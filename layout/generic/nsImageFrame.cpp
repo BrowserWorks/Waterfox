@@ -756,22 +756,15 @@ nsImageFrame::MaybeDecodeForPredictedSize()
 nsRect
 nsImageFrame::PredictedDestRect(const nsRect& aFrameContentBox)
 {
-  // What is the rect painted by the image?  It's the image's "dest rect" (the
-  // rect where a full copy of the image is mapped), clipped to the container's
-  // content box.  So, we intersect those rects.
-
   // Note: To get the "dest rect", we have to provide the "constraint rect"
   // (which is the content-box, with the effects of fragmentation undone).
   nsRect constraintRect(aFrameContentBox.TopLeft(), mComputedSize);
   constraintRect.y -= GetContinuationOffset();
 
-  const nsRect destRect =
-    nsLayoutUtils::ComputeObjectDestRect(constraintRect,
-                                         mIntrinsicSize,
-                                         mIntrinsicRatio,
-                                         StylePosition());
-
-  return destRect.Intersect(aFrameContentBox);
+  return nsLayoutUtils::ComputeObjectDestRect(constraintRect,
+                                              mIntrinsicSize,
+                                              mIntrinsicRatio,
+                                              StylePosition());
 }
 
 void
@@ -1210,7 +1203,8 @@ nsImageFrame::DisplayAltText(nsPresContext*      aPresContext,
 
       rv = nsBidiPresUtils::RenderText(str, maxFit, dir,
                                        aPresContext, aRenderingContext,
-                                       aRenderingContext, *fm, x, y);
+                                       aRenderingContext.GetDrawTarget(),
+                                       *fm, x, y);
     }
     if (NS_FAILED(rv)) {
       nsLayoutUtils::DrawUniDirString(str, maxFit,
@@ -1343,7 +1337,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
     // couldn't ignore the DrawResult that PaintBorderWithStyleBorder returns.
     MOZ_ASSERT(recessedBorder.mBorderImageSource.GetType() == eStyleImageType_Null);
 
-    unused <<
+    Unused <<
       nsCSSRendering::PaintBorderWithStyleBorder(PresContext(), aRenderingContext,
                                                  this, inner, inner,
                                                  recessedBorder, mStyleContext,
@@ -1463,7 +1457,7 @@ nsImageFrame::DisplayAltFeedback(nsRenderingContext& aRenderingContext,
 }
 
 #ifdef DEBUG
-static void PaintDebugImageMap(nsIFrame* aFrame, nsRenderingContext* aCtx,
+static void PaintDebugImageMap(nsIFrame* aFrame, DrawTarget* aDrawTarget,
                                const nsRect& aDirtyRect, nsPoint aPt)
 {
   nsImageFrame* f = static_cast<nsImageFrame*>(aFrame);
@@ -1471,11 +1465,10 @@ static void PaintDebugImageMap(nsIFrame* aFrame, nsRenderingContext* aCtx,
   gfxPoint devPixelOffset =
     nsLayoutUtils::PointToGfxPoint(inner.TopLeft(),
                                    aFrame->PresContext()->AppUnitsPerDevPixel());
-  DrawTarget* drawTarget = aCtx->GetDrawTarget();
-  AutoRestoreTransform autoRestoreTransform(drawTarget);
-  drawTarget->SetTransform(
-    drawTarget->GetTransform().PreTranslate(ToPoint(devPixelOffset)));
-  f->GetImageMap()->Draw(aFrame, *drawTarget,
+  AutoRestoreTransform autoRestoreTransform(aDrawTarget);
+  aDrawTarget->SetTransform(
+    aDrawTarget->GetTransform().PreTranslate(ToPoint(devPixelOffset)));
+  f->GetImageMap()->Draw(aFrame, *aDrawTarget,
                          ColorPattern(ToDeviceColor(Color(0.f, 0.f, 0.f, 1.f))));
 }
 #endif
@@ -1643,8 +1636,10 @@ nsDisplayImage::GetLayerState(nsDisplayListBuilder* aBuilder,
 nsDisplayImage::GetOpaqueRegion(nsDisplayListBuilder* aBuilder,
                                 bool* aSnap)
 {
+  *aSnap = false;
   if (mImage && mImage->IsOpaque()) {
-    return nsRegion(GetDestRect(aSnap));
+    const nsRect frameContentBox = GetBounds(aSnap);
+    return GetDestRect().Intersect(frameContentBox);
   }
   return nsRegion();
 }
@@ -1814,7 +1809,11 @@ nsImageFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       // decoded yet. And we are not going to ask the image to draw, so this
       // may be the only chance to tell it that it should decode.
       if (currentRequest) {
-        currentRequest->RequestDecode();
+        uint32_t status = 0;
+        currentRequest->GetImageStatus(&status);
+        if (!(status & imgIRequest::STATUS_DECODE_COMPLETE)) {
+          MaybeDecodeForPredictedSize();
+        }
       }
     } else {
       aLists.Content()->AppendNewToTop(new (aBuilder)
@@ -2295,7 +2294,6 @@ nsresult nsImageFrame::LoadIcons(nsPresContext *aPresContext)
   if (NS_FAILED(rv)) {
     return rv;
   }
-  gIconLoad->mLoadingImage->RequestDecode();
 
   rv = LoadIcon(brokenSrc,
                 aPresContext,
@@ -2303,7 +2301,6 @@ nsresult nsImageFrame::LoadIcons(nsPresContext *aPresContext)
   if (NS_FAILED(rv)) {
     return rv;
   }
-  gIconLoad->mBrokenImage->RequestDecode();
 
   return rv;
 }
@@ -2373,11 +2370,33 @@ void nsImageFrame::IconLoad::GetPrefs()
 }
 
 NS_IMETHODIMP
-nsImageFrame::IconLoad::Notify(imgIRequest *aRequest, int32_t aType, const nsIntRect* aData)
+nsImageFrame::IconLoad::Notify(imgIRequest* aRequest,
+                               int32_t aType,
+                               const nsIntRect* aData)
 {
+  MOZ_ASSERT(aRequest);
+
   if (aType != imgINotificationObserver::LOAD_COMPLETE &&
       aType != imgINotificationObserver::FRAME_UPDATE) {
     return NS_OK;
+  }
+
+  if (aType == imgINotificationObserver::LOAD_COMPLETE) {
+    nsCOMPtr<imgIContainer> image;
+    aRequest->GetImage(getter_AddRefs(image));
+    if (!image) {
+      return NS_ERROR_FAILURE;
+    }
+
+    // Retrieve the image's intrinsic size.
+    int32_t width = 0;
+    int32_t height = 0;
+    image->GetWidth(&width);
+    image->GetHeight(&height);
+
+    // Request a decode at that size.
+    image->RequestDecodeForSize(IntSize(width, height),
+                                imgIContainer::DECODE_FLAGS_DEFAULT);
   }
 
   nsTObserverArray<nsImageFrame*>::ForwardIterator iter(mIconObservers);
@@ -2439,9 +2458,9 @@ nsImageFrame::AddInlineMinISize(nsRenderingContext *aRenderingContext,
     parent->StyleText()->WhiteSpaceCanWrap(parent) &&
     !IsInAutoWidthTableCellForQuirk(this);
 
-  if (canBreak)
-    aData->OptionallyBreak(aRenderingContext);
- 
+  if (canBreak) {
+    aData->OptionallyBreak();
+  }
   aData->trailingWhitespace = 0;
   aData->skipWhitespace = false;
   aData->trailingTextFrame = nullptr;
@@ -2449,7 +2468,7 @@ nsImageFrame::AddInlineMinISize(nsRenderingContext *aRenderingContext,
                             this, nsLayoutUtils::MIN_ISIZE);
   aData->atStartOfLine = false;
 
-  if (canBreak)
-    aData->OptionallyBreak(aRenderingContext);
-
+  if (canBreak) {
+    aData->OptionallyBreak();
+  }
 }

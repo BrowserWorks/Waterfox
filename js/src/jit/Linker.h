@@ -22,6 +22,7 @@ namespace jit {
 class Linker
 {
     MacroAssembler& masm;
+    mozilla::Maybe<AutoWritableJitCode> awjc;
 
     JitCode* fail(JSContext* cx) {
         ReportOutOfMemory(cx);
@@ -36,8 +37,9 @@ class Linker
     }
 
     template <AllowGC allowGC>
-    JitCode* newCode(JSContext* cx, CodeKind kind) {
-        MOZ_ASSERT(masm.numAsmJSAbsoluteLinks() == 0);
+    JitCode* newCode(JSContext* cx, CodeKind kind, bool hasPatchableBackedges = false) {
+        MOZ_ASSERT(masm.numAsmJSAbsoluteAddresses() == 0);
+        MOZ_ASSERT_IF(hasPatchableBackedges, kind == ION_CODE);
 
         gc::AutoSuppressGC suppressGC(cx);
         if (masm.oom())
@@ -51,7 +53,9 @@ class Linker
         // ExecutableAllocator requires bytesNeeded to be word-size aligned.
         bytesNeeded = AlignBytes(bytesNeeded, sizeof(void*));
 
-        ExecutableAllocator& execAlloc = cx->runtime()->jitRuntime()->execAlloc();
+        ExecutableAllocator& execAlloc = hasPatchableBackedges
+                                       ? cx->runtime()->jitRuntime()->backedgeExecAlloc()
+                                       : cx->runtime()->jitRuntime()->execAlloc();
         uint8_t* result = (uint8_t*)execAlloc.alloc(bytesNeeded, &pool, kind);
         if (!result)
             return fail(cx);
@@ -68,7 +72,7 @@ class Linker
             return nullptr;
         if (masm.oom())
             return fail(cx);
-        AutoWritableJitCode awjc(result, bytesNeeded);
+        awjc.emplace(result, bytesNeeded);
         code->copyFrom(masm);
         masm.link(code);
         if (masm.embedsNurseryPointers())

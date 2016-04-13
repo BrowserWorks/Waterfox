@@ -31,7 +31,7 @@ public:
   virtual ~WebrtcMediaCodecVP8VideoEncoder() override;
 
   // Implement VideoEncoder interface.
-  virtual const uint64_t PluginID() override { return 0; }
+  virtual uint64_t PluginID() const override { return 0; }
 
   virtual int32_t InitEncode(const webrtc::VideoCodec* codecSettings,
                               int32_t numberOfCores,
@@ -45,7 +45,7 @@ public:
 
   virtual int32_t Release() override;
 
-  virtual int32_t SetChannelParameters(uint32_t packetLoss, int rtt) override;
+  virtual int32_t SetChannelParameters(uint32_t packetLoss, int64_t rtt) override;
 
   virtual int32_t SetRates(uint32_t newBitRate, uint32_t frameRate) override;
 
@@ -74,7 +74,7 @@ public:
   virtual ~WebrtcMediaCodecVP8VideoDecoder() override;
 
   // Implement VideoDecoder interface.
-  virtual const uint64_t PluginID() override { return 0; }
+  virtual uint64_t PluginID() const override { return 0; }
 
   virtual int32_t InitDecode(const webrtc::VideoCodec* codecSettings,
                               int32_t numberOfCores) override;

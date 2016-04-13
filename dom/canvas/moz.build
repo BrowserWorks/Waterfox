@@ -6,6 +6,9 @@
 
 TEST_DIRS += ['compiledtest']
 
+# Number changes to this file to avoid bug 1081323 (clobber after changing a manifest):
+# 9
+
 MOCHITEST_MANIFESTS += [
     'test/crossorigin/mochitest.ini',
     'test/mochitest-subsuite-webgl.ini',
@@ -31,6 +34,7 @@ EXPORTS.mozilla.dom += [
     'CanvasRenderingContextHelper.h',
     'CanvasUtils.h',
     'ImageBitmap.h',
+    'ImageBitmapRenderingContext.h',
     'ImageBitmapSource.h',
     'ImageData.h',
     'OffscreenCanvas.h',
@@ -47,13 +51,14 @@ UNIFIED_SOURCES += [
     'DocumentRendererChild.cpp',
     'DocumentRendererParent.cpp',
     'ImageBitmap.cpp',
+    'ImageBitmapRenderingContext.cpp',
     'ImageData.cpp',
     'OffscreenCanvas.cpp',
 ]
 
 # WebGL Sources
 UNIFIED_SOURCES += [
-    'MurmurHash3.cpp',
+    'TexUnpackBlob.cpp',
     'WebGL1Context.cpp',
     'WebGL1ContextBuffers.cpp',
     'WebGL1ContextUniforms.cpp',
@@ -95,6 +100,7 @@ UNIFIED_SOURCES += [
     'WebGLExtensionColorBufferFloat.cpp',
     'WebGLExtensionColorBufferHalfFloat.cpp',
     'WebGLExtensionCompressedTextureATC.cpp',
+    'WebGLExtensionCompressedTextureES3.cpp',
     'WebGLExtensionCompressedTextureETC1.cpp',
     'WebGLExtensionCompressedTexturePVRTC.cpp',
     'WebGLExtensionCompressedTextureS3TC.cpp',
@@ -142,6 +148,14 @@ UNIFIED_SOURCES += [
     'WebGLVertexArrayObject.cpp',
 ]
 
+SOURCES += [
+    'MurmurHash3.cpp',
+]
+
+# Suppress warnings from third-party code.
+if CONFIG['CLANG_CXX']:
+    SOURCES['MurmurHash3.cpp'].flags += ['-Wno-implicit-fallthrough']
+
 LOCAL_INCLUDES += [
     '/js/xpconnect/wrappers',
 ]
@@ -169,4 +183,3 @@ CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
-

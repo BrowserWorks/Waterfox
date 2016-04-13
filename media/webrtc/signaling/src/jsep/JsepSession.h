@@ -110,6 +110,15 @@ public:
                                 const std::string& oldTrackId,
                                 const std::string& newStreamId,
                                 const std::string& newTrackId) = 0;
+  virtual nsresult SetParameters(
+      const std::string& streamId,
+      const std::string& trackId,
+      const std::vector<JsepTrack::JsConstraints>& constraints) = 0;
+
+  virtual nsresult GetParameters(
+      const std::string& streamId,
+      const std::string& trackId,
+      std::vector<JsepTrack::JsConstraints>* outConstraints) = 0;
 
   virtual std::vector<RefPtr<JsepTrack>> GetLocalTracks() const = 0;
 
@@ -143,12 +152,13 @@ public:
                                         uint16_t level,
                                         std::string* mid,
                                         bool* skipped) = 0;
-  virtual nsresult EndOfLocalCandidates(
+  virtual nsresult UpdateDefaultCandidate(
       const std::string& defaultCandidateAddr,
       uint16_t defaultCandidatePort,
       const std::string& defaultRtcpCandidateAddr,
       uint16_t defaultRtcpCandidatePort,
       uint16_t level) = 0;
+  virtual nsresult EndOfLocalCandidates(uint16_t level) = 0;
   virtual nsresult Close() = 0;
 
   // ICE controlling or controlled

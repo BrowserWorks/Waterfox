@@ -24,14 +24,13 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace JS;
-using namespace js;
 
 namespace xpc {
 
 bool
 IsReflector(JSObject* obj)
 {
-    obj = CheckedUnwrap(obj, /* stopAtOuter = */ false);
+    obj = js::CheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
     if (!obj)
         return false;
     return IS_WN_REFLECTOR(obj) || dom::IsDOMObject(obj);
@@ -205,7 +204,8 @@ public:
 
         if (JS::IsCallable(aObj)) {
             if (mOptions->cloneFunctions) {
-                mFunctions.append(aObj);
+                if (!mFunctions.append(aObj))
+                    return false;
                 return JS_WriteUint32Pair(aWriter, SCTAG_FUNCTION, mFunctions.length() - 1);
             } else {
                 JS_ReportError(aCx, "Permission denied to pass a Function via structured clone");
@@ -408,8 +408,8 @@ ExportFunction(JSContext* cx, HandleValue vfunction, HandleValue vscope, HandleV
     // * We must subsume the scope we are exporting to.
     // * We must subsume the function being exported, because the function
     //   forwarder manually circumvents security wrapper CALL restrictions.
-    targetScope = CheckedUnwrap(targetScope);
-    funObj = CheckedUnwrap(funObj);
+    targetScope = js::CheckedUnwrap(targetScope);
+    funObj = js::CheckedUnwrap(funObj);
     if (!targetScope || !funObj) {
         JS_ReportError(cx, "Permission denied to export function into scope");
         return false;

@@ -13,8 +13,6 @@ import re
 import sys
 import time
 import shlex
-import logging
-
 import subprocess
 
 # load modules from parent dir
@@ -36,7 +34,6 @@ from mozharness.mozilla.updates.balrog import BalrogMixin
 from mozharness.mozilla.taskcluster_helper import Taskcluster
 from mozharness.base.python import VirtualenvMixin
 from mozharness.mozilla.mock import ERROR_MSGS
-from mozharness.base.log import FATAL
 
 try:
     import simplejson as json
@@ -48,6 +45,9 @@ except ImportError:
 # needed by _map
 SUCCESS = 0
 FAILURE = 1
+
+SUCCESS_STR = "Success"
+FAILURE_STR = "Failed"
 
 # when running get_output_form_command, pymake has some extra output
 # that needs to be filtered out
@@ -71,7 +71,7 @@ configuration_tokens = ('branch',
 # phase
 runtime_config_tokens = ('buildid', 'version', 'locale', 'from_buildid',
                          'abs_objdir', 'abs_merge_dir', 'version',
-                         'to_buildid', 'en_us_binary_url')
+                         'to_buildid', 'en_us_binary_url', 'mar_tools_url')
 
 
 # DesktopSingleLocale {{{1
@@ -182,9 +182,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 "hashType": "sha512",
                 "taskcluster_credentials_file": "oauth.txt",
                 'virtualenv_modules': [
-                    'requests==2.2.1',
+                    'requests==2.8.1',
                     'PyHawk-with-a-single-extra-commit==0.1.5',
-                    'taskcluster==0.0.15',
+                    'taskcluster==0.0.26',
                 ],
                 'virtualenv_path': 'venv',
             },
@@ -257,6 +257,16 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 msg.append(t)
             self.fatal(' '.join(msg))
         self.info('configuration looks ok')
+
+        self.read_buildbot_config()
+        if not self.buildbot_config:
+            self.warning("Skipping buildbot properties overrides")
+            return
+        props = self.buildbot_config["properties"]
+        for prop in ['mar_tools_url']:
+            if props.get(prop):
+                self.info("Overriding %s with %s" % (prop, props[prop]))
+                self.config[prop] = props.get(prop)
 
     def _get_configuration_tokens(self, iterable):
         """gets a list of tokens in iterable"""
@@ -354,6 +364,9 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             if binary.endswith('.exe'):
                 binary_path = binary_path.replace('\\', '\\\\\\\\')
             bootstrap_env[name] = binary_path
+            if 'LOCALE_MERGEDIR' in bootstrap_env:
+                # windows fix
+                bootstrap_env['LOCALE_MERGEDIR'] = bootstrap_env['LOCALE_MERGEDIR'].replace('\\', '\\\\\\\\')
         if self.query_is_nightly():
             bootstrap_env["IS_NIGHTLY"] = "yes"
         self.bootstrap_env = bootstrap_env
@@ -494,7 +507,7 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
 
     def _add_failure(self, locale, message, **kwargs):
         """marks current step as failed"""
-        self.locales_property[locale] = "Failed"
+        self.locales_property[locale] = FAILURE_STR
         prop_key = "%s_failure" % locale
         prop_value = self.query_buildbot_property(prop_key)
         if prop_value:
@@ -504,13 +517,17 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.set_buildbot_property(prop_key, prop_value, write_to_file=True)
         BaseScript.add_failure(self, locale, message=message, **kwargs)
 
+    def query_failed_locales(self):
+        return [l for l, res in self.locales_property.items() if
+                res == FAILURE_STR]
+
     def summary(self):
         """generates a summary"""
         BaseScript.summary(self)
         # TODO we probably want to make this configurable on/off
         locales = self.query_locales()
         for locale in locales:
-            self.locales_property.setdefault(locale, "Success")
+            self.locales_property.setdefault(locale, SUCCESS_STR)
         self.set_buildbot_property("locales",
                                    json.dumps(self.locales_property),
                                    write_to_file=True)
@@ -653,14 +670,15 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                                 halt_on_failure=halt_on_failure,
                                 output_parser=output_parser)
 
-    def _get_output_from_make(self, target, cwd, env, halt_on_failure=True):
+    def _get_output_from_make(self, target, cwd, env, halt_on_failure=True, ignore_errors=False):
         """runs make and returns the output of the command"""
         make = self._get_make_executable()
         return self.get_output_from_command(make + target,
                                             cwd=cwd,
                                             env=env,
                                             silent=True,
-                                            halt_on_failure=halt_on_failure)
+                                            halt_on_failure=halt_on_failure,
+                                            ignore_errors=ignore_errors)
 
     def make_unpack_en_US(self):
         """wrapper for make unpack"""
@@ -706,19 +724,23 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             ret = FAILURE
         return ret
 
-    def get_upload_files(self, locale):
+    def set_upload_files(self, locale):
         # The tree doesn't have a good way of exporting the list of files
         # created during locale generation, but we can grab them by echoing the
         # UPLOAD_FILES variable for each locale.
         env = self.query_l10n_env()
-        target = ['echo-variable-UPLOAD_FILES', 'AB_CD=%s' % (locale)]
+        target = ['echo-variable-UPLOAD_FILES', 'echo-variable-CHECKSUM_FILES',
+                  'AB_CD=%s' % locale]
         dirs = self.query_abs_dirs()
         cwd = dirs['abs_locales_dir']
-        output = self._get_output_from_make(target=target, cwd=cwd, env=env)
-        self.info('UPLOAD_FILES is "%s"' % (output))
+        # Bug 1242771 - echo-variable-UPLOAD_FILES via mozharness fails when stderr is found
+        #    we should ignore stderr as unfortunately it's expected when parsing for values
+        output = self._get_output_from_make(target=target, cwd=cwd, env=env,
+                                            ignore_errors=True)
+        self.info('UPLOAD_FILES is "%s"' % output)
         files = shlex.split(output)
         if not files:
-            self.error('failed to get upload file list for locale %s' % (locale))
+            self.error('failed to get upload file list for locale %s' % locale)
             return FAILURE
 
         self.upload_files[locale] = [
@@ -750,13 +772,17 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
             self.error("make installers-%s failed" % (locale))
             return FAILURE
 
-        if self.get_upload_files(locale):
-            self.error("failed to get list of files to upload for locale %s" % (locale))
-            return FAILURE
         # now try to upload the artifacts
         if self.make_upload(locale):
             self.error("make upload for locale %s failed!" % (locale))
             return FAILURE
+
+        # set_upload_files() should be called after make upload, to make sure
+        # we have all files in place (cheksums, etc)
+        if self.set_upload_files(locale):
+            self.error("failed to get list of files to upload for locale %s" % locale)
+            return FAILURE
+
         return SUCCESS
 
     def repack(self):
@@ -960,7 +986,6 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         self.activate_virtualenv()
 
         branch = self.config['branch']
-        platform = self.config['platform']
         revision = self._query_revision()
         repo = self.query_l10n_repo()
         if not repo:
@@ -973,6 +998,19 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
         with open(routes_json) as f:
             contents = json.load(f)
             templates = contents['l10n']
+
+        # Release promotion creates a special task to accumulate all artifacts
+        # under the same task
+        artifacts_task = None
+        self.read_buildbot_config()
+        if "artifactsTaskId" in self.buildbot_config.get("properties", {}):
+            artifacts_task_id = self.buildbot_config["properties"]["artifactsTaskId"]
+            artifacts_tc = Taskcluster(
+                    branch=branch, rank=pushinfo.pushdate, client_id=client_id,
+                    access_token=access_token, log_obj=self.log_obj,
+                    task_id=artifacts_task_id)
+            artifacts_task = artifacts_tc.get_task(artifacts_task_id)
+            artifacts_tc.claim_task(artifacts_task)
 
         for locale, files in self.upload_files.iteritems():
             self.info("Uploading files to S3 for locale '%s': %s" % (locale, files))
@@ -1009,8 +1047,21 @@ class DesktopSingleLocale(LocalesMixin, ReleaseMixin, MockMixin, BuildbotMixin,
                 # check the uploaded file against the property conditions so that we
                 # can set the buildbot config with the correct URLs for package
                 # locations.
-                tc.create_artifact(task, upload_file)
+                artifact_url = tc.create_artifact(task, upload_file)
+                if artifacts_task:
+                    artifacts_tc.create_reference_artifact(
+                            artifacts_task, upload_file, artifact_url)
+
             tc.report_completed(task)
+
+        if artifacts_task:
+            if not self.query_failed_locales():
+                artifacts_tc.report_completed(artifacts_task)
+            else:
+                # If some locales fail, we want to mark the artifacts
+                # task failed, so a retry can reuse the same task ID
+                artifacts_tc.report_failed(artifacts_task)
+
 
 # main {{{
 if __name__ == '__main__':

@@ -15,6 +15,7 @@
 #include "mozilla/EventForwards.h"
 #include "nsRect.h"
 #include "WritingModes.h"
+#include "npapi.h"
 
 class nsWindow;
 
@@ -26,21 +27,28 @@ struct MSGResult;
 class IMEContext final
 {
 public:
+  IMEContext()
+    : mWnd(nullptr)
+    , mIMC(nullptr)
+  {
+  }
+
   explicit IMEContext(HWND aWnd);
   explicit IMEContext(nsWindow* aWindow);
 
   ~IMEContext()
   {
-    if (mIMC) {
-      ::ImmReleaseContext(mWnd, mIMC);
-      mIMC = nullptr;
-    }
+    Clear();
   }
 
   HIMC get() const
   {
     return mIMC;
   }
+
+  void Init(HWND aWnd);
+  void Init(nsWindow* aWindow);
+  void Clear();
 
   bool IsValid() const
   {
@@ -90,11 +98,6 @@ public:
   }
 
 protected:
-  IMEContext()
-  {
-    MOZ_CRASH("Don't create IMEContext without window handle");
-  }
-
   IMEContext(const IMEContext& aOther)
   {
     MOZ_CRASH("Don't copy IMEContext");
@@ -116,7 +119,7 @@ public:
                              MSGResult& aResult);
   static bool IsComposing()
   {
-    return IsComposingOnOurEditor() || IsComposingOnPlugin();
+    return IsComposingOnOurEditor();
   }
   static bool IsComposingOn(nsWindow* aWindow)
   {
@@ -148,6 +151,9 @@ public:
   // IME.  Otherwise, NS_OK.
   static nsresult OnMouseButtonEvent(nsWindow* aWindow,
                                      const IMENotification& aIMENotification);
+  static void SetCandidateWindow(nsWindow* aWindow, CANDIDATEFORM* aForm);
+  static void DefaultProcOfPluginEvent(nsWindow* aWindow,
+                                       const NPEvent* aEvent);
 
 protected:
   static void EnsureHandlerInstance();
@@ -178,7 +184,7 @@ protected:
                                               MSGResult& aResult);
   static bool ProcessMessageForPlugin(nsWindow* aWindow, UINT msg,
                                         WPARAM &wParam, LPARAM &lParam,
-                                        MSGResult& aResult);
+                                        bool &aRet, MSGResult& aResult);
 
   IMMHandler();
   ~IMMHandler();
@@ -189,16 +195,15 @@ protected:
                              MSGResult& aResult);
 
   bool OnIMEStartComposition(nsWindow* aWindow, MSGResult& aResult);
-  bool OnIMEStartCompositionOnPlugin(nsWindow* aWindow,
-                                     WPARAM wParam, LPARAM lParam,
-                                     MSGResult& aResult);
+  void OnIMEStartCompositionOnPlugin(nsWindow* aWindow,
+                                     WPARAM wParam, LPARAM lParam);
   bool OnIMEComposition(nsWindow* aWindow, WPARAM wParam, LPARAM lParam,
                         MSGResult& aResult);
-  bool OnIMECompositionOnPlugin(nsWindow* aWindow, WPARAM wParam, LPARAM lParam,
-                                MSGResult& aResult);
+  void OnIMECompositionOnPlugin(nsWindow* aWindow, WPARAM wParam,
+                                LPARAM lParam);
   bool OnIMEEndComposition(nsWindow* aWindow, MSGResult& aResult);
-  bool OnIMEEndCompositionOnPlugin(nsWindow* aWindow, WPARAM wParam,
-                                   LPARAM lParam, MSGResult& aResult);
+  void OnIMEEndCompositionOnPlugin(nsWindow* aWindow, WPARAM wParam,
+                                   LPARAM lParam);
   bool OnIMERequest(nsWindow* aWindow, WPARAM wParam, LPARAM lParam,
                     MSGResult& aResult);
   bool OnIMECharOnPlugin(nsWindow* aWindow, WPARAM wParam, LPARAM lParam,
@@ -267,9 +272,9 @@ protected:
    *  @param aOutRect         The converted cursor rect.
    */
   void ResolveIMECaretPos(nsIWidget* aReferenceWidget,
-                          nsIntRect& aCursorRect,
+                          mozilla::LayoutDeviceIntRect& aCursorRect,
                           nsIWidget* aNewOriginWidget,
-                          nsIntRect& aOutRect);
+                          mozilla::LayoutDeviceIntRect& aOutRect);
 
   bool ConvertToANSIString(const nsAFlatString& aStr,
                              UINT aCodePage,
@@ -299,7 +304,7 @@ protected:
   bool GetCharacterRectOfSelectedTextAt(
          nsWindow* aWindow,
          uint32_t aOffset,
-         nsIntRect& aCharRect,
+         mozilla::LayoutDeviceIntRect& aCharRect,
          mozilla::WritingMode* aWritingMode = nullptr);
   /**
    * GetCaretRect() returns caret rect at current selection start.
@@ -313,7 +318,7 @@ protected:
    *                        Otherwise, false.
    */
   bool GetCaretRect(nsWindow* aWindow,
-                    nsIntRect& aCaretRect,
+                    mozilla::LayoutDeviceIntRect& aCaretRect,
                     mozilla::WritingMode* aWritingMode = nullptr);
   void GetCompositionString(const IMEContext& aContext,
                             DWORD aIndex,
@@ -324,7 +329,8 @@ protected:
    * If aForceUpdate is true, it will update composition font even if writing
    * mode isn't being changed.
    */
-  void AdjustCompositionFont(const IMEContext& aContext,
+  void AdjustCompositionFont(nsWindow* aWindow,
+                             const IMEContext& aContext,
                              const mozilla::WritingMode& aWritingMode,
                              bool aForceUpdate = false);
 
@@ -351,6 +357,11 @@ protected:
    *  in the composition string, you need to subtract mCompositionStart from it.
    */
   bool GetTargetClauseRange(uint32_t *aOffset, uint32_t *aLength = nullptr);
+
+  /**
+   * DispatchEvent() dispatches aEvent if aWidget hasn't been destroyed yet.
+   */
+  static void DispatchEvent(nsWindow* aWindow, WidgetGUIEvent& aEvent);
 
   /**
    * DispatchCompositionChangeEvent() dispatches eCompositionChange event
@@ -471,6 +482,7 @@ protected:
   static DWORD sIMEUIProperty;
   static bool sAssumeVerticalWritingModeNotSupported;
   static bool sHasFocus;
+  static bool sNativeCaretIsCreatedForPlugin;
 };
 
 } // namespace widget

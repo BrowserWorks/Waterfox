@@ -145,8 +145,8 @@ nsresult nsWebShellWindow::Initialize(nsIXULWindow* aParent,
 
   // XXX: need to get the default window size from prefs...
   // Doesn't come from prefs... will come from CSS/XUL/RDF
-  nsIntRect r(initialX, initialY, aInitialWidth, aInitialHeight);
-  
+  LayoutDeviceIntRect r(initialX, initialY, aInitialWidth, aInitialHeight);
+
   // Create top level window
   mWindow = do_CreateInstance(kWindowCID, &rv);
   if (NS_OK != rv) {
@@ -347,7 +347,17 @@ nsWebShellWindow::SizeModeChanged(nsSizeMode sizeMode)
       ourWindow->SetFullScreen(true);
     }
     else if (sizeMode != nsSizeMode_Minimized) {
-      ourWindow->SetFullScreen(false);
+      if (ourWindow->GetFullScreen()) {
+        // The first SetFullscreenInternal call below ensures that we do
+        // not trigger any fullscreen transition even if the window was
+        // put in fullscreen only for the Fullscreen API. The second
+        // SetFullScreen call ensures that the window really exit from
+        // fullscreen even if it entered fullscreen for both Fullscreen
+        // Mode and Fullscreen API.
+        ourWindow->SetFullscreenInternal(
+          nsPIDOMWindow::eForForceExitFullscreen, false);
+        ourWindow->SetFullScreen(false);
+      }
     }
 
     // And always fire a user-defined sizemodechange event on the window

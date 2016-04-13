@@ -7,11 +7,20 @@
 #ifndef mozilla_layers_TreeTraversal_h
 #define mozilla_layers_TreeTraversal_h
 
+#include <queue>
+#include <stack>
+
 namespace mozilla {
 namespace layers {
 
-#include <queue>
-#include <stack>
+
+/*
+ * Returned by |aAction| in ForEachNode. If the action returns
+ * TraversalFlag::Skip, the node's children are not added to the traverrsal
+ * stack. Otherwise, a return value of TraversalFlag::Continue indicates that
+ * ForEachNode should traverse each of the node's children.
+ */
+enum class TraversalFlag { Skip, Continue };
 
 /*
  * Do a breadth-first search of the tree rooted at |aRoot|, and return the
@@ -21,23 +30,23 @@ namespace layers {
  * |Node| should have methods GetLastChild() and GetPrevSibling().
  */
 template <typename Node, typename Condition>
-const Node* BreadthFirstSearch(const Node* aRoot, const Condition& aCondition)
+Node* BreadthFirstSearch(Node* aRoot, const Condition& aCondition)
 {
   if (!aRoot) {
     return nullptr;
   }
 
-  std::queue<const Node*> queue;
+  std::queue<Node*> queue;
   queue.push(aRoot);
   while (!queue.empty()) {
-    const Node* node = queue.front();
+    Node* node = queue.front();
     queue.pop();
 
     if (aCondition(node)) {
       return node;
     }
 
-    for (const Node* child = node->GetLastChild();
+    for (Node* child = node->GetLastChild();
          child;
          child = child->GetPrevSibling()) {
       queue.push(child);
@@ -55,23 +64,23 @@ const Node* BreadthFirstSearch(const Node* aRoot, const Condition& aCondition)
  * |Node| should have methods GetLastChild() and GetPrevSibling().
  */
 template <typename Node, typename Condition>
-const Node* DepthFirstSearch(const Node* aRoot, const Condition& aCondition)
+Node* DepthFirstSearch(Node* aRoot, const Condition& aCondition)
 {
   if (!aRoot) {
     return nullptr;
   }
 
-  std::stack<const Node*> stack;
+  std::stack<Node*> stack;
   stack.push(aRoot);
   while (!stack.empty()) {
-    const Node* node = stack.top();
+    Node* node = stack.top();
     stack.pop();
 
     if (aCondition(node)) {
         return node;
     }
 
-    for (const Node* child = node->GetLastChild();
+    for (Node* child = node->GetLastChild();
          child;
          child = child->GetPrevSibling()) {
       stack.push(child);
@@ -79,6 +88,66 @@ const Node* DepthFirstSearch(const Node* aRoot, const Condition& aCondition)
   }
 
   return nullptr;
+}
+
+/*
+ * Do a depth-first traversal of the tree rooted at |aRoot|, performing
+ * |aAction| for each node.  |aAction| can return a TraversalFlag to determine
+ * whether or not to omit the children of a particular node.
+ *
+ * If |aAction| does not return a TraversalFlag, it must return nothing.  There
+ * is no ForEachNode instance handling types other than void or TraversalFlag.
+ */
+template <typename Node, typename Action>
+auto ForEachNode(Node* aRoot, const Action& aAction) ->
+typename EnableIf<IsSame<decltype(aAction(aRoot)), TraversalFlag>::value, void>::Type
+{
+  if (!aRoot) {
+    return;
+  }
+
+  std::stack<Node*> stack;
+  stack.push(aRoot);
+
+  while (!stack.empty()) {
+    Node* node = stack.top();
+    stack.pop();
+
+    TraversalFlag result = aAction(node);
+
+    if (result == TraversalFlag::Continue) {
+      for (Node* child = node->GetLastChild();
+           child;
+           child = child->GetPrevSibling()) {
+        stack.push(child);
+      }
+    }
+  }
+}
+
+template <typename Node, typename Action>
+auto ForEachNode(Node* aRoot, const Action& aAction) ->
+typename EnableIf<IsSame<decltype(aAction(aRoot)), void>::value, void>::Type
+{
+  if (!aRoot) {
+    return;
+  }
+
+  std::stack<Node*> stack;
+  stack.push(aRoot);
+
+  while (!stack.empty()) {
+    Node* node = stack.top();
+    stack.pop();
+
+    aAction(node);
+
+    for (Node* child = node->GetLastChild();
+         child;
+         child = child->GetPrevSibling()) {
+      stack.push(child);
+    }
+  }
 }
 
 }

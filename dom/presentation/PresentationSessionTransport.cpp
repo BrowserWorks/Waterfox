@@ -56,12 +56,22 @@ CopierCallbacks::OnStopRequest(nsIRequest* aRequest, nsISupports* aContext, nsre
   return NS_OK;
 }
 
-NS_IMPL_ISUPPORTS(PresentationSessionTransport,
-                  nsIPresentationSessionTransport,
-                  nsITransportEventSink,
-                  nsIInputStreamCallback,
-                  nsIStreamListener,
-                  nsIRequestObserver)
+NS_IMPL_CYCLE_COLLECTION(PresentationSessionTransport, mTransport,
+                         mSocketInputStream, mSocketOutputStream,
+                         mInputStreamPump, mInputStreamScriptable,
+                         mMultiplexStream, mMultiplexStreamCopier, mCallback)
+
+NS_IMPL_CYCLE_COLLECTING_ADDREF(PresentationSessionTransport)
+NS_IMPL_CYCLE_COLLECTING_RELEASE(PresentationSessionTransport)
+
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PresentationSessionTransport)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIPresentationSessionTransport)
+  NS_INTERFACE_MAP_ENTRY(nsIPresentationSessionTransport)
+  NS_INTERFACE_MAP_ENTRY(nsITransportEventSink)
+  NS_INTERFACE_MAP_ENTRY(nsIInputStreamCallback)
+  NS_INTERFACE_MAP_ENTRY(nsIStreamListener)
+  NS_INTERFACE_MAP_ENTRY(nsIRequestObserver)
+NS_INTERFACE_MAP_END
 
 PresentationSessionTransport::PresentationSessionTransport()
   : mReadyState(CLOSED)
@@ -281,21 +291,6 @@ PresentationSessionTransport::EnableDataNotification()
 }
 
 NS_IMETHODIMP
-PresentationSessionTransport::GetCallback(nsIPresentationSessionTransportCallback** aCallback)
-{
-  nsCOMPtr<nsIPresentationSessionTransportCallback> callback = mCallback;
-  callback.forget(aCallback);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-PresentationSessionTransport::SetCallback(nsIPresentationSessionTransportCallback* aCallback)
-{
-  mCallback = aCallback;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
 PresentationSessionTransport::GetSelfAddress(nsINetAddr** aSelfAddress)
 {
   if (NS_WARN_IF(!mTransport)) {
@@ -395,6 +390,7 @@ PresentationSessionTransport::SetReadyState(ReadyState aReadyState)
   } else if (mReadyState == CLOSED && mCallback) {
     // Notify the transport channel has been shut down.
     NS_WARN_IF(NS_FAILED(mCallback->NotifyTransportClosed(mCloseStatus)));
+    mCallback = nullptr;
   }
 }
 

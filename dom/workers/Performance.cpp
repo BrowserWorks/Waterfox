@@ -33,12 +33,7 @@ Performance::Now() const
 {
   TimeDuration duration =
     TimeStamp::Now() - mWorkerPrivate->NowBaseTimeStamp();
-  double nowTime = duration.ToMilliseconds();
-  // Round down to the nearest 5us, because if the timer is too accurate people
-  // can do nasty timing attacks with it.  See similar code in the non-worker
-  // Performance implementation.
-  const double maxResolutionMs = 0.005;
-  return floor(nowTime / maxResolutionMs) * maxResolutionMs;
+  return RoundTime(duration.ToMilliseconds());
 }
 
 // To be removed once bug 1124165 lands
@@ -57,7 +52,7 @@ Performance::GetPerformanceTimingFromString(const nsAString& aProperty)
   }
 
   if (aProperty.EqualsLiteral("navigationStart")) {
-    return mWorkerPrivate->NowBaseTimeHighRes();
+    return mWorkerPrivate->NowBaseTime();
   }
 
   MOZ_CRASH("IsPerformanceTimingAttribute and GetPerformanceTimingFromString are out of sync");
@@ -79,14 +74,16 @@ Performance::InsertUserEntry(PerformanceEntry* aEntry)
   PerformanceBase::InsertUserEntry(aEntry);
 }
 
-DOMHighResTimeStamp
-Performance::DeltaFromNavigationStart(DOMHighResTimeStamp aTime)
+TimeStamp
+Performance::CreationTimeStamp() const
 {
-  if (aTime == 0) {
-    return 0;
-  }
+  return mWorkerPrivate->NowBaseTimeStamp();
+}
 
-  return aTime - mWorkerPrivate->NowBaseTimeHighRes();
+DOMHighResTimeStamp
+Performance::CreationTime() const
+{
+  return mWorkerPrivate->NowBaseTime();
 }
 
 void

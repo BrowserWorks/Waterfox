@@ -1,6 +1,6 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var TrackingProtection = {
   MAX_INTROS: 0,
@@ -184,7 +184,6 @@ var TrackingProtection = {
   },
 
   showIntroPanel: Task.async(function*() {
-    let mm = gBrowser.selectedBrowser.messageManager;
     let brandBundle = document.getElementById("bundle_brand");
     let brandShortName = brandBundle.getString("brandShortName");
 
@@ -219,7 +218,7 @@ var TrackingProtection = {
 
     let panelTarget = yield UITour.getTarget(window, "trackingProtection");
     UITour.initForBrowser(gBrowser.selectedBrowser, window);
-    UITour.showInfo(window, mm, panelTarget,
+    UITour.showInfo(window, panelTarget,
                     gNavigatorBundle.getString("trackingProtection.intro.title"),
                     gNavigatorBundle.getFormattedString("trackingProtection.intro.description",
                                                         [brandShortName]),

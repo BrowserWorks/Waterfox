@@ -118,6 +118,8 @@ UDPSocket::UDPSocket(nsPIDOMWindow* aOwner,
   : DOMEventTargetHelper(aOwner)
   , mRemoteAddress(aRemoteAddress)
   , mRemotePort(aRemotePort)
+  , mAddressReuse(false)
+  , mLoopback(false)
   , mReadyState(SocketReadyState::Opening)
 {
   MOZ_ASSERT(aOwner);
@@ -733,6 +735,15 @@ UDPSocket::CallListenerOpened()
   }
 
   mOpened->MaybeResolve(JS::UndefinedHandleValue);
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+UDPSocket::CallListenerConnected()
+{
+  // This shouldn't be called here.
+  MOZ_CRASH();
 
   return NS_OK;
 }

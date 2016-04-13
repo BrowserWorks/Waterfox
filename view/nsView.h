@@ -14,6 +14,7 @@
 #include "nsCOMPtr.h"
 #include "nsWidgetInitData.h" // for nsWindowType
 #include "nsIWidgetListener.h"
+#include "Units.h"
 #include "mozilla/EventForwards.h"
 
 class nsViewManager;
@@ -56,6 +57,9 @@ class nsView final : public nsIWidgetListener
 {
 public:
   friend class nsViewManager;
+
+  typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
+  typedef mozilla::LayoutDeviceIntRegion LayoutDeviceIntRegion;
 
   NS_DECL_AND_IMPL_ZEROING_OPERATOR_NEW
 
@@ -326,7 +330,7 @@ public:
    */
   bool IsRoot() const;
 
-  nsIntRect CalcWidgetBounds(nsWindowType aType);
+  LayoutDeviceIntRect CalcWidgetBounds(nsWindowType aType);
 
   // This is an app unit offset to add when converting view coordinates to
   // widget coordinates.  It is the offset in view coordinates from widget
@@ -379,7 +383,8 @@ public:
   virtual bool WindowResized(nsIWidget* aWidget, int32_t aWidth, int32_t aHeight) override;
   virtual bool RequestWindowClose(nsIWidget* aWidget) override;
   virtual void WillPaintWindow(nsIWidget* aWidget) override;
-  virtual bool PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion) override;
+  virtual bool PaintWindow(nsIWidget* aWidget,
+                           LayoutDeviceIntRegion aRegion) override;
   virtual void DidPaintWindow() override;
   virtual void DidCompositeWindow(const mozilla::TimeStamp& aCompositeStart,
                                   const mozilla::TimeStamp& aCompositeEnd) override;

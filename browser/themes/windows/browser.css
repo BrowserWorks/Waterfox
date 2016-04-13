@@ -20,6 +20,9 @@
 
   --backbutton-urlbar-overlap: 6px;
 
+  /* icon width + border + horizontal padding (without the overlap from backbutton-urlbar-overlap) */
+  --forwardbutton-width: 25px;
+
   --toolbarbutton-vertical-inner-padding: 2px;
   --toolbarbutton-vertical-outer-padding: 8px;
 
@@ -652,24 +655,6 @@ menuitem.bookmark-item {
   #bookmarks-menu-button.toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
     list-style-image: url("chrome://browser/skin/Toolbar-lunaSilver.png");
   }
-
-  #loop-button {
-    list-style-image: url(chrome://browser/skin/loop/toolbar-lunaSilver.png)
-  }
-
-  #PanelUI-menu-button.thumburger {
-    list-style-image: url("chrome://browser/skin/customizableui/thumburger-lunaSilver.png") !important;
-  }
-}
-
-@media (-moz-windows-theme: luna-silver) and (min-resolution: 1.1dppx) {
-  #loop-button {
-    list-style-image: url(chrome://browser/skin/loop/toolbar-lunaSilver@2x.png)
-  }
-
-  #PanelUI-menu-button.thumburger {
-    list-style-image: url("chrome://browser/skin/customizableui/thumburger-lunaSilver@2x.png") !important;
-  }
 }
 
 #main-window:not([customizing]) .toolbarbutton-1[disabled=true] > .toolbarbutton-icon,
@@ -957,9 +942,7 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
   border-radius: 0 !important;
   padding-left: calc(var(--backbutton-urlbar-overlap) + 3px) !important;
   padding-right: 3px !important;
-% icon width + border + horizontal padding without --backbutton-urlbar-overlap
-%define forwardButtonWidth 25
-  max-width: calc(@forwardButtonWidth@px + var(--backbutton-urlbar-overlap)) !important;
+  max-width: calc(var(--forwardbutton-width) + var(--backbutton-urlbar-overlap)) !important;
 }
 
 @conditionalForwardWithUrlbar@:not([switchingtabs]) > #forward-button {
@@ -967,7 +950,7 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
 }
 
 @conditionalForwardWithUrlbar@ > #forward-button[disabled] {
-  margin-left: calc(-@forwardButtonWidth@px - var(--backbutton-urlbar-overlap));
+  margin-left: calc(0px - var(--forwardbutton-width) - var(--backbutton-urlbar-overlap));
 }
 
 @conditionalForwardWithUrlbar@:hover:not([switchingtabs]) > #forward-button[disabled] {
@@ -977,7 +960,7 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
 
 @conditionalForwardWithUrlbar@:not(:hover) > #forward-button[disabled] {
   /* when not hovered anymore, trigger a new transition to hide the forward button immediately */
-  margin-left: calc(-@forwardButtonWidth@.01px - var(--backbutton-urlbar-overlap));
+  margin-left: calc(-0.01px - var(--forwardbutton-width) - var(--backbutton-urlbar-overlap));
 }
 
 #back-button {
@@ -1016,29 +999,6 @@ toolbar[brighttext] .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
 .unified-nav-forward[_moz-menuactive]:-moz-locale-dir(ltr),
 .unified-nav-back[_moz-menuactive]:-moz-locale-dir(rtl) {
   list-style-image: url("chrome://browser/skin/menu-forward.png") !important;
-}
-
-/* tabview menu item */
-
-#menu_tabview {
-  list-style-image: url(chrome://browser/skin/tabview/tabview.png);
-  -moz-image-region: rect(1px, 89px, 17px, 73px);
-}
-
-#menu_tabview[groups="0"] {
-  -moz-image-region: rect(1px, 17px, 17px, 1px);
-}
-
-#menu_tabview[groups="1"] {
-  -moz-image-region: rect(1px, 35px, 17px, 19px);
-}
-
-#menu_tabview[groups="2"] {
-  -moz-image-region: rect(1px, 53px, 17px, 37px);
-}
-
-#menu_tabview[groups="3"] {
-  -moz-image-region: rect(1px, 71px, 17px, 55px);
 }
 
 /* undo close tab menu item */
@@ -1537,7 +1497,7 @@ richlistitem[type~="action"][actiontype="searchengine"] > .ac-title-box > .ac-si
   }
 }
 
-richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-icon {
+richlistitem[type~="action"][actiontype$="tab"] > .ac-url-box > .ac-action-icon {
   list-style-image: url("chrome://browser/skin/actionicon-tab.png");
   -moz-image-region: rect(0, 16px, 11px, 0);
   padding: 0 3px;
@@ -1546,7 +1506,7 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 }
 
 @media (min-resolution: 1.1dppx) {
-  richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-icon {
+  richlistitem[type~="action"][actiontype$="tab"] > .ac-url-box > .ac-action-icon {
     list-style-image: url("chrome://browser/skin/actionicon-tab@2x.png");
     -moz-image-region: rect(0, 32px, 22px, 0);
   }
@@ -1556,12 +1516,12 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
        not all and (-moz-windows-default-theme) {
   @media not all and (-moz-os-version: windows-win7),
          not all and (-moz-windows-default-theme) {
-    richlistitem[type~="action"][actiontype="switchtab"][selected="true"] > .ac-url-box > .ac-action-icon {
+    richlistitem[type~="action"][actiontype$="tab"][selected="true"] > .ac-url-box > .ac-action-icon {
       -moz-image-region: rect(11px, 16px, 22px, 0);
     }
 
     @media (min-resolution: 1.1dppx) {
-      richlistitem[type~="action"][actiontype="switchtab"][selected="true"] > .ac-url-box > .ac-action-icon {
+      richlistitem[type~="action"][actiontype$="tab"][selected="true"] > .ac-url-box > .ac-action-icon {
         -moz-image-region: rect(22px, 32px, 44px, 0);
       }
     }
@@ -1913,6 +1873,18 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
   border: none;
 }
 
+@media not all and (min-resolution: 1.1dppx) {
+  #sidebar-header > .close-icon:-moz-lwtheme-brighttext {
+    list-style-image: url("chrome://global/skin/icons/close-inverted.png");
+  }
+}
+
+@media (min-resolution: 1.1dppx) {
+  #sidebar-header > .close-icon:-moz-lwtheme-brighttext {
+    list-style-image: url("chrome://global/skin/icons/close-inverted@2x.png");
+  }
+}
+
 @media (-moz-os-version: windows-xp),
        (-moz-os-version: windows-vista),
        (-moz-os-version: windows-win7) {
@@ -2063,30 +2035,13 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 
 .tabbrowser-arrowscrollbox > .scrollbutton-up,
 .tabbrowser-arrowscrollbox > .scrollbutton-down {
-  list-style-image: url("chrome://browser/skin/tabbrowser/tab-arrow-left.png");
+  list-style-image: url("chrome://browser/skin/tabbrowser/tab-arrow-left.svg");
   margin: 0 0 var(--tab-toolbar-navbar-overlap);
 }
 
 #TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-arrowscrollbox > .scrollbutton-up,
 #TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-arrowscrollbox > .scrollbutton-down {
-  list-style-image: url(chrome://browser/skin/tabbrowser/tab-arrow-left-inverted.png);
-}
-
-@media (min-resolution: 1.1dppx) {
-  .tabbrowser-arrowscrollbox > .scrollbutton-up,
-  .tabbrowser-arrowscrollbox > .scrollbutton-down {
-    list-style-image: url("chrome://browser/skin/tabbrowser/tab-arrow-left@2x.png");
-  }
-
-  .tabbrowser-arrowscrollbox > .scrollbutton-up > .toolbarbutton-icon,
-  .tabbrowser-arrowscrollbox > .scrollbutton-down > .toolbarbutton-icon {
-    width: 15px;
-  }
-
-  #TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-arrowscrollbox > .scrollbutton-up,
-  #TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-arrowscrollbox > .scrollbutton-down {
-    list-style-image: url(chrome://browser/skin/tabbrowser/tab-arrow-left-inverted@2x.png);
-  }
+  list-style-image: url(chrome://browser/skin/tabbrowser/tab-arrow-left-inverted.svg);
 }
 
 .tabbrowser-arrowscrollbox > .scrollbutton-up[disabled],
@@ -2116,34 +2071,20 @@ richlistitem[type~="action"][actiontype="switchtab"] > .ac-url-box > .ac-action-
 .tabs-newtab-button,
 #TabsToolbar > #new-tab-button,
 #TabsToolbar > toolbarpaletteitem > #new-tab-button {
-  list-style-image: url(chrome://browser/skin/tabbrowser/newtab.png);
+  list-style-image: url(chrome://browser/skin/tabbrowser/newtab.svg);
   -moz-image-region: auto;
 }
 
 #TabsToolbar[brighttext] .tabs-newtab-button,
 #TabsToolbar[brighttext] > #new-tab-button,
 #TabsToolbar[brighttext] > toolbarpaletteitem > #new-tab-button {
-  list-style-image: url(chrome://browser/skin/tabbrowser/newtab-inverted.png);
+  list-style-image: url(chrome://browser/skin/tabbrowser/newtab-inverted.svg);
 }
 
 .tabs-newtab-button > .toolbarbutton-icon,
 #TabsToolbar > #new-tab-button > .toolbarbutton-icon,
 #TabsToolbar > toolbarpaletteitem > #new-tab-button > .toolbarbutton-icon {
   width: 16px;
-}
-
-@media (min-resolution: 1.1dppx) {
-  .tabs-newtab-button,
-  #TabsToolbar > #new-tab-button,
-  #TabsToolbar > toolbarpaletteitem > #new-tab-button {
-    list-style-image: url(chrome://browser/skin/tabbrowser/newtab@2x.png);
-  }
-
-  #TabsToolbar[brighttext] .tabs-newtab-button,
-  #TabsToolbar[brighttext] > #new-tab-button,
-  #TabsToolbar[brighttext] > toolbarpaletteitem > #new-tab-button {
-    list-style-image: url(chrome://browser/skin/tabbrowser/newtab-inverted@2x.png);
-  }
 }
 
 #TabsToolbar > #new-tab-button {
@@ -2355,19 +2296,6 @@ notification[value="translation"] {
   -moz-appearance: none;
 }
 
-/* Loop/ Hello browser styles */
-
-notification[value="loop-sharing-notification"] .button-menubutton-button {
-  -moz-appearance: none;
-  min-width: 0;
-  border: 0;
-  margin: 0;
-}
-
-notification[value="loop-sharing-notification"] .messageImage {
-  list-style-image: url(chrome://browser/skin/webRTC-shareScreen-16.png);
-}
-
 /* Bookmarks roots menu-items */
 #subscribeToPageMenuitem:not([disabled]),
 #subscribeToPageMenupopup,
@@ -2387,12 +2315,6 @@ notification[value="loop-sharing-notification"] .messageImage {
 #panelMenu_unsortedBookmarks {
   list-style-image: url("chrome://browser/skin/places/unsortedBookmarks.png");
   -moz-image-region: auto;
-}
-
-#panelMenu_pocket,
-#menu_pocket,
-#BMB_pocket {
-  list-style-image: url("chrome://browser/content/pocket/panels/img/pocketmenuitem16.png");
 }
 
 /* ::::: Keyboard UI Panel ::::: */
@@ -2704,22 +2626,6 @@ notification[value="loop-sharing-notification"] .messageImage {
   width: 40px;
   height: 20px;
   position: relative;
-}
-
-@media (-moz-os-version: windows-xp),
-       (-moz-os-version: windows-vista),
-       (-moz-os-version: windows-win7) {
-  #TabsToolbar > .private-browsing-indicator {
-    background-image: url("chrome://browser/skin/privatebrowsing-mask-tabstrip-XPVista7.png");
-  }
-
-  /* We're intentionally using the titlebar asset here for fullscreen mode.
-   * See bug 1008183.
-   */
-  #private-browsing-indicator-titlebar > .private-browsing-indicator,
-  #main-window[inFullscreen] #TabsToolbar > .private-browsing-indicator {
-    background-image: url("chrome://browser/skin/privatebrowsing-mask-titlebar-XPVista7.png");
-  }
 }
 
 @media (-moz-os-version: windows-xp) {

@@ -71,6 +71,10 @@ public:
 
   HTMLCanvasElement* GetCanvas() const
   {
+    if (mCanvasElement->IsInNativeAnonymousSubtree()) {
+      return nullptr;
+    }
+
     // corresponds to changes to the old bindings made in bug 745025
     return mCanvasElement->GetOriginalCanvas();
   }
@@ -455,9 +459,9 @@ public:
   bool GetIsOpaque() override { return mOpaque; }
   NS_IMETHOD Reset() override;
   mozilla::layers::PersistentBufferProvider* GetBufferProvider(mozilla::layers::LayerManager* aManager);
-  already_AddRefed<CanvasLayer> GetCanvasLayer(nsDisplayListBuilder* aBuilder,
-                                               CanvasLayer *aOldLayer,
-                                               LayerManager *aManager) override;
+  already_AddRefed<Layer> GetCanvasLayer(nsDisplayListBuilder* aBuilder,
+                                         Layer *aOldLayer,
+                                         LayerManager *aManager) override;
   virtual bool ShouldForceInactiveLayer(LayerManager *aManager) override;
   void MarkContextClean() override;
   void MarkContextCleanForFrameCapture() override;
@@ -903,6 +907,7 @@ protected:
   public:
     ContextState() : textAlign(TextAlign::START),
                      textBaseline(TextBaseline::ALPHABETIC),
+                     shadowColor(0),
                      lineWidth(1.0f),
                      miterLimit(10.0f),
                      globalAlpha(1.0f),

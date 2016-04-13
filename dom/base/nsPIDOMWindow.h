@@ -15,7 +15,9 @@
 #include "nsTArray.h"
 #include "mozilla/dom/EventTarget.h"
 #include "js/TypeDecls.h"
+#include "nsRefPtrHashtable.h"
 
+// Only fired for inner windows.
 #define DOM_WINDOW_DESTROYED_TOPIC "dom-window-destroyed"
 #define DOM_WINDOW_FROZEN_TOPIC "dom-window-frozen"
 #define DOM_WINDOW_THAWED_TOPIC "dom-window-thawed"
@@ -37,9 +39,10 @@ namespace mozilla {
 namespace dom {
 class AudioContext;
 class Element;
+class ServiceWorkerRegistrationMainThread;
 } // namespace dom
 namespace gfx {
-class VRHMDInfo;
+class VRDeviceProxy;
 } // namespace gfx
 } // namespace mozilla
 
@@ -111,6 +114,8 @@ public:
     MOZ_ASSERT(IsOuterWindow());
     return mIsActive;
   }
+
+  virtual bool IsTopLevelWindowActive() = 0;
 
   // Outer windows only.
   void SetDesktopModeViewport(bool aDesktopModeViewport)
@@ -217,6 +222,10 @@ public:
     MOZ_ASSERT(IsOuterWindow());
     return mServiceWorkersTestingEnabled;
   }
+
+  already_AddRefed<mozilla::dom::ServiceWorkerRegistrationMainThread>
+    GetServiceWorkerRegistration(const nsAString& aScope);
+  void InvalidateServiceWorkerRegistration(const nsAString& aScope);
 
 protected:
   // Lazily instantiate an about:blank document if necessary, and if
@@ -505,7 +514,7 @@ public:
    */
   virtual nsresult SetFullscreenInternal(
     FullscreenReason aReason, bool aIsFullscreen,
-    mozilla::gfx::VRHMDInfo *aHMD = nullptr) = 0;
+    mozilla::gfx::VRDeviceProxy *aHMD = nullptr) = 0;
 
   /**
    * This function should be called when the fullscreen state is flipped.
@@ -854,6 +863,11 @@ protected:
 
   // mPerformance is only used on inner windows.
   RefPtr<nsPerformance>       mPerformance;
+
+  typedef nsRefPtrHashtable<nsStringHashKey,
+                            mozilla::dom::ServiceWorkerRegistrationMainThread>
+          ServiceWorkerRegistrationTable;
+  ServiceWorkerRegistrationTable mServiceWorkerRegistrationTable;
 
   uint32_t               mModalStateDepth;
 

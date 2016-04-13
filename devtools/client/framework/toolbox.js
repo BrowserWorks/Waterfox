@@ -19,7 +19,8 @@ var promise = require("promise");
 var EventEmitter = require("devtools/shared/event-emitter");
 var Telemetry = require("devtools/client/shared/telemetry");
 var HUDService = require("devtools/client/webconsole/hudservice");
-var sourceUtils = require("devtools/client/shared/source-utils");
+var viewSource = require("devtools/client/shared/view-source");
+var { attachThread, detachThread } = require("./attach-thread");
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://devtools/client/framework/gDevTools.jsm");
@@ -30,7 +31,7 @@ Cu.import("resource://gre/modules/Task.jsm");
 loader.lazyImporter(this, "CommandUtils",
   "resource://devtools/client/shared/DeveloperToolbar.jsm");
 loader.lazyGetter(this, "toolboxStrings", () => {
-  const properties = "chrome://browser/locale/devtools/toolbox.properties";
+  const properties = "chrome://devtools/locale/toolbox.properties";
   const bundle = Services.strings.createBundle(properties);
   return (name, ...args) => {
     try {
@@ -251,6 +252,10 @@ Toolbox.prototype = {
     return this._target;
   },
 
+  get threadClient() {
+    return this._threadClient;
+  },
+
   /**
    * Get/alter the host of a Toolbox, i.e. is it in browser or in a separate
    * tab. See HostType for more details.
@@ -348,13 +353,18 @@ Toolbox.prototype = {
       let iframe = yield this._host.create();
       let domReady = promise.defer();
 
-      // Load the toolbox-level actor fronts and utilities now
-      yield this._target.makeRemote();
       iframe.setAttribute("src", this._URL);
       iframe.setAttribute("aria-label", toolboxStrings("toolbox.label"));
       let domHelper = new DOMHelpers(iframe.contentWindow);
-      domHelper.onceDOMReady(() => domReady.resolve());
+      domHelper.onceDOMReady(() => domReady.resolve(), this._URL);
+      // Optimization: fire up a few other things before waiting on
+      // the iframe being ready (makes startup faster)
 
+      // Load the toolbox-level actor fronts and utilities now
+      yield this._target.makeRemote();
+
+      // Attach the thread
+      this._threadClient = yield attachThread(this);
       yield domReady.promise;
 
       this.isReady = true;
@@ -1952,6 +1962,10 @@ Toolbox.prototype = {
     // Destroy the profiler connection
     outstanding.push(this.destroyPerformance());
 
+    // Detach the thread
+    detachThread(this._threadClient);
+    this._threadClient = null;
+
     // We need to grab a reference to win before this._host is destroyed.
     let win = this.frame.ownerGlobal;
 
@@ -2136,7 +2150,7 @@ Toolbox.prototype = {
    * @see devtools/client/shared/source-utils.js
    */
   viewSourceInStyleEditor: function(sourceURL, sourceLine) {
-    return sourceUtils.viewSourceInStyleEditor(this, sourceURL, sourceLine);
+    return viewSource.viewSourceInStyleEditor(this, sourceURL, sourceLine);
   },
 
   /**
@@ -2144,7 +2158,7 @@ Toolbox.prototype = {
    * @see devtools/client/shared/source-utils.js
    */
   viewSourceInDebugger: function(sourceURL, sourceLine) {
-    return sourceUtils.viewSourceInDebugger(this, sourceURL, sourceLine);
+    return viewSource.viewSourceInDebugger(this, sourceURL, sourceLine);
   },
 
   /**
@@ -2157,7 +2171,7 @@ Toolbox.prototype = {
    * @see devtools/client/shared/source-utils.js
    */
   viewSourceInScratchpad: function(sourceURL, sourceLine) {
-    return sourceUtils.viewSourceInScratchpad(sourceURL, sourceLine);
+    return viewSource.viewSourceInScratchpad(sourceURL, sourceLine);
   },
 
   /**
@@ -2165,6 +2179,6 @@ Toolbox.prototype = {
    * @see devtools/client/shared/source-utils.js
    */
   viewSource: function(sourceURL, sourceLine) {
-    return sourceUtils.viewSource(this, sourceURL, sourceLine);
+    return viewSource.viewSource(this, sourceURL, sourceLine);
   },
 };

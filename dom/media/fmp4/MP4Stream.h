@@ -13,6 +13,7 @@
 
 #include "mozilla/Maybe.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/UniquePtrExtensions.h"
 
 namespace mozilla {
 
@@ -23,11 +24,11 @@ public:
   explicit MP4Stream(MediaResource* aResource);
   virtual ~MP4Stream();
   bool BlockingReadIntoCache(int64_t aOffset, size_t aCount, Monitor* aToUnlock);
-  virtual bool ReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
-                      size_t* aBytesRead) override;
-  virtual bool CachedReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
-                            size_t* aBytesRead) override;
-  virtual bool Length(int64_t* aSize) override;
+  bool ReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
+              size_t* aBytesRead) override;
+  bool CachedReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
+                    size_t* aBytesRead) override;
+  bool Length(int64_t* aSize) override;
 
   struct ReadRecord {
     ReadRecord(int64_t aOffset, size_t aCount) : mOffset(aOffset), mCount(aCount) {}
@@ -74,9 +75,15 @@ private:
     int64_t mOffset;
     size_t mCount;
 
+    CacheBlock(CacheBlock&& aOther)
+      : mOffset(aOther.mOffset)
+      , mCount(aOther.mCount)
+      , mBuffer(Move(aOther.mBuffer))
+    {}
+
     bool Init()
     {
-      mBuffer = new (fallible) char[mCount];
+      mBuffer = MakeUniqueFallible<char[]>(mCount);
       return !!mBuffer;
     }
 
@@ -87,7 +94,10 @@ private:
     }
 
   private:
-    nsAutoArrayPtr<char> mBuffer;
+    CacheBlock(const CacheBlock&) = delete;
+    CacheBlock& operator=(const CacheBlock&) = delete;
+
+    UniquePtr<char[]> mBuffer;
   };
   nsTArray<CacheBlock> mCache;
 };

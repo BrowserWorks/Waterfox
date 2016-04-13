@@ -8,6 +8,7 @@
 interface nsIURI;
 interface nsIChannel;
 interface nsIDocShell;
+interface nsIDOMDocument;
 interface nsIPrincipal;
 interface nsIURI;
 
@@ -20,7 +21,7 @@ interface nsIURI;
 
 typedef unsigned short CSPDirective;
 
-[scriptable, uuid(fe07ab08-21ba-470c-8b89-78d0e7298c68)]
+[scriptable, builtinclass, uuid(b3c4c0ae-bd5e-4cad-87e0-8d210dbb3f9f)]
 interface nsIContentSecurityPolicy : nsISerializable
 {
   /**
@@ -50,6 +51,7 @@ interface nsIContentSecurityPolicy : nsISerializable
   const unsigned short REFERRER_DIRECTIVE             = 15;
   const unsigned short WEB_MANIFEST_SRC_DIRECTIVE     = 16;
   const unsigned short UPGRADE_IF_INSECURE_DIRECTIVE  = 17;
+  const unsigned short CHILD_SRC_DIRECTIVE            = 18;
 
   /**
    * Accessor method for a read-only string version of the policy at a given
@@ -86,20 +88,19 @@ interface nsIContentSecurityPolicy : nsISerializable
   bool getReferrerPolicy(out unsigned long policy);
 
   /**
-   * Remove a policy associated with this CSP context.
-   * @throws NS_ERROR_FAILURE if the index is out of bounds or invalid.
-   */
-  void removePolicy(in unsigned long index);
-
-  /**
    * Parse and install a CSP policy.
    * @param aPolicy
-   *        String representation of the policy (e.g., header value)
+   *        String representation of the policy
+   *        (e.g., header value, meta content)
    * @param reportOnly
    *        Should this policy affect content, script and style processing or
    *        just send reports if it is violated?
+   * @param deliveredViaMetaTag
+   *        Indicates whether the policy was delivered via the meta tag.
    */
-  void appendPolicy(in AString policyString, in boolean reportOnly);
+  void appendPolicy(in AString policyString,
+                    in boolean reportOnly,
+                    in boolean deliveredViaMetaTag);
 
   /*
    * Whether this policy allows inline script or style.
@@ -172,16 +173,12 @@ interface nsIContentSecurityPolicy : nsISerializable
 
   /**
    * Called after the CSP object is created to fill in appropriate request
-   * context and give it a reference to its owning principal for violation
-   * report generation.
-   * This will use whatever data is available, choosing earlier arguments first
-   * if multiple are available.  Either way, it will attempt to obtain the URI,
-   * referrer and the principal from whatever is available.  If the channel is
-   * available, it'll also store that for processing policy-uri directives.
+   * context. Either use
+   *  * aDocument (preferred), or if no document is available, then provide
+   *  * aPrincipal
    */
-  void setRequestContext(in nsIURI selfURI,
-                         in nsIURI referrer,
-                         in nsIChannel aChannel);
+  void setRequestContext(in nsIDOMDocument aDocument,
+                         in nsIPrincipal aPrincipal);
 
   /**
    * Verifies ancestry as permitted by the policy.

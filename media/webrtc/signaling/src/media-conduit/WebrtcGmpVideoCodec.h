@@ -133,7 +133,7 @@ public:
 
   // Implement VideoEncoder interface, sort of.
   // (We cannot use |Release|, since that's needed for nsRefPtr)
-  virtual const uint64_t PluginID()
+  virtual uint64_t PluginID() const
   {
     return mCachedPluginId;
   }
@@ -300,14 +300,14 @@ class WebrtcVideoEncoderProxy : public WebrtcVideoEncoder
       RegisterEncodeCompleteCallback(nullptr);
     }
 
-    const uint64_t PluginID() override
+    uint64_t PluginID() const override
     {
       return mEncoderImpl->PluginID();
     }
 
     int32_t InitEncode(const webrtc::VideoCodec* aCodecSettings,
                        int32_t aNumberOfCores,
-                       uint32_t aMaxPayloadSize) override
+                       size_t aMaxPayloadSize) override
     {
       return mEncoderImpl->InitEncode(aCodecSettings,
                                       aNumberOfCores,
@@ -336,7 +336,7 @@ class WebrtcVideoEncoderProxy : public WebrtcVideoEncoder
     }
 
     int32_t SetChannelParameters(uint32_t aPacketLoss,
-                                 int aRTT) override
+                                 int64_t aRTT) override
     {
       return mEncoderImpl->SetChannelParameters(aPacketLoss, aRTT);
     }
@@ -359,7 +359,7 @@ public:
 
   // Implement VideoEncoder interface, sort of.
   // (We cannot use |Release|, since that's needed for nsRefPtr)
-  virtual const uint64_t PluginID()
+  virtual uint64_t PluginID() const
   {
     return mCachedPluginId;
   }
@@ -477,7 +477,7 @@ class WebrtcVideoDecoderProxy : public WebrtcVideoDecoder
       RegisterDecodeCompleteCallback(nullptr);
     }
 
-    const uint64_t PluginID() override
+    uint64_t PluginID() const override
     {
       return mDecoderImpl->PluginID();
     }

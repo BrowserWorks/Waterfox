@@ -339,16 +339,27 @@
 /**
  * MOZ_FALLTHROUGH is an annotation to suppress compiler warnings about switch
  * cases that fall through without a break or return statement. MOZ_FALLTHROUGH
- * is only needed on cases that have code:
+ * is only needed on cases that have code.
+ *
+ * MOZ_FALLTHROUGH_ASSERT is an annotation to suppress compiler warnings about
+ * switch cases that MOZ_ASSERT(false) (or its alias MOZ_ASSERT_UNREACHABLE) in
+ * debug builds, but intentionally fall through in release builds. See comment
+ * in Assertions.h for more details.
  *
  * switch (foo) {
  *   case 1: // These cases have no code. No fallthrough annotations are needed.
  *   case 2:
- *   case 3:
- *     foo = 4; // This case has code, so a fallthrough annotation is needed:
+ *   case 3: // This case has code, so a fallthrough annotation is needed!
+ *     foo++;
  *     MOZ_FALLTHROUGH;
- *   default:
+ *   case 4:
  *     return foo;
+ *
+ *   default:
+ *     // This case asserts in debug builds, falls through in release.
+ *     MOZ_FALLTHROUGH_ASSERT("Unexpected foo value?!");
+ *   case 5:
+ *     return 5;
  * }
  */
 #if defined(__clang__) && __cplusplus >= 201103L
@@ -451,10 +462,12 @@
  *   intended to prevent introducing static initializers.  This attribute
  *   currently makes it a compile-time error to instantiate these classes
  *   anywhere other than at the global scope, or as a static member of a class.
+ *   In non-debug mode, it also prohibits non-trivial constructors and
+ *   destructors.
  * MOZ_TRIVIAL_CTOR_DTOR: Applies to all classes that must have both a trivial
- *   constructor and a trivial destructor.  Setting this attribute on a class
- *   makes it a compile-time error for that class to get a non-trivial
- *   constructor or destructor for any reason.
+ *   or constexpr constructor and a trivial destructor. Setting this attribute
+ *   on a class makes it a compile-time error for that class to get a
+ *   non-trivial constructor or destructor for any reason.
  * MOZ_HEAP_ALLOCATOR: Applies to any function. This indicates that the return
  *   value is allocated on the heap, and will as a result check such allocations
  *   during MOZ_STACK_CLASS and MOZ_NONHEAP_CLASS annotation checking.

@@ -27,7 +27,10 @@ UNIFIED_SOURCES += [
     'wrappers/H264Converter.cpp'
 ]
 
-DIRS += ['agnostic/gmp']
+DIRS += [
+    'agnostic/gmp',
+    'omx'
+]
 
 if CONFIG['MOZ_WMF']:
     DIRS += [ 'wmf' ];
@@ -35,19 +38,19 @@ if CONFIG['MOZ_WMF']:
 if CONFIG['MOZ_EME']:
     DIRS += ['agnostic/eme']
 
-if CONFIG['MOZ_FFMPEG']:
-    EXPORTS += [
-        'ffmpeg/FFmpegRuntimeLinker.h',
-    ]
+if CONFIG['MOZ_FFVPX'] or CONFIG['MOZ_FFMPEG']:
+    # common code to either FFmpeg or FFVPX
     UNIFIED_SOURCES += [
-        'ffmpeg/FFmpegRuntimeLinker.cpp',
+        'ffmpeg/FFmpegLibWrapper.cpp',
     ]
+
+if CONFIG['MOZ_FFVPX']:
     DIRS += [
-        'ffmpeg/libav53',
-        'ffmpeg/libav54',
-        'ffmpeg/libav55',
+        'ffmpeg/ffvpx',
     ]
-    LOCAL_INCLUDES += [
+
+if CONFIG['MOZ_FFMPEG']:
+    DIRS += [
         'ffmpeg',
     ]
 

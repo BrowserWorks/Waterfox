@@ -37,7 +37,7 @@ const int32_t kFirstShippedSchemaVersion = 15;
 namespace {
 
 // Update this whenever the DB schema is changed.
-const int32_t kLatestSchemaVersion = 17;
+const int32_t kLatestSchemaVersion = 19;
 
 // ---------
 // The following constants define the SQL schema.  These are defined in the
@@ -192,7 +192,8 @@ static_assert(int(HeadersGuardEnum::None) == 0 &&
 static_assert(int(RequestMode::Same_origin) == 0 &&
               int(RequestMode::No_cors) == 1 &&
               int(RequestMode::Cors) == 2 &&
-              int(RequestMode::EndGuard_) == 3,
+              int(RequestMode::Navigate) == 3 &&
+              int(RequestMode::EndGuard_) == 4,
               "RequestMode values are as expected");
 static_assert(int(RequestCredentials::Omit) == 0 &&
               int(RequestCredentials::Same_origin) == 1 &&
@@ -204,8 +205,7 @@ static_assert(int(RequestCache::Default) == 0 &&
               int(RequestCache::Reload) == 2 &&
               int(RequestCache::No_cache) == 3 &&
               int(RequestCache::Force_cache) == 4 &&
-              int(RequestCache::Only_if_cached) == 5 &&
-              int(RequestCache::EndGuard_) == 6,
+              int(RequestCache::EndGuard_) == 5,
               "RequestCache values are as expected");
 static_assert(int(RequestRedirect::Follow) == 0 &&
               int(RequestRedirect::Error) == 1 &&
@@ -1256,7 +1256,7 @@ MatchByVaryHeader(mozIStorageConnection* aConn,
     ErrorResult errorResult;
 
     cachedHeaders->Append(name, value, errorResult);
-    if (errorResult.Failed()) { return errorResult.StealNSResult(); };
+    if (errorResult.Failed()) { return errorResult.StealNSResult(); }
   }
   if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
 
@@ -1933,7 +1933,7 @@ ReadResponse(mozIStorageConnection* aConn, EntryId aEntryId,
   aSavedResponseOut->mValue.principalInfo() = void_t();
   if (!serializedInfo.IsEmpty()) {
     nsAutoCString originNoSuffix;
-    OriginAttributes attrs;
+    PrincipalOriginAttributes attrs;
     if (!attrs.PopulateFromOrigin(serializedInfo, originNoSuffix)) {
       NS_WARNING("Something went wrong parsing a serialized principal!");
       return NS_ERROR_FAILURE;
@@ -2411,11 +2411,15 @@ struct Migration
 // the version by a single increment.  Don't skip versions.
 nsresult MigrateFrom15To16(mozIStorageConnection* aConn);
 nsresult MigrateFrom16To17(mozIStorageConnection* aConn);
+nsresult MigrateFrom17To18(mozIStorageConnection* aConn);
+nsresult MigrateFrom18To19(mozIStorageConnection* aConn);
 
 // Configure migration functions to run for the given starting version.
 Migration sMigrationList[] = {
   Migration(15, MigrateFrom15To16),
   Migration(16, MigrateFrom16To17),
+  Migration(17, MigrateFrom17To18),
+  Migration(18, MigrateFrom18To19),
 };
 
 uint32_t sMigrationListLength = sizeof(sMigrationList) / sizeof(Migration);
@@ -2652,6 +2656,69 @@ MigrateFrom16To17(mozIStorageConnection* aConn)
 
   return rv;
 }
+
+nsresult
+MigrateFrom17To18(mozIStorageConnection* aConn)
+{
+  MOZ_ASSERT(!NS_IsMainThread());
+  MOZ_ASSERT(aConn);
+
+  mozStorageTransaction trans(aConn, true,
+                              mozIStorageConnection::TRANSACTION_IMMEDIATE);
+
+  // This migration is needed in order to remove "only-if-cached" RequestCache
+  // values from the database.  This enum value was removed from the spec in
+  // https://github.com/whatwg/fetch/issues/39 but we unfortunately happily
+  // accepted this value in the Request constructor.
+  //
+  // There is no good value to upgrade this to, so we just stick to "default".
+
+  static_assert(int(RequestCache::Default) == 0,
+                "This is where the 0 below comes from!");
+  nsresult rv = aConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
+    "UPDATE entries SET request_cache = 0 "
+      "WHERE request_cache = 5;"
+  ));
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  rv = aConn->SetSchemaVersion(18);
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  return rv;
+}
+
+nsresult
+MigrateFrom18To19(mozIStorageConnection* aConn)
+{
+  MOZ_ASSERT(!NS_IsMainThread());
+  MOZ_ASSERT(aConn);
+
+  mozStorageTransaction trans(aConn, true,
+                              mozIStorageConnection::TRANSACTION_IMMEDIATE);
+
+  // This migration is needed in order to update the RequestMode values for
+  // Request objects corresponding to a navigation content policy type to
+  // "navigate".
+
+  static_assert(int(nsIContentPolicy::TYPE_DOCUMENT) == 6 &&
+                int(nsIContentPolicy::TYPE_SUBDOCUMENT) == 7 &&
+                int(nsIContentPolicy::TYPE_INTERNAL_FRAME) == 28 &&
+                int(nsIContentPolicy::TYPE_INTERNAL_IFRAME) == 29 &&
+                int(nsIContentPolicy::TYPE_REFRESH) == 8 &&
+                int(RequestMode::Navigate) == 3,
+                "This is where the numbers below come from!");
+  nsresult rv = aConn->ExecuteSimpleSQL(NS_LITERAL_CSTRING(
+    "UPDATE entries SET request_mode = 3 "
+      "WHERE request_contentpolicytype IN (6, 7, 28, 29, 8);"
+  ));
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  rv = aConn->SetSchemaVersion(19);
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  return rv;
+}
+
 
 } // anonymous namespace
 

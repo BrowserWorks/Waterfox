@@ -47,9 +47,9 @@ PluginWidgetProxy::~PluginWidgetProxy()
 }
 
 NS_IMETHODIMP
-PluginWidgetProxy::Create(nsIWidget*        aParent,
-                          nsNativeWidget    aNativeParent,
-                          const nsIntRect&  aRect,
+PluginWidgetProxy::Create(nsIWidget* aParent,
+                          nsNativeWidget aNativeParent,
+                          const LayoutDeviceIntRect& aRect,
                           nsWidgetInitData* aInitData)
 {
   ENSURE_CHANNEL;
@@ -109,7 +109,7 @@ PluginWidgetProxy::Destroy()
 }
 
 void
-PluginWidgetProxy::GetWindowClipRegion(nsTArray<nsIntRect>* aRects)
+PluginWidgetProxy::GetWindowClipRegion(nsTArray<LayoutDeviceIntRect>* aRects)
 {
   if (mClipRects && mClipRectCount) {
     aRects->AppendElements(mClipRects.get(), mClipRectCount);

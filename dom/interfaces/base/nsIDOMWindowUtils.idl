@@ -49,7 +49,7 @@ interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 interface nsIObserver;
 
-[scriptable, uuid(a30a95ac-3b95-4251-88dc-8efa89ba9f9c)]
+[scriptable, uuid(ca6a458c-82e7-4979-886e-6d214eac6f0b)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -590,6 +590,13 @@ interface nsIDOMWindowUtils : nsISupports {
                             in long aModifierFlags,
                             in nsIDOMElement aElement,
                             [optional] in nsIObserver aObserver);
+  /**
+   * See nsIWidget::SynthesizeNativeMouseMove and sendNativeMouseEvent
+   */
+  void sendNativeMouseMove(in long aScreenX,
+                           in long aScreenY,
+                           in nsIDOMElement aElement,
+                           [optional] in nsIObserver aObserver);
 
   /**
    * The values for sendNativeMouseScrollEvent's aAdditionalFlags.
@@ -1431,7 +1438,7 @@ interface nsIDOMWindowUtils : nsISupports {
    * with that offset if async scrolling is enabled, and then the offset
    * will be removed. Only call this while test-controlled refreshes is enabled.
    */
-  void setAsyncScrollOffset(in nsIDOMNode aNode, in int32_t aX, in int32_t aY);
+  void setAsyncScrollOffset(in nsIDOMNode aNode, in float aX, in float aY);
 
   /**
    * Set async zoom value. aRootElement should be the document element of our
@@ -1450,6 +1457,11 @@ interface nsIDOMWindowUtils : nsISupports {
    * will not fire. This is intended to be used by test code only!
    */
   bool flushApzRepaints();
+
+  /**
+   * Ask APZ to pan and zoom to the focused input element.
+   */
+  void zoomToFocusedInput();
 
   /**
    * Method for testing StyleAnimationValue::ComputeDistance.

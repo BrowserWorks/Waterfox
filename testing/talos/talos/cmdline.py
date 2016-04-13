@@ -5,6 +5,8 @@
 import argparse
 import os
 
+from mozlog.commandline import add_logging_group
+
 
 class _StopAction(argparse.Action):
     def __init__(self, option_strings, dest=argparse.SUPPRESS,
@@ -84,7 +86,8 @@ def create_parser(mach_interface=False):
     add_arg('--spsProfileEntries', dest="sps_profile_entries", type=int,
             help="How many samples to take with the profiler")
     add_arg('--extension', dest='extensions', action='append',
-            default=['${talos}/talos-powers', '${talos}/pageloader'],
+            default=['${talos}/talos-powers/talos-powers-signed.xpi',
+                     '${talos}/pageloader/pageloader-signed.xpi'],
             help="Extension to install while running")
     add_arg('--fast', action='store_true',
             help="Run tp tests as tp_fast")
@@ -137,8 +140,8 @@ def create_parser(mach_interface=False):
             help="print available tests")
     add_arg('--print-suites', action=_ListSuite,
             help="list available suites")
-    add_arg('--debug', action='store_true',
-            help='show debug information')
+
+    add_logging_group(parser)
     return parser
 
 

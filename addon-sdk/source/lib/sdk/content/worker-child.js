@@ -51,7 +51,9 @@ const WorkerChild = Class({
 
     this.sandbox = WorkerSandbox(this, this.window);
 
-    this.frozen = false;
+    // If the document is still loading wait for it to finish before passing on
+    // received messages
+    this.frozen = this.window.document.readyState == "loading";
     this.frozenMessages = [];
     this.on('pageshow', () => {
       this.frozen = false;
@@ -132,12 +134,12 @@ function exceptions(key, value) {
 // workers for windows in this tab
 var keepAlive = new Map();
 
-process.port.on('sdk/worker/create', (process, options) => {
-  options.window = getByInnerId(options.windowId);
-  if (!options.window)
-    return;
-
+process.port.on('sdk/worker/create', (process, options, cpows) => {
+  options.window = cpows.window;
   let worker = new WorkerChild(options);
+
+  let frame = frames.getFrameForWindow(options.window.top);
+  frame.port.emit('sdk/worker/connect', options.id, options.window.location.href);
 });
 
 when(reason => {

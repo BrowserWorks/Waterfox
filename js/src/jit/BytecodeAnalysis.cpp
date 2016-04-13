@@ -68,7 +68,7 @@ BytecodeAnalysis::init(TempAllocator& alloc, GSNCache& gsn)
         unsigned offset = script_->pcToOffset(pc);
 
         JitSpew(JitSpew_BaselineOp, "Analyzing op @ %d (end=%d): %s",
-                int(script_->pcToOffset(pc)), int(script_->length()), js_CodeName[op]);
+                int(script_->pcToOffset(pc)), int(script_->length()), CodeName[op]);
 
         // If this bytecode info has not yet been initialized, it's not reachable.
         if (!infos_[offset].initialized)
@@ -158,6 +158,7 @@ BytecodeAnalysis::init(TempAllocator& alloc, GSNCache& gsn)
 
           case JSOP_GETNAME:
           case JSOP_BINDNAME:
+          case JSOP_BINDVAR:
           case JSOP_SETNAME:
           case JSOP_STRICTSETNAME:
           case JSOP_DELNAME:

@@ -23,7 +23,7 @@ const Heritage = require("sdk/core/heritage");
 const URI = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-const STRINGS_URI = "chrome://browser/locale/devtools/webconsole.properties";
+const STRINGS_URI = "chrome://devtools/locale/webconsole.properties";
 
 const WebConsoleUtils = require("devtools/shared/webconsole/utils").Utils;
 const l10n = new WebConsoleUtils.l10n(STRINGS_URI);
@@ -779,7 +779,6 @@ Messages.Simple.prototype = Heritage.extend(Messages.BaseMessage.prototype,
    */
   _message: null,
 
-  _afterMessage: null,
   _objectActors: null,
   _groupDepthCompat: 0,
 
@@ -941,11 +940,6 @@ Messages.Simple.prototype = Heritage.extend(Messages.BaseMessage.prototype,
 
     if (this.private) {
       this.element.setAttribute("private", true);
-    }
-
-    if (this._afterMessage) {
-      this.element._outputAfterNode = this._afterMessage.element;
-      this._afterMessage = null;
     }
 
     // TODO: handle object releasing in a more elegant way once all console
@@ -1191,6 +1185,8 @@ Messages.Extended.prototype = Heritage.extend(Messages.Simple.prototype,
    *        grip. This is typically set to true when the object needs to be
    *        displayed in an array preview, or as a property value in object
    *        previews, etc.
+   *        - shorten - boolean that tells the renderer to display a truncated
+   *        grip.
    * @return DOMElement
    *         The DOM element that displays the given grip.
    */
@@ -1215,10 +1211,15 @@ Messages.Extended.prototype = Heritage.extend(Messages.Simple.prototype,
       }
     }
 
+    let unshortenedGrip = grip;
+    if (options.shorten) {
+      grip = this.shortenValueGrip(grip)
+    }
+
     let result = this.document.createElementNS(XHTML_NS, "span");
     if (isPrimitive) {
       if (Widgets.URLString.prototype.containsURL.call(Widgets.URLString.prototype, grip)) {
-        let widget = new Widgets.URLString(this, grip, options).render();
+        let widget = new Widgets.URLString(this, grip, unshortenedGrip).render();
         return widget.element;
       }
 
@@ -1820,7 +1821,8 @@ Messages.ConsoleTable.prototype = Heritage.extend(Messages.Extended.prototype,
 
     let data = this._arguments[0];
     if (data.class != "Array" && data.class != "Object" &&
-        data.class != "Map" && data.class != "Set") {
+        data.class != "Map" && data.class != "Set" &&
+        data.class != "WeakMap" && data.class != "WeakSet") {
       return;
     }
 
@@ -1900,7 +1902,7 @@ Messages.ConsoleTable.prototype = Heritage.extend(Messages.Extended.prototype,
 
         deferred.resolve();
       });
-    } else if (data.class == "Map") {
+    } else if (data.class == "Map" || data.class == "WeakMap") {
       let entries = data.preview.entries;
 
       if (!hasColumnsArg) {
@@ -1925,7 +1927,7 @@ Messages.ConsoleTable.prototype = Heritage.extend(Messages.Extended.prototype,
       }
 
       deferred.resolve();
-    } else if (data.class == "Set") {
+    } else if (data.class == "Set" || data.class == "WeakSet") {
       let entries = data.preview.items;
 
       if (!hasColumnsArg) {
@@ -2204,11 +2206,14 @@ Widgets.MessageTimestamp.prototype = Heritage.extend(Widgets.BaseWidget.prototyp
  *        The owning message.
  * @param string str
  *        The string, which contains at least one valid URL.
+ * @param string unshortenedStr
+ *        The unshortened form of the string, if it was shortened.
  */
-Widgets.URLString = function(message, str)
+Widgets.URLString = function(message, str, unshortenedStr)
 {
   Widgets.BaseWidget.call(this, message);
   this.str = str;
+  this.unshortenedStr = unshortenedStr;
 };
 
 Widgets.URLString.prototype = Heritage.extend(Widgets.BaseWidget.prototype,
@@ -2233,16 +2238,23 @@ Widgets.URLString.prototype = Heritage.extend(Widgets.BaseWidget.prototype,
     this.element.appendChild(this._renderText("\""));
 
     // As we walk through the tokens of the source string, we make sure to preserve
-    // the original whitespace that seperated the tokens.
+    // the original whitespace that separated the tokens.
     let tokens = this.str.split(/\s+/);
     let textStart = 0;
     let tokenStart;
-    for (let token of tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+      let token = tokens[i];
+      let unshortenedToken;
       tokenStart = this.str.indexOf(token, textStart);
       if (this._isURL(token)) {
+        // The last URL in the string might be shortened.  If so, get the
+        // real URL so the rendered link can point to it.
+        if (i === tokens.length - 1 && this.unshortenedStr) {
+          unshortenedToken = this.unshortenedStr.slice(tokenStart).split(/\s+/, 1)[0];
+        }
         this.element.appendChild(this._renderText(this.str.slice(textStart, tokenStart)));
         textStart = tokenStart + token.length;
-        this.element.appendChild(this._renderURL(token));
+        this.element.appendChild(this._renderURL(token, unshortenedToken));
       }
     }
 
@@ -2294,15 +2306,18 @@ Widgets.URLString.prototype = Heritage.extend(Widgets.BaseWidget.prototype,
    *
    * @param string url
    *        The string to be rendered as a url.
+   * @param string fullUrl
+   *        The unshortened form of the URL, if it was shortened.
    * @return DOMElement
    *         An element containing the rendered string.
    */
-  _renderURL: function(url)
+  _renderURL: function(url, fullUrl)
   {
+    let unshortened = fullUrl || url;
     let result = this.el("a", {
       class: "url",
-      title: url,
-      href: url,
+      title: unshortened,
+      href: unshortened,
       draggable: false
     }, url);
     this.message._addLinkCallback(result);
@@ -2419,8 +2434,7 @@ Widgets.JSObject.prototype = Heritage.extend(Widgets.BaseWidget.prototype,
     if (valueIsText) {
       this._text(value);
     } else {
-      let shortVal = this.message.shortenValueGrip(value);
-      let valueElem = this.message._renderValueGrip(shortVal, { concise: true });
+      let valueElem = this.message._renderValueGrip(value, { concise: true, shorten: true });
       container.appendChild(valueElem);
     }
   },
@@ -2813,8 +2827,7 @@ Widgets.ObjectRenderers.add({
           emptySlots = 0;
         }
 
-        let shortVal = this.message.shortenValueGrip(item);
-        let elem = this.message._renderValueGrip(shortVal, { concise: true });
+        let elem = this.message._renderValueGrip(item, { concise: true, shorten: true });
         this.element.appendChild(elem);
       }
     }
@@ -3375,6 +3388,54 @@ Widgets.ObjectRenderers.add({
     this._renderObjectSuffix();
   }
 }); // Widgets.ObjectRenderers.byClass.Promise
+
+/*
+ * A renderer used for wrapped primitive objects.
+ */
+
+function WrappedPrimitiveRenderer() {
+  let { ownProperties, safeGetterValues } = this.objectActor.preview || {};
+  if ((!ownProperties && !safeGetterValues) || this.options.concise) {
+    this._renderConciseObject();
+    return;
+  }
+
+  this._renderObjectPrefix();
+
+  let elem =
+      this.message._renderValueGrip(this.objectActor.preview.wrappedValue);
+  this.element.appendChild(elem);
+
+  this._renderObjectProperties(this.element, true);
+  this._renderObjectSuffix();
+}
+
+/**
+ * The widget used for displaying Boolean previews.
+ */
+Widgets.ObjectRenderers.add({
+  byClass: "Boolean",
+
+  render: WrappedPrimitiveRenderer,
+});
+
+/**
+ * The widget used for displaying Number previews.
+ */
+Widgets.ObjectRenderers.add({
+  byClass: "Number",
+
+  render: WrappedPrimitiveRenderer,
+});
+
+/**
+ * The widget used for displaying String previews.
+ */
+Widgets.ObjectRenderers.add({
+  byClass: "String",
+
+  render: WrappedPrimitiveRenderer,
+});
 
 /**
  * The widget used for displaying generic JS object previews.

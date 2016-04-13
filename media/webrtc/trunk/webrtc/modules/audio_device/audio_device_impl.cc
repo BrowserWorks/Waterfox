@@ -100,7 +100,6 @@ AudioDeviceModule* CreateAudioDeviceModule(
 AudioDeviceModule* AudioDeviceModuleImpl::Create(const int32_t id,
                                                  const AudioLayer audioLayer)
 {
-
     // Create the generic ref counted (platform independent) implementation.
     RefCountImpl<AudioDeviceModuleImpl>* audioDevice =
         new RefCountImpl<AudioDeviceModuleImpl>(id, audioLayer);
@@ -231,7 +230,7 @@ int32_t AudioDeviceModuleImpl::CreatePlatformSpecificObjects()
         ptrAudioDeviceUtility = new AudioDeviceUtilityDummy(Id());
     }
 #else
-    const AudioLayer audioLayer(PlatformAudioLayer());
+    AudioLayer audioLayer(PlatformAudioLayer());
 
     // Create the *Windows* implementation of the Audio Device
     //
@@ -286,9 +285,8 @@ int32_t AudioDeviceModuleImpl::CreatePlatformSpecificObjects()
     // Create the *Android OpenSLES* implementation of the Audio Device
     //
 #if defined(WEBRTC_ANDROID) || defined (WEBRTC_GONK)
-    if (audioLayer == kPlatformDefaultAudio)
-    {
-      // AudioRecordJni provides hardware AEC and OpenSlesOutput low latency.
+    if (audioLayer == kPlatformDefaultAudio) {
+    // AudioRecordJni provides hardware AEC and OpenSlesOutput low latency.
 #if defined (WEBRTC_ANDROID_OPENSLES)
       // Android and Gonk
       // Check if the OpenSLES library is available before going further.
@@ -297,40 +295,39 @@ int32_t AudioDeviceModuleImpl::CreatePlatformSpecificObjects()
         // That worked, close for now and proceed normally.
         dlclose(opensles_lib);
         if (audioLayer == kPlatformDefaultAudio)
-        {
-          // Create *Android OpenSLES Audio* implementation
-          ptrAudioDevice = new AudioDeviceTemplate<OpenSlesInput, OpenSlesOutput>(Id());
-          WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
-                       "Android OpenSLES Audio APIs will be utilized");
-        }
+          {
+            // Create *Android OpenSLES Audio* implementation
+            ptrAudioDevice = new AudioDeviceTemplate<OpenSlesInput, OpenSlesOutput>(Id());
+            WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
+                         "Android OpenSLES Audio APIs will be utilized");
+          }
       }
-#endif
+#endif // defined (WEBRTC_ANDROID_OPENSLES)
 #if !defined(WEBRTC_GONK)
       // Fall back to this case if on Android 2.2/OpenSLES not available.
       if (ptrAudioDevice == NULL) {
         // Create the *Android Java* implementation of the Audio Device
         if (audioLayer == kPlatformDefaultAudio)
-        {
-          // Create *Android JNI Audio* implementation
-          ptrAudioDevice = new AudioDeviceTemplate<AudioRecordJni, AudioTrackJni>(Id());
-          WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "Android JNI Audio APIs will be utilized");
-        }
+          {
+            // Create *Android JNI Audio* implementation
+            ptrAudioDevice = new AudioDeviceTemplate<AudioRecordJni, AudioTrackJni>(Id());
+            WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "Android JNI Audio APIs will be utilized");
+          }
       }
-#endif
+#endif // !defined (WEBRTC_GONK)
     }
 
-    if (ptrAudioDevice != NULL)
-    {
+    if (ptrAudioDevice != NULL) {
         // Create the Android implementation of the Device Utility.
         ptrAudioDeviceUtility = new AudioDeviceUtilityAndroid(Id());
     }
-    // END #if defined(WEBRTC_ANDROID_OPENSLES)
 
 #elif defined(WEBRTC_AUDIO_SNDIO)
     ptrAudioDevice = new AudioDeviceSndio(Id());
     if (ptrAudioDevice != NULL)
     {
         WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "attempting to use the Sndio audio API...");
+        _platformAudioLayer = kSndioAudio;
         // Create the sndio implementation of the Device Utility.
         ptrAudioDeviceUtility = new AudioDeviceUtilitySndio(Id());
     }
@@ -505,23 +502,13 @@ AudioDeviceModuleImpl::~AudioDeviceModuleImpl()
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-//  Module::ChangeUniqueId
-// ----------------------------------------------------------------------------
-
-int32_t AudioDeviceModuleImpl::ChangeUniqueId(const int32_t id)
-{
-    _id = id;
-    return 0;
-}
-
-// ----------------------------------------------------------------------------
 //  Module::TimeUntilNextProcess
 //
 //  Returns the number of milliseconds until the module want a worker thread
 //  to call Process().
 // ----------------------------------------------------------------------------
 
-int32_t AudioDeviceModuleImpl::TimeUntilNextProcess()
+int64_t AudioDeviceModuleImpl::TimeUntilNextProcess()
 {
     uint32_t now = AudioDeviceUtility::GetTimeInMS();
     int32_t deltaProcess = kAdmMaxIdleTimeProcess - (now - _lastProcessTime);
@@ -622,6 +609,10 @@ int32_t AudioDeviceModuleImpl::ActiveAudioLayer(AudioLayer* audioLayer) const
     else if (*audioLayer == AudioDeviceModule::kLinuxAlsaAudio)
     {
         WEBRTC_TRACE(kTraceStateInfo, kTraceAudioDevice, _id, "output: kLinuxAlsaAudio");
+    }
+    else if (*audioLayer == AudioDeviceModule::kSndioAudio)
+    {
+        WEBRTC_TRACE(kTraceStateInfo, kTraceAudioDevice, _id, "output: kSndioAudio");
     }
     else
     {
@@ -2019,9 +2010,8 @@ int32_t AudioDeviceModuleImpl::GetLoudspeakerStatus(bool* enabled) const
 
 int32_t AudioDeviceModuleImpl::EnableBuiltInAEC(bool enable)
 {
-    CHECK_INITIALIZED();
-
-    return _ptrAudioDevice->EnableBuiltInAEC(enable);
+  CHECK_INITIALIZED();
+  return _ptrAudioDevice->EnableBuiltInAEC(enable);
 }
 
 bool AudioDeviceModuleImpl::BuiltInAECIsEnabled() const
@@ -2029,6 +2019,11 @@ bool AudioDeviceModuleImpl::BuiltInAECIsEnabled() const
     CHECK_INITIALIZED_BOOL();
 
     return _ptrAudioDevice->BuiltInAECIsEnabled();
+}
+
+bool AudioDeviceModuleImpl::BuiltInAECIsAvailable() const {
+  CHECK_INITIALIZED_BOOL();
+  return _ptrAudioDevice->BuiltInAECIsAvailable();
 }
 
 // ============================================================================
@@ -2068,6 +2063,10 @@ AudioDeviceModule::AudioLayer AudioDeviceModuleImpl::PlatformAudioLayer() const
     case kLinuxAlsaAudio:
         WEBRTC_TRACE(kTraceStateInfo, kTraceAudioDevice, _id,
                      "output: kLinuxAlsaAudio");
+        break;
+    case kSndioAudio:
+        WEBRTC_TRACE(kTraceStateInfo, kTraceAudioDevice, _id,
+                     "output: kSndioAudio");
         break;
     case kDummyAudio:
         WEBRTC_TRACE(kTraceStateInfo, kTraceAudioDevice, _id,

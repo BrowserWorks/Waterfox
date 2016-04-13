@@ -63,17 +63,17 @@ SharedSurface_Gralloc::Create(GLContext* prodGL,
     gfxContentType type = hasAlpha ? gfxContentType::COLOR_ALPHA
                                    : gfxContentType::COLOR;
 
-    typedef GrallocTextureClientOGL ptrT;
-    RefPtr<ptrT> grallocTC = new ptrT(allocator,
-                                      gfxPlatform::GetPlatform()->Optimal2DFormatForContent(type),
-                                      gfx::BackendType::NONE, // we don't need to use it with a DrawTarget
-                                      flags);
+    GrallocTextureData* texData = GrallocTextureData::CreateForGLRendering(
+        size, gfxPlatform::GetPlatform()->Optimal2DFormatForContent(type), allocator
+    );
 
-    if (!grallocTC->AllocateForGLRendering(size)) {
+    if (!texData) {
         return Move(ret);
     }
 
-    sp<GraphicBuffer> buffer = grallocTC->GetGraphicBuffer();
+    RefPtr<TextureClient> grallocTC = new TextureClient(texData, flags, allocator);
+
+    sp<GraphicBuffer> buffer = texData->GetGraphicBuffer();
 
     EGLDisplay display = egl->Display();
     EGLClientBuffer clientBuffer = buffer->getNativeBuffer();
@@ -119,7 +119,7 @@ SharedSurface_Gralloc::SharedSurface_Gralloc(GLContext* prodGL,
                                              bool hasAlpha,
                                              GLLibraryEGL* egl,
                                              layers::ISurfaceAllocator* allocator,
-                                             layers::GrallocTextureClientOGL* textureClient,
+                                             layers::TextureClient* textureClient,
                                              GLuint prodTex)
     : SharedSurface(SharedSurfaceType::Gralloc,
                     AttachmentType::GLTexture,
@@ -158,7 +158,7 @@ SharedSurface_Gralloc::~SharedSurface_Gralloc()
 }
 
 void
-SharedSurface_Gralloc::Fence()
+SharedSurface_Gralloc::ProducerReleaseImpl()
 {
     if (mSync) {
         MOZ_ALWAYS_TRUE( mEGL->fDestroySync(mEGL->Display(), mSync) );
@@ -222,54 +222,6 @@ SharedSurface_Gralloc::Fence()
     }
 }
 
-bool
-SharedSurface_Gralloc::WaitSync()
-{
-    if (!mSync) {
-        // We must not be needed.
-        return true;
-    }
-    MOZ_ASSERT(mEGL->IsExtensionSupported(GLLibraryEGL::KHR_fence_sync));
-
-    EGLint status = mEGL->fClientWaitSync(mEGL->Display(),
-                                          mSync,
-                                          0,
-                                          LOCAL_EGL_FOREVER);
-
-    if (status != LOCAL_EGL_CONDITION_SATISFIED) {
-        return false;
-    }
-
-    MOZ_ALWAYS_TRUE( mEGL->fDestroySync(mEGL->Display(), mSync) );
-    mSync = 0;
-
-    return true;
-}
-
-bool
-SharedSurface_Gralloc::PollSync()
-{
-    if (!mSync) {
-        // We must not be needed.
-        return true;
-    }
-    MOZ_ASSERT(mEGL->IsExtensionSupported(GLLibraryEGL::KHR_fence_sync));
-
-    EGLint status = 0;
-    MOZ_ALWAYS_TRUE( mEGL->fGetSyncAttrib(mEGL->Display(),
-                                         mSync,
-                                         LOCAL_EGL_SYNC_STATUS_KHR,
-                                         &status) );
-    if (status != LOCAL_EGL_SIGNALED_KHR) {
-        return false;
-    }
-
-    MOZ_ALWAYS_TRUE( mEGL->fDestroySync(mEGL->Display(), mSync) );
-    mSync = 0;
-
-    return true;
-}
-
 void
 SharedSurface_Gralloc::WaitForBufferOwnership()
 {
@@ -279,7 +231,7 @@ SharedSurface_Gralloc::WaitForBufferOwnership()
 bool
 SharedSurface_Gralloc::ToSurfaceDescriptor(layers::SurfaceDescriptor* const out_descriptor)
 {
-    mTextureClient->MarkShared();
+    mTextureClient->mWorkaroundAnnoyingSharedSurfaceOwnershipIssues = true;
     return mTextureClient->ToSurfaceDescriptor(*out_descriptor);
 }
 
@@ -287,7 +239,9 @@ bool
 SharedSurface_Gralloc::ReadbackBySharedHandle(gfx::DataSourceSurface* out_surface)
 {
     MOZ_ASSERT(out_surface);
-    sp<GraphicBuffer> buffer = mTextureClient->GetGraphicBuffer();
+    sp<GraphicBuffer> buffer = static_cast<GrallocTextureData*>(
+        mTextureClient->GetInternalData()
+    )->GetGraphicBuffer();
 
     const uint8_t* grallocData = nullptr;
     auto result = buffer->lock(

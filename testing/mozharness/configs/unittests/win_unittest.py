@@ -43,7 +43,15 @@ config = {
         "mozbase": "test.py",
         "mozmill": "runtestlist.py",
     },
-    "minimum_tests_zip_dirs": ["bin/*", "certs/*", "modules/*", "mozbase/*", "config/*"],
+    "minimum_tests_zip_dirs": [
+        "bin/*",
+        "certs/*",
+        "config/*",
+        "marionette/*",
+        "modules/*",
+        "mozbase/*",
+        "tools/*",
+    ],
     "specific_tests_zip_dirs": {
         "mochitest": ["mochitest/*"],
         "webapprt": ["mochitest/*"],
@@ -102,6 +110,7 @@ config = {
             "options": [
                 "--binary=%(binary_path)s",
                 "--testing-modules-dir=test/modules",
+                "--plugins-path=%(test_plugin_path)s",
                 "--symbols-path=%(symbols_path)s"
             ],
             "run_filename": "runtestlist.py",
@@ -147,6 +156,7 @@ config = {
                 "--xre-path=%(abs_res_dir)s",
                 "--cwd=%(gtest_dir)s",
                 "--symbols-path=%(symbols_path)s",
+                "--utility-path=tests/bin",
                 "%(binary_path)s",
             ],
             "run_filename": "rungtests.py",
@@ -157,7 +167,6 @@ config = {
     {
         "plain": [],
         "plain-chunked": ["--chunk-by-dir=4"],
-        "mochitest-push": ["--subsuite=push"],
         "chrome": ["--chrome"],
         "chrome-chunked": ["--chrome", "--chunk-by-dir=4"],
         "browser-chrome": ["--browser-chrome"],
@@ -194,6 +203,7 @@ config = {
             'options': ['--suite=reftest',
                         '--setpref=browser.tabs.remote=true',
                         '--setpref=browser.tabs.remote.autostart=true',
+                        '--setpref=extensions.e10sBlocksEnabling=false',
                         '--setpref=layers.async-pan-zoom.enabled=true'],
             'tests': ['tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list']
         },
@@ -212,6 +222,7 @@ config = {
             "options": ["--suite=crashtest",
                         '--setpref=browser.tabs.remote=true',
                         '--setpref=browser.tabs.remote.autostart=true',
+                        '--setpref=extensions.e10sBlocksEnabling=false',
                         '--setpref=layers.async-pan-zoom.enabled=true'],
             "tests": ['tests/reftest/tests/testing/crashtest/crashtests.list'],
         },

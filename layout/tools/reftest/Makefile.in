@@ -6,17 +6,21 @@
 _DEST_DIR = $(DEPTH)/_tests/reftest
 
 _HARNESS_FILES = \
+  $(srcdir)/b2g_start_script.js \
   $(srcdir)/runreftest.py \
   $(srcdir)/reftestcommandline.py \
+  $(srcdir)/reftest-preferences.js \
   $(srcdir)/remotereftest.py \
   $(srcdir)/runreftestb2g.py \
-  $(srcdir)/b2g_desktop.py \
+  $(srcdir)/runreftestmulet.py \
   $(srcdir)/gaia_lock_screen.js \
+  $(srcdir)/output.py \
   automation.py \
   $(topsrcdir)/testing/mozbase/mozdevice/mozdevice/devicemanager.py \
   $(topsrcdir)/testing/mozbase/mozdevice/mozdevice/devicemanagerADB.py \
   $(topsrcdir)/testing/mozbase/mozdevice/mozdevice/devicemanagerSUT.py \
   $(topsrcdir)/testing/mozbase/mozdevice/mozdevice/droid.py \
+  $(topsrcdir)/testing/mozbase/mozdevice/mozdevice/version_codes.py \
   $(topsrcdir)/testing/mozbase/mozdevice/mozdevice/Zeroconf.py \
   $(topsrcdir)/testing/mozbase/moznetwork/moznetwork/moznetwork.py \
   $(topsrcdir)/build/mobile/b2gautomation.py \
@@ -24,12 +28,6 @@ _HARNESS_FILES = \
   $(topsrcdir)/testing/mochitest/server.js \
   $(topsrcdir)/build/pgo/server-locations.txt \
   $(NULL)
-
-_HARNESS_PP_FILES = \
-  b2g_start_script.js \
-  $(NULL)
-_HARNESS_PP_FILES_PATH = $(_DEST_DIR)
-PP_TARGETS += _HARNESS_PP_FILES
 
 include $(topsrcdir)/config/rules.mk
 

@@ -57,6 +57,7 @@ public:
     virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                         FontListSizes* aSizes) const;
 
+    already_AddRefed<IDWriteFont> GetDefaultFont();
 protected:
     /** This font family's directwrite fontfamily object */
     RefPtr<IDWriteFontFamily> mDWFamily;
@@ -126,17 +127,19 @@ public:
      *
      * \param aFaceName The name of the corresponding font face.
      * \param aFontFile DirectWrite fontfile object
+     * \param aFontFileStream DirectWrite fontfile stream object
      * \param aWeight Weight of the font
      * \param aStretch Stretch of the font
      * \param aStyle italic or oblique of font
      */
     gfxDWriteFontEntry(const nsAString& aFaceName,
                               IDWriteFontFile *aFontFile,
+                              IDWriteFontFileStream *aFontFileStream,
                               uint16_t aWeight,
                               int16_t aStretch,
                               uint8_t aStyle)
       : gfxFontEntry(aFaceName), mFont(nullptr), mFontFile(aFontFile),
-        mForceGDIClassic(false)
+        mFontFileStream(aFontFileStream), mForceGDIClassic(false)
     {
         mWeight = aWeight;
         mStretch = aStretch;
@@ -163,6 +166,10 @@ public:
     virtual void AddSizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf,
                                         FontListSizes* aSizes) const;
 
+    IDWriteFont* GetFont() {
+      return mFont;
+    }
+
 protected:
     friend class gfxDWriteFont;
     friend class gfxDWriteFontList;
@@ -186,6 +193,10 @@ protected:
     RefPtr<IDWriteFont> mFont;
     RefPtr<IDWriteFontFile> mFontFile;
 
+    // For custom fonts, we hold a reference to the IDWriteFontFileStream for
+    // for the IDWriteFontFile, so that the data is available.
+    RefPtr<IDWriteFontFileStream> mFontFileStream;
+
     // font face corresponding to the mFont/mFontFile *without* any DWrite
     // style simulations applied
     RefPtr<IDWriteFontFace> mFontFace;
@@ -197,10 +208,10 @@ protected:
 };
 
 // custom text renderer used to determine the fallback font for a given char
-class FontFallbackRenderer final : public IDWriteTextRenderer
+class DWriteFontFallbackRenderer final : public IDWriteTextRenderer
 {
 public:
-    FontFallbackRenderer(IDWriteFactory *aFactory)
+    DWriteFontFallbackRenderer(IDWriteFactory *aFactory)
         : mRefCount(0)
     {
         HRESULT hr = S_OK;
@@ -209,7 +220,7 @@ public:
         NS_ASSERTION(SUCCEEDED(hr), "GetSystemFontCollection failed!");
     }
 
-    ~FontFallbackRenderer()
+    ~DWriteFontFallbackRenderer()
     {}
 
     // IDWriteTextRenderer methods
@@ -368,7 +379,8 @@ public:
     bool UseGDIFontTableAccess() { return mGDIFontTableAccess; }
 
     gfxFontFamily* FindFamily(const nsAString& aFamily,
-                              gfxFontStyle* aStyle = nullptr) override;
+                              gfxFontStyle* aStyle = nullptr,
+                              gfxFloat aDevToCssSize = 1.0) override;
 
     gfxFloat GetForceGDIClassicMaxFontSize() { return mForceGDIClassicMaxFontSize; }
 
@@ -420,7 +432,7 @@ private:
     bool mGDIFontTableAccess;
     RefPtr<IDWriteGdiInterop> mGDIInterop;
 
-    RefPtr<FontFallbackRenderer> mFallbackRenderer;
+    RefPtr<DWriteFontFallbackRenderer> mFallbackRenderer;
     RefPtr<IDWriteTextFormat>    mFallbackFormat;
 
     RefPtr<IDWriteFontCollection> mSystemFonts;

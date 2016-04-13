@@ -18,6 +18,7 @@
 #include "AndroidBridge.h"
 #include "AndroidJNIWrapper.h"
 #include "AndroidBridgeUtilities.h"
+#include "nsAlertsUtils.h"
 #include "nsAppShell.h"
 #include "nsOSHelperAppService.h"
 #include "nsWindow.h"
@@ -207,7 +208,6 @@ AndroidBridge::AndroidBridge()
     mMessageQueueMessages = jEnv->GetFieldID(
             msgQueueClass.Get(), "mMessages", "Landroid/os/Message;");
 
-    mGLControllerObj = nullptr;
     mOpenedGraphicsLibraries = false;
     mHasNativeBitmapAccess = false;
     mHasNativeWindowAccess = false;
@@ -235,16 +235,6 @@ AndroidBridge::AndroidBridge()
     } else {
         // We don't know how to get this, just set it to 0
         jSurfacePointerField = 0;
-    }
-
-    AutoJNIClass egl(jEnv, "com/google/android/gles_jni/EGLSurfaceImpl");
-    jclass eglClass = egl.getGlobalRef();
-    if (eglClass) {
-        // The pointer type moved to a 'long' in Android L, API version 20
-        const char* jniType = mAPIVersion >= 20 ? "J" : "I";
-        jEGLSurfacePointerField = egl.getField("mEGLSurface", jniType);
-    } else {
-        jEGLSurfacePointerField = 0;
     }
 
     AutoJNIClass channels(jEnv, "java/nio/channels/Channels");
@@ -519,15 +509,19 @@ AndroidBridge::ShowAlertNotification(const nsAString& aImageUrl,
                                      const nsAString& aAlertText,
                                      const nsAString& aAlertCookie,
                                      nsIObserver *aAlertListener,
-                                     const nsAString& aAlertName)
+                                     const nsAString& aAlertName,
+                                     nsIPrincipal* aPrincipal)
 {
-    if (nsAppShell::gAppShell && aAlertListener) {
+    if (aAlertListener) {
         // This will remove any observers already registered for this id
-        nsAppShell::gAppShell->PostEvent(AndroidGeckoEvent::MakeAddObserver(aAlertName, aAlertListener));
+        nsAppShell::PostEvent(AndroidGeckoEvent::MakeAddObserver(aAlertName, aAlertListener));
     }
 
+    nsAutoString host;
+    nsAlertsUtils::GetSourceHostPort(aPrincipal, host);
+
     GeckoAppShell::ShowAlertNotificationWrapper
-           (aImageUrl, aAlertTitle, aAlertText, aAlertCookie, aAlertName);
+           (aImageUrl, aAlertTitle, aAlertText, aAlertCookie, aAlertName, host);
 }
 
 int
@@ -680,52 +674,7 @@ AndroidBridge::GetIconForExtension(const nsACString& aFileExt, uint32_t aIconSiz
 void
 AndroidBridge::SetLayerClient(GeckoLayerClient::Param jobj)
 {
-    // if resetting is true, that means Android destroyed our GeckoApp activity
-    // and we had to recreate it, but all the Gecko-side things were not destroyed.
-    // We therefore need to link up the new java objects to Gecko, and that's what
-    // we do here.
-    bool resetting = (mLayerClient != nullptr);
-    __android_log_print(ANDROID_LOG_INFO, "GeckoBug1151102", "Reseting layer client: %d", resetting);
-
     mLayerClient = jobj;
-
-    if (resetting) {
-        // since we are re-linking the new java objects to Gecko, we need to get
-        // the viewport from the compositor (since the Java copy was thrown away)
-        // and we do that by setting the first-paint flag.
-        nsWindow::ForceIsFirstPaint();
-    }
-}
-
-void
-AndroidBridge::RegisterCompositor(JNIEnv *env)
-{
-    if (mGLControllerObj != nullptr) {
-        // we already have this set up, no need to do it again
-        return;
-    }
-
-    mGLControllerObj = GLController::LocalRef(
-            LayerView::RegisterCompositorWrapper());
-}
-
-EGLSurface
-AndroidBridge::CreateEGLSurfaceForCompositor()
-{
-    if (!jEGLSurfacePointerField) {
-        return nullptr;
-    }
-    MOZ_ASSERT(mGLControllerObj, "AndroidBridge::CreateEGLSurfaceForCompositor called with a null GL controller ref");
-
-    auto eglSurface = mGLControllerObj->CreateEGLSurfaceForCompositorWrapper();
-    if (!eglSurface) {
-        return nullptr;
-    }
-
-    JNIEnv* const env = GetEnvForThread(); // called on the compositor thread
-    return reinterpret_cast<EGLSurface>(mAPIVersion >= 20 ?
-            env->GetLongField(eglSurface.Get(), jEGLSurfacePointerField) :
-            env->GetIntField(eglSurface.Get(), jEGLSurfacePointerField));
 }
 
 bool
@@ -1757,15 +1706,17 @@ AndroidBridge::PumpMessageLoop()
 
 NS_IMETHODIMP nsAndroidBridge::GetBrowserApp(nsIAndroidBrowserApp * *aBrowserApp)
 {
-    if (nsAppShell::gAppShell)
-        nsAppShell::gAppShell->GetBrowserApp(aBrowserApp);
+    nsAppShell* const appShell = nsAppShell::Get();
+    if (appShell)
+        appShell->GetBrowserApp(aBrowserApp);
     return NS_OK;
 }
 
 NS_IMETHODIMP nsAndroidBridge::SetBrowserApp(nsIAndroidBrowserApp *aBrowserApp)
 {
-    if (nsAppShell::gAppShell)
-        nsAppShell::gAppShell->SetBrowserApp(aBrowserApp);
+    nsAppShell* const appShell = nsAppShell::Get();
+    if (appShell)
+        appShell->SetBrowserApp(aBrowserApp);
     return NS_OK;
 }
 
@@ -2248,6 +2199,7 @@ nsresult AndroidBridge::GetExternalPublicDirectory(const nsAString& aType, nsASt
           child->SendGetDeviceStorageLocation(type, &path);
           if (!path.IsEmpty()) {
             AndroidBridge::sStoragePaths.Put(key, path);
+            aPath = path;
             return NS_OK;
           }
         }

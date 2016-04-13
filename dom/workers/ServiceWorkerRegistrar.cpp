@@ -38,6 +38,11 @@ namespace dom {
 
 namespace {
 
+static const char* gSupportedRegistrarVersions[] = {
+  SERVICEWORKERREGISTRAR_VERSION,
+  "2"
+};
+
 StaticRefPtr<ServiceWorkerRegistrar> gServiceWorkerRegistrar;
 
 } // namespace
@@ -136,6 +141,29 @@ ServiceWorkerRegistrar::GetRegistrations(
   }
 }
 
+namespace {
+
+bool Equivalent(const ServiceWorkerRegistrationData& aLeft,
+                const ServiceWorkerRegistrationData& aRight)
+{
+  MOZ_ASSERT(aLeft.principal().type() ==
+             mozilla::ipc::PrincipalInfo::TContentPrincipalInfo);
+  MOZ_ASSERT(aRight.principal().type() ==
+             mozilla::ipc::PrincipalInfo::TContentPrincipalInfo);
+
+  const auto& leftPrincipal = aLeft.principal().get_ContentPrincipalInfo();
+  const auto& rightPrincipal = aRight.principal().get_ContentPrincipalInfo();
+
+  // Only compare the attributes, not the spec part of the principal.
+  // The scope comparison above already covers the origin and codebase
+  // principals include the full path in their spec which is not what
+  // we want here.
+  return aLeft.scope() == aRight.scope() &&
+         leftPrincipal.attrs() == rightPrincipal.attrs();
+}
+
+} // anonymous namespace
+
 void
 ServiceWorkerRegistrar::RegisterServiceWorker(
                                      const ServiceWorkerRegistrationData& aData)
@@ -151,26 +179,12 @@ ServiceWorkerRegistrar::RegisterServiceWorker(
     MonitorAutoLock lock(mMonitor);
     MOZ_ASSERT(mDataLoaded);
 
-    const mozilla::ipc::PrincipalInfo& newPrincipalInfo = aData.principal();
-    MOZ_ASSERT(newPrincipalInfo.type() ==
-               mozilla::ipc::PrincipalInfo::TContentPrincipalInfo);
-
-    const mozilla::ipc::ContentPrincipalInfo& newContentPrincipalInfo =
-      newPrincipalInfo.get_ContentPrincipalInfo();
-
     bool found = false;
     for (uint32_t i = 0, len = mData.Length(); i < len; ++i) {
-      if (mData[i].scope() == aData.scope()) {
-        const mozilla::ipc::PrincipalInfo& existingPrincipalInfo =
-          mData[i].principal();
-        const mozilla::ipc::ContentPrincipalInfo& existingContentPrincipalInfo =
-          existingPrincipalInfo.get_ContentPrincipalInfo();
-
-        if (newContentPrincipalInfo == existingContentPrincipalInfo) {
-          mData[i] = aData;
-          found = true;
-          break;
-        }
+      if (Equivalent(aData, mData[i])) {
+        mData[i] = aData;
+        found = true;
+        break;
       }
     }
 
@@ -200,9 +214,12 @@ ServiceWorkerRegistrar::UnregisterServiceWorker(
     MonitorAutoLock lock(mMonitor);
     MOZ_ASSERT(mDataLoaded);
 
+    ServiceWorkerRegistrationData tmp;
+    tmp.principal() = aPrincipalInfo;
+    tmp.scope() = aScope;
+
     for (uint32_t i = 0; i < mData.Length(); ++i) {
-      if (mData[i].principal() == aPrincipalInfo &&
-          mData[i].scope() == aScope) {
+      if (Equivalent(tmp, mData[i])) {
         mData.RemoveElementAt(i);
         deleted = true;
         break;
@@ -297,22 +314,24 @@ ServiceWorkerRegistrar::ReadData()
   nsCOMPtr<nsILineInputStream> lineInputStream = do_QueryInterface(stream);
   MOZ_ASSERT(lineInputStream);
 
-  nsAutoCString line;
+  nsAutoCString version;
   bool hasMoreLines;
-  rv = lineInputStream->ReadLine(line, &hasMoreLines);
+  rv = lineInputStream->ReadLine(version, &hasMoreLines);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
-  // The file is corrupted ?
-  // FIXME: in case we implement a version 2, we should inform the user using
-  // the console about this issue.
-  if (!line.EqualsLiteral(SERVICEWORKERREGISTRAR_VERSION)) {
+  if (!IsSupportedVersion(version)) {
+    nsContentUtils::LogMessageToConsole(nsPrintfCString(
+      "Unsupported service worker registrar version: %s", version.get()).get());
     return NS_ERROR_FAILURE;
   }
 
+  nsTArray<ServiceWorkerRegistrationData> tmpData;
+
+  bool overwrite = false;
   while (hasMoreLines) {
-    ServiceWorkerRegistrationData* entry = mData.AppendElement();
+    ServiceWorkerRegistrationData* entry = tmpData.AppendElement();
 
 #define GET_LINE(x)                                   \
     rv = lineInputStream->ReadLine(x, &hasMoreLines); \
@@ -323,28 +342,58 @@ ServiceWorkerRegistrar::ReadData()
       return NS_ERROR_FAILURE;                        \
     }
 
-    nsAutoCString suffix;
-    GET_LINE(suffix);
+    nsAutoCString line;
+    if (version.EqualsLiteral(SERVICEWORKERREGISTRAR_VERSION)) {
+      nsAutoCString suffix;
+      GET_LINE(suffix);
 
-    OriginAttributes attrs;
-    if (!attrs.PopulateFromSuffix(suffix)) {
-      return NS_ERROR_INVALID_ARG;
+      PrincipalOriginAttributes attrs;
+      if (!attrs.PopulateFromSuffix(suffix)) {
+        return NS_ERROR_INVALID_ARG;
+      }
+
+      GET_LINE(line);
+      entry->principal() =
+        mozilla::ipc::ContentPrincipalInfo(attrs, line);
+
+      GET_LINE(entry->scope());
+      GET_LINE(entry->currentWorkerURL());
+
+      nsAutoCString cacheName;
+      GET_LINE(cacheName);
+      CopyUTF8toUTF16(cacheName, entry->cacheName());
+    } else if (version.EqualsLiteral("2")) {
+      overwrite = true;
+
+      nsAutoCString suffix;
+      GET_LINE(suffix);
+
+      PrincipalOriginAttributes attrs;
+      if (!attrs.PopulateFromSuffix(suffix)) {
+        return NS_ERROR_INVALID_ARG;
+      }
+
+      GET_LINE(line);
+      entry->principal() =
+        mozilla::ipc::ContentPrincipalInfo(attrs, line);
+
+      GET_LINE(entry->scope());
+
+      // scriptSpec is no more used in latest version.
+      nsAutoCString unused;
+      GET_LINE(unused);
+
+      GET_LINE(entry->currentWorkerURL());
+
+      nsAutoCString cacheName;
+      GET_LINE(cacheName);
+      CopyUTF8toUTF16(cacheName, entry->cacheName());
+
+      // waitingCacheName is no more used in latest version.
+      GET_LINE(unused);
+    } else {
+      MOZ_ASSERT_UNREACHABLE("Should never get here!");
     }
-
-    GET_LINE(line);
-    entry->principal() =
-      mozilla::ipc::ContentPrincipalInfo(attrs, line);
-
-    GET_LINE(entry->scope());
-    GET_LINE(entry->scriptSpec());
-    GET_LINE(entry->currentWorkerURL());
-
-    nsAutoCString cacheName;
-    GET_LINE(cacheName);
-    CopyUTF8toUTF16(cacheName, entry->activeCacheName());
-
-    GET_LINE(cacheName);
-    CopyUTF8toUTF16(cacheName, entry->waitingCacheName());
 
 #undef GET_LINE
 
@@ -356,6 +405,37 @@ ServiceWorkerRegistrar::ReadData()
     if (!line.EqualsLiteral(SERVICEWORKERREGISTRAR_TERMINATOR)) {
       return NS_ERROR_FAILURE;
     }
+  }
+
+  stream->Close();
+
+  // Dedupe data in file.  Old profiles had many duplicates.  In theory
+  // we can remove this in the future. (Bug 1248449)
+  for (uint32_t i = 0; i < tmpData.Length(); ++i) {
+    bool match = false;
+    for (uint32_t j = 0; j < mData.Length(); ++j) {
+      // Use same comparison as RegisterServiceWorker. Scope contains
+      // basic origin information.  Combine with any principal attributes.
+      if (Equivalent(tmpData[i], mData[j])) {
+        // Last match wins, just like legacy loading used to do in
+        // the ServiceWorkerManager.
+        mData[j] = tmpData[i];
+        // Dupe found, so overwrite file with reduced list.
+        overwrite = true;
+        match = true;
+        break;
+      }
+    }
+    if (!match) {
+      mData.AppendElement(tmpData[i]);
+    }
+  }
+
+  // Overwrite previous version.
+  // Cannot call SaveData directly because gtest uses main-thread.
+  if (overwrite && NS_FAILED(WriteData())) {
+    NS_WARNING("Failed to write data for the ServiceWorker Registations.");
+    DeleteData();
   }
 
   return NS_OK;
@@ -494,6 +574,18 @@ ServiceWorkerRegistrar::MaybeScheduleShutdownCompleted()
   }
 }
 
+bool
+ServiceWorkerRegistrar::IsSupportedVersion(const nsACString& aVersion) const
+{
+  uint32_t numVersions = ArrayLength(gSupportedRegistrarVersions);
+  for (uint32_t i = 0; i < numVersions; i++) {
+    if (aVersion.EqualsASCII(gSupportedRegistrarVersions[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 nsresult
 ServiceWorkerRegistrar::WriteData()
 {
@@ -561,16 +653,10 @@ ServiceWorkerRegistrar::WriteData()
     buffer.Append(data[i].scope());
     buffer.Append('\n');
 
-    buffer.Append(data[i].scriptSpec());
-    buffer.Append('\n');
-
     buffer.Append(data[i].currentWorkerURL());
     buffer.Append('\n');
 
-    buffer.Append(NS_ConvertUTF16toUTF8(data[i].activeCacheName()));
-    buffer.Append('\n');
-
-    buffer.Append(NS_ConvertUTF16toUTF8(data[i].waitingCacheName()));
+    buffer.Append(NS_ConvertUTF16toUTF8(data[i].cacheName()));
     buffer.Append('\n');
 
     buffer.AppendLiteral(SERVICEWORKERREGISTRAR_TERMINATOR);

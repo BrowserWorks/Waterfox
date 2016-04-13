@@ -316,7 +316,7 @@ Function .onInit
 !ifdef HAVE_64BIT_BUILD
   ; Restrict x64 builds from being installed on x86 and pre Win7
   ${Unless} ${RunningX64}
-  ${OrUnless} ${AtLeastWinXP}
+  ${OrUnless} ${AtLeastWin7}
     MessageBox MB_OK|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_OS_MSG)"
     Quit
   ${EndUnless}
@@ -360,7 +360,7 @@ Function .onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWinVista}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif
@@ -371,6 +371,27 @@ Function .onInit
   ${If} "$R9" == "false"
     SetShellVarContext current ; Set SHCTX to HKCU
     ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+
+    ${If} ${RunningX64}
+      ; In HKCU there is no WOW64 redirection, which means we may have gotten
+      ; the path to a 32-bit install even though we're 64-bit, or vice-versa.
+      ; In that case, just use the default path instead of offering an upgrade.
+      ; But only do that override if the existing install is in Program Files,
+      ; because that's the only place we can be sure is specific
+      ; to either 32 or 64 bit applications.
+      ; The WordFind syntax below searches for the first occurence of the
+      ; "delimiter" (the Program Files path) in the install path and returns
+      ; anything that appears before that. If nothing appears before that,
+      ; then the install is under Program Files (32 or 64).
+!ifdef HAVE_64BIT_BUILD
+      ${WordFind} $R9 $PROGRAMFILES32 "+1{" $0
+!else
+      ${WordFind} $R9 $PROGRAMFILES64 "+1{" $0
+!endif
+      ${If} $0 == ""
+        StrCpy $R9 "false"
+      ${EndIf}
+    ${EndIf}
   ${EndIf}
 
   ${If} "$R9" != "false"
@@ -396,7 +417,7 @@ Function .onInit
   ${EndIf}
 
   ; The interval in MS used for the progress bars set as marquee.
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWinVista}
     StrCpy $ProgressbarMarqueeIntervalMS "10"
   ${Else}
     StrCpy $ProgressbarMarqueeIntervalMS "50"
@@ -641,7 +662,7 @@ Function SendPing
     ${EndIf}
 
     ${If} "$R2" == "0"
-    ${AndIf} ${AtLeastWinXP}
+    ${AndIf} ${AtLeastWinVista}
       ; Check to see if this install location is currently set as the default
       ; browser by Default Programs which is only available on Vista and above.
       ClearErrors
@@ -897,7 +918,7 @@ Function createOptions
   SetCtlColors $0 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
   SendMessage $0 ${WM_SETFONT} $FontNormal 0
 
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
     StrCpy $0 "$(ADD_SC_TASKBAR)"
   ${Else}
     StrCpy $0 "$(ADD_SC_QUICKLAUNCHBAR)"

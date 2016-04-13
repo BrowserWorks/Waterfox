@@ -26,7 +26,7 @@ TextDecoder::Init(const nsAString& aLabel, const bool aFatal,
   if (!EncodingUtils::FindEncodingForLabelNoReplacement(aLabel, encoding)) {
     nsAutoString label(aLabel);
     EncodingUtils::TrimSpaceCharacters(label);
-    aRv.ThrowRangeError<MSG_ENCODING_NOT_SUPPORTED>(&label);
+    aRv.ThrowRangeError<MSG_ENCODING_NOT_SUPPORTED>(label);
     return;
   }
   InitWithEncoding(encoding, aFatal);
@@ -75,7 +75,11 @@ TextDecoder::Decode(const char* aInput, const int32_t aLength,
   rv = mDecoder->Convert(aInput, &length, buf, &outLen);
   MOZ_ASSERT(mFatal || rv != NS_ERROR_ILLEGAL_INPUT);
   buf[outLen] = 0;
-  aOutDecodedString.Append(buf, outLen);
+
+  if (!aOutDecodedString.Append(buf, outLen, fallible)) {
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
 
   // If the internal streaming flag of the decoder object is not set,
   // then reset the encoding algorithm state to the default values

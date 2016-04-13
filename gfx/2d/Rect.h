@@ -32,6 +32,19 @@ struct IntMarginTyped:
     IntMarginTyped() : Super() {}
     IntMarginTyped(int32_t aTop, int32_t aRight, int32_t aBottom, int32_t aLeft) :
         Super(aTop, aRight, aBottom, aLeft) {}
+
+    // XXX When all of the code is ported, the following functions to convert
+    // to and from unknown types should be removed.
+
+    static IntMarginTyped<units> FromUnknownMargin(const IntMarginTyped<UnknownUnits>& aMargin) {
+        return IntMarginTyped<units>(aMargin.top, aMargin.right,
+                                     aMargin.bottom, aMargin.left);
+    }
+
+    IntMarginTyped<UnknownUnits> ToUnknownMargin() const {
+        return IntMarginTyped<UnknownUnits>(this->top, this->right,
+                                            this->bottom, this->left);
+    }
 };
 typedef IntMarginTyped<UnknownUnits> IntMargin;
 
@@ -83,8 +96,8 @@ struct IntRectTyped :
     void RoundIn() {}
     void RoundOut() {}
 
-    // XXX When all of the code is ported, the following functions to convert to and from
-    // unknown types should be removed.
+    // XXX When all of the code is ported, the following functions to convert
+    // to and from unknown types should be removed.
 
     static IntRectTyped<units> FromUnknownRect(const IntRectTyped<UnknownUnits>& rect) {
         return IntRectTyped<units>(rect.x, rect.y, rect.width, rect.height);
@@ -143,22 +156,6 @@ struct RectTyped :
         Super(F(rect.x), F(rect.y),
               F(rect.width), F(rect.height)) {}
 
-    // Returns the largest rectangle that can be represented with 32-bit
-    // signed integers, centered around a point at 0,0.  As BaseRect's represent
-    // the dimensions as a top-left point with a width and height, the width
-    // and height will be the largest positive 32-bit value.  The top-left
-    // position coordinate is divided by two to center the rectangle around a
-    // point at 0,0.
-    static RectTyped<units, F> MaxIntRect()
-    {
-      return RectTyped<units, F>(
-        -std::numeric_limits<int32_t>::max() * 0.5,
-        -std::numeric_limits<int32_t>::max() * 0.5,
-        std::numeric_limits<int32_t>::max(),
-        std::numeric_limits<int32_t>::max()
-      );
-    };
-
     void NudgeToIntegers()
     {
       NudgeToInteger(&(this->x));
@@ -171,8 +168,8 @@ struct RectTyped :
     {
       *aOut = IntRectTyped<units>(int32_t(this->X()), int32_t(this->Y()),
                                   int32_t(this->Width()), int32_t(this->Height()));
-      return RectTyped<units>(F(aOut->x), F(aOut->y),
-                              F(aOut->width), F(aOut->height))
+      return RectTyped<units, F>(F(aOut->x), F(aOut->y),
+                                 F(aOut->width), F(aOut->height))
              .IsEqualEdges(*this);
     }
 
@@ -227,6 +224,20 @@ IntRectTyped<units> RoundedOut(const RectTyped<units>& aRect)
                              int32_t(copy.y),
                              int32_t(copy.width),
                              int32_t(copy.height));
+}
+
+template<class units>
+IntRectTyped<units> TruncatedToInt(const RectTyped<units>& aRect) {
+  return IntRectTyped<units>(int32_t(aRect.x),
+                             int32_t(aRect.y),
+                             int32_t(aRect.width),
+                             int32_t(aRect.height));
+}
+
+template<class units>
+RectTyped<units> IntRectToRect(const IntRectTyped<units>& aRect)
+{
+  return RectTyped<units>(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 
 } // namespace gfx

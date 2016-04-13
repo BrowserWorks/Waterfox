@@ -70,7 +70,8 @@ function HistoryStore(name, engine) {
 
   // Explicitly nullify our references to our cached services so we don't leak
   Svc.Obs.add("places-shutdown", function() {
-    for each ([query, stmt] in Iterator(this._stmts)) {
+    for (let query in this._stmts) {
+      let stmt = this._stmts;
       stmt.finalize();
     }
     this._stmts = {};
@@ -365,7 +366,9 @@ HistoryStore.prototype = {
   },
 
   wipe: function HistStore_wipe() {
-    PlacesUtils.history.removeAllPages();
+    let cb = Async.makeSyncCallback();
+    PlacesUtils.history.clear().then(result => {cb(null, result)}, err => {cb(err)});
+    return Async.waitForSyncCallback(cb);
   }
 };
 

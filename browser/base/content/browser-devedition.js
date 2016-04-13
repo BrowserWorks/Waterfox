@@ -1,6 +1,6 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
  * Listeners for the DevEdition theme.  This adds an extra stylesheet
@@ -120,11 +120,10 @@ var DevEdition = {
   }
 };
 
-#ifndef RELEASE_BUILD
 // If the DevEdition theme is going to be applied in gBrowserInit.onLoad,
 // then preload it now.  This prevents a flash of unstyled content where the
 // normal theme is applied while the DevEdition stylesheet is loading.
-if (this != Services.appShell.hiddenDOMWindow && DevEdition.isThemeCurrentlyApplied) {
+if (!AppConstants.RELEASE_BUILD &&
+    this != Services.appShell.hiddenDOMWindow && DevEdition.isThemeCurrentlyApplied) {
   DevEdition.createStyleSheet();
 }
-#endif

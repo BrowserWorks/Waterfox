@@ -27,6 +27,7 @@
 #include "nsISecurityEventSink.h"
 #include "nsIURL.h"
 #include "nsIWebProgressListener.h"
+#include "nsNetUtil.h"
 #include "nsPIDOMWindow.h"
 #include "nsXULAppAPI.h"
 
@@ -40,7 +41,8 @@ using mozilla::Preferences;
 //
 // NSPR_LOG_MODULES=nsChannelClassifier:5
 //
-static PRLogModuleInfo *gChannelClassifierLog;
+static mozilla::LazyLogModule gChannelClassifierLog("nsChannelClassifier");
+
 #undef LOG
 #define LOG(args)     MOZ_LOG(gChannelClassifierLog, mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(gChannelClassifierLog, mozilla::LogLevel::Debug)
@@ -52,8 +54,6 @@ nsChannelClassifier::nsChannelClassifier()
   : mIsAllowListed(false),
     mSuspendedChannel(false)
 {
-    if (!gChannelClassifierLog)
-        gChannelClassifierLog = PR_NewLogModule("nsChannelClassifier");
 }
 
 nsresult

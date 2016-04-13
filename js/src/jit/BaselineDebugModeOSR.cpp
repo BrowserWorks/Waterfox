@@ -101,6 +101,7 @@ struct DebugModeOSREntry
 
     bool needsRecompileInfo() const {
         return frameKind == ICEntry::Kind_CallVM ||
+               frameKind == ICEntry::Kind_WarmupCounter ||
                frameKind == ICEntry::Kind_StackCheck ||
                frameKind == ICEntry::Kind_EarlyStackCheck ||
                frameKind == ICEntry::Kind_DebugTrap ||
@@ -287,7 +288,7 @@ CollectInterpreterStackScripts(JSContext* cx, const Debugger::ExecutionObservabl
     return true;
 }
 
-#ifdef DEBUG
+#ifdef JS_JITSPEW
 static const char*
 ICEntryKindToString(ICEntry::Kind kind)
 {
@@ -298,6 +299,8 @@ ICEntryKindToString(ICEntry::Kind kind)
         return "non-op IC";
       case ICEntry::Kind_CallVM:
         return "callVM";
+      case ICEntry::Kind_WarmupCounter:
+        return "warmup counter";
       case ICEntry::Kind_StackCheck:
         return "stack check";
       case ICEntry::Kind_EarlyStackCheck:
@@ -312,7 +315,7 @@ ICEntryKindToString(ICEntry::Kind kind)
         MOZ_CRASH("bad ICEntry kind");
     }
 }
-#endif // DEBUG
+#endif // JS_JITSPEW
 
 static void
 SpewPatchBaselineFrame(uint8_t* oldReturnAddress, uint8_t* newReturnAddress,
@@ -321,7 +324,7 @@ SpewPatchBaselineFrame(uint8_t* oldReturnAddress, uint8_t* newReturnAddress,
     JitSpew(JitSpew_BaselineDebugModeOSR,
             "Patch return %p -> %p on BaselineJS frame (%s:%d) from %s at %s",
             oldReturnAddress, newReturnAddress, script->filename(), script->lineno(),
-            ICEntryKindToString(frameKind), js_CodeName[(JSOp)*pc]);
+            ICEntryKindToString(frameKind), CodeName[(JSOp)*pc]);
 }
 
 static void
@@ -331,7 +334,7 @@ SpewPatchBaselineFrameFromExceptionHandler(uint8_t* oldReturnAddress, uint8_t* n
     JitSpew(JitSpew_BaselineDebugModeOSR,
             "Patch return %p -> %p on BaselineJS frame (%s:%d) from exception handler at %s",
             oldReturnAddress, newReturnAddress, script->filename(), script->lineno(),
-            js_CodeName[(JSOp)*pc]);
+            CodeName[(JSOp)*pc]);
 }
 
 static void
@@ -359,6 +362,7 @@ PatchBaselineFramesForDebugMode(JSContext* cx, const Debugger::ExecutionObservab
     //  B. From a VM call.
     //  H. From inside HandleExceptionBaseline.
     //  I. From inside the interrupt handler via the prologue stack check.
+    //  J. From the warmup counter in the prologue.
     //
     // On to Off:
     //  - All the ways above.
@@ -367,10 +371,10 @@ PatchBaselineFramesForDebugMode(JSContext* cx, const Debugger::ExecutionObservab
     //  E. From the debug epilogue.
     //
     // Off to On to Off:
-    //  F. Undo case B or I above on previously patched yet unpopped frames.
+    //  F. Undo case B, I or J above on previously patched yet unpopped frames.
     //
     // On to Off to On:
-    //  G. Undo cases B, C, D, E, or I above on previously patched yet unpopped
+    //  G. Undo cases B, C, D, E, I or J above on previously patched yet unpopped
     //     frames.
     //
     // In general, we patch the return address from the VM call to return to a
@@ -456,7 +460,7 @@ PatchBaselineFramesForDebugMode(JSContext* cx, const Debugger::ExecutionObservab
 
             // Cases F and G above.
             //
-            // We undo a previous recompile by handling cases B, C, D, E, or I
+            // We undo a previous recompile by handling cases B, C, D, E, I or J
             // like normal, except that we retrieve the pc information via
             // the previous OSR debug info stashed on the frame.
             BaselineDebugModeOSRInfo* info = iter.baselineFrame()->getDebugModeOSRInfo();
@@ -464,17 +468,19 @@ PatchBaselineFramesForDebugMode(JSContext* cx, const Debugger::ExecutionObservab
                 MOZ_ASSERT(info->pc == pc);
                 MOZ_ASSERT(info->frameKind == kind);
 
-                // Case G, might need to undo B, C, D, E, or I.
+                // Case G, might need to undo B, C, D, E, I or J.
                 MOZ_ASSERT_IF(script->baselineScript()->hasDebugInstrumentation(),
                               kind == ICEntry::Kind_CallVM ||
+                              kind == ICEntry::Kind_WarmupCounter ||
                               kind == ICEntry::Kind_StackCheck ||
                               kind == ICEntry::Kind_EarlyStackCheck ||
                               kind == ICEntry::Kind_DebugTrap ||
                               kind == ICEntry::Kind_DebugPrologue ||
                               kind == ICEntry::Kind_DebugEpilogue);
-                // Case F, should only need to undo case B or I.
+                // Case F, should only need to undo case B, I or J.
                 MOZ_ASSERT_IF(!script->baselineScript()->hasDebugInstrumentation(),
                               kind == ICEntry::Kind_CallVM ||
+                              kind == ICEntry::Kind_WarmupCounter||
                               kind == ICEntry::Kind_StackCheck ||
                               kind == ICEntry::Kind_EarlyStackCheck);
 
@@ -501,6 +507,18 @@ PatchBaselineFramesForDebugMode(JSContext* cx, const Debugger::ExecutionObservab
                 // baseline JIT code.
                 ICEntry& callVMEntry = bl->callVMEntryFromPCOffset(pcOffset);
                 recompInfo->resumeAddr = bl->returnAddressForIC(callVMEntry);
+                popFrameReg = false;
+                break;
+              }
+
+              case ICEntry::Kind_WarmupCounter: {
+                // Case J above.
+                //
+                // Patching mechanism is identical to a CallVM. This is
+                // handled especially only because the warmup counter VM call is
+                // part of the prologue, and not tied an opcode.
+                ICEntry& warmupCountEntry = bl->warmupCountICEntry();
+                recompInfo->resumeAddr = bl->returnAddressForIC(warmupCountEntry);
                 popFrameReg = false;
                 break;
               }
@@ -704,15 +722,6 @@ RecompileBaselineScriptForDebugMode(JSContext* cx, JSScript* script,
     _(SetProp_CallScripted)                     \
     _(SetProp_CallNative)
 
-#if JS_HAS_NO_SUCH_METHOD
-#define PATCHABLE_NSM_ICSTUB_KIND_LIST(_)       \
-    _(GetElem_Dense)                            \
-    _(GetElem_Arguments)                        \
-    _(GetProp_NativePrototype)                  \
-    _(GetProp_Native)                           \
-    _(GetName_Global)
-#endif
-
 static bool
 CloneOldBaselineStub(JSContext* cx, DebugModeOSREntryVector& entries, size_t entryIndex)
 {
@@ -765,7 +774,8 @@ CloneOldBaselineStub(JSContext* cx, DebugModeOSREntryVector& entries, size_t ent
     } else {
         firstMonitorStub = nullptr;
     }
-    ICStubSpace* stubSpace = ICStubCompiler::StubSpaceForKind(oldStub->kind(), entry.script);
+    ICStubSpace* stubSpace = ICStubCompiler::StubSpaceForKind(oldStub->kind(), entry.script,
+                                                              ICStubCompiler::Engine::Baseline);
 
     // Clone the existing stub into the recompiled IC.
     //
@@ -778,9 +788,6 @@ CloneOldBaselineStub(JSContext* cx, DebugModeOSREntryVector& entries, size_t ent
                                             *oldStub->to##kindName());       \
         break;
         PATCHABLE_ICSTUB_KIND_LIST(CASE_KIND)
-#if JS_HAS_NO_SUCH_METHOD
-        PATCHABLE_NSM_ICSTUB_KIND_LIST(CASE_KIND)
-#endif
 #undef CASE_KIND
 
       default:
@@ -967,6 +974,7 @@ IsReturningFromCallVM(BaselineDebugModeOSRInfo* info)
     // The stack check entries are returns from a callVM, but have a special
     // kind because they do not exist in a 1-1 relationship with a pc offset.
     return info->frameKind == ICEntry::Kind_CallVM ||
+           info->frameKind == ICEntry::Kind_WarmupCounter ||
            info->frameKind == ICEntry::Kind_StackCheck ||
            info->frameKind == ICEntry::Kind_EarlyStackCheck;
 }
@@ -984,6 +992,7 @@ EmitBranchIsReturningFromCallVM(MacroAssembler& masm, Register entry, Label* lab
 {
     // Keep this in sync with IsReturningFromCallVM.
     EmitBranchICEntryKind(masm, entry, ICEntry::Kind_CallVM, label);
+    EmitBranchICEntryKind(masm, entry, ICEntry::Kind_WarmupCounter, label);
     EmitBranchICEntryKind(masm, entry, ICEntry::Kind_StackCheck, label);
     EmitBranchICEntryKind(masm, entry, ICEntry::Kind_EarlyStackCheck, label);
 }
@@ -1127,7 +1136,7 @@ JitRuntime::generateBaselineDebugModeOSRHandler(JSContext* cx, uint32_t* noFrame
 
     // Not all patched baseline frames are returning from a situation where
     // the frame reg is already fixed up.
-    CodeOffsetLabel noFrameRegPopOffset(masm.currentOffset());
+    CodeOffset noFrameRegPopOffset(masm.currentOffset());
 
     // Record the stack pointer for syncing.
     masm.moveStackPtrTo(syncedStackStart);

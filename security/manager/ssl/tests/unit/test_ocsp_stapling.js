@@ -189,7 +189,6 @@ function check_ocsp_stapling_telemetry() {
 function run_test() {
   do_get_profile();
 
-
   let fakeOCSPResponder = new HttpServer();
   fakeOCSPResponder.registerPrefixHandler("/", function (request, response) {
     response.setStatusLine(request.httpVersion, 500, "Internal Server Error");

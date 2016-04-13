@@ -11,6 +11,7 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/gfx/PathHelpers.h"
+#include "BorderConsts.h"
 #include "nsLayoutUtils.h"
 #include "nsStyleConsts.h"
 #include "nsCSSColorUtils.h"
@@ -642,7 +643,7 @@ MakeBorderColor(nscolor aColor, nscolor aBackgroundColor,
 
     case BorderColorStyleLight:
       k = 1;
-      /* fall through */
+      MOZ_FALLTHROUGH;
     case BorderColorStyleDark:
       NS_GetSpecial3DColors(colors, aBackgroundColor, aColor);
       return Color::FromABGR(colors[k]);
@@ -1300,7 +1301,6 @@ DrawBorderRadius(DrawTarget* aDrawTarget,
 // seams when anti-aliased drawing is used.
 static void
 DrawCorner(DrawTarget* aDrawTarget,
-           mozilla::css::Corner c,
            const Point& aOuterCorner, const Point& aInnerCorner,
            const twoFloats& aCornerMultPrev, const twoFloats& aCornerMultNext,
            const Size& aCornerDims,
@@ -1455,7 +1455,7 @@ nsCSSBorderRenderer::DrawNoCompositeColorSolidBorder()
     } else if (!mBorderCornerDimensions[c].IsEmpty()) {
       // a corner with no border radius
       DrawCorner(mDrawTarget,
-                 c, outerCorner, innerCorner,
+                 outerCorner, innerCorner,
                  cornerMults[i], cornerMults[i3],
                  mBorderCornerDimensions[c],
                  firstColor, secondColor, skirtSize, skirtSlope);
@@ -1617,7 +1617,7 @@ nsCSSBorderRenderer::DrawBorders()
     Float dash = mBorderWidths[0];
     strokeOptions.mDashPattern = &dash;
     strokeOptions.mDashLength = 1;
-    strokeOptions.mDashOffset = 0.5f;
+    strokeOptions.mDashOffset = 0.5f * dash;
     DrawOptions drawOptions;
     drawOptions.mAntialiasMode = AntialiasMode::NONE;
     mDrawTarget->StrokeRect(rect, color, strokeOptions, drawOptions);

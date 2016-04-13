@@ -104,7 +104,18 @@ var SessionStorageInternal = {
   restore: function (aDocShell, aStorageData) {
     for (let origin of Object.keys(aStorageData)) {
       let data = aStorageData[origin];
-      let principal = Services.scriptSecurityManager.createCodebasePrincipalFromOrigin(origin);
+
+      let principal;
+
+      try {
+        let attrs = ChromeUtils.createOriginAttributesWithUserContextId(origin, aDocShell.userContextId);
+        let originURI = Services.io.newURI(origin, null, null);
+        principal = Services.scriptSecurityManager.createCodebasePrincipal(originURI, attrs);
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
+
       let storageManager = aDocShell.QueryInterface(Ci.nsIDOMStorageManager);
       let window = aDocShell.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
 
@@ -140,8 +151,10 @@ var SessionStorageInternal = {
     try {
       let storageManager = aDocShell.QueryInterface(Ci.nsIDOMStorageManager);
       storage = storageManager.getStorage(window, aPrincipal);
+      storage.length; // XXX: Bug 1232955 - storage.length can throw, catch that failure
     } catch (e) {
       // sessionStorage might throw if it's turned off, see bug 458954
+      storage = null;
     }
 
     if (storage && storage.length) {

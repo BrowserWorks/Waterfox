@@ -14,6 +14,7 @@ function testAttrib(elem, attrib, attribValue, msg) {
 
 function test() {
   waitForExplicitFinish();
+
   is(gBrowser.tabs.length, 1, "one tab is open initially");
 
   // Add several new tabs in sequence, hiding some, to ensure that the

@@ -38,14 +38,14 @@ namespace widget {
  * IMEHandler
  ******************************************************************************/
 
-bool IMEHandler::sPluginHasFocus = false;
+nsWindow* IMEHandler::sFocusedWindow = nullptr;
 InputContextAction::Cause IMEHandler::sLastContextActionCause =
   InputContextAction::CAUSE_UNKNOWN;
+bool IMEHandler::sPluginHasFocus = false;
 
 #ifdef NS_ENABLE_TSF
 bool IMEHandler::sIsInTSFMode = false;
 bool IMEHandler::sIsIMMEnabled = true;
-bool IMEHandler::sShowingOnScreenKeyboard = false;
 decltype(SetInputScopes)* IMEHandler::sSetInputScopes = nullptr;
 #endif // #ifdef NS_ENABLE_TSF
 
@@ -93,8 +93,31 @@ IMEHandler::Terminate()
 
 // static
 void*
-IMEHandler::GetNativeData(uint32_t aDataType)
+IMEHandler::GetNativeData(nsWindow* aWindow, uint32_t aDataType)
 {
+  if (aDataType == NS_RAW_NATIVE_IME_CONTEXT) {
+#ifdef NS_ENABLE_TSF
+    if (IsTSFAvailable()) {
+      return TSFTextStore::GetThreadManager();
+    }
+#endif // #ifdef NS_ENABLE_TSF
+    IMEContext context(aWindow);
+    if (context.IsValid()) {
+      return context.get();
+    }
+    // If IMC isn't associated with the window, IME is disabled on the window
+    // now.  In such case, we should return default IMC instead.
+    const IMEContext& defaultIMC = aWindow->DefaultIMC();
+    if (defaultIMC.IsValid()) {
+      return defaultIMC.get();
+    }
+    // If there is no default IMC, we should return the pointer to the window
+    // since if we return nullptr, IMEStateManager cannot manage composition
+    // with TextComposition instance.  This is possible if no IME is installed,
+    // but composition may occur with dead key sequence.
+    return aWindow;
+  }
+
 #ifdef NS_ENABLE_TSF
   void* result = TSFTextStore::GetNativeData(aDataType);
   if (!result || !(*(static_cast<void**>(result)))) {
@@ -129,6 +152,13 @@ IMEHandler::ProcessMessage(nsWindow* aWindow, UINT aMessage,
                            WPARAM& aWParam, LPARAM& aLParam,
                            MSGResult& aResult)
 {
+  if (aMessage == MOZ_WM_DISMISS_ONSCREEN_KEYBOARD) {
+    if (!sFocusedWindow) {
+      DismissOnScreenKeyboard();
+    }
+    return true;
+  }
+
 #ifdef NS_ENABLE_TSF
   if (IsTSFAvailable()) {
     TSFTextStore::ProcessMessage(aWindow, aMessage, aWParam, aLParam, aResult);
@@ -220,6 +250,7 @@ IMEHandler::NotifyIME(nsWindow* aWindow,
       case NOTIFY_IME_OF_TEXT_CHANGE:
         return TSFTextStore::OnTextChange(aIMENotification);
       case NOTIFY_IME_OF_FOCUS: {
+        sFocusedWindow = aWindow;
         IMMHandler::OnFocusChange(true, aWindow);
         nsresult rv =
           TSFTextStore::OnFocusChange(true, aWindow,
@@ -228,7 +259,8 @@ IMEHandler::NotifyIME(nsWindow* aWindow,
         return rv;
       }
       case NOTIFY_IME_OF_BLUR:
-        IMEHandler::MaybeDismissOnScreenKeyboard();
+        sFocusedWindow = nullptr;
+        IMEHandler::MaybeDismissOnScreenKeyboard(aWindow);
         IMMHandler::OnFocusChange(false, aWindow);
         return TSFTextStore::OnFocusChange(false, aWindow,
                                            aWindow->GetInputContext());
@@ -277,11 +309,13 @@ IMEHandler::NotifyIME(nsWindow* aWindow,
     case NOTIFY_IME_OF_MOUSE_BUTTON_EVENT:
       return IMMHandler::OnMouseButtonEvent(aWindow, aIMENotification);
     case NOTIFY_IME_OF_FOCUS:
+      sFocusedWindow = aWindow;
       IMMHandler::OnFocusChange(true, aWindow);
       IMEHandler::MaybeShowOnScreenKeyboard();
       return NS_OK;
     case NOTIFY_IME_OF_BLUR:
-      IMEHandler::MaybeDismissOnScreenKeyboard();
+      sFocusedWindow = nullptr;
+      IMEHandler::MaybeDismissOnScreenKeyboard(aWindow);
       IMMHandler::OnFocusChange(false, aWindow);
 #ifdef NS_ENABLE_TSF
       // If a plugin gets focus while TSF has focus, we need to notify TSF of
@@ -343,13 +377,23 @@ IMEHandler::GetOpenState(nsWindow* aWindow)
 void
 IMEHandler::OnDestroyWindow(nsWindow* aWindow)
 {
+  // When focus is in remote process, but the window is being destroyed, we
+  // need to clean up TSFTextStore here since NOTIFY_IME_OF_BLUR won't reach
+  // here because TabParent already lost the reference to the nsWindow when
+  // it receives from the remote process.
+  if (sFocusedWindow == aWindow) {
+    NS_ASSERTION(aWindow->GetInputContext().IsOriginContentProcess(),
+      "input context of focused widget should be set from a remote process");
+    NotifyIME(aWindow, IMENotification(NOTIFY_IME_OF_BLUR));
+  }
+
 #ifdef NS_ENABLE_TSF
   // We need to do nothing here for TSF. Just restore the default context
   // if it's been disassociated.
   if (!sIsInTSFMode) {
     // MSDN says we need to set IS_DEFAULT to avoid memory leak when we use
     // SetInputScopes API. Use an empty string to do this.
-    SetInputScopeForIMM32(aWindow, EmptyString());
+    SetInputScopeForIMM32(aWindow, EmptyString(), EmptyString());
   }
 #endif // #ifdef NS_ENABLE_TSF
   AssociateIMEContext(aWindow, true);
@@ -370,20 +414,21 @@ IMEHandler::SetInputContext(nsWindow* aWindow,
   // Assume that SetInputContext() is called only when aWindow has focus.
   sPluginHasFocus = (aInputContext.mIMEState.mEnabled == IMEState::PLUGIN);
 
+  if (aAction.UserMightRequestOpenVKB()) {
+    IMEHandler::MaybeShowOnScreenKeyboard();
+  }
+
   bool enable = WinUtils::IsIMEEnabled(aInputContext);
   bool adjustOpenState = (enable &&
     aInputContext.mIMEState.mOpen != IMEState::DONT_CHANGE_OPEN_STATE);
   bool open = (adjustOpenState &&
     aInputContext.mIMEState.mOpen == IMEState::OPEN);
 
-  aInputContext.mNativeIMEContext = nullptr;
-
 #ifdef NS_ENABLE_TSF
   // Note that even while a plugin has focus, we need to notify TSF of that.
   if (sIsInTSFMode) {
     TSFTextStore::SetInputContext(aWindow, aInputContext, aAction);
     if (IsTSFAvailable()) {
-      aInputContext.mNativeIMEContext = TSFTextStore::GetThreadManager();
       if (sIsIMMEnabled) {
         // Associate IME context for IMM-IMEs.
         AssociateIMEContext(aWindow, enable);
@@ -399,7 +444,8 @@ IMEHandler::SetInputContext(nsWindow* aWindow,
     }
   } else {
     // Set at least InputScope even when TextStore is not available.
-    SetInputScopeForIMM32(aWindow, aInputContext.mHTMLInputType);
+    SetInputScopeForIMM32(aWindow, aInputContext.mHTMLInputType,
+                          aInputContext.mHTMLInputInputmode);
   }
 #endif // #ifdef NS_ENABLE_TSF
 
@@ -409,15 +455,6 @@ IMEHandler::SetInputContext(nsWindow* aWindow,
   if (adjustOpenState) {
     context.SetOpenState(open);
   }
-
-  if (aInputContext.mNativeIMEContext) {
-    return;
-  }
-
-  // The old InputContext must store the default IMC or old TextStore.
-  // When IME context is disassociated from the window, use it.
-  aInputContext.mNativeIMEContext = enable ?
-    static_cast<void*>(context.get()) : oldInputContext.mNativeIMEContext;
 }
 
 // static
@@ -448,8 +485,6 @@ IMEHandler::InitInputContext(nsWindow* aWindow, InputContext& aInputContext)
     TSFTextStore::SetInputContext(aWindow, aInputContext,
       InputContextAction(InputContextAction::CAUSE_UNKNOWN,
                          InputContextAction::GOT_FOCUS));
-    aInputContext.mNativeIMEContext = TSFTextStore::GetThreadManager();
-    MOZ_ASSERT(aInputContext.mNativeIMEContext);
     // IME context isn't necessary in pure TSF mode.
     if (!sIsIMMEnabled) {
       AssociateIMEContext(aWindow, false);
@@ -458,15 +493,11 @@ IMEHandler::InitInputContext(nsWindow* aWindow, InputContext& aInputContext)
   }
 #endif // #ifdef NS_ENABLE_TSF
 
-  // NOTE: mNativeIMEContext may be null if IMM module isn't installed.
+#ifdef DEBUG
+  // NOTE: IMC may be null if IMM module isn't installed.
   IMEContext context(aWindow);
-  aInputContext.mNativeIMEContext = static_cast<void*>(context.get());
-  MOZ_ASSERT(aInputContext.mNativeIMEContext || !CurrentKeyboardLayoutHasIME());
-  // If no IME context is available, we should set the widget's pointer since
-  // nullptr indicates there is only one context per process on the platform.
-  if (!aInputContext.mNativeIMEContext) {
-    aInputContext.mNativeIMEContext = static_cast<void*>(aWindow);
-  }
+  MOZ_ASSERT(context.IsValid() || !CurrentKeyboardLayoutHasIME());
+#endif // #ifdef DEBUG
 }
 
 #ifdef DEBUG
@@ -487,7 +518,8 @@ IMEHandler::CurrentKeyboardLayoutHasIME()
 // static
 void
 IMEHandler::SetInputScopeForIMM32(nsWindow* aWindow,
-                                  const nsAString& aHTMLInputType)
+                                  const nsAString& aHTMLInputType,
+                                  const nsAString& aHTMLInputInputmode)
 {
   if (sIsInTSFMode || !sSetInputScopes || aWindow->Destroyed()) {
     return;
@@ -496,9 +528,28 @@ IMEHandler::SetInputScopeForIMM32(nsWindow* aWindow,
   const InputScope* scopes = nullptr;
   // http://www.whatwg.org/specs/web-apps/current-work/multipage/the-input-element.html
   if (aHTMLInputType.IsEmpty() || aHTMLInputType.EqualsLiteral("text")) {
-    static const InputScope inputScopes[] = { IS_DEFAULT };
-    scopes = &inputScopes[0];
-    arraySize = ArrayLength(inputScopes);
+    if (aHTMLInputInputmode.EqualsLiteral("url")) {
+      static const InputScope inputScopes[] = { IS_URL };
+      scopes = &inputScopes[0];
+      arraySize = ArrayLength(inputScopes);
+    } else if (aHTMLInputInputmode.EqualsLiteral("email")) {
+      static const InputScope inputScopes[] = { IS_EMAIL_SMTPEMAILADDRESS };
+      scopes = &inputScopes[0];
+      arraySize = ArrayLength(inputScopes);
+    } else if (aHTMLInputInputmode.EqualsLiteral("tel")) {
+      static const InputScope inputScopes[] =
+        {IS_TELEPHONE_LOCALNUMBER, IS_TELEPHONE_FULLTELEPHONENUMBER};
+      scopes = &inputScopes[0];
+      arraySize = ArrayLength(inputScopes);
+    } else if (aHTMLInputInputmode.EqualsLiteral("numeric")) {
+      static const InputScope inputScopes[] = { IS_NUMBER };
+      scopes = &inputScopes[0];
+      arraySize = ArrayLength(inputScopes);
+    } else {
+      static const InputScope inputScopes[] = { IS_DEFAULT };
+      scopes = &inputScopes[0];
+      arraySize = ArrayLength(inputScopes);
+    }
   } else if (aHTMLInputType.EqualsLiteral("url")) {
     static const InputScope inputScopes[] = { IS_URL };
     scopes = &inputScopes[0];
@@ -554,8 +605,8 @@ IMEHandler::MaybeShowOnScreenKeyboard()
   if (sPluginHasFocus ||
       !IsWin8OrLater() ||
       !Preferences::GetBool(kOskEnabled, true) ||
-      sShowingOnScreenKeyboard ||
-      IMEHandler::IsKeyboardPresentOnSlate()) {
+      GetOnScreenKeyboardWindow() ||
+      !IMEHandler::NeedOnScreenKeyboard()) {
     return;
   }
 
@@ -576,15 +627,15 @@ IMEHandler::MaybeShowOnScreenKeyboard()
 
 // static
 void
-IMEHandler::MaybeDismissOnScreenKeyboard()
+IMEHandler::MaybeDismissOnScreenKeyboard(nsWindow* aWindow)
 {
   if (sPluginHasFocus ||
-      !IsWin8OrLater() ||
-      !sShowingOnScreenKeyboard) {
+      !IsWin8OrLater()) {
     return;
   }
 
-  IMEHandler::DismissOnScreenKeyboard();
+  ::PostMessage(aWindow->GetWindowHandle(), MOZ_WM_DISMISS_ONSCREEN_KEYBOARD,
+                0, 0);
 }
 
 // static
@@ -602,24 +653,31 @@ IMEHandler::WStringStartsWithCaseInsensitive(const std::wstring& aHaystack,
                 lowerCaseNeedle.c_str()) == lowerCaseHaystack.c_str();
 }
 
-// Returns true if a physical keyboard is detected on Windows 8 and up.
-// Uses the Setup APIs to enumerate the attached keyboards and returns true
-// if the keyboard count is 1 or more. While this will work in most cases
-// it won't work if there are devices which expose keyboard interfaces which
-// are attached to the machine.
-// Based on IsKeyboardPresentOnSlate() in Chromium's base/win/win_util.cc.
+// Returns false if a physical keyboard is detected on Windows 8 and up,
+// or there is some other reason why an onscreen keyboard is not necessary.
+// Returns true if no keyboard is found and this device looks like it needs
+// an on-screen keyboard for text input.
 // static
 bool
-IMEHandler::IsKeyboardPresentOnSlate()
+IMEHandler::NeedOnScreenKeyboard()
 {
   // This function is only supported for Windows 8 and up.
   if (!IsWin8OrLater()) {
     Preferences::SetString(kOskDebugReason, L"IKPOS: Requires Win8+.");
-    return true;
+    return false;
   }
 
   if (!Preferences::GetBool(kOskDetectPhysicalKeyboard, true)) {
     Preferences::SetString(kOskDebugReason, L"IKPOS: Detection disabled.");
+    return true;
+  }
+
+  // If the last focus cause was not user-initiated (ie a result of code
+  // setting focus to an element) then don't auto-show a keyboard. This
+  // avoids cases where the keyboard would pop up "just" because e.g. a
+  // web page chooses to focus a search field on the page, even when that
+  // really isn't what the user is trying to do at that moment.
+  if (!InputContextAction::IsUserAction(sLastContextActionCause)) {
     return false;
   }
 
@@ -628,13 +686,13 @@ IMEHandler::IsKeyboardPresentOnSlate()
         != NID_INTEGRATED_TOUCH) {
     Preferences::SetString(kOskDebugReason,
                            L"IKPOS: Touch screen not found.");
-    return true;
+    return false;
   }
 
   // If the device is docked, the user is treating the device as a PC.
   if (::GetSystemMetrics(SM_SYSTEMDOCKED) != 0) {
     Preferences::SetString(kOskDebugReason, L"IKPOS: System docked.");
-    return true;
+    return false;
   }
 
   // To determine whether a keyboard is present on the device, we do the
@@ -646,11 +704,15 @@ IMEHandler::IsKeyboardPresentOnSlate()
 
   // 2. If the device supports auto rotation, then we get its platform role
   //    and check the system metric SM_CONVERTIBLESLATEMODE to see if it is
-  //    being used in slate mode. If yes then we return false here to ensure
-  //    that the OSK is displayed.
+  //    being used in slate mode. If not then we return false here to ensure
+  //    that the OSK is not displayed.
 
-  // 3. If step 1 and 2 fail then we check attached keyboards and return true
-  //    if we find ACPI\* or HID\VID* keyboards.
+  // 3. If step 1 and 2 both confirm this *could* be a device with no usable
+  //    keyboard, we check whether the last input was touch-based. If so,
+  //    we return true immediately to get an on-screen keyboard.
+
+  // 4. If this was a mouse or (on-screen) keyboard event, we check if
+  //    this device has keyboards attached to it.
 
   typedef BOOL (WINAPI* GetAutoRotationState)(PAR_STATE state);
   GetAutoRotationState get_rotation_state =
@@ -666,11 +728,11 @@ IMEHandler::IsKeyboardPresentOnSlate()
     if (auto_rotation_state & AR_NOSENSOR) {
       Preferences::SetString(kOskDebugReason,
                              L"IKPOS: Rotation sensor not found.");
-      return true;
+      return false;
     } else if (auto_rotation_state & AR_NOT_SUPPORTED) {
       Preferences::SetString(kOskDebugReason,
                              L"IKPOS: Auto-rotation not supported.");
-      return true;
+      return false;
     }
   }
 
@@ -696,13 +758,13 @@ IMEHandler::IsKeyboardPresentOnSlate()
   if (sPowerPlatformRole != PlatformRoleMobile &&
       sPowerPlatformRole != PlatformRoleSlate) {
     Preferences::SetString(kOskDebugReason, L"IKPOS: PlatformRole is neither Mobile nor Slate.");
-    return true;
+    return false;
   }
 
   // Likewise, if the tablet/mobile isn't in "slate" mode, we should bail:
   if (::GetSystemMetrics(SM_CONVERTIBLESLATEMODE) != 0) {
     Preferences::SetString(kOskDebugReason, L"IKPOS: ConvertibleSlateMode is non-zero");
-    return true;
+    return false;
   }
 
   // Before we check for a keyboard, we should check if the last input was touch,
@@ -710,9 +772,20 @@ IMEHandler::IsKeyboardPresentOnSlate()
   if (sLastContextActionCause == InputContextAction::CAUSE_TOUCH) {
     Preferences::SetString(kOskDebugReason,
       L"IKPOS: Used touch to focus control, ignoring keyboard presence");
-    return false;
+    return true;
   }
+  return !IMEHandler::IsKeyboardPresentOnSlate();
+}
 
+// Uses the Setup APIs to enumerate the attached keyboards and returns true
+// if the keyboard count is 1 or more. While this will work in most cases
+// it won't work if there are devices which expose keyboard interfaces which
+// are attached to the machine.
+// Based on IsKeyboardPresentOnSlate() in Chromium's base/win/win_util.cc.
+// static
+bool
+IMEHandler::IsKeyboardPresentOnSlate()
+{
   const GUID KEYBOARD_CLASS_GUID =
     { 0x4D36E96B, 0xE325,  0x11CE,
       { 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18 } };
@@ -743,12 +816,18 @@ IMEHandler::IsKeyboardPresentOnSlate()
                                           MAX_DEVICE_ID_LEN,
                                           0);
     if (status == CR_SUCCESS) {
+      static const std::wstring BT_HID_DEVICE = L"HID\\{00001124";
+      static const std::wstring BT_HOGP_DEVICE = L"HID\\{00001812";
       // To reduce the scope of the hack we only look for ACPI and HID\\VID
       // prefixes in the keyboard device ids.
       if (IMEHandler::WStringStartsWithCaseInsensitive(device_id,
                                                        L"ACPI") ||
           IMEHandler::WStringStartsWithCaseInsensitive(device_id,
-                                                       L"HID\\VID")) {
+                                                       L"HID\\VID") ||
+          IMEHandler::WStringStartsWithCaseInsensitive(device_id,
+                                                       BT_HID_DEVICE) ||
+          IMEHandler::WStringStartsWithCaseInsensitive(device_id,
+                                                       BT_HOGP_DEVICE)) {
         // The heuristic we are using is to check the count of keyboards and
         // return true if the API's report one or more keyboards. Please note
         // that this will break for non keyboard devices which expose a
@@ -902,7 +981,6 @@ IMEHandler::ShowOnScreenKeyboard()
                 nullptr,
                 nullptr,
                 SW_SHOW);
-  sShowingOnScreenKeyboard = true;
 }
 
 // Based on DismissVirtualKeyboard() in Chromium's base/win/win_util.cc.
@@ -910,15 +988,45 @@ IMEHandler::ShowOnScreenKeyboard()
 void
 IMEHandler::DismissOnScreenKeyboard()
 {
-  sShowingOnScreenKeyboard = false;
+  // Dismiss the virtual keyboard if it's open
+  HWND osk = GetOnScreenKeyboardWindow();
+  if (osk) {
+    ::PostMessage(osk, WM_SYSCOMMAND, SC_CLOSE, 0);
+  }
+}
 
-  // Dismiss the virtual keyboard by generating the ESC keystroke
-  // programmatically.
+// static
+HWND
+IMEHandler::GetOnScreenKeyboardWindow()
+{
   const wchar_t kOSKClassName[] = L"IPTip_Main_Window";
   HWND osk = ::FindWindowW(kOSKClassName, nullptr);
   if (::IsWindow(osk) && ::IsWindowEnabled(osk)) {
-    ::PostMessage(osk, WM_SYSCOMMAND, SC_CLOSE, 0);
+    return osk;
   }
+  return nullptr;
+}
+
+// static
+void
+IMEHandler::SetCandidateWindow(nsWindow* aWindow, CANDIDATEFORM* aForm)
+{
+  if (!sPluginHasFocus) {
+    return;
+  }
+
+  IMMHandler::SetCandidateWindow(aWindow, aForm);
+}
+
+// static
+void
+IMEHandler::DefaultProcOfPluginEvent(nsWindow* aWindow,
+                                     const NPEvent* aPluginEvent)
+{
+  if (!sPluginHasFocus) {
+    return;
+  }
+  IMMHandler::DefaultProcOfPluginEvent(aWindow, aPluginEvent);
 }
 
 } // namespace widget

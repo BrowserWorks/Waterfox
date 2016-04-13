@@ -4,16 +4,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "MediaDecoderReader.h"
-#include "PlatformDecoderModule.h"
-#include "nsRect.h"
-#include "mozilla/RefPtr.h"
-#include "mozilla/CheckedInt.h"
-#include "VideoUtils.h"
 #include "ImageContainer.h"
+#include "MediaDecoderReader.h"
 #include "MediaInfo.h"
+#include "mozilla/CheckedInt.h"
+#include "mozilla/mozalloc.h" // for operator new, and new (fallible)
+#include "mozilla/RefPtr.h"
 #include "mozilla/TaskQueue.h"
+#include "mozilla/UniquePtr.h"
+#include "mozilla/UniquePtrExtensions.h"
+#include "nsRect.h"
+#include "PlatformDecoderModule.h"
 #include "TimeUnits.h"
+#include "VideoUtils.h"
 
 namespace mozilla {
 
@@ -58,6 +61,9 @@ public:
         mCreator->Create(media::TimeUnit::FromMicroseconds(mSample->mTime),
                          media::TimeUnit::FromMicroseconds(mSample->mDuration),
                          mSample->mOffset);
+      if (!data) {
+        return NS_ERROR_OUT_OF_MEMORY;
+      }
       mCallback->Output(data);
       return NS_OK;
     }
@@ -87,6 +93,11 @@ public:
     return NS_OK;
   }
 
+  const char* GetDescriptionName() const override
+  {
+    return "blank media data decoder";
+  }
+
 private:
   nsAutoPtr<BlankMediaDataCreator> mCreator;
   RefPtr<FlushableTaskQueue> mTaskQueue;
@@ -114,12 +125,12 @@ public:
     // with a U and V plane that are half the size of the Y plane, i.e 8 bit,
     // 2x2 subsampled. Have the data pointers of each frame point to the
     // first plane, they'll always be zero'd memory anyway.
-    nsAutoArrayPtr<uint8_t> frame(new uint8_t[mFrameWidth * mFrameHeight]);
-    memset(frame, 0, mFrameWidth * mFrameHeight);
+    auto frame = MakeUnique<uint8_t[]>(mFrameWidth * mFrameHeight);
+    memset(frame.get(), 0, mFrameWidth * mFrameHeight);
     VideoData::YCbCrBuffer buffer;
 
     // Y plane.
-    buffer.mPlanes[0].mData = frame;
+    buffer.mPlanes[0].mData = frame.get();
     buffer.mPlanes[0].mStride = mFrameWidth;
     buffer.mPlanes[0].mHeight = mFrameHeight;
     buffer.mPlanes[0].mWidth = mFrameWidth;
@@ -127,7 +138,7 @@ public:
     buffer.mPlanes[0].mSkip = 0;
 
     // Cb plane.
-    buffer.mPlanes[1].mData = frame;
+    buffer.mPlanes[1].mData = frame.get();
     buffer.mPlanes[1].mStride = mFrameWidth / 2;
     buffer.mPlanes[1].mHeight = mFrameHeight / 2;
     buffer.mPlanes[1].mWidth = mFrameWidth / 2;
@@ -135,7 +146,7 @@ public:
     buffer.mPlanes[1].mSkip = 0;
 
     // Cr plane.
-    buffer.mPlanes[2].mData = frame;
+    buffer.mPlanes[2].mData = frame.get();
     buffer.mPlanes[2].mStride = mFrameWidth / 2;
     buffer.mPlanes[2].mHeight = mFrameHeight / 2;
     buffer.mPlanes[2].mWidth = mFrameWidth / 2;
@@ -183,7 +194,11 @@ public:
         frames.value() > (UINT32_MAX / mChannelCount)) {
       return nullptr;
     }
-    AudioDataValue* samples = new AudioDataValue[frames.value() * mChannelCount];
+    auto samples =
+      MakeUniqueFallible<AudioDataValue[]>(frames.value() * mChannelCount);
+    if (!samples) {
+      return nullptr;
+    }
     // Fill the sound buffer with an A4 tone.
     static const float pi = 3.14159265f;
     static const float noteHz = 440.0f;
@@ -198,7 +213,7 @@ public:
                          aDTS.ToMicroseconds(),
                          aDuration.ToMicroseconds(),
                          uint32_t(frames.value()),
-                         samples,
+                         Move(samples),
                          mChannelCount,
                          mSampleRate);
   }
@@ -246,7 +261,7 @@ public:
   }
 
   bool
-  SupportsMimeType(const nsACString& aMimeType) override
+  SupportsMimeType(const nsACString& aMimeType) const override
   {
     return true;
   }

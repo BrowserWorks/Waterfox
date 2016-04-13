@@ -1,7 +1,7 @@
-# -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /**
  * Customization handler prepares this browser window for entering and exiting
@@ -60,14 +60,11 @@ var CustomizationHandler = {
     if (aDetails.changed) {
       gURLBar = document.getElementById("urlbar");
 
-      gProxyFavIcon = document.getElementById("page-proxy-favicon");
       gHomeButton.updateTooltip();
-      gIdentityHandler._cacheElements();
       XULBrowserWindow.init();
 
-#ifndef XP_MACOSX
-      updateEditUIVisibility();
-#endif
+      if (AppConstants.platform != "macosx")
+        updateEditUIVisibility();
 
       // Hacky: update the PopupNotifications' object's reference to the iconBox,
       // if it already exists, since it may have changed if the URL bar was

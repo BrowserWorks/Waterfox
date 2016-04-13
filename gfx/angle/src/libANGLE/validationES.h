@@ -26,6 +26,7 @@ namespace gl
 class Context;
 class Program;
 class Shader;
+class ValidationContext;
 
 bool ValidCap(const Context *context, GLenum cap);
 bool ValidTextureTarget(const Context *context, GLenum target);
@@ -93,7 +94,7 @@ bool ValidateDrawArrays(Context *context, GLenum mode, GLint first, GLsizei coun
 bool ValidateDrawArraysInstanced(Context *context, GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 bool ValidateDrawArraysInstancedANGLE(Context *context, GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 
-bool ValidateDrawElements(Context *context,
+bool ValidateDrawElements(ValidationContext *context,
                           GLenum mode,
                           GLsizei count,
                           GLenum type,
@@ -141,6 +142,25 @@ bool ValidateEGLImageTargetRenderbufferStorageOES(Context *context,
                                                   egl::Display *display,
                                                   GLenum target,
                                                   egl::Image *image);
+
+bool ValidateBindVertexArrayBase(Context *context, GLuint array);
+bool ValidateDeleteVertexArraysBase(Context *context, GLsizei n);
+bool ValidateGenVertexArraysBase(Context *context, GLsizei n);
+
+bool ValidateProgramBinaryBase(Context *context,
+                               GLuint program,
+                               GLenum binaryFormat,
+                               const void *binary,
+                               GLint length);
+bool ValidateGetProgramBinaryBase(Context *context,
+                                  GLuint program,
+                                  GLsizei bufSize,
+                                  GLsizei *length,
+                                  GLenum *binaryFormat,
+                                  void *binary);
+
+// Error messages shared here for use in testing.
+extern const char *g_ExceedsMaxElementErrorMessage;
 }
 
 #endif // LIBANGLE_VALIDATION_ES_H_

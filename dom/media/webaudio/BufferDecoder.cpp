@@ -33,13 +33,6 @@ BufferDecoder::BeginDecoding(TaskQueue* aTaskQueueIdentity)
   mTaskQueueIdentity = aTaskQueueIdentity;
 }
 
-bool
-BufferDecoder::OnStateMachineTaskQueue() const
-{
-  // BufferDecoder doesn't have the concept of a state machine.
-  return true;
-}
-
 MediaResource*
 BufferDecoder::GetResource() const
 {
@@ -47,20 +40,8 @@ BufferDecoder::GetResource() const
 }
 
 void
-BufferDecoder::NotifyBytesConsumed(int64_t aBytes, int64_t aOffset)
-{
-  // ignore
-}
-
-void
 BufferDecoder::NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
                                    uint32_t aDropped)
-{
-  // ignore
-}
-
-void
-BufferDecoder::SetMediaSeekable(bool aMediaSeekable)
 {
   // ignore
 }
@@ -77,36 +58,6 @@ BufferDecoder::GetImageContainer()
 {
   // no image container
   return nullptr;
-}
-
-bool
-BufferDecoder::IsTransportSeekable()
-{
-  return false;
-}
-
-bool
-BufferDecoder::IsMediaSeekable()
-{
-  return false;
-}
-
-void
-BufferDecoder::MetadataLoaded(nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags, MediaDecoderEventVisibility aEventVisibility)
-{
-  // ignore
-}
-
-void
-BufferDecoder::FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo, MediaDecoderEventVisibility aEventVisibility)
-{
-  // ignore
-}
-
-void
-BufferDecoder::OnReadMetadataCompleted()
-{
-  // ignore
 }
 
 MediaDecoderOwner*

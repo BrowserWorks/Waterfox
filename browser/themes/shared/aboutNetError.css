@@ -34,7 +34,7 @@ ul {
 }
 
 #errorTitle {
-  background: url("aboutNetError_info.svg") left 0 no-repeat;
+  background: url("chrome://global/skin/icons/info.svg") left 0 no-repeat;
   background-size: 3em;
   -moz-margin-start: -5em;
   -moz-padding-start: 5em;
@@ -51,7 +51,7 @@ ul {
 
 #errorTitle[sslv3=true],
 #errorTitle[weakCrypto=true] {
-  background-image: url("aboutNetError_alert.svg");
+  background-image: url("cert-error.svg");
 }
 
 #errorTryAgain {
@@ -64,7 +64,9 @@ ul {
 }
 
 @media (max-width: 675px) {
-  #errorTitle {
+  #errorTitle,
+  #errorTitle[sslv3=true],
+  #errorTitle[weakCrypto=true] {
     padding-top: 0;
     background-image: none;
     -moz-padding-start: 0;
@@ -79,7 +81,45 @@ button:disabled {
   cursor: pointer;
 }
 
-div#certificateErrorReporting,
+#learnMoreContainer {
+  display: none;
+}
+
+#buttonContainer {
+  display: none;
+  flex-flow: row wrap;
+}
+
+#buttonSpacer {
+  flex: 1;
+}
+
+#returnButton {
+  background-color: var(--in-content-primary-button-background);
+  border: none;
+  color: var(--in-content-selected-text);
+  min-width: 250px;
+  margin-inline-start: 0;
+}
+
+#returnButton:hover {
+  background-color: var(--in-content-primary-button-background-hover) !important;
+}
+
+#returnButton:hover:active {
+  background-color: var(--in-content-primary-button-background-active) !important;
+}
+
+#advancedButton {
+  display: none;
+  min-width: 150px;
+}
+
+#certificateErrorReporting,
+#reportSentMessage {
+  display: none;
+}
+
 div#weakCryptoAdvanced {
   display: none;
   float: right;
@@ -88,12 +128,10 @@ div#weakCryptoAdvanced {
   -moz-margin-end: 24px;
 }
 
-div#certificateErrorReporting a,
 div#weakCryptoAdvanced a {
   text-decoration: none;
 }
 
-div#certificateErrorReporting a:hover,
 div#weakCryptoAdvanced a:hover {
   text-decoration: underline;
 }
@@ -106,7 +144,6 @@ span.downArrow {
   transform: scaleY(0.7);
 }
 
-div#certificateErrorReportingPanel,
 div#weakCryptoAdvancedPanel {
   /* Hidden until the link is clicked */
   display: none;
@@ -117,29 +154,16 @@ div#weakCryptoAdvancedPanel {
   padding: 0 12px 12px 12px;
   box-shadow: 0 0 4px #ddd;
   font-size: 0.9em;
-  position: absolute;
-  width: 75%;
-  margin-top: 10px;
 }
 
-div#certificateErrorReportingPanel:-moz-dir(ltr),
-div#weakCryptoAdvancedPanel:-moz-dir(ltr) {
-  left: 34%;
-}
-
-div#certificateErrorReportingPanel:-moz-dir(rtl),
-div#weakCryptoAdvancedPanel:-moz-dir(rtl) {
-  right: 0;
-}
-
-#errorStatePanel,
 #overrideWeakCryptoPanel {
-  display: flex;
+  display: none;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-between;
   align-content: space-between;
   align-items: flex-start;
+  margin-top: 1em;
 }
 
 span#hostname {
@@ -148,4 +172,10 @@ span#hostname {
 
 #automaticallyReportInFuture {
   cursor: pointer;
+}
+
+#errorCode {
+  color: var(--in-content-page-color);
+  cursor: text;
+  text-decoration: none;
 }

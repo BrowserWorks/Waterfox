@@ -68,7 +68,7 @@ PR_STATIC_ASSERT (HighThreadThreshold <= MAX_RESOLVER_THREADS);
 
 //----------------------------------------------------------------------------
 
-static PRLogModuleInfo *gHostResolverLog = nullptr;
+static LazyLogModule gHostResolverLog("nsHostResolver");
 #define LOG(args) MOZ_LOG(gHostResolverLog, mozilla::LogLevel::Debug, args)
 
 #define LOG_HOST(host, interface) host,                                        \
@@ -349,7 +349,7 @@ nsHostRecord::SizeOfIncludingThis(MallocSizeOf mallocSizeOf) const
 
     n += mBlacklistedItems.ShallowSizeOfExcludingThis(mallocSizeOf);
     for (size_t i = 0; i < mBlacklistedItems.Length(); i++) {
-        n += mBlacklistedItems[i].SizeOfExcludingThisMustBeUnshared(mallocSizeOf);
+        n += mBlacklistedItems[i].SizeOfExcludingThisIfUnshared(mallocSizeOf);
     }
     return n;
 }
@@ -409,7 +409,8 @@ HostDB_MatchEntry(PLDHashTable *table,
     const nsHostDBEnt *he = static_cast<const nsHostDBEnt *>(entry);
     const nsHostKey *hk = static_cast<const nsHostKey *>(key); 
 
-    return !strcmp(he->rec->host, hk->host) &&
+    return !strcmp(he->rec->host ? he->rec->host : "",
+                   hk->host ? hk->host : "") &&
             RES_KEY_FLAGS (he->rec->flags) == RES_KEY_FLAGS(hk->flags) &&
             he->rec->af == hk->af &&
             !strcmp(he->rec->netInterface, hk->netInterface);
@@ -1458,9 +1459,6 @@ nsHostResolver::Create(uint32_t maxCacheEntries,
                        uint32_t defaultGracePeriod,
                        nsHostResolver **result)
 {
-    if (!gHostResolverLog)
-        gHostResolverLog = PR_NewLogModule("nsHostResolver");
-
     nsHostResolver *res = new nsHostResolver(maxCacheEntries, defaultCacheEntryLifetime,
                                              defaultGracePeriod);
     NS_ADDREF(res);

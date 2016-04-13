@@ -14,7 +14,7 @@ const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
                  "test/test-network.html";
 const PREF = "devtools.webconsole.persistlog";
 
-var test = asyncTest(function* () {
+add_task(function* () {
   Services.prefs.setBoolPref(PREF, true);
 
   yield loadTab(TEST_URI);
@@ -65,7 +65,7 @@ function consoleOpened(hud) {
 }
 
 function testScroll([result], hud) {
-  let scrollNode = hud.outputNode.parentNode;
+  let scrollNode = hud.ui.outputWrapper;
   let msgNode = [...result.matched][0];
   ok(msgNode.classList.contains("filtered-by-type"),
     "network message is filtered by type");

@@ -12,14 +12,14 @@
 var TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
                "bug 613642: remember scroll location";
 
-var test = asyncTest(function* () {
+add_task(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
 
   hud.jsterm.clearOutput();
   let outputNode = hud.outputNode;
-  let scrollBox = outputNode.parentNode;
+  let scrollBox = hud.ui.outputWrapper;
 
   for (let i = 0; i < 150; i++) {
     content.console.log("test message " + i);

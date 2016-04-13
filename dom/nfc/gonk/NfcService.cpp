@@ -11,6 +11,7 @@
 #include "mozilla/dom/NfcOptionsBinding.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/dom/RootedDictionary.h"
+#include "mozilla/Endian.h"
 #include "mozilla/ipc/ListenSocket.h"
 #include "mozilla/ipc/ListenSocketConsumer.h"
 #include "mozilla/ipc/NfcConnector.h"
@@ -108,7 +109,7 @@ NfcConsumer::Start()
   // If we could not cleanup properly before and an old
   // instance of the daemon is still running, we kill it
   // here.
-  unused << NS_WARN_IF(property_set("ctl.stop", "nfcd") < 0);
+  Unused << NS_WARN_IF(property_set("ctl.stop", "nfcd") < 0);
 
   mHandler = new NfcMessageHandler();
 
@@ -333,10 +334,8 @@ NfcConsumer::Receive(UnixSocketBuffer* aBuffer)
 
   while (aBuffer->GetSize()) {
     const uint8_t* data = aBuffer->GetData();
-    uint32_t parcelSize = ((data[0] & 0xff) << 24) |
-                          ((data[1] & 0xff) << 16) |
-                          ((data[2] & 0xff) <<  8) |
-                           (data[3] & 0xff);
+    uint32_t parcelSize = BigEndian::readUint32(data);
+
     MOZ_ASSERT(parcelSize <= aBuffer->GetSize());
 
     // TODO: Zero-copy buffer transfers
@@ -592,8 +591,8 @@ NfcService::Shutdown()
   }
 
   // |CleanupRunnable| will take care of these pointers
-  unused << mNfcConsumer.forget();
-  unused << mThread.forget();
+  Unused << mNfcConsumer.forget();
+  Unused << mThread.forget();
 
   return NS_OK;
 }

@@ -19,6 +19,7 @@
 #include "mozilla/RefPtr.h"
 #include "FakeMediaStreams.h"
 #include "FakeMediaStreamsImpl.h"
+#include "FakeLogging.h"
 #include "MediaConduitErrors.h"
 #include "MediaConduitInterface.h"
 #include "MediaPipeline.h"
@@ -34,6 +35,9 @@
 #include "runnable_utils.h"
 
 #include "webrtc/modules/interface/module_common_types.h"
+
+#include "FakeIPC.h"
+#include "FakeIPC.cpp"
 
 #define GTEST_HAS_RTTI 0
 #include "gtest/gtest.h"
@@ -396,9 +400,9 @@ class MediaPipelineTest : public ::testing::Test {
     // Setup transport flows
     InitTransports(aIsRtcpMux);
 
-    mozilla::SyncRunnable::DispatchToThread(
-      test_utils->sts_target(),
-      WrapRunnable(&p1_, &TestAgent::CreatePipelines_s, aIsRtcpMux));
+    NS_DispatchToMainThread(
+      WrapRunnable(&p1_, &TestAgent::CreatePipelines_s, aIsRtcpMux),
+      NS_DISPATCH_SYNC);
 
     mozilla::SyncRunnable::DispatchToThread(
       test_utils->sts_target(),
@@ -560,7 +564,6 @@ TEST_F(MediaPipelineFilterTest, TestFilterReport0CountTruncated) {
 TEST_F(MediaPipelineFilterTest, TestFilterReport1SSRCTruncated) {
   MediaPipelineFilter filter;
   filter.AddRemoteSSRC(16);
-  filter.AddLocalSSRC(17);
   const unsigned char sr[] = {
     RTCP_TYPEINFO(1, MediaPipelineFilter::SENDER_REPORT_T, 12),
     REPORT_FRAGMENT(16),
@@ -572,7 +575,6 @@ TEST_F(MediaPipelineFilterTest, TestFilterReport1SSRCTruncated) {
 TEST_F(MediaPipelineFilterTest, TestFilterReport1BigSSRC) {
   MediaPipelineFilter filter;
   filter.AddRemoteSSRC(0x01020304);
-  filter.AddLocalSSRC(0x11121314);
   const unsigned char sr[] = {
     RTCP_TYPEINFO(1, MediaPipelineFilter::SENDER_REPORT_T, 12),
     SSRC(0x01020304),
@@ -597,7 +599,6 @@ TEST_F(MediaPipelineFilterTest, TestFilterReportNoMatch) {
 
 TEST_F(MediaPipelineFilterTest, TestFilterUnknownRTCPType) {
   MediaPipelineFilter filter;
-  filter.AddLocalSSRC(18);
   ASSERT_FALSE(filter.FilterSenderReport(unknown_type, sizeof(unknown_type)));
 }
 

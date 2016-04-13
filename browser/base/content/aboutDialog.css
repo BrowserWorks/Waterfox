@@ -7,7 +7,7 @@
 }
 
 #rightBox {
-  background-image: url("chrome://branding/content/about-wordmark.png");
+  background-image: url("chrome://branding/content/about-wordmark.svg");
   background-repeat: no-repeat;
   /* padding-top creates room for the wordmark */
   padding-top: 38px;
@@ -29,6 +29,16 @@
   -moz-user-select: text;
   -moz-user-focus: normal;
   cursor: text;
+}
+
+#version:-moz-locale-dir(rtl) {
+  direction: ltr;
+  text-align: right;
+  margin-right: 0;
+}
+
+#releasenotes {
+  margin-top: 10px;
 }
 
 #distribution,

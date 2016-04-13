@@ -28,12 +28,12 @@
 #undef LOG
 #endif
 
-static PRLogModuleInfo* gMediaStreamLog;
-#define LOG(type, msg) MOZ_LOG(gMediaStreamLog, type, msg)
-
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::layers;
+
+static LazyLogModule gMediaStreamLog("MediaStream");
+#define LOG(type, msg) MOZ_LOG(gMediaStreamLog, type, msg)
 
 const TrackID TRACK_VIDEO_PRIMARY = 1;
 
@@ -128,7 +128,7 @@ public:
     NS_WARN_IF_FALSE(!mStream->mTracks.IsEmpty(),
                      "A new track was detected on the input stream; creating a corresponding MediaStreamTrack. "
                      "Initial tracks should be added manually to immediately and synchronously be available to JS.");
-    mStream->CreateOwnDOMTrack(aTrackId, aType);
+    mStream->CreateOwnDOMTrack(aTrackId, aType, nsString());
   }
 
   void DoNotifyTrackEnded(TrackID aTrackId)
@@ -318,10 +318,6 @@ DOMMediaStream::DOMMediaStream()
   nsresult rv;
   nsCOMPtr<nsIUUIDGenerator> uuidgen =
     do_GetService("@mozilla.org/uuid-generator;1", &rv);
-
-  if (!gMediaStreamLog) {
-    gMediaStreamLog = PR_NewLogModule("MediaStream");
-  }
 
   if (NS_SUCCEEDED(rv) && uuidgen) {
     nsID uuid;
@@ -623,7 +619,7 @@ DOMMediaStream::InitAudioCaptureStream(nsIDOMWindow* aWindow,
   InitInputStreamCommon(aGraph->CreateAudioCaptureStream(this, AUDIO_TRACK), aGraph);
   InitOwnedStreamCommon(aGraph);
   InitPlaybackStreamCommon(aGraph);
-  CreateOwnDOMTrack(AUDIO_TRACK, MediaSegment::AUDIO);
+  CreateOwnDOMTrack(AUDIO_TRACK, MediaSegment::AUDIO, nsString());
 }
 
 void
@@ -784,7 +780,7 @@ DOMMediaStream::RemovePrincipalChangeObserver(PrincipalChangeObserver* aObserver
 }
 
 MediaStreamTrack*
-DOMMediaStream::CreateOwnDOMTrack(TrackID aTrackID, MediaSegment::Type aType)
+DOMMediaStream::CreateOwnDOMTrack(TrackID aTrackID, MediaSegment::Type aType, const nsString& aLabel)
 {
   MOZ_RELEASE_ASSERT(mInputStream);
   MOZ_RELEASE_ASSERT(mOwnedStream);
@@ -794,10 +790,10 @@ DOMMediaStream::CreateOwnDOMTrack(TrackID aTrackID, MediaSegment::Type aType)
   MediaStreamTrack* track;
   switch (aType) {
   case MediaSegment::AUDIO:
-    track = new AudioStreamTrack(this, aTrackID);
+    track = new AudioStreamTrack(this, aTrackID, aLabel);
     break;
   case MediaSegment::VIDEO:
-    track = new VideoStreamTrack(this, aTrackID);
+    track = new VideoStreamTrack(this, aTrackID, aLabel);
     break;
   default:
     MOZ_CRASH("Unhandled track type");
@@ -1057,11 +1053,10 @@ DOMAudioNodeMediaStream::CreateTrackUnionStream(nsIDOMWindow* aWindow,
 DOMHwMediaStream::DOMHwMediaStream()
 {
 #ifdef MOZ_WIDGET_GONK
-  mImageContainer = LayerManager::CreateImageContainer(ImageContainer::ASYNCHRONOUS_OVERLAY);
-  RefPtr<Image> img = mImageContainer->CreateImage(ImageFormat::OVERLAY_IMAGE);
-  mOverlayImage = static_cast<layers::OverlayImage*>(img.get());
+  mImageContainer = LayerManager::CreateImageContainer(ImageContainer::ASYNCHRONOUS);
+  mOverlayImage = mImageContainer->CreateOverlayImage();
   nsAutoTArray<ImageContainer::NonOwningImage,1> images;
-  images.AppendElement(ImageContainer::NonOwningImage(img));
+  images.AppendElement(ImageContainer::NonOwningImage(mOverlayImage));
   mImageContainer->SetCurrentImages(images);
 #endif
 }

@@ -3,140 +3,289 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const { DOM: dom, createClass, PropTypes, createFactory } = require("devtools/client/shared/vendor/react");
-const { safeErrorString } = require("devtools/shared/DevToolsUtils");
-const Tree = createFactory(require("./tree"));
-const TreeItem = createFactory(require("./tree-item"));
-const { getSnapshotStatusTextFull, getSnapshotTotals, L10N } = require("../utils");
-const { snapshotState: states } = require("../constants");
-const { snapshot: snapshotModel } = require("../models");
-// If HEAP_TREE_ROW_HEIGHT changes, be sure to change `var(--heap-tree-row-height)`
-// in `devtools/client/themes/memory.css`
-const HEAP_TREE_ROW_HEIGHT = 14;
+const { assert, safeErrorString } = require("devtools/shared/DevToolsUtils");
+const Census = createFactory(require("./census"));
+const CensusHeader = createFactory(require("./census-header"));
+const DominatorTree = createFactory(require("./dominator-tree"));
+const DominatorTreeHeader = createFactory(require("./dominator-tree-header"));
+const { getStatusTextFull, L10N } = require("../utils");
+const { snapshotState: states, diffingState, viewState, dominatorTreeState } = require("../constants");
+const { snapshot: snapshotModel, diffingModel } = require("../models");
 
 /**
- * Creates a hash map mapping node IDs to its parent node.
+ * Get the app state's current state atom.
  *
- * @param {CensusTreeNode} node
- * @param {Object<number, CensusTreeNode>} aggregator
+ * @see the relevant state string constants in `../constants.js`.
  *
- * @return {Object<number, CensusTreeNode>}
+ * @param {viewState} view
+ * @param {snapshotModel} snapshot
+ * @param {diffingModel} diffing
+ *
+ * @return {snapshotState|diffingState|dominatorTreeState}
  */
-function createParentMap (node, aggregator=Object.create(null)) {
-  for (let child of (node.children || [])) {
-    aggregator[child.id] = node;
-    createParentMap(child, aggregator);
+function getState(view, snapshot, diffing) {
+  switch (view) {
+    case viewState.CENSUS:
+      return snapshot.state;
+
+    case viewState.DIFFING:
+      return diffing.state;
+
+    case viewState.DOMINATOR_TREE:
+      return snapshot.dominatorTree
+        ? snapshot.dominatorTree.state
+        : snapshot.state;
   }
 
-  return aggregator;
+  assert(false, `Unexpected view state: ${view}`);
+  return null;
 }
 
 /**
- * Creates properties to be passed into the Tree component.
+ * Return true if we should display a status message when we are in the given
+ * state. Return false otherwise.
  *
- * @param {CensusTreeNode} census
- * @return {Object}
+ * @param {snapshotState|diffingState|dominatorTreeState} state
+ * @param {viewState} view
+ * @param {snapshotModel} snapshot
+ *
+ * @returns {Boolean}
  */
-function createTreeProperties (snapshot, toolbox) {
-  const census = snapshot.census;
-  let map = createParentMap(census);
-  const totals = getSnapshotTotals(snapshot);
-
-  return {
-    getParent: node => {
-      const parent = map[node.id];
-      return parent === census ? null : parent;
-    },
-    getChildren: node => node.children || [],
-    renderItem: (item, depth, focused, arrow) =>
-      new TreeItem({
-        toolbox,
-        item,
-        depth,
-        focused,
-        arrow,
-        getPercentBytes: bytes => bytes / totals.bytes * 100,
-        getPercentCount: count => count / totals.count * 100,
-      }),
-    getRoots: () => census.children,
-    getKey: node => node.id,
-    itemHeight: HEAP_TREE_ROW_HEIGHT,
-    // Because we never add or remove children when viewing the same census, we
-    // can always reuse a cached traversal if one is available.
-    reuseCachedTraversal: traversal => true,
-  };
+function shouldDisplayStatus(state, view, snapshot) {
+  switch (state) {
+    case states.IMPORTING:
+    case states.SAVING:
+    case states.SAVED:
+    case states.READING:
+    case states.READ:
+    case states.SAVING_CENSUS:
+    case diffingState.SELECTING:
+    case diffingState.TAKING_DIFF:
+    case dominatorTreeState.COMPUTING:
+    case dominatorTreeState.COMPUTED:
+    case dominatorTreeState.FETCHING:
+      return true;
+  }
+  return view === viewState.DOMINATOR_TREE && !snapshot.dominatorTree;
 }
 
 /**
- * Main view for the memory tool -- contains several panels for different states;
- * an initial state of only a button to take a snapshot, loading states, and the
- * heap view tree.
+ * Get the status text to display for the given state.
+ *
+ * @param {snapshotState|diffingState|dominatorTreeState} state
+ * @param {diffingModel} diffing
+ *
+ * @returns {String}
  */
+function getStateStatusText(state, diffing) {
+  if (state === diffingState.SELECTING) {
+    return L10N.getStr(diffing.firstSnapshotId === null
+                         ? "diffing.prompt.selectBaseline"
+                         : "diffing.prompt.selectComparison");
+  }
 
+  return getStatusTextFull(state);
+}
+
+/**
+ * Given that we should display a status message, return true if we should also
+ * display a throbber along with the status message. Return false otherwise.
+ *
+ * @param {diffingModel} diffing
+ *
+ * @returns {Boolean}
+ */
+function shouldDisplayThrobber(diffing) {
+  return !diffing || diffing.state !== diffingState.SELECTING;
+}
+
+/**
+ * Get the current state's error, or return null if there is none.
+ *
+ * @param {snapshotModel} snapshot
+ * @param {diffingModel} diffing
+ *
+ * @returns {Error|null}
+ */
+function getError(snapshot, diffing) {
+  if (diffing && diffing.state === diffingState.ERROR) {
+    return diffing.error;
+  }
+
+  if (snapshot) {
+    if (snapshot.state === states.ERROR) {
+      return snapshot.error;
+    }
+
+    if (snapshot.dominatorTree &&
+        snapshot.dominatorTree.state === dominatorTreeState.ERROR) {
+      return snapshot.dominatorTree.error;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Main view for the memory tool.
+ *
+ * The Heap component contains several panels for different states; an initial
+ * state of only a button to take a snapshot, loading states, the census view
+ * tree, the dominator tree, etc.
+ */
 const Heap = module.exports = createClass({
-  displayName: "heap-view",
+  displayName: "Heap",
 
   propTypes: {
     onSnapshotClick: PropTypes.func.isRequired,
+    onLoadMoreSiblings: PropTypes.func.isRequired,
+    onCensusExpand: PropTypes.func.isRequired,
+    onCensusCollapse: PropTypes.func.isRequired,
+    onDominatorTreeExpand: PropTypes.func.isRequired,
+    onDominatorTreeCollapse: PropTypes.func.isRequired,
+    onCensusFocus: PropTypes.func.isRequired,
+    onDominatorTreeFocus: PropTypes.func.isRequired,
     snapshot: snapshotModel,
+    onViewSourceInDebugger: PropTypes.func.isRequired,
+    diffing: diffingModel,
+    view: PropTypes.string.isRequired,
   },
 
   render() {
-    let { snapshot, onSnapshotClick, toolbox } = this.props;
-    let census = snapshot ? snapshot.census : null;
-    let state = snapshot ? snapshot.state : "initial";
-    let statusText = snapshot ? getSnapshotStatusTextFull(snapshot) : "";
-    let content;
+    let {
+      snapshot,
+      diffing,
+      onSnapshotClick,
+      onLoadMoreSiblings,
+      onViewSourceInDebugger,
+      view,
+    } = this.props;
 
-    switch (state) {
-      case "initial":
-        content = [dom.button({
-          className: "devtools-toolbarbutton take-snapshot",
-          onClick: onSnapshotClick,
-          // Want to use the [standalone] tag to leverage our styles,
-          // but React hates that evidently
-          "data-standalone": true,
-          "data-text-only": true,
-        }, L10N.getStr("take-snapshot"))];
-        break;
-      case states.ERROR:
-        content = [
-          dom.span({ className: "snapshot-status error" }, statusText),
-          dom.pre({}, safeErrorString(snapshot.error))
-        ];
-        break;
-      case states.SAVING:
-      case states.SAVED:
-      case states.READING:
-      case states.READ:
-      case states.SAVING_CENSUS:
-        content = [dom.span({ className: "snapshot-status devtools-throbber" }, statusText)];
-        break;
-      case states.SAVED_CENSUS:
-        content = [];
-
-        if (snapshot.breakdown.by === "allocationStack"
-            && census.children.length === 1
-            && census.children[0].name === "noStack") {
-          content.push(dom.div({ className: "error no-allocation-stacks" },
-                               L10N.getStr("heapview.noAllocationStacks")));
-        }
-
-        content.push(
-          dom.div({ className: "header" },
-            dom.span({ className: "heap-tree-item-bytes" }, L10N.getStr("heapview.field.bytes")),
-            dom.span({ className: "heap-tree-item-count" }, L10N.getStr("heapview.field.count")),
-            dom.span({ className: "heap-tree-item-total-bytes" }, L10N.getStr("heapview.field.totalbytes")),
-            dom.span({ className: "heap-tree-item-total-count" }, L10N.getStr("heapview.field.totalcount")),
-            dom.span({ className: "heap-tree-item-name" }, L10N.getStr("heapview.field.name"))
-          ),
-          Tree(createTreeProperties(snapshot, toolbox))
-        );
-        break;
+    if (!diffing && !snapshot) {
+      return this._renderInitial(onSnapshotClick);
     }
-    let pane = dom.div({ className: "heap-view-panel", "data-state": state }, ...content);
 
-    return (
-      dom.div({ id: "heap-view", "data-state": state }, pane)
-    )
-  }
+    const state = getState(view, snapshot, diffing);
+    const statusText = getStateStatusText(state, diffing);
+
+    if (shouldDisplayStatus(state, view, snapshot)) {
+      return this._renderStatus(state, statusText, diffing);
+    }
+
+    const error = getError(snapshot, diffing);
+    if (error) {
+      return this._renderError(state, statusText, error);
+    }
+
+    if (view === viewState.CENSUS || view === viewState.DIFFING) {
+      const census = view === viewState.CENSUS
+        ? snapshot.census
+        : diffing.census;
+      return this._renderCensus(state, census, diffing, onViewSourceInDebugger);
+    }
+
+    assert(view === viewState.DOMINATOR_TREE,
+           "If we aren't in progress, looking at a census, or diffing, then we " +
+           "must be looking at a dominator tree");
+    assert(!diffing, "Should not have diffing");
+    assert(snapshot.dominatorTree, "Should have a dominator tree");
+
+    return this._renderDominatorTree(state, onViewSourceInDebugger, snapshot.dominatorTree,
+                                     onLoadMoreSiblings);
+  },
+
+  /**
+   * Render the heap view's container panel with the given contents inside of
+   * it.
+   *
+   * @param {snapshotState|diffingState|dominatorTreeState} state
+   * @param {...Any} contents
+   */
+  _renderHeapView(state, ...contents) {
+    return dom.div(
+      {
+        id: "heap-view",
+        "data-state": state
+      },
+      dom.div(
+        {
+          className: "heap-view-panel",
+          "data-state": state,
+        },
+        ...contents
+      )
+    );
+  },
+
+  _renderInitial(onSnapshotClick) {
+    return this._renderHeapView("initial", dom.button(
+      {
+        className: "devtools-toolbarbutton take-snapshot",
+        onClick: onSnapshotClick,
+        "data-standalone": true,
+        "data-text-only": true,
+      },
+      L10N.getStr("take-snapshot")
+    ));
+  },
+
+  _renderStatus(state, statusText, diffing) {
+    let throbber = "";
+    if (shouldDisplayThrobber(diffing)) {
+      throbber = "devtools-throbber";
+    }
+
+    return this._renderHeapView(state, dom.span(
+      {
+        className: `snapshot-status ${throbber}`
+      },
+      statusText
+    ));
+  },
+
+  _renderError(state, statusText, error) {
+    return this._renderHeapView(
+      state,
+      dom.span({ className: "snapshot-status error" }, statusText),
+      dom.pre({}, safeErrorString(error))
+    );
+  },
+
+  _renderCensus(state, census, diffing, onViewSourceInDebugger) {
+    const contents = [];
+
+    if (census.breakdown.by === "allocationStack"
+        && census.report.children.length === 1
+        && census.report.children[0].name === "noStack") {
+      contents.push(dom.div({ className: "error no-allocation-stacks" },
+                            L10N.getStr("heapview.noAllocationStacks")));
+    }
+
+    contents.push(CensusHeader());
+    contents.push(Census({
+      onViewSourceInDebugger,
+      diffing,
+      census,
+      onExpand: node => this.props.onCensusExpand(census, node),
+      onCollapse: node => this.props.onCensusCollapse(census, node),
+      onFocus: node => this.props.onCensusFocus(census, node),
+    }));
+
+    return this._renderHeapView(state, ...contents);
+  },
+
+  _renderDominatorTree(state, onViewSourceInDebugger, dominatorTree, onLoadMoreSiblings) {
+    return this._renderHeapView(
+      state,
+      DominatorTreeHeader(),
+      DominatorTree({
+        onViewSourceInDebugger,
+        dominatorTree,
+        onLoadMoreSiblings,
+        onExpand: this.props.onDominatorTreeExpand,
+        onCollapse: this.props.onDominatorTreeCollapse,
+        onFocus: this.props.onDominatorTreeFocus,
+      })
+    );
+  },
 });

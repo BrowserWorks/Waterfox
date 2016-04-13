@@ -501,8 +501,12 @@ var removePagesById = Task.async(function*(db, idList) {
   if (idList.length == 0) {
     return;
   }
+  // Note, we are already in a transaction, since callers create it.
   yield db.execute(`DELETE FROM moz_places
                     WHERE id IN ( ${ sqlList(idList) } )`);
+  // Hosts accumulated during the places delete are updated through a trigger
+  // (see nsPlacesTriggers.h).
+  yield db.execute(`DELETE FROM moz_updatehosts_temp`);
 });
 
 /**
@@ -527,8 +531,8 @@ var removePagesById = Task.async(function*(db, idList) {
  * @return (Promise)
  */
 var cleanupPages = Task.async(function*(db, pages) {
-  yield invalidateFrecencies(db, [p.id for (p of pages) if (p.hasForeign || p.hasVisits)]);
-  yield removePagesById(db, [p.id for (p of pages) if (!p.hasForeign && !p.hasVisits)]);
+  yield invalidateFrecencies(db, pages.filter(p => p.hasForeign || p.hasVisits).map(p => p.id));
+  yield removePagesById(db, pages.filter(p => !p.hasForeign && !p.hasVisits).map(p => p.id));
 });
 
 /**
@@ -747,7 +751,7 @@ var remove = Task.async(function*(db, {guids, urls}, onResult = null) {
     yield db.executeTransaction(function*() {
       // 2. Remove all visits to these pages.
       yield db.execute(`DELETE FROM moz_historyvisits
-                        WHERE place_id IN (${ sqlList([p.id for (p of pages)]) })
+                        WHERE place_id IN (${ sqlList(pages.map(p => p.id)) })
                        `);
 
       // 3. Clean up and notify

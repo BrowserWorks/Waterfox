@@ -139,9 +139,11 @@ XPCWrappedNativeScope::XPCWrappedNativeScope(JSContext* cx,
     JSAddonId* addonId = JS::AddonIdOfObject(aGlobal);
     if (gInterpositionMap) {
         bool isSystem = nsContentUtils::IsSystemPrincipal(principal);
-        if (InterpositionMap::Ptr p = gInterpositionMap->lookup(addonId)) {
+        bool waiveInterposition = priv->waiveInterposition;
+        InterpositionMap::Ptr interposition = gInterpositionMap->lookup(addonId);
+        if (!waiveInterposition && interposition) {
             MOZ_RELEASE_ASSERT(isSystem);
-            mInterposition = p->value();
+            mInterposition = interposition->value();
         }
         // We also want multiprocessCompatible add-ons to have a default interposition.
         if (!mInterposition && addonId && isSystem) {
@@ -465,7 +467,7 @@ XPCWrappedNativeScope::~XPCWrappedNativeScope()
 void
 XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(JSTracer* trc, XPCJSRuntime* rt)
 {
-    // Do JS_CallTracer for all wrapped natives with external references, as
+    // Do JS::TraceEdge for all wrapped natives with external references, as
     // well as any DOM expando objects.
     for (XPCWrappedNativeScope* cur = gScopes; cur; cur = cur->mNext) {
         for (auto i = cur->mWrappedNativeMap->Iter(); !i.Done(); i.Next()) {
@@ -477,7 +479,7 @@ XPCWrappedNativeScope::TraceWrappedNativesInAllScopes(JSTracer* trc, XPCJSRuntim
 
         if (cur->mDOMExpandoSet) {
             for (DOMExpandoSet::Enum e(*cur->mDOMExpandoSet); !e.empty(); e.popFront())
-                JS_CallHashSetObjectTracer(trc, e, e.front(), "DOM expando object");
+                JS::TraceEdge(trc, &e.mutableFront(), "DOM expando object");
         }
     }
 }
@@ -698,7 +700,8 @@ XPCWrappedNativeScope::SetAddonInterposition(JSContext* cx,
 {
     if (!gInterpositionMap) {
         gInterpositionMap = new InterpositionMap();
-        gInterpositionMap->init();
+        bool ok = gInterpositionMap->init();
+        NS_ENSURE_TRUE(ok, false);
 
         // Make sure to clear the map at shutdown.
         // Note: this will take care of gInterpositionWhitelists too.
@@ -754,7 +757,11 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
     MOZ_RELEASE_ASSERT(MAX_INTERPOSITION > gInterpositionWhitelists->Length() + 1);
     InterpositionWhitelistPair* newPair = gInterpositionWhitelists->AppendElement();
     newPair->interposition = interposition;
-    newPair->whitelist.init();
+    if (!newPair->whitelist.init()) {
+        JS_ReportOutOfMemory(cx);
+        return false;
+    }
+
     whitelist = &newPair->whitelist;
 
     RootedValue whitelistVal(cx);
@@ -816,7 +823,10 @@ XPCWrappedNativeScope::UpdateInterpositionWhitelist(JSContext* cx,
             // By internizing the id's we ensure that they won't get
             // GCed so we can use them as hash keys.
             jsid id = INTERNED_STRING_TO_JSID(cx, str);
-            whitelist->put(JSID_BITS(id));
+            if (!whitelist->put(JSID_BITS(id))) {
+                JS_ReportOutOfMemory(cx);
+                return false;
+            }
         }
     }
 

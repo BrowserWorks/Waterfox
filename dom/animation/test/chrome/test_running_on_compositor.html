@@ -20,6 +20,10 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+@keyframes rotate_and_opacity {
+  from { transform: rotate(0deg); opacity: 1;}
+  to { transform: rotate(360deg); opacity: 0;}
+}
 div {
   /* Element needs geometry to be eligible for layerization */
   width: 100px;
@@ -107,20 +111,15 @@ promise_test(function(t) {
 
   return animation.ready.then(t.step_func(function() {
     animation.finish();
-    // We need to wait for two frames here to ensure isRunningOnCompositor
-    // flag is cleared. The first frame is for waking root refresh driver up,
-    // the second one is for clearing the flag.
-    // In most cases root refresh driver has been dormant because there is
-    // nothing to do for the root refresh driver (e.g. nothing change on
-    // chrome window). In the first frame document's refresh driver wakes the
-    // root refresh driver up as a result of animation's style changes.
-    // In the second frame the root refresh driver clears the flag as a
-    // result of a paint.
-    return waitForAnimationFrames(2);
+    assert_equals(animation.isRunningOnCompositor, false,
+       'Animation reports that it is NOT running on the compositor'
+       + ' immediately after animation.finish() is called');
+    // Check that we don't set the flag back again on the next tick.
+    return waitForFrame();
   })).then(t.step_func(function() {
     assert_equals(animation.isRunningOnCompositor, false,
        'Animation reports that it is NOT running on the compositor'
-       + ' when animation.finish() is called');
+       + ' on the next tick after animation.finish() is called');
   }));
 }, 'isRunningOnCompositor is false when the animation.finish() is called');
 
@@ -130,15 +129,15 @@ promise_test(function(t) {
 
   return animation.ready.then(t.step_func(function() {
     animation.currentTime = 100000; // 100s
-    // We need to wait for up to two frames here to ensure the "is running on
-    // compositor" flag is cleared.
-    // See the description in the 'isRunningOnCompositor is false when the
-    // animation.finish() is called' test for the rationale.
-    return waitForAnimationFrames(2);
+    assert_equals(animation.isRunningOnCompositor, false,
+       'Animation reports that it is NOT running on the compositor'
+       + ' immediately after manually seeking the animation to the end');
+    // Check that we don't set the flag back again on the next tick.
+    return waitForFrame();
   })).then(t.step_func(function() {
     assert_equals(animation.isRunningOnCompositor, false,
        'Animation reports that it is NOT running on the compositor'
-       + ' when manually seeking the animation to the end');
+       + ' on the next tick after manually seeking the animation to the end');
   }));
 }, 'isRunningOnCompositor is false when manually seeking the animation to ' +
    'the end');
@@ -149,15 +148,15 @@ promise_test(function(t) {
 
   return animation.ready.then(t.step_func(function() {
     animation.cancel();
-    // We need to wait for up to two frames here to ensure the "is running on
-    // compositor" flag is cleared.
-    // See the description in the 'isRunningOnCompositor is false when the
-    // animation.finish() is called' test for the rationale.
-    return waitForAnimationFrames(2);
+    assert_equals(animation.isRunningOnCompositor, false,
+       'Animation reports that it is NOT running on the compositor'
+       + ' immediately after animation.cancel() is called');
+    // Check that we don't set the flag back again on the next tick.
+    return waitForFrame();
   })).then(t.step_func(function() {
     assert_equals(animation.isRunningOnCompositor, false,
        'Animation reports that it is NOT running on the compositor'
-       + ' when animation.cancel() is called');
+       + ' on the next tick after animation.cancel() is called');
   }));
 }, 'isRunningOnCompositor is false when animation.cancel() is called');
 
@@ -212,6 +211,9 @@ promise_test(function(t) {
         resolve();
       }));
       observer.observe(div, { animations: true, subtree: false });
+      t.add_cleanup(function() {
+        observer.disconnect();
+      });
       div.style.animationDuration = "200s";
     }));
   }));
@@ -267,5 +269,22 @@ promise_test(function(t) {
   }));
 }, 'isRunningOnCompositor for transitions');
 
+promise_test(function(t) {
+  var div = addDiv(t, { style: 'animation: rotate_and_opacity 100s; ' +
+                               'backface-visibility: hidden; ' +
+                               'transform: none !important;' });
+  var animation = div.getAnimations()[0];
+
+  return animation.ready.then(t.step_func(function() {
+    assert_equals(animation.isRunningOnCompositor, omtaEnabled,
+       'If an animation has a property that can run on the compositor and a '
+       + 'property that cannot (due to Gecko limitations) but where the latter'
+       + 'property is overridden in the CSS cascade, the animation should '
+       + 'still report that it is running on the compositor');
+  }));
+}, 'isRunningOnCompositor is true when a property that would otherwise block ' +
+   'running on the compositor is overridden in the CSS cascade');
+
+</script>
 </script>
 </body>

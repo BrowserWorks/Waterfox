@@ -113,9 +113,7 @@ HTMLVideoElement::GetAttributeMappingFunction() const
 nsresult HTMLVideoElement::SetAcceptHeader(nsIHttpChannel* aChannel)
 {
   nsAutoCString value(
-#ifdef MOZ_WEBM
       "video/webm,"
-#endif
       "video/ogg,"
       "video/*;q=0.9,"
       "application/ogg;q=0.7,"
@@ -267,6 +265,7 @@ HTMLVideoElement::UpdateScreenWakeLock()
   if (mScreenWakeLock && (mPaused || hidden || !mUseScreenWakeLock)) {
     ErrorResult rv;
     mScreenWakeLock->Unlock(rv);
+    rv.SuppressException();
     mScreenWakeLock = nullptr;
     return;
   }

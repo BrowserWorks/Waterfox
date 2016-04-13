@@ -14,7 +14,7 @@
 namespace mozilla {
 
 #ifndef IC_LOG
-PRLogModuleInfo* GetICLog();
+LogModule* GetICLog();
 #define IC_LOG(...) MOZ_LOG(GetICLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 #endif
 
@@ -53,7 +53,7 @@ public:
   VideoStreamTrack* GetVideoStreamTrack() const;
 
   // nsWrapperCache member
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
   {
     return ImageCaptureBinding::Wrap(aCx, this, aGivenProto);
   }

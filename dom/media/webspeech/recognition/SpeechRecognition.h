@@ -46,7 +46,7 @@ namespace dom {
 class GlobalObject;
 class SpeechEvent;
 
-PRLogModuleInfo* GetSpeechRecognitionLog();
+LogModule* GetSpeechRecognitionLog();
 #define SR_LOG(...) MOZ_LOG(GetSpeechRecognitionLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 class SpeechRecognition final : public DOMEventTargetHelper,
@@ -64,7 +64,7 @@ public:
 
   nsISupports* GetParentObject() const;
 
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   static bool IsAuthorized(JSContext* aCx, JSObject* aGlobal);
 

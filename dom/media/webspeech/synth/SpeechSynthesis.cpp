@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsISupportsPrimitives.h"
 #include "nsSpeechTask.h"
 #include "mozilla/Logging.h"
 
@@ -16,14 +17,10 @@
 #include "nsIDocument.h"
 
 #undef LOG
-PRLogModuleInfo*
+mozilla::LogModule*
 GetSpeechSynthLog()
 {
-  static PRLogModuleInfo* sLog = nullptr;
-
-  if (!sLog) {
-    sLog = PR_NewLogModule("SpeechSynthesis");
-  }
+  static mozilla::LazyLogModule sLog("SpeechSynthesis");
 
   return sLog;
 }
@@ -59,7 +56,9 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(SpeechSynthesis)
   NS_WRAPPERCACHE_INTERFACE_MAP_ENTRY
-  NS_INTERFACE_MAP_ENTRY(nsISupports)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIObserver)
+  NS_INTERFACE_MAP_ENTRY(nsIObserver)
+  NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(SpeechSynthesis)
@@ -68,8 +67,16 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(SpeechSynthesis)
 SpeechSynthesis::SpeechSynthesis(nsPIDOMWindow* aParent)
   : mParent(aParent)
   , mHoldQueue(false)
+  , mInnerID(aParent->WindowID())
 {
   MOZ_ASSERT(aParent->IsInnerWindow());
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->AddObserver(this, "inner-window-destroyed", true);
+  }
+
 }
 
 SpeechSynthesis::~SpeechSynthesis()
@@ -120,6 +127,12 @@ SpeechSynthesis::Paused() const
 {
   return mHoldQueue || (mCurrentTask && mCurrentTask->IsPrePaused()) ||
          (!mSpeechQueue.IsEmpty() && mSpeechQueue.ElementAt(0)->IsPaused());
+}
+
+bool
+SpeechSynthesis::HasEmptyQueue() const
+{
+  return mSpeechQueue.Length() == 0;
 }
 
 void
@@ -196,7 +209,7 @@ SpeechSynthesis::Pause()
     return;
   }
 
-  if (mCurrentTask &&
+  if (mCurrentTask && !mSpeechQueue.IsEmpty() &&
       mSpeechQueue.ElementAt(0)->GetState() != SpeechSynthesisUtterance::STATE_ENDED) {
     mCurrentTask->Pause();
   } else {
@@ -243,6 +256,8 @@ SpeechSynthesis::GetVoices(nsTArray< RefPtr<SpeechSynthesisVoice> >& aResult)
     return;
   }
 
+  nsISupports* voiceParent = NS_ISUPPORTS_CAST(nsIObserver*, this);
+
   for (uint32_t i = 0; i < voiceCount; i++) {
     nsAutoString uri;
     rv = nsSynthVoiceRegistry::GetInstance()->GetVoice(i, uri);
@@ -255,7 +270,7 @@ SpeechSynthesis::GetVoices(nsTArray< RefPtr<SpeechSynthesisVoice> >& aResult)
     SpeechSynthesisVoice* voice = mVoiceCache.GetWeak(uri);
 
     if (!voice) {
-      voice = new SpeechSynthesisVoice(this, uri);
+      voice = new SpeechSynthesisVoice(voiceParent, uri);
     }
 
     aResult.AppendElement(voice);
@@ -277,6 +292,37 @@ SpeechSynthesis::ForceEnd()
   if (mCurrentTask) {
     mCurrentTask->ForceEnd();
   }
+}
+
+NS_IMETHODIMP
+SpeechSynthesis::Observe(nsISupports* aSubject, const char* aTopic,
+                         const char16_t* aData)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (strcmp(aTopic, "inner-window-destroyed")) {
+    return NS_OK;
+  }
+
+  nsCOMPtr<nsISupportsPRUint64> wrapper = do_QueryInterface(aSubject);
+  NS_ENSURE_TRUE(wrapper, NS_ERROR_FAILURE);
+
+  uint64_t innerID;
+  nsresult rv = wrapper->GetData(&innerID);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (innerID == mInnerID) {
+    if (mCurrentTask) {
+      mCurrentTask->Cancel();
+    }
+
+    nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+    if (obs) {
+      obs->RemoveObserver(this, "inner-window-destroyed");
+    }
+  }
+
+  return NS_OK;
 }
 
 } // namespace dom

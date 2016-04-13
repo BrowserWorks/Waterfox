@@ -446,95 +446,6 @@ template void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType, const A
 template void MacroAssembler::loadFromTypedArray(Scalar::Type arrayType, const BaseIndex& src, const ValueOperand& dest,
                                                  bool allowDouble, Register temp, Label* fail);
 
-template<typename T>
-void
-MacroAssembler::compareExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem,
-                                               Register oldval, Register newval,
-                                               Register temp, AnyRegister output)
-{
-    switch (arrayType) {
-      case Scalar::Int8:
-        compareExchange8SignExtend(mem, oldval, newval, output.gpr());
-        break;
-      case Scalar::Uint8:
-        compareExchange8ZeroExtend(mem, oldval, newval, output.gpr());
-        break;
-      case Scalar::Uint8Clamped:
-        compareExchange8ZeroExtend(mem, oldval, newval, output.gpr());
-        break;
-      case Scalar::Int16:
-        compareExchange16SignExtend(mem, oldval, newval, output.gpr());
-        break;
-      case Scalar::Uint16:
-        compareExchange16ZeroExtend(mem, oldval, newval, output.gpr());
-        break;
-      case Scalar::Int32:
-        compareExchange32(mem, oldval, newval, output.gpr());
-        break;
-      case Scalar::Uint32:
-        // At the moment, the code in MCallOptimize.cpp requires the output
-        // type to be double for uint32 arrays.  See bug 1077305.
-        MOZ_ASSERT(output.isFloat());
-        compareExchange32(mem, oldval, newval, temp);
-        convertUInt32ToDouble(temp, output.fpu());
-        break;
-      default:
-        MOZ_CRASH("Invalid typed array type");
-    }
-}
-
-template void
-MacroAssembler::compareExchangeToTypedIntArray(Scalar::Type arrayType, const Address& mem,
-                                               Register oldval, Register newval, Register temp,
-                                               AnyRegister output);
-template void
-MacroAssembler::compareExchangeToTypedIntArray(Scalar::Type arrayType, const BaseIndex& mem,
-                                               Register oldval, Register newval, Register temp,
-                                               AnyRegister output);
-
-template<typename T>
-void
-MacroAssembler::atomicExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem,
-                                              Register value, Register temp, AnyRegister output)
-{
-    switch (arrayType) {
-      case Scalar::Int8:
-        atomicExchange8SignExtend(mem, value, output.gpr());
-        break;
-      case Scalar::Uint8:
-        atomicExchange8ZeroExtend(mem, value, output.gpr());
-        break;
-      case Scalar::Uint8Clamped:
-        atomicExchange8ZeroExtend(mem, value, output.gpr());
-        break;
-      case Scalar::Int16:
-        atomicExchange16SignExtend(mem, value, output.gpr());
-        break;
-      case Scalar::Uint16:
-        atomicExchange16ZeroExtend(mem, value, output.gpr());
-        break;
-      case Scalar::Int32:
-        atomicExchange32(mem, value, output.gpr());
-        break;
-      case Scalar::Uint32:
-        // At the moment, the code in MCallOptimize.cpp requires the output
-        // type to be double for uint32 arrays.  See bug 1077305.
-        MOZ_ASSERT(output.isFloat());
-        atomicExchange32(mem, value, temp);
-        convertUInt32ToDouble(temp, output.fpu());
-        break;
-      default:
-        MOZ_CRASH("Invalid typed array type");
-    }
-}
-
-template void
-MacroAssembler::atomicExchangeToTypedIntArray(Scalar::Type arrayType, const Address& mem,
-                                              Register value, Register temp, AnyRegister output);
-template void
-MacroAssembler::atomicExchangeToTypedIntArray(Scalar::Type arrayType, const BaseIndex& mem,
-                                              Register value, Register temp, AnyRegister output);
-
 template <typename T>
 void
 MacroAssembler::loadUnboxedProperty(T address, JSValueType type, TypedOrValueRegister output)
@@ -546,7 +457,7 @@ MacroAssembler::loadUnboxedProperty(T address, JSValueType type, TypedOrValueReg
               convertInt32ToDouble(address, output.typedReg().fpu());
               break;
           }
-          // Fallthrough.
+          MOZ_FALLTHROUGH;
       }
 
       case JSVAL_TYPE_BOOLEAN:
@@ -1189,6 +1100,10 @@ MacroAssembler::initGCThing(Register obj, Register temp, JSObject* templateObj,
                     Address(obj, elementsOffset + ObjectElements::offsetOfFlags()));
             MOZ_ASSERT(!ntemplate->hasPrivate());
         } else {
+            // If the target type could be a TypedArray that maps shared memory
+            // then this would need to store emptyObjectElementsShared in that case.
+            // That cannot happen at present; TypedArray allocation is always
+            // a VM call.
             storePtr(ImmPtr(emptyObjectElements), Address(obj, NativeObject::offsetOfElements()));
 
             initGCSlots(obj, temp, ntemplate, initContents);
@@ -1327,8 +1242,7 @@ MacroAssembler::loadStringChar(Register str, Register index, Register output)
     loadStringChars(str, output);
 
     Label isLatin1, done;
-    branchTest32(Assembler::NonZero, Address(str, JSString::offsetOfFlags()),
-                 Imm32(JSString::LATIN1_CHARS_BIT), &isLatin1);
+    branchLatin1String(str, &isLatin1);
     load16ZeroExtend(BaseIndex(output, index, TimesTwo), output);
     jump(&done);
 
@@ -1810,7 +1724,7 @@ MacroAssembler::convertValueToFloatingPoint(JSContext* cx, const Value& v, Float
         return true;
     }
 
-    MOZ_ASSERT(v.isObject());
+    MOZ_ASSERT(v.isObject() || v.isSymbol());
     jump(fail);
     return true;
 }
@@ -2033,7 +1947,7 @@ MacroAssembler::convertValueToInt(JSContext* cx, const Value& v, Register output
         return true;
     }
 
-    MOZ_ASSERT(v.isObject());
+    MOZ_ASSERT(v.isObject() || v.isSymbol());
 
     jump(fail);
     return true;
@@ -2089,6 +2003,21 @@ MacroAssembler::convertTypedOrValueToInt(TypedOrValueRegister src, FloatRegister
       default:
         MOZ_CRASH("Bad MIRType");
     }
+}
+
+bool
+MacroAssembler::asmMergeWith(MacroAssembler& other)
+{
+    size_t sizeBeforeMerge = size();
+
+    if (!MacroAssemblerSpecific::asmMergeWith(other))
+        return false;
+
+    retargetWithOffset(sizeBeforeMerge, other.asmSyncInterruptLabel(), asmSyncInterruptLabel());
+    retargetWithOffset(sizeBeforeMerge, other.asmStackOverflowLabel(), asmStackOverflowLabel());
+    retargetWithOffset(sizeBeforeMerge, other.asmOnOutOfBoundsLabel(), asmOnOutOfBoundsLabel());
+    retargetWithOffset(sizeBeforeMerge, other.asmOnConversionErrorLabel(), asmOnConversionErrorLabel());
+    return true;
 }
 
 void
@@ -2177,7 +2106,7 @@ MacroAssembler::AutoProfilerCallInstrumentation::AutoProfilerCallInstrumentation
     JitContext* icx = GetJitContext();
     AbsoluteAddress profilingActivation(icx->runtime->addressOfProfilingActivation());
 
-    CodeOffsetLabel label = masm.movWithPatch(ImmWord(uintptr_t(-1)), reg);
+    CodeOffset label = masm.movWithPatch(ImmWord(uintptr_t(-1)), reg);
     masm.loadPtr(profilingActivation, reg2);
     masm.storePtr(reg, Address(reg2, JitActivation::offsetOfLastProfilingCallSite()));
 
@@ -2191,7 +2120,7 @@ void
 MacroAssembler::linkProfilerCallSites(JitCode* code)
 {
     for (size_t i = 0; i < profilerCallSites_.length(); i++) {
-        CodeOffsetLabel offset = profilerCallSites_[i];
+        CodeOffset offset = profilerCallSites_[i];
         CodeLocationLabel location(code, offset);
         PatchDataWithValueCheck(location, ImmPtr(location.raw()), ImmPtr((void*)-1));
     }
@@ -2304,17 +2233,6 @@ MacroAssembler::MacroAssembler(JSContext* cx, IonScript* ion,
         if (pc && cx->runtime()->spsProfiler.enabled())
             enableProfilingInstrumentation();
     }
-}
-
-void
-MacroAssembler::resetForNewCodeGenerator(TempAllocator& alloc)
-{
-    setFramePushed(0);
-    moveResolver_.clearTempObjectPool();
-    moveResolver_.setAllocator(alloc);
-#ifdef DEBUG
-    debugTrackedRegisters_.clear();
-#endif
 }
 
 MacroAssembler::AfterICSaveLive
@@ -2602,7 +2520,7 @@ MacroAssembler::callWithABINoProfiler(void* fun, MoveOp::Type result)
 }
 
 void
-MacroAssembler::callWithABINoProfiler(AsmJSImmPtr imm, MoveOp::Type result)
+MacroAssembler::callWithABINoProfiler(wasm::SymbolicAddress imm, MoveOp::Type result)
 {
     uint32_t stackAdjust;
     callWithABIPre(&stackAdjust, /* callFromAsmJS = */ true);

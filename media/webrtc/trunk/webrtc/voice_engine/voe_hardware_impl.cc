@@ -81,6 +81,9 @@ int VoEHardwareImpl::SetAudioDeviceLayer(AudioLayers audioLayer)
         case kAudioLinuxPulse:
             wantedLayer = AudioDeviceModule::kLinuxPulseAudio;
             break;
+        case kAudioSndio:
+            wantedLayer = AudioDeviceModule::kSndioAudio;
+            break;
     }
 
     // Save the audio device layer for Init()
@@ -132,6 +135,9 @@ int VoEHardwareImpl::GetAudioDeviceLayer(AudioLayers& audioLayer)
             break;
         case AudioDeviceModule::kLinuxPulseAudio:
             audioLayer = kAudioLinuxPulse;
+            break;
+        case AudioDeviceModule::kSndioAudio:
+            audioLayer = kAudioSndio;
             break;
         default:
             _shared->SetLastError(VE_UNDEFINED_SC_ERR, kTraceError,
@@ -779,6 +785,14 @@ int VoEHardwareImpl::PlayoutSampleRate(unsigned int* samples_per_sec) const {
     return false;
   }
   return _shared->audio_device()->PlayoutSampleRate(samples_per_sec);
+}
+
+bool VoEHardwareImpl::BuiltInAECIsAvailable() const {
+if (!_shared->statistics().Initialized()) {
+    _shared->SetLastError(VE_NOT_INITED, kTraceError);
+    return false;
+  }
+  return _shared->audio_device()->BuiltInAECIsAvailable();
 }
 
 #endif  // WEBRTC_VOICE_ENGINE_HARDWARE_API

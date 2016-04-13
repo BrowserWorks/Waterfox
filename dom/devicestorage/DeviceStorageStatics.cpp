@@ -131,6 +131,30 @@ DeviceStorageStatics::InitDirs()
   sMutex.AssertCurrentThreadOwns();
   DS_LOG_INFO("");
 
+#if !defined(MOZ_WIDGET_GONK)
+  if (!XRE_IsParentProcess()) {
+    // For gonk, we have the parent process forward the directory information
+    // to the child using ContentParent::ForwardKnownInfo. On desktop, this
+    // winds up slowing down the startup (in particular ts_paint), so rather
+    // than penalize all e10s processes, we do a synchronous IPC call here,
+    // which only penalizes child processes which actually use DeviceStorage.
+
+    dom::ContentChild* child = dom::ContentChild::GetSingleton();
+    DeviceStorageLocationInfo locationInfo;
+    child->SendGetDeviceStorageLocations(&locationInfo);
+
+    NS_NewLocalFile(locationInfo.apps(),     true, getter_AddRefs(sInstance->mDirs[TYPE_APPS]));
+    NS_NewLocalFile(locationInfo.crashes(),  true, getter_AddRefs(sInstance->mDirs[TYPE_CRASHES]));
+    NS_NewLocalFile(locationInfo.pictures(), true, getter_AddRefs(sInstance->mDirs[TYPE_PICTURES]));
+    NS_NewLocalFile(locationInfo.videos(),   true, getter_AddRefs(sInstance->mDirs[TYPE_VIDEOS]));
+    NS_NewLocalFile(locationInfo.music(),    true, getter_AddRefs(sInstance->mDirs[TYPE_MUSIC]));
+    NS_NewLocalFile(locationInfo.sdcard(),   true, getter_AddRefs(sInstance->mDirs[TYPE_SDCARD]));
+
+    sInstance->mInitialized = true;
+    return;
+  }
+#endif
+
   nsCOMPtr<nsIProperties> dirService
     = do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID);
   MOZ_ASSERT(dirService);
@@ -174,6 +198,13 @@ DeviceStorageStatics::InitDirs()
     NS_NewLocalFile(path, /* aFollowLinks */ true,
                     getter_AddRefs(mDirs[TYPE_SDCARD]));
   }
+#ifdef MOZ_B2GDROID
+  if (NS_SUCCEEDED(mozilla::AndroidBridge::GetExternalPublicDirectory(
+      NS_LITERAL_STRING(DEVICESTORAGE_APPS), path))) {
+    NS_NewLocalFile(path, /* aFollowLinks */ true,
+                    getter_AddRefs(mDirs[TYPE_APPS]));
+  }
+#endif
 
 #elif defined (XP_UNIX)
   dirService->Get(NS_UNIX_XDG_PICTURES_DIR,
@@ -208,8 +239,11 @@ DeviceStorageStatics::InitDirs()
   }
 #endif // !MOZ_WIDGET_ANDROID
 
+#ifndef MOZ_B2GDROID
   dirService->Get(NS_APP_USER_PROFILE_50_DIR, NS_GET_IID(nsIFile),
                   getter_AddRefs(mDirs[TYPE_APPS]));
+#endif
+
   if (mDirs[TYPE_APPS]) {
     mDirs[TYPE_APPS]->AppendRelativeNativePath(NS_LITERAL_CSTRING("webapps"));
   }
@@ -261,6 +295,13 @@ DeviceStorageStatics::DumpDirs()
     nullptr
   };
 
+  const char* ptStr;
+  if (XRE_IsParentProcess()) {
+    ptStr = "parent";
+  } else {
+    ptStr = "child";
+  }
+
   for (uint32_t i = 0; i < TYPE_COUNT; ++i) {
     MOZ_ASSERT(storageTypes[i]);
 
@@ -268,8 +309,8 @@ DeviceStorageStatics::DumpDirs()
     if (mDirs[i]) {
       mDirs[i]->GetPath(path);
     }
-    DS_LOG_INFO("%s: '%s'",
-      storageTypes[i], NS_LossyConvertUTF16toASCII(path).get());
+    DS_LOG_INFO("(%s) %s: '%s'",
+      ptStr, storageTypes[i], NS_LossyConvertUTF16toASCII(path).get());
   }
 #endif
 }
@@ -285,6 +326,23 @@ DeviceStorageStatics::Shutdown()
   Preferences::RemoveObserver(this, kPrefTesting);
   Preferences::RemoveObserver(this, kPrefPromptTesting);
   Preferences::RemoveObserver(this, kPrefWritableName);
+}
+
+/* static */ void
+DeviceStorageStatics::GetDeviceStorageLocationsForIPC(
+  DeviceStorageLocationInfo* aLocationInfo)
+{
+  MOZ_ASSERT(XRE_IsParentProcess());
+  MOZ_ASSERT(NS_IsMainThread());
+
+  InitializeDirs();
+
+  GetDirPath(TYPE_APPS,     aLocationInfo->apps());
+  GetDirPath(TYPE_CRASHES,  aLocationInfo->crashes());
+  GetDirPath(TYPE_PICTURES, aLocationInfo->pictures());
+  GetDirPath(TYPE_VIDEOS,   aLocationInfo->videos());
+  GetDirPath(TYPE_MUSIC,    aLocationInfo->music());
+  GetDirPath(TYPE_SDCARD,   aLocationInfo->sdcard());
 }
 
 /* static */ already_AddRefed<nsIFile>
@@ -320,6 +378,16 @@ DeviceStorageStatics::GetDir(DeviceStorageType aType)
 #endif
   }
   return file.forget();
+}
+
+/* static */ void
+DeviceStorageStatics::GetDirPath(DeviceStorageType aType, nsString& aDirPath)
+{
+  aDirPath.Truncate();
+  nsCOMPtr<nsIFile> file = GetDir(aType);
+  if (file) {
+    file->GetPath(aDirPath);
+  }
 }
 
 /* static */ bool
@@ -821,7 +889,7 @@ DeviceStorageStatics::ListenerWrapper::OnFileWatcherUpdate(const nsCString& aDat
       listener->OnFileWatcherUpdate(data, file);
     }
   });
-  mOwningThread->Dispatch(r, NS_DISPATCH_NORMAL);
+  mOwningThread->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
 }
 
 void
@@ -834,7 +902,7 @@ DeviceStorageStatics::ListenerWrapper::OnDiskSpaceWatcher(bool aLowDiskSpace)
       listener->OnDiskSpaceWatcher(aLowDiskSpace);
     }
   });
-  mOwningThread->Dispatch(r, NS_DISPATCH_NORMAL);
+  mOwningThread->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
 }
 
 void
@@ -847,7 +915,7 @@ DeviceStorageStatics::ListenerWrapper::OnWritableNameChanged()
       listener->OnWritableNameChanged();
     }
   });
-  mOwningThread->Dispatch(r, NS_DISPATCH_NORMAL);
+  mOwningThread->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
 }
 
 #ifdef MOZ_WIDGET_GONK
@@ -862,7 +930,7 @@ DeviceStorageStatics::ListenerWrapper::OnVolumeStateChanged(nsIVolume* aVolume)
       listener->OnVolumeStateChanged(volume);
     }
   });
-  mOwningThread->Dispatch(r, NS_DISPATCH_NORMAL);
+  mOwningThread->Dispatch(r.forget(), NS_DISPATCH_NORMAL);
 }
 #endif
 

@@ -11,6 +11,7 @@
 #include "nsBidiUtils.h"
 #include "nsHashKeys.h"
 #include "nsCoord.h"
+#include "nsRenderingContext.h"
 
 #ifdef DrawText
 #undef DrawText
@@ -93,6 +94,8 @@ struct nsBidiPositionResolve
 
 class nsBidiPresUtils {
 public:
+  typedef mozilla::gfx::DrawTarget DrawTarget;
+
   nsBidiPresUtils();
   ~nsBidiPresUtils();
   
@@ -180,8 +183,7 @@ public:
   static nsresult FormatUnicodeText(nsPresContext*  aPresContext,
                                     char16_t*       aText,
                                     int32_t&        aTextLength,
-                                    nsCharType      aCharType,
-                                    nsBidiDirection aDir);
+                                    nsCharType      aCharType);
 
   /**
    * Reorder plain text using the Unicode Bidi algorithm and send it to
@@ -212,7 +214,7 @@ public:
                              nsBidiLevel            aBaseLevel,
                              nsPresContext*         aPresContext,
                              nsRenderingContext&    aRenderingContext,
-                             nsRenderingContext&    aTextRunConstructionContext,
+                             DrawTarget*            aTextRunConstructionDrawTarget,
                              nsFontMetrics&         aFontMetrics,
                              nscoord                aX,
                              nscoord                aY,
@@ -220,7 +222,7 @@ public:
                              int32_t                aPosResolveCount = 0)
   {
     return ProcessTextForRenderingContext(aText, aLength, aBaseLevel, aPresContext, aRenderingContext,
-                                          aTextRunConstructionContext,
+                                          aTextRunConstructionDrawTarget,
                                           aFontMetrics,
                                           MODE_DRAW, aX, aY, aPosResolve, aPosResolveCount, nullptr);
   }
@@ -234,7 +236,8 @@ public:
   {
     nscoord length;
     nsresult rv = ProcessTextForRenderingContext(aText, aLength, aBaseLevel, aPresContext,
-                                                 aRenderingContext, aRenderingContext,
+                                                 aRenderingContext,
+                                                 aRenderingContext.GetDrawTarget(),
                                                  aFontMetrics,
                                                  MODE_MEASURE, 0, 0, nullptr, 0, &length);
     return NS_SUCCEEDED(rv) ? length : 0;
@@ -377,7 +380,7 @@ private:
                                  nsBidiLevel            aBaseLevel,
                                  nsPresContext*         aPresContext,
                                  nsRenderingContext&    aRenderingContext,
-                                 nsRenderingContext&    aTextRunConstructionContext,
+                                 DrawTarget*            aTextRunConstructionDrawTarget,
                                  nsFontMetrics&         aFontMetrics,
                                  Mode                   aMode,
                                  nscoord                aX, // DRAW only
@@ -490,7 +493,6 @@ private:
    *  @lina 04/11/2000
    */
   static nscoord RepositionInlineFrames(BidiLineData* aBld,
-                                        nsIFrame* aFirstChild,
                                         mozilla::WritingMode aLineWM,
                                         const nsSize& aContainerSize,
                                         nscoord aStart);
@@ -502,7 +504,6 @@ private:
    *
    * @param aFrame       the original frame
    * @param aNewFrame    [OUT] the new frame that was created
-   * @param aFrameIndex  [IN/OUT] index of aFrame in mLogicalFrames
    * @param aStart       [IN] the start of the content mapped by aFrame (and 
    *                          any fluid continuations)
    * @param aEnd         [IN] the offset of the end of the single-directional
@@ -513,7 +514,6 @@ private:
   static inline
   nsresult EnsureBidiContinuation(nsIFrame*       aFrame,
                                   nsIFrame**      aNewFrame,
-                                  int32_t&        aFrameIndex,
                                   int32_t         aStart,
                                   int32_t         aEnd);
 

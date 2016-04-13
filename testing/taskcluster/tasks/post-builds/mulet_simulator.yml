@@ -6,7 +6,7 @@ task:
   created: '{{now}}'
   deadline: '{{#from_now}}24 hours{{/from_now}}'
   metadata:
-    source: https://hg.mozilla.org/mozilla-central/file/tip/b2g/simulator
+    source: '{{source}}'
     owner: apoirot@mozilla.com
     name: '[TC] FxOS Simulator'
     description: 'Firefox OS Simulator addon'
@@ -21,13 +21,13 @@ task:
     - 'index.gecko.v1.{{project}}.latest.simulator.{{build_type}}'
 
   scopes:
-    - 'docker-worker:cache:tc-vcs'
-    - 'docker-worker:image:{{#docker_image}}builder{{/docker_image}}'
-    - 'queue:define-task:aws-provisioner-v1/build-c4-2xlarge'
-    - 'queue:create-task:aws-provisioner-v1/build-c4-2xlarge'
+    - 'docker-worker:cache:level-{{level}}-{{project}}-tc-vcs'
 
   payload:
-    image: '{{#docker_image}}builder{{/docker_image}}'
+    image:
+      type: 'task-image'
+      path: 'public/image.tar'
+      taskId: '{{#task_id_for_image}}builder{{/task_id_for_image}}'
 
     maxRunTime: 600
 

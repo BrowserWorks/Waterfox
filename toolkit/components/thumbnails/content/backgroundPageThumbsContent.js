@@ -4,7 +4,7 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-Cu.importGlobalProperties(['Blob']);
+Cu.importGlobalProperties(['Blob', 'FileReader']);
 
 Cu.import("resource://gre/modules/PageThumbUtils.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -99,7 +99,7 @@ const backgroundPageThumbsContent = {
   onStateChange: function (webProgress, req, flags, status) {
     if (webProgress.isTopLevel &&
         (flags & Ci.nsIWebProgressListener.STATE_STOP) &&
-        this._currentCapture && Components.isSuccessCode(status)) {
+        this._currentCapture) {
       if (req.name == "about:blank") {
         if (this._state == STATE_CAPTURING) {
           // about:blank has loaded, ending the current capture.
@@ -108,16 +108,29 @@ const backgroundPageThumbsContent = {
           this._startNextCapture();
         }
         else if (this._state == STATE_CANCELED) {
-          // A capture request was received while the current capture's page
-          // was still loading.
           delete this._currentCapture;
           this._startNextCapture();
         }
       }
-      else if (this._state == STATE_LOADING) {
+      else if (this._state == STATE_LOADING &&
+               Components.isSuccessCode(status)) {
         // The requested page has loaded.  Capture it.
         this._state = STATE_CAPTURING;
         this._captureCurrentPage();
+      }
+      else if (this._state != STATE_CANCELED) {
+        // Something went wrong.  Cancel the capture.  Loading about:blank
+        // while onStateChange is still on the stack does not actually stop
+        // the request if it redirects, so do it asyncly.
+        this._state = STATE_CANCELED;
+        if (!this._cancelTimer) {
+          this._cancelTimer =
+            Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+          this._cancelTimer.init(() => {
+            this._loadAboutBlank();
+            delete this._cancelTimer;
+          }, 0, Ci.nsITimer.TYPE_ONE_SHOT);
+        }
       }
     }
   },
@@ -129,7 +142,7 @@ const backgroundPageThumbsContent = {
 
     let canvasDrawDate = new Date();
 
-    let finalCanvas = PageThumbUtils.createSnapshotThumbnail(content);
+    let finalCanvas = PageThumbUtils.createSnapshotThumbnail(content, null);
     capture.canvasDrawTime = new Date() - canvasDrawDate;
 
     finalCanvas.toBlob(blob => {
@@ -141,8 +154,7 @@ const backgroundPageThumbsContent = {
 
   _finishCurrentCapture: function () {
     let capture = this._currentCapture;
-    let fileReader = Cc["@mozilla.org/files/filereader;1"].
-                     createInstance(Ci.nsIDOMFileReader);
+    let fileReader = new FileReader();
     fileReader.onloadend = () => {
       sendAsyncMessage("BackgroundPageThumbs:didCapture", {
         id: capture.id,

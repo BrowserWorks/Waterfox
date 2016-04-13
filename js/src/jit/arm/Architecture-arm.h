@@ -391,8 +391,7 @@ class VFPRegister
 
     bool isSingle() const { return kind == Single; }
     bool isDouble() const { return kind == Double; }
-    bool isInt32x4() const { return false; }
-    bool isFloat32x4() const { return false; }
+    bool isSimd128() const { return false; }
     bool isFloat() const { return (kind == Double) || (kind == Single); }
     bool isInt() const { return (kind == UInt) || (kind == Int); }
     bool isSInt() const { return kind == Int; }
@@ -409,8 +408,7 @@ class VFPRegister
 
     VFPRegister asSingle() const { return singleOverlay(); }
     VFPRegister asDouble() const { return doubleOverlay(); }
-    VFPRegister asInt32x4() const { MOZ_CRASH("NYI"); }
-    VFPRegister asFloat32x4() const { MOZ_CRASH("NYI"); }
+    VFPRegister asSimd128() const { MOZ_CRASH("NYI"); }
 
     struct VFPRegIndexSplit;
     VFPRegIndexSplit encode();
@@ -651,7 +649,7 @@ static inline bool UseHardFpABI()
 // have ABIArg which are represented by pair of general purpose registers.
 #define JS_CODEGEN_REGISTER_PAIR 1
 
-// See the comments above AsmJSMappedSize in AsmJSValidate.h for more info.
+// See the comments above AsmJSMappedSize in AsmJS.cpp for more info.
 // TODO: Implement this for ARM. Note that it requires Codegen to respect the
 // offset field of AsmJSHeapAccess.
 static const size_t AsmJSCheckedImmediateRange = 0;

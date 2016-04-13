@@ -11,7 +11,7 @@
 
 namespace mozilla {
 
-class OriginAttributes;
+class PrincipalOriginAttributes;
 
 namespace ipc {
 class BackgroundParentImpl;
@@ -27,11 +27,19 @@ class ServiceWorkerManagerParent final : public PServiceWorkerManagerParent
   friend class mozilla::ipc::BackgroundParentImpl;
 
 public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ServiceWorkerManagerParent)
+
+  bool ActorDestroyed() const
+  {
+    return mActorDestroyed;
+  }
+
   uint64_t ID() const
   {
     return mID;
   }
 
+  already_AddRefed<ContentParent> GetContentParent() const;
 private:
   ServiceWorkerManagerParent();
   ~ServiceWorkerManagerParent();
@@ -42,7 +50,7 @@ private:
   virtual bool RecvUnregister(const PrincipalInfo& aPrincipalInfo,
                               const nsString& aScope) override;
 
-  virtual bool RecvPropagateSoftUpdate(const OriginAttributes& aOriginAttributes,
+  virtual bool RecvPropagateSoftUpdate(const PrincipalOriginAttributes& aOriginAttributes,
                                        const nsString& aScope) override;
 
   virtual bool RecvPropagateUnregister(const PrincipalInfo& aPrincipalInfo,
@@ -61,6 +69,8 @@ private:
   // We use this ID in the Service in order to avoid the sending of messages to
   // ourself.
   uint64_t mID;
+
+  bool mActorDestroyed;
 };
 
 } // namespace workers

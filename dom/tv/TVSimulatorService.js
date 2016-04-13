@@ -13,9 +13,10 @@ const Ci = Components.interfaces;
 const Cr = Components.returnCode;
 
 Cu.importGlobalProperties(["File"]);
+Cu.import("resource://gre/modules/Services.jsm");
 
-const TV_SIMULATOR_DUMMY_DIRECTORY = "dummy";
-const TV_SIMULATOR_DUMMY_FILE      = "settings.json";
+const TV_SIMULATOR_DUMMY_DIRECTORY   = "dummy";
+const TV_SIMULATOR_DUMMY_FILE        = "settings.json";
 
 // See http://seanyhlin.github.io/TV-Manager-API/#idl-def-TVSourceType
 const TV_SOURCE_TYPES = ["dvb-t","dvb-t2","dvb-c","dvb-c2","dvb-s",
@@ -49,36 +50,19 @@ TVSimulatorService.prototype = {
       return;
     }
 
-    // Load the setting file from local JSON file.
-    // Synchrhronous File Reading.
-    let file = Cc["@mozilla.org/file/local;1"]
-                 .createInstance(Ci.nsILocalFile);
-
-    file.initWithPath(this._getFilePath(TV_SIMULATOR_DUMMY_FILE));
-
-    let fstream = Cc["@mozilla.org/network/file-input-stream;1"]
-                    .createInstance(Ci.nsIFileInputStream);
-    let cstream = Cc["@mozilla.org/intl/converter-input-stream;1"]
-                    .createInstance(Ci.nsIConverterInputStream);
-
+    // I try to load the testing mock data if related preference are already set.
+    // Otherwise, use to the simulation data from prefences.
+    // See /dom/tv/test/mochitest/head.js for more details.
     let settingStr = "";
-
     try {
-      fstream.init(file, -1, 0, 0);
-      cstream.init(fstream,
-                   "UTF-8",
-                   1024,
-                   Ci.nsIConverterInputStream.DEFAULT_REPLACEMENT_CHARACTER);
-
-      let str = {};
-      while (cstream.readString(0xffffffff, str) != 0) {
-        settingStr += str.value;
-      }
+      settingStr = Services.prefs.getCharPref("dom.testing.tv_mock_data");
     } catch(e) {
-      debug("Error occurred : " + e );
-      return;
-    } finally {
-      cstream.close();
+      try {
+        settingStr = this._getDummyData();
+      } catch(e) {
+        debug("TV Simulator service failed to load simulation data: " + e);
+        return;
+      }
     }
 
     let settingsObj;
@@ -196,7 +180,7 @@ TVSimulatorService.prototype = {
           }
 
           // Sort the program according to the startTime
-	  wrapChannelData.programs.sort(function(a, b) {
+          wrapChannelData.programs.sort(function(a, b) {
             return a.startTime - b.startTime;
           });
           wrapTunerData.channels.set(channel.number, wrapChannelData);
@@ -270,8 +254,8 @@ TVSimulatorService.prototype = {
 
     this._scanCompleteTimer = Cc["@mozilla.org/timer;1"]
                                 .createInstance(Ci.nsITimer);
-    rv = this._scanCompleteTimer.initWithCallback(this, 10,
-                                                  Ci.nsITimer.TYPE_ONE_SHOT);
+    let rv = this._scanCompleteTimer.initWithCallback(this, 10,
+                                                      Ci.nsITimer.TYPE_ONE_SHOT);
     return Cr.NS_OK;
   },
 
@@ -281,10 +265,11 @@ TVSimulatorService.prototype = {
     }
 
     this._scanCompleteTimer = null;
+    let notifyResult = this._sourceListener.notifyChannelScanComplete(
+                                                  this._scanningWrapTunerData.tuner.id,
+                                                  this._scanningWrapTunerData.sourceType);
     this._scanningWrapTunerData = null;
-    return this._sourceListener.notifyChannelScanComplete(
-                                       this._scanningWrapTunerData.tuner.id,
-                                       this._scanningWrapTunerData.sourceType);
+    return notifyResult;
   },
 
   stopScanningChannels: function TVSimStopScanningChannels(aTunerId, aSourceType, aCallback) {
@@ -432,6 +417,41 @@ TVSimulatorService.prototype = {
     let videoBlobURL = aWin.URL.createObjectURL(videoFile);
 
     return videoBlobURL;
+  },
+
+  _getDummyData : function TVSimGetDummyData() {
+    // Load the setting file from local JSON file.
+    // Synchrhronous File Reading.
+    let file = Cc["@mozilla.org/file/local;1"]
+                 .createInstance(Ci.nsILocalFile);
+
+    let fstream = Cc["@mozilla.org/network/file-input-stream;1"]
+                    .createInstance(Ci.nsIFileInputStream);
+    let cstream = Cc["@mozilla.org/intl/converter-input-stream;1"]
+                   .createInstance(Ci.nsIConverterInputStream);
+
+    let settingsStr = "";
+
+    try {
+      file.initWithPath(this._getFilePath(TV_SIMULATOR_DUMMY_FILE));
+      fstream.init(file, -1, 0, 0);
+      cstream.init(fstream,
+                   "UTF-8",
+                   1024,
+                   Ci.nsIConverterInputStream.DEFAULT_REPLACEMENT_CHARACTER);
+
+      let str = {};
+      while (cstream.readString(0xffffffff, str) != 0) {
+        settingsStr += str.value;
+      }
+    } catch(e) {
+      debug("Catch the Exception when reading the dummy file:" + e );
+      throw e;
+    } finally {
+      cstream.close();
+    }
+
+    return settingsStr;
   },
 
   _getTunerMapKey: function TVSimGetTunerMapKey(aTunerId, aSourceType) {

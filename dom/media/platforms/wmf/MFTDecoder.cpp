@@ -9,7 +9,7 @@
 #include "WMFUtils.h"
 #include "mozilla/Logging.h"
 
-extern PRLogModuleInfo* GetPDMLog();
+extern mozilla::LogModule* GetPDMLog();
 #define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
@@ -236,7 +236,9 @@ MFTDecoder::Output(RefPtr<IMFSample>* aOutput)
   // Treat other errors as unexpected, and warn.
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  MOZ_ASSERT(output.pSample);
+  if (!output.pSample) {
+    return S_OK;
+  }
 
   if (mDiscontinuity) {
     output.pSample->SetUINT32(MFSampleExtension_Discontinuity, TRUE);

@@ -277,7 +277,8 @@ speechd_cb(size_t msg_id, size_t client_id, SPDNotificationType state)
 
 NS_INTERFACE_MAP_BEGIN(SpeechDispatcherService)
   NS_INTERFACE_MAP_ENTRY(nsISpeechService)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsISpeechService)
+  NS_INTERFACE_MAP_ENTRY(nsIObserver)
+  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIObserver)
 NS_INTERFACE_MAP_END
 
 NS_IMPL_ADDREF(SpeechDispatcherService)
@@ -286,6 +287,11 @@ NS_IMPL_RELEASE(SpeechDispatcherService)
 SpeechDispatcherService::SpeechDispatcherService()
   : mInitialized(false)
   , mSpeechdClient(nullptr)
+{
+}
+
+void
+SpeechDispatcherService::Init()
 {
   if (!Preferences::GetBool("media.webspeech.synth.enabled") ||
       Preferences::GetBool("media.webspeech.synth.test")) {
@@ -299,7 +305,7 @@ SpeechDispatcherService::SpeechDispatcherService()
                                              getter_AddRefs(mInitThread));
   MOZ_ASSERT(NS_SUCCEEDED(rv));
   rv = mInitThread->Dispatch(
-    NS_NewRunnableMethod(this, &SpeechDispatcherService::Init), NS_DISPATCH_NORMAL);
+    NS_NewRunnableMethod(this, &SpeechDispatcherService::Setup), NS_DISPATCH_NORMAL);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
@@ -315,7 +321,7 @@ SpeechDispatcherService::~SpeechDispatcherService()
 }
 
 void
-SpeechDispatcherService::Init()
+SpeechDispatcherService::Setup()
 {
 #define FUNC(name, type, params) { #name, (nsSpeechDispatcherFunc *)&_##name },
   static const nsSpeechDispatcherDynamicFunction kSpeechDispatcherSymbols[] = {
@@ -344,6 +350,10 @@ SpeechDispatcherService::Init()
   }
 
   mSpeechdClient = spd_open("firefox", "web speech api", "who", SPD_MODE_THREADED);
+  if (!mSpeechdClient) {
+    NS_WARNING("Failed to call spd_open");
+    return;
+  }
 
   // Get all the voices from sapi and register in the SynthVoiceRegistry
   SPDVoice** list = spd_list_synthesis_voices(mSpeechdClient);
@@ -440,6 +450,17 @@ SpeechDispatcherService::RegisterVoices()
   mInitialized = true;
 }
 
+// nsIObserver
+
+NS_IMETHODIMP
+SpeechDispatcherService::Observe(nsISupports* aSubject, const char* aTopic,
+                                 const char16_t* aData)
+{
+  return NS_OK;
+}
+
+// nsISpeechService
+
 // TODO: Support SSML
 NS_IMETHODIMP
 SpeechDispatcherService::Speak(const nsAString& aText, const nsAString& aUri,
@@ -489,13 +510,25 @@ SpeechDispatcherService::Speak(const nsAString& aText, const nsAString& aUri,
     return rv;
   }
 
-  int msg_id = spd_say(mSpeechdClient, SPD_MESSAGE, NS_ConvertUTF16toUTF8(aText).get());
+  if (aText.Length()) {
+    int msg_id = spd_say(
+      mSpeechdClient, SPD_MESSAGE, NS_ConvertUTF16toUTF8(aText).get());
 
-  if (msg_id < 0) {
-    return NS_ERROR_FAILURE;
+    if (msg_id < 0) {
+      return NS_ERROR_FAILURE;
+    }
+
+    mCallbacks.Put(msg_id, callback);
+  } else {
+    // Speech dispatcher does not work well with empty strings.
+    // In that case, don't send empty string to speechd,
+    // and just emulate a speechd start and end event.
+    NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<SPDNotificationType>(
+        callback, &SpeechDispatcherCallback::OnSpeechEvent, SPD_EVENT_BEGIN));
+
+    NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<SPDNotificationType>(
+        callback, &SpeechDispatcherCallback::OnSpeechEvent, SPD_EVENT_END));
   }
-
-  mCallbacks.Put(msg_id, callback);
 
   return NS_OK;
 }
@@ -518,6 +551,7 @@ SpeechDispatcherService::GetInstance(bool create)
 
   if (!sSingleton && create) {
     sSingleton = new SpeechDispatcherService();
+    sSingleton->Init();
   }
 
   return sSingleton;

@@ -580,7 +580,7 @@ GeckoInputReaderPolicy::setDisplayInfo()
     uint32_t rotation = nsIScreen::ROTATION_0_DEG;
     DebugOnly<nsresult> rv = screen->GetRotation(&rotation);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
-    nsIntRect screenBounds = screen->GetNaturalBounds();
+    LayoutDeviceIntRect screenBounds = screen->GetNaturalBounds();
 
     DisplayViewport viewport;
     viewport.displayId = 0;
@@ -848,7 +848,9 @@ nsAppShell::nsAppShell()
     , mPowerKeyChecked(false)
 {
     gAppShell = this;
-    Preferences::SetCString("b2g.safe_mode", "unset");
+    if (XRE_IsParentProcess()) {
+        Preferences::SetCString("b2g.safe_mode", "unset");
+    }
 }
 
 nsAppShell::~nsAppShell()
@@ -935,8 +937,13 @@ nsAppShell::CheckPowerKey()
     // If Power is pressed while we startup, mark safe mode.
     // Consumers of the b2g.safe_mode preference need to listen on this
     // preference change to prevent startup races.
-    Preferences::SetCString("b2g.safe_mode",
-                            (powerState == AKEY_STATE_DOWN) ? "yes" : "no");
+    nsCOMPtr<nsIRunnable> prefSetter = 
+    NS_NewRunnableFunction([powerState] () -> void {
+        Preferences::SetCString("b2g.safe_mode",
+                                (powerState == AKEY_STATE_DOWN) ? "yes" : "no");
+    });
+    NS_DispatchToMainThread(prefSetter.forget());
+
     mPowerKeyChecked = true;
 }
 

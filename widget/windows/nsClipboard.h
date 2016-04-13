@@ -35,8 +35,8 @@ public:
 
   // nsIClipboard
   NS_IMETHOD HasDataMatchingFlavors(const char** aFlavorList, uint32_t aLength,
-                                    int32_t aWhichClipboard, bool *_retval); 
-  NS_IMETHOD EmptyClipboard(int32_t aWhichClipboard);
+                                    int32_t aWhichClipboard, bool *_retval) override; 
+  NS_IMETHOD EmptyClipboard(int32_t aWhichClipboard) override;
 
   // Internal Native Routines
   static nsresult CreateNativeDataObject(nsITransferable * aTransferable, 
@@ -51,19 +51,26 @@ public:
   static nsresult GetNativeDataOffClipboard(nsIWidget * aWindow, UINT aIndex, UINT aFormat, void ** aData, uint32_t * aLen);
   static nsresult GetNativeDataOffClipboard(IDataObject * aDataObject, UINT aIndex, UINT aFormat, const char * aMIMEImageFormat, void ** aData, uint32_t * aLen);
   static nsresult GetGlobalData(HGLOBAL aHGBL, void ** aData, uint32_t * aLen);
-  static UINT     GetFormat(const char* aMimeStr);
+
+  // This function returns the internal Windows clipboard format identifier
+  // for a given Mime string. The default is to map kHTMLMime ("text/html")
+  // to the clipboard format CF_HTML ("HTLM Format"), but it can also be
+  // registered as clipboard format "text/html" to support previous versions
+  // of Gecko.
+  static UINT     GetFormat(const char* aMimeStr, bool aMapHTMLMime = true);
 
   static UINT     CF_HTML;
   
 protected:
-  NS_IMETHOD SetNativeClipboardData ( int32_t aWhichClipboard );
-  NS_IMETHOD GetNativeClipboardData ( nsITransferable * aTransferable, int32_t aWhichClipboard );
+  NS_IMETHOD SetNativeClipboardData ( int32_t aWhichClipboard ) override;
+  NS_IMETHOD GetNativeClipboardData ( nsITransferable * aTransferable, int32_t aWhichClipboard ) override;
   
   static bool IsInternetShortcut ( const nsAString& inFileName ) ;
   static bool FindURLFromLocalFile ( IDataObject* inDataObject, UINT inIndex, void** outData, uint32_t* outDataLen ) ;
   static bool FindURLFromNativeURL ( IDataObject* inDataObject, UINT inIndex, void** outData, uint32_t* outDataLen ) ;
   static bool FindUnicodeFromPlainText ( IDataObject* inDataObject, UINT inIndex, void** outData, uint32_t* outDataLen ) ;
-  static bool FindPlatformHTML ( IDataObject* inDataObject, UINT inIndex, void** outData, uint32_t* outDataLen );
+  static bool FindPlatformHTML ( IDataObject* inDataObject, UINT inIndex, void** outData,
+                                 uint32_t* outStartOfData, uint32_t* outDataLen );
   static void ResolveShortcut ( nsIFile* inFileName, nsACString& outURL ) ;
 
   nsIWidget         * mWindow;

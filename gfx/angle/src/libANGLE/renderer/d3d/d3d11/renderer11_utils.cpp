@@ -1070,7 +1070,8 @@ void GenerateCaps(ID3D11Device *device, ID3D11DeviceContext *deviceContext, cons
     }
 
     // GL core feature limits
-    caps->maxElementIndex = static_cast<GLint64>(std::numeric_limits<unsigned int>::max());
+    // Reserve MAX_UINT for D3D11's primitive restart.
+    caps->maxElementIndex       = static_cast<GLint64>(std::numeric_limits<unsigned int>::max() - 1);
     caps->max3DTextureSize      = static_cast<GLuint>(GetMaximum3DTextureSize(featureLevel));
     caps->max2DTextureSize      = static_cast<GLuint>(GetMaximum2DTextureSize(featureLevel));
     caps->maxCubeMapTextureSize = static_cast<GLuint>(GetMaximumCubeMapTextureSize(featureLevel));
@@ -1208,13 +1209,14 @@ void GenerateCaps(ID3D11Device *device, ID3D11DeviceContext *deviceContext, cons
     extensions->shaderTextureLOD = GetShaderTextureLODSupport(featureLevel);
     extensions->fragDepth = true;
     extensions->textureUsage = true; // This could be false since it has no effect in D3D11
-    extensions->discardFramebuffer = false; // TODO: enable this once BUG:497445 is fixed (Chrome WebGL video tests fail with this extension active)
+    extensions->discardFramebuffer = true;
     extensions->translatedShaderSource = true;
     extensions->fboRenderMipmap = false;
     extensions->debugMarker = true;
     extensions->eglImage                 = true;
     extensions->unpackSubimage           = true;
     extensions->packSubimage             = true;
+    extensions->vertexArrayObject        = true;
 
     // D3D11 Feature Level 10_0+ uses SV_IsFrontFace in HLSL to emulate gl_FrontFacing.
     // D3D11 Feature Level 9_3 doesn't support SV_IsFrontFace, and has no equivalent, so can't support gl_FrontFacing.
@@ -1298,6 +1300,11 @@ void GenerateInitialTextureData(GLint internalFormat, const Renderer11DeviceCaps
     }
 }
 
+UINT GetPrimitiveRestartIndex()
+{
+    return std::numeric_limits<UINT>::max();
+}
+
 void SetPositionTexCoordVertex(PositionTexCoordVertex* vertex, float x, float y, float u, float v)
 {
     vertex->x = x;
@@ -1325,6 +1332,56 @@ HRESULT SetDebugName(ID3D11DeviceChild *resource, const char *name)
 #else
     return S_OK;
 #endif
+}
+
+LazyInputLayout::LazyInputLayout(const D3D11_INPUT_ELEMENT_DESC *inputDesc,
+                                 size_t inputDescLen,
+                                 const BYTE *byteCode,
+                                 size_t byteCodeLen,
+                                 const char *debugName)
+    : mInputDesc(inputDescLen),
+      mByteCodeLen(byteCodeLen),
+      mByteCode(byteCode),
+      mDebugName(debugName)
+{
+    memcpy(&mInputDesc[0], inputDesc, sizeof(D3D11_INPUT_ELEMENT_DESC) * inputDescLen);
+}
+
+ID3D11InputLayout *LazyInputLayout::resolve(ID3D11Device *device)
+{
+    checkAssociatedDevice(device);
+
+    if (mResource == nullptr)
+    {
+        HRESULT result =
+            device->CreateInputLayout(&mInputDesc[0], static_cast<UINT>(mInputDesc.size()),
+                                      mByteCode, mByteCodeLen, &mResource);
+        ASSERT(SUCCEEDED(result));
+        UNUSED_ASSERTION_VARIABLE(result);
+        d3d11::SetDebugName(mResource, mDebugName);
+    }
+
+    return mResource;
+}
+
+LazyBlendState::LazyBlendState(const D3D11_BLEND_DESC &desc, const char *debugName)
+    : mDesc(desc), mDebugName(debugName)
+{
+}
+
+ID3D11BlendState *LazyBlendState::resolve(ID3D11Device *device)
+{
+    checkAssociatedDevice(device);
+
+    if (mResource == nullptr)
+    {
+        HRESULT result = device->CreateBlendState(&mDesc, &mResource);
+        ASSERT(SUCCEEDED(result));
+        UNUSED_ASSERTION_VARIABLE(result);
+        d3d11::SetDebugName(mResource, mDebugName);
+    }
+
+    return mResource;
 }
 
 WorkaroundsD3D GenerateWorkarounds(D3D_FEATURE_LEVEL featureLevel)

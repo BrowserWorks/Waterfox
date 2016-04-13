@@ -86,7 +86,6 @@ InternalRequest::InternalRequest(const InternalRequest& aOther)
   , mForceOriginHeader(aOther.mForceOriginHeader)
   , mPreserveContentCodings(aOther.mPreserveContentCodings)
   , mSameOriginDataURL(aOther.mSameOriginDataURL)
-  , mSandboxedStorageAreaURLs(aOther.mSandboxedStorageAreaURLs)
   , mSkipServiceWorker(aOther.mSkipServiceWorker)
   , mSynchronous(aOther.mSynchronous)
   , mUnsafeRequest(aOther.mUnsafeRequest)
@@ -276,14 +275,13 @@ InternalRequest::MapChannelToRequestMode(nsIChannel* aChannel)
   nsCOMPtr<nsILoadInfo> loadInfo;
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(aChannel->GetLoadInfo(getter_AddRefs(loadInfo))));
 
-  // RequestMode deviates from our internal security mode for navigations.
-  // While navigations normally allow cross origin we must set a same-origin
-  // RequestMode to get the correct service worker interception restrictions
-  // in place.
-  // TODO: remove the worker override once securityMode is fully implemented (bug 1189945)
   nsContentPolicyType contentPolicy = loadInfo->InternalContentPolicyType();
-  if (IsNavigationContentPolicy(contentPolicy) ||
-      IsWorkerContentPolicy(contentPolicy)) {
+  if (IsNavigationContentPolicy(contentPolicy)) {
+    return RequestMode::Navigate;
+  }
+
+  // TODO: remove the worker override once securityMode is fully implemented (bug 1189945)
+  if (IsWorkerContentPolicy(contentPolicy)) {
     return RequestMode::Same_origin;
   }
 
@@ -320,9 +318,55 @@ InternalRequest::MapChannelToRequestMode(nsIChannel* aChannel)
 
   uint32_t corsMode;
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(httpChannel->GetCorsMode(&corsMode)));
+  MOZ_ASSERT(corsMode != nsIHttpChannelInternal::CORS_MODE_NAVIGATE);
 
   // This cast is valid due to static asserts in ServiceWorkerManager.cpp.
   return static_cast<RequestMode>(corsMode);
+}
+
+// static
+RequestCredentials
+InternalRequest::MapChannelToRequestCredentials(nsIChannel* aChannel)
+{
+  MOZ_ASSERT(aChannel);
+
+  nsCOMPtr<nsILoadInfo> loadInfo;
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(aChannel->GetLoadInfo(getter_AddRefs(loadInfo))));
+
+  uint32_t securityMode;
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(loadInfo->GetSecurityMode(&securityMode)));
+
+  // TODO: Remove following code after stylesheet and image support cookie policy
+  if (securityMode == nsILoadInfo::SEC_NORMAL) {
+    uint32_t loadFlags;
+    aChannel->GetLoadFlags(&loadFlags);
+
+    if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
+      return RequestCredentials::Omit;
+    } else {
+      bool includeCrossOrigin;
+      nsCOMPtr<nsIHttpChannelInternal> internalChannel = do_QueryInterface(aChannel);
+
+      internalChannel->GetCorsIncludeCredentials(&includeCrossOrigin);
+      if (includeCrossOrigin) {
+        return RequestCredentials::Include;
+      }
+    }
+    return RequestCredentials::Same_origin;
+  }
+
+  uint32_t cookiePolicy = loadInfo->GetCookiePolicy();
+
+  if (cookiePolicy == nsILoadInfo::SEC_COOKIES_INCLUDE) {
+    return RequestCredentials::Include;
+  } else if (cookiePolicy == nsILoadInfo::SEC_COOKIES_OMIT) {
+    return RequestCredentials::Omit;
+  } else if (cookiePolicy == nsILoadInfo::SEC_COOKIES_SAME_ORIGIN) {
+    return RequestCredentials::Same_origin;
+  }
+
+  MOZ_ASSERT_UNREACHABLE("Unexpected cookie policy!");
+  return RequestCredentials::Same_origin;
 }
 
 } // namespace dom

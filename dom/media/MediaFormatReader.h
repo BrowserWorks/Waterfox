@@ -10,6 +10,7 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/TaskQueue.h"
+#include "mozilla/Monitor.h"
 
 #include "MediaDataDemuxer.h"
 #include "MediaDecoderReader.h"
@@ -49,18 +50,13 @@ public:
   RefPtr<SeekPromise>
   Seek(int64_t aTime, int64_t aUnused) override;
 
-  bool IsMediaSeekable() override
-  {
-    return mSeekable;
-  }
-
 protected:
-  void NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset) override;
+  void NotifyDataArrivedInternal() override;
 
 public:
   media::TimeIntervals GetBuffered() override;
 
-  virtual bool ForceZeroStartTime() const override;
+  bool ForceZeroStartTime() const override;
 
   // For Media Resource Management
   void ReleaseMediaResources() override;
@@ -101,6 +97,10 @@ public:
   void SetCDMProxy(CDMProxy* aProxy) override;
 #endif
 
+  // Returns a string describing the state of the decoder data.
+  // Used for debugging purposes.
+  void GetMozDebugReaderData(nsAString& aString);
+
 private:
   bool HasVideo() { return mVideo.mTrackDemuxer; }
   bool HasAudio() { return mAudio.mTrackDemuxer; }
@@ -111,10 +111,10 @@ private:
   // Notify the demuxer that new data has been received.
   // The next queued task calling GetBuffered() is guaranteed to have up to date
   // buffered ranges.
-  void NotifyDemuxer(uint32_t aLength, int64_t aOffset);
+  void NotifyDemuxer();
   void ReturnOutput(MediaData* aData, TrackType aTrack);
 
-  bool EnsureDecodersCreated();
+  bool EnsureDecoderCreated(TrackType aTrack);
   bool EnsureDecoderInitialized(TrackType aTrack);
 
   // Enqueues a task to call Update(aTrack) on the decoder task queue.
@@ -132,6 +132,22 @@ private:
   // Decode any pending already demuxed samples.
   bool DecodeDemuxedSamples(TrackType aTrack,
                             MediaRawData* aSample);
+
+  struct SeekTarget {
+    SeekTarget(const media::TimeUnit& aTime, bool aDropTarget)
+      : mTime(aTime)
+      , mDropTarget(aDropTarget)
+      , mWaiting(false)
+    {}
+
+    media::TimeUnit mTime;
+    bool mDropTarget;
+    bool mWaiting;
+  };
+  // Perform an internal seek to aTime. If aDropTarget is true then
+  // the first sample past the target will be dropped.
+  void InternalSeek(TrackType aTrack, const SeekTarget& aTarget);
+
   // Drain the current decoder.
   void DrainDecoder(TrackType aTrack);
   void NotifyNewOutput(TrackType aTrack, MediaData* aSample);
@@ -198,6 +214,8 @@ private:
                 uint32_t aDecodeAhead)
       : mOwner(aOwner)
       , mType(aType)
+      , mMonitor("DecoderData")
+      , mDescription("shutdown")
       , mDecodeAhead(aDecodeAhead)
       , mUpdateScheduled(false)
       , mDemuxEOS(false)
@@ -215,6 +233,7 @@ private:
       , mNumSamplesInput(0)
       , mNumSamplesOutput(0)
       , mNumSamplesOutputTotal(0)
+      , mNumSamplesSkippedTotal(0)
       , mSizeOfQueue(0)
       , mIsHardwareAccelerated(false)
       , mLastStreamSourceID(UINT32_MAX)
@@ -224,13 +243,26 @@ private:
     // Disambiguate Audio vs Video.
     MediaData::Type mType;
     RefPtr<MediaTrackDemuxer> mTrackDemuxer;
-    // The platform decoder.
-    RefPtr<MediaDataDecoder> mDecoder;
     // TaskQueue on which decoder can choose to decode.
     // Only non-null up until the decoder is created.
     RefPtr<FlushableTaskQueue> mTaskQueue;
     // Callback that receives output and error notifications from the decoder.
     nsAutoPtr<DecoderCallback> mCallback;
+
+    // Monitor protecting mDescription and mDecoder.
+    Monitor mMonitor;
+    // The platform decoder.
+    RefPtr<MediaDataDecoder> mDecoder;
+    const char* mDescription;
+    void ShutdownDecoder()
+    {
+      MonitorAutoLock mon(mMonitor);
+      if (mDecoder) {
+        mDecoder->Shutdown();
+      }
+      mDescription = "shutdown";
+      mDecoder = nullptr;
+    }
 
     // Only accessed from reader's task queue.
     uint32_t mDecodeAhead;
@@ -266,8 +298,11 @@ private:
     bool mDraining;
     bool mDrainComplete;
     // If set, all decoded samples prior mTimeThreshold will be dropped.
-    // Used for internal seeking when a change of stream is detected.
-    Maybe<media::TimeUnit> mTimeThreshold;
+    // Used for internal seeking when a change of stream is detected or when
+    // encountering data discontinuity.
+    Maybe<SeekTarget> mTimeThreshold;
+    // Time of last sample returned.
+    Maybe<media::TimeUnit> mLastSampleTime;
 
     // Decoded samples returned my mDecoder awaiting being returned to
     // state machine upon request.
@@ -275,6 +310,7 @@ private:
     uint64_t mNumSamplesInput;
     uint64_t mNumSamplesOutput;
     uint64_t mNumSamplesOutputTotal;
+    uint64_t mNumSamplesSkippedTotal;
 
     // These get overriden in the templated concrete class.
     // Indicate if we have a pending promise for decoded frame.
@@ -305,6 +341,7 @@ private:
       mDraining = false;
       mDrainComplete = false;
       mTimeThreshold.reset();
+      mLastSampleTime.reset();
       mOutput.Clear();
       mNumSamplesInput = 0;
       mNumSamplesOutput = 0;
@@ -321,6 +358,7 @@ private:
     uint32_t mLastStreamSourceID;
     Maybe<uint32_t> mNextStreamSourceID;
     media::TimeIntervals mTimeRanges;
+    Maybe<media::TimeUnit> mLastTimeRangesEnd;
     RefPtr<SharedTrackInfo> mInfo;
   };
 
@@ -396,9 +434,6 @@ private:
   // True if we've read the streams' metadata.
   bool mInitDone;
   MozPromiseHolder<MetadataPromise> mMetadataPromise;
-  // Accessed from multiple thread, in particular the MediaDecoderStateMachine,
-  // however the value doesn't change after reading the metadata.
-  bool mSeekable;
   bool IsEncrypted()
   {
     return mIsEncrypted;

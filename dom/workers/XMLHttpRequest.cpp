@@ -16,11 +16,11 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/dom/FormData.h"
 #include "mozilla/dom/ProgressEvent.h"
 #include "mozilla/dom/StructuredCloneHolder.h"
 #include "nsComponentManagerUtils.h"
 #include "nsContentUtils.h"
-#include "nsFormData.h"
 #include "nsJSUtils.h"
 #include "nsThreadUtils.h"
 #include "nsVariant.h"
@@ -559,8 +559,8 @@ public:
   private:
     virtual void trace(JSTracer* aTrc)
     {
-      JS_CallValueTracer(aTrc, &mStateData->mResponse,
-                         "XMLHttpRequest::StateData::mResponse");
+      JS::TraceEdge(aTrc, &mStateData->mResponse,
+                    "XMLHttpRequest::StateData::mResponse");
     }
   };
 
@@ -2203,7 +2203,7 @@ XMLHttpRequest::Send(Blob& aBody, ErrorResult& aRv)
 }
 
 void
-XMLHttpRequest::Send(nsFormData& aBody, ErrorResult& aRv)
+XMLHttpRequest::Send(FormData& aBody, ErrorResult& aRv)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
   JSContext* cx = mWorkerPrivate->GetJSContext();
@@ -2245,6 +2245,12 @@ XMLHttpRequest::Send(const ArrayBuffer& aBody, ErrorResult& aRv)
 void
 XMLHttpRequest::Send(const ArrayBufferView& aBody, ErrorResult& aRv)
 {
+  if (JS_IsTypedArrayObject(aBody.Obj()) &&
+      JS_GetTypedArraySharedness(aBody.Obj())) {
+    // Throw if the object is mapping shared memory (must opt in).
+    aRv.ThrowTypeError<MSG_TYPEDARRAY_IS_SHARED>(NS_LITERAL_STRING("Argument of XMLHttpRequest.send"));
+    return;
+  }
   JS::Rooted<JSObject*> obj(mWorkerPrivate->GetJSContext(), aBody.Obj());
   return Send(obj, aRv);
 }

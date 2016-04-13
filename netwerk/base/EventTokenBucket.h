@@ -86,13 +86,14 @@ public:
   // credits. ClearCredits can be used before unpausing if desired.
   void Pause();
   void UnPause();
-  void Stop() { mStopped = true; }
+  void Stop();
 
   // The returned cancelable event can only be canceled from the socket thread
   nsresult SubmitEvent(ATokenBucketEvent *event, nsICancelable **cancelable);
 
 private:
   virtual ~EventTokenBucket();
+  void CleanupTimers();
 
   friend class RunNotifyEvent;
   friend class SetTimerEvent;

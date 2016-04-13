@@ -1,5 +1,6 @@
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
@@ -19,15 +20,8 @@ function cached_handler(metadata, response) {
 }
 
 function makeChan(url, appId, inBrowser) {
-  var ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
-  var chan = ios.newChannel2(url,
-                             null,
-                             null,
-                             null,      // aLoadingNode
-                             Services.scriptSecurityManager.getSystemPrincipal(),
-                             null,      // aTriggeringPrincipal
-                             Ci.nsILoadInfo.SEC_NORMAL,
-                             Ci.nsIContentPolicy.TYPE_OTHER).QueryInterface(Ci.nsIHttpChannel);
+  var chan = NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true})
+                    .QueryInterface(Ci.nsIHttpChannel);
   chan.notificationCallbacks = {
     appId: appId,
     isInBrowserElement: inBrowser,
@@ -53,7 +47,7 @@ function run_all_tests() {
   for (let test of firstTests) {
     handlers_called = 0;
     var chan = makeChan(URL, test[0], test[1]);
-    chan.asyncOpen(new ChannelListener(doneFirstLoad, test[2]), null);
+    chan.asyncOpen2(new ChannelListener(doneFirstLoad, test[2]));
     yield undefined;
   }
 
@@ -71,7 +65,7 @@ function run_all_tests() {
   for (let test of secondTests) {
     handlers_called = 0;
     var chan = makeChan(URL, test[0], test[1]);
-    chan.asyncOpen(new ChannelListener(doneFirstLoad, test[2]), null);
+    chan.asyncOpen2(new ChannelListener(doneFirstLoad, test[2]));
     yield undefined;
   }
 
@@ -81,7 +75,7 @@ function run_all_tests() {
   for (let test of thirdTests) {
     handlers_called = 0;
     var chan = makeChan(URL, test[0], test[1]);
-    chan.asyncOpen(new ChannelListener(doneFirstLoad, test[2]), null);
+    chan.asyncOpen2(new ChannelListener(doneFirstLoad, test[2]));
     yield undefined;
   }
 }
@@ -89,6 +83,10 @@ function run_all_tests() {
 var gTests;
 function run_test() {
   do_get_profile();
+  if (!newCacheBackEndUsed()) {
+    do_check_true(true, "This test checks only cache2 specific behavior.");
+    return;
+  }
   do_test_pending();
   httpserv = new HttpServer();
   httpserv.registerPathHandler("/cached", cached_handler);
@@ -99,8 +97,9 @@ function run_test() {
 
 function doneFirstLoad(req, buffer, expected) {
   // Load it again, make sure it hits the cache
-  var chan = makeChan(URL, 0, false);
-  chan.asyncOpen(new ChannelListener(doneSecondLoad, expected), null);
+  var nc = req.notificationCallbacks.getInterface(Ci.nsILoadContext);
+  var chan = makeChan(URL, nc.appId, nc.isInBrowserElement);
+  chan.asyncOpen2(new ChannelListener(doneSecondLoad, expected));
 }
 
 function doneSecondLoad(req, buffer, expected) {

@@ -9,11 +9,16 @@ this.EXPORTED_SYMBOLS = [
 
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
+Cu.import("resource://services-common/async.js");
 Cu.import("resource://services-common/stringbundle.js");
 Cu.import("resource://services-sync/constants.js");
 Cu.import("resource://services-sync/engines.js");
 Cu.import("resource://services-sync/record.js");
 Cu.import("resource://services-sync/util.js");
+Cu.import("resource://gre/modules/Services.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
+  "resource://gre/modules/FxAccounts.jsm");
 
 const CLIENTS_TTL = 1814400; // 21 days
 const CLIENTS_TTL_REFRESH = 604800; // 7 days
@@ -63,13 +68,14 @@ ClientEngine.prototype = {
   // Aggregate some stats on the composition of clients on this account
   get stats() {
     let stats = {
-      hasMobile: this.localType == "mobile",
+      hasMobile: this.localType == DEVICE_TYPE_MOBILE,
       names: [this.localName],
       numClients: 1,
     };
 
-    for each (let {name, type} in this._store._remoteClients) {
-      stats.hasMobile = stats.hasMobile || type == "mobile";
+    for (let id in this._store._remoteClients) {
+      let {name, type} = this._store._remoteClients[id];
+      stats.hasMobile = stats.hasMobile || type == DEVICE_TYPE_MOBILE;
       stats.names.push(name);
       stats.numClients++;
     }
@@ -87,7 +93,8 @@ ClientEngine.prototype = {
 
     counts.set(this.localType, 1);
 
-    for each (let record in this._store._remoteClients) {
+    for (let id in this._store._remoteClients) {
+      let record = this._store._remoteClients[id];
       let type = record.type;
       if (!counts.has(type)) {
         counts.set(type, 0);
@@ -114,18 +121,15 @@ ClientEngine.prototype = {
   },
 
   get localName() {
-    let localName = Svc.Prefs.get("client.name", "");
-    if (localName != "")
-      return localName;
-
-    return this.localName = Utils.getDefaultDeviceName();
+    return this.localName = Utils.getDeviceName();
   },
   set localName(value) {
     Svc.Prefs.set("client.name", value);
+    fxAccounts.updateDeviceRegistration();
   },
 
   get localType() {
-    return Svc.Prefs.get("client.type", "desktop");
+    return Utils.getDeviceType();
   },
   set localType(value) {
     Svc.Prefs.set("client.type", value);
@@ -133,7 +137,7 @@ ClientEngine.prototype = {
 
   isMobile: function isMobile(id) {
     if (this._store._remoteClients[id])
-      return this._store._remoteClients[id].type == "mobile";
+      return this._store._remoteClients[id].type == DEVICE_TYPE_MOBILE;
     return false;
   },
 
@@ -144,6 +148,26 @@ ClientEngine.prototype = {
       this.lastRecordUpload = Date.now() / 1000;
     }
     SyncEngine.prototype._syncStartup.call(this);
+  },
+
+  _syncFinish() {
+    // Record telemetry for our device types.
+    for (let [deviceType, count] of this.deviceTypes) {
+      let hid;
+      switch (deviceType) {
+        case "desktop":
+          hid = "WEAVE_DEVICE_COUNT_DESKTOP";
+          break;
+        case "mobile":
+          hid = "WEAVE_DEVICE_COUNT_MOBILE";
+          break;
+        default:
+          this._log.warn(`Unexpected deviceType "${deviceType}" recording device telemetry.`);
+          continue;
+      }
+      Services.telemetry.getHistogramById(hid).add(count);
+    }
+    SyncEngine.prototype._syncFinish.call(this);
   },
 
   // Always process incoming items because they might have commands
@@ -258,7 +282,11 @@ ClientEngine.prototype = {
       this.clearCommands();
 
       // Process each command in order.
-      for each (let {command, args} in commands) {
+      if (!commands) {
+        return true;
+      }
+      for (let key in commands) {
+        let {command, args} = commands[key];
         this._log.debug("Processing command: " + command + "(" + args + ")");
 
         let engines = [args[0]];
@@ -407,6 +435,13 @@ ClientStore.prototype = {
 
     // Package the individual components into a record for the local client
     if (id == this.engine.localID) {
+      let cb = Async.makeSpinningCallback();
+      fxAccounts.getDeviceId().then(id => cb(null, id), cb);
+      try {
+        record.fxaDeviceId = cb.wait();
+      } catch(error) {
+        this._log.warn("failed to get fxa device id", error);
+      }
       record.name = this.engine.localName;
       record.type = this.engine.localType;
       record.commands = this.engine.localCommands;

@@ -63,7 +63,7 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
     mValidRegion.SetEmpty();
     mContentClient->Clear();
 
-    nsIntRegion toDraw = IntersectWithClip(GetEffectiveVisibleRegion(), aContext);
+    nsIntRegion toDraw = IntersectWithClip(GetEffectiveVisibleRegion().ToUnknownRegion(), aContext);
 
     RenderTraceInvalidateStart(this, "FFFF00", toDraw.GetBounds());
 
@@ -75,18 +75,15 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
 
       aContext->Save();
 
-      bool needsClipToVisibleRegion = GetClipToVisibleRegion();
       bool needsGroup = opacity != 1.0 ||
                         effectiveOperator != CompositionOp::OP_OVER ||
                         aMaskLayer;
       RefPtr<gfxContext> groupContext;
+      BasicLayerManager::PushedGroup group;
       if (needsGroup) {
-        groupContext =
-          BasicManager()->PushGroupForLayer(aContext, this, toDraw,
-                                            &needsClipToVisibleRegion);
-        if (effectiveOperator != CompositionOp::OP_OVER) {
-          needsClipToVisibleRegion = true;
-        }
+        group =
+          BasicManager()->PushGroupForLayer(aContext, this, toDraw);
+        groupContext = group.mGroupTarget;
       } else {
         groupContext = aContext;
       }
@@ -94,12 +91,7 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
       aCallback(this, groupContext, toDraw, toDraw,
                 DrawRegionClip::NONE, nsIntRegion(), aCallbackData);
       if (needsGroup) {
-        aContext->PopGroupToSource();
-        if (needsClipToVisibleRegion) {
-          gfxUtils::ClipToRegion(aContext, toDraw);
-        }
-        AutoSetOperator setOptimizedOperator(aContext, effectiveOperator);
-        PaintWithMask(aContext, opacity, aMaskLayer);
+        BasicManager()->PopGroupForLayer(group);
       }
 
       aContext->Restore();
@@ -177,7 +169,7 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
     // from RGB to RGBA, because we might need to repaint with
     // subpixel AA)
     state.mRegionToInvalidate.And(state.mRegionToInvalidate,
-                                  GetEffectiveVisibleRegion());
+                                  GetEffectiveVisibleRegion().ToUnknownRegion());
     SetAntialiasingFlags(this, target);
 
     RenderTraceInvalidateStart(this, "FFFF00", state.mRegionToDraw.GetBounds());
@@ -200,6 +192,7 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
       mContentClient->ReturnDrawTargetToBuffer(target);
       target = nullptr;
     }
+
     // It's possible that state.mRegionToInvalidate is nonempty here,
     // if we are shrinking the valid region to nothing. So use mRegionToDraw
     // instead.
@@ -210,16 +203,16 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
   for (uint32_t i = 0; i < readbackUpdates.Length(); ++i) {
     ReadbackProcessor::Update& update = readbackUpdates[i];
     nsIntPoint offset = update.mLayer->GetBackgroundLayerOffset();
-    RefPtr<gfxContext> ctx =
+    RefPtr<DrawTarget> dt =
       update.mLayer->GetSink()->BeginUpdate(update.mUpdateRect + offset,
                                             update.mSequenceCounter);
-    if (ctx) {
+    if (dt) {
       NS_ASSERTION(GetEffectiveOpacity() == 1.0, "Should only read back opaque layers");
       NS_ASSERTION(!GetMaskLayer(), "Should only read back layers without masks");
-      ctx->SetMatrix(ctx->CurrentMatrix().Translate(offset.x, offset.y));
-      mContentClient->DrawTo(this, ctx->GetDrawTarget(), 1.0,
-                             ctx->CurrentOp(), nullptr, nullptr);
-      update.mLayer->GetSink()->EndUpdate(ctx, update.mUpdateRect + offset);
+      dt->SetTransform(dt->GetTransform().PreTranslate(offset.x, offset.y));
+      mContentClient->DrawTo(this, dt, 1.0, CompositionOp::OP_OVER,
+                             nullptr, nullptr);
+      update.mLayer->GetSink()->EndUpdate(update.mUpdateRect + offset);
     }
   }
 }

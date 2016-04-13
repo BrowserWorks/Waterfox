@@ -38,22 +38,144 @@ config = {
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
     },
     'mozilla-release': {
+        'enable_release_promotion': True,
         'repo_path': 'releases/mozilla-release',
-        # TODO I think we can remove update_channel since we don't run
-        # nightlies for mozilla-release
         'update_channel': 'release',
         'branch_uses_per_checkin_strategy': True,
         'use_branch_in_symbols_extra_buildid': False,
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
+        'platform_overrides': {
+            'linux': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux32/release',
+            },
+            'linux64': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux64/release',
+            },
+            'macosx64': {
+                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/release',
+            },
+            'win32': {
+                'src_mozconfig': 'browser/config/mozconfigs/win32/release',
+            },
+            'win64': {
+                'src_mozconfig': 'browser/config/mozconfigs/win64/release',
+            },
+            'linux-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan': {
+                'update_channel': 'default',
+            },
+            'linux64-cc': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an': {
+                'update_channel': 'default',
+            },
+            'linux64-tsan': {
+                'update_channel': 'default',
+            },
+            'macosx64-debug': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an': {
+                'update_channel': 'default',
+            },
+            'macosx64-mulet': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an-debug': {
+                'update_channel': 'default',
+            },
+            'win32-debug': {
+                'update_channel': 'default',
+            },
+            'win32-mulet': {
+                'update_channel': 'default',
+            },
+            'win64-debug': {
+                'update_channel': 'default',
+            },
+        },
     },
     'mozilla-beta': {
+        'enable_release_promotion': 1,
         'repo_path': 'releases/mozilla-beta',
-        # TODO I think we can remove update_channel since we don't run
-        # nightlies for mozilla-beta
         'update_channel': 'beta',
         'branch_uses_per_checkin_strategy': True,
         'use_branch_in_symbols_extra_buildid': False,
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
+        'platform_overrides': {
+            'linux': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux32/beta',
+            },
+            'linux64': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux64/beta',
+            },
+            'macosx64': {
+                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/beta',
+            },
+            'win32': {
+                'src_mozconfig': 'browser/config/mozconfigs/win32/beta',
+            },
+            'win64': {
+                'src_mozconfig': 'browser/config/mozconfigs/win64/beta',
+            },
+            'linux-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan': {
+                'update_channel': 'default',
+            },
+            'linux64-cc': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an': {
+                'update_channel': 'default',
+            },
+            'linux64-tsan': {
+                'update_channel': 'default',
+            },
+            'macosx64-debug': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an': {
+                'update_channel': 'default',
+            },
+            'macosx64-mulet': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an-debug': {
+                'update_channel': 'default',
+            },
+            'win32-debug': {
+                'update_channel': 'default',
+            },
+            'win32-mulet': {
+                'update_channel': 'default',
+            },
+            'win64-debug': {
+                'update_channel': 'default',
+            },
+        },
     },
     'mozilla-aurora': {
         'repo_path': 'releases/mozilla-aurora',
@@ -106,22 +228,68 @@ config = {
     # When build promotion goes live the mozconfig changes are probably better
     # expressed once in files like configs/builds/releng_base_windows_32_builds.py
     'date': {
+        'update_channel': 'beta-dev',
         'enable_release_promotion': 1,
         'platform_overrides': {
             'linux': {
                 'src_mozconfig': 'browser/config/mozconfigs/linux32/beta',
             },
+            'linux-debug': {
+                'update_channel': 'default',
+            },
             'linux64': {
                 'src_mozconfig': 'browser/config/mozconfigs/linux64/beta',
+            },
+            'linux64-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan': {
+                'update_channel': 'default',
+            },
+            'linux64-cc': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an': {
+                'update_channel': 'default',
+            },
+            'linux64-tsan': {
+                'update_channel': 'default',
             },
             'macosx64': {
                 'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/beta',
             },
+            'macosx64-debug': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an': {
+                'update_channel': 'default',
+            },
+            'macosx64-mulet': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an-debug': {
+                'update_channel': 'default',
+            },
             'win32': {
                 'src_mozconfig': 'browser/config/mozconfigs/win32/beta',
             },
+            'win32-debug': {
+                'update_channel': 'default',
+            },
+            'win32-mulet': {
+                'update_channel': 'default',
+            },
             'win64': {
                 'src_mozconfig': 'browser/config/mozconfigs/win64/beta',
+            },
+            'win64-debug': {
+                'update_channel': 'default',
             },
         },
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
@@ -153,6 +321,70 @@ config = {
     # 'graphics': {}
     # 'holly': {},
     'jamun': {
+        'update_channel': 'release-dev',
+        'enable_release_promotion': 1,
+        'platform_overrides': {
+            'linux': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux32/release',
+            },
+            'linux-debug': {
+                'update_channel': 'default',
+            },
+            'linux64': {
+                'src_mozconfig': 'browser/config/mozconfigs/linux64/release',
+            },
+            'linux64-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-asan': {
+                'update_channel': 'default',
+            },
+            'linux64-cc': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an-debug': {
+                'update_channel': 'default',
+            },
+            'linux64-st-an': {
+                'update_channel': 'default',
+            },
+            'linux64-tsan': {
+                'update_channel': 'default',
+            },
+            'macosx64': {
+                'src_mozconfig': 'browser/config/mozconfigs/macosx-universal/release',
+            },
+            'macosx64-debug': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an': {
+                'update_channel': 'default',
+            },
+            'macosx64-mulet': {
+                'update_channel': 'default',
+            },
+            'macosx64-st-an-debug': {
+                'update_channel': 'default',
+            },
+            'win32': {
+                'src_mozconfig': 'browser/config/mozconfigs/win32/release',
+            },
+            'win32-debug': {
+                'update_channel': 'default',
+            },
+            'win32-mulet': {
+                'update_channel': 'default',
+            },
+            'win64': {
+                'src_mozconfig': 'browser/config/mozconfigs/win64/release',
+            },
+            'win64-debug': {
+                'update_channel': 'default',
+            },
+        },
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
     },
     'larch': {

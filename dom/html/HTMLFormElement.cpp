@@ -36,6 +36,7 @@
 #include "nsQueryObject.h"
 
 // form submission
+#include "mozilla/dom/FormData.h"
 #include "mozilla/Telemetry.h"
 #include "nsIFormSubmitObserver.h"
 #include "nsIObserverService.h"
@@ -49,7 +50,6 @@
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsIWebProgress.h"
 #include "nsIDocShell.h"
-#include "nsFormData.h"
 #include "nsFormSubmissionConstants.h"
 #include "nsIPrompt.h"
 #include "nsISecurityUITelemetry.h"
@@ -1746,7 +1746,7 @@ HTMLFormElement::GetActionURL(nsIURI** aActionURL,
   bool isHttpScheme = false;
   rv = actionURL->SchemeIs("http", &isHttpScheme);
   NS_ENSURE_SUCCESS(rv, rv);
-  if (isHttpScheme && document->GetUpgradeInsecureRequests()) {
+  if (isHttpScheme && document->GetUpgradeInsecureRequests(false)) {
     // let's use the old specification before the upgrade for logging
     nsAutoCString spec;
     rv = actionURL->GetSpec(spec);

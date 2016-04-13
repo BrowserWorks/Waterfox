@@ -25,6 +25,7 @@
 #include "nsString.h"
 #include "nsNetUtil.h"
 #include "nsNetCID.h"
+#include "plstr.h"
 #include "prnetdb.h"
 #include "nsPACMan.h"
 #include "nsProxyRelease.h"
@@ -49,7 +50,7 @@ using namespace mozilla;
 
 #include "mozilla/Logging.h"
 #undef LOG
-#define LOG(args) MOZ_LOG(net::GetProxyLog(), mozilla::LogLevel::Debug, args)
+#define LOG(args) MOZ_LOG(net::gProxyLog, mozilla::LogLevel::Debug, args)
 
 //----------------------------------------------------------------------------
 
@@ -1373,6 +1374,23 @@ nsProtocolProxyService::NewProxyInfo(const nsACString &aType,
                                      nsIProxyInfo *aFailoverProxy,
                                      nsIProxyInfo **aResult)
 {
+    return NewProxyInfoWithAuth(aType, aHost, aPort,
+                                EmptyCString(), EmptyCString(),
+                                aFlags, aFailoverTimeout,
+                                aFailoverProxy, aResult);
+}
+
+NS_IMETHODIMP
+nsProtocolProxyService::NewProxyInfoWithAuth(const nsACString &aType,
+                                             const nsACString &aHost,
+                                             int32_t aPort,
+                                             const nsACString &aUsername,
+                                             const nsACString &aPassword,
+                                             uint32_t aFlags,
+                                             uint32_t aFailoverTimeout,
+                                             nsIProxyInfo *aFailoverProxy,
+                                             nsIProxyInfo **aResult)
+{
     static const char *types[] = {
         kProxyType_HTTP,
         kProxyType_HTTPS,
@@ -1392,10 +1410,16 @@ nsProtocolProxyService::NewProxyInfo(const nsACString &aType,
     }
     NS_ENSURE_TRUE(type, NS_ERROR_INVALID_ARG);
 
-    if (aPort <= 0)
-        aPort = -1;
+    // We have only implemented username/password for SOCKS proxies.
+    if ((!aUsername.IsEmpty() || !aPassword.IsEmpty()) &&
+        !aType.LowerCaseEqualsASCII(kProxyType_SOCKS) &&
+        !aType.LowerCaseEqualsASCII(kProxyType_SOCKS4)) {
+        return NS_ERROR_NOT_IMPLEMENTED;
+    }
 
-    return NewProxyInfo_Internal(type, aHost, aPort, aFlags, aFailoverTimeout,
+    return NewProxyInfo_Internal(type, aHost, aPort,
+                                 aUsername, aPassword,
+                                 aFlags, aFailoverTimeout,
                                  aFailoverProxy, 0, aResult);
 }
 
@@ -1703,12 +1727,17 @@ nsresult
 nsProtocolProxyService::NewProxyInfo_Internal(const char *aType,
                                               const nsACString &aHost,
                                               int32_t aPort,
+                                              const nsACString &aUsername,
+                                              const nsACString &aPassword,
                                               uint32_t aFlags,
                                               uint32_t aFailoverTimeout,
                                               nsIProxyInfo *aFailoverProxy,
                                               uint32_t aResolveFlags,
                                               nsIProxyInfo **aResult)
 {
+    if (aPort <= 0)
+        aPort = -1;
+
     nsCOMPtr<nsProxyInfo> failover;
     if (aFailoverProxy) {
         failover = do_QueryInterface(aFailoverProxy);
@@ -1722,6 +1751,8 @@ nsProtocolProxyService::NewProxyInfo_Internal(const char *aType,
     proxyInfo->mType = aType;
     proxyInfo->mHost = aHost;
     proxyInfo->mPort = aPort;
+    proxyInfo->mUsername = aUsername;
+    proxyInfo->mPassword = aPassword;
     proxyInfo->mFlags = aFlags;
     proxyInfo->mResolveFlags = aResolveFlags;
     proxyInfo->mTimeout = aFailoverTimeout == UINT32_MAX
@@ -1890,8 +1921,9 @@ nsProtocolProxyService::Resolve_Internal(nsIChannel *channel,
     }
 
     if (type) {
-        rv = NewProxyInfo_Internal(type, *host, port, proxyFlags,
-                                   UINT32_MAX, nullptr, flags,
+        rv = NewProxyInfo_Internal(type, *host, port,
+                                   EmptyCString(), EmptyCString(),
+                                   proxyFlags, UINT32_MAX, nullptr, flags,
                                    result);
         if (NS_FAILED(rv))
             return rv;

@@ -13,6 +13,7 @@
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundChild.h"
+#include "nsContentUtils.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 
@@ -388,7 +389,7 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
     RefPtr<InitializeRunnable> runnable =
       new InitializeRunnable(workerPrivate, origin, principalInfo,
                              privateBrowsing, aRv);
-    runnable->Dispatch(cx);
+    runnable->Dispatch(aRv);
   }
 
   if (aRv.Failed()) {

@@ -12,34 +12,66 @@ function forceRefresh() {
   EventUtils.synthesizeKey('R', { accelKey: true, shiftKey: true });
 }
 
+function frameScript() {
+  function eventHandler(event) {
+    sendAsyncMessage("test:event", {type: event.type});
+  }
+
+  // These are tab-local, so no need to unregister them.
+  addEventListener('base-load', eventHandler, true, true);
+  addEventListener('base-register', eventHandler, true, true);
+  addEventListener('base-sw-ready', eventHandler, true, true);
+  addEventListener('cached-load', eventHandler, true, true);
+}
+
 function test() {
   waitForExplicitFinish();
   SpecialPowers.pushPrefEnv({'set': [['dom.serviceWorkers.enabled', true],
                                      ['dom.serviceWorkers.exemptFromPerDomainMax', true],
                                      ['dom.serviceWorkers.testing.enabled', true],
                                      ['dom.serviceWorkers.interception.enabled', true],
-                                     ['dom.caches.enabled', true]]},
+                                     ['dom.caches.enabled', true],
+                                     ['browser.cache.disk.enable', false],
+                                     ['browser.cache.memory.enable', false]]},
                             function() {
     var url = gTestRoot + 'browser_base_force_refresh.html';
-    var tab = gBrowser.addTab(url);
+    var tab = gBrowser.addTab();
     gBrowser.selectedTab = tab;
 
-    var cachedLoad = false;
+    tab.linkedBrowser.messageManager.loadFrameScript("data:,(" + encodeURIComponent(frameScript) + ")()", true);
+    gBrowser.loadURI(url);
 
-    function eventHandler(event) {
-      if (event.type === 'base-load') {
+    function done() {
+      tab.linkedBrowser.messageManager.removeMessageListener("test:event", eventHandler);
+
+      gBrowser.removeTab(tab);
+      executeSoon(finish);
+    }
+
+    var cachedLoad = false;
+    var baseLoadCount = 0;
+
+    function eventHandler(msg) {
+      if (msg.data.type === 'base-load') {
+        baseLoadCount += 1;
         if (cachedLoad) {
-          gBrowser.removeTab(tab);
-          executeSoon(finish);
+          is(baseLoadCount, 2, 'cached load should occur before second base load');
+          return done();
         }
-      } else if (event.type === 'base-register') {
+        if (baseLoadCount !== 1) {
+          ok(false, 'base load without cached load should only occur once');
+          return done();
+        }
+      } else if (msg.data.type === 'base-register') {
         ok(!cachedLoad, 'cached load should not occur before base register');
-        refresh();
-      } else if (event.type === 'base-sw-ready') {
+        is(baseLoadCount, 1, 'register should occur after first base load');
+      } else if (msg.data.type === 'base-sw-ready') {
         ok(!cachedLoad, 'cached load should not occur before base ready');
+        is(baseLoadCount, 1, 'ready should occur after first base load');
         refresh();
-      } else if (event.type === 'cached-load') {
+      } else if (msg.data.type === 'cached-load') {
         ok(!cachedLoad, 'cached load should not occur twice');
+        is(baseLoadCount, 1, 'cache load occur after first base load');
         cachedLoad = true;
         forceRefresh();
       }
@@ -47,9 +79,6 @@ function test() {
       return;
     }
 
-    addEventListener('base-load', eventHandler, true, true);
-    addEventListener('base-register', eventHandler, true, true);
-    addEventListener('base-sw-ready', eventHandler, true, true);
-    addEventListener('cached-load', eventHandler, true, true);
+    tab.linkedBrowser.messageManager.addMessageListener("test:event", eventHandler);
   });
 }

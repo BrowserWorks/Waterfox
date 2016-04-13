@@ -285,6 +285,9 @@ static void
 setup_topographical_masks (const hb_ot_shape_plan_t *plan,
 			   hb_buffer_t *buffer)
 {
+  const use_shape_plan_t *use_plan = (const use_shape_plan_t *) plan->data;
+  if (use_plan->arabic_plan)
+    return;
 
   ASSERT_STATIC (INIT < 4 && ISOL < 4 && MEDI < 4 && FINA < 4);
   hb_mask_t masks[4], all_masks = 0;
@@ -360,7 +363,7 @@ clear_substitution_flags (const hb_ot_shape_plan_t *plan,
   hb_glyph_info_t *info = buffer->info;
   unsigned int count = buffer->len;
   for (unsigned int i = 0; i < count; i++)
-    _hb_glyph_info_clear_substituted_and_ligated_and_multiplied (&info[i]);
+    _hb_glyph_info_clear_substituted (&info[i]);
 }
 
 static void
@@ -405,6 +408,12 @@ record_pref (const hb_ot_shape_plan_t *plan,
   }
 }
 
+static inline bool
+is_halant (const hb_glyph_info_t &info)
+{
+  return info.use_category() == USE_H && !_hb_glyph_info_ligated (&info);
+}
+
 static void
 reorder_syllable (hb_buffer_t *buffer, unsigned int start, unsigned int end)
 {
@@ -420,7 +429,6 @@ reorder_syllable (hb_buffer_t *buffer, unsigned int start, unsigned int end)
 
   hb_glyph_info_t *info = buffer->info;
 
-#define HALANT_FLAGS FLAG(USE_H)
 #define BASE_FLAGS (FLAG (USE_B) | FLAG (USE_GB) | FLAG (USE_IV))
 
   /* Move things forward. */
@@ -428,12 +436,12 @@ reorder_syllable (hb_buffer_t *buffer, unsigned int start, unsigned int end)
   {
     /* Got a repha.  Reorder it to after first base, before first halant. */
     for (unsigned int i = start + 1; i < end; i++)
-      if (FLAG_UNSAFE (info[i].use_category()) & (HALANT_FLAGS | BASE_FLAGS))
+      if ((FLAG_UNSAFE (info[i].use_category()) & (BASE_FLAGS)) || is_halant (info[i]))
       {
 	/* If we hit a halant, move before it; otherwise it's a base: move to it's
 	 * place, and shift things in between backward. */
 
-	if (info[i].use_category() == USE_H)
+	if (is_halant (info[i]))
 	  i--;
 
 	buffer->merge_clusters (start, i + 1);
@@ -450,11 +458,11 @@ reorder_syllable (hb_buffer_t *buffer, unsigned int start, unsigned int end)
   for (unsigned int i = start; i < end; i++)
   {
     uint32_t flag = FLAG_UNSAFE (info[i].use_category());
-    if (flag & (HALANT_FLAGS | BASE_FLAGS))
+    if ((flag & (BASE_FLAGS)) || is_halant (info[i]))
     {
-      /* If we hit a halant, move before it; otherwise it's a base: move to it's
+      /* If we hit a halant, move after it; otherwise it's a base: move to it's
        * place, and shift things in between backward. */
-      if (info[i].use_category() == USE_H)
+      if (is_halant (info[i]))
 	j = i + 1;
       else
 	j = i;
@@ -490,11 +498,6 @@ insert_dotted_circles (const hb_ot_shape_plan_t *plan HB_UNUSED,
   if (likely (!has_broken_syllables))
     return;
 
-
-  hb_codepoint_t dottedcircle_glyph;
-  if (!font->get_glyph (0x25CCu, 0, &dottedcircle_glyph))
-    return;
-
   hb_glyph_info_t dottedcircle = {0};
   if (!font->get_glyph (0x25CCu, 0, &dottedcircle.codepoint))
     return;
@@ -503,9 +506,8 @@ insert_dotted_circles (const hb_ot_shape_plan_t *plan HB_UNUSED,
   buffer->clear_output ();
 
   buffer->idx = 0;
-
   unsigned int last_syllable = 0;
-  while (buffer->idx < buffer->len)
+  while (buffer->idx < buffer->len && !buffer->in_error)
   {
     unsigned int syllable = buffer->cur().syllable();
     syllable_type_t syllable_type = (syllable_type_t) (syllable & 0x0F);
@@ -513,10 +515,10 @@ insert_dotted_circles (const hb_ot_shape_plan_t *plan HB_UNUSED,
     {
       last_syllable = syllable;
 
-      hb_glyph_info_t info = dottedcircle;
-      info.cluster = buffer->cur().cluster;
-      info.mask = buffer->cur().mask;
-      info.syllable() = buffer->cur().syllable();
+      hb_glyph_info_t ginfo = dottedcircle;
+      ginfo.cluster = buffer->cur().cluster;
+      ginfo.mask = buffer->cur().mask;
+      ginfo.syllable() = buffer->cur().syllable();
       /* TODO Set glyph_props? */
 
       /* Insert dottedcircle after possible Repha. */
@@ -525,7 +527,7 @@ insert_dotted_circles (const hb_ot_shape_plan_t *plan HB_UNUSED,
 	     buffer->cur().use_category() == USE_R)
         buffer->next_glyph ();
 
-      buffer->output_info (info);
+      buffer->output_info (ginfo);
     }
     else
       buffer->next_glyph ();
@@ -564,7 +566,7 @@ compose_use (const hb_ot_shape_normalize_context_t *c,
   if (HB_UNICODE_GENERAL_CATEGORY_IS_MARK (c->unicode->general_category (a)))
     return false;
 
-  return c->unicode->compose (a, b, ab);
+  return (bool)c->unicode->compose (a, b, ab);
 }
 
 
@@ -576,6 +578,7 @@ const hb_ot_complex_shaper_t _hb_ot_complex_shaper_use =
   data_create_use,
   data_destroy_use,
   NULL, /* preprocess_text */
+  NULL, /* postprocess_glyphs */
   HB_OT_SHAPE_NORMALIZATION_MODE_COMPOSED_DIACRITICS_NO_SHORT_CIRCUIT,
   NULL, /* decompose */
   compose_use,

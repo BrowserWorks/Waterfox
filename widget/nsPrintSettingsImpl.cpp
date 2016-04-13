@@ -7,7 +7,6 @@
 #include "nsReadableUtils.h"
 #include "nsIPrintSession.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/gfx/Logging.h"
 
 #define DEFAULT_MARGIN_WIDTH 0.5
 
@@ -35,7 +34,6 @@ nsPrintSettings::nsPrintSettings() :
   mShowPrintProgress(true),
   mPrintPageDelay(50),
   mPaperData(0),
-  mPaperSizeType(kPaperSizeDefined),
   mPaperWidth(8.5),
   mPaperHeight(11.0),
   mPaperSizeUnit(kPaperSizeInches),
@@ -813,9 +811,6 @@ NS_IMETHODIMP nsPrintSettings::GetPaperWidth(double *aPaperWidth)
 NS_IMETHODIMP nsPrintSettings::SetPaperWidth(double aPaperWidth)
 {
   mPaperWidth = aPaperWidth;
-  if (mPaperWidth <= 0) {
-    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Setting paper width to bad value " << mPaperWidth;
-  }
   return NS_OK;
 }
 
@@ -828,9 +823,6 @@ NS_IMETHODIMP nsPrintSettings::GetPaperHeight(double *aPaperHeight)
 NS_IMETHODIMP nsPrintSettings::SetPaperHeight(double aPaperHeight)
 {
   mPaperHeight = aPaperHeight;
-  if (mPaperHeight <= 0) {
-    gfxCriticalError(gfxCriticalError::DefaultOptions(false)) << "Setting paper height to bad value " << mPaperHeight;
-  }
   return NS_OK;
 }
 
@@ -843,18 +835,6 @@ NS_IMETHODIMP nsPrintSettings::GetPaperSizeUnit(int16_t *aPaperSizeUnit)
 NS_IMETHODIMP nsPrintSettings::SetPaperSizeUnit(int16_t aPaperSizeUnit)
 {
   mPaperSizeUnit = aPaperSizeUnit;
-  return NS_OK;
-}
-
-NS_IMETHODIMP nsPrintSettings::GetPaperSizeType(int16_t *aPaperSizeType)
-{
-  NS_ENSURE_ARG_POINTER(aPaperSizeType);
-  *aPaperSizeType = mPaperSizeType;
-  return NS_OK;
-}
-NS_IMETHODIMP nsPrintSettings::SetPaperSizeType(int16_t aPaperSizeType)
-{
-  mPaperSizeType = aPaperSizeType;
   return NS_OK;
 }
 
@@ -1028,7 +1008,6 @@ nsPrintSettings& nsPrintSettings::operator=(const nsPrintSettings& rhs)
   mShrinkToFit         = rhs.mShrinkToFit;
   mShowPrintProgress   = rhs.mShowPrintProgress;
   mPaperName           = rhs.mPaperName;
-  mPaperSizeType       = rhs.mPaperSizeType;
   mPaperData           = rhs.mPaperData;
   mPaperWidth          = rhs.mPaperWidth;
   mPaperHeight         = rhs.mPaperHeight;

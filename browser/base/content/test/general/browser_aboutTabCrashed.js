@@ -70,7 +70,7 @@ function crashTabTestHelper(fieldValues, expectedExtra) {
     gBrowser,
     url: PAGE,
   }, function*(browser) {
-    let prefs = TabCrashReporter.prefs;
+    let prefs = TabCrashHandler.prefs;
     let originalSendReport = prefs.getBoolPref("sendReport");
     let originalEmailMe = prefs.getBoolPref("emailMe");
     let originalIncludeURL = prefs.getBoolPref("includeURL");
@@ -125,9 +125,9 @@ function crashTabTestHelper(fieldValues, expectedExtra) {
  */
 add_task(function* test_default() {
   yield crashTabTestHelper({}, {
-    "Comments": "",
+    "Comments": null,
     "URL": "",
-    "Email": "",
+    "Email": null,
   });
 });
 
@@ -140,7 +140,7 @@ add_task(function* test_just_a_comment() {
   }, {
     "Comments": COMMENTS,
     "URL": "",
-    "Email": "",
+    "Email": null,
   });
 });
 
@@ -152,9 +152,9 @@ add_task(function* test_no_email() {
     email: EMAIL,
     emailMe: false,
   }, {
-    "Comments": "",
+    "Comments": null,
     "URL": "",
-    "Email": "",
+    "Email": null,
   });
 });
 
@@ -166,7 +166,7 @@ add_task(function* test_yes_email() {
     email: EMAIL,
     emailMe: true,
   }, {
-    "Comments": "",
+    "Comments": null,
     "URL": "",
     "Email": EMAIL,
   });
@@ -179,9 +179,9 @@ add_task(function* test_send_URL() {
   yield crashTabTestHelper({
     includeURL: true,
   }, {
-    "Comments": "",
+    "Comments": null,
     "URL": PAGE,
-    "Email": "",
+    "Email": null,
   });
 });
 
@@ -200,3 +200,4 @@ add_task(function* test_send_all() {
     "Email": EMAIL,
   });
 });
+

@@ -26,12 +26,12 @@ var {synthesizeDragStart, synthesizeDrop} = ChromeUtils;
 const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 const kTabEventFailureTimeoutInMs = 20000;
 
-function createDummyXULButton(id, label) {
+function createDummyXULButton(id, label, win = window) {
   let btn = document.createElementNS(kNSXUL, "toolbarbutton");
   btn.id = id;
   btn.setAttribute("label", label || id);
   btn.className = "toolbarbutton-1 chromeclass-toolbar-additional";
-  window.gNavToolbox.palette.appendChild(btn);
+  win.gNavToolbox.palette.appendChild(btn);
   return btn;
 }
 
@@ -200,7 +200,7 @@ function endCustomizing(aWindow=window) {
 
     // If we stop early enough, this might actually be about:blank.
     if (newTabBrowser.contentDocument.location.href == "about:blank") {
-      return;
+      return null;
     }
 
     // Otherwise, make it be about:blank, and wait for that to be done.
@@ -216,7 +216,7 @@ function endCustomizing(aWindow=window) {
 
 function startCustomizing(aWindow=window) {
   if (aWindow.document.documentElement.getAttribute("customizing") == "true") {
-    return;
+    return null;
   }
   Services.prefs.setBoolPref("browser.uiCustomization.disableAnimation", true);
   let deferred = Promise.defer();

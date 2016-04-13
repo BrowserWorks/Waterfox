@@ -128,6 +128,7 @@ function AbstractTreeItem({ parent, level }) {
     EventEmitter.decorate(this);
   }
 }
+this.AbstractTreeItem = AbstractTreeItem;
 
 AbstractTreeItem.prototype = {
   _containerNode: null,
@@ -521,7 +522,6 @@ AbstractTreeItem.prototype = {
    * Handler for the "click" event on the element displaying this tree item.
    */
   _onClick: function(e) {
-    e.preventDefault();
     e.stopPropagation();
     this.focus();
   },

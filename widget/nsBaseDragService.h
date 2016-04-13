@@ -56,7 +56,7 @@ public:
 
   void SetDragEndPoint(nsIntPoint aEndDragPoint)
   {
-    mEndDragPoint = mozilla::LayoutDeviceIntPoint::FromUntyped(aEndDragPoint);
+    mEndDragPoint = mozilla::LayoutDeviceIntPoint::FromUnknownPoint(aEndDragPoint);
   }
   void SetDragEndPoint(mozilla::LayoutDeviceIntPoint aEndDragPoint)
   {
@@ -112,8 +112,7 @@ protected:
    * Draw a drag image for an image node specified by aImageLoader or aCanvas.
    * This is called by DrawDrag.
    */
-  nsresult DrawDragForImage(nsPresContext* aPresContext,
-                            nsIImageLoadingContent* aImageLoader,
+  nsresult DrawDragForImage(nsIImageLoadingContent* aImageLoader,
                             mozilla::dom::HTMLCanvasElement* aCanvas,
                             int32_t aScreenX, int32_t aScreenY,
                             nsIntRect* aScreenDragRect,

@@ -14,7 +14,6 @@ Cu.import("resource://testing-common/MockRegistrar.jsm", this);
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                                   "resource://gre/modules/LightweightThemeManager.jsm");
 
-// Lazy load |ProfileAge| as it is not available on Android.
 XPCOMUtils.defineLazyModuleGetter(this, "ProfileAge",
                                   "resource://gre/modules/ProfileAge.jsm");
 
@@ -122,6 +121,100 @@ function registerFakePluginHost() {
   MockRegistrar.register("@mozilla.org/plugin/host;1", PluginHost);
 }
 
+function MockAddonWrapper(aAddon) {
+  this.addon = aAddon;
+}
+MockAddonWrapper.prototype = {
+  get id() {
+    return this.addon.id;
+  },
+
+  get type() {
+    return "service";
+  },
+
+  get appDisabled() {
+    return false;
+  },
+
+  get isCompatible() {
+    return true;
+  },
+
+  get isPlatformCompatible() {
+    return true;
+  },
+
+  get scope() {
+    return AddonManager.SCOPE_PROFILE;
+  },
+
+  get foreignInstall() {
+    return false;
+  },
+
+  get providesUpdatesSecurely() {
+    return true;
+  },
+
+  get blocklistState() {
+    return 0; // Not blocked.
+  },
+
+  get pendingOperations() {
+    return AddonManager.PENDING_NONE;
+  },
+
+  get permissions() {
+    return AddonManager.PERM_CAN_UNINSTALL | AddonManager.PERM_CAN_DISABLE;
+  },
+
+  get isActive() {
+    return true;
+  },
+
+  get name() {
+    return this.addon.name;
+  },
+
+  get version() {
+    return this.addon.version;
+  },
+
+  get creator() {
+    return new AddonManagerPrivate.AddonAuthor(this.addon.author);
+  },
+
+  get userDisabled() {
+    return this.appDisabled;
+  },
+};
+
+function createMockAddonProvider(aName) {
+  let mockProvider = {
+    _addons: [],
+
+    get name() {
+      return aName;
+    },
+
+    addAddon: function(aAddon) {
+      this._addons.push(aAddon);
+      AddonManagerPrivate.callAddonListeners("onInstalled", new MockAddonWrapper(aAddon));
+    },
+
+    getAddonsByTypes: function (aTypes, aCallback) {
+      aCallback(this._addons.map(a => new MockAddonWrapper(a)));
+    },
+
+    shutdown() {
+      return Promise.resolve();
+    },
+  };
+
+  return mockProvider;
+};
+
 /**
  * Used to spoof the Persona Id.
  */
@@ -148,11 +241,6 @@ function spoofGfxAdapter() {
 }
 
 function spoofProfileReset() {
-  if (gIsAndroid) {
-    // ProfileAge is not available on Android.
-    return true;
-  }
-
   let profileAccessor = new ProfileAge();
 
   return profileAccessor.writeTimes({
@@ -249,6 +337,7 @@ function checkSettingsSection(data) {
   const EXPECTED_FIELDS_TYPES = {
     blocklistEnabled: "boolean",
     e10sEnabled: "boolean",
+    e10sCohort: "string",
     telemetryEnabled: "boolean",
     isInOptoutSample: "boolean",
     locale: "string",
@@ -293,12 +382,6 @@ function checkSettingsSection(data) {
 }
 
 function checkProfileSection(data) {
-  if (gIsAndroid) {
-    Assert.ok(!("profile" in data),
-              "There must be no profile section in Environment on Android.");
-    return;
-  }
-
   Assert.ok("profile" in data, "There must be a profile section in Environment.");
   Assert.equal(data.profile.creationDate, truncateToDays(PROFILE_CREATION_DATE_MS));
   Assert.equal(data.profile.resetDate, truncateToDays(PROFILE_RESET_DATE_MS));
@@ -572,7 +655,7 @@ function checkActiveGMPlugin(data) {
   Assert.equal(typeof data.applyBackgroundUpdates, "number");
 }
 
-function checkAddonsSection(data) {
+function checkAddonsSection(data, expectBrokenAddons) {
   const EXPECTED_FIELDS = [
     "activeAddons", "theme", "activePlugins", "activeGMPlugins", "activeExperiment",
     "persona",
@@ -584,9 +667,11 @@ function checkAddonsSection(data) {
   }
 
   // Check the active addons, if available.
-  let activeAddons = data.addons.activeAddons;
-  for (let addon in activeAddons) {
-    checkActiveAddon(activeAddons[addon]);
+  if (!expectBrokenAddons) {
+    let activeAddons = data.addons.activeAddons;
+    for (let addon in activeAddons) {
+      checkActiveAddon(activeAddons[addon]);
+    }
   }
 
   // Check "theme" structure.
@@ -617,13 +702,13 @@ function checkAddonsSection(data) {
   Assert.ok(checkNullOrString(data.addons.persona));
 }
 
-function checkEnvironmentData(data, isInitial = false) {
+function checkEnvironmentData(data, isInitial = false, expectBrokenAddons = false) {
   checkBuildSection(data);
   checkSettingsSection(data);
   checkProfileSection(data);
   checkPartnerSection(data, isInitial);
   checkSystemSection(data);
-  checkAddonsSection(data);
+  checkAddonsSection(data, expectBrokenAddons);
 }
 
 function run_test() {
@@ -665,6 +750,7 @@ function isRejected(promise) {
 
 add_task(function* asyncSetup() {
   yield spoofProfileReset();
+  TelemetryEnvironment.delayedInit();
 });
 
 add_task(function* test_checkEnvironment() {
@@ -931,7 +1017,7 @@ add_task(function* test_addonsAndPlugins() {
     hasBinaryComponents: false,
     installDay: ADDON_INSTALL_DATE,
     updateDay: ADDON_INSTALL_DATE,
-    signedState: mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_MISSING : AddonManager.SIGNEDSTATE_NOT_REQUIRED,
+    signedState: mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_SIGNED : AddonManager.SIGNEDSTATE_NOT_REQUIRED,
   };
 
   const EXPECTED_PLUGIN_DATA = {
@@ -976,6 +1062,9 @@ add_task(function* test_addonsAndPlugins() {
 
   let personaId = (gIsGonk) ? null : PERSONA_ID;
   Assert.equal(data.addons.persona, personaId, "The correct Persona Id must be reported.");
+
+  // Uninstall the addon.
+  yield AddonTestUtils.uninstallAddonByID(ADDON_ID);
 });
 
 add_task(function* test_signedAddon() {
@@ -1052,6 +1141,93 @@ add_task(function* test_addonsFieldsLimit() {
                "The description string must have been limited");
 });
 
+add_task(function* test_collectionWithbrokenAddonData() {
+  const BROKEN_ADDON_ID = "telemetry-test2.example.com@services.mozilla.org";
+  const BROKEN_MANIFEST = {
+    id: "telemetry-test2.example.com@services.mozilla.org",
+    name: "telemetry broken addon",
+    origin: "https://telemetry-test2.example.com",
+    version: 1, // This is intentionally not a string.
+    signedState: AddonManager.SIGNEDSTATE_SIGNED,
+  };
+
+  const ADDON_INSTALL_URL = gDataRoot + "restartless.xpi";
+  const ADDON_ID = "tel-restartless-xpi@tests.mozilla.org";
+  const ADDON_INSTALL_DATE = truncateToDays(Date.now());
+  const EXPECTED_ADDON_DATA = {
+    blocklisted: false,
+    description: "A restartless addon which gets enabled without a reboot.",
+    name: "XPI Telemetry Restartless Test",
+    userDisabled: false,
+    appDisabled: false,
+    version: "1.0",
+    scope: 1,
+    type: "extension",
+    foreignInstall: false,
+    hasBinaryComponents: false,
+    installDay: ADDON_INSTALL_DATE,
+    updateDay: ADDON_INSTALL_DATE,
+    signedState: mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_MISSING :
+                                         AddonManager.SIGNEDSTATE_NOT_REQUIRED,
+  };
+
+  let deferred = PromiseUtils.defer();
+  let receivedNotifications = 0;
+
+  let registerCheckpointPromise = (aExpected) => {
+    gNow = futureDate(gNow, 10 * MILLISECONDS_PER_MINUTE);
+    fakeNow(gNow);
+    return new Promise(resolve => TelemetryEnvironment.registerChangeListener(
+      "testBrokenAddon_collection" + aExpected, (reason, data) => {
+        Assert.equal(reason, "addons-changed");
+        receivedNotifications++;
+        resolve();
+      }));
+  };
+
+  let assertCheckpoint = (aExpected) => {
+    Assert.equal(receivedNotifications, aExpected);
+    TelemetryEnvironment.unregisterChangeListener("testBrokenAddon_collection" + aExpected);
+  };
+
+  // Register the broken provider and install the broken addon.
+  let checkpointPromise = registerCheckpointPromise(1);
+  let brokenAddonProvider = createMockAddonProvider("Broken Extensions Provider");
+  AddonManagerPrivate.registerProvider(brokenAddonProvider);
+  brokenAddonProvider.addAddon(BROKEN_MANIFEST);
+  yield checkpointPromise;
+  assertCheckpoint(1);
+
+  // Set the clock in the future so our changes don't get throttled.
+  gNow = fakeNow(futureDate(gNow, 10 * MILLISECONDS_PER_MINUTE));
+  // Now install an addon which returns the correct information.
+  checkpointPromise = registerCheckpointPromise(2);
+  yield AddonTestUtils.installXPIFromURL(ADDON_INSTALL_URL);
+  yield checkpointPromise;
+  assertCheckpoint(2);
+
+  // Check that the new environment contains the Social addon installed with the broken
+  // manifest and the rest of the data.
+  let data = TelemetryEnvironment.currentEnvironment;
+  checkEnvironmentData(data, false, true /* expect broken addons*/);
+
+  let activeAddons = data.addons.activeAddons;
+  Assert.ok(BROKEN_ADDON_ID in activeAddons,
+            "The addon with the broken manifest must be reported.");
+  Assert.equal(activeAddons[BROKEN_ADDON_ID].version, null,
+               "null should be reported for invalid data.");
+  Assert.ok(ADDON_ID in activeAddons,
+            "The valid addon must be reported.");
+  Assert.equal(activeAddons[ADDON_ID].description, EXPECTED_ADDON_DATA.description,
+               "The description for the valid addon should be correct.");
+
+  // Unregister the broken provider so we don't mess with other tests.
+  AddonManagerPrivate.unregisterProvider(brokenAddonProvider);
+
+  // Uninstall the valid addon.
+  yield AddonTestUtils.uninstallAddonByID(ADDON_ID);
+});
+
 add_task(function* test_changeThrottling() {
   const PREF_TEST = "toolkit.telemetry.test.pref1";
   const PREFS_TO_WATCH = new Map([
@@ -1118,7 +1294,8 @@ add_task(function* test_defaultSearchEngine() {
   Assert.equal(data.settings.defaultSearchEngine, "telemetrySearchIdentifier");
   let expectedSearchEngineData = {
     name: "telemetrySearchIdentifier",
-    loadPath: "jar:[other]/searchTest.jar!testsearchplugin/telemetrySearchIdentifier.xml"
+    loadPath: "jar:[other]/searchTest.jar!testsearchplugin/telemetrySearchIdentifier.xml",
+    submissionURL: "http://ar.wikipedia.org/wiki/%D8%AE%D8%A7%D8%B5:%D8%A8%D8%AD%D8%AB?search=&sourceid=Mozilla-search"
   };
   Assert.deepEqual(data.settings.defaultSearchEngineData, expectedSearchEngineData);
 
@@ -1126,10 +1303,10 @@ add_task(function* test_defaultSearchEngine() {
   for (let engine of Services.search.getEngines()) {
     Services.search.removeEngine(engine);
   }
-  // The search service does not notify "engine-default" when removing a default engine.
+  // The search service does not notify "engine-current" when removing a default engine.
   // Manually force the notification.
   // TODO: remove this when bug 1165341 is resolved.
-  Services.obs.notifyObservers(null, "browser-search-engine-modified", "engine-default");
+  Services.obs.notifyObservers(null, "browser-search-engine-modified", "engine-current");
 
   // Then check that no default engine is reported if none is available.
   data = TelemetryEnvironment.currentEnvironment;
@@ -1158,7 +1335,7 @@ add_task(function* test_defaultSearchEngine() {
 
   const EXPECTED_SEARCH_ENGINE_DATA = {
     name: "telemetry_default",
-    loadPath: "[profile]/searchplugins/telemetrydefault.xml"
+    loadPath: null
   };
   Assert.deepEqual(data.settings.defaultSearchEngineData, EXPECTED_SEARCH_ENGINE_DATA);
   TelemetryEnvironment.unregisterChangeListener("testWatch_SearchDefault");

@@ -14,6 +14,7 @@
 #include "nsAutodialWin.h"
 #include "mozilla/Logging.h"
 #include "nsWindowsHelpers.h"
+#include "mozilla/Telemetry.h"
 
 #define AUTODIAL_DEFAULT AUTODIAL_NEVER
 
@@ -29,8 +30,7 @@
 // the file nspr.log
 //
 
-static PRLogModuleInfo* gLog = nullptr;
-
+static mozilla::LazyLogModule gLog("Autodial");
 #undef LOGD
 #undef LOGE
 #define LOGD(args) MOZ_LOG(gLog, mozilla::LogLevel::Debug, args)
@@ -62,9 +62,6 @@ nsAutodial::~nsAutodial()
 // Returns NS_ERROR_FAILURE if error or NS_OK if success.
 nsresult nsAutodial::Init()
 {
-    if (!gLog)
-        gLog = PR_NewLogModule("Autodial");
-
     mDefaultEntryName[0] = '\0';
     mNumRASConnectionEntries = 0;
     mAutodialBehavior = QueryAutodialBehavior();
@@ -191,6 +188,9 @@ int nsAutodial::QueryAutodialBehavior()
     }
 }
 
+// only do telemetry once per session
+static bool reportedAutoDial = false;
+
 // If the RAS autodial service is running, use it. Otherwise, dial
 // the default RAS connection. There are two possible RAS dialogs:
 // one that dials a single entry, and one that lets the user choose which
@@ -271,6 +271,10 @@ nsresult nsAutodial::DialDefault(const char16_t* hostName)
                 return NS_ERROR_FAILURE;    // don't retry
             }
 
+            if (!reportedAutoDial) {
+                reportedAutoDial = true;
+                mozilla::Telemetry::Accumulate(mozilla::Telemetry::NETWORK_AUTODIAL, true);
+            }
             LOGD(("Autodial: RAS dialup connection successful."));
         }
 
@@ -302,6 +306,10 @@ nsresult nsAutodial::DialDefault(const char16_t* hostName)
                 return NS_ERROR_FAILURE;    // don't retry
             }
 
+            if (!reportedAutoDial) {
+                reportedAutoDial = true;
+                mozilla::Telemetry::Accumulate(mozilla::Telemetry::NETWORK_AUTODIAL, true);
+            }
             LOGD(("Autodial: RAS dialup connection successful."));
         }
     }

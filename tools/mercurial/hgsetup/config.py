@@ -12,7 +12,7 @@ import os
 
 HOST_FINGERPRINTS = {
     'bitbucket.org': '46:de:34:e7:9b:18:cd:7f:ae:fd:8b:e3:bc:f4:1a:5e:38:d7:ac:24',
-    'bugzilla.mozilla.org': 'f9:7e:62:42:4e:38:79:96:ca:87:71:2a:f8:51:38:c8:16:92:5c:a7',
+    'bugzilla.mozilla.org': '7c:7a:c4:6c:91:3b:6b:89:cf:f2:8c:13:b8:02:c4:25:bd:1e:25:17',
     'hg.mozilla.org': 'af:27:b9:34:47:4e:e5:98:01:f6:83:2b:51:c9:aa:d8:df:fb:1a:27',
 }
 
@@ -209,3 +209,55 @@ class MercurialConfig(object):
         for k in ('password', 'userid', 'cookie'):
             if k in b:
                 del b[k]
+
+    def have_clonebundles(self):
+        return 'clonebundles' in self._c.get('experimental', {})
+
+    def activate_clonebundles(self):
+        exp = self._c.setdefault('experimental', {})
+        exp['clonebundles'] = 'true'
+
+        # bundleclone is redundant with clonebundles. Remove it if it
+        # is installed.
+        ext = self._c.get('extensions', {})
+        try:
+            del ext['bundleclone']
+        except KeyError:
+            pass
+
+    def have_wip(self):
+        return 'wip' in self._c.get('alias', {})
+
+    def install_wip_alias(self):
+        """hg wip shows a concise view of work in progress."""
+        alias = self._c.setdefault('alias', {})
+        alias['wip'] = 'log --graph --rev=wip --template=wip'
+
+        revsetalias = self._c.setdefault('revsetalias', {})
+        revsetalias['wip'] = ('('
+                'parents(not public()) '
+                'or not public() '
+                'or . '
+                'or (head() and branch(default))'
+            ') and (not obsolete() or unstable()^) '
+            'and not closed()')
+
+        templates = self._c.setdefault('templates', {})
+        templates['wip'] = ("'"
+            # prefix with branch name
+            '{label("log.branch", branches)} '
+            # rev:node
+            '{label("changeset.{phase}", rev)}'
+            '{label("changeset.{phase}", ":")}'
+            '{label("changeset.{phase}", short(node))} '
+            # just the username part of the author, for brevity
+            '{label("grep.user", author|user)}'
+            # tags and bookmarks
+            '{label("log.tag", if(tags," {tags}"))}'
+            '{label("log.tag", if(fxheads," {fxheads}"))} '
+            '{label("log.bookmark", if(bookmarks," {bookmarks}"))}'
+            '\\n'
+            # first line of commit message
+            '{label(ifcontains(rev, revset("."), "desc.here"),desc|firstline)}'
+            "'"
+        )

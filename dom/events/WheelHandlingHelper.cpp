@@ -21,6 +21,7 @@
 #include "nsPresContext.h"
 #include "prtime.h"
 #include "Units.h"
+#include "AsyncScrollBase.h"
 
 namespace mozilla {
 
@@ -137,7 +138,7 @@ WheelTransaction::UpdateTransaction(WidgetWheelEvent* aEvent)
 
   SetTimeout();
 
-  if (sScrollSeriesCounter != 0 && OutOfTime(sTime, kScrollSeriesTimeout)) {
+  if (sScrollSeriesCounter != 0 && OutOfTime(sTime, kScrollSeriesTimeoutMs)) {
     sScrollSeriesCounter = 0;
   }
   sScrollSeriesCounter++;
@@ -338,8 +339,8 @@ WheelTransaction::GetScreenPoint(WidgetGUIEvent* aEvent)
 {
   NS_ASSERTION(aEvent, "aEvent is null");
   NS_ASSERTION(aEvent->widget, "aEvent-widget is null");
-  return LayoutDeviceIntPoint::ToUntyped(aEvent->refPoint +
-           aEvent->widget->WidgetToScreenOffset());
+  return (aEvent->refPoint + aEvent->widget->WidgetToScreenOffset())
+      .ToUnknownPoint();
 }
 
 /* static */ uint32_t
@@ -383,14 +384,9 @@ WheelTransaction::AccelerateWheelDelta(WidgetWheelEvent* aEvent,
 }
 
 /* static */ double
-WheelTransaction::ComputeAcceleratedWheelDelta(double aDelta,
-                                               int32_t aFactor)
+WheelTransaction::ComputeAcceleratedWheelDelta(double aDelta, int32_t aFactor)
 {
-  if (aDelta == 0.0) {
-    return 0;
-  }
-
-  return (aDelta * sScrollSeriesCounter * (double)aFactor / 10);
+  return mozilla::ComputeAcceleratedWheelDelta(aDelta, sScrollSeriesCounter, aFactor);
 }
 
 /* static */ int32_t
@@ -423,18 +419,8 @@ WheelTransaction::OverrideSystemScrollSpeed(WidgetWheelEvent* aEvent)
     return DeltaValues(aEvent);
   }
 
-  // Compute the overridden speed to nsIWidget.  The widget can check the
-  // conditions (e.g., checking the prefs, and also whether the user customized
-  // the system settings of the mouse wheel scrolling or not), and can limit
-  // the speed for preventing the unexpected high speed scrolling.
-  nsCOMPtr<nsIWidget> widget(sTargetFrame->GetNearestWidget());
-  NS_ENSURE_TRUE(widget, DeltaValues(aEvent));
-  DeltaValues overriddenDeltaValues(0.0, 0.0);
-  nsresult rv =
-    widget->OverrideSystemMouseScrollSpeed(aEvent->deltaX, aEvent->deltaY,
-                                           overriddenDeltaValues.deltaX,
-                                           overriddenDeltaValues.deltaY);
-  return NS_FAILED(rv) ? DeltaValues(aEvent) : overriddenDeltaValues;
+  return DeltaValues(aEvent->OverriddenDeltaX(),
+                     aEvent->OverriddenDeltaY());
 }
 
 /******************************************************************/

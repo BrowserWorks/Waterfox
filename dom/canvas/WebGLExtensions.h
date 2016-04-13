@@ -38,7 +38,7 @@ public:
     explicit WebGLExtensionBase(WebGLContext* webgl);
 
     WebGLContext* GetParentObject() const {
-        return Context();
+        return mContext;
     }
 
     void MarkLost();
@@ -67,6 +67,16 @@ class WebGLExtensionCompressedTextureATC
 public:
     explicit WebGLExtensionCompressedTextureATC(WebGLContext*);
     virtual ~WebGLExtensionCompressedTextureATC();
+
+    DECL_WEBGL_EXTENSION_GOOP
+};
+
+class WebGLExtensionCompressedTextureES3
+    : public WebGLExtensionBase
+{
+public:
+    explicit WebGLExtensionCompressedTextureES3(WebGLContext*);
+    virtual ~WebGLExtensionCompressedTextureES3();
 
     DECL_WEBGL_EXTENSION_GOOP
 };
@@ -219,6 +229,8 @@ public:
     explicit WebGLExtensionTextureFloat(WebGLContext*);
     virtual ~WebGLExtensionTextureFloat();
 
+    static bool IsSupported(const WebGLContext*);
+
     DECL_WEBGL_EXTENSION_GOOP
 };
 
@@ -240,6 +252,8 @@ public:
 
     explicit WebGLExtensionTextureHalfFloat(WebGLContext*);
     virtual ~WebGLExtensionTextureHalfFloat();
+
+    static bool IsSupported(const WebGLContext*);
 
     DECL_WEBGL_EXTENSION_GOOP
 };
@@ -288,14 +302,6 @@ public:
     void DrawBuffersWEBGL(const dom::Sequence<GLenum>& buffers);
 
     static bool IsSupported(const WebGLContext*);
-
-    static const size_t kMinColorAttachments = 4;
-    static const size_t kMinDrawBuffers = 4;
-    /*
-     WEBGL_draw_buffers does not give a minal value for GL_MAX_DRAW_BUFFERS. But, we request
-     for GL_MAX_DRAW_BUFFERS = 4 at least to be able to use all requested color attachments.
-     See DrawBuffersWEBGL in WebGLExtensionDrawBuffers.cpp inner comments for more informations.
-     */
 
     DECL_WEBGL_EXTENSION_GOOP
 };

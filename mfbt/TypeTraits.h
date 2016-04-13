@@ -24,6 +24,18 @@ namespace mozilla {
 /* Forward declarations. */
 
 template<typename> struct RemoveCV;
+template<typename> struct AddRvalueReference;
+
+/* 20.2.4 Function template declval [declval] */
+
+/**
+ * DeclVal simplifies the definition of expressions which occur as unevaluated
+ * operands. It converts T to a reference type, making it possible to use in
+ * decltype expressions even if T does not have a default constructor, e.g.:
+ * decltype(DeclVal<TWithNoDefaultConstructor>().foo())
+ */
+template<typename T>
+typename AddRvalueReference<T>::Type DeclVal();
 
 /* 20.9.3 Helper classes [meta.help] */
 
@@ -160,6 +172,40 @@ struct IsArrayHelper<T[]> : TrueType {};
  */
 template<typename T>
 struct IsArray : detail::IsArrayHelper<typename RemoveCV<T>::Type>
+{};
+
+namespace detail {
+
+template<typename T>
+struct IsFunPtr;
+
+template<typename>
+struct IsFunPtr
+  : public FalseType
+{};
+
+template<typename Result, typename... ArgTypes>
+struct IsFunPtr<Result(*)(ArgTypes...)>
+  : public TrueType
+{};
+
+}; // namespace detail
+
+/**
+ * IsFunction determines whether a type is a function type. Function pointers
+ * don't qualify here--only the type of an actual function symbol. We do not
+ * correctly handle varags function types because of a bug in MSVC.
+ *
+ * Given the function:
+ *   void f(int) {}
+ *
+ * mozilla::IsFunction<void(int)> is true;
+ * mozilla::IsFunction<void(*)(int)> is false;
+ * mozilla::IsFunction<decltype(f)> is true.
+ */
+template<typename T>
+struct IsFunction
+  : public detail::IsFunPtr<typename RemoveCV<T>::Type *>
 {};
 
 namespace detail {
@@ -598,21 +644,25 @@ struct IsBaseOf
 
 namespace detail {
 
+// This belongs inside ConvertibleTester, but it's pulled out to
+// work around a bug in the compiler used for hazard builds.
+template <typename To>
+static void ConvertibleTestHelper(To);
+
 template<typename From, typename To>
 struct ConvertibleTester
 {
 private:
-  static From create();
-
-  template<typename From1, typename To1>
-  static char test(To to);
+  template<typename From1, typename To1,
+           typename = decltype(ConvertibleTestHelper<To1>(DeclVal<From>()))>
+  static char test(int);
 
   template<typename From1, typename To1>
   static int test(...);
 
 public:
   static const bool value =
-    sizeof(test<From, To>(create())) == sizeof(char);
+    sizeof(test<From, To>(0)) == sizeof(char);
 };
 
 } // namespace detail
@@ -829,17 +879,6 @@ template<typename T>
 struct AddRvalueReference
   : detail::AddRvalueReferenceHelper<T>
 {};
-
-/* 20.2.4 Function template declval [declval] */
-
-/**
- * DeclVal simplifies the definition of expressions which occur as unevaluated
- * operands. It converts T to a reference type, making it possible to use in
- * decltype expressions even if T does not have a default constructor, e.g.:
- * decltype(DeclVal<TWithNoDefaultConstructor>().foo())
- */
-template<typename T>
-typename AddRvalueReference<T>::Type DeclVal();
 
 /* 20.9.7.3 Sign modifications [meta.trans.sign] */
 
@@ -1063,6 +1102,22 @@ struct RemovePointer
   : detail::RemovePointerHelper<T, typename RemoveCV<T>::Type>
 {};
 
+/**
+ * Converts T& to T*. Otherwise returns T* given T. Note that C++17 wants
+ * std::add_pointer to work differently for function types. We don't implement
+ * that behavior here.
+ *
+ * mozilla::AddPointer<int> is int*;
+ * mozilla::AddPointer<int*> is int**;
+ * mozilla::AddPointer<int&> is int*;
+ * mozilla::AddPointer<int* const> is int** const.
+ */
+template<typename T>
+struct AddPointer
+{
+  typedef typename RemoveReference<T>::Type* Type;
+};
+
 /* 20.9.7.6 Other transformations [meta.trans.other] */
 
 /**
@@ -1109,6 +1164,51 @@ template<class A, class B>
 struct Conditional<false, A, B>
 {
   typedef B Type;
+};
+
+namespace detail {
+
+template<typename U,
+         bool IsArray = IsArray<U>::value,
+         bool IsFunction = IsFunction<U>::value>
+struct DecaySelector;
+
+template<typename U>
+struct DecaySelector<U, false, false>
+{
+  typedef typename RemoveCV<U>::Type Type;
+};
+
+template<typename U>
+struct DecaySelector<U, true, false>
+{
+  typedef typename RemoveExtent<U>::Type* Type;
+};
+
+template<typename U>
+struct DecaySelector<U, false, true>
+{
+  typedef typename AddPointer<U>::Type Type;
+};
+
+}; // namespace detail
+
+/**
+ * Strips const/volatile off a type and decays it from an lvalue to an
+ * rvalue. So function types are converted to function pointers, arrays to
+ * pointers, and references are removed.
+ *
+ * mozilla::Decay<int>::Type is int
+ * mozilla::Decay<int&>::Type is int
+ * mozilla::Decay<int&&>::Type is int
+ * mozilla::Decay<const int&>::Type is int
+ * mozilla::Decay<int[2]>::Type is int*
+ * mozilla::Decay<int(int)>::Type is int(*)(int)
+ */
+template<typename T>
+class Decay
+  : public detail::DecaySelector<typename RemoveReference<T>::Type>
+{
 };
 
 } /* namespace mozilla */

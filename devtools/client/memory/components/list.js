@@ -10,7 +10,7 @@ const { DOM: dom, createClass, PropTypes } = require("devtools/client/shared/ven
  * as that component with a click handler.
  */
 const List = module.exports = createClass({
-  displayName: "list",
+  displayName: "List",
 
   propTypes: {
     itemComponent: PropTypes.any.isRequired,
@@ -23,9 +23,12 @@ const List = module.exports = createClass({
 
     return (
       dom.ul({ className: "list" }, ...items.map((item, index) => {
-        return Item({
-          key: index, item, index, onClick: () => onClick(item),
-        });
+        return Item(Object.assign({}, this.props, {
+          key: index,
+          item,
+          index,
+          onClick: () => onClick(item),
+        }));
       }))
     );
   }

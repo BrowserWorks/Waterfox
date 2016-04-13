@@ -11,6 +11,7 @@
 #include "gfxPrefs.h"
 #include "nsString.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/TimeStamp.h"
 
 #include "mozilla/gfx/Quaternion.h"
 
@@ -19,9 +20,6 @@
 #endif
 
 #include "gfxVROculus.h"
-
-#include "nsServiceManagerUtils.h"
-#include "nsIScreenManager.h"
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846
@@ -36,25 +34,23 @@ namespace {
 static pfn_ovr_Initialize ovr_Initialize = nullptr;
 static pfn_ovr_Shutdown ovr_Shutdown = nullptr;
 static pfn_ovr_GetTimeInSeconds ovr_GetTimeInSeconds = nullptr;
+static pfn_ovr_GetHmdDesc ovr_GetHmdDesc = nullptr;
 
-static pfn_ovrHmd_Detect ovrHmd_Detect = nullptr;
-static pfn_ovrHmd_Create ovrHmd_Create = nullptr;
-static pfn_ovrHmd_CreateDebug ovrHmd_CreateDebug = nullptr;
-static pfn_ovrHmd_Destroy ovrHmd_Destroy = nullptr;
+static pfn_ovr_Create ovr_Create = nullptr;
+static pfn_ovr_Destroy ovr_Destroy = nullptr;
 
-static pfn_ovrHmd_ConfigureTracking ovrHmd_ConfigureTracking = nullptr;
-static pfn_ovrHmd_RecenterPose ovrHmd_RecenterPose = nullptr;
-static pfn_ovrHmd_GetTrackingState ovrHmd_GetTrackingState = nullptr;
-static pfn_ovrHmd_GetFovTextureSize ovrHmd_GetFovTextureSize = nullptr;
-static pfn_ovrHmd_GetRenderDesc ovrHmd_GetRenderDesc = nullptr;
+static pfn_ovr_RecenterPose ovr_RecenterPose = nullptr;
+static pfn_ovr_GetTrackingState ovr_GetTrackingState = nullptr;
+static pfn_ovr_GetFovTextureSize ovr_GetFovTextureSize = nullptr;
+static pfn_ovr_GetRenderDesc ovr_GetRenderDesc = nullptr;
 
-static pfn_ovrHmd_DestroySwapTextureSet ovrHmd_DestroySwapTextureSet = nullptr;
-static pfn_ovrHmd_SubmitFrame ovrHmd_SubmitFrame = nullptr;
+static pfn_ovr_DestroySwapTextureSet ovr_DestroySwapTextureSet = nullptr;
+static pfn_ovr_SubmitFrame ovr_SubmitFrame = nullptr;
 
 #ifdef XP_WIN
-static pfn_ovrHmd_CreateSwapTextureSetD3D11 ovrHmd_CreateSwapTextureSetD3D11 = nullptr;
+static pfn_ovr_CreateSwapTextureSetD3D11 ovr_CreateSwapTextureSetD3D11 = nullptr;
 #endif
-static pfn_ovrHmd_CreateSwapTextureSetGL ovrHmd_CreateSwapTextureSetGL = nullptr;
+static pfn_ovr_CreateSwapTextureSetGL ovr_CreateSwapTextureSetGL = nullptr;
 
 #ifdef HAVE_64BIT_BUILD
 #define BUILD_BITS 64
@@ -63,7 +59,7 @@ static pfn_ovrHmd_CreateSwapTextureSetGL ovrHmd_CreateSwapTextureSetGL = nullptr
 #endif
 
 #define OVR_PRODUCT_VERSION 0
-#define OVR_MAJOR_VERSION   6
+#define OVR_MAJOR_VERSION   8
 #define OVR_MINOR_VERSION   0
 
 static bool
@@ -111,7 +107,7 @@ InitializeOculusCAPI()
     libSearchPaths.AppendElement(nsCString("/usr/lib"));
     libName.AppendPrintf("libOVRRT%d_%d.so.%d", BUILD_BITS, OVR_PRODUCT_VERSION, OVR_MAJOR_VERSION);
 #endif
-
+    
     // If the pref is present, we override libName
     nsAdoptingCString prefLibPath = mozilla::Preferences::GetCString("dom.vr.ovr_lib_path");
     if (prefLibPath && prefLibPath.get()) {
@@ -151,7 +147,6 @@ InitializeOculusCAPI()
     }
 
     if (!ovrlib) {
-      printf_stderr("Failed to load Oculus VR library!\n");
       return false;
     }
   }
@@ -168,24 +163,22 @@ InitializeOculusCAPI()
   REQUIRE_FUNCTION(ovr_Initialize);
   REQUIRE_FUNCTION(ovr_Shutdown);
   REQUIRE_FUNCTION(ovr_GetTimeInSeconds);
+  REQUIRE_FUNCTION(ovr_GetHmdDesc);
   
-  REQUIRE_FUNCTION(ovrHmd_Detect);
-  REQUIRE_FUNCTION(ovrHmd_Create);
-  REQUIRE_FUNCTION(ovrHmd_CreateDebug);
-  REQUIRE_FUNCTION(ovrHmd_Destroy);
+  REQUIRE_FUNCTION(ovr_Create);
+  REQUIRE_FUNCTION(ovr_Destroy);
   
-  REQUIRE_FUNCTION(ovrHmd_ConfigureTracking);
-  REQUIRE_FUNCTION(ovrHmd_RecenterPose);
-  REQUIRE_FUNCTION(ovrHmd_GetTrackingState);
-  REQUIRE_FUNCTION(ovrHmd_GetFovTextureSize);
-  REQUIRE_FUNCTION(ovrHmd_GetRenderDesc);
+  REQUIRE_FUNCTION(ovr_RecenterPose);
+  REQUIRE_FUNCTION(ovr_GetTrackingState);
+  REQUIRE_FUNCTION(ovr_GetFovTextureSize);
+  REQUIRE_FUNCTION(ovr_GetRenderDesc);
 
-  REQUIRE_FUNCTION(ovrHmd_DestroySwapTextureSet);
-  REQUIRE_FUNCTION(ovrHmd_SubmitFrame);
+  REQUIRE_FUNCTION(ovr_DestroySwapTextureSet);
+  REQUIRE_FUNCTION(ovr_SubmitFrame);
 #ifdef XP_WIN
-  REQUIRE_FUNCTION(ovrHmd_CreateSwapTextureSetD3D11);
+  REQUIRE_FUNCTION(ovr_CreateSwapTextureSetD3D11);
 #endif
-  REQUIRE_FUNCTION(ovrHmd_CreateSwapTextureSetGL);
+  REQUIRE_FUNCTION(ovr_CreateSwapTextureSetGL);
 
 #undef REQUIRE_FUNCTION
 
@@ -227,7 +220,7 @@ do_CalcEyePoses(ovrPosef headPose,
 }
 
 ovrFovPort
-ToFovPort(const VRFieldOfView& aFOV)
+ToFovPort(const gfx::VRFieldOfView& aFOV)
 {
   ovrFovPort fovPort;
   fovPort.LeftTan = tan(aFOV.leftDegrees * M_PI / 180.0);
@@ -237,10 +230,10 @@ ToFovPort(const VRFieldOfView& aFOV)
   return fovPort;
 }
 
-VRFieldOfView
+gfx::VRFieldOfView
 FromFovPort(const ovrFovPort& aFOV)
 {
-  VRFieldOfView fovInfo;
+  gfx::VRFieldOfView fovInfo;
   fovInfo.leftDegrees = atan(aFOV.LeftTan) * 180.0 / M_PI;
   fovInfo.rightDegrees = atan(aFOV.RightTan) * 180.0 / M_PI;
   fovInfo.upDegrees = atan(aFOV.UpTan) * 180.0 / M_PI;
@@ -250,87 +243,81 @@ FromFovPort(const ovrFovPort& aFOV)
 
 } // namespace
 
-HMDInfoOculus::HMDInfoOculus(ovrHmd aHMD)
-  : VRHMDInfo(VRHMDType::Oculus)
-  , mHMD(aHMD)
-  , mStartCount(0)
+HMDInfoOculus::HMDInfoOculus(ovrSession aSession)
+  : VRHMDInfo(VRHMDType::Oculus, false)
+  , mSession(aSession)
 {
   MOZ_ASSERT(sizeof(HMDInfoOculus::DistortionVertex) == sizeof(VRDistortionVertex),
              "HMDInfoOculus::DistortionVertex must match the size of VRDistortionVertex");
 
   MOZ_COUNT_CTOR_INHERITED(HMDInfoOculus, VRHMDInfo);
 
-  mDeviceName.AssignLiteral("Oculus VR HMD");
+  mDeviceInfo.mDeviceName.AssignLiteral("Oculus VR HMD");
 
-  mSupportedSensorBits = 0;
-  if (mHMD->TrackingCaps & ovrTrackingCap_Orientation)
-    mSupportedSensorBits |= State_Orientation;
-  if (mHMD->TrackingCaps & ovrTrackingCap_Position)
-    mSupportedSensorBits |= State_Position;
+  mDesc = ovr_GetHmdDesc(aSession);
 
-  mRecommendedEyeFOV[Eye_Left] = FromFovPort(mHMD->DefaultEyeFov[ovrEye_Left]);
-  mRecommendedEyeFOV[Eye_Right] = FromFovPort(mHMD->DefaultEyeFov[ovrEye_Right]);
-
-  mMaximumEyeFOV[Eye_Left] = FromFovPort(mHMD->MaxEyeFov[ovrEye_Left]);
-  mMaximumEyeFOV[Eye_Right] = FromFovPort(mHMD->MaxEyeFov[ovrEye_Right]);
-
-  SetFOV(mRecommendedEyeFOV[Eye_Left], mRecommendedEyeFOV[Eye_Right], 0.01, 10000.0);
-
-#if 1
-  int32_t xcoord = 0;
-  if (getenv("FAKE_OCULUS_SCREEN")) {
-      const char *env = getenv("FAKE_OCULUS_SCREEN");
-      nsresult err;
-      xcoord = nsCString(env).ToInteger(&err);
-      if (err != NS_OK) xcoord = 0;
+  mDeviceInfo.mSupportedSensorBits = VRStateValidFlags::State_None;
+  if (mDesc.AvailableTrackingCaps & ovrTrackingCap_Orientation) {
+    mDeviceInfo.mSupportedSensorBits |= VRStateValidFlags::State_Orientation;
   }
-  uint32_t w = mHMD->Resolution.w;
-  uint32_t h = mHMD->Resolution.h;
-  mScreen = VRHMDManager::MakeFakeScreen(xcoord, 0, std::max(w, h), std::min(w, h));
+  if (mDesc.AvailableTrackingCaps & ovrTrackingCap_Position) {
+    mDeviceInfo.mSupportedSensorBits |= VRStateValidFlags::State_Position;
+  }
 
-#ifdef DEBUG
-  printf_stderr("OCULUS SCREEN: %d %d %d %d\n", xcoord, 0, std::max(w, h), std::min(w, h));
-#endif
-#endif
+  mDeviceInfo.mRecommendedEyeFOV[VRDeviceInfo::Eye_Left] = FromFovPort(mDesc.DefaultEyeFov[ovrEye_Left]);
+  mDeviceInfo.mRecommendedEyeFOV[VRDeviceInfo::Eye_Right] = FromFovPort(mDesc.DefaultEyeFov[ovrEye_Right]);
+
+  mDeviceInfo.mMaximumEyeFOV[VRDeviceInfo::Eye_Left] = FromFovPort(mDesc.MaxEyeFov[ovrEye_Left]);
+  mDeviceInfo.mMaximumEyeFOV[VRDeviceInfo::Eye_Right] = FromFovPort(mDesc.MaxEyeFov[ovrEye_Right]);
+
+  uint32_t w = mDesc.Resolution.w;
+  uint32_t h = mDesc.Resolution.h;
+  mDeviceInfo.mScreenRect.x = 0;
+  mDeviceInfo.mScreenRect.y = 0;
+  mDeviceInfo.mScreenRect.width = std::max(w, h);
+  mDeviceInfo.mScreenRect.height = std::min(w, h);
+  mDeviceInfo.mIsFakeScreen = true;
+
+  SetFOV(mDeviceInfo.mRecommendedEyeFOV[VRDeviceInfo::Eye_Left], mDeviceInfo.mRecommendedEyeFOV[VRDeviceInfo::Eye_Right], 0.01, 10000.0);
 }
 
 void
 HMDInfoOculus::Destroy()
 {
-  if (mHMD) {
-    ovrHmd_Destroy(mHMD);
-    mHMD = nullptr;
+  if (mSession) {
+    ovr_Destroy(mSession);
+    mSession = nullptr;
   }
 }
 
 bool
-HMDInfoOculus::SetFOV(const VRFieldOfView& aFOVLeft, const VRFieldOfView& aFOVRight,
+HMDInfoOculus::SetFOV(const gfx::VRFieldOfView& aFOVLeft, const gfx::VRFieldOfView& aFOVRight,
                       double zNear, double zFar)
 {
   float pixelsPerDisplayPixel = 1.0;
   ovrSizei texSize[2];
 
   // get eye parameters and create the mesh
-  for (uint32_t eye = 0; eye < NumEyes; eye++) {
-    mEyeFOV[eye] = eye == 0 ? aFOVLeft : aFOVRight;
-    mFOVPort[eye] = ToFovPort(mEyeFOV[eye]);
+  for (uint32_t eye = 0; eye < VRDeviceInfo::NumEyes; eye++) {
+    mDeviceInfo.mEyeFOV[eye] = eye == 0 ? aFOVLeft : aFOVRight;
+    mFOVPort[eye] = ToFovPort(mDeviceInfo.mEyeFOV[eye]);
 
-    ovrEyeRenderDesc renderDesc = ovrHmd_GetRenderDesc(mHMD, (ovrEyeType) eye, mFOVPort[eye]);
+    ovrEyeRenderDesc renderDesc = ovr_GetRenderDesc(mSession, (ovrEyeType)eye, mFOVPort[eye]);
 
     // As of Oculus 0.6.0, the HmdToEyeViewOffset values are correct and don't need to be negated.
-    mEyeTranslation[eye] = Point3D(renderDesc.HmdToEyeViewOffset.x, renderDesc.HmdToEyeViewOffset.y, renderDesc.HmdToEyeViewOffset.z);
+    mDeviceInfo.mEyeTranslation[eye] = Point3D(renderDesc.HmdToEyeViewOffset.x, renderDesc.HmdToEyeViewOffset.y, renderDesc.HmdToEyeViewOffset.z);
 
     // note that we are using a right-handed coordinate system here, to match CSS
-    mEyeProjectionMatrix[eye] = mEyeFOV[eye].ConstructProjectionMatrix(zNear, zFar, true);
+    mDeviceInfo.mEyeProjectionMatrix[eye] = mDeviceInfo.mEyeFOV[eye].ConstructProjectionMatrix(zNear, zFar, true);
 
-    texSize[eye] = ovrHmd_GetFovTextureSize(mHMD, (ovrEyeType) eye, mFOVPort[eye], pixelsPerDisplayPixel);
+    texSize[eye] = ovr_GetFovTextureSize(mSession, (ovrEyeType)eye, mFOVPort[eye], pixelsPerDisplayPixel);
   }
 
   // take the max of both for eye resolution
-  mEyeResolution.width = std::max(texSize[Eye_Left].w, texSize[Eye_Right].w);
-  mEyeResolution.height = std::max(texSize[Eye_Left].h, texSize[Eye_Right].h);
+  mDeviceInfo.mEyeResolution.width = std::max(texSize[VRDeviceInfo::Eye_Left].w, texSize[VRDeviceInfo::Eye_Right].w);
+  mDeviceInfo.mEyeResolution.height = std::max(texSize[VRDeviceInfo::Eye_Left].h, texSize[VRDeviceInfo::Eye_Right].h);
 
-  mConfiguration.hmdType = mType;
+  mConfiguration.hmdType = mDeviceInfo.mType;
   mConfiguration.value = 0;
   mConfiguration.fov[0] = aFOVLeft;
   mConfiguration.fov[1] = aFOVRight;
@@ -349,30 +336,22 @@ HMDInfoOculus::FillDistortionConstants(uint32_t whichEye,
 }
 
 bool
-HMDInfoOculus::StartSensorTracking()
+HMDInfoOculus::KeepSensorTracking()
 {
-  if (mStartCount == 0) {
-    bool ok = ovrHmd_ConfigureTracking(mHMD, ovrTrackingCap_Orientation | ovrTrackingCap_Position, 0);
-    if (!ok)
-      return false;
-  }
-
-  mStartCount++;
+  // Oculus PC SDK 0.8 and newer enable tracking by default
   return true;
 }
 
 void
-HMDInfoOculus::StopSensorTracking()
+HMDInfoOculus::NotifyVsync(const mozilla::TimeStamp& aVsyncTimestamp)
 {
-  if (--mStartCount == 0) {
-    ovrHmd_ConfigureTracking(mHMD, 0, 0);
-  }
+
 }
 
 void
 HMDInfoOculus::ZeroSensor()
 {
-  ovrHmd_RecenterPose(mHMD);
+  ovr_RecenterPose(mSession);
 }
 
 VRHMDSensorState
@@ -383,13 +362,13 @@ HMDInfoOculus::GetSensorState(double timeOffset)
 
   // XXX this is the wrong time base for timeOffset; we need to figure out how to synchronize
   // the Oculus time base and the browser one.
-  ovrTrackingState state = ovrHmd_GetTrackingState(mHMD, ovr_GetTimeInSeconds() + timeOffset);
+  ovrTrackingState state = ovr_GetTrackingState(mSession, ovr_GetTimeInSeconds() + timeOffset, true);
   ovrPoseStatef& pose(state.HeadPose);
 
   result.timestamp = pose.TimeInSeconds;
 
   if (state.StatusFlags & ovrStatus_OrientationTracked) {
-    result.flags |= State_Orientation;
+    result.flags |= VRStateValidFlags::State_Orientation;
 
     result.orientation[0] = pose.ThePose.Orientation.x;
     result.orientation[1] = pose.ThePose.Orientation.y;
@@ -406,7 +385,7 @@ HMDInfoOculus::GetSensorState(double timeOffset)
   }
 
   if (state.StatusFlags & ovrStatus_PositionTracked) {
-    result.flags |= State_Position;
+    result.flags |= VRStateValidFlags::State_Position;
 
     result.position[0] = pose.ThePose.Position.x;
     result.position[1] = pose.ThePose.Position.y;
@@ -449,10 +428,10 @@ struct RenderTargetSetOculus : public VRHMDRenderingSupport::RenderTargetSet
     if (!hmd)
       return;
     
-    if (hmd->GetOculusHMD()) {
-      // If the ovrHmd was already destroyed, so were all associated
+    if (hmd->GetOculusSession()) {
+      // If the ovrSession was already destroyed, so were all associated
       // texture sets
-      ovrHmd_DestroySwapTextureSet(hmd->GetOculusHMD(), textureSet);
+      ovr_DestroySwapTextureSet(hmd->GetOculusSession(), textureSet);
     }
     hmd = nullptr;
     textureSet = nullptr;
@@ -495,7 +474,7 @@ struct RenderTargetSetD3D11 : public RenderTargetSetOculus
       RefPtr<layers::CompositingRenderTargetD3D11> rt;
       
       tex11 = (ovrD3D11Texture*)&aTS->Textures[i];
-      rt = new layers::CompositingRenderTargetD3D11(tex11->D3D11.pTexture, IntPoint(0, 0));
+      rt = new layers::CompositingRenderTargetD3D11(tex11->D3D11.pTexture, IntPoint(0, 0), DXGI_FORMAT_B8G8R8A8_UNORM);
       rt->SetSize(size);
       renderTargets[i] = rt;
     }
@@ -511,11 +490,11 @@ HMDInfoOculus::CreateRenderTargetSet(layers::Compositor *aCompositor, const IntS
   {
     layers::CompositorD3D11 *comp11 = static_cast<layers::CompositorD3D11*>(aCompositor);
 
-    CD3D11_TEXTURE2D_DESC desc(DXGI_FORMAT_B8G8R8A8_UNORM, aSize.width, aSize.height, 1, 1,
+    CD3D11_TEXTURE2D_DESC desc(DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, aSize.width, aSize.height, 1, 1,
                                D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET);
     ovrSwapTextureSet *ts = nullptr;
     
-    ovrResult orv = ovrHmd_CreateSwapTextureSetD3D11(mHMD, comp11->GetDevice(), &desc, &ts);
+    ovrResult orv = ovr_CreateSwapTextureSetD3D11(mSession, comp11->GetDevice(), &desc, ovrSwapTextureSetD3D11_Typeless, &ts);
     if (orv != ovrSuccess) {
       return nullptr;
     }
@@ -561,109 +540,101 @@ HMDInfoOculus::SubmitFrame(RenderTargetSet *aRTSet)
   layer.Viewport[1].Size.w = rts->size.width / 2;
   layer.Viewport[1].Size.h = rts->size.height;
 
-  const Point3D& l = rts->hmd->mEyeTranslation[0];
-  const Point3D& r = rts->hmd->mEyeTranslation[1];
+  const Point3D& l = rts->hmd->mDeviceInfo.mEyeTranslation[0];
+  const Point3D& r = rts->hmd->mDeviceInfo.mEyeTranslation[1];
   const ovrVector3f hmdToEyeViewOffset[2] = { { l.x, l.y, l.z },
                                               { r.x, r.y, r.z } };
   do_CalcEyePoses(rts->hmd->mLastTrackingState.HeadPose.ThePose, hmdToEyeViewOffset, layer.RenderPose);
 
   ovrLayerHeader *layers = &layer.Header;
-  ovrResult orv = ovrHmd_SubmitFrame(mHMD, 0, nullptr, &layers, 1);
+  ovrResult orv = ovr_SubmitFrame(mSession, 0, nullptr, &layers, 1);
   //printf_stderr("Submitted frame %d, result: %d\n", rts->textureSet->CurrentIndex, orv);
   if (orv != ovrSuccess) {
     // not visible? failed?
   }
 }
 
-bool
-VRHMDManagerOculus::PlatformInit()
+/*static*/ already_AddRefed<VRHMDManagerOculus>
+VRHMDManagerOculus::Create()
 {
-  if (mOculusPlatformInitialized)
-    return true;
+  MOZ_ASSERT(NS_IsMainThread());
 
-  if (!gfxPrefs::VREnabled() ||
-      !gfxPrefs::VROculusEnabled())
+  if (!gfxPrefs::VREnabled() || !gfxPrefs::VROculusEnabled())
   {
-    return false;
+    return nullptr;
   }
 
-  if (!InitializeOculusCAPI())
-    return false;
+  if (!InitializeOculusCAPI()) {
+    return nullptr;
+  }
 
-  ovrInitParams params;
-  params.Flags = ovrInit_RequestVersion;
-  params.RequestedMinorVersion = OVR_MINOR_VERSION;
-  params.LogCallback = nullptr;
-  params.ConnectionTimeoutMS = 0;
-
-  ovrResult orv = ovr_Initialize(&params);
-
-  if (orv != ovrSuccess)
-    return false;
-
-  mOculusPlatformInitialized = true;
-  return true;
+  RefPtr<VRHMDManagerOculus> manager = new VRHMDManagerOculus();
+  return manager.forget();
 }
 
 bool
 VRHMDManagerOculus::Init()
 {
-  if (mOculusInitialized)
-    return true;
+  if (!mOculusInitialized) {
+    nsIThread* thread = nullptr;
+    NS_GetCurrentThread(&thread);
+    mOculusThread = already_AddRefed<nsIThread>(thread);
 
-  if (!PlatformInit())
-    return false;
+    ovrInitParams params;
+    params.Flags = ovrInit_RequestVersion;
+    params.RequestedMinorVersion = OVR_MINOR_VERSION;
+    params.LogCallback = nullptr;
+    params.ConnectionTimeoutMS = 0;
 
-  ovrResult orv;
-  int count = ovrHmd_Detect();
-  
-  for (int i = 0; i < count; ++i) {
-    ovrHmd hmd;
-    orv = ovrHmd_Create(i, &hmd);
+    ovrResult orv = ovr_Initialize(&params);
+
     if (orv == ovrSuccess) {
-      RefPtr<HMDInfoOculus> oc = new HMDInfoOculus(hmd);
-      mOculusHMDs.AppendElement(oc);
+      mOculusInitialized = true;
     }
   }
 
-  // VRAddTestDevices == 1: add test device only if no real devices present
-  // VRAddTestDevices == 2: add test device always
-  if ((count == 0 && gfxPrefs::VRAddTestDevices() == 1) ||
-      (gfxPrefs::VRAddTestDevices() == 2))
-  {
-    ovrHmd hmd;
-    orv = ovrHmd_CreateDebug(ovrHmd_DK2, &hmd);
-    if (orv == ovrSuccess) {
-      RefPtr<HMDInfoOculus> oc = new HMDInfoOculus(hmd);
-      mOculusHMDs.AppendElement(oc);
-    }
-  }
-
-  mOculusInitialized = true;
-  return true;
+  return mOculusInitialized;
 }
 
 void
 VRHMDManagerOculus::Destroy()
 {
-  if (!mOculusInitialized)
-    return;
+  if(mOculusInitialized) {
+    MOZ_ASSERT(NS_GetCurrentThread() == mOculusThread);
+    mOculusThread = nullptr;
 
-  for (size_t i = 0; i < mOculusHMDs.Length(); ++i) {
-    mOculusHMDs[i]->Destroy();
+    mHMDInfo = nullptr;
+
+    ovr_Shutdown();
+    mOculusInitialized = false;
   }
-
-  mOculusHMDs.Clear();
-
-  ovr_Shutdown();
-  mOculusInitialized = false;
 }
 
 void
 VRHMDManagerOculus::GetHMDs(nsTArray<RefPtr<VRHMDInfo>>& aHMDResult)
 {
-  Init();
-  for (size_t i = 0; i < mOculusHMDs.Length(); ++i) {
-    aHMDResult.AppendElement(mOculusHMDs[i]);
+  if (!mOculusInitialized) {
+    return;
+  }
+
+  // ovr_Create can be slow when no HMD is present and we wish
+  // to keep the same oculus session when possible, so we detect
+  // presence of an HMD with ovr_GetHmdDesc before calling ovr_Create
+  ovrHmdDesc desc = ovr_GetHmdDesc(NULL);
+  if (desc.Type == ovrHmd_None) {
+    // No HMD connected.
+    mHMDInfo = nullptr;
+  } else if (mHMDInfo == nullptr) {
+    // HMD Detected
+    ovrSession session;
+    ovrGraphicsLuid luid;
+    ovrResult orv = ovr_Create(&session, &luid);
+    if (orv == ovrSuccess) {
+      mHMDInfo = new HMDInfoOculus(session);
+    }
+  }
+
+  if (mHMDInfo) {
+    aHMDResult.AppendElement(mHMDInfo);
   }
 }

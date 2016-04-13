@@ -54,8 +54,14 @@ public:
   static void DecryptAES(const std::vector<uint8_t>& aKey,
                          std::vector<uint8_t>& aData, std::vector<uint8_t>& aIV);
 
-  static void ParseInitData(const uint8_t* aInitData, uint32_t aInitDataSize,
-                            std::vector<Key>& aOutKeys);
+  static void ParseCENCInitData(const uint8_t* aInitData,
+                                uint32_t aInitDataSize,
+                                std::vector<Key>& aOutKeyIds);
+
+  static bool ParseKeyIdsInitData(const uint8_t* aInitData,
+                                  uint32_t aInitDataSize,
+                                  std::vector<KeyId>& aOutKeyIds,
+                                  std::string& aOutSessionType);
 
   static void MakeKeyRequest(const std::vector<KeyId>& aKeyIds,
                              std::string& aOutRequest,
@@ -96,5 +102,12 @@ private:
 };
 
 GMPMutex* GMPCreateMutex();
+
+template<typename T>
+inline void
+Assign(std::vector<T>& aVec, const T* aData, size_t aLength)
+{
+  aVec.assign(aData, aData + aLength);
+}
 
 #endif // __ClearKeyUtils_h__

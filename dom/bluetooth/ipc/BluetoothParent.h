@@ -153,6 +153,12 @@ protected:
   DoRequest(const StopLeScanRequest& aRequest);
 
   bool
+  DoRequest(const StartAdvertisingRequest& aRequest);
+
+  bool
+  DoRequest(const StopAdvertisingRequest& aRequest);
+
+  bool
   DoRequest(const PairRequest& aRequest);
 
   bool
@@ -211,6 +217,12 @@ protected:
 
   bool
   DoRequest(const IsScoConnectedRequest& aRequest);
+
+  bool
+  DoRequest(const SetObexPasswordRequest& aRequest);
+
+  bool
+  DoRequest(const RejectObexAuthRequest& aRequest);
 
   bool
   DoRequest(const ReplyTovCardPullingRequest& aRequest);
@@ -288,6 +300,9 @@ protected:
 
   bool
   DoRequest(const GattClientWriteDescriptorValueRequest& aRequest);
+
+  bool
+  DoRequest(const GattServerRegisterRequest& aRequest);
 
   bool
   DoRequest(const GattServerConnectPeripheralRequest& aRequest);

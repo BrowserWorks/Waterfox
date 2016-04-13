@@ -68,7 +68,7 @@ function String_substr(start, length) {
         intStart = std_Math_max(intStart + size, 0);
 
     // Step 9.
-    var resultLength = std_Math_min(std_Math_max(end, 0), size - intStart)
+    var resultLength = std_Math_min(std_Math_max(end, 0), size - intStart);
 
     // Step 10.
     if (resultLength <= 0)
@@ -199,10 +199,6 @@ function String_iterator() {
     return iterator;
 }
 
-function StringIteratorIdentity() {
-    return this;
-}
-
 function StringIteratorNext() {
     if (!IsObject(this) || !IsStringIterator(this)) {
         return callFunction(CallStringIteratorMethodIfWrapped, this,
@@ -232,7 +228,7 @@ function StringIteratorNext() {
     }
 
     UnsafeSetReservedSlot(this, ITERATOR_SLOT_NEXT_INDEX, index + charCount);
-    result.value = callFunction(std_String_substring, S, index, index + charCount);
+    result.value = callFunction(String_substring, S, index, index + charCount);
 
     return result;
 }
@@ -296,12 +292,12 @@ function String_static_fromCodePoint(codePoints) {
         // Step 5f.
         // Inlined UTF-16 Encoding
         if (nextCP <= 0xFFFF) {
-            elements.push(nextCP);
+            callFunction(std_Array_push, elements, nextCP);
             continue;
         }
 
-        elements.push((((nextCP - 0x10000) / 0x400) | 0) + 0xD800);
-        elements.push((nextCP - 0x10000) % 0x400 + 0xDC00);
+        callFunction(std_Array_push, elements, (((nextCP - 0x10000) / 0x400) | 0) + 0xD800);
+        callFunction(std_Array_push, elements, (nextCP - 0x10000) % 0x400 + 0xDC00);
     }
 
     // Step 6.
@@ -437,14 +433,14 @@ function EscapeAttributeValue(v) {
     var chunkStart = 0;
     for (var i = 0; i < inputLen; i++) {
         if (inputStr[i] === '"') {
-            outputStr += callFunction(std_String_substring, inputStr, chunkStart, i) + '&quot;';
+            outputStr += callFunction(String_substring, inputStr, chunkStart, i) + '&quot;';
             chunkStart = i + 1;
         }
     }
     if (chunkStart === 0)
         return inputStr;
     if (chunkStart < inputLen)
-        outputStr += callFunction(std_String_substring, inputStr, chunkStart);
+        outputStr += callFunction(String_substring, inputStr, chunkStart);
     return outputStr;
 }
 

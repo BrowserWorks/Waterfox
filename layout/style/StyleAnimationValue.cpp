@@ -1,4 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -136,6 +137,7 @@ AppendFunction(nsCSSKeyword aTransformFunction)
       break;
     default:
       NS_ERROR("must be a transform function");
+      MOZ_FALLTHROUGH;
     case eCSSKeyword_translatex:
     case eCSSKeyword_translatey:
     case eCSSKeyword_translatez:
@@ -282,7 +284,8 @@ AppendCSSShadowValue(const nsCSSShadowItem *aShadow,
 
 // Like nsStyleCoord::CalcValue, but with length in float pixels instead
 // of nscoord.
-struct PixelCalcValue {
+struct PixelCalcValue
+{
   float mLength, mPercent;
   bool mHasPercent;
 };
@@ -1684,6 +1687,7 @@ AddFilterFunctionImpl(double aCoeff1, const nsCSSValueList* aList1,
     case eCSSKeyword_invert:
     case eCSSKeyword_sepia:
       initialVal = 0.0f;
+      MOZ_FALLTHROUGH;
     case eCSSKeyword_brightness:
     case eCSSKeyword_contrast:
     case eCSSKeyword_opacity:
@@ -1864,7 +1868,7 @@ AddTransformLists(double aCoeff1, const nsCSSValueList* aList1,
                            arr->Item(4));
           break;
         }
-        // FALL THROUGH
+        MOZ_FALLTHROUGH;
       }
       case eCSSKeyword_matrix:
       case eCSSKeyword_matrix3d:
@@ -2491,7 +2495,7 @@ BuildStyleRule(nsCSSProperty aProperty,
                bool aUseSVGMode)
 {
   // Set up an empty CSS Declaration
-  nsAutoPtr<css::Declaration> declaration(new css::Declaration());
+  RefPtr<css::Declaration> declaration(new css::Declaration());
   declaration->InitializeEmpty();
 
   bool changed; // ignored, but needed as outparam for ParseProperty
@@ -2514,7 +2518,7 @@ BuildStyleRule(nsCSSProperty aProperty,
   }
 
   RefPtr<css::StyleRule> rule = new css::StyleRule(nullptr,
-                                                     declaration.forget(),
+                                                     declaration,
                                                      0, 0);
   return rule.forget();
 }
@@ -2631,8 +2635,9 @@ StyleAnimationValue::ComputeValues(
 
     nsCOMArray<nsIStyleRule> ruleArray;
     ruleArray.AppendObject(styleSet->InitialStyleRule());
-    ruleArray.AppendObject(aStyleRule);
-    aStyleRule->RuleMatched();
+    css::Declaration* declaration = aStyleRule->GetDeclaration();
+    ruleArray.AppendObject(declaration);
+    declaration->SetImmutable();
     tmpStyleContext =
       styleSet->ResolveStyleByAddingRules(styleContext, ruleArray);
     if (!tmpStyleContext) {
@@ -2658,8 +2663,9 @@ StyleAnimationValue::ComputeValues(
   // value may have been biased by the 'initial' values supplied.
   if (!aIsContextSensitive || *aIsContextSensitive) {
     nsCOMArray<nsIStyleRule> ruleArray;
-    ruleArray.AppendObject(aStyleRule);
-    aStyleRule->RuleMatched();
+    css::Declaration* declaration = aStyleRule->GetDeclaration();
+    ruleArray.AppendObject(declaration);
+    declaration->SetImmutable();
     tmpStyleContext =
       styleSet->ResolveStyleByAddingRules(styleContext, ruleArray);
     if (!tmpStyleContext) {
@@ -3092,6 +3098,14 @@ StyleAnimationValue::ExtractComputedValue(nsCSSProperty aProperty,
             static_cast<const nsStyleTextReset*>(styleStruct)->
               GetDecorationStyle();
           aComputedValue.SetIntValue(decorationStyle, eUnit_Enumerated);
+          break;
+        }
+
+        case eCSSProperty_text_emphasis_color: {
+          auto styleText = static_cast<const nsStyleText*>(styleStruct);
+          nscolor color = styleText->mTextEmphasisColorForeground ?
+            aStyleContext->StyleColor()->mColor : styleText->mTextEmphasisColor;
+          aComputedValue.SetColorValue(color);
           break;
         }
 
@@ -3612,12 +3626,14 @@ StyleAnimationValue::GetScaleValue(const nsIFrame* aForFrame) const
   MOZ_ASSERT(list->mHead);
 
   RuleNodeCacheConditions dontCare;
+  bool dontCareBool;
   nsStyleTransformMatrix::TransformReferenceBox refBox(aForFrame);
   Matrix4x4 transform = nsStyleTransformMatrix::ReadTransforms(
                           list->mHead,
                           aForFrame->StyleContext(),
                           aForFrame->PresContext(), dontCare, refBox,
-                          aForFrame->PresContext()->AppUnitsPerDevPixel());
+                          aForFrame->PresContext()->AppUnitsPerDevPixel(),
+                          &dontCareBool);
 
   Matrix transform2d;
   bool canDraw2D = transform.CanDraw2D(&transform2d);
@@ -3846,11 +3862,11 @@ void
 StyleAnimationValue::SetAndAdoptCSSValueTripletValue(
                        nsCSSValueTriplet *aValueTriplet, Unit aUnit)
 {
-    FreeValue();
-    MOZ_ASSERT(IsCSSValueTripletUnit(aUnit), "bad unit");
-    MOZ_ASSERT(aValueTriplet != nullptr, "value pairs may not be null");
-    mUnit = aUnit;
-    mValue.mCSSValueTriplet = aValueTriplet; // take ownership
+  FreeValue();
+  MOZ_ASSERT(IsCSSValueTripletUnit(aUnit), "bad unit");
+  MOZ_ASSERT(aValueTriplet != nullptr, "value pairs may not be null");
+  mUnit = aUnit;
+  mValue.mCSSValueTriplet = aValueTriplet; // take ownership
 }
 
 void
@@ -3972,4 +3988,3 @@ StyleAnimationValue::operator==(const StyleAnimationValue& aOther) const
   NS_NOTREACHED("incomplete case");
   return false;
 }
-

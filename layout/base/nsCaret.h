@@ -137,8 +137,7 @@ class nsCaret final : public nsISelectionListener
     /** PaintCaret
      *  Actually paint the caret onto the given rendering context.
      */
-    void PaintCaret(nsDisplayListBuilder *aBuilder,
-                    DrawTarget& aDrawTarget,
+    void PaintCaret(DrawTarget& aDrawTarget,
                     nsIFrame *aForFrame,
                     const nsPoint &aOffset);
 
@@ -260,10 +259,6 @@ protected:
      * it's in non-user-modifiable content.
      */
     bool                  mIgnoreUserModify;
-
-    // Preference
-    static bool sSelectionCaretEnabled;
-    static bool sSelectionCaretsAffectCaret;
 };
 
 #endif //nsCaret_h__

@@ -30,6 +30,7 @@
 
 #include "js/Conversions.h"
 #include "shell/jsshell.h"
+#include "vm/StringBuffer.h"
 #include "vm/TypedArrayObject.h"
 
 #include "jsobjinlines.h"
@@ -41,10 +42,44 @@
 # include <libgen.h>
 #endif
 
-using namespace JS;
-
 namespace js {
 namespace shell {
+
+#ifdef XP_WIN
+const char PathSeparator = '\\';
+#else
+const char PathSeparator = '/';
+#endif
+
+static bool
+IsAbsolutePath(const JSAutoByteString& filename)
+{
+    const char* pathname = filename.ptr();
+
+    if (pathname[0] == PathSeparator)
+        return true;
+
+#ifdef XP_WIN
+    // On Windows there are various forms of absolute paths (see
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
+    // for details):
+    //
+    //   "\..."
+    //   "\\..."
+    //   "C:\..."
+    //
+    // The first two cases are handled by the test above so we only need a test
+    // for the last one here.
+
+    if ((strlen(pathname) > 3 &&
+        isalpha(pathname[0]) && pathname[1] == ':' && pathname[2] == '\\'))
+    {
+        return true;
+    }
+#endif
+
+    return false;
+}
 
 /*
  * Resolve a (possibly) relative filename to an absolute path. If
@@ -57,28 +92,23 @@ namespace shell {
 JSString*
 ResolvePath(JSContext* cx, HandleString filenameStr, PathResolutionMode resolveMode)
 {
+    if (!filenameStr) {
+#ifdef XP_WIN
+        return JS_NewStringCopyZ(cx, "nul");
+#else
+        return JS_NewStringCopyZ(cx, "/dev/null");
+#endif
+    }
+
     JSAutoByteString filename(cx, filenameStr);
     if (!filename)
         return nullptr;
 
-    const char* pathname = filename.ptr();
-    if (pathname[0] == '/')
+    if (IsAbsolutePath(filename))
         return filenameStr;
-#ifdef XP_WIN
-    // Various forms of absolute paths per http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247%28v=vs.85%29.aspx
-    // "\..."
-    if (pathname[0] == '\\')
-        return filenameStr;
-    // "C:\..."
-    if (strlen(pathname) > 3 && isalpha(pathname[0]) && pathname[1] == ':' && pathname[2] == '\\')
-        return filenameStr;
-    // "\\..."
-    if (strlen(pathname) > 2 && pathname[1] == '\\' && pathname[2] == '\\')
-        return filenameStr;
-#endif
 
     /* Get the currently executing script's name. */
-    JS::AutoFilename scriptFilename;
+    JS::UniqueChars scriptFilename;
     if (!DescribeScriptedCaller(cx, &scriptFilename))
         return nullptr;
 
@@ -110,7 +140,7 @@ ResolvePath(JSContext* cx, HandleString filenameStr, PathResolutionMode resolveM
 
     size_t len = strlen(buffer);
     buffer[len] = '/';
-    strncpy(buffer + len + 1, pathname, sizeof(buffer) - (len+1));
+    strncpy(buffer + len + 1, filename.ptr(), sizeof(buffer) - (len+1));
     if (buffer[PATH_MAX] != '\0')
         return nullptr;
 
@@ -138,7 +168,21 @@ FileAsTypedArray(JSContext* cx, const char* pathname)
             obj = JS_NewUint8Array(cx, len);
             if (!obj)
                 return nullptr;
-            char* buf = (char*) obj->as<js::TypedArrayObject>().viewData();
+            js::TypedArrayObject& ta = obj->as<js::TypedArrayObject>();
+            if (ta.isSharedMemory()) {
+                // Must opt in to use shared memory.  For now, don't.
+                //
+                // (It is incorrect to read into the buffer without
+                // synchronization since that can create a race.  A
+                // lock here won't fix it - both sides must
+                // participate.  So what one must do is to create a
+                // temporary buffer, read into that, and use a
+                // race-safe primitive to copy memory into the
+                // buffer.)
+                JS_ReportError(cx, "can't read %s: shared memory buffer", pathname);
+                return nullptr;
+            }
+            char* buf = static_cast<char*>(ta.viewDataUnshared());
             size_t cc = fread(buf, 1, len, file);
             if (cc != len) {
                 JS_ReportError(cx, "can't read %s: %s", pathname,
@@ -243,7 +287,15 @@ osfile_writeTypedArrayToFile(JSContext* cx, unsigned argc, Value* vp)
 
     TypedArrayObject* obj = &args[1].toObject().as<TypedArrayObject>();
 
-    if (fwrite(obj->viewData(), obj->bytesPerElement(), obj->length(), file) != obj->length() ||
+    if (obj->isSharedMemory()) {
+        // Must opt in to use shared memory.  For now, don't.
+        //
+        // See further comments in FileAsTypedArray, above.
+        JS_ReportError(cx, "can't write %s: shared memory buffer", filename.ptr());
+        return false;
+    }
+    void* buf = obj->viewDataUnshared();
+    if (fwrite(buf, obj->bytesPerElement(), obj->length(), file) != obj->length() ||
         !autoClose.release())
     {
         JS_ReportError(cx, "can't write %s", filename.ptr());
@@ -280,18 +332,24 @@ osfile_redirect(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    if (args[0].isString()) {
-        RootedString stdoutPath(cx, args[0].toString());
-        if (!stdoutPath)
-            return false;
+    if (args[0].isString() || args[0].isNull()) {
+        RootedString stdoutPath(cx);
+        if (!args[0].isNull()) {
+            stdoutPath = args[0].toString();
+            if (!stdoutPath)
+                return false;
+        }
         if (!Redirect(cx, stdout, stdoutPath))
             return false;
     }
 
-    if (args.length() > 1 && args[1].isString()) {
-        RootedString stderrPath(cx, args[1].toString());
-        if (!stderrPath)
-            return false;
+    if (args.length() > 1 && (args[1].isString() || args[1].isNull())) {
+        RootedString stderrPath(cx);
+        if (!args[1].isNull()) {
+            stderrPath = args[1].toString();
+            if (!stderrPath)
+                return false;
+        }
         if (!Redirect(cx, stderr, stderrPath))
             return false;
     }
@@ -322,7 +380,82 @@ static const JSFunctionSpecWithHelp osfile_unsafe_functions[] = {
     JS_FN_HELP("redirect", osfile_redirect, 2, 0,
 "redirect(stdoutFilename[, stderrFilename])",
 "  Redirect stdout and/or stderr to the named file. Pass undefined to avoid\n"
-"   redirecting. Filenames are relative to the current working directory."),
+"   redirecting, or null to discard the output. Filenames are relative to the\n"
+"   current working directory."),
+
+    JS_FS_HELP_END
+};
+
+static bool
+ospath_isAbsolute(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    if (args.length() != 1 || !args[0].isString()) {
+        JS_ReportErrorNumber(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS, "isAbsolute");
+        return false;
+    }
+
+    JSAutoByteString path(cx, args[0].toString());
+    if (!path)
+        return false;
+
+    args.rval().setBoolean(IsAbsolutePath(path));
+    return true;
+}
+
+static bool
+ospath_join(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+
+    if (args.length() < 1) {
+        JS_ReportErrorNumber(cx, my_GetErrorMessage, nullptr, JSSMSG_INVALID_ARGS, "join");
+        return false;
+    }
+
+    // This function doesn't take into account some aspects of Windows paths,
+    // e.g. the drive letter is always reset when an absolute path is appended.
+
+    StringBuffer buffer(cx);
+
+    for (unsigned i = 0; i < args.length(); i++) {
+        if (!args[i].isString()) {
+            JS_ReportError(cx, "join expects string arguments only");
+            return false;
+        }
+
+        JSAutoByteString path(cx, args[i].toString());
+        if (!path)
+            return false;
+
+        if (IsAbsolutePath(path)) {
+            MOZ_ALWAYS_TRUE(buffer.resize(0));
+        } else if (i != 0) {
+            if (!buffer.append(PathSeparator))
+                return false;
+        }
+
+        if (!buffer.append(args[i].toString()))
+            return false;
+    }
+
+    JSString* result = buffer.finishString();
+    if (!result)
+        return false;
+
+    args.rval().setString(result);
+    return true;
+}
+
+static const JSFunctionSpecWithHelp ospath_functions[] = {
+    JS_FN_HELP("isAbsolute", ospath_isAbsolute, 1, 0,
+"isAbsolute(path)",
+"  Return whether the given path is absolute."),
+
+    JS_FN_HELP("join", ospath_join, 1, 0,
+"join(paths...)",
+"  Join one or more path components in a platform independent way."),
 
     JS_FS_HELP_END
 };
@@ -621,6 +754,14 @@ DefineOS(JSContext* cx, HandleObject global, bool fuzzingSafe)
     if (!fuzzingSafe) {
         if (!JS_DefineFunctionsWithHelp(cx, osfile, osfile_unsafe_functions))
             return false;
+    }
+
+    RootedObject ospath(cx, JS_NewPlainObject(cx));
+    if (!ospath ||
+        !JS_DefineFunctionsWithHelp(cx, ospath, ospath_functions) ||
+        !JS_DefineProperty(cx, obj, "path", ospath, 0))
+    {
+        return false;
     }
 
     // For backwards compatibility, expose various os.file.* functions as

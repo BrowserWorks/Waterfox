@@ -34,6 +34,12 @@
             "url": "/_mozilla/service-workers/service-worker/ServiceWorkerGlobalScope/update.https.html"
           }
         ],
+        "service-workers/service-worker/activate-event-after-install-state-change.https.html": [
+          {
+            "path": "service-workers/service-worker/activate-event-after-install-state-change.https.html",
+            "url": "/_mozilla/service-workers/service-worker/activate-event-after-install-state-change.https.html"
+          }
+        ],
         "service-workers/service-worker/activation-after-registration.https.html": [
           {
             "path": "service-workers/service-worker/activation-after-registration.https.html",
@@ -62,6 +68,18 @@
           {
             "path": "service-workers/service-worker/claim-using-registration.https.html",
             "url": "/_mozilla/service-workers/service-worker/claim-using-registration.https.html"
+          }
+        ],
+        "service-workers/service-worker/clients-get-cross-origin.https.html": [
+          {
+            "path": "service-workers/service-worker/clients-get-cross-origin.https.html",
+            "url": "/_mozilla/service-workers/service-worker/clients-get-cross-origin.https.html"
+          }
+        ],
+        "service-workers/service-worker/clients-get.https.html": [
+          {
+            "path": "service-workers/service-worker/clients-get.https.html",
+            "url": "/_mozilla/service-workers/service-worker/clients-get.https.html"
           }
         ],
         "service-workers/service-worker/clients-matchall-client-types.https.html": [
@@ -170,6 +188,7 @@
         "service-workers/service-worker/fetch-frame-resource.https.html": [
           {
             "path": "service-workers/service-worker/fetch-frame-resource.https.html",
+            "timeout": "long",
             "url": "/_mozilla/service-workers/service-worker/fetch-frame-resource.https.html"
           }
         ],
@@ -209,6 +228,13 @@
           {
             "path": "service-workers/service-worker/fetch-request-no-freshness-headers.https.html",
             "url": "/_mozilla/service-workers/service-worker/fetch-request-no-freshness-headers.https.html"
+          }
+        ],
+        "service-workers/service-worker/fetch-request-redirect.https.html": [
+          {
+            "path": "service-workers/service-worker/fetch-request-redirect.https.html",
+            "timeout": "long",
+            "url": "/_mozilla/service-workers/service-worker/fetch-request-redirect.https.html"
           }
         ],
         "service-workers/service-worker/fetch-request-resources.https.html": [

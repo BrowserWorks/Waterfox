@@ -33,6 +33,7 @@
 #include "nsIClassInfo.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIURI.h" // for NS_IURI_IID
+#include "nsIX509Cert.h" // for NS_IX509CERT_IID
 
 #include "jsfriendapi.h"
 
@@ -863,11 +864,13 @@ nsBinaryInputStream::ReadArrayBuffer(uint32_t aLength,
     // Copy data into actual buffer.
 
     JS::AutoCheckCannotGC nogc;
+    bool isShared;
     if (bufferLength != JS_GetArrayBufferByteLength(buffer)) {
       return NS_ERROR_FAILURE;
     }
 
-    char* data = reinterpret_cast<char*>(JS_GetArrayBufferData(buffer, nogc));
+    char* data = reinterpret_cast<char*>(JS_GetArrayBufferData(buffer, &isShared, nogc));
+    MOZ_ASSERT(!isShared);      // Implied by JS_GetArrayBufferData()
     if (!data) {
       return NS_ERROR_FAILURE;
     }
@@ -929,6 +932,23 @@ nsBinaryInputStream::ReadObject(bool aIsStrongRef, nsISupports** aObject)
       iid.Equals(oldURIiid4)) {
     const nsIID newURIiid = NS_IURI_IID;
     iid = newURIiid;
+  }
+  // END HACK
+
+  // HACK:  Service workers store resource security info on disk in the dom
+  //        Cache API.  When the uuid of the nsIX509Cert interface changes
+  //        these serialized objects cannot be loaded any more.  This hack
+  //        works around this issue.
+
+  // hackaround for bug 1247580 (FF45 to FF46 transition)
+  static const nsIID oldCertIID = {
+    0xf8ed8364, 0xced9, 0x4c6e,
+    { 0x86, 0xba, 0x48, 0xaf, 0x53, 0xc3, 0x93, 0xe6 }
+  };
+
+  if (iid.Equals(oldCertIID)) {
+    const nsIID newCertIID = NS_IX509CERT_IID;
+    iid = newCertIID;
   }
   // END HACK
 

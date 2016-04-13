@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string>
 
+#include "webrtc/common_video/libyuv/include/scaler.h"
 #include "webrtc/common_video/libyuv/include/webrtc_libyuv.h"
 #include "webrtc/modules/interface/module_common_types.h"
 #include "webrtc/modules/video_capture/video_capture_config.h"
@@ -123,7 +124,7 @@ int32_t ScreenDeviceInfoImpl::GetBestMatchedCapability(const char* deviceUniqueI
 }
 
 int32_t ScreenDeviceInfoImpl::GetOrientation(const char* deviceUniqueIdUTF8,
-                                             VideoCaptureRotation& orientation) {
+                                             VideoRotation& orientation) {
   return 0;
 }
 
@@ -215,7 +216,7 @@ int32_t AppDeviceInfoImpl::GetBestMatchedCapability(
 }
 
 int32_t AppDeviceInfoImpl::GetOrientation(const char* deviceUniqueIdUTF8,
-                                          VideoCaptureRotation& orientation) {
+                                          VideoRotation& orientation) {
   return 0;
 }
 
@@ -319,7 +320,7 @@ int32_t WindowDeviceInfoImpl::GetBestMatchedCapability(const char* deviceUniqueI
 }
 
 int32_t WindowDeviceInfoImpl::GetOrientation(const char* deviceUniqueIdUTF8,
-                                             VideoCaptureRotation& orientation) {
+                                             VideoRotation& orientation) {
   return 0;
 }
 
@@ -352,11 +353,6 @@ VideoCaptureModule::DeviceInfo* DesktopCaptureImpl::CreateDeviceInfo(const int32
 
 const char* DesktopCaptureImpl::CurrentDeviceName() const {
   return _deviceUniqueId.c_str();
-}
-
-int32_t DesktopCaptureImpl::ChangeUniqueId(const int32_t id) {
-  _id = id;
-  return 0;
 }
 
 int32_t DesktopCaptureImpl::Init(const char* uniqueId,
@@ -406,11 +402,11 @@ int32_t DesktopCaptureImpl::Init(const char* uniqueId,
 }
 
 // returns the number of milliseconds until the module want a worker thread to call Process
-int32_t DesktopCaptureImpl::TimeUntilNextProcess() {
+int64_t DesktopCaptureImpl::TimeUntilNextProcess() {
   CriticalSectionScoped cs(&_callBackCs);
 
-  int32_t timeToNormalProcess = kProcessInterval
-    - (int32_t)((TickTime::Now() - _lastProcessTime).Milliseconds());
+  int64_t timeToNormalProcess = 300
+    - (int64_t)((TickTime::Now() - _lastProcessTime).Milliseconds());
 
   return timeToNormalProcess;
 }
@@ -468,18 +464,19 @@ DesktopCaptureImpl::DesktopCaptureImpl(const int32_t id)
     _setCaptureDelay(0),
     _dataCallBack(NULL),
     _captureCallBack(NULL),
-  _lastProcessFrameCount(TickTime::Now()),
-  _rotateFrame(kRotateNone),
+    _lastProcessFrameCount(TickTime::Now()),
+    _rotateFrame(kVideoRotation_0),
   last_capture_time_(TickTime::MillisecondTimestamp()),
   delta_ntp_internal_ms_(
                          Clock::GetRealTimeClock()->CurrentNtpInMilliseconds() -
                          TickTime::MillisecondTimestamp()),
-  time_event_(*EventWrapper::Create()),
+  time_event_(EventWrapper::Create()),
 #if defined(_WIN32)
-  capturer_thread_(*ThreadWrapper::CreateUIThread(Run, this, kHighPriority, "ScreenCaptureThread")) {
+  capturer_thread_(ThreadWrapper::CreateUIThread(Run, this, "ScreenCaptureThread")) {
 #else
-  capturer_thread_(*ThreadWrapper::CreateThread(Run, this, kHighPriority, "ScreenCaptureThread")) {
+  capturer_thread_(ThreadWrapper::CreateThread(Run, this, "ScreenCaptureThread")) {
 #endif
+  capturer_thread_->SetPriority(kHighPriority);
   _requestedCapability.width = kDefaultWidth;
   _requestedCapability.height = kDefaultHeight;
   _requestedCapability.maxFPS = 30;
@@ -489,10 +486,8 @@ DesktopCaptureImpl::DesktopCaptureImpl(const int32_t id)
 }
 
 DesktopCaptureImpl::~DesktopCaptureImpl() {
-  time_event_.Set();
-  capturer_thread_.Stop();
-  delete &time_event_;
-  delete &capturer_thread_;
+  time_event_->Set();
+  capturer_thread_->Stop();
 
   DeRegisterCaptureDataCallback();
   DeRegisterCaptureCallback();
@@ -578,7 +573,7 @@ int32_t DesktopCaptureImpl::DeliverCapturedFrame(I420VideoFrame& captureFrame,
 
 // Copied from VideoCaptureImpl::IncomingFrame. See Bug 1038324
 int32_t DesktopCaptureImpl::IncomingFrame(uint8_t* videoFrame,
-                                          int32_t videoFrameLength,
+                                          size_t videoFrameLength,
                                           const VideoCaptureCapability& frameInfo,
                                           int64_t captureTime/*=0*/)
 {
@@ -611,18 +606,18 @@ int32_t DesktopCaptureImpl::IncomingFrame(uint8_t* videoFrame,
     int stride_y = width;
     int stride_uv = (width + 1) / 2;
     int target_width = width;
-    int target_height = height;
+    int target_height = abs(height);
     // Rotating resolution when for 90/270 degree rotations.
-    if (_rotateFrame == kRotate90 || _rotateFrame == kRotate270)  {
-      target_width = abs(height);
+    if (_rotateFrame == kVideoRotation_90 || _rotateFrame == kVideoRotation_270)  {
       target_height = width;
+      target_width = abs(height);
     }
 
     // Setting absolute height (in case it was negative).
     // In Windows, the image starts bottom left, instead of top left.
     // Setting a negative source height, inverts the image (within LibYuv).
     int ret = _captureFrame.CreateEmptyFrame(target_width,
-                                             abs(target_height),
+                                             target_height,
                                              stride_y,
                                              stride_uv, stride_uv);
     if (ret < 0) {
@@ -643,7 +638,64 @@ int32_t DesktopCaptureImpl::IncomingFrame(uint8_t* videoFrame,
                    frameInfo.rawType);
       return -1;
     }
-    DeliverCapturedFrame(_captureFrame, captureTime);
+
+    int32_t req_max_width = _requestedCapability.width & 0xffff;
+    int32_t req_max_height = _requestedCapability.height & 0xffff;
+    int32_t req_ideal_width = (_requestedCapability.width >> 16) & 0xffff;
+    int32_t req_ideal_height = (_requestedCapability.height >> 16) & 0xffff;
+
+    int32_t dest_max_width = std::min(req_max_width, target_width);
+    int32_t dest_max_height = std::min(req_max_height, target_height);
+    int32_t dst_width = std::min(req_ideal_width > 0 ? req_ideal_width : target_width, dest_max_width);
+    int32_t dst_height = std::min(req_ideal_height > 0 ? req_ideal_height : target_height, dest_max_height);
+
+    // scale to average of portrait and landscape
+    float scale_width = (float)dst_width / (float)target_width;
+    float scale_height = (float)dst_height / (float)target_height;
+    float scale = (scale_width + scale_height) / 2;
+    dst_width = (int)(scale * target_width);
+    dst_height = (int)(scale * target_height);
+
+    // if scaled rectangle exceeds max rectangle, scale to minimum of portrait and landscape
+    if (dst_width > dest_max_width || dst_height > dest_max_height) {
+      scale_width = (float)dest_max_width / (float)dst_width;
+      scale_height = (float)dest_max_height / (float)dst_height;
+      scale = std::min(scale_width, scale_height);
+      dst_width = (int)(scale * dst_width);
+      dst_height = (int)(scale * dst_height);
+    }
+
+    if (dst_width == target_width && dst_height == target_height) {
+      DeliverCapturedFrame(_captureFrame, captureTime);
+    } else {
+
+      I420VideoFrame scaledFrame;
+      ret = scaledFrame.CreateEmptyFrame(dst_width,
+                                         dst_height,
+                                         stride_y,
+                                         stride_uv, stride_uv);
+      if (ret < 0) {
+        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, _id,
+                     "Failed to allocate I420 frame.");
+        return -1;
+      }
+
+      webrtc::Scaler s;
+      s.Set(target_width, target_height, dst_width, dst_height, kI420, kI420, kScaleBox);
+      const int scaleResult = s.Scale(_captureFrame, &scaledFrame);
+
+      if (scaleResult != 0) {
+        WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, _id,
+                     "Failed to scale capture frame from type %d",
+                     frameInfo.rawType);
+        return -1;
+      }
+
+      DeliverCapturedFrame(scaledFrame, captureTime);
+    }
+
+
+
   } else {
     assert(false);
     return -1;
@@ -661,50 +713,15 @@ int32_t DesktopCaptureImpl::IncomingFrame(uint8_t* videoFrame,
   return 0;
 }
 
-int32_t DesktopCaptureImpl::IncomingI420VideoFrame(I420VideoFrame* video_frame, int64_t captureTime) {
-
-  CriticalSectionScoped cs(&_callBackCs);
-  int stride_y = video_frame->stride(kYPlane);
-  int stride_u = video_frame->stride(kUPlane);
-  int stride_v = video_frame->stride(kVPlane);
-  int size_y = video_frame->height() * stride_y;
-  int size_u = stride_u * ((video_frame->height() + 1) / 2);
-  int size_v =  stride_v * ((video_frame->height() + 1) / 2);
-  int ret = _captureFrame.CreateFrame(size_y, video_frame->buffer(kYPlane),
-                                      size_u, video_frame->buffer(kUPlane),
-                                      size_v, video_frame->buffer(kVPlane),
-                                      video_frame->width(), video_frame->height(),
-                                      stride_y, stride_u, stride_v);
-
-  if (ret < 0) {
-    WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, _id,
-                 "Failed to create I420VideoFrame");
-    return -1;
-  }
-
-  DeliverCapturedFrame(_captureFrame, captureTime);
-
+int32_t DesktopCaptureImpl::SetCaptureRotation(VideoRotation rotation) {
+  CriticalSectionScoped cs(&_apiCs);
+  CriticalSectionScoped cs2(&_callBackCs);
+  _rotateFrame = rotation;
   return 0;
 }
 
-int32_t DesktopCaptureImpl::SetCaptureRotation(VideoCaptureRotation rotation) {
-  CriticalSectionScoped cs(&_apiCs);
-  CriticalSectionScoped cs2(&_callBackCs);
-  switch (rotation) {
-  case kCameraRotate0:
-    _rotateFrame = kRotateNone;
-    break;
-  case kCameraRotate90:
-    _rotateFrame = kRotate90;
-    break;
-  case kCameraRotate180:
-    _rotateFrame = kRotate180;
-    break;
-  case kCameraRotate270:
-    _rotateFrame = kRotate270;
-    break;
-  }
-  return 0;
+bool DesktopCaptureImpl::SetApplyRotation(bool enable) {
+  return true;
 }
 
 void DesktopCaptureImpl::EnableFrameRateCallback(const bool enable) {
@@ -759,14 +776,13 @@ uint32_t DesktopCaptureImpl::CalculateFrameRate(const TickTime& now) {
 
 int32_t DesktopCaptureImpl::StartCapture(const VideoCaptureCapability& capability) {
   _requestedCapability = capability;
-  desktop_capturer_cursor_composer_->Start(this);
-  unsigned int t_id =0;
-  capturer_thread_.Start(t_id);
-
 #if defined(_WIN32)
   uint32_t maxFPSNeeded = 1000/_requestedCapability.maxFPS;
-  capturer_thread_.RequestCallbackTimer(maxFPSNeeded);
+  capturer_thread_->RequestCallbackTimer(maxFPSNeeded);
 #endif
+
+  desktop_capturer_cursor_composer_->Start(this);
+  capturer_thread_->Start();
 
   return 0;
 }
@@ -794,7 +810,7 @@ void DesktopCaptureImpl::OnCaptureCompleted(DesktopFrame* frame) {
   // combine cursor in frame
   // Latest WebRTC already support it by DesktopFrameWithCursor/DesktopAndCursorComposer.
 
-  int32_t videoFrameLength = frameInfo.width * frameInfo.height * DesktopFrame::kBytesPerPixel;
+  size_t videoFrameLength = frameInfo.width * frameInfo.height * DesktopFrame::kBytesPerPixel;
   IncomingFrame(videoFrame, videoFrameLength, frameInfo);
   delete frame; //handled it, so we need delete it
 }
@@ -820,7 +836,7 @@ void DesktopCaptureImpl::process() {
   const uint32_t maxFPSNeeded = 1000/_requestedCapability.maxFPS;
   const float sleepTimeFactor = (100.0f / kMaxDesktopCaptureCpuUsage) - 1.0f;
   const uint32_t sleepTime = sleepTimeFactor * processTime;
-  time_event_.Wait(std::max<uint32_t>(maxFPSNeeded, sleepTime));
+  time_event_->Wait(std::max<uint32_t>(maxFPSNeeded, sleepTime));
 #endif
 }
 

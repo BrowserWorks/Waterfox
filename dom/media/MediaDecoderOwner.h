@@ -64,6 +64,9 @@ public:
   // resource has a decode error during metadata loading or decoding.
   virtual void DecodeError() = 0;
 
+  // Return true if media element error attribute is not null.
+  virtual bool HasError() const = 0;
+
   // Called by the video decoder object, on the main thread, when the
   // resource load has been cancelled.
   virtual void LoadAborted() = 0;
@@ -117,10 +120,10 @@ public:
   };
 
   // Check if the decoder owner is active.
-  virtual bool IsActive() = 0;
+  virtual bool IsActive() const = 0;
 
   // Check if the decoder owner is hidden.
-  virtual bool IsHidden() = 0;
+  virtual bool IsHidden() const = 0;
 
   // Called by the media decoder and the video frame to get the
   // ImageContainer containing the video data.
@@ -129,6 +132,9 @@ public:
   // Called by the media decoder object, on the main thread,
   // when the connection between Rtsp server and client gets lost.
   virtual void ResetConnectionState() = 0;
+
+  // Called by media decoder when the audible state changed
+  virtual void NotifyAudibleStateChanged(bool aAudible) = 0;
 
 #ifdef MOZ_EME
   // Dispatches a "encrypted" event to the HTMLMediaElement, with the

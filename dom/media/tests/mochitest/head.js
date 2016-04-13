@@ -33,6 +33,9 @@ function AudioStreamAnalyser(ac, stream) {
   this.stream = stream;
   this.sourceNode = this.audioContext.createMediaStreamSource(this.stream);
   this.analyser = this.audioContext.createAnalyser();
+  // Setting values lower than default for speedier testing on emulators
+  this.analyser.smoothingTimeConstant = 0.2;
+  this.analyser.fftSize = 1024;
   this.sourceNode.connect(this.analyser);
   this.data = new Uint8Array(this.analyser.frequencyBinCount);
 }
@@ -58,17 +61,18 @@ AudioStreamAnalyser.prototype = {
 
     // Easy: 1px per bin
     cvs.width = this.analyser.frequencyBinCount;
-    cvs.height = 256;
+    cvs.height = 128;
     cvs.style.border = "1px solid red";
 
     var c = cvs.getContext('2d');
+    c.fillStyle = 'black';
 
     var self = this;
     function render() {
       c.clearRect(0, 0, cvs.width, cvs.height);
       var array = self.getByteFrequencyData();
       for (var i = 0; i < array.length; i++) {
-        c.fillRect(i, (256 - (array[i])), 1, 256);
+        c.fillRect(i, (cvs.height - (array[i])), 1, cvs.height);
       }
       if (!cvs.stopDrawing) {
         requestAnimationFrame(render);
@@ -390,6 +394,18 @@ function waitUntil(func, time) {
 var timeout = (promise, time, msg) =>
   Promise.race([promise, wait(time).then(() => Promise.reject(new Error(msg)))]);
 
+/** Use event listener to call passed-in function on fire until it returns true */
+var listenUntil = (target, eventName, onFire) => {
+  return new Promise(resolve => target.addEventListener(eventName,
+                                                        function callback() {
+    var result = onFire();
+    if (result) {
+      target.removeEventListener(eventName, callback, false);
+      resolve(result);
+    }
+  }, false));
+};
+
 /*** Test control flow methods */
 
 /**
@@ -541,6 +557,14 @@ CommandChain.prototype = {
     return this.commands.indexOf(functionOrName, start);
   },
 
+  mustHaveIndexOf: function(functionOrName, start) {
+    var index = this.indexOf(functionOrName, start);
+    if (index == -1) {
+      throw new Error("Unknown test: " + functionOrName);
+    }
+    return index;
+  },
+
   /**
    * Inserts the new commands after the specified command.
    */
@@ -563,7 +587,7 @@ CommandChain.prototype = {
   },
 
   _insertHelper: function(functionOrName, commands, delta, all, start) {
-    var index = this.indexOf(functionOrName);
+    var index = this.mustHaveIndexOf(functionOrName);
     start = start || 0;
     for (; index !== -1; index = this.indexOf(functionOrName, index)) {
       if (!start) {
@@ -585,33 +609,21 @@ CommandChain.prototype = {
    * Removes the specified command, returns what was removed.
    */
   remove: function(functionOrName) {
-    var index = this.indexOf(functionOrName);
-    if (index >= 0) {
-      return this.commands.splice(index, 1);
-    }
-    return [];
+    return this.commands.splice(this.mustHaveIndexOf(functionOrName), 1);
   },
 
   /**
    * Removes all commands after the specified one, returns what was removed.
    */
   removeAfter: function(functionOrName, start) {
-    var index = this.indexOf(functionOrName, start);
-    if (index >= 0) {
-      return this.commands.splice(index + 1);
-    }
-    return [];
+    return this.commands.splice(this.mustHaveIndexOf(functionOrName, start) + 1);
   },
 
   /**
    * Removes all commands before the specified one, returns what was removed.
    */
   removeBefore: function(functionOrName) {
-    var index = this.indexOf(functionOrName);
-    if (index >= 0) {
-      return this.commands.splice(0, index);
-    }
-    return [];
+    return this.commands.splice(0, this.mustHaveIndexOf(functionOrName));
   },
 
   /**

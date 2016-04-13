@@ -47,13 +47,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #define END_HEADERS CRLF CRLF
 
+typedef enum {
+  PROXY_TUNNEL_NONE=0,
+  PROXY_TUNNEL_REQUESTED,
+  PROXY_TUNNEL_CONNECTED,
+  PROXY_TUNNEL_CLOSED,
+  PROXY_TUNNEL_FAILED
+} nr_socket_proxy_tunnel_state;
+
 typedef struct nr_socket_proxy_tunnel_ {
   nr_proxy_tunnel_config *config;
   nr_socket *inner;
   nr_transport_addr remote_addr;
-  int connect_requested;
-  int connect_answered;
-  int connect_failed;
+  nr_socket_proxy_tunnel_state state;
   char buffer[MAX_HTTP_CONNECT_BUFFER_SIZE];
   size_t buffered_bytes;
   void *resolver_handle;
@@ -143,7 +149,7 @@ static int send_http_connect(nr_socket_proxy_tunnel *sock)
     ABORT(R_IO_ERROR);
   }
 
-  sock->connect_requested = 1;
+  sock->state = PROXY_TUNNEL_REQUESTED;
 
   _status = 0;
 abort:
@@ -173,6 +179,9 @@ static int parse_http_response(char *begin, char *end, unsigned int *status)
   // len should *never* be greater than nr_socket_proxy_tunnel::buffered_bytes.
   // Which in turn should never be greater nr_socket_proxy_tunnel::buffer size.
   assert(len <= MAX_HTTP_CONNECT_BUFFER_SIZE);
+  if (len > MAX_HTTP_CONNECT_BUFFER_SIZE) {
+    return R_BAD_DATA;
+  }
 
   memcpy(response, begin, len);
   response[len] = '\0';
@@ -249,6 +258,10 @@ static int nr_socket_proxy_tunnel_resolved_cb(void *obj, nr_transport_addr *prox
   else {
     r_log(LOG_GENERIC,LOG_WARNING,"Failed to resolve proxy %s",
         sock->config->proxy_host);
+    /* TODO: Mozilla bug 1241758: because of the callback the return value goes
+     * nowhere, so we can't mark the candidate as failed, so everything depends
+     * on the overall timeouts in this case. */
+    sock->state = PROXY_TUNNEL_FAILED;
     ABORT(R_NOT_FOUND);
   }
 
@@ -267,7 +280,7 @@ int nr_socket_proxy_tunnel_connect(void *obj, nr_transport_addr *addr)
   int has_addr;
   nr_socket_proxy_tunnel *sock = (nr_socket_proxy_tunnel*)obj;
   nr_proxy_tunnel_config *config = sock->config;
-  nr_transport_addr proxy_addr;
+  nr_transport_addr proxy_addr, local_addr;
   nr_resolver_resource resource;
 
   if ((r=nr_transport_addr_copy(&sock->remote_addr, addr))) {
@@ -292,6 +305,22 @@ int nr_socket_proxy_tunnel_connect(void *obj, nr_transport_addr *addr)
     resource.port=config->proxy_port;
     resource.stun_turn=NR_RESOLVE_PROTOCOL_TURN;
     resource.transport_protocol=IPPROTO_TCP;
+
+    if ((r=nr_socket_getaddr(sock->inner, &local_addr))) {
+      r_log(LOG_GENERIC,LOG_ERR,"nr_socket_proxy_tunnel_connect failed to get local address");
+      ABORT(r);
+    }
+
+    switch(local_addr.ip_version) {
+      case NR_IPV4:
+        resource.address_family=AF_INET;
+        break;
+      case NR_IPV6:
+        resource.address_family=AF_INET6;
+        break;
+      default:
+        ABORT(R_BAD_ARGS);
+    }
 
     r_log(LOG_GENERIC,LOG_DEBUG,"nr_socket_proxy_tunnel_connect: nr_resolver_resolve");
     if ((r=nr_resolver_resolve(config->resolver, &resource,
@@ -320,13 +349,20 @@ int nr_socket_proxy_tunnel_write(void *obj, const void *msg, size_t len,
 
   r_log(LOG_GENERIC,LOG_DEBUG,"nr_socket_proxy_tunnel_write");
 
-  if (!sock->connect_requested) {
+  if (sock->state >= PROXY_TUNNEL_CLOSED) {
+    return R_FAILED;
+  }
+
+  if (sock->state == PROXY_TUNNEL_NONE) {
     if ((r=send_http_connect(sock))) {
       ABORT(r);
     }
   }
 
-  /* TODO (bug 1117984): we cannot assume it's safe to write until we receive a response. */
+  if (sock->state != PROXY_TUNNEL_CONNECTED) {
+    return R_WOULDBLOCK;
+  }
+
   if ((r=nr_socket_write(sock->inner, msg, len, written, 0))) {
     ABORT(r);
   }
@@ -350,11 +386,11 @@ int nr_socket_proxy_tunnel_read(void *obj, void * restrict buf, size_t maxlen,
 
   *len = 0;
 
-  if (sock->connect_failed) {
+  if (sock->state >= PROXY_TUNNEL_CLOSED) {
     return R_FAILED;
   }
 
-  if (sock->connect_answered) {
+  if (sock->state == PROXY_TUNNEL_CONNECTED) {
     return nr_socket_read(sock->inner, buf, maxlen, len, 0);
   }
 
@@ -375,8 +411,6 @@ int nr_socket_proxy_tunnel_read(void *obj, void * restrict buf, size_t maxlen,
   sock->buffered_bytes += bytes_read;
 
   if (http_term = find_http_terminator(sock->buffer, sock->buffered_bytes)) {
-    sock->connect_answered = 1;
-
     if ((r = parse_http_response(sock->buffer, http_term, &http_status))) {
       ABORT(r);
     }
@@ -387,6 +421,8 @@ int nr_socket_proxy_tunnel_read(void *obj, void * restrict buf, size_t maxlen,
             http_status);
       ABORT(R_FAILED);
     }
+
+    sock->state = PROXY_TUNNEL_CONNECTED;
 
     ptr = http_term + strlen(END_HEADERS);
     pending = sock->buffered_bytes - (ptr - sock->buffer);
@@ -404,7 +440,7 @@ int nr_socket_proxy_tunnel_read(void *obj, void * restrict buf, size_t maxlen,
   _status=0;
 abort:
   if (_status && _status != R_WOULDBLOCK) {
-      sock->connect_failed = 1;
+      sock->state = PROXY_TUNNEL_FAILED;
   }
   return(_status);
 }
@@ -419,6 +455,8 @@ int nr_socket_proxy_tunnel_close(void *obj)
     nr_resolver_cancel(sock->config->resolver, sock->resolver_handle);
     sock->resolver_handle = 0;
   }
+
+  sock->state = PROXY_TUNNEL_CLOSED;
 
   return nr_socket_close(sock->inner);
 }

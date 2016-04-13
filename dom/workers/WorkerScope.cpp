@@ -326,6 +326,7 @@ WorkerGlobalScope::Dump(const Optional<nsAString>& aString) const
 
   NS_ConvertUTF16toUTF8 str(aString.Value());
 
+  MOZ_LOG(nsContentUtils::DOMDumpLog(), LogLevel::Debug, ("[Worker.Dump] %s", str.get()));
 #ifdef ANDROID
   __android_log_print(ANDROID_LOG_INFO, "Gecko", "%s", str.get());
 #endif
@@ -432,8 +433,12 @@ DedicatedWorkerGlobalScope::WrapGlobalObject(JSContext* aCx,
   const bool extraWarnings = usesSystemPrincipal &&
                              xpc::ExtraWarningsForSystemJS();
 
-  options.setDiscardSource(discardSource)
-         .extraWarningsOverride().set(extraWarnings);
+  JS::CompartmentBehaviors& behaviors = options.behaviors();
+  behaviors.setDiscardSource(discardSource)
+           .extraWarningsOverride().set(extraWarnings);
+
+  JS::CompartmentCreationOptions& creationOptions = options.creationOptions();
+  creationOptions.setSharedMemoryAndAtomicsEnabled(xpc::SharedMemoryEnabled());
 
   return DedicatedWorkerGlobalScopeBinding_workers::Wrap(aCx, this, this,
                                                          options,
@@ -782,8 +787,6 @@ const js::Class workerdebuggersandbox_class = {
     nullptr,
     JS_GlobalObjectTraceHook,
     JS_NULL_CLASS_SPEC, {
-      nullptr,
-      nullptr,
       false,
       nullptr,
       workerdebuggersandbox_moved
@@ -798,7 +801,7 @@ WorkerDebuggerGlobalScope::CreateSandbox(JSContext* aCx, const nsAString& aName,
   mWorkerPrivate->AssertIsOnWorkerThread();
 
   JS::CompartmentOptions options;
-  options.setInvisibleToDebugger(true);
+  options.creationOptions().setInvisibleToDebugger(true);
 
   JS::Rooted<JSObject*> sandbox(aCx,
     JS_NewGlobalObject(aCx, js::Jsvalify(&workerdebuggersandbox_class), nullptr,
@@ -896,10 +899,10 @@ void
 WorkerDebuggerGlobalScope::ReportError(JSContext* aCx,
                                        const nsAString& aMessage)
 {
-  JS::AutoFilename afn;
+  JS::UniqueChars chars;
   uint32_t lineno = 0;
-  JS::DescribeScriptedCaller(aCx, &afn, &lineno);
-  nsString filename(NS_ConvertUTF8toUTF16(afn.get()));
+  JS::DescribeScriptedCaller(aCx, &chars, &lineno);
+  nsString filename(NS_ConvertUTF8toUTF16(chars.get()));
   mWorkerPrivate->ReportErrorToDebugger(filename, lineno, aMessage);
 }
 

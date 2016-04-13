@@ -14,11 +14,10 @@ Cu.import("resource://gre/modules/TelemetryReportingPolicy.jsm", this);
 Cu.import("resource://gre/modules/TelemetryUtils.jsm", this);
 Cu.import("resource://gre/modules/Timer.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
+Cu.import("resource://gre/modules/UpdateUtils.jsm", this);
 
 const PREF_BRANCH = "toolkit.telemetry.";
-const PREF_ENABLED = PREF_BRANCH + "enabled";
 const PREF_SERVER = PREF_BRANCH + "server";
-const PREF_DRS_ENABLED = "datareporting.healthreport.service.enabled";
 
 const TEST_CHANNEL = "TestChannelABC";
 
@@ -42,14 +41,27 @@ function fakeResetAcceptedPolicy() {
   Preferences.reset(PREF_ACCEPTED_POLICY_VERSION);
 }
 
+function setMinimumPolicyVersion(aNewPolicyVersion) {
+  const CHANNEL_NAME = UpdateUtils.getUpdateChannel(false);
+  // We might have channel-dependent minimum policy versions.
+  const CHANNEL_DEPENDENT_PREF = PREF_MINIMUM_POLICY_VERSION + ".channel-" + CHANNEL_NAME;
+
+  // Does the channel-dependent pref exist? If so, set its value.
+  if (Preferences.get(CHANNEL_DEPENDENT_PREF, undefined)) {
+    Preferences.set(CHANNEL_DEPENDENT_PREF, aNewPolicyVersion);
+    return;
+  }
+
+  // We don't have a channel specific minimu, so set the common one.
+  Preferences.set(PREF_MINIMUM_POLICY_VERSION, aNewPolicyVersion);
+}
+
 function run_test() {
   // Addon manager needs a profile directory
   do_get_profile(true);
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
-  Services.prefs.setBoolPref(PREF_ENABLED, true);
-  // We need to disable FHR in order to use the policy from telemetry.
-  Services.prefs.setBoolPref(PREF_DRS_ENABLED, false);
+  Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);
   // Don't bypass the notifications in this test, we'll fake it.
   Services.prefs.setBoolPref(PREF_BYPASS_NOTIFICATION, false);
 
@@ -113,7 +125,7 @@ add_task(function* test_prefs() {
 
   // Set a new minimum policy version and check that user is no longer notified.
   let newMinimum = Preferences.get(PREF_CURRENT_POLICY_VERSION, 1) + 1;
-  Preferences.set(PREF_MINIMUM_POLICY_VERSION, newMinimum);
+  setMinimumPolicyVersion(newMinimum);
   Assert.ok(!TelemetryReportingPolicy.testIsUserNotified(),
             "A greater minimum policy version must invalidate the policy and disable upload.");
 

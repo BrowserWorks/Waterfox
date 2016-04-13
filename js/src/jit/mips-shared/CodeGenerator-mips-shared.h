@@ -175,7 +175,7 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared
     virtual void visitTruncateFToInt32(LTruncateFToInt32* ins);
 
     // Out of line visitors.
-    void visitOutOfLineBailout(OutOfLineBailout* ool);
+    virtual void visitOutOfLineBailout(OutOfLineBailout* ool) = 0;
   protected:
     virtual ValueOperand ToOutValue(LInstruction* ins) = 0;
     void memoryBarrier(MemoryBarrierBits barrier);
@@ -200,7 +200,9 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared
     void visitAsmJSLoadHeap(LAsmJSLoadHeap* ins);
     void visitAsmJSStoreHeap(LAsmJSStoreHeap* ins);
     void visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins);
+    void visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins);
     void visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins);
+    void visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEffect* ins);
     void visitAsmJSLoadGlobalVar(LAsmJSLoadGlobalVar* ins);
     void visitAsmJSStoreGlobalVar(LAsmJSStoreGlobalVar* ins);
     void visitAsmJSLoadFuncPtr(LAsmJSLoadFuncPtr* ins);
@@ -209,8 +211,25 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared
     void visitAsmJSPassStackArg(LAsmJSPassStackArg* ins);
 
     void visitMemoryBarrier(LMemoryBarrier* ins);
+    void visitAtomicTypedArrayElementBinop(LAtomicTypedArrayElementBinop* lir);
+    void visitAtomicTypedArrayElementBinopForEffect(LAtomicTypedArrayElementBinopForEffect* lir);
+    void visitCompareExchangeTypedArrayElement(LCompareExchangeTypedArrayElement* lir);
+    void visitAtomicExchangeTypedArrayElement(LAtomicExchangeTypedArrayElement* lir);
 
     void generateInvalidateEpilogue();
+
+    // Generating a result.
+    template<typename S, typename T>
+    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value,
+                                    const T& mem, Register flagTemp, Register outTemp,
+                                    Register valueTemp, Register offsetTemp, Register maskTemp,
+                                    AnyRegister output);
+
+    // Generating no result.
+    template<typename S, typename T>
+    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S& value,
+                                    const T& mem, Register flagTemp, Register valueTemp,
+                                    Register offsetTemp, Register maskTemp);
 
   protected:
     void visitEffectiveAddress(LEffectiveAddress* ins);
@@ -224,7 +243,6 @@ class CodeGeneratorMIPSShared : public CodeGeneratorShared
     void visitSimdReinterpretCast(LSimdReinterpretCast* ins) { MOZ_CRASH("NYI"); }
     void visitSimdExtractElementI(LSimdExtractElementI* ins) { MOZ_CRASH("NYI"); }
     void visitSimdExtractElementF(LSimdExtractElementF* ins) { MOZ_CRASH("NYI"); }
-    void visitSimdSignMaskX4(LSimdSignMaskX4* ins) { MOZ_CRASH("NYI"); }
     void visitSimdBinaryCompIx4(LSimdBinaryCompIx4* lir) { MOZ_CRASH("NYI"); }
     void visitSimdBinaryCompFx4(LSimdBinaryCompFx4* lir) { MOZ_CRASH("NYI"); }
     void visitSimdBinaryArithIx4(LSimdBinaryArithIx4* lir) { MOZ_CRASH("NYI"); }

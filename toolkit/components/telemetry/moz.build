@@ -40,6 +40,7 @@ EXTRA_JS_MODULES += [
     'TelemetrySession.jsm',
     'TelemetryStopwatch.jsm',
     'TelemetryStorage.jsm',
+    'TelemetryTimestamps.jsm',
     'TelemetryUtils.jsm',
     'ThirdPartyCookieProbe.jsm',
     'UITelemetry.jsm',
@@ -80,3 +81,4 @@ LOCAL_INCLUDES += [
 ]
 
 SPHINX_TREES['telemetry'] = 'docs'
+SPHINX_TREES['healthreport'] = 'docs/fhr'

@@ -29,7 +29,9 @@
 #include <algorithm>
 
 // Activate BHR only for one every BHR_BETA_MOD users.
-#define BHR_BETA_MOD 2;
+// This is now 100% of Beta population for the Beta 45/46 e10s A/B trials
+// It can be scaled back again in the future
+#define BHR_BETA_MOD 1;
 
 // Maximum depth of the call stack in the reported thread hangs. This value represents
 // the 99.9th percentile of the thread hangs stack depths reported by Telemetry.
@@ -136,7 +138,8 @@ BackgroundHangManager::Observe(nsISupports* aSubject, const char* aTopic, const 
 class BackgroundHangThread : public LinkedListElement<BackgroundHangThread>
 {
 private:
-  static ThreadLocal<BackgroundHangThread*> sTlsKey;
+  static MOZ_THREAD_LOCAL(BackgroundHangThread*) sTlsKey;
+  static bool sTlsKeyInitialized;
 
   BackgroundHangThread(const BackgroundHangThread&);
   BackgroundHangThread& operator=(const BackgroundHangThread&);
@@ -204,8 +207,8 @@ StaticRefPtr<BackgroundHangManager> BackgroundHangManager::sInstance;
 bool BackgroundHangManager::sProhibited = false;
 bool BackgroundHangManager::sDisabled = false;
 
-ThreadLocal<BackgroundHangThread*> BackgroundHangThread::sTlsKey;
-
+MOZ_THREAD_LOCAL(BackgroundHangThread*) BackgroundHangThread::sTlsKey;
+bool BackgroundHangThread::sTlsKeyInitialized;
 
 BackgroundHangManager::BackgroundHangManager()
   : mShutdown(false)
@@ -370,7 +373,7 @@ BackgroundHangThread::BackgroundHangThread(const char* aName,
   , mWaiting(true)
   , mStats(aName)
 {
-  if (sTlsKey.initialized()) {
+  if (sTlsKeyInitialized) {
     sTlsKey.set(this);
   }
   // Lock here because LinkedList is not thread-safe
@@ -391,7 +394,7 @@ BackgroundHangThread::~BackgroundHangThread()
   autoLock.Notify();
 
   // We no longer have a thread
-  if (sTlsKey.initialized()) {
+  if (sTlsKeyInitialized) {
     sTlsKey.set(nullptr);
   }
 
@@ -437,7 +440,9 @@ BackgroundHangThread::ReportHang(PRIntervalTime aHangTime)
   }
   // Add new histogram
   newHistogram.Add(aHangTime, Move(mAnnotations));
-  mStats.mHangs.append(Move(newHistogram));
+  if (!mStats.mHangs.append(Move(newHistogram))) {
+    MOZ_CRASH();
+  }
   return mStats.mHangs.back();
 }
 
@@ -485,7 +490,7 @@ BackgroundHangThread::FindThread()
     return nullptr;
   }
 
-  if (sTlsKey.initialized()) {
+  if (sTlsKeyInitialized) {
     // Use TLS if available
     MOZ_ASSERT(!BackgroundHangManager::sProhibited,
                "BackgroundHandleManager is not initialized");

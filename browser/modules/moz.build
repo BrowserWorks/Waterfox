@@ -17,7 +17,7 @@ EXTRA_JS_MODULES += [
     'CastingApps.jsm',
     'Chat.jsm',
     'ContentClick.jsm',
-    'ContentCrashReporters.jsm',
+    'ContentCrashHandlers.jsm',
     'ContentLinkHandler.jsm',
     'ContentObservers.jsm',
     'ContentSearch.jsm',
@@ -29,6 +29,7 @@ EXTRA_JS_MODULES += [
     'FormSubmitObserver.jsm',
     'FormValidationHandler.jsm',
     'HiddenFrame.jsm',
+    'LaterRun.jsm',
     'NetworkPrioritizer.jsm',
     'offlineAppCache.jsm',
     'PanelFrame.jsm',
@@ -41,7 +42,9 @@ EXTRA_JS_MODULES += [
     'SelfSupportBackend.jsm',
     'SitePermissions.jsm',
     'Social.jsm',
+    'TabGroupsMigrator.jsm',
     'TransientPrefs.jsm',
+    'UserContextUI.jsm',
     'WebappManager.jsm',
     'webrtcUI.jsm',
 ]
@@ -57,7 +60,3 @@ if CONFIG['NIGHTLY_BUILD']:
     EXTRA_JS_MODULES += [
         'SignInToWebsite.jsm',
     ]
-
-EXTRA_PP_COMPONENTS += [
-    'browsermodules.manifest',
-]

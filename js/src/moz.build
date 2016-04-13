@@ -50,9 +50,6 @@ with Files('../public/TrackedOptimizationInfo.h'):
     BUG_COMPONENT = component_jit
 
 
-if CONFIG['DEHYDRA_PATH']:
-    DIRS += ['analysis-tests']
-
 if CONFIG['JS_BUNDLED_EDITLINE']:
     DIRS += ['editline']
 
@@ -64,9 +61,11 @@ TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']
 
 CONFIGURE_SUBST_FILES += [
     'devtools/rootAnalysis/Makefile',
-    'js-confdefs.h',
     'js-config',
     'js.pc',
+]
+CONFIGURE_DEFINE_FILES += [
+    'js-confdefs.h',
 ]
 
 if not CONFIG['JS_STANDALONE']:
@@ -111,9 +110,12 @@ EXPORTS.js += [
     '../public/Date.h',
     '../public/Debug.h',
     '../public/GCAPI.h',
+    '../public/GCHashTable.h',
+    '../public/GCVector.h',
     '../public/HashTable.h',
     '../public/HeapAPI.h',
     '../public/Id.h',
+    '../public/Initialization.h',
     '../public/LegacyIntTypes.h',
     '../public/MemoryMetrics.h',
     '../public/Principals.h',
@@ -124,8 +126,6 @@ EXPORTS.js += [
     '../public/RootingAPI.h',
     '../public/SliceBudget.h',
     '../public/StructuredClone.h',
-    '../public/TraceableHashTable.h',
-    '../public/TraceableVector.h',
     '../public/TraceKind.h',
     '../public/TracingAPI.h',
     '../public/TrackedOptimizationInfo.h',
@@ -133,7 +133,9 @@ EXPORTS.js += [
     '../public/UbiNode.h',
     '../public/UbiNodeBreadthFirst.h',
     '../public/UbiNodeCensus.h',
+    '../public/UbiNodeDominatorTree.h',
     '../public/UbiNodePostOrder.h',
+    '../public/UniquePtr.h',
     '../public/Utility.h',
     '../public/Value.h',
     '../public/Vector.h',
@@ -141,12 +143,14 @@ EXPORTS.js += [
 ]
 
 UNIFIED_SOURCES += [
-    'asmjs/AsmJSCompile.cpp',
-    'asmjs/AsmJSFrameIterator.cpp',
-    'asmjs/AsmJSLink.cpp',
-    'asmjs/AsmJSModule.cpp',
-    'asmjs/AsmJSSignalHandlers.cpp',
-    'asmjs/AsmJSValidate.cpp',
+    'asmjs/AsmJS.cpp',
+    'asmjs/WasmFrameIterator.cpp',
+    'asmjs/WasmGenerator.cpp',
+    'asmjs/WasmIonCompile.cpp',
+    'asmjs/WasmModule.cpp',
+    'asmjs/WasmSignalHandlers.cpp',
+    'asmjs/WasmStubs.cpp',
+    'asmjs/WasmTypes.cpp',
     'builtin/AtomicsObject.cpp',
     'builtin/Eval.cpp',
     'builtin/Intl.cpp',
@@ -258,7 +262,6 @@ UNIFIED_SOURCES += [
     'jscntxt.cpp',
     'jscompartment.cpp',
     'jsdate.cpp',
-    'jsdtoa.cpp',
     'jsexn.cpp',
     'jsfriendapi.cpp',
     'jsfun.cpp',
@@ -320,7 +323,6 @@ UNIFIED_SOURCES += [
     'vm/SelfHosting.cpp',
     'vm/Shape.cpp',
     'vm/SharedArrayObject.cpp',
-    'vm/SharedTypedArrayObject.cpp',
     'vm/SPSProfiler.cpp',
     'vm/Stack.cpp',
     'vm/Stopwatch.cpp',
@@ -347,6 +349,8 @@ UNIFIED_SOURCES += [
 # without PGO
 # frontend/Parser.cpp cannot be built in unified mode because of explicit
 # template instantiations.
+# jsdtoa.cpp cannot be built in unified mode because we want to suppress
+# compiler warnings in third-party dtoa.c.
 # jsmath.cpp cannot be built in unified mode because it needs to pull rand_s
 # from <stdlib.h> on Windows through a preprocessor define.
 # jsutil.cpp cannot be built in unified mode because it is needed for
@@ -360,8 +364,10 @@ SOURCES += [
     'gc/StoreBuffer.cpp',
     'jsarray.cpp',
     'jsatom.cpp',
+    'jsdtoa.cpp',
     'jsmath.cpp',
     'jsutil.cpp',
+    'vm/Initialization.cpp',
 ]
 
 if CONFIG['JS_POSIX_NSPR']:
@@ -475,6 +481,7 @@ elif CONFIG['JS_CODEGEN_ARM64']:
     if CONFIG['JS_SIMULATOR_ARM64']:
         UNIFIED_SOURCES += [
             'jit/arm64/vixl/Debugger-vixl.cpp',
+            'jit/arm64/vixl/Logic-vixl.cpp',
             'jit/arm64/vixl/MozSimulator-vixl.cpp',
             'jit/arm64/vixl/Simulator-vixl.cpp'
         ]
@@ -515,10 +522,17 @@ elif CONFIG['JS_CODEGEN_MIPS32'] or CONFIG['JS_CODEGEN_MIPS64']:
             'jit/mips64/Bailouts-mips64.cpp',
             'jit/mips64/BaselineCompiler-mips64.cpp',
             'jit/mips64/BaselineIC-mips64.cpp',
+            'jit/mips64/CodeGenerator-mips64.cpp',
             'jit/mips64/Lowering-mips64.cpp',
+            'jit/mips64/MacroAssembler-mips64.cpp',
+            'jit/mips64/MoveEmitter-mips64.cpp',
             'jit/mips64/SharedIC-mips64.cpp',
             'jit/mips64/Trampoline-mips64.cpp',
         ]
+        if CONFIG['JS_SIMULATOR_MIPS64']:
+            UNIFIED_SOURCES += [
+                'jit/mips64/Simulator-mips64.cpp'
+            ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
     SOURCES += [
@@ -537,8 +551,8 @@ if CONFIG['JS_HAS_CTYPES']:
         'ctypes/Library.cpp',
     ]
     if not CONFIG['MOZ_NATIVE_FFI']:
-        GENERATED_INCLUDES += [
-            'ctypes/libffi/include',
+        LOCAL_INCLUDES += [
+            '!ctypes/libffi/include',
         ]
 
 if CONFIG['MOZ_VTUNE']:
@@ -602,7 +616,12 @@ if CONFIG['MOZ_ETW']:
 
 if CONFIG['NIGHTLY_BUILD']:
     DEFINES['ENABLE_BINARYDATA'] = True
-    DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
+
+if CONFIG['NIGHTLY_BUILD']:
+    DEFINES['ENABLE_SIMD'] = True
+
+# Also set in shell/moz.build
+DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
 
 DEFINES['EXPORT_JS_API'] = True
 
@@ -632,6 +651,8 @@ if CONFIG['_MSC_VER']:
     # Parser<SyntaxParseHandler> definition, see bug 1167030.
     CXXFLAGS += ['-wd4661']
     CXXFLAGS += ['-we4067', '-we4258', '-we4275']
+    CXXFLAGS += ['-wd4146'] # FIXME: unary minus operator applied to unsigned type (bug 1229189)
+    CXXFLAGS += ['-wd4273'] # FIXME: inconsistent dll linkage (bug 1229666)
 
 if CONFIG['OS_ARCH'] not in ('WINNT', 'HP-UX'):
     OS_LIBS += [
@@ -658,10 +679,51 @@ if CONFIG['OS_ARCH'] == 'SunOS':
 
 CFLAGS += CONFIG['MOZ_ICU_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_ICU_CFLAGS']
-
-if not CONFIG['GNU_CXX']:
-    ALLOW_COMPILER_WARNINGS = True
+LOCAL_INCLUDES += CONFIG['MOZ_ICU_INCLUDES']
 
 NO_EXPAND_LIBS = True
 
 DIST_INSTALL = True
+
+# Prepare self-hosted JS code for embedding
+GENERATED_FILES += ['selfhosted.out.h']
+selfhosted = GENERATED_FILES['selfhosted.out.h']
+selfhosted.script = 'builtin/embedjs.py:generate_selfhosted'
+selfhosted.inputs = [
+    'js.msg',
+    'builtin/TypedObjectConstants.h',
+    'builtin/SelfHostingDefines.h',
+    'builtin/Utilities.js',
+    'builtin/Array.js',
+    'builtin/Classes.js',
+    'builtin/Date.js',
+    'builtin/Error.js',
+    'builtin/Function.js',
+    'builtin/Generator.js',
+    'builtin/Intl.js',
+    'builtin/IntlData.js',
+    'builtin/Iterator.js',
+    'builtin/Map.js',
+    'builtin/Module.js',
+    'builtin/Number.js',
+    'builtin/Object.js',
+    'builtin/Reflect.js',
+    'builtin/RegExp.js',
+    'builtin/String.js',
+    'builtin/Set.js',
+    'builtin/Sorting.js',
+    'builtin/TypedArray.js',
+    'builtin/TypedObject.js',
+    'builtin/WeakSet.js'
+]
+
+if CONFIG['JS_HAS_CTYPES']:
+    if CONFIG['MOZ_NATIVE_FFI']:
+        CXXFLAGS += CONFIG['MOZ_FFI_CFLAGS']
+    else:
+        # Windows needs this to be linked with a static library.
+        DEFINES['FFI_BUILDING'] = True
+
+# Suppress warnings in third-party code.
+if CONFIG['CLANG_CXX']:
+    SOURCES['jsdtoa.cpp'].flags += ['-Wno-implicit-fallthrough']

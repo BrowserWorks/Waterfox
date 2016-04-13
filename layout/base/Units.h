@@ -8,13 +8,14 @@
 #define MOZ_UNITS_H_
 
 #include "mozilla/gfx/Coord.h"
+#include "mozilla/gfx/Matrix.h"
 #include "mozilla/gfx/Point.h"
 #include "mozilla/gfx/Rect.h"
-#include "mozilla/gfx/RegionTyped.h"
 #include "mozilla/gfx/ScaleFactor.h"
 #include "mozilla/gfx/ScaleFactors2D.h"
-#include "nsRect.h"
 #include "nsMargin.h"
+#include "nsRect.h"
+#include "nsRegion.h"
 #include "mozilla/AppUnits.h"
 #include "mozilla/TypeTraits.h"
 
@@ -27,6 +28,7 @@ struct IsPixel : FalseType {};
 struct CSSPixel;
 struct LayoutDevicePixel;
 struct LayerPixel;
+struct CSSTransformedLayerPixel;
 struct RenderTargetPixel;
 struct ScreenPixel;
 struct ParentLayerPixel;
@@ -34,6 +36,7 @@ struct ParentLayerPixel;
 template<> struct IsPixel<CSSPixel>          : TrueType {};
 template<> struct IsPixel<LayoutDevicePixel> : TrueType {};
 template<> struct IsPixel<LayerPixel>        : TrueType {};
+template<> struct IsPixel<CSSTransformedLayerPixel> : TrueType {};
 template<> struct IsPixel<RenderTargetPixel> : TrueType {};
 template<> struct IsPixel<ScreenPixel>       : TrueType {};
 template<> struct IsPixel<ParentLayerPixel>  : TrueType {};
@@ -73,6 +76,18 @@ typedef gfx::IntRectTyped<LayerPixel> LayerIntRect;
 typedef gfx::MarginTyped<LayerPixel> LayerMargin;
 typedef gfx::IntMarginTyped<LayerPixel> LayerIntMargin;
 typedef gfx::IntRegionTyped<LayerPixel> LayerIntRegion;
+
+typedef gfx::CoordTyped<CSSTransformedLayerPixel> CSSTransformedLayerCoord;
+typedef gfx::IntCoordTyped<CSSTransformedLayerPixel> CSSTransformedLayerIntCoord;
+typedef gfx::PointTyped<CSSTransformedLayerPixel> CSSTransformedLayerPoint;
+typedef gfx::IntPointTyped<CSSTransformedLayerPixel> CSSTransformedLayerIntPoint;
+typedef gfx::SizeTyped<CSSTransformedLayerPixel> CSSTransformedLayerSize;
+typedef gfx::IntSizeTyped<CSSTransformedLayerPixel> CSSTransformedLayerIntSize;
+typedef gfx::RectTyped<CSSTransformedLayerPixel> CSSTransformedLayerRect;
+typedef gfx::IntRectTyped<CSSTransformedLayerPixel> CSSTransformedLayerIntRect;
+typedef gfx::MarginTyped<CSSTransformedLayerPixel> CSSTransformedLayerMargin;
+typedef gfx::IntMarginTyped<CSSTransformedLayerPixel> CSSTransformedLayerIntMargin;
+typedef gfx::IntRegionTyped<CSSTransformedLayerPixel> CSSTransformedLayerIntRegion;
 
 typedef gfx::PointTyped<RenderTargetPixel> RenderTargetPoint;
 typedef gfx::IntPointTyped<RenderTargetPixel> RenderTargetIntPoint;
@@ -151,6 +166,14 @@ typedef gfx::ScaleFactors2D<ScreenPixel, ParentLayerPixel> ScreenToParentLayerSc
 typedef gfx::ScaleFactors2D<ParentLayerPixel, LayerPixel> ParentLayerToLayerScale2D;
 typedef gfx::ScaleFactors2D<ParentLayerPixel, ScreenPixel> ParentLayerToScreenScale2D;
 typedef gfx::ScaleFactors2D<ParentLayerPixel, ParentLayerPixel> ParentLayerToParentLayerScale2D;
+
+typedef gfx::Matrix4x4Typed<LayoutDevicePixel, LayoutDevicePixel> LayoutDeviceToLayoutDeviceMatrix4x4;
+typedef gfx::Matrix4x4Typed<LayerPixel, ParentLayerPixel> LayerToParentLayerMatrix4x4;
+typedef gfx::Matrix4x4Typed<ScreenPixel, ScreenPixel> ScreenToScreenMatrix4x4;
+typedef gfx::Matrix4x4Typed<ScreenPixel, ParentLayerPixel> ScreenToParentLayerMatrix4x4;
+typedef gfx::Matrix4x4Typed<ParentLayerPixel, LayerPixel> ParentLayerToLayerMatrix4x4;
+typedef gfx::Matrix4x4Typed<ParentLayerPixel, ScreenPixel> ParentLayerToScreenMatrix4x4;
+typedef gfx::Matrix4x4Typed<ParentLayerPixel, ParentLayerPixel> ParentLayerToParentLayerMatrix4x4;
 
 /*
  * The pixels that content authors use to specify sizes in.
@@ -235,22 +258,6 @@ struct CSSPixel {
  * 2) the "widget scale" (see nsIWidget::GetDefaultScale)
  */
 struct LayoutDevicePixel {
-  static LayoutDeviceIntPoint FromUntyped(const nsIntPoint& aPoint) {
-    return LayoutDeviceIntPoint(aPoint.x, aPoint.y);
-  }
-
-  static nsIntPoint ToUntyped(const LayoutDeviceIntPoint& aPoint) {
-    return nsIntPoint(aPoint.x, aPoint.y);
-  }
-
-  static LayoutDeviceIntRect FromUntyped(const nsIntRect& aRect) {
-    return LayoutDeviceIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static nsIntRect ToUntyped(const LayoutDeviceIntRect& aRect) {
-    return nsIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
   static LayoutDeviceRect FromAppUnits(const nsRect& aRect, nscoord aAppUnitsPerDevPixel) {
     return LayoutDeviceRect(NSAppUnitsToFloatPixels(aRect.x, float(aAppUnitsPerDevPixel)),
                             NSAppUnitsToFloatPixels(aRect.y, float(aAppUnitsPerDevPixel)),
@@ -276,17 +283,22 @@ struct LayoutDevicePixel {
   }
 
   static LayoutDeviceIntPoint FromAppUnitsToNearest(const nsPoint& aPoint, nscoord aAppUnitsPerDevPixel) {
-    return FromUntyped(aPoint.ToNearestPixels(aAppUnitsPerDevPixel));
+    return LayoutDeviceIntPoint::FromUnknownPoint(aPoint.ToNearestPixels(aAppUnitsPerDevPixel));
   }
 
   static LayoutDeviceIntRect FromAppUnitsToNearest(const nsRect& aRect, nscoord aAppUnitsPerDevPixel) {
-    return FromUntyped(aRect.ToNearestPixels(aAppUnitsPerDevPixel));
+    return LayoutDeviceIntRect::FromUnknownRect(aRect.ToNearestPixels(aAppUnitsPerDevPixel));
   }
 
   static LayoutDeviceIntSize FromAppUnitsRounded(const nsSize& aSize, nscoord aAppUnitsPerDevPixel) {
     return LayoutDeviceIntSize(
       NSAppUnitsToIntPixels(aSize.width, aAppUnitsPerDevPixel),
       NSAppUnitsToIntPixels(aSize.height, aAppUnitsPerDevPixel));
+  }
+
+  static nsPoint ToAppUnits(const LayoutDeviceIntPoint& aPoint, nscoord aAppUnitsPerDevPixel) {
+    return nsPoint(aPoint.x * aAppUnitsPerDevPixel,
+                   aPoint.y * aAppUnitsPerDevPixel);
   }
 
   static nsSize ToAppUnits(const LayoutDeviceIntSize& aSize, nscoord aAppUnitsPerDevPixel) {
@@ -297,6 +309,13 @@ struct LayoutDevicePixel {
   static nsSize ToAppUnits(const LayoutDeviceSize& aSize, nscoord aAppUnitsPerDevPixel) {
     return nsSize(NSFloatPixelsToAppUnits(aSize.width, aAppUnitsPerDevPixel),
                   NSFloatPixelsToAppUnits(aSize.height, aAppUnitsPerDevPixel));
+  }
+
+  static nsRect ToAppUnits(const LayoutDeviceIntRect& aRect, nscoord aAppUnitsPerDevPixel) {
+    return nsRect(aRect.x * aAppUnitsPerDevPixel,
+                  aRect.y * aAppUnitsPerDevPixel,
+                  aRect.width * aAppUnitsPerDevPixel,
+                  aRect.height * aAppUnitsPerDevPixel);
   }
 
   static nsRect ToAppUnits(const LayoutDeviceRect& aRect, nscoord aAppUnitsPerDevPixel) {
@@ -317,29 +336,16 @@ struct LayoutDevicePixel {
  * 4) rasterizing at a different scale in the presence of some CSS transforms
  */
 struct LayerPixel {
-  static nsIntRect ToUntyped(const LayerIntRect& aRect) {
-    return nsIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
+};
 
-  static nsIntPoint ToUntyped(const LayerIntPoint& aPoint) {
-    return nsIntPoint(aPoint.x, aPoint.y);
-  }
+/*
+ * This is Layer coordinates with the Layer's CSS transform applied.
+ * It can be thought of as intermediate between LayerPixel and
+ * ParentLayerPixel, as further applying async transforms to this
+ * yields ParentLayerPixels.
+ */
+struct CSSTransformedLayerPixel {
 
-  static gfx::IntRect ToUnknown(const LayerIntRect& aRect) {
-    return gfx::IntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static gfx::Rect ToUnknown(const LayerRect& aRect) {
-    return gfx::Rect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static LayerIntRect FromUntyped(const nsIntRect& aRect) {
-    return LayerIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static LayerIntPoint FromUntyped(const nsIntPoint& aPoint) {
-    return LayerIntPoint(aPoint.x, aPoint.y);
-  }
 };
 
 /*
@@ -350,29 +356,6 @@ struct LayerPixel {
  * have RenderTargetPixel == LayerPixel.
  */
 struct RenderTargetPixel {
-  static nsIntPoint ToUntyped(const RenderTargetIntPoint& aPoint) {
-    return nsIntPoint(aPoint.x, aPoint.y);
-  }
-
-  static nsIntRect ToUntyped(const RenderTargetIntRect& aRect) {
-    return nsIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static gfx::IntRect ToUnknown(const RenderTargetIntRect& aRect) {
-    return gfx::IntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static gfx::Rect ToUnknown(const RenderTargetRect& aRect) {
-    return gfx::Rect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static RenderTargetRect FromUnknown(const gfx::Rect& aRect) {
-    return RenderTargetRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
-
-  static RenderTargetIntRect FromUntyped(const nsIntRect& aRect) {
-    return RenderTargetIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
 };
 
 /*
@@ -385,13 +368,6 @@ struct RenderTargetPixel {
  * generally be represented in ScreenPixel units.
  */
 struct ScreenPixel {
-  static nsIntSize ToUntyped(const ScreenIntSize& aSize) {
-    return nsIntSize(aSize.width, aSize.height);
-  }
-
-  static ScreenIntPoint FromUntyped(const nsIntPoint& aPoint) {
-    return ScreenIntPoint(aPoint.x, aPoint.y);
-  }
 };
 
 /* The layer coordinates of the parent frame.
@@ -407,9 +383,6 @@ struct ScreenPixel {
  * to get a picture of how the various coordinate systems relate to each other.
  */
 struct ParentLayerPixel {
-  static nsIntRect ToUntyped(const ParentLayerIntRect& aRect) {
-    return nsIntRect(aRect.x, aRect.y, aRect.width, aRect.height);
-  }
 };
 
 // Operators to apply ScaleFactors directly to Coords, Points, Rects, Sizes and Margins

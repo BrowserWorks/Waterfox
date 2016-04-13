@@ -31,7 +31,7 @@ Test that css-logic handles media-queries correctly
 
     var {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
     Cu.import("resource://gre/modules/Services.jsm");
-    const {CssLogic} = require("devtools/shared/styleinspector/css-logic");
+    const {CssLogic} = require("devtools/shared/inspector/css-logic");
 
     SimpleTest.waitForExplicitFinish();
 
@@ -41,7 +41,7 @@ Test that css-logic handles media-queries correctly
     cssLogic.processMatchedSelectors();
 
     let _strings = Services.strings
-      .createBundle("chrome://global/locale/devtools/styleinspector.properties");
+      .createBundle("chrome://devtools-shared/locale/styleinspector.properties");
 
     let inline = _strings.GetStringFromName("rule.sourceInline");
 

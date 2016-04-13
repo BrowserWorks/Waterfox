@@ -11,12 +11,15 @@
 
 #include "js/Debug.h"
 #include "js/TypeDecls.h"
-#include "js/UbiNodeCensus.h"
 #include "js/UbiNodeBreadthFirst.h"
+#include "js/UbiNodeCensus.h"
+#include "js/UbiNodeDominatorTree.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/devtools/AutoMemMap.h"
 #include "mozilla/devtools/CoreDump.pb.h"
 #include "mozilla/devtools/DeserializedNode.h"
+#include "mozilla/devtools/DominatorTree.h"
 #include "mozilla/devtools/FileDescriptorOutputStream.h"
 #include "mozilla/devtools/HeapSnapshotTempFileHelperChild.h"
 #include "mozilla/devtools/ZeroCopyNSIOutputStream.h"
@@ -52,20 +55,21 @@ using ::google::protobuf::io::ZeroCopyInputStream;
 
 using JS::ubi::AtomOrTwoByteChars;
 
-NS_IMPL_CYCLE_COLLECTION_CLASS(HeapSnapshot)
+MallocSizeOf
+GetCurrentThreadDebuggerMallocSizeOf()
+{
+  auto ccrt = CycleCollectedJSRuntime::Get();
+  MOZ_ASSERT(ccrt);
+  auto rt = ccrt->Runtime();
+  MOZ_ASSERT(rt);
+  auto mallocSizeOf = JS::dbg::GetDebuggerMallocSizeOf(rt);
+  MOZ_ASSERT(mallocSizeOf);
+  return mallocSizeOf;
+}
 
-NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(HeapSnapshot)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mParent)
-NS_IMPL_CYCLE_COLLECTION_UNLINK_END
+/*** Cycle Collection Boilerplate *****************************************************************/
 
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(HeapSnapshot)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mParent)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE_SCRIPT_OBJECTS
-NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
-
-NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(HeapSnapshot)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
-NS_IMPL_CYCLE_COLLECTION_TRACE_END
+NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(HeapSnapshot, mParent)
 
 NS_IMPL_CYCLE_COLLECTING_ADDREF(HeapSnapshot)
 NS_IMPL_CYCLE_COLLECTING_RELEASE(HeapSnapshot)
@@ -279,10 +283,19 @@ HeapSnapshot::saveNode(const protobuf::Node& node, NodeIdSet& edgeReferents)
       return false;
   }
 
+  const char* scriptFilename = nullptr;
+  if (node.ScriptFilenameOrRef_case() != protobuf::Node::SCRIPTFILENAMEORREF_NOT_SET) {
+    Maybe<StringOrRef> scriptFilenameOrRef = GET_STRING_OR_REF(node, scriptfilename);
+    scriptFilename = getOrInternString<char>(internedOneByteStrings, scriptFilenameOrRef);
+    if (NS_WARN_IF(!scriptFilename))
+      return false;
+  }
+
   if (NS_WARN_IF(!nodes.putNew(id, DeserializedNode(id, coarseType, typeName,
                                                     size, Move(edges),
                                                     allocationStack,
-                                                    jsObjectClassName, *this))))
+                                                    jsObjectClassName,
+                                                    scriptFilename, *this))))
   {
     return false;
   };
@@ -371,6 +384,9 @@ HeapSnapshot::saveStackFrame(const protobuf::StackFrame& frame,
   outFrameId = id;
   return true;
 }
+
+#undef GET_STRING_OR_REF_WITH_PROP_NAMES
+#undef GET_STRING_OR_REF
 
 static inline bool
 StreamHasData(GzipInputStream& stream)
@@ -478,7 +494,7 @@ HeapSnapshot::TakeCensus(JSContext* cx, JS::HandleObject options,
     return;
   }
 
-  JS::ubi::CensusHandler handler(census, rootCount);
+  JS::ubi::CensusHandler handler(census, rootCount, GetCurrentThreadDebuggerMallocSizeOf());
 
   {
     JS::AutoCheckCannotGC nogc;
@@ -500,14 +516,69 @@ HeapSnapshot::TakeCensus(JSContext* cx, JS::HandleObject options,
     }
   }
 
-  if (NS_WARN_IF(!handler.report(rval))) {
+  if (NS_WARN_IF(!handler.report(cx, rval))) {
     rv.Throw(NS_ERROR_OUT_OF_MEMORY);
     return;
   }
 }
 
-#undef GET_STRING_OR_REF_WITH_PROP_NAMES
-#undef GET_STRING_OR_REF
+void
+HeapSnapshot::DescribeNode(JSContext* cx, JS::HandleObject breakdown, uint64_t nodeId,
+                           JS::MutableHandleValue rval, ErrorResult& rv) {
+  MOZ_ASSERT(breakdown);
+  JS::RootedValue breakdownVal(cx, JS::ObjectValue(*breakdown));
+  JS::ubi::CountTypePtr rootType = JS::ubi::ParseBreakdown(cx, breakdownVal);
+  if (NS_WARN_IF(!rootType)) {
+    rv.Throw(NS_ERROR_UNEXPECTED);
+    return;
+  }
+
+  JS::ubi::RootedCount rootCount(cx, rootType->makeCount());
+  if (NS_WARN_IF(!rootCount)) {
+    rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+
+  JS::ubi::Node::Id id(nodeId);
+  Maybe<JS::ubi::Node> node = getNodeById(id);
+  if (NS_WARN_IF(node.isNothing())) {
+    rv.Throw(NS_ERROR_INVALID_ARG);
+    return;
+  }
+
+  MallocSizeOf mallocSizeOf = GetCurrentThreadDebuggerMallocSizeOf();
+  if (NS_WARN_IF(!rootCount->count(mallocSizeOf, *node))) {
+    rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+
+  if (NS_WARN_IF(!rootCount->report(cx, rval))) {
+    rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+}
+
+
+already_AddRefed<DominatorTree>
+HeapSnapshot::ComputeDominatorTree(ErrorResult& rv)
+{
+  Maybe<JS::ubi::DominatorTree> maybeTree;
+  {
+    auto ccrt = CycleCollectedJSRuntime::Get();
+    MOZ_ASSERT(ccrt);
+    auto rt = ccrt->Runtime();
+    MOZ_ASSERT(rt);
+    JS::AutoCheckCannotGC nogc(rt);
+    maybeTree = JS::ubi::DominatorTree::Create(rt, nogc, getRoot());
+  }
+
+  if (maybeTree.isNothing()) {
+    rv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return nullptr;
+  }
+
+  return MakeAndAddRef<DominatorTree>(Move(*maybeTree), this, mParent);
+}
 
 
 /*** Saving Heap Snapshots ************************************************************************/
@@ -1095,6 +1166,15 @@ public:
       }
     }
 
+    if (auto scriptFilename = ubiNode.scriptFilename()) {
+      if (NS_WARN_IF(!attachOneByteString(scriptFilename,
+                                          [&] (std::string* name) { protobufNode.set_allocated_scriptfilename(name); },
+                                          [&] (uint64_t ref) { protobufNode.set_scriptfilenameref(ref); })))
+      {
+        return false;
+      }
+    }
+
     return writeMessage(protobufNode);
   }
 };
@@ -1323,7 +1403,6 @@ using namespace devtools;
 
 /* static */ void
 ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
-                                        JSContext* cx,
                                         const HeapSnapshotBoundaries& boundaries,
                                         nsAString& outFilePath,
                                         ErrorResult& rv)
@@ -1342,6 +1421,7 @@ ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
   ZeroCopyNSIOutputStream zeroCopyStream(outputStream);
   ::google::protobuf::io::GzipOutputStream gzipStream(&zeroCopyStream);
 
+  JSContext* cx = global.Context();
   StreamWriter writer(cx, gzipStream, wantNames);
   if (NS_WARN_IF(!writer.init())) {
     rv.Throw(NS_ERROR_OUT_OF_MEMORY);
@@ -1387,7 +1467,6 @@ ThreadSafeChromeUtils::SaveHeapSnapshot(GlobalObject& global,
 
 /* static */ already_AddRefed<HeapSnapshot>
 ThreadSafeChromeUtils::ReadHeapSnapshot(GlobalObject& global,
-                                        JSContext* cx,
                                         const nsAString& filePath,
                                         ErrorResult& rv)
 {
@@ -1405,7 +1484,8 @@ ThreadSafeChromeUtils::ReadHeapSnapshot(GlobalObject& global,
     return nullptr;
 
   RefPtr<HeapSnapshot> snapshot = HeapSnapshot::Create(
-      cx, global, reinterpret_cast<const uint8_t*>(mm.address()), mm.size(), rv);
+      global.Context(), global, reinterpret_cast<const uint8_t*>(mm.address()),
+      mm.size(), rv);
 
   if (!rv.Failed())
     Telemetry::AccumulateTimeDelta(Telemetry::DEVTOOLS_READ_HEAP_SNAPSHOT_MS,

@@ -53,16 +53,16 @@ var ContentPolicy = {
 
   receiveMessage(msg) {
     switch (msg.name) {
-    case "WebRequest:AddContentPolicy":
-      this.addContentPolicy(msg.data);
-      break;
+      case "WebRequest:AddContentPolicy":
+        this.addContentPolicy(msg.data);
+        break;
 
-    case "WebRequest:RemoveContentPolicy":
-      this.contentPolicies.delete(msg.data.id);
-      if (this.contentPolicies.size == 0) {
-        this.unregister();
-      }
-      break;
+      case "WebRequest:RemoveContentPolicy":
+        this.contentPolicies.delete(msg.data.id);
+        if (this.contentPolicies.size == 0) {
+          this.unregister();
+        }
+        break;
     }
   },
 
@@ -82,8 +82,7 @@ var ContentPolicy = {
     let ids = [];
     for (let [id, {blocking, filter}] of this.contentPolicies.entries()) {
       if (WebRequestCommon.typeMatches(policyType, filter.types) &&
-          WebRequestCommon.urlMatches(contentLocation, filter.urls))
-      {
+          WebRequestCommon.urlMatches(contentLocation, filter.urls)) {
         if (blocking) {
           block = true;
         }
@@ -106,8 +105,7 @@ var ContentPolicy = {
     }
 
     if (policyType == Ci.nsIContentPolicy.TYPE_SUBDOCUMENT ||
-       (node instanceof Ci.nsIDOMXULElement && node.localName == "browser"))
-    {
+        (node instanceof Ci.nsIDOMXULElement && node.localName == "browser")) {
       // Chrome sets frameId to the ID of the sub-window. But when
       // Firefox loads an iframe, it sets |node| to the <iframe>
       // element, whose window is the parent window. We adopt the
@@ -140,7 +138,11 @@ var ContentPolicy = {
       try {
         // If e10s is disabled, this throws NS_NOINTERFACE for closed tabs.
         mm = ir.getInterface(Ci.nsIContentFrameMessageManager);
-      } catch (e if e.result == Cr.NS_NOINTERFACE) {}
+      } catch (e) {
+        if (e.result != Cr.NS_NOINTERFACE) {
+          throw e;
+        }
+      }
     }
 
     let data = {ids,

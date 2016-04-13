@@ -157,7 +157,7 @@ BOOL PathGetSiblingFilePath(LPWSTR destinationBuffer,
 // declare it here to avoid including that entire header file.
 #define BZ2_CRC32TABLE_UNDECLARED
 
-#if MOZ_IS_GCC
+#if MOZ_IS_GCC || defined(__clang__)
 extern "C"  __attribute__((visibility("default"))) unsigned int BZ2_crc32Table[256];
 #undef BZ2_CRC32TABLE_UNDECLARED
 #elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
@@ -3721,6 +3721,7 @@ int add_dir_entries(const NS_tchar *dirpath, ActionList *list)
         LOG(("add_dir_entries: found a non-standard file: " LOG_S,
              ftsdirEntry->fts_path));
         // Fall through and try to remove as a file
+        MOZ_FALLTHROUGH;
 
       // Files
       case FTS_F:
@@ -3767,7 +3768,7 @@ int add_dir_entries(const NS_tchar *dirpath, ActionList *list)
           rv = OK;
           break;
         }
-        // Fall through
+        MOZ_FALLTHROUGH;
 
       case FTS_ERR:
         rv = UNEXPECTED_FILE_OPERATION_ERROR;

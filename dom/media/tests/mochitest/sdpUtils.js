@@ -8,13 +8,20 @@ checkSdpAfterEndOfTrickle: function(sdp, testOptions, label) {
   info("EOC-SDP: " + JSON.stringify(sdp));
 
   ok(sdp.sdp.includes("a=end-of-candidates"), label + ": SDP contains end-of-candidates");
-  ok(!sdp.sdp.includes("c=IN IP4 0.0.0.0"), label + ": SDP contains non-zero IP c line");
+  sdputils.checkSdpCLineNotDefault(sdp.sdp, label);
 
   if (testOptions.rtcpmux) {
     ok(sdp.sdp.includes("a=rtcp-mux"), label + ": SDP contains rtcp-mux");
   } else {
     ok(sdp.sdp.includes("a=rtcp:"), label + ": SDP contains rtcp port");
   }
+},
+
+// takes sdp in string form (or possibly a fragment, say an m-section), and
+// verifies that the default 0.0.0.0 addr is not present.
+checkSdpCLineNotDefault: function(sdpStr, label) {
+  info("CLINE-NO-DEFAULT-ADDR-SDP: " + JSON.stringify(sdpStr));
+  ok(!sdpStr.includes("c=IN IP4 0.0.0.0"), label + ": SDP contains non-zero IP c line");
 },
 
 // Also remove mode 0 if it's offered
@@ -36,6 +43,31 @@ removeRtcpMux: function(sdp) {
 
 removeBundle: function(sdp) {
   return sdp.replace(/a=group:BUNDLE .*\r\n/g, "");
+},
+
+reduceAudioMLineToPcmuPcma: function(sdp) {
+  return sdp.replace(/m=audio .*\r\n/g, "m=audio 9 UDP/TLS/RTP/SAVPF 0 8\r\n");
+},
+
+removeAllRtpMaps: function(sdp) {
+  return sdp.replace(/a=rtpmap:.*\r\n/g, "");
+},
+
+reduceAudioMLineToDynamicPtAndOpus: function(sdp) {
+  return sdp.replace(/m=audio .*\r\n/g, "m=audio 9 UDP/TLS/RTP/SAVPF 101 109\r\n");
+},
+
+transferSimulcastProperties: function(offer_sdp, answer_sdp) {
+  if (!offer_sdp.includes("a=simulcast:")) {
+    return answer_sdp;
+  }
+  var o_simul = offer_sdp.match(/simulcast: send rid=(.*)([\n$])*/i);
+  var o_rids = offer_sdp.match(/a=rid:(.*)/ig);
+  var new_answer_sdp = answer_sdp + "a=simulcast: recv rid=" + o_simul[1] + "\r\n";
+  o_rids.forEach((o_rid) => {
+    new_answer_sdp = new_answer_sdp + o_rid.replace(/send/, "recv") + "\r\n";
+  });
+  return new_answer_sdp;
 },
 
 verifySdp: function(desc, expectedType, offerConstraintsList, offerOptions,
@@ -69,7 +101,7 @@ verifySdp: function(desc, expectedType, offerConstraintsList, offerOptions,
     ok(!desc.sdp.includes("m=audio"), "audio m-line is absent from SDP");
   } else {
     ok(desc.sdp.includes("m=audio"), "audio m-line is present in SDP");
-    ok(desc.sdp.includes("a=rtpmap:109 opus/48000/2"), "OPUS codec is present in SDP");
+    is(testOptions.opus, desc.sdp.includes("a=rtpmap:109 opus/48000/2"), "OPUS codec is present in SDP");
     //TODO: ideally the rtcp-mux should be for the m=audio, and not just
     //      anywhere in the SDP (JS SDP parser bug 1045429)
     is(testOptions.rtcpmux, desc.sdp.includes("a=rtcp-mux"), "RTCP Mux is offered in SDP");

@@ -20,6 +20,20 @@ namespace rx
 
 class FunctionsGLX;
 
+// State-tracking data for the swap control to allow DisplayGLX to remember per
+// drawable information for swap control.
+struct SwapControlData
+{
+    SwapControlData();
+
+    // Set by the drawable
+    int targetSwapInterval;
+
+    // DisplayGLX-side state-tracking
+    int maxSwapInterval;
+    int currentSwapInterval;
+};
+
 class DisplayGLX : public DisplayGL
 {
   public:
@@ -59,25 +73,52 @@ class DisplayGLX : public DisplayGL
     // between the application's display and ANGLE's one.
     void syncXCommands() const;
 
+    // Depending on the supported GLX extension, swap interval can be set
+    // globally or per drawable. This function will make sure the drawable's
+    // swap interval is the one required so that the subsequent swapBuffers
+    // acts as expected.
+    void setSwapInterval(glx::Drawable drawable, SwapControlData *data);
+
+    bool isValidWindowVisualId(int visualId) const;
+
   private:
     const FunctionsGL *getFunctionsGL() const override;
+
+    glx::Context initializeContext(glx::FBConfig config, const egl::AttributeMap &eglAttributes);
 
     void generateExtensions(egl::DisplayExtensions *outExtensions) const override;
     void generateCaps(egl::Caps *outCaps) const override;
 
     int getGLXFBConfigAttrib(glx::FBConfig config, int attrib) const;
+    glx::Context createContextAttribs(glx::FBConfig, const std::vector<int> &attribs) const;
 
     FunctionsGL *mFunctionsGL;
 
     //TODO(cwallez) yuck, change generateConfigs to be non-const or add a userdata member to egl::Config?
     mutable std::map<int, glx::FBConfig> configIdToGLXConfig;
 
+    EGLint mRequestedVisual;
     glx::FBConfig mContextConfig;
     glx::Context mContext;
     // A pbuffer the context is current on during ANGLE initialization
     glx::Pbuffer mDummyPbuffer;
 
     bool mUsesNewXDisplay;
+    bool mIsMesa;
+    bool mHasMultisample;
+    bool mHasARBCreateContext;
+
+    enum class SwapControl
+    {
+        Absent,
+        EXT,
+        Mesa,
+        SGI,
+    };
+    SwapControl mSwapControl;
+    int mMinSwapInterval;
+    int mMaxSwapInterval;
+    int mCurrentSwapInterval;
 
     FunctionsGLX mGLX;
     egl::Display *mEGLDisplay;

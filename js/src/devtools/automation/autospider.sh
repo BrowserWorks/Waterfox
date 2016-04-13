@@ -83,6 +83,7 @@ if [[ "$OSTYPE" == darwin* ]]; then
   if [ "$VARIANT" = "arm-sim-osx" ]; then
     USE_64BIT=false
   fi
+  source "$ABSDIR/macbuildenv.sh"
 elif [ "$OSTYPE" = "linux-gnu" ]; then
   if [ -n "$AUTOMATION" ]; then
       GCCDIR="${GCCDIR:-/tools/gcc-4.7.2-0moz1}"
@@ -147,7 +148,10 @@ if $USE_64BIT; then
   fi
 else
   NSPR64=""
-  if [ "$OSTYPE" != "msys" ]; then
+  if [ "$OSTYPE" == darwin* ]; then
+    export CC="${CC:-/usr/bin/clang} -arch i386"
+    export CXX="${CXX:-/usr/bin/clang++} -arch i386"
+  elif [ "$OSTYPE" != "msys" ]; then
     export CC="${CC:-/usr/bin/gcc} -m32"
     export CXX="${CXX:-/usr/bin/g++} -m32"
     export AR=ar
@@ -209,13 +213,14 @@ elif [[ "$VARIANT" = "warnaserr" ||
         "$VARIANT" = "plain" ]]; then
     export JSTESTS_EXTRA_ARGS=--jitflags=all
 elif [[ "$VARIANT" = "arm-sim" ||
+        "$VARIANT" = "arm-sim-osx" ||
         "$VARIANT" = "plaindebug" ]]; then
     export JSTESTS_EXTRA_ARGS=--jitflags=debug
 elif [[ "$VARIANT" = arm64* ]]; then
-    # The ARM64 JIT is not yet fully functional, and asm.js does not work.
-    # Just run "make check" and jsapi-tests.
-    RUN_JITTEST=false
-    RUN_JSTESTS=false
+    # The ARM64 simulator is slow, so some tests are timing out.
+    # Run a reduced set of test cases so this doesn't take hours.
+    export JSTESTS_EXTRA_ARGS="--exclude-file=$ABSDIR/arm64-jstests-slow.txt"
+    export JITTEST_EXTRA_ARGS="--jitflags=none --args=--baseline-eager -x ion/ -x asm.js/"
 fi
 
 $COMMAND_PREFIX $MAKE check || exit 1

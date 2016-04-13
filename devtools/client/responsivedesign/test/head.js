@@ -3,19 +3,73 @@
 
 "use strict";
 
+let testDir = gTestPath.substr(0, gTestPath.lastIndexOf("/"));
 // shared-head.js handles imports, constants, and utility functions
-Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/client/framework/test/shared-head.js", this);
+let sharedHeadURI = testDir + "../../../framework/test/shared-head.js";
+Services.scriptloader.loadSubScript(sharedHeadURI, this);
 
 // Import the GCLI test helper
-var testDir = gTestPath.substr(0, gTestPath.lastIndexOf("/"));
-Services.scriptloader.loadSubScript(testDir + "../../../commandline/test/helpers.js", this);
+let gcliHelpersURI = testDir + "../../../commandline/test/helpers.js";
+Services.scriptloader.loadSubScript(gcliHelpersURI, this);
 
 DevToolsUtils.testing = true;
 registerCleanupFunction(() => {
   DevToolsUtils.testing = false;
-  while (gBrowser.tabs.length > 1) {
-    gBrowser.removeCurrentTab();
+  Services.prefs.clearUserPref("devtools.responsiveUI.currentPreset");
+  Services.prefs.clearUserPref("devtools.responsiveUI.customHeight");
+  Services.prefs.clearUserPref("devtools.responsiveUI.customWidth");
+  Services.prefs.clearUserPref("devtools.responsiveUI.presets");
+  Services.prefs.clearUserPref("devtools.responsiveUI.rotate");
+});
+
+SimpleTest.requestCompleteLog();
+
+/**
+ * Open the Responsive Design Mode
+ * @param {Tab} The browser tab to open it into (defaults to the selected tab).
+ * @param {method} The method to use to open the RDM (values: menu, keyboard)
+ * @return {rdm, manager} Returns the RUI instance and the manager
+ */
+var openRDM = Task.async(function*(tab = gBrowser.selectedTab,
+                                   method = "menu") {
+  let manager = ResponsiveUI.ResponsiveUIManager;
+
+  let opened = once(manager, "on");
+  let resized = once(manager, "contentResize");
+  if (method == "menu") {
+    document.getElementById("Tools:ResponsiveUI").doCommand();
+  } else {
+    synthesizeKeyFromKeyTag(document.getElementById("key_responsiveUI"));
   }
+  yield opened;
+
+  let rdm = manager.getResponsiveUIForTab(tab);
+  rdm.transitionsEnabled = false;
+  registerCleanupFunction(() => {
+    rdm.transitionsEnabled = true;
+  });
+
+  // Wait for content to resize.  This is triggered async by the preset menu
+  // auto-selecting its default entry once it's in the document.
+  yield resized;
+
+  return {rdm, manager};
+});
+
+/**
+ * Close a responsive mode instance
+ * @param {rdm} ResponsiveUI instance for the tab
+ */
+var closeRDM = Task.async(function*(rdm) {
+  let manager = ResponsiveUI.ResponsiveUIManager;
+  if (!rdm) {
+    rdm = manager.getResponsiveUIForTab(gBrowser.selectedTab);
+  }
+  let closed = once(manager, "off");
+  let resized = once(manager, "contentResize");
+  rdm.close();
+  yield resized;
+  yield closed;
 });
 
 /**
@@ -55,6 +109,11 @@ var openInspector = Task.async(function*() {
     toolbox: toolbox,
     inspector: inspector
   };
+});
+
+var closeToolbox = Task.async(function*() {
+  let target = TargetFactory.forTab(gBrowser.selectedTab);
+  yield gDevTools.closeToolbox(target);
 });
 
 /**
@@ -125,7 +184,6 @@ function openRuleView() {
   return openInspectorSideBar("ruleview");
 }
 
-
 /**
  * Add a new test tab in the browser and load the given url.
  * @param {String} url The url to be loaded in the new tab
@@ -145,46 +203,9 @@ var addTab = Task.async(function* (url) {
   return tab;
 });
 
-/**
- * Wait for eventName on target.
- * @param {Object} target An observable object that either supports on/off or
- * addEventListener/removeEventListener
- * @param {String} eventName
- * @param {Boolean} useCapture Optional, for addEventListener/removeEventListener
- * @return A promise that resolves when the event has been handled
- */
-function once(target, eventName, useCapture=false) {
-  info("Waiting for event: '" + eventName + "' on " + target + ".");
-
-  let deferred = promise.defer();
-
-  for (let [add, remove] of [
-    ["addEventListener", "removeEventListener"],
-    ["addListener", "removeListener"],
-    ["on", "off"]
-  ]) {
-    if ((add in target) && (remove in target)) {
-      target[add](eventName, function onEvent(...aArgs) {
-        info("Got event: '" + eventName + "' on " + target + ".");
-        target[remove](eventName, onEvent, useCapture);
-        deferred.resolve.apply(deferred, aArgs);
-      }, useCapture);
-      break;
-    }
-  }
-
-  return deferred.promise;
-}
-
 function wait(ms) {
   let def = promise.defer();
   setTimeout(def.resolve, ms);
-  return def.promise;
-}
-
-function nextTick() {
-  let def = promise.defer();
-  executeSoon(() => def.resolve())
   return def.promise;
 }
 
@@ -193,19 +214,19 @@ function nextTick() {
  *
  * @return promise
  */
-function waitForDocLoadComplete(aBrowser=gBrowser) {
+function waitForDocLoadComplete(aBrowser = gBrowser) {
   let deferred = promise.defer();
   let progressListener = {
-    onStateChange: function (webProgress, req, flags, status) {
+    onStateChange: function(webProgress, req, flags, status) {
       let docStop = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
                     Ci.nsIWebProgressListener.STATE_STOP;
-      info("Saw state " + flags.toString(16) + " and status " + status.toString(16));
+      info(`Saw state ${flags.toString(16)} and status ${status.toString(16)}`);
 
       // When a load needs to be retargetted to a new process it is cancelled
       // with NS_BINDING_ABORTED so ignore that case
       if ((flags & docStop) == docStop && status != Cr.NS_BINDING_ABORTED) {
         aBrowser.removeProgressListener(progressListener);
-        info("Browser loaded " + aBrowser.contentWindow.location);
+        info("Browser loaded");
         deferred.resolve();
       }
     },
@@ -216,3 +237,71 @@ function waitForDocLoadComplete(aBrowser=gBrowser) {
   info("Waiting for browser load");
   return deferred.promise;
 }
+
+/**
+ * Get the NodeFront for a node that matches a given css selector, via the
+ * protocol.
+ * @param {String|NodeFront} selector
+ * @param {InspectorPanel} inspector The instance of InspectorPanel currently
+ * loaded in the toolbox
+ * @return {Promise} Resolves to the NodeFront instance
+ */
+function getNodeFront(selector, {walker}) {
+  if (selector._form) {
+    return selector;
+  }
+  return walker.querySelector(walker.rootNode, selector);
+}
+
+/**
+ * Set the inspector's current selection to the first match of the given css
+ * selector
+ * @param {String|NodeFront} selector
+ * @param {InspectorPanel} inspector The instance of InspectorPanel currently
+ * loaded in the toolbox
+ * @param {String} reason Defaults to "test" which instructs the inspector not
+ * to highlight the node upon selection
+ * @return {Promise} Resolves when the inspector is updated with the new node
+ */
+var selectNode = Task.async(function*(selector, inspector, reason = "test") {
+  info("Selecting the node for '" + selector + "'");
+  let nodeFront = yield getNodeFront(selector, inspector);
+  let updated = inspector.once("inspector-updated");
+  inspector.selection.setNodeFront(nodeFront, reason);
+  yield updated;
+});
+
+function waitForResizeTo(manager, width, height) {
+  return new Promise(resolve => {
+    let onResize = (_, data) => {
+      if (data.width != width || data.height != height) {
+        return;
+      }
+      manager.off("contentResize", onResize);
+      info(`Got contentResize to ${width} x ${height}`);
+      resolve();
+    };
+    info(`Waiting for contentResize to ${width} x ${height}`);
+    manager.on("contentResize", onResize);
+  });
+}
+
+var setPresetIndex = Task.async(function*(rdm, manager, index) {
+  info(`Current preset: ${rdm.menulist.selectedIndex}, change to: ${index}`);
+  if (rdm.menulist.selectedIndex != index) {
+    let resized = once(manager, "contentResize");
+    rdm.menulist.selectedIndex = index;
+    yield resized;
+  }
+});
+
+var setSize = Task.async(function*(rdm, manager, width, height) {
+  let size = rdm.getSize();
+  info(`Current size: ${size.width} x ${size.height}, ` +
+       `set to: ${width} x ${height}`);
+  if (size.width != width || size.height != height) {
+    let resized = waitForResizeTo(manager, width, height);
+    rdm.setSize(width, height);
+    yield resized;
+  }
+});

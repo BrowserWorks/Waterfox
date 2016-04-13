@@ -7,6 +7,21 @@
 "unpack": true
 },
 {
+"size": 12072532,
+"digest": "3915f8ec396c56a8a92e6f9695b70f09ce9d1582359d1258e37e3fd43a143bc974410e4cfc27f500e095f34a8956206e0ebf799b7287f0f38def0d5e34ed71c9",
+"algorithm": "sha512",
+"filename": "gtk3.tar.xz",
+"setup": "setup.sh",
+"unpack": true
+},
+{
+"size": 80164520,
+"digest": "26fd5301aaf6174a0e4f2ac3a8d19f39573f78a051aa78e876c065d60421b2b62207c11fbf1f20f92ba61acc4b9ce58d05409bf5af886943891b04c3d22f5e04",
+"algorithm": "sha512",
+"filename": "rustc.tar.xz",
+"unpack": true
+},
+{
 "size": 167175,
 "digest": "0b71a936edf5bd70cf274aaa5d7abc8f77fe8e7b5593a208f805cc9436fac646b9c4f0b43c2b10de63ff3da671497d35536077ecbc72dba7f8159a38b580f831",
 "algorithm": "sha512",

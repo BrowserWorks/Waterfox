@@ -1,8 +1,6 @@
 // The parser should throw SyntaxError immediately if it finds "..." in a
 // context where it's not allowed.
 
-load(libdir + "class.js");
-
 function testThrow(code, column) {
   var caught = false;
   try {
@@ -143,11 +141,9 @@ try {} catch (x if ...a) =>
 
 // class
 
-if (classesEnabled()) {
 testThrow(`
 class A extends ...a) =>
 `, 16);
-}
 
 // conditional expression
 
@@ -178,14 +174,6 @@ delete ...a) =>
 `, 7);
 
 // array comprehension
-
-testThrow(`
-[x for (...a) =>
-`, 8);
-
-testThrow(`
-[x for (x of ...a) =>
-`, 13);
 
 testThrow(`
 [for (...a) =>

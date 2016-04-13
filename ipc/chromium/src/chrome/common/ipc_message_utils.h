@@ -12,7 +12,6 @@
 #include "base/file_path.h"
 #include "base/string_util.h"
 #include "base/string16.h"
-#include "base/tuple.h"
 #include "base/time.h"
 
 #if defined(OS_POSIX)
@@ -54,7 +53,7 @@ class MessageIterator {
       NOTREACHED();
     return val;
   }
-  const void NextData(const char** data, int* length) const {
+  void NextData(const char** data, int* length) const {
     if (!msg_.ReadData(&iter_, data, length)) {
       NOTREACHED();
     }

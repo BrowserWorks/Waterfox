@@ -4,11 +4,6 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!DOCTYPE bindings [
-  <!ENTITY % findBarDTD SYSTEM "chrome://global/locale/findbar.dtd" >
-  %findBarDTD;
-]>
-
 <bindings id="browserBindings"
           xmlns="http://www.mozilla.org/xbl"
           xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
@@ -290,6 +285,15 @@
         </setter>
       </property>
 
+      <method name="setDocShellIsActiveAndForeground">
+        <parameter name="isActive"/>
+        <body>
+          <![CDATA[
+            this.docShell && this.docShell.setIsActiveAndForeground(isActive);
+          ]]>
+        </body>
+      </method>
+
       <property name="imageDocument"
                 readonly="true">
         <getter>
@@ -408,6 +412,22 @@
                      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
                      .getInterface(Components.interfaces.nsIDOMWindowUtils)
                      .outerWindowID;
+        ]]></getter>
+      </property>
+
+      <property name="innerWindowID" readonly="true">
+        <getter><![CDATA[
+          try {
+            return this.contentWindow
+                       .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                       .getInterface(Components.interfaces.nsIDOMWindowUtils)
+                       .currentInnerWindowID;
+          } catch (e) {
+            if (e.result != Cr.NS_ERROR_NOT_AVAILABLE) {
+              throw e;
+            }
+            return null;
+          }
         ]]></getter>
       </property>
 
@@ -731,12 +751,23 @@
         </setter>
       </property>
 
+      <!-- increases or decreases the browser's network priority -->
       <method name="adjustPriority">
         <parameter name="adjustment"/>
         <body><![CDATA[
-          let loadGroup = this.webNavigation.QueryInterface(Ci.nsIDocumentLoader)
-                              .loadGroup.QueryInterface(Ci.nsISupportsPriority);
+          let loadGroup = this.webNavigation.QueryInterface(Components.interfaces.nsIDocumentLoader)
+                              .loadGroup.QueryInterface(Components.interfaces.nsISupportsPriority);
           loadGroup.adjustPriority(adjustment);
+        ]]></body>
+      </method>
+
+      <!-- sets the browser's network priority to a discrete value -->
+      <method name="setPriority">
+        <parameter name="priority"/>
+        <body><![CDATA[
+          let loadGroup = this.webNavigation.QueryInterface(Components.interfaces.nsIDocumentLoader)
+                              .loadGroup.QueryInterface(Components.interfaces.nsISupportsPriority);
+          loadGroup.priority = priority;
         ]]></body>
       </method>
 
@@ -1073,8 +1104,8 @@
             window.addEventListener("keypress", this, true);
             window.addEventListener("keyup", this, true);
          ]]>
-       </body>
-     </method>
+        </body>
+      </method>
 
       <method name="handleEvent">
         <parameter name="aEvent"/>
@@ -1159,6 +1190,7 @@
           if (this.isRemoteBrowser) {
             fieldsToSwap.push(...[
               "_remoteWebNavigation",
+              "_remoteWebNavigationImpl",
               "_remoteWebProgressManager",
               "_remoteWebProgress",
               "_remoteFinder",
@@ -1172,6 +1204,7 @@
               "_fullZoom",
               "_textZoom",
               "_isSyntheticDocument",
+              "_innerWindowID",
             ]);
           }
 
@@ -1185,8 +1218,13 @@
           if (window.PopupNotifications)
             PopupNotifications._swapBrowserNotifications(aOtherBrowser, this);
 
-          this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner)
-              .swapFrameLoaders(aOtherBrowser);
+          try {
+            this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner)
+                .swapFrameLoaders(aOtherBrowser);
+          } catch(ex) {
+            // This may not be implemented for browser elements that are not
+            // attached to a BrowserDOMWindow.
+          }
 
           // Before we swap the actual docShell property we need to detach the
           // form fill controller from those docShells.
@@ -1212,17 +1250,43 @@
           }
           else {
             // Rewire the remote listeners
-            this._remoteWebNavigation.swapBrowser(this);
-            aOtherBrowser._remoteWebNavigation.swapBrowser(aOtherBrowser);
+            this._remoteWebNavigationImpl.swapBrowser(this);
+            aOtherBrowser._remoteWebNavigationImpl.swapBrowser(aOtherBrowser);
 
-            this._remoteWebProgressManager.swapBrowser(this);
-            aOtherBrowser._remoteWebProgressManager.swapBrowser(aOtherBrowser);
+            if (this._remoteWebProgressManager && aOtherBrowser._remoteWebProgressManager) {
+              this._remoteWebProgressManager.swapBrowser(this);
+              aOtherBrowser._remoteWebProgressManager.swapBrowser(aOtherBrowser);
+            }
 
             if (this._remoteFinder)
               this._remoteFinder.swapBrowser(this);
             if (aOtherBrowser._remoteFinder)
               aOtherBrowser._remoteFinder.swapBrowser(aOtherBrowser);
           }
+        ]]>
+        </body>
+      </method>
+
+      <method name="getInPermitUnload">
+        <parameter name="aCallback"/>
+        <body>
+        <![CDATA[
+          if (!this.docShell || !this.docShell.contentViewer) {
+            aCallback(false);
+            return;
+          }
+          aCallback(this.docShell.contentViewer.inPermitUnload);
+        ]]>
+        </body>
+      </method>
+
+      <method name="permitUnload">
+        <body>
+        <![CDATA[
+          if (!this.docShell || !this.docShell.contentViewer) {
+            return true;
+          }
+          return {permitUnload: this.docShell.contentViewer.permitUnload(), timedOut: false};
         ]]>
         </body>
       </method>

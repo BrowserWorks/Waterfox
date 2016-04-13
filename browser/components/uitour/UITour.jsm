@@ -4,7 +4,7 @@
 
 "use strict";
 
-this.EXPORTED_SYMBOLS = ["UITour", "UITourMetricsProvider"];
+this.EXPORTED_SYMBOLS = ["UITour"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
@@ -15,6 +15,7 @@ Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource:///modules/RecentWindow.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/TelemetryController.jsm");
+Cu.import("resource://gre/modules/Timer.jsm");
 
 Cu.importGlobalProperties(["URL"]);
 
@@ -41,6 +42,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ReaderParent",
 const PREF_LOG_LEVEL      = "browser.uitour.loglevel";
 const PREF_SEENPAGEIDS    = "browser.uitour.seenPageIDs";
 const PREF_READERVIEW_TRIGGER = "browser.uitour.readerViewTrigger";
+const PREF_SURVEY_DURATION = "browser.uitour.surveyDuration";
 
 const BACKGROUND_PAGE_ACTIONS_ALLOWED = new Set([
   "endUrlbarCapture",
@@ -93,6 +95,9 @@ this.UITour = {
   urlbarCapture: new WeakMap(),
   appMenuOpenForAnnotation: new Set(),
   availableTargetsCache: new WeakMap(),
+  clearAvailableTargetsCache() {
+    this.availableTargetsCache = new WeakMap();
+  },
 
   _annotationPanelMutationObservers: new WeakMap(),
 
@@ -285,7 +290,7 @@ this.UITour = {
       "onAreaReset",
     ];
     CustomizableUI.addListener(listenerMethods.reduce((listener, method) => {
-      listener[method] = () => this.availableTargetsCache.clear();
+      listener[method] = () => this.clearAvailableTargetsCache();
       return listener;
     }, {}));
   },
@@ -530,13 +535,18 @@ this.UITour = {
           }
 
           let infoOptions = {};
+          if (typeof data.closeButtonCallbackID == "string") {
+            infoOptions.closeButtonCallback = () => {
+              this.sendPageCallback(messageManager, data.closeButtonCallbackID);
+            };
+          }
+          if (typeof data.targetCallbackID == "string") {
+            infoOptions.targetCallback = details => {
+              this.sendPageCallback(messageManager, data.targetCallbackID, details);
+            };
+          }
 
-          if (typeof data.closeButtonCallbackID == "string")
-            infoOptions.closeButtonCallbackID = data.closeButtonCallbackID;
-          if (typeof data.targetCallbackID == "string")
-            infoOptions.targetCallbackID = data.targetCallbackID;
-
-          this.showInfo(window, messageManager, target, data.title, data.text, iconURL, buttons, infoOptions);
+          this.showInfo(window, target, data.title, data.text, iconURL, buttons, infoOptions);
         }).catch(log.error);
         break;
       }
@@ -731,6 +741,18 @@ this.UITour = {
         targetPromise.then(target => {
           ReaderParent.toggleReaderMode({target: target.node});
         });
+        break;
+      }
+
+      case "closeTab": {
+        // Find the <tabbrowser> element of the <browser> for which the event
+        // was generated originally. If the browser where the UI tour is loaded
+        // is windowless, just ignore the request to close the tab. The request
+        // is also ignored if this is the only tab in the window.
+        let tabBrowser = browser.ownerDocument.defaultView.gBrowser;
+        if (tabBrowser && tabBrowser.browsers.length > 1) {
+          tabBrowser.removeTab(tabBrowser.getTabForBrowser(browser));
+        }
         break;
       }
     }
@@ -1086,7 +1108,8 @@ this.UITour = {
    * Show the Heartbeat UI to request user feedback. This function reports back to the
    * caller using |notify|. The notification event name reflects the current status the UI
    * is in (either "Heartbeat:NotificationOffered", "Heartbeat:NotificationClosed",
-   * "Heartbeat:LearnMore", "Heartbeat:Engaged" or "Heartbeat:Voted").
+   * "Heartbeat:LearnMore", "Heartbeat:Engaged", "Heartbeat:Voted",
+   * "Heartbeat:SurveyExpired" or "Heartbeat:WindowClosed").
    * When a "Heartbeat:Voted" event is notified
    * the data payload contains a |score| field which holds the rating picked by the user.
    * Please note that input parameters are already validated by the caller.
@@ -1112,16 +1135,115 @@ this.UITour = {
    * @param {String} [aOptions.learnMoreURL=null]
    *        The learn more URL to open when clicking on the learn more link. No learn more
    *        will be shown if this is an invalid URL.
-   * @param {String} [aOptions.privateWindowsOnly=false]
+   * @param {boolean} [aOptions.privateWindowsOnly=false]
    *        Whether the heartbeat UI should only be targeted at a private window (if one exists).
    *        No notifications should be fired when this is true.
+   * @param {String} [aOptions.surveyId]
+   *        An ID for the survey, reflected in the Telemetry ping.
+   * @param {Number} [aOptions.surveyVersion]
+   *        Survey's version number, reflected in the Telemetry ping.
+   * @param {boolean} [aOptions.testing]
+   *        Whether this is a test survey, reflected in the Telemetry ping.
    */
   showHeartbeat(aChromeWindow, aOptions) {
-    let maybeNotifyHeartbeat = (...aParams) => {
+    // Initialize survey state
+    let pingSent = false;
+    let surveyResults = {};
+    let surveyEndTimer = null;
+
+    /**
+     * Accumulates survey events and submits to Telemetry after the survey ends.
+     *
+     * @param {String} aEventName
+     *        Heartbeat event name
+     * @param {Object} aParams
+     *        Additional parameters and their values
+     */
+    let maybeNotifyHeartbeat = (aEventName, aParams = {}) => {
+      // Return if event occurred after the ping was sent
+      if (pingSent) {
+        log.warn("maybeNotifyHeartbeat: event occurred after ping sent:", aEventName, aParams);
+        return;
+      }
+
+      // No Telemetry from private-window-only Heartbeats
       if (aOptions.privateWindowsOnly) {
         return;
       }
-      this.notify(...aParams);
+
+      let ts = Date.now();
+      let sendPing = false;
+      switch (aEventName) {
+        case "Heartbeat:NotificationOffered":
+          surveyResults.flowId = aOptions.flowId;
+          surveyResults.offeredTS = ts;
+          break;
+        case "Heartbeat:LearnMore":
+          // record only the first click
+          if (!surveyResults.learnMoreTS) {
+            surveyResults.learnMoreTS = ts;
+          }
+          break;
+        case "Heartbeat:Engaged":
+          surveyResults.engagedTS = ts;
+          break;
+        case "Heartbeat:Voted":
+          surveyResults.votedTS = ts;
+          surveyResults.score = aParams.score;
+          break;
+        case "Heartbeat:SurveyExpired":
+          surveyResults.expiredTS = ts;
+          break;
+        case "Heartbeat:NotificationClosed":
+          // this is the final event in most surveys
+          surveyResults.closedTS = ts;
+          sendPing = true;
+          break;
+        case "Heartbeat:WindowClosed":
+          surveyResults.windowClosedTS = ts;
+          sendPing = true;
+          break;
+        default:
+          log.error("maybeNotifyHeartbeat: unrecognized event:", aEventName);
+          break;
+      }
+
+      aParams.timestamp = ts;
+      aParams.flowId = aOptions.flowId;
+      this.notify(aEventName, aParams);
+
+      if (!sendPing) {
+        return;
+      }
+
+      // Send the ping to Telemetry
+      let payload = Object.assign({}, surveyResults);
+      payload.version = 1;
+      for (let meta of ["surveyId", "surveyVersion", "testing"]) {
+        if (aOptions.hasOwnProperty(meta)) {
+          payload[meta] = aOptions[meta];
+        }
+      }
+
+      log.debug("Sending payload to Telemetry: aEventName:", aEventName,
+                "payload:", payload);
+
+      TelemetryController.submitExternalPing("heartbeat", payload, {
+        addClientId: true,
+        addEnvironment: true,
+      });
+
+      // only for testing
+      this.notify("Heartbeat:TelemetrySent", payload);
+
+      // Survey is complete, clear out the expiry timer & survey configuration
+      if (surveyEndTimer) {
+        clearTimeout(surveyEndTimer);
+        surveyEndTimer = null;
+      }
+
+      pingSent = true;
+      surveyResults = {};
     };
 
     let nb = aChromeWindow.document.getElementById("high-priority-global-notificationbox");
@@ -1132,7 +1254,7 @@ this.UITour = {
         label: aOptions.engagementButtonLabel,
         callback: () => {
           // Let the consumer know user engaged.
-          maybeNotifyHeartbeat("Heartbeat:Engaged", { flowId: aOptions.flowId, timestamp: Date.now() });
+          maybeNotifyHeartbeat("Heartbeat:Engaged");
 
           userEngaged(new Map([
             ["type", "button"],
@@ -1147,11 +1269,16 @@ this.UITour = {
     }
     // Create the notification. Prefix its ID to decrease the chances of collisions.
     let notice = nb.appendNotification(aOptions.message, "heartbeat-" + aOptions.flowId,
-      "chrome://browser/skin/heartbeat-icon.svg", nb.PRIORITY_INFO_HIGH, buttons, function() {
-        // Let the consumer know the notification bar was closed. This also happens
-        // after voting.
-        maybeNotifyHeartbeat("Heartbeat:NotificationClosed", { flowId: aOptions.flowId, timestamp: Date.now() });
-    }.bind(this));
+                                       "chrome://browser/skin/heartbeat-icon.svg",
+                                       nb.PRIORITY_INFO_HIGH, buttons,
+                                       (aEventType) => {
+                                         if (aEventType != "removed") {
+                                           return;
+                                         }
+                                         // Let the consumer know the notification bar was closed.
+                                         // This also happens after voting.
+                                         maybeNotifyHeartbeat("Heartbeat:NotificationClosed");
+                                       });
 
     // Get the elements we need to style.
     let messageImage =
@@ -1222,11 +1349,7 @@ this.UITour = {
         let rating = Number(evt.target.getAttribute("data-score"), 10);
 
         // Let the consumer know user voted.
-        maybeNotifyHeartbeat("Heartbeat:Voted", {
-          flowId: aOptions.flowId,
-          score: rating,
-          timestamp: Date.now(),
-        });
+        maybeNotifyHeartbeat("Heartbeat:Voted", { score: rating });
 
         // Append the score data to the engagement URL.
         userEngaged(new Map([
@@ -1265,8 +1388,7 @@ this.UITour = {
       learnMore.className = "text-link";
       learnMore.href = learnMoreURL.toString();
       learnMore.setAttribute("value", aOptions.learnMoreLabel);
-      learnMore.addEventListener("click", () => maybeNotifyHeartbeat("Heartbeat:LearnMore",
-        { flowId: aOptions.flowId, timestamp: Date.now() }));
+      learnMore.addEventListener("click", () => maybeNotifyHeartbeat("Heartbeat:LearnMore"));
       frag.appendChild(learnMore);
     }
 
@@ -1277,10 +1399,23 @@ this.UITour = {
     messageText.classList.add("heartbeat");
 
     // Let the consumer know the notification was shown.
-    maybeNotifyHeartbeat("Heartbeat:NotificationOffered", {
-      flowId: aOptions.flowId,
-      timestamp: Date.now(),
-    });
+    maybeNotifyHeartbeat("Heartbeat:NotificationOffered");
+
+    // End the survey if the user quits, closes the window, or
+    // hasn't responded before expiration.
+    if (!aOptions.privateWindowsOnly) {
+      function handleWindowClosed(aTopic) {
+        maybeNotifyHeartbeat("Heartbeat:WindowClosed");
+        aChromeWindow.removeEventListener("SSWindowClosing", handleWindowClosed);
+      }
+      aChromeWindow.addEventListener("SSWindowClosing", handleWindowClosed);
+
+      let surveyDuration = Services.prefs.getIntPref(PREF_SURVEY_DURATION) * 1000;
+      surveyEndTimer = setTimeout(() => {
+        maybeNotifyHeartbeat("Heartbeat:SurveyExpired");
+        nb.removeNotification(notice);
+      }, surveyDuration);
+    }
   },
 
   /**
@@ -1395,17 +1530,17 @@ this.UITour = {
    * Show an info panel.
    *
    * @param {ChromeWindow} aChromeWindow
-   * @param {nsIMessageSender} aMessageManager
    * @param {Node}     aAnchor
    * @param {String}   [aTitle=""]
    * @param {String}   [aDescription=""]
    * @param {String}   [aIconURL=""]
    * @param {Object[]} [aButtons=[]]
    * @param {Object}   [aOptions={}]
-   * @param {String}   [aOptions.closeButtonCallbackID]
+   * @param {String}   [aOptions.closeButtonCallback]
+   * @param {String}   [aOptions.targetCallback]
    */
-  showInfo: function(aChromeWindow, aMessageManager, aAnchor, aTitle = "", aDescription = "", aIconURL = "",
-                     aButtons = [], aOptions = {}) {
+  showInfo(aChromeWindow, aAnchor, aTitle = "", aDescription = "",
+           aIconURL = "", aButtons = [], aOptions = {}) {
     function showInfoPanel(aAnchorEl) {
       aAnchorEl.focus();
 
@@ -1461,8 +1596,9 @@ this.UITour = {
       let tooltipClose = document.getElementById("UITourTooltipClose");
       let closeButtonCallback = (event) => {
         this.hideInfo(document.defaultView);
-        if (aOptions && aOptions.closeButtonCallbackID)
-          this.sendPageCallback(aMessageManager, aOptions.closeButtonCallbackID);
+        if (aOptions && aOptions.closeButtonCallback) {
+          aOptions.closeButtonCallback();
+        }
       };
       tooltipClose.addEventListener("command", closeButtonCallback);
 
@@ -1471,16 +1607,16 @@ this.UITour = {
           target: aAnchor.targetName,
           type: event.type,
         };
-        this.sendPageCallback(aMessageManager, aOptions.targetCallbackID, details);
+        aOptions.targetCallback(details);
       };
-      if (aOptions.targetCallbackID && aAnchor.addTargetListener) {
+      if (aOptions.targetCallback && aAnchor.addTargetListener) {
         aAnchor.addTargetListener(document, targetCallback);
       }
 
       tooltip.addEventListener("popuphiding", function tooltipHiding(event) {
         tooltip.removeEventListener("popuphiding", tooltipHiding);
         tooltipClose.removeEventListener("command", closeButtonCallback);
-        if (aOptions.targetCallbackID && aAnchor.removeTargetListener) {
+        if (aOptions.targetCallback && aAnchor.removeTargetListener) {
           aAnchor.removeTargetListener(document, targetCallback);
         }
       });
@@ -1576,7 +1712,7 @@ this.UITour = {
       popup.addEventListener("popuphidden", this.onPanelHidden);
 
       popup.setAttribute("noautohide", true);
-      this.availableTargetsCache.clear();
+      this.clearAvailableTargetsCache();
 
       if (popup.state == "open") {
         if (aOpenCallback) {
@@ -1605,7 +1741,7 @@ this.UITour = {
       panel.setAttribute("noautohide", true);
       if (panel.state != "open") {
         this.recreatePopup(panel);
-        this.availableTargetsCache.clear();
+        this.clearAvailableTargetsCache();
       }
 
       // An event object is expected but we don't want to toggle the panel with a click if the panel
@@ -1725,7 +1861,7 @@ this.UITour = {
   onPanelHidden: function(aEvent) {
     aEvent.target.removeAttribute("noautohide");
     UITour.recreatePopup(aEvent.target);
-    UITour.availableTargetsCache.clear();
+    UITour.clearAvailableTargetsCache();
   },
 
   recreatePopup: function(aPanel) {
@@ -1814,8 +1950,9 @@ this.UITour = {
         this.getAvailableTargets(aMessageManager, aWindow, aCallbackID);
         break;
       case "loop":
+        const FTU_VERSION = 1;
         this.sendPageCallback(aMessageManager, aCallbackID, {
-          gettingStartedSeen: Services.prefs.getBoolPref("loop.gettingStarted.seen"),
+          gettingStartedSeen: (Services.prefs.getIntPref("loop.gettingStarted.latestFTUVersion") >= FTU_VERSION),
         });
         break;
       case "search":
@@ -1826,9 +1963,8 @@ this.UITour = {
             let engines = Services.search.getVisibleEngines();
             data = {
               searchEngineIdentifier: Services.search.defaultEngine.identifier,
-              engines: [TARGET_SEARCHENGINE_PREFIX + engine.identifier
-                        for (engine of engines)
-                          if (engine.identifier)]
+              engines: engines.filter((engine) => engine.identifier)
+                              .map((engine) => TARGET_SEARCHENGINE_PREFIX + engine.identifier)
             };
           } else {
             data = {engines: [], searchEngineIdentifier: ""};
@@ -1989,10 +2125,12 @@ this.UITour = {
         for (let engine of engines) {
           if (engine.identifier == aID) {
             Services.search.defaultEngine = engine;
-            return resolve();
+            resolve();
+            return;
           }
         }
         reject("selectSearchEngine could not find engine with given ID");
+        return;
       });
     });
   },
@@ -2068,100 +2206,5 @@ const UITourHealthReport = {
       addClientId: true,
       addEnvironment: true,
     });
-
-    if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
-      Task.spawn(function*() {
-        let reporter = Cc["@mozilla.org/datareporting/service;1"]
-                         .getService()
-                         .wrappedJSObject
-                         .healthReporter;
-
-        // This can happen if the FHR component of the data reporting service is
-        // disabled. This is controlled by a pref that most will never use.
-        if (!reporter) {
-          return;
-        }
-
-        yield reporter.onInit();
-
-        // Get the UITourMetricsProvider instance from the Health Reporter
-        reporter.getProvider("org.mozilla.uitour").recordTreatmentTag(tag, value);
-      });
-    }
   }
 };
-
-function UITourTreatmentMeasurement1() {
-  Metrics.Measurement.call(this);
-
-  this._serializers = {};
-  this._serializers[this.SERIALIZE_JSON] = {
-    //singular: We don't need a singular serializer because we have none of this data
-    daily: this._serializeJSONDaily.bind(this)
-  };
-
-}
-
-if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
-
-  const DAILY_DISCRETE_TEXT_FIELD = Metrics.Storage.FIELD_DAILY_DISCRETE_TEXT;
-
-  this.UITourMetricsProvider = function() {
-    Metrics.Provider.call(this);
-  }
-
-  UITourMetricsProvider.prototype = Object.freeze({
-    __proto__: Metrics.Provider.prototype,
-
-    name: "org.mozilla.uitour",
-
-    measurementTypes: [
-      UITourTreatmentMeasurement1,
-    ],
-
-    recordTreatmentTag: function(tag, value) {
-      let m = this.getMeasurement(UITourTreatmentMeasurement1.prototype.name,
-                                  UITourTreatmentMeasurement1.prototype.version);
-      let field = tag;
-
-      if (this.storage.hasFieldFromMeasurement(m.id, field,
-                                               DAILY_DISCRETE_TEXT_FIELD)) {
-        let fieldID = this.storage.fieldIDFromMeasurement(m.id, field);
-        return this.enqueueStorageOperation(function recordKnownField() {
-          return this.storage.addDailyDiscreteTextFromFieldID(fieldID, value);
-        }.bind(this));
-      }
-
-      // Otherwise, we first need to create the field.
-      return this.enqueueStorageOperation(function recordField() {
-        // This function has to return a promise.
-        return Task.spawn(function () {
-          let fieldID = yield this.storage.registerField(m.id, field,
-                                                         DAILY_DISCRETE_TEXT_FIELD);
-          yield this.storage.addDailyDiscreteTextFromFieldID(fieldID, value);
-        }.bind(this));
-      }.bind(this));
-    },
-  });
-
-  UITourTreatmentMeasurement1.prototype = Object.freeze({
-    __proto__: Metrics.Measurement.prototype,
-
-    name: "treatment",
-    version: 1,
-
-    // our fields are dynamic
-    fields: { },
-
-    // We need a custom serializer because the default one doesn't accept unknown fields
-    _serializeJSONDaily: function(data) {
-      let result = {_v: this.version };
-
-      for (let [field, data] of data) {
-        result[field] = data;
-      }
-
-      return result;
-    }
-  });
-}

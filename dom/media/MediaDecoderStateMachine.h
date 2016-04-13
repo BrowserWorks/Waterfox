@@ -105,10 +105,19 @@ class MediaSink;
 
 class AudioSegment;
 class DecodedStream;
+class OutputStreamManager;
 class TaskQueue;
 
-extern PRLogModuleInfo* gMediaDecoderLog;
-extern PRLogModuleInfo* gMediaSampleLog;
+extern LazyLogModule gMediaDecoderLog;
+extern LazyLogModule gMediaSampleLog;
+
+enum class MediaEventType : int8_t {
+  PlaybackStarted,
+  PlaybackStopped,
+  PlaybackEnded,
+  DecodeError,
+  Invalidate
+};
 
 /*
   The state machine class. This manages the decoding and seeking in the
@@ -159,19 +168,7 @@ public:
   // Set/Unset dormant state.
   void DispatchSetDormant(bool aDormant);
 
-  void DispatchShutdown();
-
-  void DispatchStartBuffering()
-  {
-    nsCOMPtr<nsIRunnable> runnable =
-      NS_NewRunnableMethod(this, &MediaDecoderStateMachine::StartBuffering);
-    OwnerThread()->Dispatch(runnable.forget());
-  }
-
-  void DispatchNotifyDataArrived(uint32_t aLength, int64_t aOffset, bool aThrottleUpdates)
-  {
-    mReader->DispatchNotifyDataArrived(aLength, aOffset, aThrottleUpdates);
-  }
+  RefPtr<ShutdownPromise> BeginShutdown();
 
   // Notifies the state machine that should minimize the number of samples
   // decoded we preroll, until playback starts. The first time playback starts
@@ -215,26 +212,40 @@ public:
     OwnerThread()->Dispatch(r.forget());
   }
 
-  // Drop reference to decoder.  Only called during shutdown dance.
+  // Drop reference to mReader and mResource. Only called during shutdown dance.
   void BreakCycles() {
     MOZ_ASSERT(NS_IsMainThread());
     if (mReader) {
       mReader->BreakCycles();
     }
     mResource = nullptr;
-    mDecoder = nullptr;
   }
 
   TimedMetadataEventSource& TimedMetadataEvent() {
     return mMetadataManager.TimedMetadataEvent();
   }
 
+  MediaEventSource<void>& OnMediaNotSeekable() {
+    return mReader->OnMediaNotSeekable();
+  }
+
+  MediaEventSourceExc<nsAutoPtr<MediaInfo>,
+                      nsAutoPtr<MetadataTags>,
+                      MediaDecoderEventVisibility>&
+  MetadataLoadedEvent() { return mMetadataLoadedEvent; }
+
+  MediaEventSourceExc<nsAutoPtr<MediaInfo>,
+                      MediaDecoderEventVisibility>&
+  FirstFrameLoadedEvent() { return mFirstFrameLoadedEvent; }
+
+  MediaEventSource<MediaEventType>&
+  OnPlaybackEvent() { return mOnPlaybackEvent; }
+
+  MediaEventSource<MediaDecoderEventVisibility>&
+  OnSeekingStart() { return mOnSeekingStart; }
+
   // Immutable after construction - may be called on any thread.
   bool IsRealTime() const { return mRealTime; }
-
-  // Functions used by assertions to ensure we're calling things
-  // on the appropriate threads.
-  bool OnTaskQueue() const;
 
   size_t SizeOfVideoQueue() {
     if (mReader) {
@@ -251,10 +262,14 @@ public:
   }
 
 private:
+  // Functions used by assertions to ensure we're calling things
+  // on the appropriate threads.
+  bool OnTaskQueue() const;
+
   // Initialization that needs to happen on the task queue. This is the first
   // task that gets run on the task queue, and is dispatched from the MDSM
   // constructor immediately after the task queue is created.
-  void InitializationTask();
+  void InitializationTask(MediaDecoder* aDecoder);
 
   void SetDormant(bool aDormant);
 
@@ -262,9 +277,9 @@ private:
 
   RefPtr<MediaDecoder::SeekPromise> Seek(SeekTarget aTarget);
 
-  void Shutdown();
+  RefPtr<ShutdownPromise> Shutdown();
 
-  void FinishShutdown();
+  RefPtr<ShutdownPromise> FinishShutdown();
 
   // Update the playback position. This can result in a timeupdate event
   // and an invalidate of the frame being dispatched asynchronously if
@@ -390,6 +405,7 @@ protected:
   void OnAudioPopped(const RefPtr<MediaData>& aSample);
   void OnVideoPopped(const RefPtr<MediaData>& aSample);
 
+  void CheckIsAudible(const MediaData* aSample);
   void VolumeChanged();
   void LogicalPlaybackRateChanged();
   void PreservesPitchChanged();
@@ -426,12 +442,6 @@ protected:
 
   // Returns true if we have less than aUsecs of undecoded data available.
   bool HasLowUndecodedData(int64_t aUsecs);
-
-  // Returns the number of unplayed usecs of audio we've got decoded and/or
-  // pushed to the hardware waiting to play. This is how much audio we can
-  // play without having to run the audio decoder. The decoder monitor
-  // must be held.
-  int64_t AudioDecodedUsecs();
 
   // Returns true when there's decoded audio waiting to play.
   // The decoder monitor must be held.
@@ -490,9 +500,6 @@ protected:
 
   // Notification method invoked when mLogicallySeeking changes.
   void LogicallySeekingChanged();
-
-  // Notification method invoked when mSameOriginMedia changes.
-  void SameOriginMediaChanged();
 
   // Sets internal state which causes playback of media to pause.
   // The decoder monitor must be held.
@@ -642,18 +649,10 @@ private:
   // play time.
   bool NeedToSkipToNextKeyframe();
 
-  void AdjustAudioThresholds();
-
-  // The decoder object that created this state machine. The state machine
-  // holds a strong reference to the decoder to ensure that the decoder stays
-  // alive once media element has started the decoder shutdown process, and has
-  // dropped its reference to the decoder. This enables the state machine to
-  // keep using the decoder's monitor until the state machine has finished
-  // shutting down, without fear of the monitor being destroyed. After
-  // shutting down, the state machine will then release this reference,
-  // causing the decoder to be destroyed. This is accessed on the decode,
-  // state machine, audio and main threads.
-  RefPtr<MediaDecoder> mDecoder;
+  void* const mDecoderID;
+  const RefPtr<FrameStatistics> mFrameStats;
+  const RefPtr<VideoFrameContainer> mVideoFrameContainer;
+  const dom::AudioChannel mAudioChannel;
 
   // Task queue for running the state machine.
   RefPtr<TaskQueue> mTaskQueue;
@@ -970,13 +969,7 @@ private:
   uint32_t AudioPrerollUsecs() const
   {
     MOZ_ASSERT(OnTaskQueue());
-    if (IsRealTime()) {
-      return 0;
-    }
-
-    uint32_t result = mLowAudioThresholdUsecs * 2;
-    MOZ_ASSERT(result <= mAmpleAudioThresholdUsecs, "Prerolling will never finish");
-    return result;
+    return IsRealTime() ? 0 : mAmpleAudioThresholdUsecs / 2;
   }
 
   uint32_t VideoPrerollFrames() const
@@ -1075,7 +1068,7 @@ private:
   // True if we shouldn't play our audio (but still write it to any capturing
   // streams). When this is true, the audio thread will never start again after
   // it has stopped.
-  Watchable<bool> mAudioCaptured;
+  bool mAudioCaptured;
 
   // True if the audio playback thread has finished. It is finished
   // when either all the audio frames have completed playing, or we've moved
@@ -1085,6 +1078,9 @@ private:
   // When data is being sent to a MediaStream, this is true when all data has
   // been written to the MediaStream.
   Watchable<bool> mAudioCompleted;
+
+  // True if all video frames are already rendered.
+  Watchable<bool> mVideoCompleted;
 
   // Set if MDSM receives dormant request during reading metadata.
   Maybe<bool> mPendingDormant;
@@ -1170,16 +1166,12 @@ private:
   // SetStartTime because the mStartTime already set before. Also we don't need
   // to decode any audio/video since the MediaDecoder will trigger a seek
   // operation soon.
-  Watchable<bool> mSentFirstFrameLoadedEvent;
+  bool mSentFirstFrameLoadedEvent;
 
   bool mSentPlaybackEndedEvent;
 
-  // The SourceMediaStream we are using to feed the mOutputStreams. This stream
-  // is never exposed outside the decoder.
-  // Only written on the main thread while holding the monitor. Therefore it
-  // can be read on any thread while holding the monitor, or on the main thread
-  // without holding the monitor.
-  RefPtr<DecodedStream> mStreamSink;
+  // Data about MediaStreams that are being fed by the decoder.
+  const RefPtr<OutputStreamManager> mOutputStreamManager;
 
   // Media data resource from the decoder.
   RefPtr<MediaResource> mResource;
@@ -1191,9 +1183,21 @@ private:
   MediaEventListener mAudioQueueListener;
   MediaEventListener mVideoQueueListener;
 
+  MediaEventProducerExc<nsAutoPtr<MediaInfo>,
+                        nsAutoPtr<MetadataTags>,
+                        MediaDecoderEventVisibility> mMetadataLoadedEvent;
+  MediaEventProducerExc<nsAutoPtr<MediaInfo>,
+                        MediaDecoderEventVisibility> mFirstFrameLoadedEvent;
+
+  MediaEventProducer<MediaEventType> mOnPlaybackEvent;
+  MediaEventProducer<MediaDecoderEventVisibility> mOnSeekingStart;
+
   // True if audio is offloading.
   // Playback will not start when audio is offloading.
   bool mAudioOffloading;
+
+  // Duration of the continuous silent data.
+  uint32_t mSilentDataDuration;
 
 #ifdef MOZ_EME
   void OnCDMProxyReady(RefPtr<CDMProxy> aProxy);
@@ -1263,6 +1267,9 @@ private:
   // Current playback position in the stream in bytes.
   Canonical<int64_t> mPlaybackOffset;
 
+  // Used to distiguish whether the audio is producing sound.
+  Canonical<bool> mIsAudioDataAudible;
+
 public:
   AbstractCanonical<media::TimeIntervals>* CanonicalBuffered() {
     return mReader->CanonicalBuffered();
@@ -1281,6 +1288,9 @@ public:
   }
   AbstractCanonical<int64_t>* CanonicalPlaybackOffset() {
     return &mPlaybackOffset;
+  }
+  AbstractCanonical<bool>* CanonicalIsAudioDataAudible() {
+    return &mIsAudioDataAudible;
   }
 };
 

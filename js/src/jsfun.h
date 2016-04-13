@@ -28,6 +28,10 @@ typedef JSNative           Native;
 
 struct JSAtomState;
 
+static const uint32_t JSSLOT_BOUND_FUNCTION_TARGET     = 2;
+static const uint32_t JSSLOT_BOUND_FUNCTION_THIS       = 3;
+static const uint32_t JSSLOT_BOUND_FUNCTION_ARGS       = 4;
+
 class JSFunction : public js::NativeObject
 {
   public:
@@ -48,7 +52,7 @@ class JSFunction : public js::NativeObject
         INTERPRETED      = 0x0001,  /* function has a JSScript and environment. */
         CONSTRUCTOR      = 0x0002,  /* function that can be called as a constructor */
         EXTENDED         = 0x0004,  /* structure is FunctionExtended */
-        IS_FUN_PROTO     = 0x0008,  /* function is Function.prototype for some global object */
+        BOUND_FUN        = 0x0008,  /* function was created with Function.prototype.bind. */
         EXPR_BODY        = 0x0010,  /* arrow function with expression body or
                                      * expression closure: function(x) x*x */
         HAS_GUESSED_ATOM = 0x0020,  /* function had no explicit name, but a
@@ -93,8 +97,8 @@ class JSFunction : public js::NativeObject
         INTERPRETED_GENERATOR = INTERPRETED,
         NO_XDR_FLAGS = RESOLVED_LENGTH | RESOLVED_NAME,
 
-        STABLE_ACROSS_CLONES = IS_FUN_PROTO | CONSTRUCTOR | EXPR_BODY | HAS_GUESSED_ATOM |
-                               LAMBDA | SELF_HOSTED |  HAS_REST | FUNCTION_KIND_MASK
+        STABLE_ACROSS_CLONES = CONSTRUCTOR | EXPR_BODY | HAS_GUESSED_ATOM | LAMBDA |
+                               SELF_HOSTED |  HAS_REST | FUNCTION_KIND_MASK
     };
 
     static_assert((INTERPRETED | INTERPRETED_LAZY) == js::JS_FUNCTION_INTERPRETED_BITS,
@@ -183,17 +187,18 @@ class JSFunction : public js::NativeObject
     bool isAsmJSNative()            const { return kind() == AsmJS; }
 
     /* Possible attributes of an interpreted function: */
-    bool isFunctionPrototype()      const { return flags() & IS_FUN_PROTO; }
     bool isExprBody()               const { return flags() & EXPR_BODY; }
     bool hasGuessedAtom()           const { return flags() & HAS_GUESSED_ATOM; }
     bool isLambda()                 const { return flags() & LAMBDA; }
-    bool isSelfHostedBuiltin()      const { return flags() & SELF_HOSTED; }
+    bool isBoundFunction()          const { return flags() & BOUND_FUN; }
     bool hasRest()                  const { return flags() & HAS_REST; }
     bool isInterpretedLazy()        const { return flags() & INTERPRETED_LAZY; }
     bool hasScript()                const { return flags() & INTERPRETED; }
     bool isBeingParsed()            const { return flags() & BEING_PARSED; }
 
-    // Arrow functions store their lexical |this| in the first extended slot.
+    bool infallibleIsDefaultClassConstructor(JSContext* cx) const;
+
+    // Arrow functions store their lexical new.target in the first extended slot.
     bool isArrow()                  const { return kind() == Arrow; }
     // Every class-constructor is also a method.
     bool isMethod()                 const { return kind() == Method || kind() == ClassConstructor; }
@@ -209,6 +214,10 @@ class JSFunction : public js::NativeObject
     bool hasResolvedLength()        const { return flags() & RESOLVED_LENGTH; }
     bool hasResolvedName()          const { return flags() & RESOLVED_NAME; }
 
+    bool isSelfHostedOrIntrinsic()  const { return flags() & SELF_HOSTED; }
+    bool isSelfHostedBuiltin()      const { return isSelfHostedOrIntrinsic() && !isNative(); }
+    bool isIntrinsic()              const { return isSelfHostedOrIntrinsic() && isNative(); }
+
     bool hasJITCode() const {
         if (!hasScript())
             return false;
@@ -223,6 +232,10 @@ class JSFunction : public js::NativeObject
 
     bool isNamedLambda() const {
         return isLambda() && displayAtom() && !hasGuessedAtom();
+    }
+
+    bool hasLexicalThis() const {
+        return isArrow() || nonLazyScript()->isGeneratorExp();
     }
 
     bool isBuiltinFunctionConstructor();
@@ -248,6 +261,13 @@ class JSFunction : public js::NativeObject
         flags_ |= CONSTRUCTOR;
     }
 
+    void setIsClassConstructor() {
+        MOZ_ASSERT(!isClassConstructor());
+        MOZ_ASSERT(isConstructor());
+
+        setKind(ClassConstructor);
+    }
+
     // Can be called multiple times by the parser.
     void setArgCount(uint16_t nargs) {
         this->nargs_ = nargs;
@@ -258,16 +278,22 @@ class JSFunction : public js::NativeObject
         flags_ |= HAS_REST;
     }
 
+    void setIsBoundFunction() {
+        MOZ_ASSERT(!isBoundFunction());
+        flags_ |= BOUND_FUN;
+    }
+
     void setIsSelfHostedBuiltin() {
+        MOZ_ASSERT(isInterpreted());
         MOZ_ASSERT(!isSelfHostedBuiltin());
         flags_ |= SELF_HOSTED;
         // Self-hosted functions should not be constructable.
         flags_ &= ~CONSTRUCTOR;
     }
-
-    void setIsFunctionPrototype() {
-        MOZ_ASSERT(!isFunctionPrototype());
-        flags_ |= IS_FUN_PROTO;
+    void setIsIntrinsic() {
+        MOZ_ASSERT(isNative());
+        MOZ_ASSERT(!isIntrinsic());
+        flags_ |= SELF_HOSTED;
     }
 
     // Can be called multiple times by the parser.
@@ -294,6 +320,8 @@ class JSFunction : public js::NativeObject
     }
 
     void initAtom(JSAtom* atom) { atom_.init(atom); }
+
+    void setAtom(JSAtom* atom) { atom_ = atom; }
 
     JSAtom* displayAtom() const {
         return atom_;
@@ -425,15 +453,7 @@ class JSFunction : public js::NativeObject
         return u.i.s.script_;
     }
 
-    bool getLength(JSContext* cx, uint16_t* length) {
-        JS::RootedFunction self(cx, this);
-        if (self->isInterpretedLazy() && !self->getOrCreateScript(cx))
-            return false;
-
-        *length = self->hasScript() ? self->nonLazyScript()->funLength()
-                                    : (self->nargs() - self->hasRest());
-        return true;
-    }
+    bool getLength(JSContext* cx, uint16_t* length);
 
     js::LazyScript* lazyScript() const {
         MOZ_ASSERT(isInterpretedLazy() && u.i.s.lazy_);
@@ -518,15 +538,7 @@ class JSFunction : public js::NativeObject
         u.n.jitinfo = data;
     }
 
-    bool isDerivedClassConstructor() {
-        bool derived;
-        if (isInterpretedLazy())
-            derived = lazyScript()->isDerivedClassConstructor();
-        else
-            derived = nonLazyScript()->isDerivedClassConstructor();
-        MOZ_ASSERT_IF(derived, isClassConstructor());
-        return derived;
-    }
+    bool isDerivedClassConstructor();
 
     static unsigned offsetOfNativeOrScript() {
         static_assert(offsetof(U, n.native) == offsetof(U, i.s.script_),
@@ -543,12 +555,9 @@ class JSFunction : public js::NativeObject
 
     /* Bound function accessors. */
 
-    inline bool initBoundFunction(JSContext* cx, js::HandleObject target, js::HandleValue thisArg,
-                                  const js::Value* args, unsigned argslen);
-
     JSObject* getBoundFunctionTarget() const;
     const js::Value& getBoundFunctionThis() const;
-    const js::Value& getBoundFunctionArgument(unsigned which) const;
+    const js::Value& getBoundFunctionArgument(JSContext* cx, unsigned which) const;
     size_t getBoundFunctionArgumentCount() const;
 
   private:
@@ -628,22 +637,31 @@ NewNativeConstructor(ExclusiveContext* cx, JSNative native, unsigned nargs, Hand
 // the global.
 extern JSFunction*
 NewScriptedFunction(ExclusiveContext* cx, unsigned nargs, JSFunction::Flags flags,
-                    HandleAtom atom, gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
+                    HandleAtom atom, HandleObject proto = nullptr,
+                    gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
                     NewObjectKind newKind = GenericObject,
                     HandleObject enclosingDynamicScope = nullptr);
 
-// If proto is nullptr, Function.prototype is used instead.  If
+// By default, if proto is nullptr, Function.prototype is used instead.i
+// If protoHandling is NewFunctionExactProto, and proto is nullptr, the created
+// function will use nullptr as its [[Prototype]] instead. If
 // enclosingDynamicScope is null, the function will have a null environment()
 // (yes, null, not the global).  In all cases, the global will be used as the
 // parent.
+
+enum NewFunctionProtoHandling {
+    NewFunctionClassProto,
+    NewFunctionGivenProto
+};
 extern JSFunction*
 NewFunctionWithProto(ExclusiveContext* cx, JSNative native, unsigned nargs,
                      JSFunction::Flags flags, HandleObject enclosingDynamicScope, HandleAtom atom,
                      HandleObject proto, gc::AllocKind allocKind = gc::AllocKind::FUNCTION,
-                     NewObjectKind newKind = GenericObject);
+                     NewObjectKind newKind = GenericObject,
+                     NewFunctionProtoHandling protoHandling = NewFunctionClassProto);
 
 extern JSAtom*
-IdToFunctionName(JSContext* cx, HandleId id);
+IdToFunctionName(JSContext* cx, HandleId id, const char* prefix = nullptr);
 
 extern JSFunction*
 DefineFunction(JSContext* cx, HandleObject obj, HandleId id, JSNative native,
@@ -656,9 +674,6 @@ FunctionHasResolveHook(const JSAtomState& atomState, jsid id);
 extern bool
 fun_toString(JSContext* cx, unsigned argc, Value* vp);
 
-extern bool
-fun_bind(JSContext* cx, unsigned argc, Value* vp);
-
 /*
  * Function extended with reserved slots for use by various kinds of functions.
  * Most functions do not have these extensions, but enough do that efficient
@@ -669,18 +684,26 @@ class FunctionExtended : public JSFunction
   public:
     static const unsigned NUM_EXTENDED_SLOTS = 2;
 
-    /* Arrow functions store their lexical |this| in the first extended slot. */
-    static const unsigned ARROW_THIS_SLOT = 0;
-    static const unsigned ARROW_NEWTARGET_SLOT = 1;
+    /* Arrow functions store their lexical new.target in the first extended slot. */
+    static const unsigned ARROW_NEWTARGET_SLOT = 0;
 
     static const unsigned METHOD_HOMEOBJECT_SLOT = 0;
+
+    /*
+     * All asm.js/wasm functions store their compiled module (either
+     * WasmModuleObject or AsmJSModuleObject) in the first extended slot.
+     */
+    static const unsigned WASM_MODULE_SLOT = 0;
+
+    /*
+     * wasm/asm.js exported functions store the index of the export in the
+     * module's export vector in the second slot.
+     */
+    static const unsigned WASM_EXPORT_INDEX_SLOT = 1;
 
     static inline size_t offsetOfExtendedSlot(unsigned which) {
         MOZ_ASSERT(which < NUM_EXTENDED_SLOTS);
         return offsetof(FunctionExtended, extendedSlots) + which * sizeof(HeapValue);
-    }
-    static inline size_t offsetOfArrowThisSlot() {
-        return offsetOfExtendedSlot(ARROW_THIS_SLOT);
     }
     static inline size_t offsetOfArrowNewTargetSlot() {
         return offsetOfExtendedSlot(ARROW_NEWTARGET_SLOT);
@@ -784,10 +807,8 @@ ReportIncompatibleMethod(JSContext* cx, CallReceiver call, const Class* clasp);
 extern void
 ReportIncompatible(JSContext* cx, CallReceiver call);
 
-bool
-CallOrConstructBoundFunction(JSContext*, unsigned, js::Value*);
-
 extern const JSFunctionSpec function_methods[];
+extern const JSFunctionSpec function_selfhosted_methods[];
 
 extern bool
 fun_apply(JSContext* cx, unsigned argc, Value* vp);

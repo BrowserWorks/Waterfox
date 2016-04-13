@@ -36,7 +36,7 @@ public:
     READ,
     MANAGEMENT,
     WRITE,
-    CLOSE,
+    CLOSE = WRITE,
     INDEX,
     EVICT,
     LAST_LEVEL,
@@ -88,7 +88,7 @@ private:
 
   mozilla::Monitor mMonitor;
   PRThread* mThread;
-  nsCOMPtr<nsIThread> mXPCOMThread;
+  Atomic<nsIThread *> mXPCOMThread;
   Atomic<uint32_t, Relaxed> mLowestLevelWaiting;
   uint32_t mCurrentlyExecutingLevel;
   nsTArray<nsCOMPtr<nsIRunnable> > mEventQueue[LAST_LEVEL];

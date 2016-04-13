@@ -42,10 +42,12 @@
 #include "nsPrincipal.h"
 #include "nsIOService.h"
 #include "nsINetworkPredictor.h"
+#include "nsINetworkPredictorVerifier.h"
 #include "mozilla/net/OfflineObserver.h"
 #include "nsISpeculativeConnect.h"
 
-using mozilla::OriginAttributes;
+using mozilla::DocShellOriginAttributes;
+using mozilla::NeckoOriginAttributes;
 using mozilla::dom::ContentParent;
 using mozilla::dom::TabContext;
 using mozilla::dom::TabParent;
@@ -111,7 +113,7 @@ PBOverrideStatusFromLoadContext(const SerializedLoadContext& aSerialized)
 const char*
 NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
                                  PContentParent* aContent,
-                                 OriginAttributes& aAttrs)
+                                 DocShellOriginAttributes& aAttrs)
 {
   if (UsingNeckoIPCSecurity()) {
     if (!aSerialized.IsNotNull()) {
@@ -144,7 +146,20 @@ NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
         continue;
       }
     }
-    aAttrs = OriginAttributes(appId, inBrowserElement);
+
+    if (!aSerialized.mOriginAttributes.mSignedPkg.IsEmpty() &&
+        aSerialized.mOriginAttributes.mSignedPkg != tabContext.OriginAttributesRef().mSignedPkg) {
+      continue;
+    }
+    if (aSerialized.mOriginAttributes.mUserContextId != tabContext.OriginAttributesRef().mUserContextId) {
+      continue;
+    }
+    aAttrs = DocShellOriginAttributes();
+    aAttrs.mAppId = appId;
+    aAttrs.mInBrowser = inBrowserElement;
+    aAttrs.mSignedPkg = aSerialized.mOriginAttributes.mSignedPkg;
+    aAttrs.mUserContextId = aSerialized.mOriginAttributes.mUserContextId;
+
     return nullptr;
   }
 
@@ -157,7 +172,7 @@ NeckoParent::GetValidatedAppInfo(const SerializedLoadContext& aSerialized,
     if (aSerialized.IsNotNull()) {
       aAttrs = aSerialized.mOriginAttributes;
     } else {
-      aAttrs = OriginAttributes(NECKO_NO_APP_ID, false);
+      aAttrs = DocShellOriginAttributes(NECKO_NO_APP_ID, false);
     }
     return nullptr;
   }
@@ -171,7 +186,7 @@ NeckoParent::CreateChannelLoadContext(const PBrowserOrId& aBrowser,
                                       const SerializedLoadContext& aSerialized,
                                       nsCOMPtr<nsILoadContext> &aResult)
 {
-  OriginAttributes attrs;
+  DocShellOriginAttributes attrs;
   const char* error = GetValidatedAppInfo(aSerialized, aContent, attrs);
   if (error) {
     return error;
@@ -295,7 +310,7 @@ NeckoParent::AllocPCookieServiceParent()
   return new CookieServiceParent();
 }
 
-bool 
+bool
 NeckoParent::DeallocPCookieServiceParent(PCookieServiceParent* cs)
 {
   delete cs;
@@ -454,7 +469,7 @@ NeckoParent::AllocPTCPSocketParent(const nsString& /* host */,
 {
   // We actually don't need host/port to construct a TCPSocketParent since
   // TCPSocketParent will maintain an internal nsIDOMTCPSocket instance which
-  // can be delegated to get the host/port. 
+  // can be delegated to get the host/port.
   TCPSocketParent* p = new TCPSocketParent();
   p->AddIPDLReference();
   return p;
@@ -893,7 +908,7 @@ NeckoParent::RecvPredPredict(const ipc::OptionalURIParams& aTargetURI,
   // We only actually care about the loadContext.mPrivateBrowsing, so we'll just
   // pass dummy params for nestFrameId, and originAttributes.
   uint64_t nestedFrameId = 0;
-  OriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
+  DocShellOriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
   nsCOMPtr<nsILoadContext> loadContext;
   if (aLoadContext.IsNotNull()) {
     loadContext = new LoadContext(aLoadContext, nestedFrameId, attrs);
@@ -925,7 +940,7 @@ NeckoParent::RecvPredLearn(const ipc::URIParams& aTargetURI,
   // We only actually care about the loadContext.mPrivateBrowsing, so we'll just
   // pass dummy params for nestFrameId, and originAttributes;
   uint64_t nestedFrameId = 0;
-  OriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
+  DocShellOriginAttributes attrs(NECKO_UNKNOWN_APP_ID, false);
   nsCOMPtr<nsILoadContext> loadContext;
   if (aLoadContext.IsNotNull()) {
     loadContext = new LoadContext(aLoadContext, nestedFrameId, attrs);

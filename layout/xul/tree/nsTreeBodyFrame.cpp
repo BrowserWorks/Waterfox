@@ -1318,10 +1318,12 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
 {
   NS_PRECONDITION(aColumn && aColumn->GetFrame(), "invalid column passed");
 
+  DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
+
   nscoord maxWidth = aTextRect.width;
   bool widthIsGreater = nsLayoutUtils::StringWidthIsGreaterThan(aText,
                                                                 aFontMetrics,
-                                                                aRenderingContext,
+                                                                drawTarget,
                                                                 maxWidth);
 
   if (aColumn->Overflow()) {
@@ -1353,7 +1355,7 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
           maxWidth += width;
           widthIsGreater = nsLayoutUtils::StringWidthIsGreaterThan(aText,
                                                                    aFontMetrics,
-                                                                   aRenderingContext,
+                                                                   drawTarget,
                                                                    maxWidth);
 
           nextColumn = nextColumn->GetNext();
@@ -1372,8 +1374,7 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
     const nsDependentString& kEllipsis = nsContentUtils::GetLocalizedEllipsis();
     aFontMetrics.SetTextRunRTL(false);
     nscoord ellipsisWidth =
-      nsLayoutUtils::AppUnitWidthOfString(kEllipsis, aFontMetrics,
-                                          aRenderingContext);
+      nsLayoutUtils::AppUnitWidthOfString(kEllipsis, aFontMetrics, drawTarget);
 
     width = maxWidth;
     if (ellipsisWidth > width)
@@ -1399,7 +1400,7 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
             char16_t ch = aText[i];
             // XXX this is horrible and doesn't handle clusters
             cwidth = nsLayoutUtils::AppUnitWidthOfString(ch, aFontMetrics,
-                                                         aRenderingContext);
+                                                         drawTarget);
             if (twidth + cwidth > width)
               break;
             twidth += cwidth;
@@ -1418,7 +1419,7 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
           for (i=length-1; i >= 0; --i) {
             char16_t ch = aText[i];
             cwidth = nsLayoutUtils::AppUnitWidthOfString(ch, aFontMetrics,
-                                                         aRenderingContext);
+                                                         drawTarget);
             if (twidth + cwidth > width)
               break;
             twidth += cwidth;
@@ -1441,7 +1442,7 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
           for (int32_t leftPos = 0; leftPos < rightPos; ++leftPos) {
             char16_t ch = aText[leftPos];
             cwidth = nsLayoutUtils::AppUnitWidthOfString(ch, aFontMetrics,
-                                                         aRenderingContext);
+                                                         drawTarget);
             twidth += cwidth;
             if (twidth > width)
               break;
@@ -1449,7 +1450,7 @@ nsTreeBodyFrame::AdjustForCellText(nsAutoString& aText,
 
             ch = aText[rightPos];
             cwidth = nsLayoutUtils::AppUnitWidthOfString(ch, aFontMetrics,
-                                                         aRenderingContext);
+                                                         drawTarget);
             twidth += cwidth;
             if (twidth > width)
               break;
@@ -2802,8 +2803,8 @@ public:
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override
   {
-    gfxContext* ctx = aCtx->ThebesContext();
-    gfxContextAutoDisableSubpixelAntialiasing disable(ctx, mDisableSubpixelAA);
+    DrawTargetAutoDisableSubpixelAntialiasing disable(aCtx->GetDrawTarget(),
+                                                      mDisableSubpixelAA);
 
     DrawResult result = static_cast<nsTreeBodyFrame*>(mFrame)
       ->PaintTreeBody(*aCtx, mVisibleRect, ToReferenceFrame());
@@ -3648,7 +3649,7 @@ nsTreeBodyFrame::PaintImage(int32_t              aRowIndex,
 
     gfxContext* ctx = aRenderingContext.ThebesContext();
     if (opacity != 1.0f) {
-      ctx->PushGroup(gfxContentType::COLOR_ALPHA);
+      ctx->PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, opacity);
     }
 
     result &=
@@ -3658,8 +3659,7 @@ nsTreeBodyFrame::PaintImage(int32_t              aRowIndex,
         imgIContainer::FLAG_NONE);
 
     if (opacity != 1.0f) {
-      ctx->PopGroupToSource();
-      ctx->Paint(opacity);
+      ctx->PopGroupAndBlend();
     }
   }
 
@@ -3758,15 +3758,16 @@ nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
 
   nscoord offset;
   nscoord size;
-  if (decorations & (NS_FONT_DECORATION_OVERLINE | NS_FONT_DECORATION_UNDERLINE)) {
+  if (decorations & (NS_STYLE_TEXT_DECORATION_LINE_OVERLINE |
+                     NS_STYLE_TEXT_DECORATION_LINE_UNDERLINE)) {
     fontMet->GetUnderline(offset, size);
-    if (decorations & NS_FONT_DECORATION_OVERLINE) {
+    if (decorations & NS_STYLE_TEXT_DECORATION_LINE_OVERLINE) {
       nsRect r(textRect.x, textRect.y, textRect.width, size);
       Rect devPxRect =
         NSRectToSnappedRect(r, appUnitsPerDevPixel, *drawTarget);
       drawTarget->FillRect(devPxRect, color);
     }
-    if (decorations & NS_FONT_DECORATION_UNDERLINE) {
+    if (decorations & NS_STYLE_TEXT_DECORATION_LINE_UNDERLINE) {
       nsRect r(textRect.x, textRect.y + baseline - offset,
                textRect.width, size);
       Rect devPxRect =
@@ -3774,7 +3775,7 @@ nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
       drawTarget->FillRect(devPxRect, color);
     }
   }
-  if (decorations & NS_FONT_DECORATION_LINE_THROUGH) {
+  if (decorations & NS_STYLE_TEXT_DECORATION_LINE_LINE_THROUGH) {
     fontMet->GetStrikeout(offset, size);
     nsRect r(textRect.x, textRect.y + baseline - offset, textRect.width, size);
     Rect devPxRect =
@@ -3785,7 +3786,7 @@ nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
 
   gfxContext* ctx = aRenderingContext.ThebesContext();
   if (opacity != 1.0f) {
-    ctx->PushGroup(gfxContentType::COLOR_ALPHA);
+    ctx->PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, opacity);
   }
 
   ctx->SetColor(Color::FromABGR(textContext->StyleColor()->mColor));
@@ -3795,8 +3796,7 @@ nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
                             cellContext);
 
   if (opacity != 1.0f) {
-    ctx->PopGroupToSource();
-    ctx->Paint(opacity);
+    ctx->PopGroupAndBlend();
   }
 
 }

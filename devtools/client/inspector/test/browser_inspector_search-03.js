@@ -6,7 +6,7 @@
 // Testing that searching for elements using the inspector search field
 // produces correct suggestions.
 
-const TEST_URL = TEST_URL_ROOT + "doc_inspector_search.html";
+const TEST_URL = URL_ROOT + "doc_inspector_search.html";
 
 // An array of (key, suggestions) pairs where key is a key to press and
 // suggestions is an array of suggestions that should be shown in the popup.
@@ -16,14 +16,14 @@ var TEST_DATA = [
   {
     key: "d",
     suggestions: [
-      {label: "div", count: 2},
-      {label: "#d1", count: 1},
-      {label: "#d2", count: 1}
+      {label: "div"},
+      {label: "#d1"},
+      {label: "#d2"}
     ]
   },
   {
     key: "i",
-    suggestions: [{label: "div", count: 2}]
+    suggestions: [{label: "div"}]
   },
   {
     key: "v",
@@ -50,14 +50,14 @@ var TEST_DATA = [
   },
   {
     key: "VK_BACK_SPACE",
-    suggestions: [{label: "div", count: 2}]
+    suggestions: [{label: "div"}]
   },
   {
     key: "VK_BACK_SPACE",
     suggestions: [
-      {label: "div", count: 2},
-      {label: "#d1", count: 1},
-      {label: "#d2", count: 1}
+      {label: "div"},
+      {label: "#d1"},
+      {label: "#d2"}
     ]
   },
   {
@@ -67,14 +67,14 @@ var TEST_DATA = [
   {
     key: ".",
     suggestions: [
-      {label: ".c1", count: 3},
+      {label: ".c1"},
       {label: ".c2"}
     ]
   },
   {
     key: "c",
     suggestions: [
-      {label: ".c1", count: 3},
+      {label: ".c1"},
       {label: ".c2"}
     ]
   },
@@ -85,7 +85,7 @@ var TEST_DATA = [
   {
     key: "VK_BACK_SPACE",
     suggestions: [
-      {label: ".c1", count: 3},
+      {label: ".c1"},
       {label: ".c2"}
     ]
   },
@@ -108,14 +108,14 @@ var TEST_DATA = [
   {
     key: "VK_BACK_SPACE",
     suggestions: [
-      {label: ".c1", count: 3},
+      {label: ".c1"},
       {label: ".c2"}
     ]
   },
   {
     key: "VK_BACK_SPACE",
     suggestions: [
-      {label: ".c1", count: 3},
+      {label: ".c1"},
       {label: ".c2"}
     ]
   },
@@ -160,6 +160,39 @@ var TEST_DATA = [
   {
     key: "VK_BACK_SPACE",
     suggestions: []
+  },
+  {
+    key: "p",
+    suggestions: [
+      {label: "p"},
+      {label: "#p1"},
+      {label: "#p2"},
+      {label: "#p3"}
+    ]
+  },
+  {
+    key: "[", suggestions: []
+  },
+  {
+    key: "i", suggestions: []
+  },
+  {
+    key: "d", suggestions: []
+  },
+  {
+    key: "*", suggestions: []
+  },
+  {
+    key: "=", suggestions: []
+  },
+  {
+    key: "p", suggestions: []
+  },
+  {
+    key: "]",
+    suggestions: [
+      {label: "p[id*=p]"}
+    ]
   }
 ];
 
@@ -189,14 +222,12 @@ add_task(function* () {
     for (let i = 0; i < suggestions.length; i++) {
       is(actualSuggestions[i].label, suggestions[i].label,
          "The suggestion at " + i + "th index is correct.");
-      is(actualSuggestions[i].count, suggestions[i].count || 1,
-         "The count for suggestion at " + i + "th index is correct.");
     }
   }
 });
 
 function formatSuggestions(suggestions) {
   return "[" + suggestions
-                .map(s => "'" + s.label + "' (" + (s.count || 1) + ")")
+                .map(s => "'" + s.label + "'")
                 .join(", ") + "]";
 }

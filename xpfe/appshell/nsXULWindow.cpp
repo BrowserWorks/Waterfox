@@ -383,6 +383,8 @@ NS_IMETHODIMP nsXULWindow::RemoveChildWindow(nsIXULWindow *aChild)
 
 NS_IMETHODIMP nsXULWindow::ShowModal()
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+
   // Store locally so it doesn't die on us
   nsCOMPtr<nsIWidget> window = mWindow;
   nsCOMPtr<nsIXULWindow> tempRef = this;  
@@ -651,7 +653,7 @@ NS_IMETHODIMP nsXULWindow::SetPositionAndSize(int32_t aX, int32_t aY,
 NS_IMETHODIMP nsXULWindow::GetPositionAndSize(int32_t* x, int32_t* y, int32_t* cx,
    int32_t* cy)
 {
-  nsIntRect rect;
+  LayoutDeviceIntRect rect;
 
   if (!mWindow)
     return NS_ERROR_FAILURE;
@@ -1428,7 +1430,8 @@ void nsXULWindow::SyncAttributesToWidget()
   nsIntMargin margins;
   windowElement->GetAttribute(NS_LITERAL_STRING("chromemargin"), attr);
   if (nsContentUtils::ParseIntMarginValue(attr, margins)) {
-    mWindow->SetNonClientMargins(margins);
+    LayoutDeviceIntMargin tmp = LayoutDeviceIntMargin::FromUnknownMargin(margins);
+    mWindow->SetNonClientMargins(tmp);
   }
 
   // "windowtype" attribute
@@ -1487,7 +1490,7 @@ NS_IMETHODIMP nsXULWindow::SavePersistentAttributes()
   }
 
   // get our size, position and mode to persist
-  nsIntRect rect;
+  LayoutDeviceIntRect rect;
   bool gotRestoredBounds = NS_SUCCEEDED(mWindow->GetRestoredBounds(rect));
 
   CSSToLayoutDeviceScale scale = mWindow->GetDefaultScale();

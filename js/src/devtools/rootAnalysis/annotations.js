@@ -38,10 +38,6 @@ function indirectCallCannotGC(fullCaller, fullVariable)
     if (name == "op" && /GetWeakmapKeyDelegate/.test(caller))
         return true;
 
-    var CheckCallArgs = "AsmJSValidate.cpp:uint8 CheckCallArgs(FunctionValidator*, js::frontend::ParseNode*, (uint8)(FunctionValidator*,js::frontend::ParseNode*,js::wasm::Type)*, js::wasm::Signature*)";
-    if (name == "checkArg" && caller == CheckCallArgs)
-        return true;
-
     // hook called during script finalization which cannot GC.
     if (/CallDestroyScriptHook/.test(caller))
         return true;
@@ -82,7 +78,8 @@ var ignoreCallees = {
     "z_stream_s.zfree" : true,
     "GrGLInterface.fCallback" : true,
     "std::strstreambuf._M_alloc_fun" : true,
-    "std::strstreambuf._M_free_fun" : true
+    "std::strstreambuf._M_free_fun" : true,
+    "struct js::gc::Callback<void (*)(JSRuntime*, void*)>.op" : true,
 };
 
 function fieldCallCannotGC(csu, fullfield)
@@ -191,6 +188,9 @@ var ignoreFunctions = {
     "void test::RingbufferDumper::OnTestPartResult(testing::TestPartResult*)" : true,
 
     "float64 JS_GetCurrentEmbedderTime()" : true,
+
+    "uint64 js::TenuringTracer::moveObjectToTenured(JSObject*, JSObject*, int32)" : true,
+    "uint32 js::TenuringTracer::moveObjectToTenured(JSObject*, JSObject*, int32)" : true,
 };
 
 function isProtobuf(name)
@@ -273,7 +273,6 @@ function isRootedGCPointerTypeName(name)
         name == "WrappableJSErrorResult" ||
         name == "frontend::TokenStream" ||
         name == "frontend::TokenStream::Position" ||
-        name == "ModuleCompiler" ||
         name == "ModuleValidator")
     {
         return true;

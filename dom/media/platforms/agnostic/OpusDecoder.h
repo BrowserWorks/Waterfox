@@ -9,6 +9,7 @@
 #include "OpusParser.h"
 #include "PlatformDecoderModule.h"
 
+#include "mozilla/Maybe.h"
 #include "nsAutoPtr.h"
 
 namespace mozilla {
@@ -26,6 +27,10 @@ public:
   nsresult Flush() override;
   nsresult Drain() override;
   nsresult Shutdown() override;
+  const char* GetDescriptionName() const override
+  {
+    return "opus audio decoder";
+  }
 
   // Return true if mimetype is Opus
   static bool IsOpus(const nsACString& aMimeType);
@@ -53,6 +58,7 @@ private:
   // will raise an error so we can indicate that the file is invalid.
   bool mPaddingDiscarded;
   int64_t mFrames;
+  Maybe<int64_t> mLastFrameTime;
 };
 
 } // namespace mozilla

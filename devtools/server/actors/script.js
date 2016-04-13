@@ -9,10 +9,12 @@
 const Services = require("Services");
 const { Cc, Ci, Cu, components, ChromeWorker } = require("chrome");
 const { ActorPool, OriginalLocation, GeneratedLocation } = require("devtools/server/actors/common");
+const { BreakpointActor } = require("devtools/server/actors/breakpoint");
+const { FrameActor } = require("devtools/server/actors/frame");
 const { ObjectActor, createValueGrip, longStringGrip } = require("devtools/server/actors/object");
 const { DebuggerServer } = require("devtools/server/main");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { dbg_assert, dumpn, update, fetch } = DevToolsUtils;
+const { assert, dumpn, update, fetch } = DevToolsUtils;
 const { dirname, joinURI } = require("devtools/shared/path");
 const promise = require("promise");
 const PromiseDebugging = require("PromiseDebugging");
@@ -29,7 +31,7 @@ loader.lazyGetter(this, "Debugger", () => {
 });
 loader.lazyRequireGetter(this, "SourceMapConsumer", "source-map", true);
 loader.lazyRequireGetter(this, "SourceMapGenerator", "source-map", true);
-loader.lazyRequireGetter(this, "CssLogic", "devtools/shared/styleinspector/css-logic", true);
+loader.lazyRequireGetter(this, "CssLogic", "devtools/shared/inspector/css-logic", true);
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "mapURIToAddonID", "devtools/server/actors/utils/map-uri-to-addon-id");
 loader.lazyRequireGetter(this, "setTimeout", "sdk/timers", true);
@@ -354,9 +356,6 @@ EventLoop.prototype = {
       }
     }
 
-    dbg_assert(this._thread.state === "running",
-               "Should be in the running state");
-
     if (this._hooks.postNest) {
       this._hooks.postNest(nestData);
     }
@@ -545,7 +544,7 @@ ThreadActor.prototype = {
   },
   _popThreadPause: function () {
     const eventLoop = this._threadPauseEventLoops.pop();
-    dbg_assert(eventLoop, "Should have an event loop.");
+    assert(eventLoop, "Should have an event loop.");
     eventLoop.resolve();
   },
 
@@ -624,7 +623,7 @@ ThreadActor.prototype = {
     this._debuggerSourcesSeen = new Set();
 
     update(this._options, aRequest.options || {});
-    this.sources.reconfigure(this._options);
+    this.sources.setOptions(this._options);
     this.sources.on('newSource', (name, source) => {
       this.onNewSource(source);
     });
@@ -681,10 +680,16 @@ ThreadActor.prototype = {
     if (this.state == "exited") {
       return { error: "wrongState" };
     }
+    const options = aRequest.options || {};
 
-    update(this._options, aRequest.options || {});
+    if ('observeAsmJS' in options) {
+      this.dbg.allowUnobservedAsmJS = !options.observeAsmJS;
+    }
+
+    update(this._options, options);
+
     // Update the global source store
-    this.sources.reconfigure(this._options);
+    this.sources.setOptions(options);
 
     return {};
   },
@@ -1527,7 +1532,7 @@ ThreadActor.prototype = {
                 .getService(Ci.nsIEventListenerService);
       els.removeListenerForAllEvents(this.global, this._allEventsListener, true);
       for (let [,bp] of this._hiddenBreakpoints) {
-        bp.onDelete();
+        bp.delete();
       }
       this._hiddenBreakpoints.clear();
     }
@@ -1536,7 +1541,7 @@ ThreadActor.prototype = {
 
     // Create the actor pool that will hold the pause actor and its
     // children.
-    dbg_assert(!this._pausePool, "No pause pool should exist yet");
+    assert(!this._pausePool, "No pause pool should exist yet");
     this._pausePool = new ActorPool(this.conn);
     this.conn.addActorPool(this._pausePool);
 
@@ -1545,7 +1550,7 @@ ThreadActor.prototype = {
     this._pausePool.threadActor = this;
 
     // Create the pause actor itself...
-    dbg_assert(!this._pauseActor, "No pause actor should exist yet");
+    assert(!this._pauseActor, "No pause actor should exist yet");
     this._pauseActor = new PauseActor(this._pausePool);
     this._pausePool.addActor(this._pauseActor);
 
@@ -1924,21 +1929,26 @@ ThreadActor.prototype = {
 
     let sourceActor = this.sources.createNonSourceMappedActor(aSource);
 
+    // Set any stored breakpoints.
+    let bpActors = this.breakpointActorMap.findActors();
+    let promises = [];
+
     // Go ahead and establish the source actors for this script, which
     // fetches sourcemaps if available and sends onNewSource
     // notifications.
-    //
-    // We need to use unsafeSynchronize here because if the page is being reloaded,
-    // this call will replace the previous set of source actors for this source
-    // with a new one. If the source actors have not been replaced by the time
-    // we try to reset the breakpoints below, their location objects will still
-    // point to the old set of source actors, which point to different scripts.
-    this.unsafeSynchronize(this.sources.createSourceActors(aSource));
+    let sourceActorsCreated = this.sources.createSourceActors(aSource);
 
-    // Set any stored breakpoints.
-    let promises = [];
+    if (bpActors.length) {
+      // We need to use unsafeSynchronize here because if the page is being reloaded,
+      // this call will replace the previous set of source actors for this source
+      // with a new one. If the source actors have not been replaced by the time
+      // we try to reset the breakpoints below, their location objects will still
+      // point to the old set of source actors, which point to different
+      // scripts.
+      this.unsafeSynchronize(sourceActorsCreated);
+    }
 
-    for (let _actor of this.breakpointActorMap.findActors()) {
+    for (let _actor of bpActors) {
       // XXX bug 1142115: We do async work in here, so we need to create a fresh
       // binding because for/of does not yet do that in SpiderMonkey.
       let actor = _actor;
@@ -2716,245 +2726,93 @@ SourceActor.prototype = {
    * @returns A Promise that resolves to the given BreakpointActor.
    */
   _setBreakpoint: function (actor) {
-    let { originalLocation } = actor;
-    let { originalSourceActor, originalLine, originalColumn } = originalLocation;
+    const { originalLocation } = actor;
+    const { originalLine, originalSourceActor } = originalLocation;
 
-    return this._setBreakpointAtOriginalLocation(actor, originalLocation)
-               .then((actualLocation) => {
-      if (actualLocation) {
-        return actualLocation;
-      }
-
-      // There were no scripts that matched the given location, so we need to
-      // perform breakpoint sliding. We try to slide the breakpoint by column
-      // first, and if that fails, by line instead.
-      if (!this.isSourceMapped) {
-        if (originalColumn !== undefined) {
-          // To perform breakpoint sliding for column breakpoints, we need to
-          // build a map from column numbers to a list of entry points for each
-          // column, implemented as a sparse array. An entry point is a (script,
-          // offsets) pair, and represents all offsets in that script that are
-          // entry points for the corresponding column.
-          let columnToEntryPointsMap = [];
-
-          // Iterate over all scripts that correspond to this source actor and
-          // line number.
-          let scripts = this.scripts.getScriptsBySourceActor(this, originalLine);
-          for (let script of scripts) {
-            let columnToOffsetMap = script.getAllColumnOffsets()
-                                          .filter(({ lineNumber }) => {
-              return lineNumber === originalLine;
-            })
-
-            // Iterate over each column, and add their list of offsets to the
-            // map from column numbers to entry points by forming a (script,
-            // offsets) pair, where script is the current script, and offsets is
-            // the list of offsets for the current column.
-            for (let { columnNumber: column, offset } of columnToOffsetMap) {
-              let entryPoints = columnToEntryPointsMap[column];
-              if (!entryPoints) {
-                // We dont have a list of entry points for the current column
-                // number yet, so create it and add it to the map.
-                entryPoints = [];
-                columnToEntryPointsMap[column] = entryPoints;
-              }
-              entryPoints.push({ script, offsets: [offset] });
-            }
-          }
-
-          // Now that we have a map from column numbers to a list of entry points
-          // for each column, we can use it to perform breakpoint sliding. Start
-          // at the original column of the breakpoint actor, and keep
-          // incrementing it by one, until either we find a line that has at
-          // least one entry point, or we go past the last column in the map.
-          //
-          // Note that by computing the entire map up front, and implementing it
-          // as a sparse array, we can easily tell when we went past the last
-          // column in the map.
-          let actualColumn = originalColumn + 1;
-          while (actualColumn < columnToEntryPointsMap.length) {
-            let entryPoints = columnToEntryPointsMap[actualColumn];
-            if (entryPoints) {
-              setBreakpointAtEntryPoints(actor, entryPoints);
-              return new OriginalLocation(
-                originalSourceActor,
-                originalLine,
-                actualColumn
-              );
-            }
-            ++actualColumn;
-          }
-
-          return originalLocation;
-        } else {
-          // To perform breakpoint sliding for line breakpoints, we need to
-          // build a map from line numbers to a list of entry points for each
-          // line, implemented as a sparse array. An entry point is a (script,
-          // offsets) pair, and represents all offsets in that script that are
-          // entry points for the corresponding line.
-          let lineToEntryPointsMap = [];
-
-          // Iterate over all scripts that correspond to this source actor.
-          let scripts = this.scripts.getScriptsBySourceActor(this);
-          for (let script of scripts) {
-            // Get all offsets for each line in the current script. This returns
-            // a map from line numbers fo a list of offsets for each line,
-            // implemented as a sparse array.
-            let lineToOffsetsMap = script.getAllOffsets();
-
-            // Iterate over each line, and add their list of offsets to the map
-            // from line numbers to entry points by forming a (script, offsets)
-            // pair, where script is the current script, and offsets is the list
-            // of offsets for the current line.
-            for (let line = 0; line < lineToOffsetsMap.length; ++line) {
-              let offsets = lineToOffsetsMap[line];
-              if (offsets) {
-                let entryPoints = lineToEntryPointsMap[line];
-                if (!entryPoints) {
-                  // We dont have a list of entry points for the current line
-                  // number yet, so create it and add it to the map.
-                  entryPoints = [];
-                  lineToEntryPointsMap[line] = entryPoints;
-                }
-                entryPoints.push({ script, offsets });
-              }
-            }
-          }
-
-          // Now that we have a map from line numbers to a list of entry points
-          // for each line, we can use it to perform breakpoint sliding. Start
-          // at the original line of the breakpoint actor, and keep incrementing
-          // it by one, until either we find a line that has at least one entry
-          // point, or we go past the last line in the map.
-          //
-          // Note that by computing the entire map up front, and implementing it
-          // as a sparse array, we can easily tell when we went past the last
-          // line in the map.
-          let actualLine = originalLine + 1;
-          while (actualLine < lineToEntryPointsMap.length) {
-            let entryPoints = lineToEntryPointsMap[actualLine];
-            if (entryPoints) {
-              setBreakpointAtEntryPoints(actor, entryPoints);
-              break;
-            }
-            ++actualLine;
-          }
-          if (actualLine >= lineToEntryPointsMap.length) {
-            // We went past the last line in the map, so breakpoint sliding
-            // failed. Keep the BreakpointActor in the BreakpointActorMap as a
-            // pending breakpoint, so we can try again whenever a new script is
-            // introduced.
-            return originalLocation;
-          }
-
-          return new OriginalLocation(
-            originalSourceActor,
-            actualLine
-          );
-        }
-      } else {
-        let slideByColumn = (actualColumn) => {
-          return this.sources.getAllGeneratedLocations(new OriginalLocation(
-            this,
-            originalLine,
-            actualColumn
-          )).then((generatedLocations) => {
-            // Because getAllGeneratedLocations will always return the list of
-            // generated locations for the closest column that is greater than
-            // the one we are searching for if no exact match can be found, if
-            // the list of generated locations is empty, we've reached the end
-            // of the original line, and sliding continues by line.
-            if (generatedLocations.length === 0) {
-              return slideByLine(originalLine + 1);
-            }
-
-            // If at least one script has an offset that matches one of the
-            // generated locations in the list, then breakpoint sliding
-            // succeeded.
-            if (this._setBreakpointAtAllGeneratedLocations(actor, generatedLocations)) {
-              return this.threadActor.sources.getOriginalLocation(generatedLocations[0]);
-            }
-
-            // Try the next column in the original source.
-            return slideByColumn(actualColumn + 1);
-          });
-        };
-
-        let slideByLine = (actualLine) => {
-          return this.sources.getAllGeneratedLocations(new OriginalLocation(
-            this,
-            actualLine
-          )).then((generatedLocations) => {
-            // Because getAllGeneratedLocations will always return the list of
-            // generated locations for the closest line that is greater than
-            // the one we are searching for if no exact match can be found, if
-            // the list of generated locations is empty, we've reached the end
-            // of the original source, and breakpoint sliding failed.
-            if (generatedLocations.length === 0) {
-              return originalLocation;
-            }
-
-            // If at least one script has an offset that matches one of the
-            // generated locations in the list, then breakpoint sliding
-            // succeeded.
-            if (this._setBreakpointAtAllGeneratedLocations(actor, generatedLocations)) {
-              return this.threadActor.sources.getOriginalLocation(generatedLocations[0]);
-            }
-
-            // Try the next line in the original source.
-            return slideByLine(actualLine + 1);
-          });
-        };
-
-        if (originalColumn !== undefined) {
-          return slideByColumn(originalColumn + 1);
-        } else {
-          return slideByLine(originalLine + 1);
-        }
-      }
-    }).then((actualLocation) => {
-      // If the actual location on which the BreakpointActor ended up being
-      // set differs from the original line that was requested, both the
-      // BreakpointActor and the BreakpointActorMap need to be updated
-      // accordingly.
-      if (!actualLocation.equals(originalLocation)) {
-        let existingActor = this.breakpointActorMap.getActor(actualLocation);
-        if (existingActor) {
-          actor.onDelete();
-          this.breakpointActorMap.deleteActor(originalLocation);
-          actor = existingActor;
-        } else {
-          this.breakpointActorMap.deleteActor(originalLocation);
-          actor.originalLocation = actualLocation;
-          this.breakpointActorMap.setActor(actualLocation, actor);
-        }
-      }
-
-      return actor;
-    });
-  },
-
-  _setBreakpointAtOriginalLocation: function (actor, originalLocation) {
     if (!this.isSourceMapped) {
       if (!this._setBreakpointAtGeneratedLocation(
         actor,
         GeneratedLocation.fromOriginalLocation(originalLocation)
       )) {
-        return promise.resolve(null);
-      }
+        const scripts = this.scripts.getScriptsBySourceActorAndLine(
+          this,
+          originalLine
+        );
 
-      return promise.resolve(originalLocation);
-    } else {
-      return this.sources.getAllGeneratedLocations(originalLocation)
-                         .then((generatedLocations) => {
-        if (!this._setBreakpointAtAllGeneratedLocations(
-          actor,
-          generatedLocations
-        )) {
-          return null;
+        // Never do breakpoint sliding for column breakpoints.
+        // Additionally, never do breakpoint sliding if no scripts
+        // exist on this line.
+        //
+        // Sliding can go horribly wrong if we always try to find the
+        // next line with valid entry points in the entire file.
+        // Scripts may be completely GCed and we never knew they
+        // existed, so we end up sliding through whole functions to
+        // the user's bewilderment.
+        //
+        // We can slide reliably if any scripts exist, however, due
+        // to how scripts are kept alive. A parent Debugger.Script
+        // keeps all of its children alive, so as long as we have a
+        // valid script, we can slide through it and know we won't
+        // slide through any of its child scripts. Additionally, if a
+        // script gets GCed, that means that all parents scripts are
+        // GCed as well, and no scripts will exist on those lines
+        // anymore. We will never slide through a GCed script.
+        if (originalLocation.originalColumn || scripts.length === 0) {
+          return promise.resolve(actor);
         }
 
-        return this.threadActor.sources.getOriginalLocation(generatedLocations[0]);
+        // Find the script that spans the largest amount of code to
+        // determine the bounds for sliding.
+        const largestScript = scripts.reduce((largestScript, script) => {
+          if (script.lineCount > largestScript.lineCount) {
+            return script;
+          }
+          return largestScript;
+        });
+        const maxLine = largestScript.startLine + largestScript.lineCount - 1;
+
+        let actualLine = originalLine;
+        for (; actualLine <= maxLine; actualLine++) {
+          const loc = new GeneratedLocation(this, actualLine);
+          if (this._setBreakpointAtGeneratedLocation(actor, loc)) {
+            break;
+          }
+        }
+
+        // The above loop should never complete. We only did breakpoint sliding
+        // because we found scripts on the line we started from,
+        // which means there must be valid entry points somewhere
+        // within those scripts.
+        assert(
+          actualLine <= maxLine,
+          "Could not find any entry points to set a breakpoint on, " +
+          "even though I was told a script existed on the line I started " +
+          "the search with."
+        );
+
+        // Update the actor to use the new location (reusing a
+        // previous breakpoint if it already exists on that line).
+        const actualLocation = new OriginalLocation(originalSourceActor, actualLine);
+        const existingActor = this.breakpointActorMap.getActor(actualLocation);
+        this.breakpointActorMap.deleteActor(originalLocation);
+        if (existingActor) {
+          actor.delete();
+          actor = existingActor;
+        } else {
+          actor.originalLocation = actualLocation;
+          this.breakpointActorMap.setActor(actualLocation, actor);
+        }
+      }
+
+      return promise.resolve(actor);
+    } else {
+      return this.sources.getAllGeneratedLocations(originalLocation).then((generatedLocations) => {
+        this._setBreakpointAtAllGeneratedLocations(
+          actor,
+          generatedLocations
+        );
+
+        return actor;
       });
     }
   },
@@ -3115,287 +2973,6 @@ update(PauseScopedObjectActor.prototype, {
 update(PauseScopedObjectActor.prototype.requestTypes, {
   "threadGrip": PauseScopedObjectActor.prototype.onThreadGrip,
 });
-
-/**
- * Creates an actor for the specified stack frame.
- *
- * @param aFrame Debugger.Frame
- *        The debuggee frame.
- * @param aThreadActor ThreadActor
- *        The parent thread actor for this frame.
- */
-function FrameActor(aFrame, aThreadActor)
-{
-  this.frame = aFrame;
-  this.threadActor = aThreadActor;
-}
-
-FrameActor.prototype = {
-  actorPrefix: "frame",
-
-  /**
-   * A pool that contains frame-lifetime objects, like the environment.
-   */
-  _frameLifetimePool: null,
-  get frameLifetimePool() {
-    if (!this._frameLifetimePool) {
-      this._frameLifetimePool = new ActorPool(this.conn);
-      this.conn.addActorPool(this._frameLifetimePool);
-    }
-    return this._frameLifetimePool;
-  },
-
-  /**
-   * Finalization handler that is called when the actor is being evicted from
-   * the pool.
-   */
-  disconnect: function () {
-    this.conn.removeActorPool(this._frameLifetimePool);
-    this._frameLifetimePool = null;
-  },
-
-  /**
-   * Returns a frame form for use in a protocol message.
-   */
-  form: function () {
-    let threadActor = this.threadActor;
-    let form = { actor: this.actorID,
-                 type: this.frame.type };
-    if (this.frame.type === "call") {
-      form.callee = createValueGrip(this.frame.callee, threadActor._pausePool,
-        threadActor.objectGrip);
-    }
-
-    if (this.frame.environment) {
-      let envActor = threadActor.createEnvironmentActor(
-        this.frame.environment,
-        this.frameLifetimePool
-      );
-      form.environment = envActor.form();
-    }
-    form.this = createValueGrip(this.frame.this, threadActor._pausePool,
-      threadActor.objectGrip);
-    form.arguments = this._args();
-    if (this.frame.script) {
-      var generatedLocation = this.threadActor.sources.getFrameLocation(this.frame);
-      form.where = {
-        source: generatedLocation.generatedSourceActor.form(),
-        line: generatedLocation.generatedLine,
-        column: generatedLocation.generatedColumn
-      };
-    }
-
-    if (!this.frame.older) {
-      form.oldest = true;
-    }
-
-    return form;
-  },
-
-  _args: function () {
-    if (!this.frame.arguments) {
-      return [];
-    }
-
-    return this.frame.arguments.map(arg => createValueGrip(arg,
-      this.threadActor._pausePool, this.threadActor.objectGrip));
-  },
-
-  /**
-   * Handle a protocol request to pop this frame from the stack.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onPop: function (aRequest) {
-    // TODO: remove this when Debugger.Frame.prototype.pop is implemented
-    if (typeof this.frame.pop != "function") {
-      return { error: "notImplemented",
-               message: "Popping frames is not yet implemented." };
-    }
-
-    while (this.frame != this.threadActor.dbg.getNewestFrame()) {
-      this.threadActor.dbg.getNewestFrame().pop();
-    }
-    this.frame.pop(aRequest.completionValue);
-
-    // TODO: return the watches property when frame pop watch actors are
-    // implemented.
-    return { from: this.actorID };
-  }
-};
-
-FrameActor.prototype.requestTypes = {
-  "pop": FrameActor.prototype.onPop,
-};
-
-
-/**
- * Creates a BreakpointActor. BreakpointActors exist for the lifetime of their
- * containing thread and are responsible for deleting breakpoints, handling
- * breakpoint hits and associating breakpoints with scripts.
- *
- * @param ThreadActor aThreadActor
- *        The parent thread actor that contains this breakpoint.
- * @param OriginalLocation aOriginalLocation
- *        The original location of the breakpoint.
- */
-function BreakpointActor(aThreadActor, aOriginalLocation)
-{
-  // The set of Debugger.Script instances that this breakpoint has been set
-  // upon.
-  this.scripts = new Set();
-
-  this.threadActor = aThreadActor;
-  this.originalLocation = aOriginalLocation;
-  this.condition = null;
-  this.isPending = true;
-}
-
-BreakpointActor.prototype = {
-  actorPrefix: "breakpoint",
-  condition: null,
-
-  disconnect: function () {
-    this.removeScripts();
-  },
-
-  hasScript: function (aScript) {
-    return this.scripts.has(aScript);
-  },
-
-  /**
-   * Called when this same breakpoint is added to another Debugger.Script
-   * instance.
-   *
-   * @param aScript Debugger.Script
-   *        The new source script on which the breakpoint has been set.
-   * @param ThreadActor aThreadActor
-   *        The parent thread actor that contains this breakpoint.
-   */
-  addScript: function (aScript) {
-    this.scripts.add(aScript);
-    this.isPending = false;
-  },
-
-  /**
-   * Remove the breakpoints from associated scripts and clear the script cache.
-   */
-  removeScripts: function () {
-    for (let script of this.scripts) {
-      script.clearBreakpoint(this);
-    }
-    this.scripts.clear();
-  },
-
-  /**
-   * Check if this breakpoint has a condition that doesn't error and
-   * evaluates to true in aFrame.
-   *
-   * @param aFrame Debugger.Frame
-   *        The frame to evaluate the condition in
-   * @returns Object
-   *          - result: boolean|undefined
-   *            True when the conditional breakpoint should trigger a pause, false otherwise.
-   *            If the condition evaluation failed/killed, `result` will be `undefined`.
-   *          - message: string
-   *            The thrown message converted to a string, when the condition throws.
-   */
-  checkCondition: function(aFrame) {
-    let completion = aFrame.eval(this.condition);
-    if (completion) {
-      if (completion.throw) {
-        // The evaluation failed and threw
-        let message = "Unknown exception";
-        try {
-          if (completion.throw.getOwnPropertyDescriptor) {
-            message = completion.throw.getOwnPropertyDescriptor("message").value;
-          } else if (completion.toString) {
-            message = completion.toString();
-          }
-        } catch (ex) {}
-        return {
-          result: true,
-          message: message
-        };
-      } else if (completion.yield) {
-        dbg_assert(false,
-                   "Shouldn't ever get yield completions from an eval");
-      } else {
-        return { result: completion.return ? true : false };
-      }
-    } else {
-      // The evaluation was killed (possibly by the slow script dialog)
-      return { result: undefined };
-    }
-  },
-
-  /**
-   * A function that the engine calls when a breakpoint has been hit.
-   *
-   * @param aFrame Debugger.Frame
-   *        The stack frame that contained the breakpoint.
-   */
-  hit: function (aFrame) {
-    // Don't pause if we are currently stepping (in or over) or the frame is
-    // black-boxed.
-    let generatedLocation = this.threadActor.sources.getFrameLocation(aFrame);
-    let { originalSourceActor } = this.threadActor.unsafeSynchronize(
-      this.threadActor.sources.getOriginalLocation(generatedLocation));
-    let url = originalSourceActor.url;
-
-    if (this.threadActor.sources.isBlackBoxed(url)
-        || aFrame.onStep) {
-      return undefined;
-    }
-
-    let reason = {};
-
-    if (this.threadActor._hiddenBreakpoints.has(this.actorID)) {
-      reason.type = "pauseOnDOMEvents";
-    } else if (!this.condition) {
-      reason.type = "breakpoint";
-      // TODO: add the rest of the breakpoints on that line (bug 676602).
-      reason.actors = [ this.actorID ];
-    } else {
-      let { result, message } = this.checkCondition(aFrame)
-
-      if (result) {
-        if (!message) {
-          reason.type = "breakpoint";
-        } else {
-          reason.type = "breakpointConditionThrown";
-          reason.message = message;
-        }
-        reason.actors = [ this.actorID ];
-      } else {
-        return undefined;
-      }
-    }
-    return this.threadActor._pauseAndRespond(aFrame, reason);
-  },
-
-  /**
-   * Handle a protocol request to remove this breakpoint.
-   *
-   * @param aRequest object
-   *        The protocol request object.
-   */
-  onDelete: function (aRequest) {
-    // Remove from the breakpoint store.
-    if (this.originalLocation) {
-      this.threadActor.breakpointActorMap.deleteActor(this.originalLocation);
-    }
-    this.threadActor.threadLifetimePool.removeActor(this);
-    // Remove the actual breakpoint from the associated scripts.
-    this.removeScripts();
-    return { from: this.actorID };
-  }
-};
-
-BreakpointActor.prototype.requestTypes = {
-  "delete": BreakpointActor.prototype.onDelete
-};
 
 /**
  * Creates an EnvironmentActor. EnvironmentActors are responsible for listing
@@ -3722,7 +3299,7 @@ exports.AddonThreadActor = AddonThreadActor;
  */
 var oldReportError = reportError;
 reportError = function(aError, aPrefix="") {
-  dbg_assert(aError instanceof Error, "Must pass Error objects to reportError");
+  assert(aError instanceof Error, "Must pass Error objects to reportError");
   let msg = aPrefix + aError.message + ":\n" + aError.stack;
   oldReportError(msg);
   dumpn(msg);

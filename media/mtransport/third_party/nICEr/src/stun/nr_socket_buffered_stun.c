@@ -501,13 +501,15 @@ static int nr_socket_buffered_stun_write(void *obj,const void *msg, size_t len, 
     sock->pending += len;
   }
 
-  if (sock->pending && !already_armed) {
+  if (sock->pending) {
+    if (!already_armed) {
       if ((r=nr_socket_buffered_stun_arm_writable_cb(sock)))
         ABORT(r);
+    }
+    r_log(LOG_GENERIC, LOG_INFO, "Write buffer not empty for %s  %u - %s armed (@%p)",
+          sock->remote_addr.as_string, (uint32_t)sock->pending,
+          already_armed ? "already" : "", &sock->pending);
   }
-  r_log(LOG_GENERIC, LOG_INFO, "Write buffer not empty for %s  %u - %s armed (@%p)",
-        sock->remote_addr.as_string, (uint32_t)sock->pending,
-        already_armed ? "already" : "", &sock->pending);
 
   *written = original_len;
 
@@ -521,6 +523,10 @@ static void nr_socket_buffered_stun_writable_cb(NR_SOCKET s, int how, void *arg)
   nr_socket_buffered_stun *sock = (nr_socket_buffered_stun *)arg;
   int r,_status;
   nr_p_buf *n1, *n2;
+
+  if (sock->read_state == NR_ICE_SOCKET_READ_FAILED) {
+    ABORT(R_FAILED);
+  }
 
   /* Try to flush */
   STAILQ_FOREACH_SAFE(n1, &sock->pending_writes, entry, n2) {

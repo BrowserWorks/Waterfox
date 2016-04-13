@@ -10,7 +10,7 @@
 #include "nsCORSListenerProxy.h"
 #include "nsIChannel.h"
 #include "nsIHttpChannel.h"
-#include "nsIHttpChannelChild.h"
+#include "HttpChannelChild.h"
 #include "nsIHttpChannelInternal.h"
 #include "nsError.h"
 #include "nsContentUtils.h"
@@ -456,7 +456,7 @@ nsCORSListenerProxy::Init(nsIChannel* aChannel, DataURIHandling aAllowDataURI)
   aChannel->GetNotificationCallbacks(getter_AddRefs(mOuterNotificationCallbacks));
   aChannel->SetNotificationCallbacks(this);
 
-  nsresult rv = UpdateChannel(aChannel, aAllowDataURI);
+  nsresult rv = UpdateChannel(aChannel, aAllowDataURI, UpdateType::Default);
   if (NS_FAILED(rv)) {
     mOuterListener = nullptr;
     mRequestingPrincipal = nullptr;
@@ -649,8 +649,22 @@ nsCORSListenerProxy::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
                                             nsIAsyncVerifyRedirectCallback *aCb)
 {
   nsresult rv;
-  if (!NS_IsInternalSameURIRedirect(aOldChannel, aNewChannel, aFlags) &&
-      !NS_IsHSTSUpgradeRedirect(aOldChannel, aNewChannel, aFlags)) {
+  if (NS_IsInternalSameURIRedirect(aOldChannel, aNewChannel, aFlags) ||
+      NS_IsHSTSUpgradeRedirect(aOldChannel, aNewChannel, aFlags)) {
+    // Internal redirects still need to be updated in order to maintain
+    // the correct headers.  We use DataURIHandling::Allow, since unallowed
+    // data URIs should have been blocked before we got to the internal
+    // redirect.
+    rv = UpdateChannel(aNewChannel, DataURIHandling::Allow,
+                       UpdateType::InternalOrHSTSRedirect);
+    if (NS_FAILED(rv)) {
+        NS_WARNING("nsCORSListenerProxy::AsyncOnChannelRedirect: "
+                   "internal redirect UpdateChannel() returned failure");
+      aOldChannel->Cancel(rv);
+      return rv;
+    }
+  } else {
+    // A real, external redirect.  Perform CORS checking on new URL.
     rv = CheckRequestApproved(aOldChannel);
     if (NS_FAILED(rv)) {
       nsCOMPtr<nsIURI> oldURI;
@@ -711,7 +725,8 @@ nsCORSListenerProxy::AsyncOnChannelRedirect(nsIChannel *aOldChannel,
       }
     }
 
-    rv = UpdateChannel(aNewChannel, DataURIHandling::Disallow);
+    rv = UpdateChannel(aNewChannel, DataURIHandling::Disallow,
+                       UpdateType::Default);
     if (NS_FAILED(rv)) {
         NS_WARNING("nsCORSListenerProxy::AsyncOnChannelRedirect: "
                    "UpdateChannel() returned failure");
@@ -813,13 +828,16 @@ CheckUpgradeInsecureRequestsPreventsCORS(nsIPrincipal* aRequestingPrincipal,
 
 nsresult
 nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
-                                   DataURIHandling aAllowDataURI)
+                                   DataURIHandling aAllowDataURI,
+                                   UpdateType aUpdateType)
 {
   nsCOMPtr<nsIURI> uri, originalURI;
   nsresult rv = NS_GetFinalChannelURI(aChannel, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
   rv = aChannel->GetOriginalURI(getter_AddRefs(originalURI));
   NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
 
   // exempt data URIs from the same origin check.
   if (aAllowDataURI == DataURIHandling::Allow && originalURI == uri) {
@@ -829,8 +847,6 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
     if (dataScheme) {
       return NS_OK;
     }
-    nsCOMPtr<nsILoadInfo> loadInfo;
-    aChannel->GetLoadInfo(getter_AddRefs(loadInfo));
     if (loadInfo && loadInfo->GetAboutBlankInherits() &&
         NS_IsAboutBlank(uri)) {
       return NS_OK;
@@ -881,6 +897,11 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
     return NS_OK;
   }
 
+  // Check if we need to do a preflight, and if so set one up. This must be
+  // called once we know that the request is going, or has gone, cross-origin.
+  rv = CheckPreflightNeeded(aChannel, aUpdateType);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   // It's a cross site load
   mHasBeenCrossSite = true;
 
@@ -899,8 +920,11 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
   rv = http->SetRequestHeader(NS_LITERAL_CSTRING("Origin"), origin, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Make cookie-less if needed
-  if (!mWithCredentials) {
+  // Make cookie-less if needed. We don't need to do anything here if the
+  // channel was opened with AsyncOpen2, since then AsyncOpen2 will take
+  // care of the cookie policy for us.
+  if (!mWithCredentials &&
+      (!loadInfo || !loadInfo->GetEnforceSecurity())) {
     nsLoadFlags flags;
     rv = http->GetLoadFlags(&flags);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -909,6 +933,73 @@ nsCORSListenerProxy::UpdateChannel(nsIChannel* aChannel,
     rv = http->SetLoadFlags(flags);
     NS_ENSURE_SUCCESS(rv, rv);
   }
+
+  return NS_OK;
+}
+
+nsresult
+nsCORSListenerProxy::CheckPreflightNeeded(nsIChannel* aChannel, UpdateType aUpdateType)
+{
+  // If this caller isn't using AsyncOpen2, or if this *is* a preflight channel,
+  // then we shouldn't initiate preflight for this channel.
+  nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
+  if (!loadInfo ||
+      loadInfo->GetSecurityMode() !=
+        nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS ||
+      loadInfo->GetIsPreflight()) {
+    return NS_OK;
+  }
+
+  bool doPreflight = loadInfo->GetForcePreflight();
+
+  nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(aChannel);
+  NS_ENSURE_TRUE(http, NS_ERROR_DOM_BAD_URI);
+  nsAutoCString method;
+  http->GetRequestMethod(method);
+  if (!method.LowerCaseEqualsLiteral("get") &&
+      !method.LowerCaseEqualsLiteral("post") &&
+      !method.LowerCaseEqualsLiteral("head")) {
+    doPreflight = true;
+  }
+
+  // Avoid copying the array here
+  const nsTArray<nsCString>& loadInfoHeaders = loadInfo->CorsUnsafeHeaders();
+  if (!loadInfoHeaders.IsEmpty()) {
+    doPreflight = true;
+  }
+
+  // Add Content-Type header if needed
+  nsTArray<nsCString> headers;
+  nsAutoCString contentTypeHeader;
+  nsresult rv = http->GetRequestHeader(NS_LITERAL_CSTRING("Content-Type"),
+                                       contentTypeHeader);
+  // GetRequestHeader return an error if the header is not set. Don't add
+  // "content-type" to the list if that's the case.
+  if (NS_SUCCEEDED(rv) &&
+      !nsContentUtils::IsAllowedNonCorsContentType(contentTypeHeader) &&
+      !loadInfoHeaders.Contains(NS_LITERAL_CSTRING("content-type"),
+                                nsCaseInsensitiveCStringArrayComparator())) {
+    headers.AppendElements(loadInfoHeaders);
+    headers.AppendElement(NS_LITERAL_CSTRING("content-type"));
+    doPreflight = true;
+  }
+
+  if (!doPreflight) {
+    return NS_OK;
+  }
+
+  // A preflight is needed. But if we've already been cross-site, then
+  // we already did a preflight when that happened, and so we're not allowed
+  // to do another preflight again.
+  if (aUpdateType != UpdateType::InternalOrHSTSRedirect) {
+    NS_ENSURE_FALSE(mHasBeenCrossSite, NS_ERROR_DOM_BAD_URI);
+  }
+
+  nsCOMPtr<nsIHttpChannelInternal> internal = do_QueryInterface(http);
+  NS_ENSURE_TRUE(internal, NS_ERROR_DOM_BAD_URI);
+
+  internal->SetCorsPreflightParameters(
+    headers.IsEmpty() ? loadInfoHeaders : headers);
 
   return NS_OK;
 }
@@ -1236,9 +1327,7 @@ nsCORSListenerProxy::RemoveFromCorsPreflightCache(nsIURI* aURI,
 
 nsresult
 nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
-                                        nsIPrincipal* aPrincipal,
                                         nsICorsPreflightCallback* aCallback,
-                                        bool aWithCredentials,
                                         nsTArray<nsCString>& aUnsafeHeaders,
                                         nsIChannel** aPreflightChannel)
 {
@@ -1264,18 +1353,17 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsILoadInfo> loadInfo = static_cast<mozilla::LoadInfo*>
-    (originalLoadInfo.get())->Clone();
-
-  nsSecurityFlags securityMode = loadInfo->GetSecurityMode();
-
-  MOZ_ASSERT(securityMode == 0 ||
-             securityMode == nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS,
+  MOZ_ASSERT(originalLoadInfo->GetSecurityMode() ==
+             nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS,
              "how did we end up here?");
+
+  nsCOMPtr<nsIPrincipal> principal = originalLoadInfo->LoadingPrincipal();
+  bool withCredentials = originalLoadInfo->GetCookiePolicy() ==
+    nsILoadInfo::SEC_COOKIES_INCLUDE;
 
   nsPreflightCache::CacheEntry* entry =
     sPreflightCache ?
-    sPreflightCache->GetEntry(uri, aPrincipal, aWithCredentials, false) :
+    sPreflightCache->GetEntry(uri, principal, withCredentials, false) :
     nullptr;
 
   if (entry && entry->CheckRequest(method, aUnsafeHeaders)) {
@@ -1285,6 +1373,10 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
 
   // Either it wasn't cached or the cached result has expired. Build a
   // channel for the OPTIONS request.
+
+  nsCOMPtr<nsILoadInfo> loadInfo = static_cast<mozilla::LoadInfo*>
+    (originalLoadInfo.get())->CloneForNewRequest();
+  static_cast<mozilla::LoadInfo*>(loadInfo.get())->SetIsPreflight();
 
   nsCOMPtr<nsILoadGroup> loadGroup;
   rv = aRequestChannel->GetLoadGroup(getter_AddRefs(loadGroup));
@@ -1347,24 +1439,14 @@ nsCORSListenerProxy::StartCORSPreflight(nsIChannel* aRequestChannel,
 
   // Set up listener which will start the original channel
   RefPtr<nsCORSPreflightListener> preflightListener =
-    new nsCORSPreflightListener(aPrincipal, aCallback, aWithCredentials,
+    new nsCORSPreflightListener(principal, aCallback, withCredentials,
                                 method, preflightHeaders);
 
   rv = preflightChannel->SetNotificationCallbacks(preflightListener);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Start preflight
-  if (securityMode == nsILoadInfo::SEC_REQUIRE_CORS_DATA_INHERITS) {
-    rv = preflightChannel->AsyncOpen2(preflightListener);
-  }
-  else {
-    RefPtr<nsCORSListenerProxy> corsListener =
-      new nsCORSListenerProxy(preflightListener, aPrincipal,
-                              aWithCredentials);
-    rv = corsListener->Init(preflightChannel, DataURIHandling::Disallow);
-    NS_ENSURE_SUCCESS(rv, rv);
-    rv = preflightChannel->AsyncOpen(corsListener, nullptr);
-  }
+  rv = preflightChannel->AsyncOpen2(preflightListener);
   NS_ENSURE_SUCCESS(rv, rv);
   
   // Return newly created preflight channel

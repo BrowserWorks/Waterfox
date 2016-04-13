@@ -14,8 +14,10 @@
 #include "nsIStreamListener.h"
 #include "nsIChannelEventSink.h"
 #include "nsIInterfaceRequestor.h"
+#include "Intervals.h"
 #include "MediaCache.h"
 #include "MediaData.h"
+#include "MediaResourceCallback.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/TimeStamp.h"
@@ -43,7 +45,6 @@ class nsIPrincipal;
 
 namespace mozilla {
 
-class MediaResourceCallback;
 class MediaChannelStatistics;
 
 /**
@@ -61,7 +62,12 @@ class MediaChannelStatistics;
  */
 class MediaChannelStatistics {
 public:
-  MediaChannelStatistics() { Reset(); }
+  MediaChannelStatistics()
+    : mAccumulatedBytes(0)
+    , mIsStarted(false)
+  {
+    Reset();
+  }
 
   explicit MediaChannelStatistics(MediaChannelStatistics * aCopyFrom)
   {
@@ -128,87 +134,11 @@ private:
   bool         mIsStarted;
 };
 
-// Forward declaration for use in MediaByteRange.
-class TimestampedMediaByteRange;
-
 // Represents a section of contiguous media, with a start and end offset.
 // Used to denote ranges of data which are cached.
-class MediaByteRange {
-public:
-  MediaByteRange() : mStart(0), mEnd(0) {}
 
-  MediaByteRange(int64_t aStart, int64_t aEnd)
-    : mStart(aStart), mEnd(aEnd)
-  {
-    NS_ASSERTION(mStart <= mEnd, "Range should end after start!");
-  }
-
-  explicit MediaByteRange(TimestampedMediaByteRange& aByteRange);
-
-  bool IsNull() const {
-    return mStart == 0 && mEnd == 0;
-  }
-
-  bool operator==(const MediaByteRange& aRange) const {
-    return mStart == aRange.mStart && mEnd == aRange.mEnd;
-  }
-
-  // Clears byte range values.
-  void Clear() {
-    mStart = 0;
-    mEnd = 0;
-  }
-
-  bool Contains(const MediaByteRange& aByteRange) const {
-    return aByteRange.mStart >= mStart && aByteRange.mEnd <= mEnd;
-  }
-
-  MediaByteRange Extents(const MediaByteRange& aByteRange) const {
-    if (IsNull()) {
-      return aByteRange;
-    }
-    return MediaByteRange(std::min(mStart, aByteRange.mStart),
-                          std::max(mEnd, aByteRange.mEnd));
-  }
-
-  int64_t Length() const {
-    return mEnd - mStart;
-  }
-
-  int64_t mStart, mEnd;
-};
-
-// Represents a section of contiguous media, with a start and end offset, and
-// a timestamp representing the start time.
-class TimestampedMediaByteRange : public MediaByteRange {
-public:
-  TimestampedMediaByteRange() : MediaByteRange(), mStartTime(-1) {}
-
-  TimestampedMediaByteRange(int64_t aStart, int64_t aEnd, int64_t aStartTime)
-    : MediaByteRange(aStart, aEnd), mStartTime(aStartTime)
-  {
-    NS_ASSERTION(aStartTime >= 0, "Start time should not be negative!");
-  }
-
-  bool IsNull() const {
-    return MediaByteRange::IsNull() && mStartTime == -1;
-  }
-
-  // Clears byte range values.
-  void Clear() {
-    MediaByteRange::Clear();
-    mStartTime = -1;
-  }
-
-  // In usecs.
-  int64_t mStartTime;
-};
-
-inline MediaByteRange::MediaByteRange(TimestampedMediaByteRange& aByteRange)
-  : mStart(aByteRange.mStart), mEnd(aByteRange.mEnd)
-{
-  NS_ASSERTION(mStart < mEnd, "Range should end after start!");
-}
+typedef media::Interval<int64_t> MediaByteRange;
+typedef media::IntervalSet<int64_t> MediaByteRangeSet;
 
 class RtspMediaResource;
 
@@ -400,7 +330,7 @@ public:
    * in the media cache. Stream should be pinned during call and while
    * aRanges is being used.
    */
-  virtual nsresult GetCachedRanges(nsTArray<MediaByteRange>& aRanges) = 0;
+  virtual nsresult GetCachedRanges(MediaByteRangeSet& aRanges) = 0;
 
   // Ensure that the media cache writes any data held in its partial block.
   // Called on the main thread only.
@@ -450,11 +380,10 @@ private:
 
 class BaseMediaResource : public MediaResource {
 public:
-  virtual nsIURI* URI() const override { return mURI; }
-  virtual void SetLoadInBackground(bool aLoadInBackground) override;
+  nsIURI* URI() const override { return mURI; }
+  void SetLoadInBackground(bool aLoadInBackground) override;
 
-  virtual size_t SizeOfExcludingThis(
-                  MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     // Might be useful to track in the future:
     // - mChannel
@@ -467,8 +396,7 @@ public:
     return size;
   }
 
-  virtual size_t SizeOfIncludingThis(
-                  MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -499,7 +427,7 @@ protected:
     MOZ_COUNT_DTOR(BaseMediaResource);
   }
 
-  virtual const nsCString& GetContentType() const override
+  const nsCString& GetContentType() const override
   {
     return mContentType;
   }
@@ -513,10 +441,7 @@ protected:
   // on the main thread. This is called automatically after every read.
   void DispatchBytesConsumed(int64_t aNumBytes, int64_t aOffset);
 
-  // This is not an nsCOMPointer to prevent a circular reference
-  // between the decoder to the media stream object. The stream never
-  // outlives the lifetime of the decoder.
-  MediaResourceCallback* mCallback;
+  RefPtr<MediaResourceCallback> mCallback;
 
   // Channel used to download the media data. Must be accessed
   // from the main thread only.
@@ -529,10 +454,10 @@ protected:
   // Content-Type of the channel. This is copied from the nsIChannel when the
   // MediaResource is created. This is constant, so accessing from any thread
   // is safe.
-  const nsAutoCString mContentType;
+  const nsCString mContentType;
 
   // Copy of the url of the channel resource.
-  nsAutoCString mContentURL;
+  nsCString mContentURL;
 
   // True if SetLoadInBackground() has been called with
   // aLoadInBackground = true, i.e. when the document load event is not
@@ -629,21 +554,21 @@ public:
 
   // Ensure that the media cache writes any data held in its partial block.
   // Called on the main thread.
-  virtual void FlushCache() override;
+  void FlushCache() override;
 
   // Notify that the last data byte range was loaded.
-  virtual void NotifyLastByteRange() override;
+  void NotifyLastByteRange() override;
 
   // Main thread
-  virtual nsresult Open(nsIStreamListener** aStreamListener) override;
-  virtual nsresult Close() override;
-  virtual void     Suspend(bool aCloseImmediately) override;
-  virtual void     Resume() override;
-  virtual already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
+  nsresult Open(nsIStreamListener** aStreamListener) override;
+  nsresult Close() override;
+  void     Suspend(bool aCloseImmediately) override;
+  void     Resume() override;
+  already_AddRefed<nsIPrincipal> GetCurrentPrincipal() override;
   // Return true if the stream has been closed.
-  bool IsClosed() const { return mCacheStream.IsClosed(); }
-  virtual bool     CanClone() override;
-  virtual already_AddRefed<MediaResource> CloneData(MediaResourceCallback* aDecoder) override;
+  bool     IsClosed() const { return mCacheStream.IsClosed(); }
+  bool     CanClone() override;
+  already_AddRefed<MediaResource> CloneData(MediaResourceCallback* aDecoder) override;
   // Set statistics to be recorded to the object passed in. If not called,
   // |ChannelMediaResource| will create it's own statistics objects in |Open|.
   void RecordStatisticsTo(MediaChannelStatistics *aStatistics) override {
@@ -653,31 +578,30 @@ public:
       mChannelStatistics = aStatistics;
     }
   }
-  virtual nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override;
-  virtual void     EnsureCacheUpToDate() override;
+  nsresult ReadFromCache(char* aBuffer, int64_t aOffset, uint32_t aCount) override;
+  void     EnsureCacheUpToDate() override;
 
   // Other thread
-  virtual void     SetReadMode(MediaCacheStream::ReadMode aMode) override;
-  virtual void     SetPlaybackRate(uint32_t aBytesPerSecond) override;
-  virtual nsresult ReadAt(int64_t offset, char* aBuffer,
-                          uint32_t aCount, uint32_t* aBytes) override;
-  virtual already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount) override;
-  virtual int64_t Tell() override;
+  void     SetReadMode(MediaCacheStream::ReadMode aMode) override;
+  void     SetPlaybackRate(uint32_t aBytesPerSecond) override;
+  nsresult ReadAt(int64_t offset, char* aBuffer,
+                  uint32_t aCount, uint32_t* aBytes) override;
+  already_AddRefed<MediaByteBuffer> MediaReadAt(int64_t aOffset, uint32_t aCount) override;
+  int64_t Tell() override;
 
   // Any thread
-  virtual void    Pin() override;
-  virtual void    Unpin() override;
-  virtual double  GetDownloadRate(bool* aIsReliable) override;
-  virtual int64_t GetLength() override;
-  virtual int64_t GetNextCachedData(int64_t aOffset) override;
-  virtual int64_t GetCachedDataEnd(int64_t aOffset) override;
-  virtual bool    IsDataCachedToEndOfResource(int64_t aOffset) override;
-  virtual bool    IsSuspendedByCache() override;
-  virtual bool    IsSuspended() override;
-  virtual bool    IsTransportSeekable() override;
+  void    Pin() override;
+  void    Unpin() override;
+  double  GetDownloadRate(bool* aIsReliable) override;
+  int64_t GetLength() override;
+  int64_t GetNextCachedData(int64_t aOffset) override;
+  int64_t GetCachedDataEnd(int64_t aOffset) override;
+  bool    IsDataCachedToEndOfResource(int64_t aOffset) override;
+  bool    IsSuspendedByCache() override;
+  bool    IsSuspended() override;
+  bool    IsTransportSeekable() override;
 
-  virtual size_t SizeOfExcludingThis(
-                      MallocSizeOf aMallocSizeOf) const override {
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override {
     // Might be useful to track in the future:
     //   - mListener (seems minor)
     //   - mChannelStatistics (seems minor)
@@ -689,8 +613,7 @@ public:
     return size;
   }
 
-  virtual size_t SizeOfIncludingThis(
-                      MallocSizeOf aMallocSizeOf) const override {
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
 
@@ -715,7 +638,7 @@ public:
   };
   friend class Listener;
 
-  virtual nsresult GetCachedRanges(nsTArray<MediaByteRange>& aRanges) override;
+  nsresult GetCachedRanges(MediaByteRangeSet& aRanges) override;
 
 protected:
   // These are called on the main thread by Listener.

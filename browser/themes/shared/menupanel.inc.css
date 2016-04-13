@@ -60,12 +60,7 @@
 
   #sync-button[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > #sync-button {
-    -moz-image-region: rect(0px, 384px, 32px, 352px);
-  }
-
-  #sync-button[cui-areatype="menu-panel"][status="active"] {
-    list-style-image: url(chrome://browser/skin/syncProgress-menuPanel.png);
-    -moz-image-region: rect(0px, 32px, 32px, 0px);
+    -moz-image-region: rect(0px, 1024px, 32px, 992px);
   }
 
   #feed-button[cui-areatype="menu-panel"],
@@ -109,11 +104,6 @@
   #privatebrowsing-button[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > #privatebrowsing-button {
     -moz-image-region: rect(0px, 576px, 32px, 544px);
-  }
-
-  #tabview-button[cui-areatype="menu-panel"],
-  toolbarpaletteitem[place="palette"] > #tabview-button {
-    -moz-image-region: rect(0px, 608px, 32px, 576px);
   }
 
   #find-button[cui-areatype="menu-panel"],
@@ -173,53 +163,8 @@
     -moz-image-region: rect(0px, 960px, 32px, 928px);
   }
 
-  #pocket-button[cui-areatype="menu-panel"],
-  toolbarpaletteitem[place="palette"] > #pocket-button {
-    -moz-image-region: rect(0px, 992px, 32px, 960px);
-  }
-
-  #pocket-button[cui-areatype="menu-panel"][panel-multiview-anchor=true] {
-    -moz-image-region: rect(32px, 992px, 64px, 960px);
-  }
-
   toolbaritem[sdkstylewidget="true"] > toolbarbutton {
     -moz-image-region: rect(0, 832px, 32px, 800px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"],
-  toolbarpaletteitem[place="palette"] > #loop-button {
-    list-style-image: url(chrome://browser/skin/loop/menuPanel.png);
-    -moz-image-region: rect(0, 32px, 32px, 0);
-  }
-
-  /* Make sure that the state icons are not shown in the customization palette. */
-  toolbarpaletteitem[place="palette"] > #loop-button {
-    -moz-image-region: rect(0, 32px, 32px, 0) !important;
-  }
-
-  #loop-button[cui-areatype="menu-panel"][state="disabled"],
-  #loop-button[cui-areatype="menu-panel"][disabled="true"] {
-    -moz-image-region: rect(0, 64px, 32px, 32px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="error"] {
-    -moz-image-region: rect(0, 96px, 32px, 64px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"] {
-    -moz-image-region: rect(0, 128px, 32px, 96px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"]:-moz-any(:hover,:hover:active,[open]) {
-    -moz-image-region: rect(0, 160px, 32px, 128px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"] {
-    -moz-image-region: rect(0, 192px, 32px, 160px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"]:-moz-any(:hover,:hover:active,[open]) {
-    -moz-image-region: rect(0, 224px, 32px, 192px);
   }
 
   /* Wide panel control icons */
@@ -315,12 +260,7 @@
 
   #sync-button[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > #sync-button {
-    -moz-image-region: rect(0px, 768px, 64px, 704px);
-  }
-
-  #sync-button[cui-areatype="menu-panel"][status="active"] {
-    list-style-image: url(chrome://browser/skin/syncProgress-menuPanel@2x.png);
-    -moz-image-region: rect(0px, 64px, 64px, 0px);
+    -moz-image-region: rect(0px, 2048px, 64px, 1984px);
   }
 
   #feed-button[cui-areatype="menu-panel"],
@@ -361,51 +301,6 @@
     -moz-image-region: rect(0px, 1920px, 64px, 1856px);
   }
 
-  #pocket-button[cui-areatype="menu-panel"],
-  toolbarpaletteitem[place="palette"] > #pocket-button {
-    -moz-image-region: rect(0px, 1984px, 64px, 1920px);
-  }
-
-  #pocket-button[cui-areatype="menu-panel"][panel-multiview-anchor=true] {
-    -moz-image-region: rect(64px, 1984px, 128px, 1920px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"],
-  toolbarpaletteitem[place="palette"] > #loop-button {
-    list-style-image: url(chrome://browser/skin/loop/menuPanel@2x.png);
-    -moz-image-region: rect(0, 64px, 64px, 0);
-  }
-
-  /* Make sure that the state icons are not shown in the customization palette. */
-  toolbarpaletteitem[place="palette"] > #loop-button {
-    -moz-image-region: rect(0, 64px, 64px, 0) !important;
-  }
-
-  #loop-button[cui-areatype="menu-panel"][state="disabled"],
-  #loop-button[cui-areatype="menu-panel"][disabled="true"] {
-    -moz-image-region: rect(0, 128px, 64px, 64px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="error"] {
-    -moz-image-region: rect(0, 192px, 64px, 128px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"] {
-    -moz-image-region: rect(0, 256px, 64px, 192px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"]:-moz-any(:hover,:hover:active,[open]) {
-    -moz-image-region: rect(0, 320px, 64px, 256px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"] {
-    -moz-image-region: rect(0, 384px, 64px, 320px);
-  }
-
-  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"]:-moz-any(:hover,:hover:active,[open]) {
-    -moz-image-region: rect(0, 448px, 64px, 384px);
-  }
-
   #new-tab-button[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > #new-tab-button {
     -moz-image-region: rect(0px, 1088px, 64px, 1024px);
@@ -414,11 +309,6 @@
   #privatebrowsing-button[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > #privatebrowsing-button {
     -moz-image-region: rect(0px, 1152px, 64px, 1088px);
-  }
-
-  #tabview-button[cui-areatype="menu-panel"],
-  toolbarpaletteitem[place="palette"] > #tabview-button {
-    -moz-image-region: rect(0px, 1216px, 64px, 1152px);
   }
 
   #find-button[cui-areatype="menu-panel"],

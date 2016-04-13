@@ -39,7 +39,7 @@ LookupRegisterAllocator(const char* name)
     return mozilla::Nothing();
 }
 
-struct JitOptions
+struct DefaultJitOptions
 {
     bool checkGraphConsistency;
 #ifdef CHECK_OSIPOINT_REGISTERS
@@ -55,6 +55,7 @@ struct JitOptions
     bool disableInlining;
     bool disableLicm;
     bool disableLoopUnrolling;
+    bool disablePgo;
     bool disableInstructionReordering;
     bool disableRangeAnalysis;
     bool disableScalarReplacement;
@@ -77,7 +78,7 @@ struct JitOptions
     // The options below affect the rest of the VM, and not just the JIT.
     bool disableUnboxedObjects;
 
-    JitOptions();
+    DefaultJitOptions();
     bool isSmallFunction(JSScript* script) const;
     void setEagerCompilation();
     void setCompilerWarmUpThreshold(uint32_t warmUpThreshold);
@@ -85,7 +86,7 @@ struct JitOptions
     void enableGvn(bool val);
 };
 
-extern JitOptions js_JitOptions;
+extern DefaultJitOptions JitOptions;
 
 } // namespace jit
 } // namespace js

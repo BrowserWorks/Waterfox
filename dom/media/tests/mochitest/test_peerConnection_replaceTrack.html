@@ -19,6 +19,13 @@
           .some(sn => sn.track == t))) // that's being sent over |pc|.
   }
 
+  function allRemoteStreamsHaveReceiver(pc) {
+    return pc.getRemoteStreams()
+      .every(s => s.getTracks()        // Every remote stream,
+        .some(t => pc.getReceivers()   // should have some track,
+          .some(sn => sn.track == t))) // that's being received over |pc|.
+  }
+
   function replacetest(wrapper) {
     var pc = wrapper._pc;
     var oldSenderCount = pc.getSenders().length;
@@ -26,11 +33,13 @@
     var oldTrack = sender.track;
     ok(sender, "We have a sender for video");
     ok(allLocalStreamsHaveSender(pc),
-       "Shouldn't have any streams without a corresponding sender");
+       "Shouldn't have any local streams without a corresponding sender");
+    ok(allRemoteStreamsHaveReceiver(pc),
+       "Shouldn't have any remote streams without a corresponding receiver");
 
     var newTrack;
     var audiotrack;
-    return navigator.mediaDevices.getUserMedia({video:true, audio:true, fake:true})
+    return navigator.mediaDevices.getUserMedia({video:true, audio:true})
       .then(newStream => {
         window.grip = newStream;
         newTrack = newStream.getVideoTracks()[0];
@@ -59,7 +68,7 @@
     test = new PeerConnectionTest();
     test.audioCtx = new AudioContext();
     test.setMediaConstraints([{video: true, audio: true}], [{video: true}]);
-    test.chain.removeAfter("PC_REMOTE_CHECK_MEDIA_FLOW_PRESENT");
+    test.chain.removeAfter("PC_REMOTE_WAIT_FOR_MEDIA_FLOW");
 
     // Test replaceTrack on pcRemote separately since it's video only.
     test.chain.append([
@@ -112,7 +121,8 @@
 
         var sourceNode = test.audioCtx.createOscillator();
         sourceNode.type = 'sine';
-        // We need a frequency not too close to the fake audio track (1kHz).
+        // We need a frequency not too close to the fake audio track
+        // (440Hz for loopback devices, 1kHz for fake tracks).
         sourceNode.frequency.value = 2000;
         sourceNode.start();
 
@@ -157,7 +167,7 @@
           is(e.name, "InvalidParameterError",
              "addTrack existing track should fail");
         }
-        return navigator.mediaDevices.getUserMedia({video:true, fake: true})
+        return navigator.mediaDevices.getUserMedia({video:true})
           .then(differentStream => {
             var track = differentStream.getVideoTracks()[0];
             try {

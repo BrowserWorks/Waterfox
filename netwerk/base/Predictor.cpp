@@ -38,6 +38,7 @@
 #include "mozilla/Telemetry.h"
 
 #include "mozilla/net/NeckoCommon.h"
+#include "mozilla/net/NeckoParent.h"
 
 #include "LoadContextInfo.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -56,7 +57,8 @@ namespace net {
 
 Predictor *Predictor::sSelf = nullptr;
 
-static PRLogModuleInfo *gPredictorLog = nullptr;
+static LazyLogModule gPredictorLog("NetworkPredictor");
+
 #define PREDICTOR_LOG(args) MOZ_LOG(gPredictorLog, mozilla::LogLevel::Debug, args)
 
 #define RETURN_IF_FAILED(_rv) \
@@ -322,8 +324,6 @@ Predictor::Predictor()
   ,mStartupCount(1)
   ,mMaxURILength(PREDICTOR_MAX_URI_LENGTH_DEFAULT)
 {
-  gPredictorLog = PR_NewLogModule("NetworkPredictor");
-
   MOZ_ASSERT(!sSelf, "multiple Predictor instances!");
   sSelf = this;
 }
@@ -596,7 +596,7 @@ Predictor::Init()
   NS_ENSURE_SUCCESS(rv, rv);
 
   RefPtr<LoadContextInfo> lci =
-    new LoadContextInfo(false, false, OriginAttributes());
+    new LoadContextInfo(false, false, NeckoOriginAttributes());
 
   rv = cacheStorageService->DiskCacheStorage(lci, false,
                                              getter_AddRefs(mCacheDiskStorage));
@@ -638,7 +638,7 @@ public:
       // future.
       Preferences::SetBool(PREDICTOR_CLEANED_UP_PREF, true);
     }
-    return mIOThread->Shutdown();
+    return mIOThread->AsyncShutdown();
   }
 
 private:
@@ -1857,7 +1857,8 @@ Predictor::Resetter::OnCacheStorageInfo(uint32_t entryCount, uint64_t consumptio
 NS_IMETHODIMP
 Predictor::Resetter::OnCacheEntryInfo(nsIURI *uri, const nsACString &idEnhance,
                                       int64_t dataSize, int32_t fetchCount,
-                                      uint32_t lastModifiedTime, uint32_t expirationTime)
+                                      uint32_t lastModifiedTime, uint32_t expirationTime,
+                                      bool aPinned)
 {
   MOZ_ASSERT(NS_IsMainThread());
 

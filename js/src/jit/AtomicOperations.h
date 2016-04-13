@@ -225,23 +225,35 @@ class AtomicOperations
     }
 
     template<typename T>
-    static void memcpySafeWhenRacy(SharedMem<T> dest, SharedMem<T> src, size_t nbytes) {
-        memcpySafeWhenRacy(static_cast<void*>(dest.unwrap()), static_cast<void*>(src.unwrap()), nbytes);
+    static void memcpySafeWhenRacy(SharedMem<T*> dest, SharedMem<T*> src, size_t nbytes) {
+        memcpySafeWhenRacy(dest.template cast<void*>().unwrap(),
+                           src.template cast<void*>().unwrap(), nbytes);
     }
 
     template<typename T>
-    static void memcpySafeWhenRacy(SharedMem<T> dest, T src, size_t nbytes) {
-        memcpySafeWhenRacy(static_cast<void*>(dest.unwrap()), static_cast<void*>(src), nbytes);
+    static void memcpySafeWhenRacy(SharedMem<T*> dest, T* src, size_t nbytes) {
+        memcpySafeWhenRacy(dest.template cast<void*>().unwrap(), static_cast<void*>(src), nbytes);
     }
 
     template<typename T>
-    static void memcpySafeWhenRacy(T dest, SharedMem<T> src, size_t nbytes) {
-        memcpySafeWhenRacy(static_cast<void*>(dest), static_cast<void*>(src.unwrap()), nbytes);
+    static void memcpySafeWhenRacy(T* dest, SharedMem<T*> src, size_t nbytes) {
+        memcpySafeWhenRacy(static_cast<void*>(dest), src.template cast<void*>().unwrap(), nbytes);
     }
 
     template<typename T>
-    static void memmoveSafeWhenRacy(SharedMem<T> dest, SharedMem<T> src, size_t nbytes) {
-        memmoveSafeWhenRacy(static_cast<void*>(dest.unwrap()), static_cast<void*>(src.unwrap()), nbytes);
+    static void memmoveSafeWhenRacy(SharedMem<T*> dest, SharedMem<T*> src, size_t nbytes) {
+        memmoveSafeWhenRacy(dest.template cast<void*>().unwrap(),
+                            src.template cast<void*>().unwrap(), nbytes);
+    }
+
+    template<typename T>
+    static void podCopySafeWhenRacy(SharedMem<T*> dest, SharedMem<T*> src, size_t nelem) {
+        memcpySafeWhenRacy(dest, src, nelem * sizeof(T));
+    }
+
+    template<typename T>
+    static void podMoveSafeWhenRacy(SharedMem<T*> dest, SharedMem<T*> src, size_t nelem) {
+        memmoveSafeWhenRacy(dest, src, nelem * sizeof(T));
     }
 };
 
@@ -298,8 +310,12 @@ AtomicOperations::isLockfree(int32_t size)
 # include "jit/arm/AtomicOperations-arm.h"
 #elif defined(JS_CODEGEN_ARM64)
 # include "jit/arm64/AtomicOperations-arm64.h"
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
 # include "jit/mips-shared/AtomicOperations-mips-shared.h"
+#elif defined(__ppc64__) || defined(__PPC64_)       \
+    || defined(__ppc64le__) || defined(__PPC64LE__) \
+    || defined(__ppc__) || defined(__PPC__)
+# include "jit/none/AtomicOperations-ppc.h"
 #elif defined(JS_CODEGEN_NONE)
 # include "jit/none/AtomicOperations-none.h"
 #elif defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)

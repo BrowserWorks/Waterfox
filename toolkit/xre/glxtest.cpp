@@ -92,8 +92,8 @@ static func_ptr_type cast(void *ptr)
 
 static void fatal_error(const char *str)
 {
-  mozilla::unused << write(write_end_of_the_pipe, str, strlen(str));
-  mozilla::unused << write(write_end_of_the_pipe, "\n", 1);
+  mozilla::Unused << write(write_end_of_the_pipe, str, strlen(str));
+  mozilla::Unused << write(write_end_of_the_pipe, "\n", 1);
   _exit(EXIT_FAILURE);
 }
 
@@ -107,7 +107,7 @@ x_error_handler(Display *, XErrorEvent *ev)
                         ev->error_code,
                         ev->request_code,
                         ev->minor_code);
-  mozilla::unused << write(write_end_of_the_pipe, buf, length);
+  mozilla::Unused << write(write_end_of_the_pipe, buf, length);
   _exit(EXIT_FAILURE);
   return 0;
 }
@@ -152,7 +152,7 @@ void glxtest()
                          gtk_get_major_version(), gtk_get_minor_version(),
                          gtk_get_micro_version());
       if (len > 0 && size_t(len) < sizeof(gtkver)) {
-        mozilla::unused << write(gtk_write_end_of_the_pipe, gtkver, len);
+        mozilla::Unused << write(gtk_write_end_of_the_pipe, gtkver, len);
       }
     }
   }
@@ -290,7 +290,7 @@ void glxtest()
   dlclose(libgl);
 
   ///// Finally write data to the pipe
-  mozilla::unused << write(write_end_of_the_pipe, buf, length);
+  mozilla::Unused << write(write_end_of_the_pipe, buf, length);
 }
 
 }

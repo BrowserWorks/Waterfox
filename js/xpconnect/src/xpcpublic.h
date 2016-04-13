@@ -371,7 +371,7 @@ public:
     ZoneStatsExtras()
     {}
 
-    nsAutoCString pathPrefix;
+    nsCString pathPrefix;
 
 private:
     ZoneStatsExtras(const ZoneStatsExtras& other) = delete;
@@ -383,11 +383,13 @@ private:
 class CompartmentStatsExtras {
 public:
     CompartmentStatsExtras()
+      : sizeOfXPCPrivate(0)
     {}
 
-    nsAutoCString jsPathPrefix;
-    nsAutoCString domPathPrefix;
+    nsCString jsPathPrefix;
+    nsCString domPathPrefix;
     nsCOMPtr<nsIURI> location;
+    size_t sizeOfXPCPrivate;
 
 private:
     CompartmentStatsExtras(const CompartmentStatsExtras& other) = delete;
@@ -489,6 +491,9 @@ SimulateActivityCallback(bool aActive);
 // racey.
 bool
 ShouldDiscardSystemSource();
+
+bool
+SharedMemoryEnabled();
 
 bool
 SetAddonInterposition(const nsACString& addonId, nsIAddonInterposition* interposition);

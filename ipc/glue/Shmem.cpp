@@ -323,8 +323,8 @@ Shmem::AssertInvariants() const
   char checkMappingBack = *(reinterpret_cast<char*>(mData) + mSize - 1);
 
   // avoid "unused" warnings for these variables:
-  unused << checkMappingFront;
-  unused << checkMappingBack;
+  Unused << checkMappingFront;
+  Unused << checkMappingBack;
 }
 
 void
@@ -456,7 +456,13 @@ Shmem::OpenExisting(IHadBetterBeIPDLCodeCallingThis_OtherwiseIAmADoodyhead,
   Header* header = GetHeader(segment);
 
   if (size != header->mSize) {
-    NS_ERROR("Wrong size for this Shmem!");
+    // Deallocation should zero out the header, so check for that.
+    if (header->mSize || header->mUnsafe || header->mMagic[0] ||
+        memcmp(header->mMagic, &header->mMagic[1], sizeof(header->mMagic)-1)) {
+      NS_ERROR("Wrong size for this Shmem!");
+    } else {
+      NS_WARNING("Shmem was deallocated");
+    }
     return nullptr;
   }
 

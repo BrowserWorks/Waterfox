@@ -72,9 +72,36 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
                                   desc.mName,
                                   desc.mClock,
                                   desc.mPacketSize,
-                                  desc.mChannels,
+                                  desc.mForceMono ? 1 : desc.mChannels,
                                   desc.mBitrate);
+  (*aConfig)->mMaxPlaybackRate = desc.mMaxPlaybackRate;
 
+  return NS_OK;
+}
+
+static std::vector<JsepCodecDescription*>
+GetCodecs(const JsepTrackNegotiatedDetails& aDetails)
+{
+  // We do not try to handle cases where a codec is not used on the primary
+  // encoding.
+  if (aDetails.GetEncodingCount()) {
+    return aDetails.GetEncoding(0).GetCodecs();
+  }
+  return std::vector<JsepCodecDescription*>();
+}
+
+static nsresult
+NegotiatedDetailsToAudioCodecConfigs(const JsepTrackNegotiatedDetails& aDetails,
+                                     PtrVector<AudioCodecConfig>* aConfigs)
+{
+  std::vector<JsepCodecDescription*> codecs(GetCodecs(aDetails));
+  for (const JsepCodecDescription* codec : codecs) {
+    AudioCodecConfig* config;
+    if (NS_FAILED(JsepCodecDescToCodecConfig(*codec, &config))) {
+      return NS_ERROR_INVALID_ARG;
+    }
+    aConfigs->values.push_back(config);
+  }
   return NS_OK;
 }
 
@@ -109,23 +136,44 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
     h264Config->sprop_parameter_sets[spropSize - 1] = '\0';
     h264Config->packetization_mode = desc.mPacketizationMode;
     h264Config->profile_level_id = desc.mProfileLevelId;
-    h264Config->max_mbps = desc.mMaxMbps;
-    h264Config->max_fs = desc.mMaxFs;
-    h264Config->max_cpb = desc.mMaxCpb;
-    h264Config->max_dpb = desc.mMaxDpb;
-    h264Config->max_br = desc.mMaxBr;
     h264Config->tias_bw = 0; // TODO. Issue 165.
   }
 
   VideoCodecConfig* configRaw;
   configRaw = new VideoCodecConfig(
-      pt, desc.mName, desc.mMaxFs, desc.mMaxFr, h264Config);
+      pt, desc.mName, desc.mConstraints, h264Config);
 
   configRaw->mAckFbTypes = desc.mAckFbTypes;
   configRaw->mNackFbTypes = desc.mNackFbTypes;
   configRaw->mCcmFbTypes = desc.mCcmFbTypes;
 
   *aConfig = configRaw;
+  return NS_OK;
+}
+
+static nsresult
+NegotiatedDetailsToVideoCodecConfigs(const JsepTrackNegotiatedDetails& aDetails,
+                                     PtrVector<VideoCodecConfig>* aConfigs)
+{
+  std::vector<JsepCodecDescription*> codecs(GetCodecs(aDetails));
+  for (const JsepCodecDescription* codec : codecs) {
+    VideoCodecConfig* config;
+    if (NS_FAILED(JsepCodecDescToCodecConfig(*codec, &config))) {
+      return NS_ERROR_INVALID_ARG;
+    }
+
+    for (size_t i = 0; i < aDetails.GetEncodingCount(); ++i) {
+      const JsepTrackEncoding& jsepEncoding(aDetails.GetEncoding(i));
+      if (jsepEncoding.HasFormat(codec->mDefaultPt)) {
+        VideoCodecConfig::SimulcastEncoding encoding;
+        encoding.rid = jsepEncoding.mRid;
+        encoding.constraints = jsepEncoding.mConstraints;
+        config->mSimulcastEncodings.push_back(encoding);
+      }
+    }
+    aConfigs->values.push_back(config);
+  }
+
   return NS_OK;
 }
 
@@ -299,13 +347,6 @@ MediaPipelineFactory::GetTransportParameters(
       auto uniquePts = aTrack.GetNegotiatedDetails()->GetUniquePayloadTypes();
       for (auto i = uniquePts.begin(); i != uniquePts.end(); ++i) {
         (*aFilterOut)->AddUniquePT(*i);
-      }
-    } else {
-      // Add local SSRCs so we can distinguish which RTCP packets actually
-      // belong to this pipeline.
-      for (auto i = aTrack.GetSsrcs().begin();
-           i != aTrack.GetSsrcs().end(); ++i) {
-        (*aFilterOut)->AddLocalSSRC(*i);
       }
     }
   }
@@ -568,15 +609,6 @@ MediaPipelineFactory::CreateMediaPipelineSending(
   return NS_OK;
 }
 
-static const JsepCodecDescription*
-GetBestCodec(const JsepTrackNegotiatedDetails& details)
-{
-  if (details.GetCodecCount()) {
-    return details.GetCodec(0);
-  }
-  return nullptr;
-}
-
 nsresult
 MediaPipelineFactory::GetOrCreateAudioConduit(
     const JsepTrackPair& aTrackPair,
@@ -604,27 +636,22 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
     mPCMedia->AddAudioConduit(aTrackPair.mLevel, conduit);
   }
 
-  if (!GetBestCodec(*aTrack.GetNegotiatedDetails())) {
+  PtrVector<AudioCodecConfig> configs;
+  nsresult rv = NegotiatedDetailsToAudioCodecConfigs(
+      *aTrack.GetNegotiatedDetails(), &configs);
+
+  if (NS_FAILED(rv)) {
+    MOZ_MTLOG(ML_ERROR, "Failed to convert JsepCodecDescriptions to "
+                        "AudioCodecConfigs.");
+    return rv;
+  }
+
+  if (configs.values.empty()) {
     MOZ_MTLOG(ML_ERROR, "Can't set up a conduit with 0 codecs");
     return NS_ERROR_FAILURE;
   }
 
-  size_t numCodecs = aTrack.GetNegotiatedDetails()->GetCodecCount();
   if (receiving) {
-    PtrVector<AudioCodecConfig> configs;
-
-    for (size_t i = 0; i < numCodecs; i++) {
-      const JsepCodecDescription* cdesc =
-        aTrack.GetNegotiatedDetails()->GetCodec(i);
-
-      AudioCodecConfig* configRaw;
-      nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
-      if (NS_FAILED(rv))
-        return rv;
-
-      configs.values.push_back(configRaw);
-    }
-
     auto error = conduit->ConfigureRecvMediaCodecs(configs.values);
 
     if (error) {
@@ -652,16 +679,7 @@ MediaPipelineFactory::GetOrCreateAudioConduit(
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
 
-    const JsepCodecDescription* cdesc =
-      GetBestCodec(*aTrack.GetNegotiatedDetails());
-
-    AudioCodecConfig* configRaw;
-    nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
-    if (NS_FAILED(rv))
-      return rv;
-
-    ScopedDeletePtr<AudioCodecConfig> config(configRaw);
-    auto error = conduit->ConfigureSendMediaCodec(config.get());
+    auto error = conduit->ConfigureSendMediaCodec(configs.values[0]);
     if (error) {
       MOZ_MTLOG(ML_ERROR, "ConfigureSendMediaCodec failed: " << error);
       return NS_ERROR_FAILURE;
@@ -714,40 +732,44 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
     mPCMedia->AddVideoConduit(aTrackPair.mLevel, conduit);
   }
 
-  if (!GetBestCodec(*aTrack.GetNegotiatedDetails())) {
+  PtrVector<VideoCodecConfig> configs;
+  nsresult rv = NegotiatedDetailsToVideoCodecConfigs(
+      *aTrack.GetNegotiatedDetails(), &configs);
+
+  if (NS_FAILED(rv)) {
+    MOZ_MTLOG(ML_ERROR, "Failed to convert JsepCodecDescriptions to "
+                        "VideoCodecConfigs.");
+    return rv;
+  }
+
+  if (configs.values.empty()) {
     MOZ_MTLOG(ML_ERROR, "Can't set up a conduit with 0 codecs");
     return NS_ERROR_FAILURE;
   }
 
-  size_t numCodecs = aTrack.GetNegotiatedDetails()->GetCodecCount();
-
-  bool configuredH264 = false;
   if (receiving) {
-    PtrVector<VideoCodecConfig> configs;
-
-    for (size_t i = 0; i < numCodecs; i++) {
-      const JsepCodecDescription* cdesc =
-        aTrack.GetNegotiatedDetails()->GetCodec(i);
-
-      // We can only handle configuring one recv H264 codec
-      if (configuredH264 && (cdesc->mName == "H264")) {
+    // Prune out stuff we cannot actually do. We should work to eliminate the
+    // need for this.
+    bool configuredH264 = false;
+    for (size_t i = 0; i < configs.values.size();) {
+      // TODO(bug 1200768): We can only handle configuring one recv H264 codec
+      if (configuredH264 && (configs.values[i]->mName == "H264")) {
+        delete configs.values[i];
+        configs.values.erase(configs.values.begin() + i);
         continue;
       }
 
-      VideoCodecConfig* configRaw;
-      nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
-      if (NS_FAILED(rv))
-        return rv;
-
-      UniquePtr<VideoCodecConfig> config(configRaw);
-      if (EnsureExternalCodec(*conduit, config.get(), false)) {
+      // TODO(bug 1018791): This really should be checked sooner
+      if (EnsureExternalCodec(*conduit, configs.values[i], false)) {
+        delete configs.values[i];
+        configs.values.erase(configs.values.begin() + i);
         continue;
       }
 
-      if (cdesc->mName == "H264") {
+      if (configs.values[i]->mName == "H264") {
         configuredH264 = true;
       }
-      configs.values.push_back(config.release());
+      ++i;
     }
 
     auto error = conduit->ConfigureRecvMediaCodecs(configs.values);
@@ -777,28 +799,18 @@ MediaPipelineFactory::GetOrCreateVideoConduit(
 
     conduit->SetLocalCNAME(aTrack.GetCNAME().c_str());
 
-    const JsepCodecDescription* cdesc =
-      GetBestCodec(*aTrack.GetNegotiatedDetails());
-
-    VideoCodecConfig* configRaw;
-    nsresult rv = JsepCodecDescToCodecConfig(*cdesc, &configRaw);
-    if (NS_FAILED(rv))
-      return rv;
-
     rv = ConfigureVideoCodecMode(aTrack,*conduit);
     if (NS_FAILED(rv)) {
       return rv;
     }
 
-    // Take possession of this pointer
-    ScopedDeletePtr<VideoCodecConfig> config(configRaw);
-
-    if (EnsureExternalCodec(*conduit, config, true)) {
+    // TODO(bug 1018791): This really should be checked sooner
+    if (EnsureExternalCodec(*conduit, configs.values[0], true)) {
       MOZ_MTLOG(ML_ERROR, "External codec not available");
       return NS_ERROR_FAILURE;
     }
 
-    auto error = conduit->ConfigureSendMediaCodec(config);
+    auto error = conduit->ConfigureSendMediaCodec(configs.values[0]);
 
     if (error) {
       MOZ_MTLOG(ML_ERROR, "ConfigureSendMediaCodec failed: " << error);

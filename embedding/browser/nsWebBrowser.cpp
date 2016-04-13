@@ -1176,7 +1176,8 @@ nsWebBrowser::Create()
     widgetInit.clipChildren = true;
 
     widgetInit.mWindowType = eWindowType_child;
-    nsIntRect bounds(mInitInfo->x, mInitInfo->y, mInitInfo->cx, mInitInfo->cy);
+    LayoutDeviceIntRect bounds(mInitInfo->x, mInitInfo->y,
+                               mInitInfo->cx, mInitInfo->cy);
 
     mInternalWidget->SetWidgetListener(this);
     mInternalWidget->Create(nullptr, mParentNativeWindow, bounds, &widgetInit);
@@ -1375,7 +1376,7 @@ nsWebBrowser::GetPositionAndSize(int32_t* aX, int32_t* aY,
       *aCY = mInitInfo->cy;
     }
   } else if (mInternalWidget) {
-    nsIntRect bounds;
+    LayoutDeviceIntRect bounds;
     NS_ENSURE_SUCCESS(mInternalWidget->GetBounds(bounds), NS_ERROR_FAILURE);
 
     if (aX) {
@@ -1728,7 +1729,7 @@ nsWebBrowser::WindowLowered(nsIWidget* aWidget)
 }
 
 bool
-nsWebBrowser::PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion)
+nsWebBrowser::PaintWindow(nsIWidget* aWidget, LayoutDeviceIntRegion aRegion)
 {
   LayerManager* layerManager = aWidget->GetLayerManager();
   NS_ASSERTION(layerManager, "Must be in paint event");
@@ -1736,8 +1737,8 @@ nsWebBrowser::PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion)
   layerManager->BeginTransaction();
   RefPtr<PaintedLayer> root = layerManager->CreatePaintedLayer();
   if (root) {
-    nsIntRect dirtyRect = aRegion.GetBounds();
-    root->SetVisibleRegion(dirtyRect);
+    nsIntRect dirtyRect = aRegion.GetBounds().ToUnknownRect();
+    root->SetVisibleRegion(LayerIntRegion::FromUnknownRegion(dirtyRect));
     layerManager->SetRoot(root);
   }
 

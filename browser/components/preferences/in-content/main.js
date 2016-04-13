@@ -5,7 +5,12 @@
 Components.utils.import("resource://gre/modules/Downloads.jsm");
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
 Components.utils.import("resource://gre/modules/Task.jsm");
+Components.utils.import("resource:///modules/ShellService.jsm");
 Components.utils.import("resource:///modules/TransientPrefs.jsm");
+#ifdef E10S_TESTING_ONLY
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
+                                  "resource://gre/modules/UpdateUtils.jsm");
+#endif
 
 var gMainPane = {
   /**
@@ -78,32 +83,21 @@ var gMainPane = {
     setEventListener("e10sAutoStart", "command",
                      gMainPane.enableE10SChange);
     let e10sCheckbox = document.getElementById("e10sAutoStart");
-    e10sCheckbox.checked = Services.appinfo.browserTabsRemoteAutostart;
 
-    // If e10s is blocked for some reason unrelated to prefs, we want to disable
-    // the checkbox.
-    if (!Services.appinfo.browserTabsRemoteAutostart) {
-      let e10sBlockedReason = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
-      let appinfo = Services.appinfo.QueryInterface(Ci.nsIObserver);
-      appinfo.observe(e10sBlockedReason, "getE10SBlocked", "")
-      if (e10sBlockedReason.data) {
-        if (e10sBlockedReason.data == "Safe mode") {
-          // If the only reason we're disabled is because of safe mode, then
-          // we want to allow the user to un-toggle the pref.
-          // We're relying on the nsAppRunner code only specifying "Safe mode"
-          // as the reason if the pref is otherwise enabled, and there are no
-          // other reasons to block e10s.
-          // Update the checkbox to reflect the pref state.
-          e10sCheckbox.checked = true;
-        } else {
-          e10sCheckbox.disabled = true;
-          e10sCheckbox.label += " (disabled: " + e10sBlockedReason.data + ")";
-        }
-      }
+    let e10sPref = document.getElementById("browser.tabs.remote.autostart");
+    let e10sTempPref = document.getElementById("e10sTempPref");
+    let e10sForceEnable = document.getElementById("e10sForceEnable");
+
+    let preffedOn = e10sPref.value || e10sTempPref.value || e10sForceEnable.value;
+
+    if (preffedOn) {
+      // The checkbox is checked if e10s is preffed on.
+      e10sCheckbox.checked = true;
+
+      // but if it's force disabled, then the checkbox is disabled.
+      e10sCheckbox.disabled = !Services.appinfo.browserTabsRemoteAutostart;
     }
 
-    // If E10S is blocked because of safe mode, we want the checkbox to be
-    // enabled
 #endif
 
 #ifdef MOZ_DEV_EDITION
@@ -369,19 +363,18 @@ var gMainPane = {
       // We should only include visible & non-pinned tabs
 
       tabs = win.gBrowser.visibleTabs.slice(win.gBrowser._numPinnedTabs);
-      
       tabs = tabs.filter(this.isNotAboutPreferences);
     }
-    
+
     return tabs;
   },
-  
+
   /**
    * Check to see if a tab is not about:preferences
    */
   isNotAboutPreferences: function (aElement, aIndex, aArray)
   {
-    return (aElement.linkedBrowser.currentURI.spec.startsWith != "about:preferences");
+    return !aElement.linkedBrowser.currentURI.spec.startsWith("about:preferences");
   },
 
   /**

@@ -19,6 +19,7 @@
 #include "mozilla/RefPtr.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "nsAutoPtr.h"
 #include "nsCExternalHandlerService.h"
 #include "nsIObserver.h"
@@ -62,12 +63,7 @@ namespace {
   static const double kSdpUpdatingTimeoutMs = 3000.0;
 
   // UUID of OBEX Object Push
-  static const BluetoothUuid kObexObjectPush = {
-    {
-      0x00, 0x00, 0x11, 0x05, 0x00, 0x00, 0x10, 0x00,
-      0x80, 0x00, 0x00, 0x80, 0x5F, 0x9B, 0x34, 0xFB
-    }
-  };
+  static const BluetoothUuid kObexObjectPush(OBJECT_PUSH);
 
   StaticRefPtr<BluetoothOppManager> sBluetoothOppManager;
   static bool sInShutdown = false;
@@ -76,13 +72,13 @@ namespace {
 class mozilla::dom::bluetooth::SendFileBatch
 {
 public:
-  SendFileBatch(const nsAString& aDeviceAddress, Blob* aBlob)
+  SendFileBatch(const BluetoothAddress& aDeviceAddress, Blob* aBlob)
     : mDeviceAddress(aDeviceAddress)
   {
     mBlobs.AppendElement(aBlob);
   }
 
-  nsString mDeviceAddress;
+  BluetoothAddress mDeviceAddress;
   nsTArray<RefPtr<Blob>> mBlobs;
 };
 
@@ -105,8 +101,8 @@ BluetoothOppManager::Observe(nsISupports* aSubject,
 class SendSocketDataTask : public nsRunnable
 {
 public:
-  SendSocketDataTask(uint8_t* aStream, uint32_t aSize)
-    : mStream(aStream)
+  SendSocketDataTask(UniquePtr<uint8_t[]> aStream, uint32_t aSize)
+    : mStream(Move(aStream))
     , mSize(aSize)
   {
     MOZ_ASSERT(!NS_IsMainThread());
@@ -116,13 +112,13 @@ public:
   {
     MOZ_ASSERT(NS_IsMainThread());
 
-    sBluetoothOppManager->SendPutRequest(mStream, mSize);
+    sBluetoothOppManager->SendPutRequest(mStream.get(), mSize);
 
     return NS_OK;
   }
 
 private:
-  nsAutoArrayPtr<uint8_t> mStream;
+  UniquePtr<uint8_t[]> mStream;
   uint32_t mSize;
 };
 
@@ -142,10 +138,11 @@ public:
     MOZ_ASSERT(!NS_IsMainThread());
 
     uint32_t numRead;
-    nsAutoArrayPtr<char> buf(new char[mAvailablePacketSize]);
+    auto buf = MakeUnique<uint8_t[]>(mAvailablePacketSize);
 
     // function inputstream->Read() only works on non-main thread
-    nsresult rv = mInputStream->Read(buf, mAvailablePacketSize, &numRead);
+    nsresult rv = mInputStream->Read((char*)buf.get(), mAvailablePacketSize,
+                                     &numRead);
     if (NS_FAILED(rv)) {
       // Needs error handling here
       BT_WARNING("Failed to read from input stream");
@@ -156,7 +153,7 @@ public:
       sBluetoothOppManager->CheckPutFinal(numRead);
 
       RefPtr<SendSocketDataTask> task =
-        new SendSocketDataTask((uint8_t*)buf.forget(), numRead);
+        new SendSocketDataTask(Move(buf), numRead);
       if (NS_FAILED(NS_DispatchToMainThread(task))) {
         BT_WARNING("Failed to dispatch to main thread!");
         return NS_ERROR_FAILURE;
@@ -214,9 +211,7 @@ BluetoothOppManager::BluetoothOppManager()
   , mWaitingToSendPutFinal(false)
   , mCurrentBlobIndex(-1)
   , mSocketType(static_cast<BluetoothSocketType>(0))
-{
-  mConnectedDeviceAddress.AssignLiteral(BLUETOOTH_ADDRESS_NONE);
-}
+{ }
 
 BluetoothOppManager::~BluetoothOppManager()
 {
@@ -265,7 +260,7 @@ BluetoothOppManager::Get()
 }
 
 void
-BluetoothOppManager::ConnectInternal(const nsAString& aDeviceAddress)
+BluetoothOppManager::ConnectInternal(const BluetoothAddress& aDeviceAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -290,10 +285,8 @@ BluetoothOppManager::ConnectInternal(const nsAString& aDeviceAddress)
 
   mNeedsUpdatingSdpRecords = true;
 
-  nsString uuid;
-  BluetoothUuidHelper::GetString(BluetoothServiceClass::OBJECT_PUSH, uuid);
-
-  if (NS_FAILED(bs->GetServiceChannel(aDeviceAddress, uuid, this))) {
+  auto rv = bs->GetServiceChannel(aDeviceAddress, kObexObjectPush, this);
+  if (NS_FAILED(rv)) {
     OnSocketConnectError(mSocket);
     return;
   }
@@ -389,7 +382,7 @@ BluetoothOppManager::StartSendingNextFile()
 }
 
 bool
-BluetoothOppManager::SendFile(const nsAString& aDeviceAddress,
+BluetoothOppManager::SendFile(const BluetoothAddress& aDeviceAddress,
                               BlobParent* aActor)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -401,7 +394,7 @@ BluetoothOppManager::SendFile(const nsAString& aDeviceAddress,
 }
 
 bool
-BluetoothOppManager::SendFile(const nsAString& aDeviceAddress,
+BluetoothOppManager::SendFile(const BluetoothAddress& aDeviceAddress,
                               Blob* aBlob)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -415,7 +408,7 @@ BluetoothOppManager::SendFile(const nsAString& aDeviceAddress,
 }
 
 void
-BluetoothOppManager::AppendBlobToSend(const nsAString& aDeviceAddress,
+BluetoothOppManager::AppendBlobToSend(const BluetoothAddress& aDeviceAddress,
                                       Blob* aBlob)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -851,8 +844,7 @@ BluetoothOppManager::ComposePacket(uint8_t aOpCode, UnixSocketBuffer* aMessage)
     // [opcode:1][length:2][Headers:var]
     frameHeaderLength = 3;
 
-    mPacketLength = ((static_cast<int>(data[1]) << 8) | data[2]) -
-                    frameHeaderLength;
+    mPacketLength = BigEndian::readUint16(&data[1]) - frameHeaderLength;
     /**
      * A PUT request from remote devices may be divided into multiple parts.
      * In other words, one request may need to be received multiple times,
@@ -1103,7 +1095,7 @@ BluetoothOppManager::ClientDataHandler(UnixSocketBuffer* aMessage)
     // Keep remote information
     mRemoteObexVersion = data[3];
     mRemoteConnectionFlags = data[4];
-    mRemoteMaxPacketLength = (static_cast<int>(data[5]) << 8) | data[6];
+    mRemoteMaxPacketLength = BigEndian::readUint16(&data[5]);
 
     // The length of file name exceeds maximum length.
     int fileNameByteLen = (mFileName.Length() + 1) * 2;
@@ -1186,7 +1178,7 @@ BluetoothOppManager::SendPutHeaderRequest(const nsAString& aFileName,
 {
   if (!mConnected) return;
 
-  uint8_t* req = new uint8_t[mRemoteMaxPacketLength];
+  auto req = MakeUnique<uint8_t[]>(mRemoteMaxPacketLength);
 
   int len = aFileName.Length();
   uint8_t* fileName = new uint8_t[(len + 1) * 2];
@@ -1208,10 +1200,9 @@ BluetoothOppManager::SendPutHeaderRequest(const nsAString& aFileName,
   // This is final put packet if file size equals to 0
   uint8_t opcode = (aFileSize > 0) ? ObexRequestCode::Put
                                    : ObexRequestCode::PutFinal;
-  SendObexData(req, opcode, index);
+  SendObexData(Move(req), opcode, index);
 
   delete [] fileName;
-  delete [] req;
 }
 
 void
@@ -1227,14 +1218,13 @@ BluetoothOppManager::SendPutRequest(uint8_t* aFileBody,
 
   // Section 3.3.3 "Put", IrOBEX 1.2
   // [opcode:1][length:2][Headers:var]
-  uint8_t* req = new uint8_t[mRemoteMaxPacketLength];
+  auto req = MakeUnique<uint8_t[]>(mRemoteMaxPacketLength);
 
   int index = 3;
   index += AppendHeaderBody(&req[index], mRemoteMaxPacketLength - index,
                             aFileBody, aFileBodyLength);
 
-  SendObexData(req, ObexRequestCode::Put, index);
-  delete [] req;
+  SendObexData(Move(req), ObexRequestCode::Put, index);
   mSentFileLength += aFileBodyLength;
 }
 
@@ -1252,11 +1242,10 @@ BluetoothOppManager::SendPutFinalRequest()
 
   // [opcode:1][length:2]
   int index = 3;
-  uint8_t* req = new uint8_t[mRemoteMaxPacketLength];
+  auto req = MakeUnique<uint8_t[]>(mRemoteMaxPacketLength);
   index += AppendHeaderEndOfBody(&req[index]);
 
-  SendObexData(req, ObexRequestCode::PutFinal, index);
-  delete [] req;
+  SendObexData(Move(req), ObexRequestCode::PutFinal, index);
 
   mWaitingToSendPutFinal = false;
 }
@@ -1289,7 +1278,7 @@ BluetoothOppManager::IsConnected()
 }
 
 void
-BluetoothOppManager::GetAddress(nsAString& aDeviceAddress)
+BluetoothOppManager::GetAddress(BluetoothAddress& aDeviceAddress)
 {
   return mSocket->GetAddress(aDeviceAddress);
 }
@@ -1375,6 +1364,18 @@ BluetoothOppManager::SendObexData(uint8_t* aData, uint8_t aOpcode, int aSize)
 
   SetObexPacketInfo(aData, aOpcode, aSize);
   mSocket->SendSocketData(new UnixSocketRawData(aData, aSize));
+}
+
+void
+BluetoothOppManager::SendObexData(UniquePtr<uint8_t[]> aData, uint8_t aOpcode,
+                                  int aSize)
+{
+  if (!mIsServer) {
+    mLastCommand = aOpcode;
+  }
+
+  SetObexPacketInfo(aData.get(), aOpcode, aSize);
+  mSocket->SendSocketData(new UnixSocketRawData(Move(aData), aSize));
 }
 
 void
@@ -1619,7 +1620,7 @@ BluetoothOppManager::OnSocketDisconnect(BluetoothSocket* aSocket)
   }
 
   AfterOppDisconnected();
-  mConnectedDeviceAddress.AssignLiteral(BLUETOOTH_ADDRESS_NONE);
+  mConnectedDeviceAddress.Clear();
   mSuccessFlag = false;
 
   mSocket = nullptr;
@@ -1642,12 +1643,13 @@ BluetoothOppManager::Disconnect(BluetoothProfileController* aController)
 }
 
 void
-BluetoothOppManager::OnGetServiceChannel(const nsAString& aDeviceAddress,
-                                         const nsAString& aServiceUuid,
-                                         int aChannel)
+BluetoothOppManager::OnGetServiceChannel(
+  const BluetoothAddress& aDeviceAddress,
+  const BluetoothUuid& aServiceUuid,
+  int aChannel)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!aDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!aDeviceAddress.IsCleared());
 
   BluetoothService* bs = BluetoothService::Get();
   NS_ENSURE_TRUE_VOID(bs);
@@ -1679,18 +1681,16 @@ BluetoothOppManager::OnGetServiceChannel(const nsAString& aDeviceAddress,
 }
 
 void
-BluetoothOppManager::OnUpdateSdpRecords(const nsAString& aDeviceAddress)
+BluetoothOppManager::OnUpdateSdpRecords(const BluetoothAddress& aDeviceAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!aDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!aDeviceAddress.IsCleared());
 
   BluetoothService* bs = BluetoothService::Get();
   NS_ENSURE_TRUE_VOID(bs);
 
-  nsString uuid;
-  BluetoothUuidHelper::GetString(BluetoothServiceClass::OBJECT_PUSH, uuid);
-
-  if (NS_FAILED(bs->GetServiceChannel(aDeviceAddress, uuid, this))) {
+  auto rv = bs->GetServiceChannel(aDeviceAddress, kObexObjectPush, this);
+  if (NS_FAILED(rv)) {
     OnSocketConnectError(mSocket);
   }
 }
@@ -1711,7 +1711,7 @@ BluetoothOppManager::AcquireSdcardMountLock()
 }
 
 void
-BluetoothOppManager::Connect(const nsAString& aDeviceAddress,
+BluetoothOppManager::Connect(const BluetoothAddress& aDeviceAddress,
                              BluetoothProfileController* aController)
 {
   MOZ_ASSERT(false);

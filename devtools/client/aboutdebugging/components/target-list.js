@@ -7,13 +7,13 @@
 "use strict";
 
 loader.lazyRequireGetter(this, "React",
-  "resource://devtools/client/shared/vendor/react.js");
+  "devtools/client/shared/vendor/react");
 loader.lazyRequireGetter(this, "TargetComponent",
   "devtools/client/aboutdebugging/components/target", true);
 loader.lazyRequireGetter(this, "Services");
 
 const Strings = Services.strings.createBundle(
-  "chrome://browser/locale/devtools/aboutdebugging.properties");
+  "chrome://devtools/locale/aboutdebugging.properties");
 const LocaleCompare = (a, b) => {
   return a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 };
@@ -27,7 +27,7 @@ exports.TargetListComponent = React.createClass({
       return React.createElement(TargetComponent, { client, target });
     });
     return (
-      React.createElement("div", { className: "targets" },
+      React.createElement("div", { id: this.props.id, className: "targets" },
         React.createElement("h4", null, this.props.name),
         targets.length > 0 ? targets :
           React.createElement("p", null, Strings.GetStringFromName("nothing"))

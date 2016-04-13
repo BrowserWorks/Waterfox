@@ -36,6 +36,18 @@ Current ping data
 Archived ping data
 ">
 
+<!ENTITY aboutTelemetry.pingDataDisplay "
+Ping data display:
+">
+
+<!ENTITY aboutTelemetry.structured "
+Structured
+">
+
+<!ENTITY aboutTelemetry.raw "
+Raw JSON
+">
+
 <!ENTITY aboutTelemetry.showSubsessionData "
 Show subsession data
 ">
@@ -50,6 +62,10 @@ Choose ping:
 
 <!ENTITY aboutTelemetry.showOlderPing "
 Older ping &gt;&gt;
+">
+
+<!ENTITY aboutTelemetry.rawPingData "
+Raw ping data…
 ">
 
 <!ENTITY aboutTelemetry.archiveWeekHeader "
@@ -104,8 +120,8 @@ Ping
   Late Writes
 ">
 
-<!ENTITY aboutTelemetry.systemInfoSection "
-  System Information
+<!ENTITY aboutTelemetry.sessionInfoSection "
+  Session Information
 ">
 
 <!ENTITY aboutTelemetry.addonHistogramsSection "
@@ -134,4 +150,8 @@ Ping
 
 <!ENTITY aboutTelemetry.filterText "
   Filter (strings or /regexp/)
+">
+
+<!ENTITY aboutTelemetry.payloadChoiceHeader "
+  Payload
 ">

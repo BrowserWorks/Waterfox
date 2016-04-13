@@ -13,7 +13,7 @@ sys.path.insert(
 
 from automation import Automation
 from remoteautomation import RemoteAutomation, fennecLogcatFilters
-from runtests import Mochitest, MessageLogger
+from runtests import MochitestDesktop, MessageLogger
 from mochitest_options import MochitestArgumentParser
 
 import devicemanager
@@ -22,19 +22,21 @@ import mozinfo
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 
 
-class MochiRemote(Mochitest):
+# TODO inherit from MochitestBase instead
+class MochiRemote(MochitestDesktop):
     _automation = None
     _dm = None
     localProfile = None
     logMessages = []
 
     def __init__(self, automation, devmgr, options):
-        Mochitest.__init__(self, options)
+        MochitestDesktop.__init__(self, options)
 
         self._automation = automation
         self._dm = devmgr
         self.environment = self._automation.environment
-        self.remoteProfile = options.remoteTestRoot + "/profile"
+        self.remoteProfile = os.path.join(options.remoteTestRoot, "profile/")
+        self.remoteModulesDir = os.path.join(options.remoteTestRoot, "modules/")
         self._automation.setRemoteProfile(self.remoteProfile)
         self.remoteLog = options.remoteLogFile
         self.localLog = options.logFile
@@ -63,7 +65,7 @@ class MochiRemote(Mochitest):
         blobberUploadDir = os.environ.get('MOZ_UPLOAD_DIR', None)
         if blobberUploadDir:
             self._dm.getDirectory(self.remoteNSPR, blobberUploadDir)
-        Mochitest.cleanup(self, options)
+        MochitestDesktop.cleanup(self, options)
 
     def findPath(self, paths, filename=None):
         for path in paths:
@@ -155,7 +157,7 @@ class MochiRemote(Mochitest):
         """ Create the servers on the host and start them up """
         restoreRemotePaths = self.switchToLocalPaths(options)
         # ignoreSSLTunnelExts is a workaround for bug 1109310
-        Mochitest.startServers(
+        MochitestDesktop.startServers(
             self,
             options,
             debuggerInfo,
@@ -164,12 +166,27 @@ class MochiRemote(Mochitest):
 
     def buildProfile(self, options):
         restoreRemotePaths = self.switchToLocalPaths(options)
-        manifest = Mochitest.buildProfile(self, options)
+        if options.testingModulesDir:
+            try:
+                self._dm.pushDir(options.testingModulesDir, self.remoteModulesDir)
+                self._dm.chmodDir(self.remoteModulesDir)
+            except devicemanager.DMError:
+                self.log.error(
+                    "Automation Error: Unable to copy test modules to device.")
+                raise
+            savedTestingModulesDir = options.testingModulesDir
+            options.testingModulesDir = self.remoteModulesDir
+        else:
+            savedTestingModulesDir = None
+        manifest = MochitestDesktop.buildProfile(self, options)
+        if savedTestingModulesDir:
+            options.testingModulesDir = savedTestingModulesDir
         self.localProfile = options.profilePath
         self._dm.removeDir(self.remoteProfile)
 
         try:
             self._dm.pushDir(options.profilePath, self.remoteProfile)
+            self._dm.chmodDir(self.remoteProfile)
         except devicemanager.DMError:
             self.log.error(
                 "Automation Error: Unable to copy profile to device.")
@@ -179,17 +196,32 @@ class MochiRemote(Mochitest):
         options.profilePath = self.remoteProfile
         return manifest
 
+    def addChromeToProfile(self, options):
+        manifest = MochitestDesktop.addChromeToProfile(self, options)
+
+        # Support Firefox (browser), B2G (shell), SeaMonkey (navigator), and Webapp
+        # Runtime (webapp).
+        if options.chrome:
+            # append overlay to chrome.manifest
+            chrome = "overlay chrome://browser/content/browser.xul chrome://mochikit/content/browser-test-overlay.xul"
+            path = os.path.join(options.profilePath, 'extensions', 'staged',
+                                'mochikit@mozilla.org', 'chrome.manifest')
+            with open(path, "a") as f:
+                f.write(chrome)
+        return manifest
+
     def buildURLOptions(self, options, env):
         self.localLog = options.logFile
         options.logFile = self.remoteLog
         options.fileLevel = 'INFO'
         options.profilePath = self.localProfile
         env["MOZ_HIDE_RESULTS_TABLE"] = "1"
-        retVal = Mochitest.buildURLOptions(self, options, env)
+        retVal = MochitestDesktop.buildURLOptions(self, options, env)
 
         # we really need testConfig.js (for browser chrome)
         try:
             self._dm.pushDir(options.profilePath, self.remoteProfile)
+            self._dm.chmodDir(self.remoteProfile)
         except devicemanager.DMError:
             self.log.error(
                 "Automation Error: Unable to copy profile to device.")
@@ -239,7 +271,7 @@ class MochiRemote(Mochitest):
         return None
 
     def buildBrowserEnv(self, options, debugger=False):
-        browserEnv = Mochitest.buildBrowserEnv(
+        browserEnv = MochitestDesktop.buildBrowserEnv(
             self,
             options,
             debugger=debugger)
@@ -248,7 +280,7 @@ class MochiRemote(Mochitest):
             del browserEnv["MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA"]
         if "XPCOM_MEM_BLOAT_LOG" in browserEnv:
             del browserEnv["XPCOM_MEM_BLOAT_LOG"]
-        # override nsprLogs to avoid processing in Mochitest base class
+        # override nsprLogs to avoid processing in MochitestDesktop base class
         self.nsprLogs = None
         browserEnv["NSPR_LOG_FILE"] = os.path.join(
             self.remoteNSPR,
@@ -263,8 +295,9 @@ class MochiRemote(Mochitest):
         if 'profileDir' not in kwargs and 'profile' in kwargs:
             kwargs['profileDir'] = kwargs.pop('profile').profile
 
-        if 'quiet' in kwargs:
-            kwargs.pop('quiet')
+        # remove args not supported by automation.py
+        kwargs.pop('marionette_args', None)
+        kwargs.pop('quiet', None)
 
         return self._automation.runApp(*args, **kwargs)
 

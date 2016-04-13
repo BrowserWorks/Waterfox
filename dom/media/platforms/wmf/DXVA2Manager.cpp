@@ -280,21 +280,23 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
     return hr;
   }
 
-  // Create D3D9DeviceEx.
+  // Create D3D9DeviceEx. We pass null HWNDs here even though the documentation
+  // suggests that one of them should not be. At this point in time Chromium
+  // does the same thing for video acceleration.
   D3DPRESENT_PARAMETERS params = {0};
   params.BackBufferWidth = 1;
   params.BackBufferHeight = 1;
   params.BackBufferFormat = D3DFMT_UNKNOWN;
   params.BackBufferCount = 1;
   params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-  params.hDeviceWindow = ::GetShellWindow();
+  params.hDeviceWindow = nullptr;
   params.Windowed = TRUE;
   params.Flags = D3DPRESENTFLAG_VIDEO;
 
   RefPtr<IDirect3DDevice9Ex> device;
   hr = d3d9Ex->CreateDeviceEx(D3DADAPTER_DEFAULT,
                               D3DDEVTYPE_HAL,
-                              ::GetShellWindow(),
+                              nullptr,
                               D3DCREATE_FPU_PRESERVE |
                               D3DCREATE_MULTITHREADED |
                               D3DCREATE_MIXED_VERTEXPROCESSING,
@@ -380,7 +382,8 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
     return hr;
   }
 
-  if (adapter.VendorId == 0x1022) {
+  if (adapter.VendorId == 0x1022 &&
+      !Preferences::GetBool("media.wmf.skip-blacklist", false)) {
     for (size_t i = 0; i < MOZ_ARRAY_LENGTH(sAMDPreUVD4); i++) {
       if (adapter.DeviceId == sAMDPreUVD4[i]) {
         mIsAMDPreUVD4 = true;
@@ -420,17 +423,13 @@ D3D9DXVA2Manager::CopyToImage(IMFSample* aSample,
                          getter_AddRefs(surface));
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  RefPtr<Image> image = aImageContainer->CreateImage(ImageFormat::D3D9_RGB32_TEXTURE);
-  NS_ENSURE_TRUE(image, E_FAIL);
-  NS_ASSERTION(image->GetFormat() == ImageFormat::D3D9_RGB32_TEXTURE,
-               "Wrong format?");
+  RefPtr<D3D9SurfaceImage> image = new D3D9SurfaceImage(mFirstFrame);
+  hr = image->AllocateAndCopy(mTextureClientAllocator, surface, aRegion);
+  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
-  D3D9SurfaceImage* videoImage = static_cast<D3D9SurfaceImage*>(image.get());
-  hr = videoImage->SetData(D3D9SurfaceImage::Data(surface, aRegion, mTextureClientAllocator, mFirstFrame));
   mFirstFrame = false;
 
   image.forget(aOutImage);
-
   return S_OK;
 }
 
@@ -667,7 +666,8 @@ D3D11DXVA2Manager::Init(nsACString& aFailureReason)
     return hr;
   }
 
-  if (adapterDesc.VendorId == 0x1022) {
+  if (adapterDesc.VendorId == 0x1022 &&
+      !Preferences::GetBool("media.wmf.skip-blacklist", false)) {
     for (size_t i = 0; i < MOZ_ARRAY_LENGTH(sAMDPreUVD4); i++) {
       if (adapterDesc.DeviceId == sAMDPreUVD4[i]) {
         mIsAMDPreUVD4 = true;
@@ -714,23 +714,16 @@ D3D11DXVA2Manager::CopyToImage(IMFSample* aVideoSample,
   // to create a copy of that frame as a sharable resource, save its share
   // handle, and put that handle into the rendering pipeline.
 
-  ImageFormat format = ImageFormat::D3D11_SHARE_HANDLE_TEXTURE;
-  RefPtr<Image> image(aContainer->CreateImage(format));
-  NS_ENSURE_TRUE(image, E_FAIL);
-  NS_ASSERTION(image->GetFormat() == ImageFormat::D3D11_SHARE_HANDLE_TEXTURE,
-               "Wrong format?");
+  RefPtr<D3D11ShareHandleImage> image =
+    new D3D11ShareHandleImage(gfx::IntSize(mWidth, mHeight), aRegion);
+  bool ok = image->AllocateTexture(mTextureClientAllocator);
+  NS_ENSURE_TRUE(ok, E_FAIL);
 
-  D3D11ShareHandleImage* videoImage = static_cast<D3D11ShareHandleImage*>(image.get());
-  HRESULT hr = videoImage->SetData(D3D11ShareHandleImage::Data(mTextureClientAllocator,
-                                                               gfx::IntSize(mWidth, mHeight),
-                                                               aRegion));
-  NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
-
-  hr = mTransform->Input(aVideoSample);
+  HRESULT hr = mTransform->Input(aVideoSample);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 
   RefPtr<IMFSample> sample;
-  RefPtr<ID3D11Texture2D> texture = videoImage->GetTexture();
+  RefPtr<ID3D11Texture2D> texture = image->GetTexture();
   hr = CreateOutputSample(sample, texture);
   NS_ENSURE_TRUE(SUCCEEDED(hr), hr);
 

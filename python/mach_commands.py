@@ -48,21 +48,6 @@ option in the node installation) and try again.
 Valid installation paths:
 '''.strip()
 
-ESLINT_PROMPT = '''
-Would you like to use eslint
-'''.strip()
-
-ESLINT_PLUGIN_MOZILLA_PROMPT = '''
-eslint-plugin-mozilla is an eslint plugin containing rules that help enforce
-JavaScript coding standards in the Mozilla project. Would you like to use this
-plugin
-'''.strip()
-
-ESLINT_PLUGIN_REACT_PROMPT = '''
-eslint-plugin-react is an eslint plugin containing rules that help React
-developers follow strict guidelines. Would you like to install it
-'''.strip()
-
 
 @CommandProvider
 class MachCommands(MachCommandBase):
@@ -168,16 +153,12 @@ class MachCommands(MachCommandBase):
         description='Run eslint or help configure eslint for optimal development.')
     @CommandArgument('-s', '--setup', default=False, action='store_true',
         help='configure eslint for optimal development.')
-    @CommandArgument('path', nargs='?', default='.',
-        help='Path to files to lint, like "browser/components/loop" '
-            'or "mobile/android". '
-            'Defaults to the current directory if not given.')
-    @CommandArgument('-e', '--ext', default='[.js,.jsm,.jsx]',
-        help='Filename extensions to lint, default: "[.js,.jsm,.jsx]".')
+    @CommandArgument('-e', '--ext', default='[.js,.jsm,.jsx,.xml,.html]',
+        help='Filename extensions to lint, default: "[.js,.jsm,.jsx,.xml,.html]".')
     @CommandArgument('-b', '--binary', default=None,
         help='Path to eslint binary.')
     @CommandArgument('args', nargs=argparse.REMAINDER)  # Passed through to eslint.
-    def eslint(self, setup, path, ext=None, binary=None, args=[]):
+    def eslint(self, setup, ext=None, binary=None, args=None):
         '''Run eslint.'''
 
         if setup:
@@ -195,31 +176,30 @@ class MachCommands(MachCommandBase):
             print(ESLINT_NOT_FOUND_MESSAGE)
             return 1
 
-        # The cwd below is unfortunate.  eslint --config=PATH/TO/.eslintrc works,
-        # but --ignore-path=PATH/TO/.eslintignore treats paths as relative to
-        # the current directory, rather than as relative to the location of
-        # .eslintignore (see https://github.com/eslint/eslint/issues/1382).
-        # mach commands always execute in the topsrcdir, so we could make all
-        # paths in .eslint relative to the topsrcdir, but it's not clear if
-        # that's a good choice for future eslint and IDE integrations.
-        # Unfortunately, running after chdir does not print the full path to
-        # files (convenient for opening with copy-and-paste).  In the meantime,
-        # we just print the active path.
+        self.log(logging.INFO, 'eslint', {'binary': binary, 'args': args},
+            'Running {binary}')
 
-        self.log(logging.INFO, 'eslint', {'binary': binary, 'path': path},
-            'Running {binary} in {path}')
+        args = args or ['.']
 
         cmd_args = [binary,
-            '--ext', ext,  # This keeps ext as a single argument.
-        ] + args
-        # Path must come after arguments.  Path is '.' due to cwd below.
-        cmd_args += ['.']
+                    # Enable the HTML plugin.
+                    # We can't currently enable this in the global config file
+                    # because it has bad interactions with the SublimeText
+                    # ESLint plugin (bug 1229874).
+                    '--plugin', 'html',
+                    '--ext', ext,  # This keeps ext as a single argument.
+                    ] + args
 
-        return self.run_process(cmd_args,
-            cwd=path,
+        success = self.run_process(cmd_args,
             pass_thru=True,  # Allow user to run eslint interactively.
             ensure_exit_code=False,  # Don't throw on non-zero exit code.
+            require_unix_environment=True # eslint is not a valid Win32 binary.
         )
+
+        self.log(logging.INFO, 'eslint', {'msg': ('No errors' if success == 0 else 'Errors')},
+            'Finished eslint. {msg} encountered.')
+        return success
+
     def eslint_setup(self, update_only=False):
         """Ensure eslint is optimally configured.
 
@@ -239,25 +219,47 @@ class MachCommands(MachCommandBase):
             return 1
 
         # Install eslint.
-        print("Installing eslint...")
-        with open(os.devnull, "w") as fnull:
-            subprocess.call([npmPath, "install", "eslint", "-g"],
-                            stdout=fnull, stderr=fnull)
+        success = self.callProcess("eslint",
+                                   [npmPath, "install", "eslint", "-g"])
+        if not success:
+            return 1
 
         # Install eslint-plugin-mozilla.
-        print("")
-        print("Installing eslint-plugin-mozilla...")
-        with open(os.devnull, "w") as fnull:
-            subprocess.call([npmPath, "link"],
-                            cwd="testing/eslint-plugin-mozilla",
-                            stdout=fnull, stderr=fnull)
+        success = self.callProcess("eslint-plugin-mozilla",
+                                   [npmPath, "link"],
+                                   "testing/eslint-plugin-mozilla")
+        if not success:
+            return 1
+
+        # Install eslint-plugin-html.
+        success = self.callProcess("eslint-plugin-html",
+                                   [npmPath, "install", "eslint-plugin-html", "-g"])
+        if not success:
+            return 1
 
         # Install eslint-plugin-react.
-        print("")
-        print("Installing eslint-plugin-react...")
-        with open(os.devnull, "w") as fnull:
-            subprocess.call([npmPath, "install", "-g", "eslint-plugin-react"],
-                            stdout=fnull, stderr=fnull)
+        success = self.callProcess("eslint-plugin-react",
+                                   [npmPath, "install", "eslint-plugin-react", "-g"])
+        if not success:
+            return 1
+
+        print("\nESLint and approved plugins installed successfully!")
+
+    def callProcess(self, name, cmd, cwd=None):
+        print("\nInstalling %s using \"%s\"..." % (name, " ".join(cmd)))
+
+        try:
+            with open(os.devnull, "w") as fnull:
+                subprocess.check_call(cmd, cwd=cwd, stdout=fnull)
+        except subprocess.CalledProcessError:
+            if cwd:
+                print("\nError installing %s in the %s folder, aborting." % (name, cwd))
+            else:
+                print("\nError installing %s, aborting." % name)
+
+            return False
+
+        return True
 
     def getPossibleNodePathsWin(self):
         """
@@ -301,7 +303,7 @@ class MachCommands(MachCommandBase):
             appPaths = self.getPossibleNodePathsWin()
 
             for p in appPaths:
-                print("  - " + p)
+                print("  - %s" % p)
         elif platform.system() == "Darwin":
             print("  - /usr/local/bin/node")
         elif platform.system() == "Linux":

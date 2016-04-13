@@ -18,6 +18,8 @@
 
 #include "gc/Marking.h"
 #include "jit/JitCompartment.h"
+#include "jit/JitOptions.h"
+#include "js/Date.h"
 #include "js/Proxy.h"
 #include "js/RootingAPI.h"
 #include "proxy/DeadObjectProxy.h"
@@ -39,16 +41,17 @@ using mozilla::DebugOnly;
 using mozilla::PodArrayZero;
 
 JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options = JS::CompartmentOptions())
-  : options_(options),
+  : creationOptions_(options.creationOptions()),
+    behaviors_(options.behaviors()),
     zone_(zone),
     runtime_(zone->runtimeFromMainThread()),
     principals_(nullptr),
     isSystem_(false),
     isSelfHosting(false),
     marked(true),
-    warnedAboutNoSuchMethod(false),
     warnedAboutFlagsArgument(false),
-    addonId(options.addonIdOrNull()),
+    warnedAboutExprClosure(false),
+    warnedAboutRegExpMultiline(false),
 #ifdef DEBUG
     firedOnNewGlobalObject(false),
 #endif
@@ -68,9 +71,7 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     lazyArrayBuffers(nullptr),
     nonSyntacticLexicalScopes_(nullptr),
     gcIncomingGrayPointers(nullptr),
-    gcPreserveJitCode(options.preserveJitCode()),
     debugModeBits(0),
-    rngState(0),
     watchpointMap(nullptr),
     scriptCountsMap(nullptr),
     debugScriptMap(nullptr),
@@ -86,7 +87,8 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
 {
     PodArrayZero(sawDeprecatedLanguageExtension);
     runtime_->numCompartments++;
-    MOZ_ASSERT_IF(options.mergeable(), options.invisibleToDebugger());
+    MOZ_ASSERT_IF(creationOptions_.mergeable(),
+                  creationOptions_.invisibleToDebugger());
 }
 
 JSCompartment::~JSCompartment()
@@ -120,11 +122,10 @@ JSCompartment::init(JSContext* maybecx)
      *
      * As a hack, we clear our timezone cache every time we create a new
      * compartment. This ensures that the cache is always relatively fresh, but
-     * shouldn't interfere with benchmarks which create tons of date objects
+     * shouldn't interfere with benchmarks that create tons of date objects
      * (unless they also create tons of iframes, which seems unlikely).
      */
-    if (maybecx)
-        maybecx->runtime()->dateTimeInfo.updateTimeZoneAdjustment();
+    JS::ResetTimeZone();
 
     if (!crossCompartmentWrappers.init(0)) {
         if (maybecx)
@@ -157,14 +158,14 @@ JSRuntime::createJitRuntime(JSContext* cx)
 
     MOZ_ASSERT(!jitRuntime_);
 
-    jit::JitRuntime* jrt = cx->new_<jit::JitRuntime>();
+    jit::JitRuntime* jrt = cx->new_<jit::JitRuntime>(cx->runtime());
     if (!jrt)
         return nullptr;
 
     // Protect jitRuntime_ from being observed (by InterruptRunningJitCode)
     // while it is being initialized. Unfortunately, initialization depends on
     // jitRuntime_ being non-null, so we can't just wait to assign jitRuntime_.
-    JitRuntime::AutoMutateBackedges amb(jrt);
+    JitRuntime::AutoPreventBackedgePatching apbp(cx->runtime(), jrt);
     jitRuntime_ = jrt;
 
     AutoEnterOOMUnsafeRegion noOOM;
@@ -396,7 +397,7 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
     const JSWrapObjectCallbacks* cb = cx->runtime()->wrapObjectCallbacks;
 
     if (obj->compartment() == this) {
-        obj.set(GetOuterObject(cx, obj));
+        obj.set(ToWindowProxyIfWindow(obj));
         return true;
     }
 
@@ -409,10 +410,10 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
 
     // Unwrap the object, but don't unwrap outer windows.
     RootedObject objectPassedToWrap(cx, obj);
-    obj.set(UncheckedUnwrap(obj, /* stopAtOuter = */ true));
+    obj.set(UncheckedUnwrap(obj, /* stopAtWindowProxy = */ true));
 
     if (obj->compartment() == this) {
-        MOZ_ASSERT(obj == GetOuterObject(cx, obj));
+        MOZ_ASSERT(!IsWindow(obj));
         return true;
     }
 
@@ -435,7 +436,7 @@ JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existin
         if (!obj)
             return false;
     }
-    MOZ_ASSERT(obj == GetOuterObject(cx, obj));
+    MOZ_ASSERT(!IsWindow(obj));
 
     if (obj->compartment() == this)
         return true;
@@ -571,6 +572,7 @@ JSCompartment::traceIncomingCrossCompartmentEdgesForZoneGC(JSTracer* trc)
         if (!c->zone()->isCollecting())
             c->traceOutgoingCrossCompartmentWrappers(trc);
     }
+    Debugger::markIncomingCrossCompartmentEdges(trc);
 }
 
 void
@@ -658,13 +660,13 @@ JSCompartment::sweepAfterMinorGC()
     globalWriteBarriered = false;
 
     if (innerViews.needsSweepAfterMinorGC())
-        innerViews.sweepAfterMinorGC(runtimeFromMainThread());
+        innerViews.sweepAfterMinorGC();
 }
 
 void
 JSCompartment::sweepInnerViews()
 {
-    innerViews.sweep(runtimeFromAnyThread());
+    innerViews.sweep();
 }
 
 void
@@ -752,44 +754,37 @@ JSCompartment::sweepNativeIterators()
 void
 JSCompartment::sweepCrossCompartmentWrappers()
 {
-    /* Remove dead wrappers from the table. */
-    for (WrapperMap::Enum e(crossCompartmentWrappers); !e.empty(); e.popFront()) {
-        CrossCompartmentKey key = e.front().key();
-        bool keyDying;
-        switch (key.kind) {
-          case CrossCompartmentKey::ObjectWrapper:
-          case CrossCompartmentKey::DebuggerObject:
-          case CrossCompartmentKey::DebuggerEnvironment:
-          case CrossCompartmentKey::DebuggerSource:
-              MOZ_ASSERT(IsInsideNursery(key.wrapped) ||
-                         key.wrapped->asTenured().getTraceKind() == JS::TraceKind::Object);
-              keyDying = IsAboutToBeFinalizedUnbarriered(
-                  reinterpret_cast<JSObject**>(&key.wrapped));
-              break;
-          case CrossCompartmentKey::StringWrapper:
-              MOZ_ASSERT(key.wrapped->asTenured().getTraceKind() == JS::TraceKind::String);
-              keyDying = IsAboutToBeFinalizedUnbarriered(
-                  reinterpret_cast<JSString**>(&key.wrapped));
-              break;
-          case CrossCompartmentKey::DebuggerScript:
-              MOZ_ASSERT(key.wrapped->asTenured().getTraceKind() == JS::TraceKind::Script);
-              keyDying = IsAboutToBeFinalizedUnbarriered(
-                  reinterpret_cast<JSScript**>(&key.wrapped));
-              break;
-          default:
-              MOZ_CRASH("Unknown key kind");
-        }
-        bool valDying = IsAboutToBeFinalized(&e.front().value());
-        bool dbgDying = key.debugger && IsAboutToBeFinalizedUnbarriered(&key.debugger);
-        if (keyDying || valDying || dbgDying) {
-            MOZ_ASSERT(key.kind != CrossCompartmentKey::StringWrapper);
-            e.removeFront();
-        } else if (key.wrapped != e.front().key().wrapped ||
-                   key.debugger != e.front().key().debugger)
-        {
-            e.rekeyFront(key);
-        }
+    crossCompartmentWrappers.sweep();
+}
+
+bool
+CrossCompartmentKey::needsSweep()
+{
+    bool keyDying;
+    switch (kind) {
+      case CrossCompartmentKey::ObjectWrapper:
+      case CrossCompartmentKey::DebuggerObject:
+      case CrossCompartmentKey::DebuggerEnvironment:
+      case CrossCompartmentKey::DebuggerSource:
+          MOZ_ASSERT(IsInsideNursery(wrapped) ||
+                     wrapped->asTenured().getTraceKind() == JS::TraceKind::Object);
+          keyDying = IsAboutToBeFinalizedUnbarriered(reinterpret_cast<JSObject**>(&wrapped));
+          break;
+      case CrossCompartmentKey::StringWrapper:
+          MOZ_ASSERT(wrapped->asTenured().getTraceKind() == JS::TraceKind::String);
+          keyDying = IsAboutToBeFinalizedUnbarriered(reinterpret_cast<JSString**>(&wrapped));
+          break;
+      case CrossCompartmentKey::DebuggerScript:
+          MOZ_ASSERT(wrapped->asTenured().getTraceKind() == JS::TraceKind::Script);
+          keyDying = IsAboutToBeFinalizedUnbarriered(reinterpret_cast<JSScript**>(&wrapped));
+          break;
+      default:
+          MOZ_CRASH("Unknown key kind");
     }
+
+    bool dbgDying = debugger && IsAboutToBeFinalizedUnbarriered(&debugger);
+    MOZ_ASSERT_IF(keyDying || dbgDying, kind != CrossCompartmentKey::StringWrapper);
+    return keyDying || dbgDying;
 }
 
 void
@@ -1067,6 +1062,15 @@ JSCompartment::updateDebuggerObservesCoverage()
     clearScriptCounts();
 }
 
+bool
+JSCompartment::collectCoverage() const
+{
+    return !JitOptions.disablePgo ||
+           debuggerObservesCoverage() ||
+           runtimeFromAnyThread()->profilingScripts ||
+           runtimeFromAnyThread()->lcovOutput.isEnabled();
+}
+
 void
 JSCompartment::clearScriptCounts()
 {
@@ -1137,7 +1141,7 @@ JSCompartment::reportTelemetry()
     // Hazard analysis can't tell that the telemetry callbacks don't GC.
     JS::AutoSuppressGCAnalysis nogc;
 
-    int id = addonId
+    int id = creationOptions_.addonIdOrNull()
              ? JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_ADDONS
              : JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT;
 
@@ -1152,7 +1156,9 @@ void
 JSCompartment::addTelemetry(const char* filename, DeprecatedLanguageExtension e)
 {
     // Only report telemetry for web content and add-ons, not chrome JS.
-    if (isSystem_ || (!addonId && (!filename || strncmp(filename, "http", 4) != 0)))
+    if (isSystem_)
+        return;
+    if (!creationOptions_.addonIdOrNull() && (!filename || strncmp(filename, "http", 4) != 0))
         return;
 
     sawDeprecatedLanguageExtension[e] = true;

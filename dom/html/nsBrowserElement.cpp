@@ -563,9 +563,18 @@ nsBrowserElement::GetAllowedAudioChannels(
       return;
     }
 
+    nsCOMPtr<mozIApplication> parentApp;
+    aRv = GetParentApplication(getter_AddRefs(parentApp));
+    if (NS_WARN_IF(aRv.Failed())) {
+      return;
+    }
+
+    MOZ_LOG(AudioChannelService::GetAudioChannelLog(), LogLevel::Debug,
+            ("nsBrowserElement, GetAllowedAudioChannels, this = %p\n", this));
+
     GenerateAllowedAudioChannels(window, frameLoader, mBrowserElementAPI,
-                                 manifestURL, mBrowserElementAudioChannels,
-                                 aRv);
+                                 manifestURL, parentApp,
+                                 mBrowserElementAudioChannels, aRv);
     if (NS_WARN_IF(aRv.Failed())) {
       return;
     }
@@ -580,6 +589,7 @@ nsBrowserElement::GenerateAllowedAudioChannels(
                  nsIFrameLoader* aFrameLoader,
                  nsIBrowserElementAPI* aAPI,
                  const nsAString& aManifestURL,
+                 mozIApplication* aParentApp,
                  nsTArray<RefPtr<BrowserElementAudioChannel>>& aAudioChannels,
                  ErrorResult& aRv)
 {
@@ -603,7 +613,8 @@ nsBrowserElement::GenerateAllowedAudioChannels(
 
   RefPtr<BrowserElementAudioChannel> ac =
     BrowserElementAudioChannel::Create(aWindow, aFrameLoader, aAPI,
-                                       AudioChannel::Normal, aRv);
+                                       AudioChannel::Normal,
+                                       aManifestURL, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
@@ -621,6 +632,19 @@ nsBrowserElement::GenerateAllowedAudioChannels(
       permissionName.AssignASCII("audio-channel-");
       permissionName.AppendASCII(audioChannelTable[i].tag);
 
+      // In case of nested iframes we want to check if the parent has the
+      // permission to use this AudioChannel.
+      if (aParentApp) {
+        aRv = aParentApp->HasPermission(permissionName.get(), &allowed);
+        if (NS_WARN_IF(aRv.Failed())) {
+          return;
+        }
+
+        if (!allowed) {
+          continue;
+        }
+      }
+
       aRv = app->HasPermission(permissionName.get(), &allowed);
       if (NS_WARN_IF(aRv.Failed())) {
         return;
@@ -630,7 +654,7 @@ nsBrowserElement::GenerateAllowedAudioChannels(
         RefPtr<BrowserElementAudioChannel> ac =
           BrowserElementAudioChannel::Create(aWindow, aFrameLoader, aAPI,
                                              (AudioChannel)audioChannelTable[i].value,
-                                             aRv);
+                                             aManifestURL, aRv);
         if (NS_WARN_IF(aRv.Failed())) {
           return;
         }
@@ -777,5 +801,23 @@ nsBrowserElement::GetStructuredData(ErrorResult& aRv)
 
   return req.forget().downcast<DOMRequest>();
 }
+
+already_AddRefed<DOMRequest>
+nsBrowserElement::GetWebManifest(ErrorResult& aRv)
+{
+  NS_ENSURE_TRUE(IsBrowserElementOrThrow(aRv), nullptr);
+
+  nsCOMPtr<nsIDOMDOMRequest> req;
+  nsresult rv = mBrowserElementAPI->GetWebManifest(getter_AddRefs(req));
+
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return nullptr;
+  }
+
+  return req.forget().downcast<DOMRequest>();
+}
+
+
 
 } // namespace mozilla

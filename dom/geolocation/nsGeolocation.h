@@ -22,6 +22,7 @@
 #include "nsCycleCollectionParticipant.h"
 
 #include "nsGeoPosition.h"
+#include "nsIDOMEventListener.h"
 #include "nsIDOMGeoGeolocation.h"
 #include "nsIDOMGeoPosition.h"
 #include "nsIDOMGeoPositionError.h"
@@ -91,6 +92,7 @@ public:
 
   // create, or reinitalize the callback timer
   void     SetDisconnectTimer();
+  void     StopDisconnectTimer();
 
   // Update the accuracy and notify the provider if changed
   void     UpdateAccuracy(bool aForceHigh = false);
@@ -128,7 +130,8 @@ namespace dom {
  */
 class Geolocation final : public nsIDOMGeoGeolocation,
                           public nsIGeolocationUpdate,
-                          public nsWrapperCache
+                          public nsWrapperCache,
+                          public nsIDOMEventListener
 {
 public:
 
@@ -137,6 +140,8 @@ public:
 
   NS_DECL_NSIGEOLOCATIONUPDATE
   NS_DECL_NSIDOMGEOGEOLOCATION
+
+  NS_DECL_NSIDOMEVENTLISTENER
 
   Geolocation();
 
@@ -153,6 +158,9 @@ public:
 
   // Register an allowed request
   void NotifyAllowedRequest(nsGeolocationRequest* aRequest);
+
+  // Check if callbacks arrays already contain this request
+  bool ContainsRequest(nsGeolocationRequest* aRequest);
 
   // Remove request from all callbacks arrays
   void RemoveRequest(nsGeolocationRequest* request);
@@ -209,6 +217,12 @@ private:
 
   // where the content was loaded from
   nsCOMPtr<nsIPrincipal> mPrincipal;
+
+  // the protocols we want to measure
+  enum class ProtocolType: uint8_t { OTHER, HTTP, HTTPS };
+
+  // the protocol used to load the content
+  ProtocolType mProtocolType;
 
   // owning back pointer.
   RefPtr<nsGeolocationService> mService;

@@ -103,6 +103,13 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
          "dest": "test_path",
          "help": "Path of tests to run",
          }
+    ], [
+        ["--symbols-url"],
+        {"action": "store",
+         "dest": "symbols_url",
+         "default": None,
+         "help": "URL to the symbols which is used for crash reporter",
+         }
     ]] + copy.deepcopy(testing_config_options) \
        + copy.deepcopy(blobupload_config_options)
 
@@ -146,6 +153,7 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
         self.test_packages_url = c.get('test_packages_url')
         self.test_manifest = c.get('test_manifest')
         self.busybox_path = None
+        self.symbols_url = c.get('symbols_url')
 
     # TODO detect required config items and fail if not set
 
@@ -200,8 +208,7 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
                          error_list=TarErrorList,
                          halt_on_failure=True, fatal_exit_code=3)
 
-        self.mkdir_p(dirs['abs_xre_dir'])
-        self._download_unzip(self.config['xre_url'],
+        self.download_unzip(self.config['xre_url'],
                              dirs['abs_xre_dir'])
 
         if self.config.get('busybox_url'):
@@ -219,26 +226,6 @@ class B2GEmulatorTest(TestingMixin, VCSMixin, BaseScript, BlobUploadMixin):
         if os.path.isfile(requirements):
             self.register_virtualenv_module(requirements=[requirements],
                                             two_pass=True)
-            return
-
-        # XXX Bug 879765: Dependent modules need to be listed before parent
-        # modules, otherwise they will get installed from the pypi server.
-        # XXX Bug 908356: This block can be removed as soon as the
-        # in-tree requirements files propagate to all active trees.
-        mozbase_dir = os.path.join('tests', 'mozbase')
-        self.register_virtualenv_module(
-            'manifestparser',
-            url=os.path.join(mozbase_dir, 'manifestdestiny')
-        )
-
-        for m in ('mozfile', 'mozlog', 'mozinfo', 'moznetwork', 'mozhttpd',
-                  'mozcrash', 'mozinstall', 'mozdevice', 'mozprofile', 'mozprocess',
-                  'mozrunner'):
-            self.register_virtualenv_module(
-                m, url=os.path.join(mozbase_dir, m))
-
-        self.register_virtualenv_module(
-            'marionette', url=os.path.join('tests', 'marionette'))
 
     def _query_abs_base_cmd(self, suite):
         dirs = self.query_abs_dirs()

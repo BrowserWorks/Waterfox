@@ -43,6 +43,9 @@ SPSProfiler::init()
     if (lock_ == nullptr)
         return false;
 
+    if (!strings.init())
+        return false;
+
     return true;
 }
 
@@ -61,8 +64,8 @@ SPSProfiler::setProfilingStack(ProfileEntry* stack, uint32_t* size, uint32_t max
 {
     AutoSPSLock lock(lock_);
     MOZ_ASSERT_IF(size_ && *size_ != 0, !enabled());
-    if (!strings.initialized())
-        strings.init();
+    MOZ_ASSERT(strings.initialized());
+
     stack_ = stack;
     size_  = size;
     max_   = max;
@@ -346,16 +349,12 @@ SPSProfiler::allocProfileString(JSScript* script, JSFunction* maybeFun)
     // Construct the descriptive string.
     DebugOnly<size_t> ret;
     if (atom) {
-        JS::AutoCheckCannotGC nogc;
-        auto atomStr = mozilla::UniquePtr<char, JS::FreePolicy>(
-            atom->hasLatin1Chars()
-            ? JS::CharsToNewUTF8CharsZ(nullptr, atom->latin1Range(nogc)).c_str()
-            : JS::CharsToNewUTF8CharsZ(nullptr, atom->twoByteRange(nogc)).c_str());
+        UniqueChars atomStr = StringToNewUTF8CharsZ(nullptr, *atom);
         if (!atomStr)
             return nullptr;
-        ret = JS_snprintf(cstr, len + 1, "%s (%s:%llu)", atomStr.get(), filename, lineno);
+        ret = JS_snprintf(cstr, len + 1, "%s (%s:%" PRIu64 ")", atomStr.get(), filename, lineno);
     } else {
-        ret = JS_snprintf(cstr, len + 1, "%s:%llu", filename, lineno);
+        ret = JS_snprintf(cstr, len + 1, "%s:%" PRIu64, filename, lineno);
     }
 
     MOZ_ASSERT(ret == len, "Computed length should match actual length!");

@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import fileinput
 import glob
 import os
 import platform
@@ -12,6 +13,7 @@ import signal
 import sys
 import telnetlib
 import time
+import urlparse
 import urllib2
 from distutils.spawn import find_executable
 
@@ -24,7 +26,7 @@ TOOLTOOL_URL = 'https://raw.githubusercontent.com/mozilla/build-tooltool/master/
 
 TRY_URL = 'https://hg.mozilla.org/try/raw-file/default'
 
-MANIFEST_URL = '%s/testing/config/tooltool-manifests' % TRY_URL
+MANIFEST_PATH = 'testing/config/tooltool-manifests'
 
 verbose_logging = False
 
@@ -75,11 +77,11 @@ AVD_DICT = {
                     'init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket',
                     '-qemu', '-m', '1024', '-enable-kvm'],
                    5554,
-                   True,
-                   20701, 20700)
+                   False,
+                   0, 0)
 }
 
-def verify_android_device(build_obj, install=False, xre=False):
+def verify_android_device(build_obj, install=False, xre=False, debugger=False):
     """
        Determine if any Android device is connected via adb.
        If no device is found, prompt to start an emulator.
@@ -89,13 +91,15 @@ def verify_android_device(build_obj, install=False, xre=False):
        If 'xre' is specified, also check with MOZ_HOST_BIN is set
        to a valid xre/host-utils directory; if not, prompt to set
        one up.
+       If 'debugger' is specified, also check that JimDB is installed;
+       if JimDB is not found, prompt to set up JimDB.
        Returns True if the emulator was started or another device was
        already connected.
     """
     device_verified = False
     emulator = AndroidEmulator('*', substs=build_obj.substs)
     devices = emulator.dm.devices()
-    if len(devices) > 0:
+    if (len(devices) > 0) and ('device' in [d[1] for d in devices]):
         device_verified = True
     elif emulator.is_available():
         response = raw_input(
@@ -158,20 +162,10 @@ def verify_android_device(build_obj, install=False, xre=False):
                 "Download and setup your host utilities? (Y/n) ").strip()
             if response.lower().startswith('y') or response == '':
                 _log_info("Installing host utilities. This may take a while...")
-                _download_file(TOOLTOOL_URL, 'tooltool.py', EMULATOR_HOME_DIR)
-                if 'darwin' in str(sys.platform).lower():
-                    plat = 'macosx64'
-                elif 'linux' in str(sys.platform).lower():
-                    if '64' in platform.architecture()[0]:
-                        plat = 'linux64'
-                    else:
-                        plat = 'linux32'
-                else:
-                    plat = None
-                    _log_warning("Unable to install host utilities -- your platform is not supported!")
-                if plat:
-                    url = '%s/%s/hostutils.manifest' % (MANIFEST_URL, plat)
-                    _download_file(url, 'releng.manifest', EMULATOR_HOME_DIR)
+                host_platform = _get_host_platform()
+                if host_platform:
+                    path = os.path.join(MANIFEST_PATH, host_platform, 'hostutils.manifest')
+                    _get_tooltool_manifest(build_obj.substs, path, EMULATOR_HOME_DIR, 'releng.manifest')
                     _tooltool_fetch()
                     xre_path = glob.glob(os.path.join(EMULATOR_HOME_DIR, 'host-utils*'))
                     for path in xre_path:
@@ -181,9 +175,90 @@ def verify_android_device(build_obj, install=False, xre=False):
                             break
                     if err:
                         _log_warning("Unable to install host utilities.")
+                else:
+                    _log_warning("Unable to install host utilities -- your platform is not supported!")
+
+    if debugger:
+        # Optionally set up JimDB. See https://wiki.mozilla.org/Mobile/Fennec/Android/GDB.
+        build_platform = _get_build_platform(build_obj.substs)
+        jimdb_path = os.path.join(EMULATOR_HOME_DIR, 'jimdb-%s' % build_platform)
+        jimdb_utils_path = os.path.join(jimdb_path, 'utils')
+        gdb_path = os.path.join(jimdb_path, 'bin', 'gdb')
+        err = None
+        if not os.path.isdir(jimdb_path):
+            err = '%s does not exist' % jimdb_path
+        elif not os.path.isfile(gdb_path):
+            err = '%s not found' % gdb_path
+        if err:
+            _log_info("JimDB (%s) not found: %s" % (build_platform, err))
+            response = raw_input(
+                "Download and setup JimDB (%s)? (Y/n) " % build_platform).strip()
+            if response.lower().startswith('y') or response == '':
+                host_platform = _get_host_platform()
+                if host_platform:
+                    _log_info("Installing JimDB (%s/%s). This may take a while..." % (host_platform, build_platform))
+                    path = os.path.join(MANIFEST_PATH, host_platform, 'jimdb-%s.manifest' % build_platform)
+                    _get_tooltool_manifest(build_obj.substs, path, EMULATOR_HOME_DIR, 'releng.manifest')
+                    _tooltool_fetch()
+                    if os.path.isfile(gdb_path):
+                        # Get JimDB utilities from git repository
+                        proc = ProcessHandler(['git', 'pull'], cwd=jimdb_utils_path)
+                        proc.run()
+                        git_pull_complete = False
+                        try:
+                            proc.wait()
+                            if proc.proc.returncode == 0:
+                                git_pull_complete = True
+                        except:
+                            if proc.poll() is None:
+                                proc.kill(signal.SIGTERM)
+                        if not git_pull_complete:
+                            _log_warning("Unable to update JimDB utils from git -- some JimDB features may be unavailable.")
+                    else:
+                        _log_warning("Unable to install JimDB -- unable to fetch from tooltool.")
+                else:
+                    _log_warning("Unable to install JimDB -- your platform is not supported!")
+        if os.path.isfile(gdb_path):
+            # sync gdbinit.local with build settings
+            _update_gdbinit(build_obj.substs, os.path.join(jimdb_utils_path, "gdbinit.local"))
+            # ensure JimDB is in system path, so that mozdebug can find it
+            bin_path = os.path.join(jimdb_path, 'bin')
+            os.environ['PATH'] = "%s:%s" % (bin_path, os.environ['PATH'])
 
     return device_verified
 
+def run_firefox_for_android(build_obj, params):
+    """
+       Launch Firefox for Android on the connected device.
+       Optional 'params' allow parameters to be passed to Firefox.
+    """
+    adb_path = _find_sdk_exe(build_obj.substs, 'adb', False)
+    if not adb_path:
+        adb_path = 'adb'
+    dm = DeviceManagerADB(autoconnect=False, adbPath=adb_path, retryLimit=1)
+    try:
+        #
+        # Construct an adb command similar to:
+        #
+        #   adb shell am start -a android.activity.MAIN -n org.mozilla.fennec_$USER -d <url param> --es args "<params>"
+        #
+        app = "%s/.App" % build_obj.substs['ANDROID_PACKAGE_NAME']
+        cmd = ['am', 'start', '-a', 'android.activity.MAIN', '-n', app]
+        if params:
+            for p in params:
+                if urlparse.urlparse(p).scheme != "":
+                    cmd.extend(['-d', p])
+                    params.remove(p)
+                    break
+        if params:
+            cmd.extend(['--es', 'args', '"%s"' % ' '.join(params)])
+        _log_debug(cmd)
+        output = dm.shellCheckOutput(cmd, timeout=10)
+        _log_info(output)
+    except DMError:
+        _log_warning("unable to launch Firefox for Android")
+        return 1
+    return 0
 
 class AndroidEmulator(object):
 
@@ -202,7 +277,7 @@ class AndroidEmulator(object):
                 emulator.wait()
     """
 
-    def __init__(self, avd_type='4.3', verbose=False, substs=None):
+    def __init__(self, avd_type='4.3', verbose=False, substs=None, device_serial=None):
         global verbose_logging
         self.emulator_log = None
         self.emulator_path = 'emulator'
@@ -210,10 +285,11 @@ class AndroidEmulator(object):
         self.substs = substs
         self.avd_type = self._get_avd_type(avd_type)
         self.avd_info = AVD_DICT[self.avd_type]
-        adb_path = self._find_sdk_exe('adb', False)
+        adb_path = _find_sdk_exe(substs, 'adb', False)
         if not adb_path:
             adb_path = 'adb'
-        self.dm = DeviceManagerADB(autoconnect=False, adbPath=adb_path, retryLimit=1)
+        self.dm = DeviceManagerADB(autoconnect=False, adbPath=adb_path, retryLimit=1,
+            deviceSerial=device_serial)
         self.dm.default_timeout = 10
         _log_debug("Emulator created with type %s" % self.avd_type)
 
@@ -238,7 +314,7 @@ class AndroidEmulator(object):
            Returns True if an emulator executable is found.
         """
         found = False
-        emulator_path = self._find_sdk_exe('emulator', True)
+        emulator_path = _find_sdk_exe(self.substs, 'emulator', True)
         if emulator_path:
             self.emulator_path = emulator_path
             found = True
@@ -277,7 +353,6 @@ class AndroidEmulator(object):
         if force and os.path.exists(avd):
             shutil.rmtree(avd)
         if not os.path.exists(avd):
-            _download_file(TOOLTOOL_URL, 'tooltool.py', EMULATOR_HOME_DIR)
             url = '%s/%s' % (TRY_URL, self.avd_info.tooltool_manifest)
             _download_file(url, 'releng.manifest', EMULATOR_HOME_DIR)
             _tooltool_fetch()
@@ -294,6 +369,9 @@ class AndroidEmulator(object):
         command = [self.emulator_path, "-avd",
                    self.avd_info.name, "-port", "5554"]
         if self.avd_info.extra_args:
+            # -enable-kvm option is not valid on OSX
+            if _get_host_platform() == 'macosx64' and '-enable-kvm' in self.avd_info.extra_args:
+                self.avd_info.extra_args.remove('-enable-kvm')
             command += self.avd_info.extra_args
         log_path = os.path.join(EMULATOR_HOME_DIR, 'emulator.log')
         self.emulator_log = open(log_path, 'w')
@@ -482,79 +560,70 @@ class AndroidEmulator(object):
                 return '2.3'
         return '4.3'
 
-    def _find_sdk_exe(self, exe, tools):
-        if tools:
-            subdir = 'tools'
-        else:
-            subdir = 'platform-tools'
+def _find_sdk_exe(substs, exe, tools):
+    if tools:
+        subdir = 'tools'
+    else:
+        subdir = 'platform-tools'
 
-        found = False
-        if not found and self.substs:
-            # It's best to use the tool specified by the build, rather
-            # than something we find on the PATH or crawl for.
-            try:
-                exe_path = self.substs[exe.upper()]
-                if os.path.exists(exe_path):
-                    found = True
-                else:
-                    self._log_debug(
-                        "Unable to find executable at %s" % exe_path)
-            except KeyError:
-                self._log_debug("%s not set" % exe.upper())
-
-        # Can exe be found in the Android SDK?
-        if not found:
-            try:
-                android_sdk_root = os.environ['ANDROID_SDK_ROOT']
-                exe_path = os.path.join(
-                    android_sdk_root, subdir, exe)
-                if os.path.exists(exe_path):
-                    found = True
-                else:
-                    _log_debug(
-                        "Unable to find executable at %s" % exe_path)
-            except KeyError:
-                _log_debug("ANDROID_SDK_ROOT not set")
-
-        if not found:
-            # Can exe be found in the Android SDK?
-            try:
-                android_sdk_root = os.environ['ANDROID_SDK_ROOT']
-                exe_path = os.path.join(
-                    android_sdk_root, subdir, exe)
-                if os.path.exists(exe_path):
-                    found = True
-                else:
-                    _log_debug(
-                        "Unable to find executable at %s" % exe_path)
-            except KeyError:
-                _log_debug("ANDROID_SDK_ROOT not set")
-
-        if not found:
-            # Can exe be found in the default bootstrap location?
-            mozbuild_path = os.environ.get('MOZBUILD_STATE_PATH',
-                os.path.expanduser(os.path.join('~', '.mozbuild')))
-            exe_path = os.path.join(
-                mozbuild_path, 'android-sdk-linux', subdir, exe)
+    found = False
+    if not found and substs:
+        # It's best to use the tool specified by the build, rather
+        # than something we find on the PATH or crawl for.
+        try:
+            exe_path = substs[exe.upper()]
             if os.path.exists(exe_path):
                 found = True
             else:
                 _log_debug(
                     "Unable to find executable at %s" % exe_path)
+        except KeyError:
+            _log_debug("%s not set" % exe.upper())
 
-        if not found:
-            # Is exe on PATH?
-            exe_path = find_executable(exe)
-            if exe_path:
+    # Append '.exe' to the name on Windows if it's not present,
+    # so that the executable can be found.
+    if (os.name == 'nt' and not exe.lower().endswith('.exe')):
+        exe += '.exe'
+
+    if not found:
+        # Can exe be found in the Android SDK?
+        try:
+            android_sdk_root = os.environ['ANDROID_SDK_ROOT']
+            exe_path = os.path.join(
+                android_sdk_root, subdir, exe)
+            if os.path.exists(exe_path):
                 found = True
             else:
-                _log_debug("Unable to find executable on PATH")
+                _log_debug(
+                    "Unable to find executable at %s" % exe_path)
+        except KeyError:
+            _log_debug("ANDROID_SDK_ROOT not set")
 
-        if found:
-            _log_debug("%s found at %s" % (exe, exe_path))
+    if not found:
+        # Can exe be found in the default bootstrap location?
+        mozbuild_path = os.environ.get('MOZBUILD_STATE_PATH',
+            os.path.expanduser(os.path.join('~', '.mozbuild')))
+        exe_path = os.path.join(
+            mozbuild_path, 'android-sdk-linux', subdir, exe)
+        if os.path.exists(exe_path):
+            found = True
         else:
-            exe_path = None
-        return exe_path
+            _log_debug(
+                "Unable to find executable at %s" % exe_path)
+
+    if not found:
+        # Is exe on PATH?
+        exe_path = find_executable(exe)
+        if exe_path:
+            found = True
+        else:
+            _log_debug("Unable to find executable on PATH")
+
+    if found:
+        _log_debug("%s found at %s" % (exe, exe_path))
+    else:
+        exe_path = None
+    return exe_path
 
 def _log_debug(text):
     if verbose_logging:
@@ -580,9 +649,28 @@ def _download_file(url, filename, path):
     _log_debug("Downloaded %s to %s/%s" % (url, path, filename))
     return True
 
+def _get_tooltool_manifest(substs, src_path, dst_path, filename):
+    if not os.path.isdir(dst_path):
+        try:
+            os.makedirs(dst_path)
+        except Exception, e:
+            _log_warning(str(e))
+    copied = False
+    if substs and 'top_srcdir' in substs:
+        src = os.path.join(substs['top_srcdir'], src_path)
+        if os.path.exists(src):
+            dst = os.path.join(dst_path, filename)
+            shutil.copy(src, dst)
+            copied = True
+            _log_debug("Copied tooltool manifest %s to %s" % (src, dst))
+    if not copied:
+        url = os.path.join(TRY_URL, src_path)
+        _download_file(url, filename, dst_path)
+
 def _tooltool_fetch():
     def outputHandler(line):
         _log_debug(line)
+    _download_file(TOOLTOOL_URL, 'tooltool.py', EMULATOR_HOME_DIR)
     command = ['python', 'tooltool.py', 'fetch', '-o', '-m', 'releng.manifest']
     proc = ProcessHandler(
         command, processOutputLine=outputHandler, storeOutput=False,
@@ -593,3 +681,48 @@ def _tooltool_fetch():
     except:
         if proc.poll() is None:
             proc.kill(signal.SIGTERM)
+
+def _get_host_platform():
+    plat = None
+    if 'darwin' in str(sys.platform).lower():
+        plat = 'macosx64'
+    elif 'linux' in str(sys.platform).lower():
+        if '64' in platform.architecture()[0]:
+            plat = 'linux64'
+        else:
+            plat = 'linux32'
+    return plat
+
+def _get_build_platform(substs):
+    if substs['TARGET_CPU'].startswith('arm'):
+        return 'arm'
+    return 'x86'
+
+def _update_gdbinit(substs, path):
+    if os.path.exists(path):
+        obj_replaced = False
+        src_replaced = False
+        # update existing objdir/srcroot in place
+        for line in fileinput.input(path, inplace=True):
+            if "feninit.default.objdir" in line and substs and 'MOZ_BUILD_ROOT' in substs:
+                print("python feninit.default.objdir = '%s'" % substs['MOZ_BUILD_ROOT'])
+                obj_replaced = True
+            elif "feninit.default.srcroot" in line and substs and 'top_srcdir' in substs:
+                print("python feninit.default.srcroot = '%s'" % substs['top_srcdir'])
+                src_replaced = True
+            else:
+                print(line.strip())
+        # append objdir/srcroot if not updated
+        if (not obj_replaced) and substs and 'MOZ_BUILD_ROOT' in substs:
+            with open(path, "a") as f:
+                f.write("\npython feninit.default.objdir = '%s'\n" % substs['MOZ_BUILD_ROOT'])
+        if (not src_replaced) and substs and 'top_srcdir' in substs:
+            with open(path, "a") as f:
+                f.write("python feninit.default.srcroot = '%s'\n" % substs['top_srcdir'])
+    else:
+        # write objdir/srcroot to new gdbinit file
+        with open(path, "w") as f:
+            if substs and 'MOZ_BUILD_ROOT' in substs:
+                f.write("python feninit.default.objdir = '%s'\n" % substs['MOZ_BUILD_ROOT'])
+            if substs and 'top_srcdir' in substs:
+                f.write("python feninit.default.srcroot = '%s'\n" % substs['top_srcdir'])

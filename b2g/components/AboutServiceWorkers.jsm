@@ -29,17 +29,12 @@ function serializeServiceWorkerInfo(aServiceWorkerInfo) {
 
   let result = {};
 
-  Object.keys(aServiceWorkerInfo).forEach(property => {
-    if (typeof aServiceWorkerInfo[property] == "function") {
-      return;
-    }
-    if (property === "principal") {
-      result.principal = {
-        origin: aServiceWorkerInfo.principal.origin,
-        originAttributes: aServiceWorkerInfo.principal.originAttributes
-      };
-      return;
-    }
+  result.principal = {
+    origin: aServiceWorkerInfo.principal.originNoSuffix,
+    originAttributes: aServiceWorkerInfo.principal.originAttributes
+  };
+
+  ["scope", "scriptSpec"].forEach(property => {
     result[property] = aServiceWorkerInfo[property];
   });
 
@@ -109,9 +104,9 @@ this.AboutServiceWorkers = {
         let registrations = [];
 
         for (let i = 0; i < data.length; i++) {
-          let info = data.queryElementAt(i, Ci.nsIServiceWorkerInfo);
+          let info = data.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
           if (!info) {
-            dump("AboutServiceWorkers: Invalid nsIServiceWorkerInfo " +
+            dump("AboutServiceWorkers: Invalid nsIServiceWorkerRegistrationInfo " +
                  "interface.\n");
             continue;
           }

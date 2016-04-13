@@ -28,7 +28,12 @@ class nsPluginDOMContextMenuListener;
 class nsPluginFrame;
 class nsDisplayListBuilder;
 
+#if defined(MOZ_X11) || defined(ANDROID)
+class gfxContext;
+#endif
+
 namespace mozilla {
+class TextComposition;
 namespace dom {
 struct MozPluginParameter;
 } // namespace dom
@@ -53,6 +58,8 @@ class nsPluginInstanceOwner final : public nsIPluginInstanceOwner,
                                     public nsSupportsWeakReference
 {
 public:
+  typedef mozilla::gfx::DrawTarget DrawTarget;
+
   nsPluginInstanceOwner();
   
   NS_DECL_ISUPPORTS
@@ -66,7 +73,12 @@ public:
   
   NPBool     ConvertPoint(double sourceX, double sourceY, NPCoordinateSpace sourceSpace,
                           double *destX, double *destY, NPCoordinateSpace destSpace) override;
-  
+
+  NPError InitAsyncSurface(NPSize *size, NPImageFormat format,
+                           void *initData, NPAsyncSurface *surface) override;
+  NPError FinalizeAsyncSurface(NPAsyncSurface *surface) override;
+  void SetCurrentAsyncSurface(NPAsyncSurface *surface, NPRect *changed) override;
+
   /**
    * Get the type of the HTML tag that was used ot instantiate this
    * plugin.  Currently supported tags are EMBED, OBJECT and APPLET.
@@ -112,6 +124,10 @@ public:
   void ReleasePluginPort(void* pluginPort);
 
   nsEventStatus ProcessEvent(const mozilla::WidgetGUIEvent& anEvent);
+
+  static void GeneratePluginEvent(
+                const mozilla::WidgetCompositionEvent* aSrcCompositionEvent,
+                mozilla::WidgetCompositionEvent* aDistCompositionEvent);
 
 #if defined(XP_WIN)
   void SetWidgetWindowAsParent(HWND aWindowToAdopt);
@@ -213,6 +229,8 @@ public:
   // Returns the image container that has our currently displayed image.
   already_AddRefed<mozilla::layers::ImageContainer> GetImageContainer();
 
+  void DidComposite();
+
   /**
    * Returns the bounds of the current async-rendered surface. This can only
    * change in response to messages received by the event loop (i.e. not during
@@ -224,9 +242,9 @@ public:
   // The eventual target of these operations is PluginInstanceParent,
   // but it takes several hops to get there.
   void SetBackgroundUnknown();
-  already_AddRefed<gfxContext> BeginUpdateBackground(const nsIntRect& aRect);
-  void EndUpdateBackground(gfxContext* aContext, const nsIntRect& aRect);
-  
+  already_AddRefed<DrawTarget> BeginUpdateBackground(const nsIntRect& aRect);
+  void EndUpdateBackground(const nsIntRect& aRect);
+
   bool UseAsyncRendering();
 
   already_AddRefed<nsIURI> GetBaseURI() const;
@@ -248,6 +266,11 @@ public:
   void NotifyHostAsyncInitFailed();
   void NotifyHostCreateWidget();
   void NotifyDestroyPending();
+
+  bool GetCompositionString(uint32_t aIndex, nsTArray<uint8_t>* aString,
+                            int32_t* aLength);
+  bool SetCandidateWindow(int32_t aX, int32_t aY);
+  bool RequestCommitOrCancel(bool aCommitted);
 
 private:
   virtual ~nsPluginInstanceOwner();
@@ -271,6 +294,13 @@ private:
 
 #if defined(XP_WIN)
   nsIWidget* GetContainingWidgetIfOffset();
+  already_AddRefed<mozilla::TextComposition> GetTextComposition();
+  void HandleNoConsumedCompositionMessage(
+    mozilla::WidgetCompositionEvent* aCompositionEvent,
+    const NPEvent* aPluginEvent);
+  bool mGotCompositionData;
+  bool mSentStartComposition;
+  bool mPluginDidNotHandleIMEComposition;
 #endif
  
   nsPluginNativeWindow       *mPluginWindow;
@@ -322,6 +352,11 @@ private:
   nsresult DispatchMouseToPlugin(nsIDOMEvent* aMouseEvent,
                                  bool aAllowPropagate = false);
   nsresult DispatchFocusToPlugin(nsIDOMEvent* aFocusEvent);
+  nsresult DispatchCompositionToPlugin(nsIDOMEvent* aEvent);
+
+#ifdef XP_WIN
+  void CallDefaultProc(const mozilla::WidgetGUIEvent* aEvent);
+#endif
 
 #ifdef XP_MACOSX
   static NPBool ConvertPointPuppet(PuppetWidget *widget, nsPluginFrame* pluginFrame,

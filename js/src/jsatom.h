@@ -12,8 +12,10 @@
 #include "jsalloc.h"
 
 #include "gc/Barrier.h"
+#include "gc/Marking.h"
 #include "gc/Rooting.h"
 #include "js/GCAPI.h"
+#include "js/GCHashTable.h"
 #include "vm/CommonPropertyNames.h"
 
 class JSAtom;
@@ -76,6 +78,11 @@ class AtomStateEntry
 
     JSAtom* asPtr() const;
     JSAtom* asPtrUnbarriered() const;
+
+    bool needsSweep() {
+        JSAtom* atom = asPtrUnbarriered();
+        return gc::IsAboutToBeFinalizedUnbarriered(&atom);
+    }
 };
 
 struct AtomHasher
@@ -111,7 +118,7 @@ struct AtomHasher
     static void rekey(AtomStateEntry& k, const AtomStateEntry& newKey) { k = newKey; }
 };
 
-typedef HashSet<AtomStateEntry, AtomHasher, SystemAllocPolicy> AtomSet;
+using AtomSet = js::GCHashSet<AtomStateEntry, AtomHasher, SystemAllocPolicy>;
 
 // This class is a wrapper for AtomSet that is used to ensure the AtomSet is
 // not modified. It should only expose read-only methods from AtomSet.
@@ -222,6 +229,9 @@ template <typename CharT>
 extern JSAtom*
 AtomizeChars(ExclusiveContext* cx, const CharT* chars, size_t length,
              js::PinningBehavior pin = js::DoNotPinAtom);
+
+extern JSAtom*
+AtomizeUTF8Chars(JSContext* cx, const char* utf8Chars, size_t utf8ByteLength);
 
 extern JSAtom*
 AtomizeString(ExclusiveContext* cx, JSString* str, js::PinningBehavior pin = js::DoNotPinAtom);

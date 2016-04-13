@@ -222,6 +222,7 @@ config("libANGLE_config") {
   }
   defines += [
     "GL_GLEXT_PROTOTYPES",
+    "EGL_EGLEXT_PROTOTYPES",
   ]
 
   if (is_win) {
@@ -379,6 +380,7 @@ static_library("angle_util") {
 
   if (is_linux) {
     sources += rebase_path(util_gypi.util_linux_sources, ".", "util")
+    libs = [ "rt" ]
   }
 
   if (is_mac) {

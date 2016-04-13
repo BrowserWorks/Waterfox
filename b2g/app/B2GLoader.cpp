@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 
 #include "nsXPCOMPrivate.h" // for MAXPATHLEN and XPCOM_DLL
+#include "mozilla/UniquePtr.h"
 
 #define ASSERT(x) if (!(x)) { MOZ_CRASH(); }
 
@@ -65,11 +66,11 @@ GetDirnameSlash(const char *aPath, char *aOutDir, int aMaxLen)
 static bool
 GetXPCOMPath(const char *aProgram, char *aOutPath, int aMaxLen)
 {
-  nsAutoArrayPtr<char> progBuf(new char[aMaxLen]);
-  nsresult rv = mozilla::BinaryPath::Get(aProgram, progBuf);
+  auto progBuf = mozilla::MakeUnique<char[]>(aMaxLen);
+  nsresult rv = mozilla::BinaryPath::Get(aProgram, progBuf.get());
   NS_ENSURE_SUCCESS(rv, false);
 
-  int len = GetDirnameSlash(progBuf, aOutPath, aMaxLen);
+  int len = GetDirnameSlash(progBuf.get(), aOutPath, aMaxLen);
   NS_ENSURE_TRUE(!!len, false);
 
   NS_ENSURE_TRUE((len + sizeof(XPCOM_DLL)) < (unsigned)aMaxLen, false);
@@ -251,7 +252,9 @@ ReserveFileDescriptors(FdArray& aReservedFds)
       MOZ_CRASH("ProcLoader error: failed to reserve a magic file descriptor.");
     }
 
-    aReservedFds.append(target);
+    if (!aReservedFds.append(target)) {
+      MOZ_CRASH("Failed to append to aReservedFds");
+    }
 
     if (fd == target) {
       // No need to call dup2(). We already occupy the desired file descriptor.

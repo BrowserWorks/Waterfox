@@ -29,22 +29,21 @@ from .data import (
     AndroidExtraResDirs,
     AndroidResDirs,
     BrandingFiles,
+    ChromeManifestEntry,
     ConfigFileSubstitution,
     ContextWrapped,
     Defines,
-    DistFiles,
     DirectoryTraversal,
     Exports,
     FinalTargetFiles,
+    FinalTargetPreprocessedFiles,
     GeneratedEventWebIDLFile,
     GeneratedFile,
-    GeneratedInclude,
     GeneratedSources,
     GeneratedWebIDLFile,
     ExampleWebIDLInterface,
     ExternalStaticLibrary,
     ExternalSharedLibrary,
-    HeaderFileSubstitution,
     HostDefines,
     HostLibrary,
     HostProgram,
@@ -53,8 +52,6 @@ from .data import (
     InstallationTarget,
     IPDLFile,
     JARManifest,
-    JavaScriptModules,
-    JsPreferenceFile,
     Library,
     Linkable,
     LinkageWrongKindError,
@@ -63,18 +60,22 @@ from .data import (
     PreprocessedTestWebIDLFile,
     PreprocessedWebIDLFile,
     Program,
-    Resources,
     SharedLibrary,
     SimpleProgram,
     Sources,
     StaticLibrary,
     TestHarnessFiles,
+    TestingFiles,
     TestWebIDLFile,
     TestManifest,
     UnifiedSources,
     VariablePassthru,
     WebIDLFile,
     XPIDLFile,
+)
+from mozpack.chrome.manifest import (
+    ManifestBinaryComponent,
+    Manifest,
 )
 
 from .reader import SandboxValidationError
@@ -243,7 +244,7 @@ class TreeMetadataEmitter(LoggingMixin):
 
         # Propagate LIBRARY_DEFINES to all child libraries recursively.
         def propagate_defines(outerlib, defines):
-            outerlib.defines.update(defines)
+            outerlib.lib_defines.update(defines)
             for lib in outerlib.linked_libraries:
                 # Propagate defines only along FINAL_LIBRARY paths, not USE_LIBS
                 # paths.
@@ -253,7 +254,7 @@ class TreeMetadataEmitter(LoggingMixin):
 
         for lib in (l for libs in self._libs.values() for l in libs):
             if isinstance(lib, Library):
-                propagate_defines(lib, lib.defines)
+                propagate_defines(lib, lib.lib_defines)
             yield lib
 
         for obj in self._binaries.values():
@@ -506,10 +507,38 @@ class TreeMetadataEmitter(LoggingMixin):
                         'STATIC_LIBRARY_NAME. Please change one of them.',
                         context)
 
+            symbols_file = context.get('SYMBOLS_FILE')
+            if symbols_file:
+                if not shared_lib:
+                    raise SandboxValidationError(
+                        'SYMBOLS_FILE can only be used with a SHARED_LIBRARY.',
+                        context)
+                if context.get('DEFFILE') or context.get('LD_VERSION_SCRIPT'):
+                    raise SandboxValidationError(
+                        'SYMBOLS_FILE cannot be used along DEFFILE or '
+                        'LD_VERSION_SCRIPT.', context)
+                if not os.path.exists(symbols_file.full_path):
+                    raise SandboxValidationError(
+                        'Path specified in SYMBOLS_FILE does not exist: %s '
+                        '(resolved to %s)' % (symbols_file,
+                        symbols_file.full_path), context)
+                shared_args['symbols_file'] = True
+
             if shared_lib:
                 lib = SharedLibrary(context, libname, **shared_args)
                 self._libs[libname].append(lib)
                 self._linkage.append((context, lib, 'USE_LIBS'))
+                if is_component and not context['NO_COMPONENTS_MANIFEST']:
+                    yield ChromeManifestEntry(context,
+                        'components/components.manifest',
+                        ManifestBinaryComponent('components', lib.lib_name))
+                if symbols_file:
+                    script = mozpath.join(
+                        mozpath.dirname(mozpath.dirname(__file__)),
+                        'action', 'generate_symbols_file.py')
+                    yield GeneratedFile(context, script,
+                        'generate_symbols_file', lib.symbols_file,
+                        [symbols_file.full_path], lib.defines.get_defines())
             if static_lib:
                 lib = StaticLibrary(context, libname, **static_args)
                 self._libs[libname].append(lib)
@@ -519,7 +548,7 @@ class TreeMetadataEmitter(LoggingMixin):
                 if not libname:
                     raise SandboxValidationError('LIBRARY_DEFINES needs a '
                         'LIBRARY_NAME to take effect', context)
-                lib.defines.update(lib_defines)
+                lib.lib_defines.update(lib_defines)
 
     def emit_from_context(self, context):
         """Convert a Context to tree metadata objects.
@@ -542,23 +571,8 @@ class TreeMetadataEmitter(LoggingMixin):
             yield self._create_substitution(ConfigFileSubstitution, context,
                 path)
 
-        for path in context['CONFIGURE_DEFINE_FILES']:
-            yield self._create_substitution(HeaderFileSubstitution, context,
-                path)
-
         for obj in self._process_xpidl(context):
             yield obj
-
-        # Check for manifest declarations in EXTRA_{PP_,}COMPONENTS.
-        extras = context.get('EXTRA_COMPONENTS', []) + context.get('EXTRA_PP_COMPONENTS', [])
-        if any(e.endswith('.js') for e in extras) and \
-                not any(e.endswith('.manifest') for e in extras) and \
-                not context.get('NO_JS_MANIFEST', False):
-            raise SandboxValidationError('A .js component was specified in EXTRA_COMPONENTS '
-                                         'or EXTRA_PP_COMPONENTS without a matching '
-                                         '.manifest file.  See '
-                                         'https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0 .',
-                                         context);
 
         # Proxy some variables as-is until we have richer classes to represent
         # them. We should aim to keep this set small because it violates the
@@ -570,9 +584,7 @@ class TreeMetadataEmitter(LoggingMixin):
             'ANDROID_APK_PACKAGE',
             'ANDROID_GENERATED_RESFILES',
             'DISABLE_STL_WRAPPING',
-            'EXTRA_COMPONENTS',
             'EXTRA_DSO_LDOPTS',
-            'EXTRA_PP_COMPONENTS',
             'USE_STATIC_LIBS',
             'PYTHON_UNIT_TESTS',
             'RCFILE',
@@ -583,6 +595,7 @@ class TreeMetadataEmitter(LoggingMixin):
             'LD_VERSION_SCRIPT',
             'USE_EXTENSION_MANIFEST',
             'NO_JS_MANIFEST',
+            'HAS_MISC_RULE',
         ]
         for v in varlist:
             if v in context and context[v]:
@@ -615,12 +628,9 @@ class TreeMetadataEmitter(LoggingMixin):
         for obj in self._process_sources(context, passthru):
             yield obj
 
-        exports = context.get('EXPORTS')
-        if exports:
-            yield Exports(context, exports,
-                dist_install=dist_install is not False)
-
+        generated_files = set()
         for obj in self._process_generated_files(context):
+            generated_files.add(obj.output)
             yield obj
 
         for obj in self._process_test_harness_files(context):
@@ -634,32 +644,12 @@ class TreeMetadataEmitter(LoggingMixin):
         if host_defines:
             yield HostDefines(context, host_defines)
 
-        resources = context.get('RESOURCE_FILES')
-        if resources:
-            yield Resources(context, resources, defines)
-
-        for pref in sorted(context['JS_PREFERENCE_FILES']):
-            yield JsPreferenceFile(context, pref)
-
         self._handle_programs(context)
-
-        extra_js_modules = context.get('EXTRA_JS_MODULES')
-        if extra_js_modules:
-            yield JavaScriptModules(context, extra_js_modules, 'extra')
-
-        extra_pp_js_modules = context.get('EXTRA_PP_JS_MODULES')
-        if extra_pp_js_modules:
-            yield JavaScriptModules(context, extra_pp_js_modules, 'extra_pp')
-
-        test_js_modules = context.get('TESTING_JS_MODULES')
-        if test_js_modules:
-            yield JavaScriptModules(context, test_js_modules, 'testing')
 
         simple_lists = [
             ('GENERATED_EVENTS_WEBIDL_FILES', GeneratedEventWebIDLFile),
             ('GENERATED_WEBIDL_FILES', GeneratedWebIDLFile),
             ('IPDL_SOURCES', IPDLFile),
-            ('GENERATED_INCLUDES', GeneratedInclude),
             ('PREPROCESSED_TEST_WEBIDL_FILES', PreprocessedTestWebIDLFile),
             ('PREPROCESSED_WEBIDL_FILES', PreprocessedWebIDLFile),
             ('TEST_WEBIDL_FILES', TestWebIDLFile),
@@ -671,38 +661,92 @@ class TreeMetadataEmitter(LoggingMixin):
                 yield klass(context, name)
 
         for local_include in context.get('LOCAL_INCLUDES', []):
-            if local_include.startswith('/'):
-                path = context.config.topsrcdir
-                relative_include = local_include[1:]
-            else:
-                path = context.srcdir
-                relative_include = local_include
-
-            actual_include = os.path.join(path, relative_include)
-            if not os.path.exists(actual_include):
+            if (not isinstance(local_include, ObjDirPath) and
+                    not os.path.exists(local_include.full_path)):
                 raise SandboxValidationError('Path specified in LOCAL_INCLUDES '
-                    'does not exist: %s (resolved to %s)' % (local_include, actual_include), context)
+                    'does not exist: %s (resolved to %s)' % (local_include,
+                    local_include.full_path), context)
             yield LocalInclude(context, local_include)
 
-        final_target_files = context.get('FINAL_TARGET_FILES')
-        if final_target_files:
-            yield FinalTargetFiles(context, final_target_files, context['FINAL_TARGET'])
+        components = []
+        for var, cls in (
+            ('BRANDING_FILES', BrandingFiles),
+            ('EXPORTS', Exports),
+            ('FINAL_TARGET_FILES', FinalTargetFiles),
+            ('FINAL_TARGET_PP_FILES', FinalTargetPreprocessedFiles),
+            ('TESTING_FILES', TestingFiles),
+        ):
+            all_files = context.get(var)
+            if not all_files:
+                continue
+            if dist_install is False and var != 'TESTING_FILES':
+                raise SandboxValidationError(
+                    '%s cannot be used with DIST_INSTALL = False' % var,
+                    context)
+            has_prefs = False
+            has_resources = False
+            for base, files in all_files.walk():
+                if base == 'components':
+                    components.extend(files)
+                if base == 'defaults/pref':
+                    has_prefs = True
+                if mozpath.split(base)[0] == 'res':
+                    has_resources = True
+                for f in files:
+                    if (var == 'FINAL_TARGET_PP_FILES' and
+                        not isinstance(f, SourcePath)):
+                        raise SandboxValidationError(
+                                ('Only source directory paths allowed in ' +
+                                'FINAL_TARGET_PP_FILES: %s')
+                                % (f,), context)
+                    if not isinstance(f, ObjDirPath):
+                        path = f.full_path
+                        if not os.path.exists(path):
+                            raise SandboxValidationError(
+                                'File listed in %s does not exist: %s'
+                                % (var, path), context)
+                    else:
+                        if f.target_basename not in generated_files:
+                            raise SandboxValidationError(
+                                ('Objdir file listed in %s not in ' +
+                                 'GENERATED_FILES: %s') % (var, f), context)
 
-        dist_files = context.get('DIST_FILES')
-        if dist_files:
-            for f in dist_files:
-                path = os.path.join(context.srcdir, f)
-                if not os.path.exists(path):
-                    raise SandboxValidationError('File listed in DIST_FILES '
-                        'does not exist: %s' % f, context)
+            # Addons (when XPI_NAME is defined) and Applications (when
+            # DIST_SUBDIR is defined) use a different preferences directory
+            # (default/preferences) from the one the GRE uses (defaults/pref).
+            # Hence, we move the files from the latter to the former in that
+            # case.
+            if has_prefs and (context.get('XPI_NAME') or
+                              context.get('DIST_SUBDIR')):
+                all_files.defaults.preferences += all_files.defaults.pref
+                del all_files.defaults._children['pref']
 
-            yield DistFiles(context, dist_files, context['FINAL_TARGET'])
+            if has_resources and (context.get('DIST_SUBDIR') or
+                                  context.get('XPI_NAME')):
+                raise SandboxValidationError(
+                    'RESOURCES_FILES cannot be used with DIST_SUBDIR or '
+                    'XPI_NAME.', context)
 
-        branding_files = context.get('BRANDING_FILES')
-        if branding_files:
-            yield BrandingFiles(context, branding_files)
+            yield cls(context, all_files)
 
-        self._handle_libraries(context)
+        # Check for manifest declarations in EXTRA_{PP_,}COMPONENTS.
+        if any(e.endswith('.js') for e in components) and \
+                not any(e.endswith('.manifest') for e in components) and \
+                not context.get('NO_JS_MANIFEST', False):
+            raise SandboxValidationError('A .js component was specified in EXTRA_COMPONENTS '
+                                         'or EXTRA_PP_COMPONENTS without a matching '
+                                         '.manifest file.  See '
+                                         'https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0 .',
+                                         context);
+
+        for c in components:
+            if c.endswith('.manifest'):
+                yield ChromeManifestEntry(context, 'chrome.manifest',
+                                          Manifest('components',
+                                                   mozpath.basename(c)))
+
+        for obj in self._handle_libraries(context):
+            yield obj
 
         for obj in self._process_test_manifests(context):
             yield obj
@@ -738,12 +782,9 @@ class TreeMetadataEmitter(LoggingMixin):
             yield passthru
 
     def _create_substitution(self, cls, context, path):
-        if os.path.isabs(path):
-            path = path[1:]
-
         sub = cls(context)
-        sub.input_path = mozpath.join(context.srcdir, '%s.in' % path)
-        sub.output_path = mozpath.join(context.objdir, path)
+        sub.input_path = '%s.in' % path.full_path
+        sub.output_path = path.translated
         sub.relpath = path
 
         return sub
@@ -761,7 +802,7 @@ class TreeMetadataEmitter(LoggingMixin):
                 if isinstance(f, SourcePath):
                     srcs.append(full_path)
                 else:
-                    assert isinstance(f, ObjDirPath)
+                    assert isinstance(f, Path)
                     gen_srcs.append(full_path)
                 if symbol == 'SOURCES':
                     flags = context_srcs[f]
@@ -876,6 +917,13 @@ class TreeMetadataEmitter(LoggingMixin):
                 xpidl_module, add_to_manifest=not context['XPIDL_NO_MANIFEST'])
 
     def _process_generated_files(self, context):
+        for path in context['CONFIGURE_DEFINE_FILES']:
+            script = mozpath.join(mozpath.dirname(mozpath.dirname(__file__)),
+                                  'action', 'process_define_files.py')
+            yield GeneratedFile(context, script, 'process_define_file',
+                                unicode(path),
+                                [mozpath.join(context.srcdir, path + '.in')])
+
         generated_files = context.get('GENERATED_FILES')
         if not generated_files:
             return
@@ -986,7 +1034,6 @@ class TreeMetadataEmitter(LoggingMixin):
                     else 'USE_LIBS'))
 
     def _process_test_manifests(self, context):
-
         for prefix, info in TEST_MANIFESTS.items():
             for path in context.get('%s_MANIFESTS' % prefix, []):
                 for obj in self._process_test_manifest(context, info, path):
@@ -1246,7 +1293,7 @@ class TreeMetadataEmitter(LoggingMixin):
                 'it is currently limited to one value.', context)
 
         for path in jar_manifests:
-            yield JARManifest(context, mozpath.join(context.srcdir, path))
+            yield JARManifest(context, path)
 
         # Temporary test to look for jar.mn files that creep in without using
         # the new declaration. Before, we didn't require jar.mn files to
@@ -1261,8 +1308,6 @@ class TreeMetadataEmitter(LoggingMixin):
     def _emit_directory_traversal_from_context(self, context):
         o = DirectoryTraversal(context)
         o.dirs = context.get('DIRS', [])
-        o.test_dirs = context.get('TEST_DIRS', [])
-        o.affected_tiers = context.get_affected_tiers()
 
         # Some paths have a subconfigure, yet also have a moz.build. Those
         # shouldn't end up in self._external_paths.

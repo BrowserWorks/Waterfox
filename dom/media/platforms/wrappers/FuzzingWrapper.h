@@ -81,6 +81,7 @@ private:
   typedef Pair<RefPtr<MediaData>, bool> MediaDataAndInputExhausted;
   std::deque<MediaDataAndInputExhausted> mDelayedOutput;
   RefPtr<MediaTimer> mDelayedOutputTimer;
+  MozPromiseRequestHolder<MediaTimerPromise> mDelayedOutputRequest;
   // If draining, a 'DrainComplete' will be sent after all delayed frames have
   // been output.
   bool mDraining;
@@ -110,6 +111,10 @@ private:
   nsresult Shutdown() override;
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override;
   nsresult ConfigurationChanged(const TrackInfo& aConfig) override;
+  const char* GetDescriptionName() const override
+  {
+    return mDecoder->GetDescriptionName();
+  }
 
   RefPtr<MediaDataDecoder> mDecoder;
   RefPtr<DecoderCallbackFuzzingWrapper> mCallbackWrapper;

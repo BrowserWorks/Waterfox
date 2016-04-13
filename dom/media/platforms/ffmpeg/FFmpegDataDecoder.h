@@ -8,8 +8,9 @@
 #define __FFmpegDataDecoder_h__
 
 #include "PlatformDecoderModule.h"
-#include "FFmpegLibs.h"
+#include "FFmpegLibWrapper.h"
 #include "mozilla/StaticMutex.h"
+#include "FFmpegLibs.h"
 
 namespace mozilla
 {
@@ -23,7 +24,7 @@ template <>
 class FFmpegDataDecoder<LIBAV_VER> : public MediaDataDecoder
 {
 public:
-  FFmpegDataDecoder(FlushableTaskQueue* aTaskQueue,
+  FFmpegDataDecoder(FFmpegLibWrapper* aLib, FlushableTaskQueue* aTaskQueue,
                     MediaDataDecoderCallback* aCallback,
                     AVCodecID aCodecID);
   virtual ~FFmpegDataDecoder();
@@ -36,16 +37,18 @@ public:
   nsresult Drain() override;
   nsresult Shutdown() override;
 
-  static AVCodec* FindAVCodec(AVCodecID aCodec);
+  static AVCodec* FindAVCodec(FFmpegLibWrapper* aLib, AVCodecID aCodec);
 
 protected:
   // Flush and Drain operation, always run
   virtual void ProcessFlush();
   virtual void ProcessDrain() = 0;
   virtual void ProcessShutdown();
+  virtual void InitCodecContext() {}
   AVFrame*        PrepareFrame();
   nsresult        InitDecoder();
 
+  FFmpegLibWrapper* mLib;
   RefPtr<FlushableTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
 
@@ -61,10 +64,8 @@ protected:
   // not required and so input samples on mTaskQueue need not be processed.
   // Cleared on mTaskQueue in ProcessDrain().
   Atomic<bool> mIsFlushing;
-  AVCodecParserContext* mCodecParser;
 
 private:
-  static bool sFFmpegInitDone;
   static StaticMutex sMonitor;
 };
 

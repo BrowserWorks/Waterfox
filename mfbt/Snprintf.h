@@ -19,18 +19,16 @@
 // characters written equals the buffer size, it does not write a null
 // terminator, so we wrap it to do so.
 #if defined(_MSC_VER) && _MSC_VER < 1900
-
-int snprintf(char *buffer, size_t n, const char *format, ...)
+#include "mozilla/Attributes.h"
+MOZ_ALWAYS_INLINE int snprintf(char* buffer, size_t n, const char* format, ...)
 {
-  va_list argp;
-  int ret;
-  va_start(argp, format);
-  ret = _vscprintf(format, argp);
-  vsnprintf_s(buffer, n, _TRUNCATE, format, argp);
-  va_end(argp);
-  return ret;
+  va_list args;
+  va_start(args, format);
+  int result = vsnprintf(buffer, n, format, args);
+  va_end(args);
+  buffer[n - 1] = '\0';
+  return result;
 }
-
 #endif
 
 // In addition, in C++ code, on all platforms, provide an snprintf_literal()

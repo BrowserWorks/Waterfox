@@ -16,8 +16,8 @@
         <!-- Style for MenuItemActionBar -->
         <attr name="menuItemActionModeStyle" format="reference"/>
 
-        <!-- Style for MenuItemActionView -->
-        <attr name="menuItemActionViewStyle" format="reference"/>
+        <!-- Style for MenuItemSwitcherLayout -->
+        <attr name="menuItemSwitcherLayoutStyle" format="reference"/>
 
         <!-- Style for MenuItemDefault -->
         <attr name="menuItemDefaultStyle" format="reference"/>
@@ -25,7 +25,7 @@
         <!-- Style for MenuItemActionBar when shown in SecondaryActionBar -->
         <attr name="menuItemSecondaryActionBarStyle" format="reference"/>
 
-        <!-- Style for MenuItemActionView's ShareActionButton -->
+        <!-- Style for MenuItemSwitcherLayout's ShareActionButton -->
         <attr name="menuItemShareActionButtonStyle" format="reference"/>
 
         <!-- Default style for the BookmarksListView -->
@@ -166,6 +166,11 @@
         <attr name="activeTextColor" format="color" />
         <attr name="inactiveTextColor" format="color" />
         <attr name="titlebarFill" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="CustomColorPreference">
+        <attr name="titleColor" format="color" />
+        <attr name="summaryColor" format="color" />
     </declare-styleable>
 
     <declare-styleable name="TabPanelBackButton">

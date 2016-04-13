@@ -8,6 +8,8 @@
 #define CUBEB_INTERNAL_0eb56756_4e20_4404_a76d_42bf88cd15a5
 
 #include "cubeb/cubeb.h"
+#include <stdio.h>
+#include <string.h>
 
 struct cubeb_ops {
   int (* init)(cubeb ** context, char const * context_name);
@@ -17,9 +19,17 @@ struct cubeb_ops {
                           cubeb_stream_params params,
                           uint32_t * latency_ms);
   int (* get_preferred_sample_rate)(cubeb * context, uint32_t * rate);
+  int (* enumerate_devices)(cubeb * context, cubeb_device_type type,
+                            cubeb_device_collection ** collection);
   void (* destroy)(cubeb * context);
-  int (* stream_init)(cubeb * context, cubeb_stream ** stream, char const * stream_name,
-                      cubeb_stream_params stream_params, unsigned int latency,
+  int (* stream_init)(cubeb * context,
+                      cubeb_stream ** stream,
+                      char const * stream_name,
+                      cubeb_devid input_device,
+                      cubeb_stream_params * input_stream_params,
+                      cubeb_devid output_device,
+                      cubeb_stream_params * output_stream_params,
+                      unsigned int latency,
                       cubeb_data_callback data_callback,
                       cubeb_state_callback state_callback,
                       void * user_ptr);
@@ -36,7 +46,6 @@ struct cubeb_ops {
                                 cubeb_device * device);
   int (* stream_register_device_changed_callback)(cubeb_stream * stream,
                                                   cubeb_device_changed_callback device_changed_callback);
-
 };
 
 #define XASSERT(expr) do {                                              \

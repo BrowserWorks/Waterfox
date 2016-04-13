@@ -13,6 +13,7 @@
 #include "cairo-xlib.h"
 #include "cairo-xlib-xrender.h"
 #include "mozilla/gfx/BorrowedContext.h"
+#include "mozilla/gfx/HelpersCairo.h"
 #include "gfx2DGlue.h"
 
 using namespace mozilla;
@@ -136,13 +137,13 @@ FINISH:
  * @return True if we took the direct path
  */
 bool
-gfxXlibNativeRenderer::DrawDirect(gfxContext *ctx, IntSize size,
+gfxXlibNativeRenderer::DrawDirect(DrawTarget* aDT, IntSize size,
                                   uint32_t flags,
                                   Screen *screen, Visual *visual)
 {
     // We need to actually borrow the context because we want to read out the
     // clip rectangles.
-    BorrowedCairoContext borrowed(ctx->GetDrawTarget());
+    BorrowedCairoContext borrowed(aDT);
     if (!borrowed.mCairo) {
       return false;
     }
@@ -352,7 +353,7 @@ CreateTempXlibSurface (cairo_surface_t* cairoTarget,
         } else if (cairoTargetType == CAIRO_SURFACE_TYPE_IMAGE || drawTarget) {
             gfxImageFormat imageFormat =
                 drawTarget ? SurfaceFormatToImageFormat(drawTarget->GetFormat()) :
-                    gfxCairoFormatToImageFormat(cairo_image_surface_get_format(cairoTarget));
+                    CairoFormatToGfxFormat(cairo_image_surface_get_format(cairoTarget));
             target_visual = gfxXlibSurface::FindVisual(screen, imageFormat);
             Display *dpy = DisplayOfScreen(screen);
             if (target_visual) {
@@ -389,7 +390,7 @@ CreateTempXlibSurface (cairo_surface_t* cairoTarget,
             supportsAlternateScreen ? target_screen : screen;
         Visual *argbVisual =
             gfxXlibSurface::FindVisual(visualScreen,
-                                       gfxImageFormat::ARGB32);
+                                       SurfaceFormat::A8R8G8B8_UINT32);
         if (argbVisual) {
             visual = argbVisual;
             screen = visualScreen;
@@ -399,7 +400,7 @@ CreateTempXlibSurface (cairo_surface_t* cairoTarget,
             // No advantage in using the target screen.
             Visual *rgb24Visual =
                 gfxXlibSurface::FindVisual(screen,
-                                           gfxImageFormat::RGB24);
+                                           SurfaceFormat::X8R8G8B8_UINT32);
             if (rgb24Visual) {
                 visual = rgb24Visual;
             }
@@ -490,6 +491,8 @@ gfxXlibNativeRenderer::Draw(gfxContext* ctx, IntSize size,
         NATIVE_DRAWING_NOTE("FALLBACK: unsupported operator");
     }
 
+    DrawTarget* drawTarget = ctx->GetDrawTarget();
+
     // Clipping to the region affected by drawing allows us to consider only
     // the portions of the clip region that will be affected by drawing.
     gfxRect clipExtents;
@@ -498,12 +501,13 @@ gfxXlibNativeRenderer::Draw(gfxContext* ctx, IntSize size,
         ctx->Clip(affectedRect);
 
         clipExtents = ctx->GetClipExtents();
-        if (clipExtents.IsEmpty())
+        if (clipExtents.IsEmpty()) {
             return; // nothing to do
-
+        }
         if (canDrawOverBackground &&
-            DrawDirect(ctx, size, flags, screen, visual))
+            DrawDirect(drawTarget, size, flags, screen, visual)) {
           return;
+        }
     }
 
     IntRect drawingRect(IntPoint(0, 0), size);
@@ -525,12 +529,14 @@ gfxXlibNativeRenderer::Draw(gfxContext* ctx, IntSize size,
     gfxPoint offset(drawingRect.x, drawingRect.y);
 
     DrawingMethod method;
-    DrawTarget* drawTarget = ctx->GetDrawTarget();
     Matrix dtTransform = drawTarget->GetTransform();
     gfxPoint deviceTranslation = gfxPoint(dtTransform._31, dtTransform._32);
-    cairo_surface_t* cairoTarget = static_cast<cairo_surface_t*>
-            (drawTarget->GetNativeSurface(NativeSurfaceType::CAIRO_SURFACE));
+    cairo_t* cairo = static_cast<cairo_t*>
+        (drawTarget->GetNativeSurface(NativeSurfaceType::CAIRO_CONTEXT));
+    if (!cairo)
+        return;
 
+    cairo_surface_t* cairoTarget = cairo_get_group_target(cairo);
     cairo_surface_t* tempXlibSurface =
         CreateTempXlibSurface(cairoTarget, drawTarget, size,
                               canDrawOverBackground, flags, screen, visual,
@@ -569,13 +575,8 @@ gfxXlibNativeRenderer::Draw(gfxContext* ctx, IntSize size,
             SurfaceFormat::B8G8R8A8 : SurfaceFormat::B8G8R8X8;
     if (method != eAlphaExtraction) {
         if (drawTarget) {
-            NativeSurface native;
-            native.mFormat = moz2DFormat;
-            native.mType = NativeSurfaceType::CAIRO_SURFACE;
-            native.mSurface = tempXlibSurface;
-            native.mSize = size;
             RefPtr<SourceSurface> sourceSurface =
-                drawTarget->CreateSourceSurfaceFromNativeSurface(native);
+                Factory::CreateSourceSurfaceForCairoSurface(tempXlibSurface, size, moz2DFormat);
             if (sourceSurface) {
                 drawTarget->DrawSurface(sourceSurface,
                     Rect(offset.x, offset.y, size.width, size.height),
@@ -591,7 +592,7 @@ gfxXlibNativeRenderer::Draw(gfxContext* ctx, IntSize size,
     }
     
     RefPtr<gfxImageSurface> blackImage =
-        CopyXlibSurfaceToImage(tempXlibSurface, size, gfxImageFormat::ARGB32);
+        CopyXlibSurfaceToImage(tempXlibSurface, size, SurfaceFormat::A8R8G8B8_UINT32);
     
     cairo_t* tmpCtx = cairo_create(tempXlibSurface);
     cairo_set_source_rgba(tmpCtx, 1.0, 1.0, 1.0, 1.0);
@@ -600,7 +601,7 @@ gfxXlibNativeRenderer::Draw(gfxContext* ctx, IntSize size,
     cairo_destroy(tmpCtx);
     DrawOntoTempSurface(tempXlibSurface, -drawingRect.TopLeft());
     RefPtr<gfxImageSurface> whiteImage =
-        CopyXlibSurfaceToImage(tempXlibSurface, size, gfxImageFormat::RGB24);
+        CopyXlibSurfaceToImage(tempXlibSurface, size, SurfaceFormat::X8R8G8B8_UINT32);
   
     if (blackImage->CairoStatus() == CAIRO_STATUS_SUCCESS &&
         whiteImage->CairoStatus() == CAIRO_STATUS_SUCCESS) {
@@ -611,13 +612,9 @@ gfxXlibNativeRenderer::Draw(gfxContext* ctx, IntSize size,
 
         gfxASurface* paintSurface = blackImage;
         if (drawTarget) {
-            NativeSurface native;
-            native.mFormat = moz2DFormat;
-            native.mType = NativeSurfaceType::CAIRO_SURFACE;
-            native.mSurface = paintSurface->CairoSurface();
-            native.mSize = size;
             RefPtr<SourceSurface> sourceSurface =
-                drawTarget->CreateSourceSurfaceFromNativeSurface(native);
+                Factory::CreateSourceSurfaceForCairoSurface(paintSurface->CairoSurface(),
+                                                            size, moz2DFormat);
             if (sourceSurface) {
                 drawTarget->DrawSurface(sourceSurface,
                     Rect(offset.x, offset.y, size.width, size.height),

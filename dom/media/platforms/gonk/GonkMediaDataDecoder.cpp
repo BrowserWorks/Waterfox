@@ -16,7 +16,11 @@
 #define INPUT_TIMEOUT_US 0LL // Don't wait for buffer if none is available.
 #define MIN_QUEUED_SAMPLES 2
 
-extern PRLogModuleInfo* GetPDMLog();
+#ifdef DEBUG
+#include <utils/AndroidThreads.h>
+#endif
+
+extern mozilla::LogModule* GetPDMLog();
 #define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 using namespace android;
@@ -40,6 +44,11 @@ GonkDecoderManager::InitLoopers(MediaData::Type aType)
   name.append(suffix);
   mTaskLooper->setName(name.c_str());
   mTaskLooper->registerHandler(this);
+
+#ifdef DEBUG
+  sp<AMessage> findThreadId(new AMessage(kNotifyFindLooperId, id()));
+  findThreadId->post();
+#endif
 
   return mDecodeLooper->start() == OK && mTaskLooper->start() == OK;
 }
@@ -71,20 +80,21 @@ GonkDecoderManager::Input(MediaRawData* aSample)
 int32_t
 GonkDecoderManager::ProcessQueuedSamples()
 {
+  MOZ_ASSERT(OnTaskLooper());
+
   MutexAutoLock lock(mMutex);
   status_t rv;
   while (mQueuedSamples.Length()) {
     RefPtr<MediaRawData> data = mQueuedSamples.ElementAt(0);
-    {
-      rv = mDecoder->Input(reinterpret_cast<const uint8_t*>(data->Data()),
-                           data->Size(),
-                           data->mTime,
-                           0,
-                           INPUT_TIMEOUT_US);
-    }
+    rv = mDecoder->Input(reinterpret_cast<const uint8_t*>(data->Data()),
+                         data->Size(),
+                         data->mTime,
+                         0,
+                         INPUT_TIMEOUT_US);
     if (rv == OK) {
       mQueuedSamples.RemoveElementAt(0);
-      mWaitOutput.AppendElement(data->mOffset);
+      mWaitOutput.AppendElement(WaitOutputInfo(data->mOffset, data->mTime,
+                                               /* eos */ data->Data() == nullptr));
     } else if (rv == -EAGAIN || rv == -ETIMEDOUT) {
       // In most cases, EAGAIN or ETIMEOUT are safe because OMX can't fill
       // buffer on time.
@@ -113,8 +123,6 @@ GonkDecoderManager::Flush()
     mQueuedSamples.Clear();
   }
 
-  mLastTime = 0;
-
   MonitorAutoLock lock(mFlushMonitor);
   mIsFlushing = true;
   sp<AMessage> flush = new AMessage(kNotifyProcessFlush, id());
@@ -139,8 +147,8 @@ GonkDecoderManager::Shutdown()
   return NS_OK;
 }
 
-bool
-GonkDecoderManager::HasQueuedSample()
+size_t
+GonkDecoderManager::NumQueuedSamples()
 {
   MutexAutoLock lock(mMutex);
   return mQueuedSamples.Length();
@@ -149,6 +157,8 @@ GonkDecoderManager::HasQueuedSample()
 void
 GonkDecoderManager::ProcessInput(bool aEndOfStream)
 {
+  MOZ_ASSERT(OnTaskLooper());
+
   status_t rv = ProcessQueuedSamples();
   if (rv >= 0) {
     if (!aEndOfStream && rv <= MIN_QUEUED_SAMPLES) {
@@ -161,6 +171,8 @@ GonkDecoderManager::ProcessInput(bool aEndOfStream)
         mToDo->setInt32("input-eos", 1);
       }
       mDecoder->requestActivityNotification(mToDo);
+    } else if (aEndOfStream) {
+      mToDo->setInt32("input-eos", 1);
     }
   } else {
     GMDD_LOG("input processed: error#%d", rv);
@@ -171,6 +183,9 @@ GonkDecoderManager::ProcessInput(bool aEndOfStream)
 void
 GonkDecoderManager::ProcessFlush()
 {
+  MOZ_ASSERT(OnTaskLooper());
+
+  mLastTime = INT64_MIN;
   MonitorAutoLock lock(mFlushMonitor);
   mWaitOutput.Clear();
   if (mDecoder->flush() != OK) {
@@ -181,42 +196,57 @@ GonkDecoderManager::ProcessFlush()
   lock.NotifyAll();
 }
 
+// Use output timestamp to determine which output buffer is already returned
+// and remove corresponding info, except for EOS, from the waiting list.
+// This method handles the cases that audio decoder sends multiple output
+// buffers for one input.
+void
+GonkDecoderManager::UpdateWaitingList(int64_t aForgetUpTo)
+{
+  MOZ_ASSERT(OnTaskLooper());
+
+  size_t i;
+  for (i = 0; i < mWaitOutput.Length(); i++) {
+    const auto& item = mWaitOutput.ElementAt(i);
+    if (item.mEOS || item.mTimestamp > aForgetUpTo) {
+      break;
+    }
+  }
+  if (i > 0) {
+    mWaitOutput.RemoveElementsAt(0, i);
+  }
+}
+
 void
 GonkDecoderManager::ProcessToDo(bool aEndOfStream)
 {
+  MOZ_ASSERT(OnTaskLooper());
+
   MOZ_ASSERT(mToDo.get() != nullptr);
   mToDo.clear();
 
-  if (HasQueuedSample()) {
-    status_t pendingInput = ProcessQueuedSamples();
-    if (pendingInput < 0) {
-      mDecodeCallback->Error();
-      return;
-    }
-    if (!aEndOfStream && pendingInput <= MIN_QUEUED_SAMPLES) {
-      mDecodeCallback->InputExhausted();
-    }
+  if (NumQueuedSamples() > 0 && ProcessQueuedSamples() < 0) {
+    mDecodeCallback->Error();
+    return;
   }
 
-  nsresult rv = NS_OK;
   while (mWaitOutput.Length() > 0) {
     RefPtr<MediaData> output;
-    int64_t offset = mWaitOutput.ElementAt(0);
-    rv = Output(offset, output);
+    WaitOutputInfo wait = mWaitOutput.ElementAt(0);
+    nsresult rv = Output(wait.mOffset, output);
     if (rv == NS_OK) {
-      mWaitOutput.RemoveElementAt(0);
+      MOZ_ASSERT(output);
       mDecodeCallback->Output(output);
+      UpdateWaitingList(output->mTime);
     } else if (rv == NS_ERROR_ABORT) {
       // EOS
       MOZ_ASSERT(mQueuedSamples.IsEmpty());
-      mWaitOutput.RemoveElementAt(0);
-      // Sometimes the decoder attaches EOS flag to the final output buffer
-      // instead of emits EOS by itself, hence the 2nd condition.
-      MOZ_ASSERT(mWaitOutput.IsEmpty() ||
-                 (mWaitOutput.Length() == 1 && output.get()));
       if (output) {
         mDecodeCallback->Output(output);
+        UpdateWaitingList(output->mTime);
       }
+      MOZ_ASSERT(mWaitOutput.Length() == 1);
+      mWaitOutput.RemoveElementAt(0);
       mDecodeCallback->DrainComplete();
       return;
     } else if (rv == NS_ERROR_NOT_AVAILABLE) {
@@ -227,8 +257,18 @@ GonkDecoderManager::ProcessToDo(bool aEndOfStream)
     }
   }
 
-  if (HasQueuedSample() || mWaitOutput.Length() > 0) {
+  if (!aEndOfStream && NumQueuedSamples() <= MIN_QUEUED_SAMPLES) {
+    mDecodeCallback->InputExhausted();
+    // No need to shedule todo task this time because InputExhausted() will
+    // cause Input() to be invoked and do it for us.
+    return;
+  }
+
+  if (NumQueuedSamples() || mWaitOutput.Length() > 0) {
     mToDo = new AMessage(kNotifyDecoderActivity, id());
+    if (aEndOfStream) {
+      mToDo->setInt32("input-eos", 1);
+    }
     mDecoder->requestActivityNotification(mToDo);
   }
 }
@@ -254,6 +294,14 @@ GonkDecoderManager::onMessageReceived(const sp<AMessage> &aMessage)
       ProcessToDo(aMessage->findInt32("input-eos", &eos) && eos);
       break;
     }
+#ifdef DEBUG
+    case kNotifyFindLooperId:
+    {
+      mTaskLooperId = androidGetThreadId();
+      MOZ_ASSERT(mTaskLooperId);
+      break;
+    }
+#endif
     default:
       {
         TRESPASS();
@@ -262,11 +310,18 @@ GonkDecoderManager::onMessageReceived(const sp<AMessage> &aMessage)
   }
 }
 
+#ifdef DEBUG
+bool
+GonkDecoderManager::OnTaskLooper()
+{
+  return androidGetThreadId() == mTaskLooperId;
+}
+#endif
+
 GonkMediaDataDecoder::GonkMediaDataDecoder(GonkDecoderManager* aManager,
                                            FlushableTaskQueue* aTaskQueue,
                                            MediaDataDecoderCallback* aCallback)
-  : mTaskQueue(aTaskQueue)
-  , mManager(aManager)
+  : mManager(aManager)
 {
   MOZ_COUNT_CTOR(GonkMediaDataDecoder);
   mManager->SetDecodeCallback(aCallback);
@@ -305,11 +360,6 @@ GonkMediaDataDecoder::Input(MediaRawData* aSample)
 nsresult
 GonkMediaDataDecoder::Flush()
 {
-  // Flush the input task queue. This cancels all pending Decode() calls.
-  // Note this blocks until the task queue finishes its current job, if
-  // it's executing at all. Note the MP4Reader ignores all output while
-  // flushing.
-  mTaskQueue->Flush();
   return mManager->Flush();
 }
 

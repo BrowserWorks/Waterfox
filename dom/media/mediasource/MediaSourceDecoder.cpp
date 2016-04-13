@@ -13,11 +13,11 @@
 #include "MediaSourceResource.h"
 #include "MediaSourceUtils.h"
 #include "VideoUtils.h"
-#include "MediaFormatReader.h"
 #include "MediaSourceDemuxer.h"
 #include "SourceBufferList.h"
+#include <algorithm>
 
-extern PRLogModuleInfo* GetMediaSourceLog();
+extern mozilla::LogModule* GetMediaSourceLog();
 
 #define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("MediaSourceDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 #define MSE_DEBUGV(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Verbose, ("MediaSourceDecoder(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
@@ -46,9 +46,8 @@ MediaSourceDecoder::CreateStateMachine()
 {
   MOZ_ASSERT(NS_IsMainThread());
   mDemuxer = new MediaSourceDemuxer();
-  RefPtr<MediaFormatReader> reader =
-    new MediaFormatReader(this, mDemuxer, GetVideoFrameContainer());
-  return new MediaDecoderStateMachine(this, reader);
+  mReader = new MediaFormatReader(this, mDemuxer, GetVideoFrameContainer());
+  return new MediaDecoderStateMachine(this, mReader);
 }
 
 nsresult
@@ -102,6 +101,10 @@ MediaSourceDecoder::GetBuffered()
   MOZ_ASSERT(NS_IsMainThread());
 
   dom::SourceBufferList* sourceBuffers = mMediaSource->ActiveSourceBuffers();
+  if (!sourceBuffers) {
+    // Media source object is shutting down.
+    return TimeIntervals();
+  }
   media::TimeUnit highestEndTime;
   nsTArray<media::TimeIntervals> activeRanges;
   media::TimeIntervals buffered;
@@ -134,7 +137,7 @@ MediaSourceDecoder::GetBuffered()
   return buffered;
 }
 
-void
+RefPtr<ShutdownPromise>
 MediaSourceDecoder::Shutdown()
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -146,7 +149,7 @@ MediaSourceDecoder::Shutdown()
   }
   mDemuxer = nullptr;
 
-  MediaDecoder::Shutdown();
+  return MediaDecoder::Shutdown();
 }
 
 /*static*/
@@ -236,7 +239,10 @@ MediaSourceDecoder::GetMediaSourceDuration()
 void
 MediaSourceDecoder::GetMozDebugReaderData(nsAString& aString)
 {
-  mDemuxer->GetMozDebugReaderData(aString);
+  if (mReader && mDemuxer) {
+    mReader->GetMozDebugReaderData(aString);
+    mDemuxer->GetMozDebugReaderData(aString);
+  }
 }
 
 double
@@ -244,6 +250,58 @@ MediaSourceDecoder::GetDuration()
 {
   MOZ_ASSERT(NS_IsMainThread());
   return ExplicitDuration();
+}
+
+MediaDecoderOwner::NextFrameStatus
+MediaSourceDecoder::NextFrameBufferedStatus()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!mMediaSource ||
+      mMediaSource->ReadyState() == dom::MediaSourceReadyState::Closed) {
+    return MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
+  }
+
+  // Next frame hasn't been decoded yet.
+  // Use the buffered range to consider if we have the next frame available.
+  TimeUnit currentPosition = TimeUnit::FromMicroseconds(CurrentPosition());
+  TimeInterval interval(currentPosition,
+                        currentPosition + media::TimeUnit::FromMicroseconds(DEFAULT_NEXT_FRAME_AVAILABLE_BUFFERED),
+                        MediaSourceDemuxer::EOS_FUZZ);
+  return GetBuffered().Contains(interval)
+    ? MediaDecoderOwner::NEXT_FRAME_AVAILABLE
+    : MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
+}
+
+bool
+MediaSourceDecoder::CanPlayThrough()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (NextFrameBufferedStatus() == MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE) {
+    return false;
+  }
+
+  if (IsNaN(mMediaSource->Duration())) {
+    // Don't have any data yet.
+    return false;
+  }
+  TimeUnit duration = TimeUnit::FromSeconds(mMediaSource->Duration());
+  TimeUnit currentPosition = TimeUnit::FromMicroseconds(CurrentPosition());
+  if (duration.IsInfinite()) {
+    // We can't make an informed decision and just assume that it's a live stream
+    return true;
+  } else if (duration <= currentPosition) {
+    return true;
+  }
+  // If we have data up to the mediasource's duration or 30s ahead, we can
+  // assume that we can play without interruption.
+  TimeUnit timeAhead =
+    std::min(duration, currentPosition + TimeUnit::FromSeconds(30));
+  TimeInterval interval(currentPosition,
+                        timeAhead,
+                        MediaSourceDemuxer::EOS_FUZZ);
+  return GetBuffered().Contains(interval);
 }
 
 #undef MSE_DEBUG

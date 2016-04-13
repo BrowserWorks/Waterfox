@@ -33,9 +33,9 @@ function check_mp4(v, enabled) {
   // Not the MIME type that other browsers respond to, so we won't either.
   check("audio/m4a", "");
   check("video/m4v", "");
-  // Only Safari responds affirmatively to "audio/aac",
-  // so we'll let x-m4a cover aac support.
-  check("audio/aac", "");
+
+  check("audio/aac", "maybe");
+  check("audio/aacp", "maybe");
 
   // H.264 Constrained Baseline Profile Level 3.0, AAC-LC
   check("video/mp4; codecs=\"avc1.42E01E, mp4a.40.2\"", "probably");
@@ -76,7 +76,8 @@ function check_mp4(v, enabled) {
   check("audio/mp4; codecs=mp4a.40.5", "probably");
   check("audio/x-m4a; codecs=\"mp4a.40.5\"", "probably");
   check("audio/x-m4a; codecs=mp4a.40.5", "probably");
-
+  // HE-AAC v2
+  check("audio/mp4; codecs=\"mp4a.40.29\"", "probably");
 }
 
 function check_mp3(v, enabled) {
@@ -112,6 +113,10 @@ function IsMacOSSnowLeopardOrLater() {
   return major == 10 && minor >= 6;
 }
 
+function IsLinux() {
+  return navigator.userAgent.indexOf("Linux") != -1;
+}
+
 function getPref(name) {
   var pref = false;
   try {
@@ -120,23 +125,29 @@ function getPref(name) {
   return pref;
 }
 
+function IsSupportedAndroid() {
+  return getAndroidVersion() >= 14;
+}
+
 function IsJellyBeanOrLater() {
-  return androidVersion >= 16;
+  return getAndroidVersion() >= 16;
 }
 
 var haveMp4 = (getPref("media.wmf.enabled") && IsWindowsVistaOrLater()) ||
               IsMacOSSnowLeopardOrLater() ||
-              IsJellyBeanOrLater() ||
+              (IsSupportedAndroid() &&
+               (IsJellyBeanOrLater() || getPref("media.plugins.enabled"))) ||
               getPref("media.omx.enabled") ||
-              getPref("media.gstreamer.enabled") ||
-              getPref("media.ffmpeg.enabled");
+              (IsLinux() && getPref("media.ffmpeg.enabled"));
 
 check_mp4(document.getElementById('v'), haveMp4);
 
 var haveMp3 = getPref("media.directshow.enabled") ||
               (getPref("media.wmf.enabled") && IsWindowsVistaOrLater()) ||
-              getPref("media.gstreamer.enabled") ||
-              getPref("media.ffmpeg.enabled") ||
+              (IsLinux() && getPref("media.ffmpeg.enabled")) ||
+              (IsSupportedAndroid() &&
+               ((IsJellyBeanOrLater() && getPref("media.android-media-codec.enabled")) ||
+                getPref("media.plugins.enabled"))) ||
               getPref("media.apple.mp3.enabled");
 check_mp3(document.getElementById('v'), haveMp3);
 

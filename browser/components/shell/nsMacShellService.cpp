@@ -57,12 +57,6 @@ nsMacShellService::IsDefaultBrowser(bool aStartupCheck,
     ::CFRelease(defaultBrowserID);
   }
 
-  // If this is the first browser window, maintain internal state that we've
-  // checked this session (so that subsequent window opens don't show the 
-  // default browser dialog).
-  if (aStartupCheck)
-    mCheckedThisSession = true;
-
   return NS_OK;
 }
 
@@ -100,97 +94,6 @@ nsMacShellService::SetDefaultBrowser(bool aClaimAllTypes, bool aForAllUsers)
     (void) prefs->SetIntPref(PREF_DEFAULTBROWSERCHECKCOUNT, 0);
   }
 
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsMacShellService::GetShouldSkipCheckDefaultBrowser(bool* aResult)
-{
-  NS_ENSURE_ARG_POINTER(aResult);
-
-  nsresult rv;
-  nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  rv = prefs->GetBoolPref(PREF_SKIPDEFAULTBROWSERCHECK, aResult);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  if (*aResult) {
-    // Only skip the default browser check once. The next attempt in
-    // a new session should proceed.
-    return prefs->SetBoolPref(PREF_SKIPDEFAULTBROWSERCHECK, false);
-  }
-
-  int32_t defaultBrowserCheckCount;
-  rv = prefs->GetIntPref(PREF_DEFAULTBROWSERCHECKCOUNT,
-                         &defaultBrowserCheckCount);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  if (defaultBrowserCheckCount < 4) {
-    *aResult = false;
-    return prefs->SetIntPref(PREF_DEFAULTBROWSERCHECKCOUNT,
-                             defaultBrowserCheckCount + 1);
-  }
-
-  // Disable the default browser check after three attempts.
-  // Don't modify PREF_CHECKDEFAULTBROWSER since that is a
-  // user-initiated action and it shouldn't get re-enabled
-  // if it has been user disabled.
-  *aResult = true;
-  return rv;
-}
-
-NS_IMETHODIMP
-nsMacShellService::GetShouldCheckDefaultBrowser(bool* aResult)
-{
-  // If we've already checked, the browser has been started and this is a 
-  // new window open, and we don't want to check again.
-  if (mCheckedThisSession) {
-    *aResult = false;
-    return NS_OK;
-  }
-
-  nsresult rv;
-#ifndef RELEASE_BUILD
-  bool skipDefaultBrowserCheck;
-  rv = GetShouldSkipCheckDefaultBrowser(&skipDefaultBrowserCheck);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  if (skipDefaultBrowserCheck) {
-    *aResult = false;
-    return rv;
-  }
-#endif
-
-  nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  return prefs->GetBoolPref(PREF_CHECKDEFAULTBROWSER, aResult);
-}
-
-NS_IMETHODIMP
-nsMacShellService::SetShouldCheckDefaultBrowser(bool aShouldCheck)
-{
-  nsresult rv;
-  nsCOMPtr<nsIPrefBranch> prefs(do_GetService(NS_PREFSERVICE_CONTRACTID, &rv));
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  return prefs->SetBoolPref(PREF_CHECKDEFAULTBROWSER, aShouldCheck);
-}
-
-NS_IMETHODIMP
-nsMacShellService::GetCanSetDesktopBackground(bool* aResult)
-{
-  *aResult = true;
   return NS_OK;
 }
 

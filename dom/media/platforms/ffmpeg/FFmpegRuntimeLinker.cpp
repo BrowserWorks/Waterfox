@@ -4,14 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <dlfcn.h>
-
 #include "FFmpegRuntimeLinker.h"
+#include "FFmpegLibWrapper.h"
 #include "mozilla/ArrayUtils.h"
 #include "FFmpegLog.h"
-#include "mozilla/Preferences.h"
-
-#define NUM_ELEMENTS(X) (sizeof(X) / sizeof((X)[0]))
+#include "prlink.h"
 
 namespace mozilla
 {
@@ -19,111 +16,81 @@ namespace mozilla
 FFmpegRuntimeLinker::LinkStatus FFmpegRuntimeLinker::sLinkStatus =
   LinkStatus_INIT;
 
-struct AvCodecLib
-{
-  const char* Name;
-  already_AddRefed<PlatformDecoderModule> (*Factory)();
-  uint32_t Version;
-};
-
 template <int V> class FFmpegDecoderModule
 {
 public:
-  static already_AddRefed<PlatformDecoderModule> Create();
+  static already_AddRefed<PlatformDecoderModule> Create(FFmpegLibWrapper*);
 };
 
-static const AvCodecLib sLibs[] = {
-  { "libavcodec-ffmpeg.so.56", FFmpegDecoderModule<55>::Create, 55 },
-  { "libavcodec.so.56", FFmpegDecoderModule<55>::Create, 55 },
-  { "libavcodec.so.55", FFmpegDecoderModule<55>::Create, 55 },
-  { "libavcodec.so.54", FFmpegDecoderModule<54>::Create, 54 },
-  { "libavcodec.so.53", FFmpegDecoderModule<53>::Create, 53 },
-  { "libavcodec.56.dylib", FFmpegDecoderModule<55>::Create, 55 },
-  { "libavcodec.55.dylib", FFmpegDecoderModule<55>::Create, 55 },
-  { "libavcodec.54.dylib", FFmpegDecoderModule<54>::Create, 54 },
-  { "libavcodec.53.dylib", FFmpegDecoderModule<53>::Create, 53 },
+static FFmpegLibWrapper sLibAV;
+
+static const char* sLibs[] = {
+#if defined(XP_DARWIN)
+  "libavcodec.57.dylib",
+  "libavcodec.56.dylib",
+  "libavcodec.55.dylib",
+  "libavcodec.54.dylib",
+  "libavcodec.53.dylib",
+#else
+  "libavcodec-ffmpeg.so.57",
+  "libavcodec-ffmpeg.so.56",
+  "libavcodec.so.57",
+  "libavcodec.so.56",
+  "libavcodec.so.55",
+  "libavcodec.so.54",
+  "libavcodec.so.53",
+#endif
 };
-
-void* FFmpegRuntimeLinker::sLinkedLib = nullptr;
-const AvCodecLib* FFmpegRuntimeLinker::sLib = nullptr;
-
-#define AV_FUNC(func, ver) void (*func)();
-#define LIBAVCODEC_ALLVERSION
-#include "FFmpegFunctionList.h"
-#undef LIBAVCODEC_ALLVERSION
-#undef AV_FUNC
 
 /* static */ bool
-FFmpegRuntimeLinker::Link()
+FFmpegRuntimeLinker::Init()
 {
   if (sLinkStatus) {
     return sLinkStatus == LinkStatus_SUCCEEDED;
   }
-
   MOZ_ASSERT(NS_IsMainThread());
 
   for (size_t i = 0; i < ArrayLength(sLibs); i++) {
-    const AvCodecLib* lib = &sLibs[i];
-    sLinkedLib = dlopen(lib->Name, RTLD_NOW | RTLD_LOCAL);
-    if (sLinkedLib) {
-      if (Bind(lib->Name, lib->Version)) {
-        sLib = lib;
+    const char* lib = sLibs[i];
+    PRLibSpec lspec;
+    lspec.type = PR_LibSpec_Pathname;
+    lspec.value.pathname = lib;
+    sLibAV.mAVCodecLib = PR_LoadLibraryWithFlags(lspec, PR_LD_NOW | PR_LD_LOCAL);
+    if (sLibAV.mAVCodecLib) {
+      sLibAV.mAVUtilLib = sLibAV.mAVCodecLib;
+      if (sLibAV.Link()) {
         sLinkStatus = LinkStatus_SUCCEEDED;
         return true;
       }
-      // Shouldn't happen but if it does then we try the next lib..
-      Unlink();
     }
   }
 
   FFMPEG_LOG("H264/AAC codecs unsupported without [");
   for (size_t i = 0; i < ArrayLength(sLibs); i++) {
-    FFMPEG_LOG("%s %s", i ? "," : "", sLibs[i].Name);
+    FFMPEG_LOG("%s %s", i ? "," : "", sLibs[i]);
   }
   FFMPEG_LOG(" ]\n");
-
-  Unlink();
 
   sLinkStatus = LinkStatus_FAILED;
   return false;
 }
 
-/* static */ bool
-FFmpegRuntimeLinker::Bind(const char* aLibName, uint32_t Version)
-{
-#define LIBAVCODEC_ALLVERSION
-#define AV_FUNC(func, ver)                                                     \
-  if (ver == 0 || ver == Version) {                                            \
-    if (!(func = (typeof(func))dlsym(sLinkedLib, #func))) {                    \
-      FFMPEG_LOG("Couldn't load function " #func " from %s.", aLibName);       \
-      return false;                                                            \
-    }                                                                          \
-  }
-#include "FFmpegFunctionList.h"
-#undef AV_FUNC
-#undef LIBAVCODEC_ALLVERSION
-  return true;
-}
-
 /* static */ already_AddRefed<PlatformDecoderModule>
 FFmpegRuntimeLinker::CreateDecoderModule()
 {
-  if (!Link()) {
+  if (!Init()) {
     return nullptr;
   }
-  RefPtr<PlatformDecoderModule> module = sLib->Factory();
-  return module.forget();
-}
-
-/* static */ void
-FFmpegRuntimeLinker::Unlink()
-{
-  if (sLinkedLib) {
-    dlclose(sLinkedLib);
-    sLinkedLib = nullptr;
-    sLib = nullptr;
-    sLinkStatus = LinkStatus_INIT;
+  RefPtr<PlatformDecoderModule> module;
+  switch (sLibAV.mVersion) {
+    case 53: module = FFmpegDecoderModule<53>::Create(&sLibAV); break;
+    case 54: module = FFmpegDecoderModule<54>::Create(&sLibAV); break;
+    case 55:
+    case 56: module = FFmpegDecoderModule<55>::Create(&sLibAV); break;
+    case 57: module = FFmpegDecoderModule<57>::Create(&sLibAV); break;
+    default: module = nullptr;
   }
+  return module.forget();
 }
 
 } // namespace mozilla

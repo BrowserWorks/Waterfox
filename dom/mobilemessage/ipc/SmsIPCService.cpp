@@ -8,7 +8,6 @@
 #include "SmsIPCService.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/dom/mobilemessage/SmsChild.h"
-#include "SmsMessage.h"
 #include "nsJSUtils.h"
 #include "mozilla/dom/MozMobileMessageManagerBinding.h"
 #include "mozilla/dom/BindingUtils.h"
@@ -73,7 +72,7 @@ SendCursorRequest(const IPCMobileMessageCursor& aRequest,
   // Add an extra ref for IPDL. Will be released in
   // SmsChild::DeallocPMobileMessageCursor().
   RefPtr<MobileMessageCursorChild> actorCopy(actor);
-  mozilla::unused << actorCopy.forget().take();
+  mozilla::Unused << actorCopy.forget().take();
 
   smsChild->SendPMobileMessageCursorConstructor(actor, aRequest);
 

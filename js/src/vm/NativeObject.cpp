@@ -37,12 +37,19 @@ static const ObjectElements emptyElementsHeader(0, 0);
 HeapSlot* const js::emptyObjectElements =
     reinterpret_cast<HeapSlot*>(uintptr_t(&emptyElementsHeader) + sizeof(ObjectElements));
 
+static const ObjectElements emptyElementsHeaderShared(0, 0, ObjectElements::SharedMemory::IsShared);
+
+/* Objects with no elements share one empty set of elements. */
+HeapSlot* const js::emptyObjectElementsShared =
+    reinterpret_cast<HeapSlot*>(uintptr_t(&emptyElementsHeaderShared) + sizeof(ObjectElements));
+
+
 #ifdef DEBUG
 
 bool
 NativeObject::canHaveNonEmptyElements()
 {
-    return !IsAnyTypedArray(this);
+    return !this->is<TypedArrayObject>();
 }
 
 #endif // DEBUG
@@ -56,7 +63,8 @@ ObjectElements::ConvertElementsToDoubles(JSContext* cx, uintptr_t elementsPtr)
      * elements converted to doubles, and arrays never have empty elements.
      */
     HeapSlot* elementsHeapPtr = (HeapSlot*) elementsPtr;
-    MOZ_ASSERT(elementsHeapPtr != emptyObjectElements);
+    MOZ_ASSERT(elementsHeapPtr != emptyObjectElements &&
+               elementsHeapPtr != emptyObjectElementsShared);
 
     ObjectElements* header = ObjectElements::fromElements(elementsHeapPtr);
     MOZ_ASSERT(!header->shouldConvertDoubleElements());
@@ -126,7 +134,7 @@ js::NativeObject::checkShapeConsistency()
         for (int n = throttle; --n >= 0 && shape->parent; shape = shape->parent) {
             MOZ_ASSERT_IF(lastProperty() != shape, !shape->hasTable());
 
-            ShapeTable::Entry& entry = table.search(shape->propid(), false);
+            ShapeTable::Entry& entry = table.search<MaybeAdding::NotAdding>(shape->propid());
             MOZ_ASSERT(entry.shape() == shape);
         }
 
@@ -147,7 +155,7 @@ js::NativeObject::checkShapeConsistency()
                 ShapeTable& table = shape->table();
                 MOZ_ASSERT(shape->parent);
                 for (Shape::Range<NoGC> r(shape); !r.empty(); r.popFront()) {
-                    ShapeTable::Entry& entry = table.search(r.front().propid(), false);
+                    ShapeTable::Entry& entry = table.search<MaybeAdding::NotAdding>(r.front().propid());
                     MOZ_ASSERT(entry.shape() == &r.front());
                 }
             }
@@ -348,7 +356,7 @@ void
 NativeObject::setLastPropertyMakeNative(ExclusiveContext* cx, Shape* shape)
 {
     MOZ_ASSERT(getClass()->isNative());
-    MOZ_ASSERT(shape->isNative());
+    MOZ_ASSERT(shape->getObjectClass()->isNative());
     MOZ_ASSERT(!shape->inDictionary());
 
     // This method is used to convert unboxed objects into native objects. In
@@ -1139,7 +1147,7 @@ AddOrChangeProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId id,
         !desc.setter() &&
         desc.attributes() == JSPROP_ENUMERATE &&
         (!obj->isIndexed() || !obj->containsPure(id)) &&
-        !IsAnyTypedArray(obj))
+        !obj->is<TypedArrayObject>())
     {
         uint32_t index = JSID_TO_INT(id);
         DenseElementResult edResult = obj->ensureDenseElements(cx, index, 1);
@@ -1319,7 +1327,7 @@ js::NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId 
             if (WouldDefinePastNonwritableLength(obj, index))
                 return result.fail(JSMSG_CANT_DEFINE_PAST_ARRAY_LENGTH);
         }
-    } else if (IsAnyTypedArray(obj)) {
+    } else if (obj->is<TypedArrayObject>()) {
         // 9.4.5.3 step 3. Indexed properties of typed arrays are special.
         uint64_t index;
         if (IsTypedArrayIndex(id, &index)) {
@@ -1336,6 +1344,11 @@ js::NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId 
             // redefined, it will.
             if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
                 obj->as<ArgumentsObject>().markLengthOverridden();
+        }
+        if (JSID_IS_SYMBOL(id) && JSID_TO_SYMBOL(id) == cx->wellKnownSymbols().iterator) {
+            // Do same thing as .length for [@@iterator].
+            if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
+                obj->as<ArgumentsObject>().markIteratorOverridden();
         }
     }
 
@@ -1364,7 +1377,7 @@ js::NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId 
     // Step 2.
     if (!shape) {
         if (!obj->nonProxyIsExtensible())
-            return result.fail(JSMSG_OBJECT_NOT_EXTENSIBLE);
+            return result.fail(JSMSG_CANT_DEFINE_PROP_OBJECT_NOT_EXTENSIBLE);
 
         // Fill in missing desc fields with defaults.
         CompletePropertyDescriptor(&desc);
@@ -1445,7 +1458,7 @@ js::NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId 
             return result.fail(JSMSG_CANT_REDEFINE_PROP);
 
         if (IsImplicitDenseOrTypedArrayElement(shape)) {
-            MOZ_ASSERT(!IsAnyTypedArray(obj));
+            MOZ_ASSERT(!obj->is<TypedArrayObject>());
             if (!NativeObject::sparsifyDenseElement(cx, obj, JSID_TO_INT(id)))
                 return false;
             shape = obj->lookup(cx, id);
@@ -1461,7 +1474,7 @@ js::NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId 
 
         if (frozen || !desc.hasValue()) {
             if (IsImplicitDenseOrTypedArrayElement(shape)) {
-                MOZ_ASSERT(!IsAnyTypedArray(obj));
+                MOZ_ASSERT(!obj->is<TypedArrayObject>());
                 if (!NativeObject::sparsifyDenseElement(cx, obj, JSID_TO_INT(id)))
                     return false;
                 shape = obj->lookup(cx, id);
@@ -1742,7 +1755,7 @@ Detecting(JSContext* cx, JSScript* script, jsbytecode* pc)
 
     // General case: a branch or equality op follows the access.
     JSOp op = JSOp(*pc);
-    if (js_CodeSpec[op].format & JOF_DETECTING)
+    if (CodeSpec[op].format & JOF_DETECTING)
         return true;
 
     jsbytecode* endpc = script->codeEnd();
@@ -1760,7 +1773,7 @@ Detecting(JSContext* cx, JSScript* script, jsbytecode* pc)
         // Special case #2: don't warn about (obj.prop == undefined).
         JSAtom* atom = script->getAtom(GET_UINT32_INDEX(pc));
         if (atom == cx->names().undefined &&
-            (pc += js_CodeSpec[op].length) < endpc) {
+            (pc += CodeSpec[op].length) < endpc) {
             op = JSOp(*pc);
             return op == JSOP_EQ || op == JSOP_NE || op == JSOP_STRICTEQ || op == JSOP_STRICTNE;
         }
@@ -1814,7 +1827,7 @@ GetNonexistentProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
     //
     // Don't warn if extra warnings not enabled or for random getprop
     // operations.
-    if (!cx->compartment()->options().extraWarnings(cx))
+    if (!cx->compartment()->behaviors().extraWarnings(cx))
         return true;
 
     jsbytecode* pc;
@@ -1840,7 +1853,7 @@ GetNonexistentProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
         return true;
 
     // Do not warn about tests like (obj[prop] == undefined).
-    pc += js_CodeSpec[*pc].length;
+    pc += CodeSpec[*pc].length;
     if (Detecting(cx, script, pc))
         return true;
 
@@ -1982,6 +1995,7 @@ js::GetPropertyForNameLookup(JSContext* cx, HandleObject obj, HandleId id, Mutab
 static bool
 MaybeReportUndeclaredVarAssignment(JSContext* cx, JSString* propname)
 {
+    unsigned flags;
     {
         jsbytecode* pc;
         JSScript* script = cx->currentScript(&pc, JSContext::ALLOW_CROSS_COMPARTMENT);
@@ -1990,16 +2004,17 @@ MaybeReportUndeclaredVarAssignment(JSContext* cx, JSString* propname)
 
         // If the code is not strict and extra warnings aren't enabled, then no
         // check is needed.
-        if (!IsStrictSetPC(pc) && !cx->compartment()->options().extraWarnings(cx))
+        if (IsStrictSetPC(pc))
+            flags = JSREPORT_ERROR;
+        else if (cx->compartment()->behaviors().extraWarnings(cx))
+            flags = JSREPORT_WARNING | JSREPORT_STRICT;
+        else
             return true;
     }
 
     JSAutoByteString bytes(cx, propname);
     return !!bytes &&
-           JS_ReportErrorFlagsAndNumber(cx,
-                                        (JSREPORT_WARNING | JSREPORT_STRICT
-                                         | JSREPORT_STRICT_MODE_ERROR),
-                                        GetErrorMessage, nullptr,
+           JS_ReportErrorFlagsAndNumber(cx, flags, GetErrorMessage, nullptr,
                                         JSMSG_UNDECLARED_VAR, bytes.ptr());
 }
 
@@ -2160,7 +2175,7 @@ SetNonexistentProperty(JSContext* cx, HandleId id, HandleValue v, HandleValue re
                        QualifiedBool qualified, ObjectOpResult& result)
 {
     // We should never add properties to lexical blocks.
-    MOZ_ASSERT_IF(receiver.isObject(), !receiver.toObject().is<BlockObject>());
+    MOZ_ASSERT_IF(receiver.isObject(), !receiver.toObject().is<ClonedBlockObject>());
 
     if (!qualified && receiver.isObject() && receiver.toObject().isUnqualifiedVarObj()) {
         if (!MaybeReportUndeclaredVarAssignment(cx, JSID_TO_STRING(id)))
@@ -2178,7 +2193,7 @@ static bool
 SetDenseOrTypedArrayElement(JSContext* cx, HandleNativeObject obj, uint32_t index, HandleValue v,
                             ObjectOpResult& result)
 {
-    if (IsAnyTypedArray(obj)) {
+    if (obj->is<TypedArrayObject>()) {
         double d;
         if (!ToNumber(cx, v, &d))
             return false;
@@ -2186,13 +2201,9 @@ SetDenseOrTypedArrayElement(JSContext* cx, HandleNativeObject obj, uint32_t inde
         // Silently do nothing for out-of-bounds sets, for consistency with
         // current behavior.  (ES6 currently says to throw for this in
         // strict mode code, so we may eventually need to change.)
-        uint32_t len = AnyTypedArrayLength(obj);
-        if (index < len) {
-            if (obj->is<TypedArrayObject>())
-                TypedArrayObject::setElement(obj->as<TypedArrayObject>(), index, d);
-            else
-                SharedTypedArrayObject::setElement(obj->as<SharedTypedArrayObject>(), index, d);
-        }
+        uint32_t len = obj->as<TypedArrayObject>().length();
+        if (index < len)
+            TypedArrayObject::setElement(obj->as<TypedArrayObject>(), index, d);
         return result.succeed();
     }
 
@@ -2392,7 +2403,7 @@ js::NativeDeleteProperty(JSContext* cx, HandleNativeObject obj, HandleId id,
     // Step 5.
     if (IsImplicitDenseOrTypedArrayElement(shape)) {
         // Typed array elements are non-configurable.
-        MOZ_ASSERT(!IsAnyTypedArray(obj));
+        MOZ_ASSERT(!obj->is<TypedArrayObject>());
 
         if (!obj->maybeCopyElementsForWrite(cx))
             return false;

@@ -33,11 +33,9 @@ const LOGGER_PREFIX = "TelemetryController::";
 const PREF_BRANCH = "toolkit.telemetry.";
 const PREF_BRANCH_LOG = PREF_BRANCH + "log.";
 const PREF_SERVER = PREF_BRANCH + "server";
-const PREF_ENABLED = PREF_BRANCH + "enabled";
 const PREF_LOG_LEVEL = PREF_BRANCH_LOG + "level";
 const PREF_LOG_DUMP = PREF_BRANCH_LOG + "dump";
 const PREF_CACHED_CLIENTID = PREF_BRANCH + "cachedClientID";
-const PREF_FHR_ENABLED = "datareporting.healthreport.service.enabled";
 const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 const PREF_SESSIONS_BRANCH = "datareporting.sessions.";
 const PREF_UNIFIED = PREF_BRANCH + "unified";
@@ -162,7 +160,6 @@ this.EXPORTED_SYMBOLS = ["TelemetryController"];
 
 this.TelemetryController = Object.freeze({
   Constants: Object.freeze({
-    PREF_ENABLED: PREF_ENABLED,
     PREF_LOG_LEVEL: PREF_LOG_LEVEL,
     PREF_LOG_DUMP: PREF_LOG_DUMP,
     PREF_SERVER: PREF_SERVER,
@@ -225,15 +222,14 @@ this.TelemetryController = Object.freeze({
     aOptions.addClientId = aOptions.addClientId || false;
     aOptions.addEnvironment = aOptions.addEnvironment || false;
 
-    const testOnly = Impl.submitExternalPing(aType, aPayload, aOptions);
-    return testOnly;
+    return Impl.submitExternalPing(aType, aPayload, aOptions);
   },
 
   /**
    * Get the current session ping data as it would be sent out or stored.
    *
    * @param {bool} aSubsession Whether to get subsession data. Optional, defaults to false.
-   * @return {object} The current ping data in object form.
+   * @return {object} The current ping data if Telemetry is enabled, null otherwise.
    */
   getCurrentPingData: function(aSubsession = false) {
     return Impl.getCurrentPingData(aSubsession);
@@ -408,14 +404,14 @@ var Impl = {
     try {
       arch = Services.sysinfo.get("arch");
     } catch (e) {
-      this._log.trace("assemblePing - Unable to get system architecture.", e);
+      this._log.trace("_getApplicationSection - Unable to get system architecture.", e);
     }
 
     let updateChannel = null;
     try {
       updateChannel = UpdateUtils.getUpdateChannel(false);
     } catch (e) {
-      this._log.trace("assemblePing - Unable to get update channel.", e);
+      this._log.trace("_getApplicationSection - Unable to get update channel.", e);
     }
 
     return {
@@ -423,6 +419,7 @@ var Impl = {
       buildId: Services.appinfo.appBuildID,
       name: Services.appinfo.name,
       version: Services.appinfo.version,
+      displayVersion: AppConstants.MOZ_APP_VERSION_DISPLAY,
       vendor: Services.appinfo.vendor,
       platformVersion: Services.appinfo.platformVersion,
       xpcomAbi: Services.appinfo.XPCOMABI,
@@ -442,7 +439,7 @@ var Impl = {
    *                  environment data.
    * @param {Object}  [aOptions.overrideEnvironment=null] set to override the environment data.
    *
-   * @returns Promise<Object> A promise that resolves when the ping is completely assembled.
+   * @returns {Object} An object that contains the assembled ping data.
    */
   assemblePing: function assemblePing(aType, aPayload, aOptions = {}) {
     this._log.trace("assemblePing - Type " + aType + ", aOptions " + JSON.stringify(aOptions));
@@ -671,22 +668,10 @@ var Impl = {
     // Unified Telemetry makes it opt-out unless the unifedOptin pref is set.
     // Additionally, we make Telemetry opt-out for a 5% sample.
     // If extended Telemetry is enabled, base recording is always on as well.
-    const enabled = Preferences.get(PREF_ENABLED, false);
+    const enabled = Utils.isTelemetryEnabled;
     const isOptout = IS_UNIFIED_TELEMETRY && (!Policy.isUnifiedOptin() || this._isInOptoutSample());
     Telemetry.canRecordBase = enabled || isOptout;
-
-    if (AppConstants.MOZILLA_OFFICIAL) {
-      // Enable extended telemetry if:
-      //  * the telemetry preference is set and
-      //  * this is an official build or we are in test-mode
-      // We only do the latter check for official builds so that e.g. developer builds
-      // still enable Telemetry based on prefs.
-      Telemetry.canRecordExtended = enabled && (Telemetry.isOfficialTelemetry || this._testMode);
-    } else {
-      // Turn off extended telemetry recording if disabled by preferences or if base/telemetry
-      // telemetry recording is off.
-      Telemetry.canRecordExtended = enabled;
-    }
+    Telemetry.canRecordExtended = enabled;
 
     this._log.config("enableTelemetryRecording - canRecordBase:" + Telemetry.canRecordBase +
                      ", canRecordExtended: " + Telemetry.canRecordExtended);
@@ -721,21 +706,18 @@ var Impl = {
       return Promise.resolve();
     }
 
-    // Only initialize the session recorder if FHR is enabled.
-    // TODO: move this after the |enableTelemetryRecording| block and drop the
-    // PREF_FHR_ENABLED check once we permanently switch over to unified Telemetry.
-    if (!this._sessionRecorder &&
-        (Preferences.get(PREF_FHR_ENABLED, true) || IS_UNIFIED_TELEMETRY)) {
-      this._sessionRecorder = new SessionRecorder(PREF_SESSIONS_BRANCH);
-      this._sessionRecorder.onStartup();
-    }
-
     // This will trigger displaying the datachoices infobar.
     TelemetryReportingPolicy.setup();
 
     if (!this.enableTelemetryRecording()) {
       this._log.config("setupChromeProcess - Telemetry recording is disabled, skipping Chrome process setup.");
       return Promise.resolve();
+    }
+
+    // Initialize the session recorder.
+    if (!this._sessionRecorder) {
+      this._sessionRecorder = new SessionRecorder(PREF_SESSIONS_BRANCH);
+      this._sessionRecorder.onStartup();
     }
 
     this._attachObservers();
@@ -754,6 +736,7 @@ var Impl = {
       try {
         // TODO: This should probably happen after all the delayed init here.
         this._initialized = true;
+        TelemetryEnvironment.delayedInit();
 
         yield TelemetrySend.setup(this._testMode);
 
@@ -764,7 +747,11 @@ var Impl = {
         // task to complete, but TelemetryStorage blocks on it during shutdown.
         TelemetryStorage.runCleanPingArchiveTask();
 
-        Telemetry.asyncFetchTelemetryData(function () {});
+        // Now that FHR/healthreporter is gone, make sure to remove FHR's DB from
+        // the profile directory. This is a temporary measure that we should drop
+        // in the future.
+        TelemetryStorage.removeFHRDatabase();
+
         this._delayedInitTaskDeferred.resolve();
       } catch (e) {
         this._delayedInitTaskDeferred.reject(e);
@@ -957,6 +944,11 @@ var Impl = {
 
   getCurrentPingData: function(aSubsession) {
     this._log.trace("getCurrentPingData - subsession: " + aSubsession)
+
+    // Telemetry is disabled, don't gather any data.
+    if (!Telemetry.canRecordBase) {
+      return null;
+    }
 
     const reason = aSubsession ? REASON_GATHER_SUBSESSION_PAYLOAD : REASON_GATHER_PAYLOAD;
     const type = PING_TYPE_MAIN;

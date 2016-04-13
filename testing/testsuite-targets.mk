@@ -24,6 +24,20 @@ ifndef TEST_PACKAGE_NAME
 TEST_PACKAGE_NAME := $(ANDROID_PACKAGE_NAME)
 endif
 
+# Linking xul-gtest.dll takes too long, so we disable GTest on
+# Windows PGO builds (bug 1028035).
+ifneq (1_WINNT,$(MOZ_PGO)_$(OS_ARCH))
+BUILD_GTEST=1
+endif
+
+ifdef MOZ_B2G
+BUILD_GTEST=
+endif
+
+ifneq (browser,$(MOZ_BUILD_APP))
+BUILD_GTEST=
+endif
+
 RUN_MOCHITEST_B2G_DESKTOP = \
   rm -f ./$@.log && \
   $(PYTHON) _tests/testing/mochitest/runtestsb2g.py \
@@ -59,7 +73,7 @@ RUN_MOCHITEST_REMOTE = \
 RUN_MOCHITEST_ROBOCOP = \
   rm -f ./$@.log && \
   $(PYTHON) _tests/testing/mochitest/runrobocop.py \
-    --robocop-apk=$(DEPTH)/build/mobile/robocop/robocop-debug.apk \
+    --robocop-apk=$(DEPTH)/mobile/android/tests/browser/robocop/robocop-debug.apk \
     --robocop-ini=_tests/testing/mochitest/robocop.ini \
     --log-tbpl=./$@.log $(DM_FLAGS) --dm_trans=$(DM_TRANS) \
     --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
@@ -174,6 +188,7 @@ REMOTE_REFTEST = rm -f ./$@.log && $(PYTHON) _tests/reftest/remotereftest.py \
   --dm_trans=$(DM_TRANS) --ignore-window-size \
   --app=$(TEST_PACKAGE_NAME) --deviceIP=${TEST_DEVICE} --xre-path=${MOZ_HOST_BIN} \
   --httpd-path=_tests/modules --suite reftest \
+  --extra-profile-file=$(topsrcdir)/mobile/android/fonts \
   $(SYMBOLS_PATH) $(EXTRA_TEST_ARGS) $(1) | tee ./$@.log
 
 RUN_REFTEST_B2G = rm -f ./$@.log && $(PYTHON) _tests/reftest/runreftestb2g.py \
@@ -270,7 +285,7 @@ GARBAGE += $(addsuffix .log,$(MOCHITESTS) reftest crashtest jstestbrowser)
 ifeq ($(OS_ARCH),Darwin)
 xpcshell_path = $(TARGET_DIST)/$(MOZ_MACBUNDLE_NAME)/Contents/MacOS/xpcshell
 else
-xpcshell_path = $(LIBXUL_DIST)/bin/xpcshell
+xpcshell_path = $(DIST)/bin/xpcshell
 endif
 
 # Execute all xpcshell tests in the directories listed in the manifest.
@@ -373,6 +388,7 @@ PKG_STAGE = $(DIST)/test-stage
 stage-all: \
   stage-config \
   stage-mach \
+  stage-extensions \
   stage-mochitest \
   stage-xpcshell \
   stage-jstests \
@@ -396,6 +412,11 @@ TEST_PKGS := \
   web-platform \
   xpcshell \
   $(NULL)
+
+ifdef BUILD_GTEST
+stage-all: stage-gtest
+TEST_PKGS += gtest
+endif
 
 PKG_ARG = --$(1) '$(PKG_BASENAME).$(1).tests.zip'
 
@@ -480,6 +501,16 @@ stage-xpcshell: make-stage-dir
 stage-jstests: make-stage-dir
 	$(MAKE) -C $(DEPTH)/js/src/tests stage-package
 
+stage-gtest: make-stage-dir
+# FIXME: (bug 1200311) We should be generating the gtest xul as part of the build.
+	$(MAKE) -C $(DEPTH)/testing/gtest gtest
+	$(NSINSTALL) -D $(PKG_STAGE)/gtest/gtest_bin
+	cp -RL $(DIST)/bin/gtest $(PKG_STAGE)/gtest/gtest_bin
+	cp -RL $(DEPTH)/_tests/gtest $(PKG_STAGE)
+	cp $(topsrcdir)/testing/gtest/rungtests.py $(PKG_STAGE)/gtest
+	cp $(DIST)/bin/dependentlibs.list.gtest $(PKG_STAGE)/gtest
+	cp $(DEPTH)/mozinfo.json $(PKG_STAGE)/gtest
+
 stage-android: make-stage-dir
 ifdef MOZ_ENABLE_SZIP
 # Tinderbox scripts are not unzipping everything, so the file needs to be in a directory it unzips
@@ -489,6 +520,8 @@ endif
 	$(NSINSTALL) $(DEPTH)/build/mobile/sutagent/android/watcher/Watcher.apk $(PKG_STAGE)/bin
 	$(NSINSTALL) $(DEPTH)/build/mobile/sutagent/android/fencp/FenCP.apk $(PKG_STAGE)/bin
 	$(NSINSTALL) $(DEPTH)/build/mobile/sutagent/android/ffxcp/FfxCP.apk $(PKG_STAGE)/bin
+	$(NSINSTALL) $(topsrcdir)/mobile/android/fonts $(DEPTH)/_tests/reftest
+	$(NSINSTALL) $(topsrcdir)/mobile/android/fonts $(DEPTH)/_tests/testing/mochitest
 
 stage-jetpack: make-stage-dir
 	$(MAKE) -C $(DEPTH)/addon-sdk stage-tests-package
@@ -546,6 +579,14 @@ stage-marionette: make-stage-dir
 
 stage-instrumentation-tests: make-stage-dir
 	$(MAKE) -C $(DEPTH)/testing/instrumentation stage-package
+
+TEST_EXTENSIONS := \
+    specialpowers@mozilla.org.xpi \
+	$(NULL)
+
+stage-extensions: make-stage-dir
+	$(NSINSTALL) -D $(PKG_STAGE)/extensions/
+	@$(foreach ext,$(TEST_EXTENSIONS), cp -RL $(DIST)/xpi-stage/$(ext) $(PKG_STAGE)/extensions;)
 
 .PHONY: \
   mochitest \

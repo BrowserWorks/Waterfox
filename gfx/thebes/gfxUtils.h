@@ -13,13 +13,14 @@
 #include "mozilla/UniquePtr.h"
 #include "nsColor.h"
 #include "nsPrintfCString.h"
+#include "nsRegionFwd.h"
 #include "mozilla/gfx/Rect.h"
+#include "mozilla/CheckedInt.h"
 
 class gfxASurface;
 class gfxDrawable;
 class nsIInputStream;
 class nsIGfxInfo;
-class nsIntRegion;
 class nsIPresShell;
 
 namespace mozilla {
@@ -48,7 +49,7 @@ public:
      * If aDestSurface is given, it must have identical format, dimensions, and
      * stride as the source.
      *
-     * If the source is not gfxImageFormat::ARGB32, no operation is performed.  If
+     * If the source is not SurfaceFormat::A8R8G8B8_UINT32, no operation is performed.  If
      * aDestSurface is given, the data is copied over.
      */
     static bool PremultiplyDataSurface(DataSourceSurface* srcSurf,
@@ -95,11 +96,6 @@ public:
      */
     static void ClipToRegion(mozilla::gfx::DrawTarget* aTarget, const nsIntRegion& aRegion);
 
-    /**
-     * Create a path consisting of rectangles in |aRegion|.
-     */
-    static void PathFromRegion(gfxContext* aContext, const nsIntRegion& aRegion);
-
     /*
      * Convert image format to depth value
      */
@@ -136,7 +132,7 @@ public:
     /**
      * Helper function for ConvertYCbCrToRGB that finds the
      * RGB buffer size and format for given YCbCrImage.
-     * @param aSuggestedFormat will be set to gfxImageFormat::RGB24
+     * @param aSuggestedFormat will be set to SurfaceFormat::X8R8G8B8_UINT32
      *   if the desired format is not supported.
      * @param aSuggestedSize will be set to the picture size from aData
      *   if either the suggested size was {0,0}
@@ -305,16 +301,6 @@ public:
 
     static bool DumpDisplayList();
 
-    static bool sDumpPainting;
-    static bool sDumpPaintingIntermediate;
-    static bool sDumpPaintingToFile;
-    static bool sDumpPaintItems;
-    // TODO: Dumping compositor textures is broken pretty badly. For example,
-    //       on Linux it crashes because TextureHost::GetAsSurface() returns
-    //       null. Expect to have to fix things like this if you turn it on.
-    //       Meanwhile, content-side texture dumping (conditioned on
-    //       sDumpPainting) is a good replacement.
-    static bool sDumpCompositorTextures;
     static FILE* sDumpPaintFile;
 };
 
@@ -345,8 +331,8 @@ IsPowerOfTwo(int aNumber)
 }
 
 /**
- * Returns the first integer greater than |aNumber| which is a power of two
- * Undefined for |aNumber| < 0
+ * Returns the first integer greater than or equal to |aNumber| which is a
+ * power of two. Undefined for |aNumber| < 0.
  */
 static inline int
 NextPowerOfTwo(int aNumber)
@@ -362,6 +348,19 @@ NextPowerOfTwo(int aNumber)
     aNumber |= aNumber >> 16;
     return ++aNumber;
 #endif
+}
+
+/**
+ * Performs a checked multiply of the given width, height, and bytes-per-pixel
+ * values.
+ */
+static inline CheckedInt<uint32_t>
+SafeBytesForBitmap(uint32_t aWidth, uint32_t aHeight, unsigned aBytesPerPixel)
+{
+  MOZ_ASSERT(aBytesPerPixel > 0);
+  CheckedInt<uint32_t> width = uint32_t(aWidth);
+  CheckedInt<uint32_t> height = uint32_t(aHeight);
+  return width * height * aBytesPerPixel;
 }
 
 } // namespace gfx

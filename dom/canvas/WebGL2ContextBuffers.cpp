@@ -19,11 +19,16 @@ WebGL2Context::ValidateBufferTarget(GLenum target, const char* info)
     case LOCAL_GL_COPY_READ_BUFFER:
     case LOCAL_GL_COPY_WRITE_BUFFER:
     case LOCAL_GL_ELEMENT_ARRAY_BUFFER:
-    case LOCAL_GL_PIXEL_PACK_BUFFER:
-    case LOCAL_GL_PIXEL_UNPACK_BUFFER:
     case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
     case LOCAL_GL_UNIFORM_BUFFER:
         return true;
+
+    case LOCAL_GL_PIXEL_PACK_BUFFER:
+    case LOCAL_GL_PIXEL_UNPACK_BUFFER:
+        ErrorInvalidOperation("%s: PBOs are still under development, and are currently"
+                              " disabled.",
+                              info);
+        return false;
 
     default:
         ErrorInvalidEnumInfo(info, target);
@@ -171,7 +176,7 @@ WebGL2Context::GetBufferSubDataT(GLenum target, GLintptr offset, const BufferT& 
     // of the buffer an INVALID_VALUE error is generated.
     data.ComputeLengthAndData();
 
-    CheckedInt<WebGLsizeiptr> neededByteLength = CheckedInt<WebGLsizeiptr>(offset) + data.Length();
+    CheckedInt<WebGLsizeiptr> neededByteLength = CheckedInt<WebGLsizeiptr>(offset) + data.LengthAllowShared();
     if (!neededByteLength.isValid()) {
         ErrorInvalidValue("getBufferSubData: Integer overflow computing the needed"
                           " byte length.");
@@ -213,8 +218,9 @@ WebGL2Context::GetBufferSubDataT(GLenum target, GLintptr offset, const BufferT& 
      * bound to a transform feedback binding point.
      */
 
-    void* ptr = gl->fMapBufferRange(target, offset, data.Length(), LOCAL_GL_MAP_READ_BIT);
-    memcpy(data.Data(), ptr, data.Length());
+    void* ptr = gl->fMapBufferRange(target, offset, data.LengthAllowShared(), LOCAL_GL_MAP_READ_BIT);
+    // Warning: Possibly shared memory.  See bug 1225033.
+    memcpy(data.DataAllowShared(), ptr, data.LengthAllowShared());
     gl->fUnmapBuffer(target);
 
     if (target == LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER && currentTF) {

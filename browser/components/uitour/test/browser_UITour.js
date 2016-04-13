@@ -327,9 +327,8 @@ var tests = [
       let defaultEngine = Services.search.defaultEngine;
       gContentAPI.getConfiguration("search", data => {
         let visibleEngines = Services.search.getVisibleEngines();
-        let expectedEngines = ["searchEngine-" + engine.identifier
-                               for (engine of visibleEngines)
-                                 if (engine.identifier)];
+        let expectedEngines = visibleEngines.filter((engine) => engine.identifier)
+                                            .map((engine) => "searchEngine-" + engine.identifier);
 
         let engines = data.engines;
         ok(Array.isArray(engines), "data.engines should be an array");
@@ -360,21 +359,23 @@ var tests = [
       });
     });
   },
-  taskify(function* test_treatment_tag(done) {
+  taskify(function* test_treatment_tag() {
     let ac = new TelemetryArchiveTesting.Checker();
     yield ac.promiseInit();
-    gContentAPI.setTreatmentTag("foobar", "baz");
-    gContentAPI.getTreatmentTag("foobar", (data) => {
-      is(data.value, "baz", "set and retrieved treatmentTag");
-      ac.promiseFindPing("uitour-tag", [
-        [["payload", "tagName"], "foobar"],
-        [["payload", "tagValue"], "baz"],
-      ]).then((found) => {
-        ok(found, "Telemetry ping submitted for setTreatmentTag");
-        done();
-      }, (err) => {
-        ok(false, "Exeption finding uitour telemetry ping: " + err);
-        done();
+    yield gContentAPI.setTreatmentTag("foobar", "baz");
+    yield new Promise((resolve) => {
+      gContentAPI.getTreatmentTag("foobar", (data) => {
+        is(data.value, "baz", "set and retrieved treatmentTag");
+        ac.promiseFindPing("uitour-tag", [
+          [["payload", "tagName"], "foobar"],
+          [["payload", "tagValue"], "baz"],
+        ]).then((found) => {
+          ok(found, "Telemetry ping submitted for setTreatmentTag");
+          resolve();
+        }, (err) => {
+          ok(false, "Exception finding uitour telemetry ping: " + err);
+          resolve();
+        });
       });
     });
   }),

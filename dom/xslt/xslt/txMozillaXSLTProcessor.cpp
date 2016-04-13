@@ -361,6 +361,12 @@ txMozillaXSLTProcessor::txMozillaXSLTProcessor(nsISupports* aOwner)
 {
 }
 
+NS_IMETHODIMP
+txMozillaXSLTProcessor::Init(nsISupports* aOwner)
+{
+    return NS_OK;
+}
+
 txMozillaXSLTProcessor::~txMozillaXSLTProcessor()
 {
     if (mStylesheetDocument) {
@@ -516,7 +522,6 @@ txMozillaXSLTProcessor::AddXSLTParam(const nsString& aName,
     }
     else {
         value = new StringResult(aValue, nullptr);
-        NS_ENSURE_TRUE(value, NS_ERROR_OUT_OF_MEMORY);
     }
 
     nsCOMPtr<nsIAtom> name = do_GetAtom(aName);
@@ -574,12 +579,7 @@ txMozillaXSLTProcessor::DoTransform()
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIRunnable> event = new nsTransformBlockerEvent(this);
-    if (!event) {
-        return NS_ERROR_OUT_OF_MEMORY;
-    }
-
     document->BlockOnload();
-
     rv = NS_DispatchToCurrentThread(event);
     if (NS_FAILED(rv)) {
         // XXX Maybe we should just display the source document in this case?
@@ -956,8 +956,6 @@ txMozillaXSLTProcessor::SetParameter(const nsAString & aNamespaceURI,
     }
 
     var = new txVariable(value);
-    NS_ENSURE_TRUE(var, NS_ERROR_OUT_OF_MEMORY);
-
     return mVariables.add(varName, var);
 }
 
@@ -1414,8 +1412,6 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
             NS_ENSURE_SUCCESS(rv, rv);
 
             *aResult = new NumberResult(value, nullptr);
-            NS_ENSURE_TRUE(*aResult, NS_ERROR_OUT_OF_MEMORY);
-
             NS_ADDREF(*aResult);
 
             return NS_OK;
@@ -1429,8 +1425,6 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
             NS_ENSURE_SUCCESS(rv, rv);
 
             *aResult = new BooleanResult(value);
-            NS_ENSURE_TRUE(*aResult, NS_ERROR_OUT_OF_MEMORY);
-
             NS_ADDREF(*aResult);
 
             return NS_OK;
@@ -1453,8 +1447,6 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
             NS_ENSURE_SUCCESS(rv, rv);
 
             *aResult = new StringResult(value, nullptr);
-            NS_ENSURE_TRUE(*aResult, NS_ERROR_OUT_OF_MEMORY);
-
             NS_ADDREF(*aResult);
 
             return NS_OK;
@@ -1537,10 +1529,6 @@ txVariable::Convert(nsIVariant *aValue, txAExprResult** aResult)
                 NS_ENSURE_TRUE(value.init(cx, str), NS_ERROR_FAILURE);
 
                 *aResult = new StringResult(value, nullptr);
-                if (!*aResult) {
-                    return NS_ERROR_OUT_OF_MEMORY;
-                }
-
                 NS_ADDREF(*aResult);
 
                 return NS_OK;

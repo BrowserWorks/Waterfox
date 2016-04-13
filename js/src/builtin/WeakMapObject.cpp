@@ -14,8 +14,6 @@
 using namespace js;
 using namespace js::gc;
 
-using mozilla::UniquePtr;
-
 MOZ_ALWAYS_INLINE bool
 IsWeakMap(HandleValue v)
 {
@@ -49,27 +47,6 @@ js::WeakMap_has(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     return CallNonGenericMethod<IsWeakMap, WeakMap_has_impl>(cx, args);
-}
-
-MOZ_ALWAYS_INLINE bool
-WeakMap_clear_impl(JSContext* cx, const CallArgs& args)
-{
-    MOZ_ASSERT(IsWeakMap(args.thisv()));
-
-    // We can't js_delete the weakmap because the data gathered during GC is
-    // used by the Cycle Collector.
-    if (ObjectValueMap* map = args.thisv().toObject().as<WeakMapObject>().getMap())
-        map->clear();
-
-    args.rval().setUndefined();
-    return true;
-}
-
-bool
-js::WeakMap_clear(JSContext* cx, unsigned argc, Value* vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    return CallNonGenericMethod<IsWeakMap, WeakMap_clear_impl>(cx, args);
 }
 
 MOZ_ALWAYS_INLINE bool
@@ -148,13 +125,6 @@ TryPreserveReflector(JSContext* cx, HandleObject obj)
     return true;
 }
 
-static inline void
-WeakMapPostWriteBarrier(JSRuntime* rt, ObjectValueMap* weakMap, JSObject* key)
-{
-    if (key && IsInsideNursery(key))
-        rt->gc.storeBuffer.putGeneric(gc::HashKeyRef<ObjectValueMap, JSObject*>(weakMap, key));
-}
-
 static MOZ_ALWAYS_INLINE bool
 SetWeakMapEntryInternal(JSContext* cx, Handle<WeakMapObject*> mapObj,
                         HandleObject key, HandleValue value)
@@ -189,7 +159,6 @@ SetWeakMapEntryInternal(JSContext* cx, Handle<WeakMapObject*> mapObj,
         JS_ReportOutOfMemory(cx);
         return false;
     }
-    WeakMapPostWriteBarrier(cx->runtime(), map, key.get());
     return true;
 }
 
@@ -199,8 +168,7 @@ WeakMap_set_impl(JSContext* cx, const CallArgs& args)
     MOZ_ASSERT(IsWeakMap(args.thisv()));
 
     if (!args.get(0).isObject()) {
-        UniquePtr<char[], JS::FreePolicy> bytes =
-            DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, args.get(0), nullptr);
+        UniqueChars bytes = DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, args.get(0), nullptr);
         if (!bytes)
             return false;
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT, bytes.get());
@@ -324,7 +292,8 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
     if (!ThrowIfNotConstructing(cx, args, "WeakMap"))
         return false;
 
-    RootedObject obj(cx, NewBuiltinClassInstance(cx, &WeakMapObject::class_));
+    RootedObject newTarget(cx, &args.newTarget().toObject());
+    RootedObject obj(cx, CreateThis(cx, &WeakMapObject::class_, newTarget));
     if (!obj)
         return false;
 
@@ -384,7 +353,7 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
             // Steps 12k-l.
             if (isOriginalAdder) {
                 if (keyVal.isPrimitive()) {
-                    UniquePtr<char[], JS::FreePolicy> bytes =
+                    UniqueChars bytes =
                         DecompileValueGenerator(cx, JSDVG_SEARCH_STACK, keyVal, nullptr);
                     if (!bytes)
                         return false;
@@ -437,7 +406,6 @@ static const JSFunctionSpec weak_map_methods[] = {
     JS_FN("get",    WeakMap_get, 1, 0),
     JS_FN("delete", WeakMap_delete, 1, 0),
     JS_FN("set",    WeakMap_set, 2, 0),
-    JS_FN("clear",  WeakMap_clear, 0, 0),
     JS_FS_END
 };
 

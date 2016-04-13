@@ -19,6 +19,7 @@
 #include "nsComponentManagerUtils.h"
 #include "nsIURL.h"
 #include "mozilla/BasePrincipal.h"
+#include "HttpLog.h"
 
 static const short kResourceHashType = nsICryptoHash::SHA256;
 
@@ -81,10 +82,12 @@ NS_IMETHODIMP PackagedAppVerifier::Init(nsIPackagedAppVerifierListener* aListene
   mIsFirstResource = true;
   mManifest = EmptyCString();
 
-  nsAutoCString originNoSuffix;
-  OriginAttributes().PopulateFromOrigin(aPackageOrigin, originNoSuffix);
-  mBypassVerification = (originNoSuffix ==
+  NeckoOriginAttributes().PopulateFromOrigin(aPackageOrigin, mPackageOrigin);
+  mBypassVerification = (mPackageOrigin ==
       Preferences::GetCString("network.http.signed-packages.trusted-origin"));
+
+  LOG(("mBypassVerification = %d\n", mBypassVerification));
+  LOG(("mPackageOrigin = %s\n", mPackageOrigin.get()));
 
   nsresult rv;
   mPackagedAppUtils = do_CreateInstance(NS_PACKAGEDAPPUTILS_CONTRACTID, &rv);
@@ -359,6 +362,16 @@ PackagedAppVerifier::OnManifestVerified(bool aSuccess)
     LOG(("Developer mode! Treat junk signature valid."));
   }
 
+  if (aSuccess && !mSignature.IsEmpty()) {
+    // Get the package location from the manifest
+    nsAutoCString packageOrigin;
+    mPackagedAppUtils->GetPackageOrigin(packageOrigin);
+    if (packageOrigin != mPackageOrigin) {
+      aSuccess = false;
+      LOG(("moz-package-location doesn't match:\nFrom: %s\nManifest: %s\n", mPackageOrigin.get(), packageOrigin.get()));
+    }
+  }
+
   // Only when the manifest verified and package has signature would we
   // regard this package is signed.
   mIsPackageSigned = aSuccess && !mSignature.IsEmpty();
@@ -370,6 +383,12 @@ PackagedAppVerifier::OnManifestVerified(bool aSuccess)
   if (mIsPackageSigned) {
     mPackagedAppUtils->GetPackageIdentifier(mPackageIdentifer);
     LOG(("PackageIdentifer is: %s", mPackageIdentifer.get()));
+  }
+
+  // If the signature verification failed, doom the package cache to
+  // make its subresources unavailable in the subsequent requests.
+  if (!aSuccess && mPackageCacheEntry) {
+    mPackageCacheEntry->AsyncDoom(nullptr);
   }
 
   // If the package is signed, add related info to the package cache.

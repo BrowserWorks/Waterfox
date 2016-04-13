@@ -137,6 +137,7 @@ struct nr_stun_client_ctx_ {
 #define NR_STUN_CLIENT_STATE_FAILED          3
 #define NR_STUN_CLIENT_STATE_TIMED_OUT       4
 #define NR_STUN_CLIENT_STATE_CANCELLED       5
+#define NR_STUN_CLIENT_STATE_WAITING         6
 
   int mode;
 #define NR_STUN_CLIENT_MODE_BINDING_REQUEST_SHORT_TERM_AUTH   1
@@ -170,7 +171,7 @@ struct nr_stun_client_ctx_ {
   UINT4 rto_ms;    /* retransmission time out */
   double retransmission_backoff_factor;
   UINT4 maximum_transmits;
-  UINT4 final_retransmit_backoff_ms;
+  UINT4 maximum_transmits_timeout_ms;
   UINT4 mapped_addr_check_mask;  /* What checks to run on mapped addresses */
   int timeout_ms;
   struct timeval timer_set;
@@ -191,6 +192,7 @@ int nr_stun_client_ctx_destroy(nr_stun_client_ctx **ctxp);
 int nr_stun_transport_addr_check(nr_transport_addr* addr, UINT4 mask);
 int nr_stun_client_process_response(nr_stun_client_ctx *ctx, UCHAR *msg, int len, nr_transport_addr *peer_addr);
 int nr_stun_client_cancel(nr_stun_client_ctx *ctx);
+int nr_stun_client_wait(nr_stun_client_ctx *ctx);
 int nr_stun_client_failed(nr_stun_client_ctx *ctx);
 
 #endif

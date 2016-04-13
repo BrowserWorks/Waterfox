@@ -877,11 +877,6 @@
                         tooltiptext="&cmd.showPreferencesUnix.tooltip;"
 #endif
                         oncommand="document.getBindingParent(this).showPreferences();"/>
-                        <!-- label="&cmd.debugAddon.label;" -->
-            <xul:button anonid="debug-btn" class="addon-control debug"
-                        label="&cmd.debugAddon.label;"
-                        oncommand="document.getBindingParent(this).debug();"/>
-
             <xul:button anonid="enable-btn"  class="addon-control enable"
                         label="&cmd.enableAddon.label;"
                         oncommand="document.getBindingParent(this).userDisabled = false;"/>
@@ -919,6 +914,7 @@
 
     <implementation>
       <constructor><![CDATA[
+        this._installStatus = document.getAnonymousElementByAttribute(this, "anonid", "install-status");
         this._installStatus.mControl = this;
 
         this.setAttribute("contextmenu", "addonitem-popup");
@@ -1018,10 +1014,6 @@
       <field name="_enableBtn">
         document.getAnonymousElementByAttribute(this, "anonid",
                                                 "enable-btn");
-      </field>
-      <field name="_debugBtn">
-        document.getAnonymousElementByAttribute(this, "anonid",
-                                                "debug-btn");
       </field>
       <field name="_disableBtn">
         document.getAnonymousElementByAttribute(this, "anonid",
@@ -1123,18 +1115,17 @@
               (this.mAddon.applyBackgroundUpdates == AddonManager.AUTOUPDATE_DISABLE ||
                (this.mAddon.applyBackgroundUpdates == AddonManager.AUTOUPDATE_DEFAULT &&
                 !AddonManager.autoUpdateDefault))) {
-            var self = this;
-            AddonManager.getAllInstalls(function(aInstallsList) {
+            AddonManager.getAllInstalls(aInstallsList => {
               // This can return after the binding has been destroyed,
               // so try to detect that and return early
-              if (!("onNewInstall" in self))
+              if (!("onNewInstall" in this))
                 return;
               for (let install of aInstallsList) {
                 if (install.existingAddon &&
-                    install.existingAddon.id == self.mAddon.id &&
+                    install.existingAddon.id == this.mAddon.id &&
                     install.state == AddonManager.STATE_AVAILABLE) {
-                  self.onNewInstall(install);
-                  self.onIncludeUpdateChanged();
+                  this.onNewInstall(install);
+                  this.onIncludeUpdateChanged();
                 }
               }
             });
@@ -1370,12 +1361,6 @@
                              this.mAddon.install.state != AddonManager.STATE_INSTALLED);
           this._showStatus(showProgress ? "progress" : "none");
 
-          let debuggable = this.mAddon.isDebuggable &&
-                           Services.prefs.getBoolPref('devtools.chrome.enabled') &&
-                           Services.prefs.getBoolPref('devtools.debugger.remote-enabled');
-
-          this._debugBtn.disabled = this._debugBtn.hidden = !debuggable
-
           if (this.mAddon.type == "experiment") {
             this.removeAttribute("notification");
             let prefix = "experiment.";
@@ -1412,7 +1397,6 @@
       <method name="_fetchReleaseNotes">
         <parameter name="aURI"/>
         <body><![CDATA[
-          var self = this;
           if (!aURI || this._relNotesLoaded) {
             sendToggleEvent();
             return;
@@ -1424,17 +1408,17 @@
           this._relNotesLoading.hidden = false;
           this._relNotesError.hidden = true;
 
-          function sendToggleEvent() {
+          let sendToggleEvent = () => {
             var event = document.createEvent("Events");
             event.initEvent("RelNotesToggle", true, true);
-            self.dispatchEvent(event);
+            this.dispatchEvent(event);
           }
 
-          function showRelNotes() {
+          let showRelNotes = () => {
             if (!relNotesData || !transformData)
               return;
 
-            self._relNotesLoading.hidden = true;
+            this._relNotesLoading.hidden = true;
 
             var processor = Components.classes["@mozilla.org/document-transformer;1?type=xslt"]
                                       .createInstance(Components.interfaces.nsIXSLTProcessor);
@@ -1442,20 +1426,20 @@
 
             processor.importStylesheet(transformData);
             var fragment = processor.transformToFragment(relNotesData, document);
-            self._relNotes.appendChild(fragment);
-            if (self.hasAttribute("show-relnotes")) {
-              var container = self._relNotesContainer;
+            this._relNotes.appendChild(fragment);
+            if (this.hasAttribute("show-relnotes")) {
+              var container = this._relNotesContainer;
               container.style.height = container.scrollHeight + "px";
             }
             sendToggleEvent();
           }
 
-          function handleError() {
+          let handleError = () => {
             dataReq.abort();
             styleReq.abort();
-            self._relNotesLoading.hidden = true;
-            self._relNotesError.hidden = false;
-            self._relNotesLoaded = false; // allow loading to be re-tried
+            this._relNotesLoading.hidden = true;
+            this._relNotesError.hidden = false;
+            this._relNotesLoaded = false; // allow loading to be re-tried
             sendToggleEvent();
           }
 
@@ -1555,12 +1539,6 @@
           } else {
             this.mAddon.uninstall();
           }
-        ]]></body>
-      </method>
-
-      <method name="debug">
-        <body><![CDATA[
-          gViewController.doCommand("cmd_debugItem", this.mAddon);
         ]]></body>
       </method>
 

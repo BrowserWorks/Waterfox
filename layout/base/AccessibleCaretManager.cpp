@@ -13,12 +13,16 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Selection.h"
 #include "mozilla/dom/TreeWalker.h"
+#include "mozilla/IMEStateManager.h"
+#include "mozilla/Preferences.h"
 #include "nsCaret.h"
+#include "nsContainerFrame.h"
 #include "nsContentUtils.h"
 #include "nsFocusManager.h"
 #include "nsFrame.h"
 #include "nsFrameSelection.h"
 #include "nsGenericHTMLElement.h"
+#include "nsIHapticFeedback.h"
 
 namespace mozilla {
 
@@ -60,14 +64,34 @@ std::ostream& operator<<(std::ostream& aStream,
 }
 #undef AC_PROCESS_ENUM_TO_STREAM
 
+/*static*/ bool
+AccessibleCaretManager::sSelectionBarEnabled = false;
+/*static*/ bool
+AccessibleCaretManager::sCaretsExtendedVisibility = false;
+/*static*/ bool
+AccessibleCaretManager::sHapticFeedback = false;
+
 AccessibleCaretManager::AccessibleCaretManager(nsIPresShell* aPresShell)
   : mPresShell(aPresShell)
 {
-  if (mPresShell) {
-    mFirstCaret = MakeUnique<AccessibleCaret>(mPresShell);
-    mSecondCaret = MakeUnique<AccessibleCaret>(mPresShell);
+  if (!mPresShell) {
+    return;
+  }
 
-    mCaretTimeoutTimer = do_CreateInstance("@mozilla.org/timer;1");
+  mFirstCaret = MakeUnique<AccessibleCaret>(mPresShell);
+  mSecondCaret = MakeUnique<AccessibleCaret>(mPresShell);
+
+  mCaretTimeoutTimer = do_CreateInstance("@mozilla.org/timer;1");
+
+  static bool addedPrefs = false;
+  if (!addedPrefs) {
+    Preferences::AddBoolVarCache(&sSelectionBarEnabled,
+                                 "layout.accessiblecaret.bar.enabled");
+    Preferences::AddBoolVarCache(&sCaretsExtendedVisibility,
+                                 "layout.accessiblecaret.extendedvisibility");
+    Preferences::AddBoolVarCache(&sHapticFeedback,
+                                 "layout.accessiblecaret.hapticfeedback");
+    addedPrefs = true;
   }
 }
 
@@ -80,15 +104,39 @@ nsresult
 AccessibleCaretManager::OnSelectionChanged(nsIDOMDocument* aDoc,
                                            nsISelection* aSel, int16_t aReason)
 {
+  Selection* selection = GetSelection();
   AC_LOG("%s: aSel: %p, GetSelection(): %p, aReason: %d", __FUNCTION__,
-         aSel, GetSelection(), aReason);
-
-  if (aSel != GetSelection()) {
+         aSel, selection, aReason);
+  if (aSel != selection) {
     return NS_OK;
   }
 
-  // Move the cursor by Javascript.
+  // eSetSelection events from the Fennec widget IME can be generated
+  // by autoSuggest, autoCorrect, and nsCaret position changes.
+  if (aReason & nsISelectionListener::IME_REASON) {
+    if (GetCaretMode() == CaretMode::Cursor) {
+      // Caret position changes need us to open/update,
+      // or hide the AccessibleCaret.
+      FlushLayout();
+      UpdateCarets();
+    } else {
+      // Ignore transient autoSuggest selection styling,
+      // or autoCorrect text updates.
+    }
+    return NS_OK;
+  }
+
+  // Move the cursor by Javascript / or unknown internal.
   if (aReason == nsISelectionListener::NO_REASON) {
+    // Extended visibility won't make hidden carets visible. Visible carets will
+    // be updated or hidden as appropriate.
+    if (sCaretsExtendedVisibility &&
+        (mFirstCaret->IsLogicallyVisible() || mSecondCaret->IsLogicallyVisible())) {
+        FlushLayout();
+        UpdateCarets();
+        return NS_OK;
+    }
+    // Default for NO_REASON is to make hidden.
     HideCarets();
     return NS_OK;
   }
@@ -130,6 +178,18 @@ AccessibleCaretManager::HideCarets()
 }
 
 void
+AccessibleCaretManager::DoNotShowCarets()
+{
+  if (mFirstCaret->IsLogicallyVisible() || mSecondCaret->IsLogicallyVisible()) {
+    AC_LOG("%s", __FUNCTION__);
+    mFirstCaret->SetAppearance(Appearance::NormalNotShown);
+    mSecondCaret->SetAppearance(Appearance::NormalNotShown);
+    DispatchCaretStateChangedEvent(CaretChangedReason::Visibilitychange);
+    CancelCaretTimeoutTimer();
+  }
+}
+
+void
 AccessibleCaretManager::UpdateCarets(UpdateCaretsHint aHint)
 {
   mLastUpdateCaretMode = GetCaretMode();
@@ -142,7 +202,7 @@ AccessibleCaretManager::UpdateCarets(UpdateCaretsHint aHint)
     UpdateCaretsForCursorMode(aHint);
     break;
   case CaretMode::Selection:
-    UpdateCaretsForSelectionMode(aHint);
+    UpdateCaretsForSelectionMode();
     break;
   }
 }
@@ -209,7 +269,10 @@ AccessibleCaretManager::UpdateCaretsForCursorMode(UpdateCaretsHint aHint)
     case PositionChangedResult::Changed:
       switch (aHint) {
         case UpdateCaretsHint::Default:
-          if (HasNonEmptyTextContent(GetEditingHostForFrame(frame))) {
+          // On Fennec, always show accessiblecaret even if the input is empty
+          // to make ActionBar visible.
+          if (sCaretsExtendedVisibility ||
+              HasNonEmptyTextContent(GetEditingHostForFrame(frame))) {
             mFirstCaret->SetAppearance(Appearance::Normal);
           } else {
             mFirstCaret->SetAppearance(Appearance::NormalNotShown);
@@ -240,7 +303,7 @@ AccessibleCaretManager::UpdateCaretsForCursorMode(UpdateCaretsHint aHint)
 }
 
 void
-AccessibleCaretManager::UpdateCaretsForSelectionMode(UpdateCaretsHint aHint)
+AccessibleCaretManager::UpdateCaretsForSelectionMode()
 {
   AC_LOG("%s: selection: %p", __FUNCTION__, GetSelection());
 
@@ -260,7 +323,7 @@ AccessibleCaretManager::UpdateCaretsForSelectionMode(UpdateCaretsHint aHint)
                               int32_t aOffset) -> PositionChangedResult
   {
     PositionChangedResult result = aCaret->SetPosition(aFrame, aOffset);
-    aCaret->SetSelectionBarEnabled(true);
+    aCaret->SetSelectionBarEnabled(sSelectionBarEnabled);
 
     switch (result) {
       case PositionChangedResult::NotChanged:
@@ -313,6 +376,16 @@ AccessibleCaretManager::UpdateCaretsForTilt()
       mFirstCaret->SetAppearance(Appearance::Normal);
       mSecondCaret->SetAppearance(Appearance::Normal);
     }
+  }
+}
+
+void
+AccessibleCaretManager::ProvideHapticFeedback()
+{
+  if (sHapticFeedback) {
+    nsCOMPtr<nsIHapticFeedback> haptic =
+      do_GetService("@mozilla.org/widget/hapticfeedback;1");
+    haptic->PerformSimpleAction(haptic->LongPress);
   }
 }
 
@@ -416,6 +489,7 @@ AccessibleCaretManager::SelectWordOrShortcut(const nsPoint& aPoint)
     // We need to update carets to get correct information before dispatching
     // CaretStateChangedEvent.
     UpdateCarets();
+    ProvideHapticFeedback();
     DispatchCaretStateChangedEvent(CaretChangedReason::Longpressonemptycontent);
     return NS_OK;
   }
@@ -432,6 +506,11 @@ AccessibleCaretManager::SelectWordOrShortcut(const nsPoint& aPoint)
     return NS_ERROR_FAILURE;
   }
 
+  // Commit the composition string of the old editable focus element (if there
+  // is any) before changing the focus.
+  IMEStateManager::NotifyIME(widget::REQUEST_TO_COMMIT_COMPOSITION,
+                             mPresShell->GetPresContext());
+
   // ptFrame is selectable. Now change the focus.
   ChangeFocusToOrClearOldFocus(focusableFrame);
 
@@ -441,6 +520,8 @@ AccessibleCaretManager::SelectWordOrShortcut(const nsPoint& aPoint)
 
   nsresult rv = SelectWord(ptFrame, ptInFrame);
   UpdateCarets();
+  ProvideHapticFeedback();
+
   return rv;
 }
 
@@ -453,7 +534,12 @@ AccessibleCaretManager::OnScrollStart()
     mFirstCaretAppearanceOnScrollStart = mFirstCaret->GetAppearance();
   }
 
-  HideCarets();
+  // Hide the carets. (Extended visibility makes them "NormalNotShown").
+  if (sCaretsExtendedVisibility) {
+    DoNotShowCarets();
+  } else {
+    HideCarets();
+  }
 }
 
 void
@@ -1085,6 +1171,8 @@ AccessibleCaretManager::DispatchCaretStateChangedEvent(CaretChangedReason aReaso
   init.mCollapsed = sel->IsCollapsed();
   init.mCaretVisible = mFirstCaret->IsLogicallyVisible() ||
                        mSecondCaret->IsLogicallyVisible();
+  init.mCaretVisuallyVisible = mFirstCaret->IsVisuallyVisible() ||
+                                mSecondCaret->IsVisuallyVisible();
   sel->Stringify(init.mSelectedTextContent);
 
   RefPtr<CaretStateChangedEvent> event =

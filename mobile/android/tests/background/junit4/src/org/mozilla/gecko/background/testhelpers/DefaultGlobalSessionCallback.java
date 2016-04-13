@@ -3,11 +3,11 @@
 
 package org.mozilla.gecko.background.testhelpers;
 
-import java.net.URI;
-
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+
+import java.net.URI;
 
 public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
 
@@ -16,25 +16,9 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public boolean wantNodeAssignment() {
-    return false;
-  }
-
-  @Override
   public void informUnauthorizedResponse(GlobalSession globalSession,
                                          URI oldClusterURL) {
   }
-
-  @Override
-  public void informNodeAssigned(GlobalSession globalSession,
-                                 URI oldClusterURL, URI newClusterURL) {
-  }
-
-  @Override
-  public void informNodeAuthenticationFailed(GlobalSession globalSession,
-                                             URI failedClusterURL) {
-  }
-
   @Override
   public void informUpgradeRequiredResponse(GlobalSession session) {
   }
@@ -63,10 +47,5 @@ public class DefaultGlobalSessionCallback implements GlobalSessionCallback {
   @Override
   public boolean shouldBackOffStorage() {
     return false;
-  }
-
-  @Override
-  public String nodeWeaveURL() {
-    return null;
   }
 }

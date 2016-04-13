@@ -151,6 +151,7 @@ public:
 
   virtual void WriteInternal(const char* aBuffer,
                              uint32_t aCount) override;
+  virtual void BeforeFinishInternal() override;
   virtual void FinishInternal() override;
 
 private:
@@ -167,9 +168,7 @@ private:
     PIXEL_ROW,
     RLE_SEGMENT,
     RLE_DELTA,
-    RLE_ABSOLUTE,
-    SUCCESS,
-    FAILURE
+    RLE_ABSOLUTE
   };
 
   // This is the constructor used by DecoderFactory.
@@ -230,8 +229,9 @@ private:
 
   int32_t mCurrentRow;      // Index of the row of the image that's currently
                             // being decoded: [height,1].
-  int32_t mCurrentPos;      // Index into the current line; only used when
-                            // doing RLE decoding.
+  int32_t mCurrentPos;      // Index into the current line. Used when
+                            // doing RLE decoding and when filling in pixels
+                            // for truncated files.
 
   // Only used in RLE_ABSOLUTE state: the number of pixels to read.
   uint32_t mAbsoluteModeNumPixels;

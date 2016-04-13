@@ -2708,6 +2708,22 @@
       ReadRegStr $R5 SHCTX "$R6\$R7" "InstallLocation"
       IfErrors loop
       ${${_MOZFUNC_UN}RemoveQuotesFromPath} "$R5" $R9
+
+      ; Detect when the path is just a drive letter without a trailing
+      ; backslash (e.g., "C:"), and add a backslash. If we don't, the Win32
+      ; calls in GetLongPath will interpret that syntax as a shorthand
+      ; for the working directory, because that's the DOS 2.0 convention,
+      ; and will return the path to that directory instead of just the drive.
+      ; Back here, we would then successfully match that with our $INSTDIR,
+      ; and end up deleting a registry key that isn't really ours.
+      StrLen $R5 "$R9"
+      ${If} $R5 == 2
+        StrCpy $R5 "$R9" 1 1
+        ${If} "$R5" == ":"
+          StrCpy $R9 "$R9\"
+        ${EndIf}
+      ${EndIf}
+
       ${${_MOZFUNC_UN}GetLongPath} "$R9" $R9
       StrCmp "$R9" "$R4" +1 loop
       ClearErrors
@@ -2985,10 +3001,18 @@
       Exch $R8
       Push $R7
 
+      DeleteRegValue HKCU "Software\Classes\$R9\OpenWithProgids" $R8
+      EnumRegValue $R7 HKCU "Software\Classes\$R9\OpenWithProgids" 0
+      StrCmp "$R7" "" +1 +2
+      DeleteRegKey HKCU "Software\Classes\$R9\OpenWithProgids"
       ReadRegStr $R7 HKCU "Software\Classes\$R9" ""
       StrCmp "$R7" "$R8" +1 +2
       DeleteRegKey HKCU "Software\Classes\$R9"
 
+      DeleteRegValue HKLM "Software\Classes\$R9\OpenWithProgids" $R8
+      EnumRegValue $R7 HKLM "Software\Classes\$R9\OpenWithProgids" 0
+      StrCmp "$R7" "" +1 +2
+      DeleteRegKey HKLM "Software\Classes\$R9\OpenWithProgids"
       ReadRegStr $R7 HKLM "Software\Classes\$R9" ""
       StrCmp "$R7" "$R8" +1 +2
       DeleteRegValue HKLM "Software\Classes\$R9" ""
@@ -3694,7 +3718,7 @@
       Push $R5
       Push $R4
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ; Since shortcuts that are pinned can later be removed without removing
         ; the pinned shortcut unpin the pinned shortcuts for the application's
         ; main exe using the pinned shortcuts themselves.
@@ -5075,7 +5099,7 @@
 
       !ifdef HAVE_64BIT_BUILD
         ${Unless} ${RunningX64}
-        ${OrUnless} ${AtLeastWinXP}
+        ${OrUnless} ${AtLeastWin7}
           MessageBox MB_OK|MB_ICONSTOP "$R9" IDOK
           ; Nothing initialized so no need to call OnEndCommon
           Quit
@@ -5532,6 +5556,27 @@
       SetShellVarContext current  ; Set SHCTX to HKCU
       ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
 
+      ${If} ${RunningX64}
+        ; In HKCU there is no WOW64 redirection, which means we may have gotten
+        ; the path to a 32-bit install even though we're 64-bit, or vice-versa.
+        ; In that case, just use the default path instead of offering an upgrade.
+        ; But only do that override if the existing install is in Program Files,
+        ; because that's the only place we can be sure is specific
+        ; to either 32 or 64 bit applications.
+        ; The WordFind syntax below searches for the first occurence of the
+        ; "delimiter" (the Program Files path) in the install path and returns
+        ; anything that appears before that. If nothing appears before that,
+        ; then the install is under Program Files (32 or 64).
+!ifdef HAVE_64BIT_BUILD
+        ${WordFind} $R9 $PROGRAMFILES32 "+1{" $0
+!else
+        ${WordFind} $R9 $PROGRAMFILES64 "+1{" $0
+!endif
+        ${If} $0 == ""
+          StrCpy $R9 "false"
+        ${EndIf}
+      ${EndIf}
+
       finish_get_install_dir:
       StrCmp "$R9" "false" +2 +1
       StrCpy $INSTDIR "$R9"
@@ -5808,7 +5853,7 @@
       Push $0
 
 !ifndef NONADMIN_ELEVATE
-        ${If} ${AtLeastWinXP}
+        ${If} ${AtLeastWinVista}
           UAC::IsAdmin
           ; If the user is not an admin already
           ${If} "$0" != "1"
@@ -5839,7 +5884,7 @@
           ${EndIf}
         ${EndIf}
 !else
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWinVista}
         UAC::IsAdmin
         ; If the user is not an admin already
         ${If} "$0" != "1"
@@ -5952,7 +5997,7 @@
     !define ${_MOZFUNC_UN}UnloadUAC "!insertmacro ${_MOZFUNC_UN}UnloadUACCall"
 
     Function ${_MOZFUNC_UN}UnloadUAC
-      ${Unless} ${AtLeastWinXP}
+      ${Unless} ${AtLeastWinVista}
         Return
       ${EndUnless}
 
@@ -6605,7 +6650,7 @@
     !define ${_MOZFUNC_UN}SetAppLSPCategories "!insertmacro ${_MOZFUNC_UN}SetAppLSPCategoriesCall"
 
     Function ${_MOZFUNC_UN}SetAppLSPCategories
-      ${Unless} ${AtLeastWinXP}
+      ${Unless} ${AtLeastWinVista}
         Return
       ${EndUnless}
 
@@ -6718,7 +6763,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6798,7 +6843,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -6870,7 +6915,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6931,7 +6976,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -7012,7 +7057,7 @@
 
       StrCpy $R3 "false"
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ; installed shortcuts
         ${${_MOZFUNC_UN}GetLongPath} "$INSTDIR\uninstall\${SHORTCUTS_LOG}" $R6
         ${If} ${FileExists} "$R6"
@@ -7243,7 +7288,7 @@
       Exch $R8 ; stack: $R8, $R9   | $R8 = regpath
       Push $R7
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ${${_MOZFUNC_UN}GetLongPath} "$R9" $R9
         ; Always create a new AppUserModelID and overwrite the existing one
         ; for the current installation path.
@@ -7346,7 +7391,7 @@
       ; Don't create when running silently.
       ${Unless} ${Silent}
         ; This is only supported on Win 7 and above.
-        ${If} ${AtLeastWinXP}
+        ${If} ${AtLeastWin7}
           System::Call "ole32::CoCreateInstance(g '${CLSID_ITaskbarList}', \
                                                 i 0, \
                                                 i ${CLSCTX_INPROC_SERVER}, \

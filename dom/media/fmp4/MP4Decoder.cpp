@@ -6,7 +6,6 @@
 
 #include "MP4Decoder.h"
 #include "MediaDecoderStateMachine.h"
-#include "MediaFormatReader.h"
 #include "MP4Demuxer.h"
 #include "mozilla/Preferences.h"
 #include "nsCharSeparatedTokenizer.h"
@@ -47,12 +46,12 @@ MP4Decoder::MP4Decoder(MediaDecoderOwner* aOwner)
 
 MediaDecoderStateMachine* MP4Decoder::CreateStateMachine()
 {
-  MediaDecoderReader* reader =
+  mReader =
     new MediaFormatReader(this,
                           new MP4Demuxer(GetResource()),
                           GetVideoFrameContainer());
 
-  return new MediaDecoderStateMachine(this, reader);
+  return new MediaDecoderStateMachine(this, mReader);
 }
 
 static bool
@@ -108,6 +107,7 @@ MP4Decoder::CanHandleMediaType(const nsACString& aMIMETypeExcludingCodecs,
     aMIMETypeExcludingCodecs.EqualsASCII(VIDEO_3GPP) ||
 #endif
     aMIMETypeExcludingCodecs.EqualsASCII("video/mp4") ||
+    aMIMETypeExcludingCodecs.EqualsASCII("video/quicktime") ||
     aMIMETypeExcludingCodecs.EqualsASCII("video/x-m4v");
   if (!isMP4Audio && !isMP4Video) {
     return false;
@@ -225,6 +225,14 @@ MP4Decoder::IsVideoAccelerated(layers::LayersBackend aBackend, nsACString& aFail
   bool result = decoder->IsHardwareAccelerated(aFailureReason);
   decoder->Shutdown();
   return result;
+}
+
+void
+MP4Decoder::GetMozDebugReaderData(nsAString& aString)
+{
+  if (mReader) {
+    mReader->GetMozDebugReaderData(aString);
+  }
 }
 
 } // namespace mozilla

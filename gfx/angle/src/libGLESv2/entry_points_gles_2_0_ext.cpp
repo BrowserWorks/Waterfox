@@ -390,7 +390,6 @@ void GL_APIENTRY GetTranslatedShaderSourceANGLE(GLuint shader, GLsizei bufsize, 
             return;
         }
 
-        // Only returns extra info if ANGLE_GENERATE_SHADER_DEBUG_INFO is defined
         shaderObject->getTranslatedSourceWithDebugInfo(bufsize, length, source);
     }
 }
@@ -752,13 +751,13 @@ void GL_APIENTRY GetProgramBinaryOES(GLuint program, GLsizei bufSize, GLsizei *l
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        Program *programObject = context->getProgram(program);
-
-        if (!programObject || !programObject->isLinked())
+        if (!ValidateGetProgramBinaryOES(context, program, bufSize, length, binaryFormat, binary))
         {
-            context->recordError(Error(GL_INVALID_OPERATION));
             return;
         }
+
+        Program *programObject = context->getProgram(program);
+        ASSERT(programObject != nullptr);
 
         Error error = programObject->saveBinary(binaryFormat, binary, bufSize, length);
         if (error.isError())
@@ -777,19 +776,13 @@ void GL_APIENTRY ProgramBinaryOES(GLuint program, GLenum binaryFormat, const voi
     Context *context = GetValidGlobalContext();
     if (context)
     {
-        const std::vector<GLenum> &programBinaryFormats = context->getCaps().programBinaryFormats;
-        if (std::find(programBinaryFormats.begin(), programBinaryFormats.end(), binaryFormat) == programBinaryFormats.end())
+        if (!ValidateProgramBinaryOES(context, program, binaryFormat, binary, length))
         {
-            context->recordError(Error(GL_INVALID_ENUM));
             return;
         }
 
         Program *programObject = context->getProgram(program);
-        if (!programObject)
-        {
-            context->recordError(Error(GL_INVALID_OPERATION));
-            return;
-        }
+        ASSERT(programObject != nullptr);
 
         Error error = programObject->loadBinary(binaryFormat, binary, length);
         if (error.isError())
@@ -1201,5 +1194,87 @@ ANGLE_EXPORT void GL_APIENTRY EGLImageTargetRenderbufferStorageOES(GLenum target
             return;
         }
     }
+}
+
+void GL_APIENTRY BindVertexArrayOES(GLuint array)
+{
+    EVENT("(GLuint array = %u)", array);
+
+    Context *context = GetValidGlobalContext();
+    if (context)
+    {
+        if (!ValidateBindVertexArrayOES(context, array))
+        {
+            return;
+        }
+
+        context->bindVertexArray(array);
+    }
+}
+
+void GL_APIENTRY DeleteVertexArraysOES(GLsizei n, const GLuint *arrays)
+{
+    EVENT("(GLsizei n = %d, const GLuint* arrays = 0x%0.8p)", n, arrays);
+
+    Context *context = GetValidGlobalContext();
+    if (context)
+    {
+        if (!ValidateDeleteVertexArraysOES(context, n))
+        {
+            return;
+        }
+
+        for (int arrayIndex = 0; arrayIndex < n; arrayIndex++)
+        {
+            if (arrays[arrayIndex] != 0)
+            {
+                context->deleteVertexArray(arrays[arrayIndex]);
+            }
+        }
+    }
+}
+
+void GL_APIENTRY GenVertexArraysOES(GLsizei n, GLuint *arrays)
+{
+    EVENT("(GLsizei n = %d, GLuint* arrays = 0x%0.8p)", n, arrays);
+
+    Context *context = GetValidGlobalContext();
+    if (context)
+    {
+        if (!ValidateGenVertexArraysOES(context, n))
+        {
+            return;
+        }
+
+        for (int arrayIndex = 0; arrayIndex < n; arrayIndex++)
+        {
+            arrays[arrayIndex] = context->createVertexArray();
+        }
+    }
+}
+
+GLboolean GL_APIENTRY IsVertexArrayOES(GLuint array)
+{
+    EVENT("(GLuint array = %u)", array);
+
+    Context *context = GetValidGlobalContext();
+    if (context)
+    {
+        if (!ValidateIsVertexArrayOES(context))
+        {
+            return GL_FALSE;
+        }
+
+        if (array == 0)
+        {
+            return GL_FALSE;
+        }
+
+        VertexArray *vao = context->getVertexArray(array);
+
+        return (vao != nullptr ? GL_TRUE : GL_FALSE);
+    }
+
+    return GL_FALSE;
 }
 }

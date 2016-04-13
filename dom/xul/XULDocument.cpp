@@ -131,7 +131,7 @@ const nsForwardReference::Phase nsForwardReference::kPasses[] = {
 
 int32_t XULDocument::gRefCnt = 0;
 
-PRLogModuleInfo* XULDocument::gXULLog;
+LazyLogModule XULDocument::gXULLog("XULDocument");
 
 //----------------------------------------------------------------------
 
@@ -259,33 +259,6 @@ namespace dom {
 // nsISupports interface
 //
 
-static PLDHashOperator
-TraverseTemplateBuilders(nsISupports* aKey, nsIXULTemplateBuilder* aData,
-                         void* aContext)
-{
-    nsCycleCollectionTraversalCallback *cb =
-        static_cast<nsCycleCollectionTraversalCallback*>(aContext);
-
-    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(*cb, "mTemplateBuilderTable key");
-    cb->NoteXPCOMChild(aKey);
-    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(*cb, "mTemplateBuilderTable value");
-    cb->NoteXPCOMChild(aData);
-
-    return PL_DHASH_NEXT;
-}
-
-static PLDHashOperator
-TraverseObservers(nsIURI* aKey, nsIObserver* aData, void* aContext)
-{
-    nsCycleCollectionTraversalCallback *cb =
-        static_cast<nsCycleCollectionTraversalCallback*>(aContext);
-
-    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(*cb, "mOverlayLoadObservers/mPendingOverlayLoadNotifications value");
-    cb->NoteXPCOMChild(aData);
-
-    return PL_DHASH_NEXT;
-}
-
 NS_IMPL_CYCLE_COLLECTION_CLASS(XULDocument)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(XULDocument, XMLDocument)
@@ -296,20 +269,38 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(XULDocument, XMLDocument)
 
     // An element will only have a template builder as long as it's in the
     // document, so we'll traverse the table here instead of from the element.
-    if (tmp->mTemplateBuilderTable)
-        tmp->mTemplateBuilderTable->EnumerateRead(TraverseTemplateBuilders, &cb);
+    if (tmp->mTemplateBuilderTable) {
+        for (auto iter = tmp->mTemplateBuilderTable->Iter();
+             !iter.Done();
+             iter.Next()) {
+            NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mTemplateBuilderTable key");
+            cb.NoteXPCOMChild(iter.Key());
+            NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mTemplateBuilderTable value");
+            cb.NoteXPCOMChild(iter.UserData());
+        }
+    }
 
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCurrentPrototype)
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMasterPrototype)
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mCommandDispatcher)
-    NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPrototypes);
+    NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPrototypes)
     NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mLocalStore)
 
     if (tmp->mOverlayLoadObservers) {
-        tmp->mOverlayLoadObservers->EnumerateRead(TraverseObservers, &cb);
+        for (auto iter = tmp->mOverlayLoadObservers->Iter();
+             !iter.Done();
+             iter.Next()) {
+            NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mOverlayLoadObservers value");
+            cb.NoteXPCOMChild(iter.Data());
+        }
     }
     if (tmp->mPendingOverlayLoadNotifications) {
-        tmp->mPendingOverlayLoadNotifications->EnumerateRead(TraverseObservers, &cb);
+        for (auto iter = tmp->mPendingOverlayLoadNotifications->Iter();
+             !iter.Done();
+             iter.Next()) {
+            NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mPendingOverlayLoadNotifications value");
+            cb.NoteXPCOMChild(iter.Data());
+        }
     }
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
@@ -1887,9 +1878,6 @@ XULDocument::Init()
     Preferences::RegisterCallback(XULDocument::DirectionChanged,
                                   "intl.uidirection.", this);
 
-    if (! gXULLog)
-        gXULLog = PR_NewLogModule("XULDocument");
-
     return NS_OK;
 }
 
@@ -3244,19 +3232,6 @@ XULDocument::LoadScript(nsXULPrototypeScript* aScriptProto, bool* aBlock)
         }
     }
 
-    // Allow security manager and content policies to veto the load. Note that
-    // at this point we already lost context information of the script.
-    rv = nsScriptLoader::ShouldLoadScript(
-                            this,
-                            static_cast<nsIDocument*>(this),
-                            aScriptProto->mSrcURI,
-                            NS_LITERAL_STRING("application/x-javascript"),
-                            false);
-    if (NS_FAILED(rv)) {
-      *aBlock = false;
-      return rv;
-    }
-
     // Release script objects from FastLoad since we decided against using them
     aScriptProto->UnlinkJSObjects();
 
@@ -3266,7 +3241,7 @@ XULDocument::LoadScript(nsXULPrototypeScript* aScriptProto, bool* aBlock)
                  "still loading a script when starting another load?");
     mCurrentScriptProto = aScriptProto;
 
-    if (aScriptProto->mSrcLoading) {
+    if (isChromeDoc && aScriptProto->mSrcLoading) {
         // Another XULDocument load has started, which is still in progress.
         // Remember to ResumeWalk this document when the load completes.
         mNextSrcLoadWaiter = aScriptProto->mSrcLoadWaiters;
@@ -3282,9 +3257,8 @@ XULDocument::LoadScript(nsXULPrototypeScript* aScriptProto, bool* aBlock)
                                 aScriptProto->mSrcURI,
                                 this, // aObserver
                                 this, // aRequestingContext
-                                nsILoadInfo::SEC_NORMAL,
-                                nsIContentPolicy::TYPE_OTHER,
-                                nullptr, // aContext
+                                nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_INHERITS,
+                                nsIContentPolicy::TYPE_INTERNAL_SCRIPT,
                                 group);
 
         if (NS_FAILED(rv)) {

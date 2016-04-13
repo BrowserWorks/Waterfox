@@ -530,11 +530,11 @@ struct BaseRect {
   }
 
   /**
-   * Clamp this rectangle to be inside aRect. The function returns a copy of
-   * this rect after it is forced inside the bounds of aRect. It will attempt to
-   * retain the size but will shrink the dimensions that don't fit.
+   * Translate this rectangle to be inside aRect. If it doesn't fit inside
+   * aRect then the dimensions that don't fit will be shrunk so that they
+   * do fit. The resulting rect is returned.
    */
-  MOZ_WARN_UNUSED_RESULT Sub ForceInside(const Sub& aRect) const
+  MOZ_WARN_UNUSED_RESULT Sub MoveInsideAndClamp(const Sub& aRect) const
   {
     Sub rect(std::max(aRect.x, x),
              std::max(aRect.y, y),
@@ -544,6 +544,22 @@ struct BaseRect {
     rect.y = std::min(rect.YMost(), aRect.YMost()) - rect.height;
     return rect;
   }
+
+  // Returns the largest rectangle that can be represented with 32-bit
+  // signed integers, centered around a point at 0,0.  As BaseRect's represent
+  // the dimensions as a top-left point with a width and height, the width
+  // and height will be the largest positive 32-bit value.  The top-left
+  // position coordinate is divided by two to center the rectangle around a
+  // point at 0,0.
+  static Sub MaxIntRect()
+  {
+    return Sub(
+      -std::numeric_limits<int32_t>::max() * 0.5,
+      -std::numeric_limits<int32_t>::max() * 0.5,
+      std::numeric_limits<int32_t>::max(),
+      std::numeric_limits<int32_t>::max()
+    );
+  };
 
   friend std::ostream& operator<<(std::ostream& stream,
       const BaseRect<T, Sub, Point, SizeT, MarginT>& aRect) {

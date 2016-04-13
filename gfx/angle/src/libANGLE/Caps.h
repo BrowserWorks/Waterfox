@@ -80,8 +80,10 @@ struct Extensions
     // GL_OES_texture_float, GL_OES_texture_float_linear
     // GL_EXT_texture_rg
     // GL_EXT_texture_compression_dxt1, GL_ANGLE_texture_compression_dxt3, GL_ANGLE_texture_compression_dxt5
+    // GL_KHR_texture_compression_astc_hdr, GL_KHR_texture_compression_astc_ldr
+    // GL_OES_compressed_ETC1_RGB8_texture
     // GL_EXT_sRGB
-    // GL_ANGLE_depth_texture
+    // GL_ANGLE_depth_texture, GL_OES_depth32
     // GL_EXT_color_buffer_float
     void setTextureExtensionSupport(const TextureCapsMap &textureCaps);
 
@@ -138,6 +140,16 @@ struct Extensions
     bool textureCompressionDXT3;
     bool textureCompressionDXT5;
 
+    // GL_KHR_texture_compression_astc_hdr
+    bool textureCompressionASTCHDR;
+
+    // GL_KHR_texture_compression_astc_ldr
+    bool textureCompressionASTCLDR;
+
+    // GL_OES_compressed_ETC1_RGB8_texture
+    // Implies that TextureCaps for GL_ETC1_RGB8_OES exist
+    bool compressedETC1RGB8Texture;
+
     // GL_EXT_sRGB
     // Implies that TextureCaps for GL_SRGB8_ALPHA8 and GL_SRGB8 exist
     // TODO: Don't advertise this extension in ES3
@@ -145,6 +157,10 @@ struct Extensions
 
     // GL_ANGLE_depth_texture
     bool depthTextures;
+
+    // GL_OES_depth32
+    // Allows DEPTH_COMPONENT32_OES as a valid Renderbuffer format.
+    bool depth32;
 
     // GL_EXT_texture_storage
     bool textureStorage;
@@ -233,6 +249,9 @@ struct Extensions
 
     // NV_pack_subimage
     bool packSubimage;
+
+    // GL_OES_vertex_array_object
+    bool vertexArrayObject;
 
     // ES3 Extension support
 
@@ -452,6 +471,9 @@ struct ClientExtensions
     // EGL_EXT_platform_base
     bool platformBase;
 
+    // EGL_EXT_platform_device
+    bool platformDevice;
+
     // EGL_ANGLE_platform_angle
     bool platformANGLE;
 
@@ -460,6 +482,15 @@ struct ClientExtensions
 
     // EGL_ANGLE_platform_angle_opengl
     bool platformANGLEOpenGL;
+
+    // EGL_ANGLE_device_creation
+    bool deviceCreation;
+
+    // EGL_ANGLE_device_creation_d3d11
+    bool deviceCreationD3D11;
+
+    // EGL_ANGLE_x11_visual
+    bool x11Visual;
 
     // EGL_KHR_client_get_all_proc_addresses
     bool clientGetAllProcAddresses;

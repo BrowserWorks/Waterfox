@@ -8,6 +8,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/Move.h"
 
 #include <stdlib.h>
 
@@ -32,6 +33,7 @@ using namespace js::frontend;
 using JS::AutoValueArray;
 using mozilla::ArrayLength;
 using mozilla::DebugOnly;
+using mozilla::Forward;
 
 enum class ParseTarget
 {
@@ -220,6 +222,13 @@ GetPropertyDefault(JSContext* cx, HandleObject obj, HandleId id, HandleValue def
     return GetProperty(cx, obj, obj, id, result);
 }
 
+enum class GeneratorStyle
+{
+    None,
+    Legacy,
+    ES6
+};
+
 /*
  * Builder class that constructs JavaScript AST node objects. See:
  *
@@ -296,123 +305,43 @@ class NodeBuilder
     }
 
   private:
-    bool callback(HandleValue fun, TokenPos* pos, MutableHandleValue dst) {
+    template <size_t N>
+    bool callbackHelper(HandleValue fun, AutoValueArray<N>& args, size_t i,
+                        TokenPos* pos, MutableHandleValue dst)
+    {
+        // The end of the implementation of callback(). All arguments except
+        // loc have already been stored in range [0, i) or args.
+        MOZ_ASSERT(i == N - 1);
         if (saveLoc) {
             RootedValue loc(cx);
             if (!newNodeLoc(pos, &loc))
                 return false;
-            AutoValueArray<1> argv(cx);
-            argv[0].set(loc);
-            return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
+            args[i++].set(loc);
         }
-
-        AutoValueArray<1> argv(cx);
-        argv[0].setNull(); /* no zero-length arrays allowed! */
-        return Invoke(cx, userv, fun, 0, argv.begin(), dst);
+        return Invoke(cx, userv, fun, N, args.begin(), dst);
     }
 
-    bool callback(HandleValue fun, HandleValue v1, TokenPos* pos, MutableHandleValue dst) {
-        if (saveLoc) {
-            RootedValue loc(cx);
-            if (!newNodeLoc(pos, &loc))
-                return false;
-            AutoValueArray<2> argv(cx);
-            argv[0].set(v1);
-            argv[1].set(loc);
-            return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-        }
-
-        AutoValueArray<1> argv(cx);
-        argv[0].set(v1);
-        return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
+    // Helper function for callback(). Note that all Arguments must be types
+    // that convert to HandleValue, so this is not really as template-y as it
+    // seems, just variadic.
+    template <size_t N, typename... Arguments>
+    bool callbackHelper(HandleValue fun, AutoValueArray<N>& args, size_t i,
+                        HandleValue head, Arguments&&... tail)
+    {
+        // Recursive loop to store the arguments in the array. This eventually
+        // bottoms out in a call to the non-template callbackHelper() above.
+        args[i].set(head);
+        return callbackHelper(fun, args, i + 1, Forward<Arguments>(tail)...);
     }
 
-    bool callback(HandleValue fun, HandleValue v1, HandleValue v2, TokenPos* pos,
-                  MutableHandleValue dst) {
-        if (saveLoc) {
-            RootedValue loc(cx);
-            if (!newNodeLoc(pos, &loc))
-                return false;
-            AutoValueArray<3> argv(cx);
-            argv[0].set(v1);
-            argv[1].set(v2);
-            argv[2].set(loc);
-            return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-        }
-
-        AutoValueArray<2> argv(cx);
-        argv[0].set(v1);
-        argv[1].set(v2);
-        return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-    }
-
-    bool callback(HandleValue fun, HandleValue v1, HandleValue v2, HandleValue v3, TokenPos* pos,
-                  MutableHandleValue dst) {
-        if (saveLoc) {
-            RootedValue loc(cx);
-            if (!newNodeLoc(pos, &loc))
-                return false;
-            AutoValueArray<4> argv(cx);
-            argv[0].set(v1);
-            argv[1].set(v2);
-            argv[2].set(v3);
-            argv[3].set(loc);
-            return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-        }
-
-        AutoValueArray<3> argv(cx);
-        argv[0].set(v1);
-        argv[1].set(v2);
-        argv[2].set(v3);
-        return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-    }
-
-    bool callback(HandleValue fun, HandleValue v1, HandleValue v2, HandleValue v3, HandleValue v4,
-                  TokenPos* pos, MutableHandleValue dst) {
-        if (saveLoc) {
-            RootedValue loc(cx);
-            if (!newNodeLoc(pos, &loc))
-                return false;
-            AutoValueArray<5> argv(cx);
-            argv[0].set(v1);
-            argv[1].set(v2);
-            argv[2].set(v3);
-            argv[3].set(v4);
-            argv[4].set(loc);
-            return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-        }
-
-        AutoValueArray<4> argv(cx);
-        argv[0].set(v1);
-        argv[1].set(v2);
-        argv[2].set(v3);
-        argv[3].set(v4);
-        return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-    }
-
-    bool callback(HandleValue fun, HandleValue v1, HandleValue v2, HandleValue v3, HandleValue v4,
-                  HandleValue v5, TokenPos* pos, MutableHandleValue dst) {
-        if (saveLoc) {
-            RootedValue loc(cx);
-            if (!newNodeLoc(pos, &loc))
-                return false;
-            AutoValueArray<6> argv(cx);
-            argv[0].set(v1);
-            argv[1].set(v2);
-            argv[2].set(v3);
-            argv[3].set(v4);
-            argv[4].set(v5);
-            argv[5].set(loc);
-            return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
-        }
-
-        AutoValueArray<5> argv(cx);
-        argv[0].set(v1);
-        argv[1].set(v2);
-        argv[2].set(v3);
-        argv[3].set(v4);
-        argv[4].set(v5);
-        return Invoke(cx, userv, fun, argv.length(), argv.begin(), dst);
+    // Invoke a user-defined callback. The actual signature is:
+    //
+    //     bool callback(HandleValue fun, HandleValue... args, TokenPos* pos,
+    //                   MutableHandleValue dst);
+    template <typename... Arguments>
+    bool callback(HandleValue fun, Arguments&&... args) {
+        AutoValueArray<sizeof...(args) - 1> argv(cx);
+        return callbackHelper(fun, argv, 0, Forward<Arguments>(args)...);
     }
 
     // WARNING: Returning a Handle is non-standard, but it works in this case
@@ -447,117 +376,39 @@ class NodeBuilder
 
     bool newArray(NodeVector& elts, MutableHandleValue dst);
 
-    bool newNode(ASTType type, TokenPos* pos, MutableHandleObject dst);
+    bool createNode(ASTType type, TokenPos* pos, MutableHandleObject dst);
 
-    bool newNode(ASTType type, TokenPos* pos, MutableHandleValue dst) {
-        RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setResult(node, dst);
+    bool newNodeHelper(HandleObject obj, MutableHandleValue dst) {
+        // The end of the implementation of newNode().
+        MOZ_ASSERT(obj);
+        dst.setObject(*obj);
+        return true;
     }
 
-    bool newNode(ASTType type, TokenPos* pos,
-                 const char* childName, HandleValue child,
-                 MutableHandleValue dst) {
-        RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setProperty(node, childName, child) &&
-               setResult(node, dst);
+    template <typename... Arguments>
+    bool newNodeHelper(HandleObject obj, const char *name, HandleValue value,
+                       Arguments&&... rest)
+    {
+        // Recursive loop to define properties. Note that the newNodeHelper()
+        // call below passes two fewer arguments than we received, as we omit
+        // `name` and `value`. This eventually bottoms out in a call to the
+        // non-template newNodeHelper() above.
+        return defineProperty(obj, name, value)
+               && newNodeHelper(obj, Forward<Arguments>(rest)...);
     }
 
-    bool newNode(ASTType type, TokenPos* pos,
-                 const char* childName1, HandleValue child1,
-                 const char* childName2, HandleValue child2,
-                 MutableHandleValue dst) {
+    // Create a node object with "type" and "loc" properties, as well as zero
+    // or more properties passed in as arguments. The signature is really more
+    // like:
+    //
+    //     bool newNode(ASTType type, TokenPos* pos,
+    //                  {const char *name0, HandleValue value0,}...
+    //                  MutableHandleValue dst);
+    template <typename... Arguments>
+    bool newNode(ASTType type, TokenPos* pos, Arguments&&... args) {
         RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setProperty(node, childName1, child1) &&
-               setProperty(node, childName2, child2) &&
-               setResult(node, dst);
-    }
-
-    bool newNode(ASTType type, TokenPos* pos,
-                 const char* childName1, HandleValue child1,
-                 const char* childName2, HandleValue child2,
-                 const char* childName3, HandleValue child3,
-                 MutableHandleValue dst) {
-        RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setProperty(node, childName1, child1) &&
-               setProperty(node, childName2, child2) &&
-               setProperty(node, childName3, child3) &&
-               setResult(node, dst);
-    }
-
-    bool newNode(ASTType type, TokenPos* pos,
-                 const char* childName1, HandleValue child1,
-                 const char* childName2, HandleValue child2,
-                 const char* childName3, HandleValue child3,
-                 const char* childName4, HandleValue child4,
-                 MutableHandleValue dst) {
-        RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setProperty(node, childName1, child1) &&
-               setProperty(node, childName2, child2) &&
-               setProperty(node, childName3, child3) &&
-               setProperty(node, childName4, child4) &&
-               setResult(node, dst);
-    }
-
-    bool newNode(ASTType type, TokenPos* pos,
-                 const char* childName1, HandleValue child1,
-                 const char* childName2, HandleValue child2,
-                 const char* childName3, HandleValue child3,
-                 const char* childName4, HandleValue child4,
-                 const char* childName5, HandleValue child5,
-                 MutableHandleValue dst) {
-        RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setProperty(node, childName1, child1) &&
-               setProperty(node, childName2, child2) &&
-               setProperty(node, childName3, child3) &&
-               setProperty(node, childName4, child4) &&
-               setProperty(node, childName5, child5) &&
-               setResult(node, dst);
-    }
-
-    bool newNode(ASTType type, TokenPos* pos,
-                 const char* childName1, HandleValue child1,
-                 const char* childName2, HandleValue child2,
-                 const char* childName3, HandleValue child3,
-                 const char* childName4, HandleValue child4,
-                 const char* childName5, HandleValue child5,
-                 const char* childName6, HandleValue child6,
-                 MutableHandleValue dst) {
-        RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setProperty(node, childName1, child1) &&
-               setProperty(node, childName2, child2) &&
-               setProperty(node, childName3, child3) &&
-               setProperty(node, childName4, child4) &&
-               setProperty(node, childName5, child5) &&
-               setProperty(node, childName6, child6) &&
-               setResult(node, dst);
-    }
-
-    bool newNode(ASTType type, TokenPos* pos,
-                 const char* childName1, HandleValue child1,
-                 const char* childName2, HandleValue child2,
-                 const char* childName3, HandleValue child3,
-                 const char* childName4, HandleValue child4,
-                 const char* childName5, HandleValue child5,
-                 const char* childName6, HandleValue child6,
-                 const char* childName7, HandleValue child7,
-                 MutableHandleValue dst) {
-        RootedObject node(cx);
-        return newNode(type, pos, &node) &&
-               setProperty(node, childName1, child1) &&
-               setProperty(node, childName2, child2) &&
-               setProperty(node, childName3, child3) &&
-               setProperty(node, childName4, child4) &&
-               setProperty(node, childName5, child5) &&
-               setProperty(node, childName6, child6) &&
-               setProperty(node, childName7, child7) &&
-               setResult(node, dst);
+        return createNode(type, pos, &node) &&
+               newNodeHelper(node, Forward<Arguments>(args)...);
     }
 
     bool listNode(ASTType type, const char* propName, NodeVector& elts, TokenPos* pos,
@@ -573,7 +424,7 @@ class NodeBuilder
         return newNode(type, pos, propName, array, dst);
     }
 
-    bool setProperty(HandleObject obj, const char* name, HandleValue val) {
+    bool defineProperty(HandleObject obj, const char* name, HandleValue val) {
         MOZ_ASSERT_IF(val.isMagic(), val.whyMagic() == JS_SERIALIZE_NO_NODE);
 
         /*
@@ -591,12 +442,6 @@ class NodeBuilder
     bool newNodeLoc(TokenPos* pos, MutableHandleValue dst);
 
     bool setNodeLoc(HandleObject node, TokenPos* pos);
-
-    bool setResult(HandleObject obj, MutableHandleValue dst) {
-        MOZ_ASSERT(obj);
-        dst.setObject(*obj);
-        return true;
-    }
 
   public:
     /*
@@ -620,8 +465,8 @@ class NodeBuilder
 
     bool function(ASTType type, TokenPos* pos,
                   HandleValue id, NodeVector& args, NodeVector& defaults,
-                  HandleValue body, HandleValue rest, bool isGenerator, bool isExpression,
-                  MutableHandleValue dst);
+                  HandleValue body, HandleValue rest, GeneratorStyle generatorStyle,
+                  bool isExpression, MutableHandleValue dst);
 
     bool variableDeclarator(HandleValue id, HandleValue init, TokenPos* pos,
                             MutableHandleValue dst);
@@ -788,7 +633,7 @@ class NodeBuilder
 } /* anonymous namespace */
 
 bool
-NodeBuilder::newNode(ASTType type, TokenPos* pos, MutableHandleObject dst)
+NodeBuilder::createNode(ASTType type, TokenPos* pos, MutableHandleObject dst)
 {
     MOZ_ASSERT(type > AST_ERROR && type < AST_LIMIT);
 
@@ -797,7 +642,7 @@ NodeBuilder::newNode(ASTType type, TokenPos* pos, MutableHandleObject dst)
     if (!node ||
         !setNodeLoc(node, pos) ||
         !atomValue(nodeTypeNames[type], &tv) ||
-        !setProperty(node, "type", tv)) {
+        !defineProperty(node, "type", tv)) {
         return false;
     }
 
@@ -859,28 +704,28 @@ NodeBuilder::newNodeLoc(TokenPos* pos, MutableHandleValue dst)
     if (!newObject(&to))
         return false;
     val.setObject(*to);
-    if (!setProperty(loc, "start", val))
+    if (!defineProperty(loc, "start", val))
         return false;
     val.setNumber(startLineNum);
-    if (!setProperty(to, "line", val))
+    if (!defineProperty(to, "line", val))
         return false;
     val.setNumber(startColumnIndex);
-    if (!setProperty(to, "column", val))
+    if (!defineProperty(to, "column", val))
         return false;
 
     if (!newObject(&to))
         return false;
     val.setObject(*to);
-    if (!setProperty(loc, "end", val))
+    if (!defineProperty(loc, "end", val))
         return false;
     val.setNumber(endLineNum);
-    if (!setProperty(to, "line", val))
+    if (!defineProperty(to, "line", val))
         return false;
     val.setNumber(endColumnIndex);
-    if (!setProperty(to, "column", val))
+    if (!defineProperty(to, "column", val))
         return false;
 
-    if (!setProperty(loc, "source", srcval))
+    if (!defineProperty(loc, "source", srcval))
         return false;
 
     return true;
@@ -891,13 +736,13 @@ NodeBuilder::setNodeLoc(HandleObject node, TokenPos* pos)
 {
     if (!saveLoc) {
         RootedValue nullVal(cx, NullValue());
-        setProperty(node, "loc", nullVal);
+        defineProperty(node, "loc", nullVal);
         return true;
     }
 
     RootedValue loc(cx);
     return newNodeLoc(pos, &loc) &&
-           setProperty(node, "loc", loc);
+           defineProperty(node, "loc", loc);
 }
 
 bool
@@ -1757,7 +1602,7 @@ bool
 NodeBuilder::function(ASTType type, TokenPos* pos,
                       HandleValue id, NodeVector& args, NodeVector& defaults,
                       HandleValue body, HandleValue rest,
-                      bool isGenerator, bool isExpression,
+                      GeneratorStyle generatorStyle, bool isExpression,
                       MutableHandleValue dst)
 {
     RootedValue array(cx), defarray(cx);
@@ -1766,12 +1611,34 @@ NodeBuilder::function(ASTType type, TokenPos* pos,
     if (!newArray(defaults, &defarray))
         return false;
 
+    bool isGenerator = generatorStyle != GeneratorStyle::None;
     RootedValue isGeneratorVal(cx, BooleanValue(isGenerator));
     RootedValue isExpressionVal(cx, BooleanValue(isExpression));
 
     RootedValue cb(cx, callbacks[type]);
     if (!cb.isNull()) {
         return callback(cb, opt(id), array, body, isGeneratorVal, isExpressionVal, pos, dst);
+    }
+
+    if (isGenerator) {
+        // Distinguish ES6 generators from legacy generators.
+        RootedValue styleVal(cx);
+        JSAtom* styleStr = generatorStyle == GeneratorStyle::ES6
+                           ? Atomize(cx, "es6", 3)
+                           : Atomize(cx, "legacy", 6);
+        if (!styleStr)
+            return false;
+        styleVal.setString(styleStr);
+        return newNode(type, pos,
+                       "id", id,
+                       "params", array,
+                       "defaults", defarray,
+                       "body", body,
+                       "rest", rest,
+                       "generator", isGeneratorVal,
+                       "style", styleVal,
+                       "expression", isExpressionVal,
+                       dst);
     }
 
     return newNode(type, pos,
@@ -2173,6 +2040,9 @@ ASTSerializer::declaration(ParseNode* pn, MutableHandleValue dst)
       case PNK_FUNCTION:
         return function(pn, AST_FUNC_DECL, dst);
 
+      case PNK_ANNEXB_FUNCTION:
+        return function(pn->pn_left, AST_FUNC_DECL, dst);
+
       case PNK_VAR:
         return variableDeclaration(pn, false, dst);
 
@@ -2387,8 +2257,8 @@ ASTSerializer::switchCase(ParseNode* pn, MutableHandleValue dst)
 
     RootedValue expr(cx);
 
-    return optExpression(pn->pn_left, &expr) &&
-           statements(pn->pn_right, stmts) &&
+    return optExpression(pn->as<CaseClause>().caseExpression(), &expr) &&
+           statements(pn->as<CaseClause>().statementList(), stmts) &&
            builder.switchCase(expr, stmts, &pn->pn_pos, dst);
 }
 
@@ -2491,8 +2361,9 @@ ASTSerializer::forInit(ParseNode* pn, MutableHandleValue dst)
         return true;
     }
 
-    return (pn->isKind(PNK_VAR))
-           ? variableDeclaration(pn, false, dst)
+    bool lexical = pn->isKind(PNK_LET) || pn->isKind(PNK_CONST);
+    return (lexical || pn->isKind(PNK_VAR))
+           ? variableDeclaration(pn, lexical, dst)
            : expression(pn, dst);
 }
 
@@ -2543,6 +2414,17 @@ ASTSerializer::statement(ParseNode* pn, MutableHandleValue dst)
       case PNK_VAR:
         return declaration(pn, dst);
 
+      case PNK_ANNEXB_FUNCTION:
+        // XXXshu NOP check used only for phasing in block-scope function
+        // XXXshu early errors.
+        // XXXshu
+        // XXXshu Back out when major version >= 50. See [1].
+        // XXXshu
+        // XXXshu [1] https://bugzilla.mozilla.org/show_bug.cgi?id=1235590#c10
+        if (pn->pn_left->isKind(PNK_NOP))
+            return builder.emptyStatement(&pn->pn_pos, dst);
+        return declaration(pn->pn_left, dst);
+
       case PNK_LETBLOCK:
         return letBlock(pn, dst);
 
@@ -2574,7 +2456,7 @@ ASTSerializer::statement(ParseNode* pn, MutableHandleValue dst)
         pn = pn->pn_expr;
         if (!pn->isKind(PNK_STATEMENTLIST))
             return statement(pn, dst);
-        /* FALL THROUGH */
+        MOZ_FALLTHROUGH;
 
       case PNK_STATEMENTLIST:
         return blockStatement(pn, dst);
@@ -2627,6 +2509,7 @@ ASTSerializer::statement(ParseNode* pn, MutableHandleValue dst)
       }
 
       case PNK_FOR:
+      case PNK_COMPREHENSIONFOR:
       {
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_left->pn_pos));
         MOZ_ASSERT(pn->pn_pos.encloses(pn->pn_right->pn_pos));
@@ -2641,32 +2524,31 @@ ASTSerializer::statement(ParseNode* pn, MutableHandleValue dst)
         if (!statement(pn->pn_right, &stmt))
             return false;
 
-        if (head->isKind(PNK_FORIN)) {
+        if (head->isKind(PNK_FORIN) || head->isKind(PNK_FOROF)) {
             RootedValue var(cx);
-            return (!head->pn_kid1
-                    ? pattern(head->pn_kid2, &var)
-                    : head->pn_kid1->isKind(PNK_LEXICALSCOPE)
-                    ? variableDeclaration(head->pn_kid1->pn_expr, true, &var)
-                    : variableDeclaration(head->pn_kid1, false, &var)) &&
-                forIn(pn, head, var, stmt, dst);
-        }
-
-        if (head->isKind(PNK_FOROF)) {
-            RootedValue var(cx);
-            return (!head->pn_kid1
-                    ? pattern(head->pn_kid2, &var)
-                    : head->pn_kid1->isKind(PNK_LEXICALSCOPE)
-                    ? variableDeclaration(head->pn_kid1->pn_expr, true, &var)
-                    : variableDeclaration(head->pn_kid1, false, &var)) &&
-                forOf(pn, head, var, stmt, dst);
+            if (!head->pn_kid1) {
+                if (!pattern(head->pn_kid2, &var))
+                    return false;
+            } else if (head->pn_kid1->isKind(PNK_LEXICALSCOPE)) {
+                if (!variableDeclaration(head->pn_kid1->pn_expr, true, &var))
+                    return false;
+            } else {
+                if (!variableDeclaration(head->pn_kid1,
+                                         head->pn_kid1->isKind(PNK_LET) ||
+                                         head->pn_kid1->isKind(PNK_CONST),
+                                         &var))
+                {
+                    return false;
+                }
+            }
+            if (head->isKind(PNK_FORIN))
+                return forIn(pn, head, var, stmt, dst);
+            return forOf(pn, head, var, stmt, dst);
         }
 
         RootedValue init(cx), test(cx), update(cx);
 
-        return forInit(head->pn_kid1 && !head->pn_kid1->isKind(PNK_FRESHENBLOCK)
-                       ? head->pn_kid1
-                       : nullptr,
-                       &init) &&
+        return forInit(head->pn_kid1, &init) &&
                optExpression(head->pn_kid2, &test) &&
                optExpression(head->pn_kid3, &update) &&
                builder.forStatement(init, test, update, stmt, &pn->pn_pos, dst);
@@ -2892,12 +2774,12 @@ ASTSerializer::comprehension(ParseNode* pn, MutableHandleValue dst)
     // They have slightly different parse trees and scoping.
     bool isLegacy = pn->isKind(PNK_LEXICALSCOPE);
     ParseNode* next = isLegacy ? pn->pn_expr : pn;
-    LOCAL_ASSERT(next->isKind(PNK_FOR));
+    LOCAL_ASSERT(next->isKind(PNK_COMPREHENSIONFOR));
 
     NodeVector blocks(cx);
     RootedValue filter(cx, MagicValue(JS_SERIALIZE_NO_NODE));
     while (true) {
-        if (next->isKind(PNK_FOR)) {
+        if (next->isKind(PNK_COMPREHENSIONFOR)) {
             RootedValue block(cx);
             if (!comprehensionBlock(next, &block) || !blocks.append(block))
                 return false;
@@ -2935,12 +2817,12 @@ ASTSerializer::generatorExpression(ParseNode* pn, MutableHandleValue dst)
     // expression.
     bool isLegacy = pn->isKind(PNK_LEXICALSCOPE);
     ParseNode* next = isLegacy ? pn->pn_expr : pn;
-    LOCAL_ASSERT(next->isKind(PNK_FOR));
+    LOCAL_ASSERT(next->isKind(PNK_COMPREHENSIONFOR));
 
     NodeVector blocks(cx);
     RootedValue filter(cx, MagicValue(JS_SERIALIZE_NO_NODE));
     while (true) {
-        if (next->isKind(PNK_FOR)) {
+        if (next->isKind(PNK_COMPREHENSIONFOR)) {
             RootedValue block(cx);
             if (!comprehensionBlock(next, &block) || !blocks.append(block))
                 return false;
@@ -3103,10 +2985,8 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
                builder.unaryExpression(op, expr, &pn->pn_pos, dst);
       }
 
-#if JS_HAS_GENERATOR_EXPRS
       case PNK_GENEXP:
         return generatorExpression(pn->generatorExpr(), dst);
-#endif
 
       case PNK_NEW:
       case PNK_TAGGED_TEMPLATE:
@@ -3118,7 +2998,7 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
 
         RootedValue callee(cx);
         if (pn->isKind(PNK_SUPERCALL)) {
-            MOZ_ASSERT(next->isKind(PNK_POSHOLDER));
+            MOZ_ASSERT(next->isKind(PNK_SUPERBASE));
             if (!builder.super(&next->pn_pos, &callee))
                 return false;
         } else {
@@ -3349,6 +3229,12 @@ ASTSerializer::expression(ParseNode* pn, MutableHandleValue dst)
                builder.metaProperty(newIdent, targetIdent, &pn->pn_pos, dst);
       }
 
+      case PNK_SETTHIS:
+        // SETTHIS is used to assign the result of a super() call to |this|.
+        // It's not part of the original AST, so just forward to the call.
+        MOZ_ASSERT(pn->pn_left->isKind(PNK_NAME));
+        return expression(pn->pn_right, dst);
+
       default:
         LOCAL_NOT_REACHED("unexpected expression type");
     }
@@ -3395,7 +3281,9 @@ ASTSerializer::property(ParseNode* pn, MutableHandleValue dst)
     }
 
     bool isShorthand = pn->isKind(PNK_SHORTHAND);
-    bool isMethod = pn->pn_right->isKind(PNK_FUNCTION) && kind == PROP_INIT;
+    bool isMethod =
+        pn->pn_right->isKind(PNK_FUNCTION) &&
+        pn->pn_right->pn_funbox->function()->kind() == JSFunction::Method;
     RootedValue key(cx), val(cx);
     return propertyName(pn->pn_left, &key) &&
            expression(pn->pn_right, &val) &&
@@ -3567,8 +3455,12 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
 {
     RootedFunction func(cx, pn->pn_funbox->function());
 
-    // FIXME: Provide more information (legacy generator vs star generator).
-    bool isGenerator = pn->pn_funbox->isGenerator();
+    GeneratorStyle generatorStyle =
+        pn->pn_funbox->isGenerator()
+        ? (pn->pn_funbox->isLegacyGenerator()
+           ? GeneratorStyle::Legacy
+           : GeneratorStyle::ES6)
+        : GeneratorStyle::None;
 
     bool isExpression =
 #if JS_HAS_EXPR_CLOSURES
@@ -3592,7 +3484,7 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
         rest.setNull();
     return functionArgsAndBody(pn->pn_body, args, defaults, &body, &rest) &&
         builder.function(type, &pn->pn_pos, id, args, defaults, body,
-                         rest, isGenerator, isExpression, dst);
+                         rest, generatorStyle, isExpression, dst);
 }
 
 bool
@@ -3859,7 +3751,8 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
         if (!module)
             return false;
 
-        pn = parser.standaloneModule(module);
+        ModuleBuilder builder(cx, module);
+        pn = parser.standaloneModule(module, builder);
         if (!pn)
             return false;
 

@@ -10,7 +10,9 @@
 #include <queue>
 
 #include "mozilla/DeferredFinalize.h"
+#include "mozilla/mozalloc.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/SegmentedVector.h"
 #include "jsapi.h"
 
 #include "nsCycleCollectionParticipant.h"
@@ -22,6 +24,7 @@ class nsCycleCollectionNoteRootCallback;
 class nsIException;
 class nsIRunnable;
 class nsThread;
+class nsWrapperCache;
 
 namespace js {
 struct Class;
@@ -200,6 +203,9 @@ private:
   static void GCCallback(JSRuntime* aRuntime, JSGCStatus aStatus, void* aData);
   static void GCSliceCallback(JSRuntime* aRuntime, JS::GCProgress aProgress,
                               const JS::GCDescription& aDesc);
+  static void GCNurseryCollectionCallback(JSRuntime* aRuntime,
+                                          JS::GCNurseryProgress aProgress,
+                                          JS::gcreason::Reason aReason);
   static void OutOfMemoryCallback(JSContext* aContext, void* aData);
   static void LargeAllocationFailureCallback(void* aData);
   static bool ContextCallback(JSContext* aCx, unsigned aOperation,
@@ -280,6 +286,10 @@ public:
   bool AreGCGrayBitsValid() const;
   void GarbageCollect(uint32_t aReason) const;
 
+  void NurseryWrapperAdded(nsWrapperCache* aCache);
+  void NurseryWrapperPreserved(JSObject* aWrapper);
+  void JSObjectsTenured();
+
   void DeferredFinalize(DeferredFinalizeAppendFunction aAppendFunc,
                         DeferredFinalizeFunction aFunc,
                         void* aThing);
@@ -334,6 +344,7 @@ private:
   JSRuntime* mJSRuntime;
 
   JS::GCSliceCallback mPrevGCSliceCallback;
+  JS::GCNurseryCollectionCallback mPrevGCNurseryCollectionCallback;
 
   nsDataHashtable<nsPtrHashKey<void>, nsScriptObjectTracer*> mJSHolders;
 
@@ -361,6 +372,13 @@ private:
 
   OOMState mOutOfMemoryState;
   OOMState mLargeAllocationFailureState;
+
+  static const size_t kSegmentSize = 512;
+  SegmentedVector<nsWrapperCache*, kSegmentSize, InfallibleAllocPolicy>
+    mNurseryObjects;
+  SegmentedVector<JS::PersistentRooted<JSObject*>, kSegmentSize,
+                  InfallibleAllocPolicy>
+    mPreservedNurseryObjects;
 };
 
 void TraceScriptHolder(nsISupports* aHolder, JSTracer* aTracer);

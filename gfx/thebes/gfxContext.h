@@ -53,6 +53,7 @@ class gfxContext final {
     typedef mozilla::gfx::Pattern Pattern;
     typedef mozilla::gfx::Rect Rect;
     typedef mozilla::gfx::RectCornerRadii RectCornerRadii;
+    typedef mozilla::gfx::Size Size;
 
     NS_INLINE_DECL_REFCOUNTING(gfxContext)
 
@@ -74,21 +75,10 @@ public:
     static already_AddRefed<gfxContext> ContextForDrawTarget(mozilla::gfx::DrawTarget* aTarget);
 
     /**
-     * Return the current transparency group target, if any, along
-     * with its device offsets from the top.  If no group is
-     * active, returns the surface the gfxContext was created with,
-     * and 0,0 in dx,dy.
+     * Return the current transparency group target, if any. If no group is
+     * active, returns the surface the gfxContext was created with.
      */
-    already_AddRefed<gfxASurface> CurrentSurface(gfxFloat *dx, gfxFloat *dy);
-    already_AddRefed<gfxASurface> CurrentSurface() {
-        return CurrentSurface(nullptr, nullptr);
-    }
-
-    /**
-     * Return the raw cairo_t object.
-     * XXX this should go away at some point.
-     */
-    cairo_t *GetCairo();
+    already_AddRefed<gfxASurface> CurrentSurface();
 
     mozilla::gfx::DrawTarget *GetDrawTarget() { return mDT; }
 
@@ -194,7 +184,7 @@ public:
      * Converts a size from device to user coordinates. This does not apply
      * translation components of the matrix.
      */
-    gfxSize DeviceToUser(const gfxSize& size) const;
+    Size DeviceToUser(const Size& size) const;
 
     /**
      * Converts a rectangle from device to user coordinates; this has the
@@ -213,7 +203,7 @@ public:
      * Converts a size from user to device coordinates. This does not apply
      * translation components of the matrix.
      */
-    gfxSize UserToDevice(const gfxSize& size) const;
+    Size UserToDevice(const Size& size) const;
 
     /**
      * Converts a rectangle from user to device coordinates.  The
@@ -314,7 +304,8 @@ public:
      * Like Paint, except that it only draws the source where pattern is
      * non-transparent.
      */
-    void Mask(mozilla::gfx::SourceSurface *aSurface, const mozilla::gfx::Matrix& aTransform);
+    void Mask(mozilla::gfx::SourceSurface *aSurface, mozilla::gfx::Float aAlpha, const mozilla::gfx::Matrix& aTransform);
+    void Mask(mozilla::gfx::SourceSurface *aSurface, const mozilla::gfx::Matrix& aTransform) { Mask(aSurface, 1.0f, aTransform); }
 
     /**
      * Shorthand for creating a pattern and calling the pattern-taking
@@ -363,13 +354,6 @@ public:
 
     void SetMiterLimit(gfxFloat limit);
     gfxFloat CurrentMiterLimit() const;
-
-    /**
-     ** Fill Properties
-     **/
-
-    void SetFillRule(FillRule rule);
-    FillRule CurrentFillRule() const;
 
     /**
      * Sets the operator used for all further drawing. The operator affects
@@ -429,29 +413,26 @@ public:
     /**
      * Groups
      */
-    void PushGroup(gfxContentType content = gfxContentType::COLOR);
+    void PushGroupForBlendBack(gfxContentType content, mozilla::gfx::Float aOpacity = 1.0f,
+                               mozilla::gfx::SourceSurface* aMask = nullptr,
+                               const mozilla::gfx::Matrix& aMaskTransform = mozilla::gfx::Matrix());
+
     /**
-     * Like PushGroup, but if the current surface is gfxContentType::COLOR and
+     * Like PushGroupForBlendBack, but if the current surface is gfxContentType::COLOR and
      * content is gfxContentType::COLOR_ALPHA, makes the pushed surface gfxContentType::COLOR
      * instead and copies the contents of the current surface to the pushed
      * surface. This is good for pushing opacity groups, since blending the
      * group back to the current surface with some alpha applied will give
      * the correct results and using an opaque pushed surface gives better
      * quality and performance.
-     * This API really only makes sense if you do a PopGroupToSource and
-     * immediate Paint with OP_OVER.
      */
-    void PushGroupAndCopyBackground(gfxContentType content = gfxContentType::COLOR);
-    already_AddRefed<gfxPattern> PopGroup();
-    void PopGroupToSource();
-
-    already_AddRefed<mozilla::gfx::SourceSurface>
-    PopGroupToSurface(mozilla::gfx::Matrix* aMatrix);
+    void PushGroupAndCopyBackground(gfxContentType content = gfxContentType::COLOR,
+                                    mozilla::gfx::Float aOpacity = 1.0f,
+                                    mozilla::gfx::SourceSurface* aMask = nullptr,
+                                    const mozilla::gfx::Matrix& aMaskTransform = mozilla::gfx::Matrix());
+    void PopGroupAndBlend();
 
     mozilla::gfx::Point GetDeviceOffset() const;
-
-    // Work out whether cairo will snap inter-glyph spacing to pixels.
-    void GetRoundOffsetsToPixels(bool *aRoundX, bool *aRoundY);
 
 #ifdef MOZ_DUMP_PAINTING
     /**
@@ -494,10 +475,9 @@ private:
     AzureState()
       : op(mozilla::gfx::CompositionOp::OP_OVER)
       , color(0, 0, 0, 1.0f)
-      , clipWasReset(false)
-      , fillRule(mozilla::gfx::FillRule::FILL_WINDING)
       , aaMode(mozilla::gfx::AntialiasMode::SUBPIXEL)
       , patternTransformChanged(false)
+      , mBlendOpacity(0.0f)
     {}
 
     mozilla::gfx::CompositionOp op;
@@ -515,17 +495,19 @@ private:
     };
     nsTArray<PushedClip> pushedClips;
     nsTArray<Float> dashPattern;
-    bool clipWasReset;
-    mozilla::gfx::FillRule fillRule;
     StrokeOptions strokeOptions;
     RefPtr<DrawTarget> drawTarget;
-    RefPtr<DrawTarget> parentTarget;
     mozilla::gfx::AntialiasMode aaMode;
     bool patternTransformChanged;
     Matrix patternTransform;
     Color fontSmoothingBackgroundColor;
     // This is used solely for using minimal intermediate surface size.
     mozilla::gfx::Point deviceOffset;
+    // Support groups
+    mozilla::gfx::Float mBlendOpacity;
+    RefPtr<SourceSurface> mBlendMask;
+    Matrix mBlendMaskTransform;
+    mozilla::DebugOnly<bool> mWasPushedForBlendBack;
   };
 
   // This ensures mPath contains a valid path (in user space!)
@@ -553,10 +535,7 @@ private:
   AzureState &CurrentState() { return mStateStack[mStateStack.Length() - 1]; }
   const AzureState &CurrentState() const { return mStateStack[mStateStack.Length() - 1]; }
 
-  cairo_t *mRefCairo;
-
   RefPtr<DrawTarget> mDT;
-  RefPtr<DrawTarget> mOriginalDT;
 };
 
 /**
@@ -653,17 +632,19 @@ private:
 };
 
 
-class gfxContextAutoDisableSubpixelAntialiasing {
+class DrawTargetAutoDisableSubpixelAntialiasing {
 public:
-    gfxContextAutoDisableSubpixelAntialiasing(gfxContext *aContext, bool aDisable)
+    typedef mozilla::gfx::DrawTarget DrawTarget;
+
+    DrawTargetAutoDisableSubpixelAntialiasing(DrawTarget *aDT, bool aDisable)
     {
         if (aDisable) {
-            mDT = aContext->GetDrawTarget();
+            mDT = aDT;
             mSubpixelAntialiasingEnabled = mDT->GetPermitSubpixelAA();
             mDT->SetPermitSubpixelAA(false);
         }
     }
-    ~gfxContextAutoDisableSubpixelAntialiasing()
+    ~DrawTargetAutoDisableSubpixelAntialiasing()
     {
         if (mDT) {
             mDT->SetPermitSubpixelAA(mSubpixelAntialiasingEnabled);
@@ -671,7 +652,7 @@ public:
     }
 
 private:
-    RefPtr<mozilla::gfx::DrawTarget> mDT;
+    RefPtr<DrawTarget> mDT;
     bool mSubpixelAntialiasingEnabled;
 };
 

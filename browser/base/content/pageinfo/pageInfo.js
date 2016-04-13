@@ -349,7 +349,7 @@ function onLoadPageInfo()
             .notifyObservers(window, "page-info-dialog-loaded", null);
 }
 
-function loadPageInfo(frameOuterWindowID)
+function loadPageInfo(frameOuterWindowID, imageElement)
 {
   let mm = window.opener.gBrowser.selectedBrowser.messageManager;
 
@@ -361,7 +361,8 @@ function loadPageInfo(frameOuterWindowID)
 
   // Look for pageInfoListener in content.js. Sends message to listener with arguments.
   mm.sendAsyncMessage("PageInfo:getData", {strings: gStrings,
-                      frameOuterWindowID: frameOuterWindowID});
+                      frameOuterWindowID: frameOuterWindowID},
+                      { imageElement });
 
   let pageInfoData;
 
@@ -374,6 +375,8 @@ function loadPageInfo(frameOuterWindowID)
     let uri = makeURI(docInfo.documentURIObject.spec,
                       docInfo.documentURIObject.originCharset);
     gDocInfo = docInfo;
+
+    gImageElement = pageInfoData.imageInfo;
 
     var titleFormat = windowInfo.isTopWindow ? "pageInfo.page.title"
                                              : "pageInfo.frame.title";
@@ -402,7 +405,10 @@ function loadPageInfo(frameOuterWindowID)
       return;
     }
 
-    addImage(message.data.imageViewRow);
+    for (let item of message.data.mediaItems) {
+      addImage(item);
+    }
+
     selectImage();
   });
 
@@ -478,19 +484,11 @@ function loadTab(args)
   // If the "View Image Info" context menu item was used, the related image
   // element is provided as an argument. This can't be a background image.
   let imageElement = args && args.imageElement;
-  if (imageElement) {
-    gImageElement = {currentSrc: imageElement.currentSrc,
-                     width: imageElement.width, height: imageElement.height,
-                     imageText: imageElement.title || imageElement.alt};
-  }
-  else {
-    gImageElement = null;
-  }
 
   let frameOuterWindowID = args && args.frameOuterWindowID;
 
   /* Load the page info */
-  loadPageInfo(frameOuterWindowID);
+  loadPageInfo(frameOuterWindowID, imageElement);
 
   var initialTab = (args && args.initialTab) || "generalTab";
   var radioGroup = document.getElementById("viewGroup");
@@ -747,8 +745,9 @@ function saveMedia()
     selectSaveFolder(function(aDirectory) {
       if (aDirectory) {
         var saveAnImage = function(aURIString, aChosenData, aBaseURI) {
+          uniqueFile(aChosenData.file);
           internalSave(aURIString, null, null, null, null, false, "SaveImageTitle",
-                       aChosenData, aBaseURI, null, gDocInfo.isContentWindowPrivate);
+                       aChosenData, aBaseURI, null, false, null, gDocInfo.isContentWindowPrivate);
         };
 
         for (var i = 0; i < rowArray.length; i++) {
@@ -762,7 +761,10 @@ function saveMedia()
             uri.QueryInterface(Components.interfaces.nsIURL);
             dir.append(decodeURIComponent(uri.fileName));
           } catch(ex) {
-            /* data: uris */
+            // data:/blob: uris
+            // Supply a dummy filename, otherwise Download Manager
+            // will try to delete the base directory on failure.
+            dir.append(gImageView.data[v][COL_IMAGE_TYPE]);
           }
 
           if (i == 0) {
@@ -839,7 +841,7 @@ function makePreview(row)
     // find out the file size
     var sizeText;
     if (cacheEntry) {
-      var imageSize = cacheEntry.dataSize;
+      let imageSize = cacheEntry.dataSize;
       var kbSize = Math.round(imageSize / 1024 * 100) / 100;
       sizeText = gBundle.getFormattedString("generalSize",
                                             [formatNumber(kbSize), formatNumber(imageSize)]);
@@ -953,7 +955,7 @@ function makePreview(row)
       document.getElementById("theimagecontainer").collapsed = true;
     }
 
-    var imageSize = "";
+    let imageSize = "";
     if (url && !isAudio) {
       if (width != physWidth || height != physHeight) {
         imageSize = gBundle.getFormattedString("mediaDimensionsScaled",

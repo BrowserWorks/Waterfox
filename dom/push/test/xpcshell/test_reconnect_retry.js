@@ -47,7 +47,7 @@ add_task(function* test_reconnect_retry() {
           this.serverSendMsg(JSON.stringify({
             messageType: 'register',
             channelID: request.channelID,
-            pushEndpoint: 'https://example.org/push/' + registers,
+            pushEndpoint: 'https://example.org/push/' + request.channelID,
             status: 200,
           }));
         }
@@ -55,17 +55,20 @@ add_task(function* test_reconnect_retry() {
     }
   });
 
-  let registration = yield PushNotificationService.register(
-    'https://example.com/page/1',
-    ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })
-  );
-  equal(registration.channelID, channelID, 'Wrong channel ID for retried request');
+  let registration = yield PushService.register({
+    scope: 'https://example.com/page/1',
+    originAttributes: ChromeUtils.originAttributesToSuffix(
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+  });
+  let retryEndpoint = 'https://example.org/push/' + channelID;
+  equal(registration.endpoint, retryEndpoint, 'Wrong endpoint for retried request');
 
-  registration = yield PushNotificationService.register(
-    'https://example.com/page/2',
-    ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })
-  );
-  notEqual(registration.channelID, channelID, 'Wrong channel ID for new request');
+  registration = yield PushService.register({
+    scope: 'https://example.com/page/2',
+    originAttributes: ChromeUtils.originAttributesToSuffix(
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+  });
+  notEqual(registration.endpoint, retryEndpoint, 'Wrong endpoint for new request')
 
   equal(registers, 3, 'Wrong registration count');
 });

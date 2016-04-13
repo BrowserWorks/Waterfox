@@ -46,14 +46,31 @@ var snapshotFormatters = {
     if (data.updateChannel)
       $("updatechannel-box").textContent = data.updateChannel;
 
-    $("multiprocess-box").textContent = stringBundle().formatStringFromName("multiProcessStatus",
-      [data.numRemoteWindows, data.numTotalWindows, data.remoteAutoStart], 3);
+    let statusStrName = ".unknown";
+
+    // Whitelist of known values with string descriptions:
+    switch (data.autoStartStatus) {
+      case 0:
+      case 1:
+      case 2:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+        statusStrName = "." + data.autoStartStatus;
+    }
+
+    let statusText = stringBundle().GetStringFromName("multiProcessStatus" + statusStrName);
+    $("multiprocess-box").textContent = stringBundle().formatStringFromName("multiProcessWindows",
+      [data.numRemoteWindows, data.numTotalWindows, statusText], 3);
 
     $("safemode-box").textContent = data.safeMode;
   },
 
-#ifdef MOZ_CRASHREPORTER
   crashes: function crashes(data) {
+    if (!AppConstants.MOZ_CRASHREPORTER)
+      return;
+
     let strings = stringBundle();
     let daysRange = Troubleshoot.kMaxCrashAge / (24 * 60 * 60 * 1000);
     $("crashes-title").textContent =
@@ -117,7 +134,6 @@ var snapshotFormatters = {
       ]);
     }));
   },
-#endif
 
   extensions: function extensions(data) {
     $.append($("extensions-tbody"), data.map(function (extension) {
@@ -206,21 +222,13 @@ var snapshotFormatters = {
       let out = [];
       for (let type of ['Wheel', 'Touch', 'Drag']) {
         let key = 'Apz' + type + 'Input';
-        let warningKey = key + 'Warning';
 
         if (!(key in info))
           continue;
 
-        let badPref = info[warningKey];
         delete info[key];
-        delete info[warningKey];
 
-        let message;
-        if (badPref)
-          message = localizedMsg([type.toLowerCase() + 'Warning', badPref]);
-        else
-          message = localizedMsg([type.toLowerCase() + 'Enabled']);
-        dump(message + ', ' + (type.toLowerCase() + 'Warning') + ', ' + badPref + '\n');
+        let message = localizedMsg([type.toLowerCase() + 'Enabled']);
         out.push(message);
       }
 
@@ -381,8 +389,10 @@ var snapshotFormatters = {
     $("prefs-user-js-section").className = "";
   },
 
-#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
   sandbox: function sandbox(data) {
+    if (AppConstants.platform != "linux" || !AppConstants.MOZ_SANDBOX)
+      return;
+
     let strings = stringBundle();
     let tbody = $("sandbox-tbody");
     for (let key in data) {
@@ -397,7 +407,6 @@ var snapshotFormatters = {
       ]));
     }
   },
-#endif
 };
 
 var $ = document.getElementById.bind(document);
@@ -478,15 +487,15 @@ function copyRawDataToClipboard(button) {
       Cc["@mozilla.org/widget/clipboard;1"].
         getService(Ci.nsIClipboard).
         setData(transferable, null, Ci.nsIClipboard.kGlobalClipboard);
-#ifdef ANDROID
-      // Present a toast notification.
-      let message = {
-        type: "Toast:Show",
-        message: stringBundle().GetStringFromName("rawDataCopied"),
-        duration: "short"
-      };
-      Services.androidBridge.handleGeckoMessage(message);
-#endif
+      if (AppConstants.platform == "android") {
+        // Present a toast notification.
+        let message = {
+          type: "Toast:Show",
+          message: stringBundle().GetStringFromName("rawDataCopied"),
+          duration: "short"
+        };
+        Services.androidBridge.handleGeckoMessage(message);
+      }
     });
   }
   catch (err) {
@@ -532,15 +541,15 @@ function copyContentsToClipboard() {
                     .getService(Ci.nsIClipboard);
   clipboard.setData(transferable, null, clipboard.kGlobalClipboard);
 
-#ifdef ANDROID
-  // Present a toast notification.
-  let message = {
-    type: "Toast:Show",
-    message: stringBundle().GetStringFromName("textCopied"),
-    duration: "short"
-  };
-  Services.androidBridge.handleGeckoMessage(message);
-#endif
+  if (AppConstants.platform == "android") {
+    // Present a toast notification.
+    let message = {
+      type: "Toast:Show",
+      message: stringBundle().GetStringFromName("textCopied"),
+      duration: "short"
+    };
+    Services.androidBridge.handleGeckoMessage(message);
+  }
 }
 
 // Return the plain text representation of an element.  Do a little bit
@@ -550,9 +559,9 @@ function createTextForElement(elem) {
   let text = serializer.serialize(elem);
 
   // Actual CR/LF pairs are needed for some Windows text editors.
-#ifdef XP_WIN
-  text = text.replace(/\n/g, "\r\n");
-#endif
+  if (AppConstants.platform == "win") {
+    text = text.replace(/\n/g, "\r\n");
+  }
 
   return text;
 }

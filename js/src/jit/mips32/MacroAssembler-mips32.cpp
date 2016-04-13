@@ -77,51 +77,6 @@ MacroAssemblerMIPSCompat::convertUInt32ToDouble(Register src, FloatRegister dest
     as_addd(dest, dest, SecondScratchDoubleReg);
 }
 
-void
-MacroAssemblerMIPSCompat::mul64(Imm64 imm, const Register64& dest)
-{
-    // LOW32  = LOW(LOW(dest) * LOW(imm));
-    // HIGH32 = LOW(HIGH(dest) * LOW(imm)) [multiply imm into upper bits]
-    //        + LOW(LOW(dest) * HIGH(imm)) [multiply dest into upper bits]
-    //        + HIGH(LOW(dest) * LOW(imm)) [carry]
-
-    // HIGH(dest) = LOW(HIGH(dest) * LOW(imm));
-    ma_li(ScratchRegister, Imm32(imm.value & LOW_32_MASK));
-    as_multu(dest.high, ScratchRegister);
-    as_mflo(dest.high);
-
-    // mfhi:mflo = LOW(dest) * LOW(imm);
-    as_multu(dest.low, ScratchRegister);
-
-    // HIGH(dest) += mfhi;
-    as_mfhi(ScratchRegister);
-    as_addu(dest.high, dest.high, ScratchRegister);
-
-    if (((imm.value >> 32) & LOW_32_MASK) == 5) {
-        // Optimized case for Math.random().
-
-        // HIGH(dest) += LOW(LOW(dest) * HIGH(imm));
-        as_sll(ScratchRegister, dest.low, 2);
-        as_addu(ScratchRegister, ScratchRegister, dest.low);
-        as_addu(dest.high, dest.high, ScratchRegister);
-
-        // LOW(dest) = mflo;
-        as_mflo(dest.low);
-    } else {
-        // tmp = mflo
-        as_mflo(SecondScratchReg);
-
-        // HIGH(dest) += LOW(LOW(dest) * HIGH(imm));
-        ma_li(ScratchRegister, Imm32((imm.value >> 32) & LOW_32_MASK));
-        as_multu(dest.low, ScratchRegister);
-        as_mflo(ScratchRegister);
-        as_addu(dest.high, dest.high, ScratchRegister);
-
-        // LOW(dest) = tmp;
-        ma_move(dest.low, SecondScratchReg);
-    }
-}
-
 static const double TO_DOUBLE_HIGH_SCALE = 0x100000000;
 
 void
@@ -129,9 +84,9 @@ MacroAssemblerMIPSCompat::convertUInt64ToDouble(Register64 src, Register temp, F
 {
     convertUInt32ToDouble(src.high, dest);
     loadConstantDouble(TO_DOUBLE_HIGH_SCALE, ScratchDoubleReg);
-    mulDouble(ScratchDoubleReg, dest);
+    asMasm().mulDouble(ScratchDoubleReg, dest);
     convertUInt32ToDouble(src.low, ScratchDoubleReg);
-    addDouble(ScratchDoubleReg, dest);
+    asMasm().addDouble(ScratchDoubleReg, dest);
 }
 
 void
@@ -264,62 +219,11 @@ MacroAssemblerMIPSCompat::convertInt32ToFloat32(const Address& src, FloatRegiste
 }
 
 void
-MacroAssemblerMIPSCompat::addDouble(FloatRegister src, FloatRegister dest)
+MacroAssemblerMIPS::ma_li(Register dest, CodeOffset* label)
 {
-    as_addd(dest, dest, src);
-}
-
-void
-MacroAssemblerMIPSCompat::subDouble(FloatRegister src, FloatRegister dest)
-{
-    as_subd(dest, dest, src);
-}
-
-void
-MacroAssemblerMIPSCompat::mulDouble(FloatRegister src, FloatRegister dest)
-{
-    as_muld(dest, dest, src);
-}
-
-void
-MacroAssemblerMIPSCompat::divDouble(FloatRegister src, FloatRegister dest)
-{
-    as_divd(dest, dest, src);
-}
-
-void
-MacroAssemblerMIPSCompat::negateDouble(FloatRegister reg)
-{
-    as_negd(reg, reg);
-}
-
-void
-MacroAssemblerMIPSCompat::inc64(AbsoluteAddress dest)
-{
-    ma_li(ScratchRegister, Imm32((int32_t)dest.addr));
-    as_lw(SecondScratchReg, ScratchRegister, 0);
-
-    as_addiu(SecondScratchReg, SecondScratchReg, 1);
-    as_sw(SecondScratchReg, ScratchRegister, 0);
-
-    as_sltiu(SecondScratchReg, SecondScratchReg, 1);
-    as_lw(ScratchRegister, ScratchRegister, 4);
-
-    as_addu(SecondScratchReg, ScratchRegister, SecondScratchReg);
-
-    ma_li(ScratchRegister, Imm32((int32_t)dest.addr));
-    as_sw(SecondScratchReg, ScratchRegister, 4);
-}
-
-void
-MacroAssemblerMIPS::ma_li(Register dest, AbsoluteLabel* label)
-{
-    MOZ_ASSERT(!label->bound());
-    // Thread the patch list through the unpatched address word in the
-    // instruction stream.
     BufferOffset bo = m_buffer.nextOffset();
-    ma_liPatchable(dest, Imm32(label->prev()));
-    label->setPrev(bo.getOffset());
+    ma_liPatchable(dest, ImmWord(/* placeholder */ 0));
+    label->bind(bo.getOffset());
 }
 
 void
@@ -596,7 +500,8 @@ MacroAssemblerMIPS::ma_bal(Label* label, DelaySlotFill delaySlotFill)
 
     BufferOffset bo = writeInst(getBranchCode(BranchIsCall).encode());
     writeInst(nextInChain);
-    label->use(bo.getOffset());
+    if (!oom())
+        label->use(bo.getOffset());
     // Leave space for long jump.
     as_nop();
     if (delaySlotFill == FillDelaySlot)
@@ -655,7 +560,8 @@ MacroAssemblerMIPS::branchWithCode(InstImm code, Label* label, JumpKind jumpKind
         code.setBOffImm16(BOffImm16(4));
         BufferOffset bo = writeInst(code.encode());
         writeInst(nextInChain);
-        label->use(bo.getOffset());
+        if (!oom())
+            label->use(bo.getOffset());
         return;
     }
 
@@ -666,7 +572,8 @@ MacroAssemblerMIPS::branchWithCode(InstImm code, Label* label, JumpKind jumpKind
 
     BufferOffset bo = writeInst(code.encode());
     writeInst(nextInChain);
-    label->use(bo.getOffset());
+    if (!oom())
+        label->use(bo.getOffset());
     // Leave space for potential long jump.
     as_nop();
     as_nop();
@@ -813,58 +720,6 @@ MacroAssemblerMIPSCompat::buildOOLFakeExitFrame(void* fakeReturnAddr)
 }
 
 void
-MacroAssemblerMIPSCompat::add32(Register src, Register dest)
-{
-    as_addu(dest, dest, src);
-}
-
-void
-MacroAssemblerMIPSCompat::add32(Imm32 imm, Register dest)
-{
-    ma_addu(dest, dest, imm);
-}
-
-void
-
-MacroAssemblerMIPSCompat::add32(Imm32 imm, const Address& dest)
-{
-    load32(dest, SecondScratchReg);
-    ma_addu(SecondScratchReg, imm);
-    store32(SecondScratchReg, dest);
-}
-
-void
-MacroAssemblerMIPSCompat::sub32(Imm32 imm, Register dest)
-{
-    ma_subu(dest, dest, imm);
-}
-
-void
-MacroAssemblerMIPSCompat::sub32(Register src, Register dest)
-{
-    as_subu(dest, dest, src);
-}
-
-void
-MacroAssemblerMIPSCompat::addPtr(Register src, Register dest)
-{
-    ma_addu(dest, src);
-}
-
-void
-MacroAssemblerMIPSCompat::addPtr(const Address& src, Register dest)
-{
-    loadPtr(src, ScratchRegister);
-    ma_addu(dest, ScratchRegister);
-}
-
-void
-MacroAssemblerMIPSCompat::subPtr(Register src, Register dest)
-{
-    as_subu(dest, dest, src);
-}
-
-void
 MacroAssemblerMIPSCompat::move32(Imm32 imm, Register dest)
 {
     ma_li(dest, imm);
@@ -899,9 +754,9 @@ MacroAssemblerMIPSCompat::movePtr(ImmPtr imm, Register dest)
     movePtr(ImmWord(uintptr_t(imm.value)), dest);
 }
 void
-MacroAssemblerMIPSCompat::movePtr(AsmJSImmPtr imm, Register dest)
+MacroAssemblerMIPSCompat::movePtr(wasm::SymbolicAddress imm, Register dest)
 {
-    append(AsmJSAbsoluteLink(CodeOffsetLabel(nextOffset().getOffset()), imm.kind()));
+    append(AsmJSAbsoluteAddress(CodeOffset(nextOffset().getOffset()), imm));
     ma_liPatchable(dest, ImmWord(-1));
 }
 
@@ -973,9 +828,9 @@ MacroAssemblerMIPSCompat::load32(AbsoluteAddress address, Register dest)
 }
 
 void
-MacroAssemblerMIPSCompat::load32(AsmJSAbsoluteAddress address, Register dest)
+MacroAssemblerMIPSCompat::load32(wasm::SymbolicAddress address, Register dest)
 {
-    movePtr(AsmJSImmPtr(address.kind()), ScratchRegister);
+    movePtr(address, ScratchRegister);
     load32(Address(ScratchRegister, 0), dest);
 }
 
@@ -999,9 +854,9 @@ MacroAssemblerMIPSCompat::loadPtr(AbsoluteAddress address, Register dest)
 }
 
 void
-MacroAssemblerMIPSCompat::loadPtr(AsmJSAbsoluteAddress address, Register dest)
+MacroAssemblerMIPSCompat::loadPtr(wasm::SymbolicAddress address, Register dest)
 {
-    movePtr(AsmJSImmPtr(address.kind()), ScratchRegister);
+    movePtr(address, ScratchRegister);
     loadPtr(Address(ScratchRegister, 0), dest);
 }
 
@@ -1254,41 +1109,6 @@ MacroAssembler::clampDoubleToUint8(FloatRegister input, Register output)
 }
 
 void
-MacroAssemblerMIPSCompat::subPtr(Imm32 imm, const Register dest)
-{
-    ma_subu(dest, dest, imm);
-}
-
-void
-MacroAssemblerMIPSCompat::subPtr(const Address& addr, const Register dest)
-{
-    loadPtr(addr, SecondScratchReg);
-    subPtr(SecondScratchReg, dest);
-}
-
-void
-MacroAssemblerMIPSCompat::subPtr(Register src, const Address& dest)
-{
-    loadPtr(dest, SecondScratchReg);
-    subPtr(src, SecondScratchReg);
-    storePtr(SecondScratchReg, dest);
-}
-
-void
-MacroAssemblerMIPSCompat::addPtr(Imm32 imm, const Register dest)
-{
-    ma_addu(dest, imm);
-}
-
-void
-MacroAssemblerMIPSCompat::addPtr(Imm32 imm, const Address& dest)
-{
-    loadPtr(dest, ScratchRegister);
-    addPtr(imm, ScratchRegister);
-    storePtr(ScratchRegister, dest);
-}
-
-void
 MacroAssemblerMIPSCompat::branchDouble(DoubleCondition cond, FloatRegister lhs,
                                        FloatRegister rhs, Label* label)
 {
@@ -1389,6 +1209,14 @@ MacroAssemblerMIPSCompat:: branchTestBoolean(Condition cond, Register tag, Label
 {
     MOZ_ASSERT(cond == Assembler::Equal || cond == Assembler::NotEqual);
     ma_b(tag, ImmType(JSVAL_TYPE_BOOLEAN), label, cond);
+}
+
+void
+MacroAssemblerMIPSCompat::branchTestBoolean(Condition cond, const Address& address, Label* label)
+{
+    MOZ_ASSERT(cond == Equal || cond == NotEqual);
+    extractTag(address, SecondScratchReg);
+    ma_b(SecondScratchReg, ImmTag(JSVAL_TAG_BOOLEAN), label, cond);
 }
 
 void
@@ -2179,7 +2007,7 @@ void
 MacroAssemblerMIPSCompat::pushValue(ValueOperand val)
 {
     // Allocate stack slots for type and payload. One for each.
-    subPtr(Imm32(sizeof(Value)), StackPointer);
+    asMasm().subPtr(Imm32(sizeof(Value)), StackPointer);
     // Store type and payload.
     storeValue(val, Address(StackPointer, 0));
 }
@@ -2297,7 +2125,7 @@ void
 MacroAssemblerMIPSCompat::alignStackPointer()
 {
     movePtr(StackPointer, SecondScratchReg);
-    subPtr(Imm32(sizeof(uintptr_t)), StackPointer);
+    asMasm().subPtr(Imm32(sizeof(uintptr_t)), StackPointer);
     asMasm().andPtr(Imm32(~(ABIStackAlignment - 1)), StackPointer);
     storePtr(SecondScratchReg, Address(StackPointer, 0));
 }
@@ -2333,7 +2161,7 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
 {
     // Reserve space for exception information.
     int size = (sizeof(ResumeFromException) + ABIStackAlignment) & ~(ABIStackAlignment - 1);
-    subPtr(Imm32(size), StackPointer);
+    asMasm().subPtr(Imm32(size), StackPointer);
     ma_move(a0, StackPointer); // Use a0 since it is a first function argument
 
     // Call the handler.
@@ -2423,19 +2251,112 @@ MacroAssemblerMIPSCompat::handleFailureWithHandlerTail(void* handler)
     jump(a1);
 }
 
-CodeOffsetLabel
+template<typename T>
+void
+MacroAssemblerMIPSCompat::compareExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem,
+                                                         Register oldval, Register newval,
+                                                         Register temp, Register valueTemp,
+                                                         Register offsetTemp, Register maskTemp,
+                                                         AnyRegister output)
+{
+    switch (arrayType) {
+      case Scalar::Int8:
+        compareExchange8SignExtend(mem, oldval, newval, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Uint8:
+        compareExchange8ZeroExtend(mem, oldval, newval, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Int16:
+        compareExchange16SignExtend(mem, oldval, newval, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Uint16:
+        compareExchange16ZeroExtend(mem, oldval, newval, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Int32:
+        compareExchange32(mem, oldval, newval, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Uint32:
+        // At the moment, the code in MCallOptimize.cpp requires the output
+        // type to be double for uint32 arrays.  See bug 1077305.
+        MOZ_ASSERT(output.isFloat());
+        compareExchange32(mem, oldval, newval, valueTemp, offsetTemp, maskTemp, temp);
+        convertUInt32ToDouble(temp, output.fpu());
+        break;
+      default:
+        MOZ_CRASH("Invalid typed array type");
+    }
+}
+
+template void
+MacroAssemblerMIPSCompat::compareExchangeToTypedIntArray(Scalar::Type arrayType, const Address& mem,
+                                                         Register oldval, Register newval, Register temp,
+                                                         Register valueTemp, Register offsetTemp, Register maskTemp,
+                                                         AnyRegister output);
+template void
+MacroAssemblerMIPSCompat::compareExchangeToTypedIntArray(Scalar::Type arrayType, const BaseIndex& mem,
+                                                         Register oldval, Register newval, Register temp,
+                                                         Register valueTemp, Register offsetTemp, Register maskTemp,
+                                                         AnyRegister output);
+
+template<typename T>
+void
+MacroAssemblerMIPSCompat::atomicExchangeToTypedIntArray(Scalar::Type arrayType, const T& mem,
+                                                        Register value, Register temp, Register valueTemp,
+                                                        Register offsetTemp, Register maskTemp,
+                                                        AnyRegister output)
+{
+    switch (arrayType) {
+      case Scalar::Int8:
+        atomicExchange8SignExtend(mem, value, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Uint8:
+        atomicExchange8ZeroExtend(mem, value, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Int16:
+        atomicExchange16SignExtend(mem, value, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Uint16:
+        atomicExchange16ZeroExtend(mem, value, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Int32:
+        atomicExchange32(mem, value, valueTemp, offsetTemp, maskTemp, output.gpr());
+        break;
+      case Scalar::Uint32:
+        // At the moment, the code in MCallOptimize.cpp requires the output
+        // type to be double for uint32 arrays.  See bug 1077305.
+        MOZ_ASSERT(output.isFloat());
+        atomicExchange32(mem, value, valueTemp, offsetTemp, maskTemp, temp);
+        convertUInt32ToDouble(temp, output.fpu());
+        break;
+      default:
+        MOZ_CRASH("Invalid typed array type");
+    }
+}
+
+template void
+MacroAssemblerMIPSCompat::atomicExchangeToTypedIntArray(Scalar::Type arrayType, const Address& mem,
+                                                        Register value, Register temp, Register valueTemp,
+                                                        Register offsetTemp, Register maskTemp,
+                                                        AnyRegister output);
+template void
+MacroAssemblerMIPSCompat::atomicExchangeToTypedIntArray(Scalar::Type arrayType, const BaseIndex& mem,
+                                                        Register value, Register temp, Register valueTemp,
+                                                        Register offsetTemp, Register maskTemp,
+                                                        AnyRegister output);
+
+CodeOffset
 MacroAssemblerMIPSCompat::toggledJump(Label* label)
 {
-    CodeOffsetLabel ret(nextOffset().getOffset());
+    CodeOffset ret(nextOffset().getOffset());
     ma_b(label);
     return ret;
 }
 
-CodeOffsetLabel
+CodeOffset
 MacroAssemblerMIPSCompat::toggledCall(JitCode* target, bool enabled)
 {
     BufferOffset bo = nextOffset();
-    CodeOffsetLabel offset(bo.getOffset());
+    CodeOffset offset(bo.getOffset());
     addPendingJump(bo, ImmPtr(target->raw()), Relocation::JITCODE);
     ma_liPatchable(ScratchRegister, ImmPtr(target->raw()));
     if (enabled) {
@@ -2459,7 +2380,7 @@ MacroAssemblerMIPSCompat::branchPtrInNurseryRange(Condition cond, Register ptr, 
 
     const Nursery& nursery = GetJitContext()->runtime->gcNursery();
     movePtr(ImmWord(-ptrdiff_t(nursery.start())), SecondScratchReg);
-    addPtr(ptr, SecondScratchReg);
+    asMasm().addPtr(ptr, SecondScratchReg);
     branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
               SecondScratchReg, Imm32(nursery.nurserySize()), label);
 }
@@ -2558,29 +2479,8 @@ void
 MacroAssembler::reserveStack(uint32_t amount)
 {
     if (amount)
-        subPtr(Imm32(amount), StackPointer);
+        asMasm().subPtr(Imm32(amount), StackPointer);
     adjustFrame(amount);
-}
-
-// ===============================================================
-// Simple call functions.
-
-void
-MacroAssembler::callAndPushReturnAddress(Register callee)
-{
-    // Push return address during jalr delay slot.
-    subPtr(Imm32(sizeof(intptr_t)), StackPointer);
-    as_jalr(callee);
-    storePtr(ra, Address(StackPointer, 0));
-}
-
-void
-MacroAssembler::callAndPushReturnAddress(Label* label)
-{
-    // Push return address during bal delay slot.
-    subPtr(Imm32(sizeof(intptr_t)), StackPointer);
-    ma_bal(label, DontFillDelaySlot);
-    storePtr(ra, Address(StackPointer, 0));
 }
 
 // ===============================================================
@@ -2595,7 +2495,7 @@ MacroAssembler::setupUnalignedABICall(Register scratch)
     ma_move(scratch, StackPointer);
 
     // Force sp to be aligned
-    subPtr(Imm32(sizeof(uintptr_t)), StackPointer);
+    asMasm().subPtr(Imm32(sizeof(uintptr_t)), StackPointer);
     ma_and(StackPointer, StackPointer, Imm32(~(ABIStackAlignment - 1)));
     storePtr(scratch, Address(StackPointer, 0));
 }

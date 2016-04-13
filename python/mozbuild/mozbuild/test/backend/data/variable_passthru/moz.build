@@ -2,9 +2,6 @@
 # Any copyright is dedicated to the Public Domain.
 # http://creativecommons.org/publicdomain/zero/1.0/
 
-EXTRA_COMPONENTS = ['bar.js', 'dummy.manifest', 'foo.js']
-EXTRA_PP_COMPONENTS = ['bar.pp.js', 'foo.pp.js']
-
 NO_VISIBILITY_FLAGS = True
 
 DELAYLOAD_DLLS = ['foo.dll', 'bar.dll']
@@ -17,8 +14,8 @@ DEFFILE = 'baz.def'
 USE_STATIC_LIBS = True
 
 CFLAGS += ['-fno-exceptions', '-w']
-CXXFLAGS += ['-fcxx-exceptions', '-include foo.h']
-LDFLAGS += ['-framework Foo', '-x']
+CXXFLAGS += ['-fcxx-exceptions', '-option with spaces']
+LDFLAGS += ['-ld flag with spaces', '-x']
 HOST_CFLAGS += ['-funroll-loops', '-wall']
 HOST_CXXFLAGS += ['-funroll-loops-harder', '-wall-day-everyday']
 WIN32_EXE_LDFLAGS += ['-subsystem:console']

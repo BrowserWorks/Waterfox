@@ -1936,8 +1936,8 @@ TextInputHandler::HandleFlagsChanged(NSEvent* aNativeEvent)
                           timestamp:[aNativeEvent timestamp]
                        windowNumber:[aNativeEvent windowNumber]
                             context:[aNativeEvent context]
-                         characters:nil
-        charactersIgnoringModifiers:nil
+                         characters:@""
+        charactersIgnoringModifiers:@""
                           isARepeat:NO
                             keyCode:keyCode];
         DispatchKeyEventForFlagsChanged(event, dispatchKeyDown);
@@ -2315,7 +2315,7 @@ IMEInputHandler::OnCurrentTextInputSourceChange(CFNotificationCenterRef aCenter,
     nsTArray<dom::ContentParent*> children;
     dom::ContentParent::GetAll(children);
     for (uint32_t i = 0; i < children.Length(); i++) {
-      unused << children[i]->SendBidiKeyboardNotify(tis.IsForRTLLanguage());
+      Unused << children[i]->SendBidiKeyboardNotify(tis.IsForRTLLanguage());
     }
     sCachedIsForRTLLangage = tis.IsForRTLLanguage();
   }
@@ -3316,8 +3316,7 @@ IMEInputHandler::FirstRectForCharacterRange(NSRange& aRange,
   if (!rootWindow || !rootView) {
     return rect;
   }
-  rect = nsCocoaUtils::DevPixelsToCocoaPoints(LayoutDevicePixel::ToUntyped(r),
-                                              mWidget->BackingScaleFactor());
+  rect = nsCocoaUtils::DevPixelsToCocoaPoints(r, mWidget->BackingScaleFactor());
   rect = [rootView convertRect:rect toView:nil];
   rect.origin = [rootWindow convertBaseToScreen:rect.origin];
 

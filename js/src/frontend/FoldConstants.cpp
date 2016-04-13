@@ -100,6 +100,11 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
         *result = false;
         return true;
 
+      case PNK_ANNEXB_FUNCTION:
+        MOZ_ASSERT(node->isArity(PN_BINARY));
+        *result = false;
+        return true;
+
       case PNK_MODULE:
         *result = false;
         return true;
@@ -238,15 +243,11 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
         MOZ_ASSERT(node->isArity(PN_BINARY));
         return ContainsHoistedDeclaration(cx, node->pn_right, result);
 
-      // A case/default node's right half is its statements.  A default node's
-      // left half is null; a case node's left half is its expression.
-      case PNK_DEFAULT:
-        MOZ_ASSERT(!node->pn_left);
       case PNK_CASE:
-        MOZ_ASSERT(node->isArity(PN_BINARY));
-        return ContainsHoistedDeclaration(cx, node->pn_right, result);
+        return ContainsHoistedDeclaration(cx, node->as<CaseClause>().statementList(), result);
 
-      case PNK_FOR: {
+      case PNK_FOR:
+      case PNK_COMPREHENSIONFOR: {
         MOZ_ASSERT(node->isArity(PN_BINARY));
 
         ParseNode* loopHead = node->pn_left;
@@ -408,13 +409,14 @@ ContainsHoistedDeclaration(ExclusiveContext* cx, ParseNode* node, bool* result)
       case PNK_FORIN:
       case PNK_FOROF:
       case PNK_FORHEAD:
-      case PNK_FRESHENBLOCK:
       case PNK_CLASSMETHOD:
       case PNK_CLASSMETHODLIST:
       case PNK_CLASSNAMES:
       case PNK_NEWTARGET:
       case PNK_POSHOLDER:
       case PNK_SUPERCALL:
+      case PNK_SUPERBASE:
+      case PNK_SETTHIS:
         MOZ_CRASH("ContainsHoistedDeclaration should have indicated false on "
                   "some parent node without recurring to test this node");
 
@@ -1706,15 +1708,14 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
       case PNK_BREAK:
       case PNK_CONTINUE:
       case PNK_TEMPLATE_STRING:
-      case PNK_THIS:
       case PNK_GENERATOR:
       case PNK_EXPORT_BATCH_SPEC:
       case PNK_OBJECT_PROPERTY_NAME:
-      case PNK_FRESHENBLOCK:
       case PNK_POSHOLDER:
         MOZ_ASSERT(pn->isArity(PN_NULLARY));
         return true;
 
+      case PNK_SUPERBASE:
       case PNK_TYPEOFNAME:
         MOZ_ASSERT(pn->isArity(PN_UNARY));
         MOZ_ASSERT(pn->pn_kid->isKind(PNK_NAME));
@@ -1774,6 +1775,7 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
         return Fold(cx, &pn->pn_left, parser, inGenexpLambda);
 
       case PNK_SEMI:
+      case PNK_THIS:
         MOZ_ASSERT(pn->isArity(PN_UNARY));
         if (ParseNode*& expr = pn->pn_kid)
             return Fold(cx, &expr, parser, inGenexpLambda);
@@ -1785,6 +1787,17 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
 
       case PNK_FUNCTION:
         return FoldFunction(cx, pn, parser, inGenexpLambda);
+
+      case PNK_ANNEXB_FUNCTION:
+        // XXXshu NOP check used only for phasing in block-scope function
+        // XXXshu early errors.
+        // XXXshu
+        // XXXshu Back out when major version >= 50. See [1].
+        // XXXshu
+        // XXXshu [1] https://bugzilla.mozilla.org/show_bug.cgi?id=1235590#c10
+        if (pn->pn_left->isKind(PNK_NOP))
+            return true;
+        return FoldFunction(cx, pn->pn_left, parser, inGenexpLambda);
 
       case PNK_MODULE:
         return FoldModule(cx, pn, parser);
@@ -1875,7 +1888,6 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
         return FoldCall(cx, pn, parser, inGenexpLambda);
 
       case PNK_SWITCH:
-      case PNK_CASE:
       case PNK_COLON:
       case PNK_ASSIGN:
       case PNK_ADDASSIGN:
@@ -1895,9 +1907,11 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
       case PNK_SHORTHAND:
       case PNK_LETBLOCK:
       case PNK_FOR:
+      case PNK_COMPREHENSIONFOR:
       case PNK_CLASSMETHOD:
       case PNK_IMPORT_SPEC:
       case PNK_EXPORT_SPEC:
+      case PNK_SETTHIS:
         MOZ_ASSERT(pn->isArity(PN_BINARY));
         return Fold(cx, &pn->pn_left, parser, inGenexpLambda) &&
                Fold(cx, &pn->pn_right, parser, inGenexpLambda);
@@ -1926,11 +1940,16 @@ Fold(ExclusiveContext* cx, ParseNode** pnp, Parser<FullParseHandler>& parser, bo
         return FoldCondition(cx, &pn->pn_left, parser, inGenexpLambda) &&
                Fold(cx, &pn->pn_right, parser, inGenexpLambda);
 
-      case PNK_DEFAULT:
+      case PNK_CASE: {
         MOZ_ASSERT(pn->isArity(PN_BINARY));
-        MOZ_ASSERT(!pn->pn_left);
-        MOZ_ASSERT(pn->pn_right->isKind(PNK_STATEMENTLIST));
+
+        // pn_left is null for DefaultClauses.
+        if (pn->pn_left) {
+            if (!Fold(cx, &pn->pn_left, parser, inGenexpLambda))
+                return false;
+        }
         return Fold(cx, &pn->pn_right, parser, inGenexpLambda);
+      }
 
       case PNK_WITH:
         MOZ_ASSERT(pn->isArity(PN_BINARY_OBJ));

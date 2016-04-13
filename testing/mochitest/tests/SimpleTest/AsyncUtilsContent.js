@@ -47,11 +47,19 @@ addMessageListener("Test:SynthesizeMouse", (message) => {
     }
   }
 
-  let result = EventUtils.synthesizeMouseAtPoint(left, top, data.event, content);
+  let result;
+  if (data.event && data.event.wheel) {
+    EventUtils.synthesizeWheelAtPoint(left, top, data.event, content);
+  } else {
+    result = EventUtils.synthesizeMouseAtPoint(left, top, data.event, content);
+  }
   sendAsyncMessage("Test:SynthesizeMouseDone", { defaultPrevented: result });
 });
 
 addMessageListener("Test:SendChar", message => {
   let result = EventUtils.sendChar(message.data.char, content);
-  sendAsyncMessage("Test:SendCharDone", { sendCharResult: result });
+  sendAsyncMessage("Test:SendCharDone", {
+    sendCharResult: result,
+    seq: message.data.seq
+  });
 });

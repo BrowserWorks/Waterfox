@@ -34,7 +34,7 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
   : mWindowId(0)
 {
   MOZ_ASSERT(aDoc);
-  nsresult rv = aDoc->GetId(mClientId);
+  nsresult rv = aDoc->GetOrCreateId(mClientId);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to get the UUID of the document.");
   }
@@ -46,7 +46,12 @@ ServiceWorkerClientInfo::ServiceWorkerClientInfo(nsIDocument* aDoc)
     mWindowId = innerWindow->WindowID();
   }
 
-  aDoc->GetURL(mUrl);
+  nsCOMPtr<nsIURI> originalURI = aDoc->GetOriginalURI();
+  if (originalURI) {
+    nsAutoCString spec;
+    originalURI->GetSpec(spec);
+    CopyUTF8toUTF16(spec, mUrl);
+  }
   mVisibilityState = aDoc->VisibilityState();
 
   ErrorResult result;

@@ -28,26 +28,74 @@ namespace mozilla {
 
 using dom::URLParams;
 
-void OriginAttributes::InheritFromDocShellParent(const OriginAttributes& aParent)
+void
+PrincipalOriginAttributes::InheritFromDocShellToDoc(const DocShellOriginAttributes& aAttrs,
+                                                    const nsIURI* aURI)
 {
-  mAppId = aParent.mAppId;
-  mInBrowser = aParent.mInBrowser;
-  mUserContextId = aParent.mUserContextId;
-  mSignedPkg = aParent.mSignedPkg;
+  mAppId = aAttrs.mAppId;
+  mInBrowser = aAttrs.mInBrowser;
+
+  // addonId is computed from the principal URI and never propagated
+  mUserContextId = aAttrs.mUserContextId;
+
+  // TODO:
+  // Bug 1225349 - PrincipalOriginAttributes should inherit mSignedPkg
+  // accordingly by URI
+  mSignedPkg = aAttrs.mSignedPkg;
 }
 
-bool OriginAttributes::CopyFromLoadContext(nsILoadContext* aLoadContext)
+void
+PrincipalOriginAttributes::InheritFromNecko(const NeckoOriginAttributes& aAttrs)
 {
-  OriginAttributes attrs;
-  bool result = aLoadContext->GetOriginAttributes(attrs);
-  NS_ENSURE_TRUE(result, false);
+  mAppId = aAttrs.mAppId;
+  mInBrowser = aAttrs.mInBrowser;
 
-  mAppId = attrs.mAppId;
-  mInBrowser = attrs.mInBrowser;
-  mAddonId = attrs.mAddonId;
-  mUserContextId = attrs.mUserContextId;
-  mSignedPkg = attrs.mSignedPkg;
-  return true;
+  // addonId is computed from the principal URI and never propagated
+  mUserContextId = aAttrs.mUserContextId;
+  mSignedPkg = aAttrs.mSignedPkg;
+}
+
+void
+DocShellOriginAttributes::InheritFromDocToChildDocShell(const PrincipalOriginAttributes& aAttrs)
+{
+  mAppId = aAttrs.mAppId;
+  mInBrowser = aAttrs.mInBrowser;
+
+  // addonId is computed from the principal URI and never propagated
+  mUserContextId = aAttrs.mUserContextId;
+
+  // TODO:
+  // Bug 1225353 - DocShell/NeckoOriginAttributes should inherit
+  // mSignedPkg accordingly by mSignedPkgInBrowser
+  mSignedPkg = aAttrs.mSignedPkg;
+}
+
+void
+NeckoOriginAttributes::InheritFromDocToNecko(const PrincipalOriginAttributes& aAttrs)
+{
+  mAppId = aAttrs.mAppId;
+  mInBrowser = aAttrs.mInBrowser;
+
+  // addonId is computed from the principal URI and never propagated
+  mUserContextId = aAttrs.mUserContextId;
+
+  // TODO:
+  // Bug 1225353 - DocShell/NeckoOriginAttributes should inherit
+  // mSignedPkg accordingly by mSignedPkgInBrowser
+}
+
+void
+NeckoOriginAttributes::InheritFromDocShellToNecko(const DocShellOriginAttributes& aAttrs)
+{
+  mAppId = aAttrs.mAppId;
+  mInBrowser = aAttrs.mInBrowser;
+
+  // addonId is computed from the principal URI and never propagated
+  mUserContextId = aAttrs.mUserContextId;
+
+  // TODO:
+  // Bug 1225353 - DocShell/NeckoOriginAttributes should inherit
+  // mSignedPkg accordingly by mSignedPkgInBrowser
 }
 
 void
@@ -84,6 +132,7 @@ OriginAttributes::CreateSuffix(nsACString& aStr) const
   }
 
   if (!mSignedPkg.IsEmpty()) {
+    MOZ_RELEASE_ASSERT(mSignedPkg.FindCharInSet(dom::quota::QuotaManager::kReplaceChars) == kNotFound);
     params->Set(NS_LITERAL_STRING("signedPkg"), mSignedPkg);
   }
 
@@ -315,14 +364,55 @@ BasePrincipal::GetCsp(nsIContentSecurityPolicy** aCsp)
 }
 
 NS_IMETHODIMP
-BasePrincipal::SetCsp(nsIContentSecurityPolicy* aCsp)
+BasePrincipal::EnsureCSP(nsIDOMDocument* aDocument,
+                         nsIContentSecurityPolicy** aCSP)
 {
-  // If CSP was already set, it should not be destroyed!  Instead, it should
-  // get set anew when a new principal is created.
-  if (mCSP)
-    return NS_ERROR_ALREADY_INITIALIZED;
+  if (mCSP) {
+    // if there is a CSP already associated with this principal
+    // then just return that - do not overwrite it!!!
+    NS_IF_ADDREF(*aCSP = mCSP);
+    return NS_OK;
+  }
 
-  mCSP = aCsp;
+  nsresult rv = NS_OK;
+  mCSP = do_CreateInstance("@mozilla.org/cspcontext;1", &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // Store the request context for violation reports
+  rv = aDocument ? mCSP->SetRequestContext(aDocument, nullptr)
+                 : mCSP->SetRequestContext(nullptr, this);
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_IF_ADDREF(*aCSP = mCSP);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BasePrincipal::GetPreloadCsp(nsIContentSecurityPolicy** aPreloadCSP)
+{
+  NS_IF_ADDREF(*aPreloadCSP = mPreloadCSP);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+BasePrincipal::EnsurePreloadCSP(nsIDOMDocument* aDocument,
+                                nsIContentSecurityPolicy** aPreloadCSP)
+{
+  if (mPreloadCSP) {
+    // if there is a speculative CSP already associated with this principal
+    // then just return that - do not overwrite it!!!
+    NS_IF_ADDREF(*aPreloadCSP = mPreloadCSP);
+    return NS_OK;
+  }
+
+  nsresult rv = NS_OK;
+  mPreloadCSP = do_CreateInstance("@mozilla.org/cspcontext;1", &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // Store the request context for violation reports
+  rv = aDocument ? mPreloadCSP->SetRequestContext(aDocument, nullptr)
+                 : mPreloadCSP->SetRequestContext(nullptr, this);
+  NS_ENSURE_SUCCESS(rv, rv);
+  NS_IF_ADDREF(*aPreloadCSP = mPreloadCSP);
   return NS_OK;
 }
 
@@ -438,7 +528,7 @@ BasePrincipal::GetUnknownAppId(bool* aUnknownAppId)
 }
 
 already_AddRefed<BasePrincipal>
-BasePrincipal::CreateCodebasePrincipal(nsIURI* aURI, const OriginAttributes& aAttrs)
+BasePrincipal::CreateCodebasePrincipal(nsIURI* aURI, const PrincipalOriginAttributes& aAttrs)
 {
   // If the URI is supposed to inherit the security context of whoever loads it,
   // we shouldn't make a codebase principal for it.
@@ -479,7 +569,7 @@ BasePrincipal::CreateCodebasePrincipal(const nsACString& aOrigin)
              "CreateCodebasePrincipal does not support nsNullPrincipal");
 
   nsAutoCString originNoSuffix;
-  mozilla::OriginAttributes attrs;
+  mozilla::PrincipalOriginAttributes attrs;
   if (!attrs.PopulateFromOrigin(aOrigin, originNoSuffix)) {
     return nullptr;
   }

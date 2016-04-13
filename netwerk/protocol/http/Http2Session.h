@@ -11,6 +11,7 @@
 
 #include "ASpdySession.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 #include "nsAHttpConnection.h"
 #include "nsClassHashtable.h"
 #include "nsDataHashtable.h"
@@ -231,6 +232,10 @@ public:
   bool MaybeReTunnel(nsAHttpTransaction *) override;
   bool UseH2Deps() { return mUseH2Deps; }
 
+  // overload of nsAHttpTransaction
+  nsresult ReadSegmentsAgain(nsAHttpSegmentReader *, uint32_t, uint32_t *, bool *) override final;
+  nsresult WriteSegmentsAgain(nsAHttpSegmentWriter *, uint32_t , uint32_t *, bool *) override final;
+
 private:
 
   // These internal states do not correspond to the states of the HTTP/2 specification
@@ -254,7 +259,7 @@ private:
   void        ChangeDownstreamState(enum internalStateType);
   void        ResetDownstreamState();
   nsresult    ReadyToProcessDataFrame(enum internalStateType);
-  nsresult    UncompressAndDiscard();
+  nsresult    UncompressAndDiscard(bool);
   void        GeneratePing(bool);
   void        GenerateSettingsAck();
   void        GeneratePriority(uint32_t, uint8_t);
@@ -361,7 +366,7 @@ private:
   // of header on data packets
   uint32_t             mInputFrameBufferSize; // buffer allocation
   uint32_t             mInputFrameBufferUsed; // amt of allocation used
-  nsAutoArrayPtr<char> mInputFrameBuffer;
+  UniquePtr<char[]>    mInputFrameBuffer;
 
   // mInputFrameDataSize/Read are used for tracking the amount of data consumed
   // in a frame after the 8 byte header. Control frames are always fully buffered
@@ -473,7 +478,7 @@ private:
   uint32_t             mOutputQueueSize;
   uint32_t             mOutputQueueUsed;
   uint32_t             mOutputQueueSent;
-  nsAutoArrayPtr<char> mOutputQueueBuffer;
+  UniquePtr<char[]>    mOutputQueueBuffer;
 
   PRIntervalTime       mPingThreshold;
   PRIntervalTime       mLastReadEpoch;     // used for ping timeouts

@@ -1,6 +1,6 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // the "exported" symbols
 var SocialUI,
@@ -370,7 +370,7 @@ SocialFlyout = {
     // the xbl bindings for the iframe probably don't exist yet, so we can't
     // access iframe.messageManager directly - but can get at it with this dance.
     let mm = iframe.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
-    mm.sendAsyncMessage("Social:SetErrorURL", null,
+    mm.sendAsyncMessage("Social:SetErrorURL",
                         { template: "about:socialerror?mode=compactInfo&origin=%{origin}" });
   },
 
@@ -512,7 +512,7 @@ SocialShare = {
     iframe.setAttribute("messagemanagergroup", "social");
     panel.lastChild.appendChild(iframe);
     let mm = iframe.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
-    mm.sendAsyncMessage("Social:SetErrorURL", null,
+    mm.sendAsyncMessage("Social:SetErrorURL",
                         { template: "about:socialerror?mode=compactInfo&origin=%{origin}&url=%{url}" });
 
     this.populateProviderMenu();
@@ -537,7 +537,7 @@ SocialShare = {
   populateProviderMenu: function() {
     if (!this.iframe)
       return;
-    let providers = [p for (p of Social.providers) if (p.shareURL)];
+    let providers = Social.providers.filter(p => p.shareURL);
     let hbox = document.getElementById("social-share-provider-buttons");
     // remove everything before the add-share-provider button (which should also
     // be lastChild if any share providers were added)
@@ -976,7 +976,7 @@ SocialSidebar = {
     // first, otherwise fallback to the first provider in the list
     let sbrowser = document.getElementById("social-sidebar-browser");
     let origin = sbrowser.getAttribute("origin");
-    let providers = [p for (p of Social.providers) if (p.sidebarURL)];
+    let providers = Social.providers.filter(p => p.sidebarURL);
     let provider;
     if (origin)
       provider = Social._getProviderFromOrigin(origin);
@@ -1093,7 +1093,7 @@ SocialSidebar = {
       menu.removeChild(providerMenuSep.previousSibling);
     }
     // only show a selection in the sidebar header menu if there is more than one
-    let providers = [p for (p of Social.providers) if (p.sidebarURL)];
+    let providers = Social.providers.filter(p => p.sidebarURL);
     if (providers.length < 2 && menu.id != "viewSidebarMenu") {
       providerMenuSep.hidden = true;
       return;
@@ -1153,7 +1153,9 @@ ToolbarHelper.prototype = {
   },
 
   clearPalette: function() {
-    [this.removeProviderButton(p.origin) for (p of Social.providers)];
+    for (let p of Social.providers) {
+      this.removeProviderButton(p.origin);
+    }
   },
 
   // should be called on enable of a provider
@@ -1320,8 +1322,7 @@ var SocialMarksWidgetListener = {
  */
 SocialMarks = {
   get nodes() {
-    let providers = [p for (p of Social.providers) if (p.markURL)];
-    for (let p of providers) {
+    for (let p of Social.providers.filter(p => p.markURL)) {
       let widgetId = SocialMarks._toolbarHelper.idFromOrigin(p.origin);
       let widget = CustomizableUI.getWidget(widgetId);
       if (!widget)
@@ -1348,9 +1349,8 @@ SocialMarks = {
     // also means that populateToolbarPalette must be called prior to using this
     // method, otherwise you get a big fat zero. For our use case with context
     // menu's, this is ok.
-    let tbh = this._toolbarHelper;
-    return [p for (p of Social.providers) if (p.markURL &&
-                                              document.getElementById(tbh.idFromOrigin(p.origin)))];
+    return Social.providers.filter(p => p.markURL &&
+                                        document.getElementById(this._toolbarHelper.idFromOrigin(p.origin)));
   },
 
   populateContextMenu: function() {
@@ -1358,8 +1358,10 @@ SocialMarks = {
     let providers = this.getProviders();
 
     // remove all previous entries by class
-    let menus = [m for (m of document.getElementsByClassName("context-socialmarks"))];
-    [m.parentNode.removeChild(m) for (m of menus)];
+    let menus = [...document.getElementsByClassName("context-socialmarks")];
+    for (let m of menus) {
+      m.parentNode.removeChild(m);
+    }
 
     let contextMenus = [
       {

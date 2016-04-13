@@ -4,17 +4,18 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsArrayUtils.h"
-#include "nsAutoPtr.h"
 #include "nsIObserver.h"
 #include "nsIObserverService.h"
 #include "nsISupportsPrimitives.h"
 #include "nsPackageKitService.h"
-#include "nsStringAPI.h"
+#include "nsString.h"
 #include "prlink.h"
 #include "mozilla/unused.h"
+#include "mozilla/UniquePtr.h"
 
 #include <glib.h>
 #include <glib-object.h>
+#include <limits>
 
 using namespace mozilla;
 
@@ -158,7 +159,7 @@ InstallPackagesProxyCallCallback(GObject *aSourceObject,
   }
 
   g_object_unref(proxy);
-  unused << observer.forget().take();
+  Unused << observer.forget().take();
 }
 
 static void
@@ -215,7 +216,7 @@ nsPackageKitService::InstallPackages(uint32_t aInstallMethod,
 
   // Create the GVariant* parameter from the list of packages.
   GVariant* parameters = nullptr;
-  nsAutoArrayPtr<gchar*> packages(new gchar*[arrayLength + 1]);
+  auto packages = MakeUnique<gchar*[]>(arrayLength + 1);
 
   nsresult rv = NS_OK;
   for (uint32_t i = 0; i < arrayLength; i++) {

@@ -131,6 +131,10 @@ AudioChannelManager::NotifyVolumeControlChannelChanged()
   docshell->GetIsActive(&isActive);
 
   RefPtr<AudioChannelService> service = AudioChannelService::GetOrCreate();
+  if (!service) {
+    return;
+  }
+
   if (isActive) {
     service->SetDefaultVolumeControlChannel(mVolumeChannel, isActive);
   } else {
@@ -209,8 +213,8 @@ AudioChannelManager::GetAllowedAudioChannels(
   }
 
   nsBrowserElement::GenerateAllowedAudioChannels(window, nullptr, nullptr,
-                                                 manifestURL, aAudioChannels,
-                                                 aRv);
+                                                 manifestURL, nullptr,
+                                                 aAudioChannels, aRv);
   NS_WARN_IF(aRv.Failed());
 }
 

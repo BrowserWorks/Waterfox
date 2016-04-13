@@ -26,13 +26,10 @@ if CONFIG['MOZ_VORBIS']:
 if CONFIG['MOZ_TREMOR']:
     external_dirs += ['media/libtremor']
 
-if CONFIG['MOZ_WEBM']:
-    external_dirs += ['media/libnestegg']
-
 if CONFIG['MOZ_WEBM_ENCODER']:
     external_dirs += ['media/libmkv']
 
-if CONFIG['MOZ_VPX'] and not CONFIG['MOZ_NATIVE_LIBVPX']:
+if not CONFIG['MOZ_NATIVE_LIBVPX']:
     external_dirs += ['media/libvpx']
 
 if not CONFIG['MOZ_NATIVE_PNG']:
@@ -47,9 +44,13 @@ if CONFIG['MOZ_WEBSPEECH_POCKETSPHINX']:
         'media/pocketsphinx',
     ]
 
+if CONFIG['MOZ_FFVPX']:
+    external_dirs += ['media/ffvpx']
+
 external_dirs += [
     'media/kiss_fft',
     'media/libcubeb',
+    'media/libnestegg',
     'media/libogg',
     'media/libopus',
     'media/libtheora',

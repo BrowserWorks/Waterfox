@@ -1258,8 +1258,9 @@ PrepareSortPattern(FcPattern *aPattern, double aFallbackSize,
 
 gfxPangoFontGroup::gfxPangoFontGroup(const FontFamilyList& aFontFamilyList,
                                      const gfxFontStyle *aStyle,
-                                     gfxUserFontSet *aUserFontSet)
-    : gfxFontGroup(aFontFamilyList, aStyle, nullptr, aUserFontSet),
+                                     gfxUserFontSet *aUserFontSet,
+                                     gfxFloat aDevToCssSize)
+    : gfxFontGroup(aFontFamilyList, aStyle, nullptr, aUserFontSet, aDevToCssSize),
       mPangoLanguage(GuessPangoLanguage(aStyle->language))
 {
     // This language is passed to the font for shaping.
@@ -1280,7 +1281,7 @@ gfxPangoFontGroup::~gfxPangoFontGroup()
 gfxFontGroup *
 gfxPangoFontGroup::Copy(const gfxFontStyle *aStyle)
 {
-    return new gfxPangoFontGroup(mFamilyList, aStyle, mUserFontSet);
+    return new gfxPangoFontGroup(mFamilyList, aStyle, mUserFontSet, mDevToCssSize);
 }
 
 void
@@ -1624,9 +1625,14 @@ gfxPangoFontGroup::FindFontForChar(uint32_t aCh, uint32_t aPrevCh,
         nextFont = 1;
     }
 
-    // Pango, GLib, and Thebes (but not harfbuzz!) all happen to use the same
-    // script codes, so we can just cast the value here.
-    const PangoScript script = static_cast<PangoScript>(aRunScript);
+    // Our MOZ_SCRIPT_* codes may not match the PangoScript enumeration values
+    // (if we're using ICU's codes), so convert by mapping through ISO 15924 tag.
+    // Note that PangoScript is defined to be compatible with GUnicodeScript:
+    // https://developer.gnome.org/pango/stable/pango-Scripts-and-Languages.html#PangoScript
+    const hb_tag_t scriptTag = GetScriptTagForCode(aRunScript);
+    const PangoScript script =
+      (const PangoScript)g_unicode_script_from_iso15924(scriptTag);
+
     // Might be nice to call pango_language_includes_script only once for the
     // run rather than for each character.
     PangoLanguage *scriptLang;
@@ -1652,19 +1658,6 @@ gfxPangoFontGroup::FindFontForChar(uint32_t aCh, uint32_t aPrevCh,
 
     return nullptr;
 }
-
-// Sanity-check: spot-check a few constants to confirm that Thebes and
-// Pango script codes really do match
-#define CHECK_SCRIPT_CODE(script) \
-    PR_STATIC_ASSERT(int32_t(MOZ_SCRIPT_##script) == \
-                     int32_t(PANGO_SCRIPT_##script))
-
-CHECK_SCRIPT_CODE(COMMON);
-CHECK_SCRIPT_CODE(INHERITED);
-CHECK_SCRIPT_CODE(ARABIC);
-CHECK_SCRIPT_CODE(LATIN);
-CHECK_SCRIPT_CODE(UNKNOWN);
-CHECK_SCRIPT_CODE(NKO);
 
 /**
  ** gfxFcFont
@@ -1813,7 +1806,7 @@ gfxPangoFontGroup::GetFTLibrary()
         gfxFontStyle style;
         RefPtr<gfxPangoFontGroup> fontGroup =
             new gfxPangoFontGroup(FontFamilyList(eFamily_sans_serif),
-                                  &style, nullptr);
+                                  &style, nullptr, 1.0);
 
         gfxFcFont *font = fontGroup->GetBaseFont();
         if (!font)
@@ -2179,6 +2172,7 @@ CreateScaledFont(FcPattern *aPattern, cairo_font_face_t *aFace)
             // subpixel_order won't be used by the font as we won't use
             // CAIRO_ANTIALIAS_SUBPIXEL, but don't leave it at default for
             // caching reasons described above.  Fall through:
+            MOZ_FALLTHROUGH;
         case FC_RGBA_RGB:
             subpixel_order = CAIRO_SUBPIXEL_ORDER_RGB;
             break;

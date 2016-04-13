@@ -28,32 +28,25 @@ class LayerManagerComposite;
 class AutoResolveRefLayers;
 class CompositorParent;
 
-// Represents (affine) transforms that are calculated from a content view.
-struct ViewTransform {
-  explicit ViewTransform(LayerToParentLayerScale aScale = LayerToParentLayerScale(),
-                         ParentLayerPoint aTranslation = ParentLayerPoint())
+// Represents async transforms consisting of a scale and a translation.
+struct AsyncTransform {
+  explicit AsyncTransform(LayerToParentLayerScale aScale = LayerToParentLayerScale(),
+                          ParentLayerPoint aTranslation = ParentLayerPoint())
     : mScale(aScale)
     , mTranslation(aTranslation)
   {}
 
-  operator gfx::Matrix4x4() const
+  operator AsyncTransformComponentMatrix() const
   {
-    return
-      gfx::Matrix4x4::Scaling(mScale.scale, mScale.scale, 1)
-                      .PostTranslate(mTranslation.x, mTranslation.y, 0);
+    return AsyncTransformComponentMatrix::Scaling(mScale.scale, mScale.scale, 1)
+        .PostTranslate(mTranslation.x, mTranslation.y, 0);
   }
 
-  // For convenience, to avoid writing the cumbersome
-  // "gfx::Matrix4x4(a) * gfx::Matrix4x4(b)".
-  friend gfx::Matrix4x4 operator*(const ViewTransform& a, const ViewTransform& b) {
-    return gfx::Matrix4x4(a) * gfx::Matrix4x4(b);
-  }
-
-  bool operator==(const ViewTransform& rhs) const {
+  bool operator==(const AsyncTransform& rhs) const {
     return mTranslation == rhs.mTranslation && mScale == rhs.mScale;
   }
 
-  bool operator!=(const ViewTransform& rhs) const {
+  bool operator!=(const AsyncTransform& rhs) const {
     return !(*this == rhs);
   }
 
@@ -132,8 +125,11 @@ private:
   // applied for |aLayer|. |*aOutFoundRoot| is set to true on Android only, if
   // one of the metrics on one of the layers was determined to be the "root"
   // and its state was synced to the Java front-end. |aOutFoundRoot| must be
-  // non-null.
-  bool ApplyAsyncContentTransformToTree(Layer* aLayer, bool* aOutFoundRoot);
+  // non-null. As the function recurses over the layer tree, a layer may
+  // populate |aClipDeferredToParent| a clip rect it wants to set on its parent.
+  bool ApplyAsyncContentTransformToTree(Layer* aLayer,
+                                        bool* aOutFoundRoot,
+                                        Maybe<ParentLayerIntRect>& aClipDeferredToParent);
   /**
    * Update the shadow transform for aLayer assuming that is a scrollbar,
    * so that it stays in sync with the content that is being scrolled by APZ.
@@ -174,12 +170,17 @@ private:
    * This function will also adjust layers so that the given content document
    * fixed position margins will be respected during asynchronous panning and
    * zooming.
+   * aTransformAffectsLayerClip indicates whether the transform on
+   * aTransformedSubtreeRoot affects aLayer's clip rects, so we know
+   * whether we need to perform a corresponding unadjustment to keep
+   * the clip rect fixed.
    */
   void AlignFixedAndStickyLayers(Layer* aLayer, Layer* aTransformedSubtreeRoot,
                                  FrameMetrics::ViewID aTransformScrollId,
-                                 const gfx::Matrix4x4& aPreviousTransformForRoot,
-                                 const gfx::Matrix4x4& aCurrentTransformForRoot,
-                                 const ScreenMargin& aFixedLayerMargins);
+                                 const LayerToParentLayerMatrix4x4& aPreviousTransformForRoot,
+                                 const LayerToParentLayerMatrix4x4& aCurrentTransformForRoot,
+                                 const ScreenMargin& aFixedLayerMargins,
+                                 bool aTransformAffectsLayerClip);
 
   /**
    * DRAWING PHASE ONLY
@@ -227,6 +228,14 @@ private:
 
   gfx::Matrix mWorldTransform;
   LayerTransformRecorder mLayerTransformRecorder;
+
+#ifdef MOZ_ANDROID_APZ
+  // The following two fields are only needed on Fennec with C++ APZ, because
+  // then we need to reposition the gecko scrollbar to deal with the
+  // dynamic toolbar shifting content around.
+  FrameMetrics::ViewID mRootScrollableId;
+  ScreenMargin mFixedLayerMargins;
+#endif
 };
 
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(AsyncCompositionManager::TransformsToSkip)

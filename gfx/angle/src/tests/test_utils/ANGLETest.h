@@ -3,6 +3,9 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 //
+// ANGLETest:
+//   Implementation of common ANGLE testing fixture.
+//
 
 #ifndef ANGLE_TESTS_ANGLE_TEST_H_
 #define ANGLE_TESTS_ANGLE_TEST_H_
@@ -23,6 +26,12 @@
 
 #define EXPECT_EGL_ERROR(err) EXPECT_EQ((err), eglGetError())
 #define EXPECT_EGL_SUCCESS() EXPECT_EGL_ERROR(EGL_SUCCESS)
+
+// EGLBoolean is |unsigned int| but EGL_TRUE is 0, not 0u.
+#define ASSERT_EGL_TRUE(a) ASSERT_EQ(static_cast<EGLBoolean>(EGL_TRUE), (a))
+#define ASSERT_EGL_FALSE(a) ASSERT_EQ(static_cast<EGLBoolean>(EGL_FALSE), (a))
+#define EXPECT_EGL_TRUE(a) EXPECT_EQ(static_cast<EGLBoolean>(EGL_TRUE), (a))
+#define EXPECT_EGL_FALSE(a) EXPECT_EQ(static_cast<EGLBoolean>(EGL_FALSE), (a))
 
 #define ASSERT_EGL_ERROR(err) ASSERT_EQ((err), eglGetError())
 #define ASSERT_EGL_SUCCESS() ASSERT_EGL_ERROR(EGL_SUCCESS)
@@ -98,6 +107,13 @@ class ANGLETest : public ::testing::TestWithParam<angle::PlatformParameters>
     bool isIntel() const;
     bool isAMD() const;
     bool isNVidia() const;
+    // Note: FL9_3 is explicitly *not* considered D3D11.
+    bool isD3D11() const;
+    bool isD3D11_FL93() const;
+    // Is a D3D9-class renderer.
+    bool isD3D9() const;
+    // Is D3D9 or SM9_3 renderer.
+    bool isD3DSM3() const;
     EGLint getPlatformRenderer() const;
 
   private:

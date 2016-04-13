@@ -8,12 +8,7 @@ browser.jar:
 #include ../shared/jar.inc.mn
   skin/classic/browser/sanitizeDialog.css
   skin/classic/browser/aboutSessionRestore-window-icon.png
-  skin/classic/browser/aboutCertError_sectionCollapsed.png
-  skin/classic/browser/aboutCertError_sectionCollapsed-rtl.png
-  skin/classic/browser/aboutCertError_sectionExpanded.png
-#ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/aboutSyncTabs.css
-#endif
   skin/classic/browser/actionicon-tab.png
 * skin/classic/browser/browser.css
 * skin/classic/browser/devedition.css
@@ -52,20 +47,12 @@ browser.jar:
   skin/classic/browser/Toolbar-inverted.png
   skin/classic/browser/Toolbar-small.png
   skin/classic/browser/webRTC-indicator.css
-  skin/classic/browser/loop/menuPanel.png             (loop/menuPanel.png)
-  skin/classic/browser/loop/menuPanel@2x.png          (loop/menuPanel@2x.png)
-  skin/classic/browser/loop/toolbar.png               (loop/toolbar.png)
-  skin/classic/browser/loop/toolbar@2x.png            (loop/toolbar@2x.png)
-  skin/classic/browser/loop/toolbar-inverted.png      (loop/toolbar-inverted.png)
-  skin/classic/browser/loop/toolbar-inverted@2x.png   (loop/toolbar-inverted@2x.png)
 * skin/classic/browser/controlcenter/panel.css        (controlcenter/panel.css)
   skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
   skin/classic/browser/customizableui/customizeMode-gridTexture.png  (customizableui/customizeMode-gridTexture.png)
   skin/classic/browser/customizableui/customizeMode-separatorHorizontal.png  (customizableui/customizeMode-separatorHorizontal.png)
   skin/classic/browser/customizableui/customizeMode-separatorVertical.png  (customizableui/customizeMode-separatorVertical.png)
 * skin/classic/browser/customizableui/panelUIOverlay.css (customizableui/panelUIOverlay.css)
-  skin/classic/browser/customizableui/thumburger.png  (customizableui/thumburger.png)
-  skin/classic/browser/customizableui/thumburger-inverted.png  (customizableui/thumburger-inverted.png)
   skin/classic/browser/downloads/allDownloadsViewOverlay.css   (downloads/allDownloadsViewOverlay.css)
   skin/classic/browser/downloads/buttons.png          (downloads/buttons.png)
   skin/classic/browser/downloads/download-glow-menuPanel.png (downloads/download-glow-menuPanel.png)
@@ -100,14 +87,11 @@ browser.jar:
   skin/classic/browser/preferences/alwaysAsk.png      (preferences/alwaysAsk.png)
   skin/classic/browser/preferences/mail.png           (preferences/mail.png)
   skin/classic/browser/preferences/Options.png        (preferences/Options.png)
-#ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/preferences/Options-sync.png   (preferences/Options-sync.png)
-#endif
-* skin/classic/browser/preferences/preferences.css    (preferences/preferences.css)
+  skin/classic/browser/preferences/preferences.css    (preferences/preferences.css)
 * skin/classic/browser/preferences/in-content/preferences.css (preferences/in-content/preferences.css)
 * skin/classic/browser/preferences/in-content/dialog.css      (preferences/in-content/dialog.css)
   skin/classic/browser/preferences/applications.css   (preferences/applications.css)
-  skin/classic/browser/preferences/aboutPermissions.css (preferences/aboutPermissions.css)
   skin/classic/browser/preferences/search.css         (preferences/search.css)
   skin/classic/browser/social/services-16.png         (social/services-16.png)
   skin/classic/browser/social/services-64.png         (social/services-64.png)
@@ -133,16 +117,10 @@ browser.jar:
   skin/classic/browser/tabbrowser/tab-stroke-start.png      (tabbrowser/tab-stroke-start.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png      (tabbrowser/tabDragIndicator.png)
 
-  skin/classic/browser/tabview/edit-light.png         (tabview/edit-light.png)
-  skin/classic/browser/tabview/search.png             (tabview/search.png)
-  skin/classic/browser/tabview/stack-expander.png     (tabview/stack-expander.png)
-  skin/classic/browser/tabview/tabview.png            (tabview/tabview.png)
-  skin/classic/browser/tabview/tabview.css            (tabview/tabview.css)
   skin/classic/browser/usercontext/personal.svg       (../shared/usercontext/personal.svg)
   skin/classic/browser/usercontext/work.svg           (../shared/usercontext/work.svg)
   skin/classic/browser/usercontext/banking.svg        (../shared/usercontext/banking.svg)
   skin/classic/browser/usercontext/shopping.svg       (../shared/usercontext/shopping.svg)
-#ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/sync-16.png
   skin/classic/browser/sync-32.png
   skin/classic/browser/sync-bg.png
@@ -161,7 +139,6 @@ browser.jar:
   skin/classic/browser/syncQuota.css
   skin/classic/browser/syncProgress-horizontalbar.png
   skin/classic/browser/syncProgress-horizontalbar@2x.png
-#endif
 #ifdef E10S_TESTING_ONLY
   skin/classic/browser/e10s-64@2x.png (../shared/e10s-64@2x.png)
 #endif

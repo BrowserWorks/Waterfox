@@ -59,12 +59,12 @@ public:
   virtual void SetLayoutManager(nsBoxLayout* aLayout) override { mLayoutManager = aLayout; }
   virtual nsBoxLayout* GetLayoutManager() override { return mLayoutManager; }
 
-  virtual nsresult RelayoutChildAtOrdinal(nsBoxLayoutState& aState, nsIFrame* aChild) override;
+  virtual nsresult RelayoutChildAtOrdinal(nsIFrame* aChild) override;
 
   virtual nsSize GetPrefSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetMinSize(nsBoxLayoutState& aBoxLayoutState) override;
   virtual nsSize GetMaxSize(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual nscoord GetFlex(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual nscoord GetFlex() override;
   virtual nscoord GetBoxAscent(nsBoxLayoutState& aBoxLayoutState) override;
 #ifdef DEBUG_LAYOUT
   virtual nsresult SetDebug(nsBoxLayoutState& aBoxLayoutState, bool aDebug) override;
@@ -222,7 +222,7 @@ private:
 #ifdef DEBUG_LAYOUT
     nsresult SetDebug(nsPresContext* aPresContext, bool aDebug);
     bool GetInitialDebug(bool& aDebug);
-    void GetDebugPref(nsPresContext* aPresContext);
+    void GetDebugPref();
 
     void GetDebugBorder(nsMargin& aInset);
     void GetDebugPadding(nsMargin& aInset);
@@ -230,7 +230,7 @@ private:
 
     nsresult GetFrameSizeWithMargin(nsIFrame* aBox, nsSize& aSize);
 
-    void PixelMarginToTwips(nsPresContext* aPresContext, nsMargin& aMarginPixels);
+    void PixelMarginToTwips(nsMargin& aMarginPixels);
 
     void GetValue(nsPresContext* aPresContext, const nsSize& a, const nsSize& b, char* value);
     void GetValue(nsPresContext* aPresContext, int32_t a, int32_t b, char* value);

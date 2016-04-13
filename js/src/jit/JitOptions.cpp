@@ -17,7 +17,7 @@ using mozilla::Maybe;
 namespace js {
 namespace jit {
 
-JitOptions js_JitOptions;
+DefaultJitOptions JitOptions;
 
 static void Warn(const char* env, const char* value)
 {
@@ -57,7 +57,7 @@ T overrideDefault(const char* param, T dflt) {
     return dflt;
 }
 #define SET_DEFAULT(var, dflt) var = overrideDefault("JIT_OPTION_" #var, dflt)
-JitOptions::JitOptions()
+DefaultJitOptions::DefaultJitOptions()
 {
     // Whether to perform expensive graph-consistency DEBUG-only assertions.
     // It can be useful to disable this to reduce DEBUG-compile time of large
@@ -97,6 +97,9 @@ JitOptions::JitOptions()
 
     // Toggles whether Loop Unrolling is globally disabled.
     SET_DEFAULT(disableLoopUnrolling, true);
+
+    // Toggle whether Profile Guided Optimization is globally disabled.
+    SET_DEFAULT(disablePgo, true);
 
     // Toggles whether instruction reordering is globally disabled.
     SET_DEFAULT(disableInstructionReordering, false);
@@ -156,7 +159,7 @@ JitOptions::JitOptions()
     SET_DEFAULT(osrPcMismatchesBeforeRecompile, 6000);
 
     // The bytecode length limit for small function.
-    SET_DEFAULT(smallFunctionMaxBytecodeLength_, 100);
+    SET_DEFAULT(smallFunctionMaxBytecodeLength_, 120);
 
     // Force how many invocation or loop iterations are needed before compiling
     // a function with the highest ionmonkey optimization level.
@@ -184,19 +187,19 @@ JitOptions::JitOptions()
 }
 
 bool
-JitOptions::isSmallFunction(JSScript* script) const
+DefaultJitOptions::isSmallFunction(JSScript* script) const
 {
     return script->length() <= smallFunctionMaxBytecodeLength_;
 }
 
 void
-JitOptions::enableGvn(bool enable)
+DefaultJitOptions::enableGvn(bool enable)
 {
     disableGvn = !enable;
 }
 
 void
-JitOptions::setEagerCompilation()
+DefaultJitOptions::setEagerCompilation()
 {
     eagerCompilation = true;
     baselineWarmUpThreshold = 0;
@@ -205,27 +208,27 @@ JitOptions::setEagerCompilation()
 }
 
 void
-JitOptions::setCompilerWarmUpThreshold(uint32_t warmUpThreshold)
+DefaultJitOptions::setCompilerWarmUpThreshold(uint32_t warmUpThreshold)
 {
     forcedDefaultIonWarmUpThreshold.reset();
     forcedDefaultIonWarmUpThreshold.emplace(warmUpThreshold);
 
     // Undo eager compilation
     if (eagerCompilation && warmUpThreshold != 0) {
-        jit::JitOptions defaultValues;
+        jit::DefaultJitOptions defaultValues;
         eagerCompilation = false;
         baselineWarmUpThreshold = defaultValues.baselineWarmUpThreshold;
     }
 }
 
 void
-JitOptions::resetCompilerWarmUpThreshold()
+DefaultJitOptions::resetCompilerWarmUpThreshold()
 {
     forcedDefaultIonWarmUpThreshold.reset();
 
     // Undo eager compilation
     if (eagerCompilation) {
-        jit::JitOptions defaultValues;
+        jit::DefaultJitOptions defaultValues;
         eagerCompilation = false;
         baselineWarmUpThreshold = defaultValues.baselineWarmUpThreshold;
     }

@@ -68,7 +68,7 @@ VsyncParent::DispatchVsyncEvent(TimeStamp aTimeStamp)
   // NotifyVsync(). We use mObservingVsync and mDestroyed flags to skip this
   // notification.
   if (mObservingVsync && !mDestroyed) {
-    unused << SendNotify(aTimeStamp);
+    Unused << SendNotify(aTimeStamp);
   }
 }
 
@@ -77,7 +77,7 @@ VsyncParent::RecvRequestVsyncRate()
 {
   AssertIsOnBackgroundThread();
   TimeDuration vsyncRate = gfxPlatform::GetPlatform()->GetHardwareVsync()->GetGlobalDisplay().GetVsyncRate();
-  unused << SendVsyncRate(vsyncRate.ToMilliseconds());
+  Unused << SendVsyncRate(vsyncRate.ToMilliseconds());
   return true;
 }
 

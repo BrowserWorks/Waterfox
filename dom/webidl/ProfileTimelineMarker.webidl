@@ -15,7 +15,7 @@ dictionary ProfileTimelineStackFrame {
   DOMString functionDisplayName;
   object? parent = null;
   object? asyncParent = null;
-  object? asyncCause = null;
+  DOMString asyncCause;
 };
 
 dictionary ProfileTimelineLayerRect {
@@ -50,6 +50,10 @@ dictionary ProfileTimelineMarker {
   /* For DOMEvent markers.  */
   DOMString type;
   unsigned short eventPhase;
+
+  /* For document::DOMContentLoaded and document::Load markers. Using this
+   * instead of the `start` and `end` timestamps is strongly discouraged. */
+  unsigned long long unixTime; // in microseconds
 
   /* For Paint markers.  */
   sequence<ProfileTimelineLayerRect> rectangles;

@@ -4,7 +4,7 @@
 "use strict";
 
 const { L10N } = require("devtools/client/performance/modules/global");
-const { Formatters } = require("devtools/client/performance/modules/logic/marker-utils");
+const { Formatters } = require("devtools/client/performance/modules/logic/marker-formatters");
 
 /**
  * A simple schema for mapping markers to the timeline UI. The keys correspond
@@ -122,6 +122,12 @@ const TIMELINE_BLUEPRINT = {
     colorName: "graphs-red",
     label: Formatters.GCLabel,
     fields: Formatters.GCFields,
+  },
+  "MinorGC": {
+    group: 1,
+    colorName: "graphs-red",
+    label: L10N.getStr("marker.label.minorGC"),
+    fields: Formatters.MinorGCFields,
   },
   "nsCycleCollector::Collect": {
     group: 1,

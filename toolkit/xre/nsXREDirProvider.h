@@ -54,8 +54,6 @@ public:
 
   void DoShutdown();
 
-  nsresult GetProfileDefaultsDir(nsIFile* *aResult);
-
   static nsresult GetUserAppDataDirectory(nsIFile* *aFile) {
     return GetUserDataDirectory(aFile, false, nullptr, nullptr, nullptr);
   }
@@ -108,7 +106,6 @@ protected:
   static nsresult GetSystemExtensionsDirectory(nsIFile** aFile);
 #endif
   static nsresult EnsureDirectoryExists(nsIFile* aDirectory);
-  void EnsureProfileFileExists(nsIFile* aFile);
 
   // Determine the profile path within the UAppData directory. This is different
   // on every major platform.
@@ -123,6 +120,11 @@ protected:
   // Internal helper that splits a path into components using the '/' and '\\'
   // delimiters.
   static inline nsresult AppendProfileString(nsIFile* aFile, const char* aPath);
+
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+  // Load the temp directory for sandboxed content processes
+  nsresult LoadContentProcessTempDir();
+#endif
 
   // Calculate and register extension and theme bundle directories.
   void LoadExtensionBundleDirectories();
@@ -144,6 +146,9 @@ protected:
   nsCOMPtr<nsIFile>      mProfileDir;
   nsCOMPtr<nsIFile>      mProfileLocalDir;
   bool                   mProfileNotified;
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+  nsCOMPtr<nsIFile>      mContentTempDir;
+#endif
   nsCOMArray<nsIFile>    mAppBundleDirectories;
   nsCOMArray<nsIFile>    mExtensionDirectories;
   nsCOMArray<nsIFile>    mThemeDirectories;

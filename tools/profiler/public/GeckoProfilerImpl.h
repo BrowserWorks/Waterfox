@@ -22,10 +22,6 @@
 #include "PseudoStack.h"
 #include "ProfilerBacktrace.h"
 
-#ifdef MOZ_TASK_TRACER
-#include "GeckoTaskTracer.h"
-#endif
-
 /* QT has a #define for the word "slots" and jsfriendapi.h has a struct with
  * this variable name, causing compilation problems. Alleviate this for now by
  * removing this #define */
@@ -44,9 +40,9 @@ namespace mozilla {
 class TimeStamp;
 } // namespace mozilla
 
-extern mozilla::ThreadLocal<PseudoStack *> tlsPseudoStack;
-extern mozilla::ThreadLocal<GeckoSampler *> tlsTicker;
-extern mozilla::ThreadLocal<void *> tlsStackTop;
+extern MOZ_THREAD_LOCAL(PseudoStack *) tlsPseudoStack;
+extern MOZ_THREAD_LOCAL(GeckoSampler *) tlsTicker;
+extern MOZ_THREAD_LOCAL(void *) tlsStackTop;
 extern bool stack_key_initialized;
 
 #ifndef SAMPLE_FUNCTION_NAME
@@ -62,18 +58,12 @@ extern bool stack_key_initialized;
 static inline
 void profiler_init(void* stackTop)
 {
-#ifdef MOZ_TASK_TRACER
-  mozilla::tasktracer::InitTaskTracer();
-#endif
   mozilla_sampler_init(stackTop);
 }
 
 static inline
 void profiler_shutdown()
 {
-#ifdef MOZ_TASK_TRACER
-  mozilla::tasktracer::ShutdownTaskTracer();
-#endif
   mozilla_sampler_shutdown();
 }
 
@@ -170,6 +160,22 @@ void profiler_get_profile_jsobject_async(double aSinceTime = 0,
 {
   mozilla_sampler_get_profile_data_async(aSinceTime, aPromise);
 }
+
+static inline
+void profiler_get_start_params(int* aEntrySize,
+                               double* aInterval,
+                               mozilla::Vector<const char*>* aFilters,
+                               mozilla::Vector<const char*>* aFeatures)
+{
+  mozilla_sampler_get_profiler_start_params(aEntrySize, aInterval, aFilters, aFeatures);
+}
+
+static inline
+void profiler_get_gatherer(nsISupports** aRetVal)
+{
+  mozilla_sampler_get_gatherer(aRetVal);
+}
+
 #endif
 
 static inline
@@ -204,9 +210,9 @@ void profiler_unlock()
 }
 
 static inline
-void profiler_register_thread(const char* name, void* stackTop)
+void profiler_register_thread(const char* name, void* guessStackTop)
 {
-  mozilla_sampler_register_thread(name, stackTop);
+  mozilla_sampler_register_thread(name, guessStackTop);
 }
 
 static inline
@@ -426,6 +432,7 @@ public:
   // we only copy the strings at save time, so to take multiple parameters we'd need to copy them then.
   SamplerStackFramePrintfRAII(const char *aInfo,
     js::ProfileEntry::Category aCategory, uint32_t line, const char *aFormat, ...)
+    : mHandle(nullptr)
   {
     if (profiler_is_active() && !profiler_in_privacy_mode()) {
       va_list args;

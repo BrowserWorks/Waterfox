@@ -7,10 +7,9 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-const NET_STRINGS_URI = "chrome://browser/locale/devtools/netmonitor.properties";
+const NET_STRINGS_URI = "chrome://devtools/locale/netmonitor.properties";
 const PKI_STRINGS_URI = "chrome://pippki/locale/pippki.properties";
 const LISTENERS = [ "NetworkActivity" ];
-const NET_PREFS = { "NetworkMonitor.saveRequestAndResponseBodies": true };
 
 // The panel's window global is an EventEmitter firing the following events:
 const EVENTS = {
@@ -18,10 +17,11 @@ const EVENTS = {
   TARGET_WILL_NAVIGATE: "NetMonitor:TargetWillNavigate",
   TARGET_DID_NAVIGATE: "NetMonitor:TargetNavigate",
 
-  // When a network event is received.
+  // When a network or timeline event is received.
   // See https://developer.mozilla.org/docs/Tools/Web_Console/remoting for
   // more information about what each packet is supposed to deliver.
   NETWORK_EVENT: "NetMonitor:NetworkEvent",
+  TIMELINE_EVENT: "NetMonitor:TimelineEvent",
 
   // When a network event is added to the view
   REQUEST_ADDED: "NetMonitor:RequestAdded",
@@ -124,6 +124,7 @@ const Editor = require("devtools/client/sourceeditor/editor");
 const {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
 const {ToolSidebar} = require("devtools/client/framework/sidebar");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const {TimelineFront} = require("devtools/server/actors/timeline");
 
 XPCOMUtils.defineConstant(this, "EVENTS", EVENTS);
 XPCOMUtils.defineConstant(this, "ACTIVITY_TYPE", ACTIVITY_TYPE);
@@ -163,21 +164,22 @@ Object.defineProperty(this, "NetworkHelper", {
  */
 var NetMonitorController = {
   /**
-   * Initializes the view.
+   * Initializes the view and connects the monitor client.
    *
    * @return object
    *         A promise that is resolved when the monitor finishes startup.
    */
-  startupNetMonitor: function() {
+  startupNetMonitor: Task.async(function*() {
     if (this._startup) {
-      return this._startup;
+      return this._startup.promise;
     }
-
-    NetMonitorView.initialize();
-
-    // Startup is synchronous, for now.
-    return this._startup = promise.resolve();
-  },
+    this._startup = promise.defer();
+    {
+      NetMonitorView.initialize();
+      yield this.connect();
+    }
+    this._startup.resolve();
+  }),
 
   /**
    * Destroys the view and disconnects the monitor client from the server.
@@ -185,19 +187,19 @@ var NetMonitorController = {
    * @return object
    *         A promise that is resolved when the monitor finishes shutdown.
    */
-  shutdownNetMonitor: function() {
+  shutdownNetMonitor: Task.async(function*() {
     if (this._shutdown) {
-      return this._shutdown;
+      return this._shutdown.promise;
     }
-
-    NetMonitorView.destroy();
-    this.TargetEventsHandler.disconnect();
-    this.NetworkEventsHandler.disconnect();
-    this.disconnect();
-
-    // Shutdown is synchronous, for now.
-    return this._shutdown = promise.resolve();
-  },
+    this._shutdown = promise.defer();;
+    {
+      NetMonitorView.destroy();
+      this.TargetEventsHandler.disconnect();
+      this.NetworkEventsHandler.disconnect();
+      yield this.disconnect();
+    }
+    this._shutdown.resolve();
+  }),
 
   /**
    * Initiates remote or chrome network monitoring based on the current target,
@@ -210,47 +212,71 @@ var NetMonitorController = {
    */
   connect: Task.async(function*() {
     if (this._connection) {
-      return this._connection;
+      return this._connection.promise;
     }
+    this._connection = promise.defer();
 
-    let deferred = promise.defer();
-    this._connection = deferred.promise;
-
-    this.client = this._target.client;
     // Some actors like AddonActor or RootActor for chrome debugging
     // aren't actual tabs.
     if (this._target.isTabActor) {
       this.tabClient = this._target.activeTab;
     }
-    this.webConsoleClient = this._target.activeConsole;
-    this.webConsoleClient.setPreferences(NET_PREFS, () => {
-      this.TargetEventsHandler.connect();
-      this.NetworkEventsHandler.connect();
-      deferred.resolve();
-    });
 
-    yield deferred.promise;
+    let connectTimeline = () => {
+      // Don't start up waiting for timeline markers if the server isn't
+      // recent enough to emit the markers we're interested in.
+      if (this._target.getTrait("documentLoadingMarkers")) {
+        this.timelineFront = new TimelineFront(this._target.client, this._target.form);
+        return this.timelineFront.start({ withDocLoadingEvents: true });
+      }
+    };
+
+    this.webConsoleClient = this._target.activeConsole;
+    yield connectTimeline();
+
+    this.TargetEventsHandler.connect();
+    this.NetworkEventsHandler.connect();
+
     window.emit(EVENTS.CONNECTED);
+
+    this._connection.resolve();
+    this._connected = true;
   }),
 
   /**
    * Disconnects the debugger client and removes event handlers as necessary.
    */
-  disconnect: function() {
+  disconnect: Task.async(function*() {
+    if (this._disconnection) {
+      return this._disconnection.promise;
+    }
+    this._disconnection = promise.defer();
+
+    // Wait for the connection to finish first.
+    yield this._connection.promise;
+
     // When debugging local or a remote instance, the connection is closed by
-    // the RemoteTarget.
-    this._connection = null;
-    this.client = null;
+    // the RemoteTarget. The webconsole actor is stopped on disconnect.
     this.tabClient = null;
     this.webConsoleClient = null;
-  },
+
+    // The timeline front wasn't initialized and started if the server wasn't
+    // recent enough to emit the markers we were interested in.
+    if (this._target.getTrait("documentLoadingMarkers")) {
+      yield this.timelineFront.destroy();
+      this.timelineFront = null;
+    }
+
+    this._disconnection.resolve();
+    this._connected = false;
+  }),
 
   /**
    * Checks whether the netmonitor connection is active.
    * @return boolean
    */
   isConnected: function() {
-    return !!this.client;
+    return !!this._connected;
   },
 
   /**
@@ -391,15 +417,7 @@ var NetMonitorController = {
   get supportsPerfStats() {
     return this.tabClient &&
            (this.tabClient.traits.reconfigure || !this._target.isApp);
-  },
-
-  _startup: null,
-  _shutdown: null,
-  _connection: null,
-  _currentActivity: null,
-  client: null,
-  tabClient: null,
-  webConsoleClient: null
+  }
 };
 
 /**
@@ -458,6 +476,8 @@ TargetEventsHandler.prototype = {
         if (NetMonitorController.getCurrentActivity() == ACTIVITY_TYPE.NONE) {
           NetMonitorView.showNetworkInspectorView();
         }
+        // Clear any accumulated markers.
+        NetMonitorController.NetworkEventsHandler.clearMarkers();
 
         window.emit(EVENTS.TARGET_WILL_NAVIGATE);
         break;
@@ -481,8 +501,11 @@ TargetEventsHandler.prototype = {
  * Functions handling target network events.
  */
 function NetworkEventsHandler() {
+  this._markers = [];
+
   this._onNetworkEvent = this._onNetworkEvent.bind(this);
   this._onNetworkEventUpdate = this._onNetworkEventUpdate.bind(this);
+  this._onDocLoadingMarker = this._onDocLoadingMarker.bind(this);
   this._onRequestHeaders = this._onRequestHeaders.bind(this);
   this._onRequestCookies = this._onRequestCookies.bind(this);
   this._onRequestPostData = this._onRequestPostData.bind(this);
@@ -501,6 +524,20 @@ NetworkEventsHandler.prototype = {
     return NetMonitorController.webConsoleClient;
   },
 
+  get timelineFront() {
+    return NetMonitorController.timelineFront;
+  },
+
+  get firstDocumentDOMContentLoadedTimestamp() {
+    let marker = this._markers.filter(e => e.name == "document::DOMContentLoaded")[0];
+    return marker ? marker.unixTime / 1000 : -1;
+  },
+
+  get firstDocumentLoadTimestamp() {
+    let marker = this._markers.filter(e => e.name == "document::Load")[0];
+    return marker ? marker.unixTime / 1000 : -1;
+  },
+
   /**
    * Connect to the current target client.
    */
@@ -508,7 +545,28 @@ NetworkEventsHandler.prototype = {
     dumpn("NetworkEventsHandler is connecting...");
     this.webConsoleClient.on("networkEvent", this._onNetworkEvent);
     this.webConsoleClient.on("networkEventUpdate", this._onNetworkEventUpdate);
+
+    if (this.timelineFront) {
+      this.timelineFront.on("doc-loading", this._onDocLoadingMarker);
+    }
+
     this._displayCachedEvents();
+  },
+
+  /**
+   * Disconnect from the client.
+   */
+  disconnect: function() {
+    if (!this.client) {
+      return;
+    }
+    dumpn("NetworkEventsHandler is disconnecting...");
+    this.webConsoleClient.off("networkEvent", this._onNetworkEvent);
+    this.webConsoleClient.off("networkEventUpdate", this._onNetworkEventUpdate);
+
+    if (this.timelineFront) {
+      this.timelineFront.off("doc-loading", this._onDocLoadingMarker);
+    }
   },
 
   /**
@@ -531,15 +589,12 @@ NetworkEventsHandler.prototype = {
   },
 
   /**
-   * Disconnect from the client.
+   * The "DOMContentLoaded" and "Load" events sent by the timeline actor.
+   * @param object marker
    */
-  disconnect: function() {
-    if (!this.client) {
-      return;
-    }
-    dumpn("NetworkEventsHandler is disconnecting...");
-    this.webConsoleClient.off("networkEvent", this._onNetworkEvent);
-    this.webConsoleClient.off("networkEventUpdate", this._onNetworkEventUpdate);
+  _onDocLoadingMarker: function(marker) {
+    window.emit(EVENTS.TIMELINE_EVENT, marker);
+    this._markers.push(marker);
   },
 
   /**
@@ -551,10 +606,10 @@ NetworkEventsHandler.prototype = {
    *        The network request information.
    */
   _onNetworkEvent: function(type, networkInfo) {
-    let { actor, startedDateTime, request: { method, url }, isXHR, fromCache } = networkInfo;
+    let { actor, startedDateTime, request: { method, url }, isXHR, fromCache, fromServiceWorker } = networkInfo;
 
     NetMonitorView.RequestsMenu.addRequest(
-      actor, startedDateTime, method, url, isXHR, fromCache
+      actor, startedDateTime, method, url, isXHR, fromCache, fromServiceWorker
     );
     window.emit(EVENTS.NETWORK_EVENT, actor);
   },
@@ -739,6 +794,13 @@ NetworkEventsHandler.prototype = {
     }, () => {
       window.emit(EVENTS.RECEIVED_EVENT_TIMINGS, aResponse.from);
     });
+  },
+
+  /**
+   * Clears all accumulated markers.
+   */
+  clearMarkers: function() {
+    this._markers.length = 0;
   },
 
   /**

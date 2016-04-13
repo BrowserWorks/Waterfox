@@ -4,6 +4,8 @@
 
 const ID = "webextension1@tests.mozilla.org";
 
+const PREF_SELECTED_LOCALE = "general.useragent.locale";
+
 const profileDir = gProfD.clone();
 profileDir.append("extensions");
 
@@ -53,7 +55,7 @@ add_task(function*() {
   do_check_false(addon.appDisabled);
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
-  do_check_eq(addon.signedState, mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_MISSING : AddonManager.SIGNEDSTATE_NOT_REQUIRED);
+  do_check_eq(addon.signedState, mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_SIGNED : AddonManager.SIGNEDSTATE_NOT_REQUIRED);
 
   let uri = do_get_addon_root_uri(profileDir, ID);
 
@@ -80,7 +82,7 @@ add_task(function*() {
   do_check_false(addon.appDisabled);
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
-  do_check_eq(addon.signedState, mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_MISSING : AddonManager.SIGNEDSTATE_NOT_REQUIRED);
+  do_check_eq(addon.signedState, mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_SIGNED : AddonManager.SIGNEDSTATE_NOT_REQUIRED);
 
   let file = getFileForAddon(profileDir, ID);
   do_check_true(file.exists());
@@ -132,7 +134,7 @@ add_task(function*() {
   do_check_false(addon.appDisabled);
   do_check_true(addon.isActive);
   do_check_eq(addon.type, "extension");
-  do_check_eq(addon.signedState, mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_MISSING : AddonManager.SIGNEDSTATE_NOT_REQUIRED);
+  do_check_eq(addon.signedState, mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_SIGNED : AddonManager.SIGNEDSTATE_NOT_REQUIRED);
 
   let file = getFileForAddon(profileDir, ID);
   do_check_true(file.exists());
@@ -140,6 +142,33 @@ add_task(function*() {
   addon.uninstall();
 
   yield promiseRestartManager();
+});
+
+add_task(function* test_manifest_localization() {
+  const ID = "webextension3@tests.mozilla.org";
+
+  yield promiseInstallAllFiles([do_get_addon("webextension_3")], true);
+
+  let addon = yield promiseAddonByID(ID);
+
+  equal(addon.name, "Web Extensiøn foo ☹");
+  equal(addon.description, "Descriptïon bar ☹ of add-on");
+
+  Services.prefs.setCharPref(PREF_SELECTED_LOCALE, "fr-FR");
+  yield promiseRestartManager();
+
+  addon = yield promiseAddonByID(ID);
+
+  equal(addon.name, "Web Extensiøn le foo ☺");
+  equal(addon.description, "Descriptïon le bar ☺ of add-on");
+
+  Services.prefs.setCharPref(PREF_SELECTED_LOCALE, "de");
+  yield promiseRestartManager();
+
+  addon = yield promiseAddonByID(ID);
+
+  equal(addon.name, "Web Extensiøn foo ☹");
+  equal(addon.description, "Descriptïon bar ☹ of add-on");
 });
 
 // Missing ID should cause a failure

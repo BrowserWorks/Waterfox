@@ -30,24 +30,20 @@ var bound = f.bind(null, "carrot");
 assertDeepEq(Reflect.construct(bound, []), new bound);
 
 // Classes:
-if (classesEnabled()) {
-    eval(`{
-        class Base {
-            constructor(...args) {
-                this.args = args;
-                this.newTarget = new.target;
-            }
-        }
-        class Derived extends Base {
-            constructor(...args) { super(...args); }
-        }
-
-        assertDeepEq(Reflect.construct(Base, []), new Base);
-        assertDeepEq(Reflect.construct(Derived, [7]), new Derived(7));
-        g = Derived.bind(null, "q");
-        assertDeepEq(Reflect.construct(g, [8, 9]), new g(8, 9));
-    }`);
+class Base {
+    constructor(...args) {
+        this.args = args;
+        this.newTarget = new.target;
+    }
 }
+class Derived extends Base {
+    constructor(...args) { super(...args); }
+}
+
+assertDeepEq(Reflect.construct(Base, []), new Base);
+assertDeepEq(Reflect.construct(Derived, [7]), new Derived(7));
+g = Derived.bind(null, "q");
+assertDeepEq(Reflect.construct(g, [8, 9]), new g(8, 9));
 
 // Cross-compartment wrappers:
 var g = newGlobal();
@@ -101,9 +97,7 @@ for (var v of SOME_PRIMITIVE_VALUES.concat(nonConstructors)) {
 // creates a real array object.
 function someConstructor() {}
 var result = Reflect.construct(Array, [], someConstructor);
-assertEq(Reflect.getPrototypeOf(result),
-         Array.prototype, // should be someConstructor.prototype, per ES6 22.1.1.1 Array()
-        "Congratulations on implementing Array subclassing! Fix this test for +1 karma point.");
+assertEq(Reflect.getPrototypeOf(result), someConstructor.prototype);
 assertEq(result.length, 0);
 assertEq(Array.isArray(result), true);
 

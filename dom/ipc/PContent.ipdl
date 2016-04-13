@@ -16,6 +16,7 @@ include protocol PCycleCollectWithLogs;
 include protocol PCrashReporter;
 include protocol PPSMContentDownloader;
 include protocol PExternalHelperApp;
+include protocol PHandlerService;
 include protocol PDeviceStorageRequest;
 include protocol PFileDescriptorSet;
 include protocol PFMRadio;
@@ -53,6 +54,7 @@ include protocol PRemoteSpellcheckEngine;
 include protocol PWebBrowserPersistDocument;
 include protocol PWebrtcGlobal;
 include protocol PPresentation;
+include protocol PVRManager;
 include DOMTypes;
 include JavaScriptTypes;
 include InputStreamParams;
@@ -64,15 +66,15 @@ include PBackgroundSharedTypes;
 include PContentPermission;
 include BrowserConfiguration;
 include GraphicsMessages;
+include ProfilerTypes;
 
 // Workaround to prevent error if PContentChild.cpp & PContentBridgeParent.cpp
 // are put into different UnifiedProtocolsXX.cpp files.
 // XXX Remove this once bug 1069073 is fixed
 include "mozilla/dom/PContentBridgeParent.h";
 
-include "mozilla/dom/indexedDB/SerializationHelpers.h";
-
 using GeoPosition from "nsGeoPositionIPCSerialiser.h";
+using AlertNotificationType from "mozilla/AlertNotificationIPCSerializer.h";
 
 using struct ChromePackage from "mozilla/chrome/RegistryMessageUtils.h";
 using struct SubstitutionMapping from "mozilla/chrome/RegistryMessageUtils.h";
@@ -84,13 +86,13 @@ using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
-using mozilla::dom::quota::PersistenceType from "mozilla/dom/quota/PersistenceType.h";
 using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
 using mozilla::gfx::IntSize from "mozilla/gfx/2D.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 using mozilla::dom::ContentParentId from "mozilla/dom/ipc/IdType.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
 using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
+using mozilla::DataStorageType from "ipc/DataStorageIPCUtils.h";
 
 union ChromeRegistryItem
 {
@@ -218,6 +220,15 @@ union DeviceStorageParams
   DeviceStorageUnmountParams;
 };
 
+struct DeviceStorageLocationInfo {
+  nsString music;
+  nsString pictures;
+  nsString videos;
+  nsString sdcard;
+  nsString apps;
+  nsString crashes;
+};
+
 struct FMRadioRequestEnableParams
 {
   double frequency;
@@ -276,6 +287,16 @@ struct FileSystemGetDirectoryListingParams
 {
   nsString filesystem;
   nsString realPath;
+  // 'filters' could be an array rather than a semicolon separated string
+  // (we'd then use InfallibleTArray<nsString> internally), but that is
+  // wasteful.  E10s requires us to pass the filters over as a string anyway,
+  // so avoiding using an array avoids serialization on the side passing the
+  // filters.  Since an nsString can share its buffer when copied,
+  // using that instead of InfallibleTArray<nsString> makes copying the filters
+  // around in any given process a bit more efficient too, since copying a
+  // single nsString is cheaper than copying InfallibleTArray member data and
+  // each nsString that it contains.
+  nsString filters;
 };
 
 struct FileSystemGetFileOrDirectoryParams
@@ -322,6 +343,12 @@ struct PrefSetting {
   nsCString name;
   MaybePrefValue defaultValue;
   MaybePrefValue userValue;
+};
+
+struct DataStorageItem {
+  nsCString key;
+  nsCString value;
+  DataStorageType type;
 };
 
 struct DataStoreSetting {
@@ -416,6 +443,16 @@ struct FrameScriptInfo
     bool runInGlobalScope;
 };
 
+struct AndroidSystemInfo
+{
+    nsString device;
+    nsString manufacturer;
+    nsString release_version;
+    nsString hardware;
+    uint32_t sdk_version;
+    bool     isTablet;
+};
+
 prio(normal upto urgent) sync protocol PContent
 {
     parent spawns PPluginModule;
@@ -425,6 +462,7 @@ prio(normal upto urgent) sync protocol PContent
     parent opens PSharedBufferManager;
     parent opens PImageBridge;
     parent opens PGMPService;
+    parent opens PVRManager;
     child opens PBackground;
 
     manages PBlob;
@@ -441,6 +479,7 @@ prio(normal upto urgent) sync protocol PContent
     manages PFileDescriptorSet;
     manages PFMRadio;
     manages PHal;
+    manages PHandlerService;
     manages PHeapSnapshotTempFileHelper;
     manages PIcc;
     manages PMedia;
@@ -521,8 +560,6 @@ child:
      */
     async BidiKeyboardNotify(bool isLangRTL);
 
-    async UpdateServiceWorkerRegistrations();
-
     async DataStoreNotify(uint32_t aAppId, nsString aName,
                           nsString aManifestURL);
 
@@ -550,6 +587,10 @@ child:
     async SystemMemoryAvailable(uint64_t getterId, uint32_t memoryAvailable);
 
     PreferenceUpdate(PrefSetting pref);
+
+    DataStoragePut(nsString aFilename, DataStorageItem aItem);
+    DataStorageRemove(nsString aFilename, nsCString aKey, DataStorageType aType);
+    DataStorageClear(nsString aFilename);
 
     NotifyAlertsObserver(nsCString topic, nsString data);
 
@@ -633,8 +674,7 @@ child:
     /**
      * Control the Gecko Profiler in the child process.
      */
-    async StartProfiler(uint32_t aEntries, double aInterval, nsCString[] aFeatures,
-                        nsCString[] aThreadNameFilters);
+    async StartProfiler(ProfilerInitParams params);
     async StopProfiler();
     async PauseProfiler(bool aPause);
 
@@ -682,6 +722,26 @@ child:
      * cleaned up.
      */
     async NotifyPresentationReceiverCleanUp(nsString aSessionId);
+
+    /**
+     * Notify the child that the Gecko Media Plugins installed changed.
+     */
+    async NotifyGMPsChanged();
+
+    /**
+     * Send a `push` event without data to a service worker in the child.
+     */
+    Push(nsCString scope, Principal principal);
+
+    /**
+     * Send a `push` event with data to a service worker in the child.
+     */
+    PushWithData(nsCString scope, Principal principal, uint8_t[] data);
+
+    /**
+     * Send a `pushsubscriptionchange` event to a service worker in the child.
+     */
+    PushSubscriptionChange(nsCString scope, Principal principal);
 
 parent:
     /**
@@ -750,7 +810,7 @@ parent:
      * process. |newPluginEpoch| is the current epoch in the chrome process. If
      * |pluginEpoch == newPluginEpoch|, then |plugins| will be left empty.
      */
-    sync FindPlugins(uint32_t pluginEpoch) returns (PluginTag[] plugins, uint32_t newPluginEpoch);
+    sync FindPlugins(uint32_t pluginEpoch) returns (nsresult aResult, PluginTag[] plugins, uint32_t newPluginEpoch);
 
     async PJavaScript();
 
@@ -819,12 +879,15 @@ parent:
     async VisitURI(URIParams uri, OptionalURIParams referrer, uint32_t flags);
     async SetURITitle(URIParams uri, nsString title);
 
-    async LoadURIExternal(URIParams uri);
+    async LoadURIExternal(URIParams uri, PBrowser windowContext);
 
     // PrefService message
     sync ReadPrefsArray() returns (PrefSetting[] prefs);
 
     sync ReadFontList() returns (FontListEntry[] retValue);
+
+    sync ReadDataStorageArray(nsString aFilename)
+      returns (DataStorageItem[] retValue);
 
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
                      CpowEntry[] aCpows, Principal aPrincipal)
@@ -834,17 +897,7 @@ parent:
                                CpowEntry[] aCpows, Principal aPrincipal)
       returns (StructuredCloneData[] retval);
 
-    ShowAlertNotification(nsString imageUrl,
-                          nsString title,
-                          nsString text,
-                          bool textClickable,
-                          nsString cookie,
-                          nsString name,
-                          nsString bidi,
-                          nsString lang,
-                          nsString data,
-                          Principal principal,
-                          bool inPrivateBrowsing);
+    ShowAlert(AlertNotificationType alert);
 
     CloseAlert(nsString name, Principal principal);
 
@@ -863,6 +916,8 @@ parent:
                        int64_t aContentLength,
                        OptionalURIParams aReferrer,
                        nullable PBrowser aBrowser);
+
+    PHandlerService();
 
     AddGeolocationListener(Principal principal, bool highAccuracy);
     RemoveGeolocationListener();
@@ -935,7 +990,7 @@ parent:
 
     sync NotifyKeywordSearchLoading(nsString providerName, nsString keyword);
 
-    async CopyFavicon(URIParams oldURI, URIParams newURI, bool isPrivate);
+    async CopyFavicon(URIParams oldURI, URIParams newURI, Principal aLoadingPrincipal, bool isPrivate);
 
     // Tell the compositor to allocate a layer tree id for nested remote mozbrowsers.
     sync AllocateLayerTreeId()
@@ -1001,14 +1056,6 @@ parent:
         returns (nsString aAttribute, nsString[] aContent);
 
     // Use only for testing!
-    sync GetFileReferences(PersistenceType persistenceType,
-                           nsCString origin,
-                           nsString databaseName,
-                           int64_t fileId)
-      returns (int32_t refCnt, int32_t dBRefCnt, int32_t sliceRefCnt,
-               bool result);
-
-    // Use only for testing!
     FlushPendingFileDeletions();
 
     /**
@@ -1053,8 +1100,7 @@ parent:
      *   To identify which tab owns the app.
      */
     POfflineCacheUpdate(URIParams manifestURI, URIParams documentURI,
-                        PrincipalInfo loadingPrincipal, bool stickDocument,
-                        TabId tabId);
+                        PrincipalInfo loadingPrincipal, bool stickDocument);
 
     /**
      * Sets "offline-app" permission for the principal.  Called when we hit
@@ -1131,6 +1177,19 @@ parent:
     sync GetDeviceStorageLocation(nsString type)
         returns (nsString path);
 
+    sync GetDeviceStorageLocations()
+	returns (DeviceStorageLocationInfo info);
+
+    sync GetAndroidSystemInfo()
+        returns (AndroidSystemInfo info);
+
+    /**
+     * Tells the parent to ungrab the pointer on the default display.
+     *
+     * This is for GTK platforms where we have to ensure the pointer ungrab happens in the
+     * chrome process as that's the process that receives the pointer event.
+     */
+    sync UngrabPointer(uint32_t time);
 both:
      AsyncMessage(nsString aMessage, ClonedMessageData aData,
                   CpowEntry[] aCpows, Principal aPrincipal);

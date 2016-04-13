@@ -100,8 +100,22 @@ class CompositorVsyncScheduler
 
 public:
   explicit CompositorVsyncScheduler(CompositorParent* aCompositorParent, nsIWidget* aWidget);
+
+#ifdef MOZ_WIDGET_GONK
+  // emulator-ics never trigger the display on/off, so compositor will always
+  // skip composition request at that device. Only check the display status
+  // with kk device and upon.
+#if ANDROID_VERSION >= 19
+  // SetDisplay() and CancelSetDisplayTask() are used for the display on/off.
+  // It will clear all composition related task and flag, and skip another
+  // composition task during the display off. That could prevent the problem
+  // that compositor might show the old content at the first frame of display on.
+  void SetDisplay(bool aDisplayEnable);
+#endif
+#endif
+
   bool NotifyVsync(TimeStamp aVsyncTimestamp);
-  void SetNeedsComposite(bool aSchedule);
+  void SetNeedsComposite();
   void OnForceComposeToTarget();
 
   void ScheduleTask(CancelableTask*, int);
@@ -126,7 +140,7 @@ public:
     return mExpectedComposeStartTime;
   }
 #endif
- 
+
 private:
   virtual ~CompositorVsyncScheduler();
 
@@ -134,7 +148,13 @@ private:
   void ObserveVsync();
   void UnobserveVsync();
   void DispatchTouchEvents(TimeStamp aVsyncTimestamp);
+  void DispatchVREvents(TimeStamp aVsyncTimestamp);
   void CancelCurrentSetNeedsCompositeTask();
+#ifdef MOZ_WIDGET_GONK
+#if ANDROID_VERSION >= 19
+  void CancelSetDisplayTask();
+#endif
+#endif
 
   class Observer final : public VsyncObserver
   {
@@ -152,23 +172,31 @@ private:
 
   CompositorParent* mCompositorParent;
   TimeStamp mLastCompose;
-  CancelableTask* mCurrentCompositeTask;
 
 #ifdef COMPOSITOR_PERFORMANCE_WARNING
   TimeStamp mExpectedComposeStartTime;
 #endif
 
   bool mAsapScheduling;
-  bool mNeedsComposite;
   bool mIsObservingVsync;
+  uint32_t mNeedsComposite;
   int32_t mVsyncNotificationsSkipped;
   RefPtr<CompositorVsyncDispatcher> mCompositorVsyncDispatcher;
   RefPtr<CompositorVsyncScheduler::Observer> mVsyncObserver;
 
   mozilla::Monitor mCurrentCompositeTaskMonitor;
+  CancelableTask* mCurrentCompositeTask;
 
   mozilla::Monitor mSetNeedsCompositeMonitor;
   CancelableTask* mSetNeedsCompositeTask;
+
+#ifdef MOZ_WIDGET_GONK
+#if ANDROID_VERSION >= 19
+  bool mDisplayEnabled;
+  mozilla::Monitor mSetDisplayMonitor;
+  CancelableTask* mSetDisplayTask;
+#endif
+#endif
 };
 
 class CompositorUpdateObserver
@@ -295,7 +323,8 @@ public:
   /**
    * Returns the compositor thread's message loop.
    *
-   * This message loop is used by CompositorParent and ImageBridgeParent.
+   * This message loop is used by CompositorParent, ImageBridgeParent,
+   * and VRManagerParent
    */
   static MessageLoop* CompositorLoop();
 
@@ -381,6 +410,15 @@ public:
    * and visibility via ipc.
    */
   bool UpdatePluginWindowState(uint64_t aId);
+
+  /**
+   * Plugin visibility helpers for the apz (main thread) and compositor
+   * thread.
+   */
+  void ScheduleShowAllPluginWindows();
+  void ScheduleHideAllPluginWindows();
+  void ShowAllPluginWindows();
+  void HideAllPluginWindows();
 #endif
 
   /**
@@ -407,6 +445,8 @@ public:
 
   nsIWidget* GetWidget() { return mWidget; }
 
+  void ForceComposeToTarget(gfx::DrawTarget* aTarget, const gfx::IntRect* aRect = nullptr);
+
 protected:
   // Protected destructor, to discourage deletion outside of Release():
   virtual ~CompositorParent();
@@ -421,7 +461,6 @@ protected:
   virtual bool DeallocPLayerTransactionParent(PLayerTransactionParent* aLayers) override;
   virtual void ScheduleTask(CancelableTask*, int);
   void CompositeToTarget(gfx::DrawTarget* aTarget, const gfx::IntRect* aRect = nullptr);
-  void ForceComposeToTarget(gfx::DrawTarget* aTarget, const gfx::IntRect* aRect = nullptr);
 
   void SetEGLSurfaceSize(int width, int height);
 
@@ -484,11 +523,12 @@ protected:
   nsIntPoint mPluginsLayerOffset;
   nsIntRegion mPluginsLayerVisibleRegion;
   nsTArray<PluginWindowData> mCachedPluginData;
-#endif
-#if defined(XP_WIN)
   // indicates if we are currently waiting on a plugin update confirmation.
   // When this is true, composition is currently on hold.
   bool mPluginUpdateResponsePending;
+  // indicates if plugin window visibility and metric updates are currently
+  // being defered due to a scroll operation.
+  bool mDeferPluginWindows;
 #endif
 
   DISALLOW_EVIL_CONSTRUCTORS(CompositorParent);

@@ -31,11 +31,7 @@ elif CONFIG['MOZ_FOLD_LIBS']:
 
     OS_LIBS += CONFIG['REALTIME_LIBS']
 
-    if CONFIG['OS_TARGET'] == 'WINNT':
-        DEFFILE = 'nss3.def'
-
-    if CONFIG['OS_ARCH'] == 'Linux' and CONFIG['GCC_USE_GNU_LD']:
-        LD_VERSION_SCRIPT = 'nss3.def'
+    SYMBOLS_FILE = 'nss.symbols'
 else:
     Library('nss')
     USE_LIBS += [
@@ -48,3 +44,6 @@ else:
 
 # XXX: We should fix these warnings.
 ALLOW_COMPILER_WARNINGS = True
+
+if CONFIG['NSS_EXTRA_SYMBOLS_FILE']:
+    DEFINES['NSS_EXTRA_SYMBOLS_FILE'] = CONFIG['NSS_EXTRA_SYMBOLS_FILE']

@@ -67,22 +67,16 @@ add_task(function* no_request_if_prefed_off() {
   Services.prefs.setBoolPref("browser.search.geoSpecificDefaults", false);
   yield asyncInit();
   checkNoRequest();
+  yield promiseAfterCache();
 
   // The default engine should be set based on the prefs.
   do_check_eq(Services.search.currentEngine.name, getDefaultEngineName(false));
 
-  // Change the default engine and then revert to default to ensure
-  // the metadata file exists.
-  let commitPromise = promiseAfterCommit();
-  Services.search.currentEngine = Services.search.getEngineByName(kTestEngineName);
-  Services.search.resetToOriginalDefaultEngine();
-  yield commitPromise;
-
   // Ensure nothing related to geoSpecificDefaults has been written in the metadata.
   let metadata = yield promiseGlobalMetadata();
-  do_check_eq(typeof metadata.searchdefaultexpir, "undefined");
-  do_check_eq(typeof metadata.searchdefault, "undefined");
-  do_check_eq(typeof metadata.searchdefaulthash, "undefined");
+  do_check_eq(typeof metadata.searchDefaultExpir, "undefined");
+  do_check_eq(typeof metadata.searchDefault, "undefined");
+  do_check_eq(typeof metadata.searchDefaultHash, "undefined");
 
   Services.prefs.setBoolPref("browser.search.geoSpecificDefaults", true);
 });
@@ -90,23 +84,22 @@ add_task(function* no_request_if_prefed_off() {
 add_task(function* should_get_geo_defaults_only_once() {
   // (Re)initializing the search service should trigger a request,
   // and set the default engine based on it.
-  let commitPromise = promiseAfterCommit();
   // Due to the previous initialization, we expect the countryCode to already be set.
   do_check_true(Services.prefs.prefHasUserValue("browser.search.countryCode"));
   do_check_eq(Services.prefs.getCharPref("browser.search.countryCode"), "FR");
   yield asyncReInit();
   checkRequest();
   do_check_eq(Services.search.currentEngine.name, kTestEngineName);
-  yield commitPromise;
+  yield promiseAfterCache();
 
   // Verify the metadata was written correctly.
   let metadata = yield promiseGlobalMetadata();
-  do_check_eq(typeof metadata.searchdefaultexpir, "number");
-  do_check_true(metadata.searchdefaultexpir > Date.now());
-  do_check_eq(typeof metadata.searchdefault, "string");
-  do_check_eq(metadata.searchdefault, "Test search engine");
-  do_check_eq(typeof metadata.searchdefaulthash, "string");
-  do_check_eq(metadata.searchdefaulthash.length, 44);
+  do_check_eq(typeof metadata.searchDefaultExpir, "number");
+  do_check_true(metadata.searchDefaultExpir > Date.now());
+  do_check_eq(typeof metadata.searchDefault, "string");
+  do_check_eq(metadata.searchDefault, "Test search engine");
+  do_check_eq(typeof metadata.searchDefaultHash, "string");
+  do_check_eq(metadata.searchDefaultHash.length, 44);
 
   // The next restart shouldn't trigger a request.
   yield asyncReInit();
@@ -116,26 +109,24 @@ add_task(function* should_get_geo_defaults_only_once() {
 
 add_task(function* should_request_when_countryCode_not_set() {
   Services.prefs.clearUserPref("browser.search.countryCode");
-  let commitPromise = promiseAfterCommit();
   yield asyncReInit();
   checkRequest();
-  yield commitPromise;
+  yield promiseAfterCache();
 });
 
 add_task(function* should_recheck_if_interval_expired() {
   yield forceExpiration();
 
-  let commitPromise = promiseAfterCommit();
   let date = Date.now();
   yield asyncReInit();
   checkRequest();
-  yield commitPromise;
+  yield promiseAfterCache();
 
   // Check that the expiration timestamp has been updated.
   let metadata = yield promiseGlobalMetadata();
-  do_check_eq(typeof metadata.searchdefaultexpir, "number");
-  do_check_true(metadata.searchdefaultexpir >= date + kYearInSeconds * 1000);
-  do_check_true(metadata.searchdefaultexpir < date + (kYearInSeconds + 3600) * 1000);
+  do_check_eq(typeof metadata.searchDefaultExpir, "number");
+  do_check_true(metadata.searchDefaultExpir >= date + kYearInSeconds * 1000);
+  do_check_true(metadata.searchDefaultExpir < date + (kYearInSeconds + 3600) * 1000);
 });
 
 add_task(function* should_recheck_when_broken_hash() {
@@ -147,19 +138,17 @@ add_task(function* should_recheck_when_broken_hash() {
   let metadata = yield promiseGlobalMetadata();
 
   // Break the hash.
-  let hash = metadata.searchdefaulthash;
-  metadata.searchdefaulthash = "broken";
+  let hash = metadata.searchDefaultHash;
+  metadata.searchDefaultHash = "broken";
   yield promiseSaveGlobalMetadata(metadata);
 
-  let commitPromise = promiseAfterCommit();
+  let commitPromise = promiseAfterCache();
+  let unInitPromise = waitForSearchNotification("uninit-complete");
   let reInitPromise = asyncReInit();
+  yield unInitPromise;
 
   // Synchronously check the current default engine, to force a sync init.
   // The hash is wrong, so we should fallback to the default engine from prefs.
-  // XXX For some reason forcing a sync init while already asynchronously
-  // reinitializing causes a shutdown warning related to engineMetadataService's
-  // finalize method having already been called. Seems harmless for the purpose
-  // of this test.
   do_check_false(Services.search.isInitialized)
   do_check_eq(Services.search.currentEngine.name, getDefaultEngineName(false));
   do_check_true(Services.search.isInitialized)
@@ -170,8 +159,16 @@ add_task(function* should_recheck_when_broken_hash() {
 
   // Check that the hash is back to its previous value.
   metadata = yield promiseGlobalMetadata();
-  do_check_eq(typeof metadata.searchdefaulthash, "string");
-  do_check_eq(metadata.searchdefaulthash, hash);
+  do_check_eq(typeof metadata.searchDefaultHash, "string");
+  if (metadata.searchDefaultHash == "broken") {
+    // If the server takes more than 1000ms to return the result,
+    // the commitPromise was resolved by a first save of the cache
+    // that saved the engines, but not the request's results.
+    do_print("waiting for the cache to be saved a second time");
+    yield promiseAfterCache();
+    metadata = yield promiseGlobalMetadata();
+  }
+  do_check_eq(metadata.searchDefaultHash, hash);
 
   // The current default engine shouldn't change during a session.
   do_check_eq(Services.search.currentEngine.name, getDefaultEngineName(false));
@@ -193,7 +190,7 @@ add_task(function* should_remember_cohort_id() {
 
   // Trigger a new request.
   yield forceExpiration();
-  let commitPromise = promiseAfterCommit();
+  let commitPromise = promiseAfterCache();
   yield asyncReInit();
   checkRequest();
   yield commitPromise;
@@ -208,7 +205,7 @@ add_task(function* should_remember_cohort_id() {
   // Check that the next request sends the previous cohort id, and
   // will remove it from the prefs due to the server no longer sending it.
   yield forceExpiration();
-  commitPromise = promiseAfterCommit();
+  commitPromise = promiseAfterCache();
   yield asyncReInit();
   checkRequest(cohort);
   yield commitPromise;
@@ -239,16 +236,16 @@ add_task(function* should_honor_retry_after_header() {
   // Trigger a new request.
   yield forceExpiration();
   let date = Date.now();
-  let commitPromise = promiseAfterCommit();
+  let commitPromise = promiseAfterCache();
   yield asyncReInit();
   checkRequest();
   yield commitPromise;
 
   // Check that the expiration timestamp has been updated.
   let metadata = yield promiseGlobalMetadata();
-  do_check_eq(typeof metadata.searchdefaultexpir, "number");
-  do_check_true(metadata.searchdefaultexpir >= date + kDayInSeconds * 1000);
-  do_check_true(metadata.searchdefaultexpir < date + (kDayInSeconds + 3600) * 1000);
+  do_check_eq(typeof metadata.searchDefaultExpir, "number");
+  do_check_true(metadata.searchDefaultExpir >= date + kDayInSeconds * 1000);
+  do_check_true(metadata.searchDefaultExpir < date + (kDayInSeconds + 3600) * 1000);
 
   // After another restart, a new request should not be triggered.
   yield asyncReInit();

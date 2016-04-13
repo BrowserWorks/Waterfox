@@ -66,7 +66,7 @@ if CONFIG['OS_TARGET'] == 'Android':
 
     if not CONFIG['MOZ_WEBRTC']:
         SOURCES += [
-            '%s/sources/android/cpufeatures/cpu-features.c' % CONFIG['ANDROID_NDK'],
+            '%%%s/sources/android/cpufeatures/cpu-features.c' % CONFIG['ANDROID_NDK'],
         ]
 
 if CONFIG['CLANG_CL'] or not CONFIG['_MSC_VER']:
@@ -82,8 +82,11 @@ if CONFIG['CLANG_CL'] or not CONFIG['_MSC_VER']:
                 SOURCES[f].flags += ['-mavx2']
 
 # Suppress warnings in third-party code.
-if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wno-sign-compare']
+if CONFIG['GNU_CC'] or CONFIG['CLANG_CL']:
+    CFLAGS += [
+        '-Wno-sign-compare',
+        '-Wno-unused-function', # so many of these warnings; just ignore them
+    ]
 
 ASFLAGS += CONFIG['VPX_ASFLAGS']
 ASFLAGS += [

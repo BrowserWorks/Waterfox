@@ -3,12 +3,12 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <!DOCTYPE html [
-<!ENTITY % animationinspectorDTD SYSTEM "chrome://browser/locale/devtools/animationinspector.dtd" >
+<!ENTITY % animationinspectorDTD SYSTEM "chrome://devtools/locale/animationinspector.dtd" >
  %animationinspectorDTD;
 ]>
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <title>&title;</title>
+    <title>&animationInspectorTitle;</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <link rel="stylesheet" href="chrome://devtools/skin/common.css" type="text/css"/>
     <link rel="stylesheet" href="chrome://devtools/skin/animationinspector.css" type="text/css"/>
@@ -22,7 +22,8 @@
     <div id="timeline-toolbar" class="theme-toolbar">
       <button id="rewind-timeline" standalone="true" class="devtools-button"></button>
       <button id="pause-resume-timeline" standalone="true" class="devtools-button pause-button paused"></button>
-      <span id="timeline-current-time" class="label"></span>
+      <span id="timeline-rate" standalone="true" class="devtools-button"></span>
+      <span id="timeline-current-time" class="label devtools-toolbarbutton"></span>
     </div>
     <div id="players"></div>
     <div id="error-message">

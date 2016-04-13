@@ -7,10 +7,10 @@
 #ifndef js_GCAPI_h
 #define js_GCAPI_h
 
-#include "mozilla/UniquePtr.h"
 #include "mozilla/Vector.h"
 
 #include "js/HeapAPI.h"
+#include "js/UniquePtr.h"
 
 namespace js {
 namespace gc {
@@ -47,8 +47,6 @@ typedef enum JSGCInvocationKind {
 } JSGCInvocationKind;
 
 namespace JS {
-
-using mozilla::UniquePtr;
 
 #define GCREASONS(D)                            \
     /* Reasons internal to the JS engine */     \
@@ -129,6 +127,12 @@ enum Reason {
      */
     NUM_TELEMETRY_REASONS = 100
 };
+
+/**
+ * Get a statically allocated C string explaining the given GC reason.
+ */
+extern JS_PUBLIC_API(const char*)
+ExplainReason(JS::gcreason::Reason reason);
 
 } /* namespace gcreason */
 
@@ -300,7 +304,7 @@ class GarbageCollectionEvent
         , collections()
     { }
 
-    using Ptr = UniquePtr<GarbageCollectionEvent, DeletePolicy<GarbageCollectionEvent>>;
+    using Ptr = js::UniquePtr<GarbageCollectionEvent>;
     static Ptr Create(JSRuntime* rt, ::js::gcstats::Statistics& stats, uint64_t majorGCNumber);
 
     JSObject* toJSObject(JSContext* cx) const;
@@ -352,6 +356,34 @@ typedef void
  */
 extern JS_PUBLIC_API(GCSliceCallback)
 SetGCSliceCallback(JSRuntime* rt, GCSliceCallback callback);
+
+/**
+ * Describes the progress of an observed nursery collection.
+ */
+enum class GCNurseryProgress {
+    /**
+     * The nursery collection is starting.
+     */
+    GC_NURSERY_COLLECTION_START,
+    /**
+     * The nursery collection is ending.
+     */
+    GC_NURSERY_COLLECTION_END
+};
+
+/**
+ * A nursery collection callback receives the progress of the nursery collection
+ * and the reason for the collection.
+ */
+using GCNurseryCollectionCallback = void(*)(JSRuntime* rt, GCNurseryProgress progress,
+                                            gcreason::Reason reason);
+
+/**
+ * Set the nursery collection callback for the given runtime. When set, it will
+ * be called at the start and end of every nursery collection.
+ */
+extern JS_PUBLIC_API(GCNurseryCollectionCallback)
+SetGCNurseryCollectionCallback(JSRuntime* rt, GCNurseryCollectionCallback callback);
 
 /**
  * Incremental GC defaults to enabled, but may be disabled for testing or in

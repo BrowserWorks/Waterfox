@@ -10,6 +10,7 @@
 #include "nsWrapperCache.h"
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Attributes.h"
+#include "mozilla/EffectCompositor.h" // For EffectCompositor::CascadeLevel
 #include "mozilla/LinkedList.h"
 #include "mozilla/TimeStamp.h" // for TimeStamp, TimeDuration
 #include "mozilla/dom/AnimationBinding.h" // for AnimationPlayState
@@ -38,9 +39,7 @@ class nsPresContext;
 
 namespace mozilla {
 
-struct AnimationCollection;
 class AnimValuesStyleRule;
-class CommonAnimationManager;
 
 namespace dom {
 
@@ -91,7 +90,13 @@ public:
   };
 
   // Animation interface methods
-
+  static already_AddRefed<Animation>
+  Constructor(const GlobalObject& aGlobal,
+              KeyframeEffectReadOnly* aEffect,
+              AnimationTimeline* aTimeline,
+              ErrorResult& aRv);
+  void GetId(nsAString& aResult) const { aResult = mId; }
+  void SetId(const nsAString& aId);
   KeyframeEffectReadOnly* GetEffect() const { return mEffect; }
   void SetEffect(KeyframeEffectReadOnly* aEffect);
   AnimationTimeline* GetTimeline() const { return mTimeline; }
@@ -232,6 +237,15 @@ public:
    */
   Nullable<TimeDuration> GetCurrentOrPendingStartTime() const;
 
+  /**
+   * Converts a time in the timescale of this Animation's currentTime, to a
+   * TimeStamp. Returns a null TimeStamp if the conversion cannot be performed
+   * because of the current state of this Animation (e.g. it has no timeline, a
+   * zero playbackRate, an unresolved start time etc.) or the value of the time
+   * passed-in (e.g. an infinite time).
+   */
+  TimeStamp AnimationTimeToTimeStamp(const StickyTimeDuration& aTime) const;
+
   bool IsPausedOrPausing() const
   {
     return PlayState() == AnimationPlayState::Paused ||
@@ -274,7 +288,16 @@ public:
   /**
    * Returns true if this Animation has a lower composite order than aOther.
    */
-  virtual bool HasLowerCompositeOrderThan(const Animation& aOther) const;
+  bool HasLowerCompositeOrderThan(const Animation& aOther) const;
+
+   /**
+   * Returns the level at which the effect(s) associated with this Animation
+   * are applied to the CSS cascade.
+   */
+  virtual EffectCompositor::CascadeLevel CascadeLevel() const
+  {
+    return EffectCompositor::CascadeLevel::Animations;
+  }
 
   /**
    * Returns true if this animation does not currently need to update
@@ -287,13 +310,9 @@ public:
    * if any.
    * Any properties already contained in |aSetProperties| are not changed. Any
    * properties that are changed are added to |aSetProperties|.
-   * |aStyleChanging| will be set to true if this animation expects to update
-   * the style rule on the next refresh driver tick as well (because it
-   * is running and has an effect to sample).
    */
   void ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
-                    nsCSSPropertySet& aSetProperties,
-                    bool& aStyleChanging);
+                    nsCSSPropertySet& aSetProperties);
 
   void NotifyEffectTimingUpdated();
 
@@ -352,12 +371,9 @@ protected:
 
   bool IsPossiblyOrphanedPendingAnimation() const;
   StickyTimeDuration EffectEnd() const;
-  TimeStamp AnimationTimeToTimeStamp(const StickyTimeDuration& aTime) const;
 
   nsIDocument* GetRenderedDocument() const;
   nsPresContext* GetPresContext() const;
-  virtual CommonAnimationManager* GetAnimationManager() const = 0;
-  AnimationCollection* GetCollection() const;
 
   RefPtr<AnimationTimeline> mTimeline;
   RefPtr<KeyframeEffectReadOnly> mEffect;
@@ -412,6 +428,8 @@ protected:
   // in that case mFinished is immediately reset to represent a new current
   // finished promise.
   bool mFinishedIsResolved;
+
+  nsString mId;
 };
 
 } // namespace dom

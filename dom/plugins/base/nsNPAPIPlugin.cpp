@@ -169,7 +169,10 @@ static NPNetscapeFuncs sBrowserFuncs = {
   _convertpoint,
   nullptr, // handleevent, unimplemented
   nullptr, // unfocusinstance, unimplemented
-  _urlredirectresponse
+  _urlredirectresponse,
+  _initasyncsurface,
+  _finalizeasyncsurface,
+  _setcurrentasyncsurface
 };
 
 static Mutex *sPluginThreadAsyncCallLock = nullptr;
@@ -262,6 +265,8 @@ nsNPAPIPlugin::RunPluginOOP(const nsPluginTag *aPluginTag)
 inline PluginLibrary*
 GetNewPluginLibrary(nsPluginTag *aPluginTag)
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+
   if (!aPluginTag) {
     return nullptr;
   }
@@ -280,6 +285,7 @@ GetNewPluginLibrary(nsPluginTag *aPluginTag)
 nsresult
 nsNPAPIPlugin::CreatePlugin(nsPluginTag *aPluginTag, nsNPAPIPlugin** aResult)
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
   *aResult = nullptr;
 
   if (!aPluginTag) {
@@ -1256,6 +1262,7 @@ _releaseobject(NPObject* npobj)
     return;
   }
 
+  // THIS IS A KNOWN LEAK. SEE BUG 1221448.
   // If releaseobject is called off the main thread and we have a valid pointer,
   // we at least know it was created on the main thread (see _createobject
   // implementation). However, forwarding the deletion back to the main thread
@@ -1359,10 +1366,8 @@ _evaluate(NPP npp, NPObject* npobj, NPString *script, NPVariant *result)
     return false;
   }
 
-  obj = JS_ObjectToInnerObject(cx, obj);
-  MOZ_ASSERT(obj,
-             "JS_ObjectToInnerObject should never return null with non-null "
-             "input.");
+  obj = js::ToWindowIfWindowProxy(obj);
+  MOZ_ASSERT(obj, "ToWindowIfWindowProxy should never return null");
 
   if (result) {
     // Initialize the out param to void
@@ -2144,9 +2149,7 @@ _getvalue(NPP npp, NPNVariable variable, void *result)
 
     case kOpenGLInterfaceV0_ANPGetValue: {
       LOG("get openGL interface");
-      ANPOpenGLInterfaceV0 *i = (ANPOpenGLInterfaceV0*) result;
-      InitOpenGLInterface(i);
-      return NPERR_NO_ERROR;
+      return NPERR_GENERIC_ERROR;
     }
 
     case kWindowInterfaceV1_ANPGetValue: {
@@ -2294,8 +2297,7 @@ _setvalue(NPP npp, NPPVariable variable, void *result)
       } else {
         float volume = 0.0;
         bool muted = true;
-        rv = agent->NotifyStartedPlaying(nsIAudioChannelAgent::AUDIO_AGENT_NOTIFY,
-                                         &volume, &muted);
+        rv = agent->NotifyStartedPlaying(&volume, &muted);
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return NPERR_NO_ERROR;
         }
@@ -2789,6 +2791,39 @@ _urlredirectresponse(NPP instance, void* notifyData, NPBool allow)
   }
 
   inst->URLRedirectResponse(notifyData, allow);
+}
+
+NPError
+_initasyncsurface(NPP instance, NPSize *size, NPImageFormat format, void *initData, NPAsyncSurface *surface)
+{
+  nsNPAPIPluginInstance *inst = (nsNPAPIPluginInstance *)instance->ndata;
+  if (!inst) {
+    return NPERR_GENERIC_ERROR;
+  }
+
+  return inst->InitAsyncSurface(size, format, initData, surface);
+}
+
+NPError
+_finalizeasyncsurface(NPP instance, NPAsyncSurface *surface)
+{
+  nsNPAPIPluginInstance *inst = (nsNPAPIPluginInstance *)instance->ndata;
+  if (!inst) {
+    return NPERR_GENERIC_ERROR;
+  }
+
+  return inst->FinalizeAsyncSurface(surface);
+}
+
+void
+_setcurrentasyncsurface(NPP instance, NPAsyncSurface *surface, NPRect *changed)
+{
+  nsNPAPIPluginInstance *inst = (nsNPAPIPluginInstance *)instance->ndata;
+  if (!inst) {
+    return;
+  }
+
+  inst->SetCurrentAsyncSurface(surface, changed);
 }
 
 } /* namespace parent */

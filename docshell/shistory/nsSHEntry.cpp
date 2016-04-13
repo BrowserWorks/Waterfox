@@ -24,6 +24,7 @@ static uint32_t gEntryID = 0;
 
 nsSHEntry::nsSHEntry()
   : mShared(new nsSHEntryShared())
+  , mLoadReplace(false)
   , mReferrerPolicy(mozilla::net::RP_Default)
   , mLoadType(0)
   , mID(gEntryID++)
@@ -32,6 +33,7 @@ nsSHEntry::nsSHEntry()
   , mParent(nullptr)
   , mURIWasModified(false)
   , mIsSrcdocEntry(false)
+  , mScrollRestorationIsManual(false)
 {
 }
 
@@ -52,6 +54,7 @@ nsSHEntry::nsSHEntry(const nsSHEntry& aOther)
   , mURIWasModified(aOther.mURIWasModified)
   , mStateData(aOther.mStateData)
   , mIsSrcdocEntry(aOther.mIsSrcdocEntry)
+  , mScrollRestorationIsManual(false)
   , mSrcdocData(aOther.mSrcdocData)
   , mBaseURI(aOther.mBaseURI)
 {
@@ -594,6 +597,20 @@ NS_IMETHODIMP
 nsSHEntry::SetBaseURI(nsIURI* aBaseURI)
 {
   mBaseURI = aBaseURI;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::GetScrollRestorationIsManual(bool* aIsManual)
+{
+  *aIsManual = mScrollRestorationIsManual;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHEntry::SetScrollRestorationIsManual(bool aIsManual)
+{
+  mScrollRestorationIsManual = aIsManual;
   return NS_OK;
 }
 

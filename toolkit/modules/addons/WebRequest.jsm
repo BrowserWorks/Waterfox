@@ -6,6 +6,8 @@
 
 const EXPORTED_SYMBOLS = ["WebRequest"];
 
+/* exported WebRequest */
+
 const Ci = Components.interfaces;
 const Cc = Components.classes;
 const Cu = Components.utils;
@@ -37,7 +39,7 @@ function parseExtra(extra, allowed) {
   if (extra) {
     for (let ex of extra) {
       if (allowed.indexOf(ex) == -1) {
-        throw `Invalid option ${ex}`;
+        throw new Error(`Invalid option ${ex}`);
       }
     }
   }
@@ -81,7 +83,7 @@ var ContentPolicyManager = {
           windowId: msg.data.windowId,
           parentWindowId: msg.data.parentWindowId,
           type: msg.data.type,
-          browser: browser
+          browser: browser,
         });
       } catch (e) {
         Cu.reportError(e);
@@ -122,8 +124,7 @@ var ContentPolicyManager = {
 };
 ContentPolicyManager.init();
 
-function StartStopListener(manager, loadContext)
-{
+function StartStopListener(manager, loadContext) {
   this.manager = manager;
   this.loadContext = loadContext;
   this.orig = null;
@@ -147,17 +148,65 @@ StartStopListener.prototype = {
 
   onDataAvailable(...args) {
     return this.orig.onDataAvailable(...args);
-  }
+  },
 };
 
-var HttpObserverManager = {
+var HttpObserverManager;
+
+var ChannelEventSink = {
+  _classDescription: "WebRequest channel event sink",
+  _classID: Components.ID("115062f8-92f1-11e5-8b7f-080027b0f7ec"),
+  _contractID: "@mozilla.org/webrequest/channel-event-sink;1",
+
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIChannelEventSink,
+                                         Ci.nsIFactory]),
+
+  init() {
+    Components.manager.QueryInterface(Ci.nsIComponentRegistrar)
+      .registerFactory(this._classID, this._classDescription, this._contractID, this);
+  },
+
+  register() {
+    let catMan = Cc["@mozilla.org/categorymanager;1"].getService(Ci.nsICategoryManager);
+    catMan.addCategoryEntry("net-channel-event-sinks", this._contractID, this._contractID, false, true);
+  },
+
+  unregister() {
+    let catMan = Cc["@mozilla.org/categorymanager;1"].getService(Ci.nsICategoryManager);
+    catMan.deleteCategoryEntry("net-channel-event-sinks", this._contractID, false);
+  },
+
+  // nsIChannelEventSink implementation
+  asyncOnChannelRedirect(oldChannel, newChannel, flags, redirectCallback) {
+    Services.tm.currentThread.dispatch(() => redirectCallback.onRedirectVerifyCallback(Cr.NS_OK), Ci.nsIEventTarget.DISPATCH_NORMAL);
+    try {
+      HttpObserverManager.onChannelReplaced(oldChannel, newChannel);
+    } catch (e) {
+      // we don't wanna throw: it would abort the redirection
+    }
+  },
+
+  // nsIFactory implementation
+  createInstance(outer, iid) {
+    if (outer) {
+      throw Cr.NS_ERROR_NO_AGGREGATION;
+    }
+    return this.QueryInterface(iid);
+  },
+};
+
+ChannelEventSink.init();
+
+HttpObserverManager = {
   modifyInitialized: false,
   examineInitialized: false,
+  redirectInitialized: false,
 
   listeners: {
     modify: new Map(),
     afterModify: new Map(),
     headersReceived: new Map(),
+    onRedirect: new Map(),
     onStart: new Map(),
     onStop: new Map(),
   },
@@ -185,6 +234,15 @@ var HttpObserverManager = {
       Services.obs.removeObserver(this, "http-on-examine-response");
       Services.obs.removeObserver(this, "http-on-examine-cached-response");
       Services.obs.removeObserver(this, "http-on-examine-merged-response");
+    }
+
+    let needRedirect = this.listeners.onRedirect.size;
+    if (needRedirect && !this.redirectInitialized) {
+      this.redirectInitialized = true;
+      ChannelEventSink.register();
+    } else if (!needRedirect && this.redirectInitialized) {
+      this.redirectInitialized = false;
+      ChannelEventSink.unregister();
     }
   },
 
@@ -246,7 +304,7 @@ var HttpObserverManager = {
            WebRequestCommon.urlMatches(uri, filter.urls);
   },
 
-  runChannelListener(channel, loadContext, kind) {
+  runChannelListener(channel, loadContext, kind, extraData = null) {
     let listeners = this.listeners[kind];
     let browser = loadContext ? loadContext.topFrameElement : null;
     let loadInfo = channel.loadInfo;
@@ -257,7 +315,10 @@ var HttpObserverManager = {
     let requestHeaders;
     let responseHeaders;
 
-    let includeStatus = kind == "headersReceived" || kind == "onStart" || kind == "onStop";
+    let includeStatus = kind === "headersReceived" ||
+                        kind === "onBeforeRedirect" ||
+                        kind === "onStart" ||
+                        kind === "onStop";
 
     for (let [callback, opts] of listeners.entries()) {
       if (!this.shouldRunListener(policyType, channel.URI, opts.filter)) {
@@ -272,6 +333,9 @@ var HttpObserverManager = {
         windowId: loadInfo ? loadInfo.outerWindowID : 0,
         parentWindowId: loadInfo ? loadInfo.parentOuterWindowID : 0,
       };
+      if (extraData) {
+        Object.assign(data, extraData);
+      }
       if (opts.requestHeaders) {
         if (!requestHeaders) {
           requestHeaders = this.getHeaders(channel, "visitRequestHeaders");
@@ -308,7 +372,7 @@ var HttpObserverManager = {
       }
       if (opts.requestHeaders && result.requestHeaders) {
         // Start by clearing everything.
-        for (let {name, value} of requestHeaders) {
+        for (let {name} of requestHeaders) {
           channel.setRequestHeader(name, "", false);
         }
 
@@ -318,7 +382,7 @@ var HttpObserverManager = {
       }
       if (opts.responseHeaders && result.responseHeaders) {
         // Start by clearing everything.
-        for (let {name, value} of responseHeaders) {
+        for (let {name} of responseHeaders) {
           channel.setResponseHeader(name, "", false);
         }
 
@@ -343,14 +407,23 @@ var HttpObserverManager = {
     let loadContext = this.getLoadContext(channel);
 
     if (this.listeners.onStart.size || this.listeners.onStop.size) {
-      if (channel instanceof Components.interfaces.nsITraceableChannel) {
-        let listener = new StartStopListener(this, loadContext);
-        let orig = channel.setNewListener(listener);
-        listener.orig = orig;
+      if (channel instanceof Ci.nsITraceableChannel) {
+        let responseStatus = channel.responseStatus;
+        // skip redirections, https://bugzilla.mozilla.org/show_bug.cgi?id=728901#c8
+        if (responseStatus < 300 || responseStatus >= 400) {
+          let listener = new StartStopListener(this, loadContext);
+          let orig = channel.setNewListener(listener);
+          listener.orig = orig;
+        }
       }
     }
 
     this.runChannelListener(channel, loadContext, "headersReceived");
+  },
+
+  onChannelReplaced(oldChannel, newChannel) {
+    this.runChannelListener(oldChannel, this.getLoadContext(oldChannel),
+                            "onRedirect", { redirectUrl: newChannel.URI.spec });
   },
 
   onStartRequest(channel, loadContext) {
@@ -372,68 +445,32 @@ var onBeforeRequest = {
 
   removeListener(callback) {
     ContentPolicyManager.removeListener(callback);
-  }
+  },
 };
 
-var onBeforeSendHeaders = {
+function HttpEvent(internalEvent, options) {
+  this.internalEvent = internalEvent;
+  this.options = options;
+}
+
+HttpEvent.prototype = {
   addListener(callback, filter = null, opt_extraInfoSpec = null) {
-    let opts = parseExtra(opt_extraInfoSpec, ["requestHeaders", "blocking"]);
+    let opts = parseExtra(opt_extraInfoSpec, this.options);
     opts.filter = parseFilter(filter);
-    HttpObserverManager.addListener("modify", callback, opts);
+    HttpObserverManager.addListener(this.internalEvent, callback, opts);
   },
 
   removeListener(callback) {
-    HttpObserverManager.removeListener("modify", callback);
-  }
-};
-
-var onSendHeaders = {
-  addListener(callback, filter = null, opt_extraInfoSpec = null) {
-    let opts = parseExtra(opt_extraInfoSpec, ["requestHeaders"]);
-    opts.filter = parseFilter(filter);
-    HttpObserverManager.addListener("afterModify", callback, opts);
+    HttpObserverManager.removeListener(this.internalEvent, callback);
   },
-
-  removeListener(callback) {
-    HttpObserverManager.removeListener("afterModify", callback);
-  }
 };
 
-var onHeadersReceived = {
-  addListener(callback, filter = null, opt_extraInfoSpec = null) {
-    let opts = parseExtra(opt_extraInfoSpec, ["blocking", "responseHeaders"]);
-    opts.filter = parseFilter(filter);
-    HttpObserverManager.addListener("headersReceived", callback, opts);
-  },
-
-  removeListener(callback) {
-    HttpObserverManager.removeListener("headersReceived", callback);
-  }
-};
-
-var onResponseStarted = {
-  addListener(callback, filter = null, opt_extraInfoSpec = null) {
-    let opts = parseExtra(opt_extraInfoSpec, ["responseHeaders"]);
-    opts.filter = parseFilter(filter);
-    HttpObserverManager.addListener("onStart", callback, opts);
-  },
-
-  removeListener(callback) {
-    HttpObserverManager.removeListener("onStart", callback);
-  }
-};
-
-var onCompleted = {
-  addListener(callback, filter = null, opt_extraInfoSpec = null) {
-    let opts = parseExtra(opt_extraInfoSpec, ["responseHeaders"]);
-    opts.filter = parseFilter(filter);
-    HttpObserverManager.addListener("onStop", callback, opts);
-  },
-
-  removeListener(callback) {
-    HttpObserverManager.removeListener("onStop", callback);
-  }
-};
+var onBeforeSendHeaders = new HttpEvent("modify", ["requestHeaders", "blocking"]);
+var onSendHeaders = new HttpEvent("afterModify", ["requestHeaders"]);
+var onHeadersReceived = new HttpEvent("headersReceived", ["blocking", "responseHeaders"]);
+var onBeforeRedirect = new HttpEvent("onRedirect", ["responseHeaders"]);
+var onResponseStarted = new HttpEvent("onStart", ["responseHeaders"]);
+var onCompleted = new HttpEvent("onStop", ["responseHeaders"]);
 
 var WebRequest = {
   // Handled via content policy.
@@ -447,6 +484,9 @@ var WebRequest = {
 
   // http-on-examine-*observer.
   onHeadersReceived: onHeadersReceived,
+
+  // nsIChannelEventSink
+  onBeforeRedirect: onBeforeRedirect,
 
   // OnStartRequest channel listener.
   onResponseStarted: onResponseStarted,

@@ -41,7 +41,8 @@ addMessageListener("devtools:test:console", function ({ data }) {
  *        { method: the request method (default: "GET"),
  *          url: the url to request (default: content.location.href),
  *          body: the request body to send (default: ""),
- *          nocache: append an unique token to the query string (default: true)
+ *          nocache: append an unique token to the query string (default: true),
+ *          requestHeaders: set request headers (default: none)
  *        }
  *
  * @return Promise A promise that's resolved with object
@@ -67,9 +68,16 @@ function promiseXHR(data) {
   });
 
   xhr.open(method, url);
+
+  // Set request headers
+  if (data.requestHeaders) {
+    data.requestHeaders.forEach(header => {
+      xhr.setRequestHeader(header.name, header.value);
+    });
+  }
+
   xhr.send(body);
   return deferred.promise;
-
 }
 
 /**
@@ -83,7 +91,11 @@ function promiseXHR(data) {
  *   method: "GET",
  *   url: content.location.href,
  *   body: "",
- *   nocache: true, // Adds a cache busting random token to the URL
+ *   nocache: true, // Adds a cache busting random token to the URL,
+ *   requestHeaders: [{
+ *     name: "Content-Type",
+ *     value: "application/json"
+ *   }]
  * }
  *
  * The handler will respond with devtools:test:xhr message after all requests
@@ -146,42 +158,6 @@ addMessageListener("devtools:test:setStyle", function(msg) {
   node.style[propertyName] = propertyValue;
 
   sendAsyncMessage("devtools:test:setStyle");
-});
-
-/**
- * Get information about a DOM element, identified by a selector.
- * @param {Object} data
- * - {String} selector The CSS selector to get the node (can be a "super"
- *   selector).
- * @return {Object} data Null if selector didn't match any node, otherwise:
- * - {String} tagName.
- * - {String} namespaceURI.
- * - {Number} numChildren The number of children in the element.
- * - {Array} attributes An array of {name, value, namespaceURI} objects.
- * - {String} outerHTML.
- * - {String} innerHTML.
- * - {String} textContent.
- */
-addMessageListener("devtools:test:getDomElementInfo", function(msg) {
-  let {selector} = msg.data;
-  let node = superQuerySelector(selector);
-
-  let info = null;
-  if (node) {
-    info = {
-      tagName: node.tagName,
-      namespaceURI: node.namespaceURI,
-      numChildren: node.children.length,
-      attributes: [...node.attributes].map(({name, value, namespaceURI}) => {
-        return {name, value, namespaceURI};
-      }),
-      outerHTML: node.outerHTML,
-      innerHTML: node.innerHTML,
-      textContent: node.textContent
-    };
-  }
-
-  sendAsyncMessage("devtools:test:getDomElementInfo", info);
 });
 
 /**

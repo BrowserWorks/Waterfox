@@ -197,7 +197,7 @@ const EXPIRATION_QUERIES = {
   },
 
   // Finds orphan URIs in the database.
-  // Notice we won't notify single removed URIs on removeAllPages, so we don't
+  // Notice we won't notify single removed URIs on History.clear(), so we don't
   // run this query in such a case, but just delete URIs.
   // This could run in the middle of adding a visit or bookmark to a new page.
   // In such a case since it is async, could end up expiring the orphan page
@@ -239,6 +239,15 @@ const EXPIRATION_QUERIES = {
             LIMIT :limit_uris
           )`,
     actions: ACTION.CLEAR_HISTORY
+  },
+
+  // Hosts accumulated during the places delete are updated through a trigger
+  // (see nsPlacesTriggers.h).
+  QUERY_UPDATE_HOSTS: {
+    sql: `DELETE FROM moz_updatehosts_temp`,
+    actions: ACTION.CLEAR_HISTORY | ACTION.TIMED | ACTION.TIMED_OVERLIMIT |
+             ACTION.SHUTDOWN_DIRTY | ACTION.IDLE_DIRTY | ACTION.IDLE_DAILY |
+             ACTION.DEBUG
   },
 
   // Expire orphan icons from the database.

@@ -42,10 +42,15 @@ class SyntaxParseHandler
         NodeGetProp,
         NodeStringExprStatement,
         NodeReturn,
-        NodeHoistableDeclaration,
         NodeBreak,
         NodeThrow,
         NodeEmptyStatement,
+
+        NodeVarDeclaration,
+        NodeLetDeclaration,
+        NodeConstDeclaration,
+
+        NodeFunctionDefinition,
 
         // This is needed for proper assignment-target handling.  ES6 formally
         // requires function calls *not* pass IsValidSimpleAssignmentTarget,
@@ -220,7 +225,7 @@ class SyntaxParseHandler
         return true;
     }
 
-    Node newThisLiteral(const TokenPos& pos) { return NodeGeneric; }
+    Node newThisLiteral(const TokenPos& pos, Node thisName) { return NodeGeneric; }
     Node newNullLiteral(const TokenPos& pos) { return NodeGeneric; }
 
     template <class Boxer>
@@ -276,7 +281,7 @@ class SyntaxParseHandler
 
     Node newNewTarget(Node newHolder, Node targetHolder) { return NodeGeneric; }
     Node newPosHolder(const TokenPos& pos) { return NodeGeneric; }
-    Node newSuperBase(const TokenPos& pos, ExclusiveContext* cx) { return NodeSuperBase; }
+    Node newSuperBase(Node thisName, const TokenPos& pos) { return NodeSuperBase; }
 
     bool addPrototypeMutation(Node literal, uint32_t begin, Node expr) { return true; }
     bool addPropertyDefinition(Node literal, Node name, Node expr) { return true; }
@@ -290,8 +295,11 @@ class SyntaxParseHandler
 
     Node newStatementList(unsigned blockid, const TokenPos& pos) { return NodeGeneric; }
     void addStatementToList(Node list, Node stmt, ParseContext<SyntaxParseHandler>* pc) {}
+    void addCaseStatementToList(Node list, Node stmt, ParseContext<SyntaxParseHandler>* pc) {}
     bool prependInitialYield(Node stmtList, Node gen) { return true; }
     Node newEmptyStatement(const TokenPos& pos) { return NodeEmptyStatement; }
+
+    Node newSetThis(Node thisName, Node value) { return value; }
 
     Node newExprStatement(Node expr, uint32_t end) {
         return expr == NodeUnparenthesizedString ? NodeStringExprStatement : NodeGeneric;
@@ -328,17 +336,35 @@ class SyntaxParseHandler
 
     bool setLastFunctionArgumentDefault(Node funcpn, Node pn) { return true; }
     void setLastFunctionArgumentDestructuring(Node funcpn, Node pn) {}
-    Node newFunctionDefinition() { return NodeHoistableDeclaration; }
+    Node newFunctionDefinition() { return NodeFunctionDefinition; }
     void setFunctionBody(Node pn, Node kid) {}
     void setFunctionBox(Node pn, FunctionBox* funbox) {}
+    Node newFunctionDefinitionForAnnexB(Node pn, Node assignment) { return NodeFunctionDefinition; }
     void addFunctionArgument(Node pn, Node argpn) {}
 
     Node newForStatement(uint32_t begin, Node forHead, Node body, unsigned iflags) {
         return NodeGeneric;
     }
 
+    Node newComprehensionFor(uint32_t begin, Node forHead, Node body) {
+        return NodeGeneric;
+    }
+
+    Node newComprehensionBinding(Node kid) {
+        // Careful: we're asking this well after the name was parsed, so the
+        // value returned may not correspond to |kid|'s actual name.  But it
+        // *will* be truthy iff |kid| was a name, so we're safe.
+        MOZ_ASSERT(isUnparenthesizedName(kid));
+        return NodeGeneric;
+    }
+
     Node newForHead(ParseNodeKind kind, Node decls, Node lhs, Node rhs, const TokenPos& pos) {
         return NodeGeneric;
+    }
+
+    void initForLetBlock(Node forLetImpliedBlock, Node nestedForLoop) {
+        MOZ_ASSERT(forLetImpliedBlock == NodeGeneric); // per newForStatement
+        MOZ_ASSERT(nestedForLoop == NodeGeneric); // per newLexicalScope
     }
 
     Node newLexicalScope(ObjectBox* blockbox) { return NodeGeneric; }
@@ -348,7 +374,7 @@ class SyntaxParseHandler
         return NodeGeneric;
     }
 
-    bool finishInitializerAssignment(Node pn, Node init, JSOp op) { return true; }
+    bool finishInitializerAssignment(Node pn, Node init) { return true; }
     void setLexicalDeclarationOp(Node pn, JSOp op) {}
 
     void setBeginPosition(Node pn, Node oth) {}
@@ -366,22 +392,68 @@ class SyntaxParseHandler
 
     Node newList(ParseNodeKind kind, JSOp op = JSOP_NOP) {
         MOZ_ASSERT(kind != PNK_VAR);
+        MOZ_ASSERT(kind != PNK_LET);
+        MOZ_ASSERT(kind != PNK_CONST);
         return NodeGeneric;
     }
     Node newList(ParseNodeKind kind, uint32_t begin, JSOp op = JSOP_NOP) {
-        return NodeGeneric;
-    }
-    Node newDeclarationList(ParseNodeKind kind, JSOp op = JSOP_NOP) {
-        MOZ_ASSERT(kind == PNK_VAR || kind == PNK_CONST || kind == PNK_LET);
-        return kind == PNK_VAR ? NodeHoistableDeclaration : NodeGeneric;
+        return newList(kind, op);
     }
     Node newList(ParseNodeKind kind, Node kid, JSOp op = JSOP_NOP) {
-        MOZ_ASSERT(kind != PNK_VAR);
-        return NodeGeneric;
+        return newList(kind, op);
+    }
+
+    Node newDeclarationList(ParseNodeKind kind, JSOp op = JSOP_NOP) {
+        if (kind == PNK_VAR)
+            return NodeVarDeclaration;
+        if (kind == PNK_LET)
+            return NodeLetDeclaration;
+        MOZ_ASSERT(kind == PNK_CONST);
+        return NodeConstDeclaration;
     }
     Node newDeclarationList(ParseNodeKind kind, Node kid, JSOp op = JSOP_NOP) {
-        MOZ_ASSERT(kind == PNK_VAR || kind == PNK_CONST || kind == PNK_LET);
-        return kind == PNK_VAR ? NodeHoistableDeclaration : NodeGeneric;
+        return newDeclarationList(kind, op);
+    }
+
+    bool isDeclarationList(Node node) {
+        return node == NodeVarDeclaration ||
+               node == NodeLetDeclaration ||
+               node == NodeConstDeclaration;
+    }
+
+    bool declarationIsVar(Node node) {
+        MOZ_ASSERT(isDeclarationList(node));
+        return node == NodeVarDeclaration;
+    }
+
+    bool declarationIsLet(Node node) {
+        MOZ_ASSERT(isDeclarationList(node));
+        return node == NodeLetDeclaration;
+    }
+
+    bool declarationIsConst(Node node) {
+        MOZ_ASSERT(isDeclarationList(node));
+        return node == NodeConstDeclaration;
+    }
+
+    Node singleBindingFromDeclaration(Node decl) {
+        MOZ_ASSERT(isDeclarationList(decl));
+
+        // This is, unfortunately, very dodgy.  Obviously NodeVarDeclaration
+        // can store no info on the arbitrary number of bindings it could
+        // contain.
+        //
+        // But this method is called only for cloning for-in/of declarations
+        // as initialization targets.  That context simplifies matters.  If the
+        // binding is a single name, it'll always syntax-parse (or it would
+        // already have been rejected as assigning/binding a forbidden name).
+        // Otherwise the binding is a destructuring pattern.  But syntax
+        // parsing would *already* have aborted when it saw a destructuring
+        // pattern.  So we can just say any old thing here, because the only
+        // time we'll be wrong is a case that syntax parsing has already
+        // rejected.  Use NodeUnparenthesizedName so the SyntaxParseHandler
+        // Parser::cloneLeftHandSide can assert it sees only this.
+        return NodeUnparenthesizedName;
     }
 
     Node newCatchList() {
@@ -397,7 +469,9 @@ class SyntaxParseHandler
                    list == NodeUnparenthesizedArray ||
                    list == NodeUnparenthesizedObject ||
                    list == NodeUnparenthesizedCommaExpr ||
-                   list == NodeHoistableDeclaration ||
+                   list == NodeVarDeclaration ||
+                   list == NodeLetDeclaration ||
+                   list == NodeConstDeclaration ||
                    list == NodeFunctionCall);
     }
 
@@ -426,13 +500,13 @@ class SyntaxParseHandler
     }
 
     bool isStatementPermittedAfterReturnStatement(Node pn) {
-        return pn == NodeHoistableDeclaration || pn == NodeBreak || pn == NodeThrow ||
+        return pn == NodeFunctionDefinition || pn == NodeVarDeclaration ||
+               pn == NodeBreak ||
+               pn == NodeThrow ||
                pn == NodeEmptyStatement;
     }
 
-    bool isSuperBase(Node pn, ExclusiveContext* cx) {
-        // While NodePosHolder is used in other places than just as super-base,
-        // it is unique enough for our purposes.
+    bool isSuperBase(Node pn) {
         return pn == NodeSuperBase;
     }
 
@@ -477,30 +551,35 @@ class SyntaxParseHandler
 
     bool isConstant(Node pn) { return false; }
 
-    PropertyName* maybeUnparenthesizedName(Node node) {
-        if (node == NodeUnparenthesizedName ||
-            node == NodeUnparenthesizedArgumentsName ||
-            node == NodeUnparenthesizedEvalName)
-        {
-            return lastAtom->asPropertyName();
-        }
-        return nullptr;
+    bool isUnparenthesizedName(Node node) {
+        return node == NodeUnparenthesizedArgumentsName ||
+               node == NodeUnparenthesizedEvalName ||
+               node == NodeUnparenthesizedName;
     }
 
-    PropertyName* maybeParenthesizedName(Node node) {
-        if (node == NodeParenthesizedName ||
-            node == NodeParenthesizedArgumentsName ||
-            node == NodeParenthesizedEvalName)
-        {
-            return lastAtom->asPropertyName();
-        }
-        return nullptr;
+    bool isNameAnyParentheses(Node node) {
+        if (isUnparenthesizedName(node))
+            return true;
+        return node == NodeParenthesizedArgumentsName ||
+               node == NodeParenthesizedEvalName ||
+               node == NodeParenthesizedName;
     }
 
-    PropertyName* maybeNameAnyParentheses(Node node) {
-        if (PropertyName* name = maybeUnparenthesizedName(node))
-            return name;
-        return maybeParenthesizedName(node);
+    bool nameIsEvalAnyParentheses(Node node, ExclusiveContext* cx) {
+        MOZ_ASSERT(isNameAnyParentheses(node),
+                   "must only call this function on known names");
+        return node == NodeUnparenthesizedEvalName || node == NodeParenthesizedEvalName;
+    }
+
+    const char* nameIsArgumentsEvalAnyParentheses(Node node, ExclusiveContext* cx) {
+        MOZ_ASSERT(isNameAnyParentheses(node),
+                   "must only call this method on known names");
+
+        if (nameIsEvalAnyParentheses(node, cx))
+            return js_eval_str;
+        if (node == NodeUnparenthesizedArgumentsName || node == NodeParenthesizedArgumentsName)
+            return js_arguments_str;
+        return nullptr;
     }
 
     PropertyName* maybeDottedProperty(Node node) {

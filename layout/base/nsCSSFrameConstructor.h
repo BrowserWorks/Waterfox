@@ -55,8 +55,7 @@ public:
 
   friend class mozilla::RestyleManager;
 
-  nsCSSFrameConstructor(nsIDocument *aDocument, nsIPresShell* aPresShell,
-                        nsStyleSet* aStyleSet);
+  nsCSSFrameConstructor(nsIDocument* aDocument, nsIPresShell* aPresShell);
   ~nsCSSFrameConstructor(void) {
     NS_ASSERTION(mUpdateCount == 0, "Dying in the middle of our own update?");
   }
@@ -301,14 +300,11 @@ public:
    */
   InsertionPoint GetInsertionPoint(nsIContent* aContainer, nsIContent* aChild);
 
-  nsresult CreateListBoxContent(nsPresContext*    aPresContext,
-                                nsContainerFrame* aParentFrame,
+  nsresult CreateListBoxContent(nsContainerFrame* aParentFrame,
                                 nsIFrame*         aPrevFrame,
                                 nsIContent*       aChild,
                                 nsIFrame**        aResult,
-                                bool              aIsAppend,
-                                bool              aIsScrollbar,
-                                nsILayoutHistoryState* aFrameState);
+                                bool              aIsAppend);
 
   // GetInitialContainingBlock() is deprecated in favor of GetRootElementFrame();
   // nsIFrame* GetInitialContainingBlock() { return mRootElementFrame; }
@@ -337,7 +333,6 @@ private:
   class FrameConstructionItemList;
 
   nsContainerFrame* ConstructPageFrame(nsIPresShell*      aPresShell,
-                                       nsPresContext*     aPresContext,
                                        nsContainerFrame*  aParentFrame,
                                        nsIFrame*          aPrevPageFrame,
                                        nsContainerFrame*& aCanvasFrame);
@@ -1478,7 +1473,6 @@ private:
                                   nsFrameConstructorState& aState,
                                   FrameConstructionItem&   aItem,
                                   nsContainerFrame*        aParentFrame,
-                                  const nsStyleDisplay*    aDisplay,
                                   nsFrameItems&            aFrameItems,
                                   ContainerFrameCreationFunc aConstructor,
                                   ContainerFrameCreationFunc aInnerConstructor,
@@ -1515,7 +1509,7 @@ private:
      changes, make this static */
   const FrameConstructionData*
     FindDisplayData(const nsStyleDisplay* aDisplay, Element* aElement,
-                    nsIFrame* aParentFrame, nsStyleContext* aStyleContext);
+                    nsStyleContext* aStyleContext);
 
   /**
    * Construct a scrollable block frame
@@ -1695,7 +1689,6 @@ private:
                                             nsStyleContext*   aStyleContext);
 
   nsIFrame* CreateContinuingTableFrame(nsIPresShell*     aPresShell,
-                                       nsPresContext*    aPresContext,
                                        nsIFrame*         aFrame,
                                        nsContainerFrame* aParentFrame,
                                        nsIContent*       aContent,
@@ -1745,7 +1738,6 @@ private:
   // @param aPendingBinding the pending binding  from this block's frame
   // construction item.
   void ConstructBlock(nsFrameConstructorState& aState,
-                      const nsStyleDisplay*    aDisplay,
                       nsIContent*              aContent,
                       nsContainerFrame*        aParentFrame,
                       nsContainerFrame*        aContentParentFrame,
@@ -1820,7 +1812,6 @@ private:
   // Methods support :first-letter style
 
   void CreateFloatingLetterFrame(nsFrameConstructorState& aState,
-                                 nsContainerFrame*        aBlockFrame,
                                  nsIContent*              aTextContent,
                                  nsIFrame*                aTextFrame,
                                  nsContainerFrame*        aParentFrame,
@@ -1833,8 +1824,7 @@ private:
                          nsContainerFrame*        aParentFrame,
                          nsFrameItems&            aResult);
 
-  void WrapFramesInFirstLetterFrame(nsIContent*       aBlockContent,
-                                    nsContainerFrame* aBlockFrame,
+  void WrapFramesInFirstLetterFrame(nsContainerFrame* aBlockFrame,
                                     nsFrameItems&     aBlockFrames);
 
   /**
@@ -1855,9 +1845,6 @@ private:
    * @param aTextFrame returns the textframe that had the first-letter
    * @param aPrevFrame returns the previous sibling of aTextFrame
    * @param aLetterFrames returns the frames that were created
-   * @param aStopLooking returns whether we should stop looking for a
-   *                     first-letter either because it was found or won't be
-   *                     found
    */
   void WrapFramesInFirstLetterFrame(nsContainerFrame*  aBlockFrame,
                                     nsContainerFrame*  aBlockContinuation,
@@ -1872,22 +1859,18 @@ private:
   void RecoverLetterFrames(nsContainerFrame* aBlockFrame);
 
   //
-  nsresult RemoveLetterFrames(nsPresContext*    aPresContext,
-                              nsIPresShell*     aPresShell,
+  nsresult RemoveLetterFrames(nsIPresShell*     aPresShell,
                               nsContainerFrame* aBlockFrame);
 
   // Recursive helper for RemoveLetterFrames
-  nsresult RemoveFirstLetterFrames(nsPresContext*    aPresContext,
-                                   nsIPresShell*     aPresShell,
+  nsresult RemoveFirstLetterFrames(nsIPresShell*     aPresShell,
                                    nsContainerFrame* aFrame,
                                    nsContainerFrame* aBlockFrame,
                                    bool*             aStopLooking);
 
   // Special remove method for those pesky floating first-letter frames
-  nsresult RemoveFloatingFirstLetterFrames(nsPresContext*  aPresContext,
-                                           nsIPresShell*    aPresShell,
-                                           nsIFrame*        aBlockFrame,
-                                           bool*          aStopLooking);
+  nsresult RemoveFloatingFirstLetterFrames(nsIPresShell*    aPresShell,
+                                           nsIFrame*        aBlockFrame);
 
   // Capture state for the frame tree rooted at the frame associated with the
   // content object, aContent

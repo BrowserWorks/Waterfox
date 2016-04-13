@@ -214,7 +214,7 @@ void StopSSLServerCertVerificationThreads()
 namespace {
 
 void
-LogInvalidCertError(TransportSecurityInfo* socketInfo,
+LogInvalidCertError(nsNSSSocketInfo* socketInfo,
                     PRErrorCode errorCode,
                     ::mozilla::psm::SSLErrorMessageType errorMessageType)
 {
@@ -236,7 +236,7 @@ class SSLServerCertVerificationResult : public nsRunnable
 public:
   NS_DECL_NSIRUNNABLE
 
-  SSLServerCertVerificationResult(TransportSecurityInfo* infoObject,
+  SSLServerCertVerificationResult(nsNSSSocketInfo* infoObject,
                                   PRErrorCode errorCode,
                                   Telemetry::ID telemetryID = Telemetry::HistogramCount,
                                   uint32_t telemetryValue = -1,
@@ -245,7 +245,7 @@ public:
 
   void Dispatch();
 private:
-  const RefPtr<TransportSecurityInfo> mInfoObject;
+  const RefPtr<nsNSSSocketInfo> mInfoObject;
 public:
   const PRErrorCode mErrorCode;
   const SSLErrorMessageType mErrorMessageType;
@@ -258,7 +258,7 @@ class CertErrorRunnable : public SyncRunnableBase
  public:
   CertErrorRunnable(const void* fdForLogging,
                     nsIX509Cert* cert,
-                    TransportSecurityInfo* infoObject,
+                    nsNSSSocketInfo* infoObject,
                     PRErrorCode defaultErrorCodeToReport,
                     uint32_t collectedErrors,
                     PRErrorCode errorCodeTrust,
@@ -282,7 +282,7 @@ private:
 
   const void* const mFdForLogging; // may become an invalid pointer; do not dereference
   const nsCOMPtr<nsIX509Cert> mCert;
-  const RefPtr<TransportSecurityInfo> mInfoObject;
+  const RefPtr<nsNSSSocketInfo> mInfoObject;
   const PRErrorCode mDefaultErrorCodeToReport;
   const uint32_t mCollectedErrors;
   const PRErrorCode mErrorCodeTrust;
@@ -454,7 +454,7 @@ CertErrorRunnable::CheckCertOverrides()
                                     mFdForLogging, this));
   // "Use" mFdForLogging in non-PR_LOGGING builds, too, to suppress
   // clang's -Wunused-private-field build warning for this variable:
-  unused << mFdForLogging;
+  Unused << mFdForLogging;
 
   if (!NS_IsMainThread()) {
     NS_ERROR("CertErrorRunnable::CheckCertOverrides called off main thread");
@@ -622,7 +622,7 @@ CertErrorRunnable::RunOnTargetThread()
 CertErrorRunnable*
 CreateCertErrorRunnable(CertVerifier& certVerifier,
                         PRErrorCode defaultErrorCodeToReport,
-                        TransportSecurityInfo* infoObject,
+                        nsNSSSocketInfo* infoObject,
                         CERTCertificate* cert,
                         const void* fdForLogging,
                         uint32_t providerFlags,
@@ -715,7 +715,7 @@ public:
   // Must be called only on the socket transport thread
   static SECStatus Dispatch(const RefPtr<SharedCertVerifier>& certVerifier,
                             const void* fdForLogging,
-                            TransportSecurityInfo* infoObject,
+                            nsNSSSocketInfo* infoObject,
                             CERTCertificate* serverCert,
                             ScopedCERTCertList& peerCertChain,
                             SECItem* stapledOCSPResponse,
@@ -728,7 +728,7 @@ private:
   // Must be called only on the socket transport thread
   SSLServerCertVerificationJob(const RefPtr<SharedCertVerifier>& certVerifier,
                                const void* fdForLogging,
-                               TransportSecurityInfo* infoObject,
+                               nsNSSSocketInfo* infoObject,
                                CERTCertificate* cert,
                                CERTCertList* peerCertChain,
                                SECItem* stapledOCSPResponse,
@@ -737,7 +737,7 @@ private:
                                PRTime prtime);
   const RefPtr<SharedCertVerifier> mCertVerifier;
   const void* const mFdForLogging;
-  const RefPtr<TransportSecurityInfo> mInfoObject;
+  const RefPtr<nsNSSSocketInfo> mInfoObject;
   const ScopedCERTCertificate mCert;
   ScopedCERTCertList mPeerCertChain;
   const uint32_t mProviderFlags;
@@ -749,7 +749,7 @@ private:
 
 SSLServerCertVerificationJob::SSLServerCertVerificationJob(
     const RefPtr<SharedCertVerifier>& certVerifier, const void* fdForLogging,
-    TransportSecurityInfo* infoObject, CERTCertificate* cert,
+    nsNSSSocketInfo* infoObject, CERTCertificate* cert,
     CERTCertList* peerCertChain, SECItem* stapledOCSPResponse,
     uint32_t providerFlags, Time time, PRTime prtime)
   : mCertVerifier(certVerifier)
@@ -1200,7 +1200,7 @@ GatherSuccessfulValidationTelemetry(const ScopedCERTCertList& certList)
 
 SECStatus
 AuthCertificate(CertVerifier& certVerifier,
-                TransportSecurityInfo* infoObject,
+                nsNSSSocketInfo* infoObject,
                 CERTCertificate* cert,
                 ScopedCERTCertList& peerCertChain,
                 SECItem* stapledOCSPResponse,
@@ -1222,15 +1222,21 @@ AuthCertificate(CertVerifier& certVerifier,
   CertVerifier::OCSPStaplingStatus ocspStaplingStatus =
     CertVerifier::OCSP_STAPLING_NEVER_CHECKED;
   KeySizeStatus keySizeStatus = KeySizeStatus::NeverChecked;
-  SignatureDigestStatus sigDigestStatus = SignatureDigestStatus::NeverChecked;
+  SHA1ModeResult sha1ModeResult = SHA1ModeResult::NeverChecked;
   PinningTelemetryInfo pinningTelemetryInfo;
+
+  int flags = 0;
+  if (!infoObject->SharedState().IsOCSPStaplingEnabled() ||
+      !infoObject->SharedState().IsOCSPMustStapleEnabled()) {
+    flags |= CertVerifier::FLAG_TLS_IGNORE_STATUS_REQUEST;
+  }
 
   rv = certVerifier.VerifySSLServerCert(cert, stapledOCSPResponse,
                                         time, infoObject,
                                         infoObject->GetHostNameRaw(),
-                                        saveIntermediates, 0, &certList,
+                                        certList, saveIntermediates, flags,
                                         &evOidPolicy, &ocspStaplingStatus,
-                                        &keySizeStatus, &sigDigestStatus,
+                                        &keySizeStatus, &sha1ModeResult,
                                         &pinningTelemetryInfo);
   PRErrorCode savedErrorCode;
   if (rv != SECSuccess) {
@@ -1244,9 +1250,9 @@ AuthCertificate(CertVerifier& certVerifier,
     Telemetry::Accumulate(Telemetry::CERT_CHAIN_KEY_SIZE_STATUS,
                           static_cast<uint32_t>(keySizeStatus));
   }
-  if (sigDigestStatus != SignatureDigestStatus::NeverChecked) {
-    Telemetry::Accumulate(Telemetry::CERT_CHAIN_SIGNATURE_DIGEST_STATUS,
-                          static_cast<uint32_t>(sigDigestStatus));
+  if (sha1ModeResult != SHA1ModeResult::NeverChecked) {
+    Telemetry::Accumulate(Telemetry::CERT_CHAIN_SHA1_POLICY_STATUS,
+                          static_cast<uint32_t>(sha1ModeResult));
   }
 
   if (pinningTelemetryInfo.accumulateForRoot) {
@@ -1327,7 +1333,7 @@ AuthCertificate(CertVerifier& certVerifier,
 SSLServerCertVerificationJob::Dispatch(
   const RefPtr<SharedCertVerifier>& certVerifier,
   const void* fdForLogging,
-  TransportSecurityInfo* infoObject,
+  nsNSSSocketInfo* infoObject,
   CERTCertificate* serverCert,
   ScopedCERTCertList& peerCertChain,
   SECItem* stapledOCSPResponse,
@@ -1662,7 +1668,7 @@ void EnsureServerVerificationInitialized()
 }
 
 SSLServerCertVerificationResult::SSLServerCertVerificationResult(
-        TransportSecurityInfo* infoObject, PRErrorCode errorCode,
+        nsNSSSocketInfo* infoObject, PRErrorCode errorCode,
         Telemetry::ID telemetryID, uint32_t telemetryValue,
         SSLErrorMessageType errorMessageType)
   : mInfoObject(infoObject)

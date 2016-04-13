@@ -11,11 +11,17 @@
 #include "MediaTrackConstraints.h"
 #include "CamerasChild.h"
 
-extern PRLogModuleInfo* GetMediaManagerLog();
+extern mozilla::LogModule* GetMediaManagerLog();
 #define LOG(msg) MOZ_LOG(GetMediaManagerLog(), mozilla::LogLevel::Debug, msg)
 #define LOGFRAME(msg) MOZ_LOG(GetMediaManagerLog(), mozilla::LogLevel::Verbose, msg)
 
 namespace mozilla {
+
+// These need a definition somewhere because template
+// code is allowed to take their address, and they aren't
+// guaranteed to have one without this.
+const unsigned int MediaEngineSource::kMaxDeviceNameLength;
+const unsigned int MediaEngineSource::kMaxUniqueIdLength;;
 
 using dom::ConstrainLongRange;
 
@@ -38,10 +44,11 @@ MediaEngineRemoteVideoSource::Init()
   LOG((__PRETTY_FUNCTION__));
   char deviceName[kMaxDeviceNameLength];
   char uniqueId[kMaxUniqueIdLength];
-  if (mozilla::camera::GetCaptureDevice(mCapEngine,
-                                        mCaptureIndex,
-                                        deviceName, kMaxDeviceNameLength,
-                                        uniqueId, kMaxUniqueIdLength)) {
+  if (mozilla::camera::GetChildAndCall(
+    &mozilla::camera::CamerasChild::GetCaptureDevice,
+    mCapEngine, mCaptureIndex,
+    deviceName, kMaxDeviceNameLength,
+    uniqueId, kMaxUniqueIdLength)) {
     LOG(("Error initializing RemoteVideoSource (GetCaptureDevice)"));
     return;
   }
@@ -111,9 +118,9 @@ MediaEngineRemoteVideoSource::Allocate(const dom::MediaTrackConstraints& aConstr
       return NS_ERROR_UNEXPECTED;
     }
 
-    if (mozilla::camera::AllocateCaptureDevice(mCapEngine,
-                                               GetUUID().get(),
-                                               kMaxUniqueIdLength, mCaptureIndex)) {
+    if (mozilla::camera::GetChildAndCall(
+      &mozilla::camera::CamerasChild::AllocateCaptureDevice,
+      mCapEngine, GetUUID().get(), kMaxUniqueIdLength, mCaptureIndex)) {
       return NS_ERROR_FAILURE;
     }
     mState = kAllocated;
@@ -145,7 +152,9 @@ MediaEngineRemoteVideoSource::Deallocate()
     if (mState != kStopped && mState != kAllocated) {
       return NS_ERROR_FAILURE;
     }
-    mozilla::camera::ReleaseCaptureDevice(mCapEngine, mCaptureIndex);
+    mozilla::camera::GetChildAndCall(
+      &mozilla::camera::CamerasChild::ReleaseCaptureDevice,
+      mCapEngine, mCaptureIndex);
     mState = kReleased;
     LOG(("Video device %d deallocated", mCaptureIndex));
   } else {
@@ -179,8 +188,9 @@ MediaEngineRemoteVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
   mState = kStarted;
   mTrackID = aID;
 
-  if (mozilla::camera::StartCapture(mCapEngine,
-                                    mCaptureIndex, mCapability, this)) {
+  if (mozilla::camera::GetChildAndCall(
+    &mozilla::camera::CamerasChild::StartCapture,
+    mCapEngine, mCaptureIndex, mCapability, this)) {
     LOG(("StartCapture failed"));
     return NS_ERROR_FAILURE;
   }
@@ -217,7 +227,9 @@ MediaEngineRemoteVideoSource::Stop(mozilla::SourceMediaStream* aSource,
     mImage = nullptr;
   }
 
-  mozilla::camera::StopCapture(mCapEngine, mCaptureIndex);
+  mozilla::camera::GetChildAndCall(
+    &mozilla::camera::CamerasChild::StopCapture,
+    mCapEngine, mCaptureIndex);
 
   return NS_OK;
 }
@@ -239,9 +251,12 @@ MediaEngineRemoteVideoSource::Restart(const dom::MediaTrackConstraints& aConstra
     return NS_OK;
   }
 
-  mozilla::camera::StopCapture(mCapEngine, mCaptureIndex);
-  if (mozilla::camera::StartCapture(mCapEngine,
-                                    mCaptureIndex, mCapability, this)) {
+  mozilla::camera::GetChildAndCall(
+    &mozilla::camera::CamerasChild::StopCapture,
+    mCapEngine, mCaptureIndex);
+  if (mozilla::camera::GetChildAndCall(
+    &mozilla::camera::CamerasChild::StartCapture,
+    mCapEngine, mCaptureIndex, mCapability, this)) {
     LOG(("StartCapture failed"));
     return NS_ERROR_FAILURE;
   }
@@ -276,7 +291,7 @@ MediaEngineRemoteVideoSource::FrameSizeChange(unsigned int w, unsigned int h,
 
 int
 MediaEngineRemoteVideoSource::DeliverFrame(unsigned char* buffer,
-                                           int size,
+                                           size_t size,
                                            uint32_t time_stamp,
                                            int64_t ntp_time,
                                            int64_t render_time,
@@ -288,14 +303,13 @@ MediaEngineRemoteVideoSource::DeliverFrame(unsigned char* buffer,
     return 0;
   }
 
-  if (mWidth*mHeight + 2*(((mWidth+1)/2)*((mHeight+1)/2)) != size) {
+  if ((size_t) (mWidth*mHeight + 2*(((mWidth+1)/2)*((mHeight+1)/2))) != size) {
     MOZ_ASSERT(false, "Wrong size frame in DeliverFrame!");
     return 0;
   }
 
   // Create a video frame and append it to the track.
-  RefPtr<layers::Image> image = mImageContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
-  layers::PlanarYCbCrImage* videoImage = static_cast<layers::PlanarYCbCrImage*>(image.get());
+  RefPtr<layers::PlanarYCbCrImage> image = mImageContainer->CreatePlanarYCbCrImage();
 
   uint8_t* frame = static_cast<uint8_t*> (buffer);
   const uint8_t lumaBpp = 8;
@@ -315,7 +329,7 @@ MediaEngineRemoteVideoSource::DeliverFrame(unsigned char* buffer,
   data.mPicSize = IntSize(mWidth, mHeight);
   data.mStereoMode = StereoMode::MONO;
 
-  if (!videoImage->SetData(data)) {
+  if (!image->SetData(data)) {
     MOZ_ASSERT(false);
     return 0;
   }
@@ -355,7 +369,10 @@ MediaEngineRemoteVideoSource::DeliverFrame(unsigned char* buffer,
 size_t
 MediaEngineRemoteVideoSource::NumCapabilities()
 {
-  int num = mozilla::camera::NumberOfCapabilities(mCapEngine, GetUUID().get());
+  int num = mozilla::camera::GetChildAndCall(
+      &mozilla::camera::CamerasChild::NumberOfCapabilities,
+      mCapEngine,
+      GetUUID().get());
   if (num > 0) {
     return num;
   }
@@ -413,10 +430,10 @@ MediaEngineRemoteVideoSource::ChooseCapability(const MediaTrackConstraints &aCon
     case dom::MediaSourceEnum::Window:
     case dom::MediaSourceEnum::Application: {
       FlattenedConstraints c(aConstraints);
-      mCapability.width = c.mWidth.Clamp(c.mWidth.mIdeal.WasPassed() ?
-        c.mWidth.mIdeal.Value() : aPrefs.mWidth);
-      mCapability.height = c.mHeight.Clamp(c.mHeight.mIdeal.WasPassed() ?
-        c.mHeight.mIdeal.Value() : aPrefs.mHeight);
+      mCapability.width = ((c.mWidth.mIdeal.WasPassed() ?
+        c.mWidth.mIdeal.Value() : 0) & 0xffff) << 16 | (c.mWidth.mMax & 0xffff);
+      mCapability.height = ((c.mHeight.mIdeal.WasPassed() ?
+        c.mHeight.mIdeal.Value() : 0) & 0xffff) << 16 | (c.mHeight.mMax & 0xffff);
       mCapability.maxFPS = c.mFrameRate.Clamp(c.mFrameRate.mIdeal.WasPassed() ?
         c.mFrameRate.mIdeal.Value() : aPrefs.mFPS);
       return true;
@@ -434,10 +451,12 @@ MediaEngineRemoteVideoSource::GetCapability(size_t aIndex,
   if (!mHardcodedCapabilities.IsEmpty()) {
     MediaEngineCameraVideoSource::GetCapability(aIndex, aOut);
   }
-  mozilla::camera::GetCaptureCapability(mCapEngine,
-                                        GetUUID().get(),
-                                        aIndex,
-                                        aOut);
+  mozilla::camera::GetChildAndCall(
+    &mozilla::camera::CamerasChild::GetCaptureCapability,
+    mCapEngine,
+    GetUUID().get(),
+    aIndex,
+    aOut);
 }
 
 void MediaEngineRemoteVideoSource::Refresh(int aIndex) {
@@ -447,10 +466,11 @@ void MediaEngineRemoteVideoSource::Refresh(int aIndex) {
   char deviceName[kMaxDeviceNameLength];
   char uniqueId[kMaxUniqueIdLength];
 
-  if (mozilla::camera::GetCaptureDevice(mCapEngine,
-                                        aIndex,
-                                        deviceName, sizeof(deviceName),
-                                        uniqueId, sizeof(uniqueId))) {
+  if (mozilla::camera::GetChildAndCall(
+    &mozilla::camera::CamerasChild::GetCaptureDevice,
+    mCapEngine, aIndex,
+    deviceName, sizeof(deviceName),
+    uniqueId, sizeof(uniqueId))) {
     return;
   }
 

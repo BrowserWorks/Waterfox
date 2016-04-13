@@ -179,7 +179,7 @@ var kSpecialIds = {
 
   // Don't bother creating mobile: if it doesn't exist, this ID can't be it!
   specialGUIDForId: function specialGUIDForId(id) {
-    for each (let guid in this.guids)
+    for (let guid of this.guids)
       if (this.specialIdForGUID(guid, false) == id)
         return guid;
     return null;
@@ -426,8 +426,7 @@ BookmarksEngine.prototype = {
         // Failure to create a backup is somewhat bad, but probably not bad
         // enough to prevent syncing of bookmarks - so just log the error and
         // continue.
-        this._log.warn("Got exception \"" + Utils.exceptionStr(ex) +
-                       "\" backing up bookmarks, but continuing with sync.");
+        this._log.warn("Error while backing up bookmarks, but continuing with sync", ex);
         cb();
       }
     );
@@ -442,9 +441,7 @@ BookmarksEngine.prototype = {
       try {
         guidMap = this._buildGUIDMap();
       } catch (ex if !Async.isShutdownException(ex)) {
-        this._log.warn("Got exception \"" + Utils.exceptionStr(ex) +
-                       "\" building GUID map." +
-                       " Skipping all other incoming items.");
+        this._log.warn("Error while building GUID map, skipping all other incoming items", ex);
         throw {code: Engine.prototype.eEngineAbortApplyIncoming,
                cause: ex};
       }
@@ -507,7 +504,8 @@ function BookmarksStore(name, engine) {
 
   // Explicitly nullify our references to our cached services so we don't leak
   Svc.Obs.add("places-shutdown", function() {
-    for each (let [query, stmt] in Iterator(this._stmts)) {
+    for (let query in this._stmts) {
+      let stmt = this._stmts[query];
       stmt.finalize();
     }
     this._stmts = {};
@@ -564,7 +562,7 @@ BookmarksStore.prototype = {
           this._log.debug("Tag query folder: " + tag + " = " + child.itemId);
           
           this._log.trace("Replacing folders in: " + uri);
-          for each (let q in queriesRef.value)
+          for (let q of queriesRef.value)
             q.setFolders([child.itemId], 1);
           
           record.bmkUri = PlacesUtils.history.queriesToQueryString(
@@ -690,7 +688,7 @@ BookmarksStore.prototype = {
         return true;
       }
     } catch(ex) {
-      this._log.debug("Failed to reparent item. " + Utils.exceptionStr(ex));
+      this._log.debug("Failed to reparent item", ex);
     }
     return false;
   },
@@ -1322,8 +1320,7 @@ BookmarksStore.prototype = {
       let u = PlacesUtils.bookmarks.getBookmarkURI(itemID);
       this._tagURI(u, tags);
     } catch (e) {
-      this._log.warn("Got exception fetching URI for " + itemID + ": not tagging. " +
-                     Utils.exceptionStr(e));
+      this._log.warn(`Got exception fetching URI for ${itemID} not tagging`, e);
 
       // I guess it doesn't have a URI. Don't try to tag it.
       return;
@@ -1361,7 +1358,7 @@ BookmarksStore.prototype = {
     if (kSpecialIds.findMobileRoot(false)) {
       items["mobile"] = true;
     }
-    for each (let guid in kSpecialIds.guids) {
+    for (let guid of kSpecialIds.guids) {
       if (guid != "places" && guid != "tags")
         this._getChildren(guid, items);
     }
@@ -1373,7 +1370,7 @@ BookmarksStore.prototype = {
     Task.spawn(function() {
       // Save a backup before clearing out all bookmarks.
       yield PlacesBackups.create(null, true);
-      for each (let guid in kSpecialIds.guids)
+      for (let guid of kSpecialIds.guids)
         if (guid != "places") {
           let id = kSpecialIds.specialIdForGUID(guid);
           if (id)

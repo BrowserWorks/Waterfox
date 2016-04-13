@@ -1,15 +1,13 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-#ifdef MOZ_SERVICES_CLOUDSYNC
-XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
-                                  "resource://gre/modules/CloudSync.jsm");
-#else
-var CloudSync = null;
-#endif
+if (AppConstants.MOZ_SERVICES_CLOUDSYNC) {
+  XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
+                                    "resource://gre/modules/CloudSync.jsm");
+}
 
 XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
                                   "resource://gre/modules/FxAccounts.jsm");
@@ -79,31 +77,15 @@ var gSyncUI = {
       Services.obs.addObserver(this, topic, true);
     }, this);
 
-    if (gBrowser && Weave.Notifications.notifications.length) {
-      this.initNotifications();
-    }
+    // initial label for the sync buttons.
+    let broadcaster = document.getElementById("sync-status");
+    broadcaster.setAttribute("label", this._stringBundle.GetStringFromName("syncnow.label"));
+
+    this.maybeMoveSyncedTabsButton();
+
     this.updateUI();
   },
 
-  initNotifications: function SUI_initNotifications() {
-    const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    let notificationbox = document.createElementNS(XULNS, "notificationbox");
-    notificationbox.id = "sync-notifications";
-    notificationbox.setAttribute("flex", "1");
-
-    let bottombox = document.getElementById("browser-bottombox");
-    bottombox.insertBefore(notificationbox, bottombox.firstChild);
-
-    // Force a style flush to ensure that our binding is attached.
-    notificationbox.clientTop;
-
-    // notificationbox will listen to observers from now on.
-    Services.obs.removeObserver(this, "weave:notification:added");
-    let idx = this._obs.indexOf("weave:notification:added");
-    if (idx >= 0) {
-      this._obs.splice(idx, 1);
-    }
-  },
 
   // Returns a promise that resolves with true if Sync needs to be configured,
   // false otherwise.
@@ -200,14 +182,10 @@ var gSyncUI = {
 
     this.log.debug("onActivityStart with numActive", this._numActiveSyncTasks);
     if (++this._numActiveSyncTasks == 1) {
-      let button = document.getElementById("sync-button");
-      if (button) {
-        button.setAttribute("status", "active");
-      }
-      let container = document.getElementById("PanelUI-footer-fxa");
-      if (container) {
-        container.setAttribute("syncstatus", "active");
-      }
+      let broadcaster = document.getElementById("sync-status");
+      broadcaster.setAttribute("syncstatus", "active");
+      broadcaster.setAttribute("label", this._stringBundle.GetStringFromName("syncing2.label"));
+      broadcaster.setAttribute("disabled", "true");
     }
     this.updateUI();
   },
@@ -227,20 +205,15 @@ var gSyncUI = {
       return; // active tasks are still ongoing...
     }
 
-    let syncButton = document.getElementById("sync-button");
-    if (syncButton) {
-      syncButton.removeAttribute("status");
-    }
-    let fxaContainer = document.getElementById("PanelUI-footer-fxa");
-    if (fxaContainer) {
-      fxaContainer.removeAttribute("syncstatus");
-    }
+    let broadcaster = document.getElementById("sync-status");
+    broadcaster.removeAttribute("syncstatus");
+    broadcaster.removeAttribute("disabled");
+    broadcaster.setAttribute("label", this._stringBundle.GetStringFromName("syncnow.label"));
     this.updateUI();
   },
 
   onLoginError: function SUI_onLoginError() {
     this.log.debug("onLoginError: login=${login}, sync=${sync}", Weave.Status);
-    Weave.Notifications.removeAll();
 
     // We don't show any login errors here; browser-fxaccounts shows them in
     // the hamburger menu.
@@ -249,10 +222,6 @@ var gSyncUI = {
 
   onLogout: function SUI_onLogout() {
     this.updateUI();
-  },
-
-  onStartOver: function SUI_onStartOver() {
-    this.clearError();
   },
 
   _getAppName: function () {
@@ -342,8 +311,47 @@ var gSyncUI = {
     gFxAccounts.openSignInAgainPage(entryPoint);
   },
 
-  /* Update the tooltip for the Sync Toolbar button and the Sync spinner in the
-     FxA hamburger area.
+  openSyncedTabsPanel() {
+    let placement = CustomizableUI.getPlacementOfWidget("sync-button");
+    let area = placement ? placement.area : CustomizableUI.AREA_NAVBAR;
+    let anchor = document.getElementById("sync-button") ||
+                 document.getElementById("PanelUI-menu-button");
+    if (area == CustomizableUI.AREA_PANEL) {
+      // The button is in the panel, so we need to show the panel UI, then our
+      // subview.
+      PanelUI.show().then(() => {
+        PanelUI.showSubView("PanelUI-remotetabs", anchor, area);
+      }).catch(Cu.reportError);
+    } else {
+      // It is placed somewhere else - just try and show it.
+      PanelUI.showSubView("PanelUI-remotetabs", anchor, area);
+    }
+  },
+
+  /* After Sync is initialized we perform a once-only check for the sync
+     button being in "customize purgatory" and if so, move it to the panel.
+     This is done primarily for profiles created before SyncedTabs landed,
+     where the button defaulted to being in that purgatory.
+     We use a preference to ensure we only do it once, so people can still
+     customize it away and have it stick.
+  */
+  maybeMoveSyncedTabsButton() {
+    const prefName = "browser.migrated-sync-button";
+    let migrated = false;
+    try {
+      migrated = Services.prefs.getBoolPref(prefName);
+    } catch (_) {}
+    if (migrated) {
+      return;
+    }
+    if (!CustomizableUI.getPlacementOfWidget("sync-button")) {
+      CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
+    }
+    Services.prefs.setBoolPref(prefName, true);
+  },
+
+  /* Update the tooltip for the sync-status broadcaster (which will update the
+     Sync Toolbar button and the Sync spinner in the FxA hamburger area.)
      If Sync is configured, the tooltip is when the last sync occurred,
      otherwise the tooltip reflects the fact that Sync needs to be
      (re-)configured.
@@ -393,30 +401,19 @@ var gSyncUI = {
     // sure it hasn't been torn down since we started.
     if (!gBrowser)
       return;
-    let syncButton = document.getElementById("sync-button");
-    let statusButton = document.getElementById("PanelUI-fxa-icon");
 
-    for (let button of [syncButton, statusButton]) {
-      if (button) {
-        if (tooltiptext) {
-          button.setAttribute("tooltiptext", tooltiptext);
-        } else {
-          button.removeAttribute("tooltiptext");
-        }
+    let broadcaster = document.getElementById("sync-status");
+    if (broadcaster) {
+      if (tooltiptext) {
+        broadcaster.setAttribute("tooltiptext", tooltiptext);
+      } else {
+        broadcaster.removeAttribute("tooltiptext");
       }
     }
   }),
 
-  clearError: function SUI_clearError(errorString) {
-    Weave.Notifications.removeAll(errorString);
-    this.updateUI();
-  },
-
   onSyncFinish: function SUI_onSyncFinish() {
     let title = this._stringBundle.GetStringFromName("error.sync.title");
-
-    // Clear out sync failures on a successful sync
-    this.clearError(title);
   },
 
   observe: function SUI_observe(subject, topic, data) {
@@ -453,16 +450,15 @@ var gSyncUI = {
       case "weave:service:setup-complete":
       case "weave:service:login:finish":
       case "weave:service:login:start":
+      case "weave:service:start-over":
         this.updateUI();
         break;
       case "weave:ui:login:error":
+      case "weave:service:login:error":
         this.onLoginError();
         break;
       case "weave:service:logout:finish":
         this.onLogout();
-        break;
-      case "weave:service:start-over":
-        this.onStartOver();
         break;
       case "weave:service:start-over:finish":
         this.updateUI();
@@ -472,9 +468,6 @@ var gSyncUI = {
         break;
       case "weave:notification:added":
         this.initNotifications();
-        break;
-      case "weave:ui:clear-error":
-        this.clearError();
         break;
     }
   },

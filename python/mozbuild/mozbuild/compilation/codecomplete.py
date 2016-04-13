@@ -15,6 +15,11 @@ from mach.decorators import (
 )
 
 from mozbuild.base import MachCommandBase
+from mozbuild.shellutil import (
+    split as shell_split,
+    quote as shell_quote,
+)
+
 
 @CommandProvider
 class Introspection(MachCommandBase):
@@ -49,5 +54,5 @@ class Introspection(MachCommandBase):
         if name not in build_vars:
             return
 
-        print(util.get_flags(self.topobjdir, make_dir, build_vars, name))
-
+        print(' '.join(shell_quote(arg)
+                       for arg in shell_split(build_vars[name])))

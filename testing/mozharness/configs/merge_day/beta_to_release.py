@@ -1,11 +1,9 @@
 config = {
     "log_name": "beta_to_release",
     "version_files": [
-        "browser/config/version.txt",
-        "browser/config/version_display.txt",
-        "config/milestone.txt",
-        "mobile/android/confvars.sh",  # TODO: remove this line before gecko 43 merge
-        "b2g/confvars.sh",
+        {"file": "browser/config/version.txt", "suffix": ""},
+        {"file": "browser/config/version_display.txt", "suffix": ""},
+        {"file": "config/milestone.txt", "suffix": ""},
     ],
     "replacements": [
         # File, from, to
@@ -42,7 +40,7 @@ config = {
     "pull_all_branches": True,
 
     "virtualenv_modules": [
-        "requests==2.2.1",
+        "requests==2.8.1",
     ],
 
     "post_merge_builders": [

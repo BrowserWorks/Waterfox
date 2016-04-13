@@ -65,6 +65,11 @@ public:
   static void OnTabParentDestroying(TabParent* aTabParent);
 
   /**
+   * Called when aWidget is being deleted.
+   */
+  static void WidgetDestroyed(nsIWidget* aWidget);
+
+  /**
    * SetIMEContextForChildProcess() is called when aTabParent receives
    * SetInputContext() from the remote process.
    */
@@ -176,11 +181,17 @@ public:
 
   /**
    * Returns TextComposition instance for the event.
-   *
-   * @param aGUIEvent Should be a composition event which is being dispatched.
    */
   static already_AddRefed<TextComposition>
-    GetTextCompositionFor(WidgetGUIEvent* aGUIEvent);
+    GetTextCompositionFor(const WidgetCompositionEvent* aCompositionEvent);
+
+  /**
+   * Returns TextComposition instance for the pres context.
+   * Be aware, even if another pres context which shares native IME context with
+   * specified pres context has composition, this returns nullptr.
+   */
+  static already_AddRefed<TextComposition>
+    GetTextCompositionFor(nsPresContext* aPresContext);
 
   /**
    * Send a notification to IME.  It depends on the IME or platform spec what
@@ -225,7 +236,7 @@ protected:
 
   static StaticRefPtr<nsIContent> sContent;
   static nsPresContext* sPresContext;
-  static StaticRefPtr<nsIWidget> sFocusedIMEWidget;
+  static nsIWidget* sFocusedIMEWidget;
   static StaticRefPtr<TabParent> sActiveTabParent;
   // sActiveIMEContentObserver points to the currently active
   // IMEContentObserver.  This is null if there is no focused editor.

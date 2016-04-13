@@ -121,6 +121,37 @@ def skip_unless_protocol(predicate):
         return skip_wrapper
     return decorator
 
+def skip_unless_browser_pref(pref, predicate=bool):
+    """
+    Skip a test based on the value of a browser preference.
+
+    :param pref: the preference name
+    :param predicate: a function that should return false to skip the test.
+                      The function takes one parameter, the preference value.
+                      Defaults to the python built-in bool function.
+
+    Note that the preference must exist, else a failure is raised.
+
+    Example: ::
+
+      class TestSomething(MarionetteTestCase):
+          @skip_unless_browser_pref("accessibility.tabfocus",
+                                    lambda value: value >= 7)
+          def test_foo(self):
+              pass  # test implementation here
+    """
+    def wrapper(target):
+        @functools.wraps(target)
+        def wrapped(self, *args, **kwargs):
+            value = self.marionette.get_pref(pref)
+            if value is None:
+                self.fail("No such browser preference: %r" % pref)
+            if not predicate(value):
+                raise SkipTest("browser preference %r: %r" % (pref, value))
+            return target(self, *args, **kwargs)
+        return wrapped
+    return wrapper
+
 def parameterized(func_suffix, *args, **kwargs):
     """
     A decorator that can generate methods given a base method and some data.
@@ -521,17 +552,16 @@ setReq.onerror = function() {
         self.marionette.set_context("chrome")
         self.marionette.execute_script("""
             let SECURITY_PREF = "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer";
-            Components.utils.import("resource://gre/modules/Services.jsm");
-            Services.prefs.setBoolPref(SECURITY_PREF, true);
+            Components.utils.import("resource://gre/modules/Preferences.jsm");
+            Preferences.set(SECURITY_PREF, true);
 
             if (!testUtils.hasOwnProperty("specialPowersObserver")) {
               let loader = Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
                 .getService(Components.interfaces.mozIJSSubScriptLoader);
-              loader.loadSubScript("chrome://specialpowers/content/SpecialPowersObserver.js",
+              loader.loadSubScript("chrome://specialpowers/content/SpecialPowersObserver.jsm",
                 testUtils);
               testUtils.specialPowersObserver = new testUtils.SpecialPowersObserver();
               testUtils.specialPowersObserver.init();
-              testUtils.specialPowersObserver._loadFrameScript();
             }
             """)
 

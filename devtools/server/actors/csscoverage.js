@@ -23,7 +23,7 @@ loader.lazyGetter(this, "stylesheets", () => {
   return require("devtools/server/actors/stylesheets");
 });
 loader.lazyGetter(this, "CssLogic", () => {
-  return require("devtools/shared/styleinspector/css-logic").CssLogic;
+  return require("devtools/shared/inspector/css-logic").CssLogic;
 });
 
 const CSSRule = Ci.nsIDOMCSSRule;
@@ -34,7 +34,7 @@ const MAX_UNUSED_RULES = 10000;
  * Allow: let foo = l10n.lookup("csscoverageFoo");
  */
 const l10n = exports.l10n = {
-  _URI: "chrome://global/locale/devtools/csscoverage.properties",
+  _URI: "chrome://devtools-shared/locale/csscoverage.properties",
   lookup: function(msg) {
     if (this._stringBundle == null) {
       this._stringBundle = Services.strings.createBundle(this._URI);

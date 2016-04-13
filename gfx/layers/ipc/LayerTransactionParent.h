@@ -40,6 +40,7 @@ class LayerTransactionParent final : public PLayerTransactionParent,
 {
   typedef mozilla::layout::RenderFrameParent RenderFrameParent;
   typedef InfallibleTArray<Edit> EditArray;
+  typedef InfallibleTArray<OpDestroy> OpDestroyArray;
   typedef InfallibleTArray<EditReply> EditReplyArray;
   typedef InfallibleTArray<AsyncChildMessageData> AsyncChildMessageArray;
   typedef InfallibleTArray<PluginWindowData> PluginsArray;
@@ -93,6 +94,7 @@ protected:
   virtual bool RecvShutdown() override;
 
   virtual bool RecvUpdate(EditArray&& cset,
+                          OpDestroyArray&& aToDestroy,
                           const uint64_t& aTransactionId,
                           const TargetConfig& targetConfig,
                           PluginsArray&& aPlugins,
@@ -105,6 +107,7 @@ protected:
                           EditReplyArray* reply) override;
 
   virtual bool RecvUpdateNoSwap(EditArray&& cset,
+                                OpDestroyArray&& aToDestroy,
                                 const uint64_t& aTransactionId,
                                 const TargetConfig& targetConfig,
                                 PluginsArray&& aPlugins,
@@ -125,7 +128,7 @@ protected:
                                          MaybeTransform* aTransform)
                                          override;
   virtual bool RecvSetAsyncScrollOffset(const FrameMetrics::ViewID& aId,
-                                        const int32_t& aX, const int32_t& aY) override;
+                                        const float& aX, const float& aY) override;
   virtual bool RecvSetAsyncZoom(const FrameMetrics::ViewID& aId,
                                 const float& aValue) override;
   virtual bool RecvFlushApzRepaints() override;

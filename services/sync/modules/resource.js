@@ -13,6 +13,7 @@ var Cr = Components.results;
 var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Preferences.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://services-common/async.js");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/observers.js");
@@ -148,16 +149,9 @@ AsyncResource.prototype = {
   // to obtain a request channel.
   //
   _createRequest: function Res__createRequest(method) {
-    let channel = Services.io.newChannel2(this.spec,
-                                          null,
-                                          null,
-                                          null,      // aLoadingNode
-                                          Services.scriptSecurityManager.getSystemPrincipal(),
-                                          null,      // aTriggeringPrincipal
-                                          Ci.nsILoadInfo.SEC_NORMAL,
-                                          Ci.nsIContentPolicy.TYPE_OTHER)
-                          .QueryInterface(Ci.nsIRequest)
-                          .QueryInterface(Ci.nsIHttpChannel);
+    let channel = NetUtil.newChannel({uri: this.spec, loadUsingSystemPrincipal: true})
+                         .QueryInterface(Ci.nsIRequest)
+                         .QueryInterface(Ci.nsIHttpChannel);
 
     channel.loadFlags |= DEFAULT_LOAD_FLAGS;
 
@@ -230,10 +224,10 @@ AsyncResource.prototype = {
                                        this._log, this.ABORT_TIMEOUT);
     channel.requestMethod = action;
     try {
-      channel.asyncOpen(listener, null);
+      channel.asyncOpen2(listener);
     } catch (ex) {
-      // asyncOpen can throw in a bunch of cases -- e.g., a forbidden port.
-      this._log.warn("Caught an error in asyncOpen: " + CommonUtils.exceptionStr(ex));
+      // asyncOpen2 can throw in a bunch of cases -- e.g., a forbidden port.
+      this._log.warn("Caught an error in asyncOpen2", ex);
       CommonUtils.nextTick(callback.bind(this, ex));
     }
   },
@@ -280,9 +274,7 @@ AsyncResource.prototype = {
     } catch(ex) {
       // Got a response, but an exception occurred during processing.
       // This shouldn't occur.
-      this._log.warn("Caught unexpected exception " + CommonUtils.exceptionStr(ex) +
-                     " in _onComplete.");
-      this._log.debug(CommonUtils.stackTrace(ex));
+      this._log.warn("Caught unexpected exception in _oncomplete", ex);
     }
 
     // Process headers. They can be empty, or the call can otherwise fail, so
@@ -320,9 +312,7 @@ AsyncResource.prototype = {
                        contentLength + ".");
       }
     } catch (ex) {
-      this._log.debug("Caught exception " + CommonUtils.exceptionStr(ex) +
-                      " visiting headers in _onComplete.");
-      this._log.debug(CommonUtils.stackTrace(ex));
+      this._log.debug("Caught exception visiting headers in _onComplete", ex);
     }
 
     let ret     = new String(data);
@@ -338,7 +328,7 @@ AsyncResource.prototype = {
       try {
         return JSON.parse(ret);
       } catch (ex) {
-        this._log.warn("Got exception parsing response body: \"" + CommonUtils.exceptionStr(ex));
+        this._log.warn("Got exception parsing response body", ex);
         // Stringify to avoid possibly printing non-printable characters.
         this._log.debug("Parse fail: Response body starts: \"" +
                         JSON.stringify((ret + "").slice(0, 100)) +
@@ -544,7 +534,7 @@ ChannelListener.prototype = {
       siStream = Cc["@mozilla.org/scriptableinputstream;1"].createInstance(Ci.nsIScriptableInputStream);
       siStream.init(stream);
     } catch (ex) {
-      this._log.warn("Exception creating nsIScriptableInputStream." + CommonUtils.exceptionStr(ex));
+      this._log.warn("Exception creating nsIScriptableInputStream", ex);
       this._log.debug("Parameters: " + req.URI.spec + ", " + stream + ", " + off + ", " + count);
       // Cannot proceed, so rethrow and allow the channel to cancel itself.
       throw ex;
@@ -561,8 +551,7 @@ ChannelListener.prototype = {
       this._onProgress();
     } catch (ex if !Async.isShutdownException(ex)) {
       this._log.warn("Got exception calling onProgress handler during fetch of "
-                     + req.URI.spec);
-      this._log.debug(CommonUtils.exceptionStr(ex));
+                     + req.URI.spec, ex);
       this._log.trace("Rethrowing; expect a failure code from the HTTP channel.");
       throw ex;
     }
@@ -577,7 +566,7 @@ ChannelListener.prototype = {
     try {
       CommonUtils.namedTimer(this.abortRequest, this._timeout, this, "abortTimer");
     } catch (ex) {
-      this._log.warn("Got exception extending abort timer: " + CommonUtils.exceptionStr(ex));
+      this._log.warn("Got exception extending abort timer", ex);
     }
   },
 
@@ -671,14 +660,14 @@ ChannelNotificationListener.prototype = {
         }
       }
     } catch (ex) {
-      this._log.error("Error copying headers: " + CommonUtils.exceptionStr(ex));
+      this._log.error("Error copying headers", ex);
     }
 
     // We let all redirects proceed.
     try {
       callback.onRedirectVerifyCallback(Cr.NS_OK);
     } catch (ex) {
-      this._log.error("onRedirectVerifyCallback threw!" + CommonUtils.exceptionStr(ex));
+      this._log.error("onRedirectVerifyCallback threw!", ex);
     }
   }
 };

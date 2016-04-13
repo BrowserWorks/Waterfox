@@ -3,25 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { promiseInvoke } = require("devtools/shared/async-utils");
 const { reportException } = require("devtools/shared/DevToolsUtils");
-
-function rdpInvoke(client, method, ...args) {
-  return promiseInvoke(client, method, ...args)
-    .then((packet) => {
-      let { error, message } = packet;
-      if (error) {
-        throw new Error(error + ": " + message);
-      }
-
-      return packet;
-    });
-}
 
 function asPaused(client, func) {
   if (client.state != "paused") {
     return Task.spawn(function*() {
-      yield rdpInvoke(client, client.interrupt);
+      yield client.interrupt();
       let result;
 
       try {
@@ -30,11 +17,11 @@ function asPaused(client, func) {
       catch(e) {
         // Try to put the debugger back in a working state by resuming
         // it
-        yield rdpInvoke(client, client.resume);
+        yield client.resume();
         throw e;
       }
 
-      yield rdpInvoke(client, client.resume);
+      yield client.resume();
       return result;
     });
   } else {
@@ -42,4 +29,57 @@ function asPaused(client, func) {
   }
 }
 
-module.exports = { rdpInvoke, asPaused };
+function handleError(err) {
+  reportException("promise", err.toString());
+}
+
+function onReducerEvents(controller, listeners, thisContext) {
+  Object.keys(listeners).forEach(name => {
+    const listener = listeners[name];
+    controller.onChange(name, payload => {
+      listener.call(thisContext, payload);
+    });
+  });
+}
+
+function _getIn(destObj, path) {
+  return path.reduce(function(acc, name) {
+    return acc[name];
+  }, destObj);
+}
+
+function mergeIn(destObj, path, value) {
+  path = [...path];
+  path.reverse();
+  var obj = path.reduce(function(acc, name) {
+    return { [name]: acc };
+  }, value);
+
+  return destObj.merge(obj, { deep: true });
+}
+
+function setIn(destObj, path, value) {
+  destObj = mergeIn(destObj, path, null);
+  return mergeIn(destObj, path, value);
+}
+
+function updateIn(destObj, path, fn) {
+  return setIn(destObj, path, fn(_getIn(destObj, path)));
+}
+
+function deleteIn(destObj, path) {
+  const objPath = path.slice(0, -1);
+  const propName = path[path.length - 1];
+  const obj = _getIn(destObj, objPath);
+  return setIn(destObj, objPath, obj.without(propName));
+}
+
+module.exports = {
+  asPaused,
+  handleError,
+  onReducerEvents,
+  mergeIn,
+  setIn,
+  updateIn,
+  deleteIn
+};

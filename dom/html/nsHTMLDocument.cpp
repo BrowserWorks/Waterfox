@@ -269,7 +269,7 @@ nsHTMLDocument::CreateShell(nsPresContext* aContext,
                             nsViewManager* aViewManager,
                             nsStyleSet* aStyleSet)
 {
-  return doCreateShell(aContext, aViewManager, aStyleSet, mCompatMode);
+  return doCreateShell(aContext, aViewManager, aStyleSet);
 }
 
 void
@@ -1034,7 +1034,7 @@ nsHTMLDocument::SetBody(nsIDOMHTMLElement* aBody)
 void
 nsHTMLDocument::SetBody(nsGenericHTMLElement* newBody, ErrorResult& rv)
 {
-  Element* root = GetRootElement();
+  nsCOMPtr<Element> root = GetRootElement();
 
   // The body element must be either a body tag or a frameset tag. And we must
   // have a html root tag, otherwise GetBody will not return the newly set
@@ -1398,6 +1398,9 @@ nsHTMLDocument::Open(JSContext* cx,
                      const nsAString& aReplace,
                      ErrorResult& rv)
 {
+  // Implements the "When called with two arguments (or fewer)" steps here:
+  // https://html.spec.whatwg.org/multipage/webappapis.html#opening-the-input-stream
+
   NS_ASSERTION(nsContentUtils::CanCallerAccess(static_cast<nsIDOMHTMLDocument*>(this)),
                "XOW should have caught this!");
   if (!IsHTMLDocument() || mDisableDocWrite || !IsMasterDocument()) {
@@ -1519,7 +1522,7 @@ nsHTMLDocument::Open(JSContext* cx,
 
     if (cv) {
       bool okToUnload;
-      if (NS_SUCCEEDED(cv->PermitUnload(false, &okToUnload)) && !okToUnload) {
+      if (NS_SUCCEEDED(cv->PermitUnload(&okToUnload)) && !okToUnload) {
         // We don't want to unload, so stop here, but don't throw an
         // exception.
         nsCOMPtr<nsIDocument> ret = this;
@@ -1538,7 +1541,7 @@ nsHTMLDocument::Open(JSContext* cx,
   }
 
   // The open occurred after the document finished loading.
-  // So we reset the document and create a new one.
+  // So we reset the document and then reinitialize it.
   nsCOMPtr<nsIChannel> channel;
   nsCOMPtr<nsILoadGroup> group = do_QueryReferent(mDocumentLoadGroup);
   rv = NS_NewChannel(getter_AddRefs(channel),
@@ -1607,8 +1610,9 @@ nsHTMLDocument::Open(JSContext* cx,
     }
 #endif
 
-    // Should this pass true for aForceReuseInnerWindow?
-    rv = window->SetNewDocument(this, nullptr, false);
+    // Per spec, we pass false here so that a new Window is created.
+    rv = window->SetNewDocument(this, nullptr,
+                                /* aForceReuseInnerWindow */ false);
     if (rv.Failed()) {
       return nullptr;
     }
@@ -2637,12 +2641,12 @@ nsHTMLDocument::TearingDownEditor(nsIEditor *aEditor)
     if (!presShell)
       return;
 
-    nsCOMArray<nsIStyleSheet> agentSheets;
+    nsTArray<RefPtr<CSSStyleSheet>> agentSheets;
     presShell->GetAgentStyleSheets(agentSheets);
 
-    agentSheets.RemoveObject(nsLayoutStylesheetCache::ContentEditableSheet());
+    agentSheets.RemoveElement(nsLayoutStylesheetCache::ContentEditableSheet());
     if (oldState == eDesignMode)
-      agentSheets.RemoveObject(nsLayoutStylesheetCache::DesignModeSheet());
+      agentSheets.RemoveElement(nsLayoutStylesheetCache::DesignModeSheet());
 
     presShell->SetAgentStyleSheets(agentSheets);
 
@@ -2776,18 +2780,15 @@ nsHTMLDocument::EditingStateChanged()
     // Before making this window editable, we need to modify UA style sheet
     // because new style may change whether focused element will be focusable
     // or not.
-    nsCOMArray<nsIStyleSheet> agentSheets;
+    nsTArray<RefPtr<CSSStyleSheet>> agentSheets;
     rv = presShell->GetAgentStyleSheets(agentSheets);
     NS_ENSURE_SUCCESS(rv, rv);
 
     CSSStyleSheet* contentEditableSheet =
       nsLayoutStylesheetCache::ContentEditableSheet();
 
-    bool result;
-
     if (!agentSheets.Contains(contentEditableSheet)) {
-      bool result = agentSheets.AppendObject(contentEditableSheet);
-      NS_ENSURE_TRUE(result, NS_ERROR_OUT_OF_MEMORY);
+      agentSheets.AppendElement(contentEditableSheet);
     }
 
     // Should we update the editable state of all the nodes in the document? We
@@ -2798,8 +2799,7 @@ nsHTMLDocument::EditingStateChanged()
       CSSStyleSheet* designModeSheet =
         nsLayoutStylesheetCache::DesignModeSheet();
       if (!agentSheets.Contains(designModeSheet)) {
-        result = agentSheets.AppendObject(designModeSheet);
-        NS_ENSURE_TRUE(result, NS_ERROR_OUT_OF_MEMORY);
+        agentSheets.AppendElement(designModeSheet);
       }
 
       updateState = true;
@@ -2807,7 +2807,7 @@ nsHTMLDocument::EditingStateChanged()
     }
     else if (oldState == eDesignMode) {
       // designMode is being turned off (contentEditable is still on).
-      agentSheets.RemoveObject(nsLayoutStylesheetCache::DesignModeSheet());
+      agentSheets.RemoveElement(nsLayoutStylesheetCache::DesignModeSheet());
       updateState = true;
     }
 
@@ -3239,6 +3239,12 @@ nsHTMLDocument::ExecCommand(const nsAString& commandID,
   // cut & copy are allowed in non editable documents
   if (isCutCopy) {
     if (!nsContentUtils::IsCutCopyAllowed()) {
+      // We have rejected the event due to it not being performed in an
+      // input-driven context therefore, we report the error to the console.
+      nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
+                                      NS_LITERAL_CSTRING("DOM"), this,
+                                      nsContentUtils::eDOM_PROPERTIES,
+                                      "ExecCommandCutCopyDeniedNotInputDriven");
       return false;
     }
 

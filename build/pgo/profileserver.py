@@ -49,7 +49,7 @@ if __name__ == '__main__':
       prefs[pref] = Preferences.cast(prefs[pref])
     profile = FirefoxProfile(profile=profilePath,
                              preferences=prefs,
-                             addons=[os.path.join(build.distdir, 'xpi-stage', 'quitter')],
+                             addons=[os.path.join(build.topsrcdir, 'tools', 'quitter', 'quitter@mozilla.org.xpi')],
                              locations=locations)
 
     env = os.environ.copy()
@@ -62,6 +62,14 @@ if __name__ == '__main__':
                                              "../../VC/bin"))
       if os.path.exists(vc12dir):
         env["PATH"] = vc12dir + ";" + env["PATH"]
+
+    # Run Firefox a first time to initialize its profile
+    runner = FirefoxRunner(profile=profile,
+                           binary=build.get_binary_path(where="staged-package"),
+                           cmdargs=['javascript:Quitter.quit()'],
+                           env=env)
+    runner.start()
+    runner.wait()
 
     jarlog = os.getenv("JARLOG_FILE")
     if jarlog:

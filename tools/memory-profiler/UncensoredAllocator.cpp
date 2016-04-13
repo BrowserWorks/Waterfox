@@ -20,7 +20,7 @@
 namespace mozilla {
 
 #ifdef MOZ_REPLACE_MALLOC
-ThreadLocal<bool> MallocHook::mEnabledTLS;
+MOZ_THREAD_LOCAL(bool) MallocHook::mEnabledTLS;
 NativeProfiler* MallocHook::mNativeProfiler;
 malloc_hook_table_t MallocHook::mMallocHook;
 #endif
@@ -79,14 +79,12 @@ MallocHook::Initialize()
   mMallocHook.malloc_hook = SampleNative;
   ReplaceMallocBridge* bridge = ReplaceMallocBridge::Get(3);
   if (bridge) {
-    mozilla::unused << bridge->RegisterHook("memory-profiler", nullptr, nullptr);
+    mozilla::Unused << bridge->RegisterHook("memory-profiler", nullptr, nullptr);
   }
-  if (!mEnabledTLS.initialized()) {
-    bool success = mEnabledTLS.init();
-    if (NS_WARN_IF(!success)) {
-      return;
-    }
-    mEnabledTLS.set(false);
+
+  bool success = mEnabledTLS.init();
+  if (NS_WARN_IF(!success)) {
+    return;
   }
 #endif
 }
@@ -96,9 +94,6 @@ MallocHook::Enable(NativeProfiler* aNativeProfiler)
 {
 #ifdef MOZ_REPLACE_MALLOC
   MOZ_ASSERT(NS_IsMainThread());
-  if (NS_WARN_IF(!mEnabledTLS.initialized())) {
-    return;
-  }
   ReplaceMallocBridge* bridge = ReplaceMallocBridge::Get(3);
   if (bridge) {
     const malloc_table_t* alloc_funcs =

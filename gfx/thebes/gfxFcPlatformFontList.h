@@ -225,7 +225,8 @@ public:
                      uint32_t aLength) override;
 
     gfxFontFamily* FindFamily(const nsAString& aFamily,
-                              gfxFontStyle* aStyle = nullptr) override;
+                              gfxFontStyle* aStyle = nullptr,
+                              gfxFloat aDevToCssSize = 1.0) override;
 
     bool GetStandardFamilyName(const nsAString& aFontName,
                                nsAString& aFamilyName) override;
@@ -244,8 +245,6 @@ public:
         mGenericMappings.Clear();
     }
 
-    void GetSampleLangForGroup(nsIAtom* aLanguage, nsACString& aLangStr);
-
     static FT_Library GetFTLibrary();
 
 protected:
@@ -261,10 +260,6 @@ protected:
 
     // are all pref font settings set to use fontconfig generics?
     bool PrefFontListsUseOnlyGenerics();
-
-    // helper method for finding an appropriate fontconfig language
-    bool TryLangForGroup(const nsACString& aOSLang, nsIAtom* aLangGroup,
-                         nsACString& aFcLang);
 
     static void CheckFontUpdates(nsITimer *aTimer, void *aThis);
 

@@ -1512,7 +1512,9 @@ nsParser::ResumeParse(bool allowIteration, bool aIsFinalChunk,
               if (theContext) {
                 theIterationIsOk = allowIteration && theContextIsStringBased;
                 if (theContext->mCopyUnused) {
-                  theContext->mScanner->CopyUnusedData(mUnusedInput);
+                  if (!theContext->mScanner->CopyUnusedData(mUnusedInput)) {
+                    mInternalState = NS_ERROR_OUT_OF_MEMORY;
+                  }
                 }
 
                 delete theContext;
@@ -1684,7 +1686,7 @@ ExtractCharsetFromXmlDeclaration(const unsigned char* aBytes, int32_t aLen,
   return !oCharset.IsEmpty();
 }
 
-inline const char
+inline char
 GetNextChar(nsACString::const_iterator& aStart,
             nsACString::const_iterator& aEnd)
 {

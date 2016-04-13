@@ -14,6 +14,7 @@ namespace mozilla {
 namespace dom {
 class GattPermissions;
 class GattCharacteristicProperties;
+class BluetoothAdvertisingData;
 }
 }
 
@@ -38,7 +39,18 @@ StringToAddress(const nsAString& aString, BluetoothAddress& aAddress);
 //
 
 nsresult
+PinCodeToString(const BluetoothPinCode& aPinCode, nsAString& aString);
+
+nsresult
 StringToPinCode(const nsAString& aString, BluetoothPinCode& aPinCode);
+
+//
+// Play status/string conversion
+//
+
+nsresult
+StringToControlPlayStatus(const nsAString& aString,
+                          ControlPlayStatus& aPlayStatus);
 
 //
 // Property type/string conversion
@@ -89,8 +101,16 @@ UuidToString(const BluetoothUuid& aUuid, nsAString& aString);
  * Note: This utility function is used by gecko internal only to convert uuid
  * string created by gecko back to BluetoothUuid representation.
  */
-void
+nsresult
 StringToUuid(const nsAString& aString, BluetoothUuid& aUuid);
+
+/**
+ * Generate a random uuid.
+ *
+ * @param aUuid [out] The generated uuid.
+ */
+nsresult
+GenerateUuid(BluetoothUuid &aUuid);
 
 /**
  * Generate a random uuid.
@@ -156,12 +176,25 @@ void
 GeneratePathFromGattId(const BluetoothGattId& aId,
                        nsAString& aPath);
 
+/**
+ * Convert BluetoothAdvertisingData object used by applications to
+ * BluetoothGattAdvertisingData object used by gecko backend.
+ *
+ * @param aAdvData [in] BluetoothAdvertisingData object.
+ * @param aGattAdData [out] Target BluetoothGattAdvertisingData.
+ * @return NS_OK on success, NS_ERROR_ILLEGAL_VALUE otherwise.
+ */
+nsresult
+AdvertisingDataToGattAdvertisingData(
+  const BluetoothAdvertisingData& aAdvData,
+  BluetoothGattAdvertisingData& aGattAdvData);
+
 //
 // Register/Unregister bluetooth signal handlers
 //
 
 /**
- * Register the bluetooth signal handler.
+ * Register the Bluetooth signal handler.
  *
  * @param aPath Path of the signal to be registered.
  * @param aHandler The message handler object to be added into the observer
@@ -172,7 +205,29 @@ RegisterBluetoothSignalHandler(const nsAString& aPath,
                                BluetoothSignalObserver* aHandler);
 
 /**
- * Unregister the bluetooth signal handler.
+ * Register the Bluetooth signal handler.
+ *
+ * @param aAddress Address of the signal to be unregistered.
+ * @param aHandler The message handler object to be added into the observer
+ *                 list. Note that this function doesn't take references to it.
+ */
+void
+RegisterBluetoothSignalHandler(const BluetoothAddress& aAddress,
+                               BluetoothSignalObserver* aHandler);
+
+/**
+ * Register the Bluetooth signal handler.
+ *
+ * @param aUuid UUID of the signal to be unregistered.
+ * @param aHandler The message handler object to be added into the observer
+ *                 list. Note that this function doesn't take references to it.
+ */
+void
+RegisterBluetoothSignalHandler(const BluetoothUuid& aUuid,
+                               BluetoothSignalObserver* aHandler);
+
+/**
+ * Unregister the Bluetooth signal handler.
  *
  * @param aPath Path of the signal to be unregistered.
  * @param aHandler The message handler object to be removed from the observer
@@ -180,6 +235,28 @@ RegisterBluetoothSignalHandler(const nsAString& aPath,
  */
 void
 UnregisterBluetoothSignalHandler(const nsAString& aPath,
+                                 BluetoothSignalObserver* aHandler);
+
+/**
+ * Unregister the Bluetooth signal handler.
+ *
+ * @param aAddress Address of the signal to be unregistered.
+ * @param aHandler The message handler object to be removed from the observer
+ *                 list. Note that this function doesn't take references to it.
+ */
+void
+UnregisterBluetoothSignalHandler(const BluetoothAddress& aAddress,
+                                 BluetoothSignalObserver* aHandler);
+
+/**
+ * Unregister the Bluetooth signal handler.
+ *
+ * @param aUuid UUID of the signal to be unregistered.
+ * @param aHandler The message handler object to be removed from the observer
+ *                 list. Note that this function doesn't take references to it.
+ */
+void
+UnregisterBluetoothSignalHandler(const BluetoothUuid& aUuid,
                                  BluetoothSignalObserver* aHandler);
 
 //
@@ -250,7 +327,7 @@ DispatchReplyError(BluetoothReplyRunnable* aRunnable,
 
 void
 DispatchStatusChangedEvent(const nsAString& aType,
-                           const nsAString& aDeviceAddress,
+                           const BluetoothAddress& aDeviceAddress,
                            bool aStatus);
 
 //

@@ -37,7 +37,7 @@ AudioCallbackAdapter::Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp
 
   size_t numFrames = aPCM.Length() / aChannels;
   MOZ_ASSERT((aPCM.Length() % aChannels) == 0);
-  nsAutoArrayPtr<AudioDataValue> audioData(new AudioDataValue[aPCM.Length()]);
+  auto audioData = MakeUnique<AudioDataValue[]>(aPCM.Length());
 
   for (size_t i = 0; i < aPCM.Length(); ++i) {
     audioData[i] = AudioSampleToFloat(aPCM[i]);
@@ -71,12 +71,12 @@ AudioCallbackAdapter::Decoded(const nsTArray<int16_t>& aPCM, uint64_t aTimeStamp
   }
 
   RefPtr<AudioData> audio(new AudioData(mLastStreamOffset,
-                                          timestamp.value(),
-                                          duration.value(),
-                                          numFrames,
-                                          audioData.forget(),
-                                          aChannels,
-                                          aRate));
+                                        timestamp.value(),
+                                        duration.value(),
+                                        numFrames,
+                                        Move(audioData),
+                                        aChannels,
+                                        aRate));
 
 #ifdef LOG_SAMPLE_DECODE
   LOG("Decoded audio sample! timestamp=%lld duration=%lld currentLength=%u",
@@ -136,14 +136,22 @@ GMPAudioDecoder::InitTags(nsTArray<nsCString>& aTags)
 nsCString
 GMPAudioDecoder::GetNodeId()
 {
-  return NS_LITERAL_CSTRING("");
+  return SHARED_GMP_DECODING_NODE_ID;
 }
 
 void
 GMPAudioDecoder::GMPInitDone(GMPAudioDecoderProxy* aGMP)
 {
+  MOZ_ASSERT(IsOnGMPThread());
+
   if (!aGMP) {
-    mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.RejectIfExists(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    return;
+  }
+  if (mInitPromise.IsEmpty()) {
+    // GMP must have been shutdown while we were waiting for Init operation
+    // to complete.
+    aGMP->Close();
     return;
   }
   nsTArray<uint8_t> codecSpecific;
@@ -241,6 +249,7 @@ GMPAudioDecoder::Shutdown()
   if (!mGMP) {
     return NS_ERROR_FAILURE;
   }
+  // Note this unblocks flush and drain operations waiting for callbacks.
   mGMP->Close();
   mGMP = nullptr;
 

@@ -9,6 +9,7 @@
 #include "nsNodeUtils.h"
 #include "nsIFrame.h"
 #include "mozilla/Likely.h"
+#include "mozilla/UniquePtr.h"
 
 nsHtml5TreeBuilder::nsHtml5TreeBuilder(nsHtml5OplessBuilder* aBuilder)
   : scriptingEnabled(false)
@@ -128,7 +129,7 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace, nsIAtom* aName,
           nsString* crossOrigin =
             aAttributes->getValue(nsHtml5AttributeName::ATTR_CROSSORIGIN);
           nsString* referrerPolicy =
-            aAttributes->getValue(nsHtml5AttributeName::ATTR_REFERRER);
+            aAttributes->getValue(nsHtml5AttributeName::ATTR_REFERRERPOLICY);
           nsString* sizes =
             aAttributes->getValue(nsHtml5AttributeName::ATTR_SIZES);
           mSpeculativeLoadQueue.AppendElement()->
@@ -236,6 +237,14 @@ nsHtml5TreeBuilder::createElement(int32_t aNamespace, nsIAtom* aName,
           }
         } else if (nsHtml5Atoms::meta == aName) {
           if (nsHtml5Portability::lowerCaseLiteralEqualsIgnoreAsciiCaseString(
+                      "content-security-policy",
+                      aAttributes->getValue(nsHtml5AttributeName::ATTR_HTTP_EQUIV))) {
+            nsString* csp = aAttributes->getValue(nsHtml5AttributeName::ATTR_CONTENT);
+            if (csp) {
+              mSpeculativeLoadQueue.AppendElement()->InitMetaCSP(*csp);
+            }
+          }
+          else if (nsHtml5Portability::lowerCaseLiteralEqualsIgnoreAsciiCaseString(
                       "referrer",
                       aAttributes->getValue(nsHtml5AttributeName::ATTR_NAME))) {
             nsString* referrerPolicy = aAttributes->getValue(nsHtml5AttributeName::ATTR_CONTENT);
@@ -989,8 +998,8 @@ nsHtml5TreeBuilder::AllocateContentHandle()
     return nullptr;
   }
   if (mHandlesUsed == NS_HTML5_TREE_BUILDER_HANDLE_ARRAY_LENGTH) {
-    mOldHandles.AppendElement(mHandles.forget());
-    mHandles = new nsIContent*[NS_HTML5_TREE_BUILDER_HANDLE_ARRAY_LENGTH];
+    mOldHandles.AppendElement(Move(mHandles));
+    mHandles = MakeUnique<nsIContent*[]>(NS_HTML5_TREE_BUILDER_HANDLE_ARRAY_LENGTH);
     mHandlesUsed = 0;
   }
 #ifdef DEBUG

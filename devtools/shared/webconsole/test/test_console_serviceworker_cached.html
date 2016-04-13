@@ -49,6 +49,7 @@ let startTest = Task.async(function*() {
 
   yield new Promise(resolve => {
     SpecialPowers.pushPrefEnv({"set": [
+      ["dom.serviceWorkers.enabled", true],
       ["devtools.webconsole.filter.serviceworkers", true]
     ]}, resolve);
   });
@@ -60,13 +61,12 @@ let startTest = Task.async(function*() {
 
   yield new Promise(resolve => {
     info("Attaching console to tab 1");
-
-    attachConsole(["ConsoleAPI"], function(state) {
+    attachConsoleToTab(["ConsoleAPI"], function(state) {
       state.client.getCachedMessages(["ConsoleAPI"], function(calls) {
         checkConsoleAPICalls(calls.messages, firstTabExpectedCalls);
         closeDebugger(state, resolve);
       });
-    }, true);
+    });
   });
 
   // Because this tab is being added after the original messages happened,
@@ -76,12 +76,12 @@ let startTest = Task.async(function*() {
   let tab2 = yield addTab(FRAME_URL);
   yield new Promise(resolve => {
     info("Attaching console to tab 2");
-    attachConsole(["ConsoleAPI"], function(state) {
+    attachConsoleToTab(["ConsoleAPI"], function(state) {
       state.client.getCachedMessages(["ConsoleAPI"], function(calls) {
         checkConsoleAPICalls(calls.messages, secondTabExpectedCalls);
         closeDebugger(state, resolve);
       });
-    }, true);
+    });
   });
 
   yield swr.unregister();

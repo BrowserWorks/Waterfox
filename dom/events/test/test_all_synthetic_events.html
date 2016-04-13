@@ -76,6 +76,10 @@ const kEventConstructors = {
                                                           return new BluetoothLeDeviceEvent(aName, aProps);
                                                        },
                                              },
+  BluetoothObexAuthEvent:                    { create: function (aName, aProps) {
+                                                          return new BluetoothObexAuthEvent(aName, aProps);
+                                                       },
+                                             },
   BluetoothPairingEvent:                     { create: function (aName, aProps) {
                                                           return new BluetoothPairingEvent(aName, aProps);
                                                        },
@@ -444,6 +448,9 @@ const kEventConstructors = {
   RTCPeerConnectionIceEvent:                 { create: function (aName, aProps) {
                                                          return new RTCPeerConnectionIceEvent(aName, aProps);
                                                        },
+                                             },
+  RTCTrackEvent:                             {
+                                               // Difficult to test required arguments.
                                              },
   ScrollAreaEvent:                           { create: function (aName, aProps) {
                                                          var e = document.createEvent("scrollareaevent");

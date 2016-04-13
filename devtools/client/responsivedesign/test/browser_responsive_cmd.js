@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+"use strict";
+
 ///////////////////
 //
 // Whitelisting this test.
@@ -9,80 +11,102 @@
 thisTestLeaksUncaughtRejectionsAndShouldBeFixed("destroy");
 
 function test() {
+  let manager = ResponsiveUI.ResponsiveUIManager;
+  let done;
+
   function isOpen() {
     return gBrowser.getBrowserContainer(gBrowser.selectedBrowser)
                    .hasAttribute("responsivemode");
   }
 
-  helpers.addTabWithToolbar("data:text/html;charset=utf-8,hi", function(options) {
+  helpers.addTabWithToolbar("data:text/html;charset=utf-8,hi", (options) => {
     return helpers.audit(options, [
       {
-        setup: "resize toggle",
+        setup() {
+          done = once(manager, "on");
+          return helpers.setInput(options, "resize toggle");
+        },
         check: {
-          input:  'resize toggle',
-          hints:               '',
-          markup: 'VVVVVVVVVVVVV',
-          status: 'VALID'
+          input:  "resize toggle",
+          hints:               "",
+          markup: "VVVVVVVVVVVVV",
+          status: "VALID"
         },
         exec: {
           output: ""
         },
-        post: function() {
+        post: Task.async(function*() {
+          yield done;
           ok(isOpen(), "responsive mode is open");
-        },
+        }),
       },
       {
-        setup: "resize toggle",
+        setup() {
+          done = once(manager, "off");
+          return helpers.setInput(options, "resize toggle");
+        },
         check: {
-          input:  'resize toggle',
-          hints:               '',
-          markup: 'VVVVVVVVVVVVV',
-          status: 'VALID'
+          input:  "resize toggle",
+          hints:               "",
+          markup: "VVVVVVVVVVVVV",
+          status: "VALID"
         },
         exec: {
           output: ""
         },
-        post: function() {
+        post: Task.async(function*() {
+          yield done;
           ok(!isOpen(), "responsive mode is closed");
-        },
+        }),
       },
       {
-        setup: "resize on",
+        setup() {
+          done = once(manager, "on");
+          return helpers.setInput(options, "resize on");
+        },
         check: {
-          input:  'resize on',
-          hints:           '',
-          markup: 'VVVVVVVVV',
-          status: 'VALID'
+          input:  "resize on",
+          hints:           "",
+          markup: "VVVVVVVVV",
+          status: "VALID"
         },
         exec: {
           output: ""
         },
-        post: function() {
+        post: Task.async(function*() {
+          yield done;
           ok(isOpen(), "responsive mode is open");
-        },
+        }),
       },
       {
-        setup: "resize off",
+        setup() {
+          done = once(manager, "off");
+          return helpers.setInput(options, "resize off");
+        },
         check: {
-          input:  'resize off',
-          hints:            '',
-          markup: 'VVVVVVVVVV',
-          status: 'VALID'
+          input:  "resize off",
+          hints:            "",
+          markup: "VVVVVVVVVV",
+          status: "VALID"
         },
         exec: {
           output: ""
         },
-        post: function() {
+        post: Task.async(function*() {
+          yield done;
           ok(!isOpen(), "responsive mode is closed");
-        },
+        }),
       },
       {
-        setup: "resize to 400 400",
+        setup() {
+          done = once(manager, "on");
+          return helpers.setInput(options, "resize to 400 400");
+        },
         check: {
-          input:  'resize to 400 400',
-          hints:                   '',
-          markup: 'VVVVVVVVVVVVVVVVV',
-          status: 'VALID',
+          input:  "resize to 400 400",
+          hints:                   "",
+          markup: "VVVVVVVVVVVVVVVVV",
+          status: "VALID",
           args: {
             width: { value: 400 },
             height: { value: 400 },
@@ -91,24 +115,29 @@ function test() {
         exec: {
           output: ""
         },
-        post: function() {
+        post: Task.async(function*() {
+          yield done;
           ok(isOpen(), "responsive mode is open");
-        },
+        }),
       },
       {
-        setup: "resize off",
+        setup() {
+          done = once(manager, "off");
+          return helpers.setInput(options, "resize off");
+        },
         check: {
-          input:  'resize off',
-          hints:            '',
-          markup: 'VVVVVVVVVV',
-          status: 'VALID'
+          input:  "resize off",
+          hints:            "",
+          markup: "VVVVVVVVVV",
+          status: "VALID"
         },
         exec: {
           output: ""
         },
-        post: function() {
+        post: Task.async(function*() {
+          yield done;
           ok(!isOpen(), "responsive mode is closed");
-        },
+        }),
       },
     ]);
   }).then(finish);

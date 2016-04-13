@@ -162,10 +162,12 @@ if os_bsd or os_linux:
         ]
 
 ost = CONFIG['OS_TEST']
-if '86' not in ost and 'arm' not in ost and 'mips' not in ost:
+if '86' not in ost and 'arm' not in ost and 'aarch64' != ost and 'mips' not in ost:
     SOURCES += [
         'src/base/atomicops_internals_mutex.cc',
     ]
+
+CXXFLAGS += CONFIG['TK_CFLAGS']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

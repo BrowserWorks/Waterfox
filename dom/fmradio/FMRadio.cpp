@@ -321,7 +321,9 @@ FMRadio::GetRdsgroup(JSContext* cx, JS::MutableHandle<JSObject*> retval)
 
   JSObject *rdsgroup = Uint16Array::Create(cx, this, 4);
   JS::AutoCheckCannotGC nogc;
-  uint16_t *data = JS_GetUint16ArrayData(rdsgroup, nogc);
+  bool isShared = false;
+  uint16_t *data = JS_GetUint16ArrayData(rdsgroup, &isShared, nogc);
+  MOZ_ASSERT(!isShared);  // Because created above.
   data[3] = group & 0xFFFF;
   group >>= 16;
   data[2] = group & 0xFFFF;
@@ -452,8 +454,7 @@ FMRadio::EnableAudioChannelAgent()
 
   float volume = 0.0;
   bool muted = true;
-  mAudioChannelAgent->NotifyStartedPlaying(nsIAudioChannelAgent::AUDIO_AGENT_NOTIFY,
-                                           &volume, &muted);
+  mAudioChannelAgent->NotifyStartedPlaying(&volume, &muted);
   WindowVolumeChanged(volume, muted);
 
   mAudioChannelAgentEnabled = true;
@@ -468,7 +469,7 @@ FMRadio::WindowVolumeChanged(float aVolume, bool aMuted)
 }
 
 NS_IMETHODIMP
-FMRadio::WindowAudioCaptureChanged()
+FMRadio::WindowAudioCaptureChanged(bool aCapture)
 {
   return NS_OK;
 }

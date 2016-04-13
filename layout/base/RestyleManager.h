@@ -65,9 +65,6 @@ public:
     return mPresContext;
   }
 
-  nsCSSFrameConstructor* FrameConstructor() const
-    { return PresContext()->FrameConstructor(); }
-
   // Should be called when a frame is going to be destroyed and
   // WillDestroyFrameTree hasn't been called yet.
   void NotifyDestroyingFrame(nsIFrame* aFrame);
@@ -103,10 +100,7 @@ public:
   // track whether off-main-thread animations are up-to-date.
   uint64_t GetAnimationGeneration() const { return mAnimationGeneration; }
 
-  // A workaround until bug 847286 lands that gets the maximum of the animation
-  // generation counters stored on the set of animations and transitions
-  // respectively for |aFrame|.
-  static uint64_t GetMaxAnimationGenerationForFrame(nsIFrame* aFrame);
+  static uint64_t GetAnimationGenerationForFrame(nsIFrame* aFrame);
 
   // Update the animation generation count to mark that animation state
   // has changed.
@@ -114,7 +108,14 @@ public:
   // This is normally performed automatically by ProcessPendingRestyles
   // but it is also called when we have out-of-band changes to animations
   // such as changes made through the Web Animations API.
-  void IncrementAnimationGeneration() { ++mAnimationGeneration; }
+  void IncrementAnimationGeneration() {
+    // We update the animation generation at start of each call to
+    // ProcessPendingRestyles so we should ignore any subsequent (redundant)
+    // calls that occur while we are still processing restyles.
+    if (!mIsProcessingRestyles) {
+      ++mAnimationGeneration;
+    }
+  }
 
   // Whether rule matching should skip styles associated with animation
   bool SkipAnimationRules() const { return mSkipAnimationRules; }
@@ -138,6 +139,9 @@ public:
   }
 
 private:
+  nsCSSFrameConstructor* FrameConstructor() const
+    { return PresContext()->FrameConstructor(); }
+
   // Used when restyling an element with a frame.
   void ComputeAndProcessStyleChange(nsIFrame*              aFrame,
                                     nsChangeHint           aMinChange,
@@ -346,12 +350,14 @@ public:
   // Returns whether there are any pending restyles.
   bool HasPendingRestyles() { return mPendingRestyles.Count() != 0; }
 
+private:
   // ProcessPendingRestyles calls into one of our RestyleTracker
   // objects.  It then calls back to these functions at the beginning
   // and end of its work.
   void BeginProcessingRestyles(RestyleTracker& aRestyleTracker);
   void EndProcessingRestyles();
 
+public:
   // Update styles for animations that are running on the compositor and
   // whose updating is suppressed on the main thread (to save
   // unnecessary work), while leaving all other aspects of style
@@ -377,11 +383,6 @@ public:
   // compare against.  When we do this, we don't bother touching frames
   // other than primary frames.
   void UpdateOnlyAnimationStyles();
-
-  bool ThrottledAnimationStyleIsUpToDate() const {
-    return mLastUpdateForThrottledAnimations ==
-             mPresContext->RefreshDriver()->MostRecentRefresh();
-  }
 
   // Rebuilds all style data by throwing out the old rule tree and
   // building a new one, and additionally applying aExtraHint (which
@@ -554,8 +555,6 @@ private:
   nsChangeHint mRebuildAllExtraHint;
   nsRestyleHint mRebuildAllRestyleHint;
 
-  mozilla::TimeStamp mLastUpdateForThrottledAnimations;
-
   OverflowChangedTracker mOverflowChangedTracker;
 
   // The total number of animation flushes by this frame constructor.
@@ -567,9 +566,11 @@ private:
 
   RestyleTracker mPendingRestyles;
 
-#ifdef DEBUG
+  // Are we currently in the middle of a call to ProcessRestyles?
+  // This flag is used both as a debugging aid to assert that we are not
+  // performing nested calls to ProcessPendingRestyles, as well as to ignore
+  // redundant calls to IncrementAnimationGeneration.
   bool mIsProcessingRestyles;
-#endif
 
 #ifdef RESTYLE_LOGGING
   int32_t mLoggingDepth;

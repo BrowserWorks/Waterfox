@@ -256,7 +256,7 @@ OnStatsReport_m(WebrtcGlobalChild* aThisChild,
       }
     }
 
-    unused << aThisChild->SendGetStatsResult(aRequestId, stats);
+    Unused << aThisChild->SendGetStatsResult(aRequestId, stats);
     return;
   }
 
@@ -327,7 +327,7 @@ static void OnGetLogging_m(WebrtcGlobalChild* aThisChild,
       nsLogs.AppendElement(NS_LITERAL_STRING("+++++++ END ++++++++"), fallible);
     }
 
-    unused << aThisChild->SendGetLogResult(aRequestId, nsLogs);
+    Unused << aThisChild->SendGetLogResult(aRequestId, nsLogs);
     return;
   }
 
@@ -386,7 +386,9 @@ BuildStatsQueryList(
     if (aPcIdFilter.IsEmpty() ||
         aPcIdFilter.EqualsASCII(pc.second->GetIdAsAscii().c_str())) {
       if (pc.second->HasMedia()) {
-        queries->append(nsAutoPtr<RTCStatsQuery>(new RTCStatsQuery(true)));
+        if (!queries->append(nsAutoPtr<RTCStatsQuery>(new RTCStatsQuery(true)))) {
+	  return NS_ERROR_OUT_OF_MEMORY;
+	}
         rv = pc.second->BuildStatsQuery_m(nullptr, queries->back()); // all tracks
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return rv;
@@ -585,7 +587,7 @@ WebrtcGlobalInformation::SetDebugLevel(const GlobalObject& aGlobal, int32_t aLev
   sLastSetLevel = aLevel;
 
   for (auto& cp : WebrtcContentParents::GetAll()){
-    unused << cp->SendSetDebugMode(aLevel);
+    Unused << cp->SendSetDebugMode(aLevel);
   }
 }
 
@@ -603,7 +605,7 @@ WebrtcGlobalInformation::SetAecDebug(const GlobalObject& aGlobal, bool aEnable)
   sLastAECDebug = aEnable;
 
   for (auto& cp : WebrtcContentParents::GetAll()){
-    unused << cp->SendSetAecLogging(aEnable);
+    Unused << cp->SendSetAecLogging(aEnable);
   }
 }
 
@@ -1066,7 +1068,7 @@ static void StoreLongTermICEStatisticsImpl_m(
 
 static void GetStatsForLongTermStorage_s(
     nsAutoPtr<RTCStatsQuery> query,
-    bool aIsLoop) {
+    const bool aIsLoop) {
 
   MOZ_ASSERT(query);
 

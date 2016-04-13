@@ -54,6 +54,9 @@ public:
     void BindAttribLocation(GLuint prog, const nsCString& userName, GLuint index) const;
     bool FindAttribUserNameByMappedName(const nsACString& mappedName,
                                         nsDependentCString* const out_userName) const;
+    bool FindVaryingByMappedName(const nsACString& mappedName,
+                                 nsCString* const out_userName,
+                                 bool* const out_isArray) const;
     bool FindUniformByMappedName(const nsACString& mappedName,
                                  nsCString* const out_userName,
                                  bool* const out_isArray) const;
@@ -74,7 +77,7 @@ public:
     size_t SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
     void Delete();
 
-    WebGLContext* GetParentObject() const { return Context(); }
+    WebGLContext* GetParentObject() const { return mContext; }
 
     virtual JSObject* WrapObject(JSContext* js, JS::Handle<JSObject*> givenProto) override;
 

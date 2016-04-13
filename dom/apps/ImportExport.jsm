@@ -15,7 +15,7 @@ Cu.import("resource://gre/modules/Promise.jsm");
 Cu.import("resource://gre/modules/Webapps.jsm");
 Cu.import("resource://gre/modules/MessageBroadcaster.jsm");
 
-Cu.importGlobalProperties(['File']);
+Cu.importGlobalProperties(['File', 'FileReader']);
 
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
   "resource://gre/modules/FileUtils.jsm");
@@ -251,7 +251,9 @@ this.ImportExport = {
       throw "NoManifestFound";
     }
 
-    return [readObjectFromZip(appZipReader, "manifest.webapp"), file];
+    return [readObjectFromZip(appZipReader, "manifest.webapp"),
+            readObjectFromZip(appZipReader, "update.webapp"),
+            file];
   },
 
   // Returns a promise that resolves to the temp file path.
@@ -260,8 +262,7 @@ this.ImportExport = {
     debug("_writeBlobToTempFile");
     let path;
     return new Promise((aResolve, aReject) => {
-      let reader = Cc['@mozilla.org/files/filereader;1']
-                     .createInstance(Ci.nsIDOMFileReader);
+      let reader = new FileReader();
       reader.onloadend = () => {
         path = OS.Path.join(OS.Constants.Path.tmpDir, "app-blob.zip");
         debug("onloadend path=" + path);
@@ -307,6 +308,7 @@ this.ImportExport = {
     let meta;
     let appDir;
     let manifest;
+    let updateManifest;
     let zipReader = Cc["@mozilla.org/libjar/zip-reader;1"]
                       .createInstance(Ci.nsIZipReader);
     try {
@@ -353,7 +355,7 @@ this.ImportExport = {
       let appFile;
 
       if (isPackage) {
-        [manifest, appFile] =
+        [manifest, updateManifest, appFile] =
           this._importPackagedApp(zipReader, meta.manifestURL, appDir);
       } else {
         manifest = this._importHostedApp(zipReader, meta.manifestURL);
@@ -394,6 +396,11 @@ this.ImportExport = {
       meta.installerAppId = Ci.nsIScriptSecurityManager.NO_APP_ID;
       meta.installerIsBrowser = false;
       meta.role = manifest.role;
+
+      // If there is an id in the mini-manifest, use it for blocklisting purposes.
+      if (isPackage && updateManifest && ("id" in updateManifest)) {
+        meta.blocklistId = updateManifest["id"];
+      }
 
       let devMode = false;
       try {

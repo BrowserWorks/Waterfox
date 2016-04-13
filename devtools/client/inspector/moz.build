@@ -2,11 +2,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+DIRS += [
+    'computed',
+    'fonts',
+    'layout',
+    'markup',
+    'rules',
+    'shared'
+]
+
 DevToolsModules(
     'breadcrumbs.js',
     'inspector-commands.js',
     'inspector-panel.js',
-    'selector-search.js'
+    'inspector-search.js'
 )
 
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']

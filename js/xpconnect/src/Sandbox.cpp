@@ -40,6 +40,7 @@
 #ifdef MOZ_WEBRTC
 #include "mozilla/dom/RTCIdentityProviderRegistrar.h"
 #endif
+#include "mozilla/dom/FileReaderBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/TextDecoderBinding.h"
 #include "mozilla/dom/TextEncoderBinding.h"
@@ -49,7 +50,6 @@
 
 using namespace mozilla;
 using namespace JS;
-using namespace js;
 using namespace xpc;
 
 using mozilla::dom::DestroyProtoAndIfaceCache;
@@ -289,9 +289,8 @@ SandboxFetch(JSContext* cx, JS::HandleObject scope, const CallArgs& args)
     ErrorResult rv;
     RefPtr<dom::Promise> response =
         FetchRequest(global, Constify(request), Constify(options), rv);
-    rv.WouldReportJSException();
-    if (rv.Failed()) {
-        return ThrowMethodFailed(cx, rv);
+    if (rv.MaybeSetPendingException(cx)) {
+        return false;
     }
     if (!GetOrCreateDOMReflector(cx, response, args.rval())) {
         return false;
@@ -510,7 +509,7 @@ sandbox_addProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v)
         return false;
 
     // After bug 1015790 is fixed, we should be able to remove this unwrapping.
-    RootedObject unwrappedProto(cx, js::UncheckedUnwrap(proto, /* stopAtOuter = */ false));
+    RootedObject unwrappedProto(cx, js::UncheckedUnwrap(proto, /* stopAtWindowProxy = */ false));
 
     Rooted<JSPropertyDescriptor> pd(cx);
     if (!JS_GetPropertyDescriptorById(cx, proto, id, &pd))
@@ -562,8 +561,6 @@ static const js::Class SandboxClass = {
     nullptr, nullptr, nullptr, JS_GlobalObjectTraceHook,
     JS_NULL_CLASS_SPEC,
     {
-      nullptr,      /* outerObject */
-      nullptr,      /* innerObject */
       false,        /* isWrappedNative */
       nullptr,      /* weakmapKeyDelegateOp */
       sandbox_moved /* objectMovedOp */
@@ -583,8 +580,6 @@ static const js::Class SandboxWriteToProtoClass = {
     nullptr, nullptr, nullptr, JS_GlobalObjectTraceHook,
     JS_NULL_CLASS_SPEC,
     {
-      nullptr,      /* outerObject */
-      nullptr,      /* innerObject */
       false,        /* isWrappedNative */
       nullptr,      /* weakmapKeyDelegateOp */
       sandbox_moved /* objectMovedOp */
@@ -602,7 +597,7 @@ static const JSFunctionSpec SandboxFunctions[] = {
 bool
 xpc::IsSandbox(JSObject* obj)
 {
-    const Class* clasp = GetObjectClass(obj);
+    const js::Class* clasp = js::GetObjectClass(obj);
     return clasp == &SandboxClass || clasp == &SandboxWriteToProtoClass;
 }
 
@@ -715,8 +710,12 @@ WrapCallable(JSContext* cx, HandleObject callable, HandleObject sandboxProtoProx
                  &xpc::sandboxProxyHandler);
 
     RootedValue priv(cx, ObjectValue(*callable));
+    // We want to claim to have the same proto as our wrapped callable, so set
+    // ourselves up with a lazy proto.
+    js::ProxyOptions options;
+    options.setLazyProto(true);
     JSObject* obj = js::NewProxyObject(cx, &xpc::sandboxCallableProxyHandler,
-                                       priv, nullptr);
+                                       priv, nullptr, options);
     if (obj) {
         js::SetProxyExtra(obj, SandboxCallableProxyHandler::SandboxProxySlot,
                           ObjectValue(*sandboxProtoProxy));
@@ -897,6 +896,8 @@ xpc::GlobalProperties::Parse(JSContext* cx, JS::HandleObject obj)
             fetch = true;
         } else if (!strcmp(name.ptr(), "caches")) {
             caches = true;
+        } else if (!strcmp(name.ptr(), "FileReader")) {
+            fileReader = true;
         } else {
             JS_ReportError(cx, "Unknown property name: %s", name.ptr());
             return false;
@@ -965,6 +966,9 @@ xpc::GlobalProperties::Define(JSContext* cx, JS::HandleObject obj)
     if (caches && !dom::cache::CacheStorage::DefineCaches(cx, obj))
         return false;
 
+    if (fileReader && !dom::FileReaderBinding::GetConstructorObject(cx, obj))
+        return false;
+
     return true;
 }
 
@@ -987,16 +991,21 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
     MOZ_ASSERT(principal);
 
     JS::CompartmentOptions compartmentOptions;
-    if (options.sameZoneAs)
-        compartmentOptions.setSameZoneAs(js::UncheckedUnwrap(options.sameZoneAs));
-    else if (options.freshZone)
-        compartmentOptions.setZone(JS::FreshZone);
-    else
-        compartmentOptions.setZone(JS::SystemZone);
 
-    compartmentOptions.setInvisibleToDebugger(options.invisibleToDebugger)
-                      .setDiscardSource(options.discardSource)
-                      .setTrace(TraceXPCGlobal);
+    auto& creationOptions = compartmentOptions.creationOptions();
+
+    if (xpc::SharedMemoryEnabled())
+        creationOptions.setSharedMemoryAndAtomicsEnabled(true);
+
+    if (options.sameZoneAs)
+        creationOptions.setSameZoneAs(js::UncheckedUnwrap(options.sameZoneAs));
+    else if (options.freshZone)
+        creationOptions.setZone(JS::FreshZone);
+    else
+        creationOptions.setZone(JS::SystemZone);
+
+    creationOptions.setInvisibleToDebugger(options.invisibleToDebugger)
+                   .setTrace(TraceXPCGlobal);
 
     // Try to figure out any addon this sandbox should be associated with.
     // The addon could have been passed in directly, as part of the metadata,
@@ -1010,11 +1019,13 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
             addonId = id;
     }
 
-    compartmentOptions.setAddonId(addonId);
+    creationOptions.setAddonId(addonId);
 
-    const Class* clasp = options.writeToGlobalPrototype
-                       ? &SandboxWriteToProtoClass
-                       : &SandboxClass;
+    compartmentOptions.behaviors().setDiscardSource(options.discardSource);
+
+    const js::Class* clasp = options.writeToGlobalPrototype
+                             ? &SandboxWriteToProtoClass
+                             : &SandboxClass;
 
     RootedObject sandbox(cx, xpc::CreateGlobalObject(cx, js::Jsvalify(clasp),
                                                      principal, compartmentOptions));
@@ -1025,6 +1036,7 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
     priv->allowWaivers = options.allowWaivers;
     priv->writeToGlobalPrototype = options.writeToGlobalPrototype;
     priv->isWebExtensionContentScript = options.isWebExtensionContentScript;
+    priv->waiveInterposition = options.waiveInterposition;
 
     // Set up the wantXrays flag, which indicates whether xrays are desired even
     // for same-origin access.
@@ -1189,7 +1201,7 @@ ParsePrincipal(JSContext* cx, HandleString codebase, nsIPrincipal** principal)
     // We could allow passing in the app-id and browser-element info to the
     // sandbox constructor. But creating a sandbox based on a string is a
     // deprecated API so no need to add features to it.
-    OriginAttributes attrs;
+    PrincipalOriginAttributes attrs;
     nsCOMPtr<nsIPrincipal> prin =
         BasePrincipal::CreateCodebasePrincipal(uri, attrs);
     prin.forget(principal);
@@ -1491,6 +1503,7 @@ SandboxOptions::Parse()
               ParseBoolean("wantComponents", &wantComponents) &&
               ParseBoolean("wantExportHelpers", &wantExportHelpers) &&
               ParseBoolean("isWebExtensionContentScript", &isWebExtensionContentScript) &&
+              ParseBoolean("waiveInterposition", &waiveInterposition) &&
               ParseString("sandboxName", sandboxName) &&
               ParseObject("sameZoneAs", &sameZoneAs) &&
               ParseBoolean("freshZone", &freshZone) &&

@@ -21,6 +21,7 @@
 #include "nsIXULDocument.h"
 #include "nsScriptLoader.h"
 #include "nsIStreamListener.h"
+#include "nsIStreamLoader.h"
 #include "nsICSSLoaderObserver.h"
 #include "nsIXULStore.h"
 
@@ -42,8 +43,6 @@ class nsIObjectOutputStream;
 #endif
 #include "nsURIHashKey.h"
 #include "nsInterfaceHashtable.h"
-
-struct PRLogModuleInfo;
 
 class nsRefMapEntry : public nsStringHashKey
 {
@@ -294,7 +293,7 @@ protected:
     static nsIRDFResource* kNC_attribute;
     static nsIRDFResource* kNC_value;
 
-    static PRLogModuleInfo* gXULLog;
+    static LazyLogModule gXULLog;
 
     nsresult
     Persist(nsIContent* aElement, int32_t aNameSpaceID, nsIAtom* aAttribute);

@@ -3,7 +3,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
-import shlex
+from mozbuild import shellutil
 
 def check_top_objdir(topobjdir):
     top_make = os.path.join(topobjdir, 'Makefile')
@@ -33,31 +33,3 @@ def get_build_vars(directory, cmd):
         cmd.log_manager.replace_terminal_handler(old_logger)
 
     return build_vars
-
-def get_flags(topobjdir, make_dir, build_vars, name):
-    flags = ['-isystem', '-I', '-include', '-MF']
-    new_args = []
-    path = os.path.join(topobjdir, make_dir)
-
-    # Take case to handle things such as the following correctly:
-    #   * -DMOZ_APP_VERSION='"40.0a1"'
-    #   * -DR_PLATFORM_INT_TYPES='<stdint.h>'
-    #   * -DAPP_ID='{ec8030f7-c20a-464f-9b0e-13a3a9e97384}
-    #   * -D__UNUSED__='__attribute__((unused))'
-    lex = shlex.shlex(build_vars[name])
-    lex.quotes = '"'
-    lex.wordchars += '+/\'"-=.*{}()[]<>'
-
-    for arg in list(lex):
-        if new_args and new_args[-1] in flags:
-            arg = os.path.normpath(os.path.join(path, arg))
-        else:
-            flag = [(f, arg[len(f):]) for f in flags + ['--sysroot=']
-                    if arg.startswith(f)]
-            if flag:
-                flag, val = flag[0]
-                if val:
-                    arg = flag + os.path.normpath(os.path.join(path, val))
-        new_args.append(arg)
-
-    return ' '.join(new_args)

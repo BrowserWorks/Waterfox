@@ -23,6 +23,7 @@ class ProfileGatherer;
 } // namespace mozilla
 
 typedef mozilla::Vector<std::string> ThreadNameFilterList;
+typedef mozilla::Vector<std::string> FeatureList;
 
 static bool
 threadSelected(ThreadInfo* aInfo, const ThreadNameFilterList &aThreadNameFilters) {
@@ -103,6 +104,7 @@ class GeckoSampler: public Sampler {
   void ToStreamAsJSON(std::ostream& stream, double aSinceTime = 0);
 #ifndef SPS_STANDALONE
   virtual JSObject *ToJSObject(JSContext *aCx, double aSinceTime = 0);
+  void GetGatherer(nsISupports** aRetVal);
 #endif
   mozilla::UniquePtr<char[]> ToJSON(double aSinceTime = 0);
   virtual void ToJSObjectAsync(double aSinceTime = 0, mozilla::dom::Promise* aPromise = 0);
@@ -121,10 +123,10 @@ class GeckoSampler: public Sampler {
   bool LayersDump() const { return mLayersDump; }
   bool DisplayListDump() const { return mDisplayListDump; }
   bool ProfileRestyle() const { return mProfileRestyle; }
+  const ThreadNameFilterList& ThreadNameFilters() { return mThreadNameFilters; }
+  const FeatureList& Features() { return mFeatures; }
 
   void GetBufferInfo(uint32_t *aCurrentPosition, uint32_t *aTotalSize, uint32_t *aGeneration);
-
-  void ProfileGathered();
 
 protected:
   // Called within a signal. This function must be reentrant
@@ -153,6 +155,7 @@ protected:
   // Keep the thread filter to check against new thread that
   // are started while profiling
   ThreadNameFilterList mThreadNameFilters;
+  FeatureList mFeatures;
   bool mPrivacyMode;
   bool mAddMainThreadIO;
   bool mProfileMemory;

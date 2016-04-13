@@ -87,7 +87,11 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
         self.log.info("%s | environment: %s" % (name, self.env))
 
     def getHeadAndTailFiles(self, test):
-        """Override parent method to find files on remote device."""
+        """Override parent method to find files on remote device.
+
+        Obtains lists of head- and tail files.  Returns a tuple containing
+        a list of head files and a list of tail files.
+        """
         def sanitize_list(s, kind):
             for f in s.strip().split(' '):
                 f = f.strip()
@@ -99,13 +103,14 @@ class RemoteXPCShellTestThread(xpcshell.XPCShellTestThread):
                 # skip check for file existence: the convenience of discovering
                 # a missing file does not justify the time cost of the round trip
                 # to the device
-
                 yield path
 
         self.remoteHere = self.remoteForLocal(test['here'])
 
-        return (list(sanitize_list(test['head'], 'head')),
-                list(sanitize_list(test['tail'], 'tail')))
+        headlist = test.get('head', '')
+        taillist = test.get('tail', '')
+        return (list(sanitize_list(headlist, 'head')),
+                list(sanitize_list(taillist, 'tail')))
 
     def buildXpcsCmd(self):
         # change base class' paths to remote paths and use base class to build command
@@ -231,7 +236,7 @@ class XPCShellRemote(xpcshell.XPCShellTests, object):
         self.options = options
         self.device = devmgr
         self.pathMapping = []
-        self.remoteTestRoot = "%s/xpcshell" % self.device.deviceRoot
+        self.remoteTestRoot = "%s/xpc" % self.device.deviceRoot
         # remoteBinDir contains xpcshell and its wrapper script, both of which must
         # be executable. Since +x permissions cannot usually be set on /mnt/sdcard,
         # and the test root may be on /mnt/sdcard, remoteBinDir is set to be on

@@ -16,7 +16,6 @@ var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Log.jsm");
 Cu.import("resource://services-common/rest.js");
-Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-common/observers.js");
 
 const PREF_LOG_LEVEL = "services.common.log.logger.tokenserverclient";
@@ -285,8 +284,7 @@ TokenServerClient.prototype = {
         try {
           cb(error, result);
         } catch (ex) {
-          self._log.warn("Exception when calling user-supplied callback: " +
-                         CommonUtils.exceptionStr(ex));
+          self._log.warn("Exception when calling user-supplied callback", ex);
         }
 
         cb = null;
@@ -295,8 +293,7 @@ TokenServerClient.prototype = {
       try {
         client._processTokenResponse(this.response, callCallback);
       } catch (ex) {
-        this._log.warn("Error processing token server response: " +
-                       CommonUtils.exceptionStr(ex));
+        this._log.warn("Error processing token server response", ex);
 
         let error = new TokenServerClientError(ex);
         error.response = this.response;
@@ -396,11 +393,6 @@ TokenServerClient.prototype = {
       } else if (response.status == 404) {
         error.message = "Unknown service.";
         error.cause = "unknown-service";
-      }
-
-      if (response.status == 401 || response.status == 403) {
-        Services.telemetry.getKeyedHistogramById(
-          "TOKENSERVER_AUTH_ERRORS").add(error.cause || "unknown");
       }
 
       // A Retry-After header should theoretically only appear on a 503, but

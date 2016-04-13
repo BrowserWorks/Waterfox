@@ -1,6 +1,10 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* import-globals-from ../debugger-controller.js */
+/* import-globals-from ../debugger-view.js */
+/* import-globals-from ../utils.js */
+/* globals document, window */
 "use strict";
 
 /**
@@ -114,7 +118,7 @@ GlobalSearchView.prototype = Heritage.extend(WidgetMethods, {
     setNamedTimeout("global-search", delay, () => {
       // Start fetching as many sources as possible, then perform the search.
       let actors = this.DebuggerView.Sources.values;
-      let sourcesFetched = this.SourceScripts.getTextForSources(actors);
+      let sourcesFetched = DebuggerController.dispatch(actions.getTextForSources(actors));
       sourcesFetched.then(aSources => this._doSearch(aToken, aSources));
     });
   },

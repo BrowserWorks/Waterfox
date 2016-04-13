@@ -15,6 +15,8 @@ var httpServer = new HttpServer();
 httpServer.start(-1);
 var testsToFinish = 0;
 
+var principal;
+
 const REPORT_SERVER_PORT = httpServer.identity.primaryPort;
 const REPORT_SERVER_URI = "http://localhost";
 const REPORT_SERVER_PATH = "/report";
@@ -37,9 +39,9 @@ function makeReportHandler(testpath, message, expectedJSON) {
             request.bodyInputStream,
             request.bodyInputStream.available()));
 
-    dump("GOT REPORT:\n" + JSON.stringify(reportObj) + "\n");
-    dump("TESTPATH:    " + testpath + "\n");
-    dump("EXPECTED:  \n" + JSON.stringify(expectedJSON) + "\n\n");
+    // dump("GOT REPORT:\n" + JSON.stringify(reportObj) + "\n");
+    // dump("TESTPATH:    " + testpath + "\n");
+    // dump("EXPECTED:  \n" + JSON.stringify(expectedJSON) + "\n\n");
 
     for (var i in expectedJSON)
       do_check_eq(expectedJSON[i], reportObj['csp-report'][i]);
@@ -72,18 +74,17 @@ function makeTest(id, expectedJSON, useReportOnlyPolicy, callback) {
   var selfuri = NetUtil.newURI(REPORT_SERVER_URI +
                                ":" + REPORT_SERVER_PORT +
                                "/foo/self");
-  var selfchan = NetUtil.newChannel({
-    uri: selfuri,
-    loadUsingSystemPrincipal: true});
 
   dump("Created test " + id + " : " + policy + "\n\n");
 
-  // make the reports seem authentic by "binding" them to a channel.
-  csp.setRequestContext(selfuri, null, selfchan);
+  let ssm = Cc["@mozilla.org/scriptsecuritymanager;1"]
+              .getService(Ci.nsIScriptSecurityManager);
+  principal = ssm.getSimpleCodebasePrincipal(selfuri);
+  csp.setRequestContext(null, principal);
 
   // Load up the policy
   // set as report-only if that's the case
-  csp.appendPolicy(policy, useReportOnlyPolicy);
+  csp.appendPolicy(policy, useReportOnlyPolicy, false);
 
   // prime the report server
   var handler = makeReportHandler("/test" + id, "Test " + id, expectedJSON);
@@ -131,7 +132,7 @@ function run_test() {
         }
       });
 
-  makeTest(2, {"blocked-uri": "http://blocked.test/foo.js"}, false,
+  makeTest(2, {"blocked-uri": "http://blocked.test"}, false,
       function(csp) {
         // shouldLoad creates and sends out the report here.
         csp.shouldLoad(Ci.nsIContentPolicy.TYPE_SCRIPT,
@@ -170,5 +171,37 @@ function run_test() {
                                   "script sample",
                                   4);
         }
+      });
+
+  // test that only the uri's scheme is reported for globally unique identifiers
+  makeTest(5, {"blocked-uri": "data"}, false,
+    function(csp) {
+      var base64data =
+        "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12" +
+        "P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
+      // shouldLoad creates and sends out the report here.
+      csp.shouldLoad(Ci.nsIContentPolicy.TYPE_IMAGE,
+                     NetUtil.newURI("data:image/png;base64," + base64data),
+                     null, null, null, null);
+      });
+
+  // test that only the uri's scheme is reported for globally unique identifiers
+  makeTest(6, {"blocked-uri": "intent"}, false,
+    function(csp) {
+      // shouldLoad creates and sends out the report here.
+      csp.shouldLoad(Ci.nsIContentPolicy.TYPE_SUBDOCUMENT,
+                     NetUtil.newURI("intent://mymaps.com/maps?um=1&ie=UTF-8&fb=1&sll"),
+                     null, null, null, null);
+      });
+
+  // test fragment removal
+  var selfSpec = REPORT_SERVER_URI + ":" + REPORT_SERVER_PORT + "/foo/self/foo.js";
+  makeTest(7, {"blocked-uri": selfSpec}, false,
+    function(csp) {
+      var uri = NetUtil
+      // shouldLoad creates and sends out the report here.
+      csp.shouldLoad(Ci.nsIContentPolicy.TYPE_SCRIPT,
+                     NetUtil.newURI(selfSpec + "#bar"),
+                     null, null, null, null);
       });
 }

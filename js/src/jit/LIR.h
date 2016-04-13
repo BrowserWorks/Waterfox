@@ -183,7 +183,7 @@ class LAllocation : public TempObject
         return bits_;
     }
 
-    const char* toString() const;
+    UniqueChars toString() const;
     bool aliases(const LAllocation& other) const;
     void dump() const;
 
@@ -484,10 +484,8 @@ class LDefinition
                 return r.fpu().isSingle();
             if (type() == DOUBLE)
                 return r.fpu().isDouble();
-            if (type() == INT32X4)
-                return r.fpu().isInt32x4();
-            if (type() == FLOAT32X4)
-                return r.fpu().isFloat32x4();
+            if (isSimdType())
+                return r.fpu().isSimd128();
             MOZ_CRASH("Unexpected MDefinition type");
         }
         return !isFloatReg() && !r.isFloat();
@@ -570,6 +568,7 @@ class LDefinition
             return LDefinition::SLOTS;
           case MIRType_Pointer:
             return LDefinition::GENERAL;
+          case MIRType_Bool32x4:
           case MIRType_Int32x4:
             return LDefinition::INT32X4;
           case MIRType_Float32x4:
@@ -579,7 +578,7 @@ class LDefinition
         }
     }
 
-    const char* toString() const;
+    UniqueChars toString() const;
 
     void dump() const;
 };
@@ -1827,9 +1826,11 @@ LAllocation::toRegister() const
 # include "jit/arm/LIR-arm.h"
 #elif defined(JS_CODEGEN_ARM64)
 # include "jit/arm64/LIR-arm64.h"
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
 # if defined(JS_CODEGEN_MIPS32)
 #  include "jit/mips32/LIR-mips32.h"
+# elif defined(JS_CODEGEN_MIPS64)
+#  include "jit/mips64/LIR-mips64.h"
 # endif
 # include "jit/mips-shared/LIR-mips-shared.h"
 #elif defined(JS_CODEGEN_NONE)

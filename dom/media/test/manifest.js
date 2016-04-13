@@ -58,6 +58,12 @@ var gVideoTests = [
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
+// Temp hack for trackIDs and captureStream() -- bug 1215769
+var gLongerTests = [
+  { name:"seek.webm", type:"video/webm", width:320, height:240, duration:3.966 },
+  { name:"gizmo.mp4", type:"video/mp4", width:560, height:320, duration:5.56 },
+];
+
 // Used by test_progress to ensure we get the correct progress information
 // during resource download.
 var gProgressTests = [
@@ -148,6 +154,10 @@ var gPlayTests = [
   { name:"r11025_s16_c1_trailing.wav", type:"audio/x-wav", duration:1.0 },
   // file with list chunk
   { name:"r16000_u8_c1_list.wav", type:"audio/x-wav", duration:4.2 },
+  // file with 2 extra bytes of metadata
+  { name:"16bit_wave_extrametadata.wav", type:"audio/x-wav", duration:1.108 },
+  // 24-bit samples
+  { name:"wavedata_s24.wav", type:"audio/x-wav", duration:1.0 },
 
   // Ogg stream without eof marker
   { name:"bug461281.ogg", type:"application/ogg", duration:2.208 },
@@ -497,7 +507,8 @@ var gUnseekableTests = [
 ];
 
 var androidVersion = -1; // non-Android platforms
-if (manifestNavigator().userAgent.indexOf("Mobile") != -1) {
+if (manifestNavigator().userAgent.indexOf("Mobile") != -1 ||
+    manifestNavigator().userAgent.indexOf("Tablet") != -1) {
   // See nsSystemInfo.cpp, the getProperty('version') returns different value
   // on each platforms, so we need to distinguish the android and B2G platform.
   var versionString = manifestNavigator().userAgent.indexOf("Android") != -1 ?
@@ -1406,6 +1417,11 @@ const DEBUG_TEST_LOOP_FOREVER = false;
 //      or end the mochitest if all the tests are done.
 function MediaTestManager() {
 
+  // Return how many seconds elapsed since |begin|.
+  function elapsedTime(begin) {
+    var end = new Date();
+    return (end.getTime() - begin.getTime()) / 1000;
+  }
   // Sets up a MediaTestManager to runs through the 'tests' array, which needs
   // to be one of, or have the same fields as, the g*Test arrays of tests. Uses
   // the user supplied 'startTest' function to initialize the test. This
@@ -1450,7 +1466,8 @@ function MediaTestManager() {
     this.tokens.push(token);
     this.numTestsRunning++;
     this.handlers[token] = handler;
-    is(this.numTestsRunning, this.tokens.length, "[started " + token + "] Length of array should match number of running tests");
+    is(this.numTestsRunning, this.tokens.length,
+       "[started " + token + " t=" + elapsedTime(this.startTime) + "] Length of array should match number of running tests");
   }
 
   // Registers that the test corresponding to 'token' has finished. Call when
@@ -1466,7 +1483,8 @@ function MediaTestManager() {
 
     info("[finished " + token + "] remaining= " + this.tokens);
     this.numTestsRunning--;
-    is(this.numTestsRunning, this.tokens.length, "[finished " + token + "] Length of array should match number of running tests");
+    is(this.numTestsRunning, this.tokens.length,
+       "[finished " + token + " t=" + elapsedTime(this.startTime) + "] Length of array should match number of running tests");
     if (this.tokens.length < PARALLEL_TESTS) {
       this.nextTest();
     }
@@ -1504,7 +1522,7 @@ function MediaTestManager() {
       var onCleanup = function() {
         var end = new Date();
         SimpleTest.info("Finished at " + end + " (" + (end.getTime() / 1000) + "s)");
-        SimpleTest.info("Running time: " + (end.getTime() - this.startTime.getTime())/1000 + "s");
+        SimpleTest.info("Running time: " + elapsedTime(this.startTime) + "s");
         SimpleTest.finish();
       }.bind(this);
       mediaTestCleanup(onCleanup);
@@ -1543,4 +1561,8 @@ function isSlowPlatform() {
   return SpecialPowers.Services.appinfo.name == "B2G" || getAndroidVersion() == 10;
 }
 
-SimpleTest.requestFlakyTimeout("untriaged");
+// Could be undefined in a page opened by the parent test page
+// like file_access_controls.html.
+if ("SimpleTest" in window) {
+  SimpleTest.requestFlakyTimeout("untriaged");
+}

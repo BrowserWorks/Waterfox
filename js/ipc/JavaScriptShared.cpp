@@ -35,10 +35,8 @@ IdToObjectMap::init()
 void
 IdToObjectMap::trace(JSTracer* trc)
 {
-    for (Table::Range r(table_.all()); !r.empty(); r.popFront()) {
-        DebugOnly<JSObject*> prior = r.front().value().get();
-        JS_CallObjectTracer(trc, &r.front().value(), "ipc-object");
-    }
+    for (Table::Range r(table_.all()); !r.empty(); r.popFront())
+        JS::TraceEdge(trc, &r.front().value(), "ipc-object");
 }
 
 void
@@ -104,25 +102,13 @@ ObjectToIdMap::init()
 void
 ObjectToIdMap::trace(JSTracer* trc)
 {
-    for (Table::Enum e(table_); !e.empty(); e.popFront()) {
-        JSObject* obj = e.front().key();
-        JS_CallUnbarrieredObjectTracer(trc, &obj, "ipc-object");
-        if (obj != e.front().key())
-            e.rekeyFront(obj);
-    }
+    table_.trace(trc);
 }
 
 void
 ObjectToIdMap::sweep()
 {
-    for (Table::Enum e(table_); !e.empty(); e.popFront()) {
-        JSObject* obj = e.front().key();
-        JS_UpdateWeakPointerAfterGCUnbarriered(&obj);
-        if (!obj)
-            e.removeFront();
-        else if (obj != e.front().key())
-            e.rekeyFront(obj);
-    }
+    table_.sweep();
 }
 
 ObjectId
@@ -137,23 +123,7 @@ ObjectToIdMap::find(JSObject* obj)
 bool
 ObjectToIdMap::add(JSContext* cx, JSObject* obj, ObjectId id)
 {
-    if (!table_.put(obj, id))
-        return false;
-    JS_StoreObjectPostBarrierCallback(cx, keyMarkCallback, obj, &table_);
-    return true;
-}
-
-/*
- * This function is called during minor GCs for each key in the HashMap that has
- * been moved.
- */
-/* static */ void
-ObjectToIdMap::keyMarkCallback(JSTracer* trc, JSObject* key, void* data)
-{
-    Table* table = static_cast<Table*>(data);
-    JSObject* prior = key;
-    JS_CallUnbarrieredObjectTracer(trc, &key, "ObjectIdCache::table_ key");
-    table->rekeyIfMoved(prior, key);
+    return table_.put(obj, id);
 }
 
 void
@@ -537,9 +507,8 @@ JavaScriptShared::findObjectById(JSContext* cx, const ObjectId& objId)
     if (objId.hasXrayWaiver()) {
         {
             JSAutoCompartment ac2(cx, obj);
-            obj = JS_ObjectToOuterObject(cx, obj);
-            if (!obj)
-                return nullptr;
+            obj = js::ToWindowProxyIfWindow(obj);
+            MOZ_ASSERT(obj);
         }
         if (!xpc::WrapperFactory::WaiveXrayAndWrap(cx, &obj))
             return nullptr;

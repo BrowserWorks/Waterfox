@@ -26,8 +26,9 @@ using class mozilla::gfx::Matrix from "mozilla/gfx/Matrix.h";
 using struct gfxSize from "gfxPoint.h";
 using CSSRect from "Units.h";
 using CSSSize from "Units.h";
-using LayoutDeviceIntRect from "Units.h";
+using mozilla::LayoutDeviceIntRect from "Units.h";
 using mozilla::LayoutDeviceIntPoint from "Units.h";
+using mozilla::ScreenIntPoint from "Units.h";
 using ScreenIntSize from "Units.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
@@ -51,6 +52,7 @@ using class mozilla::WidgetDragEvent from "ipc/nsGUIEventIPC.h";
 using struct nsRect from "nsRect.h";
 using class mozilla::WidgetSelectionEvent from "ipc/nsGUIEventIPC.h";
 using class mozilla::WidgetTouchEvent from "ipc/nsGUIEventIPC.h";
+using class mozilla::WidgetPluginEvent from "ipc/nsGUIEventIPC.h";
 using struct mozilla::dom::RemoteDOMEvent from "mozilla/dom/TabMessageUtils.h";
 using mozilla::dom::ScreenOrientationInternal from "mozilla/dom/ScreenOrientation.h";
 using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
@@ -90,6 +92,7 @@ struct ShowInfo
   nsString name;
   bool fullscreenAllowed;
   bool isPrivate;
+  bool fakeShowInfo;
   float dpi;
   double defaultScale;
 };
@@ -233,20 +236,19 @@ parent:
                                                IMENotification notification);
 
     /**
-     * Instructs chrome to end any pending composition
+     * Requests chrome to commit or cancel composition of IME.
      *
-     *  cancel       true if composition should be cancelled
-     *  noCompositionEvent   true if no composition event is fired by commit or
-     *                       cancel
-     *  composition  Text to commit before ending the composition
+     *  cancel                Set true if composition should be cancelled.
      *
-     *  if cancel is true,
-     *    widget should return empty string for composition
-     *  if cancel is false,
-     *    widget should return the current composition text
+     *  isCommitted           Returns true if the request causes composition
+     *                        being committed synchronously.
+     *  committedString       Returns committed string.  The may be non-empty
+     *                        string even if cancel is true because IME may
+     *                        try to restore selected string which was
+     *                        replaced with the composition.
      */
-    prio(urgent) sync EndIMEComposition(bool cancel)
-                        returns (bool noCompositionEvent, nsString composition);
+    prio(urgent) sync RequestIMEToCommitComposition(bool cancel)
+                        returns (bool isCommitted, nsString committedString);
 
     /**
      * OnEventNeedingAckHandled() is called after a child process dispatches a
@@ -280,6 +282,16 @@ parent:
     prio(urgent) async SetPluginFocused(bool aFocused);
 
     /**
+     * Set IME candidate window by windowless plugin if plugin has focus.
+     */
+    async SetCandidateWindowForPlugin(int32_t aX, int32_t aY);
+
+    /**
+     *  When plugin event isn't consumed, call this
+     */
+    async DefaultProcOfPluginEvent(WidgetPluginEvent aEvent);
+
+    /**
      * Request that the parent process move focus to the browser's frame. If
      * canRaise is true, the window can be raised if it is inactive.
      */
@@ -294,8 +306,7 @@ parent:
                           nsCString[] disabledCommands);
 
     prio(urgent) sync GetInputContext() returns (int32_t IMEEnabled,
-                                                 int32_t IMEOpen,
-                                                 intptr_t NativeIMEContext);
+                                                 int32_t IMEOpen);
 
     prio(urgent) async SetInputContext(int32_t IMEEnabled,
                                        int32_t IMEOpen,
@@ -409,7 +420,7 @@ parent:
      * Instructs the TabParent to forward a request to zoom to a rect given in
      * CSS pixels. This rect is relative to the document.
      */
-    ZoomToRect(uint32_t aPresShellId, ViewID aViewId, CSSRect aRect);
+    ZoomToRect(uint32_t aPresShellId, ViewID aViewId, CSSRect aRect, uint32_t aFlags);
 
     /**
      * We know for sure that content has either preventDefaulted or not
@@ -489,11 +500,11 @@ parent:
                                      uint64_t aObserverId);
     SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                TouchPointerState aPointerState,
-                               IntPoint aPointerScreenPoint,
+                               ScreenIntPoint aPointerScreenPoint,
                                double aPointerPressure,
                                uint32_t aPointerOrientation,
                                uint64_t aObserverId);
-    SynthesizeNativeTouchTap(IntPoint aPointerScreenPoint,
+    SynthesizeNativeTouchTap(ScreenIntPoint aPointerScreenPoint,
                              bool aLongTap,
                              uint64_t aObserverId);
     ClearNativeTouchSequence(uint64_t aObserverId);
@@ -553,12 +564,15 @@ child:
          nullable PRenderFrame renderFrame,
          bool parentIsActive);
 
-    LoadURL(nsCString uri, BrowserConfiguration config);
+    LoadURL(nsCString uri, BrowserConfiguration config, ShowInfo info);
+
+    OpenURI(URIParams uri, uint32_t flags);
 
     CacheFileDescriptor(nsString path, FileDescriptor fd);
 
     UpdateDimensions(CSSRect rect, CSSSize size, nsSizeMode sizeMode,
                      ScreenOrientationInternal orientation,
+                     LayoutDeviceIntPoint clientOffset,
                      LayoutDeviceIntPoint chromeDisp) compressall;
 
     UpdateFrame(FrameMetrics frame);
@@ -632,6 +646,7 @@ child:
                        uint64_t aInputBlockId,
                        nsEventStatus aApzResponse);
     RealDragEvent(WidgetDragEvent aEvent, uint32_t aDragAction, uint32_t aDropEffect);
+    PluginEvent(WidgetPluginEvent aEvent);
 
     /**
      * @see nsIDOMWindowUtils sendKeyEvent.
@@ -694,7 +709,7 @@ child:
     /**
      * Update the child side docShell active (resource use) state.
      */
-    SetDocShellIsActive(bool aIsActive);
+    SetDocShellIsActive(bool aIsActive, bool aIsHidden);
 
     /**
      * Notify the child that it shouldn't paint the offscreen displayport.
@@ -757,6 +772,13 @@ child:
      * @param modifierMask indicates which accesskey modifiers are pressed
      */
     HandleAccessKey(uint32_t[] charCodes, bool isTrusted, int32_t modifierMask);
+
+    /**
+     * Propagate a refresh to the child process
+     */
+    AudioChannelChangeNotification(uint32_t aAudioChannel,
+                                   float aVolume,
+                                   bool aMuted);
 
 /*
  * FIXME: write protocol!

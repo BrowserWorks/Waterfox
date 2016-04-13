@@ -37,9 +37,7 @@ class MIRGenerator
   public:
     MIRGenerator(CompileCompartment* compartment, const JitCompileOptions& options,
                  TempAllocator* alloc, MIRGraph* graph,
-                 CompileInfo* info, const OptimizationInfo* optimizationInfo,
-                 Label* outOfBoundsLabel = nullptr,
-                 Label* conversionErrorLabel = nullptr,
+                 const CompileInfo* info, const OptimizationInfo* optimizationInfo,
                  bool usesSignalHandlersForAsmJSOOB = false);
 
     TempAllocator& alloc() {
@@ -54,7 +52,7 @@ class MIRGenerator
     const JitRuntime* jitRuntime() const {
         return GetJitContext()->runtime->jitRuntime();
     }
-    CompileInfo& info() {
+    const CompileInfo& info() const {
         return *info_;
     }
     const OptimizationInfo& optimizationInfo() const {
@@ -169,7 +167,7 @@ class MIRGenerator
     CompileCompartment* compartment;
 
   protected:
-    CompileInfo* info_;
+    const CompileInfo* info_;
     const OptimizationInfo* optimizationInfo_;
     TempAllocator* alloc_;
     JSFunction* fun_;
@@ -198,11 +196,6 @@ class MIRGenerator
 
     void addAbortedPreliminaryGroup(ObjectGroup* group);
 
-    Label* outOfBoundsLabel_;
-    // Label where we should jump in asm.js mode, in the case where we have an
-    // invalid conversion or a loss of precision (when converting from a
-    // floating point SIMD type into an integer SIMD type).
-    Label* conversionErrorLabel_;
 #if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
     bool usesSignalHandlersForAsmJSOOB_;
 #endif
@@ -224,14 +217,6 @@ class MIRGenerator
   public:
     const JitCompileOptions options;
 
-    Label* conversionErrorLabel() const {
-        MOZ_ASSERT((conversionErrorLabel_ != nullptr) == compilingAsmJS());
-        return conversionErrorLabel_;
-    }
-    Label* outOfBoundsLabel() const {
-        MOZ_ASSERT(compilingAsmJS());
-        return outOfBoundsLabel_;
-    }
     bool needsAsmJSBoundsCheckBranch(const MAsmJSHeapAccess* access) const;
     size_t foldableOffsetRange(const MAsmJSHeapAccess* access) const;
 

@@ -19,7 +19,6 @@ import org.json.JSONObject;
 import org.mozilla.gecko.Actions;
 import org.mozilla.gecko.Element;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoThread;
 import org.mozilla.gecko.R;
@@ -29,10 +28,8 @@ import org.mozilla.gecko.Tabs;
 
 import android.app.Activity;
 import android.content.ContentValues;
-import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.AssetManager;
-import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.SystemClock;
@@ -124,31 +121,6 @@ abstract class BaseTest extends BaseRobocopTest {
         // In Robocop tests, we typically don't get initialized correctly, because
         // GeckoProfile doesn't create the profile directory.
         profile.enqueueInitialization(profile.getDir());
-    }
-
-    @Override
-    protected void runTest() throws Throwable {
-        try {
-            super.runTest();
-        } catch (Throwable t) {
-            // save screenshot -- written to /mnt/sdcard/Robotium-Screenshots
-            // as <filename>.jpg
-            mSolo.takeScreenshot("robocop-screenshot-"+getClass().getName());
-            if (mAsserter != null) {
-                mAsserter.dumpLog("Exception caught during test!", t);
-                mAsserter.ok(false, "Exception caught", t.toString());
-            }
-            // re-throw to continue bail-out
-            throw t;
-        }
-    }
-
-    public void assertMatches(String value, String regex, String name) {
-        if (value == null) {
-            mAsserter.ok(false, name, "Expected /" + regex + "/, got null");
-            return;
-        }
-        mAsserter.ok(value.matches(regex), name, "Expected /" + regex +"/, got \"" + value + "\"");
     }
 
     /**
@@ -298,10 +270,6 @@ abstract class BaseTest extends BaseRobocopTest {
             mAsserter.dumpLog("waitForCondition timeout after " + timeout + " ms.");
         }
         return result;
-    }
-
-    protected interface BooleanTest {
-        public boolean test();
     }
 
     public void SqliteCompare(String dbName, String sqlCommand, ContentValues[] cvs) {
@@ -564,14 +532,16 @@ abstract class BaseTest extends BaseRobocopTest {
        }
     }
 
-    // Used to hide/show the virtual keyboard
-    public void toggleVKB() {
-        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+    private void waitForAnimationsToFinish() {
+        // Ideally we'd actually wait for animations to finish but since we have
+        // no good way of doing that, we just wait an arbitrary unit of time.
+        mSolo.sleep(3500);
     }
 
     public void addTab() {
         mSolo.clickOnView(mSolo.getView(R.id.tabs));
+        waitForAnimationsToFinish();
+
         // wait for addTab to appear (this is usually immediate)
         boolean success = waitForCondition(new Condition() {
             @Override
@@ -586,6 +556,8 @@ abstract class BaseTest extends BaseRobocopTest {
         mAsserter.ok(success, "waiting for add tab view", "add tab view available");
         final Actions.RepeatedEventExpecter pageShowExpecter = mActions.expectGeckoEvent("Content:PageShow");
         mSolo.clickOnView(mSolo.getView(R.id.add_tab));
+        waitForAnimationsToFinish();
+
         // Wait until we get a PageShow event for a new tab ID
         for(;;) {
             try {
@@ -610,7 +582,7 @@ abstract class BaseTest extends BaseRobocopTest {
         addTab();
 
         // Adding a new tab opens about:home, so now we just need to load the url in it.
-        inputAndLoadUrl(url);
+        loadUrlAndWait(url);
     }
 
     public void closeAddedTabs() {
@@ -682,17 +654,6 @@ abstract class BaseTest extends BaseRobocopTest {
         mSolo.clickOnView(getTabViewAt(index));
     }
 
-    /**
-     * Closes the tab at the specified index.
-     *
-     * @param index Index of tab to close
-     */
-    public void closeTabAt(final int index) {
-        View closeButton = getTabViewAt(index).findViewById(R.id.close);
-
-        mSolo.clickOnView(closeButton);
-    }
-
     public final void runOnUiThreadSync(Runnable runnable) {
         RobocopUtils.runOnUiThreadSync(getActivity(), runnable);
     }
@@ -731,14 +692,6 @@ abstract class BaseTest extends BaseRobocopTest {
         }
     }
 
-    public void clearPrivateData() {
-        selectSettingsItem(mStringHelper.PRIVACY_SECTION_LABEL, mStringHelper.CLEAR_PRIVATE_DATA_LABEL);
-        Actions.EventExpecter clearData = mActions.expectGeckoEvent("Sanitize:Finished");
-        mSolo.clickOnText("Clear data");
-        clearData.blockForEvent();
-        clearData.unregisterListener();
-    }
-
     class Device {
         public final String version; // 2.x or 3.x or 4.x
         public String type; // "tablet" or "phone"
@@ -772,14 +725,6 @@ abstract class BaseTest extends BaseRobocopTest {
                 }
             } catch (Exception e) {
                 mAsserter.dumpLog("Exception in detectDevice", e);
-            }
-        }
-
-        public void rotate() {
-            if (getActivity().getRequestedOrientation () == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
-                mSolo.setActivityOrientation(Solo.PORTRAIT);
-            } else {
-                mSolo.setActivityOrientation(Solo.LANDSCAPE);
             }
         }
     }
@@ -827,23 +772,6 @@ abstract class BaseTest extends BaseRobocopTest {
 
             pageShowExpecter.blockForEvent();
             pageShowExpecter.unregisterListener();
-        }
-
-        public void reload() {
-            if (devType.equals("tablet")) {
-                mSolo.waitForView(R.id.reload);
-                mSolo.clickOnView(mSolo.getView(R.id.reload));
-            } else {
-                mActions.sendSpecialKey(Actions.SpecialKey.MENU);
-                waitForText("^New Tab$");
-                if (!osVersion.equals("2.x")) {
-                    mSolo.waitForView(R.id.reload);
-                    mSolo.clickOnView(mSolo.getView(R.id.reload));
-                } else {
-                    mSolo.clickOnText("^Reload$");
-                }
-                ensureMenuClosed();
-            }
         }
 
         // DEPRECATED!

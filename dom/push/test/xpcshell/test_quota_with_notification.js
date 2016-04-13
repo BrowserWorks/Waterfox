@@ -14,6 +14,7 @@ function run_test() {
   do_get_profile();
   setPrefs({
     userAgentID,
+    'testing.ignorePermission': true,
   });
   run_next_test();
 }
@@ -21,14 +22,14 @@ function run_test() {
 add_task(function* test_expiration_origin_threshold() {
   let db = PushServiceWebSocket.newPushDB();
   do_register_cleanup(() => {
-    db.drop().then(_ => db.close())
-    PushService._notificationForOriginClosed("https://example.com");
+    PushService.notificationForOriginClosed("https://example.com");
+    return db.drop().then(_ => db.close());
   });
 
   // Simulate a notification being shown for the origin,
   // this should relax the quota and allow as many push messages
   // as we want.
-  PushService._notificationForOriginShown("https://example.com");
+  PushService.notificationForOriginShown("https://example.com");
 
   yield db.put({
     channelID: 'f56645a9-1f32-4655-92ad-ddc37f6d54fb',
@@ -54,8 +55,8 @@ add_task(function* test_expiration_origin_threshold() {
   let numMessages = 10;
 
   let updates = 0;
-  let notifyPromise = promiseObserverNotification('push-notification', (subject, data) => {
-    dump(updates++);
+  let notifyPromise = promiseObserverNotification('push-message', (subject, data) => {
+    updates++;
     return updates == numMessages;
   });
 

@@ -55,6 +55,8 @@ def Libxul(name):
     if not CONFIG['JS_SHARED_LIBRARY']:
         LIBRARY_DEFINES['STATIC_EXPORTABLE_JS_API'] = True
 
+    if CONFIG['MOZ_NEEDS_LIBATOMIC']:
+        OS_LIBS += ['atomic']
 
 Libxul('xul')
 
@@ -365,9 +367,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
 
 if CONFIG['MOZ_ENABLE_QT']:
     OS_LIBS += CONFIG['XEXT_LIBS']
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa' and CONFIG['MOZ_GSTREAMER']:
-    OS_LIBS += CONFIG['GSTREAMER_LIBS']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     OS_LIBS += [

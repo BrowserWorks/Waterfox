@@ -31,7 +31,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "console",
 
 const MAX_LONG_STRING_LENGTH = 200000;
 const MAX_PROPERTY_ITEMS = 2000;
-const DBG_STRINGS_URI = "chrome://browser/locale/devtools/debugger.properties";
+const DBG_STRINGS_URI = "chrome://devtools/locale/debugger.properties";
 
 const ELLIPSIS = Services.prefs.getComplexValue("intl.ellipsis", Ci.nsIPrefLocalizedString).data
 
@@ -65,6 +65,7 @@ function VariablesViewController(aView, aOptions = {}) {
   this.view = aView;
   this.view.controller = this;
 }
+this.VariablesViewController = VariablesViewController;
 
 VariablesViewController.prototype = {
   /**
@@ -430,7 +431,7 @@ VariablesViewController.prototype = {
       let label = StackFrameUtils.getScopeLabel(environment);
 
       // Block scopes may have the same label, so make addItem allow duplicates.
-      let closure = funcScope.addItem(label, undefined, true);
+      let closure = funcScope.addItem(label, undefined, {relaxed: true});
       closure.target.setAttribute("scope", "");
       closure.showArrow();
 
@@ -694,7 +695,7 @@ VariablesViewController.prototype = {
 
     let scope = this.view.addScope(aOptions.label);
     scope.expanded = true; // Expand the scope by default.
-    scope.locked = true; // Prevent collpasing the scope.
+    scope.locked = true; // Prevent collapsing the scope.
 
     let variable = scope.addItem("", { enumerable: true });
     let populated;
@@ -734,7 +735,7 @@ VariablesViewController.attach = function(aView, aOptions) {
 /**
  * Utility functions for handling stackframes.
  */
-var StackFrameUtils = {
+var StackFrameUtils = this.StackFrameUtils = {
   /**
    * Create a textual representation for the specified stack frame
    * to display in the stackframes container.

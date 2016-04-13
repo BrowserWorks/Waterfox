@@ -14,27 +14,28 @@ function ModuleGetExportedNames(exportStarSet = [])
     let module = this;
 
     // Step 2
-    if (module in exportStarSet)
+    if (callFunction(ArrayIncludes, exportStarSet, module))
         return [];
 
     // Step 3
-    exportStarSet.push(module);
+    _DefineDataProperty(exportStarSet, exportStarSet.length, module);
 
     // Step 4
     let exportedNames = [];
+    let namesCount = 0;
 
     // Step 5
     let localExportEntries = module.localExportEntries;
     for (let i = 0; i < localExportEntries.length; i++) {
         let e = localExportEntries[i];
-        exportedNames.push(e.exportName);
+        _DefineDataProperty(exportedNames, namesCount++, e.exportName);
     }
 
     // Step 6
     let indirectExportEntries = module.indirectExportEntries;
     for (let i = 0; i < indirectExportEntries.length; i++) {
         let e = indirectExportEntries[i];
-        exportedNames.push(e.exportName);
+        _DefineDataProperty(exportedNames, namesCount++, e.exportName);
     }
 
     // Step 7
@@ -42,11 +43,12 @@ function ModuleGetExportedNames(exportStarSet = [])
     for (let i = 0; i < starExportEntries.length; i++) {
         let e = starExportEntries[i];
         let requestedModule = HostResolveImportedModule(module, e.moduleRequest);
-        let starNames = requestedModule.getExportedNames(exportStarSet);
+        let starNames = callFunction(requestedModule.getExportedNames, requestedModule,
+                                     exportStarSet);
         for (let j = 0; j < starNames.length; j++) {
             let n = starNames[j];
-            if (n !== "default" && !(n in exportedNames))
-                exportedNames.push(n);
+            if (n !== "default" && !callFunction(ArrayIncludes, exportedNames, n))
+                _DefineDataProperty(exportedNames, namesCount++, n);
         }
     }
 
@@ -72,7 +74,7 @@ function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
     }
 
     // Step 3
-    resolveSet.push({module: module, exportName: exportName});
+    _DefineDataProperty(resolveSet, resolveSet.length, {module: module, exportName: exportName});
 
     // Step 4
     let localExportEntries = module.localExportEntries;
@@ -88,9 +90,8 @@ function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
         let e = indirectExportEntries[i];
         if (exportName === e.exportName) {
             let importedModule = HostResolveImportedModule(module, e.moduleRequest);
-            let indirectResolution = importedModule.resolveExport(e.importName,
-                                                                  resolveSet,
-                                                                  exportStarSet);
+            let indirectResolution = callFunction(importedModule.resolveExport, importedModule,
+                                                  e.importName, resolveSet, exportStarSet);
             if (indirectResolution !== null)
                 return indirectResolution;
         }
@@ -103,11 +104,11 @@ function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
     }
 
     // Step 7
-    if (module in exportStarSet)
+    if (callFunction(ArrayIncludes, exportStarSet, module))
         return null;
 
     // Step 8
-    exportStarSet.push(module);
+    _DefineDataProperty(exportStarSet, exportStarSet.length, module);
 
     // Step 9
     let starResolution = null;
@@ -117,7 +118,8 @@ function ModuleResolveExport(exportName, resolveSet = [], exportStarSet = [])
     for (let i = 0; i < starExportEntries.length; i++) {
         let e = starExportEntries[i];
         let importedModule = HostResolveImportedModule(module, e.moduleRequest);
-        let resolution = importedModule.resolveExport(exportName, resolveSet, exportStarSet);
+        let resolution = callFunction(importedModule.resolveExport, importedModule,
+                                      exportName, resolveSet, exportStarSet);
         if (resolution === "ambiguous")
             return resolution;
 
@@ -145,15 +147,15 @@ function GetModuleNamespace(module)
 
     // Step 3
     if (typeof namespace === "undefined") {
-        let exportedNames = module.getExportedNames();
+        let exportedNames = callFunction(module.getExportedNames, module);
         let unambiguousNames = [];
         for (let i = 0; i < exportedNames.length; i++) {
             let name = exportedNames[i];
-            let resolution = module.resolveExport(name);
+            let resolution = callFunction(module.resolveExport, module, name);
             if (resolution === null)
                 ThrowSyntaxError(JSMSG_MISSING_NAMESPACE_EXPORT);
             if (resolution !== "ambiguous")
-                unambiguousNames.push(name);
+                _DefineDataProperty(unambiguousNames, unambiguousNames.length, name);
         }
         namespace = ModuleNamespaceCreate(module, unambiguousNames);
     }
@@ -165,7 +167,7 @@ function GetModuleNamespace(module)
 // 9.4.6.13 ModuleNamespaceCreate(module, exports)
 function ModuleNamespaceCreate(module, exports)
 {
-    exports.sort();
+    callFunction(std_Array_sort, exports);
 
     let ns = NewModuleNamespace(module, exports);
 
@@ -173,7 +175,7 @@ function ModuleNamespaceCreate(module, exports)
     // access.
     for (let i = 0; i < exports.length; i++) {
         let name = exports[i];
-        let binding = module.resolveExport(name);
+        let binding = callFunction(module.resolveExport, module, name);
         assert(binding !== null && binding !== "ambiguous", "Failed to resolve binding");
         AddModuleNamespaceBinding(ns, name, binding.module, binding.bindingName);
     }
@@ -203,18 +205,18 @@ function ModuleDeclarationInstantiation()
     for (let i = 0; i < requestedModules.length; i++) {
         let required = requestedModules[i];
         let requiredModule = HostResolveImportedModule(module, required);
-        requiredModule.declarationInstantiation();
+        callFunction(requiredModule.declarationInstantiation, requiredModule);
     }
 
     // Step 9
     let indirectExportEntries = module.indirectExportEntries;
     for (let i = 0; i < indirectExportEntries.length; i++) {
         let e = indirectExportEntries[i];
-        let resolution = module.resolveExport(e.exportName);
+        let resolution = callFunction(module.resolveExport, module, e.exportName);
         if (resolution === null)
-            ThrowSyntaxError(JSMSG_MISSING_INDIRECT_EXPORT);
+            ThrowSyntaxError(JSMSG_MISSING_INDIRECT_EXPORT, e.exportName);
         if (resolution === "ambiguous")
-            ThrowSyntaxError(JSMSG_AMBIGUOUS_INDIRECT_EXPORT);
+            ThrowSyntaxError(JSMSG_AMBIGUOUS_INDIRECT_EXPORT, e.exportName);
     }
 
     // Step 12
@@ -226,11 +228,12 @@ function ModuleDeclarationInstantiation()
             let namespace = GetModuleNamespace(importedModule);
             CreateNamespaceBinding(env, imp.localName, namespace);
         } else {
-            let resolution = importedModule.resolveExport(imp.importName);
+            let resolution = callFunction(importedModule.resolveExport, importedModule,
+                                          imp.importName);
             if (resolution === null)
-                ThrowSyntaxError(JSMSG_MISSING_IMPORT);
+                ThrowSyntaxError(JSMSG_MISSING_IMPORT, imp.importName);
             if (resolution === "ambiguous")
-                ThrowSyntaxError(JSMSG_AMBIGUOUS_IMPORT);
+                ThrowSyntaxError(JSMSG_AMBIGUOUS_IMPORT, imp.importName);
             CreateImportBinding(env, imp.localName, resolution.module, resolution.bindingName);
         }
     }
@@ -260,7 +263,7 @@ function ModuleEvaluation()
     for (let i = 0; i < requestedModules.length; i++) {
         let required = requestedModules[i];
         let requiredModule = HostResolveImportedModule(module, required);
-        requiredModule.evaluation();
+        callFunction(requiredModule.evaluation, requiredModule);
     }
 
     return EvaluateModule(module);

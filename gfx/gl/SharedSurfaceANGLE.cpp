@@ -135,30 +135,12 @@ SharedSurface_ANGLEShareHandle::UnlockProdImpl()
 }
 
 void
-SharedSurface_ANGLEShareHandle::Fence()
-{
-    mGL->fFinish();
-}
-
-bool
-SharedSurface_ANGLEShareHandle::WaitSync()
-{
-    return true;
-}
-
-bool
-SharedSurface_ANGLEShareHandle::PollSync()
-{
-    return true;
-}
-
-void
 SharedSurface_ANGLEShareHandle::ProducerAcquireImpl()
 {
     if (mKeyedMutex) {
         HRESULT hr = mKeyedMutex->AcquireSync(0, 10000);
         if (hr == WAIT_TIMEOUT) {
-            MOZ_CRASH();
+            MOZ_CRASH("GFX: ANGLE share handle timeout");
         }
     }
 }
@@ -174,7 +156,7 @@ SharedSurface_ANGLEShareHandle::ProducerReleaseImpl()
         mKeyedMutex->ReleaseSync(0);
         return;
     }
-    Fence();
+    mGL->fFinish();
 }
 
 void
@@ -190,77 +172,6 @@ SharedSurface_ANGLEShareHandle::ProducerReadReleaseImpl()
         mKeyedMutex->ReleaseSync(0);
         return;
     }
-}
-
-void
-SharedSurface_ANGLEShareHandle::ConsumerAcquireImpl()
-{
-    if (!mConsumerTexture) {
-        RefPtr<ID3D11Texture2D> tex;
-        HRESULT hr = gfxWindowsPlatform::GetPlatform()->GetD3D11Device()->OpenSharedResource(mShareHandle,
-                                                                                             __uuidof(ID3D11Texture2D),
-                                                                                             (void**)(ID3D11Texture2D**)getter_AddRefs(tex));
-        if (SUCCEEDED(hr)) {
-            mConsumerTexture = tex;
-            RefPtr<IDXGIKeyedMutex> mutex;
-            hr = tex->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mutex));
-
-            if (SUCCEEDED(hr)) {
-                mConsumerKeyedMutex = mutex;
-            }
-        }
-    }
-
-    if (mConsumerKeyedMutex) {
-      HRESULT hr = mConsumerKeyedMutex->AcquireSync(0, 10000);
-      if (hr == WAIT_TIMEOUT) {
-        MOZ_CRASH();
-      }
-    }
-}
-
-void
-SharedSurface_ANGLEShareHandle::ConsumerReleaseImpl()
-{
-    if (mConsumerKeyedMutex) {
-        mConsumerKeyedMutex->ReleaseSync(0);
-    }
-}
-
-void
-SharedSurface_ANGLEShareHandle::Fence_ContentThread_Impl()
-{
-    if (mFence) {
-        MOZ_ASSERT(mGL->IsExtensionSupported(GLContext::NV_fence));
-        mGL->fSetFence(mFence, LOCAL_GL_ALL_COMPLETED_NV);
-        mGL->fFlush();
-        return;
-    }
-
-    Fence();
-}
-
-bool
-SharedSurface_ANGLEShareHandle::WaitSync_ContentThread_Impl()
-{
-    if (mFence) {
-        mGL->MakeCurrent();
-        mGL->fFinishFence(mFence);
-        return true;
-    }
-
-    return WaitSync();
-}
-
-bool
-SharedSurface_ANGLEShareHandle::PollSync_ContentThread_Impl()
-{
-    if (mFence) {
-        mGL->MakeCurrent();
-        return mGL->fTestFence(mFence);
-    }
-
-    return PollSync();
 }
 
 bool
@@ -289,7 +200,7 @@ public:
         if (mMutex) {
             hr = mMutex->AcquireSync(0, 10000);
             if (hr == WAIT_TIMEOUT) {
-                MOZ_CRASH();
+                MOZ_CRASH("GFX: ANGLE scoped lock timeout");
             }
 
             if (FAILED(hr)) {

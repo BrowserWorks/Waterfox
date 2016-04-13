@@ -137,12 +137,16 @@ interface RTCPeerConnection : EventTarget  {
   sequence<RTCRtpSender> getSenders();
   sequence<RTCRtpReceiver> getReceivers();
 
+  [ChromeOnly]
+  void mozSelectSsrc(RTCRtpReceiver receiver, unsigned short ssrcIndex);
+
   void close ();
   attribute EventHandler onnegotiationneeded;
   attribute EventHandler onicecandidate;
   attribute EventHandler onsignalingstatechange;
-  attribute EventHandler onaddstream;
-  attribute EventHandler onaddtrack;  // replaces onaddstream; see AddTrackEvent
+  attribute EventHandler onaddstream; // obsolete
+  attribute EventHandler onaddtrack;  // obsolete
+  attribute EventHandler ontrack;     // replaces onaddtrack and onaddstream.
   attribute EventHandler onremovestream;
   attribute EventHandler oniceconnectionstatechange;
 

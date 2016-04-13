@@ -7,6 +7,7 @@
 #include "mozilla/dom/DesktopNotificationBinding.h"
 #include "mozilla/dom/AppNotificationServiceOptionsBinding.h"
 #include "mozilla/dom/ToJSValue.h"
+#include "nsComponentManagerUtils.h"
 #include "nsContentPermissionHelper.h"
 #include "nsXULAppAPI.h"
 #include "mozilla/dom/PBrowserChild.h"
@@ -114,16 +115,20 @@ DesktopNotification::PostDesktopNotification()
   nsIPrincipal* principal = doc->NodePrincipal();
   nsCOMPtr<nsILoadContext> loadContext = doc->GetLoadContext();
   bool inPrivateBrowsing = loadContext && loadContext->UsePrivateBrowsing();
-  return alerts->ShowAlertNotification(mIconURL, mTitle, mDescription,
-                                       true,
-                                       uniqueName,
-                                       mObserver,
-                                       uniqueName,
-                                       NS_LITERAL_STRING("auto"),
-                                       EmptyString(),
-                                       EmptyString(),
-                                       principal,
-                                       inPrivateBrowsing);
+  nsCOMPtr<nsIAlertNotification> alert =
+    do_CreateInstance(ALERT_NOTIFICATION_CONTRACTID);
+  NS_ENSURE_TRUE(alert, NS_ERROR_FAILURE);
+  nsresult rv = alert->Init(uniqueName, mIconURL, mTitle,
+                            mDescription,
+                            true,
+                            uniqueName,
+                            NS_LITERAL_STRING("auto"),
+                            EmptyString(),
+                            EmptyString(),
+                            principal,
+                            inPrivateBrowsing);
+  NS_ENSURE_SUCCESS(rv, rv);
+  return alerts->ShowAlert(alert, mObserver);
 }
 
 DesktopNotification::DesktopNotification(const nsAString & title,
@@ -175,10 +180,7 @@ DesktopNotification::DispatchNotificationEvent(const nsString& aName)
 
   RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
   // it doesn't bubble, and it isn't cancelable
-  nsresult rv = event->InitEvent(aName, false, false);
-  if (NS_FAILED(rv)) {
-    return;
-  }
+  event->InitEvent(aName, false, false);
   event->SetTrusted(true);
   DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }

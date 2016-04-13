@@ -49,10 +49,13 @@ NS_IMETHODIMP
 PresentationIPCService::StartSession(const nsAString& aUrl,
                                      const nsAString& aSessionId,
                                      const nsAString& aOrigin,
+                                     const nsAString& aDeviceId,
                                      nsIPresentationServiceCallback* aCallback)
 {
-  return SendRequest(aCallback,
-                     StartSessionRequest(nsAutoString(aUrl), nsAutoString(aSessionId), nsAutoString(aOrigin)));
+  return SendRequest(aCallback, StartSessionRequest(nsAutoString(aUrl),
+                                                    nsAutoString(aSessionId),
+                                                    nsAutoString(aOrigin),
+                                                    nsAutoString(aDeviceId)));
 }
 
 NS_IMETHODIMP
@@ -254,8 +257,11 @@ PresentationIPCService::NotifyReceiverReady(const nsAString& aSessionId,
   mRespondingSessionIds.Put(aWindowId, new nsAutoString(aSessionId));
   mRespondingWindowIds.Put(aSessionId, aWindowId);
 
-  mCallback = nullptr;
   NS_WARN_IF(!sPresentationChild->SendNotifyReceiverReady(nsAutoString(aSessionId)));
+
+  // Release mCallback after using aSessionId
+  // because aSessionId is held by mCallback.
+  mCallback = nullptr;
   return NS_OK;
 }
 

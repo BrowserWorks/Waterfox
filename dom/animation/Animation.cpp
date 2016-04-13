@@ -11,13 +11,13 @@
 #include "mozilla/AutoRestore.h"
 #include "mozilla/AsyncEventDispatcher.h" // For AsyncEventDispatcher
 #include "mozilla/Maybe.h" // For Maybe
-#include "AnimationCommon.h" // For AnimationCollection,
-                             // CommonAnimationManager
+#include "nsAnimationManager.h" // For CSSAnimation
 #include "nsDOMMutationObserver.h" // For nsAutoAnimationMutationBatch
 #include "nsIDocument.h" // For nsIDocument
 #include "nsIPresShell.h" // For nsIPresShell
 #include "nsLayoutUtils.h" // For PostRestyleEvent (remove after bug 1073336)
 #include "nsThreadUtils.h" // For nsRunnableMethod and nsRevocableEventPtr
+#include "nsTransitionManager.h" // For CSSTransition
 #include "PendingAnimationTracker.h" // For PendingAnimationTracker
 
 namespace mozilla {
@@ -83,6 +83,41 @@ namespace {
 // Animation interface:
 //
 // ---------------------------------------------------------------------------
+/* static */ already_AddRefed<Animation>
+Animation::Constructor(const GlobalObject& aGlobal,
+                       KeyframeEffectReadOnly* aEffect,
+                       AnimationTimeline* aTimeline,
+                       ErrorResult& aRv)
+{
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
+  RefPtr<Animation> animation = new Animation(global);
+
+  if (!aTimeline) {
+    // Bug 1096776: We do not support null timeline yet.
+    aRv.Throw(NS_ERROR_FAILURE);
+    return nullptr;
+  }
+  if (!aEffect) {
+    // Bug 1049975: We do not support null effect yet.
+    aRv.Throw(NS_ERROR_FAILURE);
+    return nullptr;
+  }
+
+  animation->SetTimeline(aTimeline);
+  animation->SetEffect(aEffect);
+
+  return animation.forget();
+}
+
+void
+Animation::SetId(const nsAString& aId)
+{
+  if (mId == aId) {
+    return;
+  }
+  mId = aId;
+  nsNodeUtils::AnimationChanged(this);
+}
 
 void
 Animation::SetEffect(KeyframeEffectReadOnly* aEffect)
@@ -477,14 +512,12 @@ Animation::Tick()
 
   UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
 
-  // FIXME: Detect the no-change case and don't request a restyle at all
-  // FIXME: Detect changes to IsPlaying() state and request RestyleType::Layer
-  //        so that layers get updated immediately
-  AnimationCollection* collection = GetCollection();
-  if (collection) {
-    collection->RequestRestyle(CanThrottle() ?
-      AnimationCollection::RestyleType::Throttled :
-      AnimationCollection::RestyleType::Standard);
+  // Update layers if we are newly finished.
+  if (mEffect &&
+      !mEffect->Properties().IsEmpty() &&
+      !mFinishedAtLastComposeStyle &&
+      PlayState() == AnimationPlayState::Finished) {
+    PostUpdate();
   }
 }
 
@@ -545,6 +578,44 @@ Animation::GetCurrentOrPendingStartTime() const
   // This is the same as the calculation performed in ResumeAt and will
   // need to incorporate the playbackRate when implemented (bug 1127380).
   result.SetValue(mPendingReadyTime.Value() - mHoldTime.Value());
+  return result;
+}
+
+TimeStamp
+Animation::AnimationTimeToTimeStamp(const StickyTimeDuration& aTime) const
+{
+  // Initializes to null. Return the same object every time to benefit from
+  // return-value-optimization.
+  TimeStamp result;
+
+  // We *don't* check for mTimeline->TracksWallclockTime() here because that
+  // method only tells us if the timeline times can be converted to
+  // TimeStamps that can be compared to TimeStamp::Now() or not, *not*
+  // whether the timelines can be converted to TimeStamp values at all.
+  //
+  // Furthermore, we want to be able to use this method when the refresh driver
+  // is under test control (in which case TracksWallclockTime() will return
+  // false).
+  //
+  // Once we introduce timelines that are not time-based we will need to
+  // differentiate between them here and determine how to sort their events.
+  if (!mTimeline) {
+    return result;
+  }
+
+  // Check the time is convertible to a timestamp
+  if (aTime == TimeDuration::Forever() ||
+      mPlaybackRate == 0.0 ||
+      mStartTime.IsNull()) {
+    return result;
+  }
+
+  // Invert the standard relation:
+  //   animation time = (timeline time - start time) * playback rate
+  TimeDuration timelineTime =
+    TimeDuration(aTime).MultDouble(1.0 / mPlaybackRate) + mStartTime.Value();
+
+  result = mTimeline->ToTimeStamp(timelineTime);
   return result;
 }
 
@@ -624,65 +695,67 @@ Animation::UpdateRelevance()
 bool
 Animation::HasLowerCompositeOrderThan(const Animation& aOther) const
 {
-  // Due to the way subclasses of this repurpose the mAnimationIndex to
-  // implement their own brand of composite ordering it is possible for
-  // two animations to have an identical mAnimationIndex member.
-  // However, these subclasses override this method so we shouldn't see
-  // identical animation indices here.
-  MOZ_ASSERT(mAnimationIndex != aOther.mAnimationIndex || &aOther == this,
+  // 0. Object-equality case
+  if (&aOther == this) {
+    return false;
+  }
+
+  // 1. CSS Transitions sort lowest
+  {
+    auto asCSSTransitionForSorting =
+      [] (const Animation& anim) -> const CSSTransition*
+      {
+        const CSSTransition* transition = anim.AsCSSTransition();
+        return transition && transition->IsTiedToMarkup() ?
+               transition :
+               nullptr;
+      };
+    auto thisTransition  = asCSSTransitionForSorting(*this);
+    auto otherTransition = asCSSTransitionForSorting(aOther);
+    if (thisTransition && otherTransition) {
+      return thisTransition->HasLowerCompositeOrderThan(*otherTransition);
+    }
+    if (thisTransition || otherTransition) {
+      return thisTransition;
+    }
+  }
+
+  // 2. CSS Animations sort next
+  {
+    auto asCSSAnimationForSorting =
+      [] (const Animation& anim) -> const CSSAnimation*
+      {
+        const CSSAnimation* animation = anim.AsCSSAnimation();
+        return animation && animation->IsTiedToMarkup() ? animation : nullptr;
+      };
+    auto thisAnimation  = asCSSAnimationForSorting(*this);
+    auto otherAnimation = asCSSAnimationForSorting(aOther);
+    if (thisAnimation && otherAnimation) {
+      return thisAnimation->HasLowerCompositeOrderThan(*otherAnimation);
+    }
+    if (thisAnimation || otherAnimation) {
+      return thisAnimation;
+    }
+  }
+
+  // Subclasses of Animation repurpose mAnimationIndex to implement their
+  // own brand of composite ordering. However, by this point we should have
+  // handled any such custom composite ordering so we should now have unique
+  // animation indices.
+  MOZ_ASSERT(mAnimationIndex != aOther.mAnimationIndex,
              "Animation indices should be unique");
 
+  // 3. Finally, generic animations sort by their position in the global
+  // animation array.
   return mAnimationIndex < aOther.mAnimationIndex;
-}
-
-bool
-Animation::CanThrottle() const
-{
-  // This method answers the question, "Can we get away with NOT updating
-  // style on the main thread for this animation on this tick?"
-
-  // Ignore animations that were never going to have any effect anyway.
-  if (!mEffect || mEffect->Properties().IsEmpty()) {
-    return true;
-  }
-
-  // Finished animations can be throttled unless this is the first
-  // sample since finishing. In that case we need an unthrottled sample
-  // so we can apply the correct end-of-animation behavior on the main
-  // thread (either removing the animation style or applying the fill mode).
-  if (PlayState() == AnimationPlayState::Finished) {
-    return mFinishedAtLastComposeStyle;
-  }
-
-  // We should also ignore animations which are not "in effect"--i.e. not
-  // producing an output. This includes animations that are idle or in their
-  // delay phase but with no backwards fill.
-  //
-  // Note that unlike newly-finished animations, we don't need to worry about
-  // special handling for newly-idle animations or animations that are newly
-  // yet-to-start since any operation that would cause that change (e.g. a call
-  // to cancel() on the animation, or seeking its current time) will trigger an
-  // unthrottled sample.
-  if (!IsInEffect()) {
-    return true;
-  }
-
-  return IsRunningOnCompositor();
 }
 
 void
 Animation::ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
-                        nsCSSPropertySet& aSetProperties,
-                        bool& aStyleChanging)
+                        nsCSSPropertySet& aSetProperties)
 {
   if (!mEffect) {
     return;
-  }
-
-  AnimationPlayState playState = PlayState();
-  if (playState == AnimationPlayState::Running ||
-      playState == AnimationPlayState::Pending) {
-    aStyleChanging = true;
   }
 
   if (!IsInEffect()) {
@@ -723,7 +796,7 @@ Animation::ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
   // immediately before updating the style rule and then restore it immediately
   // afterwards. This is purely to prevent visual flicker. Other behavior
   // such as dispatching events continues to rely on the regular timeline time.
-  bool updatedHoldTime = false;
+  AnimationPlayState playState = PlayState();
   {
     AutoRestore<Nullable<TimeDuration>> restoreHoldTime(mHoldTime);
 
@@ -739,18 +812,10 @@ Animation::ComposeStyle(RefPtr<AnimValuesStyleRule>& aStyleRule,
       if (!timeToUse.IsNull()) {
         mHoldTime.SetValue((timeToUse.Value() - mStartTime.Value())
                             .MultDouble(mPlaybackRate));
-        // Push the change down to the effect
-        UpdateEffect();
-        updatedHoldTime = true;
       }
     }
 
     mEffect->ComposeStyle(aStyleRule, aSetProperties);
-  }
-
-  // Now that the hold time has been restored, update the effect
-  if (updatedHoldTime) {
-    UpdateEffect();
   }
 
   MOZ_ASSERT(playState == PlayState(),
@@ -937,7 +1002,7 @@ Animation::PauseAt(const TimeDuration& aReadyTime)
   MOZ_ASSERT(mPendingState == PendingState::PausePending,
              "Expected to pause a pause-pending animation");
 
-  if (!mStartTime.IsNull()) {
+  if (!mStartTime.IsNull() && mHoldTime.IsNull()) {
     mHoldTime.SetValue((aReadyTime - mStartTime.Value())
                         .MultDouble(mPlaybackRate));
   }
@@ -1020,6 +1085,7 @@ Animation::UpdateEffect()
 {
   if (mEffect) {
     UpdateRelevance();
+    mEffect->NotifyAnimationTimingUpdated();
   }
 }
 
@@ -1035,10 +1101,23 @@ Animation::FlushStyle() const
 void
 Animation::PostUpdate()
 {
-  AnimationCollection* collection = GetCollection();
-  if (collection) {
-    collection->RequestRestyle(AnimationCollection::RestyleType::Layer);
+  nsPresContext* presContext = GetPresContext();
+  if (!presContext) {
+    return;
   }
+
+  Element* targetElement;
+  nsCSSPseudoElements::Type targetPseudoType;
+  mEffect->GetTarget(targetElement, targetPseudoType);
+  if (!targetElement) {
+    return;
+  }
+
+  presContext->EffectCompositor()
+             ->RequestRestyle(targetElement,
+                              targetPseudoType,
+                              EffectCompositor::RestyleType::Layer,
+                              CascadeLevel());
 }
 
 void
@@ -1125,48 +1204,8 @@ Animation::EffectEnd() const
     return StickyTimeDuration(0);
   }
 
-  return mEffect->Timing().mDelay
+  return mEffect->SpecifiedTiming().mDelay
          + mEffect->GetComputedTiming().mActiveDuration;
-}
-
-TimeStamp
-Animation::AnimationTimeToTimeStamp(const StickyTimeDuration& aTime) const
-{
-  // Initializes to null. Return the same object every time to benefit from
-  // return-value-optimization.
-  TimeStamp result;
-
-  // We *don't* check for mTimeline->TracksWallclockTime() here because that
-  // method only tells us if the timeline times can be converted to
-  // TimeStamps that can be compared to TimeStamp::Now() or not, *not*
-  // whether the timelines can be converted to TimeStamp values at all.
-  //
-  // Since we never compare the result of this method with TimeStamp::Now()
-  // it is ok to return values even if mTimeline->TracksWallclockTime() is
-  // false. Furthermore, we want to be able to use this method when the
-  // refresh driver is under test control (in which case TracksWallclockTime()
-  // will return false).
-  //
-  // Once we introduce timelines that are not time-based we will need to
-  // differentiate between them here and determine how to sort their events.
-  if (!mTimeline) {
-    return result;
-  }
-
-  // Check the time is convertible to a timestamp
-  if (aTime == TimeDuration::Forever() ||
-      mPlaybackRate == 0.0 ||
-      mStartTime.IsNull()) {
-    return result;
-  }
-
-  // Invert the standard relation:
-  //   animation time = (timeline time - start time) * playback rate
-  TimeDuration timelineTime =
-    TimeDuration(aTime).MultDouble(1.0 / mPlaybackRate) + mStartTime.Value();
-
-  result = mTimeline->ToTimeStamp(timelineTime);
-  return result;
 }
 
 nsIDocument*
@@ -1176,47 +1215,17 @@ Animation::GetRenderedDocument() const
     return nullptr;
   }
 
-  Element* targetElement;
-  nsCSSPseudoElements::Type pseudoType;
-  mEffect->GetTarget(targetElement, pseudoType);
-  if (!targetElement) {
-    return nullptr;
-  }
-
-  return targetElement->GetComposedDoc();
+  return mEffect->GetRenderedDocument();
 }
 
 nsPresContext*
 Animation::GetPresContext() const
 {
-  nsIDocument* doc = GetRenderedDocument();
-  if (!doc) {
+  if (!mEffect) {
     return nullptr;
   }
-  nsIPresShell* shell = doc->GetShell();
-  if (!shell) {
-    return nullptr;
-  }
-  return shell->GetPresContext();
-}
 
-AnimationCollection*
-Animation::GetCollection() const
-{
-  CommonAnimationManager* manager = GetAnimationManager();
-  if (!manager) {
-    return nullptr;
-  }
-  MOZ_ASSERT(mEffect,
-             "An animation with an animation manager must have an effect");
-
-  Element* targetElement;
-  nsCSSPseudoElements::Type targetPseudoType;
-  mEffect->GetTarget(targetElement, targetPseudoType);
-  MOZ_ASSERT(targetElement,
-             "An animation with an animation manager must have a target");
-
-  return manager->GetAnimations(targetElement, targetPseudoType, false);
+  return mEffect->GetPresContext();
 }
 
 void

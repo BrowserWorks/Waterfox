@@ -159,11 +159,12 @@ LIRGeneratorShared::defineReturn(LInstruction* lir, MDefinition* mir)
       case MIRType_Double:
         lir->setDef(0, LDefinition(vreg, LDefinition::DOUBLE, LFloatReg(ReturnDoubleReg)));
         break;
+      case MIRType_Bool32x4:
       case MIRType_Int32x4:
-        lir->setDef(0, LDefinition(vreg, LDefinition::INT32X4, LFloatReg(ReturnInt32x4Reg)));
+        lir->setDef(0, LDefinition(vreg, LDefinition::INT32X4, LFloatReg(ReturnSimd128Reg)));
         break;
       case MIRType_Float32x4:
-        lir->setDef(0, LDefinition(vreg, LDefinition::FLOAT32X4, LFloatReg(ReturnFloat32x4Reg)));
+        lir->setDef(0, LDefinition(vreg, LDefinition::FLOAT32X4, LFloatReg(ReturnSimd128Reg)));
         break;
       default:
         LDefinition::Type type = LDefinition::TypeFrom(mir->type());
@@ -190,7 +191,7 @@ LIRGeneratorShared::defineSinCos(LInstructionHelper<2, Ops, Temps> *lir, MDefini
 #elif defined(JS_CODEGEN_ARM64)
     lir->setDef(1, LDefinition(vreg + VREG_INCREMENT, LDefinition::DOUBLE,
                 LFloatReg(FloatRegister(FloatRegisters::d1, FloatRegisters::Double))));
-#elif defined(JS_CODEGEN_MIPS32)
+#elif defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
     lir->setDef(1, LDefinition(vreg + VREG_INCREMENT, LDefinition::DOUBLE, LFloatReg(f2)));
 #elif defined(JS_CODEGEN_NONE)
     MOZ_CRASH();
@@ -284,7 +285,7 @@ LIRGeneratorShared::redefine(MDefinition* def, MDefinition* as)
         def->setVirtualRegister(as->virtualRegister());
 
 #ifdef DEBUG
-        if (js_JitOptions.runExtraChecks &&
+        if (JitOptions.runExtraChecks &&
             def->resultTypeSet() && as->resultTypeSet() &&
             !def->resultTypeSet()->equals(as->resultTypeSet()))
         {

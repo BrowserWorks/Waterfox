@@ -1,6 +1,6 @@
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // Simple gestures support
 //
@@ -81,11 +81,10 @@ var gGestureSupport = {
         break;
       case "MozMagnifyGestureStart":
         aEvent.preventDefault();
-#ifdef XP_WIN
-        this._setupGesture(aEvent, "pinch", def(25, 0), "out", "in");
-#else
-        this._setupGesture(aEvent, "pinch", def(150, 1), "out", "in");
-#endif
+        let pinchPref = AppConstants.platform == "win"
+                        ? def(25, 0)
+                        : def(150, 1);
+        this._setupGesture(aEvent, "pinch", pinchPref, "out", "in");
         break;
       case "MozRotateGestureStart":
         aEvent.preventDefault();
@@ -256,7 +255,7 @@ var gGestureSupport = {
    *        Source array containing any number of elements
    * @yield Array that is a subset of the input array from full set to empty
    */
-  _power: function GS__power(aArray) {
+  _power: function* GS__power(aArray) {
     // Create a bitmask based on the length of the array
     let num = 1 << aArray.length;
     while (--num >= 0) {
@@ -646,20 +645,25 @@ var gHistorySwipeAnimation = {
         this._canGoForward = this.canGoForward();
         this._handleFastSwiping();
       }
+      this.updateAnimation(0);
     }
     else {
-      this._startingIndex = gBrowser.webNavigation.sessionHistory.index;
-      this._historyIndex = this._startingIndex;
-      this._canGoBack = this.canGoBack();
-      this._canGoForward = this.canGoForward();
-      if (this.active) {
-        this._addBoxes();
-        this._takeSnapshot();
-        this._installPrevAndNextSnapshots();
-        this._lastSwipeDir = "";
+      // Get the session history from SessionStore.
+      let updateSessionHistory = sessionHistory => {
+        this._startingIndex = sessionHistory.index;
+        this._historyIndex = this._startingIndex;
+        this._canGoBack = this.canGoBack();
+        this._canGoForward = this.canGoForward();
+        if (this.active) {
+          this._addBoxes();
+          this._takeSnapshot();
+          this._installPrevAndNextSnapshots();
+          this._lastSwipeDir = "";
+        }
+        this.updateAnimation(0);
       }
+      SessionStore.getSessionHistory(gBrowser.selectedTab, updateSessionHistory);
     }
-    this.updateAnimation(0);
   },
 
   /**
@@ -667,7 +671,7 @@ var gHistorySwipeAnimation = {
    */
   stopAnimation: function HSA_stopAnimation() {
     gHistorySwipeAnimation._removeBoxes();
-    this._historyIndex = gBrowser.webNavigation.sessionHistory.index;
+    this._historyIndex = this._getCurrentHistoryIndex();
   },
 
   /**
@@ -724,6 +728,10 @@ var gHistorySwipeAnimation = {
         this._positionBox(this._curBox, aVal / dampValue);
       }
     }
+  },
+
+  _getCurrentHistoryIndex: function() {
+    return SessionStore.getSessionHistory(gBrowser.selectedTab).index;
   },
 
   /**
@@ -821,10 +829,14 @@ var gHistorySwipeAnimation = {
    * any. This will also result in the animation overlay to be torn down.
    */
   swipeEndEventReceived: function HSA_swipeEndEventReceived() {
-    if (this._lastSwipeDir != "" && this._historyIndex != this._startingIndex)
-      this._navigateToHistoryIndex();
-    else
-      this.stopAnimation();
+    // Update the session history before continuing.
+    let updateSessionHistory = sessionHistory => {
+      if (this._lastSwipeDir != "" && this._historyIndex != this._startingIndex)
+        this._navigateToHistoryIndex();
+      else
+        this.stopAnimation();
+    }
+    SessionStore.getSessionHistory(gBrowser.selectedTab, updateSessionHistory);
   },
 
   /**
@@ -836,7 +848,7 @@ var gHistorySwipeAnimation = {
    */
   _doesIndexExistInHistory: function HSA__doesIndexExistInHistory(aIndex) {
     try {
-      gBrowser.webNavigation.sessionHistory.getEntryAtIndex(aIndex, false);
+      return SessionStore.getSessionHistory(gBrowser.selectedTab).entries[aIndex] != null;
     }
     catch(ex) {
       return false;
@@ -959,11 +971,7 @@ var gHistorySwipeAnimation = {
    * @return true if we're ready to take snapshots, false otherwise.
    */
   _readyToTakeSnapshots: function HSA__readyToTakeSnapshots() {
-    if ((this._maxSnapshots < 1) ||
-        (gBrowser.webNavigation.sessionHistory.index < 0)) {
-      return false;
-    }
-    return true;
+    return (this._maxSnapshots >= 1 && this._getCurrentHistoryIndex() >= 0);
   },
 
   /**
@@ -1026,7 +1034,7 @@ var gHistorySwipeAnimation = {
   _assignSnapshotToCurrentBrowser:
   function HSA__assignSnapshotToCurrentBrowser(aCanvas) {
     let browser = gBrowser.selectedBrowser;
-    let currIndex = browser.webNavigation.sessionHistory.index;
+    let currIndex = this._getCurrentHistoryIndex();
 
     this._removeTrackedSnapshot(currIndex, browser);
     this._addSnapshotRefToArray(currIndex, browser);
@@ -1059,7 +1067,7 @@ var gHistorySwipeAnimation = {
     try {
       let browser = gBrowser.selectedBrowser;
       let snapshots = browser.snapshots;
-      let currIndex = browser.webNavigation.sessionHistory.index;
+      let currIndex = _getCurrentHistoryIndex();
 
       // Kick off snapshot compression.
       let canvas = snapshots[currIndex].image;

@@ -10,7 +10,9 @@
 #include "jsapi.h"
 #include "jsatom.h"
 
-#include "js/TraceableVector.h"
+#include "gc/Zone.h"
+
+#include "js/GCVector.h"
 
 #include "vm/NativeObject.h"
 #include "vm/ProxyObject.h"
@@ -26,6 +28,8 @@ class ParseNode;
 
 typedef Rooted<ModuleObject*> RootedModuleObject;
 typedef Handle<ModuleObject*> HandleModuleObject;
+typedef Rooted<ModuleEnvironmentObject*> RootedModuleEnvironmentObject;
+typedef Handle<ModuleEnvironmentObject*> HandleModuleEnvironmentObject;
 
 class ImportEntryObject : public NativeObject
 {
@@ -45,10 +49,13 @@ class ImportEntryObject : public NativeObject
                                      HandleAtom moduleRequest,
                                      HandleAtom importName,
                                      HandleAtom localName);
-    JSAtom* moduleRequest();
-    JSAtom* importName();
-    JSAtom* localName();
+    JSAtom* moduleRequest() const;
+    JSAtom* importName() const;
+    JSAtom* localName() const;
 };
+
+typedef Rooted<ImportEntryObject*> RootedImportEntryObject;
+typedef Handle<ImportEntryObject*> HandleImportEntryObject;
 
 class ExportEntryObject : public NativeObject
 {
@@ -70,20 +77,54 @@ class ExportEntryObject : public NativeObject
                                      HandleAtom maybeModuleRequest,
                                      HandleAtom maybeImportName,
                                      HandleAtom maybeLocalName);
-    JSAtom* exportName();
-    JSAtom* moduleRequest();
-    JSAtom* importName();
-    JSAtom* localName();
+    JSAtom* exportName() const;
+    JSAtom* moduleRequest() const;
+    JSAtom* importName() const;
+    JSAtom* localName() const;
 };
 
-struct IndirectBinding
+typedef Rooted<ExportEntryObject*> RootedExportEntryObject;
+typedef Handle<ExportEntryObject*> HandleExportEntryObject;
+
+class IndirectBindingMap
 {
-    IndirectBinding(Handle<ModuleEnvironmentObject*> environment, HandleId localName);
-    RelocatablePtr<ModuleEnvironmentObject*> environment;
-    RelocatableId localName;
-};
+  public:
+    explicit IndirectBindingMap(Zone* zone);
+    bool init();
 
-typedef HashMap<jsid, IndirectBinding, JsidHasher, SystemAllocPolicy> IndirectBindingMap;
+    void trace(JSTracer* trc);
+
+    bool putNew(JSContext* cx, HandleId name,
+                HandleModuleEnvironmentObject environment, HandleId localName);
+
+    size_t count() const {
+        return map_.count();
+    }
+
+    bool has(jsid name) const {
+        return map_.has(name);
+    }
+
+    bool lookup(jsid name, ModuleEnvironmentObject** envOut, Shape** shapeOut) const;
+
+    template <typename Func>
+    void forEachExportedName(Func func) const {
+        for (auto r = map_.all(); !r.empty(); r.popFront())
+            func(r.front().key());
+    }
+
+  private:
+    struct Binding
+    {
+        Binding(ModuleEnvironmentObject* environment, Shape* shape);
+        RelocatablePtr<ModuleEnvironmentObject*> environment;
+        RelocatablePtrShape shape;
+    };
+
+    typedef HashMap<jsid, Binding, JsidHasher, ZoneAllocPolicy> Map;
+
+    Map map_;
+};
 
 class ModuleNamespaceObject : public ProxyObject
 {
@@ -139,6 +180,7 @@ class ModuleNamespaceObject : public ProxyObject
         static const char family;
     };
 
+  public:
     static const ProxyHandler proxyHandler;
 };
 
@@ -154,7 +196,7 @@ struct FunctionDeclaration
     RelocatablePtrFunction fun;
 };
 
-using FunctionDeclarationVector = TraceableVector<FunctionDeclaration>;
+using FunctionDeclarationVector = GCVector<FunctionDeclaration, 0, ZoneAllocPolicy>;
 
 class ModuleObject : public NativeObject
 {
@@ -223,6 +265,7 @@ class ModuleObject : public NativeObject
     static void finalize(js::FreeOp* fop, JSObject* obj);
 
     bool hasScript() const;
+    bool hasImportBindings() const;
     FunctionDeclarationVector* functionDeclarations();
 };
 
@@ -231,21 +274,32 @@ class ModuleObject : public NativeObject
 class MOZ_STACK_CLASS ModuleBuilder
 {
   public:
-    explicit ModuleBuilder(JSContext* cx);
+    explicit ModuleBuilder(JSContext* cx, HandleModuleObject module);
 
-    bool buildAndInit(frontend::ParseNode* pn, HandleModuleObject module);
+    bool processImport(frontend::ParseNode* pn);
+    bool processExport(frontend::ParseNode* pn);
+    bool processExportFrom(frontend::ParseNode* pn);
+
+    bool hasExportedName(JSAtom* name) const;
+
+    using ExportEntryVector = GCVector<ExportEntryObject*>;
+    const ExportEntryVector& localExportEntries() const {
+        return localExportEntries_;
+    }
+
+    bool buildTables();
+    bool initModule();
 
   private:
-    using AtomVector = TraceableVector<JSAtom*>;
+    using AtomVector = GCVector<JSAtom*>;
     using RootedAtomVector = JS::Rooted<AtomVector>;
-    using ImportEntryVector = TraceableVector<ImportEntryObject*>;
+    using ImportEntryVector = GCVector<ImportEntryObject*>;
     using RootedImportEntryVector = JS::Rooted<ImportEntryVector>;
-    using ExportEntryVector = TraceableVector<ExportEntryObject*> ;
-    using RootedExportEntryVector = JS::Rooted<ExportEntryVector> ;
+    using RootedExportEntryVector = JS::Rooted<ExportEntryVector>;
 
     JSContext* cx_;
+    RootedModuleObject module_;
     RootedAtomVector requestedModules_;
-
     RootedAtomVector importedBoundNames_;
     RootedImportEntryVector importEntries_;
     RootedExportEntryVector exportEntries_;
@@ -253,24 +307,27 @@ class MOZ_STACK_CLASS ModuleBuilder
     RootedExportEntryVector indirectExportEntries_;
     RootedExportEntryVector starExportEntries_;
 
-    bool processImport(frontend::ParseNode* pn);
-    bool processExport(frontend::ParseNode* pn);
-    bool processExportFrom(frontend::ParseNode* pn);
+    ImportEntryObject* importEntryFor(JSAtom* localName) const;
 
-    ImportEntryObject* importEntryFor(JSAtom* localName);
-
-    bool appendLocalExportEntry(HandleAtom exportName, HandleAtom localName);
-    bool appendIndirectExportEntry(HandleAtom exportName, HandleAtom moduleRequest,
-                                   HandleAtom importName);
+    bool appendExportEntry(HandleAtom exportName, HandleAtom localName);
+    bool appendExportFromEntry(HandleAtom exportName, HandleAtom moduleRequest,
+                               HandleAtom importName);
 
     bool maybeAppendRequestedModule(HandleAtom module);
 
     template <typename T>
-    ArrayObject* createArray(const TraceableVector<T>& vector);
+    ArrayObject* createArray(const GCVector<T>& vector);
 };
 
 bool InitModuleClasses(JSContext* cx, HandleObject obj);
 
 } // namespace js
+
+template<>
+inline bool
+JSObject::is<js::ModuleNamespaceObject>() const
+{
+    return js::IsDerivedProxyObject(this, &js::ModuleNamespaceObject::proxyHandler);
+}
 
 #endif /* builtin_ModuleObject_h */

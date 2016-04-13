@@ -101,8 +101,8 @@ typedef enum {
    */
   MOZ_GTK_SCROLLBAR_BUTTON,
   /* Paints the trough (track) of a GtkScrollbar. */
-  MOZ_GTK_SCROLLBAR_TRACK_HORIZONTAL,
-  MOZ_GTK_SCROLLBAR_TRACK_VERTICAL,
+  MOZ_GTK_SCROLLBAR_HORIZONTAL,
+  MOZ_GTK_SCROLLBAR_VERTICAL,
   /* Paints the slider (thumb) of a GtkScrollbar. */
   MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL,
   MOZ_GTK_SCROLLBAR_THUMB_VERTICAL,
@@ -387,12 +387,14 @@ gint moz_gtk_get_tab_scroll_arrow_size(gint* width, gint* height);
 
 /**
  * Get the desired size of an arrow in a button
- * width:   [OUT] the desired width
- * height:  [OUT] the desired height
  *
- * returns:    MOZ_GTK_SUCCESS if there was no error, an error code otherwise
+ * widgetType: [IN]  the widget for which to get the arrow size
+ * width:      [OUT] the desired width
+ * height:     [OUT] the desired height
  */
-gint moz_gtk_get_arrow_size(gint* width, gint* height);
+void
+moz_gtk_get_arrow_size(GtkThemeWidgetType widgetType,
+                       gint* width, gint* height);
 
 /**
  * Get the desired size of a toolbar separator

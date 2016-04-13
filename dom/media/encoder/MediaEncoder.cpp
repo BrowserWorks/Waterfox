@@ -31,7 +31,7 @@
 #undef LOG
 #endif
 
-PRLogModuleInfo* gMediaEncoderLog;
+mozilla::LazyLogModule gMediaEncoderLog("MediaEncoder");
 #define LOG(type, msg) MOZ_LOG(gMediaEncoderLog, type, msg)
 
 namespace mozilla {
@@ -79,9 +79,6 @@ MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint32_t aAudioBitrate,
                             uint32_t aVideoBitrate, uint32_t aBitrate,
                             uint8_t aTrackTypes)
 {
-  if (!gMediaEncoderLog) {
-    gMediaEncoderLog = PR_NewLogModule("MediaEncoder");
-  }
   PROFILER_LABEL("MediaEncoder", "CreateEncoder",
     js::ProfileEntry::Category::OTHER);
 
@@ -130,6 +127,14 @@ MediaEncoder::CreateEncoder(const nsAString& aMIMEType, uint32_t aAudioBitrate,
     writer = new ISOMediaWriter(aTrackTypes, ISOMediaWriter::TYPE_FRAG_3GP);
     NS_ENSURE_TRUE(writer, nullptr);
     mimeType = NS_LITERAL_STRING(AUDIO_3GPP);
+  } else if (MediaEncoder::IsOMXEncoderEnabled() &&
+            (aMIMEType.EqualsLiteral(AUDIO_3GPP2))) {
+    audioEncoder = new OmxEVRCAudioTrackEncoder();
+    NS_ENSURE_TRUE(audioEncoder, nullptr);
+
+    writer = new ISOMediaWriter(aTrackTypes, ISOMediaWriter::TYPE_FRAG_3G2);
+    NS_ENSURE_TRUE(writer, nullptr);
+    mimeType = NS_LITERAL_STRING(AUDIO_3GPP2) ;
   }
 #endif // MOZ_OMX_ENCODER
   else if (MediaDecoder::IsOggEnabled() && MediaDecoder::IsOpusEnabled() &&

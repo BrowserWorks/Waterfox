@@ -1,0 +1,167 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test for WebExtension localization APIs</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/ExtensionTestUtils.js"></script>
+  <script type="text/javascript" src="head.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+
+<script type="text/javascript">
+"use strict";
+
+add_task(function* test_i18n() {
+  function runTests(assertEq) {
+    let _ = browser.i18n.getMessage.bind(browser.i18n);
+
+    let url = browser.runtime.getURL("/");
+    assertEq(url, `moz-extension://${_("@@extension_id")}/`, "@@extension_id builtin message");
+
+    assertEq("Foo.", _("Foo"), "Simple message in selected locale.");
+
+    assertEq("(bar)", _("bar"), "Simple message fallback in default locale.");
+
+    assertEq("??", _("some-unknown-locale-string"), "Unknown locale string.");
+
+    assertEq("??", _("@@unknown_builtin_string"), "Unknown built-in string.");
+    assertEq("??", _("@@bidi_unknown_builtin_string"), "Unknown built-in bidi string.");
+
+    assertEq("Føo.", _("Föo"), "Multi-byte message in selected locale.");
+
+    let substitutions = [];
+    substitutions[4] = "5";
+    substitutions[13] = "14";
+
+    assertEq("'$0' '14' '' '5' '$$$$' '$'.", _("basic_substitutions", substitutions),
+             "Basic numeric substitutions");
+
+    assertEq("'$0' '' 'just a string' '' '$$$$' '$'.", _("basic_substitutions", "just a string"),
+             "Basic numeric substitutions, with non-array value");
+
+    let values = _("named_placeholder_substitutions", ["(subst $1 $2)", "(2 $1 $2)"]).split("\n");
+
+    assertEq("_foo_ (subst $1 $2) _bar_", values[0], "Named and numeric substitution");
+
+    assertEq("(2 $1 $2)", values[1], "Numeric substitution amid named placeholders");
+
+    assertEq("$bad name$", values[2], "Named placeholder with invalid key");
+
+    assertEq("", values[3], "Named placeholder with an invalid value");
+
+    assertEq("Accepted, but shouldn't break.", values[4], "Named placeholder with a strange content value");
+
+    assertEq("$foo", values[5], "Non-placeholder token that should be ignored");
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      "default_locale": "jp",
+
+      content_scripts: [
+        { "matches": ["http://mochi.test/*/file_sample.html"],
+          "js": ["content.js"] },
+      ],
+    },
+
+
+    files: {
+      "_locales/en_US/messages.json": {
+        "foo": {
+          "message": "Foo.",
+          "description": "foo",
+        },
+
+        "föo": {
+          "message": "Føo.",
+          "description": "foo",
+        },
+
+        "basic_substitutions": {
+          "message": "'$0' '$14' '$1' '$5' '$$$$$' '$$'.",
+          "description": "foo",
+        },
+
+        "Named_placeholder_substitutions": {
+          "message": "$Foo$\n$2\n$bad name$\n$bad_value$\n$bad_content_value$\n$foo",
+          "description": "foo",
+          "placeholders": {
+            "foO": {
+              "content": "_foo_ $1 _bar_",
+              "description": "foo",
+            },
+
+            "bad name": {
+              "content": "Nope.",
+              "description": "bad name",
+            },
+
+            "bad_value": "Nope.",
+
+            "bad_content_value": {
+              "content": ["Accepted, but shouldn't break."],
+              "description": "bad value",
+            },
+          },
+        },
+
+        "broken_placeholders": {
+          "message": "$broken$",
+          "description": "broken placeholders",
+          "placeholders": "foo.",
+        },
+      },
+
+      "_locales/jp/messages.json": {
+        "foo": {
+          "message": "(foo)",
+          "description": "foo",
+        },
+
+        "bar": {
+          "message": "(bar)",
+          "description": "bar",
+        },
+      },
+
+      "content.js": "new " + function(runTests) {
+        runTests((...args) => {
+          browser.runtime.sendMessage(["assertEq", ...args]);
+        });
+
+        browser.runtime.sendMessage(["content-script-finished"]);
+      } + `(${runTests})`,
+    },
+
+    background: "new " + function(runTests) {
+      browser.runtime.onMessage.addListener(([msg, ...args]) => {
+        if (msg == "assertEq") {
+          browser.test.assertEq(...args);
+        } else {
+          browser.test.sendMessage(msg, ...args);
+        }
+      });
+
+      runTests(browser.test.assertEq.bind(browser.test));
+
+      browser.test.notifyPass("l10n");
+    } + `(${runTests})`,
+  });
+
+  yield extension.startup();
+
+  let win = window.open("file_sample.html");
+  yield extension.awaitMessage("content-script-finished");
+  win.close();
+
+  yield extension.awaitFinish("l10n");
+  yield extension.unload();
+});
+
+</script>
+
+</body>
+</html>

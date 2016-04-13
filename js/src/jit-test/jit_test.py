@@ -5,7 +5,7 @@
 
 from __future__ import print_function, unicode_literals
 
-import math, os, posixpath, shlex, shutil, subprocess, sys, traceback
+import math, os, platform, posixpath, shlex, shutil, subprocess, sys, traceback
 
 def add_libdir_to_path():
     from os.path import dirname, exists, join, realpath
@@ -138,6 +138,9 @@ def main(argv):
                   help='The total number of test chunks.')
     op.add_option('--ignore-timeouts', dest='ignore_timeouts', metavar='FILE',
                   help='Ignore timeouts of tests listed in [FILE]')
+    op.add_option('--test-reflect-stringify', dest="test_reflect_stringify",
+                  help="instead of running tests, use them to test the "
+                  "Reflect.stringify code in specified file")
 
     options, args = op.parse_args(argv)
     if len(args) < 1:
@@ -145,6 +148,13 @@ def main(argv):
     js_shell = which(args[0])
     test_args = args[1:]
     test_environment = get_environment_overlay(js_shell)
+
+    if not (os.path.isfile(js_shell) and os.access(js_shell, os.X_OK)):
+        if (platform.system() != 'Windows' or
+            os.path.isfile(js_shell) or not
+            os.path.isfile(js_shell + ".exe") or not
+            os.access(js_shell + ".exe", os.X_OK)):
+            op.error('shell is not executable: ' + js_shell)
 
     if jittests.stdio_might_be_broken():
         # Prefer erring on the side of caution and not using stdio if
@@ -207,6 +217,10 @@ def main(argv):
 
     if not options.run_slow:
         test_list = [_ for _ in test_list if not _.slow]
+
+    if options.test_reflect_stringify is not None:
+        for test in test_list:
+            test.test_reflect_stringify = options.test_reflect_stringify
 
     # If chunking is enabled, determine which tests are part of this chunk.
     # This code was adapted from testing/mochitest/runtestsremote.py.
@@ -274,7 +288,7 @@ def main(argv):
             debug_cmd = options.debugger.split()
 
         with change_env(test_environment):
-            subprocess.call(debug_cmd + tc.command(prefix, jittests.LIB_DIR))
+            subprocess.call(debug_cmd + tc.command(prefix, jittests.LIB_DIR, jittests.MODULE_DIR))
             if options.debugger == 'rr':
                 subprocess.call(['rr', 'replay'])
         sys.exit()

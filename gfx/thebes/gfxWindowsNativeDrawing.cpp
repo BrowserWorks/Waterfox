@@ -12,7 +12,11 @@
 #include "gfxAlphaRecovery.h"
 #include "gfxPattern.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Helpers.h"
 #include "gfx2DGlue.h"
+
+#include "cairo.h"
+#include "cairo-win32.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -43,12 +47,25 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
 {
     if (mRenderState == RENDER_STATE_INIT) {
         RefPtr<gfxASurface> surf;
-        
-        if (mContext->GetCairo()) {
-          surf = mContext->CurrentSurface(&mDeviceOffset.x, &mDeviceOffset.y);
+        DrawTarget* drawTarget = mContext->GetDrawTarget();
+        cairo_t* cairo = nullptr;
+        if (drawTarget->GetBackendType() == BackendType::CAIRO) {
+            cairo = static_cast<cairo_t*>
+                (drawTarget->GetNativeSurface(NativeSurfaceType::CAIRO_CONTEXT));
+            if (cairo) {
+                cairo_surface_t* s = cairo_get_group_target(cairo);
+                if (s) {
+                    mDeviceOffset = mContext->GetDeviceOffset();
+                    double sdx, sdy;
+                    cairo_surface_get_device_offset(s, &sdx, &sdy);
+                    mDeviceOffset.x -= sdx;
+                    mDeviceOffset.y -= sdy;
+                    surf = gfxASurface::Wrap(s);
+                }
+            }
         }
 
-        if (surf && surf->CairoStatus())
+        if (surf && surf->CairoStatus() != 0)
             return nullptr;
 
         gfxMatrix m = mContext->CurrentMatrix();
@@ -72,7 +89,7 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
             // grab the DC. This can fail if there is a complex clipping path,
             // in which case we'll have to fall back.
             mWinSurface = static_cast<gfxWindowsSurface*>(static_cast<gfxASurface*>(surf.get()));
-            mDC = mWinSurface->GetDCWithClip(mContext);
+            mDC = cairo_win32_get_dc_with_clip(cairo);
 
             if (mDC) {
                 if (mTransformType == TRANSLATION_ONLY) {
@@ -149,8 +166,8 @@ gfxWindowsNativeDrawing::BeginNativeDrawing()
         }
         GetViewportOrgEx(mDC, &mOrigViewportOrigin);
         SetViewportOrgEx(mDC,
-                         mOrigViewportOrigin.x + (int)mDeviceOffset.x,
-                         mOrigViewportOrigin.y + (int)mDeviceOffset.y,
+                         mOrigViewportOrigin.x - (int)mDeviceOffset.x,
+                         mOrigViewportOrigin.y - (int)mDeviceOffset.y,
                          nullptr);
 
         return mDC;
@@ -252,26 +269,22 @@ gfxWindowsNativeDrawing::PaintToContext()
                                                      black->Stride(),
                                                      black->GetSize(),
                                                      SurfaceFormat::B8G8R8A8);
+        {
+            DrawTarget* dt = mContext->GetDrawTarget();
+            AutoRestoreTransform autoRestoreTransform(dt);
 
-        mContext->Save();
-        mContext->SetMatrix(
-          mContext->CurrentMatrix().Translate(mNativeRect.TopLeft()));
-        mContext->NewPath();
-        mContext->Rectangle(gfxRect(gfxPoint(0.0, 0.0), mNativeRect.Size()));
+            Matrix newTransform = dt->GetTransform();
+            newTransform.PreTranslate(ToPoint(mNativeRect.TopLeft()));
+            dt->SetTransform(newTransform);
 
-        RefPtr<gfxPattern> pat = new gfxPattern(source, Matrix());
-
-        gfxMatrix m;
-        m.Scale(mScale.width, mScale.height);
-        pat->SetMatrix(m);
-
-        if (mNativeDrawFlags & DO_NEAREST_NEIGHBOR_FILTERING)
-            pat->SetFilter(Filter::LINEAR);
-
-        pat->SetExtend(ExtendMode::CLAMP);
-        mContext->SetPattern(pat);
-        mContext->Fill();
-        mContext->Restore();
+            Rect rect(Point(0.0, 0.0), ToSize(mNativeRect.Size()));
+            Matrix m = Matrix::Scaling(1.0 / mScale.width, 1.0 / mScale.height);
+            Filter filter = (mNativeDrawFlags & DO_NEAREST_NEIGHBOR_FILTERING)
+                          ? Filter::LINEAR
+                          : Filter::GOOD;
+            SurfacePattern pat(source, ExtendMode::CLAMP, m, filter);
+            dt->FillRect(rect, pat);
+        }
 
         mRenderState = RENDER_STATE_DONE;
     } else {

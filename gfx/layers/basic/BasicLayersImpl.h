@@ -62,7 +62,7 @@ protected:
   }
 
 public:
-  virtual void SetVisibleRegion(const nsIntRegion& aRegion)
+  virtual void SetVisibleRegion(const LayerIntRegion& aRegion)
   {
     NS_ASSERTION(BasicManager()->InConstruction(),
                  "Can only set properties in construction phase");
@@ -87,6 +87,8 @@ bool
 GetMaskData(Layer* aMaskLayer,
             const gfx::Point& aDeviceOffset,
             AutoMoz2DMaskData* aMaskData);
+
+already_AddRefed<gfx::SourceSurface> GetMaskForLayer(Layer* aLayer, gfx::Matrix* aMaskTransform);
 
 // Paint the current source to a context using a mask, if present
 void

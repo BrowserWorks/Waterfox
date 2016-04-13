@@ -49,6 +49,7 @@ class JitContext
     JitContext(ExclusiveContext* cx, TempAllocator* temp);
     JitContext(CompileRuntime* rt, CompileCompartment* comp, TempAllocator* temp);
     explicit JitContext(CompileRuntime* rt);
+    JitContext(CompileRuntime* rt, TempAllocator* temp);
     ~JitContext();
 
     // Running context when executing on the main thread. Not available during
@@ -82,10 +83,9 @@ void SetJitContext(JitContext* ctx);
 
 bool CanIonCompileScript(JSContext* cx, JSScript* script, bool osr);
 
-MethodStatus CanEnterAtBranch(JSContext* cx, HandleScript script,
-                              BaselineFrame* frame, jsbytecode* pc);
+bool IonCompileScriptForBaseline(JSContext* cx, BaselineFrame* frame, jsbytecode* pc);
+
 MethodStatus CanEnter(JSContext* cx, RunState& state);
-MethodStatus CompileFunctionForBaseline(JSContext* cx, HandleScript script, BaselineFrame* frame);
 MethodStatus CanEnterUsingFastInvoke(JSContext* cx, HandleScript script, uint32_t numActualArgs);
 
 MethodStatus
@@ -174,7 +174,7 @@ IsIonInlinablePC(jsbytecode* pc) {
 inline bool
 TooManyActualArguments(unsigned nargs)
 {
-    return nargs > js_JitOptions.maxStackArgs;
+    return nargs > JitOptions.maxStackArgs;
 }
 
 inline bool

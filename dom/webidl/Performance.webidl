@@ -4,10 +4,10 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://www.w3.org/TR/hr-time/
+ * http://w3c.github.io/hr-time/
  *
- * Copyright © 2012 W3C® (MIT, ERCIM, Keio), All Rights Reserved. W3C
- * liability, trademark and document use rules apply.
+ * Copyright © 2015 W3C® (MIT, ERCIM, Keio, Beihang).
+ * W3C liability, trademark and document use rules apply.
  */
 
 typedef double DOMHighResTimeStamp;

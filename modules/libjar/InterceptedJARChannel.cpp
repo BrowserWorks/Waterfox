@@ -46,6 +46,12 @@ InterceptedJARChannel::GetChannel(nsIChannel** aChannel)
 }
 
 NS_IMETHODIMP
+InterceptedJARChannel::GetSecureUpgradedChannelURI(nsIURI** aURI)
+{
+  return mChannel->GetURI(aURI);
+}
+
+NS_IMETHODIMP
 InterceptedJARChannel::ResetInterception()
 {
   if (!mChannel) {
@@ -150,14 +156,7 @@ InterceptedJARChannel::NotifyController()
                            0, UINT32_MAX, true, true);
   NS_ENSURE_SUCCESS_VOID(rv);
 
-  nsCOMPtr<nsIFetchEventDispatcher> dispatcher;
-  rv = mController->ChannelIntercepted(this, getter_AddRefs(dispatcher));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    rv = ResetInterception();
-    NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
-        "Failed to resume intercepted network request");
-  }
-  rv = dispatcher->Dispatch();
+  rv = mController->ChannelIntercepted(this);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     rv = ResetInterception();
     NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),

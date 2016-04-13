@@ -598,6 +598,9 @@ class AutoClearTypeInferenceStateOnOOM
     void setOOM() {
         oom = true;
     }
+    bool hadOOM() const {
+        return oom;
+    }
 };
 
 /* Superclass common to stack and heap type sets. */
@@ -718,11 +721,19 @@ class TemporaryTypeSet : public TypeSet
      */
     bool getCommonPrototype(CompilerConstraintList* constraints, JSObject** proto);
 
-    /* Get the typed array type of all objects in this set, or Scalar::MaxTypedArrayViewType. */
-    Scalar::Type getTypedArrayType(CompilerConstraintList* constraints);
+    /* Whether the buffer mapped by a TypedArray is shared memory or not */
+    enum TypedArraySharedness {
+        UnknownSharedness=1,    // We can't determine sharedness
+        KnownShared,            // We know for sure the buffer is shared
+        KnownUnshared           // We know for sure the buffer is unshared
+    };
 
-    /* Get the shared typed array type of all objects in this set, or Scalar::MaxTypedArrayViewType. */
-    Scalar::Type getSharedTypedArrayType(CompilerConstraintList* constraints);
+    /* Get the typed array type of all objects in this set, or Scalar::MaxTypedArrayViewType.
+     * If there is such a common type and sharedness is not nullptr then
+     * *sharedness is set to what we know about the sharedness of the memory.
+     */
+    Scalar::Type getTypedArrayType(CompilerConstraintList* constraints,
+                                   TypedArraySharedness* sharedness = nullptr);
 
     /* Whether all objects have JSCLASS_IS_DOMJSCLASS set. */
     bool isDOMClass(CompilerConstraintList* constraints);
@@ -764,6 +775,10 @@ class TemporaryTypeSet : public TypeSet
      * objects in this type set.
      */
     DoubleConversion convertDoubleElements(CompilerConstraintList* constraints);
+
+  private:
+    void getTypedArraySharedness(CompilerConstraintList* constraints,
+                                 TypedArraySharedness* sharedness);
 };
 
 bool
@@ -1022,6 +1037,8 @@ class TypeScript
      */
     static inline void Monitor(JSContext* cx, JSScript* script, jsbytecode* pc,
                                const js::Value& val);
+    static inline void Monitor(JSContext* cx, JSScript* script, jsbytecode* pc,
+                               TypeSet::Type type);
     static inline void Monitor(JSContext* cx, const js::Value& rval);
 
     /* Monitor an assignment at a SETELEM on a non-integer identifier. */
@@ -1206,7 +1223,9 @@ class RecompileInfo
     bool shouldSweep(TypeZone& types);
 };
 
-typedef Vector<RecompileInfo, 0, SystemAllocPolicy> RecompileInfoVector;
+// The RecompileInfoVector has a MinInlineCapacity of one so that invalidating a
+// single IonScript doesn't require an allocation.
+typedef Vector<RecompileInfo, 1, SystemAllocPolicy> RecompileInfoVector;
 
 struct AutoEnterAnalysis;
 

@@ -7,8 +7,9 @@
 #include "WebSocketFrame.h"
 
 #include "WebSocketChannel.h"
-
-extern PRThread *gSocketThread;
+#include "nsSocketTransportService2.h"
+#include "nsThreadUtils.h" // for NS_IsMainThread
+#include "ipc/IPCMessageUtils.h"
 
 namespace mozilla {
 namespace net {

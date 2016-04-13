@@ -7,6 +7,10 @@
 # be specified once. As a result, the source file paths are relative
 # to the location of the actual manifest.
 
+toolkit.jar:
+% skin global classic/1.0 %skin/classic/global/
+% skin help classic/1.0 %skin/classic/help/
+% skin mozapps classic/1.0 %skin/classic/mozapps/
   skin/classic/global/about.css                            (../../shared/about.css)
   skin/classic/global/aboutCache.css                       (../../shared/aboutCache.css)
   skin/classic/global/aboutCacheEntry.css                  (../../shared/aboutCacheEntry.css)
@@ -17,6 +21,7 @@
   skin/classic/global/aboutSupport.css                     (../../shared/aboutSupport.css)
   skin/classic/global/appPicker.css                        (../../shared/appPicker.css)
   skin/classic/global/config.css                           (../../shared/config.css)
+  skin/classic/global/icons/info.svg                       (../../shared/incontent-icons/info.svg)
   skin/classic/global/icons/loading-inverted.png           (../../shared/icons/loading-inverted.png)
   skin/classic/global/icons/loading-inverted@2x.png        (../../shared/icons/loading-inverted@2x.png)
   skin/classic/global/icons/warning.svg                    (../../shared/incontent-icons/warning.svg)
@@ -31,7 +36,6 @@
   skin/classic/global/in-content/dropdown.svg              (../../shared/in-content/dropdown.svg)
   skin/classic/global/in-content/help-glyph.svg            (../../shared/in-content/help-glyph.svg)
   skin/classic/global/in-content/radio.svg                 (../../shared/in-content/radio.svg)
-  skin/classic/global/reader/pocket.svg                    (../../shared/reader/pocket.svg)
   skin/classic/global/reader/RM-Add-24x24.svg              (../../shared/reader/RM-Add-24x24.svg)
   skin/classic/global/reader/RM-Close-24x24.svg            (../../shared/reader/RM-Close-24x24.svg)
   skin/classic/global/reader/RM-Delete-24x24.svg           (../../shared/reader/RM-Delete-24x24.svg)
@@ -40,3 +44,4 @@
   skin/classic/global/reader/RM-Reading-List-24x24.svg     (../../shared/reader/RM-Reading-List-24x24.svg)
   skin/classic/global/reader/RM-Type-Controls-24x24.svg    (../../shared/reader/RM-Type-Controls-24x24.svg)
   skin/classic/global/reader/RM-Type-Controls-Arrow.svg    (../../shared/reader/RM-Type-Controls-Arrow.svg)
+

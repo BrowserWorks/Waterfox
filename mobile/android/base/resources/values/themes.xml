@@ -8,14 +8,8 @@
     <!--
         Base application theme. This could be overridden by GeckoBaseTheme
         in other res/values-XXX/themes.xml.
-
-        Bug 1215079: we inherit from android:* on GB but AppCompat in later versions.
-        Inheriting only from the AppCompat style but not extending AppCompat causes the
-        menu to be transparent and we can't correctly override the color on all devices
-        while also extending AppCompat disables the menu entirely due to a framework bug.
-        We're stuck until we always show the overflow menu (bug 1209967).
     -->
-    <style name="GeckoBase" parent="android:Theme.NoTitleBar">
+    <style name="GeckoBase" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="windowNoTitle">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
@@ -87,6 +81,7 @@
         <item name="android:dropDownItemStyle">@style/Widget.DropDownItem</item>
         <item name="android:editTextStyle">@style/Widget.EditText</item>
         <item name="android:textViewStyle">@style/Widget.TextView</item>
+        <item name="android:panelBackground">@drawable/menu_panel_bg</item>
         <item name="menuItemDefaultStyle">@style/Widget.MenuItemDefault</item>
     </style>
 
@@ -110,6 +105,8 @@
 
     <style name="Gecko.Preferences" parent="GeckoPreferencesBase">
         <item name="floatingHintEditTextStyle">@style/FloatingHintEditText</item>
+        <!-- This fixed bug 1233412 (Crash in GeckoPrefs due to missing colorAccent in JB) -->
+        <item name="colorAccent">@color/action_orange</item>
     </style>
 
     <!-- Make an activity appear like an overlay. -->

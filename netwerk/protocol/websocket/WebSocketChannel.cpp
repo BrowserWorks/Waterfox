@@ -55,6 +55,7 @@
 #include "mozilla/StaticMutex.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
+#include "nsSocketTransportService2.h"
 
 #include "plbase64.h"
 #include "prmem.h"
@@ -69,8 +70,6 @@
 // rather than slurp up all of nsIWebSocket.idl, which lives outside necko, just
 // dupe one constant we need from it
 #define CLOSE_GOING_AWAY 1001
-
-extern PRThread *gSocketThread;
 
 using namespace mozilla;
 using namespace mozilla::net;
@@ -1699,7 +1698,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
                                         opcode, maskBit, mask, utf8Data);
 
         if (frame) {
-          mService->FrameReceived(mSerial, mInnerWindowID, frame);
+          mService->FrameReceived(mSerial, mInnerWindowID, frame.forget());
         }
 
         mTargetThread->Dispatch(new CallOnMessageAvailable(this, utf8Data, -1),
@@ -1758,8 +1757,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
         if (frame) {
           // We send the frame immediately becuase we want to have it dispatched
           // before the CallOnServerClose.
-          mService->FrameReceived(mSerial, mInnerWindowID, frame);
-          frame = nullptr;
+          mService->FrameReceived(mSerial, mInnerWindowID, frame.forget());
         }
 
         if (mListenerMT) {
@@ -1798,7 +1796,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
       }
 
       if (frame) {
-        mService->FrameReceived(mSerial, mInnerWindowID, frame);
+        mService->FrameReceived(mSerial, mInnerWindowID, frame.forget());
       }
     } else if (opcode == nsIWebSocketFrame::OPCODE_BINARY) {
       bool isDeflated = mPMCECompressor && mPMCECompressor->IsMessageDeflated();
@@ -1827,7 +1825,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
           mService->CreateFrameIfNeeded(finBit, rsvBit1, rsvBit2, rsvBit3,
                                         opcode, maskBit, mask, binaryData);
         if (frame) {
-          mService->FrameReceived(mSerial, mInnerWindowID, frame);
+          mService->FrameReceived(mSerial, mInnerWindowID, frame.forget());
         }
 
         mTargetThread->Dispatch(
@@ -2108,6 +2106,7 @@ WebSocketChannel::PrimeNewOutgoingMessage()
       msgType = kMsgTypeBinaryString;
 
       // no break: fall down into binary string case
+      MOZ_FALLTHROUGH;
 
     case kMsgTypeBinaryString:
       mOutHeader[0] = kFinalFragBit | nsIWebSocketFrame::OPCODE_BINARY;
@@ -2186,7 +2185,7 @@ WebSocketChannel::PrimeNewOutgoingMessage()
                            mCurrentOut->OrigLength());
 
   if (frame) {
-    mService->FrameSent(mSerial, mInnerWindowID, frame);
+    mService->FrameSent(mSerial, mInnerWindowID, frame.forget());
   }
 
   while (payload < (mOutHeader + mHdrOutToSend)) {
@@ -2804,18 +2803,15 @@ WebSocketChannel::StartWebsocketData()
   MOZ_ASSERT(!mDataStarted, "StartWebsocketData twice");
   mDataStarted = 1;
 
-  LOG(("WebSocketChannel::StartWebsocketData Notifying Listener %p\n",
-       mListenerMT ? mListenerMT->mListener.get() : nullptr));
-
-  if (mListenerMT) {
-    mListenerMT->mListener->OnStart(mListenerMT->mContext);
-  }
-
   rv = mSocketIn->AsyncWait(this, 0, 0, mSocketThread);
   if (NS_FAILED(rv)) {
     LOG(("WebSocketChannel::StartWebsocketData mSocketIn->AsyncWait() failed "
-         "with error %0x%08x\n", rv));
-    return rv;
+         "with error 0x%08x", rv));
+    return mSocketThread->Dispatch(
+      NS_NewRunnableMethodWithArgs<nsresult>(this,
+                                             &WebSocketChannel::AbortSession,
+                                             rv),
+      NS_DISPATCH_NORMAL);
   }
 
   if (mPingInterval) {
@@ -2823,8 +2819,17 @@ WebSocketChannel::StartWebsocketData()
       NS_NewRunnableMethod(this, &WebSocketChannel::StartPinging),
       NS_DISPATCH_NORMAL);
     if (NS_FAILED(rv)) {
+      LOG(("WebSocketChannel::StartWebsocketData Could not start pinging, "
+           "rv=0x%08x", rv));
       return rv;
     }
+  }
+
+  LOG(("WebSocketChannel::StartWebsocketData Notifying Listener %p",
+       mListenerMT ? mListenerMT->mListener.get() : nullptr));
+
+  if (mListenerMT) {
+    mListenerMT->mListener->OnStart(mListenerMT->mContext);
   }
 
   return NS_OK;

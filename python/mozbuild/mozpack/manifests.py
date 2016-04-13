@@ -12,6 +12,7 @@ from .files import (
     ExistingFile,
     File,
     FileFinder,
+    GeneratedFile,
     PreprocessedFile,
 )
 import mozpack.path as mozpath
@@ -75,16 +76,21 @@ class InstallManifest(object):
           the preprocessor, and the output will be written to the destination
           path.
 
+      content -- The destination file will be created with the given content.
+
     Version 1 of the manifest was the initial version.
     Version 2 added optional path support
     Version 3 added support for pattern entries.
     Version 4 added preprocessed file support.
+    Version 5 added content support.
     """
 
-    CURRENT_VERSION = 4
+    CURRENT_VERSION = 5
 
     FIELD_SEPARATOR = '\x1f'
 
+    # Negative values are reserved for non-actionable items, that is, metadata
+    # that doesn't describe files in the destination.
     SYMLINK = 1
     COPY = 2
     REQUIRED_EXISTS = 3
@@ -92,6 +98,7 @@ class InstallManifest(object):
     PATTERN_SYMLINK = 5
     PATTERN_COPY = 6
     PREPROCESS = 7
+    CONTENT = 8
 
     def __init__(self, path=None, fileobj=None):
         """Create a new InstallManifest entry.
@@ -114,7 +121,7 @@ class InstallManifest(object):
 
     def _load_from_fileobj(self, fileobj):
         version = fileobj.readline().rstrip()
-        if version not in ('1', '2', '3', '4'):
+        if version not in ('1', '2', '3', '4', '5'):
             raise UnreadableInstallManifest('Unknown manifest version: %s' %
                 version)
 
@@ -163,8 +170,18 @@ class InstallManifest(object):
                     silence_missing_directive_warnings=bool(int(warnings)))
                 continue
 
-            raise UnreadableInstallManifest('Unknown record type: %d' %
-                record_type)
+            if record_type == self.CONTENT:
+                dest, content = fields[1:]
+
+                self.add_content(
+                    self._decode_field_entry(content).encode('utf-8'), dest)
+                continue
+
+            # Don't fail for non-actionable items, allowing
+            # forward-compatibility with those we will add in the future.
+            if record_type >= 0:
+                raise UnreadableInstallManifest('Unknown record type: %d' %
+                    record_type)
 
     def __len__(self):
         return len(self._dests)
@@ -299,6 +316,13 @@ class InstallManifest(object):
             '1' if silence_missing_directive_warnings else '0',
         ))
 
+    def add_content(self, content, dest):
+        """Add a file with the given content."""
+        self._add_entry(dest, (
+            self.CONTENT,
+            self._encode_field_entry(content),
+        ))
+
     def _add_entry(self, dest, entry):
         if dest in self._dests:
             raise ValueError('Item already in manifest: %s' % dest)
@@ -362,6 +386,13 @@ class InstallManifest(object):
                     extra_depends=self._source_files,
                     silence_missing_directive_warnings=bool(int(entry[5]))))
 
+                continue
+
+            if install_type == self.CONTENT:
+                # GeneratedFile expect the buffer interface, which the unicode
+                # type doesn't have, so encode to a str.
+                content = self._decode_field_entry(entry[1]).encode('utf-8')
+                registry.add(dest, GeneratedFile(content))
                 continue
 
             raise Exception('Unknown install type defined in manifest: %d' %

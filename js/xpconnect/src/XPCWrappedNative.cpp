@@ -182,7 +182,9 @@ XPCWrappedNative::WrapNewGlobal(xpcObjectHelper& nativeHelper,
     MOZ_ASSERT(clasp->flags & JSCLASS_IS_GLOBAL);
 
     // Create the global.
-    aOptions.setTrace(XPCWrappedNative::Trace);
+    aOptions.creationOptions().setTrace(XPCWrappedNative::Trace);
+    if (xpc::SharedMemoryEnabled())
+        aOptions.creationOptions().setSharedMemoryAndAtomicsEnabled(true);
     RootedObject global(cx, xpc::CreateGlobalObject(cx, clasp, principal, aOptions));
     if (!global)
         return NS_ERROR_FAILURE;
@@ -996,7 +998,7 @@ XPCWrappedNative::SystemIsBeingShutDown()
         }
         // We leak the tearoff mNative
         // (for the same reason we leak mIdentity - see above).
-        unused << to->TakeNative().take();
+        Unused << to->TakeNative().take();
         to->SetInterface(nullptr);
     }
 
@@ -2360,5 +2362,5 @@ XPCJSObjectHolder::~XPCJSObjectHolder()
 void
 XPCJSObjectHolder::TraceJS(JSTracer* trc)
 {
-    JS_CallObjectTracer(trc, &mJSObj, "XPCJSObjectHolder::mJSObj");
+    JS::TraceEdge(trc, &mJSObj, "XPCJSObjectHolder::mJSObj");
 }

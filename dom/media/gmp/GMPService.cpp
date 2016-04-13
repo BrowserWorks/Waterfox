@@ -46,12 +46,10 @@ namespace mozilla {
 #undef LOG
 #endif
 
-PRLogModuleInfo*
+LogModule*
 GetGMPLog()
 {
-  static PRLogModuleInfo *sLog;
-  if (!sLog)
-    sLog = PR_NewLogModule("GMP");
+  static LazyLogModule sLog("GMP");
   return sLog;
 }
 
@@ -377,7 +375,7 @@ public:
   {
   }
 
-  virtual void Done(GMPContentParent* aGMPParent) override
+  void Done(GMPContentParent* aGMPParent) override
   {
     GMPAudioDecoderParent* gmpADP = nullptr;
     if (aGMPParent) {
@@ -421,7 +419,7 @@ public:
   {
   }
 
-  virtual void Done(GMPContentParent* aGMPParent) override
+  void Done(GMPContentParent* aGMPParent) override
   {
     GMPVideoDecoderParent* gmpVDP = nullptr;
     GMPVideoHostImpl* videoHost = nullptr;
@@ -466,7 +464,7 @@ public:
   {
   }
 
-  virtual void Done(GMPContentParent* aGMPParent) override
+  void Done(GMPContentParent* aGMPParent) override
   {
     GMPVideoEncoderParent* gmpVEP = nullptr;
     GMPVideoHostImpl* videoHost = nullptr;
@@ -511,7 +509,7 @@ public:
   {
   }
 
-  virtual void Done(GMPContentParent* aGMPParent) override
+  void Done(GMPContentParent* aGMPParent) override
   {
     GMPDecryptorParent* ksp = nullptr;
     if (aGMPParent) {

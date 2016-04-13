@@ -1,6 +1,8 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+requestLongerTimeout(2);
+
 Components.utils.import("resource://gre/modules/Promise.jsm", this);
 
 const RELATIVE_DIR = "browser/extensions/pdfjs/test/";
@@ -28,6 +30,7 @@ const TESTS = [
   {
     action: {
       keyboard: true,
+      keyCode: 61,
       event: "+"
     },
     expectedZoom: 1, // 1 - zoom in
@@ -37,6 +40,7 @@ const TESTS = [
   {
     action: {
       keyboard: true,
+      keyCode: 109,
       event: "-"
     },
     expectedZoom: -1, // -1 - zoom out
@@ -54,11 +58,7 @@ const TESTS = [
   }
 ];
 
-var initialWidth; // the initial width of the PDF document
-var previousWidth; // the width of the PDF document at previous step/test
-
-function test() {
-  var tab;
+add_task(function* test() {
   let handlerService = Cc["@mozilla.org/uriloader/handler-service;1"]
                        .getService(Ci.nsIHandlerService);
   let mimeService = Cc["@mozilla.org/mime;1"].getService(Ci.nsIMIMEService);
@@ -72,104 +72,83 @@ function test() {
 
   info('Pref action: ' + handlerInfo.preferredAction);
 
-  waitForExplicitFinish();
-  registerCleanupFunction(function() {
-    gBrowser.removeTab(tab);
-  });
+  yield BrowserTestUtils.withNewTab({ gBrowser, url: "about:blank" },
+    function* (newTabBrowser) {
+      yield waitForPdfJS(newTabBrowser, TESTROOT + "file_pdfjs_test.pdf" + "#zoom=100");
 
-  tab = gBrowser.selectedTab = gBrowser.addTab(TESTROOT + "file_pdfjs_test.pdf");
-  var newTabBrowser = gBrowser.getBrowserForTab(tab);
+      yield ContentTask.spawn(newTabBrowser, TESTS, function* (TESTS) {
+        let document = content.document;
 
-  newTabBrowser.addEventListener("load", function eventHandler() {
-    newTabBrowser.removeEventListener("load", eventHandler, true);
+        function waitForRender() {
+          return new Promise((resolve) => {
+            document.addEventListener("pagerendered", function onPageRendered(e) {
+              if(e.detail.pageNumber !== 1) {
+                return;
+              }
 
-    var document = newTabBrowser.contentDocument,
-        window = newTabBrowser.contentWindow;
+              document.removeEventListener("pagerendered", onPageRendered, true);
+              resolve();
+            }, true);
+          });
+        }
 
-    // Runs tests after all 'load' event handlers have fired off
-    window.addEventListener("documentload", function() {
-      initialWidth = parseInt(document.querySelector("div#pageContainer1").style.width);
-      previousWidth = initialWidth;
-      runTests(document, window, finish);
-    }, false, true);
-  }, true);
-}
+        // check that PDF is opened with internal viewer
+        ok(content.document.querySelector('div#viewer'), "document content has viewer UI");
+        ok('PDFJS' in content.wrappedJSObject, "window content has PDFJS object");
 
-function runTests(document, window, callback) {
-  // check that PDF is opened with internal viewer
-  ok(document.querySelector('div#viewer'), "document content has viewer UI");
-  ok('PDFJS' in window.wrappedJSObject, "window content has PDFJS object");
+        let initialWidth, previousWidth;
+        initialWidth = previousWidth =
+          parseInt(content.document.querySelector("div#pageContainer1").style.width);
 
-  // Start the zooming tests after the document is loaded
-  waitForDocumentLoad(document).then(function () {
-    zoomPDF(document, window, TESTS.shift(), finish);
-  });
-}
+        for (let test of TESTS) {
+          // We zoom using an UI element
+          var ev;
+          if (test.action.selector) {
+            // Get the element and trigger the action for changing the zoom
+            var el = document.querySelector(test.action.selector);
+            ok(el, "Element '" + test.action.selector + "' has been found");
 
-function waitForDocumentLoad(document) {
-  var deferred = Promise.defer();
-  var interval = setInterval(function () {
-    if (document.querySelector("div#pageContainer1") != null){
-      clearInterval(interval);
-      deferred.resolve();
-    }
-  }, 500);
+            if (test.action.index){
+              el.selectedIndex = test.action.index;
+            }
 
-  return deferred.promise;
-}
+            // Dispatch the event for changing the zoom
+            ev = new Event(test.action.event);
+          }
+          // We zoom using keyboard
+          else {
+            // Simulate key press
+            ev = new content.KeyboardEvent("keydown",
+                                           { key: test.action.event,
+                                             keyCode: test.action.keyCode,
+                                             ctrlKey: true });
+            el = content;
+          }
 
-function zoomPDF(document, window, test, endCallback) {
-  var renderedPage;
+          el.dispatchEvent(ev);
+          yield waitForRender();
 
-  document.addEventListener("pagerendered", function onPageRendered(e) {
-    if(e.detail.pageNumber !== 1) {
-      return;
-    }
+          var pageZoomScale = content.document.querySelector('select#scaleSelect');
 
-    document.removeEventListener("pagerendered", onPageRendered, true);
+          // The zoom value displayed in the zoom select
+          var zoomValue = pageZoomScale.options[pageZoomScale.selectedIndex].innerHTML;
 
-    var pageZoomScale = document.querySelector('select#scaleSelect');
+          let pageContainer = content.document.querySelector('div#pageContainer1');
+          let actualWidth = parseInt(pageContainer.style.width);
 
-    // The zoom value displayed in the zoom select
-    var zoomValue = pageZoomScale.options[pageZoomScale.selectedIndex].innerHTML;
+          // the actual zoom of the PDF document
+          let computedZoomValue = parseInt(((actualWidth/initialWidth).toFixed(2))*100) + "%";
+          is(computedZoomValue, zoomValue, "Content has correct zoom");
 
-    let pageContainer = document.querySelector('div#pageContainer1');
-    let actualWidth  = parseInt(pageContainer.style.width);
+          // Check that document zooms in the expected way (in/out)
+          let zoom = (actualWidth - previousWidth) * test.expectedZoom;
+          ok(zoom > 0, test.message);
 
-    // the actual zoom of the PDF document
-    let computedZoomValue = parseInt(((actualWidth/initialWidth).toFixed(2))*100) + "%";
-    is(computedZoomValue, zoomValue, "Content has correct zoom");
+          previousWidth = actualWidth;
+        }
 
-    // Check that document zooms in the expected way (in/out)
-    let zoom = (actualWidth - previousWidth) * test.expectedZoom;
-    ok(zoom > 0, test.message);
-
-    // Go to next test (if there is any) or finish
-    var nextTest = TESTS.shift();
-    if (nextTest) {
-      previousWidth = actualWidth;
-      zoomPDF(document, window, nextTest, endCallback);
-    }
-    else
-      endCallback();
-  }, true);
-
-  // We zoom using an UI element
-  if (test.action.selector) {
-    // Get the element and trigger the action for changing the zoom
-    var el = document.querySelector(test.action.selector);
-    ok(el, "Element '" + test.action.selector + "' has been found");
-
-    if (test.action.index){
-      el.selectedIndex = test.action.index;
-    }
-
-    // Dispatch the event for changing the zoom
-    el.dispatchEvent(new Event(test.action.event));
-  }
-  // We zoom using keyboard
-  else {
-    // Simulate key press
-    EventUtils.synthesizeKey(test.action.event, { ctrlKey: true });
-  }
-}
+        var viewer = content.wrappedJSObject.PDFViewerApplication;
+        yield viewer.close();
+      });
+    });
+});

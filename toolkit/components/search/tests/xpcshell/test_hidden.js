@@ -25,7 +25,7 @@ function run_test() {
 }
 
 add_task(function* async_init() {
-  let commitPromise = promiseAfterCommit()
+  let commitPromise = promiseAfterCache()
   yield asyncInit();
 
   let engines = Services.search.getEngines();
@@ -45,13 +45,12 @@ add_task(function* async_init() {
 });
 
 add_task(function* sync_init() {
+  let unInitPromise = waitForSearchNotification("uninit-complete");
   let reInitPromise = asyncReInit();
-  // Synchronously check the current default engine, to force a sync init.
-  // XXX For some reason forcing a sync init while already asynchronously
-  // reinitializing causes a shutdown warning related to engineMetadataService's
-  // finalize method having already been called. Seems harmless for the purpose
-  // of this test.
+  yield unInitPromise;
   do_check_false(Services.search.isInitialized);
+
+  // Synchronously check the current default engine, to force a sync init.
   do_check_eq(Services.search.currentEngine.name, "hidden");
   do_check_true(Services.search.isInitialized);
 
@@ -79,7 +78,6 @@ add_task(function* invalid_engine() {
   let url = "data:application/json,{\"interval\": 31536000, \"settings\": {\"searchDefault\": \"hidden\", \"visibleDefaultEngines\": [\"hidden\", \"bogus\"]}}";
   Services.prefs.getDefaultBranch(BROWSER_SEARCH_PREF).setCharPref(kUrlPref, url);
 
-  let commitPromise = promiseAfterCommit();
   yield asyncReInit();
 
   let engines = Services.search.getEngines();

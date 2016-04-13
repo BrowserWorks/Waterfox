@@ -168,7 +168,7 @@ LoopUnroller::go(LoopIterationBound* bound)
                 continue;
             if (ins->isTest() || ins->isGoto() || ins->isInterruptCheck())
                 continue;
-#ifdef DEBUG
+#ifdef JS_JITSPEW
             JitSpew(JitSpew_Unrolling, "Aborting: can't clone instruction %s", ins->opName());
 #endif
             return;
@@ -204,7 +204,7 @@ LoopUnroller::go(LoopIterationBound* bound)
 
     // The old preheader will go before the unrolled loop, and the old loop
     // will need a new empty preheader.
-    CompileInfo& info = oldPreheader->info();
+    const CompileInfo& info = oldPreheader->info();
     if (header->trackedPc()) {
         unrolledHeader =
             MBasicBlock::New(graph, nullptr, info,

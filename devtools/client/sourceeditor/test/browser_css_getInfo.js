@@ -4,47 +4,48 @@
 
 "use strict";
 
-const cssAutoCompleter  = require("devtools/client/sourceeditor/css-autocompleter");
+const CSSCompleter =
+      require("devtools/client/sourceeditor/css-autocompleter");
 
 const source = [
-".devtools-toolbar {",
-"  -moz-appearance: none;",
-"           padding:4px 3px;border-bottom-width: 1px;",
-"  border-bottom-style: solid;",
-"}",
-"",
-"#devtools-menu.devtools-menulist,",
-".devtools-toolbarbutton#devtools-menu {",
-"  -moz-appearance: none;",
-"  -moz-box-align: center;",
-"  min-width: 78px;",
-"  min-height: 22px;",
-"  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);",
-"  border: 1px solid hsla(210,8%,5%,.45);",
-"  border-radius: 3px;",
-"  background: linear-gradient(hsla(212,7%,57%,.35),",
-"              hsla(212,7%,57%,.1)) padding-box;",
-"  margin: 0 3px;",
-"  color: inherit;",
-"}",
-"",
-".devtools-toolbarbutton > hbox.toolbarbutton-menubutton-button {",
-"  -moz-box-orient: horizontal;",
-"}",
-"",
-".devtools-menulist:active,",
-"#devtools-toolbarbutton:focus {",
-"  outline: 1px dotted hsla(210,30%,85%,0.7);",
-"  outline-offset   :  -4px;",
-"}",
-"",
-".devtools-toolbarbutton:not([label]) {",
-"  min-width: 32px;",
-"}",
-"",
-".devtools-toolbarbutton:not([label]) > .toolbarbutton-text, .devtools-toolbar {",
-"  display: none;",
-"}",
+  ".devtools-toolbar {",
+  "  -moz-appearance: none;",
+  "           padding:4px 3px;border-bottom-width: 1px;",
+  "  border-bottom-style: solid;",
+  "}",
+  "",
+  "#devtools-menu.devtools-menulist,",
+  ".devtools-toolbarbutton#devtools-menu {",
+  "  -moz-appearance: none;",
+  "  -moz-box-align: center;",
+  "  min-width: 78px;",
+  "  min-height: 22px;",
+  "  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);",
+  "  border: 1px solid hsla(210,8%,5%,.45);",
+  "  border-radius: 3px;",
+  "  background: linear-gradient(hsla(212,7%,57%,.35),",
+  "              hsla(212,7%,57%,.1)) padding-box;",
+  "  margin: 0 3px;",
+  "  color: inherit;",
+  "}",
+  "",
+  ".devtools-toolbarbutton > hbox.toolbarbutton-menubutton-button {",
+  "  -moz-box-orient: horizontal;",
+  "}",
+  "",
+  ".devtools-menulist:active,",
+  "#devtools-toolbarbutton:focus {",
+  "  outline: 1px dotted hsla(210,30%,85%,0.7);",
+  "  outline-offset   :  -4px;",
+  "}",
+  "",
+  ".devtools-toolbarbutton:not([label]) {",
+  "  min-width: 32px;",
+  "}",
+  "",
+  ".devtools-toolbarbutton:not([label]) > .toolbarbutton-text, .devtools-toolbar {",
+  "  display: none;",
+  "}",
 ].join("\n");
 
 // Format of test cases :
@@ -119,20 +120,19 @@ const TEST_URI = "data:text/html;charset=UTF-8," + encodeURIComponent(
    " </html>"
   ].join("\n"));
 
-var doc = null;
+let doc = null;
 function test() {
   waitForExplicitFinish();
   gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.selectedBrowser.addEventListener("load", function onload() {
-    gBrowser.selectedBrowser.removeEventListener("load", onload, true);
+  BrowserTestUtils.browserLoaded(gBrowser.selectedBrowser).then(() => {
     doc = content.document;
     runTests();
-  }, true);
-  content.location = TEST_URI;
+  });
+  gBrowser.loadURI(TEST_URI);
 }
 
 function runTests() {
-  let completer = new cssAutoCompleter();
+  let completer = new CSSCompleter();
   let matches = (arr, toCheck) => !arr.some((x, i) => x != toCheck[i]);
   let checkState = (expected, actual) => {
     if (expected[0] == "null" && actual == null) {
@@ -159,12 +159,11 @@ function runTests() {
   for (let expected of tests) {
     let caret = expected.splice(0, 1)[0];
     progress.dataset.progress = ++i;
-    progressDiv.style.width = 100*i/tests.length + "%";
+    progressDiv.style.width = 100 * i / tests.length + "%";
     let actual = completer.getInfoAt(source, caret);
     if (checkState(expected, actual)) {
       ok(true, "Test " + i + " passed. ");
-    }
-    else {
+    } else {
       ok(false, "Test " + i + " failed. Expected state : [" + expected + "] " +
          "but found [" + actual.state + ", " +
          (actual.selector || actual.selectors) + ", " +

@@ -23,8 +23,7 @@ AppendHeader(uint8_t aHeaderId, uint8_t* aRetBuf, int aBufferSize,
   int writtenLength = (headerLength < aBufferSize) ? headerLength : aBufferSize;
 
   aRetBuf[0] = aHeaderId;
-  aRetBuf[1] = (headerLength & 0xFF00) >> 8;
-  aRetBuf[2] = headerLength & 0x00FF;
+  BigEndian::writeUint16(&aRetBuf[1], headerLength);
   memcpy(&aRetBuf[3], aData, writtenLength - 3);
 
   return writtenLength;
@@ -37,10 +36,7 @@ int
 AppendHeader(uint8_t aHeaderId, uint8_t* aRetBuf, int aValue)
 {
   aRetBuf[0] = aHeaderId;
-  aRetBuf[1] = (aValue & 0xFF000000) >> 24;
-  aRetBuf[2] = (aValue & 0x00FF0000) >> 16;
-  aRetBuf[3] = (aValue & 0x0000FF00) >> 8;
-  aRetBuf[4] = aValue & 0x000000FF;
+  BigEndian::writeInt32(&aRetBuf[1], aValue);
 
   return 5;
 }
@@ -79,6 +75,14 @@ AppendHeaderWho(uint8_t* aRetBuf, int aBufferSize, const uint8_t* aWho,
 {
   return AppendHeader(ObexHeaderId::Who, aRetBuf, aBufferSize,
                       aWho, aLength);
+}
+
+int
+AppendAuthResponse(uint8_t* aRetBuf, int aBufferSize, const uint8_t* aDigest,
+                   int aLength)
+{
+  return AppendHeader(ObexHeaderId::AuthResponse, aRetBuf, aBufferSize,
+                      aDigest, aLength);
 }
 
 int
@@ -135,8 +139,7 @@ void
 SetObexPacketInfo(uint8_t* aRetBuf, uint8_t aOpcode, int aPacketLength)
 {
   aRetBuf[0] = aOpcode;
-  aRetBuf[1] = (aPacketLength & 0xFF00) >> 8;
-  aRetBuf[2] = aPacketLength & 0x00FF;
+  BigEndian::writeUint16(&aRetBuf[1], aPacketLength);
 }
 
 bool
@@ -150,7 +153,6 @@ ParseHeaders(const uint8_t* aHeaderStart,
     ObexHeaderId headerId = (ObexHeaderId)*ptr++;
 
     uint16_t contentLength = 0;
-    uint8_t highByte, lowByte;
 
     // Defined in 2.1 OBEX Headers, IrOBEX 1.2
     switch (headerId >> 6)
@@ -160,9 +162,8 @@ ParseHeaders(const uint8_t* aHeaderStart,
         // unsigned integer.
       case 0x01:
         // byte sequence, length prefixed with 2 byte unsigned integer.
-        highByte = *ptr++;
-        lowByte = *ptr++;
-        contentLength = (((uint16_t)highByte << 8) | lowByte) - 3;
+        contentLength = BigEndian::readUint16(ptr) - 3;
+        ptr += 2;
         break;
 
       case 0x02:

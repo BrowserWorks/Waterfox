@@ -257,7 +257,7 @@ class MozbuildObject(ProcessExecutionMixin):
         config_status = os.path.join(self.topobjdir, 'config.status')
 
         if not os.path.exists(config_status):
-            raise Exception('config.status not available. Run configure.')
+            raise BuildEnvironmentNotFoundException('config.status not available. Run configure.')
 
         self._config_environment = \
             ConfigEnvironment.from_config_status(config_status)
@@ -292,13 +292,13 @@ class MozbuildObject(ProcessExecutionMixin):
     def extra_environment_variables(self):
         '''Some extra environment variables are stored in .mozconfig.mk.
         This functions extracts and returns them.'''
-        from pymake.process import ClineSplitter
+        from mozbuild import shellutil
         mozconfig_mk = os.path.join(self.topobjdir, '.mozconfig.mk')
         env = {}
         with open(mozconfig_mk) as fh:
             for line in fh:
                 if line.startswith('export '):
-                    exports = ClineSplitter(line, self.topobjdir)[1:]
+                    exports = shellutil.split(line)[1:]
                     for e in exports:
                         if '=' in e:
                             key, value = e.split('=')

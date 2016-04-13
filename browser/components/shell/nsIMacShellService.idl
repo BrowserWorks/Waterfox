@@ -5,7 +5,7 @@
 
 #include "nsIShellService.idl"
 
-[scriptable, uuid(7f8ca08e-1df4-4735-86e9-50dedb48e5e8)]
+[scriptable, uuid(387fdc80-0077-4b60-a0d9-d9e80a83ba64)]
 interface nsIMacShellService : nsIShellService
 {
   const long APPLICATION_KEYCHAIN_ACCESS  = 2;

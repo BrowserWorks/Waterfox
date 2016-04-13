@@ -63,7 +63,7 @@ nsRubyBaseContainerFrame::GetFrameName(nsAString& aResult) const
 
 static gfxBreakPriority
 LineBreakBefore(nsIFrame* aFrame,
-                nsRenderingContext* aRenderingContext,
+                DrawTarget* aDrawTarget,
                 nsIFrame* aLineContainerFrame,
                 const nsLineList::iterator* aLine)
 {
@@ -79,8 +79,7 @@ LineBreakBefore(nsIFrame* aFrame,
 
     auto textFrame = static_cast<nsTextFrame*>(child);
     gfxSkipCharsIterator iter =
-      textFrame->EnsureTextRun(nsTextFrame::eInflated,
-                               aRenderingContext->ThebesContext(),
+      textFrame->EnsureTextRun(nsTextFrame::eInflated, aDrawTarget,
                                aLineContainerFrame, aLine);
     iter.SetOriginalOffset(textFrame->GetContentOffset());
     uint32_t pos = iter.GetSkippedOffset();
@@ -148,13 +147,13 @@ CalculateColumnPrefISize(nsRenderingContext* aRenderingContext,
     if (frame) {
       nsIFrame::InlinePrefISizeData data;
       if (i == 0) {
-        data.lineContainer = aBaseISizeData->lineContainer;
+        data.SetLineContainer(aBaseISizeData->LineContainer());
         data.skipWhitespace = aBaseISizeData->skipWhitespace;
         data.trailingWhitespace = aBaseISizeData->trailingWhitespace;
       } else {
         // The line container of ruby text frames is their parent,
         // ruby text container frame.
-        data.lineContainer = frame->GetParent();
+        data.SetLineContainer(frame->GetParent());
       }
       frame->AddInlinePrefISize(aRenderingContext, &data);
       MOZ_ASSERT(data.prevLines == 0, "Shouldn't have prev lines");
@@ -182,7 +181,7 @@ nsRubyBaseContainerFrame::AddInlineMinISize(
       // Since spans are not breakable internally, use our pref isize
       // directly if there is any span.
       nsIFrame::InlinePrefISizeData data;
-      data.lineContainer = aData->lineContainer;
+      data.SetLineContainer(aData->LineContainer());
       data.skipWhitespace = aData->skipWhitespace;
       data.trailingWhitespace = aData->trailingWhitespace;
       AddInlinePrefISize(aRenderingContext, &data);
@@ -208,9 +207,10 @@ nsRubyBaseContainerFrame::AddInlineMinISize(
         nsIFrame* baseFrame = enumerator.GetFrameAtLevel(0);
         if (baseFrame) {
           gfxBreakPriority breakPriority =
-            LineBreakBefore(baseFrame, aRenderingContext, nullptr, nullptr);
+            LineBreakBefore(baseFrame, aRenderingContext->GetDrawTarget(),
+                            nullptr, nullptr);
           if (breakPriority != gfxBreakPriority::eNoBreak) {
-            aData->OptionallyBreak(aRenderingContext);
+            aData->OptionallyBreak();
           }
         }
       }
@@ -582,7 +582,7 @@ nsRubyBaseContainerFrame::ReflowOneColumn(const ReflowState& aReflowState,
       aReflowState.mAllowLineBreak : aReflowState.mAllowInitialLineBreak;
     if (allowBreakBefore) {
       gfxBreakPriority breakPriority = LineBreakBefore(
-        aColumn.mBaseFrame, baseReflowState.rendContext,
+        aColumn.mBaseFrame, baseReflowState.rendContext->GetDrawTarget(),
         baseReflowState.mLineLayout->LineContainerFrame(),
         baseReflowState.mLineLayout->GetLine());
       if (breakPriority != gfxBreakPriority::eNoBreak) {

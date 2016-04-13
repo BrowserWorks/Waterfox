@@ -14,6 +14,7 @@ class MessageLoop;
 
 BEGIN_BLUETOOTH_NAMESPACE
 
+class BluetoothSocketInterface;
 class BluetoothSocketObserver;
 class BluetoothSocketResultHandler;
 class DroidSocketImpl;
@@ -24,7 +25,9 @@ public:
   BluetoothSocket(BluetoothSocketObserver* aObserver);
   ~BluetoothSocket();
 
-  nsresult Connect(const nsAString& aDeviceAddress,
+  void SetObserver(BluetoothSocketObserver* aObserver);
+
+  nsresult Connect(const BluetoothAddress& aDeviceAddress,
                    const BluetoothUuid& aServiceUuid,
                    BluetoothSocketType aType,
                    int aChannel,
@@ -32,7 +35,7 @@ public:
                    MessageLoop* aConsumerLoop,
                    MessageLoop* aIOLoop);
 
-  nsresult Connect(const nsAString& aDeviceAddress,
+  nsresult Connect(const BluetoothAddress& aDeviceAddress,
                    const BluetoothUuid& aServiceUuid,
                    BluetoothSocketType aType,
                    int aChannel,
@@ -52,6 +55,8 @@ public:
                   int aChannel,
                   bool aAuth, bool aEncrypt);
 
+  nsresult Accept(int aListenFd, BluetoothSocketResultHandler* aRes);
+
   /**
    * Method to be called whenever data is received. This is only called on the
    * consumer thread.
@@ -60,19 +65,14 @@ public:
    */
   void ReceiveSocketData(nsAutoPtr<mozilla::ipc::UnixSocketBuffer>& aBuffer);
 
-  inline void GetAddress(nsAString& aDeviceAddress)
+  inline void GetAddress(BluetoothAddress& aDeviceAddress)
   {
     aDeviceAddress = mDeviceAddress;
   }
 
-  inline void SetAddress(const nsAString& aDeviceAddress)
+  inline void SetAddress(const BluetoothAddress& aDeviceAddress)
   {
     mDeviceAddress = aDeviceAddress;
-  }
-
-  inline void SetCurrentResultHandler(BluetoothSocketResultHandler* aRes)
-  {
-    mCurrentRes = aRes;
   }
 
   // Methods for |DataSocket|
@@ -90,10 +90,19 @@ public:
   void OnDisconnect() override;
 
 private:
+  nsresult LoadSocketInterface();
+  void Cleanup();
+
+  inline void SetCurrentResultHandler(BluetoothSocketResultHandler* aRes)
+  {
+    mCurrentRes = aRes;
+  }
+
+  BluetoothSocketInterface* mSocketInterface;
   BluetoothSocketObserver* mObserver;
   BluetoothSocketResultHandler* mCurrentRes;
   DroidSocketImpl* mImpl;
-  nsString mDeviceAddress;
+  BluetoothAddress mDeviceAddress;
 };
 
 END_BLUETOOTH_NAMESPACE

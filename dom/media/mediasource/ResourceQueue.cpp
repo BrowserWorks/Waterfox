@@ -10,7 +10,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Logging.h"
 
-extern PRLogModuleInfo* GetSourceBufferResourceLog();
+extern mozilla::LogModule* GetSourceBufferResourceLog();
 
 #define SBR_DEBUG(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Debug, ("ResourceQueue(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 #define SBR_DEBUGV(arg, ...) MOZ_LOG(GetSourceBufferResourceLog(), mozilla::LogLevel::Verbose, ("ResourceQueue(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
@@ -35,7 +35,7 @@ ResourceItem::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 class ResourceQueueDeallocator : public nsDequeFunctor {
-  virtual void* operator() (void* aObject) {
+  void* operator() (void* aObject) override {
     delete static_cast<ResourceItem*>(aObject);
     return nullptr;
   }

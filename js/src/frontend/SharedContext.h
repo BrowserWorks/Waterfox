@@ -130,6 +130,10 @@ class FunctionContextFlags
     bool needsHomeObject:1;
     bool isDerivedClassConstructor:1;
 
+    // Whether this function has a .this binding. If true, we need to emit
+    // JSOP_FUNCTIONTHIS in the prologue to initialize it.
+    bool hasThisBinding:1;
+
   public:
     FunctionContextFlags()
      :  mightAliasLocals(false),
@@ -138,7 +142,8 @@ class FunctionContextFlags
         argumentsHasLocalBinding(false),
         definitelyNeedsArgsObj(false),
         needsHomeObject(false),
-        isDerivedClassConstructor(false)
+        isDerivedClassConstructor(false),
+        hasThisBinding(false)
     { }
 };
 
@@ -171,6 +176,12 @@ class Directives
     }
 };
 
+// The kind of this-binding for the current scope. Note that arrow functions
+// (and generator expression lambdas) have a lexical this-binding so their
+// ThisBinding is the same as the ThisBinding of their enclosing scope and can
+// be any value.
+enum class ThisBinding { Global, Function, Module };
+
 /*
  * The struct SharedContext is part of the current parser context (see
  * ParseContext). It stores information that is reused between the parser and
@@ -187,9 +198,13 @@ class SharedContext
     bool extraWarnings;
 
   private:
+    ThisBinding thisBinding_;
+
     bool allowNewTarget_;
     bool allowSuperProperty_;
+    bool allowSuperCall_;
     bool inWith_;
+    bool needsThisTDZChecks_;
     bool superScopeAlreadyNeedsHomeObject_;
 
   public:
@@ -200,9 +215,12 @@ class SharedContext
         strictScript(directives.strict()),
         localStrict(false),
         extraWarnings(extraWarnings),
+        thisBinding_(ThisBinding::Global),
         allowNewTarget_(false),
         allowSuperProperty_(false),
+        allowSuperCall_(false),
         inWith_(false),
+        needsThisTDZChecks_(false),
         superScopeAlreadyNeedsHomeObject_(false)
     { }
 
@@ -214,6 +232,7 @@ class SharedContext
     virtual JSObject* staticScope() const = 0;
     void computeAllowSyntax(JSObject* staticScope);
     void computeInWith(JSObject* staticScope);
+    void computeThisBinding(JSObject* staticScope);
 
     virtual ObjectBox* toObjectBox() { return nullptr; }
     bool isObjectBox() { return toObjectBox() != nullptr; }
@@ -223,9 +242,14 @@ class SharedContext
     inline ModuleBox* asModuleBox();
     bool isGlobalContext() { return !toObjectBox(); }
 
+    ThisBinding thisBinding()          const { return thisBinding_; }
+
     bool allowNewTarget()              const { return allowNewTarget_; }
     bool allowSuperProperty()          const { return allowSuperProperty_; }
+    bool allowSuperCall()              const { return allowSuperCall_; }
     bool inWith()                      const { return inWith_; }
+    bool needsThisTDZChecks()          const { return needsThisTDZChecks_; }
+
     void markSuperScopeNeedsHomeObject();
 
     bool hasExplicitUseStrict()        const { return anyCxFlags.hasExplicitUseStrict; }
@@ -255,22 +279,30 @@ class SharedContext
     }
 
     bool isDotVariable(JSAtom* atom) const {
-        return atom == context->names().dotGenerator;
+        return atom == context->names().dotGenerator || atom == context->names().dotThis;
     }
 };
 
 class MOZ_STACK_CLASS GlobalSharedContext : public SharedContext
 {
-    Rooted<ScopeObject*> staticScope_;
+    Rooted<StaticScope*> staticScope_;
 
   public:
-    GlobalSharedContext(ExclusiveContext* cx, ScopeObject* staticScope, Directives directives,
-                        bool extraWarnings)
+    GlobalSharedContext(ExclusiveContext* cx, StaticScope* staticScope, Directives directives,
+                        bool extraWarnings, JSFunction* maybeEvalCaller = nullptr)
       : SharedContext(cx, directives, extraWarnings),
         staticScope_(cx, staticScope)
     {
         computeAllowSyntax(staticScope);
         computeInWith(staticScope);
+
+        // If we're executing a Debugger eval-in-frame, staticScope is always a
+        // non-function scope, so we have to compute our ThisBinding based on
+        // the actual callee.
+        if (maybeEvalCaller)
+            computeThisBinding(maybeEvalCaller);
+        else
+            computeThisBinding(staticScope);
     }
 
     JSObject* staticScope() const override { return staticScope_; }
@@ -298,6 +330,7 @@ class FunctionBox : public ObjectBox, public SharedContext
     bool            usesArguments:1;  /* contains a free use of 'arguments' */
     bool            usesApply:1;      /* contains an f.apply() call */
     bool            usesThis:1;       /* contains 'this' */
+    bool            usesReturn:1;     /* contains a 'return' statement */
 
     FunctionContextFlags funCxFlags;
 
@@ -310,6 +343,10 @@ class FunctionBox : public ObjectBox, public SharedContext
     JSFunction* function() const { return &object->as<JSFunction>(); }
     JSObject* staticScope() const override { return function(); }
     JSObject* enclosingStaticScope() const { return enclosingStaticScope_; }
+
+    bool isLikelyConstructorWrapper() const {
+        return usesArguments && usesApply && usesThis && !usesReturn;
+    }
 
     GeneratorKind generatorKind() const { return GeneratorKindFromBits(generatorKindBits_); }
     bool isGenerator() const { return generatorKind() != NotGenerator; }
@@ -328,6 +365,7 @@ class FunctionBox : public ObjectBox, public SharedContext
     bool mightAliasLocals()         const { return funCxFlags.mightAliasLocals; }
     bool hasExtensibleScope()       const { return funCxFlags.hasExtensibleScope; }
     bool needsDeclEnvObject()       const { return funCxFlags.needsDeclEnvObject; }
+    bool hasThisBinding()           const { return funCxFlags.hasThisBinding; }
     bool argumentsHasLocalBinding() const { return funCxFlags.argumentsHasLocalBinding; }
     bool definitelyNeedsArgsObj()   const { return funCxFlags.definitelyNeedsArgsObj; }
     bool needsHomeObject()          const { return funCxFlags.needsHomeObject; }
@@ -336,6 +374,7 @@ class FunctionBox : public ObjectBox, public SharedContext
     void setMightAliasLocals()             { funCxFlags.mightAliasLocals         = true; }
     void setHasExtensibleScope()           { funCxFlags.hasExtensibleScope       = true; }
     void setNeedsDeclEnvObject()           { funCxFlags.needsDeclEnvObject       = true; }
+    void setHasThisBinding()               { funCxFlags.hasThisBinding           = true; }
     void setArgumentsHasLocalBinding()     { funCxFlags.argumentsHasLocalBinding = true; }
     void setDefinitelyNeedsArgsObj()       { MOZ_ASSERT(funCxFlags.argumentsHasLocalBinding);
                                              funCxFlags.definitelyNeedsArgsObj   = true; }
@@ -377,21 +416,25 @@ class FunctionBox : public ObjectBox, public SharedContext
                isDerivedClassConstructor() ||
                isGenerator();
     }
+
+    void trace(JSTracer* trc) override;
 };
 
 class ModuleBox : public ObjectBox, public SharedContext
 {
   public:
     Bindings bindings;
-    TraceableVector<JSAtom*> exportNames;
+    ModuleBuilder& builder;
 
     template <typename ParseHandler>
     ModuleBox(ExclusiveContext* cx, ObjectBox* traceListHead, ModuleObject* module,
-              ParseContext<ParseHandler>* pc);
+              ModuleBuilder& builder, ParseContext<ParseHandler>* pc);
 
     ObjectBox* toObjectBox() override { return this; }
     ModuleObject* module() const { return &object->as<ModuleObject>(); }
     JSObject* staticScope() const override { return module(); }
+
+    void trace(JSTracer* trc) override;
 };
 
 inline FunctionBox*
@@ -420,34 +463,33 @@ SharedContext::allLocalsAliased()
     return bindingsAccessedDynamically() || (isFunctionBox() && asFunctionBox()->isGenerator());
 }
 
+// NOTE: If you add a new type of statement that is a scope, add it between
+//       WITH and CATCH, or you'll break StmtInfoBase::linksScope.  If you add
+//       a non-looping statement type, add it before DO_LOOP or you'll break
+//       StmtInfoBase::isLoop().
+#define FOR_EACH_STATEMENT_TYPE(macro) \
+    macro(LABEL, "label statement") \
+    macro(IF, "if statement") \
+    macro(ELSE, "else statement") \
+    macro(SEQ, "destructuring body") \
+    macro(BLOCK, "block") \
+    macro(SWITCH, "switch statement") \
+    macro(WITH, "with statement") \
+    macro(CATCH, "catch block") \
+    macro(TRY, "try block") \
+    macro(FINALLY, "finally block") \
+    macro(SUBROUTINE, "finally block") \
+    macro(DO_LOOP, "do loop") \
+    macro(FOR_LOOP, "for loop") \
+    macro(FOR_IN_LOOP, "for/in loop") \
+    macro(FOR_OF_LOOP, "for/of loop") \
+    macro(WHILE_LOOP, "while loop") \
+    macro(SPREAD, "spread")
 
-/*
- * NB: If you add a new type of statement that is a scope, add it between
- * STMT_WITH and STMT_CATCH, or you will break StmtInfoBase::linksScope. If you
- * add a non-looping statement type, add it before STMT_DO_LOOP or you will
- * break StmtInfoBase::isLoop().
- *
- * Also remember to keep the statementName array in BytecodeEmitter.cpp in
- * sync.
- */
 enum class StmtType : uint16_t {
-    LABEL,                 /* labeled statement:  L: s */
-    IF,                    /* if (then) statement */
-    ELSE,                  /* else clause of if statement */
-    SEQ,                   /* synthetic sequence of statements */
-    BLOCK,                 /* compound statement: { s1[;... sN] } */
-    SWITCH,                /* switch statement */
-    WITH,                  /* with statement */
-    CATCH,                 /* catch block */
-    TRY,                   /* try block */
-    FINALLY,               /* finally block */
-    SUBROUTINE,            /* gosub-target subroutine body */
-    DO_LOOP,               /* do/while loop statement */
-    FOR_LOOP,              /* for loop statement */
-    FOR_IN_LOOP,           /* for/in loop statement */
-    FOR_OF_LOOP,           /* for/of loop statement */
-    WHILE_LOOP,            /* while loop statement */
-    SPREAD,                /* spread operator (pseudo for/of) */
+#define DECLARE_STMTTYPE_ENUM(name, desc) name,
+    FOR_EACH_STATEMENT_TYPE(DECLARE_STMTTYPE_ENUM)
+#undef DECLARE_STMTTYPE_ENUM
     LIMIT
 };
 
@@ -493,7 +535,7 @@ struct StmtInfoBase
     RootedAtom      label;
 
     // Compile-time scope chain node for this scope.
-    Rooted<NestedScopeObject*> staticScope;
+    Rooted<NestedStaticScope*> staticScope;
 
     explicit StmtInfoBase(ExclusiveContext* cx)
         : isBlockScope(false), isForLetBlock(false),
@@ -517,10 +559,10 @@ struct StmtInfoBase
                type == StmtType::CATCH;
     }
 
-    StaticBlockObject& staticBlock() const {
+    StaticBlockScope& staticBlock() const {
         MOZ_ASSERT(staticScope);
         MOZ_ASSERT(isBlockScope);
-        return staticScope->as<StaticBlockObject>();
+        return staticScope->as<StaticBlockScope>();
     }
 
     bool isLoop() const {
@@ -549,6 +591,12 @@ class MOZ_STACK_CLASS StmtInfoStack
 
     StmtInfo* innermost() const { return innermostStmt_; }
     StmtInfo* innermostScopeStmt() const { return innermostScopeStmt_; }
+    StmtInfo* innermostNonLabel() const {
+        StmtInfo* stmt = innermost();
+        while (stmt && stmt->type == StmtType::LABEL)
+            stmt = stmt->enclosing;
+        return stmt;
+    }
 
     void push(StmtInfo* stmt, StmtType type) {
         stmt->type = type;
@@ -561,7 +609,7 @@ class MOZ_STACK_CLASS StmtInfoStack
         innermostStmt_ = stmt;
     }
 
-    void pushNestedScope(StmtInfo* stmt, StmtType type, NestedScopeObject& staticScope) {
+    void pushNestedScope(StmtInfo* stmt, StmtType type, NestedStaticScope& staticScope) {
         push(stmt, type);
         linkAsInnermostScopeStmt(stmt, staticScope);
     }
@@ -573,7 +621,7 @@ class MOZ_STACK_CLASS StmtInfoStack
             innermostScopeStmt_ = stmt->enclosingScope;
     }
 
-    void linkAsInnermostScopeStmt(StmtInfo* stmt, NestedScopeObject& staticScope) {
+    void linkAsInnermostScopeStmt(StmtInfo* stmt, NestedStaticScope& staticScope) {
         MOZ_ASSERT(stmt != innermostScopeStmt_);
         MOZ_ASSERT(!stmt->enclosingScope);
         stmt->enclosingScope = innermostScopeStmt_;
@@ -581,11 +629,11 @@ class MOZ_STACK_CLASS StmtInfoStack
         stmt->staticScope = &staticScope;
     }
 
-    void makeInnermostLexicalScope(StaticBlockObject& blockObj) {
+    void makeInnermostLexicalScope(StaticBlockScope& blockScope) {
         MOZ_ASSERT(!innermostStmt_->isBlockScope);
         MOZ_ASSERT(innermostStmt_->canBeBlockScope());
         innermostStmt_->isBlockScope = true;
-        linkAsInnermostScopeStmt(innermostStmt_, blockObj);
+        linkAsInnermostScopeStmt(innermostStmt_, blockScope);
     }
 };
 

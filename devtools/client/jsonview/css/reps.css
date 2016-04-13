@@ -44,7 +44,8 @@
 .objectBox-number,
 .objectLink-styleRule,
 .objectLink-element,
-.objectLink-textNode {
+.objectLink-textNode,
+.objectBox-array > .length {
   color: #000088;
 }
 
@@ -54,7 +55,7 @@
 
 .objectLink-function,
 .objectBox-stackTrace,
-.objectLink-profile  {
+.objectLink-profile {
   color: DarkGreen;
 }
 
@@ -174,9 +175,11 @@
 
 .theme-dark .domLabel,
 .theme-light .domLabel {
-  color: var(--theme-highlight-bluegrey);
+  color: var(--theme-highlight-blue);
 }
 
+.theme-dark .objectBox-array .length,
+.theme-light .objectBox-array .length,
 .theme-dark .objectBox-number,
 .theme-light .objectBox-number {
   color: var(--theme-highlight-green);
@@ -184,7 +187,7 @@
 
 .theme-dark .objectBox-string,
 .theme-light .objectBox-string {
-  color: var(--theme-highlight-orange)
+  color: var(--theme-highlight-orange);
 }
 
 .theme-dark .objectBox-null,
@@ -195,11 +198,16 @@
   color: var(--theme-comment);
 }
 
+.theme-dark .objectBox-array,
+.theme-light .objectBox-array {
+  color: var(--theme-body-color);
+}
+
 .theme-dark .objectBox-object,
 .theme-light .objectBox-object {
   font-family: Lucida Grande, sans-serif;
   font-weight: normal;
-  color: var(--theme-highlight-bluegrey);
+  color: var(--theme-highlight-blue);
   white-space: pre-wrap;
 }
 
@@ -207,5 +215,5 @@
 .theme-light .caption {
   font-family: Lucida Grande, Tahoma, sans-serif;
   font-weight: normal;
-  color: var(--theme-highlight-bluegrey);
+  color: var(--theme-highlight-blue);
 }

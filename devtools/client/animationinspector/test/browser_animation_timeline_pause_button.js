@@ -4,6 +4,8 @@
 
 "use strict";
 
+requestLongerTimeout(2);
+
 // Check that the timeline toolbar contains a pause button and that this pause
 // button can be clicked. Check that when it is, the current animations
 // displayed in the timeline get their playstates changed accordingly, and check
@@ -64,7 +66,7 @@ add_task(function*() {
        "animation to complete");
   yield selectNode(".negative-delay", inspector);
   yield reloadTab(inspector);
-  yield waitForOutOfBoundScrubber(timeline);
+  yield waitForScrubberStopped(timeline);
 
   ok(btn.classList.contains("paused"),
      "The button is in paused state once finite animations are done");
@@ -90,5 +92,16 @@ function waitForOutOfBoundScrubber({win, scrubberEl}) {
       }
     }
     check();
+  });
+}
+
+function waitForScrubberStopped(timeline) {
+  return new Promise(resolve => {
+    timeline.on("timeline-data-changed", function onTimelineData(e, {isMoving}) {
+      if (!isMoving) {
+        timeline.off("timeline-data-changed", onTimelineData);
+        resolve();
+      }
+    });
   });
 }

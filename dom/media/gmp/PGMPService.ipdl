@@ -19,10 +19,9 @@ parent:
                ProcessId[] alreadyBridgedTo)
     returns (ProcessId id, nsCString displayName, uint32_t pluginId);
   sync GetGMPNodeId(nsString origin, nsString topLevelOrigin,
+                    nsString gmpName,
                     bool inPrivateBrowsing)
     returns (nsCString id);
-
-  async UpdateGMPTrialCreateState(nsString keySystem, uint32_t status);
 };
 
 } // namespace gmp

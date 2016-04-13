@@ -246,16 +246,16 @@ protected:
   inline nscoord ComputeISizeValue(nscoord aContainingBlockISize,
                                    nscoord aContentEdgeToBoxSizing,
                                    nscoord aBoxSizingToMarginEdge,
-                                   const nsStyleCoord& aCoord);
+                                   const nsStyleCoord& aCoord) const;
   // same as previous, but using mComputedBorderPadding, mComputedPadding,
   // and mComputedMargin
   nscoord ComputeISizeValue(nscoord aContainingBlockISize,
-                            uint8_t aBoxSizing,
-                            const nsStyleCoord& aCoord);
+                            mozilla::StyleBoxSizing aBoxSizing,
+                            const nsStyleCoord& aCoord) const;
 
   nscoord ComputeBSizeValue(nscoord aContainingBlockBSize,
-                            uint8_t aBoxSizing,
-                            const nsStyleCoord& aCoord);
+                            mozilla::StyleBoxSizing aBoxSizing,
+                            const nsStyleCoord& aCoord) const;
 };
 
 /**
@@ -583,6 +583,8 @@ public:
                                         // but its in a paginated environment
                                         // (e.g. columns), it should always
                                         // reflow its placeholder children.
+    uint16_t mShrinkWrap:1; // stores the COMPUTE_SIZE_SHRINK_WRAP ctor flag
+    uint16_t mStaticPosIsCBOrigin:1; // the STATIC_POS_IS_CB_ORIGIN ctor flag
   } mFlags;
 
   // Logical and physical accessors for the resize flags. All users should go
@@ -652,9 +654,9 @@ public:
    * @param aFrame The frame for whose reflow state is being constructed.
    * @param aAvailableSpace See comments for availableHeight and availableWidth
    *        members.
-   * @param aContainingBlockSize An optional size, in app units, that
-   *        is used by absolute positioning code to override default containing
-   *        block sizes.
+   * @param aContainingBlockSize An optional size, in app units, specifying
+   *        the containing block size to use instead of the default which is
+   *        to use the aAvailableSpace.
    * @param aFlags A set of flags used for additional boolean parameters (see
    *        below).
    */
@@ -673,7 +675,15 @@ public:
 
     // Indicates that the calling function will initialize the reflow state, and
     // that the constructor should not call Init().
-    CALLER_WILL_INIT = (1<<1)
+    CALLER_WILL_INIT = (1<<1),
+
+    // The caller wants shrink-wrap behavior (i.e. ComputeSizeFlags::eShrinkWrap
+    // will be passed to ComputeSize()).
+    COMPUTE_SIZE_SHRINK_WRAP = (1<<2),
+
+    // The caller wants the abs.pos. static-position resolved at the origin
+    // of the containing block, i.e. at LogicalPoint(0, 0).
+    STATIC_POS_IS_CB_ORIGIN = (1<<3),
   };
 
   // This method initializes various data members. It is automatically
@@ -914,7 +924,7 @@ protected:
   // These are returned in the coordinate space of the containing block.
   nsIFrame* GetHypotheticalBoxContainer(nsIFrame* aFrame,
                                         nscoord& aCBIStartEdge,
-                                        mozilla::LogicalSize& aCBSize);
+                                        mozilla::LogicalSize& aCBSize) const;
 
   // Calculate a "hypothetical box" position where the placeholder frame
   // (for a position:fixed/absolute element) would have been placed if it were
@@ -925,7 +935,7 @@ protected:
                                      nsIFrame* aPlaceholderFrame,
                                      const nsHTMLReflowState* cbrs,
                                      nsHypotheticalPosition& aHypotheticalPos,
-                                     nsIAtom* aFrameType);
+                                     nsIAtom* aFrameType) const;
 
   void InitAbsoluteConstraints(nsPresContext* aPresContext,
                                const nsHTMLReflowState* cbrs,
@@ -943,7 +953,7 @@ protected:
   void CalculateBorderPaddingMargin(mozilla::LogicalAxis aAxis,
                                     nscoord aContainingBlockSize,
                                     nscoord* aInsideBoxSizing,
-                                    nscoord* aOutsideBoxSizing);
+                                    nscoord* aOutsideBoxSizing) const;
 
   void CalculateBlockSideMargins(nsIAtom* aFrameType);
 };

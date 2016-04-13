@@ -28,10 +28,6 @@
 @RESPATH@/chrome/@AB_CD@.manifest
 @RESPATH@/@PREF_DIR@/b2g-l10n.js
 @RESPATH@/searchplugins/*
-@RESPATH@/defaults/profile/bookmarks.html
-@RESPATH@/defaults/profile/localstore.rdf
-@RESPATH@/defaults/profile/mimeTypes.rdf
-@RESPATH@/defaults/profile/chrome/*
 #ifdef MOZ_UPDATER
 @RESPATH@/update.locale
 @RESPATH@/updater.ini
@@ -69,11 +65,12 @@
 #if MOZ_PACKAGE_MSVC_DLLS
 @BINPATH@/@MSVC_C_RUNTIME_DLL@
 @BINPATH@/@MSVC_CXX_RUNTIME_DLL@
+#ifdef MSVC_APPCRT_DLL
+@BINPATH@/@MSVC_APPCRT_DLL@
 #endif
-#if MOZ_PACKAGE_WIN_ICL_DLLS
-@BINPATH@/libiomp5md.dll
-@BINPATH@/libmmd.dll
-@BINPATH@/svml_dispmd.dll
+#ifdef MSVC_DESKTOPCRT_DLL
+@BINPATH@/@MSVC_DESKTOPCRT_DLL@
+#endif
 #endif
 #endif
 #ifndef MOZ_NATIVE_ICU
@@ -173,6 +170,7 @@
 @RESPATH@/components/dom_audiochannel.xpt
 @RESPATH@/components/dom_base.xpt
 @RESPATH@/components/dom_system.xpt
+@RESPATH@/components/dom_workers.xpt
 #ifdef MOZ_WIDGET_GONK
 @RESPATH@/components/dom_wifi.xpt
 @RESPATH@/components/dom_system_gonk.xpt
@@ -536,15 +534,16 @@
 #endif // MOZ_WIDGET_GONK && MOZ_B2G_RIL
 
 #ifndef MOZ_WIDGET_GONK
-@RESPATH@/components/extensions.manifest
 @RESPATH@/components/addonManager.js
 @RESPATH@/components/amContentHandler.js
 @RESPATH@/components/amInstallTrigger.js
 @RESPATH@/components/amWebInstallListener.js
-@RESPATH@/components/nsBlocklistService.js
+
 @RESPATH@/components/OopCommandLine.js
 @RESPATH@/components/CommandLine.js
 #endif
+@RESPATH@/components/extensions.manifest
+@RESPATH@/components/nsBlocklistService.js
 @RESPATH@/components/BootstrapCommandLine.js
 
 #ifdef MOZ_UPDATER
@@ -628,10 +627,6 @@
 #endif
 @RESPATH@/components/servicesComponents.manifest
 @RESPATH@/components/cryptoComponents.manifest
-#ifdef MOZ_SERVICES_HEALTHREPORT
-@RESPATH@/components/HealthReportComponents.manifest
-@RESPATH@/components/HealthReportService.js
-#endif
 @RESPATH@/components/CaptivePortalDetectComponents.manifest
 @RESPATH@/components/captivedetect.js
 @RESPATH@/components/TelemetryStartup.js
@@ -644,9 +639,11 @@
 @RESPATH@/components/AppsService.manifest
 @RESPATH@/components/Push.js
 @RESPATH@/components/Push.manifest
-@RESPATH@/components/PushClient.js
-@RESPATH@/components/PushNotificationService.js
+#ifdef MOZ_SIMPLEPUSH
 @RESPATH@/components/PushServiceLauncher.js
+#else
+@RESPATH@/components/PushComponents.js
+#endif
 
 @RESPATH@/components/InterAppComm.manifest
 @RESPATH@/components/InterAppCommService.js
@@ -713,11 +710,6 @@
 @RESPATH@/components/PrivateBrowsing.manifest
 @RESPATH@/components/PrivateBrowsingTrackingProtectionWhitelist.js
 
-; GNOME hooks
-#ifdef MOZ_ENABLE_GNOME_COMPONENT
-@RESPATH@/components/@DLL_PREFIX@mozgnome@DLL_SUFFIX@
-#endif
-
 ; Signed Packaged Content
 @RESPATH@/components/InstallPackagedWebapp.manifest
 @RESPATH@/components/InstallPackagedWebapp.js
@@ -746,6 +738,9 @@
 ; DevTools
 @RESPATH@/chrome/devtools@JAREXT@
 @RESPATH@/chrome/devtools.manifest
+#ifdef MOZ_GRAPHENE
+@RESPATH@/@PREF_DIR@/devtools.js
+#endif
 
 ; shell icons
 #ifdef XP_UNIX
@@ -765,7 +760,6 @@
 @RESPATH@/@PREF_DIR@/channel-prefs.js
 @RESPATH@/greprefs.js
 @RESPATH@/defaults/autoconfig/prefcalls.js
-@RESPATH@/defaults/profile/prefs.js
 
 ; Services (gre) prefs
 #ifdef MOZ_SERVICES_SYNC
@@ -810,18 +804,6 @@
 @RESPATH@/res/accessiblecaret_tilt_right@1.5x.png
 @RESPATH@/res/accessiblecaret_tilt_right@2.25x.png
 @RESPATH@/res/accessiblecaret_tilt_right@2x.png
-@RESPATH@/res/text_caret.png
-@RESPATH@/res/text_caret@1.5x.png
-@RESPATH@/res/text_caret@2.25x.png
-@RESPATH@/res/text_caret@2x.png
-@RESPATH@/res/text_caret_tilt_left.png
-@RESPATH@/res/text_caret_tilt_left@1.5x.png
-@RESPATH@/res/text_caret_tilt_left@2.25x.png
-@RESPATH@/res/text_caret_tilt_left@2x.png
-@RESPATH@/res/text_caret_tilt_right.png
-@RESPATH@/res/text_caret_tilt_right@1.5x.png
-@RESPATH@/res/text_caret_tilt_right@2.25x.png
-@RESPATH@/res/text_caret_tilt_right@2x.png
 @RESPATH@/res/grabber.gif
 #ifdef XP_MACOSX
 @RESPATH@/res/cursors/*

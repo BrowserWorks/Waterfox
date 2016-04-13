@@ -26,7 +26,7 @@ ScreenManagerParent::ScreenManagerParent(uint32_t* aNumberOfScreens,
     MOZ_CRASH("Couldn't get nsIScreenManager from ScreenManagerParent.");
   }
 
-  unused << RecvRefresh(aNumberOfScreens, aSystemDefaultScale, aSuccess);
+  Unused << RecvRefresh(aNumberOfScreens, aSystemDefaultScale, aSuccess);
 }
 
 bool
@@ -64,7 +64,7 @@ ScreenManagerParent::RecvScreenRefresh(const uint32_t& aId,
   }
 
   ScreenDetails details;
-  unused << ExtractScreenDetails(screen, details);
+  Unused << ExtractScreenDetails(screen, details);
 
   *aRetVal = details;
   *aSuccess = true;
@@ -142,11 +142,9 @@ ScreenManagerParent::RecvScreenForBrowser(const TabId& aTabId,
   nsCOMPtr<nsIWidget> widget = tabParent->GetWidget();
 
   nsCOMPtr<nsIScreen> screen;
-  if (widget) {
-    if (widget->GetNativeData(NS_NATIVE_WINDOW)) {
-      mScreenMgr->ScreenForNativeWidget(widget->GetNativeData(NS_NATIVE_WINDOW),
-                                        getter_AddRefs(screen));
-    }
+  if (widget && widget->GetNativeData(NS_NATIVE_WINDOW)) {
+    mScreenMgr->ScreenForNativeWidget(widget->GetNativeData(NS_NATIVE_WINDOW),
+                                      getter_AddRefs(screen));
   } else {
     nsresult rv = mScreenMgr->GetPrimaryScreen(getter_AddRefs(screen));
     if (NS_WARN_IF(NS_FAILED(rv))) {

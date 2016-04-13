@@ -5,8 +5,8 @@
 
 <!DOCTYPE html [
 <!ENTITY % htmlDTD PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd"> %htmlDTD;
-<!ENTITY % toolboxDTD SYSTEM "chrome://browser/locale/devtools/toolbox.dtd"> %toolboxDTD;
-<!ENTITY % aboutdebuggingDTD SYSTEM "chrome://browser/locale/devtools/aboutdebugging.dtd"> %aboutdebuggingDTD;
+<!ENTITY % toolboxDTD SYSTEM "chrome://devtools/locale/toolbox.dtd"> %toolboxDTD;
+<!ENTITY % aboutdebuggingDTD SYSTEM "chrome://devtools/locale/aboutdebugging.dtd"> %aboutdebuggingDTD;
 ]>
 
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -21,11 +21,11 @@
   <body id="body">
     <div id="categories">
       <div class="category" value="addons" selected="true">
-        <img class="category-icon" src="chrome://mozapps/skin/extensions/category-extensions.png"/>
+        <img class="category-icon" src="chrome://devtools/skin/images/debugging-addons.svg"/>
         <div class="category-name">&aboutDebugging.addons;</div>
       </div>
       <div class="category" value="workers">
-        <img class="category-icon" src="chrome://browser/skin/preferences/in-content/icons.svg#applications"/>
+        <img class="category-icon" src="chrome://devtools/skin/images/debugging-workers.svg"/>
         <div class="category-name">&aboutDebugging.workers;</div>
       </div>
     </div>
@@ -34,8 +34,13 @@
         <div class="header">
           <h1 class="header-name">&aboutDebugging.addons;</h1>
         </div>
-        <input id="enable-addon-debugging" type="checkbox" data-pref="devtools.chrome.enabled"/>
-        <label for="enable-addon-debugging" title="&aboutDebugging.addonDebugging.tooltip;">&aboutDebugging.addonDebugging.label;</label>
+        <div class="addon-controls">
+          <div class="addon-options">
+            <input id="enable-addon-debugging" type="checkbox" data-pref="devtools.chrome.enabled"/>
+            <label for="enable-addon-debugging" title="&aboutDebugging.addonDebugging.tooltip;">&aboutDebugging.addonDebugging.label;</label>
+          </div>
+          <button id="load-addon-from-file">&aboutDebugging.loadTemporaryAddon;</button>
+        </div>
         <div id="addons"></div>
       </div>
       <div id="tab-workers" class="tab">

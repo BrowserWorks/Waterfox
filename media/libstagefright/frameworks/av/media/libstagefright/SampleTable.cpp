@@ -375,7 +375,7 @@ status_t SampleTable::setTimeToSampleParams(
 
 status_t SampleTable::setCompositionTimeToSampleParams(
         off64_t data_offset, size_t data_size) {
-    ALOGI("There are reordered frames present.");
+    ALOGV("There are reordered frames present.");
 
     if (mCompositionTimeDeltaEntries != NULL || data_size < 8) {
         return ERROR_MALFORMED;
@@ -547,7 +547,12 @@ SampleTable::setSampleAuxiliaryInformationSizeParams(
         data_offset += mCencInfoCount;
     }
 
-    CHECK(data_offset == data_end);
+    if (data_offset != data_end) {
+        ALOGW("wrong saiz data size, expected %lu, actual %lu",
+              data_size, data_offset - (data_end - data_size));
+        // Continue, assume extra data is not important.
+        // Parser will skip past the box end.
+    }
 
     return parseSampleCencInfo();
 }
@@ -612,7 +617,12 @@ SampleTable::setSampleAuxiliaryInformationOffsetParams(
         }
     }
 
-    CHECK(data_offset == data_end);
+    if (data_offset != data_end) {
+        ALOGW("wrong saio data size, expected %lu, actual %lu",
+              data_size, data_offset - (data_end - data_size));
+        // Continue, assume extra data is not important.
+        // Parser will skip past the box end.
+    }
 
     return parseSampleCencInfo();
 }
@@ -626,8 +636,8 @@ SampleTable::parseSampleCencInfo() {
         return OK;
     }
 
-    if (!mCencSizes.IsEmpty() && mCencOffsets.Length() > 1 &&
-        mCencSizes.IsEmpty() != mCencOffsets.Length()) {
+    if ((mCencOffsets.Length() > 1 && mCencOffsets.Length() < mCencInfoCount) ||
+        (!mCencDefaultSize && mCencSizes.Length() < mCencInfoCount)) {
         return ERROR_MALFORMED;
     }
 

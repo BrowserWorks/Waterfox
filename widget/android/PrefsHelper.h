@@ -26,7 +26,9 @@ struct PrefsHelper
                              bool observe)
     {
         MOZ_ASSERT(NS_IsMainThread());
-        MOZ_ASSERT(nsAppShell::gAppShell);
+
+        nsAppShell* const appShell = nsAppShell::Get();
+        MOZ_ASSERT(appShell);
 
         nsTArray<jni::Object::LocalRef> namesRefArray(prefNames.GetElements());
         const size_t len = namesRefArray.Length();
@@ -42,13 +44,12 @@ struct PrefsHelper
                 namesPtrArray.AppendElement(nullptr);
                 continue;
             }
-            namesPtrArray.AppendElement(namesStrArray.AppendElement(
-                    nsString(jni::String::LocalRef(
-                    mozilla::Move(namesRefArray[i]))))->Data());
+            namesPtrArray.AppendElement(namesStrArray.AppendElement(nsString(
+                    jni::String::Ref::From(namesRefArray[i])))->Data());
         }
 
         nsIAndroidBrowserApp* browserApp = nullptr;
-        nsAppShell::gAppShell->GetBrowserApp(&browserApp);
+        appShell->GetBrowserApp(&browserApp);
         MOZ_ASSERT(browserApp);
 
         if (observe) {
@@ -63,10 +64,12 @@ struct PrefsHelper
     static void RemovePrefsObserver(int32_t requestId)
     {
         MOZ_ASSERT(NS_IsMainThread());
-        MOZ_ASSERT(nsAppShell::gAppShell);
+
+        nsAppShell* const appShell = nsAppShell::Get();
+        MOZ_ASSERT(appShell);
 
         nsIAndroidBrowserApp* browserApp = nullptr;
-        nsAppShell::gAppShell->GetBrowserApp(&browserApp);
+        appShell->GetBrowserApp(&browserApp);
         MOZ_ASSERT(browserApp);
 
         browserApp->RemovePreferenceObservers(requestId);

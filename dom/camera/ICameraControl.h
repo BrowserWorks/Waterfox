@@ -116,6 +116,11 @@ public:
   struct Size {
     uint32_t  width;
     uint32_t  height;
+
+    bool Equals(const Size& aSize) const
+    {
+      return width == aSize.width && height == aSize.height;
+    }
   };
 
   struct Region {
@@ -219,6 +224,7 @@ public:
     const nsString& GetName() const       { return mName; }
     const nsString& GetContainer() const  { return mContainer; }
     const nsString& GetMimeType() const   { return mMimeType; }
+    uint32_t GetPriority() const          { return mPriority; }
 
     virtual const Video& GetVideo() const = 0;
     virtual const Audio& GetAudio() const = 0;
@@ -229,6 +235,7 @@ public:
     nsString    mName;
     nsString    mContainer;
     nsString    mMimeType;
+    uint32_t    mPriority;
 
   private:
     DISALLOW_EVIL_CONSTRUCTORS(RecorderProfile);

@@ -97,14 +97,6 @@
 #include "AndroidMediaPluginHost.h"
 #endif
 
-#ifdef MOZ_GSTREAMER
-#include "GStreamerFormatHelper.h"
-#endif
-
-#ifdef MOZ_FFMPEG
-#include "FFmpegRuntimeLinker.h"
-#endif
-
 #include "CubebUtils.h"
 #include "Latency.h"
 #include "WebAudioUtils.h"
@@ -265,6 +257,7 @@ nsLayoutStatics::Initialize()
   }
 
   AsyncLatencyLogger::InitializeStatics();
+  MediaManager::StartupInit();
   CubebUtils::InitLibrary();
 
   nsContentSink::InitializeStatics();
@@ -395,14 +388,6 @@ nsLayoutStatics::Shutdown()
 
 #ifdef MOZ_ANDROID_OMX
   AndroidMediaPluginHost::Shutdown();
-#endif
-
-#ifdef MOZ_GSTREAMER
-  GStreamerFormatHelper::Shutdown();
-#endif
-
-#ifdef MOZ_FFMPEG
-  FFmpegRuntimeLinker::Unlink();
 #endif
 
   CubebUtils::ShutdownLibrary();

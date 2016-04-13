@@ -34,6 +34,7 @@ ARCHIVE_FILES = {
             'pattern': '**',
             'ignore': [
                 'cppunittest/**',
+                'gtest/**',
                 'mochitest/**',
                 'reftest/**',
                 'talos/**',
@@ -50,6 +51,17 @@ ARCHIVE_FILES = {
             'source': buildconfig.topobjdir,
             'base': '_tests',
             'pattern': 'mozbase/**',
+        },
+        {
+            'source': buildconfig.topsrcdir,
+            'base': 'testing',
+            'pattern': 'firefox-ui/**',
+        },
+        {
+            'source': buildconfig.topsrcdir,
+            'base': 'dom/media/test/external',
+            'pattern': '**',
+            'dest': 'external-media-tests',
         },
         {
             'source': buildconfig.topsrcdir,
@@ -84,6 +96,11 @@ ARCHIVE_FILES = {
         {
             'source': buildconfig.topsrcdir,
             'base': 'testing',
+            'pattern': 'puppeteer/**',
+        },
+        {
+            'source': buildconfig.topsrcdir,
+            'base': 'testing',
             'pattern': 'tps/**',
         },
         {
@@ -96,6 +113,17 @@ ARCHIVE_FILES = {
             'base': 'services/sync/tests/tps',
             'pattern': '**',
             'dest': 'tps/tests',
+        },
+        {
+            'source': buildconfig.topsrcdir,
+            'base': 'testing/web-platform/tests/tools/wptserve',
+            'pattern': '**',
+            'dest': 'tools/wptserve',
+        },
+        {
+            'source': buildconfig.topobjdir,
+            'base': '',
+            'pattern': 'mozinfo.json',
         },
     ],
     'cppunittest': [
@@ -135,6 +163,13 @@ ARCHIVE_FILES = {
             'base': '',
             'pattern': 'mozinfo.json',
             'dest': 'cppunittest',
+        },
+    ],
+    'gtest': [
+        {
+            'source': STAGE,
+            'base': '',
+            'pattern': 'gtest/**',
         },
     ],
     'mochitest': [
@@ -177,6 +212,21 @@ ARCHIVE_FILES = {
         },
     ],
     'web-platform': [
+        {
+            'source': buildconfig.topsrcdir,
+            'base': 'testing',
+            'pattern': 'web-platform/meta/**',
+        },
+        {
+            'source': buildconfig.topsrcdir,
+            'base': 'testing',
+            'pattern': 'web-platform/mozilla/**',
+        },
+        {
+            'source': buildconfig.topsrcdir,
+            'base': 'testing',
+            'pattern': 'web-platform/tests/**',
+        },
         {
             'source': buildconfig.topobjdir,
             'base': '_tests',

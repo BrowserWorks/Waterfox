@@ -11,9 +11,6 @@ const channelID = 'cafed00d';
 function run_test() {
   do_get_profile();
   setPrefs();
-  disableServiceWorkerEvents(
-    'https://example.com/invalid-channel'
-  );
   run_next_test();
 }
 
@@ -48,12 +45,12 @@ add_task(function* test_register_invalid_channel() {
   });
 
   yield rejects(
-    PushNotificationService.register('https://example.com/invalid-channel',
-      ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })),
-    function(error) {
-      return error == 'Invalid channel ID';
-    },
-    'Wrong error for invalid channel ID'
+    PushService.register({
+      scope: 'https://example.com/invalid-channel',
+      originAttributes: ChromeUtils.originAttributesToSuffix(
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+    }),
+    'Expected error for invalid channel ID'
   );
 
   let record = yield db.getByKeyID(channelID);

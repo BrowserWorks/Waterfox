@@ -21,7 +21,7 @@ var gClient;
 var gConnectionTimeout;
 
 XPCOMUtils.defineLazyGetter(window, 'l10n', function () {
-  return Services.strings.createBundle('chrome://browser/locale/devtools/connection-screen.properties');
+  return Services.strings.createBundle('chrome://devtools/locale/connection-screen.properties');
 });
 
 /**
@@ -90,9 +90,7 @@ function clientConnect() {
 var onConnectionReady = Task.async(function*(aType, aTraits) {
   clearTimeout(gConnectionTimeout);
 
-  let deferred = promise.defer();
-  gClient.listAddons(deferred.resolve);
-  let response = yield deferred.promise;
+  let response = yield gClient.listAddons();
 
   let parent = document.getElementById("addonActors")
   if (!response.error && response.addons.length > 0) {
@@ -110,9 +108,7 @@ var onConnectionReady = Task.async(function*(aType, aTraits) {
     parent.remove();
   }
 
-  deferred = promise.defer();
-  gClient.listTabs(deferred.resolve);
-  response = yield deferred.promise;
+  response = yield gClient.listTabs();
 
   parent = document.getElementById("tabActors");
 

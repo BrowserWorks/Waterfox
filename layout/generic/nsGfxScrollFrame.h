@@ -19,6 +19,7 @@
 #include "nsIReflowCallback.h"
 #include "nsBoxLayoutState.h"
 #include "nsQueryFrame.h"
+#include "nsRefreshDriver.h"
 #include "nsExpirationTracker.h"
 #include "TextOverflow.h"
 #include "ScrollVelocityQueue.h"
@@ -77,7 +78,6 @@ public:
   void AppendScrollPartsTo(nsDisplayListBuilder*   aBuilder,
                            const nsRect&           aDirtyRect,
                            const nsDisplayListSet& aLists,
-                           bool                    aUsingDisplayPort,
                            bool                    aCreateLayer,
                            bool                    aPositioned);
 
@@ -101,13 +101,39 @@ public:
 
   bool IsSmoothScrollingEnabled();
 
-  class ScrollEvent : public nsRunnable {
+  /**
+   * This class handles the dispatching of scroll events to content.
+   *
+   * nsRefreshDriver maintains three lists of refresh observers, one for each
+   * flush type: Flush_Style, Flush_Layout, and Flush_Display.
+   *
+   * During a tick, it runs through each list of observers, in order, and runs
+   * them. To iterate over each list, it uses an EndLimitedIterator, which is
+   * designed to iterate only over elements present when the iterator was
+   * created, not elements added afterwards. This means that, for a given flush
+   * type, a refresh observer added during the execution of another refresh
+   * observer of that flush type, will not run until the next tick.
+   *
+   * During main-thread animation-driven scrolling, ScrollEvents are *posted*
+   * by AsyncScroll::WillRefresh(). AsyncScroll registers itself as a Flush_Style
+   * refresh observer.
+   *
+   * Posting a scroll event, as of bug 1250550, registers a Flush_Layout
+   * refresh observer, which *fires* the event when run. This allows the event
+   * to be fired to content in the same refresh driver tick as it is posted.
+   * This is an important invariant to maintain to reduce scroll event latency
+   * for main-thread scrolling.
+   */
+  class ScrollEvent : public nsARefreshObserver {
   public:
-    NS_DECL_NSIRUNNABLE
-    explicit ScrollEvent(ScrollFrameHelper *helper) : mHelper(helper) {}
-    void Revoke() { mHelper = nullptr; }
+    NS_INLINE_DECL_REFCOUNTING(ScrollEvent, override)
+    explicit ScrollEvent(ScrollFrameHelper *helper);
+    void WillRefresh(mozilla::TimeStamp aTime) override;
+  protected:
+    virtual ~ScrollEvent();
   private:
     ScrollFrameHelper *mHelper;
+    RefPtr<nsRefreshDriver> mDriver;
   };
 
   class AsyncScrollPortEvent : public nsRunnable {
@@ -176,9 +202,6 @@ public:
   // Get the scroll range assuming the scrollport has size (aWidth, aHeight).
   nsRect GetScrollRange(nscoord aWidth, nscoord aHeight) const;
   nsSize GetScrollPositionClampingScrollPortSize() const;
-  float GetResolution() const;
-  void SetResolution(float aResolution);
-  void SetResolutionAndScaleTo(float aResolution);
   void FlingSnap(const mozilla::CSSPoint& aDestination);
   void ScrollSnap(nsIScrollableFrame::ScrollMode aMode = nsIScrollableFrame::SMOOTH_MSD);
   void ScrollSnap(const nsPoint &aDestination,
@@ -356,8 +379,6 @@ public:
       // because we have special behaviour for it when APZ scrolling is active.
       mOuter->SchedulePaint();
     }
-    // Update windowed plugin visibility in response to apz scrolling events.
-    NotifyPluginFrames(aTransforming ? BEGIN_APZ : END_APZ);
   }
   bool IsTransformingByAPZ() const {
     return mTransformingByAPZ;
@@ -369,6 +390,8 @@ public:
   bool DecideScrollableLayer(nsDisplayListBuilder* aBuilder,
                              nsRect* aDirtyRect,
                              bool aAllowCreateDisplayPort);
+  void NotifyImageVisibilityUpdate();
+  bool GetDisplayPortAtLastImageVisibilityUpdate(nsRect* aDisplayPort);
 
   void ScheduleSyntheticMouseMove();
   static void ScrollActivityCallback(nsITimer *aTimer, void* anInstance);
@@ -386,11 +409,10 @@ public:
     }
   }
   bool WantAsyncScroll() const;
-  Maybe<FrameMetricsAndClip> ComputeFrameMetrics(
+  Maybe<mozilla::layers::FrameMetrics> ComputeFrameMetrics(
     Layer* aLayer, nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
-    bool aIsForCaret) const;
-  mozilla::Maybe<mozilla::DisplayItemClip> ComputeScrollClip(bool aIsForCaret) const;
+    const mozilla::DisplayItemClip* aClip) const;
 
   // nsIScrollbarMediator
   void ScrollByPage(nsScrollbarFrame* aScrollbar, int32_t aDirection,
@@ -420,7 +442,7 @@ public:
   nsCOMPtr<nsIContent> mScrollCornerContent;
   nsCOMPtr<nsIContent> mResizerContent;
 
-  nsRevocableEventPtr<ScrollEvent> mScrollEvent;
+  RefPtr<ScrollEvent> mScrollEvent;
   nsRevocableEventPtr<AsyncScrollPortEvent> mAsyncScrollPortEvent;
   nsRevocableEventPtr<ScrolledAreaEvent> mScrolledAreaEvent;
   nsIFrame* mHScrollbarBox;
@@ -435,6 +457,7 @@ public:
   nsTArray<nsIScrollPositionListener*> mListeners;
   nsIAtom* mLastScrollOrigin;
   nsIAtom* mLastSmoothScrollOrigin;
+  Maybe<nsPoint> mApzSmoothScrollDestination;
   uint32_t mScrollGeneration;
   nsRect mScrollPort;
   // Where we're currently scrolling to, if we're scrolling asynchronously.
@@ -454,9 +477,6 @@ public:
   // other than trying to restore mRestorePos.
   nsPoint mLastPos;
 
-  // The current resolution derived from the zoom level and device pixel ratio.
-  float mResolution;
-
   nsExpirationState mActivityExpirationState;
 
   nsCOMPtr<nsITimer> mScrollActivityTimer;
@@ -464,14 +484,12 @@ public:
 
   // The scroll position where we last updated image visibility.
   nsPoint mLastUpdateImagesPos;
+  bool mHadDisplayPortAtLastImageUpdate;
+  nsRect mDisplayPortAtLastImageUpdate;
 
   nsRect mPrevScrolledRect;
 
   FrameMetrics::ViewID mScrollParentID;
-
-  // The scroll port clip.
-  Maybe<DisplayItemClip> mAncestorClip;
-  Maybe<DisplayItemClip> mAncestorClipForCaret;
 
   bool mNeverHasVerticalScrollbar:1;
   bool mNeverHasHorizontalScrollbar:1;
@@ -526,17 +544,9 @@ public:
   // True if this frame has been scrolled at least once
   bool mHasBeenScrolled:1;
 
-  // True if the frame's resolution has been set via SetResolution or
-  // SetResolutionAndScaleTo or restored via RestoreState.
-  bool mIsResolutionSet:1;
-
   // True if the events synthesized by OSX to produce momentum scrolling should
   // be ignored.  Reset when the next real, non-synthesized scroll event occurs.
   bool mIgnoreMomentumScroll:1;
-
-  // True if the frame's resolution has been set via SetResolutionAndScaleTo.
-  // Only meaningful for root scroll frames.
-  bool mScaleToResolution:1;
 
   // True if the APZ is in the process of async-transforming this scrollframe,
   // (as best as we can tell on the main thread, anyway).
@@ -564,7 +574,7 @@ protected:
    * Helper that notifies plugins about async smooth scroll operations managed
    * by nsGfxScrollFrame.
    */
-  enum AsyncScrollEventType { BEGIN_DOM, BEGIN_APZ, END_DOM, END_APZ };
+  enum AsyncScrollEventType { BEGIN_DOM, END_DOM };
   void NotifyPluginFrames(AsyncScrollEventType aEvent);
   AsyncScrollEventType mAsyncScrollEvent;
 
@@ -733,15 +743,6 @@ public:
   virtual nsSize GetScrollPositionClampingScrollPortSize() const override {
     return mHelper.GetScrollPositionClampingScrollPortSize();
   }
-  virtual float GetResolution() const override {
-    return mHelper.GetResolution();
-  }
-  virtual void SetResolution(float aResolution) override {
-    return mHelper.SetResolution(aResolution);
-  }
-  virtual void SetResolutionAndScaleTo(float aResolution) override {
-    return mHelper.SetResolutionAndScaleTo(aResolution);
-  }
   virtual nsSize GetLineScrollAmount() const override {
     return mHelper.GetLineScrollAmount();
   }
@@ -824,9 +825,6 @@ public:
   virtual void ResetScrollPositionForLayerPixelAlignment() override {
     mHelper.ResetScrollPositionForLayerPixelAlignment();
   }
-  virtual bool IsResolutionSet() const override {
-    return mHelper.mIsResolutionSet;
-  }
   virtual bool DidHistoryRestore() const override {
     return mHelper.mDidHistoryRestore;
   }
@@ -857,16 +855,12 @@ public:
   virtual bool WantAsyncScroll() const override {
     return mHelper.WantAsyncScroll();
   }
-  virtual mozilla::Maybe<mozilla::FrameMetricsAndClip> ComputeFrameMetrics(
+  virtual mozilla::Maybe<mozilla::layers::FrameMetrics> ComputeFrameMetrics(
     Layer* aLayer, nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
-    bool aIsForCaret) const override
+    const mozilla::DisplayItemClip* aClip) const override
   {
-    return mHelper.ComputeFrameMetrics(aLayer, aContainerReferenceFrame, aParameters, aIsForCaret);
-  }
-  virtual mozilla::Maybe<mozilla::DisplayItemClip> ComputeScrollClip(bool aIsForCaret) const override
-  {
-    return mHelper.ComputeScrollClip(aIsForCaret);
+    return mHelper.ComputeFrameMetrics(aLayer, aContainerReferenceFrame, aParameters, aClip);
   }
   virtual bool IsIgnoringViewportClipping() const override {
     return mHelper.IsIgnoringViewportClipping();
@@ -881,6 +875,12 @@ public:
                                      nsRect* aDirtyRect,
                                      bool aAllowCreateDisplayPort) override {
     return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aAllowCreateDisplayPort);
+  }
+  virtual void NotifyImageVisibilityUpdate() override {
+    mHelper.NotifyImageVisibilityUpdate();
+  }
+  virtual bool GetDisplayPortAtLastImageVisibilityUpdate(nsRect* aDisplayPort) override {
+    return mHelper.GetDisplayPortAtLastImageVisibilityUpdate(aDisplayPort);
   }
 
   // nsIStatefulFrame
@@ -1145,15 +1145,6 @@ public:
   virtual nsSize GetScrollPositionClampingScrollPortSize() const override {
     return mHelper.GetScrollPositionClampingScrollPortSize();
   }
-  virtual float GetResolution() const override {
-    return mHelper.GetResolution();
-  }
-  virtual void SetResolution(float aResolution) override {
-    return mHelper.SetResolution(aResolution);
-  }
-  virtual void SetResolutionAndScaleTo(float aResolution) override {
-    return mHelper.SetResolutionAndScaleTo(aResolution);
-  }
   virtual nsSize GetLineScrollAmount() const override {
     return mHelper.GetLineScrollAmount();
   }
@@ -1232,9 +1223,6 @@ public:
   virtual void ResetScrollPositionForLayerPixelAlignment() override {
     mHelper.ResetScrollPositionForLayerPixelAlignment();
   }
-  virtual bool IsResolutionSet() const override {
-    return mHelper.mIsResolutionSet;
-  }
   virtual bool DidHistoryRestore() const override {
     return mHelper.mDidHistoryRestore;
   }
@@ -1265,16 +1253,12 @@ public:
   virtual bool WantAsyncScroll() const override {
     return mHelper.WantAsyncScroll();
   }
-  virtual mozilla::Maybe<mozilla::FrameMetricsAndClip> ComputeFrameMetrics(
+  virtual mozilla::Maybe<mozilla::layers::FrameMetrics> ComputeFrameMetrics(
     Layer* aLayer, nsIFrame* aContainerReferenceFrame,
     const ContainerLayerParameters& aParameters,
-    bool aIsForCaret) const override
+    const mozilla::DisplayItemClip* aClip) const override
   {
-    return mHelper.ComputeFrameMetrics(aLayer, aContainerReferenceFrame, aParameters, aIsForCaret);
-  }
-  virtual mozilla::Maybe<mozilla::DisplayItemClip> ComputeScrollClip(bool aIsForCaret) const override
-  {
-    return mHelper.ComputeScrollClip(aIsForCaret);
+    return mHelper.ComputeFrameMetrics(aLayer, aContainerReferenceFrame, aParameters, aClip);
   }
   virtual bool IsIgnoringViewportClipping() const override {
     return mHelper.IsIgnoringViewportClipping();
@@ -1365,7 +1349,12 @@ public:
                                      bool aAllowCreateDisplayPort) override {
     return mHelper.DecideScrollableLayer(aBuilder, aDirtyRect, aAllowCreateDisplayPort);
   }
-
+  virtual void NotifyImageVisibilityUpdate() override {
+    mHelper.NotifyImageVisibilityUpdate();
+  }
+  virtual bool GetDisplayPortAtLastImageVisibilityUpdate(nsRect* aDisplayPort) override {
+    return mHelper.GetDisplayPortAtLastImageVisibilityUpdate(aDisplayPort);
+  }
 
 #ifdef DEBUG_FRAME_DUMP
   virtual nsresult GetFrameName(nsAString& aResult) const override;

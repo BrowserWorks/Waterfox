@@ -6,6 +6,7 @@
 #include "nsContentUtils.h"
 #include "nsContentSecurityManager.h"
 #include "nsIScriptSecurityManager.h"
+#include "nsIStreamListener.h"
 
 namespace mozilla {
 namespace net {
@@ -55,6 +56,18 @@ NullHttpChannel::Init(nsIURI *aURI,
 //-----------------------------------------------------------------------------
 // NullHttpChannel::nsIHttpChannel
 //-----------------------------------------------------------------------------
+
+NS_IMETHODIMP
+NullHttpChannel::GetTransferSize(uint64_t *aTransferSize)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::GetDecodedBodySize(uint64_t *aDecodedBodySize)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
 
 NS_IMETHODIMP
 NullHttpChannel::GetRequestMethod(nsACString & aRequestMethod)
@@ -228,6 +241,18 @@ NullHttpChannel::GetSchedulingContextID(nsID *_retval)
 
 NS_IMETHODIMP
 NullHttpChannel::SetSchedulingContextID(const nsID scID)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::GetProtocolVersion(nsACString& aProtocolVersion)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::GetEncodedBodySize(uint64_t *aEncodedBodySize)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }

@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 var Cu = Components.utils;
+var Ci = Components.interfaces;
 
 const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const { GetDevices, GetDeviceString } = require("devtools/client/shared/devices");
@@ -12,7 +13,7 @@ const EventEmitter = require('devtools/shared/event-emitter');
 const promise = require("promise");
 const utils = require("devtools/client/webide/modules/utils");
 
-const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
+const Strings = Services.strings.createBundle("chrome://devtools/locale/webide.properties");
 
 var SimulatorEditor = {
 
@@ -44,7 +45,7 @@ var SimulatorEditor = {
       Simulators.on("configure", (e, simulator) => { this.edit(simulator) });
       // Extract the list of device simulation options we'll support.
       let deviceFields = form.querySelectorAll("*[data-device]");
-      this._deviceOptions = [].map.call(deviceFields, field => field.name);
+      this._deviceOptions = Array.map(deviceFields, field => field.name);
     }
 
     // Append a new <option> to a <select> (or <optgroup>) element.
@@ -117,7 +118,27 @@ var SimulatorEditor = {
       this.updateProfileSelector();
       this.updateDeviceSelector();
       this.updateDeviceFields();
+
+      // Change visibility of 'TV Simulator Menu'.
+      let tvSimMenu = document.querySelector("#tv_simulator_menu");
+      tvSimMenu.style.visibility = (this._simulator.type === "television")?
+                                   "visible" : "hidden";
     });
+  },
+
+  // Open the directory of TV Simulator config.
+  showTVConfigDirectory() {
+    let profD = Services.dirsvc.get("ProfD", Ci.nsIFile);
+    profD.append("extensions");
+    profD.append(this._simulator.addon.id);
+    profD.append("profile");
+    profD.append("dummy");
+    let profileDir = profD.path;
+
+    // Show the profile directory.
+    let nsLocalFile = Components.Constructor("@mozilla.org/file/local;1",
+                                           "nsILocalFile", "initWithPath");
+    new nsLocalFile(profileDir).reveal();
   },
 
   // Close the configuration panel.
@@ -145,7 +166,7 @@ var SimulatorEditor = {
   // Select an available option, or set the "custom" option.
   updateSelector(selector, value) {
     selector.value = value;
-    if (selector[selector.selectedIndex].value !== value) {
+    if (selector.selectedIndex == -1) {
       selector.value = "custom";
       selector.classList.add("custom");
       selector[selector.selectedIndex].textContent = value;
@@ -172,7 +193,7 @@ var SimulatorEditor = {
       // TODO (Bug 1146531) Indicate that a custom profile is now required.
     }
     // If `form.name` contains the old version, update its last occurrence.
-    if (form.name.value.contains(oldVer) && simulator.version !== oldVer) {
+    if (form.name.value.includes(oldVer) && simulator.version !== oldVer) {
       let regex = new RegExp("(.*)" + oldVer);
       let name = form.name.value.replace(regex, "$1" + simulator.version);
       simulator.options.name = form.name.value = Simulators.uniqueName(name);
@@ -317,4 +338,9 @@ window.addEventListener("load", function onLoad() {
 
   // We just loaded, so we probably missed the first configure request.
   SimulatorEditor.edit(Simulators._lastConfiguredSimulator);
+
+  document.querySelector("#open-tv-dummy-directory").onclick = e => {
+    SimulatorEditor.showTVConfigDirectory();
+    e.preventDefault();
+  };
 });

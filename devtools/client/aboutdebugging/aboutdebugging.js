@@ -8,6 +8,7 @@
 
 "use strict";
 
+const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 const { loader } = Components.utils.import(
   "resource://devtools/shared/Loader.jsm", {});
 
@@ -17,11 +18,21 @@ loader.lazyRequireGetter(this, "DebuggerClient",
   "devtools/shared/client/main", true);
 loader.lazyRequireGetter(this, "DebuggerServer",
   "devtools/server/main", true);
+loader.lazyRequireGetter(this, "Telemetry",
+  "devtools/client/shared/telemetry");
 loader.lazyRequireGetter(this, "WorkersComponent",
   "devtools/client/aboutdebugging/components/workers", true);
 loader.lazyRequireGetter(this, "Services");
 
+loader.lazyImporter(this, "AddonManager",
+  "resource://gre/modules/AddonManager.jsm");
+
+const Strings = Services.strings.createBundle(
+  "chrome://devtools/locale/aboutdebugging.properties");
+
 var AboutDebugging = {
+  _prefListeners: [],
+
   _categories: null,
   get categories() {
     // If needed, initialize the list of available categories.
@@ -53,12 +64,19 @@ var AboutDebugging = {
     document.querySelector(".category[value=" + category + "]")
       .setAttribute("selected", "true");
     location.hash = "#" + category;
+
+    if (category == "addons") {
+      React.render(React.createElement(AddonsComponent, { client: this.client }),
+        document.querySelector("#addons"));
+    } else if (category == "workers") {
+      React.render(React.createElement(WorkersComponent, { client: this.client }),
+        document.querySelector("#workers"));
+    }
   },
 
   init() {
-    // Show the first available tab.
-    this.showTab();
-    window.addEventListener("hashchange", () => this.showTab());
+    let telemetry = this._telemetry = new Telemetry();
+    telemetry.toolOpened("aboutdebugging");
 
     // Link checkboxes to prefs.
     let elements = document.querySelectorAll("input[type=checkbox][data-pref]");
@@ -67,31 +85,80 @@ var AboutDebugging = {
       let updatePref = () => {
         Services.prefs.setBoolPref(pref, element.checked);
       };
+      element.addEventListener("change", updatePref, false);
       let updateCheckbox = () => {
         element.checked = Services.prefs.getBoolPref(pref);
       };
-      element.addEventListener("change", updatePref, false);
       Services.prefs.addObserver(pref, updateCheckbox, false);
+      this._prefListeners.push([pref, updateCheckbox]);
       updateCheckbox();
     });
+
+    // Link buttons to their associated actions.
+    let loadAddonButton = document.getElementById("load-addon-from-file");
+    loadAddonButton.addEventListener("click", this.loadAddonFromFile);
 
     if (!DebuggerServer.initialized) {
       DebuggerServer.init();
       DebuggerServer.addBrowserActors();
     }
     DebuggerServer.allowChromeProcess = true;
-    let client = new DebuggerClient(DebuggerServer.connectPipe());
+    this.client = new DebuggerClient(DebuggerServer.connectPipe());
 
-    client.connect(() => {
-      React.render(React.createElement(AddonsComponent, { client }),
-        document.querySelector("#addons"));
-      React.render(React.createElement(WorkersComponent, { client }),
-        document.querySelector("#workers"));
+    this.client.connect(() => {
+      // Show the first available tab.
+      this.showTab();
+      window.addEventListener("hashchange", () => this.showTab());
     });
+  },
+
+  loadAddonFromFile() {
+    let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
+    fp.init(window,
+      Strings.GetStringFromName("selectAddonFromFile"),
+      Ci.nsIFilePicker.modeOpen);
+    let res = fp.show();
+    if (res == Ci.nsIFilePicker.returnCancel || !fp.file) {
+      return;
+    }
+    let file = fp.file;
+    // AddonManager.installTemporaryAddon accepts either
+    // addon directory or final xpi file.
+    if (!file.isDirectory() && !file.leafName.endsWith(".xpi")) {
+      file = file.parent;
+    }
+    try {
+      AddonManager.installTemporaryAddon(file);
+    } catch(e) {
+      alert("Error while installing the addon:\n" + e.message + "\n");
+      throw e;
+    }
+  },
+
+  destroy() {
+    let telemetry = this._telemetry;
+    telemetry.toolClosed("aboutdebugging");
+    telemetry.destroy();
+
+    this._prefListeners.forEach(([pref, listener]) => {
+      Services.prefs.removeObserver(pref, listener);
+    });
+    this._prefListeners = [];
+
+    React.unmountComponentAtNode(document.querySelector("#addons"));
+    React.unmountComponentAtNode(document.querySelector("#workers"));
+
+    this.client.close();
+    this.client = null;
   },
 };
 
 window.addEventListener("DOMContentLoaded", function load() {
   window.removeEventListener("DOMContentLoaded", load);
   AboutDebugging.init();
+});
+
+window.addEventListener("unload", function unload() {
+  window.removeEventListener("unload", unload);
+  AboutDebugging.destroy();
 });

@@ -76,8 +76,7 @@ NS_IMPL_RELEASE(OfflineCacheUpdateChild)
 OfflineCacheUpdateChild::OfflineCacheUpdateChild(nsIDOMWindow* aWindow)
     : mState(STATE_UNINITIALIZED)
     , mIsUpgrade(false)
-    , mAppID(NECKO_NO_APP_ID)
-    , mInBrowser(false)
+    , mSucceeded(false)
     , mWindow(aWindow)
     , mByteProgress(0)
 {
@@ -177,9 +176,7 @@ OfflineCacheUpdateChild::Init(nsIURI *aManifestURI,
                               nsIURI *aDocumentURI,
                               nsIPrincipal *aLoadingPrincipal,
                               nsIDOMDocument *aDocument,
-                              nsIFile *aCustomProfileDir,
-                              uint32_t aAppID,
-                              bool aInBrowser)
+                              nsIFile *aCustomProfileDir)
 {
     nsresult rv;
 
@@ -221,9 +218,6 @@ OfflineCacheUpdateChild::Init(nsIURI *aManifestURI,
     if (aDocument)
         SetDocument(aDocument);
 
-    mAppID = aAppID;
-    mInBrowser = aInBrowser;
-
     return NS_OK;
 }
 
@@ -242,8 +236,6 @@ OfflineCacheUpdateChild::InitPartial(nsIURI *aManifestURI,
 NS_IMETHODIMP
 OfflineCacheUpdateChild::InitForUpdateCheck(nsIURI *aManifestURI,
                                             nsIPrincipal* aLoadingPrincipal,
-                                            uint32_t aAppID,
-                                            bool aInBrowser,
                                             nsIObserver *aObserver)
 {
     NS_NOTREACHED("Not expected to do only update checks"
@@ -443,7 +435,7 @@ OfflineCacheUpdateChild::Schedule()
     // the work has been done.
     ContentChild::GetSingleton()->SendPOfflineCacheUpdateConstructor(
         this, manifestURI, documentURI, loadingPrincipalInfo,
-        stickDocument, child->GetTabId());
+        stickDocument);
 
     // ContentChild::DeallocPOfflineCacheUpdate will release this.
     NS_ADDREF_THIS();

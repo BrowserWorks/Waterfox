@@ -15,6 +15,7 @@ import static org.mozilla.gecko.tests.helpers.WaitHelper.waitFor;
 
 import org.mozilla.gecko.tests.components.GeckoViewComponent.InputConnectionTest;
 import org.mozilla.gecko.tests.helpers.GeckoHelper;
+import org.mozilla.gecko.tests.helpers.JavascriptBridge;
 import org.mozilla.gecko.tests.helpers.NavigationHelper;
 
 import com.jayway.android.robotium.solo.Condition;
@@ -30,20 +31,40 @@ public class testInputConnection extends UITest {
 
     private static final String INITIAL_TEXT = "foo";
 
+    private JavascriptBridge js;
+
+    @Override // UITest
+    public void setUp() throws Exception {
+        super.setUp();
+        js = new JavascriptBridge(this);
+    }
+
+    @Override // UITest
+    public void tearDown() throws Exception {
+        js.disconnect();
+        super.tearDown();
+    }
+
     public void testInputConnection() throws InterruptedException {
         GeckoHelper.blockForReady();
 
-        final String url = mStringHelper.ROBOCOP_INPUT_URL + "#" + INITIAL_TEXT;
+        final String url = mStringHelper.ROBOCOP_INPUT_URL;
         NavigationHelper.enterAndLoadUrl(url);
         mToolbar.assertTitle(url);
 
+        // First run tests inside the normal input field.
+        js.syncCall("focus_input", INITIAL_TEXT);
         mGeckoView.mTextInput
             .waitForInputConnection()
-            // First run tests inside the normal input field.
-            .testInputConnection(new BasicInputConnectionTest())
-            // Then switch focus to the resetting input field, and run tests there.
-            .testInputConnection(new FocusNextInputFieldTest())
+            .testInputConnection(new BasicInputConnectionTest());
+
+        // Then switch focus to the resetting input field, and run tests there.
+        js.syncCall("focus_resetting_input", "");
+        mGeckoView.mTextInput
+            .waitForInputConnection()
             .testInputConnection(new ResettingInputConnectionTest());
+
+        js.syncCall("finish_test");
     }
 
     private class BasicInputConnectionTest extends InputConnectionTest {
@@ -93,11 +114,43 @@ public class testInputConnection extends UITest {
             ic.finishComposingText();
             assertTextAndSelectionAt("Can finish composition", ic, "foobar", 6);
 
+            // Test setComposingRegion
+            ic.setComposingRegion(0, 3);
+            assertTextAndSelectionAt("Can set composing region", ic, "foobar", 6);
+
+            ic.setComposingText("far", 1);
+            assertTextAndSelectionAt("Can set composing region text", ic, "farbar", 3);
+
+            ic.setComposingRegion(1, 4);
+            assertTextAndSelectionAt("Can set existing composing region", ic, "farbar", 3);
+
+            ic.setComposingText("rab", 3);
+            assertTextAndSelectionAt("Can set new composing region text", ic, "frabar", 6);
+
             // Test getTextBeforeCursor
             fAssertEquals("Can retrieve text before cursor", "bar", ic.getTextBeforeCursor(3, 0));
 
             // Test getTextAfterCursor
             fAssertEquals("Can retrieve text after cursor", "", ic.getTextAfterCursor(3, 0));
+
+            ic.finishComposingText();
+            assertTextAndSelectionAt("Can finish composition", ic, "frabar", 6);
+
+            // Test sendKeyEvent
+            final KeyEvent shiftKey = new KeyEvent(KeyEvent.ACTION_DOWN,
+                                                   KeyEvent.KEYCODE_SHIFT_LEFT);
+            final KeyEvent leftKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT);
+            final KeyEvent tKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_T);
+
+            ic.sendKeyEvent(shiftKey);
+            ic.sendKeyEvent(leftKey);
+            ic.sendKeyEvent(KeyEvent.changeAction(leftKey, KeyEvent.ACTION_UP));
+            ic.sendKeyEvent(KeyEvent.changeAction(shiftKey, KeyEvent.ACTION_UP));
+            assertTextAndSelection("Can select using key event", ic, "frabar", 6, 5);
+
+            ic.sendKeyEvent(tKey);
+            ic.sendKeyEvent(KeyEvent.changeAction(tKey, KeyEvent.ACTION_UP));
+            assertTextAndSelectionAt("Can type using event", ic, "frabat", 6);
 
             ic.deleteSurroundingText(6, 0);
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
@@ -125,31 +178,25 @@ public class testInputConnection extends UITest {
 
             ic.deleteSurroundingText(1, 0);
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
-        }
-    }
 
-    /**
-     * FocusNextInputFieldTest is used to switch focus from one input field to
-     * another on the test page by sending a tab key.
-     */
-    private class FocusNextInputFieldTest extends InputConnectionTest {
-        @Override
-        public void test(final InputConnection ic, EditorInfo info) {
-            // First clear all text.
-            ic.setSelection(0, 0);
-            assertSelectionAt("Can set selection to start", ic, 0);
+            // Bug 1051556, exception due to committing text changes during flushing.
+            ic.setComposingText("bad", 1);
+            assertTextAndSelectionAt("Can set the composing text", ic, "bad", 3);
+            js.asyncCall("test_reflush_changes");
+            // Wait for text change notifications to come in.
+            processGeckoEvents(ic);
+            assertTextAndSelectionAt("Can re-flush text changes", ic, "good", 4);
+            ic.setComposingText("done", 1);
+            assertTextAndSelectionAt("Can update composition after re-flushing", ic, "done", 4);
+            ic.finishComposingText();
+            assertTextAndSelectionAt("Can finish composing text", ic, "done", 4);
 
-            ic.deleteSurroundingText(0, Integer.MAX_VALUE);
-            assertTextAndSelectionAt("Can clear all text", ic, "", 0);
+            ic.deleteSurroundingText(4, 0);
+            assertTextAndSelectionAt("Can clear text", ic, "", 0);
 
-            // Set dummy text in currently focused input so we can check when we have switched focus.
-            final String dummyText = "dummy switch input text";
-            ic.commitText(dummyText, 1);
-            assertTextAndSelectionAt("Can commit text", ic, dummyText, dummyText.length());
-
-            final KeyEvent tabKey = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB);
-            ic.sendKeyEvent(tabKey);
-            ic.sendKeyEvent(KeyEvent.changeAction(tabKey, KeyEvent.ACTION_UP));
+            // Make sure we don't leave behind stale events for the following test.
+            processGeckoEvents(ic);
+            processInputConnectionEvents();
         }
     }
 

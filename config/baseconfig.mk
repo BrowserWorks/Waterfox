@@ -6,18 +6,12 @@ includedir := $(includedir)/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
 idldir = $(datadir)/idl/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
 installdir = $(libdir)/$(MOZ_APP_NAME)-$(MOZ_APP_VERSION)
 sdkdir = $(libdir)/$(MOZ_APP_NAME)-devel-$(MOZ_APP_VERSION)
-ifndef TOP_DIST
-TOP_DIST = dist
-endif
-ifneq (,$(filter /%,$(TOP_DIST)))
-DIST = $(TOP_DIST)
-else
 ifeq (.,$(DEPTH))
-DIST = $(TOP_DIST)
+DIST = dist
 else
-DIST = $(DEPTH)/$(TOP_DIST)
+DIST = $(DEPTH)/dist
 endif
-endif
+ABS_DIST = $(topobjdir)/dist
 
 # We do magic with OBJ_SUFFIX in config.mk, the following ensures we don't
 # manually use it before config.mk inclusion
@@ -48,12 +42,10 @@ endif
 endif
 endif # WINNT
 
-include_deps = $(eval $(if $(2),,-)include $(1))
-
 ifndef INCLUDED_AUTOCONF_MK
 default::
 else
-TIERS := export $(if $(COMPILE_ENVIRONMENT),compile )misc libs tools
+TIERS := pre-export export $(if $(COMPILE_ENVIRONMENT),compile )misc libs tools
 endif
 
 # These defines are used to support the twin-topsrcdir model for comm-central.

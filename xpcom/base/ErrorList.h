@@ -532,6 +532,12 @@
      a DOMException */
   ERROR(NS_ERROR_DOM_DOMEXCEPTION,                 FAILURE(1017)),
 
+  /* An nsresult value to use in ErrorResult to indicate that we
+   * should just rethrow whatever is on the JSContext (which might be
+   * nothing if an uncatchable exception was thrown).
+   */
+  ERROR(NS_ERROR_DOM_EXCEPTION_ON_JSCONTEXT,       FAILURE(1018)),
+
   /* May be used to indicate when e.g. setting a property value didn't
    * actually change the value, like for obj.foo = "bar"; obj.foo = "bar";
    * the second assignment throws NS_SUCCESS_DOM_NO_OPERATION.
@@ -700,6 +706,7 @@
   ERROR(NS_ERROR_PHISHING_URI,          FAILURE(31)),
   ERROR(NS_ERROR_TRACKING_URI,          FAILURE(34)),
   ERROR(NS_ERROR_UNWANTED_URI,          FAILURE(35)),
+  ERROR(NS_ERROR_FORBIDDEN_URI,         FAILURE(36)),
   /* Used when "Save Link As..." doesn't see the headers quickly enough to
    * choose a filename.  See nsContextMenu.js. */
   ERROR(NS_ERROR_SAVE_LINK_AS_TIMEOUT,  FAILURE(32)),
@@ -926,6 +933,16 @@
 #define MODULE NS_ERROR_MODULE_DOM_ANIM
   ERROR(NS_ERROR_DOM_ANIM_MISSING_PROPS_ERR,              FAILURE(1)),
   ERROR(NS_ERROR_DOM_ANIM_NO_TARGET_ERR,                  FAILURE(2)),
+#undef MODULE
+
+  /* ======================================================================= */
+  /* 40: NS_ERROR_MODULE_DOM_PUSH */
+  /* ======================================================================= */
+#define MODULE NS_ERROR_MODULE_DOM_PUSH
+  ERROR(NS_ERROR_DOM_PUSH_INVALID_REGISTRATION_ERR, FAILURE(1)),
+  ERROR(NS_ERROR_DOM_PUSH_DENIED_ERR, FAILURE(2)),
+  ERROR(NS_ERROR_DOM_PUSH_ABORT_ERR, FAILURE(3)),
+  ERROR(NS_ERROR_DOM_PUSH_SERVICE_UNREACHABLE, FAILURE(4)),
 #undef MODULE
 
   /* ======================================================================= */

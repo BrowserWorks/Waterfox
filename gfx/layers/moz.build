@@ -92,6 +92,10 @@ EXPORTS.gfxipc += [
     'ipc/ShadowLayerUtils.h',
 ]
 
+EXPORTS.mozilla.dom += [
+    'apz/util/CheckerboardReportService.h',
+]
+
 EXPORTS.mozilla.layers += [
     'apz/public/GeckoContentController.h',
     # exporting things from apz/src is temporary until we extract a
@@ -109,6 +113,7 @@ EXPORTS.mozilla.layers += [
     'apz/util/ChromeProcessController.h',
     'apz/util/DoubleTapToZoom.h',
     'apz/util/InputAPZContext.h',
+    'apz/util/ScrollLinkedEffectDetector.h',
     'AsyncCanvasRenderer.h',
     'AtomicRefCountedWithFinalize.h',
     'AxisPhysicsModel.h',
@@ -116,6 +121,7 @@ EXPORTS.mozilla.layers += [
     'basic/BasicCompositor.h',
     'basic/MacIOSurfaceTextureHostBasic.h',
     'basic/TextureHostBasic.h',
+    'BufferTexture.h',
     'client/CanvasClient.h',
     'client/CompositableClient.h',
     'client/ContentClient.h',
@@ -151,6 +157,8 @@ EXPORTS.mozilla.layers += [
     'ipc/CompositorLRU.h',
     'ipc/CompositorParent.h',
     'ipc/FenceUtils.h',
+    'ipc/GonkNativeHandle.h',
+    'ipc/GonkNativeHandleUtils.h',
     'ipc/ImageBridgeChild.h',
     'ipc/ImageBridgeParent.h',
     'ipc/ImageContainerParent.h',
@@ -176,8 +184,8 @@ EXPORTS.mozilla.layers += [
     'opengl/TextureHostOGL.h',
     'PersistentBufferProvider.h',
     'RenderTrace.h',
+    'TextureWrapperImage.h',
     'TransactionIdAllocator.h',
-    'YCbCrImageDataSerializer.h',
 ]
 
 if CONFIG['MOZ_X11']:
@@ -202,6 +210,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         'opengl/GLManager.h',
     ]
     EXPORTS += [
+        'MacIOSurfaceHelpers.h',
         'MacIOSurfaceImage.h',
     ]
     UNIFIED_SOURCES += [
@@ -209,6 +218,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     ]
     SOURCES += [
         'ipc/ShadowLayerUtilsMac.cpp',
+        'MacIOSurfaceHelpers.cpp',
         'MacIOSurfaceImage.cpp',
     ]
 
@@ -228,12 +238,15 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'opengl/GrallocTextureHost.cpp',
     ]
     LOCAL_INCLUDES += ['/widget/gonk']
-    CXXFLAGS += [
-         '-I%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
-             'system/core/libsync/include'
-         ]
-    ]
+    if CONFIG['ANDROID_VERSION'] >= '21':
+        LOCAL_INCLUDES += [
+             '%' + '%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
+                 'system/core/libsync/include'
+             ]
+        ]
     SOURCES += [
+        'ipc/GonkNativeHandle.cpp',
+        'ipc/GonkNativeHandleUtils.cpp',
         'ipc/ShadowLayerUtilsGralloc.cpp',
     ]
 
@@ -241,12 +254,13 @@ UNIFIED_SOURCES += [
     'apz/src/APZCTreeManager.cpp',
     'apz/src/AsyncPanZoomController.cpp',
     'apz/src/Axis.cpp',
+    'apz/src/CheckerboardEvent.cpp',
     'apz/src/GestureEventListener.cpp',
     'apz/src/HitTestingTreeNode.cpp',
     'apz/src/InputBlockState.cpp',
     'apz/src/InputQueue.cpp',
     'apz/src/OverscrollHandoffState.cpp',
-    'apz/src/TaskThrottler.cpp',
+    'apz/src/PotentialCheckerboardDurationTracker.cpp',
     'apz/src/TouchCounter.cpp',
     'apz/src/WheelScrollAnimation.cpp',
     'apz/testutil/APZTestData.cpp',
@@ -254,9 +268,11 @@ UNIFIED_SOURCES += [
     'apz/util/APZCCallbackHelper.cpp',
     'apz/util/APZEventState.cpp',
     'apz/util/APZThreadUtils.cpp',
+    'apz/util/CheckerboardReportService.cpp',
     'apz/util/ChromeProcessController.cpp',
     'apz/util/DoubleTapToZoom.cpp',
     'apz/util/InputAPZContext.cpp',
+    'apz/util/ScrollLinkedEffectDetector.cpp',
     'AsyncCanvasRenderer.cpp',
     'AxisPhysicsModel.cpp',
     'AxisPhysicsMSDModel.cpp',
@@ -269,6 +285,7 @@ UNIFIED_SOURCES += [
     'basic/BasicLayersImpl.cpp',
     'basic/BasicPaintedLayer.cpp',
     'basic/TextureHostBasic.cpp',
+    'BufferTexture.cpp',
     'BufferUnrotate.cpp',
     'client/CanvasClient.cpp',
     'client/ClientCanvasLayer.cpp',
@@ -345,7 +362,7 @@ UNIFIED_SOURCES += [
     'ReadbackProcessor.cpp',
     'RenderTrace.cpp',
     'RotatedBuffer.cpp',
-    'YCbCrImageDataSerializer.cpp',
+    'TextureWrapperImage.cpp',
 ]
 
 SOURCES += [
@@ -403,14 +420,21 @@ if CONFIG['MOZ_DEBUG']:
 if CONFIG['MOZ_ENABLE_D3D10_LAYER']:
     DEFINES['MOZ_ENABLE_D3D10_LAYER'] = True
 
-CXXFLAGS += [
-    '-I%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in [
-        'frameworks/base/include/media/stagefright',
-        'frameworks/base/include/media/stagefright/openmax',
-        'frameworks/av/include/media/stagefright',
-        'frameworks/native/include/media/openmax',
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
+    if CONFIG['ANDROID_VERSION'] >= '17':
+        includes = [
+            'frameworks/av/include/media/stagefright',
+            'frameworks/native/include/media/openmax',
+        ]
+    else:
+        includes = [
+            'frameworks/base/include/media/stagefright',
+            'frameworks/base/include/media/stagefright/openmax',
+        ]
+
+    LOCAL_INCLUDES += [
+        '%' + '%s/%s' % (CONFIG['ANDROID_SOURCE'], d) for d in includes
     ]
-]
 
 if CONFIG['ENABLE_TESTS']:
     DIRS += ['apz/test/gtest']

@@ -58,7 +58,7 @@
   }
 
 using mozilla::BasePrincipal;
-using mozilla::OriginAttributes;
+using mozilla::PrincipalOriginAttributes;
 
 namespace mozilla {
 namespace dom {
@@ -79,6 +79,8 @@ public:
                 const nsAString& aManifestURL,
                 bool aReadOnly,
                 bool aEnabled)
+    : mReadOnly(true)
+    , mEnabled(false)
   {
     Init(aName, aOriginURL, aManifestURL, aReadOnly, aEnabled);
   }
@@ -218,7 +220,7 @@ ResetPermission(uint32_t aAppId, const nsAString& aOriginURL,
     return rv;
   }
 
-  OriginAttributes attrs(aAppId, false);
+  PrincipalOriginAttributes attrs(aAppId, false);
   nsCOMPtr<nsIPrincipal> principal =
     BasePrincipal::CreateCodebasePrincipal(uri, attrs);
   NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
@@ -1326,7 +1328,7 @@ DataStoreService::EnableDataStore(uint32_t aAppId, const nsAString& aName,
     ContentParent::GetAll(children);
     for (uint32_t i = 0; i < children.Length(); i++) {
       if (children[i]->NeedsDataStoreInfos()) {
-        unused << children[i]->SendDataStoreNotify(aAppId, nsAutoString(aName),
+        Unused << children[i]->SendDataStoreNotify(aAppId, nsAutoString(aName),
                                                    nsAutoString(aManifestURL));
       }
     }

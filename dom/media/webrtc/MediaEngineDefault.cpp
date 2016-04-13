@@ -6,6 +6,7 @@
 
 #include "nsCOMPtr.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/UniquePtr.h"
 #include "nsILocalFile.h"
 #include "Layers.h"
 #include "ImageContainer.h"
@@ -27,7 +28,7 @@
 #endif
 
 #define AUDIO_RATE mozilla::MediaEngine::DEFAULT_SAMPLE_RATE
-#define AUDIO_FRAME_LENGTH ((AUDIO_RATE * MediaEngine::DEFAULT_AUDIO_TIMER_MS) / 1000)
+#define DEFAULT_AUDIO_TIMER_MS 10
 namespace mozilla {
 
 using namespace mozilla::gfx;
@@ -236,9 +237,7 @@ MediaEngineDefaultVideoSource::Notify(nsITimer* aTimer)
   }
 
   // Allocate a single solid color image
-  RefPtr<layers::Image> image = mImageContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
-  RefPtr<layers::PlanarYCbCrImage> ycbcr_image =
-      static_cast<layers::PlanarYCbCrImage*>(image.get());
+  RefPtr<layers::PlanarYCbCrImage> ycbcr_image = mImageContainer->CreatePlanarYCbCrImage();
   layers::PlanarYCbCrData data;
   AllocateSolidColorFrame(data, mOpts.mWidth, mOpts.mHeight, 0x80, mCb, mCr);
 
@@ -316,7 +315,7 @@ public:
     // If we allow arbitrary frequencies, there's no guarantee we won't get rounded here
     // We could include an error term and adjust for it in generation; not worth the trouble
     //MOZ_ASSERT(mTotalLength * aFrequency == aSampleRate);
-    mAudioBuffer = new int16_t[mTotalLength];
+    mAudioBuffer = MakeUnique<int16_t[]>(mTotalLength);
     for (int i = 0; i < mTotalLength; i++) {
       // Set volume to -20db. It's from 32768.0 * 10^(-20/20) = 3276.8
       mAudioBuffer[i] = (3276.8f * sin(2 * M_PI * i / mTotalLength));
@@ -335,7 +334,7 @@ public:
       } else {
         processSamples = mTotalLength - mReadLength;
       }
-      memcpy(aBuffer, mAudioBuffer + mReadLength, processSamples * bytesPerSample);
+      memcpy(aBuffer, &mAudioBuffer[mReadLength], processSamples * bytesPerSample);
       aBuffer += processSamples;
       mReadLength += processSamples;
       remaining -= processSamples;
@@ -346,7 +345,7 @@ public:
   }
 
 private:
-  nsAutoArrayPtr<int16_t> mAudioBuffer;
+  UniquePtr<int16_t[]> mAudioBuffer;
   int16_t mTotalLength;
   int16_t mReadLength;
 };
@@ -434,27 +433,36 @@ MediaEngineDefaultAudioSource::Start(SourceMediaStream* aStream, TrackID aID)
 
   mSource = aStream;
 
+  // We try to keep the appended data at this size.
+  // Make it two timer intervals to try to avoid underruns.
+  mBufferSize = 2 * (AUDIO_RATE * DEFAULT_AUDIO_TIMER_MS) / 1000;
+
   // AddTrack will take ownership of segment
   AudioSegment* segment = new AudioSegment();
+  AppendToSegment(*segment, mBufferSize);
   mSource->AddAudioTrack(aID, AUDIO_RATE, 0, segment, SourceMediaStream::ADDTRACK_QUEUED);
 
   if (mHasFakeTracks) {
     for (int i = 0; i < kFakeAudioTrackCount; ++i) {
+      segment = new AudioSegment();
+      segment->AppendNullData(mBufferSize);
       mSource->AddAudioTrack(kTrackCount + kFakeVideoTrackCount+i,
-                             AUDIO_RATE, 0, new AudioSegment(), SourceMediaStream::ADDTRACK_QUEUED);
+                             AUDIO_RATE, 0, segment, SourceMediaStream::ADDTRACK_QUEUED);
     }
   }
 
   // Remember TrackID so we can finish later
   mTrackID = aID;
 
+  mLastNotify = TimeStamp::Now();
+
   // 1 Audio frame per 10ms
 #if defined(MOZ_WIDGET_GONK) && defined(DEBUG)
 // B2G emulator debug is very, very slow and has problems dealing with realtime audio inputs
-  mTimer->InitWithCallback(this, MediaEngine::DEFAULT_AUDIO_TIMER_MS*10,
+  mTimer->InitWithCallback(this, DEFAULT_AUDIO_TIMER_MS*10,
                            nsITimer::TYPE_REPEATING_PRECISE_CAN_SKIP);
 #else
-  mTimer->InitWithCallback(this, MediaEngine::DEFAULT_AUDIO_TIMER_MS,
+  mTimer->InitWithCallback(this, DEFAULT_AUDIO_TIMER_MS,
                            nsITimer::TYPE_REPEATING_PRECISE_CAN_SKIP);
 #endif
   mState = kStarted;
@@ -494,24 +502,42 @@ MediaEngineDefaultAudioSource::Restart(const dom::MediaTrackConstraints& aConstr
   return NS_OK;
 }
 
+void
+MediaEngineDefaultAudioSource::AppendToSegment(AudioSegment& aSegment,
+                                               TrackTicks aSamples)
+{
+  RefPtr<SharedBuffer> buffer = SharedBuffer::Create(aSamples * sizeof(int16_t));
+  int16_t* dest = static_cast<int16_t*>(buffer->Data());
+
+  mSineGenerator->generate(dest, aSamples);
+  nsAutoTArray<const int16_t*,1> channels;
+  channels.AppendElement(dest);
+  aSegment.AppendFrames(buffer.forget(), channels, aSamples);
+}
+
 NS_IMETHODIMP
 MediaEngineDefaultAudioSource::Notify(nsITimer* aTimer)
 {
-  AudioSegment segment;
-  RefPtr<SharedBuffer> buffer = SharedBuffer::Create(AUDIO_FRAME_LENGTH * sizeof(int16_t));
-  int16_t* dest = static_cast<int16_t*>(buffer->Data());
+  TimeStamp now = TimeStamp::Now();
+  TimeDuration timeSinceLastNotify = now - mLastNotify;
+  mLastNotify = now;
+  TrackTicks samplesSinceLastNotify =
+    RateConvertTicksRoundUp(AUDIO_RATE, 1000000, timeSinceLastNotify.ToMicroseconds());
 
-  mSineGenerator->generate(dest, AUDIO_FRAME_LENGTH);
-  nsAutoTArray<const int16_t*,1> channels;
-  channels.AppendElement(dest);
-  segment.AppendFrames(buffer.forget(), channels, AUDIO_FRAME_LENGTH);
+  // If it's been longer since the last Notify() than mBufferSize holds, we
+  // have underrun and the MSG had to append silence while waiting for us
+  // to push more data. In this case we reset to mBufferSize again.
+  TrackTicks samplesToAppend = std::min(samplesSinceLastNotify, mBufferSize);
+
+  AudioSegment segment;
+  AppendToSegment(segment, samplesToAppend);
   mSource->AppendToTrack(mTrackID, &segment);
 
   // Generate null data for fake tracks.
   if (mHasFakeTracks) {
     for (int i = 0; i < kFakeAudioTrackCount; ++i) {
       AudioSegment nullSegment;
-      nullSegment.AppendNullData(AUDIO_FRAME_LENGTH);
+      nullSegment.AppendNullData(samplesToAppend);
       mSource->AppendToTrack(kTrackCount + kFakeVideoTrackCount+i, &nullSegment);
     }
   }

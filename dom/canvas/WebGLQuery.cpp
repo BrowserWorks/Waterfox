@@ -20,6 +20,7 @@ WebGLQuery::WrapObject(JSContext* cx, JS::Handle<JSObject*> givenProto)
 
 WebGLQuery::WebGLQuery(WebGLContext* webgl)
     : WebGLContextBoundObject(webgl)
+    , mCanBeAvailable(false)
     , mGLName(0)
     , mType(0)
 {
@@ -40,6 +41,9 @@ WebGLQuery::Delete()
 bool
 WebGLQuery::IsActive() const
 {
+    if (!HasEverBeenActive())
+        return false;
+
     WebGLRefPtr<WebGLQuery>& targetSlot = mContext->GetQuerySlotByTarget(mType);
 
     return targetSlot.get() == this;

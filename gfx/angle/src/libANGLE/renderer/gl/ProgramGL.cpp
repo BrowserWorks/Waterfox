@@ -13,6 +13,7 @@
 #include "libANGLE/renderer/gl/FunctionsGL.h"
 #include "libANGLE/renderer/gl/ShaderGL.h"
 #include "libANGLE/renderer/gl/StateManagerGL.h"
+#include "platform/Platform.h"
 
 namespace rx
 {
@@ -46,10 +47,38 @@ gl::Error ProgramGL::save(gl::BinaryOutputStream *stream)
     return gl::Error(GL_INVALID_OPERATION);
 }
 
+void ProgramGL::setBinaryRetrievableHint(bool retrievable)
+{
+    UNIMPLEMENTED();
+}
+
 LinkResult ProgramGL::link(const gl::Data &data, gl::InfoLog &infoLog)
 {
     // Reset the program state, delete the current program if one exists
     reset();
+
+    // Set the transform feedback state
+    std::vector<const GLchar *> transformFeedbackVaryings;
+    for (const auto &tfVarying : mData.getTransformFeedbackVaryingNames())
+    {
+        transformFeedbackVaryings.push_back(tfVarying.c_str());
+    }
+
+    if (transformFeedbackVaryings.empty())
+    {
+        if (mFunctions->transformFeedbackVaryings)
+        {
+            mFunctions->transformFeedbackVaryings(mProgramID, 0, nullptr,
+                                                  mData.getTransformFeedbackBufferMode());
+        }
+    }
+    else
+    {
+        ASSERT(mFunctions->transformFeedbackVaryings);
+        mFunctions->transformFeedbackVaryings(
+            mProgramID, static_cast<GLsizei>(transformFeedbackVaryings.size()),
+            &transformFeedbackVaryings[0], mData.getTransformFeedbackBufferMode());
+    }
 
     const gl::Shader *vertexShader   = mData.getAttachedVertexShader();
     const gl::Shader *fragmentShader = mData.getAttachedFragmentShader();
@@ -82,7 +111,6 @@ LinkResult ProgramGL::link(const gl::Data &data, gl::InfoLog &infoLog)
     // Verify the link
     GLint linkStatus = GL_FALSE;
     mFunctions->getProgramiv(mProgramID, GL_LINK_STATUS, &linkStatus);
-    ASSERT(linkStatus == GL_TRUE);
     if (linkStatus == GL_FALSE)
     {
         // Linking failed, put the error into the info log
@@ -95,8 +123,11 @@ LinkResult ProgramGL::link(const gl::Data &data, gl::InfoLog &infoLog)
         mFunctions->deleteProgram(mProgramID);
         mProgramID = 0;
 
-        infoLog << &buf[0];
-        TRACE("\n%s", &buf[0]);
+        infoLog << buf.data();
+
+        std::string warning = FormatString("Program link failed unexpectedly: %s", buf.data());
+        ANGLEPlatformCurrent()->logWarning(warning.c_str());
+        TRACE("\n%s", warning.c_str());
 
         // TODO, return GL_OUT_OF_MEMORY or just fail the link? This is an unexpected case
         return LinkResult(false, gl::Error(GL_NO_ERROR));

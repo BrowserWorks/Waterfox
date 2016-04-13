@@ -39,6 +39,7 @@ struct nsFontFaceRuleContainer;
 struct TreeMatchContext;
 
 namespace mozilla {
+class CSSStyleSheet;
 class EventStates;
 } // namespace mozilla
 
@@ -50,6 +51,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
   virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
+  virtual bool MightMapInheritedStyleData() override;
 #ifdef DEBUG
   virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
@@ -63,6 +65,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
   virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
+  virtual bool MightMapInheritedStyleData() override;
 #ifdef DEBUG
   virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
@@ -76,6 +79,7 @@ private:
 public:
   NS_DECL_ISUPPORTS
   virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
+  virtual bool MightMapInheritedStyleData() override;
 #ifdef DEBUG
   virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
@@ -257,6 +261,11 @@ class nsStyleSet final
   // Free all of the data associated with this style set.
   void Shutdown();
 
+  // Notification that a style context with a null parent has been created.
+  // The argument is a style context that has not been fully initialized,
+  // but its parent and rule node are correct.
+  void AddStyleContextRoot(nsStyleContext* aStyleContext);
+
   // Notification that a style context is being destroyed.
   void NotifyStyleContextDestroyed(nsStyleContext* aStyleContext);
 
@@ -309,27 +318,29 @@ class nsStyleSet final
 
   // APIs to manipulate the style sheet lists.  The sheets in each
   // list are stored with the most significant sheet last.
-  nsresult AppendStyleSheet(mozilla::SheetType aType, nsIStyleSheet *aSheet);
-  nsresult PrependStyleSheet(mozilla::SheetType aType, nsIStyleSheet *aSheet);
-  nsresult RemoveStyleSheet(mozilla::SheetType aType, nsIStyleSheet *aSheet);
+  nsresult AppendStyleSheet(mozilla::SheetType aType,
+                            mozilla::CSSStyleSheet* aSheet);
+  nsresult PrependStyleSheet(mozilla::SheetType aType,
+                             mozilla::CSSStyleSheet* aSheet);
+  nsresult RemoveStyleSheet(mozilla::SheetType aType,
+                            mozilla::CSSStyleSheet* aSheet);
   nsresult ReplaceSheets(mozilla::SheetType aType,
-                         const nsCOMArray<nsIStyleSheet> &aNewSheets);
+                         const nsTArray<RefPtr<mozilla::CSSStyleSheet>>& aNewSheets);
   nsresult InsertStyleSheetBefore(mozilla::SheetType aType,
-                                  nsIStyleSheet *aNewSheet,
-                                  nsIStyleSheet *aReferenceSheet);
-
-  nsresult DirtyRuleProcessors(mozilla::SheetType aType);
+                                  mozilla::CSSStyleSheet* aNewSheet,
+                                  mozilla::CSSStyleSheet* aReferenceSheet);
 
   // Enable/Disable entire author style level (Doc, ScopedDoc & PresHint levels)
-  bool GetAuthorStyleDisabled();
+  bool GetAuthorStyleDisabled() const;
   nsresult SetAuthorStyleDisabled(bool aStyleDisabled);
 
   int32_t SheetCount(mozilla::SheetType aType) const {
-    return mSheets[aType].Count();
+    return mSheets[aType].Length();
   }
 
-  nsIStyleSheet* StyleSheetAt(mozilla::SheetType aType, int32_t aIndex) const {
-    return mSheets[aType].ObjectAt(aIndex);
+  mozilla::CSSStyleSheet* StyleSheetAt(mozilla::SheetType aType,
+                                       int32_t aIndex) const {
+    return mSheets[aType][aIndex];
   }
 
   void AppendAllXBLStyleSheets(nsTArray<mozilla::CSSStyleSheet*>& aArray) const {
@@ -338,8 +349,9 @@ class nsStyleSet final
     }
   }
 
-  nsresult RemoveDocStyleSheet(nsIStyleSheet* aSheet);
-  nsresult AddDocStyleSheet(nsIStyleSheet* aSheet, nsIDocument* aDocument);
+  nsresult RemoveDocStyleSheet(mozilla::CSSStyleSheet* aSheet);
+  nsresult AddDocStyleSheet(mozilla::CSSStyleSheet* aSheet,
+                            nsIDocument* aDocument);
 
   void     BeginUpdate();
   nsresult EndUpdate();
@@ -394,12 +406,14 @@ class nsStyleSet final
   // to drop any nsCSSSelector pointers it has.
   void ClearSelectors();
 
- private:
+private:
   nsStyleSet(const nsStyleSet& aCopy) = delete;
   nsStyleSet& operator=(const nsStyleSet& aCopy) = delete;
 
   // Run mark-and-sweep GC on mRuleTree and mOldRuleTrees, based on mRoots.
   void GCRuleTrees();
+
+  nsresult DirtyRuleProcessors(mozilla::SheetType aType);
 
   // Update the rule processor list after a change to the style sheet list.
   nsresult GatherRuleProcessors(mozilla::SheetType aType);
@@ -471,7 +485,7 @@ class nsStyleSet final
   // eAnimationSheet and eSVGAttrAnimationSheet are always empty.
   // (FIXME:  We should reduce the storage needed for them.)
   mozilla::EnumeratedArray<mozilla::SheetType, mozilla::SheetType::Count,
-                           nsCOMArray<nsIStyleSheet>> mSheets;
+                           nsTArray<RefPtr<mozilla::CSSStyleSheet>>> mSheets;
 
   // mRuleProcessors[eScopedDocSheet] is always null; rule processors
   // for scoped style sheets are stored in mScopedDocSheetRuleProcessors.

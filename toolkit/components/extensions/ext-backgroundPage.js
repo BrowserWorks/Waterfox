@@ -1,3 +1,5 @@
+"use strict";
+
 var { interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
@@ -6,20 +8,20 @@ Cu.import("resource://gre/modules/Services.jsm");
 var backgroundPagesMap = new WeakMap();
 
 // Responsible for the background_page section of the manifest.
-function BackgroundPage(options, extension)
-{
+function BackgroundPage(options, extension) {
   this.extension = extension;
   this.scripts = options.scripts || [];
   this.page = options.page || null;
   this.contentWindow = null;
+  this.chromeWebNav = null;
   this.webNav = null;
   this.context = null;
 }
 
 BackgroundPage.prototype = {
   build() {
-    let webNav = Services.appShell.createWindowlessBrowser(false);
-    this.webNav = webNav;
+    let chromeWebNav = Services.appShell.createWindowlessBrowser(true);
+    this.chromeWebNav = chromeWebNav;
 
     let url;
     if (this.page) {
@@ -35,21 +37,33 @@ BackgroundPage.prototype = {
     }
 
     let uri = Services.io.newURI(url, null, null);
-    let principal = this.extension.createPrincipal(uri);
 
-    let interfaceRequestor = webNav.QueryInterface(Ci.nsIInterfaceRequestor);
-    let docShell = interfaceRequestor.getInterface(Ci.nsIDocShell);
+    let system = Services.scriptSecurityManager.getSystemPrincipal();
+    let interfaceRequestor = chromeWebNav.QueryInterface(Ci.nsIInterfaceRequestor);
+    let chromeShell = interfaceRequestor.getInterface(Ci.nsIDocShell);
+    chromeShell.createAboutBlankContentViewer(system);
+
+    let chromeDoc = chromeWebNav.document;
+    const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    let browser = chromeDoc.createElementNS(XUL_NS, "browser");
+    browser.setAttribute("type", "content");
+    browser.setAttribute("disableglobalhistory", "true");
+    chromeDoc.body.appendChild(browser);
+
+    let frameLoader = browser.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader;
+    let docShell = frameLoader.docShell;
 
     this.context = new ExtensionPage(this.extension, {type: "background", docShell, uri});
     GlobalManager.injectInDocShell(docShell, this.extension, this.context);
 
-    docShell.createAboutBlankContentViewer(principal);
+    let webNav = docShell.QueryInterface(Ci.nsIWebNavigation);
+    this.webNav = webNav;
+
+    webNav.loadURI(url, 0, null, null, null);
 
     let window = webNav.document.defaultView;
     this.contentWindow = window;
     this.context.contentWindow = window;
-
-    webNav.loadURI(url, 0, null, null, null);
 
     // TODO: Right now we run onStartup after the background page
     // finishes. See if this is what Chrome does.
@@ -58,6 +72,7 @@ BackgroundPage.prototype = {
         return;
       }
       event.currentTarget.removeEventListener("load", loadListener, true);
+
       if (this.scripts) {
         let doc = window.document;
         for (let script of this.scripts) {
@@ -79,7 +94,7 @@ BackgroundPage.prototype = {
         this.extension.onStartup();
       }
     };
-    window.windowRoot.addEventListener("load", loadListener, true);
+    browser.addEventListener("load", loadListener, true);
   },
 
   shutdown() {
@@ -87,9 +102,14 @@ BackgroundPage.prototype = {
     // setTimeouts or other callbacks.
     this.webNav.loadURI("about:blank", 0, null, null, null);
     this.webNav = null;
+
+    this.chromeWebNav.loadURI("about:blank", 0, null, null, null);
+    this.chromeWebNav.close();
+    this.chromeWebNav = null;
   },
 };
 
+/* eslint-disable mozilla/balanced-listeners */
 extensions.on("manifest_background", (type, directive, extension, manifest) => {
   let bgPage = new BackgroundPage(manifest.background, extension);
   bgPage.build();
@@ -102,12 +122,19 @@ extensions.on("shutdown", (type, extension) => {
     backgroundPagesMap.delete(extension);
   }
 });
+/* eslint-enable mozilla/balanced-listeners */
 
-extensions.registerAPI((extension, context) => {
+extensions.registerSchemaAPI("extension", null, (extension, context) => {
   return {
     extension: {
       getBackgroundPage: function() {
         return backgroundPagesMap.get(extension).contentWindow;
+      },
+    },
+
+    runtime: {
+      getBackgroundPage: function(callback) {
+        runSafe(context, callback, backgroundPagesMap.get(extension).contentWindow);
       },
     },
   };

@@ -1409,7 +1409,7 @@ struct CollectorData
   CycleCollectedJSRuntime* mRuntime;
 };
 
-static mozilla::ThreadLocal<CollectorData*> sCollectorData;
+static MOZ_THREAD_LOCAL(CollectorData*) sCollectorData;
 
 ////////////////////////////////////////////////////////////////////////
 // Utility functions
@@ -2637,7 +2637,7 @@ class SnowWhiteKiller : public TraceCallbacks
     ObjectsVector;
 
 public:
-  SnowWhiteKiller(nsCycleCollector* aCollector, uint32_t aMaxCount)
+  explicit SnowWhiteKiller(nsCycleCollector* aCollector)
     : mCollector(aCollector)
     , mObjects(kSegmentSize)
   {
@@ -2677,7 +2677,7 @@ public:
   }
 
   virtual void Trace(JS::Heap<JS::Value>* aValue, const char* aName,
-                     void* aClosure) const
+                     void* aClosure) const override
   {
     if (aValue->isMarkable() && ValueIsGrayCCThing(*aValue)) {
       MOZ_ASSERT(!js::gc::IsInsideNursery(aValue->toGCThing()));
@@ -2686,7 +2686,7 @@ public:
   }
 
   virtual void Trace(JS::Heap<jsid>* aId, const char* aName,
-                     void* aClosure) const
+                     void* aClosure) const override
   {
   }
 
@@ -2699,29 +2699,35 @@ public:
   }
 
   virtual void Trace(JS::Heap<JSObject*>* aObject, const char* aName,
-                     void* aClosure) const
+                     void* aClosure) const override
+  {
+    AppendJSObjectToPurpleBuffer(*aObject);
+  }
+
+  virtual void Trace(JSObject** aObject, const char* aName,
+                     void* aClosure) const override
   {
     AppendJSObjectToPurpleBuffer(*aObject);
   }
 
   virtual void Trace(JS::TenuredHeap<JSObject*>* aObject, const char* aName,
-                     void* aClosure) const
+                     void* aClosure) const override
   {
     AppendJSObjectToPurpleBuffer(*aObject);
   }
 
   virtual void Trace(JS::Heap<JSString*>* aString, const char* aName,
-                     void* aClosure) const
+                     void* aClosure) const override
   {
   }
 
   virtual void Trace(JS::Heap<JSScript*>* aScript, const char* aName,
-                     void* aClosure) const
+                     void* aClosure) const override
   {
   }
 
   virtual void Trace(JS::Heap<JSFunction*>* aFunction, const char* aName,
-                     void* aClosure) const
+                     void* aClosure) const override
   {
   }
 
@@ -2734,10 +2740,10 @@ class RemoveSkippableVisitor : public SnowWhiteKiller
 {
 public:
   RemoveSkippableVisitor(nsCycleCollector* aCollector,
-                         uint32_t aMaxCount, bool aRemoveChildlessNodes,
+                         bool aRemoveChildlessNodes,
                          bool aAsyncSnowWhiteFreeing,
                          CC_ForgetSkippableCallback aCb)
-    : SnowWhiteKiller(aCollector, aAsyncSnowWhiteFreeing ? 0 : aMaxCount)
+    : SnowWhiteKiller(aCollector)
     , mRemoveChildlessNodes(aRemoveChildlessNodes)
     , mAsyncSnowWhiteFreeing(aAsyncSnowWhiteFreeing)
     , mDispatchedDeferredDeletion(false)
@@ -2794,7 +2800,7 @@ nsPurpleBuffer::RemoveSkippable(nsCycleCollector* aCollector,
                                 bool aAsyncSnowWhiteFreeing,
                                 CC_ForgetSkippableCallback aCb)
 {
-  RemoveSkippableVisitor visitor(aCollector, Count(), aRemoveChildlessNodes,
+  RemoveSkippableVisitor visitor(aCollector, aRemoveChildlessNodes,
                                  aAsyncSnowWhiteFreeing, aCb);
   VisitEntries(visitor);
 }
@@ -2813,7 +2819,7 @@ nsCycleCollector::FreeSnowWhite(bool aUntilNoSWInPurpleBuffer)
 
   bool hadSnowWhiteObjects = false;
   do {
-    SnowWhiteKiller visitor(this, mPurpleBuf.Count());
+    SnowWhiteKiller visitor(this);
     mPurpleBuf.VisitEntries(visitor);
     hadSnowWhiteObjects = hadSnowWhiteObjects ||
                           visitor.HasSnowWhiteObjects();
@@ -2832,7 +2838,7 @@ nsCycleCollector::ForgetSkippable(bool aRemoveChildlessNodes,
 
   mozilla::Maybe<mozilla::AutoGlobalTimelineMarker> marker;
   if (NS_IsMainThread()) {
-    marker.emplace("nsCycleCollector::ForgetSkippable");
+    marker.emplace("nsCycleCollector::ForgetSkippable", MarkerStackRequest::NO_STACK);
   }
 
   // If we remove things from the purple buffer during graph building, we may
@@ -3584,7 +3590,7 @@ nsCycleCollector::Collect(ccType aCCType,
 
   mozilla::Maybe<mozilla::AutoGlobalTimelineMarker> marker;
   if (NS_IsMainThread()) {
-    marker.emplace("nsCycleCollector::Collect");
+    marker.emplace("nsCycleCollector::Collect", MarkerStackRequest::NO_STACK);
   }
 
   bool startedIdle = IsIdle();
@@ -3993,8 +3999,11 @@ nsCycleCollector_suspectedCount()
 bool
 nsCycleCollector_init()
 {
+  static DebugOnly<bool> sInitialized;
+
   MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
-  MOZ_ASSERT(!sCollectorData.initialized(), "Called twice!?");
+  MOZ_ASSERT(!sInitialized, "Called twice!?");
+  sInitialized = true;
 
   return sCollectorData.init();
 }
@@ -4002,8 +4011,6 @@ nsCycleCollector_init()
 void
 nsCycleCollector_startup()
 {
-  MOZ_ASSERT(sCollectorData.initialized(),
-             "Forgot to call nsCycleCollector_init!");
   if (sCollectorData.get()) {
     MOZ_CRASH();
   }

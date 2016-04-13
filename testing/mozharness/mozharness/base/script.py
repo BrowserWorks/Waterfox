@@ -45,6 +45,7 @@ except ImportError:
 
 from mozprocess import ProcessHandler
 from mozharness.base.config import BaseConfig
+from mozharness.base.errors import ZipErrorList
 from mozharness.base.log import SimpleFileLogger, MultiFileLogger, \
     LogMixin, OutputParser, DEBUG, INFO, ERROR, FATAL
 
@@ -132,6 +133,14 @@ class ScriptMixin(PlatformMixin):
 
     env = None
     script_obj = None
+
+    def platform_name(self):
+        """ Return the platform name on which the script is running on.
+        Returns:
+            None: for failure to determine the platform.
+            str: The name of the platform (e.g. linux64)
+        """
+        return platform_name()
 
     # Simple filesystem commands {{{2
     def mkdir_p(self, path, error_level=ERROR):
@@ -319,7 +328,9 @@ class ScriptMixin(PlatformMixin):
         .. _urllib2.urlopen:
         https://docs.python.org/2/library/urllib2.html#urllib2.urlopen
         """
-        return urllib2.urlopen(url, **kwargs)
+        # http://bugs.python.org/issue13359 - urllib2 does not automatically quote the URL
+        url_quoted = urllib2.quote(url, safe='%/:=&?~#+!$,;\'@()*[]|')
+        return urllib2.urlopen(url_quoted, **kwargs)
 
     def _download_file(self, url, file_name):
         """ Helper script for download_file()
@@ -439,6 +450,40 @@ class ScriptMixin(PlatformMixin):
             kwargs=kwargs,
             **retry_args
         )
+
+    def download_unzip(self, url, parent_dir, target_unzip_dirs=None, halt_on_failure=True):
+        """Generic method to download and extract a zip file.
+
+        The downloaded file will always be saved to the working directory and is not getting
+        deleted after extracting.
+
+        Args:
+            url (str): URL where the file to be downloaded is located.
+            parent_dir (str): directory where the downloaded file will
+                              be extracted to.
+            target_unzip_dirs (list, optional): directories inside the zip file to extract.
+                                                Defaults to `None`.
+            halt_on_failure (bool, optional): whether or not to redefine the
+                                              log level as `FATAL` on errors. Defaults to True.
+
+        """
+        dirs = self.query_abs_dirs()
+        zipfile = self.download_file(url, parent_dir=dirs['abs_work_dir'],
+                                     error_level=FATAL)
+
+        command = self.query_exe('unzip', return_type='list')
+        # Always overwrite to not get an input in a hidden pipe if files already exist
+        command.extend(['-q', '-o', zipfile, '-d', parent_dir])
+        if target_unzip_dirs:
+            command.extend(target_unzip_dirs)
+        # TODO error_list: http://www.info-zip.org/mans/unzip.html#DIAGNOSTICS
+        # unzip return code 11 is 'no matching files were found'
+        self.run_command(command,
+                         error_list=ZipErrorList,
+                         halt_on_failure=halt_on_failure,
+                         fatal_exit_code=3,
+                         success_codes=[0, 11],
+                         )
 
     def load_json_url(self, url, error_level=None, *args, **kwargs):
         """ Returns a json object from a url (it retries). """
@@ -1107,6 +1152,7 @@ class ScriptMixin(PlatformMixin):
                     self.info("Automation Error: mozprocess timed out after %s seconds running %s" % (str(output_timeout), str(command)))
 
                 p = ProcessHandler(command,
+                                   shell=shell,
                                    env=env,
                                    cwd=cwd,
                                    storeOutput=False,
@@ -1602,6 +1648,7 @@ class BaseScript(ScriptMixin, LogMixin, object):
         elif error_if_missing:
             self.error("No such method %s!" % method_name)
 
+    @PostScriptRun
     def copy_logs_to_upload_dir(self):
         """Copies logs to the upload directory"""
         self.info("Copying logs to upload dir...")

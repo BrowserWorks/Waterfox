@@ -53,11 +53,25 @@ body {
   flex: 1;
 }
 
-/* Pressing the retry button will cause the cursor to flicker from a pointer to
- * not-allowed. Override the disabled cursor behaviour since we will never show
- * the button disabled as the initial state. Remove this in Bug 1219861. */
-button:disabled {
-  cursor: pointer;
+#certificateErrorDebugInformation {
+  display: none;
+  background-color: var(--in-content-box-background-hover) !important;
+  border-top: 1px solid var(--in-content-border-color);
+  position: absolute;
+  left: 0%;
+  top: 100%;
+  width: 65%;
+  padding: 1em 17.5%;
+}
+
+#certificateErrorText {
+  font-family: monospace;
+  white-space: pre-wrap;
+  padding: 1em 0;
+}
+
+#errorCode {
+  white-space: nowrap;
 }
 
 #returnButton {
@@ -95,4 +109,11 @@ button:disabled {
 
 .hostname {
   font-weight: bold;
+}
+
+#reportCertificateErrorRetry,
+#certificateErrorReporting,
+#reportSendingMessage,
+#reportSentMessage {
+  display: none;
 }

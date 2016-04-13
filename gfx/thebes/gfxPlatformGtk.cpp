@@ -247,13 +247,16 @@ gfxFontGroup *
 gfxPlatformGtk::CreateFontGroup(const FontFamilyList& aFontFamilyList,
                                 const gfxFontStyle* aStyle,
                                 gfxTextPerfMetrics* aTextPerf,
-                                gfxUserFontSet* aUserFontSet)
+                                gfxUserFontSet* aUserFontSet,
+                                gfxFloat aDevToCssSize)
 {
     if (sUseFcFontList) {
-        return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf, aUserFontSet);
+        return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf,
+                                aUserFontSet, aDevToCssSize);
     }
 
-    return new gfxPangoFontGroup(aFontFamilyList, aStyle, aUserFontSet);
+    return new gfxPangoFontGroup(aFontFamilyList, aStyle,
+                                 aUserFontSet, aDevToCssSize);
 }
 
 gfxFontEntry*
@@ -362,10 +365,10 @@ gfxPlatformGtk::GetOffscreenFormat()
     // Make sure there is a screen
     GdkScreen *screen = gdk_screen_get_default();
     if (screen && gdk_visual_get_depth(gdk_visual_get_system()) == 16) {
-        return gfxImageFormat::RGB16_565;
+        return SurfaceFormat::R5G6B5_UINT16;
     }
 
-    return gfxImageFormat::RGB24;
+    return SurfaceFormat::X8R8G8B8_UINT32;
 }
 
 void gfxPlatformGtk::FontsPrefsChanged(const char *aPref)

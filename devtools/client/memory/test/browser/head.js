@@ -96,12 +96,44 @@ function waitUntilSnapshotState (store, expected) {
   return waitUntilState(store, predicate);
 }
 
+/**
+ * Returns a promise that will resolve when the provided store matches
+ * the expected array. expectedStates is an array of dominatorTree states.
+ * Expectations :
+ * - store.getState().snapshots.length == expected.length
+ * - snapshots[i].dominatorTree.state == expected[i]
+ *
+ * @param  {Store} store
+ * @param  {Array<string>} expectedStates [description]
+ * @return {Promise}
+ */
+function waitUntilDominatorTreeState(store, expected) {
+  let predicate = () => {
+    let snapshots = store.getState().snapshots;
+    return snapshots.length === expected.length &&
+            expected.every((state, i) => {
+              return snapshots[i].dominatorTree &&
+              snapshots[i].dominatorTree.state === state;
+            });
+  };
+  info(`Waiting for dominator trees to be of state: ${expected}`);
+  return waitUntilState(store, predicate);
+}
+
 function takeSnapshot (window) {
   let { gStore, document } = window;
   let snapshotCount = gStore.getState().snapshots.length;
   info(`Taking snapshot...`);
   document.querySelector(".devtools-toolbar .take-snapshot").click();
   return waitUntilState(gStore, () => gStore.getState().snapshots.length === snapshotCount + 1);
+}
+
+function clearSnapshots (window) {
+  let { gStore, document } = window;
+  document.querySelector(".devtools-toolbar .clear-snapshots").click();
+  return waitUntilState(gStore, () => gStore.getState().snapshots.every(
+    (snapshot) => snapshot.state !== states.SAVED_CENSUS)
+  );
 }
 
 /**
@@ -120,6 +152,17 @@ function setBreakdown (window, type) {
   return waitUntilState(window.gStore, () => {
     let selected = window.gStore.getState().snapshots.find(s => s.selected);
     return selected.state === states.SAVED_CENSUS &&
-           breakdownEquals(breakdownNameToSpec(type), selected.breakdown);
+           breakdownEquals(breakdownNameToSpec(type), selected.census.breakdown);
   });
+}
+
+/**
+ * Get the snapshot tatus text currently displayed, or null if none is
+ * displayed.
+ *
+ * @param {Document} document
+ */
+function getDisplayedSnapshotStatus(document) {
+  const status = document.querySelector(".snapshot-status");
+  return status ? status.textContent.trim() : null;
 }

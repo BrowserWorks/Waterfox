@@ -5,7 +5,7 @@
 
 "use strict";
 
-this.EXPORTED_SYMBOLS = ["StyleSheetEditor", "prettifyCSS"];
+this.EXPORTED_SYMBOLS = ["StyleSheetEditor"];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -14,7 +14,7 @@ const Cu = Components.utils;
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const Editor  = require("devtools/client/sourceeditor/editor");
 const promise = require("promise");
-const {CssLogic} = require("devtools/shared/styleinspector/css-logic");
+const {CssLogic} = require("devtools/shared/inspector/css-logic");
 const {console} = require("resource://gre/modules/Console.jsm");
 
 Cu.import("resource://gre/modules/Services.jsm");
@@ -130,6 +130,7 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
   this.savedFile = file;
   this.linkCSSFile();
 }
+this.StyleSheetEditor = StyleSheetEditor;
 
 StyleSheetEditor.prototype = {
   /**
@@ -360,6 +361,7 @@ StyleSheetEditor.prototype = {
         this.sourceEditor.setText(newText);
         this.sourceEditor.setFirstVisibleLine(firstLine);
         this.sourceEditor.setCursor(pos);
+        this.emit("style-applied");
       });
     }
   },
@@ -574,12 +576,8 @@ StyleSheetEditor.prototype = {
    * @param {Number} y
    */
   _highlightSelectorAt: Task.async(function*(x, y) {
-    // Need to catch parsing exceptions as long as bug 1051900 isn't fixed
-    let info;
-    try {
-      let pos = this.sourceEditor.getPositionFromCoords({left: x, top: y});
-      info = this.sourceEditor.getInfoAt(pos);
-    } catch (e) {}
+    let pos = this.sourceEditor.getPositionFromCoords({left: x, top: y});
+    let info = this.sourceEditor.getInfoAt(pos);
     if (!info || info.state !== "selector") {
       return;
     }

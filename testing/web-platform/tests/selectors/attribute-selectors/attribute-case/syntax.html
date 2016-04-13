@@ -12,6 +12,7 @@ setup({explicit_done:true});
 var valid = [
   "[foo='BAR'] /* sanity check (valid) */",
   "[foo='bar' i]",
+  "[foo='bar' I]",
   "[foo=bar i]",
   '[foo="bar" i]',
   "[foo='bar'i]",
@@ -29,13 +30,14 @@ var valid = [
   "[foo~='bar' i]",
   "[foo^='bar' i]",
   "[foo$='bar' i]",
+  "[foo*='bar' i]",
+  "[foo|='bar' i]",
   "[|foo='bar' i]",
   "[*|foo='bar' i]",
 ];
 var invalid = [
   "[foo[ /* sanity check (invalid) */",
   "[foo='bar' i i]",
-  "[foo='bar' I]",
   "[foo i ='bar']",
   "[foo= i 'bar']",
   "[i foo='bar']",

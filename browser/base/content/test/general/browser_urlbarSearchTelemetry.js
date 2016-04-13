@@ -27,6 +27,7 @@ add_task(function* prepare() {
 
 add_task(function* heuristicResult() {
   yield compareCounts(function* () {
+    gBrowser.selectedTab = gBrowser.addTab();
     yield promiseAutocompleteResultPopup("heuristicResult");
     let action = getActionAtIndex(0);
     Assert.ok(!!action, "there should be an action at index 0");
@@ -35,11 +36,13 @@ add_task(function* heuristicResult() {
     let loadPromise = promiseTabLoaded(gBrowser.selectedTab);
     item.click();
     yield loadPromise;
+    gBrowser.removeTab(gBrowser.selectedTab);
   });
 });
 
 add_task(function* searchSuggestion() {
   yield compareCounts(function* () {
+    gBrowser.selectedTab = gBrowser.addTab();
     yield promiseAutocompleteResultPopup("searchSuggestion");
     let idx = getFirstSuggestionIndex();
     Assert.ok(idx >= 0, "there should be a first suggestion");
@@ -47,6 +50,7 @@ add_task(function* searchSuggestion() {
     let loadPromise = promiseTabLoaded(gBrowser.selectedTab);
     item.click();
     yield loadPromise;
+    gBrowser.removeTab(gBrowser.selectedTab);
   });
 });
 
@@ -99,7 +103,6 @@ function* compareCounts(clickCallback) {
   // FHR -- first make sure the engine has an identifier so that FHR is happy.
   Object.defineProperty(engine.wrappedJSObject, "identifier",
                         { value: engineID });
-  let fhrCount = yield getNumberOfSearchesInFHR(engine.name, "urlbar");
 
   gURLBar.focus();
   yield clickCallback();
@@ -122,10 +125,6 @@ function* compareCounts(clickCallback) {
   Assert.ok(histogramKey in snapshot, "histogram with key should be recorded");
   Assert.equal(snapshot[histogramKey].sum, histogramCount + 1,
                "histogram sum should be incremented");
-
-  // FHR
-  let newFHRCount = yield getNumberOfSearchesInFHR(engine.name, "urlbar");
-  Assert.equal(newFHRCount, fhrCount + 1, "should be recorded in FHR");
 }
 
 /**

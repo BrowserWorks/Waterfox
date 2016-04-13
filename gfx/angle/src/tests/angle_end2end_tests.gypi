@@ -44,6 +44,7 @@
             '<(angle_path)/src/tests/gl_tests/PbufferTest.cpp',
             '<(angle_path)/src/tests/gl_tests/PBOExtensionTest.cpp',
             '<(angle_path)/src/tests/gl_tests/PointSpritesTest.cpp',
+            '<(angle_path)/src/tests/gl_tests/ProvokingVertexTest.cpp',
             '<(angle_path)/src/tests/gl_tests/OcclusionQueriesTest.cpp',
             '<(angle_path)/src/tests/gl_tests/ProgramBinaryTest.cpp',
             '<(angle_path)/src/tests/gl_tests/ReadPixelsTest.cpp',
@@ -76,9 +77,13 @@
             '<(angle_path)/src/tests/gl_tests/D3D11EmulatedIndexedBufferTest.cpp',
             '<(angle_path)/src/tests/gl_tests/D3D11FormatTablesTest.cpp',
             '<(angle_path)/src/tests/gl_tests/D3D11InputLayoutCacheTest.cpp',
-            '<(angle_path)/src/tests/gl_tests/QueryDisplayAttribTest.cpp',
+            '<(angle_path)/src/tests/egl_tests/EGLDeviceTest.cpp',
             # TODO(cwallez) for Linux, requires a portable implementation of threads
             '<(angle_path)/src/tests/egl_tests/EGLThreadTest.cpp',
+        ],
+        'angle_end2end_tests_x11_sources':
+        [
+            '<(angle_path)/src/tests/egl_tests/EGLX11VisualTest.cpp',
         ],
     },
     'dependencies':
@@ -105,6 +110,13 @@
             'sources':
             [
                 '<@(angle_end2end_tests_win_sources)',
+            ],
+        }],
+        ['use_x11==1',
+        {
+            'sources':
+            [
+                '<@(angle_end2end_tests_x11_sources)',
             ],
         }],
     ]

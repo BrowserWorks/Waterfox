@@ -228,6 +228,10 @@ BluetoothA2dpManager::InitA2dpInterface(BluetoothProfileResultHandler* aRes)
 }
 
 BluetoothA2dpManager::~BluetoothA2dpManager()
+{ }
+
+void
+BluetoothA2dpManager::Uninit()
 {
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   NS_ENSURE_TRUE_VOID(obs);
@@ -273,9 +277,9 @@ BluetoothA2dpManager::Get()
   // If we're in shutdown, don't create a new instance
   NS_ENSURE_FALSE(sInShutdown, nullptr);
 
-  // Create a new instance, register, and return
-  BluetoothA2dpManager* manager = new BluetoothA2dpManager();
-  sBluetoothA2dpManager = manager;
+  // Create a new instance and return
+  sBluetoothA2dpManager = new BluetoothA2dpManager();
+
   return sBluetoothA2dpManager;
 }
 
@@ -297,6 +301,9 @@ public:
     sBtA2dpInterface->SetNotificationHandler(nullptr);
     sBtA2dpInterface = nullptr;
 
+    sBluetoothA2dpManager->Uninit();
+    sBluetoothA2dpManager = nullptr;
+
     if (mRes) {
       mRes->OnError(NS_ERROR_FAILURE);
     }
@@ -308,6 +315,9 @@ public:
 
     sBtA2dpInterface->SetNotificationHandler(nullptr);
     sBtA2dpInterface = nullptr;
+
+    sBluetoothA2dpManager->Uninit();
+    sBluetoothA2dpManager = nullptr;
 
     if (mRes) {
       mRes->Deinit();
@@ -411,7 +421,7 @@ BluetoothA2dpManager::OnConnectError()
   mController->NotifyCompletion(NS_LITERAL_STRING(ERR_CONNECTION_FAILED));
 
   mController = nullptr;
-  mDeviceAddress.Truncate();
+  mDeviceAddress.Clear();
 }
 
 class BluetoothA2dpManager::ConnectResultHandler final
@@ -428,11 +438,11 @@ public:
 };
 
 void
-BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
+BluetoothA2dpManager::Connect(const BluetoothAddress& aDeviceAddress,
                               BluetoothProfileController* aController)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!aDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!aDeviceAddress.IsCleared());
   MOZ_ASSERT(aController);
 
   BluetoothService* bs = BluetoothService::Get();
@@ -455,13 +465,7 @@ BluetoothA2dpManager::Connect(const nsAString& aDeviceAddress,
     return;
   }
 
-  BluetoothAddress deviceAddress;
-  nsresult rv = StringToAddress(aDeviceAddress, deviceAddress);
-  if (NS_FAILED(rv)) {
-    return;
-  }
-
-  sBtA2dpInterface->Connect(deviceAddress, new ConnectResultHandler());
+  sBtA2dpInterface->Connect(mDeviceAddress, new ConnectResultHandler());
 }
 
 void
@@ -509,7 +513,7 @@ BluetoothA2dpManager::Disconnect(BluetoothProfileController* aController)
     return;
   }
 
-  MOZ_ASSERT(!mDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!mDeviceAddress.IsCleared());
 
   mController = aController;
 
@@ -522,13 +526,7 @@ BluetoothA2dpManager::Disconnect(BluetoothProfileController* aController)
     return;
   }
 
-  BluetoothAddress deviceAddress;
-  nsresult rv = StringToAddress(mDeviceAddress, deviceAddress);
-  if (NS_FAILED(rv)) {
-    return;
-  }
-
-  sBtA2dpInterface->Disconnect(deviceAddress, new DisconnectResultHandler());
+  sBtA2dpInterface->Disconnect(mDeviceAddress, new DisconnectResultHandler());
 }
 
 void
@@ -588,14 +586,15 @@ BluetoothA2dpManager::HandleSinkPropertyChanged(const BluetoothSignal& aSignal)
   MOZ_ASSERT(aSignal.value().type() ==
              BluetoothValue::TArrayOfBluetoothNamedValue);
 
-  const nsString& address = aSignal.path();
+  BluetoothAddress address;
+  NS_ENSURE_TRUE_VOID(NS_SUCCEEDED(StringToAddress(aSignal.path(), address)));
+
   /**
    * Update sink property only if
    * - mDeviceAddress is empty (A2dp is disconnected), or
    * - this property change is from the connected sink.
    */
-  NS_ENSURE_TRUE_VOID(mDeviceAddress.IsEmpty() ||
-                      mDeviceAddress.Equals(address));
+  NS_ENSURE_TRUE_VOID(mDeviceAddress.IsCleared() || mDeviceAddress == address);
 
   const InfallibleTArray<BluetoothNamedValue>& arr =
     aSignal.value().get_ArrayOfBluetoothNamedValue();
@@ -658,7 +657,7 @@ BluetoothA2dpManager::HandleSinkPropertyChanged(const BluetoothSignal& aSignal)
 
       mA2dpConnected = false;
       NotifyConnectionStatusChanged();
-      mDeviceAddress.Truncate();
+      mDeviceAddress.Clear();
       OnDisconnect(EmptyString());
       break;
     default:
@@ -674,14 +673,8 @@ void
 BluetoothA2dpManager::HandleBackendError()
 {
   if (mSinkState != SinkState::SINK_DISCONNECTED) {
-    BluetoothAddress deviceAddress;
-    nsresult rv = StringToAddress(mDeviceAddress, deviceAddress);
-    if (NS_FAILED(rv)) {
-      return;
-    }
-
     ConnectionStateNotification(A2DP_CONNECTION_STATE_DISCONNECTED,
-      deviceAddress);
+                                mDeviceAddress);
   }
 }
 
@@ -694,9 +687,12 @@ BluetoothA2dpManager::NotifyConnectionStatusChanged()
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   NS_ENSURE_TRUE_VOID(obs);
 
+  nsAutoString deviceAddressStr;
+  AddressToString(mDeviceAddress, deviceAddressStr);
+
   if (NS_FAILED(obs->NotifyObservers(this,
                                      BLUETOOTH_A2DP_STATUS_CHANGED_ID,
-                                     mDeviceAddress.get()))) {
+                                     deviceAddressStr.get()))) {
     BT_WARNING("Failed to notify bluetooth-a2dp-status-changed observsers!");
   }
 
@@ -706,19 +702,19 @@ BluetoothA2dpManager::NotifyConnectionStatusChanged()
 }
 
 void
-BluetoothA2dpManager::OnGetServiceChannel(const nsAString& aDeviceAddress,
-                                          const nsAString& aServiceUuid,
+BluetoothA2dpManager::OnGetServiceChannel(const BluetoothAddress& aDeviceAddress,
+                                          const BluetoothUuid& aServiceUuid,
                                           int aChannel)
 {
 }
 
 void
-BluetoothA2dpManager::OnUpdateSdpRecords(const nsAString& aDeviceAddress)
+BluetoothA2dpManager::OnUpdateSdpRecords(const BluetoothAddress& aDeviceAddress)
 {
 }
 
 void
-BluetoothA2dpManager::GetAddress(nsAString& aDeviceAddress)
+BluetoothA2dpManager::GetAddress(BluetoothAddress& aDeviceAddress)
 {
   aDeviceAddress = mDeviceAddress;
 }

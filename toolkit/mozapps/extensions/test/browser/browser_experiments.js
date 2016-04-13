@@ -98,6 +98,7 @@ add_task(function* initializeState() {
 
   registerCleanupFunction(() => {
     Services.prefs.clearUserPref("experiments.enabled");
+    Services.prefs.clearUserPref("toolkit.telemetry.enabled");
     if (gHttpServer) {
       gHttpServer.stop(() => {});
       if (gSavedManifestURI !== undefined) {
@@ -224,7 +225,12 @@ add_task(function* testOpenPreferences() {
   }, "advanced-pane-loaded", false);
 
   info("Loading preferences pane.");
-  EventUtils.synthesizeMouseAtCenter(btn, {}, gManagerWindow);
+  // We need to focus before synthesizing the mouse event (bug 1240052) as
+  // synthesizeMouseAtCenter currently only synthesizes the mouse in the child process.
+  // This can cause some subtle differences if the child isn't focused.
+  yield SimpleTest.promiseFocus();
+  yield BrowserTestUtils.synthesizeMouseAtCenter("#experiments-change-telemetry", {},
+                                                 gBrowser.selectedBrowser);
 
   yield deferred.promise;
 });
@@ -294,6 +300,7 @@ add_task(function* testActivateExperiment() {
   // We need to remove the cache file to help ensure consistent state.
   yield OS.File.remove(gExperiments._cacheFilePath);
 
+  Services.prefs.setBoolPref("toolkit.telemetry.enabled", true);
   Services.prefs.setBoolPref("experiments.enabled", true);
 
   info("Initializing experiments service.");
@@ -331,7 +338,7 @@ add_task(function* testActivateExperiment() {
   is_element_visible(el, "Experiment info is visible on experiment tab.");
 });
 
-add_task(function testDeactivateExperiment() {
+add_task(function* testDeactivateExperiment() {
   if (!gExperiments) {
     return;
   }
@@ -379,7 +386,7 @@ add_task(function testDeactivateExperiment() {
   is_element_hidden(el, "Preferences button is not visible.");
 });
 
-add_task(function testActivateRealExperiments() {
+add_task(function* testActivateRealExperiments() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
@@ -532,7 +539,7 @@ add_task(function testActivateRealExperiments() {
   }
 });
 
-add_task(function testDetailView() {
+add_task(function* testDetailView() {
   if (!gExperiments) {
     info("Skipping experiments test because that feature isn't available.");
     return;
@@ -635,6 +642,8 @@ add_task(function* testCleanup() {
     yield OS.File.remove(gExperiments._cacheFilePath);
     yield gExperiments.uninit();
     yield gExperiments.init();
+
+    Services.prefs.clearUserPref("toolkit.telemetry.enabled");
   }
 
   // Check post-conditions.

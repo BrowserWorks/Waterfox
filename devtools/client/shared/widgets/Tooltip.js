@@ -1509,7 +1509,6 @@ EventTooltip.prototype = {
         editor.destroy();
       }
 
-      this._tooltip.eventEditors.clear();
       this._tooltip.eventEditors = null;
     }
 
@@ -1719,5 +1718,5 @@ var l10n = new L10N();
 
 loader.lazyGetter(L10N.prototype, "strings", () => {
   return Services.strings.createBundle(
-    "chrome://browser/locale/devtools/inspector.properties");
+    "chrome://devtools/locale/inspector.properties");
 });

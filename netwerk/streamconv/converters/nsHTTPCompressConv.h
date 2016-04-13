@@ -8,7 +8,9 @@
 #define	__nsHTTPCompressConv__h__	1
 
 #include "nsIStreamConverter.h"
+#include "nsICompressConvStats.h"
 #include "nsCOMPtr.h"
+#include "nsAutoPtr.h"
 
 #include "zlib.h"
 
@@ -72,12 +74,16 @@ public:
   uint64_t     mSourceOffset;
 };
 
-class nsHTTPCompressConv : public nsIStreamConverter	{
+class nsHTTPCompressConv
+  : public nsIStreamConverter
+  , public nsICompressConvStats
+{
   public:
   // nsISupports methods
     NS_DECL_THREADSAFE_ISUPPORTS
     NS_DECL_NSIREQUESTOBSERVER
     NS_DECL_NSISTREAMLISTENER
+    NS_DECL_NSICOMPRESSCONVSTATS
 
   // nsIStreamConverter methods
     NS_DECL_NSISTREAMCONVERTER
@@ -119,6 +125,8 @@ private:
     unsigned mLen, hMode, mSkipCount, mFlags;
 
     uint32_t check_header (nsIInputStream *iStr, uint32_t streamLen, nsresult *rv);
+
+    uint32_t mDecodedDataLength;
 };
 
 } // namespace net

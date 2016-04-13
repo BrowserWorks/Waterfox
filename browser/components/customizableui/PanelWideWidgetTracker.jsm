@@ -11,9 +11,6 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
   "resource:///modules/CustomizableUI.jsm");
 
-var gModuleName = "[PanelWideWidgetTracker]";
-#include logging.js
-
 var gPanel = CustomizableUI.AREA_PANEL;
 // We keep track of the widget placements for the panel locally:
 var gPanelPlacements = [];
@@ -92,7 +89,7 @@ var PanelWideWidgetTracker = {
       return;
     }
     this.adjusting = true;
-    let widgetsAffected = [w for (w of gPanelPlacements) if (gWideWidgets.has(w))];
+    let widgetsAffected = gPanelPlacements.filter((w) => gWideWidgets.has(w));
     // If we're moving the wide widgets forwards (down/to the right in the panel)
     // we want to start with the last widgets. Otherwise we move widgets over other wide
     // widgets, which might mess up their order. Likewise, if moving backwards we should start with

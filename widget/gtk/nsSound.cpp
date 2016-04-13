@@ -81,7 +81,7 @@ struct ScopedCanberraFile {
     }
 
     void forget() {
-        mozilla::unused << mFile.forget();
+        mozilla::Unused << mFile.forget();
     }
     nsIFile* operator->() { return mFile; }
     operator nsIFile*() { return mFile; }
@@ -352,7 +352,7 @@ NS_METHOD nsSound::Play(nsIURL *aURL)
                                 aURL,
                                 this, // aObserver
                                 nsContentUtils::GetSystemPrincipal(),
-                                nsILoadInfo::SEC_NORMAL,
+                                nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                 nsIContentPolicy::TYPE_OTHER);
     }
 

@@ -1,6 +1,10 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* import-globals-from ../debugger-controller.js */
+/* import-globals-from ../debugger-view.js */
+/* import-globals-from ../utils.js */
+/* globals document, window */
 "use strict";
 
 /**
@@ -16,6 +20,7 @@ function StackFramesView(DebuggerController, DebuggerView) {
   this._onSelect = this._onSelect.bind(this);
   this._onScroll = this._onScroll.bind(this);
   this._afterScroll = this._afterScroll.bind(this);
+  this._getStackAsString = this._getStackAsString.bind(this);
 }
 
 StackFramesView.prototype = Heritage.extend(WidgetMethods, {
@@ -25,9 +30,12 @@ StackFramesView.prototype = Heritage.extend(WidgetMethods, {
   initialize: function() {
     dumpn("Initializing the StackFramesView");
 
+    this._popupset = document.getElementById("debuggerPopupset");
+
     this.widget = new BreadcrumbsWidget(document.getElementById("stackframes"));
     this.widget.addEventListener("select", this._onSelect, false);
     this.widget.addEventListener("scroll", this._onScroll, true);
+    this.widget.setAttribute("context", "stackFramesContextMenu");
     window.addEventListener("resize", this._onScroll, true);
 
     this.autoFocusOnFirstItem = false;
@@ -62,7 +70,7 @@ StackFramesView.prototype = Heritage.extend(WidgetMethods, {
    * @param boolean aIsBlackBoxed
    *        Whether or not the frame is black boxed.
    */
-  addFrame: function(aFrame, aLine, aDepth, aIsBlackBoxed) {
+  addFrame: function(aFrame, aLine, aColumn, aDepth, aIsBlackBoxed) {
     let { source } = aFrame;
 
     // The source may not exist in the source listing yet because it's
@@ -97,7 +105,8 @@ StackFramesView.prototype = Heritage.extend(WidgetMethods, {
         title: title,
         url: location,
         line: aLine,
-        depth: aDepth
+        depth: aDepth,
+        column: aColumn
       },
       // Make sure that when the stack frame item is removed, the corresponding
       // mirrored item in the classic list is also removed.
@@ -106,6 +115,29 @@ StackFramesView.prototype = Heritage.extend(WidgetMethods, {
 
     // Mirror this newly inserted item inside the "Call Stack" tab.
     this._mirror.addFrame(title, location, aLine, aDepth);
+  },
+
+  _getStackAsString: function() {
+    return [...this].map(frameItem => {
+      const { attachment: { title, url, line, column }} = frameItem;
+      return title + "@" + url + ":" + line + ":" + column;
+    }).join("\n")
+  },
+
+  addCopyContextMenu: function() {
+    let menupopup = document.createElement("menupopup");
+    let menuitem = document.createElement("menuitem");
+
+    menupopup.id = "stackFramesContextMenu";
+    menuitem.id = "copyStackMenuItem";
+
+    menuitem.setAttribute("label", "Copy");
+    menuitem.addEventListener("command", () => {
+      let stack = this._getStackAsString();
+      clipboardHelper.copyString(stack);
+    }, false);
+    menupopup.appendChild(menuitem);
+    this._popupset.appendChild(menupopup);
   },
 
   /**

@@ -3,14 +3,14 @@
 
 package org.mozilla.android.sync.test.helpers;
 
-import static org.junit.Assert.assertEquals;
-
-import java.net.URI;
-
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.GlobalSession;
 import org.mozilla.gecko.sync.delegates.GlobalSessionCallback;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
+
+import java.net.URI;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * A callback for use with a GlobalSession that records what happens for later
@@ -20,16 +20,6 @@ import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
  * WaitHelper performWait.
  */
 public class MockGlobalSessionCallback implements GlobalSessionCallback {
-  public final String nodeWeaveURL;
-
-  public MockGlobalSessionCallback(String nodeWeaveURL) {
-    this.nodeWeaveURL = nodeWeaveURL;
-  }
-
-  public MockGlobalSessionCallback() {
-    this(null);
-  }
-
   protected WaitHelper testWaiter() {
     return WaitHelper.getTestWaiter();
   }
@@ -40,14 +30,9 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   public Exception calledErrorException = null;
   public boolean calledAborted = false;
   public boolean calledRequestBackoff = false;
-  public boolean calledInformNodeAuthenticationFailed = false;
-  public boolean calledInformNodeAssigned = false;
   public boolean calledInformUnauthorizedResponse = false;
   public boolean calledInformUpgradeRequiredResponse = false;
   public boolean calledInformMigrated = false;
-  public URI calledInformNodeAuthenticationFailedClusterURL = null;
-  public URI calledInformNodeAssignedOldClusterURL = null;
-  public URI calledInformNodeAssignedNewClusterURL = null;
   public URI calledInformUnauthorizedResponseClusterURL = null;
   public long weaveBackoff = -1;
 
@@ -84,19 +69,6 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   }
 
   @Override
-  public void informNodeAuthenticationFailed(GlobalSession session, URI clusterURL) {
-    this.calledInformNodeAuthenticationFailed = true;
-    this.calledInformNodeAuthenticationFailedClusterURL = clusterURL;
-  }
-
-  @Override
-  public void informNodeAssigned(GlobalSession session, URI oldClusterURL, URI newClusterURL) {
-    this.calledInformNodeAssigned = true;
-    this.calledInformNodeAssignedOldClusterURL = oldClusterURL;
-    this.calledInformNodeAssignedNewClusterURL = newClusterURL;
-  }
-
-  @Override
   public void informUnauthorizedResponse(GlobalSession session, URI clusterURL) {
     this.calledInformUnauthorizedResponse = true;
     this.calledInformUnauthorizedResponseClusterURL = clusterURL;
@@ -115,15 +87,5 @@ public class MockGlobalSessionCallback implements GlobalSessionCallback {
   @Override
   public boolean shouldBackOffStorage() {
     return false;
-  }
-
-  @Override
-  public boolean wantNodeAssignment() {
-    return false;
-  }
-
-  @Override
-  public String nodeWeaveURL() {
-    return nodeWeaveURL;
   }
 }

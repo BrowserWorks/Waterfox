@@ -16,7 +16,7 @@ sys.path.insert(
 
 from automation import Automation
 from remoteautomation import RemoteAutomation, fennecLogcatFilters
-from runtests import Mochitest, MessageLogger
+from runtests import MochitestDesktop, MessageLogger
 from mochitest_options import MochitestArgumentParser
 
 from manifestparser import TestManifest
@@ -27,7 +27,8 @@ import mozinfo
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 
 
-class RobocopTestRunner(Mochitest):
+# TODO inherit from MochitestBase instead
+class RobocopTestRunner(MochitestDesktop):
     """
        A test harness for Robocop. Robocop tests are UI tests for Firefox for Android,
        based on the Robotium test framework. This harness leverages some functionality
@@ -42,7 +43,7 @@ class RobocopTestRunner(Mochitest):
         """
            Simple one-time initialization.
         """
-        Mochitest.__init__(self, options)
+        MochitestDesktop.__init__(self, options)
 
         self.auto = automation
         self.dm = devmgr
@@ -131,7 +132,7 @@ class RobocopTestRunner(Mochitest):
                            blobberUploadDir)
             self.dm.getDirectory(self.remoteNSPR, blobberUploadDir)
             self.dm.getDirectory(self.remoteScreenshots, blobberUploadDir)
-        Mochitest.cleanup(self, self.options)
+        MochitestDesktop.cleanup(self, self.options)
         if self.localProfile:
             os.system("rm -Rf %s" % self.localProfile)
         self.dm.removeDir(self.remoteProfile)
@@ -225,14 +226,19 @@ class RobocopTestRunner(Mochitest):
         self.options.extraPrefs.append('browser.snippets.enabled=false')
         self.options.extraPrefs.append('browser.casting.enabled=true')
         self.options.extraPrefs.append('extensions.autoupdate.enabled=false')
-        manifest = Mochitest.buildProfile(self, self.options)
+
+        self.options.extensionsToExclude.extend([
+            'mochikit@mozilla.org',
+            'worker-test@mozilla.org.xpi',
+            'workerbootstrap-test@mozilla.org.xpi',
+            'indexedDB-test@mozilla.org.xpi',
+        ])
+
+        manifest = MochitestDesktop.buildProfile(self, self.options)
         self.localProfile = self.options.profilePath
         self.log.debug("Profile created at %s" % self.localProfile)
         # some files are not needed for robocop; save time by not pushing
         shutil.rmtree(os.path.join(self.localProfile, 'webapps'))
-        desktop_extensions = ['mochikit@mozilla.org', 'worker-test@mozilla.org', 'workerbootstrap-test@mozilla.org']
-        for ext in desktop_extensions:
-            shutil.rmtree(os.path.join(self.localProfile, 'extensions', 'staged', ext))
         os.remove(os.path.join(self.localProfile, 'userChrome.css'))
         try:
             self.dm.pushDir(self.localProfile, self.remoteProfileCopy)
@@ -307,7 +313,7 @@ class RobocopTestRunner(Mochitest):
 
     def logTestSummary(self):
         """
-           Print a summary of all tests run to stdout, for treeherder parsing 
+           Print a summary of all tests run to stdout, for treeherder parsing
            (logging via self.log does not work here).
         """
         print("0 INFO TEST-START | Shutdown")
@@ -431,7 +437,7 @@ class RobocopTestRunner(Mochitest):
             self.dm.default_timeout = sys.maxint  # Forever.
             self.log.info("")
             self.log.info("Serving mochi.test Robocop root at http://%s:%s/tests/robocop/" %
-                         (self.options.remoteWebServer, self.options.httpPort))
+                          (self.options.remoteWebServer, self.options.httpPort))
             self.log.info("")
         result = -1
         log_result = -1
@@ -490,7 +496,7 @@ class RobocopTestRunner(Mochitest):
                 continue
             if 'disabled' in test:
                 self.log.info('TEST-INFO | skipping %s | %s' %
-                             (test['name'], test['disabled']))
+                              (test['name'], test['disabled']))
                 continue
             active_tests.append(test)
         self.log.suite_start([t['name'] for t in active_tests])

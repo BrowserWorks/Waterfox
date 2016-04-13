@@ -145,6 +145,11 @@ Telemetry.prototype = {
       userHistogram: "DEVTOOLS_JSPROFILER_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_JSPROFILER_TIME_ACTIVE_SECONDS"
     },
+    memory: {
+      histogram: "DEVTOOLS_MEMORY_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_MEMORY_OPENED_PER_USER_FLAG",
+      timerHistogram: "DEVTOOLS_MEMORY_TIME_ACTIVE_SECONDS"
+    },
     netmonitor: {
       histogram: "DEVTOOLS_NETMONITOR_OPENED_BOOLEAN",
       userHistogram: "DEVTOOLS_NETMONITOR_OPENED_PER_USER_FLAG",
@@ -191,6 +196,11 @@ Telemetry.prototype = {
       histogram: "DEVTOOLS_DEVELOPERTOOLBAR_OPENED_BOOLEAN",
       userHistogram: "DEVTOOLS_DEVELOPERTOOLBAR_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_DEVELOPERTOOLBAR_TIME_ACTIVE_SECONDS"
+    },
+    aboutdebugging: {
+      histogram: "DEVTOOLS_ABOUTDEBUGGING_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_ABOUTDEBUGGING_OPENED_PER_USER_FLAG",
+      timerHistogram: "DEVTOOLS_ABOUTDEBUGGING_TIME_ACTIVE_SECONDS"
     },
     webide: {
       histogram: "DEVTOOLS_WEBIDE_OPENED_BOOLEAN",

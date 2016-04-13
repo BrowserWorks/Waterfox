@@ -264,6 +264,37 @@ JsepSessionImpl::ReplaceTrack(const std::string& oldStreamId,
   return NS_OK;
 }
 
+nsresult
+JsepSessionImpl::SetParameters(const std::string& streamId,
+                               const std::string& trackId,
+                               const std::vector<JsepTrack::JsConstraints>& constraints)
+{
+  auto it = FindTrackByIds(mLocalTracks, streamId, trackId);
+
+  if (it == mLocalTracks.end()) {
+    JSEP_SET_ERROR("Track " << streamId << "/" << trackId << " was never added.");
+    return NS_ERROR_INVALID_ARG;
+  }
+  it->mTrack->SetJsConstraints(constraints);
+  return NS_OK;
+}
+
+nsresult
+JsepSessionImpl::GetParameters(const std::string& streamId,
+                               const std::string& trackId,
+                               std::vector<JsepTrack::JsConstraints>* outConstraints)
+{
+  auto it = FindTrackByIds(mLocalTracks, streamId, trackId);
+
+  if (it == mLocalTracks.end()) {
+    JSEP_SET_ERROR("Track " << streamId << "/" << trackId << " was never added.");
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  it->mTrack->GetJsConstraints(outConstraints);
+  return NS_OK;
+}
+
 std::vector<RefPtr<JsepTrack>>
 JsepSessionImpl::GetLocalTracks() const
 {
@@ -649,10 +680,9 @@ std::string
 JsepSessionImpl::GetLocalDescription() const
 {
   std::ostringstream os;
-  if (mPendingLocalDescription) {
-    mPendingLocalDescription->Serialize(os);
-  } else if (mCurrentLocalDescription) {
-    mCurrentLocalDescription->Serialize(os);
+  mozilla::Sdp* sdp = GetParsedLocalDescription();
+  if (sdp) {
+    sdp->Serialize(os);
   }
   return os.str();
 }
@@ -661,10 +691,9 @@ std::string
 JsepSessionImpl::GetRemoteDescription() const
 {
   std::ostringstream os;
-  if (mPendingRemoteDescription) {
-    mPendingRemoteDescription->Serialize(os);
-  } else if (mCurrentRemoteDescription) {
-    mCurrentRemoteDescription->Serialize(os);
+  mozilla::Sdp* sdp =  GetParsedRemoteDescription();
+  if (sdp) {
+    sdp->Serialize(os);
   }
   return os.str();
 }
@@ -2059,25 +2088,26 @@ JsepSessionImpl::SetupDefaultCodecs()
                                     ));
 
   // Supported video codecs.
-  JsepVideoCodecDescription* vp8 = new JsepVideoCodecDescription(
-      "120",
-      "VP8",
-      90000
-      );
-  // Defaults for mandatory params
-  vp8->mMaxFs = 12288;
-  vp8->mMaxFr = 60;
-  mSupportedCodecs.values.push_back(vp8);
-
+  // Note: order here implies priority for building offers!
   JsepVideoCodecDescription* vp9 = new JsepVideoCodecDescription(
       "121",
       "VP9",
       90000
       );
   // Defaults for mandatory params
-  vp9->mMaxFs = 12288;
-  vp9->mMaxFr = 60;
+  vp9->mConstraints.maxFs = 12288; // Enough for 2048x1536
+  vp9->mConstraints.maxFps = 60;
   mSupportedCodecs.values.push_back(vp9);
+
+  JsepVideoCodecDescription* vp8 = new JsepVideoCodecDescription(
+      "120",
+      "VP8",
+      90000
+      );
+  // Defaults for mandatory params
+  vp8->mConstraints.maxFs = 12288; // Enough for 2048x1536
+  vp8->mConstraints.maxFps = 60;
+  mSupportedCodecs.values.push_back(vp8);
 
   JsepVideoCodecDescription* h264_1 = new JsepVideoCodecDescription(
       "126",
@@ -2130,13 +2160,9 @@ JsepSessionImpl::AddRemoteIceCandidate(const std::string& candidate,
 {
   mLastError.clear();
 
-  mozilla::Sdp* sdp = 0;
+  mozilla::Sdp* sdp = GetParsedRemoteDescription();
 
-  if (mPendingRemoteDescription) {
-    sdp = mPendingRemoteDescription.get();
-  } else if (mCurrentRemoteDescription) {
-    sdp = mCurrentRemoteDescription.get();
-  } else {
+  if (!sdp) {
     JSEP_SET_ERROR("Cannot add ICE candidate in state " << GetStateStr(mState));
     return NS_ERROR_UNEXPECTED;
   }
@@ -2152,13 +2178,9 @@ JsepSessionImpl::AddLocalIceCandidate(const std::string& candidate,
 {
   mLastError.clear();
 
-  mozilla::Sdp* sdp = 0;
+  mozilla::Sdp* sdp = GetParsedLocalDescription();
 
-  if (mPendingLocalDescription) {
-    sdp = mPendingLocalDescription.get();
-  } else if (mCurrentLocalDescription) {
-    sdp = mCurrentLocalDescription.get();
-  } else {
+  if (!sdp) {
     JSEP_SET_ERROR("Cannot add ICE candidate in state " << GetStateStr(mState));
     return NS_ERROR_UNEXPECTED;
   }
@@ -2190,21 +2212,18 @@ JsepSessionImpl::AddLocalIceCandidate(const std::string& candidate,
 }
 
 nsresult
-JsepSessionImpl::EndOfLocalCandidates(const std::string& defaultCandidateAddr,
-                                      uint16_t defaultCandidatePort,
-                                      const std::string& defaultRtcpCandidateAddr,
-                                      uint16_t defaultRtcpCandidatePort,
-                                      uint16_t level)
+JsepSessionImpl::UpdateDefaultCandidate(
+    const std::string& defaultCandidateAddr,
+    uint16_t defaultCandidatePort,
+    const std::string& defaultRtcpCandidateAddr,
+    uint16_t defaultRtcpCandidatePort,
+    uint16_t level)
 {
   mLastError.clear();
 
-  mozilla::Sdp* sdp = 0;
+  mozilla::Sdp* sdp = GetParsedLocalDescription();
 
-  if (mPendingLocalDescription) {
-    sdp = mPendingLocalDescription.get();
-  } else if (mCurrentLocalDescription) {
-    sdp = mCurrentLocalDescription.get();
-  } else {
+  if (!sdp) {
     JSEP_SET_ERROR("Cannot add ICE candidate in state " << GetStateStr(mState));
     return NS_ERROR_UNEXPECTED;
   }
@@ -2240,6 +2259,42 @@ JsepSessionImpl::EndOfLocalCandidates(const std::string& defaultCandidateAddr,
       sdp,
       level,
       bundledMids);
+
+  return NS_OK;
+}
+
+nsresult
+JsepSessionImpl::EndOfLocalCandidates(uint16_t level)
+{
+  mLastError.clear();
+
+  mozilla::Sdp* sdp = GetParsedLocalDescription();
+
+  if (!sdp) {
+    JSEP_SET_ERROR("Cannot mark end of local ICE candidates in state "
+                   << GetStateStr(mState));
+    return NS_ERROR_UNEXPECTED;
+  }
+
+  if (level >= sdp->GetMediaSectionCount()) {
+    return NS_OK;
+  }
+
+  // If offer/answer isn't done, it is too early to tell whether this update
+  // needs to be applied to other m-sections.
+  SdpHelper::BundledMids bundledMids;
+  if (mState == kJsepStateStable) {
+    nsresult rv = GetNegotiatedBundledMids(&bundledMids);
+    if (NS_FAILED(rv)) {
+      MOZ_ASSERT(false);
+      mLastError += " (This should have been caught sooner!)";
+      return NS_ERROR_FAILURE;
+    }
+  }
+
+  mSdpHelper.SetIceGatheringComplete(sdp,
+                                     level,
+                                     bundledMids);
 
   return NS_OK;
 }
@@ -2286,6 +2341,30 @@ JsepSessionImpl::EnableOfferMsection(SdpMediaSection* msection)
   AddMid(osMid.str(), msection);
 
   return NS_OK;
+}
+
+mozilla::Sdp*
+JsepSessionImpl::GetParsedLocalDescription() const
+{
+  if (mPendingLocalDescription) {
+    return mPendingLocalDescription.get();
+  } else if (mCurrentLocalDescription) {
+    return mCurrentLocalDescription.get();
+  }
+
+  return nullptr;
+}
+
+mozilla::Sdp*
+JsepSessionImpl::GetParsedRemoteDescription() const
+{
+  if (mPendingRemoteDescription) {
+    return mPendingRemoteDescription.get();
+  } else if (mCurrentRemoteDescription) {
+    return mCurrentRemoteDescription.get();
+  }
+
+  return nullptr;
 }
 
 const Sdp*

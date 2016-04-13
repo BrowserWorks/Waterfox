@@ -10,8 +10,8 @@
 #include "mozilla/dom/mobilemessage/SmsParent.h"
 #include "mozilla/dom/mobilemessage/SmsTypes.h"
 #include "mozilla/dom/mobilemessage/Types.h"
-#include "mozilla/dom/MobileMessageThread.h"
-#include "mozilla/dom/SmsMessage.h"
+#include "MobileMessageThreadInternal.h"
+#include "SmsMessageInternal.h"
 #include "mozilla/Services.h"
 #include "nsIMobileMessageDatabaseService.h"
 #include "nsIObserverService.h"
@@ -24,14 +24,16 @@ namespace mozilla {
 
 /*static*/
 void
-SmsManager::NotifySmsReceived(jni::String::Param aSender,
+SmsManager::NotifySmsReceived(int32_t aId,
+                              jni::String::Param aSender,
                               jni::String::Param aBody,
                               int32_t aMessageClass,
+                              int64_t aSentTimestamp,
                               int64_t aTimestamp)
 {
     // TODO Need to correct the message `threadId` parameter value. Bug 859098
     SmsMessageData message;
-    message.id() = 0;
+    message.id() = aId;
     message.threadId() = 0;
     message.iccId() = EmptyString();
     message.delivery() = eDeliveryState_Received;
@@ -41,7 +43,7 @@ SmsManager::NotifySmsReceived(jni::String::Param aSender,
     message.body() = aBody ? nsString(aBody) : EmptyString();
     message.messageClass() = static_cast<MessageClass>(aMessageClass);
     message.timestamp() = aTimestamp;
-    message.sentTimestamp() = aTimestamp;
+    message.sentTimestamp() = aSentTimestamp;
     message.deliveryTimestamp() = aTimestamp;
     message.read() = false;
 
@@ -51,7 +53,7 @@ SmsManager::NotifySmsReceived(jni::String::Param aSender,
             return;
         }
 
-        nsCOMPtr<nsIDOMMozSmsMessage> domMessage = new SmsMessage(message);
+        nsCOMPtr<nsISmsMessage> domMessage = new SmsMessageInternal(message);
         obs->NotifyObservers(domMessage, kSmsReceivedObserverTopic, nullptr);
     });
     NS_DispatchToMainThread(runnable);
@@ -92,7 +94,7 @@ SmsManager::NotifySmsSent(int32_t aId,
             return;
         }
 
-        nsCOMPtr<nsIDOMMozSmsMessage> domMessage = new SmsMessage(message);
+        nsCOMPtr<nsISmsMessage> domMessage = new SmsMessageInternal(message);
         obs->NotifyObservers(domMessage, kSmsSentObserverTopic, nullptr);
 
         nsCOMPtr<nsIMobileMessageCallback> request =
@@ -137,7 +139,7 @@ SmsManager::NotifySmsDelivery(int32_t aId,
             return;
         }
 
-        nsCOMPtr<nsIDOMMozSmsMessage> domMessage = new SmsMessage(message);
+        nsCOMPtr<nsISmsMessage> domMessage = new SmsMessageInternal(message);
         const char* topic = (message.deliveryStatus() == eDeliveryStatus_Success)
                             ? kSmsDeliverySuccessObserverTopic
                             : kSmsDeliveryErrorObserverTopic;
@@ -201,7 +203,7 @@ SmsManager::NotifyGetSms(int32_t aId,
             return;
         }
 
-        nsCOMPtr<nsIDOMMozSmsMessage> domMessage = new SmsMessage(message);
+        nsCOMPtr<nsISmsMessage> domMessage = new SmsMessageInternal(message);
         request->NotifyMessageGot(domMessage);
     });
     NS_DispatchToMainThread(runnable);
@@ -313,10 +315,10 @@ SmsManager::NotifyThreadCursorResult(int64_t aId,
             return;
         }
 
-        nsCOMArray<nsIDOMMozMobileMessageThread> arr;
-        arr.AppendElement(new MobileMessageThread(thread));
+        nsCOMArray<nsIMobileMessageThread> arr;
+        arr.AppendElement(new MobileMessageThreadInternal(thread));
 
-        nsIDOMMozMobileMessageThread** elements;
+        nsIMobileMessageThread** elements;
         int32_t size;
         size = arr.Forget(&elements);
 
@@ -365,10 +367,10 @@ SmsManager::NotifyMessageCursorResult(int32_t aMessageId,
             return;
         }
 
-        nsCOMArray<nsIDOMMozSmsMessage> arr;
-        arr.AppendElement(new SmsMessage(message));
+        nsCOMArray<nsISmsMessage> arr;
+        arr.AppendElement(new SmsMessageInternal(message));
 
-        nsIDOMMozSmsMessage** elements;
+        nsISmsMessage** elements;
         int32_t size;
         size = arr.Forget(&elements);
 

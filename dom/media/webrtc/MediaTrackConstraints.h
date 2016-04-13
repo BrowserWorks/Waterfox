@@ -48,6 +48,9 @@ struct NormalizedConstraintSet
     template<class ConstrainRange>
     void SetFrom(const ConstrainRange& aOther);
     ValueType Clamp(ValueType n) const { return std::max(mMin, std::min(n, mMax)); }
+    ValueType Get(ValueType defaultValue) const {
+      return Clamp(mIdeal.WasPassed() ? mIdeal.Value() : defaultValue);
+    }
     bool Intersects(const Range& aOther) const {
       return mMax >= aOther.mMin && mMin <= aOther.mMax;
     }
@@ -69,15 +72,30 @@ struct NormalizedConstraintSet
                 bool advanced);
   };
 
+  struct BooleanRange : public Range<bool>
+  {
+    BooleanRange(const dom::OwningBooleanOrConstrainBooleanParameters& aOther,
+                 bool advanced);
+  };
+
   // Do you need to add your constraint here? Only if your code uses flattening
   LongRange mWidth, mHeight;
   DoubleRange mFrameRate;
+  LongRange mViewportOffsetX, mViewportOffsetY, mViewportWidth, mViewportHeight;
+  BooleanRange mEchoCancellation, mMozNoiseSuppression, mMozAutoGainControl;
 
   NormalizedConstraintSet(const dom::MediaTrackConstraintSet& aOther,
                           bool advanced)
   : mWidth(aOther.mWidth, advanced)
   , mHeight(aOther.mHeight, advanced)
-  , mFrameRate(aOther.mFrameRate, advanced) {}
+  , mFrameRate(aOther.mFrameRate, advanced)
+  , mViewportOffsetX(aOther.mViewportOffsetX, advanced)
+  , mViewportOffsetY(aOther.mViewportOffsetY, advanced)
+  , mViewportWidth(aOther.mViewportWidth, advanced)
+  , mViewportHeight(aOther.mViewportHeight, advanced)
+  , mEchoCancellation(aOther.mEchoCancellation, advanced)
+  , mMozNoiseSuppression(aOther.mMozNoiseSuppression, advanced)
+  , mMozAutoGainControl(aOther.mMozAutoGainControl, advanced) {}
 };
 
 struct FlattenedConstraints : public NormalizedConstraintSet
@@ -109,18 +127,19 @@ protected:
 
   template<class DeviceType>
   static bool
-  AreUnfitSettings(const dom::MediaTrackConstraints &aConstraints,
-                   nsTArray<RefPtr<DeviceType>>& aSources)
+  SomeSettingsFit(const dom::MediaTrackConstraints &aConstraints,
+                  nsTArray<RefPtr<DeviceType>>& aSources)
   {
     nsTArray<const dom::MediaTrackConstraintSet*> aggregateConstraints;
     aggregateConstraints.AppendElement(&aConstraints);
 
+    MOZ_ASSERT(aSources.Length());
     for (auto& source : aSources) {
       if (source->GetBestFitnessDistance(aggregateConstraints) != UINT32_MAX) {
-        return false;
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
 public:
@@ -160,38 +179,42 @@ public:
       // of the sources. Unfortunately, this is a bit laborious to find out, and
       // requires updating as new constraints are added!
 
+      if (!unsatisfactory.Length() ||
+          !SomeSettingsFit(dom::MediaTrackConstraints(), unsatisfactory)) {
+        return "";
+      }
       if (c.mDeviceId.IsConstrainDOMStringParameters()) {
         dom::MediaTrackConstraints fresh;
         fresh.mDeviceId = c.mDeviceId;
-        if (AreUnfitSettings(fresh, unsatisfactory)) {
+        if (!SomeSettingsFit(fresh, unsatisfactory)) {
           return "deviceId";
         }
       }
       if (c.mWidth.IsConstrainLongRange()) {
         dom::MediaTrackConstraints fresh;
         fresh.mWidth = c.mWidth;
-        if (AreUnfitSettings(fresh, unsatisfactory)) {
+        if (!SomeSettingsFit(fresh, unsatisfactory)) {
           return "width";
         }
       }
       if (c.mHeight.IsConstrainLongRange()) {
         dom::MediaTrackConstraints fresh;
         fresh.mHeight = c.mHeight;
-        if (AreUnfitSettings(fresh, unsatisfactory)) {
+        if (!SomeSettingsFit(fresh, unsatisfactory)) {
           return "height";
         }
       }
       if (c.mFrameRate.IsConstrainDoubleRange()) {
         dom::MediaTrackConstraints fresh;
         fresh.mFrameRate = c.mFrameRate;
-        if (AreUnfitSettings(fresh, unsatisfactory)) {
+        if (!SomeSettingsFit(fresh, unsatisfactory)) {
           return "frameRate";
         }
       }
       if (c.mFacingMode.IsConstrainDOMStringParameters()) {
         dom::MediaTrackConstraints fresh;
         fresh.mFacingMode = c.mFacingMode;
-        if (AreUnfitSettings(fresh, unsatisfactory)) {
+        if (!SomeSettingsFit(fresh, unsatisfactory)) {
           return "facingMode";
         }
       }

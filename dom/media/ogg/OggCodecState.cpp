@@ -32,7 +32,7 @@
 
 namespace mozilla {
 
-extern PRLogModuleInfo* gMediaDecoderLog;
+extern LazyLogModule gMediaDecoderLog;
 #define LOG(type, msg) MOZ_LOG(gMediaDecoderLog, type, msg)
 
 /** Decoder base class for Ogg-encapsulated streams. */
@@ -1448,7 +1448,7 @@ bool SkeletonState::DecodeFisbone(ogg_packet* aPacket)
     }
     msgLength--;
     msgProbe++;
-  };
+  }
 
   if (!mMsgFieldStore.Contains(serialno)) {
     mMsgFieldStore.Put(serialno, field.forget());

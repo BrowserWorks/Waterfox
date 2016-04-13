@@ -73,6 +73,7 @@ config = {
                 "--quiet",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
+                "--extra-profile-file=fonts",
                 "--screenshot-on-fail",
             ],
         },
@@ -128,7 +129,6 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--bootstrap",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s",
@@ -140,6 +140,7 @@ config = {
                 "%(modules_dir)s",
                 "--symbols-path=%(symbols_path)s",
                 "--total-chunks=16",
+                "--extra-profile-file=fonts",
                 "--suite=reftest",
             ],
             "tests": ["tests/layout/reftests/reftest.list"],
@@ -150,7 +151,6 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--bootstrap",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s",
@@ -172,7 +172,6 @@ config = {
             "options": [
                 "--app=%(app)s",
                 "--ignore-window-size",
-                "--bootstrap",
                 "--remote-webserver=%(remote_webserver)s",
                 "--xre-path=%(xre_path)s",
                 "--utility-path=%(utility_path)s",

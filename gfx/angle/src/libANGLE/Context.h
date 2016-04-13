@@ -55,7 +55,7 @@ class VertexArray;
 class Sampler;
 class TransformFeedback;
 
-class Context final : angle::NonCopyable
+class Context final : public ValidationContext
 {
   public:
     Context(const egl::Config *config, int clientVersion, const Context *shareContext, rx::Renderer *renderer, bool notifyResets, bool robustAccess);
@@ -153,6 +153,9 @@ class Context final : angle::NonCopyable
 
     bool isSampler(GLuint samplerName) const;
 
+    bool isVertexArrayGenerated(GLuint vertexArray);
+    bool isTransformFeedbackGenerated(GLuint vertexArray);
+
     void getBooleanv(GLenum pname, GLboolean *params);
     void getFloatv(GLenum pname, GLfloat *params);
     void getIntegerv(GLenum pname, GLint *params);
@@ -193,22 +196,15 @@ class Context final : angle::NonCopyable
     void pushGroupMarker(GLsizei length, const char *marker);
     void popGroupMarker();
 
-    void recordError(const Error &error);
+    void recordError(const Error &error) override;
 
     GLenum getError();
     GLenum getResetStatus();
     virtual bool isResetNotificationEnabled();
 
-    virtual int getClientVersion() const;
-
     const egl::Config *getConfig() const;
     EGLenum getClientType() const;
     EGLenum getRenderBuffer() const;
-
-    const Caps &getCaps() const;
-    const TextureCapsMap &getTextureCaps() const;
-    const Extensions &getExtensions() const;
-    const Limitations &getLimitations() const;
 
     const std::string &getRendererString() const;
 
@@ -219,13 +215,14 @@ class Context final : angle::NonCopyable
     rx::Renderer *getRenderer() { return mRenderer; }
 
     State &getState() { return mState; }
-    const State &getState() const { return mState; }
 
-    const Data &getData() const { return mData; }
     void syncRendererState();
     void syncRendererState(const State::DirtyBits &bitMask);
 
   private:
+    void checkVertexArrayAllocation(GLuint vertexArray);
+    void checkTransformFeedbackAllocation(GLuint transformFeedback);
+
     void detachBuffer(GLuint buffer);
     void detachTexture(GLuint texture);
     void detachFramebuffer(GLuint framebuffer);
@@ -274,7 +271,6 @@ class Context final : angle::NonCopyable
     VertexArrayMap mVertexArrayMap;
     HandleAllocator mVertexArrayHandleAllocator;
 
-    BindingPointer<TransformFeedback> mTransformFeedbackZero;
     typedef std::map<GLuint, TransformFeedback*> TransformFeedbackMap;
     TransformFeedbackMap mTransformFeedbackMap;
     HandleAllocator mTransformFeedbackAllocator;
@@ -296,9 +292,6 @@ class Context final : angle::NonCopyable
     egl::Surface *mCurrentSurface;
 
     ResourceManager *mResourceManager;
-
-    // Cache the Data object to avoid re-calling the constructor
-    Data mData;
 };
 
 }

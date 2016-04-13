@@ -35,7 +35,6 @@
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/SizePrintfMacros.h"
 
-#include "asmjs/AsmJSValidate.h"
 #include "jit/arm/Assembler-arm.h"
 #include "jit/arm/disasm/Constants-arm.h"
 #include "jit/AtomicOperations.h"
@@ -4463,7 +4462,7 @@ Simulator::execute()
             int32_t rpc = resume_pc_;
             if (MOZ_UNLIKELY(rpc != 0)) {
                 // AsmJS signal handler ran and we have to adjust the pc.
-                JSRuntime::innermostAsmJSActivation()->setResumePC((void*)get_pc());
+                JSRuntime::innermostWasmActivation()->setResumePC((void*)get_pc());
                 set_pc(rpc);
                 resume_pc_ = 0;
             }
@@ -4597,7 +4596,7 @@ Simulator::callInternal(uint8_t* entry)
     }
 }
 
-int64_t
+int32_t
 Simulator::call(uint8_t* entry, int argument_count, ...)
 {
     va_list parameters;
@@ -4634,7 +4633,7 @@ Simulator::call(uint8_t* entry, int argument_count, ...)
     MOZ_ASSERT(entry_stack == get_register(sp));
     set_register(sp, original_stack);
 
-    int64_t result = (int64_t(get_register(r1)) << 32) | get_register(r0);
+    int32_t result = get_register(r0);
     return result;
 }
 

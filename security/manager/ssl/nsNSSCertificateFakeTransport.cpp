@@ -31,7 +31,7 @@ nsNSSCertificateFakeTransport::~nsNSSCertificateFakeTransport()
 }
 
 NS_IMETHODIMP
-nsNSSCertificateFakeTransport::GetDbKey(char**)
+nsNSSCertificateFakeTransport::GetDbKey(nsACString&)
 {
   NS_NOTREACHED("Unimplemented on content process");
   return NS_ERROR_NOT_IMPLEMENTED;
@@ -480,7 +480,9 @@ nsNSSCertListFakeTransport::Read(nsIObjectInputStream* aStream)
     }
 
     nsCOMPtr<nsIX509Cert> cert = do_QueryInterface(certSupports);
-    mFakeCertList.append(cert);
+    if (!mFakeCertList.append(cert)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
   }
 
   return rv;

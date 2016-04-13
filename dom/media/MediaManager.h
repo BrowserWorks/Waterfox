@@ -51,7 +51,7 @@ struct MediaTrackConstraints;
 struct MediaTrackConstraintSet;
 } // namespace dom
 
-extern PRLogModuleInfo* GetMediaManagerLog();
+extern LogModule* GetMediaManagerLog();
 #define MM_LOG(msg) MOZ_LOG(GetMediaManagerLog(), mozilla::LogLevel::Debug, msg)
 
 class MediaDevice : public nsIMediaDevice
@@ -134,7 +134,7 @@ public:
 
   ~GetUserMediaCallbackMediaStreamListener()
   {
-    unused << mMediaThread;
+    Unused << mMediaThread;
     // It's OK to release mStream on any thread; they have thread-safe
     // refcounts.
   }
@@ -415,6 +415,7 @@ public:
   // from MediaManager thread.
   static MediaManager* Get();
   static MediaManager* GetIfExists();
+  static void StartupInit();
   static void PostTask(const tracked_objects::Location& from_here, Task* task);
 #ifdef DEBUG
   static bool IsInMediaThread();

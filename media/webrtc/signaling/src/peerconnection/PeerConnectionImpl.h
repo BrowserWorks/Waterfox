@@ -81,6 +81,7 @@ class RTCCertificate;
 struct RTCConfiguration;
 struct RTCIceServer;
 struct RTCOfferOptions;
+struct RTCRtpParameters;
 #ifdef USE_FAKE_MEDIA_STREAMS
 typedef Fake_MediaStreamTrack MediaStreamTrack;
 #else
@@ -316,11 +317,12 @@ public:
                                 NrIceCtx::ConnectionState state);
   void IceGatheringStateChange(NrIceCtx* ctx,
                                NrIceCtx::GatheringState state);
-  void EndOfLocalCandidates(const std::string& defaultAddr,
-                            uint16_t defaultPort,
-                            const std::string& defaultRtcpAddr,
-                            uint16_t defaultRtcpPort,
-                            uint16_t level);
+  void UpdateDefaultCandidate(const std::string& defaultAddr,
+                              uint16_t defaultPort,
+                              const std::string& defaultRtcpAddr,
+                              uint16_t defaultRtcpPort,
+                              uint16_t level);
+  void EndOfLocalCandidates(uint16_t level);
   void IceStreamReady(NrIceMediaStream *aStream);
 
   static void ListenThread(void *aData);
@@ -440,6 +442,37 @@ public:
                                mozilla::dom::MediaStreamTrack& aWithTrack)
   {
     rv = ReplaceTrack(aThisTrack, aWithTrack);
+  }
+
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  NS_IMETHODIMP_TO_ERRORRESULT(SetParameters, ErrorResult &rv,
+                               dom::MediaStreamTrack& aTrack,
+                               const dom::RTCRtpParameters& aParameters)
+  {
+    rv = SetParameters(aTrack, aParameters);
+  }
+
+  NS_IMETHODIMP_TO_ERRORRESULT(GetParameters, ErrorResult &rv,
+                               dom::MediaStreamTrack& aTrack,
+                               dom::RTCRtpParameters& aOutParameters)
+  {
+    rv = GetParameters(aTrack, aOutParameters);
+  }
+#endif
+
+  nsresult
+  SetParameters(dom::MediaStreamTrack& aTrack,
+                const std::vector<JsepTrack::JsConstraints>& aConstraints);
+
+  nsresult
+  GetParameters(dom::MediaStreamTrack& aTrack,
+                std::vector<JsepTrack::JsConstraints>* aOutConstraints);
+
+  NS_IMETHODIMP_TO_ERRORRESULT(SelectSsrc, ErrorResult &rv,
+                               dom::MediaStreamTrack& aRecvTrack,
+                               unsigned short aSsrcIndex)
+  {
+    rv = SelectSsrc(aRecvTrack, aSsrcIndex);
   }
 
   nsresult GetPeerIdentity(nsAString& peerIdentity)
@@ -704,6 +737,8 @@ private:
   void RecordLongtermICEStatistics();
 
   void OnNegotiationNeeded();
+  static void MaybeFireNegotiationNeeded_static(const std::string& pcHandle);
+  void MaybeFireNegotiationNeeded();
 
   // Timecard used to measure processing time. This should be the first class
   // attribute so that we accurately measure the time required to instantiate
@@ -796,7 +831,7 @@ private:
 
   bool mTrickle;
 
-  bool mShouldSuppressNegotiationNeeded;
+  bool mNegotiationNeeded;
 
   // storage for Telemetry data
   uint16_t mMaxReceiving[SdpMediaSection::kMediaTypes];

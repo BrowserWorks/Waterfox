@@ -25,11 +25,11 @@ function MapForEach(callbackfn, thisArg = undefined) {
     /* Step 6-8. */
     var entries = callFunction(std_Map_iterator, M);
     while (true) {
-        var result = callFunction(std_Map_iterator_next, entries);
+        var result = callFunction(MapIteratorNext, entries);
         if (result.done)
             break;
         var entry = result.value;
-        callFunction(callbackfn, thisArg, entry[1], entry[0], M);
+        callContentFunction(callbackfn, thisArg, entry[1], entry[0], M);
     }
 }
 
@@ -88,3 +88,4 @@ function MapSpecies() {
     // Step 1.
     return this;
 }
+_SetCanonicalName(MapSpecies, "get [Symbol.species]");

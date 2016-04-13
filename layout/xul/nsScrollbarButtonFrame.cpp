@@ -222,16 +222,14 @@ void nsScrollbarButtonFrame::Notify()
 }
 
 void
-nsScrollbarButtonFrame::MouseClicked(nsPresContext* aPresContext,
-                                     WidgetGUIEvent* aEvent) 
+nsScrollbarButtonFrame::MouseClicked(WidgetGUIEvent* aEvent)
 {
-  nsButtonBoxFrame::MouseClicked(aPresContext, aEvent);
+  nsButtonBoxFrame::MouseClicked(aEvent);
   //MouseClicked();
 }
 
 nsresult
-nsScrollbarButtonFrame::GetChildWithTag(nsPresContext* aPresContext,
-                                        nsIAtom* atom, nsIFrame* start,
+nsScrollbarButtonFrame::GetChildWithTag(nsIAtom* atom, nsIFrame* start,
                                         nsIFrame*& result)
 {
   // recursively search our children
@@ -252,7 +250,7 @@ nsScrollbarButtonFrame::GetChildWithTag(nsPresContext* aPresContext,
     }
 
      // recursive search the child
-     GetChildWithTag(aPresContext, atom, childFrame, result);
+     GetChildWithTag(atom, childFrame, result);
      if (result != nullptr) 
        return NS_OK;
 

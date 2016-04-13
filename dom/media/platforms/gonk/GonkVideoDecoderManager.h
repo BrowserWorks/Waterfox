@@ -15,6 +15,7 @@
 #include "GonkNativeWindow.h"
 #include "GonkNativeWindowClient.h"
 #include "mozilla/layers/FenceUtils.h"
+#include "mozilla/UniquePtr.h"
 #include <ui/Fence.h>
 
 using namespace android;
@@ -29,6 +30,7 @@ namespace mozilla {
 
 namespace layers {
 class TextureClient;
+class TextureClientRecycleAllocator;
 } // namespace mozilla::layers
 
 class GonkVideoDecoderManager : public GonkDecoderManager {
@@ -36,8 +38,6 @@ typedef android::MediaCodecProxy MediaCodecProxy;
 typedef mozilla::layers::TextureClient TextureClient;
 
 public:
-  typedef MozPromise<bool /* aIgnored */, bool /* aIgnored */, /* IsExclusive = */ true> MediaResourcePromise;
-
   GonkVideoDecoderManager(mozilla::layers::ImageContainer* aImageContainer,
                           const VideoInfo& aConfig);
 
@@ -50,7 +50,23 @@ public:
 
   nsresult Shutdown() override;
 
+  const char* GetDescriptionName() const override
+  {
+    return "gonk video decoder";
+  }
+
   static void RecycleCallback(TextureClient* aClient, void* aClosure);
+
+protected:
+  // Bug 1199809: workaround to avoid sending the graphic buffer by making a
+  // copy of output buffer after calling flush(). Bug 1203859 was created to
+  // reimplementing Gonk PDM on top of OpenMax IL directly. Its buffer
+  // management will work better with Gecko and solve problems like this.
+  void ProcessFlush() override
+  {
+    mNeedsCopyBuffer = true;
+    GonkDecoderManager::ProcessFlush();
+  }
 
 private:
   struct FrameInfo
@@ -68,33 +84,14 @@ private:
 
   void onMessageReceived(const android::sp<android::AMessage> &aMessage) override;
 
-  class VideoResourceListener : public android::MediaCodecProxy::CodecResourceListener
-  {
-  public:
-    VideoResourceListener();
-    ~VideoResourceListener();
-
-    RefPtr<MediaResourcePromise> Init()
-    {
-      RefPtr<MediaResourcePromise> p = mVideoCodecPromise.Ensure(__func__);
-      return p.forget();
-    }
-
-    void codecReserved() override;
-    void codecCanceled() override;
-
-  private:
-    // Forbidden
-    VideoResourceListener(const VideoResourceListener &rhs) = delete;
-    const VideoResourceListener &operator=(const VideoResourceListener &rhs) = delete;
-
-    MozPromiseHolder<MediaResourcePromise> mVideoCodecPromise;
-  };
-
   bool SetVideoFormat();
 
-  nsresult CreateVideoData(int64_t aStreamOffset, VideoData** aOutData);
-  void ReleaseVideoBuffer();
+  nsresult CreateVideoData(MediaBuffer* aBuffer, int64_t aStreamOffset, VideoData** aOutData);
+  already_AddRefed<VideoData> CreateVideoDataFromGraphicBuffer(android::MediaBuffer* aSource,
+                                                               gfx::IntRect& aPicture);
+  already_AddRefed<VideoData> CreateVideoDataFromDataBuffer(android::MediaBuffer* aSource,
+                                                            gfx::IntRect& aPicture);
+
   uint8_t* GetColorConverterBuffer(int32_t aWidth, int32_t aHeight);
 
   // For codec resource management
@@ -113,20 +110,22 @@ private:
   nsIntSize mInitialFrame;
 
   RefPtr<layers::ImageContainer> mImageContainer;
-
-  android::MediaBuffer* mVideoBuffer;
+  RefPtr<layers::TextureClientRecycleAllocator> mCopyAllocator;
 
   MediaInfo mInfo;
-  android::sp<VideoResourceListener> mVideoListener;
-  MozPromiseRequestHolder<MediaResourcePromise> mVideoCodecRequest;
+  MozPromiseRequestHolder<android::MediaCodecProxy::CodecPromise> mVideoCodecRequest;
   FrameInfo mFrameInfo;
 
   // color converter
   android::I420ColorConverterHelper mColorConverter;
-  nsAutoArrayPtr<uint8_t> mColorConverterBuffer;
+  UniquePtr<uint8_t[]> mColorConverterBuffer;
   size_t mColorConverterBufferSize;
 
   android::sp<android::GonkNativeWindow> mNativeWindow;
+#if ANDROID_VERSION >= 21
+  android::sp<android::IGraphicBufferProducer> mGraphicBufferProducer;
+#endif
+
   enum {
     kNotifyPostReleaseBuffer = 'nprb',
   };
@@ -146,6 +145,10 @@ private:
   // This TaskQueue should be the same one in mDecodeCallback->OnReaderTaskQueue().
   // It is for codec resource mangement, decoding task should not dispatch to it.
   RefPtr<TaskQueue> mReaderTaskQueue;
+
+  // Bug 1199809: do we need to make a copy of output buffer? Used only when
+  // the decoder outputs graphic buffers.
+  bool mNeedsCopyBuffer;
 };
 
 } // namespace mozilla

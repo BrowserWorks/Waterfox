@@ -527,8 +527,10 @@ WINDOW_EVENT(popstate,
              eBasicEventClass)
 // Not supported yet
 // WINDOW_EVENT(redo)
-// Not supported yet
-// WINDOW_EVENT(storage)
+WINDOW_EVENT(storage,
+             eStorage,
+             EventNameType_HTMLBodyOrFramesetOnly,
+             eBasicEventClass)
 // Not supported yet
 // WINDOW_EVENT(undo)
 WINDOW_EVENT(unload,
@@ -543,6 +545,10 @@ WINDOW_ONLY_EVENT(devicemotion,
                   eBasicEventClass)
 WINDOW_ONLY_EVENT(deviceorientation,
                   eDeviceOrientation,
+                  EventNameType_None,
+                  eBasicEventClass)
+WINDOW_ONLY_EVENT(absolutedeviceorientation,
+                  eAbsoluteDeviceOrientation,
                   EventNameType_None,
                   eBasicEventClass)
 WINDOW_ONLY_EVENT(deviceproximity,
@@ -918,6 +924,7 @@ NON_IDL_EVENT(MozEdgeUICompleted,
               EventNameType_None,
               eSimpleGestureEventClass)
 
+// CSS Transition & Animation events:
 NON_IDL_EVENT(transitionend,
               eTransitionEnd,
               EventNameType_None,
@@ -932,6 +939,24 @@ NON_IDL_EVENT(animationend,
               eAnimationEventClass)
 NON_IDL_EVENT(animationiteration,
               eAnimationIteration,
+              EventNameType_None,
+              eAnimationEventClass)
+
+// Webkit-prefixed versions of Transition & Animation events, for web compat:
+NON_IDL_EVENT(webkitTransitionEnd,
+              eWebkitTransitionEnd,
+              EventNameType_None,
+              eTransitionEventClass)
+NON_IDL_EVENT(webkitAnimationEnd,
+              eWebkitAnimationEnd,
+              EventNameType_None,
+              eAnimationEventClass)
+NON_IDL_EVENT(webkitAnimationIteration,
+              eWebkitAnimationIteration,
+              EventNameType_None,
+              eAnimationEventClass)
+NON_IDL_EVENT(webkitAnimationStart,
+              eWebkitAnimationStart,
               EventNameType_None,
               eAnimationEventClass)
 

@@ -50,23 +50,18 @@ protected:
   ~OggReader();
 
 public:
-  virtual nsresult Init() override;
-  virtual nsresult ResetDecode() override;
-  virtual bool DecodeAudioData() override;
+  nsresult Init() override;
+  nsresult ResetDecode() override;
+  bool DecodeAudioData() override;
 
   // If the Theora granulepos has not been captured, it may read several packets
   // until one with a granulepos has been captured, to ensure that all packets
   // read have valid time info.
-  virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
-                                int64_t aTimeThreshold) override;
+  bool DecodeVideoFrame(bool &aKeyframeSkip, int64_t aTimeThreshold) override;
 
-  virtual nsresult ReadMetadata(MediaInfo* aInfo,
-                                MetadataTags** aTags) override;
-  virtual RefPtr<SeekPromise>
-  Seek(int64_t aTime, int64_t aEndTime) override;
-  virtual media::TimeIntervals GetBuffered() override;
-
-  virtual bool IsMediaSeekable() override;
+  nsresult ReadMetadata(MediaInfo* aInfo, MetadataTags** aTags) override;
+  RefPtr<SeekPromise> Seek(int64_t aTime, int64_t aEndTime) override;
+  media::TimeIntervals GetBuffered() override;
 
 private:
   bool HasAudio() {
@@ -254,7 +249,7 @@ private:
 
   // Set this media as being a chain and notifies the state machine that the
   // media is no longer seekable.
-  void SetChained(bool aIsChained);
+  void SetChained();
 
   // Returns the next Ogg packet for an bitstream/codec state. Returns a
   // pointer to an ogg_packet on success, or nullptr if the read failed.

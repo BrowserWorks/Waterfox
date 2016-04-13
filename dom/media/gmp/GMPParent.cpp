@@ -16,6 +16,7 @@
 #include "nsIWritablePropertyBag2.h"
 #include "mozIGeckoMediaPluginService.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
+#include "mozilla/SSE.h"
 #include "mozilla/SyncRunnable.h"
 #include "mozilla/unused.h"
 #include "nsIObserverService.h"
@@ -43,7 +44,7 @@ namespace mozilla {
 #undef LOG
 #undef LOGD
 
-extern PRLogModuleInfo* GetGMPLog();
+extern LogModule* GetGMPLog();
 #define LOG(level, x, ...) MOZ_LOG(GetGMPLog(), (level), (x, ##__VA_ARGS__))
 #define LOGD(x, ...) LOG(mozilla::LogLevel::Debug, "GMPParent[%p|childPid=%d] " x, this, mChildPid, ##__VA_ARGS__)
 
@@ -73,8 +74,6 @@ GMPParent::GMPParent()
 
 GMPParent::~GMPParent()
 {
-  // Can't Close or Destroy the process here, since destruction is MainThread only
-  MOZ_ASSERT(NS_IsMainThread());
   LOGD("GMPParent dtor");
 
   MOZ_ASSERT(!mProcess);
@@ -122,7 +121,7 @@ void
 GMPParent::Crash()
 {
   if (mState != GMPStateNotLoaded) {
-    unused << SendCrashPluginNow();
+    Unused << SendCrashPluginNow();
   }
 }
 
@@ -233,7 +232,7 @@ GMPParent::EnsureAsyncShutdownTimeoutSet()
   rv = mAsyncShutdownTimeout->InitWithFuncCallback(
     &AbortWaitingForGMPAsyncShutdown, this, timeout,
     nsITimer::TYPE_ONE_SHOT);
-  unused << NS_WARN_IF(NS_FAILED(rv));
+  Unused << NS_WARN_IF(NS_FAILED(rv));
   return rv;
 }
 
@@ -584,7 +583,7 @@ void
 GMPParent::GetCrashID(nsString& aResult)
 {
   CrashReporterParent* cr =
-    static_cast<CrashReporterParent*>(LoneManagedOrNull(ManagedPCrashReporterParent()));
+    static_cast<CrashReporterParent*>(LoneManagedOrNullAsserts(ManagedPCrashReporterParent()));
   if (NS_WARN_IF(!cr)) {
     return;
   }
@@ -868,6 +867,12 @@ GMPParent::ReadGMPMetaData()
       }
     }
 
+    // We support the current GMPDecryptor version, and the previous.
+    // We Adapt the previous to the current in the GMPContentChild.
+    if (cap->mAPIName.EqualsLiteral(GMP_API_DECRYPTOR_BACKWARDS_COMPAT)) {
+      cap->mAPIName.AssignLiteral(GMP_API_DECRYPTOR);
+    }
+
     if (cap->mAPIName.EqualsLiteral(GMP_API_DECRYPTOR)) {
       mCanDecrypt = true;
 
@@ -880,6 +885,20 @@ GMPParent::ReadGMPMetaData()
         return NS_ERROR_FAILURE;
       }
 #endif
+#ifdef XP_WIN
+      // Adobe GMP doesn't work without SSE2. Check the tags to see if
+      // the decryptor is for the Adobe GMP, and refuse to load it if
+      // SSE2 isn't supported.
+      for (const nsCString& tag : cap->mAPITags) {
+        if (!tag.EqualsLiteral("com.adobe.primetime")) {
+          continue;
+        }
+        if (!mozilla::supports_sse2()) {
+          return NS_ERROR_FAILURE;
+        }
+        break;
+      }
+#endif // XP_WIN
     }
 
     mCapabilities.AppendElement(cap);
@@ -932,7 +951,7 @@ GMPParent::GetVersion() const
   return mVersion;
 }
 
-const uint32_t
+uint32_t
 GMPParent::GetPluginId() const
 {
   return mPluginId;
@@ -1066,6 +1085,12 @@ GMPParent::Bridge(GMPServiceParent* aGMPServiceParent)
   }
   ++mGMPContentChildCount;
   return true;
+}
+
+nsString
+GMPParent::GetPluginBaseName() const
+{
+  return NS_LITERAL_STRING("gmp-") + mName;
 }
 
 } // namespace gmp

@@ -51,24 +51,6 @@
 #include "DataChannel.h"
 #include "DataChannelProtocol.h"
 
-PRLogModuleInfo*
-GetDataChannelLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog)
-    sLog = PR_NewLogModule("DataChannel");
-  return sLog;
-}
-
-PRLogModuleInfo*
-GetSCTPLog()
-{
-  static PRLogModuleInfo* sLog;
-  if (!sLog)
-    sLog = PR_NewLogModule("SCTP");
-  return sLog;
-}
-
 // Let us turn on and off important assertions in non-debug builds
 #ifdef DEBUG
 #define ASSERT_WEBRTC(x) MOZ_ASSERT((x))
@@ -79,6 +61,9 @@ GetSCTPLog()
 static bool sctp_initialized;
 
 namespace mozilla {
+
+LazyLogModule gDataChannelLog("DataChannel");
+static LazyLogModule gSCTPLog("SCTP");
 
 class DataChannelShutdown : public nsIObserver
 {
@@ -138,7 +123,6 @@ public:
 
 NS_IMPL_ISUPPORTS(DataChannelShutdown, nsIObserver);
 
-
 BufferedMsg::BufferedMsg(struct sctp_sendv_spa &spa, const char *data,
                          size_t length) : mLength(length)
 {
@@ -170,7 +154,7 @@ debug_printf(const char *format, ...)
   va_list ap;
   char buffer[1024];
 
-  if (MOZ_LOG_TEST(GetSCTPLog(), LogLevel::Debug)) {
+  if (MOZ_LOG_TEST(gSCTPLog, LogLevel::Debug)) {
     va_start(ap, format);
 #ifdef _WIN32
     if (vsnprintf_s(buffer, sizeof(buffer), _TRUNCATE, format, ap) > 0) {
@@ -327,7 +311,7 @@ DataChannelConnection::Init(unsigned short aPort, uint16_t aNumStreams, bool aUs
       }
 
       // Set logging to SCTP:LogLevel::Debug to get SCTP debugs
-      if (MOZ_LOG_TEST(GetSCTPLog(), LogLevel::Debug)) {
+      if (MOZ_LOG_TEST(gSCTPLog, LogLevel::Debug)) {
         usrsctp_sysctl_set_sctp_debug_on(SCTP_DEBUG_ALL);
       }
 
@@ -671,7 +655,7 @@ void
 DataChannelConnection::SctpDtlsInput(TransportFlow *flow,
                                      const unsigned char *data, size_t len)
 {
-  if (MOZ_LOG_TEST(GetSCTPLog(), LogLevel::Debug)) {
+  if (MOZ_LOG_TEST(gSCTPLog, LogLevel::Debug)) {
     char *buf;
 
     if ((buf = usrsctp_dumppacket((void *)data, len, SCTP_DUMP_INBOUND)) != nullptr) {
@@ -701,7 +685,7 @@ DataChannelConnection::SctpDtlsOutput(void *addr, void *buffer, size_t length,
   DataChannelConnection *peer = static_cast<DataChannelConnection *>(addr);
   int res;
 
-  if (MOZ_LOG_TEST(GetSCTPLog(), LogLevel::Debug)) {
+  if (MOZ_LOG_TEST(gSCTPLog, LogLevel::Debug)) {
     char *buf;
 
     if ((buf = usrsctp_dumppacket(buffer, length, SCTP_DUMP_OUTBOUND)) != nullptr) {
@@ -714,7 +698,7 @@ DataChannelConnection::SctpDtlsOutput(void *addr, void *buffer, size_t length,
   // SCTP has an option for Apple, on IP connections only, to release at least
   // one of the locks before calling a packet output routine; with changes to
   // the underlying SCTP stack this might remove the need to use an async proxy.
-  if (0 /*peer->IsSTSThread()*/) {
+  if ((0 /*peer->IsSTSThread()*/)) {
     res = peer->SendPacket(static_cast<unsigned char *>(buffer), length, false);
   } else {
     unsigned char *data = new unsigned char[length];
@@ -1794,7 +1778,7 @@ DataChannelConnection::HandleStreamResetEvent(const struct sctp_stream_reset_eve
 
           LOG(("Disconnected DataChannel %p from connection %p",
                (void *) channel.get(), (void *) channel->mConnection.get()));
-          channel->Destroy();
+          channel->DestroyLocked();
           // At this point when we leave here, the object is a zombie held alive only by the DOM object
         } else {
           LOG(("Can't find incoming channel %d",i));
@@ -1814,7 +1798,6 @@ void
 DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_event *strchg)
 {
   uint16_t stream;
-  uint32_t i;
   RefPtr<DataChannel> channel;
 
   if (strchg->strchange_flags == SCTP_STREAM_CHANGE_DENIED) {
@@ -1849,7 +1832,7 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
 
       // Make sure we request enough streams if there's a big jump in streams
       // Could make a more complex API for OpenXxxFinish() and avoid this loop
-      int32_t num_needed = mPending.GetSize();
+      size_t num_needed = mPending.GetSize();
       LOG(("%d of %d new streams already needed", num_needed,
            new_len - old_len));
       num_needed -= (new_len - old_len); // number we added
@@ -1869,7 +1852,7 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
     // else probably not a change in # of streams
   }
 
-  for (i = 0; i < mStreams.Length(); ++i) {
+  for (uint32_t i = 0; i < mStreams.Length(); ++i) {
     channel = mStreams[i];
     if (!channel)
       continue;
@@ -1900,7 +1883,6 @@ DataChannelConnection::HandleStreamChangeEvent(const struct sctp_stream_change_e
     }
   }
 }
-
 
 // Called with mLock locked!
 void
@@ -2380,7 +2362,7 @@ public:
     if (!NS_IsMainThread() && mConnection) {
       MOZ_ASSERT(false);
       // explicitly leak the connection if destroyed off mainthread
-      unused << mConnection.forget().take();
+      Unused << mConnection.forget().take();
     }
   }
 
@@ -2520,7 +2502,7 @@ DataChannelConnection::CloseInt(DataChannel *aChannel)
   aChannel->mState = CLOSING;
   if (mState == CLOSED) {
     // we're not going to hang around waiting
-    channel->Destroy();
+    channel->DestroyLocked();
   }
   // At this point when we leave here, the object is a zombie held alive only by the DOM object
 }
@@ -2574,13 +2556,15 @@ void
 DataChannel::Close()
 {
   ENSURE_DATACONNECTION;
+  RefPtr<DataChannelConnection> connection(mConnection);
   mConnection->Close(this);
 }
 
 // Used when disconnecting from the DataChannelConnection
 void
-DataChannel::Destroy()
+DataChannel::DestroyLocked()
 {
+  mConnection->mLock.AssertCurrentThreadOwns();
   ENSURE_DATACONNECTION;
 
   LOG(("Destroying Data channel %u", mStream));

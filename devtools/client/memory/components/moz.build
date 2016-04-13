@@ -4,13 +4,14 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DevToolsModules(
-    'frame.js',
+    'census-header.js',
+    'census-tree-item.js',
+    'census.js',
+    'dominator-tree-header.js',
+    'dominator-tree-item.js',
+    'dominator-tree.js',
     'heap.js',
     'list.js',
     'snapshot-list-item.js',
     'toolbar.js',
-    'tree-item.js',
-    'tree.js',
 )
-
-MOCHITEST_CHROME_MANIFESTS += ['test/mochitest/chrome.ini']

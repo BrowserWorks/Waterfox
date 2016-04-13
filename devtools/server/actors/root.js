@@ -95,6 +95,8 @@ function RootActor(aConnection, aParameters) {
   this._onTabListChanged = this.onTabListChanged.bind(this);
   this._onAddonListChanged = this.onAddonListChanged.bind(this);
   this._onWorkerListChanged = this.onWorkerListChanged.bind(this);
+  this._onServiceWorkerRegistrationListChanged = this.onServiceWorkerRegistrationListChanged.bind(this);
+  this._onProcessListChanged = this.onProcessListChanged.bind(this);
   this._extraActors = {};
 
   this._globalActorPool = new ActorPool(this.conn);
@@ -176,6 +178,9 @@ RootActor.prototype = {
     // Whether or not the MemoryActor's heap snapshot abilities are
     // fully equipped to handle heap snapshots for the memory tool. Fx44+
     heapSnapshots: true,
+    // Whether or not the timeline actor can emit DOMContentLoaded and Load
+    // markers, currently in use by the network monitor. Fx45+
+    documentLoadingMarkers: true
   },
 
   /**
@@ -201,6 +206,9 @@ RootActor.prototype = {
     }
     if (this._parameters.addonList) {
       this._parameters.addonList.onListChanged = null;
+    }
+    if (this._parameters.workerList) {
+      this._parameters.workerList.onListChanged = null;
     }
     if (typeof this._parameters.onShutdown === 'function') {
       this._parameters.onShutdown();
@@ -383,16 +391,52 @@ RootActor.prototype = {
     this._parameters.workerList.onListChanged = null;
   },
 
-  onListProcesses: function () {
-    let processes = [];
-    for (let i = 0; i < ppmm.childCount; i++) {
-      processes.push({
-        id: i, // XXX: may not be a perfect id, but process message manager doesn't expose anything...
-        parent: i == 0, // XXX Weak, but appear to be stable
-        tabCount: undefined, // TODO: exposes process message manager on frameloaders in order to compute this
-      });
+  onListServiceWorkerRegistrations: function () {
+    let registrationList = this._parameters.serviceWorkerRegistrationList;
+    if (!registrationList) {
+      return { from: this.actorID, error: "noServiceWorkerRegistrations",
+               message: "This root actor has no service worker registrations." };
     }
-    return { processes: processes };
+
+    return registrationList.getList().then(actors => {
+      let pool = new ActorPool(this.conn);
+      for (let actor of actors) {
+        pool.addActor(actor);
+      }
+
+      this.conn.removeActorPool(this._serviceWorkerRegistrationActorPool);
+      this._serviceWorkerRegistrationActorPool = pool;
+      this.conn.addActorPool(this._serviceWorkerRegistrationActorPool);
+
+      registrationList.onListChanged = this._onServiceWorkerRegistrationListChanged;
+
+      return {
+        "from": this.actorID,
+        "registrations": actors.map(actor => actor.form())
+      };
+    });
+  },
+
+  onServiceWorkerRegistrationListChanged: function () {
+    this.conn.send({ from: this.actorID, type: "serviceWorkerRegistrationListChanged" });
+    this._parameters.serviceWorkerRegistrationList.onListChanged = null;
+  },
+
+  onListProcesses: function () {
+    let { processList } = this._parameters;
+    if (!processList) {
+      return { from: this.actorID, error: "noProcesses",
+               message: "This root actor has no processes." };
+    }
+    processList.onListChanged = this._onProcessListChanged;
+    return {
+      processes: processList.getList()
+    };
+  },
+
+  onProcessListChanged: function () {
+    this.conn.send({ from: this.actorID, type: "processListChanged" });
+    this._parameters.processList.onListChanged = null;
   },
 
   onGetProcess: function (aRequest) {
@@ -470,6 +514,7 @@ RootActor.prototype.requestTypes = {
   "getTab": RootActor.prototype.onGetTab,
   "listAddons": RootActor.prototype.onListAddons,
   "listWorkers": RootActor.prototype.onListWorkers,
+  "listServiceWorkerRegistrations": RootActor.prototype.onListServiceWorkerRegistrations,
   "listProcesses": RootActor.prototype.onListProcesses,
   "getProcess": RootActor.prototype.onGetProcess,
   "echo": RootActor.prototype.onEcho,

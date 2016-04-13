@@ -28,11 +28,10 @@ WindowSurfaceGLX::WindowSurfaceGLX(const FunctionsGLX &glx,
       mWindow(0),
       mDisplay(display),
       mGLX(glx),
-      mGLXDisplay(*glxDisplay),
+      mGLXDisplay(glxDisplay),
       mContext(context),
       mFBConfig(fbConfig),
-      mGLXWindow(0),
-      mMaxSwapInterval(1)
+      mGLXWindow(0)
 {
 }
 
@@ -48,17 +47,31 @@ WindowSurfaceGLX::~WindowSurfaceGLX()
         XDestroyWindow(mDisplay, mWindow);
     }
 
-    mGLXDisplay.syncXCommands();
+    mGLXDisplay->syncXCommands();
 }
 
 egl::Error WindowSurfaceGLX::initialize()
 {
+    // Check that the window's visual ID is valid, as part of the AMGLE_x11_visual
+    // extension.
+    {
+        XWindowAttributes windowAttributes;
+        XGetWindowAttributes(mDisplay, mParent, &windowAttributes);
+        int visualId = windowAttributes.visual->visualid;
+
+        if (!mGLXDisplay->isValidWindowVisualId(visualId))
+        {
+            return egl::Error(EGL_BAD_MATCH,
+                              "The visual of native_window doesn't match the visual given with "
+                              "ANGLE_X11_VISUAL_ID");
+        }
+    }
+
     // The visual of the X window, GLX window and GLX context must match,
     // however we received a user-created window that can have any visual
     // and wouldn't work with our GLX context. To work in all cases, we
     // create a child window with the right visual that covers all of its
     // parent.
-
     XVisualInfo *visualInfo = mGLX.getVisualFromFBConfig(mFBConfig);
     if (!visualInfo)
     {
@@ -95,18 +108,13 @@ egl::Error WindowSurfaceGLX::initialize()
                             0, visualInfo->depth, InputOutput, visual, attributeMask, &attributes);
     mGLXWindow = mGLX.createWindow(mFBConfig, mWindow, nullptr);
 
-    if (mGLX.hasExtension("GLX_EXT_swap_control"))
-    {
-        mGLX.queryDrawable(mGLXWindow, GLX_MAX_SWAP_INTERVAL_EXT, &mMaxSwapInterval);
-    }
-
     XMapWindow(mDisplay, mWindow);
     XFlush(mDisplay);
 
     XFree(visualInfo);
     XFreeColormap(mDisplay, colormap);
 
-    mGLXDisplay.syncXCommands();
+    mGLXDisplay->syncXCommands();
 
     return egl::Error(EGL_SUCCESS);
 }
@@ -140,6 +148,7 @@ egl::Error WindowSurfaceGLX::swap()
         mGLX.waitX();
     }
 
+    mGLXDisplay->setSwapInterval(mGLXWindow, &mSwapControl);
     mGLX.swapBuffers(mGLXWindow);
 
     return egl::Error(EGL_SUCCESS);
@@ -157,7 +166,7 @@ egl::Error WindowSurfaceGLX::querySurfacePointerANGLE(EGLint attribute, void **v
     return egl::Error(EGL_SUCCESS);
 }
 
-egl::Error WindowSurfaceGLX::bindTexImage(EGLint buffer)
+egl::Error WindowSurfaceGLX::bindTexImage(gl::Texture *texture, EGLint buffer)
 {
     UNIMPLEMENTED();
     return egl::Error(EGL_SUCCESS);
@@ -171,12 +180,7 @@ egl::Error WindowSurfaceGLX::releaseTexImage(EGLint buffer)
 
 void WindowSurfaceGLX::setSwapInterval(EGLint interval)
 {
-    if (mGLX.hasExtension("GLX_EXT_swap_control"))
-    {
-        // TODO(cwallez) error checking?
-        const int realInterval = std::min(interval, static_cast<int>(mMaxSwapInterval));
-        mGLX.swapIntervalEXT(mGLXWindow, realInterval);
-    }
+    mSwapControl.targetSwapInterval = interval;
 }
 
 EGLint WindowSurfaceGLX::getWidth() const

@@ -133,10 +133,14 @@ TEST_FLAVORS = {
         'mach_command': 'mochitest',
         'kwargs': {'flavor': 'browser-chrome', 'test_paths': []},
     },
-    'chrashtest': { },
+    'crashtest': {},
     'chrome': {
         'mach_command': 'mochitest',
         'kwargs': {'flavor': 'chrome', 'test_paths': []},
+    },
+    'marionette': {
+        'mach_command': 'marionette-test',
+        'kwargs': {'tests': []},
     },
     'mochitest': {
         'mach_command': 'mochitest',
@@ -146,7 +150,7 @@ TEST_FLAVORS = {
         'mach_command': 'reftest',
         'kwargs': {'tests': []}
     },
-    'steeplechase': { },
+    'steeplechase': {},
     'web-platform-tests': {
         'mach_command': 'web-platform-tests',
         'kwargs': {'include': []}
@@ -160,7 +164,6 @@ TEST_FLAVORS = {
         'kwargs': {'test_paths': []},
     },
 }
-
 
 for i in range(1, MOCHITEST_TOTAL_CHUNKS + 1):
     TEST_SUITES['mochitest-%d' %i] = {
@@ -524,7 +527,8 @@ class PushToTry(MachCommandBase):
             sys.exit(1)
 
         try:
-            talos = self.normalise_list(kwargs["talos"]) if kwargs["talos"] else []
+            talos = (self.normalise_list(kwargs["talos"], allow_subitems=True)
+                     if kwargs["talos"] else [])
         except ValueError as e:
             print("Error parsing -t argument:\n%s" % e.message)
             sys.exit(1)
@@ -532,9 +536,9 @@ class PushToTry(MachCommandBase):
         paths = []
         for p in kwargs["paths"]:
             p = os.path.normpath(os.path.abspath(p))
-            if not p.startswith(self.topsrcdir):
-                print('Specified path "%s" is outside of the srcdir, unable to'
-                      ' specify tests outside of the srcdir' % p)
+            if not (os.path.isdir(p) and p.startswith(self.topsrcdir)):
+                print('Specified path "%s" is not a directory under the srcdir,'
+                      ' unable to specify tests outside of the srcdir' % p)
                 sys.exit(1)
             if len(p) <= len(self.topsrcdir):
                 print('Specified path "%s" is at the top of the srcdir and would'

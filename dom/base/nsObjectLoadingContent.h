@@ -287,15 +287,14 @@ class nsObjectLoadingContent : public nsImageLoadingContent
       eSupportDocuments    = 1u << 2, // Documents are supported
                                         // (nsIDocumentLoaderFactory)
                                         // This flag always includes SVG
-      eSupportSVG          = 1u << 3, // SVG is supported (image/svg+xml)
-      eSupportClassID      = 1u << 4, // The classid attribute is supported
+      eSupportClassID      = 1u << 3, // The classid attribute is supported
 
       // If possible to get a *plugin* type from the type attribute *or* file
       // extension, we can use that type and begin loading the plugin before
       // opening a channel.
       // A side effect of this is if the channel fails, the plugin is still
       // running.
-      eAllowPluginSkipChannel  = 1u << 5
+      eAllowPluginSkipChannel  = 1u << 4
     };
 
     /**
@@ -519,7 +518,27 @@ class nsObjectLoadingContent : public nsImageLoadingContent
      */
     nsPluginFrame* GetExistingFrame();
 
-    bool IsYoutubeEmbed();
+    /**
+     * Used for identifying whether we can rewrite a youtube flash embed to
+     * possibly use HTML5 instead.
+     *
+     * Returns true if plugin.rewrite_youtube_embeds pref is true and the
+     * element this nsObjectLoadingContent instance represents:
+     *
+     * - is an embed or object node
+     * - has a URL pointing at the youtube.com domain, using "/v/" style video
+     *   path reference, and without enablejsapi=1 in the path
+     *
+     * Having the enablejsapi flag means the document that contains the element
+     * could possibly be manipulating the youtube video elsewhere on the page
+     * via javascript. We can't rewrite these kinds of elements without possibly
+     * breaking content, which we want to avoid.
+     *
+     * If we can rewrite the URL, we change the "/v/" to "/embed/", and change
+     * our type to eType_Document so that we render similarly to an iframe
+     * embed.
+     */
+    bool ShouldRewriteYoutubeEmbed(nsIURI* uri);
 
     // Helper class for SetupProtoChain
     class SetupProtoChainRunner final : public nsIRunnable

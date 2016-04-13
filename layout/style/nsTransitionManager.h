@@ -10,6 +10,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/ContentEvents.h"
+#include "mozilla/EffectCompositor.h" // For EffectCompositor::CascadeLevel
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/KeyframeEffect.h"
@@ -37,8 +38,12 @@ struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
   ElementPropertyTransition(nsIDocument* aDocument,
                             dom::Element* aTarget,
                             nsCSSPseudoElements::Type aPseudoType,
-                            const AnimationTiming &aTiming)
+                            const TimingParams &aTiming,
+                            StyleAnimationValue aStartForReversingTest,
+                            double aReversePortion)
     : dom::KeyframeEffectReadOnly(aDocument, aTarget, aPseudoType, aTiming)
+    , mStartForReversingTest(aStartForReversingTest)
+    , mReversePortion(aReversePortion)
   { }
 
   ElementPropertyTransition* AsTransition() override { return this; }
@@ -114,8 +119,6 @@ public:
 
   void CancelFromStyle() override
   {
-    mOwningElement = OwningElementRef();
-
     // The animation index to use for compositing will be established when
     // this transition next transitions out of the idle state but we still
     // update it now so that the sort order of this transition remains
@@ -126,13 +129,27 @@ public:
     mNeedsNewAnimationIndexWhenRun = true;
 
     Animation::CancelFromStyle();
+
+    // It is important we do this *after* calling CancelFromStyle().
+    // This is because CancelFromStyle() will end up posting a restyle and
+    // that restyle should target the *transitions* level of the cascade.
+    // However, once we clear the owning element, CascadeLevel() will begin
+    // returning CascadeLevel::Animations.
+    mOwningElement = OwningElementRef();
   }
 
   void Tick() override;
 
   nsCSSProperty TransitionProperty() const;
 
-  bool HasLowerCompositeOrderThan(const Animation& aOther) const override;
+  bool HasLowerCompositeOrderThan(const CSSTransition& aOther) const;
+  EffectCompositor::CascadeLevel CascadeLevel() const override
+  {
+    return IsTiedToMarkup() ?
+           EffectCompositor::CascadeLevel::Transitions :
+           EffectCompositor::CascadeLevel::Animations;
+  }
+
   void SetCreationSequence(uint64_t aIndex)
   {
     MOZ_ASSERT(IsTiedToMarkup());
@@ -159,7 +176,6 @@ protected:
   }
 
   // Animation overrides
-  CommonAnimationManager* GetAnimationManager() const override;
   void UpdateTiming(SeekFlag aSeekFlag,
                     SyncNotifyFlag aSyncNotifyFlag) override;
 
@@ -202,7 +218,7 @@ struct TransitionEventInfo {
   TransitionEventInfo(dom::Element* aElement,
                       nsCSSPseudoElements::Type aPseudoType,
                       nsCSSProperty aProperty,
-                      TimeDuration aDuration,
+                      StickyTimeDuration aDuration,
                       const TimeStamp& aTimeStamp,
                       dom::Animation* aAnimation)
     : mElement(aElement)
@@ -241,8 +257,8 @@ public:
   {
   }
 
-  NS_DECL_CYCLE_COLLECTION_CLASS(nsTransitionManager)
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(nsTransitionManager)
+  NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(nsTransitionManager)
 
   typedef mozilla::AnimationCollection AnimationCollection;
 
@@ -276,13 +292,6 @@ public:
                                  nsCSSPseudoElements::Type aPseudoType,
                                  nsStyleContext* aNewStyleContext);
 
-  void UpdateCascadeResultsWithTransitions(AnimationCollection* aTransitions);
-  void UpdateCascadeResultsWithAnimations(AnimationCollection* aAnimations);
-  void UpdateCascadeResultsWithAnimationsToBeDestroyed(
-         const AnimationCollection* aAnimations);
-  void UpdateCascadeResults(AnimationCollection* aTransitions,
-                            AnimationCollection* aAnimations);
-
   void SetInAnimationOnlyStyleUpdate(bool aInAnimationOnlyUpdate) {
     mInAnimationOnlyStyleUpdate = aInAnimationOnlyUpdate;
   }
@@ -291,18 +300,17 @@ public:
     return mInAnimationOnlyStyleUpdate;
   }
 
-  virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
-    MOZ_MUST_OVERRIDE override;
-  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
-    MOZ_MUST_OVERRIDE override;
-
   void QueueEvent(mozilla::TransitionEventInfo&& aEventInfo)
   {
     mEventDispatcher.QueueEvent(
       mozilla::Forward<mozilla::TransitionEventInfo>(aEventInfo));
   }
 
-  void DispatchEvents()  { mEventDispatcher.DispatchEvents(mPresContext); }
+  void DispatchEvents()
+  {
+    RefPtr<nsTransitionManager> kungFuDeathGrip(this);
+    mEventDispatcher.DispatchEvents(mPresContext);
+  }
   void SortEvents()      { mEventDispatcher.SortEvents(); }
   void ClearEventQueue() { mEventDispatcher.ClearEventQueue(); }
 

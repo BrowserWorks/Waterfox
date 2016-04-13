@@ -61,10 +61,8 @@ const MS_IN_ONE_HOUR  = 60 * 60 * 1000;
 const MS_IN_ONE_DAY   = 24 * MS_IN_ONE_HOUR;
 
 const PREF_BRANCH = "toolkit.telemetry.";
-const PREF_ENABLED = PREF_BRANCH + "enabled";
 const PREF_SERVER = PREF_BRANCH + "server";
 const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
-const PREF_FHR_SERVICE_ENABLED = "datareporting.healthreport.service.enabled";
 
 const DATAREPORTING_DIR = "datareporting";
 const ABORTED_PING_FILE_NAME = "aborted-session-ping";
@@ -434,7 +432,7 @@ function run_test() {
   do_get_profile();
   loadAddonManager(APP_ID, APP_NAME, APP_VERSION, PLATFORM_VERSION);
 
-  Services.prefs.setBoolPref(PREF_ENABLED, true);
+  Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);
   Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, true);
 
   // Make it look like we've previously failed to lock a profile a couple times.
@@ -560,7 +558,7 @@ add_task(function* test_saveLoadPing() {
   }
 
   // We decode both requests to check for the |reason|.
-  let pings = [for (req of requests) decodeRequestPayload(req)];
+  let pings = Array.from(requests, decodeRequestPayload);
 
   // Check we have the correct two requests. Ordering is not guaranteed. The ping type
   // is encoded in the URL.

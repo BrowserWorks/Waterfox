@@ -26,7 +26,6 @@
 #include "AndroidBridge.h"
 #include <map>
 class PluginEventRunnable;
-class SharedPluginTexture;
 #endif
 
 #include "mozilla/TimeStamp.h"
@@ -83,6 +82,8 @@ private:
   typedef mozilla::PluginLibrary PluginLibrary;
 
 public:
+  typedef mozilla::gfx::DrawTarget DrawTarget;
+
   MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsNPAPIPluginInstance)
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIAUDIOCHANNELAGENTCALLBACK
@@ -108,8 +109,8 @@ public:
   nsresult NotifyPainted(void);
   nsresult GetIsOOP(bool* aIsOOP);
   nsresult SetBackgroundUnknown();
-  nsresult BeginUpdateBackground(nsIntRect* aRect, gfxContext** aContext);
-  nsresult EndUpdateBackground(gfxContext* aContext, nsIntRect* aRect);
+  nsresult BeginUpdateBackground(nsIntRect* aRect, DrawTarget** aContext);
+  nsresult EndUpdateBackground(nsIntRect* aRect);
   nsresult IsTransparent(bool* isTransparent);
   nsresult GetFormValue(nsAString& aValue);
   nsresult PushPopupsEnabledState(bool aEnabled);
@@ -121,6 +122,7 @@ public:
   nsresult GetJSContext(JSContext* *outContext);
   nsPluginInstanceOwner* GetOwner();
   void SetOwner(nsPluginInstanceOwner *aOwner);
+  void DidComposite();
 
   bool HasAudioChannelAgent() const
   {
@@ -202,13 +204,9 @@ public:
     GLuint mInternalFormat;
   };
 
-  TextureInfo LockContentTexture();
-  void ReleaseContentTexture(TextureInfo& aTextureInfo);
-
   // For ANPNativeWindow
   void* AcquireContentWindow();
 
-  EGLImage AsEGLImage();
   mozilla::gl::AndroidSurfaceTexture* AsSurfaceTexture();
 
   // For ANPVideo
@@ -292,6 +290,11 @@ public:
 
   void URLRedirectResponse(void* notifyData, NPBool allow);
 
+  NPError InitAsyncSurface(NPSize *size, NPImageFormat format,
+                           void *initData, NPAsyncSurface *surface);
+  NPError FinalizeAsyncSurface(NPAsyncSurface *surface);
+  void SetCurrentAsyncSurface(NPAsyncSurface *surface, NPRect *changed);
+
   // Called when the instance fails to instantiate beceause the Carbon
   // event model is not supported.
   void CarbonNPAPIFailure();
@@ -348,7 +351,6 @@ protected:
   bool mFullScreen;
   mozilla::gl::OriginPos mOriginPos;
 
-  RefPtr<SharedPluginTexture> mContentTexture;
   RefPtr<mozilla::gl::AndroidSurfaceTexture> mContentSurface;
 #endif
 
@@ -399,7 +401,6 @@ private:
   mozilla::TimeStamp mStopTime;
 
 #ifdef MOZ_WIDGET_ANDROID
-  void EnsureSharedTexture();
   already_AddRefed<mozilla::gl::AndroidSurfaceTexture> CreateSurfaceTexture();
 
   std::map<void*, VideoInfo*> mVideos;

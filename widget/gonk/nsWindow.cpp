@@ -25,7 +25,6 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "gfxContext.h"
 #include "gfxPlatform.h"
-#include "gfxUtils.h"
 #include "GLContextProvider.h"
 #include "GLContext.h"
 #include "GLContextEGL.h"
@@ -66,8 +65,6 @@ static nsWindow *gFocusedWindow = nullptr;
 NS_IMPL_ISUPPORTS_INHERITED0(nsWindow, nsBaseWidget)
 
 nsWindow::nsWindow()
-    : mFramebuffer(nullptr)
-    , mMappedBuffer(nullptr)
 {
     RefPtr<nsScreenManagerGonk> screenManager = nsScreenManagerGonk::GetInstance();
     screenManager->Initialize();
@@ -258,7 +255,7 @@ private:
 nsresult
 nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                      TouchPointerState aPointerState,
-                                     nsIntPoint aPointerScreenPoint,
+                                     ScreenIntPoint aPointerScreenPoint,
                                      double aPointerPressure,
                                      uint32_t aPointerOrientation,
                                      nsIObserver* aObserver)
@@ -286,7 +283,7 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
         if (index >= 0) {
             // found an existing touch point, update it
             SingleTouchData& point = mSynthesizedTouchInput->mTouches[index];
-            point.mScreenPoint = ScreenIntPoint::FromUntyped(aPointerScreenPoint);
+            point.mScreenPoint = aPointerScreenPoint;
             point.mRotationAngle = (float)aPointerOrientation;
             point.mForce = (float)aPointerPressure;
             inputToDispatch.mType = MultiTouchInput::MULTITOUCH_MOVE;
@@ -294,7 +291,7 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
             // new touch point, add it
             mSynthesizedTouchInput->mTouches.AppendElement(SingleTouchData(
                 (int32_t)aPointerId,
-                ScreenIntPoint::FromUntyped(aPointerScreenPoint),
+                aPointerScreenPoint,
                 ScreenSize(0, 0),
                 (float)aPointerOrientation,
                 (float)aPointerPressure));
@@ -312,7 +309,7 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
             : MultiTouchInput::MULTITOUCH_CANCEL);
         inputToDispatch.mTouches.AppendElement(SingleTouchData(
             (int32_t)aPointerId,
-            ScreenIntPoint::FromUntyped(aPointerScreenPoint),
+            aPointerScreenPoint,
             ScreenSize(0, 0),
             (float)aPointerOrientation,
             (float)aPointerPressure));
@@ -330,10 +327,10 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
 }
 
 NS_IMETHODIMP
-nsWindow::Create(nsIWidget *aParent,
-                 void *aNativeParent,
-                 const nsIntRect &aRect,
-                 nsWidgetInitData *aInitData)
+nsWindow::Create(nsIWidget* aParent,
+                 void* aNativeParent,
+                 const LayoutDeviceIntRect& aRect,
+                 nsWidgetInitData* aInitData)
 {
     BaseCreate(aParent, aRect, aInitData);
 
@@ -451,8 +448,8 @@ nsWindow::Resize(double aX,
                  double aHeight,
                  bool   aRepaint)
 {
-    mBounds = nsIntRect(NSToIntRound(aX), NSToIntRound(aY),
-                        NSToIntRound(aWidth), NSToIntRound(aHeight));
+    mBounds = LayoutDeviceIntRect(NSToIntRound(aX), NSToIntRound(aY),
+                                  NSToIntRound(aWidth), NSToIntRound(aHeight));
     if (mWidgetListener) {
         mWidgetListener->WindowResized(this, mBounds.width, mBounds.height);
     }
@@ -498,7 +495,7 @@ nsWindow::ConfigureChildren(const nsTArray<nsIWidget::Configuration>&)
 }
 
 NS_IMETHODIMP
-nsWindow::Invalidate(const nsIntRect &aRect)
+nsWindow::Invalidate(const LayoutDeviceIntRect& aRect)
 {
     nsWindow *top = mParent;
     while (top && top->mParent) {
@@ -537,7 +534,13 @@ nsWindow::GetNativeData(uint32_t aDataType)
     case NS_NATIVE_WINDOW:
         // Called before primary display's EGLSurface creation.
         return mScreen->GetNativeWindow();
+    case NS_NATIVE_OPENGL_CONTEXT:
+        return mScreen->GetGLContext().take();
+    case NS_RAW_NATIVE_IME_CONTEXT:
+        // There is only one IME context on Gonk.
+        return NS_ONLY_ONE_NATIVE_IME_CONTEXT;
     }
+
     return nullptr;
 }
 
@@ -579,8 +582,6 @@ nsWindow::SetInputContext(const InputContext& aContext,
 NS_IMETHODIMP_(InputContext)
 nsWindow::GetInputContext()
 {
-    // There is only one IME context on Gonk.
-    mInputContext.mNativeIMEContext = nullptr;
     return mInputContext;
 }
 
@@ -619,116 +620,17 @@ nsWindow::MakeFullScreen(bool aFullScreen, nsIScreen*)
     return NS_OK;
 }
 
-static gralloc_module_t const*
-gralloc_module()
-{
-    hw_module_t const *module;
-    if (hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module)) {
-        return nullptr;
-    }
-    return reinterpret_cast<gralloc_module_t const*>(module);
-}
-
-static SurfaceFormat
-HalFormatToSurfaceFormat(int aHalFormat)
-{
-    switch (aHalFormat) {
-    case HAL_PIXEL_FORMAT_RGBA_8888:
-        // Needs RB swap
-        return SurfaceFormat::B8G8R8A8;
-    case HAL_PIXEL_FORMAT_RGBX_8888:
-        // Needs RB swap
-        return SurfaceFormat::B8G8R8X8;
-    case HAL_PIXEL_FORMAT_BGRA_8888:
-        return SurfaceFormat::B8G8R8A8;
-    case HAL_PIXEL_FORMAT_RGB_565:
-        return SurfaceFormat::R5G6B5_UINT16;
-    default:
-        MOZ_CRASH("Unhandled HAL pixel format");
-        return SurfaceFormat::UNKNOWN; // not reached
-    }
-}
-
-static bool
-NeedsRBSwap(int aHalFormat)
-{
-    switch (aHalFormat) {
-    case HAL_PIXEL_FORMAT_RGBA_8888:
-        return true;
-    case HAL_PIXEL_FORMAT_RGBX_8888:
-        return true;
-    case HAL_PIXEL_FORMAT_BGRA_8888:
-        return false;
-    case HAL_PIXEL_FORMAT_RGB_565:
-        return false;
-    default:
-        MOZ_CRASH("Unhandled HAL pixel format");
-        return false; // not reached
-    }
-}
-
-
 already_AddRefed<DrawTarget>
 nsWindow::StartRemoteDrawing()
 {
-    mFramebuffer = mScreen->DequeueBuffer();
-    int width = mFramebuffer->width, height = mFramebuffer->height;
-    if (gralloc_module()->lock(gralloc_module(), mFramebuffer->handle,
-                               GRALLOC_USAGE_SW_READ_NEVER |
-                               GRALLOC_USAGE_SW_WRITE_OFTEN |
-                               GRALLOC_USAGE_HW_FB,
-                               0, 0, width, height,
-                               reinterpret_cast<void**>(&mMappedBuffer))) {
-        EndRemoteDrawing();
-        return nullptr;
-    }
-    SurfaceFormat format = HalFormatToSurfaceFormat(mScreen->GetSurfaceFormat());
-    mFramebufferTarget = Factory::CreateDrawTargetForData(
-        BackendType::CAIRO,
-        mMappedBuffer,
-        IntSize(width, height),
-        mFramebuffer->stride * gfx::BytesPerPixel(format),
-        format);
-    if (!mFramebufferTarget) {
-        MOZ_CRASH("nsWindow::StartRemoteDrawing failed in CreateDrawTargetForData");
-    }
-    if (!mBackBuffer ||
-        mBackBuffer->GetSize() != mFramebufferTarget->GetSize() ||
-        mBackBuffer->GetFormat() != mFramebufferTarget->GetFormat()) {
-        mBackBuffer = mFramebufferTarget->CreateSimilarDrawTarget(
-            mFramebufferTarget->GetSize(), mFramebufferTarget->GetFormat());
-    }
-    RefPtr<DrawTarget> buffer(mBackBuffer);
+    RefPtr<DrawTarget> buffer = mScreen->StartRemoteDrawing();
     return buffer.forget();
 }
 
 void
 nsWindow::EndRemoteDrawing()
 {
-    if (mFramebufferTarget && mFramebuffer) {
-        IntSize size = mFramebufferTarget->GetSize();
-        Rect rect(0, 0, size.width, size.height);
-        RefPtr<SourceSurface> source = mBackBuffer->Snapshot();
-        mFramebufferTarget->DrawSurface(source, rect, rect);
-
-        // Convert from BGR to RGB
-        // XXX this is a temporary solution. It consumes extra cpu cycles,
-        // it should not be used on product device.
-        if (NeedsRBSwap(mScreen->GetSurfaceFormat())) {
-            LOGE("Very slow composition path, it should not be used on product!!!");
-            SurfaceFormat format = HalFormatToSurfaceFormat(mScreen->GetSurfaceFormat());
-            gfxUtils::ConvertBGRAtoRGBA(
-                mMappedBuffer,
-                mFramebuffer->stride * mFramebuffer->height * gfx::BytesPerPixel(format));
-            mMappedBuffer = nullptr;
-            gralloc_module()->unlock(gralloc_module(), mFramebuffer->handle);
-        }
-    }
-    if (mFramebuffer) {
-        mScreen->QueueBuffer(mFramebuffer);
-    }
-    mFramebuffer = nullptr;
-    mFramebufferTarget = nullptr;
+    mScreen->EndRemoteDrawing();
 }
 
 float
@@ -747,7 +649,7 @@ nsWindow::GetDefaultScaleInternal()
     if (dpi < 200.0) {
         return 1.0; // mdpi devices.
     }
-    if (dpi < 300.0) {
+    if (dpi < 280.0) {
         return 1.5; // hdpi devices.
     }
     // xhdpi devices and beyond.
@@ -785,8 +687,11 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
     }
 
     CreateCompositor();
-    if (mCompositorParent && mScreen->IsPrimaryScreen()) {
-        mComposer2D->SetCompositorParent(mCompositorParent);
+    if (mCompositorParent) {
+        mScreen->SetCompositorParent(mCompositorParent);
+        if (mScreen->IsPrimaryScreen()) {
+            mComposer2D->SetCompositorParent(mCompositorParent);
+        }
     }
     MOZ_ASSERT(mLayerManager);
     return mLayerManager;
@@ -795,9 +700,12 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
 void
 nsWindow::DestroyCompositor()
 {
-    if (mCompositorParent && mScreen->IsPrimaryScreen()) {
-        // Unset CompositorParent
-        mComposer2D->SetCompositorParent(nullptr);
+    if (mCompositorParent) {
+        mScreen->SetCompositorParent(nullptr);
+        if (mScreen->IsPrimaryScreen()) {
+            // Unset CompositorParent
+            mComposer2D->SetCompositorParent(nullptr);
+        }
     }
     nsBaseWidget::DestroyCompositor();
 }
@@ -851,7 +759,7 @@ nsWindow::GetGLFrameBufferFormat()
     return LOCAL_GL_NONE;
 }
 
-nsIntRect
+LayoutDeviceIntRect
 nsWindow::GetNaturalBounds()
 {
     return mScreen->GetNaturalBounds();

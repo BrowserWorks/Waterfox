@@ -331,9 +331,9 @@ nsGonkCameraControl::ValidateConfiguration(const Configuration& aConfig, Configu
   }
 
   if (mCurrentConfiguration.mMode == aConfig.mMode &&
-      mRequestedPreviewSize.width == aConfig.mPreviewSize.width &&
-      mRequestedPreviewSize.height == aConfig.mPreviewSize.height &&
-      mCurrentConfiguration.mRecorderProfile.Equals(profile->GetName()))
+      mCurrentConfiguration.mRecorderProfile.Equals(profile->GetName()) &&
+      mRequestedPreviewSize.Equals(aConfig.mPreviewSize) &&
+      mCurrentConfiguration.mPictureSize.Equals(aValidatedConfig.mPictureSize))
   {
     DOM_CAMERA_LOGI("Camera configuration is unchanged\n");
     return NS_ERROR_ALREADY_INITIALIZED;
@@ -2172,6 +2172,7 @@ nsGonkCameraControl::LoadRecorderProfiles()
 
     nsTArray<RecorderProfile>::size_type bestIndexMatch = 0;
     int bestAreaMatch = 0;
+    uint32_t bestPriorityMatch = UINT32_MAX;
 
     // Limit profiles to those video sizes supported by the camera hardware...
     for (nsTArray<RecorderProfile>::size_type i = 0; i < profiles.Length(); ++i) {
@@ -2186,17 +2187,22 @@ nsGonkCameraControl::LoadRecorderProfiles()
         if (static_cast<uint32_t>(width) == sizes[n].width &&
             static_cast<uint32_t>(height) == sizes[n].height) {
           mRecorderProfiles.Put(profiles[i]->GetName(), profiles[i]);
+
+          // "Best" or default profile is the one with the lowest priority
+          // value and largest area.
           int area = width * height;
-          if (area > bestAreaMatch) {
+          uint32_t priority = profiles[i]->GetPriority();
+          if (bestPriorityMatch > priority ||
+              (bestPriorityMatch == priority && area > bestAreaMatch)) {
             bestIndexMatch = i;
             bestAreaMatch = area;
+            bestPriorityMatch = priority;
           }
           break;
         }
       }
     }
 
-    // Default profile is the one with the largest area.
     if (bestAreaMatch > 0) {
       nsAutoString name;
       name.AssignASCII("default");
@@ -2205,17 +2211,6 @@ nsGonkCameraControl::LoadRecorderProfiles()
   }
 
   return NS_OK;
-}
-
-/* static */ PLDHashOperator
-nsGonkCameraControl::Enumerate(const nsAString& aProfileName,
-                               RecorderProfile* aProfile,
-                               void* aUserArg)
-{
-  nsTArray<nsString>* profiles = static_cast<nsTArray<nsString>*>(aUserArg);
-  MOZ_ASSERT(profiles);
-  profiles->AppendElement(aProfileName);
-  return PL_DHASH_NEXT;
 }
 
 nsresult
@@ -2227,7 +2222,9 @@ nsGonkCameraControl::GetRecorderProfiles(nsTArray<nsString>& aProfiles)
   }
 
   aProfiles.Clear();
-  mRecorderProfiles.EnumerateRead(Enumerate, static_cast<void*>(&aProfiles));
+  for (auto iter = mRecorderProfiles.Iter(); !iter.Done(); iter.Next()) {
+    aProfiles.AppendElement(iter.Key());
+  }
   return NS_OK;
 }
 
@@ -2382,15 +2379,11 @@ void
 nsGonkCameraControl::OnNewPreviewFrame(layers::TextureClient* aBuffer)
 {
 #ifdef MOZ_WIDGET_GONK
-  RefPtr<Image> frame = mImageContainer->CreateImage(ImageFormat::GRALLOC_PLANAR_YCBCR);
+  RefPtr<GrallocImage> frame = new GrallocImage();
 
-  GrallocImage* videoImage = static_cast<GrallocImage*>(frame.get());
-
-  GrallocImage::GrallocData data;
-  data.mGraphicBuffer = aBuffer;
-  data.mPicSize = IntSize(mCurrentConfiguration.mPreviewSize.width,
-                          mCurrentConfiguration.mPreviewSize.height);
-  videoImage->SetData(data);
+  IntSize picSize(mCurrentConfiguration.mPreviewSize.width,
+                  mCurrentConfiguration.mPreviewSize.height);
+  frame->SetData(aBuffer, picSize);
 
   if (mCapturePoster.exchange(false)) {
     CreatePoster(frame,

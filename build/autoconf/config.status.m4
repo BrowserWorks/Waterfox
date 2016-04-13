@@ -100,10 +100,6 @@ dnl Picked from autoconf 2.13
 trap '' 1 2 15
 AC_CACHE_SAVE
 
-test "x$prefix" = xNONE && prefix=$ac_default_prefix
-# Let make expand exec_prefix.
-test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-
 trap 'rm -f $CONFIG_STATUS conftest*; exit 1' 1 2 15
 : ${CONFIG_STATUS=./config.status}
 
@@ -232,12 +228,18 @@ define([AC_CONFIG_HEADER],
 
 define([MOZ_BUILD_BACKEND],
 [
-BUILD_BACKENDS="RecursiveMake"
+dnl For now, only enable the unified hybrid build system on artifact builds,
+dnl otherwise default to RecursiveMake /and/ FasterMake.
+if test -n "$MOZ_ARTIFACT_BUILDS"; then
+    BUILD_BACKENDS="FasterMake+RecursiveMake"
+else
+    BUILD_BACKENDS="RecursiveMake FasterMake"
+fi
 
 MOZ_ARG_ENABLE_STRING(build-backend,
-[  --enable-build-backend={AndroidEclipse,CppEclipse,VisualStudio,FasterMake,CompileDB}
+[  --enable-build-backend={$($(dirname ]$[0)/$1/mach python -c "from mozbuild.backend import backends; print ','.join(sorted(backends))")}
                          Enable additional build backends],
-[ BUILD_BACKENDS="RecursiveMake `echo $enableval | sed 's/,/ /g'`"])
+[ BUILD_BACKENDS="$BUILD_BACKENDS `echo $enableval | sed 's/,/ /g'`"])
 
 AC_SUBST_SET([BUILD_BACKENDS])
 ])

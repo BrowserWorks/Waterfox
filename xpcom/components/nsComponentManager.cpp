@@ -71,6 +71,7 @@
 #include "nsArrayEnumerator.h"
 #include "nsStringEnumerator.h"
 #include "mozilla/FileUtils.h"
+#include "mozilla/UniquePtr.h"
 #include "nsDataHashtable.h"
 
 #include <new>     // for placement new
@@ -78,6 +79,7 @@
 #include "mozilla/Omnijar.h"
 
 #include "mozilla/Logging.h"
+#include "LogModulePrefWatcher.h"
 
 using namespace mozilla;
 
@@ -447,6 +449,20 @@ nsComponentManagerImpl::Init()
   nsCategoryManager::GetSingleton()->SuppressNotifications(false);
 
   RegisterWeakMemoryReporter(this);
+
+  // NB: The logging preference watcher needs to be registered late enough in
+  // startup that it's okay to use the preference system, but also as soon as
+  // possible so that log modules enabled via preferences are turned on as
+  // early as possible.
+  //
+  // We can't initialize the preference watcher when the log module manager is
+  // initialized, as a number of things attempt to start logging before the
+  // preference system is initialized.
+  //
+  // The preference system is registered as a component so at this point during
+  // component manager initialization we know it is setup and we can register
+  // for notifications.
+  LogModulePrefWatcher::RegisterPrefWatcher();
 #endif
 
   // Unfortunately, we can't register the nsCategoryManager memory reporter
@@ -620,18 +636,18 @@ DoRegisterManifest(NSLocationType aType,
   MOZ_ASSERT(!aXPTOnly || !nsComponentManagerImpl::gComponentManager);
   uint32_t len;
   FileLocation::Data data;
-  nsAutoArrayPtr<char> buf;
+  UniquePtr<char[]> buf;
   nsresult rv = aFile.GetData(data);
   if (NS_SUCCEEDED(rv)) {
     rv = data.GetSize(&len);
   }
   if (NS_SUCCEEDED(rv)) {
-    buf = new char[len + 1];
-    rv = data.Copy(buf, len);
+    buf = MakeUnique<char[]>(len + 1);
+    rv = data.Copy(buf.get(), len);
   }
   if (NS_SUCCEEDED(rv)) {
     buf[len] = '\0';
-    ParseManifest(aType, aFile, buf, aChromeOnly, aXPTOnly);
+    ParseManifest(aType, aFile, buf.get(), aChromeOnly, aXPTOnly);
   } else if (NS_BOOTSTRAPPED_LOCATION != aType) {
     nsCString uri;
     aFile.GetURIString(uri);
@@ -699,17 +715,17 @@ DoRegisterXPT(FileLocation& aFile)
 
   uint32_t len;
   FileLocation::Data data;
-  nsAutoArrayPtr<char> buf;
+  UniquePtr<char[]> buf;
   nsresult rv = aFile.GetData(data);
   if (NS_SUCCEEDED(rv)) {
     rv = data.GetSize(&len);
   }
   if (NS_SUCCEEDED(rv)) {
-    buf = new char[len];
-    rv = data.Copy(buf, len);
+    buf = MakeUnique<char[]>(len);
+    rv = data.Copy(buf.get(), len);
   }
   if (NS_SUCCEEDED(rv)) {
-    XPTInterfaceInfoManager::GetSingleton()->RegisterBuffer(buf, len);
+    XPTInterfaceInfoManager::GetSingleton()->RegisterBuffer(buf.get(), len);
 #ifdef MOZ_B2G_LOADER
     MarkRegisteredXPTIInfo(aFile);
 #endif
@@ -1845,7 +1861,7 @@ nsComponentManagerImpl::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
   for (auto iter = mContractIDs.ConstIter(); !iter.Done(); iter.Next()) {
     // We don't measure the nsFactoryEntry data because it's owned by
     // mFactories (which is measured above).
-    n += iter.Key().SizeOfExcludingThisMustBeUnshared(aMallocSizeOf);
+    n += iter.Key().SizeOfExcludingThisIfUnshared(aMallocSizeOf);
   }
 
   n += sStaticModules->ShallowSizeOfIncludingThis(aMallocSizeOf);

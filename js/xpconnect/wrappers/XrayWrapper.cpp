@@ -8,6 +8,7 @@
 #include "AccessCheck.h"
 #include "WrapperFactory.h"
 
+#include "nsContentUtils.h"
 #include "nsIControllers.h"
 #include "nsDependentString.h"
 #include "nsIScriptError.h"
@@ -94,12 +95,12 @@ IsJSXraySupported(JSProtoKey key)
 XrayType
 GetXrayType(JSObject* obj)
 {
-    obj = js::UncheckedUnwrap(obj, /* stopAtOuter = */ false);
+    obj = js::UncheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
     if (mozilla::dom::UseDOMXray(obj))
         return XrayForDOMObject;
 
     const js::Class* clasp = js::GetObjectClass(obj);
-    if (IS_WN_CLASS(clasp) || clasp->ext.innerObject)
+    if (IS_WN_CLASS(clasp) || js::IsWindowProxy(obj))
         return XrayForWrappedNative;
 
     JSProtoKey standardProto = IdentifyStandardInstanceOrPrototype(obj);
@@ -204,7 +205,7 @@ ReportWrapperDenial(JSContext* cx, HandleId id, WrapperDenialType type, const ch
         return false;
     if (!propertyName.init(cx, str))
         return false;
-    AutoFilename filename;
+    UniqueChars filename;
     unsigned line = 0, column = 0;
     DescribeScriptedCaller(cx, &filename, &line, &column);
 

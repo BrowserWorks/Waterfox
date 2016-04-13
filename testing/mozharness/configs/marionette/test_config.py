@@ -6,10 +6,6 @@ config = {
     "marionette_address": "localhost:2828",
     "test_manifest": "unit-tests.ini",
 
-    # XXX: replace these with something appropriate to your system
-    "installer_url": "http://archive.mozilla.org/pub/firefox/tinderbox-builds/mozilla-central-linux-debug/1344372927/firefox-17.0a1.en-US.linux-i686.tar.bz2",
-    "test_url": "http://archive.mozilla.org/pub/firefox/tinderbox-builds/mozilla-central-linux-debug/1344372927/firefox-17.0a1.en-US.linux-i686.tests.zip",
-
     "default_actions": [
         'clobber',
         'download-and-extract',
@@ -27,7 +23,7 @@ config = {
                 "--profile=%(profile)s",
                 "--symbols-path=%(symbols_path)s",
                 "--gecko-log=%(gecko_log)s",
-                "--xml-output=%(xml_output)s",
+                "--log-xunit=%(xml_output)s",
                 "--html-output=%(html_output)s",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
@@ -47,7 +43,7 @@ config = {
                 "--testvars=%(testvars)s",
                 "--profile=%(profile)s",
                 "--symbols-path=%(symbols_path)s",
-                "--xml-output=%(xml_output)s",
+                "--log-xunit=%(xml_output)s",
                 "--html-output=%(html_output)s",
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",

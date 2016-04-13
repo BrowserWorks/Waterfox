@@ -101,11 +101,11 @@ gfxAndroidPlatform::gfxAndroidPlatform()
     RegisterStrongMemoryReporter(new FreetypeReporter());
 
     mOffscreenFormat = GetScreenDepth() == 16
-                       ? gfxImageFormat::RGB16_565
-                       : gfxImageFormat::RGB24;
+                       ? SurfaceFormat::R5G6B5_UINT16
+                       : SurfaceFormat::X8R8G8B8_UINT32;
 
     if (gfxPrefs::AndroidRGB16Force()) {
-        mOffscreenFormat = gfxImageFormat::RGB16_565;
+        mOffscreenFormat = SurfaceFormat::R5G6B5_UINT16;
     }
 
 #ifdef MOZ_WIDGET_GONK
@@ -313,9 +313,11 @@ gfxFontGroup *
 gfxAndroidPlatform::CreateFontGroup(const FontFamilyList& aFontFamilyList,
                                     const gfxFontStyle* aStyle,
                                     gfxTextPerfMetrics* aTextPerf,
-                                    gfxUserFontSet* aUserFontSet)
+                                    gfxUserFontSet* aUserFontSet,
+                                    gfxFloat aDevToCssSize)
 {
-    return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf, aUserFontSet);
+    return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf,
+                            aUserFontSet, aDevToCssSize);
 }
 
 FT_Library

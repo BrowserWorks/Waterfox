@@ -8,6 +8,8 @@
 
 const DEVELOPER_HUD_LOG_PREFIX = 'DeveloperHUD';
 const CUSTOM_HISTOGRAM_PREFIX = 'DEVTOOLS_HUD_CUSTOM_';
+const APPNAME_IDX = 3;
+const HISTNAME_IDX = 4;
 
 XPCOMUtils.defineLazyGetter(this, 'devtools', function() {
   const {devtools} = Cu.import('resource://devtools/shared/Loader.jsm', {});
@@ -106,6 +108,10 @@ var developerHUD = {
 
     SettingsListener.observe('hud.logging', this._logging, enabled => {
       this._logging = enabled;
+    });
+
+    SettingsListener.observe('hud.telemetry.logging', _telemetryDebug, enabled => {
+      _telemetryDebug = enabled;
     });
 
     SettingsListener.observe('metrics.selectedMetrics.level', "", level => {
@@ -318,14 +324,16 @@ Target.prototype = {
   },
 
   _getAddonHistogram(item) {
-    let APPNAME_IDX = 3;
-    let HISTNAME_IDX = 4;
+    let appName = this._getAddonHistogramName(item, APPNAME_IDX);
+    let histName = this._getAddonHistogramName(item, HISTNAME_IDX);
 
+    return Services.telemetry.getAddonHistogram(appName, CUSTOM_HISTOGRAM_PREFIX
+      + histName);
+  },
+
+  _getAddonHistogramName(item, index) {
     let array = item.split('_');
-    let appName = array[APPNAME_IDX].toUpperCase();
-    let histName = array[HISTNAME_IDX].toUpperCase();
-    return Services.telemetry.getAddonHistogram(appName,
-      CUSTOM_HISTOGRAM_PREFIX + histName);
+    return array[index].toUpperCase();
   },
 
   _clearTelemetryData() {
@@ -353,11 +361,21 @@ Target.prototype = {
       payload.keyedHistograms[item] =
         Services.telemetry.getKeyedHistogramById(item).snapshot();
     });
+
     // Package the registered hud custom histograms
     developerHUD._customHistograms.forEach(item => {
-      payload.addonHistograms[item] = this._getAddonHistogram(item).snapshot();
+      let appName = this._getAddonHistogramName(item, APPNAME_IDX);
+      let histName = CUSTOM_HISTOGRAM_PREFIX +
+        this._getAddonHistogramName(item, HISTNAME_IDX);
+      let addonHist = Services.telemetry.getAddonHistogram(appName, histName).snapshot();
+      if (!(appName in payload.addonHistograms)) {
+        payload.addonHistograms[appName] = {};
+      }
+      // Do not include histograms with sum of 0.
+      if (addonHist.sum > 0) {
+        payload.addonHistograms[appName][histName] = addonHist;
+      }
     });
-
     shell.sendEvent(frame, 'advanced-telemetry-update', Cu.cloneInto(payload, frame));
   },
 
@@ -446,6 +464,7 @@ var consoleWatcher = {
     'SSL',
     'CORS'
   ],
+  _reflowThreshold: 0,
 
   init(client) {
     this._client = client;
@@ -467,6 +486,10 @@ var consoleWatcher = {
         }
       });
     }
+
+    SettingsListener.observe('hud.reflows.duration', this._reflowThreshold, threshold => {
+      this._reflowThreshold = threshold;
+    });
 
     client.addListener('logMessage', this.consoleListener);
     client.addListener('pageError', this.consoleListener);
@@ -572,6 +595,12 @@ var consoleWatcher = {
         let {start, end, sourceURL, interruptible} = packet;
         metric.interruptible = interruptible;
         let duration = Math.round((end - start) * 100) / 100;
+
+        // Record the reflow if the duration exceeds the threshold.
+        if (duration < this._reflowThreshold) {
+          return;
+        }
+
         output += 'Reflow: ' + duration + 'ms';
         if (sourceURL) {
           output += ' ' + this.formatSourceURL(packet);
@@ -745,19 +774,21 @@ developerHUD.registerWatcher(eventLoopLagWatcher);
 
 /*
  * The performanceEntriesWatcher determines the delta between the epoch
- * of an app's launch time and the app's performance entry marks.
+ * of an app's launch time and the epoch of the app's performance entry marks.
  * When it receives an "appLaunch" performance entry mark it records the
  * name of the app being launched and the epoch of when the launch ocurred.
  * When it receives subsequent performance entry events for the app being
  * launched, it records the delta of the performance entry opoch compared
  * to the app-launch epoch and emits an "app-start-time-<performance mark name>"
  * event containing the delta.
+ *
+ * Additionally, while recording the "app-start-time" for a performance mark,
+ * USS memory at the time of the performance mark is also recorded.
  */
 var performanceEntriesWatcher = {
   _client: null,
   _fronts: new Map(),
-  _appLaunchName: null,
-  _appLaunchStartTime: null,
+  _appLaunch: new Map(),
   _supported: [
     'contentInteractive',
     'navigationInteractive',
@@ -800,17 +831,14 @@ var performanceEntriesWatcher = {
       let name = detail.name;
       let epoch = detail.epoch;
 
-      // FIXME There is a potential race condition that can result
-      // in some performance entries being disregarded. See bug 1189942.
-      //
       // If this is an "app launch" mark, record the app that was
       // launched and the epoch of when it was launched.
       if (name.indexOf('appLaunch') !== -1) {
         let CHARS_UNTIL_APP_NAME = 7; // '@app://'
         let startPos = name.indexOf('@app') + CHARS_UNTIL_APP_NAME;
         let endPos = name.indexOf('.');
-        this._appLaunchName = name.slice(startPos, endPos);
-        this._appLaunchStartTime = epoch;
+        let appName = name.slice(startPos, endPos);
+        this._appLaunch.set(appName, epoch);
         return;
       }
 
@@ -822,13 +850,15 @@ var performanceEntriesWatcher = {
       let origin = detail.origin;
       origin = origin.slice(0, origin.indexOf('.'));
 
-      // Continue if the performance mark corresponds to the app
-      // for which we have recorded app launch information.
-      if (this._appLaunchName !== origin) {
+      let appLaunchTime = this._appLaunch.get(origin);
+
+      // Sanity check: ensure we have an app launch time for the app
+      // corresponding to this performance mark.
+      if (!appLaunchTime) {
         return;
       }
 
-      let time = epoch - this._appLaunchStartTime;
+      let time = epoch - appLaunchTime;
       let eventName = 'app_startup_time_' + name;
 
       // Events based on performance marks are for telemetry only, they are

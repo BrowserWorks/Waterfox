@@ -13,6 +13,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/BinarySearch.h"
 #include "mozilla/fallible.h"
+#include "mozilla/InitializerList.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Move.h"
@@ -27,6 +28,7 @@
 #include "nsQuickSort.h"
 #include "nsDebug.h"
 #include "nsISupportsImpl.h"
+#include "nsRegionFwd.h"
 #include <new>
 
 namespace JS {
@@ -35,7 +37,6 @@ class Heap;
 } /* namespace JS */
 
 class nsRegion;
-class nsIntRegion;
 namespace mozilla {
 namespace layers {
 struct TileClient;
@@ -260,6 +261,7 @@ template<class E, class Derived>
 struct nsTArray_SafeElementAtHelper<E*, Derived>
 {
   typedef E*       elem_type;
+  //typedef const E* const_elem_type;   XXX: see below
   typedef size_t   index_type;
 
   elem_type SafeElementAt(index_type aIndex)
@@ -267,7 +269,11 @@ struct nsTArray_SafeElementAtHelper<E*, Derived>
     return static_cast<Derived*>(this)->SafeElementAt(aIndex, nullptr);
   }
 
-  const elem_type SafeElementAt(index_type aIndex) const
+  // XXX: Probably should return const_elem_type, but callsites must be fixed.
+  // Also, the use of const_elem_type for nsTArray<xpcGCCallback> in
+  // xpcprivate.h causes build failures on Windows because xpcGCCallback is a
+  // function pointer and MSVC doesn't like qualifying it with |const|.
+  elem_type SafeElementAt(index_type aIndex) const
   {
     return static_cast<const Derived*>(this)->SafeElementAt(aIndex, nullptr);
   }
@@ -279,6 +285,7 @@ template<class E, class Derived>
 struct nsTArray_SafeElementAtSmartPtrHelper
 {
   typedef E*       elem_type;
+  typedef const E* const_elem_type;
   typedef size_t   index_type;
 
   elem_type SafeElementAt(index_type aIndex)
@@ -286,7 +293,8 @@ struct nsTArray_SafeElementAtSmartPtrHelper
     return static_cast<Derived*>(this)->SafeElementAt(aIndex, nullptr);
   }
 
-  const elem_type SafeElementAt(index_type aIndex) const
+  // XXX: Probably should return const_elem_type, but callsites must be fixed.
+  elem_type SafeElementAt(index_type aIndex) const
   {
     return static_cast<const Derived*>(this)->SafeElementAt(aIndex, nullptr);
   }
@@ -313,8 +321,9 @@ template<class T> class OwningNonNull;
 template<class E, class Derived>
 struct nsTArray_SafeElementAtHelper<mozilla::OwningNonNull<E>, Derived>
 {
-  typedef E*     elem_type;
-  typedef size_t index_type;
+  typedef E*       elem_type;
+  typedef const E* const_elem_type;
+  typedef size_t   index_type;
 
   elem_type SafeElementAt(index_type aIndex)
   {
@@ -324,7 +333,8 @@ struct nsTArray_SafeElementAtHelper<mozilla::OwningNonNull<E>, Derived>
     return nullptr;
   }
 
-  const elem_type SafeElementAt(index_type aIndex) const
+  // XXX: Probably should return const_elem_type, but callsites must be fixed.
+  elem_type SafeElementAt(index_type aIndex) const
   {
     if (aIndex < static_cast<const Derived*>(this)->Length()) {
       return static_cast<const Derived*>(this)->ElementAt(aIndex);
@@ -382,10 +392,10 @@ protected:
   typename ActualAlloc::ResultTypeProxy EnsureCapacity(size_type aCapacity,
                                                        size_type aElemSize);
 
-  // Resize the storage to the minimum required amount.
+  // Tries to resize the storage to the minimum required amount. If this fails,
+  // the array is left as-is.
   // @param aElemSize  The size of an array element.
   // @param aElemAlign The alignment in bytes of an array element.
-  template<typename ActualAlloc>
   void ShrinkCapacity(size_type aElemSize, size_t aElemAlign);
 
   // This method may be called to resize a "gap" in the array by shifting
@@ -793,6 +803,7 @@ class nsTArray_Impl
 {
 private:
   typedef nsTArrayFallibleAllocator FallibleAlloc;
+  typedef nsTArrayInfallibleAllocator InfallibleAlloc;
 
 public:
   typedef typename nsTArray_CopyChooser<E>::Type     copy_type;
@@ -857,6 +868,7 @@ public:
   // |const nsTArray_Impl<E, OtherAlloc>&|.
   explicit nsTArray_Impl(const self_type& aOther) { AppendElements(aOther); }
 
+  explicit nsTArray_Impl(std::initializer_list<E> aIL) { AppendElements(aIL.begin(), aIL.size()); }
   // Allow converting to a const array with a different kind of allocator,
   // Since the allocator doesn't matter for const arrays
   template<typename Allocator>
@@ -1538,12 +1550,13 @@ public:
 
   // Move all elements from another array to the end of this array.
   // @return A pointer to the newly appended elements, or null on OOM.
-  template<class Item, class Allocator>
+protected:
+  template<class Item, class Allocator, typename ActualAlloc = Alloc>
   elem_type* AppendElements(nsTArray_Impl<Item, Allocator>&& aArray)
   {
     MOZ_ASSERT(&aArray != this, "argument must be different aArray");
     if (Length() == 0) {
-      SwapElements(aArray);
+      SwapElements<ActualAlloc>(aArray);
       return Elements();
     }
 
@@ -1559,6 +1572,15 @@ public:
     aArray.template ShiftData<Alloc>(0, otherLen, 0, sizeof(elem_type),
                                      MOZ_ALIGNOF(elem_type));
     return Elements() + len;
+  }
+public:
+
+  template<class Item, class Allocator, typename ActualAlloc = Alloc>
+  /* MOZ_WARN_UNUSED_RESULT */
+  elem_type* AppendElements(nsTArray_Impl<Item, Allocator>&& aArray,
+                            const mozilla::fallible_t&)
+  {
+    return AppendElements<Item, Allocator>(mozilla::Move(aArray));
   }
 
   // Append a new element, move constructing if possible.
@@ -1639,8 +1661,9 @@ public:
     // Check that the previous assert didn't overflow
     MOZ_ASSERT(aStart <= aStart + aCount, "Start index plus length overflows");
     DestructRange(aStart, aCount);
-    this->template ShiftData<Alloc>(aStart, aCount, 0,
-                                    sizeof(elem_type), MOZ_ALIGNOF(elem_type));
+    this->template ShiftData<InfallibleAlloc>(aStart, aCount, 0,
+                                              sizeof(elem_type),
+                                              MOZ_ALIGNOF(elem_type));
   }
 
   // A variation on the RemoveElementsAt method defined above.
@@ -1873,8 +1896,7 @@ public:
   // This method may be called to minimize the memory used by this array.
   void Compact()
   {
-    this->template ShrinkCapacity<Alloc>(sizeof(elem_type),
-                                         MOZ_ALIGNOF(elem_type));
+    ShrinkCapacity(sizeof(elem_type), MOZ_ALIGNOF(elem_type));
   }
 
   //
@@ -2081,6 +2103,7 @@ public:
   explicit nsTArray(size_type aCapacity) : base_type(aCapacity) {}
   explicit nsTArray(const nsTArray& aOther) : base_type(aOther) {}
   MOZ_IMPLICIT nsTArray(nsTArray&& aOther) : base_type(mozilla::Move(aOther)) {}
+  MOZ_IMPLICIT nsTArray(std::initializer_list<E> aIL) : base_type(aIL) {}
 
   template<class Allocator>
   explicit nsTArray(const nsTArray_Impl<E, Allocator>& aOther)

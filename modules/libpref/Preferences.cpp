@@ -10,6 +10,7 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/HashFunctions.h"
+#include "mozilla/UniquePtrExtensions.h"
 
 #include "nsXULAppAPI.h"
 
@@ -261,59 +262,9 @@ public:
 
 protected:
   static const uint32_t kSuspectReferentCount = 1000;
-  static PLDHashOperator CountReferents(PrefCallback* aKey,
-                                        nsAutoPtr<PrefCallback>& aCallback,
-                                        void* aClosure);
 };
 
 NS_IMPL_ISUPPORTS(PreferenceServiceReporter, nsIMemoryReporter)
-
-struct PreferencesReferentCount {
-  PreferencesReferentCount() : numStrong(0), numWeakAlive(0), numWeakDead(0) {}
-  size_t numStrong;
-  size_t numWeakAlive;
-  size_t numWeakDead;
-  nsTArray<nsCString> suspectPreferences;
-  // Count of the number of referents for each preference.
-  nsDataHashtable<nsCStringHashKey, uint32_t> prefCounter;
-};
-
-PLDHashOperator
-PreferenceServiceReporter::CountReferents(PrefCallback* aKey,
-                                          nsAutoPtr<PrefCallback>& aCallback,
-                                          void* aClosure)
-{
-  PreferencesReferentCount* referentCount =
-    static_cast<PreferencesReferentCount*>(aClosure);
-
-  nsPrefBranch* prefBranch = aCallback->GetPrefBranch();
-  const char* pref = prefBranch->getPrefName(aCallback->GetDomain().get());
-
-  if (aCallback->IsWeak()) {
-    nsCOMPtr<nsIObserver> callbackRef = do_QueryReferent(aCallback->mWeakRef);
-    if (callbackRef) {
-      referentCount->numWeakAlive++;
-    } else {
-      referentCount->numWeakDead++;
-    }
-  } else {
-    referentCount->numStrong++;
-  }
-
-  nsDependentCString prefString(pref);
-  uint32_t oldCount = 0;
-  referentCount->prefCounter.Get(prefString, &oldCount);
-  uint32_t currentCount = oldCount + 1;
-  referentCount->prefCounter.Put(prefString, currentCount);
-
-  // Keep track of preferences that have a suspiciously large
-  // number of referents (symptom of leak).
-  if (currentCount == kSuspectReferentCount) {
-    referentCount->suspectPreferences.AppendElement(prefString);
-  }
-
-  return PL_DHASH_NEXT;
-}
 
 MOZ_DEFINE_MALLOC_SIZE_OF(PreferenceServiceMallocSizeOf)
 
@@ -342,13 +293,46 @@ PreferenceServiceReporter::CollectReports(nsIMemoryReporterCallback* aCb,
     return NS_OK;
   }
 
-  PreferencesReferentCount referentCount;
-  rootBranch->mObservers.Enumerate(&CountReferents, &referentCount);
+  size_t numStrong = 0;
+  size_t numWeakAlive = 0;
+  size_t numWeakDead = 0;
+  nsTArray<nsCString> suspectPreferences;
+  // Count of the number of referents for each preference.
+  nsDataHashtable<nsCStringHashKey, uint32_t> prefCounter;
 
-  for (uint32_t i = 0; i < referentCount.suspectPreferences.Length(); i++) {
-    nsCString& suspect = referentCount.suspectPreferences[i];
+  for (auto iter = rootBranch->mObservers.Iter(); !iter.Done(); iter.Next()) {
+    nsAutoPtr<PrefCallback>& callback = iter.Data();
+    nsPrefBranch* prefBranch = callback->GetPrefBranch();
+    const char* pref = prefBranch->getPrefName(callback->GetDomain().get());
+
+    if (callback->IsWeak()) {
+      nsCOMPtr<nsIObserver> callbackRef = do_QueryReferent(callback->mWeakRef);
+      if (callbackRef) {
+        numWeakAlive++;
+      } else {
+        numWeakDead++;
+      }
+    } else {
+      numStrong++;
+    }
+
+    nsDependentCString prefString(pref);
+    uint32_t oldCount = 0;
+    prefCounter.Get(prefString, &oldCount);
+    uint32_t currentCount = oldCount + 1;
+    prefCounter.Put(prefString, currentCount);
+
+    // Keep track of preferences that have a suspiciously large number of
+    // referents (a symptom of a leak).
+    if (currentCount == kSuspectReferentCount) {
+      suspectPreferences.AppendElement(prefString);
+    }
+  }
+
+  for (uint32_t i = 0; i < suspectPreferences.Length(); i++) {
+    nsCString& suspect = suspectPreferences[i];
     uint32_t totalReferentCount = 0;
-    referentCount.prefCounter.Get(suspect, &totalReferentCount);
+    prefCounter.Get(suspect, &totalReferentCount);
 
     nsPrintfCString suspectPath("preference-service-suspect/"
                                 "referent(pref=%s)", suspect.get());
@@ -360,16 +344,16 @@ PreferenceServiceReporter::CollectReports(nsIMemoryReporterCallback* aCb,
   }
 
   REPORT(NS_LITERAL_CSTRING("preference-service/referent/strong"),
-         KIND_OTHER, UNITS_COUNT, referentCount.numStrong,
+         KIND_OTHER, UNITS_COUNT, numStrong,
          "The number of strong referents held by the preference service.");
 
   REPORT(NS_LITERAL_CSTRING("preference-service/referent/weak/alive"),
-         KIND_OTHER, UNITS_COUNT, referentCount.numWeakAlive,
+         KIND_OTHER, UNITS_COUNT, numWeakAlive,
          "The number of weak referents held by the preference service "
          "that are still alive.");
 
   REPORT(NS_LITERAL_CSTRING("preference-service/referent/weak/dead"),
-         KIND_OTHER, UNITS_COUNT, referentCount.numWeakDead,
+         KIND_OTHER, UNITS_COUNT, numWeakDead,
          "The number of weak referents held by the preference service "
          "that are dead.");
 
@@ -954,25 +938,23 @@ Preferences::WritePrefFile(nsIFile* aFile)
   if (NS_FAILED(rv)) 
       return rv;  
 
-  nsAutoArrayPtr<char*> valueArray(new char*[gHashTable->EntryCount()]);
-  memset(valueArray, 0, gHashTable->EntryCount() * sizeof(char*));
-
   // get the lines that we're supposed to be writing to the file
-  pref_savePrefs(gHashTable, valueArray);
+  UniquePtr<char*[]> valueArray = pref_savePrefs(gHashTable);
 
   /* Sort the preferences to make a readable file on disk */
-  NS_QuickSort(valueArray, gHashTable->EntryCount(), sizeof(char *),
+  NS_QuickSort(valueArray.get(), gHashTable->EntryCount(), sizeof(char *),
                pref_CompareStrings, nullptr);
 
   // write out the file header
   outStream->Write(outHeader, sizeof(outHeader) - 1, &writeAmount);
 
-  char** walker = valueArray;
-  for (uint32_t valueIdx = 0; valueIdx < gHashTable->EntryCount(); valueIdx++, walker++) {
-    if (*walker) {
-      outStream->Write(*walker, strlen(*walker), &writeAmount);
+  for (uint32_t valueIdx = 0; valueIdx < gHashTable->EntryCount(); valueIdx++) {
+    char*& pref = valueArray[valueIdx];
+    if (pref) {
+      outStream->Write(pref, strlen(pref), &writeAmount);
       outStream->Write(NS_LINEBREAK, NS_LINEBREAK_LEN, &writeAmount);
-      free(*walker);
+      free(pref);
+      pref = nullptr;
     }
   }
 
@@ -1000,14 +982,14 @@ static nsresult openPrefFile(nsIFile* aFile)
   if (NS_FAILED(rv)) 
     return rv;        
 
-  uint64_t fileSize64;
-  rv = inStr->Available(&fileSize64);
+  int64_t fileSize64;
+  rv = aFile->GetFileSize(&fileSize64);
   if (NS_FAILED(rv))
     return rv;
   NS_ENSURE_TRUE(fileSize64 <= UINT32_MAX, NS_ERROR_FILE_TOO_BIG);
 
   uint32_t fileSize = (uint32_t)fileSize64;
-  nsAutoArrayPtr<char> fileBuffer(new char[fileSize]);
+  auto fileBuffer = MakeUniqueFallible<char[]>(fileSize);
   if (fileBuffer == nullptr)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -1017,13 +999,18 @@ static nsresult openPrefFile(nsIFile* aFile)
   // Read is not guaranteed to return a buf the size of fileSize,
   // but usually will.
   nsresult rv2 = NS_OK;
+  uint32_t offset = 0;
   for (;;) {
     uint32_t amtRead = 0;
-    rv = inStr->Read((char*)fileBuffer, fileSize, &amtRead);
+    rv = inStr->Read(fileBuffer.get(), fileSize, &amtRead);
     if (NS_FAILED(rv) || amtRead == 0)
       break;
-    if (!PREF_ParseBuf(&ps, fileBuffer, amtRead))
+    if (!PREF_ParseBuf(&ps, fileBuffer.get(), amtRead))
       rv2 = NS_ERROR_FILE_CORRUPTED;
+    offset += amtRead;
+    if (offset == fileSize) {
+      break;
+    }
   }
 
   PREF_FinalizeParseState(&ps);
@@ -1282,9 +1269,7 @@ static nsresult pref_InitInitialObjects()
     "winpref.js"
 #elif defined(XP_UNIX)
     "unix.js"
-#if defined(VMS)
-    , "openvms.js"
-#elif defined(_AIX)
+#if defined(_AIX)
     , "aix.js"
 #endif
 #elif defined(XP_BEOS)

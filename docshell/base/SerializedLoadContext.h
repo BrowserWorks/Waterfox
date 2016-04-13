@@ -28,6 +28,11 @@ class SerializedLoadContext
 {
 public:
   SerializedLoadContext()
+    : mIsNotNull(false)
+    , mIsPrivateBitValid(false)
+    , mIsContent(false)
+    , mUsePrivateBrowsing(false)
+    , mUseRemoteTabs(false)
   {
     Init(nullptr);
   }
@@ -49,7 +54,7 @@ public:
   bool mIsContent;
   bool mUsePrivateBrowsing;
   bool mUseRemoteTabs;
-  mozilla::OriginAttributes mOriginAttributes;
+  mozilla::DocShellOriginAttributes mOriginAttributes;
 };
 
 // Function to serialize over IPDL

@@ -52,6 +52,25 @@
 // Utilities
 //---------------------------------------------------------------------------
 
+// MOZ_FALLTHROUGH is an annotation to suppress compiler warnings about switch
+// cases that fall through without a break or return statement. MOZ_FALLTHROUGH
+// is only needed on cases that have code. This definition of MOZ_FALLTHROUGH
+// is identical to the one in mfbt/Attributes.h, which we don't use here because
+// this file avoids depending on Mozilla headers.
+#if defined(__clang__) && __cplusplus >= 201103L
+   /* clang's fallthrough annotations are only available starting in C++11. */
+#  define MOZ_FALLTHROUGH [[clang::fallthrough]]
+#elif defined(_MSC_VER)
+   /*
+    * MSVC's __fallthrough annotations are checked by /analyze (Code Analysis):
+    * https://msdn.microsoft.com/en-us/library/ms235402%28VS.80%29.aspx
+    */
+#  include <sal.h>
+#  define MOZ_FALLTHROUGH __fallthrough
+#else
+#  define MOZ_FALLTHROUGH /* FALLTHROUGH */
+#endif
+
 // The value of argv[0] passed to main(). Used in error messages.
 static const char* gArgv0;
 
@@ -327,7 +346,7 @@ public:
 
       case 63:  // 0x3f: Haswell-Server
         mHasRamUnitsQuirk = true;
-        // FALLTHROUGH
+        MOZ_FALLTHROUGH;
       case 45:  // 0x2d: Sandy Bridge-EP
       case 62:  // 0x3e: Ivy Bridge-E
         // Supports package, cores, RAM.
@@ -838,7 +857,9 @@ main(int argc, char** argv)
   struct sigaction sa;
   memset(&sa, 0, sizeof(sa));
   sa.sa_flags = SA_RESTART | SA_SIGINFO;
-  if (sigemptyset(&sa.sa_mask) < 0) {
+  // The extra parens around (0) suppress a -Wunreachable-code warning on OS X
+  // where sigemptyset() is a macro that can never fail and always returns 0.
+  if (sigemptyset(&sa.sa_mask) < (0)) {
     Abort("sigemptyset() failed");
   }
   sa.sa_sigaction = SigAlrmHandler;
@@ -877,4 +898,3 @@ main(int argc, char** argv)
 
   return 0;
 }
-

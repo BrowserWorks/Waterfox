@@ -3,30 +3,31 @@
 
 package org.mozilla.android.sync.net.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
 import org.json.simple.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mozilla.android.sync.test.helpers.BaseTestStorageRequestDelegate;
 import org.mozilla.android.sync.test.helpers.HTTPServerTestHelper;
 import org.mozilla.android.sync.test.helpers.MockServer;
+import org.mozilla.gecko.background.testhelpers.TestRunner;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BasicAuthHeaderProvider;
 import org.mozilla.gecko.sync.net.SyncStorageRecordRequest;
 import org.mozilla.gecko.sync.net.SyncStorageResponse;
-import org.robolectric.RobolectricGradleTestRunner;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
-@RunWith(RobolectricGradleTestRunner.class)
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+@RunWith(TestRunner.class)
 public class TestSyncStorageRequest {
   private static final int    TEST_PORT   = HTTPServerTestHelper.getTestPort();
   private static final String TEST_SERVER = "http://localhost:" + TEST_PORT;
@@ -149,7 +150,7 @@ public class TestSyncStorageRequest {
     @Override
     public void handle(Request request, Response response) {
       String errorBody = EXPECTED_RETRY_AFTER_ERROR_MESSAGE;
-      response.set("Retry-After", "3001");
+      response.setValue("Retry-After", "3001");
       super.handle(request, response, 503, errorBody);
     }
   }
@@ -185,7 +186,7 @@ public class TestSyncStorageRequest {
   public class WeaveBackoffMockServer extends MockServer {
     @Override
     public void handle(Request request, Response response) {
-      response.set("X-Weave-Backoff", "1801");
+      response.setValue("X-Weave-Backoff", "1801");
       super.handle(request, response);
     }
   }
@@ -226,10 +227,10 @@ public class TestSyncStorageRequest {
   public class HeadersMockServer extends MockServer {
     @Override
     public void handle(Request request, Response response) {
-      response.set("X-Weave-Quota-Remaining", "65536");
-      response.set("X-Weave-Alert", "First weave alert string");
-      response.add("X-Weave-Alert", "Second weave alert string");
-      response.set("X-Weave-Records", "50");
+      response.setValue("X-Weave-Quota-Remaining", "65536");
+      response.setValue("X-Weave-Alert", "First weave alert string");
+      response.addValue("X-Weave-Alert", "Second weave alert string");
+      response.setValue("X-Weave-Records", "50");
 
       super.handle(request, response);
     }
@@ -249,7 +250,7 @@ public class TestSyncStorageRequest {
   public class DeleteMockServer extends MockServer {
     @Override
     public void handle(Request request, Response response) {
-      assertTrue(request.contains("x-confirm-delete"));
+      assertNotNull(request.getValue("x-confirm-delete"));
       assertEquals("1", request.getValue("x-confirm-delete"));
       super.handle(request, response);
     }

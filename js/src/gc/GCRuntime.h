@@ -18,11 +18,6 @@
 #include "gc/StoreBuffer.h"
 #include "gc/Tracer.h"
 
-/* Perform validation of incremental marking in debug builds but not on B2G. */
-#if defined(DEBUG) && !defined(MOZ_B2G)
-#define JS_GC_MARKING_VALIDATION
-#endif
-
 namespace js {
 
 class AutoLockGC;
@@ -154,8 +149,8 @@ class GCSchedulingTunables
     /*
      * Controls the number of empty chunks reserved for future allocation.
      */
-    unsigned minEmptyChunkCount_;
-    unsigned maxEmptyChunkCount_;
+    uint32_t minEmptyChunkCount_;
+    uint32_t maxEmptyChunkCount_;
 
   public:
     GCSchedulingTunables()
@@ -187,10 +182,10 @@ class GCSchedulingTunables
     double highFrequencyHeapGrowthMin() const { return highFrequencyHeapGrowthMin_; }
     double lowFrequencyHeapGrowth() const { return lowFrequencyHeapGrowth_; }
     bool isDynamicMarkSliceEnabled() const { return dynamicMarkSliceEnabled_; }
-    unsigned minEmptyChunkCount() const { return minEmptyChunkCount_; }
+    unsigned minEmptyChunkCount(const AutoLockGC&) const { return minEmptyChunkCount_; }
     unsigned maxEmptyChunkCount() const { return maxEmptyChunkCount_; }
 
-    void setParameter(JSGCParamKey key, uint32_t value);
+    bool setParameter(JSGCParamKey key, uint32_t value, const AutoLockGC& lock);
 };
 
 /*
@@ -537,7 +532,7 @@ struct Callback {
 };
 
 template<typename F>
-class CallbackVector : public Vector<Callback<F>, 4, SystemAllocPolicy> {};
+using CallbackVector = Vector<Callback<F>, 4, SystemAllocPolicy>;
 
 template <typename T, typename Iter0, typename Iter1>
 class ChainedIter
@@ -591,9 +586,9 @@ class GCRuntime
 
     bool addRoot(Value* vp, const char* name);
     void removeRoot(Value* vp);
-    void setMarkStackLimit(size_t limit);
+    void setMarkStackLimit(size_t limit, AutoLockGC& lock);
 
-    void setParameter(JSGCParamKey key, uint32_t value);
+    bool setParameter(JSGCParamKey key, uint32_t value, AutoLockGC& lock);
     uint32_t getParameter(JSGCParamKey key, const AutoLockGC& lock);
 
     bool triggerGC(JS::gcreason::Reason reason);
@@ -755,13 +750,20 @@ class GCRuntime
     void onTooMuchMalloc();
 
     void setGCCallback(JSGCCallback callback, void* data);
+    void callGCCallback(JSGCStatus status) const;
+    void setObjectsTenuredCallback(JSObjectsTenuredCallback callback,
+                                   void* data);
+    void callObjectsTenuredCallback();
     bool addFinalizeCallback(JSFinalizeCallback callback, void* data);
     void removeFinalizeCallback(JSFinalizeCallback func);
-    bool addWeakPointerCallback(JSWeakPointerCallback callback, void* data);
-    void removeWeakPointerCallback(JSWeakPointerCallback func);
+    bool addWeakPointerZoneGroupCallback(JSWeakPointerZoneGroupCallback callback, void* data);
+    void removeWeakPointerZoneGroupCallback(JSWeakPointerZoneGroupCallback callback);
+    bool addWeakPointerCompartmentCallback(JSWeakPointerCompartmentCallback callback, void* data);
+    void removeWeakPointerCompartmentCallback(JSWeakPointerCompartmentCallback callback);
     JS::GCSliceCallback setSliceCallback(JS::GCSliceCallback callback);
+    JS::GCNurseryCollectionCallback setNurseryCollectionCallback(
+        JS::GCNurseryCollectionCallback callback);
 
-    void setValidate(bool enable);
     void setFullCompartmentChecks(bool enable);
 
     bool isManipulatingDeadZones() { return manipulatingDeadZones; }
@@ -917,6 +919,7 @@ class GCRuntime
     bool shouldPreserveJITCode(JSCompartment* comp, int64_t currentTime,
                                JS::gcreason::Reason reason);
     void bufferGrayRoots();
+    void markCompartments();
     IncrementalProgress drainMarkStack(SliceBudget& sliceBudget, gcstats::Phase phase);
     template <class CompartmentIterT> void markWeakReferences(gcstats::Phase phase);
     void markWeakReferencesInCurrentGroup(gcstats::Phase phase);
@@ -969,7 +972,8 @@ class GCRuntime
 #endif
 
     void callFinalizeCallbacks(FreeOp* fop, JSFinalizeStatus status) const;
-    void callWeakPointerCallbacks() const;
+    void callWeakPointerZoneGroupCallbacks() const;
+    void callWeakPointerCompartmentCallbacks(JSCompartment* comp) const;
 
   public:
     JSRuntime* rt;
@@ -1173,7 +1177,7 @@ class GCRuntime
     js::gc::ZoneList zonesToMaybeCompact;
     ArenaHeader* relocatedArenasToRelease;
 
-#ifdef JS_GC_MARKING_VALIDATION
+#ifdef JS_GC_ZEAL
     js::gc::MarkingValidator* markingValidator;
 #endif
 
@@ -1264,12 +1268,13 @@ class GCRuntime
     js::Vector<JSObject*, 0, js::SystemAllocPolicy> selectedForMarking;
 #endif
 
-    bool validate;
     bool fullCompartmentChecks;
 
     Callback<JSGCCallback> gcCallback;
+    Callback<JSObjectsTenuredCallback> tenuredCallback;
     CallbackVector<JSFinalizeCallback> finalizeCallbacks;
-    CallbackVector<JSWeakPointerCallback> updateWeakPointerCallbacks;
+    CallbackVector<JSWeakPointerZoneGroupCallback> updateWeakPointerZoneGroupCallbacks;
+    CallbackVector<JSWeakPointerCompartmentCallback> updateWeakPointerCompartmentCallbacks;
 
     /*
      * Malloc counter to measure memory pressure for GC scheduling. It runs

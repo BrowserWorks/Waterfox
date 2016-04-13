@@ -12,14 +12,12 @@
 #include "nsTHashtable.h"
 #include "nsDebug.h"
 
-// These are the codes returned by |EnumReadFunction| and |EnumFunction|, which
-// control the behavior of EnumerateRead() and Enumerate(). The PLD/PL_D prefix
-// is because they originated in PLDHashTable, but that class no longer uses
-// them.
+// These type is returned by |EnumFunction| and controls the behavior of
+// Enumerate(). The PLD/PL_D prefix is because it originated in PLDHashTable,
+// but that class no longer uses it.
 enum PLDHashOperator
 {
   PL_DHASH_NEXT = 0,          // enumerator says continue
-  PL_DHASH_STOP = 1,          // enumerator says stop
   PL_DHASH_REMOVE = 2         // enumerator says remove
 };
 
@@ -160,47 +158,12 @@ public:
   /**
    * function type provided by the application for enumeration.
    * @param aKey the key being enumerated
-   * @param aData data being enumerated
-   * @param aUserArg passed unchanged from Enumerate
-   * @return either
-   *   @link PLDHashOperator::PL_DHASH_NEXT PL_DHASH_NEXT @endlink or
-   *   @link PLDHashOperator::PL_DHASH_STOP PL_DHASH_STOP @endlink
-   */
-  typedef PLDHashOperator (*EnumReadFunction)(KeyType aKey,
-                                              UserDataType aData,
-                                              void* aUserArg);
-
-  /**
-   * enumerate entries in the hashtable, without allowing changes
-   * WARNING: this function is deprecated. Please use Iterator instead.
-   * @param aEnumFunc enumeration callback
-   * @param aUserArg passed unchanged to the EnumReadFunction
-   */
-  uint32_t EnumerateRead(EnumReadFunction aEnumFunc, void* aUserArg) const
-  {
-    uint32_t n = 0;
-    for (auto iter = this->mTable.ConstIter(); !iter.Done(); iter.Next()) {
-      auto entry = static_cast<EntryType*>(iter.Get());
-      PLDHashOperator op = aEnumFunc(entry->GetKey(), entry->mData, aUserArg);
-      n++;
-      MOZ_ASSERT(!(op & PL_DHASH_REMOVE));
-      if (op & PL_DHASH_STOP) {
-        break;
-      }
-    }
-    return n;
-  }
-
-  /**
-   * function type provided by the application for enumeration.
-   * @param aKey the key being enumerated
    * @param aData Reference to data being enumerated, may be altered. e.g. for
    *        nsInterfaceHashtable this is an nsCOMPtr reference...
    * @parm aUserArg passed unchanged from Enumerate
    * @return bitflag combination of
-   *   @link PLDHashOperator::PL_DHASH_REMOVE @endlink,
-   *   @link PLDHashOperator::PL_DHASH_NEXT PL_DHASH_NEXT @endlink, or
-   *   @link PLDHashOperator::PL_DHASH_STOP PL_DHASH_STOP @endlink
+   *   @link PLDHashOperator::PL_DHASH_REMOVE @endlink or
+   *   @link PLDHashOperator::PL_DHASH_NEXT PL_DHASH_NEXT @endlink
    */
   typedef PLDHashOperator (*EnumFunction)(KeyType aKey,
                                           DataType& aData,
@@ -222,9 +185,6 @@ public:
       n++;
       if (op & PL_DHASH_REMOVE) {
         iter.Remove();
-      }
-      if (op & PL_DHASH_STOP) {
-        break;
       }
     }
     return n;

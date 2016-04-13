@@ -413,27 +413,6 @@ IsNullTaggedPointer(void* p)
     return uintptr_t(p) <= LargestTaggedNullCellPointer;
 }
 
-// HashKeyRef represents a reference to a HashMap key. This should normally
-// be used through the HashTableWriteBarrierPost function.
-template <typename Map, typename Key>
-class HashKeyRef : public BufferableRef
-{
-    Map* map;
-    Key key;
-
-  public:
-    HashKeyRef(Map* m, const Key& k) : map(m), key(k) {}
-
-    void trace(JSTracer* trc) override {
-        Key prior = key;
-        typename Map::Ptr p = map->lookup(key);
-        if (!p)
-            return;
-        TraceManuallyBarrieredEdge(trc, &key, "HashKeyRef");
-        map->rekeyIfMoved(prior, key);
-    }
-};
-
 // Wrap a GC thing pointer into a new Value or jsid. The type system enforces
 // that the thing pointer is a wrappable type.
 template <typename S, typename T>
@@ -461,6 +440,50 @@ CheckTracedThing(JSTracer* trc, T* thing);
 template<typename T>
 void
 CheckTracedThing(JSTracer* trc, T thing);
+
+// Define a default Policy for all pointer types. This may fail to link if this
+// policy gets used on a non-GC typed pointer by accident. There is a separate
+// default policy for Value and jsid.
+template <typename T>
+struct DefaultGCPolicy<T*>
+{
+    static void trace(JSTracer* trc, T** thingp, const char* name) {
+        // If linking is failing here, it likely means that you need to define
+        // or use a non-default GC policy for your non-gc-pointer type.
+        if (*thingp)
+            TraceManuallyBarrieredEdge(trc, thingp, name);
+    }
+
+    static bool needsSweep(T** thingp) {
+        // If linking is failing here, it likely means that you need to define
+        // or use a non-default GC policy for your non-gc-pointer type.
+        return *thingp && gc::IsAboutToBeFinalizedUnbarriered(thingp);
+    }
+};
+
+// RelocatablePtr is only defined for GC pointer types, so this default policy
+// should work in all cases.
+template <typename T>
+struct DefaultGCPolicy<RelocatablePtr<T>>
+{
+    static void trace(JSTracer* trc, RelocatablePtr<T>* thingp, const char* name) {
+        TraceEdge(trc, thingp, name);
+    }
+    static bool needsSweep(RelocatablePtr<T>* thingp) {
+        return gc::IsAboutToBeFinalizedUnbarriered(thingp);
+    }
+};
+
+template <typename T>
+struct DefaultGCPolicy<ReadBarriered<T>>
+{
+    static void trace(JSTracer* trc, ReadBarriered<T>* thingp, const char* name) {
+        TraceEdge(trc, thingp, name);
+    }
+    static bool needsSweep(ReadBarriered<T>* thingp) {
+        return gc::IsAboutToBeFinalized(thingp);
+    }
+};
 
 } /* namespace js */
 

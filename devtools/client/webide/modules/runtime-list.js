@@ -5,7 +5,6 @@
 const {Cu} = require("chrome");
 
 const {Services} = Cu.import("resource://gre/modules/Services.jsm");
-const {AppProjects} = require("devtools/client/app-manager/app-projects");
 const {AppManager} = require("devtools/client/webide/modules/app-manager");
 const EventEmitter = require("devtools/shared/event-emitter");
 const {RuntimeScanners, WiFiScanner} = require("devtools/client/webide/modules/runtimes");
@@ -13,7 +12,7 @@ const {Devices} = Cu.import("resource://devtools/shared/apps/Devices.jsm");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const utils = require("devtools/client/webide/modules/utils");
 
-const Strings = Services.strings.createBundle("chrome://browser/locale/devtools/webide.properties");
+const Strings = Services.strings.createBundle("chrome://devtools/locale/webide.properties");
 
 var RuntimeList;
 
@@ -85,6 +84,10 @@ RuntimeList.prototype = {
 
   showAddons: function() {
     this._Cmds.showAddons();
+  },
+
+  refreshScanners: function() {
+    RuntimeScanners.scan();
   },
 
   updateCommands: function() {

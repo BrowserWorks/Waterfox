@@ -29,11 +29,6 @@ inline RectDouble ToRectDouble(const gfxRect &aRect)
   return RectDouble(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 
-inline Rect ToRect(const IntRect &aRect)
-{
-  return Rect(aRect.x, aRect.y, aRect.width, aRect.height);
-}
-
 inline Matrix ToMatrix(const gfxMatrix &aMatrix)
 {
   return Matrix(Float(aMatrix._11), Float(aMatrix._12), Float(aMatrix._21),
@@ -49,11 +44,6 @@ inline gfxMatrix ThebesMatrix(const Matrix &aMatrix)
 inline Point ToPoint(const gfxPoint &aPoint)
 {
   return Point(Float(aPoint.x), Float(aPoint.y));
-}
-
-inline IntMargin ToIntMargin(const nsIntMargin& aMargin)
-{
-  return IntMargin(aMargin.top, aMargin.right, aMargin.bottom, aMargin.left);
 }
 
 inline Size ToSize(const gfxSize &aSize)
@@ -76,6 +66,11 @@ inline gfxRect ThebesRect(const Rect &aRect)
   return gfxRect(aRect.x, aRect.y, aRect.width, aRect.height);
 }
 
+inline gfxRect ThebesRect(const IntRect &aRect)
+{
+  return gfxRect(aRect.x, aRect.y, aRect.width, aRect.height);
+}
+
 inline gfxRect ThebesRect(const RectDouble &aRect)
 {
   return gfxRect(aRect.x, aRect.y, aRect.width, aRect.height);
@@ -85,31 +80,31 @@ inline gfxImageFormat SurfaceFormatToImageFormat(SurfaceFormat aFormat)
 {
   switch (aFormat) {
   case SurfaceFormat::B8G8R8A8:
-    return gfxImageFormat::ARGB32;
+    return SurfaceFormat::A8R8G8B8_UINT32;
   case SurfaceFormat::B8G8R8X8:
-    return gfxImageFormat::RGB24;
+    return SurfaceFormat::X8R8G8B8_UINT32;
   case SurfaceFormat::R5G6B5_UINT16:
-    return gfxImageFormat::RGB16_565;
+    return SurfaceFormat::R5G6B5_UINT16;
   case SurfaceFormat::A8:
-    return gfxImageFormat::A8;
+    return SurfaceFormat::A8;
   default:
-    return gfxImageFormat::Unknown;
+    return SurfaceFormat::UNKNOWN;
   }
 }
 
 inline SurfaceFormat ImageFormatToSurfaceFormat(gfxImageFormat aFormat)
 {
   switch (aFormat) {
-  case gfxImageFormat::ARGB32:
+  case SurfaceFormat::A8R8G8B8_UINT32:
     return SurfaceFormat::B8G8R8A8;
-  case gfxImageFormat::RGB24:
+  case SurfaceFormat::X8R8G8B8_UINT32:
     return SurfaceFormat::B8G8R8X8;
-  case gfxImageFormat::RGB16_565:
+  case SurfaceFormat::R5G6B5_UINT16:
     return SurfaceFormat::R5G6B5_UINT16;
-  case gfxImageFormat::A8:
+  case SurfaceFormat::A8:
     return SurfaceFormat::A8;
   default:
-  case gfxImageFormat::Unknown:
+  case SurfaceFormat::UNKNOWN:
     return SurfaceFormat::B8G8R8A8;
   }
 }

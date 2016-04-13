@@ -18,8 +18,6 @@
 #include "nsDirectoryIndexStream.h"
 #include "mozilla/Logging.h"
 #include "prtime.h"
-static PRLogModuleInfo* gLog;
-
 #include "nsISimpleEnumerator.h"
 #ifdef THREADSAFE_I18N
 #include "nsCollationCID.h"
@@ -41,12 +39,12 @@ static PRLogModuleInfo* gLog;
 
 //#define THREADSAFE_I18N
 
+using namespace mozilla;
+static LazyLogModule gLog("nsDirectoryIndexStream");
+
 nsDirectoryIndexStream::nsDirectoryIndexStream()
     : mOffset(0), mStatus(NS_OK), mPos(0)
 {
-    if (! gLog)
-        gLog = PR_NewLogModule("nsDirectoryIndexStream");
-
     MOZ_LOG(gLog, LogLevel::Debug,
            ("nsDirectoryIndexStream[%p]: created", this));
 }

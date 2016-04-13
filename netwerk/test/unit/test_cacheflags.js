@@ -1,5 +1,5 @@
 Cu.import("resource://testing-common/httpd.js");
-Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 
 var httpserver = new HttpServer();
 httpserver.start(-1);
@@ -13,6 +13,8 @@ var longexpPath = "/longexp/" + suffix;
 var longexp2Path = "/longexp/2/" + suffix;
 var nocachePath = "/nocache" + suffix;
 var nostorePath = "/nostore" + suffix;
+var test410Path = "/test410" + suffix;
+var test404Path = "/test404" + suffix;
 
 // We attach this to channel when we want to test Private Browsing mode
 function LoadContext(usePrivateBrowsing) {
@@ -42,16 +44,7 @@ LoadContext.prototype = {
 PrivateBrowsingLoadContext = new LoadContext(true);
 
 function make_channel(url, flags, usePrivateBrowsing) {
-  var ios = Cc["@mozilla.org/network/io-service;1"].
-    getService(Ci.nsIIOService);
-  var req = ios.newChannel2(url,
-                            null,
-                            null,
-                            null,      // aLoadingNode
-                            Services.scriptSecurityManager.getSystemPrincipal(),
-                            null,      // aTriggeringPrincipal
-                            Ci.nsILoadInfo.SEC_NORMAL,
-                            Ci.nsIContentPolicy.TYPE_OTHER);
+  var req = NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true});
   req.loadFlags = flags;
   if (usePrivateBrowsing) {
     req.notificationCallbacks = PrivateBrowsingLoadContext;    
@@ -112,7 +105,7 @@ Test.prototype = {
          "\n  " + this.hitServer + "\n");
     gHitServer = false;
     var channel = make_channel(this.path, this.flags, this.usePrivateBrowsing);
-    channel.asyncOpen(this, null);
+    channel.asyncOpen2(this);
   }
 };
 
@@ -266,8 +259,26 @@ var gTests = [
            Ci.nsIRequest.VALIDATE_NEVER,
            false,  // expect success
            false,  // read from cache
-           false)  // hit server
-  ];
+           false), // hit server
+
+  new Test(httpBase + test410Path, 0,
+           true,   // expect success
+           false,  // read from cache
+           true),  // hit server
+  new Test(httpBase + test410Path, 0,
+           true,   // expect success
+           true,   // read from cache
+           false), // hit server
+
+  new Test(httpBase + test404Path, 0,
+           true,   // expect success
+           false,  // read from cache
+           true),  // hit server
+  new Test(httpBase + test404Path, 0,
+           true,   // expect success
+           false,  // read from cache
+           true)   // hit server
+];
 
 function run_next_test()
 {
@@ -280,7 +291,7 @@ function run_next_test()
   test.run();
 }
 
-function handler(metadata, response) {
+function handler(httpStatus, metadata, response) {
   gHitServer = true;
   try {
     var etag = metadata.getHeader("If-None-Match");
@@ -291,7 +302,7 @@ function handler(metadata, response) {
     // Allow using the cached data
     response.setStatusLine(metadata.httpVersion, 304, "Not Modified");
   } else {
-    response.setStatusLine(metadata.httpVersion, 200, "OK");
+    response.setStatusLine(metadata.httpVersion, httpStatus, "Useless Phrase");
     response.setHeader("Content-Type", "text/plain", false);
     response.setHeader("ETag", "testtag", false);
     const body = "data";
@@ -301,28 +312,36 @@ function handler(metadata, response) {
 
 function nocache_handler(metadata, response) {
   response.setHeader("Cache-Control", "no-cache", false);
-  handler(metadata, response);
+  handler(200, metadata, response);
 }
 
 function nostore_handler(metadata, response) {
   response.setHeader("Cache-Control", "no-store", false);
-  handler(metadata, response);
+  handler(200, metadata, response);
+}
+
+function test410_handler(metadata, response) {
+  handler(410, metadata, response);
+}
+
+function test404_handler(metadata, response) {
+  handler(404, metadata, response);
 }
 
 function shortexp_handler(metadata, response) {
   response.setHeader("Cache-Control", "max-age=0", false);
-  handler(metadata, response);
+  handler(200, metadata, response);
 }
 
 function longexp_handler(metadata, response) {
   response.setHeader("Cache-Control", "max-age=10000", false);
-  handler(metadata, response);
+  handler(200, metadata, response);
 }
 
 // test spaces around max-age value token
 function longexp2_handler(metadata, response) {
   response.setHeader("Cache-Control", "max-age = 10000", false);
-  handler(metadata, response);
+  handler(200, metadata, response);
 }
 
 function run_test() {
@@ -331,6 +350,8 @@ function run_test() {
   httpserver.registerPathHandler(longexp2Path, longexp2_handler);
   httpserver.registerPathHandler(nocachePath, nocache_handler);
   httpserver.registerPathHandler(nostorePath, nostore_handler);
+  httpserver.registerPathHandler(test410Path, test410_handler);
+  httpserver.registerPathHandler(test404Path, test404_handler);
 
   run_next_test();
   do_test_pending();

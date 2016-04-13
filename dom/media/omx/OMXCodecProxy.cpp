@@ -64,7 +64,15 @@ OMXCodecProxy::OMXCodecProxy(
 
 OMXCodecProxy::~OMXCodecProxy()
 {
+  // At first, release mResourceClient's resource to prevent a conflict with
+  // mResourceClient's callback.
+  if (mResourceClient) {
+    mResourceClient->ReleaseResource();
+    mResourceClient = nullptr;
+  }
+
   mState = ResourceState::END;
+  mCodecPromise.RejectIfExists(true, __func__);
 
   if (mOMXCodec.get()) {
     wp<MediaSource> tmp = mOMXCodec;
@@ -77,44 +85,18 @@ OMXCodecProxy::~OMXCodecProxy()
   // Complete all pending Binder ipc transactions
   IPCThreadState::self()->flushCommands();
 
-  if (mResourceClient) {
-    mResourceClient->ReleaseResource();
-    mResourceClient = nullptr;
-  }
-
   mSource.clear();
   free(mComponentName);
   mComponentName = nullptr;
 }
 
-void OMXCodecProxy::setListener(const wp<CodecResourceListener>& listener)
-{
-  Mutex::Autolock autoLock(mLock);
-  mListener = listener;
-}
-
-void OMXCodecProxy::notifyResourceReserved()
-{
-  sp<CodecResourceListener> listener = mListener.promote();
-  if (listener != nullptr) {
-    listener->codecReserved();
-  }
-}
-
-void OMXCodecProxy::notifyResourceCanceled()
-{
-  sp<CodecResourceListener> listener = mListener.promote();
-  if (listener != nullptr) {
-    listener->codecCanceled();
-  }
-}
-
-void OMXCodecProxy::requestResource()
+RefPtr<OMXCodecProxy::CodecPromise>
+OMXCodecProxy::requestResource()
 {
   Mutex::Autolock autoLock(mLock);
 
   if (mResourceClient) {
-    return;
+    return CodecPromise::CreateAndReject(true, __func__);
   }
   mState = ResourceState::WAITING;
 
@@ -123,6 +105,9 @@ void OMXCodecProxy::requestResource()
   mResourceClient = new mozilla::MediaSystemResourceClient(type);
   mResourceClient->SetListener(this);
   mResourceClient->Acquire();
+
+  RefPtr<CodecPromise> p = mCodecPromise.Ensure(__func__);
+  return p.forget();
 }
 
 // Called on ImageBridge thread
@@ -132,13 +117,14 @@ OMXCodecProxy::ResourceReserved()
   Mutex::Autolock autoLock(mLock);
 
   if (mState != ResourceState::WAITING) {
+    mCodecPromise.RejectIfExists(true, __func__);
     return;
   }
 
   const char *mime;
   if (!mSrcMeta->findCString(kKeyMIMEType, &mime)) {
     mState = ResourceState::END;
-    notifyResourceCanceled();
+    mCodecPromise.RejectIfExists(true, __func__);
     return;
   }
 
@@ -147,7 +133,7 @@ OMXCodecProxy::ResourceReserved()
     mOMXCodec = OMXCodec::Create(mOMX, mSrcMeta, mIsEncoder, mSource, mComponentName, mFlags, mNativeWindow);
     if (mOMXCodec == nullptr) {
       mState = ResourceState::END;
-      notifyResourceCanceled();
+      mCodecPromise.RejectIfExists(true, __func__);
       return;
     }
     // Check if this video is sized such that we're comfortable
@@ -168,7 +154,7 @@ OMXCodecProxy::ResourceReserved()
                     width, height, maxWidth, maxHeight);
       mOMXCodec.clear();
       mState = ResourceState::END;
-      notifyResourceCanceled();
+      mCodecPromise.RejectIfExists(true, __func__);
       return;
     }
 
@@ -176,13 +162,13 @@ OMXCodecProxy::ResourceReserved()
       NS_WARNING("Couldn't start OMX video source");
       mOMXCodec.clear();
       mState = ResourceState::END;
-      notifyResourceCanceled();
+      mCodecPromise.RejectIfExists(true, __func__);
       return;
     }
   }
 
   mState = ResourceState::ACQUIRED;
-  notifyResourceReserved();
+  mCodecPromise.ResolveIfExists(true, __func__);
 }
 
 // Called on ImageBridge thread
@@ -191,9 +177,11 @@ OMXCodecProxy::ResourceReserveFailed()
 {
   Mutex::Autolock autoLock(mLock);
   mState = ResourceState::NOT_ACQUIRED;
+  mCodecPromise.RejectIfExists(true, __func__);
 }
 
-status_t OMXCodecProxy::start(MetaData *params)
+status_t
+OMXCodecProxy::start(MetaData *params)
 {
   Mutex::Autolock autoLock(mLock);
 
@@ -204,7 +192,8 @@ status_t OMXCodecProxy::start(MetaData *params)
   return mOMXCodec->start();
 }
 
-status_t OMXCodecProxy::stop()
+status_t
+OMXCodecProxy::stop()
 {
   Mutex::Autolock autoLock(mLock);
 
@@ -215,7 +204,8 @@ status_t OMXCodecProxy::stop()
   return mOMXCodec->stop();
 }
 
-sp<MetaData> OMXCodecProxy::getFormat()
+sp<MetaData>
+OMXCodecProxy::getFormat()
 {
   Mutex::Autolock autoLock(mLock);
 
@@ -227,7 +217,8 @@ sp<MetaData> OMXCodecProxy::getFormat()
   return mOMXCodec->getFormat();
 }
 
-status_t OMXCodecProxy::read(MediaBuffer **buffer, const ReadOptions *options)
+status_t
+OMXCodecProxy::read(MediaBuffer **buffer, const ReadOptions *options)
 {
   Mutex::Autolock autoLock(mLock);
 
@@ -238,7 +229,8 @@ status_t OMXCodecProxy::read(MediaBuffer **buffer, const ReadOptions *options)
   return mOMXCodec->read(buffer, options);
 }
 
-status_t OMXCodecProxy::pause()
+status_t
+OMXCodecProxy::pause()
 {
   Mutex::Autolock autoLock(mLock);
 

@@ -37,6 +37,7 @@ class FxDesktopBuild(BuildScript, object):
                 'sendchange',
                 'check-test',
                 'package-source',
+                'generate-source-signing-manifest',
                 'multi-l10n',
                 'generate-build-stats',
                 'update',
@@ -76,6 +77,7 @@ class FxDesktopBuild(BuildScript, object):
                 'compare_locales_vcs': 'hgtool',
                 'influx_credentials_file': 'oauth.txt',
                 'build_resources_path': '%(abs_src_dir)s/obj-firefox/.mozbuild/build_resources.json',
+                'nightly_promotion_branches': ['mozilla-central', 'mozilla-aurora'],
 
                 # try will overwrite these
                 'clone_with_purge': False,
@@ -89,9 +91,9 @@ class FxDesktopBuild(BuildScript, object):
                 'stage_username': 'ffxbld',
                 'stage_ssh_key': 'ffxbld_rsa',
                 'virtualenv_modules': [
-                    'requests==2.2.1',
+                    'requests==2.8.1',
                     'PyHawk-with-a-single-extra-commit==0.1.5',
-                    'taskcluster==0.0.15',
+                    'taskcluster==0.0.26',
                 ],
                 'virtualenv_path': 'venv',
                 #

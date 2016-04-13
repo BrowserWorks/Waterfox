@@ -30,7 +30,9 @@ StaticRefPtr<nsFakeSynthServices> nsFakeSynthServices::sSingleton;
 enum VoiceFlags
 {
   eSuppressEvents = 1,
-  eSuppressEnd = 2
+  eSuppressEnd = 2,
+  eFailAtStart = 4,
+  eFail = 8
 };
 
 struct VoiceDetails
@@ -54,6 +56,8 @@ static const VoiceDetails sIndirectVoices[] = {
   {"urn:moz-tts:fake-indirect:zanetta", "Zanetta Farussi", "it-IT", false, 0},
   {"urn:moz-tts:fake-indirect:margherita", "Margherita Durastanti", "it-IT-noevents-noend", false, eSuppressEvents | eSuppressEnd},
   {"urn:moz-tts:fake-indirect:teresa", "Teresa Cornelys", "it-IT-noend", false, eSuppressEnd},
+  {"urn:moz-tts:fake-indirect:cecilia", "Cecilia Bartoli", "it-IT-failatstart", false, eFailAtStart},
+  {"urn:moz-tts:fake-indirect:gottardo", "Gottardo Aldighieri", "it-IT-fail", false, eFail},
 };
 
 // FakeSynthCallback
@@ -150,8 +154,8 @@ FakeDirectAudioSynth::Speak(const nsAString& aText, const nsAString& aUri,
       // Just an arbitrary multiplier. Pretend that each character is
       // synthesized to 40 frames.
       uint32_t frames_length = 40 * mText.Length();
-      nsAutoArrayPtr<int16_t> frames(new int16_t[frames_length]());
-      mTask->SendAudioNative(frames, frames_length);
+      auto frames = MakeUnique<int16_t[]>(frames_length);
+      mTask->SendAudioNative(frames.get(), frames_length);
 
       mTask->SendAudioNative(nullptr, 0);
 
@@ -236,11 +240,35 @@ FakeIndirectAudioSynth::Speak(const nsAString& aText, const nsAString& aUri,
     nsString mText;
   };
 
+  class DispatchError final : public nsRunnable
+  {
+  public:
+    DispatchError(nsISpeechTask* aTask, const nsAString& aText) :
+      mTask(aTask), mText(aText)
+    {
+    }
+
+    NS_IMETHOD Run() override
+    {
+      mTask->DispatchError(mText.Length()/2, mText.Length());
+
+      return NS_OK;
+    }
+
+  private:
+    nsCOMPtr<nsISpeechTask> mTask;
+    nsString mText;
+  };
+
   uint32_t flags = 0;
   for (uint32_t i = 0; i < ArrayLength(sIndirectVoices); i++) {
     if (aUri.EqualsASCII(sIndirectVoices[i].uri)) {
       flags = sIndirectVoices[i].flags;
     }
+  }
+
+  if (flags & eFailAtStart) {
+    return NS_ERROR_FAILURE;
   }
 
   RefPtr<FakeSynthCallback> cb = new FakeSynthCallback(
@@ -251,7 +279,10 @@ FakeIndirectAudioSynth::Speak(const nsAString& aText, const nsAString& aUri,
   nsCOMPtr<nsIRunnable> runnable = new DispatchStart(aTask);
   NS_DispatchToMainThread(runnable);
 
-  if ((flags & eSuppressEnd) == 0) {
+  if (flags & eFail) {
+    runnable = new DispatchError(aTask, aText);
+    NS_DispatchToMainThread(runnable);
+  } else if ((flags & eSuppressEnd) == 0) {
     runnable = new DispatchEnd(aTask, aText);
     NS_DispatchToMainThread(runnable);
   }

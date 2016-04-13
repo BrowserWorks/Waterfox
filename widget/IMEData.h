@@ -10,6 +10,8 @@
 #include "nsRect.h"
 #include "nsStringGlue.h"
 
+class nsIWidget;
+
 namespace mozilla {
 
 class WritingMode;
@@ -117,7 +119,6 @@ struct nsIMEUpdatePreference final
 
   Notifications mWantUpdates;
 };
-
 
 /**
  * Contains IMEStatus plus information about the current 
@@ -229,11 +230,58 @@ struct IMEState final
   }
 };
 
+// NS_ONLY_ONE_NATIVE_IME_CONTEXT is a special value of native IME context.
+// If there can be only one IME composition in a process, this can be used.
+#define NS_ONLY_ONE_NATIVE_IME_CONTEXT \
+  (reinterpret_cast<void*>(static_cast<intptr_t>(-1)))
+
+struct NativeIMEContext final
+{
+  // Pointer to native IME context.  Typically this is the result of
+  // nsIWidget::GetNativeData(NS_RAW_NATIVE_IME_CONTEXT) in the parent process.
+  // See also NS_ONLY_ONE_NATIVE_IME_CONTEXT.
+  uintptr_t mRawNativeIMEContext;
+  // Process ID of the origin of mNativeIMEContext.
+  uint64_t mOriginProcessID;
+
+  NativeIMEContext()
+  {
+    Init(nullptr);
+  }
+
+  explicit NativeIMEContext(nsIWidget* aWidget)
+  {
+    Init(aWidget);
+  }
+
+  bool IsValid() const
+  {
+    return mRawNativeIMEContext &&
+           mOriginProcessID != static_cast<uintptr_t>(-1);
+  }
+
+  void Init(nsIWidget* aWidget);
+  void InitWithRawNativeIMEContext(const void* aRawNativeIMEContext)
+  {
+    InitWithRawNativeIMEContext(const_cast<void*>(aRawNativeIMEContext));
+  }
+  void InitWithRawNativeIMEContext(void* aRawNativeIMEContext);
+
+  bool operator==(const NativeIMEContext& aOther) const
+  {
+    return mRawNativeIMEContext == aOther.mRawNativeIMEContext &&
+           mOriginProcessID == aOther.mOriginProcessID;
+  }
+  bool operator!=(const NativeIMEContext& aOther) const
+  {
+    return !(*this == aOther);
+  }
+};
+
 struct InputContext final
 {
   InputContext()
-    : mNativeIMEContext(nullptr)
-    , mOrigin(XRE_IsParentProcess() ? ORIGIN_MAIN : ORIGIN_CONTENT)
+    : mOrigin(XRE_IsParentProcess() ? ORIGIN_MAIN : ORIGIN_CONTENT)
     , mMayBeIMEUnaware(false)
   {
   }
@@ -253,11 +301,6 @@ struct InputContext final
 
   /* A hint for the action that is performed when the input is submitted */
   nsString mActionHint;
-
-  /* Native IME context for the widget.  This doesn't come from the argument of
-     SetInputContext().  If there is only one context in the process, this may
-     be nullptr. */
-  void* mNativeIMEContext;
 
   /**
    * mOrigin indicates whether this focus event refers to main or remote
@@ -347,7 +390,19 @@ struct InputContextAction final
   bool UserMightRequestOpenVKB() const
   {
     return (mFocusChange == FOCUS_NOT_CHANGED &&
-            mCause == CAUSE_MOUSE);
+            (mCause == CAUSE_MOUSE || mCause == CAUSE_TOUCH));
+  }
+
+  static bool IsUserAction(Cause aCause)
+  {
+    switch (aCause) {
+      case CAUSE_KEY:
+      case CAUSE_MOUSE:
+      case CAUSE_TOUCH:
+        return true;
+      default:
+        return false;
+    }
   }
 
   InputContextAction()
@@ -432,6 +487,7 @@ struct IMENotification final
         mMouseButtonEventData.mButton = -1;
         mMouseButtonEventData.mButtons = 0;
         mMouseButtonEventData.mModifiers = 0;
+        break;
       default:
         break;
     }
@@ -681,8 +737,20 @@ struct IMENotification final
     // mStartOffset if just removed.  The vlaue is offset in the new content.
     uint32_t mAddedEndOffset;
 
-    bool mCausedByComposition;
-    bool mOccurredDuringComposition;
+    // Note that TextChangeDataBase may be the result of merging two or more
+    // changes especially in e10s mode.
+
+    // mCausedOnlyByComposition is true only when *all* merged changes are
+    // caused by composition.
+    bool mCausedOnlyByComposition;
+    // mIncludingChangesDuringComposition is true if at least one change which
+    // is not caused by composition occurred during the last composition.
+    // Note that if after the last composition is finished and there are some
+    // changes not caused by composition, this is set to false.
+    bool mIncludingChangesDuringComposition;
+    // mIncludingChangesWithoutComposition is true if there is at least one
+    // change which did occur when there wasn't a composition ongoing.
+    bool mIncludingChangesWithoutComposition;
 
     uint32_t OldLength() const
     {
@@ -753,8 +821,11 @@ struct IMENotification final
       mStartOffset = aStartOffset;
       mRemovedEndOffset = aRemovedEndOffset;
       mAddedEndOffset = aAddedEndOffset;
-      mCausedByComposition = aCausedByComposition;
-      mOccurredDuringComposition = aOccurredDuringComposition;
+      mCausedOnlyByComposition = aCausedByComposition;
+      mIncludingChangesDuringComposition =
+        !aCausedByComposition && aOccurredDuringComposition;
+      mIncludingChangesWithoutComposition =
+        !aCausedByComposition && !aOccurredDuringComposition;
     }
   };
 
@@ -797,30 +868,6 @@ struct IMENotification final
   {
     MOZ_RELEASE_ASSERT(mMessage == NOTIFY_IME_OF_TEXT_CHANGE);
     mTextChangeData = aTextChangeData;
-  }
-
-  bool IsCausedByComposition() const
-  {
-    switch (mMessage) {
-      case NOTIFY_IME_OF_SELECTION_CHANGE:
-        return mSelectionChangeData.mCausedByComposition;
-      case NOTIFY_IME_OF_TEXT_CHANGE:
-        return mTextChangeData.mCausedByComposition;
-      default:
-        return false;
-    }
-  }
-
-  bool OccurredDuringComposition() const
-  {
-    switch (mMessage) {
-      case NOTIFY_IME_OF_SELECTION_CHANGE:
-        return mSelectionChangeData.mOccurredDuringComposition;
-      case NOTIFY_IME_OF_TEXT_CHANGE:
-        return mTextChangeData.mOccurredDuringComposition;
-      default:
-        return false;
-    }
   }
 };
 

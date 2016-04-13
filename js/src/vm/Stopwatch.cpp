@@ -1,19 +1,35 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+ * vim: set ts=8 sts=4 et sw=4 tw=99:
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "vm/Stopwatch.h"
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/IntegerTypeTraits.h"
 #include "mozilla/unused.h"
 
+#if defined(XP_WIN)
+#include <processthreadsapi.h>
+#include <windows.h>
+#endif // defined(XP_WIN)
+
+#include "jscompartment.h"
+
+#include "gc/Zone.h"
+#include "vm/Runtime.h"
+
 namespace js {
 
 bool
 PerformanceMonitoring::addRecentGroup(PerformanceGroup* group)
 {
-  if (group->isUsedInThisIteration())
-    return true;
+    if (group->isUsedInThisIteration())
+        return true;
 
-  group->setIsUsedInThisIteration(true);
-  return recentGroups_.append(group);
+    group->setIsUsedInThisIteration(true);
+    return recentGroups_.append(group);
 }
 
 void
@@ -205,8 +221,10 @@ AutoStopwatch::AutoStopwatch(JSContext* cx MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IM
     }
     for (auto group = groups->begin(); group < groups->end(); group++) {
       auto acquired = acquireGroup(*group);
-      if (acquired)
-        groups_.append(acquired);
+      if (acquired) {
+          if (!groups_.append(acquired))
+              MOZ_CRASH();
+      }
     }
     if (groups_.length() == 0) {
       // We are not in charge of monitoring anything.
@@ -237,7 +255,7 @@ AutoStopwatch::~AutoStopwatch()
         return;
     }
 
-    mozilla::unused << exit(); // Sadly, there is nothing we can do about an error at this point.
+    mozilla::Unused << exit(); // Sadly, there is nothing we can do about an error at this point.
 
     for (auto group = groups_.begin(); group < groups_.end(); group++)
         releaseGroup(*group);
@@ -467,13 +485,13 @@ uint64_t
 PerformanceGroup::recentCycles(uint64_t iteration) const
 {
     MOZ_ASSERT(iteration == iteration_);
-        return recentCycles_;
-    }
+    return recentCycles_;
+}
 
 void
 PerformanceGroup::addRecentCycles(uint64_t iteration, uint64_t cycles)
 {
-    MOZ_ASSERT(iteration == iteration);
+    MOZ_ASSERT(iteration == iteration_);
     recentCycles_ += cycles;
 }
 
@@ -487,7 +505,7 @@ PerformanceGroup::recentTicks(uint64_t iteration) const
 void
 PerformanceGroup::addRecentTicks(uint64_t iteration, uint64_t ticks)
 {
-    MOZ_ASSERT(iteration == iteration);
+    MOZ_ASSERT(iteration == iteration_);
     recentTicks_ += ticks;
 }
 
@@ -502,7 +520,7 @@ PerformanceGroup::recentCPOW(uint64_t iteration) const
 void
 PerformanceGroup::addRecentCPOW(uint64_t iteration, uint64_t CPOW)
 {
-    MOZ_ASSERT(iteration == iteration);
+    MOZ_ASSERT(iteration == iteration_);
     recentCPOW_ += CPOW;
 }
 

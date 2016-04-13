@@ -44,7 +44,7 @@ def get_logger():
 
 
 def check_for_crashes(dump_directory,
-                      symbols_path,
+                      symbols_path=None,
                       stackwalk_binary=None,
                       dump_save_path=None,
                       test_name=None,
@@ -163,8 +163,14 @@ class CrashInfo(object):
         self._dump_files = None
 
     def _get_symbols(self):
-        # This updates self.symbols_path so we only download once
-        if self.symbols_path and mozfile.is_url(self.symbols_path):
+        # If no symbols path has been set create a temporary folder to let the
+        # minidump stackwalk download the symbols.
+        if not self.symbols_path:
+            self.symbols_path = tempfile.mkdtemp()
+            self.remove_symbols = True
+
+        # This updates self.symbols_path so we only download once.
+        if mozfile.is_url(self.symbols_path):
             self.remove_symbols = True
             self.logger.info("Downloading symbols from: %s" % self.symbols_path)
             # Get the symbols and write them to a temporary zipfile
@@ -230,13 +236,24 @@ class CrashInfo(object):
         err = None
         retcode = None
         if (self.symbols_path and self.stackwalk_binary and
-            os.path.exists(self.stackwalk_binary)):
+            os.path.exists(self.stackwalk_binary) and
+            os.access(self.stackwalk_binary, os.X_OK)):
+
+            command = [
+                self.stackwalk_binary,
+                path,
+                self.symbols_path
+            ]
+            self.logger.info('Copy/paste: ' + ' '.join(command))
             # run minidump_stackwalk
-            p = subprocess.Popen([self.stackwalk_binary, path, self.symbols_path],
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+            p = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
             (out, err) = p.communicate()
             retcode = p.returncode
+
             if len(out) > 3:
                 # minidump_stackwalk is chatty,
                 # so ignore stderr when it succeeds.
@@ -255,6 +272,7 @@ class CrashInfo(object):
                         break
             else:
                 include_stderr = True
+
         else:
             if not self.symbols_path:
                 errors.append("No symbols path given, can't process dump.")
@@ -262,6 +280,8 @@ class CrashInfo(object):
                 errors.append("MINIDUMP_STACKWALK not set, can't process dump.")
             elif self.stackwalk_binary and not os.path.exists(self.stackwalk_binary):
                 errors.append("MINIDUMP_STACKWALK binary not found: %s" % self.stackwalk_binary)
+            elif not os.access(self.stackwalk_binary, os.X_OK):
+                errors.append('This user cannot execute the MINIDUMP_STACKWALK binary.')
 
         if self.dump_save_path:
             self._save_dump_file(path, extra)
@@ -445,3 +465,18 @@ def kill_and_get_minidump(pid, dump_directory=None):
         needs_killing = False
     if needs_killing:
         kill_pid(pid)
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--stackwalk-binary', '-b')
+    parser.add_argument('--dump-save-path', '-o')
+    parser.add_argument('--test-name', '-n')
+    parser.add_argument('dump_directory')
+    parser.add_argument('symbols_path')
+    args = parser.parse_args()
+
+    check_for_crashes(args.dump_directory, args.symbols_path,
+                      stackwalk_binary=args.stackwalk_binary,
+                      dump_save_path=args.dump_save_path,
+                      test_name=args.test_name)

@@ -16,8 +16,8 @@
 #include "nsThreadUtils.h"
 #include "mozilla/Logging.h"
 
-extern PRLogModuleInfo* GetMediaSourceLog();
-extern PRLogModuleInfo* GetMediaSourceAPILog();
+extern mozilla::LogModule* GetMediaSourceLog();
+extern mozilla::LogModule* GetMediaSourceAPILog();
 
 #define MSE_API(arg, ...) MOZ_LOG(GetMediaSourceAPILog(), mozilla::LogLevel::Debug, ("SourceBufferList(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
 #define MSE_DEBUG(arg, ...) MOZ_LOG(GetMediaSourceLog(), mozilla::LogLevel::Debug, ("SourceBufferList(%p)::%s: " arg, this, __func__, ##__VA_ARGS__))
@@ -175,16 +175,6 @@ SourceBufferList::QueueAsyncSimpleEvent(const char* aName)
   nsCOMPtr<nsIRunnable> event = new AsyncEventRunner<SourceBufferList>(this, aName);
   NS_DispatchToMainThread(event);
 }
-
-#if defined(DEBUG)
-void
-SourceBufferList::Dump(const char* aPath)
-{
-  for (uint32_t i = 0; i < mSourceBuffers.Length(); ++i) {
-    mSourceBuffers[i]->Dump(aPath);
-  }
-}
-#endif
 
 SourceBufferList::SourceBufferList(MediaSource* aMediaSource)
   : DOMEventTargetHelper(aMediaSource->GetParentObject())

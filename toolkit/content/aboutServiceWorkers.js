@@ -46,26 +46,26 @@ function init() {
     return;
   }
 
-  let pns = undefined;
+  let ps = undefined;
   try {
-    pns = Cc["@mozilla.org/push/NotificationService;1"]
-            .getService(Ci.nsIPushNotificationService);
+    ps = Cc["@mozilla.org/push/Service;1"]
+           .getService(Ci.nsIPushService);
   } catch(e) {
-    dump("Could not acquire PushNotificationService\n");
+    dump("Could not acquire PushService\n");
   }
 
   for (let i = 0; i < length; ++i) {
-    let info = data.queryElementAt(i, Ci.nsIServiceWorkerInfo);
+    let info = data.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
     if (!info) {
-      dump("AboutServiceWorkers: Invalid nsIServiceWorkerInfo interface.\n");
+      dump("AboutServiceWorkers: Invalid nsIServiceWorkerRegistrationInfo interface.\n");
       continue;
     }
 
-    display(info, pns);
+    display(info, ps);
   }
 }
 
-function display(info, pushNotificationService) {
+function display(info, pushService) {
   let parent = document.getElementById("serviceworkers");
 
   let div = document.createElement('div');
@@ -116,18 +116,22 @@ function display(info, pushNotificationService) {
 
   createItem(bundle.GetStringFromName('scope'), info.scope);
   createItem(bundle.GetStringFromName('scriptSpec'), info.scriptSpec, true);
-  createItem(bundle.GetStringFromName('currentWorkerURL'), info.currentWorkerURL, true);
-  createItem(bundle.GetStringFromName('activeCacheName'), info.activeCacheName);
-  createItem(bundle.GetStringFromName('waitingCacheName'), info.waitingCacheName);
+  let currentWorkerURL = info.activeWorker ? info.activeWorker.scriptSpec : "";
+  createItem(bundle.GetStringFromName('currentWorkerURL'), currentWorkerURL, true);
+  let activeCacheName = info.activeWorker ? info.activeWorker.cacheName : "";
+  createItem(bundle.GetStringFromName('activeCacheName'), activeCacheName);
+  let waitingCacheName = info.waitingWorker ? info.waitingWorker.cacheName : "";
+  createItem(bundle.GetStringFromName('waitingCacheName'), waitingCacheName);
 
   let pushItem = createItem(bundle.GetStringFromName('pushEndpoint'), bundle.GetStringFromName('waiting'));
-  if (pushNotificationService) {
-    pushNotificationService.registration(info.scope, info.principal.originAttributes)
-      .then(pushRecord => {
+  if (pushService) {
+    pushService.getSubscription(info.scope, info.principal, (status, pushRecord) => {
+      if (Components.isSuccessCode(status)) {
         pushItem.data = JSON.stringify(pushRecord);
-      }).catch(error => {
+      } else {
         dump("about:serviceworkers - retrieving push registration failed\n");
-      });
+      }
+    });
   }
 
   let updateButton = document.createElement("button");

@@ -19,6 +19,9 @@ class MIRGenerator;
 class MIRGraph;
 
 bool
+PruneUnusedBranches(MIRGenerator* mir, MIRGraph& graph);
+
+bool
 FoldTests(MIRGraph& graph);
 
 bool
@@ -131,7 +134,9 @@ class LinearSum
       : terms_(other.terms_.allocPolicy()),
         constant_(other.constant_)
     {
-        terms_.appendAll(other.terms_);
+        AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!terms_.appendAll(other.terms_))
+            oomUnsafe.crash("LinearSum::LinearSum");
     }
 
     // These return false on an integer overflow, and afterwards the sum must

@@ -357,11 +357,15 @@ class BuildOptionParser(object):
         'source': 'builds/releng_sub_%s_configs/%s_source.py',
         'api-9': 'builds/releng_sub_%s_configs/%s_api_9.py',
         'api-11': 'builds/releng_sub_%s_configs/%s_api_11.py',
+        'api-15': 'builds/releng_sub_%s_configs/%s_api_15.py',
         'api-9-debug': 'builds/releng_sub_%s_configs/%s_api_9_debug.py',
         'api-11-debug': 'builds/releng_sub_%s_configs/%s_api_11_debug.py',
+        'api-15-debug': 'builds/releng_sub_%s_configs/%s_api_15_debug.py',
         'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
         'api-11-partner-sample1': 'builds/releng_sub_%s_configs/%s_api_11_partner_sample1.py',
+        'api-15-partner-sample1': 'builds/releng_sub_%s_configs/%s_api_15_partner_sample1.py',
         'api-11-b2gdroid': 'builds/releng_sub_%s_configs/%s_api_11_b2gdroid.py',
+        'api-15-b2gdroid': 'builds/releng_sub_%s_configs/%s_api_15_b2gdroid.py',
     }
     build_pool_cfg_file = 'builds/build_pool_specifics.py'
     branch_cfg_file = 'builds/branch_specifics.py'
@@ -814,6 +818,11 @@ or run without that action (ie: --no-{action})"
         self.info("Skipping......")
         return
 
+    def query_is_nightly_promotion(self):
+        platform_enabled = self.config.get('enable_nightly_promotion')
+        branch_enabled = self.branch in self.config.get('nightly_promotion_branches')
+        return platform_enabled and branch_enabled
+
     def query_build_env(self, replace_dict=None, **kwargs):
         c = self.config
 
@@ -833,8 +842,11 @@ or run without that action (ie: --no-{action})"
         # first grab the buildid
         env['MOZ_BUILD_DATE'] = self.query_buildid()
 
-        if self.query_is_nightly():
-            env["IS_NIGHTLY"] = "yes"
+        if self.query_is_nightly() or self.query_is_nightly_promotion():
+            if self.query_is_nightly():
+                # nightly promotion needs to set update_channel but not do all the 'IS_NIGHTLY'
+                # automation parts like uploading symbols for now
+                env["IS_NIGHTLY"] = "yes"
             # in branch_specifics.py we might set update_channel explicitly
             if c.get('update_channel'):
                 env["MOZ_UPDATE_CHANNEL"] = c['update_channel']
@@ -1134,7 +1146,7 @@ or run without that action (ie: --no-{action})"
         if auth_file:
             cmd.extend(['--authentication-file', auth_file])
         self.info(str(cmd))
-        self.run_command(cmd, cwd=dirs['abs_src_dir'], halt_on_failure=True)
+        self.run_command_m(cmd, cwd=dirs['abs_src_dir'], halt_on_failure=True)
 
     def query_revision(self, source_path=None):
         """ returns the revision of the build
@@ -1224,6 +1236,19 @@ or run without that action (ie: --no-{action})"
                                    testresults,
                                    write_to_file=True)
 
+    def _generate_properties_file(self, path):
+        # TODO it would be better to grab all the properties that were
+        # persisted to file rather than use whats in the buildbot_properties
+        # live object so we become less action dependant.
+        all_current_props = dict(
+            chain(self.buildbot_config['properties'].items(),
+                  self.buildbot_properties.items())
+        )
+        # graph_server_post.py expects a file with 'properties' key
+        graph_props = dict(properties=all_current_props)
+        self.dump_config(path, graph_props)
+
+
     def _graph_server_post(self):
         """graph server post results."""
         self._assert_cfg_valid_for_action(
@@ -1247,18 +1272,8 @@ or run without that action (ie: --no-{action})"
         # graph server takes all our build properties we had initially
         # (buildbot_config) and what we updated to since
         # the script ran (buildbot_properties)
-        # TODO it would be better to grab all the properties that were
-        # persisted to file rather than use whats in the buildbot_properties
-        # live object so we become less action dependant.
-        graph_props_path = os.path.join(c['base_work_dir'],
-                                        "graph_props.json")
-        all_current_props = dict(
-            chain(self.buildbot_config['properties'].items(),
-                  self.buildbot_properties.items())
-        )
-        # graph_server_post.py expects a file with 'properties' key
-        graph_props = dict(properties=all_current_props)
-        self.dump_config(graph_props_path, graph_props)
+        graph_props_path = os.path.join(c['base_work_dir'], "graph_props.json")
+        self._generate_properties_file(graph_props_path)
 
         gs_env = self.query_build_env()
         gs_env.update({'PYTHONPATH': graph_server_path})
@@ -1433,6 +1448,7 @@ or run without that action (ie: --no-{action})"
             self.warning('Skipping S3 file upload: No taskcluster credentials.')
             return
 
+        dirs = self.query_abs_dirs()
         repo = self._query_repo()
         revision = self.query_revision()
         pushinfo = self.vcs_query_pushinfo(repo, revision)
@@ -1458,12 +1474,16 @@ or run without that action (ie: --no-{action})"
             routes.append(template.format(**fmt))
         self.info("Using routes: %s" % routes)
 
-        tc = Taskcluster(self.branch,
-                         pushinfo.pushdate, # Use pushdate as the rank
-                         self.client_id,
-                         self.access_token,
-                         self.log_obj,
-                         )
+        tc = Taskcluster(
+            branch=self.branch,
+            rank=pushinfo.pushdate, # Use pushdate as the rank
+            client_id=self.client_id,
+            access_token=self.access_token,
+            log_obj=self.log_obj,
+            # `upload_to_task_id` is used by mozci to have access to where the artifacts
+            # will be uploaded
+            task_id=self.buildbot_config['properties'].get('upload_to_task_id'),
+        )
 
         # TODO: Bug 1165980 - these should be in tree
         routes.extend([
@@ -1497,6 +1517,17 @@ or run without that action (ie: --no-{action})"
                     if condition(upload_file):
                         self.set_buildbot_property(prop, tc.get_taskcluster_url(upload_file))
                         break
+
+        # Upload a file with all Buildbot properties
+        # This is necessary for Buildbot Bridge test jobs work properly
+        # until we can migrate to TaskCluster
+        properties_path = os.path.join(
+            dirs['base_work_dir'],
+            'buildbot_properties.json'
+        )
+        self._generate_properties_file(properties_path)
+        tc.create_artifact(task, properties_path)
+
         tc.report_completed(task)
 
     def upload_files(self):
@@ -1600,9 +1631,41 @@ or run without that action (ie: --no-{action})"
         else:
             paths.append( ('libxul.so', os.path.join(dirs['abs_obj_dir'], 'dist', 'bin', 'libxul.so')) )
 
+        size_measurements = []
+        installer_size = 0
         for (name, path) in paths:
+            # FIXME: Remove the tinderboxprints when bug 1161249 is fixed and
+            # we're displaying perfherder data for each job automatically
             if os.path.exists(path):
-                self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' % (name, self.query_filesize(path)))
+                filesize = self.query_filesize(path)
+                self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' % (
+                    name, filesize))
+                if any(name.endswith(extension) for extension in ['apk',
+                                                                  'dmg',
+                                                                  'bz2',
+                                                                  'zip']):
+                    installer_size = filesize
+                else:
+                    size_measurements.append({'name': name, 'value': filesize})
+
+        perfherder_data = {
+            "framework": {
+                "name": "build_metrics"
+            },
+            "suites": [],
+        }
+        if installer_size or size_measurements:
+            perfherder_data["suites"].append({
+                "name": "installer size",
+                "value": installer_size,
+                "subtests": size_measurements
+            })
+        if (hasattr(self, "build_metrics_summary") and
+            self.build_metrics_summary):
+            perfherder_data["suites"].append(self.build_metrics_summary)
+
+        if perfherder_data["suites"]:
+            self.info('PERFHERDER_DATA: %s' % json.dumps(perfherder_data))
 
     def _set_file_properties(self, file_name, find_dir, prop_type,
                              error_level=ERROR):
@@ -1812,27 +1875,56 @@ or run without that action (ie: --no-{action})"
 
     def preflight_package_source(self):
         self._get_mozconfig()
-        self._run_tooltool()
 
     def package_source(self):
         """generates source archives and uploads them"""
         env = self.query_build_env()
         env.update(self.query_mach_build_env())
         python = self.query_exe('python2.7')
+        dirs = self.query_abs_dirs()
 
         self.run_command_m(
             command=[python, 'mach', '--log-no-times', 'configure'],
-            cwd=self.query_abs_dirs()['abs_src_dir'],
+            cwd=dirs['abs_src_dir'],
             env=env, output_timeout=60*3, halt_on_failure=True,
         )
         self.run_command_m(
             command=[
-                'make', 'source-package', 'hg-bundle',
+                'make', 'source-package', 'hg-bundle', 'source-upload',
                 'HG_BUNDLE_REVISION=%s' % self.query_revision(),
+                'UPLOAD_HG_BUNDLE=1',
             ],
-            cwd=self.query_abs_dirs()['abs_obj_dir'],
+            cwd=dirs['abs_obj_dir'],
             env=env, output_timeout=60*45, halt_on_failure=True,
         )
+
+    def generate_source_signing_manifest(self):
+        """Sign source checksum file"""
+        env = self.query_build_env()
+        env.update(self.query_mach_build_env())
+        if env.get("UPLOAD_HOST") != "localhost":
+            self.warning("Skipping signing manifest generation. Set "
+                         "UPLOAD_HOST to `localhost' to enable.")
+            return
+
+        if not env.get("UPLOAD_PATH"):
+            self.warning("Skipping signing manifest generation. Set "
+                         "UPLOAD_PATH to enable.")
+            return
+
+        dirs = self.query_abs_dirs()
+        objdir = dirs['abs_obj_dir']
+
+        output = self.get_output_from_command_m(
+            command=['make', 'echo-variable-SOURCE_CHECKSUM_FILE'],
+            cwd=objdir,
+        )
+        files = shlex.split(output)
+        abs_files = [os.path.abspath(os.path.join(objdir, f)) for f in files]
+        manifest_file = os.path.join(env["UPLOAD_PATH"],
+                                     "signing_manifest.json")
+        self.write_to_file(manifest_file,
+                           self.generate_signing_manifest(abs_files))
 
     def check_test(self):
         c = self.config

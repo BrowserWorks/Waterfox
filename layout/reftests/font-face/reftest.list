@@ -7,7 +7,7 @@ HTTP(..) == download-2.html download-2-ref.html
 HTTP(..) != download-2.html about:blank
 random-if(winWidget) HTTP(..) == download-2-big.html download-2-big-otf.html # bug 470713
 HTTP(..) != download-2-big-otf.html about:blank
-asserts-if(Android,4-8) skip-if(Android&&AndroidVersion==17) HTTP(..) != download-3-notref.html download-3.html # bug 1019192, bug 936226
+asserts-if(Android&&!asyncPan,4-8) skip-if(Android&&AndroidVersion==17) HTTP(..) != download-3-notref.html download-3.html # bug 1019192, bug 936226
 asserts-if(Android,0-8) HTTP(..) == download-3-ref.html download-3.html # same bugs as above
 asserts-if(Android,0-8) HTTP(..) == fallback-to-system-1.html fallback-to-system-1-ref.html # just delayed assertions from above tests
 HTTP(..) == name-override-simple-1.html name-override-simple-1-ref.html
@@ -94,9 +94,6 @@ HTTP(..) == ahem-metrics-1.html ahem-metrics-1-ref.html
 HTTP(..) == ex-unit-1.html ex-unit-1-ref.html
 HTTP(..) == ex-unit-1-dynamic.html ex-unit-1-ref.html
 
-# bug 493976 - for some reason the Arabic tests below cause Tinderbox timeouts
-# HTTP(..) == src-format-arabic.html src-format-arabic-ot-ref.html
-
 == local-1.html local-1-ref.html
 == local-styled-1.html local-styled-1-ref.html
 
@@ -179,3 +176,8 @@ HTTP(..) == reflow-sanity-delay-1a.html reflow-sanity-1-ref.html
 HTTP(..) == reflow-sanity-delay-1b.html reflow-sanity-1-ref.html
 HTTP(..) == reflow-sanity-delay-1c.html reflow-sanity-1-ref.html
 HTTP(..) == reflow-sanity-delay-1-metrics.html reflow-sanity-1-ref.html
+
+# font-display
+pref(layout.css.font-display.enabled,true) HTTP(..) == font-display-1.html font-display-1-ref.html # normal font load (~500ms)
+pref(layout.css.font-display.enabled,true) HTTP(..) == font-display-2.html font-display-2-ref.html # font load takes 4500ms
+

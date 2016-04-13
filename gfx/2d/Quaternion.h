@@ -8,13 +8,14 @@
 
 #include "Types.h"
 #include <math.h>
+#include <ostream>
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
+#include "mozilla/gfx/MatrixFwd.h"
+#include "mozilla/gfx/Point.h"
 
 namespace mozilla {
 namespace gfx {
-
-class Matrix4x4;
 
 class Quaternion
 {

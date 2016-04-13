@@ -15,18 +15,21 @@ interface nsIPrincipal;
 #include "nsTArray.h"
 #include "mozilla/BasePrincipal.h"
 #include "mozilla/LoadTainting.h"
+
+class nsCString;
 %}
 
 [ref] native const_nsIPrincipalArray(const nsTArray<nsCOMPtr<nsIPrincipal>>);
-native OriginAttributes(mozilla::OriginAttributes);
-[ref] native const_OriginAttributesRef(const mozilla::OriginAttributes);
+native NeckoOriginAttributes(mozilla::NeckoOriginAttributes);
+[ref] native const_OriginAttributesRef(const mozilla::NeckoOriginAttributes);
+[ref] native StringArrayRef(const nsTArray<nsCString>);
 
 typedef unsigned long nsSecurityFlags;
 
 /**
  * An nsILoadOwner represents per-load information about who started the load.
  */
-[scriptable, builtinclass, uuid(2ab4c77c-78e6-11e5-8bcf-feff819cdc9f)]
+[scriptable, builtinclass, uuid(ddc65bf9-2f60-41ab-b22a-4f1ae9efcd36)]
 interface nsILoadInfo : nsISupports
 {
   /**
@@ -86,11 +89,21 @@ interface nsILoadInfo : nsISupports
   const unsigned long SEC_REQUIRE_CORS_DATA_INHERITS = (1<<4);
 
   /**
-   * Use this flag in addition to SEC_REQUIRE_CORS_DATA_INHERITS
-   * to make cross-origin CORS loads happen with credentials
-   * (such as cookies and client side certs).
+   * Choose cookie policy. The default policy is equivalent to "INCLUDE" for
+   * SEC_REQUIRE_SAME_ORIGIN_* and SEC_ALLOW_CROSS_ORIGIN_* modes, and
+   * equivalent to "SAME_ORIGIN" for SEC_REQUIRE_CORS_DATA_INHERITS mode.
+   *
+   * This means that if you want to perform a CORS load with credentials, pass
+   * SEC_COOKIES_INCLUDE.
+   *
+   * Note that these flags are still subject to the user's cookie policies.
+   * For example, if the user is blocking 3rd party cookies, those cookies
+   * will be blocked no matter which of these flags are set.
    */
-  const unsigned long SEC_REQUIRE_CORS_WITH_CREDENTIALS = (1<<5);
+  const unsigned long SEC_COOKIES_DEFAULT = (0 << 5);
+  const unsigned long SEC_COOKIES_INCLUDE = (1 << 5);
+  const unsigned long SEC_COOKIES_SAME_ORIGIN = (2 << 5);
+  const unsigned long SEC_COOKIES_OMIT = (3 << 5);
 
   /**
    * Force inheriting of the Principal. The resulting resource will use the
@@ -107,7 +120,7 @@ interface nsILoadInfo : nsISupports
    *
    * This flag can not be used together with SEC_SANDBOXED.
    */
-  const unsigned long SEC_FORCE_INHERIT_PRINCIPAL = (1<<6);
+  const unsigned long SEC_FORCE_INHERIT_PRINCIPAL = (1<<7);
 
   /**
    * Sandbox the load. The resulting resource will use a freshly created
@@ -119,17 +132,30 @@ interface nsILoadInfo : nsISupports
    *
    * This flag can not be used together with SEC_FORCE_INHERIT_PRINCIPAL.
    */
-  const unsigned long SEC_SANDBOXED = (1<<7);
+  const unsigned long SEC_SANDBOXED = (1<<8);
 
   /**
    * Inherit the Principal for about:blank.
    */
-  const unsigned long SEC_ABOUT_BLANK_INHERITS = (1<<8);
+  const unsigned long SEC_ABOUT_BLANK_INHERITS = (1<<9);
 
   /**
-   * Allow chrome: to bypass security checks.
+   * Allow access to chrome: packages that are content accessible.
    */
-  const unsigned long SEC_ALLOW_CHROME = (1<<9);
+  const unsigned long SEC_ALLOW_CHROME = (1<<10);
+
+  /**
+   * Don't follow redirects. Instead the redirect response is returned
+   * as a successful response for the channel.
+   *
+   * Redirects not initiated by a server response, i.e. REDIRECT_INTERNAL and
+   * REDIRECT_STS_UPGRADE, are still followed.
+   *
+   * Note: If this flag is set and the channel response is a redirect, then
+   * the response body might not be available.
+   * This can happen if the redirect was cached.
+   */
+  const unsigned long SEC_DONT_FOLLOW_REDIRECTS = (1<<11);
 
   /**
    * The loadingPrincipal is the principal that is responsible for the load.
@@ -220,10 +246,20 @@ interface nsILoadInfo : nsISupports
   [infallible] readonly attribute unsigned long securityMode;
 
   /**
-   * Determines whether credentials are sent with CORS requests.
-   * Using this flag requires SEC_REQUIRE_CORS_DATA_INHERITS also to be set.
+   * True if this request is embedded in a context that can't be third-party
+   * (i.e. an iframe embedded in a cross-origin parent window). If this is
+   * false, then this request may be third-party if it's a third-party to
+   * loadingPrincipal.
    */
-  [infallible] readonly attribute boolean requireCorsWithCredentials;
+  [infallible] readonly attribute boolean isInThirdPartyContext;
+
+  /**
+   * See the SEC_COOKIES_* flags above. This attribute will never return
+   * SEC_COOKIES_DEFAULT, but will instead return what the policy resolves to.
+   * I.e. SEC_COOKIES_SAME_ORIGIN for CORS mode, and SEC_COOKIES_INCLUDE
+   * otherwise.
+   */
+  [infallible] readonly attribute unsigned long cookiePolicy;
 
   /**
    * If forceInheritPrincipal is true, the data coming from the channel should
@@ -251,6 +287,11 @@ interface nsILoadInfo : nsISupports
    * when calling CheckLoadURIWithPrincipal().
    */
   [infallible] readonly attribute boolean allowChrome;
+
+  /**
+   * Returns true if SEC_DONT_FOLLOW_REDIRECTS is set.
+   */
+  [infallible] readonly attribute boolean dontFollowRedirects;
 
   /**
    * The external contentPolicyType of the channel, used for security checks
@@ -293,17 +334,7 @@ interface nsILoadInfo : nsISupports
    * Warning: If the loadingDocument is null, then the
    * upgradeInsecureRequests is false.
    */
-  readonly attribute boolean upgradeInsecureRequests;
-
-%{ C++
-  inline bool GetUpgradeInsecureRequests()
-  {
-    bool result;
-    mozilla::DebugOnly<nsresult> rv = GetUpgradeInsecureRequests(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
-%}
+  [infallible] readonly attribute boolean upgradeInsecureRequests;
 
   /**
    * Typically these are the window IDs of the window in which the element being
@@ -317,53 +348,27 @@ interface nsILoadInfo : nsISupports
    * available. parentOuterWindowID will be the same as outerWindowID if the
    * window has no parent.
    */
-  readonly attribute unsigned long long innerWindowID;
-  readonly attribute unsigned long long outerWindowID;
-  readonly attribute unsigned long long parentOuterWindowID;
-
-%{ C++
-  inline uint64_t GetInnerWindowID()
-  {
-    uint64_t result;
-    mozilla::DebugOnly<nsresult> rv = GetInnerWindowID(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
-
-  inline uint64_t GetOuterWindowID()
-  {
-    uint64_t result;
-    mozilla::DebugOnly<nsresult> rv = GetOuterWindowID(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
-
-  inline uint64_t GetParentOuterWindowID()
-  {
-    uint64_t result;
-    mozilla::DebugOnly<nsresult> rv = GetParentOuterWindowID(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
-%}
+  [infallible] readonly attribute unsigned long long innerWindowID;
+  [infallible] readonly attribute unsigned long long outerWindowID;
+  [infallible] readonly attribute unsigned long long parentOuterWindowID;
 
   /**
-   * Customized OriginAttributes within LoadInfo to allow overwriting of the
+   * Customized NeckoOriginAttributes within LoadInfo to allow overwriting of the
    * default originAttributes from the loadingPrincipal.
    */
   [implicit_jscontext, binaryname(ScriptableOriginAttributes)]
   attribute jsval originAttributes;
 
   [noscript, nostdcall, binaryname(GetOriginAttributes)]
-  OriginAttributes binaryGetOriginAttributes();
+  NeckoOriginAttributes binaryGetOriginAttributes();
 
   [noscript, nostdcall, binaryname(SetOriginAttributes)]
   void binarySetOriginAttributes(in const_OriginAttributesRef aOriginAttrs);
 
 %{ C++
-  inline mozilla::OriginAttributes GetOriginAttributes()
+  inline mozilla::NeckoOriginAttributes GetOriginAttributes()
   {
-    mozilla::OriginAttributes result;
+    mozilla::NeckoOriginAttributes result;
     mozilla::DebugOnly<nsresult> rv = GetOriginAttributes(&result);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
     return result;
@@ -380,17 +385,7 @@ interface nsILoadInfo : nsISupports
    * to anything else than true will be discareded.
    *
    */
-  attribute bool enforceSecurity;
-
-%{ C++
-  inline bool GetEnforceSecurity()
-  {
-    bool result;
-    mozilla::DebugOnly<nsresult> rv = GetEnforceSecurity(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
-%}
+  [infallible] attribute boolean enforceSecurity;
 
   /**
    * Whenever a channel is evaluated by the ContentSecurityManager
@@ -405,34 +400,43 @@ interface nsILoadInfo : nsISupports
    *
    * Please note, once the flag is set to true it must remain true
    * throughout the lifetime of the channel. Trying to set it
-   * to anything else than true will be discareded.
+   * to anything else than true will be discarded.
    *
    */
-  attribute bool initialSecurityCheckDone;
-
-%{ C++
-  inline bool GetInitialSecurityCheckDone()
-  {
-    bool result;
-    mozilla::DebugOnly<nsresult> rv = GetInitialSecurityCheckDone(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
-%}
+  [infallible] attribute boolean initialSecurityCheckDone;
 
   /**
    * Whenever a channel gets redirected, append the principal of the
    * channel [before the channels got redirected] to the loadinfo,
    * so that at every point this array lets us reason about all the
    * redirects this channel went through.
+   * @param aPrincipal, the channelURIPrincipal before the channel
+   *         got redirected.
+   * @param aIsInternalRedirect should be true if the channel is going
+   *        through an internal redirect, otherwise false.
    */
-  void appendRedirectedPrincipal(in nsIPrincipal aPrincipal);
+  void appendRedirectedPrincipal(in nsIPrincipal principal,
+                                 in boolean isInternalRedirect);
 
   /**
-   * An array of nsIPrincipal that store the redirects associated with this
+   * An array of nsIPrincipals which stores redirects associated with this
    * channel. This array is filled whether or not the channel has ever been
    * opened. The last element of the array is associated with the most recent
-   * channel.
+   * redirect. Please note, that this array *includes* internal redirects.
+   */
+  [implicit_jscontext]
+  readonly attribute jsval redirectChainIncludingInternalRedirects;
+
+  /**
+   * A C++-friendly version of redirectChain.
+   * Please note that this array has the same lifetime as the
+   * loadInfo object - use with caution!
+   */
+  [noscript, notxpcom, nostdcall, binaryname(RedirectChainIncludingInternalRedirects)]
+  const_nsIPrincipalArray binaryRedirectChainIncludingInternalRedirects();
+
+  /**
+   * Same as RedirectChain but does *not* include internal redirects.
    */
   [implicit_jscontext]
   readonly attribute jsval redirectChain;
@@ -444,6 +448,36 @@ interface nsILoadInfo : nsISupports
    */
   [noscript, notxpcom, nostdcall, binaryname(RedirectChain)]
   const_nsIPrincipalArray binaryRedirectChain();
+
+  /**
+   * Sets the list of unsafe headers according to CORS spec, as well as
+   * potentially forces a preflight.
+   * Note that you do not need to set the Content-Type header. That will be
+   * automatically detected as needed.
+   *
+   * Only call this function when using the SEC_REQUIRE_CORS_DATA_INHERITS mode.
+   */
+  [noscript, notxpcom, nostdcall]
+  void setCorsPreflightInfo(in StringArrayRef unsafeHeaders,
+                            in boolean forcePreflight);
+
+  /**
+   * A C++-friendly getter for the list of cors-unsafe headers.
+   * Please note that this array has the same lifetime as the
+   * loadInfo object - use with caution!
+   */
+  [noscript, notxpcom, nostdcall, binaryname(CorsUnsafeHeaders)]
+  StringArrayRef corsUnsafeHeaders();
+
+  /**
+   * Returns value set through setCorsPreflightInfo.
+   */
+  [infallible] readonly attribute boolean forcePreflight;
+
+  /**
+   * A C++ friendly getter for the forcePreflight flag.
+   */
+  [infallible] readonly attribute boolean isPreflight;
 
   /**
   * Constants reflecting the channel tainting.  These are mainly defined here

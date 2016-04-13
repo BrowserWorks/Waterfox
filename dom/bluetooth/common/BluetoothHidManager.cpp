@@ -78,6 +78,30 @@ BluetoothHidManager::~BluetoothHidManager()
   }
 }
 
+// static
+void
+BluetoothHidManager::InitHidInterface(BluetoothProfileResultHandler* aRes)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (aRes) {
+    aRes->Init();
+  }
+}
+
+// static
+void
+BluetoothHidManager::DeinitHidInterface(BluetoothProfileResultHandler* aRes)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  sBluetoothHidManager = nullptr;
+
+  if (aRes) {
+    aRes->Deinit();
+  }
+}
+
 //static
 BluetoothHidManager*
 BluetoothHidManager::Get()
@@ -110,11 +134,11 @@ BluetoothHidManager::HandleShutdown()
 }
 
 void
-BluetoothHidManager::Connect(const nsAString& aDeviceAddress,
+BluetoothHidManager::Connect(const BluetoothAddress& aDeviceAddress,
                              BluetoothProfileController* aController)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!aDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!aDeviceAddress.IsCleared());
   MOZ_ASSERT(aController && !mController);
 
   BluetoothService* bs = BluetoothService::Get();
@@ -131,7 +155,10 @@ BluetoothHidManager::Connect(const nsAString& aDeviceAddress,
   mDeviceAddress = aDeviceAddress;
   mController = aController;
 
-  if (NS_FAILED(bs->SendInputMessage(aDeviceAddress,
+  nsAutoString deviceAddressStr;
+  AddressToString(mDeviceAddress, deviceAddressStr);
+
+  if (NS_FAILED(bs->SendInputMessage(deviceAddressStr,
                                      NS_LITERAL_STRING("Connect")))) {
     aController->NotifyCompletion(NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
     return;
@@ -160,12 +187,15 @@ BluetoothHidManager::Disconnect(BluetoothProfileController* aController)
     return;
   }
 
-  MOZ_ASSERT(!mDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!mDeviceAddress.IsCleared());
   MOZ_ASSERT(!mController);
 
   mController = aController;
 
-  if (NS_FAILED(bs->SendInputMessage(mDeviceAddress,
+  nsAutoString deviceAddressStr;
+  AddressToString(mDeviceAddress, deviceAddressStr);
+
+  if (NS_FAILED(bs->SendInputMessage(deviceAddressStr,
                                      NS_LITERAL_STRING("Disconnect")))) {
     aController->NotifyCompletion(NS_LITERAL_STRING(ERR_NO_AVAILABLE_RESOURCE));
     return;
@@ -251,21 +281,22 @@ BluetoothHidManager::NotifyStatusChanged()
 }
 
 void
-BluetoothHidManager::OnGetServiceChannel(const nsAString& aDeviceAddress,
-                                         const nsAString& aServiceUuid,
-                                         int aChannel)
+BluetoothHidManager::OnGetServiceChannel(
+  const BluetoothAddress& aDeviceAddress,
+  const BluetoothUuid& aServiceUuid,
+  int aChannel)
 {
   // Do nothing here as bluez acquires service channel and connects for us
 }
 
 void
-BluetoothHidManager::OnUpdateSdpRecords(const nsAString& aDeviceAddress)
+BluetoothHidManager::OnUpdateSdpRecords(const BluetoothAddress& aDeviceAddress)
 {
   // Do nothing here as bluez acquires service channel and connects for us
 }
 
 void
-BluetoothHidManager::GetAddress(nsAString& aDeviceAddress)
+BluetoothHidManager::GetAddress(BluetoothAddress& aDeviceAddress)
 {
   aDeviceAddress = mDeviceAddress;
 }

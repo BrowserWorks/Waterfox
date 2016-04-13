@@ -236,7 +236,7 @@ var Settings = {
           Cu.import("resource://gre/modules/Messaging.jsm");
           Messaging.sendRequest({
             type: "Settings:Show",
-            resource: "preferences_vendor",
+            resource: "preferences_privacy",
           });
         } else {
           // Show the data choices preferences on desktop.
@@ -273,13 +273,19 @@ var Settings = {
 };
 
 var PingPicker = {
-  viewCurrentPingData: true,
+  viewCurrentPingData: null,
+  viewStructuredPingData: null,
   _archivedPings: null,
 
   attachObservers: function() {
     let elements = document.getElementsByName("choose-ping-source");
     for (let el of elements) {
       el.addEventListener("change", () => this.onPingSourceChanged(), false);
+    }
+
+    let displays = document.getElementsByName("choose-ping-display");
+    for (let el of displays) {
+      el.addEventListener("change", () => this.onPingDisplayChanged(), false);
     }
 
     document.getElementById("show-subsession-data").addEventListener("change", () => {
@@ -298,37 +304,60 @@ var PingPicker = {
             .addEventListener("click", () => this._movePingIndex(-1), false);
     document.getElementById("older-ping")
             .addEventListener("click", () => this._movePingIndex(1), false);
+    document.getElementById("choose-payload")
+            .addEventListener("change", () => displayPingData(gPingData), false);
   },
 
   onPingSourceChanged: function() {
     this.update();
   },
 
-  update: function() {
-    let el = document.getElementById("ping-source-current");
-    this.viewCurrentPingData = el.checked;
+  onPingDisplayChanged: function() {
+    this.update();
+  },
 
-    if (this.viewCurrentPingData) {
-      document.getElementById("current-ping-picker").classList.remove("hidden");
-      document.getElementById("archived-ping-picker").classList.add("hidden");
-      this._updateCurrentPingData();
-    } else {
-      document.getElementById("current-ping-picker").classList.add("hidden");
-      this._updateArchivedPingList().then(() =>
-        document.getElementById("archived-ping-picker").classList.remove("hidden"));
+  update: function() {
+    let viewCurrent = document.getElementById("ping-source-current").checked;
+    let viewStructured = document.getElementById("ping-source-structured").checked;
+    let currentChanged = viewCurrent !== this.viewCurrentPingData;
+    let structuredChanged = viewStructured !== this.viewStructuredPingData;
+    this.viewCurrentPingData = viewCurrent;
+    this.viewStructuredPingData = viewStructured;
+
+    if (currentChanged) {
+      if (this.viewCurrentPingData) {
+        document.getElementById("current-ping-picker").classList.remove("hidden");
+        document.getElementById("archived-ping-picker").classList.add("hidden");
+        this._updateCurrentPingData();
+      } else {
+        document.getElementById("current-ping-picker").classList.add("hidden");
+        this._updateArchivedPingList().then(() =>
+          document.getElementById("archived-ping-picker").classList.remove("hidden"));
+      }
+    }
+
+    if (structuredChanged) {
+      if (this.viewStructuredPingData) {
+        this._showStructuredPingData();
+      } else {
+        this._showRawPingData();
+      }
     }
   },
 
   _updateCurrentPingData: function() {
     const subsession = document.getElementById("show-subsession-data").checked;
     const ping = TelemetryController.getCurrentPingData(subsession);
-    displayPingData(ping);
+    if (!ping) {
+      return;
+    }
+    displayPingData(ping, true);
   },
 
   _updateArchivedPingData: function() {
     let id = this._getSelectedPingId();
     TelemetryArchive.promiseArchivedPingById(id)
-                    .then((ping) => displayPingData(ping));
+                    .then((ping) => displayPingData(ping, true));
   },
 
   _updateArchivedPingList: function() {
@@ -363,10 +392,10 @@ var PingPicker = {
         return d;
       };
 
-      this._weeks = [for (startTime of weekStartDates.values()) {
+      this._weeks = Array.from(weekStartDates.values(), startTime => ({
         startDate: new Date(startTime),
         endDate: plusOneWeek(new Date(startTime)),
-      }];
+      }));
 
       // Render the archive data.
       this._renderWeeks();
@@ -445,6 +474,16 @@ var PingPicker = {
     this._renderPingList(ping.id);
     this._updateArchivedPingData();
   },
+
+  _showRawPingData: function() {
+    document.getElementById("raw-ping-data-section").classList.remove("hidden");
+    document.getElementById("structured-ping-data-section").classList.add("hidden");
+  },
+
+  _showStructuredPingData: function() {
+    document.getElementById("raw-ping-data-section").classList.add("hidden");
+    document.getElementById("structured-ping-data-section").classList.remove("hidden");
+  },
 };
 
 var GeneralData = {
@@ -512,27 +551,174 @@ var EnvironmentData = {
     let data = sectionalizeObject(ping.environment);
 
     for (let [section, sectionData] of data) {
-      let table = document.createElement("table");
-      let caption = document.createElement("caption");
-      caption.appendChild(document.createTextNode(section + "\n"));
-      table.appendChild(caption);
-
-      let headings = document.createElement("tr");
-      this.appendColumn(headings, "th", bundle.GetStringFromName("environmentDataHeadingName") + "\t");
-      this.appendColumn(headings, "th", bundle.GetStringFromName("environmentDataHeadingValue") + "\t");
-      table.appendChild(headings);
-
-      for (let [path, value] of sectionData) {
-          let row = document.createElement("tr");
-          this.appendColumn(row, "td", path + "\t");
-          this.appendColumn(row, "td", value + "\t");
-          table.appendChild(row);
+      if (section == "addons") {
+        break;
       }
 
-      dataDiv.appendChild(table);
+      let table = document.createElement("table");
+      this.appendHeading(table);
+
+      for (let [path, value] of sectionData) {
+        let row = document.createElement("tr");
+        this.appendColumn(row, "td", path);
+        this.appendColumn(row, "td", value);
+        table.appendChild(row);
+      }
+
+      let hasData = sectionData.size > 0;
+      this.createSubsection(section, hasData, table, dataDiv);
     }
+
+    // We use specialized rendering here to make the addon and plugin listings
+    // more readable.
+    this.createAddonSection(dataDiv, ping);
   },
 
+  createSubsection: function(title, hasSubdata, subSectionData, dataDiv) {
+    let dataSection = document.createElement("section");
+    dataSection.classList.add("data-subsection");
+
+    if (hasSubdata) {
+      dataSection.classList.add("has-subdata");
+    }
+
+    // Create section heading
+    let sectionName = document.createElement("h2");
+    sectionName.setAttribute("class", "section-name");
+    sectionName.appendChild(document.createTextNode(title));
+    sectionName.addEventListener("click", toggleSection, false);
+
+    // Create caption for toggling the subsection visibility.
+    let toggleCaption = document.createElement("span");
+    toggleCaption.setAttribute("class", "toggle-caption");
+    let toggleText = bundle.GetStringFromName("environmentDataSubsectionToggle");
+    toggleCaption.appendChild(document.createTextNode(" " + toggleText));
+    toggleCaption.addEventListener("click", toggleSection, false);
+
+    // Create caption for empty subsections.
+    let emptyCaption = document.createElement("span");
+    emptyCaption.setAttribute("class", "empty-caption");
+    let emptyText = bundle.GetStringFromName("environmentDataSubsectionEmpty");
+    emptyCaption.appendChild(document.createTextNode(" " + emptyText));
+
+    // Create data container
+    let data = document.createElement("div");
+    data.setAttribute("class", "subsection-data subdata");
+    data.appendChild(subSectionData);
+
+    // Append elements
+    dataSection.appendChild(sectionName);
+    dataSection.appendChild(toggleCaption);
+    dataSection.appendChild(emptyCaption);
+    dataSection.appendChild(data);
+
+    dataDiv.appendChild(dataSection);
+  },
+
+  renderPersona: function(addonObj, addonSection, sectionTitle) {
+    let table = document.createElement("table");
+    table.setAttribute("id", sectionTitle);
+    this.appendAddonSubsectionTitle(sectionTitle, table);
+    this.appendRow(table, "persona", addonObj.persona);
+    addonSection.appendChild(table);
+  },
+
+  renderActivePlugins: function(addonObj, addonSection, sectionTitle) {
+    let data = explodeObject(addonObj);
+    let table = document.createElement("table");
+    table.setAttribute("id", sectionTitle);
+    this.appendAddonSubsectionTitle(sectionTitle, table);
+
+    for (let plugin of addonObj) {
+      let data = explodeObject(plugin);
+      this.appendHeadingName(table, data.get("name"));
+
+      for (let [key, value] of data) {
+        this.appendRow(table, key, value);
+      }
+    }
+
+    addonSection.appendChild(table);
+  },
+
+  renderAddonsObject: function(addonObj, addonSection, sectionTitle) {
+    let table = document.createElement("table");
+    table.setAttribute("id", sectionTitle);
+    this.appendAddonSubsectionTitle(sectionTitle, table);
+
+    for (let id of Object.keys(addonObj)) {
+      let addon = addonObj[id];
+      this.appendHeadingName(table, addon.name || id);
+      this.appendAddonID(table, id);
+      let data = explodeObject(addon);
+
+      for (let [key, value] of data) {
+        this.appendRow(table, key, value);
+      }
+    }
+
+    addonSection.appendChild(table);
+  },
+
+  renderKeyValueObject: function(addonObj, addonSection, sectionTitle) {
+    let data = explodeObject(addonObj);
+    let table = document.createElement("table");
+    table.setAttribute("class", sectionTitle);
+    this.appendAddonSubsectionTitle(sectionTitle, table);
+    this.appendHeading(table);
+
+    for (let [key, value] of data) {
+      this.appendRow(table, key, value);
+    }
+
+    addonSection.appendChild(table);
+  },
+
+  appendAddonID: function(table, addonID) {
+    this.appendRow(table, "id", addonID);
+  },
+
+  appendHeading: function(table) {
+    let headings = document.createElement("tr");
+    this.appendColumn(headings, "th", bundle.GetStringFromName("environmentDataHeadingName"));
+    this.appendColumn(headings, "th", bundle.GetStringFromName("environmentDataHeadingValue"));
+    table.appendChild(headings);
+  },
+
+  appendHeadingName: function(table, name) {
+    let headings = document.createElement("tr");
+    this.appendColumn(headings, "th", name);
+    headings.cells[0].colSpan = 2;
+    table.appendChild(headings);
+  },
+
+  appendAddonSubsectionTitle: function(section, table) {
+    let caption = document.createElement("caption");
+    caption.setAttribute("class", "addon-caption");
+    caption.appendChild(document.createTextNode(section));
+    table.appendChild(caption);
+  },
+
+  createAddonSection: function(dataDiv, ping) {
+    let addonSection = document.createElement("div");
+    let addons = ping.environment.addons;
+    this.renderAddonsObject(addons.activeAddons, addonSection, "activeAddons");
+    this.renderActivePlugins(addons.activePlugins, addonSection, "activePlugins");
+    this.renderKeyValueObject(addons.theme, addonSection, "theme");
+    this.renderKeyValueObject(addons.activeExperiment, addonSection, "activeExperiment");
+    this.renderAddonsObject(addons.activeGMPlugins, addonSection, "activeGMPlugins");
+    this.renderPersona(addons, addonSection, "persona");
+
+    let hasAddonData = Object.keys(ping.environment.addons).length > 0;
+    this.createSubsection("addons", hasAddonData, addonSection, dataDiv);
+  },
+
+  appendRow: function(table, id, value){
+    let row = document.createElement("tr");
+    this.appendColumn(row, "td", id);
+    this.appendColumn(row, "td", value);
+    table.appendChild(row);
+  },
   /**
    * Helper function for appending a column to the data table.
    *
@@ -912,11 +1098,11 @@ var ThreadHangStats = {
   /**
    * Renders raw thread hang stats data
    */
-  render: function(aPing) {
+  render: function(aPayload) {
     let div = document.getElementById("thread-hang-stats");
     removeAllChildNodes(div);
 
-    let stats = aPing.payload.threadHangStats;
+    let stats = aPayload.threadHangStats;
     setHasData("thread-hang-stats-section", stats && (stats.length > 0));
     if (!stats) {
       return;
@@ -940,11 +1126,11 @@ var ThreadHangStats = {
     // Don't localize the histogram name, because the
     // name is also used as the div element's ID
     Histogram.render(div, aThread.name + "-Activity",
-                     aThread.activity, {exponential: true});
+                     aThread.activity, {exponential: true}, true);
     aThread.hangs.forEach((hang, index) => {
       let hangName = aThread.name + "-Hang-" + (index + 1);
       let hangDiv = Histogram.render(
-        div, hangName, hang.histogram, {exponential: true});
+        div, hangName, hang.histogram, {exponential: true}, true);
       let stackDiv = document.createElement("div");
       let stack = hang.nativeStack || hang.stack;
       stack.forEach((frame) => {
@@ -977,10 +1163,11 @@ var Histogram = {
    * @param aHgram Histogram information
    * @param aOptions Object with render options
    *                 * exponential: bars follow logarithmic scale
+   * @param aIsBHR whether or not requires fixing the labels for TimeHistogram
    */
-  render: function Histogram_render(aParent, aName, aHgram, aOptions) {
+  render: function Histogram_render(aParent, aName, aHgram, aOptions, aIsBHR) {
     let options = aOptions || {};
-    let hgram = this.processHistogram(aHgram, aName);
+    let hgram = this.processHistogram(aHgram, aName, aIsBHR);
 
     let outerDiv = document.createElement("div");
     outerDiv.className = "histogram";
@@ -1021,8 +1208,8 @@ var Histogram = {
     return outerDiv;
   },
 
-  processHistogram: function(aHgram, aName) {
-    const values = [for (k of Object.keys(aHgram.values)) aHgram.values[k]];
+  processHistogram: function(aHgram, aName, aIsBHR) {
+    const values = Object.keys(aHgram.values).map(k => aHgram.values[k]);
     if (!values.length) {
       // If we have no values collected for this histogram, just return
       // zero values so we still render it.
@@ -1039,7 +1226,27 @@ var Histogram = {
     const average = Math.round(aHgram.sum * 10 / sample_count) / 10;
     const max_value = Math.max(...values);
 
-    const labelledValues = [for (k of Object.keys(aHgram.values)) [Number(k), aHgram.values[k]]];
+    function labelFunc(k) {
+      // - BHR histograms are TimeHistograms: Exactly power-of-two buckets (from 0)
+      //   (buckets: [0..1], [2..3], [4..7], [8..15], ... note the 0..1 anomaly - same bucket)
+      // - TimeHistogram's JS representation adds a dummy (empty) "0" bucket, and
+      //   the rest of the buckets have the label as the upper value of the
+      //   bucket (non TimeHistograms have the lower value of the bucket as label).
+      //   So JS TimeHistograms bucket labels are: 0 (dummy), 1, 3, 7, 15, ...
+      // - see toolkit/components/telemetry/Telemetry.cpp
+      //   (CreateJSTimeHistogram, CreateJSThreadHangStats, CreateJSHangHistogram)
+      // - see toolkit/components/telemetry/ThreadHangStats.h
+      // Fix BHR labels to the "standard" format for about:telemetry as follows:
+      //   - The dummy 0 label+bucket will be filtered before arriving here
+      //   - If it's 1 -> manually correct it to 0 (the 0..1 anomaly)
+      //   - For the rest, set the label as the bottom value instead of the upper.
+      //   --> so we'll end with the following (non dummy) labels: 0, 2, 4, 8, 16, ...
+      return !aIsBHR ? k : k == 1 ? 0 : (k + 1) / 2;
+    }
+
+    const labelledValues = Object.keys(aHgram.values)
+                           .filter(label => !aIsBHR || Number(label) != 0) // remove dummy 0 label for BHR
+                           .map(k => [labelFunc(Number(k)), aHgram.values[k]]);
 
     let result = {
       values: labelledValues,
@@ -1088,7 +1295,7 @@ var Histogram = {
               + " ".repeat(Math.max(0, labelPadTo - String(label).length)) + label // Right-aligned label
               + " |" + "#".repeat(Math.round(MAX_BAR_CHARS * barValue / maxBarValue)) // Bar
               + "  " + value // Value
-              + "  " + Math.round(100 * value / aHgram.sum) + "%"; // Percentage
+              + "  " + Math.round(100 * value / aHgram.sample_count) + "%"; // Percentage
 
       // Construct the HTML labels + bars
       let belowEm = Math.round(MAX_BAR_HEIGHT * (barValue / maxBarValue) * 10) / 10;
@@ -1345,7 +1552,8 @@ function setHasData(aSectionID, aHasData) {
  */
 function toggleSection(aEvent) {
   let parentElement = aEvent.target.parentElement;
-  if (!parentElement.classList.contains("has-data")) {
+  if (!parentElement.classList.contains("has-data") &&
+      !parentElement.classList.contains("has-subdata")) {
     return; // nothing to toggle
   }
 
@@ -1353,7 +1561,9 @@ function toggleSection(aEvent) {
 
   // Store section opened/closed state in a hidden checkbox (which is then used on reload)
   let statebox = parentElement.getElementsByClassName("statebox")[0];
-  statebox.checked = parentElement.classList.contains("expanded");
+  if (statebox) {
+    statebox.checked = parentElement.classList.contains("expanded");
+  }
 }
 
 /**
@@ -1456,9 +1666,6 @@ function onLoad() {
   // Render settings.
   Settings.render();
 
-  // Update ping data when async Telemetry init is finished.
-  Telemetry.asyncFetchTelemetryData(() => PingPicker.update());
-
   // Restore sections states
   let stateboxes = document.getElementsByClassName("statebox");
   for (let box of stateboxes) {
@@ -1466,6 +1673,9 @@ function onLoad() {
         box.parentElement.classList.add("expanded");
     }
   }
+
+  // Update ping data when async Telemetry init is finished.
+  Telemetry.asyncFetchTelemetryData(() => PingPicker.update());
 }
 
 var LateWritesSingleton = {
@@ -1531,11 +1741,53 @@ function sortStartupMilestones(aSimpleMeasurements) {
   return result;
 }
 
-function displayPingData(ping) {
+function renderPayloadList(ping) {
+  // Rebuild the payload select with options:
+  //   Parent Payload (selected)
+  //   Child Payload 1..ping.payload.childPayloads.length
+  let listEl = document.getElementById("choose-payload");
+  removeAllChildNodes(listEl);
+
+  let option = document.createElement("option");
+  let text = bundle.GetStringFromName("parentPayload");
+  let content = document.createTextNode(text);
+  let payloadIndex = 0;
+  option.appendChild(content);
+  option.setAttribute("value", payloadIndex++);
+  option.selected = true;
+  listEl.appendChild(option);
+
+  if (!ping.payload.childPayloads) {
+    listEl.disabled = true;
+    return
+  }
+  listEl.disabled = false;
+
+  for (; payloadIndex <= ping.payload.childPayloads.length; ++payloadIndex) {
+    option = document.createElement("option");
+    text = bundle.formatStringFromName("childPayloadN", [payloadIndex], 1);
+    content = document.createTextNode(text);
+    option.appendChild(content);
+    option.setAttribute("value", payloadIndex);
+    listEl.appendChild(option);
+  }
+}
+
+function displayPingData(ping, updatePayloadList = false) {
   gPingData = ping;
 
+  // Render raw ping data.
+  let pre = document.getElementById("raw-ping-data");
+  pre.textContent = JSON.stringify(gPingData, null, 2);
+
+  // Update the structured data rendering.
   const keysHeader = bundle.GetStringFromName("keysHeader");
   const valuesHeader = bundle.GetStringFromName("valuesHeader");
+
+  // Update the payload list
+  if (updatePayloadList) {
+    renderPayloadList(ping);
+  }
 
   // Show general data.
   GeneralData.render(ping);
@@ -1552,14 +1804,23 @@ function displayPingData(ping) {
   // Show chrome hang stacks
   ChromeHangs.render(ping);
 
-  // Show thread hang stats
-  ThreadHangStats.render(ping);
-
   // Render Addon details.
   AddonDetails.render(ping);
 
-  // Show simple measurements
+  // Select payload to render
+  let payloadSelect = document.getElementById("choose-payload");
+  let payloadOption = payloadSelect.selectedOptions.item(0);
+  let payloadIndex = payloadOption.getAttribute("value");
+
   let payload = ping.payload;
+  if (payloadIndex > 0) {
+    payload = ping.payload.childPayloads[payloadIndex - 1];
+  }
+
+  // Show thread hang stats
+  ThreadHangStats.render(payload);
+
+  // Show simple measurements
   let simpleMeasurements = sortStartupMilestones(payload.simpleMeasurements);
   let hasData = Object.keys(simpleMeasurements).length > 0;
   setHasData("simple-measurements-section", hasData);
@@ -1573,14 +1834,14 @@ function displayPingData(ping) {
 
   LateWritesSingleton.renderLateWrites(payload.lateWrites);
 
-  // Show basic system info gathered
-  hasData = Object.keys(payload.info).length > 0;
-  setHasData("system-info-section", hasData);
-  let infoSection = document.getElementById("system-info");
+  // Show basic session info gathered
+  hasData = Object.keys(ping.payload.info).length > 0;
+  setHasData("session-info-section", hasData);
+  let infoSection = document.getElementById("session-info");
   removeAllChildNodes(infoSection);
 
   if (hasData) {
-    infoSection.appendChild(KeyValueTable.render(payload.info,
+    infoSection.appendChild(KeyValueTable.render(ping.payload.info,
                                                  keysHeader, valuesHeader));
   }
 

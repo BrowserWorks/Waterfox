@@ -483,11 +483,7 @@ nsPerformance::DispatchBufferFullEvent()
 {
   RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
   // it bubbles, and it isn't cancelable
-  nsresult rv = event->InitEvent(NS_LITERAL_STRING("resourcetimingbufferfull"),
-                                 true, false);
-  if (NS_FAILED(rv)) {
-    return;
-  }
+  event->InitEvent(NS_LITERAL_STRING("resourcetimingbufferfull"), true, false);
   event->SetTrusted(true);
   DispatchDOMEvent(nullptr, event, nullptr, nullptr);
 }
@@ -504,12 +500,7 @@ nsPerformance::Navigation()
 DOMHighResTimeStamp
 nsPerformance::Now() const
 {
-  double nowTimeMs = GetDOMTiming()->TimeStampToDOMHighRes(TimeStamp::Now());
-  // Round down to the nearest 5us, because if the timer is too accurate people
-  // can do nasty timing attacks with it.  See similar code in the worker
-  // Performance implementation.
-  const double maxResolutionMs = 0.005;
-  return floor(nowTimeMs / maxResolutionMs) * maxResolutionMs;
+  return RoundTime(GetDOMTiming()->TimeStampToDOMHighRes(TimeStamp::Now()));
 }
 
 JSObject*
@@ -565,6 +556,25 @@ nsPerformance::AddEntry(nsIHttpChannel* channel,
     // object to get all the required timings.
     RefPtr<PerformanceResourceTiming> performanceEntry =
       new PerformanceResourceTiming(performanceTiming, this, entryName);
+
+    nsAutoCString protocol;
+    channel->GetProtocolVersion(protocol);
+    performanceEntry->SetNextHopProtocol(NS_ConvertUTF8toUTF16(protocol));
+
+    uint64_t encodedBodySize = 0;
+    channel->GetEncodedBodySize(&encodedBodySize);
+    performanceEntry->SetEncodedBodySize(encodedBodySize);
+
+    uint64_t transferSize = 0;
+    channel->GetTransferSize(&transferSize);
+    performanceEntry->SetTransferSize(transferSize);
+
+    uint64_t decodedBodySize = 0;
+    channel->GetDecodedBodySize(&decodedBodySize);
+    if (decodedBodySize == 0) {
+      decodedBodySize = encodedBodySize;
+    }
+    performanceEntry->SetDecodedBodySize(decodedBodySize);
 
     // If the initiator type had no valid value, then set it to the default
     // ("other") value.
@@ -692,12 +702,12 @@ public:
   }
 };
 
-class PrefEnabledRunnable final : public WorkerMainThreadRunnable
+class PrefEnabledRunnable final : public WorkerCheckAPIExposureOnMainThreadRunnable
 {
 public:
   PrefEnabledRunnable(WorkerPrivate* aWorkerPrivate,
                       const nsCString& aPrefName)
-    : WorkerMainThreadRunnable(aWorkerPrivate)
+    : WorkerCheckAPIExposureOnMainThreadRunnable(aWorkerPrivate)
     , mEnabled(false)
     , mPrefName(aPrefName)
   { }
@@ -735,9 +745,7 @@ nsPerformance::IsEnabled(JSContext* aCx, JSObject* aGlobal)
   RefPtr<PrefEnabledRunnable> runnable =
     new PrefEnabledRunnable(workerPrivate,
                             NS_LITERAL_CSTRING("dom.enable_user_timing"));
-  runnable->Dispatch(workerPrivate->GetJSContext());
-
-  return runnable->IsEnabled();
+  return runnable->Dispatch() && runnable->IsEnabled();
 }
 
 /* static */ bool
@@ -754,9 +762,8 @@ nsPerformance::IsObserverEnabled(JSContext* aCx, JSObject* aGlobal)
   RefPtr<PrefEnabledRunnable> runnable =
     new PrefEnabledRunnable(workerPrivate,
                             NS_LITERAL_CSTRING("dom.enable_performance_observer"));
-  runnable->Dispatch(workerPrivate->GetJSContext());
 
-  return runnable->IsEnabled();
+  return runnable->Dispatch() && runnable->IsEnabled();
 }
 
 void
@@ -787,15 +794,16 @@ nsPerformance::InsertUserEntry(PerformanceEntry* aEntry)
   PerformanceBase::InsertUserEntry(aEntry);
 }
 
-DOMHighResTimeStamp
-nsPerformance::DeltaFromNavigationStart(DOMHighResTimeStamp aTime)
+TimeStamp
+nsPerformance::CreationTimeStamp() const
 {
-  // If the time we're trying to convert is equal to zero, it hasn't been set
-  // yet so just return 0.
-  if (aTime == 0) {
-    return 0;
-  }
-  return aTime - GetDOMTiming()->GetNavigationStart();
+  return GetDOMTiming()->GetNavigationStartTimeStamp();
+}
+
+DOMHighResTimeStamp
+nsPerformance::CreationTime() const
+{
+  return GetDOMTiming()->GetNavigationStart();
 }
 
 // PerformanceBase
@@ -907,6 +915,17 @@ PerformanceBase::ClearResourceTimings()
   mResourceEntries.Clear();
 }
 
+DOMHighResTimeStamp
+PerformanceBase::RoundTime(double aTime) const
+{
+  // Round down to the nearest 5us, because if the timer is too accurate people
+  // can do nasty timing attacks with it.  See similar code in the worker
+  // Performance implementation.
+  const double maxResolutionMs = 0.005;
+  return floor(aTime / maxResolutionMs) * maxResolutionMs;
+}
+
+
 void
 PerformanceBase::Mark(const nsAString& aName, ErrorResult& aRv)
 {
@@ -961,7 +980,7 @@ PerformanceBase::ResolveTimestampFromName(const nsAString& aName,
     return 0;
   }
 
-  return DeltaFromNavigationStart(ts);
+  return ts - CreationTime();
 }
 
 void

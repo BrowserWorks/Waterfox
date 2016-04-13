@@ -83,12 +83,9 @@ public:
                               bool aMerge) override;
   NS_IMETHOD SetEmptyRequestHeader(const nsACString& aHeader) override;
   NS_IMETHOD RedirectTo(nsIURI *newURI) override;
+  NS_IMETHOD GetProtocolVersion(nsACString& aProtocolVersion) override;
   // nsIHttpChannelInternal
   NS_IMETHOD SetupFallbackChannel(const char *aFallbackKey) override;
-  NS_IMETHOD GetLocalAddress(nsACString& addr) override;
-  NS_IMETHOD GetLocalPort(int32_t* port) override;
-  NS_IMETHOD GetRemoteAddress(nsACString& addr) override;
-  NS_IMETHOD GetRemotePort(int32_t* port) override;
   NS_IMETHOD ForceIntercepted(uint64_t aInterceptionID) override;
   // nsISupportsPriority
   NS_IMETHOD SetPriority(int32_t value) override;
@@ -153,8 +150,6 @@ protected:
   bool RecvIssueDeprecationWarning(const uint32_t& warning,
                                    const bool& asError) override;
 
-  bool RecvReportRedirectionError() override;
-
   bool GetAssociatedContentSecurity(nsIAssociatedContentSecurity** res = nullptr);
   virtual void DoNotifyListenerCleanup() override;
 
@@ -169,7 +164,9 @@ private:
   void DoOnDataAvailable(nsIRequest* aRequest, nsISupports* aContext, nsIInputStream* aStream,
                          uint64_t offset, uint32_t count);
   void DoPreOnStopRequest(nsresult aStatus);
-  void DoOnStopRequest(nsIRequest* aRequest, nsISupports* aContext);
+  void DoOnStopRequest(nsIRequest* aRequest, nsresult aChannelStatus, nsISupports* aContext);
+
+  bool ShouldInterceptURI(nsIURI* aURI, bool& aShouldUpgrade);
 
   // Discard the prior interception and continue with the original network request.
   void ResetInterception();
@@ -186,7 +183,6 @@ private:
   nsCOMPtr<nsIChildChannel> mRedirectChannelChild;
   RefPtr<InterceptStreamListener> mInterceptListener;
   RefPtr<nsInputStreamPump> mSynthesizedResponsePump;
-  nsAutoPtr<nsHttpResponseHead> mSynthesizedResponseHead;
   nsCOMPtr<nsIInputStream> mSynthesizedInput;
   int64_t mSynthesizedStreamLength;
 
@@ -195,6 +191,8 @@ private:
   uint32_t     mCacheExpirationTime;
   nsCString    mCachedCharset;
   nsCOMPtr<nsISupports> mCacheKey;
+
+  nsCString mProtocolVersion;
 
   // If ResumeAt is called before AsyncOpen, we need to send extra data upstream
   bool mSendResumeAt;
@@ -229,9 +227,21 @@ private:
   // response to a channel using a different principal than the current one.
   bool mRedirectingForSubsequentSynthesizedResponse;
 
+  // Set if a manual redirect mode channel needs to be intercepted in the
+  // parent.
+  bool mPostRedirectChannelShouldIntercept;
+  // Set if a manual redirect mode channel needs to be upgraded to a secure URI
+  // when it's being considered for interception.  Can only be true if
+  // mPostRedirectChannelShouldIntercept is true.
+  bool mPostRedirectChannelShouldUpgrade;
+
   // Set if the corresponding parent channel should force an interception to occur
   // before the network transaction is initiated.
   bool mShouldParentIntercept;
+
+  // Set if the corresponding parent channel should suspend after a response
+  // is synthesized.
+  bool mSuspendParentAfterSynthesizeResponse;
 
   // true after successful AsyncOpen until OnStopRequest completes.
   bool RemoteChannelExists() { return mIPCOpen && !mKeptAlive; }
@@ -278,6 +288,7 @@ private:
   // response headers.
   nsresult SetupRedirect(nsIURI* uri,
                          const nsHttpResponseHead* responseHead,
+                         const uint32_t& redirectFlags,
                          nsIChannel** outChannel);
 
   // Perform a redirection without communicating with the parent process at all.
@@ -300,6 +311,30 @@ private:
   friend class InterceptStreamListener;
   friend class InterceptedChannelContent;
   friend class OverrideRunnable;
+};
+
+// A stream listener interposed between the nsInputStreamPump used for intercepted channels
+// and this channel's original listener. This is only used to ensure the original listener
+// sees the channel as the request object, and to synthesize OnStatus and OnProgress notifications.
+class InterceptStreamListener : public nsIStreamListener
+                              , public nsIProgressEventSink
+{
+  RefPtr<HttpChannelChild> mOwner;
+  nsCOMPtr<nsISupports> mContext;
+  virtual ~InterceptStreamListener() {}
+ public:
+  InterceptStreamListener(HttpChannelChild* aOwner, nsISupports* aContext)
+  : mOwner(aOwner)
+  , mContext(aContext)
+  {
+  }
+
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIREQUESTOBSERVER
+  NS_DECL_NSISTREAMLISTENER
+  NS_DECL_NSIPROGRESSEVENTSINK
+
+  void Cleanup();
 };
 
 //-----------------------------------------------------------------------------

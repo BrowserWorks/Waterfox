@@ -80,12 +80,6 @@ jmethodID AndroidLocation::jGetBearingMethod = 0;
 jmethodID AndroidLocation::jGetSpeedMethod = 0;
 jmethodID AndroidLocation::jGetTimeMethod = 0;
 
-jclass AndroidLayerRendererFrame::jLayerRendererFrameClass = 0;
-jmethodID AndroidLayerRendererFrame::jBeginDrawingMethod = 0;
-jmethodID AndroidLayerRendererFrame::jDrawBackgroundMethod = 0;
-jmethodID AndroidLayerRendererFrame::jDrawForegroundMethod = 0;
-jmethodID AndroidLayerRendererFrame::jEndDrawingMethod = 0;
-
 RefCountedJavaObject::~RefCountedJavaObject() {
     if (mObject)
         GetEnvForThread()->DeleteGlobalRef(mObject);
@@ -100,7 +94,6 @@ mozilla::InitAndroidJavaWrappers(JNIEnv *jEnv)
     AndroidLocation::InitLocationClass(jEnv);
     AndroidRect::InitRectClass(jEnv);
     AndroidRectF::InitRectFClass(jEnv);
-    AndroidLayerRendererFrame::InitLayerRendererFrameClass(jEnv);
 }
 
 void
@@ -220,18 +213,6 @@ AndroidRectF::InitRectFClass(JNIEnv *jEnv)
     jLeftField = rect.getField("left", "F");
     jTopField = rect.getField("top", "F");
     jRightField = rect.getField("right", "F");
-}
-
-void
-AndroidLayerRendererFrame::InitLayerRendererFrameClass(JNIEnv *jEnv)
-{
-    AutoJNIClass layerRendererFrame(jEnv, "org/mozilla/gecko/gfx/LayerRenderer$Frame");
-    jLayerRendererFrameClass = layerRendererFrame.getGlobalRef();
-
-    jBeginDrawingMethod = layerRendererFrame.getMethod("beginDrawing", "()V");
-    jDrawBackgroundMethod = layerRendererFrame.getMethod("drawBackground", "()V");
-    jDrawForegroundMethod = layerRendererFrame.getMethod("drawForeground", "()V");
-    jEndDrawingMethod = layerRendererFrame.getMethod("endDrawing", "()V");
 }
 
 void
@@ -453,12 +434,6 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
             break;
         }
 
-        case COMPOSITOR_CREATE: {
-            mWidth = jenv->GetIntField(jobj, jWidthField);
-            mHeight = jenv->GetIntField(jobj, jHeightField);
-            break;
-        }
-
         case CALL_OBSERVER: {
             ReadCharactersField(jenv);
             ReadCharactersExtraField(jenv);
@@ -662,14 +637,14 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
         LayoutDeviceIntPoint pt(
             (Points()[i].x * scale.scale) - offset.x,
             (Points()[i].y * scale.scale) - offset.y);
-        nsIntPoint radii(
+        LayoutDeviceIntPoint radius(
             PointRadii()[i].x * scale.scale,
             PointRadii()[i].y * scale.scale);
         RefPtr<Touch> t = new Touch(PointIndicies()[i],
-                                      pt,
-                                      radii,
-                                      Orientations()[i],
-                                      Pressures()[i]);
+                                    pt,
+                                    radius,
+                                    Orientations()[i],
+                                    Pressures()[i]);
         event.touches.AppendElement(t);
     }
 
@@ -717,7 +692,7 @@ AndroidGeckoEvent::MakeMultiTouchInput(nsIWidget* widget)
         return event;
     }
 
-    const nsIntPoint& offset = widget->WidgetToScreenOffsetUntyped();
+    const nsIntPoint& offset = widget->WidgetToScreenOffset().ToUnknownPoint();
     event.mTouches.SetCapacity(endIndex - startIndex);
     for (int i = startIndex; i < endIndex; i++) {
         nsIntPoint point = Points()[i] - offset;
@@ -824,80 +799,7 @@ AndroidPoint::Init(JNIEnv *jenv, jobject jobj)
     }
 }
 
-void
-AndroidLayerRendererFrame::Init(JNIEnv *env, jobject jobj)
-{
-    if (!isNull()) {
-        Dispose(env);
-    }
-
-    wrapped_obj = env->NewGlobalRef(jobj);
-}
-
-void
-AndroidLayerRendererFrame::Dispose(JNIEnv *env)
-{
-    if (isNull()) {
-        return;
-    }
-
-    env->DeleteGlobalRef(wrapped_obj);
-    wrapped_obj = 0;
-}
-
 NS_IMPL_ISUPPORTS(nsAndroidDisplayport, nsIAndroidDisplayport)
-
-bool
-AndroidLayerRendererFrame::BeginDrawing(AutoLocalJNIFrame *jniFrame)
-{
-    if (!jniFrame || !jniFrame->GetEnv())
-        return false;
-
-    jniFrame->GetEnv()->CallVoidMethod(wrapped_obj, jBeginDrawingMethod);
-    if (jniFrame->CheckForException())
-        return false;
-
-    return true;
-}
-
-bool
-AndroidLayerRendererFrame::DrawBackground(AutoLocalJNIFrame *jniFrame)
-{
-    if (!jniFrame || !jniFrame->GetEnv())
-        return false;
-
-    jniFrame->GetEnv()->CallVoidMethod(wrapped_obj, jDrawBackgroundMethod);
-    if (jniFrame->CheckForException())
-        return false;
-
-    return true;
-}
-
-bool
-AndroidLayerRendererFrame::DrawForeground(AutoLocalJNIFrame *jniFrame)
-{
-    if (!jniFrame || !jniFrame->GetEnv())
-        return false;
-
-    jniFrame->GetEnv()->CallVoidMethod(wrapped_obj, jDrawForegroundMethod);
-    if (jniFrame->CheckForException())
-        return false;
-
-    return true;
-}
-
-bool
-AndroidLayerRendererFrame::EndDrawing(AutoLocalJNIFrame *jniFrame)
-{
-    if (!jniFrame || !jniFrame->GetEnv())
-        return false;
-
-    jniFrame->GetEnv()->CallVoidMethod(wrapped_obj, jEndDrawingMethod);
-    if (jniFrame->CheckForException())
-        return false;
-
-    return true;
-}
 
 void
 AndroidRect::Init(JNIEnv *jenv, jobject jobj)

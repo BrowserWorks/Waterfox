@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 import gyp
 import sys
 import os
+import types
 import mozpack.path as mozpath
 from mozpack.files import FileFinder
 from .sandbox import alphabetical_sorted
@@ -16,6 +17,7 @@ from .context import (
     VARIABLES,
 )
 from mozbuild.util import (
+    expand_variables,
     List,
     memoize,
 )
@@ -211,7 +213,18 @@ def read_from_gyp(config, path, output, vars, non_unified_sources = set()):
                     for e in extensions if e in suffix_map
                 )
                 for var in variables:
-                    context[var].extend(flags)
+                    for f in flags:
+                        # We may be getting make variable references out of the
+                        # gyp data, and we don't want those in emitted data, so
+                        # substitute them with their actual value.
+                        f = expand_variables(f, config.substs)
+                        if not f:
+                            continue
+                        # the result may be a string or a list.
+                        if isinstance(f, types.StringTypes):
+                            context[var].append(f)
+                        else:
+                            context[var].extend(f)
         else:
             # Ignore other types than static_library because we don't have
             # anything using them, and we're not testing them. They can be
@@ -221,10 +234,10 @@ def read_from_gyp(config, path, output, vars, non_unified_sources = set()):
         # Add some features to all contexts. Put here in case LOCAL_INCLUDES
         # order matters.
         context['LOCAL_INCLUDES'] += [
+            '!/ipc/ipdl/_ipdlheaders',
             '/ipc/chromium/src',
             '/ipc/glue',
         ]
-        context['GENERATED_INCLUDES'] += ['/ipc/ipdl/_ipdlheaders']
         # These get set via VC project file settings for normal GYP builds.
         if config.substs['OS_TARGET'] == 'WINNT':
             context['DEFINES']['UNICODE'] = True

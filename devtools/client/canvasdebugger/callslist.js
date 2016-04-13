@@ -1,6 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* import-globals-from canvasdebugger.js */
+/* globals window, document */
 "use strict";
 
 /**
@@ -79,8 +81,6 @@ var CallsListView = Heritage.extend(WidgetMethods, {
       gutter.appendChild(index);
       contents.appendChild(gutter);
 
-      // Not all function calls have a caller that was stringified (e.g.
-      // context calls have a "gl" or "ctx" caller preview).
       if (call.callerPreview) {
         let context = document.createElement("label");
         context.className = "plain call-item-context";

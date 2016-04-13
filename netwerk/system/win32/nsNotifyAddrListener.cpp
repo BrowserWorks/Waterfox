@@ -35,7 +35,7 @@
 
 using namespace mozilla;
 
-static PRLogModuleInfo *gNotifyAddrLog = nullptr;
+static LazyLogModule gNotifyAddrLog("nsNotifyAddr");
 #define LOG(args) MOZ_LOG(gNotifyAddrLog, mozilla::LogLevel::Debug, args)
 
 static HMODULE sNetshell;
@@ -220,16 +220,21 @@ nsNotifyAddrListener::Run()
             false, // no initial notification
             &interfacechange);
 
-        do {
-            ret = WaitForSingleObject(mCheckEvent, waitTime);
-            if (!mShutdown) {
-                waitTime = nextCoalesceWaitTime();
-            }
-            else {
-                break;
-            }
-        } while (ret != WAIT_FAILED);
-        sCancelMibChangeNotify2(interfacechange);
+        if (ret == NO_ERROR) {
+            do {
+                ret = WaitForSingleObject(mCheckEvent, waitTime);
+                if (!mShutdown) {
+                    waitTime = nextCoalesceWaitTime();
+                }
+                else {
+                    break;
+                }
+            } while (ret != WAIT_FAILED);
+            sCancelMibChangeNotify2(interfacechange);
+        } else {
+            LOG(("Link Monitor: sNotifyIpInterfaceChange returned %d\n",
+                 (int)ret));
+        }
     }
     return NS_OK;
 }
@@ -248,9 +253,6 @@ nsNotifyAddrListener::Observe(nsISupports *subject,
 nsresult
 nsNotifyAddrListener::Init(void)
 {
-    if (!gNotifyAddrLog)
-        gNotifyAddrLog = PR_NewLogModule("nsNotifyAddr");
-
     nsCOMPtr<nsIObserverService> observerService =
         mozilla::services::GetObserverService();
     if (!observerService)

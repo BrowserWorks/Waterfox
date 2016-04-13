@@ -11,8 +11,10 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/Casting.h"
+#include "mozilla/HashFunctions.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Move.h"
+#include "mozilla/Opaque.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/ReentrancyGuard.h"
 #include "mozilla/TemplateLib.h"
@@ -32,6 +34,8 @@ namespace detail {
 } // namespace detail
 
 /*****************************************************************************/
+
+using Generation = mozilla::Opaque<uint64_t>;
 
 // A JS-friendly, STL-like container providing a hash-based map from keys to
 // values. In particular, HashMap calls constructors and destructors of all
@@ -73,7 +77,7 @@ class HashMap
     // HashMap construction is fallible (due to OOM); thus the user must call
     // init after constructing a HashMap and check the return value.
     explicit HashMap(AllocPolicy a = AllocPolicy()) : impl(a)  {}
-    bool init(uint32_t len = 16)                      { return impl.init(len); }
+    MOZ_WARN_UNUSED_RESULT bool init(uint32_t len = 16) { return impl.init(len); }
     bool initialized() const                          { return impl.initialized(); }
 
     // Return whether the given lookup value is present in the map. E.g.:
@@ -136,19 +140,19 @@ class HashMap
     }
 
     template<typename KeyInput, typename ValueInput>
-    bool add(AddPtr& p, KeyInput&& k, ValueInput&& v) {
+    MOZ_WARN_UNUSED_RESULT bool add(AddPtr& p, KeyInput&& k, ValueInput&& v) {
         return impl.add(p,
                         mozilla::Forward<KeyInput>(k),
                         mozilla::Forward<ValueInput>(v));
     }
 
     template<typename KeyInput>
-    bool add(AddPtr& p, KeyInput&& k) {
+    MOZ_WARN_UNUSED_RESULT bool add(AddPtr& p, KeyInput&& k) {
         return impl.add(p, mozilla::Forward<KeyInput>(k), Value());
     }
 
     template<typename KeyInput, typename ValueInput>
-    bool relookupOrAdd(AddPtr& p, KeyInput&& k, ValueInput&& v) {
+    MOZ_WARN_UNUSED_RESULT bool relookupOrAdd(AddPtr& p, KeyInput&& k, ValueInput&& v) {
         return impl.relookupOrAdd(p, k,
                                   mozilla::Forward<KeyInput>(k),
                                   mozilla::Forward<ValueInput>(v));
@@ -207,7 +211,9 @@ class HashMap
 
     // If |generation()| is the same before and after a HashMap operation,
     // pointers into the table remain valid.
-    uint32_t generation() const                       { return impl.generation(); }
+    Generation generation() const {
+        return impl.generation();
+    }
 
     /************************************************** Shorthand operations */
 
@@ -217,7 +223,7 @@ class HashMap
 
     // Overwrite existing value with v. Return false on oom.
     template<typename KeyInput, typename ValueInput>
-    bool put(KeyInput&& k, ValueInput&& v) {
+    MOZ_WARN_UNUSED_RESULT bool put(KeyInput&& k, ValueInput&& v) {
         AddPtr p = lookupForAdd(k);
         if (p) {
             p->value() = mozilla::Forward<ValueInput>(v);
@@ -228,7 +234,7 @@ class HashMap
 
     // Like put, but assert that the given key is not already present.
     template<typename KeyInput, typename ValueInput>
-    bool putNew(KeyInput&& k, ValueInput&& v) {
+    MOZ_WARN_UNUSED_RESULT bool putNew(KeyInput&& k, ValueInput&& v) {
         return impl.putNew(k, mozilla::Forward<KeyInput>(k), mozilla::Forward<ValueInput>(v));
     }
 
@@ -243,7 +249,9 @@ class HashMap
         AddPtr p = lookupForAdd(k);
         if (p)
             return p;
-        (void)add(p, k, defaultValue);  // p is left false-y on oom.
+        bool ok = add(p, k, defaultValue);
+        MOZ_ASSERT_IF(!ok, !p); // p is left false-y on oom.
+        (void)ok;
         return p;
     }
 
@@ -323,7 +331,7 @@ class HashSet
     // HashSet construction is fallible (due to OOM); thus the user must call
     // init after constructing a HashSet and check the return value.
     explicit HashSet(AllocPolicy a = AllocPolicy()) : impl(a)  {}
-    bool init(uint32_t len = 16)                      { return impl.init(len); }
+    MOZ_WARN_UNUSED_RESULT bool init(uint32_t len = 16) { return impl.init(len); }
     bool initialized() const                          { return impl.initialized(); }
 
     // Return whether the given lookup value is present in the map. E.g.:
@@ -381,12 +389,12 @@ class HashSet
     AddPtr lookupForAdd(const Lookup& l) const        { return impl.lookupForAdd(l); }
 
     template <typename U>
-    bool add(AddPtr& p, U&& u) {
+    MOZ_WARN_UNUSED_RESULT bool add(AddPtr& p, U&& u) {
         return impl.add(p, mozilla::Forward<U>(u));
     }
 
     template <typename U>
-    bool relookupOrAdd(AddPtr& p, const Lookup& l, U&& u) {
+    MOZ_WARN_UNUSED_RESULT bool relookupOrAdd(AddPtr& p, const Lookup& l, U&& u) {
         return impl.relookupOrAdd(p, l, mozilla::Forward<U>(u));
     }
 
@@ -443,7 +451,9 @@ class HashSet
 
     // If |generation()| is the same before and after a HashSet operation,
     // pointers into the table remain valid.
-    uint32_t generation() const                       { return impl.generation(); }
+    Generation generation() const {
+        return impl.generation();
+    }
 
     /************************************************** Shorthand operations */
 
@@ -453,19 +463,19 @@ class HashSet
 
     // Add |u| if it is not present already. Return false on oom.
     template <typename U>
-    bool put(U&& u) {
+    MOZ_WARN_UNUSED_RESULT bool put(U&& u) {
         AddPtr p = lookupForAdd(u);
         return p ? true : add(p, mozilla::Forward<U>(u));
     }
 
     // Like put, but assert that the given key is not already present.
     template <typename U>
-    bool putNew(U&& u) {
+    MOZ_WARN_UNUSED_RESULT bool putNew(U&& u) {
         return impl.putNew(u, mozilla::Forward<U>(u));
     }
 
     template <typename U>
-    bool putNew(const Lookup& l, U&& u) {
+    MOZ_WARN_UNUSED_RESULT bool putNew(const Lookup& l, U&& u) {
         return impl.putNew(l, mozilla::Forward<U>(u));
     }
 
@@ -496,11 +506,16 @@ class HashSet
         return false;
     }
 
-    // Infallibly rekey one entry with a new key that is equivalent.
-    void rekeyInPlace(Ptr p, const T& new_value)
-    {
+    // Infallibly replace the current key at |p| with an equivalent key.
+    // Specifically, both HashPolicy::hash and HashPolicy::match must return
+    // identical results for the new and old key when applied against all
+    // possible matching values.
+    void replaceKey(Ptr p, const T& new_value) {
+        MOZ_ASSERT(p.found());
+        MOZ_ASSERT(*p != new_value);
+        MOZ_ASSERT(HashPolicy::hash(*p) == HashPolicy::hash(new_value));
         MOZ_ASSERT(HashPolicy::match(*p, new_value));
-        impl.rekeyInPlace(p, new_value);
+        const_cast<T&>(*p) = new_value;
     }
 
     // HashSet is movable
@@ -599,21 +614,21 @@ template <class T>
 struct DefaultHasher<T*> : PointerHasher<T*, mozilla::tl::FloorLog2<sizeof(void*)>::value>
 {};
 
-// Specialize hashing policy for mozilla::UniquePtr<T> to proxy the UniquePtr's
+// Specialize hashing policy for mozilla::UniquePtr to proxy the UniquePtr's
 // raw pointer to PointerHasher.
-template <class T>
-struct DefaultHasher<mozilla::UniquePtr<T>>
+template <class T, class D>
+struct DefaultHasher<mozilla::UniquePtr<T, D>>
 {
-    using Lookup = mozilla::UniquePtr<T>;
+    using Lookup = mozilla::UniquePtr<T, D>;
     using PtrHasher = PointerHasher<T*, mozilla::tl::FloorLog2<sizeof(void*)>::value>;
 
     static HashNumber hash(const Lookup& l) {
         return PtrHasher::hash(l.get());
     }
-    static bool match(const mozilla::UniquePtr<T>& k, const Lookup& l) {
+    static bool match(const mozilla::UniquePtr<T, D>& k, const Lookup& l) {
         return PtrHasher::match(k.get(), l.get());
     }
-    static void rekey(mozilla::UniquePtr<T>& k, mozilla::UniquePtr<T>&& newKey) {
+    static void rekey(mozilla::UniquePtr<T, D>& k, mozilla::UniquePtr<T, D>&& newKey) {
         k = mozilla::Move(newKey);
     }
 };
@@ -645,6 +660,18 @@ struct DefaultHasher<float>
     }
     static bool match(float lhs, float rhs) {
         return mozilla::BitwiseCast<uint32_t>(lhs) == mozilla::BitwiseCast<uint32_t>(rhs);
+    }
+};
+
+// A hash policy that compares C strings.
+struct CStringHasher
+{
+    typedef const char* Lookup;
+    static js::HashNumber hash(Lookup l) {
+        return mozilla::HashString(l);
+    }
+    static bool match(const char* key, Lookup lookup) {
+        return strcmp(key, lookup) == 0;
     }
 };
 
@@ -799,7 +826,7 @@ class HashTable : private AllocPolicy
         Entry* entry_;
 #ifdef JS_DEBUG
         const HashTable* table_;
-        uint32_t generation;
+        Generation generation;
 #endif
 
       protected:
@@ -907,7 +934,7 @@ class HashTable : private AllocPolicy
 #ifdef JS_DEBUG
         const HashTable* table_;
         uint64_t mutationCount;
-        uint32_t generation;
+        Generation generation;
         bool validEntry;
 #endif
 
@@ -1056,9 +1083,9 @@ class HashTable : private AllocPolicy
     static const size_t CAP_BITS = 30;
 
   public:
-    Entry*      table;                 // entry storage
-    uint32_t    gen:24;                 // entry storage generation number
-    uint32_t    hashShift:8;            // multiplicative hash shift
+    uint64_t    gen:56;                 // entry storage generation number
+    uint64_t    hashShift:8;            // multiplicative hash shift
+    Entry*      table;                  // entry storage
     uint32_t    entryCount;             // number of entries in table
     uint32_t    removedCount;           // removed entry sentinels in table
 
@@ -1155,9 +1182,9 @@ class HashTable : private AllocPolicy
   public:
     explicit HashTable(AllocPolicy ap)
       : AllocPolicy(ap)
-      , table(nullptr)
       , gen(0)
       , hashShift(sHashBits)
+      , table(nullptr)
       , entryCount(0)
       , removedCount(0)
 #ifdef JS_DEBUG
@@ -1596,10 +1623,10 @@ class HashTable : private AllocPolicy
         return JS_BIT(sHashBits - hashShift);
     }
 
-    uint32_t generation() const
+    Generation generation() const
     {
         MOZ_ASSERT(table);
-        return gen;
+        return Generation(gen);
     }
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
@@ -1635,7 +1662,7 @@ class HashTable : private AllocPolicy
     }
 
     template <typename... Args>
-    bool add(AddPtr& p, Args&&... args)
+    MOZ_WARN_UNUSED_RESULT bool add(AddPtr& p, Args&&... args)
     {
         mozilla::ReentrancyGuard g(*this);
         MOZ_ASSERT(table);
@@ -1655,7 +1682,7 @@ class HashTable : private AllocPolicy
             RebuildStatus status = checkOverloaded();
             if (status == RehashFailed)
                 return false;
-            if (!this->checkSimulatedOOM())
+            if (status == NotOverloaded && !this->checkSimulatedOOM())
                 return false;
             if (status == Rehashed)
                 p.entry_ = &findFreeEntry(p.keyHash);
@@ -1698,7 +1725,7 @@ class HashTable : private AllocPolicy
     // Note: |l| may be alias arguments in |args|, so this function must take
     // care not to use |l| after moving |args|.
     template <typename... Args>
-    bool putNew(const Lookup& l, Args&&... args)
+    MOZ_WARN_UNUSED_RESULT bool putNew(const Lookup& l, Args&&... args)
     {
         if (!this->checkSimulatedOOM())
             return false;
@@ -1713,7 +1740,7 @@ class HashTable : private AllocPolicy
     // Note: |l| may be a reference to a piece of |u|, so this function
     // must take care not to use |l| after moving |u|.
     template <typename... Args>
-    bool relookupOrAdd(AddPtr& p, const Lookup& l, Args&&... args)
+    MOZ_WARN_UNUSED_RESULT bool relookupOrAdd(AddPtr& p, const Lookup& l, Args&&... args)
     {
 #ifdef JS_DEBUG
         p.generation = generation();
@@ -1751,14 +1778,6 @@ class HashTable : private AllocPolicy
     {
         rekeyWithoutRehash(p, l, k);
         checkOverRemoved();
-    }
-
-    void rekeyInPlace(Ptr p, const Key& k)
-    {
-        MOZ_ASSERT(table);
-        mozilla::ReentrancyGuard g(*this);
-        MOZ_ASSERT(p.found());
-        HashPolicy::rekey(const_cast<Key&>(*p), const_cast<Key&>(k));
     }
 
 #undef METER

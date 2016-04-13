@@ -273,8 +273,10 @@ WebGL2Context::GetIndexedParameter(GLenum target, GLuint index,
             return ErrorInvalidValue("getIndexedParameter: index should be less than "
                                      "MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS");
 
-        retval.SetValue().SetAsWebGLBuffer() =
-            mBoundTransformFeedbackBuffers[index].get();
+        if (mBoundTransformFeedbackBuffers[index].get()) {
+            retval.SetValue().SetAsWebGLBuffer() =
+                mBoundTransformFeedbackBuffers[index].get();
+        }
         return;
 
     case LOCAL_GL_UNIFORM_BUFFER_BINDING:
@@ -282,7 +284,8 @@ WebGL2Context::GetIndexedParameter(GLenum target, GLuint index,
             return ErrorInvalidValue("getIndexedParameter: index should be than "
                                      "MAX_UNIFORM_BUFFER_BINDINGS");
 
-        retval.SetValue().SetAsWebGLBuffer() = mBoundUniformBuffers[index].get();
+        if (mBoundUniformBuffers[index].get())
+            retval.SetValue().SetAsWebGLBuffer() = mBoundUniformBuffers[index].get();
         return;
 
     case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER_START:
@@ -312,22 +315,7 @@ WebGL2Context::GetUniformIndices(WebGLProgram* program,
     if (!uniformNames.Length())
         return;
 
-    GLuint progname = program->mGLName;
-    size_t count = uniformNames.Length();
-    nsTArray<GLuint>& arr = retval.SetValue();
-
-    MakeContextCurrent();
-
-    for (size_t n = 0; n < count; n++) {
-        NS_LossyConvertUTF16toASCII name(uniformNames[n]);
-        //        const GLchar* glname = name.get();
-        const GLchar* glname = nullptr;
-        name.BeginReading(glname);
-
-        GLuint index = 0;
-        gl->fGetUniformIndices(progname, 1, &glname, &index);
-        arr.AppendElement(index);
-    }
+    program->GetUniformIndices(uniformNames, retval);
 }
 
 void
@@ -339,6 +327,11 @@ WebGL2Context::GetActiveUniforms(WebGLProgram* program,
     retval.SetNull();
     if (IsContextLost())
         return;
+
+    if (pname == LOCAL_GL_UNIFORM_NAME_LENGTH) {
+        ErrorInvalidEnumInfo("getActiveUniforms: pname", pname);
+        return;
+    }
 
     if (!ValidateObject("getActiveUniforms: program", program))
         return;

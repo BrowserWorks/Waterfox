@@ -14,7 +14,6 @@ var Ci = Components.interfaces;
 var Cu = Components.utils;
 var Cr = Components.results;
 
-Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://testing-common/MockRegistrar.jsm");
 var testserver;
 
@@ -296,10 +295,9 @@ add_task(function* init() {
   }, profileDir);
 
   // Create and configure the HTTP server.
-  testserver = new HttpServer();
+  testserver = createHttpServer(4444);
   testserver.registerDirectory("/data/", do_get_file("data"));
   testserver.registerDirectory("/addons/", do_get_file("addons"));
-  testserver.start(4444);
 
   startupManager();
 
@@ -464,13 +462,3 @@ add_task(function* run_test_6() {
                                          "override1x2-1x3@tests.mozilla.org"]);
   check_state_v1_2(addons);
 });
-
-add_task(function* cleanup() {
-  return new Promise((resolve, reject) => {
-    testserver.stop(resolve);
-  });
-});
-
-function run_test() {
-  run_next_test();
-}

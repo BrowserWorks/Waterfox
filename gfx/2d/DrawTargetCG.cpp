@@ -257,7 +257,7 @@ GetRetainedImageFromSourceSurface(SourceSurface *aSurface)
     {
       RefPtr<DataSourceSurface> data = aSurface->GetDataSurface();
       if (!data) {
-        MOZ_CRASH("unsupported source surface");
+        MOZ_CRASH("GFX: unsupported source CG surface");
       }
       data.get()->AddRef();
       return CreateCGImage(releaseDataSurface, data.get(),
@@ -714,7 +714,7 @@ DrawGradient(CGColorSpaceRef aColorSpace,
 
       CGContextDrawLinearGradient(cg, stops->mGradient, startPoint, endPoint,
                                   kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation);
-    } else if (stops->mExtend == ExtendMode::REPEAT || stops->mExtend == ExtendMode::REFLECT) {
+    } else {
       DrawLinearRepeatingGradient(aColorSpace, cg, pat, extents, stops->mExtend == ExtendMode::REFLECT);
     }
   } else if (aPattern.GetType() == PatternType::RADIAL_GRADIENT) {
@@ -734,7 +734,7 @@ DrawGradient(CGColorSpaceRef aColorSpace,
       //XXX: are there degenerate radial gradients that we should avoid drawing?
       CGContextDrawRadialGradient(cg, stops->mGradient, startCenter, startRadius, endCenter, endRadius,
                                   kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation);
-    } else if (stops->mExtend == ExtendMode::REPEAT || stops->mExtend == ExtendMode::REFLECT) {
+    } else {
       DrawRadialRepeatingGradient(aColorSpace, cg, pat, extents, stops->mExtend == ExtendMode::REFLECT);
     }
   } else {
@@ -775,8 +775,14 @@ isGradient(const Pattern &aPattern)
 static bool
 isNonRepeatingSurface(const Pattern& aPattern)
 {
-  return aPattern.GetType() == PatternType::SURFACE &&
-    static_cast<const SurfacePattern&>(aPattern).mExtendMode != ExtendMode::REPEAT;
+  if (aPattern.GetType() != PatternType::SURFACE) {
+    return false;
+  }
+
+  const SurfacePattern& surfacePattern = static_cast<const SurfacePattern&>(aPattern);
+  return surfacePattern.mExtendMode != ExtendMode::REPEAT &&
+         surfacePattern.mExtendMode != ExtendMode::REPEAT_X &&
+         surfacePattern.mExtendMode != ExtendMode::REPEAT_Y;
 }
 
 /* CoreGraphics patterns ignore the userspace transform so
@@ -802,7 +808,7 @@ CreateCGPattern(const Pattern &aPattern, CGAffineTransform aUserSpace)
       yStep = static_cast<CGFloat>(1 << 22);
       break;
     case ExtendMode::REFLECT:
-      assert(0);
+      MOZ_FALLTHROUGH_ASSERT("ExtendMode::REFLECT");
     case ExtendMode::REPEAT:
       xStep = static_cast<CGFloat>(CGImageGetWidth(image));
       yStep = static_cast<CGFloat>(CGImageGetHeight(image));
@@ -815,6 +821,15 @@ CreateCGPattern(const Pattern &aPattern, CGAffineTransform aUserSpace)
       //    wkPatternTilingConstantSpacing
       // } wkPatternTiling;
       // extern CGPatternRef (*wkCGPatternCreateWithImageAndTransform)(CGImageRef, CGAffineTransform, int);
+      break;
+    case ExtendMode::REPEAT_X:
+      xStep = static_cast<CGFloat>(CGImageGetWidth(image));
+      yStep = static_cast<CGFloat>(1 << 22);
+      break;
+    case ExtendMode::REPEAT_Y:
+      yStep = static_cast<CGFloat>(CGImageGetHeight(image));
+      xStep = static_cast<CGFloat>(1 << 22);
+      break;
   }
 
   //XXX: We should be using CGContextDrawTiledImage when we can. Even though it
@@ -1539,7 +1554,8 @@ DrawTargetCG::FillGlyphs(ScaledFont *aFont, const GlyphBuffer &aBuffer, const Pa
   Vector<CGPoint, 64> positions;
   if (!glyphs.resizeUninitialized(aBuffer.mNumGlyphs) ||
       !positions.resizeUninitialized(aBuffer.mNumGlyphs)) {
-    MOZ_CRASH("glyphs/positions allocation failed");
+    gfxDevCrash(LogReason::GlyphAllocFailedCG) << "glyphs/positions allocation failed";
+    return;
   }
 
   // Handle the flip
@@ -1940,6 +1956,7 @@ DrawTargetCG::Mask(const Pattern &aSource,
                    const Pattern &aMask,
                    const DrawOptions &aDrawOptions)
 {
+  MOZ_CRASH("not completely implemented");
   MarkChanged();
 
   CGContextSaveGState(mCg);

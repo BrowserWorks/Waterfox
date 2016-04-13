@@ -263,12 +263,14 @@ public:
     mCacheStorage = CreateCacheStorage(jsapi.cx(), aPrincipal, result, &mSandbox);
     if (NS_WARN_IF(result.Failed())) {
       MOZ_ASSERT(!result.IsErrorWithMessage());
+      Cleanup();
       return result.StealNSResult();
     }
 
     mCN = new CompareNetwork(this);
     nsresult rv = mCN->Initialize(aPrincipal, aURL, aLoadGroup);
     if (NS_WARN_IF(NS_FAILED(rv))) {
+      Cleanup();
       return rv;
     }
 
@@ -277,6 +279,7 @@ public:
       rv = mCC->Initialize(aPrincipal, aURL, aCacheName);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         mCN->Abort();
+        Cleanup();
         return rv;
       }
     }
@@ -353,7 +356,7 @@ public:
       return;
     }
 
-    if (NS_WARN_IF(!mCC || !mInCache)) {
+    if (!mCC || !mInCache) {
       ComparisonFinished(NS_OK, false);
       return;
     }
@@ -737,7 +740,7 @@ CompareNetwork::OnStreamComplete(nsIStreamLoader* aLoader, nsISupports* aContext
     nsAutoCString maxScope;
     // Note: we explicitly don't check for the return value here, because the
     // absence of the header is not an error condition.
-    unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Service-Worker-Allowed"),
+    Unused << httpChannel->GetResponseHeader(NS_LITERAL_CSTRING("Service-Worker-Allowed"),
                                              maxScope);
 
     mManager->SetMaxScope(maxScope);
@@ -1036,7 +1039,9 @@ GenerateCacheName(nsAString& aName)
 
   char chars[NSID_LENGTH];
   id.ToProvidedString(chars);
-  aName.AssignASCII(chars, NSID_LENGTH);
+
+  // NSID_LENGTH counts the null terminator.
+  aName.AssignASCII(chars, NSID_LENGTH - 1);
 
   return NS_OK;
 }

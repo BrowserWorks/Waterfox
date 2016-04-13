@@ -1,7 +1,6 @@
 // |jit-test| test-also-noasmjs
 load(libdir + "asm.js");
 load(libdir + "asserts.js");
-load(libdir + "class.js");
 
 assertAsmTypeFail(USE_ASM);
 assertAsmTypeFail(USE_ASM + 'return');
@@ -98,6 +97,12 @@ var exp = asmLink(asmCompile(USE_ASM + "function f() { return 3 } return {f:f,f:
 assertEq(exp.f(), 3);
 assertEq(Object.keys(exp).join(), 'f');
 
+var exp = asmLink(asmCompile(USE_ASM + "function f() { return 4 } return {f1:f,f2:f}"));
+assertEq(exp.f1(), 4);
+assertEq(exp.f2(), 4);
+assertEq(Object.keys(exp).sort().join(), 'f1,f2');
+assertEq(exp.f1, exp.f2);
+
 assertAsmTypeFail(USE_ASM + "function f() { return 3 } return {1:f}");
 assertAsmTypeFail(USE_ASM + "function f() { return 3 } return {__proto__:f}");
 assertAsmTypeFail(USE_ASM + "function f() { return 3 } return {get x() {} }");
@@ -134,19 +139,8 @@ assertTypeFailInEval('function *f() { "use asm"; function g() {} return g }');
 assertTypeFailInEval('f => { "use asm"; function g() {} return g }');
 assertTypeFailInEval('var f = { method() {"use asm"; return {}} }');
 assertAsmTypeFail(USE_ASM + 'return {m() {}};');
-if (classesEnabled()) {
-    assertTypeFailInEval('class f { constructor() {"use asm"; return {}} }');
-    assertAsmTypeFail(USE_ASM + 'class c { constructor() {}}; return c;');
-}
-
-assertAsmTypeFail(USE_ASM + 'function f(i) {i=i|0; (i for (x in [1,2,3])) } return f');
-assertAsmTypeFail(USE_ASM + 'function f(i) {i=i|0; [i for (x in [1,2,3])] } return f');
-assertAsmTypeFail(USE_ASM + 'function f() { (x for (x in [1,2,3])) } return f');
-assertAsmTypeFail(USE_ASM + 'function f() { [x for (x in [1,2,3])] } return f');
-assertTypeFailInEval('function f() { "use asm"; function g(i) {i=i|0; (i for (x in [1,2,3])) } return g }');
-assertTypeFailInEval('function f() { "use asm"; function g(i) {i=i|0; [i for (x in [1,2,3])] } return g }');
-assertTypeFailInEval('function f() { "use asm"; function g() { (x for (x in [1,2,3])) } return g }');
-assertTypeFailInEval('function f() { "use asm"; function g() { [x for (x in [1,2,3])] } return g }');
+assertTypeFailInEval('class f { constructor() {"use asm"; return {}} }');
+assertAsmTypeFail(USE_ASM + 'class c { constructor() {}}; return c;');
 
 assertThrowsInstanceOf(function() { new Function(USE_ASM + 'var)') }, SyntaxError);
 assertThrowsInstanceOf(function() { new Function(USE_ASM + 'return)') }, SyntaxError);

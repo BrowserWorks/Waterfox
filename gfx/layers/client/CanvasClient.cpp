@@ -13,6 +13,7 @@
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "GLReadTexImageHelper.h"
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
+#include "mozilla/layers/BufferTexture.h"
 #include "mozilla/layers/AsyncCanvasRenderer.h"
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/CompositorChild.h" // for CompositorChild
@@ -98,22 +99,20 @@ CanvasClient2D::Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer)
     bufferCreated = true;
   }
 
-  if (!mBuffer->Lock(OpenMode::OPEN_WRITE_ONLY)) {
-    mBuffer = nullptr;
-    return;
-  }
-
   bool updated = false;
   {
-    // Restrict drawTarget to a scope so that terminates before Unlock.
-    RefPtr<DrawTarget> target =
-      mBuffer->BorrowDrawTarget();
+    TextureClientAutoLock autoLock(mBuffer, OpenMode::OPEN_WRITE_ONLY);
+    if (!autoLock.Succeeded()) {
+      mBuffer = nullptr;
+      return;
+    }
+
+    RefPtr<DrawTarget> target = mBuffer->BorrowDrawTarget();
     if (target) {
       aLayer->UpdateTarget(target);
       updated = true;
     }
   }
-  mBuffer->Unlock();
 
   if (bufferCreated && !AddTextureClient(mBuffer)) {
     mBuffer = nullptr;
@@ -202,21 +201,21 @@ public:
   }
 
 protected:
-  already_AddRefed<BufferTextureClient> Create(gfx::SurfaceFormat format) {
+  already_AddRefed<TextureClient> Create(gfx::SurfaceFormat format) {
     return TextureClient::CreateForRawBufferAccess(mAllocator, format,
                                                    mSize, mBackendType,
                                                    mBaseTexFlags);
   }
 
 public:
-  already_AddRefed<BufferTextureClient> CreateB8G8R8AX8() {
+  already_AddRefed<TextureClient> CreateB8G8R8AX8() {
     gfx::SurfaceFormat format = mHasAlpha ? gfx::SurfaceFormat::B8G8R8A8
                                           : gfx::SurfaceFormat::B8G8R8X8;
     return Create(format);
   }
 
-  already_AddRefed<BufferTextureClient> CreateR8G8B8AX8() {
-    RefPtr<BufferTextureClient> ret;
+  already_AddRefed<TextureClient> CreateR8G8B8AX8() {
+    RefPtr<TextureClient> ret;
 
     bool areRGBAFormatsBroken = mLayersBackend == LayersBackend::LAYERS_BASIC;
     if (!areRGBAFormatsBroken) {
@@ -244,7 +243,7 @@ TexClientFromReadback(SharedSurface* src, ISurfaceAllocator* allocator,
   TexClientFactory factory(allocator, src->mHasAlpha, src->mSize, backendType,
                            baseFlags, layersBackend);
 
-  RefPtr<BufferTextureClient> texClient;
+  RefPtr<TextureClient> texClient;
 
   {
     gl::ScopedReadbackFB autoReadback(src);
@@ -278,7 +277,7 @@ TexClientFromReadback(SharedSurface* src, ISurfaceAllocator* allocator,
       // [RR, GG, BB, AA]
       texClient = factory.CreateR8G8B8AX8();
     } else {
-      MOZ_CRASH("Bad `read{Format,Type}`.");
+      MOZ_CRASH("GFX: Bad `read{Format,Type}`.");
     }
 
     MOZ_ASSERT(texClient);
@@ -286,18 +285,22 @@ TexClientFromReadback(SharedSurface* src, ISurfaceAllocator* allocator,
         return nullptr;
 
     // With a texClient, we can lock for writing.
-    MOZ_ALWAYS_TRUE( texClient->Lock(OpenMode::OPEN_WRITE) );
+    TextureClientAutoLock autoLock(texClient, OpenMode::OPEN_WRITE);
+    DebugOnly<bool> succeeded = autoLock.Succeeded();
+    MOZ_ASSERT(succeeded, "texture should have locked");
 
-    uint8_t* lockedBytes = texClient->GetLockedData();
+    MappedTextureData mapped;
+    texClient->BorrowMappedData(mapped);
 
-    // ReadPixels from the current FB into lockedBits.
+    // ReadPixels from the current FB into mapped.data.
     auto width = src->mSize.width;
     auto height = src->mSize.height;
 
     {
       ScopedPackAlignment autoAlign(gl, 4);
 
-      gl->raw_fReadPixels(0, 0, width, height, readFormat, readType, lockedBytes);
+      MOZ_ASSERT(mapped.stride/4 == mapped.size.width);
+      gl->raw_fReadPixels(0, 0, width, height, readFormat, readType, mapped.data);
     }
 
     // RB_SWAPPED doesn't work with D3D11. (bug 1051010)
@@ -310,7 +313,7 @@ TexClientFromReadback(SharedSurface* src, ISurfaceAllocator* allocator,
         layersNeedsManualSwap)
     {
       size_t pixels = width * height;
-      uint8_t* itr = lockedBytes;
+      uint8_t* itr = mapped.data;
       for (size_t i = 0; i < pixels; i++) {
         SwapRB_R8G8B8A8(itr);
         itr += 4;
@@ -318,8 +321,6 @@ TexClientFromReadback(SharedSurface* src, ISurfaceAllocator* allocator,
 
       texClient->RemoveFlags(TextureFlags::RB_SWAPPED);
     }
-
-    texClient->Unlock();
   }
 
   return texClient.forget();
@@ -334,8 +335,13 @@ CloneSurface(gl::SharedSurface* src, gl::SurfaceFactory* factory)
     if (!dest) {
       return nullptr;
     }
+
+    gl::SharedSurface* destSurf = dest->Surf();
+
+    destSurf->ProducerAcquire();
     SharedSurface::ProdCopy(src, dest->Surf(), factory);
-    dest->Surf()->Fence();
+    destSurf->ProducerRelease();
+
     return dest.forget();
 }
 
@@ -439,6 +445,10 @@ CanvasClientSharedSurface::UpdateRenderer(gfx::IntSize aSize, Renderer& aRendere
 void
 CanvasClientSharedSurface::Updated()
 {
+  if (!mNewFront) {
+    return;
+  }
+
   auto forwarder = GetForwarder();
 
 #ifndef MOZ_WIDGET_GONK

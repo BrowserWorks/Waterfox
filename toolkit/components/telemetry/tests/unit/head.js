@@ -22,7 +22,7 @@ const MILLISECONDS_PER_MINUTE = 60 * 1000;
 const MILLISECONDS_PER_HOUR = 60 * MILLISECONDS_PER_MINUTE;
 const MILLISECONDS_PER_DAY = 24 * MILLISECONDS_PER_HOUR;
 
-const HAS_DATAREPORTINGSERVICE = "@mozilla.org/datareporting/service;1" in Cc;
+const PREF_TELEMETRY_ENABLED = "toolkit.telemetry.enabled";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -96,7 +96,7 @@ const PingServer = {
 
   promiseNextPings: function(count) {
     return this.promiseNextRequests(count).then(requests => {
-      return [for (req of requests) decodeRequestPayload(req)];
+      return Array.from(requests, decodeRequestPayload);
     });
   },
 };
@@ -146,7 +146,10 @@ function wrapWithExceptionHandler(f) {
   function wrapper(...args) {
     try {
       f(...args);
-    } catch (ex if typeof(ex) == 'object') {
+    } catch (ex) {
+      if (typeof(ex) != 'object') {
+        throw ex;
+      }
       dump("Caught exception: " + ex.message + "\n");
       dump(ex.stack);
       do_test_finished();

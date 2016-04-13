@@ -1,4 +1,6 @@
-extensions.registerAPI((extension, context) => {
+"use strict";
+
+extensions.registerSchemaAPI("extension", null, (extension, context) => {
   return {
     extension: {
       getURL: function(url) {
@@ -9,14 +11,12 @@ extensions.registerAPI((extension, context) => {
         let result = Cu.cloneInto([], context.cloneScope);
 
         for (let view of extension.views) {
-          if (fetchProperties && "type" in fetchProperties) {
-            if (view.type != fetchProperties.type) {
+          if (fetchProperties !== null) {
+            if (fetchProperties.type !== null && view.type != fetchProperties.type) {
               continue;
             }
-          }
 
-          if (fetchProperties && "windowId" in fetchProperties) {
-            if (view.windowId != fetchProperties.windowId) {
+            if (fetchProperties.windowId !== null && view.windowId != fetchProperties.windowId) {
               continue;
             }
           }
@@ -29,7 +29,7 @@ extensions.registerAPI((extension, context) => {
 
       get inIncognitoContext() {
         return context.incognito;
-      }
+      },
     },
   };
 });

@@ -201,25 +201,6 @@ public:
 
   void ClearRenderFrame() { mRenderFrame = nullptr; }
 
-  virtual void SendAsyncScrollDOMEvent(bool aIsRootContent,
-                                       const CSSRect& aContentRect,
-                                       const CSSSize& aContentSize) override
-  {
-    if (MessageLoop::current() != mUILoop) {
-      mUILoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this,
-                          &RemoteContentController::SendAsyncScrollDOMEvent,
-                          aIsRootContent, aContentRect, aContentSize));
-      return;
-    }
-    if (mRenderFrame && aIsRootContent) {
-      TabParent* browser = TabParent::GetFrom(mRenderFrame->Manager());
-      BrowserElementParent::DispatchAsyncScrollEvent(browser, aContentRect,
-                                                     aContentSize);
-    }
-  }
-
   virtual void PostDelayedTask(Task* aTask, int aDelayMs) override
   {
 #ifdef MOZ_ANDROID_APZ
@@ -388,7 +369,9 @@ RenderFrameParent::BuildLayer(nsDisplayListBuilder* aBuilder,
     // draw a manager's subtree.  The latter is bad bad bad, but the the
     // MOZ_ASSERT() above will flag it.  Returning nullptr here will just
     // cause the shadow subtree not to be rendered.
-    NS_WARNING("Remote iframe not rendered");
+    if (!aContainerParameters.mForEventsOnly) {
+      NS_WARNING("Remote iframe not rendered");
+    }
     return nullptr;
   }
 
@@ -523,11 +506,12 @@ RenderFrameParent::BuildDisplayList(nsDisplayListBuilder* aBuilder,
 
 void
 RenderFrameParent::ZoomToRect(uint32_t aPresShellId, ViewID aViewId,
-                              const CSSRect& aRect)
+                              const CSSRect& aRect,
+                              const uint32_t aFlags)
 {
   if (GetApzcTreeManager()) {
     GetApzcTreeManager()->ZoomToRect(ScrollableLayerGuid(mLayersId, aPresShellId, aViewId),
-                                     aRect);
+                                     aRect, aFlags);
   }
 }
 

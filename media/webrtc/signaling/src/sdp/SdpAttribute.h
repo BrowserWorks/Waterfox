@@ -22,6 +22,7 @@
 #include "mozilla/Maybe.h"
 
 #include "signaling/src/sdp/SdpEnum.h"
+#include "signaling/src/common/EncodingConstraints.h"
 
 namespace mozilla
 {
@@ -828,38 +829,6 @@ public:
     : SdpAttribute(kRidAttribute)
   {}
 
-  struct Constraints
-  {
-    Constraints() :
-      maxWidth(0),
-      maxHeight(0),
-      maxFps(0),
-      maxFs(0),
-      maxBr(0),
-      maxPps(0)
-    {}
-
-    bool Parse(std::istream& is, std::string* error);
-    bool ParseDepend(std::istream& is, std::string* error);
-    bool ParseFormats(std::istream& is, std::string* error);
-    void Serialize(std::ostream& os) const;
-    bool IsSet() const
-    {
-      return !formats.empty() || maxWidth || maxHeight || maxFps || maxFs ||
-             maxBr || maxPps || !dependIds.empty();
-    }
-
-    std::vector<uint16_t> formats; // Empty implies all
-    uint32_t maxWidth;
-    uint32_t maxHeight;
-    uint32_t maxFps;
-    uint32_t maxFs;
-    uint32_t maxBr;
-    uint32_t maxPps;
-    std::vector<std::string> dependIds;
-    // We do not bother trying to store constraints we don't understand.
-  };
-
   struct Rid
   {
     Rid() :
@@ -867,11 +836,30 @@ public:
     {}
 
     bool Parse(std::istream& is, std::string* error);
+    bool ParseParameters(std::istream& is, std::string* error);
+    bool ParseDepend(std::istream& is, std::string* error);
+    bool ParseFormats(std::istream& is, std::string* error);
     void Serialize(std::ostream& os) const;
+    void SerializeParameters(std::ostream& os) const;
+    bool HasFormat(const std::string& format) const;
+    bool HasParameters() const
+    {
+      return !formats.empty() ||
+        constraints.maxWidth ||
+        constraints.maxHeight ||
+        constraints.maxFps ||
+        constraints.maxFs ||
+        constraints.maxBr ||
+        constraints.maxPps ||
+        !dependIds.empty();
+    }
+
 
     std::string id;
     sdp::Direction direction;
-    Constraints constraints;
+    std::vector<uint16_t> formats; // Empty implies all
+    EncodingConstraints constraints;
+    std::vector<std::string> dependIds;
   };
 
   virtual void Serialize(std::ostream& os) const override;
@@ -1248,21 +1236,45 @@ public:
     unsigned int max_fr;
   };
 
+  class OpusParameters : public Parameters
+  {
+  public:
+    enum { kDefaultMaxPlaybackRate = 48000,
+           kDefaultStereo = 0 };
+    OpusParameters() :
+      Parameters(SdpRtpmapAttributeList::kOpus),
+      maxplaybackrate(kDefaultMaxPlaybackRate),
+      stereo(kDefaultStereo)
+    {}
+
+    Parameters*
+    Clone() const override
+    {
+      return new OpusParameters(*this);
+    }
+
+    void
+    Serialize(std::ostream& os) const override
+    {
+      os << "maxplaybackrate=" << maxplaybackrate << ";"
+         << "stereo=" << stereo;
+    }
+
+    unsigned int maxplaybackrate;
+    unsigned int stereo;
+  };
+
   class Fmtp
   {
   public:
-    Fmtp(const std::string& aFormat, const std::string& aParametersString,
-         UniquePtr<Parameters> aParameters)
+    Fmtp(const std::string& aFormat, UniquePtr<Parameters> aParameters)
         : format(aFormat),
-          parameters_string(aParametersString),
           parameters(Move(aParameters))
     {
     }
 
-    Fmtp(const std::string& aFormat, const std::string& aParametersString,
-         const Parameters& aParameters)
+    Fmtp(const std::string& aFormat, const Parameters& aParameters)
         : format(aFormat),
-          parameters_string(aParametersString),
           parameters(aParameters.Clone())
     {
     }
@@ -1274,34 +1286,28 @@ public:
     {
       if (this != &rhs) {
         format = rhs.format;
-        parameters_string = rhs.parameters_string;
         parameters.reset(rhs.parameters ? rhs.parameters->Clone() : nullptr);
       }
       return *this;
     }
 
     // The contract around these is as follows:
-    // * |format| and |parameters_string| are always set
     // * |parameters| is only set if we recognized the media type and had
     //   a subclass of Parameters to represent that type of parameters
     // * |parameters| is a best-effort representation; it might be missing
     //   stuff
-    // * if |parameters| is set, it determines the serialized form,
-    //   otherwise |parameters_string| is used
     // * Parameters::codec_type tells you the concrete class, eg
     //   kH264 -> H264Parameters
     std::string format;
-    std::string parameters_string;
     UniquePtr<Parameters> parameters;
   };
 
   virtual void Serialize(std::ostream& os) const override;
 
   void
-  PushEntry(const std::string& format, const std::string& parameters_string,
-            UniquePtr<Parameters> parameters)
+  PushEntry(const std::string& format, UniquePtr<Parameters> parameters)
   {
-    mFmtps.push_back(Fmtp(format, parameters_string, Move(parameters)));
+    mFmtps.push_back(Fmtp(format, Move(parameters)));
   }
 
   std::vector<Fmtp> mFmtps;

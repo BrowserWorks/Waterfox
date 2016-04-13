@@ -28,6 +28,10 @@ function doConsoleCalls(aState)
   top.console.dir(top.document, top.location);
   top.console.log("foo", longString);
 
+  let sandbox = new Cu.Sandbox(null, { invisibleToDebugger: true });
+  let sandboxObj = sandbox.eval("new Object");
+  top.console.log(sandboxObj);
+
   function fromAsmJS() {
       top.console.error("foobarBaz-asmjs-error", undefined);
   }
@@ -120,6 +124,19 @@ function doConsoleCalls(aState)
       ],
     },
     {
+      level: "log",
+      filename: /test_consoleapi/,
+      functionName: "doConsoleCalls",
+      timeStamp: /^\d+$/,
+      arguments: [
+        {
+          type: "object",
+          actor: /[a-z]/,
+          class: "Object",
+        },
+      ],
+    },
+    {
       level: "error",
       filename: /test_consoleapi/,
       functionName: "fromAsmJS",
@@ -156,7 +173,7 @@ function startTest()
 {
   removeEventListener("load", startTest);
 
-  attachConsole(["ConsoleAPI"], onAttach, true);
+  attachConsoleToTab(["ConsoleAPI"], onAttach);
 }
 
 function onAttach(aState, aResponse)

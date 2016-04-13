@@ -399,8 +399,34 @@ js::TraceEdge(JSTracer* trc, WriteBarrieredBase<T>* thingp, const char* name)
 }
 
 template <typename T>
+JS_PUBLIC_API(void)
+JS::TraceEdge(JSTracer* trc, JS::Heap<T>* thingp, const char* name)
+{
+    MOZ_ASSERT(thingp);
+    if (InternalGCMethods<T>::isMarkable(thingp->get()))
+        DispatchToTracer(trc, ConvertToBase(thingp->unsafeGet()), name);
+}
+
+JS_PUBLIC_API(void)
+JS::TraceEdge(JSTracer* trc, JS::TenuredHeap<JSObject*>* thingp, const char* name)
+{
+    MOZ_ASSERT(thingp);
+    if (JSObject* ptr = thingp->getPtr()) {
+        DispatchToTracer(trc, &ptr, name);
+        thingp->setPtr(ptr);
+    }
+}
+
+template <typename T>
 void
 js::TraceManuallyBarrieredEdge(JSTracer* trc, T* thingp, const char* name)
+{
+    DispatchToTracer(trc, ConvertToBase(thingp), name);
+}
+
+template <typename T>
+JS_PUBLIC_API(void)
+js::UnsafeTraceManuallyBarrieredEdge(JSTracer* trc, T* thingp, const char* name)
 {
     DispatchToTracer(trc, ConvertToBase(thingp), name);
 }
@@ -411,7 +437,7 @@ js::TraceWeakEdge(JSTracer* trc, WeakRef<T>* thingp, const char* name)
 {
     // Non-marking tracers treat the edge strongly.
     if (!trc->isMarkingTracer())
-        DispatchToTracer(trc, ConvertToBase(thingp->unsafeUnbarrieredForTracing()), name);
+        return DispatchToTracer(trc, ConvertToBase(thingp->unsafeUnbarrieredForTracing()), name);
 
     NoteWeakEdge(static_cast<GCMarker*>(trc),
                  ConvertToBase(thingp->unsafeUnbarrieredForTracing()));
@@ -427,11 +453,33 @@ js::TraceRoot(JSTracer* trc, T* thingp, const char* name)
 
 template <typename T>
 void
+js::TraceRoot(JSTracer* trc, ReadBarriered<T>* thingp, const char* name)
+{
+    TraceRoot(trc, thingp->unsafeGet(), name);
+}
+
+template <typename T>
+void
 js::TraceNullableRoot(JSTracer* trc, T* thingp, const char* name)
 {
     AssertRootMarkingPhase(trc);
     if (InternalGCMethods<T>::isMarkableTaggedPointer(*thingp))
         DispatchToTracer(trc, ConvertToBase(thingp), name);
+}
+
+template <typename T>
+void
+js::TraceNullableRoot(JSTracer* trc, ReadBarriered<T>* thingp, const char* name)
+{
+    TraceNullableRoot(trc, thingp->unsafeGet(), name);
+}
+
+template <typename T>
+JS_PUBLIC_API(void)
+JS::UnsafeTraceRoot(JSTracer* trc, T* thingp, const char* name)
+{
+    MOZ_ASSERT(thingp);
+    js::TraceNullableRoot(trc, thingp, name);
 }
 
 template <typename T>
@@ -465,11 +513,21 @@ js::TraceRootRange(JSTracer* trc, size_t len, T* vec, const char* name)
     template void js::TraceManuallyBarrieredEdge<type>(JSTracer*, type*, const char*); \
     template void js::TraceWeakEdge<type>(JSTracer*, WeakRef<type>*, const char*); \
     template void js::TraceRoot<type>(JSTracer*, type*, const char*); \
+    template void js::TraceRoot<type>(JSTracer*, ReadBarriered<type>*, const char*); \
     template void js::TraceNullableRoot<type>(JSTracer*, type*, const char*); \
+    template void js::TraceNullableRoot<type>(JSTracer*, ReadBarriered<type>*, const char*); \
     template void js::TraceRange<type>(JSTracer*, size_t, WriteBarrieredBase<type>*, const char*); \
     template void js::TraceRootRange<type>(JSTracer*, size_t, type*, const char*);
 FOR_EACH_GC_POINTER_TYPE(INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS)
 #undef INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS
+
+#define INSTANTIATE_PUBLIC_TRACE_FUNCTIONS(type) \
+    template JS_PUBLIC_API(void) JS::TraceEdge<type>(JSTracer*, JS::Heap<type>*, const char*); \
+    template JS_PUBLIC_API(void) JS::UnsafeTraceRoot<type>(JSTracer*, type*, const char*); \
+    template JS_PUBLIC_API(void) js::UnsafeTraceManuallyBarrieredEdge<type>(JSTracer*, type*, \
+                                                                            const char*);
+FOR_EACH_PUBLIC_GC_POINTER_TYPE(INSTANTIATE_PUBLIC_TRACE_FUNCTIONS)
+#undef INSTANTIATE_PUBLIC_TRACE_FUNCTIONS
 
 template <typename T>
 void
@@ -1631,6 +1689,7 @@ MarkStack::setBaseCapacity(JSGCMode mode)
 void
 MarkStack::setMaxCapacity(size_t maxCapacity)
 {
+    MOZ_ASSERT(maxCapacity != 0);
     MOZ_ASSERT(isEmpty());
     maxCapacity_ = maxCapacity;
     if (baseCapacity_ > maxCapacity_)
@@ -1648,6 +1707,7 @@ MarkStack::reset()
         return;
     }
 
+    MOZ_ASSERT(baseCapacity_ != 0);
     uintptr_t* newStack = (uintptr_t*)js_realloc(stack_, sizeof(uintptr_t) * baseCapacity_);
     if (!newStack) {
         // If the realloc fails, just keep using the existing stack; it's
@@ -1667,6 +1727,7 @@ MarkStack::enlarge(unsigned count)
 
     size_t tosIndex = position();
 
+    MOZ_ASSERT(newCapacity != 0);
     uintptr_t* newStack = (uintptr_t*)js_realloc(stack_, sizeof(uintptr_t) * newCapacity);
     if (!newStack)
         return false;
@@ -1740,8 +1801,11 @@ GCMarker::stop()
 
     /* Free non-ballast stack memory. */
     stack.reset();
-    for (GCZonesIter zone(runtime()); !zone.done(); zone.next())
-        zone->gcWeakKeys.clear();
+    AutoEnterOOMUnsafeRegion oomUnsafe;
+    for (GCZonesIter zone(runtime()); !zone.done(); zone.next()) {
+        if (!zone->gcWeakKeys.clear())
+            oomUnsafe.crash("clearing weak keys in GCMarker::stop()");
+    }
 }
 
 void
@@ -1796,8 +1860,11 @@ GCMarker::leaveWeakMarkingMode()
 
     // Table is expensive to maintain when not in weak marking mode, so we'll
     // rebuild it upon entry rather than allow it to contain stale data.
-    for (GCZonesIter zone(runtime()); !zone.done(); zone.next())
-        zone->gcWeakKeys.clear();
+    AutoEnterOOMUnsafeRegion oomUnsafe;
+    for (GCZonesIter zone(runtime()); !zone.done(); zone.next()) {
+        if (!zone->gcWeakKeys.clear())
+            oomUnsafe.crash("clearing weak keys in GCMarker::leaveWeakMarkingMode()");
+    }
 }
 
 void
@@ -2185,6 +2252,8 @@ js::TenuringTracer::moveObjectToTenured(JSObject* dst, JSObject* src, AllocKind 
             tenuredSize += UnboxedArrayObject::objectMovedDuringMinorGC(this, dst, src, dstKind);
         } else if (src->is<ArgumentsObject>()) {
             tenuredSize += ArgumentsObject::objectMovedDuringMinorGC(this, dst, src);
+        } else if (JSObjectMovedOp op = dst->getClass()->ext.objectMovedOp) {
+            op(dst, src);
         } else {
             // Objects with JSCLASS_SKIP_NURSERY_FINALIZE need to be handled above
             // to ensure any additional nursery buffers they hold are moved.
@@ -2436,13 +2505,21 @@ IsAboutToBeFinalized(ReadBarrieredBase<T>* thingp)
     return IsAboutToBeFinalizedInternal(ConvertToBase(thingp->unsafeUnbarrieredForTracing()));
 }
 
+template <typename T>
+JS_PUBLIC_API(bool)
+EdgeNeedsSweep(JS::Heap<T>* thingp)
+{
+    return IsAboutToBeFinalizedInternal(ConvertToBase(thingp->unsafeGet()));
+}
+
 // Instantiate a copy of the Tracing templates for each derived type.
 #define INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS(type) \
     template bool IsMarkedUnbarriered<type>(type*); \
     template bool IsMarked<type>(WriteBarrieredBase<type>*); \
     template bool IsAboutToBeFinalizedUnbarriered<type>(type*); \
     template bool IsAboutToBeFinalized<type>(WriteBarrieredBase<type>*); \
-    template bool IsAboutToBeFinalized<type>(ReadBarrieredBase<type>*);
+    template bool IsAboutToBeFinalized<type>(ReadBarrieredBase<type>*); \
+    template JS_PUBLIC_API(bool) EdgeNeedsSweep<type>(JS::Heap<type>*);
 FOR_EACH_GC_POINTER_TYPE(INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS)
 #undef INSTANTIATE_ALL_VALID_TRACE_FUNCTIONS
 
@@ -2492,18 +2569,11 @@ struct UnmarkGrayTracer : public JS::CallbackTracer
      * We set weakMapAction to DoNotTraceWeakMaps because the cycle collector
      * will fix up any color mismatches involving weakmaps when it runs.
      */
-    explicit UnmarkGrayTracer(JSRuntime* rt)
-      : JS::CallbackTracer(rt, DoNotTraceWeakMaps),
-        tracingShape(false),
-        previousShape(nullptr),
-        unmarkedAny(false)
-    {}
-
-    UnmarkGrayTracer(JSTracer* trc, bool tracingShape)
-      : JS::CallbackTracer(trc->runtime(), DoNotTraceWeakMaps),
-        tracingShape(tracingShape),
-        previousShape(nullptr),
-        unmarkedAny(false)
+    explicit UnmarkGrayTracer(JSRuntime *rt, bool tracingShape = false)
+      : JS::CallbackTracer(rt, DoNotTraceWeakMaps)
+      , tracingShape(tracingShape)
+      , previousShape(nullptr)
+      , unmarkedAny(false)
     {}
 
     void onChild(const JS::GCCellPtr& thing) override;
@@ -2589,7 +2659,7 @@ UnmarkGrayTracer::onChild(const JS::GCCellPtr& thing)
     // The parent will later trace |tenured|. This is done to avoid increasing
     // the stack depth during shape tracing. It is safe to do because a shape
     // can only have one child that is a shape.
-    UnmarkGrayTracer childTracer(this, thing.kind() == JS::TraceKind::Shape);
+    UnmarkGrayTracer childTracer(runtime(), thing.kind() == JS::TraceKind::Shape);
 
     if (thing.kind() != JS::TraceKind::Shape) {
         TraceChildren(&childTracer, &tenured, thing.kind());
@@ -2634,6 +2704,8 @@ TypedUnmarkGrayCellRecursively(T* t)
     }
 
     UnmarkGrayTracer trc(rt);
+    gcstats::AutoPhase outerPhase(rt->gc.stats, gcstats::PHASE_BARRIER);
+    gcstats::AutoPhase innerPhase(rt->gc.stats, gcstats::PHASE_UNMARK_GRAY);
     t->traceChildren(&trc);
 
     return unmarkedArg || trc.unmarkedAny;

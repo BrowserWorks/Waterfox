@@ -22,7 +22,7 @@
 
 using mozilla::psm::SyncRunnableBase;
 using mozilla::Atomic;
-using mozilla::unused;
+using mozilla::Unused;
 
 namespace {
 
@@ -122,6 +122,7 @@ SharedSSLState::SharedSSLState()
 , mMutex("SharedSSLState::mMutex")
 , mSocketCreated(false)
 , mOCSPStaplingEnabled(false)
+, mOCSPMustStapleEnabled(false)
 {
   mIOLayerHelpers.Init();
   mClientAuthRemember->Init();

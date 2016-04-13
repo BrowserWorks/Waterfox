@@ -1,3 +1,5 @@
+"use strict";
+
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -17,8 +19,7 @@ var {
 } = ExtensionUtils;
 
 // Similar to WebRequestEventManager but for WebNavigation.
-function WebNavigationEventManager(context, eventName)
-{
+function WebNavigationEventManager(context, eventName) {
   let name = `webNavigation.${eventName}`;
   let register = callback => {
     let listener = data => {
@@ -59,7 +60,7 @@ function WebNavigationEventManager(context, eventName)
 
 WebNavigationEventManager.prototype = Object.create(SingletonEventManager.prototype);
 
-extensions.registerPrivilegedAPI("webNavigation", (extension, context) => {
+extensions.registerSchemaAPI("webNavigation", "webNavigation", (extension, context) => {
   return {
     webNavigation: {
       onBeforeNavigate: new WebNavigationEventManager(context, "onBeforeNavigate").api(),
@@ -68,7 +69,7 @@ extensions.registerPrivilegedAPI("webNavigation", (extension, context) => {
       onCompleted: new WebNavigationEventManager(context, "onCompleted").api(),
       onErrorOccurred: new WebNavigationEventManager(context, "onErrorOccurred").api(),
       onReferenceFragmentUpdated: new WebNavigationEventManager(context, "onReferenceFragmentUpdated").api(),
-      onCreatedNavigationTarget: ignoreEvent(),
+      onCreatedNavigationTarget: ignoreEvent(context, "webNavigation.onCreatedNavigationTarget"),
     },
   };
 });

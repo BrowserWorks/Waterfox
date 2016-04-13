@@ -18,12 +18,11 @@
 #define JS_HAS_UNEVAL           1       /* has uneval() top-level function */
 #define JS_HAS_CONST            1       /* (no longer used) */
 #define JS_HAS_FUN_EXPR_STMT    1       /* (no longer used) */
-#define JS_HAS_NO_SUCH_METHOD   1       /* has o.__noSuchMethod__ handler */
 #define JS_HAS_FOR_EACH_IN      1       /* has for each (lhs in iterable) */
 #define JS_HAS_GENERATORS       1       /* (no longer used) */
 #define JS_HAS_BLOCK_SCOPE      1       /* (no longer used) */
 #define JS_HAS_DESTRUCTURING    2       /* (no longer used) */
-#define JS_HAS_GENERATOR_EXPRS  1       /* has (expr for (lhs in iterable)) */
+#define JS_HAS_GENERATOR_EXPRS  1       /* (no longer used) */
 #define JS_HAS_EXPR_CLOSURES    1       /* has function (formals) listexpr */
 
 /* (no longer used) */
@@ -39,9 +38,6 @@
 #define JS_OLD_GETTER_SETTER_METHODS    1
 
 #ifdef NIGHTLY_BUILD
-
-/* Support for ES6 Classes. */
-#define JS_HAS_CLASSES 1
 
 /* Support for ES7 Exponentiation proposal. */
 #define JS_HAS_EXPONENTIATION 1

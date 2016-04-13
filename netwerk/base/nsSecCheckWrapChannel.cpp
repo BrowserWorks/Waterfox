@@ -6,19 +6,12 @@
 #include "nsContentSecurityManager.h"
 #include "nsSecCheckWrapChannel.h"
 #include "nsIForcePendingChannel.h"
+#include "nsIStreamListener.h"
+#include "mozilla/Logging.h"
 #include "nsCOMPtr.h"
 
-static PRLogModuleInfo*
-GetChannelWrapperLog()
-{
-  static PRLogModuleInfo* gChannelWrapperPRLog;
-  if (!gChannelWrapperPRLog) {
-    gChannelWrapperPRLog = PR_NewLogModule("ChannelWrapper");
-  }
-  return gChannelWrapperPRLog;
-}
-
-#define CHANNELWRAPPERLOG(args) MOZ_LOG(GetChannelWrapperLog(), mozilla::LogLevel::Debug, args)
+static mozilla::LazyLogModule gChannelWrapperLog("ChannelWrapper");
+#define CHANNELWRAPPERLOG(args) MOZ_LOG(gChannelWrapperLog, mozilla::LogLevel::Debug, args)
 
 NS_IMPL_ADDREF(nsSecCheckWrapChannelBase)
 NS_IMPL_RELEASE(nsSecCheckWrapChannelBase)

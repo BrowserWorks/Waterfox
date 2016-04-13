@@ -28,35 +28,21 @@ function test_histogram(histogram_type, name, min, max, bucket_count) {
   var h = Telemetry.newHistogram(name, "never", histogram_type, min, max, bucket_count);
   var r = h.snapshot().ranges;
   var sum = 0;
-  var log_sum = 0;
-  var log_sum_squares = 0;
   for(var i=0;i<r.length;i++) {
     var v = r[i];
     sum += v;
-    if (histogram_type == Telemetry.HISTOGRAM_EXPONENTIAL) {
-      var log_v = Math.log(1+v);
-      log_sum += log_v;
-      log_sum_squares += log_v*log_v;
-    }
     h.add(v);
   }
   var s = h.snapshot();
   // verify properties
   do_check_eq(sum, s.sum);
   if (histogram_type == Telemetry.HISTOGRAM_EXPONENTIAL) {
-    // We do the log with float precision in C++ and double precision in
-    // JS, so there's bound to be tiny discrepancies.  Just check the
-    // integer part.
-    do_check_eq(Math.floor(log_sum), Math.floor(s.log_sum));
-    do_check_eq(Math.floor(log_sum_squares), Math.floor(s.log_sum_squares));
     do_check_false("sum_squares_lo" in s);
     do_check_false("sum_squares_hi" in s);
   } else {
     // Doing the math to verify sum_squares was reflected correctly is
     // tedious in JavaScript.  Just make sure we have something.
     do_check_neq(s.sum_squares_lo + s.sum_squares_hi, 0);
-    do_check_false("log_sum" in s);
-    do_check_false("log_sum_squares" in s);
   }
 
   // there should be exactly one element per bucket
@@ -84,10 +70,7 @@ function test_histogram(histogram_type, name, min, max, bucket_count) {
     do_check_eq(i, 0);
   }
   do_check_eq(s.sum, 0);
-  if (histogram_type == Telemetry.HISTOGRAM_EXPONENTIAL) {
-    do_check_eq(s.log_sum, 0);
-    do_check_eq(s.log_sum_squares, 0);
-  } else {
+  if (histogram_type != Telemetry.HISTOGRAM_EXPONENTIAL) {
     do_check_eq(s.sum_squares_lo, 0);
     do_check_eq(s.sum_squares_hi, 0);
   }
@@ -208,10 +191,7 @@ function compareHistograms(h1, h2) {
   do_check_eq(s1.min, s2.min);
   do_check_eq(s1.max, s2.max);
   do_check_eq(s1.sum, s2.sum);
-  if (s1.histogram_type == Telemetry.HISTOGRAM_EXPONENTIAL) {
-    do_check_eq(s1.log_sum, s2.log_sum);
-    do_check_eq(s1.log_sum_squares, s2.log_sum_squares);
-  } else {
+  if (s1.histogram_type != Telemetry.HISTOGRAM_EXPONENTIAL) {
     do_check_eq(s1.sum_squares_lo, s2.sum_squares_lo);
     do_check_eq(s1.sum_squares_hi, s2.sum_squares_hi);
   }
@@ -420,21 +400,6 @@ function test_histogramRecording() {
                "Histogram value should have incremented by 1 due to recording.");
 }
 
-// Check that histograms that aren't flagged as needing extended stats
-// don't record extended stats.
-function test_extended_stats() {
-  var h = Telemetry.getHistogramById("GRADIENT_DURATION");
-  var s = h.snapshot();
-  do_check_eq(s.sum, 0);
-  do_check_eq(s.log_sum, 0);
-  do_check_eq(s.log_sum_squares, 0);
-  h.add(1);
-  s = h.snapshot();
-  do_check_eq(s.sum, 1);
-  do_check_eq(s.log_sum, 0);
-  do_check_eq(s.log_sum_squares, 0);
-}
-
 // Return an array of numbers from lower up to, excluding, upper
 function numberRange(lower, upper)
 {
@@ -448,7 +413,7 @@ function numberRange(lower, upper)
 function test_keyed_boolean_histogram()
 {
   const KEYED_ID = "test::keyed::boolean";
-  let KEYS = ["key"+(i+1) for (i of numberRange(0, 2))];
+  let KEYS = numberRange(0, 2).map(i => "key" + (i + 1));
   KEYS.push("漢語");
   let histogramBase = {
     "min": 1,
@@ -460,7 +425,7 @@ function test_keyed_boolean_histogram()
     "ranges": [0, 1, 2],
     "counts": [0, 1, 0]
   };
-  let testHistograms = [JSON.parse(JSON.stringify(histogramBase)) for (i of numberRange(0, 3))];
+  let testHistograms = numberRange(0, 3).map(i => JSON.parse(JSON.stringify(histogramBase)));
   let testKeys = [];
   let testSnapShot = {};
 
@@ -500,7 +465,7 @@ function test_keyed_boolean_histogram()
 function test_keyed_count_histogram()
 {
   const KEYED_ID = "test::keyed::count";
-  const KEYS = ["key"+(i+1) for (i of numberRange(0, 5))];
+  const KEYS = numberRange(0, 5).map(i => "key" + (i + 1));
   let histogramBase = {
     "min": 1,
     "max": 2,
@@ -511,7 +476,7 @@ function test_keyed_count_histogram()
     "ranges": [0, 1, 2],
     "counts": [1, 0, 0]
   };
-  let testHistograms = [JSON.parse(JSON.stringify(histogramBase)) for (i of numberRange(0, 5))];
+  let testHistograms = numberRange(0, 5).map(i => JSON.parse(JSON.stringify(histogramBase)));
   let testKeys = [];
   let testSnapShot = {};
 
@@ -636,6 +601,95 @@ function test_keyed_histogram_recording() {
   h.clear();
   h.add(TEST_KEY, 1);
   Assert.equal(h.snapshot(TEST_KEY).sum, 1);
+}
+
+function test_histogram_recording_enabled() {
+  Telemetry.canRecordBase = true;
+  Telemetry.canRecordExtended = true;
+
+  // Check that a "normal" histogram respects recording-enabled on/off
+  var h = Telemetry.getHistogramById("TELEMETRY_TEST_COUNT");
+  var orig = h.snapshot();
+
+  h.add(1);
+  Assert.equal(orig.sum + 1, h.snapshot().sum,
+              "add should record by default.");
+
+  // Check that when recording is disabled - add is ignored
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_COUNT", false);
+  h.add(1);
+  Assert.equal(orig.sum + 1, h.snapshot().sum,
+              "When recording is disabled add should not record.");
+
+  // Check that we're back to normal after recording is enabled
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_COUNT", true);
+  h.add(1);
+  Assert.equal(orig.sum + 2, h.snapshot().sum,
+               "When recording is re-enabled add should record.");
+
+  // Check that a histogram with recording disabled by default behaves correctly
+  h = Telemetry.getHistogramById("TELEMETRY_TEST_COUNT_INIT_NO_RECORD");
+  orig = h.snapshot();
+
+  h.add(1);
+  Assert.equal(orig.sum, h.snapshot().sum,
+               "When recording is disabled by default, add should not record by default.");
+
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_COUNT_INIT_NO_RECORD", true);
+  h.add(1);
+  Assert.equal(orig.sum + 1, h.snapshot().sum,
+               "When recording is enabled add should record.");
+
+  // Restore to disabled
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_COUNT_INIT_NO_RECORD", false);
+  h.add(1);
+  Assert.equal(orig.sum + 1, h.snapshot().sum,
+               "When recording is disabled add should not record.");
+
+}
+
+function test_keyed_histogram_recording_enabled() {
+  Telemetry.canRecordBase = true;
+  Telemetry.canRecordExtended = true;
+
+  // Check RecordingEnabled for keyed histograms which are recording by default
+  const TEST_KEY = "record_foo";
+  h = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_RELEASE_OPTOUT");
+
+  h.clear();
+  h.add(TEST_KEY, 1);
+  Assert.equal(h.snapshot(TEST_KEY).sum, 1,
+    "Keyed histogram add should record by default");
+
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_KEYED_RELEASE_OPTOUT", false);
+  h.add(TEST_KEY, 1);
+  Assert.equal(h.snapshot(TEST_KEY).sum, 1,
+    "Keyed histogram add should not record when recording is disabled");
+
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_KEYED_RELEASE_OPTOUT", true);
+  h.clear();
+  h.add(TEST_KEY, 1);
+  Assert.equal(h.snapshot(TEST_KEY).sum, 1,
+    "Keyed histogram add should record when recording is re-enabled");
+
+  // Check that a histogram with recording disabled by default behaves correctly
+  h = Telemetry.getKeyedHistogramById("TELEMETRY_TEST_KEYED_COUNT_INIT_NO_RECORD");
+  h.clear();
+
+  h.add(TEST_KEY, 1);
+  Assert.equal(h.snapshot(TEST_KEY).sum, 0,
+    "Keyed histogram add should not record by default for histograms which don't record by default");
+
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_KEYED_COUNT_INIT_NO_RECORD", true);
+  h.add(TEST_KEY, 1);
+  Assert.equal(h.snapshot(TEST_KEY).sum, 1,
+    "Keyed histogram add should record when recording is enabled");
+
+  // Restore to disabled
+  Telemetry.setHistogramRecordingEnabled("TELEMETRY_TEST_KEYED_COUNT_INIT_NO_RECORD", false);
+  h.add(TEST_KEY, 1);
+  Assert.equal(h.snapshot(TEST_KEY).sum, 1,
+    "Keyed histogram add should not record when recording is disabled");
 }
 
 function test_keyed_histogram() {
@@ -908,10 +962,11 @@ function run_test()
   test_privateMode();
   test_histogramRecording();
   test_addons();
-  test_extended_stats();
   test_expired_histogram();
   test_keyed_histogram();
   test_datasets();
   test_subsession();
   test_keyed_subsession();
+  test_histogram_recording_enabled();
+  test_keyed_histogram_recording_enabled();
 }

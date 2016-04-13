@@ -836,7 +836,7 @@ nsMenuPopupFrame::InitializePopupWithAnchorAlign(nsIContent* aAnchorContent,
 }
 
 void
-nsMenuPopupFrame::ShowPopup(bool aIsContextMenu, bool aSelectFirstItem)
+nsMenuPopupFrame::ShowPopup(bool aIsContextMenu)
 {
   mIsContextMenu = aIsContextMenu;
 
@@ -1413,10 +1413,15 @@ nsMenuPopupFrame::SetPopupPosition(nsIFrame* aAnchorFrame, bool aIsMove, bool aS
     screenPoint.MoveBy(margin.left + offsetForContextMenu.x,
                        margin.top + offsetForContextMenu.y);
 
-    // screen positioned popups can be flipped vertically but never horizontally
 #ifdef XP_MACOSX
-    hFlip = FlipStyle_Outside;
+    // OSX tooltips follow standard flip rule but other popups flip horizontally not vertically
+    if (mPopupType == ePopupTypeTooltip) {
+        vFlip = FlipStyle_Outside;
+    } else {
+        hFlip = FlipStyle_Outside;
+    }
 #else
+    // Other OS screen positioned popups can be flipped vertically but never horizontally
     vFlip = FlipStyle_Outside;
 #endif // #ifdef XP_MACOSX
   }
@@ -1742,7 +1747,7 @@ void nsMenuPopupFrame::ChangeByPage(bool aIsUp)
       // Only consider menu frames.
       nsMenuFrame* menuFrame = do_QueryFrame(currentMenu);
       if (menuFrame &&
-          nsXULPopupManager::IsValidMenuItem(PresContext(), menuFrame->GetContent(), true)) {
+          nsXULPopupManager::IsValidMenuItem(menuFrame->GetContent(), true)) {
 
         // If the right position was found, break out. Otherwise, look for another item.
         if ((!aIsUp && currentMenu->GetRect().YMost() > targetPosition) ||
@@ -1901,7 +1906,7 @@ nsMenuPopupFrame::FindMenuWithShortcut(nsIDOMKeyEvent* aKeyEvent, bool& doAction
 
   static DOMTimeStamp lastKeyTime = 0;
   DOMTimeStamp keyTime;
-  aKeyEvent->GetTimeStamp(&keyTime);
+  aKeyEvent->AsEvent()->GetTimeStamp(&keyTime);
 
   if (charCode == 0) {
     if (keyCode == nsIDOMKeyEvent::DOM_VK_BACK_SPACE) {

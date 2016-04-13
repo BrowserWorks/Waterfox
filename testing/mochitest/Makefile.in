@@ -20,6 +20,7 @@ libs::
 TEST_HARNESS_BINS := \
   xpcshell$(BIN_SUFFIX) \
   ssltunnel$(BIN_SUFFIX) \
+  fileid$(BIN_SUFFIX) \
   certutil$(BIN_SUFFIX) \
   pk12util$(BIN_SUFFIX) \
   BadCertServer$(BIN_SUFFIX) \
@@ -105,7 +106,7 @@ include $(topsrcdir)/config/android-common.mk
 stage-package-android:
 	$(NSINSTALL) -D $(_DEST_DIR)
 	$(call RELEASE_SIGN_ANDROID_APK,\
-		$(DEPTH)/build/mobile/robocop/robocop-debug-unsigned-unaligned.apk,\
+		$(DEPTH)/mobile/android/tests/browser/robocop/robocop-debug-unsigned-unaligned.apk,\
 		$(_DEST_DIR)/robocop.apk)
 
 stage-package: stage-package-android

@@ -322,7 +322,7 @@ PACErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
   nsString formattedMessage(NS_LITERAL_STRING("PAC Execution Error: "));
   formattedMessage += report->ucmessage;
   formattedMessage += NS_LITERAL_STRING(" [");
-  formattedMessage += report->uclinebuf;
+  formattedMessage.Append(report->linebuf(), report->linebufLength());
   formattedMessage += NS_LITERAL_STRING("]");
   PACLogToConsole(formattedMessage);
 }
@@ -646,8 +646,8 @@ private:
     JSAutoRequest ar(mContext);
 
     JS::CompartmentOptions options;
-    options.setZone(JS::SystemZone)
-           .setVersion(JSVERSION_LATEST);
+    options.creationOptions().setZone(JS::SystemZone);
+    options.behaviors().setVersion(JSVERSION_LATEST);
     mGlobal = JS_NewGlobalObject(mContext, &sGlobalClass, nullptr,
                                  JS::DontFireOnNewGlobalHook, options);
     NS_ENSURE_TRUE(mGlobal, NS_ERROR_OUT_OF_MEMORY);

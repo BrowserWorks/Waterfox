@@ -367,7 +367,7 @@ AndroidMediaReader::ImageBufferCallback::operator()(size_t aWidth, size_t aHeigh
     case MPAPI::RGB565:
       image = mozilla::layers::CreateSharedRGBImage(mImageContainer,
                                                     nsIntSize(aWidth, aHeight),
-                                                    gfxImageFormat::RGB16_565);
+                                                    SurfaceFormat::R5G6B5_UINT16);
       if (!image) {
         NS_WARNING("Could not create rgb image");
         return nullptr;
@@ -387,8 +387,8 @@ uint8_t *
 AndroidMediaReader::ImageBufferCallback::CreateI420Image(size_t aWidth,
                                                          size_t aHeight)
 {
-  mImage = mImageContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
-  PlanarYCbCrImage *yuvImage = static_cast<PlanarYCbCrImage *>(mImage.get());
+  RefPtr<PlanarYCbCrImage> yuvImage = mImageContainer->CreatePlanarYCbCrImage();
+  mImage = yuvImage;
 
   if (!yuvImage) {
     NS_WARNING("Could not create I420 image");

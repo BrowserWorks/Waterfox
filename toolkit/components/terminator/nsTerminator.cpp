@@ -48,13 +48,14 @@
 // following value as a fallback if for some reason the preference is
 // absent.
 #define FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS 60000
+#ifdef XP_WIN32
+#define FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS_WINXP 180000
+#include "mozilla/WindowsVersion.h"
+#endif
 
 // Additional number of milliseconds to wait until we decide to exit
 // forcefully.
 #define ADDITIONAL_WAIT_BEFORE_CRASH_MS 3000
-
-// One second, in ticks.
-#define TICK_DURATION 1000
 
 namespace mozilla {
 
@@ -130,6 +131,7 @@ RunWatchdog(void* arg)
   options = nullptr;
 
   const uint32_t timeToLive = crashAfterTicks;
+  const PRIntervalTime ticksDuration = PR_MillisecondsToInterval(1000);
   while (true) {
     //
     // We do not want to sleep for the entire duration,
@@ -141,7 +143,7 @@ RunWatchdog(void* arg)
     // we have lost at most one second, which is much
     // more reasonable.
     //
-    PR_Sleep(TICK_DURATION);
+    PR_Sleep(ticksDuration);
 
     if (gHeartbeat++ < timeToLive) {
       continue;
@@ -222,8 +224,8 @@ void RunWriter(void* arg)
   tmpFilePath.AppendLiteral(".tmp");
 
   // Cleanup any file leftover from a previous run
-  unused << PR_Delete(tmpFilePath.get());
-  unused << PR_Delete(destinationPath.get());
+  Unused << PR_Delete(tmpFilePath.get());
+  Unused << PR_Delete(destinationPath.get());
 
   while (true) {
     //
@@ -360,9 +362,23 @@ nsTerminator::Start()
 void
 nsTerminator::StartWatchdog()
 {
-  int32_t crashAfterMS =
+  int32_t crashAfterMS;
+#if defined(XP_WIN32)
+  if (IsWin7OrLater()) {
+    crashAfterMS =
+      Preferences::GetInt("toolkit.asyncshutdown.crash_timeout",
+                          FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS);
+  } else {
+    crashAfterMS =
+      Preferences::GetInt("toolkit.asyncshutdown.crash_timeout_winxp",
+                          FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS_WINXP);
+  }
+#else
+  crashAfterMS =
     Preferences::GetInt("toolkit.asyncshutdown.crash_timeout",
                         FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS);
+#endif
+
   // Ignore negative values
   if (crashAfterMS <= 0) {
     crashAfterMS = FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS;
@@ -378,7 +394,8 @@ nsTerminator::StartWatchdog()
   }
 
   UniquePtr<Options> options(new Options());
-  options->crashAfterTicks = crashAfterMS / TICK_DURATION;
+  const PRIntervalTime ticksDuration = PR_MillisecondsToInterval(1000);
+  options->crashAfterTicks = crashAfterMS / ticksDuration;
 
   DebugOnly<PRThread*> watchdogThread = CreateSystemThread(RunWatchdog,
                                                 options.release());
@@ -530,7 +547,7 @@ nsTerminator::UpdateCrashReport(const char* aTopic)
   // In case of crash, we wish to know where in shutdown we are
   nsAutoCString report(aTopic);
 
-  unused << CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("ShutdownProgress"),
+  Unused << CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("ShutdownProgress"),
                                                report);
 #endif // defined(MOZ_CRASH_REPORTER)
 }

@@ -11,6 +11,7 @@
 
 #include "mozilla/MemoryReporting.h"
 
+#include "js/GCHashTable.h"
 
 // Maps...
 
@@ -26,8 +27,10 @@
 
 class JSObject2WrappedJSMap
 {
-    typedef js::HashMap<JSObject*, nsXPCWrappedJS*, js::PointerHasher<JSObject*, 3>,
-                        js::SystemAllocPolicy> Map;
+    using Map = js::HashMap<JS::Heap<JSObject*>,
+                            nsXPCWrappedJS*,
+                            js::MovableCellHasher<JS::Heap<JSObject*>>,
+                            js::SystemAllocPolicy>;
 
 public:
     static JSObject2WrappedJSMap* newMap(int length) {
@@ -47,6 +50,16 @@ public:
         return p ? p->value() : nullptr;
     }
 
+#ifdef DEBUG
+    inline bool HasWrapper(nsXPCWrappedJS* wrapper) {
+        for (auto r = mTable.all(); !r.empty(); r.popFront()) {
+            if (r.front().value() == wrapper)
+                return true;
+        }
+        return false;
+    }
+#endif
+
     inline nsXPCWrappedJS* Add(JSContext* cx, nsXPCWrappedJS* wrapper) {
         NS_PRECONDITION(wrapper,"bad param");
         JSObject* obj = wrapper->GetJSObjectPreserveColor();
@@ -55,7 +68,6 @@ public:
             return p->value();
         if (!mTable.add(p, obj, wrapper))
             return nullptr;
-        JS_StoreObjectPostBarrierCallback(cx, KeyMarkCallback, obj, this);
         return wrapper;
     }
 
@@ -83,17 +95,6 @@ public:
 
 private:
     JSObject2WrappedJSMap() {}
-
-    /*
-     * This function is called during minor GCs for each key in the HashMap that
-     * has been moved.
-     */
-    static void KeyMarkCallback(JSTracer* trc, JSObject* key, void* data) {
-        JSObject2WrappedJSMap* self = static_cast<JSObject2WrappedJSMap*>(data);
-        JSObject* prior = key;
-        JS_CallUnbarrieredObjectTracer(trc, &key, "XPCJSRuntime::mWrappedJSMap key");
-        self->mTable.rekeyIfMoved(prior, key);
-    }
 
     Map mTable;
 };
@@ -583,8 +584,10 @@ private:
 
 class JSObject2JSObjectMap
 {
-    typedef js::HashMap<JSObject*, JS::Heap<JSObject*>, js::PointerHasher<JSObject*, 3>,
-                        js::SystemAllocPolicy> Map;
+    using Map = js::GCHashMap<JS::Heap<JSObject*>,
+                              JS::Heap<JSObject*>,
+                              js::MovableCellHasher<JS::Heap<JSObject*>>,
+                              js::SystemAllocPolicy>;
 
 public:
     static JSObject2JSObjectMap* newMap(int length) {
@@ -614,7 +617,6 @@ public:
         if (!mTable.add(p, key, value))
             return nullptr;
         MOZ_ASSERT(xpc::CompartmentPrivate::Get(key)->scope->mWaiverWrapperMap == this);
-        JS_StoreObjectPostBarrierCallback(cx, KeyMarkCallback, key, this);
         return value;
     }
 
@@ -626,40 +628,11 @@ public:
     inline uint32_t Count() { return mTable.count(); }
 
     void Sweep() {
-        for (Map::Enum e(mTable); !e.empty(); e.popFront()) {
-            JSObject* key = e.front().key();
-            JS::Heap<JSObject*>* valuep = &e.front().value();
-            JS_UpdateWeakPointerAfterGCUnbarriered(&key);
-            JS_UpdateWeakPointerAfterGC(valuep);
-            if (!key || !*valuep)
-                e.removeFront();
-            else if (key != e.front().key())
-                e.rekeyFront(key);
-        }
+        mTable.sweep();
     }
 
 private:
     JSObject2JSObjectMap() {}
-
-    /*
-     * This function is called during minor GCs for each key in the HashMap that
-     * has been moved.
-     */
-    static void KeyMarkCallback(JSTracer* trc, JSObject* key, void* data) {
-        /*
-         * To stop the barriers on the values of mTable firing while we are
-         * marking the store buffer, we cast the table to one that is
-         * binary-equivatlent but without the barriers, and update that.
-         */
-        typedef js::HashMap<JSObject*, JSObject*, js::PointerHasher<JSObject*, 3>,
-                            js::SystemAllocPolicy> UnbarrieredMap;
-        JSObject2JSObjectMap* self = static_cast<JSObject2JSObjectMap*>(data);
-        UnbarrieredMap& table = reinterpret_cast<UnbarrieredMap&>(self->mTable);
-
-        JSObject* prior = key;
-        JS_CallUnbarrieredObjectTracer(trc, &key, "XPCWrappedNativeScope::mWaiverWrapperMap key");
-        table.rekeyIfMoved(prior, key);
-    }
 
     Map mTable;
 };

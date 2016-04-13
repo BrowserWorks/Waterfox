@@ -14,7 +14,7 @@ const TEST_URI = "data:text/html;charset=utf-8,Web Console test for " +
 
 var hud;
 
-var test = asyncTest(function* () {
+add_task(function* () {
   yield loadTab(TEST_URI);
 
   hud = yield openConsole();
@@ -24,7 +24,7 @@ var test = asyncTest(function* () {
   let outputNode = hud.outputNode;
 
   Services.prefs.setIntPref("devtools.hud.loglimit.console", 140);
-  let scrollBoxElement = outputNode.parentNode;
+  let scrollBoxElement = hud.ui.outputWrapper;
 
   for (let i = 0; i < 150; i++) {
     content.console.log("test message " + i);

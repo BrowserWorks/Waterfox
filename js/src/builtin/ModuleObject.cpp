@@ -16,10 +16,7 @@
 using namespace js;
 using namespace js::frontend;
 
-typedef JS::Rooted<ImportEntryObject*> RootedImportEntry;
-typedef JS::Rooted<ExportEntryObject*> RootedExportEntry;
-
-template<typename T, Value ValueGetter(T* obj)>
+template<typename T, Value ValueGetter(const T* obj)>
 static bool
 ModuleValueGetterImpl(JSContext* cx, const CallArgs& args)
 {
@@ -27,7 +24,7 @@ ModuleValueGetterImpl(JSContext* cx, const CallArgs& args)
     return true;
 }
 
-template<typename T, Value ValueGetter(T* obj)>
+template<typename T, Value ValueGetter(const T* obj)>
 static bool
 ModuleValueGetter(JSContext* cx, unsigned argc, Value* vp)
 {
@@ -37,7 +34,7 @@ ModuleValueGetter(JSContext* cx, unsigned argc, Value* vp)
 
 #define DEFINE_GETTER_FUNCTIONS(cls, name, slot)                              \
     static Value                                                              \
-    cls##_##name##Value(cls* obj) {                                           \
+    cls##_##name##Value(const cls* obj) {                                     \
         return obj->getFixedSlot(cls::slot);                                  \
     }                                                                         \
                                                                               \
@@ -49,7 +46,7 @@ ModuleValueGetter(JSContext* cx, unsigned argc, Value* vp)
 
 #define DEFINE_ATOM_ACCESSOR_METHOD(cls, name)                                \
     JSAtom*                                                                   \
-    cls::name()                                                               \
+    cls::name() const                                                         \
     {                                                                         \
         Value value = cls##_##name##Value(this);                              \
         return &value.toString()->asAtom();                                   \
@@ -57,7 +54,7 @@ ModuleValueGetter(JSContext* cx, unsigned argc, Value* vp)
 
 #define DEFINE_ATOM_OR_NULL_ACCESSOR_METHOD(cls, name)                        \
     JSAtom*                                                                   \
-    cls::name()                                                               \
+    cls::name() const                                                         \
     {                                                                         \
         Value value = cls##_##name##Value(this);                              \
         if (value.isNull())                                                   \
@@ -121,7 +118,7 @@ ImportEntryObject::create(JSContext* cx,
     if (!obj)
         return nullptr;
 
-    RootedImportEntry self(cx, &obj->as<ImportEntryObject>());
+    RootedImportEntryObject self(cx, &obj->as<ImportEntryObject>());
     self->initReservedSlot(ModuleRequestSlot, StringValue(moduleRequest));
     self->initReservedSlot(ImportNameSlot, StringValue(importName));
     self->initReservedSlot(LocalNameSlot, StringValue(localName));
@@ -194,7 +191,7 @@ ExportEntryObject::create(JSContext* cx,
     if (!obj)
         return nullptr;
 
-    RootedExportEntry self(cx, &obj->as<ExportEntryObject>());
+    RootedExportEntryObject self(cx, &obj->as<ExportEntryObject>());
     self->initReservedSlot(ExportNameSlot, StringOrNullValue(maybeExportName));
     self->initReservedSlot(ModuleRequestSlot, StringOrNullValue(maybeModuleRequest));
     self->initReservedSlot(ImportNameSlot, StringOrNullValue(maybeImportName));
@@ -203,11 +200,65 @@ ExportEntryObject::create(JSContext* cx,
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// IndirectBinding
+// IndirectBindingMap
 
-IndirectBinding::IndirectBinding(Handle<ModuleEnvironmentObject*> environment, HandleId localName)
-  : environment(environment), localName(localName)
+IndirectBindingMap::Binding::Binding(ModuleEnvironmentObject* environment, Shape* shape)
+  : environment(environment), shape(shape)
 {}
+
+IndirectBindingMap::IndirectBindingMap(Zone* zone)
+  : map_(ZoneAllocPolicy(zone))
+{
+}
+
+bool
+IndirectBindingMap::init()
+{
+    return map_.init();
+}
+
+void
+IndirectBindingMap::trace(JSTracer* trc)
+{
+    for (Map::Enum e(map_); !e.empty(); e.popFront()) {
+        Binding& b = e.front().value();
+        TraceEdge(trc, &b.environment, "module bindings environment");
+        TraceEdge(trc, &b.shape, "module bindings shape");
+        jsid bindingName = e.front().key();
+        TraceManuallyBarrieredEdge(trc, &bindingName, "module bindings binding name");
+        MOZ_ASSERT(bindingName == e.front().key());
+    }
+}
+
+bool
+IndirectBindingMap::putNew(JSContext* cx, HandleId name,
+                           HandleModuleEnvironmentObject environment, HandleId localName)
+{
+    RootedShape shape(cx, environment->lookup(cx, localName));
+    MOZ_ASSERT(shape);
+    if (!map_.putNew(name, Binding(environment, shape))) {
+        ReportOutOfMemory(cx);
+        return false;
+    }
+
+    return true;
+}
+
+bool
+IndirectBindingMap::lookup(jsid name, ModuleEnvironmentObject** envOut, Shape** shapeOut) const
+{
+    auto ptr = map_.lookup(name);
+    if (!ptr)
+        return false;
+
+    const Binding& binding = ptr->value();
+    MOZ_ASSERT(binding.environment);
+    MOZ_ASSERT(!binding.environment->inDictionaryMode());
+    MOZ_ASSERT(binding.environment->containsPure(binding.shape));
+    *envOut = binding.environment;
+    *shapeOut = binding.shape;
+    return true;
+}
 
 ///////////////////////////////////////////////////////////////////////////
 // ModuleNamespaceObject
@@ -226,6 +277,7 @@ ModuleNamespaceObject::create(JSContext* cx, HandleModuleObject module)
     RootedValue priv(cx, ObjectValue(*module));
     ProxyOptions options;
     options.setLazyProto(true);
+    options.setSingleton(true);
     RootedObject object(cx, NewProxyObject(cx, &proxyHandler, priv, nullptr, options));
     if (!object)
         return nullptr;
@@ -273,8 +325,7 @@ ModuleNamespaceObject::addBinding(JSContext* cx, HandleAtom exportedName,
     RootedModuleEnvironmentObject environment(cx, &targetModule->initialEnvironment());
     RootedId exportedNameId(cx, AtomToId(exportedName));
     RootedId localNameId(cx, AtomToId(localName));
-    IndirectBinding binding(environment, localNameId);
-    return bindings->putNew(exportedNameId, binding);
+    return bindings->putNew(cx, exportedNameId, environment, localNameId);
 }
 
 const char ModuleNamespaceObject::ProxyHandler::family = 0;
@@ -350,19 +401,12 @@ ModuleNamespaceObject::ProxyHandler::getOwnPropertyDescriptor(JSContext* cx, Han
     }
 
     const IndirectBindingMap& bindings = ns->bindings();
-    auto ptr = bindings.lookup(id);
-    if (!ptr)
+    ModuleEnvironmentObject* env;
+    Shape* shape;
+    if (!bindings.lookup(id, &env, &shape))
         return true;
 
-    const IndirectBinding& binding = ptr->value();
-    RootedModuleEnvironmentObject env(cx, binding.environment);
-    MOZ_ASSERT(env->module().environment());
-
-    RootedId localName(cx, binding.localName);
-    RootedValue value(cx);
-    if (!GetProperty(cx, env, env, localName, &value))
-        return false;
-
+    RootedValue value(cx, env->getSlot(shape->slot()));
     if (value.isMagic(JS_UNINITIALIZED_LEXICAL)) {
         ReportRuntimeLexicalError(cx, JSMSG_UNINITIALIZED_LEXICAL, id);
         return false;
@@ -415,19 +459,12 @@ ModuleNamespaceObject::ProxyHandler::get(JSContext* cx, HandleObject proxy, Hand
         return false;
     }
 
-    auto ptr = ns->bindings().lookup(id);
-    if (!ptr)
+    ModuleEnvironmentObject* env;
+    Shape* shape;
+    if (!ns->bindings().lookup(id, &env, &shape))
         return false;
 
-    const IndirectBinding& binding = ptr->value();
-    RootedModuleEnvironmentObject env(cx, binding.environment);
-    MOZ_ASSERT(env->module().environment());
-
-    RootedId localName(cx, binding.localName);
-    RootedValue value(cx);
-    if (!GetProperty(cx, env, env, localName, &value))
-        return false;
-
+    RootedValue value(cx, env->getSlot(shape->slot()));
     if (value.isMagic(JS_UNINITIALIZED_LEXICAL)) {
         ReportRuntimeLexicalError(cx, JSMSG_UNINITIALIZED_LEXICAL, id);
         return false;
@@ -545,7 +582,8 @@ ModuleObject::create(ExclusiveContext* cx, HandleObject enclosingStaticScope)
     RootedModuleObject self(cx, &obj->as<ModuleObject>());
     self->initReservedSlot(StaticScopeSlot, ObjectOrNullValue(enclosingStaticScope));
 
-    IndirectBindingMap* bindings = cx->new_<IndirectBindingMap>();
+    Zone* zone = cx->zone();
+    IndirectBindingMap* bindings = zone->new_<IndirectBindingMap>(zone);
     if (!bindings || !bindings->init()) {
         ReportOutOfMemory(cx);
         return nullptr;
@@ -553,9 +591,11 @@ ModuleObject::create(ExclusiveContext* cx, HandleObject enclosingStaticScope)
 
     self->initReservedSlot(ImportBindingsSlot, PrivateValue(bindings));
 
-    FunctionDeclarationVector* funDecls = cx->new_<FunctionDeclarationVector>(cx);
-    if (!funDecls)
+    FunctionDeclarationVector* funDecls = zone->new_<FunctionDeclarationVector>(zone);
+    if (!funDecls) {
+        ReportOutOfMemory(cx);
         return nullptr;
+    }
 
     self->initReservedSlot(FunctionDeclarationsSlot, PrivateValue(funDecls));
     return self;
@@ -565,7 +605,7 @@ ModuleObject::create(ExclusiveContext* cx, HandleObject enclosingStaticScope)
 ModuleObject::finalize(js::FreeOp* fop, JSObject* obj)
 {
     ModuleObject* self = &obj->as<ModuleObject>();
-    if (!self->getReservedSlot(ImportBindingsSlot).isUndefined())
+    if (self->hasImportBindings())
         fop->delete_(&self->importBindings());
     if (IndirectBindingMap* bindings = self->namespaceBindings())
         fop->delete_(bindings);
@@ -581,6 +621,13 @@ ModuleObject::environment() const
         return nullptr;
 
     return &value.toObject().as<ModuleEnvironmentObject>();
+}
+
+bool
+ModuleObject::hasImportBindings() const
+{
+    // Import bindings may not be present if we hit OOM in initialization.
+    return !getReservedSlot(ImportBindingsSlot).isUndefined();
 }
 
 IndirectBindingMap&
@@ -687,19 +734,6 @@ ModuleObject::enclosingStaticScope() const
     return getReservedSlot(StaticScopeSlot).toObjectOrNull();
 }
 
-static void
-TraceBindings(JSTracer* trc, IndirectBindingMap& bindings)
-{
-    for (IndirectBindingMap::Enum e(bindings); !e.empty(); e.popFront()) {
-        IndirectBinding& b = e.front().value();
-        TraceEdge(trc, &b.environment, "module bindings environment");
-        TraceEdge(trc, &b.localName, "module bindings local name");
-        jsid bindingName = e.front().key();
-        TraceManuallyBarrieredEdge(trc, &bindingName, "module bindings binding name");
-        MOZ_ASSERT(bindingName == e.front().key());
-    }
-}
-
 /* static */ void
 ModuleObject::trace(JSTracer* trc, JSObject* obj)
 {
@@ -710,9 +744,10 @@ ModuleObject::trace(JSTracer* trc, JSObject* obj)
         module.setReservedSlot(ScriptSlot, PrivateValue(script));
     }
 
-    TraceBindings(trc, module.importBindings());
+    if (module.hasImportBindings())
+        module.importBindings().trace(trc);
     if (IndirectBindingMap* bindings = module.namespaceBindings())
-        TraceBindings(trc, *bindings);
+        bindings->trace(trc);
 
     if (FunctionDeclarationVector* funDecls = module.functionDeclarations())
         funDecls->trace(trc);
@@ -732,7 +767,12 @@ bool
 ModuleObject::noteFunctionDeclaration(ExclusiveContext* cx, HandleAtom name, HandleFunction fun)
 {
     FunctionDeclarationVector* funDecls = functionDeclarations();
-    return funDecls->emplaceBack(name, fun);
+    if (!funDecls->emplaceBack(name, fun)) {
+        ReportOutOfMemory(cx);
+        return false;
+    }
+
+    return true;
 }
 
 /* static */ bool
@@ -776,7 +816,10 @@ ModuleObject::evaluate(JSContext* cx, HandleModuleObject self, MutableHandleValu
 {
     RootedScript script(cx, self->script());
     RootedModuleEnvironmentObject scope(cx, self->environment());
-    MOZ_ASSERT(scope);
+    if (!scope) {
+        JS_ReportError(cx, "Module declarations have not yet been instantiated");
+        return false;
+    }
 
     return Execute(cx, script, *scope, rval.address());
 }
@@ -790,7 +833,8 @@ ModuleObject::createNamespace(JSContext* cx, HandleModuleObject self, HandleArra
     if (!ns)
         return nullptr;
 
-    IndirectBindingMap* bindings = cx->new_<IndirectBindingMap>();
+    Zone* zone = cx->zone();
+    IndirectBindingMap* bindings = zone->new_<IndirectBindingMap>(zone);
     if (!bindings || !bindings->init()) {
         ReportOutOfMemory(cx);
         return nullptr;
@@ -859,8 +903,9 @@ js::InitModuleClasses(JSContext* cx, HandleObject obj)
 ///////////////////////////////////////////////////////////////////////////
 // ModuleBuilder
 
-ModuleBuilder::ModuleBuilder(JSContext* cx)
+ModuleBuilder::ModuleBuilder(JSContext* cx, HandleModuleObject module)
   : cx_(cx),
+    module_(cx, module),
     requestedModules_(cx, AtomVector(cx)),
     importedBoundNames_(cx, AtomVector(cx)),
     importEntries_(cx, ImportEntryVector(cx)),
@@ -871,41 +916,12 @@ ModuleBuilder::ModuleBuilder(JSContext* cx)
 {}
 
 bool
-ModuleBuilder::buildAndInit(frontend::ParseNode* moduleNode, HandleModuleObject module)
+ModuleBuilder::buildTables()
 {
-    MOZ_ASSERT(moduleNode->isKind(PNK_MODULE));
-
-    ParseNode* stmtsNode = moduleNode->pn_expr;
-    MOZ_ASSERT(stmtsNode->isKind(PNK_STATEMENTLIST));
-    MOZ_ASSERT(stmtsNode->isArity(PN_LIST));
-
-    for (ParseNode* pn = stmtsNode->pn_head; pn; pn = pn->pn_next) {
-        switch (pn->getKind()) {
-          case PNK_IMPORT:
-            if (!processImport(pn))
-                return false;
-            break;
-
-          case PNK_EXPORT:
-          case PNK_EXPORT_DEFAULT:
-            if (!processExport(pn))
-                return false;
-            break;
-
-          case PNK_EXPORT_FROM:
-            if (!processExportFrom(pn))
-                return false;
-            break;
-
-          default:
-            break;
-        }
-    }
-
     for (const auto& e : exportEntries_) {
-        RootedExportEntry exp(cx_, e);
+        RootedExportEntryObject exp(cx_, e);
         if (!exp->moduleRequest()) {
-            RootedImportEntry importEntry(cx_, importEntryFor(exp->localName()));
+            RootedImportEntryObject importEntry(cx_, importEntryFor(exp->localName()));
             if (!importEntry) {
                 if (!localExportEntries_.append(exp))
                     return false;
@@ -917,7 +933,7 @@ ModuleBuilder::buildAndInit(frontend::ParseNode* moduleNode, HandleModuleObject 
                     RootedAtom exportName(cx_, exp->exportName());
                     RootedAtom moduleRequest(cx_, importEntry->moduleRequest());
                     RootedAtom importName(cx_, importEntry->importName());
-                    RootedExportEntry exportEntry(cx_);
+                    RootedExportEntryObject exportEntry(cx_);
                     exportEntry = ExportEntryObject::create(cx_,
                                                             exportName,
                                                             moduleRequest,
@@ -936,6 +952,12 @@ ModuleBuilder::buildAndInit(frontend::ParseNode* moduleNode, HandleModuleObject 
         }
     }
 
+    return true;
+}
+
+bool
+ModuleBuilder::initModule()
+{
     RootedArrayObject requestedModules(cx_, createArray<JSAtom*>(requestedModules_));
     if (!requestedModules)
         return false;
@@ -957,7 +979,7 @@ ModuleBuilder::buildAndInit(frontend::ParseNode* moduleNode, HandleModuleObject 
     if (!starExportEntries)
         return false;
 
-    module->initImportExportData(requestedModules,
+    module_->initImportExportData(requestedModules,
                                  importEntries,
                                  localExportEntries,
                                  indirectExportEntries,
@@ -969,6 +991,7 @@ ModuleBuilder::buildAndInit(frontend::ParseNode* moduleNode, HandleModuleObject 
 bool
 ModuleBuilder::processImport(frontend::ParseNode* pn)
 {
+    MOZ_ASSERT(pn->isKind(PNK_IMPORT));
     MOZ_ASSERT(pn->isArity(PN_BINARY));
     MOZ_ASSERT(pn->pn_left->isKind(PNK_IMPORT_SPEC_LIST));
     MOZ_ASSERT(pn->pn_right->isKind(PNK_STRING));
@@ -988,7 +1011,7 @@ ModuleBuilder::processImport(frontend::ParseNode* pn)
         if (!importedBoundNames_.append(localName))
             return false;
 
-        RootedImportEntry importEntry(cx_);
+        RootedImportEntryObject importEntry(cx_);
         importEntry = ImportEntryObject::create(cx_, module, importName, localName);
         if (!importEntry || !importEntries_.append(importEntry))
             return false;
@@ -1000,6 +1023,7 @@ ModuleBuilder::processImport(frontend::ParseNode* pn)
 bool
 ModuleBuilder::processExport(frontend::ParseNode* pn)
 {
+    MOZ_ASSERT(pn->isKind(PNK_EXPORT) || pn->isKind(PNK_EXPORT_DEFAULT));
     MOZ_ASSERT(pn->getArity() == pn->isKind(PNK_EXPORT) ? PN_UNARY : PN_BINARY);
 
     bool isDefault = pn->getKind() == PNK_EXPORT_DEFAULT;
@@ -1012,7 +1036,7 @@ ModuleBuilder::processExport(frontend::ParseNode* pn)
             MOZ_ASSERT(spec->isKind(PNK_EXPORT_SPEC));
             RootedAtom localName(cx_, spec->pn_left->pn_atom);
             RootedAtom exportName(cx_, spec->pn_right->pn_atom);
-            if (!appendLocalExportEntry(exportName, localName))
+            if (!appendExportEntry(exportName, localName))
                 return false;
         }
         break;
@@ -1021,7 +1045,7 @@ ModuleBuilder::processExport(frontend::ParseNode* pn)
           RootedFunction func(cx_, kid->pn_funbox->function());
           RootedAtom localName(cx_, func->atom());
           RootedAtom exportName(cx_, isDefault ? cx_->names().default_ : localName.get());
-          if (!appendLocalExportEntry(exportName, localName))
+          if (!appendExportEntry(exportName, localName))
               return false;
           break;
       }
@@ -1031,7 +1055,7 @@ ModuleBuilder::processExport(frontend::ParseNode* pn)
           MOZ_ASSERT(cls.names());
           RootedAtom localName(cx_, cls.names()->innerBinding()->pn_atom);
           RootedAtom exportName(cx_, isDefault ? cx_->names().default_ : localName.get());
-          if (!appendLocalExportEntry(exportName, localName))
+          if (!appendExportEntry(exportName, localName))
               return false;
           break;
       }
@@ -1046,7 +1070,7 @@ ModuleBuilder::processExport(frontend::ParseNode* pn)
               MOZ_ASSERT(var->isKind(PNK_NAME));
               RootedAtom localName(cx_, var->pn_atom);
               RootedAtom exportName(cx_, isDefault ? cx_->names().default_ : localName.get());
-              if (!appendLocalExportEntry(exportName, localName))
+              if (!appendExportEntry(exportName, localName))
                   return false;
           }
           break;
@@ -1056,7 +1080,7 @@ ModuleBuilder::processExport(frontend::ParseNode* pn)
         MOZ_ASSERT(isDefault);
         RootedAtom localName(cx_, cx_->names().starDefaultStar);
         RootedAtom exportName(cx_, cx_->names().default_);
-        if (!appendLocalExportEntry(exportName, localName))
+        if (!appendExportEntry(exportName, localName))
             return false;
         break;
     }
@@ -1066,6 +1090,7 @@ ModuleBuilder::processExport(frontend::ParseNode* pn)
 bool
 ModuleBuilder::processExportFrom(frontend::ParseNode* pn)
 {
+    MOZ_ASSERT(pn->isKind(PNK_EXPORT_FROM));
     MOZ_ASSERT(pn->isArity(PN_BINARY));
     MOZ_ASSERT(pn->pn_left->isKind(PNK_EXPORT_SPEC_LIST));
     MOZ_ASSERT(pn->pn_right->isKind(PNK_STRING));
@@ -1078,12 +1103,12 @@ ModuleBuilder::processExportFrom(frontend::ParseNode* pn)
         if (spec->isKind(PNK_EXPORT_SPEC)) {
             RootedAtom bindingName(cx_, spec->pn_left->pn_atom);
             RootedAtom exportName(cx_, spec->pn_right->pn_atom);
-            if (!appendIndirectExportEntry(exportName, module, bindingName))
+            if (!appendExportFromEntry(exportName, module, bindingName))
                 return false;
         } else {
             MOZ_ASSERT(spec->isKind(PNK_EXPORT_BATCH_SPEC));
             RootedAtom importName(cx_, cx_->names().star);
-            if (!appendIndirectExportEntry(nullptr, module, importName))
+            if (!appendExportFromEntry(nullptr, module, importName))
                 return false;
         }
     }
@@ -1092,7 +1117,7 @@ ModuleBuilder::processExportFrom(frontend::ParseNode* pn)
 }
 
 ImportEntryObject*
-ModuleBuilder::importEntryFor(JSAtom* localName)
+ModuleBuilder::importEntryFor(JSAtom* localName) const
 {
     for (auto import : importEntries_) {
         if (import->localName() == localName)
@@ -1102,7 +1127,17 @@ ModuleBuilder::importEntryFor(JSAtom* localName)
 }
 
 bool
-ModuleBuilder::appendLocalExportEntry(HandleAtom exportName, HandleAtom localName)
+ModuleBuilder::hasExportedName(JSAtom* name) const
+{
+    for (auto entry : exportEntries_) {
+        if (entry->exportName() == name)
+            return true;
+    }
+    return false;
+}
+
+bool
+ModuleBuilder::appendExportEntry(HandleAtom exportName, HandleAtom localName)
 {
     Rooted<ExportEntryObject*> exportEntry(cx_);
     exportEntry = ExportEntryObject::create(cx_, exportName, nullptr, nullptr, localName);
@@ -1110,8 +1145,8 @@ ModuleBuilder::appendLocalExportEntry(HandleAtom exportName, HandleAtom localNam
 }
 
 bool
-ModuleBuilder::appendIndirectExportEntry(HandleAtom exportName, HandleAtom moduleRequest,
-                                         HandleAtom importName)
+ModuleBuilder::appendExportFromEntry(HandleAtom exportName, HandleAtom moduleRequest,
+                                     HandleAtom importName)
 {
     Rooted<ExportEntryObject*> exportEntry(cx_);
     exportEntry = ExportEntryObject::create(cx_, exportName, moduleRequest, importName, nullptr);
@@ -1141,7 +1176,7 @@ MakeElementValue(JSObject *object)
 }
 
 template <typename T>
-ArrayObject* ModuleBuilder::createArray(const TraceableVector<T>& vector)
+ArrayObject* ModuleBuilder::createArray(const GCVector<T>& vector)
 {
     uint32_t length = vector.length();
     RootedArrayObject array(cx_, NewDenseFullyAllocatedArray(cx_, length));

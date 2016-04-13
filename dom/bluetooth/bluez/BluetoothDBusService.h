@@ -59,11 +59,12 @@ public:
     uint16_t aServiceUuid, BluetoothReplyRunnable* aRunnable) override;
 
   virtual nsresult
-  GetPairedDevicePropertiesInternal(const nsTArray<nsString>& aDeviceAddresses,
-                                    BluetoothReplyRunnable* aRunnable) override;
+  GetPairedDevicePropertiesInternal(
+    const nsTArray<BluetoothAddress>& aDeviceAddresses,
+    BluetoothReplyRunnable* aRunnable) override;
 
   virtual nsresult
-  FetchUuidsInternal(const nsAString& aDeviceAddress,
+  FetchUuidsInternal(const BluetoothAddress& aDeviceAddress,
                      BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
@@ -78,74 +79,76 @@ public:
               BluetoothReplyRunnable* aRunnable) override;
 
   virtual nsresult
-  GetServiceChannel(const nsAString& aDeviceAddress,
-                    const nsAString& aServiceUuid,
+  GetServiceChannel(const BluetoothAddress& aDeviceAddress,
+                    const BluetoothUuid& aServiceUuid,
                     BluetoothProfileManagerBase* aManager) override;
 
   virtual bool
-  UpdateSdpRecords(const nsAString& aDeviceAddress,
+  UpdateSdpRecords(const BluetoothAddress& aDeviceAddress,
                    BluetoothProfileManagerBase* aManager) override;
 
   virtual nsresult
-  CreatePairedDeviceInternal(const nsAString& aDeviceAddress,
+  CreatePairedDeviceInternal(const BluetoothAddress& aDeviceAddress,
                              int aTimeout,
                              BluetoothReplyRunnable* aRunnable) override;
 
   virtual nsresult
-  RemoveDeviceInternal(const nsAString& aDeviceObjectPath,
+  RemoveDeviceInternal(const BluetoothAddress& aDeviceAddress,
                        BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  PinReplyInternal(const nsAString& aDeviceAddress,
+  PinReplyInternal(const BluetoothAddress& aDeviceAddress,
                    bool aAccept,
-                   const nsAString& aPinCode,
+                   const BluetoothPinCode& aPinCode,
                    BluetoothReplyRunnable* aRunnable);
 
   virtual void
-  SspReplyInternal(const nsAString& aDeviceAddress,
+  SspReplyInternal(const BluetoothAddress& aDeviceAddress,
                    BluetoothSspVariant aVariant,
                    bool aAccept,
                    BluetoothReplyRunnable* aRunnable);
 
   virtual void
-  SetPinCodeInternal(const nsAString& aDeviceAddress, const nsAString& aPinCode,
+  SetPinCodeInternal(const BluetoothAddress& aDeviceAddress,
+                     const BluetoothPinCode& aPinCode,
                      BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  SetPasskeyInternal(const nsAString& aDeviceAddress, uint32_t aPasskey,
+  SetPasskeyInternal(const BluetoothAddress& aDeviceAddress, uint32_t aPasskey,
                      BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  SetPairingConfirmationInternal(const nsAString& aDeviceAddress, bool aConfirm,
+  SetPairingConfirmationInternal(const BluetoothAddress& aDeviceAddress,
+                                 bool aConfirm,
                                  BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  Connect(const nsAString& aDeviceAddress,
+  Connect(const BluetoothAddress& aDeviceAddress,
           uint32_t aCod,
           uint16_t aServiceUuid,
           BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  Disconnect(const nsAString& aDeviceAddress, uint16_t aServiceUuid,
+  Disconnect(const BluetoothAddress& aDeviceAddress, uint16_t aServiceUuid,
              BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  SendFile(const nsAString& aDeviceAddress,
+  SendFile(const BluetoothAddress& aDeviceAddress,
            BlobParent* aBlobParent,
            BlobChild* aBlobChild,
            BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  SendFile(const nsAString& aDeviceAddress,
+  SendFile(const BluetoothAddress& aDeviceAddress,
            Blob* aBlob,
            BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  StopSendingFile(const nsAString& aDeviceAddress,
+  StopSendingFile(const BluetoothAddress& aDeviceAddress,
                   BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  ConfirmReceivingFile(const nsAString& aDeviceAddress, bool aConfirm,
+  ConfirmReceivingFile(const BluetoothAddress& aDeviceAddress, bool aConfirm,
                        BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
@@ -156,6 +159,13 @@ public:
 
   virtual void
   IsScoConnected(BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  SetObexPassword(const nsAString& aPassword,
+                  BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  RejectObexAuth(BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   ReplyTovCardPulling(BlobParent* aBlobParent,
@@ -226,6 +236,7 @@ public:
 
   virtual void
   ReplyToMapSendMessage(long aMasId,
+                        const nsAString& aHandleId,
                         bool aStatus,
                         BluetoothReplyRunnable* aRunnable) override;
 
@@ -257,7 +268,7 @@ public:
   virtual void
   SendPlayStatus(int64_t aDuration,
                  int64_t aPosition,
-                 const nsAString& aPlayStatus,
+                 ControlPlayStatus aPlayStatus,
                  BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
@@ -274,37 +285,46 @@ public:
                    const nsAString& aMessage) override;
 
   virtual void
-  StartLeScanInternal(const nsTArray<nsString>& aServiceUuids,
+  StartLeScanInternal(const nsTArray<BluetoothUuid>& aServiceUuids,
                       BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  StopLeScanInternal(const nsAString& aAppUuid,
+  StopLeScanInternal(const BluetoothUuid& aAppUuid,
                      BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  ConnectGattClientInternal(const nsAString& aAppUuid,
-                            const nsAString& aDeviceAddress,
+  StartAdvertisingInternal(const BluetoothUuid& aAppUuid,
+                           const BluetoothGattAdvertisingData& aAdvData,
+                           BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  StopAdvertisingInternal(const BluetoothUuid& aAppUuid,
+                          BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
+  ConnectGattClientInternal(const BluetoothUuid& aAppUuid,
+                            const BluetoothAddress& aDeviceAddress,
                             BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  DisconnectGattClientInternal(const nsAString& aAppUuid,
-                               const nsAString& aDeviceAddress,
+  DisconnectGattClientInternal(const BluetoothUuid& aAppUuid,
+                               const BluetoothAddress& aDeviceAddress,
                                BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
-  DiscoverGattServicesInternal(const nsAString& aAppUuid,
+  DiscoverGattServicesInternal(const BluetoothUuid& aAppUuid,
                                BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattClientStartNotificationsInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothGattServiceId& aServId,
     const BluetoothGattId& aCharId,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattClientStopNotificationsInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothGattServiceId& aServId,
     const BluetoothGattId& aCharId,
     BluetoothReplyRunnable* aRunnable) override;
@@ -315,19 +335,19 @@ public:
 
   virtual void
   GattClientReadRemoteRssiInternal(
-    int aClientIf, const nsAString& aDeviceAddress,
+    int aClientIf, const BluetoothAddress& aDeviceAddress,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattClientReadCharacteristicValueInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothGattServiceId& aServiceId,
     const BluetoothGattId& aCharacteristicId,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattClientWriteCharacteristicValueInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothGattServiceId& aServiceId,
     const BluetoothGattId& aCharacteristicId,
     const BluetoothGattWriteType& aWriteType,
@@ -336,7 +356,7 @@ public:
 
   virtual void
   GattClientReadDescriptorValueInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothGattServiceId& aServiceId,
     const BluetoothGattId& aCharacteristicId,
     const BluetoothGattId& aDescriptorId,
@@ -344,7 +364,7 @@ public:
 
   virtual void
   GattClientWriteDescriptorValueInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothGattServiceId& aServiceId,
     const BluetoothGattId& aCharacteristicId,
     const BluetoothGattId& aDescriptorId,
@@ -352,15 +372,20 @@ public:
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
+  GattServerRegisterInternal(
+    const BluetoothUuid& aAppUuid,
+    BluetoothReplyRunnable* aRunnable) override;
+
+  virtual void
   GattServerConnectPeripheralInternal(
-    const nsAString& aAppUuid,
-    const nsAString& aAddress,
+    const BluetoothUuid& aAppUuid,
+    const BluetoothAddress& aAddress,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerDisconnectPeripheralInternal(
-    const nsAString& aAppUuid,
-    const nsAString& aAddress,
+    const BluetoothUuid& aAppUuid,
+    const BluetoothAddress& aAddress,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
@@ -369,21 +394,21 @@ public:
 
   virtual void
   GattServerAddServiceInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothGattServiceId& aServiceId,
     uint16_t aHandleCount,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerAddIncludedServiceInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothAttributeHandle& aServiceHandle,
     const BluetoothAttributeHandle& aIncludedServiceHandle,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerAddCharacteristicInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothAttributeHandle& aServiceHandle,
     const BluetoothUuid& aCharacteristicUuid,
     BluetoothGattAttrPerm aPermissions,
@@ -392,7 +417,7 @@ public:
 
   virtual void
   GattServerAddDescriptorInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothAttributeHandle& aServiceHandle,
     const BluetoothAttributeHandle& aCharacteristicHandle,
     const BluetoothUuid& aDescriptorUuid,
@@ -401,26 +426,26 @@ public:
 
   virtual void
   GattServerRemoveServiceInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothAttributeHandle& aServiceHandle,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerStartServiceInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothAttributeHandle& aServiceHandle,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerStopServiceInternal(
-    const nsAString& aAppUuid,
+    const BluetoothUuid& aAppUuid,
     const BluetoothAttributeHandle& aServiceHandle,
     BluetoothReplyRunnable* aRunnable) override;
 
   virtual void
   GattServerSendResponseInternal(
-    const nsAString& aAppUuid,
-    const nsAString& aAddress,
+    const BluetoothUuid& aAppUuid,
+    const BluetoothAddress& aAddress,
     uint16_t aStatus,
     int32_t aRequestId,
     const BluetoothGattResponse& aRsp,
@@ -428,8 +453,8 @@ public:
 
   virtual void
   GattServerSendIndicationInternal(
-    const nsAString& aAppUuid,
-    const nsAString& aAddress,
+    const BluetoothUuid& aAppUuid,
+    const BluetoothAddress& aAddress,
     const BluetoothAttributeHandle& aCharacteristicHandle,
     bool aConfirm,
     const nsTArray<uint8_t>& aValue,

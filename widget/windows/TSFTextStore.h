@@ -115,9 +115,11 @@ public:
   static void     CommitComposition(bool aDiscard)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    if (sEnabledTextStore) {
-      sEnabledTextStore->CommitCompositionInternal(aDiscard);
+    if (!sEnabledTextStore) {
+      return;
     }
+    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    textStore->CommitCompositionInternal(aDiscard);
   }
 
   static void SetInputContext(nsWindowBase* aWidget,
@@ -130,36 +132,51 @@ public:
   static nsresult OnTextChange(const IMENotification& aIMENotification)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnTextChangeInternal(aIMENotification) : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    return textStore->OnTextChangeInternal(aIMENotification);
   }
 
   static nsresult OnSelectionChange(const IMENotification& aIMENotification)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnSelectionChangeInternal(aIMENotification) : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    return textStore->OnSelectionChangeInternal(aIMENotification);
   }
 
   static nsresult OnLayoutChange()
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnLayoutChangeInternal() : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    return textStore->OnLayoutChangeInternal();
   }
 
   static nsresult OnUpdateComposition()
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnUpdateCompositionInternal() : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    return textStore->OnUpdateCompositionInternal();
   }
 
   static nsresult OnMouseButtonEvent(const IMENotification& aIMENotification)
   {
     NS_ASSERTION(IsInTSFMode(), "Not in TSF mode, shouldn't be called");
-    return sEnabledTextStore ?
-      sEnabledTextStore->OnMouseButtonEventInternal(aIMENotification) : NS_OK;
+    if (!sEnabledTextStore) {
+      return NS_OK;
+    }
+    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    return textStore->OnMouseButtonEventInternal(aIMENotification);
   }
 
   static nsIMEUpdatePreference GetIMEUpdatePreference();
@@ -302,7 +319,8 @@ protected:
   HRESULT  HandleRequestAttrs(DWORD aFlags,
                               ULONG aFilterCount,
                               const TS_ATTRID* aFilterAttrs);
-  void     SetInputScope(const nsString& aHTMLInputType);
+  void     SetInputScope(const nsString& aHTMLInputType,
+                         const nsString& aHTMLInputInputmode);
 
   // Creates native caret over our caret.  This method only works on desktop
   // application.  Otherwise, this does nothing.
@@ -518,7 +536,7 @@ protected:
     // For compositionstart and selectionset
     LONG mSelectionStart;
     LONG mSelectionLength;
-    // For compositionupdate and compositionend
+    // For compositionstart, compositionupdate and compositionend
     nsString mData;
     // For compositionupdate
     RefPtr<TextRangeArray> mRanges;

@@ -17,9 +17,9 @@
 #include "mozilla/dom/ChromeUtils.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
 #include "mozilla/Move.h"
-#include "mozilla/UniquePtr.h"
 #include "js/Principals.h"
 #include "js/UbiNode.h"
+#include "js/UniquePtr.h"
 
 using namespace mozilla;
 using namespace mozilla::devtools;
@@ -113,7 +113,7 @@ struct DevTools : public ::testing::Test {
     /* Create the global object. */
     JS::RootedObject newGlobal(cx);
     JS::CompartmentOptions options;
-    options.setVersion(JSVERSION_LATEST);
+    options.behaviors().setVersion(JSVERSION_LATEST);
     newGlobal = JS_NewGlobalObject(cx, getGlobalClass(), nullptr,
                                    JS::FireOnNewGlobalHook, options);
     if (!newGlobal)
@@ -173,8 +173,6 @@ public:
 namespace JS {
 namespace ubi {
 
-using mozilla::UniquePtr;
-
 template<>
 class Concrete<FakeNode> : public Base
 {
@@ -182,8 +180,8 @@ class Concrete<FakeNode> : public Base
     return concreteTypeName;
   }
 
-  UniquePtr<EdgeRange> edges(JSRuntime*, bool) const override {
-    return UniquePtr<EdgeRange>(js_new<PreComputedEdgeRange>(get().edges));
+  js::UniquePtr<EdgeRange> edges(JSRuntime*, bool) const override {
+    return js::UniquePtr<EdgeRange>(js_new<PreComputedEdgeRange>(get().edges));
   }
 
   Size size(mozilla::MallocSizeOf) const override {
@@ -276,6 +274,12 @@ MATCHER_P(UniqueUTF16StrEq, str, "") {
 
 MATCHER(UniqueIsNull, "") {
   return arg.get() == nullptr;
+}
+
+// Matches an edge whose referent is the node with the given id.
+MATCHER_P(EdgeTo, id, "") {
+  return Matcher<const DeserializedEdge&>(Field(&DeserializedEdge::referent, id))
+    .MatchAndExplain(arg, result_listener);
 }
 
 } // namespace testing

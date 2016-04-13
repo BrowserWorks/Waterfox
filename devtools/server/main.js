@@ -17,7 +17,7 @@ var { ActorPool, OriginalLocation, RegisteredActorFactory,
 var { LocalDebuggerTransport, ChildDebuggerTransport, WorkerDebuggerTransport } =
   require("devtools/shared/transport/transport");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
-var { dumpn, dumpv, dbg_assert } = DevToolsUtils;
+var { dumpn, dumpv } = DevToolsUtils;
 var EventEmitter = require("devtools/shared/event-emitter");
 var Debugger = require("Debugger");
 var Promise = require("promise");
@@ -28,6 +28,10 @@ DevToolsUtils.defineLazyGetter(this, "DebuggerSocket", () => {
 });
 DevToolsUtils.defineLazyGetter(this, "Authentication", () => {
   return require("devtools/shared/security/auth");
+});
+DevToolsUtils.defineLazyGetter(this, "generateUUID", () => {
+  let { generateUUID } = Cc['@mozilla.org/uuid-generator;1'].getService(Ci.nsIUUIDGenerator);
+  return generateUUID;
 });
 
 // On B2G, `this` != Global scope, so `Ci` won't be binded on `this`
@@ -43,7 +47,6 @@ this.ActorPool = ActorPool;
 this.DevToolsUtils = DevToolsUtils;
 this.dumpn = dumpn;
 this.dumpv = dumpv;
-this.dbg_assert = dbg_assert;
 
 // Overload `Components` to prevent SDK loader exception on Components
 // object usage
@@ -390,8 +393,7 @@ var DebuggerServer = {
         type: { global: true }
       });
     }
-    let win = Services.wm.getMostRecentWindow(DebuggerServer.chromeWindowType);
-    if (win && win.navigator.mozSettings) {
+    if (Services.prefs.getBoolPref("dom.mozSettings.enabled")) {
       this.registerModule("devtools/server/actors/settings", {
         prefix: "settings",
         constructor: "SettingsActor",
@@ -908,19 +910,51 @@ var DebuggerServer = {
    * @param setupChild
    *        The name of the setup helper exported by the above module
    *        (setup helper signature: function ({mm}) { ... })
+   * @param waitForEval (optional)
+   *        If true, the returned promise only resolves once code in child
+   *        is evaluated
    */
-  setupInChild: function({ module, setupChild, args }) {
-    if (this.isInChildProcess) {
-      return;
+  setupInChild: function({ module, setupChild, args, waitForEval }) {
+    if (this.isInChildProcess || this._childMessageManagers.size == 0) {
+      return Promise.resolve();
     }
+    let deferred = Promise.defer();
+
+    // If waitForEval is set, pass a unique id and expect child.js to send
+    // a message back once the code in child is evaluated.
+    if (typeof(waitForEval) != "boolean") {
+      waitForEval = false;
+    }
+    let count = this._childMessageManagers.size;
+    let id = waitForEval ? generateUUID().toString() : null;
 
     this._childMessageManagers.forEach(mm => {
+      if (waitForEval) {
+        // Listen for the end of each child execution
+        let evalListener = msg => {
+          if (msg.data.id !== id) {
+            return;
+          }
+          mm.removeMessageListener("debug:setup-in-child-response", evalListener);
+          if (--count === 0) {
+            deferred.resolve();
+          }
+        };
+        mm.addMessageListener("debug:setup-in-child-response", evalListener);
+      }
       mm.sendAsyncMessage("debug:setup-in-child", {
         module: module,
         setupChild: setupChild,
         args: args,
+        id: id,
       });
     });
+
+    if (waitForEval) {
+      return deferred.promise;
+    } else {
+      return Promise.resolve();
+    }
   },
 
   /**
@@ -958,6 +992,13 @@ var DebuggerServer = {
     // provides hook to actor modules that need to exchange messages
     // between e10s parent and child processes
     let onSetupInParent = function (msg) {
+      // We may have multiple connectToChild instance running for the same tab
+      // and need to filter the messages. Also the DebuggerServerConnection's
+      // prefix has an additional '/' and the end, so use `includes`.
+      if (!msg.json.prefix.includes(prefix)) {
+        return;
+      }
+
       let { module, setupParent } = msg.json;
       let m, fn;
 
@@ -1188,7 +1229,10 @@ var DebuggerServer = {
           (handler.id && handler.id == aActor.id)) {
         delete DebuggerServer.tabActorFactories[name];
         for (let connID of Object.getOwnPropertyNames(this._connections)) {
-          this._connections[connID].rootActor.removeActorByName(name);
+          // DebuggerServerConnection in child process don't have rootActor
+          if (this._connections[connID].rootActor) {
+            this._connections[connID].rootActor.removeActorByName(name);
+          }
         }
       }
     }
@@ -1380,7 +1424,7 @@ DebuggerServerConnection.prototype = {
     if (index > -1) {
       let pool = this._extraPools.splice(index, 1);
       if (!aNoCleanup) {
-        pool.map(function(p) { p.cleanup(); });
+        pool.map(function(p) { p.destroy(); });
       }
     }
   },
@@ -1692,10 +1736,11 @@ DebuggerServerConnection.prototype = {
       // Ignore this call if the connection is already closed.
       return;
     }
+    this._actorPool = null;
+
     events.emit(this, "closed", aStatus);
 
-    this._actorPool = null;
-    this._extraPools.map(function(p) { p.cleanup(); });
+    this._extraPools.map(function(p) { p.destroy(); });
     this._extraPools = null;
 
     this.rootActor = null;
@@ -1741,7 +1786,7 @@ DebuggerServerConnection.prototype = {
    * @return boolean
    *         true if the setup helper returned successfully
    */
-  setupInParent: function({ conn, module, setupParent }) {
+  setupInParent: function({ module, setupParent }) {
     if (!this.parentMessageManager) {
       return false;
     }
@@ -1749,6 +1794,7 @@ DebuggerServerConnection.prototype = {
     let { sendSyncMessage } = this.parentMessageManager;
 
     return sendSyncMessage("debug:setup-in-parent", {
+      prefix: this.prefix,
       module: module,
       setupParent: setupParent
     });

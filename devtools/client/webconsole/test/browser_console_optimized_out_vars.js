@@ -14,19 +14,17 @@ function test() {
     let hud = yield openConsole(tab);
     let { toolbox, panel, panelWin } = yield openDebugger();
 
-    yield waitForThreadEvents(panel, "resumed");
-    ok(true, "Debugger resumed");
-
     let sources = panelWin.DebuggerView.Sources;
     yield panel.addBreakpoint({ actor: sources.values[0], line: 18 });
     yield ensureThreadClientState(panel, "resumed");
 
     let fetchedScopes = panelWin.once(panelWin.EVENTS.FETCHED_SCOPES);
-    let button = content.document.querySelector("button");
-    ok(button, "Button element found");
-    // Spin the event loop before causing the debuggee to pause, to allow
-    // this function to return first.
-    executeSoon(() => button.click());
+
+    // Cause the debuggee to pause
+    ContentTask.spawn(gBrowser.selectedBrowser, {}, function*() {
+      let button = content.document.querySelector("button");
+      button.click();
+    });
 
     yield fetchedScopes;
     ok(true, "Scopes were fetched");

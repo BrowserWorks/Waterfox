@@ -18,7 +18,7 @@
 
 using namespace mozilla;
 
-static mozilla::ThreadLocal<bool> sTLSIsMainThread;
+static MOZ_THREAD_LOCAL(bool) sTLSIsMainThread;
 
 bool
 NS_IsMainThread()
@@ -29,12 +29,10 @@ NS_IsMainThread()
 void
 NS_SetMainThread()
 {
-  if (!sTLSIsMainThread.initialized()) {
-    if (!sTLSIsMainThread.init()) {
-      MOZ_CRASH();
-    }
-    sTLSIsMainThread.set(true);
+  if (!sTLSIsMainThread.init()) {
+    MOZ_CRASH();
   }
+  sTLSIsMainThread.set(true);
   MOZ_ASSERT(NS_IsMainThread());
 }
 
@@ -154,6 +152,12 @@ nsThreadManager::Shutdown()
       thread->Shutdown();
     }
   }
+
+  // NB: It's possible that there are events in the queue that want to *start*
+  // an asynchronous shutdown. But we have already shutdown the threads above,
+  // so there's no need to worry about them. We only have to wait for all
+  // in-flight asynchronous thread shutdowns to complete.
+  mMainThread->WaitForAllAsynchronousShutdowns();
 
   // In case there are any more events somehow...
   NS_ProcessPendingEvents(mMainThread);

@@ -44,7 +44,7 @@ public:
                                  const CompositingRenderTarget *aSource,
                                  const gfx::IntPoint &aSourcePoint) override;
 
-  virtual void SetRenderTarget(CompositingRenderTarget *aSurface);
+  virtual void SetRenderTarget(CompositingRenderTarget *aSurface) override;
   virtual CompositingRenderTarget* GetCurrentRenderTarget() const override
   {
     return mCurrentRT;
@@ -137,6 +137,20 @@ private:
    */
   bool EnsureSwapChain();
 
+  already_AddRefed<IDirect3DTexture9>
+  CreateTexture(const gfx::IntRect& aRect,
+                const CompositingRenderTarget* aSource,
+                const gfx::IntPoint& aSourcePoint);
+
+  /**
+   * Complete a mix-blend step at the end of DrawQuad().
+   */
+  void FinishMixBlend(const gfx::IntRect& aBackdropRect,
+                      const gfx::Rect& aBackdropDest,
+                      const gfx::Matrix4x4& aBackdropTransform,
+                      RefPtr<IDirect3DTexture9> aBackdrop,
+                      gfx::CompositionOp aBlendMode);
+
   /**
    * DeviceManagerD3D9 keeps a count of the number of times its device is
    * reset or recreated. We keep a parallel count (mDeviceResetCount). It
@@ -152,11 +166,6 @@ private:
 
   void ReportFailure(const nsACString &aMsg, HRESULT aCode);
 
-  virtual gfx::IntSize GetWidgetSize() const override
-  {
-    return mSize;
-  }
-
   /* Device manager instance for this compositor */
   RefPtr<DeviceManagerD3D9> mDeviceManager;
 
@@ -169,7 +178,7 @@ private:
   RefPtr<CompositingRenderTargetD3D9> mDefaultRT;
   RefPtr<CompositingRenderTargetD3D9> mCurrentRT;
 
-  gfx::IntSize mSize;
+  LayoutDeviceIntSize mSize;
 
   uint32_t mDeviceResetCount;
   uint32_t mFailedResetAttempts;

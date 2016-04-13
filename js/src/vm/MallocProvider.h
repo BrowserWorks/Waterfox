@@ -21,9 +21,11 @@
  *       - SystemAllocPolicy: No extra functionality over bare allocators.
  *
  *       - TempAllocPolicy: Adds automatic error reporting to the provided
- *         Context when allocations fail.
+ *         JSContext when allocations fail.
  *
- *       - RuntimeAllocPolicy: forwards to the JSRuntime MallocProvider.
+ *       - RuntimeAllocPolicy: Forwards to the JSRuntime MallocProvider.
+ *
+ *       - ZoneAllocPolicy: Forwards to the Zone MallocProvider.
  *
  *   - MallocProvider. A mixin base class that handles automatically updating
  *     the GC's state in response to allocations that are tied to a GC lifetime
@@ -41,8 +43,8 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/Likely.h"
-#include "mozilla/UniquePtr.h"
 
+#include "js/UniquePtr.h"
 #include "js/Utility.h"
 
 namespace js {
@@ -118,9 +120,9 @@ struct MallocProvider
     }
 
     template <class T>
-    mozilla::UniquePtr<T[], JS::FreePolicy>
+    UniquePtr<T[], JS::FreePolicy>
     make_pod_array(size_t numElems) {
-        return mozilla::UniquePtr<T[], JS::FreePolicy>(pod_malloc<T>(numElems));
+        return UniquePtr<T[], JS::FreePolicy>(pod_malloc<T>(numElems));
     }
 
     template <class T>
@@ -163,10 +165,10 @@ struct MallocProvider
     }
 
     template <class T>
-    mozilla::UniquePtr<T[], JS::FreePolicy>
+    UniquePtr<T[], JS::FreePolicy>
     make_zeroed_pod_array(size_t numElems)
     {
-        return mozilla::UniquePtr<T[], JS::FreePolicy>(pod_calloc<T>(numElems));
+        return UniquePtr<T[], JS::FreePolicy>(pod_calloc<T>(numElems));
     }
 
     template <class T>

@@ -10,18 +10,21 @@ import static org.mozilla.gecko.tests.helpers.AssertionHelper.fAssertNotNull;
 import static org.mozilla.gecko.tests.helpers.AssertionHelper.fAssertTrue;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.menu.MenuItemActionBar;
 import org.mozilla.gecko.menu.MenuItemDefault;
 import org.mozilla.gecko.tests.UITestContext;
 import org.mozilla.gecko.tests.helpers.DeviceHelper;
+import org.mozilla.gecko.tests.helpers.RobotiumHelper;
 import org.mozilla.gecko.tests.helpers.WaitHelper;
-import org.mozilla.gecko.util.HardwareUtils;
 
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.RelativeLayout;
 
 import com.jayway.android.robotium.solo.Condition;
 import com.jayway.android.robotium.solo.RobotiumUtils;
@@ -31,9 +34,7 @@ import com.jayway.android.robotium.solo.Solo;
  * A class representing any interactions that take place on the app menu.
  */
 public class AppMenuComponent extends BaseComponent {
-    private static final long MAX_WAITTIME_FOR_MENU_UPDATE_IN_MS = 1000L;
-
-    private Boolean hasLegacyMenu = null;
+    private static final int MAX_WAITTIME_FOR_MENU_UPDATE_IN_MS = 7500;
 
     public enum MenuItem {
         FORWARD(R.string.forward),
@@ -86,60 +87,27 @@ public class AppMenuComponent extends BaseComponent {
         fAssertFalse("Menu is not open", isMenuOpen());
     }
 
-    /**
-     * Legacy Android devices doesn't have hierarchical menus. Sub-menus, such as "Page", are missing in these devices.
-     * Try to determine if the menu item "Page" is present.
-     *
-     * TODO : This fragile way to determine legacy menus should be replaced with a check for 6-panel menu item.
-     *
-     * @return true if there is a legacy menu.
-     */
-    private boolean hasLegacyMenu() {
-        if (hasLegacyMenu == null) {
-            hasLegacyMenu = findAppMenuItemView(MenuItem.PAGE.getString(mSolo)) == null;
-        }
-
-        return hasLegacyMenu;
-    }
-
     public void assertMenuItemIsDisabledAndVisible(PageMenuItem pageMenuItem) {
         openAppMenu();
 
-        if (!hasLegacyMenu()) {
-            // Non-legacy devices have hierarchical menu, check for parent menu item "page".
-            final View parentMenuItemView = findAppMenuItemView(MenuItem.PAGE.getString(mSolo));
-            if (parentMenuItemView.isEnabled()) {
-                fAssertTrue("The parent 'page' menu item is enabled", parentMenuItemView.isEnabled());
-                fAssertEquals("The parent 'page' menu item is visible", View.VISIBLE,
-                        parentMenuItemView.getVisibility());
+        // Non-legacy devices have hierarchical menu, check for parent menu item "page".
+        final View parentMenuItemView = findAppMenuItemView(MenuItem.PAGE.getString(mSolo));
+        if (parentMenuItemView.isEnabled()) {
+            fAssertTrue("The parent 'page' menu item is enabled", parentMenuItemView.isEnabled());
+            fAssertEquals("The parent 'page' menu item is visible", View.VISIBLE,
+            parentMenuItemView.getVisibility());
 
-                // Parent menu "page" is enabled, open page menu and check for menu item represented by pageMenuItem.
-                pressMenuItem(MenuItem.PAGE.getString(mSolo));
-
-                final View pageMenuItemView = findAppMenuItemView(pageMenuItem.getString(mSolo));
-                fAssertNotNull("The page menu item is not null", pageMenuItemView);
-                fAssertFalse("The page menu item is not enabled", pageMenuItemView.isEnabled());
-                fAssertEquals("The page menu item is visible", View.VISIBLE, pageMenuItemView.getVisibility());
-            } else {
-                fAssertFalse("The parent 'page' menu item is not enabled", parentMenuItemView.isEnabled());
-                fAssertEquals("The parent 'page' menu item is visible", View.VISIBLE, parentMenuItemView.getVisibility());
-            }
-        } else {
-            // Legacy devices (Android 2.3 and earlier) don't have the parent menu, "Page", so check directly for the menu
-            // item represented by pageMenuItem.
-            //
-            // We need to make sure the appropriate menu view is constructed
-            // so open the "More" menu to additionally construct those views.
-            openLegacyMoreMenu();
+            // Parent menu "page" is enabled, open page menu and check for menu item represented by pageMenuItem.
+            pressMenuItem(MenuItem.PAGE.getString(mSolo));
 
             final View pageMenuItemView = findAppMenuItemView(pageMenuItem.getString(mSolo));
+            fAssertNotNull("The page menu item is not null", pageMenuItemView);
             fAssertFalse("The page menu item is not enabled", pageMenuItemView.isEnabled());
             fAssertEquals("The page menu item is visible", View.VISIBLE, pageMenuItemView.getVisibility());
-
-            // Close the "More" menu.
-            mSolo.goBack();
+        } else {
+            fAssertFalse("The parent 'page' menu item is not enabled", parentMenuItemView.isEnabled());
+            fAssertEquals("The parent 'page' menu item is visible", View.VISIBLE, parentMenuItemView.getVisibility());
         }
-
         // Close the App Menu.
         mSolo.goBack();
     }
@@ -157,38 +125,43 @@ public class AppMenuComponent extends BaseComponent {
      *
      * This method is dependent on not having two views with equivalent contentDescription / text.
      */
-    private View findAppMenuItemView(String text) {
-        mSolo.waitForText(text, 1, MAX_WAITTIME_FOR_MENU_UPDATE_IN_MS);
+    private View findAppMenuItemView(final String text) {
+        return WaitHelper.waitFor(String.format("menu item view '%s'", text), new Callable<View>() {
+            @Override
+            public View call() throws Exception {
+                final List<View> views = mSolo.getViews();
 
-        final List<View> views = mSolo.getViews();
+                final List<MenuItemActionBar> menuItemActionBarList = RobotiumUtils.filterViews(MenuItemActionBar.class, views);
+                for (MenuItemActionBar menuItem : menuItemActionBarList) {
+                    if (TextUtils.equals(menuItem.getContentDescription(), text)) {
+                        return menuItem;
+                    }
+                }
 
-        final List<MenuItemActionBar> menuItemActionBarList = RobotiumUtils.filterViews(MenuItemActionBar.class, views);
-        for (MenuItemActionBar menuItem : menuItemActionBarList) {
-            if (TextUtils.equals(menuItem.getContentDescription(), text)) {
-                return menuItem;
+                final List<MenuItemDefault> menuItemDefaultList = RobotiumUtils.filterViews(MenuItemDefault.class, views);
+                for (MenuItemDefault menuItem : menuItemDefaultList) {
+                    if (TextUtils.equals(menuItem.getText(), text)) {
+                        return menuItem;
+                    }
+                }
+
+                // On Android 2.3, menu items may be instances of
+                // com.android.internal.view.menu.ListMenuItemView, each with a child
+                // android.widget.RelativeLayout which in turn has a child
+                // TextView with the appropriate text.
+                final List<TextView> textViewList = RobotiumUtils.filterViews(TextView.class, views);
+                for (TextView textView : textViewList) {
+                    if (TextUtils.equals(textView.getText(), text)) {
+                        View relativeLayout = (View) textView.getParent();
+                        if (relativeLayout instanceof RelativeLayout) {
+                            View listMenuItemView = (View)relativeLayout.getParent();
+                            return listMenuItemView;
+                        }
+                    }
+                }
+                return null;
             }
-        }
-
-        final List<MenuItemDefault> menuItemDefaultList = RobotiumUtils.filterViews(MenuItemDefault.class, views);
-        for (MenuItemDefault menuItem : menuItemDefaultList) {
-            if (TextUtils.equals(menuItem.getText(), text)) {
-                return menuItem;
-            }
-        }
-
-        // On Android 2.3, menu items may be instances of
-        // com.android.internal.view.menu.ListMenuItemView, each with a child
-        // android.widget.RelativeLayout which in turn has a child
-        // TextView with the appropriate text.
-        final List<TextView> textViewList = RobotiumUtils.filterViews(TextView.class, views);
-        for (TextView textView : textViewList) {
-            if (TextUtils.equals(textView.getText(), text)) {
-                View relativeLayout = (View) textView.getParent();
-                View listMenuItemView = (View)relativeLayout.getParent();
-                return listMenuItemView;
-            }
-        }
-        return null;
+        }, MAX_WAITTIME_FOR_MENU_UPDATE_IN_MS);
     }
 
     /**
@@ -196,39 +169,39 @@ public class AppMenuComponent extends BaseComponent {
      *
      * Robotium will also try to open the menu if there are no open dialog.
      *
-     * @param menuItemText, The title of menu item to open.
+     * @param menuItemTitle, The title of menu item to open.
      */
     private void pressLegacyMenuItem(final String menuItemTitle) {
         mSolo.clickOnMenuItem(menuItemTitle, true);
     }
 
     private void pressMenuItem(final String menuItemTitle) {
-        fAssertTrue("Menu is open", isMenuOpen(menuItemTitle));
+        // Wait for the menu item view to be enabled. This improves reliability on Android 2.3.
+        WaitHelper.waitFor(String.format("menu item %s to be enabled", menuItemTitle), new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                View v = findAppMenuItemView(menuItemTitle);
+                return (v != null) && v.isEnabled();
+            }
+        });
 
-        if (!hasLegacyMenu()) {
-            final View menuItemView = findAppMenuItemView(menuItemTitle);
+        final View menuItemView = findAppMenuItemView(menuItemTitle);
+        fAssertTrue("Menu is open", isMenuOpen(menuItemView));
 
-            fAssertTrue(String.format("The menu item %s is enabled", menuItemTitle), menuItemView.isEnabled());
-            fAssertEquals(String.format("The menu item %s is visible", menuItemTitle), View.VISIBLE,
-                    menuItemView.getVisibility());
+        fAssertTrue(String.format("The menu item %s is enabled", menuItemTitle), menuItemView.isEnabled());
+        fAssertEquals(String.format("The menu item %s is visible", menuItemTitle), View.VISIBLE,
+            menuItemView.getVisibility());
 
-            mSolo.clickOnView(menuItemView);
-        } else {
-            pressLegacyMenuItem(menuItemTitle);
-        }
+        mSolo.clickOnView(menuItemView);
     }
 
     private void pressSubMenuItem(final String parentMenuItemTitle, final String childMenuItemTitle) {
         openAppMenu();
 
-        if (!hasLegacyMenu()) {
-            pressMenuItem(parentMenuItemTitle);
+        pressMenuItem(parentMenuItemTitle);
 
-            // Child menu item is not pressed yet, Click on it.
-            pressMenuItem(childMenuItemTitle);
-        } else {
-            pressLegacyMenuItem(childMenuItemTitle);
-        }
+        // Child menu item is not pressed yet, Click on it.
+        pressMenuItem(childMenuItemTitle);        
     }
 
     public void pressMenuItem(MenuItem menuItem) {
@@ -243,34 +216,15 @@ public class AppMenuComponent extends BaseComponent {
     private void openAppMenu() {
         assertMenuIsNotOpen();
 
-        // This is a hack needed for tablets where the OverflowMenuButton is always in the GONE state,
+        // This is a hack needed for tablets & GB where the OverflowMenuButton is always in the GONE state,
         // so we press the menu key instead.
-        if (HardwareUtils.hasMenuButton() || DeviceHelper.isTablet()) {
+        if (DeviceHelper.isTablet() || AppConstants.Versions.preHC) {
             mSolo.sendKey(Solo.MENU);
         } else {
             pressOverflowMenuButton();
         }
 
         waitForMenuOpen();
-    }
-
-    /**
-     * Opens the "More" options menu on legacy Android devices. Assumes the base menu
-     * (i.e. {@link #openAppMenu()}) has already been called and thus the menu is open.
-     */
-    private void openLegacyMoreMenu() {
-        fAssertTrue("The base menu is already open", isMenuOpen());
-
-        // Since there may be more views with "More" on the screen,
-        // this is not robust. However, there may not be a better way.
-        mSolo.clickOnText("^More$");
-
-        WaitHelper.waitFor("legacy \"More\" menu to open", new Condition() {
-            @Override
-            public boolean isSatisfied() {
-                return isLegacyMoreMenuOpen();
-            }
-        });
     }
 
     private void pressOverflowMenuButton() {
@@ -283,17 +237,14 @@ public class AppMenuComponent extends BaseComponent {
     }
 
     /**
-    * Determines whether the app menu is open by searching for the text "New tab".
+    * Determines whether the app menu is open by searching for items in the menu.
     *
     * @return true if app menu is open.
     */
     private boolean isMenuOpen() {
-        return isMenuOpen(MenuItem.NEW_TAB.getString(mSolo));
-    }
-
-    private boolean isLegacyMoreMenuOpen() {
-        // Check if the first menu option is visible.
-        return mSolo.searchText(mSolo.getString(R.string.share), true);
+        // We choose these options because New Tab is near the top of the menu and Page is near the middle/bottom.
+        // Intermittently, the menu doesn't scroll to top so we can't just use the first item in the list.
+        return isMenuOpen(MenuItem.NEW_TAB.getString(mSolo)) || isMenuOpen(MenuItem.PAGE.getString(mSolo));
     }
 
     /**
@@ -304,7 +255,20 @@ public class AppMenuComponent extends BaseComponent {
      * @return true if app menu is open.
      */
     private boolean isMenuOpen(String menuItemTitle) {
-        return mSolo.searchText(menuItemTitle, true);
+        final View menuItemView = findAppMenuItemView(menuItemTitle);
+        return isMenuOpen(menuItemView) ? true : RobotiumHelper.searchExactText(menuItemTitle, true);
+    }
+
+    /**
+     * If a ListMenuItemView with menuItemTitle is visible then the app menu is open .
+     *
+     * @param menuItemView, must be a ListMenuItemView with menuItemTitle.
+     *                      You must use findAppMenuItemView(menuItemTitle) to obtain it.
+     *
+     * @return true if app menu is open.
+     */
+    private boolean isMenuOpen(View menuItemView) {
+        return (menuItemView != null) && (menuItemView.getVisibility() == View.VISIBLE);
     }
 
     private void waitForMenuOpen() {

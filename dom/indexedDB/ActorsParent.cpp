@@ -22,7 +22,6 @@
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/AutoRestore.h"
 #include "mozilla/Endian.h"
-#include "mozilla/Hal.h"
 #include "mozilla/LazyIdleThread.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Preferences.h"
@@ -44,6 +43,7 @@
 #include "mozilla/dom/indexedDB/PBackgroundIDBRequestParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBTransactionParent.h"
 #include "mozilla/dom/indexedDB/PBackgroundIDBVersionChangeTransactionParent.h"
+#include "mozilla/dom/indexedDB/PBackgroundIndexedDBUtilsParent.h"
 #include "mozilla/dom/indexedDB/PIndexedDBPermissionRequestParent.h"
 #include "mozilla/dom/ipc/BlobParent.h"
 #include "mozilla/dom/quota/Client.h"
@@ -68,12 +68,9 @@
 #include "nsIEventTarget.h"
 #include "nsIFile.h"
 #include "nsIFileURL.h"
-#include "nsIIdleService.h"
 #include "nsIInputStream.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsInterfaceHashtable.h"
-#include "nsIObserver.h"
-#include "nsIObserverService.h"
 #include "nsIOutputStream.h"
 #include "nsIPrincipal.h"
 #include "nsIScriptSecurityManager.h"
@@ -242,8 +239,6 @@ const char kPrefFileHandleEnabled[] = "dom.fileHandle.enabled";
 #define PERMISSION_STRING_CHROME_READ_SUFFIX "-read"
 #define PERMISSION_STRING_CHROME_WRITE_SUFFIX "-write"
 
-const char kIdleServiceContractId[] = "@mozilla.org/widget/idleservice;1";
-
 #ifdef DEBUG
 
 const int32_t kDEBUGThreadPriority = nsISupportsPriority::PRIORITY_NORMAL;
@@ -254,14 +249,6 @@ const int32_t kDEBUGTransactionThreadPriority =
 const uint32_t kDEBUGTransactionThreadSleepMS = 0;
 
 #endif
-
-const bool kRunningXPCShellTests =
-#ifdef ENABLE_TESTS
-  !!PR_GetEnv("XPCSHELL_TEST_PROFILE_DIR")
-#else
-  false
-#endif
-  ;
 
 struct FreeDeleter
 {
@@ -321,7 +308,7 @@ struct FullObjectStoreMetadata
 
   // These two members are only ever touched on a transaction thread!
   int64_t mNextAutoIncrementId;
-  int64_t mComittedAutoIncrementId;
+  int64_t mCommittedAutoIncrementId;
 
   bool mDeleted;
 
@@ -329,7 +316,7 @@ public:
   FullObjectStoreMetadata()
     : mCommonMetadata(0, nsString(), KeyPath(0), false)
     , mNextAutoIncrementId(0)
-    , mComittedAutoIncrementId(0)
+    , mCommittedAutoIncrementId(0)
     , mDeleted(false)
   {
     // This can happen either on the QuotaManager IO thread or on a
@@ -398,7 +385,7 @@ public:
     MOZ_ASSERT(aId);
 
     SelfType closure(aId, aName);
-    aEnumerable.EnumerateRead(Enumerate, &closure);
+    MatchHelper(aEnumerable, &closure);
 
     return closure.mMetadata;
   }
@@ -411,7 +398,7 @@ public:
     MOZ_ASSERT(aId);
 
     SelfType closure(aId);
-    aEnumerable.EnumerateRead(Enumerate, &closure);
+    MatchHelper(aEnumerable, &closure);
 
     return closure.mMetadata;
   }
@@ -436,25 +423,29 @@ private:
     MOZ_ASSERT(aId);
   }
 
-  static PLDHashOperator
-  Enumerate(const uint64_t& aKey, MetadataType* aValue, void* aClosure)
+  template <class Enumerable>
+  static void
+  MatchHelper(const Enumerable& aEnumerable, SelfType* aClosure)
   {
     AssertIsOnBackgroundThread();
-    MOZ_ASSERT(aKey);
-    MOZ_ASSERT(aValue);
     MOZ_ASSERT(aClosure);
 
-    auto* closure = static_cast<SelfType*>(aClosure);
+    for (auto iter = aEnumerable.ConstIter(); !iter.Done(); iter.Next()) {
+#ifdef DEBUG
+      const uint64_t key = iter.Key();
+#endif
+      MetadataType* value = iter.UserData();
+      MOZ_ASSERT(key != 0);
+      MOZ_ASSERT(value);
 
-    if (!aValue->mDeleted &&
-        (closure->mId == aValue->mCommonMetadata.id() ||
-         (closure->mCheckName &&
-          closure->mName == aValue->mCommonMetadata.name()))) {
-      closure->mMetadata = aValue;
-      return PL_DHASH_STOP;
+      if (!value->mDeleted &&
+          (aClosure->mId == value->mCommonMetadata.id() ||
+           (aClosure->mCheckName &&
+            aClosure->mName == value->mCommonMetadata.name()))) {
+        aClosure->mMetadata = value;
+        break;
+      }
     }
-
-    return PL_DHASH_NEXT;
   }
 };
 
@@ -5313,7 +5304,7 @@ public:
   void
   CloseDatabaseWhenIdle(const nsACString& aDatabaseId)
   {
-    unused << CloseDatabaseWhenIdleInternal(aDatabaseId);
+    Unused << CloseDatabaseWhenIdleInternal(aDatabaseId);
   }
 
   void
@@ -6138,27 +6129,6 @@ private:
   CallCallback();
 
   NS_DECL_NSIRUNNABLE
-};
-
-class UnlockDirectoryRunnable final
-  : public nsRunnable
-{
-  RefPtr<DirectoryLock> mDirectoryLock;
-
-public:
-  explicit
-  UnlockDirectoryRunnable(already_AddRefed<DirectoryLock> aDirectoryLock)
-    : mDirectoryLock(Move(aDirectoryLock))
-  { }
-
-private:
-  ~UnlockDirectoryRunnable()
-  {
-    MOZ_ASSERT(!mDirectoryLock);
-  }
-
-  NS_IMETHOD
-  Run() override;
 };
 
 class Database final
@@ -7130,7 +7100,7 @@ protected:
   {
     // Just created on the PBackground thread, dispatched to the main thread.
     // Next step is either SendingResults if permission is denied,
-    // PermissionChallenge if the permission is unknown, or DirectoryOpenPending
+    // PermissionChallenge if the permission is unknown, or FinishOpen
     // if permission is granted.
     Initial,
 
@@ -7139,21 +7109,28 @@ protected:
     PermissionChallenge,
 
     // Retrying permission check after a challenge on the main thread. Next step
-    // is either SendingResults if permission is denied or DirectoryOpenPending
+    // is either SendingResults if permission is denied or FinishOpen
     // if permission is granted.
     PermissionRetry,
 
-    // Waiting for directory open allowed on the main thread. The next step is
-    // either SendingResults if directory lock failed to acquire, or
-    // DirectoryWorkOpen if directory lock is acquired.
+    // Opening directory or initializing quota manager on the PBackground
+    // thread. Next step is either DirectoryOpenPending if quota manager is
+    // already initialized or QuotaManagerPending if quota manager needs to be
+    // initialized.
+    FinishOpen,
+
+    // Waiting for quota manager initialization to complete on the PBackground
+    // thread. Next step is either SendingResults if initialization failed or
+    // DirectoryOpenPending if initialization succeeded.
+    QuotaManagerPending,
+
+    // Waiting for directory open allowed on the PBackground thread. The next
+    // step is either SendingResults if directory lock failed to acquire, or
+    // DatabaseOpenPending if directory lock is acquired.
     DirectoryOpenPending,
 
-    // Checking if database open needs to wait on the PBackground thread. The
-    // next step is DatabaseOpenPending.
-    DirectoryWorkOpen,
-
-    // Waiting for database open allowed on the main thread. The next step is
-    // DatabaseWorkOpen.
+    // Waiting for database open allowed on the PBackground thread. The next
+    // step is DatabaseWorkOpen.
     DatabaseOpenPending,
 
     // Waiting to do/doing work on the QuotaManager IO thread. Its next step is
@@ -7322,8 +7299,14 @@ private:
   CheckAtLeastOneAppHasPermission(ContentParent* aContentParent,
                                   const nsACString& aPermissionString);
 
-  nsresult
+  void
   FinishOpen();
+
+  nsresult
+  QuotaManagerOpen();
+
+  void
+  OpenDirectory();
 
   // Test whether this FactoryOp needs to wait for the given op.
   bool
@@ -7580,11 +7563,6 @@ private:
   ~VersionChangeOp()
   { }
 
-  // XXX This should be much simpler when the QuotaManager lives on the
-  //     PBackground thread.
-  nsresult
-  RunOnMainThread();
-
   nsresult
   RunOnIOThread();
 
@@ -7626,6 +7604,16 @@ protected:
 
   State mState;
 
+public:
+  void
+  RunImmediately()
+  {
+    MOZ_ASSERT(mState == State::Initial);
+
+    Unused << this->Run();
+  }
+
+protected:
   DatabaseOp(Database* aDatabase);
 
   virtual
@@ -8501,6 +8489,86 @@ private:
   SendSuccessResult() override;
 };
 
+class Utils final
+  : public PBackgroundIndexedDBUtilsParent
+{
+#ifdef DEBUG
+  bool mActorDestroyed;
+#endif
+
+public:
+  Utils();
+
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(mozilla::dom::indexedDB::Utils)
+
+private:
+  // Reference counted.
+  ~Utils();
+
+  // IPDL methods are only called by IPDL.
+  virtual void
+  ActorDestroy(ActorDestroyReason aWhy) override;
+
+  virtual bool
+  RecvDeleteMe() override;
+
+  virtual bool
+  RecvGetFileReferences(const PersistenceType& aPersistenceType,
+                        const nsCString& aOrigin,
+                        const nsString& aDatabaseName,
+                        const int64_t& aFileId,
+                        int32_t* aRefCnt,
+                        int32_t* aDBRefCnt,
+                        int32_t* aSliceRefCnt,
+                        bool* aResult) override;
+};
+
+class GetFileReferencesHelper final
+  : public nsRunnable
+{
+  PersistenceType mPersistenceType;
+  nsCString mOrigin;
+  nsString mDatabaseName;
+  int64_t mFileId;
+
+  mozilla::Mutex mMutex;
+  mozilla::CondVar mCondVar;
+  int32_t mMemRefCnt;
+  int32_t mDBRefCnt;
+  int32_t mSliceRefCnt;
+  bool mResult;
+  bool mWaiting;
+
+public:
+  GetFileReferencesHelper(PersistenceType aPersistenceType,
+                          const nsACString& aOrigin,
+                          const nsAString& aDatabaseName,
+                          int64_t aFileId)
+    : mPersistenceType(aPersistenceType)
+    , mOrigin(aOrigin)
+    , mDatabaseName(aDatabaseName)
+    , mFileId(aFileId)
+    , mMutex("GetFileReferencesHelper::mMutex")
+    , mCondVar(mMutex, "GetFileReferencesHelper::mCondVar")
+    , mMemRefCnt(-1)
+    , mDBRefCnt(-1)
+    , mSliceRefCnt(-1)
+    , mResult(false)
+    , mWaiting(true)
+  { }
+
+  nsresult
+  DispatchAndReturnFileReferences(int32_t* aMemRefCnt,
+                                  int32_t* aDBRefCnt,
+                                  int32_t* aSliceRefCnt,
+                                  bool* aResult);
+
+private:
+  ~GetFileReferencesHelper() {}
+
+  NS_DECL_NSIRUNNABLE
+};
+
 class PermissionRequestHelper final
   : public PermissionRequestBase
   , public PIndexedDBPermissionRequestParent
@@ -8685,12 +8753,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(BlobImplStoredFile, BLOB_IMPL_STORED_FILE_IID)
 
 class QuotaClient final
   : public mozilla::dom::quota::Client
-  , public nsIObserver
 {
-  // The number of seconds we will wait after receiving the idle-daily
-  // notification before beginning maintenance.
-  static const uint32_t kIdleObserverTimeSec = 1;
-
   // The minimum amount of time that has passed since the last vacuum before we
   // will attempt to analyze the database for fragmentation.
   static const PRTime kMinVacuumAge =
@@ -8712,12 +8775,10 @@ class QuotaClient final
   // then we will attempt a full vacuum.
   static const int32_t kPercentUnusedThreshold = 20;
 
-  class AbortOperationsRunnable;
   class AutoProgressHandler;
   class GetDirectoryLockListener;
   struct MaintenanceInfoBase;
   struct MultipleMaintenanceInfo;
-  class ShutdownWorkThreadsRunnable;
   struct SingleMaintenanceInfo;
 
   typedef nsClassHashtable<nsCStringHashKey, MultipleMaintenanceInfo>
@@ -8733,13 +8794,11 @@ class QuotaClient final
   static QuotaClient* sInstance;
 
   nsCOMPtr<nsIEventTarget> mBackgroundThread;
-  RefPtr<ShutdownWorkThreadsRunnable> mShutdownRunnable;
   RefPtr<nsThreadPool> mMaintenanceThreadPool;
   PRTime mMaintenanceStartTime;
   Atomic<uint32_t> mMaintenanceRunId;
   UniquePtr<MaintenanceInfoHashtable> mMaintenanceInfoHashtable;
   bool mShutdownRequested;
-  bool mIdleObserverRegistered;
 
 public:
   QuotaClient();
@@ -8747,15 +8806,15 @@ public:
   static QuotaClient*
   GetInstance()
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    AssertIsOnBackgroundThread();
 
     return sInstance;
   }
 
   static bool
-  IsShuttingDownOnMainThread()
+  IsShuttingDownOnBackgroundThread()
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    AssertIsOnBackgroundThread();
 
     if (sInstance) {
       return sInstance->IsShuttingDown();
@@ -8765,9 +8824,9 @@ public:
   }
 
   static bool
-  IsShuttingDownOnNonMainThread()
+  IsShuttingDownOnNonBackgroundThread()
   {
-    MOZ_ASSERT(!NS_IsMainThread());
+    MOZ_ASSERT(!IsOnBackgroundThread());
 
     return QuotaManager::IsShuttingDown();
   }
@@ -8775,7 +8834,7 @@ public:
   bool
   IsShuttingDown() const
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    AssertIsOnBackgroundThread();
 
     return mShutdownRequested;
   }
@@ -8791,10 +8850,7 @@ public:
     return false;
   }
 
-  void
-  NoteBackgroundThread(nsIEventTarget* aBackgroundThread);
-
-  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(QuotaClient, override)
 
   virtual mozilla::dom::quota::Client::Type
   GetType() override;
@@ -8826,7 +8882,10 @@ public:
   AbortOperationsForProcess(ContentParentId aContentParentId) override;
 
   virtual void
-  PerformIdleMaintenance() override;
+  StartIdleMaintenance() override;
+
+  virtual void
+  StopIdleMaintenance() override;
 
   virtual void
   ShutdownWorkThreads() override;
@@ -8845,13 +8904,10 @@ private:
                                bool aDatabaseFiles);
 
   void
-  RemoveIdleObserver();
+  CreateManager();
 
   void
-  StartIdleMaintenance();
-
-  void
-  StopIdleMaintenance();
+  StartIdleMaintenanceInternal();
 
   // Runs on mMaintenanceThreadPool. Once it finds databases it will queue a
   // runnable that calls GetDirectoryLockForIdleMaintenance.
@@ -8911,8 +8967,6 @@ private:
   MaybeReleaseDirectoryLockForIdleMaintenance(
                                      const nsACString& aKey,
                                      const nsAString& aDatabasePath);
-
-  NS_DECL_NSIOBSERVER
 };
 
 class MOZ_STACK_CLASS QuotaClient::AutoProgressHandler final
@@ -9080,74 +9134,6 @@ struct QuotaClient::MultipleMaintenanceInfo final
   MultipleMaintenanceInfo(const MultipleMaintenanceInfo& aOther) = delete;
 };
 
-class QuotaClient::ShutdownWorkThreadsRunnable final
-  : public nsRunnable
-{
-  RefPtr<QuotaClient> mQuotaClient;
-
-public:
-  explicit ShutdownWorkThreadsRunnable(QuotaClient* aQuotaClient)
-    : mQuotaClient(aQuotaClient)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(aQuotaClient);
-    MOZ_ASSERT(QuotaClient::GetInstance() == aQuotaClient);
-    MOZ_ASSERT(aQuotaClient->mShutdownRequested);
-  }
-
-  NS_DECL_ISUPPORTS_INHERITED
-
-private:
-  ~ShutdownWorkThreadsRunnable()
-  {
-    MOZ_ASSERT(!mQuotaClient);
-  }
-
-  NS_DECL_NSIRUNNABLE
-};
-
-class QuotaClient::AbortOperationsRunnable final
-  : public nsRunnable
-{
-  const ContentParentId mContentParentId;
-  const nsCString mOrigin;
-
-  nsTArray<RefPtr<Database>> mDatabases;
-
-public:
-  explicit AbortOperationsRunnable(const nsACString& aOrigin)
-    : mOrigin(aOrigin)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(!mOrigin.IsEmpty());
-  }
-
-  explicit AbortOperationsRunnable(ContentParentId aContentParentId)
-    : mContentParentId(aContentParentId)
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(mOrigin.IsEmpty());
-  }
-
-  NS_DECL_ISUPPORTS_INHERITED
-
-private:
-  ~AbortOperationsRunnable()
-  { }
-
-  static PLDHashOperator
-  MatchOrigin(const nsACString& aKey,
-              DatabaseActorInfo* aValue,
-              void* aClosure);
-
-  static PLDHashOperator
-  MatchContentParentId(const nsACString& aKey,
-                       DatabaseActorInfo* aValue,
-                       void* aClosure);
-
-  NS_DECL_NSIRUNNABLE
-};
-
 class QuotaClient::GetDirectoryLockListener final
   : public OpenDirectoryListener
 {
@@ -9163,7 +9149,7 @@ public:
     , mRunId(aRunId)
     , mKey(aKey)
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    AssertIsOnBackgroundThread();
     MOZ_ASSERT(aQuotaClient);
     MOZ_ASSERT(QuotaClient::GetInstance() == aQuotaClient);
   }
@@ -9173,7 +9159,7 @@ public:
 private:
   ~GetDirectoryLockListener()
   {
-    MOZ_ASSERT(NS_IsMainThread());
+    AssertIsOnBackgroundThread();
   }
 
   // OpenDirectoryListener overrides.
@@ -9527,7 +9513,7 @@ AllocPBackgroundIDBFactoryParent(const LoggingInfo& aLoggingInfo)
 {
   AssertIsOnBackgroundThread();
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread())) {
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread())) {
     return nullptr;
   }
 
@@ -9550,7 +9536,7 @@ RecvPBackgroundIDBFactoryConstructor(PBackgroundIDBFactoryParent* aActor,
 {
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(aActor);
-  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnNonMainThread());
+  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnBackgroundThread());
 
   return true;
 }
@@ -9562,6 +9548,26 @@ DeallocPBackgroundIDBFactoryParent(PBackgroundIDBFactoryParent* aActor)
   MOZ_ASSERT(aActor);
 
   RefPtr<Factory> actor = dont_AddRef(static_cast<Factory*>(aActor));
+  return true;
+}
+
+PBackgroundIndexedDBUtilsParent*
+AllocPBackgroundIndexedDBUtilsParent()
+{
+  AssertIsOnBackgroundThread();
+
+  RefPtr<Utils> actor = new Utils();
+
+  return actor.forget().take();
+}
+
+bool
+DeallocPBackgroundIndexedDBUtilsParent(PBackgroundIndexedDBUtilsParent* aActor)
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aActor);
+
+  RefPtr<Utils> actor = dont_AddRef(static_cast<Utils*>(aActor));
   return true;
 }
 
@@ -9592,7 +9598,7 @@ RecvPIndexedDBPermissionRequestConstructor(
   }
 
   if (permission != PermissionRequestBase::kPermissionPrompt) {
-    unused <<
+    Unused <<
       PIndexedDBPermissionRequestParent::Send__delete__(actor, permission);
   }
 
@@ -9614,7 +9620,7 @@ DeallocPIndexedDBPermissionRequestParent(
 already_AddRefed<mozilla::dom::quota::Client>
 CreateQuotaClient()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
 
   RefPtr<QuotaClient> client = new QuotaClient();
   return client.forget();
@@ -9623,6 +9629,18 @@ CreateQuotaClient()
 FileHandleThreadPool*
 GetFileHandleThreadPool()
 {
+  AssertIsOnBackgroundThread();
+
+  if (!gFileHandleThreadPool) {
+    RefPtr<FileHandleThreadPool> fileHandleThreadPool =
+      FileHandleThreadPool::Create();
+    if (NS_WARN_IF(!fileHandleThreadPool)) {
+      return nullptr;
+    }
+
+    gFileHandleThreadPool = fileHandleThreadPool;
+  }
+
   return gFileHandleThreadPool;
 }
 
@@ -9850,7 +9868,7 @@ DatabaseConnection::RollbackWriteTransaction()
 
   // This may fail if SQLite already rolled back the transaction so ignore any
   // errors.
-  unused << stmt->Execute();
+  Unused << stmt->Execute();
 
   mInWriteTransaction = false;
 }
@@ -9978,7 +9996,7 @@ DatabaseConnection::RollbackSavepoint()
 
   // This may fail if SQLite already rolled back the savepoint so ignore any
   // errors.
-  unused << stmt->Execute();
+  Unused << stmt->Execute();
 
   return NS_OK;
 }
@@ -10068,7 +10086,7 @@ DatabaseConnection::DoIdleProcessing(bool aNeedsCheckpoint)
 
     // Release the connection's normal transaction. It's possible that it could
     // fail, but that isn't a problem here.
-    unused << rollbackStmt->Execute();
+    Unused << rollbackStmt->Execute();
 
     mInReadTransaction = false;
   }
@@ -10093,7 +10111,7 @@ DatabaseConnection::DoIdleProcessing(bool aNeedsCheckpoint)
   // Truncate the WAL if we were asked to or if we managed to free some space.
   if (aNeedsCheckpoint || freedSomePages) {
     rv = CheckpointInternal(CheckpointMode::Truncate);
-    unused << NS_WARN_IF(NS_FAILED(rv));
+    Unused << NS_WARN_IF(NS_FAILED(rv));
   }
 
   // Finally try to restart the read transaction if we rolled it back earlier.
@@ -10219,7 +10237,7 @@ DatabaseConnection::ReclaimFreePagesWhileIdle(
     MOZ_ASSERT(mInWriteTransaction);
 
     // Something failed, make sure we roll everything back.
-    unused << aRollbackStatement->Execute();
+    Unused << aRollbackStatement->Execute();
 
     mInWriteTransaction = false;
 
@@ -10281,7 +10299,7 @@ DatabaseConnection::Close()
   AssertIsOnConnectionThread();
   MOZ_ASSERT(mStorageConnection);
   MOZ_ASSERT(!mDEBUGSavepointCount);
-  MOZ_ASSERT(!mInWriteTransaction);
+  MOZ_RELEASE_ASSERT(!mInWriteTransaction);
 
   PROFILER_LABEL("IndexedDB",
                  "DatabaseConnection::Close",
@@ -11187,7 +11205,7 @@ ConnectionPool::Start(const nsID& aBackgroundChildLoggingId,
   }
 
   if (!transactionInfo->mBlockedOn.Count()) {
-    unused << ScheduleTransaction(transactionInfo,
+    Unused << ScheduleTransaction(transactionInfo,
                                   /* aFromQueuedTransactions */ false);
   }
 
@@ -11280,7 +11298,7 @@ ConnectionPool::WaitForDatabasesToComplete(nsTArray<nsCString>&& aDatabaseIds,
   }
 
   if (mayRunCallbackImmediately) {
-    unused << aCallback->Run();
+    Unused << aCallback->Run();
     return;
   }
 
@@ -11352,7 +11370,7 @@ ConnectionPool::Cleanup()
       MOZ_ASSERT(completeCallback);
       MOZ_ASSERT(completeCallback->mCallback);
 
-      unused << completeCallback->mCallback->Run();
+      Unused << completeCallback->mCallback->Run();
     }
 
     mCompleteCallbacks.Clear();
@@ -11878,7 +11896,7 @@ ConnectionPool::NoteClosedDatabase(DatabaseInfo* aDatabaseInfo)
     for (uint32_t index = 0, count = scheduledTransactions.Length();
          index < count;
          index++) {
-      unused << ScheduleTransaction(scheduledTransactions[index],
+      Unused << ScheduleTransaction(scheduledTransactions[index],
                                     /* aFromQueuedTransactions */ false);
     }
 
@@ -11943,7 +11961,7 @@ ConnectionPool::MaybeFireCallback(DatabasesCompleteCallback* aCallback)
     }
   }
 
-  unused << aCallback->mCallback->Run();
+  Unused << aCallback->mCallback->Run();
   return true;
 }
 
@@ -12222,7 +12240,7 @@ FinishCallbackWrapper::Run()
 
     mHasRunOnce = true;
 
-    unused << mCallback->Run();
+    Unused << mCallback->Run();
 
     MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
       mOwningThread->Dispatch(this, NS_DISPATCH_NORMAL)));
@@ -12520,7 +12538,7 @@ TransactionInfo::Schedule()
   MOZ_ASSERT(connectionPool);
   connectionPool->AssertIsOnOwningThread();
 
-  unused <<
+  Unused <<
     connectionPool->ScheduleTransaction(this,
                                         /* aFromQueuedTransactions */ false);
 }
@@ -12584,7 +12602,7 @@ FullDatabaseMetadata::Duplicate() const
 
     newOSMetadata->mCommonMetadata = value->mCommonMetadata;
     newOSMetadata->mNextAutoIncrementId = value->mNextAutoIncrementId;
-    newOSMetadata->mComittedAutoIncrementId = value->mComittedAutoIncrementId;
+    newOSMetadata->mCommittedAutoIncrementId = value->mCommittedAutoIncrementId;
 
     for (auto iter = value->mIndexes.ConstIter(); !iter.Done(); iter.Next()) {
       auto key = iter.Key();
@@ -12638,7 +12656,7 @@ Factory::Factory(already_AddRefed<DatabaseLoggingInfo> aLoggingInfo)
   , mActorDestroyed(false)
 {
   AssertIsOnBackgroundThread();
-  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnNonMainThread());
+  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnBackgroundThread());
 }
 
 Factory::~Factory()
@@ -12651,7 +12669,7 @@ already_AddRefed<Factory>
 Factory::Create(const LoggingInfo& aLoggingInfo)
 {
   AssertIsOnBackgroundThread();
-  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnNonMainThread());
+  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnBackgroundThread());
 
   // If this is the first instance then we need to do some initialization.
   if (!sFactoryInstanceCount) {
@@ -12790,7 +12808,7 @@ Factory::AllocPBackgroundIDBFactoryRequestParent(
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(aParams.type() != FactoryRequestParams::T__None);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread())) {
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread())) {
     return nullptr;
   }
 
@@ -12861,7 +12879,7 @@ Factory::RecvPBackgroundIDBFactoryRequestConstructor(
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(aActor);
   MOZ_ASSERT(aParams.type() != FactoryRequestParams::T__None);
-  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnNonMainThread());
+  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnBackgroundThread());
 
   auto* op = static_cast<FactoryOp*>(aActor);
 
@@ -12910,7 +12928,7 @@ WaitForTransactionsHelper::WaitForTransactions()
 {
   MOZ_ASSERT(mState == State::Initial);
 
-  unused << this->Run();
+  Unused << this->Run();
 }
 
 void
@@ -12995,17 +13013,6 @@ WaitForTransactionsHelper::Run()
     default:
       MOZ_CRASH("Should never get here!");
   }
-
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-UnlockDirectoryRunnable::Run()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(mDirectoryLock);
-
-  mDirectoryLock = nullptr;
 
   return NS_OK;
 }
@@ -13142,7 +13149,7 @@ Database::Invalidate()
   mInvalidated = true;
 
   if (mActorWasAlive && !mActorDestroyed) {
-    unused << SendInvalidate();
+    Unused << SendInvalidate();
   }
 
   if (!Helper::InvalidateTransactions(mTransactions)) {
@@ -13331,12 +13338,7 @@ Database::ConnectionClosedCallback()
   MOZ_ASSERT(!mTransactions.Count());
   MOZ_ASSERT(!mActiveMutableFileCount);
 
-  if (mDirectoryLock) {
-    RefPtr<UnlockDirectoryRunnable> runnable =
-      new UnlockDirectoryRunnable(mDirectoryLock.forget());
-
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
-  }
+  mDirectoryLock = nullptr;
 
   CleanupMetadata();
 }
@@ -13500,7 +13502,8 @@ Database::RecvPBackgroundIDBDatabaseRequestConstructor(
 
   auto* op = static_cast<DatabaseOp*>(aActor);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(op)));
+  op->RunImmediately();
+
   return true;
 }
 
@@ -14748,7 +14751,7 @@ NormalTransaction::SendCompleteNotification(nsresult aResult)
   AssertIsOnBackgroundThread();
 
   if (!IsActorDestroyed()) {
-    unused << SendComplete(aResult);
+    Unused << SendComplete(aResult);
   }
 }
 
@@ -14952,46 +14955,6 @@ VersionChangeTransaction::UpdateMetadata(nsresult aResult)
   MOZ_ASSERT(!!mActorWasAlive == !!mOpenDatabaseOp->mDatabase);
   MOZ_ASSERT_IF(mActorWasAlive, !mOpenDatabaseOp->mDatabaseId.IsEmpty());
 
-  class MOZ_STACK_CLASS Helper final
-  {
-  public:
-    static PLDHashOperator
-    Enumerate(const uint64_t& aKey,
-              RefPtr<FullObjectStoreMetadata>& aValue,
-              void* /* aClosure */)
-    {
-      MOZ_ASSERT(aKey);
-      MOZ_ASSERT(aValue);
-
-      if (aValue->mDeleted) {
-        return PL_DHASH_REMOVE;
-      }
-
-      aValue->mIndexes.Enumerate(Enumerate, nullptr);
-#ifdef DEBUG
-      aValue->mIndexes.MarkImmutable();
-#endif
-
-      return PL_DHASH_NEXT;
-    }
-
-  private:
-    static PLDHashOperator
-    Enumerate(const uint64_t& aKey,
-              RefPtr<FullIndexMetadata>& aValue,
-              void* /* aClosure */)
-    {
-      MOZ_ASSERT(aKey);
-      MOZ_ASSERT(aValue);
-
-      if (aValue->mDeleted) {
-        return PL_DHASH_REMOVE;
-      }
-
-      return PL_DHASH_NEXT;
-    }
-  };
-
   if (IsActorDestroyed() || !mActorWasAlive) {
     return;
   }
@@ -15008,7 +14971,33 @@ VersionChangeTransaction::UpdateMetadata(nsresult aResult)
 
   if (NS_SUCCEEDED(aResult)) {
     // Remove all deleted objectStores and indexes, then mark immutable.
-    info->mMetadata->mObjectStores.Enumerate(Helper::Enumerate, nullptr);
+    for (auto objectStoreIter = info->mMetadata->mObjectStores.Iter();
+         !objectStoreIter.Done();
+         objectStoreIter.Next()) {
+      MOZ_ASSERT(objectStoreIter.Key());
+      RefPtr<FullObjectStoreMetadata>& metadata = objectStoreIter.Data();
+      MOZ_ASSERT(metadata);
+
+      if (metadata->mDeleted) {
+        objectStoreIter.Remove();
+        continue;
+      }
+
+      for (auto indexIter = metadata->mIndexes.Iter();
+           !indexIter.Done();
+           indexIter.Next()) {
+        MOZ_ASSERT(indexIter.Key());
+        RefPtr<FullIndexMetadata>& index = indexIter.Data();
+        MOZ_ASSERT(index);
+
+        if (index->mDeleted) {
+          indexIter.Remove();
+        }
+      }
+#ifdef DEBUG
+      metadata->mIndexes.MarkImmutable();
+#endif
+    }
 #ifdef DEBUG
     info->mMetadata->mObjectStores.MarkImmutable();
 #endif
@@ -15047,7 +15036,7 @@ VersionChangeTransaction::SendCompleteNotification(nsresult aResult)
   openDatabaseOp->mState = OpenDatabaseOp::State::SendingResults;
 
   if (!IsActorDestroyed()) {
-    unused << SendComplete(aResult);
+    Unused << SendComplete(aResult);
   }
 
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(openDatabaseOp->Run()));
@@ -15133,7 +15122,7 @@ VersionChangeTransaction::RecvCreateObjectStore(
   RefPtr<FullObjectStoreMetadata> newMetadata = new FullObjectStoreMetadata();
   newMetadata->mCommonMetadata = aMetadata;
   newMetadata->mNextAutoIncrementId = aMetadata.autoIncrement() ? 1 : 0;
-  newMetadata->mComittedAutoIncrementId = newMetadata->mNextAutoIncrementId;
+  newMetadata->mCommittedAutoIncrementId = newMetadata->mNextAutoIncrementId;
 
   if (NS_WARN_IF(!dbMetadata->mObjectStores.Put(aMetadata.id(), newMetadata,
                                                 fallible))) {
@@ -15158,56 +15147,6 @@ bool
 VersionChangeTransaction::RecvDeleteObjectStore(const int64_t& aObjectStoreId)
 {
   AssertIsOnBackgroundThread();
-
-  class MOZ_STACK_CLASS Helper final
-  {
-    const int64_t mObjectStoreId;
-    bool mIsLastObjectStore;
-    DebugOnly<bool> mFoundTargetId;
-
-  public:
-    static bool
-    IsLastObjectStore(const FullDatabaseMetadata* aDatabaseMetadata,
-                      const int64_t aObjectStoreId)
-    {
-      AssertIsOnBackgroundThread();
-      MOZ_ASSERT(aDatabaseMetadata);
-      MOZ_ASSERT(aObjectStoreId);
-
-      Helper helper(aObjectStoreId);
-      aDatabaseMetadata->mObjectStores.EnumerateRead(&Enumerate, &helper);
-
-      MOZ_ASSERT_IF(helper.mIsLastObjectStore, helper.mFoundTargetId);
-
-      return helper.mIsLastObjectStore;
-    }
-
-  private:
-    explicit
-    Helper(const int64_t aObjectStoreId)
-      : mObjectStoreId(aObjectStoreId)
-      , mIsLastObjectStore(true)
-      , mFoundTargetId(false)
-    { }
-
-    static PLDHashOperator
-    Enumerate(const uint64_t& aKey,
-              FullObjectStoreMetadata* aValue,
-              void* aClosure)
-    {
-      auto* helper = static_cast<Helper*>(aClosure);
-      MOZ_ASSERT(helper);
-
-      if (uint64_t(helper->mObjectStoreId) == aKey) {
-        helper->mFoundTargetId = true;
-      } else if(!aValue->mDeleted) {
-        helper->mIsLastObjectStore = false;
-        return PL_DHASH_STOP;
-      }
-
-      return PL_DHASH_NEXT;
-    }
-  };
 
   if (NS_WARN_IF(!aObjectStoreId)) {
     ASSERT_UNLESS_FUZZING();
@@ -15238,11 +15177,22 @@ VersionChangeTransaction::RecvDeleteObjectStore(const int64_t& aObjectStoreId)
 
   foundMetadata->mDeleted = true;
 
+  bool isLastObjectStore = true;
+  DebugOnly<bool> foundTargetId = false;
+  for (auto iter = dbMetadata->mObjectStores.Iter();
+       !iter.Done();
+       iter.Next()) {
+    if (uint64_t(aObjectStoreId) == iter.Key()) {
+      foundTargetId = true;
+    } else if (!iter.UserData()->mDeleted) {
+      isLastObjectStore = false;
+      break;
+    }
+  }
+  MOZ_ASSERT_IF(isLastObjectStore, foundTargetId);
+
   RefPtr<DeleteObjectStoreOp> op =
-    new DeleteObjectStoreOp(this,
-                            foundMetadata,
-                            Helper::IsLastObjectStore(dbMetadata,
-                                                      aObjectStoreId));
+    new DeleteObjectStoreOp(this, foundMetadata, isLastObjectStore);
 
   if (NS_WARN_IF(!op->Init(this))) {
     op->Cleanup();
@@ -15330,54 +15280,6 @@ VersionChangeTransaction::RecvDeleteIndex(const int64_t& aObjectStoreId,
 {
   AssertIsOnBackgroundThread();
 
-  class MOZ_STACK_CLASS Helper final
-  {
-    const int64_t mIndexId;
-    bool mIsLastIndex;
-    DebugOnly<bool> mFoundTargetId;
-
-  public:
-    static bool
-    IsLastIndex(const FullObjectStoreMetadata* aObjectStoreMetadata,
-                const int64_t aIndexId)
-    {
-      AssertIsOnBackgroundThread();
-      MOZ_ASSERT(aObjectStoreMetadata);
-      MOZ_ASSERT(aIndexId);
-
-      Helper helper(aIndexId);
-      aObjectStoreMetadata->mIndexes.EnumerateRead(&Enumerate, &helper);
-
-      MOZ_ASSERT_IF(helper.mIsLastIndex, helper.mFoundTargetId);
-
-      return helper.mIsLastIndex;
-    }
-
-  private:
-    explicit
-    Helper(const int64_t aIndexId)
-      : mIndexId(aIndexId)
-      , mIsLastIndex(true)
-      , mFoundTargetId(false)
-    { }
-
-    static PLDHashOperator
-    Enumerate(const uint64_t& aKey, FullIndexMetadata* aValue, void* aClosure)
-    {
-      auto* helper = static_cast<Helper*>(aClosure);
-      MOZ_ASSERT(helper);
-
-      if (uint64_t(helper->mIndexId) == aKey) {
-        helper->mFoundTargetId = true;
-      } else if (!aValue->mDeleted) {
-        helper->mIsLastIndex = false;
-        return PL_DHASH_STOP;
-      }
-
-      return PL_DHASH_NEXT;
-    }
-  };
-
   if (NS_WARN_IF(!aObjectStoreId)) {
     ASSERT_UNLESS_FUZZING();
     return false;
@@ -15426,12 +15328,26 @@ VersionChangeTransaction::RecvDeleteIndex(const int64_t& aObjectStoreId,
 
   foundIndexMetadata->mDeleted = true;
 
+  bool isLastIndex = true;
+  DebugOnly<bool> foundTargetId = false;
+  for (auto iter = foundObjectStoreMetadata->mIndexes.ConstIter();
+       !iter.Done();
+       iter.Next()) {
+    if (uint64_t(aIndexId) == iter.Key()) {
+      foundTargetId = true;
+    } else if (!iter.UserData()->mDeleted) {
+      isLastIndex = false;
+      break;
+    }
+  }
+  MOZ_ASSERT_IF(isLastIndex, foundTargetId);
+
   RefPtr<DeleteIndexOp> op =
     new DeleteIndexOp(this,
                       aObjectStoreId,
                       aIndexId,
                       foundIndexMetadata->mCommonMetadata.unique(),
-                      Helper::IsLastIndex(foundObjectStoreMetadata, aIndexId));
+                      isLastIndex);
 
   if (NS_WARN_IF(!op->Init(this))) {
     op->Cleanup();
@@ -15979,22 +15895,6 @@ FileManager::Init(nsIFile* aDirectory,
 nsresult
 FileManager::Invalidate()
 {
-  class MOZ_STACK_CLASS Helper final
-  {
-  public:
-    static PLDHashOperator
-    ClearDBRefs(const uint64_t& aKey, FileInfo*& aValue, void* aUserArg)
-    {
-      MOZ_ASSERT(aValue);
-
-      if (aValue->LockedClearDBRefs()) {
-        return PL_DHASH_NEXT;
-      }
-
-      return PL_DHASH_REMOVE;
-    }
-  };
-
   if (IndexedDatabaseManager::IsClosed()) {
     MOZ_ASSERT(false, "Shouldn't be called after shutdown!");
     return NS_ERROR_UNEXPECTED;
@@ -16005,7 +15905,14 @@ FileManager::Invalidate()
   MOZ_ASSERT(!mInvalidated);
   mInvalidated = true;
 
-  mFileInfos.Enumerate(Helper::ClearDBRefs, nullptr);
+  for (auto iter = mFileInfos.Iter(); !iter.Done(); iter.Next()) {
+    FileInfo* info = iter.Data();
+    MOZ_ASSERT(info);
+
+    if (!info->LockedClearDBRefs()) {
+      iter.Remove();
+    }
+  }
 
   return NS_OK;
 }
@@ -16356,7 +16263,7 @@ FileManager::GetUsage(nsIFile* aDirectory, uint64_t* aUsage)
       return rv;
     }
 
-    quota::IncrementUsage(&usage, uint64_t(fileSize));
+    UsageInfo::IncrementUsage(&usage, uint64_t(fileSize));
   }
 
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -16385,9 +16292,8 @@ QuotaClient::QuotaClient()
   : mMaintenanceStartTime(0)
   , mMaintenanceRunId(0)
   , mShutdownRequested(false)
-  , mIdleObserverRegistered(false)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
   MOZ_ASSERT(!sInstance, "We expect this to be a singleton!");
   MOZ_ASSERT(!gTelemetryIdMutex);
 
@@ -16400,12 +16306,11 @@ QuotaClient::QuotaClient()
 
 QuotaClient::~QuotaClient()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
   MOZ_ASSERT(sInstance == this, "We expect this to be a singleton!");
   MOZ_ASSERT(gTelemetryIdMutex);
   MOZ_ASSERT(!mMaintenanceThreadPool);
   MOZ_ASSERT_IF(mMaintenanceInfoHashtable, !mMaintenanceInfoHashtable->Count());
-  MOZ_ASSERT(!mIdleObserverRegistered);
 
   // No one else should be able to touch gTelemetryIdHashtable now that the
   // QuotaClient has gone away.
@@ -16414,18 +16319,6 @@ QuotaClient::~QuotaClient()
 
   sInstance = nullptr;
 }
-
-void
-QuotaClient::NoteBackgroundThread(nsIEventTarget* aBackgroundThread)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(aBackgroundThread);
-  MOZ_ASSERT(!mShutdownRequested);
-
-  mBackgroundThread = aBackgroundThread;
-}
-
-NS_IMPL_ISUPPORTS(QuotaClient, nsIObserver)
 
 mozilla::dom::quota::Client::Type
 QuotaClient::GetType()
@@ -16777,118 +16670,112 @@ QuotaClient::ReleaseIOThreadObjects()
 void
 QuotaClient::AbortOperations(const nsACString& aOrigin)
 {
-  if (mBackgroundThread) {
-    RefPtr<AbortOperationsRunnable> runnable =
-      new AbortOperationsRunnable(aOrigin);
+  AssertIsOnBackgroundThread();
 
-    if (NS_FAILED(mBackgroundThread->Dispatch(runnable, NS_DISPATCH_NORMAL))) {
-      // This can happen if the thread has shut down already.
-      return;
+  if (!gLiveDatabaseHashtable) {
+    return;
+  }
+
+  nsTArray<RefPtr<Database>> databases;
+
+  for (auto iter = gLiveDatabaseHashtable->ConstIter();
+       !iter.Done(); iter.Next()) {
+    for (Database* database : iter.Data()->mLiveDatabases) {
+      if (aOrigin.IsVoid() || database->Origin() == aOrigin) {
+        databases.AppendElement(database);
+      }
     }
   }
+
+  for (Database* database : databases) {
+    database->Invalidate();
+  }
+
+  databases.Clear();
 }
 
 void
 QuotaClient::AbortOperationsForProcess(ContentParentId aContentParentId)
 {
-  if (mBackgroundThread) {
-    RefPtr<AbortOperationsRunnable> runnable =
-      new AbortOperationsRunnable(aContentParentId);
+  AssertIsOnBackgroundThread();
 
-    if (NS_FAILED(mBackgroundThread->Dispatch(runnable, NS_DISPATCH_NORMAL))) {
-      // This can happen if the thread has shut down already.
-      return;
+  if (!gLiveDatabaseHashtable) {
+    return;
+  }
+
+  nsTArray<RefPtr<Database>> databases;
+
+  for (auto iter = gLiveDatabaseHashtable->ConstIter();
+       !iter.Done(); iter.Next()) {
+    for (Database* database : iter.Data()->mLiveDatabases) {
+      if (database->IsOwnedByProcess(aContentParentId)) {
+        databases.AppendElement(database);
+      }
     }
   }
+
+  for (Database* database : databases) {
+    database->Invalidate();
+  }
+
+  databases.Clear();
 }
 
 void
-QuotaClient::PerformIdleMaintenance()
+QuotaClient::StartIdleMaintenance()
 {
-  using namespace mozilla::hal;
-
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
   MOZ_ASSERT(!mShutdownRequested);
 
-  // If we're running on battery power then skip all idle maintenance since we
-  // would otherwise be doing lots of disk I/O.
-  BatteryInformation batteryInfo;
+  mBackgroundThread = do_GetCurrentThread();
 
-#ifdef MOZ_WIDGET_ANDROID
-  // Android XPCShell doesn't load the AndroidBridge that is needed to make
-  // GetCurrentBatteryInformation work...
-  if (!kRunningXPCShellTests)
-#endif
-  {
-    GetCurrentBatteryInformation(&batteryInfo);
-  }
+  if (!IndexedDatabaseManager::Get()) {
+    nsCOMPtr<nsIRunnable> runnable =
+      NS_NewRunnableMethod(this, &QuotaClient::CreateManager);
+    MOZ_ASSERT(runnable);
 
-  // If we're running XPCShell because we always want to be able to test this
-  // code so pretend that we're always charging.
-  if (kRunningXPCShellTests) {
-    batteryInfo.level() = 100;
-    batteryInfo.charging() = true;
-  }
-
-  if (NS_WARN_IF(!batteryInfo.charging())) {
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
     return;
   }
 
-  // Make sure that the IndexedDatabaseManager is running so that we can check
-  // for low disk space mode.
-  IndexedDatabaseManager* mgr = IndexedDatabaseManager::GetOrCreate();
-  if (NS_WARN_IF(!mgr)) {
-    return;
-  }
+  StartIdleMaintenanceInternal();
+}
 
-  if (kRunningXPCShellTests) {
-    // We don't want user activity to impact this code if we're running tests.
-    unused << Observe(nullptr, OBSERVER_TOPIC_IDLE, nullptr);
-  } else if (!mIdleObserverRegistered) {
-    nsCOMPtr<nsIIdleService> idleService =
-      do_GetService(kIdleServiceContractId);
-    MOZ_ASSERT(idleService);
+void
+QuotaClient::StopIdleMaintenance()
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(!mShutdownRequested);
 
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      idleService->AddIdleObserver(this, kIdleObserverTimeSec)));
-
-    mIdleObserverRegistered = true;
-  }
+  mMaintenanceRunId++;
 }
 
 void
 QuotaClient::ShutdownWorkThreads()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!mShutdownRunnable);
+  AssertIsOnBackgroundThread();
   MOZ_ASSERT(!mShutdownRequested);
 
-  StopIdleMaintenance();
-
   mShutdownRequested = true;
-
-  if (mBackgroundThread) {
-    RefPtr<ShutdownWorkThreadsRunnable> runnable =
-      new ShutdownWorkThreadsRunnable(this);
-
-    if (NS_SUCCEEDED(mBackgroundThread->Dispatch(runnable,
-                                                 NS_DISPATCH_NORMAL))) {
-      mShutdownRunnable = Move(runnable);
-    }
-  }
 
   if (mMaintenanceThreadPool) {
     mMaintenanceThreadPool->Shutdown();
     mMaintenanceThreadPool = nullptr;
   }
 
-  if (mShutdownRunnable) {
-    nsIThread* currentThread = NS_GetCurrentThread();
-    MOZ_ASSERT(currentThread);
+  RefPtr<ConnectionPool> connectionPool = gConnectionPool.get();
+  if (connectionPool) {
+    connectionPool->Shutdown();
 
-    while (mShutdownRunnable) {
-      MOZ_ALWAYS_TRUE(NS_ProcessNextEvent(currentThread));
-    }
+    gConnectionPool = nullptr;
+  }
+
+  RefPtr<FileHandleThreadPool> fileHandleThreadPool =
+    gFileHandleThreadPool.get();
+  if (fileHandleThreadPool) {
+    fileHandleThreadPool->Shutdown();
+
+    gFileHandleThreadPool = nullptr;
   }
 }
 
@@ -17022,26 +16909,29 @@ QuotaClient::GetUsageForDirectoryInternal(nsIFile* aDirectory,
 }
 
 void
-QuotaClient::RemoveIdleObserver()
+QuotaClient::CreateManager()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  if (mIdleObserverRegistered) {
-    nsCOMPtr<nsIIdleService> idleService =
-      do_GetService(kIdleServiceContractId);
-    MOZ_ASSERT(idleService);
-
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
-      idleService->RemoveIdleObserver(this, kIdleObserverTimeSec)));
-
-    mIdleObserverRegistered = false;
+  // Make sure that the IndexedDatabaseManager is running so that we can check
+  // for low disk space mode.
+  IndexedDatabaseManager* mgr = IndexedDatabaseManager::GetOrCreate();
+  if (NS_WARN_IF(!mgr)) {
+    return;
   }
+
+  nsCOMPtr<nsIRunnable> runnable =
+    NS_NewRunnableMethod(this, &QuotaClient::StartIdleMaintenanceInternal);
+  MOZ_ASSERT(runnable);
+
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mBackgroundThread->Dispatch(runnable,
+                                                           NS_DISPATCH_NORMAL)));
 }
 
 void
-QuotaClient::StartIdleMaintenance()
+QuotaClient::StartIdleMaintenanceInternal()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
   MOZ_ASSERT(!mShutdownRequested);
 
   if (!mMaintenanceThreadPool) {
@@ -17087,17 +16977,6 @@ QuotaClient::StartIdleMaintenance()
 
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
     mMaintenanceThreadPool->Dispatch(runnable, NS_DISPATCH_NORMAL)));
-}
-
-void
-QuotaClient::StopIdleMaintenance()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!mShutdownRequested);
-
-  RemoveIdleObserver();
-
-  mMaintenanceRunId++;
 }
 
 void
@@ -17316,7 +17195,8 @@ QuotaClient::FindDatabasesForIdleMaintenance(uint32_t aRunId)
                                     Move(databasePaths)));
         MOZ_ASSERT(runnable);
 
-        MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+        MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
+          mBackgroundThread->Dispatch(runnable, NS_DISPATCH_NORMAL)));
       }
     }
   }
@@ -17327,7 +17207,7 @@ QuotaClient::GetDirectoryLockForIdleMaintenance(
                                      uint32_t aRunId,
                                      MultipleMaintenanceInfo&& aMaintenanceInfo)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
 
   if (IdleMaintenanceMustEnd(aRunId)) {
     return;
@@ -17353,6 +17233,7 @@ QuotaClient::GetDirectoryLockForIdleMaintenance(
   QuotaManager* quotaManager = QuotaManager::Get();
   MOZ_ASSERT(quotaManager);
 
+  // FIXME: This will update origin access time!
   quotaManager->OpenDirectory(maintenanceInfo->mPersistenceType,
                               maintenanceInfo->mGroup,
                               maintenanceInfo->mOrigin,
@@ -17367,7 +17248,7 @@ QuotaClient::ScheduleIdleMaintenance(uint32_t aRunId,
                                      const nsACString& aKey,
                                      const MultipleMaintenanceInfo& aMaintenanceInfo)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
   MOZ_ASSERT(!aKey.IsEmpty());
 
   MOZ_ASSERT(mMaintenanceThreadPool);
@@ -17416,7 +17297,8 @@ QuotaClient::PerformIdleMaintenanceOnDatabase(
       aMaintenanceInfo.mDatabasePath);
   MOZ_ASSERT(runnable);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
+    mBackgroundThread->Dispatch(runnable, NS_DISPATCH_NORMAL)));
 }
 
 void
@@ -17671,7 +17553,7 @@ QuotaClient::DetermineMaintenanceAction(mozIStorageConnection* aConnection,
 
   bool lowDiskSpace = IndexedDatabaseManager::InLowDiskSpaceMode();
 
-  if (kRunningXPCShellTests) {
+  if (QuotaManager::kRunningXPCShellTests) {
     // If we're running XPCShell then we want to test both the low disk space
     // and normal disk space code paths so pick semi-randomly based on the
     // current time.
@@ -17932,7 +17814,7 @@ QuotaClient::MaybeReleaseDirectoryLockForIdleMaintenance(
                                                  const nsACString& aKey,
                                                  const nsAString& aDatabasePath)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
   MOZ_ASSERT(!aKey.IsEmpty());
   MOZ_ASSERT(!aDatabasePath.IsEmpty());
   MOZ_ASSERT(mMaintenanceInfoHashtable);
@@ -17950,27 +17832,6 @@ QuotaClient::MaybeReleaseDirectoryLockForIdleMaintenance(
     // This will delete |maintenanceInfo|.
     mMaintenanceInfoHashtable->Remove(aKey);
   }
-}
-
-NS_IMETHODIMP
-QuotaClient::Observe(nsISupports* aSubject,
-                     const char* aTopic,
-                     const char16_t* aData)
-{
-  MOZ_ASSERT(NS_IsMainThread());
-
-  if (!strcmp(aTopic, OBSERVER_TOPIC_IDLE)) {
-    StartIdleMaintenance();
-    return NS_OK;
-  }
-
-  if (!strcmp(aTopic, OBSERVER_TOPIC_ACTIVE)) {
-    StopIdleMaintenance();
-    return NS_OK;
-  }
-
-  MOZ_ASSERT_UNREACHABLE("Should never get here!");
-  return NS_OK;
 }
 
 nsresult
@@ -18009,7 +17870,7 @@ AutoProgressHandler::Unregister()
 
   nsCOMPtr<mozIStorageProgressHandler> oldHandler;
   nsresult rv = mConnection->RemoveProgressHandler(getter_AddRefs(oldHandler));
-  unused << NS_WARN_IF(NS_FAILED(rv));
+  Unused << NS_WARN_IF(NS_FAILED(rv));
 
   MOZ_ASSERT_IF(NS_SUCCEEDED(rv), oldHandler == this);
 }
@@ -18051,123 +17912,11 @@ AutoProgressHandler::OnProgress(mozIStorageConnection* aConnection,
   return NS_OK;
 }
 
-NS_IMPL_ISUPPORTS_INHERITED0(QuotaClient::ShutdownWorkThreadsRunnable,
-                             nsRunnable)
-
-NS_IMETHODIMP
-QuotaClient::
-ShutdownWorkThreadsRunnable::Run()
-{
-  if (NS_IsMainThread()) {
-    MOZ_ASSERT(QuotaClient::GetInstance() == mQuotaClient);
-    MOZ_ASSERT(mQuotaClient->mShutdownRunnable == this);
-
-    mQuotaClient->mShutdownRunnable = nullptr;
-    mQuotaClient = nullptr;
-
-    return NS_OK;
-  }
-
-  AssertIsOnBackgroundThread();
-
-  RefPtr<ConnectionPool> connectionPool = gConnectionPool.get();
-  if (connectionPool) {
-    connectionPool->Shutdown();
-
-    gConnectionPool = nullptr;
-  }
-
-  RefPtr<FileHandleThreadPool> fileHandleThreadPool =
-    gFileHandleThreadPool.get();
-  if (fileHandleThreadPool) {
-    fileHandleThreadPool->Shutdown();
-
-    gFileHandleThreadPool = nullptr;
-  }
-
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(this)));
-
-  return NS_OK;
-}
-
-// static
-PLDHashOperator
-QuotaClient::
-AbortOperationsRunnable::MatchOrigin(const nsACString& aKey,
-                                     DatabaseActorInfo* aValue,
-                                     void* aClosure)
-{
-  AssertIsOnBackgroundThread();
-  MOZ_ASSERT(!aKey.IsEmpty());
-  MOZ_ASSERT(aValue);
-  MOZ_ASSERT(aClosure);
-
-  auto* closure = static_cast<AbortOperationsRunnable*>(aClosure);
-
-  for (Database* database : aValue->mLiveDatabases) {
-    if (closure->mOrigin.IsVoid() || closure->mOrigin == database->Origin()) {
-      closure->mDatabases.AppendElement(database);
-    }
-  }
-
-  return PL_DHASH_NEXT;
-}
-
-// static
-PLDHashOperator
-QuotaClient::
-AbortOperationsRunnable::MatchContentParentId(const nsACString& aKey,
-                                              DatabaseActorInfo* aValue,
-                                              void* aClosure)
-{
-  AssertIsOnBackgroundThread();
-  MOZ_ASSERT(!aKey.IsEmpty());
-  MOZ_ASSERT(aValue);
-  MOZ_ASSERT(aClosure);
-
-  auto* closure = static_cast<AbortOperationsRunnable*>(aClosure);
-
-  for (Database* database : aValue->mLiveDatabases) {
-    if (database->IsOwnedByProcess(closure->mContentParentId)) {
-      closure->mDatabases.AppendElement(database);
-    }
-  }
-
-  return PL_DHASH_NEXT;
-}
-
-NS_IMPL_ISUPPORTS_INHERITED0(QuotaClient::AbortOperationsRunnable, nsRunnable)
-
-NS_IMETHODIMP
-QuotaClient::
-AbortOperationsRunnable::Run()
-{
-  AssertIsOnBackgroundThread();
-
-  if (!gLiveDatabaseHashtable) {
-    return NS_OK;
-  }
-
-  if (mOrigin.IsEmpty()) {
-    gLiveDatabaseHashtable->EnumerateRead(MatchContentParentId, this);
-  } else {
-    gLiveDatabaseHashtable->EnumerateRead(MatchOrigin, this);
-  }
-
-  for (Database* database : mDatabases) {
-    database->Invalidate();
-  }
-
-  mDatabases.Clear();
-
-  return NS_OK;
-}
-
 void
 QuotaClient::
 GetDirectoryLockListener::DirectoryLockAcquired(DirectoryLock* aLock)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
 
   MultipleMaintenanceInfo* maintenanceInfo;
   MOZ_ALWAYS_TRUE(
@@ -18193,7 +17942,7 @@ void
 QuotaClient::
 GetDirectoryLockListener::DirectoryLockFailed()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnBackgroundThread();
 
   DebugOnly<MultipleMaintenanceInfo*> maintenanceInfo;
   MOZ_ASSERT(
@@ -18609,51 +18358,7 @@ DatabaseOperationBase::GetUniqueIndexTableForObjectStore(
   MOZ_ASSERT(aObjectStoreId);
   MOZ_ASSERT(aMaybeUniqueIndexTable.isNothing());
 
-  class MOZ_STACK_CLASS Helper final
-  {
-  public:
-    static nsresult
-    CopyUniqueValues(const IndexTable& aIndexes,
-                     Maybe<UniqueIndexTable>& aMaybeUniqueIndexTable)
-    {
-      const uint32_t indexCount = aIndexes.Count();
-      MOZ_ASSERT(indexCount);
-
-      aMaybeUniqueIndexTable.emplace();
-
-      aIndexes.EnumerateRead(Enumerate, aMaybeUniqueIndexTable.ptr());
-
-      if (NS_WARN_IF(aMaybeUniqueIndexTable.ref().Count() != indexCount)) {
-        IDB_REPORT_INTERNAL_ERR();
-        aMaybeUniqueIndexTable.reset();
-        return NS_ERROR_OUT_OF_MEMORY;
-      }
-
-#ifdef DEBUG
-      aMaybeUniqueIndexTable.ref().MarkImmutable();
-#endif
-      return NS_OK;
-    }
-
-  private:
-    static PLDHashOperator
-    Enumerate(const uint64_t& aKey, FullIndexMetadata* aValue, void* aClosure)
-    {
-      auto* uniqueIndexTable = static_cast<UniqueIndexTable*>(aClosure);
-      MOZ_ASSERT(uniqueIndexTable);
-      MOZ_ASSERT(!uniqueIndexTable->Get(aValue->mCommonMetadata.id()));
-
-      if (NS_WARN_IF(!uniqueIndexTable->Put(aValue->mCommonMetadata.id(),
-                                            aValue->mCommonMetadata.unique(),
-                                            fallible))) {
-        return PL_DHASH_STOP;
-      }
-
-      return PL_DHASH_NEXT;
-    }
-  };
-
-  const RefPtr<FullObjectStoreMetadata> objectStoreMetadata = 
+  const RefPtr<FullObjectStoreMetadata> objectStoreMetadata =
     aTransaction->GetMetadataForObjectStoreId(aObjectStoreId);
   MOZ_ASSERT(objectStoreMetadata);
 
@@ -18661,11 +18366,34 @@ DatabaseOperationBase::GetUniqueIndexTableForObjectStore(
     return NS_OK;
   }
 
-  nsresult rv = Helper::CopyUniqueValues(objectStoreMetadata->mIndexes,
-                                         aMaybeUniqueIndexTable);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
+  const uint32_t indexCount = objectStoreMetadata->mIndexes.Count();
+  MOZ_ASSERT(indexCount > 0);
+
+  aMaybeUniqueIndexTable.emplace();
+  UniqueIndexTable* uniqueIndexTable = aMaybeUniqueIndexTable.ptr();
+  MOZ_ASSERT(uniqueIndexTable);
+
+  for (auto iter = objectStoreMetadata->mIndexes.Iter(); !iter.Done(); iter.Next()) {
+    FullIndexMetadata* value = iter.UserData();
+    MOZ_ASSERT(!uniqueIndexTable->Get(value->mCommonMetadata.id()));
+
+    if (NS_WARN_IF(!uniqueIndexTable->Put(value->mCommonMetadata.id(),
+                                          value->mCommonMetadata.unique(),
+                                          fallible))) {
+      break;
+    }
   }
+
+  if (NS_WARN_IF(aMaybeUniqueIndexTable.ref().Count() != indexCount)) {
+    IDB_REPORT_INTERNAL_ERR();
+    aMaybeUniqueIndexTable.reset();
+    NS_WARNING("out of memory");
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+
+#ifdef DEBUG
+  aMaybeUniqueIndexTable.ref().MarkImmutable();
+#endif
 
   return NS_OK;
 }
@@ -19101,13 +18829,11 @@ DatabaseOperationBase::UpdateIndexValues(
 
   if (indexDataValues) {
     rv = updateStmt->BindAdoptedBlobByName(indexDataValuesString,
-                                           indexDataValues.get(),
+                                           indexDataValues.release(),
                                            indexDataValuesLength);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
-
-    indexDataValues.release();
   } else {
     rv = updateStmt->BindNullByName(indexDataValuesString);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -19420,7 +19146,7 @@ FactoryOp::FactoryOp(Factory* aFactory,
 {
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(aFactory);
-  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnNonMainThread());
+  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnBackgroundThread());
 }
 
 nsresult
@@ -19433,7 +19159,7 @@ FactoryOp::Open()
   RefPtr<ContentParent> contentParent;
   mContentParent.swap(contentParent);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
       !OperationMayProceed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -19455,30 +19181,21 @@ FactoryOp::Open()
 
   {
     // These services have to be started on the main thread currently.
-    if (NS_WARN_IF(!IndexedDatabaseManager::GetOrCreate())) {
+
+    IndexedDatabaseManager* mgr = IndexedDatabaseManager::GetOrCreate();
+    if (NS_WARN_IF(!mgr)) {
       IDB_REPORT_INTERNAL_ERR();
       return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
     }
+
+    mgr->NoteBackgroundThread(mOwningThread);
 
     nsCOMPtr<mozIStorageService> ss;
     if (NS_WARN_IF(!(ss = do_GetService(MOZ_STORAGE_SERVICE_CONTRACTID)))) {
       IDB_REPORT_INTERNAL_ERR();
       return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
     }
-
-    if (NS_WARN_IF(!QuotaManager::GetOrCreate())) {
-      IDB_REPORT_INTERNAL_ERR();
-      return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-    }
   }
-
-  QuotaClient* quotaClient = QuotaClient::GetInstance();
-  if (NS_WARN_IF(!quotaClient)) {
-    IDB_REPORT_INTERNAL_ERR();
-    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-  }
-
-  quotaClient->NoteBackgroundThread(mOwningThread);
 
   const DatabaseMetadata& metadata = mCommonParams.metadata();
 
@@ -19499,10 +19216,9 @@ FactoryOp::Open()
 
   MOZ_ASSERT(permission == PermissionRequestBase::kPermissionAllowed);
 
-  rv = FinishOpen();
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
+  mState = State::FinishOpen;
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(this,
+                                                       NS_DISPATCH_NORMAL)));
 
   return NS_OK;
 }
@@ -19535,7 +19251,7 @@ FactoryOp::RetryCheckPermission()
   RefPtr<ContentParent> contentParent;
   mContentParent.swap(contentParent);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
       !OperationMayProceed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -19558,10 +19274,9 @@ FactoryOp::RetryCheckPermission()
 
   MOZ_ASSERT(permission == PermissionRequestBase::kPermissionAllowed);
 
-  rv = FinishOpen();
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
+  mState = State::FinishOpen;
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(this,
+                                                       NS_DISPATCH_NORMAL)));
 
   return NS_OK;
 }
@@ -19570,7 +19285,7 @@ nsresult
 FactoryOp::DirectoryOpen()
 {
   AssertIsOnOwningThread();
-  MOZ_ASSERT(mState == State::DirectoryWorkOpen);
+  MOZ_ASSERT(mState == State::DirectoryOpenPending);
   MOZ_ASSERT(mDirectoryLock);
 
   // gFactoryOps could be null here if the child process crashed or something
@@ -19600,7 +19315,10 @@ FactoryOp::DirectoryOpen()
 
   mState = State::DatabaseOpenPending;
   if (!delayed) {
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(this)));
+    nsresult rv = DatabaseOpen();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
   }
 
   return NS_OK;
@@ -19609,10 +19327,10 @@ FactoryOp::DirectoryOpen()
 nsresult
 FactoryOp::SendToIOThread()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnOwningThread();
   MOZ_ASSERT(mState == State::DatabaseOpenPending);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
       !OperationMayProceed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -19642,9 +19360,6 @@ FactoryOp::WaitForTransactions()
   MOZ_ASSERT(!mDatabaseId.IsEmpty());
   MOZ_ASSERT(!IsActorDestroyed());
 
-  nsTArray<nsCString> databaseIds;
-  databaseIds.AppendElement(mDatabaseId);
-
   mState = State::WaitingForTransactionsToComplete;
 
   RefPtr<WaitForTransactionsHelper> helper =
@@ -19665,7 +19380,7 @@ FactoryOp::FinishSendResults()
 
   if (mBlockedDatabaseOpen) {
     if (mDelayedOp) {
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(mDelayedOp)));
+      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToCurrentThread(mDelayedOp)));
       mDelayedOp = nullptr;
     }
 
@@ -19954,34 +19669,58 @@ FactoryOp::CheckAtLeastOneAppHasPermission(ContentParent* aContentParent,
 #endif // MOZ_CHILD_PERMISSIONS
 }
 
-nsresult
+void
 FactoryOp::FinishOpen()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(mState == State::Initial || mState == State::PermissionRetry);
-  MOZ_ASSERT(!mOrigin.IsEmpty());
-  MOZ_ASSERT(!mDatabaseId.IsEmpty());
-  MOZ_ASSERT(!mDirectoryLock);
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mState == State::FinishOpen);
   MOZ_ASSERT(!mContentParent);
-  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnMainThread());
 
-  QuotaManager* quotaManager = QuotaManager::GetOrCreate();
-  if (NS_WARN_IF(!quotaManager)) {
-    IDB_REPORT_INTERNAL_ERR();
-    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
+  if (QuotaManager::Get()) {
+    OpenDirectory();
+
+    return;
   }
+
+  mState = State::QuotaManagerPending;
+  QuotaManager::GetOrCreate(this);
+}
+
+nsresult
+FactoryOp::QuotaManagerOpen()
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mState == State::QuotaManagerPending);
+
+  if (NS_WARN_IF(!QuotaManager::Get())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  OpenDirectory();
+
+  return NS_OK;
+}
+
+void
+FactoryOp::OpenDirectory()
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mState == State::FinishOpen ||
+             mState == State::QuotaManagerPending);
+  MOZ_ASSERT(!mOrigin.IsEmpty());
+  MOZ_ASSERT(!mDirectoryLock);
+  MOZ_ASSERT(!QuotaClient::IsShuttingDownOnBackgroundThread());
+  MOZ_ASSERT(QuotaManager::Get());
 
   mState = State::DirectoryOpenPending;
 
-  quotaManager->OpenDirectory(mCommonParams.metadata().persistenceType(),
-                              mGroup,
-                              mOrigin,
-                              mIsApp,
-                              Client::IDB,
-                              /* aExclusive */ false,
-                              this);
-
-  return NS_OK;
+  QuotaManager::Get()->OpenDirectory(mCommonParams.metadata().persistenceType(),
+                                     mGroup,
+                                     mOrigin,
+                                     mIsApp,
+                                     Client::IDB,
+                                     /* aExclusive */ false,
+                                     this);
 }
 
 bool
@@ -20048,8 +19787,12 @@ FactoryOp::Run()
       rv = RetryCheckPermission();
       break;
 
-    case State::DirectoryWorkOpen:
-      rv = DirectoryOpen();
+    case State::FinishOpen:
+      FinishOpen();
+      return NS_OK;
+
+    case State::QuotaManagerPending:
+      rv = QuotaManagerOpen();
       break;
 
     case State::DatabaseOpenPending:
@@ -20099,21 +19842,29 @@ FactoryOp::Run()
 void
 FactoryOp::DirectoryLockAcquired(DirectoryLock* aLock)
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnOwningThread();
   MOZ_ASSERT(mState == State::DirectoryOpenPending);
   MOZ_ASSERT(!mDirectoryLock);
 
   mDirectoryLock = aLock;
 
-  mState = State::DirectoryWorkOpen;
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(this,
-                                                       NS_DISPATCH_NORMAL)));
+  nsresult rv = DirectoryOpen();
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    if (NS_SUCCEEDED(mResultCode)) {
+      mResultCode = rv;
+    }
+
+    mState = State::SendingResults;
+    SendResults();
+
+    return;
+  }
 }
 
 void
 FactoryOp::DirectoryLockFailed()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnOwningThread();
   MOZ_ASSERT(mState == State::DirectoryOpenPending);
   MOZ_ASSERT(!mDirectoryLock);
 
@@ -20123,8 +19874,7 @@ FactoryOp::DirectoryLockFailed()
   }
 
   mState = State::SendingResults;
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(mOwningThread->Dispatch(this,
-                                                       NS_DISPATCH_NORMAL)));
+  SendResults();
 }
 
 void
@@ -20183,7 +19933,7 @@ OpenDatabaseOp::ActorDestroy(ActorDestroyReason aWhy)
 nsresult
 OpenDatabaseOp::DatabaseOpen()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnOwningThread();
   MOZ_ASSERT(mState == State::DatabaseOpenPending);
 
   nsresult rv = SendToIOThread();
@@ -20204,7 +19954,7 @@ OpenDatabaseOp::DoDatabaseWork()
                  "OpenDatabaseOp::DoDatabaseWork",
                  js::ProfileEntry::Category::STORAGE);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
       !OperationMayProceed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -20504,7 +20254,7 @@ OpenDatabaseOp::LoadDatabaseInformation(mozIStorageConnection* aConnection)
 
     metadata->mCommonMetadata.autoIncrement() = !!nextAutoIncrementId;
     metadata->mNextAutoIncrementId = nextAutoIncrementId;
-    metadata->mComittedAutoIncrementId = nextAutoIncrementId;
+    metadata->mCommittedAutoIncrementId = nextAutoIncrementId;
 
     if (NS_WARN_IF(!objectStores.Put(objectStoreId, metadata, fallible))) {
       return NS_ERROR_OUT_OF_MEMORY;
@@ -20816,7 +20566,7 @@ OpenDatabaseOp::BeginVersionChange()
   MOZ_ASSERT(!mDatabase);
   MOZ_ASSERT(!mVersionChangeTransaction);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
       IsActorDestroyed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -20932,7 +20682,7 @@ OpenDatabaseOp::SendBlockedNotification()
   MOZ_ASSERT(mState == State::WaitingForOtherDatabasesToClose);
 
   if (!IsActorDestroyed()) {
-    unused << SendBlocked(mMetadata->mCommonMetadata.version());
+    Unused << SendBlocked(mMetadata->mCommonMetadata.version());
   }
 }
 
@@ -20946,7 +20696,7 @@ OpenDatabaseOp::DispatchToWorkThread()
                IDBTransaction::VERSION_CHANGE);
   MOZ_ASSERT(mMaybeBlockedDatabases.IsEmpty());
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
       IsActorDestroyed() ||
       mDatabase->IsInvalidated()) {
     IDB_REPORT_INTERNAL_ERR();
@@ -20999,7 +20749,7 @@ OpenDatabaseOp::SendUpgradeNeeded()
   MOZ_ASSERT(NS_SUCCEEDED(mResultCode));
   MOZ_ASSERT_IF(!IsActorDestroyed(), mDatabase);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
       IsActorDestroyed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -21095,7 +20845,7 @@ OpenDatabaseOp::SendResults()
       response = ClampResultCode(mResultCode);
     }
 
-    unused <<
+    Unused <<
       PBackgroundIDBFactoryRequestParent::Send__delete__(this, response);
   }
 
@@ -21127,10 +20877,7 @@ OpenDatabaseOp::ConnectionClosedCallback()
   MOZ_ASSERT(NS_FAILED(mResultCode));
   MOZ_ASSERT(mDirectoryLock);
 
-  RefPtr<UnlockDirectoryRunnable> runnable =
-    new UnlockDirectoryRunnable(mDirectoryLock.forget());
-
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
+  mDirectoryLock = nullptr;
 }
 
 void
@@ -21219,79 +20966,32 @@ OpenDatabaseOp::MetadataToSpec(DatabaseSpec& aSpec)
   AssertIsOnOwningThread();
   MOZ_ASSERT(mMetadata);
 
-  class MOZ_STACK_CLASS Helper final
-  {
-    DatabaseSpec& mSpec;
-    ObjectStoreSpec* mCurrentObjectStoreSpec;
+  aSpec.metadata() = mMetadata->mCommonMetadata;
 
-  public:
-    static void
-    CopyToSpec(const FullDatabaseMetadata* aMetadata, DatabaseSpec& aSpec)
-    {
-      AssertIsOnBackgroundThread();
-      MOZ_ASSERT(aMetadata);
+  for (auto objectStoreIter = mMetadata->mObjectStores.ConstIter();
+       !objectStoreIter.Done();
+       objectStoreIter.Next()) {
+    FullObjectStoreMetadata* metadata = objectStoreIter.UserData();
+    MOZ_ASSERT(objectStoreIter.Key());
+    MOZ_ASSERT(metadata);
 
-      aSpec.metadata() = aMetadata->mCommonMetadata;
+    // XXX This should really be fallible...
+    ObjectStoreSpec* objectStoreSpec = aSpec.objectStores().AppendElement();
+    objectStoreSpec->metadata() = metadata->mCommonMetadata;
 
-      Helper helper(aSpec);
-      aMetadata->mObjectStores.EnumerateRead(Enumerate, &helper);
-    }
-
-  private:
-    explicit Helper(DatabaseSpec& aSpec)
-      : mSpec(aSpec)
-      , mCurrentObjectStoreSpec(nullptr)
-    { }
-
-    static PLDHashOperator
-    Enumerate(const uint64_t& aKey,
-              FullObjectStoreMetadata* aValue,
-              void* aClosure)
-    {
-      MOZ_ASSERT(aKey);
-      MOZ_ASSERT(aValue);
-      MOZ_ASSERT(aClosure);
-
-      auto* helper = static_cast<Helper*>(aClosure);
-
-      MOZ_ASSERT(!helper->mCurrentObjectStoreSpec);
+    for (auto indexIter = metadata->mIndexes.Iter();
+         !indexIter.Done();
+         indexIter.Next()) {
+      FullIndexMetadata* indexMetadata = indexIter.UserData();
+      MOZ_ASSERT(indexIter.Key());
+      MOZ_ASSERT(indexMetadata);
 
       // XXX This should really be fallible...
-      ObjectStoreSpec* objectStoreSpec =
-        helper->mSpec.objectStores().AppendElement();
-      objectStoreSpec->metadata() = aValue->mCommonMetadata;
-
-      AutoRestore<ObjectStoreSpec*> ar(helper->mCurrentObjectStoreSpec);
-      helper->mCurrentObjectStoreSpec = objectStoreSpec;
-
-      aValue->mIndexes.EnumerateRead(Enumerate, helper);
-
-      return PL_DHASH_NEXT;
+      IndexMetadata* metadata = objectStoreSpec->indexes().AppendElement();
+      *metadata = indexMetadata->mCommonMetadata;
     }
-
-    static PLDHashOperator
-    Enumerate(const uint64_t& aKey, FullIndexMetadata* aValue, void* aClosure)
-    {
-      MOZ_ASSERT(aKey);
-      MOZ_ASSERT(aValue);
-      MOZ_ASSERT(aClosure);
-
-      auto* helper = static_cast<Helper*>(aClosure);
-
-      MOZ_ASSERT(helper->mCurrentObjectStoreSpec);
-
-      // XXX This should really be fallible...
-      IndexMetadata* metadata =
-        helper->mCurrentObjectStoreSpec->indexes().AppendElement();
-      *metadata = aValue->mCommonMetadata;
-
-      return PL_DHASH_NEXT;
-    }
-  };
-
-  Helper::CopyToSpec(mMetadata, aSpec);
+  }
 }
-
 
 #ifdef DEBUG
 
@@ -21299,110 +20999,6 @@ void
 OpenDatabaseOp::AssertMetadataConsistency(const FullDatabaseMetadata* aMetadata)
 {
   AssertIsOnBackgroundThread();
-
-  class MOZ_STACK_CLASS Helper final
-  {
-    const ObjectStoreTable& mOtherObjectStores;
-    IndexTable* mCurrentOtherIndexTable;
-
-  public:
-    static void
-    AssertConsistent(const ObjectStoreTable& aThisObjectStores,
-                     const ObjectStoreTable& aOtherObjectStores)
-    {
-      Helper helper(aOtherObjectStores);
-      aThisObjectStores.EnumerateRead(Enumerate, &helper);
-    }
-
-  private:
-    explicit Helper(const ObjectStoreTable& aOtherObjectStores)
-      : mOtherObjectStores(aOtherObjectStores)
-      , mCurrentOtherIndexTable(nullptr)
-    { }
-
-    static PLDHashOperator
-    Enumerate(const uint64_t& /* aKey */,
-              FullObjectStoreMetadata* aThisObjectStore,
-              void* aClosure)
-    {
-      MOZ_ASSERT(aThisObjectStore);
-      MOZ_ASSERT(!aThisObjectStore->mDeleted);
-      MOZ_ASSERT(aClosure);
-
-      auto* helper = static_cast<Helper*>(aClosure);
-
-      MOZ_ASSERT(!helper->mCurrentOtherIndexTable);
-
-      auto* otherObjectStore =
-        MetadataNameOrIdMatcher<FullObjectStoreMetadata>::Match(
-          helper->mOtherObjectStores, aThisObjectStore->mCommonMetadata.id());
-      MOZ_ASSERT(otherObjectStore);
-
-      MOZ_ASSERT(aThisObjectStore != otherObjectStore);
-
-      MOZ_ASSERT(aThisObjectStore->mCommonMetadata.id() ==
-                   otherObjectStore->mCommonMetadata.id());
-      MOZ_ASSERT(aThisObjectStore->mCommonMetadata.name() ==
-                   otherObjectStore->mCommonMetadata.name());
-      MOZ_ASSERT(aThisObjectStore->mCommonMetadata.autoIncrement() ==
-                   otherObjectStore->mCommonMetadata.autoIncrement());
-      MOZ_ASSERT(aThisObjectStore->mCommonMetadata.keyPath() ==
-                   otherObjectStore->mCommonMetadata.keyPath());
-      // mNextAutoIncrementId and mComittedAutoIncrementId may be modified
-      // concurrently with this OpenOp, so it is not possible to assert equality
-      // here.
-      MOZ_ASSERT(aThisObjectStore->mNextAutoIncrementId <=
-                   otherObjectStore->mNextAutoIncrementId);
-      MOZ_ASSERT(aThisObjectStore->mComittedAutoIncrementId <=
-                   otherObjectStore->mComittedAutoIncrementId);
-      MOZ_ASSERT(!otherObjectStore->mDeleted);
-
-      MOZ_ASSERT(aThisObjectStore->mIndexes.Count() ==
-                   otherObjectStore->mIndexes.Count());
-
-      AutoRestore<IndexTable*> ar(helper->mCurrentOtherIndexTable);
-      helper->mCurrentOtherIndexTable = &otherObjectStore->mIndexes;
-
-      aThisObjectStore->mIndexes.EnumerateRead(Enumerate, helper);
-
-      return PL_DHASH_NEXT;
-    }
-
-    static PLDHashOperator
-    Enumerate(const uint64_t& /* aKey */,
-              FullIndexMetadata* aThisIndex,
-              void* aClosure)
-    {
-      MOZ_ASSERT(aThisIndex);
-      MOZ_ASSERT(!aThisIndex->mDeleted);
-      MOZ_ASSERT(aClosure);
-
-      auto* helper = static_cast<Helper*>(aClosure);
-
-      MOZ_ASSERT(helper->mCurrentOtherIndexTable);
-
-      auto* otherIndex =
-        MetadataNameOrIdMatcher<FullIndexMetadata>::Match(
-          *helper->mCurrentOtherIndexTable, aThisIndex->mCommonMetadata.id());
-      MOZ_ASSERT(otherIndex);
-
-      MOZ_ASSERT(aThisIndex != otherIndex);
-
-      MOZ_ASSERT(aThisIndex->mCommonMetadata.id() ==
-                   otherIndex->mCommonMetadata.id());
-      MOZ_ASSERT(aThisIndex->mCommonMetadata.name() ==
-                   otherIndex->mCommonMetadata.name());
-      MOZ_ASSERT(aThisIndex->mCommonMetadata.keyPath() ==
-                   otherIndex->mCommonMetadata.keyPath());
-      MOZ_ASSERT(aThisIndex->mCommonMetadata.unique() ==
-                   otherIndex->mCommonMetadata.unique());
-      MOZ_ASSERT(aThisIndex->mCommonMetadata.multiEntry() ==
-                   otherIndex->mCommonMetadata.multiEntry());
-      MOZ_ASSERT(!otherIndex->mDeleted);
-
-      return PL_DHASH_NEXT;
-    }
-  };
 
   const FullDatabaseMetadata* thisDB = mMetadata;
   const FullDatabaseMetadata* otherDB = aMetadata;
@@ -21428,7 +21024,70 @@ OpenDatabaseOp::AssertMetadataConsistency(const FullDatabaseMetadata* aMetadata)
 
   MOZ_ASSERT(thisDB->mObjectStores.Count() == otherDB->mObjectStores.Count());
 
-  Helper::AssertConsistent(thisDB->mObjectStores, otherDB->mObjectStores);
+  for (auto objectStoreIter = thisDB->mObjectStores.ConstIter();
+       !objectStoreIter.Done();
+       objectStoreIter.Next()) {
+    FullObjectStoreMetadata* thisObjectStore = objectStoreIter.UserData();
+    MOZ_ASSERT(thisObjectStore);
+    MOZ_ASSERT(!thisObjectStore->mDeleted);
+
+    auto* otherObjectStore =
+      MetadataNameOrIdMatcher<FullObjectStoreMetadata>::Match(
+        otherDB->mObjectStores, thisObjectStore->mCommonMetadata.id());
+    MOZ_ASSERT(otherObjectStore);
+
+    MOZ_ASSERT(thisObjectStore != otherObjectStore);
+
+    MOZ_ASSERT(thisObjectStore->mCommonMetadata.id() ==
+                 otherObjectStore->mCommonMetadata.id());
+    MOZ_ASSERT(thisObjectStore->mCommonMetadata.name() ==
+                 otherObjectStore->mCommonMetadata.name());
+    MOZ_ASSERT(thisObjectStore->mCommonMetadata.autoIncrement() ==
+                 otherObjectStore->mCommonMetadata.autoIncrement());
+    MOZ_ASSERT(thisObjectStore->mCommonMetadata.keyPath() ==
+                 otherObjectStore->mCommonMetadata.keyPath());
+    // mNextAutoIncrementId and mCommittedAutoIncrementId may be modified
+    // concurrently with this OpenOp, so it is not possible to assert equality
+    // here. It's also possible that we've written the new ids to disk but not
+    // yet updated the in-memory count.
+    MOZ_ASSERT(thisObjectStore->mNextAutoIncrementId <=
+                 otherObjectStore->mNextAutoIncrementId);
+    MOZ_ASSERT(thisObjectStore->mCommittedAutoIncrementId <=
+                 otherObjectStore->mCommittedAutoIncrementId ||
+               thisObjectStore->mCommittedAutoIncrementId ==
+                 otherObjectStore->mNextAutoIncrementId);
+    MOZ_ASSERT(!otherObjectStore->mDeleted);
+
+    MOZ_ASSERT(thisObjectStore->mIndexes.Count() ==
+                 otherObjectStore->mIndexes.Count());
+
+    for (auto indexIter = thisObjectStore->mIndexes.Iter();
+         !indexIter.Done();
+         indexIter.Next()) {
+      FullIndexMetadata* thisIndex = indexIter.UserData();
+      MOZ_ASSERT(thisIndex);
+      MOZ_ASSERT(!thisIndex->mDeleted);
+
+      auto* otherIndex =
+        MetadataNameOrIdMatcher<FullIndexMetadata>::
+          Match(otherObjectStore->mIndexes, thisIndex->mCommonMetadata.id());
+      MOZ_ASSERT(otherIndex);
+
+      MOZ_ASSERT(thisIndex != otherIndex);
+
+      MOZ_ASSERT(thisIndex->mCommonMetadata.id() ==
+                   otherIndex->mCommonMetadata.id());
+      MOZ_ASSERT(thisIndex->mCommonMetadata.name() ==
+                   otherIndex->mCommonMetadata.name());
+      MOZ_ASSERT(thisIndex->mCommonMetadata.keyPath() ==
+                   otherIndex->mCommonMetadata.keyPath());
+      MOZ_ASSERT(thisIndex->mCommonMetadata.unique() ==
+                   otherIndex->mCommonMetadata.unique());
+      MOZ_ASSERT(thisIndex->mCommonMetadata.multiEntry() ==
+                   otherIndex->mCommonMetadata.multiEntry());
+      MOZ_ASSERT(!otherIndex->mDeleted);
+    }
+  }
 }
 
 #endif // DEBUG
@@ -21442,7 +21101,7 @@ VersionChangeOp::DoDatabaseWork(DatabaseConnection* aConnection)
   MOZ_ASSERT(mOpenDatabaseOp);
   MOZ_ASSERT(mOpenDatabaseOp->mState == State::DatabaseWorkVersionChange);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
       !OperationMayProceed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -21619,7 +21278,7 @@ DeleteDatabaseOp::LoadPreviousVersion(nsIFile* aDatabaseFile)
 nsresult
 DeleteDatabaseOp::DatabaseOpen()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnOwningThread();
   MOZ_ASSERT(mState == State::DatabaseOpenPending);
 
   // Swap this to the stack now to ensure that we release it on this thread.
@@ -21644,7 +21303,7 @@ DeleteDatabaseOp::DoDatabaseWork()
                  "DeleteDatabaseOp::DoDatabaseWork",
                  js::ProfileEntry::Category::STORAGE);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
       !OperationMayProceed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -21721,7 +21380,7 @@ DeleteDatabaseOp::BeginVersionChange()
   MOZ_ASSERT(mState == State::BeginVersionChange);
   MOZ_ASSERT(mMaybeBlockedDatabases.IsEmpty());
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
       IsActorDestroyed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -21760,7 +21419,7 @@ DeleteDatabaseOp::DispatchToWorkThread()
   MOZ_ASSERT(mState == State::WaitingForTransactionsToComplete);
   MOZ_ASSERT(mMaybeBlockedDatabases.IsEmpty());
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnBackgroundThread()) ||
       IsActorDestroyed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -21770,7 +21429,15 @@ DeleteDatabaseOp::DispatchToWorkThread()
 
   RefPtr<VersionChangeOp> versionChangeOp = new VersionChangeOp(this);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(versionChangeOp)));
+  QuotaManager* quotaManager = QuotaManager::Get();
+  MOZ_ASSERT(quotaManager);
+
+  nsresult rv =
+    quotaManager->IOThread()->Dispatch(versionChangeOp, NS_DISPATCH_NORMAL);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    IDB_REPORT_INTERNAL_ERR();
+    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
+  }
 
   return NS_OK;
 }
@@ -21821,7 +21488,7 @@ DeleteDatabaseOp::SendBlockedNotification()
   MOZ_ASSERT(mState == State::WaitingForOtherDatabasesToClose);
 
   if (!IsActorDestroyed()) {
-    unused << SendBlocked(0);
+    Unused << SendBlocked(0);
   }
 }
 
@@ -21840,45 +21507,14 @@ DeleteDatabaseOp::SendResults()
       response = ClampResultCode(mResultCode);
     }
 
-    unused <<
+    Unused <<
       PBackgroundIDBFactoryRequestParent::Send__delete__(this, response);
   }
 
-  if (mDirectoryLock) {
-    RefPtr<UnlockDirectoryRunnable> runnable =
-      new UnlockDirectoryRunnable(mDirectoryLock.forget());
-
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToMainThread(runnable)));
-  }
+  mDirectoryLock = nullptr;
 
   FinishSendResults();
 }
-
-nsresult
-DeleteDatabaseOp::
-VersionChangeOp::RunOnMainThread()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(mDeleteDatabaseOp->mState == State::DatabaseWorkVersionChange);
-
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnMainThread()) ||
-      !OperationMayProceed()) {
-    IDB_REPORT_INTERNAL_ERR();
-    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-  }
-
-  QuotaManager* quotaManager = QuotaManager::Get();
-  MOZ_ASSERT(quotaManager);
-
-  nsresult rv = quotaManager->IOThread()->Dispatch(this, NS_DISPATCH_NORMAL);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    IDB_REPORT_INTERNAL_ERR();
-    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-  }
-
-  return NS_OK;
-}
-
 
 nsresult
 DeleteDatabaseOp::
@@ -21958,7 +21594,7 @@ VersionChangeOp::RunOnIOThread()
                  "DeleteDatabaseOp::VersionChangeOp::RunOnIOThread",
                  js::ProfileEntry::Category::STORAGE);
 
-  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonMainThread()) ||
+  if (NS_WARN_IF(QuotaClient::IsShuttingDownOnNonBackgroundThread()) ||
       !OperationMayProceed()) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -22182,9 +21818,7 @@ VersionChangeOp::Run()
 {
   nsresult rv;
 
-  if (NS_IsMainThread()) {
-    rv = RunOnMainThread();
-  } else if (!IsOnBackgroundThread()) {
+  if (IsOnIOThread()) {
     rv = RunOnIOThread();
   } else {
     RunOnOwningThread();
@@ -22504,9 +22138,9 @@ CommitOp::CommitOrRollbackAutoIncrementCounts()
       RefPtr<FullObjectStoreMetadata>& metadata = metadataArray[index];
 
       if (committed) {
-        metadata->mComittedAutoIncrementId = metadata->mNextAutoIncrementId;
+        metadata->mCommittedAutoIncrementId = metadata->mNextAutoIncrementId;
       } else {
-        metadata->mNextAutoIncrementId = metadata->mComittedAutoIncrementId;
+        metadata->mNextAutoIncrementId = metadata->mCommittedAutoIncrementId;
       }
     }
   }
@@ -22699,7 +22333,7 @@ DatabaseOp::DatabaseOp(Database* aDatabase)
 nsresult
 DatabaseOp::SendToIOThread()
 {
-  MOZ_ASSERT(NS_IsMainThread());
+  AssertIsOnOwningThread();
   MOZ_ASSERT(mState == State::Initial);
 
   if (!OperationMayProceed()) {
@@ -22914,7 +22548,7 @@ CreateFileOp::SendResults()
       response = ClampResultCode(mResultCode);
     }
 
-    unused <<
+    Unused <<
       PBackgroundIDBDatabaseRequestParent::Send__delete__(this, response);
   }
 
@@ -23595,8 +23229,9 @@ NormalJSRuntime::Init()
 
   JSAutoRequest ar(mContext);
 
+  JS::CompartmentOptions options;
   mGlobal = JS_NewGlobalObject(mContext, &kGlobalClass, nullptr,
-                               JS::FireOnNewGlobalHook);
+                               JS::FireOnNewGlobalHook, options);
   if (NS_WARN_IF(!mGlobal)) {
     return false;
   }
@@ -24798,12 +24433,9 @@ ObjectStoreAddOrPutRequestOp::DoDatabaseWork(DatabaseConnection* aConnection)
     uint8_t* dataBuffer = reinterpret_cast<uint8_t*>(compressed);
     size_t dataBufferLength = compressedLength;
 
-    // If this call succeeds, | compressed | is now owned by the statement, and
-    // we are no longer responsible for it.
     rv = stmt->BindAdoptedBlobByName(NS_LITERAL_CSTRING("data"), dataBuffer,
                                      dataBufferLength);
     if (NS_WARN_IF(NS_FAILED(rv))) {
-      free(compressed);
       return rv;
     }
   }
@@ -27266,13 +26898,179 @@ ContinueOp::SendSuccessResult()
   return NS_OK;
 }
 
+Utils::Utils()
+#ifdef DEBUG
+  : mActorDestroyed(false)
+#endif
+{
+  AssertIsOnBackgroundThread();
+}
+
+Utils::~Utils()
+{
+  MOZ_ASSERT(mActorDestroyed);
+}
+
+void
+Utils::ActorDestroy(ActorDestroyReason aWhy)
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(!mActorDestroyed);
+
+#ifdef DEBUG
+  mActorDestroyed = true;
+#endif
+}
+
+bool
+Utils::RecvDeleteMe()
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(!mActorDestroyed);
+
+  return PBackgroundIndexedDBUtilsParent::Send__delete__(this);
+}
+
+bool
+Utils::RecvGetFileReferences(const PersistenceType& aPersistenceType,
+                             const nsCString& aOrigin,
+                             const nsString& aDatabaseName,
+                             const int64_t& aFileId,
+                             int32_t* aRefCnt,
+                             int32_t* aDBRefCnt,
+                             int32_t* aSliceRefCnt,
+                             bool* aResult)
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aRefCnt);
+  MOZ_ASSERT(aDBRefCnt);
+  MOZ_ASSERT(aSliceRefCnt);
+  MOZ_ASSERT(aResult);
+  MOZ_ASSERT(!mActorDestroyed);
+
+  if (NS_WARN_IF(!IndexedDatabaseManager::Get() ||
+                 !QuotaManager::Get())) {
+    ASSERT_UNLESS_FUZZING();
+    return false;
+  }
+
+  if (NS_WARN_IF(!IndexedDatabaseManager::InTestingMode())) {
+    ASSERT_UNLESS_FUZZING();
+    return false;
+  }
+
+  if (NS_WARN_IF(aPersistenceType != quota::PERSISTENCE_TYPE_PERSISTENT &&
+                 aPersistenceType != quota::PERSISTENCE_TYPE_TEMPORARY &&
+                 aPersistenceType != quota::PERSISTENCE_TYPE_DEFAULT)) {
+    ASSERT_UNLESS_FUZZING();
+    return false;
+  }
+
+  if (NS_WARN_IF(aOrigin.IsEmpty())) {
+    ASSERT_UNLESS_FUZZING();
+    return false;
+  }
+
+  if (NS_WARN_IF(aDatabaseName.IsEmpty())) {
+    ASSERT_UNLESS_FUZZING();
+    return false;
+  }
+
+  if (NS_WARN_IF(aFileId == 0)) {
+    ASSERT_UNLESS_FUZZING();
+    return false;
+  }
+
+  RefPtr<GetFileReferencesHelper> helper =
+    new GetFileReferencesHelper(aPersistenceType, aOrigin, aDatabaseName,
+                                aFileId);
+
+  nsresult rv =
+    helper->DispatchAndReturnFileReferences(aRefCnt, aDBRefCnt,
+                                            aSliceRefCnt, aResult);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+
+  return true;
+}
+
+nsresult
+GetFileReferencesHelper::DispatchAndReturnFileReferences(int32_t* aMemRefCnt,
+                                                         int32_t* aDBRefCnt,
+                                                         int32_t* aSliceRefCnt,
+                                                         bool* aResult)
+{
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aMemRefCnt);
+  MOZ_ASSERT(aDBRefCnt);
+  MOZ_ASSERT(aSliceRefCnt);
+  MOZ_ASSERT(aResult);
+
+  QuotaManager* quotaManager = QuotaManager::Get();
+  MOZ_ASSERT(quotaManager);
+
+  nsresult rv =
+    quotaManager->IOThread()->Dispatch(this, NS_DISPATCH_NORMAL);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  mozilla::MutexAutoLock autolock(mMutex);
+  while (mWaiting) {
+    mCondVar.Wait();
+  }
+
+  *aMemRefCnt = mMemRefCnt;
+  *aDBRefCnt = mDBRefCnt;
+  *aSliceRefCnt = mSliceRefCnt;
+  *aResult = mResult;
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+GetFileReferencesHelper::Run()
+{
+  AssertIsOnIOThread();
+
+  IndexedDatabaseManager* mgr = IndexedDatabaseManager::Get();
+  MOZ_ASSERT(mgr);
+
+  RefPtr<FileManager> fileManager =
+    mgr->GetFileManager(mPersistenceType, mOrigin, mDatabaseName);
+
+  if (fileManager) {
+    RefPtr<FileInfo> fileInfo = fileManager->GetFileInfo(mFileId);
+
+    if (fileInfo) {
+      fileInfo->GetReferences(&mMemRefCnt, &mDBRefCnt, &mSliceRefCnt);
+
+      if (mMemRefCnt != -1) {
+        // We added an extra temp ref, so account for that accordingly.
+        mMemRefCnt--;
+      }
+
+      mResult = true;
+    }
+  }
+
+  mozilla::MutexAutoLock lock(mMutex);
+  MOZ_ASSERT(mWaiting);
+
+  mWaiting = false;
+  mCondVar.Notify();
+
+  return NS_OK;
+}
+
 void
 PermissionRequestHelper::OnPromptComplete(PermissionValue aPermissionValue)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
   if (!mActorDestroyed) {
-    unused <<
+    Unused <<
       PIndexedDBPermissionRequestParent::Send__delete__(this, aPermissionValue);
   }
 }

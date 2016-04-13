@@ -81,11 +81,14 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
           // adjust to get the desired content rectangle.
           nsRect rect = frameToResize->GetScreenRectInAppUnits();
           switch (frameToResize->StylePosition()->mBoxSizing) {
-            case NS_STYLE_BOX_SIZING_CONTENT:
+            case StyleBoxSizing::Content:
               rect.Deflate(frameToResize->GetUsedPadding());
-            case NS_STYLE_BOX_SIZING_PADDING:
+              MOZ_FALLTHROUGH;
+            case StyleBoxSizing::Padding:
               rect.Deflate(frameToResize->GetUsedBorder());
-            default:
+              MOZ_FALLTHROUGH;
+            case StyleBoxSizing::Border:
+              // nothing
               break;
           }
 
@@ -99,7 +102,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
             break;
 
           doDefault = false;
-            
+
           // ask the widget implementation to begin a resize drag if it can
           Direction direction = GetDirection();
           nsresult rv = aEvent->widget->BeginResizeDrag(aEvent,
@@ -230,7 +233,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         // than be too large. If the popup is too large it could get flipped
         // to the opposite side of the anchor point while resizing.
         nsIntRect screenRectPixels = screenRect.ToInsidePixels(aPresContext->AppUnitsPerDevPixel());
-        rect.IntersectRect(rect, LayoutDevicePixel::FromUntyped(screenRectPixels));
+        rect.IntersectRect(rect, LayoutDeviceIntRect::FromUnknownRect(screenRectPixels));
       }
 
       if (contentToResize) {
@@ -238,14 +241,14 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         // direction, don't allow the new size to be less that the resizer's
         // size. This ensures that content isn't resized too small as to make
         // the resizer invisible.
-        nsRect appUnitsRect = ToAppUnits(LayoutDevicePixel::ToUntyped(rect), aPresContext->AppUnitsPerDevPixel());
+        nsRect appUnitsRect = ToAppUnits(rect.ToUnknownRect(), aPresContext->AppUnitsPerDevPixel());
         if (appUnitsRect.width < mRect.width && mouseMove.x)
           appUnitsRect.width = mRect.width;
         if (appUnitsRect.height < mRect.height && mouseMove.y)
           appUnitsRect.height = mRect.height;
         nsIntRect cssRect = appUnitsRect.ToInsidePixels(nsPresContext::AppUnitsPerCSSPixel());
 
-        nsIntRect oldRect;
+        LayoutDeviceIntRect oldRect;
         nsWeakFrame weakFrame(menuPopupFrame);
         if (menuPopupFrame) {
           nsCOMPtr<nsIWidget> widget = menuPopupFrame->GetWidget();
@@ -253,7 +256,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
             widget->GetScreenBounds(oldRect);
 
           // convert the new rectangle into outer window coordinates
-          nsIntPoint clientOffset = widget->GetClientOffset();
+          LayoutDeviceIntPoint clientOffset = widget->GetClientOffset();
           rect.x -= clientOffset.x;
           rect.y -= clientOffset.y;
         }
@@ -289,7 +292,7 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
   case eMouseClick: {
     WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
     if (mouseEvent->IsLeftClickEvent()) {
-      MouseClicked(aPresContext, mouseEvent);
+      MouseClicked(mouseEvent);
     }
     break;
   }
@@ -531,8 +534,7 @@ nsResizerFrame::GetDirection()
 }
 
 void
-nsResizerFrame::MouseClicked(nsPresContext* aPresContext,
-                             WidgetMouseEvent* aEvent)
+nsResizerFrame::MouseClicked(WidgetMouseEvent* aEvent)
 {
   // Execute the oncommand event handler.
   nsContentUtils::DispatchXULCommand(mContent,

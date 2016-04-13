@@ -19,10 +19,6 @@
 @BINPATH@/chrome/@AB_CD@.manifest
 @BINPATH@/@PREF_DIR@/mobile-l10n.js
 @BINPATH@/searchplugins/*
-@BINPATH@/defaults/profile/bookmarks.html
-@BINPATH@/defaults/profile/localstore.rdf
-@BINPATH@/defaults/profile/mimeTypes.rdf
-@BINPATH@/defaults/profile/chrome/*
 #ifdef MOZ_UPDATER
 @BINPATH@/update.locale
 @BINPATH@/updater.ini
@@ -120,6 +116,7 @@
 @BINPATH@/components/browsercompsbase.xpt
 @BINPATH@/components/browser-element.xpt
 @BINPATH@/components/browser-feeds.xpt
+@BINPATH@/components/browser-newtab.xpt
 @BINPATH@/components/caps.xpt
 @BINPATH@/components/chardet.xpt
 @BINPATH@/components/chrome.xpt
@@ -164,6 +161,7 @@
 @BINPATH@/components/dom_storage.xpt
 @BINPATH@/components/dom_stylesheets.xpt
 @BINPATH@/components/dom_system.xpt
+@BINPATH@/components/dom_workers.xpt
 @BINPATH@/components/dom_threads.xpt
 @BINPATH@/components/dom_traversal.xpt
 @BINPATH@/components/dom_tv.xpt
@@ -431,11 +429,6 @@
 @BINPATH@/components/PeerConnection.manifest
 #endif
 
-#ifdef MOZ_SERVICES_HEALTHREPORT
-@BINPATH@/components/HealthReportComponents.manifest
-@BINPATH@/components/HealthReportService.js
-#endif
-
 @BINPATH@/components/CaptivePortalDetectComponents.manifest
 @BINPATH@/components/captivedetect.js
 
@@ -476,18 +469,9 @@
 @BINPATH@/components/url-classifier.xpt
 #endif
 
-; GNOME hooks
-#ifdef MOZ_ENABLE_GNOME_COMPONENT
-@BINPATH@/components/@DLL_PREFIX@mozgnome@DLL_SUFFIX@
-#endif
-
 ; [Browser Chrome Files]
 @BINPATH@/chrome/browser@JAREXT@
 @BINPATH@/chrome/browser.manifest
-#ifdef NIGHTLY_BUILD
-@BINPATH@/chrome/shumway.manifest
-@BINPATH@/chrome/shumway/*
-#endif
 @BINPATH@/chrome/toolkit@JAREXT@
 @BINPATH@/chrome/toolkit.manifest
 #ifdef XP_UNIX
@@ -514,7 +498,6 @@
 @BINPATH@/ua-update.json
 @BINPATH@/greprefs.js
 @BINPATH@/defaults/autoconfig/prefcalls.js
-@BINPATH@/defaults/profile/prefs.js
 
 ; [Layout Engine Resources]
 ; Style Sheets, Graphics and other Resources used by the layout engine.
@@ -547,22 +530,24 @@
 @BINPATH@/res/language.properties
 @BINPATH@/res/entityTables/*
 #ifdef NIGHTLY_BUILD
-@BINPATH@/res/text_caret.png
-@BINPATH@/res/text_caret@1.5x.png
-@BINPATH@/res/text_caret@2.25x.png
-@BINPATH@/res/text_caret@2x.png
-@BINPATH@/res/text_caret_tilt_left.png
-@BINPATH@/res/text_caret_tilt_left@1.5x.png
-@BINPATH@/res/text_caret_tilt_left@2.25x.png
-@BINPATH@/res/text_caret_tilt_left@2x.png
-@BINPATH@/res/text_caret_tilt_right.png
-@BINPATH@/res/text_caret_tilt_right@1.5x.png
-@BINPATH@/res/text_caret_tilt_right@2.25x.png
-@BINPATH@/res/text_caret_tilt_right@2x.png
+@BINPATH@/res/accessiblecaret.png
+@BINPATH@/res/accessiblecaret@1.5x.png
+@BINPATH@/res/accessiblecaret@2.25x.png
+@BINPATH@/res/accessiblecaret@2x.png
+@BINPATH@/res/accessiblecaret_tilt_left.png
+@BINPATH@/res/accessiblecaret_tilt_left@1.5x.png
+@BINPATH@/res/accessiblecaret_tilt_left@2.25x.png
+@BINPATH@/res/accessiblecaret_tilt_left@2x.png
+@BINPATH@/res/accessiblecaret_tilt_right.png
+@BINPATH@/res/accessiblecaret_tilt_right@1.5x.png
+@BINPATH@/res/accessiblecaret_tilt_right@2.25x.png
+@BINPATH@/res/accessiblecaret_tilt_right@2x.png
 #endif
 
 #ifndef MOZ_ANDROID_EXCLUDE_FONTS
 @BINPATH@/res/fonts/*
+#else
+@BINPATH@/res/fonts/*.properties
 #endif
 
 ; svg
@@ -622,8 +607,6 @@ bin/libfreebl_32int64_3.so
 @BINPATH@/components/ContentDispatchChooser.js
 @BINPATH@/components/ContentPermissionPrompt.js
 @BINPATH@/components/DirectoryProvider.js
-@BINPATH@/components/FilePicker.js
-@BINPATH@/components/HelperAppDialog.js
 @BINPATH@/components/LoginManagerPrompter.js
 @BINPATH@/components/MobileComponents.manifest
 @BINPATH@/components/MobileComponents.xpt

@@ -31,7 +31,12 @@ public:
   nsresult Output(int64_t aStreamOffset,
                           RefPtr<MediaData>& aOutput) override;
 
-  virtual nsresult Flush() override;
+  void ProcessFlush() override;
+
+  const char* GetDescriptionName() const override
+  {
+    return "gonk audio decoder";
+  }
 
 private:
   bool InitMediaCodecProxy();

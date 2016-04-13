@@ -55,7 +55,8 @@ static void DrawDebugOverlay(mozilla::gfx::DrawTarget* dt, int x, int y, int wid
   ss << x << ", " << y;
 
   // Draw text using cairo toy text API
-  cairo_t* cr = c.GetCairo();
+  // XXX: this drawing will silently fail if |dt| doesn't have a Cairo backend
+  cairo_t* cr = gfxFont::RefCairo(dt);
   cairo_set_font_size(cr, 25);
   cairo_text_extents_t extents;
   cairo_text_extents(cr, ss.str().c_str(), &extents);
@@ -145,7 +146,7 @@ FuzzyEquals(float a, float b) {
   return (fabsf(a - b) < 1e-6);
 }
 
-static ViewTransform
+static AsyncTransform
 ComputeViewTransform(const FrameMetrics& aContentMetrics, const FrameMetrics& aCompositorMetrics)
 {
   // This is basically the same code as AsyncPanZoomController::GetCurrentAsyncTransform
@@ -154,7 +155,7 @@ ComputeViewTransform(const FrameMetrics& aContentMetrics, const FrameMetrics& aC
 
   ParentLayerPoint translation = (aCompositorMetrics.GetScrollOffset() - aContentMetrics.GetScrollOffset())
                                * aCompositorMetrics.GetZoom();
-  return ViewTransform(aCompositorMetrics.GetAsyncZoom(), -translation);
+  return AsyncTransform(aCompositorMetrics.GetAsyncZoom(), -translation);
 }
 
 bool
@@ -162,7 +163,7 @@ SharedFrameMetricsHelper::UpdateFromCompositorFrameMetrics(
     const LayerMetricsWrapper& aLayer,
     bool aHasPendingNewThebesContent,
     bool aLowPrecision,
-    ViewTransform& aViewTransform)
+    AsyncTransform& aViewTransform)
 {
   MOZ_ASSERT(aLayer);
 
@@ -292,6 +293,8 @@ ClientMultiTiledLayerBuffer::ClientMultiTiledLayerBuffer(ClientTiledPaintedLayer
                                                          SharedFrameMetricsHelper* aHelper)
   : ClientTiledLayerBuffer(aPaintedLayer, aCompositableClient)
   , mManager(aManager)
+  , mCallback(nullptr)
+  , mCallbackData(nullptr)
   , mSharedFrameMetricsHelper(aHelper)
 {
 }
@@ -601,7 +604,8 @@ CopyFrontToBack(TextureClient* aFront,
                 TextureClient* aBack,
                 const gfx::IntRect& aRectToCopy)
 {
-  if (!aFront->Lock(OpenMode::OPEN_READ)) {
+  TextureClientAutoLock frontLock(aFront, OpenMode::OPEN_READ);
+  if (!frontLock.Succeeded()) {
     gfxCriticalError() << "[Tiling:Client] Failed to lock the tile's front buffer";
     return false;
   }
@@ -613,8 +617,6 @@ CopyFrontToBack(TextureClient* aFront,
 
   gfx::IntPoint rectToCopyTopLeft = aRectToCopy.TopLeft();
   aFront->CopyToTextureClient(aBack, &aRectToCopy, &rectToCopyTopLeft);
-
-  aFront->Unlock();
   return true;
 }
 
@@ -704,7 +706,7 @@ TileClient::DiscardBackBuffer()
 {
   if (mBackBuffer) {
     MOZ_ASSERT(mBackLock);
-    if (!mBackBuffer->ImplementsLocking() && mBackLock->GetReadCount() > 1) {
+    if (!mBackBuffer->HasSynchronization() && mBackLock->GetReadCount() > 1) {
       // Our current back-buffer is still locked by the compositor. This can occur
       // when the client is producing faster than the compositor can consume. In
       // this case we just want to drop it and not return it to the pool.
@@ -770,7 +772,7 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
 
       mBackBuffer.Set(this, mAllocator->GetTextureClient());
       if (!mBackBuffer) {
-        gfxCriticalError() << "[Tiling:Client] Failed to allocate a TextureClient";
+        gfxCriticalError() << "[Tiling:Client] Failed to allocate a TextureClient (B)";
         return nullptr;
       }
 
@@ -778,7 +780,7 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
         mBackBufferOnWhite = mAllocator->GetTextureClient();
         if (!mBackBufferOnWhite) {
           mBackBuffer.Set(this, nullptr);
-          gfxCriticalError() << "[Tiling:Client] Failed to allocate a TextureClient";
+          gfxCriticalError() << "[Tiling:Client] Failed to allocate a TextureClient (W)";
           return nullptr;
         }
       }
@@ -803,7 +805,7 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
 
   if (!mBackBuffer->IsLocked()) {
     if (!mBackBuffer->Lock(OpenMode::OPEN_READ_WRITE)) {
-      gfxCriticalError() << "[Tiling:Client] Failed to lock a tile";
+      gfxCriticalError() << "[Tiling:Client] Failed to lock a tile (B)";
       DiscardBackBuffer();
       DiscardFrontBuffer();
       return nullptr;
@@ -812,7 +814,7 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
 
   if (mBackBufferOnWhite && !mBackBufferOnWhite->IsLocked()) {
     if (!mBackBufferOnWhite->Lock(OpenMode::OPEN_READ_WRITE)) {
-      gfxCriticalError() << "[Tiling:Client] Failed to lock a tile";
+      gfxCriticalError() << "[Tiling:Client] Failed to lock a tile (W)";
       DiscardBackBuffer();
       DiscardFrontBuffer();
       return nullptr;
@@ -1021,16 +1023,16 @@ void PadDrawTargetOutFromRegion(RefPtr<DrawTarget> drawTarget, nsIntRegion &regi
     static void ensure_memcpy(uint8_t *dst, uint8_t *src, size_t n, uint8_t *bitmap, int stride, int height)
     {
         if (src + n > bitmap + stride*height) {
-            MOZ_CRASH("long src memcpy");
+            MOZ_CRASH("GFX: long src memcpy");
         }
         if (src < bitmap) {
-            MOZ_CRASH("short src memcpy");
+            MOZ_CRASH("GFX: short src memcpy");
         }
         if (dst + n > bitmap + stride*height) {
-            MOZ_CRASH("long dst mempcy");
+            MOZ_CRASH("GFX: long dst mempcy");
         }
         if (dst < bitmap) {
-            MOZ_CRASH("short dst mempcy");
+            MOZ_CRASH("GFX: short dst mempcy");
         }
     }
 
@@ -1328,8 +1330,6 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
   RefPtr<DrawTarget> drawTarget = backBuffer->BorrowDrawTarget();
   drawTarget->SetTransform(Matrix());
 
-  RefPtr<gfxContext> ctxt = new gfxContext(drawTarget);
-
   // XXX Perhaps we should just copy the bounding rectangle here?
   RefPtr<gfx::SourceSurface> source = mSinglePaintDrawTarget->Snapshot();
   nsIntRegionRectIterator it(aDirtyRegion);
@@ -1363,7 +1363,6 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
                    aTileOrigin.y * GetPresShellResolution(), GetTileLength(), GetTileLength());
 #endif
 
-  ctxt = nullptr;
   drawTarget = nullptr;
 
   nsIntRegion tileRegion =
@@ -1401,13 +1400,14 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
  */
 static Maybe<LayerRect>
 GetCompositorSideCompositionBounds(const LayerMetricsWrapper& aScrollAncestor,
-                                   const Matrix4x4& aTransformToCompBounds,
-                                   const ViewTransform& aAPZTransform,
+                                   const LayerToParentLayerMatrix4x4& aTransformToCompBounds,
+                                   const AsyncTransform& aAPZTransform,
                                    const LayerRect& aClip)
 {
-  Matrix4x4 transform = aTransformToCompBounds * Matrix4x4(aAPZTransform);
+  LayerToParentLayerMatrix4x4 transform = aTransformToCompBounds *
+      AsyncTransformComponentMatrix(aAPZTransform);
 
-  return UntransformTo<LayerPixel>(transform.Inverse(),
+  return UntransformBy(transform.Inverse(),
     aScrollAncestor.Metrics().GetCompositionBounds(), aClip);
 }
 
@@ -1445,7 +1445,7 @@ ClientMultiTiledLayerBuffer::ComputeProgressiveUpdateRegion(const nsIntRegion& a
   // Find out the current view transform to determine which tiles to draw
   // first, and see if we should just abort this paint. Aborting is usually
   // caused by there being an incoming, more relevant paint.
-  ViewTransform viewTransform;
+  AsyncTransform viewTransform;
 #if defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_ANDROID_APZ)
   FrameMetrics contentMetrics = scrollAncestor.Metrics();
   bool abortPaint = false;
@@ -1509,13 +1509,13 @@ ClientMultiTiledLayerBuffer::ComputeProgressiveUpdateRegion(const nsIntRegion& a
   // make the progressive paint more visible to the user while scrolling.
   // On B2G uploads are cheaper and we value coherency more, especially outside
   // the browser, so we always use the entire user-visible area.
-  IntRect coherentUpdateRect(LayerIntRect::ToUntyped(RoundedOut(
+  IntRect coherentUpdateRect(RoundedOut(
 #ifdef MOZ_WIDGET_ANDROID
     transformedCompositionBounds->Intersect(aPaintData->mCompositionBounds)
 #else
     *transformedCompositionBounds
 #endif
-  )));
+  ).ToUnknownRect());
 
   TILING_LOG("TILING %p: Progressive update final coherency rect %s\n", mPaintedLayer, Stringify(coherentUpdateRect).c_str());
 
@@ -1695,7 +1695,7 @@ BasicTiledLayerPaintData::ResetPaintData()
   mLowPrecisionPaintCount = 0;
   mPaintFinished = false;
   mCompositionBounds.SetEmpty();
-  mCriticalDisplayPort.SetEmpty();
+  mCriticalDisplayPort = Nothing();
 }
 
 } // namespace layers

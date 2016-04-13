@@ -28,6 +28,9 @@ this.EXPORTED_SYMBOLS = ["PushRecord"];
 
 const prefs = new Preferences("dom.push.");
 
+/**
+ * The push subscription record, stored in IndexedDB.
+ */
 function PushRecord(props) {
   this.pushEndpoint = props.pushEndpoint;
   this.scope = props.scope;
@@ -36,13 +39,15 @@ function PushRecord(props) {
   this.lastPush = props.lastPush || 0;
   this.p256dhPublicKey = props.p256dhPublicKey;
   this.p256dhPrivateKey = props.p256dhPrivateKey;
+  this.authenticationSecret = props.authenticationSecret;
+  this.systemRecord = !!props.systemRecord;
   this.setQuota(props.quota);
   this.ctime = (typeof props.ctime === "number") ? props.ctime : 0;
 }
 
 PushRecord.prototype = {
   setQuota(suggestedQuota) {
-    if (!isNaN(suggestedQuota) && suggestedQuota >= 0) {
+    if (this.quotaApplies() && !isNaN(suggestedQuota) && suggestedQuota >= 0) {
       this.quota = suggestedQuota;
     } else {
       this.resetQuota();
@@ -50,7 +55,8 @@ PushRecord.prototype = {
   },
 
   resetQuota() {
-    this.quota = prefs.get("maxQuotaPerSubscription");
+    this.quota = this.quotaApplies() ?
+                 prefs.get("maxQuotaPerSubscription") : Infinity;
   },
 
   updateQuota(lastVisit) {
@@ -84,6 +90,9 @@ PushRecord.prototype = {
   },
 
   reduceQuota() {
+    if (!this.quotaApplies()) {
+      return;
+    }
     this.quota = Math.max(this.quota - 1, 0);
     // We check for ctime > 0 to skip older records that did not have ctime.
     if (this.isExpired() && this.ctime > 0) {
@@ -185,9 +194,13 @@ PushRecord.prototype = {
 
   /**
    * Indicates whether the registration can deliver push messages to its
-   * associated service worker.
+   * associated service worker. System subscriptions are exempt from the
+   * permission check.
    */
   hasPermission() {
+    if (this.systemRecord || prefs.get("testing.ignorePermission")) {
+      return true;
+    }
     let permission = Services.perms.testExactPermissionFromPrincipal(
       this.principal, "desktop-notification");
     return permission == Ci.nsIPermissionManager.ALLOW_ACTION;
@@ -202,19 +215,34 @@ PushRecord.prototype = {
   },
 
   quotaApplies() {
-    return Number.isFinite(this.quota);
+    return !this.systemRecord;
   },
 
   isExpired() {
     return this.quota === 0;
   },
 
+  matchesOriginAttributes(pattern) {
+    if (this.systemRecord) {
+      return false;
+    }
+    return ChromeUtils.originAttributesMatchPattern(
+      this.principal.originAttributes, pattern);
+  },
+
+  hasAuthenticationSecret() {
+    return !!this.authenticationSecret &&
+           this.authenticationSecret.byteLength == 16;
+  },
+
   toSubscription() {
     return {
-      pushEndpoint: this.pushEndpoint,
+      endpoint: this.pushEndpoint,
       lastPush: this.lastPush,
       pushCount: this.pushCount,
       p256dhKey: this.p256dhPublicKey,
+      authenticationSecret: this.authenticationSecret,
+      quota: this.quotaApplies() ? this.quota : -1,
     };
   },
 };
@@ -225,6 +253,9 @@ var principals = new WeakMap();
 Object.defineProperties(PushRecord.prototype, {
   principal: {
     get() {
+      if (this.systemRecord) {
+        return Services.scriptSecurityManager.getSystemPrincipal();
+      }
       let principal = principals.get(this);
       if (!principal) {
         let url = this.scope;

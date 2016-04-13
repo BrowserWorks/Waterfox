@@ -17,6 +17,7 @@
 #include "mozilla/BasePrincipal.h"
 
 class nsINode;
+class nsPIDOMWindow;
 class nsXMLHttpRequest;
 
 namespace mozilla {
@@ -53,7 +54,14 @@ public:
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType);
 
+  // create an exact copy of the loadinfo
   already_AddRefed<nsILoadInfo> Clone() const;
+  // creates a copy of the loadinfo which is appropriate to use for a
+  // separate request. I.e. not for a redirect or an inner channel, but
+  // when a separate request is made with the same security properties.
+  already_AddRefed<nsILoadInfo> CloneForNewRequest() const;
+
+  void SetIsPreflight();
 
 private:
   // private constructor that is only allowed to be called from within
@@ -64,14 +72,20 @@ private:
            nsIPrincipal* aTriggeringPrincipal,
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType,
+           LoadTainting aTainting,
            bool aUpgradeInsecureRequests,
            uint64_t aInnerWindowID,
            uint64_t aOuterWindowID,
            uint64_t aParentOuterWindowID,
            bool aEnforceSecurity,
            bool aInitialSecurityCheckDone,
-           const OriginAttributes& aOriginAttributes,
-           nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChain);
+           bool aIsThirdPartyRequest,
+           const NeckoOriginAttributes& aOriginAttributes,
+           nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChainIncludingInternalRedirects,
+           nsTArray<nsCOMPtr<nsIPrincipal>>& aRedirectChain,
+           const nsTArray<nsCString>& aUnsafeHeaders,
+           bool aForcePreflight,
+           bool aIsPreflight);
   LoadInfo(const LoadInfo& rhs);
 
   friend nsresult
@@ -81,12 +95,15 @@ private:
 
   ~LoadInfo();
 
+  void ComputeIsThirdPartyContext(nsPIDOMWindow* aOuterWindow);
+
   // This function is the *only* function which can change the securityflags
   // of a loadinfo. It only exists because of the XHR code. Don't call it
   // from anywhere else!
-  void SetWithCredentialsSecFlag();
+  void SetIncludeCookiesSecFlag();
   friend class ::nsXMLHttpRequest;
 
+  // if you add a member, please also update the copy constructor
   nsCOMPtr<nsIPrincipal>           mLoadingPrincipal;
   nsCOMPtr<nsIPrincipal>           mTriggeringPrincipal;
   nsWeakPtr                        mLoadingContext;
@@ -99,8 +116,13 @@ private:
   uint64_t                         mParentOuterWindowID;
   bool                             mEnforceSecurity;
   bool                             mInitialSecurityCheckDone;
-  OriginAttributes                 mOriginAttributes;
+  bool                             mIsThirdPartyContext;
+  NeckoOriginAttributes            mOriginAttributes;
+  nsTArray<nsCOMPtr<nsIPrincipal>> mRedirectChainIncludingInternalRedirects;
   nsTArray<nsCOMPtr<nsIPrincipal>> mRedirectChain;
+  nsTArray<nsCString>              mCorsUnsafeHeaders;
+  bool                             mForcePreflight;
+  bool                             mIsPreflight;
 };
 
 } // namespace mozilla

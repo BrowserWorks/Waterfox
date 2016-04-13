@@ -533,15 +533,17 @@ class Marionette(object):
     TIMEOUT_SEARCH = 'implicit'
     TIMEOUT_SCRIPT = 'script'
     TIMEOUT_PAGE = 'page load'
+    DEFAULT_SOCKET_TIMEOUT = 360
     DEFAULT_STARTUP_TIMEOUT = 60
 
     def __init__(self, host='localhost', port=2828, app=None, app_args=None, bin=None,
                  profile=None, addons=None, emulator=None, sdcard=None, emulator_img=None,
                  emulator_binary=None, emulator_res=None, connect_to_running_emulator=False,
                  gecko_log=None, homedir=None, baseurl=None, no_window=False, logdir=None,
-                 busybox=None, symbols_path=None, timeout=None, socket_timeout=360,
+                 busybox=None, symbols_path=None, timeout=None, socket_timeout=None,
                  device_serial=None, adb_path=None, process_args=None,
-                 adb_host=None, adb_port=None, prefs=None, startup_timeout=None):
+                 adb_host=None, adb_port=None, prefs=None, startup_timeout=None,
+                 workspace=None, verbose=0):
         self.host = host
         self.port = self.local_port = port
         self.bin = bin
@@ -559,7 +561,7 @@ class Marionette(object):
         self.no_window = no_window
         self._test_name = None
         self.timeout = timeout
-        self.socket_timeout = socket_timeout
+        self.socket_timeout = socket_timeout or self.DEFAULT_SOCKET_TIMEOUT
         self.device_serial = device_serial
         self.adb_host = adb_host
         self.adb_port = adb_port
@@ -590,11 +592,14 @@ class Marionette(object):
                     instance_class = geckoinstance.GeckoInstance
             self.instance = instance_class(host=self.host, port=self.port,
                                            bin=self.bin, profile=self.profile,
-                                           app_args=app_args, symbols_path=symbols_path,
+                                           app_args=app_args,
+                                           symbols_path=symbols_path,
                                            gecko_log=gecko_log, prefs=prefs,
-                                           addons=self.addons)
+                                           addons=self.addons,
+                                           workspace=workspace,
+                                           verbose=verbose)
             self.instance.start()
-            assert(self.wait_for_port(timeout=startup_timeout)), "Timed out waiting for port!"
+            self.raise_for_port(self.wait_for_port(timeout=startup_timeout))
 
         if emulator:
             self.runner = B2GEmulatorRunner(b2g_home=homedir,
@@ -613,7 +618,7 @@ class Marionette(object):
             self.emulator = self.runner.device
             self.emulator.start()
             self.port = self.emulator.setup_port_forwarding(remote_port=self.port)
-            assert(self.emulator.wait_for_port(self.port)), "Timed out waiting for port!"
+            self.raise_for_port(self.emulator.wait_for_port(self.port))
 
         if connect_to_running_emulator:
             self.runner = B2GEmulatorRunner(b2g_home=homedir,
@@ -622,7 +627,7 @@ class Marionette(object):
             self.emulator = self.runner.device
             self.emulator.connect()
             self.port = self.emulator.setup_port_forwarding(remote_port=self.port)
-            assert(self.emulator.wait_for_port(self.port)), "Timed out waiting for port!"
+            self.raise_for_port(self.emulator.wait_for_port(self.port))
 
         if emulator:
             if busybox:
@@ -666,11 +671,39 @@ class Marionette(object):
         finally:
             s.close()
 
-    def wait_for_port(self, timeout=60):
+    def wait_for_port(self, timeout=None):
+        timeout = timeout or self.DEFAULT_STARTUP_TIMEOUT
         return transport.wait_for_port(self.host, self.port, timeout=timeout)
 
     @do_crash_check
+    def raise_for_port(self, port_obtained):
+        if not port_obtained:
+            raise IOError("Timed out waiting for port!")
+
+
+    @do_crash_check
     def _send_message(self, name, params=None, key=None):
+        """Send a blocking message to the server.
+
+        Marionette provides an asynchronous, non-blocking interface and
+        this attempts to paper over this by providing a synchronous API
+        to the user.
+
+        In particular, the Python client can be instructed to carry out
+        a sequence of instructions on the connected emulator.  For this
+        reason, if ``execute_script``, ``execute_js_script``, or
+        ``execute_async_script`` is called, it will loop until all
+        commands requested from the server have been exhausted, and we
+        receive our expected response.
+
+        :param name: Requested command key.
+        :param params: Optional dictionary of key/value arguments.
+        :param key: Optional key to extract from response.
+
+        :returns: Full response from the server, or if `key` is given,
+            the value of said key in the response.
+        """
+
         if not self.session_id and name != "newSession":
             raise errors.MarionetteException("Please start a session")
 
@@ -692,13 +725,16 @@ class Marionette(object):
                 returncode = self.instance.runner.wait(timeout=self.DEFAULT_STARTUP_TIMEOUT)
                 raise IOError("process died with returncode %s" % returncode)
             raise
+
         except socket.timeout:
             self.session = None
             self.window = None
             self.client.close()
             raise errors.TimeoutException("Connection timed out")
 
-        if isinstance(msg, transport.Command):
+        # support execution of commands on the client,
+        # loop until we receive our expected response
+        while isinstance(msg, transport.Command):
             if msg.name == "runEmulatorCmd":
                 self.emulator_callback_id = msg.params.get("id")
                 msg = self._emulator_cmd(msg.params["emulator_cmd"])
@@ -933,39 +969,26 @@ class Marionette(object):
                 self.push_permission(perm, original_perms[perm])
 
     def get_pref(self, pref):
-        '''Gets the preference value.
+        """Gets the preference value.
 
         :param pref: Name of the preference.
 
         Usage example::
 
-          marionette.get_pref('browser.tabs.warnOnClose')
-
-        '''
+            marionette.get_pref("browser.tabs.warnOnClose")
+        """
         with self.using_context(self.CONTEXT_CONTENT):
             pref_value = self.execute_script("""
-                Components.utils.import("resource://gre/modules/Services.jsm");
-                let pref = arguments[0];
-                let type = Services.prefs.getPrefType(pref);
-                switch (type) {
-                    case Services.prefs.PREF_STRING:
-                        return Services.prefs.getCharPref(pref);
-                    case Services.prefs.PREF_INT:
-                        return Services.prefs.getIntPref(pref);
-                    case Services.prefs.PREF_BOOL:
-                        return Services.prefs.getBoolPref(pref);
-                    case Services.prefs.PREF_INVALID:
-                        return null;
-                }
-                """, script_args=[pref], sandbox='system')
+                Components.utils.import("resource://gre/modules/Preferences.jsm");
+                return Preferences.get(arguments[0], null);
+                """, script_args=[pref], sandbox="system")
             return pref_value
 
     def clear_pref(self, pref):
         with self.using_context(self.CONTEXT_CHROME):
             self.execute_script("""
-               Components.utils.import("resource://gre/modules/Services.jsm");
-               let pref = arguments[0];
-               Services.prefs.clearUserPref(pref);
+               Components.utils.import("resource://gre/modules/Preferences.jsm");
+               Preferences.reset(arguments[0]);
                """, script_args=[pref])
 
     def set_pref(self, pref, value):
@@ -974,22 +997,10 @@ class Marionette(object):
                 self.clear_pref(pref)
                 return
 
-            if isinstance(value, bool):
-                func = 'setBoolPref'
-            elif isinstance(value, (int, long)):
-                func = 'setIntPref'
-            elif isinstance(value, basestring):
-                func = 'setCharPref'
-            else:
-                raise errors.MarionetteException(
-                    "Unsupported preference type: %s" % type(value))
-
             self.execute_script("""
-                Components.utils.import("resource://gre/modules/Services.jsm");
-                let pref = arguments[0];
-                let value = arguments[1];
-                Services.prefs.%s(pref, value);
-                """ % func, script_args=[pref, value])
+                Components.utils.import("resource://gre/modules/Preferences.jsm");
+                Preferences.set(arguments[0], arguments[1]);
+                """, script_args=[pref, value])
 
     def set_prefs(self, prefs):
         '''Sets preferences.
@@ -1069,7 +1080,7 @@ class Marionette(object):
         if not pref_exists:
             self.delete_session()
             self.instance.restart(prefs)
-            assert(self.wait_for_port()), "Timed out waiting for port!"
+            self.raise_for_port(self.wait_for_port())
             self.start_session()
             self._reset_timeouts()
 
@@ -1106,7 +1117,7 @@ class Marionette(object):
         else:
             self.delete_session()
             self.instance.restart(clean=clean)
-        assert(self.wait_for_port()), "Timed out waiting for port!"
+        self.raise_for_port(self.wait_for_port())
         self.start_session(session_id=self.session_id)
         self._reset_timeouts()
 
@@ -1140,8 +1151,11 @@ class Marionette(object):
             self.host,
             self.port,
             self.socket_timeout)
-        self.protocol, _ = self.client.connect()
+
+        # Call wait_for_port() before attempting to connect in
+        # the event gecko hasn't started yet.
         self.wait_for_port(timeout=timeout)
+        self.protocol, _ = self.client.connect()
 
         body = {"capabilities": desired_capabilities, "sessionId": session_id}
         resp = self._send_message("newSession", body)

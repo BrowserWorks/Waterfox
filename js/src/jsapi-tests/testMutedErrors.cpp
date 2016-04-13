@@ -5,8 +5,6 @@
 #include "jsfriendapi.h"
 #include "jsapi-tests/tests.h"
 
-using mozilla::UniquePtr;
-
 static bool sErrorReportMuted = false;
 BEGIN_TEST(testMutedErrors)
 {
@@ -47,12 +45,14 @@ bool
 eval(const char* asciiChars, bool mutedErrors, JS::MutableHandleValue rval)
 {
     size_t len = strlen(asciiChars);
-    UniquePtr<char16_t[]> chars(new char16_t[len+1]);
+    mozilla::UniquePtr<char16_t[]> chars(new char16_t[len+1]);
     for (size_t i = 0; i < len; ++i)
         chars[i] = asciiChars[i];
     chars[len] = 0;
 
-    JS::RootedObject global(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr, JS::FireOnNewGlobalHook));
+    JS::CompartmentOptions globalOptions;
+    JS::RootedObject global(cx, JS_NewGlobalObject(cx, getGlobalClass(), nullptr,
+						   JS::FireOnNewGlobalHook, globalOptions));
     CHECK(global);
     JSAutoCompartment ac(cx, global);
     CHECK(JS_InitStandardClasses(cx, global));

@@ -151,6 +151,24 @@ nsViewSourceChannel::GetName(nsACString &result)
 }
 
 NS_IMETHODIMP
+nsViewSourceChannel::GetTransferSize(uint64_t *aTransferSize)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::GetDecodedBodySize(uint64_t *aDecodedBodySize)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::GetEncodedBodySize(uint64_t *aEncodedBodySize)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsViewSourceChannel::IsPending(bool *result)
 {
     NS_ENSURE_TRUE(mChannel, NS_ERROR_FAILURE);
@@ -637,6 +655,12 @@ nsViewSourceChannel::SetBaseURI(nsIURI* aBaseURI)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+nsViewSourceChannel::GetProtocolVersion(nsACString& aProtocolVersion)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
 // nsIRequestObserver methods
 NS_IMETHODIMP
 nsViewSourceChannel::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext)
@@ -941,4 +965,11 @@ nsViewSourceChannel::SetIsMainDocumentChannel(bool aValue)
 {
     return !mHttpChannel ? NS_ERROR_NULL_POINTER :
         mHttpChannel->SetIsMainDocumentChannel(aValue);
+}
+
+// Have to manually forward SetCorsPreflightParameters since it's [notxpcom]
+void
+nsViewSourceChannel::SetCorsPreflightParameters(const nsTArray<nsCString>& aUnsafeHeaders)
+{
+  mHttpChannelInternal->SetCorsPreflightParameters(aUnsafeHeaders);
 }

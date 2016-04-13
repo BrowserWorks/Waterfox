@@ -35,7 +35,7 @@ class nsAutoRefTraits<SpeexResamplerState> : public nsPointerRefTraits<SpeexResa
 
 namespace mozilla {
 
-extern PRLogModuleInfo* gMediaStreamGraphLog;
+extern LazyLogModule gMediaStreamGraphLog;
 
 namespace dom {
   enum class AudioContextOperation;
@@ -181,6 +181,39 @@ public:
    * are also notified of atomically to MediaStreamListeners.
    */
   virtual void NotifyFinishedTrackCreation(MediaStreamGraph* aGraph) {}
+};
+
+class AudioDataListenerInterface {
+protected:
+  // Protected destructor, to discourage deletion outside of Release():
+  virtual ~AudioDataListenerInterface() {}
+
+public:
+  /* These are for cubeb audio input & output streams: */
+  /**
+   * Output data to speakers, for use as the "far-end" data for echo
+   * cancellation.  This is not guaranteed to be in any particular size
+   * chunks.
+   */
+  virtual void NotifyOutputData(MediaStreamGraph* aGraph,
+                                AudioDataValue* aBuffer, size_t aFrames,
+                                uint32_t aChannels) = 0;
+  /**
+   * Input data from a microphone (or other audio source.  This is not
+   * guaranteed to be in any particular size chunks.
+   */
+  virtual void NotifyInputData(MediaStreamGraph* aGraph,
+                               const AudioDataValue* aBuffer, size_t aFrames,
+                               uint32_t aChannels) = 0;
+};
+
+class AudioDataListener : public AudioDataListenerInterface {
+protected:
+  // Protected destructor, to discourage deletion outside of Release():
+  virtual ~AudioDataListener() {}
+
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(AudioDataListener)
 };
 
 /**
@@ -698,10 +731,10 @@ public:
     mNeedsMixing(false)
   {}
 
-  virtual SourceMediaStream* AsSourceStream() override { return this; }
+  SourceMediaStream* AsSourceStream() override { return this; }
 
   // Media graph thread only
-  virtual void DestroyImpl() override;
+  void DestroyImpl() override;
 
   // Call these on any thread.
   /**
@@ -796,14 +829,14 @@ public:
   }
 
   // Overriding allows us to hold the mMutex lock while changing the track enable status
-  virtual void
+  void
   SetTrackEnabledImpl(TrackID aTrackID, bool aEnabled) override {
     MutexAutoLock lock(mMutex);
     MediaStream::SetTrackEnabledImpl(aTrackID, aEnabled);
   }
 
   // Overriding allows us to ensure mMutex is locked while changing the track enable status
-  virtual void
+  void
   ApplyTrackDisabling(TrackID aTrackID, MediaSegment* aSegment,
                       MediaSegment* aRawSegment = nullptr) override {
     mMutex.AssertCurrentThreadOwns();
@@ -1044,7 +1077,7 @@ class ProcessedMediaStream : public MediaStream
 {
 public:
   explicit ProcessedMediaStream(DOMMediaStream* aWrapper)
-    : MediaStream(aWrapper), mAutofinish(false)
+    : MediaStream(aWrapper), mAutofinish(false), mCycleMarker(0)
   {}
 
   // Control API.
@@ -1071,7 +1104,7 @@ public:
    */
   void SetAutofinish(bool aAutofinish);
 
-  virtual ProcessedMediaStream* AsProcessedStream() override { return this; }
+  ProcessedMediaStream* AsProcessedStream() override { return this; }
 
   friend class MediaStreamGraphImpl;
 
@@ -1089,7 +1122,7 @@ public:
   {
     return mInputs.Length();
   }
-  virtual void DestroyImpl() override;
+  void DestroyImpl() override;
   /**
    * This gets called after we've computed the blocking states for all
    * streams (mBlocked is up to date up to mStateComputedTime).
@@ -1117,7 +1150,7 @@ public:
   // true for echo loops, only for muted cycles.
   bool InMutedCycle() const { return mCycleMarker; }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = MediaStream::SizeOfExcludingThis(aMallocSizeOf);
     // Not owned:
@@ -1126,7 +1159,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -1175,6 +1208,12 @@ public:
   // Idempotent
   static void DestroyNonRealtimeInstance(MediaStreamGraph* aGraph);
 
+  virtual nsresult OpenAudioInput(CubebUtils::AudioDeviceID aID,
+                                  AudioDataListener *aListener) {
+    return NS_ERROR_FAILURE;
+  }
+  virtual void CloseAudioInput(AudioDataListener *aListener) {}
+
   // Control API.
   /**
    * Create a stream that a media decoder (or some other source of
@@ -1202,13 +1241,10 @@ public:
   ProcessedMediaStream* CreateAudioCaptureStream(DOMMediaStream* aWrapper,
                                                  TrackID aTrackId);
 
-  enum {
-    ADD_STREAM_SUSPENDED = 0x01
-  };
   /**
    * Add a new stream to the graph.  Main thread.
    */
-  void AddStream(MediaStream* aStream, uint32_t aFlags = 0);
+  void AddStream(MediaStream* aStream);
 
   /* From the main thread, ask the MSG to send back an event when the graph
    * thread is running, and audio is being processed. */
@@ -1257,6 +1293,13 @@ public:
   already_AddRefed<MediaInputPort> ConnectToCaptureStream(
     uint64_t aWindowId, MediaStream* aMediaStream);
 
+  /**
+   * Data going to the speakers from the GraphDriver's DataCallback
+   * to notify any listeners (for echo cancellation).
+   */
+  void NotifyOutputData(AudioDataValue* aBuffer, size_t aFrames,
+                        uint32_t aChannels);
+
 protected:
   explicit MediaStreamGraph(TrackRate aSampleRate)
     : mSampleRate(aSampleRate)
@@ -1277,6 +1320,12 @@ protected:
    * at construction.
    */
   TrackRate mSampleRate;
+
+  /**
+   * Lifetime is controlled by OpenAudioInput/CloseAudioInput.  Destroying the listener
+   * without removing it is an error; callers should assert on that.
+   */
+  nsTArray<AudioDataListener *> mAudioInputs;
 };
 
 } // namespace mozilla

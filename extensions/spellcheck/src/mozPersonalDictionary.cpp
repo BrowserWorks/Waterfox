@@ -304,8 +304,7 @@ void mozPersonalDictionary::SyncLoadInternal()
   NS_NewLocalFileInputStream(getter_AddRefs(inStream), mFile);
 
   nsCOMPtr<nsIUnicharInputStream> convStream;
-  rv = nsSimpleUnicharStreamFactory::GetInstance()->
-    CreateInstanceFromUTF8Stream(inStream, getter_AddRefs(convStream));
+  rv = NS_NewUnicharInputStream(inStream, getter_AddRefs(convStream));
   if (NS_FAILED(rv)) {
     return;
   }
@@ -375,9 +374,11 @@ NS_IMETHODIMP mozPersonalDictionary::Save()
     return res;
   }
 
-  nsTArray<nsString> array(mDictionaryTable.Count());
+  nsTArray<nsString> array;
+  nsString* elems = array.AppendElements(mDictionaryTable.Count());
   for (auto iter = mDictionaryTable.Iter(); !iter.Done(); iter.Next()) {
-    array.AppendElement(nsDependentString(iter.Get()->GetKey()));
+    elems->Assign(iter.Get()->GetKey());
+    elems++;
   }
 
   nsCOMPtr<nsIRunnable> runnable =
@@ -396,9 +397,11 @@ NS_IMETHODIMP mozPersonalDictionary::GetWordList(nsIStringEnumerator **aWords)
 
   WaitForLoad();
 
-  nsTArray<nsString> *array = new nsTArray<nsString>(mDictionaryTable.Count());
+  nsTArray<nsString> *array = new nsTArray<nsString>();
+  nsString* elems = array->AppendElements(mDictionaryTable.Count());
   for (auto iter = mDictionaryTable.Iter(); !iter.Done(); iter.Next()) {
-    array->AppendElement(nsDependentString(iter.Get()->GetKey()));
+    elems->Assign(iter.Get()->GetKey());
+    elems++;
   }
 
   array->Sort();

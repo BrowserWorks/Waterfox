@@ -34,11 +34,13 @@ public:
 
   NS_DECL_ISUPPORTS_INHERITED
 
-  NS_IMETHOD              GetClientBounds(IntRect &aRect) override {
-    aRect = IntRect(0, 0, gCompWidth, gCompHeight);
+  NS_IMETHOD GetClientBounds(LayoutDeviceIntRect& aRect) override {
+    aRect = LayoutDeviceIntRect(0, 0, gCompWidth, gCompHeight);
     return NS_OK;
   }
-  NS_IMETHOD              GetBounds(IntRect &aRect) override { return GetClientBounds(aRect); }
+  NS_IMETHOD GetBounds(LayoutDeviceIntRect& aRect) override {
+    return GetClientBounds(aRect);
+  }
 
   void* GetNativeData(uint32_t aDataType) override {
     if (aDataType == NS_NATIVE_OPENGL_CONTEXT) {
@@ -53,10 +55,10 @@ public:
     return nullptr;
   }
 
-  NS_IMETHOD              Create(nsIWidget *aParent,
+  NS_IMETHOD              Create(nsIWidget* aParent,
                                  nsNativeWidget aNativeParent,
-                                 const IntRect &aRect,
-                                 nsWidgetInitData *aInitData = nullptr) override { return NS_OK; }
+                                 const LayoutDeviceIntRect& aRect,
+                                 nsWidgetInitData* aInitData = nullptr) override { return NS_OK; }
   NS_IMETHOD              Show(bool aState) override { return NS_OK; }
   virtual bool            IsVisible() const override { return true; }
   NS_IMETHOD              ConstrainPosition(bool aAllowSlop,
@@ -70,7 +72,7 @@ public:
   virtual bool            IsEnabled() const override { return true; }
   NS_IMETHOD              SetFocus(bool aRaise) override { return NS_OK; }
   virtual nsresult        ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override { return NS_OK; }
-  NS_IMETHOD              Invalidate(const IntRect &aRect) override { return NS_OK; }
+  NS_IMETHOD              Invalidate(const LayoutDeviceIntRect& aRect) override { return NS_OK; }
   NS_IMETHOD              SetTitle(const nsAString& title) override { return NS_OK; }
   virtual LayoutDeviceIntPoint WidgetToScreenOffset() override { return LayoutDeviceIntPoint(0, 0); }
   NS_IMETHOD              DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
@@ -241,19 +243,19 @@ TEST(Gfx, CompositorSimpleTree)
     { // background
       ColorLayer* colorLayer = layers[1]->AsColorLayer();
       colorLayer->SetColor(Color(1.f, 0.f, 1.f, 1.f));
-      colorLayer->SetBounds(colorLayer->GetVisibleRegion().GetBounds());
+      colorLayer->SetBounds(colorLayer->GetVisibleRegion().ToUnknownRegion().GetBounds());
     }
 
     {
       ColorLayer* colorLayer = layers[2]->AsColorLayer();
       colorLayer->SetColor(Color(1.f, 0.f, 0.f, 1.f));
-      colorLayer->SetBounds(colorLayer->GetVisibleRegion().GetBounds());
+      colorLayer->SetBounds(colorLayer->GetVisibleRegion().ToUnknownRegion().GetBounds());
     }
 
     {
       ColorLayer* colorLayer = layers[3]->AsColorLayer();
       colorLayer->SetColor(Color(0.f, 0.f, 1.f, 1.f));
-      colorLayer->SetBounds(colorLayer->GetVisibleRegion().GetBounds());
+      colorLayer->SetBounds(colorLayer->GetVisibleRegion().ToUnknownRegion().GetBounds());
     }
 
     RefPtr<DrawTarget> refDT = CreateDT();

@@ -74,7 +74,7 @@ inDOMUtils::GetAllStyleSheets(nsIDOMDocument *aDocument, uint32_t *aLength,
 {
   NS_ENSURE_ARG_POINTER(aDocument);
 
-  nsCOMArray<nsIStyleSheet> sheets;
+  nsTArray<RefPtr<CSSStyleSheet>> sheets;
 
   nsCOMPtr<nsIDocument> document = do_QueryInterface(aDocument);
   MOZ_ASSERT(document);
@@ -109,14 +109,14 @@ inDOMUtils::GetAllStyleSheets(nsIDOMDocument *aDocument, uint32_t *aLength,
     sheets.AppendElement(document->GetStyleSheetAt(i));
   }
 
-  nsISupports** ret = static_cast<nsISupports**>(moz_xmalloc(sheets.Count() *
+  nsISupports** ret = static_cast<nsISupports**>(moz_xmalloc(sheets.Length() *
                                                  sizeof(nsISupports*)));
 
-  for (int32_t i = 0; i < sheets.Count(); i++) {
-    NS_ADDREF(ret[i] = sheets[i]);
+  for (size_t i = 0; i < sheets.Length(); i++) {
+    NS_ADDREF(ret[i] = NS_ISUPPORTS_CAST(nsIDOMCSSStyleSheet*, sheets[i]));
   }
 
-  *aLength = sheets.Count();
+  *aLength = sheets.Length();
   *aSheets = ret;
 
   return NS_OK;
@@ -238,13 +238,17 @@ inDOMUtils::GetCSSStyleRules(nsIDOMElement *aElement,
   NS_NewISupportsArray(getter_AddRefs(rules));
   if (!rules) return NS_ERROR_OUT_OF_MEMORY;
 
-  RefPtr<mozilla::css::StyleRule> cssRule;
   for ( ; !ruleNode->IsRoot(); ruleNode = ruleNode->GetParent()) {
-    cssRule = do_QueryObject(ruleNode->GetRule());
-    if (cssRule) {
-      nsCOMPtr<nsIDOMCSSRule> domRule = cssRule->GetDOMRule();
-      if (domRule)
-        rules->InsertElementAt(domRule, 0);
+    RefPtr<Declaration> decl = do_QueryObject(ruleNode->GetRule());
+    if (decl) {
+      RefPtr<mozilla::css::StyleRule> styleRule =
+        do_QueryObject(decl->GetOwningRule());
+      if (styleRule) {
+        nsCOMPtr<nsIDOMCSSRule> domRule = styleRule->GetDOMRule();
+        if (domRule) {
+          rules->InsertElementAt(domRule, 0);
+        }
+      }
     }
   }
 
@@ -314,7 +318,7 @@ inDOMUtils::GetRelativeRuleLine(nsIDOMCSSRule* aRule, uint32_t* _retval)
 
   uint32_t lineNumber = rule->GetLineNumber();
   CSSStyleSheet* sheet = rule->GetStyleSheet();
-  if (sheet) {
+  if (sheet && lineNumber != 0) {
     nsINode* owningNode = sheet->GetOwnerNode();
     if (owningNode) {
       nsCOMPtr<nsIStyleSheetLinkingElement> link =
@@ -573,17 +577,13 @@ static void GetKeywordsForProperty(const nsCSSProperty aProperty,
     // Shorthand props have no keywords.
     return;
   }
-  const nsCSSProps::KTableValue *keywordTable =
+  const nsCSSProps::KTableEntry* keywordTable =
     nsCSSProps::kKeywordTableTable[aProperty];
   if (keywordTable) {
-    size_t i = 0;
-    while (nsCSSKeyword(keywordTable[i]) != eCSSKeyword_UNKNOWN) {
-      nsCSSKeyword word = nsCSSKeyword(keywordTable[i]);
+    for (size_t i = 0; keywordTable[i].mKeyword != eCSSKeyword_UNKNOWN; ++i) {
+      nsCSSKeyword word = keywordTable[i].mKeyword;
       InsertNoDuplicates(aArray,
                          NS_ConvertASCIItoUTF16(nsCSSKeywords::GetStringValue(word)));
-      // Increment counter by 2, because in this table every second
-      // element is a nsCSSKeyword.
-      i += 2;
     }
   }
 }
@@ -1185,6 +1185,29 @@ GetStatesForPseudoClass(const nsAString& aStatePseudo)
   // Our array above is long enough that indexing into it with
   // NotPseudoClass is ok.
   return sPseudoClassStates[nsCSSPseudoClasses::GetPseudoType(atom)];
+}
+
+NS_IMETHODIMP
+inDOMUtils::GetCSSPseudoElementNames(uint32_t* aLength, char16_t*** aNames)
+{
+  nsTArray<nsIAtom*> array;
+
+  for (int i = 0; i < nsCSSPseudoElements::ePseudo_PseudoElementCount; ++i) {
+    nsCSSPseudoElements::Type type = static_cast<nsCSSPseudoElements::Type>(i);
+    if (!nsCSSPseudoElements::PseudoElementIsUASheetOnly(type)) {
+      nsIAtom* atom = nsCSSPseudoElements::GetPseudoAtom(type);
+      array.AppendElement(atom);
+    }
+  }
+
+  *aLength = array.Length();
+  char16_t** ret =
+    static_cast<char16_t**>(moz_xmalloc(*aLength * sizeof(char16_t*)));
+  for (uint32_t i = 0; i < *aLength; ++i) {
+    ret[i] = ToNewUnicode(nsDependentAtomString(array[i]));
+  }
+  *aNames = ret;
+  return NS_OK;
 }
 
 NS_IMETHODIMP

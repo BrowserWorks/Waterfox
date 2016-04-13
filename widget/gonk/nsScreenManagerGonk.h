@@ -21,6 +21,7 @@
 #include "hardware/hwcomposer.h"
 
 #include "libdisplay/GonkDisplay.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/Hal.h"
 #include "mozilla/Mutex.h"
 #include "nsBaseScreen.h"
@@ -42,17 +43,30 @@ namespace mozilla {
 namespace gl {
     class GLContext;
 }
+namespace layers {
+class CompositorVsyncScheduler;
+class CompositorParent;
 }
+}
+
+enum class NotifyDisplayChangedEvent : int8_t {
+  Observable,
+  Suppressed
+};
 
 class nsScreenGonk : public nsBaseScreen
 {
     typedef mozilla::hal::ScreenConfiguration ScreenConfiguration;
     typedef mozilla::GonkDisplay GonkDisplay;
+    typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
+    typedef mozilla::layers::CompositorParent CompositorParent;
+    typedef mozilla::gfx::DrawTarget DrawTarget;
 
 public:
     nsScreenGonk(uint32_t aId,
                  GonkDisplay::DisplayType aDisplayType,
-                 const GonkDisplay::NativeData& aNativeData);
+                 const GonkDisplay::NativeData& aNativeData,
+                 NotifyDisplayChangedEvent aEventVisibility);
 
     ~nsScreenGonk();
 
@@ -65,17 +79,21 @@ public:
     NS_IMETHOD SetRotation(uint32_t  aRotation);
 
     uint32_t GetId();
-    nsIntRect GetRect();
+    NotifyDisplayChangedEvent GetEventVisibility();
+    LayoutDeviceIntRect GetRect();
     float GetDpi();
     int32_t GetSurfaceFormat();
     ANativeWindow* GetNativeWindow();
-    nsIntRect GetNaturalBounds();
+    LayoutDeviceIntRect GetNaturalBounds();
     uint32_t EffectiveScreenRotation();
     ScreenConfiguration GetConfiguration();
     bool IsPrimaryScreen();
 
-    ANativeWindowBuffer* DequeueBuffer();
-    bool QueueBuffer(ANativeWindowBuffer* buf);
+    already_AddRefed<DrawTarget> StartRemoteDrawing();
+    void EndRemoteDrawing();
+
+    nsresult MakeSnapshot(ANativeWindowBuffer* aBuffer);
+    void SetCompositorParent(CompositorParent* aCompositorParent);
 
 #if ANDROID_VERSION >= 17
     android::DisplaySurface* GetDisplaySurface();
@@ -109,17 +127,22 @@ public:
                     mozilla::gl::GLContext* aGLContext);
     hwc_display_t GetEGLDisplay();
     hwc_surface_t GetEGLSurface();
+    already_AddRefed<mozilla::gl::GLContext> GetGLContext();
     void UpdateMirroringWidget(already_AddRefed<nsWindow>& aWindow); // Primary screen only
     nsWindow* GetMirroringWidget(); // Primary screen only
 
 protected:
+    ANativeWindowBuffer* DequeueBuffer();
+    bool QueueBuffer(ANativeWindowBuffer* buf);
+
     uint32_t mId;
+    NotifyDisplayChangedEvent mEventVisibility;
     int32_t mColorDepth;
     android::sp<ANativeWindow> mNativeWindow;
     float mDpi;
     int32_t mSurfaceFormat;
-    nsIntRect mNaturalBounds; // Screen bounds w/o rotation taken into account.
-    nsIntRect mVirtualBounds; // Screen bounds w/ rotation taken into account.
+    LayoutDeviceIntRect mNaturalBounds; // Screen bounds w/o rotation taken into account.
+    LayoutDeviceIntRect mVirtualBounds; // Screen bounds w/ rotation taken into account.
     uint32_t mScreenRotation;
     uint32_t mPhysicalScreenRotation;
     nsTArray<nsWindow*> mTopWindows;
@@ -128,6 +151,7 @@ protected:
 #endif
     bool mIsMirroring; // Non-primary screen only
     RefPtr<nsScreenGonk> mMirroringScreen; // Primary screen only
+    mozilla::Atomic<CompositorParent*> mCompositorParent;
 
     // Accessed and updated only on compositor thread
     GonkDisplay::DisplayType mDisplayType;
@@ -135,6 +159,26 @@ protected:
     hwc_surface_t mEGLSurface;
     RefPtr<mozilla::gl::GLContext> mGLContext;
     RefPtr<nsWindow> mMirroringWidget; // Primary screen only
+
+    // If we're using a BasicCompositor, these fields are temporarily
+    // set during frame composition.  They wrap the hardware
+    // framebuffer.
+    RefPtr<DrawTarget> mFramebufferTarget;
+    ANativeWindowBuffer* mFramebuffer;
+    /**
+     * Points to a mapped gralloc buffer between calls to lock and unlock.
+     * Should be null outside of the lock-unlock pair.
+     */
+    uint8_t* mMappedBuffer;
+    // If we're using a BasicCompositor, this is our window back
+    // buffer.  The gralloc framebuffer driver expects us to draw the
+    // entire framebuffer on every frame, but gecko expects the
+    // windowing system to be tracking buffer updates for invalidated
+    // regions.  We get stuck holding that bag.
+    //
+    // Only accessed on the compositor thread, except during
+    // destruction.
+    RefPtr<DrawTarget> mBackBuffer;
 };
 
 class nsScreenManagerGonk final : public nsIScreenManager
@@ -155,9 +199,14 @@ public:
     void DisplayEnabled(bool aEnabled);
 
     nsresult AddScreen(GonkDisplay::DisplayType aDisplayType,
-                       android::IGraphicBufferProducer* aSink = nullptr);
+                       android::IGraphicBufferProducer* aSink = nullptr,
+                       NotifyDisplayChangedEvent aEventVisibility = NotifyDisplayChangedEvent::Observable);
 
     nsresult RemoveScreen(GonkDisplay::DisplayType aDisplayType);
+
+#if ANDROID_VERSION >= 19
+    void SetCompositorVsyncScheduler(mozilla::layers::CompositorVsyncScheduler* aObserver);
+#endif
 
 protected:
     ~nsScreenManagerGonk();
@@ -169,6 +218,10 @@ protected:
     nsTArray<RefPtr<nsScreenGonk>> mScreens;
     RefPtr<nsRunnable> mScreenOnEvent;
     RefPtr<nsRunnable> mScreenOffEvent;
+
+#if ANDROID_VERSION >= 19
+    RefPtr<mozilla::layers::CompositorVsyncScheduler> mCompositorVsyncScheduler;
+#endif
 };
 
 #endif /* nsScreenManagerGonk_h___ */

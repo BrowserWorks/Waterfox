@@ -171,6 +171,9 @@ GonkDisplayICS::SwapBuffers(EGLDisplay dpy, EGLSurface sur)
     mFBSurface->compositionComplete();
 
     if (!mHwc) {
+        if (sur != EGL_NO_SURFACE) {
+            return eglSwapBuffers(dpy, sur);
+        }
         return true;
     }
 
@@ -206,7 +209,7 @@ GonkDisplayICS::SetDispReleaseFd(int fd)
 
 GonkDisplay::NativeData
 GonkDisplayICS::GetNativeData(GonkDisplay::DisplayType aDisplayType,
-                              android::IGraphicBufferProducer* aProducer)
+                              android::IGraphicBufferProducer* aSink)
 {
     MOZ_ASSERT(aDisplayType == DISPLAY_PRIMARY, "ICS gonk supports primary display only.");
 

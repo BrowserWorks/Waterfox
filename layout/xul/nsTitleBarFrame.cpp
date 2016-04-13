@@ -125,10 +125,10 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
          if (parent) {
            nsMenuPopupFrame* menuPopupFrame = static_cast<nsMenuPopupFrame*>(parent);
            nsCOMPtr<nsIWidget> widget = menuPopupFrame->GetWidget();
-           nsIntRect bounds;
+           LayoutDeviceIntRect bounds;
            widget->GetScreenBounds(bounds);
 
-           CSSPoint cssPos = (LayoutDeviceIntPoint::FromUntyped(bounds.TopLeft()) + nsMoveBy)
+           CSSPoint cssPos = (bounds.TopLeft() + nsMoveBy)
                            / aPresContext->CSSToDevPixelScale();
            menuPopupFrame->MoveTo(RoundedToInt(cssPos), false);
          }
@@ -150,7 +150,7 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
     case eMouseClick: {
       WidgetMouseEvent* mouseEvent = aEvent->AsMouseEvent();
       if (mouseEvent->IsLeftClickEvent()) {
-        MouseClicked(aPresContext, mouseEvent);
+        MouseClicked(mouseEvent);
       }
       break;
     }
@@ -166,8 +166,7 @@ nsTitleBarFrame::HandleEvent(nsPresContext* aPresContext,
 }
 
 void
-nsTitleBarFrame::MouseClicked(nsPresContext* aPresContext,
-                              WidgetMouseEvent* aEvent)
+nsTitleBarFrame::MouseClicked(WidgetMouseEvent* aEvent)
 {
   // Execute the oncommand event handler.
   nsContentUtils::DispatchXULCommand(mContent,

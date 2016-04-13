@@ -22,6 +22,7 @@ namespace css {
 class Declaration;
 } /* namespace css */
 namespace dom {
+class KeyframeEffectReadOnly;
 class Promise;
 } /* namespace dom */
 
@@ -74,6 +75,7 @@ public:
     , mPauseShouldStick(false)
     , mNeedsNewAnimationIndexWhenRun(false)
     , mPreviousPhaseOrIteration(PREVIOUS_PHASE_BEFORE)
+    , mInitialPlayState(NS_STYLE_ANIMATION_PLAY_STATE_PAUSED)
   {
     // We might need to drop this assertion once we add a script-accessible
     // constructor but for animations generated from CSS markup the
@@ -129,7 +131,7 @@ public:
 
   bool IsStylePaused() const { return mIsStylePaused; }
 
-  bool HasLowerCompositeOrderThan(const Animation& aOther) const override;
+  bool HasLowerCompositeOrderThan(const CSSAnimation& aOther) const;
 
   void SetAnimationIndex(uint64_t aIndex)
   {
@@ -154,12 +156,12 @@ public:
   // reflect changes to that markup.
   bool IsTiedToMarkup() const { return mOwningElement.IsSet(); }
 
-  // Is this animation currently in effect for the purposes of computing
-  // mWinsInCascade.  (In general, this can be computed from the timing
-  // function.  This boolean remembers the state as of the last time we
-  // called UpdateCascadeResults so we know if it changes and we need to
-  // call UpdateCascadeResults again.)
-  bool mInEffectForCascadeResults;
+  void SetInitialPlayState(uint8_t aPlayState)
+  {
+    mInitialPlayState = aPlayState;
+  }
+  uint8_t InitialPlayState() const { return mInitialPlayState; }
+  void PlayOrPauseFromStyle();
 
 protected:
   virtual ~CSSAnimation()
@@ -169,18 +171,17 @@ protected:
   }
 
   // Animation overrides
-  CommonAnimationManager* GetAnimationManager() const override;
   void UpdateTiming(SeekFlag aSeekFlag,
                     SyncNotifyFlag aSyncNotifyFlag) override;
 
   // Returns the duration from the start of the animation's source effect's
   // active interval to the point where the animation actually begins playback.
   // This is zero unless the animation's source effect has a negative delay in
-  // which // case it is the absolute value of that delay.
+  // which case it is the absolute value of that delay.
   // This is used for setting the elapsedTime member of CSS AnimationEvents.
   TimeDuration InitialAdvance() const {
     return mEffect ?
-           std::max(TimeDuration(), mEffect->Timing().mDelay * -1) :
+           std::max(TimeDuration(), mEffect->SpecifiedTiming().mDelay * -1) :
            TimeDuration();
   }
   // Converts an AnimationEvent's elapsedTime value to an equivalent TimeStamp
@@ -273,6 +274,10 @@ protected:
   // One of the PREVIOUS_PHASE_* constants, or an integer for the iteration
   // whose start we last notified on.
   uint64_t mPreviousPhaseOrIteration;
+
+  // Represents initial play state specified by style.  This is used to avoid
+  // requesting a restyle for temporary animations.
+  uint8_t mInitialPlayState;
 };
 
 } /* namespace dom */
@@ -287,16 +292,8 @@ public:
   {
   }
 
-  NS_DECL_CYCLE_COLLECTION_CLASS(nsAnimationManager)
-  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-
-  void MaybeUpdateCascadeResults(mozilla::AnimationCollection* aCollection);
-
-  // nsIStyleRuleProcessor (parts)
-  virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf)
-    const MOZ_MUST_OVERRIDE override;
-  virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
-    const MOZ_MUST_OVERRIDE override;
+  NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(nsAnimationManager)
+  NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(nsAnimationManager)
 
   /**
    * Return the style rule that RulesMatching should add for
@@ -328,7 +325,11 @@ public:
    * accumulate animationstart events at other points when style
    * contexts are created.
    */
-  void DispatchEvents()  { mEventDispatcher.DispatchEvents(mPresContext); }
+  void DispatchEvents()
+  {
+    RefPtr<nsAnimationManager> kungFuDeathGrip(this);
+    mEventDispatcher.DispatchEvents(mPresContext);
+  }
   void SortEvents()      { mEventDispatcher.SortEvents(); }
   void ClearEventQueue() { mEventDispatcher.ClearEventQueue(); }
 
@@ -369,10 +370,6 @@ private:
                     float aFromKey, nsStyleContext* aFromContext,
                     mozilla::css::Declaration* aFromDeclaration,
                     float aToKey, nsStyleContext* aToContext);
-
-  static void UpdateCascadeResults(nsStyleContext* aStyleContext,
-                                   mozilla::AnimationCollection*
-                                     aElementAnimations);
 };
 
 #endif /* !defined(nsAnimationManager_h_) */

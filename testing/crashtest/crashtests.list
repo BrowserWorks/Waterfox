@@ -7,6 +7,7 @@ include ../../accessible/tests/crashtests/crashtests.list
 
 include ../../docshell/base/crashtests/crashtests.list
 
+include ../../dom/audiochannel/crashtests/crashtests.list
 include ../../dom/base/crashtests/crashtests.list
 include ../../dom/bindings/crashtests/crashtests.list
 include ../../dom/canvas/crashtests/crashtests.list
@@ -22,14 +23,16 @@ include ../../dom/offline/crashtests/crashtests.list
 include ../../dom/plugins/test/crashtests/crashtests.list
 include ../../dom/smil/crashtests/crashtests.list
 include ../../dom/svg/crashtests/crashtests.list
-include ../../dom/workers/test/crashtests.list
+include ../../dom/workers/test/crashtests/crashtests.list
 include ../../dom/xbl/crashtests/crashtests.list
 include ../../dom/xml/crashtests/crashtests.list
 include ../../dom/xslt/crashtests/crashtests.list
 include ../../dom/xul/crashtests/crashtests.list
 include ../../dom/xul/templates/crashtests/crashtests.list
 
-include ../../editor/crashtests.list
+include ../../editor/composer/crashtests/crashtests.list
+include ../../editor/libeditor/crashtests/crashtests.list
+include ../../editor/txmgr/tests/crashtests/crashtests.list
 
 include ../../gfx/tests/crashtests/crashtests.list
 

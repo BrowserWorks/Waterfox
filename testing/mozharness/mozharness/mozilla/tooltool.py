@@ -49,16 +49,11 @@ class TooltoolMixin(object):
     def tooltool_fetch(self, manifest,
                        output_dir=None, privileged=False, cache=None):
         """docstring for tooltool_fetch"""
-        tooltool = self.query_exe('tooltool.py', return_type='list')
 
         if self.config.get("download_tooltool"):
-            tooltool = [bin for bin in tooltool if os.path.exists(bin)]
-            if tooltool:
-                cmd = [tooltool[0]]
-            else:
-                cmd = [self._fetch_tooltool_py()]
+            cmd = [sys.executable, self._fetch_tooltool_py()]
         else:
-            cmd = tooltool
+            cmd = self.query_exe('tooltool.py', return_type='list')
 
         # get the tooltool servers from configuration
         default_urls = self.config.get('tooltool_servers', TOOLTOOL_SERVERS)
@@ -85,8 +80,16 @@ class TooltoolMixin(object):
         if cache:
             cmd.extend(['-c', cache])
 
+        # when mock is enabled run tooltool in mock. We can't use
+        # run_command_m in all cases because it won't exist unless
+        # MockMixin is used on the parent class
+        if self.config.get('mock_target'):
+            cmd_runner = self.run_command_m
+        else:
+            cmd_runner = self.run_command
+
         self.retry(
-            self.run_command,
+            cmd_runner,
             args=(cmd, ),
             kwargs={'cwd': output_dir,
                     'error_list': TooltoolErrorList,

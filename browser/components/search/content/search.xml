@@ -31,6 +31,7 @@
       <xul:textbox class="searchbar-textbox"
                    anonid="searchbar-textbox"
                    type="autocomplete"
+                   inputtype="search"
                    flex="1"
                    autocompletepopup="PopupSearchAutoComplete"
                    autocompletesearch="search-autocomplete"
@@ -130,8 +131,7 @@
 
       <property name="currentEngine">
         <setter><![CDATA[
-          let ss = Services.search;
-          ss.defaultEngine = ss.currentEngine = val;
+          Services.search.currentEngine = val;
           return val;
         ]]></setter>
         <getter><![CDATA[
@@ -404,7 +404,7 @@
           var textBox = this._textbox;
 
           // Save the current value in the form history
-          if (aData && !PrivateBrowsingUtils.isWindowPrivate(window)) {
+          if (aData && !PrivateBrowsingUtils.isWindowPrivate(window) && this.FormHistory.enabled) {
             this.FormHistory.update(
               { op : "bump",
                 fieldname : textBox.getAttribute("autocompletesearchparam"),
@@ -421,7 +421,7 @@
           if (telemetrySearchDetails && telemetrySearchDetails.index == -1) {
             telemetrySearchDetails = null;
           }
-          BrowserSearch.recordSearchInHealthReport(engine, "searchbar", telemetrySearchDetails);
+          BrowserSearch.recordSearchInTelemetry(engine, "searchbar", telemetrySearchDetails);
           // null parameter below specifies HTML response for search
           let params = {
             postData: submission.postData,
@@ -681,11 +681,9 @@
 
             var outerRect = this.getBoundingClientRect();
             var innerRect = this.inputField.getBoundingClientRect();
-            if (isRTL) {
-              var width = innerRect.right - outerRect.left;
-            } else {
-              var width = outerRect.right - innerRect.left;
-            }
+            let width = isRTL ?
+                        innerRect.right - outerRect.left :
+                        outerRect.right - innerRect.left;
             popup.setAttribute("width", width > 100 ? width : 100);
 
             var yOffset = outerRect.bottom - innerRect.bottom;
@@ -727,7 +725,7 @@
 
           let engine;
           let oneOff = this.selectedButton;
-          if (oneOff && !this.selectionFromMouseOver) {
+          if (oneOff) {
             if (!oneOff.engine) {
               oneOff.doCommand();
               this.mEnterEvent = null;
@@ -749,11 +747,19 @@
       <field name="_selectedButton"/>
       <property name="selectedButton" onget="return this._selectedButton;">
         <setter><![CDATA[
-          // Set to true from the mouseover handler right after this setter call.
-          this.selectionFromMouseOver = false;
-
-          if (this._selectedButton)
-            this._selectedButton.removeAttribute("selected");
+          this._changeVisuallySelectedButton(val, true);
+        ]]></setter>
+      </property>
+      <method name="_changeVisuallySelectedButton">
+        <parameter name="val"/>
+        <parameter name="aUpdateLogicallySelectedButton"/>
+        <body><![CDATA[
+          let list = this.getSelectableButtons();
+          let visuallySelectedButton = list.find(button => {
+            return button.getAttribute("selected") == "true"
+          });
+          if (visuallySelectedButton)
+            visuallySelectedButton.removeAttribute("selected");
 
           let textbox = document.getBindingParent(this).textbox;
           let header =
@@ -762,7 +768,8 @@
           // Avoid selecting dummy buttons.
           if (val && !val.classList.contains("dummy")) {
             val.setAttribute("selected", "true");
-            this._selectedButton = val;
+            if (aUpdateLogicallySelectedButton)
+              this._selectedButton = val;
             if (val.classList.contains("searchbar-engine-one-off-item")) {
               let headerEngineText =
                 document.getAnonymousElementByAttribute(this.popup, "anonid",
@@ -774,14 +781,14 @@
               header.selectedIndex = textbox.value ? 1 : 0;
             }
             this.setAttribute("aria-activedescendant", val.id);
-            return;
+          } else {
+            header.selectedIndex = textbox.value ? 1 : 0;
+            this.removeAttribute("aria-activedescendant");
+            if (aUpdateLogicallySelectedButton)
+              this._selectedButton = null;
           }
-
-          header.selectedIndex = textbox.value ? 1 : 0;
-          this.removeAttribute("aria-activedescendant");
-          this._selectedButton = null;
-        ]]></setter>
-      </property>
+        ]]></body>
+      </method>
 
       <method name="getSelectableButtons">
         <parameter name="aCycleEngines"/>
@@ -1368,23 +1375,30 @@
             target.classList.contains("addengine-item") ||
             target.classList.contains("search-setting-button")) {
           let textbox = document.getElementById("searchbar").textbox;
-          textbox.selectedButton = target;
-          textbox.selectionFromMouseOver = true;
+          textbox._changeVisuallySelectedButton(target);
         }
       ]]></handler>
 
       <handler event="mouseout"><![CDATA[
         let target = event.originalTarget;
-        if (target.localName != "button")
+        if (target.localName != "button") {
           return;
+        }
 
         // Don't deselect the current button if the context menu is open.
         if (this._ignoreMouseEvents)
           return;
 
         let textbox = document.getElementById("searchbar").textbox;
-        if (textbox.selectedButton == target)
-          textbox.selectedButton = null;
+        // Unfortunately this will fire before mouseover hits another item.
+        // If this button is selected, we replace that selection only if
+        // we're not moving to a different one-off item:
+        if (target.getAttribute("selected") == "true" &&
+            (!event.relatedTarget ||
+             !event.relatedTarget.classList.contains("searchbar-engine-one-off-item") ||
+             event.relatedTarget.classList.contains("dummy"))) {
+          textbox._changeVisuallySelectedButton(textbox.selectedButton);
+        }
       ]]></handler>
 
       <handler event="click"><![CDATA[

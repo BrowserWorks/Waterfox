@@ -20,7 +20,7 @@ ALLOW_COMPILER_WARNINGS = True
 FINAL_LIBRARY = 'gkmedias'
 
 DEFINES['OPUS_BUILD'] = True
-DEFINES['OPUS_VERSION'] = '"v1.1-mozilla"'
+DEFINES['OPUS_VERSION'] = '"v1.1.2-mozilla"'
 DEFINES['USE_ALLOCA'] = True
 
 # Don't export symbols
@@ -70,9 +70,9 @@ LOCAL_INCLUDES += [
 include('sources.mozbuild')
 
 UNIFIED_SOURCES += celt_sources
-SOURCES += celt_nonunified_sources
 UNIFIED_SOURCES += silk_sources
 UNIFIED_SOURCES += opus_sources
+SOURCES += opus_nonunified_sources
 
 if CONFIG['MOZ_SAMPLE_TYPE_FLOAT32']:
     LOCAL_INCLUDES += [
@@ -111,4 +111,4 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['GNU_AS']:
 # Suppress warnings in third-party code.
 if CONFIG['GNU_CC']:
     if CONFIG['CLANG_CXX']:
-        CFLAGS += ['-Wno-\#pragma-messages']
+        CFLAGS += ['-Wno-#pragma-messages']

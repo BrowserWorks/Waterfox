@@ -25,7 +25,7 @@
           let hostedAppManifest = TEST_BASE + "hosted_app.manifest";
 
           yield win.AppProjects.load();
-          is(win.AppProjects.store.object.projects.length, 0, "IDB is empty");
+          is(win.AppProjects.projects.length, 0, "IDB is empty");
 
           info("to call importPackagedApp(" + packagedAppLocation + ")");
           yield winProject.projectList.importPackagedApp(packagedAppLocation);
@@ -54,8 +54,8 @@
 
           let panelNode = docProject.querySelector("#project-panel");
           let items = panelNode.querySelectorAll(".panel-item");
-          // 4 controls, + 2 projects
-          is(items.length, 6, "6 projects in panel");
+          // 3 controls, + 2 projects
+          is(items.length, 5, "5 projects in panel");
           is(items[3].querySelector("span").textContent, "A name (in app directory)", "Panel text is correct");
           is(items[4].querySelector("span").textContent, "hosted manifest name property", "Panel text is correct");
 

@@ -1,3 +1,7 @@
+/* -*- Mode: indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set sts=2 sw=2 et tw=80: */
+"use strict";
+
 const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/PlacesUtils.jsm");
@@ -5,8 +9,6 @@ var Bookmarks = PlacesUtils.bookmarks;
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
-  EventManager,
-  ignoreEvent,
   runSafe,
 } = ExtensionUtils;
 
@@ -41,11 +43,12 @@ function getTree(rootGuid, onlyChildren) {
   }
 
   return PlacesUtils.promiseBookmarksTree(rootGuid, {
-    excludeItemsCallback: aItem => {
-      if (aItem.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR)
+    excludeItemsCallback: item => {
+      if (item.type == PlacesUtils.TYPE_X_MOZ_PLACE_SEPARATOR) {
         return true;
-      return aItem.annos &&
-             aItem.annos.find(a => a.name == PlacesUtils.EXCLUDE_FROM_BACKUP_ANNO);
+      }
+      return item.annos &&
+             item.annos.find(a => a.name == PlacesUtils.EXCLUDE_FROM_BACKUP_ANNO);
     },
   }).then(root => {
     if (onlyChildren) {
@@ -79,7 +82,7 @@ function convert(result) {
   return node;
 }
 
-extensions.registerPrivilegedAPI("bookmarks", (extension, context) => {
+extensions.registerSchemaAPI("bookmarks", "bookmarks", (extension, context) => {
   return {
     bookmarks: {
       get: function(idOrIdList, callback) {
@@ -139,18 +142,18 @@ extensions.registerPrivilegedAPI("bookmarks", (extension, context) => {
         };
 
         // If url is NULL or missing, it will be a folder.
-        if ("url" in bookmark && bookmark.url !== null) {
+        if (bookmark.url !== null) {
           info.type = Bookmarks.TYPE_BOOKMARK;
           info.url = bookmark.url || "";
         } else {
           info.type = Bookmarks.TYPE_FOLDER;
         }
 
-        if ("index" in bookmark) {
+        if (bookmark.index !== null) {
           info.index = bookmark.index;
         }
 
-        if ("parentId" in bookmark) {
+        if (bookmark.parentId !== null) {
           info.parentGuid = bookmark.parentId;
         } else {
           info.parentGuid = Bookmarks.unfiledGuid;
@@ -169,20 +172,20 @@ extensions.registerPrivilegedAPI("bookmarks", (extension, context) => {
               runSafe(context, callback, convert(result));
             }
           }, failure);
-        } catch(e) {
+        } catch (e) {
           failure(e);
         }
       },
 
       move: function(id, destination, callback) {
         let info = {
-          guid: id
+          guid: id,
         };
 
-        if ("parentId" in destination) {
+        if (destination.parentId !== null) {
           info.parentGuid = destination.parentId;
         }
-        if ("index" in destination) {
+        if (destination.index !== null) {
           info.index = destination.index;
         }
 
@@ -205,13 +208,13 @@ extensions.registerPrivilegedAPI("bookmarks", (extension, context) => {
 
       update: function(id, changes, callback) {
         let info = {
-          guid: id
+          guid: id,
         };
 
-        if ("title" in changes) {
+        if (changes.title !== null) {
           info.title = changes.title;
         }
-        if ("url" in changes) {
+        if (changes.url !== null) {
           info.url = changes.url;
         }
 
@@ -234,7 +237,7 @@ extensions.registerPrivilegedAPI("bookmarks", (extension, context) => {
 
       remove: function(id, callback) {
         let info = {
-          guid: id
+          guid: id,
         };
 
         let failure = reason => {
@@ -253,8 +256,8 @@ extensions.registerPrivilegedAPI("bookmarks", (extension, context) => {
         } catch (e) {
           failure(e);
         }
-      }
-    }
+      },
+    },
   };
 });
 

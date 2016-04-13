@@ -552,11 +552,9 @@ interface WebGLRenderingContext {
 
     void bufferData(GLenum target, GLsizeiptr size, GLenum usage);
     void bufferData(GLenum target, ArrayBufferView data, GLenum usage);
-    void bufferData(GLenum target, SharedArrayBufferView data, GLenum usage);
     void bufferData(GLenum target, ArrayBuffer? data, GLenum usage);
     void bufferData(GLenum target, SharedArrayBuffer data, GLenum usage);
     void bufferSubData(GLenum target, GLintptr offset, ArrayBufferView data);
-    void bufferSubData(GLenum target, GLintptr offset, SharedArrayBufferView data);
     void bufferSubData(GLenum target, GLintptr offset, ArrayBuffer? data);
     void bufferSubData(GLenum target, GLintptr offset, SharedArrayBuffer data);
 
@@ -570,11 +568,11 @@ interface WebGLRenderingContext {
 
     void compressedTexImage2D(GLenum target, GLint level, GLenum internalformat,
                               GLsizei width, GLsizei height, GLint border,
-                              (ArrayBufferView or SharedArrayBufferView) data);
+                              ArrayBufferView data);
     void compressedTexSubImage2D(GLenum target, GLint level,
                                  GLint xoffset, GLint yoffset,
                                  GLsizei width, GLsizei height, GLenum format,
-                                 (ArrayBufferView or SharedArrayBufferView) data);
+                                 ArrayBufferView data);
 
     void copyTexImage2D(GLenum target, GLint level, GLenum internalformat,
                         GLint x, GLint y, GLsizei width, GLsizei height,
@@ -677,7 +675,7 @@ interface WebGLRenderingContext {
 
     [Throws]
     void readPixels(GLint x, GLint y, GLsizei width, GLsizei height,
-                    GLenum format, GLenum type, (ArrayBufferView or SharedArrayBufferView)? pixels);
+                    GLenum format, GLenum type, ArrayBufferView? pixels);
 
     void renderbufferStorage(GLenum target, GLenum internalformat,
                              GLsizei width, GLsizei height);
@@ -694,11 +692,12 @@ interface WebGLRenderingContext {
     void stencilOpSeparate(GLenum face, GLenum fail, GLenum zfail, GLenum zpass);
 
 
-    [Throws]
+    // Overloads must share [Throws].
+    [Throws] // Can't actually throw.
     void texImage2D(GLenum target, GLint level, GLenum internalformat,
                     GLsizei width, GLsizei height, GLint border, GLenum format,
-                    GLenum type, (ArrayBufferView or SharedArrayBufferView)? pixels);
-    [Throws]
+                    GLenum type, ArrayBufferView? pixels);
+    [Throws] // Can't actually throw.
     void texImage2D(GLenum target, GLint level, GLenum internalformat,
                     GLenum format, GLenum type, ImageData? pixels);
     [Throws]
@@ -714,11 +713,11 @@ interface WebGLRenderingContext {
     void texParameterf(GLenum target, GLenum pname, GLfloat param);
     void texParameteri(GLenum target, GLenum pname, GLint param);
 
-    [Throws]
+    [Throws] // Can't actually throw.
     void texSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
-                       GLsizei width, GLsizei height,
-                       GLenum format, GLenum type, (ArrayBufferView or SharedArrayBufferView)? pixels);
-    [Throws]
+                       GLsizei width, GLsizei height, GLenum format, GLenum type,
+                       ArrayBufferView? pixels);
+    [Throws] // Can't actually throw.
     void texSubImage2D(GLenum target, GLint level, GLint xoffset, GLint yoffset,
                        GLenum format, GLenum type, ImageData? pixels);
     [Throws]
@@ -826,6 +825,21 @@ interface WEBGL_compressed_texture_atc
     const GLenum COMPRESSED_RGB_ATC_WEBGL                     = 0x8C92;
     const GLenum COMPRESSED_RGBA_ATC_EXPLICIT_ALPHA_WEBGL     = 0x8C93;
     const GLenum COMPRESSED_RGBA_ATC_INTERPOLATED_ALPHA_WEBGL = 0x87EE;
+};
+
+[NoInterfaceObject]
+interface WEBGL_compressed_texture_es3
+{
+    const GLenum COMPRESSED_R11_EAC                                 = 0x9270;
+    const GLenum COMPRESSED_SIGNED_R11_EAC                          = 0x9271;
+    const GLenum COMPRESSED_RG11_EAC                                = 0x9272;
+    const GLenum COMPRESSED_SIGNED_RG11_EAC                         = 0x9273;
+    const GLenum COMPRESSED_RGB8_ETC2                               = 0x9274;
+    const GLenum COMPRESSED_SRGB8_ETC2                              = 0x9275;
+    const GLenum COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2           = 0x9276;
+    const GLenum COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2          = 0x9277;
+    const GLenum COMPRESSED_RGBA8_ETC2_EAC                          = 0x9278;
+    const GLenum COMPRESSED_SRGB8_ALPHA8_ETC2_EAC                   = 0x9279;
 };
 
 [NoInterfaceObject]

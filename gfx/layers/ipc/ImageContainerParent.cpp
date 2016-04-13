@@ -9,6 +9,7 @@
 
 #include "nsThreadUtils.h"
 #include "mozilla/layers/ImageHost.h"
+#include "mozilla/unused.h"
 
 namespace mozilla {
 namespace layers {
@@ -22,7 +23,7 @@ ImageContainerParent::~ImageContainerParent()
 
 bool ImageContainerParent::RecvAsyncDelete()
 {
-  unused << PImageContainerParent::Send__delete__(this);
+  Unused << PImageContainerParent::Send__delete__(this);
   return true;
 }
 

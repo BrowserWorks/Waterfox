@@ -1,46 +1,49 @@
-/* globals XPCOMUtils, Task, RemoteAboutNewTab, RemoteNewTabLocation, ok */
+/* globals Cu, XPCOMUtils, TestUtils, aboutNewTabService, ContentTask, content, is */
 "use strict";
 
-let Cu = Components.utils;
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "RemoteNewTabLocation",
-  "resource:///modules/RemoteNewTabLocation.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "RemoteAboutNewTab",
-  "resource:///modules/RemoteAboutNewTab.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "aboutNewTabService",
+                                   "@mozilla.org/browser/aboutnewtab-service;1",
+                                   "nsIAboutNewTabService");
 
 const TEST_URL = "https://example.com/browser/browser/components/newtab/tests/browser/dummy_page.html";
-const NEWTAB_URL = "about:remote-newtab";
-
-let tests = [];
 
 /*
- * Tests that:
- * 1. overriding the RemoteNewTabPageLocation url causes a remote newtab page
- *    to load with the new url.
- * 2. Messages pass between remote page <--> newTab.js <--> RemoteAboutNewTab.js
+ * Tests opening a newtab page with a remote URL. Simulates a newtab open from chrome
  */
-tests.push(Task.spawn(function* testMessage() {
-  yield new Promise(resolve => {
-    RemoteAboutNewTab.pageListener.addMessageListener("NewTab:testMessage", () => {
-      ok(true, "message received");
-      resolve();
-    });
-  });
-}));
-
 add_task(function* open_newtab() {
-  RemoteNewTabLocation.override(TEST_URL);
-  ok(RemoteNewTabLocation.href === TEST_URL, "RemoteNewTabLocation has been overridden");
-  let tabOptions = {
-    gBrowser,
-    url: NEWTAB_URL,
-  };
+  let notificationPromise = nextChangeNotificationPromise(TEST_URL, "newtab page now points to test url");
+  aboutNewTabService.newTabURL = TEST_URL;
 
-  for (let test of tests) {
-    yield BrowserTestUtils.withNewTab(tabOptions, function* (browser) { // jshint ignore:line
-      yield test;
-    }); // jshint ignore:line
-  }
+  yield notificationPromise;
+  Assert.ok(aboutNewTabService.overridden, "url has been overridden");
+
+  /*
+   * Simulate a newtab open as a user would.
+   *
+   * Bug 1240169 - We cannot set the URL to about:newtab because that would invoke the redirector.
+   * The redirector always yields the loading of a default newtab URL. We expect the user to use
+   * the browser UI to access overriding URLs, for istance by click on the "+" button in the tab
+   * bar, or by using the new tab shortcut key.
+   */
+  BrowserOpenTab();  // jshint ignore:line
+
+  let browser = gBrowser.selectedBrowser;
+  yield BrowserTestUtils.browserLoaded(browser);
+
+  yield ContentTask.spawn(browser, {url: TEST_URL}, function*(args) {
+    is(content.document.location.href, args.url, "document.location should match the external resource");
+    is(content.document.documentURI, args.url, "document.documentURI should match the external resource");
+    is(content.document.nodePrincipal.URI.spec, args.url, "nodePrincipal should match the external resource");
+  });
+  yield BrowserTestUtils.removeTab(gBrowser.selectedTab);
 });
+
+function nextChangeNotificationPromise(aNewURL, testMessage) {
+  return TestUtils.topicObserved("newtab-url-changed", function observer(aSubject, aData) {  // jshint unused:false
+      Assert.equal(aData, aNewURL, testMessage);
+      return true;
+  }.bind(this));
+}

@@ -14,7 +14,9 @@
 #include "MediaInfo.h"
 #include "MediaResource.h"
 
-namespace mozilla { class MediaByteRange; }
+#ifdef MOZ_RUST_MP4PARSE
+#include "mp4parse.h"
+#endif
 
 namespace stagefright { class MetaData; }
 
@@ -22,6 +24,10 @@ namespace mp4_demuxer
 {
 
 struct StageFrightPrivate;
+
+#ifdef MOZ_RUST_MP4PARSE
+struct FreeMP4ParseState { void operator()(mp4parse_state* aPtr) { mp4parse_free(aPtr); } };
+#endif
 
 class MP4Metadata
 {
@@ -52,6 +58,10 @@ private:
   nsAutoPtr<StageFrightPrivate> mPrivate;
   CryptoFile mCrypto;
   RefPtr<Stream> mSource;
+
+#ifdef MOZ_RUST_MP4PARSE
+  mutable mozilla::UniquePtr<mp4parse_state, FreeMP4ParseState> mRustState;
+#endif
 };
 
 } // namespace mp4_demuxer

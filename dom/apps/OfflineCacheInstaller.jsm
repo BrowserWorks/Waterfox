@@ -229,7 +229,7 @@ function installCache(app) {
     return;
 
   let principal =
-    Services.scriptSecurityManager.createCodebasePrincipal(app.origin, {appId: aApp.localId});
+    Services.scriptSecurityManager.createCodebasePrincipal(app.origin, {appId: app.localId});
 
   // If the build has been correctly configured, this should not happen!
   // If we install the cache anyway, it won't be updateable. If we don't install
@@ -255,7 +255,7 @@ function installCache(app) {
     // The group ID contains application id and 'f' for not being hosted in
     // a browser element, but a mozbrowser iframe.
     // See netwerk/cache/nsDiskCacheDeviceSQL.cpp: AppendJARIdentifier
-    let groupID = appcacheURL + '#' + app.localId+ '+f';
+    let groupID = appcacheURL + '#^appId=' + app.localId;
     let applicationCache = applicationCacheService.createApplicationCache(groupID);
     applicationCache.activate();
 

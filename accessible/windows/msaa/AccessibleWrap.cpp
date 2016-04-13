@@ -91,8 +91,13 @@ void
 AccessibleWrap::Shutdown()
 {
 #ifdef _WIN64
-  if (mID != kNoID)
-    static_cast<DocAccessibleWrap*>(mDoc)->RemoveID(mID);
+  if (mID != kNoID) {
+    auto doc = static_cast<DocAccessibleWrap*>(mDoc);
+    MOZ_ASSERT(doc);
+    if (doc) {
+      doc->RemoveID(mID);
+    }
+  }
 #endif
 
   Accessible::Shutdown();
@@ -447,7 +452,7 @@ AccessibleWrap::get_accRole(
 #include "RoleMap.h"
     default:
       MOZ_CRASH("Unknown role.");
-  };
+  }
 
 #undef ROLE
 
@@ -1018,10 +1023,6 @@ AccessibleWrap::accNavigate(
   if (accessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
-  // TODO make this work with proxies.
-  if (IsProxy())
-    return E_NOTIMPL;
-
   Accessible* navAccessible = nullptr;
   Maybe<RelationType> xpRelation;
 
@@ -1032,18 +1033,34 @@ AccessibleWrap::accNavigate(
 
   switch(navDir) {
     case NAVDIR_FIRSTCHILD:
-      if (!nsAccUtils::MustPrune(accessible))
-        navAccessible = accessible->FirstChild();
+      if (accessible->IsProxy()) {
+        if (!accessible->Proxy()->MustPruneChildren()) {
+          navAccessible = WrapperFor(accessible->Proxy()->FirstChild());
+        }
+      } else {
+        if (!nsAccUtils::MustPrune(accessible))
+          navAccessible = accessible->FirstChild();
+      }
       break;
     case NAVDIR_LASTCHILD:
-      if (!nsAccUtils::MustPrune(accessible))
-        navAccessible = accessible->LastChild();
+      if (accessible->IsProxy()) {
+        if (!accessible->Proxy()->MustPruneChildren()) {
+          navAccessible = WrapperFor(accessible->Proxy()->LastChild());
+        }
+      } else {
+        if (!nsAccUtils::MustPrune(accessible))
+          navAccessible = accessible->LastChild();
+      }
       break;
     case NAVDIR_NEXT:
-      navAccessible = accessible->NextSibling();
+      navAccessible = accessible->IsProxy()
+        ? WrapperFor(accessible->Proxy()->NextSibling())
+        : accessible->NextSibling();
       break;
     case NAVDIR_PREVIOUS:
-      navAccessible = accessible->PrevSibling();
+      navAccessible = accessible->IsProxy()
+        ? WrapperFor(accessible->Proxy()->PrevSibling())
+        : accessible->PrevSibling();
       break;
     case NAVDIR_DOWN:
     case NAVDIR_LEFT:
@@ -1063,8 +1080,16 @@ AccessibleWrap::accNavigate(
   pvarEndUpAt->vt = VT_EMPTY;
 
   if (xpRelation) {
-    Relation rel = RelationByType(*xpRelation);
-    navAccessible = rel.Next();
+    if (accessible->IsProxy()) {
+      nsTArray<ProxyAccessible*> targets =
+        accessible->Proxy()->RelationByType(*xpRelation);
+      if (targets.Length()) {
+        navAccessible = WrapperFor(targets[0]);
+      }
+    } else {
+      Relation rel = RelationByType(*xpRelation);
+      navAccessible = rel.Next();
+    }
   }
 
   if (!navAccessible)
@@ -1613,7 +1638,7 @@ AccessibleWrap::UpdateSystemCaretFor(Accessible* aAccessible)
     return;
 
   nsIWidget* widget = nullptr;
-  nsIntRect caretRect = text->GetCaretRect(&widget);
+  LayoutDeviceIntRect caretRect = text->GetCaretRect(&widget);
   HWND caretWnd;
   if (caretRect.IsEmpty() || !(caretWnd = (HWND)widget->GetNativeData(NS_NATIVE_WINDOW))) {
     return;

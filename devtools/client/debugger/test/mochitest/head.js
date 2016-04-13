@@ -2,9 +2,8 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
-
-var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+// shared-head.js handles imports, constants, and utility functions
+Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/client/framework/test/shared-head.js", this);
 
 // Disable logging for faster test runs. Set this pref to true if you want to
 // debug a test in your try runs. Both the debugger server and frontend will
@@ -12,30 +11,18 @@ var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 var gEnableLogging = Services.prefs.getBoolPref("devtools.debugger.log");
 Services.prefs.setBoolPref("devtools.debugger.log", false);
 
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
-var { Promise: promise } = Cu.import("resource://devtools/shared/deprecated-sync-thenables.js", {});
-var { gDevTools } = Cu.import("resource://devtools/client/framework/gDevTools.jsm", {});
-var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var { BrowserToolboxProcess } = Cu.import("resource://devtools/client/framework/ToolboxProcess.jsm", {});
 var { DebuggerServer } = require("devtools/server/main");
 var { DebuggerClient, ObjectClient } = require("devtools/shared/client/main");
 var { AddonManager } = Cu.import("resource://gre/modules/AddonManager.jsm", {});
 var EventEmitter = require("devtools/shared/event-emitter");
-const { promiseInvoke } = require("devtools/shared/async-utils");
-var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox")
+
+// Override promise with deprecated-sync-thenables
+promise = Cu.import("resource://devtools/shared/deprecated-sync-thenables.js", {}).Promise;
 
 const EXAMPLE_URL = "http://example.com/browser/devtools/client/debugger/test/mochitest/";
 const FRAME_SCRIPT_URL = getRootDirectory(gTestPath) + "code_frame-script.js";
-
-DevToolsUtils.testing = true;
-SimpleTest.registerCleanupFunction(() => {
-  DevToolsUtils.testing = false;
-});
-
-// All tests are asynchronous.
-waitForExplicitFinish();
 
 registerCleanupFunction(function* () {
   info("finish() was called, cleaning up...");
@@ -65,13 +52,6 @@ testDir = testDir.replace("chrome:/mochitest", "chrome://mochitest");
 var helpersjs = testDir + "/../../../commandline/test/helpers.js";
 Services.scriptloader.loadSubScript(helpersjs, this);
 
-// Redeclare dbg_assert with a fatal behavior.
-function dbg_assert(cond, e) {
-  if (!cond) {
-    throw e;
-  }
-}
-
 function addWindow(aUrl) {
   info("Adding window: " + aUrl);
   return promise.resolve(getChromeWindow(window.open(aUrl)));
@@ -84,7 +64,9 @@ function getChromeWindow(aWindow) {
     .QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindow);
 }
 
-function addTab(aUrl, aWindow) {
+// Override addTab/removeTab as defined by shared-head, since these have
+// an extra window parameter and add a frame script
+this.addTab = function addTab(aUrl, aWindow) {
   info("Adding tab: " + aUrl);
 
   let deferred = promise.defer();
@@ -107,7 +89,7 @@ function addTab(aUrl, aWindow) {
   return deferred.promise;
 }
 
-function removeTab(aTab, aWindow) {
+this.removeTab = function removeTab(aTab, aWindow) {
   info("Removing tab.");
 
   let deferred = promise.defer();
@@ -273,7 +255,8 @@ function ensureSourceIs(aPanel, aUrlOrSource, aWaitFlag = false) {
   let sources = aPanel.panelWin.DebuggerView.Sources;
 
   if (sources.selectedValue === aUrlOrSource ||
-      sources.selectedItem.attachment.source.url.includes(aUrlOrSource)) {
+      (sources.selectedItem &&
+       sources.selectedItem.attachment.source.url.includes(aUrlOrSource))) {
     ok(true, "Expected source is shown: " + aUrlOrSource);
     return promise.resolve(null);
   }
@@ -542,13 +525,8 @@ function initDebugger(aTarget, aWindow) {
       let debuggerPanel = aToolbox.getCurrentPanel();
       let panelWin = debuggerPanel.panelWin;
 
-      // Wait for the initial resume...
-      panelWin.gClient.addOneTimeListener("resumed", () => {
-        info("Debugger client resumed successfully.");
-
-        prepareDebugger(debuggerPanel);
-        deferred.resolve([aTab, debuggee, debuggerPanel, aWindow]);
-      });
+      prepareDebugger(debuggerPanel);
+      deferred.resolve([aTab, debuggee, debuggerPanel, aWindow]);
     });
 
     return deferred.promise;
@@ -611,7 +589,6 @@ AddonDebugger.prototype = {
     this.debuggerPanel = toolbox.getCurrentPanel();
 
     // Wait for the initial resume...
-    yield waitForClientEvents(this.debuggerPanel, "resumed");
     yield prepareDebugger(this.debuggerPanel);
     yield this._attachConsole();
   }),
@@ -786,16 +763,23 @@ function getSelectedSourceElement(aPanel) {
     return aPanel.panelWin.DebuggerView.Sources.selectedItem.prebuiltNode;
 }
 
-function toggleBlackBoxing(aPanel, aSource = null) {
+function toggleBlackBoxing(aPanel, aSourceActor = null) {
   function clickBlackBoxButton() {
     getBlackBoxButton(aPanel).click();
   }
 
-  const blackBoxChanged = waitForThreadEvents(aPanel, "blackboxchange");
+  const blackBoxChanged = waitForDispatch(
+    aPanel,
+    aPanel.panelWin.constants.BLACKBOX
+  ).then(() => {
+    return aSourceActor ?
+      getSource(aPanel, aSourceActor) :
+      getSelectedSource(aPanel)
+  });
 
-  if (aSource) {
-    aPanel.panelWin.DebuggerView.Sources.selectedValue = aSource;
-    ensureSourceIs(aPanel, aSource, true).then(clickBlackBoxButton);
+  if (aSourceActor) {
+    aPanel.panelWin.DebuggerView.Sources.selectedValue = aSourceActor;
+    ensureSourceIs(aPanel, aSourceActor, true).then(clickBlackBoxButton);
   } else {
     clickBlackBoxButton();
   }
@@ -902,26 +886,14 @@ function attachAddonActorForUrl(aClient, aUrl) {
   return deferred.promise;
 }
 
-function rdpInvoke(aClient, aMethod, ...args) {
-  return promiseInvoke(aClient, aMethod, ...args)
-    .then((packet) => {
-      let { error, message } = packet;
-      if (error) {
-        throw new Error(error + ": " + message);
-      }
-
-      return packet;
-    });
-}
-
 function doResume(aPanel) {
   const threadClient = aPanel.panelWin.gThreadClient;
-  return rdpInvoke(threadClient, threadClient.resume);
+  return threadClient.resume();
 }
 
 function doInterrupt(aPanel) {
   const threadClient = aPanel.panelWin.gThreadClient;
-  return rdpInvoke(threadClient, threadClient.interrupt);
+  return threadClient.interrupt();
 }
 
 function pushPrefs(...aPrefs) {
@@ -938,6 +910,16 @@ function popPrefs() {
 
 // Source helpers
 
+function getSelectedSource(panel) {
+  const win = panel.panelWin;
+  return win.queries.getSelectedSource(win.DebuggerController.getState());
+}
+
+function getSource(panel, actor) {
+  const win = panel.panelWin;
+  return win.queries.getSource(win.DebuggerController.getState(), actor);
+}
+
 function getSelectedSourceURL(aSources) {
   return (aSources.selectedItem &&
           aSources.selectedItem.attachment.source.url);
@@ -949,12 +931,12 @@ function getSourceURL(aSources, aActor) {
 }
 
 function getSourceActor(aSources, aURL) {
-  let item = aSources.getItemForAttachment(a => a.source.url === aURL);
+  let item = aSources.getItemForAttachment(a => a.source && a.source.url === aURL);
   return item && item.value;
 }
 
 function getSourceForm(aSources, aURL) {
-  let item = aSources.getItemByValue(getSourceActor(gSources, aURL));
+  let item = aSources.getItemByValue(getSourceActor(aSources, aURL));
   return item.attachment.source;
 }
 
@@ -1031,7 +1013,7 @@ function connect(client) {
 }
 
 function close(client) {
-  info("Closing client.\n");
+  info("Waiting for client to close.\n");
   return new Promise(function (resolve) {
     client.close(() => {
       resolve();
@@ -1041,11 +1023,7 @@ function close(client) {
 
 function listTabs(client) {
   info("Listing tabs.");
-  return new Promise(function (resolve) {
-    client.listTabs(function (response) {
-      resolve(response);
-    });
-  });
+  return client.listTabs();
 }
 
 function findTab(tabs, url) {
@@ -1126,7 +1104,7 @@ function waitForWorkerClose(workerClient) {
 
 function resume(threadClient) {
   info("Resuming thread.");
-  return rdpInvoke(threadClient, threadClient.resume);
+  return threadClient.resume();
 }
 
 function findSource(sources, url) {
@@ -1166,29 +1144,12 @@ function waitForPause(threadClient) {
 
 function setBreakpoint(sourceClient, location) {
   info("Setting breakpoint.\n");
-  return rdpInvoke(sourceClient, sourceClient.setBreakpoint, location);
+  return sourceClient.setBreakpoint(location);
 }
 
 function source(sourceClient) {
   info("Getting source.\n");
-  return rdpInvoke(sourceClient, sourceClient.source);
-}
-
-function afterDispatch(store, type) {
-  info("Waiting on dispatch: " + type);
-  return new Promise(resolve => {
-    store.dispatch({
-      // Normally we would use `services.WAIT_UNTIL`, but use the
-      // internal name here so tests aren't forced to always pass it
-      // in
-      type: "@@service/waitUntil",
-      predicate: action => (
-        action.type === type &&
-        action.status ? action.status === "done" : true
-      ),
-      run: resolve
-    });
-  });
+  return sourceClient.source();
 }
 
 // Return a promise with a reference to jsterm, opening the split
@@ -1216,29 +1177,80 @@ function getSplitConsole(toolbox, win) {
   });
 }
 
-// This can be removed once debugger uses shared-head.js (bug 1181838)
-function synthesizeKeyFromKeyTag(key) {
-  is(key && key.tagName, "key", "Successfully retrieved the <key> node");
+// navigation
 
-  let modifiersAttr = key.getAttribute("modifiers");
+function waitForNavigation(gPanel) {
+  const target = gPanel.panelWin.gTarget;
+  const deferred = promise.defer();
+  target.once('navigate', () => {
+    deferred.resolve();
+  });
+  info("Waiting for navigation...");
+  return deferred.promise;
+}
 
-  let name = null;
+// actions
 
-  if (key.getAttribute("keycode"))
-    name = key.getAttribute("keycode");
-  else if (key.getAttribute("key"))
-    name = key.getAttribute("key");
+function bindActionCreators(panel) {
+  const win = panel.panelWin;
+  const dispatch = win.DebuggerController.dispatch;
+  const { bindActionCreators } = win.require('devtools/client/shared/vendor/redux');
+  return bindActionCreators(win.actions, dispatch);
+}
 
-  isnot(name, null, "Successfully retrieved keycode/key");
+// Wait until an action of `type` is dispatched. This is different
+// then `_afterDispatchDone` because it doesn't wait for async actions
+// to be done/errored. Use this if you want to listen for the "start"
+// action of an async operation (somewhat rare).
+function waitForNextDispatch(store, type) {
+  return new Promise(resolve => {
+    store.dispatch({
+      // Normally we would use `services.WAIT_UNTIL`, but use the
+      // internal name here so tests aren't forced to always pass it
+      // in
+      type: "@@service/waitUntil",
+      predicate: action => action.type === type,
+      run: (dispatch, getState, action) => {
+        resolve(action);
+      }
+    });
+  });
+}
 
-  let modifiers = {
-    shiftKey: !!modifiersAttr.match("shift"),
-    ctrlKey: !!modifiersAttr.match("control"),
-    altKey: !!modifiersAttr.match("alt"),
-    metaKey: !!modifiersAttr.match("meta"),
-    accelKey: !!modifiersAttr.match("accel")
-  };
+// Wait until an action of `type` is dispatched. If it's part of an
+// async operation, wait until the `status` field is "done" or "error"
+function _afterDispatchDone(store, type) {
+  return new Promise(resolve => {
+    store.dispatch({
+      // Normally we would use `services.WAIT_UNTIL`, but use the
+      // internal name here so tests aren't forced to always pass it
+      // in
+      type: "@@service/waitUntil",
+      predicate: action => {
+        if (action.type === type) {
+          return action.status ?
+            (action.status === "done" || action.status === "error") :
+            true
+        }
+      },
+      run: (dispatch, getState, action) => {
+        resolve(action);
+      }
+    });
+  });
+}
 
-  info("Synthesizing key " + name + " " + JSON.stringify(modifiers));
-  EventUtils.synthesizeKey(name, modifiers);
+function waitForDispatch(panel, type, eventRepeat = 1) {
+  const controller = panel.panelWin.DebuggerController;
+  const actionType = panel.panelWin.constants[type];
+  let count = 0;
+
+  return Task.spawn(function*() {
+    info("Waiting for " + type + " to dispatch " + eventRepeat + " time(s)");
+    while(count < eventRepeat) {
+      yield _afterDispatchDone(controller, actionType);
+      count++;
+      info(type + " dispatched " + count + " time(s)");
+    }
+  });
 }

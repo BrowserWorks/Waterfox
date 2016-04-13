@@ -10,6 +10,7 @@ from __future__ import absolute_import, print_function
 
 import logging
 import os
+import subprocess
 import sys
 import time
 
@@ -17,12 +18,16 @@ from argparse import ArgumentParser
 
 from mach.logging import LoggingManager
 from mozbuild.backend.configenvironment import ConfigEnvironment
-from mozbuild.backend.recursivemake import RecursiveMakeBackend
 from mozbuild.base import MachCommandConditions
 from mozbuild.frontend.emitter import TreeMetadataEmitter
 from mozbuild.frontend.reader import BuildReader
 from mozbuild.mozinfo import write_mozinfo
 from itertools import chain
+
+from mozbuild.backend import (
+    backends,
+    get_backend_class,
+)
 
 
 log_manager = LoggingManager()
@@ -32,10 +37,11 @@ ANDROID_IDE_ADVERTISEMENT = '''
 =============
 ADVERTISEMENT
 
-You are building Firefox for Android. After your build completes, you
-should run `mach gradle-install` to prepare Gradle and IntelliJ/Android Studio
-integration. Then import the Gradle project at $OBJDIR/mobile/android/gradle
-into the IDE of your choice.
+You are building Firefox for Android. After your build completes, you can open
+the top source directory in IntelliJ or Android Studio directly and build using
+Gradle.  See the documentation at
+
+https://developer.mozilla.org/en-US/docs/Simple_Firefox_for_Android_build
 
 PLEASE BE AWARE THAT GRADLE AND INTELLIJ/ANDROID STUDIO SUPPORT IS EXPERIMENTAL.
 You should verify any changes using |mach build|.
@@ -106,12 +112,12 @@ def config_status(topobjdir='.', topsrcdir='.',
                         help='do not consider current directory as top object directory')
     parser.add_argument('-d', '--diff', action='store_true',
                         help='print diffs of changed files.')
-    parser.add_argument('-b', '--backend', nargs='+',
-                        choices=['RecursiveMake', 'AndroidEclipse', 'CppEclipse',
-                                 'VisualStudio', 'FasterMake', 'CompileDB'],
+    parser.add_argument('-b', '--backend', nargs='+', choices=sorted(backends),
                         default=default_backends,
                         help='what backend to build (default: %s).' %
                         ' '.join(default_backends))
+    parser.add_argument('--dry-run', action='store_true',
+                        help='do everything except writing files out.')
     options = parser.parse_args()
 
     # Without -n, the current directory is meant to be the top object directory
@@ -126,35 +132,16 @@ def config_status(topobjdir='.', topsrcdir='.',
     if 'WRITE_MOZINFO' in os.environ:
         write_mozinfo(os.path.join(topobjdir, 'mozinfo.json'), env, os.environ)
 
-    # Make an appropriate backend instance, defaulting to RecursiveMakeBackend.
-    backends_cls = []
-    for backend in options.backend:
-        if backend == 'AndroidEclipse':
-            from mozbuild.backend.android_eclipse import AndroidEclipseBackend
-            if not MachCommandConditions.is_android(env):
-                raise Exception('The Android Eclipse backend is not available with this configuration.')
-            backends_cls.append(AndroidEclipseBackend)
-        elif backend == 'CppEclipse':
-            from mozbuild.backend.cpp_eclipse import CppEclipseBackend
-            backends_cls.append(CppEclipseBackend)
-            if os.name == 'nt':
-              raise Exception('Eclipse is not supported on Windows. Consider using Visual Studio instead.')
-        elif backend == 'VisualStudio':
-            from mozbuild.backend.visualstudio import VisualStudioBackend
-            backends_cls.append(VisualStudioBackend)
-        elif backend == 'FasterMake':
-            from mozbuild.backend.fastermake import FasterMakeBackend
-            backends_cls.append(FasterMakeBackend)
-        elif backend == 'CompileDB':
-            from mozbuild.compilation.database import CompileDBBackend
-            backends_cls.append(CompileDBBackend)
-        else:
-            backends_cls.append(RecursiveMakeBackend)
-
     cpu_start = time.clock()
     time_start = time.time()
 
-    backends = [cls(env) for cls in backends_cls]
+    # Make appropriate backend instances, defaulting to RecursiveMakeBackend,
+    # or what is in BUILD_BACKENDS.
+    selected_backends = [get_backend_class(b)(env) for b in options.backend]
+
+    if options.dry_run:
+        for b in selected_backends:
+            b.dry_run = True
 
     reader = BuildReader(env)
     emitter = TreeMetadataEmitter(env)
@@ -171,14 +158,14 @@ def config_status(topobjdir='.', topsrcdir='.',
     log_manager.enable_unstructured()
 
     print('Reticulating splines...', file=sys.stderr)
-    if len(backends) > 1:
+    if len(selected_backends) > 1:
         definitions = list(definitions)
 
-    for the_backend in backends:
+    for the_backend in selected_backends:
         the_backend.consume(definitions)
 
     execution_time = 0.0
-    for obj in chain((reader, emitter), backends):
+    for obj in chain((reader, emitter), selected_backends):
         summary = obj.summary()
         print(summary, file=sys.stderr)
         execution_time += summary.execution_time
@@ -196,7 +183,7 @@ def config_status(topobjdir='.', topsrcdir='.',
     )
 
     if options.diff:
-        for the_backend in backends:
+        for the_backend in selected_backends:
             for path, diff in sorted(the_backend.file_diffs.items()):
                 print('\n'.join(diff))
 
@@ -208,3 +195,8 @@ def config_status(topobjdir='.', topsrcdir='.',
     if MachCommandConditions.is_android(env):
         if 'AndroidEclipse' not in options.backend:
             print(ANDROID_IDE_ADVERTISEMENT)
+
+    if env.substs.get('MOZ_ARTIFACT_BUILDS', False):
+        # Execute |mach artifact install| from the top source directory.
+        os.chdir(topsrcdir)
+        return subprocess.check_call([sys.executable, os.path.join(topsrcdir, 'mach'), 'artifact', 'install'])

@@ -238,8 +238,6 @@ NativeObject::getDenseOrTypedArrayElement(uint32_t idx)
 {
     if (is<TypedArrayObject>())
         return as<TypedArrayObject>().getElement(idx);
-    if (is<SharedTypedArrayObject>())
-        return as<SharedTypedArrayObject>().getElement(idx);
     return getDenseElement(idx);
 }
 
@@ -404,7 +402,7 @@ CallResolveOp(JSContext* cx, HandleNativeObject obj, HandleId id, MutableHandleS
         return true;
     }
 
-    MOZ_ASSERT(!IsAnyTypedArray(obj));
+    MOZ_ASSERT(!obj->is<TypedArrayObject>());
 
     propp.set(obj->lookup(cx, id));
     return true;
@@ -450,10 +448,10 @@ LookupOwnPropertyInline(ExclusiveContext* cx,
     // Check for a typed array element. Integer lookups always finish here
     // so that integer properties on the prototype are ignored even for out
     // of bounds accesses.
-    if (IsAnyTypedArray(obj)) {
+    if (obj->template is<TypedArrayObject>()) {
         uint64_t index;
         if (IsTypedArrayIndex(id, &index)) {
-            if (index < AnyTypedArrayLength(obj)) {
+            if (index < obj->template as<TypedArrayObject>().length()) {
                 MarkDenseOrTypedArrayElementFound<allowGC>(propp);
             } else {
                 propp.set(nullptr);
@@ -518,10 +516,10 @@ NativeLookupOwnPropertyNoResolve(ExclusiveContext* cx, HandleNativeObject obj, H
     }
 
     // Check for a typed array element.
-    if (IsAnyTypedArray(obj)) {
+    if (obj->is<TypedArrayObject>()) {
         uint64_t index;
         if (IsTypedArrayIndex(id, &index)) {
-            if (index < AnyTypedArrayLength(obj))
+            if (index < obj->as<TypedArrayObject>().length())
                 MarkDenseOrTypedArrayElementFound<CanGC>(result);
             else
                 result.set(nullptr);
@@ -590,6 +588,14 @@ ThrowIfNotConstructing(JSContext *cx, const CallArgs &args, const char *builtinN
         return true;
     return JS_ReportErrorFlagsAndNumber(cx, JSREPORT_ERROR, GetErrorMessage, nullptr,
                                         JSMSG_BUILTIN_CTOR_NO_NEW, builtinName);
+}
+
+inline bool
+IsPackedArray(JSObject* obj)
+{
+    return obj->is<ArrayObject>() && !obj->hasLazyGroup() &&
+           !obj->group()->hasAllFlags(OBJECT_FLAG_NON_PACKED) &&
+           obj->as<ArrayObject>().getDenseInitializedLength() == obj->as<ArrayObject>().length();
 }
 
 } // namespace js

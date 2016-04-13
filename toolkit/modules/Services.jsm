@@ -24,9 +24,11 @@ XPCOMUtils.defineLazyGetter(Services, "appinfo", function () {
                   .getService(Ci.nsIXULRuntime);
   try {
     appinfo.QueryInterface(Ci.nsIXULAppInfo);
-  } catch (ex if ex instanceof Components.Exception &&
-                 ex.result == Cr.NS_NOINTERFACE) {
+  } catch (ex) {
     // Not all applications implement nsIXULAppInfo (e.g. xpcshell doesn't).
+    if (!(ex instanceof Components.Exception) || ex.result != Cr.NS_NOINTERFACE) {
+      throw ex;
+    }
   }
   return appinfo;
 });
@@ -102,6 +104,7 @@ var initTable = [
   ["blocklist", "@mozilla.org/extensions/blocklist;1", "nsIBlocklistService"],
   ["netUtils", "@mozilla.org/network/util;1", "nsINetUtil"],
   ["loadContextInfo", "@mozilla.org/load-context-info-factory;1", "nsILoadContextInfoFactory"],
+  ["qms", "@mozilla.org/dom/quota-manager-service;1", "nsIQuotaManagerService"],
 ];
 
 initTable.forEach(([name, contract, intf, enabled = true]) => {

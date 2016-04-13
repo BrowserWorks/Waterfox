@@ -12,7 +12,7 @@
 #include "nsAutoPtr.h"
 
 #undef LOG
-extern PRLogModuleInfo* GetPDMLog();
+extern mozilla::LogModule* GetPDMLog();
 #define LOG(type, msg) MOZ_LOG(GetPDMLog(), type, msg)
 
 namespace mozilla {
@@ -154,6 +154,12 @@ VorbisDataDecoder::DoDecode(MediaRawData* aSample)
 
   MOZ_ASSERT(mPacketCount >= 3);
 
+  if (!mLastFrameTime || mLastFrameTime.ref() != aSample->mTime) {
+    // We are starting a new block.
+    mFrames = 0;
+    mLastFrameTime = Some(aSample->mTime);
+  }
+
   ogg_packet pkt = InitVorbisPacket(aData, aLength, false, false, -1, mPacketCount++);
   bool first_packet = mPacketCount == 4;
 
@@ -184,7 +190,7 @@ VorbisDataDecoder::DoDecode(MediaRawData* aSample)
   }
   while (frames > 0) {
     uint32_t channels = mVorbisDsp.vi->channels;
-    nsAutoArrayPtr<AudioDataValue> buffer(new AudioDataValue[frames*channels]);
+    auto buffer = MakeUnique<AudioDataValue[]>(frames*channels);
     for (uint32_t j = 0; j < channels; ++j) {
       VorbisPCMValue* channel = pcm[j];
       for (uint32_t i = 0; i < uint32_t(frames); ++i) {
@@ -197,7 +203,7 @@ VorbisDataDecoder::DoDecode(MediaRawData* aSample)
       NS_WARNING("Int overflow converting WebM audio duration");
       return -1;
     }
-    CheckedInt64 total_duration = FramesToUsecs(aTotalFrames,
+    CheckedInt64 total_duration = FramesToUsecs(mFrames,
                                                 mVorbisDsp.vi->rate);
     if (!total_duration.isValid()) {
       NS_WARNING("Int overflow converting WebM audio total_duration");
@@ -215,10 +221,10 @@ VorbisDataDecoder::DoDecode(MediaRawData* aSample)
                                     time.value(),
                                     duration.value(),
                                     frames,
-                                    buffer.forget(),
+                                    Move(buffer),
                                     mVorbisDsp.vi->channels,
                                     mVorbisDsp.vi->rate));
-    mFrames += aTotalFrames;
+    mFrames += frames;
     if (vorbis_synthesis_read(&mVorbisDsp, frames) != 0) {
       return -1;
     }
@@ -252,7 +258,7 @@ VorbisDataDecoder::Flush()
   // aren't fatal and it fails when ResetDecode is called at a
   // time when no vorbis data has been read.
   vorbis_synthesis_restart(&mVorbisDsp);
-  mFrames = 0;
+  mLastFrameTime.reset();
   return NS_OK;
 }
 
@@ -260,7 +266,8 @@ VorbisDataDecoder::Flush()
 bool
 VorbisDataDecoder::IsVorbis(const nsACString& aMimeType)
 {
-  return aMimeType.EqualsLiteral("audio/ogg; codecs=vorbis");
+  return aMimeType.EqualsLiteral("audio/webm; codecs=vorbis") ||
+         aMimeType.EqualsLiteral("audio/ogg; codecs=vorbis");
 }
 
 

@@ -337,8 +337,8 @@ typedef JSString*
  * (e.g., the DOM attributes for a given node reflected as obj) on demand.
  *
  * JS looks for a property in an object, and if not found, tries to resolve
- * the given id. *resolvedp should be set to true iff the property was
- * was defined on |obj|.
+ * the given id. *resolvedp should be set to true iff the property was defined
+ * on |obj|.
  */
 typedef bool
 (* JSResolveOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id,
@@ -435,9 +435,6 @@ typedef bool
 typedef bool
 (* UnwatchOp)(JSContext* cx, JS::HandleObject obj, JS::HandleId id);
 
-typedef bool
-(* ThisValueOp)(JSContext* cx, JS::HandleObject obj, JS::MutableHandleValue vp);
-
 class JS_FRIEND_API(ElementAdder)
 {
   public:
@@ -476,17 +473,6 @@ class JS_FRIEND_API(ElementAdder)
 typedef bool
 (* GetElementsOp)(JSContext* cx, JS::HandleObject obj, uint32_t begin, uint32_t end,
                   ElementAdder* adder);
-
-/**
- * A generic type for functions mapping an object to another object, or null
- * if an error or exception was thrown on cx.
- */
-typedef JSObject*
-(* ObjectOp)(JSContext* cx, JS::HandleObject obj);
-
-/** Hook to map an object to its inner object. Infallible. */
-typedef JSObject*
-(* InnerObjectOp)(JSObject* obj);
 
 typedef void
 (* FinalizeOp)(FreeOp* fop, JSObject* obj);
@@ -601,9 +587,6 @@ struct ClassSpec
 
 struct ClassExtension
 {
-    ObjectOp            outerObject;
-    InnerObjectOp       innerObject;
-
     /**
      * isWrappedNative is true only if the class is an XPCWrappedNative.
      * WeakMaps use this to override the wrapper disposal optimization.
@@ -641,8 +624,8 @@ inline ClassObjectCreationOp DELEGATED_CLASSSPEC(const ClassSpec* spec) {
     return reinterpret_cast<ClassObjectCreationOp>(const_cast<ClassSpec*>(spec));
 }
 
-#define JS_NULL_CLASS_SPEC  {nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr}
-#define JS_NULL_CLASS_EXT   {nullptr,nullptr,false,nullptr,nullptr}
+#define JS_NULL_CLASS_SPEC  {nullptr,nullptr,nullptr,nullptr,nullptr,nullptr}
+#define JS_NULL_CLASS_EXT   {false,nullptr}
 
 struct ObjectOps
 {
@@ -657,7 +640,6 @@ struct ObjectOps
     UnwatchOp           unwatch;
     GetElementsOp       getElements;
     JSNewEnumerateOp    enumerate;
-    ThisValueOp         thisValue;
     JSFunToStringOp     funToString;
 };
 
@@ -674,7 +656,7 @@ typedef void (*JSClassInternal)();
 struct JSClass {
     JS_CLASS_MEMBERS(JSFinalizeOp);
 
-    void*               reserved[26];
+    void*               reserved[23];
 };
 
 #define JSCLASS_HAS_PRIVATE             (1<<0)  // objects have private slot
@@ -737,7 +719,7 @@ struct JSClass {
 // application.
 #define JSCLASS_GLOBAL_APPLICATION_SLOTS 5
 #define JSCLASS_GLOBAL_SLOT_COUNT                                             \
-    (JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 3 + 39)
+    (JSCLASS_GLOBAL_APPLICATION_SLOTS + JSProto_LIMIT * 3 + 36)
 #define JSCLASS_GLOBAL_FLAGS_WITH_SLOTS(n)                                    \
     (JSCLASS_IS_GLOBAL | JSCLASS_HAS_RESERVED_SLOTS(JSCLASS_GLOBAL_SLOT_COUNT + (n)))
 #define JSCLASS_GLOBAL_FLAGS                                                  \
@@ -748,7 +730,7 @@ struct JSClass {
 
 // Fast access to the original value of each standard class's prototype.
 #define JSCLASS_CACHED_PROTO_SHIFT      (JSCLASS_HIGH_FLAGS_SHIFT + 10)
-#define JSCLASS_CACHED_PROTO_MASK       JS_BITMASK(JSCLASS_CACHED_PROTO_WIDTH)
+#define JSCLASS_CACHED_PROTO_MASK       JS_BITMASK(js::JSCLASS_CACHED_PROTO_WIDTH)
 #define JSCLASS_HAS_CACHED_PROTO(key)   (uint32_t(key) << JSCLASS_CACHED_PROTO_SHIFT)
 #define JSCLASS_CACHED_PROTO_KEY(clasp) ((JSProtoKey)                         \
                                          (((clasp)->flags                     \
@@ -772,8 +754,8 @@ struct Class
      * Objects of this class aren't native objects. They don't have Shapes that
      * describe their properties and layout. Classes using this flag must
      * provide their own property behavior, either by being proxy classes (do
-     * this) or by overriding all the ObjectOps except getElements, watch,
-     * unwatch, and thisObject (don't do this).
+     * this) or by overriding all the ObjectOps except getElements, watch and
+     * unwatch (don't do this).
      */
     static const uint32_t NON_NATIVE = JSCLASS_INTERNAL_FLAG2;
 

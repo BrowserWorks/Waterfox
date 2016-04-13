@@ -1482,7 +1482,8 @@ CSS_PROP_DISPLAY(
     contain,
     Contain,
     CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_VALUE_PARSER_FUNCTION,
+        CSS_PROPERTY_VALUE_PARSER_FUNCTION |
+        CSS_PROPERTY_FIXPOS_CB,
     "layout.css.contain.enabled",
     // Does not affect parsing, but is needed for tab completion in devtools:
     VARIANT_HK | VARIANT_NONE,
@@ -1586,32 +1587,32 @@ CSS_PROP_POSITION(
     align-content,
     align_content,
     AlignContent,
-    CSS_PROPERTY_PARSE_VALUE,
+    CSS_PROPERTY_PARSE_FUNCTION,
     "",
-    VARIANT_HK,
-    kAlignContentKTable,
-    offsetof(nsStylePosition, mAlignContent),
-    eStyleAnimType_EnumU8)
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_POSITION(
     align-items,
     align_items,
     AlignItems,
-    CSS_PROPERTY_PARSE_VALUE,
+    CSS_PROPERTY_PARSE_FUNCTION,
     "",
-    VARIANT_HK,
-    kAlignItemsKTable,
-    offsetof(nsStylePosition, mAlignItems),
-    eStyleAnimType_EnumU8)
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_POSITION(
     align-self,
     align_self,
     AlignSelf,
-    CSS_PROPERTY_PARSE_VALUE,
+    CSS_PROPERTY_PARSE_FUNCTION,
     "",
-    VARIANT_HK,
-    kAlignSelfKTable,
-    offsetof(nsStylePosition, mAlignSelf),
-    eStyleAnimType_EnumU8)
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_SHORTHAND(
     flex,
     flex,
@@ -1643,6 +1644,22 @@ CSS_PROP_POSITION(
     kFlexDirectionKTable,
     offsetof(nsStylePosition, mFlexDirection),
     eStyleAnimType_EnumU8)
+/* We treat -webkit-box-orient as a writing-mode-aware logical alias
+ * for "flex-direction": */
+CSS_PROP_LOGICAL(
+    -webkit-box-orient,
+    webkit_box_orient,
+    WebkitBoxOrient,
+    CSS_PROPERTY_PARSE_VALUE |
+      CSS_PROPERTY_LOGICAL |
+      CSS_PROPERTY_LOGICAL_SINGLE_CUSTOM_VALMAPPING,
+    "layout.css.prefixes.webkit",
+    VARIANT_HK,
+    kBoxOrientKTable,
+    WebkitBoxOrient,
+    Position,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_SHORTHAND(
     flex-flow,
     flex_flow,
@@ -1701,12 +1718,32 @@ CSS_PROP_POSITION(
     justify-content,
     justify_content,
     JustifyContent,
-    CSS_PROPERTY_PARSE_VALUE,
+    CSS_PROPERTY_PARSE_FUNCTION,
     "",
-    VARIANT_HK,
-    kJustifyContentKTable,
-    offsetof(nsStylePosition, mJustifyContent),
-    eStyleAnimType_EnumU8)
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
+CSS_PROP_POSITION(
+    justify-items,
+    justify_items,
+    JustifyItems,
+    CSS_PROPERTY_PARSE_FUNCTION,
+    "",
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
+CSS_PROP_POSITION(
+    justify-self,
+    justify_self,
+    JustifySelf,
+    CSS_PROPERTY_PARSE_FUNCTION,
+    "",
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_DISPLAY(
     float,
     float,
@@ -2103,6 +2140,34 @@ CSS_PROP_SHORTHAND(
     grid-area,
     grid_area,
     GridArea,
+    CSS_PROPERTY_PARSE_FUNCTION,
+    "layout.css.grid.enabled")
+CSS_PROP_POSITION(
+    grid-column-gap,
+    grid_column_gap,
+    GridColumnGap,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_VALUE_NONNEGATIVE,
+    "layout.css.grid.enabled",
+    VARIANT_HL | VARIANT_CALC,
+    nullptr,
+    offsetof(nsStylePosition, mGridColumnGap),
+    eStyleAnimType_nscoord)
+CSS_PROP_POSITION(
+    grid-row-gap,
+    grid_row_gap,
+    GridRowGap,
+    CSS_PROPERTY_PARSE_VALUE |
+      CSS_PROPERTY_VALUE_NONNEGATIVE,
+    "layout.css.grid.enabled",
+    VARIANT_HL | VARIANT_CALC,
+    nullptr,
+    offsetof(nsStylePosition, mGridRowGap),
+    eStyleAnimType_nscoord)
+CSS_PROP_SHORTHAND(
+    grid-gap,
+    grid_gap,
+    GridGap,
     CSS_PROPERTY_PARSE_FUNCTION,
     "layout.css.grid.enabled")
 CSS_PROP_POSITION(
@@ -2980,7 +3045,8 @@ CSS_PROP_DISPLAY(
     Position,
     CSS_PROPERTY_PARSE_VALUE |
         // For position: sticky/fixed
-        CSS_PROPERTY_CREATES_STACKING_CONTEXT,
+        CSS_PROPERTY_CREATES_STACKING_CONTEXT |
+        CSS_PROPERTY_ABSPOS_CB,
     "",
     VARIANT_HK,
     kPositionKTable,
@@ -3028,7 +3094,7 @@ CSS_PROP_TEXT(
     ruby_align,
     RubyAlign,
     CSS_PROPERTY_PARSE_VALUE,
-    "layout.css.ruby.enabled",
+    "",
     VARIANT_HK,
     kRubyAlignKTable,
     offsetof(nsStyleText, mRubyAlign),
@@ -3038,7 +3104,7 @@ CSS_PROP_TEXT(
     ruby_position,
     RubyPosition,
     CSS_PROPERTY_PARSE_VALUE,
-    "layout.css.ruby.enabled",
+    "",
     VARIANT_HK,
     kRubyPositionKTable,
     offsetof(nsStyleText, mRubyPosition),
@@ -3216,6 +3282,49 @@ CSS_PROP_TEXTRESET(
     kTextDecorationStyleKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_Custom)
+CSS_PROP_SHORTHAND(
+    text-emphasis,
+    text_emphasis,
+    TextEmphasis,
+    CSS_PROPERTY_PARSE_FUNCTION |
+        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
+    "layout.css.text-emphasis.enabled")
+CSS_PROP_TEXT(
+    text-emphasis-color,
+    text_emphasis_color,
+    TextEmphasisColor,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED |
+        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
+    "layout.css.text-emphasis.enabled",
+    VARIANT_HC,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_Custom)
+CSS_PROP_TEXT(
+    text-emphasis-position,
+    text_emphasis_position,
+    TextEmphasisPosition,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_VALUE_PARSER_FUNCTION |
+        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
+    "layout.css.text-emphasis.enabled",
+    0,
+    kTextEmphasisPositionKTable,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
+CSS_PROP_TEXT(
+    text-emphasis-style,
+    text_emphasis_style,
+    TextEmphasisStyle,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_VALUE_PARSER_FUNCTION |
+        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
+    "layout.css.text-emphasis.enabled",
+    0,
+    nullptr,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_TEXT(
     text-indent,
     text_indent,
@@ -3296,7 +3405,8 @@ CSS_PROP_DISPLAY(
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_GETCS_NEEDS_LAYOUT_FLUSH |
         CSS_PROPERTY_CREATES_STACKING_CONTEXT |
-        CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR,
+        CSS_PROPERTY_CAN_ANIMATE_ON_COMPOSITOR |
+        CSS_PROPERTY_FIXPOS_CB,
     "",
     0,
     nullptr,
@@ -3341,7 +3451,8 @@ CSS_PROP_DISPLAY(
     perspective,
     Perspective,
     CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_CREATES_STACKING_CONTEXT,
+        CSS_PROPERTY_CREATES_STACKING_CONTEXT |
+        CSS_PROPERTY_FIXPOS_CB,
     "",
     VARIANT_NONE | VARIANT_INHERIT | VARIANT_LENGTH | VARIANT_POSITIVE_DIMENSION,
     nullptr,
@@ -3352,7 +3463,8 @@ CSS_PROP_DISPLAY(
     transform_style,
     TransformStyle,
     CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_CREATES_STACKING_CONTEXT,
+        CSS_PROPERTY_CREATES_STACKING_CONTEXT |
+        CSS_PROPERTY_FIXPOS_CB,
     "",
     VARIANT_HK,
     kTransformStyleKTable,
@@ -3603,9 +3715,10 @@ CSS_PROP_TEXT(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER_AND_FIRST_LINE |
         CSS_PROPERTY_APPLIES_TO_PLACEHOLDER |
-        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK,
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
+        CSS_PROPERTY_STORES_CALC,
     "",
-    VARIANT_HL | VARIANT_NORMAL | VARIANT_CALC,
+    VARIANT_HLP | VARIANT_NORMAL | VARIANT_CALC,
     nullptr,
     offsetof(nsStyleText, mWordSpacing),
     eStyleAnimType_Coord)
@@ -3847,8 +3960,7 @@ CSS_PROP_SVG(
     fill,
     fill,
     Fill,
-    CSS_PROPERTY_PARSE_FUNCTION |
-        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
+    CSS_PROPERTY_PARSE_FUNCTION,
     "",
     0,
     kContextPatternKTable,
@@ -3879,7 +3991,8 @@ CSS_PROP_SVGRESET(
     filter,
     Filter,
     CSS_PROPERTY_PARSE_FUNCTION |
-        CSS_PROPERTY_CREATES_STACKING_CONTEXT,
+        CSS_PROPERTY_CREATES_STACKING_CONTEXT |
+        CSS_PROPERTY_FIXPOS_CB,
     "",
     0,
     nullptr,
@@ -4016,8 +4129,7 @@ CSS_PROP_SVG(
     stroke,
     stroke,
     Stroke,
-    CSS_PROPERTY_PARSE_FUNCTION |
-        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
+    CSS_PROPERTY_PARSE_FUNCTION,
     "",
     0,
     kContextPatternKTable,

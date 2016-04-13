@@ -8,16 +8,16 @@
 #define jit_JitCompartment_h
 
 #include "mozilla/Array.h"
+#include "mozilla/DebugOnly.h"
 #include "mozilla/MemoryReporting.h"
 
-#include "jsweakcache.h"
-
-#include "builtin/TypedObject.h"
+#include "builtin/SIMD.h"
 #include "jit/CompileInfo.h"
 #include "jit/ICStubSpace.h"
 #include "jit/IonCode.h"
 #include "jit/JitFrames.h"
 #include "jit/shared/Assembler-shared.h"
+#include "js/GCHashTable.h"
 #include "js/Value.h"
 #include "vm/Stack.h"
 
@@ -81,10 +81,21 @@ class PatchableBackedge : public InlineListNode<PatchableBackedge>
 
 class JitRuntime
 {
+  public:
+    enum BackedgeTarget {
+        BackedgeLoopHeader,
+        BackedgeInterruptCheck
+    };
+
+  private:
     friend class JitCompartment;
 
-    // Executable allocator for all code except asm.js code.
+    // Executable allocator for all code except asm.js code and Ion code with
+    // patchable backedges (see below).
     ExecutableAllocator execAlloc_;
+
+    // Executable allocator for Ion scripts with patchable backedges.
+    ExecutableAllocator backedgeExecAlloc_;
 
     // Shared exception-handler tail.
     JitCode* exceptionTail_;
@@ -137,7 +148,7 @@ class JitRuntime
     void* baselineDebugModeOSRHandlerNoFrameRegPopAddr_;
 
     // Map VMFunction addresses to the JitCode of the wrapper.
-    typedef WeakCache<const VMFunction*, JitCode*> VMWrapperMap;
+    typedef GCRekeyableHashMap<const VMFunction*, JitCode*> VMWrapperMap;
     VMWrapperMap* functionWrappers_;
 
     // Buffer for OSR from baseline to Ion. To avoid holding on to this for
@@ -145,11 +156,18 @@ class JitRuntime
     // (after returning from JIT code).
     uint8_t* osrTempData_;
 
+    // If true, the signal handler to interrupt Ion code should not attempt to
+    // patch backedges, as we're busy modifying data structures.
+    mozilla::Atomic<bool> preventBackedgePatching_;
+
+    // Whether patchable backedges currently jump to the loop header or the
+    // interrupt check.
+    BackedgeTarget backedgeTarget_;
+
     // List of all backedges in all Ion code. The backedge edge list is accessed
-    // asynchronously when the main thread is paused and mutatingBackedgeList_
-    // is false. Thus, the list must only be mutated while mutatingBackedgeList_
+    // asynchronously when the main thread is paused and preventBackedgePatching_
+    // is false. Thus, the list must only be mutated while preventBackedgePatching_
     // is true.
-    volatile bool mutatingBackedgeList_;
     InlineList<PatchableBackedge> backedgeList_;
 
     // In certain cases, we want to optimize certain opcodes to typed instructions,
@@ -187,7 +205,7 @@ class JitRuntime
     JitCode* generateVMWrapper(JSContext* cx, const VMFunction& f);
 
   public:
-    JitRuntime();
+    explicit JitRuntime(JSRuntime* rt);
     ~JitRuntime();
     bool initialize(JSContext* cx);
 
@@ -202,37 +220,56 @@ class JitRuntime
     ExecutableAllocator& execAlloc() {
         return execAlloc_;
     }
+    ExecutableAllocator& backedgeExecAlloc() {
+        return backedgeExecAlloc_;
+    }
 
-    class AutoMutateBackedges
+    class AutoPreventBackedgePatching
     {
+        mozilla::DebugOnly<JSRuntime*> rt_;
         JitRuntime* jrt_;
+        bool prev_;
+
       public:
-        explicit AutoMutateBackedges(JitRuntime* jrt) : jrt_(jrt) {
-            MOZ_ASSERT(!jrt->mutatingBackedgeList_);
-            jrt->mutatingBackedgeList_ = true;
+        // This two-arg constructor is provided for JSRuntime::createJitRuntime,
+        // where we have a JitRuntime but didn't set rt->jitRuntime_ yet.
+        AutoPreventBackedgePatching(JSRuntime* rt, JitRuntime* jrt)
+          : rt_(rt),
+            jrt_(jrt),
+            prev_(false)  // silence GCC warning
+        {
+            MOZ_ASSERT(CurrentThreadCanAccessRuntime(rt));
+            if (jrt_) {
+                prev_ = jrt_->preventBackedgePatching_;
+                jrt_->preventBackedgePatching_ = true;
+            }
         }
-        ~AutoMutateBackedges() {
-            MOZ_ASSERT(jrt_->mutatingBackedgeList_);
-            jrt_->mutatingBackedgeList_ = false;
+        explicit AutoPreventBackedgePatching(JSRuntime* rt)
+          : AutoPreventBackedgePatching(rt, rt->jitRuntime())
+        {}
+        ~AutoPreventBackedgePatching() {
+            MOZ_ASSERT(jrt_ == rt_->jitRuntime());
+            if (jrt_) {
+                MOZ_ASSERT(jrt_->preventBackedgePatching_);
+                jrt_->preventBackedgePatching_ = prev_;
+            }
         }
     };
 
-    bool mutatingBackedgeList() const {
-        return mutatingBackedgeList_;
+    bool preventBackedgePatching() const {
+        return preventBackedgePatching_;
+    }
+    BackedgeTarget backedgeTarget() const {
+        return backedgeTarget_;
     }
     void addPatchableBackedge(PatchableBackedge* backedge) {
-        MOZ_ASSERT(mutatingBackedgeList_);
+        MOZ_ASSERT(preventBackedgePatching_);
         backedgeList_.pushFront(backedge);
     }
     void removePatchableBackedge(PatchableBackedge* backedge) {
-        MOZ_ASSERT(mutatingBackedgeList_);
+        MOZ_ASSERT(preventBackedgePatching_);
         backedgeList_.remove(backedge);
     }
-
-    enum BackedgeTarget {
-        BackedgeLoopHeader,
-        BackedgeInterruptCheck
-    };
 
     void patchIonBackedges(JSRuntime* rt, BackedgeTarget target);
 
@@ -349,8 +386,18 @@ class JitCompartment
 {
     friend class JitActivation;
 
+    struct IcStubCodeMapGCPolicy {
+        static bool needsSweep(uint32_t* key, ReadBarrieredJitCode* value) {
+            return IsAboutToBeFinalized(value);
+        }
+    };
+
     // Map ICStub keys to ICStub shared code objects.
-    typedef WeakValueCache<uint32_t, ReadBarrieredJitCode> ICStubCodeMap;
+    using ICStubCodeMap = GCHashMap<uint32_t,
+                                    ReadBarrieredJitCode,
+                                    DefaultHasher<uint32_t>,
+                                    RuntimeAllocPolicy,
+                                    IcStubCodeMapGCPolicy>;
     ICStubCodeMap* stubCodes_;
 
     // Keep track of offset into various baseline stubs' code at return
@@ -366,14 +413,14 @@ class JitCompartment
     // which may occur off thread and whose barriers are captured during
     // CodeGenerator::link.
     JitCode* stringConcatStub_;
-    JitCode* regExpExecStub_;
-    JitCode* regExpTestStub_;
+    JitCode* regExpMatcherStub_;
+    JitCode* regExpTesterStub_;
 
-    mozilla::Array<ReadBarrieredObject, SimdTypeDescr::LAST_TYPE + 1> simdTemplateObjects_;
+    mozilla::EnumeratedArray<SimdType, SimdType::Count, ReadBarrieredObject> simdTemplateObjects_;
 
     JitCode* generateStringConcatStub(JSContext* cx);
-    JitCode* generateRegExpExecStub(JSContext* cx);
-    JitCode* generateRegExpTestStub(JSContext* cx);
+    JitCode* generateRegExpMatcherStub(JSContext* cx);
+    JitCode* generateRegExpTesterStub(JSContext* cx);
 
   public:
     JSObject* getSimdTemplateObjectFor(JSContext* cx, Handle<SimdTypeDescr*> descr) {
@@ -383,7 +430,7 @@ class JitCompartment
         return tpl.get();
     }
 
-    JSObject* maybeGetSimdTemplateObjectFor(SimdTypeDescr::Type type) const {
+    JSObject* maybeGetSimdTemplateObjectFor(SimdType type) const {
         const ReadBarrieredObject& tpl = simdTemplateObjects_[type];
 
         // This function is used by Eager Simd Unbox phase, so we cannot use the
@@ -394,7 +441,7 @@ class JitCompartment
 
     // This function is used to call the read barrier, to mark the SIMD template
     // type as used. This function can only be called from the main thread.
-    void registerSimdTemplateObjectFor(SimdTypeDescr::Type type) {
+    void registerSimdTemplateObjectFor(SimdType type) {
         ReadBarrieredObject& tpl = simdTemplateObjects_[type];
         MOZ_ASSERT(tpl.unbarrieredGet());
         tpl.get();
@@ -457,26 +504,26 @@ class JitCompartment
         return stringConcatStub_;
     }
 
-    JitCode* regExpExecStubNoBarrier() const {
-        return regExpExecStub_;
+    JitCode* regExpMatcherStubNoBarrier() const {
+        return regExpMatcherStub_;
     }
 
-    bool ensureRegExpExecStubExists(JSContext* cx) {
-        if (regExpExecStub_)
+    bool ensureRegExpMatcherStubExists(JSContext* cx) {
+        if (regExpMatcherStub_)
             return true;
-        regExpExecStub_ = generateRegExpExecStub(cx);
-        return regExpExecStub_ != nullptr;
+        regExpMatcherStub_ = generateRegExpMatcherStub(cx);
+        return regExpMatcherStub_ != nullptr;
     }
 
-    JitCode* regExpTestStubNoBarrier() const {
-        return regExpTestStub_;
+    JitCode* regExpTesterStubNoBarrier() const {
+        return regExpTesterStub_;
     }
 
-    bool ensureRegExpTestStubExists(JSContext* cx) {
-        if (regExpTestStub_)
+    bool ensureRegExpTesterStubExists(JSContext* cx) {
+        if (regExpTesterStub_)
             return true;
-        regExpTestStub_ = generateRegExpTestStub(cx);
-        return regExpTestStub_ != nullptr;
+        regExpTesterStub_ = generateRegExpTesterStub(cx);
+        return regExpTesterStub_ != nullptr;
     }
 };
 
@@ -490,21 +537,25 @@ void FinishInvalidation(FreeOp* fop, JSScript* script);
 const unsigned WINDOWS_BIG_FRAME_TOUCH_INCREMENT = 4096 - 1;
 #endif
 
-// If ExecutableAllocator::nonWritableJitCode is |true|, this class will ensure
-// JIT code is writable (has RW permissions) in its scope. If nonWritableJitCode
-// is |false|, it's a no-op.
+// If NON_WRITABLE_JIT_CODE is enabled, this class will ensure
+// JIT code is writable (has RW permissions) in its scope.
+// Otherwise it's a no-op.
 class MOZ_STACK_CLASS AutoWritableJitCode
 {
+    // Backedge patching from the signal handler will change memory protection
+    // flags, so don't allow it in a AutoWritableJitCode scope.
+    JitRuntime::AutoPreventBackedgePatching preventPatching_;
     JSRuntime* rt_;
     void* addr_;
     size_t size_;
 
   public:
     AutoWritableJitCode(JSRuntime* rt, void* addr, size_t size)
-      : rt_(rt), addr_(addr), size_(size)
+      : preventPatching_(rt), rt_(rt), addr_(addr), size_(size)
     {
         rt_->toggleAutoWritableJitCodeActive(true);
-        ExecutableAllocator::makeWritable(addr_, size_);
+        if (!ExecutableAllocator::makeWritable(addr_, size_))
+            MOZ_CRASH();
     }
     AutoWritableJitCode(void* addr, size_t size)
       : AutoWritableJitCode(TlsPerThreadData.get()->runtimeFromMainThread(), addr, size)
@@ -513,12 +564,11 @@ class MOZ_STACK_CLASS AutoWritableJitCode
       : AutoWritableJitCode(code->runtimeFromMainThread(), code->raw(), code->bufferSize())
     {}
     ~AutoWritableJitCode() {
-        ExecutableAllocator::makeExecutable(addr_, size_);
+        if (!ExecutableAllocator::makeExecutable(addr_, size_))
+            MOZ_CRASH();
         rt_->toggleAutoWritableJitCodeActive(false);
     }
 };
-
-enum ReprotectCode { Reprotect = true, DontReprotect = false };
 
 class MOZ_STACK_CLASS MaybeAutoWritableJitCode
 {

@@ -15,6 +15,7 @@
 #include "LayersLogging.h"              // for AppendToString
 #include "ReadbackLayer.h"              // for ReadbackLayer
 #include "UnitTransforms.h"             // for ViewAs
+#include "gfxEnv.h"
 #include "gfxPlatform.h"                // for gfxPlatform
 #include "gfxPrefs.h"
 #include "gfxUtils.h"                   // for gfxUtils, etc
@@ -60,6 +61,14 @@ using namespace mozilla::Compression;
 
 //--------------------------------------------------
 // LayerManager
+
+/* static */ mozilla::LogModule*
+LayerManager::GetLog()
+{
+  static LazyLogModule sLog("Layers");
+  return sLog;
+}
+
 FrameMetrics::ViewID
 LayerManager::GetRootScrollableLayerId()
 {
@@ -67,8 +76,7 @@ LayerManager::GetRootScrollableLayerId()
     return FrameMetrics::NULL_SCROLL_ID;
   }
 
-  nsTArray<LayerMetricsWrapper> queue;
-  queue.AppendElement(LayerMetricsWrapper(mRoot));
+  nsTArray<LayerMetricsWrapper> queue = { LayerMetricsWrapper(mRoot) };
   while (queue.Length()) {
     LayerMetricsWrapper layer = queue[0];
     queue.RemoveElementAt(0);
@@ -101,8 +109,7 @@ LayerManager::GetRootScrollableLayers(nsTArray<Layer*>& aArray)
     return;
   }
 
-  nsTArray<Layer*> queue;
-  queue.AppendElement(mRoot);
+  nsTArray<Layer*> queue = { mRoot };
   while (queue.Length()) {
     Layer* layer = queue[0];
     queue.RemoveElementAt(0);
@@ -125,8 +132,7 @@ LayerManager::GetScrollableLayers(nsTArray<Layer*>& aArray)
     return;
   }
 
-  nsTArray<Layer*> queue;
-  queue.AppendElement(mRoot);
+  nsTArray<Layer*> queue = { mRoot };
   while (!queue.IsEmpty()) {
     Layer* layer = queue.LastElement();
     queue.RemoveElementAt(queue.Length() - 1);
@@ -236,6 +242,7 @@ Layer::Layer(LayerManager* aManager, void* aImplData) :
   mContentFlags(0),
   mUseTileSourceRect(false),
   mIsFixedPosition(false),
+  mTransformIsPerspective(false),
   mFixedPositionData(nullptr),
   mStickyPositionData(nullptr),
   mScrollbarTargetId(FrameMetrics::NULL_SCROLL_ID),
@@ -609,7 +616,7 @@ Layer::GetEffectiveClipRect()
   return GetClipRect();
 }
 
-const nsIntRegion&
+const LayerIntRegion&
 Layer::GetEffectiveVisibleRegion()
 {
   if (LayerComposite* shadow = AsLayerComposite()) {
@@ -626,10 +633,13 @@ Layer::SnapTransformTranslation(const Matrix4x4& aTransform,
     *aResidualTransform = Matrix();
   }
 
+  if (!mManager->IsSnappingEffectiveTransforms()) {
+    return aTransform;
+  }
+
   Matrix matrix2D;
   Matrix4x4 result;
-  if (mManager->IsSnappingEffectiveTransforms() &&
-      aTransform.Is2D(&matrix2D) &&
+  if (aTransform.Is2D(&matrix2D) &&
       !matrix2D.HasNonTranslation() &&
       matrix2D.HasNonIntegerTranslation()) {
     IntPoint snappedTranslation = RoundedToInt(matrix2D.GetTranslation());
@@ -644,9 +654,67 @@ Layer::SnapTransformTranslation(const Matrix4x4& aTransform,
         Matrix::Translation(matrix2D._31 - snappedTranslation.x,
                             matrix2D._32 - snappedTranslation.y);
     }
-  } else {
-    result = aTransform;
+    return result;
   }
+
+  if(aTransform.IsSingular() ||
+     aTransform.HasPerspectiveComponent() ||
+     aTransform.HasNonTranslation() ||
+     !aTransform.HasNonIntegerTranslation()) {
+    // For a singular transform, there is no reversed matrix, so we
+    // don't snap it.
+    // For a perspective transform, the content is transformed in
+    // non-linear, so we don't snap it too.
+    return aTransform;
+  }
+
+  // Snap for 3D Transforms
+
+  Point3D transformedOrigin = aTransform * Point3D();
+
+  // Compute the transformed snap by rounding the values of
+  // transformed origin.
+  IntPoint transformedSnapXY =
+    RoundedToInt(Point(transformedOrigin.x, transformedOrigin.y));
+  Matrix4x4 inverse = aTransform;
+  inverse.Invert();
+  // see Matrix4x4::ProjectPoint()
+  Float transformedSnapZ =
+    inverse._33 == 0 ? 0 : (-(transformedSnapXY.x * inverse._13 +
+                              transformedSnapXY.y * inverse._23 +
+                              inverse._43) / inverse._33);
+  Point3D transformedSnap =
+    Point3D(transformedSnapXY.x, transformedSnapXY.y, transformedSnapZ);
+  if (transformedOrigin == transformedSnap) {
+    return aTransform;
+  }
+
+  // Compute the snap from the transformed snap.
+  Point3D snap = inverse * transformedSnap;
+  if (snap.z > 0.001 || snap.z < -0.001) {
+    // Allow some level of accumulated computation error.
+    MOZ_ASSERT(inverse._33 == 0.0);
+    return aTransform;
+  }
+
+  // The difference between the origin and snap is the residual transform.
+  if (aResidualTransform) {
+    // The residual transform is to translate the snap to the origin
+    // of the content buffer.
+    *aResidualTransform = Matrix::Translation(-snap.x, -snap.y);
+  }
+
+  // Translate transformed origin to transformed snap since the
+  // residual transform would trnslate the snap to the origin.
+  Point3D transformedShift = transformedSnap - transformedOrigin;
+  result = aTransform;
+  result.PostTranslate(transformedShift.x,
+                       transformedShift.y,
+                       transformedShift.z);
+
+  // For non-2d transform, residual translation could be more than
+  // 0.5 pixels for every axis.
+
   return result;
 }
 
@@ -663,7 +731,7 @@ Layer::SnapTransform(const Matrix4x4& aTransform,
   Matrix4x4 result;
   if (mManager->IsSnappingEffectiveTransforms() &&
       aTransform.Is2D(&matrix2D) &&
-      gfx::Size(1.0, 1.0) <= ToSize(aSnapRect.Size()) &&
+      gfxSize(1.0, 1.0) <= aSnapRect.Size() &&
       matrix2D.PreservesAxisAlignedRectangles()) {
     IntPoint transformedTopLeft = RoundedToInt(matrix2D * ToPoint(aSnapRect.TopLeft()));
     IntPoint transformedTopRight = RoundedToInt(matrix2D * ToPoint(aSnapRect.TopRight()));
@@ -711,7 +779,23 @@ RenderTargetIntRect
 Layer::CalculateScissorRect(const RenderTargetIntRect& aCurrentScissorRect)
 {
   ContainerLayer* container = GetParent();
-  NS_ASSERTION(container, "This can't be called on the root!");
+  ContainerLayer* containerChild = nullptr;
+  NS_ASSERTION(GetParent(), "This can't be called on the root!");
+
+  // Find the layer creating the 3D context.
+  while (container->Extend3DContext() &&
+         !container->UseIntermediateSurface()) {
+    containerChild = container;
+    container = container->GetParent();
+    MOZ_ASSERT(container);
+  }
+
+  // Find the nearest layer with a clip, or this layer.
+  // ContainerState::SetupScrollingMetadata() may install a clip on
+  // the layer.
+  Layer *clipLayer =
+    containerChild && containerChild->GetEffectiveClipRect() ?
+    containerChild : this;
 
   // Establish initial clip rect: it's either the one passed in, or
   // if the parent has an intermediate surface, it's the extents of that surface.
@@ -722,7 +806,7 @@ Layer::CalculateScissorRect(const RenderTargetIntRect& aCurrentScissorRect)
     currentClip = aCurrentScissorRect;
   }
 
-  if (!GetEffectiveClipRect()) {
+  if (!clipLayer->GetEffectiveClipRect()) {
     return currentClip;
   }
 
@@ -734,7 +818,7 @@ Layer::CalculateScissorRect(const RenderTargetIntRect& aCurrentScissorRect)
   }
 
   const RenderTargetIntRect clipRect =
-    ViewAs<RenderTargetPixel>(*GetEffectiveClipRect(),
+    ViewAs<RenderTargetPixel>(*clipLayer->GetEffectiveClipRect(),
                               PixelCastJustification::RenderTargetIsParentLayerForRoot);
   if (clipRect.IsEmpty()) {
     // We might have a non-translation transform in the container so we can't
@@ -808,6 +892,12 @@ Layer::GetTransform() const
   return transform;
 }
 
+const CSSTransformMatrix
+Layer::GetTransformTyped() const
+{
+  return ViewAs<CSSTransformMatrix>(GetTransform());
+}
+
 const Matrix4x4
 Layer::GetLocalTransform()
 {
@@ -823,6 +913,12 @@ Layer::GetLocalTransform()
   }
 
   return transform;
+}
+
+const LayerToParentLayerMatrix4x4
+Layer::GetLocalTransformTyped()
+{
+  return ViewAs<LayerToParentLayerMatrix4x4>(GetLocalTransform());
 }
 
 bool
@@ -854,7 +950,7 @@ Layer::ApplyPendingUpdatesForThisTransaction()
   }
 }
 
-const float
+float
 Layer::GetLocalOpacity()
 {
   float opacity = mOpacity;
@@ -920,9 +1016,8 @@ RenderTargetRect
 Layer::TransformRectToRenderTarget(const LayerIntRect& aRect)
 {
   LayerRect rect(aRect);
-  RenderTargetRect quad = RenderTargetRect::FromUnknown(
-    GetEffectiveTransform().TransformBounds(
-      LayerPixel::ToUnknown(rect)));
+  RenderTargetRect quad = RenderTargetRect::FromUnknownRect(
+    GetEffectiveTransform().TransformBounds(rect.ToUnknownRect()));
   return quad;
 }
 
@@ -937,7 +1032,7 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
   }
 
   IntPoint offset;
-  aResult = GetEffectiveVisibleRegion();
+  aResult = GetEffectiveVisibleRegion().ToUnknownRegion();
   for (Layer* layer = this; layer; layer = layer->GetParent()) {
     gfx::Matrix matrix;
     if (!layer->GetLocalTransform().Is2D(&matrix) ||
@@ -955,7 +1050,7 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
     // If the parent layer clips its lower layers, clip the visible region
     // we're accumulating.
     if (layer->GetEffectiveClipRect()) {
-      aResult.AndWith(ParentLayerIntRect::ToUntyped(*layer->GetEffectiveClipRect()));
+      aResult.AndWith(layer->GetEffectiveClipRect()->ToUnknownRect());
     }
 
     // Now we need to walk across the list of siblings for this parent layer,
@@ -974,14 +1069,14 @@ Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
       // Retreive the translation from sibling to |layer|. The accumulated
       // visible region is currently oriented with |layer|.
       IntPoint siblingOffset = RoundedToInt(siblingMatrix.GetTranslation());
-      nsIntRegion siblingVisibleRegion(sibling->GetEffectiveVisibleRegion());
+      nsIntRegion siblingVisibleRegion(sibling->GetEffectiveVisibleRegion().ToUnknownRegion());
       // Translate the siblings region to |layer|'s origin.
       siblingVisibleRegion.MoveBy(-siblingOffset.x, -siblingOffset.y);
       // Apply the sibling's clip.
       // Layer clip rects are not affected by the layer's transform.
       Maybe<ParentLayerIntRect> clipRect = sibling->GetEffectiveClipRect();
       if (clipRect) {
-        siblingVisibleRegion.AndWith(ParentLayerIntRect::ToUntyped(*clipRect));
+        siblingVisibleRegion.AndWith(clipRect->ToUnknownRect());
       }
       // Subtract the sibling visible region from the visible region of |this|.
       aResult.SubOut(siblingVisibleRegion);
@@ -1031,7 +1126,8 @@ ContainerLayer::ContainerLayer(LayerManager* aManager, void* aImplData)
     mSupportsComponentAlphaChildren(false),
     mMayHaveReadbackChild(false),
     mChildrenChanged(false),
-    mEventRegionsOverride(EventRegionsOverride::NoOverride)
+    mEventRegionsOverride(EventRegionsOverride::NoOverride),
+    mVRDeviceID(0)
 {
   MOZ_COUNT_CTOR(ContainerLayer);
   mContentFlags = 0; // Clear NO_TEXT, NO_TEXT_OVER_TRANSPARENT
@@ -1193,7 +1289,23 @@ ContainerLayer::FillSpecificAttributes(SpecificLayerAttributes& aAttrs)
                                     mInheritedXScale, mInheritedYScale,
                                     mPresShellResolution, mScaleToResolution,
                                     mEventRegionsOverride,
-                                    reinterpret_cast<uint64_t>(mHMDInfo.get()));
+                                    mVRDeviceID);
+}
+
+bool
+ContainerLayer::Creates3DContextWithExtendingChildren()
+{
+  if (Extend3DContext()) {
+    return false;
+  }
+  for (Layer* child = GetFirstChild();
+       child;
+       child = child->GetNextSibling()) {
+      if (child->Extend3DContext()) {
+        return true;
+      }
+  }
+  return false;
 }
 
 bool
@@ -1214,6 +1326,23 @@ ContainerLayer::HasMultipleChildren()
   return false;
 }
 
+/**
+ * Collect all leaf descendants of the current 3D context.
+ */
+void
+ContainerLayer::Collect3DContextLeaves(nsTArray<Layer*>& aToSort)
+{
+  for (Layer* l = GetFirstChild(); l; l = l->GetNextSibling()) {
+    ContainerLayer* container = l->AsContainerLayer();
+    if (container && container->Extend3DContext() &&
+        !container->UseIntermediateSurface()) {
+      container->Collect3DContextLeaves(aToSort);
+    } else {
+      aToSort.AppendElement(l);
+    }
+  }
+}
+
 void
 ContainerLayer::SortChildrenBy3DZOrder(nsTArray<Layer*>& aArray)
 {
@@ -1221,8 +1350,9 @@ ContainerLayer::SortChildrenBy3DZOrder(nsTArray<Layer*>& aArray)
 
   for (Layer* l = GetFirstChild(); l; l = l->GetNextSibling()) {
     ContainerLayer* container = l->AsContainerLayer();
-    if (container && container->GetContentFlags() & CONTENT_PRESERVE_3D) {
-      toSort.AppendElement(l);
+    if (container && container->Extend3DContext() &&
+        !container->UseIntermediateSurface()) {
+      container->Collect3DContextLeaves(toSort);
     } else {
       if (toSort.Length() > 0) {
         SortLayersBy3DZOrder(toSort);
@@ -1248,21 +1378,25 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
 {
   Matrix residual;
   Matrix4x4 idealTransform = GetLocalTransform() * aTransformToSurface;
-  idealTransform.ProjectTo2D();
-  mEffectiveTransform = SnapTransformTranslation(idealTransform, &residual);
+
+  // Keep 3D transforms for leaves to keep z-order sorting correct.
+  if (!Extend3DContext() && !Is3DContextLeaf()) {
+    idealTransform.ProjectTo2D();
+  }
 
   bool useIntermediateSurface;
   if (HasMaskLayers() ||
       GetForceIsolatedGroup()) {
     useIntermediateSurface = true;
 #ifdef MOZ_DUMP_PAINTING
-  } else if (gfxUtils::sDumpPaintingIntermediate) {
+  } else if (gfxEnv::DumpPaintIntermediate() && !Extend3DContext()) {
     useIntermediateSurface = true;
 #endif
   } else {
     float opacity = GetEffectiveOpacity();
     CompositionOp blendMode = GetEffectiveMixBlendMode();
-    if ((opacity != 1.0f || blendMode != CompositionOp::OP_OVER) && HasMultipleChildren()) {
+    if (((opacity != 1.0f || blendMode != CompositionOp::OP_OVER) && (HasMultipleChildren() || Creates3DContextWithExtendingChildren())) ||
+        (!idealTransform.Is2D() && Creates3DContextWithExtendingChildren())) {
       useIntermediateSurface = true;
     } else {
       useIntermediateSurface = false;
@@ -1270,7 +1404,7 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
       bool checkClipRect = false;
       bool checkMaskLayers = false;
 
-      if (!mEffectiveTransform.Is2D(&contTransform)) {
+      if (!idealTransform.Is2D(&contTransform)) {
         // In 3D case, always check if we should use IntermediateSurface.
         checkClipRect = true;
         checkMaskLayers = true;
@@ -1311,6 +1445,19 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
     }
   }
 
+  if (useIntermediateSurface) {
+    mEffectiveTransform = SnapTransformTranslation(idealTransform, &residual);
+  } else {
+    mEffectiveTransform = idealTransform;
+  }
+
+  // For layers extending 3d context, its ideal transform should be
+  // applied on children.
+  if (!Extend3DContext()) {
+    // Without this projection, non-container children would get a 3D
+    // transform while 2D is expected.
+    idealTransform.ProjectTo2D();
+  }
   mUseIntermediateSurface = useIntermediateSurface && !GetEffectiveVisibleRegion().IsEmpty();
   if (useIntermediateSurface) {
     ComputeEffectiveTransformsForChildren(Matrix4x4::From2D(residual));
@@ -1565,9 +1712,9 @@ void
 Layer::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHtml)
 {
 #ifdef MOZ_DUMP_PAINTING
-  bool dumpCompositorTexture = gfxUtils::sDumpCompositorTextures && AsLayerComposite() &&
+  bool dumpCompositorTexture = gfxEnv::DumpCompositorTextures() && AsLayerComposite() &&
                                AsLayerComposite()->GetCompositableHost();
-  bool dumpClientTexture = gfxUtils::sDumpPainting && AsShadowableLayer() &&
+  bool dumpClientTexture = gfxEnv::DumpPaint() && AsShadowableLayer() &&
                            AsShadowableLayer()->GetCompositableClient();
   nsCString layerId(Name());
   layerId.Append('-');
@@ -1750,11 +1897,17 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   if (!mTransform.IsIdentity()) {
     AppendToString(aStream, mTransform, " [transform=", "]");
   }
+  if (!GetEffectiveTransform().IsIdentity()) {
+    AppendToString(aStream, GetEffectiveTransform(), " [effective-transform=", "]");
+  }
+  if (mTransformIsPerspective) {
+    aStream << " [perspective]";
+  }
   if (!mLayerBounds.IsEmpty()) {
     AppendToString(aStream, mLayerBounds, " [bounds=", "]");
   }
   if (!mVisibleRegion.IsEmpty()) {
-    AppendToString(aStream, mVisibleRegion, " [visible=", "]");
+    AppendToString(aStream, mVisibleRegion.ToUnknownRegion(), " [visible=", "]");
   } else {
     aStream << " [not visible]";
   }
@@ -1769,6 +1922,9 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   }
   if (GetContentFlags() & CONTENT_COMPONENT_ALPHA) {
     aStream << " [componentAlpha]";
+  }
+  if (GetContentFlags() & CONTENT_BACKFACE_HIDDEN) {
+    aStream << " [backfaceHidden]";
   }
   if (GetScrollbarDirection() == VERTICAL) {
     aStream << nsPrintfCString(" [vscrollbar=%lld]", GetScrollbarTargetContainerId()).get();
@@ -1870,7 +2026,7 @@ Layer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
       DumpTransform(s->mutable_transform(), lc->GetShadowTransform());
     }
     if (!lc->GetShadowVisibleRegion().IsEmpty()) {
-      DumpRegion(s->mutable_vregion(), lc->GetShadowVisibleRegion());
+      DumpRegion(s->mutable_vregion(), lc->GetShadowVisibleRegion().ToUnknownRegion());
     }
   }
   // Clip
@@ -1882,8 +2038,8 @@ Layer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
     DumpTransform(layer->mutable_transform(), mTransform);
   }
   // Visible region
-  if (!mVisibleRegion.IsEmpty()) {
-    DumpRegion(layer->mutable_vregion(), mVisibleRegion);
+  if (!mVisibleRegion.ToUnknownRegion().IsEmpty()) {
+    DumpRegion(layer->mutable_vregion(), mVisibleRegion.ToUnknownRegion());
   }
   // EventRegions
   if (!mEventRegions.IsEmpty()) {
@@ -1935,6 +2091,23 @@ Layer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent)
   }
 }
 
+bool
+Layer::IsBackfaceHidden()
+{
+  if (GetContentFlags() & CONTENT_BACKFACE_HIDDEN) {
+    Layer* container = AsContainerLayer() ? this : GetParent();
+    if (container) {
+      // The effective transform can include non-preserve-3d parent
+      // transforms, since we don't always require an intermediate.
+      if (container->Extend3DContext() || container->Is3DContextLeaf()) {
+        return container->GetEffectiveTransform().IsBackfaceVisible();
+      }
+      return container->GetBaseTransform().IsBackfaceVisible();
+    }
+  }
+  return false;
+}
+
 nsAutoPtr<LayerUserData>
 Layer::RemoveUserData(void* aKey)
 {
@@ -1983,8 +2156,8 @@ ContainerLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   if (mEventRegionsOverride & EventRegionsOverride::ForceEmptyHitRegion) {
     aStream << " [force-ehr]";
   }
-  if (mHMDInfo) {
-    aStream << nsPrintfCString(" [hmd=%p]", mHMDInfo.get()).get();
+  if (mVRDeviceID) {
+    aStream << nsPrintfCString(" [hmd=%lu]", mVRDeviceID).get();
   }
 }
 
@@ -2243,19 +2416,10 @@ LayerManager::DumpPacket(layerscope::LayersPacket* aPacket)
   layer->set_parentptr(0);
 }
 
-/*static*/ void
-LayerManager::InitLog()
-{
-  if (!sLog)
-    sLog = PR_NewLogModule("Layers");
-}
-
 /*static*/ bool
 LayerManager::IsLogEnabled()
 {
-  MOZ_ASSERT(!!sLog,
-             "layer manager must be created before logging is allowed");
-  return MOZ_LOG_TEST(sLog, LogLevel::Debug);
+  return MOZ_LOG_TEST(GetLog(), LogLevel::Debug);
 }
 
 void
@@ -2271,7 +2435,7 @@ PrintInfo(std::stringstream& aStream, LayerComposite* aLayerComposite)
     AppendToString(aStream, aLayerComposite->GetShadowTransform(), " [shadow-transform=", "]");
   }
   if (!aLayerComposite->GetShadowVisibleRegion().IsEmpty()) {
-    AppendToString(aStream, aLayerComposite->GetShadowVisibleRegion(), " [shadow-visible=", "]");
+    AppendToString(aStream, aLayerComposite->GetShadowVisibleRegion().ToUnknownRegion(), " [shadow-visible=", "]");
   }
 }
 
@@ -2279,12 +2443,12 @@ void
 SetAntialiasingFlags(Layer* aLayer, DrawTarget* aTarget)
 {
   bool permitSubpixelAA = !(aLayer->GetContentFlags() & Layer::CONTENT_DISABLE_SUBPIXEL_AA);
-  if (aTarget->GetFormat() != SurfaceFormat::B8G8R8A8) {
+  if (aTarget->IsCurrentGroupOpaque()) {
     aTarget->SetPermitSubpixelAA(permitSubpixelAA);
     return;
   }
 
-  const IntRect& bounds = aLayer->GetVisibleRegion().GetBounds();
+  const IntRect& bounds = aLayer->GetVisibleRegion().ToUnknownRegion().GetBounds();
   gfx::Rect transformedBounds = aTarget->GetTransform().TransformBounds(gfx::Rect(Float(bounds.x), Float(bounds.y),
                                                                                   Float(bounds.width), Float(bounds.height)));
   transformedBounds.RoundOut();
@@ -2302,8 +2466,6 @@ ToOutsideIntRect(const gfxRect &aRect)
   r.RoundOut();
   return IntRect(r.X(), r.Y(), r.Width(), r.Height());
 }
-
-PRLogModuleInfo* LayerManager::sLog;
 
 } // namespace layers
 } // namespace mozilla

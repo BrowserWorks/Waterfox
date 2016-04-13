@@ -10,6 +10,7 @@
 class nsIFrame;
 class nsIContent;
 class nsDisplayListBuilder;
+class nsDOMCSSDeclaration;
 
 namespace mozilla {
 
@@ -47,15 +48,29 @@ public:
   /**
    * Mark aFrame as being known to have an animation of aProperty.
    * Any such marking will time out after a short period.
+   * aNewValue and aDOMCSSDecl are used to determine whether the property's
+   * value has changed.
    */
-  static void NotifyAnimated(nsIFrame* aFrame, nsCSSProperty aProperty);
+  static void NotifyAnimated(nsIFrame* aFrame, nsCSSProperty aProperty,
+                             const nsAString& aNewValue,
+                             nsDOMCSSDeclaration* aDOMCSSDecl);
+  /**
+   * Notify aFrame as being known to have an animation of aProperty through an
+   * inline style modification during aScrollFrame's scroll event handler.
+   */
+  static void NotifyAnimatedFromScrollHandler(nsIFrame* aFrame, nsCSSProperty aProperty,
+                                              nsIFrame* aScrollFrame);
   /**
    * Notify that a property in the inline style rule of aFrame's element
    * has been modified.
    * This notification is incomplete --- not all modifications to inline
    * style will trigger this.
+   * aNewValue and aDOMCSSDecl are used to determine whether the property's
+   * value has changed.
    */
-  static void NotifyInlineStyleRuleModified(nsIFrame* aFrame, nsCSSProperty aProperty);
+  static void NotifyInlineStyleRuleModified(nsIFrame* aFrame, nsCSSProperty aProperty,
+                                            const nsAString& aNewValue,
+                                            nsDOMCSSDeclaration* aDOMCSSDecl);
   /**
    * Return true if aFrame's aProperty style should be considered as being animated
    * for pre-rendering.
@@ -107,6 +122,13 @@ public:
    * Return true if this frame's content is still marked as active.
    */
   static bool IsContentActive(nsIFrame* aFrame);
+
+  /**
+   * Called before and after a scroll event handler is executed, with the
+   * scrollframe or nullptr, respectively. This acts as a hint to treat
+   * inline style changes during the handler differently.
+   */
+  static void SetCurrentScrollHandlerFrame(nsIFrame* aFrame);
 };
 
 } // namespace mozilla

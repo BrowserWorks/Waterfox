@@ -622,7 +622,24 @@ nsTableFrame::RemoveCol(nsTableColGroupFrame* aColGroupFrame,
   if (aRemoveFromCellMap) {
     nsTableCellMap* cellMap = GetCellMap();
     if (cellMap) {
-      AppendAnonymousColFrames(1);
+      // If we have some anonymous cols at the end already, we just
+      // add a new anonymous col.
+      if (!mColFrames.IsEmpty() &&
+          mColFrames.LastElement() && // XXXbz is this ever null?
+          mColFrames.LastElement()->GetColType() == eColAnonymousCell) {
+        AppendAnonymousColFrames(1);
+      } else {
+        // All of our colframes correspond to actual <col> tags.  It's possible
+        // that we still have at least as many <col> tags as we have logical
+        // columns from cells, but we might have one less.  Handle the latter
+        // case as follows: First ask the cellmap to drop its last col if it
+        // doesn't have any actual cells in it.  Then call
+        // MatchCellMapToColCache to append an anonymous column if it's needed;
+        // this needs to be after RemoveColsAtEnd, since it will determine the
+        // need for a new column frame based on the width of the cell map.
+        cellMap->RemoveColsAtEnd();
+        MatchCellMapToColCache(cellMap);
+      }
     }
   }
   // for now, just bail and recalc all of the collapsing borders
@@ -1264,7 +1281,7 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
     // Ensure that the table frame event background goes before the
     // table rowgroups event backgrounds, before the table row event backgrounds,
     // before everything else (cells and their blocks)
-    separatedCollection.BorderBackground()->Sort(aBuilder, CompareByTablePartRank, nullptr);
+    separatedCollection.BorderBackground()->Sort(CompareByTablePartRank, nullptr);
     separatedCollection.MoveTo(aLists);
   }
 
@@ -1387,9 +1404,8 @@ nsTableFrame::PaintTableBorderBackground(nsDisplayListBuilder* aBuilder,
         nsCSSRendering::PaintBorder(presContext, aRenderingContext, this,
                                     aDirtyRect, rect, mStyleContext,
                                     borderFlags, skipSides);
-    }
-    else {
-      gfxContext* ctx = aRenderingContext.ThebesContext();
+    } else {
+      DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
 
       gfxPoint devPixelOffset =
         nsLayoutUtils::PointToGfxPoint(aPt,
@@ -1397,10 +1413,11 @@ nsTableFrame::PaintTableBorderBackground(nsDisplayListBuilder* aBuilder,
 
       // XXX we should probably get rid of this translation at some stage
       // But that would mean modifying PaintBCBorders, ugh
-      gfxContextMatrixAutoSaveRestore autoSR(ctx);
-      ctx->SetMatrix(ctx->CurrentMatrix().Translate(devPixelOffset));
+      AutoRestoreTransform autoRestoreTransform(drawTarget);
+      drawTarget->SetTransform(
+        drawTarget->GetTransform().PreTranslate(ToPoint(devPixelOffset)));
 
-      PaintBCBorders(aRenderingContext, aDirtyRect - aPt);
+      PaintBCBorders(*drawTarget, aDirtyRect - aPt);
     }
   }
 
@@ -2534,10 +2551,30 @@ nsTableFrame::DoRemoveFrame(ChildListID     aListID,
       }
     }
 
-    int32_t numAnonymousColsToAdd = GetColCount() - mColFrames.Length();
-    if (numAnonymousColsToAdd > 0) {
-      // this sets the child list, updates the col cache and cell map
-      AppendAnonymousColFrames(numAnonymousColsToAdd);
+    // If we have some anonymous cols at the end already, we just
+    // add more of them.
+    if (!mColFrames.IsEmpty() &&
+        mColFrames.LastElement() && // XXXbz is this ever null?
+        mColFrames.LastElement()->GetColType() == eColAnonymousCell) {
+      int32_t numAnonymousColsToAdd = GetColCount() - mColFrames.Length();
+      if (numAnonymousColsToAdd > 0) {
+        // this sets the child list, updates the col cache and cell map
+        AppendAnonymousColFrames(numAnonymousColsToAdd);
+      }
+    } else {
+      // All of our colframes correspond to actual <col> tags.  It's possible
+      // that we still have at least as many <col> tags as we have logical
+      // columns from cells, but we might have one less.  Handle the latter case
+      // as follows: First ask the cellmap to drop its last col if it doesn't
+      // have any actual cells in it.  Then call MatchCellMapToColCache to
+      // append an anonymous column if it's needed; this needs to be after
+      // RemoveColsAtEnd, since it will determine the need for a new column
+      // frame based on the width of the cell map.
+      nsTableCellMap* cellMap = GetCellMap();
+      if (cellMap) { // XXXbz is this ever null?
+        cellMap->RemoveColsAtEnd();
+        MatchCellMapToColCache(cellMap);
+      }
     }
 
   } else {
@@ -6193,7 +6230,7 @@ struct BCBlockDirSeg
 
 
   void Paint(BCPaintBorderIterator& aIter,
-             nsRenderingContext&    aRenderingContext,
+             DrawTarget&            aDrawTarget,
              BCPixelSize            aInlineSegBSize);
   void AdvanceOffsetB();
   void IncludeCurrentBorder(BCPaintBorderIterator& aIter);
@@ -6243,8 +6280,7 @@ struct BCInlineDirSeg
                      BCPixelSize            aIStartSegISize);
   void AdvanceOffsetI();
   void IncludeCurrentBorder(BCPaintBorderIterator& aIter);
-  void Paint(BCPaintBorderIterator& aIter,
-             nsRenderingContext&    aRenderingContext);
+  void Paint(BCPaintBorderIterator& aIter, DrawTarget& aDrawTarget);
 
   nscoord            mOffsetI;       // i-offset with respect to the table edge
   nscoord            mOffsetB;       // b-offset with respect to the table edge
@@ -6288,8 +6324,8 @@ public:
   bool SetDamageArea(const nsRect& aDamageRect);
   void First();
   void Next();
-  void AccumulateOrPaintInlineDirSegment(nsRenderingContext& aRenderingContext);
-  void AccumulateOrPaintBlockDirSegment(nsRenderingContext& aRenderingContext);
+  void AccumulateOrPaintInlineDirSegment(DrawTarget& aDrawTarget);
+  void AccumulateOrPaintBlockDirSegment(DrawTarget& aDrawTarget);
   void ResetVerInfo();
   void StoreColumnWidth(int32_t aIndex);
   bool BlockDirSegmentOwnsCorner();
@@ -6915,14 +6951,14 @@ BCBlockDirSeg::GetBEndCorner(BCPaintBorderIterator& aIter,
 
 /**
  * Paint the block-dir segment
- * @param aIter             - iterator containing the structural information
- * @param aRenderingContext - the rendering context
- * @param aInlineSegBSize   - the width of the inline-dir segment joining the corner
- *                            at the start
+ * @param aIter           - iterator containing the structural information
+ * @param aDrawTarget     - the draw target
+ * @param aInlineSegBSize - the width of the inline-dir segment joining the
+ *                          corner at the start
  */
 void
 BCBlockDirSeg::Paint(BCPaintBorderIterator& aIter,
-                     nsRenderingContext&    aRenderingContext,
+                     DrawTarget&            aDrawTarget,
                      BCPixelSize            aInlineSegBSize)
 {
   // get the border style, color and paint the segment
@@ -6947,7 +6983,8 @@ BCBlockDirSeg::Paint(BCPaintBorderIterator& aIter,
       side = eLogicalSideIEnd;
       if (!aIter.IsTableIEndMost() && (relColIndex > 0)) {
         col = aIter.mBlockDirInfo[relColIndex - 1].mCol;
-      } // and fall through
+      }
+      MOZ_FALLTHROUGH;
     case eColGroupOwner:
       if (col) {
         owner = col->GetParent();
@@ -6957,20 +6994,22 @@ BCBlockDirSeg::Paint(BCPaintBorderIterator& aIter,
       side = eLogicalSideIEnd;
       if (!aIter.IsTableIEndMost() && (relColIndex > 0)) {
         col = aIter.mBlockDirInfo[relColIndex - 1].mCol;
-      } // and fall through
+      }
+      MOZ_FALLTHROUGH;
     case eColOwner:
       owner = col;
       break;
     case eAjaRowGroupOwner:
       NS_ERROR("a neighboring rowgroup can never own a vertical border");
-      // and fall through
+      MOZ_FALLTHROUGH;
     case eRowGroupOwner:
       NS_ASSERTION(aIter.IsTableIStartMost() || aIter.IsTableIEndMost(),
                   "row group can own border only at table edge");
       owner = mFirstRowGroup;
       break;
     case eAjaRowOwner:
-      NS_ERROR("program error"); // and fall through
+      NS_ERROR("program error");
+      MOZ_FALLTHROUGH;
     case eRowOwner:
       NS_ASSERTION(aIter.IsTableIStartMost() || aIter.IsTableIEndMost(),
                    "row can own border only at table edge");
@@ -6978,7 +7017,8 @@ BCBlockDirSeg::Paint(BCPaintBorderIterator& aIter,
       break;
     case eAjaCellOwner:
       side = eLogicalSideIEnd;
-      cell = mAjaCell; // and fall through
+      cell = mAjaCell;
+      MOZ_FALLTHROUGH;
     case eCellOwner:
       owner = cell;
       break;
@@ -7024,7 +7064,7 @@ BCBlockDirSeg::Paint(BCPaintBorderIterator& aIter,
     Swap(startBevelSide, endBevelSide);
     Swap(startBevelOffset, endBevelOffset);
   }
-  nsCSSRendering::DrawTableBorderSegment(aRenderingContext, style, color,
+  nsCSSRendering::DrawTableBorderSegment(aDrawTarget, style, color,
                                          aIter.mTableBgColor, physicalRect,
                                          appUnitsPerDevPixel,
                                          nsPresContext::AppUnitsPerCSSPixel(),
@@ -7126,12 +7166,11 @@ BCInlineDirSeg::GetIEndCorner(BCPaintBorderIterator& aIter,
 
 /**
  * Paint the inline-dir segment
- * @param aIter             - iterator containing the structural information
- * @param aRenderingContext - the rendering context
+ * @param aIter       - iterator containing the structural information
+ * @param aDrawTarget - the draw target
  */
 void
-BCInlineDirSeg::Paint(BCPaintBorderIterator& aIter,
-                      nsRenderingContext&    aRenderingContext)
+BCInlineDirSeg::Paint(BCPaintBorderIterator& aIter, DrawTarget& aDrawTarget)
 {
   // get the border style, color and paint the segment
   LogicalSide side =
@@ -7155,7 +7194,7 @@ BCInlineDirSeg::Paint(BCPaintBorderIterator& aIter,
       break;
     case eAjaColGroupOwner:
       NS_ERROR("neighboring colgroups can never own an inline-dir border");
-      // and fall through
+      MOZ_FALLTHROUGH;
     case eColGroupOwner:
       NS_ASSERTION(aIter.IsTableBStartMost() || aIter.IsTableBEndMost(),
                    "col group can own border only at the table edge");
@@ -7165,7 +7204,7 @@ BCInlineDirSeg::Paint(BCPaintBorderIterator& aIter,
       break;
     case eAjaColOwner:
       NS_ERROR("neighboring column can never own an inline-dir border");
-      // and fall through
+      MOZ_FALLTHROUGH;
     case eColOwner:
       NS_ASSERTION(aIter.IsTableBStartMost() || aIter.IsTableBEndMost(),
                    "col can own border only at the table edge");
@@ -7174,14 +7213,14 @@ BCInlineDirSeg::Paint(BCPaintBorderIterator& aIter,
     case eAjaRowGroupOwner:
       side = eLogicalSideBEnd;
       rg = (aIter.IsTableBEndMost()) ? aIter.mRg : aIter.mPrevRg;
-      // and fall through
+      MOZ_FALLTHROUGH;
     case eRowGroupOwner:
       owner = rg;
       break;
     case eAjaRowOwner:
       side = eLogicalSideBEnd;
       row = (aIter.IsTableBEndMost()) ? aIter.mRow : aIter.mPrevRow;
-      // and fall through
+      MOZ_FALLTHROUGH;
     case eRowOwner:
       owner = row;
       break;
@@ -7190,7 +7229,7 @@ BCInlineDirSeg::Paint(BCPaintBorderIterator& aIter,
       // if this is null due to the damage area origin-y > 0, then the border
       // won't show up anyway
       cell = mAjaCell;
-      // and fall through
+      MOZ_FALLTHROUGH;
     case eCellOwner:
       owner = cell;
       break;
@@ -7229,7 +7268,7 @@ BCInlineDirSeg::Paint(BCPaintBorderIterator& aIter,
     Swap(startBevelSide, endBevelSide);
     Swap(startBevelOffset, endBevelOffset);
   }
-  nsCSSRendering::DrawTableBorderSegment(aRenderingContext, style, color,
+  nsCSSRendering::DrawTableBorderSegment(aDrawTarget, style, color,
                                          aIter.mTableBgColor, physicalRect,
                                          appUnitsPerDevPixel,
                                          nsPresContext::AppUnitsPerCSSPixel(),
@@ -7288,10 +7327,10 @@ BCPaintBorderIterator::BlockDirSegmentOwnsCorner()
 
 /**
  * Paint if necessary an inline-dir segment, otherwise accumulate it
- * @param aRenderingContext - the rendering context
+ * @param aDrawTarget - the draw target
  */
 void
-BCPaintBorderIterator::AccumulateOrPaintInlineDirSegment(nsRenderingContext& aRenderingContext)
+BCPaintBorderIterator::AccumulateOrPaintInlineDirSegment(DrawTarget& aDrawTarget)
 {
 
   int32_t relColIndex = GetRelativeColIndex();
@@ -7324,7 +7363,7 @@ BCPaintBorderIterator::AccumulateOrPaintInlineDirSegment(nsRenderingContext& aRe
     if (mInlineSeg.mLength > 0) {
       mInlineSeg.GetIEndCorner(*this, iStartSegISize);
       if (mInlineSeg.mWidth > 0) {
-        mInlineSeg.Paint(*this, aRenderingContext);
+        mInlineSeg.Paint(*this, aDrawTarget);
       }
       mInlineSeg.AdvanceOffsetI();
     }
@@ -7336,10 +7375,10 @@ BCPaintBorderIterator::AccumulateOrPaintInlineDirSegment(nsRenderingContext& aRe
 }
 /**
  * Paint if necessary a block-dir segment, otherwise accumulate it
- * @param aRenderingContext - the rendering context
+ * @param aDrawTarget - the draw target
  */
 void
-BCPaintBorderIterator::AccumulateOrPaintBlockDirSegment(nsRenderingContext& aRenderingContext)
+BCPaintBorderIterator::AccumulateOrPaintBlockDirSegment(DrawTarget& aDrawTarget)
 {
   BCBorderOwner borderOwner = eCellOwner;
   BCBorderOwner ignoreBorderOwner;
@@ -7366,7 +7405,7 @@ BCPaintBorderIterator::AccumulateOrPaintBlockDirSegment(nsRenderingContext& aRen
     if (blockDirSeg.mLength > 0) {
       blockDirSeg.GetBEndCorner(*this, inlineSegBSize);
       if (blockDirSeg.mWidth > 0) {
-        blockDirSeg.Paint(*this, aRenderingContext, inlineSegBSize);
+        blockDirSeg.Paint(*this, aDrawTarget, inlineSegBSize);
       }
       blockDirSeg.AdvanceOffsetB();
     }
@@ -7394,12 +7433,11 @@ BCPaintBorderIterator::ResetVerInfo()
 /**
  * Method to paint BCBorders, this does not use currently display lists although
  * it will do this in future
- * @param aRenderingContext - the rendering context
- * @param aDirtyRect        - inside this rectangle the BC Borders will redrawn
+ * @param aDrawTarget - the rendering context
+ * @param aDirtyRect  - inside this rectangle the BC Borders will redrawn
  */
 void
-nsTableFrame::PaintBCBorders(nsRenderingContext& aRenderingContext,
-                             const nsRect&       aDirtyRect)
+nsTableFrame::PaintBCBorders(DrawTarget& aDrawTarget, const nsRect& aDirtyRect)
 {
   // We first transfer the aDirtyRect into cellmap coordinates to compute which
   // cell borders need to be painted
@@ -7418,7 +7456,7 @@ nsTableFrame::PaintBCBorders(nsRenderingContext& aRenderingContext,
   // this we  the now active segment with the current border. These
   // segments are stored in mBlockDirInfo to be used on the next row
   for (iter.First(); !iter.mAtEnd; iter.Next()) {
-    iter.AccumulateOrPaintBlockDirSegment(aRenderingContext);
+    iter.AccumulateOrPaintBlockDirSegment(aDrawTarget);
   }
 
   // Next, paint all of the inline-dir border segments from bStart to bEnd reuse
@@ -7426,7 +7464,7 @@ nsTableFrame::PaintBCBorders(nsRenderingContext& aRenderingContext,
   // corner calculations
   iter.Reset();
   for (iter.First(); !iter.mAtEnd; iter.Next()) {
-    iter.AccumulateOrPaintInlineDirSegment(aRenderingContext);
+    iter.AccumulateOrPaintInlineDirSegment(aDrawTarget);
   }
 }
 
@@ -7492,7 +7530,7 @@ nsTableFrame::InvalidateTableFrame(nsIFrame* aFrame,
              aOrigVisualOverflow.Size() != visualOverflow.Size()){
     aFrame->InvalidateFrameWithRect(aOrigVisualOverflow);
     aFrame->InvalidateFrame();
-    parent->InvalidateFrameWithRect(aOrigRect);;
+    parent->InvalidateFrameWithRect(aOrigRect);
     parent->InvalidateFrame();
   }
 }

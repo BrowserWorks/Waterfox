@@ -10,7 +10,6 @@
 #include "mozilla/GuardObjects.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/Range.h"
-#include "mozilla/UniquePtr.h"
 #include "mozilla/Vector.h"
 
 #include "jsclist.h"
@@ -42,8 +41,8 @@ class Breakpoint;
 class DebuggerMemory;
 
 typedef HashSet<ReadBarrieredGlobalObject,
-                DefaultHasher<ReadBarrieredGlobalObject>,
-                SystemAllocPolicy> WeakGlobalObjectSet;
+                MovableCellHasher<ReadBarrieredGlobalObject>,
+                RuntimeAllocPolicy> WeakGlobalObjectSet;
 
 /*
  * A weakmap from GC thing keys to JSObject values that supports the keys being
@@ -70,10 +69,11 @@ typedef HashSet<ReadBarrieredGlobalObject,
  * transitions.
  */
 template <class UnbarrieredKey, bool InvisibleKeysOk=false>
-class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, RelocatablePtrObject>
+class DebuggerWeakMap : private WeakMap<RelocatablePtr<UnbarrieredKey>, RelocatablePtrObject,
+                                        MovableCellHasher<RelocatablePtr<UnbarrieredKey>>>
 {
   private:
-    typedef PreBarriered<UnbarrieredKey> Key;
+    typedef RelocatablePtr<UnbarrieredKey> Key;
     typedef RelocatablePtrObject Value;
 
     typedef HashMap<JS::Zone*,
@@ -85,7 +85,7 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     JSCompartment* compartment;
 
   public:
-    typedef WeakMap<Key, Value, DefaultHasher<Key> > Base;
+    typedef WeakMap<Key, Value, MovableCellHasher<Key>> Base;
 
     explicit DebuggerWeakMap(JSContext* cx)
         : Base(cx),
@@ -116,8 +116,9 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     template<typename KeyInput, typename ValueInput>
     bool relookupOrAdd(AddPtr& p, const KeyInput& k, const ValueInput& v) {
         MOZ_ASSERT(v->compartment() == this->compartment);
-        MOZ_ASSERT(!k->compartment()->options_.mergeable());
-        MOZ_ASSERT_IF(!InvisibleKeysOk, !k->compartment()->options_.invisibleToDebugger());
+        MOZ_ASSERT(!k->compartment()->creationOptions().mergeable());
+        MOZ_ASSERT_IF(!InvisibleKeysOk,
+                      !k->compartment()->creationOptions().invisibleToDebugger());
         MOZ_ASSERT(!Base::has(k));
         if (!incZoneCount(k->zone()))
             return false;
@@ -134,6 +135,18 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     }
 
   public:
+    template <void (traceValueEdges)(JSTracer*, JSObject*)>
+    void markCrossCompartmentEdges(JSTracer* tracer) {
+        for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
+            traceValueEdges(tracer, e.front().value());
+            Key key = e.front().key();
+            TraceEdge(tracer, &key, "Debugger WeakMap key");
+            if (key != e.front().key())
+                e.rekeyFront(key);
+            key.unsafeSet(nullptr);
+        }
+    }
+
     bool hasKeyInZone(JS::Zone* zone) {
         CountMap::Ptr p = zoneCounts.lookup(zone);
         MOZ_ASSERT_IF(p.found(), p->value() > 0);
@@ -144,13 +157,9 @@ class DebuggerWeakMap : private WeakMap<PreBarriered<UnbarrieredKey>, Relocatabl
     /* Override sweep method to also update our edge cache. */
     void sweep() {
         for (Enum e(*static_cast<Base*>(this)); !e.empty(); e.popFront()) {
-            Key k(e.front().key());
-            if (gc::IsAboutToBeFinalized(&k)) {
+            if (gc::IsAboutToBeFinalized(&e.front().mutableKey())) {
+                decZoneCount(e.front().key()->zone());
                 e.removeFront();
-                decZoneCount(k->zone());
-            } else {
-                // markKeys() should have done any necessary relocation.
-                MOZ_ASSERT(k == e.front().key());
             }
         }
         Base::assertEntriesNotAboutToBeFinalized();
@@ -251,6 +260,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     // Return true if this Debugger observed a debuggee that participated in the
     // GC identified by the given GC number. Return false otherwise.
+    // May return false negatives if we have hit OOM.
     bool observedGC(uint64_t majorGCNumber) const {
         return observedGCs.has(majorGCNumber);
     }
@@ -331,7 +341,8 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 
     // The set of GC numbers for which one or more of this Debugger's observed
     // debuggees participated in.
-    js::HashSet<uint64_t> observedGCs;
+    using GCNumberSet = HashSet<uint64_t, DefaultHasher<uint64_t>, RuntimeAllocPolicy>;
+    GCNumberSet observedGCs;
 
     using TenurePromotionsLog = js::TraceableFifo<TenurePromotionsLogEntry>;
     TenurePromotionsLog tenurePromotionsLog;
@@ -437,10 +448,10 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      * lost events.
      */
 #ifdef NIGHTLY_BUILD
-    uint32_t traceLoggerLastDrainedId;
+    uint32_t traceLoggerLastDrainedSize;
     uint32_t traceLoggerLastDrainedIteration;
 #endif
-    uint32_t traceLoggerScriptedCallsLastDrainedId;
+    uint32_t traceLoggerScriptedCallsLastDrainedSize;
     uint32_t traceLoggerScriptedCallsLastDrainedIteration;
 
     class FrameRange;
@@ -504,6 +515,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void traceObject(JSTracer* trc, JSObject* obj);
     void trace(JSTracer* trc);
     static void finalize(FreeOp* fop, JSObject* obj);
+    void markCrossCompartmentEdges(JSTracer* tracer);
 
     static const Class jsclass;
 
@@ -700,6 +712,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      * Debugger objects that are definitely live but not yet marked, it marks
      * them and returns true. If not, it returns false.
      */
+    static void markIncomingCrossCompartmentEdges(JSTracer* tracer);
     static bool markAllIteratively(GCMarker* trc);
     static void markAll(JSTracer* trc);
     static void sweepAll(FreeOp* fop);
@@ -929,14 +942,14 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
 };
 
 template<>
-struct DefaultTracer<Debugger::TenurePromotionsLogEntry> {
+struct DefaultGCPolicy<Debugger::TenurePromotionsLogEntry> {
     static void trace(JSTracer* trc, Debugger::TenurePromotionsLogEntry* e, const char*) {
         Debugger::TenurePromotionsLogEntry::trace(e, trc);
     }
 };
 
 template<>
-struct DefaultTracer<Debugger::AllocationsLogEntry> {
+struct DefaultGCPolicy<Debugger::AllocationsLogEntry> {
     static void trace(JSTracer* trc, Debugger::AllocationsLogEntry* e, const char*) {
         Debugger::AllocationsLogEntry::trace(e, trc);
     }
@@ -1068,7 +1081,7 @@ Debugger::onNewScript(JSContext* cx, HandleScript script)
 {
     // We early return in slowPathOnNewScript for self-hosted scripts, so we can
     // ignore those in our assertion here.
-    MOZ_ASSERT_IF(!script->compartment()->options().invisibleToDebugger() &&
+    MOZ_ASSERT_IF(!script->compartment()->creationOptions().invisibleToDebugger() &&
                   !script->selfHosted(),
                   script->compartment()->firedOnNewGlobalObject);
     if (script->compartment()->isDebuggee())

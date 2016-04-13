@@ -116,6 +116,13 @@ nsStyleContext::nsStyleContext(nsStyleContext* aParent,
   mRuleNode->AddRef();
   mRuleNode->SetUsedDirectly(); // before ApplyStyleFixups()!
 
+  if (!mParent) {
+    // Add as a root before ApplyStyleFixups, since ApplyStyleFixups
+    // can trigger rule tree GC.
+    nsStyleSet* styleSet = mRuleNode->PresContext()->PresShell()->StyleSet();
+    styleSet->AddStyleContextRoot(this);
+  }
+
   ApplyStyleFixups(aSkipParentDisplayBasedStyleFixup);
 
   #define eStyleStruct_LastItem (nsStyleStructID_Length - 1)
@@ -389,29 +396,6 @@ nsStyleContext::FindChildWithRules(const nsIAtom* aPseudoTag,
   return result.forget();
 }
 
-/* static */ bool
-nsStyleContext::ListContainsStyleContextThatUsesGrandancestorStyle(const nsStyleContext* aHead)
-{
-  if (aHead) {
-    const nsStyleContext* child = aHead;
-    do {
-      if (child->UsesGrandancestorStyle()) {
-        return true;
-      }
-      child = child->mNextSibling;
-    } while (child != aHead);
-  }
-
-  return false;
-}
-
-bool
-nsStyleContext::HasChildThatUsesGrandancestorStyle() const
-{
-  return ListContainsStyleContextThatUsesGrandancestorStyle(mEmptyChild) ||
-         ListContainsStyleContextThatUsesGrandancestorStyle(mChild);
-}
-
 const void* nsStyleContext::StyleData(nsStyleStructID aSID)
 {
   const void* cachedData = GetCachedStyleData(aSID);
@@ -535,19 +519,21 @@ nsStyleContext::SetStyle(nsStyleStructID aSID, void* aStruct)
 
 static bool
 ShouldSuppressLineBreak(const nsStyleDisplay* aStyleDisplay,
-                        const nsStyleContext* aContainerContext,
-                        const nsStyleDisplay* aContainerDisplay)
+                        const nsStyleContext* aParentContext,
+                        const nsStyleDisplay* aParentDisplay)
 {
   // The display change should only occur for "in-flow" children
   if (aStyleDisplay->IsOutOfFlowStyle()) {
     return false;
   }
-  if (aContainerContext->ShouldSuppressLineBreak()) {
-    // Line break suppressing bit is propagated to any children of line
-    // participants, which include inline and inline ruby boxes.
-    if (aContainerDisplay->mDisplay == NS_STYLE_DISPLAY_INLINE ||
-        aContainerDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY ||
-        aContainerDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER) {
+  if (aParentContext->ShouldSuppressLineBreak()) {
+    // Line break suppressing bit is propagated to any children of
+    // line participants, which include inline, contents, and inline
+    // ruby boxes.
+    if (aParentDisplay->mDisplay == NS_STYLE_DISPLAY_INLINE ||
+        aParentDisplay->mDisplay == NS_STYLE_DISPLAY_CONTENTS ||
+        aParentDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY ||
+        aParentDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER) {
       return true;
     }
   }
@@ -570,7 +556,7 @@ ShouldSuppressLineBreak(const nsStyleDisplay* aStyleDisplay,
   // However, there is one special case which is BR tag, because it
   // directly affects the line layout. This case is handled by the BR
   // frame which checks the flag of its parent frame instead of itself.
-  if ((aContainerDisplay->IsRubyDisplayType() &&
+  if ((aParentDisplay->IsRubyDisplayType() &&
        aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER &&
        aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) ||
       // Since ruby base and ruby text may exist themselves without any
@@ -627,8 +613,9 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
     // This is covering the <div align="right"><table>...</table></div> case.
     // In this case, we don't want to inherit the text alignment into the table.
     const nsStyleText* text = StyleText();
-    
-    if (text->mTextAlign == NS_STYLE_TEXT_ALIGN_MOZ_CENTER ||
+
+    if (text->mTextAlign == NS_STYLE_TEXT_ALIGN_MOZ_LEFT ||
+        text->mTextAlign == NS_STYLE_TEXT_ALIGN_MOZ_CENTER ||
         text->mTextAlign == NS_STYLE_TEXT_ALIGN_MOZ_RIGHT)
     {
       nsStyleText* uniqueText = (nsStyleText*)GetUniqueStyleData(eStyleStruct_Text);
@@ -654,8 +641,9 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
       displayVal = NS_STYLE_DISPLAY_BLOCK;
     }
     if (displayVal != disp->mDisplay) {
-      nsStyleDisplay *mutable_display =
+      nsStyleDisplay* mutable_display =
         static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
+      disp = mutable_display;
 
       // If we're in this code, then mOriginalDisplay doesn't matter
       // for purposes of the cascade (because this nsStyleDisplay
@@ -718,21 +706,11 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
                        "We shouldn't be changing the display value of "
                        "positioned content (and we should have already "
                        "converted its display value to be block-level...)");
-          nsStyleDisplay *mutable_display =
+          nsStyleDisplay* mutable_display =
             static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
+          disp = mutable_display;
           mutable_display->mDisplay = displayVal;
         }
-      }
-    }
-
-    if (::ShouldSuppressLineBreak(disp, containerContext, containerDisp)) {
-      mBits |= NS_STYLE_SUPPRESS_LINEBREAK;
-      uint8_t displayVal = disp->mDisplay;
-      nsRuleNode::EnsureInlineDisplay(displayVal);
-      if (displayVal != disp->mDisplay) {
-        nsStyleDisplay *mutable_display =
-          static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
-        mutable_display->mDisplay = displayVal;
       }
     }
   }
@@ -743,6 +721,18 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
     mBits |= NS_STYLE_IN_DISPLAY_NONE_SUBTREE;
   }
 
+  if (mParent && ::ShouldSuppressLineBreak(disp, mParent,
+                                           mParent->StyleDisplay())) {
+    mBits |= NS_STYLE_SUPPRESS_LINEBREAK;
+    uint8_t displayVal = disp->mDisplay;
+    nsRuleNode::EnsureInlineDisplay(displayVal);
+    if (displayVal != disp->mDisplay) {
+      nsStyleDisplay* mutable_display =
+        static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
+      disp = mutable_display;
+      mutable_display->mDisplay = displayVal;
+    }
+  }
   // Suppress border/padding of ruby level containers
   if (disp->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER ||
       disp->mDisplay == NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) {
@@ -781,8 +771,9 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
     // and text-orientation) here; just the writing-mode property is enough.
     if (StyleVisibility()->mWritingMode !=
         mParent->StyleVisibility()->mWritingMode) {
-      nsStyleDisplay *mutable_display =
+      nsStyleDisplay* mutable_display =
         static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
+      disp = mutable_display;
       mutable_display->mOriginalDisplay = mutable_display->mDisplay =
         NS_STYLE_DISPLAY_INLINE_BLOCK;
     }
@@ -1062,6 +1053,17 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
     }
 
     // NB: Calling Peek on |this|, not |thisVis| (see above).
+    if (!change && PeekStyleText()) {
+      const nsStyleText* thisVisText = thisVis->StyleText();
+      const nsStyleText* otherVisText = otherVis->StyleText();
+      if (thisVisText->mTextEmphasisColorForeground !=
+          otherVisText->mTextEmphasisColorForeground ||
+          thisVisText->mTextEmphasisColor != otherVisText->mTextEmphasisColor) {
+        change = true;
+      }
+    }
+
+    // NB: Calling Peek on |this|, not |thisVis| (see above).
     if (!change && PeekStyleTextReset()) {
       const nsStyleTextReset *thisVisTextReset = thisVis->StyleTextReset();
       const nsStyleTextReset *otherVisTextReset = otherVis->StyleTextReset();
@@ -1277,6 +1279,7 @@ nsStyleContext::GetVisitedDependentColor(nsCSSProperty aProperty)
                aProperty == eCSSProperty_outline_color ||
                aProperty == eCSSProperty__moz_column_rule_color ||
                aProperty == eCSSProperty_text_decoration_color ||
+               aProperty == eCSSProperty_text_emphasis_color ||
                aProperty == eCSSProperty_fill ||
                aProperty == eCSSProperty_stroke,
                "we need to add to nsStyleContext::CalcStyleDifference");
@@ -1551,8 +1554,8 @@ nsStyleContext::LogStyleContextTree(bool aFirst, uint32_t aStructs)
   if (IsStyleIfVisited()) {
     flags.AppendLiteral("IS_STYLE_IF_VISITED ");
   }
-  if (UsesGrandancestorStyle()) {
-    flags.AppendLiteral("USES_GRANDANCESTOR_STYLE ");
+  if (HasChildThatUsesGrandancestorStyle()) {
+    flags.AppendLiteral("CHILD_USES_GRANDANCESTOR_STYLE ");
   }
   if (IsShared()) {
     flags.AppendLiteral("IS_SHARED ");

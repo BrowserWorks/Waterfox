@@ -358,7 +358,8 @@ public:
    * Helper used in invalidating flash plugin windows owned
    * by low rights flash containers.
    */
-  static void InvalidatePluginAsWorkaround(nsIWidget *aWidget, const nsIntRect &aRect);
+  static void InvalidatePluginAsWorkaround(nsIWidget* aWidget,
+                                           const LayoutDeviceIntRect& aRect);
 
   /**
    * Returns true if the context or IME state is enabled.  Otherwise, false.
@@ -385,6 +386,18 @@ public:
   * each individual digitizer.
   */
   static uint32_t GetMaxTouchPoints();
+
+  /**
+   * Detect if path is within the Users folder and Users is actually a junction
+   * point to another folder.
+   * If this is detected it will change the path to the actual path.
+   *
+   * @param aPath path to be resolved.
+   * @return true if successful, including if nothing needs to be changed.
+   *         false if something failed or aPath does not exist, aPath will
+   *               remain unchanged.
+   */
+  static bool ResolveMovedUsersFolder(std::wstring& aPath);
 
   /**
   * dwmapi.dll function typedefs and declarations
@@ -460,7 +473,7 @@ public:
 
   // Warning: AsyncEncodeAndWriteIcon assumes ownership of the aData buffer passed in
   AsyncEncodeAndWriteIcon(const nsAString &aIconPath,
-                          UniquePtr<uint8_t[]> aData, uint32_t aDataLen,
+                          UniquePtr<uint8_t[]> aData,
                           uint32_t aStride, uint32_t aWidth, uint32_t aHeight,
                           const bool aURLShortcut);
 
@@ -469,8 +482,6 @@ private:
 
   nsAutoString mIconPath;
   UniquePtr<uint8_t[]> mBuffer;
-  HMODULE sDwmDLL;
-  uint32_t mBufferLength;
   uint32_t mStride;
   uint32_t mWidth;
   uint32_t mHeight;

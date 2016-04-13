@@ -7,6 +7,7 @@
 #define nsHttpConnection_h__
 
 #include "nsHttpConnectionInfo.h"
+#include "nsHttpResponseHead.h"
 #include "nsAHttpTransaction.h"
 #include "nsCOMPtr.h"
 #include "nsAutoPtr.h"
@@ -76,7 +77,7 @@ public:
     nsresult Activate(nsAHttpTransaction *, uint32_t caps, int32_t pri);
 
     // Close the underlying socket transport.
-    void Close(nsresult reason);
+    void Close(nsresult reason, bool aIsShutdown = false);
 
     //-------------------------------------------------------------------------
     // XXX document when these are ok to call

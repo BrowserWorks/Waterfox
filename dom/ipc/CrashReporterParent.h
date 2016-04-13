@@ -18,8 +18,7 @@
 namespace mozilla {
 namespace dom {
 
-class CrashReporterParent :
-    public PCrashReporterParent
+class CrashReporterParent : public PCrashReporterParent
 {
 #ifdef MOZ_CRASHREPORTER
   typedef CrashReporter::AnnotationTable AnnotationTable;
@@ -32,7 +31,8 @@ public:
 
   /*
    * Attempt to create a bare-bones crash report, along with extra process-
-   * specific annotations present in the given AnnotationTable.
+   * specific annotations present in the given AnnotationTable. Calls
+   * GenerateChildData and FinalizeChildData.
    *
    * @returns true if successful, false otherwise.
    */
@@ -46,7 +46,7 @@ public:
    * generate the minidumps. Crash reporter annotations set prior to this
    * call will be saved via PairedDumpCallbackExtra into an .extra file
    * under the proper crash id. AnnotateCrashReport annotations are not
-   * set in this call, use GenerateChildData.
+   * set in this call and the report is not finalized.
    *
    * @returns true if successful, false otherwise.
    */
@@ -107,8 +107,8 @@ public:
   GenerateCompleteMinidump(Toplevel* t);
 
   /**
-   * Submits a raw minidump handed in, calls GenerateChildData. Used
-   * by plugins.
+   * Submits a raw minidump handed in, calls GenerateChildData and
+   * FinalizeChildData. Used by content plugins and gmp.
    *
    * @returns true if successful, false otherwise.
    */
@@ -136,7 +136,7 @@ public:
    * Returns the ID of the child minidump.
    * GeneratePairedMinidump or GenerateCrashReport must be called first.
    */
-  const nsString& ChildDumpID() {
+  const nsString& ChildDumpID() const {
     return mChildDumpID;
   }
 
@@ -146,18 +146,20 @@ public:
    * the notes will get dropped.
    */
   void
-  AnnotateCrashReport(const nsCString& key, const nsCString& data);
+  AnnotateCrashReport(const nsCString& aKey, const nsCString& aData);
 
  protected:
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual bool
-    RecvAnnotateCrashReport(const nsCString& key, const nsCString& data) override {
-    AnnotateCrashReport(key, data);
+  virtual bool RecvAnnotateCrashReport(const nsCString& aKey,
+                                       const nsCString& aData) override
+  {
+    AnnotateCrashReport(aKey, aData);
     return true;
   }
-  virtual bool
-    RecvAppendAppNotes(const nsCString& data) override;
+
+  virtual bool RecvAppendAppNotes(const nsCString& aData) override;
+
   virtual mozilla::ipc::IProtocol*
   CloneProtocol(Channel* aChannel,
                 mozilla::ipc::ProtocolCloneContext *aCtx) override;
@@ -216,7 +218,8 @@ CrashReporterParent::GenerateMinidumpAndPair(Toplevel* aTopLevel,
 #ifdef XP_MACOSX
   childHandle = aTopLevel->Process()->GetChildTask();
 #else
-  if (!base::OpenPrivilegedProcessHandle(aTopLevel->OtherPid(), &childHandle.rwget())) {
+  if (!base::OpenPrivilegedProcessHandle(aTopLevel->OtherPid(),
+                                         &childHandle.rwget())) {
     NS_WARNING("Failed to open child process handle.");
     return false;
   }
@@ -241,7 +244,9 @@ CrashReporterParent::GenerateCrashReport(Toplevel* t,
   nsCOMPtr<nsIFile> crashDump;
   if (t->TakeMinidump(getter_AddRefs(crashDump), nullptr) &&
       CrashReporter::GetIDFromMinidump(crashDump, mChildDumpID)) {
-    return GenerateChildData(processNotes);
+    bool result = GenerateChildData(processNotes);
+    FinalizeChildData();
+    return result;
   }
   return false;
 }
@@ -271,9 +276,9 @@ CrashReporterParent::GenerateCompleteMinidump(Toplevel* t)
                                             nullptr, // pair with a dump of this process and thread
                                             getter_AddRefs(childDump)) &&
       CrashReporter::GetIDFromMinidump(childDump, mChildDumpID)) {
-    GenerateChildData(nullptr);
+    bool result = GenerateChildData(nullptr);
     FinalizeChildData();
-    return true;
+    return result;
   }
   return false;
 }

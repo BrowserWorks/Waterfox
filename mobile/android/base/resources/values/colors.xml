@@ -66,9 +66,8 @@
 
   <color name="dark_transparent_overlay">#99000000</color>
 
-  <!-- Firstrun tour-->
-  <color name="firstrun_tabstrip">#1193CB</color>
-  <color name="firstrun_pager_background">#16A3DF</color>
+  <!-- Firstrun tour -->
+  <color name="firstrun_pager_header">#E8E8E8</color>
 
   <!-- Tab Queue -->
   <color name="tab_queue_dismiss_button_foreground">#16A3DF</color>
@@ -98,7 +97,7 @@
   <color name="text_color_link">#22629E</color>
 
   <!-- Divider colors -->
-  <color name="divider_light">#FFD7D9DB</color>
+  <color name="toolbar_divider_grey">#D7D9DB</color>
 
   <color name="doorhanger_link">#FF2AA1FE</color>
 
@@ -153,8 +152,5 @@
   <color name="top_site_border">#FFCFD9E1</color>
 
   <color name="private_active_text">#FFFFFF</color>
-
-  <!-- This color is from a 2.3 Samsung device. -->
-  <color name="gingerbread_menu_background_color">#1b1b1b</color>
 
 </resources>

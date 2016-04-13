@@ -11,7 +11,7 @@
  */
 
 [Constructor(DOMString type, optional EventInit eventInitDict),
- Exposed=(Window,Worker,System)]
+ Exposed=(Window,Worker,System), ProbablyShortLivingObject]
 interface Event {
   [Pure]
   readonly attribute DOMString type;
@@ -43,7 +43,6 @@ interface Event {
   [Pure]
   readonly attribute DOMHighResTimeStamp timeStamp;
 
-  [Throws]
   void initEvent(DOMString type, boolean bubbles, boolean cancelable);
 };
 

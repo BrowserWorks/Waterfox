@@ -10,11 +10,9 @@
 const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
                  "test/test-bug_1050691_click_function_to_source.html";
 
-var test = asyncTest(function*() {
+add_task(function*() {
   yield loadTab(TEST_URI);
   let hud = yield openConsole();
-
-  yield testWithoutDebuggerOpen(hud);
 
   // Open the Debugger panel.
   let debuggerPanel = yield openDebugger();
@@ -22,13 +20,6 @@ var test = asyncTest(function*() {
   yield openConsole();
   yield testWithDebuggerOpen(hud, debuggerPanel);
 });
-
-function* testWithoutDebuggerOpen(hud) {
-  let clickable = yield printFunction(hud);
-  let onVariablesViewOpen = hud.jsterm.once("variablesview-fetched");
-  synthesizeClick(clickable, hud);
-  return onVariablesViewOpen;
-}
 
 function* testWithDebuggerOpen(hud, debuggerPanel) {
   let clickable = yield printFunction(hud);

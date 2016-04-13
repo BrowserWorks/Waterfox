@@ -258,7 +258,7 @@ public:
    * @param  aInvalidateAfter [in, optional] indicates whether invalidate
    *                           cached offsets for next siblings of the child
    */
-  int32_t GetChildOffset(Accessible* aChild,
+  int32_t GetChildOffset(const Accessible* aChild,
                          bool aInvalidateAfter = false) const
   {
     int32_t index = GetIndexOf(aChild);
@@ -335,7 +335,7 @@ public:
    * @param [out] the widget containing the caret
    * @return      the caret rect
    */
-  nsIntRect GetCaretRect(nsIWidget** aWidget);
+  mozilla::LayoutDeviceIntRect GetCaretRect(nsIWidget** aWidget);
 
   /**
    * Return selected regions count within the accessible.

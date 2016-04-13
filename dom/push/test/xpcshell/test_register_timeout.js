@@ -14,9 +14,6 @@ function run_test() {
     requestTimeout: 1000,
     retryBaseInterval: 150
   });
-  disableServiceWorkerEvents(
-    'https://example.net/page/timeout'
-  );
   run_next_test();
 }
 
@@ -75,12 +72,12 @@ add_task(function* test_register_timeout() {
   });
 
   yield rejects(
-    PushNotificationService.register('https://example.net/page/timeout',
-      ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })),
-    function(error) {
-      return error == 'TimeoutError';
-    },
-    'Wrong error for request timeout'
+    PushService.register({
+      scope: 'https://example.net/page/timeout',
+      originAttributes: ChromeUtils.originAttributesToSuffix(
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+    }),
+    'Expected error for request timeout'
   );
 
   let record = yield db.getByKeyID(channelID);

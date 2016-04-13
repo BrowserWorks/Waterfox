@@ -40,6 +40,7 @@ AudioNodeStream::AudioNodeStream(AudioNodeEngine* aEngine,
     mPassThrough(false)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  mSuspendedCount = !(mIsActive || mFlags & EXTERNAL_OUTPUT);
   mChannelCountMode = ChannelCountMode::Max;
   mChannelInterpretation = ChannelInterpretation::Speakers;
   // AudioNodes are always producing data
@@ -73,17 +74,16 @@ AudioNodeStream::Create(AudioContext* aCtx, AudioNodeEngine* aEngine,
   // MediaRecorders use an AudioNodeStream, but no AudioNode
   AudioNode* node = aEngine->NodeMainThread();
   MediaStreamGraph* graph = aGraph ? aGraph : aCtx->Graph();
-  MOZ_ASSERT(graph->GraphRate() == aCtx->SampleRate());
 
   RefPtr<AudioNodeStream> stream =
     new AudioNodeStream(aEngine, aFlags, graph->GraphRate());
+  stream->mSuspendedCount += aCtx->ShouldSuspendNewStream();
   if (node) {
     stream->SetChannelMixingParametersImpl(node->ChannelCount(),
                                            node->ChannelCountModeValue(),
                                            node->ChannelInterpretationValue());
   }
-  graph->AddStream(stream,
-    aCtx->ShouldSuspendNewStream() ? MediaStreamGraph::ADD_STREAM_SUSPENDED : 0);
+  graph->AddStream(stream);
   return stream.forget();
 }
 
@@ -137,7 +137,7 @@ AudioNodeStream::SetStreamTimeParameter(uint32_t aIndex, AudioContext* aContext,
       : ControlMessage(aStream), mStreamTime(aStreamTime),
         mRelativeToStream(aRelativeToStream), mIndex(aIndex)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->
           SetStreamTimeParameterImpl(mIndex, mRelativeToStream, mStreamTime);
@@ -169,7 +169,7 @@ AudioNodeStream::SetDoubleParameter(uint32_t aIndex, double aValue)
     Message(AudioNodeStream* aStream, uint32_t aIndex, double aValue)
       : ControlMessage(aStream), mValue(aValue), mIndex(aIndex)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->Engine()->
           SetDoubleParameter(mIndex, mValue);
@@ -190,7 +190,7 @@ AudioNodeStream::SetInt32Parameter(uint32_t aIndex, int32_t aValue)
     Message(AudioNodeStream* aStream, uint32_t aIndex, int32_t aValue)
       : ControlMessage(aStream), mValue(aValue), mIndex(aIndex)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->Engine()->
           SetInt32Parameter(mIndex, mValue);
@@ -216,7 +216,7 @@ AudioNodeStream::SendTimelineEvent(uint32_t aIndex,
         mSampleRate(aStream->SampleRate()),
         mIndex(aIndex)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->Engine()->
           RecvTimelineEvent(mIndex, mEvent);
@@ -237,7 +237,7 @@ AudioNodeStream::SetThreeDPointParameter(uint32_t aIndex, const ThreeDPoint& aVa
     Message(AudioNodeStream* aStream, uint32_t aIndex, const ThreeDPoint& aValue)
       : ControlMessage(aStream), mValue(aValue), mIndex(aIndex)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->Engine()->
           SetThreeDPointParameter(mIndex, mValue);
@@ -259,7 +259,7 @@ AudioNodeStream::SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList>&& 
             already_AddRefed<ThreadSharedFloatArrayBufferList>& aBuffer)
       : ControlMessage(aStream), mBuffer(aBuffer)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->Engine()->
           SetBuffer(mBuffer.forget());
@@ -282,7 +282,7 @@ AudioNodeStream::SetRawArrayData(nsTArray<float>& aData)
     {
       mData.SwapElements(aData);
     }
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->Engine()->SetRawArrayData(mData);
     }
@@ -309,7 +309,7 @@ AudioNodeStream::SetChannelMixingParameters(uint32_t aNumberOfChannels,
         mChannelCountMode(aChannelCountMode),
         mChannelInterpretation(aChannelInterpretation)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->
         SetChannelMixingParametersImpl(mNumberOfChannels, mChannelCountMode,
@@ -334,7 +334,7 @@ AudioNodeStream::SetPassThrough(bool aPassThrough)
     Message(AudioNodeStream* aStream, bool aPassThrough)
       : ControlMessage(aStream), mPassThrough(aPassThrough)
     {}
-    virtual void Run() override
+    void Run() override
     {
       static_cast<AudioNodeStream*>(mStream)->mPassThrough = mPassThrough;
     }
@@ -381,7 +381,7 @@ class AudioNodeStream::AdvanceAndResumeMessage final : public ControlMessage {
 public:
   AdvanceAndResumeMessage(AudioNodeStream* aStream, StreamTime aAdvance) :
     ControlMessage(aStream), mAdvance(aAdvance) {}
-  virtual void Run() override
+  void Run() override
   {
     auto ns = static_cast<AudioNodeStream*>(mStream);
     ns->mBufferStartTime -= mAdvance;
@@ -576,7 +576,9 @@ AudioNodeStream::ProcessInput(GraphTime aFrom, GraphTime aTo, uint32_t aFlags)
     }
     if (finished) {
       mMarkAsFinishedAfterThisBlock = true;
-      CheckForInactive();
+      if (mIsActive) {
+        ScheduleCheckForInactive();
+      }
     }
 
     if (mDisabledTrackIDs.Contains(static_cast<TrackID>(AUDIO_TRACK))) {
@@ -693,6 +695,9 @@ AudioNodeStream::SetActive()
   }
 
   mIsActive = true;
+  if (!(mFlags & EXTERNAL_OUTPUT)) {
+    GraphImpl()->DecrementSuspendCount(this);
+  }
   if (IsAudioParamStream()) {
     // Consumers merely influence stream order.
     // They do not read from the stream.
@@ -705,6 +710,29 @@ AudioNodeStream::SetActive()
       ns->IncrementActiveInputCount();
     }
   }
+}
+
+class AudioNodeStream::CheckForInactiveMessage final : public ControlMessage
+{
+public:
+  explicit CheckForInactiveMessage(AudioNodeStream* aStream) :
+    ControlMessage(aStream) {}
+  void Run() override
+  {
+    auto ns = static_cast<AudioNodeStream*>(mStream);
+    ns->CheckForInactive();
+  }
+};
+
+void
+AudioNodeStream::ScheduleCheckForInactive()
+{
+  if (mActiveInputCount > 0 && !mMarkAsFinishedAfterThisBlock) {
+    return;
+  }
+
+  nsAutoPtr<CheckForInactiveMessage> message(new CheckForInactiveMessage(this));
+  GraphImpl()->RunMessageAfterProcessing(Move(message));
 }
 
 void
@@ -720,6 +748,9 @@ AudioNodeStream::CheckForInactive()
   mInputChunks.Clear(); // not required for foreseeable future
   for (auto& chunk : mLastChunks) {
     chunk.SetNull(WEBAUDIO_BLOCK_SIZE);
+  }
+  if (!(mFlags & EXTERNAL_OUTPUT)) {
+    GraphImpl()->IncrementSuspendCount(this);
   }
   if (IsAudioParamStream()) {
     return;

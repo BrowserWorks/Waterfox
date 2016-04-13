@@ -18,8 +18,10 @@ function test() {
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
     gSources = gDebugger.DebuggerView.Sources;
+    const constants = gDebugger.require('./content/constants');
 
-    reloadActiveTab(gPanel, gDebugger.EVENTS.SOURCES_ADDED)
+    reloadActiveTab(gPanel);
+    waitForNavigation(gPanel)
       .then(testSourcesEmptyText)
       .then(() => closeDebuggerAndFinish(gPanel))
       .then(null, aError => {

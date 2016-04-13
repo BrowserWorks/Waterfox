@@ -36,21 +36,15 @@
 struct JSContext;
 class JSObject;
 
-PRLogModuleInfo* GetMediaSourceLog()
+mozilla::LogModule* GetMediaSourceLog()
 {
-  static PRLogModuleInfo* sLogModule = nullptr;
-  if (!sLogModule) {
-    sLogModule = PR_NewLogModule("MediaSource");
-  }
+  static mozilla::LazyLogModule sLogModule("MediaSource");
   return sLogModule;
 }
 
-PRLogModuleInfo* GetMediaSourceAPILog()
+mozilla::LogModule* GetMediaSourceAPILog()
 {
-  static PRLogModuleInfo* sLogModule = nullptr;
-  if (!sLogModule) {
-    sLogModule = PR_NewLogModule("MediaSource");
-  }
+  static mozilla::LazyLogModule sLogModule("MediaSource");
   return sLogModule;
 }
 
@@ -96,7 +90,7 @@ IsTypeSupported(const nsAString& aType)
   nsAutoString mimeType;
   nsresult rv = parser.GetType(mimeType);
   if (NS_FAILED(rv)) {
-    return NS_ERROR_DOM_INVALID_STATE_ERR;
+    return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
   }
   NS_ConvertUTF16toUTF8 mimeTypeUTF8(mimeType);
 
@@ -112,12 +106,12 @@ IsTypeSupported(const nsAString& aType)
         if (hasCodecs &&
             DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
                                                codecs) == CANPLAY_NO) {
-          return NS_ERROR_DOM_INVALID_STATE_ERR;
+          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
         }
         return NS_OK;
       } else if (DecoderTraits::IsWebMTypeAndEnabled(mimeTypeUTF8)) {
         if (!(Preferences::GetBool("media.mediasource.webm.enabled", false) ||
-              (Preferences::GetBool("media.mediasource.webm.audio.enabled", false) &&
+              (Preferences::GetBool("media.mediasource.webm.audio.enabled", true) &&
                DecoderTraits::IsWebMAudioType(mimeTypeUTF8)) ||
               IsWebMForced())) {
           return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
@@ -125,7 +119,7 @@ IsTypeSupported(const nsAString& aType)
         if (hasCodecs &&
             DecoderTraits::CanHandleCodecsType(mimeTypeUTF8.get(),
                                                codecs) == CANPLAY_NO) {
-          return NS_ERROR_DOM_INVALID_STATE_ERR;
+          return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
         }
         return NS_OK;
       }
@@ -492,20 +486,6 @@ MediaSource::NotifyEvicted(double aStart, double aEnd)
   // the given range.
   mSourceBuffers->Evict(aStart, aEnd);
 }
-
-#if defined(DEBUG)
-void
-MediaSource::Dump(const char* aPath)
-{
-  char buf[255];
-  PR_snprintf(buf, sizeof(buf), "%s/mediasource-%p", aPath, this);
-  PR_MkDir(buf, 0700);
-
-  if (mSourceBuffers) {
-    mSourceBuffers->Dump(buf);
-  }
-}
-#endif
 
 void
 MediaSource::GetMozDebugReaderData(nsAString& aString)

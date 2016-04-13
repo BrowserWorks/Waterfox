@@ -21,7 +21,7 @@
 
 class GMPStringList {
 public:
-  virtual const uint32_t Size() const = 0;
+  virtual uint32_t Size() const = 0;
 
   virtual void StringAt(uint32_t aIndex,
                         const char** aOutString, uint32_t* aOutLength) const = 0;
@@ -94,10 +94,12 @@ enum GMPMediaKeyStatus {
   kGMPUsable = 0,
   kGMPExpired = 1,
   kGMPOutputDownscaled = 2,
-  kGMPOutputNotAllowed = 3,
+  kGMPOutputRestricted = 3,
   kGMPInternalError = 4,
-  kGMPUnknown = 5,
-  kGMPMediaKeyStatusInvalid = 6 // Must always be last.
+  kGMPUnknown = 5, // Removes key from MediaKeyStatusMap
+  kGMPReleased = 6,
+  kGMPStatusPending = 7,
+  kGMPMediaKeyStatusInvalid = 8 // Must always be last.
 };
 
 // Time in milliseconds, as offset from epoch, 1 Jan 1970.
@@ -242,7 +244,9 @@ enum GMPSessionType {
   kGMPSessionInvalid = 2 // Must always be last.
 };
 
-#define GMP_API_DECRYPTOR "eme-decrypt-v7"
+// Gecko supports the current GMPDecryptor version, and the previous.
+#define GMP_API_DECRYPTOR "eme-decrypt-v8"
+#define GMP_API_DECRYPTOR_BACKWARDS_COMPAT "eme-decrypt-v7"
 
 // API exposed by plugin library to manage decryption sessions.
 // When the Host requests this by calling GMPGetAPIFunc().

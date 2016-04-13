@@ -92,7 +92,7 @@ public:
     } else {
       MOZ_ASSERT(!mIsShutdown);
       nsresult rv = mDecoder->Input(aDecrypted.mSample);
-      unused << NS_WARN_IF(NS_FAILED(rv));
+      Unused << NS_WARN_IF(NS_FAILED(rv));
     }
   }
 
@@ -105,7 +105,7 @@ public:
       iter.Remove();
     }
     nsresult rv = mDecoder->Flush();
-    unused << NS_WARN_IF(NS_FAILED(rv));
+    Unused << NS_WARN_IF(NS_FAILED(rv));
     mSamplesWaitingForKey->Flush();
     return rv;
   }
@@ -119,7 +119,7 @@ public:
       iter.Remove();
     }
     nsresult rv = mDecoder->Drain();
-    unused << NS_WARN_IF(NS_FAILED(rv));
+    Unused << NS_WARN_IF(NS_FAILED(rv));
     return rv;
   }
 
@@ -128,13 +128,17 @@ public:
     MOZ_ASSERT(!mIsShutdown);
     mIsShutdown = true;
     nsresult rv = mDecoder->Shutdown();
-    unused << NS_WARN_IF(NS_FAILED(rv));
+    Unused << NS_WARN_IF(NS_FAILED(rv));
     mSamplesWaitingForKey->BreakCycles();
     mSamplesWaitingForKey = nullptr;
     mDecoder = nullptr;
     mProxy = nullptr;
     mCallback = nullptr;
     return rv;
+  }
+
+  const char* GetDescriptionName() const override {
+    return mDecoder->GetDescriptionName();
   }
 
 private:
@@ -303,7 +307,7 @@ EMEDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 }
 
 bool
-EMEDecoderModule::SupportsMimeType(const nsACString& aMimeType)
+EMEDecoderModule::SupportsMimeType(const nsACString& aMimeType) const
 {
   Maybe<nsCString> gmp;
   gmp.emplace(NS_ConvertUTF16toUTF8(mProxy->KeySystem()));

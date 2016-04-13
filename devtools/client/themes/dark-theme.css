@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 @import url(variables.css);
+@import url(toolbars.css);
 
 body {
   margin: 0;
@@ -167,7 +168,7 @@ body {
 .devtools-toolbar,
 .devtools-sidebar-tabs tabs,
 .devtools-sidebar-alltabs,
-.CodeMirror-dialog { /* General toolbar styling */
+.cm-s-mozilla .CodeMirror-dialog { /* General toolbar styling */
   color: var(--theme-body-color-alt);
   background-color: var(--theme-toolbar-background);
   border-color: hsla(210,8%,5%,.6);
@@ -186,13 +187,13 @@ body {
  * Best effort to match the existing theme, some of the colors
  * are duplicated here to prevent weirdness in the main theme. */
 
-.CodeMirror { /* Inherit platform specific font sizing and styles */
+.CodeMirror.cm-s-mozilla  { /* Inherit platform specific font sizing and styles */
   font-family: inherit;
   font-size: inherit;
   background: transparent;
 }
 
-.CodeMirror pre,
+.CodeMirror.cm-s-mozilla  pre,
 .cm-s-mozilla .cm-variable-2,
 .cm-s-mozilla .cm-variable-3,
 .cm-s-mozilla .cm-operator,
@@ -317,24 +318,44 @@ div.CodeMirror span.eval-text {
 
 /* Overring panel arrow images to fit with our light and dark themes */
 
-.theme-tooltip-panel .panel-arrow[side="top"] {
+.theme-tooltip-panel .panel-arrow {
+  --arrow-margin: -4px;
+}
+
+:root[platform="win"] .theme-tooltip-panel .panel-arrow {
+  --arrow-margin: -7px;
+}
+
+.theme-tooltip-panel .panel-arrow[side="top"],
+.theme-tooltip-panel .panel-arrow[side="bottom"] {
   list-style-image: url("chrome://devtools/skin/tooltip/arrow-vertical-dark.png");
-  margin-bottom: -4px;
+  /* !important is needed to override the popup.css rules in toolkit/themes */
+  width: 39px !important;
+  height: 16px !important;
+}
+
+.theme-tooltip-panel .panel-arrow[side="left"],
+.theme-tooltip-panel .panel-arrow[side="right"] {
+  list-style-image: url("chrome://devtools/skin/tooltip/arrow-horizontal-dark.png");
+  /* !important is needed to override the popup.css rules in toolkit/themes */
+  width: 16px !important;
+  height: 39px !important;
+}
+
+.theme-tooltip-panel .panel-arrow[side="top"] {
+  margin-bottom: var(--arrow-margin);
 }
 
 .theme-tooltip-panel .panel-arrow[side="bottom"] {
-  list-style-image: url("chrome://devtools/skin/tooltip/arrow-vertical-dark.png");
-  margin-top: -4px;
+  margin-top: var(--arrow-margin);
 }
 
 .theme-tooltip-panel .panel-arrow[side="left"] {
-  list-style-image: url("chrome://devtools/skin/tooltip/arrow-horizontal-dark.png");
-  margin-right: -4px;
+  margin-right: var(--arrow-margin);
 }
 
 .theme-tooltip-panel .panel-arrow[side="right"] {
-  list-style-image: url("chrome://devtools/skin/tooltip/arrow-horizontal-dark.png");
-  margin-left: -4px;
+  margin-left: var(--arrow-margin);
 }
 
 @media (min-resolution: 1.1dppx) {
@@ -374,6 +395,3 @@ div.CodeMirror span.eval-text {
   background-color: #0f171f;
   color: var(--theme-body-color);
 }
-
-
-%include toolbars.inc.css

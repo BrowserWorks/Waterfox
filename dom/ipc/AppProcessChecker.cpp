@@ -14,6 +14,7 @@
 #include "nsIPrincipal.h"
 #include "nsPrintfCString.h"
 #include "nsIURI.h"
+#include "nsContentUtils.h"
 #include "nsNetUtil.h"
 #include "nsServiceManagerUtils.h"
 #include "TabParent.h"
@@ -154,7 +155,7 @@ AssertAppProcess(TabContext& aContext,
                  AssertAppProcessType aType,
                  const char* aCapability)
 {
-  const mozilla::OriginAttributes& attr = aContext.OriginAttributesRef();
+  const mozilla::DocShellOriginAttributes& attr = aContext.OriginAttributesRef();
   nsCString suffix;
   attr.CreateSuffix(suffix);
 

@@ -7,7 +7,7 @@
 const { Ci, Cu } = require("chrome");
 const Services = require("Services");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { dbg_assert, fetch } = DevToolsUtils;
+const { assert, fetch } = DevToolsUtils;
 const EventEmitter = require("devtools/shared/event-emitter");
 const { OriginalLocation, GeneratedLocation } = require("devtools/server/actors/common");
 const { resolve } = require("promise");
@@ -34,6 +34,7 @@ function TabSources(threadActor, allowSourceFn=() => true) {
 
   this.blackBoxedSources = new Set();
   this.prettyPrintedSources = new Map();
+  this.neverAutoBlackBoxSources = new Set();
 
   // generated Debugger.Source -> promise of SourceMapConsumer
   this._sourceMaps = new Map();
@@ -56,16 +57,22 @@ TabSources.prototype = {
   /**
    * Update preferences and clear out existing sources
    */
-  reconfigure: function(options) {
+  setOptions: function(options) {
+    let shouldReset = false;
+
     if ('useSourceMaps' in options) {
+      shouldReset = true;
       this._useSourceMaps = options.useSourceMaps;
     }
 
     if ('autoBlackBox' in options) {
+      shouldReset = true;
       this._autoBlackBox = options.autoBlackBox;
     }
 
-    this.reset();
+    if (shouldReset) {
+      this.reset();
+    }
   },
 
   /**
@@ -102,9 +109,9 @@ TabSources.prototype = {
    * @returns a SourceActor representing the source or null.
    */
   source: function  ({ source, originalUrl, generatedSource,
-              isInlineSource, contentType }) {
-    dbg_assert(source || (originalUrl && generatedSource),
-               "TabSources.prototype.source needs an originalUrl or a source");
+                       isInlineSource, contentType }) {
+    assert(source || (originalUrl && generatedSource),
+           "TabSources.prototype.source needs an originalUrl or a source");
 
     if (source) {
       // If a source is passed, we are creating an actor for a real
@@ -169,8 +176,12 @@ TabSources.prototype = {
     this._thread.threadLifetimePool.addActor(actor);
     sourceActorStore.setReusableActorId(source, originalUrl, actor.actorID);
 
-    if (this._autoBlackBox && this._isMinifiedURL(actor.url)) {
+    if (this._autoBlackBox &&
+        !this.neverAutoBlackBoxSources.has(actor.url) &&
+        this._isMinifiedURL(actor.url)) {
+
       this.blackBox(actor.url);
+      this.neverAutoBlackBoxSources.add(actor.url);
     }
 
     if (source) {
@@ -387,7 +398,8 @@ TabSources.prototype = {
     let result = this._fetchSourceMap(sourceMapURL, aSource.url);
 
     // The promises in `_sourceMaps` must be the exact same instances
-    // as returned by `_fetchSourceMap` for `clearSourceMapCache` to work.
+    // as returned by `_fetchSourceMap` for `clearSourceMapCache` to
+    // work.
     this._sourceMaps.set(aSource, result);
     return result;
   },
@@ -620,8 +632,8 @@ TabSources.prototype = {
       originalColumn
     } = originalLocation;
 
-    let source = originalSourceActor.source ||
-                 originalSourceActor.generatedSource;
+    let source = (originalSourceActor.source ||
+                  originalSourceActor.generatedSource);
 
     return this.fetchSourceMap(source).then((map) => {
       if (map) {
@@ -765,7 +777,7 @@ TabSources.prototype = {
    * Normalize multiple relative paths towards the base paths on the right.
    */
   _normalize: function (...aURLs) {
-    dbg_assert(aURLs.length > 1, "Should have more than 1 URL");
+    assert(aURLs.length > 1, "Should have more than 1 URL");
     let base = Services.io.newURI(aURLs.pop(), null, null);
     let url;
     while ((url = aURLs.pop())) {

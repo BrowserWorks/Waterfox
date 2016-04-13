@@ -27,14 +27,14 @@ struct VertexShaderConstants
   gfx::Rect textureCoords;
   gfx::Rect layerQuad;
   gfx::Rect maskQuad;
-  float vrEyeToSourceUVScale[2];
-  float vrEyeToSourceUVOffset[2];
+  float backdropTransform[4][4];
 };
 
 struct PixelShaderConstants
 {
   float layerColor[4];
   float layerOpacity[4];
+  int blendConfig[4];
 };
 
 struct DeviceAttachmentsD3D11;
@@ -157,8 +157,6 @@ private:
   };
 
   void HandleError(HRESULT hr, Severity aSeverity = DebugAssert);
-  bool Failed(HRESULT hr, Severity aSeverity = DebugAssert);
-  bool Succeeded(HRESULT hr, Severity aSeverity = DebugAssert);
 
   // Same as Failed(), except the severity is critical (with no abort) and
   // a string prefix must be provided.
@@ -170,10 +168,14 @@ private:
   bool UpdateRenderTarget();
   bool UpdateConstantBuffers();
   void SetSamplerForFilter(gfx::Filter aFilter);
-  void SetPSForEffect(Effect *aEffect, MaskType aMaskType, gfx::SurfaceFormat aFormat);
+  ID3D11PixelShader* GetPSForEffect(Effect *aEffect, MaskType aMaskType);
   void PaintToTarget();
-
-  virtual gfx::IntSize GetWidgetSize() const override { return mSize; }
+  RefPtr<ID3D11Texture2D> CreateTexture(const gfx::IntRect& aRect,
+                                        const CompositingRenderTarget* aSource,
+                                        const gfx::IntPoint& aSourcePoint);
+  bool CopyBackdrop(const gfx::IntRect& aRect,
+                    RefPtr<ID3D11Texture2D>* aOutTexture,
+                    RefPtr<ID3D11ShaderResourceView>* aOutView);
 
   RefPtr<ID3D11DeviceContext> mContext;
   RefPtr<ID3D11Device> mDevice;
@@ -185,7 +187,7 @@ private:
 
   nsIWidget* mWidget;
 
-  gfx::IntSize mSize;
+  LayoutDeviceIntSize mSize;
 
   HWND mHwnd;
 

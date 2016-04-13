@@ -50,11 +50,11 @@ public:
   }
 
   void
-  GetUrl(DOMString& aUrl) const
+  GetUrl(nsAString& aUrl) const
   {
     nsCString url;
     mInternalResponse->GetUrl(url);
-    aUrl.AsAString() = NS_ConvertUTF8toUTF16(url);
+    CopyUTF8toUTF16(url, aUrl);
   }
 
   uint16_t
@@ -123,6 +123,9 @@ public:
 
   already_AddRefed<Response>
   Clone(ErrorResult& aRv) const;
+
+  already_AddRefed<Response>
+  CloneUnfiltered(ErrorResult& aRv) const;
 
   void
   SetBody(nsIInputStream* aBody);

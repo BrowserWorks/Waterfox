@@ -223,32 +223,11 @@ public:
   virtual size_t SizeOfVideoQueueInFrames();
   virtual size_t SizeOfAudioQueueInFrames();
 
-  // In situations where these notifications come from stochastic network
-  // activity, we can save significant recomputation by throttling the delivery
-  // of these updates to the reader implementation. We don't want to do this
-  // throttling when the update comes from MSE code, since that code needs the
-  // updates to be observable immediately, and is generally less
-  // trigger-happy with notifications anyway.
-  void DispatchNotifyDataArrived(uint32_t aLength,
-                                 int64_t aOffset,
-                                 bool aThrottleUpdates)
-  {
-    typedef media::Interval<int64_t> Interval;
-    RefPtr<nsRunnable> r = NS_NewRunnableMethodWithArg<Interval>(
-      this,
-      aThrottleUpdates ? &MediaDecoderReader::ThrottledNotifyDataArrived :
-                         &MediaDecoderReader::NotifyDataArrived,
-      Interval(aOffset, aOffset + aLength));
-
-    OwnerThread()->Dispatch(
-      r.forget(), AbstractThread::DontAssertDispatchSuccess);
-  }
-
-  void NotifyDataArrived(const media::Interval<int64_t>& aInfo)
+  void NotifyDataArrived()
   {
     MOZ_ASSERT(OnTaskQueue());
     NS_ENSURE_TRUE_VOID(!mShutdown);
-    NotifyDataArrivedInternal(aInfo.Length(), aInfo.mStart);
+    NotifyDataArrivedInternal();
     UpdateBuffered();
   }
 
@@ -259,10 +238,6 @@ public:
   {
     return &mBuffered;
   }
-
-  // Indicates if the media is seekable.
-  // ReadMetada should be called before calling this method.
-  virtual bool IsMediaSeekable() = 0;
 
   void DispatchSetStartTime(int64_t aStartTime)
   {
@@ -299,6 +274,9 @@ public:
   {
     return mTimedMetadataEvent;
   }
+
+  // Notified by the OggReader during playback when chained ogg is detected.
+  MediaEventSource<void>& OnMediaNotSeekable() { return mOnMediaNotSeekable; }
 
 protected:
   virtual ~MediaDecoderReader();
@@ -354,9 +332,6 @@ protected:
   // State-watching manager.
   WatchManager<MediaDecoderReader> mWatchManager;
 
-  // MediaTimer.
-  RefPtr<MediaTimer> mTimer;
-
   // Buffered range.
   Canonical<media::TimeIntervals> mBuffered;
 
@@ -365,12 +340,6 @@ protected:
 
   // Duration, mirrored from the state machine task queue.
   Mirror<media::NullableTimeUnit> mDuration;
-
-  // State for ThrottledNotifyDataArrived.
-  MozPromiseRequestHolder<MediaTimerPromise> mThrottledNotify;
-  const TimeDuration mThrottleDuration;
-  TimeStamp mLastThrottledNotify;
-  Maybe<media::Interval<int64_t>> mThrottledInterval;
 
   // Whether we should accept media that we know we can't play
   // directly, because they have a number of channel higher than
@@ -399,6 +368,9 @@ protected:
   // Used to send TimedMetadata to the listener.
   TimedMetadataEventProducer mTimedMetadataEvent;
 
+  // Notify if this media is not seekable.
+  MediaEventProducer<void> mOnMediaNotSeekable;
+
 private:
   // Does any spinup that needs to happen on this task queue. This runs on a
   // different thread than Init, and there should not be ordering dependencies
@@ -418,12 +390,7 @@ private:
   // Recomputes mBuffered.
   virtual void UpdateBuffered();
 
-  virtual void NotifyDataArrivedInternal(uint32_t aLength, int64_t aOffset) {}
-
-  // Invokes NotifyDataArrived while throttling the calls to occur
-  // at most every mThrottleDuration ms.
-  void ThrottledNotifyDataArrived(const media::Interval<int64_t>& aInterval);
-  void DoThrottledNotify();
+  virtual void NotifyDataArrivedInternal() {}
 
   // Overrides of this function should decodes an unspecified amount of
   // audio data, enqueuing the audio data in mAudioQueue. Returns true
@@ -454,6 +421,8 @@ private:
   // "discontinuity" in the stream. For example after a seek.
   bool mAudioDiscontinuity;
   bool mVideoDiscontinuity;
+
+  MediaEventListener mDataArrivedListener;
 };
 
 } // namespace mozilla

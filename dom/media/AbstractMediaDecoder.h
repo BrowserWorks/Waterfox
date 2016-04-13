@@ -10,6 +10,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/StateMirroring.h"
 
+#include "MediaEventSource.h"
 #include "MediaInfo.h"
 #include "nsISupports.h"
 #include "nsDataHashtable.h"
@@ -52,15 +53,9 @@ public:
   // called cross-thread.
   virtual bool IsOggDecoderShutdown() { return false; }
 
-  virtual bool OnStateMachineTaskQueue() const = 0;
-
   // Get the current MediaResource being used. Its URI will be returned
   // by currentSrc. Returns what was passed to Load(), if Load() has been called.
   virtual MediaResource* GetResource() const = 0;
-
-  // Called by the decode thread to keep track of the number of bytes read
-  // from the resource.
-  virtual void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) = 0;
 
   // Increments the parsed, decoded and dropped frame counters by the passed in
   // counts.
@@ -69,6 +64,15 @@ public:
                                    uint32_t aDropped) = 0;
 
   virtual AbstractCanonical<media::NullableTimeUnit>* CanonicalDurationOrNull() { return nullptr; };
+
+  // Return an event that will be notified when data arrives in MediaResource.
+  // MediaDecoderReader will register with this event to receive notifications
+  // in order to udpate buffer ranges.
+  // Return null if this decoder doesn't support the event.
+  virtual MediaEventSource<void>* DataArrivedEvent()
+  {
+    return nullptr;
+  }
 
 protected:
   virtual void UpdateEstimatedMediaDuration(int64_t aDuration) {};
@@ -81,46 +85,15 @@ public:
     NS_DispatchToMainThread(r);
   }
 
-  // Set the media as being seekable or not.
-  virtual void SetMediaSeekable(bool aMediaSeekable) = 0;
-
-  void DispatchSetMediaSeekable(bool aMediaSeekable)
-  {
-    nsCOMPtr<nsIRunnable> r = NS_NewRunnableMethodWithArg<bool>(
-      this, &AbstractMediaDecoder::SetMediaSeekable, aMediaSeekable);
-    NS_DispatchToMainThread(r);
-  }
-
   virtual VideoFrameContainer* GetVideoFrameContainer() = 0;
   virtual mozilla::layers::ImageContainer* GetImageContainer() = 0;
-
-  // Return true if the media layer supports seeking.
-  virtual bool IsTransportSeekable() = 0;
-
-  // Return true if the transport layer supports seeking.
-  virtual bool IsMediaSeekable() = 0;
-
-  virtual void MetadataLoaded(nsAutoPtr<MediaInfo> aInfo, nsAutoPtr<MetadataTags> aTags, MediaDecoderEventVisibility aEventVisibility) = 0;
-  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo, MediaDecoderEventVisibility aEventVisibility) = 0;
-
-  // May be called by the reader to notify this decoder that the metadata from
-  // the media file has been read. Call on the decode thread only.
-  virtual void OnReadMetadataCompleted() = 0;
 
   // Returns the owner of this media decoder. The owner should only be used
   // on the main thread.
   virtual MediaDecoderOwner* GetOwner() = 0;
 
-  // Called by the reader's MediaResource as data arrives over the network.
-  // Must be called on the main thread.
-  virtual void NotifyDataArrived(uint32_t aLength, int64_t aOffset,
-                                 bool aThrottleUpdates) = 0;
-
   // Set by Reader if the current audio track can be offloaded
   virtual void SetPlatformCanOffloadAudio(bool aCanOffloadAudio) {}
-
-  // Called from HTMLMediaElement when owner document activity changes
-  virtual void SetElementVisibility(bool aIsVisible) {}
 
   // Stack based class to assist in notifying the frame statistics of
   // parsed and decoded frames. Use inside video demux & decode functions
@@ -146,58 +119,6 @@ public:
   // Observe and it should never be called directly.
   NS_IMETHOD Observe(nsISupports *aSubject, const char * aTopic, const char16_t * aData) override
   { MOZ_CRASH("Forbidden method"); return NS_OK; }
-};
-
-class MetadataContainer
-{
-protected:
-  MetadataContainer(AbstractMediaDecoder* aDecoder,
-                    nsAutoPtr<MediaInfo> aInfo,
-                    nsAutoPtr<MetadataTags> aTags,
-                    MediaDecoderEventVisibility aEventVisibility)
-    : mDecoder(aDecoder),
-      mInfo(aInfo),
-      mTags(aTags),
-      mEventVisibility(aEventVisibility)
-  {}
-
-  RefPtr<AbstractMediaDecoder> mDecoder;
-  nsAutoPtr<MediaInfo>  mInfo;
-  nsAutoPtr<MetadataTags> mTags;
-  MediaDecoderEventVisibility mEventVisibility;
-};
-
-class MetadataEventRunner : public nsRunnable, private MetadataContainer
-{
-public:
-  MetadataEventRunner(AbstractMediaDecoder* aDecoder,
-                      nsAutoPtr<MediaInfo> aInfo,
-                      nsAutoPtr<MetadataTags> aTags,
-                      MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable)
-    : MetadataContainer(aDecoder, aInfo, aTags, aEventVisibility)
-  {}
-
-  NS_IMETHOD Run() override
-  {
-    mDecoder->MetadataLoaded(mInfo, mTags, mEventVisibility);
-    return NS_OK;
-  }
-};
-
-class FirstFrameLoadedEventRunner : public nsRunnable, private MetadataContainer
-{
-public:
-  FirstFrameLoadedEventRunner(AbstractMediaDecoder* aDecoder,
-                              nsAutoPtr<MediaInfo> aInfo,
-                              MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable)
-    : MetadataContainer(aDecoder, aInfo, nsAutoPtr<MetadataTags>(nullptr), aEventVisibility)
-  {}
-
-  NS_IMETHOD Run() override
-  {
-    mDecoder->FirstFrameLoaded(mInfo, mEventVisibility);
-    return NS_OK;
-  }
 };
 
 } // namespace mozilla

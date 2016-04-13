@@ -300,8 +300,7 @@ inline nscolor EnsureDifferentColors(nscolor colorA, nscolor colorB)
 }
 
 void
-nsTableCellFrame::DecorateForSelection(nsRenderingContext& aRenderingContext,
-                                       nsPoint aPt)
+nsTableCellFrame::DecorateForSelection(DrawTarget* aDrawTarget, nsPoint aPt)
 {
   NS_ASSERTION(IsSelected(), "Should only be called for selected cells");
   int16_t displaySelection;
@@ -330,38 +329,37 @@ nsTableCellFrame::DecorateForSelection(nsRenderingContext& aRenderingContext,
         int32_t appUnitsPerDevPixel = PresContext()->AppUnitsPerDevPixel();
         Point devPixelOffset = NSPointToPoint(aPt, appUnitsPerDevPixel);
 
-        DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
-        AutoRestoreTransform autoRestoreTransform(drawTarget);
-        drawTarget->SetTransform(
-          drawTarget->GetTransform().PreTranslate(devPixelOffset));
+        AutoRestoreTransform autoRestoreTransform(aDrawTarget);
+        aDrawTarget->SetTransform(
+          aDrawTarget->GetTransform().PreTranslate(devPixelOffset));
 
         ColorPattern color(ToDeviceColor(bordercolor));
 
         nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
 
         StrokeLineWithSnapping(nsPoint(onePixel, 0), nsPoint(mRect.width, 0),
-                               appUnitsPerDevPixel, *drawTarget, color);
+                               appUnitsPerDevPixel, *aDrawTarget, color);
         StrokeLineWithSnapping(nsPoint(0, onePixel), nsPoint(0, mRect.height),
-                               appUnitsPerDevPixel, *drawTarget, color);
+                               appUnitsPerDevPixel, *aDrawTarget, color);
         StrokeLineWithSnapping(nsPoint(onePixel, mRect.height),
                                nsPoint(mRect.width, mRect.height),
-                               appUnitsPerDevPixel, *drawTarget, color);
+                               appUnitsPerDevPixel, *aDrawTarget, color);
         StrokeLineWithSnapping(nsPoint(mRect.width, onePixel),
                                nsPoint(mRect.width, mRect.height),
-                               appUnitsPerDevPixel, *drawTarget, color);
+                               appUnitsPerDevPixel, *aDrawTarget, color);
         //middle
         nsRect r(onePixel, onePixel,
                  mRect.width - onePixel, mRect.height - onePixel);
         Rect devPixelRect =
-          NSRectToSnappedRect(r, appUnitsPerDevPixel, *drawTarget);
-        drawTarget->StrokeRect(devPixelRect, color);
+          NSRectToSnappedRect(r, appUnitsPerDevPixel, *aDrawTarget);
+        aDrawTarget->StrokeRect(devPixelRect, color);
         //shading
         StrokeLineWithSnapping(nsPoint(2*onePixel, mRect.height-2*onePixel),
                                nsPoint(mRect.width-onePixel, mRect.height- (2*onePixel)),
-                               appUnitsPerDevPixel, *drawTarget, color);
+                               appUnitsPerDevPixel, *aDrawTarget, color);
         StrokeLineWithSnapping(nsPoint(mRect.width - (2*onePixel), 2*onePixel),
                                nsPoint(mRect.width - (2*onePixel), mRect.height-onePixel),
-                               appUnitsPerDevPixel, *drawTarget, color);
+                               appUnitsPerDevPixel, *aDrawTarget, color);
       }
     }
   }
@@ -469,10 +467,11 @@ void nsTableCellFrame::InvalidateFrameWithRect(const nsRect& aRect, uint32_t aDi
 }
 
 static void
-PaintTableCellSelection(nsIFrame* aFrame, nsRenderingContext* aCtx,
+PaintTableCellSelection(nsIFrame* aFrame, DrawTarget* aDrawTarget,
                         const nsRect& aRect, nsPoint aPt)
 {
-  static_cast<nsTableCellFrame*>(aFrame)->DecorateForSelection(*aCtx, aPt);
+  static_cast<nsTableCellFrame*>(aFrame)->DecorateForSelection(aDrawTarget,
+                                                               aPt);
 }
 
 void
@@ -627,8 +626,9 @@ void nsTableCellFrame::BlockDirAlignChild(WritingMode aWM, nscoord aMaxAscent)
       // Align the middle of the child frame with the middle of the content area,
       kidBStart = (bSize - childBSize - bEndInset + bStartInset) / 2;
   }
-  // if the content is larger than the cell bsize, align from bstart
-  kidBStart = std::max(0, kidBStart);
+  // If the content is larger than the cell bsize, align from bStartInset
+  // (cell's content-box bstart edge).
+  kidBStart = std::max(bStartInset, kidBStart);
 
   if (kidBStart != kidRect.BStart(aWM)) {
     // Invalidate at the old position first
@@ -824,10 +824,9 @@ void DebugCheckChildSize(nsIFrame*            aChild,
 // it is the bsize (minus border, padding) of the cell's first in flow during its final
 // reflow without an unconstrained bsize.
 static nscoord
-CalcUnpaginatedBSize(nsPresContext*     aPresContext,
-                      nsTableCellFrame& aCellFrame,
-                      nsTableFrame&     aTableFrame,
-                      nscoord           aBlockDirBorderPadding)
+CalcUnpaginatedBSize(nsTableCellFrame& aCellFrame,
+                     nsTableFrame&     aTableFrame,
+                     nscoord           aBlockDirBorderPadding)
 {
   const nsTableCellFrame* firstCellInFlow =
     static_cast<nsTableCellFrame*>(aCellFrame.FirstInFlow());
@@ -851,7 +850,7 @@ CalcUnpaginatedBSize(nsPresContext*     aPresContext,
       break;
     }
     else if (rowX >= rowIndex) {
-      computedBSize += row->GetUnpaginatedBSize(aPresContext);
+      computedBSize += row->GetUnpaginatedBSize();
     }
   }
   return computedBSize;
@@ -909,7 +908,7 @@ nsTableCellFrame::Reflow(nsPresContext*           aPresContext,
   }
   else if (aPresContext->IsPaginated()) {
     nscoord computedUnpaginatedBSize =
-      CalcUnpaginatedBSize(aPresContext, (nsTableCellFrame&)*this,
+      CalcUnpaginatedBSize((nsTableCellFrame&)*this,
                            *tableFrame, borderPadding.BStartEnd(wm));
     if (computedUnpaginatedBSize > 0) {
       const_cast<nsHTMLReflowState&>(aReflowState).SetComputedBSize(computedUnpaginatedBSize);

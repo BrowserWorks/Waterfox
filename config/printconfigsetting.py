@@ -14,7 +14,7 @@ except ValueError:
     sys.exit(1)
 
 with open(file) as fh:
-    content = re.sub(re.compile('^\s*;', re.M), '#', fh.read())
+    content = re.sub('^\s*;', '#', fh.read(), flags=re.M)
 
 c = configobj.ConfigObj(StringIO(content))
 

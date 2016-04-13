@@ -34,7 +34,6 @@ gfxGraphiteShaper::gfxGraphiteShaper(gfxFont *aFont)
       mGrFont(nullptr), mFallbackToSmallCaps(false)
 {
     mCallbackData.mFont = aFont;
-    mCallbackData.mShaper = this;
 }
 
 gfxGraphiteShaper::~gfxGraphiteShaper()
@@ -50,8 +49,7 @@ gfxGraphiteShaper::GrGetAdvance(const void* appFontHandle, uint16_t glyphid)
 {
     const CallbackData *cb =
         static_cast<const CallbackData*>(appFontHandle);
-    return FixedToFloat(cb->mFont->GetGlyphWidth(*cb->mContext->GetDrawTarget(),
-                                                 glyphid));
+    return FixedToFloat(cb->mFont->GetGlyphWidth(*cb->mDrawTarget, glyphid));
 }
 
 static inline uint32_t
@@ -84,7 +82,7 @@ AddFeature(const uint32_t& aTag, uint32_t& aValue, void *aUserArg)
 }
 
 bool
-gfxGraphiteShaper::ShapeText(gfxContext      *aContext,
+gfxGraphiteShaper::ShapeText(DrawTarget      *aDrawTarget,
                              const char16_t *aText,
                              uint32_t         aOffset,
                              uint32_t         aLength,
@@ -93,11 +91,11 @@ gfxGraphiteShaper::ShapeText(gfxContext      *aContext,
                              gfxShapedText   *aShapedText)
 {
     // some font back-ends require this in order to get proper hinted metrics
-    if (!mFont->SetupCairoFont(aContext)) {
+    if (!mFont->SetupCairoFont(aDrawTarget)) {
         return false;
     }
 
-    mCallbackData.mContext = aContext;
+    mCallbackData.mDrawTarget = aDrawTarget;
 
     const gfxFontStyle *style = mFont->GetStyle();
 
@@ -175,7 +173,7 @@ gfxGraphiteShaper::ShapeText(gfxContext      *aContext,
         return false;
     }
 
-    nsresult rv = SetGlyphsFromSegment(aContext, aShapedText, aOffset, aLength,
+    nsresult rv = SetGlyphsFromSegment(aDrawTarget, aShapedText, aOffset, aLength,
                                        aText, seg);
 
     gr_seg_destroy(seg);
@@ -195,7 +193,7 @@ struct Cluster {
 };
 
 nsresult
-gfxGraphiteShaper::SetGlyphsFromSegment(gfxContext      *aContext,
+gfxGraphiteShaper::SetGlyphsFromSegment(DrawTarget      *aDrawTarget,
                                         gfxShapedText   *aShapedText,
                                         uint32_t         aOffset,
                                         uint32_t         aLength,
@@ -270,9 +268,8 @@ gfxGraphiteShaper::SetGlyphsFromSegment(gfxContext      *aContext,
         }
     }
 
-    bool roundX;
-    bool roundY;
-    aContext->GetRoundOffsetsToPixels(&roundX, &roundY);
+    bool roundX, roundY;
+    GetRoundOffsetsToPixels(aDrawTarget, &roundX, &roundY);
 
     gfxShapedText::CompressedGlyph *charGlyphs =
         aShapedText->GetCharacterGlyphs() + aOffset;

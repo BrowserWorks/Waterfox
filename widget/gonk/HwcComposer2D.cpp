@@ -123,7 +123,8 @@ HwcComposer2D::HwcComposer2D()
     mRBSwapSupport = mHal->Query(HwcHALBase::QueryType::RB_SWAP);
 }
 
-HwcComposer2D::~HwcComposer2D() {
+HwcComposer2D::~HwcComposer2D()
+{
     free(mList);
 }
 
@@ -270,7 +271,8 @@ HwcComposer2D::ReallocLayerList()
 bool
 HwcComposer2D::PrepareLayerList(Layer* aLayer,
                                 const nsIntRect& aClip,
-                                const Matrix& aParentTransform)
+                                const Matrix& aParentTransform,
+                                bool aFindSidebandStreams)
 {
     // NB: we fall off this path whenever there are container layers
     // that require intermediate surfaces.  That means all the
@@ -278,7 +280,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
 
     bool fillColor = false;
 
-    const nsIntRegion& visibleRegion = aLayer->GetEffectiveVisibleRegion();
+    const nsIntRegion visibleRegion = aLayer->GetEffectiveVisibleRegion().ToUnknownRegion();
     if (visibleRegion.IsEmpty()) {
         return true;
     }
@@ -289,19 +291,18 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         return true;
     }
 
-    if (!mHal->SupportTransparency() && opacity < 0xFF) {
+    if (!mHal->SupportTransparency() && opacity < 0xFF && !aFindSidebandStreams) {
         LOGD("%s Layer has planar semitransparency which is unsupported by hwcomposer", aLayer->Name());
         return false;
     }
 
-    if (aLayer->GetMaskLayer()) {
+    if (aLayer->GetMaskLayer() && !aFindSidebandStreams) {
         LOGD("%s Layer has MaskLayer which is unsupported by hwcomposer", aLayer->Name());
         return false;
     }
 
     nsIntRect clip;
-    nsIntRect layerClip = aLayer->GetEffectiveClipRect() ?
-                          ParentLayerIntRect::ToUntyped(*aLayer->GetEffectiveClipRect()) : nsIntRect();
+    nsIntRect layerClip = aLayer->GetEffectiveClipRect().valueOr(ParentLayerIntRect()).ToUnknownRect();
     nsIntRect* layerClipPtr = aLayer->GetEffectiveClipRect() ? &layerClip : nullptr;
     if (!HwcUtils::CalculateClipRect(aParentTransform,
                                      layerClipPtr,
@@ -336,7 +337,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     }
 
     if (ContainerLayer* container = aLayer->AsContainerLayer()) {
-        if (container->UseIntermediateSurface()) {
+        if (container->UseIntermediateSurface() && !aFindSidebandStreams) {
             LOGD("Container layer needs intermediate surface");
             return false;
         }
@@ -344,7 +345,8 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         container->SortChildrenBy3DZOrder(children);
 
         for (uint32_t i = 0; i < children.Length(); i++) {
-            if (!PrepareLayerList(children[i], clip, layerTransform)) {
+            if (!PrepareLayerList(children[i], clip, layerTransform, aFindSidebandStreams) &&
+                !aFindSidebandStreams) {
                 return false;
             }
         }
@@ -354,7 +356,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     LayerRenderState state = aLayer->GetRenderState();
 
 #if ANDROID_VERSION >= 21
-    if (!state.GetGrallocBuffer() && !state.GetSidebandStream()) {
+    if (!state.GetGrallocBuffer() && !state.GetSidebandStream().IsValid()) {
 #else
     if (!state.GetGrallocBuffer()) {
 #endif
@@ -451,8 +453,8 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     mHal->SetCrop(hwcLayer, sourceCrop);
     buffer_handle_t handle = nullptr;
 #if ANDROID_VERSION >= 21
-    if (state.GetSidebandStream()) {
-        handle = state.GetSidebandStream()->handle();
+    if (state.GetSidebandStream().IsValid()) {
+        handle = state.GetSidebandStream().GetRawNativeHandle();
     } else if (state.GetGrallocBuffer()) {
         handle = state.GetGrallocBuffer()->getNativeBuffer()->handle;
     }
@@ -469,7 +471,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
 #if ANDROID_VERSION >= 17
     hwcLayer.compositionType = HWC_FRAMEBUFFER;
 #if ANDROID_VERSION >= 21
-    if (state.GetSidebandStream()) {
+    if (state.GetSidebandStream().IsValid()) {
         hwcLayer.compositionType = HWC_SIDEBAND;
     }
 #endif
@@ -646,6 +648,12 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         hwcLayer.transform = colorLayer->GetColor().ToABGR();
     }
 
+#if ANDROID_VERSION >= 21
+    if (aFindSidebandStreams && hwcLayer.compositionType == HWC_SIDEBAND) {
+        mCachedSidebandLayers.AppendElement(hwcLayer);
+    }
+#endif
+
     mHwcLayerMap.AppendElement(static_cast<LayerComposite*>(aLayer->ImplData()));
     mList->numHwLayers++;
     return true;
@@ -703,6 +711,9 @@ HwcComposer2D::TryHwComposition(nsScreenGonk* aScreen)
                 case HWC_BLIT:
                     blitComposite = true;
                     break;
+#if ANDROID_VERSION >= 21
+                case HWC_SIDEBAND:
+#endif
                 case HWC_OVERLAY: {
                     // HWC will compose HWC_OVERLAY layers in partial
                     // Overlay Composition, set layer composition flag
@@ -770,7 +781,7 @@ HwcComposer2D::Render(nsIWidget* aWidget)
         mList->hwLayers[mList->numHwLayers - 1].acquireFenceFd = dispSurface->GetPrevDispAcquireFd();
     } else {
         // Update screen rect to handle a case that TryRenderWithHwc() is not called.
-        mScreenRect = screen->GetNaturalBounds();
+        mScreenRect = screen->GetNaturalBounds().ToUnknownRect();
 
         mList->flags = HWC_GEOMETRY_CHANGED;
         mList->numHwLayers = 2;
@@ -781,6 +792,15 @@ HwcComposer2D::Render(nsIWidget* aWidget)
         mList->hwLayers[0].acquireFenceFd = -1;
         mList->hwLayers[0].releaseFenceFd = -1;
         mList->hwLayers[0].displayFrame = {0, 0, mScreenRect.width, mScreenRect.height};
+
+#if ANDROID_VERSION >= 21
+        // Prepare layers for sideband streams
+        const uint32_t len = mCachedSidebandLayers.Length();
+        for (uint32_t i = 0; i < len; ++i) {
+            ++mList->numHwLayers;
+            mList->hwLayers[i+1] = mCachedSidebandLayers[i];
+        }
+#endif
         Prepare(dispSurface->lastHandle, dispSurface->GetPrevDispAcquireFd(), screen);
     }
 
@@ -869,7 +889,8 @@ HwcComposer2D::Render(nsIWidget* aWidget)
 bool
 HwcComposer2D::TryRenderWithHwc(Layer* aRoot,
                                 nsIWidget* aWidget,
-                                bool aGeometryChanged)
+                                bool aGeometryChanged,
+                                bool aHasImageHostOverlays)
 {
     if (!mHal->HasHwc()) {
         return false;
@@ -892,14 +913,30 @@ HwcComposer2D::TryRenderWithHwc(Layer* aRoot,
     // reallocated. We may want to avoid this if possible
     mVisibleRegions.clear();
 
-    mScreenRect = screen->GetNaturalBounds();
+    mScreenRect = screen->GetNaturalBounds().ToUnknownRect();
     MOZ_ASSERT(mHwcLayerMap.IsEmpty());
+    mCachedSidebandLayers.Clear();
     if (!PrepareLayerList(aRoot,
                           mScreenRect,
-                          gfx::Matrix()))
+                          gfx::Matrix(),
+                          /* aFindSidebandStreams */ false))
     {
         mHwcLayerMap.Clear();
-        LOGD("Render aborted. Nothing was drawn to the screen");
+        LOGD("Render aborted. Fallback to GPU Composition");
+        if (aHasImageHostOverlays) {
+            LOGD("Prepare layers of SidebandStreams");
+            // Failed to create a layer list for hwc. But we need the list
+            // only for handling sideband streams. Traverse layer tree without
+            // some early returns to make sure we can find all the layers.
+            // It is the best wrong thing that we can do.
+            PrepareLayerList(aRoot,
+                             mScreenRect,
+                             gfx::Matrix(),
+                             /* aFindSidebandStreams */ true);
+            // Reset mPrepared to false, since we already fell back to
+            // gpu composition.
+            mPrepared = false;
+        }
         return false;
     }
 

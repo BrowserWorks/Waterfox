@@ -3,22 +3,11 @@
 
 package org.mozilla.android.sync.net.test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import ch.boye.httpclientandroidlib.HttpResponse;
+import ch.boye.httpclientandroidlib.ProtocolVersion;
+import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
+import ch.boye.httpclientandroidlib.message.BasicStatusLine;
 import junit.framework.AssertionFailedError;
-
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +21,7 @@ import org.mozilla.gecko.background.testhelpers.MockGlobalSession;
 import org.mozilla.gecko.background.testhelpers.MockPrefsGlobalSession;
 import org.mozilla.gecko.background.testhelpers.MockServerSyncStage;
 import org.mozilla.gecko.background.testhelpers.MockSharedPreferences;
+import org.mozilla.gecko.background.testhelpers.TestRunner;
 import org.mozilla.gecko.background.testhelpers.WaitHelper;
 import org.mozilla.gecko.sync.EngineSettings;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -51,16 +41,24 @@ import org.mozilla.gecko.sync.stage.AndroidBrowserBookmarksServerSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 import org.mozilla.gecko.sync.stage.NoSuchStageException;
-import org.robolectric.RobolectricGradleTestRunner;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
-import ch.boye.httpclientandroidlib.HttpResponse;
-import ch.boye.httpclientandroidlib.ProtocolVersion;
-import ch.boye.httpclientandroidlib.message.BasicHttpResponse;
-import ch.boye.httpclientandroidlib.message.BasicStatusLine;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-@RunWith(RobolectricGradleTestRunner.class)
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+@RunWith(TestRunner.class)
 public class TestGlobalSession {
   private int          TEST_PORT                = HTTPServerTestHelper.getTestPort();
   private final String TEST_CLUSTER_URL         = "http://localhost:" + TEST_PORT;
@@ -110,13 +108,13 @@ public class TestGlobalSession {
   @Test
   public void testBackoffCalledByHandleHTTPError() {
     try {
-      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
       SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
       final GlobalSession session = new MockGlobalSession(config, callback);
 
       final HttpResponse response = new BasicHttpResponse(
         new BasicStatusLine(new ProtocolVersion("HTTP", 1, 1), 503, "Illegal method/protocol"));
-      response.addHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
+      response.setHeader("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS)); // Backoff given in seconds.
 
       getTestWaiter().performWait(WaitHelper.onThreadRunnable(new Runnable() {
         @Override
@@ -142,7 +140,7 @@ public class TestGlobalSession {
   @Test
   public void testSuccessCalledAfterStages() {
     try {
-      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
       SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
       final GlobalSession session = new MockGlobalSession(config, callback);
 
@@ -175,7 +173,7 @@ public class TestGlobalSession {
   @Test
   public void testBackoffCalledInStages() {
     try {
-      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+      final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
 
       // Stage fakes a 503 and sets X-Weave-Backoff header to the given seconds.
       final GlobalSyncStage stage = new MockAbstractNonRepositorySyncStage() {
@@ -247,7 +245,7 @@ public class TestGlobalSession {
       @Override
       public void handle(Request request, Response response) {
         if (stageShouldBackoff) {
-          response.set("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS));
+          response.addValue("X-Weave-Backoff", Long.toString(TEST_BACKOFF_IN_SECONDS));
         }
         super.handle(request, response);
       }
@@ -268,7 +266,7 @@ public class TestGlobalSession {
       }
     };
 
-    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback(TEST_CLUSTER_URL);
+    final MockGlobalSessionCallback callback = new MockGlobalSessionCallback();
     SyncConfiguration config = new SyncConfiguration(TEST_USERNAME, new BasicAuthHeaderProvider(TEST_USERNAME, TEST_PASSWORD), new MockSharedPreferences(), new KeyBundle(TEST_USERNAME, TEST_SYNC_KEY));
     final GlobalSession session = new MockGlobalSession(config, callback)
                                       .withStage(Stage.syncBookmarks, stage);

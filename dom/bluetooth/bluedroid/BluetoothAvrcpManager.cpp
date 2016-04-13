@@ -15,6 +15,7 @@
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/UniquePtr.h"
 #include "MainThreadUtils.h"
 #include "nsIObserverService.h"
 #include "nsThreadUtils.h"
@@ -267,6 +268,10 @@ BluetoothAvrcpManager::InitAvrcpInterface(BluetoothProfileResultHandler* aRes)
 }
 
 BluetoothAvrcpManager::~BluetoothAvrcpManager()
+{ }
+
+void
+BluetoothAvrcpManager::Uninit()
 {
   nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
   NS_ENSURE_TRUE_VOID(obs);
@@ -293,9 +298,9 @@ BluetoothAvrcpManager::Get()
   // If we're in shutdown, don't create a new instance
   NS_ENSURE_FALSE(sInShutdown, nullptr);
 
-  // Create a new instance, register, and return
-  BluetoothAvrcpManager* manager = new BluetoothAvrcpManager();
-  sBluetoothAvrcpManager = manager;
+  // Create a new instance and return
+  sBluetoothAvrcpManager = new BluetoothAvrcpManager();
+
   return sBluetoothAvrcpManager;
 }
 
@@ -317,6 +322,9 @@ public:
     sBtAvrcpInterface->SetNotificationHandler(nullptr);
     sBtAvrcpInterface = nullptr;
 
+    sBluetoothAvrcpManager->Uninit();
+    sBluetoothAvrcpManager = nullptr;
+
     if (mRes) {
       mRes->OnError(NS_ERROR_FAILURE);
     }
@@ -328,6 +336,9 @@ public:
 
     sBtAvrcpInterface->SetNotificationHandler(nullptr);
     sBtAvrcpInterface = nullptr;
+
+    sBluetoothAvrcpManager->Uninit();
+    sBluetoothAvrcpManager = nullptr;
 
     if (mRes) {
       mRes->Deinit();
@@ -441,11 +452,11 @@ private:
 };
 
 void
-BluetoothAvrcpManager::Connect(const nsAString& aDeviceAddress,
+BluetoothAvrcpManager::Connect(const BluetoothAddress& aDeviceAddress,
                                BluetoothProfileController* aController)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!aDeviceAddress.IsEmpty());
+  MOZ_ASSERT(!aDeviceAddress.IsCleared());
   MOZ_ASSERT(aController);
 
   // AVRCP doesn't require connecting. We just set the remote address here.
@@ -479,7 +490,7 @@ BluetoothAvrcpManager::Disconnect(BluetoothProfileController* aController)
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mController);
 
-  mDeviceAddress.Truncate();
+  mDeviceAddress.Clear();
   mController = aController;
   SetConnected(false);
 
@@ -519,17 +530,19 @@ BluetoothAvrcpManager::OnDisconnect(const nsAString& aErrorStr)
 }
 
 void
-BluetoothAvrcpManager::OnGetServiceChannel(const nsAString& aDeviceAddress,
-                                          const nsAString& aServiceUuid,
-                                          int aChannel)
+BluetoothAvrcpManager::OnGetServiceChannel(
+  const BluetoothAddress& aDeviceAddress,
+  const BluetoothUuid& aServiceUuid,
+  int aChannel)
 { }
 
 void
-BluetoothAvrcpManager::OnUpdateSdpRecords(const nsAString& aDeviceAddress)
+BluetoothAvrcpManager::OnUpdateSdpRecords(
+  const BluetoothAddress& aDeviceAddress)
 { }
 
 void
-BluetoothAvrcpManager::GetAddress(nsAString& aDeviceAddress)
+BluetoothAvrcpManager::GetAddress(BluetoothAddress& aDeviceAddress)
 {
   aDeviceAddress = mDeviceAddress;
 }
@@ -846,8 +859,7 @@ BluetoothAvrcpManager::GetElementAttrNotification(
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsAutoArrayPtr<BluetoothAvrcpElementAttribute> attrs(
-    new BluetoothAvrcpElementAttribute[aNumAttrs]);
+  auto attrs = MakeUnique<BluetoothAvrcpElementAttribute[]>(aNumAttrs);
 
   for (uint8_t i = 0; i < aNumAttrs; ++i) {
     attrs[i].mId = aAttrs[i];
@@ -857,7 +869,7 @@ BluetoothAvrcpManager::GetElementAttrNotification(
   }
 
   MOZ_ASSERT(sBtAvrcpInterface);
-  sBtAvrcpInterface->GetElementAttrRsp(aNumAttrs, attrs, nullptr);
+  sBtAvrcpInterface->GetElementAttrRsp(aNumAttrs, attrs.get(), nullptr);
 }
 
 void

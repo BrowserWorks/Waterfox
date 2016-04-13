@@ -12,6 +12,7 @@
 #include "BluetoothSocketObserver.h"
 #include "DeviceStorage.h"
 #include "mozilla/ipc/SocketBase.h"
+#include "mozilla/UniquePtr.h"
 #include "nsCOMArray.h"
 
 class nsIOutputStream;
@@ -39,6 +40,7 @@ class BluetoothOppManager : public BluetoothSocketObserver
   class SendSocketDataTask;
 
 public:
+
   BT_DECL_PROFILE_MGR_BASE
   BT_DECL_SOCKET_OBSERVER
   virtual void GetName(nsACString& aName)
@@ -48,14 +50,17 @@ public:
 
   static const int MAX_PACKET_LENGTH = 0xFFFE;
 
+  static void InitOppInterface(BluetoothProfileResultHandler* aRes);
+  static void DeinitOppInterface(BluetoothProfileResultHandler* aRes);
   static BluetoothOppManager* Get();
+
   void ClientDataHandler(mozilla::ipc::UnixSocketBuffer* aMessage);
   void ServerDataHandler(mozilla::ipc::UnixSocketBuffer* aMessage);
 
   bool Listen();
 
-  bool SendFile(const nsAString& aDeviceAddress, BlobParent* aActor);
-  bool SendFile(const nsAString& aDeviceAddress, Blob* aBlob);
+  bool SendFile(const BluetoothAddress& aDeviceAddress, BlobParent* aActor);
+  bool SendFile(const BluetoothAddress& aDeviceAddress, Blob* aBlob);
   bool StopSendingFile();
   bool ConfirmReceivingFile(bool aConfirm);
 
@@ -74,7 +79,8 @@ protected:
 
 private:
   BluetoothOppManager();
-  bool Init();
+  nsresult Init();
+  void Uninit();
   void HandleShutdown();
   void HandleVolumeStateChanged(nsISupports* aSubject);
 
@@ -101,10 +107,11 @@ private:
   void NotifyAboutFileChange();
   bool AcquireSdcardMountLock();
   void SendObexData(uint8_t* aData, uint8_t aOpcode, int aSize);
-  void AppendBlobToSend(const nsAString& aDeviceAddress, Blob* aBlob);
+  void SendObexData(UniquePtr<uint8_t[]> aData, uint8_t aOpcode, int aSize);
+  void AppendBlobToSend(const BluetoothAddress& aDeviceAddress, Blob* aBlob);
   void DiscardBlobsToSend();
   bool ProcessNextBatch();
-  void ConnectInternal(const nsAString& aDeviceAddress);
+  void ConnectInternal(const BluetoothAddress& aDeviceAddress);
 
   /**
    * Usually we won't get a full PUT packet in one operation, which means that
@@ -123,7 +130,7 @@ private:
    * Set when OBEX session is established.
    */
   bool mConnected;
-  nsString mDeviceAddress;
+  BluetoothAddress mDeviceAddress;
 
   /**
    * Remote information

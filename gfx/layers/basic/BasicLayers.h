@@ -138,15 +138,27 @@ public:
   void SetTransactionIncomplete() { mTransactionIncomplete = true; }
   bool IsTransactionIncomplete() { return mTransactionIncomplete; }
 
-  already_AddRefed<gfxContext> PushGroupForLayer(gfxContext* aContext, Layer* aLayer,
-                                                 const nsIntRegion& aRegion,
-                                                 bool* aNeedsClipToVisibleRegion);
+  struct PushedGroup
+  {
+    PushedGroup() : mFinalTarget(nullptr), mNeedsClipToVisibleRegion(false), mOperator(gfx::CompositionOp::OP_COUNT), mOpacity(0.0f){}
+    gfxContext* mFinalTarget;
+    RefPtr<gfxContext> mGroupTarget;
+    nsIntRegion mVisibleRegion;
+    bool mNeedsClipToVisibleRegion;
+    gfx::IntPoint mGroupOffset;
+    gfx::CompositionOp mOperator;
+    gfx::Float mOpacity;
+    RefPtr<gfx::SourceSurface> mMaskSurface;
+    gfx::Matrix mMaskTransform;
+  };
+
+  PushedGroup PushGroupForLayer(gfxContext* aContext, Layer* aLayerContext, const nsIntRegion& aRegion);
+
+  void PopGroupForLayer(PushedGroup& aGroup);
 
   virtual bool IsCompositingCheap() override { return false; }
   virtual int32_t GetMaxTextureSize() const override { return INT32_MAX; }
   bool CompositorMightResample() { return mCompositorMightResample; }
-
-  virtual bool SupportsMixBlendModes(EnumSet<gfx::CompositionOp>& aMixBlendModes) override { return true; }
 
 protected:
   enum TransactionPhase {

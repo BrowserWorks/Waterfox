@@ -35,7 +35,9 @@
       class="header"
       hidden="true"
       data-category="paneSync">
-  <label class="header-name">&paneSync.title;</label>
+  <label class="header-name" flex="1">&paneSync.title;</label>
+  <button class="help-button"
+          aria-label="&helpButton.label;"/>
 </hbox>
 
 <vbox id="syncStatusMessage-container" data-category="paneSync" hidden="true">
@@ -212,12 +214,12 @@
     </hbox>
     <label class="fxaMobilePromo">
         &mobilePromo2.start;<!-- We put these comments to avoid inserting white spaces
-        --><label class="androidLink text-link"
-                  href="https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&amp;utm_medium=firefox-browser&amp;utm_campaign=sync-preferences"><!--
+        --><label id="fxaMobilePromo-android"
+                  class="androidLink text-link"><!--
         -->&mobilePromo2.androidLink;</label><!--
         -->&mobilePromo2.iOSBefore;<!--
-        --><label class="iOSLink text-link"
-                  href="https://www.mozilla.org/firefox/ios/?utm_source=firefox-browser&amp;utm_medium=firefox-browser&amp;utm_campaign=sync-preferences"><!--
+        --><label id="fxaMobilePromo-ios"
+                  class="iOSLink text-link"><!--
         -->&mobilePromo2.iOSLink;</label><!--
         -->&mobilePromo2.end;
     </label>
@@ -323,7 +325,6 @@
         <image class="fxaSyncIllustration"/>
       </vbox>
     </hbox>
-    <spacer class="separator"/>
     <groupbox>
       <caption>
         <label accesskey="&syncDeviceName.accesskey;"
@@ -356,7 +357,6 @@
         -->&mobilePromo2.iOSLink;</label><!--
         -->&mobilePromo2.end;
     </label>
-    <spacer class="separator" flex="1"/>
     <vbox id="tosPP-small" align="start">
       <label id="tosPP-small-ToS" class="text-link">
         &prefs.tosLink.label;

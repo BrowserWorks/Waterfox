@@ -95,8 +95,6 @@ static MOZ_CONSTEXPR_VAR Register IntArgReg6 = a6;
 static MOZ_CONSTEXPR_VAR Register IntArgReg7 = a7;
 static MOZ_CONSTEXPR_VAR Register GlobalReg = s6; // used by Odin
 static MOZ_CONSTEXPR_VAR Register HeapReg = s7; // used by Odin
-static MOZ_CONSTEXPR_VAR Register CallTempNonArgRegs[] = CALL_TEMP_NON_ARG_REGS;
-static const uint32_t NumCallTempNonArgRegs = mozilla::ArrayLength(CallTempNonArgRegs);
 
 static MOZ_CONSTEXPR_VAR Register PreBarrierReg = a1;
 
@@ -106,9 +104,8 @@ static MOZ_CONSTEXPR_VAR FloatRegister InvalidFloatReg;
 static MOZ_CONSTEXPR_VAR Register StackPointer = sp;
 static MOZ_CONSTEXPR_VAR Register FramePointer = InvalidReg;
 static MOZ_CONSTEXPR_VAR Register ReturnReg = v0;
-static MOZ_CONSTEXPR_VAR FloatRegister ReturnInt32x4Reg = InvalidFloatReg;
-static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32x4Reg = InvalidFloatReg;
-static MOZ_CONSTEXPR_VAR FloatRegister ScratchSimdReg = InvalidFloatReg;
+static MOZ_CONSTEXPR_VAR FloatRegister ReturnSimd128Reg = InvalidFloatReg;
+static MOZ_CONSTEXPR_VAR FloatRegister ScratchSimd128Reg = InvalidFloatReg;
 
 // A bias applied to the GlobalReg to allow the use of instructions with small
 // negative immediate offsets which doubles the range of global data that can be
@@ -127,6 +124,18 @@ static MOZ_CONSTEXPR_VAR Register AsmJSIonExitRegE3 = a3;
 static MOZ_CONSTEXPR_VAR Register AsmJSIonExitRegD0 = a0;
 static MOZ_CONSTEXPR_VAR Register AsmJSIonExitRegD1 = a1;
 static MOZ_CONSTEXPR_VAR Register AsmJSIonExitRegD2 = t0;
+
+// Registerd used in RegExpMatcher instruction (do not use JSReturnOperand).
+static MOZ_CONSTEXPR_VAR Register RegExpMatcherRegExpReg = CallTempReg0;
+static MOZ_CONSTEXPR_VAR Register RegExpMatcherStringReg = CallTempReg1;
+static MOZ_CONSTEXPR_VAR Register RegExpMatcherLastIndexReg = CallTempReg2;
+static MOZ_CONSTEXPR_VAR Register RegExpMatcherStickyReg = CallTempReg3;
+
+// Registerd used in RegExpTester instruction (do not use ReturnReg).
+static MOZ_CONSTEXPR_VAR Register RegExpTesterRegExpReg = CallTempReg0;
+static MOZ_CONSTEXPR_VAR Register RegExpTesterStringReg = CallTempReg1;
+static MOZ_CONSTEXPR_VAR Register RegExpTesterLastIndexReg = CallTempReg2;
+static MOZ_CONSTEXPR_VAR Register RegExpTesterStickyReg = CallTempReg3;
 
 static MOZ_CONSTEXPR_VAR uint32_t CodeAlignment = 4;
 
@@ -627,6 +636,18 @@ class Operand
     }
 };
 
+inline Imm32
+Imm64::firstHalf() const
+{
+    return low();
+}
+
+inline Imm32
+Imm64::secondHalf() const
+{
+    return hi();
+}
+
 void
 PatchJump(CodeLocationJump& jump_, CodeLocationLabel label,
           ReprotectCode reprotect = DontReprotect);
@@ -648,9 +669,19 @@ class MIPSBufferWithExecutableCopy : public MIPSBuffer
             buffer += cur->length();
         }
     }
-};
 
-class Assembler;
+    bool appendBuffer(const MIPSBufferWithExecutableCopy& other) {
+        if (this->oom())
+            return false;
+
+        for (Slice* cur = other.head; cur != nullptr; cur = cur->getNext()) {
+            this->putBytes(cur->length(), &cur->instructions);
+            if (this->oom())
+                return false;
+        }
+        return true;
+    }
+};
 
 class AssemblerMIPSShared : public AssemblerShared
 {
@@ -735,8 +766,6 @@ class AssemblerMIPSShared : public AssemblerShared
     uint32_t actualIndex(uint32_t) const;
     static uint8_t* PatchableJumpAddress(JitCode* code, uint32_t index);
   protected:
-    Assembler& asAsm();
-
     // structure for fixing up pc-relative loads/jumps when a the machine code
     // gets moved (executable copy, gc, etc.)
     struct RelativePatch
@@ -785,7 +814,7 @@ class AssemblerMIPSShared : public AssemblerShared
             dataRelocations_.writeUnsigned(nextOffset().getOffset());
         }
     }
-    void writePrebarrierOffset(CodeOffsetLabel label) {
+    void writePrebarrierOffset(CodeOffset label) {
         preBarriers_.writeUnsigned(label.offset());
     }
 
@@ -803,6 +832,7 @@ class AssemblerMIPSShared : public AssemblerShared
     bool isFinished;
   public:
     void finish();
+    bool asmMergeWith(const AssemblerMIPSShared& other);
     void executableCopy(void* buffer);
     void copyJumpRelocationTable(uint8_t* dest);
     void copyDataRelocationTable(uint8_t* dest);
@@ -1036,13 +1066,19 @@ class AssemblerMIPSShared : public AssemblerShared
 
     // label operations
     void bind(Label* label, BufferOffset boff = BufferOffset());
+    virtual void bind(InstImm* inst, uintptr_t branch, uintptr_t target) = 0;
+    virtual void Bind(uint8_t* rawCode, CodeOffset* label, const void* address) = 0;
+    void bind(CodeOffset* label) {
+        label->bind(currentOffset());
+    }
     uint32_t currentOffset() {
         return nextOffset().getOffset();
     }
     void retarget(Label* label, Label* target);
+    void retargetWithOffset(size_t baseOffset, const LabelBase* label, Label* target);
 
     // See Bind
-    size_t labelOffsetToPatchOffset(size_t offset) { return offset; }
+    size_t labelToPatchOffset(CodeOffset label) { return label.offset(); }
 
     void call(Label* label);
     void call(void* target);
@@ -1088,8 +1124,6 @@ class AssemblerMIPSShared : public AssemblerShared
 
     static uint32_t NopSize() { return 4; }
 
-    static void PatchDataWithValueCheck(CodeLocationLabel label, ImmPtr newValue,
-                                        ImmPtr expectedValue);
     static void PatchWrite_Imm32(CodeLocationLabel label, Imm32 imm);
 
     static uint32_t AlignDoubleArg(uint32_t offset) {
@@ -1316,42 +1350,6 @@ class InstJump : public Instruction
         return extractBitField(Imm26Shift + Imm26Bits - 1, Imm26Shift);
     }
 };
-
-static const uint32_t NumIntArgRegs = NUM_INT_ARG_REGS;
-
-static inline bool
-GetIntArgReg(uint32_t usedArgSlots, Register* out)
-{
-    if (usedArgSlots < NumIntArgRegs) {
-        *out = Register::FromCode(a0.code() + usedArgSlots);
-        return true;
-    }
-    return false;
-}
-
-// Get a register in which we plan to put a quantity that will be used as an
-// integer argument. This differs from GetIntArgReg in that if we have no more
-// actual argument registers to use we will fall back on using whatever
-// CallTempReg* don't overlap the argument registers, and only fail once those
-// run out too.
-static inline bool
-GetTempRegForIntArg(uint32_t usedIntArgs, uint32_t usedFloatArgs, Register* out)
-{
-    // NOTE: We can't properly determine which regs are used if there are
-    // float arguments. If this is needed, we will have to guess.
-    MOZ_ASSERT(usedFloatArgs == 0);
-
-    if (GetIntArgReg(usedIntArgs, out))
-        return true;
-    // Unfortunately, we have to assume things about the point at which
-    // GetIntArgReg returns false, because we need to know how many registers it
-    // can allocate.
-    usedIntArgs -= NumIntArgRegs;
-    if (usedIntArgs >= NumCallTempNonArgRegs)
-        return false;
-    *out = CallTempNonArgRegs[usedIntArgs];
-    return true;
-}
 
 } // namespace jit
 } // namespace js

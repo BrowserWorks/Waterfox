@@ -31,13 +31,14 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_initialize()
+add_task(function* test_initialize()
 {
   var noon = new Date();
   noon.setHours(12);
 
   // Add visits.
-  for ([pageIndex, page] in Iterator(pages)) {
+  for (let pageIndex = 0; pageIndex < pages.length; ++pageIndex) {
+    let page = pages[pageIndex];
     yield PlacesTestUtils.addVisits({
       uri: uri(page),
       visitDate: noon - (pages.length - pageIndex) * 1000

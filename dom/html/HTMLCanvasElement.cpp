@@ -374,7 +374,8 @@ HTMLCanvasElement::~HTMLCanvasElement()
 
 NS_IMPL_CYCLE_COLLECTION_INHERITED(HTMLCanvasElement, nsGenericHTMLElement,
                                    mCurrentContext, mPrintCallback,
-                                   mPrintState, mOriginalCanvas)
+                                   mPrintState, mOriginalCanvas,
+                                   mOffscreenCanvas)
 
 NS_IMPL_ADDREF_INHERITED(HTMLCanvasElement, Element)
 NS_IMPL_RELEASE_INHERITED(HTMLCanvasElement, Element)
@@ -681,8 +682,14 @@ HTMLCanvasElement::CaptureStream(const Optional<double>& aFrameRate,
     return nullptr;
   }
 
-  stream->CreateOwnDOMTrack(videoTrackId, MediaSegment::VIDEO);
-  RegisterFrameCaptureListener(stream->FrameCaptureListener());
+  stream->CreateOwnDOMTrack(videoTrackId, MediaSegment::VIDEO, nsString());
+
+  rv = RegisterFrameCaptureListener(stream->FrameCaptureListener());
+  if (NS_FAILED(rv)) {
+    aRv.Throw(rv);
+    return nullptr;
+  }
+
   return stream.forget();
 }
 
@@ -779,10 +786,17 @@ HTMLCanvasElement::TransferControlToOffscreen(ErrorResult& aRv)
     renderer->SetWidth(sz.width);
     renderer->SetHeight(sz.height);
 
-    mOffscreenCanvas = new OffscreenCanvas(sz.width,
+    nsCOMPtr<nsIGlobalObject> global =
+      do_QueryInterface(OwnerDoc()->GetInnerWindow());
+    mOffscreenCanvas = new OffscreenCanvas(global,
+                                           sz.width,
                                            sz.height,
                                            GetCompositorBackendType(),
                                            renderer);
+    if (mWriteOnly) {
+      mOffscreenCanvas->SetWriteOnly();
+    }
+
     if (!mContextObserver) {
       mContextObserver = new HTMLCanvasElementObserver(this);
     }
@@ -881,7 +895,8 @@ HTMLCanvasElement::GetContext(JSContext* aCx,
   }
 
   return CanvasRenderingContextHelper::GetContext(aCx, aContextId,
-                                                  aContextOptions, aRv);
+    aContextOptions.isObject() ? aContextOptions : JS::NullHandleValue,
+    aRv);
 }
 
 NS_IMETHODIMP
@@ -1038,9 +1053,9 @@ HTMLCanvasElement::GetOpaqueAttr()
   return HasAttr(kNameSpaceID_None, nsGkAtoms::moz_opaque);
 }
 
-already_AddRefed<CanvasLayer>
+already_AddRefed<Layer>
 HTMLCanvasElement::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
-                                  CanvasLayer *aOldLayer,
+                                  Layer *aOldLayer,
                                   LayerManager *aManager)
 {
   // The address of sOffscreenCanvasLayerUserDataDummy is used as the user
@@ -1056,7 +1071,7 @@ HTMLCanvasElement::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
   if (mOffscreenCanvas) {
     if (!mResetLayer &&
         aOldLayer && aOldLayer->HasUserData(&sOffscreenCanvasLayerUserDataDummy)) {
-      RefPtr<CanvasLayer> ret = aOldLayer;
+      RefPtr<Layer> ret = aOldLayer;
       return ret.forget();
     }
 
@@ -1120,38 +1135,52 @@ HTMLCanvasElement::IsContextCleanForFrameCapture()
   return mCurrentContext && mCurrentContext->IsContextCleanForFrameCapture();
 }
 
-void
+nsresult
 HTMLCanvasElement::RegisterFrameCaptureListener(FrameCaptureListener* aListener)
 {
   WeakPtr<FrameCaptureListener> listener = aListener;
 
   if (mRequestedFrameListeners.Contains(listener)) {
-    return;
+    return NS_OK;
   }
-
-  mRequestedFrameListeners.AppendElement(listener);
 
   if (!mRequestedFrameRefreshObserver) {
     nsIDocument* doc = OwnerDoc();
-    MOZ_RELEASE_ASSERT(doc);
+    if (!doc) {
+      return NS_ERROR_FAILURE;
+    }
+
+    while (doc->GetParentDocument()) {
+      doc = doc->GetParentDocument();
+    }
 
     nsIPresShell* shell = doc->GetShell();
-    MOZ_RELEASE_ASSERT(shell);
+    if (!shell) {
+      return NS_ERROR_FAILURE;
+    }
 
     nsPresContext* context = shell->GetPresContext();
-    MOZ_RELEASE_ASSERT(context);
+    if (!context) {
+      return NS_ERROR_FAILURE;
+    }
 
     context = context->GetRootPresContext();
-    MOZ_RELEASE_ASSERT(context);
+    if (!context) {
+      return NS_ERROR_FAILURE;
+    }
 
     nsRefreshDriver* driver = context->RefreshDriver();
-    MOZ_RELEASE_ASSERT(driver);
+    if (!driver) {
+      return NS_ERROR_FAILURE;
+    }
 
     mRequestedFrameRefreshObserver =
       new RequestedFrameRefreshObserver(this, driver);
   }
 
+  mRequestedFrameListeners.AppendElement(listener);
   mRequestedFrameRefreshObserver->Register();
+  return NS_OK;
 }
 
 bool
@@ -1173,13 +1202,7 @@ void
 HTMLCanvasElement::SetFrameCapture(already_AddRefed<SourceSurface> aSurface)
 {
   RefPtr<SourceSurface> surface = aSurface;
-
-  CairoImage::Data imageData;
-  imageData.mSize = surface->GetSize();
-  imageData.mSourceSurface = surface;
-
-  RefPtr<CairoImage> image = new CairoImage();
-  image->SetData(imageData);
+  RefPtr<SourceSurfaceImage> image = new SourceSurfaceImage(surface->GetSize(), surface);
 
   // Loop backwards to allow removing elements in the loop.
   for (int i = mRequestedFrameListeners.Length() - 1; i >= 0; --i) {

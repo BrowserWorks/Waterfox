@@ -1862,13 +1862,13 @@ class ConstraintDataFreezeObjectForTypedArrayData
 {
     NativeObject* obj;
 
-    void* viewData;
+    uintptr_t viewData;
     uint32_t length;
 
   public:
     explicit ConstraintDataFreezeObjectForTypedArrayData(TypedArrayObject& tarray)
       : obj(&tarray),
-        viewData(tarray.viewData()),
+        viewData(tarray.viewDataEither().unwrapValue()),
         length(tarray.length())
     {
         MOZ_ASSERT(tarray.isSingleton());
@@ -1881,7 +1881,7 @@ class ConstraintDataFreezeObjectForTypedArrayData
     bool invalidateOnNewObjectState(ObjectGroup* group) {
         MOZ_ASSERT(obj->group() == group);
         TypedArrayObject& tarr = obj->as<TypedArrayObject>();
-        return tarr.viewData() != viewData || tarr.length() != length;
+        return tarr.viewDataEither().unwrapValue() != viewData || tarr.length() != length;
     }
 
     bool constraintHolds(JSContext* cx,
@@ -2205,7 +2205,8 @@ TemporaryTypeSet::convertDoubleElements(CompilerConstraintList* constraints)
         // We can't convert to double elements for objects which do not have
         // double in their element types (as the conversion may render the type
         // information incorrect), nor for non-array objects (as their elements
-        // may point to emptyObjectElements, which cannot be converted).
+        // may point to emptyObjectElements or emptyObjectElementsShared, which
+        // cannot be converted).
         if (!property.maybeTypes() ||
             !property.maybeTypes()->hasType(DoubleType()) ||
             key->clasp() != &ArrayObject::class_)
@@ -2271,6 +2272,14 @@ TemporaryTypeSet::getKnownClass(CompilerConstraintList* constraints)
     return clasp;
 }
 
+void
+TemporaryTypeSet::getTypedArraySharedness(CompilerConstraintList* constraints,
+                                          TypedArraySharedness* sharedness)
+{
+    // In the future this will inspect the object set.
+    *sharedness = UnknownSharedness;
+}
+
 TemporaryTypeSet::ForAllResult
 TemporaryTypeSet::forAllClasses(CompilerConstraintList* constraints,
                                 bool (*func)(const Class* clasp))
@@ -2308,22 +2317,16 @@ TemporaryTypeSet::forAllClasses(CompilerConstraintList* constraints,
 }
 
 Scalar::Type
-TemporaryTypeSet::getTypedArrayType(CompilerConstraintList* constraints)
+TemporaryTypeSet::getTypedArrayType(CompilerConstraintList* constraints,
+                                    TypedArraySharedness* sharedness)
 {
     const Class* clasp = getKnownClass(constraints);
 
-    if (clasp && IsTypedArrayClass(clasp))
+    if (clasp && IsTypedArrayClass(clasp)) {
+        if (sharedness)
+            getTypedArraySharedness(constraints, sharedness);
         return (Scalar::Type) (clasp - &TypedArrayObject::classes[0]);
-    return Scalar::MaxTypedArrayViewType;
-}
-
-Scalar::Type
-TemporaryTypeSet::getSharedTypedArrayType(CompilerConstraintList* constraints)
-{
-    const Class* clasp = getKnownClass(constraints);
-
-    if (clasp && IsSharedTypedArrayClass(clasp))
-        return (Scalar::Type) (clasp - &SharedTypedArrayObject::classes[0]);
+    }
     return Scalar::MaxTypedArrayViewType;
 }
 
@@ -2463,7 +2466,7 @@ js::ClassCanHaveExtraProperties(const Class* clasp)
     return clasp->resolve
         || clasp->ops.lookupProperty
         || clasp->ops.getProperty
-        || IsAnyTypedArrayClass(clasp);
+        || IsTypedArrayClass(clasp);
 }
 
 void
@@ -2579,12 +2582,12 @@ UpdatePropertyType(ExclusiveContext* cx, HeapTypeSet* types, NativeObject* obj, 
          * that are not collated into the JSID_VOID property (see propertySet
          * comment).
          *
-         * Also don't add untracked values (initial uninitialized lexical
-         * magic values and optimized out values) as appearing in CallObjects
-         * and the global lexical scope.
+         * Also don't add untracked values (initial uninitialized lexical magic
+         * values and optimized out values) as appearing in CallObjects, module
+         * environments or the global lexical scope.
          */
         MOZ_ASSERT_IF(TypeSet::IsUntrackedValue(value),
-                      obj->is<CallObject>() || IsExtensibleLexicalScope(obj));
+                      obj->is<LexicalScopeBase>() || IsExtensibleLexicalScope(obj));
         if ((indexed || !value.isUndefined() || !CanHaveEmptyPropertyTypesForOwnProperty(obj)) &&
             !TypeSet::IsUntrackedValue(value))
         {
@@ -3212,7 +3215,7 @@ js::FillBytecodeTypeMap(JSScript* script, uint32_t* bytecodeMap)
     uint32_t added = 0;
     for (jsbytecode* pc = script->code(); pc < script->codeEnd(); pc += GetBytecodeLength(pc)) {
         JSOp op = JSOp(*pc);
-        if (js_CodeSpec[op].format & JOF_TYPESET) {
+        if (CodeSpec[op].format & JOF_TYPESET) {
             bytecodeMap[added++] = script->pcToOffset(pc);
             if (added == script->nTypeSets())
                 break;
@@ -3222,18 +3225,10 @@ js::FillBytecodeTypeMap(JSScript* script, uint32_t* bytecodeMap)
 }
 
 void
-js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, const js::Value& rval)
+js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::Type type)
 {
-    /* Allow the non-TYPESET scenario to simplify stubs used in compound opcodes. */
-    if (!(js_CodeSpec[*pc].format & JOF_TYPESET))
-        return;
-
-    if (!script->hasBaselineScript())
-        return;
-
     AutoEnterAnalysis enter(cx);
 
-    TypeSet::Type type = TypeSet::GetValueType(rval);
     StackTypeSet* types = TypeScript::BytecodeTypes(script, pc);
     if (types->hasType(type))
         return;
@@ -3241,6 +3236,19 @@ js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, const js:
     InferSpew(ISpewOps, "bytecodeType: %p %05u: %s",
               script, script->pcToOffset(pc), TypeSet::TypeString(type));
     types->addType(cx, type);
+}
+
+void
+js::TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, const js::Value& rval)
+{
+    /* Allow the non-TYPESET scenario to simplify stubs used in compound opcodes. */
+    if (!(CodeSpec[*pc].format & JOF_TYPESET))
+        return;
+
+    if (!script->hasBaselineScript())
+        return;
+
+    TypeMonitorResult(cx, script, pc, TypeSet::GetValueType(rval));
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -3867,12 +3875,20 @@ TypeNewScript::rollbackPartiallyInitializedObjects(JSContext* cx, ObjectGroup* g
     RootedFunction function(cx, this->function());
     Vector<uint32_t, 32> pcOffsets(cx);
     for (ScriptFrameIter iter(cx); !iter.done(); ++iter) {
-        pcOffsets.append(iter.script()->pcToOffset(iter.pc()));
+        {
+            AutoEnterOOMUnsafeRegion oomUnsafe;
+            if (!pcOffsets.append(iter.script()->pcToOffset(iter.pc())))
+                oomUnsafe.crash("rollbackPartiallyInitializedObjects");
+        }
 
         if (!iter.isConstructing() || !iter.matchCallee(cx, function))
             continue;
 
-        Value thisv = iter.thisv(cx);
+        // Derived class constructors initialize their this-binding later and
+        // we shouldn't run the definite properties analysis on them.
+        MOZ_ASSERT(!iter.script()->isDerivedClassConstructor());
+
+        Value thisv = iter.thisArgument(cx);
         if (!thisv.isObject() ||
             thisv.toObject().hasLazyGroup() ||
             thisv.toObject().group() != group)
@@ -4288,6 +4304,12 @@ JSScript::maybeSweepTypes(AutoClearTypeInferenceStateOnOOM* oom)
     for (unsigned i = 0; i < num; i++)
         typeArray[i].sweep(zone(), *oom);
 
+    if (oom->hadOOM()) {
+        // It's possible we OOM'd while copying freeze constraints, so they
+        // need to be regenerated.
+        hasFreezeConstraints_ = false;
+    }
+
     // Update the recompile indexes in any IonScripts still on the script.
     if (hasIonScript())
         ionScript()->recompileInfoRef().shouldSweep(types);
@@ -4459,7 +4481,7 @@ TypeScript::printTypes(JSContext* cx, HandleScript script) const
             fprintf(stderr, "%s", sprinter.string());
         }
 
-        if (js_CodeSpec[*pc].format & JOF_TYPESET) {
+        if (CodeSpec[*pc].format & JOF_TYPESET) {
             StackTypeSet* types = TypeScript::BytecodeTypes(script, pc);
             fprintf(stderr, "  typeset %u:", unsigned(types - typeArray()));
             types->print();

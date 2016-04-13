@@ -7,7 +7,7 @@ See the adjacent README.txt for more details.
 
 from __future__ import print_function
 
-import os, sys, textwrap
+import os, sys, textwrap, platform
 from os.path import abspath, dirname, isfile, realpath
 from contextlib import contextmanager
 from copy import copy
@@ -83,6 +83,9 @@ def parse_args():
     harness_og.add_option('--passthrough', action='store_true',
                           help='Run tests with stdin/stdout attached to'
                           ' caller.')
+    harness_og.add_option('--test-reflect-stringify', dest="test_reflect_stringify",
+                          help="instead of running tests, use them to test the "
+                          "Reflect.stringify code in specified file")
     harness_og.add_option('--valgrind', action='store_true',
                           help='Run tests in valgrind.')
     harness_og.add_option('--valgrind-args', default='',
@@ -250,6 +253,18 @@ def load_tests(options, requested_paths, excluded_paths):
     test_gen = manifest.load_reftests(test_dir, requested_paths, excluded_paths,
                                       xul_tester)
 
+    if options.test_reflect_stringify is not None:
+        def trs_gen(tests):
+            for test in tests:
+                test.test_reflect_stringify = options.test_reflect_stringify
+                # Even if the test is not normally expected to pass, we still
+                # expect reflect-stringify to be able to handle it.
+                test.expect = True
+                test.random = False
+                test.slow = False
+                yield test
+        test_gen = trs_gen(test_gen)
+
     if options.make_manifests:
         manifest.make_manifests(options.make_manifests, test_gen)
         sys.exit()
@@ -308,9 +323,15 @@ def load_tests(options, requested_paths, excluded_paths):
 
 def main():
     options, prefix, requested_paths, excluded_paths = parse_args()
-    if options.js_shell is not None and not isfile(options.js_shell):
-        print('Could not find shell at given path.')
-        return 1
+    if options.js_shell is not None and not (isfile(options.js_shell) and
+                                             os.access(options.js_shell, os.X_OK)):
+        if (platform.system() != 'Windows' or
+            isfile(options.js_shell) or not
+            isfile(options.js_shell + ".exe") or not
+            os.access(options.js_shell + ".exe", os.X_OK)):
+           print('Could not find executable shell: ' + options.js_shell)
+           return 1
+
     test_count, test_gen = load_tests(options, requested_paths, excluded_paths)
     test_environment = get_environment_overlay(options.js_shell)
 

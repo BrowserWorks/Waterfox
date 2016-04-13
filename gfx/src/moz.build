@@ -32,6 +32,7 @@ EXPORTS += [
     'nsPoint.h',
     'nsRect.h',
     'nsRegion.h',
+    'nsRegionFwd.h',
     'nsRenderingContext.h',
     'nsSize.h',
     'nsThemeConstants.h',
@@ -40,10 +41,6 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'AppUnits.h',
-]
-
-EXPORTS.mozilla.gfx += [
-    'RegionTyped.h',
 ]
 
 if CONFIG['MOZ_X11']:
@@ -62,7 +59,6 @@ UNIFIED_SOURCES += [
     'nsFontMetrics.cpp',
     'nsRect.cpp',
     'nsRegion.cpp',
-    'nsRenderingContext.cpp',
     'nsScriptableRegion.cpp',
     'nsThebesFontEnumerator.cpp',
     'nsThebesGfxFactory.cpp',

@@ -232,6 +232,9 @@ public:
     // Returns true iff Xing/Info TOC (table of contents) is present.
     bool IsTOCPresent() const;
 
+    // Returns whether the header is valid (containing reasonable field values).
+    bool IsValid() const;
+
     // Returns the byte offset for the given duration percentage as a factor
     // (0: begin, 1.0: end).
     int64_t Offset(float aDurationFac) const;
@@ -298,10 +301,8 @@ public:
   // Returns the currently parsed frame. Reset via Reset or EndFrameSession.
   const Frame& CurrentFrame() const;
 
-#ifdef ENABLE_TESTS
   // Returns the previously parsed frame. Reset via Reset.
   const Frame& PrevFrame() const;
-#endif
 
   // Returns the first parsed frame. Reset via Reset.
   const Frame& FirstFrame() const;
@@ -344,9 +345,7 @@ private:
   // previously parsed frame for debugging and the currently parsed frame.
   Frame mFirstFrame;
   Frame mFrame;
-#ifdef ENABLE_TESTS
   Frame mPrevFrame;
-#endif
 };
 
 // The MP3 demuxer used to extract MPEG frames and side information out of
@@ -370,11 +369,11 @@ public:
   // or a 0-duration if unknown.
   media::TimeUnit Duration(int64_t aNumFrames) const;
 
-#ifdef ENABLE_TESTS
+  // Returns the estimated current seek position time.
+  media::TimeUnit SeekPosition() const;
+
   const FrameParser::Frame& LastFrame() const;
   RefPtr<MediaRawData> DemuxSample();
-  media::TimeUnit SeekPosition() const;
-#endif
 
   const ID3Parser::ID3Header& ID3Header() const;
   const FrameParser::VBRHeader& VBRInfo() const;
@@ -411,10 +410,13 @@ private:
   // Updates post-read meta data.
   void UpdateState(const MediaByteRange& aRange);
 
-  // Returns the frame index for the given offset.
+  // Returns the estimated offset for the given frame index.
+  int64_t OffsetFromFrameIndex(int64_t aFrameIndex) const;
+
+  // Returns the estimated frame index for the given offset.
   int64_t FrameIndexFromOffset(int64_t aOffset) const;
 
-  // Returns the frame index for the given time.
+  // Returns the estimated frame index for the given time.
   int64_t FrameIndexFromTime(const media::TimeUnit& aTime) const;
 
   // Reads aSize bytes into aBuffer from the source starting at aOffset.

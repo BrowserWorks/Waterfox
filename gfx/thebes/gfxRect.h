@@ -12,13 +12,8 @@
 #include "nsRect.h"
 #include "mozilla/gfx/BaseMargin.h"
 #include "mozilla/gfx/BaseRect.h"
+#include "mozilla/gfx/MatrixFwd.h"
 #include "mozilla/Assertions.h"
-
-namespace mozilla {
-namespace gfx {
-class Matrix4x4;
-} // namepsace gfx
-} // namespace mozilla
 
 struct gfxQuad;
 
@@ -71,8 +66,6 @@ struct gfxRect :
         Super(aPos, aSize) {}
     gfxRect(gfxFloat aX, gfxFloat aY, gfxFloat aWidth, gfxFloat aHeight) :
         Super(aX, aY, aWidth, aHeight) {}
-    MOZ_IMPLICIT gfxRect(const mozilla::gfx::IntRect& aRect) :
-        Super(aRect.x, aRect.y, aRect.width, aRect.height) {}
 
     /**
      * Return true if all components of this rect are within

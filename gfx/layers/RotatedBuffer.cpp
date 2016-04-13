@@ -109,7 +109,7 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
       aOperator == CompositionOp::OP_SOURCE) {
     aOperator = CompositionOp::OP_OVER;
     if (snapshot->GetFormat() == SurfaceFormat::B8G8R8A8) {
-      aTarget->ClearRect(ToRect(fillRect));
+      aTarget->ClearRect(IntRectToRect(fillRect));
     }
   }
 
@@ -119,7 +119,7 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
   // We also need this clip in the case where we have a mask, since the mask surface
   // might cover more than fillRect, but we only want to touch the pixels inside
   // fillRect.
-  aTarget->PushClipRect(gfx::ToRect(fillRect));
+  aTarget->PushClipRect(IntRectToRect(fillRect));
 
   if (aMask) {
     Matrix oldTransform = aTarget->GetTransform();
@@ -149,7 +149,7 @@ RotatedBuffer::DrawBufferQuadrant(gfx::DrawTarget* aTarget,
 #else
     DrawSurfaceOptions options;
 #endif
-    aTarget->DrawSurface(snapshot, ToRect(fillRect),
+    aTarget->DrawSurface(snapshot, IntRectToRect(fillRect),
                          GetSourceRectangle(aXSide, aYSide),
                          options,
                          DrawOptions(aOpacity, aOperator));
@@ -221,14 +221,14 @@ RotatedContentBuffer::DrawTo(PaintedLayer* aLayer,
   // Also clip to the visible region if we're told to.
   if (!aLayer->GetValidRegion().Contains(BufferRect()) ||
       (ToData(aLayer)->GetClipToVisibleRegion() &&
-       !aLayer->GetVisibleRegion().Contains(BufferRect())) ||
-      IsClippingCheap(aTarget, aLayer->GetEffectiveVisibleRegion())) {
+       !aLayer->GetVisibleRegion().ToUnknownRegion().Contains(BufferRect())) ||
+      IsClippingCheap(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion())) {
     // We don't want to draw invalid stuff, so we need to clip. Might as
     // well clip to the smallest area possible --- the visible region.
     // Bug 599189 if there is a non-integer-translation transform in aTarget,
     // we might sample pixels outside GetEffectiveVisibleRegion(), which is wrong
     // and may cause gray lines.
-    gfxUtils::ClipToRegion(aTarget, aLayer->GetEffectiveVisibleRegion());
+    gfxUtils::ClipToRegion(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion());
     clipped = true;
   }
 
@@ -454,7 +454,7 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
 
   while (true) {
     mode = aLayer->GetSurfaceMode();
-    neededRegion = aLayer->GetVisibleRegion();
+    neededRegion = aLayer->GetVisibleRegion().ToUnknownRegion();
     canReuseBuffer &= BufferSizeOkFor(neededRegion.GetBounds().Size());
     result.mContentType = layerContentType;
 

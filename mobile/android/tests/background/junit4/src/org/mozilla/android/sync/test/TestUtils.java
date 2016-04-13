@@ -3,22 +3,22 @@
 
 package org.mozilla.android.sync.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mozilla.gecko.background.testhelpers.TestRunner;
+import org.mozilla.gecko.sync.SyncConstants;
+import org.mozilla.gecko.sync.Utils;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mozilla.gecko.sync.SyncConstants;
-import org.mozilla.gecko.sync.Utils;
-import org.robolectric.RobolectricGradleTestRunner;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-@RunWith(RobolectricGradleTestRunner.class)
+@RunWith(TestRunner.class)
 public class TestUtils extends Utils {
 
   @Test
@@ -150,13 +150,5 @@ public class TestUtils extends Utils {
   public void testObfuscateEmail() {
     assertEquals("XXX@XXX.XXX", Utils.obfuscateEmail("foo@bar.com"));
     assertEquals("XXXX@XXX.XXXX.XX", Utils.obfuscateEmail("foot@bar.test.ca"));
-  }
-
-  @Test
-  public void testNodeWeaveURL() throws Exception {
-    Assert.assertEquals("http://userapi.com/endpoint/user/1.0/username/node/weave", Utils.nodeWeaveURL("http://userapi.com/endpoint", "username"));
-    Assert.assertEquals("http://userapi.com/endpoint/user/1.0/username/node/weave", Utils.nodeWeaveURL("http://userapi.com/endpoint/", "username"));
-    Assert.assertEquals(SyncConstants.DEFAULT_AUTH_SERVER + "user/1.0/username/node/weave", Utils.nodeWeaveURL(null, "username"));
-    Assert.assertEquals(SyncConstants.DEFAULT_AUTH_SERVER + "user/1.0/username2/node/weave", Utils.nodeWeaveURL(null, "username2"));
   }
 }

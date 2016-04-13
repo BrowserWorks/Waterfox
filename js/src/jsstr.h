@@ -9,13 +9,13 @@
 
 #include "mozilla/HashFunctions.h"
 #include "mozilla/PodOperations.h"
-#include "mozilla/UniquePtr.h"
 
 #include "jsutil.h"
 #include "NamespaceImports.h"
 
 #include "gc/Rooting.h"
 #include "js/RootingAPI.h"
+#include "js/UniquePtr.h"
 #include "vm/Printer.h"
 #include "vm/Unicode.h"
 
@@ -123,15 +123,20 @@ InitStringClass(JSContext* cx, HandleObject obj);
 extern const char*
 ValueToPrintable(JSContext* cx, const Value&, JSAutoByteString* bytes, bool asSource = false);
 
-extern mozilla::UniquePtr<char[], JS::FreePolicy>
+extern UniqueChars
 DuplicateString(ExclusiveContext* cx, const char* s);
 
-extern mozilla::UniquePtr<char16_t[], JS::FreePolicy>
+extern UniqueTwoByteChars
 DuplicateString(ExclusiveContext* cx, const char16_t* s);
 
-// This variant does not report OOMs, you must arrange for OOMs to be reported
-// yourself.
-extern mozilla::UniquePtr<char16_t[], JS::FreePolicy>
+/*
+ * These variants do not report OOMs, you must arrange for OOMs to be reported
+ * yourself.
+ */
+extern UniqueChars
+DuplicateString(const char* s);
+
+extern UniqueTwoByteChars
 DuplicateString(const char16_t* s);
 
 /*
@@ -436,6 +441,10 @@ str_split(JSContext* cx, unsigned argc, Value* vp);
 
 JSObject*
 str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, HandleString sep);
+
+JSString *
+str_flat_replace_string(JSContext *cx, HandleString string, HandleString pattern,
+                        HandleString replacement);
 
 JSString*
 str_replace_string_raw(JSContext* cx, HandleString string, HandleString pattern,

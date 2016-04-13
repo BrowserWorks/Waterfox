@@ -236,7 +236,7 @@ function sendMmsWithFailure(aMmsParameters, aSendParameters) {
 /**
  * Retrieve message by message id.
  *
- * Fulfill params: MozSmsMessage
+ * Fulfill params: SmsMessage
  * Reject params:
  *   event -- a DOMEvent
  *
@@ -481,7 +481,7 @@ function sendTextSmsToEmulator(aFrom, aText) {
 /**
  * Send simple text SMS to emulator and wait for a received event.
  *
- * Fulfill params: MozSmsMessage
+ * Fulfill params: SmsMessage
  * Reject params: (none)
  *
  * @param aFrom
@@ -662,4 +662,61 @@ function runIfMultiSIM(aTest) {
     log("Not a Multi-SIM environment. Test is skipped.");
     return Promise.resolve();
   }
+}
+
+/**
+ * Helper to enable/disable connection radio state.
+ *
+ * @param  aConnection
+ *         connection to enable / disable
+ * @param  aEnabled
+ *         True to enable the radio.
+ * @return a Promise object.
+ */
+function setRadioEnabled(aConnection, aEnabled) {
+  log("setRadioEnabled to " + aEnabled);
+
+  let deferred = Promise.defer();
+  let finalState = (aEnabled) ? "enabled" : "disabled";
+  if (aConnection.radioState == finalState) {
+    return deferred.resolve(aConnection);
+  }
+
+  aConnection.onradiostatechange = function() {
+    log("Received 'radiostatechange', radioState: " + aConnection.radioState);
+
+    if (aConnection.radioState == finalState) {
+      deferred.resolve(aConnection);
+      aConnection.onradiostatechange = null;
+    }
+  };
+
+  let req = aConnection.setRadioEnabled(aEnabled);
+
+  req.onsuccess = function() {
+    log("setRadioEnabled success");
+  };
+
+  req.onerror = function() {
+    ok(false, "setRadioEnabled should not fail");
+    deferred.reject();
+  };
+
+  return deferred.promise;
+}
+
+/**
+ * Helper to enable/disable all connections radio state.
+ *
+ * @param  aEnabled
+ *         True to enable the radio.
+ * @return a Promise object.
+ */
+function setAllRadioEnabled(aEnabled) {
+  let promises = []
+  for (let i = 0; i < window.navigator.mozMobileConnections.length; ++i) {
+    promises.push(ensureMobileConnection(i)
+      .then((connection) => setRadioEnabled(connection, aEnabled)));
+  }
+  return Promise.all(promises);
 }

@@ -14,7 +14,6 @@
 #include "js/Value.h"
 #include "vm/ScopeObject.h"
 #include "vm/SharedArrayObject.h"
-#include "vm/SharedTypedArrayObject.h"
 #include "vm/Symbol.h"
 
 namespace js {
@@ -163,6 +162,7 @@ template struct MovableCellHasher<JSObject*>;
 template struct MovableCellHasher<GlobalObject*>;
 template struct MovableCellHasher<SavedFrame*>;
 template struct MovableCellHasher<ScopeObject*>;
+template struct MovableCellHasher<JSScript*>;
 
 } // namespace js
 

@@ -3,6 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "DriverCrashGuard.h"
+#include "gfxEnv.h"
 #include "gfxPrefs.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
@@ -71,8 +72,7 @@ DriverCrashGuard::Initialize()
   }
 
   // Check to see if all guards have been disabled through the environment.
-  static bool sAllGuardsDisabled = !!PR_GetEnv("MOZ_DISABLE_CRASH_GUARD");
-  if (sAllGuardsDisabled) {
+  if (gfxEnv::DisableCrashGuard()) {
     return;
   }
 
@@ -491,6 +491,13 @@ GLContextCrashGuard::Initialize()
     return;
   }
 
+#if defined(MOZ_WIDGET_ANDROID)
+  // Disable the WebGL crash guard on Android - it doesn't use E10S, and
+  // its drivers will essentially never change, so the crash guard could
+  // permanently disable WebGL.
+  return;
+#endif
+
   DriverCrashGuard::Initialize();
 }
 
@@ -525,13 +532,13 @@ GLContextCrashGuard::UpdateEnvironment()
 void
 GLContextCrashGuard::LogCrashRecovery()
 {
-  gfxCriticalNote << "GLContext just crashed and is now disabled.";
+  gfxCriticalNote << "GLContext just crashed.";
 }
 
 void
 GLContextCrashGuard::LogFeatureDisabled()
 {
-  gfxCriticalNote << "GLContext is disabled due to a previous crash.";
+  gfxCriticalNote << "GLContext remains enabled despite a previous crash.";
 }
 
 } // namespace gfx

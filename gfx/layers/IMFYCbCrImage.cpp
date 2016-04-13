@@ -15,7 +15,7 @@ namespace mozilla {
 namespace layers {
 
 IMFYCbCrImage::IMFYCbCrImage(IMFMediaBuffer* aBuffer, IMF2DBuffer* a2DBuffer)
-  : PlanarYCbCrImage(nullptr)
+  : RecyclingPlanarYCbCrImage(nullptr)
   , mBuffer(aBuffer)
   , m2DBuffer(a2DBuffer)
 {}
@@ -37,7 +37,7 @@ struct AutoLockTexture
     aTexture->QueryInterface((IDXGIKeyedMutex**)getter_AddRefs(mMutex));
     HRESULT hr = mMutex->AcquireSync(0, 10000);
     if (hr == WAIT_TIMEOUT) {
-      MOZ_CRASH();
+      MOZ_CRASH("GFX: IMFYCbCrImage timeout");
     }
 
     if (FAILED(hr)) {
@@ -204,17 +204,15 @@ IMFYCbCrImage::GetD3D9TextureClient(CompositableClient* aClient)
     return nullptr;
   }
 
-  mTextureClient = DXGIYCbCrTextureClient::Create(aClient->GetForwarder(),
-                                                  TextureFlags::DEFAULT,
-                                                  textureY,
-                                                  textureCb,
-                                                  textureCr,
-                                                  shareHandleY,
-                                                  shareHandleCb,
-                                                  shareHandleCr,
-                                                  GetSize(),
-                                                  mData.mYSize,
-                                                  mData.mCbCrSize);
+  mTextureClient = TextureClient::CreateWithData(
+    DXGIYCbCrTextureData::Create(aClient->GetForwarder(),
+                                 TextureFlags::DEFAULT,
+                                 textureY, textureCb, textureCr,
+                                 shareHandleY, shareHandleCb, shareHandleCr,
+                                 GetSize(), mData.mYSize, mData.mCbCrSize),
+    TextureFlags::DEFAULT,
+    aClient->GetForwarder()
+  );
 
   return mTextureClient;
 }
@@ -222,6 +220,10 @@ IMFYCbCrImage::GetD3D9TextureClient(CompositableClient* aClient)
 TextureClient*
 IMFYCbCrImage::GetTextureClient(CompositableClient* aClient)
 {
+  if (mTextureClient) {
+    return mTextureClient;
+  }
+
   LayersBackend backend = aClient->GetForwarder()->GetCompositorBackendType();
   ID3D11Device* device = gfxWindowsPlatform::GetPlatform()->GetD3D11ImageBridgeDevice();
 
@@ -231,10 +233,6 @@ IMFYCbCrImage::GetTextureClient(CompositableClient* aClient)
       return GetD3D9TextureClient(aClient);
     }
     return nullptr;
-  }
-
-  if (mTextureClient) {
-    return mTextureClient;
   }
 
   RefPtr<ID3D11DeviceContext> ctx;
@@ -273,14 +271,14 @@ IMFYCbCrImage::GetTextureClient(CompositableClient* aClient)
                            mData.mCbCrStride, mData.mCbCrStride * mData.mCbCrSize.height);
   }
 
-  mTextureClient = DXGIYCbCrTextureClient::Create(aClient->GetForwarder(),
-                                                  TextureFlags::DEFAULT,
-                                                  textureY,
-                                                  textureCb,
-                                                  textureCr,
-                                                  GetSize(),
-                                                  mData.mYSize,
-                                                  mData.mCbCrSize);
+  mTextureClient = TextureClient::CreateWithData(
+    DXGIYCbCrTextureData::Create(aClient->GetForwarder(),
+                                 TextureFlags::DEFAULT,
+                                 textureY, textureCb, textureCr,
+                                 GetSize(), mData.mYSize, mData.mCbCrSize),
+    TextureFlags::DEFAULT,
+    aClient->GetForwarder()
+  );
 
   return mTextureClient;
 }

@@ -58,7 +58,7 @@ UserSpaceMetricsForFrame(nsIFrame* aFrame)
 
 nsresult
 nsFilterInstance::PaintFilteredFrame(nsIFrame *aFilteredFrame,
-                                     gfxContext& aContext,
+                                     DrawTarget* aDrawTarget,
                                      const gfxMatrix& aTransform,
                                      nsSVGFilterPaintCallback *aPaintCallback,
                                      const nsRegion *aDirtyArea)
@@ -71,7 +71,7 @@ nsFilterInstance::PaintFilteredFrame(nsIFrame *aFilteredFrame,
   if (!instance.IsInitialized()) {
     return NS_OK;
   }
-  return instance.Render(&aContext);
+  return instance.Render(aDrawTarget);
 }
 
 nsRegion
@@ -376,7 +376,7 @@ nsFilterInstance::BuildSourcePaint(SourceInfo *aSource,
       nsSVGUtils::MakeStrokePatternFor(mTargetFrame, gfx, &pattern);
     }
     if (pattern.GetPattern()) {
-      offscreenDT->FillRect(ToRect(FilterSpaceToUserSpace(neededRect)),
+      offscreenDT->FillRect(ToRect(FilterSpaceToUserSpace(ThebesRect(neededRect))),
                             pattern);
     }
     gfx->Restore();
@@ -422,7 +422,7 @@ nsFilterInstance::BuildSourceImage(DrawTarget* aTargetDT)
     return NS_ERROR_OUT_OF_MEMORY;
   }
 
-  gfxRect r = FilterSpaceToUserSpace(neededRect);
+  gfxRect r = FilterSpaceToUserSpace(ThebesRect(neededRect));
   r.RoundOut();
   nsIntRect dirty;
   if (!gfxUtils::GfxRectToIntRect(r, &dirty))
@@ -457,34 +457,34 @@ nsFilterInstance::BuildSourceImage(DrawTarget* aTargetDT)
 }
 
 nsresult
-nsFilterInstance::Render(gfxContext* aContext)
+nsFilterInstance::Render(DrawTarget* aDrawTarget)
 {
   MOZ_ASSERT(mTargetFrame, "Need a frame for rendering");
 
-  nsIntRect filterRect = mPostFilterDirtyRegion.GetBounds().Intersect(OutputFilterSpaceBounds());
+  nsIntRect filterRect =
+    mPostFilterDirtyRegion.GetBounds().Intersect(OutputFilterSpaceBounds());
   gfxMatrix ctm = GetFilterSpaceToDeviceSpaceTransform();
 
   if (filterRect.IsEmpty() || ctm.IsSingular()) {
     return NS_OK;
   }
 
-  RefPtr<DrawTarget> dt = aContext->GetDrawTarget();
-
-  AutoRestoreTransform autoRestoreTransform(dt);
-  Matrix newTM = ToMatrix(ctm).PreTranslate(filterRect.x, filterRect.y) * dt->GetTransform();
-  dt->SetTransform(newTM);
+  AutoRestoreTransform autoRestoreTransform(aDrawTarget);
+  Matrix newTM = ToMatrix(ctm).PreTranslate(filterRect.x, filterRect.y) *
+                 aDrawTarget->GetTransform();
+  aDrawTarget->SetTransform(newTM);
 
   ComputeNeededBoxes();
 
-  nsresult rv = BuildSourceImage(dt);
+  nsresult rv = BuildSourceImage(aDrawTarget);
   if (NS_FAILED(rv))
     return rv;
-  rv = BuildSourcePaints(dt);
+  rv = BuildSourcePaints(aDrawTarget);
   if (NS_FAILED(rv))
     return rv;
 
   FilterSupport::RenderFilterDescription(
-    dt, mFilterDescription, ToRect(filterRect),
+    aDrawTarget, mFilterDescription, IntRectToRect(filterRect),
     mSourceGraphic.mSourceSurface, mSourceGraphic.mSurfaceRect,
     mFillPaint.mSourceSurface, mFillPaint.mSurfaceRect,
     mStrokePaint.mSourceSurface, mStrokePaint.mSurfaceRect,

@@ -4,9 +4,9 @@
 // Test that the HeapAnalyses{Client,Worker} can get a HeapSnapshot's
 // creation time.
 
-function waitForTenMilliseconds() {
+function waitForThirtyMilliseconds() {
   const start = Date.now();
-  while (Date.now() - start < 10) ;
+  while (Date.now() - start < 30) ;
 }
 
 function run_test() {
@@ -23,23 +23,34 @@ add_task(function* () {
   const start = Date.now() * 1000;
 
   // Because Date.now() is less precise than the snapshot's time stamp, give it
-  // a little bit of head room.
-  waitForTenMilliseconds();
+  // a little bit of head room. Additionally, WinXP's timers have a granularity
+  // of only +/-15 ms.
+  waitForThirtyMilliseconds();
   const snapshotFilePath = saveNewHeapSnapshot();
-  waitForTenMilliseconds();
+  waitForThirtyMilliseconds();
   const end = Date.now() * 1000;
 
   yield client.readHeapSnapshot(snapshotFilePath);
   ok(true, "Should have read the heap snapshot");
 
-  let time = yield client.getCreationTime("/not/a/real/path", {
-    breakdown: BREAKDOWN
-  });
-  equal(time, null, "getCreationTime returns `null` when snapshot does not exist");
+  let threw = false;
+  try {
+    yield client.getCreationTime("/not/a/real/path", {
+      breakdown: BREAKDOWN
+    });
+  } catch (_) {
+    threw = true;
+  }
+  ok(threw, "getCreationTime should throw when snapshot does not exist");
 
-  time = yield client.getCreationTime(snapshotFilePath, {
+  let time = yield client.getCreationTime(snapshotFilePath, {
     breakdown: BREAKDOWN
   });
+
+  dumpn("Start = " + start);
+  dumpn("End   = " + end);
+  dumpn("Time  = " + time);
+
   ok(time >= start, "creation time occurred after start");
   ok(time <= end, "creation time occurred before end");
 

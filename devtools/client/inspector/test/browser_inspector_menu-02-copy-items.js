@@ -5,7 +5,7 @@ http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Test that the various copy items in the context menu works correctly.
 
-const TEST_URL = TEST_URL_ROOT + "doc_inspector_menu.html";
+const TEST_URL = URL_ROOT + "doc_inspector_menu.html";
 const COPY_ITEMS_TEST_DATA = [
   {
     desc: "copy inner html",
@@ -34,7 +34,7 @@ const COPY_ITEMS_TEST_DATA = [
   },
 ];
 
-add_task(function *() {
+add_task(function*() {
   let { inspector } = yield openInspectorForURL(TEST_URL);
   for (let {desc, id, selector, text} of COPY_ITEMS_TEST_DATA) {
     info("Testing " + desc);
@@ -43,9 +43,6 @@ add_task(function *() {
     let item = inspector.panelDoc.getElementById(id);
     ok(item, "The popup has a " + desc + " menu item.");
 
-    let deferred = promise.defer();
-    waitForClipboard(text, () => item.doCommand(),
-                     deferred.resolve, deferred.reject);
-    yield deferred.promise;
+    yield waitForClipboard(() => item.doCommand(), text);
   }
 });

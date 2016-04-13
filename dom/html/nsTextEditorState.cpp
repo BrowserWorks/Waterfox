@@ -252,9 +252,6 @@ public:
   NS_IMETHOD CheckVisibility(nsIDOMNode *node, int16_t startOffset, int16_t EndOffset, bool* _retval) override;
   virtual nsresult CheckVisibilityContent(nsIContent* aNode, int16_t aStartOffset, int16_t aEndOffset, bool* aRetval) override;
 
-  NS_IMETHOD GetSelectionCaretsVisibility(bool* aOutVisibility) override;
-  NS_IMETHOD SetSelectionCaretsVisibility(bool aVisibility) override;
-
 private:
   RefPtr<nsFrameSelection> mFrameSelection;
   nsCOMPtr<nsIContent>       mLimiter;
@@ -648,36 +645,6 @@ nsTextInputSelectionImpl::CheckVisibility(nsIDOMNode *node, int16_t startOffset,
   }
   return NS_ERROR_FAILURE;
 
-}
-
-NS_IMETHODIMP
-nsTextInputSelectionImpl::GetSelectionCaretsVisibility(bool* aOutVisibility)
-{
-  if (!mPresShellWeak) {
-    return NS_ERROR_NOT_INITIALIZED;
-  }
-
-  nsresult result;
-  nsCOMPtr<nsISelectionController> shell = do_QueryReferent(mPresShellWeak, &result);
-  if (shell) {
-    return shell->GetSelectionCaretsVisibility(aOutVisibility);
-  }
-  return NS_ERROR_FAILURE;
-}
-
-NS_IMETHODIMP
-nsTextInputSelectionImpl::SetSelectionCaretsVisibility(bool aVisibility)
-{
-  if (!mPresShellWeak) {
-    return NS_ERROR_NOT_INITIALIZED;
-  }
-
-  nsresult result;
-  nsCOMPtr<nsISelectionController> shell = do_QueryReferent(mPresShellWeak, &result);
-  if (shell) {
-    return shell->SetSelectionCaretsVisibility(aVisibility);
-  }
-  return NS_ERROR_FAILURE;
 }
 
 nsresult
@@ -1934,7 +1901,7 @@ nsTextEditorState::GetValue(nsAString& aValue, bool aIgnoreWrap) const
     if (!mTextCtrlElement->ValueChanged() || !mValue) {
       mTextCtrlElement->GetDefaultValueFromContent(aValue);
     } else {
-      aValue = NS_ConvertUTF8toUTF16(*mValue);
+      aValue = *mValue;
     }
   }
 }
@@ -1966,6 +1933,21 @@ nsTextEditorState::SetValue(const nsAString& aValue, uint32_t aFlags)
         // we should skip to set the new value to the editor here.  It should
         // be set later with the updated mValueBeingSet.
         return true;
+      }
+      if (NS_WARN_IF(!mBoundFrame)) {
+        // We're not sure if this case is possible.
+      } else {
+        // If setting value won't change current value, we shouldn't commit
+        // composition for compatibility with the other browsers.
+        nsAutoString currentValue;
+        mBoundFrame->GetText(currentValue);
+        if (newValue == currentValue) {
+          // Note that in this case, we shouldn't fire any events with setting
+          // value because event handlers may try to set value recursively but
+          // we cannot commit composition at that time due to unsafe to run
+          // script (see below).
+          return true;
+        }
       }
       // If there is composition, need to commit composition first because
       // other browsers do that.
@@ -2140,7 +2122,7 @@ nsTextEditorState::SetValue(const nsAString& aValue, uint32_t aFlags)
     }
   } else {
     if (!mValue) {
-      mValue = new nsCString;
+      mValue.emplace();
     }
     nsString value;
     if (!value.Assign(newValue, fallible)) {
@@ -2149,7 +2131,7 @@ nsTextEditorState::SetValue(const nsAString& aValue, uint32_t aFlags)
     if (!nsContentUtils::PlatformToDOMLineBreaks(value, fallible)) {
       return false;
     }
-    if (!CopyUTF16toUTF8(value, *mValue, fallible)) {
+    if (!mValue->Assign(value, fallible)) {
       return false;
     }
 

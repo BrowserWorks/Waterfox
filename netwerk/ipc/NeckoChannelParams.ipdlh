@@ -12,6 +12,7 @@ include URIParams;
 include InputStreamParams;
 include PBackgroundSharedTypes;
 
+using mozilla::NeckoOriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 using struct mozilla::void_t from "ipc/IPCMessageUtils.h";
 using RequestHeaderTuples from "mozilla/net/PHttpChannelParams.h";
 using struct nsHttpAtom from "nsHttp.h";
@@ -30,14 +31,20 @@ struct LoadInfoArgs
   PrincipalInfo    triggeringPrincipalInfo;
   uint32_t         securityFlags;
   uint32_t         contentPolicyType;
+  uint32_t         tainting;
   bool             upgradeInsecureRequests;
   uint64_t         innerWindowID;
   uint64_t         outerWindowID;
   uint64_t         parentOuterWindowID;
   bool             enforceSecurity;
   bool             initialSecurityCheckDone;
-  OriginAttributes originAttributes;
+  bool             isInThirdPartyContext;
+  NeckoOriginAttributes originAttributes;
+  PrincipalInfo[]  redirectChainIncludingInternalRedirects;
   PrincipalInfo[]  redirectChain;
+  nsCString[]      corsUnsafeHeaders;
+  bool             forcePreflight;
+  bool             isPreflight;
 };
 
 /**
@@ -61,8 +68,6 @@ union OptionalHttpResponseHead
 
 struct CorsPreflightArgs
 {
-  bool          withCredentials;
-  PrincipalInfo preflightPrincipal;
   nsCString[]   unsafeHeaders;
 };
 
@@ -110,6 +115,9 @@ struct HttpChannelOpenArgs
   nsCString                   schedulingContextID;
   OptionalCorsPreflightArgs   preflightArgs;
   uint32_t                    initialRwin;
+  bool                        blockAuthPrompt;
+  bool                        suspendAfterSynthesizeResponse;
+  bool                        allowStaleCacheContent;
 };
 
 struct HttpChannelConnectArgs

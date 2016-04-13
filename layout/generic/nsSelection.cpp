@@ -51,11 +51,7 @@ static NS_DEFINE_CID(kFrameTraversalCID, NS_FRAMETRAVERSAL_CID);
 #include "nsPresContext.h"
 #include "nsIPresShell.h"
 #include "nsCaret.h"
-#include "TouchCaret.h"
-#include "SelectionCarets.h"
-
 #include "AccessibleCaretEventHub.h"
-#include "AccessibleCaretManager.h"
 
 #include "mozilla/MouseEvents.h"
 #include "mozilla/TextEvents.h"
@@ -265,43 +261,41 @@ GetIndexFromSelectionType(SelectionType aType)
 {
     switch (aType)
     {
-    case nsISelectionController::SELECTION_NORMAL: return 0; break;
-    case nsISelectionController::SELECTION_SPELLCHECK: return 1; break;
-    case nsISelectionController::SELECTION_IME_RAWINPUT: return 2; break;
-    case nsISelectionController::SELECTION_IME_SELECTEDRAWTEXT: return 3; break;
-    case nsISelectionController::SELECTION_IME_CONVERTEDTEXT: return 4; break;
-    case nsISelectionController::SELECTION_IME_SELECTEDCONVERTEDTEXT: return 5; break;
-    case nsISelectionController::SELECTION_ACCESSIBILITY: return 6; break;
-    case nsISelectionController::SELECTION_FIND: return 7; break;
-    case nsISelectionController::SELECTION_URLSECONDARY: return 8; break;
-    case nsISelectionController::SELECTION_URLSTRIKEOUT: return 9; break;
+    case nsISelectionController::SELECTION_NORMAL: return 0;
+    case nsISelectionController::SELECTION_SPELLCHECK: return 1;
+    case nsISelectionController::SELECTION_IME_RAWINPUT: return 2;
+    case nsISelectionController::SELECTION_IME_SELECTEDRAWTEXT: return 3;
+    case nsISelectionController::SELECTION_IME_CONVERTEDTEXT: return 4;
+    case nsISelectionController::SELECTION_IME_SELECTEDCONVERTEDTEXT: return 5;
+    case nsISelectionController::SELECTION_ACCESSIBILITY: return 6;
+    case nsISelectionController::SELECTION_FIND: return 7;
+    case nsISelectionController::SELECTION_URLSECONDARY: return 8;
+    case nsISelectionController::SELECTION_URLSTRIKEOUT: return 9;
     default:
-      return -1; break;
+      return -1;
     }
     /* NOTREACHED */
-    return 0;
 }
 
-static SelectionType 
+static SelectionType
 GetSelectionTypeFromIndex(int8_t aIndex)
 {
   switch (aIndex)
   {
-    case 0: return nsISelectionController::SELECTION_NORMAL; break;
-    case 1: return nsISelectionController::SELECTION_SPELLCHECK; break;
-    case 2: return nsISelectionController::SELECTION_IME_RAWINPUT; break;
-    case 3: return nsISelectionController::SELECTION_IME_SELECTEDRAWTEXT; break;
-    case 4: return nsISelectionController::SELECTION_IME_CONVERTEDTEXT; break;
-    case 5: return nsISelectionController::SELECTION_IME_SELECTEDCONVERTEDTEXT; break;
-    case 6: return nsISelectionController::SELECTION_ACCESSIBILITY; break;
-    case 7: return nsISelectionController::SELECTION_FIND; break;
-    case 8: return nsISelectionController::SELECTION_URLSECONDARY; break;
-    case 9: return nsISelectionController::SELECTION_URLSTRIKEOUT; break;
+    case 0: return nsISelectionController::SELECTION_NORMAL;
+    case 1: return nsISelectionController::SELECTION_SPELLCHECK;
+    case 2: return nsISelectionController::SELECTION_IME_RAWINPUT;
+    case 3: return nsISelectionController::SELECTION_IME_SELECTEDRAWTEXT;
+    case 4: return nsISelectionController::SELECTION_IME_CONVERTEDTEXT;
+    case 5: return nsISelectionController::SELECTION_IME_SELECTEDCONVERTEDTEXT;
+    case 6: return nsISelectionController::SELECTION_ACCESSIBILITY;
+    case 7: return nsISelectionController::SELECTION_FIND;
+    case 8: return nsISelectionController::SELECTION_URLSECONDARY;
+    case 9: return nsISelectionController::SELECTION_URLSTRIKEOUT;
     default:
-      return nsISelectionController::SELECTION_NORMAL; break;
+      return nsISelectionController::SELECTION_NORMAL;
   }
   /* NOTREACHED */
-  return 0;
 }
 
 /*
@@ -824,24 +818,6 @@ nsFrameSelection::Init(nsIPresShell *aShell, nsIContent *aLimiter)
 
     Preferences::AddBoolVarCache(&sSelectionEventsEnabled,
                                  "dom.select_events.enabled", false);
-  }
-
-  // Set touch caret as selection listener
-  RefPtr<TouchCaret> touchCaret = mShell->GetTouchCaret();
-  if (touchCaret) {
-    int8_t index = GetIndexFromSelectionType(nsISelectionController::SELECTION_NORMAL);
-    if (mDomSelections[index]) {
-      mDomSelections[index]->AddSelectionListener(touchCaret);
-    }
-  }
-
-  // Set selection caret as selection listener
-  RefPtr<SelectionCarets> selectionCarets = mShell->GetSelectionCarets();
-  if (selectionCarets) {
-    int8_t index = GetIndexFromSelectionType(nsISelectionController::SELECTION_NORMAL);
-    if (mDomSelections[index]) {
-      mDomSelections[index]->AddSelectionListener(selectionCarets);
-    }
   }
 
   RefPtr<AccessibleCaretEventHub> eventHub = mShell->GetAccessibleCaretEventHub();
@@ -2153,6 +2129,13 @@ nsFrameSelection::PhysicalMove(int16_t aDirection, int16_t aAmount,
       rv = MoveCaret(mapping.direction, aExtend, mapping.amounts[aAmount + 1],
                      eVisual);
     }
+    // And if it was a next-word move that failed (which can happen when
+    // eat_space_to_next_word is true, see bug 1153237), then just move forward
+    // to the line-edge.
+    else if (mapping.amounts[aAmount] == eSelectWord &&
+             mapping.direction == eDirNext) {
+      rv = MoveCaret(eDirNext, aExtend, eSelectEndLine, eVisual);
+    }
   }
 
   return rv;
@@ -2245,11 +2228,14 @@ nsFrameSelection::StartBatchChanges()
 }
 
 void
-nsFrameSelection::EndBatchChanges()
+nsFrameSelection::EndBatchChanges(int16_t aReason)
 {
   mBatching--;
   NS_ASSERTION(mBatching >=0,"Bad mBatching");
-  if (mBatching == 0 && mChangesDuringBatching){
+
+  if (mBatching == 0 && mChangesDuringBatching) {
+    int16_t postReason = PopReason() | aReason;
+    PostReason(postReason);
     mChangesDuringBatching = false;
     NotifySelectionListeners(nsISelectionController::SELECTION_NORMAL);
   }
@@ -2790,14 +2776,14 @@ nsFrameSelection::AddCellsToSelection(nsIContent *aTableContent,
         col ++;
       else
         col--;
-    };
+    }
     if (row == aEndRowIndex) break;
 
     if (aStartRowIndex < aEndRowIndex)
       row++;
     else
       row--;
-  };
+  }
   return result;
 }
 
@@ -3290,19 +3276,6 @@ nsFrameSelection::SetDelayedCaretData(WidgetMouseEvent* aMouseEvent)
 void
 nsFrameSelection::DisconnectFromPresShell()
 {
-  // Remove touch caret as selection listener
-  RefPtr<TouchCaret> touchCaret = mShell->GetTouchCaret();
-  if (touchCaret) {
-    int8_t index = GetIndexFromSelectionType(nsISelectionController::SELECTION_NORMAL);
-    mDomSelections[index]->RemoveSelectionListener(touchCaret);
-  }
-
-  RefPtr<SelectionCarets> selectionCarets = mShell->GetSelectionCarets();
-  if (selectionCarets) {
-    int8_t index = GetIndexFromSelectionType(nsISelectionController::SELECTION_NORMAL);
-    mDomSelections[index]->RemoveSelectionListener(selectionCarets);
-  }
-
   RefPtr<AccessibleCaretEventHub> eventHub = mShell->GetAccessibleCaretEventHub();
   if (eventHub) {
     int8_t index = GetIndexFromSelectionType(nsISelectionController::SELECTION_NORMAL);
@@ -5669,7 +5642,6 @@ Selection::GetSelectionAnchorGeometry(SelectionRegion aRegion, nsRect* aRect)
     case nsISelectionController::SELECTION_ANCHOR_REGION:
     case nsISelectionController::SELECTION_FOCUS_REGION:
       return GetSelectionEndPointGeometry(aRegion, aRect);
-      break;
     case nsISelectionController::SELECTION_WHOLE_SELECTION:
       break;
     default:
@@ -5998,9 +5970,15 @@ Selection::StartBatchChanges()
 NS_IMETHODIMP
 Selection::EndBatchChanges()
 {
-  if (mFrameSelection)
-    mFrameSelection->EndBatchChanges();
+  return EndBatchChangesInternal();
+}
 
+nsresult
+Selection::EndBatchChangesInternal(int16_t aReason)
+{
+  if (mFrameSelection) {
+    mFrameSelection->EndBatchChanges(aReason);
+  }
   return NS_OK;
 }
 

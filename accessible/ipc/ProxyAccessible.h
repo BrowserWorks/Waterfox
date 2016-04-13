@@ -46,6 +46,21 @@ public:
 
   uint32_t ChildrenCount() const { return mChildren.Length(); }
   ProxyAccessible* ChildAt(uint32_t aIdx) const { return mChildren[aIdx]; }
+  ProxyAccessible* FirstChild() const
+    { return mChildren.Length() ? mChildren[0] : nullptr; }
+  ProxyAccessible* LastChild() const
+    { return mChildren.Length() ? mChildren[mChildren.Length() - 1] : nullptr; }
+  ProxyAccessible* PrevSibling() const
+  {
+    size_t idx = IndexInParent();
+    return idx > 0 ? Parent()->mChildren[idx - 1] : nullptr;
+  }
+  ProxyAccessible* NextSibling() const
+  {
+    size_t idx = IndexInParent();
+    return idx < Parent()->mChildren.Length() ? Parent()->mChildren[idx + 1]
+    : nullptr;
+  }
 
   // XXX evaluate if this is fast enough.
   size_t IndexInParent() const { return Parent()->mChildren.IndexOf(this); }
@@ -129,6 +144,8 @@ public:
   nsIAtom* ARIARoleAtom() const;
 
   int32_t GetLevelInternal();
+  void ScrollTo(uint32_t aScrollType);
+  void ScrollToPoint(uint32_t aScrollType, int32_t aX, int32_t aY);
 
   int32_t CaretLineNumber();
   int32_t CaretOffset();

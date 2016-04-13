@@ -53,19 +53,6 @@ _VPATH_SRCS = $(abspath $<)
 testxpcobjdir = $(DEPTH)/_tests/xpcshell
 
 ifdef ENABLE_TESTS
-
-# Add test directories to the regular directories list. TEST_DIRS should
-# arguably have the same status as other *_DIRS variables. It is coded this way
-# until Makefiles stop using the "ifdef ENABLE_TESTS; DIRS +=" convention.
-#
-# The current developer workflow expects tests to be updated when processing
-# the default target. If we ever change this implementation, the behavior
-# should be preserved or the change should be widely communicated. A
-# consequence of not processing test dir targets during the default target is
-# that changes to tests may not be updated and code could assume to pass
-# locally against non-current test code.
-DIRS += $(TEST_DIRS)
-
 ifdef CPP_UNIT_TESTS
 ifdef COMPILE_ENVIRONMENT
 
@@ -73,7 +60,7 @@ ifdef COMPILE_ENVIRONMENT
 # through TestHarness.h, by modifying the list of includes and the libs against
 # which stuff links.
 SIMPLE_PROGRAMS += $(CPP_UNIT_TESTS)
-INCLUDES += -I$(DIST)/include/testing
+INCLUDES += -I$(ABS_DIST)/include/testing
 
 ifndef MOZ_PROFILE_GENERATE
 CPP_UNIT_TESTS_FILES = $(CPP_UNIT_TESTS)
@@ -475,6 +462,24 @@ EXTRA_DEPS += $(LD_VERSION_SCRIPT)
 endif
 endif
 
+ifdef SYMBOLS_FILE
+ifeq ($(OS_TARGET),WINNT)
+ifndef GNU_CC
+EXTRA_DSO_LDOPTS += -DEF:$(call normalizepath,$(SYMBOLS_FILE))
+else
+EXTRA_DSO_LDOPTS += $(call normalizepath,$(SYMBOLS_FILE))
+endif
+else
+ifdef GCC_USE_GNU_LD
+EXTRA_DSO_LDOPTS += -Wl,--version-script,$(SYMBOLS_FILE)
+else
+ifeq ($(OS_TARGET),Darwin)
+EXTRA_DSO_LDOPTS += -Wl,-exported_symbols_list,$(SYMBOLS_FILE)
+endif
+endif
+endif
+EXTRA_DEPS += $(SYMBOLS_FILE)
+endif
 #
 # GNU doesn't have path length limitation
 #
@@ -504,10 +509,8 @@ endif
 
 ifeq (_WINNT,$(GNU_CC)_$(OS_ARCH))
 OUTOPTION = -Fo# eol
-PREPROCESS_OPTION = -P -Fi# eol
 else
 OUTOPTION = -o # eol
-PREPROCESS_OPTION = -E -o #eol
 endif # WINNT && !GNU_CC
 
 ifneq (,$(filter ml%,$(AS)))
@@ -529,12 +532,17 @@ endif
 ifndef MOZBUILD_BACKEND_CHECKED
 ifndef MACH
 ifndef TOPLEVEL_BUILD
-$(DEPTH)/backend.RecursiveMakeBackend:
+BUILD_BACKEND_FILES := $(addprefix $(DEPTH)/backend.,$(addsuffix Backend,$(BUILD_BACKENDS)))
+$(DEPTH)/backend.%Backend:
 	$(error Build configuration changed. Build with |mach build| or run |mach build-backend| to regenerate build config)
 
-include $(DEPTH)/backend.RecursiveMakeBackend.pp
+define build_backend_rule
+$(1): $$(shell cat $(1).in)
 
-default:: $(DEPTH)/backend.RecursiveMakeBackend
+endef
+$(foreach file,$(BUILD_BACKEND_FILES),$(eval $(call build_backend_rule,$(file))))
+
+default:: $(BUILD_BACKEND_FILES)
 
 export MOZBUILD_BACKEND_CHECKED=1
 endif
@@ -904,6 +912,7 @@ $(HOST_COBJS):
 
 $(HOST_CPPOBJS):
 	$(REPORT_BUILD)
+	$(call BUILDSTATUS,OBJECT_FILE $@)
 	$(ELOG) $(HOST_CXX) $(HOST_OUTOPTION)$@ -c $(HOST_CXXFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
 
 $(HOST_CMOBJS):
@@ -947,7 +956,7 @@ ifdef MOZ_RUST
 # in the target's LIBS.
 $(RSOBJS):
 	$(REPORT_BUILD)
-	$(RUSTC) $(RUSTFLAGS) --crate-type staticlib -o $(call mk_libname,$<) $(_VPATH_SRCS)
+	$(RUSTC) $(RUSTFLAGS) --crate-type staticlib --emit dep-info=$(MDDEPDIR)/$(call mk_libname,$<).pp,link=$(call mk_libname,$<) $(_VPATH_SRCS)
 endif
 
 $(SOBJS):
@@ -956,6 +965,7 @@ $(SOBJS):
 
 $(CPPOBJS):
 	$(REPORT_BUILD)
+	$(call BUILDSTATUS,OBJECT_FILE $@)
 	@$(MAKE_DEPS_AUTO_CXX)
 	$(ELOG) $(CCC) $(OUTOPTION)$@ -c $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
@@ -1140,9 +1150,8 @@ export:: $(FINAL_TARGET)
 endif
 
 ################################################################################
-# Copy each element of PREF_JS_EXPORTS
-
-# The default location for PREF_JS_EXPORTS is the gre prefs directory.
+# The default location for prefs is the gre prefs directory.
+# PREF_DIR is used for L10N_PREF_JS_EXPORTS in various locales/ directories.
 PREF_DIR = defaults/pref
 
 # If DIST_SUBDIR is defined it indicates that app and gre dirs are
@@ -1150,16 +1159,6 @@ PREF_DIR = defaults/pref
 # PREF_DIR should point to the app prefs location.
 ifneq (,$(DIST_SUBDIR)$(XPI_NAME))
 PREF_DIR = defaults/preferences
-endif
-
-ifneq ($(PREF_JS_EXPORTS),)
-ifndef NO_DIST_INSTALL
-PREF_JS_EXPORTS_PATH := $(FINAL_TARGET)/$(PREF_DIR)
-# We preprocess these, but they don't necessarily have preprocessor directives,
-# so tell them preprocessor to not complain about that.
-PREF_JS_EXPORTS_FLAGS := $(PREF_PPFLAGS) --silence-missing-directive-warnings
-PP_TARGETS += PREF_JS_EXPORTS
-endif
 endif
 
 ################################################################################
@@ -1172,33 +1171,6 @@ AUTOCFG_JS_EXPORTS_DEST := $(FINAL_TARGET)/defaults/autoconfig
 AUTOCFG_JS_EXPORTS_TARGET := export
 INSTALL_TARGETS += AUTOCFG_JS_EXPORTS
 endif
-endif
-
-################################################################################
-# Copy each element of EXTRA_COMPONENTS to $(FINAL_TARGET)/components
-ifdef EXTRA_COMPONENTS
-misc:: $(EXTRA_COMPONENTS)
-ifndef NO_DIST_INSTALL
-EXTRA_COMPONENTS_FILES := $(EXTRA_COMPONENTS)
-EXTRA_COMPONENTS_DEST := $(FINAL_TARGET)/components
-EXTRA_COMPONENTS_TARGET := misc
-INSTALL_TARGETS += EXTRA_COMPONENTS
-endif
-
-endif
-
-ifdef EXTRA_PP_COMPONENTS
-ifndef NO_DIST_INSTALL
-EXTRA_PP_COMPONENTS_PATH := $(FINAL_TARGET)/components
-EXTRA_PP_COMPONENTS_TARGET := misc
-PP_TARGETS += EXTRA_PP_COMPONENTS
-endif
-endif
-
-EXTRA_MANIFESTS = $(filter %.manifest,$(EXTRA_COMPONENTS) $(EXTRA_PP_COMPONENTS))
-ifneq (,$(EXTRA_MANIFESTS))
-misc:: $(call mkdir_deps,$(FINAL_TARGET))
-	$(call py_action,buildlist,$(FINAL_TARGET)/chrome.manifest $(patsubst %,'manifest components/%',$(notdir $(EXTRA_MANIFESTS))))
 endif
 
 ################################################################################
@@ -1257,25 +1229,11 @@ endif
 libs realchrome:: $(FINAL_TARGET)/chrome
 	$(call py_action,jar_maker,\
 	  $(QUIET) -d $(FINAL_TARGET) \
-	  $(MAKE_JARS_FLAGS) $(DEFINES) $(ACDEFINES) $(MOZ_DEBUG_DEFINES) \
+	  $(MAKE_JARS_FLAGS) $(DEFINES) $(ACDEFINES) \
 	  $(JAR_MANIFEST))
 
 endif
 
-# This is a temporary check to ensure patches relying on the old behavior
-# of silently picking up jar.mn files continue to work.
-else # No JAR_MANIFEST
-ifneq (,$(wildcard $(srcdir)/jar.mn))
-$(error $(srcdir) contains a jar.mn file but this file is not declared in a JAR_MANIFESTS variable in a moz.build file)
-endif
-endif
-
-ifneq ($(DIST_FILES),)
-DIST_FILES_PATH := $(FINAL_TARGET)
-# We preprocess these, but they don't necessarily have preprocessor directives,
-# so tell them preprocessor to not complain about that.
-DIST_FILES_FLAGS := --silence-missing-directive-warnings
-PP_TARGETS += DIST_FILES
 endif
 
 # When you move this out of the tools tier, please remove the corresponding
@@ -1341,22 +1299,18 @@ endif
 #   it.
 
 ifneq (,$(filter-out all chrome default export realchrome clean clobber clobber_all distclean realclean,$(MAKECMDGOALS)))
-MDDEPEND_FILES		:= $(strip $(wildcard $(addprefix $(MDDEPDIR)/,$(EXTRA_MDDEPEND_FILES) $(addsuffix .pp,$(notdir $(sort $(OBJS) $(PROGOBJS) $(HOST_OBJS) $(HOST_PROGOBJS)))))))
+MDDEPEND_FILES		:= $(strip $(wildcard $(addprefix $(MDDEPDIR)/,$(addsuffix .pp,$(notdir $(sort $(OBJS) $(PROGOBJS) $(HOST_OBJS) $(HOST_PROGOBJS)))))))
 
 ifneq (,$(MDDEPEND_FILES))
-$(call include_deps,$(MDDEPEND_FILES))
+-include $(MDDEPEND_FILES)
 endif
 
 endif
 
-
-ifneq (,$(filter export,$(MAKECMDGOALS)))
-MDDEPEND_FILES		:= $(strip $(wildcard $(addprefix $(MDDEPDIR)/,$(EXTRA_EXPORT_MDDEPEND_FILES))))
+MDDEPEND_FILES		:= $(strip $(wildcard $(addprefix $(MDDEPDIR)/,$(EXTRA_MDDEPEND_FILES))))
 
 ifneq (,$(MDDEPEND_FILES))
-$(call include_deps,$(MDDEPEND_FILES))
-endif
-
+-include $(MDDEPEND_FILES)
 endif
 
 #############################################################################
@@ -1511,7 +1465,9 @@ PP_TARGETS_ALL_RESULTS := $(sort $(foreach tier,$(PP_TARGETS_TIERS),$(PP_TARGETS
 $(PP_TARGETS_ALL_RESULTS):
 	$(if $(filter-out $(notdir $@),$(notdir $(<:.in=))),$(error Looks like $@ has an unexpected dependency on $< which breaks PP_TARGETS))
 	$(RM) '$@'
-	$(call py_action,preprocessor,--depend $(MDDEPDIR)/$(@F).pp $(PP_TARGET_FLAGS) $(DEFINES) $(ACDEFINES) $(MOZ_DEBUG_DEFINES) '$<' -o '$@')
+	$(call py_action,preprocessor,--depend $(MDDEPDIR)/$(@F).pp $(PP_TARGET_FLAGS) $(DEFINES) $(ACDEFINES) '$<' -o '$@')
+
+$(filter %.css,$(PP_TARGETS_ALL_RESULTS)): PP_TARGET_FLAGS+=--marker %
 
 # The depfile is based on the filename, and we don't want conflicts. So check
 # there's only one occurrence of any given filename in PP_TARGETS_ALL_RESULTS.
@@ -1535,7 +1491,7 @@ $(foreach file,$(PP_TARGETS_ALL_RESULTS), \
 MDDEPEND_FILES := $(strip $(wildcard $(addprefix $(MDDEPDIR)/,$(addsuffix .pp,$(notdir $(PP_TARGETS_ALL_RESULTS))))))
 
 ifneq (,$(MDDEPEND_FILES))
-$(call include_deps,$(MDDEPEND_FILES))
+-include $(MDDEPEND_FILES)
 endif
 
 endif
@@ -1598,8 +1554,6 @@ FREEZE_VARIABLES = \
   DIRS \
   LIBRARY \
   MODULE \
-  EXTRA_COMPONENTS \
-  EXTRA_PP_COMPONENTS \
   $(NULL)
 
 $(foreach var,$(FREEZE_VARIABLES),$(eval $(var)_FROZEN := '$($(var))'))
@@ -1631,7 +1585,3 @@ include $(MOZILLA_DIR)/config/makefiles/autotargets.mk
 ifneq ($(NULL),$(AUTO_DEPS))
   default all libs tools export:: $(AUTO_DEPS)
 endif
-
-export:: $(GENERATED_FILES)
-
-GARBAGE += $(GENERATED_FILES)

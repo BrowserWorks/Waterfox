@@ -10,8 +10,10 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/TimeStamp.h"
 
+#include "nsRegionFwd.h"
+#include "Units.h"
+
 class nsView;
-class nsIntRegion;
 class nsIPresShell;
 class nsIWidget;
 class nsIXULWindow;
@@ -127,7 +129,8 @@ public:
    * This is called at a time when it is not OK to change the geometry of
    * this widget or of other widgets.
    */
-  virtual bool PaintWindow(nsIWidget* aWidget, nsIntRegion aRegion);
+  virtual bool PaintWindow(nsIWidget* aWidget,
+                           mozilla::LayoutDeviceIntRegion aRegion);
 
   /**
    * Indicates that a paint occurred.

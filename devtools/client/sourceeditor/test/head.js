@@ -4,8 +4,10 @@
 
 "use strict";
 
+Cu.import("resource://gre/modules/NetUtil.jsm");
+
 const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-const Editor  = require("devtools/client/sourceeditor/editor");
+const Editor = require("devtools/client/sourceeditor/editor");
 const promise = require("promise");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
@@ -17,26 +19,26 @@ SimpleTest.registerCleanupFunction(() => {
 /**
  * Open a new tab at a URL and call a callback on load
  */
-function addTab(aURL, aCallback) {
+function addTab(url, callback) {
   waitForExplicitFinish();
 
   gBrowser.selectedTab = gBrowser.addTab();
-  content.location = aURL;
+  content.location = url;
 
   let tab = gBrowser.selectedTab;
   let browser = gBrowser.getBrowserForTab(tab);
 
   function onTabLoad() {
     browser.removeEventListener("load", onTabLoad, true);
-    aCallback(browser, tab, browser.contentDocument);
+    callback(browser, tab, browser.contentDocument);
   }
 
   browser.addEventListener("load", onTabLoad, true);
 }
 
-function promiseTab(aURL) {
+function promiseTab(url) {
   return new Promise(resolve =>
-    addTab(aURL, resolve));
+    addTab(url, resolve));
 }
 
 function promiseWaitForFocus() {
@@ -48,18 +50,20 @@ function setup(cb, additionalOpts = {}) {
   cb = cb || function() {};
   let def = promise.defer();
   const opt = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
-  const url = "data:application/vnd.mozilla.xul+xml;charset=UTF-8,<?xml version='1.0'?>" +
+  const url = "data:application/vnd.mozilla.xul+xml;charset=UTF-8," +
+    "<?xml version='1.0'?>" +
     "<?xml-stylesheet href='chrome://global/skin/global.css'?>" +
-    "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul'" +
-    " title='Editor' width='600' height='500'><box flex='1'/></window>";
+    "<window xmlns='http://www.mozilla.org/keymaster/gatekeeper" +
+    "/there.is.only.xul' title='Editor' width='600' height='500'>" +
+    "<box flex='1'/></window>";
 
   let win = Services.ww.openWindow(null, url, "_blank", opt, null);
   let opts = {
     value: "Hello.",
     lineNumbers: true,
     foldGutter: true,
-    gutters: [ "CodeMirror-linenumbers", "breakpoints", "CodeMirror-foldgutter" ]
-  }
+    gutters: ["CodeMirror-linenumbers", "breakpoints", "CodeMirror-foldgutter"]
+  };
   for (let o in additionalOpts) {
     opts[o] = additionalOpts[o];
   }
@@ -67,7 +71,7 @@ function setup(cb, additionalOpts = {}) {
   win.addEventListener("load", function onLoad() {
     win.removeEventListener("load", onLoad, false);
 
-    waitForFocus(function () {
+    waitForFocus(function() {
       let box = win.document.querySelector("box");
       let editor = new Editor(opts);
 
@@ -104,8 +108,8 @@ function teardown(ed, win) {
 /**
  * Some tests may need to import one or more of the test helper scripts.
  * A test helper script is simply a js file that contains common test code that
- * is either not common-enough to be in head.js, or that is located in a separate
- * directory.
+ * is either not common-enough to be in head.js, or that is located in a
+ * separate directory.
  * The script will be loaded synchronously and in the test's scope.
  * @param {String} filePath The file path, relative to the current directory.
  *                 Examples:
@@ -124,10 +128,12 @@ function loadHelperScript(filePath) {
 function limit(source, [line, ch]) {
   line++;
   let list = source.split("\n");
-  if (list.length < line)
+  if (list.length < line) {
     return source;
-  if (line == 1)
+  }
+  if (line == 1) {
     return list[0].slice(0, ch);
+  }
   return [...list.slice(0, line - 1), list[line - 1].slice(0, ch)].join("\n");
 }
 
@@ -135,15 +141,11 @@ function read(url) {
   let scriptableStream = Cc["@mozilla.org/scriptableinputstream;1"]
     .getService(Ci.nsIScriptableInputStream);
 
-  let channel = Services.io.newChannel2(url,
-                                        null,
-                                        null,
-                                        null,      // aLoadingNode
-                                        Services.scriptSecurityManager.getSystemPrincipal(),
-                                        null,      // aTriggeringPrincipal
-                                        Ci.nsILoadInfo.SEC_NORMAL,
-                                        Ci.nsIContentPolicy.TYPE_OTHER);
-  let input = channel.open();
+  let channel = NetUtil.newChannel({
+    uri: url,
+    loadUsingSystemPrincipal: true
+  });
+  let input = channel.open2();
   scriptableStream.init(input);
 
   let data = "";
@@ -161,7 +163,7 @@ function read(url) {
  * messages from the CM tests.
  * @see codemirror.html
  */
-function codeMirror_setStatus(statusMsg, type, customMsg) {
+function codemirrorSetStatus(statusMsg, type, customMsg) {
   switch (type) {
     case "expected":
     case "ok":

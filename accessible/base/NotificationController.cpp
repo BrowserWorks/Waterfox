@@ -54,6 +54,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(NotificationController)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mHangingChildDocuments)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mContentInsertions)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mEvents)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mRelocations)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(NotificationController, AddRef)
@@ -86,6 +87,7 @@ NotificationController::Shutdown()
   mContentInsertions.Clear();
   mNotifications.Clear();
   mEvents.Clear();
+  mRelocations.Clear();
 }
 
 void
@@ -139,6 +141,7 @@ NotificationController::IsUpdatePending()
 void
 NotificationController::WillRefresh(mozilla::TimeStamp aTime)
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
   Telemetry::AutoTimer<Telemetry::A11Y_UPDATE_TIME> updateTimer;
 
   // If the document accessible that notification collector was created for is
@@ -228,12 +231,13 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
     nsIContent* containerElm = containerNode->IsElement() ?
       containerNode->AsElement() : nullptr;
 
-    nsAutoString text;
-    textFrame->GetRenderedText(&text);
+    nsIFrame::RenderedText text = textFrame->GetRenderedText(0,
+        UINT32_MAX, nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
+        nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
 
     // Remove text accessible if rendered text is empty.
     if (textAcc) {
-      if (text.IsEmpty()) {
+      if (text.mString.IsEmpty()) {
   #ifdef A11Y_LOG
         if (logging::IsEnabled(logging::eTree | logging::eText)) {
           logging::MsgBegin("TREE", "text node lost its content");
@@ -256,17 +260,17 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
         logging::MsgEntry("old text '%s'",
                           NS_ConvertUTF16toUTF8(textAcc->AsTextLeaf()->Text()).get());
         logging::MsgEntry("new text: '%s'",
-                          NS_ConvertUTF16toUTF8(text).get());
+                          NS_ConvertUTF16toUTF8(text.mString).get());
         logging::MsgEnd();
       }
   #endif
 
-      TextUpdater::Run(mDocument, textAcc->AsTextLeaf(), text);
+      TextUpdater::Run(mDocument, textAcc->AsTextLeaf(), text.mString);
       continue;
     }
 
     // Append an accessible if rendered text is not empty.
-    if (!text.IsEmpty()) {
+    if (!text.mString.IsEmpty()) {
   #ifdef A11Y_LOG
       if (logging::IsEnabled(logging::eTree | logging::eText)) {
         logging::MsgBegin("TREE", "text node gains new content");
@@ -351,6 +355,16 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
   // modification are done.
   mDocument->ProcessInvalidationList();
 
+  // We cannot rely on DOM tree to keep aria-owns relations updated. Make
+  // a validation to remove dead links.
+  mDocument->ValidateARIAOwned();
+
+  // Process relocation list.
+  for (uint32_t idx = 0; idx < mRelocations.Length(); idx++) {
+    mDocument->DoARIAOwnsRelocation(mRelocations[idx]);
+  }
+  mRelocations.Clear();
+
   // If a generic notification occurs after this point then we may be allowed to
   // process it synchronously.  However we do not want to reenter if fireing
   // events causes script to run.
@@ -376,8 +390,10 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
       childDoc->SetIPCDoc(ipcDoc);
       nsCOMPtr<nsITabChild> tabChild =
         do_GetInterface(mDocument->DocumentNode()->GetDocShell());
-      static_cast<TabChild*>(tabChild.get())->
-        SendPDocAccessibleConstructor(ipcDoc, parentIPCDoc, id);
+      if (tabChild) {
+        static_cast<TabChild*>(tabChild.get())->
+          SendPDocAccessibleConstructor(ipcDoc, parentIPCDoc, id);
+      }
     }
   }
 

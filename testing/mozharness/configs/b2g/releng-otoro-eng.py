@@ -11,8 +11,9 @@ config = {
         'make-updates',
         'prep-upload',
         'upload',
-        'make-socorro-json',
-        'upload-source-manifest',
+        # bug 1222227 - temporarily disable for S3 migration
+        # 'make-socorro-json',
+        # 'upload-source-manifest',
     ],
     "upload": {
         "default": {
@@ -28,7 +29,7 @@ config = {
         "public": {
             "ssh_key": os.path.expanduser("~/.ssh/ffxbld_rsa"),
             "ssh_user": "ffxbld",
-            "upload_remote_host": "stage.mozilla.org",
+            "upload_remote_host": "upload.ffxbld.productdelivery.prod.mozaws.net",
             "post_upload_cmd": "post_upload.py --tinderbox-builds-dir %(branch)s-%(target)s -p b2g -i %(buildid)s --revision %(revision)s --release-to-tinderbox-dated-builds",
             "post_upload_nightly_cmd": "post_upload.py --tinderbox-builds-dir %(branch)s-%(target)s -b %(branch)s-%(target)s -p b2g -i %(buildid)s --revision %(revision)s --release-to-tinderbox-dated-builds --release-to-latest --release-to-dated",
         },
@@ -49,7 +50,8 @@ config = {
         "ssh_user": "b2gbld",
         "branches": {
             'mozilla-b2g37_v2_2': '2.2.0',
-            'mozilla-central': '2.5.0',
+            'mozilla-b2g44_v2_5': '2.5.0',
+            'mozilla-central': '2.6.0',
         },
         "translate_hg_to_git": True,
         "translate_base_url": "http://cruncher.build.mozilla.org/mapper/{project}/{vcs}/{rev}",

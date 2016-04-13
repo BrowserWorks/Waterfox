@@ -44,6 +44,7 @@
 #include "nsSMILAnimationController.h"
 #include "nsCSSRuleProcessor.h"
 #include "ChildIterator.h"
+#include "Layers.h"
 
 #ifdef ACCESSIBILITY
 #include "nsAccessibilityService.h"
@@ -52,6 +53,7 @@
 namespace mozilla {
 
 using namespace layers;
+using namespace dom;
 
 #define LOG_RESTYLE_CONTINUE(reason_, ...) \
   LOG_RESTYLE("continuing restyle since " reason_, ##__VA_ARGS__)
@@ -87,17 +89,13 @@ RestyleManager::RestyleManager(nsPresContext* aPresContext)
   , mHoverGeneration(0)
   , mRebuildAllExtraHint(nsChangeHint(0))
   , mRebuildAllRestyleHint(nsRestyleHint(0))
-  , mLastUpdateForThrottledAnimations(aPresContext->RefreshDriver()->
-                                        MostRecentRefresh())
   , mAnimationGeneration(0)
   , mReframingStyleContexts(nullptr)
   , mAnimationsWithDestroyedFrame(nullptr)
   , mPendingRestyles(ELEMENT_HAS_PENDING_RESTYLE |
                      ELEMENT_IS_POTENTIAL_RESTYLE_ROOT |
                      ELEMENT_IS_CONDITIONAL_RESTYLE_ANCESTOR)
-#ifdef DEBUG
   , mIsProcessingRestyles(false)
-#endif
 #ifdef RESTYLE_LOGGING
   , mLoggingDepth(0)
 #endif
@@ -854,6 +852,21 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
         didReflowThisFrame = true;
       }
 
+      if ((hint & nsChangeHint_UpdateUsesOpacity) &&
+          frame->IsFrameOfType(nsIFrame::eTablePart)) {
+        NS_ASSERTION(hint & nsChangeHint_UpdateOpacityLayer,
+                     "should only return UpdateUsesOpacity hint "
+                     "when also returning UpdateOpacityLayer hint");
+        // When an internal table part (including cells) changes between
+        // having opacity 1 and non-1, it changes whether its
+        // backgrounds (and those of table parts inside of it) are
+        // painted as part of the table's nsDisplayTableBorderBackground
+        // display item, or part of its own display item.  That requires
+        // invalidation, so change UpdateOpacityLayer to RepaintFrame.
+        hint &= ~nsChangeHint_UpdateOpacityLayer;
+        hint |= nsChangeHint_RepaintFrame;
+      }
+
       if (hint & (nsChangeHint_RepaintFrame | nsChangeHint_SyncFrameView |
                   nsChangeHint_UpdateOpacityLayer | nsChangeHint_UpdateTransformLayer |
                   nsChangeHint_ChildrenOnlyTransform | nsChangeHint_SchedulePaint)) {
@@ -1320,30 +1333,16 @@ RestyleManager::AttributeChanged(Element* aElement,
 }
 
 /* static */ uint64_t
-RestyleManager::GetMaxAnimationGenerationForFrame(nsIFrame* aFrame)
+RestyleManager::GetAnimationGenerationForFrame(nsIFrame* aFrame)
 {
-  nsIContent* content = aFrame->GetContent();
-  if (!content || !content->IsElement()) {
-    return 0;
-  }
-
-  nsCSSPseudoElements::Type pseudoType =
-    aFrame->StyleContext()->GetPseudoType();
-  AnimationCollection* transitions =
-    aFrame->PresContext()->TransitionManager()->GetAnimations(
-      content->AsElement(), pseudoType, false /* don't create */);
-  AnimationCollection* animations =
-    aFrame->PresContext()->AnimationManager()->GetAnimations(
-      content->AsElement(), pseudoType, false /* don't create */);
-
-  return std::max(transitions ? transitions->mAnimationGeneration : 0,
-                  animations ? animations->mAnimationGeneration : 0);
+  EffectSet* effectSet = EffectSet::GetEffectSet(aFrame);
+  return effectSet ? effectSet->GetAnimationGeneration() : 0;
 }
 
 void
 RestyleManager::RestyleForEmptyChange(Element* aContainer)
 {
-  // In some cases (:empty + E, :empty ~ E), a change if the content of
+  // In some cases (:empty + E, :empty ~ E), a change in the content of
   // an element requires restyling its parent's siblings.
   nsRestyleHint hint = eRestyle_Subtree;
   nsIContent* grandparent = aContainer->GetParent();
@@ -1730,9 +1729,7 @@ RestyleManager::ProcessPendingRestyles()
   // Process non-animation restyles...
   MOZ_ASSERT(!mIsProcessingRestyles,
              "Nesting calls to ProcessPendingRestyles?");
-#ifdef DEBUG
   mIsProcessingRestyles = true;
-#endif
 
   // Before we process any restyles, we need to ensure that style
   // resulting from any animations is up-to-date, so that if any style
@@ -1741,7 +1738,7 @@ RestyleManager::ProcessPendingRestyles()
   bool haveNonAnimation =
     mHavePendingNonAnimationRestyles || mDoRebuildAllStyleData;
   if (haveNonAnimation) {
-    IncrementAnimationGeneration();
+    ++mAnimationGeneration;
     UpdateOnlyAnimationStyles();
   } else {
     // If we don't have non-animation style updates, then we have queued
@@ -1774,9 +1771,7 @@ RestyleManager::ProcessPendingRestyles()
     mPresContext->TransitionManager()->SetInAnimationOnlyStyleUpdate(false);
   }
 
-#ifdef DEBUG
   mIsProcessingRestyles = false;
-#endif
 
   NS_ASSERTION(haveNonAnimation || !mHavePendingNonAnimationRestyles,
                "should not have added restyles");
@@ -1838,9 +1833,7 @@ RestyleManager::EndProcessingRestyles()
 void
 RestyleManager::UpdateOnlyAnimationStyles()
 {
-  TimeStamp now = mPresContext->RefreshDriver()->MostRecentRefresh();
-  bool doCSS = mLastUpdateForThrottledAnimations != now;
-  mLastUpdateForThrottledAnimations = now;
+  bool doCSS = mPresContext->EffectCompositor()->HasPendingStyleUpdates();
 
   nsIDocument* document = mPresContext->Document();
   nsSMILAnimationController* animationController =
@@ -1855,7 +1848,6 @@ RestyleManager::UpdateOnlyAnimationStyles()
   }
 
   nsTransitionManager* transitionManager = mPresContext->TransitionManager();
-  nsAnimationManager* animationManager = mPresContext->AnimationManager();
 
   transitionManager->SetInAnimationOnlyStyleUpdate(true);
 
@@ -1868,8 +1860,7 @@ RestyleManager::UpdateOnlyAnimationStyles()
     // add only the elements for which animations are currently throttled
     // (i.e., animating on the compositor with main-thread style updates
     // suppressed).
-    transitionManager->AddStyleUpdatesTo(tracker);
-    animationManager->AddStyleUpdatesTo(tracker);
+    mPresContext->EffectCompositor()->AddStyleUpdatesTo(tracker);
   }
 
   if (doSMIL) {
@@ -1997,8 +1988,8 @@ VerifySameTree(nsStyleContext* aContext1, nsStyleContext* aContext2)
 }
 
 static void
-VerifyContextParent(nsPresContext* aPresContext, nsIFrame* aFrame,
-                    nsStyleContext* aContext, nsStyleContext* aParentContext)
+VerifyContextParent(nsIFrame* aFrame, nsStyleContext* aContext,
+                    nsStyleContext* aParentContext)
 {
   // get the contexts not provided
   if (!aContext) {
@@ -2058,11 +2049,10 @@ VerifyContextParent(nsPresContext* aPresContext, nsIFrame* aFrame,
 }
 
 static void
-VerifyStyleTree(nsPresContext* aPresContext, nsIFrame* aFrame,
-                nsStyleContext* aParentContext)
+VerifyStyleTree(nsIFrame* aFrame)
 {
   nsStyleContext*  context = aFrame->StyleContext();
-  VerifyContextParent(aPresContext, aFrame, context, nullptr);
+  VerifyContextParent(aFrame, context, nullptr);
 
   nsIFrame::ChildListIterator lists(aFrame);
   for (; !lists.IsDone(); lists.Next()) {
@@ -2077,15 +2067,15 @@ VerifyStyleTree(nsPresContext* aPresContext, nsIFrame* aFrame,
 
           // recurse to out of flow frame, letting the parent context get resolved
           do {
-            VerifyStyleTree(aPresContext, outOfFlowFrame, nullptr);
+            VerifyStyleTree(outOfFlowFrame);
           } while ((outOfFlowFrame = outOfFlowFrame->GetNextContinuation()));
 
           // verify placeholder using the parent frame's context as
           // parent context
-          VerifyContextParent(aPresContext, child, nullptr, nullptr);
+          VerifyContextParent(child, nullptr, nullptr);
         }
         else { // regular frame
-          VerifyStyleTree(aPresContext, child, nullptr);
+          VerifyStyleTree(child);
         }
       }
     }
@@ -2096,7 +2086,7 @@ VerifyStyleTree(nsPresContext* aPresContext, nsIFrame* aFrame,
   for (nsStyleContext* extraContext;
        (extraContext = aFrame->GetAdditionalStyleContext(contextIndex));
        ++contextIndex) {
-    VerifyContextParent(aPresContext, aFrame, extraContext, context);
+    VerifyContextParent(aFrame, extraContext, context);
   }
 }
 
@@ -2104,9 +2094,7 @@ void
 RestyleManager::DebugVerifyStyleTree(nsIFrame* aFrame)
 {
   if (aFrame) {
-    nsStyleContext* context = aFrame->StyleContext();
-    nsStyleContext* parentContext = context->GetParent();
-    VerifyStyleTree(mPresContext, aFrame, parentContext);
+    VerifyStyleTree(aFrame);
   }
 }
 
@@ -2524,7 +2512,7 @@ RestyleManager::ReparentStyleContext(nsIFrame* aFrame)
         }
       }
 #ifdef DEBUG
-      VerifyStyleTree(mPresContext, aFrame, newParentContext);
+      VerifyStyleTree(aFrame);
 #endif
     }
   }
@@ -2701,7 +2689,7 @@ ElementRestyler::AddLayerChangesForAnimation()
   // on layers for transitions and animations and use != comparison below
   // rather than a > comparison.
   uint64_t frameGeneration =
-    RestyleManager::GetMaxAnimationGenerationForFrame(mFrame);
+    RestyleManager::GetAnimationGenerationForFrame(mFrame);
 
   nsChangeHint hint = nsChangeHint(0);
   for (const LayerAnimationInfo::Record& layerInfo :
@@ -3696,6 +3684,89 @@ ElementRestyler::CanReparentStyleContext(nsRestyleHint aRestyleHint)
          !mPresContext->StyleSet()->IsInRuleTreeReconstruct();
 }
 
+// Returns true iff any rule node that is an ancestor-or-self of the
+// two specified rule nodes, but which is not an ancestor of both,
+// has any inherited style data.  If false is returned, then we know
+// that a change from one rule node to the other must not result in
+// any change in inherited style data.
+static bool
+CommonInheritedStyleData(nsRuleNode* aRuleNode1, nsRuleNode* aRuleNode2)
+{
+  if (aRuleNode1 == aRuleNode2) {
+    return true;
+  }
+
+  nsRuleNode* n1 = aRuleNode1->GetParent();
+  nsRuleNode* n2 = aRuleNode2->GetParent();
+
+  if (n1 == n2) {
+    // aRuleNode1 and aRuleNode2 sharing a parent is a common case, e.g.
+    // when modifying a style="" attribute.  (We must null check GetRule()'s
+    // result since although we know the two parents are the same, it might
+    // be null, as in the case of the two rule nodes being roots of two
+    // different rule trees.)
+    if (aRuleNode1->GetRule() &&
+        aRuleNode1->GetRule()->MightMapInheritedStyleData()) {
+      return false;
+    }
+    if (aRuleNode2->GetRule() &&
+        aRuleNode2->GetRule()->MightMapInheritedStyleData()) {
+      return false;
+    }
+    return true;
+  }
+
+  // Compute the depths of aRuleNode1 and aRuleNode2.
+  int d1 = 0, d2 = 0;
+  while (n1) {
+    ++d1;
+    n1 = n1->GetParent();
+  }
+  while (n2) {
+    ++d2;
+    n2 = n2->GetParent();
+  }
+
+  // Make aRuleNode1 be the deeper node.
+  if (d2 > d1) {
+    std::swap(d1, d2);
+    std::swap(aRuleNode1, aRuleNode2);
+  }
+
+  // Check all of the rule nodes in the deeper branch until we reach
+  // the same depth as the shallower branch.
+  n1 = aRuleNode1;
+  n2 = aRuleNode2;
+  while (d1 > d2) {
+    nsIStyleRule* rule = n1->GetRule();
+    MOZ_ASSERT(rule, "non-root rule node should have a rule");
+    if (rule->MightMapInheritedStyleData()) {
+      return false;
+    }
+    n1 = n1->GetParent();
+    --d1;
+  }
+
+  // Check both branches simultaneously until we reach a common ancestor.
+  while (n1 != n2) {
+    MOZ_ASSERT(n1);
+    MOZ_ASSERT(n2);
+    // As above, we must null check GetRule()'s result since we won't find
+    // a common ancestor if the two rule nodes come from different rule trees,
+    // and thus we might reach the root (which has a null rule).
+    if (n1->GetRule() && n1->GetRule()->MightMapInheritedStyleData()) {
+      return false;
+    }
+    if (n2->GetRule() && n2->GetRule()->MightMapInheritedStyleData()) {
+      return false;
+    }
+    n1 = n1->GetParent();
+    n2 = n2->GetParent();
+  }
+
+  return true;
+}
+
 ElementRestyler::RestyleResult
 ElementRestyler::RestyleSelf(nsIFrame* aSelf,
                              nsRestyleHint aRestyleHint,
@@ -3959,14 +4030,24 @@ ElementRestyler::RestyleSelf(nsIFrame* aSelf,
       LOG_RESTYLE_CONTINUE("the old style context is shared");
       result = eRestyleResult_Continue;
 
-      // It's not safe to return eRestyleResult_StopWithStyleChange,
-      // as even though we might not have cached structs for inherited
-      // properties on oldContext (and thus our samePointerStructs
-      // check later will look OK), oldContext and newContext might
-      // represent different inherited style data, and some of the
-      // elements currently sharing oldContext might need to keep it
-      // rather than get restyled to use newContext.
-      canStopWithStyleChange = false;
+      // It is not safe to return eRestyleResult_StopWithStyleChange
+      // when oldContext is shared and newContext has different
+      // inherited style data, regardless of whether the oldContext has
+      // that inherited style data cached.  We can't simply rely on the
+      // samePointerStructs check later on, as the descendent style
+      // contexts just might not have had their inherited style data
+      // requested yet (which is possible for example if we flush style
+      // between resolving an initial style context for a frame and
+      // building its display list items).  Therefore we must compare
+      // the rule nodes of oldContext and newContext to see if the
+      // restyle results in new inherited style data.  If not, then
+      // we can continue assuming that eRestyleResult_StopWithStyleChange
+      // is safe.  Without this check, we could end up with style contexts
+      // shared between elements which should have different styles.
+      if (!CommonInheritedStyleData(oldContext->RuleNode(),
+                                    newContext->RuleNode())) {
+        canStopWithStyleChange = false;
+      }
     }
 
     // Look at some details of the new style context to see if it would
@@ -5004,7 +5085,8 @@ RestyleManager::ChangeHintToString(nsChangeHint aHint)
     "ChildrenOnlyTransform", "RecomputePosition", "AddOrRemoveTransform",
     "BorderStyleNoneChange", "UpdateTextPath", "SchedulePaint",
     "NeutralChange", "InvalidateRenderingObservers",
-    "ReflowChangesSizeOrPosition", "UpdateComputedBSize"
+    "ReflowChangesSizeOrPosition", "UpdateComputedBSize",
+    "UpdateUsesOpacity"
   };
   uint32_t hint = aHint & ((1 << ArrayLength(names)) - 1);
   uint32_t rest = aHint & ~((1 << ArrayLength(names)) - 1);

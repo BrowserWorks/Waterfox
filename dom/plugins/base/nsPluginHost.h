@@ -118,9 +118,9 @@ public:
   void GetPlugins(nsTArray<nsCOMPtr<nsIInternalPluginTag>>& aPluginArray,
                   bool aIncludeDisabled = false);
 
-  void FindPluginsForContent(uint32_t aPluginEpoch,
-                             nsTArray<mozilla::plugins::PluginTag>* aPlugins,
-                             uint32_t* aNewPluginEpoch);
+  nsresult FindPluginsForContent(uint32_t aPluginEpoch,
+                                 nsTArray<mozilla::plugins::PluginTag>* aPlugins,
+                                 uint32_t* aNewPluginEpoch);
 
   nsresult GetURL(nsISupports* pluginInst,
                   const char* url,
@@ -362,6 +362,8 @@ private:
   // from the chrome process.
   uint32_t ChromeEpochForContent();
   void SetChromeEpochForContent(uint32_t aEpoch);
+
+  void UpdateInMemoryPluginInfo(nsPluginTag* aPluginTag);
 
   // On certain platforms, we only want to load certain plugins. This function
   // centralizes loading rules.

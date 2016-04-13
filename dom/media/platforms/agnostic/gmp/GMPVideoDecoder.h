@@ -89,6 +89,10 @@ public:
   nsresult Flush() override;
   nsresult Drain() override;
   nsresult Shutdown() override;
+  const char* GetDescriptionName() const override
+  {
+    return "GMP video decoder";
+  }
 
 protected:
   virtual void InitTags(nsTArray<nsCString>& aTags);
@@ -115,7 +119,7 @@ private:
   };
   void GMPInitDone(GMPVideoDecoderProxy* aGMP, GMPVideoHost* aHost);
 
-  const VideoInfo& mConfig;
+  const VideoInfo mConfig;
   MediaDataDecoderCallbackProxy* mCallback;
   nsCOMPtr<mozIGeckoMediaPluginService> mMPS;
   GMPVideoDecoderProxy* mGMP;

@@ -51,6 +51,7 @@
 #include "mozilla/dom/EncodingUtils.h"
 #include "nsContainerFrame.h"
 #include "nsBlockFrame.h"
+#include "nsComputedDOMStyle.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -1099,6 +1100,9 @@ nsDocumentEncoder::EncodeToStringWithMaxLength(uint32_t aMaxLength,
   static const size_t bufferSize = 2048;
   if (!mCachedBuffer) {
     mCachedBuffer = nsStringBuffer::Alloc(bufferSize).take();
+    if (NS_WARN_IF(!mCachedBuffer)) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
   }
   NS_ASSERTION(!mCachedBuffer->IsReadonly(),
                "DocumentEncoder shouldn't keep reference to non-readonly buffer!");
@@ -1306,8 +1310,6 @@ nsresult
 NS_NewTextEncoder(nsIDocumentEncoder** aResult)
 {
   *aResult = new nsDocumentEncoder;
-  if (!*aResult)
-    return NS_ERROR_OUT_OF_MEMORY;
  NS_ADDREF(*aResult);
  return NS_OK;
 }
@@ -1428,10 +1430,6 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
     return NS_ERROR_NULL_POINTER;
   range->GetCommonAncestorContainer(getter_AddRefs(commonParent));
 
-  // Thunderbird's msg compose code abuses the HTML copy encoder and gets
-  // confused if mIsTextWidget ends up becoming true, so for now we skip
-  // this logic in Thunderbird.
-#ifndef MOZ_THUNDERBIRD
   for (nsCOMPtr<nsIContent> selContent(do_QueryInterface(commonParent));
        selContent;
        selContent = selContent->GetParent())
@@ -1442,6 +1440,46 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
       mIsTextWidget = true;
       break;
     }
+#ifdef MOZ_THUNDERBIRD
+    else if (selContent->IsHTMLElement(nsGkAtoms::body)) {
+      // Currently, setting mIsTextWidget to 'true' will result in the selection
+      // being encoded/copied as pre-formatted plain text.
+      // This is fine for copying pre-formatted plain text with Firefox, it is
+      // already not correct for copying pre-formatted "rich" text (bold, colour)
+      // with Firefox. As long as the serialisers aren't fixed, copying
+      // pre-formatted text in Firefox is broken. If we set mIsTextWidget,
+      // pre-formatted plain text is copied, but pre-formatted "rich" text loses
+      // the "rich" formatting. If we don't set mIsTextWidget, "rich" text
+      // attributes aren't lost, but white-space is lost.
+      // So far the story for Firefox.
+      //
+      // Thunderbird has two *conflicting* requirements.
+      // Case 1:
+      // When selecting and copying text, even pre-formatted text, as a quote
+      // to be placed into a reply, we *always* expect HTML to be copied.
+      // Case 2:
+      // When copying text in a so-called "plain text" message, that is
+      // one where the body carries style "white-space:pre-wrap", the text should
+      // be copied as pre-formatted plain text.
+      //
+      // Therefore the following code checks for "pre-wrap" on the body.
+      // This is a terrible hack.
+      //
+      // The proper fix would be this:
+      // For case 1:
+      // Communicate the fact that HTML is required to EncodeToString(),
+      // bug 1141786.
+      // For case 2:
+      // Wait for Firefox to get fixed to detect pre-formatting correctly,
+      // bug 1174452.
+      nsAutoString styleVal;
+      if (selContent->GetAttr(kNameSpaceID_None, nsGkAtoms::style, styleVal) &&
+          styleVal.Find(NS_LITERAL_STRING("pre-wrap")) != kNotFound) {
+        mIsTextWidget = true;
+        break;
+      }
+    }
+#endif
   }
 
   // normalize selection if we are not in a widget
@@ -1451,7 +1489,6 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
     mMimeType.AssignLiteral("text/plain");
     return NS_OK;
   }
-#endif
 
   // also consider ourselves in a text widget if we can't find an html document
   nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(mDocument);
@@ -2044,8 +2081,6 @@ nsresult
 NS_NewHTMLCopyTextEncoder(nsIDocumentEncoder** aResult)
 {
   *aResult = new nsHTMLCopyEncoder;
-  if (!*aResult)
-    return NS_ERROR_OUT_OF_MEMORY;
  NS_ADDREF(*aResult);
  return NS_OK;
 }

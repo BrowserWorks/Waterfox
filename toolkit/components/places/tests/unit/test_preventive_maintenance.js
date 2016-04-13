@@ -1074,7 +1074,7 @@ tests.push({
   name: "L.2",
   desc: "Recalculate visit_count and last_visit_date",
 
-  setup: function() {
+  setup: function* () {
     function setVisitCount(aURL, aValue) {
       let stmt = mDBConn.createStatement(
         "UPDATE moz_places SET visit_count = :count WHERE url = :url"
@@ -1225,7 +1225,9 @@ tests.push({
     do_check_true(this._separatorId > 0);
     ts.tagURI(this._uri1, ["testtag"]);
     fs.setAndFetchFaviconForPage(this._uri2, SMALLPNG_DATA_URI, false,
-                                 PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE);
+                                 PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
+                                 null,
+                                 Services.scriptSecurityManager.getSystemPrincipal());
     yield PlacesUtils.keywords.insert({ url: this._uri1.spec, keyword: "testkeyword" });
     as.setPageAnnotation(this._uri2, "anno", "anno", 0, as.EXPIRE_NEVER);
     as.setItemAnnotation(this._bookmarkId, "anno", "anno", 0, as.EXPIRE_NEVER);
@@ -1265,7 +1267,7 @@ function run_test()
   run_next_test();
 }
 
-add_task(function test_preventive_maintenance()
+add_task(function* test_preventive_maintenance()
 {
   // Force initialization of the bookmarks hash. This test could cause
   // it to go out of sync due to direct queries on the database.

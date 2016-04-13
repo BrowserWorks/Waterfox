@@ -32,7 +32,7 @@ ServiceWorkerManagerChild::RecvNotifyRegister(
 
 bool
 ServiceWorkerManagerChild::RecvNotifySoftUpdate(
-                                      const OriginAttributes& aOriginAttributes,
+                                      const PrincipalOriginAttributes& aOriginAttributes,
                                       const nsString& aScope)
 {
   if (mShuttingDown) {
@@ -63,7 +63,7 @@ ServiceWorkerManagerChild::RecvNotifyUnregister(const PrincipalInfo& aPrincipalI
   }
 
   nsresult rv = swm->Unregister(principal, nullptr, aScope);
-  unused << NS_WARN_IF(NS_FAILED(rv));
+  Unused << NS_WARN_IF(NS_FAILED(rv));
   return true;
 }
 

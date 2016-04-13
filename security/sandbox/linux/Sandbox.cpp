@@ -168,7 +168,7 @@ InstallSigSysHandler(void)
   struct sigaction act;
 
   // Ensure that the Chromium handler is installed.
-  unused << sandbox::Trap::Registry();
+  Unused << sandbox::Trap::Registry();
 
   // If the signal handling state isn't as expected, crash now instead
   // of crashing later (and more confusingly) when SIGSYS happens.
@@ -439,7 +439,7 @@ BroadcastSetThreadSandbox(const sock_fprog* aFilter)
                       signum, oldHandler);
     MOZ_CRASH();
   }
-  unused << closedir(taskdp);
+  Unused << closedir(taskdp);
   // And now, deprivilege the main thread:
   SetThreadSandbox();
   gSetSandboxFilter = nullptr;
@@ -524,8 +524,11 @@ SandboxEarlyInit(GeckoProcessType aType, bool aIsNuwa)
     return;
   }
 
-  MOZ_RELEASE_ASSERT(IsSingleThreaded());
   const SandboxInfo info = SandboxInfo::Get();
+  if (info.Test(SandboxInfo::kUnexpectedThreads)) {
+    return;
+  }
+  MOZ_RELEASE_ASSERT(IsSingleThreaded());
 
   // Which kinds of resource isolation (of those that need to be set
   // up at this point) can be used by this process?

@@ -369,15 +369,15 @@ private:
         // To have the UsingSpdy flag means some host with the same connection
         // entry has done NPN=spdy/* at some point. It does not mean every
         // connection is currently using spdy.
-        bool mUsingSpdy;
+        bool mUsingSpdy : 1;
 
         // mTestedSpdy is set after NPN negotiation has occurred and we know
         // with confidence whether a host speaks spdy or not (which is reflected
         // in mUsingSpdy). Before mTestedSpdy is set, handshake parallelism is
         // minimized so that we can multiplex on a single spdy connection.
-        bool mTestedSpdy;
+        bool mTestedSpdy : 1;
 
-        bool mInPreferredHash;
+        bool mInPreferredHash : 1;
 
         // Flags to remember our happy-eyeballs decision.
         // Reset only by Ctrl-F5 reload.
@@ -387,6 +387,9 @@ private:
         // True when we've first connected an IPv6 server for this host,
         // initially false.
         bool mPreferIPv6 : 1;
+
+        // True if this connection entry has initiated a socket
+        bool mUsedForConnection : 1;
 
         // Set the IP family preference flags according the connected family
         void RecordIPFamilyPreference(uint16_t family);
@@ -510,13 +513,10 @@ private:
     // NOTE: these members are only accessed on the socket transport thread
     //-------------------------------------------------------------------------
 
-    static PLDHashOperator ProcessOneTransactionCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     static PLDHashOperator ProcessAllTransactionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
 
     static PLDHashOperator PruneDeadConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     static PLDHashOperator ShutdownPassCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
-    static PLDHashOperator PurgeExcessIdleConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
-    static PLDHashOperator PurgeExcessSpdyConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     static PLDHashOperator ClosePersistentConnectionsCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     static PLDHashOperator VerifyTrafficCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);
     static PLDHashOperator PruneNoTrafficCB(const nsACString &, nsAutoPtr<nsConnectionEntry> &, void *);

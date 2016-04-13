@@ -7,7 +7,7 @@
 requestLongerTimeout(5);
 
 // Dragging the zoom controls to be before the print button should not move any controls.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let zoomControls = document.getElementById("zoom-controls");
   let printButton = document.getElementById("print-button");
@@ -22,7 +22,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(zoomControls, printButton);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -33,7 +35,7 @@ add_task(function() {
 });
 
 // Dragging the zoom controls to be before the save button should not move any controls.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let zoomControls = document.getElementById("zoom-controls");
   let savePageButton = document.getElementById("save-page-button");
@@ -48,7 +50,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(zoomControls, savePageButton);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -57,7 +61,7 @@ add_task(function() {
 
 
 // Dragging the zoom controls to be before the new-window button should not move any widgets.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let zoomControls = document.getElementById("zoom-controls");
   let newWindowButton = document.getElementById("new-window-button");
@@ -72,7 +76,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(zoomControls, newWindowButton);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -80,7 +86,7 @@ add_task(function() {
 });
 
 // Dragging the zoom controls to be before the history-panelmenu should move the zoom-controls in to the row higher than the history-panelmenu.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let zoomControls = document.getElementById("zoom-controls");
   let historyPanelMenu = document.getElementById("history-panelmenu");
@@ -95,7 +101,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(zoomControls, historyPanelMenu);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -107,7 +115,7 @@ add_task(function() {
 
 // Dragging the zoom controls to be before the preferences-button should move the zoom-controls
 // in to the row higher than the preferences-button.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let zoomControls = document.getElementById("zoom-controls");
   let preferencesButton = document.getElementById("preferences-button");
@@ -122,7 +130,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(zoomControls, preferencesButton);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -133,7 +143,7 @@ add_task(function() {
 });
 
 // Dragging an item from the palette to before the zoom-controls should move it and two other buttons before the zoom controls.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let openFileButton = document.getElementById("open-file-button");
   let zoomControls = document.getElementById("zoom-controls");
@@ -149,7 +159,9 @@ add_task(function() {
                                "find-button",
                                "preferences-button",
                                "add-ons-button",
-                               "developer-button"];
+                               "developer-button",
+                               "sync-button",
+                              ];
   removeDeveloperButtonIfDevEdition(placementsAfterInsert);
   simulateItemDrag(openFileButton, zoomControls);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterInsert);
@@ -172,7 +184,7 @@ add_task(function() {
 
 // Dragging an item from the palette to before the edit-controls
 // should move it and two other buttons before the edit and zoom controls.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let openFileButton = document.getElementById("open-file-button");
   let editControls = document.getElementById("edit-controls");
@@ -188,7 +200,9 @@ add_task(function() {
                                "find-button",
                                "preferences-button",
                                "add-ons-button",
-                               "developer-button"];
+                               "developer-button",
+                               "sync-button",
+                              ];
   removeDeveloperButtonIfDevEdition(placementsAfterInsert);
   simulateItemDrag(openFileButton, editControls);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterInsert);
@@ -209,7 +223,7 @@ add_task(function() {
 
 // Dragging the edit-controls to be before the zoom-controls button
 // should not move any widgets.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let zoomControls = document.getElementById("zoom-controls");
@@ -224,7 +238,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(editControls, zoomControls);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -233,7 +249,7 @@ add_task(function() {
 
 // Dragging the edit-controls to be before the new-window-button should
 // move the zoom-controls before the edit-controls.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let newWindowButton = document.getElementById("new-window-button");
@@ -248,7 +264,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(editControls, newWindowButton);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -260,7 +278,7 @@ add_task(function() {
 // Dragging the edit-controls to be before the privatebrowsing-button
 // should move the edit-controls in to the row higher than the
 // privatebrowsing-button.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let privateBrowsingButton = document.getElementById("privatebrowsing-button");
@@ -275,7 +293,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(editControls, privateBrowsingButton);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -287,7 +307,7 @@ add_task(function() {
 // Dragging the edit-controls to be before the save-page-button
 // should move the edit-controls in to the row higher than the
 // save-page-button.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let savePageButton = document.getElementById("save-page-button");
@@ -302,7 +322,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(editControls, savePageButton);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -313,7 +335,7 @@ add_task(function() {
 
 // Dragging the edit-controls to the panel itself should append
 // the edit controls to the bottom of the panel.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let panel = document.getElementById(CustomizableUI.AREA_PANEL);
@@ -328,7 +350,9 @@ add_task(function() {
                              "preferences-button",
                              "add-ons-button",
                              "edit-controls",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(editControls, panel);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
@@ -339,7 +363,7 @@ add_task(function() {
 
 // Dragging the edit-controls to the customization-palette and
 // back should work.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let palette = document.getElementById("customization-palette");
@@ -353,7 +377,9 @@ add_task(function() {
                              "find-button",
                              "preferences-button",
                              "add-ons-button",
-                             "developer-button"];
+                             "developer-button",
+                             "sync-button",
+                            ];
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   let paletteChildElementCount = palette.childElementCount;
   simulateItemDrag(editControls, palette);
@@ -373,12 +399,18 @@ add_task(function() {
 
 // Dragging the edit-controls to each of the panel placeholders
 // should append the edit-controls to the bottom of the panel.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let panel = document.getElementById(CustomizableUI.AREA_PANEL);
   let numPlaceholders = 2;
   for (let i = 0; i < numPlaceholders; i++) {
+    // This test relies on there being a specific number of widgets in the
+    // panel. The addition of sync-button screwed this up, so we remove it
+    // here. We should either fix the tests to not rely on the specific layout,
+    // or fix bug 1007910 which would change the placeholder logic in different
+    // ways. Bug 1229236 is for these tests to be smarter.
+    CustomizableUI.removeWidgetFromArea("sync-button");
     // NB: We can't just iterate over all of the placeholders
     // because each drag-drop action recreates them.
     let placeholder = panel.getElementsByClassName("panel-customization-placeholder")[i];
@@ -399,12 +431,13 @@ add_task(function() {
     assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
     let zoomControls = document.getElementById("zoom-controls");
     simulateItemDrag(editControls, zoomControls);
+    CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
     ok(CustomizableUI.inDefaultState, "Should still be in default state.");
   }
 });
 
 // Dragging the open-file-button back on to itself should work.
-add_task(function() {
+add_task(function*() {
   yield startCustomizing();
   let openFileButton = document.getElementById("open-file-button");
   is(openFileButton.parentNode.tagName, "toolbarpaletteitem",
@@ -419,7 +452,11 @@ add_task(function() {
 });
 
 // Dragging a small button onto the last big button should work.
-add_task(function() {
+add_task(function*() {
+  // Bug 1007910 requires there be a placeholder on the final row for this
+  // test to work as written. The addition of sync-button meant that's not true
+  // so we remove it from here. Bug 1229236 is for these tests to be smarter.
+  CustomizableUI.removeWidgetFromArea("sync-button");
   yield startCustomizing();
   let editControls = document.getElementById("edit-controls");
   let panel = document.getElementById(CustomizableUI.AREA_PANEL);
@@ -439,7 +476,7 @@ add_task(function() {
   removeDeveloperButtonIfDevEdition(placementsAfterMove);
   simulateItemDrag(editControls, target);
   assertAreaPlacements(CustomizableUI.AREA_PANEL, placementsAfterMove);
-  let itemToDrag = "sync-button";
+  let itemToDrag = "email-link-button"; // any button in the palette by default.
   let button = document.getElementById(itemToDrag);
   placementsAfterMove.splice(11, 0, itemToDrag);
   simulateItemDrag(button, editControls);
@@ -450,10 +487,11 @@ add_task(function() {
   let zoomControls = document.getElementById("zoom-controls");
   simulateItemDrag(button, palette);
   simulateItemDrag(editControls, zoomControls);
+  CustomizableUI.addWidgetToArea("sync-button", CustomizableUI.AREA_PANEL);
   ok(CustomizableUI.inDefaultState, "Should be in default state again.");
 });
 
-add_task(function asyncCleanup() {
+add_task(function* asyncCleanup() {
   yield endCustomizing();
   yield resetCustomization();
 });

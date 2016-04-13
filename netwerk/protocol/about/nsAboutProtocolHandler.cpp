@@ -17,6 +17,7 @@
 #include "nsIObjectOutputStream.h"
 #include "nsAutoPtr.h"
 #include "nsIWritablePropertyBag2.h"
+#include "nsIChannel.h"
 
 static NS_DEFINE_CID(kSimpleURICID,     NS_SIMPLEURI_CID);
 static NS_DEFINE_CID(kNestedAboutURICID, NS_NESTEDABOUTURI_CID);
@@ -38,7 +39,7 @@ static bool IsSafeToLinkForUntrustedContent(nsIAboutModule *aModule, nsIURI *aUR
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-NS_IMPL_ISUPPORTS(nsAboutProtocolHandler, nsIProtocolHandler)
+NS_IMPL_ISUPPORTS(nsAboutProtocolHandler, nsIProtocolHandler, nsISupportsWeakReference)
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsIProtocolHandler methods:
@@ -213,7 +214,7 @@ nsAboutProtocolHandler::AllowPort(int32_t port, const char *scheme, bool *_retva
 ////////////////////////////////////////////////////////////////////////////////
 // Safe about protocol handler impl
 
-NS_IMPL_ISUPPORTS(nsSafeAboutProtocolHandler, nsIProtocolHandler)
+NS_IMPL_ISUPPORTS(nsSafeAboutProtocolHandler, nsIProtocolHandler, nsISupportsWeakReference)
 
 // nsIProtocolHandler methods:
 

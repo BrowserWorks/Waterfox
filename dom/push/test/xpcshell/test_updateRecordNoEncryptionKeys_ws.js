@@ -12,11 +12,6 @@ function run_test() {
   setPrefs({
     userAgentID,
   });
-  disableServiceWorkerEvents(
-    'https://example.com/page/1',
-    'https://example.com/page/2',
-    'https://example.com/page/3'
-  );
   run_next_test();
 }
 
@@ -73,12 +68,12 @@ add_task(function* test_with_data_enabled() {
     },
   });
 
-  let newRecord = yield PushNotificationService.register(
-    'https://example.com/page/3',
-    ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })
-  );
-  ok(newRecord.p256dhPublicKey, 'Should generate public keys for new records');
-  ok(newRecord.p256dhPrivateKey, 'Should generate private keys for new records');
+  let newRecord = yield PushService.register({
+    scope: 'https://example.com/page/3',
+    originAttributes: ChromeUtils.originAttributesToSuffix(
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+  });
+  ok(newRecord.p256dhKey, 'Should generate public keys for new records');
 
   let record = yield db.getByKeyID('eb18f12a-cc42-4f14-accb-3bfc1227f1aa');
   ok(record.p256dhPublicKey, 'Should add public key to partial record');

@@ -18,7 +18,6 @@
 namespace mozilla {
 namespace layers {
 
-class BufferTextureClient;
 class ImageClient;
 class TextureClient;
 
@@ -39,9 +38,6 @@ public:
   virtual bool SetDataNoCopy(const Data &aData) override;
 
   virtual bool Allocate(PlanarYCbCrData& aData);
-  virtual uint8_t* AllocateBuffer(uint32_t aSize) override;
-  // needs to be overriden because the parent class sets mBuffer which we
-  // do not want to happen.
   virtual uint8_t* AllocateAndGetNewBuffer(uint32_t aSize) override;
 
   virtual bool IsValid() override;
@@ -54,7 +50,7 @@ public:
   virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override;
 
 private:
-  RefPtr<BufferTextureClient> mTextureClient;
+  RefPtr<TextureClient> mTextureClient;
   RefPtr<ImageClient> mCompositable;
 };
 

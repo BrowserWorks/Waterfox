@@ -22,6 +22,7 @@ struct ANPEvent;
 namespace mozilla {
     class AndroidGeckoEvent;
     class TextComposition;
+    class WidgetTouchEvent;
 
     namespace layers {
         class CompositorParent;
@@ -45,11 +46,23 @@ public:
     NS_DECL_ISUPPORTS_INHERITED
 
     static void InitNatives();
-    class Natives;
-    // Object that implements native GeckoView calls;
-    // nullptr for nsWindows that were not opened from GeckoView.
-    mozilla::UniquePtr<Natives> mNatives;
 
+private:
+    class GeckoViewSupport;
+    // Object that implements native GeckoView calls and associated states.
+    // nullptr for nsWindows that were not opened from GeckoView.
+    mozilla::UniquePtr<GeckoViewSupport> mGeckoViewSupport;
+
+    class GLControllerSupport;
+    // Object that implements native GLController calls.
+    mozilla::UniquePtr<GLControllerSupport> mGLControllerSupport;
+
+    class NPZCSupport;
+    // Object that implements native NativePanZoomController calls.
+    // Owned by the Java NativePanZoomController instance.
+    NPZCSupport* mNPZCSupport;
+
+public:
     static void OnGlobalAndroidEvent(mozilla::AndroidGeckoEvent *ae);
     static mozilla::gfx::IntSize GetAndroidScreenBounds();
     static nsWindow* TopWindow();
@@ -62,16 +75,17 @@ public:
 
     void OnSizeChanged(const mozilla::gfx::IntSize& aSize);
 
-    void InitEvent(mozilla::WidgetGUIEvent& event, nsIntPoint* aPoint = 0);
+    void InitEvent(mozilla::WidgetGUIEvent& event,
+                   LayoutDeviceIntPoint* aPoint = 0);
 
     //
     // nsIWidget
     //
 
-    NS_IMETHOD Create(nsIWidget *aParent,
+    NS_IMETHOD Create(nsIWidget* aParent,
                       nsNativeWidget aNativeParent,
-                      const nsIntRect &aRect,
-                      nsWidgetInitData *aInitData) override;
+                      const LayoutDeviceIntRect& aRect,
+                      nsWidgetInitData* aInitData) override;
     NS_IMETHOD Destroy(void) override;
     NS_IMETHOD ConfigureChildren(const nsTArray<nsIWidget::Configuration>&) override;
     NS_IMETHOD SetParent(nsIWidget* aNewParent) override;
@@ -101,10 +115,10 @@ public:
     NS_IMETHOD SetSizeMode(nsSizeMode aMode) override;
     NS_IMETHOD Enable(bool aState) override;
     virtual bool IsEnabled() const override;
-    NS_IMETHOD Invalidate(const nsIntRect &aRect) override;
+    NS_IMETHOD Invalidate(const LayoutDeviceIntRect& aRect) override;
     NS_IMETHOD SetFocus(bool aRaise = false) override;
-    NS_IMETHOD GetScreenBounds(nsIntRect &aRect) override;
-    virtual mozilla::LayoutDeviceIntPoint WidgetToScreenOffset() override;
+    NS_IMETHOD GetScreenBounds(LayoutDeviceIntRect& aRect) override;
+    virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus) override;
     nsEventStatus DispatchEvent(mozilla::WidgetGUIEvent* aEvent);
@@ -149,24 +163,16 @@ public:
     NS_IMETHOD ReparentNativeWidget(nsIWidget* aNewParent) override;
 
     virtual bool NeedsPaint() override;
-    virtual void DrawWindowUnderlay(LayerManagerComposite* aManager, nsIntRect aRect) override;
-    virtual void DrawWindowOverlay(LayerManagerComposite* aManager, nsIntRect aRect) override;
+    virtual void DrawWindowUnderlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override;
+    virtual void DrawWindowOverlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override;
 
     virtual mozilla::layers::CompositorParent* NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight) override;
 
-    static void SetCompositor(mozilla::layers::LayerManager* aLayerManager,
-                              mozilla::layers::CompositorParent* aCompositorParent,
-                              mozilla::layers::CompositorChild* aCompositorChild);
     static bool IsCompositionPaused();
     static void InvalidateAndScheduleComposite();
     static void SchedulePauseComposition();
     static void ScheduleResumeComposition();
-    static void ScheduleResumeComposition(int width, int height);
-    static void ForceIsFirstPaint();
     static float ComputeRenderIntegrity();
-    static mozilla::layers::APZCTreeManager* GetAPZCTreeManager();
-    /* RootLayerTreeId() can only be called when GetAPZCTreeManager() returns non-null */
-    static uint64_t RootLayerTreeId();
 
     virtual bool WidgetPaintsBackground() override;
 
@@ -184,8 +190,8 @@ protected:
     RefPtr<mozilla::TextComposition> GetIMEComposition();
     void RemoveIMEComposition();
 
-    void ConfigureAPZCTreeManager() override;
     void ConfigureAPZControllerThread() override;
+    void DispatchHitTest(const mozilla::WidgetTouchEvent& aEvent);
 
     already_AddRefed<GeckoContentController> CreateRootContentController() override;
 
@@ -216,13 +222,7 @@ private:
     void CreateLayerManager(int aCompositorWidth, int aCompositorHeight);
     void RedrawAll();
 
-    mozilla::AndroidLayerRendererFrame mLayerRendererFrame;
-
-    static mozilla::StaticRefPtr<mozilla::layers::APZCTreeManager> sApzcTreeManager;
-    static mozilla::StaticRefPtr<mozilla::layers::LayerManager> sLayerManager;
-    static mozilla::StaticRefPtr<mozilla::layers::CompositorParent> sCompositorParent;
-    static mozilla::StaticRefPtr<mozilla::layers::CompositorChild> sCompositorChild;
-    static bool sCompositorPaused;
+    mozilla::widget::LayerRenderer::Frame::GlobalRef mLayerRendererFrame;
 };
 
 #endif /* NSWINDOW_H_ */

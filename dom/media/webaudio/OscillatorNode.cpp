@@ -8,6 +8,7 @@
 #include "AudioNodeEngine.h"
 #include "AudioNodeStream.h"
 #include "AudioDestinationNode.h"
+#include "nsContentUtils.h"
 #include "WebAudioUtils.h"
 #include "blink/PeriodicWave.h"
 
@@ -81,7 +82,7 @@ public:
     }
   }
 
-  virtual void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam) override
+  void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam) override
   {
     switch (aIndex) {
     case START:
@@ -94,7 +95,7 @@ public:
     }
   }
 
-  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) override
+  void SetInt32Parameter(uint32_t aIndex, int32_t aParam) override
   {
     switch (aIndex) {
       case TYPE:
@@ -133,7 +134,7 @@ public:
     // End index switch.
   }
 
-  virtual void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer) override
+  void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer) override
   {
     MOZ_ASSERT(mCustomLength, "Custom buffer sent before length");
     mCustom = aBuffer;
@@ -300,11 +301,11 @@ public:
     aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
   }
 
-  virtual void ProcessBlock(AudioNodeStream* aStream,
-                            GraphTime aFrom,
-                            const AudioBlock& aInput,
-                            AudioBlock* aOutput,
-                            bool* aFinished) override
+  void ProcessBlock(AudioNodeStream* aStream,
+                    GraphTime aFrom,
+                    const AudioBlock& aInput,
+                    AudioBlock* aOutput,
+                    bool* aFinished) override
   {
     MOZ_ASSERT(mSource == aStream, "Invalid source stream");
 
@@ -314,48 +315,45 @@ public:
       return;
     }
 
-    if (ticks >= mStop) {
+    if (ticks + WEBAUDIO_BLOCK_SIZE <= mStart || ticks >= mStop) {
+      ComputeSilence(aOutput);
+
+    } else {
+      aOutput->AllocateChannels(1);
+      float* output = aOutput->ChannelFloatsForWrite(0);
+
+      uint32_t start, end;
+      FillBounds(output, ticks, start, end);
+
+      // Synthesize the correct waveform.
+      switch(mType) {
+        case OscillatorType::Sine:
+          ComputeSine(output, ticks, start, end);
+          break;
+        case OscillatorType::Square:
+        case OscillatorType::Triangle:
+        case OscillatorType::Sawtooth:
+        case OscillatorType::Custom:
+          ComputeCustom(output, ticks, start, end);
+          break;
+        default:
+          ComputeSilence(aOutput);
+      };
+    }
+
+    if (ticks + WEBAUDIO_BLOCK_SIZE >= mStop) {
       // We've finished playing.
-      ComputeSilence(aOutput);
       *aFinished = true;
-      return;
     }
-    if (ticks + WEBAUDIO_BLOCK_SIZE <= mStart) {
-      // We're not playing yet.
-      ComputeSilence(aOutput);
-      return;
-    }
-
-    aOutput->AllocateChannels(1);
-    float* output = aOutput->ChannelFloatsForWrite(0);
-
-    uint32_t start, end;
-    FillBounds(output, ticks, start, end);
-
-    // Synthesize the correct waveform.
-    switch(mType) {
-      case OscillatorType::Sine:
-        ComputeSine(output, ticks, start, end);
-        break;
-      case OscillatorType::Square:
-      case OscillatorType::Triangle:
-      case OscillatorType::Sawtooth:
-      case OscillatorType::Custom:
-        ComputeCustom(output, ticks, start, end);
-        break;
-      default:
-        ComputeSilence(aOutput);
-    };
-
   }
 
-  virtual bool IsActive() const override
+  bool IsActive() const override
   {
     // start() has been called.
     return mStart != -1;
   }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = AudioNodeEngine::SizeOfExcludingThis(aMallocSizeOf);
 
@@ -376,7 +374,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
+  size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }

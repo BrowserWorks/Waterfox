@@ -3,10 +3,6 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 browser.jar:
-    content/browser/preferences/aboutPermissions.xul
-    content/browser/preferences/aboutPermissions.js
-    content/browser/preferences/aboutPermissions.css
-    content/browser/preferences/aboutPermissions.xml
     content/browser/preferences/applicationManager.xul
     content/browser/preferences/applicationManager.js
     content/browser/preferences/blocklists.xul
@@ -16,6 +12,7 @@ browser.jar:
 *   content/browser/preferences/cookies.js
 *   content/browser/preferences/connection.xul
     content/browser/preferences/connection.js
+    content/browser/preferences/donottrack.xul
 *   content/browser/preferences/fonts.xul
     content/browser/preferences/fonts.js
     content/browser/preferences/handlers.xml

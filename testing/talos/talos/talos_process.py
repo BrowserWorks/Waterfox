@@ -3,13 +3,16 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import time
-import logging
 import psutil
 import mozcrash
 from mozprocess import ProcessHandler
 from threading import Event
 
+from mozlog import get_proxy_logger
+
 from utils import TalosError
+
+LOG = get_proxy_logger()
 
 
 class ProcessContext(object):
@@ -25,31 +28,42 @@ class ProcessContext(object):
         return self.process and self.process.pid
 
     def kill_process(self):
+        """
+        Kill the process, returning the exit code or None if the process
+        is already finished.
+        """
         if self.process and self.process.is_running():
-            logging.debug("Terminating %s", self.process)
+            LOG.debug("Terminating %s" % self.process)
             self.process.terminate()
             try:
-                self.process.wait(3)
+                return self.process.wait(3)
             except psutil.TimeoutExpired:
                 self.process.kill()
                 # will raise TimeoutExpired if unable to kill
-                self.process.wait(3)
+                return self.process.wait(3)
 
 
 class Reader(object):
     def __init__(self, event):
         self.output = []
         self.got_end_timestamp = False
+        self.got_timeout = False
+        self.timeout_message = ''
         self.event = event
+        self.proc = None
 
     def __call__(self, line):
         if line.find('__endTimestamp') != -1:
             self.got_end_timestamp = True
             self.event.set()
+        elif line == 'TART: TIMEOUT':
+            self.got_timeout = True
+            self.timeout_message = 'TART'
+            self.event.set()
 
         if not (line.startswith('JavaScript error:') or
                 line.startswith('JavaScript warning:')):
-            logging.debug('BROWSER_OUTPUT: %s', line)
+            LOG.process_output(self.proc.pid, line)
             self.output.append(line)
 
 
@@ -88,7 +102,9 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
     kwargs['processOutputLine'] = reader
     kwargs['onFinish'] = event.set
     proc = ProcessHandler(command, **kwargs)
+    reader.proc = proc
     proc.run()
+    LOG.process_start(proc.pid, ' '.join(command))
     try:
         context.process = psutil.Process(proc.pid)
         if on_started:
@@ -104,15 +120,18 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
                 if proc.wait(1) is not None:
                     break
             if proc.poll() is None:
-                logging.info(
+                LOG.info(
                     "Browser shutdown timed out after {0} seconds, terminating"
                     " process.".format(wait_for_quit_timeout)
                 )
+        elif reader.got_timeout:
+            raise TalosError('TIMEOUT: %s' % reader.timeout_message)
     finally:
         # this also handle KeyboardInterrupt
         # ensure early the process is really terminated
-        context.kill_process()
-        return_code = proc.wait(1)
+        return_code = context.kill_process()
+        if return_code is None:
+            return_code = proc.wait(1)
 
     reader.output.append(
         "__startBeforeLaunchTimestamp%d__endBeforeLaunchTimestamp"
@@ -121,6 +140,9 @@ def run_browser(command, minidump_dir, timeout=None, on_started=None,
         "__startAfterTerminationTimestamp%d__endAfterTerminationTimestamp"
         % (int(time.time()) * 1000))
 
-    logging.info("Browser exited with error code: {0}".format(return_code))
+    if return_code is not None:
+        LOG.process_exit(proc.pid, return_code)
+    else:
+        LOG.debug("Unable to detect exit code of the process %s." % proc.pid)
     context.output = reader.output
     return context

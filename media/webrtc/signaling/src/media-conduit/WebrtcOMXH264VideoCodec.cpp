@@ -21,7 +21,7 @@
 using namespace android;
 
 // WebRTC
-#include "webrtc/common_video/interface/texture_video_frame.h"
+//#include "webrtc/common_video/interface/texture_video_frame.h"
 #include "webrtc/video_engine/include/vie_external_codec.h"
 #include "runnable_utils.h"
 
@@ -172,9 +172,12 @@ public:
 
   NS_IMETHODIMP Run() override
   {
+    MonitorAutoLock lock(mMonitor);
+    if (mEnding) {
+      return NS_OK;
+    }
     MOZ_ASSERT(mThread);
 
-    MonitorAutoLock lock(mMonitor);
     while (true) {
       if (mInputFrames.empty()) {
         // Wait for new input.
@@ -524,12 +527,9 @@ public:
       return;
     }
 
-    layers::GrallocImage::GrallocData grallocData;
-    grallocData.mPicSize = buffer->GetSize();
-    grallocData.mGraphicBuffer = buffer;
-
+    gfx::IntSize picSize(buffer->GetSize());
     nsAutoPtr<layers::GrallocImage> grallocImage(new layers::GrallocImage());
-    grallocImage->SetData(grallocData);
+    grallocImage->SetData(buffer, picSize);
 
     // Get timestamp of the frame about to render.
     int64_t timestamp = -1;
@@ -547,14 +547,14 @@ public:
     MOZ_ASSERT(timestamp >= 0 && renderTimeMs >= 0);
 
     CODEC_LOGD("Decoder NewFrame: %dx%d, timestamp %lld, renderTimeMs %lld",
-               grallocData.mPicSize.width, grallocData.mPicSize.height, timestamp, renderTimeMs);
+               picSize.width, picSize.height, timestamp, renderTimeMs);
 
-    nsAutoPtr<webrtc::I420VideoFrame> videoFrame(
-      new webrtc::TextureVideoFrame(new ImageNativeHandle(grallocImage.forget()),
-                                    grallocData.mPicSize.width,
-                                    grallocData.mPicSize.height,
-                                    timestamp,
-                                    renderTimeMs));
+    nsAutoPtr<webrtc::I420VideoFrame> videoFrame(new webrtc::I420VideoFrame(
+      new ImageNativeHandle(grallocImage.forget()),
+      picSize.width,
+      picSize.height,
+      timestamp,
+      renderTimeMs));
     if (videoFrame != nullptr) {
       mCallback->Decoded(*videoFrame);
     }
@@ -1003,7 +1003,7 @@ WebrtcOMXH264VideoEncoder::Encode(const webrtc::I420VideoFrame& aInputImage,
                                    (yuvData.mYSize.height + 1) / 2);
   yuvData.mPicSize = yuvData.mYSize;
   yuvData.mStereoMode = StereoMode::MONO;
-  layers::PlanarYCbCrImage img(nullptr);
+  layers::RecyclingPlanarYCbCrImage img(nullptr);
   // SetDataNoCopy() doesn't need AllocateAndGetNewBuffer(); OMXVideoEncoder is ok with this
   img.SetDataNoCopy(yuvData);
 
@@ -1077,9 +1077,9 @@ WebrtcOMXH264VideoEncoder::~WebrtcOMXH264VideoEncoder()
 // Note: stagefright doesn't handle these parameters.
 int32_t
 WebrtcOMXH264VideoEncoder::SetChannelParameters(uint32_t aPacketLossRate,
-                                                int aRoundTripTimeMs)
+                                                int64_t aRoundTripTimeMs)
 {
-  CODEC_LOGD("WebrtcOMXH264VideoEncoder:%p set channel packet loss:%u, rtt:%d",
+  CODEC_LOGD("WebrtcOMXH264VideoEncoder:%p set channel packet loss:%u, rtt:%" PRIi64,
              this, aPacketLossRate, aRoundTripTimeMs);
 
   return WEBRTC_VIDEO_CODEC_OK;

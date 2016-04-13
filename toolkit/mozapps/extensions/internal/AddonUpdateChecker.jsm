@@ -31,11 +31,13 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
                                   "resource://gre/modules/AddonManager.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AddonManagerPrivate",
+                                  "resource://gre/modules/AddonManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AddonRepository",
                                   "resource://gre/modules/addons/AddonRepository.jsm");
 
 // Shared code for suppressing bad cert dialogs.
-XPCOMUtils.defineLazyGetter(this, "CertUtils", function certUtilsLazyGetter() {
+XPCOMUtils.defineLazyGetter(this, "CertUtils", function() {
   let certUtils = {};
   Components.utils.import("resource://gre/modules/CertUtils.jsm", certUtils);
   return certUtils;
@@ -77,7 +79,7 @@ RDFSerializer.prototype = {
    * @return a string with all characters invalid in XML character data
    *         converted to entity references.
    */
-  escapeEntities: function RDFS_escapeEntities(aString) {
+  escapeEntities: function(aString) {
     aString = aString.replace(/&/g, "&amp;");
     aString = aString.replace(/</g, "&lt;");
     aString = aString.replace(/>/g, "&gt;");
@@ -95,8 +97,7 @@ RDFSerializer.prototype = {
    *         The current level of indent for pretty-printing
    * @return a string containing the serialized elements.
    */
-  serializeContainerItems: function RDFS_serializeContainerItems(aDs, aContainer,
-                                                                 aIndent) {
+  serializeContainerItems: function(aDs, aContainer, aIndent) {
     var result = "";
     var items = aContainer.GetElements();
     while (items.hasMoreElements()) {
@@ -122,9 +123,7 @@ RDFSerializer.prototype = {
    * @return a string containing the serialized properties.
    * @throws if the resource contains a property that cannot be serialized
    */
-  serializeResourceProperties: function RDFS_serializeResourceProperties(aDs,
-                                                                         aResource,
-                                                                         aIndent) {
+  serializeResourceProperties: function(aDs, aResource, aIndent) {
     var result = "";
     var items = [];
     var arcs = aDs.ArcLabelsOut(aResource);
@@ -178,7 +177,7 @@ RDFSerializer.prototype = {
    * @return a string containing the serialized resource.
    * @throws if the RDF data contains multiple references to the same resource.
    */
-  serializeResource: function RDFS_serializeResource(aDs, aResource, aIndent) {
+  serializeResource: function(aDs, aResource, aIndent) {
     if (this.resources.indexOf(aResource) != -1 ) {
       // We cannot output multiple references to the same resource.
       throw Components.Exception("Cannot serialize multiple references to " + aResource.Value);
@@ -218,6 +217,48 @@ RDFSerializer.prototype = {
 }
 
 /**
+ * Sanitizes the update URL in an update item, as returned by
+ * parseRDFManifest and parseJSONManifest. Ensures that:
+ *
+ * - The URL is secure, or secured by a strong enough hash.
+ * - The security principal of the update manifest has permission to
+ *   load the URL.
+ *
+ * @param aUpdate
+ *        The update item to sanitize.
+ * @param aRequest
+ *        The XMLHttpRequest used to load the manifest.
+ * @param aHashPattern
+ *        The regular expression used to validate the update hash.
+ * @param aHashString
+ *        The human-readable string specifying which hash functions
+ *        are accepted.
+ */
+function sanitizeUpdateURL(aUpdate, aRequest, aHashPattern, aHashString) {
+  if (aUpdate.updateURL) {
+    let scriptSecurity = Services.scriptSecurityManager;
+    let principal = scriptSecurity.getChannelURIPrincipal(aRequest.channel);
+    try {
+      // This logs an error on failure, so no need to log it a second time
+      scriptSecurity.checkLoadURIStrWithPrincipal(principal, aUpdate.updateURL,
+                                                  scriptSecurity.DISALLOW_SCRIPT);
+    } catch (e) {
+      delete aUpdate.updateURL;
+      return;
+    }
+
+    if (AddonManager.checkUpdateSecurity &&
+        !aUpdate.updateURL.startsWith("https:") &&
+        !aHashPattern.test(aUpdate.updateHash)) {
+      logger.warn(`Update link ${aUpdate.updateURL} is not secure and is not verified ` +
+                  `by a strong enough hash (needs to be ${aHashString}).`);
+      delete aUpdate.updateURL;
+      delete aUpdate.updateHash;
+    }
+  }
+}
+
+/**
  * Parses an RDF style update manifest into an array of update objects.
  *
  * @param  aId
@@ -226,10 +267,17 @@ RDFSerializer.prototype = {
  *         An optional update key for the add-on
  * @param  aRequest
  *         The XMLHttpRequest that has retrieved the update manifest
+ * @param  aManifestData
+ *         The pre-parsed manifest, as a bare XML DOM document
  * @return an array of update objects
  * @throws if the update manifest is invalid in any way
  */
-function parseRDFManifest(aId, aUpdateKey, aRequest) {
+function parseRDFManifest(aId, aUpdateKey, aRequest, aManifestData) {
+  if (aManifestData.documentElement.namespaceURI != PREFIX_NS_RDF) {
+    throw Components.Exception("Update manifest had an unrecognised namespace: " + xml.documentElement.namespaceURI);
+    return;
+  }
+
   function EM_R(aProp) {
     return gRDF.GetResource(PREFIX_NS_EM + aProp);
   }
@@ -366,16 +414,132 @@ function parseRDFManifest(aId, aUpdateKey, aRequest) {
         targetApplications: [appEntry]
       };
 
-      if (result.updateURL && AddonManager.checkUpdateSecurity &&
-          result.updateURL.substring(0, 6) != "https:" &&
-          (!result.updateHash || result.updateHash.substring(0, 3) != "sha")) {
-        logger.warn("updateLink " + result.updateURL + " is not secure and is not verified" +
-             " by a strong enough hash (needs to be sha1 or stronger).");
-        delete result.updateURL;
-        delete result.updateHash;
-      }
+      // The JSON update protocol requires an SHA-2 hash. RDF still
+      // supports SHA-1, for compatibility reasons.
+      sanitizeUpdateURL(result, aRequest, /^sha/, "sha1 or stronger");
+
       results.push(result);
     }
+  }
+  return results;
+}
+
+/**
+ * Parses an JSON update manifest into an array of update objects.
+ *
+ * @param  aId
+ *         The ID of the add-on being checked for updates
+ * @param  aUpdateKey
+ *         An optional update key for the add-on
+ * @param  aRequest
+ *         The XMLHttpRequest that has retrieved the update manifest
+ * @param  aManifestData
+ *         The pre-parsed manifest, as a JSON object tree
+ * @return an array of update objects
+ * @throws if the update manifest is invalid in any way
+ */
+function parseJSONManifest(aId, aUpdateKey, aRequest, aManifestData) {
+  if (aUpdateKey)
+    throw Components.Exception("Update keys are not supported for JSON update manifests");
+
+  let TYPE_CHECK = {
+    "array": val => Array.isArray(val),
+    "object": val => val && typeof val == "object" && !Array.isArray(val),
+  };
+
+  function getProperty(aObj, aProperty, aType, aDefault = undefined) {
+    if (!(aProperty in aObj))
+      return aDefault;
+
+    let value = aObj[aProperty];
+
+    let matchesType = aType in TYPE_CHECK ? TYPE_CHECK[aType](value) : typeof value == aType;
+    if (!matchesType)
+      throw Components.Exception(`Update manifest property '${aProperty}' has incorrect type (expected ${aType})`);
+
+    return value;
+  }
+
+  function getRequiredProperty(aObj, aProperty, aType) {
+    let value = getProperty(aObj, aProperty, aType);
+    if (value === undefined)
+      throw Components.Exception(`Update manifest is missing a required ${aProperty} property.`);
+    return value;
+  }
+
+  let manifest = aManifestData;
+
+  if (!TYPE_CHECK["object"](manifest))
+    throw Components.Exception("Root element of update manifest must be a JSON object literal");
+
+  // The set of add-ons this manifest has updates for
+  let addons = getRequiredProperty(manifest, "addons", "object");
+
+  // The entry for this particular add-on
+  let addon = getProperty(addons, aId, "object");
+
+  // A missing entry doesn't count as a failure, just as no avialable update
+  // information
+  if (!addon) {
+    logger.warn("Update manifest did not contain an entry for " + aId);
+    return [];
+  }
+
+  // The list of available updates
+  let updates = getProperty(addon, "updates", "array", []);
+
+  let results = [];
+
+  for (let update of updates) {
+    let version = getRequiredProperty(update, "version", "string");
+
+    logger.debug(`Found an update entry for ${aId} version ${version}`);
+
+    let applications = getProperty(update, "applications", "object",
+                                   { gecko: {} });
+
+    // "gecko" is currently the only supported application entry. If
+    // it's missing, skip this update.
+    if (!("gecko" in applications))
+      continue;
+
+    let app = getProperty(applications, "gecko", "object");
+
+    let appEntry = {
+      id: TOOLKIT_ID,
+      minVersion: getProperty(app, "strict_min_version", "string",
+                              AddonManagerPrivate.webExtensionsMinPlatformVersion),
+      maxVersion: "*",
+    };
+
+    let result = {
+      id: aId,
+      version: version,
+      multiprocessCompatible: getProperty(update, "multiprocess_compatible", "boolean", true),
+      updateURL: getProperty(update, "update_link", "string"),
+      updateHash: getProperty(update, "update_hash", "string"),
+      updateInfoURL: getProperty(update, "update_info_url", "string"),
+      strictCompatibility: false,
+      targetApplications: [appEntry],
+    };
+
+    if ("strict_max_version" in app) {
+      if ("advisory_max_version" in app) {
+        logger.warn("Ignoring 'advisory_max_version' update manifest property for " +
+                    aId + " property since 'strict_max_version' also present");
+      }
+
+      appEntry.maxVersion = getProperty(app, "strict_max_version", "string");
+      result.strictCompatibility = appEntry.maxVersion != "*";
+    } else if ("advisory_max_version" in app) {
+      appEntry.maxVersion = getProperty(app, "advisory_max_version", "string");
+    }
+
+    // The JSON update protocol requires an SHA-2 hash. RDF still
+    // supports SHA-1, for compatibility reasons.
+    sanitizeUpdateURL(result, aRequest, /^sha(256|512):/, "sha256 or sha512");
+
+    results.push(result);
   }
   return results;
 }
@@ -415,13 +579,12 @@ function UpdateParser(aId, aUpdateKey, aUrl, aObserver) {
     this.request.channel.loadFlags |= Ci.nsIRequest.LOAD_BYPASS_CACHE;
     // Prevent the request from writing to cache.
     this.request.channel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
-    this.request.overrideMimeType("text/xml");
+    this.request.overrideMimeType("text/plain");
     this.request.setRequestHeader("Moz-XPI-Update", "1", true);
     this.request.timeout = TIMEOUT;
-    var self = this;
-    this.request.addEventListener("load", function loadEventListener(event) { self.onLoad() }, false);
-    this.request.addEventListener("error", function errorEventListener(event) { self.onError() }, false);
-    this.request.addEventListener("timeout", function timeoutEventListener(event) { self.onTimeout() }, false);
+    this.request.addEventListener("load", () => this.onLoad(), false);
+    this.request.addEventListener("error", () => this.onError(), false);
+    this.request.addEventListener("timeout", () => this.onTimeout(), false);
     this.request.send(null);
   }
   catch (e) {
@@ -439,7 +602,7 @@ UpdateParser.prototype = {
   /**
    * Called when the manifest has been successfully loaded.
    */
-  onLoad: function UP_onLoad() {
+  onLoad: function() {
     let request = this.request;
     this.request = null;
     this._doneAt = new Error("place holder");
@@ -474,41 +637,52 @@ UpdateParser.prototype = {
       return;
     }
 
-    let xml = request.responseXML;
-    if (!xml || xml.documentElement.namespaceURI == XMLURI_PARSE_ERROR) {
-      logger.warn("Update manifest was not valid XML");
+    // Detect the manifest type by first attempting to parse it as
+    // JSON, and falling back to parsing it as XML if that fails.
+    let parser;
+    try {
+      try {
+        let json = JSON.parse(request.responseText);
+
+        parser = () => parseJSONManifest(this.id, this.updateKey, request, json);
+      } catch (e) {
+        if (!(e instanceof SyntaxError))
+          throw e;
+        let domParser = Cc["@mozilla.org/xmlextras/domparser;1"].createInstance(Ci.nsIDOMParser);
+        let xml = domParser.parseFromString(request.responseText, "text/xml");
+
+        if (xml.documentElement.namespaceURI == XMLURI_PARSE_ERROR)
+          throw new Error("Update manifest was not valid XML or JSON");
+
+        parser = () => parseRDFManifest(this.id, this.updateKey, request, xml);
+      }
+    } catch (e) {
+      logger.warn("onUpdateCheckComplete failed to determine manifest type");
+      this.notifyError(AddonUpdateChecker.ERROR_UNKNOWN_FORMAT);
+      return;
+    }
+
+    let results;
+    try {
+      results = parser();
+    }
+    catch (e) {
+      logger.warn("onUpdateCheckComplete failed to parse update manifest", e);
       this.notifyError(AddonUpdateChecker.ERROR_PARSE_ERROR);
       return;
     }
 
-    // We currently only know about RDF update manifests
-    if (xml.documentElement.namespaceURI == PREFIX_NS_RDF) {
-      let results = null;
-
+    if ("onUpdateCheckComplete" in this.observer) {
       try {
-        results = parseRDFManifest(this.id, this.updateKey, request);
+        this.observer.onUpdateCheckComplete(results);
       }
       catch (e) {
-        logger.warn("onUpdateCheckComplete failed to parse RDF manifest", e);
-        this.notifyError(AddonUpdateChecker.ERROR_PARSE_ERROR);
-        return;
+        logger.warn("onUpdateCheckComplete notification failed", e);
       }
-      if ("onUpdateCheckComplete" in this.observer) {
-        try {
-          this.observer.onUpdateCheckComplete(results);
-        }
-        catch (e) {
-          logger.warn("onUpdateCheckComplete notification failed", e);
-        }
-      }
-      else {
-        logger.warn("onUpdateCheckComplete may not properly cancel", new Error("stack marker"));
-      }
-      return;
     }
-
-    logger.warn("Update manifest had an unrecognised namespace: " + xml.documentElement.namespaceURI);
-    this.notifyError(AddonUpdateChecker.ERROR_UNKNOWN_FORMAT);
+    else {
+      logger.warn("onUpdateCheckComplete may not properly cancel", new Error("stack marker"));
+    }
   },
 
   /**
@@ -524,7 +698,7 @@ UpdateParser.prototype = {
   /**
    * Called when the manifest failed to load.
    */
-  onError: function UP_onError() {
+  onError: function() {
     if (!Components.isSuccessCode(this.request.status)) {
       logger.warn("Request failed: " + this.url + " - " + this.request.status);
     }
@@ -553,7 +727,7 @@ UpdateParser.prototype = {
   /**
    * Helper method to notify the observer that an error occured.
    */
-  notifyError: function UP_notifyError(aStatus) {
+  notifyError: function(aStatus) {
     if ("onUpdateCheckError" in this.observer) {
       try {
         this.observer.onUpdateCheckError(aStatus);
@@ -567,7 +741,7 @@ UpdateParser.prototype = {
   /**
    * Called to cancel an in-progress update check.
    */
-  cancel: function UP_cancel() {
+  cancel: function() {
     if (!this.request) {
       logger.error("Trying to cancel already-complete request", this._doneAt);
       return;
@@ -661,12 +835,9 @@ this.AddonUpdateChecker = {
    *         Ignore strictCompatibility when testing if an update matches. Optional.
    * @return an update object if one matches or null if not
    */
-  getCompatibilityUpdate: function AUC_getCompatibilityUpdate(aUpdates, aVersion,
-                                                              aIgnoreCompatibility,
-                                                              aAppVersion,
-                                                              aPlatformVersion,
-                                                              aIgnoreMaxVersion,
-                                                              aIgnoreStrictCompat) {
+  getCompatibilityUpdate: function(aUpdates, aVersion, aIgnoreCompatibility,
+                                   aAppVersion, aPlatformVersion,
+                                   aIgnoreMaxVersion, aIgnoreStrictCompat) {
     if (!aAppVersion)
       aAppVersion = Services.appinfo.version;
     if (!aPlatformVersion)
@@ -707,12 +878,9 @@ this.AddonUpdateChecker = {
    *         Array of AddonCompatibilityOverride to take into account. Optional.
    * @return an update object if one matches or null if not
    */
-  getNewestCompatibleUpdate: function AUC_getNewestCompatibleUpdate(aUpdates,
-                                                                    aAppVersion,
-                                                                    aPlatformVersion,
-                                                                    aIgnoreMaxVersion,
-                                                                    aIgnoreStrictCompat,
-                                                                    aCompatOverrides) {
+  getNewestCompatibleUpdate: function(aUpdates, aAppVersion, aPlatformVersion,
+                                      aIgnoreMaxVersion, aIgnoreStrictCompat,
+                                      aCompatOverrides) {
     if (!aAppVersion)
       aAppVersion = Services.appinfo.version;
     if (!aPlatformVersion)
@@ -752,8 +920,7 @@ this.AddonUpdateChecker = {
    * @return UpdateParser so that the caller can use UpdateParser.cancel() to shut
    *         down in-progress update requests
    */
-  checkForUpdates: function AUC_checkForUpdates(aId, aUpdateKey, aUrl,
-                                                aObserver) {
+  checkForUpdates: function(aId, aUpdateKey, aUrl, aObserver) {
     return new UpdateParser(aId, aUpdateKey, aUrl, aObserver);
   }
 };

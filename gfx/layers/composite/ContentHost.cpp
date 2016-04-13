@@ -18,9 +18,6 @@
 #include "mozilla/layers/TextureHostOGL.h"  // for TextureHostOGL
 
 namespace mozilla {
-namespace gfx {
-class Matrix4x4;
-} // namespace gfx
 using namespace gfx;
 
 namespace layers {
@@ -135,7 +132,7 @@ ContentHostTexture::Composite(LayerComposite* aLayer,
 
   bool usingTiles = (bigImgIter && bigImgIter->GetTileCount() > 1);
   do {
-    if (iterOnWhite) {
+    if (iterOnWhite && bigImgIter) {
       MOZ_ASSERT(iterOnWhite->GetTileRect() == bigImgIter->GetTileRect(),
                  "component alpha textures should be the same size.");
     }

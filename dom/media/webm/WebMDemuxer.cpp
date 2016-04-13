@@ -18,6 +18,7 @@
 #include "nsAutoRef.h"
 #include "NesteggPacketHolder.h"
 #include "XiphExtradata.h"
+#include "prprf.h"
 
 #include <algorithm>
 #include <stdint.h>
@@ -32,8 +33,8 @@ namespace mozilla {
 
 using namespace gfx;
 
-PRLogModuleInfo* gWebMDemuxerLog = nullptr;
-extern PRLogModuleInfo* gNesteggLog;
+LazyLogModule gWebMDemuxerLog("WebMDemuxer");
+LazyLogModule gNesteggLog("Nestegg");
 
 // How far ahead will we look when searching future keyframe. In microseconds.
 // This value is based on what appears to be a reasonable value as most webm
@@ -145,12 +146,6 @@ WebMDemuxer::WebMDemuxer(MediaResource* aResource, bool aIsMediaSource)
   , mLastWebMBlockOffset(-1)
   , mIsMediaSource(aIsMediaSource)
 {
-  if (!gNesteggLog) {
-    gNesteggLog = PR_NewLogModule("Nestegg");
-  }
-  if (!gWebMDemuxerLog) {
-    gWebMDemuxerLog = PR_NewLogModule("WebMDemuxer");
-  }
 }
 
 WebMDemuxer::~WebMDemuxer()
@@ -377,9 +372,9 @@ WebMDemuxer::ReadMetadata()
       mCodecDelay = media::TimeUnit::FromNanoseconds(params.codec_delay).ToMicroseconds();
       mAudioCodec = nestegg_track_codec_id(mContext, track);
       if (mAudioCodec == NESTEGG_CODEC_VORBIS) {
-        mInfo.mAudio.mMimeType = "audio/ogg; codecs=vorbis";
+        mInfo.mAudio.mMimeType = "audio/webm; codecs=vorbis";
       } else if (mAudioCodec == NESTEGG_CODEC_OPUS) {
-        mInfo.mAudio.mMimeType = "audio/ogg; codecs=opus";
+        mInfo.mAudio.mMimeType = "audio/webm; codecs=opus";
         uint8_t c[sizeof(uint64_t)];
         BigEndian::writeUint64(&c[0], mCodecDelay);
         mInfo.mAudio.mCodecSpecificConfig->AppendElements(&c[0], sizeof(uint64_t));
@@ -445,7 +440,7 @@ WebMDemuxer::EnsureUpToDateIndex()
     return;
   }
   AutoPinned<MediaResource> resource(mResource.GetResource());
-  nsTArray<MediaByteRange> byteRanges;
+  MediaByteRangeSet byteRanges;
   nsresult rv = resource->GetCachedRanges(byteRanges);
   if (NS_FAILED(rv) || !byteRanges.Length()) {
     return;
@@ -738,7 +733,7 @@ WebMDemuxer::GetBuffered()
 
   media::TimeIntervals buffered;
 
-  nsTArray<MediaByteRange> ranges;
+  MediaByteRangeSet ranges;
   nsresult rv = resource->GetCachedRanges(ranges);
   if (NS_FAILED(rv)) {
     return media::TimeIntervals();

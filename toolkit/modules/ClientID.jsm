@@ -48,6 +48,11 @@ this.ClientID = Object.freeze({
    * data reporting (FHR & Telemetry). Previously exising FHR client IDs are
    * migrated to this.
    *
+   * WARNING: This functionality is duplicated for Android (see GeckoProfile.getClientId
+   * for more). There are Java tests (TestGeckoProfile) to ensure the functionality is
+   * consistent and Gecko tests to come (bug 1249156). However, THIS IS NOT FOOLPROOF.
+   * Be careful when changing this code and, in particular, the underlying file format.
+   *
    * @return {Promise<string>} The stable client ID.
    */
   getClientID: function() {
@@ -174,6 +179,9 @@ var ClientIDImpl = {
 
     // Not yet loaded, return the cached client id if we have one.
     let id = Preferences.get(PREF_CACHED_CLIENTID, null);
+    if (id === null) {
+      return null;
+    }
     if (!isValidClientID(id)) {
       this._log.error("getCachedClientID - invalid client id in preferences, resetting", id);
       Preferences.reset(PREF_CACHED_CLIENTID);

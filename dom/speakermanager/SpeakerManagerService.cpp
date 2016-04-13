@@ -133,7 +133,7 @@ SpeakerManagerService::Notify()
   nsTArray<ContentParent*> children;
   ContentParent::GetAll(children);
   for (uint32_t i = 0; i < children.Length(); i++) {
-    unused << children[i]->SendSpeakerManagerNotify();
+    Unused << children[i]->SendSpeakerManagerNotify();
   }
 
   for (uint32_t i = 0; i < mRegisteredSpeakerManagers.Length(); i++) {
@@ -184,7 +184,9 @@ SpeakerManagerService::Observe(nsISupports* aSubject,
     // AudioChannelService cannot be used past that point.
     RefPtr<AudioChannelService> audioChannelService =
       AudioChannelService::GetOrCreate();
-    audioChannelService->UnregisterSpeakerManager(this);
+    if (audioChannelService) {
+      audioChannelService->UnregisterSpeakerManager(this);
+    }
 
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
     if (obs) {
@@ -211,7 +213,9 @@ SpeakerManagerService::SpeakerManagerService()
   }
   RefPtr<AudioChannelService> audioChannelService =
     AudioChannelService::GetOrCreate();
-  audioChannelService->RegisterSpeakerManager(this);
+  if (audioChannelService) {
+    audioChannelService->RegisterSpeakerManager(this);
+  }
 }
 
 SpeakerManagerService::~SpeakerManagerService()

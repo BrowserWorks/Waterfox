@@ -17,14 +17,19 @@
 #include "AudioContext.h"
 #include "AudioBuffer.h"
 #include "nsAutoPtr.h"
+#include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "nsIScriptError.h"
 #include "nsMimeTypes.h"
 #include "VideoUtils.h"
 #include "WebAudioUtils.h"
 #include "mozilla/dom/Promise.h"
+#include "mozilla/Telemetry.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
+
+extern LazyLogModule gMediaDecoderLog;
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(WebAudioDecodeJob)
 
@@ -266,6 +271,23 @@ MediaDecodeTask::OnMetadataRead(MetadataHolder* aMetadata)
     ReportFailureOnMainThread(WebAudioDecodeJob::NoAudio);
     return;
   }
+
+  nsCString codec;
+  if (!mMediaInfo.mAudio.GetAsAudioInfo()->mMimeType.IsEmpty()) {
+    codec = nsPrintfCString("webaudio; %s", mMediaInfo.mAudio.GetAsAudioInfo()->mMimeType.get());
+  } else {
+    codec = nsPrintfCString("webaudio;resource; %s", mContentType.get());
+  }
+
+  nsCOMPtr<nsIRunnable> task = NS_NewRunnableFunction([codec]() -> void {
+    MOZ_ASSERT(!codec.IsEmpty());
+    MOZ_LOG(gMediaDecoderLog,
+            LogLevel::Debug,
+            ("Telemetry (WebAudio) MEDIA_CODEC_USED= '%s'", codec.get()));
+    Telemetry::Accumulate(Telemetry::ID::MEDIA_CODEC_USED, codec);
+  });
+  AbstractThread::MainThread()->Dispatch(task.forget());
+
   RequestSample();
 }
 
@@ -527,15 +549,17 @@ WebAudioDecodeJob::OnSuccess(ErrorCode aErrorCode)
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aErrorCode == NoError);
 
-  // Ignore errors in calling the callback, since there is not much that we can
-  // do about it here.
-  ErrorResult rv;
   if (mSuccessCallback) {
+    ErrorResult rv;
     mSuccessCallback->Call(*mOutput, rv);
+    // Ignore errors in calling the callback, since there is not much that we can
+    // do about it here.
+    rv.SuppressException();
   }
   mPromise->MaybeResolve(mOutput);
 
   mContext->RemoveFromDecodeQueue(this);
+
 }
 
 void
@@ -546,7 +570,7 @@ WebAudioDecodeJob::OnFailure(ErrorCode aErrorCode)
   const char* errorMessage;
   switch (aErrorCode) {
   case NoError:
-    MOZ_ASSERT(false, "Who passed NoError to OnFailure?");
+    MOZ_FALLTHROUGH_ASSERT("Who passed NoError to OnFailure?");
     // Fall through to get some sort of a sane error message if this actually
     // happens at runtime.
   case UnknownError:
@@ -577,8 +601,7 @@ WebAudioDecodeJob::OnFailure(ErrorCode aErrorCode)
   // Ignore errors in calling the callback, since there is not much that we can
   // do about it here.
   if (mFailureCallback) {
-    ErrorResult rv;
-    mFailureCallback->Call(rv);
+    mFailureCallback->Call();
   }
 
   mPromise->MaybeReject(NS_ERROR_DOM_ENCODING_NOT_SUPPORTED_ERR);
@@ -590,7 +613,7 @@ size_t
 WebAudioDecodeJob::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t amount = 0;
-  amount += mContentType.SizeOfExcludingThisMustBeUnshared(aMallocSizeOf);
+  amount += mContentType.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
   if (mSuccessCallback) {
     amount += mSuccessCallback->SizeOfIncludingThis(aMallocSizeOf);
   }

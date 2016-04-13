@@ -96,25 +96,22 @@ TEST(stagefright_MoofParser, EmptyStream)
 {
   RefPtr<Stream> stream = new TestStream(nullptr, 0);
 
-  Monitor monitor("MP4Metadata::gtest");
-  MonitorAutoLock mon(monitor);
-  MoofParser parser(stream, 0, false, &monitor);
+  MoofParser parser(stream, 0, false);
   EXPECT_EQ(0u, parser.mOffset);
   EXPECT_TRUE(parser.ReachedEnd());
 
-  nsTArray<MediaByteRange> byteRanges;
-  byteRanges.AppendElement(MediaByteRange(0, 0));
+  MediaByteRangeSet byteRanges;
   EXPECT_FALSE(parser.RebuildFragmentedIndex(byteRanges));
 
   EXPECT_TRUE(parser.GetCompositionRange(byteRanges).IsNull());
-  EXPECT_TRUE(parser.mInitRange.IsNull());
+  EXPECT_TRUE(parser.mInitRange.IsEmpty());
   EXPECT_EQ(0u, parser.mOffset);
   EXPECT_TRUE(parser.ReachedEnd());
   EXPECT_FALSE(parser.HasMetadata());
   RefPtr<MediaByteBuffer> metadataBuffer = parser.Metadata();
   EXPECT_FALSE(metadataBuffer);
-  EXPECT_TRUE(parser.FirstCompleteMediaSegment().IsNull());
-  EXPECT_TRUE(parser.FirstCompleteMediaHeader().IsNull());
+  EXPECT_TRUE(parser.FirstCompleteMediaSegment().IsEmpty());
+  EXPECT_TRUE(parser.FirstCompleteMediaHeader().IsEmpty());
 }
 
 nsTArray<uint8_t>
@@ -162,12 +159,20 @@ struct TestFileData
   uint32_t mNumberVideoTracks;
   int32_t mWidth;
   int32_t mHeight;
+  uint32_t mNumberAudioTracks;
 };
 static const TestFileData testFiles[] = {
-  { "test_case_1156505.mp4", 0, 0, 0 },
-  { "test_case_1187067.mp4", 1, 160, 90 },
-  { "test_case_1200326.mp4", 0, 0, 0 },
-  { "test_case_1204580.mp4", 1, 320, 180 }
+  { "test_case_1156505.mp4", 0,   0,   0, 0 },
+  { "test_case_1181213.mp4", 0,   0,   0, 0 },
+  { "test_case_1181215.mp4", 0,   0,   0, 0 },
+  { "test_case_1181220.mp4", 0,   0,   0, 0 },
+  { "test_case_1181223.mp4", 0,   0,   0, 0 },
+  { "test_case_1181719.mp4", 0,   0,   0, 0 },
+  { "test_case_1185230.mp4", 1, 320, 240, 1 },
+  { "test_case_1187067.mp4", 1, 160,  90, 0 },
+  { "test_case_1200326.mp4", 0,   0,   0, 0 },
+  { "test_case_1204580.mp4", 1, 320, 180, 0 },
+  { "test_case_1216748.mp4", 0,   0,   0, 0 }
 };
 
 TEST(stagefright_MPEG4Metadata, test_case_mp4)
@@ -183,29 +188,45 @@ TEST(stagefright_MPEG4Metadata, test_case_mp4)
 
     MP4Metadata metadata(stream);
     EXPECT_EQ(0u, metadata.GetNumberTracks(TrackInfo::kUndefinedTrack));
-    EXPECT_EQ(0u, metadata.GetNumberTracks(TrackInfo::kAudioTrack));
+    EXPECT_EQ(testFiles[test].mNumberAudioTracks,
+              metadata.GetNumberTracks(TrackInfo::kAudioTrack));
     EXPECT_EQ(testFiles[test].mNumberVideoTracks,
               metadata.GetNumberTracks(TrackInfo::kVideoTrack));
     EXPECT_EQ(0u, metadata.GetNumberTracks(TrackInfo::kTextTrack));
     EXPECT_EQ(0u, metadata.GetNumberTracks(static_cast<TrackInfo::TrackType>(-1)));
     EXPECT_FALSE(metadata.GetTrackInfo(TrackInfo::kUndefinedTrack, 0));
-    EXPECT_FALSE(metadata.GetTrackInfo(TrackInfo::kAudioTrack, 0));
     UniquePtr<TrackInfo> trackInfo = metadata.GetTrackInfo(TrackInfo::kVideoTrack, 0);
     if (testFiles[test].mNumberVideoTracks == 0) {
       EXPECT_TRUE(!trackInfo);
     } else {
-      EXPECT_TRUE(!!trackInfo);
-      if (trackInfo) {
-        const VideoInfo* videoInfo = trackInfo->GetAsVideoInfo();
-        EXPECT_TRUE(!!videoInfo);
-        if (videoInfo) {
-          EXPECT_TRUE(videoInfo->IsValid());
-          EXPECT_TRUE(videoInfo->IsVideo());
-          EXPECT_EQ(testFiles[test].mWidth, videoInfo->mDisplay.width);
-          EXPECT_EQ(testFiles[test].mHeight, videoInfo->mDisplay.height);
-          FallibleTArray<mp4_demuxer::Index::Indice> indices;
-          EXPECT_TRUE(metadata.ReadTrackIndex(indices, videoInfo->mTrackId));
-        }
+      ASSERT_TRUE(!!trackInfo);
+      const VideoInfo* videoInfo = trackInfo->GetAsVideoInfo();
+      ASSERT_TRUE(!!videoInfo);
+      EXPECT_TRUE(videoInfo->IsValid());
+      EXPECT_TRUE(videoInfo->IsVideo());
+      EXPECT_EQ(testFiles[test].mWidth, videoInfo->mDisplay.width);
+      EXPECT_EQ(testFiles[test].mHeight, videoInfo->mDisplay.height);
+      FallibleTArray<mp4_demuxer::Index::Indice> indices;
+      EXPECT_TRUE(metadata.ReadTrackIndex(indices, videoInfo->mTrackId));
+      for (const mp4_demuxer::Index::Indice& indice : indices) {
+        EXPECT_TRUE(indice.start_offset <= indice.end_offset);
+        EXPECT_TRUE(indice.start_composition <= indice.end_composition);
+      }
+    }
+    trackInfo = metadata.GetTrackInfo(TrackInfo::kAudioTrack, 0);
+    if (testFiles[test].mNumberAudioTracks == 0) {
+      EXPECT_TRUE(!trackInfo);
+    } else {
+      ASSERT_TRUE(!!trackInfo);
+      const AudioInfo* audioInfo = trackInfo->GetAsAudioInfo();
+      ASSERT_TRUE(!!audioInfo);
+      EXPECT_TRUE(audioInfo->IsValid());
+      EXPECT_TRUE(audioInfo->IsAudio());
+      FallibleTArray<mp4_demuxer::Index::Indice> indices;
+      EXPECT_TRUE(metadata.ReadTrackIndex(indices, audioInfo->mTrackId));
+      for (const mp4_demuxer::Index::Indice& indice : indices) {
+        EXPECT_TRUE(indice.start_offset <= indice.end_offset);
+        EXPECT_TRUE(indice.start_composition <= indice.end_composition);
       }
     }
     EXPECT_FALSE(metadata.GetTrackInfo(TrackInfo::kTextTrack, 0));
@@ -216,6 +237,8 @@ TEST(stagefright_MPEG4Metadata, test_case_mp4)
   }
 }
 
+// Bug 1224019: This test produces way to much output, disabling for now.
+#if 0
 TEST(stagefright_MPEG4Metadata, test_case_mp4_subsets)
 {
   static const size_t step = 1u;
@@ -251,6 +274,7 @@ TEST(stagefright_MPEG4Metadata, test_case_mp4_subsets)
     }
   }
 }
+#endif
 
 TEST(stagefright_MoofParser, test_case_mp4)
 {
@@ -259,28 +283,27 @@ TEST(stagefright_MoofParser, test_case_mp4)
     ASSERT_FALSE(buffer.IsEmpty());
     RefPtr<Stream> stream = new TestStream(buffer.Elements(), buffer.Length());
 
-    Monitor monitor("MP4Metadata::HasCompleteMetadata");
-    MonitorAutoLock mon(monitor);
-    MoofParser parser(stream, 0, false, &monitor);
+    MoofParser parser(stream, 0, false);
     EXPECT_EQ(0u, parser.mOffset);
     EXPECT_FALSE(parser.ReachedEnd());
 
-    nsTArray<MediaByteRange> byteRanges;
-    byteRanges.AppendElement(MediaByteRange(0, 0));
+    MediaByteRangeSet byteRanges;
     EXPECT_FALSE(parser.RebuildFragmentedIndex(byteRanges));
 
     EXPECT_TRUE(parser.GetCompositionRange(byteRanges).IsNull());
-    EXPECT_TRUE(parser.mInitRange.IsNull());
+    EXPECT_TRUE(parser.mInitRange.IsEmpty());
     EXPECT_EQ(0u, parser.mOffset);
     EXPECT_FALSE(parser.ReachedEnd());
     EXPECT_TRUE(parser.HasMetadata());
     RefPtr<MediaByteBuffer> metadataBuffer = parser.Metadata();
     EXPECT_TRUE(metadataBuffer);
-    EXPECT_TRUE(parser.FirstCompleteMediaSegment().IsNull());
-    EXPECT_TRUE(parser.FirstCompleteMediaHeader().IsNull());
+    EXPECT_TRUE(parser.FirstCompleteMediaSegment().IsEmpty());
+    EXPECT_TRUE(parser.FirstCompleteMediaHeader().IsEmpty());
   }
 }
 
+// Bug 1224019: This test produces way to much output, disabling for now.
+#if 0
 TEST(stagefright_MoofParser, test_case_mp4_subsets)
 {
   const size_t step = 1u;
@@ -288,8 +311,6 @@ TEST(stagefright_MoofParser, test_case_mp4_subsets)
     nsTArray<uint8_t> buffer = ReadTestFile(testFiles[test].mFilename);
     ASSERT_FALSE(buffer.IsEmpty());
     ASSERT_LE(step, buffer.Length());
-    Monitor monitor("MP4Metadata::HasCompleteMetadata");
-    MonitorAutoLock mon(monitor);
     // Just exercizing the parser starting at different points through the file,
     // making sure it doesn't crash.
     // No checks because results would differ for each position.
@@ -299,9 +320,8 @@ TEST(stagefright_MoofParser, test_case_mp4_subsets)
         RefPtr<TestStream> stream =
           new TestStream(buffer.Elements() + offset, size);
 
-        MoofParser parser(stream, 0, false, &monitor);
-        nsTArray<MediaByteRange> byteRanges;
-        byteRanges.AppendElement(MediaByteRange(0, 0));
+        MoofParser parser(stream, 0, false);
+        MediaByteRangeSet byteRanges;
         EXPECT_FALSE(parser.RebuildFragmentedIndex(byteRanges));
         parser.GetCompositionRange(byteRanges);
         parser.HasMetadata();
@@ -324,6 +344,7 @@ TEST(stagefright_MoofParser, test_case_mp4_subsets)
     }
   }
 }
+#endif
 
 uint8_t media_libstagefright_gtest_video_init_mp4[] = {
   0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d,

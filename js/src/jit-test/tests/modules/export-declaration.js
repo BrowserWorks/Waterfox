@@ -1,6 +1,5 @@
 load(libdir + "match.js");
 load(libdir + "asserts.js");
-load(libdir + "class.js");
 
 var { Pattern, MatchError } = Match;
 
@@ -79,6 +78,12 @@ program([
 ]).assert(parseAsModule("export {}"));
 
 program([
+    letDeclaration([
+        {
+            id: ident("a"),
+            init: lit(1)
+        }
+    ]),
     exportDeclaration(
         null,
         [
@@ -90,9 +95,15 @@ program([
         null,
         false
     )
-]).assert(parseAsModule("export { a }"));
+]).assert(parseAsModule("let a = 1; export { a }"));
 
 program([
+    letDeclaration([
+        {
+            id: ident("a"),
+            init: lit(1)
+        }
+    ]),
     exportDeclaration(
         null,
         [
@@ -104,9 +115,15 @@ program([
         null,
         false
     )
-]).assert(parseAsModule("export { a as b }"));
+]).assert(parseAsModule("let a = 1; export { a as b }"));
 
 program([
+    letDeclaration([
+        {
+            id: ident("as"),
+            init: lit(1)
+        }
+    ]),
     exportDeclaration(
         null,
         [
@@ -118,9 +135,15 @@ program([
         null,
         false
     )
-]).assert(parseAsModule("export { as as as }"));
+]).assert(parseAsModule("let as = 1; export { as as as }"));
 
 program([
+    letDeclaration([
+        {
+            id: ident("a"),
+            init: lit(1)
+        }
+    ]),
     exportDeclaration(
         null,
         [
@@ -132,9 +155,19 @@ program([
         null,
         false
     )
-]).assert(parseAsModule("export { a as true }"));
+]).assert(parseAsModule("let a = 1; export { a as true }"));
 
 program([
+    letDeclaration([
+        {
+            id: ident("a"),
+            init: lit(1)
+        },
+        {
+            id: ident("b"),
+            init: lit(2)
+        }
+    ]),
     exportDeclaration(
         null,
         [
@@ -150,9 +183,19 @@ program([
         null,
         false
     )
-]).assert(parseAsModule("export { a, b }"));
+]).assert(parseAsModule("let a = 1, b = 2; export { a, b }"));
 
 program([
+    letDeclaration([
+        {
+            id: ident("a"),
+            init: lit(1)
+        },
+        {
+            id: ident("c"),
+            init: lit(2)
+        }
+    ]),
     exportDeclaration(
         null,
         [
@@ -168,7 +211,7 @@ program([
         null,
         false
     )
-]).assert(parseAsModule("export { a as b, c as d }"));
+]).assert(parseAsModule("let a = 1, c = 2; export { a as b, c as d }"));
 
 program([
     exportDeclaration(
@@ -208,18 +251,16 @@ program([
     )
 ]).assert(parseAsModule("export function f() {}"));
 
-if (classesEnabled()) {
-    program([
-        exportDeclaration(
-            classDeclaration(
-                ident("Foo")
-            ),
-            null,
-            null,
-            false
-        )
-    ]).assert(parseAsModule("export class Foo { constructor() {} }"));
-}
+program([
+    exportDeclaration(
+        classDeclaration(
+            ident("Foo")
+        ),
+        null,
+        null,
+        false
+    )
+]).assert(parseAsModule("export class Foo { constructor() {} }"));
 
 program([
     exportDeclaration(
@@ -298,29 +339,27 @@ program([
     )
 ]).assert(parseAsModule("export default function foo() {}"));
 
-if (classesEnabled()) {
-    program([
-        exportDeclaration(
-            classDeclaration(
-                ident("*default*")
-            ),
-            null,
-            null,
-            true
-        )
-    ]).assert(parseAsModule("export default class { constructor() {} }"));
+program([
+    exportDeclaration(
+        classDeclaration(
+            ident("*default*")
+        ),
+        null,
+        null,
+        true
+    )
+]).assert(parseAsModule("export default class { constructor() {} }"));
 
-    program([
-        exportDeclaration(
-            classDeclaration(
-                ident("Foo")
-            ),
-            null,
-            null,
-            true
-        )
-    ]).assert(parseAsModule("export default class Foo { constructor() {} }"));
-}
+program([
+    exportDeclaration(
+        classDeclaration(
+            ident("Foo")
+        ),
+        null,
+        null,
+        true
+    )
+]).assert(parseAsModule("export default class Foo { constructor() {} }"));
 
 program([
     exportDeclaration(

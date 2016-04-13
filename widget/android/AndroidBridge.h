@@ -206,7 +206,8 @@ public:
                                const nsAString& aAlertText,
                                const nsAString& aAlertData,
                                nsIObserver *aAlertListener,
-                               const nsAString& aAlertName);
+                               const nsAString& aAlertName,
+                               nsIPrincipal* aPrincipal);
 
     int GetDPI();
     int GetScreenDepth();
@@ -216,10 +217,6 @@ public:
     void GetSystemColors(AndroidSystemColors *aColors);
 
     void GetIconForExtension(const nsACString& aFileExt, uint32_t aIconSize, uint8_t * const aBuf);
-
-    // Switch Java to composite with the Gecko Compositor thread
-    void RegisterCompositor(JNIEnv* env = nullptr);
-    EGLSurface CreateEGLSurfaceForCompositor();
 
     bool GetStaticStringField(const char *classID, const char *field, nsAString &result, JNIEnv* env = nullptr);
 
@@ -409,11 +406,6 @@ protected:
     // For native surface stuff
     jclass jSurfaceClass;
     jfieldID jSurfacePointerField;
-
-    jclass jLayerView;
-
-    jfieldID jEGLSurfacePointerField;
-    widget::GLController::GlobalRef mGLControllerObj;
 
     // some convinient types to have around
     jclass jStringClass;

@@ -36,7 +36,6 @@ using namespace js;
 
 using mozilla::Move;
 using mozilla::PodArrayZero;
-using mozilla::UniquePtr;
 
 // Required by PerThreadDataFriendFields::getMainThread()
 JS_STATIC_ASSERT(offsetof(JSRuntime, mainThread) ==
@@ -52,12 +51,12 @@ PerThreadDataFriendFields::PerThreadDataFriendFields()
 }
 
 JS_FRIEND_API(void)
-js::SetSourceHook(JSRuntime* rt, UniquePtr<SourceHook> hook)
+js::SetSourceHook(JSRuntime* rt, mozilla::UniquePtr<SourceHook> hook)
 {
     rt->sourceHook = Move(hook);
 }
 
-JS_FRIEND_API(UniquePtr<SourceHook>)
+JS_FRIEND_API(mozilla::UniquePtr<SourceHook>)
 js::ForgetSourceHook(JSRuntime* rt)
 {
     return Move(rt->sourceHook);
@@ -82,10 +81,10 @@ JS_FindCompilationScope(JSContext* cx, HandleObject objArg)
         obj = UncheckedUnwrap(obj);
 
     /*
-     * Innerize the target_obj so that we compile in the correct (inner)
-     * scope.
+     * Get the Window if `obj` is a WindowProxy so that we compile in the
+     * correct (global) scope.
      */
-    return GetInnerObject(obj);
+    return ToWindowIfWindowProxy(obj);
 }
 
 JS_FRIEND_API(JSFunction*)
@@ -394,6 +393,11 @@ JS_FRIEND_API(JSFunction*)
 js::GetOutermostEnclosingFunctionOfScriptedCaller(JSContext* cx)
 {
     ScriptFrameIter iter(cx);
+
+    // Skip eval frames.
+    while (!iter.done() && iter.isEvalFrame())
+        ++iter;
+
     if (iter.done())
         return nullptr;
 
@@ -720,8 +724,12 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
         funname = fun->displayAtom();
 
     RootedValue thisVal(cx);
-    if (iter.hasUsableAbstractFramePtr() && iter.computeThis(cx)) {
-        thisVal = iter.computedThisValue();
+    if (iter.hasUsableAbstractFramePtr() &&
+        iter.isFunctionFrame() &&
+        fun && !fun->isArrow() && !fun->isDerivedClassConstructor())
+    {
+        if (!GetFunctionThis(cx, iter.abstractFramePtr(), &thisVal))
+            return nullptr;
     }
 
     // print the frame number and function name
@@ -916,6 +924,28 @@ JS::FormatStackDump(JSContext* cx, char* buf, bool showArgs, bool showLocals, bo
     return buf;
 }
 
+extern JS_FRIEND_API(bool)
+JS::ForceLexicalInitialization(JSContext *cx, HandleObject obj)
+{
+    AssertHeapIsIdle(cx);
+    CHECK_REQUEST(cx);
+    assertSameCompartment(cx, obj);
+
+    bool initializedAny = false;
+    NativeObject* nobj = &obj->as<NativeObject>();
+
+    for (Shape::Range<NoGC> r(nobj->lastProperty()); !r.empty(); r.popFront()) {
+        Shape* s = &r.front();
+        Value v = nobj->getSlot(s->slot());
+        if (s->hasSlot() && v.isMagic() && v.whyMagic() == JS_UNINITIALIZED_LEXICAL) {
+            nobj->setSlot(s->slot(), UndefinedValue());
+            initializedAny = true;
+        }
+
+    }
+    return initializedAny;
+}
+
 struct DumpHeapTracer : public JS::CallbackTracer, public WeakMapTracer
 {
     const char* prefix;
@@ -1068,7 +1098,7 @@ JS::ObjectPtr::updateWeakPointerAfterGC()
 void
 JS::ObjectPtr::trace(JSTracer* trc, const char* name)
 {
-    JS_CallObjectTracer(trc, &value, name);
+    JS::TraceEdge(trc, &value, name);
 }
 
 JS_FRIEND_API(JSObject*)
@@ -1141,24 +1171,28 @@ js::detail::IdMatchesAtom(jsid id, JSAtom* atom)
     return id == INTERNED_STRING_TO_JSID(nullptr, atom);
 }
 
-JS_FRIEND_API(bool)
-js::PrepareScriptEnvironmentAndInvoke(JSRuntime* rt, HandleObject scope, ScriptEnvironmentPreparer::Closure& closure)
+JS_FRIEND_API(void)
+js::PrepareScriptEnvironmentAndInvoke(JSContext* cx, HandleObject scope, ScriptEnvironmentPreparer::Closure& closure)
 {
-    if (rt->scriptEnvironmentPreparer)
-        return rt->scriptEnvironmentPreparer->invoke(scope, closure);
+    MOZ_ASSERT(!cx->isExceptionPending());
 
-    MOZ_ASSERT(rt->contextList.getFirst() == rt->contextList.getLast());
-    JSContext* cx = rt->contextList.getFirst();
+    if (cx->runtime()->scriptEnvironmentPreparer) {
+        cx->runtime()->scriptEnvironmentPreparer->invoke(scope, closure);
+        return;
+    }
+
     JSAutoCompartment ac(cx, scope);
     bool ok = closure(cx);
 
+    MOZ_ASSERT_IF(ok, !cx->isExceptionPending());
+
     // NB: This does not affect Gecko, which has a prepareScriptEnvironment
     // callback.
-    if (JS_IsExceptionPending(cx)) {
+    if (!ok) {
         JS_ReportPendingException(cx);
     }
 
-    return ok;
+    MOZ_ASSERT(!cx->isExceptionPending());
 }
 
 JS_FRIEND_API(void)
@@ -1281,4 +1315,54 @@ js::GetPropertyNameFromPC(JSScript* script, jsbytecode* pc)
     if (!IsGetPropPC(pc) && !IsSetPropPC(pc))
         return nullptr;
     return script->getName(pc);
+}
+
+JS_FRIEND_API(void)
+js::SetWindowProxyClass(JSRuntime* rt, const js::Class* clasp)
+{
+    MOZ_ASSERT(!rt->maybeWindowProxyClass());
+    rt->setWindowProxyClass(clasp);
+}
+
+JS_FRIEND_API(void)
+js::SetWindowProxy(JSContext* cx, HandleObject global, HandleObject windowProxy)
+{
+    AssertHeapIsIdle(cx);
+    CHECK_REQUEST(cx);
+
+    assertSameCompartment(cx, global, windowProxy);
+
+    MOZ_ASSERT(IsWindowProxy(windowProxy));
+    global->as<GlobalObject>().setWindowProxy(windowProxy);
+}
+
+JS_FRIEND_API(JSObject*)
+js::ToWindowIfWindowProxy(JSObject* obj)
+{
+    if (IsWindowProxy(obj))
+        return &obj->global();
+    return obj;
+}
+
+JS_FRIEND_API(JSObject*)
+js::ToWindowProxyIfWindow(JSObject* obj)
+{
+    if (IsWindow(obj))
+        return obj->as<GlobalObject>().windowProxy();
+    return obj;
+}
+
+JS_FRIEND_API(bool)
+js::IsWindowProxy(JSObject* obj)
+{
+    // Note: simply checking `obj == obj->global().windowProxy()` is not
+    // sufficient: we may have transplanted the window proxy with a CCW.
+    // Check the Class to ensure we really have a window proxy.
+    return obj->getClass() == obj->runtimeFromAnyThread()->maybeWindowProxyClass();
+}
+
+JS_FRIEND_API(bool)
+js::detail::IsWindowSlow(JSObject* obj)
+{
+    return obj->as<GlobalObject>().maybeWindowProxy();
 }

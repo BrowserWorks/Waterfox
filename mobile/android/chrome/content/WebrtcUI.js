@@ -6,6 +6,8 @@
 this.EXPORTED_SYMBOLS = ["WebrtcUI"];
 
 XPCOMUtils.defineLazyModuleGetter(this, "Notifications", "resource://gre/modules/Notifications.jsm");
+XPCOMUtils.defineLazyServiceGetter(this, "ParentalControls", "@mozilla.org/parental-controls-service;1", "nsIParentalControlsService");
+XPCOMUtils.defineLazyModuleGetter(this, "RuntimePermissions", "resource://gre/modules/RuntimePermissions.jsm");
 
 var WebrtcUI = {
   _notificationId: null,
@@ -27,7 +29,14 @@ var WebrtcUI = {
 
   observe: function(aSubject, aTopic, aData) {
     if (aTopic === "getUserMedia:request") {
-      this.handleGumRequest(aSubject, aTopic, aData);
+      RuntimePermissions
+        .waitForPermissions(this._determineNeededRuntimePermissions(aSubject))
+        .then((permissionGranted) => {
+          if (permissionGranted) {
+            WebrtcUI.handleGumRequest(aSubject, aTopic, aData);
+          } else {
+            Services.obs.notifyObservers(null, "getUserMedia:response:deny", aSubject.callID);
+          }});
     } else if (aTopic === "PeerConnection:request") {
       this.handlePCRequest(aSubject, aTopic, aData);
     } else if (aTopic === "recording-device-events") {
@@ -108,6 +117,12 @@ var WebrtcUI = {
     contentWindow.navigator.mozGetUserMediaDevices(
       constraints,
       function (devices) {
+        if (!ParentalControls.isAllowed(ParentalControls.CAMERA_MICROPHONE)) {
+          Services.obs.notifyObservers(null, "getUserMedia:response:deny", aSubject.callID);
+          WebrtcUI.showBlockMessage(devices);
+          return;
+        }
+
         WebrtcUI.prompt(contentWindow, aSubject.callID, constraints.audio,
                         constraints.video, devices);
       },
@@ -148,6 +163,20 @@ var WebrtcUI = {
     }];
   },
 
+  _determineNeededRuntimePermissions: function(aSubject) {
+    let permissions = [];
+
+    let constraints = aSubject.getConstraints();
+    if (constraints.video) {
+      permissions.push(RuntimePermissions.CAMERA);
+    }
+    if (constraints.audio) {
+      permissions.push(RuntimePermissions.RECORD_AUDIO);
+    }
+
+    return permissions;
+  },
+
   // Get a list of string names for devices. Ensures that none of the strings are blank
   _getList: function(aDevices, aType) {
     let defaultCount = 0;
@@ -186,6 +215,31 @@ var WebrtcUI = {
 
       }
     }
+  },
+
+  showBlockMessage: function(aDevices) {
+    let microphone = false;
+    let camera = false;
+
+    for (let device of aDevices) {
+      device = device.QueryInterface(Ci.nsIMediaDevice);
+      if (device.type == "audio") {
+        microphone = true;
+      } else if (device.type == "video") {
+        camera = true;
+      }
+    }
+
+    let message;
+    if (microphone && !camera) {
+      message = Strings.browser.GetStringFromName("getUserMedia.blockedMicrophoneAccess");
+    } else if (camera && !microphone) {
+      message = Strings.browser.GetStringFromName("getUserMedia.blockedCameraAccess");
+    } else {
+      message = Strings.browser.GetStringFromName("getUserMedia.blockedCameraAndMicrophoneAccess");
+    }
+
+    NativeWindow.doorhanger.show(message, "webrtc-blocked", [], BrowserApp.selectedTab.id, {});
   },
 
   prompt: function prompt(aContentWindow, aCallID, aAudioRequested,

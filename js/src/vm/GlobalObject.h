@@ -27,8 +27,10 @@ InitSharedArrayBufferClass(JSContext* cx, HandleObject obj);
 
 class Debugger;
 class TypedObjectModuleObject;
-class StaticBlockObject;
+class StaticBlockScope;
 class ClonedBlockObject;
+
+class SimdTypeDescr;
 
 /*
  * Global object slots are reserved as follows:
@@ -94,6 +96,7 @@ class GlobalObject : public NativeObject
 
         /* One-off properties stored after slots for built-ins. */
         LEXICAL_SCOPE,
+        ITERATOR_PROTO,
         ARRAY_ITERATOR_PROTO,
         STRING_ITERATOR_PROTO,
         LEGACY_GENERATOR_OBJECT_PROTO,
@@ -113,13 +116,9 @@ class GlobalObject : public NativeObject
         RUNTIME_CODEGEN_ENABLED,
         DEBUGGERS,
         INTRINSICS,
-        FLOAT32X4_TYPE_DESCR,
-        FLOAT64X2_TYPE_DESCR,
-        INT8X16_TYPE_DESCR,
-        INT16X8_TYPE_DESCR,
-        INT32X4_TYPE_DESCR,
         FOR_OF_PIC_CHAIN,
         MODULE_RESOLVE_HOOK,
+        WINDOW_PROXY,
 
         /* Total reserved-slot count for global objects. */
         RESERVED_SLOTS
@@ -164,6 +163,7 @@ class GlobalObject : public NativeObject
         MOZ_ASSERT(key <= JSProto_LIMIT);
         return getSlot(APPLICATION_SLOTS + key);
     }
+    static bool skipDeselectedConstructor(JSContext* cx, JSProtoKey key);
     static bool ensureConstructor(JSContext* cx, Handle<GlobalObject*> global, JSProtoKey key);
     static bool resolveConstructor(JSContext* cx, Handle<GlobalObject*> global, JSProtoKey key);
     static bool initBuiltinConstructor(JSContext* cx, Handle<GlobalObject*> global,
@@ -439,59 +439,30 @@ class GlobalObject : public NativeObject
         return getOrCreateObject(cx, APPLICATION_SLOTS + JSProto_TypedObject, initTypedObjectModule);
     }
 
-    void setFloat32x4TypeDescr(JSObject& obj) {
-        MOZ_ASSERT(getSlotRef(FLOAT32X4_TYPE_DESCR).isUndefined());
-        setSlot(FLOAT32X4_TYPE_DESCR, ObjectValue(obj));
+    JSObject* getOrCreateSimdGlobalObject(JSContext* cx) {
+        return getOrCreateObject(cx, APPLICATION_SLOTS + JSProto_SIMD, initSimdObject);
     }
 
-    JSObject& float32x4TypeDescr() {
-        MOZ_ASSERT(getSlotRef(FLOAT32X4_TYPE_DESCR).isObject());
-        return getSlotRef(FLOAT32X4_TYPE_DESCR).toObject();
-    }
-
-    void setFloat64x2TypeDescr(JSObject& obj) {
-        MOZ_ASSERT(getSlotRef(FLOAT64X2_TYPE_DESCR).isUndefined());
-        setSlot(FLOAT64X2_TYPE_DESCR, ObjectValue(obj));
-    }
-
-    JSObject& float64x2TypeDescr() {
-        MOZ_ASSERT(getSlotRef(FLOAT64X2_TYPE_DESCR).isObject());
-        return getSlotRef(FLOAT64X2_TYPE_DESCR).toObject();
-    }
-
-    void setInt8x16TypeDescr(JSObject& obj) {
-        MOZ_ASSERT(getSlotRef(INT8X16_TYPE_DESCR).isUndefined());
-        setSlot(INT8X16_TYPE_DESCR, ObjectValue(obj));
-    }
-
-    JSObject& int8x16TypeDescr() {
-        MOZ_ASSERT(getSlotRef(INT8X16_TYPE_DESCR).isObject());
-        return getSlotRef(INT8X16_TYPE_DESCR).toObject();
-    }
-
-    void setInt16x8TypeDescr(JSObject& obj) {
-        MOZ_ASSERT(getSlotRef(INT16X8_TYPE_DESCR).isUndefined());
-        setSlot(INT16X8_TYPE_DESCR, ObjectValue(obj));
-    }
-
-    JSObject& int16x8TypeDescr() {
-        MOZ_ASSERT(getSlotRef(INT16X8_TYPE_DESCR).isObject());
-        return getSlotRef(INT16X8_TYPE_DESCR).toObject();
-    }
-
-    void setInt32x4TypeDescr(JSObject& obj) {
-        MOZ_ASSERT(getSlotRef(INT32X4_TYPE_DESCR).isUndefined());
-        setSlot(INT32X4_TYPE_DESCR, ObjectValue(obj));
-    }
-
-    JSObject& int32x4TypeDescr() {
-        MOZ_ASSERT(getSlotRef(INT32X4_TYPE_DESCR).isObject());
-        return getSlotRef(INT32X4_TYPE_DESCR).toObject();
+    template<class /* SimdTypeDescriptor (cf SIMD.h) */ T>
+    static SimdTypeDescr*
+    getOrCreateSimdTypeDescr(JSContext* cx, Handle<GlobalObject*> global) {
+        RootedObject globalSimdObject(cx, global->getOrCreateSimdGlobalObject(cx));
+        if (!globalSimdObject)
+            return nullptr;
+        uint32_t typeSlotIndex = uint32_t(T::type);
+        if (globalSimdObject->as<NativeObject>().getReservedSlot(typeSlotIndex).isUndefined() &&
+            !GlobalObject::initSimdType(cx, global, typeSlotIndex))
+        {
+            return nullptr;
+        }
+        const Value& slot = globalSimdObject->as<NativeObject>().getReservedSlot(typeSlotIndex);
+        MOZ_ASSERT(slot.isObject());
+        return &slot.toObject().as<SimdTypeDescr>();
     }
 
     TypedObjectModuleObject& getTypedObjectModule() const;
 
-    JSObject* getIteratorPrototype() {
+    JSObject* getLegacyIteratorPrototype() {
         return &getPrototype(JSProto_Iterator).toObject();
     }
 
@@ -547,13 +518,9 @@ class GlobalObject : public NativeObject
     }
 
   public:
-    static NativeObject* getOrCreateIteratorPrototype(JSContext* cx,
-                                                      Handle<GlobalObject*> global)
+    static NativeObject* getOrCreateIteratorPrototype(JSContext* cx, Handle<GlobalObject*> global)
     {
-        if (!ensureConstructor(cx, global, JSProto_Iterator))
-            return nullptr;
-        size_t slot = APPLICATION_SLOTS + JSProto_LIMIT + JSProto_Iterator;
-        return &global->getSlot(slot).toObject().as<NativeObject>();
+        return MaybeNativeObject(global->getOrCreateObject(cx, ITERATOR_PROTO, initIteratorProto));
     }
 
     static NativeObject* getOrCreateArrayIteratorPrototype(JSContext* cx, Handle<GlobalObject*> global)
@@ -613,16 +580,32 @@ class GlobalObject : public NativeObject
 
     static NativeObject* getIntrinsicsHolder(JSContext* cx, Handle<GlobalObject*> global);
 
-    Value existingIntrinsicValue(PropertyName* name) {
+    bool maybeExistingIntrinsicValue(PropertyName* name, Value* vp) {
         Value slot = getReservedSlot(INTRINSICS);
-        MOZ_ASSERT(slot.isObject(), "intrinsics holder must already exist");
+        // If we're in the self-hosting compartment itself, the
+        // intrinsics-holder isn't initialized at this point.
+        if (slot.isUndefined()) {
+            *vp = UndefinedValue();
+            return false;
+        }
 
         NativeObject* holder = &slot.toObject().as<NativeObject>();
-
         Shape* shape = holder->lookupPure(name);
-        MOZ_ASSERT(shape, "intrinsic must already have been added to holder");
+        if (!shape) {
+            *vp = UndefinedValue();
+            return false;
+        }
 
-        return holder->getSlot(shape->slot());
+        *vp = holder->getSlot(shape->slot());
+        return true;
+    }
+
+    Value existingIntrinsicValue(PropertyName* name) {
+        Value val;
+        mozilla::DebugOnly<bool> exists = maybeExistingIntrinsicValue(name, &val);
+        MOZ_ASSERT(exists, "intrinsic must already have been added to holder");
+
+        return val;
     }
 
     static bool
@@ -716,6 +699,7 @@ class GlobalObject : public NativeObject
     bool valueIsEval(Value val);
 
     // Implemented in jsiter.cpp.
+    static bool initIteratorProto(JSContext* cx, Handle<GlobalObject*> global);
     static bool initArrayIteratorProto(JSContext* cx, Handle<GlobalObject*> global);
     static bool initStringIteratorProto(JSContext* cx, Handle<GlobalObject*> global);
 
@@ -740,6 +724,10 @@ class GlobalObject : public NativeObject
 
     // Implemented in builtin/TypedObject.cpp
     static bool initTypedObjectModule(JSContext* cx, Handle<GlobalObject*> global);
+
+    // Implemented in builtim/SIMD.cpp
+    static bool initSimdObject(JSContext* cx, Handle<GlobalObject*> global);
+    static bool initSimdType(JSContext* cx, Handle<GlobalObject*> global, uint32_t simdTypeDescrType);
 
     static bool initStandardClasses(JSContext* cx, Handle<GlobalObject*> global);
     static bool initSelfHostingBuiltins(JSContext* cx, Handle<GlobalObject*> global,
@@ -766,6 +754,18 @@ class GlobalObject : public NativeObject
         return &forOfPIC.toObject().as<NativeObject>();
     }
     static NativeObject* getOrCreateForOfPICObject(JSContext* cx, Handle<GlobalObject*> global);
+
+    JSObject* windowProxy() const {
+        return &getReservedSlot(WINDOW_PROXY).toObject();
+    }
+    JSObject* maybeWindowProxy() const {
+        Value v = getReservedSlot(WINDOW_PROXY);
+        MOZ_ASSERT(v.isObject() || v.isUndefined());
+        return v.isObject() ? &v.toObject() : nullptr;
+    }
+    void setWindowProxy(JSObject* windowProxy) {
+        setReservedSlot(WINDOW_PROXY, ObjectValue(*windowProxy));
+    }
 
     void setModuleResolveHook(HandleFunction hook) {
         MOZ_ASSERT(hook);

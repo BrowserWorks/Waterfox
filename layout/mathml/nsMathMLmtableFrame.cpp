@@ -781,8 +781,7 @@ nsMathMLmtableOuterFrame::AttributeChanged(int32_t  aNameSpaceID,
 }
 
 nsIFrame*
-nsMathMLmtableOuterFrame::GetRowFrameAt(nsPresContext* aPresContext,
-                                        int32_t         aRowIndex)
+nsMathMLmtableOuterFrame::GetRowFrameAt(int32_t aRowIndex)
 {
   int32_t rowCount = GetRowCount();
 
@@ -846,7 +845,7 @@ nsMathMLmtableOuterFrame::Reflow(nsPresContext*          aPresContext,
   nscoord blockSize = aDesiredSize.BSize(wm);
   nsIFrame* rowFrame = nullptr;
   if (rowIndex) {
-    rowFrame = GetRowFrameAt(aPresContext, rowIndex);
+    rowFrame = GetRowFrameAt(rowIndex);
     if (rowFrame) {
       // translate the coordinates to be relative to us and in our writing mode
       nsIFrame* frame = rowFrame;
@@ -889,7 +888,7 @@ nsMathMLmtableOuterFrame::Reflow(nsPresContext*          aPresContext,
                                             nsLayoutUtils::
                                             FontSizeInflationFor(this));
       nscoord axisHeight;
-      GetAxisHeight(*aReflowState.rendContext, fm, axisHeight);
+      GetAxisHeight(aReflowState.rendContext->GetDrawTarget(), fm, axisHeight);
       if (rowFrame) {
         // anchor the table on the axis of the row of reference
         // XXX fallback to baseline because it is a hard problem

@@ -73,10 +73,12 @@ class ReleaseFirefoxUIUpdateTests(FirefoxUIUpdateTests):
             'run-tests',
         ]
 
-        FirefoxUIUpdateTests.__init__(self, all_actions=all_actions,
-                                      default_actions=all_actions,
-                                      config_options=firefox_ui_update_release_config_options,
-                                      append_env_variables_from_configs=True)
+        super(ReleaseFirefoxUIUpdateTests, self).__init__(
+            all_actions=all_actions,
+            default_actions=all_actions,
+            config_options=firefox_ui_update_release_config_options,
+            append_env_variables_from_configs=True,
+        )
 
         self.tools_repo = self.config.get('tools_repo')
         self.tools_tag = self.config.get('tools_tag')
@@ -97,7 +99,7 @@ class ReleaseFirefoxUIUpdateTests(FirefoxUIUpdateTests):
         """
         dirs = self.query_abs_dirs()
 
-        FirefoxUIUpdateTests.checkout(self)
+        super(ReleaseFirefoxUIUpdateTests, self).checkout()
 
         self.vcs_checkout(
             repo=self.tools_repo,
@@ -110,10 +112,14 @@ class ReleaseFirefoxUIUpdateTests(FirefoxUIUpdateTests):
         if self.abs_dirs:
             return self.abs_dirs
 
-        abs_dirs = FirefoxUIUpdateTests.query_abs_dirs(self)
-        abs_dirs.update({
+        abs_dirs = super(ReleaseFirefoxUIUpdateTests, self).query_abs_dirs()
+        dirs = {
             'abs_tools_dir': os.path.join(abs_dirs['abs_work_dir'], 'tools'),
-        })
+        }
+
+        for key in dirs:
+            if key not in abs_dirs:
+                abs_dirs[key] = dirs[key]
         self.abs_dirs = abs_dirs
 
         return self.abs_dirs
@@ -240,13 +246,22 @@ class ReleaseFirefoxUIUpdateTests(FirefoxUIUpdateTests):
                     parent_dir=dirs['abs_work_dir']
                 )
 
+                binary_path = self.install_app(app=self.config.get('application'),
+                                               installer_path=installer_path)
+
                 marionette_port += 1
 
                 retcode = self.run_test(
-                    installer_path=installer_path,
+                    binary_path=binary_path,
                     env=self.query_env(avoid_host_env=True),
                     marionette_port=marionette_port,
                 )
+
+                self.uninstall_app()
+
+                # Remove installer which is not needed anymore
+                self.info('Removing {}'.format(installer_path))
+                os.remove(installer_path)
 
                 if retcode:
                     self.warning('FAIL: {} has failed.'.format(sys.argv[0]))

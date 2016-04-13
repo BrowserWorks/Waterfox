@@ -102,7 +102,7 @@ var gSyncPane = {
         cachedComputerName = "";
       }
       document.getElementById("fxaEmailAddress1").textContent = username;
-      document.getElementById("fxaSyncComputerName").value = cachedComputerName;
+      this._populateComputerName(cachedComputerName);
       this.page = FXA_PAGE_LOGGED_IN;
     } else { // Old Sync
       this.page = PAGE_HAS_ACCOUNT;
@@ -134,11 +134,16 @@ var gSyncPane = {
 
     XPCOMUtils.defineLazyGetter(this, '_stringBundle', () => {
       return Services.strings.createBundle("chrome://browser/locale/preferences/preferences.properties");
-    }),
+    });
 
     XPCOMUtils.defineLazyGetter(this, '_accountsStringBundle', () => {
       return Services.strings.createBundle("chrome://browser/locale/accounts.properties");
-    }),
+    });
+
+    let url = Services.prefs.getCharPref("identity.mobilepromo.android") + "sync-preferences";
+    document.getElementById("fxaMobilePromo-android").setAttribute("href", url);
+    url = Services.prefs.getCharPref("identity.mobilepromo.ios") + "sync-preferences";
+    document.getElementById("fxaMobilePromo-ios").setAttribute("href", url);
 
     this.updateWeavePrefs();
 
@@ -164,28 +169,25 @@ var gSyncPane = {
     document.getElementById("fxaSyncComputerName").blur();
   },
 
-  _focusChangeDeviceNameButton: function() {
-    document.getElementById("fxaChangeDeviceName").focus();
+  _focusAfterComputerNameTextbox: function() {
+    // Focus the most appropriate element that's *not* the "computer name" box.
+    Services.focus.moveFocus(window,
+                             document.getElementById("fxaSyncComputerName"),
+                             Services.focus.MOVEFOCUS_FORWARD, 0);
   },
 
   _updateComputerNameValue: function(save) {
-    let textbox = document.getElementById("fxaSyncComputerName");
     if (save) {
+      let textbox = document.getElementById("fxaSyncComputerName");
       Weave.Service.clientsEngine.localName = textbox.value;
     }
-    else {
-      textbox.value = Weave.Service.clientsEngine.localName;
-    }
+    this._populateComputerName(Weave.Service.clientsEngine.localName);
   },
 
   _closeSyncStatusMessageBox: function() {
     document.getElementById("syncStatusMessage").removeAttribute("message-type");
     document.getElementById("syncStatusMessageTitle").textContent = "";
     document.getElementById("syncStatusMessageDescription").textContent = "";
-    let learnMoreLink = document.getElementById("learnMoreLink");
-    if (learnMoreLink) {
-      learnMoreLink.parentNode.removeChild(learnMoreLink);
-    }
   },
 
   _setupEventListeners: function() {
@@ -227,17 +229,21 @@ var gSyncPane = {
       this._focusComputerNameTextbox();
     });
     setEventListener("fxaCancelChangeDeviceName", "command", function () {
-      // We explicitly blur the textbox because of bug 1194032
+      // We explicitly blur the textbox because of bug 75324, then after
+      // changing the state of the buttons, force focus to whatever the focus
+      // manager thinks should be next (which on the mac, depends on an OSX
+      // keyboard access preference)
       this._blurComputerNameTextbox();
       this._toggleComputerNameControls(false);
       this._updateComputerNameValue(false);
-      this._focusChangeDeviceNameButton();
+      this._focusAfterComputerNameTextbox();
     });
     setEventListener("fxaSaveChangeDeviceName", "command", function () {
+      // Work around bug 75324 - see above.
       this._blurComputerNameTextbox();
       this._toggleComputerNameControls(false);
       this._updateComputerNameValue(true);
-      this._focusChangeDeviceNameButton();
+      this._focusAfterComputerNameTextbox();
     });
     setEventListener("unlinkDevice", "click", function () {
       gSyncPane.startOver(true);
@@ -352,7 +358,7 @@ var gSyncPane = {
         fxaEmailAddress1Label.textContent = data.email;
         document.getElementById("fxaEmailAddress2").textContent = data.email;
         document.getElementById("fxaEmailAddress3").textContent = data.email;
-        document.getElementById("fxaSyncComputerName").value = Weave.Service.clientsEngine.localName;
+        this._populateComputerName(Weave.Service.clientsEngine.localName);
         let engines = document.getElementById("fxaSyncEngines")
         for (let checkbox of engines.querySelectorAll("checkbox")) {
           checkbox.disabled = !syncReady;
@@ -665,6 +671,15 @@ var gSyncPane = {
 
   resetSync: function () {
     this.openSetup("reset");
+  },
+
+  _populateComputerName(value) {
+    let textbox = document.getElementById("fxaSyncComputerName");
+    if (!textbox.hasAttribute("placeholder")) {
+      textbox.setAttribute("placeholder",
+                           Weave.Utils.getDefaultDeviceName());
+    }
+    textbox.value = value;
   },
 };
 

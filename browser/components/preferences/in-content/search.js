@@ -95,15 +95,8 @@ var gSearchPane = {
   buildDefaultEngineDropDown: function() {
     // This is called each time something affects the list of engines.
     let list = document.getElementById("defaultEngine");
-    let currentEngine;
-
-    // First, try to preserve the current selection.
-    if (list.selectedItem)
-      currentEngine = list.selectedItem.label;
-
-    // If there's no current selection, use the current default engine.
-    if (!currentEngine)
-      currentEngine = Services.search.currentEngine.name;
+    // Set selection to the current default engine.
+    let currentEngine = Services.search.currentEngine.name;
 
     // If the current engine isn't in the list any more, select the first item.
     let engines = gEngineView._engineStore._engines;
@@ -145,7 +138,7 @@ var gSearchPane = {
             gSearchPane.onRestoreDefaults();
             break;
           case "removeEngineButton":
-            gSearchPane.remove();
+            Services.search.removeEngine(gEngineView.selectedEngine.originalEngine);
             break;
         }
         break;
@@ -187,7 +180,11 @@ var gSearchPane = {
         gEngineView.invalidate();
         break;
       case "engine-removed":
+        gSearchPane.remove(aEngine);
+        break;
       case "engine-current":
+        gSearchPane.buildDefaultEngineDropDown();
+        break;
       case "engine-default":
         // Not relevant
         break;
@@ -235,9 +232,8 @@ var gSearchPane = {
     document.getElementById("restoreDefaultSearchEngines").disabled = !aEnable;
   },
 
-  remove: function() {
-    gEngineView._engineStore.removeEngine(gEngineView.selectedEngine);
-    let index = gEngineView.selectedIndex;
+  remove: function(aEngine) {
+    let index = gEngineView._engineStore.removeEngine(aEngine);
     gEngineView.rowCountChanged(index, -1);
     gEngineView.invalidate();
     gEngineView.selection.select(Math.min(index, gEngineView.lastIndex));
@@ -376,16 +372,18 @@ EngineStore.prototype = {
   },
 
   removeEngine: function ES_removeEngine(aEngine) {
-    var index = this._getIndexForEngine(aEngine);
+    let engineName = aEngine.name;
+    let index = this._engines.findIndex(element => element.name == engineName);
+
     if (index == -1)
       throw new Error("invalid engine?");
 
     this._engines.splice(index, 1);
-    Services.search.removeEngine(aEngine.originalEngine);
 
-    if (this._defaultEngines.some(this._isSameEngine, aEngine))
+    if (this._defaultEngines.some(this._isSameEngine, this._engines[index]))
       gSearchPane.showRestoreDefaults(true);
     gSearchPane.buildDefaultEngineDropDown();
+    return index;
   },
 
   restoreDefaultEngines: function ES_restoreDefaultEngines() {
@@ -411,6 +409,7 @@ EngineStore.prototype = {
         added++;
       }
     }
+    Services.search.resetToOriginalDefaultEngine();
     gSearchPane.showRestoreDefaults(false);
     gSearchPane.buildDefaultEngineDropDown();
     return added;

@@ -17,14 +17,9 @@
 #include "nsPrintfCString.h"            // for nsPrintfCString
 #include "nsString.h"                   // for nsAutoCString
 
-class nsIntRegion;
-
 #define BIAS_TIME_MS 1.0
 
 namespace mozilla {
-namespace gfx {
-class Matrix4x4;
-} // namespace gfx
 
 using namespace gfx;
 
@@ -134,6 +129,20 @@ ImageHost::RemoveTextureHost(TextureHost* aTexture)
       aTexture->UnbindTextureSource();
       mImages.RemoveElementAt(i);
     }
+  }
+}
+
+void
+ImageHost::UseOverlaySource(OverlaySource aOverlay,
+                            const gfx::IntRect& aPictureRect)
+{
+  if (ImageHostOverlay::IsValid(aOverlay)) {
+    if (!mImageHostOverlay) {
+      mImageHostOverlay = new ImageHostOverlay();
+    }
+    mImageHostOverlay->UseOverlaySource(aOverlay, aPictureRect);
+  } else {
+    mImageHostOverlay = nullptr;
   }
 }
 
@@ -269,6 +278,21 @@ ImageHost::Composite(LayerComposite* aLayer,
     // set the new compositor yet.
     return;
   }
+
+  if (mImageHostOverlay) {
+    mImageHostOverlay->Composite(GetCompositor(),
+                                 mFlashCounter,
+                                 aLayer,
+                                 aEffectChain,
+                                 aOpacity,
+                                 aTransform,
+                                 aFilter,
+                                 aClipRect,
+                                 aVisibleRegion);
+    mBias = BIAS_NONE;
+    return;
+  }
+
   int imageIndex = ChooseImageIndex();
   if (imageIndex < 0) {
     return;
@@ -314,6 +338,13 @@ ImageHost::Composite(LayerComposite* aLayer,
 
     if (!GetCompositor()->SupportsEffect(effect->mType)) {
       return;
+    }
+
+    DiagnosticFlags diagnosticFlags = DiagnosticFlags::IMAGE;
+    if (effect->mType == EffectTypes::NV12) {
+      diagnosticFlags |= DiagnosticFlags::NV12;
+    } else if (effect->mType == EffectTypes::YCBCR) {
+      diagnosticFlags |= DiagnosticFlags::YCBCR;
     }
 
     if (mLastFrameID != img->mFrameID || mLastProducerID != img->mProducerID) {
@@ -363,12 +394,12 @@ ImageHost::Composite(LayerComposite* aLayer,
         }
         GetCompositor()->DrawQuad(rect, aClipRect, aEffectChain,
                                   aOpacity, aTransform);
-        GetCompositor()->DrawDiagnostics(DiagnosticFlags::IMAGE | DiagnosticFlags::BIGIMAGE,
+        GetCompositor()->DrawDiagnostics(diagnosticFlags | DiagnosticFlags::BIGIMAGE,
                                          rect, aClipRect, aTransform, mFlashCounter);
       } while (it->NextTile());
       it->EndBigImageIteration();
       // layer border
-      GetCompositor()->DrawDiagnostics(DiagnosticFlags::IMAGE, pictureRect,
+      GetCompositor()->DrawDiagnostics(diagnosticFlags, pictureRect,
                                        aClipRect, aTransform, mFlashCounter);
     } else {
       IntSize textureSize = img->mTextureSource->GetSize();
@@ -384,7 +415,7 @@ ImageHost::Composite(LayerComposite* aLayer,
 
       GetCompositor()->DrawQuad(pictureRect, aClipRect, aEffectChain,
                                 aOpacity, aTransform);
-      GetCompositor()->DrawDiagnostics(DiagnosticFlags::IMAGE,
+      GetCompositor()->DrawDiagnostics(diagnosticFlags,
                                        pictureRect, aClipRect,
                                        aTransform, mFlashCounter);
     }
@@ -410,6 +441,9 @@ ImageHost::SetCompositor(Compositor* aCompositor)
       img.mFrontBuffer->SetCompositor(aCompositor);
     }
   }
+  if (mImageHostOverlay) {
+    mImageHostOverlay->SetCompositor(aCompositor);
+  }
   CompositableHost::SetCompositor(aCompositor);
 }
 
@@ -425,6 +459,10 @@ ImageHost::PrintInfo(std::stringstream& aStream, const char* aPrefix)
     aStream << "\n";
     img.mFrontBuffer->PrintInfo(aStream, pfx.get());
     AppendToString(aStream, img.mPictureRect, " [picture-rect=", "]");
+  }
+
+  if (mImageHostOverlay) {
+    mImageHostOverlay->PrintInfo(aStream, aPrefix);
   }
 }
 
@@ -445,6 +483,10 @@ ImageHost::Dump(std::stringstream& aStream,
 LayerRenderState
 ImageHost::GetRenderState()
 {
+  if (mImageHostOverlay) {
+    return mImageHostOverlay->GetRenderState();
+  }
+
   TimedImage* img = ChooseImage();
   if (img) {
     return img->mFrontBuffer->GetRenderState();
@@ -455,6 +497,10 @@ ImageHost::GetRenderState()
 already_AddRefed<gfx::DataSourceSurface>
 ImageHost::GetAsSurface()
 {
+  if (mImageHostOverlay) {
+    return nullptr;
+  }
+
   TimedImage* img = ChooseImage();
   if (img) {
     return img->mFrontBuffer->GetAsSurface();
@@ -491,6 +537,10 @@ ImageHost::Unlock()
 IntSize
 ImageHost::GetImageSize() const
 {
+  if (mImageHostOverlay) {
+    return mImageHostOverlay->GetImageSize();
+  }
+
   const TimedImage* img = ChooseImage();
   if (img) {
     return IntSize(img->mPictureRect.width, img->mPictureRect.height);
@@ -532,18 +582,47 @@ ImageHost::SetImageContainer(ImageContainerParent* aImageContainer)
   }
 }
 
-#ifdef MOZ_WIDGET_GONK
-ImageHostOverlay::ImageHostOverlay(const TextureInfo& aTextureInfo)
-  : CompositableHost(aTextureInfo)
+ImageHostOverlay::ImageHostOverlay()
 {
+  MOZ_COUNT_CTOR(ImageHostOverlay);
 }
 
 ImageHostOverlay::~ImageHostOverlay()
 {
+  if (mCompositor) {
+    mCompositor->RemoveImageHostOverlay(this);
+  }
+  MOZ_COUNT_DTOR(ImageHostOverlay);
+}
+
+/* static */ bool
+ImageHostOverlay::IsValid(OverlaySource aOverlay)
+{
+  if ((aOverlay.handle().type() == OverlayHandle::Tint32_t) &&
+      aOverlay.handle().get_int32_t() != INVALID_OVERLAY) {
+    return true;
+  } else if (aOverlay.handle().type() == OverlayHandle::TGonkNativeHandle) {
+    return true;
+  }
+  return false;
 }
 
 void
-ImageHostOverlay::Composite(LayerComposite* aLayer,
+ImageHostOverlay::SetCompositor(Compositor* aCompositor)
+{
+  if (mCompositor && (mCompositor != aCompositor)) {
+    mCompositor->RemoveImageHostOverlay(this);
+  }
+  if (aCompositor) {
+    aCompositor->AddImageHostOverlay(this);
+  }
+  mCompositor = aCompositor;
+}
+
+void
+ImageHostOverlay::Composite(Compositor* aCompositor,
+                            uint32_t aFlashCounter,
+                            LayerComposite* aLayer,
                             EffectChain& aEffectChain,
                             float aOpacity,
                             const gfx::Matrix4x4& aTransform,
@@ -551,12 +630,12 @@ ImageHostOverlay::Composite(LayerComposite* aLayer,
                             const gfx::Rect& aClipRect,
                             const nsIntRegion* aVisibleRegion)
 {
-  if (!GetCompositor()) {
+  MOZ_ASSERT(mCompositor == aCompositor);
+
+  if (mOverlay.handle().type() == OverlayHandle::Tnull_t) {
     return;
   }
 
-  if (mOverlay.handle().type() == OverlayHandle::Tnull_t)
-    return;
   Color hollow(0.0f, 0.0f, 0.0f, 0.0f);
   aEffectChain.mPrimaryEffect = new EffectSolidColor(hollow);
   aEffectChain.mSecondaryEffects[EffectTypes::BLEND_MODE] = new EffectBlendMode(CompositionOp::OP_SOURCE);
@@ -567,18 +646,24 @@ ImageHostOverlay::Composite(LayerComposite* aLayer,
   rect.SetRect(mPictureRect.x, mPictureRect.y,
                mPictureRect.width, mPictureRect.height);
 
-  mCompositor->DrawQuad(rect, aClipRect, aEffectChain, aOpacity, aTransform);
-  mCompositor->DrawDiagnostics(DiagnosticFlags::IMAGE | DiagnosticFlags::BIGIMAGE,
-                               rect, aClipRect, aTransform, mFlashCounter);
+  aCompositor->DrawQuad(rect, aClipRect, aEffectChain, aOpacity, aTransform);
+  aCompositor->DrawDiagnostics(DiagnosticFlags::IMAGE | DiagnosticFlags::BIGIMAGE,
+                               rect, aClipRect, aTransform, aFlashCounter);
 }
 
 LayerRenderState
 ImageHostOverlay::GetRenderState()
 {
   LayerRenderState state;
+#ifdef MOZ_WIDGET_GONK
   if (mOverlay.handle().type() == OverlayHandle::Tint32_t) {
     state.SetOverlayId(mOverlay.handle().get_int32_t());
+  } else if (mOverlay.handle().type() == OverlayHandle::TGonkNativeHandle) {
+    state.SetSidebandStream(mOverlay.handle().get_GonkNativeHandle());
   }
+  state.mSize.width = mPictureRect.Width();
+  state.mSize.height = mPictureRect.Height();
+#endif
   return state;
 }
 
@@ -600,7 +685,7 @@ void
 ImageHostOverlay::PrintInfo(std::stringstream& aStream, const char* aPrefix)
 {
   aStream << aPrefix;
-  aStream << nsPrintfCString("ImageHost (0x%p)", this).get();
+  aStream << nsPrintfCString("ImageHostOverlay (0x%p)", this).get();
 
   AppendToString(aStream, mPictureRect, " [picture-rect=", "]");
 
@@ -611,6 +696,5 @@ ImageHostOverlay::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   }
 }
 
-#endif
 } // namespace layers
 } // namespace mozilla

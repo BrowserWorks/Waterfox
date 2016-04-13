@@ -54,7 +54,7 @@ public:
   // Runs MSE range removal algorithm.
   // http://w3c.github.io/media-source/#sourcebuffer-coded-frame-removal
   virtual RefPtr<RangeRemovalPromise> RangeRemoval(media::TimeUnit aStart,
-                                                     media::TimeUnit aEnd) = 0;
+                                                   media::TimeUnit aEnd) = 0;
 
   enum class EvictDataResult : int8_t
   {
@@ -107,10 +107,6 @@ public:
   virtual void SetGroupStartTimestamp(const media::TimeUnit& aGroupStartTimestamp) {}
   virtual void RestartGroupStartTimestamp() {}
   virtual media::TimeUnit GroupEndTimestamp() = 0;
-
-#if defined(DEBUG)
-  virtual void Dump(const char* aPath) { }
-#endif
 
 protected:
   virtual ~SourceBufferContentManager() { }

@@ -75,6 +75,10 @@ EXPORTS.mozilla.psm += [
     'PSMContentListener.h',
 ]
 
+EXPORTS.ipc += [
+    'DataStorageIPCUtils.h',
+]
+
 UNIFIED_SOURCES += [
     'CertBlocklist.cpp',
     'CryptoTask.cpp',
@@ -161,8 +165,8 @@ LOCAL_INCLUDES += [
     '/security/pkix/include',
 ]
 
-GENERATED_INCLUDES += [
-    '/dist/public/nss',
+LOCAL_INCLUDES += [
+    '!/dist/public/nss',
 ]
 
 if CONFIG['NSS_DISABLE_DBM']:

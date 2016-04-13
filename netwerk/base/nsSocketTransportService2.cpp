@@ -8,6 +8,7 @@
 #include "nsSocketTransport2.h"
 #include "NetworkActivityMonitor.h"
 #include "mozilla/Preferences.h"
+#include "nsIOService.h"
 #endif // !defined(MOZILLA_XPCOMRT_API)
 #include "nsASocketHandler.h"
 #include "nsError.h"
@@ -17,6 +18,7 @@
 #include "nsIPrefBranch.h"
 #include "nsServiceManagerUtils.h"
 #include "nsIObserverService.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/Services.h"
 #include "mozilla/Likely.h"
 #include "mozilla/PublicSSL.h"
@@ -29,11 +31,11 @@
 using namespace mozilla;
 using namespace mozilla::net;
 
-PRLogModuleInfo *gSocketTransportLog = nullptr;
-PRLogModuleInfo *gUDPSocketLog = nullptr;
+LazyLogModule gSocketTransportLog("nsSocketTransport");
+LazyLogModule gUDPSocketLog("UDPSocket");
 
 nsSocketTransportService *gSocketTransportService = nullptr;
-PRThread                 *gSocketThread           = nullptr;
+Atomic<PRThread*, Relaxed> gSocketThread;
 
 #define SEND_BUFFER_PREF "network.tcp.sendbuffer"
 #define KEEPALIVE_ENABLED_PREF "network.tcp.keepalive.enabled"
@@ -45,6 +47,7 @@ PRThread                 *gSocketThread           = nullptr;
 #define BLIP_INTERVAL_PREF "network.activity.blipIntervalMilliseconds"
 #define MAX_TIME_BETWEEN_TWO_POLLS "network.sts.max_time_for_events_between_two_polls"
 #define TELEMETRY_PREF "toolkit.telemetry.enabled"
+#define MAX_TIME_FOR_PR_CLOSE_DURING_SHUTDOWN "network.sts.max_time_for_pr_close_during_shutdown"
 
 uint32_t nsSocketTransportService::gMaxCount;
 PRCallOnceType nsSocketTransportService::gMaxCountInitOnce;
@@ -109,11 +112,9 @@ nsSocketTransportService::nsSocketTransportService()
     , mServingPendingQueue(false)
     , mMaxTimePerPollIter(100)
     , mTelemetryEnabledPref(false)
+    , mMaxTimeForPrClosePref(PR_SecondsToInterval(5))
     , mProbedMaxCount(false)
 {
-    gSocketTransportLog = PR_NewLogModule("nsSocketTransport");
-    gUDPSocketLog = PR_NewLogModule("UDPSocket");
-
     NS_ASSERTION(NS_IsMainThread(), "wrong thread");
 
     PR_CallOnce(&gMaxCountInitOnce, DiscoverMaxCount);
@@ -551,6 +552,7 @@ nsSocketTransportService::Init()
         tmpPrefService->AddObserver(KEEPALIVE_PROBE_COUNT_PREF, this, false);
         tmpPrefService->AddObserver(MAX_TIME_BETWEEN_TWO_POLLS, this, false);
         tmpPrefService->AddObserver(TELEMETRY_PREF, this, false);
+        tmpPrefService->AddObserver(MAX_TIME_FOR_PR_CLOSE_DURING_SHUTDOWN, this, false);
     }
     UpdatePrefs();
 
@@ -1067,7 +1069,16 @@ nsSocketTransportService::DoPollIteration(bool wait, TimeDuration *pollDuration)
     // Measures seconds spent while blocked on PR_Poll
     uint32_t pollInterval;
 
-    int32_t n = Poll(wait, &pollInterval, pollDuration);
+    int32_t n = 0;
+#if !defined(MOZILLA_XPCOMRT_API)
+    if (!gIOService->IsNetTearingDown()) {
+        // Let's not do polling during shutdown.
+        n = Poll(wait, &pollInterval, pollDuration);
+    }
+#else
+    n = Poll(wait, &pollInterval, pollDuration);
+#endif // defined(MOZILLA_XPCOMRT_API)
+
     if (n < 0) {
         SOCKET_LOG(("  PR_Poll error [%d] os error [%d]\n", PR_GetError(),
                     PR_GetOSError()));
@@ -1209,6 +1220,13 @@ nsSocketTransportService::UpdatePrefs()
                                          &telemetryPref);
         if (NS_SUCCEEDED(rv)) {
             mTelemetryEnabledPref = telemetryPref;
+        }
+
+        int32_t maxTimeForPrClosePref;
+        rv = tmpPrefService->GetIntPref(MAX_TIME_FOR_PR_CLOSE_DURING_SHUTDOWN,
+                                        &maxTimeForPrClosePref);
+        if (NS_SUCCEEDED(rv) && maxTimeForPrClosePref >=0) {
+            mMaxTimeForPrClosePref = PR_MillisecondsToInterval(maxTimeForPrClosePref);
         }
     }
     

@@ -236,7 +236,7 @@ nsFrameLoader::LoadFrame()
   if (NS_SUCCEEDED(rv)) {
     rv = LoadURI(uri);
   }
-  
+
   if (NS_FAILED(rv)) {
     FireErrorEvent();
 
@@ -282,18 +282,10 @@ nsFrameLoader::LoadURI(nsIURI* aURI)
 NS_IMETHODIMP
 nsFrameLoader::SwitchProcessAndLoadURI(nsIURI* aURI, const nsACString& aPackageId)
 {
-  nsCOMPtr<nsIURI> URIToLoad = aURI;
   RefPtr<TabParent> tp = nullptr;
 
-  nsCString signedPkgOrigin;
-  if (!aPackageId.IsEmpty()) {
-    // Only when aPackageId is not empty would signed package origin
-    // be meaningful.
-    nsPrincipal::GetOriginForURI(aURI, signedPkgOrigin);
-  }
-
   MutableTabContext context;
-  nsresult rv = GetNewTabContext(&context, signedPkgOrigin, aPackageId);
+  nsresult rv = GetNewTabContext(&context, aURI, aPackageId);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<Element> ownerElement = mOwnerContent;
@@ -307,7 +299,7 @@ nsFrameLoader::SwitchProcessAndLoadURI(nsIURI* aURI, const nsACString& aPackageI
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
-  LoadURI(URIToLoad);
+  LoadURI(aURI);
   return NS_OK;
 }
 
@@ -327,7 +319,7 @@ nsFrameLoader::ReallyStartLoading()
   if (NS_FAILED(rv)) {
     FireErrorEvent();
   }
-  
+
   return rv;
 }
 
@@ -347,7 +339,7 @@ nsFrameLoader::ReallyStartLoadingInternal()
 
     // FIXME get error codes from child
     mRemoteBrowser->LoadURL(mURIToLoad);
-    
+
     if (!mRemoteBrowserShown && !ShowRemoteFrame(ScreenIntSize(0, 0))) {
       NS_WARNING("[nsFrameLoader] ReallyStartLoadingInternal tried but couldn't show remote browser.\n");
     }
@@ -380,7 +372,7 @@ nsFrameLoader::ReallyStartLoadingInternal()
   loadInfo->SetOwner(mOwnerContent->NodePrincipal());
 
   nsCOMPtr<nsIURI> referrer;
-  
+
   nsAutoString srcdoc;
   bool isSrcdoc = mOwnerContent->IsHTMLElement(nsGkAtoms::iframe) &&
                   mOwnerContent->GetAttr(kNameSpaceID_None, nsGkAtoms::srcdoc,
@@ -419,7 +411,7 @@ nsFrameLoader::ReallyStartLoadingInternal()
   net::ReferrerPolicy referrerPolicy = mOwnerContent->OwnerDoc()->GetReferrerPolicy();
   HTMLIFrameElement* iframe = HTMLIFrameElement::FromContent(mOwnerContent);
   if (iframe) {
-    net::ReferrerPolicy iframeReferrerPolicy = iframe->GetReferrerPolicy();
+    net::ReferrerPolicy iframeReferrerPolicy = iframe->GetReferrerPolicyAsEnum();
     if (iframeReferrerPolicy != net::RP_Unset) {
       referrerPolicy = iframeReferrerPolicy;
     }
@@ -554,7 +546,7 @@ nsFrameLoader::AddTreeItemToTreeOwner(nsIDocShellTreeItem* aItem,
 {
   NS_PRECONDITION(aItem, "Must have docshell treeitem");
   NS_PRECONDITION(mOwnerContent, "Must have owning content");
-  
+
   nsAutoString value;
   bool isContent = false;
   mOwnerContent->GetAttr(kNameSpaceID_None, TypeAttrName(), value);
@@ -789,6 +781,7 @@ bool
 nsFrameLoader::ShowRemoteFrame(const ScreenIntSize& size,
                                nsSubDocumentFrame *aFrame)
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::GRAPHICS);
   NS_ASSERTION(IsRemoteFrame(), "ShowRemote only makes sense on remote frames.");
 
   if (!mRemoteBrowser && !TryRemoteBrowser()) {
@@ -937,7 +930,7 @@ nsFrameLoader::SwapWithOtherRemoteLoader(nsFrameLoader* aOther,
   nsCOMPtr<nsIBrowserDOMWindow> browserDOMWindow =
     mRemoteBrowser->GetBrowserDOMWindow();
 
-  if (!otherBrowserDOMWindow || !browserDOMWindow) {
+  if (!!otherBrowserDOMWindow != !!browserDOMWindow) {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
@@ -990,8 +983,8 @@ nsFrameLoader::SwapWithOtherRemoteLoader(nsFrameLoader* aOther,
 
   mInSwap = aOther->mInSwap = false;
 
-  unused << mRemoteBrowser->SendSwappedWithOtherRemoteLoader();
-  unused << aOther->mRemoteBrowser->SendSwappedWithOtherRemoteLoader();
+  Unused << mRemoteBrowser->SendSwappedWithOtherRemoteLoader();
+  Unused << aOther->mRemoteBrowser->SendSwappedWithOtherRemoteLoader();
   return NS_OK;
 }
 
@@ -1135,7 +1128,7 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
        !AllDescendantsOfType(otherDocshell, otherType))) {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
-  
+
   // Save off the tree owners, frame elements, chrome event handlers, and
   // docshell and document parents before doing anything else.
   nsCOMPtr<nsIDocShellTreeOwner> ourOwner, otherOwner;
@@ -1245,7 +1238,7 @@ nsFrameLoader::SwapWithOtherLoader(nsFrameLoader* aOther,
     ourOwner->ContentShellRemoved(ourDocshell);
     otherOwner->ContentShellRemoved(otherDocshell);
   }
-  
+
   ourParentItem->AddChild(otherDocshell);
   otherParentItem->AddChild(ourDocshell);
 
@@ -1796,6 +1789,26 @@ nsFrameLoader::MaybeCreateDocShell()
     mDocShell->SetName(frameName);
   }
 
+  //Grab the userContextId from owner if XUL
+  nsAutoString userContextIdStr;
+  if (namespaceID == kNameSpaceID_XUL) {
+    if (mOwnerContent->HasAttr(kNameSpaceID_None, nsGkAtoms::usercontextid)) {
+      mOwnerContent->GetAttr(kNameSpaceID_None,
+                             nsGkAtoms::usercontextid,
+                             userContextIdStr);
+    }
+  }
+
+  if (!userContextIdStr.IsEmpty()) {
+    nsresult rv;
+    uint32_t userContextId =
+      static_cast<uint32_t>(userContextIdStr.ToInteger(&rv));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = mDocShell->SetUserContextId(userContextId);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
   // Inform our docShell that it has a new child.
   // Note: This logic duplicates a lot of logic in
   // nsSubDocumentFrame::AttributeChanged.  We should fix that.
@@ -1969,7 +1982,7 @@ nsFrameLoader::CheckForRecursiveLoad(nsIURI* aURI)
   NS_WARN_IF_FALSE(treeOwner,
                    "Trying to load a new url to a docshell without owner!");
   NS_ENSURE_STATE(treeOwner);
-  
+
   if (mDocShell->ItemType() != nsIDocShellTreeItem::typeContent) {
     // No need to do recursion-protection here XXXbz why not??  Do we really
     // trust people not to screw up with non-content docshells?
@@ -1983,7 +1996,7 @@ nsFrameLoader::CheckForRecursiveLoad(nsIURI* aURI)
   int32_t depth = 0;
   while (parentAsItem) {
     ++depth;
-    
+
     if (depth >= MAX_DEPTH_CONTENT_FRAMES) {
       mDepthTooGreat = true;
       NS_WARNING("Too many nested content frames so giving up");
@@ -2024,7 +2037,7 @@ nsFrameLoader::CheckForRecursiveLoad(nsIURI* aURI)
         bool equal;
         rv = aURI->EqualsExceptRef(parentURI, &equal);
         NS_ENSURE_SUCCESS(rv, rv);
-        
+
         if (equal) {
           matchCount++;
           if (matchCount >= MAX_SAME_URL_CONTENT_FRAMES) {
@@ -2296,7 +2309,7 @@ nsFrameLoader::TryRemoteBrowser()
                                  nsGkAtoms::mozpasspointerevents,
                                  nsGkAtoms::_true,
                                  eCaseMatters)) {
-    unused << mRemoteBrowser->SendSetUpdateHitRegion(true);
+    Unused << mRemoteBrowser->SendSetUpdateHitRegion(true);
   }
 
   ReallyLoadFrameScripts();
@@ -2341,14 +2354,14 @@ nsFrameLoader::DeactivateRemoteFrame() {
 void
 nsFrameLoader::ActivateUpdateHitRegion() {
   if (mRemoteBrowser) {
-    unused << mRemoteBrowser->SendSetUpdateHitRegion(true);
+    Unused << mRemoteBrowser->SendSetUpdateHitRegion(true);
   }
 }
 
 void
 nsFrameLoader::DeactivateUpdateHitRegion() {
   if (mRemoteBrowser) {
-    unused << mRemoteBrowser->SendSetUpdateHitRegion(false);
+    Unused << mRemoteBrowser->SendSetUpdateHitRegion(false);
   }
 }
 
@@ -2574,6 +2587,8 @@ nsFrameLoader::EnsureMessageManager()
     if (!parentManager) {
       chromeWindow->GetMessageManager(getter_AddRefs(parentManager));
     }
+  } else {
+    parentManager = do_GetService("@mozilla.org/globalmessagemanager;1");
   }
 
   mMessageManager = new nsFrameMessageManager(nullptr,
@@ -2857,7 +2872,7 @@ nsFrameLoader::RequestNotifyAfterRemotePaint()
 {
   // If remote browsing (e10s), handle this with the TabParent.
   if (mRemoteBrowser) {
-    unused << mRemoteBrowser->SendRequestNotifyAfterRemotePaint();
+    Unused << mRemoteBrowser->SendRequestNotifyAfterRemotePaint();
   }
 
   return NS_OK;
@@ -3041,13 +3056,20 @@ nsFrameLoader::MaybeUpdatePrimaryTabParent(TabParentChange aChange)
 
 nsresult
 nsFrameLoader::GetNewTabContext(MutableTabContext* aTabContext,
-                                const nsACString& aSignedPkgOriginNoSuffix,
+                                nsIURI* aURI,
                                 const nsACString& aPackageId)
 {
   nsCOMPtr<mozIApplication> ownApp = GetOwnApp();
   nsCOMPtr<mozIApplication> containingApp = GetContainingApp();
-  OriginAttributes attrs = OriginAttributes();
+  DocShellOriginAttributes attrs;
   attrs.mInBrowser = OwnerIsBrowserFrame();
+
+  nsCString signedPkgOrigin;
+  if (!aPackageId.IsEmpty()) {
+    // Only when aPackageId is not empty would signed package origin
+    // be meaningful.
+    nsPrincipal::GetOriginForURI(aURI, signedPkgOrigin);
+  }
 
   // Get the AppId from ownApp
   uint32_t appId = nsIScriptSecurityManager::NO_APP_ID;
@@ -3065,8 +3087,23 @@ nsFrameLoader::GetNewTabContext(MutableTabContext* aTabContext,
   // Populate packageId to signedPkg.
   attrs.mSignedPkg = NS_ConvertUTF8toUTF16(aPackageId);
 
-  bool tabContextUpdated = aTabContext->SetTabContext(ownApp, containingApp,
-                                                      attrs, aSignedPkgOriginNoSuffix);
+  // set the userContextId on the attrs before we pass them into
+  // the tab context
+  nsAutoString userContextIdStr;
+  if (mOwnerContent->HasAttr(kNameSpaceID_None, nsGkAtoms::usercontextid)) {
+    mOwnerContent->GetAttr(kNameSpaceID_None,
+                           nsGkAtoms::usercontextid,
+                           userContextIdStr);
+  }
+  if (!userContextIdStr.IsEmpty()) {
+    nsresult err;
+    uint32_t userContextId = userContextIdStr.ToInteger(&err);
+    NS_ENSURE_SUCCESS(err, err);
+    attrs.mUserContextId = userContextId;
+  }
+
+  bool tabContextUpdated =
+    aTabContext->SetTabContext(ownApp, containingApp, attrs, signedPkgOrigin);
   NS_ENSURE_STATE(tabContextUpdated);
 
   return NS_OK;

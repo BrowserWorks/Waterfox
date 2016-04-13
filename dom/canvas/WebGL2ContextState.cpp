@@ -59,8 +59,6 @@ WebGL2Context::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
       /* fall through */
 
     /* GLint */
-    case LOCAL_GL_MAX_3D_TEXTURE_SIZE:
-    case LOCAL_GL_MAX_ARRAY_TEXTURE_LAYERS:
     case LOCAL_GL_MAX_COMBINED_UNIFORM_BLOCKS:
     case LOCAL_GL_MAX_ELEMENTS_INDICES:
     case LOCAL_GL_MAX_ELEMENTS_VERTICES:
@@ -89,6 +87,12 @@ WebGL2Context::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
       return JS::Int32Value(val);
     }
 
+    case LOCAL_GL_MAX_3D_TEXTURE_SIZE:
+      return JS::Int32Value(mImplMax3DTextureSize);
+
+    case LOCAL_GL_MAX_ARRAY_TEXTURE_LAYERS:
+      return JS::Int32Value(mImplMaxArrayTextureLayers);
+
     case LOCAL_GL_MAX_VARYING_COMPONENTS: {
       // On OS X Core Profile this is buggy.  The spec says that the
       // value is 4 * GL_MAX_VARYING_VECTORS
@@ -108,6 +112,7 @@ WebGL2Context::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
         return JS::NumberValue(0);
 
       /*** fall through to fGetInteger64v ***/
+      MOZ_FALLTHROUGH;
 
     case LOCAL_GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS:
     case LOCAL_GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS:
@@ -151,9 +156,7 @@ WebGL2Context::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
       return WebGLObjectAsJSValue(cx, mBoundSamplers[mActiveTexture].get(), rv);
 
     case LOCAL_GL_TEXTURE_BINDING_2D_ARRAY:
-      // TODO: Implement gl.TEXTURE_2D_ARRAY
-      // return WebGLObjectAsJSValue(cx, mBound2DTextureArrays[mActiveTexture].get(), rv);
-      return JS::NullValue();
+      return WebGLObjectAsJSValue(cx, mBound2DArrayTextures[mActiveTexture].get(), rv);
 
     case LOCAL_GL_TEXTURE_BINDING_3D:
       return WebGLObjectAsJSValue(cx, mBound3DTextures[mActiveTexture].get(), rv);

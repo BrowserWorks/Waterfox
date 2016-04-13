@@ -15,7 +15,7 @@
 namespace mozilla {
 namespace layers {
 
-class SharedTextureClientD3D9;
+class TextureClient;
 
 class D3D9RecycleAllocator : public TextureClientRecycleAllocator
 {
@@ -26,7 +26,7 @@ public:
     , mDevice(aDevice)
   {}
 
-  already_AddRefed<SharedTextureClientD3D9>
+  already_AddRefed<TextureClient>
   CreateOrRecycleClient(gfx::SurfaceFormat aFormat,
                         const gfx::IntSize& aSize);
 
@@ -47,30 +47,12 @@ protected:
 // resource is ready to use.
 class D3D9SurfaceImage : public Image {
 public:
-
-  struct Data {
-    Data(IDirect3DSurface9* aSurface,
-         const gfx::IntRect& aRegion,
-         D3D9RecycleAllocator* aAllocator,
-         bool aIsFirstFrame)
-      : mSurface(aSurface)
-      , mRegion(aRegion)
-      , mAllocator(aAllocator)
-      , mIsFirstFrame(aIsFirstFrame)
-    {}
-
-    RefPtr<IDirect3DSurface9> mSurface;
-    gfx::IntRect mRegion;
-    RefPtr<D3D9RecycleAllocator> mAllocator;
-    bool mIsFirstFrame;
-  };
-
-  D3D9SurfaceImage();
+  explicit D3D9SurfaceImage(bool aIsFirstFrame);
   virtual ~D3D9SurfaceImage();
 
-  // Copies the surface into a sharable texture's surface, and initializes
-  // the image.
-  HRESULT SetData(const Data& aData);
+  HRESULT AllocateAndCopy(D3D9RecycleAllocator* aAllocator,
+                          IDirect3DSurface9* aSurface,
+                          const gfx::IntRect& aRegion);
 
   // Returns the description of the shared surface.
   const D3DSURFACE_DESC& GetDesc() const;
@@ -91,7 +73,7 @@ private:
 
   gfx::IntSize mSize;
   RefPtr<IDirect3DQuery9> mQuery;
-  RefPtr<SharedTextureClientD3D9> mTextureClient;
+  RefPtr<TextureClient> mTextureClient;
   bool mValid;
   bool mIsFirstFrame;
 };

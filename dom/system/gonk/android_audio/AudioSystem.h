@@ -241,6 +241,7 @@ typedef enum {
 
 #if ANDROID_VERSION < 17
 typedef enum {
+    AUDIO_DEVICE_NONE                          = 0x0,
     /* output devices */
     AUDIO_DEVICE_OUT_EARPIECE                  = 0x1,
     AUDIO_DEVICE_OUT_SPEAKER                   = 0x2,
@@ -546,6 +547,22 @@ enum {
 
 typedef uint32_t audio_devices_t;
 #endif
+
+static inline bool audio_is_output_device(uint32_t device)
+{
+#if ANDROID_VERSION < 17
+    if ((__builtin_popcount(device) == 1) && ((device & ~AUDIO_DEVICE_OUT_ALL) == 0))
+        return true;
+    else
+        return false;
+#else
+    if (((device & AUDIO_DEVICE_BIT_IN) == 0) &&
+            (__builtin_popcount(device) == 1) && ((device & ~AUDIO_DEVICE_OUT_ALL) == 0))
+        return true;
+    else
+        return false;
+#endif
+}
 
 /* device connection states used for audio_policy->set_device_connection_state()
  *  */

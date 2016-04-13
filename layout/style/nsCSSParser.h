@@ -53,29 +53,19 @@ private:
   nsCSSParser& operator=(nsCSSParser const&) = delete;
 
 public:
-  // Set a style sheet for the parser to fill in. The style sheet must
-  // implement the CSSStyleSheet interface.  Null can be passed in to clear
-  // out an existing stylesheet reference.
-  nsresult SetStyleSheet(mozilla::CSSStyleSheet* aSheet);
-
-  // Set whether or not to emulate Nav quirks
-  nsresult SetQuirkMode(bool aQuirkMode);
-
-  // Set loader to use for child sheets
-  nsresult SetChildLoader(mozilla::css::Loader* aChildLoader);
-
   /**
-   * Parse aInput into the stylesheet that was previously set by calling
-   * SetStyleSheet.  Calling this method without calling SetStyleSheet first is
-   * an error.
+   * Parse aInput into the stylesheet that was previously passed to the
+   * constructor.  Calling this method on an nsCSSParser that had nullptr
+   * passed in as the style sheet is an error.
    *
    * @param aInput the data to parse
    * @param aSheetURL the URI to use as the sheet URI (for error reporting).
    *                  This must match the URI of the sheet passed to
-   *                  SetStyleSheet.
+   *                  the constructor.
    * @param aBaseURI the URI to use for relative URI resolution
    * @param aSheetPrincipal the principal of the stylesheet.  This must match
-   *                        the principal of the sheet passed to SetStyleSheet.
+   *                        the principal of the sheet passed to the
+   *                        constructor.
    * @param aLineNumber the line number of the first line of the sheet.
    * @param aParsingMode  see SheetParsingMode in css/Loader.h
    * @param aReusableSheets style sheets that can be reused by an @import.
@@ -93,11 +83,11 @@ public:
   // Parse HTML style attribute or its equivalent in other markup
   // languages.  aBaseURL is the base url to use for relative links in
   // the declaration.
-  nsresult ParseStyleAttribute(const nsAString&  aAttributeValue,
+  already_AddRefed<mozilla::css::Declaration>
+           ParseStyleAttribute(const nsAString&  aAttributeValue,
                                nsIURI*           aDocURL,
                                nsIURI*           aBaseURL,
-                               nsIPrincipal*     aNodePrincipal,
-                               mozilla::css::StyleRule** aResult);
+                               nsIPrincipal*     aNodePrincipal);
 
   // Parse the body of a declaration block.  Very similar to
   // ParseStyleAttribute, but used under different circumstances.
@@ -144,6 +134,15 @@ public:
                              nsIURI*             aBaseURL,
                              nsIPrincipal*       aSheetPrincipal,
                              nsCSSValue&         aResult);
+
+  // Parse the value of a CSS transform property. Returns
+  // whether the value was successfully parsed. If
+  // aDisallowRelativeValues is true then this method will
+  // only successfully parse if all values are numbers or
+  // have non-relative dimensions.
+  bool ParseTransformProperty(const nsAString& aPropValue,
+                              bool             aDisallowRelativeValues,
+                              nsCSSValue&      aResult);
 
   // The same as ParseProperty but for a variable.
   void ParseVariable(const nsAString&    aVariableName,

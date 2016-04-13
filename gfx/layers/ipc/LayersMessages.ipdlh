@@ -34,7 +34,9 @@ using struct mozilla::layers::TextureInfo from "mozilla/layers/CompositorTypes.h
 using mozilla::LayerMargin from "Units.h";
 using mozilla::LayerPoint from "Units.h";
 using mozilla::LayerRect from "Units.h";
+using mozilla::LayerIntRegion from "Units.h";
 using mozilla::ParentLayerIntRect from "Units.h";
+using mozilla::LayoutDeviceIntRect from "Units.h";
 using mozilla::layers::ScaleMode from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegions from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegionsOverride from "mozilla/layers/LayersTypes.h";
@@ -164,10 +166,7 @@ struct TransformData {
   nsPoint origin;
   // the transform-origin property for the transform in device pixels
   Point3D transformOrigin;
-  // the perspective-origin property for the transform in device pixels
-  Point3D perspectiveOrigin;
   nsRect bounds;
-  nscoord perspective;
   int32_t appUnitsPerDevPixel;
 };
 
@@ -194,7 +193,7 @@ struct Animation {
   // Number of times to repeat the animation, including positive infinity.
   // Values <= 0 mean the animation will not play (although events are still
   // dispatched on the main thread).
-  float iterationCount;
+  float iterations;
   // This uses the NS_STYLE_ANIMATION_DIRECTION_* constants.
   int32_t direction;
   nsCSSProperty property;
@@ -205,9 +204,10 @@ struct Animation {
 // Change a layer's attributes
 struct CommonLayerAttributes {
   IntRect layerBounds;
-  nsIntRegion visibleRegion;
+  LayerIntRegion visibleRegion;
   EventRegions eventRegions;
   TransformMatrix transform;
+  bool transformIsPerspective;
   float postXScale;
   float postYScale;
   uint32_t contentFlags;
@@ -248,10 +248,7 @@ struct ContainerLayerAttributes {
   float presShellResolution;
   bool scaleToResolution;
   EventRegionsOverride eventRegionsOverride;
-  // This is a bare pointer; LayerTransactionParent::RecvUpdate prevents this
-  // from being used when !IsSameProcess(), but we should make this truly
-  // cross process at some point by passing the HMDConfig
-  uint64_t hmdInfo;
+  uint32_t hmdDeviceID;
 };
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
 struct CanvasLayerAttributes    { Filter filter; IntRect bounds; };
@@ -281,8 +278,8 @@ struct LayerAttributes {
 // See nsIWidget Configurations
 struct PluginWindowData {
   uintptr_t windowId;
-  IntRect[] clip;
-  IntRect bounds;
+  LayoutDeviceIntRect[] clip;
+  LayoutDeviceIntRect bounds;
   bool visible;
 };
 
@@ -300,6 +297,7 @@ struct OpRepositionChild  { PLayer container; PLayer childLayer; PLayer after; }
 struct OpRaiseToTopChild  { PLayer container; PLayer childLayer; };
 
 struct OpSetDiagnosticTypes { DiagnosticTypes diagnostics; };
+struct OpWindowOverlayChanged { };
 
 struct ShmemSection {
   Shmem shmem;
@@ -458,6 +456,7 @@ union Edit {
 
   OpSetLayerAttributes;
   OpSetDiagnosticTypes;
+  OpWindowOverlayChanged;
 
   OpSetRoot;
   OpInsertAfter;
@@ -472,6 +471,12 @@ union Edit {
   CompositableOperation;
 };
 
+// Operations related to destroying resources, always handled after the other
+// operations for safety.
+union OpDestroy {
+  PTexture;
+  PCompositable;
+};
 
 // Replies to operations
 

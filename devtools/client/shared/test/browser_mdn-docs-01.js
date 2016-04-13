@@ -22,7 +22,6 @@
 
 const {CssDocsTooltip} = require("devtools/client/shared/widgets/Tooltip");
 const {setBaseCssDocsUrl, MdnDocsWidget} = require("devtools/client/shared/widgets/MdnDocsWidget");
-const promise = require("promise");
 
 // frame to load the tooltip into
 const MDN_DOCS_TOOLTIP_FRAME = "chrome://devtools/content/shared/widgets/mdn-docs-frame.xhtml";
@@ -51,7 +50,7 @@ const URI_PARAMS = "?utm_source=mozilla&utm_medium=firefox-inspector&utm_campaig
 add_task(function*() {
   setBaseCssDocsUrl(TEST_URI_ROOT);
 
-  yield promiseTab("about:blank");
+  yield addTab("about:blank");
   let [host, win, doc] = yield createHost("bottom", MDN_DOCS_TOOLTIP_FRAME);
   let widget = new MdnDocsWidget(win.document);
 
@@ -131,26 +130,22 @@ function* testTheBasics(widget) {
   */
 function checkLinkClick(link) {
 
-  function loadListener(e) {
-    let tab = e.target;
+  function loadListener(tab) {
     var browser = getBrowser().getBrowserForTab(tab);
     var uri = browser.currentURI.spec;
-    // this is horrible, and it's because when we open a new tab
-    // "about:blank: is first loaded into it, before the actual
-    // document we want to load.
-    if (uri != "about:blank") {
-      info("New browser tab has loaded");
-      tab.removeEventListener("load", loadListener);
-      gBrowser.removeTab(tab);
-      info("Resolve promise with new tab URI");
-      deferred.resolve(uri);
-    }
+
+    info("New browser tab has loaded");
+    gBrowser.removeTab(tab);
+    info("Resolve promise with new tab URI");
+    deferred.resolve(uri);
   }
 
   function newTabListener(e) {
     gBrowser.tabContainer.removeEventListener("TabOpen", newTabListener);
     var tab = e.target;
-    tab.addEventListener("load", loadListener, false);
+    BrowserTestUtils.browserLoaded(tab.linkedBrowser, false,
+                                   url => { return url != "about:blank"; })
+      .then(url => loadListener(tab));
   }
 
   let deferred = promise.defer();

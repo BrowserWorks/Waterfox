@@ -137,11 +137,9 @@ a {
 }
 
 #output-container {
+  /* This width is set to a hardcoded px in webconsole.js since it's way
+     faster than using 100% with -moz-box-flex (see Bug 1237368) */
   -moz-user-select: text;
-  -moz-box-flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 }
 
 #output-container.hideTimestamps > .message {
@@ -494,7 +492,8 @@ a {
 .message .theme-twisty {
   display: inline-block;
   vertical-align: middle;
-  margin: 3px 3px 0 0;
+  margin: 3px 0 0 0;
+  flex-shrink: 0;
 }
 
 .stacktrace li {
@@ -527,11 +526,12 @@ a {
 
 .elementNode:hover .open-inspector,
 .open-inspector:hover {
-  background-position: -32px 0;
+  filter: url(images/filters.svg#checked-icon-state);
 }
 
+.elementNode:hover .open-inspector:active,
 .open-inspector:active {
-  background-position: -16px 0;
+  filter: url(images/filters.svg#checked-icon-state) brightness(0.9);
 }
 
 @media (max-width: 500px) {
@@ -573,13 +573,11 @@ a {
   }
 }
 
-%ifdef XP_WIN
 /*
  * This hardcoded width likely due to a toolkit Windows specific bug.
  * See http://hg.mozilla.org/mozilla-central/annotate/f38d6df93cad/toolkit/themes/winstripe/global/textbox-aero.css#l7
  */
 
-.hud-filter-box {
+:root[platform="win"] .hud-filter-box {
   width: 200px;
 }
-%endif

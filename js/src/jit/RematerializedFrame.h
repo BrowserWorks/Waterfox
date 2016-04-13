@@ -55,7 +55,7 @@ class RematerializedFrame
     ArgumentsObject* argsObj_;
 
     Value returnValue_;
-    Value thisValue_;
+    Value thisArgument_;
     Value slots_[1];
 
     RematerializedFrame(JSContext* cx, uint8_t* top, unsigned numActualArgs,
@@ -124,7 +124,7 @@ class RematerializedFrame
     bool initFunctionScopeObjects(JSContext* cx);
 
     bool hasCallObj() const {
-        MOZ_ASSERT(fun()->needsCallObject());
+        MOZ_ASSERT(callee()->needsCallObject());
         return hasCallObj_;
     }
     CallObject& callObj() const;
@@ -141,26 +141,15 @@ class RematerializedFrame
     bool isFunctionFrame() const {
         return !!script_->functionNonDelazifying();
     }
-    bool isModuleFrame() const {
-        return !!script_->module();
-    }
     bool isGlobalFrame() const {
-        return !isFunctionFrame() && !isModuleFrame();
+        return script_->isGlobalCode();
     }
-    bool isNonEvalFunctionFrame() const {
-        // Ion doesn't support eval frames.
-        return isFunctionFrame();
+    bool isModuleFrame() const {
+        return script_->module();
     }
 
     JSScript* script() const {
         return script_;
-    }
-    JSFunction* fun() const {
-        MOZ_ASSERT(isFunctionFrame());
-        return script_->functionNonDelazifying();
-    }
-    JSFunction* maybeFun() const {
-        return isFunctionFrame() ? fun() : nullptr;
     }
     JSFunction* callee() const {
         MOZ_ASSERT(isFunctionFrame());
@@ -169,8 +158,8 @@ class RematerializedFrame
     Value calleev() const {
         return ObjectValue(*callee());
     }
-    Value& thisValue() {
-        return thisValue_;
+    Value& thisArgument() {
+        return thisArgument_;
     }
 
     bool isConstructing() const {
@@ -186,7 +175,7 @@ class RematerializedFrame
     }
 
     unsigned numFormalArgs() const {
-        return maybeFun() ? fun()->nargs() : 0;
+        return isFunctionFrame() ? callee()->nargs() : 0;
     }
     unsigned numActualArgs() const {
         return numActualArgs_;

@@ -10,6 +10,7 @@
 #define LIBANGLE_RENDERER_GL_GLX_WINDOWSURFACEGLX_H_
 
 #include "libANGLE/renderer/gl/SurfaceGL.h"
+#include "libANGLE/renderer/gl/glx/DisplayGLX.h"
 #include "libANGLE/renderer/gl/glx/platform_glx.h"
 
 namespace rx
@@ -36,7 +37,7 @@ class WindowSurfaceGLX : public SurfaceGL
     egl::Error swap() override;
     egl::Error postSubBuffer(EGLint x, EGLint y, EGLint width, EGLint height) override;
     egl::Error querySurfacePointerANGLE(EGLint attribute, void **value) override;
-    egl::Error bindTexImage(EGLint buffer) override;
+    egl::Error bindTexImage(gl::Texture *texture, EGLint buffer) override;
     egl::Error releaseTexImage(EGLint buffer) override;
     void setSwapInterval(EGLint interval) override;
 
@@ -55,12 +56,13 @@ class WindowSurfaceGLX : public SurfaceGL
     Display *mDisplay;
 
     const FunctionsGLX &mGLX;
-    const DisplayGLX &mGLXDisplay;
+    DisplayGLX *mGLXDisplay;
 
     glx::Context mContext;
     glx::FBConfig mFBConfig;
     glx::Window mGLXWindow;
-    unsigned int mMaxSwapInterval;
+
+    SwapControlData mSwapControl;
 };
 
 }

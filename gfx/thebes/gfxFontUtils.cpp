@@ -289,7 +289,7 @@ gfxFontUtils::ReadCMAPTableFormat4(const uint8_t *aBuf, uint32_t aLength,
 
 nsresult
 gfxFontUtils::ReadCMAPTableFormat14(const uint8_t *aBuf, uint32_t aLength,
-                                    uint8_t*& aTable)
+                                    UniquePtr<uint8_t[]>& aTable)
 {
     enum {
         OffsetFormat = 0,
@@ -371,8 +371,8 @@ gfxFontUtils::ReadCMAPTableFormat14(const uint8_t *aBuf, uint32_t aLength,
         }
     }
 
-    aTable = new uint8_t[tablelen];
-    memcpy(aTable, aBuf, tablelen);
+    aTable = MakeUnique<uint8_t[]>(tablelen);
+    memcpy(aTable.get(), aBuf, tablelen);
 
     return NS_OK;
 }
@@ -388,7 +388,7 @@ gfxFontUtils::ReadCMAPTableFormat14(const uint8_t *aBuf, uint32_t aLength,
     #define acceptableUCS4Encoding(p, e, k) \
         (((p) == PLATFORM_ID_MICROSOFT && (e) == EncodingIDUCS4ForMicrosoftPlatform) && (k) != 12 || \
          ((p) == PLATFORM_ID_UNICODE   && \
-          ((e) == EncodingIDDefaultForUnicodePlatform || (e) >= EncodingIDUCS4ForUnicodePlatform)))
+          ((e) != EncodingIDUVSForUnicodePlatform)))
 #else
     #define acceptableFormat4(p,e,k) ((p) == PLATFORM_ID_MICROSOFT && (e) == EncodingIDMicrosoft)
 
@@ -731,6 +731,10 @@ gfxFontUtils::MapUVSToGlyphFormat14(const uint8_t *aBuf, uint32_t aCh, uint32_t 
     }
 
     const uint32_t nonDefUVSOffset = cmap14->varSelectorRecords[index].nonDefaultUVSOffset;
+    if (!nonDefUVSOffset) {
+        return 0;
+    }
+
     const NonDefUVSTable *table = reinterpret_cast<const NonDefUVSTable*>
                                       (aBuf + nonDefUVSOffset);
 

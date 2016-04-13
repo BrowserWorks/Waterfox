@@ -1494,34 +1494,34 @@ HyperTextAccessible::CaretLineNumber()
   return lineNumber;
 }
 
-nsIntRect
+LayoutDeviceIntRect
 HyperTextAccessible::GetCaretRect(nsIWidget** aWidget)
 {
   *aWidget = nullptr;
 
   RefPtr<nsCaret> caret = mDoc->PresShell()->GetCaret();
-  NS_ENSURE_TRUE(caret, nsIntRect());
+  NS_ENSURE_TRUE(caret, LayoutDeviceIntRect());
 
   bool isVisible = caret->IsVisible();
   if (!isVisible)
-    return nsIntRect();
+    return LayoutDeviceIntRect();
 
   nsRect rect;
   nsIFrame* frame = caret->GetGeometry(&rect);
   if (!frame || rect.IsEmpty())
-    return nsIntRect();
+    return LayoutDeviceIntRect();
 
   nsPoint offset;
   // Offset from widget origin to the frame origin, which includes chrome
   // on the widget.
   *aWidget = frame->GetNearestWidget(offset);
-  NS_ENSURE_TRUE(*aWidget, nsIntRect());
+  NS_ENSURE_TRUE(*aWidget, LayoutDeviceIntRect());
   rect.MoveBy(offset);
 
-  nsIntRect caretRect;
-  caretRect = rect.ToOutsidePixels(frame->PresContext()->AppUnitsPerDevPixel());
+  LayoutDeviceIntRect caretRect = LayoutDeviceIntRect::FromUnknownRect(
+    rect.ToOutsidePixels(frame->PresContext()->AppUnitsPerDevPixel()));
   // ((content screen origin) - (content offset in the widget)) = widget origin on the screen
-  caretRect.MoveBy((*aWidget)->WidgetToScreenOffsetUntyped() - (*aWidget)->GetClientOffset());
+  caretRect.MoveBy((*aWidget)->WidgetToScreenOffset() - (*aWidget)->GetClientOffset());
 
   // Correct for character size, so that caret always matches the size of
   // the character. This is important for font size transitions, and is
@@ -1769,7 +1769,7 @@ HyperTextAccessible::EnclosingRange(a11y::TextRange& aRange) const
 void
 HyperTextAccessible::SelectionRanges(nsTArray<a11y::TextRange>* aRanges) const
 {
-  NS_ASSERTION(aRanges->Length() != 0, "TextRange array supposed to be empty");
+  MOZ_ASSERT(aRanges->Length() == 0, "TextRange array supposed to be empty");
 
   dom::Selection* sel = DOMSelection();
   if (!sel)
@@ -1984,17 +1984,10 @@ HyperTextAccessible::ContentToRenderedOffset(nsIFrame* aFrame, int32_t aContentO
   NS_ASSERTION(aFrame->GetPrevContinuation() == nullptr,
                "Call on primary frame only");
 
-  gfxSkipChars skipChars;
-  gfxSkipCharsIterator iter;
-  // Only get info up to original offset, we know that will be larger than skipped offset
-  nsresult rv = aFrame->GetRenderedText(nullptr, &skipChars, &iter, 0, aContentOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  uint32_t ourRenderedStart = iter.GetSkippedOffset();
-  int32_t ourContentStart = iter.GetOriginalOffset();
-
-  *aRenderedOffset = iter.ConvertOriginalToSkipped(aContentOffset + ourContentStart) -
-                    ourRenderedStart;
+  nsIFrame::RenderedText text = aFrame->GetRenderedText(aContentOffset,
+      aContentOffset + 1, nsIFrame::TextOffsetType::OFFSETS_IN_CONTENT_TEXT,
+      nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+  *aRenderedOffset = text.mOffsetWithinNodeRenderedText;
 
   return NS_OK;
 }
@@ -2016,16 +2009,10 @@ HyperTextAccessible::RenderedToContentOffset(nsIFrame* aFrame, uint32_t aRendere
   NS_ASSERTION(aFrame->GetPrevContinuation() == nullptr,
                "Call on primary frame only");
 
-  gfxSkipChars skipChars;
-  gfxSkipCharsIterator iter;
-  // We only need info up to skipped offset -- that is what we're converting to original offset
-  nsresult rv = aFrame->GetRenderedText(nullptr, &skipChars, &iter, 0, aRenderedOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  uint32_t ourRenderedStart = iter.GetSkippedOffset();
-  int32_t ourContentStart = iter.GetOriginalOffset();
-
-  *aContentOffset = iter.ConvertSkippedToOriginal(aRenderedOffset + ourRenderedStart) - ourContentStart;
+  nsIFrame::RenderedText text = aFrame->GetRenderedText(aRenderedOffset,
+      aRenderedOffset + 1, nsIFrame::TextOffsetType::OFFSETS_IN_RENDERED_TEXT,
+      nsIFrame::TrailingWhitespace::DONT_TRIM_TRAILING_WHITESPACE);
+  *aContentOffset = text.mOffsetWithinNodeText;
 
   return NS_OK;
 }

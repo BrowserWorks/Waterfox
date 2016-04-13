@@ -9,13 +9,17 @@ const { ViewHelpers } = require("resource://devtools/client/shared/widgets/ViewH
  * Localization convenience methods.
  */
 const L10N = new ViewHelpers.MultiL10N([
-  "chrome://browser/locale/devtools/markers.properties",
-  "chrome://browser/locale/devtools/performance.properties"
+  "chrome://devtools/locale/markers.properties",
+  "chrome://devtools/locale/performance.properties"
 ]);
 
 /**
  * A list of preferences for this tool. The values automatically update
  * if somebody edits edits about:config or the prefs change somewhere else.
+ *
+ * This needs to be registered and unregistered when used; the PerformanceController
+ * handles this automatically, but if you just use this module in a test independently,
+ * ensure you call `registerObserver()` and `unregisterUnobserver()`.
  */
 const PREFS = new ViewHelpers.Prefs("devtools.performance", {
   "show-triggers-for-gc-types": ["Char", "ui.show-triggers-for-gc-types"],
@@ -27,8 +31,6 @@ const PREFS = new ViewHelpers.Prefs("devtools.performance", {
   "profiler-sample-frequency": ["Int", "profiler.sample-frequency-khz"],
   // TODO re-enable once we flame charts via bug 1148663
   "enable-memory-flame": ["Bool", "ui.enable-memory-flame"],
-}, {
-  monitorChanges: true
 });
 
 /**

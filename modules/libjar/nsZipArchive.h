@@ -19,6 +19,7 @@
 #include "nsISupportsImpl.h" // For mozilla::ThreadSafeAutoRefCnt
 #include "mozilla/FileUtils.h"
 #include "mozilla/FileLocation.h"
+#include "mozilla/UniquePtr.h"
 
 #ifdef HAVE_SEH_EXCEPTIONS
 #define MOZ_WIN_MEM_TRY_BEGIN __try {
@@ -26,7 +27,7 @@
   __except(GetExceptionCode()==EXCEPTION_IN_PAGE_ERROR ?            \
            EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)   \
   {                                                                 \
-    NS_WARNING("EXCEPTION_IN_PAGE_ERROR in " __FUNCTION__);         \
+    NS_WARNING("unexpected EXCEPTION_IN_PAGE_ERROR");               \
     cmd;                                                            \
   }
 #else
@@ -341,7 +342,7 @@ public:
 
 protected:
   RefPtr<nsZipHandle> mZipHandle;
-  nsAutoArrayPtr<uint8_t> mAutoBuf;
+  mozilla::UniquePtr<uint8_t[]> mAutoBuf;
   uint8_t *mReturnBuf;
   uint32_t mReadlen;
 };
@@ -374,7 +375,7 @@ public:
     // In uncompressed mmap case, give up buffer
     if (mAutoBuf.get() == mReturnBuf) {
       mReturnBuf = nullptr;
-      return (T*) mAutoBuf.forget();
+      return (T*) mAutoBuf.release();
     }
     T *ret = (T*) malloc(Length());
     memcpy(ret, mReturnBuf, Length());

@@ -52,7 +52,6 @@ public:
   static const int DEFAULT_43_VIDEO_HEIGHT = 480;
   static const int DEFAULT_169_VIDEO_WIDTH = 1280;
   static const int DEFAULT_169_VIDEO_HEIGHT = 720;
-  static const int DEFAULT_AUDIO_TIMER_MS = 10;
 
 #ifndef MOZ_B2G
   static const int DEFAULT_SAMPLE_RATE = 32000;
@@ -122,19 +121,13 @@ public:
                            const MediaEnginePrefs &aPrefs,
                            const nsString& aDeviceId) = 0;
 
-  /* Change device configuration.  */
-  virtual nsresult Config(bool aEchoOn, uint32_t aEcho,
-                          bool aAgcOn, uint32_t aAGC,
-                          bool aNoiseOn, uint32_t aNoise,
-                          int32_t aPlayoutDelay) = 0;
-
   /* Returns true if a source represents a fake capture device and
    * false otherwise
    */
   virtual bool IsFake() = 0;
 
   /* Returns the type of media source (camera, microphone, screen, window, etc) */
-  virtual const dom::MediaSourceEnum GetMediaSource() = 0;
+  virtual dom::MediaSourceEnum GetMediaSource() const = 0;
 
   // Callback interface for TakePhoto(). Either PhotoComplete() or PhotoError()
   // should be called.
@@ -211,11 +204,35 @@ protected:
  */
 class MediaEnginePrefs {
 public:
+  MediaEnginePrefs()
+    : mWidth(0)
+    , mHeight(0)
+    , mFPS(0)
+    , mMinFPS(0)
+    , mFreq(0)
+    , mAecOn(false)
+    , mAgcOn(false)
+    , mNoiseOn(false)
+    , mAec(0)
+    , mAgc(0)
+    , mNoise(0)
+    , mPlayoutDelay(0)
+    , mFullDuplex(false)
+  {}
+
   int32_t mWidth;
   int32_t mHeight;
   int32_t mFPS;
   int32_t mMinFPS;
   int32_t mFreq; // for test tones (fake:true)
+  bool mAecOn;
+  bool mAgcOn;
+  bool mNoiseOn;
+  int32_t mAec;
+  int32_t mAgc;
+  int32_t mNoise;
+  int32_t mPlayoutDelay;
+  bool mFullDuplex;
 
   // mWidth and/or mHeight may be zero (=adaptive default), so use functions.
 
@@ -267,7 +284,8 @@ protected:
 /**
  * Audio source and friends.
  */
-class MediaEngineAudioSource : public MediaEngineSource
+class MediaEngineAudioSource : public MediaEngineSource,
+                               public AudioDataListenerInterface
 {
 public:
   virtual ~MediaEngineAudioSource() {}

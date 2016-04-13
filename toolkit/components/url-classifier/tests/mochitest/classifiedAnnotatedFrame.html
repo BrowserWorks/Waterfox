@@ -12,6 +12,9 @@ var imageItem1 = "untouched";
 var imageItem2 = "untouched";
 var frameItem1 = "untouched";
 var frameItem2 = "untouched";
+var xhrItem = "untouched";
+var fetchItem = "untouched";
+var mediaItem1 = "untouched";
 
 var badids = [
   "badscript1",
@@ -20,6 +23,7 @@ var badids = [
   "badimage2",
   "badframe1",
   "badframe2",
+  "badmedia1",
   "badcss"
 ];
 
@@ -38,6 +42,12 @@ function checkLoads() {
     frameItem1, "untouched", "Should not load tracking iframes");
   window.parent.is(
     frameItem2, "untouched", "Should not load tracking iframes (2)");
+  window.parent.is(
+    mediaItem1, "error", "Should not load tracking videos");
+  window.parent.is(
+    xhrItem, "failed", "Should not load tracking XHRs");
+  window.parent.is(
+    fetchItem, "error", "Should not fetch from tracking URLs");
 
   var elt = document.getElementById("styleCheck");
   var style = document.defaultView.getComputedStyle(elt, "");
@@ -76,6 +86,9 @@ function checkLoads() {
         (blockedTrackingNodes[i] == document.getElementById(badids[j]));
     }
 
+    if (!nodeMatch) {
+      console.log(badids[j] + " was not found in blockedTrackingNodes");
+    }
     allNodeMatch = allNodeMatch && nodeMatch;
   }
   window.parent.ok(allNodeMatch,
@@ -87,6 +100,24 @@ function checkLoads() {
   window.parent.SimpleTest.finish();
 }
 
+var onloadCalled = false;
+var xhrFinished = false;
+var fetchFinished = false;
+var videoLoaded = false;
+function loaded(type) {
+  if (type === "onload") {
+      onloadCalled = true;
+  } else if (type === "xhr") {
+      xhrFinished = true;
+  } else if (type === "fetch") {
+      fetchFinished = true;
+  } else if (type === "video") {
+      videoLoaded = true;
+  }
+  if (onloadCalled && xhrFinished && fetchFinished && videoLoaded) {
+      checkLoads();
+  }
+}
 </script>
 
 <!-- Try loading from a tracking CSS URI -->
@@ -94,7 +125,7 @@ function checkLoads() {
 
 </head>
 
-<body onload="checkLoads()">
+<body onload="loaded('onload')">
 
 <!-- Try loading from a tracking script URI (1): evil.js onload will have updated the scriptItem variable -->
 <script id="badscript1" src="http://tracking.example.com/tests/toolkit/components/url-classifier/tests/mochitest/evil.js" onload="scriptItem1 = scriptItem;"></script>
@@ -105,7 +136,20 @@ function checkLoads() {
 <!-- Try loading from a tracking frame URI (1) -->
 <iframe id="badframe1" src="http://tracking.example.com/tests/toolkit/components/url-classifier/tests/mochitest/track.html" onload="frameItem1 = 'spoiled';"></iframe>
 
+<!-- Try loading from a tracking video URI -->
+<video id="badmedia1" src="http://tracking.example.com/tests/toolkit/components/url-classifier/tests/mochitest/vp9.webm?reload=true"></video>
+
 <script>
+var v = document.getElementById("badmedia1");
+v.addEventListener("loadedmetadata", function() {
+    mediaItem1 = "loaded";
+    loaded("video");
+}, true);
+v.addEventListener("error", function() {
+    mediaItem1 = "error";
+    loaded("video");
+}, true);
+
 // Try loading from a tracking script URI (2) - The loader may follow a different path depending on whether the resource is loaded from JS or HTML.
 var newScript = document.createElement("script");
 newScript.id = "badscript2";
@@ -126,6 +170,40 @@ newFrame.id = "badframe2";
 newFrame.src = "http://tracking.example.com/tests/toolkit/components/url-classifier/tests/mochitest/track.html"
 newFrame.addEventListener("load", function() {frameItem2 = 'spoiled'});
 document.body.appendChild(newFrame);
+
+// Try doing an XHR against a tracking domain (bug 1216793)
+function reqListener() {
+    xhrItem = "loaded";
+    loaded("xhr");
+}
+function transferFailed() {
+    xhrItem = "failed";
+    loaded("xhr");
+}
+function transferCanceled() {
+    xhrItem = "canceled";
+    loaded("xhr");
+}
+var oReq = new XMLHttpRequest();
+oReq.addEventListener("load", reqListener);
+oReq.addEventListener("error", transferFailed);
+oReq.addEventListener("abort", transferCanceled);
+oReq.open("GET", "http://tracking.example.com/tests/toolkit/components/url-classifier/tests/mochitest/evil.js");
+oReq.send();
+
+// Fetch from a tracking domain
+fetch("http://tracking.example.com/tests/toolkit/components/url-classifier/tests/mochitest/evil.js").then(function(response) {
+    if(response.ok) {
+        fetchItem = "loaded";
+        loaded("fetch");
+    } else {
+        fetchItem = "badresponse";
+        loaded("fetch");
+    }
+ }).catch(function(error) {
+     fetchItem = "error";
+     loaded("fetch");
+});
 </script>
 
 The following should not be hidden:

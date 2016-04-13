@@ -7,6 +7,7 @@
 #define GFX_LAYERMETRICSWRAPPER_H
 
 #include "Layers.h"
+#include "UnitTransforms.h"
 
 namespace mozilla {
 namespace layers {
@@ -299,6 +300,25 @@ public:
     return gfx::Matrix4x4();
   }
 
+  CSSTransformMatrix GetTransformTyped() const
+  {
+    return ViewAs<CSSTransformMatrix>(GetTransform());
+  }
+
+  bool TransformIsPerspective() const
+  {
+    MOZ_ASSERT(IsValid());
+
+    // mLayer->GetTransformIsPerspective() tells us whether
+    // mLayer->GetTransform() is a perspective transform. Since
+    // mLayer->GetTransform() is only used at the bottom layer, we only
+    // need to check GetTransformIsPerspective() at the bottom layer too.
+    if (AtBottomLayer()) {
+      return mLayer->GetTransformIsPerspective();
+    }
+    return false;
+  }
+
   EventRegions GetEventRegions() const
   {
     MOZ_ASSERT(IsValid());
@@ -329,14 +349,14 @@ public:
     return nullptr;
   }
 
-  nsIntRegion GetVisibleRegion() const
+  LayerIntRegion GetVisibleRegion() const
   {
     MOZ_ASSERT(IsValid());
 
     if (AtBottomLayer()) {
       return mLayer->GetVisibleRegion();
     }
-    nsIntRegion region = mLayer->GetVisibleRegion();
+    LayerIntRegion region = mLayer->GetVisibleRegion();
     region.Transform(mLayer->GetTransform());
     return region;
   }
@@ -352,6 +372,17 @@ public:
     }
 
     return sNoClipRect;
+  }
+
+  float GetPresShellResolution() const
+  {
+    MOZ_ASSERT(IsValid());
+
+    if (AtTopLayer() && mLayer->AsContainerLayer()) {
+      return mLayer->AsContainerLayer()->GetPresShellResolution();
+    }
+
+    return 1.0f;
   }
 
   EventRegionsOverride GetEventRegionsOverride() const

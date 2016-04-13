@@ -28,6 +28,15 @@ interface ChromeUtils : ThreadSafeChromeUtils {
   static boolean
   originAttributesMatchPattern(optional OriginAttributesDictionary originAttrs,
                                optional OriginAttributesPatternDictionary pattern);
+
+  /**
+   * Returns an OriginAttributes dictionary using the origin URI but forcing
+   * the passed userContextId.
+   */
+  [Throws]
+  static OriginAttributesDictionary
+  createOriginAttributesWithUserContextId(DOMString origin,
+                                          unsigned long userContextId);
 };
 
 /**
@@ -39,7 +48,7 @@ interface ChromeUtils : ThreadSafeChromeUtils {
  * IMPORTANT: If you add any members here, you need to do the following:
  * (1) Add them to both dictionaries.
  * (2) Update the methods on mozilla::OriginAttributes, including equality,
- *     serialization, and deserialization.
+ *     serialization, deserialization, and inheritance.
  * (3) Update the methods on mozilla::OriginAttributesPattern, including matching.
  */
 dictionary OriginAttributesDictionary {

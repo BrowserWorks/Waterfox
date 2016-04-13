@@ -335,7 +335,7 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
     }
 
     if (opacity != 1.0f || StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
-      aContext.PushGroup(gfxContentType::COLOR_ALPHA);
+      aContext.PushGroupForBlendBack(gfxContentType::COLOR_ALPHA, opacity);
     }
 
     nscoord appUnitsPerDevPx = PresContext()->AppUnitsPerDevPixel();
@@ -399,9 +399,7 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
     }
 
     if (opacity != 1.0f || StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
-      aContext.PopGroupToSource();
-      aContext.SetOp(CompositionOp::OP_OVER);
-      aContext.Paint(opacity);
+      aContext.PopGroupAndBlend();
     }
     // gfxContextAutoSaveRestore goes out of scope & cleans up our gfxContext
   }

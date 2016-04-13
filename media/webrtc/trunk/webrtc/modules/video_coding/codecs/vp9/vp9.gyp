@@ -17,19 +17,33 @@
       'dependencies': [
         '<(webrtc_root)/common_video/common_video.gyp:common_video',
         '<(webrtc_root)/modules/video_coding/utility/video_coding_utility.gyp:video_coding_utility',
-        '<(webrtc_root)/system_wrappers/source/system_wrappers.gyp:system_wrappers',
+        '<(webrtc_root)/system_wrappers/system_wrappers.gyp:system_wrappers',
       ],
       'conditions': [
         ['build_libvpx==1', {
           'dependencies': [
-            '<(DEPTH)/third_party/libvpx/libvpx.gyp:libvpx',
+            '<(libvpx_dir)/libvpx.gyp:libvpx_new',
+          ],
+        }, {
+          'include_dirs': [
+            '$(MOZ_LIBVPX_CFLAGS)',
+          ],
+	}],
+        ['build_vp9==1', {
+          'sources': [
+            'include/vp9.h',
+            'screenshare_layers.cc',
+            'screenshare_layers.h',
+            'vp9_frame_buffer_pool.cc',
+            'vp9_frame_buffer_pool.h',
+            'vp9_impl.cc',
+            'vp9_impl.h',
+          ],
+        }, {
+          'sources': [
+            'vp9_dummy_impl.cc',
           ],
         }],
-      ],
-      'sources': [
-        'include/vp9.h',
-        'vp9_impl.cc',
-        'vp9_impl.h',
       ],
     },
   ],

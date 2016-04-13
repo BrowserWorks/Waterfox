@@ -119,6 +119,10 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             "dest": "gecko_objdir",
             "help": "Specifies the gecko object directory.",
         }],
+        [["--branch"], {
+            "dest": "branch",
+            "help": "Specifies the branch name.",
+        }],
     ]
 
     def __init__(self, require_config_file=False, config={},
@@ -143,7 +147,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             'balrog_credentials_file': 'oauth.txt',
             'build_resources_path': '%(abs_obj_dir)s/.mozbuild/build_resources.json',
             'virtualenv_modules': [
-                'requests==2.2.1',
+                'requests==2.8.1',
             ],
             'virtualenv_path': 'venv',
         }
@@ -165,14 +169,16 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         self.objdir = self.config.get("gecko_objdir",
                 os.path.join(dirs['work_dir'], 'objdir-gecko'))
         self.abs_dirs['abs_obj_dir'] = self.objdir
-        if self.config.get("update_type", "ota") == "fota":
-            self.make_updates_cmd = ['./build.sh', 'gecko-update-fota']
-            self.extra_update_attrs = 'isOsUpdate="true"'
-            self.isOSUpdate = True
+
+        # Evaluating the update type to build.
+        # Default is OTA if config do not specifies anything
+        if "update_types" in self.config:
+            self.update_types = self.config["update_types"]
+        elif "update_type" in self.config:
+            self.update_types = [self.config["update_type"]]
         else:
-            self.make_updates_cmd = ['./build.sh', 'gecko-update-full']
-            self.extra_update_attrs = None
-            self.isOSUpdate = False
+            self.update_types = ["ota"]
+
         self.package_urls = {}
 
         # We need to create the virtualenv directly (without using an action) in
@@ -199,7 +205,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         if self.buildbot_config and 'properties' in self.buildbot_config:
             return self.buildbot_config['properties']['branch']
         else:
-            return os.path.basename(self.query_repo().rstrip('/'))
+            return self.config.get('branch', os.path.basename(self.query_repo().rstrip('/')))
 
     def query_buildid(self):
         if self.buildid:
@@ -306,31 +312,55 @@ class B2GBuild(LocalesMixin, PurgeMixin,
         output_dir = os.path.join(dirs['work_dir'], 'out', 'target', 'product', devicedir)
         return output_dir
 
+    def query_device_name(self):
+        return os.path.basename(self.query_device_outputdir())
+
     def query_application_ini(self):
         return os.path.join(self.query_device_outputdir(), 'system', 'b2g', 'application.ini')
 
-    def query_marfile_path(self):
-        if self.config.get("update_type", "ota") == "fota":
+    def query_marfile_path(self, update_type):
+        if update_type.startswith("fota"):
             mardir = self.query_device_outputdir()
         else:
             mardir = "%s/dist/b2g-update" % self.objdir
 
+        device_name = self.query_device_name()
+        update_type_files = {
+            'ota':          'b2g-%s-gecko-update.mar'    % device_name,
+            'fota':         'fota-%s-update.mar'         % device_name,
+            'fota:full':    'fota-%s-update-full.mar'    % device_name,
+            'fota:fullimg': 'fota-%s-update-fullimg.mar' % device_name
+        }
+
         mars = []
         for f in os.listdir(mardir):
-            if f.endswith(".mar"):
+            if f.endswith(update_type_files[update_type]):
                 mars.append(f)
 
-        if len(mars) != 1:
+        if len(mars) < 1:
             self.fatal("Found none or too many marfiles in %s, don't know what to do:\n%s" % (mardir, mars), exit_code=1)
 
         return "%s/%s" % (mardir, mars[0])
 
-    def query_complete_mar_url(self):
+    def query_complete_mar_url(self, marfile=None):
+        mar_url = None
         if "complete_mar_url" in self.config:
-            return self.config["complete_mar_url"]
-        if "completeMarUrl" in self.package_urls:
-            return self.package_urls["completeMarUrl"]
-        self.fatal("Couldn't find complete mar url in config or package_urls")
+            mar_url = self.config["complete_mar_url"]
+        elif "completeMarUrl" in self.package_urls:
+            mar_url = self.package_urls["completeMarUrl"]
+        else:
+            self.fatal("Couldn't find complete mar url in config or package_urls")
+
+        # To support OTA and FOTA update payload, we cannot rely on the filename
+        # being computed before we get called since we will determine the filename
+        # ourselves. Let's detect when the URL does not ends with ".mar" and in
+        # this case, we append the MAR file we just collected
+        if not mar_url.endswith(".mar"):
+            if marfile is None:
+                self.fatal("URL does not contains a MAR file and none found")
+            mar_url = os.path.join(mar_url, os.path.basename(marfile))
+
+        return mar_url
 
     # Actions {{{2
     def clobber(self):
@@ -613,36 +643,39 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                 self.fatal("failed to upload symbols", exit_code=2)
 
     def make_updates(self):
-        if not self.query_is_nightly():
-            self.info("Not a nightly build. Skipping...")
-            return
+        if not self.update_types:
+            self.fatal("No update types defined. We should have had at least defaulted to OTA ...")
+
         dirs = self.query_abs_dirs()
+
         self.load_gecko_config()
-        cmd = self.make_updates_cmd[:]
+
         env = self.query_build_env()
 
-        self.enable_mock()
-        retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
-        self.disable_mock()
+        for update_type in self.update_types:
+            # Defaulting to OTA
+            make_target = "gecko-update-full"
 
-        if retval != 0:
-            self.fatal("failed to create complete update", exit_code=2)
+            # Building a FOTA with only Gecko/Gaia (+ a few redistribuable)
+            if update_type == "fota":
+                make_target = "gecko-update-fota"
 
-        # Sign the updates
-        self.sign_updates()
+            # Building a FOTA with all system partition files
+            if update_type == "fota:full":
+                make_target = "gecko-update-fota-full"
 
-    def sign_updates(self):
-        if 'MOZ_SIGNING_SERVERS' not in os.environ:
-            self.info("Skipping signing since no MOZ_SIGNING_SERVERS set")
-            return
+            # Building a FOTA with full partitions images
+            if update_type == "fota:fullimg":
+                make_target = "gecko-update-fota-fullimg"
 
-        self.checkout_tools()
-        cmd = self.query_moz_sign_cmd(formats=['b2gmar'])
-        cmd.append(self.query_marfile_path())
+            cmd = ['./build.sh', make_target]
 
-        retval = self.run_command(cmd)
-        if retval != 0:
-            self.fatal("failed to sign complete update", exit_code=2)
+            self.enable_mock()
+            retval = self.run_command(cmd, cwd=dirs['work_dir'], env=env, error_list=B2GMakefileErrorList)
+            self.disable_mock()
+
+            if retval != 0:
+                self.fatal("failed to create update", exit_code=2)
 
     def prep_upload(self):
         if not self.query_do_upload():
@@ -722,8 +755,7 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                 if base_pattern in public_upload_patterns:
                     public_files.append(f)
 
-        device_name   = os.path.basename(output_dir)
-        blobfree_dist = device_name + '.blobfree-dist.zip'
+        blobfree_dist = self.query_device_name() + '.blobfree-dist.zip'
         blobfree_zip  = os.path.join(output_dir, blobfree_dist)
 
         if os.path.exists(blobfree_zip):
@@ -752,8 +784,6 @@ class B2GBuild(LocalesMixin, PurgeMixin,
             if base_f in public_files:
                 self.info("copying %s to public upload directory" % f)
                 self.copy_to_upload_dir(base_f, upload_dir=dirs['abs_public_upload_dir'])
-
-        self.copy_logs_to_upload_dir()
 
     def _do_rsync_upload(self, upload_dir, ssh_key, ssh_user, remote_host,
                          remote_path, remote_symlink_path):
@@ -1081,39 +1111,42 @@ class B2GBuild(LocalesMixin, PurgeMixin,
 
         self.checkout_tools()
 
-        marfile = self.query_marfile_path()
-        # Need to update the base url to point at FTP, or better yet, read post_upload.py output?
-        mar_url = self.query_complete_mar_url()
+        for update_type in self.update_types:
+            marfile = self.query_marfile_path(update_type)
+            # Need to update the base url to point at FTP, or better yet, read
+            # post_upload.py output?
+            mar_url = self.query_complete_mar_url(marfile)
 
-        # Set other necessary properties for Balrog submission. None need to
-        # be passed back to buildbot, so we won't write them to the properties
-        # files.
-        # Locale is hardcoded to en-US, for silly reasons
-        self.set_buildbot_property("locale", "en-US")
-        self.set_buildbot_property("appVersion", self.query_version())
-        # The Balrog submitter translates this platform into a build target
-        # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
-        if "platform" in self.config:
-            self.set_buildbot_property("platform", self.config["platform"])
-        else:
-            self.set_buildbot_property("platform", self.buildbot_config["properties"]["platform"])
-        # TODO: Is there a better way to get this?
-        self.set_buildbot_property("appName", "B2G")
-        # TODO: don't hardcode
-        self.set_buildbot_property("hashType", "sha512")
-        self.set_buildbot_property("completeMarSize", self.query_filesize(marfile))
-        self.set_buildbot_property("completeMarHash", self.query_sha512sum(marfile))
-        self.set_buildbot_property("completeMarUrl", mar_url)
-        self.set_buildbot_property("isOSUpdate", self.isOSUpdate)
+            # Set other necessary properties for Balrog submission. None need to
+            # be passed back to buildbot, so we won't write them to the properties
+            # files.
+            # Locale is hardcoded to en-US, for silly reasons
+            self.set_buildbot_property("locale", "en-US")
+            self.set_buildbot_property("appVersion", self.query_version())
+            # The Balrog submitter translates this platform into a build target
+            # via https://github.com/mozilla/build-tools/blob/master/lib/python/release/platforms.py#L23
+            if "platform" in self.config:
+                self.set_buildbot_property("platform", self.config["platform"])
+            else:
+                self.set_buildbot_property("platform", self.buildbot_config["properties"]["platform"])
+            # TODO: Is there a better way to get this?
+            self.set_buildbot_property("appName", "B2G")
+            # TODO: don't hardcode
+            self.set_buildbot_property("hashType", "sha512")
+            self.set_buildbot_property("completeMarSize", self.query_filesize(marfile))
+            self.set_buildbot_property("completeMarHash", self.query_sha512sum(marfile))
+            self.set_buildbot_property("completeMarUrl", mar_url)
+            self.set_buildbot_property("isOSUpdate", update_type.startswith("fota"))
 
-        self.submit_balrog_updates(product='b2g')
+            self.submit_balrog_updates(product='b2g')
 
     @PostScriptRun
     def _remove_userconfig(self):
         self.info("Cleanup .userconfig file.")
         dirs = self.query_abs_dirs()
         userconfig_path = os.path.join(dirs["work_dir"], ".userconfig")
-        os.remove(userconfig_path)
+        if os.path.exists(userconfig_path):
+            os.remove(userconfig_path)
 
 # main {{{1
 if __name__ == '__main__':

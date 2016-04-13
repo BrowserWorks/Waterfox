@@ -10,10 +10,13 @@
 // https://www.rfc-editor.org/rfc/rfc7540.txt
 
 #include "mozilla/Attributes.h"
+#include "mozilla/UniquePtr.h"
 #include "nsAHttpTransaction.h"
 #include "nsISupportsPriority.h"
 
 class nsStandardURL;
+class nsIInputStream;
+class nsIOutputStream;
 
 namespace mozilla {
 namespace net {
@@ -171,6 +174,12 @@ protected:
   // The session that this stream is a subset of
   Http2Session *mSession;
 
+  // These are temporary state variables to hold the argument to
+  // Read/WriteSegments so it can be accessed by On(read/write)segment
+  // further up the stack.
+  nsAHttpSegmentReader        *mSegmentReader;
+  nsAHttpSegmentWriter        *mSegmentWriter;
+
   nsCString     mOrigin;
   nsCString     mHeaderHost;
   nsCString     mHeaderScheme;
@@ -199,6 +208,9 @@ protected:
 
   void     ChangeState(enum upstreamStateType);
 
+  virtual void AdjustInitialWindow();
+  nsresult TransmitFrame(const char *, uint32_t *, bool forceCommitment);
+
 private:
   friend class nsAutoPtr<Http2Stream>;
 
@@ -206,8 +218,6 @@ private:
   nsresult GenerateOpen();
 
   void     AdjustPushedPriority();
-  void     AdjustInitialWindow();
-  nsresult TransmitFrame(const char *, uint32_t *, bool forceCommitment);
   void     GenerateDataFrameHeader(uint32_t, bool);
 
   nsresult BufferInput(uint32_t , uint32_t *);
@@ -220,12 +230,6 @@ private:
 
   // The underlying socket transport object is needed to propogate some events
   nsISocketTransport         *mSocketTransport;
-
-  // These are temporary state variables to hold the argument to
-  // Read/WriteSegments so it can be accessed by On(read/write)segment
-  // further up the stack.
-  nsAHttpSegmentReader        *mSegmentReader;
-  nsAHttpSegmentWriter        *mSegmentWriter;
 
   // The quanta upstream data frames are chopped into
   uint32_t                    mChunkSize;
@@ -266,7 +270,7 @@ private:
 
   // The InlineFrame and associated data is used for composing control
   // frames and data frame headers.
-  nsAutoArrayPtr<uint8_t>      mTxInlineFrame;
+  UniquePtr<uint8_t[]>         mTxInlineFrame;
   uint32_t                     mTxInlineFrameSize;
   uint32_t                     mTxInlineFrameUsed;
 

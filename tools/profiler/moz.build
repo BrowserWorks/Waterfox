@@ -32,6 +32,7 @@ if CONFIG['MOZ_ENABLE_PROFILER_SPS']:
         'core/ProfileJSONWriter.cpp',
         'core/ProfilerBacktrace.cpp',
         'core/ProfilerMarkers.cpp',
+        'core/StackTop.cpp',
         'core/SyncProfile.cpp',
         'core/ThreadInfo.cpp',
         'core/ThreadProfile.cpp',
@@ -108,15 +109,21 @@ if CONFIG['MOZ_ENABLE_PROFILER_SPS']:
 
     FINAL_LIBRARY = 'xul'
 
+IPDL_SOURCES += [
+    'gecko/ProfilerTypes.ipdlh',
+]
+
+include('/ipc/chromium/chromium-config.mozbuild')
+
 EXPORTS += [
     'public/GeckoProfiler.h',
 ]
 
 if CONFIG['MOZ_TASK_TRACER']:
     EXPORTS += [
-        'public/GeckoTaskTracer.h',
-        'public/GeckoTaskTracerImpl.h',
-        'public/TracedTaskCommon.h',
+        'tasktracer/GeckoTaskTracer.h',
+        'tasktracer/GeckoTaskTracerImpl.h',
+        'tasktracer/TracedTaskCommon.h',
     ]
     UNIFIED_SOURCES += [
         'tasktracer/GeckoTaskTracer.cpp',
@@ -124,3 +131,6 @@ if CONFIG['MOZ_TASK_TRACER']:
     ]
 
 XPCSHELL_TESTS_MANIFESTS += ['tests/xpcshell.ini']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-ignored-qualifiers']  # due to use of breakpad headers

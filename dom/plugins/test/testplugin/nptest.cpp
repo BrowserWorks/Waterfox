@@ -173,6 +173,7 @@ static bool startAudioPlayback(NPObject* npobj, const NPVariant* args, uint32_t 
 static bool stopAudioPlayback(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool getAudioMuted(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 static bool nativeWidgetIsVisible(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
+static bool getLastCompositionText(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result);
 
 static const NPUTF8* sPluginMethodIdentifierNames[] = {
   "npnEvaluateTest",
@@ -244,6 +245,7 @@ static const NPUTF8* sPluginMethodIdentifierNames[] = {
   "stopAudioPlayback",
   "audioMuted",
   "nativeWidgetIsVisible",
+  "getLastCompositionText",
 };
 static NPIdentifier sPluginMethodIdentifiers[MOZ_ARRAY_LENGTH(sPluginMethodIdentifierNames)];
 static const ScriptableFunction sPluginMethodFunctions[] = {
@@ -316,6 +318,7 @@ static const ScriptableFunction sPluginMethodFunctions[] = {
   stopAudioPlayback,
   getAudioMuted,
   nativeWidgetIsVisible,
+  getLastCompositionText,
 };
 
 static_assert(MOZ_ARRAY_LENGTH(sPluginMethodIdentifierNames) ==
@@ -428,8 +431,13 @@ static void clearIdentifiers()
 
 static void addRange(InstanceData* instanceData, const char* range)
 {
-  char rangestr[16];
-  strncpy(rangestr, range, sizeof(rangestr));
+  /*
+  increased rangestr size from 16 to 17, the 17byte is only for
+  null terminated value, maybe for actual capacity it needs 16 bytes
+  */
+  char rangestr[17];
+  memset(rangestr, 0, sizeof(rangestr));
+  strncpy(rangestr, range, sizeof(rangestr) - sizeof(char));
   const char* str1 = strtok(rangestr, ",");
   const char* str2 = str1 ? strtok(nullptr, ",") : nullptr;
   if (str1 && str2) {
@@ -601,6 +609,37 @@ static bool bug813906(NPP npp, const char* const function, const char* const url
   }
 
   return true;
+}
+
+void
+drawAsyncBitmapColor(InstanceData* instanceData)
+{
+  NPP npp = instanceData->npp;
+
+  uint32_t *pixelData = (uint32_t*)instanceData->backBuffer->bitmap.data;
+
+  uint32_t rgba = instanceData->scriptableObject->drawColor;
+
+  unsigned char subpixels[4];
+  memcpy(subpixels, &rgba, sizeof(subpixels));
+
+  subpixels[0] = uint8_t(float(subpixels[3] * subpixels[0]) / 0xFF);
+  subpixels[1] = uint8_t(float(subpixels[3] * subpixels[1]) / 0xFF);
+  subpixels[2] = uint8_t(float(subpixels[3] * subpixels[2]) / 0xFF);
+  uint32_t premultiplied;
+  memcpy(&premultiplied, subpixels, sizeof(premultiplied));
+
+  for (uint32_t* lastPixel = pixelData + instanceData->backBuffer->size.width * instanceData->backBuffer->size.height;
+       pixelData < lastPixel;
+       ++pixelData)
+  {
+    *pixelData = premultiplied;
+  }
+
+  NPN_SetCurrentAsyncSurface(npp, instanceData->backBuffer, NULL);
+  NPAsyncSurface *oldFront = instanceData->frontBuffer;
+  instanceData->frontBuffer = instanceData->backBuffer;
+  instanceData->backBuffer = oldFront;
 }
 
 //
@@ -778,8 +817,6 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
 
   // set up our our instance data
   InstanceData* instanceData = new InstanceData;
-  if (!instanceData)
-    return NPERR_OUT_OF_MEMORY_ERROR;
   instanceData->npp = instance;
   instanceData->streamMode = NP_ASFILEONLY;
   instanceData->testFunction = FUNCTION_NONE;
@@ -815,6 +852,10 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
   instanceData->wantsAllStreams = false;
   instanceData->mouseUpEventCount = 0;
   instanceData->bugMode = -1;
+  instanceData->asyncDrawing = AD_NONE;
+  instanceData->frontBuffer = nullptr;
+  instanceData->backBuffer = nullptr;
+  instanceData->placeholderWnd = nullptr;
   instance->pdata = instanceData;
 
   TestNPObject* scriptableObject = (TestNPObject*)NPN_CreateObject(instance, &sNPClass);
@@ -836,6 +877,8 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
     addRange(instanceData, "100,100");
   }
 
+  AsyncDrawing requestAsyncDrawing = AD_NONE;
+
   bool requestWindow = false;
   // handle extra params
   for (int i = 0; i < argc; i++) {
@@ -849,6 +892,13 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
     else if (strcmp(argn[i], "wmode") == 0) {
       if (strcmp(argv[i], "window") == 0) {
         requestWindow = true;
+      }
+    }
+    else if (strcmp(argn[i], "asyncmodel") == 0) {
+      if (strcmp(argv[i], "bitmap") == 0) {
+        requestAsyncDrawing = AD_BITMAP;
+      } else if (strcmp(argv[i], "dxgi") == 0) {
+        requestAsyncDrawing = AD_DXGI;
       }
     }
     if (strcmp(argn[i], "streammode") == 0) {
@@ -965,6 +1015,33 @@ NPP_New(NPMIMEType pluginType, NPP instance, uint16_t mode, int16_t argc, char* 
     NPN_SetValue(instance, NPPVpluginTransparentBool, (void*)true);
   }
 
+  if (requestAsyncDrawing == AD_BITMAP) {
+    NPBool supportsAsyncBitmap = false;
+    if ((NPN_GetValue(instance, NPNVsupportsAsyncBitmapSurfaceBool, &supportsAsyncBitmap) == NPERR_NO_ERROR) &&
+        supportsAsyncBitmap) {
+      if (NPN_SetValue(instance, NPPVpluginDrawingModel, (void*)NPDrawingModelAsyncBitmapSurface) == NPERR_NO_ERROR) {
+        instanceData->asyncDrawing = AD_BITMAP;
+      }
+    }
+  }
+#ifdef XP_WIN
+  else if (requestAsyncDrawing == AD_DXGI) {
+    NPBool supportsAsyncDXGI = false;
+    if ((NPN_GetValue(instance, NPNVsupportsAsyncWindowsDXGISurfaceBool, &supportsAsyncDXGI) == NPERR_NO_ERROR) &&
+        supportsAsyncDXGI) {
+      if (NPN_SetValue(instance, NPPVpluginDrawingModel, (void*)NPDrawingModelAsyncWindowsDXGISurface) == NPERR_NO_ERROR) {
+        instanceData->asyncDrawing = AD_DXGI;
+      }
+    }
+  }
+#endif
+
+  // If we can't get the right drawing mode, we fail, otherwise our tests might
+  // appear to be passing when they shouldn't. Real plugins should not do this.
+  if (instanceData->asyncDrawing != requestAsyncDrawing) {
+    return NPERR_GENERIC_ERROR;
+  }
+
   instanceData->lastReportedPrivateModeState = false;
   instanceData->lastMouseX = instanceData->lastMouseY = -1;
   instanceData->widthAtLastPaint = -1;
@@ -1056,6 +1133,16 @@ NPP_Destroy(NPP instance, NPSavedData** save)
     currentrange = nextrange;
   }
 
+  if (instanceData->frontBuffer) {
+    NPN_SetCurrentAsyncSurface(instance, nullptr, nullptr);
+    NPN_FinalizeAsyncSurface(instance, instanceData->frontBuffer);
+    NPN_MemFree(instanceData->frontBuffer);
+  }
+  if (instanceData->backBuffer) {
+    NPN_FinalizeAsyncSurface(instance, instanceData->backBuffer);
+    NPN_MemFree(instanceData->backBuffer);
+  }
+
   pluginInstanceShutdown(instanceData);
   NPN_ReleaseObject(instanceData->scriptableObject);
 
@@ -1087,6 +1174,54 @@ NPP_SetWindow(NPP instance, NPWindow* window)
   if (instanceData->hasWidget && oldWindow != instanceData->window.window) {
     pluginWidgetInit(instanceData, oldWindow);
   }
+
+
+  if (instanceData->asyncDrawing != AD_NONE) {
+    if (instanceData->frontBuffer &&
+        instanceData->frontBuffer->size.width >= 0 &&
+        (uint32_t)instanceData->frontBuffer->size.width == window->width &&
+        instanceData ->frontBuffer->size.height >= 0 &&
+        (uint32_t)instanceData->frontBuffer->size.height == window->height)
+    {
+      return NPERR_NO_ERROR;
+    }
+    if (instanceData->frontBuffer) {
+      NPN_FinalizeAsyncSurface(instance, instanceData->frontBuffer);
+      NPN_MemFree(instanceData->frontBuffer);
+    }
+    if (instanceData->backBuffer) {
+      NPN_FinalizeAsyncSurface(instance, instanceData->backBuffer);
+      NPN_MemFree(instanceData->backBuffer);
+    }
+    instanceData->frontBuffer = (NPAsyncSurface*)NPN_MemAlloc(sizeof(NPAsyncSurface));
+    instanceData->backBuffer = (NPAsyncSurface*)NPN_MemAlloc(sizeof(NPAsyncSurface));
+
+    NPSize size;
+    size.width = window->width;
+    size.height = window->height;
+
+    memcpy(instanceData->backBuffer, instanceData->frontBuffer, sizeof(NPAsyncSurface));
+
+    NPN_InitAsyncSurface(instance, &size, NPImageFormatBGRA32, nullptr, instanceData->frontBuffer);
+    NPN_InitAsyncSurface(instance, &size, NPImageFormatBGRA32, nullptr, instanceData->backBuffer);
+
+#if defined(XP_WIN)
+    if (instanceData->asyncDrawing == AD_DXGI) {
+      if (!setupDxgiSurfaces(instance, instanceData)) {
+        return NPERR_GENERIC_ERROR;
+      }
+    }
+#endif
+  }
+
+  if (instanceData->asyncDrawing == AD_BITMAP) {
+    drawAsyncBitmapColor(instanceData);
+  }
+#if defined(XP_WIN)
+  else if (instanceData->asyncDrawing == AD_DXGI) {
+    drawDxgiBitmapColor(instanceData);
+  }
+#endif
 
   return NPERR_NO_ERROR;
 }
@@ -1843,6 +1978,25 @@ void
 NPN_URLRedirectResponse(NPP instance, void* notifyData, NPBool allow)
 {
   return sBrowserFuncs->urlredirectresponse(instance, notifyData, allow);
+}
+
+NPError
+NPN_InitAsyncSurface(NPP instance, NPSize *size, NPImageFormat format,
+                     void *initData, NPAsyncSurface *surface)
+{
+  return sBrowserFuncs->initasyncsurface(instance, size, format, initData, surface);
+}
+
+NPError
+NPN_FinalizeAsyncSurface(NPP instance, NPAsyncSurface *surface)
+{
+  return sBrowserFuncs->finalizeasyncsurface(instance, surface);
+}
+
+void
+NPN_SetCurrentAsyncSurface(NPP instance, NPAsyncSurface *surface, NPRect *changed)
+{
+  sBrowserFuncs->setcurrentasyncsurface(instance, surface, changed);
 }
 
 //
@@ -2758,7 +2912,11 @@ setColor(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* r
   r.top = 0;
   r.right = id->window.width;
   r.bottom = id->window.height;
-  NPN_InvalidateRect(npp, &r);
+  if (id->asyncDrawing == AD_NONE) {
+    NPN_InvalidateRect(npp, &r);
+  } else if (id->asyncDrawing == AD_BITMAP) {
+    drawAsyncBitmapColor(id);
+  }
 
   VOID_TO_NPVARIANT(*result);
   return true;
@@ -3359,6 +3517,26 @@ nativeWidgetIsVisible(NPObject* npobj, const NPVariant* args,
   return false;
 }
 #endif
+
+bool
+getLastCompositionText(NPObject* npobj, const NPVariant* args,
+                       uint32_t argCount, NPVariant* result)
+{
+#ifdef XP_WIN
+  if (argCount != 0) {
+    return false;
+  }
+
+  NPP npp = static_cast<TestNPObject*>(npobj)->npp;
+  InstanceData* id = static_cast<InstanceData*>(npp->pdata);
+  char *outval = NPN_StrDup(id->lastComposition.c_str());
+  STRINGZ_TO_NPVARIANT(outval, *result);
+  return true;
+#else
+  // XXX not implemented
+  return false;
+#endif
+}
 
 bool
 callOnDestroy(NPObject* npobj, const NPVariant* args, uint32_t argCount, NPVariant* result)

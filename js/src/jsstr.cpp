@@ -13,7 +13,6 @@
 #include "mozilla/PodOperations.h"
 #include "mozilla/Range.h"
 #include "mozilla/TypeTraits.h"
-#include "mozilla/UniquePtr.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -34,6 +33,7 @@
 #include "builtin/RegExp.h"
 #include "jit/InlinableNatives.h"
 #include "js/Conversions.h"
+#include "js/UniquePtr.h"
 #if ENABLE_INTL_API
 #include "unicode/unorm.h"
 #endif
@@ -69,7 +69,6 @@ using mozilla::Move;
 using mozilla::PodCopy;
 using mozilla::PodEqual;
 using mozilla::RangedPtr;
-using mozilla::UniquePtr;
 
 using JS::AutoCheckCannotGC;
 
@@ -1129,13 +1128,13 @@ FirstCharMatcherUnrolled(const TextChar* text, uint32_t n, const PatChar pat)
     const TextChar* t = text;
 
     switch ((textend - t) & 7) {
-        case 0: if (*t++ == pat) return t - 1;
-        case 7: if (*t++ == pat) return t - 1;
-        case 6: if (*t++ == pat) return t - 1;
-        case 5: if (*t++ == pat) return t - 1;
-        case 4: if (*t++ == pat) return t - 1;
-        case 3: if (*t++ == pat) return t - 1;
-        case 2: if (*t++ == pat) return t - 1;
+        case 0: if (*t++ == pat) return t - 1; MOZ_FALLTHROUGH;
+        case 7: if (*t++ == pat) return t - 1; MOZ_FALLTHROUGH;
+        case 6: if (*t++ == pat) return t - 1; MOZ_FALLTHROUGH;
+        case 5: if (*t++ == pat) return t - 1; MOZ_FALLTHROUGH;
+        case 4: if (*t++ == pat) return t - 1; MOZ_FALLTHROUGH;
+        case 3: if (*t++ == pat) return t - 1; MOZ_FALLTHROUGH;
+        case 2: if (*t++ == pat) return t - 1; MOZ_FALLTHROUGH;
         case 1: if (*t++ == pat) return t - 1;
     }
     while (textend != t) {
@@ -2226,7 +2225,7 @@ class MOZ_STACK_CLASS StringRegExpGuard
         if (obj_->is<RegExpObject>()) {
             RegExpObject* nobj = &obj_->as<RegExpObject>();
             if (nobj->lookup(cx, cx->names().lastIndex)->writable()) {
-                nobj->zeroLastIndex();
+                nobj->zeroLastIndex(cx);
                 return true;
             }
         }
@@ -2256,7 +2255,8 @@ DoMatchLocal(JSContext* cx, const CallArgs& args, RegExpStatics* res, HandleLine
              RegExpShared& re)
 {
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
-    RegExpRunStatus status = re.execute(cx, input, 0, &matches);
+    bool sticky = re.sticky();
+    RegExpRunStatus status = re.execute(cx, input, 0, sticky, &matches, nullptr);
     if (status == RegExpRunStatus_Error)
         return false;
 
@@ -2274,6 +2274,41 @@ DoMatchLocal(JSContext* cx, const CallArgs& args, RegExpStatics* res, HandleLine
 
     args.rval().set(rval);
     return true;
+}
+
+/* ES6 21.2.5.2.3. */
+static size_t
+AdvanceStringIndex(HandleLinearString input, size_t length, size_t index, bool unicode)
+{
+    /* Steps 1-3 (implicit). */
+
+    /* Step 4: If input is latin1, there is no surrogate pair. */
+    if (!unicode || input->hasLatin1Chars())
+        return index + 1;
+
+    JS::AutoCheckCannotGC nogc;
+    const char16_t* S = input->twoByteChars(nogc);
+
+    /* Step 6. */
+    if (index + 1 >= length)
+        return index + 1;
+
+    /* Step 7. */
+    char16_t first = S[index];
+
+    /* Step 8. */
+    if (!unicode::IsLeadSurrogate(first))
+        return index + 1;
+
+    /* Step 9. */
+    char16_t second = S[index + 1];
+
+    /* Step 10. */
+    if (!unicode::IsTrailSurrogate(second))
+        return index + 1;
+
+    /* Step 11. */
+    return index + 2;
 }
 
 /* ES5 15.5.4.10 step 8. */
@@ -2331,12 +2366,14 @@ DoMatchGlobal(JSContext* cx, const CallArgs& args, RegExpStatics* res, HandleLin
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
     size_t charsLen = input->length();
     RegExpShared& re = g.regExp();
+    bool unicode = re.unicode();
+    bool sticky = re.sticky();
     for (size_t searchIndex = 0; searchIndex <= charsLen; ) {
         if (!CheckForInterrupt(cx))
             return false;
 
         // Steps 8f(i-ii), minus "lastIndex" updates (see above).
-        RegExpRunStatus status = re.execute(cx, input, searchIndex, &matches);
+        RegExpRunStatus status = re.execute(cx, input, searchIndex, sticky, &matches, nullptr);
         if (status == RegExpRunStatus_Error)
             return false;
 
@@ -2348,7 +2385,9 @@ DoMatchGlobal(JSContext* cx, const CallArgs& args, RegExpStatics* res, HandleLin
         MatchPair& match = matches[0];
 
         // Steps 8f(iii)(1-3).
-        searchIndex = match.isEmpty() ? match.limit + 1 : match.limit;
+        searchIndex = match.isEmpty()
+                      ? AdvanceStringIndex(input, charsLen, match.limit, unicode)
+                      : match.limit;
 
         // Step 8f(iii)(4-5).
         JSLinearString* str = NewDependentString(cx, input, match.start, match.length());
@@ -2367,7 +2406,7 @@ DoMatchGlobal(JSContext* cx, const CallArgs& args, RegExpStatics* res, HandleLin
     // The last *successful* match updates the RegExpStatics. (Interestingly,
     // this implies that String.prototype.match's semantics aren't those
     // implied by the RegExp.prototype.exec calls in the ES5 algorithm.)
-    res->updateLazily(cx, input, &re, lastSuccessfulStart);
+    res->updateLazily(cx, input, &re, lastSuccessfulStart, sticky);
 
     // Steps 8b, 8f(iii)(5-6), 8h.
     JSObject* array = NewDenseCopiedArray(cx, elements.length(), elements.begin());
@@ -2497,12 +2536,14 @@ js::str_search(JSContext* cx, unsigned argc, Value* vp)
 
     /* Per ECMAv5 15.5.4.12 (5) The last index property is ignored and left unchanged. */
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
-    RegExpRunStatus status = g.regExp().execute(cx, linearStr, 0, &matches);
+    RegExpShared& re = g.regExp();
+    bool sticky = re.sticky();
+    RegExpRunStatus status = re.execute(cx, linearStr, 0, sticky, &matches, nullptr);
     if (status == RegExpRunStatus_Error)
         return false;
 
     if (status == RegExpRunStatus_Success)
-        res->updateLazily(cx, linearStr, &g.regExp(), 0);
+        res->updateLazily(cx, linearStr, &re, 0, sticky);
 
     args.rval().setInt32(status == RegExpRunStatus_Success_NotFound ? -1 : matches[0].start);
     return true;
@@ -2591,15 +2632,19 @@ ReplaceRegExp(JSContext* cx, RegExpStatics* res, ReplaceData& rdata);
 
 static bool
 DoMatchForReplaceLocal(JSContext* cx, RegExpStatics* res, HandleLinearString linearStr,
-                       RegExpShared& re, ReplaceData& rdata)
+                       RegExpShared& re, ReplaceData& rdata, size_t* rightContextOffset)
 {
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
-    RegExpRunStatus status = re.execute(cx, linearStr, 0, &matches);
+    bool sticky = re.sticky();
+    RegExpRunStatus status = re.execute(cx, linearStr, 0, sticky, &matches, nullptr);
     if (status == RegExpRunStatus_Error)
         return false;
 
     if (status == RegExpRunStatus_Success_NotFound)
         return true;
+
+    MatchPair& match = matches[0];
+    *rightContextOffset = match.limit;
 
     if (!res->updateFromMatchPairs(cx, linearStr, matches))
         return false;
@@ -2609,15 +2654,17 @@ DoMatchForReplaceLocal(JSContext* cx, RegExpStatics* res, HandleLinearString lin
 
 static bool
 DoMatchForReplaceGlobal(JSContext* cx, RegExpStatics* res, HandleLinearString linearStr,
-                        RegExpShared& re, ReplaceData& rdata)
+                        RegExpShared& re, ReplaceData& rdata, size_t* rightContextOffset)
 {
+    bool unicode = re.unicode();
+    bool sticky = re.sticky();
     size_t charsLen = linearStr->length();
     ScopedMatchPairs matches(&cx->tempLifoAlloc());
     for (size_t count = 0, searchIndex = 0; searchIndex <= charsLen; ++count) {
         if (!CheckForInterrupt(cx))
             return false;
 
-        RegExpRunStatus status = re.execute(cx, linearStr, searchIndex, &matches);
+        RegExpRunStatus status = re.execute(cx, linearStr, searchIndex, sticky, &matches, nullptr);
         if (status == RegExpRunStatus_Error)
             return false;
 
@@ -2625,7 +2672,10 @@ DoMatchForReplaceGlobal(JSContext* cx, RegExpStatics* res, HandleLinearString li
             break;
 
         MatchPair& match = matches[0];
-        searchIndex = match.isEmpty() ? match.limit + 1 : match.limit;
+        searchIndex = match.isEmpty()
+                      ? AdvanceStringIndex(linearStr, charsLen, match.limit, unicode)
+                      : match.limit;
+        *rightContextOffset = match.limit;
 
         if (!res->updateFromMatchPairs(cx, linearStr, matches))
             return false;
@@ -2778,9 +2828,6 @@ FindReplaceLength(JSContext* cx, RegExpStatics* res, ReplaceData& rdata, size_t*
 
     if (rdata.lambda) {
         RootedObject lambda(cx, rdata.lambda);
-        PreserveRegExpStatics staticsGuard(cx, res);
-        if (!staticsGuard.init(cx))
-            return false;
 
         /*
          * In the lambda case, not only do we find the replacement string's
@@ -3227,11 +3274,13 @@ StrReplaceRegexpRemove(JSContext* cx, HandleString str, RegExpShared& re)
     size_t lazyIndex = 0;  /* Index before last successful match. */
 
     /* Accumulate StringRanges for unmatched substrings. */
+    bool unicode = re.unicode();
+    bool sticky = re.sticky();
     while (startIndex <= charsLen) {
         if (!CheckForInterrupt(cx))
             return nullptr;
 
-        RegExpRunStatus status = re.execute(cx, linearStr, startIndex, &matches);
+        RegExpRunStatus status = re.execute(cx, linearStr, startIndex, sticky, &matches, nullptr);
         if (status == RegExpRunStatus_Error)
             return nullptr;
         if (status == RegExpRunStatus_Success_NotFound)
@@ -3247,7 +3296,9 @@ StrReplaceRegexpRemove(JSContext* cx, HandleString str, RegExpShared& re)
         lazyIndex = lastIndex;
         lastIndex = match.limit;
 
-        startIndex = match.isEmpty() ? match.limit + 1 : match.limit;
+        startIndex = match.isEmpty()
+                     ? AdvanceStringIndex(linearStr, charsLen, match.limit, unicode)
+                     : match.limit;
 
         /* Non-global removal executes at most once. */
         if (!re.global())
@@ -3262,7 +3313,7 @@ StrReplaceRegexpRemove(JSContext* cx, HandleString str, RegExpShared& re)
             res = cx->global()->getRegExpStatics(cx);
             if (!res)
                 return nullptr;
-            res->updateLazily(cx, linearStr, &re, lazyIndex);
+            res->updateLazily(cx, linearStr, &re, lazyIndex, sticky);
         }
 
         return str;
@@ -3273,7 +3324,7 @@ StrReplaceRegexpRemove(JSContext* cx, HandleString str, RegExpShared& re)
     if (!res)
         return nullptr;
 
-    res->updateLazily(cx, linearStr, &re, lazyIndex);
+    res->updateLazily(cx, linearStr, &re, lazyIndex, sticky);
 
     /* Include any remaining part of the string. */
     if (lastIndex < charsLen) {
@@ -3319,11 +3370,12 @@ StrReplaceRegExp(JSContext* cx, ReplaceData& rdata)
     if (!linearStr)
         return nullptr;
 
+    size_t rightContextOffset = 0;
     if (re.global()) {
-        if (!DoMatchForReplaceGlobal(cx, res, linearStr, re, rdata))
+        if (!DoMatchForReplaceGlobal(cx, res, linearStr, re, rdata, &rightContextOffset))
             return nullptr;
     } else {
-        if (!DoMatchForReplaceLocal(cx, res, linearStr, re, rdata))
+        if (!DoMatchForReplaceLocal(cx, res, linearStr, re, rdata, &rightContextOffset))
             return nullptr;
     }
 
@@ -3332,9 +3384,9 @@ StrReplaceRegExp(JSContext* cx, ReplaceData& rdata)
         return rdata.str;
     }
 
-    JSSubString sub;
-    res->getRightContext(&sub);
-    if (!rdata.sb.appendSubstring(sub.base, sub.offset, sub.length))
+    MOZ_ASSERT(rightContextOffset <= rdata.str->length());
+    size_t length = rdata.str->length() - rightContextOffset;
+    if (!rdata.sb.appendSubstring(rdata.str, rightContextOffset, length))
         return nullptr;
 
     return rdata.sb.finishString();
@@ -3395,11 +3447,124 @@ StrReplaceString(JSContext* cx, ReplaceData& rdata, const FlatMatch& fm)
     return BuildFlatReplacement(cx, rdata.str, rdata.repstr, fm);
 }
 
+template <typename StrChar, typename RepChar>
+static bool
+StrFlatReplaceGlobal(JSContext *cx, JSLinearString *str, JSLinearString *pat, JSLinearString *rep,
+                     StringBuffer &sb)
+{
+    MOZ_ASSERT(str->length() > 0);
+
+    AutoCheckCannotGC nogc;
+    const StrChar *strChars = str->chars<StrChar>(nogc);
+    const RepChar *repChars = rep->chars<RepChar>(nogc);
+
+    // The pattern is empty, so we interleave the replacement string in-between
+    // each character.
+    if (!pat->length()) {
+        CheckedInt<uint32_t> strLength(str->length());
+        CheckedInt<uint32_t> repLength(rep->length());
+        CheckedInt<uint32_t> length = repLength * (strLength - 1) + strLength;
+        if (!length.isValid()) {
+            ReportAllocationOverflow(cx);
+            return false;
+        }
+
+        if (!sb.reserve(length.value()))
+            return false;
+
+        for (unsigned i = 0; i < str->length() - 1; ++i, ++strChars) {
+            sb.infallibleAppend(*strChars);
+            sb.infallibleAppend(repChars, rep->length());
+        }
+        sb.infallibleAppend(*strChars);
+        return true;
+    }
+
+    // If it's true, we are sure that the result's length is, at least, the same
+    // length as |str->length()|.
+    if (rep->length() >= pat->length()) {
+        if (!sb.reserve(str->length()))
+            return false;
+    }
+
+    uint32_t start = 0;
+    for (;;) {
+        int match = StringMatch(str, pat, start);
+        if (match < 0)
+            break;
+        if (!sb.append(strChars + start, match - start))
+            return false;
+        if (!sb.append(repChars, rep->length()))
+            return false;
+        start = match + pat->length();
+    }
+
+    if (!sb.append(strChars + start, str->length() - start))
+        return false;
+
+    return true;
+}
+
+// This is identical to "str.split(pattern).join(replacement)" except that we
+// do some deforestation optimization in Ion.
+JSString *
+js::str_flat_replace_string(JSContext *cx, HandleString string, HandleString pattern,
+                            HandleString replacement)
+{
+    MOZ_ASSERT(string);
+    MOZ_ASSERT(pattern);
+    MOZ_ASSERT(replacement);
+
+    if (!string->length())
+        return string;
+
+    RootedLinearString linearRepl(cx, replacement->ensureLinear(cx));
+    if (!linearRepl)
+        return nullptr;
+
+    RootedLinearString linearPat(cx, pattern->ensureLinear(cx));
+    if (!linearPat)
+        return nullptr;
+
+    RootedLinearString linearStr(cx, string->ensureLinear(cx));
+    if (!linearStr)
+        return nullptr;
+
+    StringBuffer sb(cx);
+    if (linearStr->hasTwoByteChars()) {
+        if (!sb.ensureTwoByteChars())
+            return nullptr;
+        if (linearRepl->hasTwoByteChars()) {
+            if (!StrFlatReplaceGlobal<char16_t, char16_t>(cx, linearStr, linearPat, linearRepl, sb))
+                return nullptr;
+        } else {
+            if (!StrFlatReplaceGlobal<char16_t, Latin1Char>(cx, linearStr, linearPat, linearRepl, sb))
+                return nullptr;
+        }
+    } else {
+        if (linearRepl->hasTwoByteChars()) {
+            if (!sb.ensureTwoByteChars())
+                return nullptr;
+            if (!StrFlatReplaceGlobal<Latin1Char, char16_t>(cx, linearStr, linearPat, linearRepl, sb))
+                return nullptr;
+        } else {
+            if (!StrFlatReplaceGlobal<Latin1Char, Latin1Char>(cx, linearStr, linearPat, linearRepl, sb))
+                return nullptr;
+        }
+    }
+
+    JSString *str = sb.finishString();
+    if (!str)
+        return nullptr;
+
+    return str;
+}
+
 static const uint32_t ReplaceOptArg = 2;
 
 JSString*
 js::str_replace_string_raw(JSContext* cx, HandleString string, HandleString pattern,
-                          HandleString replacement)
+                           HandleString replacement)
 {
     ReplaceData rdata(cx);
 
@@ -3483,7 +3648,7 @@ LambdaIsGetElem(JSContext* cx, JSObject& lambda, MutableHandleNativeObject pobj)
         return true;
 
     RootedFunction fun(cx, &lambda.as<JSFunction>());
-    if (!fun->isInterpreted())
+    if (!fun->isInterpreted() || fun->isClassConstructor())
         return true;
 
     JSScript* script = fun->getOrCreateScript(cx);
@@ -3629,7 +3794,7 @@ class SplitMatchResult {
 template<class Matcher>
 static JSObject*
 SplitHelper(JSContext* cx, HandleLinearString str, uint32_t limit, const Matcher& splitMatch,
-            HandleObjectGroup group)
+            HandleObjectGroup group, bool unicode)
 {
     size_t strLength = str->length();
     SplitMatchResult result;
@@ -3694,7 +3859,7 @@ SplitHelper(JSContext* cx, HandleLinearString str, uint32_t limit, const Matcher
 
         /* Step 13(c)(ii). */
         if (endIndex == lastEndIndex) {
-            index++;
+            index = AdvanceStringIndex(str, strLength, index, unicode);
             continue;
         }
 
@@ -3793,9 +3958,12 @@ class SplitRegExpMatcher
 {
     RegExpShared& re;
     RegExpStatics* res;
+    bool sticky;
 
   public:
-    SplitRegExpMatcher(RegExpShared& re, RegExpStatics* res) : re(re), res(res) {}
+    SplitRegExpMatcher(RegExpShared& re, RegExpStatics* res) : re(re), res(res) {
+        sticky = re.sticky();
+    }
 
     static const bool returnsCaptures = true;
 
@@ -3803,7 +3971,7 @@ class SplitRegExpMatcher
                     SplitMatchResult* result) const
     {
         ScopedMatchPairs matches(&cx->tempLifoAlloc());
-        RegExpRunStatus status = re.execute(cx, str, index, &matches);
+        RegExpRunStatus status = re.execute(cx, str, index, sticky, &matches, nullptr);
         if (status == RegExpRunStatus_Error)
             return false;
 
@@ -3923,14 +4091,14 @@ js::str_split(JSContext* cx, unsigned argc, Value* vp)
             aobj = CharSplitHelper(cx, linearStr, limit, group);
         } else {
             SplitStringMatcher matcher(cx, sepstr);
-            aobj = SplitHelper(cx, linearStr, limit, matcher, group);
+            aobj = SplitHelper(cx, linearStr, limit, matcher, group, false);
         }
     } else {
         RegExpStatics* res = cx->global()->getRegExpStatics(cx);
         if (!res)
             return false;
         SplitRegExpMatcher matcher(*re, res);
-        aobj = SplitHelper(cx, linearStr, limit, matcher, group);
+        aobj = SplitHelper(cx, linearStr, limit, matcher, group, re->unicode());
     }
     if (!aobj)
         return false;
@@ -3958,7 +4126,7 @@ js::str_split_string(JSContext* cx, HandleObjectGroup group, HandleString str, H
         return CharSplitHelper(cx, linearStr, limit, group);
 
     SplitStringMatcher matcher(cx, linearSep);
-    return SplitHelper(cx, linearStr, limit, matcher, group);
+    return SplitHelper(cx, linearStr, limit, matcher, group, false);
 }
 
 /*
@@ -4081,7 +4249,12 @@ js::StringConstructor(JSContext* cx, unsigned argc, Value* vp)
     }
 
     if (args.isConstructing()) {
-        StringObject* strobj = StringObject::create(cx, str);
+        RootedObject proto(cx);
+        RootedObject newTarget(cx, &args.newTarget().toObject());
+        if (!GetPrototypeFromConstructor(cx, newTarget, &proto))
+            return false;
+
+        StringObject* strobj = StringObject::create(cx, str, proto);
         if (!strobj)
             return false;
         args.rval().setObject(*strobj);
@@ -4178,7 +4351,7 @@ static const JSFunctionSpec string_static_methods[] = {
     JS_INLINABLE_FN("fromCharCode", js::str_fromCharCode, 1, 0, StringFromCharCode),
 
     JS_SELF_HOSTED_FN("fromCodePoint",   "String_static_fromCodePoint", 1,0),
-    JS_SELF_HOSTED_FN("raw",             "String_static_raw",           2,0),
+    JS_SELF_HOSTED_FN("raw",             "String_static_raw",           2,JSFUN_HAS_REST),
     JS_SELF_HOSTED_FN("substring",       "String_static_substring",     3,0),
     JS_SELF_HOSTED_FN("substr",          "String_static_substr",        3,0),
     JS_SELF_HOSTED_FN("slice",           "String_static_slice",         3,0),
@@ -4536,7 +4709,7 @@ js_strcmp(const char16_t* lhs, const char16_t* rhs)
     }
 }
 
-UniquePtr<char[], JS::FreePolicy>
+UniqueChars
 js::DuplicateString(js::ExclusiveContext* cx, const char* s)
 {
     size_t n = strlen(s) + 1;
@@ -4547,7 +4720,7 @@ js::DuplicateString(js::ExclusiveContext* cx, const char* s)
     return ret;
 }
 
-UniquePtr<char16_t[], JS::FreePolicy>
+UniqueTwoByteChars
 js::DuplicateString(js::ExclusiveContext* cx, const char16_t* s)
 {
     size_t n = js_strlen(s) + 1;
@@ -4558,11 +4731,17 @@ js::DuplicateString(js::ExclusiveContext* cx, const char16_t* s)
     return ret;
 }
 
-UniquePtr<char16_t[], JS::FreePolicy>
+UniqueChars
+js::DuplicateString(const char* s)
+{
+    return UniqueChars(js_strdup(s));
+}
+
+UniqueTwoByteChars
 js::DuplicateString(const char16_t* s)
 {
     size_t n = js_strlen(s) + 1;
-    UniquePtr<char16_t[], JS::FreePolicy> ret(js_pod_malloc<char16_t>(n));
+    UniqueTwoByteChars ret(js_pod_malloc<char16_t>(n));
     if (!ret)
         return nullptr;
     PodCopy(ret.get(), s, n);

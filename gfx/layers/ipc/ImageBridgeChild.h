@@ -262,14 +262,15 @@ public:
                                 const nsIntRect& aPictureRect) override;
 #endif
 
+  virtual bool DestroyInTransaction(PTextureChild* aTexture, bool synchronously) override;
+  virtual bool DestroyInTransaction(PCompositableChild* aCompositable, bool synchronously) override;
+
   virtual void RemoveTextureFromCompositable(CompositableClient* aCompositable,
                                              TextureClient* aTexture) override;
 
   virtual void RemoveTextureFromCompositableAsync(AsyncTransactionTracker* aAsyncTransactionTracker,
                                                   CompositableClient* aCompositable,
                                                   TextureClient* aTexture) override;
-
-  virtual void RemoveTexture(TextureClient* aTexture) override;
 
   virtual void UseTiledLayerBuffer(CompositableClient* aCompositable,
                                    const SurfaceDescriptorTiles& aTileLayerDescriptor) override
@@ -320,6 +321,8 @@ public:
   virtual void SendPendingAsyncMessges() override;
 
   void MarkShutDown();
+
+  void FallbackDestroyActors();
 protected:
   ImageBridgeChild();
   bool DispatchAllocShmemInternal(size_t aSize,

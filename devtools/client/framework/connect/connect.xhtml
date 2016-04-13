@@ -4,7 +4,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!DOCTYPE html [
-<!ENTITY % connectionDTD SYSTEM "chrome://browser/locale/devtools/connection-screen.dtd" >
+<!ENTITY % connectionDTD SYSTEM "chrome://devtools/locale/connection-screen.dtd" >
  %connectionDTD;
 ]>
 
@@ -45,7 +45,7 @@
       <ul class="actors" id="globalActors"></ul>
     </section>
     <section id="connecting">
-      <p><img src="chrome://browser/skin/tabbrowser/loading.png"></img> &connecting;</p>
+      <p class="devtools-throbber">&connecting;</p>
     </section>
     <footer>&remoteHelp;<a target='_' href='https://developer.mozilla.org/docs/Tools/Remote_Debugging'>&remoteDocumentation;</a>&remoteHelpSuffix;</footer>
   </body>

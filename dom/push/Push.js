@@ -4,14 +4,6 @@
 
 "use strict";
 
-// Don't modify this, instead set dom.push.debug.
-var gDebuggingEnabled = false;
-
-function debug(s) {
-  if (gDebuggingEnabled)
-    dump("-*- Push.js: " + s + "\n");
-}
-
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
@@ -21,6 +13,17 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/DOMRequestHelper.jsm");
 
+XPCOMUtils.defineLazyGetter(this, "console", () => {
+  let {ConsoleAPI} = Cu.import("resource://gre/modules/Console.jsm", {});
+  return new ConsoleAPI({
+    maxLogLevelPref: "dom.push.loglevel",
+    prefix: "Push",
+  });
+});
+
+XPCOMUtils.defineLazyServiceGetter(this, "PushService",
+  "@mozilla.org/push/Service;1", "nsIPushService");
+
 const PUSH_CID = Components.ID("{cde1d019-fad8-4044-b141-65fb4fb7a245}");
 
 /**
@@ -29,7 +32,7 @@ const PUSH_CID = Components.ID("{cde1d019-fad8-4044-b141-65fb4fb7a245}");
  * one actually performing all operations.
  */
 function Push() {
-  debug("Push Constructor");
+  console.debug("Push()");
 }
 
 Push.prototype = {
@@ -44,33 +47,30 @@ Push.prototype = {
                                           Ci.nsIObserver]),
 
   init: function(aWindow) {
-    // Set debug first so that all debugging actually works.
-    // NOTE: We don't add an observer here like in PushService. Flipping the
-    // pref will require a reload of the app/page, which seems acceptable.
-    gDebuggingEnabled = Services.prefs.getBoolPref("dom.push.debug");
-    debug("init()");
+    console.debug("init()");
 
     this._window = aWindow;
 
     this.initDOMRequestHelper(aWindow);
 
     this._principal = aWindow.document.nodePrincipal;
-
-    this._client = Cc["@mozilla.org/push/PushClient;1"].createInstance(Ci.nsIPushClient);
   },
 
   setScope: function(scope){
-    debug('setScope ' + scope);
+    console.debug("setScope()", scope);
     this._scope = scope;
   },
 
   askPermission: function (aAllowCallback, aCancelCallback) {
-    debug("askPermission");
+    console.debug("askPermission()");
 
     return this.createPromise((resolve, reject) => {
-      function permissionDenied() {
-        reject("PermissionDeniedError");
-      }
+      let permissionDenied = () => {
+        reject(new this._window.DOMException(
+          "User denied permission to use the Push API",
+          "PermissionDeniedError"
+        ));
+      };
 
       let permission = Ci.nsIPermissionManager.UNKNOWN_ACTION;
       try {
@@ -91,29 +91,29 @@ Push.prototype = {
   },
 
   subscribe: function() {
-    debug("subscribe()");
+    console.debug("subscribe()", this._scope);
 
     let histogram = Services.telemetry.getHistogramById("PUSH_API_USED");
     histogram.add(true);
     return this.askPermission().then(() =>
       this.createPromise((resolve, reject) => {
-        let callback = new PushEndpointCallback(this, resolve, reject);
-        this._client.subscribe(this._scope, this._principal, callback);
+        let callback = new PushSubscriptionCallback(this, resolve, reject);
+        PushService.subscribe(this._scope, this._principal, callback);
       })
     );
   },
 
   getSubscription: function() {
-    debug("getSubscription()" + this._scope);
+    console.debug("getSubscription()", this._scope);
 
     return this.createPromise((resolve, reject) => {
-      let callback = new PushEndpointCallback(this, resolve, reject);
-      this._client.getSubscription(this._scope, this._principal, callback);
+      let callback = new PushSubscriptionCallback(this, resolve, reject);
+      PushService.getSubscription(this._scope, this._principal, callback);
     });
   },
 
   permissionState: function() {
-    debug("permissionState()" + this._scope);
+    console.debug("permissionState()", this._scope);
 
     return this.createPromise((resolve, reject) => {
       let permission = Ci.nsIPermissionManager.UNKNOWN_ACTION;
@@ -179,38 +179,50 @@ Push.prototype = {
   },
 };
 
-function PushEndpointCallback(pushManager, resolve, reject) {
+function PushSubscriptionCallback(pushManager, resolve, reject) {
   this.pushManager = pushManager;
   this.resolve = resolve;
   this.reject = reject;
 }
 
-PushEndpointCallback.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPushEndpointCallback]),
-  onPushEndpoint: function(ok, endpoint, keyLen, key) {
+PushSubscriptionCallback.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIPushSubscriptionCallback]),
+
+  onPushSubscription: function(ok, subscription) {
     let {pushManager} = this;
     if (!Components.isSuccessCode(ok)) {
-      this.reject("AbortError");
+      this.reject(new pushManager._window.DOMException(
+        "Error retrieving push subscription",
+        "AbortError"
+      ));
       return;
     }
 
-    if (!endpoint) {
+    if (!subscription) {
       this.resolve(null);
       return;
     }
 
-    let publicKey = null;
-    if (keyLen) {
-      publicKey = new ArrayBuffer(keyLen);
-      let keyView = new Uint8Array(publicKey);
-      keyView.set(key);
-    }
-
-    let sub = new pushManager._window.PushSubscription(endpoint,
+    let publicKey = this._getKey(subscription, "p256dh");
+    let authSecret = this._getKey(subscription, "auth");
+    let sub = new pushManager._window.PushSubscription(subscription.endpoint,
                                                        pushManager._scope,
-                                                       publicKey);
+                                                       publicKey,
+                                                       authSecret);
     sub.setPrincipal(pushManager._principal);
     this.resolve(sub);
+  },
+
+  _getKey: function(subscription, name) {
+    let outKeyLen = {};
+    let rawKey = subscription.getKey(name, outKeyLen);
+    if (!outKeyLen.value) {
+      return null;
+    }
+    let key = new ArrayBuffer(outKeyLen.value);
+    let keyView = new Uint8Array(key);
+    keyView.set(rawKey);
+    return key;
   },
 };
 

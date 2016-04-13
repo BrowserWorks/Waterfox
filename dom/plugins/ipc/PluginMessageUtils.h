@@ -12,6 +12,7 @@
 
 #include "mozilla/ipc/MessageChannel.h"
 #include "mozilla/ipc/CrossProcessMutex.h"
+#include "mozilla/UniquePtr.h"
 #include "gfxipc/ShadowLayerUtils.h"
 
 #include "npapi.h"
@@ -52,7 +53,7 @@ MungePluginDsoPath(const std::string& path);
 std::string
 UnmungePluginDsoPath(const std::string& munged);
 
-extern PRLogModuleInfo* GetPluginLog();
+extern mozilla::LogModule* GetPluginLog();
 
 #if defined(_MSC_VER)
 #define FULLFUNCTION __FUNCSIG__
@@ -119,7 +120,7 @@ typedef mozilla::null_t DXGISharedSurfaceHandle;
 // XXX maybe not the best place for these. better one?
 
 #define VARSTR(v_)  case v_: return #v_
-inline const char* const
+inline const char*
 NPPVariableToString(NPPVariable aVar)
 {
     switch (aVar) {
@@ -218,6 +219,15 @@ inline void AssertPluginThread()
 
 void DeferNPObjectLastRelease(const NPNetscapeFuncs* f, NPObject* o);
 void DeferNPVariantLastRelease(const NPNetscapeFuncs* f, NPVariant* v);
+
+inline bool IsDrawingModelDirect(int16_t aModel)
+{
+    return aModel == NPDrawingModelAsyncBitmapSurface
+#if defined(XP_WIN)
+           || aModel == NPDrawingModelAsyncWindowsDXGISurface
+#endif
+           ;
+}
 
 // in NPAPI, char* == nullptr is sometimes meaningful.  the following is
 // helper code for dealing with nullable nsCString's
@@ -420,10 +430,10 @@ struct ParamTraits<NPString>
       }
 
       const char* messageBuffer = nullptr;
-      nsAutoArrayPtr<char> newBuffer(new char[byteCount]);
+      mozilla::UniquePtr<char[]> newBuffer(new char[byteCount]);
       if (newBuffer && aMsg->ReadBytes(aIter, &messageBuffer, byteCount )) {
         memcpy((void*)messageBuffer, newBuffer.get(), byteCount);
-        aResult->UTF8Characters = newBuffer.forget();
+        aResult->UTF8Characters = newBuffer.release();
         return true;
       }
     }

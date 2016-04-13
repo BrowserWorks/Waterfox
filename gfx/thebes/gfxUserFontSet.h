@@ -214,7 +214,8 @@ public:
                               uint8_t aStyle,
                               const nsTArray<gfxFontFeature>& aFeatureSettings,
                               uint32_t aLanguageOverride,
-                              gfxSparseBitSet* aUnicodeRanges) = 0;
+                              gfxSparseBitSet* aUnicodeRanges,
+                              uint8_t aFontDisplay) = 0;
 
     // creates a font face for the specified family, or returns an existing
     // matching entry on the family if there is one
@@ -226,7 +227,8 @@ public:
                                uint8_t aStyle,
                                const nsTArray<gfxFontFeature>& aFeatureSettings,
                                uint32_t aLanguageOverride,
-                               gfxSparseBitSet* aUnicodeRanges);
+                               gfxSparseBitSet* aUnicodeRanges,
+                               uint8_t aFontDisplay);
 
     // add in a font face for which we have the gfxUserFontEntry already
     void AddUserFontEntry(const nsAString& aFamilyName,
@@ -466,7 +468,16 @@ public:
         mLocalRulesUsed = true;
     }
 
-    static PRLogModuleInfo* GetUserFontsLog();
+    static mozilla::LogModule* GetUserFontsLog();
+
+    // record statistics about font completion
+    virtual void RecordFontLoadDone(uint32_t aFontSize,
+                                    mozilla::TimeStamp aDoneTime) {}
+
+    void GetLoadStatistics(uint32_t& aLoadCount, uint64_t& aLoadSize) const {
+        aLoadCount = mDownloadCount;
+        aLoadSize = mDownloadSize;
+    }
 
 protected:
     // Protected destructor, to discourage deletion outside of Release():
@@ -499,7 +510,8 @@ protected:
                                    uint8_t aStyle,
                                    const nsTArray<gfxFontFeature>& aFeatureSettings,
                                    uint32_t aLanguageOverride,
-                                   gfxSparseBitSet* aUnicodeRanges);
+                                   gfxSparseBitSet* aUnicodeRanges,
+                                   uint8_t aFontDisplay);
 
     // creates a new gfxUserFontFamily in mFontFamilies, or returns an existing
     // family if there is one
@@ -513,6 +525,10 @@ protected:
 
     // true when local names have been looked up, false otherwise
     bool mLocalRulesUsed;
+
+    // performance stats
+    uint32_t mDownloadCount;
+    uint64_t mDownloadSize;
 };
 
 // acts a placeholder until the real font is downloaded
@@ -538,7 +554,8 @@ public:
                      uint8_t aStyle,
                      const nsTArray<gfxFontFeature>& aFeatureSettings,
                      uint32_t aLanguageOverride,
-                     gfxSparseBitSet* aUnicodeRanges);
+                     gfxSparseBitSet* aUnicodeRanges,
+                     uint8_t aFontDisplay);
 
     virtual ~gfxUserFontEntry();
 
@@ -549,7 +566,8 @@ public:
                  uint8_t aStyle,
                  const nsTArray<gfxFontFeature>& aFeatureSettings,
                  uint32_t aLanguageOverride,
-                 gfxSparseBitSet* aUnicodeRanges);
+                 gfxSparseBitSet* aUnicodeRanges,
+                 uint8_t aFontDisplay);
 
     virtual gfxFont* CreateFontInstance(const gfxFontStyle* aFontStyle,
                                         bool aNeedsBold);
@@ -577,6 +595,8 @@ public:
     gfxCharacterMap* GetUnicodeRangeMap() const {
         return mCharacterMap.get();
     }
+
+    uint8_t GetFontDisplay() const { return mFontDisplay; }
 
     // load the font - starts the loading of sources which continues until
     // a valid font resource is found or all sources fail
@@ -648,11 +668,13 @@ protected:
                              // so keep hiding fallback font
         LOADING_SLOWLY,      // timeout happened and we're not nearly done,
                              // so use the fallback font
+        LOADING_TIMED_OUT,   // font load took too long
         LOADING_FAILED       // failed to load any source: use fallback
     };
     FontDataLoadingState     mFontDataLoadingState;
 
     bool                     mUnsupportedFormat;
+    uint8_t                  mFontDisplay; // timing of userfont fallback
 
     RefPtr<gfxFontEntry>   mPlatformFontEntry;
     nsTArray<gfxFontFaceSrc> mSrcList;

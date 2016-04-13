@@ -16,7 +16,6 @@ if CONFIG['MOZ_B2G_BT']:
         ]
 
     SOURCES += [
-        'common/BluetoothCommon.cpp',
         'common/BluetoothHidManager.cpp',
         'common/BluetoothInterface.cpp',
         'common/BluetoothProfileController.cpp',
@@ -38,6 +37,7 @@ if CONFIG['MOZ_B2G_BT']:
         'common/webapi/BluetoothLeDeviceEvent.cpp',
         'common/webapi/BluetoothManager.cpp',
         'common/webapi/BluetoothMapRequestHandle.cpp',
+        'common/webapi/BluetoothObexAuthHandle.cpp',
         'common/webapi/BluetoothPairingHandle.cpp',
         'common/webapi/BluetoothPairingListener.cpp',
         'common/webapi/BluetoothPbapRequestHandle.cpp',
@@ -129,8 +129,6 @@ if CONFIG['MOZ_B2G_BT']:
         DEFINES['MOZ_BLUETOOTH_DBUS'] = True
         DEFINES['HAVE_PTHREADS'] = True
 
-    FINAL_LIBRARY = 'xul'
-
 #
 # Exported interfaces
 #
@@ -154,10 +152,16 @@ EXPORTS.mozilla.dom.bluetooth += [
     'common/webapi/BluetoothLeDeviceEvent.h',
     'common/webapi/BluetoothManager.h',
     'common/webapi/BluetoothMapRequestHandle.h',
+    'common/webapi/BluetoothObexAuthHandle.h',
     'common/webapi/BluetoothPairingHandle.h',
     'common/webapi/BluetoothPairingListener.h',
     'common/webapi/BluetoothPbapRequestHandle.h'
 ]
+
+UNIFIED_SOURCES += [
+    'common/BluetoothCommon.cpp',
+]
+
 IPDL_SOURCES += [
     'ipc/BluetoothTypes.ipdlh',
     'ipc/PBluetooth.ipdl',
@@ -171,3 +175,5 @@ LOCAL_INCLUDES += [
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+FINAL_LIBRARY = 'xul'

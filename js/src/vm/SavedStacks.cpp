@@ -27,6 +27,7 @@
 #include "js/Vector.h"
 #include "vm/Debugger.h"
 #include "vm/SavedFrame.h"
+#include "vm/SPSProfiler.h"
 #include "vm/StringBuffer.h"
 #include "vm/Time.h"
 #include "vm/WrapperObject.h"
@@ -486,7 +487,8 @@ SavedFrame::create(JSContext* cx)
         return nullptr;
     assertSameCompartment(cx, proto);
 
-    RootedObject frameObj(cx, NewObjectWithGivenProto(cx, &SavedFrame::class_, proto));
+    RootedObject frameObj(cx, NewObjectWithGivenProto(cx, &SavedFrame::class_, proto,
+                                                      TenuredObject));
     if (!frameObj)
         return nullptr;
 
@@ -989,10 +991,6 @@ SavedFrame::toStringMethod(JSContext* cx, unsigned argc, Value* vp)
 bool
 SavedStacks::init()
 {
-    uint64_t seed[2];
-    random_generateSeed(seed, mozilla::ArrayLength(seed));
-    bernoulli.setRandomState(seed[0], seed[1]);
-
     if (!pcLocationMap.init())
         return false;
 
@@ -1013,38 +1011,30 @@ SavedStacks::saveCurrentStack(JSContext* cx, MutableHandleSavedFrame frame, unsi
         return true;
     }
 
+    AutoSPSEntry psuedoFrame(cx->runtime(), "js::SavedStacks::saveCurrentStack");
     FrameIter iter(cx, FrameIter::ALL_CONTEXTS, FrameIter::GO_THROUGH_SAVED);
     return insertFrames(cx, iter, frame, maxFrameCount);
+}
+
+bool
+SavedStacks::copyAsyncStack(JSContext* cx, HandleObject asyncStack, HandleString asyncCause,
+                            MutableHandleSavedFrame adoptedStack, unsigned maxFrameCount)
+{
+    MOZ_ASSERT(initialized());
+    assertSameCompartment(cx, this);
+
+    RootedObject asyncStackObj(cx, CheckedUnwrap(asyncStack));
+    MOZ_ASSERT(asyncStackObj);
+    MOZ_ASSERT(js::SavedFrame::isSavedFrameAndNotProto(*asyncStackObj));
+    RootedSavedFrame frame(cx, &asyncStackObj->as<js::SavedFrame>());
+
+    return adoptAsyncStack(cx, frame, asyncCause, adoptedStack, maxFrameCount);
 }
 
 void
 SavedStacks::sweep(JSRuntime* rt)
 {
-    if (frames.initialized()) {
-        for (SavedFrame::Set::Enum e(frames); !e.empty(); e.popFront()) {
-            JSObject* obj = e.front().unbarrieredGet();
-            JSObject* temp = obj;
-
-            if (IsAboutToBeFinalizedUnbarriered(&obj)) {
-                e.removeFront();
-            } else {
-                SavedFrame* frame = &obj->as<SavedFrame>();
-
-                SavedFrame* parent = frame->getParent();
-                bool parentMoved = parent && IsForwarded(parent);
-                if (parentMoved)
-                    parent = Forwarded(parent);
-
-                if (obj != temp || parentMoved) {
-                    MOZ_ASSERT(!IsForwarded(frame));
-                    SavedFrame::Lookup newLocation(*frame);
-                    newLocation.parent = parent;
-                    e.rekeyFront(newLocation, ReadBarriered<SavedFrame*>(frame));
-                }
-            }
-        }
-    }
-
+    frames.sweep();
     sweepPCLocationMap();
 }
 
@@ -1076,7 +1066,8 @@ SavedStacks::clear()
 size_t
 SavedStacks::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf)
 {
-    return frames.sizeOfExcludingThis(mallocSizeOf);
+    return frames.sizeOfExcludingThis(mallocSizeOf) +
+           pcLocationMap.sizeOfExcludingThis(mallocSizeOf);
 }
 
 bool
@@ -1133,7 +1124,7 @@ SavedStacks::insertFrames(JSContext* cx, FrameIter& iter, MutableHandleSavedFram
             }
         }
 
-        AutoLocationValueRooter location(cx);
+        Rooted<LocationValue> location(cx);
         {
             AutoCompartment ac(cx, iter.compartment());
             if (!cx->compartment()->savedStacks().getLocation(cx, iter, &location))
@@ -1145,10 +1136,10 @@ SavedStacks::insertFrames(JSContext* cx, FrameIter& iter, MutableHandleSavedFram
         if (maxFrameCount == 0)
             parentIsInCache = iter.hasCachedSavedFrame();
 
-        auto displayAtom = iter.isNonEvalFunctionFrame() ? iter.functionDisplayAtom() : nullptr;
-        if (!stackChain->emplaceBack(location->source,
-                                     location->line,
-                                     location->column,
+        auto displayAtom = iter.isFunctionFrame() ? iter.functionDisplayAtom() : nullptr;
+        if (!stackChain->emplaceBack(location.source(),
+                                     location.line(),
+                                     location.column(),
                                      displayAtom,
                                      nullptr,
                                      nullptr,
@@ -1336,7 +1327,8 @@ SavedStacks::sweepPCLocationMap()
 }
 
 bool
-SavedStacks::getLocation(JSContext* cx, const FrameIter& iter, MutableHandleLocationValue locationp)
+SavedStacks::getLocation(JSContext* cx, const FrameIter& iter,
+                         MutableHandle<LocationValue> locationp)
 {
     // We should only ever be caching location values for scripts in this
     // compartment. Otherwise, we would get dead cross-compartment scripts in
@@ -1350,20 +1342,21 @@ SavedStacks::getLocation(JSContext* cx, const FrameIter& iter, MutableHandleLoca
     // that doesn't employ memoization, and update |locationp|'s slots directly.
 
     if (!iter.hasScript()) {
-        if (const char16_t* displayURL = iter.scriptDisplayURL()) {
-            locationp->source = AtomizeChars(cx, displayURL, js_strlen(displayURL));
+        if (const char16_t* displayURL = iter.displayURL()) {
+            locationp.setSource(AtomizeChars(cx, displayURL, js_strlen(displayURL)));
         } else {
-            const char* filename = iter.scriptFilename() ? iter.scriptFilename() : "";
-            locationp->source = Atomize(cx, filename, strlen(filename));
+            const char* filename = iter.filename() ? iter.filename() : "";
+            locationp.setSource(Atomize(cx, filename, strlen(filename)));
         }
-        if (!locationp->source)
+        if (!locationp.source())
             return false;
 
-        locationp->line = iter.computeLine(&locationp->column);
+        uint32_t column = 0;
+        locationp.setLine(iter.computeLine(&column));
         // XXX: Make the column 1-based as in other browsers, instead of 0-based
         // which is how SpiderMonkey stores it internally. This will be
         // unnecessary once bug 1144340 is fixed.
-        locationp->column++;
+        locationp.setColumn(column + 1);
         return true;
     }
 
@@ -1375,7 +1368,7 @@ SavedStacks::getLocation(JSContext* cx, const FrameIter& iter, MutableHandleLoca
 
     if (!p) {
         RootedAtom source(cx);
-        if (const char16_t* displayURL = iter.scriptDisplayURL()) {
+        if (const char16_t* displayURL = iter.displayURL()) {
             source = AtomizeChars(cx, displayURL, js_strlen(displayURL));
         } else {
             const char* filename = script->filename() ? script->filename() : "";
@@ -1426,6 +1419,13 @@ SavedStacks::chooseSamplingProbability(JSCompartment* compartment)
         }
     }
     MOZ_ASSERT(foundAnyDebuggers);
+
+    if (!bernoulliSeeded) {
+        mozilla::Array<uint64_t, 2> seed;
+        GenerateXorShift128PlusSeed(seed);
+        bernoulli.setRandomState(seed[0], seed[1]);
+        bernoulliSeeded = true;
+    }
 
     bernoulli.setProbability(probability);
 }

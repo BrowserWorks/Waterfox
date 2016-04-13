@@ -7,8 +7,11 @@
 
 #include <inttypes.h>
 #include "FrameMetrics.h"
+#include "gfxPrefs.h"
 #include "LayersLogging.h"
 #include "mozilla/layers/APZCCallbackHelper.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/dom/Event.h"
 #include "nsDocument.h"
 #include "nsIFrame.h"
 #include "nsLayoutUtils.h"
@@ -45,6 +48,9 @@ ZoomConstraintsClient::~ZoomConstraintsClient()
 static nsIWidget*
 GetWidget(nsIPresShell* aShell)
 {
+  if (!aShell) {
+    return nullptr;
+  }
   if (nsIFrame* rootFrame = aShell->GetRootFrame()) {
 #if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_UIKIT)
     return rootFrame->GetNearestWidget();

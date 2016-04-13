@@ -19,6 +19,7 @@
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
 #include "mozilla/unused.h"
+#include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/dom/bluetooth/BluetoothTypes.h"
 #include "mozilla/dom/ipc/BlobChild.h"
@@ -68,8 +69,6 @@
 #define PROP_BLUETOOTH_ENABLED      "bluetooth.isEnabled"
 
 #define DEFAULT_SHUTDOWN_TIMER_MS 5000
-
-bool gBluetoothDebugFlag = false;
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -242,8 +241,7 @@ BluetoothService::Cleanup()
 
 void
 BluetoothService::RegisterBluetoothSignalHandler(
-                                              const nsAString& aNodeName,
-                                              BluetoothSignalObserver* aHandler)
+  const nsAString& aNodeName, BluetoothSignalObserver* aHandler)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aHandler);
@@ -334,6 +332,48 @@ BluetoothService::DistributeSignal(const nsAString& aName,
 {
   BluetoothSignal signal(nsString(aName), nsString(aPath), aValue);
   DistributeSignal(signal);
+}
+
+void
+BluetoothService::DistributeSignal(const nsAString& aName,
+                                   const BluetoothAddress& aAddress)
+{
+  nsAutoString path;
+  AddressToString(aAddress, path);
+
+  DistributeSignal(aName, path);
+}
+
+void
+BluetoothService::DistributeSignal(const nsAString& aName,
+                                   const BluetoothAddress& aAddress,
+                                   const BluetoothValue& aValue)
+{
+  nsAutoString path;
+  AddressToString(aAddress, path);
+
+  DistributeSignal(aName, path, aValue);
+}
+
+void
+BluetoothService::DistributeSignal(const nsAString& aName,
+                                   const BluetoothUuid& aUuid)
+{
+  nsAutoString path;
+  UuidToString(aUuid, path);
+
+  DistributeSignal(aName, path);
+}
+
+void
+BluetoothService::DistributeSignal(const nsAString& aName,
+                                   const BluetoothUuid& aUuid,
+                                   const BluetoothValue& aValue)
+{
+  nsAutoString path;
+  UuidToString(aUuid, path);
+
+  DistributeSignal(aName, path, aValue);
 }
 
 void
@@ -454,7 +494,7 @@ BluetoothService::SetEnabled(bool aEnabled)
   GetAllBluetoothActors(childActors);
 
   for (uint32_t index = 0; index < childActors.Length(); index++) {
-    unused << childActors[index]->SendEnabled(aEnabled);
+    Unused << childActors[index]->SendEnabled(aEnabled);
   }
 
   /**

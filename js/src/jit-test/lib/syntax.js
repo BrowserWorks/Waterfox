@@ -1,5 +1,3 @@
-load(libdir + "class.js");
-
 function test_syntax(postfixes, check_error, ignore_opts) {
   function test_reflect(code, module) {
     var options = undefined;
@@ -491,18 +489,16 @@ function test_syntax(postfixes, check_error, ignore_opts) {
   test("export const a = 1, b = 2 ", opts);
   test("export const a = 1, b = 2; ", opts);
 
-  if (classesEnabled()) {
-    test("export class ", opts);
-    test("export class Foo ", opts);
-    test("export class Foo {  ", opts);
-    test("export class Foo { constructor ", opts);
-    test("export class Foo { constructor( ", opts);
-    test("export class Foo { constructor() ", opts);
-    test("export class Foo { constructor() { ", opts);
-    test("export class Foo { constructor() {} ", opts);
-    test("export class Foo { constructor() {} } ", opts);
-    test("export class Foo { constructor() {} }; ", opts);
-  }
+  test("export class ", opts);
+  test("export class Foo ", opts);
+  test("export class Foo {  ", opts);
+  test("export class Foo { constructor ", opts);
+  test("export class Foo { constructor( ", opts);
+  test("export class Foo { constructor() ", opts);
+  test("export class Foo { constructor() { ", opts);
+  test("export class Foo { constructor() {} ", opts);
+  test("export class Foo { constructor() {} } ", opts);
+  test("export class Foo { constructor() {} }; ", opts);
 
   test("export default ", opts);
   test("export default 1 ", opts);
@@ -521,27 +517,25 @@ function test_syntax(postfixes, check_error, ignore_opts) {
   test("export default function foo() {} ", opts);
   test("export default function foo() {}; ", opts);
 
-  if (classesEnabled()) {
-    test("export default class ", opts);
-    test("export default class { ", opts);
-    test("export default class { constructor ", opts);
-    test("export default class { constructor( ", opts);
-    test("export default class { constructor() ", opts);
-    test("export default class { constructor() { ", opts);
-    test("export default class { constructor() {} ", opts);
-    test("export default class { constructor() {} } ", opts);
-    test("export default class { constructor() {} }; ", opts);
+  test("export default class ", opts);
+  test("export default class { ", opts);
+  test("export default class { constructor ", opts);
+  test("export default class { constructor( ", opts);
+  test("export default class { constructor() ", opts);
+  test("export default class { constructor() { ", opts);
+  test("export default class { constructor() {} ", opts);
+  test("export default class { constructor() {} } ", opts);
+  test("export default class { constructor() {} }; ", opts);
 
-    test("export default class Foo ", opts);
-    test("export default class Foo { ", opts);
-    test("export default class Foo { constructor ", opts);
-    test("export default class Foo { constructor( ", opts);
-    test("export default class Foo { constructor() ", opts);
-    test("export default class Foo { constructor() { ", opts);
-    test("export default class Foo { constructor() {} ", opts);
-    test("export default class Foo { constructor() {} } ", opts);
-    test("export default class Foo { constructor() {} }; ", opts);
-  }
+  test("export default class Foo ", opts);
+  test("export default class Foo { ", opts);
+  test("export default class Foo { constructor ", opts);
+  test("export default class Foo { constructor( ", opts);
+  test("export default class Foo { constructor() ", opts);
+  test("export default class Foo { constructor() { ", opts);
+  test("export default class Foo { constructor() {} ", opts);
+  test("export default class Foo { constructor() {} } ", opts);
+  test("export default class Foo { constructor() {} }; ", opts);
 
   // import
 
@@ -1005,115 +999,113 @@ function test_syntax(postfixes, check_error, ignore_opts) {
   test("({a: b}) ");
   test("({a: b}) => ");
 
-  if (classesEnabled()) {
-    // ---- Class declaration ----
+  // ---- Class declaration ----
 
-    test("class ");
-    test("class a ");
-    test("class a { ");
-    test("class a { constructor ");
-    test("class a { constructor( ");
-    test("class a { constructor() ");
-    test("class a { constructor() { ");
-    test("class a { constructor() { } ");
-    test("class a { constructor() { } } ");
+  test("class ");
+  test("class a ");
+  test("class a { ");
+  test("class a { constructor ");
+  test("class a { constructor( ");
+  test("class a { constructor() ");
+  test("class a { constructor() { ");
+  test("class a { constructor() { } ");
+  test("class a { constructor() { } } ");
 
-    test("class a { constructor() { } static ");
-    test("class a { constructor() { } static m ");
-    test("class a { constructor() { } static m( ");
-    test("class a { constructor() { } static m() ");
-    test("class a { constructor() { } static m() { ");
-    test("class a { constructor() { } static m() {} ");
-    test("class a { constructor() { } static m() {} } ");
+  test("class a { constructor() { } static ");
+  test("class a { constructor() { } static m ");
+  test("class a { constructor() { } static m( ");
+  test("class a { constructor() { } static m() ");
+  test("class a { constructor() { } static m() { ");
+  test("class a { constructor() { } static m() {} ");
+  test("class a { constructor() { } static m() {} } ");
 
-    test("class a { constructor() { } static ( ");
-    test("class a { constructor() { } static () ");
-    test("class a { constructor() { } static () { ");
-    test("class a { constructor() { } static () {} ");
-    test("class a { constructor() { } static () {} } ");
+  test("class a { constructor() { } static ( ");
+  test("class a { constructor() { } static () ");
+  test("class a { constructor() { } static () { ");
+  test("class a { constructor() { } static () {} ");
+  test("class a { constructor() { } static () {} } ");
 
-    test("class a { constructor() { } static get ");
-    test("class a { constructor() { } static get p ");
-    test("class a { constructor() { } static get p( ");
-    test("class a { constructor() { } static get p() ");
-    test("class a { constructor() { } static get p() { ");
-    test("class a { constructor() { } static get p() {} ");
-    test("class a { constructor() { } static get p() {} } ");
+  test("class a { constructor() { } static get ");
+  test("class a { constructor() { } static get p ");
+  test("class a { constructor() { } static get p( ");
+  test("class a { constructor() { } static get p() ");
+  test("class a { constructor() { } static get p() { ");
+  test("class a { constructor() { } static get p() {} ");
+  test("class a { constructor() { } static get p() {} } ");
 
-    test("class a { constructor() { } static set ");
-    test("class a { constructor() { } static set p ");
-    test("class a { constructor() { } static set p( ");
-    test("class a { constructor() { } static set p(v ");
-    test("class a { constructor() { } static set p(v) ");
-    test("class a { constructor() { } static set p(v) { ");
-    test("class a { constructor() { } static set p(v) {} ");
-    test("class a { constructor() { } static set p(v) {} } ");
+  test("class a { constructor() { } static set ");
+  test("class a { constructor() { } static set p ");
+  test("class a { constructor() { } static set p( ");
+  test("class a { constructor() { } static set p(v ");
+  test("class a { constructor() { } static set p(v) ");
+  test("class a { constructor() { } static set p(v) { ");
+  test("class a { constructor() { } static set p(v) {} ");
+  test("class a { constructor() { } static set p(v) {} } ");
 
-    test("class a { constructor() { } * ");
-    test("class a { constructor() { } *m ");
-    test("class a { constructor() { } *m( ");
-    test("class a { constructor() { } *m() ");
-    test("class a { constructor() { } *m() { ");
-    test("class a { constructor() { } *m() {} ");
-    test("class a { constructor() { } *m() {} } ");
+  test("class a { constructor() { } * ");
+  test("class a { constructor() { } *m ");
+  test("class a { constructor() { } *m( ");
+  test("class a { constructor() { } *m() ");
+  test("class a { constructor() { } *m() { ");
+  test("class a { constructor() { } *m() {} ");
+  test("class a { constructor() { } *m() {} } ");
 
-    test("class a { constructor() { } static * ");
-    test("class a { constructor() { } static *m ");
-    test("class a { constructor() { } static *m( ");
-    test("class a { constructor() { } static *m() ");
-    test("class a { constructor() { } static *m() { ");
-    test("class a { constructor() { } static *m() {} ");
-    test("class a { constructor() { } static *m() {} } ");
+  test("class a { constructor() { } static * ");
+  test("class a { constructor() { } static *m ");
+  test("class a { constructor() { } static *m( ");
+  test("class a { constructor() { } static *m() ");
+  test("class a { constructor() { } static *m() { ");
+  test("class a { constructor() { } static *m() {} ");
+  test("class a { constructor() { } static *m() {} } ");
 
-    test("class a extends ");
-    test("class a extends b ");
-    test("class a extends b { ");
+  test("class a extends ");
+  test("class a extends b ");
+  test("class a extends b { ");
 
-    test("class a extends ( ");
-    test("class a extends ( b ");
-    test("class a extends ( b ) ");
-    test("class a extends ( b ) { ");
+  test("class a extends ( ");
+  test("class a extends ( b ");
+  test("class a extends ( b ) ");
+  test("class a extends ( b ) { ");
 
-    // ---- Class expression ----
+  // ---- Class expression ----
 
-    test("( class ");
-    test("( class a ");
-    test("( class a { ");
-    test("( class a { constructor ");
-    test("( class a { constructor( ");
-    test("( class a { constructor() ");
-    test("( class a { constructor() { ");
-    test("( class a { constructor() { } ");
-    test("( class a { constructor() { } } ");
-    test("( class a { constructor() { } } ) ");
+  test("( class ");
+  test("( class a ");
+  test("( class a { ");
+  test("( class a { constructor ");
+  test("( class a { constructor( ");
+  test("( class a { constructor() ");
+  test("( class a { constructor() { ");
+  test("( class a { constructor() { } ");
+  test("( class a { constructor() { } } ");
+  test("( class a { constructor() { } } ) ");
 
-    test("(class a extends ");
-    test("(class a extends b ");
-    test("(class a extends b { ");
+  test("(class a extends ");
+  test("(class a extends b ");
+  test("(class a extends b { ");
 
-    test("(class a extends ( ");
-    test("(class a extends ( b ");
-    test("(class a extends ( b ) ");
-    test("(class a extends ( b ) { ");
+  test("(class a extends ( ");
+  test("(class a extends ( b ");
+  test("(class a extends ( b ) ");
+  test("(class a extends ( b ) { ");
 
-    test("( class { ");
-    test("( class { constructor ");
-    test("( class { constructor( ");
-    test("( class { constructor() ");
-    test("( class { constructor() { ");
-    test("( class { constructor() { } ");
-    test("( class { constructor() { } } ");
-    test("( class { constructor() { } } ) ");
+  test("( class { ");
+  test("( class { constructor ");
+  test("( class { constructor( ");
+  test("( class { constructor() ");
+  test("( class { constructor() { ");
+  test("( class { constructor() { } ");
+  test("( class { constructor() { } } ");
+  test("( class { constructor() { } } ) ");
 
-    test("(class extends ");
-    test("(class extends b ");
-    test("(class extends b { ");
+  test("(class extends ");
+  test("(class extends b ");
+  test("(class extends b { ");
 
-    test("(class extends ( ");
-    test("(class extends ( b ");
-    test("(class extends ( b ) ");
-    test("(class extends ( b ) { ");
-  }
+  test("(class extends ( ");
+  test("(class extends ( b ");
+  test("(class extends ( b ) ");
+  test("(class extends ( b ) { ");
 
   // ---- Other ----
 
@@ -1188,62 +1180,6 @@ function test_syntax(postfixes, check_error, ignore_opts) {
   test("for each (let x in ");
   test("for each (let x in y ");
   test("for each (let x in y) ");
-
-  // Legacy array comprehensions
-
-  test("[x ");
-  test("[x for ");
-  test("[x for ( ");
-  test("[x for (x ");
-  test("[x for (x of ");
-  test("[x for (x of y ");
-  test("[x for (x of y) ");
-  test("[x for (x of y) if ");
-  test("[x for (x of y) if ( ");
-  test("[x for (x of y) if (x ");
-  test("[x for (x of y) if (x == ");
-  test("[x for (x of y) if (x == 1 ");
-  test("[x for (x of y) if (x == 1) ");
-  test("[x for (x of y) if (x == 1)] ");
-
-  test("[x for (x in ");
-  test("[x for (x in y ");
-  test("[x for (x in y) ");
-
-  test("[x for each ");
-  test("[x for each ( ");
-  test("[x for each (x ");
-  test("[x for each (x in ");
-  test("[x for each (x in y ");
-  test("[x for each (x in y) ");
-
-  // Generator expressions
-
-  test("(x ");
-  test("(x for ");
-  test("(x for ( ");
-  test("(x for (x ");
-  test("(x for (x of ");
-  test("(x for (x of y ");
-  test("(x for (x of y) ");
-  test("(x for (x of y) if ");
-  test("(x for (x of y) if ( ");
-  test("(x for (x of y) if (x ");
-  test("(x for (x of y) if (x == ");
-  test("(x for (x of y) if (x == 1 ");
-  test("(x for (x of y) if (x == 1) ");
-  test("(x for (x of y) if (x == 1)) ");
-
-  test("(x for (x in ");
-  test("(x for (x in y ");
-  test("(x for (x in y) ");
-
-  test("(x for each ");
-  test("(x for each ( ");
-  test("(x for each (x ");
-  test("(x for each (x in ");
-  test("(x for each (x in y ");
-  test("(x for each (x in y) ");
 
   // asm.js
 

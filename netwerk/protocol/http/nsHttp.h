@@ -13,6 +13,7 @@
 #include "nsString.h"
 #include "nsError.h"
 #include "nsTArray.h"
+#include "mozilla/UniquePtr.h"
 
 // http version codes
 #define NS_HTTP_VERSION_UNKNOWN  0
@@ -167,6 +168,9 @@ struct nsHttp
     // Return whether the HTTP status code represents a permanent redirect
     static bool IsPermanentRedirect(uint32_t httpStatus);
 
+    // Returns the APLN token which represents the used protocol version.
+    static const char* GetProtocolVersion(uint32_t pv);
+
     // Declare all atoms
     //
     // The atom names and values are stored in nsHttpAtomList.h and are brought
@@ -196,9 +200,9 @@ PRTimeToSeconds(PRTime t_usec)
 #define HTTP_LWS " \t"
 #define HTTP_HEADER_VALUE_SEPS HTTP_LWS ","
 
-void EnsureBuffer(nsAutoArrayPtr<char> &buf, uint32_t newSize,
+void EnsureBuffer(UniquePtr<char[]> &buf, uint32_t newSize,
                   uint32_t preserve, uint32_t &objSize);
-void EnsureBuffer(nsAutoArrayPtr<uint8_t> &buf, uint32_t newSize,
+void EnsureBuffer(UniquePtr<uint8_t[]> &buf, uint32_t newSize,
                   uint32_t preserve, uint32_t &objSize);
 
 // h2=":443"; ma=60; single

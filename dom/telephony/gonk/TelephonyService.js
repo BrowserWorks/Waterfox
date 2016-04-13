@@ -52,6 +52,8 @@ const DIAL_ERROR_RADIO_NOT_AVAILABLE = RIL.GECKO_ERROR_RADIO_NOT_AVAILABLE;
 
 const TONES_GAP_DURATION = 70;
 
+const EMERGENCY_CALL_DEFAULT_CLIENT_ID = 0;
+
 // Consts for MMI.
 // MMI procedure as defined in TS.22.030 6.5.2
 const MMI_PROCEDURE_ACTIVATION = "*";
@@ -359,7 +361,8 @@ MobileConnectionListener.prototype = {
   notifyClirModeChanged: function(mode) {},
   notifyLastKnownNetworkChanged: function() {},
   notifyLastKnownHomeNetworkChanged: function() {},
-  notifyNetworkSelectionModeChanged: function() {}
+  notifyNetworkSelectionModeChanged: function() {},
+  notifyDeviceIdentitiesChanged: function() {}
 };
 
 function TelephonyService() {
@@ -721,6 +724,26 @@ TelephonyService.prototype = {
   },
 
   /**
+   * Select a proper client for dialing emergency call.
+   *
+   * @return clientId
+   */
+  _getClientIdForEmergencyCall: function() {
+    // Select the client with sim card first.
+    for (let cid = 0; cid < this._numClients; ++cid) {
+      let icc = gIccService.getIccByServiceId(cid);
+      let cardState = icc ? icc.cardState : Ci.nsIIcc.CARD_STATE_UNKONWN;
+      if (cardState !== Ci.nsIIcc.CARD_STATE_UNDETECTED &&
+          cardState !== Ci.nsIIcc.CARD_STATE_UNKNOWN) {
+        return cid;
+      }
+    }
+
+    // Use the defualt client if no card presents.
+    return EMERGENCY_CALL_DEFAULT_CLIENT_ID;
+  },
+
+  /**
    * Dial number. Perform call setup or SS procedure accordingly.
    *
    * @see 3GPP TS 22.030 Figure 3.5.3.2
@@ -865,7 +888,7 @@ TelephonyService.prototype = {
 
     if (isEmergency) {
       // Automatically select a proper clientId for emergency call.
-      aClientId = gRadioInterfaceLayer.getClientIdForEmergencyCall() ;
+      aClientId = this._getClientIdForEmergencyCall() ;
       if (aClientId === -1) {
         if (DEBUG) debug("Error: No client is avaialble for emergency call.");
         aCallback.notifyError(DIAL_ERROR_INVALID_STATE_ERROR);
@@ -1015,7 +1038,7 @@ TelephonyService.prototype = {
 
     aCallback.notifyDialMMI(mmiServiceCode);
 
-    if (mmiServiceCode !== RIL.MMI_KS_SC_IMEI && !this._isRadioOn(aClientId)) {
+    if (mmiServiceCode !== MMI_KS_SC_IMEI && !this._isRadioOn(aClientId)) {
       aCallback.notifyDialMMIError(DIAL_ERROR_RADIO_NOT_AVAILABLE);
       return;
     }
@@ -1230,22 +1253,13 @@ TelephonyService.prototype = {
    *        A nsITelephonyDialCallback object.
    */
   _getImeiMMI: function(aClientId, aMmi, aCallback) {
-    this._sendToRilWorker(aClientId, "getIMEI", {}, aResponse => {
-      if (aResponse.errorMsg) {
-        aCallback.notifyDialMMIError(aResponse.errorMsg);
-        return;
-      }
+    let connection = gGonkMobileConnectionService.getItemByServiceId(aClientId);
+    if (!connection.deviceIdentities || !connection.deviceIdentities.imei) {
+      aCallback.notifyDialMMIError(RIL.GECKO_ERROR_GENERIC_FAILURE);
+      return;
+    }
 
-      // We expect to have an IMEI at this point if the request was supposed
-      // to query for the IMEI, so getting a successful reply from the RIL
-       // without containing an actual IMEI number is considered an error.
-      if (!aResponse.imei) {
-        aCallback.notifyDialMMIError(RIL.GECKO_ERROR_GENERIC_FAILURE);
-        return;
-      }
-
-      aCallback.notifyDialMMISuccess(aResponse.imei);
-    });
+    aCallback.notifyDialMMISuccess(connection.deviceIdentities.imei);
   },
 
   /**

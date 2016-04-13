@@ -10,7 +10,6 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/IntegerRange.h"
 #include "mozilla/PodOperations.h"
-#include "mozilla/UniquePtr.h"
 
 #include "jsalloc.h"
 #include "jsgc.h"
@@ -44,6 +43,8 @@ enum Phase : uint8_t {
     PHASE_SWEEP_MARK_GRAY,
     PHASE_SWEEP_MARK_GRAY_WEAK,
     PHASE_FINALIZE_START,
+    PHASE_WEAK_ZONEGROUP_CALLBACK,
+    PHASE_WEAK_COMPARTMENT_CALLBACK,
     PHASE_SWEEP_ATOMS,
     PHASE_SWEEP_SYMBOL_REGISTRY,
     PHASE_SWEEP_COMPARTMENTS,
@@ -74,6 +75,8 @@ enum Phase : uint8_t {
     PHASE_MINOR_GC,
     PHASE_EVICT_NURSERY,
     PHASE_TRACE_HEAP,
+    PHASE_BARRIER,
+    PHASE_UNMARK_GRAY,
     PHASE_MARK_ROOTS,
     PHASE_BUFFER_GRAY_ROOTS,
     PHASE_MARK_CCWS,
@@ -158,6 +161,8 @@ struct Statistics
     /* Create a convenient type for referring to tables of phase times. */
     using PhaseTimeTable = int64_t[NumTimingArrays][PHASE_LIMIT];
 
+    static bool initialize();
+
     explicit Statistics(JSRuntime* rt);
     ~Statistics();
 
@@ -169,7 +174,7 @@ struct Statistics
                     SliceBudget budget, JS::gcreason::Reason reason);
     void endSlice();
 
-    void startTimingMutator();
+    bool startTimingMutator();
     bool stopTimingMutator(double& mutator_ms, double& gc_ms);
 
     void reset(const char* reason) {
@@ -186,6 +191,23 @@ struct Statistics
         counts[s]++;
     }
 
+    void beginNurseryCollection(JS::gcreason::Reason reason) {
+        count(STAT_MINOR_GC);
+        if (nurseryCollectionCallback) {
+            (*nurseryCollectionCallback)(runtime,
+                                         JS::GCNurseryProgress::GC_NURSERY_COLLECTION_START,
+                                         reason);
+        }
+    }
+
+    void endNurseryCollection(JS::gcreason::Reason reason) {
+        if (nurseryCollectionCallback) {
+            (*nurseryCollectionCallback)(runtime,
+                                         JS::GCNurseryProgress::GC_NURSERY_COLLECTION_END,
+                                         reason);
+        }
+    }
+
     int64_t beginSCC();
     void endSCC(unsigned scc, int64_t start);
 
@@ -195,6 +217,8 @@ struct Statistics
     UniqueChars formatDetailedMessage();
 
     JS::GCSliceCallback setSliceCallback(JS::GCSliceCallback callback);
+    JS::GCNurseryCollectionCallback setNurseryCollectionCallback(
+        JS::GCNurseryCollectionCallback callback);
 
     int64_t clearMaxGCPauseAccumulator();
     int64_t getMaxGCPauseSinceClear();
@@ -301,6 +325,7 @@ struct Statistics
     Vector<int64_t, 0, SystemAllocPolicy> sccTimes;
 
     JS::GCSliceCallback sliceCallback;
+    JS::GCNurseryCollectionCallback nurseryCollectionCallback;
 
     /*
      * True if we saw an OOM while allocating slices. The statistics for this
@@ -398,7 +423,6 @@ struct MOZ_RAII AutoSCC
 };
 
 const char* ExplainInvocationKind(JSGCInvocationKind gckind);
-const char* ExplainReason(JS::gcreason::Reason reason);
 
 } /* namespace gcstats */
 } /* namespace js */

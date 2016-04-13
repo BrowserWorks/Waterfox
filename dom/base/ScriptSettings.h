@@ -262,7 +262,7 @@ public:
 
   JSContext* cx() const {
     MOZ_ASSERT(mCx, "Must call Init before using an AutoJSAPI");
-    MOZ_ASSERT_IF(NS_IsMainThread(), CxPusherIsStackTop());
+    MOZ_ASSERT_IF(mIsMainThread, CxPusherIsStackTop());
     return mCx;
   }
 
@@ -279,7 +279,7 @@ public:
   void ReportException();
 
   bool HasException() const {
-    MOZ_ASSERT(CxPusherIsStackTop());
+    MOZ_ASSERT_IF(NS_IsMainThread(), CxPusherIsStackTop());
     return JS_IsExceptionPending(cx());
   };
 
@@ -291,8 +291,16 @@ public:
   // into the current compartment.
   bool StealException(JS::MutableHandle<JS::Value> aVal);
 
+  // Peek the current exception from the JS engine, without stealing it.
+  // Callers must ensure that HasException() is true, and that cx() is in a
+  // non-null compartment.
+  //
+  // Note that this fails if and only if we OOM while wrapping the exception
+  // into the current compartment.
+  bool PeekException(JS::MutableHandle<JS::Value> aVal);
+
   void ClearException() {
-    MOZ_ASSERT(CxPusherIsStackTop());
+    MOZ_ASSERT_IF(NS_IsMainThread(), CxPusherIsStackTop());
     JS_ClearPendingException(cx());
   }
 
@@ -312,6 +320,8 @@ private:
   // Track state between the old and new error reporting modes.
   bool mOwnErrorReporting;
   bool mOldAutoJSAPIOwnsErrorReporting;
+  // Whether we're mainthread or not; set when we're initialized.
+  bool mIsMainThread;
   Maybe<JSErrorReporter> mOldErrorReporter;
 
   void InitInternal(JSObject* aGlobal, JSContext* aCx, bool aIsMainThread);
@@ -349,20 +359,26 @@ private:
   public:
     DocshellEntryMonitor(JSContext* aCx, const char* aReason);
 
-    void Entry(JSContext* aCx, JSFunction* aFunction) override
+    void Entry(JSContext* aCx, JSFunction* aFunction,
+               JS::Handle<JS::Value> aAsyncStack,
+               JS::Handle<JSString*> aAsyncCause) override
     {
-      Entry(aCx, aFunction, nullptr);
+      Entry(aCx, aFunction, nullptr, aAsyncStack, aAsyncCause);
     }
 
-    void Entry(JSContext* aCx, JSScript* aScript) override
+    void Entry(JSContext* aCx, JSScript* aScript,
+               JS::Handle<JS::Value> aAsyncStack,
+               JS::Handle<JSString*> aAsyncCause) override
     {
-      Entry(aCx, nullptr, aScript);
+      Entry(aCx, nullptr, aScript, aAsyncStack, aAsyncCause);
     }
 
     void Exit(JSContext* aCx) override;
 
   private:
-    void Entry(JSContext* aCx, JSFunction* aFunction, JSScript* aScript);
+    void Entry(JSContext* aCx, JSFunction* aFunction, JSScript* aScript,
+               JS::Handle<JS::Value> aAsyncStack,
+               JS::Handle<JSString*> aAsyncCause);
 
     const char* mReason;
   };

@@ -165,6 +165,7 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
     WriteParam(aMsg, aParam.deltaZ);
     WriteParam(aMsg, aParam.deltaMode);
     WriteParam(aMsg, aParam.customizedByUserPrefs);
+    WriteParam(aMsg, aParam.mayHaveMomentum);
     WriteParam(aMsg, aParam.isMomentum);
     WriteParam(aMsg, aParam.mIsNoLineOrPageDelta);
     WriteParam(aMsg, aParam.lineOrPageDeltaX);
@@ -174,6 +175,7 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
     WriteParam(aMsg, aParam.overflowDeltaY);
     WriteParam(aMsg, aParam.mViewPortIsOverscrolled);
     WriteParam(aMsg, aParam.mCanTriggerSwipe);
+    WriteParam(aMsg, aParam.mAllowToOverrideSystemScrollSpeed);
   }
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
@@ -187,6 +189,7 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
       ReadParam(aMsg, aIter, &aResult->deltaZ) &&
       ReadParam(aMsg, aIter, &aResult->deltaMode) &&
       ReadParam(aMsg, aIter, &aResult->customizedByUserPrefs) &&
+      ReadParam(aMsg, aIter, &aResult->mayHaveMomentum) &&
       ReadParam(aMsg, aIter, &aResult->isMomentum) &&
       ReadParam(aMsg, aIter, &aResult->mIsNoLineOrPageDelta) &&
       ReadParam(aMsg, aIter, &aResult->lineOrPageDeltaX) &&
@@ -195,7 +198,8 @@ struct ParamTraits<mozilla::WidgetWheelEvent>
       ReadParam(aMsg, aIter, &aResult->overflowDeltaX) &&
       ReadParam(aMsg, aIter, &aResult->overflowDeltaY) &&
       ReadParam(aMsg, aIter, &aResult->mViewPortIsOverscrolled) &&
-      ReadParam(aMsg, aIter, &aResult->mCanTriggerSwipe);
+      ReadParam(aMsg, aIter, &aResult->mCanTriggerSwipe) &&
+      ReadParam(aMsg, aIter, &aResult->mAllowToOverrideSystemScrollSpeed);
     aResult->scrollType =
       static_cast<mozilla::WidgetWheelEvent::ScrollType>(scrollType);
     return rv;
@@ -323,7 +327,7 @@ struct ParamTraits<mozilla::WidgetTouchEvent>
     for (uint32_t i = 0; i < numTouches; ++i) {
         int32_t identifier;
         mozilla::LayoutDeviceIntPoint refPoint;
-        nsIntPoint radius;
+        mozilla::LayoutDeviceIntPoint radius;
         float rotationAngle;
         float force;
         if (!ReadParam(aMsg, aIter, &identifier) ||
@@ -544,6 +548,7 @@ struct ParamTraits<mozilla::WidgetCompositionEvent>
   {
     WriteParam(aMsg, static_cast<mozilla::WidgetGUIEvent>(aParam));
     WriteParam(aMsg, aParam.mData);
+    WriteParam(aMsg, aParam.mNativeIMEContext);
     bool hasRanges = !!aParam.mRanges;
     WriteParam(aMsg, hasRanges);
     if (hasRanges) {
@@ -557,6 +562,7 @@ struct ParamTraits<mozilla::WidgetCompositionEvent>
     if (!ReadParam(aMsg, aIter,
                    static_cast<mozilla::WidgetGUIEvent*>(aResult)) ||
         !ReadParam(aMsg, aIter, &aResult->mData) ||
+        !ReadParam(aMsg, aIter, &aResult->mNativeIMEContext) ||
         !ReadParam(aMsg, aIter, &hasRanges)) {
       return false;
     }
@@ -682,6 +688,24 @@ struct ParamTraits<nsIMEUpdatePreference>
 };
 
 template<>
+struct ParamTraits<mozilla::widget::NativeIMEContext>
+{
+  typedef mozilla::widget::NativeIMEContext paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    WriteParam(aMsg, aParam.mRawNativeIMEContext);
+    WriteParam(aMsg, aParam.mOriginProcessID);
+  }
+
+  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  {
+    return ReadParam(aMsg, aIter, &aResult->mRawNativeIMEContext) &&
+           ReadParam(aMsg, aIter, &aResult->mOriginProcessID);
+  }
+};
+
+template<>
 struct ParamTraits<mozilla::widget::IMENotification::Point>
 {
   typedef mozilla::widget::IMENotification::Point paramType;
@@ -761,8 +785,9 @@ struct ParamTraits<mozilla::widget::IMENotification::TextChangeDataBase>
     WriteParam(aMsg, aParam.mStartOffset);
     WriteParam(aMsg, aParam.mRemovedEndOffset);
     WriteParam(aMsg, aParam.mAddedEndOffset);
-    WriteParam(aMsg, aParam.mCausedByComposition);
-    WriteParam(aMsg, aParam.mOccurredDuringComposition);
+    WriteParam(aMsg, aParam.mCausedOnlyByComposition);
+    WriteParam(aMsg, aParam.mIncludingChangesDuringComposition);
+    WriteParam(aMsg, aParam.mIncludingChangesWithoutComposition);
   }
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
@@ -770,8 +795,11 @@ struct ParamTraits<mozilla::widget::IMENotification::TextChangeDataBase>
     return ReadParam(aMsg, aIter, &aResult->mStartOffset) &&
            ReadParam(aMsg, aIter, &aResult->mRemovedEndOffset) &&
            ReadParam(aMsg, aIter, &aResult->mAddedEndOffset) &&
-           ReadParam(aMsg, aIter, &aResult->mCausedByComposition) &&
-           ReadParam(aMsg, aIter, &aResult->mOccurredDuringComposition);
+           ReadParam(aMsg, aIter, &aResult->mCausedOnlyByComposition) &&
+           ReadParam(aMsg, aIter,
+                     &aResult->mIncludingChangesDuringComposition) &&
+           ReadParam(aMsg, aIter,
+                     &aResult->mIncludingChangesWithoutComposition);
   }
 };
 

@@ -80,10 +80,7 @@ public:
   NS_DECL_NSIREQUEST
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIEVENTTARGET
-  // missing from NS_DECL_NSIEVENTTARGET because MSVC
-  nsresult Dispatch(nsIRunnable* aEvent, uint32_t aFlags) {
-    return Dispatch(nsCOMPtr<nsIRunnable>(aEvent).forget(), aFlags);
-  }
+  using nsIEventTarget::Dispatch;
 
   explicit WebSocketImpl(WebSocket* aWebSocket)
   : mWebSocket(aWebSocket)
@@ -138,26 +135,22 @@ public:
                       const nsACString& aReasonString = EmptyCString());
   nsresult CloseConnection(uint16_t reasonCode,
                            const nsACString& aReasonString = EmptyCString());
-  nsresult Disconnect();
+  void Disconnect();
   void DisconnectInternal();
 
   nsresult ConsoleError();
-  nsresult PrintErrorOnConsole(const char* aBundleURI,
-                               const char16_t* aError,
-                               const char16_t** aFormatStrings,
-                               uint32_t aFormatStringsLen);
+  void PrintErrorOnConsole(const char* aBundleURI,
+                           const char16_t* aError,
+                           const char16_t** aFormatStrings,
+                           uint32_t aFormatStringsLen);
 
   nsresult DoOnMessageAvailable(const nsACString& aMsg,
                                 bool isBinary);
 
   // ConnectionCloseEvents: 'error' event if needed, then 'close' event.
-  // - These must not be dispatched while we are still within an incoming call
-  //   from JS (ex: close()).  Set 'sync' to false in that case to dispatch in a
-  //   separate new event.
   nsresult ScheduleConnectionCloseEvents(nsISupports* aContext,
-                                         nsresult aStatusCode,
-                                         bool sync);
-  // 2nd half of ScheduleConnectionCloseEvents, sometimes run in its own event.
+                                         nsresult aStatusCode);
+  // 2nd half of ScheduleConnectionCloseEvents, run in its own event.
   void DispatchConnectionCloseEvents();
 
   // Dispatch a runnable to the right thread.
@@ -301,19 +294,13 @@ public:
     , mError(aError)
     , mFormatStrings(aFormatStrings)
     , mFormatStringsLen(aFormatStringsLen)
-    , mRv(NS_ERROR_FAILURE)
   { }
 
   bool MainThreadRun() override
   {
-    mRv = mImpl->PrintErrorOnConsole(mBundleURI, mError, mFormatStrings,
-                                     mFormatStringsLen);
+    mImpl->PrintErrorOnConsole(mBundleURI, mError, mFormatStrings,
+                               mFormatStringsLen);
     return true;
-  }
-
-  nsresult ErrorCode() const
-  {
-    return mRv;
   }
 
 private:
@@ -324,12 +311,11 @@ private:
   const char16_t* mError;
   const char16_t** mFormatStrings;
   uint32_t mFormatStringsLen;
-  nsresult mRv;
 };
 
 } // namespace
 
-nsresult
+void
 WebSocketImpl::PrintErrorOnConsole(const char *aBundleURI,
                                    const char16_t *aError,
                                    const char16_t **aFormatStrings,
@@ -343,26 +329,32 @@ WebSocketImpl::PrintErrorOnConsole(const char *aBundleURI,
     RefPtr<PrintErrorOnConsoleRunnable> runnable =
       new PrintErrorOnConsoleRunnable(this, aBundleURI, aError, aFormatStrings,
                                       aFormatStringsLen);
-    runnable->Dispatch(mWorkerPrivate->GetJSContext());
-    return runnable->ErrorCode();
+    ErrorResult rv;
+    runnable->Dispatch(rv);
+    // XXXbz this seems totally broken.  We should be propagating this out, but
+    // none of our callers really propagate anything usefully.  Come to think of
+    // it, why is this a syncrunnable anyway?  Can't this be a fire-and-forget
+    // runnable??
+    rv.SuppressException();
+    return;
   }
 
   nsresult rv;
   nsCOMPtr<nsIStringBundleService> bundleService =
     do_GetService(NS_STRINGBUNDLE_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   nsCOMPtr<nsIStringBundle> strBundle;
   rv = bundleService->CreateBundle(aBundleURI, getter_AddRefs(strBundle));
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   nsCOMPtr<nsIConsoleService> console(
     do_GetService(NS_CONSOLESERVICE_CONTRACTID, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   nsCOMPtr<nsIScriptError> errorObject(
     do_CreateInstance(NS_SCRIPTERROR_CONTRACTID, &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   // Localize the error message
   nsXPIDLString message;
@@ -373,7 +365,7 @@ WebSocketImpl::PrintErrorOnConsole(const char *aBundleURI,
   } else {
     rv = strBundle->GetStringFromName(aError, getter_Copies(message));
   }
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   if (mInnerWindowID) {
     rv = errorObject->InitWithWindowID(message,
@@ -389,13 +381,11 @@ WebSocketImpl::PrintErrorOnConsole(const char *aBundleURI,
                            nsIScriptError::errorFlag, "Web Socket");
   }
 
-  NS_ENSURE_SUCCESS(rv, rv);
+  NS_ENSURE_SUCCESS_VOID(rv);
 
   // print the error message directly to the JS console
   rv = console->LogMessage(errorObject);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return NS_OK;
+  NS_ENSURE_SUCCESS_VOID(rv);
 }
 
 namespace {
@@ -524,14 +514,11 @@ WebSocketImpl::CloseConnection(uint16_t aReasonCode,
 
   mWebSocket->SetReadyState(WebSocket::CLOSING);
 
-  // Can be called from Cancel() or Init() codepaths, so need to dispatch
-  // onerror/onclose asynchronously
   ScheduleConnectionCloseEvents(
                     nullptr,
                     (aReasonCode == nsIWebSocketChannel::CLOSE_NORMAL ||
                      aReasonCode == nsIWebSocketChannel::CLOSE_GOING_AWAY) ?
-                     NS_OK : NS_ERROR_FAILURE,
-                    false);
+                     NS_OK : NS_ERROR_FAILURE);
 
   return NS_OK;
 }
@@ -603,11 +590,11 @@ private:
 
 } // namespace
 
-nsresult
+void
 WebSocketImpl::Disconnect()
 {
   if (mDisconnectingOrDisconnected) {
-    return NS_OK;
+    return;
   }
 
   AssertIsOnTargetThread();
@@ -626,7 +613,11 @@ WebSocketImpl::Disconnect()
   } else {
     RefPtr<DisconnectInternalRunnable> runnable =
       new DisconnectInternalRunnable(this);
-    runnable->Dispatch(mWorkerPrivate->GetJSContext());
+    ErrorResult rv;
+    runnable->Dispatch(rv);
+    // XXXbz this seems totally broken.  We should be propagating this out, but
+    // where to, exactly?
+    rv.SuppressException();
   }
 
   // DontKeepAliveAnyMore() can release the object. So hold a reference to this
@@ -645,8 +636,6 @@ WebSocketImpl::Disconnect()
 
   // We want to release the WebSocket in the correct thread.
   mWebSocket = nullptr;
-
-  return NS_OK;
 }
 
 void
@@ -803,14 +792,12 @@ WebSocketImpl::OnStop(nsISupports* aContext, nsresult aStatusCode)
   MOZ_ASSERT(mWebSocket->ReadyState() != WebSocket::CLOSED,
              "Shouldn't already be CLOSED when OnStop called");
 
-  // called by network stack, not JS, so can dispatch JS events synchronously
-  return ScheduleConnectionCloseEvents(aContext, aStatusCode, true);
+  return ScheduleConnectionCloseEvents(aContext, aStatusCode);
 }
 
 nsresult
 WebSocketImpl::ScheduleConnectionCloseEvents(nsISupports* aContext,
-                                             nsresult aStatusCode,
-                                             bool sync)
+                                             nsresult aStatusCode)
 {
   AssertIsOnTargetThread();
 
@@ -830,11 +817,7 @@ WebSocketImpl::ScheduleConnectionCloseEvents(nsISupports* aContext,
 
     mOnCloseScheduled = true;
 
-    if (sync) {
-      DispatchConnectionCloseEvents();
-    } else {
-      NS_DispatchToCurrentThread(new CallDispatchConnectionCloseEvents(this));
-    }
+    NS_DispatchToCurrentThread(new CallDispatchConnectionCloseEvents(this));
   }
 
   return NS_OK;
@@ -1260,7 +1243,7 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
     }
 
     unsigned lineno, column;
-    JS::AutoFilename file;
+    JS::UniqueChars file;
     if (!JS::DescribeScriptedCaller(aGlobal.Context(), &file, &lineno,
                                     &column)) {
       NS_WARNING("Failed to get line number and filename in workers.");
@@ -1270,7 +1253,7 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
       new InitRunnable(webSocket->mImpl, aUrl, protocolArray,
                        nsAutoCString(file.get()), lineno, column, aRv,
                        &connectionFailed);
-    runnable->Dispatch(aGlobal.Context());
+    runnable->Dispatch(aRv);
   }
 
   if (NS_WARN_IF(aRv.Failed())) {
@@ -1350,7 +1333,7 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
   } else {
     RefPtr<AsyncOpenRunnable> runnable =
       new AsyncOpenRunnable(webSocket->mImpl, aRv);
-    runnable->Dispatch(aGlobal.Context());
+    runnable->Dispatch(aRv);
   }
 
   if (NS_WARN_IF(aRv.Failed())) {
@@ -1495,7 +1478,7 @@ WebSocketImpl::Init(JSContext* aCx,
     MOZ_ASSERT(aCx);
 
     unsigned lineno, column;
-    JS::AutoFilename file;
+    JS::UniqueChars file;
     if (JS::DescribeScriptedCaller(aCx, &file, &lineno, &column)) {
       mScriptFile = file.get();
       mScriptLine = lineno;
@@ -1565,7 +1548,7 @@ WebSocketImpl::Init(JSContext* aCx,
   // to reflect that upgrade. Please note that we can not upgrade from ws:
   // to wss: before performing content policy checks because CSP needs to
   // send reports in case the scheme is about to be upgraded.
-  if (!mSecure && originDoc && originDoc->GetUpgradeInsecureRequests()) {
+  if (!mSecure && originDoc && originDoc->GetUpgradeInsecureRequests(false)) {
     // let's use the old specification before the upgrade for logging
     NS_ConvertUTF8toUTF16 reportSpec(mURI);
 
@@ -1807,9 +1790,7 @@ WebSocket::CreateAndDispatchSimpleEvent(const nsAString& aName)
   RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
 
   // it doesn't bubble, and it isn't cancelable
-  rv = event->InitEvent(aName, false, false);
-  NS_ENSURE_SUCCESS(rv, rv);
-
+  event->InitEvent(aName, false, false);
   event->SetTrusted(true);
 
   return DispatchDOMEvent(nullptr, event, nullptr, nullptr);
@@ -2122,17 +2103,6 @@ public:
                                       EmptyCString());
     }
 
-    return true;
-  }
-
-  bool Suspend(JSContext* aCx) override
-  {
-    {
-      MutexAutoLock lock(mWebSocketImpl->mMutex);
-      mWebSocketImpl->mWorkerShuttingDown = true;
-    }
-
-    mWebSocketImpl->CloseConnection(nsIWebSocketChannel::CLOSE_GOING_AWAY);
     return true;
   }
 

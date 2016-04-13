@@ -43,6 +43,10 @@ class PCrashReporterParent;
 class CrashReporterParent;
 } // namespace dom
 
+namespace layers {
+class TextureClientRecycleAllocator;
+} // namespace layers
+
 namespace plugins {
 //-----------------------------------------------------------------------------
 
@@ -131,6 +135,8 @@ public:
     nsCString GetHistogramKey() const {
         return mPluginName + mPluginVersion;
     }
+
+    void AccumulateModuleInitBlockedTime();
 
     virtual nsresult GetRunID(uint32_t* aRunID) override;
     virtual void SetHasLocalInstance() override {
@@ -246,13 +252,13 @@ protected:
     virtual nsresult AsyncSetWindow(NPP aInstance, NPWindow* aWindow) override;
     virtual nsresult GetImageContainer(NPP aInstance, mozilla::layers::ImageContainer** aContainer) override;
     virtual nsresult GetImageSize(NPP aInstance, nsIntSize* aSize) override;
+    virtual void DidComposite(NPP aInstance) override;
     virtual bool IsOOP() override { return true; }
     virtual nsresult SetBackgroundUnknown(NPP instance) override;
     virtual nsresult BeginUpdateBackground(NPP instance,
                                            const nsIntRect& aRect,
-                                           gfxContext** aCtx) override;
+                                           DrawTarget** aDrawTarget) override;
     virtual nsresult EndUpdateBackground(NPP instance,
-                                         gfxContext* aCtx,
                                          const nsIntRect& aRect) override;
 
 #if defined(XP_UNIX) && !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)
@@ -292,6 +298,8 @@ public:
 #endif
 
     void InitAsyncSurrogates();
+
+    layers::TextureClientRecycleAllocator* EnsureTextureAllocator();
 
 protected:
     void NotifyFlashHang();
@@ -339,6 +347,8 @@ protected:
     nsTArray<RefPtr<PluginAsyncSurrogate>> mSurrogateInstances;
     nsresult          mAsyncNewRv;
     uint32_t          mRunID;
+
+    RefPtr<layers::TextureClientRecycleAllocator> mTextureAllocator;
 };
 
 class PluginModuleContentParent : public PluginModuleParent
@@ -447,8 +457,10 @@ class PluginModuleChromeParent
     void OnExitedSyncSend() override;
 
 #ifdef  MOZ_ENABLE_PROFILER_SPS
-    void GatherAsyncProfile(mozilla::ProfileGatherer* aGatherer);
+    void GatherAsyncProfile();
     void GatheredAsyncProfile(nsIProfileSaveEvent* aSaveEvent);
+    void StartProfiler(nsIProfilerStartParams* aParams);
+    void StopProfiler();
 #endif
 
     virtual bool

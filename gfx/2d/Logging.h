@@ -14,6 +14,7 @@
 #ifdef MOZ_LOGGING
 #include "mozilla/Logging.h"
 #endif
+#include "mozilla/Tuple.h"
 
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
 #include "nsDebug.h"
@@ -23,7 +24,7 @@
 #include "Matrix.h"
 
 #if defined(MOZ_LOGGING)
-extern GFX2D_API PRLogModuleInfo *GetGFX2DLog();
+extern GFX2D_API mozilla::LogModule* GetGFX2DLog();
 #endif
 
 namespace mozilla {
@@ -62,24 +63,9 @@ inline mozilla::LogLevel PRLogLevelForLevel(int aLevel) {
 }
 #endif
 
-class PreferenceAccess
+class LoggingPrefs
 {
 public:
-  virtual ~PreferenceAccess();
-
-  // This should connect the variable aVar to be updated whenever a preference
-  // aName is modified.  aDefault would be used if the preference is undefined,
-  // so that we always get the valid value for aVar.
-  virtual void LivePref(const char* aName, int32_t* aVar, int32_t aDefault);
-
-public:
-  static void SetAccess(PreferenceAccess* aAccess);
-
-public:
-  // For each preference that needs to be accessed in Moz2D, add a variable
-  // to hold it, as well as the call to LivePref in the RegisterAll() method
-  // below.
-
   // Used to choose the level of logging we get.  The higher the number,
   // the more logging we get.  Value of zero will give you no logging,
   // 1 just errors, 2 adds warnings and 3 adds logging/debug.  4 is used to
@@ -88,15 +74,6 @@ public:
   // in addition to setting the value to 4, you will need to set an
   // environment variable NSPR_LOG_MODULES to gfx:4. See prlog.h for details.
   static int32_t sGfxLogLevel;
-
-private:
-  static void RegisterAll() {
-    // The default values (last parameter) should match the initialization
-    // values in Factory.cpp, otherwise the standalone Moz2D will get different
-    // defaults.
-    sAccess->LivePref("gfx.logging.level", &sGfxLogLevel, LOG_DEFAULT);
-  }
-  static PreferenceAccess* sAccess;
 };
 
 /// Graphics logging is available in both debug and release builds and is
@@ -122,9 +99,9 @@ private:
 /// by preference gfx.logging.crash.length (default is six, so by default,
 /// the first as well as the last five would show up in the crash log.)
 ///
-/// On platforms that support PR_LOGGING, the story is slightly more involved.
+/// On platforms that support MOZ_LOGGING, the story is slightly more involved.
 /// In that case, unless gfx.logging.level is set to 4 or higher, the output
-/// is further controlled by "gfx2d" PR logging module.  However, in the case
+/// is further controlled by the "gfx2d" logging module.  However, in the case
 /// where such module would disable the output, in all but gfxDebug cases,
 /// we will still send a printf.
 
@@ -134,7 +111,26 @@ enum class LogReason : int {
   // Start.  Do not insert, always add at end.  If you remove items,
   // make sure the other items retain their values.
   D3D11InvalidCallDeviceRemoved = 0,
-  D3D11InvalidCall = 1,
+  D3D11InvalidCall,
+  D3DLockTimeout,
+  D3D10FinalizeFrame,
+  D3D11FinalizeFrame,
+  D3D10SyncLock,
+  D3D11SyncLock,
+  D2D1NoWriteMap,
+  JobStatusError,
+  FilterInputError,
+  FilterInputData, // 10
+  FilterInputRect,
+  FilterInputSet,
+  FilterInputFormat,
+  FilterNodeD2D1Target,
+  FilterNodeD2D1Backend,
+  SourceSurfaceIncompatible,
+  GlyphAllocFailedCairo,
+  GlyphAllocFailedCG,
+  InvalidRect,
+  CannotDraw3D, // 20
   // End
   MustBeLessThanThis = 101,
 };
@@ -145,7 +141,7 @@ struct BasicLogger
   // OutputMessage below.  If making any changes here, also make it
   // in the appropriate places in that method.
   static bool ShouldOutputMessage(int aLevel) {
-    if (PreferenceAccess::sGfxLogLevel >= aLevel) {
+    if (LoggingPrefs::sGfxLogLevel >= aLevel) {
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
       return true;
 #else
@@ -154,7 +150,7 @@ struct BasicLogger
         return true;
       } else
 #endif
-      if ((PreferenceAccess::sGfxLogLevel >= LOG_DEBUG_PRLOG) ||
+      if ((LoggingPrefs::sGfxLogLevel >= LOG_DEBUG_PRLOG) ||
                  (aLevel < LOG_DEBUG)) {
         return true;
       }
@@ -178,7 +174,7 @@ struct BasicLogger
     // If making any logic changes to this method, you should probably
     // make the corresponding change in the ShouldOutputMessage method
     // above.
-    if (PreferenceAccess::sGfxLogLevel >= aLevel) {
+    if (LoggingPrefs::sGfxLogLevel >= aLevel) {
 #if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_ANDROID)
       printf_stderr("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
 #else
@@ -187,7 +183,7 @@ struct BasicLogger
         PR_LogPrint("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
       } else
 #endif
-      if ((PreferenceAccess::sGfxLogLevel >= LOG_DEBUG_PRLOG) ||
+      if ((LoggingPrefs::sGfxLogLevel >= LOG_DEBUG_PRLOG) ||
                  (aLevel < LOG_DEBUG)) {
         printf("%s%s", aString.c_str(), aNoNewline ? "" : "\n");
       }
@@ -201,19 +197,23 @@ struct CriticalLogger {
   static void CrashAction(LogReason aReason);
 };
 
+// The int is the index of the Log call; if the number of logs exceeds some preset
+// capacity we may not get all of them, so the indices help figure out which
+// ones we did save.  The double is expected to be the "TimeDuration", 
+// time in seconds since the process creation.
+typedef mozilla::Tuple<int32_t,std::string,double> LoggingRecordEntry;
+
 // Implement this interface and init the Factory with an instance to
 // forward critical logs.
+typedef std::vector<LoggingRecordEntry> LoggingRecord;
 class LogForwarder {
 public:
   virtual ~LogForwarder() {}
   virtual void Log(const std::string &aString) = 0;
   virtual void CrashAction(LogReason aReason) = 0;
 
-  // Provide a copy of the logs to the caller.  The int is the index
-  // of the Log call, if the number of logs exceeds some preset capacity
-  // we may not get all of them, so the indices help figure out which
-  // ones we did save.
-  virtual std::vector<std::pair<int32_t,std::string> > StringsVectorCopy() = 0;
+  // Provide a copy of the logs to the caller.
+  virtual LoggingRecord LoggingRecordCopy() = 0;
 };
 
 class NoLog
@@ -260,7 +260,10 @@ public:
   // version of that method for different loggers, this is OK. Once we do,
   // change BasicLogger::ShouldOutputMessage to Logger::ShouldOutputMessage.
   explicit Log(int aOptions = Log::DefaultOptions(L == LOG_CRITICAL),
-               LogReason aReason = LogReason::MustBeMoreThanThis) {
+               LogReason aReason = LogReason::MustBeMoreThanThis)
+  : mOptions(0)
+  , mLogIt(false)
+  {
     Init(aOptions, BasicLogger::ShouldOutputMessage(L), aReason);
   }
 
@@ -380,7 +383,9 @@ public:
   template<typename T>
   Log &operator<<(Hexa<T> aHex) {
     if (MOZ_UNLIKELY(LogIt())) {
-      mMessage << "0x" << std::hex << aHex.mVal << std::dec;
+      mMessage << std::showbase << std::hex
+               << aHex.mVal
+               << std::noshowbase << std::dec;
     }
     return *this;
   }
@@ -565,7 +570,7 @@ typedef Log<LOG_CRITICAL, CriticalLogger> CriticalLog;
 //
 // You should create a (new) enum in the LogReason and use it for the reason
 // parameter to ensure uniqueness.
-#define gfxCrash(reason) gfxCriticalError(int(LogOptions::AutoPrefix) | int(LogOptions::AssertOnCall) | int(LogOptions::CrashAction), (reason))
+#define gfxDevCrash(reason) gfxCriticalError(int(gfx::LogOptions::AutoPrefix) | int(gfx::LogOptions::AssertOnCall) | int(gfx::LogOptions::CrashAction), (reason))
 
 // See nsDebug.h and the NS_WARN_IF macro
 

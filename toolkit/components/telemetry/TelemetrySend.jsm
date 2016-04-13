@@ -44,7 +44,6 @@ const LOGGER_PREFIX = "TelemetrySend::";
 const PREF_BRANCH = "toolkit.telemetry.";
 const PREF_SERVER = PREF_BRANCH + "server";
 const PREF_UNIFIED = PREF_BRANCH + "unified";
-const PREF_TELEMETRY_ENABLED = PREF_BRANCH + "enabled";
 const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
 
 const TOPIC_IDLE_DAILY = "idle-daily";
@@ -454,7 +453,7 @@ var SendScheduler = {
       this._sendsFailed = false;
       const sendStartTime = Policy.now();
       this._sendTaskState = "wait on ping sends";
-      yield TelemetrySendImpl.sendPings(current, [for (p of sending) p.id]);
+      yield TelemetrySendImpl.sendPings(current, sending.map(p => p.id));
       if (this._shutdown || (TelemetrySend.pendingPingCount == 0)) {
         this._log.trace("_doSendTask - bailing out after sending, shutdown: " + this._shutdown +
                         ", pendingPingCount: " + TelemetrySend.pendingPingCount);
@@ -1048,7 +1047,7 @@ var TelemetrySendImpl = {
     }
 
     // Without unified Telemetry, the Telemetry enabled pref controls ping sending.
-    return Preferences.get(PREF_TELEMETRY_ENABLED, false);
+    return Utils.isTelemetryEnabled;
   },
 
   /**
@@ -1068,9 +1067,9 @@ var TelemetrySendImpl = {
    */
   promisePendingPingActivity: function () {
     this._log.trace("promisePendingPingActivity - Waiting for ping task");
-    let p = [for (p of this._pendingPingActivity) p.catch(ex => {
+    let p = Array.from(this._pendingPingActivity, p => p.catch(ex => {
       this._log.error("promisePendingPingActivity - ping activity had an error", ex);
-    })];
+    }));
     p.push(SendScheduler.waitOnSendTask());
     return Promise.all(p);
   },

@@ -29,8 +29,6 @@
 #   preprocessing
 # - INSTALL_MANIFESTS, which defines the list of base directories handled
 #   by install manifests, see further below
-# - MANIFEST_TARGETS, which defines the file paths of chrome manifests, see
-#   further below
 #
 # A convention used between this file and the Makefile including it is that
 # global Make variables names are uppercase, while "local" Make variables
@@ -40,18 +38,27 @@
 default: $(addprefix install-,$(INSTALL_MANIFESTS))
 
 # Explicit files to be built for a default build
-default: $(addprefix $(TOPOBJDIR)/,$(MANIFEST_TARGETS))
-default: $(TOPOBJDIR)/dist/bin/greprefs.js
+ifndef TEST_MOZBUILD
 default: $(TOPOBJDIR)/dist/bin/platform.ini
-default: $(TOPOBJDIR)/dist/bin/webapprt/webapprt.ini
+endif
 
+ifndef NO_XPIDL
 # Targets from the recursive make backend to be built for a default build
 default: $(TOPOBJDIR)/config/makefiles/xpidl/xpidl
+endif
 
-ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
 # Mac builds require to copy things in dist/bin/*.app
+# TODO: remove the MOZ_WIDGET_TOOLKIT and MOZ_BUILD_APP variables from
+# faster/Makefile and python/mozbuild/mozbuild/test/backend/test_build.py
+# when this is not required anymore.
+# We however don't need to do this when using the hybrid
+# FasterMake/RecursiveMake backend (FASTER_RECURSIVE_MAKE is set when
+# recursing from the RecursiveMake backend)
+ifndef FASTER_RECURSIVE_MAKE
+ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
 default:
 	$(MAKE) -C $(TOPOBJDIR)/$(MOZ_BUILD_APP)/app repackage
+endif
 endif
 
 .PHONY: FORCE
@@ -61,10 +68,6 @@ endif
 # toolkit/content/buildconfig.html and browser/locales/jar.mn.
 ACDEFINES += -DBUILD_FASTER
 
-# Generic rule to fall back to the recursive make backend
-$(TOPOBJDIR)/%: FORCE
-	$(MAKE) -C $(dir $@) $(notdir $@)
-
 # Files under the faster/ sub-directory, however, are not meant to use the
 # fallback
 $(TOPOBJDIR)/faster/%: ;
@@ -73,7 +76,15 @@ $(TOPOBJDIR)/faster/%: ;
 # if there is no other rule.
 $(TOPOBJDIR)/dist/%:
 	rm -f $@
+	mkdir -p $(@D)
 	cp $< $@
+
+# Generic rule to fall back to the recursive make backend.
+# This needs to stay after other $(TOPOBJDIR)/* rules because GNU Make
+# <3.82 apply pattern rules in definition order, not stem length like
+# modern GNU Make.
+$(TOPOBJDIR)/%: FORCE
+	$(MAKE) -C $(dir $@) $(notdir $@)
 
 # Install files using install manifests
 #
@@ -86,39 +97,32 @@ $(addprefix install-,$(INSTALL_MANIFESTS)): install-%: $(TOPOBJDIR)/config/build
 	@# The overhead is not that big, and this avoids waiting for proper
 	@# support for defines tracking in process_install_manifest.
 	@touch install_$(subst /,_,$*)
+	@# BOOKMARKS_INCLUDE_DIR is for bookmarks.html only.
 	$(PYTHON) -m mozbuild.action.process_install_manifest \
-		--no-remove \
-		--no-remove-empty-directories \
+		--track install_$(subst /,_,$*).track \
 		$(TOPOBJDIR)/$* \
 		-DAB_CD=en-US \
+		-DBOOKMARKS_INCLUDE_DIR=$(TOPSRCDIR)/browser/locales/en-US/profile \
 		-DMOZ_APP_BUILDID=$(shell cat $(TOPOBJDIR)/config/buildid) \
 		$(ACDEFINES) \
-		$(MOZ_DEBUG_DEFINES) \
 		install_$(subst /,_,$*)
-
-# Create some chrome manifests
-# This rule is forced to run every time because it may be updating files that
-# already exit.
-#
-# The list of chrome manifests is given in MANIFEST_TARGETS, relative to the
-# top object directory. The content for those manifests is given in the
-# `content` variable associated with the target. For example:
-#   MANIFEST_TARGETS = foo
-#   $(TOPOBJDIR)/foo: content = "manifest foo.manifest" "manifest bar.manifest"
-$(addprefix $(TOPOBJDIR)/,$(MANIFEST_TARGETS)): FORCE
-	$(PYTHON) -m mozbuild.action.buildlist \
-		$@ \
-		$(content)
 
 # ============================================================================
 # Below is a set of additional dependencies and variables used to build things
 # that are not supported by data in moz.build.
 
 # Files to build with the recursive backend and simply copy
-$(TOPOBJDIR)/dist/bin/greprefs.js: $(TOPOBJDIR)/modules/libpref/greprefs.js
 $(TOPOBJDIR)/dist/bin/platform.ini: $(TOPOBJDIR)/toolkit/xre/platform.ini
-$(TOPOBJDIR)/dist/bin/webapprt/webapprt.ini: $(TOPOBJDIR)/webapprt/webapprt.ini
+
+$(TOPOBJDIR)/toolkit/xre/platform.ini: $(TOPOBJDIR)/config/buildid
 
 # The xpidl target in config/makefiles/xpidl requires the install manifest for
-# dist/idl to have been processed.
+# dist/idl to have been processed. When using the hybrid
+# FasterMake/RecursiveMake backend, this dependency is handled in the top-level
+# Makefile.
+ifndef FASTER_RECURSIVE_MAKE
 $(TOPOBJDIR)/config/makefiles/xpidl/xpidl: $(TOPOBJDIR)/install-dist_idl
+endif
+# It also requires all the install manifests for dist/bin to have been processed
+# because it adds interfaces.manifest references with buildlist.py.
+$(TOPOBJDIR)/config/makefiles/xpidl/xpidl: $(addprefix install-,$(filter dist/bin%,$(INSTALL_MANIFESTS)))

@@ -70,14 +70,14 @@ function initTreeView() {
   gTreeData = [];
   gStateObject.windows.forEach(function(aWinData, aIx) {
     var winState = {
-      label: winLabel.replace("%S", (aIx + 1)),
+      label: aWinData.tabGroupsMigrationTitle || winLabel.replace("%S", (aIx + 1)),
       open: true,
       checked: true,
       ix: aIx
     };
     winState.tabs = aWinData.tabs.map(function(aTabData) {
       var entry = aTabData.entries[aTabData.index - 1] || { url: "about:blank" };
-      var iconURL = aTabData.attributes && aTabData.attributes.image || null;
+      var iconURL = aTabData.image || null;
       // don't initiate a connection just to fetch a favicon (see bug 462863)
       if (/^https?:/.test(iconURL))
         iconURL = "moz-anno:favicon:" + iconURL;
@@ -112,6 +112,7 @@ function updateTabListVisibility() {
 }
 
 function restoreSession() {
+  Services.obs.notifyObservers(null, "sessionstore-initiating-manual-restore", "");
   document.getElementById("errorTryAgain").disabled = true;
 
   if (isTreeViewVisible()) {

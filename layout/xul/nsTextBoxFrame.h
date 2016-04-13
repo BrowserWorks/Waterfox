@@ -85,8 +85,7 @@ protected:
                    nsRenderingContext& aRenderingContext,
                    const nsRect&        aRect);
 
-  void CalculateUnderline(nsRenderingContext& aRenderingContext,
-                          nsFontMetrics& aFontMetrics);
+  void CalculateUnderline(DrawTarget* aDrawTarget, nsFontMetrics& aFontMetrics);
 
   void CalcTextSize(nsBoxLayoutState& aBoxLayoutState);
 
@@ -94,12 +93,10 @@ protected:
 
   explicit nsTextBoxFrame(nsStyleContext* aContext);
 
-  nscoord CalculateTitleForWidth(nsPresContext*      aPresContext,
-                                 nsRenderingContext& aRenderingContext,
+  nscoord CalculateTitleForWidth(nsRenderingContext& aRenderingContext,
                                  nscoord              aWidth);
 
-  void GetTextSize(nsPresContext*      aPresContext,
-                   nsRenderingContext& aRenderingContext,
+  void GetTextSize(nsRenderingContext& aRenderingContext,
                    const nsString&      aString,
                    nsSize&              aSize,
                    nscoord&             aAscent);

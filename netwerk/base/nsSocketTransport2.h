@@ -286,6 +286,7 @@ private:
     nsCString    mProxyHost;
     nsCString    mOriginHost;
     uint16_t     mPort;
+    nsCOMPtr<nsIProxyInfo> mProxyInfo;
     uint16_t     mProxyPort;
     uint16_t     mOriginPort;
     bool mProxyTransparent;
@@ -318,10 +319,13 @@ private:
     nsCOMPtr<nsICancelable> mDNSRequest;
     nsCOMPtr<nsIDNSRecord>  mDNSRecord;
 
-    // mNetAddr is valid from GetPeerAddr() once we have
+    // mNetAddr/mSelfAddr is valid from GetPeerAddr()/GetSelfAddr() once we have
     // reached STATE_TRANSFERRING. It must not change after that.
+    void                    SetSocketName(PRFileDesc *fd);
     mozilla::net::NetAddr   mNetAddr;
-    bool                    mNetAddrIsSet;
+    mozilla::net::NetAddr   mSelfAddr; // getsockname()
+    mozilla::Atomic<bool, mozilla::Relaxed> mNetAddrIsSet;
+    mozilla::Atomic<bool, mozilla::Relaxed> mSelfAddrIsSet;
 
     nsAutoPtr<mozilla::net::NetAddr> mBindAddr;
 

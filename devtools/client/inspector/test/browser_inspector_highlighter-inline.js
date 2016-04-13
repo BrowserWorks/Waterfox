@@ -4,10 +4,12 @@
 
 "use strict";
 
+requestLongerTimeout(2);
+
 // Test that highlighting various inline boxes displays the right number of
 // polygons in the page.
 
-const TEST_URL = TEST_URL_ROOT + "doc_inspector_highlighter_inline.html";
+const TEST_URL = URL_ROOT + "doc_inspector_highlighter_inline.html";
 const TEST_DATA = [
   "body",
   "h1",

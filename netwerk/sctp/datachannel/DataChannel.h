@@ -337,9 +337,10 @@ private:
   ~DataChannel();
 
 public:
-  void Destroy(); // when we disconnect from the connection after stream RESET
-
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(DataChannel)
+
+  // when we disconnect from the connection after stream RESET
+  void DestroyLocked();
 
   // Close this DataChannel.  Can be called multiple times.  MUST be called
   // before destroying the DataChannel (state must be CLOSED or CLOSING).
@@ -527,7 +528,7 @@ public:
       case ON_DISCONNECTED:
         // If we've disconnected, make sure we close all the streams - from mainthread!
         mConnection->CloseAll();
-        // fall through
+        MOZ_FALLTHROUGH;
       case ON_CHANNEL_CREATED:
       case ON_CONNECTION:
         // WeakPtr - only used/modified/nulled from MainThread so we can use a WeakPtr here

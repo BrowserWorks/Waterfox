@@ -11,6 +11,7 @@
 
 namespace android {
 struct ALooper;
+class MediaBuffer;
 class MediaCodecProxy;
 } // namespace android
 
@@ -27,19 +28,20 @@ public:
   virtual ~GonkDecoderManager() {}
 
   virtual RefPtr<InitPromise> Init() = 0;
+  virtual const char* GetDescriptionName() const = 0;
 
   // Asynchronously send sample into mDecoder. If out of input buffer, aSample
   // will be queued for later re-send.
   nsresult Input(MediaRawData* aSample);
 
-  // Flush the queued sample.
-  virtual nsresult Flush();
+  // Flush the queued samples and signal decoder to throw all pending input/output away.
+  nsresult Flush();
 
   // Shutdown decoder and rejects the init promise.
   virtual nsresult Shutdown();
 
-  // True if sample is queued.
-  bool HasQueuedSample();
+  // How many samples are waiting for processing.
+  size_t NumQueuedSamples();
 
   // Set callback for decoder events, such as requesting more input,
   // returning output, or reporting error.
@@ -51,7 +53,7 @@ public:
 protected:
   GonkDecoderManager()
     : mMutex("GonkDecoderManager")
-    , mLastTime(0)
+    , mLastTime(INT64_MIN)
     , mFlushMonitor("GonkDecoderManager::Flush")
     , mIsFlushing(false)
     , mDecodeCallback(nullptr)
@@ -69,11 +71,11 @@ protected:
                           RefPtr<MediaData>& aOutput) = 0;
 
   // Send queued samples to OMX. It returns how many samples are still in
-  // queue after processing, or negtive error code if failed.
+  // queue after processing, or negative error code if failed.
   int32_t ProcessQueuedSamples();
 
   void ProcessInput(bool aEndOfStream);
-  void ProcessFlush();
+  virtual void ProcessFlush();
   void ProcessToDo(bool aEndOfStream);
 
   RefPtr<MediaByteBuffer> mCodecSpecificData;
@@ -87,6 +89,7 @@ protected:
   // Looper to run decode tasks such as processing input, output, flush, and
   // recycling output buffers.
   android::sp<android::ALooper> mTaskLooper;
+  // Message codes for tasks running on mTaskLooper.
   enum {
     // Decoder will send this to indicate internal state change such as input or
     // output buffers availability. Used to run pending input & output tasks.
@@ -95,6 +98,9 @@ protected:
     kNotifyProcessFlush = 'npf ',
     // Used to process queued samples when there is new input.
     kNotifyProcessInput = 'npi ',
+#ifdef DEBUG
+    kNotifyFindLooperId = 'nfli',
+#endif
   };
 
   MozPromiseHolder<InitPromise> mInitPromise;
@@ -105,20 +111,70 @@ protected:
   // Samples are queued in caller's thread and dequeued in mTaskLooper.
   nsTArray<RefPtr<MediaRawData>> mQueuedSamples;
 
-  int64_t mLastTime;  // The last decoded frame presentation time.
+  // The last decoded frame presentation time. Only accessed on mTaskLooper.
+  int64_t mLastTime;
 
   Monitor mFlushMonitor; // Waits for flushing to complete.
-  bool mIsFlushing;
+  bool mIsFlushing; // Protected by mFlushMonitor.
 
   // Remembers the notification that is currently waiting for the decoder event
   // to avoid requesting more than one notification at the time, which is
   // forbidden by mDecoder.
   android::sp<android::AMessage> mToDo;
 
-  // Stores the offset of every output that needs to be read from mDecoder.
-  nsTArray<int64_t> mWaitOutput;
+  // Stores sample info for output buffer processing later.
+  struct WaitOutputInfo {
+    WaitOutputInfo(int64_t aOffset, int64_t aTimestamp, bool aEOS)
+      : mOffset(aOffset)
+      , mTimestamp(aTimestamp)
+      , mEOS(aEOS)
+    {}
+    const int64_t mOffset;
+    const int64_t mTimestamp;
+    const bool mEOS;
+  };
+
+  nsTArray<WaitOutputInfo> mWaitOutput;
 
   MediaDataDecoderCallback* mDecodeCallback; // Reports decoder output or error.
+
+private:
+  void UpdateWaitingList(int64_t aForgetUpTo);
+
+#ifdef DEBUG
+  typedef void* LooperId;
+
+  bool OnTaskLooper();
+  LooperId mTaskLooperId;
+#endif
+};
+
+class AutoReleaseMediaBuffer
+{
+public:
+  AutoReleaseMediaBuffer(android::MediaBuffer* aBuffer, android::MediaCodecProxy* aCodec)
+    : mBuffer(aBuffer)
+    , mCodec(aCodec)
+  {}
+
+  ~AutoReleaseMediaBuffer()
+  {
+    MOZ_ASSERT(mCodec.get());
+    if (mBuffer) {
+      mCodec->ReleaseMediaBuffer(mBuffer);
+    }
+  }
+
+  android::MediaBuffer* forget()
+  {
+    android::MediaBuffer* tmp = mBuffer;
+    mBuffer = nullptr;
+    return tmp;
+  }
+
+private:
+  android::MediaBuffer* mBuffer;
+  android::sp<android::MediaCodecProxy> mCodec;
 };
 
 // Samples are decoded using the GonkDecoder (MediaCodec)
@@ -144,8 +200,12 @@ public:
 
   nsresult Shutdown() override;
 
+  const char* GetDescriptionName() const override
+  {
+    return "gonk decoder";
+  }
+
 private:
-  RefPtr<FlushableTaskQueue> mTaskQueue;
 
   android::sp<GonkDecoderManager> mManager;
 };

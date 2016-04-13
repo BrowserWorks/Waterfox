@@ -12,6 +12,7 @@
 #endif
 #include "VideoUtils.h"
 #include "ImageContainer.h"
+#include "mozilla/UniquePtrExtensions.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include <cutils/properties.h>
@@ -46,11 +47,28 @@ AudioData::EnsureAudioBuffer()
 size_t
 AudioData::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 {
-  size_t size = aMallocSizeOf(this) + aMallocSizeOf(mAudioData);
+  size_t size = aMallocSizeOf(this) + aMallocSizeOf(mAudioData.get());
   if (mAudioBuffer) {
     size += mAudioBuffer->SizeOfIncludingThis(aMallocSizeOf);
   }
   return size;
+}
+
+bool
+AudioData::IsAudible() const
+{
+  if (!mAudioData) {
+    return false;
+  }
+
+  for (uint32_t frame = 0; frame < mFrames; ++frame) {
+    for (uint32_t channel = 0; channel < mChannels; ++channel) {
+      if (mAudioData[frame * mChannels + channel] != 0) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 /* static */
@@ -61,15 +79,13 @@ AudioData::TransferAndUpdateTimestampAndDuration(AudioData* aOther,
 {
   NS_ENSURE_TRUE(aOther, nullptr);
   RefPtr<AudioData> v = new AudioData(aOther->mOffset,
-                                        aTimestamp,
-                                        aDuration,
-                                        aOther->mFrames,
-                                        aOther->mAudioData,
-                                        aOther->mChannels,
-                                        aOther->mRate);
+                                      aTimestamp,
+                                      aDuration,
+                                      aOther->mFrames,
+                                      Move(aOther->mAudioData),
+                                      aOther->mChannels,
+                                      aOther->mRate);
   v->mDiscontinuity = aOther->mDiscontinuity;
-  // Remove aOther's AudioData as it can't be shared across two targets.
-  aOther->mAudioData.forget();
 
   return v.forget();
 }
@@ -314,11 +330,11 @@ VideoData::Create(const VideoInfo& aInfo,
     // format.
 #ifdef MOZ_WIDGET_GONK
     if (IsYV12Format(Y, Cb, Cr) && !IsInEmulator()) {
-      v->mImage = aContainer->CreateImage(ImageFormat::GRALLOC_PLANAR_YCBCR);
+      v->mImage = new layers::GrallocImage();
     }
 #endif
     if (!v->mImage) {
-      v->mImage = aContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
+      v->mImage = aContainer->CreatePlanarYCbCrImage();
     }
   } else {
     v->mImage = aImage;
@@ -330,7 +346,8 @@ VideoData::Create(const VideoInfo& aInfo,
   NS_ASSERTION(v->mImage->GetFormat() == ImageFormat::PLANAR_YCBCR ||
                v->mImage->GetFormat() == ImageFormat::GRALLOC_PLANAR_YCBCR,
                "Wrong format?");
-  PlanarYCbCrImage* videoImage = static_cast<PlanarYCbCrImage*>(v->mImage.get());
+  PlanarYCbCrImage* videoImage = v->mImage->AsPlanarYCbCrImage();
+  MOZ_ASSERT(videoImage);
 
   bool shouldCopyData = (aImage == nullptr);
   if (!VideoData::SetVideoDataToImage(videoImage, aInfo, aBuffer, aPicture,
@@ -341,11 +358,11 @@ VideoData::Create(const VideoInfo& aInfo,
 #ifdef MOZ_WIDGET_GONK
   if (!videoImage->IsValid() && !aImage && IsYV12Format(Y, Cb, Cr)) {
     // Failed to allocate gralloc. Try fallback.
-    v->mImage = aContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
+    v->mImage = aContainer->CreatePlanarYCbCrImage();
     if (!v->mImage) {
       return nullptr;
     }
-    videoImage = static_cast<PlanarYCbCrImage*>(v->mImage.get());
+    videoImage = v->mImage->AsPlanarYCbCrImage();
     if(!VideoData::SetVideoDataToImage(videoImage, aInfo, aBuffer, aPicture,
                                        true /* aCopyData */)) {
       return nullptr;
@@ -462,22 +479,9 @@ VideoData::Create(const VideoInfo& aInfo,
                                       aInfo.mDisplay,
                                       0));
 
-  v->mImage = aContainer->CreateImage(ImageFormat::GRALLOC_PLANAR_YCBCR);
-  if (!v->mImage) {
-    return nullptr;
-  }
-  NS_ASSERTION(v->mImage->GetFormat() == ImageFormat::GRALLOC_PLANAR_YCBCR,
-               "Wrong format?");
-  typedef mozilla::layers::GrallocImage GrallocImage;
-  GrallocImage* videoImage = static_cast<GrallocImage*>(v->mImage.get());
-  GrallocImage::GrallocData data;
-
-  data.mPicSize = aPicture.Size();
-  data.mGraphicBuffer = aBuffer;
-
-  if (!videoImage->SetData(data)) {
-    return nullptr;
-  }
+  RefPtr<layers::GrallocImage> image = new layers::GrallocImage();
+  image->SetData(aBuffer, aPicture.Size());
+  v->mImage = image;
 
   return v.forget();
 }
@@ -547,8 +551,7 @@ MediaRawData::EnsureCapacity(size_t aSize)
   if (mData && mCapacity >= sizeNeeded) {
     return true;
   }
-  nsAutoArrayPtr<uint8_t> newBuffer;
-  newBuffer = new (fallible) uint8_t[sizeNeeded];
+  auto newBuffer = MakeUniqueFallible<uint8_t[]>(sizeNeeded);
   if (!newBuffer) {
     return false;
   }
@@ -560,7 +563,7 @@ MediaRawData::EnsureCapacity(size_t aSize)
   MOZ_ASSERT(uintptr_t(newData) % (RAW_DATA_ALIGNMENT+1) == 0);
   memcpy(newData, mData, mSize);
 
-  mBuffer = newBuffer.forget();
+  mBuffer = Move(newBuffer);
   mCapacity = sizeNeeded;
   mData = newData;
 

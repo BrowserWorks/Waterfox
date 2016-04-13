@@ -84,6 +84,7 @@ nsJAR::nsJAR(): mZip(new nsZipArchive()),
                 mReleaseTime(PR_INTERVAL_NO_TIMEOUT),
                 mCache(nullptr),
                 mLock("nsJAR::mLock"),
+                mMtime(0),
                 mTotalItemsInManifest(0),
                 mOpened(false)
 {
@@ -1055,6 +1056,7 @@ NS_IMPL_ISUPPORTS(nsZipReaderCache, nsIZipReaderCache, nsIObserver, nsISupportsW
 
 nsZipReaderCache::nsZipReaderCache()
   : mLock("nsZipReaderCache.mLock")
+  , mCacheSize(0)
   , mZips()
 #ifdef ZIP_CACHE_HIT_RATE
     ,
@@ -1331,16 +1333,6 @@ nsZipReaderCache::ReleaseZip(nsJAR* zip)
   return NS_OK;
 }
 
-static PLDHashOperator
-FindFlushableZip(const nsACString &aKey, RefPtr<nsJAR>& aCurrent, void*)
-{
-  if (aCurrent->GetReleaseTime() != PR_INTERVAL_NO_TIMEOUT) {
-    aCurrent->SetZipReaderCache(nullptr);
-    return PL_DHASH_REMOVE;
-  }
-  return PL_DHASH_NEXT;
-}
-
 NS_IMETHODIMP
 nsZipReaderCache::Observe(nsISupports *aSubject,
                           const char *aTopic,
@@ -1348,7 +1340,13 @@ nsZipReaderCache::Observe(nsISupports *aSubject,
 {
   if (strcmp(aTopic, "memory-pressure") == 0) {
     MutexAutoLock lock(mLock);
-    mZips.Enumerate(FindFlushableZip, nullptr);
+    for (auto iter = mZips.Iter(); !iter.Done(); iter.Next()) {
+      RefPtr<nsJAR>& current = iter.Data();
+      if (current->GetReleaseTime() != PR_INTERVAL_NO_TIMEOUT) {
+        current->SetZipReaderCache(nullptr);
+        iter.Remove();
+      }
+    }
   }
   else if (strcmp(aTopic, "chrome-flush-caches") == 0) {
     MutexAutoLock lock(mLock);

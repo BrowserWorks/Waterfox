@@ -112,7 +112,8 @@ public:
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
-    return ImageFrameSuper::IsFrameOfType(aFlags & ~(nsIFrame::eReplaced));
+    return ImageFrameSuper::IsFrameOfType(aFlags &
+      ~(nsIFrame::eReplaced | nsIFrame::eReplacedSizing));
   }
 
 #ifdef DEBUG_FRAME_DUMP
@@ -230,6 +231,7 @@ protected:
 protected:
   friend class nsImageListener;
   friend class nsImageLoadingContent;
+  friend class PresShell;
 
   nsresult OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage);
   nsresult OnFrameUpdate(imgIRequest* aRequest, const nsIntRect* aRect);
@@ -247,6 +249,7 @@ protected:
    * Computes the predicted dest rect that we'll draw into, in app units, based
    * upon the provided frame content box. (The content box is what
    * nsDisplayImage::GetBounds() returns.)
+   * The result is not necessarily contained in the frame content box.
    */
   nsRect PredictedDestRect(const nsRect& aFrameContentBox);
 
@@ -424,7 +427,8 @@ public:
                                                         nsDisplayListBuilder* aBuilder) override;
 
   /**
-   * @return the dest rect we'll use when drawing this image, in app units.
+   * @return The dest rect we'll use when drawing this image, in app units.
+   *         Not necessarily contained in this item's bounds.
    */
   nsRect GetDestRect(bool* aSnap = nullptr);
 

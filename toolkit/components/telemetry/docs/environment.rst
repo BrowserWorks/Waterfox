@@ -43,6 +43,7 @@ Structure::
         },
         searchCohort: <string>, // optional, contains an identifier for any active search A/B experiments
         e10sEnabled: <bool>, // whether e10s is on, i.e. browser tabs open by default in a different process
+        e10sCohort: <string>, // which e10s cohort was assigned for this user
         telemetryEnabled: <bool>, // false on failure
         isInOptoutSample: <bool>, // whether this client is part of the opt-out sample
         locale: <string>, // e.g. "it", null on failure
@@ -59,7 +60,7 @@ Structure::
             // only the fact that the value has been changed is recorded
         },
       },
-      profile: { // This section is not available on Android.
+      profile: {
         creationDate: <integer>, // integer days since UNIX epoch, e.g. 16446
         resetDate: <integer>, // integer days since UNIX epoch, e.g. 16446 - optional
       },

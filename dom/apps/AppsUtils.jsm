@@ -131,6 +131,10 @@ function _setAppProperties(aObj, aApp) {
   aObj.enabled = aApp.enabled !== undefined ? aApp.enabled : true;
   aObj.sideloaded = aApp.sideloaded;
   aObj.extensionVersion = aApp.extensionVersion;
+  aObj.blockedStatus =
+    aApp.blockedStatus !== undefined ? aApp.blockedStatus
+                                     : Ci.nsIBlocklistService.STATE_NOT_BLOCKED;
+  aObj.blocklistId = aApp.blocklistId;
 #ifdef MOZ_B2GDROID
   aObj.android_packagename = aApp.android_packagename;
   aObj.android_classname = aApp.android_classname;
@@ -783,7 +787,7 @@ this.AppsUtils = {
     }
 
     // Convert the binary hash data to a hex string.
-    return [toHexString(hash.charCodeAt(i)) for (i in hash)].join("");
+    return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join("");
   },
 
   // Returns the hash for a JS object.

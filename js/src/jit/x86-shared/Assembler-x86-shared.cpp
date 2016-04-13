@@ -62,8 +62,11 @@ TraceDataRelocations(JSTracer* trc, uint8_t* buffer, CompactBufferReader& reader
             layout.asBits = *word;
             Value v = IMPL_TO_JSVAL(layout);
             TraceManuallyBarrieredEdge(trc, &v, "ion-masm-value");
-            if (*word != JSVAL_TO_IMPL(v).asBits)
+            if (*word != JSVAL_TO_IMPL(v).asBits) {
+                // Only update the code if the Value changed, because the code
+                // is not writable if we're not moving objects.
                 *word = JSVAL_TO_IMPL(v).asBits;
+            }
             continue;
         }
 #endif
@@ -109,7 +112,7 @@ AssemblerX86Shared::processCodeLabels(uint8_t* rawCode)
 {
     for (size_t i = 0; i < codeLabels_.length(); i++) {
         CodeLabel label = codeLabels_[i];
-        Bind(rawCode, label.dest(), rawCode + label.src()->offset());
+        Bind(rawCode, label.patchAt(), rawCode + label.target()->offset());
     }
 }
 

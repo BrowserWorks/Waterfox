@@ -38,6 +38,7 @@ apt_packages+=('gstreamer0.10-plugins-base')
 apt_packages+=('gstreamer0.10-plugins-good')
 apt_packages+=('gstreamer0.10-plugins-ugly')
 apt_packages+=('gstreamer0.10-tools')
+apt_packages+=('language-pack-en-base')
 apt_packages+=('libasound2-dev')
 apt_packages+=('libasound2-plugins:i386')
 apt_packages+=('libcanberra-pulse')
@@ -103,6 +104,7 @@ apt_packages+=('ttf-oriya-fonts')
 apt_packages+=('ttf-paktype')
 apt_packages+=('ttf-punjabi-fonts')
 apt_packages+=('ttf-sazanami-mincho')
+apt_packages+=('ubuntu-desktop')
 apt_packages+=('unzip')
 apt_packages+=('uuid')
 apt_packages+=('vim')
@@ -114,6 +116,9 @@ apt_packages+=('zip')
 # get xvinfo for test-linux.sh to monitor Xvfb startup
 apt_packages+=('x11-utils')
 
+# Bug 1232407 - this allows the user to start vnc
+apt_packages+=('x11vnc')
+
 # Bug 1176031: need `xset` to disable screensavers
 apt_packages+=('x11-xserver-utils')
 
@@ -122,7 +127,11 @@ apt_packages+=('python-dev')
 apt_packages+=('python-pip')
 
 apt-get update
+# This allows ubuntu-desktop to be installed without human interaction
+export DEBIAN_FRONTEND=noninteractive
 apt-get install -y --force-yes ${apt_packages[@]}
+
+dpkg-reconfigure locales
 
 # set up tooltool (temporarily)
 curl https://raw.githubusercontent.com/mozilla/build-tooltool/master/tooltool.py > /setup/tooltool.py
@@ -175,6 +184,12 @@ EOF
 tar -C /usr/local -xz --strip-components 1 < node-*.tar.gz
 node -v  # verify
 
+# Install custom-built Debian packages.  These come from a set of repositories
+# packaged in tarballs on tooltool to make them replicable.  Because they have
+# inter-dependenices, we install all repositories first, then perform the
+# installation.
+cp /etc/apt/sources.list sources.list.orig
+
 # Install a slightly newer version of libxcb
 # See bug 975216 for the original build of these packages
 # NOTE: if you're re-creating this, the tarball contains an `update.sh` which will rebuild the repository.
@@ -189,12 +204,20 @@ tooltool_fetch <<'EOF'
 ]
 EOF
 tar -zxf xcb-repo-*.tgz
-cp /etc/apt/sources.list sources.list.orig
 echo "deb file://$PWD/xcb precise all" >> /etc/apt/sources.list
+
 apt-get update
-apt-get -q -y --force-yes install libxcb1 libxcb-render0 libxcb-shm0 libxcb-glx0 libxcb-shape0 libxcb-glx0:i386
+
+apt-get -q -y --force-yes install \
+    libxcb1 \
+    libxcb-render0 \
+    libxcb-shm0 \
+    libxcb-glx0 \
+    libxcb-shape0 libxcb-glx0:i386
 libxcb1_version=$(dpkg-query -s libxcb1 | grep ^Version | awk '{ print $2 }')
 [ "$libxcb1_version" = "1.8.1-2ubuntu2.1mozilla1" ] || exit 1
+
+# revert the list of repos
 cp sources.list.orig /etc/apt/sources.list
 apt-get update
 

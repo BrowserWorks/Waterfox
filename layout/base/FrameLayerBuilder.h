@@ -12,6 +12,7 @@
 #include "nsRegion.h"
 #include "nsIFrame.h"
 #include "DisplayItemClip.h"
+#include "mozilla/gfx/MatrixFwd.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "LayerState.h"
 #include "LayerUserData.h"
@@ -23,6 +24,7 @@ class gfxContext;
 class nsDisplayItemGeometry;
 
 namespace mozilla {
+class DisplayItemScrollClip;
 namespace layers {
 class ContainerLayer;
 class LayerManager;
@@ -30,10 +32,6 @@ class BasicLayerManager;
 class PaintedLayer;
 class ImageLayer;
 } // namespace layers
-
-namespace gfx {
-class Matrix4x4;
-} // namespace gfx
 
 class FrameLayerBuilder;
 class LayerManagerData;
@@ -57,20 +55,26 @@ struct ContainerLayerParameters {
     , mYScale(1)
     , mLayerContentsVisibleRect(nullptr)
     , mBackgroundColor(NS_RGBA(0,0,0,0))
+    , mScrollClip(nullptr)
+    , mScrollClipForPerspectiveChild(nullptr)
     , mInTransformedSubtree(false)
     , mInActiveTransformedSubtree(false)
     , mDisableSubpixelAntialiasingInDescendants(false)
     , mInLowPrecisionDisplayPort(false)
+    , mForEventsOnly(false)
   {}
   ContainerLayerParameters(float aXScale, float aYScale)
     : mXScale(aXScale)
     , mYScale(aYScale)
     , mLayerContentsVisibleRect(nullptr)
     , mBackgroundColor(NS_RGBA(0,0,0,0))
+    , mScrollClip(nullptr)
+    , mScrollClipForPerspectiveChild(nullptr)
     , mInTransformedSubtree(false)
     , mInActiveTransformedSubtree(false)
     , mDisableSubpixelAntialiasingInDescendants(false)
     , mInLowPrecisionDisplayPort(false)
+    , mForEventsOnly(false)
   {}
   ContainerLayerParameters(float aXScale, float aYScale,
                            const nsIntPoint& aOffset,
@@ -80,10 +84,13 @@ struct ContainerLayerParameters {
     , mLayerContentsVisibleRect(nullptr)
     , mOffset(aOffset)
     , mBackgroundColor(aParent.mBackgroundColor)
+    , mScrollClip(aParent.mScrollClip)
+    , mScrollClipForPerspectiveChild(aParent.mScrollClipForPerspectiveChild)
     , mInTransformedSubtree(aParent.mInTransformedSubtree)
     , mInActiveTransformedSubtree(aParent.mInActiveTransformedSubtree)
     , mDisableSubpixelAntialiasingInDescendants(aParent.mDisableSubpixelAntialiasingInDescendants)
     , mInLowPrecisionDisplayPort(aParent.mInLowPrecisionDisplayPort)
+    , mForEventsOnly(aParent.mForEventsOnly)
   {}
 
   float mXScale, mYScale;
@@ -104,14 +111,20 @@ struct ContainerLayerParameters {
   nsIntPoint mOffset;
 
   LayerIntPoint Offset() const {
-    return LayerIntPoint::FromUntyped(mOffset);
+    return LayerIntPoint::FromUnknownPoint(mOffset);
   }
 
   nscolor mBackgroundColor;
+  const DisplayItemScrollClip* mScrollClip;
+
+  // usually nullptr, except when building children of an nsDisplayPerspective
+  const DisplayItemScrollClip* mScrollClipForPerspectiveChild;
+
   bool mInTransformedSubtree;
   bool mInActiveTransformedSubtree;
   bool mDisableSubpixelAntialiasingInDescendants;
   bool mInLowPrecisionDisplayPort;
+  bool mForEventsOnly;
   /**
    * When this is false, PaintedLayer coordinates are drawn to with an integer
    * translation and the scale in mXScale/mYScale.
@@ -311,14 +324,12 @@ public:
    * @param aLayer Layer that the display item will be rendered into
    * @param aItem Display item to be drawn.
    * @param aLayerState What LayerState the item is using.
-   * @param aTopLeft offset from active scrolled root to reference frame
    * @param aManager If the layer is in the LAYER_INACTIVE state,
    * then this is the temporary layer manager to draw with.
    */
   void AddLayerDisplayItem(Layer* aLayer,
                            nsDisplayItem* aItem,
                            LayerState aLayerState,
-                           const nsPoint& aTopLeft,
                            BasicLayerManager* aManager);
 
   /**

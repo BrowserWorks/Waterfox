@@ -39,7 +39,7 @@ function onNotify(callback) {
 /**
  * Asynchronous task that adds a visit to the history database.
  */
-function task_add_visit(uri, timestamp, transition) {
+function* task_add_visit(uri, timestamp, transition) {
   uri = uri || NetUtil.newURI("http://firefox.com/");
   timestamp = timestamp || Date.now() * 1000;
   yield PlacesTestUtils.addVisits({
@@ -47,14 +47,10 @@ function task_add_visit(uri, timestamp, transition) {
     transition: transition || TRANSITION_TYPED,
     visitDate: timestamp
   });
-  throw new Task.Result([uri, timestamp]);
+  return [uri, timestamp];
 }
 
-function run_test() {
-  run_next_test();
-}
-
-add_task(function test_onVisit() {
+add_task(function* test_onVisit() {
   let promiseNotify = onNotify(function onVisit(aURI, aVisitID, aTime,
                                                 aSessionID, aReferringID,
                                                 aTransitionType, aGUID,
@@ -74,7 +70,7 @@ add_task(function test_onVisit() {
   yield promiseNotify;
 });
 
-add_task(function test_onVisit() {
+add_task(function* test_onVisit() {
   let promiseNotify = onNotify(function onVisit(aURI, aVisitID, aTime,
                                                 aSessionID, aReferringID,
                                                 aTransitionType, aGUID,
@@ -94,7 +90,7 @@ add_task(function test_onVisit() {
   yield promiseNotify;
 });
 
-add_task(function test_onDeleteURI() {
+add_task(function* test_onDeleteURI() {
   let promiseNotify = onNotify(function onDeleteURI(aURI, aGUID, aReason) {
     do_check_true(aURI.equals(testuri));
     // Can't use do_check_guid_for_uri() here because the visit is already gone.
@@ -107,7 +103,7 @@ add_task(function test_onDeleteURI() {
   yield promiseNotify;
 });
 
-add_task(function test_onDeleteVisits() {
+add_task(function* test_onDeleteVisits() {
   let promiseNotify = onNotify(function onDeleteVisits(aURI, aVisitTime, aGUID,
                                                        aReason) {
     do_check_true(aURI.equals(testuri));
@@ -128,7 +124,7 @@ add_task(function test_onDeleteVisits() {
   yield promiseNotify;
 });
 
-add_task(function test_onTitleChanged() {
+add_task(function* test_onTitleChanged() {
   let promiseNotify = onNotify(function onTitleChanged(aURI, aTitle, aGUID) {
     do_check_true(aURI.equals(testuri));
     do_check_eq(aTitle, title);
@@ -144,7 +140,7 @@ add_task(function test_onTitleChanged() {
   yield promiseNotify;
 });
 
-add_task(function test_onPageChanged() {
+add_task(function* test_onPageChanged() {
   let promiseNotify = onNotify(function onPageChanged(aURI, aChangedAttribute,
                                                       aNewValue, aGUID) {
     do_check_eq(aChangedAttribute, Ci.nsINavHistoryObserver.ATTRIBUTE_FAVICON);
@@ -161,6 +157,7 @@ add_task(function test_onPageChanged() {
   PlacesUtils.favicons.setAndFetchFaviconForPage(testuri, SMALLPNG_DATA_URI,
                                                  false,
                                                  PlacesUtils.favicons.FAVICON_LOAD_NON_PRIVATE,
-                                                 null);
+                                                 null,
+                                                 Services.scriptSecurityManager.getSystemPrincipal());
   yield promiseNotify;
 });

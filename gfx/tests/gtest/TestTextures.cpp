@@ -10,12 +10,13 @@
 #include "mozilla/gfx/Tools.h"
 #include "mozilla/layers/TextureClient.h"
 #include "mozilla/layers/TextureHost.h"
+#include "mozilla/layers/BufferTexture.h"
 #include "mozilla/RefPtr.h"
 #include "gfx2DGlue.h"
 #include "gfxImageSurface.h"
 #include "gfxTypes.h"
 #include "ImageContainer.h"
-#include "mozilla/layers/YCbCrImageDataSerializer.h"
+#include "mozilla/layers/ImageDataSerializer.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -118,38 +119,11 @@ void AssertSurfacesEqual(SourceSurface* surface1,
   dataSurface2->Unmap();
 }
 
-// Same as above, for YCbCr surfaces
-void AssertYCbCrSurfacesEqual(PlanarYCbCrData* surface1,
-                              PlanarYCbCrData* surface2)
-{
-  ASSERT_EQ(surface1->mYSize, surface2->mYSize);
-  ASSERT_EQ(surface1->mCbCrSize, surface2->mCbCrSize);
-  ASSERT_EQ(surface1->mStereoMode, surface2->mStereoMode);
-  ASSERT_EQ(surface1->mPicSize, surface2->mPicSize);
-
-  for (int y = 0; y < surface1->mYSize.height; ++y) {
-    for (int x = 0; x < surface1->mYSize.width; ++x) {
-      ASSERT_EQ(surface1->mYChannel[y*surface1->mYStride + x*(1+surface1->mYSkip)],
-                surface2->mYChannel[y*surface2->mYStride + x*(1+surface2->mYSkip)]);
-    }
-  }
-  for (int y = 0; y < surface1->mCbCrSize.height; ++y) {
-    for (int x = 0; x < surface1->mCbCrSize.width; ++x) {
-      ASSERT_EQ(surface1->mCbChannel[y*surface1->mCbCrStride + x*(1+surface1->mCbSkip)],
-                surface2->mCbChannel[y*surface2->mCbCrStride + x*(1+surface2->mCbSkip)]);
-      ASSERT_EQ(surface1->mCrChannel[y*surface1->mCbCrStride + x*(1+surface1->mCrSkip)],
-                surface2->mCrChannel[y*surface2->mCbCrStride + x*(1+surface2->mCrSkip)]);
-    }
-  }
-}
-
 // Run the test for a texture client and a surface
 void TestTextureClientSurface(TextureClient* texture, gfxImageSurface* surface) {
 
   // client allocation
   ASSERT_TRUE(texture->CanExposeDrawTarget());
-  texture->AllocateForSurface(surface->GetSize());
-  ASSERT_TRUE(texture->IsAllocated());
 
   ASSERT_TRUE(texture->Lock(OpenMode::OPEN_READ_WRITE));
   // client painting
@@ -199,25 +173,21 @@ void TestTextureClientSurface(TextureClient* texture, gfxImageSurface* surface) 
 
 // Same as above, for YCbCr surfaces
 void TestTextureClientYCbCr(TextureClient* client, PlanarYCbCrData& ycbcrData) {
-
-  // client allocation
-  ASSERT_TRUE(client->AsTextureClientYCbCr() != nullptr);
-  TextureClientYCbCr* texture = client->AsTextureClientYCbCr();
-  texture->AllocateForYCbCr(ycbcrData.mYSize,
-                            ycbcrData.mCbCrSize,
-                            ycbcrData.mStereoMode);
-  ASSERT_TRUE(client->IsAllocated());
-
-  ASSERT_TRUE(client->Lock(OpenMode::OPEN_READ_WRITE));
-  // client painting
-  texture->UpdateYCbCr(ycbcrData);
+  client->Lock(OpenMode::OPEN_READ_WRITE);
+  UpdateYCbCrTextureClient(client, ycbcrData);
   client->Unlock();
 
   // client serialization
   SurfaceDescriptor descriptor;
   ASSERT_TRUE(client->ToSurfaceDescriptor(descriptor));
 
-  ASSERT_NE(descriptor.type(), SurfaceDescriptor::Tnull_t);
+  ASSERT_EQ(descriptor.type(), SurfaceDescriptor::TSurfaceDescriptorBuffer);
+  auto bufferDesc = descriptor.get_SurfaceDescriptorBuffer();
+  ASSERT_EQ(bufferDesc.desc().type(), BufferDescriptor::TYCbCrDescriptor);
+  auto ycbcrDesc = bufferDesc.desc().get_YCbCrDescriptor();
+  ASSERT_EQ(ycbcrDesc.ySize(), ycbcrData.mYSize);
+  ASSERT_EQ(ycbcrDesc.cbCrSize(), ycbcrData.mCbCrSize);
+  ASSERT_EQ(ycbcrDesc.stereoMode(), ycbcrData.mStereoMode);
 
   // host deserialization
   RefPtr<TextureHost> textureHost = CreateBackendIndependentTextureHost(descriptor, nullptr,
@@ -233,26 +203,6 @@ void TestTextureClientYCbCr(TextureClient* client, PlanarYCbCrData& ycbcrData) {
   if (host->Lock()) {
     // This will work iff the compositor is not BasicCompositor
     ASSERT_EQ(host->GetFormat(), mozilla::gfx::SurfaceFormat::YUV);
-
-    YCbCrImageDataDeserializer yuvDeserializer(host->GetBuffer(), host->GetBufferSize());
-    ASSERT_TRUE(yuvDeserializer.IsValid());
-    PlanarYCbCrData data;
-    data.mYChannel = yuvDeserializer.GetYData();
-    data.mCbChannel = yuvDeserializer.GetCbData();
-    data.mCrChannel = yuvDeserializer.GetCrData();
-    data.mYStride = yuvDeserializer.GetYStride();
-    data.mCbCrStride = yuvDeserializer.GetCbCrStride();
-    data.mStereoMode = yuvDeserializer.GetStereoMode();
-    data.mYSize = yuvDeserializer.GetYSize();
-    data.mCbCrSize = yuvDeserializer.GetCbCrSize();
-    data.mYSkip = 0;
-    data.mCbSkip = 0;
-    data.mCrSkip = 0;
-    data.mPicSize = data.mYSize;
-    data.mPicX = 0;
-    data.mPicY = 0;
-
-    AssertYCbCrSurfacesEqual(&ycbcrData, &data);
     host->Unlock();
   }
 }
@@ -263,9 +213,9 @@ void TestTextureClientYCbCr(TextureClient* client, PlanarYCbCrData& ycbcrData) {
 TEST(Layers, TextureSerialization) {
   // the test is run on all the following image formats
   gfxImageFormat formats[3] = {
-    gfxImageFormat::ARGB32,
-    gfxImageFormat::RGB24,
-    gfxImageFormat::A8,
+    SurfaceFormat::A8R8G8B8_UINT32,
+    SurfaceFormat::X8R8G8B8_UINT32,
+    SurfaceFormat::A8,
   };
 
   for (int f = 0; f < 3; ++f) {
@@ -273,11 +223,15 @@ TEST(Layers, TextureSerialization) {
     SetupSurface(surface.get());
     AssertSurfacesEqual(surface, surface);
 
-    RefPtr<TextureClient> client
-      = new MemoryTextureClient(nullptr,
-                                mozilla::gfx::ImageFormatToSurfaceFormat(surface->Format()),
-                                gfx::BackendType::CAIRO,
-                                TextureFlags::DEALLOCATE_CLIENT);
+    auto texData = BufferTextureData::Create(surface->GetSize(),
+      gfx::ImageFormatToSurfaceFormat(surface->Format()),
+      gfx::BackendType::CAIRO, TextureFlags::DEALLOCATE_CLIENT, ALLOC_DEFAULT, nullptr
+    );
+    ASSERT_TRUE(!!texData);
+
+    RefPtr<TextureClient> client = new TextureClient(
+      texData, TextureFlags::DEALLOCATE_CLIENT, nullptr
+    );
 
     TestTextureClientSurface(client, surface);
 
@@ -286,9 +240,9 @@ TEST(Layers, TextureSerialization) {
 }
 
 TEST(Layers, TextureYCbCrSerialization) {
-  RefPtr<gfxImageSurface> ySurface = new gfxImageSurface(IntSize(400,300), gfxImageFormat::A8);
-  RefPtr<gfxImageSurface> cbSurface = new gfxImageSurface(IntSize(200,150), gfxImageFormat::A8);
-  RefPtr<gfxImageSurface> crSurface = new gfxImageSurface(IntSize(200,150), gfxImageFormat::A8);
+  RefPtr<gfxImageSurface> ySurface = new gfxImageSurface(IntSize(400,300), SurfaceFormat::A8);
+  RefPtr<gfxImageSurface> cbSurface = new gfxImageSurface(IntSize(200,150), SurfaceFormat::A8);
+  RefPtr<gfxImageSurface> crSurface = new gfxImageSurface(IntSize(200,150), SurfaceFormat::A8);
   SetupSurface(ySurface.get());
   SetupSurface(cbSurface.get());
   SetupSurface(crSurface.get());
@@ -310,11 +264,8 @@ TEST(Layers, TextureYCbCrSerialization) {
   clientData.mPicX = 0;
   clientData.mPicX = 0;
 
-  RefPtr<TextureClient> client
-    = new MemoryTextureClient(nullptr,
-                              mozilla::gfx::SurfaceFormat::YUV,
-                              gfx::BackendType::CAIRO,
-                              TextureFlags::DEALLOCATE_CLIENT);
+  RefPtr<TextureClient> client = TextureClient::CreateForYCbCr(nullptr, clientData.mYSize, clientData.mCbCrSize,
+                                                               StereoMode::MONO, TextureFlags::DEALLOCATE_CLIENT);
 
   TestTextureClientYCbCr(client, clientData);
 

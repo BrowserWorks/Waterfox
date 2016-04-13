@@ -34,12 +34,23 @@
 #include "nsITreeBoxObject.h"
 #include "nsITreeColumns.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/dom/HTMLLabelElement.h"
 
 using namespace mozilla;
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsCoreUtils
 ////////////////////////////////////////////////////////////////////////////////
+
+bool
+nsCoreUtils::IsLabelWithControl(nsIContent* aContent)
+{
+  dom::HTMLLabelElement* label = dom::HTMLLabelElement::FromContent(aContent);
+  if (label && label->GetControl())
+    return true;
+
+  return false;
+}
 
 bool
 nsCoreUtils::HasClickListener(nsIContent *aContent)
@@ -150,7 +161,7 @@ nsCoreUtils::DispatchTouchEvent(EventMessage aMessage, int32_t aX, int32_t aY,
 
   // XXX: Touch has an identifier of -1 to hint that it is synthesized.
   RefPtr<dom::Touch> t = new dom::Touch(-1, LayoutDeviceIntPoint(aX, aY),
-                                          nsIntPoint(1, 1), 0.0f, 1.0f);
+                                        LayoutDeviceIntPoint(1, 1), 0.0f, 1.0f);
   t->SetTarget(aContent);
   event.touches.AppendElement(t);
   nsEventStatus status = nsEventStatus_eIgnore;

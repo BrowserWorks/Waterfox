@@ -22,6 +22,9 @@ const HeapAnalysesClient =
 const Services = require("Services");
 const { censusReportToCensusTreeNode } = require("devtools/shared/heapsnapshot/census-tree-node");
 const CensusUtils = require("devtools/shared/heapsnapshot/CensusUtils");
+const DominatorTreeNode = require("devtools/shared/heapsnapshot/DominatorTreeNode");
+const { LabelAndShallowSizeVisitor } = DominatorTreeNode;
+
 
 // Always log packets when running tests. runxpcshelltests.py will throw
 // the output away anyway, unless you give it the --verbose flag.
@@ -117,6 +120,13 @@ function saveNewHeapSnapshot(opts = { runtime: true }) {
   return filePath;
 }
 
+function readHeapSnapshot(filePath) {
+  const snapshot = ChromeUtils.readHeapSnapshot(filePath);
+  ok(snapshot, "Should have read a heap snapshot back from " + filePath);
+  ok(snapshot instanceof HeapSnapshot, "snapshot should be an instance of HeapSnapshot");
+  return snapshot;
+}
+
 /**
  * Save a heap snapshot to the file with the given name in the current
  * directory, read it back as a HeapSnapshot instance, and then take a census of
@@ -138,16 +148,38 @@ function saveNewHeapSnapshot(opts = { runtime: true }) {
  */
 function saveHeapSnapshotAndTakeCensus(dbg=null, censusOptions=undefined) {
   const snapshotOptions = dbg ? { debugger: dbg } : { runtime: true };
-  const filePath = ChromeUtils.saveHeapSnapshot(snapshotOptions);
-  ok(filePath, "Should get a file path to save the core dump to.");
-  ok(true, "Should have saved a heap snapshot to " + filePath);
-
-  const snapshot = ChromeUtils.readHeapSnapshot(filePath);
-  ok(snapshot, "Should have read a heap snapshot back from " + filePath);
-  ok(snapshot instanceof HeapSnapshot, "snapshot should be an instance of HeapSnapshot");
+  const filePath = saveNewHeapSnapshot(snapshotOptions);
+  const snapshot = readHeapSnapshot(filePath);
 
   equal(typeof snapshot.takeCensus, "function", "snapshot should have a takeCensus method");
+
   return snapshot.takeCensus(censusOptions);
+}
+
+/**
+ * Save a heap snapshot to disk, read it back as a HeapSnapshot instance, and
+ * then compute its dominator tree.
+ *
+ * @param {Debugger|null} dbg
+ *        If a Debugger object is given, only serialize the subgraph covered by
+ *        the Debugger's debuggees. If null, serialize the whole heap graph.
+ *
+ * @returns {DominatorTree}
+ */
+function saveHeapSnapshotAndComputeDominatorTree(dbg = null) {
+  const snapshotOptions = dbg ? { debugger: dbg } : { runtime: true };
+  const filePath = saveNewHeapSnapshot(snapshotOptions);
+  const snapshot = readHeapSnapshot(filePath);
+
+  equal(typeof snapshot.computeDominatorTree, "function",
+        "snapshot should have a `computeDominatorTree` method");
+
+  const dominatorTree = snapshot.computeDominatorTree();
+
+  ok(dominatorTree, "Should be able to compute a dominator tree");
+  ok(dominatorTree instanceof DominatorTree, "Should be an instance of DominatorTree");
+
+  return dominatorTree;
 }
 
 function isSavedFrame(obj) {
@@ -264,6 +296,82 @@ function assertDiff(breakdown, first, second, expected) {
 
   const actual = CensusUtils.diff(breakdown, first, second);
   dumpn("Actual delta-report: " + JSON.stringify(actual, null, 4));
+
+  assertStructurallyEquivalent(actual, expected);
+}
+
+/**
+ * Assert that creating a label and getting a shallow size from the given node
+ * description with the specified breakdown is as expected.
+ *
+ * @param {Object} breakdown
+ * @param {Object} givenDescription
+ * @param {Number} expectedShallowSize
+ * @param {Object} expectedLabel
+ */
+function assertLabelAndShallowSize(breakdown, givenDescription, expectedShallowSize, expectedLabel) {
+  dumpn("Computing label and shallow size from node description:");
+  dumpn("Breakdown: " + JSON.stringify(breakdown, null, 4));
+  dumpn("Given description: " + JSON.stringify(givenDescription, null, 4));
+
+  const visitor = new LabelAndShallowSizeVisitor();
+  CensusUtils.walk(breakdown, description, visitor);
+
+  dumpn("Expected shallow size: " + expectedShallowSize);
+  dumpn("Actual shallow size: " + visitor.shallowSize());
+  equal(visitor.shallowSize(), expectedShallowSize, "Shallow size should be correct");
+
+  dumpn("Expected label: " + JSON.stringify(expectedLabel, null, 4));
+  dumpn("Actual label: " + JSON.stringify(visitor.label(), null, 4));
+  assertStructurallyEquivalent(visitor.label(), expectedLabel);
+}
+
+// Counter for mock DominatorTreeNode ids.
+let TEST_NODE_ID_COUNTER = 0;
+
+/**
+ * Create a mock DominatorTreeNode for testing, with sane defaults. Override any
+ * property by providing it on `opts`. Optionally pass child nodes as well.
+ *
+ * @param {Object} opts
+ * @param {Array<DominatorTreeNode>?} children
+ *
+ * @returns {DominatorTreeNode}
+ */
+function makeTestDominatorTreeNode(opts, children) {
+  const nodeId = TEST_NODE_ID_COUNTER++;
+
+  const node = Object.assign({
+    nodeId,
+    label: undefined,
+    shallowSize: 1,
+    retainedSize: (children || []).reduce((size, c) => size + c.retainedSize, 1),
+    parentId: undefined,
+    children,
+    moreChildrenAvailable: true,
+  }, opts);
+
+  if (children && children.length) {
+    children.map(c => c.parentId = node.nodeId);
+  }
+
+  return node;
+}
+
+/**
+ * Insert `newChildren` into the given dominator `tree` as specified by the
+ * `path` from the root to the node the `newChildren` should be inserted
+ * beneath. Assert that the resulting tree matches `expected`.
+ */
+function assertDominatorTreeNodeInsertion(tree, path, newChildren, moreChildrenAvailable, expected) {
+  dumpn("Inserting new children into a dominator tree:");
+  dumpn("Dominator tree: " + JSON.stringify(tree, null, 2));
+  dumpn("Path: " + JSON.stringify(path, null, 2));
+  dumpn("New children: " + JSON.stringify(newChildren, null, 2));
+  dumpn("Expected resulting tree: " + JSON.stringify(expected, null, 2));
+
+  const actual = DominatorTreeNode.insert(tree, path, newChildren, moreChildrenAvailable);
+  dumpn("Actual resulting tree: " + JSON.stringify(actual, null, 2));
 
   assertStructurallyEquivalent(actual, expected);
 }

@@ -272,10 +272,11 @@ SyncScheduler.prototype = {
       case "wake_notification":
         this._log.debug("Woke from sleep.");
         Utils.nextTick(() => {
-          // Trigger a sync if we have multiple clients.
+          // Trigger a sync if we have multiple clients. We give it 5 seconds
+          // incase the network is still in the process of coming back up.
           if (this.numClients > 1) {
-            this._log.debug("More than 1 client. Syncing.");
-            this.scheduleNextSync(0);
+            this._log.debug("More than 1 client. Will sync in 5s.");
+            this.scheduleNextSync(5000);
           }
         });
         break;
@@ -577,10 +578,10 @@ ErrorHandler.prototype = {
         let exception = subject;  // exception thrown by engine's sync() method
         let engine_name = data;   // engine name that threw the exception
 
-        this.checkServerError(exception, "engines/" + engine_name);
+        this.checkServerError(exception);
 
         Status.engines = [engine_name, exception.failureCode || ENGINE_UNKNOWN_FAIL];
-        this._log.debug(engine_name + " failed: " + Utils.exceptionStr(exception));
+        this._log.debug(engine_name + " failed", exception);
 
         Services.telemetry.getKeyedHistogramById("WEAVE_ENGINE_SYNC_ERRORS")
                           .add(engine_name);
@@ -830,7 +831,7 @@ ErrorHandler.prototype = {
    *
    * This method also looks for "side-channel" warnings.
    */
-  checkServerError: function (resp, cause) {
+  checkServerError: function (resp) {
     switch (resp.status) {
       case 200:
       case 404:
@@ -860,9 +861,6 @@ ErrorHandler.prototype = {
         break;
 
       case 401:
-        Services.telemetry.getKeyedHistogramById(
-          "WEAVE_STORAGE_AUTH_ERRORS").add(cause);
-
         this.service.logout();
         this._log.info("Got 401 response; resetting clusterURL.");
         Svc.Prefs.reset("clusterURL");

@@ -2,14 +2,14 @@
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<?xml-stylesheet href="chrome://browser/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/content/shared/widgets/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/content/inspector/inspector.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/common.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/inspector.css" type="text/css"?>
 <!DOCTYPE window [
-  <!ENTITY % inspectorDTD SYSTEM "chrome://browser/locale/devtools/inspector.dtd" >
+  <!ENTITY % inspectorDTD SYSTEM "chrome://devtools/locale/inspector.dtd" >
    %inspectorDTD;
 ]>
 
@@ -154,11 +154,12 @@
           class="breadcrumbs-widget-container"
           flex="1" orient="horizontal"
           clicktoscroll="true"/>
+        <box id="inspector-searchlabel" />
         <textbox id="inspector-searchbox"
           type="search"
           timeout="50"
           class="devtools-searchinput"
-          placeholder="&inspectorSearchHTML.label2;"/>
+          placeholder="&inspectorSearchHTML.label3;"/>
         <toolbarbutton id="inspector-pane-toggle"
           class="devtools-toolbarbutton"
           tabindex="0" />

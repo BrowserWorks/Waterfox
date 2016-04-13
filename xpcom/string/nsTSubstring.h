@@ -880,11 +880,6 @@ public:
   }
 #endif /* DEBUG || FORCE_BUILD_REFCNT_LOGGING */
 
-  size_t SizeOfExcludingThisMustBeUnshared(mozilla::MallocSizeOf aMallocSizeOf)
-  const;
-  size_t SizeOfIncludingThisMustBeUnshared(mozilla::MallocSizeOf aMallocSizeOf)
-  const;
-
   size_t SizeOfExcludingThisIfUnshared(mozilla::MallocSizeOf aMallocSizeOf)
   const;
   size_t SizeOfIncludingThisIfUnshared(mozilla::MallocSizeOf aMallocSizeOf)
@@ -1127,6 +1122,13 @@ Compare(const nsTSubstring_CharT::base_string_type& aLhs,
 inline bool
 operator!=(const nsTSubstring_CharT::base_string_type& aLhs,
            const nsTSubstring_CharT::base_string_type& aRhs)
+{
+  return !aLhs.Equals(aRhs);
+}
+
+inline bool
+operator!=(const nsTSubstring_CharT::base_string_type& aLhs,
+           const nsTSubstring_CharT::char_type* aRhs)
 {
   return !aLhs.Equals(aRhs);
 }

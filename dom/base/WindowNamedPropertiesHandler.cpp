@@ -7,6 +7,7 @@
 #include "WindowNamedPropertiesHandler.h"
 #include "mozilla/dom/EventTargetBinding.h"
 #include "mozilla/dom/WindowBinding.h"
+#include "nsContentUtils.h"
 #include "nsDOMClassInfo.h"
 #include "nsGlobalWindow.h"
 #include "nsHTMLDocument.h"
@@ -158,7 +159,7 @@ WindowNamedPropertiesHandler::defineProperty(JSContext* aCx,
 {
   ErrorResult rv;
   rv.ThrowTypeError<MSG_DEFINEPROPERTY_ON_GSP>();
-  rv.ReportErrorWithMessage(aCx);
+  rv.MaybeSetPendingException(aCx);
   return false;
 }
 

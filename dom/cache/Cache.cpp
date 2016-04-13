@@ -46,8 +46,8 @@ IsValidPutRequestURL(const nsAString& aUrl, ErrorResult& aRv)
   }
 
   if (!validScheme) {
-    NS_NAMED_LITERAL_STRING(label, "Request");
-    aRv.ThrowTypeError<MSG_INVALID_URL_SCHEME>(&label, &aUrl);
+    aRv.ThrowTypeError<MSG_INVALID_URL_SCHEME>(NS_LITERAL_STRING("Request"),
+                                               aUrl);
     return false;
   }
 
@@ -61,7 +61,7 @@ IsValidPutRequestMethod(const Request& aRequest, ErrorResult& aRv)
   aRequest.GetMethod(method);
   if (!method.LowerCaseEqualsLiteral("get")) {
     NS_ConvertASCIItoUTF16 label(method);
-    aRv.ThrowTypeError<MSG_INVALID_REQUEST_METHOD>(&label);
+    aRv.ThrowTypeError<MSG_INVALID_REQUEST_METHOD>(label);
     return false;
   }
 
@@ -155,6 +155,26 @@ public:
 
       if (NS_WARN_IF(response->Type() == ResponseType::Error)) {
         Fail();
+        return;
+      }
+
+      // Do not allow the convenience methods .add()/.addAll() to store failed
+      // responses.  A consequence of this is that these methods cannot be
+      // used to store opaque or opaqueredirect responses since they always
+      // expose a 0 status value.
+      if (!response->Ok()) {
+        uint32_t t = static_cast<uint32_t>(response->Type());
+        NS_ConvertASCIItoUTF16 type(ResponseTypeValues::strings[t].value,
+                                    ResponseTypeValues::strings[t].length);
+        nsAutoString status;
+        status.AppendInt(response->Status());
+        nsAutoString url;
+        mRequestList[i]->GetUrl(url);
+        ErrorResult rv;
+        rv.ThrowTypeError<MSG_CACHE_ADD_FAILED_RESPONSE>(type, status, url);
+
+        // TODO: abort the fetch requests we have running (bug 1157434)
+        mPromise->MaybeReject(rv);
         return;
       }
 

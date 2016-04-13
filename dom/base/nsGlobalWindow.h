@@ -129,7 +129,7 @@ class IDBFactory;
 } // namespace indexedDB
 } // namespace dom
 namespace gfx {
-class VRHMDInfo;
+class VRDeviceProxy;
 } // namespace gfx
 } // namespace mozilla
 
@@ -267,15 +267,7 @@ public:
     , mValue(aValue) {}
   nsresult Get(nsIPrincipal* aSubject, nsIVariant** aResult);
   void Get(JSContext* aCx, JS::Handle<JSObject*> aScope, nsIPrincipal* aSubject,
-           JS::MutableHandle<JS::Value> aResult, mozilla::ErrorResult& aError)
-  {
-    if (aSubject->Subsumes(mOrigin)) {
-      aError = nsContentUtils::XPConnect()->VariantToJS(aCx, aScope,
-                                                        mValue, aResult);
-    } else {
-      aResult.setUndefined();
-    }
-  }
+           JS::MutableHandle<JS::Value> aResult, mozilla::ErrorResult& aError);
 private:
   virtual ~DialogValueHolder() {}
 
@@ -359,8 +351,6 @@ public:
 
   virtual bool IsBlackForCC(bool aTracingNeeded = true) override;
 
-  static JSObject* OuterObject(JSContext* aCx, JS::Handle<JSObject*> aObj);
-
   // nsIScriptObjectPrincipal
   virtual nsIPrincipal* GetPrincipal() override;
 
@@ -416,6 +406,7 @@ public:
   // Outer windows only.
   virtual void ActivateOrDeactivate(bool aActivate) override;
   virtual void SetActive(bool aActive) override;
+  virtual bool IsTopLevelWindowActive() override;
   virtual void SetIsBackground(bool aIsBackground) override;
   virtual void SetChromeEventHandler(mozilla::dom::EventTarget* aChromeEventHandler) override;
 
@@ -481,9 +472,9 @@ public:
   // Outer windows only.
   virtual nsresult SetFullscreenInternal(
     FullscreenReason aReason, bool aIsFullscreen,
-    mozilla::gfx::VRHMDInfo *aHMD = nullptr) override final;
+    mozilla::gfx::VRDeviceProxy *aHMD = nullptr) override final;
   virtual void FinishFullscreenChange(bool aIsFullscreen) override final;
-  void SetWidgetFullscreen(FullscreenReason aReason, bool aIsFullscreen,
+  bool SetWidgetFullscreen(FullscreenReason aReason, bool aIsFullscreen,
                            nsIWidget* aWidget, nsIScreen* aScreen);
   bool FullScreen() const;
 
@@ -770,8 +761,8 @@ public:
   void EnableGamepadUpdates();
   void DisableGamepadUpdates();
 
-  // Get the VR devices for this window, initializing if necessary
-  bool GetVRDevices(nsTArray<RefPtr<mozilla::dom::VRDevice>>& aDevices);
+  // Update the VR devices for this window
+  bool UpdateVRDevices(nsTArray<RefPtr<mozilla::dom::VRDevice>>& aDevices);
 
 #define EVENT(name_, id_, type_, struct_)                                     \
   mozilla::dom::EventHandlerNonNull* GetOn##name_()                           \
@@ -1055,6 +1046,7 @@ public:
 #ifdef MOZ_WEBSPEECH
   mozilla::dom::SpeechSynthesis*
     GetSpeechSynthesis(mozilla::ErrorResult& aError);
+  bool HasActiveSpeechSynthesis();
 #endif
   already_AddRefed<nsICSSDeclaration>
     GetDefaultComputedStyle(mozilla::dom::Element& aElt,
@@ -1133,7 +1125,10 @@ public:
   {
     MOZ_ASSERT(IsOuterWindow());
     mozilla::ErrorResult ignored;
-    return GetContentInternal(ignored, /* aUnprivilegedCaller = */ false);
+    nsCOMPtr<nsIDOMWindow> win =
+      GetContentInternal(ignored, /* aUnprivilegedCaller = */ false);
+    ignored.SuppressException();
+    return win.forget();
   }
 
   void Get_content(JSContext* aCx,
@@ -1399,7 +1394,6 @@ private:
                                     bool aNavigate,
                                     nsIArray *argv,
                                     nsISupports *aExtraArgument,
-                                    nsIPrincipal *aCalleePrincipal,
                                     JSContext *aJSCallerContext,
                                     nsIDOMWindow **aReturn);
 
@@ -1674,6 +1668,11 @@ protected:
   // Window offline status. Checked to see if we need to fire offline event
   bool                          mWasOffline : 1;
 
+  // Represents whether the inner window's page has had a slow script notice.
+  // Only used by inner windows; will always be false for outer windows.
+  // This is used to implement Telemetry measures such as SLOW_SCRIPT_PAGE_COUNT.
+  bool                          mHasHadSlowScript : 1;
+
   // Track what sorts of events we need to fire when thawed
   bool                          mNotifyIdleObserversIdleOnThaw : 1;
   bool                          mNotifyIdleObserversActiveOnThaw : 1;
@@ -1856,12 +1855,8 @@ protected:
   // This is the CC generation the last time we called CanSkip.
   uint32_t mCanSkipCCGeneration;
 
-  // Did VR get initialized for this window?
-  bool                                       mVRDevicesInitialized;
   // The VRDevies for this window
   nsTArray<RefPtr<mozilla::dom::VRDevice>> mVRDevices;
-  // Any attached HMD when fullscreen
-  RefPtr<mozilla::gfx::VRHMDInfo>          mVRHMDInfo;
 
   friend class nsDOMScriptableHelper;
   friend class nsDOMWindowUtils;

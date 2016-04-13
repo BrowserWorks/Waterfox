@@ -17,7 +17,7 @@
 #include "BluetoothReplyRunnable.h"
 #include "BluetoothService.h"
 
-using mozilla::unused;
+using mozilla::Unused;
 USING_BLUETOOTH_NAMESPACE
 
 /*******************************************************************************
@@ -99,7 +99,7 @@ BluetoothParent::BeginShutdown()
 {
   // Only do something here if we haven't yet begun the shutdown sequence.
   if (mShutdownState == Running) {
-    unused << SendBeginShutdown();
+    Unused << SendBeginShutdown();
     mShutdownState = SentBeginShutdown;
   }
 }
@@ -206,6 +206,10 @@ BluetoothParent::RecvPBluetoothRequestConstructor(
       return actor->DoRequest(aRequest.get_StartLeScanRequest());
     case Request::TStopLeScanRequest:
       return actor->DoRequest(aRequest.get_StopLeScanRequest());
+    case Request::TStartAdvertisingRequest:
+      return actor->DoRequest(aRequest.get_StartAdvertisingRequest());
+    case Request::TStopAdvertisingRequest:
+      return actor->DoRequest(aRequest.get_StopAdvertisingRequest());
     case Request::TPairRequest:
       return actor->DoRequest(aRequest.get_PairRequest());
     case Request::TUnpairRequest:
@@ -246,6 +250,10 @@ BluetoothParent::RecvPBluetoothRequestConstructor(
       return actor->DoRequest(aRequest.get_DisconnectScoRequest());
     case Request::TIsScoConnectedRequest:
       return actor->DoRequest(aRequest.get_IsScoConnectedRequest());
+    case Request::TSetObexPasswordRequest:
+      return actor->DoRequest(aRequest.get_SetObexPasswordRequest());
+    case Request::TRejectObexAuthRequest:
+      return actor->DoRequest(aRequest.get_RejectObexAuthRequest());
     case Request::TReplyTovCardPullingRequest:
       return actor->DoRequest(aRequest.get_ReplyTovCardPullingRequest());
     case Request::TReplyToPhonebookPullingRequest:
@@ -304,6 +312,9 @@ BluetoothParent::RecvPBluetoothRequestConstructor(
     case Request::TGattClientWriteDescriptorValueRequest:
       return actor->DoRequest(
         aRequest.get_GattClientWriteDescriptorValueRequest());
+    case Request::TGattServerRegisterRequest:
+      return actor->DoRequest(
+        aRequest.get_GattServerRegisterRequest());
     case Request::TGattServerConnectPeripheralRequest:
       return actor->DoRequest(
         aRequest.get_GattServerConnectPeripheralRequest());
@@ -357,7 +368,7 @@ BluetoothParent::DeallocPBluetoothRequestParent(PBluetoothRequestParent* aActor)
 void
 BluetoothParent::Notify(const BluetoothSignal& aSignal)
 {
-  unused << SendNotify(aSignal);
+  Unused << SendNotify(aSignal);
 }
 
 /*******************************************************************************
@@ -493,6 +504,30 @@ BluetoothRequestParent::DoRequest(const StopLeScanRequest& aRequest)
 }
 
 bool
+BluetoothRequestParent::DoRequest(const StartAdvertisingRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TStartAdvertisingRequest);
+
+  mService->StartAdvertisingInternal(aRequest.appUuid(),
+                                     aRequest.data(),
+                                     mReplyRunnable.get());
+
+  return true;
+}
+
+bool
+BluetoothRequestParent::DoRequest(const StopAdvertisingRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TStopAdvertisingRequest);
+
+  mService->StopAdvertisingInternal(aRequest.appUuid(), mReplyRunnable.get());
+
+  return true;
+}
+
+bool
 BluetoothRequestParent::DoRequest(const PairRequest& aRequest)
 {
   MOZ_ASSERT(mService);
@@ -595,7 +630,7 @@ BluetoothRequestParent::DoRequest(const SetPinCodeRequest& aRequest)
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TSetPinCodeRequest);
 
-  mService->SetPinCodeInternal(aRequest.path(),
+  mService->SetPinCodeInternal(aRequest.address(),
                                aRequest.pincode(),
                                mReplyRunnable.get());
 
@@ -608,7 +643,7 @@ BluetoothRequestParent::DoRequest(const SetPasskeyRequest& aRequest)
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TSetPasskeyRequest);
 
-  mService->SetPasskeyInternal(aRequest.path(),
+  mService->SetPasskeyInternal(aRequest.address(),
                                aRequest.passkey(),
                                mReplyRunnable.get());
 
@@ -622,7 +657,7 @@ BluetoothRequestParent::DoRequest(const ConfirmPairingConfirmationRequest&
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TConfirmPairingConfirmationRequest);
 
-  mService->SetPairingConfirmationInternal(aRequest.path(),
+  mService->SetPairingConfirmationInternal(aRequest.address(),
                                            true,
                                            mReplyRunnable.get());
 
@@ -636,7 +671,7 @@ BluetoothRequestParent::DoRequest(const DenyPairingConfirmationRequest&
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TDenyPairingConfirmationRequest);
 
-  mService->SetPairingConfirmationInternal(aRequest.path(),
+  mService->SetPairingConfirmationInternal(aRequest.address(),
                                            false,
                                            mReplyRunnable.get());
 
@@ -676,7 +711,7 @@ BluetoothRequestParent::DoRequest(const SendFileRequest& aRequest)
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TSendFileRequest);
 
-  mService->SendFile(aRequest.devicePath(),
+  mService->SendFile(aRequest.address(),
                      (BlobParent*)aRequest.blobParent(),
                      (BlobChild*)aRequest.blobChild(),
                      mReplyRunnable.get());
@@ -690,7 +725,7 @@ BluetoothRequestParent::DoRequest(const StopSendingFileRequest& aRequest)
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TStopSendingFileRequest);
 
-  mService->StopSendingFile(aRequest.devicePath(),
+  mService->StopSendingFile(aRequest.address(),
                             mReplyRunnable.get());
 
   return true;
@@ -702,7 +737,7 @@ BluetoothRequestParent::DoRequest(const ConfirmReceivingFileRequest& aRequest)
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TConfirmReceivingFileRequest);
 
-  mService->ConfirmReceivingFile(aRequest.devicePath(),
+  mService->ConfirmReceivingFile(aRequest.address(),
                                  true,
                                  mReplyRunnable.get());
   return true;
@@ -714,7 +749,7 @@ BluetoothRequestParent::DoRequest(const DenyReceivingFileRequest& aRequest)
   MOZ_ASSERT(mService);
   MOZ_ASSERT(mRequestType == Request::TDenyReceivingFileRequest);
 
-  mService->ConfirmReceivingFile(aRequest.devicePath(),
+  mService->ConfirmReceivingFile(aRequest.address(),
                                  false,
                                  mReplyRunnable.get());
   return true;
@@ -747,6 +782,28 @@ BluetoothRequestParent::DoRequest(const IsScoConnectedRequest& aRequest)
   MOZ_ASSERT(mRequestType == Request::TIsScoConnectedRequest);
 
   mService->IsScoConnected(mReplyRunnable.get());
+  return true;
+}
+
+bool
+BluetoothRequestParent::DoRequest(const SetObexPasswordRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TSetObexPasswordRequest);
+
+  mService->SetObexPassword(aRequest.password(), mReplyRunnable.get());
+
+  return true;
+}
+
+bool
+BluetoothRequestParent::DoRequest(const RejectObexAuthRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TRejectObexAuthRequest);
+
+  mService->RejectObexAuth(mReplyRunnable.get());
+
   return true;
 }
 
@@ -848,6 +905,7 @@ BluetoothRequestParent::DoRequest(const ReplyToSendMessageRequest& aRequest)
   MOZ_ASSERT(mRequestType == Request::TReplyToSendMessageRequest);
 
   mService->ReplyToMapSendMessage(aRequest.masId(),
+                                  aRequest.handleId(),
                                   aRequest.messageStatus(),
                                   mReplyRunnable.get());
   return true;
@@ -1088,6 +1146,18 @@ BluetoothRequestParent::DoRequest(
                                                    aRequest.descId(),
                                                    aRequest.value(),
                                                    mReplyRunnable.get());
+
+  return true;
+}
+
+bool
+BluetoothRequestParent::DoRequest(const GattServerRegisterRequest& aRequest)
+{
+  MOZ_ASSERT(mService);
+  MOZ_ASSERT(mRequestType == Request::TGattServerRegisterRequest);
+
+  mService->GattServerRegisterInternal(aRequest.appUuid(),
+                                       mReplyRunnable.get());
 
   return true;
 }

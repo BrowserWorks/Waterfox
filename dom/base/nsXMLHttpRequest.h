@@ -41,8 +41,6 @@
 #undef Status
 #endif
 
-class AsyncVerifyRedirectCallbackForwarder;
-class nsFormData;
 class nsIJARChannel;
 class nsILoadGroup;
 class nsIUnicodeDecoder;
@@ -53,6 +51,7 @@ namespace mozilla {
 namespace dom {
 class Blob;
 class BlobSet;
+class FormData;
 } // namespace dom
 
 // A helper for building up an ArrayBuffer object's data
@@ -364,7 +363,7 @@ private:
     {
       mValue.mString = &aString;
     }
-    explicit RequestBody(nsFormData& aFormData) : mType(FormData)
+    explicit RequestBody(mozilla::dom::FormData& aFormData) : mType(FormData)
     {
       mValue.mFormData = &aFormData;
     }
@@ -389,7 +388,7 @@ private:
       mozilla::dom::Blob* mBlob;
       nsIDocument* mDocument;
       const nsAString* mString;
-      nsFormData* mFormData;
+      mozilla::dom::FormData* mFormData;
       nsIInputStream* mStream;
     };
 
@@ -426,7 +425,8 @@ private:
     return Send(Nullable<RequestBody>(aBody));
   }
 
-  bool IsDeniedCrossSiteRequest();
+  bool IsCrossSiteCORSRequest();
+  bool IsDeniedCrossSiteCORSRequest();
 
   // Tell our channel what network interface ID we were told to use.
   // If it's an HTTP channel and we were told to use a non-default
@@ -467,7 +467,8 @@ public:
       aRv = Send(RequestBody(aString));
     }
   }
-  void Send(JSContext* /*aCx*/, nsFormData& aFormData, ErrorResult& aRv)
+  void Send(JSContext* /*aCx*/, mozilla::dom::FormData& aFormData,
+            ErrorResult& aRv)
   {
     aRv = Send(RequestBody(aFormData));
   }
@@ -605,7 +606,7 @@ protected:
                 uint32_t count,
                 uint32_t *writeCount);
   nsresult CreateResponseParsedJSON(JSContext* aCx);
-  void CreatePartialBlob();
+  void CreatePartialBlob(ErrorResult& aRv);
   bool CreateDOMBlob(nsIRequest *request);
   // Change the state of the object with this. The broadcast argument
   // determines if the onreadystatechange listener should be called.
@@ -620,18 +621,9 @@ protected:
 
   void ChangeStateToDone();
 
-  /**
-   * Check if aChannel is ok for a cross-site request by making sure no
-   * inappropriate headers are set, and no username/password is set.
-   *
-   * Also updates the XML_HTTP_REQUEST_USE_XSITE_AC bit.
-   */
-  void CheckChannelForCrossSiteRequest(nsIChannel* aChannel);
-
   void StartProgressEventTimer();
 
-  friend class AsyncVerifyRedirectCallbackForwarder;
-  void OnRedirectVerifyCallback(nsresult result);
+  nsresult OnRedirectVerifyCallback(nsresult result);
 
   nsresult Open(const nsACString& method, const nsACString& url, bool async,
                 const mozilla::dom::Optional<nsAString>& user,
@@ -804,6 +796,8 @@ protected:
 
   void ResetResponse();
 
+  bool ShouldBlockAuthPrompt();
+
   struct RequestHeader
   {
     nsCString header;
@@ -840,6 +834,7 @@ private:
 // XMLHttpRequest via XPCOM stuff.
 class nsXMLHttpRequestXPCOMifier final : public nsIStreamListener,
                                          public nsIChannelEventSink,
+                                         public nsIAsyncVerifyRedirectCallback,
                                          public nsIProgressEventSink,
                                          public nsIInterfaceRequestor,
                                          public nsITimerCallback
@@ -864,6 +859,7 @@ public:
   NS_FORWARD_NSISTREAMLISTENER(mXHR->)
   NS_FORWARD_NSIREQUESTOBSERVER(mXHR->)
   NS_FORWARD_NSICHANNELEVENTSINK(mXHR->)
+  NS_FORWARD_NSIASYNCVERIFYREDIRECTCALLBACK(mXHR->)
   NS_FORWARD_NSIPROGRESSEVENTSINK(mXHR->)
   NS_FORWARD_NSITIMERCALLBACK(mXHR->)
 

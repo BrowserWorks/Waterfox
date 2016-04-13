@@ -30,10 +30,10 @@ public:
     // nsIWidget
     //
 
-    NS_IMETHOD Create(nsIWidget *aParent,
+    NS_IMETHOD Create(nsIWidget* aParent,
                       nsNativeWidget aNativeParent,
-                      const nsIntRect &aRect,
-                      nsWidgetInitData *aInitData = nullptr) override;
+                      const LayoutDeviceIntRect& aRect,
+                      nsWidgetInitData* aInitData = nullptr) override;
     NS_IMETHOD Destroy() override;
     NS_IMETHOD Show(bool aState) override;
     NS_IMETHOD              Enable(bool aState) override {
@@ -47,7 +47,7 @@ public:
         return mVisible;
     }
     NS_IMETHOD              SetFocus(bool aState=false) override;
-    virtual mozilla::LayoutDeviceIntPoint WidgetToScreenOffset() override;
+    virtual LayoutDeviceIntPoint WidgetToScreenOffset() override;
 
     virtual void SetBackgroundColor(const nscolor &aColor) override;
     virtual void* GetNativeData(uint32_t aDataType) override;
@@ -61,7 +61,7 @@ public:
     void                    EnteredFullScreen(bool aFullScreen);
     NS_IMETHOD              Resize(double aWidth, double aHeight, bool aRepaint) override;
     NS_IMETHOD              Resize(double aX, double aY, double aWidth, double aHeight, bool aRepaint) override;
-    NS_IMETHOD              GetScreenBounds(nsIntRect &aRect) override;
+    NS_IMETHOD              GetScreenBounds(LayoutDeviceIntRect& aRect) override;
     void                    ReportMoveEvent();
     void                    ReportSizeEvent();
     void                    ReportSizeModeEvent(nsSizeMode aMode);
@@ -81,7 +81,7 @@ public:
         return NS_OK;
     }
 
-    NS_IMETHOD Invalidate(const nsIntRect &aRect) override;
+    NS_IMETHOD Invalidate(const LayoutDeviceIntRect& aRect) override;
     virtual nsresult ConfigureChildren(const nsTArray<Configuration>& aConfigurations) override;
     NS_IMETHOD DispatchEvent(mozilla::WidgetGUIEvent* aEvent,
                              nsEventStatus& aStatus) override;
@@ -91,7 +91,7 @@ public:
     }
 
     void WillPaintWindow();
-    bool PaintWindow(nsIntRegion aRegion);
+    bool PaintWindow(LayoutDeviceIntRegion aRegion);
 
     bool HasModalDescendents() { return false; }
 

@@ -31,35 +31,15 @@ public:
   // This has to be called before decoding begins
   void BeginDecoding(TaskQueue* aTaskQueueIdentity);
 
-  virtual bool OnStateMachineTaskQueue() const final override;
+  MediaResource* GetResource() const final override;
 
-  virtual MediaResource* GetResource() const final override;
+  void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
+                           uint32_t aDropped) final override;
 
-  virtual void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) final override;
+  VideoFrameContainer* GetVideoFrameContainer() final override;
+  layers::ImageContainer* GetImageContainer() final override;
 
-  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
-                                   uint32_t aDropped) final override;
-
-  virtual void SetMediaSeekable(bool aMediaSeekable) final override;
-
-  virtual VideoFrameContainer* GetVideoFrameContainer() final override;
-  virtual layers::ImageContainer* GetImageContainer() final override;
-
-  virtual bool IsTransportSeekable() final override;
-
-  virtual bool IsMediaSeekable() final override;
-
-  virtual void MetadataLoaded(nsAutoPtr<MediaInfo> aInfo,
-                              nsAutoPtr<MetadataTags> aTags,
-                              MediaDecoderEventVisibility aEventVisibility) final override;
-  virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
-                                MediaDecoderEventVisibility aEventVisibility) final override;
-
-  virtual void OnReadMetadataCompleted() final override;
-
-  virtual MediaDecoderOwner* GetOwner() final override;
-
-  virtual void NotifyDataArrived(uint32_t, int64_t, bool) final override {};
+  MediaDecoderOwner* GetOwner() final override;
 
 private:
   virtual ~BufferDecoder();

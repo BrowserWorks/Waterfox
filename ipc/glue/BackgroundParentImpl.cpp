@@ -13,6 +13,7 @@
 #include "mozilla/AppProcessChecker.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/ContentParent.h"
+#include "mozilla/dom/DOMTypes.h"
 #include "mozilla/dom/NuwaParent.h"
 #include "mozilla/dom/PBlobParent.h"
 #include "mozilla/dom/MessagePortParent.h"
@@ -21,6 +22,7 @@
 #include "mozilla/dom/cache/ActorUtils.h"
 #include "mozilla/dom/indexedDB/ActorsParent.h"
 #include "mozilla/dom/ipc/BlobParent.h"
+#include "mozilla/dom/quota/ActorsParent.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
@@ -194,6 +196,28 @@ BackgroundParentImpl::DeallocPBackgroundIDBFactoryParent(
 }
 
 auto
+BackgroundParentImpl::AllocPBackgroundIndexedDBUtilsParent()
+  -> PBackgroundIndexedDBUtilsParent*
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  return mozilla::dom::indexedDB::AllocPBackgroundIndexedDBUtilsParent();
+}
+
+bool
+BackgroundParentImpl::DeallocPBackgroundIndexedDBUtilsParent(
+                                        PBackgroundIndexedDBUtilsParent* aActor)
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aActor);
+
+  return
+    mozilla::dom::indexedDB::DeallocPBackgroundIndexedDBUtilsParent(aActor);
+}
+
+auto
 BackgroundParentImpl::AllocPBlobParent(const BlobConstructorParams& aParams)
   -> PBlobParent*
 {
@@ -217,6 +241,18 @@ BackgroundParentImpl::DeallocPBlobParent(PBlobParent* aActor)
   MOZ_ASSERT(aActor);
 
   mozilla::dom::BlobParent::Destroy(aActor);
+  return true;
+}
+
+bool
+BackgroundParentImpl::RecvPBlobConstructor(PBlobParent* aActor,
+                                           const BlobConstructorParams& aParams)
+{
+  const ParentBlobConstructorParams& params = aParams;
+  if (params.blobParams().type() == AnyBlobConstructorParams::TKnownBlobConstructorParams) {
+    return aActor->SendCreatedFromKnownBlob();
+  }
+
   return true;
 }
 
@@ -533,7 +569,9 @@ BackgroundParentImpl::AllocPServiceWorkerManagerParent()
   AssertIsInMainProcess();
   AssertIsOnBackgroundThread();
 
-  return new ServiceWorkerManagerParent();
+  RefPtr<dom::workers::ServiceWorkerManagerParent> agent =
+    new dom::workers::ServiceWorkerManagerParent();
+  return agent.forget().take();
 }
 
 bool
@@ -544,7 +582,9 @@ BackgroundParentImpl::DeallocPServiceWorkerManagerParent(
   AssertIsOnBackgroundThread();
   MOZ_ASSERT(aActor);
 
-  delete static_cast<ServiceWorkerManagerParent*>(aActor);
+  RefPtr<dom::workers::ServiceWorkerManagerParent> parent =
+    dont_AddRef(static_cast<dom::workers::ServiceWorkerManagerParent*>(aActor));
+  MOZ_ASSERT(parent);
   return true;
 }
 
@@ -676,6 +716,25 @@ BackgroundParentImpl::DeallocPAsmJSCacheEntryParent(
 
   dom::asmjscache::DeallocEntryParent(aActor);
   return true;
+}
+
+BackgroundParentImpl::PQuotaParent*
+BackgroundParentImpl::AllocPQuotaParent()
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+
+  return mozilla::dom::quota::AllocPQuotaParent();
+}
+
+bool
+BackgroundParentImpl::DeallocPQuotaParent(PQuotaParent* aActor)
+{
+  AssertIsInMainProcess();
+  AssertIsOnBackgroundThread();
+  MOZ_ASSERT(aActor);
+
+  return mozilla::dom::quota::DeallocPQuotaParent(aActor);
 }
 
 } // namespace ipc

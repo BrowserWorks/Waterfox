@@ -38,7 +38,7 @@ namespace
 
 void MarkTransformFeedbackBufferUsage(gl::TransformFeedback *transformFeedback)
 {
-    if (transformFeedback->isActive() && !transformFeedback->isPaused())
+    if (transformFeedback && transformFeedback->isActive() && !transformFeedback->isPaused())
     {
         for (size_t tfBufferIndex = 0; tfBufferIndex < transformFeedback->getIndexedBufferCount();
              tfBufferIndex++)
@@ -63,16 +63,16 @@ Context::Context(const egl::Config *config,
                  rx::Renderer *renderer,
                  bool notifyResets,
                  bool robustAccess)
-    : mRenderer(renderer),
+    : ValidationContext(clientVersion,
+                        mState,
+                        mCaps,
+                        mTextureCaps,
+                        mExtensions,
+                        nullptr,
+                        mLimitations),
+      mRenderer(renderer),
       mConfig(config),
-      mCurrentSurface(nullptr),
-      mData(reinterpret_cast<uintptr_t>(this),
-            clientVersion,
-            mState,
-            mCaps,
-            mTextureCaps,
-            mExtensions,
-            nullptr)
+      mCurrentSurface(nullptr)
 {
     ASSERT(robustAccess == false);   // Unimplemented
 
@@ -138,12 +138,14 @@ Context::Context(const egl::Config *config,
     bindPixelPackBuffer(0);
     bindPixelUnpackBuffer(0);
 
-    // [OpenGL ES 3.0.2] section 2.14.1 pg 85:
-    // In the initial state, a default transform feedback object is bound and treated as
-    // a transform feedback object with a name of zero. That object is bound any time
-    // BindTransformFeedback is called with id of zero
-    mTransformFeedbackZero.set(new TransformFeedback(mRenderer->createTransformFeedback(), 0, mCaps));
-    bindTransformFeedback(0);
+    if (mClientVersion >= 3)
+    {
+        // [OpenGL ES 3.0.2] section 2.14.1 pg 85:
+        // In the initial state, a default transform feedback object is bound and treated as
+        // a transform feedback object with a name of zero. That object is bound any time
+        // BindTransformFeedback is called with id of zero
+        bindTransformFeedback(0);
+    }
 
     mHasBeenCurrent = false;
     mContextLost = false;
@@ -185,10 +187,12 @@ Context::~Context()
         SafeDelete(vertexArray.second);
     }
 
-    mTransformFeedbackZero.set(NULL);
     for (auto transformFeedback : mTransformFeedbackMap)
     {
-        SafeDelete(transformFeedback.second);
+        if (transformFeedback.second != nullptr)
+        {
+            transformFeedback.second->release();
+        }
     }
 
     for (auto &zeroTexture : mZeroTextures)
@@ -320,14 +324,9 @@ GLsync Context::createFenceSync()
 
 GLuint Context::createVertexArray()
 {
-    GLuint handle = mVertexArrayHandleAllocator.allocate();
-
-    // Although the spec states VAO state is not initialized until the object is bound,
-    // we create it immediately. The resulting behaviour is transparent to the application,
-    // since it's not currently possible to access the state until the object is bound.
-    VertexArray *vertexArray = new VertexArray(mRenderer, handle, MAX_VERTEX_ATTRIBS);
-    mVertexArrayMap[handle] = vertexArray;
-    return handle;
+    GLuint vertexArray           = mVertexArrayHandleAllocator.allocate();
+    mVertexArrayMap[vertexArray] = nullptr;
+    return vertexArray;
 }
 
 GLuint Context::createSampler()
@@ -337,11 +336,9 @@ GLuint Context::createSampler()
 
 GLuint Context::createTransformFeedback()
 {
-    GLuint handle = mTransformFeedbackAllocator.allocate();
-    TransformFeedback *transformFeedback = new TransformFeedback(mRenderer->createTransformFeedback(), handle, mCaps);
-    transformFeedback->addRef();
-    mTransformFeedbackMap[handle] = transformFeedback;
-    return handle;
+    GLuint transformFeedback                 = mTransformFeedbackAllocator.allocate();
+    mTransformFeedbackMap[transformFeedback] = nullptr;
+    return transformFeedback;
 }
 
 // Returns an unused framebuffer name
@@ -424,15 +421,18 @@ void Context::deleteFenceSync(GLsync fenceSync)
 
 void Context::deleteVertexArray(GLuint vertexArray)
 {
-    auto vertexArrayObject = mVertexArrayMap.find(vertexArray);
-
-    if (vertexArrayObject != mVertexArrayMap.end())
+    auto iter = mVertexArrayMap.find(vertexArray);
+    if (iter != mVertexArrayMap.end())
     {
-        detachVertexArray(vertexArray);
+        VertexArray *vertexArrayObject = iter->second;
+        if (vertexArrayObject != nullptr)
+        {
+            detachVertexArray(vertexArray);
+            delete vertexArrayObject;
+        }
 
-        mVertexArrayHandleAllocator.release(vertexArrayObject->first);
-        delete vertexArrayObject->second;
-        mVertexArrayMap.erase(vertexArrayObject);
+        mVertexArrayMap.erase(iter);
+        mVertexArrayHandleAllocator.release(vertexArray);
     }
 }
 
@@ -451,10 +451,15 @@ void Context::deleteTransformFeedback(GLuint transformFeedback)
     auto iter = mTransformFeedbackMap.find(transformFeedback);
     if (iter != mTransformFeedbackMap.end())
     {
-        detachTransformFeedback(transformFeedback);
-        mTransformFeedbackAllocator.release(transformFeedback);
-        iter->second->release();
+        TransformFeedback *transformFeedbackObject = iter->second;
+        if (transformFeedbackObject != nullptr)
+        {
+            detachTransformFeedback(transformFeedback);
+            transformFeedbackObject->release();
+        }
+
         mTransformFeedbackMap.erase(iter);
+        mTransformFeedbackAllocator.release(transformFeedback);
     }
 }
 
@@ -531,15 +536,7 @@ FenceSync *Context::getFenceSync(GLsync handle) const
 VertexArray *Context::getVertexArray(GLuint handle) const
 {
     auto vertexArray = mVertexArrayMap.find(handle);
-
-    if (vertexArray == mVertexArrayMap.end())
-    {
-        return NULL;
-    }
-    else
-    {
-        return vertexArray->second;
-    }
+    return (vertexArray != mVertexArrayMap.end()) ? vertexArray->second : nullptr;
 }
 
 Sampler *Context::getSampler(GLuint handle) const
@@ -549,15 +546,8 @@ Sampler *Context::getSampler(GLuint handle) const
 
 TransformFeedback *Context::getTransformFeedback(GLuint handle) const
 {
-    if (handle == 0)
-    {
-        return mTransformFeedbackZero.get();
-    }
-    else
-    {
-        TransformFeedbackMap::const_iterator iter = mTransformFeedbackMap.find(handle);
-        return (iter != mTransformFeedbackMap.end()) ? iter->second : NULL;
-    }
+    auto iter = mTransformFeedbackMap.find(handle);
+    return (iter != mTransformFeedbackMap.end()) ? iter->second : nullptr;
 }
 
 bool Context::isSampler(GLuint samplerName) const
@@ -627,11 +617,7 @@ void Context::bindRenderbuffer(GLuint renderbuffer)
 
 void Context::bindVertexArray(GLuint vertexArray)
 {
-    if (!getVertexArray(vertexArray))
-    {
-        VertexArray *vertexArrayObject = new VertexArray(mRenderer, vertexArray, MAX_VERTEX_ATTRIBS);
-        mVertexArrayMap[vertexArray] = vertexArrayObject;
-    }
+    checkVertexArrayAllocation(vertexArray);
 
     mState.setVertexArrayBinding(getVertexArray(vertexArray));
 }
@@ -707,6 +693,8 @@ void Context::useProgram(GLuint program)
 
 void Context::bindTransformFeedback(GLuint transformFeedback)
 {
+    checkTransformFeedbackAllocation(transformFeedback);
+
     mState.setTransformFeedbackBinding(getTransformFeedback(transformFeedback));
 }
 
@@ -1089,40 +1077,6 @@ bool Context::getQueryParameterInfo(GLenum pname, GLenum *type, unsigned int *nu
             }
         }
         return true;
-      case GL_PIXEL_PACK_BUFFER_BINDING:
-      case GL_PIXEL_UNPACK_BUFFER_BINDING:
-        {
-            if (mExtensions.pixelBufferObject)
-            {
-                *type = GL_INT;
-                *numParams = 1;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        return true;
-        case GL_PACK_ROW_LENGTH:
-        case GL_PACK_SKIP_ROWS:
-        case GL_PACK_SKIP_PIXELS:
-            if ((mClientVersion < 3) && !mExtensions.packSubimage)
-            {
-                return false;
-            }
-            *type      = GL_INT;
-            *numParams = 1;
-            return true;
-        case GL_UNPACK_ROW_LENGTH:
-        case GL_UNPACK_SKIP_ROWS:
-        case GL_UNPACK_SKIP_PIXELS:
-            if ((mClientVersion < 3) && !mExtensions.unpackSubimage)
-            {
-                return false;
-            }
-            *type      = GL_INT;
-            *numParams = 1;
-            return true;
       case GL_MAX_VIEWPORT_DIMS:
         {
             *type = GL_INT;
@@ -1195,6 +1149,48 @@ bool Context::getQueryParameterInfo(GLenum pname, GLenum *type, unsigned int *nu
         return true;
     }
 
+    // Check for ES3.0+ parameter names which are also exposed as ES2 extensions
+    switch (pname)
+    {
+        case GL_PACK_ROW_LENGTH:
+        case GL_PACK_SKIP_ROWS:
+        case GL_PACK_SKIP_PIXELS:
+            if ((mClientVersion < 3) && !mExtensions.packSubimage)
+            {
+                return false;
+            }
+            *type      = GL_INT;
+            *numParams = 1;
+            return true;
+        case GL_UNPACK_ROW_LENGTH:
+        case GL_UNPACK_SKIP_ROWS:
+        case GL_UNPACK_SKIP_PIXELS:
+            if ((mClientVersion < 3) && !mExtensions.unpackSubimage)
+            {
+                return false;
+            }
+            *type      = GL_INT;
+            *numParams = 1;
+            return true;
+        case GL_VERTEX_ARRAY_BINDING:
+            if ((mClientVersion < 3) && !mExtensions.vertexArrayObject)
+            {
+                return false;
+            }
+            *type      = GL_INT;
+            *numParams = 1;
+            return true;
+        case GL_PIXEL_PACK_BUFFER_BINDING:
+        case GL_PIXEL_UNPACK_BUFFER_BINDING:
+            if ((mClientVersion < 3) && !mExtensions.pixelBufferObject)
+            {
+                return false;
+            }
+            *type      = GL_INT;
+            *numParams = 1;
+            return true;
+    }
+
     if (mClientVersion < 3)
     {
         return false;
@@ -1220,7 +1216,6 @@ bool Context::getQueryParameterInfo(GLenum pname, GLenum *type, unsigned int *nu
       case GL_MAX_VERTEX_OUTPUT_COMPONENTS:
       case GL_MAX_FRAGMENT_INPUT_COMPONENTS:
       case GL_MAX_VARYING_COMPONENTS:
-      case GL_VERTEX_ARRAY_BINDING:
       case GL_MAX_VERTEX_UNIFORM_COMPONENTS:
       case GL_MAX_FRAGMENT_UNIFORM_COMPONENTS:
       case GL_MIN_PROGRAM_TEXEL_OFFSET:
@@ -1233,14 +1228,8 @@ bool Context::getQueryParameterInfo(GLenum pname, GLenum *type, unsigned int *nu
       case GL_MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS:
       case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS:
       case GL_MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS:
-      case GL_PACK_ROW_LENGTH:
-      case GL_PACK_SKIP_ROWS:
-      case GL_PACK_SKIP_PIXELS:
-      case GL_UNPACK_ROW_LENGTH:
       case GL_UNPACK_IMAGE_HEIGHT:
       case GL_UNPACK_SKIP_IMAGES:
-      case GL_UNPACK_SKIP_ROWS:
-      case GL_UNPACK_SKIP_PIXELS:
         {
             *type = GL_INT;
             *numParams = 1;
@@ -1260,6 +1249,8 @@ bool Context::getQueryParameterInfo(GLenum pname, GLenum *type, unsigned int *nu
 
       case GL_TRANSFORM_FEEDBACK_ACTIVE:
       case GL_TRANSFORM_FEEDBACK_PAUSED:
+      case GL_PRIMITIVE_RESTART_FIXED_INDEX:
+      case GL_RASTERIZER_DISCARD:
         {
             *type = GL_BOOL;
             *numParams = 1;
@@ -1454,11 +1445,6 @@ bool Context::isResetNotificationEnabled()
     return (mResetStrategy == GL_LOSE_CONTEXT_ON_RESET_EXT);
 }
 
-int Context::getClientVersion() const
-{
-    return mClientVersion;
-}
-
 const egl::Config *Context::getConfig() const
 {
     return mConfig;
@@ -1486,24 +1472,35 @@ EGLenum Context::getRenderBuffer() const
     }
 }
 
-const Caps &Context::getCaps() const
+void Context::checkVertexArrayAllocation(GLuint vertexArray)
 {
-    return mCaps;
+    if (!getVertexArray(vertexArray))
+    {
+        VertexArray *vertexArrayObject =
+            new VertexArray(mRenderer, vertexArray, MAX_VERTEX_ATTRIBS);
+        mVertexArrayMap[vertexArray] = vertexArrayObject;
+    }
 }
 
-const TextureCapsMap &Context::getTextureCaps() const
+void Context::checkTransformFeedbackAllocation(GLuint transformFeedback)
 {
-    return mTextureCaps;
+    if (!getTransformFeedback(transformFeedback))
+    {
+        TransformFeedback *transformFeedbackObject =
+            new TransformFeedback(mRenderer->createTransformFeedback(), transformFeedback, mCaps);
+        transformFeedbackObject->addRef();
+        mTransformFeedbackMap[transformFeedback] = transformFeedbackObject;
+    }
 }
 
-const Extensions &Context::getExtensions() const
+bool Context::isVertexArrayGenerated(GLuint vertexArray)
 {
-    return mExtensions;
+    return mVertexArrayMap.find(vertexArray) != mVertexArrayMap.end();
 }
 
-const Limitations &Context::getLimitations() const
+bool Context::isTransformFeedbackGenerated(GLuint transformFeedback)
 {
-    return mLimitations;
+    return mTransformFeedbackMap.find(transformFeedback) != mTransformFeedbackMap.end();
 }
 
 void Context::detachTexture(GLuint texture)
@@ -1517,20 +1514,15 @@ void Context::detachTexture(GLuint texture)
 
 void Context::detachBuffer(GLuint buffer)
 {
-    // Buffer detachment is handled by Context, because the buffer must also be
-    // attached from any VAOs in existence, and Context holds the VAO map.
+    // Simple pass-through to State's detachBuffer method, since
+    // only buffer attachments to container objects that are bound to the current context
+    // should be detached. And all those are available in State.
 
-    // [OpenGL ES 2.0.24] section 2.9 page 22:
-    // If a buffer object is deleted while it is bound, all bindings to that object in the current context
-    // (i.e. in the thread that called Delete-Buffers) are reset to zero.
-
-    mState.removeArrayBufferBinding(buffer);
-
-    // mark as freed among the vertex array objects
-    for (auto &vaoPair : mVertexArrayMap)
-    {
-        vaoPair.second->detachBuffer(buffer);
-    }
+    // [OpenGL ES 3.2] section 5.1.2 page 45:
+    // Attachments to unbound container objects, such as
+    // deletion of a buffer attached to a vertex array object which is not bound to the context,
+    // are not affected and continue to act as references on the deleted object
+    mState.detachBuffer(buffer);
 }
 
 void Context::detachFramebuffer(GLuint framebuffer)

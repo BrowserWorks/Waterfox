@@ -50,6 +50,18 @@ class CSSStyleSheet;
       cur = dlm_next;                                                          \
     }                                                                          \
   }
+// Ditto, but use NS_RELEASE instead of 'delete' (bug 1221902).
+#define NS_CSS_NS_RELEASE_LIST_MEMBER(type_, ptr_, member_)                    \
+  {                                                                            \
+    type_ *cur = (ptr_)->member_;                                              \
+    (ptr_)->member_ = nullptr;                                                 \
+    while (cur) {                                                              \
+      type_ *dlm_next = cur->member_;                                          \
+      cur->member_ = nullptr;                                                  \
+      NS_RELEASE(cur);                                                         \
+      cur = dlm_next;                                                          \
+    }                                                                          \
+  }
 
 // Clones a linked list iteratively to avoid blowing up the stack.
 // If it fails to clone the entire list then 'to_' is deleted and
@@ -135,7 +147,7 @@ private:
 public:
   // Inherit operator== from URLValue
 
-  nsRefPtrHashtable<nsPtrHashKey<nsISupports>, imgRequestProxy> mRequests; 
+  nsRefPtrHashtable<nsPtrHashKey<nsIDocument>, imgRequestProxy> mRequests;
 
   // Override AddRef and Release to not only log ourselves correctly, but
   // also so that we delete correctly without a virtual destructor (assuming
@@ -455,8 +467,10 @@ public:
   /**
    * A "pixel" length unit is a some multiple of CSS pixels.
    */
+  static bool IsPixelLengthUnit(nsCSSUnit aUnit)
+    { return eCSSUnit_Point <= aUnit && aUnit <= eCSSUnit_Pixel; }
   bool      IsPixelLengthUnit() const
-    { return eCSSUnit_Point <= mUnit && mUnit <= eCSSUnit_Pixel; }
+    { return IsPixelLengthUnit(mUnit); }
   bool      IsAngularUnit() const  
     { return eCSSUnit_Degree <= mUnit && mUnit <= eCSSUnit_Turn; }
   bool      IsFrequencyUnit() const  
@@ -726,6 +740,9 @@ public:
                                  const nsCSSValue* aValues[],
                                  nsAString& aResult,
                                  Serialization aValueSerialization);
+  static void
+  AppendAlignJustifyValueToString(int32_t aValue, nsAString& aResult);
+
 private:
   static const char16_t* GetBufferValue(nsStringBuffer* aBuffer) {
     return static_cast<char16_t*>(aBuffer->Data());

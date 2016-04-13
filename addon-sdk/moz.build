@@ -9,6 +9,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# Makefile.in uses a misc target through test_addons_TARGET.
+HAS_MISC_RULE = True
+
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 JETPACK_PACKAGE_MANIFESTS += ['source/test/jetpack-package.ini']
 JETPACK_ADDON_MANIFESTS += ['source/test/addons/jetpack-addon.ini']
@@ -249,6 +252,7 @@ EXTRA_JS_MODULES.commonjs.sdk.content += [
     'source/lib/sdk/content/loader.js',
     'source/lib/sdk/content/mod.js',
     'source/lib/sdk/content/page-mod.js',
+    'source/lib/sdk/content/page-worker.js',
     'source/lib/sdk/content/sandbox.js',
     'source/lib/sdk/content/tab-events.js',
     'source/lib/sdk/content/thumbnail.js',
@@ -281,6 +285,7 @@ EXTRA_JS_MODULES.commonjs.sdk.deprecated.events += [
 ]
 
 EXTRA_JS_MODULES.commonjs.sdk.dom += [
+    'source/lib/sdk/dom/events-shimmed.js',
     'source/lib/sdk/dom/events.js',
 ]
 
@@ -407,6 +412,7 @@ EXTRA_JS_MODULES.commonjs.sdk.stylesheet += [
 EXTRA_JS_MODULES.commonjs.sdk.system += [
     'source/lib/sdk/system/child_process.js',
     'source/lib/sdk/system/environment.js',
+    'source/lib/sdk/system/events-shimmed.js',
     'source/lib/sdk/system/events.js',
     'source/lib/sdk/system/globals.js',
     'source/lib/sdk/system/process.js',

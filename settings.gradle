@@ -18,19 +18,30 @@ def slurper = new JsonSlurper()
 def json = slurper.parseText(standardOutput.toString())
 
 if (json.substs.MOZ_BUILD_APP != 'mobile/android') {
-    throw new GradleException("Building with Gradle is only supported for Fennec, i.e., MOZ_BUILD_APP == 'mobile/android'.");
+    throw new GradleException("Building with Gradle is only supported for Fennec, i.e., MOZ_BUILD_APP == 'mobile/android'.")
 }
+
+// Set the Android SDK location.  This is the *least specific* mechanism, which
+// is unfortunate: we'd prefer to use the *most specific* mechanism.  That is,
+// local.properties (first 'sdk.dir', then 'android.dir') and then the
+// environment variable ANDROID_HOME will override this.  That's unfortunate,
+// but it's hard to automatically arrange better.
+System.setProperty('android.home', json.substs.ANDROID_SDK_ROOT)
 
 include ':app'
 include ':base'
 include ':omnijar'
 include ':thirdparty'
 
-def gradleRoot = new File("${json.topobjdir}/mobile/android/gradle")
-project(':app').projectDir = new File(gradleRoot, 'app')
-project(':base').projectDir = new File(gradleRoot, 'base')
-project(':omnijar').projectDir = new File(gradleRoot, 'omnijar')
+project(':app').projectDir = new File("${json.topsrcdir}/mobile/android/app")
+project(':base').projectDir = new File("${json.topsrcdir}/mobile/android/app/base")
+project(':omnijar').projectDir = new File("${json.topsrcdir}/mobile/android/app/omnijar")
 project(':thirdparty').projectDir = new File("${json.topsrcdir}/mobile/android/thirdparty")
+
+if (json.substs.MOZ_ANDROID_PACKAGE_INSTALL_BOUNCER) {
+    include ':bouncer'
+    project(':bouncer').projectDir = new File("${json.topsrcdir}/mobile/android/bouncer")
+}
 
 // The Gradle instance is shared between settings.gradle and all the
 // other build.gradle files (see

@@ -77,7 +77,7 @@ this.EventManager.prototype = {
     Logger.debug('EventManager.stop');
     AccessibilityEventObserver.removeListener(this);
     try {
-      this._preDialogPosition.clear();
+      this._preDialogPosition = new WeakMap();
       this.webProgress.removeProgressListener(this);
       this.removeEventListener('wheel', this, true);
       this.removeEventListener('scroll', this, true);
@@ -302,6 +302,7 @@ this.EventManager.prototype = {
         break;
       }
       case Events.VALUE_CHANGE:
+      case Events.TEXT_VALUE_CHANGE:
       {
         let position = this.contentControl.vc.position;
         let target = aEvent.accessible;
@@ -617,7 +618,7 @@ const AccessibilityEventObserver = {
     }
     Services.obs.removeObserver(this, 'accessible-event');
     // Clean up all registered event managers.
-    this.eventManagers.clear();
+    this.eventManagers = new WeakMap();
     this.listenerCount = 0;
     this.started = false;
   },

@@ -180,16 +180,17 @@ FrameManager.prototype = {
    *     ChromeMessageBroadcaster or ChromeMessageSender.
    */
   addMessageManagerListeners: function FM_addMessageManagerListeners(mm) {
+    mm.addWeakMessageListener("Marionette:ok", this.server);
+    mm.addWeakMessageListener("Marionette:done", this.server);
+    mm.addWeakMessageListener("Marionette:error", this.server);
     mm.addWeakMessageListener("Marionette:emitTouchEvent", this.server);
     mm.addWeakMessageListener("Marionette:log", this.server);
-    mm.addWeakMessageListener("Marionette:runEmulatorCmd", this.server);
-    mm.addWeakMessageListener("Marionette:runEmulatorShell", this.server);
+    mm.addWeakMessageListener("Marionette:runEmulatorCmd", this.server.emulator);
+    mm.addWeakMessageListener("Marionette:runEmulatorShell", this.server.emulator);
     mm.addWeakMessageListener("Marionette:shareData", this.server);
     mm.addWeakMessageListener("Marionette:switchToModalOrigin", this.server);
     mm.addWeakMessageListener("Marionette:switchedToFrame", this.server);
-    mm.addWeakMessageListener("Marionette:addCookie", this.server);
     mm.addWeakMessageListener("Marionette:getVisibleCookies", this.server);
-    mm.addWeakMessageListener("Marionette:deleteCookie", this.server);
     mm.addWeakMessageListener("Marionette:register", this.server);
     mm.addWeakMessageListener("Marionette:listenersAttached", this.server);
     mm.addWeakMessageListener("Marionette:getFiles", this.server);
@@ -211,14 +212,15 @@ FrameManager.prototype = {
    *     ChromeMessageBroadcaster or ChromeMessageSender.
    */
   removeMessageManagerListeners: function FM_removeMessageManagerListeners(mm) {
+    mm.removeWeakMessageListener("Marionette:ok", this.server);
+    mm.removeWeakMessageListener("Marionette:done", this.server);
+    mm.removeWeakMessageListener("Marionette:error", this.server);
     mm.removeWeakMessageListener("Marionette:log", this.server);
     mm.removeWeakMessageListener("Marionette:shareData", this.server);
-    mm.removeWeakMessageListener("Marionette:runEmulatorCmd", this.server);
-    mm.removeWeakMessageListener("Marionette:runEmulatorShell", this.server);
+    mm.removeWeakMessageListener("Marionette:runEmulatorCmd", this.server.emulator);
+    mm.removeWeakMessageListener("Marionette:runEmulatorShell", this.server.emulator);
     mm.removeWeakMessageListener("Marionette:switchedToFrame", this.server);
-    mm.removeWeakMessageListener("Marionette:addCookie", this.server);
     mm.removeWeakMessageListener("Marionette:getVisibleCookies", this.server);
-    mm.removeWeakMessageListener("Marionette:deleteCookie", this.server);
     mm.removeWeakMessageListener("Marionette:listenersAttached", this.server);
     mm.removeWeakMessageListener("Marionette:register", this.server);
     mm.removeWeakMessageListener("Marionette:getFiles", this.server);

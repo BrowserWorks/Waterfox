@@ -68,6 +68,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineArray(callInfo);
       case InlinableNative::ArrayIsArray:
         return inlineArrayIsArray(callInfo);
+      case InlinableNative::ArrayJoin:
+        return inlineArrayJoin(callInfo);
       case InlinableNative::ArrayPop:
         return inlineArrayPopShift(callInfo, MArrayPopShift::Pop);
       case InlinableNative::ArrayShift:
@@ -174,10 +176,12 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineMathFunction(callInfo, MMathFunction::Cbrt);
 
       // RegExp natives.
-      case InlinableNative::RegExpExec:
-        return CallResultEscapes(pc) ? inlineRegExpExec(callInfo) : inlineRegExpTest(callInfo);
-      case InlinableNative::RegExpTest:
-        return inlineRegExpTest(callInfo);
+      case InlinableNative::RegExpMatcher:
+        return inlineRegExpMatcher(callInfo);
+      case InlinableNative::RegExpTester:
+        return inlineRegExpTester(callInfo);
+      case InlinableNative::IsRegExpObject:
+        return inlineIsRegExpObject(callInfo);
 
       // String natives.
       case InlinableNative::String:
@@ -197,15 +201,13 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
       case InlinableNative::ObjectCreate:
         return inlineObjectCreate(callInfo);
 
-      // Bound function.
-      case InlinableNative::CallBoundFunction:
-        return inlineBoundFunction(callInfo, target);
-
       // SIMD natives.
       case InlinableNative::SimdInt32x4:
-        return inlineSimdInt32x4(callInfo, target->native());
+        return inlineSimd(callInfo, target, MIRType_Int32x4);
       case InlinableNative::SimdFloat32x4:
-        return inlineSimdFloat32x4(callInfo, target->native());
+        return inlineSimd(callInfo, target, MIRType_Float32x4);
+      case InlinableNative::SimdBool32x4:
+        return inlineSimd(callInfo, target, MIRType_Bool32x4);
 
       // Testing functions.
       case InlinableNative::TestBailout:
@@ -260,6 +262,8 @@ IonBuilder::inlineNativeCall(CallInfo& callInfo, JSFunction* target)
         return inlineIsTypedArray(callInfo);
       case InlinableNative::IntrinsicIsPossiblyWrappedTypedArray:
         return inlineIsPossiblyWrappedTypedArray(callInfo);
+      case InlinableNative::IntrinsicPossiblyWrappedTypedArrayLength:
+        return inlinePossiblyWrappedTypedArrayLength(callInfo);
       case InlinableNative::IntrinsicTypedArrayLength:
         return inlineTypedArrayLength(callInfo);
       case InlinableNative::IntrinsicSetDisjointTypedElements:
@@ -306,25 +310,13 @@ IonBuilder::inlineNativeGetter(CallInfo& callInfo, JSFunction* target)
     TemporaryTypeSet* thisTypes = callInfo.thisArg()->resultTypeSet();
     MOZ_ASSERT(callInfo.argc() == 0);
 
-    // Try to optimize typed array lengths. There is one getter on
-    // %TypedArray%.prototype for typed arrays and one getter on
-    // SharedTypedArray.prototype for shared typed arrays.  Make sure we're
-    // accessing the right one for the type of the instance object.
+    // Try to optimize typed array lengths.
     if (thisTypes) {
         Scalar::Type type;
 
         type = thisTypes->getTypedArrayType(constraints());
         if (type != Scalar::MaxTypedArrayViewType &&
             TypedArrayObject::isOriginalLengthGetter(native))
-        {
-            MInstruction* length = addTypedArrayLength(callInfo.thisArg());
-            current->push(length);
-            return InliningStatus_Inlined;
-        }
-
-        type = thisTypes->getSharedTypedArrayType(constraints());
-        if (type != Scalar::MaxTypedArrayViewType &&
-            SharedTypedArrayObject::isOriginalLengthGetter(type, native))
         {
             MInstruction* length = addTypedArrayLength(callInfo.thisArg());
             current->push(length);
@@ -656,6 +648,8 @@ IonBuilder::inlineArrayJoin(CallInfo& callInfo)
     current->add(ins);
     current->push(ins);
 
+    if (!resumeAfter(ins))
+        return InliningStatus_Error;
     return InliningStatus_Inlined;
 }
 
@@ -726,7 +720,7 @@ IonBuilder::inlineArrayPush(CallInfo& callInfo)
     if (unboxedType == JSVAL_TYPE_MAGIC)
         obj = addMaybeCopyElementsForWrite(obj, /* checkNative = */ false);
 
-    if (NeedsPostBarrier(info(), value))
+    if (NeedsPostBarrier(value))
         current->add(MPostWriteBarrier::New(alloc(), obj, value));
 
     MArrayPush* ins = MArrayPush::New(alloc(), obj, value, unboxedType);
@@ -1372,6 +1366,11 @@ IonBuilder::inlineMathRandom(CallInfo& callInfo)
     if (getInlineReturnType() != MIRType_Double)
         return InliningStatus_NotInlined;
 
+    // MRandom JIT code directly accesses the RNG. It's (barely) possible to
+    // inline Math.random without it having been called yet, so ensure RNG
+    // state that isn't guaranteed to be initialized already.
+    script()->compartment()->ensureRandomNumberGenerator();
+
     callInfo.setImplicitlyUsedUnchecked();
 
     MRandom* rand = MRandom::New(alloc());
@@ -1832,76 +1831,141 @@ IonBuilder::inlineStrCharAt(CallInfo& callInfo)
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineRegExpExec(CallInfo& callInfo)
+IonBuilder::inlineRegExpMatcher(CallInfo& callInfo)
 {
-    if (callInfo.argc() != 1 || callInfo.constructing()) {
+    // This is called from Self-hosted JS, after testing each argument,
+    // most of following tests should be passed.
+
+    if (callInfo.argc() != 4 || callInfo.constructing()) {
         trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
         return InliningStatus_NotInlined;
     }
 
-    if (callInfo.thisArg()->type() != MIRType_Object)
+    // regexp
+    if (callInfo.getArg(0)->type() != MIRType_Object)
         return InliningStatus_NotInlined;
 
-    TemporaryTypeSet* thisTypes = callInfo.thisArg()->resultTypeSet();
-    const Class* clasp = thisTypes ? thisTypes->getKnownClass(constraints()) : nullptr;
+    TemporaryTypeSet* arg0Types = callInfo.getArg(0)->resultTypeSet();
+    const Class* clasp = arg0Types ? arg0Types->getKnownClass(constraints()) : nullptr;
     if (clasp != &RegExpObject::class_)
         return InliningStatus_NotInlined;
 
-    if (callInfo.getArg(0)->mightBeType(MIRType_Object))
+    // string
+    if (callInfo.getArg(1)->mightBeType(MIRType_Object))
+        return InliningStatus_NotInlined;
+
+    // lastIndex: Only inline if it's Int32.
+    if (callInfo.getArg(2)->type() != MIRType_Int32)
+        return InliningStatus_NotInlined;
+
+    // sticky
+    if (callInfo.getArg(3)->type() != MIRType_Boolean)
         return InliningStatus_NotInlined;
 
     JSContext* cx = GetJitContext()->cx;
-    if (!cx->compartment()->jitCompartment()->ensureRegExpExecStubExists(cx))
+    if (!cx->compartment()->jitCompartment()->ensureRegExpMatcherStubExists(cx)) {
+        oom();
         return InliningStatus_Error;
+    }
 
     callInfo.setImplicitlyUsedUnchecked();
 
-    MInstruction* exec = MRegExpExec::New(alloc(), callInfo.thisArg(), callInfo.getArg(0));
-    current->add(exec);
-    current->push(exec);
+    MInstruction* matcher = MRegExpMatcher::New(alloc(), callInfo.getArg(0), callInfo.getArg(1),
+                                                callInfo.getArg(2), callInfo.getArg(3));
+    current->add(matcher);
+    current->push(matcher);
 
-    if (!resumeAfter(exec))
+    if (!resumeAfter(matcher))
         return InliningStatus_Error;
 
-    if (!pushTypeBarrier(exec, getInlineReturnTypeSet(), BarrierKind::TypeSet))
+    if (!pushTypeBarrier(matcher, getInlineReturnTypeSet(), BarrierKind::TypeSet))
         return InliningStatus_Error;
 
     return InliningStatus_Inlined;
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineRegExpTest(CallInfo& callInfo)
+IonBuilder::inlineRegExpTester(CallInfo& callInfo)
 {
-    if (callInfo.argc() != 1 || callInfo.constructing()) {
+    // This is called from Self-hosted JS, after testing each argument,
+    // most of following tests should be passed.
+
+    if (callInfo.argc() != 4 || callInfo.constructing()) {
         trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
         return InliningStatus_NotInlined;
     }
 
-    // TI can infer a nullptr return type of regexp_test with eager compilation.
-    if (CallResultEscapes(pc) && getInlineReturnType() != MIRType_Boolean)
+    // regexp
+    if (callInfo.getArg(0)->type() != MIRType_Object)
         return InliningStatus_NotInlined;
 
-    if (callInfo.thisArg()->type() != MIRType_Object)
-        return InliningStatus_NotInlined;
-    TemporaryTypeSet* thisTypes = callInfo.thisArg()->resultTypeSet();
-    const Class* clasp = thisTypes ? thisTypes->getKnownClass(constraints()) : nullptr;
+    TemporaryTypeSet* arg0Types = callInfo.getArg(0)->resultTypeSet();
+    const Class* clasp = arg0Types ? arg0Types->getKnownClass(constraints()) : nullptr;
     if (clasp != &RegExpObject::class_)
         return InliningStatus_NotInlined;
-    if (callInfo.getArg(0)->mightBeType(MIRType_Object))
+
+    // string
+    if (callInfo.getArg(1)->mightBeType(MIRType_Object))
+        return InliningStatus_NotInlined;
+
+    // lastIndex: Only inline if it's Int32.
+    if (callInfo.getArg(2)->type() != MIRType_Int32)
+        return InliningStatus_NotInlined;
+
+    // sticky
+    if (callInfo.getArg(3)->type() != MIRType_Boolean)
         return InliningStatus_NotInlined;
 
     JSContext* cx = GetJitContext()->cx;
-    if (!cx->compartment()->jitCompartment()->ensureRegExpTestStubExists(cx))
+    if (!cx->compartment()->jitCompartment()->ensureRegExpTesterStubExists(cx)) {
+        oom();
         return InliningStatus_Error;
+    }
 
     callInfo.setImplicitlyUsedUnchecked();
 
-    MInstruction* match = MRegExpTest::New(alloc(), callInfo.thisArg(), callInfo.getArg(0));
-    current->add(match);
-    current->push(match);
-    if (!resumeAfter(match))
+    MInstruction* tester = MRegExpTester::New(alloc(), callInfo.getArg(0), callInfo.getArg(1),
+                                              callInfo.getArg(2), callInfo.getArg(3));
+    current->add(tester);
+    current->push(tester);
+
+    if (!resumeAfter(tester))
         return InliningStatus_Error;
 
+    return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningStatus
+IonBuilder::inlineIsRegExpObject(CallInfo& callInfo)
+{
+    if (callInfo.constructing() || callInfo.argc() != 1) {
+        trackOptimizationOutcome(TrackedOutcome::CantInlineNativeBadForm);
+        return InliningStatus_NotInlined;
+    }
+
+    if (getInlineReturnType() != MIRType_Boolean)
+        return InliningStatus_NotInlined;
+
+    MDefinition* arg = callInfo.getArg(0);
+
+    bool isRegExpObject;
+    if (!arg->mightBeType(MIRType_Object)) {
+        isRegExpObject = false;
+    } else {
+        if (arg->type() != MIRType_Object)
+            return InliningStatus_NotInlined;
+
+        TemporaryTypeSet* types = arg->resultTypeSet();
+        const Class* clasp = types ? types->getKnownClass(constraints()) : nullptr;
+        if (!clasp || clasp->isProxy())
+            return InliningStatus_NotInlined;
+
+        isRegExpObject = (clasp == &RegExpObject::class_);
+    }
+
+    pushConstant(BooleanValue(isRegExpObject));
+
+    callInfo.setImplicitlyUsedUnchecked();
     return InliningStatus_Inlined;
 }
 
@@ -2181,7 +2245,7 @@ IsTypedArrayObject(CompilerConstraintList* constraints, MDefinition* def)
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineTypedArrayLength(CallInfo& callInfo)
+IonBuilder::inlinePossiblyWrappedTypedArrayLength(CallInfo& callInfo)
 {
     MOZ_ASSERT(!callInfo.constructing());
     MOZ_ASSERT(callInfo.argc() == 1);
@@ -2190,8 +2254,6 @@ IonBuilder::inlineTypedArrayLength(CallInfo& callInfo)
     if (getInlineReturnType() != MIRType_Int32)
         return InliningStatus_NotInlined;
 
-    // Note that the argument we see here is not necessarily a typed array.
-    // If it's not, this call should be unreachable though.
     if (!IsTypedArrayObject(constraints(), callInfo.getArg(0)))
         return InliningStatus_NotInlined;
 
@@ -2200,6 +2262,12 @@ IonBuilder::inlineTypedArrayLength(CallInfo& callInfo)
 
     callInfo.setImplicitlyUsedUnchecked();
     return InliningStatus_Inlined;
+}
+
+IonBuilder::InliningStatus
+IonBuilder::inlineTypedArrayLength(CallInfo& callInfo)
+{
+    return inlinePossiblyWrappedTypedArrayLength(callInfo);
 }
 
 IonBuilder::InliningStatus
@@ -2354,7 +2422,7 @@ IonBuilder::inlineUnsafeSetReservedSlot(CallInfo& callInfo)
     current->add(store);
     current->push(store);
 
-    if (NeedsPostBarrier(info(), callInfo.getArg(2)))
+    if (NeedsPostBarrier(callInfo.getArg(2)))
         current->add(MPostWriteBarrier::New(alloc(), callInfo.getArg(0), callInfo.getArg(2)));
 
     return InliningStatus_Inlined;
@@ -2580,7 +2648,7 @@ IonBuilder::inlineAssertRecoveredOnBailout(CallInfo& callInfo)
     if (callInfo.argc() != 2)
         return InliningStatus_NotInlined;
 
-    if (js_JitOptions.checkRangeAnalysis) {
+    if (JitOptions.checkRangeAnalysis) {
         // If we are checking the range of all instructions, then the guards
         // inserted by Range Analysis prevent the use of recover
         // instruction. Thus, we just disable these checks.
@@ -2616,73 +2684,6 @@ IonBuilder::inlineAssertRecoveredOnBailout(CallInfo& callInfo)
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineBoundFunction(CallInfo& nativeCallInfo, JSFunction* target)
-{
-    trackOptimizationOutcome(TrackedOutcome::CantInlineBound);
-
-    if (!target->getBoundFunctionTarget()->is<JSFunction>())
-        return InliningStatus_NotInlined;
-
-    JSFunction* scriptedTarget = &(target->getBoundFunctionTarget()->as<JSFunction>());
-
-    // Don't optimize if we're constructing and the callee is not a
-    // constructor, so that CallKnown does not have to handle this case
-    // (it should always throw).
-    if (nativeCallInfo.constructing() && !scriptedTarget->isConstructor())
-        return InliningStatus_NotInlined;
-
-    if (nativeCallInfo.constructing() && nativeCallInfo.getNewTarget() != nativeCallInfo.fun())
-        return InliningStatus_NotInlined;
-
-    if (gc::IsInsideNursery(scriptedTarget))
-        return InliningStatus_NotInlined;
-
-    for (size_t i = 0; i < target->getBoundFunctionArgumentCount(); i++) {
-        const Value val = target->getBoundFunctionArgument(i);
-        if (val.isObject() && gc::IsInsideNursery(&val.toObject()))
-            return InliningStatus_NotInlined;
-        if (val.isString() && !val.toString()->isAtom())
-            return InliningStatus_NotInlined;
-    }
-
-    const Value thisVal = target->getBoundFunctionThis();
-    if (thisVal.isObject() && gc::IsInsideNursery(&thisVal.toObject()))
-        return InliningStatus_NotInlined;
-    if (thisVal.isString() && !thisVal.toString()->isAtom())
-        return InliningStatus_NotInlined;
-
-    size_t argc = target->getBoundFunctionArgumentCount() + nativeCallInfo.argc();
-    if (argc > ARGS_LENGTH_MAX)
-        return InliningStatus_NotInlined;
-
-    nativeCallInfo.thisArg()->setImplicitlyUsedUnchecked();
-
-    CallInfo callInfo(alloc(), nativeCallInfo.constructing());
-    callInfo.setFun(constant(ObjectValue(*scriptedTarget)));
-    callInfo.setThis(constant(thisVal));
-
-    if (!callInfo.argv().reserve(argc))
-        return InliningStatus_Error;
-
-    for (size_t i = 0; i < target->getBoundFunctionArgumentCount(); i++) {
-        MConstant* argConst = constant(target->getBoundFunctionArgument(i));
-        callInfo.argv().infallibleAppend(argConst);
-    }
-    for (size_t i = 0; i < nativeCallInfo.argc(); i++)
-        callInfo.argv().infallibleAppend(nativeCallInfo.getArg(i));
-
-    // We only inline when it was not a super-call, so just set the newTarget
-    // to be the target function, per spec.
-    if (nativeCallInfo.constructing())
-        callInfo.setNewTarget(callInfo.fun());
-
-    if (!makeCall(scriptedTarget, callInfo))
-        return InliningStatus_Error;
-
-    return InliningStatus_Inlined;
-}
-
-IonBuilder::InliningStatus
 IonBuilder::inlineAtomicsCompareExchange(CallInfo& callInfo)
 {
     if (callInfo.argc() != 4 || callInfo.constructing()) {
@@ -2701,7 +2702,8 @@ IonBuilder::inlineAtomicsCompareExchange(CallInfo& callInfo)
         return InliningStatus_NotInlined;
 
     Scalar::Type arrayType;
-    if (!atomicsMeetsPreconditions(callInfo, &arrayType))
+    bool requiresCheck = false;
+    if (!atomicsMeetsPreconditions(callInfo, &arrayType, &requiresCheck))
         return InliningStatus_NotInlined;
 
     callInfo.setImplicitlyUsedUnchecked();
@@ -2709,6 +2711,9 @@ IonBuilder::inlineAtomicsCompareExchange(CallInfo& callInfo)
     MInstruction* elements;
     MDefinition* index;
     atomicsCheckBounds(callInfo, &elements, &index);
+
+    if (requiresCheck)
+        addSharedTypedArrayGuard(callInfo.getArg(0));
 
     MCompareExchangeTypedArrayElement* cas =
         MCompareExchangeTypedArrayElement::New(alloc(), elements, index, arrayType, oldval, newval);
@@ -2735,7 +2740,8 @@ IonBuilder::inlineAtomicsExchange(CallInfo& callInfo)
         return InliningStatus_NotInlined;
 
     Scalar::Type arrayType;
-    if (!atomicsMeetsPreconditions(callInfo, &arrayType))
+    bool requiresCheck = false;
+    if (!atomicsMeetsPreconditions(callInfo, &arrayType, &requiresCheck))
         return InliningStatus_NotInlined;
 
     callInfo.setImplicitlyUsedUnchecked();
@@ -2743,6 +2749,9 @@ IonBuilder::inlineAtomicsExchange(CallInfo& callInfo)
     MInstruction* elements;
     MDefinition* index;
     atomicsCheckBounds(callInfo, &elements, &index);
+
+    if (requiresCheck)
+        addSharedTypedArrayGuard(callInfo.getArg(0));
 
     MInstruction* exchange =
         MAtomicExchangeTypedArrayElement::New(alloc(), elements, index, value, arrayType);
@@ -2765,7 +2774,8 @@ IonBuilder::inlineAtomicsLoad(CallInfo& callInfo)
     }
 
     Scalar::Type arrayType;
-    if (!atomicsMeetsPreconditions(callInfo, &arrayType))
+    bool requiresCheck = false;
+    if (!atomicsMeetsPreconditions(callInfo, &arrayType, &requiresCheck))
         return InliningStatus_NotInlined;
 
     callInfo.setImplicitlyUsedUnchecked();
@@ -2773,6 +2783,9 @@ IonBuilder::inlineAtomicsLoad(CallInfo& callInfo)
     MInstruction* elements;
     MDefinition* index;
     atomicsCheckBounds(callInfo, &elements, &index);
+
+    if (requiresCheck)
+        addSharedTypedArrayGuard(callInfo.getArg(0));
 
     MLoadUnboxedScalar* load =
         MLoadUnboxedScalar::New(alloc(), elements, index, arrayType,
@@ -2801,7 +2814,8 @@ IonBuilder::inlineAtomicsStore(CallInfo& callInfo)
         return InliningStatus_NotInlined;
 
     Scalar::Type arrayType;
-    if (!atomicsMeetsPreconditions(callInfo, &arrayType, DontCheckAtomicResult))
+    bool requiresCheck = false;
+    if (!atomicsMeetsPreconditions(callInfo, &arrayType, &requiresCheck, DontCheckAtomicResult))
         return InliningStatus_NotInlined;
 
     callInfo.setImplicitlyUsedUnchecked();
@@ -2809,6 +2823,9 @@ IonBuilder::inlineAtomicsStore(CallInfo& callInfo)
     MInstruction* elements;
     MDefinition* index;
     atomicsCheckBounds(callInfo, &elements, &index);
+
+    if (requiresCheck)
+        addSharedTypedArrayGuard(callInfo.getArg(0));
 
     MDefinition* toWrite = value;
     if (value->type() != MIRType_Int32) {
@@ -2864,10 +2881,14 @@ IonBuilder::inlineAtomicsBinop(CallInfo& callInfo, InlinableNative target)
         return InliningStatus_NotInlined;
 
     Scalar::Type arrayType;
-    if (!atomicsMeetsPreconditions(callInfo, &arrayType))
+    bool requiresCheck = false;
+    if (!atomicsMeetsPreconditions(callInfo, &arrayType, &requiresCheck))
         return InliningStatus_NotInlined;
 
     callInfo.setImplicitlyUsedUnchecked();
+
+    if (requiresCheck)
+        addSharedTypedArrayGuard(callInfo.getArg(0));
 
     MInstruction* elements;
     MDefinition* index;
@@ -2926,7 +2947,7 @@ IonBuilder::inlineAtomicsIsLockFree(CallInfo& callInfo)
 
 bool
 IonBuilder::atomicsMeetsPreconditions(CallInfo& callInfo, Scalar::Type* arrayType,
-                                      AtomicCheckResult checkResult)
+                                      bool* requiresTagCheck, AtomicCheckResult checkResult)
 {
     if (!JitSupportsAtomics())
         return false;
@@ -2937,7 +2958,8 @@ IonBuilder::atomicsMeetsPreconditions(CallInfo& callInfo, Scalar::Type* arrayTyp
     if (callInfo.getArg(1)->type() != MIRType_Int32)
         return false;
 
-    // Ensure that the first argument is a valid SharedTypedArray.
+    // Ensure that the first argument is a TypedArray that maps shared
+    // memory.
     //
     // Then check both that the element type is something we can
     // optimize and that the return type is suitable for that element
@@ -2947,7 +2969,9 @@ IonBuilder::atomicsMeetsPreconditions(CallInfo& callInfo, Scalar::Type* arrayTyp
     if (!arg0Types)
         return false;
 
-    *arrayType = arg0Types->getSharedTypedArrayType(constraints());
+    TemporaryTypeSet::TypedArraySharedness sharedness;
+    *arrayType = arg0Types->getTypedArrayType(constraints(), &sharedness);
+    *requiresTagCheck = sharedness != TemporaryTypeSet::KnownShared;
     switch (*arrayType) {
       case Scalar::Int8:
       case Scalar::Uint8:
@@ -2961,7 +2985,7 @@ IonBuilder::atomicsMeetsPreconditions(CallInfo& callInfo, Scalar::Type* arrayTyp
         // be.
         return checkResult == DontCheckAtomicResult || getInlineReturnType() == MIRType_Double;
       default:
-        // Excludes floating types and Uint8Clamped
+        // Excludes floating types and Uint8Clamped.
         return false;
     }
 }
@@ -3032,190 +3056,215 @@ IonBuilder::inlineConstructTypedObject(CallInfo& callInfo, TypeDescr* descr)
     return InliningStatus_Inlined;
 }
 
+// Main entry point for SIMD inlining.
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdInt32x4(CallInfo& callInfo, JSNative native)
+IonBuilder::inlineSimd(CallInfo& callInfo, JSFunction* target, MIRType simdType)
 {
-#define INLINE_INT32X4_SIMD_ARITH_(OP)                                                           \
-    if (native == js::simd_int32x4_##OP)                                                         \
-        return inlineBinarySimd<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_##OP,   \
-                                                  SimdTypeDescr::Int32x4);
+    JSNative native = target->native();
+    const JSJitInfo* jitInfo = target->jitInfo();
+    MOZ_ASSERT(jitInfo && jitInfo->type() == JSJitInfo::InlinableNative);
+    SimdOperation simdOp = SimdOperation(jitInfo->nativeOp);
+    MOZ_ASSERT(IsSimdType(simdType));
 
-    ARITH_COMMONX4_SIMD_OP(INLINE_INT32X4_SIMD_ARITH_)
-#undef INLINE_INT32X4_SIMD_ARITH_
+    switch(simdOp) {
+      case SimdOperation::Constructor:
+        // SIMD constructor calls are handled via inlineNonFunctionCall(), so
+        // they won't show up here where target is required to be a JSFunction.
+        // See also inlineConstructSimdObject().
+        MOZ_CRASH("SIMD constructor call not expected.");
+      case SimdOperation::Fn_check:
+        return inlineSimdCheck(callInfo, native, simdType);
+      case SimdOperation::Fn_splat:
+        return inlineSimdSplat(callInfo, native, simdType);
+      case SimdOperation::Fn_extractLane:
+        return inlineSimdExtractLane(callInfo, native, simdType);
+      case SimdOperation::Fn_replaceLane:
+        return inlineSimdReplaceLane(callInfo, native, simdType);
+      case SimdOperation::Fn_select:
+        return inlineSimdSelect(callInfo, native, simdType);
+      case SimdOperation::Fn_swizzle:
+        return inlineSimdShuffle(callInfo, native, simdType, 1, SimdTypeToLength(simdType));
+      case SimdOperation::Fn_shuffle:
+        return inlineSimdShuffle(callInfo, native, simdType, 2, SimdTypeToLength(simdType));
 
-#define INLINE_SIMD_BITWISE_(OP)                                                                 \
-    if (native == js::simd_int32x4_##OP)                                                         \
-        return inlineBinarySimd<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::OP##_, \
-                                                    SimdTypeDescr::Int32x4);
+        // Unary arithmetic.
+      case SimdOperation::Fn_abs:
+        return inlineSimdUnary(callInfo, native, MSimdUnaryArith::abs, simdType);
+      case SimdOperation::Fn_neg:
+        return inlineSimdUnary(callInfo, native, MSimdUnaryArith::neg, simdType);
+      case SimdOperation::Fn_not:
+        return inlineSimdUnary(callInfo, native, MSimdUnaryArith::not_, simdType);
+      case SimdOperation::Fn_reciprocalApproximation:
+        return inlineSimdUnary(callInfo, native, MSimdUnaryArith::reciprocalApproximation,
+                               simdType);
+      case SimdOperation::Fn_reciprocalSqrtApproximation:
+        return inlineSimdUnary(callInfo, native, MSimdUnaryArith::reciprocalSqrtApproximation,
+                               simdType);
+      case SimdOperation::Fn_sqrt:
+        return inlineSimdUnary(callInfo, native, MSimdUnaryArith::sqrt, simdType);
 
-    BITWISE_COMMONX4_SIMD_OP(INLINE_SIMD_BITWISE_)
-#undef INLINE_SIMD_BITWISE_
+        // Binary arithmetic.
+      case SimdOperation::Fn_add:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_add,
+                                                  simdType);
+      case SimdOperation::Fn_sub:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_sub,
+                                                  simdType);
+      case SimdOperation::Fn_mul:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_mul,
+                                                  simdType);
+      case SimdOperation::Fn_div:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_div,
+                                                  simdType);
+      case SimdOperation::Fn_max:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_max,
+                                                  simdType);
+      case SimdOperation::Fn_min:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_min,
+                                                  simdType);
+      case SimdOperation::Fn_maxNum:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_maxNum,
+                                                  simdType);
+      case SimdOperation::Fn_minNum:
+        return inlineSimdBinary<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_minNum,
+                                                  simdType);
 
-    if (native == js::simd_int32x4_shiftLeftByScalar)
-        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::lsh, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_shiftRightArithmeticByScalar)
-        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::rsh, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_shiftRightLogicalByScalar)
-        return inlineBinarySimd<MSimdShift>(callInfo, native, MSimdShift::ursh, SimdTypeDescr::Int32x4);
+        // Binary bitwise.
+      case SimdOperation::Fn_and:
+        return inlineSimdBinary<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::and_,
+                                                    simdType);
+      case SimdOperation::Fn_or:
+        return inlineSimdBinary<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::or_,
+                                                    simdType);
+      case SimdOperation::Fn_xor:
+        return inlineSimdBinary<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::xor_,
+                                                    simdType);
 
-#define INLINE_SIMD_COMPARISON_(OP)                                                                \
-    if (native == js::simd_int32x4_##OP)                                                           \
-        return inlineCompSimd(callInfo, native, MSimdBinaryComp::OP, SimdTypeDescr::Int32x4);
+        // Shifts.
+      case SimdOperation::Fn_shiftLeftByScalar:
+        return inlineSimdBinary<MSimdShift>(callInfo, native, MSimdShift::lsh, simdType);
+      case SimdOperation::Fn_shiftRightByScalar:
+        // TODO: select opcode from simdType signedness.
+        MOZ_ASSERT(simdType == MIRType_Int32x4);
+        return inlineSimdBinary<MSimdShift>(callInfo, native, MSimdShift::rsh, simdType);
+      case SimdOperation::Fn_shiftRightArithmeticByScalar:
+        return inlineSimdBinary<MSimdShift>(callInfo, native, MSimdShift::rsh, simdType);
+      case SimdOperation::Fn_shiftRightLogicalByScalar:
+        return inlineSimdBinary<MSimdShift>(callInfo, native, MSimdShift::ursh, simdType);
 
-    COMP_COMMONX4_TO_INT32X4_SIMD_OP(INLINE_SIMD_COMPARISON_)
-#undef INLINE_SIMD_COMPARISON_
+        // Boolean unary.
+      case SimdOperation::Fn_allTrue:
+        return inlineSimdAnyAllTrue(callInfo, /* IsAllTrue= */true, native);
+      case SimdOperation::Fn_anyTrue:
+        return inlineSimdAnyAllTrue(callInfo, /* IsAllTrue= */false, native);
 
-    if (native == js::simd_int32x4_extractLane)
-        return inlineSimdExtractLane(callInfo, native, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_replaceLane)
-        return inlineSimdReplaceLane(callInfo, native, SimdTypeDescr::Int32x4);
+        // Comparisons.
+      case SimdOperation::Fn_lessThan:
+        return inlineSimdComp(callInfo, native, MSimdBinaryComp::lessThan, simdType);
+      case SimdOperation::Fn_lessThanOrEqual:
+        return inlineSimdComp(callInfo, native, MSimdBinaryComp::lessThanOrEqual, simdType);
+      case SimdOperation::Fn_equal:
+        return inlineSimdComp(callInfo, native, MSimdBinaryComp::equal, simdType);
+      case SimdOperation::Fn_notEqual:
+        return inlineSimdComp(callInfo, native, MSimdBinaryComp::notEqual, simdType);
+      case SimdOperation::Fn_greaterThan:
+        return inlineSimdComp(callInfo, native, MSimdBinaryComp::greaterThan, simdType);
+      case SimdOperation::Fn_greaterThanOrEqual:
+        return inlineSimdComp(callInfo, native, MSimdBinaryComp::greaterThanOrEqual, simdType);
 
-    if (native == js::simd_int32x4_not)
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::not_, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_neg)
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::neg, SimdTypeDescr::Int32x4);
+        // Int <-> Float conversions.
+      case SimdOperation::Fn_fromInt32x4:
+        return inlineSimdConvert(callInfo, native, false, MIRType_Int32x4, simdType);
+      case SimdOperation::Fn_fromUint32x4:
+        return InliningStatus_NotInlined;
+      case SimdOperation::Fn_fromFloat32x4:
+        return inlineSimdConvert(callInfo, native, false, MIRType_Float32x4, simdType);
 
-    typedef bool IsCast;
-    if (native == js::simd_int32x4_fromFloat32x4)
-        return inlineSimdConvert(callInfo, native, IsCast(false), SimdTypeDescr::Float32x4, SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_fromFloat32x4Bits)
-        return inlineSimdConvert(callInfo, native, IsCast(true), SimdTypeDescr::Float32x4, SimdTypeDescr::Int32x4);
+        // Load/store.
+      case SimdOperation::Fn_load:
+        return inlineSimdLoad(callInfo, native, simdType, SimdTypeToLength(simdType));
+      case SimdOperation::Fn_load1:
+        return inlineSimdLoad(callInfo, native, simdType, 1);
+      case SimdOperation::Fn_load2:
+        return inlineSimdLoad(callInfo, native, simdType, 2);
+      case SimdOperation::Fn_load3:
+        return inlineSimdLoad(callInfo, native, simdType, 3);
+      case SimdOperation::Fn_store:
+        return inlineSimdStore(callInfo, native, simdType, SimdTypeToLength(simdType));
+      case SimdOperation::Fn_store1:
+        return inlineSimdStore(callInfo, native, simdType, 1);
+      case SimdOperation::Fn_store2:
+        return inlineSimdStore(callInfo, native, simdType, 2);
+      case SimdOperation::Fn_store3:
+        return inlineSimdStore(callInfo, native, simdType, 3);
 
-    if (native == js::simd_int32x4_splat)
-        return inlineSimdSplat(callInfo, native, SimdTypeDescr::Int32x4);
+        // Bitcasts. One for each type with a memory representation.
+      case SimdOperation::Fn_fromInt8x16Bits:
+      case SimdOperation::Fn_fromInt16x8Bits:
+        return InliningStatus_NotInlined;
+      case SimdOperation::Fn_fromInt32x4Bits:
+        return inlineSimdConvert(callInfo, native, true, MIRType_Int32x4, simdType);
+      case SimdOperation::Fn_fromUint8x16Bits:
+      case SimdOperation::Fn_fromUint16x8Bits:
+      case SimdOperation::Fn_fromUint32x4Bits:
+        return InliningStatus_NotInlined;
+      case SimdOperation::Fn_fromFloat32x4Bits:
+        return inlineSimdConvert(callInfo, native, true, MIRType_Float32x4, simdType);
+      case SimdOperation::Fn_fromFloat64x2Bits:
+        return InliningStatus_NotInlined;
+    }
 
-    if (native == js::simd_int32x4_check)
-        return inlineSimdCheck(callInfo, native, SimdTypeDescr::Int32x4);
-
-    typedef bool IsElementWise;
-    if (native == js::simd_int32x4_select)
-        return inlineSimdSelect(callInfo, native, IsElementWise(true), SimdTypeDescr::Int32x4);
-    if (native == js::simd_int32x4_selectBits)
-        return inlineSimdSelect(callInfo, native, IsElementWise(false), SimdTypeDescr::Int32x4);
-
-    if (native == js::simd_int32x4_swizzle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Int32x4, 1, 4);
-    if (native == js::simd_int32x4_shuffle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Int32x4, 2, 4);
-
-    if (native == js::simd_int32x4_load)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 4);
-    if (native == js::simd_int32x4_load1)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 1);
-    if (native == js::simd_int32x4_load2)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 2);
-    if (native == js::simd_int32x4_load3)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Int32x4, 3);
-
-    if (native == js::simd_int32x4_store)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 4);
-    if (native == js::simd_int32x4_store1)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 1);
-    if (native == js::simd_int32x4_store2)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 2);
-    if (native == js::simd_int32x4_store3)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Int32x4, 3);
-
-    if (native == js::simd_int32x4_bool)
-        return inlineSimdBool(callInfo, native, SimdTypeDescr::Int32x4);
-
-    return InliningStatus_NotInlined;
+    MOZ_CRASH("Unexpected SIMD opcode");
 }
 
-IonBuilder::InliningStatus
-IonBuilder::inlineSimdFloat32x4(CallInfo& callInfo, JSNative native)
+// The representation of boolean SIMD vectors is the same as the corresponding
+// integer SIMD vectors with -1 lanes meaning true and 0 lanes meaning false.
+//
+// Functions that set the value of a boolean vector lane work by applying
+// ToBoolean on the input argument, so they accept any argument type, just like
+// the MNot and MTest instructions.
+//
+// Convert any scalar value into an appropriate SIMD lane value: An Int32 value
+// that is either 0 for false or -1 for true.
+MDefinition*
+IonBuilder::convertToBooleanSimdLane(MDefinition* scalar)
 {
-    // Simd functions
-#define INLINE_FLOAT32X4_SIMD_ARITH_(OP)                                                         \
-    if (native == js::simd_float32x4_##OP)                                                       \
-        return inlineBinarySimd<MSimdBinaryArith>(callInfo, native, MSimdBinaryArith::Op_##OP,   \
-                                                  SimdTypeDescr::Float32x4);
+    MSub* result;
 
-    ARITH_COMMONX4_SIMD_OP(INLINE_FLOAT32X4_SIMD_ARITH_)
-    BINARY_ARITH_FLOAT32X4_SIMD_OP(INLINE_FLOAT32X4_SIMD_ARITH_)
-#undef INLINE_FLOAT32X4_SIMD_ARITH_
+    if (scalar->type() == MIRType_Boolean) {
+        // The input scalar is already a boolean with the int32 values 0 / 1.
+        // Compute result = 0 - scalar.
+        result = MSub::New(alloc(), constant(Int32Value(0)), scalar);
+    } else {
+        // For any other type, let MNot handle the conversion to boolean.
+        // Compute result = !scalar - 1.
+        MNot* inv = MNot::New(alloc(), scalar);
+        current->add(inv);
+        result = MSub::New(alloc(), inv, constant(Int32Value(1)));
+    }
 
-#define INLINE_SIMD_BITWISE_(OP)                                                                 \
-    if (native == js::simd_float32x4_##OP)                                                       \
-        return inlineBinarySimd<MSimdBinaryBitwise>(callInfo, native, MSimdBinaryBitwise::OP##_, \
-                                                    SimdTypeDescr::Float32x4);
+    result->setInt32Specialization();
+    current->add(result);
+    return result;
+}
 
-    BITWISE_COMMONX4_SIMD_OP(INLINE_SIMD_BITWISE_)
-#undef INLINE_SIMD_BITWISE_
-
-#define INLINE_SIMD_COMPARISON_(OP)                                                                \
-    if (native == js::simd_float32x4_##OP)                                                         \
-        return inlineCompSimd(callInfo, native, MSimdBinaryComp::OP, SimdTypeDescr::Float32x4);
-
-    COMP_COMMONX4_TO_INT32X4_SIMD_OP(INLINE_SIMD_COMPARISON_)
-#undef INLINE_SIMD_COMPARISON_
-
-    if (native == js::simd_float32x4_extractLane)
-        return inlineSimdExtractLane(callInfo, native, SimdTypeDescr::Float32x4);
-    if (native == js::simd_float32x4_replaceLane)
-        return inlineSimdReplaceLane(callInfo, native, SimdTypeDescr::Float32x4);
-
-#define INLINE_SIMD_FLOAT32X4_UNARY_(OP)                                                           \
-    if (native == js::simd_float32x4_##OP)                                                         \
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::OP, SimdTypeDescr::Float32x4);
-
-    UNARY_ARITH_FLOAT32X4_SIMD_OP(INLINE_SIMD_FLOAT32X4_UNARY_)
-    INLINE_SIMD_FLOAT32X4_UNARY_(neg)
-#undef INLINE_SIMD_FLOAT32X4_UNARY_
-
-    if (native == js::simd_float32x4_not)
-        return inlineUnarySimd(callInfo, native, MSimdUnaryArith::not_, SimdTypeDescr::Float32x4);
-
-    typedef bool IsCast;
-    if (native == js::simd_float32x4_fromInt32x4)
-        return inlineSimdConvert(callInfo, native, IsCast(false), SimdTypeDescr::Int32x4, SimdTypeDescr::Float32x4);
-    if (native == js::simd_float32x4_fromInt32x4Bits)
-        return inlineSimdConvert(callInfo, native, IsCast(true), SimdTypeDescr::Int32x4, SimdTypeDescr::Float32x4);
-
-    if (native == js::simd_float32x4_splat)
-        return inlineSimdSplat(callInfo, native, SimdTypeDescr::Float32x4);
-
-    if (native == js::simd_float32x4_check)
-        return inlineSimdCheck(callInfo, native, SimdTypeDescr::Float32x4);
-
-    typedef bool IsElementWise;
-    if (native == js::simd_float32x4_select)
-        return inlineSimdSelect(callInfo, native, IsElementWise(true), SimdTypeDescr::Float32x4);
-
-    if (native == js::simd_float32x4_swizzle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Float32x4, 1, 4);
-    if (native == js::simd_float32x4_shuffle)
-        return inlineSimdShuffle(callInfo, native, SimdTypeDescr::Float32x4, 2, 4);
-
-    if (native == js::simd_float32x4_load)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 4);
-    if (native == js::simd_float32x4_load1)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 1);
-    if (native == js::simd_float32x4_load2)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 2);
-    if (native == js::simd_float32x4_load3)
-        return inlineSimdLoad(callInfo, native, SimdTypeDescr::Float32x4, 3);
-
-    if (native == js::simd_float32x4_store)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 4);
-    if (native == js::simd_float32x4_store1)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 1);
-    if (native == js::simd_float32x4_store2)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 2);
-    if (native == js::simd_float32x4_store3)
-        return inlineSimdStore(callInfo, native, SimdTypeDescr::Float32x4, 3);
-
-    return InliningStatus_NotInlined;
+static inline
+bool SimdTypeToMIRType(SimdType type, MIRType* mirType)
+{
+    switch (type) {
+      case SimdType::Int32x4:     *mirType = MIRType_Int32x4;   return true;
+      case SimdType::Float32x4:   *mirType = MIRType_Float32x4; return true;
+      case SimdType::Bool32x4:    *mirType = MIRType_Bool32x4;  return true;
+      default:                    return false;
+    }
 }
 
 IonBuilder::InliningStatus
 IonBuilder::inlineConstructSimdObject(CallInfo& callInfo, SimdTypeDescr* descr)
 {
     // Generic constructor of SIMD valuesX4.
-    MIRType simdType = SimdTypeDescrToMIRType(descr->type());
-
-    // TODO Happens for Float64x2 (Bug 1124205) and Int8x16/Int16x8 (Bug 1136226)
-    if (simdType == MIRType_Undefined)
+    MIRType simdType;
+    if (!SimdTypeToMIRType(descr->type(), &simdType))
         return InliningStatus_NotInlined;
 
     // Take the templateObject out of Baseline ICs, such that we can box
@@ -3233,21 +3282,31 @@ IonBuilder::inlineConstructSimdObject(CallInfo& callInfo, SimdTypeDescr* descr)
     // When there are missing arguments, provide a default value
     // containing the coercion of 'undefined' to the right type.
     MConstant* defVal = nullptr;
+    MIRType laneType = SimdTypeToLaneType(simdType);
     if (callInfo.argc() < SimdTypeToLength(simdType)) {
-        MIRType scalarType = SimdTypeToScalarType(simdType);
-        if (scalarType == MIRType_Int32) {
+        if (laneType == MIRType_Int32) {
             defVal = constant(Int32Value(0));
+        } else if (laneType == MIRType_Boolean) {
+            defVal = constant(BooleanValue(false));
         } else {
-            MOZ_ASSERT(IsFloatingPointType(scalarType));
+            MOZ_ASSERT(IsFloatingPointType(laneType));
             defVal = constant(DoubleNaNValue());
-            defVal->setResultType(scalarType);
+            defVal->setResultType(laneType);
         }
     }
 
+    MDefinition* lane[4];
+    for (unsigned i = 0; i < 4; i++)
+        lane[i] = callInfo.getArgWithDefault(i, defVal);
+
+    // Convert boolean lanes into Int32 0 / -1.
+    if (laneType == MIRType_Boolean) {
+        for (unsigned i = 0; i < 4; i++)
+            lane[i] = convertToBooleanSimdLane(lane[i]);
+    }
+
     MSimdValueX4* values =
-        MSimdValueX4::New(alloc(), simdType,
-                          callInfo.getArgWithDefault(0, defVal), callInfo.getArgWithDefault(1, defVal),
-                          callInfo.getArgWithDefault(2, defVal), callInfo.getArgWithDefault(3, defVal));
+      MSimdValueX4::New(alloc(), simdType, lane[0], lane[1], lane[2], lane[3]);
     current->add(values);
 
     MSimdBox* obj = MSimdBox::New(alloc(), constraints(), values, inlineTypedObject,
@@ -3260,20 +3319,33 @@ IonBuilder::inlineConstructSimdObject(CallInfo& callInfo, SimdTypeDescr* descr)
 }
 
 bool
-IonBuilder::checkInlineSimd(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
-                            unsigned numArgs, InlineTypedObject** templateObj)
+IonBuilder::canInlineSimd(CallInfo& callInfo, JSNative native, unsigned numArgs,
+                            InlineTypedObject** templateObj)
 {
     if (callInfo.argc() != numArgs)
         return false;
 
     JSObject* templateObject = inspector->getTemplateObjectForNative(pc, native);
     if (!templateObject)
-        return false;;
+        return false;
 
-    InlineTypedObject* inlineTypedObject = &templateObject->as<InlineTypedObject>();
-    MOZ_ASSERT(inlineTypedObject->typeDescr().as<SimdTypeDescr>().type() == type);
-    *templateObj = inlineTypedObject;
+    *templateObj = &templateObject->as<InlineTypedObject>();
     return true;
+}
+
+IonBuilder::InliningStatus
+IonBuilder::inlineSimdCheck(CallInfo& callInfo, JSNative native, MIRType mirType)
+{
+    InlineTypedObject* templateObj = nullptr;
+    if (!canInlineSimd(callInfo, native, 1, &templateObj))
+        return InliningStatus_NotInlined;
+
+    MSimdUnbox* unbox = MSimdUnbox::New(alloc(), callInfo.getArg(0), mirType);
+    current->add(unbox);
+    current->push(callInfo.getArg(0));
+
+    callInfo.setImplicitlyUsedUnchecked();
+    return InliningStatus_Inlined;
 }
 
 IonBuilder::InliningStatus
@@ -3291,11 +3363,11 @@ IonBuilder::boxSimd(CallInfo& callInfo, MInstruction* ins, InlineTypedObject* te
 
 template<typename T>
 IonBuilder::InliningStatus
-IonBuilder::inlineBinarySimd(CallInfo& callInfo, JSNative native, typename T::Operation op,
-                             SimdTypeDescr::Type type)
+IonBuilder::inlineSimdBinary(CallInfo& callInfo, JSNative native, typename T::Operation op,
+                             MIRType mirType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 2, &templateObj))
+    if (!canInlineSimd(callInfo, native, 2, &templateObj))
         return InliningStatus_NotInlined;
 
     // If the type of any of the arguments is neither a SIMD type, an Object
@@ -3303,17 +3375,16 @@ IonBuilder::inlineBinarySimd(CallInfo& callInfo, JSNative native, typename T::Op
     // unbox sequence.  This does not matter much as all binary SIMD
     // instructions are supposed to produce a TypeError when they're called
     // with non SIMD-arguments.
-    MIRType mirType = SimdTypeDescrToMIRType(type);
     T* ins = T::New(alloc(), callInfo.getArg(0), callInfo.getArg(1), op, mirType);
     return boxSimd(callInfo, ins, templateObj);
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineCompSimd(CallInfo& callInfo, JSNative native, MSimdBinaryComp::Operation op,
-                           SimdTypeDescr::Type compType)
+IonBuilder::inlineSimdComp(CallInfo& callInfo, JSNative native, MSimdBinaryComp::Operation op,
+                           MIRType mirType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, SimdTypeDescr::Int32x4, 2, &templateObj))
+    if (!canInlineSimd(callInfo, native, 2, &templateObj))
         return InliningStatus_NotInlined;
 
     // If the type of any of the arguments is neither a SIMD type, an Object
@@ -3321,43 +3392,48 @@ IonBuilder::inlineCompSimd(CallInfo& callInfo, JSNative native, MSimdBinaryComp:
     // unbox sequence.  This does not matter much as all binary SIMD
     // instructions are supposed to produce a TypeError when they're called
     // with non SIMD-arguments.
-    MIRType mirType = SimdTypeDescrToMIRType(compType);
-    MSimdBinaryComp* ins = MSimdBinaryComp::New(alloc(), callInfo.getArg(0), callInfo.getArg(1), op, mirType);
+    MDefinition* lhs = callInfo.getArg(0);
+    MDefinition* rhs = callInfo.getArg(1);
+    MSimdBinaryComp* ins = MSimdBinaryComp::New(alloc(), lhs, rhs, op, mirType);
     return boxSimd(callInfo, ins, templateObj);
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineUnarySimd(CallInfo& callInfo, JSNative native, MSimdUnaryArith::Operation op,
-                            SimdTypeDescr::Type type)
+IonBuilder::inlineSimdUnary(CallInfo& callInfo, JSNative native, MSimdUnaryArith::Operation op,
+                            MIRType mirType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 1, &templateObj))
+    if (!canInlineSimd(callInfo, native, 1, &templateObj))
         return InliningStatus_NotInlined;
 
-    // See comment in inlineBinarySimd
-    MIRType mirType = SimdTypeDescrToMIRType(type);
+    // See comment in inlineSimdBinary
     MSimdUnaryArith* ins = MSimdUnaryArith::New(alloc(), callInfo.getArg(0), op, mirType);
     return boxSimd(callInfo, ins, templateObj);
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdSplat(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type)
+IonBuilder::inlineSimdSplat(CallInfo& callInfo, JSNative native, MIRType mirType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 1, &templateObj))
+    if (!canInlineSimd(callInfo, native, 1, &templateObj))
         return InliningStatus_NotInlined;
 
-    // See comment in inlineBinarySimd
-    MIRType mirType = SimdTypeDescrToMIRType(type);
-    MSimdSplatX4* ins = MSimdSplatX4::New(alloc(), callInfo.getArg(0), mirType);
+    // See comment in inlineSimdBinary
+    MDefinition* arg = callInfo.getArg(0);
+
+    // Convert to 0 / -1 before splatting a boolean lane.
+    if (SimdTypeToLaneType(mirType) == MIRType_Boolean)
+        arg = convertToBooleanSimdLane(arg);
+
+    MSimdSplatX4* ins = MSimdSplatX4::New(alloc(), arg, mirType);
     return boxSimd(callInfo, ins, templateObj);
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdExtractLane(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type)
+IonBuilder::inlineSimdExtractLane(CallInfo& callInfo, JSNative native, MIRType vecType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 2, &templateObj))
+    if (!canInlineSimd(callInfo, native, 2, &templateObj))
         return InliningStatus_NotInlined;
 
     MDefinition* arg = callInfo.getArg(1);
@@ -3367,11 +3443,10 @@ IonBuilder::inlineSimdExtractLane(CallInfo& callInfo, JSNative native, SimdTypeD
     if (lane < 0 || lane >= 4)
         return InliningStatus_NotInlined;
 
-    // See comment in inlineBinarySimd
-    MIRType vecType = SimdTypeDescrToMIRType(type);
-    MIRType scalarType = SimdTypeToScalarType(vecType);
+    // See comment in inlineSimdBinary
+    MIRType laneType = SimdTypeToLaneType(vecType);
     MSimdExtractElement* ins = MSimdExtractElement::New(alloc(), callInfo.getArg(0),
-                                                        vecType, scalarType, SimdLane(lane));
+                                                        vecType, laneType, SimdLane(lane));
     current->add(ins);
     current->push(ins);
     callInfo.setImplicitlyUsedUnchecked();
@@ -3379,10 +3454,10 @@ IonBuilder::inlineSimdExtractLane(CallInfo& callInfo, JSNative native, SimdTypeD
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdReplaceLane(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type)
+IonBuilder::inlineSimdReplaceLane(CallInfo& callInfo, JSNative native, MIRType mirType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 3, &templateObj))
+    if (!canInlineSimd(callInfo, native, 3, &templateObj))
         return InliningStatus_NotInlined;
 
     MDefinition* arg = callInfo.getArg(1);
@@ -3393,25 +3468,26 @@ IonBuilder::inlineSimdReplaceLane(CallInfo& callInfo, JSNative native, SimdTypeD
     if (lane < 0 || lane >= 4)
         return InliningStatus_NotInlined;
 
-    // See comment in inlineBinarySimd
-    MIRType mirType = SimdTypeDescrToMIRType(type);
-    MSimdInsertElement* ins = MSimdInsertElement::New(alloc(), callInfo.getArg(0),
-                                                      callInfo.getArg(2), mirType, SimdLane(lane));
+    // Convert to 0 / -1 before inserting a boolean lane.
+    MDefinition* value = callInfo.getArg(2);
+    if (SimdTypeToLaneType(mirType) == MIRType_Boolean)
+        value = convertToBooleanSimdLane(value);
+
+    MSimdInsertElement* ins =
+      MSimdInsertElement::New(alloc(), callInfo.getArg(0), value, mirType, SimdLane(lane));
     return boxSimd(callInfo, ins, templateObj);
 }
 
 IonBuilder::InliningStatus
 IonBuilder::inlineSimdConvert(CallInfo& callInfo, JSNative native, bool isCast,
-                              SimdTypeDescr::Type from, SimdTypeDescr::Type to)
+                              MIRType fromType, MIRType toType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, to, 1, &templateObj))
+    if (!canInlineSimd(callInfo, native, 1, &templateObj))
         return InliningStatus_NotInlined;
 
-    // See comment in inlineBinarySimd
+    // See comment in inlineSimdBinary
     MInstruction* ins;
-    MIRType fromType = SimdTypeDescrToMIRType(from);
-    MIRType toType = SimdTypeDescrToMIRType(to);
     if (isCast)
         ins = MSimdReinterpretCast::New(alloc(), callInfo.getArg(0), fromType, toType);
     else
@@ -3421,45 +3497,26 @@ IonBuilder::inlineSimdConvert(CallInfo& callInfo, JSNative native, bool isCast,
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdSelect(CallInfo& callInfo, JSNative native, bool isElementWise,
-                             SimdTypeDescr::Type type)
+IonBuilder::inlineSimdSelect(CallInfo& callInfo, JSNative native, MIRType mirType)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 3, &templateObj))
+    if (!canInlineSimd(callInfo, native, 3, &templateObj))
         return InliningStatus_NotInlined;
 
-    // See comment in inlineBinarySimd
-    MIRType mirType = SimdTypeDescrToMIRType(type);
+    // See comment in inlineSimdBinary
     MSimdSelect* ins = MSimdSelect::New(alloc(), callInfo.getArg(0), callInfo.getArg(1),
-                                        callInfo.getArg(2), mirType, isElementWise);
+                                        callInfo.getArg(2), mirType);
     return boxSimd(callInfo, ins, templateObj);
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdCheck(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type)
-{
-    InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 1, &templateObj))
-        return InliningStatus_NotInlined;
-
-    MIRType mirType = SimdTypeDescrToMIRType(type);
-    MSimdUnbox* unbox = MSimdUnbox::New(alloc(), callInfo.getArg(0), mirType);
-    current->add(unbox);
-    current->push(callInfo.getArg(0));
-
-    callInfo.setImplicitlyUsedUnchecked();
-    return InliningStatus_Inlined;
-}
-
-IonBuilder::InliningStatus
-IonBuilder::inlineSimdShuffle(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
+IonBuilder::inlineSimdShuffle(CallInfo& callInfo, JSNative native, MIRType mirType,
                               unsigned numVectors, unsigned numLanes)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, numVectors + numLanes, &templateObj))
+    if (!canInlineSimd(callInfo, native, numVectors + numLanes, &templateObj))
         return InliningStatus_NotInlined;
 
-    MIRType mirType = SimdTypeDescrToMIRType(type);
     MSimdGeneralShuffle* ins = MSimdGeneralShuffle::New(alloc(), numVectors, numLanes, mirType);
 
     if (!ins->init(alloc()))
@@ -3473,17 +3530,35 @@ IonBuilder::inlineSimdShuffle(CallInfo& callInfo, JSNative native, SimdTypeDescr
     return boxSimd(callInfo, ins, templateObj);
 }
 
+IonBuilder::InliningStatus
+IonBuilder::inlineSimdAnyAllTrue(CallInfo& callInfo, bool IsAllTrue, JSNative native)
+{
+    InlineTypedObject* templateObj = nullptr;
+    if (!canInlineSimd(callInfo, native, 1, &templateObj))
+        return InliningStatus_NotInlined;
+
+    MUnaryInstruction* ins;
+    if (IsAllTrue)
+        ins = MSimdAllTrue::New(alloc(), callInfo.getArg(0), MIRType_Bool32x4);
+    else
+        ins = MSimdAnyTrue::New(alloc(), callInfo.getArg(0), MIRType_Bool32x4);
+
+    current->add(ins);
+    current->push(ins);
+    callInfo.setImplicitlyUsedUnchecked();
+    return InliningStatus_Inlined;
+}
+
+// Get the typed array element type corresponding to the lanes in a SIMD vector type.
+// This only applies to SIMD types that can be loaded and stored to a typed array.
 static Scalar::Type
-SimdTypeToScalarType(SimdTypeDescr::Type type)
+SimdTypeToArrayElementType(MIRType type)
 {
     switch (type) {
-      case SimdTypeDescr::Float32x4: return Scalar::Float32x4;
-      case SimdTypeDescr::Int32x4:   return Scalar::Int32x4;
-      case SimdTypeDescr::Int8x16:
-      case SimdTypeDescr::Int16x8:
-      case SimdTypeDescr::Float64x2: break;
+      case MIRType_Float32x4: return Scalar::Float32x4;
+      case MIRType_Int32x4:   return Scalar::Int32x4;
+      default:                MOZ_CRASH("unexpected simd type");
     }
-    MOZ_CRASH("unexpected simd type");
 }
 
 bool
@@ -3493,7 +3568,7 @@ IonBuilder::prepareForSimdLoadStore(CallInfo& callInfo, Scalar::Type simdType, M
     MDefinition* array = callInfo.getArg(0);
     *index = callInfo.getArg(1);
 
-    if (!ElementAccessIsAnyTypedArray(constraints(), array, *index, arrayType))
+    if (!ElementAccessIsTypedArray(constraints(), array, *index, arrayType))
         return false;
 
     MInstruction* indexAsInt32 = MToInt32::New(alloc(), *index);
@@ -3531,49 +3606,47 @@ IonBuilder::prepareForSimdLoadStore(CallInfo& callInfo, Scalar::Type simdType, M
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdLoad(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
-                           unsigned numElems)
+IonBuilder::inlineSimdLoad(CallInfo& callInfo, JSNative native, MIRType type, unsigned numElems)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 2, &templateObj))
+    if (!canInlineSimd(callInfo, native, 2, &templateObj))
         return InliningStatus_NotInlined;
 
-    Scalar::Type simdType = SimdTypeToScalarType(type);
+    Scalar::Type elemType = SimdTypeToArrayElementType(type);
 
     MDefinition* index = nullptr;
     MInstruction* elements = nullptr;
     Scalar::Type arrayType;
-    if (!prepareForSimdLoadStore(callInfo, simdType, &elements, &index, &arrayType))
+    if (!prepareForSimdLoadStore(callInfo, elemType, &elements, &index, &arrayType))
         return InliningStatus_NotInlined;
 
     MLoadUnboxedScalar* load = MLoadUnboxedScalar::New(alloc(), elements, index, arrayType);
-    load->setResultType(SimdTypeDescrToMIRType(type));
-    load->setSimdRead(simdType, numElems);
+    load->setResultType(type);
+    load->setSimdRead(elemType, numElems);
 
     return boxSimd(callInfo, load, templateObj);
 }
 
 IonBuilder::InliningStatus
-IonBuilder::inlineSimdStore(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type,
-                            unsigned numElems)
+IonBuilder::inlineSimdStore(CallInfo& callInfo, JSNative native, MIRType type, unsigned numElems)
 {
     InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 3, &templateObj))
+    if (!canInlineSimd(callInfo, native, 3, &templateObj))
         return InliningStatus_NotInlined;
 
-    Scalar::Type simdType = SimdTypeToScalarType(type);
+    Scalar::Type elemType = SimdTypeToArrayElementType(type);
 
     MDefinition* index = nullptr;
     MInstruction* elements = nullptr;
     Scalar::Type arrayType;
-    if (!prepareForSimdLoadStore(callInfo, simdType, &elements, &index, &arrayType))
+    if (!prepareForSimdLoadStore(callInfo, elemType, &elements, &index, &arrayType))
         return InliningStatus_NotInlined;
 
     MDefinition* valueToWrite = callInfo.getArg(2);
     MStoreUnboxedScalar* store = MStoreUnboxedScalar::New(alloc(), elements, index,
                                                           valueToWrite, arrayType,
                                                           MStoreUnboxedScalar::TruncateInput);
-    store->setSimdWrite(simdType, numElems);
+    store->setSimdWrite(elemType, numElems);
 
     current->add(store);
     current->push(valueToWrite);
@@ -3586,36 +3659,13 @@ IonBuilder::inlineSimdStore(CallInfo& callInfo, JSNative native, SimdTypeDescr::
     return InliningStatus_Inlined;
 }
 
-IonBuilder::InliningStatus
-IonBuilder::inlineSimdBool(CallInfo& callInfo, JSNative native, SimdTypeDescr::Type type)
-{
-    InlineTypedObject* templateObj = nullptr;
-    if (!checkInlineSimd(callInfo, native, type, 4, &templateObj))
-        return InliningStatus_NotInlined;
-
-    MOZ_ASSERT(type == SimdTypeDescr::Int32x4, "at the moment, only int32x4.bool is inlined");
-
-    MInstruction* operands[4];
-    for (unsigned i = 0; i < 4; i++) {
-        operands[i] = MNot::New(alloc(), callInfo.getArg(i), constraints());
-        current->add(operands[i]);
-    }
-
-    // Inline int32x4.bool(x, y, z, w) as int32x4(!x - 1, !y - 1, !z - 1, !w - 1);
-    MSimdValueX4* vector = MSimdValueX4::New(alloc(), MIRType_Int32x4, operands[0], operands[1],
-                                             operands[2], operands[3]);
-    current->add(vector);
-
-    MSimdConstant* one = MSimdConstant::New(alloc(), SimdConstant::SplatX4(1), MIRType_Int32x4);
-    current->add(one);
-
-    MSimdBinaryArith* result = MSimdBinaryArith::New(alloc(), vector, one, MSimdBinaryArith::Op_sub,
-                                                     MIRType_Int32x4);
-    return boxSimd(callInfo, result, templateObj);
-}
+// Note that SIMD.cpp provides its own JSJitInfo objects for SIMD.foo.* functions.
+// The Simd* objects defined here represent SIMD.foo() constructor calls.
+// They are encoded with .nativeOp = 0. That is the sub-opcode within the SIMD type.
+static_assert(uint16_t(SimdOperation::Constructor) == 0, "Constructor opcode must be 0");
 
 #define ADD_NATIVE(native) const JSJitInfo JitInfo_##native { \
-    { nullptr }, { uint16_t(InlinableNative::native) }, 0, JSJitInfo::InlinableNative };
+    { nullptr }, { uint16_t(InlinableNative::native) }, { 0 }, JSJitInfo::InlinableNative };
     INLINABLE_NATIVE_LIST(ADD_NATIVE)
 #undef ADD_NATIVE
 

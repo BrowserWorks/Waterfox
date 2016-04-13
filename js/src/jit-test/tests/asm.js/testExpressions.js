@@ -259,6 +259,7 @@ assertEq(asmLink(asmCompile(USE_ASM + "function f() { return (4 % 2)|0 } return 
 assertEq(asmLink(asmCompile(USE_ASM + "function f() { return (3 % 2)|0 } return f"))(), 1);
 
 assertAsmTypeFail(USE_ASM + "function f() { var i=42,j=1.1; return +(i?i:j) } return f");
+assertEq(asmLink(asmCompile(USE_ASM + "function f() { return 0; 1 ? 1 : 1; return 0; } return f"))(), 0);
 assertEq(asmLink(asmCompile(USE_ASM + "function f() { var i=42,j=1.1; return +(i?+(i|0):j) } return f"))(), 42);
 assertEq(asmLink(asmCompile(USE_ASM + "function f() { var i=42,j=1; return (i?i:j)|0 } return f"))(), 42);
 
@@ -391,3 +392,4 @@ for (let i = 0; i < 31; i++) {
     assertEq(f(Math.pow(2,i)), (Math.pow(2,i) * 2)|0);
     assertEq(f(Math.pow(2,i+1) - 1), ((Math.pow(2,i+1) - 1) * 2)|0);
 }
+assertEq(asmLink(asmCompile(USE_ASM + "var g=0; function f(x, y) { x = x|0; y = y|0; g = (x>>>0)%(y>>>0)|0; return (x|0)%(y|0)|0; } return f;"))(0xff40001, 0xfff80000), 0x40001);

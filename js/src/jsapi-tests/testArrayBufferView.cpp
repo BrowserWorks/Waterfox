@@ -2,9 +2,14 @@
  * vim: set ts=8 sts=4 et sw=4 tw=99:
  */
 
+#include "jscompartment.h"
 #include "jsfriendapi.h"
 
 #include "jsapi-tests/tests.h"
+
+#include "jscompartmentinlines.h"
+
+using namespace js;
 
 BEGIN_TEST(testArrayBufferView_type)
 {
@@ -102,7 +107,7 @@ Create(JSContext* cx)
 
 template<typename T,
          JSObject * CreateViewType(JSContext* cx),
-         JSObject * GetObjectAs(JSObject* obj, uint32_t* length, T** data),
+         JSObject * GetObjectAs(JSObject* obj, uint32_t* length, bool* isSharedMemory, T** data),
          js::Scalar::Type ExpectedType,
          uint32_t ExpectedLength,
          uint32_t ExpectedByteLength>
@@ -119,17 +124,21 @@ bool TestViewType(JSContext* cx)
 
     {
         JS::AutoCheckCannotGC nogc;
-        T* data1 = static_cast<T*>(JS_GetArrayBufferViewData(obj, nogc));
+        bool shared1;
+        T* data1 = static_cast<T*>(JS_GetArrayBufferViewData(obj, &shared1, nogc));
 
         T* data2;
+        bool shared2;
         uint32_t len;
-        CHECK(obj == GetObjectAs(obj, &len, &data2));
+        CHECK(obj == GetObjectAs(obj, &len, &shared2, &data2));
         CHECK(data1 == data2);
+        CHECK(shared1 == shared2);
         CHECK(len == ExpectedLength);
     }
 
     JS::CompartmentOptions options;
-    JS::RootedObject otherGlobal(cx, JS_NewGlobalObject(cx, basicGlobalClass(), nullptr, JS::DontFireOnNewGlobalHook, options));
+    JS::RootedObject otherGlobal(cx, JS_NewGlobalObject(cx, basicGlobalClass(), nullptr,
+                                                        JS::DontFireOnNewGlobalHook, options));
     CHECK(otherGlobal);
 
     JS::Rooted<JSObject*> buffer(cx);

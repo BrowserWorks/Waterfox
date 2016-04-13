@@ -14,7 +14,6 @@ Cu.import("resource://gre/modules/Services.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/Timer.jsm", this);
 Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
-Cu.import("resource://services-common/utils.js", this);
 Cu.import("resource://gre/modules/TelemetryController.jsm");
 Cu.import("resource://gre/modules/KeyValueParser.jsm");
 
@@ -270,19 +269,20 @@ this.CrashManager.prototype = Object.freeze({
                 Cu.reportError("Unhandled crash event file return code. Please " +
                                "file a bug: " + result);
             }
-          } catch (ex if ex instanceof OS.File.Error) {
-            this._log.warn("I/O error reading " + entry.path + ": " +
-                           CommonUtils.exceptionStr(ex));
           } catch (ex) {
-            // We should never encounter an exception. This likely represents
-            // a coding error because all errors should be detected and
-            // converted to return codes.
-            //
-            // If we get here, report the error and delete the source file
-            // so we don't see it again.
-            Cu.reportError("Exception when processing crash event file: " +
-                           CommonUtils.exceptionStr(ex));
-            deletePaths.push(entry.path);
+            if (ex instanceof OS.File.Error) {
+              this._log.warn("I/O error reading " + entry.path, ex);
+            } else {
+              // We should never encounter an exception. This likely represents
+              // a coding error because all errors should be detected and
+              // converted to return codes.
+              //
+              // If we get here, report the error and delete the source file
+              // so we don't see it again.
+              Cu.reportError("Exception when processing crash event file: " +
+                             Log.exceptionStr(ex));
+              deletePaths.push(entry.path);
+            }
           }
         }
 
@@ -295,8 +295,7 @@ this.CrashManager.prototype = Object.freeze({
           try {
             yield OS.File.remove(path);
           } catch (ex) {
-            this._log.warn("Error removing event file (" + path + "): " +
-                           CommonUtils.exceptionStr(ex));
+            this._log.warn("Error removing event file (" + path + ")", ex);
           }
         }
 
@@ -532,6 +531,7 @@ this.CrashManager.prototype = Object.freeze({
           // If we have a saved environment, use it. Otherwise report
           // the current environment.
           let crashEnvironment = null;
+          let sessionId = null;
           let reportMeta = Cu.cloneInto(metadata, myScope);
           if ('TelemetryEnvironment' in reportMeta) {
             try {
@@ -541,10 +541,15 @@ this.CrashManager.prototype = Object.freeze({
             }
             delete reportMeta.TelemetryEnvironment;
           }
+          if ('TelemetrySessionId' in reportMeta) {
+            sessionId = reportMeta.TelemetrySessionId;
+            delete reportMeta.TelemetrySessionId;
+          }
           TelemetryController.submitExternalPing("crash",
             {
               version: 1,
               crashDate: date.toISOString().slice(0, 10), // YYYY-MM-DD
+              sessionId: sessionId,
               metadata: reportMeta,
               hasCrashEnvironment: (crashEnvironment !== null),
             },
@@ -594,8 +599,11 @@ this.CrashManager.prototype = Object.freeze({
     return Task.spawn(function* () {
       try {
         yield OS.File.stat(path);
-      } catch (ex if ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
-          return [];
+      } catch (ex) {
+        if (!(ex instanceof OS.File.Error) || !ex.becauseNoSuchFile) {
+          throw ex;
+        }
+        return [];
       }
 
       let it = new OS.File.DirectoryIterator(path);
@@ -855,16 +863,17 @@ CrashStore.prototype = Object.freeze({
             this._countsByDay.get(day).set(type, count);
           }
         }
-      } catch (ex if ex instanceof OS.File.Error && ex.becauseNoSuchFile) {
-        // Missing files (first use) are allowed.
       } catch (ex) {
-        // If we can't load for any reason, mark a corrupt date in the instance
-        // and swallow the error.
-        //
-        // The marking of a corrupted file is intentionally not persisted to
-        // disk yet. Instead, we wait until the next save(). This is to give
-        // non-permanent failures the opportunity to recover on their own.
-        this._data.corruptDate = new Date();
+        // Missing files (first use) are allowed.
+        if (!(ex instanceof OS.File.Error) || !ex.becauseNoSuchFile) {
+          // If we can't load for any reason, mark a corrupt date in the instance
+          // and swallow the error.
+          //
+          // The marking of a corrupted file is intentionally not persisted to
+          // disk yet. Instead, we wait until the next save(). This is to give
+          // non-permanent failures the opportunity to recover on their own.
+          this._data.corruptDate = new Date();
+        }
       }
     }.bind(this));
   },

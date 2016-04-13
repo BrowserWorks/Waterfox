@@ -42,7 +42,7 @@ ClearKeySession::~ClearKeySession()
 
   auto& keyIds = GetKeyIds();
   for (auto it = keyIds.begin(); it != keyIds.end(); it++) {
-    assert(ClearKeyDecryptionManager::Get()->HasKeyForKeyId(*it));
+    assert(ClearKeyDecryptionManager::Get()->HasSeenKeyId(*it));
 
     ClearKeyDecryptionManager::Get()->ReleaseKeyId(*it);
     mCallback->KeyStatusChanged(&mSessionId[0], mSessionId.size(),
@@ -54,13 +54,30 @@ ClearKeySession::~ClearKeySession()
 void
 ClearKeySession::Init(uint32_t aCreateSessionToken,
                       uint32_t aPromiseId,
+                      const std::string& aInitDataType,
                       const uint8_t* aInitData, uint32_t aInitDataSize)
 {
   CK_LOGD("ClearKeySession::Init");
 
-  ClearKeyUtils::ParseInitData(aInitData, aInitDataSize, mKeyIds);
+  if (aInitDataType == "cenc") {
+    ClearKeyUtils::ParseCENCInitData(aInitData, aInitDataSize, mKeyIds);
+  } else if (aInitDataType == "keyids") {
+    std::string sessionType;
+    ClearKeyUtils::ParseKeyIdsInitData(aInitData, aInitDataSize, mKeyIds, sessionType);
+    if (sessionType != ClearKeyUtils::SessionTypeToString(mSessionType)) {
+      const char message[] = "Session type specified in keyids init data doesn't match session type.";
+      mCallback->RejectPromise(aPromiseId, kGMPAbortError, message, strlen(message));
+      return;
+    }
+  } else if (aInitDataType == "webm" && aInitDataSize == 16) {
+    // "webm" initData format is simply the raw bytes of the keyId.
+    vector<uint8_t> keyId;
+    keyId.assign(aInitData, aInitData+aInitDataSize);
+    mKeyIds.push_back(keyId);
+  }
+
   if (!mKeyIds.size()) {
-    const char message[] = "Couldn't parse cenc key init data";
+    const char message[] = "Couldn't parse init data";
     mCallback->RejectPromise(aPromiseId, kGMPAbortError, message, strlen(message));
     return;
   }

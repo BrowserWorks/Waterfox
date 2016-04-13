@@ -7,12 +7,7 @@ browser.jar:
 #include ../shared/jar.inc.mn
   skin/classic/browser/sanitizeDialog.css
   skin/classic/browser/aboutSessionRestore-window-icon.png
-  skin/classic/browser/aboutCertError_sectionCollapsed.png
-  skin/classic/browser/aboutCertError_sectionCollapsed-rtl.png
-  skin/classic/browser/aboutCertError_sectionExpanded.png
-#ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/aboutSyncTabs.css
-#endif
   skin/classic/browser/actionicon-tab.png
   skin/classic/browser/actionicon-tab@2x.png
 * skin/classic/browser/browser.css
@@ -78,16 +73,6 @@ browser.jar:
   skin/classic/browser/webRTC-sharingScreen-menubar.png
   skin/classic/browser/webRTC-sharingScreen-menubar@2x.png
   skin/classic/browser/webRTC-indicator.css
-  skin/classic/browser/loop/menuPanel.png             (loop/menuPanel.png)
-  skin/classic/browser/loop/menuPanel@2x.png          (loop/menuPanel@2x.png)
-  skin/classic/browser/loop/toolbar.png               (loop/toolbar.png)
-  skin/classic/browser/loop/toolbar@2x.png            (loop/toolbar@2x.png)
-  skin/classic/browser/loop/toolbar-inverted.png      (loop/toolbar-inverted.png)
-  skin/classic/browser/loop/toolbar-inverted@2x.png   (loop/toolbar-inverted@2x.png)
-  skin/classic/browser/yosemite/loop/menuPanel.png          (loop/menuPanel-yosemite.png)
-  skin/classic/browser/yosemite/loop/menuPanel@2x.png       (loop/menuPanel-yosemite@2x.png)
-  skin/classic/browser/yosemite/loop/toolbar.png            (loop/toolbar-yosemite.png)
-  skin/classic/browser/yosemite/loop/toolbar@2x.png         (loop/toolbar-yosemite@2x.png)
 * skin/classic/browser/controlcenter/panel.css        (controlcenter/panel.css)
   skin/classic/browser/customizableui/background-noise-toolbar.png  (customizableui/background-noise-toolbar.png)
   skin/classic/browser/customizableui/customize-titleBar-toggle.png  (customizableui/customize-titleBar-toggle.png)
@@ -96,10 +81,6 @@ browser.jar:
   skin/classic/browser/customizableui/customizeMode-separatorHorizontal.png  (customizableui/customizeMode-separatorHorizontal.png)
   skin/classic/browser/customizableui/customizeMode-separatorVertical.png  (customizableui/customizeMode-separatorVertical.png)
 * skin/classic/browser/customizableui/panelUIOverlay.css    (customizableui/panelUIOverlay.css)
-  skin/classic/browser/customizableui/thumburger-inverted.png  (customizableui/thumburger-inverted.png)
-  skin/classic/browser/customizableui/thumburger-inverted@2x.png  (customizableui/thumburger-inverted@2x.png)
-  skin/classic/browser/customizableui/thumburger.png  (customizableui/thumburger.png)
-  skin/classic/browser/customizableui/thumburger@2x.png  (customizableui/thumburger@2x.png)
   skin/classic/browser/downloads/allDownloadsViewOverlay.css (downloads/allDownloadsViewOverlay.css)
   skin/classic/browser/downloads/buttons.png                (downloads/buttons.png)
   skin/classic/browser/downloads/buttons@2x.png             (downloads/buttons@2x.png)
@@ -157,15 +138,12 @@ browser.jar:
   skin/classic/browser/preferences/alwaysAsk.png            (preferences/alwaysAsk.png)
   skin/classic/browser/preferences/application.png          (preferences/application.png)
   skin/classic/browser/preferences/Options.png              (preferences/Options.png)
-#ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/preferences/Options-sync.png         (preferences/Options-sync.png)
-#endif
   skin/classic/browser/preferences/saveFile.png             (preferences/saveFile.png)
 * skin/classic/browser/preferences/preferences.css          (preferences/preferences.css)
 * skin/classic/browser/preferences/in-content/preferences.css (preferences/in-content/preferences.css)
 * skin/classic/browser/preferences/in-content/dialog.css      (preferences/in-content/dialog.css)
   skin/classic/browser/preferences/applications.css         (preferences/applications.css)
-  skin/classic/browser/preferences/aboutPermissions.css     (preferences/aboutPermissions.css)
   skin/classic/browser/preferences/search.css               (preferences/search.css)
   skin/classic/browser/preferences/checkbox.png             (preferences/checkbox.png)
   skin/classic/browser/preferences/checkbox@2x.png          (preferences/checkbox@2x.png)
@@ -214,17 +192,10 @@ browser.jar:
   skin/classic/browser/tabbrowser/tab-stroke-start@2x.png                (tabbrowser/tab-stroke-start@2x.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png                   (tabbrowser/tabDragIndicator.png)
   skin/classic/browser/tabbrowser/tabDragIndicator@2x.png                (tabbrowser/tabDragIndicator@2x.png)
-  skin/classic/browser/tabview/close.png                    (tabview/close.png)
-  skin/classic/browser/tabview/edit-light.png               (tabview/edit-light.png)
-  skin/classic/browser/tabview/search.png                   (tabview/search.png)
-  skin/classic/browser/tabview/stack-expander.png           (tabview/stack-expander.png)
-  skin/classic/browser/tabview/tabview.png                  (tabview/tabview.png)
-  skin/classic/browser/tabview/tabview.css                  (tabview/tabview.css)
   skin/classic/browser/usercontext/personal.svg             (../shared/usercontext/personal.svg)
   skin/classic/browser/usercontext/work.svg                 (../shared/usercontext/work.svg)
   skin/classic/browser/usercontext/banking.svg              (../shared/usercontext/banking.svg)
   skin/classic/browser/usercontext/shopping.svg             (../shared/usercontext/shopping.svg)
-#ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/sync-16.png
   skin/classic/browser/sync-32.png
   skin/classic/browser/sync-bg.png
@@ -245,32 +216,28 @@ browser.jar:
   skin/classic/browser/syncProgress-toolbar@2x.png
   skin/classic/browser/syncProgress-toolbar-inverted.png
   skin/classic/browser/syncProgress-toolbar-inverted@2x.png
-#endif
   skin/classic/browser/Toolbar-background-noise.png         (Toolbar-background-noise.png)
   skin/classic/browser/lion/toolbarbutton-dropmarker.png    (toolbarbutton-dropmarker-lion.png)
   skin/classic/browser/toolbarbutton-dropmarker@2x.png      (toolbarbutton-dropmarker-lion@2x.png)
   skin/classic/browser/lion/tabbrowser/alltabs-box-bkgnd-icon.png      (tabbrowser/alltabs-box-bkgnd-icon-lion.png)
   skin/classic/browser/tabbrowser/alltabs-box-bkgnd-icon@2x.png        (tabbrowser/alltabs-box-bkgnd-icon-lion@2x.png)
-  skin/classic/browser/lion/tabview/tabview.png                        (tabview/tabview-lion.png)
-  skin/classic/browser/lion/places/toolbar.png              (places/toolbar-lion.png)
-  skin/classic/browser/yosemite/Toolbar.png                 (Toolbar-yosemite.png)
-  skin/classic/browser/yosemite/Toolbar@2x.png              (Toolbar-yosemite@2x.png)
-  skin/classic/browser/yosemite/menuPanel.png               (menuPanel-yosemite.png)
-  skin/classic/browser/yosemite/menuPanel@2x.png            (menuPanel-yosemite@2x.png)
-  skin/classic/browser/yosemite/menuPanel-customize.png     (menuPanel-customize-yosemite.png)
-  skin/classic/browser/yosemite/menuPanel-customize@2x.png  (menuPanel-customize-yosemite@2x.png)
-  skin/classic/browser/yosemite/menuPanel-exit.png          (menuPanel-exit-yosemite.png)
-  skin/classic/browser/yosemite/menuPanel-exit@2x.png       (menuPanel-exit-yosemite@2x.png)
-  skin/classic/browser/yosemite/menuPanel-help.png          (menuPanel-help-yosemite.png)
-  skin/classic/browser/yosemite/menuPanel-help@2x.png       (menuPanel-help-yosemite@2x.png)
-  skin/classic/browser/yosemite/menuPanel-small.png         (menuPanel-small-yosemite.png)
-  skin/classic/browser/yosemite/menuPanel-small@2x.png      (menuPanel-small-yosemite@2x.png)
-  skin/classic/browser/yosemite/reload-stop-go.png          (reload-stop-go-yosemite.png)
-  skin/classic/browser/yosemite/reload-stop-go@2x.png       (reload-stop-go-yosemite@2x.png)
-  skin/classic/browser/yosemite/sync-horizontalbar.png      (sync-horizontalbar-yosemite.png)
-  skin/classic/browser/yosemite/sync-horizontalbar@2x.png   (sync-horizontalbar-yosemite@2x.png)
-  skin/classic/browser/yosemite/thumburger.png              (customizableui/thumburger-yosemite.png)
-  skin/classic/browser/yosemite/thumburger@2x.png           (customizableui/thumburger-yosemite@2x.png)
+  skin/classic/browser/lion/places/toolbar.png                         (places/toolbar-lion.png)
+  skin/classic/browser/yosemite/Toolbar.png                            (Toolbar-yosemite.png)
+  skin/classic/browser/yosemite/Toolbar@2x.png                         (Toolbar-yosemite@2x.png)
+  skin/classic/browser/yosemite/menuPanel.png                          (menuPanel-yosemite.png)
+  skin/classic/browser/yosemite/menuPanel@2x.png                       (menuPanel-yosemite@2x.png)
+  skin/classic/browser/yosemite/menuPanel-customize.png                (menuPanel-customize-yosemite.png)
+  skin/classic/browser/yosemite/menuPanel-customize@2x.png             (menuPanel-customize-yosemite@2x.png)
+  skin/classic/browser/yosemite/menuPanel-exit.png                     (menuPanel-exit-yosemite.png)
+  skin/classic/browser/yosemite/menuPanel-exit@2x.png                  (menuPanel-exit-yosemite@2x.png)
+  skin/classic/browser/yosemite/menuPanel-help.png                     (menuPanel-help-yosemite.png)
+  skin/classic/browser/yosemite/menuPanel-help@2x.png                  (menuPanel-help-yosemite@2x.png)
+  skin/classic/browser/yosemite/menuPanel-small.png                    (menuPanel-small-yosemite.png)
+  skin/classic/browser/yosemite/menuPanel-small@2x.png                 (menuPanel-small-yosemite@2x.png)
+  skin/classic/browser/yosemite/reload-stop-go.png                     (reload-stop-go-yosemite.png)
+  skin/classic/browser/yosemite/reload-stop-go@2x.png                  (reload-stop-go-yosemite@2x.png)
+  skin/classic/browser/yosemite/sync-horizontalbar.png                 (sync-horizontalbar-yosemite.png)
+  skin/classic/browser/yosemite/sync-horizontalbar@2x.png              (sync-horizontalbar-yosemite@2x.png)
 #ifdef E10S_TESTING_ONLY
   skin/classic/browser/e10s-64@2x.png (../shared/e10s-64@2x.png)
 #endif
@@ -282,18 +249,11 @@ browser.jar:
 % override chrome://browser/skin/feeds/videoFeedIcon16.png                 chrome://browser/skin/feeds/feedIcon16.png
 % override chrome://browser/skin/toolbarbutton-dropmarker.png              chrome://browser/skin/lion/toolbarbutton-dropmarker.png                 os=Darwin osversion>=10.7
 % override chrome://browser/skin/tabbrowser/alltabs-box-bkgnd-icon.png     chrome://browser/skin/lion/tabbrowser/alltabs-box-bkgnd-icon.png        os=Darwin osversion>=10.7
-% override chrome://browser/skin/tabview/tabview.png                       chrome://browser/skin/lion/tabview/tabview.png                          os=Darwin osversion>=10.7
 % override chrome://browser/skin/places/toolbar.png                        chrome://browser/skin/lion/places/toolbar.png                           os=Darwin osversion>=10.7
 % override chrome://browser/skin/Toolbar.png                               chrome://browser/skin/yosemite/Toolbar.png                              os=Darwin osversion>=10.10
 % override chrome://browser/skin/Toolbar@2x.png                            chrome://browser/skin/yosemite/Toolbar@2x.png                           os=Darwin osversion>=10.10
-% override chrome://browser/skin/customizableui/thumburger.png             chrome://browser/skin/yosemite/thumburger.png                           os=Darwin osversion>=10.10
-% override chrome://browser/skin/customizableui/thumburger@2x.png          chrome://browser/skin/yosemite/thumburger@2x.png                        os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel.png                             chrome://browser/skin/yosemite/menuPanel.png                            os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel@2x.png                          chrome://browser/skin/yosemite/menuPanel@2x.png                         os=Darwin osversion>=10.10
-% override chrome://browser/skin/loop/menuPanel.png                        chrome://browser/skin/yosemite/loop/menuPanel.png                       os=Darwin osversion>=10.10
-% override chrome://browser/skin/loop/menuPanel@2x.png                     chrome://browser/skin/yosemite/loop/menuPanel@2x.png                    os=Darwin osversion>=10.10
-% override chrome://browser/skin/loop/toolbar.png                          chrome://browser/skin/yosemite/loop/toolbar.png                         os=Darwin osversion>=10.10
-% override chrome://browser/skin/loop/toolbar@2x.png                       chrome://browser/skin/yosemite/loop/toolbar@2x.png                      os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-customize.png                   chrome://browser/skin/yosemite/menuPanel-customize.png                  os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-customize@2x.png                chrome://browser/skin/yosemite/menuPanel-customize@2x.png               os=Darwin osversion>=10.10
 % override chrome://browser/skin/menuPanel-exit.png                        chrome://browser/skin/yosemite/menuPanel-exit.png                       os=Darwin osversion>=10.10

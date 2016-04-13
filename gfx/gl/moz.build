@@ -70,23 +70,28 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     EXPORTS += [
         'GLContextWGL.h',
         'SharedSurfaceANGLE.h', # Needs <windows.h> for `HANDLE`.
+        'SharedSurfaceD3D11Interop.h',
         'WGLLibrary.h',
     ]
     UNIFIED_SOURCES += [
         'GLContextProviderWGL.cpp',
         'SharedSurfaceANGLE.cpp',
+        'SharedSurfaceD3D11Interop.cpp',
     ]
 if CONFIG['MOZ_ENABLE_SKIA_GPU']:
     EXPORTS += ['SkiaGLGlue.h']
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'SkiaGLGlue.cpp',
     ]
+    if CONFIG['CLANG_CXX']:
+        # Suppress warnings from Skia header files.
+        SOURCES['SkiaGLGlue.cpp'].flags += ['-Wno-implicit-fallthrough']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     UNIFIED_SOURCES += ['SharedSurfaceGralloc.cpp']
     EXPORTS += ['SharedSurfaceGralloc.h']
     LOCAL_INCLUDES += ['/widget/gonk']
-    CXXFLAGS += ['-I%s/%s' % (CONFIG['ANDROID_SOURCE'], 'hardware/libhardware/include')]
+    LOCAL_INCLUDES += ['%' + '%s/%s' % (CONFIG['ANDROID_SOURCE'], 'hardware/libhardware/include')]
 
 if gl_provider == 'CGL':
     # These files include Mac headers that are unfriendly to unified builds
@@ -167,9 +172,6 @@ CFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CFLAGS += CONFIG['TK_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
-
-if CONFIG['OS_ARCH'] == 'WINNT':
-    del DEFINES['UNICODE']
 
 if CONFIG['CLANG_CXX']:
     CXXFLAGS += ['-Wshadow']

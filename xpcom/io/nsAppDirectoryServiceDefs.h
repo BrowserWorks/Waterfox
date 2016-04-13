@@ -31,11 +31,6 @@
 
 #define NS_APP_DEFAULTS_50_DIR                  "DefRt"         // The root dir of all defaults dirs
 #define NS_APP_PREF_DEFAULTS_50_DIR             "PrfDef"
-#define NS_APP_PROFILE_DEFAULTS_50_DIR          "profDef"       // The profile defaults of the "current"
-                                                                // locale. Should be first choice.
-#define NS_APP_PROFILE_DEFAULTS_NLOC_50_DIR     "ProfDefNoLoc"  // The profile defaults of the "default"
-                                                                // installed locale. Second choice
-                                                                // when above is not available.
                                                                                                                        
 #define NS_APP_USER_PROFILES_ROOT_DIR           "DefProfRt"     // The dir where user profile dirs live.
 #define NS_APP_USER_PROFILES_LOCAL_ROOT_DIR     "DefProfLRt"  // The dir where user profile temp dirs live.
@@ -79,8 +74,6 @@
 #define NS_APP_USER_MIMETYPES_50_FILE           "UMimTyp"
 #define NS_APP_CACHE_PARENT_DIR                 "cachePDir"
 
-#define NS_APP_BOOKMARKS_50_FILE                "BMarks"
-
 #define NS_APP_DOWNLOADS_50_FILE                "DLoads"
 
 #define NS_APP_SEARCH_50_FILE                   "SrchF"
@@ -90,4 +83,9 @@
 #define NS_APP_INDEXEDDB_PARENT_DIR             "indexedDBPDir"
 
 #define NS_APP_PERMISSION_PARENT_DIR            "permissionDBPDir"
-#endif
+
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+#define NS_APP_CONTENT_PROCESS_TEMP_DIR         "ContentTmpD"
+#endif // (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+
+#endif // nsAppDirectoryServiceDefs_h___

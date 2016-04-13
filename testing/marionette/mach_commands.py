@@ -39,7 +39,7 @@ def run_marionette(tests, b2g_path=None, emulator=None, testtype=None,
     from marionette.runtests import (
         MarionetteTestRunner,
         BaseMarionetteArguments,
-        startTestRunner
+        MarionetteHarness
     )
 
     parser = BaseMarionetteArguments()
@@ -67,12 +67,11 @@ def run_marionette(tests, b2g_path=None, emulator=None, testtype=None,
     args.logger = commandline.setup_logging("Marionette Unit Tests",
                                             args,
                                             {"mach": sys.stdout})
-
-    runner = startTestRunner(MarionetteTestRunner, args)
-    if runner.failed > 0:
+    failed = MarionetteHarness(MarionetteTestRunner, args=args).run()
+    if failed > 0:
         return 1
-
-    return 0
+    else:
+        return 0
 
 @CommandProvider
 class B2GCommands(MachCommandBase):
@@ -116,5 +115,11 @@ class MachCommands(MachCommandBase):
         parser=setup_argument_parser,
     )
     def run_marionette_test(self, tests, **kwargs):
+        if 'test_objects' in kwargs:
+            tests = []
+            for obj in kwargs['test_objects']:
+                tests.append(obj['file_relpath'])
+            del kwargs['test_objects']
+
         kwargs['binary'] = self.get_binary_path('app')
         return run_marionette(tests, topsrcdir=self.topsrcdir, **kwargs)

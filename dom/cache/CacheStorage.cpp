@@ -22,6 +22,7 @@
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/ipc/PBackgroundSharedTypes.h"
+#include "nsContentUtils.h"
 #include "nsIDocument.h"
 #include "nsIGlobalObject.h"
 #include "nsIScriptSecurityManager.h"
@@ -32,7 +33,7 @@ namespace mozilla {
 namespace dom {
 namespace cache {
 
-using mozilla::unused;
+using mozilla::Unused;
 using mozilla::ErrorResult;
 using mozilla::dom::workers::WorkerPrivate;
 using mozilla::ipc::BackgroundChild;
@@ -261,8 +262,8 @@ CacheStorage::DefineCaches(JSContext* aCx, JS::Handle<JSObject*> aGlobal)
                        false, /* private browsing */
                        true,  /* force trusted */
                        rv);
-  if (NS_WARN_IF(rv.Failed())) {
-    return ThrowMethodFailed(aCx, rv);
+  if (NS_WARN_IF(rv.MaybeSetPendingException(aCx))) {
+    return false;
   }
 
   JS::Rooted<JS::Value> caches(aCx);

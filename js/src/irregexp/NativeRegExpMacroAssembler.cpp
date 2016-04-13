@@ -122,8 +122,7 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 
 #ifdef JS_CODEGEN_ARM64
     // ARM64 communicates stack address via sp, but uses a pseudo-sp for addressing.
-    MOZ_ASSERT(!masm.GetStackPointer64().Is(sp));
-    masm.Mov(masm.GetStackPointer64(), sp);
+    masm.initStackPtr();
 #endif
 
     // Push non-volatile registers which might be modified by jitcode.
@@ -205,6 +204,10 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
         masm.assumeUnreachable("Not enough output registers for RegExp");
         masm.bind(&enoughRegisters);
 #endif
+    } else {
+        Register endIndexRegister = input_end_pointer;
+        masm.loadPtr(Address(temp0, offsetof(InputOutputData, endIndex)), endIndexRegister);
+        masm.storePtr(endIndexRegister, Address(masm.getStackPointer(), offsetof(FrameData, endIndex)));
     }
 
     // Load string end pointer.
@@ -355,6 +358,30 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 
             masm.jump(&load_char_start_regexp);
         } else {
+            if (match_only) {
+                // Store endIndex.
+
+                Register endIndexRegister = temp1;
+                Register inputByteLength = backtrack_stack_pointer;
+
+                masm.loadPtr(Address(masm.getStackPointer(), offsetof(FrameData, endIndex)), endIndexRegister);
+
+                masm.loadPtr(inputOutputAddress, temp0);
+                masm.loadPtr(Address(temp0, offsetof(InputOutputData, inputEnd)), inputByteLength);
+                masm.subPtr(Address(temp0, offsetof(InputOutputData, inputStart)), inputByteLength);
+
+                masm.loadPtr(register_location(1), temp0);
+
+                // Convert to index from start of string, not end.
+                masm.addPtr(inputByteLength, temp0);
+
+                // Convert byte index to character index.
+                if (mode_ == CHAR16)
+                    masm.rshiftPtrArithmetic(Imm32(1), temp0);
+
+                masm.store32(temp0, Address(endIndexRegister, 0));
+            }
+
             masm.movePtr(ImmWord(RegExpRunStatus_Success), temp0);
         }
     }
@@ -464,8 +491,6 @@ NativeRegExpMacroAssembler::GenerateCode(JSContext* cx, bool match_only)
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "RegExp");
 #endif
-
-    AutoWritableJitCode awjc(code);
 
     for (size_t i = 0; i < labelPatches.length(); i++) {
         LabelPatch& v = labelPatches[i];
@@ -719,9 +744,10 @@ NativeRegExpMacroAssembler::CheckNotBackReference(int start_reg, Label* on_no_ma
 }
 
 void
-NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label* on_no_match)
+NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label* on_no_match,
+                                                            bool unicode)
 {
-    JitSpew(SPEW_PREFIX "CheckNotBackReferenceIgnoreCase(%d)", start_reg);
+    JitSpew(SPEW_PREFIX "CheckNotBackReferenceIgnoreCase(%d, %d)", start_reg, unicode);
 
     Label fallthrough;
 
@@ -833,8 +859,13 @@ NativeRegExpMacroAssembler::CheckNotBackReferenceIgnoreCase(int start_reg, Label
         masm.passABIArg(current_character);
         masm.passABIArg(current_position);
         masm.passABIArg(temp1);
-        int (*fun)(const char16_t*, const char16_t*, size_t) = CaseInsensitiveCompareStrings;
-        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, fun));
+        if (!unicode) {
+            int (*fun)(const char16_t*, const char16_t*, size_t) = CaseInsensitiveCompareStrings;
+            masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, fun));
+        } else {
+            int (*fun)(const char16_t*, const char16_t*, size_t) = CaseInsensitiveCompareUCStrings;
+            masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, fun));
+        }
         masm.storeCallResult(temp0);
 
         masm.PopRegsInMask(volatileRegs);
@@ -999,7 +1030,7 @@ NativeRegExpMacroAssembler::PushBacktrack(Label* label)
 {
     JitSpew(SPEW_PREFIX "PushBacktrack");
 
-    CodeOffsetLabel patchOffset = masm.movWithPatch(ImmPtr(nullptr), temp0);
+    CodeOffset patchOffset = masm.movWithPatch(ImmPtr(nullptr), temp0);
 
     MOZ_ASSERT(!label->bound());
 

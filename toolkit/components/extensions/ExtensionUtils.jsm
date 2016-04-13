@@ -14,60 +14,83 @@ const Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "Locale",
+                                  "resource://gre/modules/Locale.jsm");
+
+function filterStack(error) {
+  return String(error.stack).replace(/(^.*(Task\.jsm|Promise-backend\.js).*\n)+/gm, "<Promise Chain>\n");
+}
+
 // Run a function and report exceptions.
-function runSafeSyncWithoutClone(f, ...args)
-{
+function runSafeSyncWithoutClone(f, ...args) {
   try {
     return f(...args);
   } catch (e) {
-    dump(`Extension error: ${e} ${e.fileName} ${e.lineNumber}\n[[Exception stack\n${e.stack}Current stack\n${Error().stack}]]\n`);
+    dump(`Extension error: ${e} ${e.fileName} ${e.lineNumber}\n[[Exception stack\n${filterStack(e)}Current stack\n${filterStack(Error())}]]\n`);
     Cu.reportError(e);
   }
 }
 
 // Run a function and report exceptions.
-function runSafeWithoutClone(f, ...args)
-{
+function runSafeWithoutClone(f, ...args) {
   if (typeof(f) != "function") {
-    dump(`Extension error: expected function\n${Error().stack}`);
+    dump(`Extension error: expected function\n${filterStack(Error())}`);
     return;
   }
 
-  Services.tm.currentThread.dispatch(function() {
+  Promise.resolve().then(() => {
     runSafeSyncWithoutClone(f, ...args);
-  }, Ci.nsIEventTarget.DISPATCH_NORMAL);
+  });
 }
 
 // Run a function, cloning arguments into context.cloneScope, and
 // report exceptions. |f| is expected to be in context.cloneScope.
-function runSafeSync(context, f, ...args)
-{
+function runSafeSync(context, f, ...args) {
   try {
     args = Cu.cloneInto(args, context.cloneScope);
   } catch (e) {
     Cu.reportError(e);
-    dump(`runSafe failure: cloning into ${context.cloneScope}: ${e}\n\n${Error().stack}`);
+    dump(`runSafe failure: cloning into ${context.cloneScope}: ${e}\n\n${filterStack(Error())}`);
   }
   return runSafeSyncWithoutClone(f, ...args);
 }
 
 // Run a function, cloning arguments into context.cloneScope, and
 // report exceptions. |f| is expected to be in context.cloneScope.
-function runSafe(context, f, ...args)
-{
+function runSafe(context, f, ...args) {
   try {
     args = Cu.cloneInto(args, context.cloneScope);
   } catch (e) {
     Cu.reportError(e);
-    dump(`runSafe failure: cloning into ${context.cloneScope}: ${e}\n\n${Error().stack}`);
+    dump(`runSafe failure: cloning into ${context.cloneScope}: ${e}\n\n${filterStack(Error())}`);
   }
   return runSafeWithoutClone(f, ...args);
 }
 
+// Return true if the given value is an instance of the given
+// native type.
+function instanceOf(value, type) {
+  return {}.toString.call(value) == `[object ${type}]`;
+}
+
+// Extend the object |obj| with the property descriptors of each object in
+// |args|.
+function extend(obj, ...args) {
+  for (let arg of args) {
+    let props = [...Object.getOwnPropertyNames(arg),
+                 ...Object.getOwnPropertySymbols(arg)];
+    for (let prop of props) {
+      let descriptor = Object.getOwnPropertyDescriptor(arg, prop);
+      Object.defineProperty(obj, prop, descriptor);
+    }
+  }
+
+  return obj;
+}
+
 // Similar to a WeakMap, but returns a particular default value for
 // |get| if a key is not present.
-function DefaultWeakMap(defaultValue)
-{
+function DefaultWeakMap(defaultValue) {
   this.defaultValue = defaultValue;
   this.weakmap = new WeakMap();
 }
@@ -86,6 +109,170 @@ DefaultWeakMap.prototype = {
     } else {
       this.defaultValue = value;
     }
+  },
+};
+
+function LocaleData(data) {
+  this.defaultLocale = data.defaultLocale;
+  this.selectedLocale = data.selectedLocale;
+  this.locales = data.locales || new Map();
+
+  // Map(locale-name -> Map(message-key -> localized-string))
+  //
+  // Contains a key for each loaded locale, each of which is a
+  // Map of message keys to their localized strings.
+  this.messages = data.messages || new Map();
+
+  if (data.builtinMessages) {
+    this.messages.set(this.BUILTIN, data.builtinMessages);
+  }
+}
+
+LocaleData.prototype = {
+  // Representation of the object to send to content processes. This
+  // should include anything the content process might need.
+  serialize() {
+    return {
+      defaultLocale: this.defaultLocale,
+      selectedLocale: this.selectedLocale,
+      messages: this.messages,
+      locales: this.locales,
+    };
+  },
+
+  BUILTIN: "@@BUILTIN_MESSAGES",
+
+  has(locale) {
+    return this.messages.has(locale);
+  },
+
+  // https://developer.chrome.com/extensions/i18n
+  localizeMessage(message, substitutions = [], locale = this.selectedLocale, defaultValue = "??") {
+    let locales = new Set([this.BUILTIN, locale, this.defaultLocale]
+                          .filter(locale => this.messages.has(locale)));
+
+    // Message names are case-insensitive, so normalize them to lower-case.
+    message = message.toLowerCase();
+    for (let locale of locales) {
+      let messages = this.messages.get(locale);
+      if (messages.has(message)) {
+        let str = messages.get(message);
+
+        if (!Array.isArray(substitutions)) {
+          substitutions = [substitutions];
+        }
+
+        let replacer = (matched, index, dollarSigns) => {
+          if (index) {
+            // This is not quite Chrome-compatible. Chrome consumes any number
+            // of digits following the $, but only accepts 9 substitutions. We
+            // accept any number of substitutions.
+            index = parseInt(index, 10) - 1;
+            return index in substitutions ? substitutions[index] : "";
+          } else {
+            // For any series of contiguous `$`s, the first is dropped, and
+            // the rest remain in the output string.
+            return dollarSigns;
+          }
+        };
+        return str.replace(/\$(?:([1-9]\d*)|(\$+))/g, replacer);
+      }
+    }
+
+    // Check for certain pre-defined messages.
+    if (message == "@@ui_locale") {
+      // Return the browser locale, but convert it to a Chrome-style
+      // locale code.
+      return Locale.getLocale().replace(/-/g, "_");
+    } else if (message.startsWith("@@bidi_")) {
+      let registry = Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIXULChromeRegistry);
+      let rtl = registry.isLocaleRTL("global");
+
+      if (message == "@@bidi_dir") {
+        return rtl ? "rtl" : "ltr";
+      } else if (message == "@@bidi_reversed_dir") {
+        return rtl ? "ltr" : "rtl";
+      } else if (message == "@@bidi_start_edge") {
+        return rtl ? "right" : "left";
+      } else if (message == "@@bidi_end_edge") {
+        return rtl ? "left" : "right";
+      }
+    }
+
+    Cu.reportError(`Unknown localization message ${message}`);
+    return defaultValue;
+  },
+
+  // Localize a string, replacing all |__MSG_(.*)__| tokens with the
+  // matching string from the current locale, as determined by
+  // |this.selectedLocale|.
+  //
+  // This may not be called before calling either |initLocale| or
+  // |initAllLocales|.
+  localize(str, locale = this.selectedLocale) {
+    if (!str) {
+      return str;
+    }
+
+    return str.replace(/__MSG_([A-Za-z0-9@_]+?)__/g, (matched, message) => {
+      return this.localizeMessage(message, [], locale, matched);
+    });
+  },
+
+  // Validates the contents of a locale JSON file, normalizes the
+  // messages into a Map of message key -> localized string pairs.
+  addLocale(locale, messages, extension) {
+    let result = new Map();
+
+    // Chrome does not document the semantics of its localization
+    // system very well. It handles replacements by pre-processing
+    // messages, replacing |$[a-zA-Z0-9@_]+$| tokens with the value of their
+    // replacements. Later, it processes the resulting string for
+    // |$[0-9]| replacements.
+    //
+    // Again, it does not document this, but it accepts any number
+    // of sequential |$|s, and replaces them with that number minus
+    // 1. It also accepts |$| followed by any number of sequential
+    // digits, but refuses to process a localized string which
+    // provides more than 9 substitutions.
+    if (!instanceOf(messages, "Object")) {
+      extension.packagingError(`Invalid locale data for ${locale}`);
+      return result;
+    }
+
+    for (let key of Object.keys(messages)) {
+      let msg = messages[key];
+
+      if (!instanceOf(msg, "Object") || typeof(msg.message) != "string") {
+        extension.packagingError(`Invalid locale message data for ${locale}, message ${JSON.stringify(key)}`);
+        continue;
+      }
+
+      // Substitutions are case-insensitive, so normalize all of their names
+      // to lower-case.
+      let placeholders = new Map();
+      if (instanceOf(msg.placeholders, "Object")) {
+        for (let key of Object.keys(msg.placeholders)) {
+          placeholders.set(key.toLowerCase(), msg.placeholders[key]);
+        }
+      }
+
+      let replacer = (match, name) => {
+        let replacement = placeholders.get(name.toLowerCase());
+        if (instanceOf(replacement, "Object") && "content" in replacement) {
+          return replacement.content;
+        }
+        return "";
+      };
+
+      let value = msg.message.replace(/\$([A-Za-z0-9@_]+)\$/g, replacer);
+
+      // Message names are also case-insensitive, so normalize them to lower-case.
+      result.set(key.toLowerCase(), value);
+    }
+
+    this.messages.set(locale, result);
+    return result;
   },
 };
 
@@ -111,8 +298,7 @@ DefaultWeakMap.prototype = {
 // to register the listener. |register| is only called once, event if
 // multiple listeners are registered. |register| should return an
 // unregister function that will unregister the listener.
-function EventManager(context, name, register)
-{
+function EventManager(context, name, register) {
   this.context = context;
   this.name = name;
   this.register = register;
@@ -185,8 +371,7 @@ EventManager.prototype = {
 // Similar to EventManager, but it doesn't try to consolidate event
 // notifications. Each addListener call causes us to register once. It
 // allows extra arguments to be passed to addListener.
-function SingletonEventManager(context, name, register)
-{
+function SingletonEventManager(context, name, register) {
   this.context = context;
   this.name = name;
   this.register = register;
@@ -207,7 +392,7 @@ SingletonEventManager.prototype = {
 
     let unregister = this.unregister.get(callback);
     this.unregister.delete(callback);
-    this.unregister();
+    unregister();
   },
 
   hasListener(callback) {
@@ -230,21 +415,34 @@ SingletonEventManager.prototype = {
 };
 
 // Simple API for event listeners where events never fire.
-function ignoreEvent()
-{
+function ignoreEvent(context, name) {
   return {
-    addListener: function(context, callback) {},
-    removeListener: function(context, callback) {},
-    hasListener: function(context, callback) {},
+    addListener: function(callback) {
+      let id = context.extension.id;
+      let frame = Components.stack.caller;
+      let msg = `In add-on ${id}, attempting to use listener "${name}", which is unimplemented.`;
+      let winID = context.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIDOMWindowUtils).currentInnerWindowID;
+      let scriptError = Cc["@mozilla.org/scripterror;1"]
+        .createInstance(Ci.nsIScriptError);
+      scriptError.initWithWindowID(msg, frame.filename, null,
+                                   frame.lineNumber, frame.columnNumber,
+                                   Ci.nsIScriptError.warningFlag,
+                                   "content javascript", winID);
+      let consoleService = Cc["@mozilla.org/consoleservice;1"]
+        .getService(Ci.nsIConsoleService);
+      consoleService.logMessage(scriptError);
+    },
+    removeListener: function(callback) {},
+    hasListener: function(callback) {},
   };
 }
 
 // Copy an API object from |source| into the scope |dest|.
-function injectAPI(source, dest)
-{
+function injectAPI(source, dest) {
   for (let prop in source) {
     // Skip names prefixed with '_'.
-    if (prop[0] == '_') {
+    if (prop[0] == "_") {
       continue;
     }
 
@@ -279,8 +477,7 @@ var MESSAGES = [
 // messages that have a certain value for a particular property in the
 // recipient. (If a message doesn't specify the given property, it's
 // considered a match.)
-function MessageBroker(messageManagers)
-{
+function MessageBroker(messageManagers) {
   this.messageManagers = messageManagers;
   for (let mm of this.messageManagers) {
     for (let message of MESSAGES) {
@@ -311,7 +508,6 @@ MessageBroker.prototype = {
   },
 
   removeListener(type, listener) {
-    let index = -1;
     for (let i = 0; i < this.listeners[type].length; i++) {
       if (this.listeners[type][i].listener == listener) {
         this.listeners[type].splice(i, 1);
@@ -345,13 +541,13 @@ MessageBroker.prototype = {
 
   receiveMessage({name, data, target}) {
     switch (name) {
-    case "Extension:Message":
-      this.runListeners("message", target, data);
-      break;
+      case "Extension:Message":
+        this.runListeners("message", target, data);
+        break;
 
-    case "Extension:Connect":
-      this.runListeners("connect", target, data);
-      break;
+      case "Extension:Connect":
+        this.runListeners("connect", target, data);
+        break;
     }
   },
 
@@ -363,8 +559,7 @@ MessageBroker.prototype = {
 };
 
 // Abstraction for a Port object in the extension API. Each port has a unique ID.
-function Port(context, messageManager, name, id, sender)
-{
+function Port(context, messageManager, name, id, sender) {
   this.context = context;
   this.messageManager = messageManager;
   this.name = name;
@@ -392,7 +587,7 @@ Port.prototype = {
       },
       postMessage: json => {
         if (this.disconnected) {
-          throw "Attempt to postMessage on disconnected port";
+          throw new this.context.contentWindow.Error("Attempt to postMessage on disconnected port");
         }
         this.messageManager.sendAsyncMessage(this.listenerName, json);
       },
@@ -452,7 +647,7 @@ Port.prototype = {
 
   disconnect() {
     if (this.disconnected) {
-      throw "Attempt to disconnect() a disconnected port";
+      throw new this.context.contentWindow.Error("Attempt to disconnect() a disconnected port");
     }
     this.handleDisconnection();
     this.messageManager.sendAsyncMessage(this.disconnectName);
@@ -463,13 +658,11 @@ Port.prototype = {
   },
 };
 
-function getMessageManager(target)
-{
-  if (target instanceof Ci.nsIDOMXULElement) {
-    return target.messageManager;
-  } else {
-    return target;
+function getMessageManager(target) {
+  if (target instanceof Ci.nsIFrameLoaderOwner) {
+    return target.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader.messageManager;
   }
+  return target;
 }
 
 // Each extension scope gets its own Messenger object. It handles the
@@ -477,13 +670,12 @@ function getMessageManager(target)
 //
 // |context| is the extension scope.
 // |broker| is a MessageBroker used to receive and send messages.
-// |sender| is an object describing the sender (usually giving its extensionId, tabId, etc.)
+// |sender| is an object describing the sender (usually giving its extension id, tabId, etc.)
 // |filter| is a recipient filter to apply to incoming messages from the broker.
 // |delegate| is an object that must implement a few methods:
 //    getSender(context, messageManagerTarget, sender): returns a MessageSender
 //      See https://developer.chrome.com/extensions/runtime#type-MessageSender.
-function Messenger(context, broker, sender, filter, delegate)
-{
+function Messenger(context, broker, sender, filter, delegate) {
   this.context = context;
   this.broker = broker;
   this.sender = sender;
@@ -511,7 +703,7 @@ Messenger.prototype = {
     onClose = {
       close() {
         messageManager.removeMessageListener(replyName, listener);
-      }
+      },
     };
     if (responseCallback) {
       messageManager.addMessageListener(replyName, listener);
@@ -585,8 +777,7 @@ Messenger.prototype = {
   },
 };
 
-function flushJarCache(jarFile)
-{
+function flushJarCache(jarFile) {
   Services.obs.notifyObservers(jarFile, "flush-cache-entry", null);
 }
 
@@ -597,10 +788,13 @@ this.ExtensionUtils = {
   runSafeSync,
   DefaultWeakMap,
   EventManager,
+  LocaleData,
   SingletonEventManager,
   ignoreEvent,
   injectAPI,
   MessageBroker,
   Messenger,
+  extend,
   flushJarCache,
+  instanceOf,
 };

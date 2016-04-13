@@ -8,7 +8,7 @@
 
 const TEST_URI = "data:text/html;charset=utf-8,Test console for bug 623749";
 
-var test = asyncTest(function* () {
+add_task(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
@@ -20,7 +20,7 @@ var test = asyncTest(function* () {
   // Test select all with Control + A.
   EventUtils.synthesizeKey("a", { ctrlKey: true });
   let inputLength = inputNode.selectionEnd - inputNode.selectionStart;
-  is(inputLength, inputNode.value.length, "Select all of input");
+  is(inputLength, jsterm.getInputValue().length, "Select all of input");
 
   // Test do nothing on Control + E.
   jsterm.setInputValue("Ignore These Four Words");

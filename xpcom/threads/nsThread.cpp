@@ -62,6 +62,11 @@
 #define HAVE_SCHED_SETAFFINITY
 #endif
 
+#ifdef XP_MACOSX
+#include <mach/mach.h>
+#include <mach/thread_policy.h>
+#endif
+
 #ifdef MOZ_CANARY
 # include <unistd.h>
 # include <execinfo.h>
@@ -295,6 +300,31 @@ private:
 //-----------------------------------------------------------------------------
 
 static void
+SetThreadAffinity(unsigned int cpu)
+{
+#ifdef HAVE_SCHED_SETAFFINITY
+  cpu_set_t cpus;
+  CPU_ZERO(&cpus);
+  CPU_SET(cpu, &cpus);
+  sched_setaffinity(0, sizeof(cpus), &cpus);
+  // Don't assert sched_setaffinity's return value because it intermittently (?)
+  // fails with EINVAL on Linux x64 try runs.
+#elif defined(XP_MACOSX)
+  // OS X does not provide APIs to pin threads to specific processors, but you
+  // can tag threads as belonging to the same "affinity set" and the OS will try
+  // to run them on the same processor. To run threads on different processors,
+  // tag them as belonging to different affinity sets. Tag 0, the default, means
+  // "no affinity" so let's pretend each CPU has its own tag `cpu+1`.
+  thread_affinity_policy_data_t policy;
+  policy.affinity_tag = cpu + 1;
+  MOZ_ALWAYS_TRUE(thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY,
+                                    &policy.affinity_tag, 1) == KERN_SUCCESS);
+#elif defined(XP_WIN)
+  MOZ_ALWAYS_TRUE(SetThreadIdealProcessor(GetCurrentThread(), cpu) != -1);
+#endif
+}
+
+static void
 SetupCurrentThreadForChaosMode()
 {
   if (!ChaosMode::isActive(ChaosFeature::ThreadScheduling)) {
@@ -321,15 +351,10 @@ SetupCurrentThreadForChaosMode()
   PR_SetThreadPriority(PR_GetCurrentThread(), PRThreadPriority(priority));
 #endif
 
-#ifdef HAVE_SCHED_SETAFFINITY
   // Force half the threads to CPU 0 so they compete for CPU
   if (ChaosMode::randomUint32LessThan(2)) {
-    cpu_set_t cpus;
-    CPU_ZERO(&cpus);
-    CPU_SET(0, &cpus);
-    sched_setaffinity(0, sizeof(cpus), &cpus);
+    SetThreadAffinity(0);
   }
-#endif
 }
 
 /*static*/ void
@@ -378,6 +403,9 @@ nsThread::ThreadFunc(void* aArg)
     BackgroundChild::CloseForCurrentThread();
 #endif // defined(MOZILLA_XPCOMRT_API)
 
+    // NB: The main thread does not shut down here!  It shuts down via
+    // nsThreadManager::Shutdown.
+
     // Do NS_ProcessPendingEvents but with special handling to set
     // mEventsAreDoomed atomically with the removal of the last event. The key
     // invariant here is that we will never permit PutEvent to succeed if the
@@ -386,10 +414,7 @@ nsThread::ThreadFunc(void* aArg)
     // as we have outstanding mRequestedShutdownContexts.
     while (true) {
       // Check and see if we're waiting on any threads.
-      while (self->mRequestedShutdownContexts.Length()) {
-        // We can't stop accepting events just yet.  Block and check again.
-        NS_ProcessNextEvent(self, true);
-      }
+      self->WaitForAllAsynchronousShutdowns();
 
       {
         MutexAutoLock lock(self->mLock);
@@ -618,9 +643,7 @@ nsThread::DispatchInternal(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFla
     while (wrapper->IsPending()) {
       NS_ProcessNextEvent(thread, true);
     }
-    // NOTE that, unlike the behavior above, the event is not leaked by
-    // this place, while it is possible that the result is an error.
-    return wrapper->Result();
+    return NS_OK;
   }
 
   NS_ASSERTION(aFlags == NS_DISPATCH_NORMAL, "unexpected dispatch flags");
@@ -751,6 +774,14 @@ nsThread::ShutdownComplete(nsThreadShutdownContext* aContext)
   // Delete aContext.
   MOZ_ALWAYS_TRUE(
     aContext->joiningThread->mRequestedShutdownContexts.RemoveElement(aContext));
+}
+
+void
+nsThread::WaitForAllAsynchronousShutdowns()
+{
+  while (mRequestedShutdownContexts.Length()) {
+    NS_ProcessNextEvent(this, true);
+  }
 }
 
 NS_IMETHODIMP

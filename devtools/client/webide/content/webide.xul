@@ -5,7 +5,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!DOCTYPE window [
-  <!ENTITY % webideDTD SYSTEM "chrome://browser/locale/devtools/webide.dtd" >
+  <!ENTITY % webideDTD SYSTEM "chrome://devtools/locale/webide.dtd" >
   %webideDTD;
 ]>
 
@@ -58,6 +58,7 @@
       <command id="cmd_zoomin" label="&viewMenu_zoomin_label;" oncommand="Cmds.zoomIn()"/>
       <command id="cmd_zoomout" label="&viewMenu_zoomout_label;" oncommand="Cmds.zoomOut()"/>
       <command id="cmd_resetzoom" label="&viewMenu_resetzoom_label;" oncommand="Cmds.resetZoom()"/>
+      <command id="cmd_reload_devtools" oncommand="Cmds.reloadDevtools()"/>
     </commandset>
   </commandset>
 
@@ -115,6 +116,7 @@
     <key key="&key_zoomin2;" id="key_zoomin2" command="cmd_zoomin" modifiers="accel"/>
     <key key="&key_zoomout;" id="key_zoomout" command="cmd_zoomout" modifiers="accel"/>
     <key key="&key_resetzoom;" id="key_resetzoom" command="cmd_resetzoom" modifiers="accel"/>
+    <key key="&key_reload_devtools;" id="key_reload_devtools" command="cmd_reload_devtools" modifiers="accel alt"/>
   </keyset>
 
   <tooltip id="aHTMLTooltip" page="true"/>
@@ -147,7 +149,7 @@
     <div flex="1" id="deck-panels">
       <vbox id="project-listing-panel" class="project-listing panel-list" flex="1">
         <div id="project-listing-wrapper" class="panel-list-wrapper">
-          <iframe id="project-listing-panel-details" flex="1" src="project-listing.xhtml"/>
+          <iframe id="project-listing-panel-details" flex="1" src="project-listing.xhtml" tooltip="aHTMLTooltip"/>
         </div>
       </vbox>
       <splitter class="devtools-side-splitter" id="project-listing-splitter"/>
@@ -167,7 +169,7 @@
       <splitter class="devtools-side-splitter" id="runtime-listing-splitter"/>
       <vbox id="runtime-listing-panel" class="runtime-listing panel-list" flex="1">
         <div id="runtime-listing-wrapper" class="panel-list-wrapper">
-          <iframe id="runtime-listing-panel-details" flex="1" src="runtime-listing.xhtml"/>
+          <iframe id="runtime-listing-panel-details" flex="1" src="runtime-listing.xhtml" tooltip="aHTMLTooltip"/>
         </div>
       </vbox>
     </div>

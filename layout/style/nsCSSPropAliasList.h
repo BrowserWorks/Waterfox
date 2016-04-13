@@ -220,6 +220,10 @@ CSS_PROP_ALIAS(-webkit-animation-timing-function,
                WebkitAnimationTimingFunction,
                WEBKIT_PREFIX_PREF)
 
+CSS_PROP_ALIAS(-webkit-filter,
+               filter,
+               WebkitFilter,
+               WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-text-size-adjust,
                text_size_adjust,
                WebkitTextSizeAdjust,
@@ -236,6 +240,18 @@ CSS_PROP_ALIAS(-webkit-transform-origin,
 CSS_PROP_ALIAS(-webkit-transform-style,
                transform_style,
                WebkitTransformStyle,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-backface-visibility,
+               backface_visibility,
+               WebkitBackfaceVisibility,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-perspective,
+               perspective,
+               WebkitPerspective,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-perspective-origin,
+               perspective_origin,
+               WebkitPerspectiveOrigin,
                WEBKIT_PREFIX_PREF)
 
 CSS_PROP_ALIAS(-webkit-transition,
@@ -296,10 +312,12 @@ CSS_PROP_ALIAS(-webkit-background-size,
                background_size,
                WebkitBackgroundSize,
                WEBKIT_PREFIX_PREF)
+
 CSS_PROP_ALIAS(-webkit-border-image,
                border_image,
                WebkitBorderImage,
                WEBKIT_PREFIX_PREF)
+
 CSS_PROP_ALIAS(-webkit-box-shadow,
                box_shadow,
                WebkitBoxShadow,
@@ -308,6 +326,25 @@ CSS_PROP_ALIAS(-webkit-box-sizing,
                box_sizing,
                WebkitBoxSizing,
                WEBKIT_PREFIX_PREF)
+
+// Alias old flexbox properties to modern flexbox pseudo-equivalents:
+CSS_PROP_ALIAS(-webkit-box-flex,
+               flex_grow,
+               WebkitBoxFlex,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-box-ordinal-group,
+               order,
+               WebkitBoxOrdinalGroup,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-box-align,
+               align_items,
+               WebkitBoxAlign,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-box-pack,
+               justify_content,
+               WebkitBoxPack,
+               WEBKIT_PREFIX_PREF)
+
 CSS_PROP_ALIAS(-webkit-user-select,
                user_select,
                WebkitUserSelect,

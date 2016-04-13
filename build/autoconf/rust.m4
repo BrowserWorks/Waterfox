@@ -12,7 +12,7 @@ AC_DEFUN([MOZ_RUST_SUPPORT], [
     _RUSTC_MINOR_VERSION=`echo ${RUSTC_VERSION} | cut -d . -f 2`
     _RUSTC_EXTRA_VERSION=`echo ${RUSTC_VERSION} | cut -d . -f 3 | cut -d + -f 1`
     _RUSTC_PATCH_VERSION=`echo ${_RUSTC_EXTRA_VERSION} | cut -d '-' -f 1`
-    AC_MSG_RESULT([$RUSTC_VERSION (v${_RUSTC_MAJOR_VERSION}.${_RUSTC_MINOR_VERSION}.${_RUSTC_PATCH_VERSION})])
+    AC_MSG_RESULT([${_RUSTC_MAJOR_VERSION}.${_RUSTC_MINOR_VERSION}.${_RUSTC_PATCH_VERSION} ($RUSTC_VERSION)])
   fi
   MOZ_ARG_ENABLE_BOOL([rust],
                       [  --enable-rust           Include Rust language sources],
@@ -24,10 +24,11 @@ AC_DEFUN([MOZ_RUST_SUPPORT], [
       See http://www.rust-lang.org/ for more information.])
   fi
   if test -n "$MOZ_RUST" && test -z "$_RUSTC_MAJOR_VERSION" -o \
-    "$_RUSTC_MAJOR_VERSION" -lt 1; then
+    "$_RUSTC_MAJOR_VERSION" -lt 1 -o \
+    \( "$_RUSTC_MAJOR_VERSION" -eq 1 -a "$_RUSTC_MINOR_VERSION" -lt 5 \); then
     AC_MSG_ERROR([Rust compiler ${RUSTC_VERSION} is too old.
       To compile Rust language sources please install at least
-      version 1.0 of the 'rustc' toolchain and make sure it is
+      version 1.5 of the 'rustc' toolchain and make sure it is
       first in your path.
       You can verify this by typing 'rustc --version'.])
   fi

@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef DEBUG
+#ifdef JS_JITSPEW
 
 #include "jit/C1Spewer.h"
 
@@ -97,7 +97,7 @@ C1Spewer::spewRanges(GenericPrinter& out, BacktrackingAllocator* regalloc, LNode
         for (LiveRange::RegisterLinkIterator iter = vreg->rangesBegin(); iter; iter++) {
             LiveRange* range = LiveRange::get(*iter);
             out.printf("%d object \"", id);
-            out.printf("%s", range->bundle()->allocation().toString());
+            out.printf("%s", range->bundle()->allocation().toString().get());
             out.printf("\" %d -1", id);
             out.printf(" [%u, %u[", range->from().bits(), range->to().bits());
             for (UsePositionIterator usePos(range->usesBegin()); usePos; usePos++)
@@ -190,5 +190,5 @@ C1Spewer::spewPass(GenericPrinter& out, MBasicBlock* block)
     out.printf("  end_block\n");
 }
 
-#endif /* DEBUG */
+#endif /* JS_JITSPEW */
 

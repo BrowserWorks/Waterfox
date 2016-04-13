@@ -4,6 +4,20 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// The test js is shared between sandboxed (which has no SpecialPowers object)
+// and content mochitests (where the |Components| object is accessible only as
+// SpecialPowers.Components). Expose Components if necessary here to make things
+// work everywhere.
+//
+// Even if the real |Components| doesn't exist, we might shim in a simple JS
+// placebo for compat. An easy way to differentiate this from the real thing
+// is whether the property is read-only or not.
+{
+  let c = Object.getOwnPropertyDescriptor(this, 'Components');
+  if ((!c.value || c.writable) && typeof SpecialPowers === 'object')
+    Components = SpecialPowers.wrap(SpecialPowers.Components);
+}
+
 /*
  * This file contains common code that is loaded before each test file(s).
  * See http://developer.mozilla.org/en/docs/Writing_xpcshell-based_unit_tests
@@ -498,7 +512,10 @@ function pattern_matcher(pattern) {
   if (typeof pattern == "function") {
     return pattern;
   } else if (typeof pattern == "object" && pattern) {
-    var matchers = [[p, pattern_matcher(pattern[p])] for (p in pattern)];
+    var matchers = [];
+    for (let p in pattern) {
+      matchers.push([p, pattern_matcher(pattern[p])]);
+    }
     // Kludge: include 'length', if not enumerable. (If it is enumerable,
     // we picked it up in the array comprehension, above.
     ld = Object.getOwnPropertyDescriptor(pattern, 'length');

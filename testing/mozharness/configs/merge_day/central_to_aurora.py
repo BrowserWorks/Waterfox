@@ -1,17 +1,16 @@
 config = {
     "log_name": "central_to_aurora",
     "version_files": [
-        "browser/config/version.txt",
-        "browser/config/version_display.txt",
-        "config/milestone.txt",
-        "b2g/confvars.sh",
+        {"file": "browser/config/version.txt", "suffix": ""},
+        {"file": "browser/config/version_display.txt", "suffix": ""},
+        {"file": "config/milestone.txt", "suffix": ""},
     ],
     "replacements": [
         # File, from, to
         ("{}/{}".format(d, f),
         "ac_add_options --with-branding=mobile/android/branding/nightly",
         "ac_add_options --with-branding=mobile/android/branding/aurora")
-        for d in ["mobile/android/config/mozconfigs/android-api-11/",
+        for d in ["mobile/android/config/mozconfigs/android-api-15/",
                   "mobile/android/config/mozconfigs/android-api-9-10-constrained/",
                   "mobile/android/config/mozconfigs/android-x86/"]
         for f in ["debug", "nightly", "l10n-nightly"]
@@ -31,13 +30,13 @@ config = {
         ("{}/l10n-nightly".format(d),
         "ac_add_options --with-l10n-base=../../l10n-central",
         "ac_add_options --with-l10n-base=..")
-        for d in ["mobile/android/config/mozconfigs/android-api-11/",
+        for d in ["mobile/android/config/mozconfigs/android-api-15/",
                   "mobile/android/config/mozconfigs/android-api-9-10-constrained/",
                   "mobile/android/config/mozconfigs/android-x86/"]
     ] + [
         # File, from, to
         (f, "ac_add_options --enable-profiling", "") for f in
-        ["mobile/android/config/mozconfigs/android-api-11/nightly",
+        ["mobile/android/config/mozconfigs/android-api-15/nightly",
          "mobile/android/config/mozconfigs/android-api-9-10-constrained/nightly",
          "mobile/android/config/mozconfigs/android-x86/nightly",
          "browser/config/mozconfigs/linux32/nightly",
@@ -92,7 +91,7 @@ config = {
     "balrog_credentials_file": "oauth.txt",
 
     "virtualenv_modules": [
-        "requests==2.2.1",
+        "requests==2.8.1",
     ],
 
     "post_merge_builders": [

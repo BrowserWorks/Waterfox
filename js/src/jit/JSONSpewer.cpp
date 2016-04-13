@@ -259,6 +259,8 @@ JSONSpewer::spewMIR(MIRGraph* mir)
         beginObject();
 
         integerProperty("number", block->id());
+        if (block->getHitState() == MBasicBlock::HitState::Count)
+            integerProperty("count", block->getHitCount());
 
         beginListProperty("attributes");
         if (block->isLoopBackedge())
@@ -369,7 +371,7 @@ JSONSpewer::spewRanges(BacktrackingAllocator* regalloc)
 
                     beginObject();
                     property("allocation");
-                    out_.printf("\"%s\"", range->bundle()->allocation().toString());
+                    out_.printf("\"%s\"", range->bundle()->allocation().toString().get());
                     integerProperty("start", range->from().bits());
                     integerProperty("end", range->to().bits());
                     endObject();

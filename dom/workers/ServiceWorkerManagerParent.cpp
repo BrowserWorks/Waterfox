@@ -150,6 +150,7 @@ private:
 ServiceWorkerManagerParent::ServiceWorkerManagerParent()
   : mService(ServiceWorkerManagerService::GetOrCreate())
   , mID(++sServiceWorkerManagerParentID)
+  , mActorDestroyed(false)
 {
   AssertIsOnBackgroundThread();
   mService->RegisterActor(this);
@@ -158,6 +159,17 @@ ServiceWorkerManagerParent::ServiceWorkerManagerParent()
 ServiceWorkerManagerParent::~ServiceWorkerManagerParent()
 {
   AssertIsOnBackgroundThread();
+}
+
+already_AddRefed<ContentParent>
+ServiceWorkerManagerParent::GetContentParent() const
+{
+  AssertIsOnBackgroundThread();
+
+  // This object must be released on main-thread.
+  RefPtr<ContentParent> parent =
+    BackgroundParent::GetContentParent(Manager());
+  return parent.forget();
 }
 
 bool
@@ -169,7 +181,6 @@ ServiceWorkerManagerParent::RecvRegister(
 
   // Basic validation.
   if (aData.scope().IsEmpty() ||
-      aData.scriptSpec().IsEmpty() ||
       aData.principal().type() == PrincipalInfo::TNullPrincipalInfo ||
       aData.principal().type() == PrincipalInfo::TSystemPrincipalInfo) {
     return false;
@@ -232,7 +243,7 @@ ServiceWorkerManagerParent::RecvUnregister(const PrincipalInfo& aPrincipalInfo,
 }
 
 bool
-ServiceWorkerManagerParent::RecvPropagateSoftUpdate(const OriginAttributes& aOriginAttributes,
+ServiceWorkerManagerParent::RecvPropagateSoftUpdate(const PrincipalOriginAttributes& aOriginAttributes,
                                                     const nsString& aScope)
 {
   AssertIsOnBackgroundThread();
@@ -297,7 +308,7 @@ ServiceWorkerManagerParent::RecvShutdown()
   mService->UnregisterActor(this);
   mService = nullptr;
 
-  unused << Send__delete__(this);
+  Unused << Send__delete__(this);
   return true;
 }
 
@@ -305,6 +316,8 @@ void
 ServiceWorkerManagerParent::ActorDestroy(ActorDestroyReason aWhy)
 {
   AssertIsOnBackgroundThread();
+
+  mActorDestroyed = true;
 
   if (mService) {
     // This object is about to be released and with it, also mService will be

@@ -50,6 +50,13 @@ dictionary MediaTrackConstraintSet {
     long long browserWindow;
     boolean scrollWithPage;
     ConstrainDOMString deviceId;
+    ConstrainLong viewportOffsetX;
+    ConstrainLong viewportOffsetY;
+    ConstrainLong viewportWidth;
+    ConstrainLong viewportHeight;
+    ConstrainBoolean echoCancellation;
+    ConstrainBoolean mozNoiseSuppression;
+    ConstrainBoolean mozAutoGainControl;
 };
 
 dictionary MediaTrackConstraints : MediaTrackConstraintSet {

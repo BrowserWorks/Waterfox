@@ -19,6 +19,8 @@
 # include "jit/arm64/MacroAssembler-arm64-inl.h"
 #elif defined(JS_CODEGEN_MIPS32)
 # include "jit/mips32/MacroAssembler-mips32-inl.h"
+#elif defined(JS_CODEGEN_MIPS64)
+# include "jit/mips64/MacroAssembler-mips64-inl.h"
 #elif !defined(JS_CODEGEN_NONE)
 # error "Unknown architecture!"
 #endif
@@ -60,14 +62,14 @@ MacroAssembler::implicitPop(uint32_t bytes)
 // ===============================================================
 // Stack manipulation functions.
 
-CodeOffsetLabel
+CodeOffset
 MacroAssembler::PushWithPatch(ImmWord word)
 {
     framePushed_ += sizeof(word.value);
     return pushWithPatch(word);
 }
 
-CodeOffsetLabel
+CodeOffset
 MacroAssembler::PushWithPatch(ImmPtr imm)
 {
     return PushWithPatch(ImmWord(uintptr_t(imm.value)));
@@ -77,17 +79,24 @@ MacroAssembler::PushWithPatch(ImmPtr imm)
 // Simple call functions.
 
 void
-MacroAssembler::call(const CallSiteDesc& desc, const Register reg)
+MacroAssembler::call(const wasm::CallSiteDesc& desc, const Register reg)
 {
-    call(reg);
-    append(desc, currentOffset(), framePushed());
+    CodeOffset l = call(reg);
+    append(desc, l, framePushed());
 }
 
 void
-MacroAssembler::call(const CallSiteDesc& desc, Label* label)
+MacroAssembler::call(const wasm::CallSiteDesc& desc, Label* label)
 {
-    call(label);
-    append(desc, currentOffset(), framePushed());
+    CodeOffset l = call(label);
+    append(desc, l, framePushed());
+}
+
+void
+MacroAssembler::call(const wasm::CallSiteDesc& desc, AsmJSInternalCallee callee)
+{
+    CodeOffset l = callWithPatch();
+    append(desc, l, framePushed(), callee.index);
 }
 
 // ===============================================================
@@ -301,7 +310,16 @@ MacroAssembler::leaveExitFrame(size_t extraFrame)
 bool
 MacroAssembler::hasSelfReference() const
 {
-    return selfReferencePatch_.offset() != 0;
+    return selfReferencePatch_.bound();
+}
+
+// ===============================================================
+// Arithmetic functions
+
+void
+MacroAssembler::addPtr(ImmPtr imm, Register dest)
+{
+    addPtr(ImmWord(uintptr_t(imm.value)), dest);
 }
 
 //}}} check_macroassembler_style
@@ -321,6 +339,31 @@ MacroAssembler::branchFunctionKind(Condition cond, JSFunction::FunctionKind kind
     load32(address, scratch);
     and32(Imm32(mask), scratch);
     branch32(cond, scratch, Imm32(bit), label);
+}
+
+#ifndef JS_CODEGEN_ARM64
+
+template <typename T> void
+MacroAssembler::addToStackPtr(T t)
+{
+    addPtr(t, getStackPointer());
+}
+
+template <typename T> void
+MacroAssembler::addStackPtrTo(T t)
+{
+    addPtr(getStackPointer(), t);
+}
+
+#endif // !JS_CODEGEN_ARM64
+
+void
+MacroAssembler::bumpKey(Int32Key* key, int diff)
+{
+    if (key->isRegister())
+        add32(Imm32(diff), key->reg());
+    else
+        key->bumpConstant(diff);
 }
 
 } // namespace jit

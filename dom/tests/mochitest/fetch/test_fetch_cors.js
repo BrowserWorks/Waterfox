@@ -204,6 +204,18 @@ function testModeCors() {
                  noAllowPreflight: 1,
                },
 
+               { pass: 0,
+                 method: "GET",
+                 headers: { "Content-Type": "foo/bar, text/plain" },
+                 noAllowPreflight: 1,
+               },
+
+               { pass: 0,
+                 method: "GET",
+                 headers: { "Content-Type": "foo/bar, text/plain, garbage" },
+                 noAllowPreflight: 1,
+               },
+
                // Custom headers
                { pass: 1,
                  method: "GET",
@@ -349,6 +361,16 @@ function testModeCors() {
                             "Accept-Language": "sv-SE" },
                  noAllowPreflight: 1,
                },
+               { pass: 0,
+                 method: "HEAD",
+                 headers: { "Content-Type": "foo/bar, text/plain" },
+                 noAllowPreflight: 1,
+               },
+               { pass: 0,
+                 method: "HEAD",
+                 headers: { "Content-Type": "foo/bar, text/plain, garbage" },
+                 noAllowPreflight: 1,
+               },
 
                // HEAD with custom headers
                { pass: 1,
@@ -424,6 +446,18 @@ function testModeCors() {
                  headers: { "Content-Type": "text/plain",
                             "Accept": "foo/bar",
                             "Accept-Language": "sv-SE" },
+                 noAllowPreflight: 1,
+               },
+               { pass: 0,
+                 method: "POST",
+                 body: "hi there",
+                 headers: { "Content-Type": "foo/bar, text/plain" },
+                 noAllowPreflight: 1,
+               },
+               { pass: 0,
+                 method: "POST",
+                 body: "hi there",
+                 headers: { "Content-Type": "foo/bar, text/plain, garbage" },
                  noAllowPreflight: 1,
                },
 
@@ -722,7 +756,7 @@ function testModeCors() {
       }
       req.url += "&headers=" + escape(test.headers.toSource());
       reqHeaders =
-        escape([name for (name in test.headers)]
+        escape(Object.keys(test.headers)
                .filter(isUnsafeHeader)
                .map(String.toLowerCase)
                .sort()
@@ -1079,7 +1113,7 @@ function testCrossOriginCredentials() {
   return finalPromise;
 }
 
-function testRedirects() {
+function testCORSRedirects() {
   var origin = "http://mochi.test:8888";
 
   var tests = [
@@ -1249,6 +1283,20 @@ function testRedirects() {
                     },
                     ],
            },
+           { pass: 1,
+             method: "POST",
+             body: "hi there",
+             headers: { "Content-Type": "text/plain",
+                        "my-header": "myValue",
+                      },
+             hops: [{ server: "http://mochi.test:8888",
+                    },
+                    { server: "http://example.com",
+                      allowOrigin: origin,
+                      allowHeaders: "my-header",
+                    },
+                    ],
+           },
            { pass: 0,
              method: "POST",
              body: "hi there",
@@ -1260,6 +1308,7 @@ function testRedirects() {
                     { server: "http://example.com",
                       allowOrigin: origin,
                       allowHeaders: "my-header",
+                      noAllowPreflight: 1,
                     },
                     ],
            },
@@ -1281,12 +1330,24 @@ function testRedirects() {
                     }
                     ],
            },
+           { pass: 1,
+             method: "DELETE",
+             hops: [{ server: "http://mochi.test:8888",
+                    },
+                    { server: "http://example.com",
+                      allowOrigin: origin,
+                      allowMethods: "DELETE",
+                    },
+                    ],
+           },
            { pass: 0,
              method: "DELETE",
              hops: [{ server: "http://mochi.test:8888",
                     },
                     { server: "http://example.com",
                       allowOrigin: origin,
+                      allowMethods: "DELETE",
+                      noAllowPreflight: 1,
                     },
                     ],
            },
@@ -1296,9 +1357,11 @@ function testRedirects() {
                     },
                     { server: "http://test1.example.com",
                       allowOrigin: origin,
+                      allowMethods: "DELETE",
                     },
                     { server: "http://test2.example.com",
                       allowOrigin: origin,
+                      allowMethods: "DELETE",
                     },
                     ],
            },
@@ -1320,9 +1383,11 @@ function testRedirects() {
              method: "DELETE",
              hops: [{ server: "http://example.com",
                       allowOrigin: origin,
+                      allowMethods: "DELETE",
                     },
                     { server: "http://sub1.test1.mochi.test:8888",
                       allowOrigin: origin,
+                      allowMethods: "DELETE",
                     },
                     ],
            },
@@ -1379,6 +1444,10 @@ function testRedirects() {
       body: test.body,
     };
 
+    if (test.headers) {
+      req.url += "&headers=" + escape(test.headers.toSource());
+    }
+
     if (test.pass) {
       if (test.body)
         req.url += "&body=" + escape(test.body);
@@ -1418,6 +1487,113 @@ function testRedirects() {
   return Promise.all(fetches);
 }
 
+function testNoCORSRedirects() {
+  var origin = "http://mochi.test:8888";
+
+  var tests = [
+           { pass: 1,
+             method: "GET",
+             hops: [{ server: "http://example.com",
+                    },
+                    ],
+           },
+           { pass: 1,
+             method: "GET",
+             hops: [{ server: origin,
+                    },
+                    { server: "http://example.com",
+                    },
+                    ],
+           },
+           { pass: 1,
+             method: "GET",
+             // Must use a simple header due to no-cors header restrictions.
+             headers: { "accept-language": "en-us",
+                      },
+             hops: [{ server: origin,
+                    },
+                    { server: "http://example.com",
+                    },
+                    ],
+           },
+           { pass: 1,
+             method: "GET",
+             hops: [{ server: origin,
+                    },
+                    { server: "http://example.com",
+                    },
+                    { server: origin,
+                    }
+                    ],
+           },
+           { pass: 1,
+             method: "POST",
+             body: 'upload body here',
+             hops: [{ server: origin
+                    },
+                    { server: "http://example.com",
+                    },
+                    ],
+           },
+           { pass: 0,
+             method: "DELETE",
+             hops: [{ server: origin
+                    },
+                    { server: "http://example.com",
+                    },
+                    ],
+           },
+           ];
+
+  var fetches = [];
+  for (test of tests) {
+    req = {
+      url: test.hops[0].server + corsServerPath + "hop=1&hops=" +
+           escape(test.hops.toSource()),
+      method: test.method,
+      headers: test.headers,
+      body: test.body,
+    };
+
+    if (test.headers) {
+      req.url += "&headers=" + escape(test.headers.toSource());
+    }
+
+    if (test.pass) {
+      if (test.body)
+        req.url += "&body=" + escape(test.body);
+    }
+
+    fetches.push((function(req, test) {
+      return new Promise(function(resolve, reject) {
+        resolve(new Request(req.url, { mode: 'no-cors',
+                                       method: req.method,
+                                       headers: req.headers,
+                                       body: req.body }));
+      }).then(function(request) {
+        return fetch(request);
+      }).then(function(res) {
+        ok(test.pass, "Expected test to pass for " + test.toSource());
+        // All requests are cross-origin no-cors, we should always have
+        // an opaque response here.  All values on the opaque response
+        // should be hidden.
+        is(res.type, 'opaque', 'wrong response type for ' + test.toSource());
+        is(res.status, 0, "wrong status in test for " + test.toSource());
+        is(res.statusText, "", "wrong status text for " + test.toSource());
+        is(res.url, '', 'wrong response url for ' + test.toSource());
+        return res.text().then(function(v) {
+          is(v, "", "wrong responseText in test for " + test.toSource());
+        });
+      }, function(e) {
+        ok(!test.pass, "Expected test failure for " + test.toSource());
+        ok(e instanceof TypeError, "Exception should be TypeError for " + test.toSource());
+      });
+    })(req, test));
+  }
+
+  return Promise.all(fetches);
+}
+
 function testReferrer() {
   var referrer;
   if (self && self.location) {
@@ -1446,7 +1622,8 @@ function runTest() {
     .then(testModeCors)
     .then(testSameOriginCredentials)
     .then(testCrossOriginCredentials)
-    .then(testRedirects)
+    .then(testCORSRedirects)
+    .then(testNoCORSRedirects)
     .then(testReferrer)
     // Put more promise based tests here.
 }

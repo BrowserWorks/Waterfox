@@ -34,9 +34,10 @@
 #include "jsobjinlines.h"
 #include "vm/Debugger-inl.h"
 
+using namespace js;
+
 using mozilla::Some;
 using mozilla::RangedPtr;
-using mozilla::UniquePtr;
 using JS::DispatchTyped;
 using JS::HandleValue;
 using JS::Value;
@@ -347,8 +348,7 @@ Concrete<JSObject>::jsObjectClassName() const
 }
 
 bool
-Concrete<JSObject>::jsObjectConstructorName(JSContext* cx,
-                                            UniquePtr<char16_t[], JS::FreePolicy>& outName) const
+Concrete<JSObject>::jsObjectConstructorName(JSContext* cx, UniqueTwoByteChars& outName) const
 {
     JSAtom* name = Concrete::get().maybeConstructorDisplayAtom();
     if (!name) {
@@ -418,7 +418,7 @@ bool
 RootList::init()
 {
     EdgeVectorTracer tracer(rt, &edges, wantNames);
-    JS_TraceRuntime(&tracer);
+    js::TraceRuntime(&tracer);
     if (!tracer.okay)
         return false;
     noGC.emplace(rt);
@@ -431,7 +431,7 @@ RootList::init(ZoneSet& debuggees)
     EdgeVector allRootEdges;
     EdgeVectorTracer tracer(rt, &allRootEdges, wantNames);
 
-    JS_TraceRuntime(&tracer);
+    js::TraceRuntime(&tracer);
     if (!tracer.okay)
         return false;
     JS_TraceIncomingCCWs(&tracer, debuggees);
@@ -487,7 +487,7 @@ RootList::addRoot(Node node, const char16_t* edgeName)
     MOZ_ASSERT(noGC.isSome());
     MOZ_ASSERT_IF(wantNames, edgeName);
 
-    UniquePtr<char16_t[], JS::FreePolicy> name;
+    UniqueTwoByteChars name;
     if (edgeName) {
         name = js::DuplicateString(edgeName);
         if (!name)
@@ -497,7 +497,7 @@ RootList::addRoot(Node node, const char16_t* edgeName)
     return edges.append(mozilla::Move(Edge(name.release(), node)));
 }
 
-const char16_t Concrete<RootList>::concreteTypeName[] = MOZ_UTF16("RootList");
+const char16_t Concrete<RootList>::concreteTypeName[] = MOZ_UTF16("JS::ubi::RootList");
 
 UniquePtr<EdgeRange>
 Concrete<RootList>::edges(JSRuntime* rt, bool wantNames) const {

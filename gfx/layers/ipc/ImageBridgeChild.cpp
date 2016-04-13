@@ -56,6 +56,38 @@ using namespace mozilla::gfx;
 using namespace mozilla::media;
 
 typedef std::vector<CompositableOperation> OpVector;
+typedef nsTArray<OpDestroy> OpDestroyVector;
+
+namespace {
+class ImageBridgeThread : public Thread {
+public:
+
+  ImageBridgeThread() : Thread("ImageBridgeChild") {
+  }
+
+protected:
+
+  void Init() {
+#ifdef MOZ_ENABLE_PROFILER_SPS
+    mPseudoStackHack = mozilla_get_pseudo_stack();
+#endif
+  }
+
+  void CleanUp() {
+#ifdef MOZ_ENABLE_PROFILER_SPS
+    mPseudoStackHack = nullptr;
+#endif
+  }
+
+private:
+
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  // This is needed to avoid a spurious leak report.  There's no other
+  // use for it.  See bug 1239504 and bug 1215265.
+  PseudoStack* mPseudoStackHack;
+#endif
+};
+}
 
 struct CompositableTransaction
 {
@@ -81,10 +113,11 @@ struct CompositableTransaction
     mFinished = true;
     mSwapRequired = false;
     mOperations.clear();
+    mDestroyedActors.Clear();
   }
   bool IsEmpty() const
   {
-    return mOperations.empty();
+    return mOperations.empty() && mDestroyedActors.IsEmpty();
   }
   void AddNoSwapEdit(const CompositableOperation& op)
   {
@@ -94,10 +127,35 @@ struct CompositableTransaction
   void AddEdit(const CompositableOperation& op)
   {
     AddNoSwapEdit(op);
+    MarkSyncTransaction();
+  }
+  void MarkSyncTransaction()
+  {
     mSwapRequired = true;
   }
 
+  void FallbackDestroyActors()
+  {
+    for (auto& actor : mDestroyedActors) {
+      switch (actor.type()) {
+      case OpDestroy::TPTextureChild: {
+        DebugOnly<bool> ok = TextureClient::DestroyFallback(actor.get_PTextureChild());
+        MOZ_ASSERT(ok);
+        break;
+      }
+      case OpDestroy::TPCompositableChild: {
+        DebugOnly<bool> ok = CompositableClient::DestroyFallback(actor.get_PCompositableChild());
+        MOZ_ASSERT(ok);
+        break;
+      }
+      default: MOZ_CRASH();
+      }
+    }
+    mDestroyedActors.Clear();
+  }
+
   OpVector mOperations;
+  OpDestroyVector mDestroyedActors;
   bool mSwapRequired;
   bool mFinished;
 };
@@ -117,6 +175,7 @@ ImageBridgeChild::UseTextures(CompositableClient* aCompositable,
 {
   MOZ_ASSERT(aCompositable);
   MOZ_ASSERT(aCompositable->GetIPDLActor());
+  MOZ_ASSERT(aCompositable->IsConnected());
 
   nsAutoTArray<TimedTexture,4> textures;
 
@@ -146,7 +205,7 @@ ImageBridgeChild::UseComponentAlphaTextures(CompositableClient* aCompositable,
   MOZ_ASSERT(aCompositable);
   MOZ_ASSERT(aTextureOnWhite);
   MOZ_ASSERT(aTextureOnBlack);
-  MOZ_ASSERT(aCompositable->GetIPDLActor());
+  MOZ_ASSERT(aCompositable->IsConnected());
   MOZ_ASSERT(aTextureOnWhite->GetIPDLActor());
   MOZ_ASSERT(aTextureOnBlack->GetIPDLActor());
   MOZ_ASSERT(aTextureOnBlack->GetSize() == aTextureOnWhite->GetSize());
@@ -162,6 +221,7 @@ ImageBridgeChild::UseOverlaySource(CompositableClient* aCompositable,
                                    const nsIntRect& aPictureRect)
 {
   MOZ_ASSERT(aCompositable);
+  MOZ_ASSERT(aCompositable->IsConnected());
   mTxn->AddEdit(OpUseOverlaySource(nullptr, aCompositable->GetIPDLActor(),
       aOverlay, aPictureRect));
 }
@@ -176,6 +236,12 @@ void ReleaseImageBridgeParentSingleton() {
   sImageBridgeParentSingleton = nullptr;
 }
 
+void
+ImageBridgeChild::FallbackDestroyActors() {
+  if (mTxn && !mTxn->mDestroyedActors.IsEmpty()) {
+    mTxn->FallbackDestroyActors();
+  }
+}
 
 // dispatched function
 static void ImageBridgeShutdownStep1(ReentrantMonitor *aBarrier, bool *aDone)
@@ -199,9 +265,11 @@ static void ImageBridgeShutdownStep1(ReentrantMonitor *aBarrier, bool *aDone)
     for (int i = textures.Length() - 1; i >= 0; --i) {
       RefPtr<TextureClient> client = TextureClient::AsTextureClient(textures[i]);
       if (client) {
-        client->ForceRemove();
+        client->Destroy();
       }
     }
+    sImageBridgeChildSingleton->FallbackDestroyActors();
+
     sImageBridgeChildSingleton->SendWillStop();
     sImageBridgeChildSingleton->MarkShutDown();
     // From now on, no message can be sent through the image bridge from the
@@ -274,6 +342,9 @@ ImageBridgeChild::~ImageBridgeChild()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
+                                   new DeleteTask<Transport>(GetTransport()));
+
   delete mTxn;
 }
 
@@ -336,7 +407,7 @@ bool ImageBridgeChild::IsCreated()
 void ImageBridgeChild::StartUp()
 {
   NS_ASSERTION(NS_IsMainThread(), "Should be on the main Thread!");
-  ImageBridgeChild::StartUpOnThread(new Thread("ImageBridgeChild"));
+  ImageBridgeChild::StartUpOnThread(new ImageBridgeThread());
 }
 
 #ifdef MOZ_NUWA_PROCESS
@@ -459,7 +530,7 @@ void ImageBridgeChild::DispatchReleaseTextureClient(TextureClient* aClient)
     NewRunnableFunction(&ReleaseTextureClientNow, aClient));
 }
 
-static void UpdateImageClientNow(ImageClient* aClient, ImageContainer* aContainer)
+static void UpdateImageClientNow(ImageClient* aClient, RefPtr<ImageContainer>&& aContainer)
 {
   if (!ImageBridgeChild::IsCreated() || ImageBridgeChild::IsShutDown()) {
     NS_WARNING("Something is holding on to graphics resources after the shutdown"
@@ -492,10 +563,7 @@ void ImageBridgeChild::DispatchImageClientUpdate(ImageClient* aClient,
   }
   sImageBridgeChildSingleton->GetMessageLoop()->PostTask(
     FROM_HERE,
-    NewRunnableFunction<
-      void (*)(ImageClient*, ImageContainer*),
-      ImageClient*,
-      RefPtr<ImageContainer> >(&UpdateImageClientNow, aClient, aContainer));
+    NewRunnableFunction(&UpdateImageClientNow, aClient, RefPtr<ImageContainer>(aContainer)));
 }
 
 static void UpdateAsyncCanvasRendererSync(AsyncCanvasRenderer* aWrapper,
@@ -544,7 +612,7 @@ void ImageBridgeChild::UpdateAsyncCanvasRendererNow(AsyncCanvasRenderer* aWrappe
 }
 
 static void FlushAllImagesSync(ImageClient* aClient, ImageContainer* aContainer,
-                               AsyncTransactionWaiter* aWaiter)
+                               RefPtr<AsyncTransactionWaiter>&& aWaiter)
 {
   if (!ImageBridgeChild::IsCreated() || ImageBridgeChild::IsShutDown()) {
     // How sad. If we get into this branch it means that the ImageBridge
@@ -605,20 +673,6 @@ ImageBridgeChild::BeginTransaction()
   mTxn->Begin();
 }
 
-class MOZ_STACK_CLASS AutoRemoveTexturesFromImageBridge
-{
-public:
-  explicit AutoRemoveTexturesFromImageBridge(ImageBridgeChild* aImageBridge)
-    : mImageBridge(aImageBridge) {}
-
-  ~AutoRemoveTexturesFromImageBridge()
-  {
-    mImageBridge->RemoveTexturesIfNecessary();
-  }
-private:
-  ImageBridgeChild* mImageBridge;
-};
-
 void
 ImageBridgeChild::EndTransaction()
 {
@@ -626,7 +680,6 @@ ImageBridgeChild::EndTransaction()
   MOZ_ASSERT(!mTxn->Finished(), "forgot BeginTransaction?");
 
   AutoEndTransaction _(mTxn);
-  AutoRemoveTexturesFromImageBridge autoRemoveTextures(this);
 
   if (mTxn->IsEmpty()) {
     return;
@@ -645,15 +698,17 @@ ImageBridgeChild::EndTransaction()
   AutoInfallibleTArray<EditReply, 10> replies;
 
   if (mTxn->mSwapRequired) {
-    if (!SendUpdate(cset, &replies)) {
+    if (!SendUpdate(cset, mTxn->mDestroyedActors, &replies)) {
       NS_WARNING("could not send async texture transaction");
+      mTxn->FallbackDestroyActors();
       return;
     }
   } else {
     // If we don't require a swap we can call SendUpdateNoSwap which
     // assumes that aReplies is empty (DEBUG assertion)
-    if (!SendUpdateNoSwap(cset)) {
+    if (!SendUpdateNoSwap(cset, mTxn->mDestroyedActors)) {
       NS_WARNING("could not send async texture transaction (no swap)");
+      mTxn->FallbackDestroyActors();
       return;
     }
   }
@@ -685,7 +740,7 @@ ImageBridgeChild::StartUpInChildProcess(Transport* aTransport,
 
   gfxPlatform::GetPlatform();
 
-  sImageBridgeChildThread = new Thread("ImageBridgeChild");
+  sImageBridgeChildThread = new ImageBridgeThread();
   if (!sImageBridgeChildThread->Start()) {
     return nullptr;
   }
@@ -773,7 +828,7 @@ bool InImageBridgeChildThread()
 
 MessageLoop * ImageBridgeChild::GetMessageLoop() const
 {
-  return sImageBridgeChildThread->message_loop();
+  return sImageBridgeChildThread ? sImageBridgeChildThread->message_loop() : nullptr;
 }
 
 void ImageBridgeChild::ConnectAsync(ImageBridgeParent* aParent)
@@ -1094,6 +1149,35 @@ ImageBridgeChild::CreateTexture(const SurfaceDescriptor& aSharedData,
   return SendPTextureConstructor(aSharedData, aLayersBackend, aFlags);
 }
 
+static bool
+IBCAddOpDestroy(CompositableTransaction* aTxn, const OpDestroy& op, bool synchronously)
+{
+  if (aTxn->Finished()) {
+    return false;
+  }
+
+  aTxn->mDestroyedActors.AppendElement(op);
+
+  if (synchronously) {
+    aTxn->MarkSyncTransaction();
+  }
+
+  return true;
+}
+
+bool
+ImageBridgeChild::DestroyInTransaction(PTextureChild* aTexture, bool synchronously)
+{
+  return IBCAddOpDestroy(mTxn, OpDestroy(aTexture), synchronously);
+}
+
+bool
+ImageBridgeChild::DestroyInTransaction(PCompositableChild* aCompositable, bool synchronously)
+{
+  return IBCAddOpDestroy(mTxn, OpDestroy(aCompositable), synchronously);
+}
+
+
 void
 ImageBridgeChild::RemoveTextureFromCompositable(CompositableClient* aCompositable,
                                                 TextureClient* aTexture)
@@ -1101,7 +1185,8 @@ ImageBridgeChild::RemoveTextureFromCompositable(CompositableClient* aCompositabl
   MOZ_ASSERT(!mShuttingDown);
   MOZ_ASSERT(aTexture);
   MOZ_ASSERT(aTexture->IsSharedWithCompositor());
-  if (!aTexture || !aTexture->IsSharedWithCompositor()) {
+  MOZ_ASSERT(aCompositable->IsConnected());
+  if (!aTexture || !aTexture->IsSharedWithCompositor() || !aCompositable->IsConnected()) {
     return;
   }
   if (aTexture->GetFlags() & TextureFlags::DEALLOCATE_CLIENT) {
@@ -1111,8 +1196,6 @@ ImageBridgeChild::RemoveTextureFromCompositable(CompositableClient* aCompositabl
     mTxn->AddNoSwapEdit(OpRemoveTexture(nullptr, aCompositable->GetIPDLActor(),
                                         nullptr, aTexture->GetIPDLActor()));
   }
-  // Hold texture until transaction complete.
-  HoldUntilTransaction(aTexture);
 }
 
 void
@@ -1123,7 +1206,8 @@ ImageBridgeChild::RemoveTextureFromCompositableAsync(AsyncTransactionTracker* aA
   MOZ_ASSERT(!mShuttingDown);
   MOZ_ASSERT(aTexture);
   MOZ_ASSERT(aTexture->IsSharedWithCompositor());
-  if (!aTexture || !aTexture->IsSharedWithCompositor()) {
+  MOZ_ASSERT(aCompositable->IsConnected());
+  if (!aTexture || !aTexture->IsSharedWithCompositor() || !aCompositable->IsConnected()) {
     return;
   }
   mTxn->AddNoSwapEdit(OpRemoveTextureAsync(CompositableClient::GetTrackersHolderId(aCompositable->GetIPDLActor()),
@@ -1133,38 +1217,6 @@ ImageBridgeChild::RemoveTextureFromCompositableAsync(AsyncTransactionTracker* aA
   // Hold AsyncTransactionTracker until receving reply
   CompositableClient::HoldUntilComplete(aCompositable->GetIPDLActor(),
                                         aAsyncTransactionTracker);
-}
-
-static void RemoveTextureSync(TextureClient* aTexture, ReentrantMonitor* aBarrier, bool* aDone)
-{
-  aTexture->ForceRemove();
-
-  ReentrantMonitorAutoEnter autoMon(*aBarrier);
-  *aDone = true;
-  aBarrier->NotifyAll();
-}
-
-void ImageBridgeChild::RemoveTexture(TextureClient* aTexture)
-{
-  if (InImageBridgeChildThread()) {
-    MOZ_ASSERT(!mShuttingDown);
-    aTexture->ForceRemove();
-    return;
-  }
-
-  ReentrantMonitor barrier("RemoveTexture Lock");
-  ReentrantMonitorAutoEnter autoMon(barrier);
-  bool done = false;
-
-  sImageBridgeChildSingleton->GetMessageLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableFunction(&RemoveTextureSync, aTexture, &barrier, &done));
-
-  // should stop the thread until the ImageClient has been created on
-  // the other thread
-  while (!done) {
-    barrier.Wait();
-  }
 }
 
 bool ImageBridgeChild::IsSameProcess() const

@@ -68,12 +68,38 @@ HTMLLabelAccessible::RelationByType(RelationType aType)
 {
   Relation rel = AccessibleWrap::RelationByType(aType);
   if (aType == RelationType::LABEL_FOR) {
-    RefPtr<dom::HTMLLabelElement> label = dom::HTMLLabelElement::FromContent(mContent);
+    dom::HTMLLabelElement* label = dom::HTMLLabelElement::FromContent(mContent);
     rel.AppendTarget(mDoc, label->GetControl());
   }
 
   return rel;
 }
+
+uint8_t
+HTMLLabelAccessible::ActionCount()
+{
+  return nsCoreUtils::IsLabelWithControl(mContent) ? 1 : 0;
+}
+
+void
+HTMLLabelAccessible::ActionNameAt(uint8_t aIndex, nsAString& aName)
+{
+  if (aIndex == 0) {
+    if (nsCoreUtils::IsLabelWithControl(mContent))
+      aName.AssignLiteral("click");
+  }
+}
+
+bool
+HTMLLabelAccessible::DoAction(uint8_t aIndex)
+{
+  if (aIndex != 0)
+    return false;
+
+  DoCommand();
+  return true;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // nsHTMLOuputAccessible

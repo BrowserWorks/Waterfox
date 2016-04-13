@@ -9,6 +9,7 @@
 
 #include "windows.h" // HRESULT, DWORD
 #include "MediaDecoderReader.h"
+#include "MediaResource.h"
 #include "mozilla/RefPtr.h"
 #include "MP3FrameParser.h"
 
@@ -54,14 +55,9 @@ public:
   Seek(int64_t aTime, int64_t aEndTime) override;
 
 protected:
-  void NotifyDataArrivedInternal(uint32_t aLength,
-                                 int64_t aOffset) override;
-public:
-
-  bool IsMediaSeekable() override;
+  void NotifyDataArrivedInternal() override;
 
 private:
-
   // Notifies the filter graph that playback is complete. aStatus is
   // the code to send to the filter graph. Always returns false, so
   // that we can just "return Finish()" from DecodeAudioData().
@@ -106,7 +102,7 @@ private:
   // Duration of the stream, in microseconds.
   int64_t mDuration;
 
-  NotifyDataArrivedFilter mFilter;
+  MediaByteRangeSet mLastCachedRanges;
 };
 
 } // namespace mozilla

@@ -8,9 +8,9 @@
 #include "gfx2DGlue.h"                  // for ImageFormatToSurfaceFormat, etc
 #include "gfxPlatform.h"                // for gfxPlatform, gfxImageFormat
 #include "mozilla/gfx/Point.h"          // for IntSIze
+#include "mozilla/layers/BufferTexture.h"
 #include "mozilla/layers/ISurfaceAllocator.h"  // for ISurfaceAllocator, etc
 #include "mozilla/layers/ImageClient.h"  // for ImageClient
-#include "mozilla/layers/ImageDataSerializer.h"  // for ImageDataSerializer
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor, etc
 #include "mozilla/layers/TextureClient.h"  // for BufferTextureClient, etc
 #include "mozilla/layers/ImageBridgeChild.h"  // for ImageBridgeChild
@@ -31,9 +31,9 @@ CreateSharedRGBImage(ImageContainer *aImageContainer,
                      gfx::IntSize aSize,
                      gfxImageFormat aImageFormat)
 {
-  NS_ASSERTION(aImageFormat == gfxImageFormat::ARGB32 ||
-               aImageFormat == gfxImageFormat::RGB24 ||
-               aImageFormat == gfxImageFormat::RGB16_565,
+  NS_ASSERTION(aImageFormat == gfx::SurfaceFormat::A8R8G8B8_UINT32 ||
+               aImageFormat == gfx::SurfaceFormat::X8R8G8B8_UINT32 ||
+               aImageFormat == gfx::SurfaceFormat::R5G6B5_UINT16,
                "RGB formats supported only");
 
   if (!aImageContainer) {
@@ -41,19 +41,16 @@ CreateSharedRGBImage(ImageContainer *aImageContainer,
     return nullptr;
   }
 
-  RefPtr<Image> image = aImageContainer->CreateImage(ImageFormat::SHARED_RGB);
-
-  if (!image) {
+  RefPtr<SharedRGBImage> rgbImage = aImageContainer->CreateSharedRGBImage();
+  if (!rgbImage) {
     NS_WARNING("Failed to create SharedRGBImage");
     return nullptr;
   }
-
-  RefPtr<SharedRGBImage> rgbImage = static_cast<SharedRGBImage*>(image.get());
   if (!rgbImage->Allocate(aSize, gfx::ImageFormatToSurfaceFormat(aImageFormat))) {
     NS_WARNING("Failed to allocate a shared image");
     return nullptr;
   }
-  return image.forget();
+  return rgbImage.forget();
 }
 
 SharedRGBImage::SharedRGBImage(ImageClient* aCompositable)
@@ -90,25 +87,17 @@ SharedRGBImage::Allocate(gfx::IntSize aSize, gfx::SurfaceFormat aFormat)
 uint8_t*
 SharedRGBImage::GetBuffer()
 {
-  if (!mTextureClient) {
-    return nullptr;
+  MappedTextureData mapped;
+  if (mTextureClient && mTextureClient->BorrowMappedData(mapped)) {
+    return mapped.data;
   }
-
-  ImageDataSerializer serializer(mTextureClient->GetBuffer(), mTextureClient->GetBufferSize());
-  return serializer.GetData();
+  return 0;
 }
 
 gfx::IntSize
 SharedRGBImage::GetSize()
 {
   return mSize;
-}
-
-size_t
-SharedRGBImage::GetBufferSize()
-{
-  return mTextureClient ? mTextureClient->GetBufferSize()
-                        : 0;
 }
 
 TextureClient*

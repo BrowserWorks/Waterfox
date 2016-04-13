@@ -14,6 +14,7 @@
 #include "mozilla/TextEvents.h"
 #include "mozilla/TouchEvents.h"
 #include "mozilla/Preferences.h"
+#include "nsCanvasFrame.h"
 #include "nsDocShell.h"
 #include "nsFocusManager.h"
 #include "nsFrameSelection.h"
@@ -368,7 +369,8 @@ MOZ_IMPL_STATE_CLASS_GETTER(LongTapState)
 
 bool AccessibleCaretEventHub::sUseLongTapInjector = true;
 
-AccessibleCaretEventHub::AccessibleCaretEventHub()
+AccessibleCaretEventHub::AccessibleCaretEventHub(nsIPresShell* aPresShell)
+  : mPresShell(aPresShell)
 {
   static bool prefsAdded = false;
   if (!prefsAdded) {
@@ -383,10 +385,10 @@ AccessibleCaretEventHub::~AccessibleCaretEventHub()
 }
 
 void
-AccessibleCaretEventHub::Init(nsIPresShell* aPresShell)
+AccessibleCaretEventHub::Init()
 {
-  if (mInitialized || !aPresShell || !aPresShell->GetCanvasFrame() ||
-      !aPresShell->GetCanvasFrame()->GetCustomContentContainer()) {
+  if (mInitialized || !mPresShell || !mPresShell->GetCanvasFrame() ||
+      !mPresShell->GetCanvasFrame()->GetCustomContentContainer()) {
     return;
   }
 
@@ -398,8 +400,6 @@ AccessibleCaretEventHub::Init(nsIPresShell* aPresShell)
   // To reproduce, run "./mach crashtest layout/base/crashtests/897852.html"
   // without the following scriptBlocker.
   nsAutoScriptBlocker scriptBlocker;
-
-  mPresShell = aPresShell;
 
   nsPresContext* presContext = mPresShell->GetPresContext();
   MOZ_ASSERT(presContext, "PresContext should be given in PresShell::Init()");

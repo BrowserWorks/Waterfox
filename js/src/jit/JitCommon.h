@@ -15,21 +15,23 @@
 # include "jit/arm64/vixl/Simulator-vixl.h"
 #elif defined(JS_SIMULATOR_MIPS32)
 #include "jit/mips32/Simulator-mips32.h"
+#elif defined(JS_SIMULATOR_MIPS64)
+#include "jit/mips64/Simulator-mips64.h"
 #endif
 
 #ifdef JS_SIMULATOR
 // Call into cross-jitted code by following the ABI of the simulated architecture.
 #define CALL_GENERATED_CODE(entry, p0, p1, p2, p3, p4, p5, p6, p7)     \
     (js::jit::Simulator::Current()->call(                              \
-        JS_FUNC_TO_DATA_PTR(uint8_t*, entry), 8, p0, p1, p2, p3, p4, p5, p6, p7) & 0xffffffff)
+        JS_FUNC_TO_DATA_PTR(uint8_t*, entry), 8, p0, p1, p2, p3, p4, p5, p6, p7))
 
 #define CALL_GENERATED_1(entry, p0)                     \
     (js::jit::Simulator::Current()->call(               \
-        JS_FUNC_TO_DATA_PTR(uint8_t*, entry), 1, p0) & 0xffffffff)
+        JS_FUNC_TO_DATA_PTR(uint8_t*, entry), 1, p0))
 
 #define CALL_GENERATED_2(entry, p0, p1)                                 \
     (js::jit::Simulator::Current()->call(                               \
-        JS_FUNC_TO_DATA_PTR(uint8_t*, entry), 2, p0, p1) & 0xffffffff)
+        JS_FUNC_TO_DATA_PTR(uint8_t*, entry), 2, p0, p1))
 
 #else
 

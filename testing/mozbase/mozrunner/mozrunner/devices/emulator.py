@@ -117,7 +117,9 @@ class Emulator(Device):
         now = datetime.datetime.now()
         while (devices - original_devices) == set([]):
             time.sleep(1)
-            if datetime.datetime.now() - now > datetime.timedelta(seconds=60):
+            # Sometimes it takes more than 60s to launch emulator, so we
+            # increase timeout value to 180s. Please see bug 1143380.
+            if datetime.datetime.now() - now > datetime.timedelta(seconds=180):
                 raise TimeoutException('timed out waiting for emulator to start')
             devices = set(self._get_online_devices())
         devices = devices - original_devices
@@ -202,23 +204,6 @@ waitFor(
             # older emulators.  45s *should* be enough of a delay
             # to allow telephony API's to work.
             pass
-        print '...done'
-
-    # TODO this function is B2G specific and shouldn't live here
-    @uses_marionette
-    def wait_for_homescreen(self, marionette):
-        print 'waiting for homescreen...'
-
-        marionette.set_context(marionette.CONTEXT_CONTENT)
-        marionette.execute_async_script("""
-log('waiting for mozbrowserloadend');
-window.addEventListener('mozbrowserloadend', function loaded(aEvent) {
-  log('received mozbrowserloadend for ' + aEvent.target.src);
-  if (aEvent.target.src.indexOf('ftu') != -1 || aEvent.target.src.indexOf('homescreen') != -1 || aEvent.target.src.indexOf('verticalhome') != -1) {
-    window.removeEventListener('mozbrowserloadend', loaded);
-    marionetteScriptFinished();
-  }
-});""", script_timeout=300000)
         print '...done'
 
     def _get_telnet_response(self, command=None):

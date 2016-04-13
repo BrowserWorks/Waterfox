@@ -10,7 +10,6 @@
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/SizePrintfMacros.h"
-#include "mozilla/UniquePtr.h"
 
 #include "jsprf.h"
 
@@ -311,16 +310,10 @@ JitcodeGlobalEntry::createScriptString(JSContext* cx, JSScript* script, size_t* 
     // If the script has a function, try calculating its name.
     bool hasName = false;
     size_t nameLength = 0;
-    mozilla::UniquePtr<char, JS::FreePolicy> nameStr = nullptr;
+    UniqueChars nameStr;
     JSFunction* func = script->functionDelazifying();
     if (func && func->displayAtom()) {
-        JSAtom* atom = func->displayAtom();
-
-        JS::AutoCheckCannotGC nogc;
-        nameStr = mozilla::UniquePtr<char, JS::FreePolicy>(
-            atom->hasLatin1Chars() ?
-                JS::CharsToNewUTF8CharsZ(cx, atom->latin1Range(nogc)).c_str()
-              : JS::CharsToNewUTF8CharsZ(cx, atom->twoByteRange(nogc)).c_str());
+        nameStr = StringToNewUTF8CharsZ(cx, *func->displayAtom());
         if (!nameStr)
             return nullptr;
 
@@ -1272,7 +1265,7 @@ JitcodeRegionEntry::ExpectedRunLength(const CodeGeneratorShared::NativeToBytecod
 
 struct JitcodeMapBufferWriteSpewer
 {
-#ifdef DEBUG
+#ifdef JS_JITSPEW
     CompactBufferWriter* writer;
     uint32_t startPos;
 
@@ -1283,6 +1276,9 @@ struct JitcodeMapBufferWriteSpewer
     {}
 
     void spewAndAdvance(const char* name) {
+        if (writer->oom())
+            return;
+
         uint32_t curPos = writer->length();
         const uint8_t* start = writer->buffer() + startPos;
         const uint8_t* end = writer->buffer() + curPos;
@@ -1305,10 +1301,10 @@ struct JitcodeMapBufferWriteSpewer
         // Move to the end of the current buffer.
         startPos = writer->length();
     }
-#else // !DEBUG
+#else // !JS_JITSPEW
     explicit JitcodeMapBufferWriteSpewer(CompactBufferWriter& w) {}
     void spewAndAdvance(const char* name) {}
-#endif // DEBUG
+#endif // JS_JITSPEW
 };
 
 // Write a run, starting at the given NativeToBytecode entry, into the given buffer writer.
@@ -1390,8 +1386,10 @@ JitcodeRegionEntry::WriteRun(CompactBufferWriter& writer,
             uint32_t curBc = curBytecodeOffset;
             while (curBc < nextBytecodeOffset) {
                 jsbytecode* pc = entry[i].tree->script()->offsetToPC(curBc);
-                mozilla::DebugOnly<JSOp> op = JSOp(*pc);
-                JitSpewCont(JitSpew_Profiling, "%s ", js_CodeName[op]);
+#ifdef JS_JITSPEW
+                JSOp op = JSOp(*pc);
+                JitSpewCont(JitSpew_Profiling, "%s ", CodeName[op]);
+#endif
                 curBc += GetBytecodeLength(pc);
             }
             JitSpewFin(JitSpew_Profiling);

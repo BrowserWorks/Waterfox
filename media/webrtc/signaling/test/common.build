@@ -11,10 +11,10 @@ for var in ('MOZILLA_EXTERNAL_LINKAGE', 'USE_FAKE_MEDIA_STREAMS', 'USE_FAKE_PCOB
             'NR_SOCKET_IS_VOID_PTR', 'HAVE_STRDUP'):
     DEFINES[var] = True
 
-GENERATED_INCLUDES += [
-  '/dom/bindings',
-]
 LOCAL_INCLUDES += [
+    '!/dist/include/mozilla/dom', # Binding headers (because binding
+                                  # implementations include them).
+    '!/dom/bindings', # Binding implementations (urk).
     '/dom/media/',
     '/ipc/chromium/src',
     '/media/mtransport',

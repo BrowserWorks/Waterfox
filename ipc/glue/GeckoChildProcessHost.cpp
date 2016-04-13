@@ -18,7 +18,7 @@
 #endif
 
 #include "MainThreadUtils.h"
-#include "prprf.h"
+#include "mozilla/Snprintf.h"
 #include "prenv.h"
 #include "nsXPCOMPrivate.h"
 
@@ -101,11 +101,11 @@ GeckoChildProcessHost::GeckoChildProcessHost(GeckoProcessType aProcessType,
     mPrivileges(aPrivileges),
     mMonitor("mozilla.ipc.GeckChildProcessHost.mMonitor"),
     mProcessState(CREATING_CHANNEL),
-    mDelegate(nullptr),
 #if defined(MOZ_SANDBOX) && defined(XP_WIN)
     mEnableSandboxLogging(false),
     mSandboxLevel(0),
 #endif
+    mDelegate(nullptr),
     mChildProcessHandle(0)
 #if defined(MOZ_WIDGET_COCOA)
   , mChildTask(MACH_PORT_NULL)
@@ -381,6 +381,8 @@ GeckoChildProcessHost::AsyncLaunch(std::vector<std::string> aExtraOpts,
 bool
 GeckoChildProcessHost::WaitUntilConnected(int32_t aTimeoutMs)
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+
   // NB: this uses a different mechanism than the chromium parent
   // class.
   PRIntervalTime timeoutTicks = (aTimeoutMs > 0) ?
@@ -541,12 +543,15 @@ AddAppDirToCommandLine(std::vector<std::string>& aCmdLine)
                                           NS_GET_IID(nsIFile),
                                           getter_AddRefs(appDir));
       if (NS_SUCCEEDED(rv)) {
+#if defined(XP_WIN)
+        nsString path;
+        MOZ_ALWAYS_TRUE(NS_SUCCEEDED(appDir->GetPath(path)));
+        aCmdLine.AppendLooseValue(UTF8ToWide("-appdir"));
+        std::wstring wpath(path.get());
+        aCmdLine.AppendLooseValue(wpath);
+#else
         nsAutoCString path;
         MOZ_ALWAYS_TRUE(NS_SUCCEEDED(appDir->GetNativePath(path)));
-#if defined(XP_WIN)
-        aCmdLine.AppendLooseValue(UTF8ToWide("-appdir"));
-        aCmdLine.AppendLooseValue(UTF8ToWide(path.get()));
-#else
         aCmdLine.push_back("-appdir");
         aCmdLine.push_back(path.get());
 #endif
@@ -614,8 +619,7 @@ GeckoChildProcessHost::PerformAsyncLaunchInternal(std::vector<std::string>& aExt
   // send the child the PID so that it can open a ProcessHandle back to us.
   // probably don't want to do this in the long run
   char pidstring[32];
-  PR_snprintf(pidstring, sizeof(pidstring) - 1,
-	      "%ld", base::Process::Current().pid());
+  snprintf_literal(pidstring,"%d", base::Process::Current().pid());
 
   const char* const childProcessType =
       XRE_ChildProcessTypeToString(mProcessType);

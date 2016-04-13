@@ -39,13 +39,13 @@ public:
   void Shutdown();
 
 protected:
-  virtual bool RecvOpen(const nsCString& aRecordName) override;
-  virtual bool RecvRead(const nsCString& aRecordName) override;
-  virtual bool RecvWrite(const nsCString& aRecordName,
-                         InfallibleTArray<uint8_t>&& aBytes) override;
-  virtual bool RecvGetRecordNames() override;
-  virtual bool RecvClose(const nsCString& aRecordName) override;
-  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
+  bool RecvOpen(const nsCString& aRecordName) override;
+  bool RecvRead(const nsCString& aRecordName) override;
+  bool RecvWrite(const nsCString& aRecordName,
+                 InfallibleTArray<uint8_t>&& aBytes) override;
+  bool RecvGetRecordNames() override;
+  bool RecvClose(const nsCString& aRecordName) override;
+  void ActorDestroy(ActorDestroyReason aWhy) override;
 
 private:
   ~GMPStorageParent() {}
@@ -54,6 +54,7 @@ private:
 
   const nsCString mNodeId;
   RefPtr<GMPParent> mPlugin;
+  // True after Shutdown(), or if Init() has not completed successfully.
   bool mShutdown;
 };
 

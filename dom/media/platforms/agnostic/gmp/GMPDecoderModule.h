@@ -10,6 +10,19 @@
 #include "PlatformDecoderModule.h"
 #include "mozilla/Maybe.h"
 
+// The special NodeId we use when doing unencrypted decoding using the GMP's
+// decoder. This ensures that each GMP MediaDataDecoder we create doesn't
+// require spinning up a new process, but instead we run all instances of
+// GMP decoders in the one process, to reduce overhead.
+//
+// Note: GMP storage is isolated by NodeId, and non persistent for this
+// special NodeId, and the only way a GMP can communicate with the outside
+// world is through the EME GMP APIs, and we never run EME with this NodeID
+// (because NodeIds are random strings which can't contain the '-' character),
+// so there's no way a malicious GMP can harvest, store, and then report any
+// privacy sensitive data about what users are watching.
+#define SHARED_GMP_DECODING_NODE_ID NS_LITERAL_CSTRING("gmp-shared-decoding")
+
 namespace mozilla {
 
 class GMPDecoderModule : public PlatformDecoderModule {
@@ -36,8 +49,9 @@ public:
   DecoderNeedsConversion(const TrackInfo& aConfig) const override;
 
   bool
-  SupportsMimeType(const nsACString& aMimeType) override;
+  SupportsMimeType(const nsACString& aMimeType) const override;
 
+  // Main thread only.
   static void Init();
 
   static const Maybe<nsCString> PreferredGMP(const nsACString& aMimeType);
@@ -45,6 +59,8 @@ public:
   static bool SupportsMimeType(const nsACString& aMimeType,
                                const Maybe<nsCString>& aGMP);
 
+  // Main thread only.
+  static void UpdateUsableCodecs();
 };
 
 } // namespace mozilla

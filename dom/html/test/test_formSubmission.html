@@ -433,8 +433,7 @@ function onFilesOpened(files) {
   while (input = addList[i++]) {
     if (input.classList.contains("multi")) {
       SpecialPowers.wrap(input).mozSetFileArray(multiFile);
-    }
-    else {
+    } else {
       SpecialPowers.wrap(input).mozSetFileArray([singleFile]);
     }
   }

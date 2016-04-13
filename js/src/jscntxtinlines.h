@@ -289,7 +289,6 @@ CallJSNativeConstructor(JSContext* cx, Native native, const CallArgs& args)
      * - (new Object(Object)) returns the callee.
      */
     MOZ_ASSERT_IF(native != js::proxy_Construct &&
-                  native != js::CallOrConstructBoundFunction &&
                   native != js::IteratorConstructor &&
                   (!callee->is<JSFunction>() || callee->as<JSFunction>().native() != obj_construct),
                   args.rval().isObject() && callee != &args.rval().toObject());
@@ -468,7 +467,7 @@ JSContext::currentScript(jsbytecode** ppc,
         return script;
     }
 
-    if (act->isAsmJS())
+    if (act->isWasm())
         return nullptr;
 
     MOZ_ASSERT(act->isInterpreter());

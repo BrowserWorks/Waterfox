@@ -23,35 +23,16 @@ MacroAssemblerX64::loadConstantDouble(double d, FloatRegister dest)
 {
     if (maybeInlineDouble(d, dest))
         return;
-
-    if (!doubleMap_.initialized()) {
-        enoughMemory_ &= doubleMap_.init();
-        if (!enoughMemory_)
-            return;
-    }
-    size_t doubleIndex;
-    if (DoubleMap::AddPtr p = doubleMap_.lookupForAdd(d)) {
-        doubleIndex = p->value();
-    } else {
-        doubleIndex = doubles_.length();
-        enoughMemory_ &= doubles_.append(Double(d));
-        if (!enoughMemory_)
-            return;
-        enoughMemory_ &= doubleMap_.add(p, d, doubleIndex);
-        if (!enoughMemory_)
-            return;
-    }
-    Double& dbl = doubles_[doubleIndex];
-    MOZ_ASSERT(!dbl.uses.bound());
-
+    Double* dbl = getDouble(d);
+    if (!dbl)
+        return;
     // The constants will be stored in a pool appended to the text (see
     // finish()), so they will always be a fixed distance from the
     // instructions which reference them. This allows the instructions to use
     // PC-relative addressing. Use "jump" label support code, because we need
     // the same PC-relative address patching that jumps use.
     JmpSrc j = masm.vmovsd_ripr(dest.encoding());
-    JmpSrc prev = JmpSrc(dbl.uses.use(j.offset()));
-    masm.setNextJump(j, prev);
+    propagateOOM(dbl->uses.append(CodeOffset(j.offset())));
 }
 
 void
@@ -59,55 +40,12 @@ MacroAssemblerX64::loadConstantFloat32(float f, FloatRegister dest)
 {
     if (maybeInlineFloat(f, dest))
         return;
-
-    if (!floatMap_.initialized()) {
-        enoughMemory_ &= floatMap_.init();
-        if (!enoughMemory_)
-            return;
-    }
-    size_t floatIndex;
-    if (FloatMap::AddPtr p = floatMap_.lookupForAdd(f)) {
-        floatIndex = p->value();
-    } else {
-        floatIndex = floats_.length();
-        enoughMemory_ &= floats_.append(Float(f));
-        if (!enoughMemory_)
-            return;
-        enoughMemory_ &= floatMap_.add(p, f, floatIndex);
-        if (!enoughMemory_)
-            return;
-    }
-    Float& flt = floats_[floatIndex];
-    MOZ_ASSERT(!flt.uses.bound());
-
+    Float* flt = getFloat(f);
+    if (!flt)
+        return;
     // See comment in loadConstantDouble
     JmpSrc j = masm.vmovss_ripr(dest.encoding());
-    JmpSrc prev = JmpSrc(flt.uses.use(j.offset()));
-    masm.setNextJump(j, prev);
-}
-
-MacroAssemblerX64::SimdData*
-MacroAssemblerX64::getSimdData(const SimdConstant& v)
-{
-    if (!simdMap_.initialized()) {
-        enoughMemory_ &= simdMap_.init();
-        if (!enoughMemory_)
-            return nullptr;
-    }
-
-    size_t index;
-    if (SimdMap::AddPtr p = simdMap_.lookupForAdd(v)) {
-        index = p->value();
-    } else {
-        index = simds_.length();
-        enoughMemory_ &= simds_.append(SimdData(v));
-        if (!enoughMemory_)
-            return nullptr;
-        enoughMemory_ &= simdMap_.add(p, v, index);
-        if (!enoughMemory_)
-            return nullptr;
-    }
-    return &simds_[index];
+    propagateOOM(flt->uses.append(CodeOffset(j.offset())));
 }
 
 void
@@ -116,17 +54,12 @@ MacroAssemblerX64::loadConstantInt32x4(const SimdConstant& v, FloatRegister dest
     MOZ_ASSERT(v.type() == SimdConstant::Int32x4);
     if (maybeInlineInt32x4(v, dest))
         return;
-
     SimdData* val = getSimdData(v);
     if (!val)
         return;
-
-    MOZ_ASSERT(!val->uses.bound());
     MOZ_ASSERT(val->type() == SimdConstant::Int32x4);
-
     JmpSrc j = masm.vmovdqa_ripr(dest.encoding());
-    JmpSrc prev = JmpSrc(val->uses.use(j.offset()));
-    masm.setNextJump(j, prev);
+    propagateOOM(val->uses.append(CodeOffset(j.offset())));
 }
 
 void
@@ -135,17 +68,24 @@ MacroAssemblerX64::loadConstantFloat32x4(const SimdConstant&v, FloatRegister des
     MOZ_ASSERT(v.type() == SimdConstant::Float32x4);
     if (maybeInlineFloat32x4(v, dest))
         return;
-
     SimdData* val = getSimdData(v);
     if (!val)
         return;
-
-    MOZ_ASSERT(!val->uses.bound());
     MOZ_ASSERT(val->type() == SimdConstant::Float32x4);
-
     JmpSrc j = masm.vmovaps_ripr(dest.encoding());
-    JmpSrc prev = JmpSrc(val->uses.use(j.offset()));
-    masm.setNextJump(j, prev);
+    propagateOOM(val->uses.append(CodeOffset(j.offset())));
+}
+
+void
+MacroAssemblerX64::bindOffsets(const MacroAssemblerX86Shared::UsesVector& uses)
+{
+    for (CodeOffset use : uses) {
+        JmpDst dst(currentOffset());
+        JmpSrc src(use.offset());
+        // Using linkJump here is safe, as explaind in the comment in
+        // loadConstantDouble.
+        masm.linkJump(src, dst);
+    }
 }
 
 void
@@ -153,26 +93,23 @@ MacroAssemblerX64::finish()
 {
     if (!doubles_.empty())
         masm.haltingAlign(sizeof(double));
-    for (size_t i = 0; i < doubles_.length(); i++) {
-        Double& dbl = doubles_[i];
-        bind(&dbl.uses);
-        masm.doubleConstant(dbl.value);
+    for (const Double& d : doubles_) {
+        bindOffsets(d.uses);
+        masm.doubleConstant(d.value);
     }
 
     if (!floats_.empty())
         masm.haltingAlign(sizeof(float));
-    for (size_t i = 0; i < floats_.length(); i++) {
-        Float& flt = floats_[i];
-        bind(&flt.uses);
-        masm.floatConstant(flt.value);
+    for (const Float& f : floats_) {
+        bindOffsets(f.uses);
+        masm.floatConstant(f.value);
     }
 
     // SIMD memory values must be suitably aligned.
     if (!simds_.empty())
         masm.haltingAlign(SimdMemoryAlignment);
-    for (size_t i = 0; i < simds_.length(); i++) {
-        SimdData& v = simds_[i];
-        bind(&v.uses);
+    for (const SimdData& v : simds_) {
+        bindOffsets(v.uses);
         switch(v.type()) {
           case SimdConstant::Int32x4:   masm.int32x4Constant(v.value.asInt32x4());     break;
           case SimdConstant::Float32x4: masm.float32x4Constant(v.value.asFloat32x4()); break;
@@ -328,7 +265,7 @@ MacroAssemblerX64::branchPtrInNurseryRange(Condition cond, Register ptr, Registe
 
     const Nursery& nursery = GetJitContext()->runtime->gcNursery();
     movePtr(ImmWord(-ptrdiff_t(nursery.start())), scratch);
-    addPtr(ptr, scratch);
+    asMasm().addPtr(ptr, scratch);
     branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
               scratch, Imm32(nursery.nurserySize()), label);
 }
@@ -350,7 +287,7 @@ MacroAssemblerX64::branchValueIsNurseryObject(Condition cond, ValueOperand value
 
     ScratchRegisterScope scratch(asMasm());
     movePtr(ImmWord(-ptrdiff_t(start.asRawBits())), scratch);
-    addPtr(value.valueReg(), scratch);
+    asMasm().addPtr(value.valueReg(), scratch);
     branchPtr(cond == Assembler::Equal ? Assembler::Below : Assembler::AboveOrEqual,
               scratch, Imm32(nursery.nurserySize()), label);
 }

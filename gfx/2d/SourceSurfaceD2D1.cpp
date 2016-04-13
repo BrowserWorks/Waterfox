@@ -15,8 +15,8 @@ SourceSurfaceD2D1::SourceSurfaceD2D1(ID2D1Image *aImage, ID2D1DeviceContext *aDC
                                      DrawTargetD2D1 *aDT)
   : mImage(aImage)
   , mDC(aDC)
-  , mDrawTarget(aDT)
   , mDevice(Factory::GetD2D1Device())
+  , mDrawTarget(aDT)
 {
   aImage->QueryInterface((ID2D1Bitmap1**)getter_AddRefs(mRealizedBitmap));
 
@@ -189,12 +189,13 @@ DataSourceSurfaceD2D1::Map(MapType aMapType, MappedSurface *aMappedSurface)
   if (aMapType == MapType::READ) {
     options = D2D1_MAP_OPTIONS_READ;
   } else {
-    MOZ_CRASH("No support for Write maps on D2D1 DataSourceSurfaces yet!");
+    gfxDevCrash(LogReason::D2D1NoWriteMap) << "No support for Write maps on D2D1 DataSourceSurfaces yet!";
+    return false;
   }
 
   D2D1_MAPPED_RECT map;
   if (FAILED(mBitmap->Map(D2D1_MAP_OPTIONS_READ, &map))) {
-    gfxCriticalError() << "Failed to map bitmap.";
+    gfxCriticalError() << "Failed to map bitmap (M).";
     return false;
   }
   aMappedSurface->mData = map.bits;
@@ -230,7 +231,7 @@ DataSourceSurfaceD2D1::EnsureMapped()
     return;
   }
   if (FAILED(mBitmap->Map(D2D1_MAP_OPTIONS_READ, &mMap))) {
-    gfxCriticalError() << "Failed to map bitmap.";
+    gfxCriticalError() << "Failed to map bitmap (EM).";
     return;
   }
   mMapped = true;

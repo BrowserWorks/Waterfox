@@ -164,12 +164,9 @@ RilObject.prototype = {
     this.cardState = GECKO_CARDSTATE_UNINITIALIZED;
 
     /**
-     * Strings
+     * Device Identities including IMEI, IMEISV, ESN and MEID.
      */
-    this.IMEI = null;
-    this.IMEISV = null;
-    this.ESN = null;
-    this.MEID = null;
+    this.deviceIdentities = null;
 
     /**
      * ICC information that is not exposed to Gaia.
@@ -1166,25 +1163,8 @@ RilObject.prototype = {
     this.context.Buf.simpleRequest(REQUEST_SIGNAL_STRENGTH);
   },
 
-  getIMEI: function(options) {
-    // A device's IMEI can't change, so we only need to request it once.
-    if (this.IMEI) {
-      if (options && options.rilMessageType) {
-        options.imei = this.IMEI;
-        this.sendChromeMessage(options);
-      }
-      return;
-    }
-
-    this.context.Buf.simpleRequest(REQUEST_GET_IMEI, options);
-  },
-
-  getIMEISV: function() {
-    this.context.Buf.simpleRequest(REQUEST_GET_IMEISV);
-  },
-
   getDeviceIdentity: function() {
-    this.context.Buf.simpleRequest(REQUEST_DEVICE_IDENTITY);
+    this.deviceIdentities || this.context.Buf.simpleRequest(REQUEST_DEVICE_IDENTITY);
   },
 
   getBasebandVersion: function() {
@@ -3137,12 +3117,6 @@ RilObject.prototype = {
     if (this._waitingRadioTech || isCdma != this._isCdma) {
       this._isCdma = isCdma;
       this._waitingRadioTech = false;
-      if (this._isCdma) {
-        this.getDeviceIdentity();
-      } else {
-        this.getIMEI();
-        this.getIMEISV();
-      }
       this.getICCStatus();
     }
   },
@@ -4369,28 +4343,8 @@ RilObject.prototype[REQUEST_SET_CALL_WAITING] = function REQUEST_SET_CALL_WAITIN
   this.sendChromeMessage(options);
 };
 RilObject.prototype[REQUEST_SMS_ACKNOWLEDGE] = null;
-RilObject.prototype[REQUEST_GET_IMEI] = function REQUEST_GET_IMEI(length, options) {
-  this.IMEI = this.context.Buf.readString();
-
-  // If the request wasn't made by ril_worker itself, we send the IMEI back to
-  // chrome.
-  if (options.rilMessageType) {
-    if (options.errorMsg) {
-      this.sendChromeMessage(options);
-      return;
-    }
-
-    options.imei = this.IMEI;
-    this.sendChromeMessage(options);
-  }
-};
-RilObject.prototype[REQUEST_GET_IMEISV] = function REQUEST_GET_IMEISV(length, options) {
-  if (options.errorMsg) {
-    return;
-  }
-
-  this.IMEISV = this.context.Buf.readString();
-};
+RilObject.prototype[REQUEST_GET_IMEI] = null;
+RilObject.prototype[REQUEST_GET_IMEISV] = null;
 RilObject.prototype[REQUEST_ANSWER] = function REQUEST_ANSWER(length, options) {
   this.sendDefaultResponse(options);
 };
@@ -4806,16 +4760,22 @@ RilObject.prototype[REQUEST_CDMA_WRITE_SMS_TO_RUIM] = null;
 RilObject.prototype[REQUEST_CDMA_DELETE_SMS_ON_RUIM] = null;
 RilObject.prototype[REQUEST_DEVICE_IDENTITY] = function REQUEST_DEVICE_IDENTITY(length, options) {
   if (options.errorMsg) {
+    this.context.debug("Failed to get device identities:" + options.errorMsg);
     return;
   }
 
   let result = this.context.Buf.readStringList();
+  this.deviceIdentities = {
+    imei: result[0] || null,
+    imeisv: result[1] || null,
+    esn: result[2] || null,
+    meid: result[3] || null,
+  };
 
-  // The result[0] is for IMEI. (Already be handled in REQUEST_GET_IMEI)
-  // The result[1] is for IMEISV. (Already be handled in REQUEST_GET_IMEISV)
-  // They are both ignored.
-  this.ESN = result[2];
-  this.MEID = result[3];
+  this.sendChromeMessage({
+    rilMessageType: "deviceidentitieschange",
+    deviceIdentities: this.deviceIdentities
+  });
 };
 RilObject.prototype[REQUEST_EXIT_EMERGENCY_CALLBACK_MODE] = function REQUEST_EXIT_EMERGENCY_CALLBACK_MODE(length, options) {
   if (options.internal) {
@@ -5061,6 +5021,11 @@ RilObject.prototype[UNSOLICITED_RESPONSE_RADIO_STATE_CHANGED] = function UNSOLIC
     return;
   }
 
+  if (radioState !== RADIO_STATE_UNAVAILABLE) {
+    // Retrieve device identities once radio is available.
+    this.getDeviceIdentity();
+  }
+
   if (radioState == RADIO_STATE_ON) {
     // This value is defined in RIL v7, we will retrieve radio tech by another
     // request. We leave _isCdma untouched, and it will be set once we get the
@@ -5073,14 +5038,6 @@ RilObject.prototype[UNSOLICITED_RESPONSE_RADIO_STATE_CHANGED] = function UNSOLIC
        this.radioState == GECKO_RADIOSTATE_DISABLED) &&
        newState == GECKO_RADIOSTATE_ENABLED) {
     // The radio became available, let's get its info.
-    if (!this._waitingRadioTech) {
-      if (this._isCdma) {
-        this.getDeviceIdentity();
-      } else {
-        this.getIMEI();
-        this.getIMEISV();
-      }
-    }
     this.getBasebandVersion();
     this.updateCellBroadcastConfig();
     if ((RILQUIRKS_DATA_REGISTRATION_ON_DEMAND ||
@@ -5282,6 +5239,18 @@ RilObject.prototype[UNSOLICITED_RESPONSE_NEW_BROADCAST_SMS] = function UNSOLICIT
   try {
     message =
       this.context.GsmPDUHelper.readCbMessage(this.context.Buf.readInt32());
+
+    // "Data-Download" message is expected to be handled by the modem.
+    // Ignore it here to prevent any garbage messages to be displayed.
+    // See 9.4.1.2.2 Message Identifier of TS 32.041 for the range of
+    // Message-identifier of the Data-Download CB messages.
+    if (message.messageId >= 0x1000 && message.messageId <= 0x10FF) {
+      if (DEBUG) {
+        this.context.debug("Ignore a Data-Download message, messageId: " +
+                           message.messageId);
+      }
+      return;
+    }
   } catch (e) {
     if (DEBUG) {
       this.context.debug("Failed to parse Cell Broadcast message: " + e);
@@ -5291,6 +5260,22 @@ RilObject.prototype[UNSOLICITED_RESPONSE_NEW_BROADCAST_SMS] = function UNSOLICIT
 
   message = this._processReceivedSmsCbPage(message);
   if (!message) {
+    return;
+  }
+
+  // Bug 1235697, failed to deactivate CBS in some modem.
+  // Workaround it according to the settings.
+  // Note: ETWS/CMAS/PWS can be received even disabled.
+  //       It will be displayed according to the setting in application layer.
+  if (this.cellBroadcastDisabled && (
+      !(message.messageId >= 0x1100 && message.messageId <= 0x1107) && // ETWS
+      !(message.messageId >= 0x1112 && message.messageId <= 0x112F) && // CMAS
+      !(message.messageId >= 0x1130 && message.messageId <= 0x18FF) // PWS
+    )) {
+    if (DEBUG) {
+      this.context.debug("Ignore a CB message when disabled, messageId: " +
+                         message.messageId);
+    }
     return;
   }
 
@@ -8689,7 +8674,7 @@ ICCPDUHelperObject.prototype = {
    *                    0xff.
    * @param str         String to be written. Could be null.
    *
-   * @return The string has been written into Buf.
+   * @return The string has been written into Buf. "" if str is null.
    */
   writeStringTo8BitUnpacked: function(numOctets, str) {
     const langTable = PDU_NL_LOCKING_SHIFT_TABLES[PDU_NL_IDENTIFIER_DEFAULT];
@@ -8729,7 +8714,7 @@ ICCPDUHelperObject.prototype = {
       GsmPDUHelper.writeHexOctet(0xff);
     }
 
-    return (str) ? str.substring(0, i) : null;
+    return (str) ? str.substring(0, i) : "";
   },
 
   /**
@@ -9090,7 +9075,7 @@ ICCPDUHelperObject.prototype = {
    */
   writeAlphaIdentifier: function(numOctets, alphaId) {
     if (numOctets === 0) {
-      return null;
+      return "";
     }
 
     // If alphaId is empty or it's of GSM 8 bit.
@@ -9222,7 +9207,7 @@ ICCPDUHelperObject.prototype = {
       for (let i = 0; i < ADN_MAX_BCD_NUMBER_BYTES + 1; i++) {
         GsmPDUHelper.writeHexOctet(0xff);
       }
-      return null;
+      return "";
     }
   }
 };

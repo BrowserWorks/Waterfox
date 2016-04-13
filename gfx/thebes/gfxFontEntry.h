@@ -20,6 +20,7 @@
 #include "nsDataHashtable.h"
 #include "harfbuzz/hb.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/UniquePtr.h"
 
 typedef struct gr_face gr_face;
 
@@ -96,6 +97,8 @@ private:
 
 class gfxFontEntry {
 public:
+    typedef mozilla::gfx::DrawTarget DrawTarget;
+
     NS_INLINE_DECL_REFCOUNTING(gfxFontEntry)
 
     explicit gfxFontEntry(const nsAString& aName, bool aIsStandardFace = false);
@@ -179,7 +182,7 @@ public:
 
     bool TryGetSVGData(gfxFont* aFont);
     bool HasSVGGlyph(uint32_t aGlyphId);
-    bool GetSVGGlyphExtents(gfxContext *aContext, uint32_t aGlyphId,
+    bool GetSVGGlyphExtents(DrawTarget* aDrawTarget, uint32_t aGlyphId,
                             gfxRect *aResult);
     bool RenderSVGGlyph(gfxContext *aContext, uint32_t aGlyphId, int aDrawMode,
                         gfxTextContextPaint *aContextPaint);
@@ -429,7 +432,7 @@ public:
 
     RefPtr<gfxCharacterMap> mCharacterMap;
     uint32_t         mUVSOffset;
-    nsAutoArrayPtr<uint8_t> mUVSData;
+    mozilla::UniquePtr<uint8_t[]> mUVSData;
     nsAutoPtr<gfxUserFontData> mUserFontData;
     nsAutoPtr<gfxSVGGlyphs> mSVGGlyphs;
     // list of gfxFonts that are using SVG glyphs
@@ -664,7 +667,8 @@ public:
         mIsBadUnderlineFamily(false),
         mFamilyCharacterMapInitialized(false),
         mSkipDefaultFeatureSpaceCheck(false),
-        mCheckForFallbackFaces(false)
+        mCheckForFallbackFaces(false),
+        mLinkedSystemFamily(false)
         { }
 
     const nsString& Name() { return mName; }
@@ -793,6 +797,9 @@ public:
         mSkipDefaultFeatureSpaceCheck = aSkipCheck;
     }
 
+    bool LinkedSystemFamily() const { return mLinkedSystemFamily; }
+    void SetLinkedSystemFamily() { mLinkedSystemFamily = true; }
+
 protected:
     // Protected destructor, to discourage deletion outside of Release():
     virtual ~gfxFontFamily()
@@ -825,6 +832,7 @@ protected:
     bool mFamilyCharacterMapInitialized : 1;
     bool mSkipDefaultFeatureSpaceCheck : 1;
     bool mCheckForFallbackFaces : 1;  // check other faces for character
+    bool mLinkedSystemFamily : 1;  // system fonts linked to other families
 
     enum {
         // for "simple" families, the faces are stored in mAvailableFonts

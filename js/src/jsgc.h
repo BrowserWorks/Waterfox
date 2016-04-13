@@ -51,8 +51,20 @@ enum State {
     COMPACT
 };
 
+// Expand the given macro D for each publicly exposed GC reference type.
+#define FOR_EACH_PUBLIC_GC_POINTER_TYPE(D) \
+    D(JS::Symbol*) \
+    D(JSAtom*) \
+    D(JSFunction*) \
+    D(JSObject*) \
+    D(JSScript*) \
+    D(JSString*) \
+    D(JS::Value) \
+    D(jsid)
+
 // Expand the given macro D for each valid GC reference type.
 #define FOR_EACH_GC_POINTER_TYPE(D) \
+    FOR_EACH_PUBLIC_GC_POINTER_TYPE(D) \
     D(AccessorShape*) \
     D(BaseShape*) \
     D(UnownedBaseShape*) \
@@ -65,31 +77,23 @@ enum State {
     D(ArrayBufferViewObject*) \
     D(DebugScopeObject*) \
     D(GlobalObject*) \
-    D(JSObject*) \
-    D(JSFunction*) \
     D(ModuleObject*) \
     D(ModuleEnvironmentObject*) \
+    D(ModuleNamespaceObject*) \
     D(NestedScopeObject*) \
     D(PlainObject*) \
     D(SavedFrame*) \
     D(ScopeObject*) \
     D(ScriptSourceObject*) \
     D(SharedArrayBufferObject*) \
-    D(SharedTypedArrayObject*) \
     D(ImportEntryObject*) \
     D(ExportEntryObject*) \
-    D(JSScript*) \
     D(LazyScript*) \
     D(Shape*) \
-    D(JSAtom*) \
-    D(JSString*) \
     D(JSFlatString*) \
     D(JSLinearString*) \
     D(PropertyName*) \
-    D(JS::Symbol*) \
     D(js::ObjectGroup*) \
-    D(Value) \
-    D(jsid) \
     D(TaggedProto)
 
 /* Map from C++ type to alloc kind. JSObject does not have a 1:1 mapping, so must use Arena::thingSize. */
@@ -167,7 +171,7 @@ IsBackgroundFinalized(AllocKind kind)
         false,     /* AllocKind::OBJECT16 */
         true,      /* AllocKind::OBJECT16_BACKGROUND */
         false,     /* AllocKind::SCRIPT */
-        false,     /* AllocKind::LAZY_SCRIPT */
+        true,      /* AllocKind::LAZY_SCRIPT */
         true,      /* AllocKind::SHAPE */
         true,      /* AllocKind::ACCESSOR_SHAPE */
         true,      /* AllocKind::BASE_SHAPE */
@@ -1302,6 +1306,7 @@ const int ZealGenerationalGCValue = 7;
 const int ZealIncrementalRootsThenFinish = 8;
 const int ZealIncrementalMarkAllThenFinish = 9;
 const int ZealIncrementalMultipleSlices = 10;
+const int ZealIncrementalMarkingValidator = 11;
 const int ZealCheckHashTablesOnMinorGC = 13;
 const int ZealCompactValue = 14;
 const int ZealLimit = 14;

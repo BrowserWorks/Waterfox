@@ -22,6 +22,7 @@
 #include "nsIFileURL.h"
 
 #include "mozilla/Preferences.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/net/RemoteOpenFileChild.h"
 #include "nsITabChild.h"
 #include "private/pprio.h"
@@ -196,6 +197,7 @@ nsJARInputThunk::IsNonBlocking(bool *nonBlocking)
 nsJARChannel::nsJARChannel()
     : mOpened(false)
     , mAppURI(nullptr)
+    , mContentDisposition(0)
     , mContentLength(-1)
     , mLoadFlags(LOAD_NORMAL)
     , mStatus(NS_OK)
@@ -937,8 +939,11 @@ nsJARChannel::OverrideWithSynthesizedResponse(nsIInputStream* aSynthesizedInput,
 NS_IMETHODIMP
 nsJARChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
 {
-    MOZ_ASSERT(!mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
-               mLoadInfo->GetEnforceSecurity(),
+    MOZ_ASSERT(!mLoadInfo ||
+               mLoadInfo->GetSecurityMode() == 0 ||
+               mLoadInfo->GetInitialSecurityCheckDone() ||
+               (mLoadInfo->GetSecurityMode() == nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
+                nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
                "security flags in loadInfo but asyncOpen2() not called");
 
     LOG(("nsJARChannel::AsyncOpen [this=%x]\n", this));
@@ -1016,6 +1021,12 @@ nsJARChannel::ContinueAsyncOpen()
         if (mBlockRemoteFiles) {
             mIsUnsafe = true;
             return NS_ERROR_UNSAFE_CONTENT_TYPE;
+        }
+
+        static bool reportedRemoteJAR = false;
+        if (!reportedRemoteJAR) {
+            reportedRemoteJAR = true;
+            Telemetry::Accumulate(Telemetry::REMOTE_JAR_PROTOCOL_USED, 1);
         }
 
         // kick off an async download of the base URI...

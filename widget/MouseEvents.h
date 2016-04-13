@@ -74,6 +74,11 @@ private:
 
 protected:
   WidgetMouseEventBase()
+    : button(0)
+    , buttons(0)
+    , pressure(0)
+    , hitCluster(false)
+    , inputSource(nsIDOMMouseEvent::MOZ_SOURCE_MOUSE)
   {
   }
 
@@ -94,7 +99,6 @@ public:
   virtual WidgetEvent* Duplicate() const override
   {
     MOZ_CRASH("WidgetMouseEventBase must not be most-subclass");
-    return nullptr;
   }
 
   /// The possible related target
@@ -196,6 +200,9 @@ public:
 
 protected:
   WidgetMouseEvent()
+    : acceptActivation(false)
+    , ignoreRootScrollFrame(false)
+    , clickCount(0)
   {
   }
 
@@ -317,6 +324,8 @@ private:
   friend class mozilla::dom::PBrowserChild;
 protected:
   WidgetDragEvent()
+    : userCancelled(false)
+    , mDefaultPreventedOnContent(false)
   {
   }
 public:
@@ -374,6 +383,8 @@ class WidgetMouseScrollEvent : public WidgetMouseEventBase
 {
 private:
   WidgetMouseScrollEvent()
+    : delta(0)
+    , isHorizontal(false)
   {
   }
 
@@ -437,15 +448,7 @@ private:
   friend class mozilla::dom::PBrowserChild;
 
   WidgetWheelEvent()
-  {
-  }
-
-public:
-  virtual WidgetWheelEvent* AsWheelEvent() override { return this; }
-
-  WidgetWheelEvent(bool aIsTrusted, EventMessage aMessage, nsIWidget* aWidget)
-    : WidgetMouseEventBase(aIsTrusted, aMessage, aWidget, eWheelEventClass)
-    , deltaX(0.0)
+    : deltaX(0.0)
     , deltaY(0.0)
     , deltaZ(0.0)
     , deltaMode(nsIDOMWheelEvent::DOM_DELTA_PIXEL)
@@ -459,6 +462,31 @@ public:
     , overflowDeltaY(0.0)
     , mViewPortIsOverscrolled(false)
     , mCanTriggerSwipe(false)
+    , mAllowToOverrideSystemScrollSpeed(false)
+  {
+  }
+
+public:
+  virtual WidgetWheelEvent* AsWheelEvent() override { return this; }
+
+  WidgetWheelEvent(bool aIsTrusted, EventMessage aMessage, nsIWidget* aWidget)
+    : WidgetMouseEventBase(aIsTrusted, aMessage, aWidget, eWheelEventClass)
+    , deltaX(0.0)
+    , deltaY(0.0)
+    , deltaZ(0.0)
+    , deltaMode(nsIDOMWheelEvent::DOM_DELTA_PIXEL)
+    , customizedByUserPrefs(false)
+    , mayHaveMomentum(false)
+    , isMomentum(false)
+    , mIsNoLineOrPageDelta(false)
+    , lineOrPageDeltaX(0)
+    , lineOrPageDeltaY(0)
+    , scrollType(SCROLL_DEFAULT)
+    , overflowDeltaX(0.0)
+    , overflowDeltaY(0.0)
+    , mViewPortIsOverscrolled(false)
+    , mCanTriggerSwipe(false)
+    , mAllowToOverrideSystemScrollSpeed(true)
   {
   }
 
@@ -500,6 +528,8 @@ public:
   // Otherwise, i.e., they are computed from native events, false.
   bool customizedByUserPrefs;
 
+  // true if the momentum events directly tied to this event may follow it.
+  bool mayHaveMomentum;
   // true if the event is caused by momentum.
   bool isMomentum;
 
@@ -571,6 +601,11 @@ public:
   // viewport.
   bool mCanTriggerSwipe;
 
+  // If mAllowToOverrideSystemScrollSpeed is true, the scroll speed may be
+  // overridden.  Otherwise, the scroll speed won't be overridden even if
+  // it's enabled by the pref.
+  bool mAllowToOverrideSystemScrollSpeed;
+
   void AssignWheelEventData(const WidgetWheelEvent& aEvent, bool aCopyTargets)
   {
     AssignMouseEventBaseData(aEvent, aCopyTargets);
@@ -580,6 +615,7 @@ public:
     deltaZ = aEvent.deltaZ;
     deltaMode = aEvent.deltaMode;
     customizedByUserPrefs = aEvent.customizedByUserPrefs;
+    mayHaveMomentum = aEvent.mayHaveMomentum;
     isMomentum = aEvent.isMomentum;
     mIsNoLineOrPageDelta = aEvent.mIsNoLineOrPageDelta;
     lineOrPageDeltaX = aEvent.lineOrPageDeltaX;
@@ -589,7 +625,30 @@ public:
     overflowDeltaY = aEvent.overflowDeltaY;
     mViewPortIsOverscrolled = aEvent.mViewPortIsOverscrolled;
     mCanTriggerSwipe = aEvent.mCanTriggerSwipe;
+    mAllowToOverrideSystemScrollSpeed =
+      aEvent.mAllowToOverrideSystemScrollSpeed;
   }
+
+  // System scroll speed settings may be too slow at using Gecko.  In such
+  // case, we should override the scroll speed computed with system settings.
+  // Following methods return preferred delta values which are multiplied by
+  // factors specified by prefs.  If system scroll speed shouldn't be
+  // overridden (e.g., this feature is disabled by pref), they return raw
+  // delta values.
+  double OverriddenDeltaX() const;
+  double OverriddenDeltaY() const;
+
+  // Compute the overridden delta value.  This may be useful for suppressing
+  // too fast scroll by system scroll speed overriding when widget sets
+  // mAllowToOverrideSystemScrollSpeed.
+  static double ComputeOverriddenDelta(double aDelta, bool aIsForVertical);
+
+private:
+  static bool sInitialized;
+  static bool sIsSystemScrollSpeedOverrideEnabled;
+  static int32_t sOverrideFactorX;
+  static int32_t sOverrideFactorY;
+  static void Initialize();
 };
 
 /******************************************************************************
@@ -602,6 +661,9 @@ class WidgetPointerEvent : public WidgetMouseEvent
   friend class mozilla::dom::PBrowserChild;
 
   WidgetPointerEvent()
+    : width(0)
+    , height(0)
+    , isPrimary(true)
   {
   }
 

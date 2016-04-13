@@ -3,7 +3,7 @@ task:
   created: '{{now}}'
   deadline: '{{#from_now}}24 hours{{/from_now}}'
   metadata:
-    source: http://todo.com/soon
+    source: '{{source}}'
     owner: mozilla-taskcluster-maintenance@mozilla.com
   tags:
     createdForUser: {{owner}}
@@ -12,9 +12,7 @@ task:
   schedulerId: task-graph-scheduler
 
   scopes:
-    - 'docker-worker:image:{{#docker_image}}tester{{/docker_image}}'
-    - 'queue:define-task:aws-provisioner-v1/test-c4-2xlarge'
-    - 'queue:create-task:aws-provisioner-v1/test-c4-2xlarge'
+    - 'docker-worker:feature:allowPtrace'
 
   payload:
     image: '{{#docker_image}}tester{{/docker_image}}'
@@ -27,11 +25,11 @@ task:
     artifacts:
       'public/logs/':
         type: directory
-        path: '/home/worker/build/upload/logs/'
+        path: '/home/worker/workspace/build/upload/logs/'
         expires: '{{#from_now}}1 year{{/from_now}}'
       'public/test_info/':
         type: directory
-        path: '/home/worker/build/blobber_upload_dir/'
+        path: '/home/worker/workspace/build/blobber_upload_dir/'
         expires: '{{#from_now}}1 year{{/from_now}}'
 
   extra:

@@ -29,6 +29,7 @@
 #include "mozilla/BasePrincipal.h"
 #include "nsProxyRelease.h"
 #include "nsContentSecurityManager.h"
+#include "nsContentUtils.h"
 
 typedef mozilla::net::LoadContextInfo LoadContextInfo;
 
@@ -43,7 +44,7 @@ public:
     NS_WARN_IF_FALSE(thread, "Couldn't get the main thread!");
     if (thread) {
       nsIWyciwygChannel *chan = static_cast<nsIWyciwygChannel *>(mChannel);
-      mozilla::unused << mChannel.forget();
+      mozilla::Unused << mChannel.forget();
       NS_ProxyRelease(thread, chan);
     }
   }
@@ -231,7 +232,7 @@ nsWyciwygChannel::SetLoadGroup(nsILoadGroup* aLoadGroup)
                                 mLoadGroup,
                                 NS_GET_IID(nsIProgressEventSink),
                                 getter_AddRefs(mProgressSink));
-  mPrivateBrowsing = NS_UsePrivateBrowsing(this);
+  UpdatePrivateBrowsing();
   NS_GetOriginAttributes(this, mOriginAttributes);
 
   return NS_OK;
@@ -328,7 +329,7 @@ nsWyciwygChannel::SetNotificationCallbacks(nsIInterfaceRequestor* aNotificationC
                                 NS_GET_IID(nsIProgressEventSink),
                                 getter_AddRefs(mProgressSink));
 
-  mPrivateBrowsing = NS_UsePrivateBrowsing(this);
+  UpdatePrivateBrowsing();
   NS_GetOriginAttributes(this, mOriginAttributes);
 
   return NS_OK;
@@ -431,8 +432,11 @@ nsWyciwygChannel::Open2(nsIInputStream** aStream)
 NS_IMETHODIMP
 nsWyciwygChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
 {
-  MOZ_ASSERT(!mLoadInfo || mLoadInfo->GetSecurityMode() == 0 ||
-             mLoadInfo->GetInitialSecurityCheckDone(),
+  MOZ_ASSERT(!mLoadInfo ||
+             mLoadInfo->GetSecurityMode() == 0 ||
+             mLoadInfo->GetInitialSecurityCheckDone() ||
+             (mLoadInfo->GetSecurityMode() == nsILoadInfo::SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL &&
+              nsContentUtils::IsSystemPrincipal(mLoadInfo->LoadingPrincipal())),
              "security flags in loadInfo but asyncOpen2() not called");
 
   LOG(("nsWyciwygChannel::AsyncOpen [this=%p]\n", this));

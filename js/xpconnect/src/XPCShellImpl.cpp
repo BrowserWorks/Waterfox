@@ -42,6 +42,7 @@
 #endif
 
 #ifdef XP_WIN
+#include "mozilla/widget/AudioSession.h"
 #include <windows.h>
 #endif
 
@@ -97,6 +98,20 @@ private:
     nsCOMPtr<nsIFile> mAppFile;
 };
 
+#ifdef XP_WIN
+class MOZ_STACK_CLASS AutoAudioSession
+{
+public:
+    AutoAudioSession() {
+        widget::StartAudioSession();
+    }
+
+    ~AutoAudioSession() {
+        widget::StopAudioSession();
+    }
+};
+#endif
+
 static const char kXPConnectServiceContractID[] = "@mozilla.org/js/xpc/XPConnect;1";
 
 #define EXITCODE_RUNTIME_ERROR 3
@@ -126,7 +141,7 @@ GetLocationProperty(JSContext* cx, unsigned argc, Value* vp)
     //XXX: your platform should really implement this
     return false;
 #else
-    JS::AutoFilename filename;
+    JS::UniqueChars filename;
     if (JS::DescribeScriptedCaller(cx, &filename) && filename.get()) {
         nsresult rv;
         nsCOMPtr<nsIXPConnect> xpc =
@@ -963,6 +978,7 @@ ProcessArgsForCompartment(JSContext* cx, char** argv, int argc)
             break;
         case 'S':
             RuntimeOptionsRef(cx).toggleWerror();
+            MOZ_FALLTHROUGH; // because -S implies -s
         case 's':
             RuntimeOptionsRef(cx).toggleExtraWarnings();
             break;
@@ -1478,8 +1494,10 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
         // Make the default XPCShell global use a fresh zone (rather than the
         // System Zone) to improve cross-zone test coverage.
         JS::CompartmentOptions options;
-        options.setZone(JS::FreshZone)
-               .setVersion(JSVERSION_LATEST);
+        options.creationOptions().setZone(JS::FreshZone);
+        if (xpc::SharedMemoryEnabled())
+            options.creationOptions().setSharedMemoryAndAtomicsEnabled(true);
+        options.behaviors().setVersion(JSVERSION_LATEST);
         nsCOMPtr<nsIXPConnectJSObjectHolder> holder;
         rv = xpc->InitClassesWithNewWrappedGlobal(cx,
                                                   static_cast<nsIGlobalObject*>(backstagePass),
@@ -1494,6 +1512,11 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
         gfxPrefs::GetSingleton();
         // Initialize e10s check on the main thread, if not already done
         BrowserTabsRemoteAutostart();
+#ifdef XP_WIN
+        // Plugin may require audio session if installed plugin can initialize
+        // asynchronized.
+        AutoAudioSession audioSession;
+#endif
 
         {
             JS::Rooted<JSObject*> glob(cx, holder->GetJSObject());
@@ -1504,7 +1527,7 @@ XRE_XPCShellMain(int argc, char** argv, char** envp)
             // Even if we're building in a configuration where source is
             // discarded, there's no reason to do that on XPCShell, and doing so
             // might break various automation scripts.
-            JS::CompartmentOptionsRef(glob).setDiscardSource(false);
+            JS::CompartmentBehaviorsRef(glob).setDiscardSource(false);
 
             backstagePass->SetGlobalObject(glob);
 

@@ -16,20 +16,19 @@
 namespace mozilla {
 namespace layers {
 
-HRESULT
-D3D11ShareHandleImage::SetData(const Data& aData)
+D3D11ShareHandleImage::D3D11ShareHandleImage(const gfx::IntSize& aSize,
+                                             const gfx::IntRect& aRect)
+ : Image(nullptr, ImageFormat::D3D11_SHARE_HANDLE_TEXTURE),
+   mSize(aSize),
+   mPictureRect(aRect)
 {
-  mPictureRect = aData.mRegion;
-  mSize = aData.mSize;
+}
 
-  mTextureClient =
-    aData.mAllocator->CreateOrRecycleClient(gfx::SurfaceFormat::B8G8R8A8,
-                                            mSize);
-  if (!mTextureClient) {
-    return E_FAIL;
-  }
-
-  return S_OK;
+bool
+D3D11ShareHandleImage::AllocateTexture(D3D11RecycleAllocator* aAllocator)
+{
+  mTextureClient = aAllocator->CreateOrRecycleClient(gfx::SurfaceFormat::B8G8R8A8, mSize);
+  return !!mTextureClient;
 }
 
 gfx::IntSize
@@ -130,7 +129,7 @@ D3D11ShareHandleImage::GetAsSourceSurface()
 
 ID3D11Texture2D*
 D3D11ShareHandleImage::GetTexture() const {
-  return mTextureClient->GetD3D11Texture();
+  return static_cast<D3D11TextureData*>(mTextureClient->GetInternalData())->GetD3D11Texture();
 }
 
 already_AddRefed<TextureClient>
@@ -140,14 +139,12 @@ D3D11RecycleAllocator::Allocate(gfx::SurfaceFormat aFormat,
                                 TextureFlags aTextureFlags,
                                 TextureAllocationFlags aAllocFlags)
 {
-  return TextureClientD3D11::Create(mSurfaceAllocator,
-                                    aFormat,
-                                    TextureFlags::DEFAULT,
-                                    mDevice,
-                                    aSize);
+  return CreateD3D11TextureClientWithDevice(aSize, aFormat,
+                                            aTextureFlags, aAllocFlags,
+                                            mDevice, mSurfaceAllocator);
 }
 
-already_AddRefed<TextureClientD3D11>
+already_AddRefed<TextureClient>
 D3D11RecycleAllocator::CreateOrRecycleClient(gfx::SurfaceFormat aFormat,
                                              const gfx::IntSize& aSize)
 {
@@ -156,12 +153,7 @@ D3D11RecycleAllocator::CreateOrRecycleClient(gfx::SurfaceFormat aFormat,
                     aSize,
                     BackendSelector::Content,
                     layers::TextureFlags::DEFAULT);
-  if (!textureClient) {
-    return nullptr;
-  }
-
-  RefPtr<TextureClientD3D11> textureD3D11 = static_cast<TextureClientD3D11*>(textureClient.get());
-  return textureD3D11.forget();
+  return textureClient.forget();
 }
 
 

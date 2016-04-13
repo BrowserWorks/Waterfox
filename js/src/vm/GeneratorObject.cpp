@@ -24,7 +24,7 @@ GeneratorObject::create(JSContext* cx, AbstractFramePtr frame)
     RootedNativeObject obj(cx);
     if (frame.script()->isStarGenerator()) {
         RootedValue pval(cx);
-        RootedObject fun(cx, frame.fun());
+        RootedObject fun(cx, frame.callee());
         // FIXME: This would be faster if we could avoid doing a lookup to get
         // the prototype for the instance.  Bug 906600.
         if (!GetProperty(cx, fun, fun, cx->names().prototype, &pval))
@@ -48,7 +48,6 @@ GeneratorObject::create(JSContext* cx, AbstractFramePtr frame)
 
     GeneratorObject* genObj = &obj->as<GeneratorObject>();
     genObj->setCallee(*frame.callee());
-    genObj->setThisValue(frame.thisValue());
     genObj->setNewTarget(frame.newTarget());
     genObj->setScopeChain(*frame.scopeChain());
     if (frame.script()->needsArgsObj())
@@ -152,10 +151,9 @@ GeneratorObject::resume(JSContext* cx, InterpreterActivation& activation,
     MOZ_ASSERT(genObj->isSuspended());
 
     RootedFunction callee(cx, &genObj->callee());
-    RootedValue thisv(cx, genObj->thisValue());
     RootedValue newTarget(cx, genObj->newTarget());
     RootedObject scopeChain(cx, &genObj->scopeChain());
-    if (!activation.resumeGeneratorFrame(callee, thisv, newTarget, scopeChain))
+    if (!activation.resumeGeneratorFrame(callee, newTarget, scopeChain))
         return false;
     activation.regs().fp()->setResumedGenerator();
 
@@ -237,7 +235,6 @@ const Class StarGeneratorObject::class_ = {
 };
 
 static const JSFunctionSpec star_generator_methods[] = {
-    JS_SELF_HOSTED_SYM_FN(iterator, "IteratorIdentity", 0, 0),
     JS_SELF_HOSTED_FN("next", "StarGeneratorNext", 1, 0),
     JS_SELF_HOSTED_FN("throw", "StarGeneratorThrow", 1, 0),
     JS_SELF_HOSTED_FN("return", "StarGeneratorReturn", 1, 0),
@@ -298,8 +295,14 @@ GlobalObject::initStarGenerators(JSContext* cx, Handle<GlobalObject*> global)
     if (global->getReservedSlot(STAR_GENERATOR_OBJECT_PROTO).isObject())
         return true;
 
-    RootedObject genObjectProto(cx, NewSingletonObjectWithObjectPrototype(cx, global));
-    if (!genObjectProto || !genObjectProto->setDelegate(cx))
+    RootedObject iteratorProto(cx, GlobalObject::getOrCreateIteratorPrototype(cx, global));
+    if (!iteratorProto)
+        return false;
+
+    RootedObject genObjectProto(cx, global->createBlankPrototypeInheriting(cx,
+                                                                           &PlainObject::class_,
+                                                                           iteratorProto));
+    if (!genObjectProto)
         return false;
     if (!DefinePropertiesAndFunctions(cx, genObjectProto, nullptr, star_generator_methods))
         return false;

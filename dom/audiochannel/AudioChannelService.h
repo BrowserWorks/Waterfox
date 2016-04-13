@@ -19,12 +19,16 @@
 
 class nsIRunnable;
 class nsPIDOMWindow;
+struct PRLogModuleInfo;
 
 namespace mozilla {
 namespace dom {
+
 #ifdef MOZ_WIDGET_GONK
 class SpeakerManagerService;
 #endif
+
+class TabParent;
 
 #define NUMBER_OF_AUDIO_CHANNELS (uint32_t)AudioChannel::EndGuard_
 
@@ -45,20 +49,26 @@ public:
 
   static bool IsAudioChannelMutedByDefault();
 
+  static PRLogModuleInfo* GetAudioChannelLog();
+
   /**
    * Any audio channel agent that starts playing should register itself to
    * this service, sharing the AudioChannel.
    */
   void RegisterAudioChannelAgent(AudioChannelAgent* aAgent,
-                                 uint32_t aNotifyPlayback,
                                  AudioChannel aChannel);
 
   /**
    * Any audio channel agent that stops playing should unregister itself to
    * this service.
    */
-  void UnregisterAudioChannelAgent(AudioChannelAgent* aAgent,
-                                   uint32_t aNotifyPlayback);
+  void UnregisterAudioChannelAgent(AudioChannelAgent* aAgent);
+
+  /**
+   * For nested iframes.
+   */
+  void RegisterTabParent(TabParent* aTabParent);
+  void UnregisterTabParent(TabParent* aTabParent);
 
   /**
    * Return the state to indicate this audioChannel for his window should keep
@@ -105,12 +115,16 @@ public:
 
   void RefreshAgentsVolume(nsPIDOMWindow* aWindow);
 
+  void RefreshAgentsVolumeAndPropagate(AudioChannel aAudioChannel,
+                                       nsPIDOMWindow* aWindow);
+
   // This method needs to know the inner window that wants to capture audio. We
   // group agents per top outer window, but we can have multiple innerWindow per
   // top outerWindow (subiframes, etc.) and we have to identify all the agents
   // just for a particular innerWindow.
-  void RefreshAgentsCapture(nsPIDOMWindow* aWindow,
-                            uint64_t aInnerWindowID);
+  void SetWindowAudioCaptured(nsPIDOMWindow* aWindow,
+                              uint64_t aInnerWindowID,
+                              bool aCapture);
 
 
 #ifdef MOZ_WIDGET_GONK
@@ -174,13 +188,15 @@ private:
   struct AudioChannelWindow final
   {
     explicit AudioChannelWindow(uint64_t aWindowID)
-      : mWindowID(aWindowID)
+      : mWindowID(aWindowID),
+        mIsAudioCaptured(false)
     {
       // Workaround for bug1183033, system channel type can always playback.
       mChannels[(int16_t)AudioChannel::System].mMuted = false;
     }
 
     uint64_t mWindowID;
+    bool mIsAudioCaptured;
     AudioChannelConfig mChannels[NUMBER_OF_AUDIO_CHANNELS];
 
     // Raw pointer because the AudioChannelAgent must unregister itself.
@@ -219,6 +235,9 @@ private:
 #ifdef MOZ_WIDGET_GONK
   nsTArray<SpeakerManagerService*>  mSpeakerManager;
 #endif
+
+  // Raw pointers because TabParents must unregister themselves.
+  nsTArray<TabParent*> mTabParents;
 
   nsCOMPtr<nsIRunnable> mRunnable;
 

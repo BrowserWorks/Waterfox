@@ -10,11 +10,10 @@
 
 #ifdef MOZ_WIDGET_GONK
 #include <utils/RefBase.h>
-#if ANDROID_VERSION >= 21
-#include <utils/NativeHandle.h>
-#endif
+#include "mozilla/layers/GonkNativeHandle.h"
 #endif
 
+#include "Units.h"
 #include "mozilla/gfx/Point.h"          // for IntPoint
 #include "mozilla/TypedEnumBits.h"
 #include "nsRegion.h"
@@ -116,13 +115,16 @@ struct LayerRenderState {
   void SetOverlayId(const int32_t& aId)
   { mOverlayId = aId; }
 
+  void SetSidebandStream(const GonkNativeHandle& aStream)
+  {
+    mSidebandStream = aStream;
+  }
+
   android::GraphicBuffer* GetGrallocBuffer() const
   { return mSurface.get(); }
 
-#if ANDROID_VERSION >= 21
-  android::NativeHandle* GetSidebandStream() const
-  { return mSidebandStream.get(); }
-#endif
+  const GonkNativeHandle& GetSidebandStream()
+  { return mSidebandStream; }
 #endif
 
   void SetOffset(const nsIntPoint& aOffset)
@@ -146,9 +148,7 @@ struct LayerRenderState {
   // size of mSurface
   gfx::IntSize mSize;
   TextureHost* mTexture;
-#if ANDROID_VERSION >= 21
-  android::sp<android::NativeHandle> mSidebandStream;
-#endif
+  GonkNativeHandle mSidebandStream;
 #endif
 };
 
@@ -284,6 +284,22 @@ enum TextureDumpMode {
   Compress,      // dump texture with LZ4 compression
   DoNotCompress  // dump texture uncompressed
 };
+
+// Some specialized typedefs of Matrix4x4Typed.
+typedef gfx::Matrix4x4Typed<LayerPixel, CSSTransformedLayerPixel> CSSTransformMatrix;
+// Several different async transforms can contribute to a layer's transform
+// (specifically, an async animation can contribute a transform, and each APZC
+// that scrolls a layer can contribute async scroll/zoom and overscroll
+// transforms).
+// To try to model this with typed units, we represent individual async
+// transforms as ParentLayer -> ParentLayer transforms (aliased as
+// AsyncTransformComponentMatrix), and we represent the product of all of them
+// as a CSSTransformLayer -> ParentLayer transform (aliased as
+// AsyncTransformMatrix). To create an AsyncTransformMatrix from component
+// matrices, a ViewAs operation is needed. A MultipleAsyncTransforms
+// PixelCastJustification is provided for this purpose.
+typedef gfx::Matrix4x4Typed<ParentLayerPixel, ParentLayerPixel> AsyncTransformComponentMatrix;
+typedef gfx::Matrix4x4Typed<CSSTransformedLayerPixel, ParentLayerPixel> AsyncTransformMatrix;
 
 } // namespace layers
 } // namespace mozilla

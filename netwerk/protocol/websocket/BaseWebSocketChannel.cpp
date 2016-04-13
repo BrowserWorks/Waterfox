@@ -8,6 +8,7 @@
 #include "BaseWebSocketChannel.h"
 #include "MainThreadUtils.h"
 #include "nsILoadGroup.h"
+#include "nsINode.h"
 #include "nsIInterfaceRequestor.h"
 #include "nsAutoPtr.h"
 #include "nsProxyRelease.h"
@@ -18,11 +19,10 @@
 
 using mozilla::dom::ContentChild;
 
-PRLogModuleInfo *webSocketLog = nullptr;
-
 namespace mozilla {
 namespace net {
 
+LazyLogModule webSocketLog("nsWebSocket");
 static uint64_t gNextWebSocketID = 0;
 
 // We use only 53 bits for the WebSocket serial ID so that it can be converted
@@ -42,9 +42,6 @@ BaseWebSocketChannel::BaseWebSocketChannel()
   , mPingInterval(0)
   , mPingResponseTimeout(10000)
 {
-  if (!webSocketLog)
-    webSocketLog = PR_NewLogModule("nsWebSocket");
-
   // Generation of a unique serial ID.
   uint64_t processID = 0;
   if (XRE_IsContentProcess()) {

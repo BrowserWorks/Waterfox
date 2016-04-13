@@ -178,9 +178,13 @@ ServerCollection.prototype = {
    * @return an array of IDs.
    */
   keys: function keys(filter) {
-    return [id for ([id, wbo] in Iterator(this._wbos))
-               if (wbo.payload &&
-                   (!filter || filter(id, wbo)))];
+    let ids = [];
+    for (let [id, wbo] in Iterator(this._wbos)) {
+      if (wbo.payload && (!filter || filter(id, wbo))) {
+        ids.push(id);
+      }
+    }
+    return ids;
   },
 
   /**
@@ -194,8 +198,13 @@ ServerCollection.prototype = {
    * @return an array of ServerWBOs.
    */
   wbos: function wbos(filter) {
-    let os = [wbo for ([id, wbo] in Iterator(this._wbos))
-              if (wbo.payload)];
+    let os = [];
+    for (let [id, wbo] in Iterator(this._wbos)) {
+      if (wbo.payload) {
+        os.push(wbo);
+      }
+    }
+
     if (filter) {
       return os.filter(filter);
     }
@@ -278,10 +287,13 @@ ServerCollection.prototype = {
   get: function(options) {
     let result;
     if (options.full) {
-      let data = [wbo.get() for ([id, wbo] in Iterator(this._wbos))
-                            // Drop deleted.
-                            if (wbo.modified &&
-                                this._inResultSet(wbo, options))];
+      let data = [];
+      for (let [id, wbo] in Iterator(this._wbos)) {
+        // Drop deleted.
+        if (wbo.modified && this._inResultSet(wbo, options)) {
+          data.push(wbo.get());
+        }
+      }
       if (options.limit) {
         data = data.slice(0, options.limit);
       }
@@ -291,8 +303,12 @@ ServerCollection.prototype = {
       // Use options as a backchannel to report count.
       options.recordCount = data.length;
     } else {
-      let data = [id for ([id, wbo] in Iterator(this._wbos))
-                     if (this._inResultSet(wbo, options))];
+      let data = [];
+      for (let [id, wbo] in Iterator(this._wbos)) {
+        if (this._inResultSet(wbo, options)) {
+          data.push(id);
+        }
+      }
       if (options.limit) {
         data = data.slice(0, options.limit);
       }
@@ -309,7 +325,8 @@ ServerCollection.prototype = {
 
     // This will count records where we have an existing ServerWBO
     // registered with us as successful and all other records as failed.
-    for each (let record in input) {
+    for (let key in input) {
+      let record = input[key];
       let wbo = this.wbo(record.id);
       if (!wbo && this.acceptNew) {
         this._log.debug("Creating WBO " + JSON.stringify(record.id) +
@@ -354,7 +371,7 @@ ServerCollection.prototype = {
 
       // Parse queryString
       let options = {};
-      for each (let chunk in request.queryString.split("&")) {
+      for (let chunk of request.queryString.split("&")) {
         if (!chunk) {
           continue;
         }
@@ -569,7 +586,7 @@ SyncServer.prototype = {
     } catch (ex) {
       _("==========================================");
       _("Got exception starting Sync HTTP server.");
-      _("Error: " + Utils.exceptionStr(ex));
+      _("Error: " + Log.exceptionStr(ex));
       _("Is there a process already listening on port " + port + "?");
       _("==========================================");
       do_throw(ex);
@@ -704,7 +721,8 @@ SyncServer.prototype = {
       throw new Error("Unknown user.");
     }
     let userCollections = this.users[username].collections;
-    for each (let [name, coll] in Iterator(userCollections)) {
+    for (let name in userCollections) {
+      let coll = userCollections[name];
       this._log.trace("Bulk deleting " + name + " for " + username + "...");
       coll.delete({});
     }
@@ -768,7 +786,10 @@ SyncServer.prototype = {
    */
   respond: function respond(req, resp, code, status, body, headers) {
     resp.setStatusLine(req.httpVersion, code, status);
-    for each (let [header, value] in Iterator(headers || this.defaultHeaders)) {
+    if (!headers)
+      headers = this.defaultHeaders;
+    for (let header in headers) {
+      let value = headers[header];
       resp.setHeader(header, value);
     }
     resp.setHeader("X-Weave-Timestamp", "" + this.timestamp(), false);

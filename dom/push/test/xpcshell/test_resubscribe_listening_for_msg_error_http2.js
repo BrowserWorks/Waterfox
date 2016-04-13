@@ -44,9 +44,6 @@ function run_test() {
     'http2.retryInterval': 1000,
     'http2.maxRetries': 2
   });
-  disableServiceWorkerEvents(
-    'https://example.com/page'
-  );
 
   run_next_test();
 }
@@ -88,7 +85,6 @@ add_task(function* test1() {
 
   PushService.init({
     serverURI: serverURL + "/subscribe",
-    service: PushServiceHttp2,
     db
   });
 

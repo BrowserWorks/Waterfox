@@ -9,24 +9,74 @@
 #include <algorithm>
 
 #include "mozilla/ClearOnShutdown.h"
+#include "mozilla/FileUtils.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/StaticPtr.h"
 #include "nsClassHashtable.h"
+#include "nsDebug.h"
+#include "NSPRLogModulesParser.h"
+
+#include "prenv.h"
+#include "prprf.h"
 
 // NB: Initial amount determined by auditing the codebase for the total amount
 //     of unique module names and padding up to the next power of 2.
 const uint32_t kInitialModuleCount = 256;
 
 namespace mozilla {
-/**
- * Safely converts an integer into a valid LogLevel.
- */
+
+namespace detail {
+
+void log_print(const PRLogModuleInfo* aModule,
+               LogLevel aLevel,
+               const char* aFmt, ...)
+{
+  va_list ap;
+  va_start(ap, aFmt);
+  char* buff = PR_vsmprintf(aFmt, ap);
+  PR_LogPrint("%s", buff);
+  PR_smprintf_free(buff);
+  va_end(ap);
+}
+
+void log_print(const LogModule* aModule,
+               LogLevel aLevel,
+               const char* aFmt, ...)
+{
+  va_list ap;
+  va_start(ap, aFmt);
+  aModule->Printv(aLevel, aFmt, ap);
+  va_end(ap);
+}
+
+}
+
 LogLevel
-Clamp(int32_t aLevel)
+ToLogLevel(int32_t aLevel)
 {
   aLevel = std::min(aLevel, static_cast<int32_t>(LogLevel::Verbose));
   aLevel = std::max(aLevel, static_cast<int32_t>(LogLevel::Disabled));
   return static_cast<LogLevel>(aLevel);
+}
+
+const char*
+ToLogStr(LogLevel aLevel) {
+  switch (aLevel) {
+    case LogLevel::Error:
+      return "E";
+    case LogLevel::Warning:
+      return "W";
+    case LogLevel::Info:
+      return "I";
+    case LogLevel::Debug:
+      return "D";
+    case LogLevel::Verbose:
+      return "V";
+    case LogLevel::Disabled:
+    default:
+      MOZ_CRASH("Invalid log level.");
+      return "";
+  }
 }
 
 class LogModuleManager
@@ -35,6 +85,8 @@ public:
   LogModuleManager()
     : mModulesLock("logmodules")
     , mModules(kInitialModuleCount)
+    , mOutFile(nullptr)
+    , mAddTimestamp(false)
   {
   }
 
@@ -44,30 +96,108 @@ public:
     //     its destructor.
   }
 
+  /**
+   * Loads config from env vars if present.
+   */
+  void Init()
+  {
+    bool shouldAppend = false;
+    bool addTimestamp = false;
+    const char* modules = PR_GetEnv("NSPR_LOG_MODULES");
+    NSPRLogModulesParser(modules,
+        [&shouldAppend, &addTimestamp]
+            (const char* aName, LogLevel aLevel) mutable {
+          if (strcmp(aName, "append") == 0) {
+            shouldAppend = true;
+          } else if (strcmp(aName, "timestamp") == 0) {
+            addTimestamp = true;
+          } else {
+            LogModule::Get(aName)->SetLevel(aLevel);
+          }
+    });
+
+    mAddTimestamp = addTimestamp;
+
+    const char* logFile = PR_GetEnv("NSPR_LOG_FILE");
+    if (logFile && logFile[0]) {
+      mOutFile = fopen(logFile, shouldAppend ? "a" : "w");
+    }
+  }
+
   LogModule* CreateOrGetModule(const char* aName)
   {
     OffTheBooksMutexAutoLock guard(mModulesLock);
     LogModule* module = nullptr;
     if (!mModules.Get(aName, &module)) {
-      // Create the PRLogModule, this will read any env vars that set the log
-      // level ahead of time. The module is held internally by NSPR, so it's
-      // okay to drop the pointer when leaving this scope.
-      PRLogModuleInfo* prModule = PR_NewLogModule(aName);
-
-      // NSPR does not impose a restriction on the values that log levels can
-      // be. LogModule uses the LogLevel enum class so we must clamp the value
-      // to a max of Verbose.
-      LogLevel logLevel = Clamp(prModule->level);
-      module = new LogModule(logLevel);
+      module = new LogModule(aName, LogLevel::Disabled);
       mModules.Put(aName, module);
     }
 
     return module;
   }
 
+  void Print(const char* aName, LogLevel aLevel, const char* aFmt, va_list aArgs)
+  {
+    const size_t kBuffSize = 1024;
+    char buff[kBuffSize];
+
+    char* buffToWrite = buff;
+
+    // For backwards compat we need to use the NSPR format string versions
+    // of sprintf and friends and then hand off to printf.
+    va_list argsCopy;
+    va_copy(argsCopy, aArgs);
+    size_t charsWritten = PR_vsnprintf(buff, kBuffSize, aFmt, argsCopy);
+    va_end(argsCopy);
+
+    if (charsWritten == kBuffSize - 1) {
+      // We may have maxed out, allocate a buffer instead.
+      buffToWrite = PR_vsmprintf(aFmt, aArgs);
+      charsWritten = strlen(buffToWrite);
+    }
+
+    // Determine if a newline needs to be appended to the message.
+    const char* newline = "";
+    if (charsWritten == 0 || buffToWrite[charsWritten - 1] != '\n') {
+      newline = "\n";
+    }
+
+    FILE* out = mOutFile ? mOutFile : stderr;
+
+    // This differs from the NSPR format in that we do not output the
+    // opaque system specific thread pointer (ie pthread_t) cast
+    // to a long. The address of the current PR_Thread continues to be
+    // prefixed.
+    //
+    // Additionally we prefix the output with the abbreviated log level
+    // and the module name.
+    if (!mAddTimestamp) {
+      fprintf_stderr(out,
+                     "[%p]: %s/%s %s%s",
+                     PR_GetCurrentThread(), ToLogStr(aLevel),
+                     aName, buffToWrite, newline);
+    } else {
+      PRExplodedTime now;
+      PR_ExplodeTime(PR_Now(), PR_GMTParameters, &now);
+      fprintf_stderr(
+          out,
+          "%04d-%02d-%02d %02d:%02d:%02d.%06d UTC - [%p]: %s/%s %s%s",
+          now.tm_year, now.tm_month + 1, now.tm_mday,
+          now.tm_hour, now.tm_min, now.tm_sec, now.tm_usec,
+          PR_GetCurrentThread(), ToLogStr(aLevel),
+          aName, buffToWrite, newline);
+    }
+
+    if (buffToWrite != buff) {
+      PR_smprintf_free(buffToWrite);
+    }
+  }
+
 private:
   OffTheBooksMutex mModulesLock;
   nsClassHashtable<nsCharPtrHashKey, LogModule> mModules;
+  ScopedCloseFile mOutFile;
+  bool mAddTimestamp;
 };
 
 StaticAutoPtr<LogModuleManager> sLogModuleManager;
@@ -95,6 +225,16 @@ LogModule::Init()
   //     before all logging is complete. And, yes, that means we leak, but
   //     we're doing that intentionally.
   sLogModuleManager = new LogModuleManager();
+  sLogModuleManager->Init();
+}
+
+void
+LogModule::Printv(LogLevel aLevel, const char* aFmt, va_list aArgs) const
+{
+  MOZ_ASSERT(sLogModuleManager != nullptr);
+
+  // Forward to LogModule manager w/ level and name
+  sLogModuleManager->Print(Name(), aLevel, aFmt, aArgs);
 }
 
 } // namespace mozilla

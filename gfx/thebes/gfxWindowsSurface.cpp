@@ -6,6 +6,7 @@
 #include "gfxWindowsSurface.h"
 #include "gfxContext.h"
 #include "gfxPlatform.h"
+#include "mozilla/gfx/HelpersCairo.h"
 #include "mozilla/gfx/Logging.h"
 
 #include "cairo.h"
@@ -59,7 +60,7 @@ gfxWindowsSurface::gfxWindowsSurface(const mozilla::gfx::IntSize& realSize, gfxI
     if (!CheckSurfaceSize(size))
         MakeInvalid(size);
 
-    cairo_format_t cformat = gfxImageFormatToCairoFormat(imageFormat);
+    cairo_format_t cformat = GfxFormatToCairoFormat(imageFormat);
     cairo_surface_t *surf =
         cairo_win32_surface_create_with_dib(cformat, size.width, size.height);
 
@@ -80,7 +81,7 @@ gfxWindowsSurface::gfxWindowsSurface(HDC dc, const mozilla::gfx::IntSize& realSi
     if (!CheckSurfaceSize(size))
         MakeInvalid(size);
 
-    cairo_format_t cformat = gfxImageFormatToCairoFormat(imageFormat);
+    cairo_format_t cformat = GfxFormatToCairoFormat(imageFormat);
     cairo_surface_t *surf =
         cairo_win32_surface_create_with_ddb(dc, cformat,
                                             size.width, size.height);
@@ -89,7 +90,8 @@ gfxWindowsSurface::gfxWindowsSurface(HDC dc, const mozilla::gfx::IntSize& realSi
 
     if (mSurfaceValid) {
         // DDBs will generally only use 3 bytes per pixel when RGB24
-        int bytesPerPixel = ((imageFormat == gfxImageFormat::RGB24) ? 3 : 4);
+        int bytesPerPixel =
+            ((imageFormat == mozilla::gfx::SurfaceFormat::X8R8G8B8_UINT32) ? 3 : 4);
         RecordMemoryUsed(size.width * size.height * bytesPerPixel + sizeof(gfxWindowsSurface));
     }
 
@@ -143,7 +145,7 @@ gfxWindowsSurface::CreateSimilarSurface(gfxContentType aContent,
         // have a DIB.
         gfxImageFormat gformat =
             gfxPlatform::GetPlatform()->OptimalFormatForContent(aContent);
-        cairo_format_t cformat = gfxImageFormatToCairoFormat(gformat);
+        cairo_format_t cformat = GfxFormatToCairoFormat(gformat);
         surface = cairo_win32_surface_create_with_dib(cformat, aSize.width,
                                                       aSize.height);
     } else {
@@ -170,12 +172,6 @@ gfxWindowsSurface::~gfxWindowsSurface()
         else
             ::DeleteDC(mDC);
     }
-}
-
-HDC
-gfxWindowsSurface::GetDCWithClip(gfxContext *ctx)
-{
-    return cairo_win32_get_dc_with_clip (ctx->GetCairo());
 }
 
 HDC
@@ -214,6 +210,10 @@ gfxWindowsSurface::BeginPrinting(const nsAString& aTitle,
 {
 #ifdef NS_PRINTING
 #define DOC_TITLE_LENGTH (MAX_PATH-1)
+    if (!mForPrinting) {
+        return NS_OK;
+    }
+
     DOCINFOW docinfo;
 
     nsString titleStr(aTitle);
@@ -241,6 +241,10 @@ nsresult
 gfxWindowsSurface::EndPrinting()
 {
 #ifdef NS_PRINTING
+    if (!mForPrinting) {
+        return NS_OK;
+    }
+
     int result = ::EndDoc(mDC);
     if (result <= 0)
         return NS_ERROR_FAILURE;
@@ -255,6 +259,10 @@ nsresult
 gfxWindowsSurface::AbortPrinting()
 {
 #ifdef NS_PRINTING
+    if (!mForPrinting) {
+        return NS_OK;
+    }
+
     int result = ::AbortDoc(mDC);
     if (result <= 0)
         return NS_ERROR_FAILURE;
@@ -268,6 +276,10 @@ nsresult
 gfxWindowsSurface::BeginPage()
 {
 #ifdef NS_PRINTING
+    if (!mForPrinting) {
+        return NS_OK;
+    }
+
     int result = ::StartPage(mDC);
     if (result <= 0)
         return NS_ERROR_FAILURE;
@@ -281,8 +293,11 @@ nsresult
 gfxWindowsSurface::EndPage()
 {
 #ifdef NS_PRINTING
-    if (mForPrinting)
-        cairo_surface_show_page(CairoSurface());
+    if (!mForPrinting) {
+        return NS_OK;
+    }
+
+    cairo_surface_show_page(CairoSurface());
     int result = ::EndPage(mDC);
     if (result <= 0)
         return NS_ERROR_FAILURE;
@@ -295,6 +310,15 @@ gfxWindowsSurface::EndPage()
 const mozilla::gfx::IntSize
 gfxWindowsSurface::GetSize() const
 {
+    if (mForPrinting) {
+        // On Windows we need to use the printable area of the page.
+        float width = (::GetDeviceCaps(mDC, HORZRES) * POINTS_PER_INCH_FLOAT)
+                      / ::GetDeviceCaps(mDC, LOGPIXELSX);
+        float height = (::GetDeviceCaps(mDC, VERTRES) * POINTS_PER_INCH_FLOAT)
+                       / ::GetDeviceCaps(mDC, LOGPIXELSY);
+        return mozilla::gfx::IntSize(width, height);
+    }
+
     if (!mSurfaceValid) {
         NS_WARNING ("GetImageSurface on an invalid (null) surface; who's calling this without checking for surface errors?");
         return mozilla::gfx::IntSize(-1, -1);

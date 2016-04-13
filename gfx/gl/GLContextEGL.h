@@ -10,8 +10,6 @@
 #include "GLContext.h"
 #include "GLLibraryEGL.h"
 
-class nsIWidget;
-
 namespace mozilla {
 namespace gl {
 
@@ -20,7 +18,8 @@ class GLContextEGL : public GLContext
     friend class TextureImageEGL;
 
     static already_AddRefed<GLContextEGL>
-    CreateGLContext(const SurfaceCaps& caps,
+    CreateGLContext(CreateContextFlags flags,
+                    const SurfaceCaps& caps,
                     GLContextEGL *shareContext,
                     bool isOffscreen,
                     EGLConfig config,
@@ -80,7 +79,7 @@ public:
 
     virtual bool IsCurrent() override;
 
-    virtual bool RenewSurface() override;
+    virtual bool RenewSurface(nsIWidget* aWidget) override;
 
     virtual void ReleaseSurface() override;
 
@@ -105,10 +104,8 @@ public:
     void BindOffscreenFramebuffer();
 
     static already_AddRefed<GLContextEGL>
-    CreateEGLPixmapOffscreenContext(const gfx::IntSize& size);
-
-    static already_AddRefed<GLContextEGL>
-    CreateEGLPBufferOffscreenContext(const gfx::IntSize& size,
+    CreateEGLPBufferOffscreenContext(CreateContextFlags flags,
+                                     const gfx::IntSize& size,
                                      const SurfaceCaps& minCaps);
 
 protected:

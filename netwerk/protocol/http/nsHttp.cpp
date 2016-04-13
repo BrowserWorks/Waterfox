@@ -12,8 +12,7 @@
 #include "mozilla/Mutex.h"
 #include "mozilla/HashFunctions.h"
 #include "nsCRT.h"
-
-PRLogModuleInfo *gHttpLog = nullptr;
+#include <errno.h>
 
 namespace mozilla {
 namespace net {
@@ -229,6 +228,26 @@ nsHttp::IsValidToken(const char *start, const char *end)
     return true;
 }
 
+const char*
+nsHttp::GetProtocolVersion(uint32_t pv)
+{
+    switch (pv) {
+    case SPDY_VERSION_31:
+        return "spdy/3.1";
+    case HTTP_VERSION_2:
+    case NS_HTTP_VERSION_2_0:
+        return "h2";
+    case NS_HTTP_VERSION_1_0:
+        return "http/1.0";
+    case NS_HTTP_VERSION_1_1:
+        return "http/1.1";
+    default:
+        NS_WARNING(nsPrintfCString("Unkown protocol version: 0x%X. "
+                                   "Please file a bug", pv).get());
+        return "http/1.1";
+    }
+}
+
 // static
 bool
 nsHttp::IsReasonableHeaderValue(const nsACString &s)
@@ -277,19 +296,25 @@ nsHttp::FindToken(const char *input, const char *token, const char *seps)
 bool
 nsHttp::ParseInt64(const char *input, const char **next, int64_t *r)
 {
-    const char *start = input;
-    *r = 0;
-    while (*input >= '0' && *input <= '9') {
-        int64_t next = 10 * (*r) + (*input - '0');
-        if (next < *r) // overflow?
-            return false;
-        *r = next;
-        ++input;
-    }
-    if (input == start) // nothing parsed?
+    MOZ_ASSERT(input);
+    MOZ_ASSERT(r);
+
+    char *end = nullptr;
+    errno = 0; // Clear errno to make sure its value is set by strtoll
+    int64_t value = strtoll(input, &end, /* base */ 10);
+
+    // Fail if: - the parsed number overflows.
+    //          - the end points to the start of the input string.
+    //          - we parsed a negative value. Consumers don't expect that.
+    if (errno != 0 || end == input || value < 0) {
+        LOG(("nsHttp::ParseInt64 value=%ld errno=%d", value, errno));
         return false;
-    if (next)
-        *next = input;
+    }
+
+    if (next) {
+        *next = end;
+    }
+    *r = value;
     return true;
 }
 
@@ -301,7 +326,7 @@ nsHttp::IsPermanentRedirect(uint32_t httpStatus)
 
 
 template<typename T> void
-localEnsureBuffer(nsAutoArrayPtr<T> &buf, uint32_t newSize,
+localEnsureBuffer(UniquePtr<T[]> &buf, uint32_t newSize,
              uint32_t preserve, uint32_t &objSize)
 {
   if (objSize >= newSize)
@@ -314,20 +339,20 @@ localEnsureBuffer(nsAutoArrayPtr<T> &buf, uint32_t newSize,
   objSize = (newSize + 2048 + 4095) & ~4095;
 
   static_assert(sizeof(T) == 1, "sizeof(T) must be 1");
-  nsAutoArrayPtr<T> tmp(new T[objSize]);
+  auto tmp = MakeUnique<T[]>(objSize);
   if (preserve) {
-    memcpy(tmp, buf, preserve);
+    memcpy(tmp.get(), buf.get(), preserve);
   }
-  buf = tmp;
+  buf = Move(tmp);
 }
 
-void EnsureBuffer(nsAutoArrayPtr<char> &buf, uint32_t newSize,
+void EnsureBuffer(UniquePtr<char[]> &buf, uint32_t newSize,
                   uint32_t preserve, uint32_t &objSize)
 {
     localEnsureBuffer<char> (buf, newSize, preserve, objSize);
 }
 
-void EnsureBuffer(nsAutoArrayPtr<uint8_t> &buf, uint32_t newSize,
+void EnsureBuffer(UniquePtr<uint8_t[]> &buf, uint32_t newSize,
                   uint32_t preserve, uint32_t &objSize)
 {
     localEnsureBuffer<uint8_t> (buf, newSize, preserve, objSize);

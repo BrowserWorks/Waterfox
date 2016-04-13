@@ -5,6 +5,7 @@
 "use strict";
 
 Components.utils.import("resource://gre/modules/Services.jsm");
+Components.utils.import("resource://gre/modules/NetUtil.jsm");
 
 if (typeof(Ci) == 'undefined') {
   var Ci = Components.interfaces;
@@ -186,15 +187,12 @@ SpecialPowersObserverAPI.prototype = {
     // to evaluate http:// urls...
     var scriptableStream = Cc["@mozilla.org/scriptableinputstream;1"]
                              .getService(Ci.nsIScriptableInputStream);
-    var channel = Services.io.newChannel2(aUrl,
-                                          null,
-                                          null,
-                                          null,      // aLoadingNode
-                                          Services.scriptSecurityManager.getSystemPrincipal(),
-                                          null,      // aTriggeringPrincipal
-                                          Ci.nsILoadInfo.SEC_NORMAL,
-                                          Ci.nsIContentPolicy.TYPE_OTHER);
-    var input = channel.open();
+
+    var channel = NetUtil.newChannel({
+      uri: aUrl,
+      loadUsingSystemPrincipal: true
+    });
+    var input = channel.open2();
     scriptableStream.init(input);
 
     var str;
@@ -459,7 +457,7 @@ SpecialPowersObserverAPI.prototype = {
         Object.defineProperty(sb, "assert", {
           get: function () {
             let scope = Components.utils.createObjectIn(sb);
-            Services.scriptloader.loadSubScript("resource://specialpowers/Assert.jsm",
+            Services.scriptloader.loadSubScript("chrome://specialpowers/content/Assert.jsm",
                                                 scope);
 
             let assert = new scope.Assert(reporter);
@@ -485,59 +483,20 @@ SpecialPowersObserverAPI.prototype = {
         let id = aMessage.json.id;
         let name = aMessage.json.name;
         let message = aMessage.json.message;
-        this._chromeScriptListeners
-            .filter(o => (o.name == name && o.id == id))
-            .forEach(o => o.listener(message));
-        return undefined;	// See comment at the beginning of this function.
+        return this._chromeScriptListeners
+                   .filter(o => (o.name == name && o.id == id))
+                   .map(o => o.listener(message));
       }
 
-      case 'SPQuotaManager': {
-        let qm = Cc['@mozilla.org/dom/quota/manager;1']
-                   .getService(Ci.nsIQuotaManager);
-        let mm = aMessage.target
-                         .QueryInterface(Ci.nsIFrameLoaderOwner)
-                         .frameLoader
-                         .messageManager;
-        let msg = aMessage.data;
-        let principal = msg.principal;
-        let op = msg.op;
-
-        if (op != 'clear' && op != 'getUsage' && op != 'reset') {
-          throw new SpecialPowersError('Invalid operation for SPQuotaManager');
+      case "SPImportInMainProcess": {
+        var message = { hadError: false, errorMessage: null };
+        try {
+          Components.utils.import(aMessage.data);
+        } catch (e) {
+          message.hadError = true;
+          message.errorMessage = e.toString();
         }
-
-        if (op == 'clear') {
-          qm.clearStoragesForPrincipal(principal);
-        } else if (op == 'reset') {
-          qm.reset();
-        }
-
-        // We always use the getUsageForPrincipal callback even if we're clearing
-        // since we know that clear and getUsageForPrincipal are synchronized by the
-        // QuotaManager.
-        let callback = function(principal, usage, fileUsage) {
-          let reply = { id: msg.id };
-          if (op == 'getUsage') {
-            reply.usage = usage;
-            reply.fileUsage = fileUsage;
-          }
-          mm.sendAsyncMessage(aMessage.name, reply);
-        };
-
-        qm.getUsageForPrincipal(principal, callback);
-
-        return undefined;	// See comment at the beginning of this function.
-      }
-
-      case "SPPeriodicServiceWorkerUpdates": {
-        // We could just dispatch a generic idle-daily notification here, but
-        // this is better since it avoids invoking other idle daily observers
-        // at the cost of hard-coding the usage of PeriodicServiceWorkerUpdater.
-        Cc["@mozilla.org/service-worker-periodic-updater;1"].
-          getService(Ci.nsIObserver).
-          observe(null, "idle-daily", "Caller:SpecialPowers");
-
-        return undefined;	// See comment at the beginning of this function.
+        return message;
       }
 
       case "SPCleanUpSTSData": {

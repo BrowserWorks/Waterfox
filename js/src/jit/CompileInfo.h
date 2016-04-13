@@ -200,6 +200,7 @@ class CompileInfo
                 InlineScriptTree* inlineScriptTree)
       : script_(script), fun_(fun), osrPc_(osrPc), constructing_(constructing),
         analysisMode_(analysisMode), scriptNeedsArgsObj_(scriptNeedsArgsObj),
+        hadOverflowBailout_(script->hadOverflowBailout()),
         mayReadFrameArgsDirectly_(script->mayReadFrameArgsDirectly()),
         inlineScriptTree_(inlineScriptTree)
     {
@@ -255,17 +256,17 @@ class CompileInfo
     bool constructing() const {
         return constructing_;
     }
-    jsbytecode* osrPc() {
+    jsbytecode* osrPc() const {
         return osrPc_;
     }
-    NestedScopeObject* osrStaticScope() const {
+    NestedStaticScope* osrStaticScope() const {
         return osrStaticScope_;
     }
     InlineScriptTree* inlineScriptTree() const {
         return inlineScriptTree_;
     }
 
-    bool hasOsrAt(jsbytecode* pc) {
+    bool hasOsrAt(jsbytecode* pc) const {
         MOZ_ASSERT(JSOp(*pc) == JSOP_LOOPENTRY);
         return pc == osrPc();
     }
@@ -406,7 +407,7 @@ class CompileInfo
         return nimplicit() + nargs() + nlocals();
     }
 
-    bool isSlotAliased(uint32_t index, NestedScopeObject* staticScope) const {
+    bool isSlotAliased(uint32_t index, NestedStaticScope* staticScope) const {
         MOZ_ASSERT(index >= startArgSlot());
 
         if (funMaybeLazy() && index == thisSlot())
@@ -430,12 +431,12 @@ class CompileInfo
 
             // Otherwise, it might be part of a block scope.
             for (; staticScope; staticScope = staticScope->enclosingNestedScope()) {
-                if (!staticScope->is<StaticBlockObject>())
+                if (!staticScope->is<StaticBlockScope>())
                     continue;
-                StaticBlockObject& blockObj = staticScope->as<StaticBlockObject>();
-                if (blockObj.localOffset() < local) {
-                    if (local - blockObj.localOffset() < blockObj.numVariables())
-                        return blockObj.isAliased(local - blockObj.localOffset());
+                StaticBlockScope& blockScope = staticScope->as<StaticBlockScope>();
+                if (blockScope.localOffset() < local) {
+                    if (local - blockScope.localOffset() < blockScope.numVariables())
+                        return blockScope.isAliased(local - blockScope.localOffset());
                     return false;
                 }
             }
@@ -549,6 +550,11 @@ class CompileInfo
         return true;
     }
 
+    // Check previous bailout states to prevent doing the same bailout in the
+    // next compilation.
+    bool hadOverflowBailout() const {
+        return hadOverflowBailout_;
+    }
     bool mayReadFrameArgsDirectly() const {
         return mayReadFrameArgsDirectly_;
     }
@@ -564,7 +570,7 @@ class CompileInfo
     JSScript* script_;
     JSFunction* fun_;
     jsbytecode* osrPc_;
-    NestedScopeObject* osrStaticScope_;
+    NestedStaticScope* osrStaticScope_;
     bool constructing_;
     AnalysisMode analysisMode_;
 
@@ -572,6 +578,10 @@ class CompileInfo
     // since the arguments optimization could be marked as failed on the main
     // thread, so cache a value here and use it throughout for consistency.
     bool scriptNeedsArgsObj_;
+
+    // Record the state of previous bailouts in order to prevent compiling the
+    // same function identically the next time.
+    bool hadOverflowBailout_;
 
     bool mayReadFrameArgsDirectly_;
 

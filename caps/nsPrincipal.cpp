@@ -25,6 +25,7 @@
 #include "nsNetCID.h"
 #include "jswrapper.h"
 
+#include "mozilla/dom/nsCSPContext.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/HashFunctions.h"
@@ -76,10 +77,15 @@ nsPrincipal::nsPrincipal()
 { }
 
 nsPrincipal::~nsPrincipal()
-{ }
+{ 
+  // let's clear the principal within the csp to avoid a tangling pointer
+  if (mCSP) {
+    static_cast<nsCSPContext*>(mCSP.get())->clearLoadingPrincipal();
+  }
+}
 
 nsresult
-nsPrincipal::Init(nsIURI *aCodebase, const OriginAttributes& aOriginAttributes)
+nsPrincipal::Init(nsIURI *aCodebase, const PrincipalOriginAttributes& aOriginAttributes)
 {
   NS_ENSURE_STATE(!mInitialized);
   NS_ENSURE_ARG(aCodebase);
@@ -385,26 +391,21 @@ nsPrincipal::Read(nsIObjectInputStream* aStream)
   rv = aStream->ReadCString(suffix);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  OriginAttributes attrs;
+  PrincipalOriginAttributes attrs;
   bool ok = attrs.PopulateFromSuffix(suffix);
   NS_ENSURE_TRUE(ok, NS_ERROR_FAILURE);
 
   rv = NS_ReadOptionalObject(aStream, true, getter_AddRefs(supports));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // This may be null.
-  nsCOMPtr<nsIContentSecurityPolicy> csp = do_QueryInterface(supports, &rv);
-
   rv = Init(codebase, attrs);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  rv = SetCsp(csp);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // need to link in the CSP context here (link in the URI of the protected
-  // resource).
-  if (csp) {
-    csp->SetRequestContext(codebase, nullptr, nullptr);
+  mCSP = do_QueryInterface(supports, &rv);
+  // make sure setRequestContext is called after Init(),
+  // to make sure  the principals URI been initalized.
+  if (mCSP) {
+    mCSP->SetRequestContext(nullptr, this);
   }
 
   SetDomain(domain);

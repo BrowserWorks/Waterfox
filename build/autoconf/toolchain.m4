@@ -89,12 +89,12 @@ if test "$compiler" = "clang-cl"; then
     # We force clang-cl to emulate Visual C++ 2013 in configure.in, but that
     # is based on the CLANG_CL variable defined here, so make sure that we're
     # getting the right version here manually.
-    CC_VERSION=1900
-    CXX_VERSION=1900
-    MSVC_VERSION_FULL=190030723
+    CC_VERSION=1800
+    CXX_VERSION=1800
+    MSVC_VERSION_FULL=180030723
     # Build on clang-cl with MSVC 2013 Update 3 with fallback emulation.
-    CFLAGS="$CFLAGS -fms-compatibility-version=19.00.30723 -fallback"
-    CXXFLAGS="$CXXFLAGS -fms-compatibility-version=19.00.30723 -fallback"
+    CFLAGS="$CFLAGS -fms-compatibility-version=18.00.30723 -fallback"
+    CXXFLAGS="$CXXFLAGS -fms-compatibility-version=18.00.30723 -fallback"
 fi
 
 if test "$GNU_CC"; then
@@ -224,7 +224,33 @@ if test "$GNU_CXX"; then
     elif test "$ac_cv_cxx0x_headers_bug" = "yes"; then
         AC_MSG_ERROR([Your toolchain does not support C++0x/C++11 mode properly. Please upgrade your toolchain])
     fi
+
+    AC_CACHE_CHECK([whether 64-bits std::atomic requires -latomic],
+        ac_cv_needs_atomic,
+        AC_TRY_LINK(
+            [#include <cstdint>
+             #include <atomic>],
+            [ std::atomic<uint64_t> foo; foo = 1; ],
+            ac_cv_needs_atomic=no,
+            _SAVE_LIBS="$LIBS"
+            LIBS="$LIBS -latomic"
+            AC_TRY_LINK(
+                [#include <cstdint>
+                 #include <atomic>],
+                [ std::atomic<uint64_t> foo; foo = 1; ],
+                ac_cv_needs_atomic=yes,
+                ac_cv_needs_atomic="do not know; assuming no")
+            LIBS="$_SAVE_LIBS"
+        )
+    )
+    if test "$ac_cv_needs_atomic" = yes; then
+      MOZ_NEEDS_LIBATOMIC=1
+    else
+      MOZ_NEEDS_LIBATOMIC=
+    fi
+    AC_SUBST(MOZ_NEEDS_LIBATOMIC)
 fi
+
 if test -n "$CROSS_COMPILE"; then
     dnl When cross compile, we have no variable telling us what the host compiler is. Figure it out.
     cat > conftest.C <<EOF

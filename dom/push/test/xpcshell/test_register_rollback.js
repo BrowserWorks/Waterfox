@@ -15,9 +15,6 @@ function run_test() {
     requestTimeout: 1000,
     retryBaseInterval: 150
   });
-  disableServiceWorkerEvents(
-    'https://example.com/storage-error'
-  );
   run_next_test();
 }
 
@@ -75,12 +72,12 @@ add_task(function* test_register_rollback() {
 
   // Should return a rejected promise if storage fails.
   yield rejects(
-    PushNotificationService.register('https://example.com/storage-error',
-      ChromeUtils.originAttributesToSuffix({ appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false })),
-    function(error) {
-      return error == 'universe has imploded';
-    },
-    'Wrong error for unregister database failure'
+    PushService.register({
+      scope: 'https://example.com/storage-error',
+      originAttributes: ChromeUtils.originAttributesToSuffix(
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+    }),
+    'Expected error for unregister database failure'
   );
 
   // Should send an out-of-band unregister request.

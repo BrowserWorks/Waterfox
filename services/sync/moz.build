@@ -12,11 +12,8 @@ DIRS += ['locales']
 XPCSHELL_TESTS_MANIFESTS += ['tests/unit/xpcshell.ini']
 
 EXTRA_COMPONENTS += [
-    'Weave.js',
-]
-
-EXTRA_PP_COMPONENTS += [
     'SyncComponents.manifest',
+    'Weave.js',
 ]
 
 EXTRA_JS_MODULES['services-sync'] += [
@@ -25,18 +22,17 @@ EXTRA_JS_MODULES['services-sync'] += [
     'modules/browserid_identity.js',
     'modules/engines.js',
     'modules/FxaMigrator.jsm',
-    'modules/healthreport.jsm',
     'modules/identity.js',
     'modules/jpakeclient.js',
     'modules/keys.js',
     'modules/main.js',
-    'modules/notifications.js',
     'modules/policies.js',
     'modules/record.js',
     'modules/resource.js',
     'modules/rest.js',
     'modules/service.js',
     'modules/status.js',
+    'modules/SyncedTabs.jsm',
     'modules/userapi.js',
     'modules/util.js',
 ]
@@ -46,7 +42,7 @@ EXTRA_PP_JS_MODULES['services-sync'] += [
 ]
 
 # Definitions used by constants.js
-DEFINES['weave_version'] = '1.46.0'
+DEFINES['weave_version'] = '1.48.0'
 DEFINES['weave_id'] = '{340c2bbc-ce74-4362-90b5-7c26312808ef}'
 
 EXTRA_JS_MODULES['services-sync'].engines += [
@@ -76,4 +72,3 @@ TESTING_JS_MODULES.services.sync += [
 JS_PREFERENCE_FILES += [
     'services-sync.js',
 ]
-

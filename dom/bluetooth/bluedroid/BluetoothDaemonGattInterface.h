@@ -203,12 +203,9 @@ public:
                                int aMinInterval,
                                int aMaxInterval,
                                int aApperance,
-                               uint16_t aManufacturerLen,
-                               char* aManufacturerData,
-                               uint16_t aServiceDataLen,
-                               char* aServiceData,
-                               uint16_t aServiceUUIDLen,
-                               char* aServiceUUID,
+                               const nsTArray<uint8_t>& aManufacturerData,
+                               const nsTArray<uint8_t>& aServiceData,
+                               const nsTArray<BluetoothUuid>& aServiceUuids,
                                BluetoothGattResultHandler* aRes);
 
   nsresult ClientTestCommandCmd(int aCommand,
@@ -676,6 +673,8 @@ protected:
   class ClientScanResultInitOp;
   class ServerConnectionInitOp;
   class ServerRequestWriteInitOp;
+  class ServerCharacteristicAddedInitOp;
+  class ServerDescriptorAddedInitOp;
 
   void ClientRegisterNtf(const DaemonSocketPDUHeader& aHeader,
                                DaemonSocketPDU& aPDU);
@@ -906,9 +905,9 @@ public:
                   int aMinInterval,
                   int aMaxInterval,
                   int aApperance,
-                  uint16_t aManufacturerLen, char* aManufacturerData,
-                  uint16_t aServiceDataLen, char* aServiceData,
-                  uint16_t aServiceUuidLen, char* aServiceUuid,
+                  const nsTArray<uint8_t>& aManufacturerData,
+                  const nsTArray<uint8_t>& aServiceData,
+                  const nsTArray<BluetoothUuid>& aServiceUuids,
                   BluetoothGattResultHandler* aRes) override;
 
   void TestCommand(int aCommand,

@@ -23,11 +23,9 @@ class nsIPresShell;
 interface nsIURI;
 interface nsIChannel;
 interface nsIContentViewer;
-interface nsIURIContentListener;
 interface nsIDOMEventTarget;
 interface nsIDocShellLoadInfo;
 interface nsIEditor;
-interface nsIWebNavigation;
 interface nsISimpleEnumerator;
 interface nsIInputStream;
 interface nsIRequest;
@@ -38,7 +36,6 @@ interface nsIScriptGlobalObject;
 interface nsIDOMStorage;
 interface nsIPrincipal;
 interface nsIWebBrowserPrint;
-interface nsIVariant;
 interface nsIPrivacyTransitionObserver;
 interface nsIReflowObserver;
 interface nsIScrollObserver;
@@ -46,7 +43,7 @@ interface nsITabParent;
 
 typedef unsigned long nsLoadFlags;
 
-[scriptable, builtinclass, uuid(44aca825-0080-49f1-8407-df62183e5ec1)]
+[scriptable, builtinclass, uuid(98358234-3936-4b95-b051-fcda4e55b52d)]
 interface nsIDocShell : nsIDocShellTreeItem
 {
   /**
@@ -241,6 +238,11 @@ interface nsIDocShell : nsIDocShellTreeItem
   attribute nsIDOMEventTarget chromeEventHandler;
 
   /**
+    * This allows chrome to set a custom User agent on a specific docshell
+    */
+  attribute DOMString customUserAgent;
+
+  /**
    * Whether to allow plugin execution
    */
   attribute boolean allowPlugins;
@@ -253,7 +255,7 @@ interface nsIDocShell : nsIDocShellTreeItem
   /**
    * Attribute stating if refresh based redirects can be allowed
    */
-  attribute  boolean allowMetaRedirects;
+  attribute boolean allowMetaRedirects;
 
   /**
    * Attribute stating if it should allow subframes (framesets/iframes) or not
@@ -632,6 +634,12 @@ interface nsIDocShell : nsIDocShellTreeItem
   attribute boolean isActive;
 
   /**
+   * Sets whether a docshell is active, as above, but ensuring it does
+   * not discard its layers
+   */
+  void setIsActiveAndForeground(in boolean aIsActive);
+
+  /**
    * Puts the docshell in prerendering mode. noscript because we want only
    * native code to be able to put a docshell in prerendering.
    */
@@ -820,6 +828,12 @@ interface nsIDocShell : nsIDocShellTreeItem
     * hack, so be careful.
     */
    void setIsBrowserInsideApp(in unsigned long containingAppId);
+
+   /**
+    * Indicate that this docshell corresponds to a signed package with
+    * the given packageId.
+    */
+   void setIsSignedPackage(in AString packageId);
 
   /**
    * Returns the id of the app associated with this docshell.  If this docshell
@@ -1054,7 +1068,9 @@ interface nsIDocShell : nsIDocShellTreeItem
   [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStart(in string aReason,
                                                                   in wstring functionName,
                                                                   in wstring fileName,
-                                                                  in unsigned long lineNumber);
+                                                                  in unsigned long lineNumber,
+                                                                  in jsval asyncStack,
+                                                                  in jsval asyncCause);
   [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStop();
 
   /**
@@ -1074,4 +1090,15 @@ interface nsIDocShell : nsIDocShellTreeItem
    * top level chrome docshell.
    */
   attribute boolean windowDraggingAllowed;
+
+  /**
+   * Sets/gets the current scroll restoration mode.
+   * @see https://html.spec.whatwg.org/#dom-history-scroll-restoration
+  */
+  attribute boolean currentScrollRestorationIsManual;
+
+  /*
+   * Sets the user context ID for this docshell.
+   */
+  void setUserContextId(in unsigned long aUserContextId);
 };

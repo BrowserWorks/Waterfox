@@ -1,7 +1,16 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* globals document, window */
 "use strict";
+
+// Maps known URLs to friendly source group names and put them at the
+// bottom of source list.
+var KNOWN_SOURCE_GROUPS = {
+  "Add-on SDK": "resource://gre/modules/commonjs/",
+};
+
+KNOWN_SOURCE_GROUPS[L10N.getStr("anonymousSourcesLabel")] = "anonymous";
 
 var XULUtils = {
   /**
@@ -38,7 +47,7 @@ const CHARACTER_LIMIT = 250; // line character limit
 var SourceUtils = {
   _labelsCache: new Map(), // Can't use WeakMaps because keys are strings.
   _groupsCache: new Map(),
-  _minifiedCache: new WeakMap(),
+  _minifiedCache: new Map(),
 
   /**
    * Returns true if the specified url and/or content type are specific to
@@ -59,12 +68,11 @@ var SourceUtils = {
    * @return object
    *         A promise that resolves to true if source text is minified.
    */
-  isMinified: Task.async(function*(sourceClient) {
-    if (this._minifiedCache.has(sourceClient)) {
-      return this._minifiedCache.get(sourceClient);
+  isMinified: function(key, text) {
+    if (this._minifiedCache.has(key)) {
+      return this._minifiedCache.get(key);
     }
 
-    let [, text] = yield DebuggerController.SourceScripts.getText(sourceClient);
     let isMinified;
     let lineEndIndex = 0;
     let lineStartIndex = 0;
@@ -94,9 +102,9 @@ var SourceUtils = {
     isMinified =
       ((indentCount / lines) * 100) < INDENT_COUNT_THRESHOLD || overCharLimit;
 
-    this._minifiedCache.set(sourceClient, isMinified);
+    this._minifiedCache.set(key, isMinified);
     return isMinified;
-  }),
+  },
 
   /**
    * Clears the labels, groups and minify cache, populated by methods like

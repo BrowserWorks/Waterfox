@@ -69,6 +69,35 @@ async_test(function(t) {
   }, 'Service Worker responds to fetch event with the referrer URL');
 
 async_test(function(t) {
+    var scope = 'resources/simple.html?clientId';
+    var frame;
+    service_worker_unregister_and_register(t, worker, scope)
+      .then(function(reg) {
+          return wait_for_state(t, reg.installing, 'activated');
+        })
+      .then(function() { return with_iframe(scope); })
+      .then(function(f) {
+          frame = f;
+          assert_equals(
+            frame.contentDocument.body.textContent,
+            'Client ID Not Found',
+            'Service Worker should respond to fetch with a client id');
+          return frame.contentWindow.fetch('resources/other.html?clientId');
+        })
+      .then(function(response) { return response.text(); })
+      .then(function(response_text) {
+          var new_client_id = response_text.substr(17);
+          assert_equals(
+            response_text.substr(0, 15),
+            'Client ID Found',
+            'Service Worker should respond to fetch with an existing client id');
+          frame.remove();
+          return service_worker_unregister_and_done(t, scope);
+        })
+      .catch(unreached_rejection(t));
+  }, 'Service Worker responds to fetch event with an existing client id');
+
+async_test(function(t) {
     var scope = 'resources/simple.html?ignore';
     service_worker_unregister_and_register(t, worker, scope)
       .then(function(reg) {
@@ -157,7 +186,7 @@ async_test(function(t) {
           assert_equals(frame.contentDocument.body.textContent,
                         'POST:application/x-www-form-urlencoded:' +
                         'testName1=testValue1&testName2=testValue2');
-          document.body.removeChild(frame);
+          frame.remove();
           return service_worker_unregister_and_done(t, scope);
         })
       .catch(unreached_rejection(t));
@@ -211,6 +240,26 @@ async_test(function(t) {
         })
       .catch(unreached_rejection(t));
   }, 'Service Worker event.respondWith must set the used flag');
+
+async_test(function(t) {
+    var scope = 'resources/simple.html?fragment-check';
+    var fragment = '#/some/fragment';
+    var first_frame;
+    service_worker_unregister_and_register(t, worker, scope)
+      .then(function(reg) {
+          return wait_for_state(t, reg.installing, 'activated');
+        })
+      .then(function() { return with_iframe(scope + fragment); })
+      .then(function(frame) {
+          assert_equals(
+            frame.contentDocument.body.textContent,
+            'Fragment Not Found',
+            'Service worker should not expose URL fragments.');
+          frame.remove();
+          return service_worker_unregister_and_done(t, scope);
+        })
+      .catch(unreached_rejection(t));
+  }, 'Service Worker must not expose FetchEvent URL fragments.');
 
 </script>
 </body>

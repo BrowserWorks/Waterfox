@@ -1136,11 +1136,25 @@ NameToId(PropertyName* name)
     return NON_INTEGER_ATOM_TO_JSID(name);
 }
 
-using PropertyNameVector = js::TraceableVector<PropertyName*>;
+using PropertyNameVector = js::GCVector<PropertyName*>;
 
 template <typename CharT>
 void
 CopyChars(CharT* dest, const JSLinearString& str);
+
+static inline UniqueChars
+StringToNewUTF8CharsZ(ExclusiveContext* maybecx, JSString& str)
+{
+    JS::AutoCheckCannotGC nogc;
+
+    JSLinearString* linear = str.ensureLinear(maybecx);
+    if (!linear)
+        return nullptr;
+
+    return UniqueChars(linear->hasLatin1Chars()
+                       ? JS::CharsToNewUTF8CharsZ(maybecx, linear->latin1Range(nogc)).c_str()
+                       : JS::CharsToNewUTF8CharsZ(maybecx, linear->twoByteRange(nogc)).c_str());
+}
 
 /* GC-allocate a string descriptor for the given malloc-allocated chars. */
 template <js::AllowGC allowGC, typename CharT>

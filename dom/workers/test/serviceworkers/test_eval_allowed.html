@@ -19,11 +19,20 @@
   }
 
   function runTest() {
+    try {
+      eval("1");
+      ok(false, "should throw");
+    }
+    catch (ex) {
+      ok(true, "did throw");
+    }
     register()
       .then(function(swr) {
-        ok(true, "eval in service worker script didn't cause an issue");
-        swr.unregister();
-        SimpleTest.finish();
+        ok(true, "eval restriction didn't get inherited");
+        swr.unregister()
+          .then(function() {
+            SimpleTest.finish();
+          });
       }).catch(function(e) {
         ok(false, "Some test failed with error " + e);
         SimpleTest.finish();

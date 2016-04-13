@@ -143,24 +143,6 @@ struct VariableLocation
     unsigned int index;
 };
 
-struct LinkedVarying
-{
-    LinkedVarying();
-    LinkedVarying(const std::string &name, GLenum type, GLsizei size, const std::string &semanticName,
-        unsigned int semanticIndex, unsigned int semanticIndexCount);
-
-    // Original GL name
-    std::string name;
-
-    GLenum type;
-    GLsizei size;
-
-    // DirectX semantic information
-    std::string semanticName;
-    unsigned int semanticIndex;
-    unsigned int semanticIndexCount;
-};
-
 class Program : angle::NonCopyable
 {
   public:
@@ -233,6 +215,8 @@ class Program : angle::NonCopyable
 
         // TODO(jmadill): use unordered/hash map when available
         std::map<int, VariableLocation> mOutputVariables;
+
+        bool mBinaryRetrieveableHint;
     };
 
     Program(rx::ImplFactory *factory, ResourceManager *manager, GLuint handle);
@@ -255,6 +239,8 @@ class Program : angle::NonCopyable
     Error loadBinary(GLenum binaryFormat, const void *binary, GLsizei length);
     Error saveBinary(GLenum *binaryFormat, void *binary, GLsizei bufSize, GLsizei *length) const;
     GLint getBinaryLength() const;
+    void setBinaryRetrievableHint(bool retrievable);
+    bool getBinaryRetrievableHint() const;
 
     int getInfoLogLength() const;
     void getInfoLog(GLsizei bufSize, GLsizei *length, char *infoLog) const;

@@ -29,7 +29,7 @@
 
 using mozilla::layers::LayerTransactionChild;
 using mozilla::dom::TabChildBase;
-using mozilla::unused;
+using mozilla::Unused;
 
 namespace mozilla {
 namespace layers {
@@ -46,6 +46,9 @@ CompositorChild::CompositorChild(ClientLayerManager *aLayerManager)
 
 CompositorChild::~CompositorChild()
 {
+  XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
+                                   new DeleteTask<Transport>(GetTransport()));
+
   if (mCanSend) {
     gfxCriticalError() << "CompositorChild was not deinitialized";
   }
@@ -203,26 +206,26 @@ CompositorChild::RecvInvalidateAll()
 }
 
 #if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
-static void CalculatePluginClip(const gfx::IntRect& aBounds,
-                                const nsTArray<gfx::IntRect>& aPluginClipRects,
-                                const nsIntPoint& aContentOffset,
-                                const nsIntRegion& aParentLayerVisibleRegion,
-                                nsTArray<gfx::IntRect>& aResult,
-                                gfx::IntRect& aVisibleBounds,
+static void CalculatePluginClip(const LayoutDeviceIntRect& aBounds,
+                                const nsTArray<LayoutDeviceIntRect>& aPluginClipRects,
+                                const LayoutDeviceIntPoint& aContentOffset,
+                                const LayoutDeviceIntRegion& aParentLayerVisibleRegion,
+                                nsTArray<LayoutDeviceIntRect>& aResult,
+                                LayoutDeviceIntRect& aVisibleBounds,
                                 bool& aPluginIsVisible)
 {
   aPluginIsVisible = true;
-  nsIntRegion contentVisibleRegion;
+  LayoutDeviceIntRegion contentVisibleRegion;
   // aPluginClipRects (plugin widget origin) - contains *visible* rects
   for (uint32_t idx = 0; idx < aPluginClipRects.Length(); idx++) {
-    gfx::IntRect rect = aPluginClipRects[idx];
+    LayoutDeviceIntRect rect = aPluginClipRects[idx];
     // shift to content origin
     rect.MoveBy(aBounds.x, aBounds.y);
     // accumulate visible rects
     contentVisibleRegion.OrWith(rect);
   }
   // apply layers clip (window origin)
-  nsIntRegion region = aParentLayerVisibleRegion;
+  LayoutDeviceIntRegion region = aParentLayerVisibleRegion;
   region.MoveBy(-aContentOffset.x, -aContentOffset.y);
   contentVisibleRegion.AndWith(region);
   if (contentVisibleRegion.IsEmpty()) {
@@ -231,8 +234,8 @@ static void CalculatePluginClip(const gfx::IntRect& aBounds,
   }
   // shift to plugin widget origin
   contentVisibleRegion.MoveBy(-aBounds.x, -aBounds.y);
-  nsIntRegionRectIterator iter(contentVisibleRegion);
-  for (const gfx::IntRect* rgnRect = iter.Next(); rgnRect; rgnRect = iter.Next()) {
+  LayoutDeviceIntRegion::RectIterator iter(contentVisibleRegion);
+  for (const LayoutDeviceIntRect* rgnRect = iter.Next(); rgnRect; rgnRect = iter.Next()) {
     aResult.AppendElement(*rgnRect);
     aVisibleBounds.UnionRect(aVisibleBounds, *rgnRect);
   }
@@ -240,8 +243,8 @@ static void CalculatePluginClip(const gfx::IntRect& aBounds,
 #endif
 
 bool
-CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset,
-                                                const nsIntRegion& aParentLayerVisibleRegion,
+CompositorChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint& aContentOffset,
+                                                const LayoutDeviceIntRegion& aParentLayerVisibleRegion,
                                                 nsTArray<PluginWindowData>&& aPlugins)
 {
 #if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
@@ -270,8 +273,8 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
     }
     bool isVisible = aPlugins[pluginsIdx].visible();
     if (widget && !widget->Destroyed()) {
-      gfx::IntRect bounds;
-      gfx::IntRect visibleBounds;
+      LayoutDeviceIntRect bounds;
+      LayoutDeviceIntRect visibleBounds;
       // If the plugin is visible update it's geometry.
       if (isVisible) {
         // bounds (content origin) - don't pass true to Resize, it triggers a
@@ -282,10 +285,11 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
                             aContentOffset.y + bounds.y,
                             bounds.width, bounds.height, false);
         NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
-        nsTArray<gfx::IntRect> rectsOut;
+        nsTArray<LayoutDeviceIntRect> rectsOut;
         // This call may change the value of isVisible
         CalculatePluginClip(bounds, aPlugins[pluginsIdx].clip(),
-                            aContentOffset, aParentLayerVisibleRegion,
+                            aContentOffset,
+                            aParentLayerVisibleRegion,
                             rectsOut, visibleBounds, isVisible);
         // content clipping region (widget origin)
         rv = widget->SetWindowClipRegion(rectsOut, false);
@@ -306,7 +310,8 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
         // Work around for flash's crummy sandbox. See bug 762948. This call
         // digs down into the window hirearchy, invalidating regions on
         // windows owned by other processes.
-        mozilla::widget::WinUtils::InvalidatePluginAsWorkaround(widget, visibleBounds);
+        mozilla::widget::WinUtils::InvalidatePluginAsWorkaround(
+          widget, visibleBounds);
 #else
         rv = widget->Invalidate(visibleBounds);
         NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
@@ -318,7 +323,7 @@ CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset
   // Any plugins we didn't update need to be hidden, as they are
   // not associated with visible content.
   nsIWidget::UpdateRegisteredPluginWindowVisibility((uintptr_t)parent, visiblePluginIds);
-#if defined(XP_WIN)
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
   SendRemotePluginsReady();
 #endif
   return true;
@@ -336,7 +341,7 @@ CompositorChild::RecvHideAllPlugins(const uintptr_t& aParentWidget)
   MOZ_ASSERT(NS_IsMainThread());
   nsTArray<uintptr_t> list;
   nsIWidget::UpdateRegisteredPluginWindowVisibility(aParentWidget, list);
-#if defined(XP_WIN)
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
   SendRemotePluginsReady();
 #endif
   return true;
@@ -350,9 +355,10 @@ CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransact
 {
   if (mLayerManager) {
     MOZ_ASSERT(aId == 0);
-    mLayerManager->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
+    RefPtr<ClientLayerManager> m = mLayerManager;
+    m->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
   } else if (aId != 0) {
-    dom::TabChild *child = dom::TabChild::GetFrom(aId);
+    RefPtr<dom::TabChild> child = dom::TabChild::GetFrom(aId);
     if (child) {
       child->DidComposite(aTransactionId, aCompositeStart, aCompositeEnd);
     }
@@ -510,7 +516,7 @@ CompositorChild::RecvRemotePaintIsReady()
   TabChildBase* tabChildBase = static_cast<TabChildBase*>(iTabChildBase.get());
   TabChild* tabChild = static_cast<TabChild*>(tabChildBase);
   MOZ_ASSERT(tabChild);
-  unused << tabChild->SendRemotePaintIsReady();
+  Unused << tabChild->SendRemotePaintIsReady();
   mWeakTabChild = nullptr;
   return true;
 }
@@ -521,7 +527,7 @@ CompositorChild::RequestNotifyAfterRemotePaint(TabChild* aTabChild)
 {
   MOZ_ASSERT(aTabChild, "NULL TabChild not allowed in CompositorChild::RequestNotifyAfterRemotePaint");
   mWeakTabChild = do_GetWeakReference( static_cast<dom::TabChildBase*>(aTabChild) );
-  unused << SendRequestNotifyAfterRemotePaint();
+  Unused << SendRequestNotifyAfterRemotePaint();
 }
 
 void

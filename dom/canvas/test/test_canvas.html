@@ -11265,22 +11265,7 @@ isPixel(ctx, 50,25, 0,255,0,255, 0);
 isPixel(ctx, 1,1, 0,255,0,255, 0);
 isPixel(ctx, 98,1, 0,255,0,255, 0);
 isPixel(ctx, 1,48, 0,255,0,255, 0);
-// Fails on Linux with Azure/Cairo only
-// The arc is drawn badly due to Cairo limitations, the error only becomes
-// apparent on Linux because of anti-aliasing, probably due to X.
-// The limitation is that Cairo draws arcs by stroking perpendicular to the arc,
-// and at very large stroke thicknesses, this becomes a fan. Where exactly the
-// 'blades' of the fan appear seems to depend on exactly how the arc is defined
-// and the platform. So if the blades of the fan are where pixels are tested it
-// passes the test, if the testing pixels fall in between the blades, then we fail.
-// With Thebes/Cairo, we were rendering wrong, but got lucky with the test, now
-// we are not so lucky.
-// Bug 764125
-if (IsAzureCairo() && IsLinux()) {
-    todo_isPixel(ctx, 20,48, 0,255,0,255, 0);
-} else {
-    isPixel(ctx, 20,48, 0,255,0,255, 0);
-}
+isPixel(ctx, 20,48, 0,255,0,255, 0);
 isPixel(ctx, 98,48, 0,255,0,255, 0);
 
 }
@@ -14401,12 +14386,7 @@ ctx.moveTo(50, 25);
 ctx.bezierCurveTo(50, 25, 50, 25, 50, 25);
 ctx.stroke();
 
-if (IsAzureSkia()) {
-  isPixel(ctx, 50,25, 0,255,0,255, 0);
-} else {
-  todo_isPixel(ctx, 50,25, 0,255,0,255, 0);
-}
-
+todo_isPixel(ctx, 50,25, 0,255,0,255, 0);
 
 }
 </script>
@@ -14438,11 +14418,7 @@ ctx.moveTo(50, 25);
 ctx.lineTo(50, 25);
 ctx.stroke();
 
-if (IsAzureSkia()) {
-  isPixel(ctx, 50,25, 0,255,0,255, 0);
-} else {
-  todo_isPixel(ctx, 50,25, 0,255,0,255, 0);
-}
+todo_isPixel(ctx, 50,25, 0,255,0,255, 0);
 
 }
 </script>
@@ -21536,6 +21512,20 @@ isPixel(ctx, 50,25, 0,255,0,255, 0);
 
 </script>
 
+<!-- [[[ test_2d.clearRect.testdoubleprecision.html ]]] -->
+
+<p>Canvas test: 2d.clearRect.testdoubleprecision</p>
+<canvas id="c690" width="100" height="50"><p class="fallback">FAIL (fallback content)</p></canvas>
+<script>
+
+function test_2d_clearRect_testdoubleprecision() {
+  var canvas = document.getElementById('c690');
+  ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 1, 1, 1, 0, 0);
+  ctx.clearRect(-1.79e+308, 0, 1.79e+308, 8);
+}
+</script>
+
 <script>
 
 function asyncTestsDone() {
@@ -24835,7 +24825,13 @@ try {
  } catch (e) {
   ok(false, "unexpected exception thrown in: test_type_replace");
  }
- 
+ try {
+   test_2d_clearRect_testdoubleprecision();
+ } catch(e) {
+   throw e;
+   ok(false, "unexpected exception thrown in: test_2d_clearRect_testdoubleprecision");
+ }
+
  //run the asynchronous tests
  try {
   test_2d_drawImage_animated_apng();

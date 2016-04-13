@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "webrtc/base/checks.h"
 #include "webrtc/modules/video_coding/main/source/packet.h"
 #include "webrtc/system_wrappers/interface/logging.h"
 
@@ -21,7 +22,6 @@ namespace webrtc {
 VCMFrameBuffer::VCMFrameBuffer()
   :
     _state(kStateEmpty),
-    _frameCounted(false),
     _nackCount(0),
     _latestPacketTimeMs(-1) {
 }
@@ -33,7 +33,6 @@ VCMFrameBuffer::VCMFrameBuffer(const VCMFrameBuffer& rhs)
 :
 VCMEncodedFrame(rhs),
 _state(rhs._state),
-_frameCounted(rhs._frameCounted),
 _sessionInfo(),
 _nackCount(rhs._nackCount),
 _latestPacketTimeMs(rhs._latestPacketTimeMs) {
@@ -74,6 +73,15 @@ int VCMFrameBuffer::Tl0PicId() const {
 
 bool VCMFrameBuffer::NonReference() const {
   return _sessionInfo.NonReference();
+}
+
+void VCMFrameBuffer::SetGofInfo(const GofInfoVP9& gof_info, size_t idx) {
+  _sessionInfo.SetGofInfo(gof_info, idx);
+  // TODO(asapersson): Consider adding hdr->VP9.ref_picture_id for testing.
+  _codecSpecificInfo.codecSpecific.VP9.temporal_idx =
+      gof_info.temporal_idx[idx];
+  _codecSpecificInfo.codecSpecific.VP9.temporal_up_switch =
+      gof_info.temporal_up_switch[idx];
 }
 
 bool
@@ -129,7 +137,9 @@ VCMFrameBuffer::InsertPacket(const VCMPacket& packet,
       _encodedHeight = packet.height;
     }
 
-    CopyCodecSpecific(&packet.codecSpecificHeader);
+    // Don't copy payload specific data for empty packets (e.g padding packets).
+    if (packet.sizeBytes > 0)
+      CopyCodecSpecific(&packet.codecSpecificHeader);
 
     int retVal = _sessionInfo.InsertPacket(packet, _buffer,
                                            decode_error_mode,
@@ -145,6 +155,18 @@ VCMFrameBuffer::InsertPacket(const VCMPacket& packet,
     _length = Length() + static_cast<uint32_t>(retVal);
 
     _latestPacketTimeMs = timeInMs;
+
+    // http://www.etsi.org/deliver/etsi_ts/126100_126199/126114/12.07.00_60/
+    // ts_126114v120700p.pdf Section 7.4.5.
+    // The MTSI client shall add the payload bytes as defined in this clause
+    // onto the last RTP packet in each group of packets which make up a key
+    // frame (I-frame or IDR frame in H.264 (AVC), or an IRAP picture in H.265
+    // (HEVC)).
+    if (packet.markerBit) {
+      DCHECK(!_rotation_set);
+      _rotation = packet.codecSpecificHeader.rotation;
+      _rotation_set = true;
+    }
 
     if (_sessionInfo.complete()) {
       SetState(kStateComplete);
@@ -191,7 +213,6 @@ VCMFrameBuffer::Reset() {
     _length = 0;
     _timeStamp = 0;
     _sessionInfo.Reset();
-    _frameCounted = false;
     _payloadType = 0;
     _nackCount = 0;
     _latestPacketTimeMs = -1;
@@ -233,15 +254,6 @@ VCMFrameBuffer::SetState(VCMFrameBufferStateEnum state) {
     _state = state;
 }
 
-// Set counted status (as counted by JB or not)
-void VCMFrameBuffer::SetCountedFrame(bool frameCounted) {
-    _frameCounted = frameCounted;
-}
-
-bool VCMFrameBuffer::GetCountedFrame() const {
-    return _frameCounted;
-}
-
 // Get current state of frame
 VCMFrameBufferStateEnum
 VCMFrameBuffer::GetState() const {
@@ -268,11 +280,11 @@ VCMFrameBuffer::PrepareForDecode(bool continuous) {
             _sessionInfo.BuildVP8FragmentationHeader(_buffer, _length,
                                                      &_fragmentation);
     } else {
-        int bytes_removed = _sessionInfo.MakeDecodable();
+        size_t bytes_removed = _sessionInfo.MakeDecodable();
         _length -= bytes_removed;
     }
 #else
-    int bytes_removed = _sessionInfo.MakeDecodable();
+    size_t bytes_removed = _sessionInfo.MakeDecodable();
     _length -= bytes_removed;
 #endif
     // Transfer frame information to EncodedFrame and create any codec

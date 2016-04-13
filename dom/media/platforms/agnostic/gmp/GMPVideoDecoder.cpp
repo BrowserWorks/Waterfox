@@ -118,7 +118,7 @@ GMPVideoDecoder::InitTags(nsTArray<nsCString>& aTags)
 nsCString
 GMPVideoDecoder::GetNodeId()
 {
-  return NS_LITERAL_CSTRING("");
+  return SHARED_GMP_DECODING_NODE_ID;
 }
 
 GMPUniquePtr<GMPVideoEncodedFrame>
@@ -167,11 +167,20 @@ GMPVideoDecoder::CreateFrame(MediaRawData* aSample)
 void
 GMPVideoDecoder::GMPInitDone(GMPVideoDecoderProxy* aGMP, GMPVideoHost* aHost)
 {
+  MOZ_ASSERT(IsOnGMPThread());
+
   if (!aGMP) {
-    mInitPromise.Reject(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
+    mInitPromise.RejectIfExists(MediaDataDecoder::DecoderFailureReason::INIT_ERROR, __func__);
     return;
   }
   MOZ_ASSERT(aHost);
+
+  if (mInitPromise.IsEmpty()) {
+    // GMP must have been shutdown while we were waiting for Init operation
+    // to complete.
+    aGMP->Close();
+    return;
+  }
 
   GMPVideoCodec codec;
   memset(&codec, 0, sizeof(codec));
@@ -247,6 +256,10 @@ GMPVideoDecoder::Input(MediaRawData* aSample)
   mAdapter->SetLastStreamOffset(sample->mOffset);
 
   GMPUniquePtr<GMPVideoEncodedFrame> frame = CreateFrame(sample);
+  if (!frame) {
+    mCallback->Error();
+    return NS_ERROR_FAILURE;
+  }
   nsTArray<uint8_t> info; // No codec specific per-frame info to pass.
   nsresult rv = mGMP->Decode(Move(frame), false, info, 0);
   if (NS_FAILED(rv)) {
@@ -290,6 +303,7 @@ GMPVideoDecoder::Shutdown()
   if (!mGMP) {
     return NS_ERROR_FAILURE;
   }
+  // Note this unblocks flush and drain operations waiting for callbacks.
   mGMP->Close();
   mGMP = nullptr;
 

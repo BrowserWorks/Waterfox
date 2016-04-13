@@ -2,7 +2,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from abc import ABCMeta, abstractmethod
 import os
 import posixpath
 import re
@@ -10,6 +9,8 @@ import subprocess
 import tempfile
 import time
 import traceback
+
+from abc import ABCMeta, abstractmethod
 
 
 class ADBProcess(object):
@@ -65,6 +66,16 @@ class ADBError(Exception):
     be handled and the device can continue to be used.
     """
     pass
+
+class ADBListDevicesError(ADBError):
+    """ADBListDevicesError is raised when errors are found listing the
+    devices, typically not any permissions.
+
+    The devices information is stocked with the *devices* member.
+    """
+    def __init__(self, msg, devices):
+        ADBError.__init__(self, msg)
+        self.devices = devices
 
 class ADBRootError(Exception):
     """ADBRootError is raised when a shell command is to be executed as
@@ -431,6 +442,7 @@ class ADBHost(ADBCommand):
         :type timeout: integer or None
         :returns: an object contain
         :raises: * ADBTimeoutError
+                 * ADBListDevicesError
                  * ADBError
 
         The output of adb devices -l ::
@@ -467,6 +479,14 @@ class ADBHost(ADBCommand):
                         self._logger.warning('devices: Unable to parse '
                                              'remainder for device %s' % line)
                 devices.append(device)
+        for device in devices:
+            if device['state'] == 'no permissions':
+                raise ADBListDevicesError(
+                    "No permissions to detect devices. You should restart the"
+                    " adb server as root:\n"
+                    "\n# adb kill-server\n# adb start-server\n"
+                    "\nor maybe configure your udev rules.",
+                    devices)
         return devices
 
 
@@ -535,50 +555,58 @@ class ADBDevice(ADBCommand):
         self._have_su = False
         self._have_android_su = False
 
-        uid = 'uid=0'
-        cmd_id = 'LD_LIBRARY_PATH=/vendor/lib:/system/lib id'
-        # Is shell already running as root?
         # Catch exceptions due to the potential for segfaults
         # calling su when using an improperly rooted device.
-        try:
-            if self.shell_output("id").find(uid) != -1:
-                self._have_root_shell = True
-        except ADBError:
-            self._logger.debug("Check for root shell failed")
 
+        # Note this check to see if adbd is running is performed on
+        # the device in the state it exists in when the ADBDevice is
+        # initialized. It may be the case that it has been manipulated
+        # since its last boot and that its current state does not
+        # match the state the device will have immediately after a
+        # reboot. For example, if adb root was called manually prior
+        # to ADBDevice being initialized, then self._have_root_shell
+        # will not reflect the state of the device after it has been
+        # rebooted again. Therefore this check will need to be
+        # performed again after a reboot.
+
+        self._check_adb_root(timeout=timeout)
+
+        uid = 'uid=0'
         # Do we have a 'Superuser' sh like su?
         try:
-            if self.shell_output("su -c '%s'" % cmd_id).find(uid) != -1:
+            if self.shell_output("su -c id", timeout=timeout).find(uid) != -1:
                 self._have_su = True
+                self._logger.info("su -c supported")
         except ADBError:
-            self._logger.debug("Check for su failed")
+            self._logger.debug("Check for su -c failed")
 
         # Do we have Android's su?
         try:
-            if self.shell_output("su 0 id").find(uid) != -1:
+            if self.shell_output("su 0 id", timeout=timeout).find(uid) != -1:
                 self._have_android_su = True
+                self._logger.info("su 0 supported")
         except ADBError:
-            self._logger.debug("Check for Android su failed")
+            self._logger.debug("Check for su 0 failed")
 
         self._mkdir_p = None
         # Force the use of /system/bin/ls or /system/xbin/ls in case
         # there is /sbin/ls which embeds ansi escape codes to colorize
         # the output.  Detect if we are using busybox ls. We want each
         # entry on a single line and we don't want . or ..
-        if self.shell_bool("/system/bin/ls /"):
+        if self.shell_bool("/system/bin/ls /", timeout=timeout):
             self._ls = "/system/bin/ls"
-        elif self.shell_bool("/system/xbin/ls /"):
+        elif self.shell_bool("/system/xbin/ls /", timeout=timeout):
             self._ls = "/system/xbin/ls"
         else:
             raise ADBError("ADBDevice.__init__: ls not found")
         try:
-            self.shell_output("%s -1A /" % self._ls)
+            self.shell_output("%s -1A /" % self._ls, timeout=timeout)
             self._ls += " -1A"
         except ADBError:
             self._ls += " -a"
 
         # Do we have cp?
-        self._have_cp = self.shell_bool("type cp")
+        self._have_cp = self.shell_bool("type cp", timeout=timeout)
 
         self._logger.debug("ADBDevice: %s" % self.__dict__)
 
@@ -614,6 +642,28 @@ class ADBDevice(ADBCommand):
             return "usb:%s" % usb
 
         raise ValueError("Unable to get device serial")
+
+    def _check_adb_root(self, timeout=None):
+        self._have_root_shell = False
+        uid = 'uid=0'
+        # Is shell already running as root?
+        try:
+            if self.shell_output("id", timeout=timeout).find(uid) != -1:
+                self._have_root_shell = True
+                self._logger.info("adbd running as root")
+        except ADBError:
+            self._logger.debug("Check for root shell failed")
+
+        # Do we need to run adb root to get a root shell?
+        try:
+            if (not self._have_root_shell and
+                self.command_output(
+                    ["root"],
+                    timeout=timeout).find("cannot run as root") == -1):
+                self._have_root_shell = True
+                self._logger.info("adbd restarted as root")
+        except ADBError:
+            self._logger.debug("Check for root adbd failed")
 
 
     @staticmethod
@@ -953,15 +1003,15 @@ class ADBDevice(ADBCommand):
         It is the caller's responsibilty to clean up by closing
         the stdout and stderr temporary files.
         """
-        if root:
-            ld_library_path='LD_LIBRARY_PATH=/vendor/lib:/system/lib'
-            cmd = '%s %s' % (ld_library_path, cmd)
-            if self._have_root_shell:
-                pass
+        if root and not self._have_root_shell:
+            # If root was requested and we do not already have a root
+            # shell, then use the appropriate version of su to invoke
+            # the shell cmd. Prefer Android's su version since it may
+            # falsely report support for su -c.
+            if self._have_android_su:
+                cmd = "su 0 %s" % cmd
             elif self._have_su:
                 cmd = "su -c \"%s\"" % cmd
-            elif self._have_android_su:
-                cmd = "su 0 \"%s\"" % cmd
             else:
                 raise ADBRootError('Can not run command %s as root!' % cmd)
 
@@ -1106,7 +1156,7 @@ class ADBDevice(ADBCommand):
             args.extend(['-b', b])
         return args
 
-    def clear_logcat(self, timeout=None, buffers=["main"]):
+    def clear_logcat(self, timeout=None, buffers=[]):
         """Clears logcat via adb logcat -c.
 
         :param timeout: The maximum time in
@@ -1124,6 +1174,7 @@ class ADBDevice(ADBCommand):
         buffers = self._get_logcat_buffer_args(buffers)
         cmds = ["logcat", "-c"] + buffers
         self.command_output(cmds, timeout=timeout)
+        self.shell_output("log logcat cleared", timeout=timeout)
 
     def get_logcat(self,
                    filter_specs=[
@@ -1136,7 +1187,7 @@ class ADBDevice(ADBCommand):
                    format="time",
                    filter_out_regexps=[],
                    timeout=None,
-                   buffers=["main"]):
+                   buffers=[]):
         """Returns the contents of the logcat file as a list of strings.
 
         :param list filter_specs: Optional logcat messages to
@@ -1426,23 +1477,30 @@ class ADBDevice(ADBCommand):
             if self._mkdir_p is None or self._mkdir_p:
                 # Use shell_bool to catch the possible
                 # non-zero exitcode if -p is not supported.
-                if self.shell_bool('mkdir -p %s' % path, timeout=timeout):
+                if self.shell_bool('mkdir -p %s' % path, timeout=timeout,
+                                   root=root):
                     self._mkdir_p = True
                     return
             # mkdir -p is not supported. create the parent
             # directories individually.
-            if not self.is_dir(posixpath.dirname(path)):
+            if not self.is_dir(posixpath.dirname(path), root=root):
                 parts = path.split('/')
                 name = "/"
                 for part in parts[:-1]:
                     if part != "":
                         name = posixpath.join(name, part)
-                        if not self.is_dir(name):
+                        if not self.is_dir(name, root=root):
                             # Use shell_output to allow any non-zero
                             # exitcode to raise an ADBError.
                             self.shell_output('mkdir %s' % name,
                                               timeout=timeout, root=root)
-        self.shell_output('mkdir %s' % path, timeout=timeout, root=root)
+
+        # If parents is True and the directory does exist, we don't
+        # need to do anything. Otherwise we call mkdir. If the
+        # directory already exists or if it is a file instead of a
+        # directory, mkdir will fail and we will raise an ADBError.
+        if not parents or not self.is_dir(path, root=root):
+            self.shell_output('mkdir %s' % path, timeout=timeout, root=root)
         if not self.is_dir(path, timeout=timeout, root=root):
             raise ADBError('mkdir %s Failed' % path)
 
@@ -1845,7 +1903,14 @@ class ADBDevice(ADBCommand):
         to determine if the device has completed booting.
         """
         self.command_output(["reboot"], timeout=timeout)
-        self.command_output(["wait-for-device"], timeout=timeout)
+        # command_output automatically inserts a 'wait-for-device'
+        # argument to adb. Issuing an empty command is the same as adb
+        # -s <device> wait-for-device. We don't send an explicit
+        # 'wait-for-device' since that would add duplicate
+        # 'wait-for-device' arguments which is an error in newer
+        # versions of adb.
+        self.command_output([], timeout=timeout)
+        self._check_adb_root(timeout=timeout)
         return self.is_device_ready(timeout=timeout)
 
     @abstractmethod

@@ -35,8 +35,6 @@
 
 using namespace js::jit;
 
-uint64_t ExecutableAllocator::rngSeed;
-
 size_t
 ExecutableAllocator::determinePageSize()
 {
@@ -59,7 +57,6 @@ ExecutableAllocator::computeRandomAllocationAddress()
      * bits of randomness in our selection.
      * x64: [2GiB, 4TiB), with 25 bits of randomness.
      */
-    static const unsigned chunkBits = 16;
 #ifdef JS_CPU_X64
     static const uintptr_t base = 0x0000000080000000;
     static const uintptr_t mask = 0x000003ffffff0000;
@@ -69,24 +66,15 @@ ExecutableAllocator::computeRandomAllocationAddress()
 #else
 # error "Unsupported architecture"
 #endif
-    uint64_t rand = random_next(&rngSeed, 32) << chunkBits;
+
+    if (randomNumberGenerator.isNothing()) {
+        mozilla::Array<uint64_t, 2> seed;
+        js::GenerateXorShift128PlusSeed(seed);
+        randomNumberGenerator.emplace(seed[0], seed[1]);
+    }
+
+    uint64_t rand = randomNumberGenerator.ref().next();
     return (void*) (base | (rand & mask));
-}
-
-static bool
-RandomizeIsBrokenImpl()
-{
-    // We disable everything before Vista, for now.
-    return !mozilla::IsVistaOrLater();
-}
-
-static bool
-RandomizeIsBroken()
-{
-    // Use the compiler's intrinsic guards for |static type value = expr| to avoid some potential
-    // races if runtimes are created from multiple threads.
-    static int result = RandomizeIsBrokenImpl();
-    return !!result;
 }
 
 #ifdef JS_CPU_X64
@@ -138,6 +126,10 @@ ExceptionHandler(PEXCEPTION_RECORD exceptionRecord, _EXCEPTION_REGISTRATION_RECO
 static bool
 RegisterExecutableMemory(void* p, size_t bytes, size_t pageSize)
 {
+    DWORD oldProtect;
+    if (!VirtualProtect(p, pageSize, PAGE_READWRITE, &oldProtect))
+        return false;
+
     ExceptionHandlerRecord* r = reinterpret_cast<ExceptionHandlerRecord*>(p);
 
     // All these fields are specified to be offsets from the base of the
@@ -170,7 +162,6 @@ RegisterExecutableMemory(void* p, size_t bytes, size_t pageSize)
     r->thunk[10] = 0xff;
     r->thunk[11] = 0xe0;
 
-    DWORD oldProtect;
     if (!VirtualProtect(p, pageSize, PAGE_EXECUTE_READ, &oldProtect))
         return false;
 
@@ -232,15 +223,11 @@ js::jit::DeallocateExecutableMemory(void* addr, size_t bytes, size_t pageSize)
 ExecutablePool::Allocation
 ExecutableAllocator::systemAlloc(size_t n)
 {
-    void* allocation = nullptr;
-    if (!RandomizeIsBroken()) {
-        void* randomAddress = computeRandomAllocationAddress();
-        allocation = AllocateExecutableMemory(randomAddress, n, initialProtectionFlags(Executable),
-                                              "js-jit-code", pageSize);
-    }
+    void* randomAddress = computeRandomAllocationAddress();
+    unsigned flags = initialProtectionFlags(Executable);
+    void* allocation = AllocateExecutableMemory(randomAddress, n, flags, "js-jit-code", pageSize);
     if (!allocation) {
-        allocation = AllocateExecutableMemory(nullptr, n, initialProtectionFlags(Executable),
-                                              "js-jit-code", pageSize);
+        allocation = AllocateExecutableMemory(nullptr, n, flags, "js-jit-code", pageSize);
     }
     ExecutablePool::Allocation alloc = { reinterpret_cast<char*>(allocation), n };
     return alloc;
@@ -252,10 +239,10 @@ ExecutableAllocator::systemRelease(const ExecutablePool::Allocation& alloc)
     DeallocateExecutableMemory(alloc.pages, alloc.size, pageSize);
 }
 
-void
+bool
 ExecutableAllocator::reprotectRegion(void* start, size_t size, ProtectionSetting setting)
 {
-    MOZ_ASSERT(nonWritableJitCode);
+    MOZ_ASSERT(NON_WRITABLE_JIT_CODE);
     MOZ_ASSERT(pageSize);
 
     // Calculate the start of the page containing this region,
@@ -271,15 +258,15 @@ ExecutableAllocator::reprotectRegion(void* start, size_t size, ProtectionSetting
 
     DWORD oldProtect;
     int flags = (setting == Writable) ? PAGE_READWRITE : PAGE_EXECUTE_READ;
-    if (!VirtualProtect(pageStart, size, flags, &oldProtect))
-        MOZ_CRASH();
+    return VirtualProtect(pageStart, size, flags, &oldProtect);
 }
 
 /* static */ unsigned
 ExecutableAllocator::initialProtectionFlags(ProtectionSetting protection)
 {
-    if (!nonWritableJitCode)
-        return PAGE_EXECUTE_READWRITE;
-
+#ifdef NON_WRITABLE_JIT_CODE
     return (protection == Writable) ? PAGE_READWRITE : PAGE_EXECUTE_READ;
+#else
+    return PAGE_EXECUTE_READWRITE;
+#endif
 }

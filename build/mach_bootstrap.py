@@ -41,25 +41,6 @@ Note: `{mach} mercurial-setup` does not make any changes without prompting
 you first.
 '''.strip()
 
-OLD_MERCURIAL_TOOLS = '''
-*** MERCURIAL CONFIGURATION POTENTIALLY OUT OF DATE ***
-
-mach has detected that it has been a while since you have run
-`{mach} mercurial-setup`.
-
-Having the latest Mercurial tools and configuration should lead to a better,
-more productive experience when working on Mozilla projects.
-
-Please run `{mach} mercurial-setup` now.
-
-Reminder: `{mach} mercurial-setup` does not make any changes without
-prompting you first.
-
-To avoid this message in the future, run `{mach} mercurial-setup` once a month.
-Or, schedule `{mach} mercurial-setup --update-only` to run automatically in
-the background at least once a month.
-'''.strip()
-
 MERCURIAL_SETUP_FATAL_INTERVAL = 31 * 24 * 60 * 60
 
 
@@ -80,24 +61,19 @@ SEARCH_PATHS = [
     'python/requests',
     'python/slugid',
     'build',
-    'build/pymake',
     'config',
     'dom/bindings',
     'dom/bindings/parser',
     'layout/tools/reftest',
     'other-licenses/ply',
-    'xpcom/idl-parser',
     'testing',
-    'testing/tools/autotry',
-    'testing/taskcluster',
-    'testing/xpcshell',
-    'testing/web-platform',
-    'testing/web-platform/harness',
+    'testing/firefox-ui/harness',
+    'testing/firefox-ui/tests',
+    'testing/luciddream',
     'testing/marionette/client',
     'testing/marionette/client/marionette/runner/mixins/browsermob-proxy-py',
     'testing/marionette/transport',
     'testing/marionette/driver',
-    'testing/luciddream',
     'testing/mozbase/mozcrash',
     'testing/mozbase/mozdebug',
     'testing/mozbase/mozdevice',
@@ -116,6 +92,13 @@ SEARCH_PATHS = [
     'testing/mozbase/moztest',
     'testing/mozbase/mozversion',
     'testing/mozbase/manifestparser',
+    'testing/puppeteer/firefox',
+    'testing/taskcluster',
+    'testing/tools/autotry',
+    'testing/web-platform',
+    'testing/web-platform/harness',
+    'testing/web-platform/tests/tools/wptserve',
+    'testing/xpcshell',
     'xpcom/idl-parser',
 ]
 
@@ -132,16 +115,16 @@ MACH_MODULES = [
     'python/mozbuild/mozbuild/mach_commands.py',
     'python/mozbuild/mozbuild/backend/mach_commands.py',
     'python/mozbuild/mozbuild/compilation/codecomplete.py',
-    'python/mozbuild/mozbuild/compilation/database.py',
     'python/mozbuild/mozbuild/frontend/mach_commands.py',
     'services/common/tests/mach_commands.py',
+    'testing/firefox-ui/mach_commands.py',
     'testing/luciddream/mach_commands.py',
     'testing/mach_commands.py',
-    'testing/taskcluster/mach_commands.py',
     'testing/marionette/mach_commands.py',
     'testing/mochitest/mach_commands.py',
-    'testing/xpcshell/mach_commands.py',
+    'testing/mozharness/mach_commands.py',
     'testing/talos/mach_commands.py',
+    'testing/taskcluster/mach_commands.py',
     'testing/web-platform/mach_commands.py',
     'testing/xpcshell/mach_commands.py',
     'tools/docs/mach_commands.py',
@@ -280,9 +263,6 @@ def bootstrap(topsrcdir, mozilla_dir=None):
         # No last run file means mercurial-setup has never completed.
         if mtime is None:
             print(NO_MERCURIAL_SETUP.format(mach=sys.argv[0]), file=sys.stderr)
-            sys.exit(2)
-        elif time.time() - mtime > MERCURIAL_SETUP_FATAL_INTERVAL:
-            print(OLD_MERCURIAL_TOOLS.format(mach=sys.argv[0]), file=sys.stderr)
             sys.exit(2)
 
     def populate_context(context, key=None):

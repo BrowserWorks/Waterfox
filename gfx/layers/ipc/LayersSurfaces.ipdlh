@@ -7,18 +7,21 @@ using nsIntRegion from "nsRegion.h";
 using struct mozilla::layers::MagicGrallocBufferHandle from "gfxipc/ShadowLayerUtils.h";
 using struct mozilla::layers::GrallocBufferRef from "gfxipc/ShadowLayerUtils.h";
 using struct mozilla::layers::SurfaceDescriptorX11 from "gfxipc/ShadowLayerUtils.h";
+using mozilla::StereoMode from "ImageTypes.h";
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
 using mozilla::WindowsHandle from "ipc/IPCMessageUtils.h";
 using mozilla::gfx::SurfaceFormat from "mozilla/gfx/Types.h";
 using mozilla::gfx::IntRect from "mozilla/gfx/Rect.h";
 using mozilla::gfx::IntSize from "mozilla/gfx/Point.h";
 using gfxImageFormat from "gfxTypes.h";
+using struct mozilla::layers::GonkNativeHandle from "mozilla/layers/GonkNativeHandleUtils.h";
 
 namespace mozilla {
 namespace layers {
 
 union OverlayHandle {
   int32_t;
+  GonkNativeHandle;
   null_t;
 };
 
@@ -90,30 +93,42 @@ struct SurfaceDescriptorSharedGLTexture {
   bool hasAlpha;
 };
 
-struct NewSurfaceDescriptorGralloc {
+struct SurfaceDescriptorGralloc {
   MaybeMagicGrallocBufferHandle buffer;
   bool isOpaque;
 };
 
-/**
- * Used for shmem-backed YCbCr and (flavors of) RGBA textures
- */
-struct SurfaceDescriptorShmem {
-  Shmem data;
+struct RGBDescriptor {
+  IntSize size;
   SurfaceFormat format;
 };
 
-/**
- * Used for "raw memory"-backed YCbCr and (flavors of) RGBA textures
- */
-struct SurfaceDescriptorMemory {
-  uintptr_t data;
-  SurfaceFormat format;
+struct YCbCrDescriptor {
+  IntSize ySize;
+  IntSize cbCrSize;
+  uint32_t yOffset;
+  uint32_t cbOffset;
+  uint32_t crOffset;
+  StereoMode stereoMode;
+};
+
+union BufferDescriptor {
+  RGBDescriptor;
+  YCbCrDescriptor;
+};
+
+union MemoryOrShmem {
+  uintptr_t;
+  Shmem;
+};
+
+struct SurfaceDescriptorBuffer {
+  BufferDescriptor desc;
+  MemoryOrShmem data;
 };
 
 union SurfaceDescriptor {
-  SurfaceDescriptorShmem;
-  SurfaceDescriptorMemory;
+  SurfaceDescriptorBuffer;
   SurfaceDescriptorD3D9;
   SurfaceDescriptorDIB;
   SurfaceDescriptorD3D10;
@@ -123,7 +138,7 @@ union SurfaceDescriptor {
   SurfaceTextureDescriptor;
   EGLImageDescriptor;
   SurfaceDescriptorMacIOSurface;
-  NewSurfaceDescriptorGralloc;
+  SurfaceDescriptorGralloc;
   SurfaceDescriptorSharedGLTexture;
   null_t;
 };

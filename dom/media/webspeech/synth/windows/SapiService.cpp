@@ -8,6 +8,7 @@
 #include "SapiService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsWin32Locale.h"
+#include "GeckoProfiler.h"
 
 #include "mozilla/dom/nsSynthVoiceRegistry.h"
 #include "mozilla/dom/nsSpeechTask.h"
@@ -76,6 +77,11 @@ SapiCallback::OnPause()
   if (FAILED(mSapiClient->Pause())) {
     return NS_ERROR_FAILURE;
   }
+  if (!mTask) {
+    // When calling pause() on child porcess, it may not receive end event
+    // from chrome process yet.
+    return NS_ERROR_FAILURE;
+  }
   mTask->DispatchPause(GetTickCount() - mStartingTime, mCurrentIndex);
   return NS_OK;
 }
@@ -84,6 +90,11 @@ NS_IMETHODIMP
 SapiCallback::OnResume()
 {
   if (FAILED(mSapiClient->Resume())) {
+    return NS_ERROR_FAILURE;
+  }
+  if (!mTask) {
+    // When calling resume() on child porcess, it may not receive end event
+    // from chrome process yet.
     return NS_ERROR_FAILURE;
   }
   mTask->DispatchResume(GetTickCount() - mStartingTime, mCurrentIndex);
@@ -167,6 +178,7 @@ SapiService::SpeechEventCallback(WPARAM aWParam, LPARAM aLParam)
 
 NS_INTERFACE_MAP_BEGIN(SapiService)
   NS_INTERFACE_MAP_ENTRY(nsISpeechService)
+  NS_INTERFACE_MAP_ENTRY(nsIObserver)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsISpeechService)
 NS_INTERFACE_MAP_END
 
@@ -185,6 +197,8 @@ SapiService::~SapiService()
 bool
 SapiService::Init()
 {
+  PROFILER_LABEL_FUNC(js::ProfileEntry::Category::OTHER);
+
   MOZ_ASSERT(!mInitialized);
 
   if (Preferences::GetBool("media.webspeech.synth.test") ||
@@ -362,6 +376,13 @@ NS_IMETHODIMP
 SapiService::GetServiceType(SpeechServiceType* aServiceType)
 {
   *aServiceType = nsISpeechService::SERVICETYPE_INDIRECT_AUDIO;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+SapiService::Observe(nsISupports* aSubject, const char* aTopic,
+                     const char16_t* aData)
+{
   return NS_OK;
 }
 

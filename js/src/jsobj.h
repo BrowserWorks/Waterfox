@@ -22,8 +22,8 @@
 #include "gc/Marking.h"
 #include "js/Conversions.h"
 #include "js/GCAPI.h"
+#include "js/GCVector.h"
 #include "js/HeapAPI.h"
-#include "js/TraceableVector.h"
 #include "vm/Shape.h"
 #include "vm/String.h"
 #include "vm/Xdr.h"
@@ -34,7 +34,7 @@ struct ClassInfo;
 
 namespace js {
 
-using PropertyDescriptorVector = TraceableVector<PropertyDescriptor>;
+using PropertyDescriptorVector = GCVector<PropertyDescriptor>;
 class GCMarker;
 class Nursery;
 
@@ -247,12 +247,11 @@ class JSObject : public js::gc::Cell
     // exist on the scope chain) are kept.
     inline bool isUnqualifiedVarObj() const;
 
-    /*
-     * Objects with an uncacheable proto can have their prototype mutated
-     * without inducing a shape change on the object. Property cache entries
-     * and JIT inline caches should not be filled for lookups across prototype
-     * lookups on the object.
-     */
+    // Objects with an uncacheable proto can have their prototype mutated
+    // without inducing a shape change on the object. JIT inline caches should
+    // do an explicit group guard to guard against this. Singletons always
+    // generate a new shape when their prototype changes, regardless of this
+    // hasUncacheableProto flag.
     inline bool hasUncacheableProto() const;
     bool setUncacheableProto(js::ExclusiveContext* cx) {
         return setFlags(cx, js::BaseShape::UNCACHEABLE_PROTO, GENERATE_SHAPE);
@@ -528,8 +527,8 @@ class JSObject : public js::gc::Cell
      *
      * These XObject classes form a hierarchy. For example, for a cloned block
      * object, the following predicates are true: is<ClonedBlockObject>,
-     * is<BlockObject>, is<NestedScopeObject> and is<ScopeObject>. Each of
-     * these has a respective class that derives and adds operations.
+     * is<NestedScopeObject> and is<ScopeObject>. Each of these has a
+     * respective class that derives and adds operations.
      *
      * A class XObject is defined in a vm/XObject{.h, .cpp, -inl.h} file
      * triplet (along with any class YObject that derives XObject).
@@ -693,18 +692,8 @@ namespace js {
 
 /*** Standard internal methods ********************************************************************
  *
- * The functions below are the fundamental operations on objects.
- *
- * ES6 specifies 14 internal methods that define how objects behave.  The spec
- * is actually quite good on this topic, though you may have to read it a few
- * times. See ES6 draft rev 29 (6 Dec 2014) 6.1.7.2 and 6.1.7.3.
- *
- * When 'obj' is an ordinary object, these functions have boring standard
- * behavior as specified by ES6 draft rev 29 section 9.1; see the section about
- * internal methods in vm/NativeObject.h.
- *
- * Proxies override the behavior of internal methods. So when 'obj' is a proxy,
- * any one of the functions below could do just about anything. See js/Proxy.h.
+ * The functions below are the fundamental operations on objects. See the
+ * comment about "Standard internal methods" in jsapi.h.
  */
 
 /*
@@ -752,8 +741,7 @@ extern bool
 PreventExtensions(JSContext* cx, HandleObject obj);
 
 /*
- * ES6 [[GetOwnPropertyDescriptor]]. Get a description of one of obj's own
- * properties.
+ * ES6 [[GetOwnProperty]]. Get a description of one of obj's own properties.
  *
  * If no such property exists on obj, return true with desc.object() set to
  * null.
@@ -805,8 +793,8 @@ DefineElement(ExclusiveContext* cx, HandleObject obj, uint32_t index, HandleValu
               unsigned attrs = JSPROP_ENUMERATE);
 
 /*
- * ES6 [[HasProperty]]. Set *foundp to true if `id in obj` (that is, if obj has
- * an own or inherited property obj[id]), false otherwise.
+ * ES6 [[Has]]. Set *foundp to true if `id in obj` (that is, if obj has an own
+ * or inherited property obj[id]), false otherwise.
  */
 inline bool
 HasProperty(JSContext* cx, HandleObject obj, HandleId id, bool* foundp);
@@ -993,6 +981,20 @@ LookupProperty(JSContext* cx, HandleObject obj, PropertyName* name,
 extern bool
 HasOwnProperty(JSContext* cx, HandleObject obj, HandleId id, bool* result);
 
+/**
+ * This enum is used to select whether the defined functions should be marked as
+ * builtin native instrinsics for self-hosted code.
+ */
+enum DefineAsIntrinsic {
+    NotIntrinsic,
+    AsIntrinsic
+};
+
+extern bool
+DefineFunctions(JSContext* cx, HandleObject obj, const JSFunctionSpec* fs,
+                DefineAsIntrinsic intrinsic,
+                PropertyDefinitionBehavior behavior = DefineAllProperties);
+
 /*
  * Set a watchpoint: a synchronous callback when the given property of the
  * given object is set.
@@ -1036,59 +1038,6 @@ extern const char*
 GetObjectClassName(JSContext* cx, HandleObject obj);
 
 /*
- * Inner and outer objects
- *
- * GetInnerObject and GetOuterObject (and also GetThisValue, somewhat) have to
- * do with Windows and WindowProxies. There's a screwy invariant that actual
- * Window objects (the global objects of web pages) are never directly exposed
- * to script. Instead we often substitute a WindowProxy.
- *
- * As a result, we have calls to these three "substitute-this-object-for-that-
- * object" functions sprinkled at apparently arbitrary (but actually *very*
- * carefully and nervously selected) places throughout the engine and indeed
- * the universe.
- */
-
-/*
- * If obj is a WindowProxy, return its current inner Window. Otherwise return
- * obj. This function can't fail and never returns nullptr.
- *
- * GetInnerObject is called when we need a scope chain; you never want a
- * WindowProxy on a scope chain.
- *
- * It's also called in a few places where an object comes in from script, and
- * the user probably intends to operate on the Window, not the
- * WindowProxy. Object.prototype.watch and various Debugger features do
- * this. (Users can't simply pass the Window, because the Window isn't exposed
- * to scripts.)
- */
-inline JSObject*
-GetInnerObject(JSObject* obj)
-{
-    if (InnerObjectOp op = obj->getClass()->ext.innerObject) {
-        JS::AutoSuppressGCAnalysis nogc;
-        return op(obj);
-    }
-    return obj;
-}
-
-/*
- * If obj is a Window object, return the WindowProxy. Otherwise return obj.
- * This function can't fail; it never sets an exception or returns nullptr.
- *
- * This must be called before passing an object to script, if the object might
- * be a Window. (But usually those cases involve scope objects, and for those,
- * it is better to call GetThisValue instead.)
- */
-inline JSObject*
-GetOuterObject(JSContext* cx, HandleObject obj)
-{
-    if (ObjectOp op = obj->getClass()->ext.outerObject)
-        return op(cx, obj);
-    return obj;
-}
-
-/*
  * Return an object that may be used as `this` in place of obj. For most
  * objects this just returns obj.
  *
@@ -1099,16 +1048,8 @@ GetOuterObject(JSContext* cx, HandleObject obj)
  *
  * See comments at ComputeImplicitThis.
  */
-inline bool
-GetThisValue(JSContext* cx, HandleObject obj, MutableHandleValue vp)
-{
-    if (ThisValueOp op = obj->getOps()->thisValue)
-        return op(cx, obj, vp);
-
-    vp.setObject(*obj);
-    return true;
-}
-
+Value
+GetThisValue(JSObject* obj);
 
 /* * */
 
@@ -1160,6 +1101,17 @@ GetInitialHeap(NewObjectKind newKind, const Class* clasp)
         return gc::TenuredHeap;
     return gc::DefaultHeap;
 }
+
+bool
+NewObjectWithTaggedProtoIsCachable(ExclusiveContext* cxArg, Handle<TaggedProto> proto,
+                                   NewObjectKind newKind, const Class* clasp);
+
+// ES6 9.1.15 GetPrototypeFromConstructor.
+extern bool
+GetPrototypeFromConstructor(JSContext* cx, js::HandleObject newTarget, js::MutableHandleObject proto);
+
+extern bool
+GetPrototypeFromCallableConstructor(JSContext* cx, const CallArgs& args, js::MutableHandleObject proto);
 
 // Specialized call for constructing |this| with a known function callee,
 // and a known prototype.

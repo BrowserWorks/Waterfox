@@ -21,8 +21,11 @@
 #include "endpointer.h"
 
 #include "mozilla/dom/SpeechRecognitionEvent.h"
+#include "nsContentUtils.h"
 #include "nsIDocument.h"
 #include "nsIObserverService.h"
+#include "nsIPermissionManager.h"
+#include "nsIPrincipal.h"
 #include "nsPIDOMWindow.h"
 #include "nsServiceManagerUtils.h"
 #include "nsQueryObject.h"
@@ -53,14 +56,10 @@ static const uint32_t kSPEECH_DETECTION_TIMEOUT_MS = 10000;
 // kSAMPLE_RATE frames = 1s, kESTIMATION_FRAMES frames = 300ms
 static const uint32_t kESTIMATION_SAMPLES = 300 * kSAMPLE_RATE / 1000;
 
-PRLogModuleInfo*
+LogModule*
 GetSpeechRecognitionLog()
 {
-  static PRLogModuleInfo* sLog;
-  if (!sLog) {
-    sLog = PR_NewLogModule("SpeechRecognition");
-  }
-
+  static LazyLogModule sLog("SpeechRecognition");
   return sLog;
 }
 #define SR_LOG(...) MOZ_LOG(GetSpeechRecognitionLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
@@ -160,11 +159,26 @@ SpeechRecognition::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 bool
 SpeechRecognition::IsAuthorized(JSContext* aCx, JSObject* aGlobal)
 {
-  bool inPrivilegedApp = IsInPrivilegedApp(aCx, aGlobal);
+  nsCOMPtr<nsIPrincipal> principal = nsContentUtils::ObjectPrincipal(aGlobal);
+  
+  nsresult rv;
+  nsCOMPtr<nsIPermissionManager> mgr = do_GetService(NS_PERMISSIONMANAGER_CONTRACTID, &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+
+  uint32_t speechRecognition = nsIPermissionManager::UNKNOWN_ACTION;
+  rv = mgr->TestExactPermissionFromPrincipal(principal, "speech-recognition", &speechRecognition);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+
+  bool hasPermission = (speechRecognition == nsIPermissionManager::ALLOW_ACTION);
+
   bool enableTests = Preferences::GetBool(TEST_PREFERENCE_ENABLE);
   bool enableRecognitionEnable = Preferences::GetBool(TEST_PREFERENCE_RECOGNITION_ENABLE);
   bool enableRecognitionForceEnable = Preferences::GetBool(TEST_PREFERENCE_RECOGNITION_FORCE_ENABLE);
-  return (inPrivilegedApp || enableRecognitionForceEnable || enableTests) && enableRecognitionEnable;
+  return (hasPermission || enableRecognitionForceEnable || enableTests) && enableRecognitionEnable;
 }
 
 already_AddRefed<SpeechRecognition>
@@ -852,9 +866,8 @@ SpeechRecognition::DispatchError(EventType aErrorType,
   RefPtr<SpeechRecognitionError> srError =
     new SpeechRecognitionError(nullptr, nullptr, nullptr);
 
-  ErrorResult err;
   srError->InitSpeechRecognitionError(NS_LITERAL_STRING("error"), true, false,
-                                      aErrorCode, aMessage, err);
+                                      aErrorCode, aMessage);
 
   RefPtr<SpeechEvent> event = new SpeechEvent(this, aErrorType);
   event->mError = srError;

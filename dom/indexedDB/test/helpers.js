@@ -34,7 +34,11 @@ function executeSoon(aFun)
 }
 
 function clearAllDatabases(callback) {
-  SpecialPowers.clearStorageForDoc(SpecialPowers.wrap(document), callback);
+  let qms = SpecialPowers.Services.qms;
+  let principal = SpecialPowers.wrap(document).nodePrincipal;
+  let request = qms.clearStoragesForPrincipal(principal);
+  let cb = SpecialPowers.wrapCallback(callback);
+  request.callback = cb;
 }
 
 var testHarnessGenerator = testHarnessSteps();
@@ -375,7 +379,9 @@ function workerScript() {
   };
 
   self.executeSoon = function(_fun_) {
-    setTimeout(_fun_, 0);
+    var channel = new MessageChannel();
+    channel.port1.postMessage("");
+    channel.port2.onmessage = function(event) { _fun_(); };
   };
 
   self.finishTest = function() {

@@ -6,17 +6,17 @@
 <?xml-stylesheet href="chrome://devtools/skin/projecteditor/projecteditor.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/content/debugger/debugger.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/common.css" type="text/css"?>
-<?xml-stylesheet href="chrome://devtools/content/markupview/markup-view.css" type="text/css"?>
-<?xml-stylesheet href="chrome://devtools/skin/markup-view.css" type="text/css"?>
+<?xml-stylesheet href="chrome://devtools/content/inspector/markup/markup.css" type="text/css"?>
+<?xml-stylesheet href="chrome://devtools/skin/markup.css" type="text/css"?>
 
 <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
 
 <!DOCTYPE window [
-<!ENTITY % scratchpadDTD SYSTEM "chrome://browser/locale/devtools/scratchpad.dtd" >
+<!ENTITY % scratchpadDTD SYSTEM "chrome://devtools/locale/scratchpad.dtd" >
  %scratchpadDTD;
 <!ENTITY % editMenuStrings SYSTEM "chrome://global/locale/editMenuOverlay.dtd">
 %editMenuStrings;
-<!ENTITY % sourceEditorStrings SYSTEM "chrome://browser/locale/devtools/sourceeditor.dtd">
+<!ENTITY % sourceEditorStrings SYSTEM "chrome://devtools/locale/sourceeditor.dtd">
 %sourceEditorStrings;
 ]>
 

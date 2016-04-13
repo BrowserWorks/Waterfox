@@ -252,7 +252,7 @@ already_AddRefed<SharedThreadPool> GetMediaThreadPool(MediaThreadType aType)
       name = "MediaPDecoder";
       break;
     default:
-      MOZ_ASSERT(false);
+      MOZ_FALLTHROUGH_ASSERT("Unexpected MediaThreadType");
     case MediaThreadType::PLAYBACK:
       name = "MediaPlayback";
       break;
@@ -453,7 +453,7 @@ void
 LogToBrowserConsole(const nsAString& aMsg)
 {
   if (!NS_IsMainThread()) {
-    nsAutoString msg(aMsg);
+    nsString msg(aMsg);
     nsCOMPtr<nsIRunnable> task =
       NS_NewRunnableFunction([msg]() { LogToBrowserConsole(msg); });
     NS_DispatchToMainThread(task.forget(), NS_DISPATCH_NORMAL);
@@ -475,7 +475,8 @@ IsAACCodecString(const nsAString& aCodec)
   return
     aCodec.EqualsLiteral("mp4a.40.2") || // MPEG4 AAC-LC
     aCodec.EqualsLiteral("mp4a.40.5") || // MPEG4 HE-AAC
-    aCodec.EqualsLiteral("mp4a.67"); // MPEG2 AAC-LC}
+    aCodec.EqualsLiteral("mp4a.67")   || // MPEG2 AAC-LC
+    aCodec.EqualsLiteral("mp4a.40.29");  // MPEG4 HE-AACv2
 }
 
 bool

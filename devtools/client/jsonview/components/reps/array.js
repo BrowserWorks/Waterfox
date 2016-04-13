@@ -9,7 +9,7 @@
 define(function(require, exports, module) {
 
 // Dependencies
-const React = require("react");
+const React = require("devtools/client/shared/vendor/react");
 const { createFactories } = require("./rep-utils");
 const { Rep } = createFactories(require("./rep"));
 const { ObjectBox } = createFactories(require("./object-box"));
@@ -33,7 +33,7 @@ var ArrayRep = React.createClass({
     var items;
 
     if (mode == "tiny") {
-      items = object.length;
+      items = DOM.span({className: "length"}, object.length);
     } else {
       var max = (mode == "short") ? 3 : 300;
       items = this.arrayIterator(object, max);

@@ -142,9 +142,11 @@ gfxFontGroup *
 gfxPlatformMac::CreateFontGroup(const FontFamilyList& aFontFamilyList,
                                 const gfxFontStyle *aStyle,
                                 gfxTextPerfMetrics* aTextPerf,
-                                gfxUserFontSet *aUserFontSet)
+                                gfxUserFontSet *aUserFontSet,
+                                gfxFloat aDevToCssSize)
 {
-    return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf, aUserFontSet);
+    return new gfxFontGroup(aFontFamilyList, aStyle, aTextPerf,
+                            aUserFontSet, aDevToCssSize);
 }
 
 // these will move to gfxPlatform once all platforms support the fontlist
@@ -425,10 +427,11 @@ gfxPlatformMac::ReadAntiAliasingThreshold()
 }
 
 bool
-gfxPlatformMac::UseAcceleratedCanvas()
+gfxPlatformMac::UseAcceleratedSkiaCanvas()
 {
   // Lion or later is required
-  return nsCocoaFeatures::OnLionOrLater() && Preferences::GetBool("gfx.canvas.azure.accelerated", false);
+  // Bug 1249659 - Lion has some gfx issues so disabled on lion and earlier
+  return nsCocoaFeatures::OnMountainLionOrLater() && gfxPlatform::UseAcceleratedSkiaCanvas();
 }
 
 bool

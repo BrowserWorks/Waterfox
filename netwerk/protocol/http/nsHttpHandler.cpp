@@ -29,6 +29,7 @@
 #include "nsCOMPtr.h"
 #include "nsNetCID.h"
 #include "prprf.h"
+#include "mozilla/Snprintf.h"
 #include "nsAsyncRedirectVerifyHelper.h"
 #include "nsSocketTransportService2.h"
 #include "nsAlgorithm.h"
@@ -46,10 +47,13 @@
 #include "SpdyZlibReporter.h"
 #include "nsIMemoryReporter.h"
 #include "nsIParentalControlsService.h"
+#include "nsPIDOMWindow.h"
 #include "nsINetworkLinkService.h"
 #include "nsHttpChannelAuthProvider.h"
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
+#include "nsSocketTransportService2.h"
+#include "nsIOService.h"
 
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/ipc/URIUtils.h"
@@ -72,11 +76,6 @@
 #include "mozilla/net/HttpChannelChild.h"
 
 
-#ifdef DEBUG
-// defined by the socket transport service while active
-extern PRThread *gSocketThread;
-#endif
-
 #define UA_PREF_PREFIX          "general.useragent."
 #ifdef XP_WIN
 #define UA_SPARE_PLATFORM
@@ -90,6 +89,7 @@ extern PRThread *gSocketThread;
 #define TELEMETRY_ENABLED        "toolkit.telemetry.enabled"
 #define ALLOW_EXPERIMENTS        "network.allow-experiments"
 #define SAFE_HINT_HEADER_VALUE   "safeHint.enabled"
+#define SECURITY_PREFIX          "security."
 
 #define UA_PREF(_pref) UA_PREF_PREFIX _pref
 #define HTTP_PREF(_pref) HTTP_PREF_PREFIX _pref
@@ -102,6 +102,8 @@ extern PRThread *gSocketThread;
 namespace mozilla {
 namespace net {
 
+LazyLogModule gHttpLog("nsHttp");
+
 static nsresult
 NewURI(const nsACString &aSpec,
        const char *aCharset,
@@ -109,19 +111,15 @@ NewURI(const nsACString &aSpec,
        int32_t aDefaultPort,
        nsIURI **aURI)
 {
-    nsStandardURL *url = new nsStandardURL();
-    if (!url)
-        return NS_ERROR_OUT_OF_MEMORY;
-    NS_ADDREF(url);
+    RefPtr<nsStandardURL> url = new nsStandardURL();
 
     nsresult rv = url->Init(nsIStandardURL::URLTYPE_AUTHORITY,
                             aDefaultPort, aSpec, aCharset, aBaseURI);
     if (NS_FAILED(rv)) {
-        NS_RELEASE(url);
         return rv;
     }
 
-    *aURI = url; // no QI needed
+    url.forget(aURI);
     return NS_OK;
 }
 
@@ -132,8 +130,7 @@ NewURI(const nsACString &aSpec,
 nsHttpHandler *gHttpHandler = nullptr;
 
 nsHttpHandler::nsHttpHandler()
-    : mConnMgr(nullptr)
-    , mHttpVersion(NS_HTTP_VERSION_1_1)
+    : mHttpVersion(NS_HTTP_VERSION_1_1)
     , mProxyHttpVersion(NS_HTTP_VERSION_1_1)
     , mCapabilities(NS_HTTP_ALLOW_KEEPALIVE)
     , mReferrerLevel(0xff) // by default we always send a referrer
@@ -147,7 +144,7 @@ nsHttpHandler::nsHttpHandler()
     , mResponseTimeout(PR_SecondsToInterval(300))
     , mResponseTimeoutEnabled(false)
     , mNetworkChangedTimeout(5000)
-    , mMaxRequestAttempts(10)
+    , mMaxRequestAttempts(6)
     , mMaxRequestDelay(10)
     , mIdleSynTimeout(250)
     , mH2MandatorySuiteEnabled(false)
@@ -180,10 +177,10 @@ nsHttpHandler::nsHttpHandler()
     , mDoNotTrackEnabled(false)
     , mSafeHintEnabled(false)
     , mParentalControlEnabled(false)
+    , mHandlerActive(false)
     , mTelemetryEnabled(false)
     , mAllowExperiments(true)
     , mDebugObservations(false)
-    , mHandlerActive(false)
     , mEnableSpdy(false)
     , mSpdyV31(true)
     , mHttp2Enabled(true)
@@ -215,8 +212,6 @@ nsHttpHandler::nsHttpHandler()
     , mTCPKeepaliveLongLivedIdleTimeS(600)
     , mEnforceH1Framing(FRAMECHECK_BARELY)
 {
-    gHttpLog = PR_NewLogModule("nsHttp");
-
     LOG(("Creating nsHttpHandler [this=%p].\n", this));
 
     RegisterStrongMemoryReporter(new SpdyZlibReporter());
@@ -232,7 +227,7 @@ nsHttpHandler::~nsHttpHandler()
     // make sure the connection manager is shutdown
     if (mConnMgr) {
         mConnMgr->Shutdown();
-        NS_RELEASE(mConnMgr);
+        mConnMgr = nullptr;
     }
 
     // Note: don't call NeckoChild::DestroyNeckoChild() here, as it's too late
@@ -253,6 +248,7 @@ nsHttpHandler::Init()
     nsresult rv;
 
     LOG(("nsHttpHandler::Init\n"));
+    MOZ_ASSERT(NS_IsMainThread());
 
     rv = nsHttp::CreateAtomTable();
     if (NS_FAILED(rv))
@@ -283,6 +279,7 @@ nsHttpHandler::Init()
         prefBranch->AddObserver(HTTP_PREF("tcp_keepalive.short_lived_connections"), this, true);
         prefBranch->AddObserver(HTTP_PREF("tcp_keepalive.long_lived_connections"), this, true);
         prefBranch->AddObserver(SAFE_HINT_HEADER_VALUE, this, true);
+        prefBranch->AddObserver(SECURITY_PREFIX, this, true);
         PrefsChanged(prefBranch, nullptr);
     }
 
@@ -296,7 +293,7 @@ nsHttpHandler::Init()
 
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
-    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
+    mCompatFirefox.AssignLiteral("Firefox/" MOZILLA_UAVERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
@@ -390,9 +387,11 @@ nsHttpHandler::Init()
 void
 nsHttpHandler::MakeNewRequestTokenBucket()
 {
-    if (!mConnMgr)
+    LOG(("nsHttpHandler::MakeNewRequestTokenBucket this=%p child=%d\n",
+         this, IsNeckoChild()));
+    if (!mConnMgr || IsNeckoChild()) {
         return;
-
+    }
     RefPtr<EventTokenBucket> tokenBucket =
         new EventTokenBucket(RequestTokenBucketHz(), RequestTokenBucketBurst());
     mConnMgr->UpdateRequestTokenBucket(tokenBucket);
@@ -401,13 +400,15 @@ nsHttpHandler::MakeNewRequestTokenBucket()
 nsresult
 nsHttpHandler::InitConnectionMgr()
 {
+    // Init ConnectionManager only on parent!
+    if (IsNeckoChild()) {
+        return NS_OK;
+    }
+
     nsresult rv;
 
     if (!mConnMgr) {
         mConnMgr = new nsHttpConnectionMgr();
-        if (!mConnMgr)
-            return NS_ERROR_OUT_OF_MEMORY;
-        NS_ADDREF(mConnMgr);
     }
 
     rv = mConnMgr->Init(mMaxConnections,
@@ -557,6 +558,8 @@ nsHttpHandler::GetCookieService()
 nsresult
 nsHttpHandler::GetIOService(nsIIOService** result)
 {
+    NS_ENSURE_ARG_POINTER(result);
+
     NS_ADDREF(*result = mIOService);
     return NS_OK;
 }
@@ -692,18 +695,18 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += '/';
     mUserAgent += mProductSub;
 
-    bool isFirefox = mAppName.EqualsLiteral("Waterfox");
+    bool isFirefox = mAppName.EqualsLiteral("Firefox");
     if (isFirefox || mCompatFirefoxEnabled) {
+        // "Firefox/x.y" (compatibility) app token
+        mUserAgent += ' ';
+        mUserAgent += mCompatFirefox;
+    }
+    if (!isFirefox) {
         // App portion
         mUserAgent += ' ';
         mUserAgent += mAppName;
         mUserAgent += '/';
         mUserAgent += mAppVersion;
-    }
-    if (!isFirefox) {
-        // "Firefox/x.y" (compatibility) app token
-        mUserAgent += ' ';
-        mUserAgent += mCompatFirefox;
     }
 }
 
@@ -741,6 +744,7 @@ nsHttpHandler::InitUserAgentComponents()
     nsresult rv;
     // Add the Android version number to the Fennec platform identifier.
 #if defined MOZ_WIDGET_ANDROID
+#ifndef MOZ_UA_OS_AGNOSTIC // Don't add anything to mPlatform since it's empty.
     nsAutoString androidVersion;
     rv = infoService->GetPropertyAsAString(
         NS_LITERAL_STRING("release_version"), androidVersion);
@@ -755,6 +759,7 @@ nsHttpHandler::InitUserAgentComponents()
         mPlatform += NS_LossyConvertUTF16toASCII(androidVersion);
       }
     }
+#endif
 #endif
     // Add the `Mobile` or `Tablet` or `TV` token when running on device.
     bool isTablet;
@@ -919,6 +924,15 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
 #define PREF_CHANGED(p) ((pref == nullptr) || !PL_strcmp(pref, p))
 #define MULTI_PREF_CHANGED(p) \
   ((pref == nullptr) || !PL_strncmp(pref, p, sizeof(p) - 1))
+
+    // If a security pref changed, lets clear our connection pool reuse
+    if (MULTI_PREF_CHANGED(SECURITY_PREFIX)) {
+        LOG(("nsHttpHandler::PrefsChanged Security Pref Changed %s\n", pref));
+        if (mConnMgr) {
+            mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
+            mConnMgr->PruneDeadConnections();
+        }
+    }
 
     //
     // UA components
@@ -1762,9 +1776,9 @@ PrepareAcceptLanguages(const char *i_AcceptLanguages, nsACString &o_AcceptLangua
                     qval_str = "%s%s;q=0.%02u";
                 }
 
-                wrote = PR_snprintf(p2, available, qval_str, comma, token, u);
+                wrote = snprintf(p2, available, qval_str, comma, token, u);
             } else {
-                wrote = PR_snprintf(p2, available, "%s%s", comma, token);
+                wrote = snprintf(p2, available, "%s%s", comma, token);
             }
 
             q -= dec;
@@ -2029,6 +2043,7 @@ nsHttpHandler::Observe(nsISupports *subject,
                        const char *topic,
                        const char16_t *data)
 {
+    MOZ_ASSERT(NS_IsMainThread());
     LOG(("nsHttpHandler::Observe [topic=\"%s\"]\n", topic));
 
     if (!strcmp(topic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID)) {
@@ -2046,9 +2061,10 @@ nsHttpHandler::Observe(nsISupports *subject,
         if (mWifiTickler)
             mWifiTickler->Cancel();
 
-        // ensure connection manager is shutdown
-        if (mConnMgr)
-            mConnMgr->Shutdown();
+        // Inform nsIOService that network is tearing down.
+        gIOService->SetHttpHandlerAlreadyShutingDown();
+
+        ShutdownConnectionManager();
 
         // need to reset the session start time since cache validation may
         // depend on this value.
@@ -2336,6 +2352,15 @@ nsHttpsHandler::AllowPort(int32_t aPort, const char *aScheme, bool *_retval)
     // don't override anything.
     *_retval = false;
     return NS_OK;
+}
+
+void
+nsHttpHandler::ShutdownConnectionManager()
+{
+    // ensure connection manager is shutdown
+    if (mConnMgr) {
+        mConnMgr->Shutdown();
+    }
 }
 
 } // namespace net

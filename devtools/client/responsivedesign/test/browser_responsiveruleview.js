@@ -1,107 +1,95 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-function test() {
-  let instance;
+"use strict";
 
-  let ruleView;
-  let inspector;
-  let mgr = ResponsiveUI.ResponsiveUIManager;
+// Check that when the viewport is resized, the rule-view refreshes.
+// Also test that ESC does open the split-console, and that the RDM menu item
+// gets updated correctly when needed.
+// TODO: split this test.
 
-  waitForExplicitFinish();
+const TEST_URI = "data:text/html;charset=utf-8,<html><style>" +
+                 "div {" +
+                 "  width: 500px;" +
+                 "  height: 10px;" +
+                 "  background: purple;" +
+                 "} " +
+                 "@media screen and (max-width: 200px) {" +
+                 "  div { " +
+                 "    width: 100px;" +
+                 "  }" +
+                 "};" +
+                 "</style><div></div></html>";
 
-  gBrowser.selectedTab = gBrowser.addTab();
-  gBrowser.selectedBrowser.addEventListener("load", startTest, true);
+add_task(function*() {
+  yield addTab(TEST_URI);
 
-  content.location = "data:text/html;charset=utf-8,<html><style>" +
-    "div {" +
-    "  width: 500px;" +
-    "  height: 10px;" +
-    "  background: purple;" +
-    "} " +
-    "@media screen and (max-width: 200px) {" +
-    "  div { " +
-    "    width: 100px;" +
-    "  }" +
-    "};" +
-    "</style><div></div></html>"
+  info("Open the responsive design mode and set its size to 500x500 to start");
+  let { rdm, manager } = yield openRDM();
+  yield setSize(rdm, manager, 500, 500);
 
-  function numberOfRules() {
-    return ruleView.element.querySelectorAll(".ruleview-code").length;
-  }
+  info("Open the inspector, rule-view and select the test node");
+  let {inspector, view} = yield openRuleView();
+  yield selectNode("div", inspector);
 
-  function startTest() {
-    gBrowser.selectedBrowser.removeEventListener("load", startTest, true);
-    document.getElementById("Tools:ResponsiveUI").doCommand();
-    executeSoon(onUIOpen);
-  }
+  info("Try shrinking the viewport and checking the applied styles");
+  yield testShrink(view, rdm, manager);
 
-  function onUIOpen() {
-    instance = mgr.getResponsiveUIForTab(gBrowser.selectedTab);
-    ok(instance, "instance of the module is attached to the tab.");
+  info("Try growing the viewport and checking the applied styles");
+  yield testGrow(view, rdm, manager);
 
-    instance.stack.setAttribute("notransition", "true");
-    registerCleanupFunction(function() {
-      instance.stack.removeAttribute("notransition");
-    });
+  info("Check that ESC still opens the split console");
+  yield testEscapeOpensSplitConsole(inspector);
 
-    instance.setSize(500, 500);
+  yield closeToolbox();
 
-    openRuleView().then(onInspectorUIOpen);
-  }
+  info("Test the state of the RDM menu item");
+  yield testMenuItem(rdm);
 
-  function onInspectorUIOpen(args) {
-    inspector = args.inspector;
-    ruleView = args.view;
-    ok(inspector, "Got inspector instance");
+  Services.prefs.clearUserPref("devtools.toolbox.splitconsoleEnabled");
+});
 
-    let div = content.document.getElementsByTagName("div")[0];
-    inspector.selection.setNode(div);
-    inspector.once("inspector-updated", testShrink);
-  }
+function* testShrink(ruleView, rdm, manager) {
+  is(numberOfRules(ruleView), 2, "Should have two rules initially.");
 
-  function testShrink() {
+  info("Resize to 100x100 and wait for the rule-view to update");
+  let onRefresh = ruleView.once("ruleview-refreshed");
+  yield setSize(rdm, manager, 100, 100);
+  yield onRefresh;
 
-    is(numberOfRules(), 2, "Should have two rules initially.");
+  is(numberOfRules(ruleView), 3, "Should have three rules after shrinking.");
+}
 
-    ruleView.on("ruleview-refreshed", function refresh() {
-      ruleView.off("ruleview-refreshed", refresh, false);
-      is(numberOfRules(), 3, "Should have three rules after shrinking.");
-      testGrow();
-    }, false);
+function* testGrow(ruleView, rdm, manager) {
+  info("Resize to 500x500 and wait for the rule-view to update");
+  let onRefresh = ruleView.once("ruleview-refreshed");
+  yield setSize(rdm, manager, 500, 500);
+  yield onRefresh;
 
-    instance.setSize(100, 100);
-  }
+  is(numberOfRules(ruleView), 2, "Should have two rules after growing.");
+}
 
-  function testGrow() {
-    ruleView.on("ruleview-refreshed", function refresh() {
-      ruleView.off("ruleview-refreshed", refresh, false);
-      is(numberOfRules(), 2, "Should have two rules after growing.");
-      testEscapeOpensSplitConsole();
-    }, false);
+function* testEscapeOpensSplitConsole(inspector) {
+  ok(!inspector._toolbox._splitConsole, "Console is not split.");
 
-    instance.setSize(500, 500);
-  }
+  info("Press escape");
+  let onSplit = inspector._toolbox.once("split-console");
+  EventUtils.synthesizeKey("VK_ESCAPE", {});
+  yield onSplit;
 
-  function testEscapeOpensSplitConsole() {
-    is(document.getElementById("Tools:ResponsiveUI").getAttribute("checked"), "true", "menu checked");
-    ok(!inspector._toolbox._splitConsole, "Console is not split.");
+  ok(inspector._toolbox._splitConsole, "Console is split after pressing ESC.");
+}
 
-    inspector._toolbox.once("split-console", function() {
-      mgr.once("off", function() {executeSoon(finishUp)});
-      mgr.toggle(window, gBrowser.selectedTab);
-    });
-    EventUtils.synthesizeKey("VK_ESCAPE", {});
-  }
+function* testMenuItem(rdm) {
+  is(document.getElementById("Tools:ResponsiveUI").getAttribute("checked"),
+     "true", "The menu item is checked");
 
-  function finishUp() {
-    ok(inspector._toolbox._splitConsole, "Console is split after pressing escape.");
+  yield closeRDM(rdm);
 
-    // Menus are correctly updated?
-    is(document.getElementById("Tools:ResponsiveUI").getAttribute("checked"), "false", "menu unchecked");
+  is(document.getElementById("Tools:ResponsiveUI").getAttribute("checked"),
+     "false", "The menu item is unchecked");
+}
 
-    Services.prefs.clearUserPref("devtools.toolbox.splitconsoleEnabled");
-    gBrowser.removeCurrentTab();
-    finish();
-  }
+function numberOfRules(ruleView) {
+  return ruleView.element.querySelectorAll(".ruleview-code").length;
 }

@@ -34,6 +34,14 @@
 #include "hb-set-private.hh"
 
 
+#ifndef HB_MAX_NESTING_LEVEL
+#define HB_MAX_NESTING_LEVEL	6
+#endif
+#ifndef HB_MAX_CONTEXT_LENGTH
+#define HB_MAX_CONTEXT_LENGTH	64
+#endif
+
+
 namespace OT {
 
 
@@ -44,8 +52,6 @@ namespace OT {
 
 
 #define NOT_COVERED		((unsigned int) -1)
-#define MAX_NESTING_LEVEL	6
-#define MAX_CONTEXT_LENGTH	64
 
 
 
@@ -539,6 +545,9 @@ struct Feature
 	  c->try_set (&featureParams, new_offset) &&
 	  !featureParams.sanitize (c, this, closure ? closure->tag : HB_TAG_NONE))
 	return_trace (false);
+
+      if (c->edit_count > 1)
+        c->edit_count--; /* This was a "legitimate" edit; don't contribute to error count. */
     }
 
     return_trace (true);
@@ -572,6 +581,11 @@ struct LookupFlag : USHORT
   public:
   DEFINE_SIZE_STATIC (2);
 };
+
+} /* namespace OT */
+/* This has to be outside the namespace. */
+HB_MARK_AS_FLAG_T (OT::LookupFlag::Flags);
+namespace OT {
 
 struct Lookup
 {

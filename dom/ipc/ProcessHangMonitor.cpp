@@ -151,7 +151,6 @@ public:
   NS_IMETHOD BeginStartingDebugger() override;
   NS_IMETHOD EndStartingDebugger() override;
   NS_IMETHOD TerminatePlugin() override;
-  NS_IMETHOD TerminateProcess() override;
   NS_IMETHOD UserCanceled() override;
 
   NS_IMETHOD IsReportForBrowser(nsIFrameLoader* aFrameLoader, bool* aResult) override;
@@ -350,7 +349,7 @@ HangMonitorChild::NotifySlowScriptAsync(TabId aTabId,
                                         unsigned aLineNo)
 {
   if (mIPCOpen) {
-    unused << SendHangEvidence(SlowScriptData(aTabId, aFileName, aLineNo));
+    Unused << SendHangEvidence(SlowScriptData(aTabId, aFileName, aLineNo));
   }
 }
 
@@ -429,7 +428,7 @@ HangMonitorChild::NotifyPluginHangAsync(uint32_t aPluginId)
 
   // bounce back to parent on background thread
   if (mIPCOpen) {
-    unused << SendHangEvidence(PluginHangData(aPluginId));
+    Unused << SendHangEvidence(PluginHangData(aPluginId));
   }
 }
 
@@ -460,25 +459,22 @@ HangMonitorParent::HangMonitorParent(ProcessHangMonitor* aMonitor)
   mReportHangs = mozilla::Preferences::GetBool("dom.ipc.reportProcessHangs", false);
 }
 
-static PLDHashOperator
-DeleteMinidump(const uint32_t& aPluginId, nsString aCrashId, void* aUserData)
-{
-#ifdef MOZ_CRASHREPORTER
-  if (!aCrashId.IsEmpty()) {
-    CrashReporter::DeleteMinidumpFilesForID(aCrashId);
-  }
-#endif
-  return PL_DHASH_NEXT;
-}
-
 HangMonitorParent::~HangMonitorParent()
 {
   // For some reason IPDL doesn't automatically delete the channel for a
   // bridged protocol (bug 1090570). So we have to do it ourselves.
   XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(GetTransport()));
 
+#ifdef MOZ_CRASHREPORTER
   MutexAutoLock lock(mBrowserCrashDumpHashLock);
-  mBrowserCrashDumpIds.EnumerateRead(DeleteMinidump, nullptr);
+
+  for (auto iter = mBrowserCrashDumpIds.Iter(); !iter.Done(); iter.Next()) {
+    nsString crashId = iter.UserData();
+    if (!crashId.IsEmpty()) {
+      CrashReporter::DeleteMinidumpFilesForID(crashId);
+    }
+  }
+#endif
 }
 
 void
@@ -623,7 +619,7 @@ HangMonitorParent::TerminateScript()
   MOZ_RELEASE_ASSERT(MessageLoop::current() == MonitorLoop());
 
   if (mIPCOpen) {
-    unused << SendTerminateScript();
+    Unused << SendTerminateScript();
   }
 }
 
@@ -633,7 +629,7 @@ HangMonitorParent::BeginStartingDebugger()
   MOZ_RELEASE_ASSERT(MessageLoop::current() == MonitorLoop());
 
   if (mIPCOpen) {
-    unused << SendBeginStartingDebugger();
+    Unused << SendBeginStartingDebugger();
   }
 }
 
@@ -643,7 +639,7 @@ HangMonitorParent::EndStartingDebugger()
   MOZ_RELEASE_ASSERT(MessageLoop::current() == MonitorLoop());
 
   if (mIPCOpen) {
-    unused << SendEndStartingDebugger();
+    Unused << SendEndStartingDebugger();
   }
 }
 
@@ -820,6 +816,8 @@ HangMonitoredProcess::TerminatePlugin()
     return NS_ERROR_UNEXPECTED;
   }
 
+  // generates a crash report that includes a browser report taken here
+  // earlier, the content process, and any plugin process(es).
   uint32_t id = mHangData.get_PluginHangData().pluginId();
   plugins::TerminatePlugin(id, NS_LITERAL_CSTRING("HangMonitor"),
                            mBrowserDumpId);
@@ -827,24 +825,6 @@ HangMonitoredProcess::TerminatePlugin()
   if (mActor) {
     mActor->CleanupPluginHang(id, false);
   }
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-HangMonitoredProcess::TerminateProcess()
-{
-  MOZ_RELEASE_ASSERT(NS_IsMainThread());
-
-  if (!mContentParent) {
-    return NS_ERROR_UNEXPECTED;
-  }
-
-  if (mActor && mHangData.type() == HangData::TPluginHangData) {
-    uint32_t id = mHangData.get_PluginHangData().pluginId();
-    mActor->CleanupPluginHang(id, true);
-  }
-
-  mContentParent->KillHard("HangMonitor");
   return NS_OK;
 }
 

@@ -41,7 +41,7 @@ test_data_path = mozpath.join(test_data_path, 'data')
 class TestSandbox(unittest.TestCase):
     def sandbox(self):
         return Sandbox(Context({
-            'DIRS': (list, list, None, None),
+            'DIRS': (list, list, None),
         }))
 
     def test_exec_source_success(self):
@@ -209,6 +209,7 @@ class TestMozbuildSandbox(unittest.TestCase):
 
     def test_special_variables(self):
         sandbox = self.sandbox()
+        sandbox._context.add_source(sandbox.normalize_path('moz.build'))
 
         for k in SPECIAL_VARIABLES:
             with self.assertRaises(KeyError):
@@ -328,9 +329,12 @@ class TestMozbuildSandbox(unittest.TestCase):
 
     def test_substitute_config_files(self):
         sandbox = self.sandbox()
+        sandbox._context.add_source(sandbox.normalize_path('moz.build'))
 
         sandbox.exec_source('CONFIGURE_SUBST_FILES += ["bar", "foo"]')
         self.assertEqual(sandbox['CONFIGURE_SUBST_FILES'], ['bar', 'foo'])
+        for item in sandbox['CONFIGURE_SUBST_FILES']:
+            self.assertIsInstance(item, SourcePath)
 
     def test_invalid_utf8_substs(self):
         """Ensure invalid UTF-8 in substs is converted with an error."""

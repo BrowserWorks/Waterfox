@@ -7,7 +7,7 @@
 "use strict";
 
 loader.lazyRequireGetter(this, "React",
-  "resource://devtools/client/shared/vendor/react.js");
+  "devtools/client/shared/vendor/react");
 loader.lazyRequireGetter(this, "TargetListComponent",
   "devtools/client/aboutdebugging/components/target-list", true);
 loader.lazyRequireGetter(this, "Services");
@@ -15,9 +15,9 @@ loader.lazyRequireGetter(this, "Services");
 loader.lazyImporter(this, "AddonManager",
   "resource://gre/modules/AddonManager.jsm");
 
-const ExtensionIcon = "chrome://mozapps/skin/extensions/extensionGeneric.png";
+const ExtensionIcon = "chrome://mozapps/skin/extensions/extensionGeneric.svg";
 const Strings = Services.strings.createBundle(
-  "chrome://browser/locale/devtools/aboutdebugging.properties");
+  "chrome://devtools/locale/aboutdebugging.properties");
 
 exports.AddonsComponent = React.createClass({
   displayName: "AddonsComponent",

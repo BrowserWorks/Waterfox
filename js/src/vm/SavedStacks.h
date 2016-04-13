@@ -157,6 +157,7 @@ class SavedStacks {
   public:
     SavedStacks()
       : frames(),
+        bernoulliSeeded(false),
         bernoulli(1.0, 0x59fdad7f6b4cc573, 0x91adf38db96a9354),
         creatingSavedFrame(false)
     { }
@@ -164,17 +165,24 @@ class SavedStacks {
     bool     init();
     bool     initialized() const { return frames.initialized(); }
     bool     saveCurrentStack(JSContext* cx, MutableHandleSavedFrame frame, unsigned maxFrameCount = 0);
+    bool     copyAsyncStack(JSContext* cx, HandleObject asyncStack, HandleString asyncCause,
+                            MutableHandleSavedFrame adoptedStack, unsigned maxFrameCount = 0);
     void     sweep(JSRuntime* rt);
     void     trace(JSTracer* trc);
     uint32_t count();
     void     clear();
-    void     setRNGState(uint64_t state0, uint64_t state1) { bernoulli.setRandomState(state0, state1); }
     void     chooseSamplingProbability(JSCompartment*);
+
+    // Set the sampling random number generator's state to |state0| and
+    // |state1|. One or the other must be non-zero. See the comments for
+    // mozilla::non_crypto::XorShift128PlusRNG::setState for details.
+    void     setRNGState(uint64_t state0, uint64_t state1) { bernoulli.setRandomState(state0, state1); }
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
 
   private:
     SavedFrame::Set frames;
+    bool bernoulliSeeded;
     mozilla::FastBernoulliTrial bernoulli;
     bool creatingSavedFrame;
 
@@ -216,7 +224,8 @@ class SavedStacks {
         jsbytecode*        pc;
     };
 
-    struct LocationValue {
+  public:
+    struct LocationValue : public JS::Traceable {
         LocationValue() : source(nullptr), line(0), column(0) { }
         LocationValue(JSAtom* source, size_t line, uint32_t column)
             : source(source),
@@ -224,6 +233,7 @@ class SavedStacks {
               column(column)
         { }
 
+        static void trace(LocationValue* self, JSTracer* trc) { self->trace(trc); }
         void trace(JSTracer* trc) {
             if (source)
                 TraceEdge(trc, &source, "SavedStacks::LocationValue::source");
@@ -234,38 +244,25 @@ class SavedStacks {
         uint32_t         column;
     };
 
-    class MOZ_STACK_CLASS AutoLocationValueRooter : public JS::CustomAutoRooter
-    {
-      public:
-        explicit AutoLocationValueRooter(JSContext* cx)
-            : JS::CustomAutoRooter(cx),
-              value() {}
-
-        inline LocationValue* operator->() { return &value; }
-        void set(LocationValue& loc) { value = loc; }
-        LocationValue& get() { return value; }
-
+    template <typename Outer>
+    struct LocationValueOperations {
+        JSAtom* source() const { return loc().source; }
+        size_t line() const { return loc().line; }
+        uint32_t column() const { return loc().column; }
       private:
-        virtual void trace(JSTracer* trc) {
-            value.trace(trc);
-        }
-
-        SavedStacks::LocationValue value;
+        const LocationValue& loc() const { return static_cast<const Outer*>(this)->get(); }
     };
 
-    class MOZ_STACK_CLASS MutableHandleLocationValue
-    {
-      public:
-        inline MOZ_IMPLICIT MutableHandleLocationValue(AutoLocationValueRooter* location)
-            : location(location) {}
-
-        inline LocationValue* operator->() { return &location->get(); }
-        void set(LocationValue& loc) { location->set(loc); }
-
+    template <typename Outer>
+    struct MutableLocationValueOperations : public LocationValueOperations<Outer> {
+        void setSource(JSAtom* v) { loc().source = v; }
+        void setLine(size_t v) { loc().line = v; }
+        void setColumn(uint32_t v) { loc().column = v; }
       private:
-        AutoLocationValueRooter* location;
+        LocationValue& loc() { return static_cast<Outer*>(this)->get(); }
     };
 
+  private:
     struct PCLocationHasher : public DefaultHasher<PCKey> {
         typedef PointerHasher<JSScript*, 3>   ScriptPtrHasher;
         typedef PointerHasher<jsbytecode*, 3> BytecodePtrHasher;
@@ -285,10 +282,20 @@ class SavedStacks {
     PCLocationMap pcLocationMap;
 
     void sweepPCLocationMap();
-    bool getLocation(JSContext* cx, const FrameIter& iter, MutableHandleLocationValue locationp);
+    bool getLocation(JSContext* cx, const FrameIter& iter, MutableHandle<LocationValue> locationp);
 };
 
 JSObject* SavedStacksMetadataCallback(JSContext* cx, JSObject* target);
+
+template <>
+class RootedBase<SavedStacks::LocationValue>
+  : public SavedStacks::MutableLocationValueOperations<JS::Rooted<SavedStacks::LocationValue>>
+{};
+
+template <>
+class MutableHandleBase<SavedStacks::LocationValue>
+  : public SavedStacks::MutableLocationValueOperations<JS::MutableHandle<SavedStacks::LocationValue>>
+{};
 
 } /* namespace js */
 

@@ -394,6 +394,21 @@ class MochitestArguments(ArgumentContainer):
           "default": False,
           "help": "Run tests with electrolysis preferences and test filtering enabled.",
           }],
+        [["--store-chrome-manifest"],
+         {"action": "store",
+          "help": "Destination path to write a copy of any chrome manifest "
+                  "written by the harness.",
+          "default": None,
+          "suppress": True,
+          }],
+        [["--jscov-dir-prefix"],
+         {"action": "store",
+          "help": "Directory to store per-test line coverage data as json "
+                  "(browser-chrome only). To emit lcov formatted data, set "
+                  "JS_CODE_COVERAGE_OUTPUT_DIR in the environment.",
+          "default": None,
+          "suppress": True,
+          }],
         [["--strict-content-sandbox"],
          {"action": "store_true",
           "default": False,
@@ -530,13 +545,27 @@ class MochitestArguments(ArgumentContainer):
           "help": "Enable logging of unsafe CPOW usage, which is disabled by default for tests",
           "suppress": True,
           }],
+        [["--marionette"],
+         {"default": None,
+          "help": "host:port to use when connecting to Marionette",
+          }],
+        [["--marionette-port-timeout"],
+         {"default": None,
+          "help": "Timeout while waiting for the marionette port to open.",
+          "suppress": True,
+          }],
+        [["--marionette-socket-timeout"],
+         {"default": None,
+          "help": "Timeout while waiting to receive a message from the marionette server.",
+          "suppress": True,
+          }],
     ]
 
     defaults = {
         # Bug 1065098 - The geckomediaplugin process fails to produce a leak
         # log for some reason.
         'ignoreMissingLeaks': ["geckomediaplugin"],
-
+        'extensionsToExclude': ['specialpowers'],
         # Set server information on the args object
         'webServer': '127.0.0.1',
         'httpPort': DEFAULT_PORTS['http'],
@@ -589,7 +618,7 @@ class MochitestArguments(ArgumentContainer):
 
         if options.extra_mozinfo_json:
             if not os.path.isfile(options.extra_mozinfo_json):
-               parser.error("Error: couldn't find mozinfo.json at '%s'."\
+                parser.error("Error: couldn't find mozinfo.json at '%s'."
                              % options.extra_mozinfo_json)
 
             options.extra_mozinfo_json = json.load(open(options.extra_mozinfo_json))
@@ -668,6 +697,26 @@ class MochitestArguments(ArgumentContainer):
         if options.debuggerArgs and not options.debugger:
             parser.error(
                 "--debugger-args requires --debugger.")
+
+        if options.valgrind or options.debugger:
+            # valgrind and some debuggers may cause Gecko to start slowly. Make sure
+            # marionette waits long enough to connect.
+            options.marionette_port_timeout = 900
+            options.marionette_socket_timeout = 540
+
+        if options.store_chrome_manifest:
+            options.store_chrome_manifest = os.path.abspath(options.store_chrome_manifest)
+            if not os.path.isdir(os.path.dirname(options.store_chrome_manifest)):
+                parser.error(
+                    "directory for %s does not exist as a destination to copy a "
+                    "chrome manifest." % options.store_chrome_manifest)
+
+        if options.jscov_dir_prefix:
+            options.jscov_dir_prefix = os.path.abspath(options.jscov_dir_prefix)
+            if not os.path.isdir(options.jscov_dir_prefix):
+                parser.error(
+                    "directory %s does not exist as a destination for coverage "
+                    "data." % options.jscov_dir_prefix)
 
         if options.testingModulesDir is None:
             if build_obj:
@@ -765,7 +814,7 @@ class MochitestArguments(ArgumentContainer):
         if options.test_paths and build_obj:
             # Normalize test paths so they are relative to test root
             options.test_paths = [build_obj._wrap_path_argument(p).relpath()
-                for p in options.test_paths]
+                                  for p in options.test_paths]
 
         return options
 
@@ -779,16 +828,6 @@ class B2GArguments(ArgumentContainer):
           "default": None,
           "help": "Path to B2G repo or QEMU directory.",
           "suppress": True,
-          }],
-        [["--desktop"],
-         {"action": "store_true",
-          "default": False,
-          "help": "Run the tests on a B2G desktop build.",
-          "suppress": True,
-          }],
-        [["--marionette"],
-         {"default": None,
-          "help": "host:port to use when connecting to Marionette",
           }],
         [["--emulator"],
          {"default": None,
@@ -859,11 +898,6 @@ class B2GArguments(ArgumentContainer):
                   "prior to test.",
           "suppress": True,
           }],
-        [["--profile"],
-         {"dest": "profile",
-          "default": None,
-          "help": "For desktop testing, the path to the gaia profile to use.",
-          }],
         [["--logdir"],
          {"dest": "logdir",
           "default": None,
@@ -885,27 +919,17 @@ class B2GArguments(ArgumentContainer):
 
     defaults = {
         'logFile': 'mochitest.log',
+        # Specialpowers is integrated with marionette for b2g,
+        # see marionette's jar.mn.
         'extensionsToExclude': ['specialpowers'],
+        # mochijar doesn't get installed via marionette on android
+        'extensionsToInstall': [os.path.join(here, 'mochijar')],
         # See dependencies of bug 1038943.
         'defaultLeakThreshold': 5536,
     }
 
     def validate(self, parser, options, context):
         """Validate b2g options."""
-
-        if options.desktop and not options.app:
-            if not (build_obj and conditions.is_b2g_desktop(build_obj)):
-                parser.error(
-                    "--desktop specified, but no b2g desktop build detected! Either "
-                    "build for b2g desktop, or point --appname to a b2g desktop binary.")
-        elif build_obj and conditions.is_b2g_desktop(build_obj):
-            options.desktop = True
-            if not options.app:
-                options.app = build_obj.get_binary_path()
-                if not options.app.endswith('-bin'):
-                    options.app = '%s-bin' % options.app
-                if not os.path.isfile(options.app):
-                    options.app = options.app[:-len('-bin')]
 
         if options.remoteWebServer is None:
             if os.name != "nt":
@@ -1052,6 +1076,10 @@ class AndroidArguments(ArgumentContainer):
 
     defaults = {
         'dm': None,
+        # we don't want to exclude specialpowers on android just yet
+        'extensionsToExclude': [],
+        # mochijar doesn't get installed via marionette on android
+        'extensionsToInstall': [os.path.join(here, 'mochijar')],
         'logFile': 'mochitest.log',
         'utilityPath': None,
     }
@@ -1139,7 +1167,8 @@ class AndroidArguments(ArgumentContainer):
             options.robocopIni = os.path.abspath(options.robocopIni)
 
             if not options.robocopApk and build_obj:
-                options.robocopApk = os.path.join(build_obj.topobjdir, 'build', 'mobile',
+                options.robocopApk = os.path.join(build_obj.topobjdir, 'mobile', 'android',
+                                                  'tests', 'browser',
                                                   'robocop', 'robocop-debug.apk')
 
         if options.robocopApk != "":
@@ -1176,7 +1205,7 @@ class MochitestArgumentParser(ArgumentParser):
         if not self.app and build_obj:
             if conditions.is_android(build_obj):
                 self.app = 'android'
-            elif conditions.is_b2g(build_obj) or conditions.is_b2g_desktop(build_obj):
+            elif conditions.is_b2g(build_obj):
                 self.app = 'b2g'
         if not self.app:
             # platform can't be determined and app wasn't specified explicitly,

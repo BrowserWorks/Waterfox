@@ -435,7 +435,9 @@ static const bool isthreaded = true;
 #define JEMALLOC_USES_MAP_ALIGN	 /* Required on Solaris 10. Might improve performance elsewhere. */
 #endif
 
+#ifndef __DECONST
 #define __DECONST(type, var) ((type)(uintptr_t)(const void *)(var))
+#endif
 
 #ifdef MOZ_MEMORY_WINDOWS
    /* MSVC++ does not support C99 variable-length arrays. */
@@ -1571,10 +1573,16 @@ wrtmessage(const char *p1, const char *p2, const char *p3, const char *p4)
 #if defined(MOZ_MEMORY) && !defined(MOZ_MEMORY_WINDOWS)
 #define	_write	write
 #endif
-	_write(STDERR_FILENO, p1, (unsigned int) strlen(p1));
-	_write(STDERR_FILENO, p2, (unsigned int) strlen(p2));
-	_write(STDERR_FILENO, p3, (unsigned int) strlen(p3));
-	_write(STDERR_FILENO, p4, (unsigned int) strlen(p4));
+	// Pretend to check _write() errors to suppress gcc warnings about
+	// warn_unused_result annotations in some versions of glibc headers.
+	if (_write(STDERR_FILENO, p1, (unsigned int) strlen(p1)) < 0)
+		return;
+	if (_write(STDERR_FILENO, p2, (unsigned int) strlen(p2)) < 0)
+		return;
+	if (_write(STDERR_FILENO, p3, (unsigned int) strlen(p3)) < 0)
+		return;
+	if (_write(STDERR_FILENO, p4, (unsigned int) strlen(p4)) < 0)
+		return;
 }
 
 MOZ_JEMALLOC_API
@@ -1600,6 +1608,12 @@ void	(*_malloc_message)(const char *p1, const char *p2, const char *p3,
 #include "mozilla/TaggedAnonymousMemory.h"
 // Note: MozTaggedAnonymousMmap() could call an LD_PRELOADed mmap
 // instead of the one defined here; use only MozTagAnonymousMemory().
+
+#ifdef MOZ_MEMORY_ANDROID
+// Android's pthread.h does not declare pthread_atfork() until SDK 21.
+extern MOZ_EXPORT
+int pthread_atfork(void (*)(void), void (*)(void), void(*)(void));
+#endif
 
 /* RELEASE_ASSERT calls jemalloc_crash() instead of calling MOZ_CRASH()
  * directly because we want crashing to add a frame to the stack.  This makes
@@ -1689,6 +1703,9 @@ malloc_mutex_unlock(malloc_mutex_t *mutex)
 #endif
 }
 
+#if (defined(__GNUC__))
+__attribute__((unused))
+#  endif
 static bool
 malloc_spin_init(malloc_spinlock_t *lock)
 {
@@ -2446,9 +2463,10 @@ pages_map(void *addr, size_t size)
 		if (munmap(ret, size) == -1) {
 			char buf[STRERROR_BUF];
 
-			strerror_r(errno, buf, sizeof(buf));
-			_malloc_message(_getprogname(),
-			    ": (malloc) Error in munmap(): ", buf, "\n");
+			if (strerror_r(errno, buf, sizeof(buf)) == 0) {
+				_malloc_message(_getprogname(),
+					": (malloc) Error in munmap(): ", buf, "\n");
+			}
 			if (opt_abort)
 				abort();
 		}
@@ -2475,9 +2493,10 @@ pages_unmap(void *addr, size_t size)
 	if (munmap(addr, size) == -1) {
 		char buf[STRERROR_BUF];
 
-		strerror_r(errno, buf, sizeof(buf));
-		_malloc_message(_getprogname(),
-		    ": (malloc) Error in munmap(): ", buf, "\n");
+		if (strerror_r(errno, buf, sizeof(buf)) == 0) {
+			_malloc_message(_getprogname(),
+				": (malloc) Error in munmap(): ", buf, "\n");
+		}
 		if (opt_abort)
 			abort();
 	}
@@ -4966,7 +4985,7 @@ arena_new(arena_t *arena)
 		bin->runcur = NULL;
 		arena_run_tree_new(&bin->runs);
 
-		bin->reg_size = (1U << (TINY_MIN_2POW + i));
+		bin->reg_size = (1ULL << (TINY_MIN_2POW + i));
 
 		prev_run_size = arena_bin_run_size_calc(bin, prev_run_size);
 
@@ -6639,8 +6658,6 @@ jemalloc_stats_impl(jemalloc_stats_t *stats)
 		for (j = 0; j < ntbins + nqbins + nsbins; j++) {
 			arena_bin_t* bin = &arena->bins[j];
 			size_t bin_unused = 0;
-			const size_t run_header_size = sizeof(arena_run_t) +
-			    (sizeof(unsigned) * (bin->regs_mask_nelms - 1));
 
 			rb_foreach_begin(arena_chunk_map_t, link, &bin->runs, mapelm) {
 				run = (arena_run_t *)(mapelm->bits & ~pagesize_mask);

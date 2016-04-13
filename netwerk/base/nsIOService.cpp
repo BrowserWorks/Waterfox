@@ -40,6 +40,7 @@
 #include "nsPIDNSService.h"
 #include "nsIProtocolProxyService2.h"
 #include "MainThreadUtils.h"
+#include "nsINode.h"
 #include "nsIWidget.h"
 #include "nsThreadUtils.h"
 #include "mozilla/LoadInfo.h"
@@ -48,8 +49,8 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/net/DNS.h"
 #include "CaptivePortalService.h"
-#include "ClosingService.h"
 #include "ReferrerPolicy.h"
+#include "nsContentSecurityManager.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsINetworkManager.h"
@@ -62,7 +63,6 @@
 
 using namespace mozilla;
 using mozilla::net::IsNeckoChild;
-using mozilla::net::ClosingService;
 using mozilla::net::CaptivePortalService;
 
 #define PORT_PREF_PREFIX           "network.security.ports."
@@ -83,6 +83,10 @@ using mozilla::net::CaptivePortalService;
 
 nsIOService* gIOService = nullptr;
 static bool gHasWarnedUploadChannel2;
+
+static mozilla::LazyLogModule gIOServiceLog("nsIOService");
+#undef LOG
+#define LOG(args)     MOZ_LOG(gIOServiceLog, mozilla::LogLevel::Debug, args)
 
 // A general port blacklist.  Connections to these ports will not be allowed
 // unless the protocol overrides.
@@ -176,6 +180,7 @@ nsIOService::nsIOService()
     , mSettingOffline(false)
     , mSetOfflineValue(false)
     , mShutdown(false)
+    , mHttpHandlerAlreadyShutingDown(false)
     , mNetworkLinkServiceInitialized(false)
     , mChannelEventSinks(NS_CHANNEL_EVENT_SINK_CATEGORY)
     , mAutoDialEnabled(false)
@@ -184,6 +189,7 @@ nsIOService::nsIOService()
     , mLastOfflineStateChange(PR_IntervalNow())
     , mLastConnectivityChange(PR_IntervalNow())
     , mLastNetworkLinkChange(PR_IntervalNow())
+    , mNetTearingDownStarted(0)
 {
 }
 
@@ -252,10 +258,6 @@ nsIOService::Init()
 
     InitializeNetworkLinkService();
 
-    // Start the closing service. Actual PR_Close() will be carried out on
-    // a separate "closing" thread. Start the closing servicee here since this
-    // point is executed only once per session.
-    ClosingService::Start();
     SetOffline(false);
 
     return NS_OK;
@@ -411,8 +413,11 @@ nsIOService::AsyncOnChannelRedirect(nsIChannel* oldChan, nsIChannel* newChan,
     // are in a captive portal, so we trigger a recheck.
     RecheckCaptivePortalIfLocalRedirect(newChan);
 
+    // This is silly. I wish there was a simpler way to get at the global
+    // reference of the contentSecurityManager. But it lives in the XPCOM
+    // service registry.
     nsCOMPtr<nsIChannelEventSink> sink =
-        do_GetService(NS_GLOBAL_CHANNELEVENTSINK_CONTRACTID);
+        do_GetService(NS_CONTENTSECURITYMANAGER_CONTRACTID);
     if (sink) {
         nsresult rv = helper->DelegateOnChannelRedirect(sink, oldChan,
                                                         newChan, flags);
@@ -782,9 +787,7 @@ nsIOService::NewChannelFromURIWithProxyFlagsInternal(nsIURI* aURI,
     // Make sure that all the individual protocolhandlers attach a loadInfo.
     if (aLoadInfo) {
       // make sure we have the same instance of loadInfo on the newly created channel
-      nsCOMPtr<nsILoadInfo> loadInfo;
-      channel->GetLoadInfo(getter_AddRefs(loadInfo));
-
+      nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
       if (aLoadInfo != loadInfo) {
         MOZ_ASSERT(false, "newly created channel must have a loadinfo attached");
         return NS_ERROR_UNEXPECTED;
@@ -973,6 +976,7 @@ nsIOService::GetOffline(bool *offline)
 NS_IMETHODIMP
 nsIOService::SetOffline(bool offline)
 {
+    LOG(("nsIOService::SetOffline offline=%d\n", offline));
     // When someone wants to go online (!offline) after we got XPCOM shutdown
     // throw ERROR_NOT_AVAILABLE to prevent return to online state.
     if ((mShutdown || mOfflineForProfileChange) && !offline)
@@ -1067,9 +1071,6 @@ nsIOService::SetOffline(bool offline)
             DebugOnly<nsresult> rv = mSocketTransportService->Shutdown();
             NS_ASSERTION(NS_SUCCEEDED(rv), "socket transport service shutdown failed");
         }
-        if (mShutdown) {
-            ClosingService::Shutdown();
-        }
     }
 
     mSettingOffline = false;
@@ -1087,6 +1088,7 @@ nsIOService::GetConnectivity(bool *aConnectivity)
 NS_IMETHODIMP
 nsIOService::SetConnectivity(bool aConnectivity)
 {
+    LOG(("nsIOService::SetConnectivity aConnectivity=%d\n", aConnectivity));
     // This should only be called from ContentChild to pass the connectivity
     // value from the chrome process to the content process.
     if (XRE_IsParentProcess()) {
@@ -1095,10 +1097,10 @@ nsIOService::SetConnectivity(bool aConnectivity)
     return SetConnectivityInternal(aConnectivity);
 }
 
-
 nsresult
 nsIOService::SetConnectivityInternal(bool aConnectivity)
 {
+    LOG(("nsIOService::SetConnectivityInternal aConnectivity=%d\n", aConnectivity));
     if (mConnectivity == aConnectivity) {
         // Nothing to do here.
         return NS_OK;
@@ -1217,8 +1219,10 @@ nsIOService::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         bool manage;
         if (mNetworkLinkServiceInitialized &&
             NS_SUCCEEDED(prefs->GetBoolPref(MANAGE_OFFLINE_STATUS_PREF,
-                                            &manage)))
+                                            &manage))) {
+            LOG(("nsIOService::PrefsChanged ManageOfflineStatus manage=%d\n", manage));
             SetManageOfflineStatus(manage);
+        }
     }
 
     if (!pref || strcmp(pref, NECKO_BUFFER_CACHE_COUNT_PREF) == 0) {
@@ -1362,23 +1366,6 @@ IsWifiActive()
 #endif
 }
 
-struct EnumeratorParams {
-    nsIOService *service;
-    int32_t     status;
-};
-
-PLDHashOperator
-nsIOService::EnumerateWifiAppsChangingState(const unsigned int &aKey,
-                                            int32_t aValue,
-                                            void *aUserArg)
-{
-    EnumeratorParams *params = reinterpret_cast<EnumeratorParams*>(aUserArg);
-    if (aValue == nsIAppOfflineInfo::WIFI_ONLY) {
-        params->service->NotifyAppOfflineStatus(aKey, params->status);
-    }
-    return PL_DHASH_NEXT;
-}
-
 class
 nsWakeupNotifier : public nsRunnable
 {
@@ -1419,6 +1406,15 @@ nsIOService::NotifyWakeup()
     return NS_OK;
 }
 
+void
+nsIOService::SetHttpHandlerAlreadyShutingDown()
+{
+    if (!mShutdown && !mOfflineForProfileChange) {
+        mNetTearingDownStarted = PR_IntervalNow();
+        mHttpHandlerAlreadyShutingDown = true;
+    }
+}
+
 // nsIObserver interface
 NS_IMETHODIMP
 nsIOService::Observe(nsISupports *subject,
@@ -1430,6 +1426,10 @@ nsIOService::Observe(nsISupports *subject,
         if (prefBranch)
             PrefsChanged(prefBranch, NS_ConvertUTF16toUTF8(data).get());
     } else if (!strcmp(topic, kProfileChangeNetTeardownTopic)) {
+        if (!mHttpHandlerAlreadyShutingDown) {
+          mNetTearingDownStarted = PR_IntervalNow();
+        }
+        mHttpHandlerAlreadyShutingDown = false;
         if (!mOffline) {
             mOfflineForProfileChange = true;
             SetOffline(true);
@@ -1457,6 +1457,11 @@ nsIOService::Observe(nsISupports *subject,
         // changes of the offline status from now. We must not allow going
         // online after this point.
         mShutdown = true;
+
+        if (!mHttpHandlerAlreadyShutingDown && !mOfflineForProfileChange) {
+          mNetTearingDownStarted = PR_IntervalNow();
+        }
+        mHttpHandlerAlreadyShutingDown = false;
 
         SetOffline(true);
 
@@ -1498,8 +1503,11 @@ nsIOService::Observe(nsISupports *subject,
             int32_t status = wifiActive ?
                 nsIAppOfflineInfo::ONLINE : nsIAppOfflineInfo::OFFLINE;
 
-            EnumeratorParams params = {this, status};
-            mAppsOfflineStatus.EnumerateRead(EnumerateWifiAppsChangingState, &params);
+            for (auto it = mAppsOfflineStatus.Iter(); !it.Done(); it.Next()) {
+                if (it.UserData() == nsIAppOfflineInfo::WIFI_ONLY) {
+                    NotifyAppOfflineStatus(it.Key(), status);
+                }
+            }
         }
 
         mPreviousWifiState = newWifiState;
@@ -1618,6 +1626,7 @@ nsIOService::NewSimpleNestedURI(nsIURI* aURI, nsIURI** aResult)
 NS_IMETHODIMP
 nsIOService::SetManageOfflineStatus(bool aManage)
 {
+    LOG(("nsIOService::SetManageOfflineStatus aManage=%d\n", aManage));
     mManageLinkStatus = aManage;
 
     // When detection is not activated, the default connectivity state is true.
@@ -1645,6 +1654,7 @@ nsIOService::GetManageOfflineStatus(bool* aManage)
 nsresult
 nsIOService::OnNetworkLinkEvent(const char *data)
 {
+    LOG(("nsIOService::OnNetworkLinkEvent data:%s\n", data));
     if (!mNetworkLinkService)
         return NS_ERROR_FAILURE;
 
@@ -1652,7 +1662,8 @@ nsIOService::OnNetworkLinkEvent(const char *data)
         return NS_ERROR_NOT_AVAILABLE;
 
     if (!mManageLinkStatus) {
-      return NS_OK;
+        LOG(("nsIOService::OnNetworkLinkEvent mManageLinkStatus=false\n"));
+        return NS_OK;
     }
 
     if (!strcmp(data, NS_NETWORK_LINK_DATA_DOWN)) {

@@ -109,7 +109,7 @@ GMPInstallManager.prototype = {
         this._deferred.resolve([]);
       }
       else {
-        this._deferred.resolve([for (a of addons) new GMPAddon(a)]);
+        this._deferred.resolve(addons.map(a => new GMPAddon(a)));
       }
       delete this._deferred;
     }, (ex) => {
@@ -187,15 +187,6 @@ GMPInstallManager.prototype = {
       log.info("A version change occurred. Ignoring " +
                "media.gmp-manager.lastCheck to check immediately for " +
                "new or updated GMPs.");
-      // Firefox updated; it could be that the TrialGMPVideoDecoderCreator
-      // had failed but could now succeed, or vice versa. So reset the
-      // prefs so we re-try next time EME is used.
-      GMP_PLUGIN_IDS.concat("gmp-eme-clearkey").forEach(
-        function(id, index, array) {
-          log.info("Version change, resetting " +
-                   GMPPrefs.getPrefKey(GMPPrefs.KEY_PLUGIN_TRIAL_CREATE, id));
-          GMPPrefs.reset(GMPPrefs.KEY_PLUGIN_TRIAL_CREATE, id);
-        });
     } else {
       let secondsBetweenChecks =
         GMPPrefs.get(GMPPrefs.KEY_SECONDS_BETWEEN_CHECKS,
@@ -430,6 +421,9 @@ GMPExtractor.prototype = {
         }
         zipReader.extract(entry, outFile);
         extractedPaths.push(outFile.path);
+        // Ensure files are writable and executable. Otherwise we may be unable to
+        // execute or uninstall them.
+        outFile.permissions |= parseInt("0700", 8);
         log.info(entry + " was successfully extracted to: " +
             outFile.path);
       });
@@ -495,10 +489,6 @@ GMPDownloader.prototype = {
         // Success, set the prefs
         let now = Math.round(Date.now() / 1000);
         GMPPrefs.set(GMPPrefs.KEY_PLUGIN_LAST_UPDATE, now, gmpAddon.id);
-        // Reset the trial create pref, so that Gecko knows to do a test
-        // run before reporting that the GMP works to content.
-        GMPPrefs.reset(GMPPrefs.KEY_PLUGIN_TRIAL_CREATE, gmpAddon.version,
-                       gmpAddon.id);
         // Remember our ABI, so that if the profile is migrated to another
         // platform or from 32 -> 64 bit, we notice and don't try to load the
         // unexecutable plugin library.

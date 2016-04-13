@@ -529,7 +529,7 @@ nsDOMCameraControl::TrackCreated(TrackID aTrackID) {
   // This track is not connected through a port.
   MediaInputPort* inputPort = nullptr;
   dom::VideoStreamTrack* track =
-    new dom::VideoStreamTrack(this, aTrackID);
+    new dom::VideoStreamTrack(this, aTrackID, nsString());
   RefPtr<TrackPort> port =
     new TrackPort(inputPort, track,
                   TrackPort::InputPortOwnership::OWNED);
@@ -1187,8 +1187,7 @@ nsDOMCameraControl::NotifyRecordingStatusChange(const nsString& aMsg)
     // Video recording doesn't output any sound, so it's not necessary to check canPlay.
     float volume = 0.0;
     bool muted = true;
-    rv = mAudioChannelAgent->NotifyStartedPlaying(nsIAudioChannelAgent::AUDIO_AGENT_DONT_NOTIFY,
-                                                  &volume, &muted);
+    rv = mAudioChannelAgent->NotifyStartedPlaying(&volume, &muted);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -1275,8 +1274,6 @@ nsDOMCameraControl::OnHardwareStateChange(CameraControlListener::HardwareState a
 {
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, this);
   MOZ_ASSERT(NS_IsMainThread());
-
-  ErrorResult ignored;
 
   switch (aState) {
     case CameraControlListener::kHardwareOpen:
@@ -1405,7 +1402,6 @@ nsDOMCameraControl::OnRecorderStateChange(CameraControlListener::RecorderState a
   DOM_CAMERA_LOGT("%s:%d : this=%p, state=%u\n", __func__, __LINE__, this, aState);
   MOZ_ASSERT(NS_IsMainThread());
 
-  ErrorResult ignored;
   nsString state;
 
   switch (aState) {

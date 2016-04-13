@@ -21,6 +21,9 @@
 
 
 #include "nsPrimitiveHelpers.h"
+
+#include "mozilla/UniquePtr.h"
+#include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
 #include "nsXPCOM.h"
 #include "nsISupportsPrimitives.h"
@@ -45,7 +48,8 @@ nsPrimitiveHelpers :: CreatePrimitiveForData ( const char* aFlavor, const void* 
   if ( !aPrimitive )
     return;
 
-  if ( strcmp(aFlavor,kTextMime) == 0 || strcmp(aFlavor,kNativeHTMLMime) == 0 ) {
+  if ( strcmp(aFlavor,kTextMime) == 0 || strcmp(aFlavor,kNativeHTMLMime) == 0 ||
+       strcmp(aFlavor,kRTFMime) == 0) {
     nsCOMPtr<nsISupportsCString> primitive =
         do_CreateInstance(NS_SUPPORTS_CSTRING_CONTRACTID);
     if ( primitive ) {
@@ -59,11 +63,11 @@ nsPrimitiveHelpers :: CreatePrimitiveForData ( const char* aFlavor, const void* 
         do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID);
     if (primitive ) {
       if (aDataLen % 2) {
-        nsAutoArrayPtr<char> buffer(new char[aDataLen + 1]);
+        auto buffer = mozilla::MakeUnique<char[]>(aDataLen + 1);
         if (!MOZ_LIKELY(buffer))
           return;
 
-        memcpy(buffer, aDataBuff, aDataLen);
+        memcpy(buffer.get(), aDataBuff, aDataLen);
         buffer[aDataLen] = 0;
         const char16_t* start = reinterpret_cast<const char16_t*>(buffer.get());
         // recall that length takes length as characters, not bytes
@@ -78,6 +82,40 @@ nsPrimitiveHelpers :: CreatePrimitiveForData ( const char* aFlavor, const void* 
   }
 
 } // CreatePrimitiveForData
+
+//
+// CreatePrimitiveForCFHTML
+//
+// Platform specific CreatePrimitive, windows CF_HTML.
+//
+void
+nsPrimitiveHelpers :: CreatePrimitiveForCFHTML ( const void* aDataBuff,
+                                                 uint32_t* aDataLen, nsISupports** aPrimitive )
+{
+  if (!aPrimitive)
+    return;
+
+  nsCOMPtr<nsISupportsString> primitive =
+    do_CreateInstance(NS_SUPPORTS_STRING_CONTRACTID);
+  if (!primitive)
+    return;
+
+  // We need to duplicate the input buffer, since the removal of linebreaks
+  // might reallocte it.
+  void* utf8 = moz_xmalloc(*aDataLen);
+  if (!utf8)
+    return;
+  memcpy(utf8, aDataBuff, *aDataLen);
+  int32_t signedLen = static_cast<int32_t>(*aDataLen);
+  nsLinebreakHelpers::ConvertPlatformToDOMLinebreaks(kTextMime, &utf8, &signedLen);
+  *aDataLen = signedLen;
+
+  nsAutoString str(NS_ConvertUTF8toUTF16(reinterpret_cast<const char*>(utf8), *aDataLen));
+  free(utf8);
+  *aDataLen = str.Length() * sizeof(char16_t);
+  primitive->SetData(str);
+  NS_ADDREF(*aPrimitive = primitive);
+}
 
 
 //
@@ -136,7 +174,7 @@ nsLinebreakHelpers :: ConvertPlatformToDOMLinebreaks ( const char* inFlavor, voi
 
   nsresult retVal = NS_OK;
 
-  if ( strcmp(inFlavor, "text/plain") == 0 ) {
+  if ( strcmp(inFlavor, kTextMime) == 0 || strcmp(inFlavor, kRTFMime) == 0) {
     char* buffAsChars = reinterpret_cast<char*>(*ioData);
     char* oldBuffer = buffAsChars;
     retVal = nsLinebreakConverter::ConvertLineBreaksInSitu ( &buffAsChars, nsLinebreakConverter::eLinebreakAny,

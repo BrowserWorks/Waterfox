@@ -15,7 +15,7 @@ const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
 
 var HUD, outputNode;
 
-var test = asyncTest(function* () {
+add_task(function* () {
   yield loadTab(TEST_URI);
 
   let hud = yield openConsole();
@@ -80,7 +80,7 @@ function consoleOpened(aHud) {
 function testContextMenuCopy() {
   let deferred = promise.defer();
 
-  let contextMenuId = outputNode.parentNode.getAttribute("context");
+  let contextMenuId = HUD.ui.outputWrapper.getAttribute("context");
   let contextMenu = HUD.ui.document.getElementById(contextMenuId);
   ok(contextMenu, "the output node has a context menu");
 

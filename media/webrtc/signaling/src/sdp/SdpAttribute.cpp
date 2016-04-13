@@ -113,13 +113,11 @@ void
 SdpFmtpAttributeList::Serialize(std::ostream& os) const
 {
   for (auto i = mFmtps.begin(); i != mFmtps.end(); ++i) {
-    os << "a=" << mType << ":" << i->format << " ";
     if (i->parameters) {
+      os << "a=" << mType << ":" << i->format << " ";
       i->parameters->Serialize(os);
-    } else {
-      os << i->parameters_string;
+      os << CRLF;
     }
-    os << CRLF;
   }
 }
 
@@ -837,10 +835,10 @@ SdpRemoteCandidatesAttribute::Serialize(std::ostream& os) const
 }
 
 bool
-SdpRidAttributeList::Constraints::Parse(std::istream& is, std::string* error)
+SdpRidAttributeList::Rid::ParseParameters(std::istream& is, std::string* error)
 {
   if (!PeekChar(is, error)) {
-    // No constraints
+    // No parameters
     return true;
   }
 
@@ -858,27 +856,33 @@ SdpRidAttributeList::Constraints::Parse(std::istream& is, std::string* error)
         return false;
       }
     } else if (key == "max-width") {
-      if (!GetUnsigned<uint32_t>(is, 0, UINT32_MAX, &maxWidth, error)) {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxWidth, error)) {
         return false;
       }
     } else if (key == "max-height") {
-      if (!GetUnsigned<uint32_t>(is, 0, UINT32_MAX, &maxHeight, error)) {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxHeight, error)) {
         return false;
       }
     } else if (key == "max-fps") {
-      if (!GetUnsigned<uint32_t>(is, 0, UINT32_MAX, &maxFps, error)) {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxFps, error)) {
         return false;
       }
     } else if (key == "max-fs") {
-      if (!GetUnsigned<uint32_t>(is, 0, UINT32_MAX, &maxFs, error)) {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxFs, error)) {
         return false;
       }
     } else if (key == "max-br") {
-      if (!GetUnsigned<uint32_t>(is, 0, UINT32_MAX, &maxBr, error)) {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxBr, error)) {
         return false;
       }
     } else if (key == "max-pps") {
-      if (!GetUnsigned<uint32_t>(is, 0, UINT32_MAX, &maxPps, error)) {
+      if (!GetUnsigned<uint32_t>(
+            is, 0, UINT32_MAX, &constraints.maxPps, error)) {
         return false;
       }
     } else if (key == "depend") {
@@ -893,7 +897,7 @@ SdpRidAttributeList::Constraints::Parse(std::istream& is, std::string* error)
 }
 
 bool
-SdpRidAttributeList::Constraints::ParseDepend(
+SdpRidAttributeList::Rid::ParseDepend(
     std::istream& is,
     std::string* error)
 {
@@ -909,7 +913,7 @@ SdpRidAttributeList::Constraints::ParseDepend(
 }
 
 bool
-SdpRidAttributeList::Constraints::ParseFormats(
+SdpRidAttributeList::Rid::ParseFormats(
     std::istream& is,
     std::string* error)
 {
@@ -925,9 +929,9 @@ SdpRidAttributeList::Constraints::ParseFormats(
 }
 
 void
-SdpRidAttributeList::Constraints::Serialize(std::ostream& os) const
+SdpRidAttributeList::Rid::SerializeParameters(std::ostream& os) const
 {
-  if (!IsSet()) {
+  if (!HasParameters()) {
     return;
   }
 
@@ -943,28 +947,28 @@ SdpRidAttributeList::Constraints::Serialize(std::ostream& os) const
     }
   }
 
-  if (maxWidth) {
-    os << semic << "max-width=" << maxWidth;
+  if (constraints.maxWidth) {
+    os << semic << "max-width=" << constraints.maxWidth;
   }
 
-  if (maxHeight) {
-    os << semic << "max-height=" << maxHeight;
+  if (constraints.maxHeight) {
+    os << semic << "max-height=" << constraints.maxHeight;
   }
 
-  if (maxFps) {
-    os << semic << "max-fps=" << maxFps;
+  if (constraints.maxFps) {
+    os << semic << "max-fps=" << constraints.maxFps;
   }
 
-  if (maxFs) {
-    os << semic << "max-fs=" << maxFs;
+  if (constraints.maxFs) {
+    os << semic << "max-fs=" << constraints.maxFs;
   }
 
-  if (maxBr) {
-    os << semic << "max-br=" << maxBr;
+  if (constraints.maxBr) {
+    os << semic << "max-br=" << constraints.maxBr;
   }
 
-  if (maxPps) {
-    os << semic << "max-pps=" << maxPps;
+  if (constraints.maxPps) {
+    os << semic << "max-pps=" << constraints.maxPps;
   }
 
   if (!dependIds.empty()) {
@@ -995,14 +999,30 @@ SdpRidAttributeList::Rid::Parse(std::istream& is, std::string* error)
     return false;
   }
 
-  return constraints.Parse(is, error);
+  return ParseParameters(is, error);
 }
 
 void
 SdpRidAttributeList::Rid::Serialize(std::ostream& os) const
 {
   os << id << " " << direction;
-  constraints.Serialize(os);
+  SerializeParameters(os);
+}
+
+bool
+SdpRidAttributeList::Rid::HasFormat(const std::string& format) const
+{
+  uint16_t formatAsInt;
+  if (!SdpHelper::GetPtAsInt(format, &formatAsInt)) {
+    return false;
+  }
+
+  if (formats.empty()) {
+    return true;
+  }
+
+  return (std::find(formats.begin(), formats.end(), formatAsInt) !=
+         formats.end());
 }
 
 void

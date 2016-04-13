@@ -758,6 +758,12 @@ public:
    */
   virtual already_AddRefed<nsIURI> AnchorURIAt(uint32_t aAnchorIndex);
 
+  /**
+   * Returns a text point for the accessible element.
+   */
+  void ToTextPoint(HyperTextAccessible** aContainer, int32_t* aOffset,
+                   bool aIsBefore = true) const;
+
   //////////////////////////////////////////////////////////////////////////////
   // SelectAccessible
 
@@ -858,7 +864,7 @@ public:
   bool IsDefunct() const { return mStateFlags & eIsDefunct; }
 
   /**
-   * Return true if the accessible is no longer in the document.
+   * Return false if the accessible is no longer in the document.
    */
   bool IsInDocument() const { return !(mStateFlags & eIsNotInDocument); }
 
@@ -910,13 +916,13 @@ public:
    * Get/set repositioned bit indicating that the accessible was moved in
    * the accessible tree, i.e. the accessible tree structure differs from DOM.
    */
-  bool IsRepositioned() const { return mStateFlags & eRepositioned; }
-  void SetRepositioned(bool aRepositioned)
+  bool IsRelocated() const { return mStateFlags & eRelocated; }
+  void SetRelocated(bool aRelocated)
   {
-    if (aRepositioned)
-      mStateFlags |= eRepositioned;
+    if (aRelocated)
+      mStateFlags |= eRelocated;
     else
-      mStateFlags &= ~eRepositioned;
+      mStateFlags &= ~eRelocated;
   }
 
   /**
@@ -1009,9 +1015,9 @@ protected:
     eSubtreeMutating = 1 << 6, // subtree is being mutated
     eIgnoreDOMUIEvent = 1 << 7, // don't process DOM UI events for a11y events
     eSurvivingInUpdate = 1 << 8, // parent drops children to recollect them
-    eRepositioned = 1 << 9, // accessible was moved in tree
+    eRelocated = 1 << 9, // accessible was moved in tree
 
-    eLastStateFlag = eRepositioned
+    eLastStateFlag = eRelocated
   };
 
   /**

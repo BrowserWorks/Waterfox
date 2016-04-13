@@ -13,6 +13,7 @@
 #include "nsDebug.h"                    // for NS_ERROR
 #include "nsPoint.h"                    // for nsIntPoint
 #include "nsRect.h"                     // for mozilla::gfx::IntRect
+#include "base/basictypes.h"
 
 using namespace mozilla::gfx;
 
@@ -222,26 +223,6 @@ AppendToString(std::stringstream& aStream, const Matrix& m,
       "[ %g %g; %g %g; %g %g; ]",
       m._11, m._12, m._21, m._22, m._31, m._32).get();
   }
-  aStream << sfx;
-}
-
-void
-AppendToString(std::stringstream& aStream, const Matrix4x4& m,
-               const char* pfx, const char* sfx)
-{
-  if (m.Is2D()) {
-    Matrix matrix = m.As2D();
-    AppendToString(aStream, matrix, pfx, sfx);
-    return;
-  }
-
-  aStream << pfx;
-  aStream << nsPrintfCString(
-    "[ %g %g %g %g; %g %g %g %g; %g %g %g %g; %g %g %g %g; ]",
-    m._11, m._12, m._13, m._14,
-    m._21, m._22, m._23, m._24,
-    m._31, m._32, m._33, m._34,
-    m._41, m._42, m._43, m._44).get();
   aStream << sfx;
 }
 

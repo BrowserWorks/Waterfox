@@ -19,7 +19,6 @@
 #include "vm/BooleanObject.h"
 #include "vm/NumberObject.h"
 #include "vm/SharedArrayObject.h"
-#include "vm/SharedTypedArrayObject.h"
 #include "vm/StringObject.h"
 #include "vm/TypedArrayObject.h"
 #include "vm/UnboxedObject.h"
@@ -461,8 +460,8 @@ MarkObjectStateChange(ExclusiveContext* cx, JSObject* obj)
 }
 
 /* Interface helpers for JSScript*. */
+extern void TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::Type type);
 extern void TypeMonitorResult(JSContext* cx, JSScript* script, jsbytecode* pc, const Value& rval);
-extern void TypeDynamicResult(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::Type type);
 
 /////////////////////////////////////////////////////////////////////
 // Script interface functions
@@ -503,7 +502,7 @@ template <typename TYPESET>
 TypeScript::BytecodeTypes(JSScript* script, jsbytecode* pc, uint32_t* bytecodeMap,
                           uint32_t* hint, TYPESET* typeArray)
 {
-    MOZ_ASSERT(js_CodeSpec[*pc].format & JOF_TYPESET);
+    MOZ_ASSERT(CodeSpec[*pc].format & JOF_TYPESET);
     uint32_t offset = script->pcToOffset(pc);
 
     // See if this pc is the next typeset opcode after the last one looked up.
@@ -555,6 +554,12 @@ TypeScript::BytecodeTypes(JSScript* script, jsbytecode* pc)
 TypeScript::Monitor(JSContext* cx, JSScript* script, jsbytecode* pc, const js::Value& rval)
 {
     TypeMonitorResult(cx, script, pc, rval);
+}
+
+/* static */ inline void
+TypeScript::Monitor(JSContext* cx, JSScript* script, jsbytecode* pc, TypeSet::Type type)
+{
+    TypeMonitorResult(cx, script, pc, type);
 }
 
 /* static */ inline void

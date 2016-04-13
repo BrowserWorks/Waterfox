@@ -30,9 +30,8 @@ static void
 resc_trace(JSTracer* trc, JSObject* obj)
 {
     void* pdata = obj->as<RegExpStaticsObject>().getPrivate();
-    MOZ_ASSERT(pdata);
-    RegExpStatics* res = static_cast<RegExpStatics*>(pdata);
-    res->mark(trc);
+    if (pdata)
+        static_cast<RegExpStatics*>(pdata)->mark(trc);
 }
 
 const Class RegExpStaticsObject::class_ = {
@@ -101,7 +100,7 @@ RegExpStatics::executeLazy(JSContext* cx)
 
     /* Execute the full regular expression. */
     RootedLinearString input(cx, matchesInput);
-    RegExpRunStatus status = g->execute(cx, input, lazyIndex, &this->matches);
+    RegExpRunStatus status = g->execute(cx, input, lazyIndex, lazySticky, &this->matches, nullptr);
     if (status == RegExpRunStatus_Error)
         return false;
 
@@ -116,17 +115,5 @@ RegExpStatics::executeLazy(JSContext* cx)
     lazySource = nullptr;
     lazyIndex = size_t(-1);
 
-    return true;
-}
-
-bool
-RegExpStatics::checkRestoredFromModifiedMatch(JSContext* cx)
-{
-    if (isRestoredFromModifiedMatch) {
-        if (JSScript* script = cx->currentScript()) {
-            const char* filename = script->filename();
-            cx->compartment()->addTelemetry(filename, JSCompartment::DeprecatedRestoredRegExpStatics);
-        }
-    }
     return true;
 }

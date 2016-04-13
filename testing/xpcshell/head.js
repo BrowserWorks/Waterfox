@@ -383,7 +383,20 @@ function _setupDebuggerServer(breakpointFiles, callback) {
     prefs.setBoolPref("devtools.debugger.log.verbose", true);
   }
 
-  let { require } = Components.utils.import("resource://devtools/shared/Loader.jsm", {});
+  let require;
+  try {
+    ({ require } = Components.utils.import("resource://devtools/shared/Loader.jsm", {}));
+  } catch (e) {
+    throw new Error("resource://devtools appears to be inaccessible from the " +
+                    "xpcshell environment.\n" +
+                    "This can usually be resolved by adding:\n" +
+                    "  firefox-appdir = browser\n" +
+                    "to the xpcshell.ini manifest.\n" +
+                    "It is possible for this to alter test behevior by " +
+                    "triggering additional browser code to run, so check " +
+                    "test behavior after making this change.\n" +
+                    "See also https://bugzil.la/1215378.")
+  }
   let { DebuggerServer } = require("devtools/server/main");
   let { OriginalLocation } = require("devtools/server/actors/common");
   DebuggerServer.init();
@@ -406,7 +419,8 @@ function _setupDebuggerServer(breakpointFiles, callback) {
           // Add a breakpoint for the first line in our test files.
           let threadActor = subject.wrappedJSObject;
           for (let file of breakpointFiles) {
-            let sourceActor = threadActor.sources.source({originalUrl: file});
+            // Pass an empty `source` object to workaround `source` function assertion
+            let sourceActor = threadActor.sources.source({originalUrl: file, source: {}});
             sourceActor._getOrCreateBreakpointActor(new OriginalLocation(sourceActor, 1));
           }
         } catch (ex) {
@@ -473,7 +487,9 @@ function _execute_test() {
     try {
       _initDebugging(_JSDEBUGGER_PORT);
     } catch (ex) {
-      do_print("Failed to initialize debugging: " + ex + "\n" + ex.stack);
+      // Fail the test run immediately if debugging is requested but fails, so
+      // that the failure state is more obvious.
+      do_throw(`Failed to initialize debugging: ${ex}`, ex.stack);
     }
   }
 
@@ -503,6 +519,12 @@ function _execute_test() {
   this.Assert = Assert;
   for (let func in Assert) {
     this[func] = Assert[func].bind(Assert);
+  }
+
+  if (_gTestHasOnly) {
+    _gTests = _gTests.filter(([props,]) => {
+      return ("_only" in props) && props._only;
+    });
   }
 
   try {
@@ -1327,6 +1349,52 @@ function do_send_remote_message(name) {
 }
 
 /**
+ * Helper function to add the _only property to add_task/add_test function when
+ * running it as add_task.only(...).
+ *
+ * @param addFunc
+ *        The parent function to call, e.g. add_task or add_test.
+ * @param funcOrProperties
+ *        A function to be run or an object represents test properties.
+ * @param func
+ *        A function to be run only if the funcOrProperies is not a function.
+ */
+function _add_only(addFunc, funcOrProperties, func) {
+  _gTestHasOnly = true;
+  if (typeof funcOrProperties == "function") {
+    func = funcOrProperties;
+    funcOrProperties = {};
+  }
+
+  if (typeof funcOrProperties == "object") {
+    funcOrProperties._only = true;
+  }
+  return addFunc(funcOrProperties, func);
+}
+
+/**
+ * Helper function to skip the test using e.g. add_task.skip(...)
+ *
+ * @param addFunc
+ *        The parent function to call, e.g. add_task or add_test.
+ * @param funcOrProperties
+ *        A function to be run or an object represents test properties.
+ * @param func
+ *        A function to be run only if the funcOrProperies is not a function.
+ */
+function _add_skip(addFunc, funcOrProperties, func) {
+  if (typeof funcOrProperties == "function") {
+    func = funcOrProperties;
+    funcOrProperties = {};
+  }
+
+  if (typeof funcOrProperties == "object") {
+    funcOrProperties.skip_if = () => true;
+  }
+  return addFunc(funcOrProperties, func);
+}
+
+/**
  * Add a test function to the list of tests that are to be run asynchronously.
  *
  * @param funcOrProperties
@@ -1355,6 +1423,8 @@ function add_test(funcOrProperties, func) {
   }
   return func;
 }
+add_test.only = _add_only.bind(undefined, add_test);
+add_test.skip = _add_skip.bind(undefined, add_test);
 
 /**
  * Add a test function which is a Task function.
@@ -1421,6 +1491,9 @@ function add_task(funcOrProperties, func) {
     do_throw("add_task() should take a function or an object and a function");
   }
 }
+add_task.only = _add_only.bind(undefined, add_task);
+add_task.skip = _add_skip.bind(undefined, add_task);
+
 var _Task = Components.utils.import("resource://gre/modules/Task.jsm", {}).Task;
 _Task.Debugging.maintainStack = true;
 
@@ -1431,6 +1504,7 @@ _Task.Debugging.maintainStack = true;
 var _gRunningTest = null;
 var _gTestIndex = 0; // The index of the currently running test.
 var _gTaskRunning = false;
+var _gTestHasOnly = false;
 function run_next_test()
 {
   if (_gTaskRunning) {

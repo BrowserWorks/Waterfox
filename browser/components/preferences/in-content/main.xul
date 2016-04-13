@@ -16,6 +16,9 @@
     <preference id="e10sTempPref"
                 name="browser.tabs.remote.autostart.2"
                 type="bool"/>
+    <preference id="e10sForceEnable"
+                name="browser.tabs.remote.force-enable"
+                type="bool"/>
 #endif
 
     <!-- Startup -->
@@ -108,7 +111,9 @@
       class="header"
       hidden="true"
       data-category="paneGeneral">
-  <label class="header-name">&paneGeneral.title;</label>
+  <label class="header-name" flex="1">&paneGeneral.title;</label>
+  <button class="help-button"
+          aria-label="&helpButton.label;"/>
 </hbox>
 
 <!-- Startup -->

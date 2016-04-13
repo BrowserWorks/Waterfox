@@ -7,6 +7,7 @@ var Cu = Components.utils;
 Cu.import("resource://services-common/utils.js");
 Cu.import("resource://services-sync/main.js");
 Cu.import("resource:///modules/PlacesUIUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/PlacesUtils.jsm", this);
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -14,12 +15,10 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
 
-#ifdef MOZ_SERVICES_CLOUDSYNC
-XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
-                                  "resource://gre/modules/CloudSync.jsm");
-#else
-var CloudSync = null;
-#endif
+if (AppConstants.MOZ_SERVICES_CLOUDSYNC) {
+  XPCOMUtils.defineLazyModuleGetter(this, "CloudSync",
+                                    "resource://gre/modules/CloudSync.jsm");
+}
 
 var RemoteTabViewer = {
   _tabsList: null,
@@ -273,7 +272,7 @@ var RemoteTabViewer = {
     }.bind(this);
 
     return CloudSync().tabs.getRemoteTabs()
-                           .then(updateTabList, Promise.reject);
+                           .then(updateTabList, Promise.reject.bind(Promise));
   },
 
   adjustContextMenu: function (event) {
@@ -318,15 +317,8 @@ var RemoteTabViewer = {
       }
     }
 
-    // if Clients hasn't synced yet this session, we need to sync it as well.
-    if (Weave.Service.clientsEngine.lastSync == 0) {
-      Weave.Service.clientsEngine.sync();
-    }
-
-    // Force a sync only for the tabs engine
-    let engine = Weave.Service.engineManager.get("tabs");
-    engine.lastModified = null;
-    engine.sync();
+    // Ask Sync to just do the tabs engine if it can.
+    Weave.Service.sync(["tabs"]);
     Services.prefs.setIntPref("services.sync.lastTabFetch",
                               Math.floor(Date.now() / 1000));
 

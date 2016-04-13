@@ -24,7 +24,7 @@
 #include "mozilla/Logging.h"
 
 #undef LOG
-PRLogModuleInfo *gMediaParentLog;
+mozilla::LazyLogModule gMediaParentLog("MediaParent");
 #define LOG(args) MOZ_LOG(gMediaParentLog, mozilla::LogLevel::Debug, args)
 
 // A file in the profile dir is used to persist mOriginKeys used to anonymize
@@ -447,7 +447,7 @@ Parent<Super>::RecvGetOriginKey(const uint32_t& aRequestId,
       if (!sIPCServingParent) {
         return NS_OK;
       }
-      unused << sIPCServingParent->SendGetOriginKeyResponse(aRequestId, aKey);
+      Unused << sIPCServingParent->SendGetOriginKeyResponse(aRequestId, aKey);
     } else {
       RefPtr<MediaManager> mgr = MediaManager::GetInstance();
       if (!mgr) {
@@ -511,8 +511,6 @@ Parent<Super>::Parent(bool aSameProcess)
   , mDestroyed(false)
   , mSameProcess(aSameProcess)
 {
-  if (!gMediaParentLog)
-    gMediaParentLog = PR_NewLogModule("MediaParent");
   LOG(("media::Parent: %p", this));
 }
 

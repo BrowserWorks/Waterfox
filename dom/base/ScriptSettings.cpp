@@ -26,7 +26,8 @@
 namespace mozilla {
 namespace dom {
 
-static mozilla::ThreadLocal<ScriptSettingsStackEntry*> sScriptSettingsTLS;
+static MOZ_THREAD_LOCAL(ScriptSettingsStackEntry*) sScriptSettingsTLS;
+static bool sScriptSettingsTLSInitialized;
 
 class ScriptSettingsStack {
 public:
@@ -94,14 +95,13 @@ UnuseEntryScriptProfiling()
 void
 InitScriptSettings()
 {
-  if (!sScriptSettingsTLS.initialized()) {
-    bool success = sScriptSettingsTLS.init();
-    if (!success) {
-      MOZ_CRASH();
-    }
+  bool success = sScriptSettingsTLS.init();
+  if (!success) {
+    MOZ_CRASH();
   }
 
   sScriptSettingsTLS.set(nullptr);
+  sScriptSettingsTLSInitialized = true;
 }
 
 void
@@ -113,7 +113,7 @@ DestroyScriptSettings()
 bool
 ScriptSettingsInitialized()
 {
-  return sScriptSettingsTLS.initialized();
+  return sScriptSettingsTLSInitialized;
 }
 
 ScriptSettingsStackEntry::ScriptSettingsStackEntry(nsIGlobalObject *aGlobal,
@@ -305,14 +305,13 @@ AutoJSAPI::AutoJSAPI()
   : mCx(nullptr)
   , mOwnErrorReporting(false)
   , mOldAutoJSAPIOwnsErrorReporting(false)
+  , mIsMainThread(false) // For lack of anything better
 {
 }
 
 AutoJSAPI::~AutoJSAPI()
 {
   if (mOwnErrorReporting) {
-    MOZ_ASSERT(NS_IsMainThread(), "See corresponding assertion in TakeOwnershipOfErrorReporting()");
-
     ReportException();
 
     // We need to do this _after_ processing the existing exception, because the
@@ -332,7 +331,10 @@ void
 AutoJSAPI::InitInternal(JSObject* aGlobal, JSContext* aCx, bool aIsMainThread)
 {
   MOZ_ASSERT(aCx);
+  MOZ_ASSERT(aIsMainThread == NS_IsMainThread());
+
   mCx = aCx;
+  mIsMainThread = aIsMainThread;
   if (aIsMainThread) {
     // This Rooted<> is necessary only as long as AutoCxPusher::AutoCxPusher
     // can GC, which is only possible because XPCJSContextStack::Push calls
@@ -357,11 +359,12 @@ AutoJSAPI::AutoJSAPI(nsIGlobalObject* aGlobalObject,
                      JSContext* aCx)
   : mOwnErrorReporting(false)
   , mOldAutoJSAPIOwnsErrorReporting(false)
+  , mIsMainThread(aIsMainThread)
 {
   MOZ_ASSERT(aGlobalObject);
   MOZ_ASSERT(aGlobalObject->GetGlobalJSObject(), "Must have a JS global");
   MOZ_ASSERT(aCx);
-  MOZ_ASSERT_IF(aIsMainThread, NS_IsMainThread());
+  MOZ_ASSERT(aIsMainThread == NS_IsMainThread());
 
   InitInternal(aGlobalObject->GetGlobalJSObject(), aCx, aIsMainThread);
 }
@@ -460,7 +463,9 @@ AutoJSAPI::InitWithLegacyErrorReporting(nsGlobalWindow* aWindow)
 void
 WarningOnlyErrorReporter(JSContext* aCx, const char* aMessage, JSErrorReport* aRep)
 {
+  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(JSREPORT_IS_WARNING(aRep->flags));
+
   RefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
   nsPIDOMWindow* win = xpc::CurrentWindowOrNull(aCx);
   xpcReport->Init(aRep, aMessage, nsContentUtils::IsCallerChrome(),
@@ -471,14 +476,19 @@ WarningOnlyErrorReporter(JSContext* aCx, const char* aMessage, JSErrorReport* aR
 void
 AutoJSAPI::TakeOwnershipOfErrorReporting()
 {
-  MOZ_ASSERT(NS_IsMainThread(), "Can't own error reporting off-main-thread yet");
   MOZ_ASSERT(!mOwnErrorReporting);
   mOwnErrorReporting = true;
 
   JSRuntime *rt = JS_GetRuntime(cx());
   mOldAutoJSAPIOwnsErrorReporting = JS::ContextOptionsRef(cx()).autoJSAPIOwnsErrorReporting();
   JS::ContextOptionsRef(cx()).setAutoJSAPIOwnsErrorReporting(true);
-  JS_SetErrorReporter(rt, WarningOnlyErrorReporter);
+  // Workers have their own error reporting mechanism which deals with warnings
+  // as well, so don't change the worker error reporter for now.  Once we switch
+  // all of workers to TakeOwnershipOfErrorReporting(), we will just make the
+  // default worker error reporter assert that it only sees warnings.
+  if (mIsMainThread) {
+    JS_SetErrorReporter(rt, WarningOnlyErrorReporter);
+  }
 }
 
 void
@@ -498,18 +508,35 @@ AutoJSAPI::ReportException()
   if (!errorGlobal)
     errorGlobal = xpc::PrivilegedJunkScope();
   JSAutoCompartment ac(cx(), errorGlobal);
-  nsCOMPtr<nsPIDOMWindow> win = xpc::WindowGlobalOrNull(errorGlobal);
   JS::Rooted<JS::Value> exn(cx());
   js::ErrorReport jsReport(cx());
   if (StealException(&exn) && jsReport.init(cx(), exn)) {
-    RefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
-    xpcReport->Init(jsReport.report(), jsReport.message(),
-                    nsContentUtils::IsCallerChrome(),
-                    win ? win->WindowID() : 0);
-    if (win) {
-      DispatchScriptErrorEvent(win, JS_GetRuntime(cx()), xpcReport, exn);
+    if (mIsMainThread) {
+      RefPtr<xpc::ErrorReport> xpcReport = new xpc::ErrorReport();
+      nsCOMPtr<nsPIDOMWindow> win = xpc::WindowGlobalOrNull(errorGlobal);
+      xpcReport->Init(jsReport.report(), jsReport.message(),
+                      nsContentUtils::IsCallerChrome(),
+                      win ? win->WindowID() : 0);
+      if (win) {
+        DispatchScriptErrorEvent(win, JS_GetRuntime(cx()), xpcReport, exn);
+      } else {
+        xpcReport->LogToConsole();
+      }
     } else {
-      xpcReport->LogToConsole();
+      // On a worker, we just use the worker error reporting mechanism and don't
+      // bother with xpc::ErrorReport.  This will ensure that all the right
+      // events (which are a lot more complicated than in the window case) get
+      // fired.
+      workers::WorkerPrivate* worker = workers::GetCurrentThreadWorkerPrivate();
+      MOZ_ASSERT(worker);
+      MOZ_ASSERT(worker->GetJSContext() == cx());
+      // Before invoking ReportError, put the exception back on the context,
+      // because it may want to put it in its error events and has no other way
+      // to get hold of it.  After we invoke ReportError, clear the exception on
+      // cx(), just in case ReportError didn't.
+      JS_SetPendingException(cx(), exn);
+      worker->ReportError(cx(), jsReport.message(), jsReport.report());
+      ClearException();
     }
   } else {
     NS_WARNING("OOMed while acquiring uncaught exception from JSAPI");
@@ -517,16 +544,25 @@ AutoJSAPI::ReportException()
 }
 
 bool
+AutoJSAPI::PeekException(JS::MutableHandle<JS::Value> aVal)
+{
+  MOZ_ASSERT_IF(mIsMainThread, CxPusherIsStackTop());
+  MOZ_ASSERT(HasException());
+  MOZ_ASSERT(js::GetContextCompartment(cx()));
+  if (!JS_GetPendingException(cx(), aVal)) {
+    return false;
+  }
+  return true;
+}
+
+bool
 AutoJSAPI::StealException(JS::MutableHandle<JS::Value> aVal)
 {
-    MOZ_ASSERT(CxPusherIsStackTop());
-    MOZ_ASSERT(HasException());
-    MOZ_ASSERT(js::GetContextCompartment(cx()));
-    if (!JS_GetPendingException(cx(), aVal)) {
-      return false;
-    }
-    JS_ClearPendingException(cx());
-    return true;
+  if (!PeekException(aVal)) {
+    return false;
+  }
+  JS_ClearPendingException(cx());
+  return true;
 }
 
 AutoEntryScript::AutoEntryScript(nsIGlobalObject* aGlobalObject,
@@ -564,7 +600,8 @@ AutoEntryScript::DocshellEntryMonitor::DocshellEntryMonitor(JSContext* aCx,
 
 void
 AutoEntryScript::DocshellEntryMonitor::Entry(JSContext* aCx, JSFunction* aFunction,
-                                             JSScript* aScript)
+                                             JSScript* aScript, JS::Handle<JS::Value> aAsyncStack,
+                                             JS::Handle<JSString*> aAsyncCause)
 {
   JS::Rooted<JSFunction*> rootedFunction(aCx);
   if (aFunction) {
@@ -609,10 +646,13 @@ AutoEntryScript::DocshellEntryMonitor::Entry(JSContext* aCx, JSFunction* aFuncti
     const char16_t* functionNameChars = functionName.isTwoByte() ?
       functionName.twoByteChars() : nullptr;
 
+    JS::Rooted<JS::Value> asyncCauseValue(aCx, aAsyncCause ? StringValue(aAsyncCause) :
+                                          JS::NullValue());
     docShellForJSRunToCompletion->NotifyJSRunToCompletionStart(mReason,
                                                                functionNameChars,
                                                                filename.BeginReading(),
-                                                               lineNumber);
+                                                               lineNumber, aAsyncStack,
+                                                               asyncCauseValue);
   }
 }
 

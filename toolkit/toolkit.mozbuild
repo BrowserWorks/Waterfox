@@ -155,7 +155,7 @@ DIRS += [
     '/toolkit/library',
 ]
 
-if CONFIG['MOZ_ENABLE_GNOME_COMPONENT']:
+if CONFIG['MOZ_ENABLE_GTK']:
     DIRS += ['/toolkit/system/gnome']
 
 DIRS += ['/addon-sdk']
@@ -180,9 +180,12 @@ if CONFIG['ENABLE_TESTS']:
         '/testing/web-platform',
     ]
 
-    if CONFIG['MOZ_WEBRTC'] and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk':
+    # The file id utility requires breakpad libraries.
+    if CONFIG['MOZ_CRASHREPORTER']:
+        DIRS += ['/testing/tools/fileid']
+
+    if CONFIG['MOZ_WEBRTC'] and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'gonk' and not CONFIG['MOZ_TASK_TRACER']:
             DIRS += [
                 '/media/webrtc/signaling/test',
-                '/media/webrtc/signaling/test/standalone',
                 '/media/mtransport/test',
             ]

@@ -122,8 +122,15 @@ public:
    */
   inline void ScheduleTextUpdate(nsIContent* aTextNode)
   {
-    if (mTextHash.PutEntry(aTextNode))
-      ScheduleProcessing();
+    // Make sure we are not called with a node that is not in the DOM tree or
+    // not visible.
+    MOZ_ASSERT(aTextNode->GetParentNode(), "A text node is not in DOM");
+    MOZ_ASSERT(aTextNode->GetPrimaryFrame(), "A text node doesn't have a frame");
+    MOZ_ASSERT(aTextNode->GetPrimaryFrame()->StyleVisibility()->IsVisible(),
+               "A text node is not visible");
+
+    mTextHash.PutEntry(aTextNode);
+    ScheduleProcessing();
   }
 
   /**
@@ -132,6 +139,16 @@ public:
   void ScheduleContentInsertion(Accessible* aContainer,
                                 nsIContent* aStartChildNode,
                                 nsIContent* aEndChildNode);
+
+  /**
+   * Pend an accessible subtree relocation.
+   */
+  void ScheduleRelocation(Accessible* aOwner)
+  {
+    if (!mRelocations.Contains(aOwner) && mRelocations.AppendElement(aOwner)) {
+      ScheduleProcessing();
+    }
+  }
 
   /**
    * Start to observe refresh to make notifications and events processing after
@@ -303,6 +320,11 @@ private:
    * use SwapElements() on it.
    */
   nsTArray<RefPtr<Notification> > mNotifications;
+
+  /**
+   * Holds all scheduled relocations.
+   */
+  nsTArray<RefPtr<Accessible> > mRelocations;
 };
 
 } // namespace a11y

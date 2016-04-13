@@ -18,6 +18,8 @@ NS_IMPL_ISUPPORTS(MobileConnectionChild, nsIMobileConnection)
 MobileConnectionChild::MobileConnectionChild(uint32_t aServiceId)
   : mServiceId(aServiceId)
   , mLive(true)
+  , mRadioState(0)
+  , mNetworkSelectionMode(0)
 {
   MOZ_COUNT_CTOR(MobileConnectionChild);
 }
@@ -105,6 +107,12 @@ MobileConnectionChild::GetRadioState(int32_t* aRadioState)
 {
   *aRadioState = mRadioState;
   return NS_OK;
+}
+
+NS_IMETHODIMP
+MobileConnectionChild::GetDeviceIdentities(nsIMobileDeviceIdentities** aIdentities)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP

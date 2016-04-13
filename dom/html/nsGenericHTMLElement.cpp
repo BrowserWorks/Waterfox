@@ -20,7 +20,7 @@
 #include "nsQueryObject.h"
 #include "nsIContentInlines.h"
 #include "nsIContentViewer.h"
-#include "mozilla/css/StyleRule.h"
+#include "mozilla/css/Declaration.h"
 #include "nsIDocument.h"
 #include "nsIDocumentEncoder.h"
 #include "nsIDOMHTMLDocument.h"
@@ -35,7 +35,6 @@
 #include "nsHTMLStyleSheet.h"
 #include "nsIHTMLDocument.h"
 #include "nsPIDOMWindow.h"
-#include "nsIStyleRule.h"
 #include "nsIURL.h"
 #include "nsEscape.h"
 #include "nsIFrameInlines.h"
@@ -53,6 +52,7 @@
 #include "nsRuleData.h"
 #include "nsIPrincipal.h"
 #include "nsContainerFrame.h"
+#include "nsStyleUtil.h"
 
 #include "nsPresState.h"
 #include "nsILayoutHistoryState.h"
@@ -84,6 +84,8 @@
 #include "nsITextControlElement.h"
 #include "mozilla/dom/Element.h"
 #include "HTMLFieldSetElement.h"
+#include "nsTextNode.h"
+#include "HTMLBRElement.h"
 #include "HTMLMenuElement.h"
 #include "nsDOMMutationObserver.h"
 #include "mozilla/Preferences.h"
@@ -104,6 +106,7 @@
 #include "nsGlobalWindow.h"
 #include "mozilla/dom/HTMLBodyElement.h"
 #include "imgIContainer.h"
+#include "nsComputedDOMStyle.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -223,15 +226,14 @@ nsGenericHTMLElement::CopyInnerTo(Element* aDst)
     value->ToString(valStr);
 
     if (name->Equals(nsGkAtoms::style, kNameSpaceID_None) &&
-        value->Type() == nsAttrValue::eCSSStyleRule) {
+        value->Type() == nsAttrValue::eCSSDeclaration) {
       // We can't just set this as a string, because that will fail
       // to reparse the string into style data until the node is
       // inserted into the document.  Clone the Rule instead.
-      RefPtr<mozilla::css::Rule> ruleClone = value->GetCSSStyleRuleValue()->Clone();
-      RefPtr<mozilla::css::StyleRule> styleRule = do_QueryObject(ruleClone);
-      NS_ENSURE_TRUE(styleRule, NS_ERROR_UNEXPECTED);
+      RefPtr<css::Declaration> declClone =
+        new css::Declaration(*value->GetCSSDeclarationValue());
 
-      rv = aDst->SetInlineStyleRule(styleRule, &valStr, false);
+      rv = aDst->SetInlineStyleDeclaration(declClone, &valStr, false);
       NS_ENSURE_SUCCESS(rv, rv);
 
       continue;
@@ -403,7 +405,7 @@ nsGenericHTMLElement::GetOffsetRect(CSSIntRect& aRect)
 
   // Subtract the parent border unless it uses border-box sizing.
   if (parent &&
-      parent->StylePosition()->mBoxSizing != NS_STYLE_BOX_SIZING_BORDER) {
+      parent->StylePosition()->mBoxSizing != StyleBoxSizing::Border) {
     const nsStyleBorder* border = parent->StyleBorder();
     origin.x -= border->GetComputedBorderWidth(NS_SIDE_LEFT);
     origin.y -= border->GetComputedBorderWidth(NS_SIDE_TOP);
@@ -1001,7 +1003,7 @@ nsGenericHTMLElement::ParseAttribute(int32_t aNamespaceID,
       return aResult.ParseIntValue(aValue);
     }
 
-    if (aAttribute == nsGkAtoms::referrer) {
+    if (aAttribute == nsGkAtoms::referrerpolicy) {
       return ParseReferrerAttribute(aValue, aResult);
     }
 
@@ -1299,6 +1301,43 @@ nsGenericHTMLElement::ParseScrollingValue(const nsAString& aString,
   return aResult.ParseEnumValue(aString, kScrollingTable, false);
 }
 
+static inline void
+MapLangAttributeInto(const nsMappedAttributes* aAttributes, nsRuleData* aData)
+{
+  if (!(aData->mSIDs & (NS_STYLE_INHERIT_BIT(Font) |
+                        NS_STYLE_INHERIT_BIT(Text)))) {
+    return;
+  }
+
+  const nsAttrValue* langValue = aAttributes->GetAttr(nsGkAtoms::lang);
+  if (!langValue || langValue->Type() != nsAttrValue::eString) {
+    return;
+  }
+
+  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Font)) {
+    nsCSSValue* lang = aData->ValueForLang();
+    if (lang->GetUnit() == eCSSUnit_Null) {
+      lang->SetStringValue(langValue->GetStringValue(), eCSSUnit_Ident);
+    }
+  }
+  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Text)) {
+    nsCSSValue* emphasisPos = aData->ValueForTextEmphasisPosition();
+    if (emphasisPos->GetUnit() == eCSSUnit_Null) {
+      const nsAString& lang = langValue->GetStringValue();
+      if (nsStyleUtil::MatchesLanguagePrefix(lang, MOZ_UTF16("zh"))) {
+        emphasisPos->SetIntValue(NS_STYLE_TEXT_EMPHASIS_POSITION_DEFAULT_ZH,
+                                eCSSUnit_Enumerated);
+      } else if (nsStyleUtil::MatchesLanguagePrefix(lang, MOZ_UTF16("ja")) ||
+                 nsStyleUtil::MatchesLanguagePrefix(lang, MOZ_UTF16("mn"))) {
+        // This branch is currently no part of the spec.
+        // See bug 1040668 comment 69 and comment 75.
+        emphasisPos->SetIntValue(NS_STYLE_TEXT_EMPHASIS_POSITION_DEFAULT,
+                                eCSSUnit_Enumerated);
+      }
+    }
+  }
+}
+
 /**
  * Handle attributes common to all html elements
  */
@@ -1325,15 +1364,7 @@ nsGenericHTMLElement::MapCommonAttributesIntoExceptHidden(const nsMappedAttribut
     }
   }
 
-  if (aData->mSIDs & NS_STYLE_INHERIT_BIT(Font)) {
-    nsCSSValue* lang = aData->ValueForLang();
-    if (lang->GetUnit() == eCSSUnit_Null) {
-      const nsAttrValue* value = aAttributes->GetAttr(nsGkAtoms::lang);
-      if (value && value->Type() == nsAttrValue::eString) {
-        lang->SetStringValue(value->GetStringValue(), eCSSUnit_Ident);
-      }
-    }
-  }
+  MapLangAttributeInto(aAttributes, aData);
 }
 
 void
@@ -3291,4 +3322,110 @@ nsGenericHTMLElement::NewURIFromString(const nsAString& aURISpec,
   }
 
   return NS_OK;
+}
+
+static bool
+IsOrHasAncestorWithDisplayNone(Element* aElement, nsIPresShell* aPresShell)
+{
+  nsTArray<Element*> elementsToCheck;
+  for (Element* e = aElement; e; e = e->GetParentElement()) {
+    if (e->GetPrimaryFrame()) {
+      // e definitely isn't display:none and doesn't have a display:none
+      // ancestor.
+      break;
+    }
+    elementsToCheck.AppendElement(e);
+  }
+
+  if (elementsToCheck.IsEmpty()) {
+    return false;
+  }
+
+  nsStyleSet* styleSet = aPresShell->StyleSet();
+  RefPtr<nsStyleContext> sc;
+  for (int32_t i = elementsToCheck.Length() - 1; i >= 0; --i) {
+    if (sc) {
+      sc = styleSet->ResolveStyleFor(elementsToCheck[i], sc);
+    } else {
+      sc = nsComputedDOMStyle::GetStyleContextForElementNoFlush(elementsToCheck[i],
+                                                                nullptr, aPresShell);
+    }
+    if (sc->StyleDisplay()->mDisplay == NS_STYLE_DISPLAY_NONE) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void
+nsGenericHTMLElement::GetInnerText(mozilla::dom::DOMString& aValue,
+                                   mozilla::ErrorResult& aError)
+{
+  if (!GetPrimaryFrame(Flush_Layout)) {
+    nsIPresShell* presShell = nsComputedDOMStyle::GetPresShellForContent(this);
+    if (!presShell || IsOrHasAncestorWithDisplayNone(this, presShell)) {
+      GetTextContentInternal(aValue, aError);
+      return;
+    }
+  }
+
+  nsRange::GetInnerTextNoFlush(aValue, aError, this, 0, this, GetChildCount());
+}
+
+void
+nsGenericHTMLElement::SetInnerText(const nsAString& aValue)
+{
+  // Fire DOMNodeRemoved mutation events before we do anything else.
+  nsCOMPtr<nsIContent> kungFuDeathGrip;
+
+  // Batch possible DOMSubtreeModified events.
+  mozAutoSubtreeModified subtree(OwnerDoc(), nullptr);
+  FireNodeRemovedForChildren();
+
+  // Might as well stick a batch around this since we're performing several
+  // mutations.
+  mozAutoDocUpdate updateBatch(GetComposedDoc(),
+    UPDATE_CONTENT_MODEL, true);
+  nsAutoMutationBatch mb;
+
+  uint32_t childCount = GetChildCount();
+
+  mb.Init(this, true, false);
+  for (uint32_t i = 0; i < childCount; ++i) {
+    RemoveChildAt(0, true);
+  }
+  mb.RemovalDone();
+
+  nsString str;
+  const char16_t* s = aValue.BeginReading();
+  const char16_t* end = aValue.EndReading();
+  while (true) {
+    if (s != end && *s == '\r' && s + 1 != end && s[1] == '\n') {
+      // a \r\n pair should only generate one <br>, so just skip the \r
+      ++s;
+    }
+    if (s == end || *s == '\r' || *s == '\n') {
+      if (!str.IsEmpty()) {
+        RefPtr<nsTextNode> textContent =
+          new nsTextNode(NodeInfo()->NodeInfoManager());
+        textContent->SetText(str, true);
+        AppendChildTo(textContent, true);
+      }
+      if (s == end) {
+        break;
+      }
+      str.Truncate();
+      already_AddRefed<mozilla::dom::NodeInfo> ni =
+        NodeInfo()->NodeInfoManager()->GetNodeInfo(nsGkAtoms::br,
+          nullptr, kNameSpaceID_XHTML, nsIDOMNode::ELEMENT_NODE);
+      RefPtr<HTMLBRElement> br = new HTMLBRElement(ni);
+      AppendChildTo(br, true);
+    } else {
+      str.Append(*s);
+    }
+    ++s;
+  }
+
+  mb.NodesAdded();
 }

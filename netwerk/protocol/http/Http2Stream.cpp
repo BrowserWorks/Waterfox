@@ -32,11 +32,6 @@
 #include "nsStandardURL.h"
 #include "prnetdb.h"
 
-#ifdef DEBUG
-// defined by the socket transport service while active
-extern PRThread *gSocketThread;
-#endif
-
 namespace mozilla {
 namespace net {
 
@@ -45,6 +40,8 @@ Http2Stream::Http2Stream(nsAHttpTransaction *httpTransaction,
                          int32_t priority)
   : mStreamID(0)
   , mSession(session)
+  , mSegmentReader(nullptr)
+  , mSegmentWriter(nullptr)
   , mUpstreamState(GENERATING_HEADERS)
   , mState(IDLE)
   , mRequestHeadersDone(0)
@@ -53,11 +50,10 @@ Http2Stream::Http2Stream(nsAHttpTransaction *httpTransaction,
   , mQueued(0)
   , mTransaction(httpTransaction)
   , mSocketTransport(session->SocketTransport())
-  , mSegmentReader(nullptr)
-  , mSegmentWriter(nullptr)
   , mChunkSize(session->SendingChunkSize())
   , mRequestBlockedOnRead(0)
   , mRecvdFin(0)
+  , mReceivedData(0)
   , mRecvdReset(0)
   , mSentReset(0)
   , mCountAsActive(0)
@@ -84,7 +80,7 @@ Http2Stream::Http2Stream(nsAHttpTransaction *httpTransaction,
   mServerReceiveWindow = session->GetServerInitialStreamWindow();
   mClientReceiveWindow = session->PushAllowance();
 
-  mTxInlineFrame = new uint8_t[mTxInlineFrameSize];
+  mTxInlineFrame = MakeUnique<uint8_t[]>(mTxInlineFrameSize);
 
   PR_STATIC_ASSERT(nsISupportsPriority::PRIORITY_LOWEST <= kNormalPriority);
 
@@ -482,8 +478,8 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
           mSession, hashkey.get(), schedulingContext, cache, pushedStream));
 
     if (pushedStream) {
-      LOG3(("Pushed Stream Match located id=0x%X key=%s\n",
-            pushedStream->StreamID(), hashkey.get()));
+      LOG3(("Pushed Stream Match located %p id=0x%X key=%s\n",
+            pushedStream, pushedStream->StreamID(), hashkey.get()));
       pushedStream->SetConsumerStream(this);
       mPushSource = pushedStream;
       SetSentFin(true);
@@ -763,8 +759,7 @@ Http2Stream::AdjustPushedPriority()
   mTxInlineFrameUsed += Http2Session::kFrameHeaderBytes + 5;
 
   mSession->CreateFrameHeader(packet, 5,
-                              Http2Session::FRAME_TYPE_PRIORITY,
-                              Http2Session::kFlag_PRIORITY,
+                              Http2Session::FRAME_TYPE_PRIORITY, 0,
                               mPushSource->mStreamID);
 
   mPushSource->SetPriority(mPriority);
@@ -862,8 +857,7 @@ Http2Stream::TransmitFrame(const char *buf,
       mTxStreamFrameSize < Http2Session::kDefaultBufferSize &&
       mTxInlineFrameUsed + mTxStreamFrameSize < mTxInlineFrameSize) {
     LOG3(("Coalesce Transmit"));
-    memcpy (mTxInlineFrame + mTxInlineFrameUsed,
-            buf, mTxStreamFrameSize);
+    memcpy (&mTxInlineFrame[mTxInlineFrameUsed], buf, mTxStreamFrameSize);
     if (countUsed)
       *countUsed += mTxStreamFrameSize;
     mTxInlineFrameUsed += mTxStreamFrameSize;
@@ -1364,7 +1358,7 @@ Http2Stream::OnReadSegment(const char *buf,
     mRequestBodyLenRemaining -= dataLength;
     GenerateDataFrameHeader(dataLength, !mRequestBodyLenRemaining);
     ChangeState(SENDING_BODY);
-    // NO BREAK
+    MOZ_FALLTHROUGH;
 
   case SENDING_BODY:
     MOZ_ASSERT(mTxInlineFrameUsed, "OnReadSegment Send Data Header 0b");
@@ -1389,6 +1383,11 @@ Http2Stream::OnReadSegment(const char *buf,
 
   case SENDING_FIN_STREAM:
     MOZ_ASSERT(false, "resuming partial fin stream out of OnReadSegment");
+    break;
+
+  case UPSTREAM_COMPLETE:
+    MOZ_ASSERT(mPushSource);
+    rv = TransmitFrame(nullptr, nullptr, true);
     break;
 
   default:
@@ -1477,4 +1476,3 @@ Http2Stream::MapStreamToHttpConnection()
 
 } // namespace net
 } // namespace mozilla
-

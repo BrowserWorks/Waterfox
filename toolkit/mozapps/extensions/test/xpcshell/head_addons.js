@@ -7,6 +7,8 @@ var AM_Ci = Components.interfaces;
 
 const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
 const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
+const CERTDB_CONTRACTID = "@mozilla.org/security/x509certdb;1";
+const CERTDB_CID = Components.ID("{fb0bbc5c-452e-4783-b32c-80124693d871}");
 
 const PREF_EM_CHECK_UPDATE_SECURITY   = "extensions.checkUpdateSecurity";
 const PREF_EM_STRICT_COMPATIBILITY    = "extensions.strictCompatibility";
@@ -29,6 +31,11 @@ Components.utils.import("resource://gre/modules/Task.jsm");
 Components.utils.import("resource://gre/modules/osfile.jsm");
 Components.utils.import("resource://gre/modules/AsyncShutdown.jsm");
 Components.utils.import("resource://testing-common/MockRegistrar.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "Extension",
+                                  "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "HttpServer",
+                                  "resource://testing-common/httpd.js");
 
 // We need some internal bits of AddonManager
 var AMscope = Components.utils.import("resource://gre/modules/AddonManager.jsm");
@@ -257,6 +264,7 @@ function createAppInfo(id, name, version, platformVersion) {
     platformBuildID: "2007010101",
 
     // nsIXULRuntime
+    browserTabsRemoteAutostart: false,
     inSafeMode: false,
     logConsoleErrors: true,
     OS: "XPCShell",
@@ -289,6 +297,179 @@ function createAppInfo(id, name, version, platformVersion) {
   registrar.registerFactory(XULAPPINFO_CID, "XULAppInfo",
                             XULAPPINFO_CONTRACTID, XULAppInfoFactory);
 }
+
+function getManifestURIForBundle(file) {
+  if (file.isDirectory()) {
+    file.append("install.rdf");
+    if (file.exists()) {
+      return NetUtil.newURI(file);
+    }
+
+    file.leafName = "manifest.json";
+    if (file.exists()) {
+      return NetUtil.newURI(file);
+    }
+
+    throw new Error("No manifest file present");
+  }
+
+  let zip = AM_Cc["@mozilla.org/libjar/zip-reader;1"].
+            createInstance(AM_Ci.nsIZipReader);
+  zip.open(file);
+  try {
+    let uri = NetUtil.newURI(file);
+
+    if (zip.hasEntry("install.rdf")) {
+      return NetUtil.newURI("jar:" + uri.spec + "!/" + "install.rdf");
+    }
+
+    if (zip.hasEntry("manifest.json")) {
+      return NetUtil.newURI("jar:" + uri.spec + "!/" + "manifest.json");
+    }
+
+    throw new Error("No manifest file present");
+  }
+  finally {
+    zip.close();
+  }
+}
+
+let getIDForManifest = Task.async(function*(manifestURI) {
+  // Load it
+  let inputStream = yield new Promise((resolve, reject) => {
+    NetUtil.asyncFetch({
+      uri: manifestURI,
+      loadUsingSystemPrincipal: true,
+    }, (inputStream, status) => {
+      if (status != Components.results.NS_OK)
+        reject(status);
+      resolve(inputStream);
+    });
+  });
+
+  // Get the data as a string
+  let data = NetUtil.readInputStreamToString(inputStream, inputStream.available());
+
+  if (manifestURI.spec.endsWith(".rdf")) {
+    let rdfParser = AM_Cc["@mozilla.org/rdf/xml-parser;1"].
+                    createInstance(AM_Ci.nsIRDFXMLParser)
+    let ds = AM_Cc["@mozilla.org/rdf/datasource;1?name=in-memory-datasource"].
+             createInstance(AM_Ci.nsIRDFDataSource);
+    rdfParser.parseString(ds, manifestURI, data);
+
+    let rdfService = AM_Cc["@mozilla.org/rdf/rdf-service;1"].
+                     getService(AM_Ci.nsIRDFService);
+
+    let rdfID = ds.GetTarget(rdfService.GetResource("urn:mozilla:install-manifest"),
+                             rdfService.GetResource("http://www.mozilla.org/2004/em-rdf#id"),
+                             true);
+    return rdfID.QueryInterface(AM_Ci.nsIRDFLiteral).Value;
+  }
+  else {
+    let manifest = JSON.parse(data);
+    return manifest.applications.gecko.id;
+  }
+});
+
+let gUseRealCertChecks = false;
+function overrideCertDB(handler) {
+  // Unregister the real database. This only works because the add-ons manager
+  // hasn't started up and grabbed the certificate database yet.
+  let registrar = Components.manager.QueryInterface(AM_Ci.nsIComponentRegistrar);
+  let factory = registrar.getClassObject(CERTDB_CID, AM_Ci.nsIFactory);
+  registrar.unregisterFactory(CERTDB_CID, factory);
+
+  // Get the real DB
+  let realCertDB = factory.createInstance(null, AM_Ci.nsIX509CertDB);
+
+  let verifyCert = Task.async(function*(caller, file, result, cert, callback) {
+    // If this isn't a callback we can get directly to through JS then just
+    // pass on the results
+    if (!callback.wrappedJSObject) {
+      caller(callback, result, cert);
+      return;
+    }
+
+    // Bypassing XPConnect allows us to create a fake x509 certificate from
+    // JS
+    callback = callback.wrappedJSObject;
+
+    if (gUseRealCertChecks || result != Components.results.NS_ERROR_SIGNED_JAR_NOT_SIGNED) {
+      // If the real DB found a useful result of some kind then pass it on.
+      caller(callback, result, cert);
+      return;
+    }
+
+    try {
+      let manifestURI = getManifestURIForBundle(file);
+
+      let id = yield getIDForManifest(manifestURI);
+
+      // Make sure to close the open zip file or it will be locked.
+      if (file.isFile()) {
+        Services.obs.notifyObservers(file, "flush-cache-entry", "cert-override");
+      }
+
+      let fakeCert = {
+        commonName: id
+      }
+      caller(callback, Components.results.NS_OK, fakeCert);
+    }
+    catch (e) {
+      // If there is any error then just pass along the original results
+      caller(callback, result, cert);
+    }
+  });
+
+  let fakeCertDB = {
+    openSignedAppFileAsync(root, file, callback) {
+      // First try calling the real cert DB
+      realCertDB.openSignedAppFileAsync(root, file, (result, zipReader, cert) => {
+        function call(callback, result, cert) {
+          callback.openSignedAppFileFinished(result, zipReader, cert);
+        }
+
+        verifyCert(call, file.clone(), result, cert, callback);
+      });
+    },
+
+    verifySignedDirectoryAsync(root, dir, callback) {
+      // First try calling the real cert DB
+      realCertDB.verifySignedDirectoryAsync(root, dir, (result, cert) => {
+        function call(callback, result, cert) {
+          callback.verifySignedDirectoryFinished(result, cert);
+        }
+
+        verifyCert(call, dir.clone(), result, cert, callback);
+      });
+    },
+
+    QueryInterface: XPCOMUtils.generateQI([AM_Ci.nsIX509CertDB])
+  };
+
+  for (let property of Object.keys(realCertDB)) {
+    if (property in fakeCertDB) {
+      continue;
+    }
+
+    if (typeof realCertDB[property] == "function") {
+      fakeCertDB[property] = realCertDB[property].bind(realCertDB);
+    }
+  }
+
+  let certDBFactory = {
+    createInstance: function(outer, iid) {
+      if (outer != null) {
+        throw Cr.NS_ERROR_NO_AGGREGATION;
+      }
+      return fakeCertDB.QueryInterface(iid);
+    }
+  };
+  registrar.registerFactory(CERTDB_CID, "CertDB",
+                            CERTDB_CONTRACTID, certDBFactory);
+}
+
+overrideCertDB();
 
 /**
  * Tests that an add-on does appear in the crash report annotations, if
@@ -368,7 +549,8 @@ function do_get_file_hash(aFile, aAlgorithm) {
   let toHexString = charCode => ("0" + charCode.toString(16)).slice(-2);
 
   let binary = crypto.finish(false);
-  return aAlgorithm + ":" + [toHexString(binary.charCodeAt(i)) for (i in binary)].join("")
+  let hash = Array.from(binary, c => toHexString(c.charCodeAt(0)));
+  return aAlgorithm + ":" + hash.join("");
 }
 
 /**
@@ -1081,6 +1263,26 @@ function createTempXPIFile(aData) {
 }
 
 /**
+ * Creates an XPI file for some WebExtension data in the temporary directory and
+ * returns the nsIFile for it. The file will be deleted when the test completes.
+ *
+ * @param   aData
+ *          The object holding data about the add-on, as expected by
+ *          |Extension.generateXPI|.
+ * @return  A file pointing to the created XPI file
+ */
+function createTempWebExtensionFile(aData) {
+  if (!aData.id) {
+    const uuidGenerator = AM_Cc["@mozilla.org/uuid-generator;1"].getService(AM_Ci.nsIUUIDGenerator);
+    aData.id = uuidGenerator.generateUUID().number;
+  }
+
+  let file = Extension.generateXPI(aData.id, aData);
+  temp_xpis.push(file);
+  return file;
+}
+
+/**
  * Sets the last modified time of the extension, usually to trigger an update
  * of its metadata. If the extension is unpacked, this function assumes that
  * the extension contains only the install.rdf file.
@@ -1107,7 +1309,9 @@ function promiseSetExtensionModifiedTime(aPath, aTime) {
     try {
       let iterator = new OS.File.DirectoryIterator(aPath);
       entries = yield iterator.nextBatch();
-    } catch (ex if ex instanceof OS.File.Error) {
+    } catch (ex) {
+      if (!(ex instanceof OS.File.Error))
+        throw ex;
       return;
     } finally {
       if (iterator) {
@@ -1463,6 +1667,23 @@ function ensure_test_completed() {
 }
 
 /**
+ * Returns a promise that resolves when the given add-on event is fired. The
+ * resolved value is an array of arguments passed for the event.
+ */
+function promiseAddonEvent(event) {
+  return new Promise(resolve => {
+    let listener = {
+      [event]: function(...args) {
+        AddonManager.removeAddonListener(listener);
+        resolve(args);
+      }
+    }
+
+    AddonManager.addAddonListener(listener);
+  });
+}
+
+/**
  * A helper method to install an array of AddonInstall to completion and then
  * call a provided callback.
  *
@@ -1600,7 +1821,7 @@ if ("nsIWindowsRegKey" in AM_Ci) {
    * This is a mock nsIWindowsRegistry implementation. It only implements the
    * methods that the extension manager requires.
    */
-  function MockWindowsRegKey() {
+  var MockWindowsRegKey = function MockWindowsRegKey() {
   }
 
   MockWindowsRegKey.prototype = {
@@ -1690,14 +1911,20 @@ Services.prefs.setCharPref("extensions.hotfix.id", "");
 Services.prefs.setCharPref(PREF_EM_MIN_COMPAT_APP_VERSION, "0");
 Services.prefs.setCharPref(PREF_EM_MIN_COMPAT_PLATFORM_VERSION, "0");
 
-// Disable signature checks for most tests
-Services.prefs.setBoolPref(PREF_XPI_SIGNATURES_REQUIRED, false);
+// Ensure signature checks are enabled by default
+Services.prefs.setBoolPref(PREF_XPI_SIGNATURES_REQUIRED, true);
 
 // Register a temporary directory for the tests.
 const gTmpD = gProfD.clone();
 gTmpD.append("temp");
 gTmpD.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
 registerDirectory("TmpD", gTmpD);
+
+// Create a replacement app directory for the tests.
+const gAppDirForAddons = gProfD.clone();
+gAppDirForAddons.append("appdir-addons");
+gAppDirForAddons.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+registerDirectory("XREAddonAppDir", gAppDirForAddons);
 
 // Write out an empty blocklist.xml file to the profile to ensure nothing
 // is blocklisted by default
@@ -1762,6 +1989,10 @@ do_register_cleanup(function addon_cleanup() {
   }
   dirEntries.close();
 
+  try {
+    gAppDirForAddons.remove(true);
+  } catch (ex) { do_print("Got exception removing addon app dir, " + ex); }
+
   var testDir = gProfD.clone();
   testDir.append("extensions");
   testDir.append("trash");
@@ -1780,6 +2011,30 @@ do_register_cleanup(function addon_cleanup() {
     Services.prefs.clearUserPref(PREF_EM_STRICT_COMPATIBILITY);
   } catch (e) {}
 });
+
+/**
+ * Creates a new HttpServer for testing, and begins listening on the
+ * specified port. Automatically shuts down the server when the test
+ * unit ends.
+ *
+ * @param port
+ *        The port to listen on. If omitted, listen on a random
+ *        port. The latter is the preferred behavior.
+ *
+ * @return HttpServer
+ */
+function createHttpServer(port = -1) {
+  let server = new HttpServer();
+  server.start(port);
+
+  do_register_cleanup(() => {
+    return new Promise(resolve => {
+      server.stop(resolve);
+    });
+  });
+
+  return server;
+}
 
 /**
  * Handler function that responds with the interpolated
@@ -1809,7 +2064,7 @@ function interpolateAndServeFile(request, response) {
 
     response.write(data);
   } catch (e) {
-    do_throw("Exception while serving interpolated file.");
+    do_throw(`Exception while serving interpolated file: ${e}\n${e.stack}`);
   } finally {
     cstream.close(); // this closes fstream as well
   }
@@ -1859,9 +2114,11 @@ function do_exception_wrap(func) {
 /**
  * Change the schema version of the JSON extensions database
  */
-function changeXPIDBVersion(aNewVersion) {
+function changeXPIDBVersion(aNewVersion, aMutator = undefined) {
   let jData = loadJSON(gExtensionsJSON);
   jData.schemaVersion = aNewVersion;
+  if (aMutator)
+    aMutator(jData);
   saveJSON(jData, gExtensionsJSON);
 }
 
@@ -1954,19 +2211,122 @@ function promiseAddonByID(aId) {
  */
 function promiseFindAddonUpdates(addon, reason = AddonManager.UPDATE_WHEN_PERIODIC_UPDATE) {
   return new Promise((resolve, reject) => {
+    let result = {};
     addon.findUpdates({
-      install: null,
-
-      onUpdateAvailable: function(addon, install) {
-        this.install = install;
+      onNoCompatibilityUpdateAvailable: function(addon2) {
+        if ("compatibilityUpdate" in result) {
+          do_throw("Saw multiple compatibility update events");
+        }
+        equal(addon, addon2, "onNoCompatibilityUpdateAvailable");
+        result.compatibilityUpdate = false;
       },
 
-      onUpdateFinished: function(addon, error) {
-        if (error == AddonManager.UPDATE_STATUS_NO_ERROR)
-          resolve(this.install);
-        else
-          reject(error);
+      onCompatibilityUpdateAvailable: function(addon2) {
+        if ("compatibilityUpdate" in result) {
+          do_throw("Saw multiple compatibility update events");
+        }
+        equal(addon, addon2, "onCompatibilityUpdateAvailable");
+        result.compatibilityUpdate = true;
+      },
+
+      onNoUpdateAvailable: function(addon2) {
+        if ("updateAvailable" in result) {
+          do_throw("Saw multiple update available events");
+        }
+        equal(addon, addon2, "onNoUpdateAvailable");
+        result.updateAvailable = false;
+      },
+
+      onUpdateAvailable: function(addon2, install) {
+        if ("updateAvailable" in result) {
+          do_throw("Saw multiple update available events");
+        }
+        equal(addon, addon2, "onUpdateAvailable");
+        result.updateAvailable = install;
+      },
+
+      onUpdateFinished: function(addon2, error) {
+        equal(addon, addon2, "onUpdateFinished");
+        if (error == AddonManager.UPDATE_STATUS_NO_ERROR) {
+          resolve(result);
+        } else {
+          result.error = error;
+          reject(result);
+        }
       }
     }, reason);
   });
+}
+
+/**
+ * Monitors console output for the duration of a task, and returns a promise
+ * which resolves to a tuple containing a list of all console messages
+ * generated during the task's execution, and the result of the task itself.
+ *
+ * @param {function} aTask
+ *                   The task to run while monitoring console output. May be
+ *                   either a generator function, per Task.jsm, or an ordinary
+ *                   function which returns promose.
+ * @return {Promise<[Array<nsIConsoleMessage>, *]>}
+ */
+var promiseConsoleOutput = Task.async(function*(aTask) {
+  const DONE = "=== xpcshell test console listener done ===";
+
+  let listener, messages = [];
+  let awaitListener = new Promise(resolve => {
+    listener = msg => {
+      if (msg == DONE) {
+        resolve();
+      } else {
+        msg instanceof Components.interfaces.nsIScriptError;
+        messages.push(msg);
+      }
+    }
+  });
+
+  Services.console.registerListener(listener);
+  try {
+    let result = yield aTask();
+
+    Services.console.logStringMessage(DONE);
+    yield awaitListener;
+
+    return { messages, result };
+  }
+  finally {
+    Services.console.unregisterListener(listener);
+  }
+});
+
+/**
+ * Creates an extension proxy file.
+ * See: https://developer.mozilla.org/en-US/Add-ons/Setting_up_extension_development_environment#Firefox_extension_proxy_file
+ * @param   aDir
+ *          The directory to add the proxy file to.
+ * @param   aAddon
+ *          An nsIFile for the add-on file that this is a proxy file for.
+ * @param   aId
+ *          A string to use for the add-on ID.
+ * @return  An nsIFile for the proxy file.
+ */
+function writeProxyFileToDir(aDir, aAddon, aId) {
+  let dir = aDir.clone();
+
+  if (!dir.exists())
+    dir.create(AM_Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
+
+  let file = dir.clone();
+  file.append(aId);
+
+  let addonPath = aAddon.path;
+
+  let fos = AM_Cc["@mozilla.org/network/file-output-stream;1"].
+            createInstance(AM_Ci.nsIFileOutputStream);
+  fos.init(file,
+           FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_TRUNCATE,
+           FileUtils.PERMS_FILE, 0);
+  fos.write(addonPath, addonPath.length);
+  fos.close();
+
+  return file;
 }

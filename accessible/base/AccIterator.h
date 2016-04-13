@@ -130,6 +130,8 @@ private:
   HTMLLabelIterator(const HTMLLabelIterator&);
   HTMLLabelIterator& operator = (const HTMLLabelIterator&);
 
+  bool IsLabel(Accessible* aLabel);
+
   RelatedAccIterator mRelIter;
   // XXX: replace it on weak reference (bug 678429), it's safe to use raw
   // pointer now because iterators life cycle is short.
@@ -245,47 +247,6 @@ private:
   nsIContent* mContent;
   DocAccessible* mDoc;
   nsAString::index_type mCurrIdx;
-};
-
-
-/**
- * Iterates over related accessible referred by aria-owns.
- */
-class ARIAOwnedByIterator final : public RelatedAccIterator
-{
-public:
-  explicit ARIAOwnedByIterator(const Accessible* aDependent);
-  virtual ~ARIAOwnedByIterator() { }
-
-  virtual Accessible* Next() override;
-
-private:
-  ARIAOwnedByIterator() = delete;
-  ARIAOwnedByIterator(const ARIAOwnedByIterator&) = delete;
-  ARIAOwnedByIterator& operator = (const ARIAOwnedByIterator&) = delete;
-
-  const Accessible* mDependent;
-};
-
-
-/**
- * Iterates over related accessible referred by aria-owns.
- */
-class ARIAOwnsIterator final : public AccIterable
-{
-public:
-  explicit ARIAOwnsIterator(const Accessible* aOwner);
-  virtual ~ARIAOwnsIterator() { }
-
-  virtual Accessible* Next() override;
-
-private:
-  ARIAOwnsIterator() = delete;
-  ARIAOwnsIterator(const ARIAOwnsIterator&) = delete;
-  ARIAOwnsIterator& operator = (const ARIAOwnsIterator&) = delete;
-
-  IDRefsIterator mIter;
-  const Accessible* mOwner;
 };
 
 

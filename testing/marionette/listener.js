@@ -14,8 +14,12 @@ loader.loadSubScript("chrome://marionette/content/simpletest.js");
 loader.loadSubScript("chrome://marionette/content/common.js");
 loader.loadSubScript("chrome://marionette/content/actions.js");
 Cu.import("chrome://marionette/content/capture.js");
+Cu.import("chrome://marionette/content/cookies.js");
 Cu.import("chrome://marionette/content/elements.js");
 Cu.import("chrome://marionette/content/error.js");
+Cu.import("chrome://marionette/content/proxy.js");
+Cu.import("chrome://marionette/content/interactions.js");
+
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
@@ -40,7 +44,11 @@ var curContainer = { frame: content, shadowRoot: null };
 var isRemoteBrowser = () => curContainer.frame.contentWindow !== null;
 var previousContainer = null;
 var elementManager = new ElementManager([]);
-var accessibility = new Accessibility();
+
+// Holds session capabilities.
+var capabilities = {};
+var interactions = new Interactions(utils, () => capabilities);
+
 var actions = new ActionChain(utils, checkForInterrupted);
 var importedScripts = null;
 
@@ -77,9 +85,12 @@ var EVENT_INTERVAL = 30; // milliseconds
 // last touch for each fingerId
 var multiLast = {};
 
+var chrome = proxy.toChrome(sendSyncMessage.bind(this));
+var cookies = new Cookies(() => curContainer.frame.document, chrome);
+
 Cu.import("resource://gre/modules/Log.jsm");
 var logger = Log.repository.getLogger("Marionette");
-logger.info("loaded listener.js");
+logger.debug("loaded listener.js");
 var modalHandler = function() {
   // This gets called on the system app only since it receives the mozbrowserprompt event
   sendSyncMessage("Marionette:switchedToFrame", { frameValue: null, storePrevious: true });
@@ -102,9 +113,8 @@ function registerSelf() {
 
   if (register[0]) {
     let {id, remotenessChange} = register[0][0];
-    let {B2G, raisesAccessibilityExceptions} = register[0][2];
-    isB2G = B2G;
-    accessibility.strict = raisesAccessibilityExceptions;
+    capabilities = register[0][2];
+    isB2G = capabilities.B2G;
     listenerId = id;
     if (typeof id != "undefined") {
       // check if we're the main process
@@ -162,7 +172,6 @@ function dispatch(fn) {
     let id = msg.json.command_id;
 
     let req = Task.spawn(function*() {
-      let rv;
       if (typeof msg.json == "undefined" || msg.json instanceof Array) {
         return yield fn.apply(null, msg.json);
       } else {
@@ -218,6 +227,11 @@ var switchToShadowRootFn = dispatch(switchToShadowRoot);
 var getCookiesFn = dispatch(getCookies);
 var singleTapFn = dispatch(singleTap);
 var takeScreenshotFn = dispatch(takeScreenshot);
+var actionChainFn = dispatch(actionChain);
+var multiActionFn = dispatch(multiAction);
+var addCookieFn = dispatch(addCookie);
+var deleteCookieFn = dispatch(deleteCookie);
+var deleteAllCookiesFn = dispatch(deleteAllCookies);
 
 /**
  * Start all message listeners
@@ -229,8 +243,8 @@ function startListeners() {
   addMessageListenerId("Marionette:executeAsyncScript", executeAsyncScript);
   addMessageListenerId("Marionette:executeJSScript", executeJSScript);
   addMessageListenerId("Marionette:singleTap", singleTapFn);
-  addMessageListenerId("Marionette:actionChain", actionChain);
-  addMessageListenerId("Marionette:multiAction", multiAction);
+  addMessageListenerId("Marionette:actionChain", actionChainFn);
+  addMessageListenerId("Marionette:multiAction", multiActionFn);
   addMessageListenerId("Marionette:get", get);
   addMessageListenerId("Marionette:pollForReadyState", pollForReadyState);
   addMessageListenerId("Marionette:cancelRequest", cancelRequest);
@@ -264,10 +278,10 @@ function startListeners() {
   addMessageListenerId("Marionette:getAppCacheStatus", getAppCacheStatus);
   addMessageListenerId("Marionette:setTestName", setTestName);
   addMessageListenerId("Marionette:takeScreenshot", takeScreenshotFn);
-  addMessageListenerId("Marionette:addCookie", addCookie);
+  addMessageListenerId("Marionette:addCookie", addCookieFn);
   addMessageListenerId("Marionette:getCookies", getCookiesFn);
-  addMessageListenerId("Marionette:deleteAllCookies", deleteAllCookies);
-  addMessageListenerId("Marionette:deleteCookie", deleteCookie);
+  addMessageListenerId("Marionette:deleteAllCookies", deleteAllCookiesFn);
+  addMessageListenerId("Marionette:deleteCookie", deleteCookieFn);
 }
 
 /**
@@ -289,8 +303,8 @@ function waitForReady() {
  * current environment, and resets all values
  */
 function newSession(msg) {
-  isB2G = msg.json.B2G;
-  accessibility.strict = msg.json.raisesAccessibilityExceptions;
+  capabilities = msg.json;
+  isB2G = capabilities.B2G;
   resetValues();
   if (isB2G) {
     readyStateTimer.initWithCallback(waitForReady, 100, Ci.nsITimer.TYPE_ONE_SHOT);
@@ -334,8 +348,8 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:executeAsyncScript", executeAsyncScript);
   removeMessageListenerId("Marionette:executeJSScript", executeJSScript);
   removeMessageListenerId("Marionette:singleTap", singleTapFn);
-  removeMessageListenerId("Marionette:actionChain", actionChain);
-  removeMessageListenerId("Marionette:multiAction", multiAction);
+  removeMessageListenerId("Marionette:actionChain", actionChainFn);
+  removeMessageListenerId("Marionette:multiAction", multiActionFn);
   removeMessageListenerId("Marionette:get", get);
   removeMessageListenerId("Marionette:pollForReadyState", pollForReadyState);
   removeMessageListenerId("Marionette:cancelRequest", cancelRequest);
@@ -369,10 +383,10 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:getAppCacheStatus", getAppCacheStatus);
   removeMessageListenerId("Marionette:setTestName", setTestName);
   removeMessageListenerId("Marionette:takeScreenshot", takeScreenshotFn);
-  removeMessageListenerId("Marionette:addCookie", addCookie);
+  removeMessageListenerId("Marionette:addCookie", addCookieFn);
   removeMessageListenerId("Marionette:getCookies", getCookiesFn);
-  removeMessageListenerId("Marionette:deleteAllCookies", deleteAllCookies);
-  removeMessageListenerId("Marionette:deleteCookie", deleteCookie);
+  removeMessageListenerId("Marionette:deleteAllCookies", deleteAllCookiesFn);
+  removeMessageListenerId("Marionette:deleteCookie", deleteCookieFn);
   if (isB2G) {
     content.removeEventListener("mozbrowsershowmodalprompt", modalHandler, false);
   }
@@ -928,123 +942,22 @@ function singleTap(id, corx, cory) {
   if (!visible) {
     throw new ElementNotVisibleError("Element is not currently visible and may not be manipulated");
   }
-  let acc = accessibility.getAccessibleObject(el, true);
-  checkVisibleAccessibility(acc, el, visible);
-  checkActionableAccessibility(acc, el);
-  if (!curContainer.frame.document.createTouch) {
-    actions.mouseEventsOnly = true;
-  }
-  let c = coordinates(el, corx, cory);
-  if (!actions.mouseEventsOnly) {
-    let touchId = actions.nextTouchId++;
-    let touch = createATouch(el, c.x, c.y, touchId);
-    emitTouchEvent('touchstart', touch);
-    emitTouchEvent('touchend', touch);
-  }
-  actions.mouseTap(el.ownerDocument, c.x, c.y);
+  return interactions.accessibility.getAccessibleObject(el, true).then(acc => {
+    interactions.accessibility.checkVisible(acc, el, visible);
+    interactions.accessibility.checkActionable(acc, el);
+    if (!curContainer.frame.document.createTouch) {
+      actions.mouseEventsOnly = true;
+    }
+    let c = coordinates(el, corx, cory);
+    if (!actions.mouseEventsOnly) {
+      let touchId = actions.nextTouchId++;
+      let touch = createATouch(el, c.x, c.y, touchId);
+      emitTouchEvent('touchstart', touch);
+      emitTouchEvent('touchend', touch);
+    }
+    actions.mouseTap(el.ownerDocument, c.x, c.y);
+  });
 }
-
-/**
- * Check if the element's unavailable accessibility state matches the enabled
- * state
- * @param nsIAccessible object
- * @param WebElement corresponding to nsIAccessible object
- * @param Boolean enabled element's enabled state
- */
-function checkEnabledAccessibility(accesible, element, enabled) {
-  if (!accesible) {
-    return;
-  }
-  let disabledAccessibility = accessibility.matchState(
-    accesible, 'STATE_UNAVAILABLE');
-  let explorable = curContainer.frame.document.defaultView.getComputedStyle(
-    element, null).getPropertyValue('pointer-events') !== 'none';
-  let message;
-
-  if (!explorable && !disabledAccessibility) {
-    message = 'Element is enabled but is not explorable via the ' +
-      'accessibility API';
-  } else if (enabled && disabledAccessibility) {
-    message = 'Element is enabled but disabled via the accessibility API';
-  } else if (!enabled && !disabledAccessibility) {
-    message = 'Element is disabled but enabled via the accessibility API';
-  }
-  accessibility.handleErrorMessage(message, element);
-}
-
-/**
- * Check if the element's visible state corresponds to its accessibility API
- * visibility
- * @param nsIAccessible object
- * @param WebElement corresponding to nsIAccessible object
- * @param Boolean visible element's visibility state
- */
-function checkVisibleAccessibility(accesible, element, visible) {
-  if (!accesible) {
-    return;
-  }
-  let hiddenAccessibility = accessibility.isHidden(accesible);
-  let message;
-  if (visible && hiddenAccessibility) {
-    message = 'Element is not currently visible via the accessibility API ' +
-      'and may not be manipulated by it';
-  } else if (!visible && !hiddenAccessibility) {
-    message = 'Element is currently only visible via the accessibility API ' +
-      'and can be manipulated by it';
-  }
-  accessibility.handleErrorMessage(message, element);
-}
-
-/**
- * Check if it is possible to activate an element with the accessibility API
- * @param nsIAccessible object
- * @param WebElement corresponding to nsIAccessible object
- */
-function checkActionableAccessibility(accesible, element) {
-  if (!accesible) {
-    return;
-  }
-  let message;
-  if (!accessibility.hasActionCount(accesible)) {
-    message = 'Element does not support any accessible actions';
-  } else if (!accessibility.isActionableRole(accesible)) {
-    message = 'Element does not have a correct accessibility role ' +
-      'and may not be manipulated via the accessibility API';
-  } else if (!accessibility.hasValidName(accesible)) {
-    message = 'Element is missing an accesible name';
-  } else if (!accessibility.matchState(accesible, 'STATE_FOCUSABLE')) {
-    message = 'Element is not focusable via the accessibility API';
-  }
-  accessibility.handleErrorMessage(message, element);
-}
-
-/**
- * Check if element's selected state corresponds to its accessibility API
- * selected state.
- * @param nsIAccessible object
- * @param WebElement corresponding to nsIAccessible object
- * @param Boolean selected element's selected state
- */
-function checkSelectedAccessibility(accessible, element, selected) {
-  if (!accessible) {
-    return;
-  }
-  if (!accessibility.matchState(accessible, 'STATE_SELECTABLE')) {
-    // Element is not selectable via the accessibility API
-    return;
-  }
-
-  let selectedAccessibility = accessibility.matchState(
-    accessible, 'STATE_SELECTED');
-  let message;
-  if (selected && !selectedAccessibility) {
-    message = 'Element is selected but not selected via the accessibility API';
-  } else if (!selected && selectedAccessibility) {
-    message = 'Element is not selected but selected via the accessibility API';
-  }
-  accessibility.handleErrorMessage(message, element);
-}
-
 
 /**
  * Function to create a touch based on the element
@@ -1060,32 +973,22 @@ function createATouch(el, corx, cory, touchId) {
 }
 
 /**
- * Function to start action chain on one finger
+ * Start action chain on one finger.
  */
-function actionChain(msg) {
-  let command_id = msg.json.command_id;
-  let args = msg.json.chain;
-  let touchId = msg.json.nextId;
-
-  let callbacks = {};
-  callbacks.onSuccess = value => sendResponse(value, command_id);
-  callbacks.onError = err => sendError(err, command_id);
-
+function actionChain(chain, touchId) {
   let touchProvider = {};
   touchProvider.createATouch = createATouch;
   touchProvider.emitTouchEvent = emitTouchEvent;
 
-  try {
+  return new Promise((resolve, reject) => {
     actions.dispatchActions(
-        args,
+        chain,
         touchId,
         curContainer,
         elementManager,
-        callbacks,
+        {onSuccess: resolve, onError: reject},
         touchProvider);
-  } catch (e) {
-    sendError(e, command_id);
-  }
+  });
 }
 
 /**
@@ -1124,16 +1027,13 @@ function emitMultiEvents(type, touch, touches) {
  * Function to dispatch one set of actions
  * @param touches represents all pending touches, batchIndex represents the batch we are dispatching right now
  */
-function setDispatch(batches, touches, command_id, batchIndex) {
-  if (typeof batchIndex === "undefined") {
-    batchIndex = 0;
-  }
+function setDispatch(batches, touches, batchIndex=0) {
   // check if all the sets have been fired
   if (batchIndex >= batches.length) {
     multiLast = {};
-    sendOk(command_id);
     return;
   }
+
   // a set of actions need to be done
   let batch = batches[batchIndex];
   // each action for some finger
@@ -1152,38 +1052,43 @@ function setDispatch(batches, touches, command_id, batchIndex) {
   let waitTime = 0;
   let maxTime = 0;
   let c;
-  batchIndex++;
+
   // loop through the batch
+  batchIndex++;
   for (let i = 0; i < batch.length; i++) {
     pack = batch[i];
     touchId = pack[0];
     command = pack[1];
+
     switch (command) {
-      case 'press':
+      case "press":
         el = elementManager.getKnownElement(pack[2], curContainer);
         c = coordinates(el, pack[3], pack[4]);
         touch = createATouch(el, c.x, c.y, touchId);
         multiLast[touchId] = touch;
         touches.push(touch);
-        emitMultiEvents('touchstart', touch, touches);
+        emitMultiEvents("touchstart", touch, touches);
         break;
-      case 'release':
+
+      case "release":
         touch = multiLast[touchId];
         // the index of the previous touch for the finger may change in the touches array
         touchIndex = touches.indexOf(touch);
         touches.splice(touchIndex, 1);
-        emitMultiEvents('touchend', touch, touches);
+        emitMultiEvents("touchend", touch, touches);
         break;
-      case 'move':
+
+      case "move":
         el = elementManager.getKnownElement(pack[2], curContainer);
         c = coordinates(el);
         touch = createATouch(multiLast[touchId].target, c.x, c.y, touchId);
         touchIndex = touches.indexOf(lastTouch);
         touches[touchIndex] = touch;
         multiLast[touchId] = touch;
-        emitMultiEvents('touchmove', touch, touches);
+        emitMultiEvents("touchmove", touch, touches);
         break;
-      case 'moveByOffset':
+
+      case "moveByOffset":
         el = multiLast[touchId].target;
         lastTouch = multiLast[touchId];
         touchIndex = touches.indexOf(lastTouch);
@@ -1199,59 +1104,58 @@ function setDispatch(batches, touches, command_id, batchIndex) {
         touch = doc.createTouch(win, el, touchId, pageX, pageY, screenX, screenY, clientX, clientY);
         touches[touchIndex] = touch;
         multiLast[touchId] = touch;
-        emitMultiEvents('touchmove', touch, touches);
+        emitMultiEvents("touchmove", touch, touches);
         break;
-      case 'wait':
-        if (pack[2] != undefined ) {
-          waitTime = pack[2]*1000;
+
+      case "wait":
+        if (typeof pack[2] != "undefined") {
+          waitTime = pack[2] * 1000;
           if (waitTime > maxTime) {
             maxTime = waitTime;
           }
         }
         break;
-    }//end of switch block
-  }//end of for loop
-  if (maxTime != 0) {
-    checkTimer.initWithCallback(function(){setDispatch(batches, touches, command_id, batchIndex);}, maxTime, Ci.nsITimer.TYPE_ONE_SHOT);
+    }
   }
-  else {
-    setDispatch(batches, touches, command_id, batchIndex);
+
+  if (maxTime != 0) {
+    checkTimer.initWithCallback(function() {
+      setDispatch(batches, touches, batchIndex);
+    }, maxTime, Ci.nsITimer.TYPE_ONE_SHOT);
+  } else {
+    setDispatch(batches, touches, batchIndex);
   }
 }
 
 /**
- * Function to start multi-action
+ * Start multi-action.
+ *
+ * @param {Number} maxLen
+ *     Longest action chain for one finger.
  */
-function multiAction(msg) {
-  let command_id = msg.json.command_id;
-  let args = msg.json.value;
-  // maxlen is the longest action chain for one finger
-  let maxlen = msg.json.maxlen;
-  try {
-    // unwrap the original nested array
-    let commandArray = elementManager.convertWrappedArguments(args, curContainer);
-    let concurrentEvent = [];
-    let temp;
-    for (let i = 0; i < maxlen; i++) {
-      let row = [];
-      for (let j = 0; j < commandArray.length; j++) {
-        if (commandArray[j][i] != undefined) {
-          // add finger id to the front of each action, i.e. [finger_id, action, element]
-          temp = commandArray[j][i];
-          temp.unshift(j);
-          row.push(temp);
-        }
+function multiAction(args, maxLen) {
+  // unwrap the original nested array
+  let commandArray = elementManager.convertWrappedArguments(args, curContainer);
+  let concurrentEvent = [];
+  let temp;
+  for (let i = 0; i < maxLen; i++) {
+    let row = [];
+    for (let j = 0; j < commandArray.length; j++) {
+      if (typeof commandArray[j][i] != "undefined") {
+        // add finger id to the front of each action, i.e. [finger_id, action, element]
+        temp = commandArray[j][i];
+        temp.unshift(j);
+        row.push(temp);
       }
-      concurrentEvent.push(row);
     }
-    // now concurrent event is made of sets where each set contain a list of actions that need to be fired.
-    // note: each action belongs to a different finger
-    // pendingTouches keeps track of current touches that's on the screen
-    let pendingTouches = [];
-    setDispatch(concurrentEvent, pendingTouches, command_id);
-  } catch (e) {
-    sendError(e, command_id);
+    concurrentEvent.push(row);
   }
+
+  // now concurrent event is made of sets where each set contain a list of actions that need to be fired.
+  // note: each action belongs to a different finger
+  // pendingTouches keeps track of current touches that's on the screen
+  let pendingTouches = [];
+  setDispatch(concurrentEvent, pendingTouches);
 }
 
 /*
@@ -1458,21 +1362,7 @@ function getActiveElement() {
  *     Reference to the web element to click.
  */
 function clickElement(id) {
-  let el = elementManager.getKnownElement(id, curContainer);
-  let visible = checkVisible(el);
-  if (!visible) {
-    throw new ElementNotVisibleError("Element is not visible");
-  }
-  let acc = accessibility.getAccessibleObject(el, true);
-  checkVisibleAccessibility(acc, el, visible);
-
-  if (utils.isElementEnabled(el)) {
-    checkEnabledAccessibility(acc, el, true);
-    checkActionableAccessibility(acc, el);
-    utils.synthesizeMouseAtCenter(el, {}, el.ownerDocument.defaultView);
-  } else {
-    throw new InvalidElementStateError("Element is not Enabled");
-  }
+  return interactions.clickElement(curContainer, elementManager, id);
 }
 
 /**
@@ -1526,11 +1416,7 @@ function getElementTagName(id) {
  * capability.
  */
 function isElementDisplayed(id) {
-  let el = elementManager.getKnownElement(id, curContainer);
-  let displayed = utils.isElementDisplayed(el);
-  checkVisibleAccessibility(
-    accessibility.getAccessibleObject(el), el, displayed);
-  return displayed;
+  return interactions.isElementDisplayed(curContainer, elementManager, id);
 }
 
 /**
@@ -1581,11 +1467,7 @@ function getElementRect(id) {
  *     True if enabled, false otherwise.
  */
 function isElementEnabled(id) {
-  let el = elementManager.getKnownElement(id, curContainer);
-  let enabled = utils.isElementEnabled(el);
-  checkEnabledAccessibility(
-    accessibility.getAccessibleObject(el), el, enabled);
-  return enabled;
+  return interactions.isElementEnabled(curContainer, elementManager, id);
 }
 
 /**
@@ -1595,11 +1477,7 @@ function isElementEnabled(id) {
  * and Radio Button states, or option elements.
  */
 function isElementSelected(id) {
-  let el = elementManager.getKnownElement(id, curContainer);
-    let selected = utils.isElementSelected(el);
-    checkSelectedAccessibility(
-      accessibility.getAccessibleObject(el), el, selected);
-  return selected;
+  return interactions.isElementSelected(curContainer, elementManager, id);
 }
 
 /**
@@ -1608,26 +1486,21 @@ function isElementSelected(id) {
 function sendKeysToElement(msg) {
   let command_id = msg.json.command_id;
   let val = msg.json.value;
+  let id = msg.json.id;
+  let el = elementManager.getKnownElement(id, curContainer);
 
-  try {
-    let el = elementManager.getKnownElement(msg.json.id, curContainer);
-    // Element should be actionable from the accessibility standpoint to be able
-    // to send keys to it.
-    checkActionableAccessibility(
-      accessibility.getAccessibleObject(el, true), el);
-    if (el.type == "file") {
-      let p = val.join("");
-      fileInputElement = el;
-      // In e10s, we can only construct File objects in the parent process,
-      // so pass the filename to driver.js, which in turn passes them back
-      // to this frame script in receiveFiles.
-      sendSyncMessage("Marionette:getFiles",
-                      {value: p, command_id: command_id});
-    } else {
-      utils.sendKeysToElement(curContainer.frame, el, val, sendOk, sendError, command_id);
-    }
-  } catch (e) {
-    sendError(e, command_id);
+  if (el.type == "file") {
+    let p = val.join("");
+        fileInputElement = el;
+        // In e10s, we can only construct File objects in the parent process,
+        // so pass the filename to driver.js, which in turn passes them back
+        // to this frame script in receiveFiles.
+        sendSyncMessage("Marionette:getFiles",
+                        {value: p, command_id: command_id});
+  } else {
+    interactions.sendKeysToElement(curContainer, elementManager, id, val)
+      .then(() => sendOk(command_id))
+      .catch(e => sendError(e, command_id));
   }
 }
 
@@ -1663,7 +1536,15 @@ function switchToShadowRoot(id) {
     // If no host element is passed, attempt to find a parent shadow root or, if
     // none found, unset the current shadow root
     if (curContainer.shadowRoot) {
-      let parent = curContainer.shadowRoot.host;
+      let parent;
+      try {
+        parent = curContainer.shadowRoot.host;
+      } catch (e) {
+        // There is a chance that host element is dead and we are trying to
+        // access a dead object.
+        curContainer.shadowRoot = null;
+        return;
+      }
       while (parent && !(parent instanceof curContainer.frame.ShadowRoot)) {
         parent = parent.parentNode;
       }
@@ -1833,47 +1714,9 @@ function switchToFrame(msg) {
 
   sendResponse({value: rv}, command_id);
 }
- /**
-  * Add a cookie to the document
-  */
-function addCookie(msg) {
-  let cookie = msg.json.cookie;
-  if (!cookie.expiry) {
-    var date = new Date();
-    var thePresent = new Date(Date.now());
-    date.setYear(thePresent.getFullYear() + 20);
-    cookie.expiry = date.getTime() / 1000;  // Stored in seconds.
-  }
 
-  if (!cookie.domain) {
-    var location = curContainer.frame.document.location;
-    cookie.domain = location.hostname;
-  } else {
-    var currLocation = curContainer.frame.location;
-    var currDomain = currLocation.host;
-    if (currDomain.indexOf(cookie.domain) == -1) {
-      sendError(new InvalidCookieDomainError("You may only set cookies for the current domain"), msg.json.command_id);
-    }
-  }
-
-  // The cookie's domain may include a port. Which is bad. Remove it
-  // We'll catch ip6 addresses by mistake. Since no-one uses those
-  // this will be okay for now. See Bug 814416
-  if (cookie.domain.match(/:\d+$/)) {
-    cookie.domain = cookie.domain.replace(/:\d+$/, '');
-  }
-
-  var document = curContainer.frame.document;
-  if (!document || !document.contentType.match(/html/i)) {
-    sendError(new UnableToSetCookieError("You may only set cookies on html documents"), msg.json.command_id);
-  }
-
-  let added = sendSyncMessage("Marionette:addCookie", {value: cookie});
-  if (added[0] !== true) {
-    sendError(new UnableToSetCookieError(), msg.json.command_id);
-    return;
-  }
-  sendOk(msg.json.command_id);
+function addCookie(cookie) {
+  cookies.add(cookie.name, cookie.value, cookie);
 }
 
 /**
@@ -1881,7 +1724,6 @@ function addCookie(msg) {
  */
 function getCookies() {
   let rv = [];
-  let cookies = getVisibleCookies(curContainer.frame.location);
 
   for (let cookie of cookies) {
     let expires = cookie.expires;
@@ -1907,47 +1749,19 @@ function getCookies() {
 }
 
 /**
- * Delete a cookie by name
+ * Delete a cookie by name.
  */
-function deleteCookie(msg) {
-  let toDelete = msg.json.name;
-  let cookies = getVisibleCookies(curContainer.frame.location);
-  for (let cookie of cookies) {
-    if (cookie.name == toDelete) {
-      let deleted = sendSyncMessage("Marionette:deleteCookie", {value: cookie});
-      if (deleted[0] !== true) {
-        sendError(new UnknownError("Could not delete cookie: " + msg.json.name), msg.json.command_id);
-        return;
-      }
-    }
-  }
-
-  sendOk(msg.json.command_id);
+function deleteCookie(name) {
+  cookies.delete(name);
 }
 
 /**
- * Delete all the visibile cookies on a page
+ * Delete all the visibile cookies on a page.
  */
-function deleteAllCookies(msg) {
-  let cookies = getVisibleCookies(curContainer.frame.location);
+function deleteAllCookies() {
   for (let cookie of cookies) {
-    let deleted = sendSyncMessage("Marionette:deleteCookie", {value: cookie});
-    if (!deleted[0]) {
-      sendError(new UnknownError("Could not delete cookie: " + JSON.stringify(cookie)), msg.json.command_id);
-      return;
-    }
+    cookies.delete(cookie);
   }
-  sendOk(msg.json.command_id);
-}
-
-/**
- * Get all the visible cookies from a location
- */
-function getVisibleCookies(location) {
-  let currentPath = location.pathname || '/';
-  let result = sendSyncMessage("Marionette:getVisibleCookies",
-                               {value: [currentPath, location.hostname]});
-  return result[0];
 }
 
 function getAppCacheStatus(msg) {
@@ -1963,7 +1777,8 @@ function runEmulatorCmd(cmd, callback) {
   if (callback) {
     _emu_cbs[_emu_cb_id] = callback;
   }
-  sendAsyncMessage("Marionette:runEmulatorCmd", {emulator_cmd: cmd, id: _emu_cb_id});
+  sendAsyncMessage("Marionette:runEmulatorCmd",
+      {command: cmd, id: _emu_cb_id});
   _emu_cb_id += 1;
 }
 
@@ -1971,25 +1786,34 @@ function runEmulatorShell(args, callback) {
   if (callback) {
     _emu_cbs[_emu_cb_id] = callback;
   }
-  sendAsyncMessage("Marionette:runEmulatorShell", {emulator_shell: args, id: _emu_cb_id});
+  sendAsyncMessage("Marionette:runEmulatorShell",
+      {arguments: args, id: _emu_cb_id});
   _emu_cb_id += 1;
 }
 
 function emulatorCmdResult(msg) {
-  let message = msg.json;
+  let {error, result, id} = msg.json;
+
+  if (error) {
+    let err = new JavaScriptError(error);
+    sendError(err, id);
+    return;
+  }
+
   if (!sandboxes[sandboxName]) {
     return;
   }
-  let cb = _emu_cbs[message.id];
-  delete _emu_cbs[message.id];
+  let cb = _emu_cbs[id];
+  delete _emu_cbs[id];
   if (!cb) {
     return;
   }
+
   try {
-    cb(message.result);
+    cb(result);
   } catch (e) {
-    sendError(e, -1);
-    return;
+    let err = new JavaScriptError(e);
+    sendError(err, id);
   }
 }
 

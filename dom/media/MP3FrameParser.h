@@ -198,7 +198,7 @@ private:
 
   // If the MP3 has a variable bitrate, then there *should* be metadata about
   // the encoding in the first frame. We buffer the first frame here.
-  nsAutoCString mFirstFrame;
+  nsCString mFirstFrame;
 
   // While we are reading the first frame, this is the stream offset of the
   // last byte of that frame. -1 at all other times.
@@ -212,24 +212,6 @@ private:
 
   eIsMP3 mIsMP3;
 
-};
-
-class NotifyDataArrivedFilter {
-public:
-  media::IntervalSet<int64_t> NotifyDataArrived(uint32_t aLength, int64_t aOffset) {
-    media::Interval<int64_t> interval(aOffset, aOffset + aLength);
-    media::IntervalSet<int64_t> newIntervals(interval);
-    newIntervals -= mIntervals;
-    mIntervals += interval;
-    return newIntervals;
-  }
-
-  const media::IntervalSet<int64_t>& GetIntervals() {
-    return mIntervals;
-  }
-
-private:
-  media::IntervalSet<int64_t> mIntervals;
 };
 
 } // namespace mozilla

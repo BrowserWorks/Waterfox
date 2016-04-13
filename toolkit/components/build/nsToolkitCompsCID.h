@@ -89,10 +89,16 @@
   "@mozilla.org/updates/update-processor;1"
 #endif
 
+#define NS_ADDONCONTENTPOLICY_CONTRACTID \
+  "@mozilla.org/addons/content-policy;1"
+
 #define NS_ADDONPATHSERVICE_CONTRACTID \
     "@mozilla.org/addon-path-service;1"
 
 /////////////////////////////////////////////////////////////////////////////
+
+#define ALERT_NOTIFICATION_CID \
+{ 0x9a7b7a41, 0x0b47, 0x47f7, { 0xb6, 0x1b, 0x15, 0xa2, 0x10, 0xd6, 0xf0, 0x20 } }
 
 // {A0CCAAF8-09DA-44D8-B250-9AC3E93C8117}
 #define NS_ALERTSSERVICE_CID \
@@ -177,6 +183,9 @@
 
 #define NS_APPLICATION_REPUTATION_SERVICE_CID \
 { 0x8576c950, 0xf4a2, 0x11e2, { 0xb7, 0x78, 0x08, 0x00, 0x20, 0x0c, 0x9a, 0x66 } }
+
+#define NS_ADDONCONTENTPOLICY_CID \
+{ 0xc26a8241, 0xecf4, 0x4aed, { 0x9f, 0x3c, 0xf1, 0xf5, 0xc7, 0x13, 0xb9, 0xa5 } }
 
 #define NS_ADDON_PATH_SERVICE_CID \
 { 0xa39f39d0, 0xdfb6, 0x11e3, { 0x8b, 0x68, 0x08, 0x00, 0x20, 0x0c, 0x9a, 0x66 } }

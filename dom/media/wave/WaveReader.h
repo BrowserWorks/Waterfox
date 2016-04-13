@@ -22,18 +22,14 @@ protected:
   ~WaveReader();
 
 public:
-  virtual bool DecodeAudioData() override;
-  virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
-                                  int64_t aTimeThreshold) override;
+  bool DecodeAudioData() override;
+  bool DecodeVideoFrame(bool &aKeyframeSkip,
+                        int64_t aTimeThreshold) override;
 
-  virtual nsresult ReadMetadata(MediaInfo* aInfo,
-                                MetadataTags** aTags) override;
-  virtual RefPtr<SeekPromise>
-  Seek(int64_t aTime, int64_t aEndTime) override;
+  nsresult ReadMetadata(MediaInfo* aInfo, MetadataTags** aTags) override;
+  RefPtr<SeekPromise> Seek(int64_t aTime, int64_t aEndTime) override;
 
-  virtual media::TimeIntervals GetBuffered() override;
-
-  virtual bool IsMediaSeekable() override;
+  media::TimeIntervals GetBuffered() override;
 
 private:
   bool ReadAll(char* aBuf, int64_t aSize, int64_t* aBytesRead = nullptr);
@@ -78,7 +74,8 @@ private:
   // support U8.
   enum {
     FORMAT_U8,
-    FORMAT_S16
+    FORMAT_S16,
+    FORMAT_S24
   } mSampleFormat;
 
   // Size of PCM data stored in the WAVE as reported by the data chunk in

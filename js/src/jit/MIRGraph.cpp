@@ -6,7 +6,6 @@
 
 #include "jit/MIRGraph.h"
 
-#include "asmjs/AsmJSValidate.h"
 #include "jit/BytecodeAnalysis.h"
 #include "jit/Ion.h"
 #include "jit/JitSpewer.h"
@@ -18,10 +17,8 @@ using namespace js::jit;
 using mozilla::Swap;
 
 MIRGenerator::MIRGenerator(CompileCompartment* compartment, const JitCompileOptions& options,
-                           TempAllocator* alloc, MIRGraph* graph, CompileInfo* info,
+                           TempAllocator* alloc, MIRGraph* graph, const CompileInfo* info,
                            const OptimizationInfo* optimizationInfo,
-                           Label* outOfBoundsLabel,
-                           Label* conversionErrorLabel,
                            bool usesSignalHandlersForAsmJSOOB)
   : compartment(compartment),
     info_(info),
@@ -42,8 +39,6 @@ MIRGenerator::MIRGenerator(CompileCompartment* compartment, const JitCompileOpti
     instrumentedProfiling_(false),
     instrumentedProfilingIsCached_(false),
     safeForMinorGC_(true),
-    outOfBoundsLabel_(outOfBoundsLabel),
-    conversionErrorLabel_(conversionErrorLabel),
 #if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
     usesSignalHandlersForAsmJSOOB_(usesSignalHandlersForAsmJSOOB),
 #endif
@@ -136,7 +131,8 @@ MIRGenerator::foldableOffsetRange(const MAsmJSHeapAccess* access) const
 #if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
     // With signal-handler OOB handling, we reserve guard space for the full
     // immediate size.
-    if (usesSignalHandlersForAsmJSOOB_)
+    // Bug 1254935: Atomic accesses can't be handled with signal handlers yet.
+    if (usesSignalHandlersForAsmJSOOB_ && !access->isAtomicAccess())
         return AsmJSImmediateRange;
 #endif
 
@@ -253,7 +249,7 @@ MIRGraph::unmarkBlocks()
 }
 
 MBasicBlock*
-MBasicBlock::New(MIRGraph& graph, BytecodeAnalysis* analysis, CompileInfo& info,
+MBasicBlock::New(MIRGraph& graph, BytecodeAnalysis* analysis, const CompileInfo& info,
                  MBasicBlock* pred, BytecodeSite* site, Kind kind)
 {
     MOZ_ASSERT(site->pc() != nullptr);
@@ -269,7 +265,7 @@ MBasicBlock::New(MIRGraph& graph, BytecodeAnalysis* analysis, CompileInfo& info,
 }
 
 MBasicBlock*
-MBasicBlock::NewPopN(MIRGraph& graph, CompileInfo& info,
+MBasicBlock::NewPopN(MIRGraph& graph, const CompileInfo& info,
                      MBasicBlock* pred, BytecodeSite* site, Kind kind, uint32_t popped)
 {
     MBasicBlock* block = new(graph.alloc()) MBasicBlock(graph, info, site, kind);
@@ -283,7 +279,7 @@ MBasicBlock::NewPopN(MIRGraph& graph, CompileInfo& info,
 }
 
 MBasicBlock*
-MBasicBlock::NewWithResumePoint(MIRGraph& graph, CompileInfo& info,
+MBasicBlock::NewWithResumePoint(MIRGraph& graph, const CompileInfo& info,
                                 MBasicBlock* pred, BytecodeSite* site,
                                 MResumePoint* resumePoint)
 {
@@ -305,7 +301,7 @@ MBasicBlock::NewWithResumePoint(MIRGraph& graph, CompileInfo& info,
 }
 
 MBasicBlock*
-MBasicBlock::NewPendingLoopHeader(MIRGraph& graph, CompileInfo& info,
+MBasicBlock::NewPendingLoopHeader(MIRGraph& graph, const CompileInfo& info,
                                   MBasicBlock* pred, BytecodeSite* site,
                                   unsigned stackPhiCount)
 {
@@ -322,7 +318,7 @@ MBasicBlock::NewPendingLoopHeader(MIRGraph& graph, CompileInfo& info,
 }
 
 MBasicBlock*
-MBasicBlock::NewSplitEdge(MIRGraph& graph, CompileInfo& info, MBasicBlock* pred)
+MBasicBlock::NewSplitEdge(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pred)
 {
     return pred->pc()
            ? MBasicBlock::New(graph, nullptr, info, pred,
@@ -332,7 +328,7 @@ MBasicBlock::NewSplitEdge(MIRGraph& graph, CompileInfo& info, MBasicBlock* pred)
 }
 
 MBasicBlock*
-MBasicBlock::NewAsmJS(MIRGraph& graph, CompileInfo& info, MBasicBlock* pred, Kind kind)
+MBasicBlock::NewAsmJS(MIRGraph& graph, const CompileInfo& info, MBasicBlock* pred, Kind kind)
 {
     BytecodeSite* site = new(graph.alloc()) BytecodeSite();
     MBasicBlock* block = new(graph.alloc()) MBasicBlock(graph, info, site, kind);
@@ -385,7 +381,7 @@ MBasicBlock::NewAsmJS(MIRGraph& graph, CompileInfo& info, MBasicBlock* pred, Kin
     return block;
 }
 
-MBasicBlock::MBasicBlock(MIRGraph& graph, CompileInfo& info, BytecodeSite* site, Kind kind)
+MBasicBlock::MBasicBlock(MIRGraph& graph, const CompileInfo& info, BytecodeSite* site, Kind kind)
   : unreachable_(false),
     graph_(graph),
     info_(info),
@@ -394,6 +390,7 @@ MBasicBlock::MBasicBlock(MIRGraph& graph, CompileInfo& info, BytecodeSite* site,
     numDominated_(0),
     pc_(site->pc()),
     lir_(nullptr),
+    callerResumePoint_(nullptr),
     entryResumePoint_(nullptr),
     outerResumePoint_(nullptr),
     successorWithPhis_(nullptr),
@@ -403,7 +400,9 @@ MBasicBlock::MBasicBlock(MIRGraph& graph, CompileInfo& info, BytecodeSite* site,
     mark_(false),
     immediatelyDominated_(graph.alloc()),
     immediateDominator_(nullptr),
-    trackedSite_(site)
+    trackedSite_(site),
+    hitCount_(0),
+    hitState_(HitState::NotDefined)
 #if defined (JS_ION_PERF)
     , lineno_(0u),
     columnIndex_(0u)

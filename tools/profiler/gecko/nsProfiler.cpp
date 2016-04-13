@@ -7,6 +7,7 @@
 #include <sstream>
 #include "GeckoProfiler.h"
 #include "nsProfiler.h"
+#include "nsProfilerStartParams.h"
 #include "nsMemory.h"
 #include "nsString.h"
 #include "mozilla/Services.h"
@@ -248,11 +249,60 @@ nsProfiler::GetFeatures(uint32_t *aCount, char ***aFeatures)
 }
 
 NS_IMETHODIMP
+nsProfiler::GetStartParams(nsIProfilerStartParams** aRetVal)
+{
+  if (!profiler_is_active()) {
+    *aRetVal = nullptr;
+  } else {
+    int entrySize = 0;
+    double interval = 0;
+    mozilla::Vector<const char*> filters;
+    mozilla::Vector<const char*> features;
+    profiler_get_start_params(&entrySize, &interval, &filters, &features);
+
+    nsTArray<nsCString> filtersArray;
+    for (uint32_t i = 0; i < filters.length(); ++i) {
+      filtersArray.AppendElement(filters[i]);
+    }
+
+    nsTArray<nsCString> featuresArray;
+    for (size_t i = 0; i < features.length(); ++i) {
+      featuresArray.AppendElement(features[i]);
+    }
+
+    nsCOMPtr<nsIProfilerStartParams> startParams =
+      new nsProfilerStartParams(entrySize, interval, featuresArray,
+                                filtersArray);
+
+    startParams.forget(aRetVal);
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsProfiler::GetBufferInfo(uint32_t *aCurrentPosition, uint32_t *aTotalSize, uint32_t *aGeneration)
 {
   MOZ_ASSERT(aCurrentPosition);
   MOZ_ASSERT(aTotalSize);
   MOZ_ASSERT(aGeneration);
   profiler_get_buffer_info(aCurrentPosition, aTotalSize, aGeneration);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsProfiler::GetProfileGatherer(nsISupports** aRetVal)
+{
+  if (!aRetVal) {
+    return NS_ERROR_INVALID_POINTER;
+  }
+
+  // If we're not profiling, there will be no gatherer.
+  if (!profiler_is_active()) {
+    *aRetVal = nullptr;
+  } else {
+    nsCOMPtr<nsISupports> gatherer;
+    profiler_get_gatherer(getter_AddRefs(gatherer));
+    gatherer.forget(aRetVal);
+  }
   return NS_OK;
 }

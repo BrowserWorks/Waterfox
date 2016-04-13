@@ -125,6 +125,15 @@ UnixSocketRawData::UnixSocketRawData(const void* aData, size_t aSize)
               0, aSize, aSize);
 }
 
+UnixSocketRawData::UnixSocketRawData(UniquePtr<uint8_t[]> aData, size_t aSize)
+{
+  MOZ_ASSERT(aData || !aSize);
+
+  MOZ_COUNT_CTOR_INHERITED(UnixSocketRawData, UnixSocketIOBuffer);
+
+  ResetBuffer(aData.release(), 0, aSize, aSize);
+}
+
 UnixSocketRawData::UnixSocketRawData(size_t aSize)
 {
   MOZ_COUNT_CTOR_INHERITED(UnixSocketRawData, UnixSocketIOBuffer);
@@ -136,7 +145,7 @@ UnixSocketRawData::~UnixSocketRawData()
 {
   MOZ_COUNT_DTOR_INHERITED(UnixSocketRawData, UnixSocketIOBuffer);
 
-  nsAutoArrayPtr<uint8_t> data(GetBuffer());
+  UniquePtr<uint8_t[]> data(GetBuffer());
   ResetBuffer(nullptr, 0, 0, 0);
 }
 

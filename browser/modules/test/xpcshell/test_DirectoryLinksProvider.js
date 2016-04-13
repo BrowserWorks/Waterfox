@@ -22,6 +22,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
   "resource://gre/modules/NetUtil.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NewTabUtils",
   "resource://gre/modules/NewTabUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
+  "resource://testing-common/PlacesTestUtils.jsm");
 
 do_get_profile();
 
@@ -198,7 +200,7 @@ function promiseDirectoryDownloadOnPrefChange(pref, newValue) {
 }
 
 function promiseSetupDirectoryLinksProvider(options = {}) {
-  return Task.spawn(function() {
+  return Task.spawn(function*() {
     let linksURL = options.linksURL || kTestURL;
     yield DirectoryLinksProvider.init();
     yield promiseDirectoryDownloadOnPrefChange(kLocalePref, options.locale || "en-US");
@@ -209,7 +211,7 @@ function promiseSetupDirectoryLinksProvider(options = {}) {
 }
 
 function promiseCleanDirectoryLinksProvider() {
-  return Task.spawn(function() {
+  return Task.spawn(function*() {
     yield promiseDirectoryDownloadOnPrefChange(kLocalePref, "en-US");
     yield promiseDirectoryDownloadOnPrefChange(kSourceUrlPref, kTestURL);
     yield DirectoryLinksProvider._clearFrequencyCap();
@@ -290,7 +292,7 @@ add_task(function test_shouldUpdateSuggestedTile() {
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
 });
 
-add_task(function test_updateSuggestedTile() {
+add_task(function* test_updateSuggestedTile() {
   let topSites = ["site0.com", "1040.com", "site2.com", "hrblock.com", "site4.com", "freetaxusa.com", "site6.com"];
 
   // Initial setup
@@ -419,7 +421,7 @@ add_task(function test_updateSuggestedTile() {
   DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
 });
 
-add_task(function test_suggestedLinksMap() {
+add_task(function* test_suggestedLinksMap() {
   let data = {"suggested": [suggestedTile1, suggestedTile2, suggestedTile3, suggestedTile4], "directory": [someOtherSite]};
   let dataURI = 'data:application/json,' + JSON.stringify(data);
 
@@ -458,7 +460,7 @@ add_task(function test_suggestedLinksMap() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_topSitesWithSuggestedLinks() {
+add_task(function* test_topSitesWithSuggestedLinks() {
   let topSites = ["site0.com", "1040.com", "site2.com", "hrblock.com", "site4.com", "freetaxusa.com", "site6.com"];
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = function(site) {
@@ -510,7 +512,7 @@ add_task(function test_topSitesWithSuggestedLinks() {
   NewTabUtils.getProviderLinks = origGetProviderLinks;
 });
 
-add_task(function test_suggestedAttributes() {
+add_task(function* test_suggestedAttributes() {
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = () => true;
 
@@ -567,7 +569,7 @@ add_task(function test_suggestedAttributes() {
   DirectoryLinksProvider.removeObserver(gLinks);
 });
 
-add_task(function test_frequencyCappedSites_views() {
+add_task(function* test_frequencyCappedSites_views() {
   Services.prefs.setCharPref(kPingUrlPref, "");
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = () => true;
@@ -644,7 +646,7 @@ add_task(function test_frequencyCappedSites_views() {
   Services.prefs.setCharPref(kPingUrlPref, kPingUrl);
 });
 
-add_task(function test_frequencyCappedSites_click() {
+add_task(function* test_frequencyCappedSites_click() {
   Services.prefs.setCharPref(kPingUrlPref, "");
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = () => true;
@@ -714,114 +716,7 @@ add_task(function test_frequencyCappedSites_click() {
   Services.prefs.setCharPref(kPingUrlPref, kPingUrl);
 });
 
-add_task(function test_reportSitesAction() {
-  yield DirectoryLinksProvider.init();
-  let deferred, expectedPath, expectedPost;
-  let done = false;
-  server.registerPrefixHandler(kPingPath, (aRequest, aResponse) => {
-    if (done) {
-      return;
-    }
-
-    do_check_eq(aRequest.path, expectedPath);
-
-    let bodyStream = new BinaryInputStream(aRequest.bodyInputStream);
-    let bodyObject = JSON.parse(NetUtil.readInputStreamToString(bodyStream, bodyStream.available()));
-    isIdentical(bodyObject, expectedPost);
-
-    deferred.resolve();
-  });
-
-  function sendPingAndTest(path, action, index) {
-    deferred = Promise.defer();
-    expectedPath = kPingPath + path;
-    DirectoryLinksProvider.reportSitesAction(sites, action, index);
-    return deferred.promise;
-  }
-
-  // Start with a single pinned link at position 3
-  let sites = [,,{
-    isPinned: _ => true,
-    link: {
-      directoryId: 1,
-      frecency: 30000,
-      url: "http://directory1/",
-    },
-  }];
-
-  // Make sure we get the click ping for the directory link with fields we want
-  // and unwanted fields removed by stringify/parse
-  expectedPost = JSON.parse(JSON.stringify({
-    click: 0,
-    locale: "en-US",
-    tiles: [{
-      id: 1,
-      pin: 1,
-      pos: 2,
-      score: 3,
-      url: undefined,
-    }],
-  }));
-  yield sendPingAndTest("click", "click", 2);
-
-  // Try a pin click ping
-  delete expectedPost.click;
-  expectedPost.pin = 0;
-  yield sendPingAndTest("click", "pin", 2);
-
-  // Try a block click ping
-  delete expectedPost.pin;
-  expectedPost.block = 0;
-  yield sendPingAndTest("click", "block", 2);
-
-  // A view ping has no actions
-  delete expectedPost.block;
-  expectedPost.view = 0;
-  yield sendPingAndTest("view", "view", 2);
-
-  // Remove the identifier that makes it a directory link so just plain history
-  delete sites[2].link.directoryId;
-  delete expectedPost.tiles[0].id;
-  yield sendPingAndTest("view", "view", 2);
-
-  // Add directory link at position 0
-  sites[0] = {
-    isPinned: _ => false,
-    link: {
-      directoryId: 1234,
-      frecency: 1000,
-      url: "http://directory/",
-    }
-  };
-  expectedPost.tiles.unshift(JSON.parse(JSON.stringify({
-    id: 1234,
-    pin: undefined,
-    pos: undefined,
-    score: undefined,
-    url: undefined,
-  })));
-  expectedPost.view = 1;
-  yield sendPingAndTest("view", "view", 2);
-
-  // Make the history tile enhanced so it reports both id and url
-  sites[2].enhancedId = "id from enhanced";
-  expectedPost.tiles[1].id = "id from enhanced";
-  expectedPost.tiles[1].url = "";
-  yield sendPingAndTest("view", "view", 2);
-
-  // Click the 0th site / 0th tile
-  delete expectedPost.view;
-  expectedPost.click = 0;
-  yield sendPingAndTest("click", "click", 0);
-
-  // Click the 2th site / 1th tile
-  expectedPost.click = 1;
-  yield sendPingAndTest("click", "click", 2);
-
-  done = true;
-});
-
-add_task(function test_fetchAndCacheLinks_local() {
+add_task(function* test_fetchAndCacheLinks_local() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
   // Trigger cache of data or chrome uri files in profD
@@ -830,7 +725,7 @@ add_task(function test_fetchAndCacheLinks_local() {
   isIdentical(data, kURLData);
 });
 
-add_task(function test_fetchAndCacheLinks_remote() {
+add_task(function* test_fetchAndCacheLinks_remote() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
   // this must trigger directory links json download and save it to cache file
@@ -840,7 +735,7 @@ add_task(function test_fetchAndCacheLinks_remote() {
   isIdentical(data, kHttpHandlerData[kExamplePath]);
 });
 
-add_task(function test_fetchAndCacheLinks_malformedURI() {
+add_task(function* test_fetchAndCacheLinks_malformedURI() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
   let someJunk = "some junk";
@@ -856,7 +751,7 @@ add_task(function test_fetchAndCacheLinks_malformedURI() {
   isIdentical(data, "");
 });
 
-add_task(function test_fetchAndCacheLinks_unknownHost() {
+add_task(function* test_fetchAndCacheLinks_unknownHost() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
   let nonExistentServer = "http://localhost:56789/";
@@ -872,7 +767,7 @@ add_task(function test_fetchAndCacheLinks_unknownHost() {
   isIdentical(data, "");
 });
 
-add_task(function test_fetchAndCacheLinks_non200Status() {
+add_task(function* test_fetchAndCacheLinks_non200Status() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
   yield promiseDirectoryDownloadOnPrefChange(kSourceUrlPref, kFailURL);
@@ -882,7 +777,7 @@ add_task(function test_fetchAndCacheLinks_non200Status() {
 });
 
 // To test onManyLinksChanged observer, trigger a fetch
-add_task(function test_DirectoryLinksProvider__linkObservers() {
+add_task(function* test_DirectoryLinksProvider__linkObservers() {
   yield DirectoryLinksProvider.init();
 
   let testObserver = new LinksChangeObserver();
@@ -897,7 +792,7 @@ add_task(function test_DirectoryLinksProvider__linkObservers() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider__prefObserver_url() {
+add_task(function* test_DirectoryLinksProvider__prefObserver_url() {
   yield promiseSetupDirectoryLinksProvider({linksURL: kTestURL});
 
   let links = yield fetchData();
@@ -926,7 +821,7 @@ add_task(function test_DirectoryLinksProvider__prefObserver_url() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_getLinks_noDirectoryData() {
+add_task(function* test_DirectoryLinksProvider_getLinks_noDirectoryData() {
   let data = {
     "directory": [],
   };
@@ -938,7 +833,7 @@ add_task(function test_DirectoryLinksProvider_getLinks_noDirectoryData() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_getLinks_badData() {
+add_task(function* test_DirectoryLinksProvider_getLinks_badData() {
   let data = {
     "en-US": {
       "en-US": [{url: "http://example.com", title: "US"}],
@@ -964,7 +859,7 @@ add_task(function test_DirectoryLinksProvider_needsDownload() {
   DirectoryLinksProvider._lastDownloadMS = 0;
 });
 
-add_task(function test_DirectoryLinksProvider_fetchAndCacheLinksIfNecessary() {
+add_task(function* test_DirectoryLinksProvider_fetchAndCacheLinksIfNecessary() {
   yield DirectoryLinksProvider.init();
   yield cleanJsonFile();
   // explicitly change source url to cause the download during setup
@@ -1006,7 +901,7 @@ add_task(function test_DirectoryLinksProvider_fetchAndCacheLinksIfNecessary() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_fetchDirectoryOnPrefChange() {
+add_task(function* test_DirectoryLinksProvider_fetchDirectoryOnPrefChange() {
   yield DirectoryLinksProvider.init();
 
   let testObserver = new LinksChangeObserver();
@@ -1027,7 +922,7 @@ add_task(function test_DirectoryLinksProvider_fetchDirectoryOnPrefChange() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_fetchDirectoryOnShow() {
+add_task(function* test_DirectoryLinksProvider_fetchDirectoryOnShow() {
   yield promiseSetupDirectoryLinksProvider();
 
   // set lastdownload to 0 to make DirectoryLinksProvider want to download
@@ -1041,7 +936,7 @@ add_task(function test_DirectoryLinksProvider_fetchDirectoryOnShow() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_fetchDirectoryOnInit() {
+add_task(function* test_DirectoryLinksProvider_fetchDirectoryOnInit() {
   // ensure preferences are set to defaults
   yield promiseSetupDirectoryLinksProvider();
   // now clean to provider, so we can init it again
@@ -1055,7 +950,7 @@ add_task(function test_DirectoryLinksProvider_fetchDirectoryOnInit() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_getLinksFromCorruptedFile() {
+add_task(function* test_DirectoryLinksProvider_getLinksFromCorruptedFile() {
   yield promiseSetupDirectoryLinksProvider();
 
   // write bogus json to a file and attempt to fetch from it
@@ -1067,7 +962,7 @@ add_task(function test_DirectoryLinksProvider_getLinksFromCorruptedFile() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_getAllowedLinks() {
+add_task(function* test_DirectoryLinksProvider_getAllowedLinks() {
   let data = {"directory": [
     {url: "ftp://example.com"},
     {url: "http://example.net"},
@@ -1088,7 +983,7 @@ add_task(function test_DirectoryLinksProvider_getAllowedLinks() {
   do_check_eq(links[1].url, data["directory"][3].url);
 });
 
-add_task(function test_DirectoryLinksProvider_getAllowedImages() {
+add_task(function* test_DirectoryLinksProvider_getAllowedImages() {
   let data = {"directory": [
     {url: "http://example.com", imageURI: "ftp://example.com"},
     {url: "http://example.com", imageURI: "http://example.net"},
@@ -1109,7 +1004,7 @@ add_task(function test_DirectoryLinksProvider_getAllowedImages() {
   do_check_eq(links[1].imageURI, data["directory"][5].imageURI);
 });
 
-add_task(function test_DirectoryLinksProvider_getAllowedImages_base() {
+add_task(function* test_DirectoryLinksProvider_getAllowedImages_base() {
   let data = {"directory": [
     {url: "http://example1.com", imageURI: "https://example.com"},
     {url: "http://example2.com", imageURI: "https://tiles.cdn.mozilla.net"},
@@ -1133,7 +1028,7 @@ add_task(function test_DirectoryLinksProvider_getAllowedImages_base() {
   do_check_eq(links[3].url, data["directory"][4].url);
 });
 
-add_task(function test_DirectoryLinksProvider_getAllowedEnhancedImages() {
+add_task(function* test_DirectoryLinksProvider_getAllowedEnhancedImages() {
   let data = {"directory": [
     {url: "http://example.com", enhancedImageURI: "ftp://example.com"},
     {url: "http://example.com", enhancedImageURI: "http://example.net"},
@@ -1154,7 +1049,7 @@ add_task(function test_DirectoryLinksProvider_getAllowedEnhancedImages() {
   do_check_eq(links[1].enhancedImageURI, data["directory"][5].enhancedImageURI);
 });
 
-add_task(function test_DirectoryLinksProvider_getEnhancedLink() {
+add_task(function* test_DirectoryLinksProvider_getEnhancedLink() {
   let data = {"enhanced": [
     {url: "http://example.net", enhancedImageURI: "data:,net1"},
     {url: "http://example.com", enhancedImageURI: "data:,com1"},
@@ -1206,7 +1101,7 @@ add_task(function test_DirectoryLinksProvider_getEnhancedLink() {
   checkEnhanced("http://example.com", "data:,fresh");
 });
 
-add_task(function test_DirectoryLinksProvider_enhancedURIs() {
+add_task(function* test_DirectoryLinksProvider_enhancedURIs() {
   let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
   NewTabUtils.isTopPlacesSite = () => true;
   let origCurrentTopSiteCount = DirectoryLinksProvider._getCurrentTopSiteCount;
@@ -1277,7 +1172,7 @@ add_task(function test_DirectoryLinksProvider_setDefaultEnhanced() {
   Services.prefs.clearUserPref("privacy.donottrackheader.value");
 });
 
-add_task(function test_timeSensetiveSuggestedTiles() {
+add_task(function* test_timeSensetiveSuggestedTiles() {
   // make tile json with start and end dates
   let testStartTime = Date.now();
   // start date is now + 1 seconds
@@ -1448,7 +1343,7 @@ add_task(function test_setupStartEndTime() {
   do_check_false(link.startTime);
 });
 
-add_task(function test_DirectoryLinksProvider_frequencyCapSetup() {
+add_task(function* test_DirectoryLinksProvider_frequencyCapSetup() {
   yield promiseSetupDirectoryLinksProvider();
   yield DirectoryLinksProvider.init();
 
@@ -1524,7 +1419,7 @@ add_task(function test_DirectoryLinksProvider_frequencyCapSetup() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_getFrequencyCapLogic() {
+add_task(function* test_DirectoryLinksProvider_getFrequencyCapLogic() {
   yield promiseSetupDirectoryLinksProvider();
   yield DirectoryLinksProvider.init();
 
@@ -1575,7 +1470,7 @@ add_task(function test_DirectoryLinksProvider_getFrequencyCapLogic() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_getFrequencyCapReportSiteAction() {
+add_task(function* test_DirectoryLinksProvider_getFrequencyCapReportSiteAction() {
   yield promiseSetupDirectoryLinksProvider();
   yield DirectoryLinksProvider.init();
 
@@ -1603,7 +1498,7 @@ add_task(function test_DirectoryLinksProvider_getFrequencyCapReportSiteAction() 
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_DirectoryLinksProvider_ClickRemoval() {
+add_task(function* test_DirectoryLinksProvider_ClickRemoval() {
   yield promiseSetupDirectoryLinksProvider();
   yield DirectoryLinksProvider.init();
   let landingUrl = "http://foo.com";
@@ -1687,8 +1582,7 @@ add_task(function test_DirectoryLinksProvider_ClickRemoval() {
 
   testObserver = new UrlDeletionTester();
   DirectoryLinksProvider.addObserver(testObserver);
-  // remove all hostory
-  PlacesUtils.bhistory.removeAllPages();
+  yield PlacesTestUtils.clearHistory();
 
   yield testObserver.promise;
   DirectoryLinksProvider.removeObserver(testObserver);
@@ -1708,7 +1602,7 @@ add_task(function test_DirectoryLinksProvider_anonymous() {
   do_check_true(DirectoryLinksProvider._newXHR().mozAnon);
 });
 
-add_task(function test_sanitizeExplanation() {
+add_task(function* test_sanitizeExplanation() {
   // Note: this is a basic test to ensure we applied sanitization to the link explanation.
   // Full testing for appropriate sanitization is done in parser/xml/test/unit/test_sanitizer.js.
   let data = {"suggested": [suggestedTile5]};
@@ -1726,7 +1620,7 @@ add_task(function test_sanitizeExplanation() {
   do_check_eq(suggestedLink.targetedName, "WE ARE EVIL ");
 });
 
-add_task(function test_inadjecentSites() {
+add_task(function* test_inadjecentSites() {
   let suggestedTile = Object.assign({
     check_inadjacency: true
   }, suggestedTile1);
@@ -1900,111 +1794,7 @@ add_task(function test_inadjecentSites() {
   yield promiseCleanDirectoryLinksProvider();
 });
 
-add_task(function test_reportPastImpressions() {
-  let origIsTopPlacesSite = NewTabUtils.isTopPlacesSite;
-  NewTabUtils.isTopPlacesSite = () => true;
-  let origCurrentTopSiteCount = DirectoryLinksProvider._getCurrentTopSiteCount;
-  DirectoryLinksProvider._getCurrentTopSiteCount = () => 8;
-
-  let testUrl = "http://frequency.capped/link";
-  let targets = ["top.site.com"];
-  let data = {
-    suggested: [{
-      type: "affiliate",
-      frecent_sites: targets,
-      url: testUrl,
-      adgroup_name: "Test"
-    }]
-  };
-  let dataURI = "data:application/json," + JSON.stringify(data);
-  yield promiseSetupDirectoryLinksProvider({linksURL: dataURI});
-
-  // make DirectoryLinksProvider load json
-  let loadPromise = Promise.defer();
-  DirectoryLinksProvider.getLinks(_ => {loadPromise.resolve();});
-  yield loadPromise.promise;
-
-  // setup ping handler
-  let deferred, expectedPath, expectedAction, expectedImpressions;
-  let done = false;
-  server.registerPrefixHandler(kPingPath, (aRequest, aResponse) => {
-    if (done) {
-      return;
-    }
-
-    do_check_eq(aRequest.path, expectedPath);
-
-    let bodyStream = new BinaryInputStream(aRequest.bodyInputStream);
-    let bodyObject = JSON.parse(NetUtil.readInputStreamToString(bodyStream, bodyStream.available()));
-    let expectedActionIndex = bodyObject[expectedAction];
-    if (bodyObject.unpin) {
-      // unpin should not report past_impressions
-      do_check_false(bodyObject.tiles[expectedActionIndex].hasOwnProperty("past_impressions"));
-    }
-    else if (expectedImpressions) {
-      do_check_eq(bodyObject.tiles[expectedActionIndex].past_impressions.total, expectedImpressions);
-      do_check_eq(bodyObject.tiles[expectedActionIndex].past_impressions.daily, expectedImpressions);
-    }
-    else {
-      do_check_eq(expectedPath, "/ping/view");
-      do_check_false(bodyObject.tiles[expectedActionIndex].hasOwnProperty("past_impressions"));
-    }
-
-    deferred.resolve();
-  });
-
-  // setup ping sender
-  function sendPingAndTest(path, action, index) {
-    deferred = Promise.defer();
-    expectedPath = kPingPath + path;
-    expectedAction = action;
-    DirectoryLinksProvider.reportSitesAction(sites, action, index);
-    return deferred.promise;
-  }
-
-  // Start with a view ping first
-  let site = {
-    isPinned: _ => false,
-    link: {
-      directoryId: 1,
-      frecency: 30000,
-      frecent_sites: targets,
-      targetedSite: targets[0],
-      url: testUrl
-    }
-  };
-  let sites = [,
-    {
-      isPinned: _ => false,
-      link: {type: "history", url: "https://foo.com"}
-    },
-    site
-  ];
-
-  yield sendPingAndTest("view", "view", 2);
-  yield sendPingAndTest("view", "view", 2);
-  yield sendPingAndTest("view", "view", 2);
-
-  expectedImpressions = DirectoryLinksProvider._frequencyCaps[testUrl].totalViews;
-  do_check_eq(expectedImpressions, 3);
-
-  // now report pin, unpin, block and click
-  sites.isPinned = _ => true;
-  yield sendPingAndTest("click", "pin", 2);
-  sites.isPinned = _ => false;
-  yield sendPingAndTest("click", "unpin", 2);
-  sites.isPinned = _ => false;
-  yield sendPingAndTest("click", "click", 2);
-  sites.isPinned = _ => false;
-  yield sendPingAndTest("click", "block", 2);
-
-  // Cleanup.
-  done = true;
-  NewTabUtils.isTopPlacesSite = origIsTopPlacesSite;
-  DirectoryLinksProvider._getCurrentTopSiteCount = origCurrentTopSiteCount;
-});
-
-add_task(function test_blockSuggestedTiles() {
+add_task(function* test_blockSuggestedTiles() {
   // Initial setup
   let suggestedTile = suggestedTile1;
   let topSites = ["site0.com", "1040.com", "site2.com", "hrblock.com", "site4.com", "freetaxusa.com", "site6.com"];

@@ -1,6 +1,10 @@
 var seenIndex = false;
 
 onfetch = function(ev) {
+  if (ev.request.url.includes("ignore")) {
+    return;
+  }
+
   if (ev.request.url.includes("bare-synthesized.txt")) {
     ev.respondWith(Promise.resolve(
       new Response("synthesized response body", {})
@@ -63,9 +67,6 @@ onfetch = function(ev) {
      ));
    }
 
-  else if (ev.request.url.includes("ignored.txt")) {
-  }
-
   else if (ev.request.url.includes("rejected.txt")) {
     ev.respondWith(Promise.reject());
   }
@@ -96,6 +97,10 @@ onfetch = function(ev) {
     ev.respondWith(Promise.resolve(
       new Response(ok.toString(), {})
     ));
+  }
+
+  else if (ev.request.url.includes('user-pass')) {
+    ev.respondWith(new Response(ev.request.url));
   }
 
   else if (ev.request.url.includes("nonexistent_image.gif")) {
@@ -293,10 +298,15 @@ onfetch = function(ev) {
   }
 
   else if (ev.request.url.includes('fetchevent-request')) {
-    if ((new FetchEvent("foo")).request === null) {
-      ev.respondWith(new Response("nullable"));
-    } else {
-      ev.respondWith(Promise.reject());
+    var threw = false;
+    try {
+      new FetchEvent("foo");
+    } catch(e) {
+      if (e.name == "TypeError") {
+        threw = true;
+      }
+    } finally {
+      ev.respondWith(new Response(threw ? "non-nullable" : "nullable"));
     }
   }
 };

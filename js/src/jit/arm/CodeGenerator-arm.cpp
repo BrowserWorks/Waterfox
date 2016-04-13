@@ -121,7 +121,7 @@ CodeGeneratorARM::generateOutOfLineCode()
         masm.branch(handler);
     }
 
-    return true;
+    return !masm.oom();
 }
 
 void
@@ -581,7 +581,7 @@ CodeGeneratorARM::visitSoftDivI(LSoftDivI* ins)
     masm.passABIArg(lhs);
     masm.passABIArg(rhs);
     if (gen->compilingAsmJS())
-        masm.callWithABI(AsmJSImm_aeabi_idivmod);
+        masm.callWithABI(wasm::SymbolicAddress::aeabi_idivmod);
     else
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, __aeabi_idivmod));
 
@@ -751,7 +751,7 @@ CodeGeneratorARM::visitSoftModI(LSoftModI* ins)
     masm.passABIArg(lhs);
     masm.passABIArg(rhs);
     if (gen->compilingAsmJS())
-        masm.callWithABI(AsmJSImm_aeabi_idivmod);
+        masm.callWithABI(wasm::SymbolicAddress::aeabi_idivmod);
     else
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, __aeabi_idivmod));
 
@@ -1031,7 +1031,7 @@ CodeGeneratorARM::visitOutOfLineTableSwitch(OutOfLineTableSwitch* ool)
         // The entries of the jump table need to be absolute addresses and thus
         // must be patched after codegen is finished.
         CodeLabel cl = ool->codeLabel(i);
-        cl.src()->bind(caseoffset);
+        cl.target()->bind(caseoffset);
         masm.addCodeLabel(cl);
     }
 }
@@ -1085,7 +1085,7 @@ CodeGeneratorARM::emitTableSwitchDispatch(MTableSwitch* mir, Register index, Reg
     OutOfLineTableSwitch* ool = new(alloc()) OutOfLineTableSwitch(alloc(), mir);
     for (int32_t i = 0; i < cases; i++) {
         CodeLabel cl;
-        masm.writeCodePointer(cl.dest());
+        masm.writeCodePointer(cl.patchAt());
         ool->addCodeLabel(cl);
     }
     addOutOfLineCode(ool, mir);
@@ -1690,6 +1690,48 @@ CodeGeneratorARM::visitStoreTypedArrayElementStatic(LStoreTypedArrayElementStati
     MOZ_CRASH("NYI");
 }
 
+void
+CodeGeneratorARM::visitCompareExchangeTypedArrayElement(LCompareExchangeTypedArrayElement* lir)
+{
+    Register elements = ToRegister(lir->elements());
+    AnyRegister output = ToAnyRegister(lir->output());
+    Register temp = lir->temp()->isBogusTemp() ? InvalidReg : ToRegister(lir->temp());
+
+    Register oldval = ToRegister(lir->oldval());
+    Register newval = ToRegister(lir->newval());
+
+    Scalar::Type arrayType = lir->mir()->arrayType();
+    int width = Scalar::byteSize(arrayType);
+
+    if (lir->index()->isConstant()) {
+        Address dest(elements, ToInt32(lir->index()) * width);
+        masm.compareExchangeToTypedIntArray(arrayType, dest, oldval, newval, temp, output);
+    } else {
+        BaseIndex dest(elements, ToRegister(lir->index()), ScaleFromElemWidth(width));
+        masm.compareExchangeToTypedIntArray(arrayType, dest, oldval, newval, temp, output);
+    }
+}
+
+void
+CodeGeneratorARM::visitAtomicExchangeTypedArrayElement(LAtomicExchangeTypedArrayElement* lir)
+{
+    Register elements = ToRegister(lir->elements());
+    AnyRegister output = ToAnyRegister(lir->output());
+    Register temp = lir->temp()->isBogusTemp() ? InvalidReg : ToRegister(lir->temp());
+
+    Register value = ToRegister(lir->value());
+
+    Scalar::Type arrayType = lir->mir()->arrayType();
+    int width = Scalar::byteSize(arrayType);
+
+    if (lir->index()->isConstant()) {
+        Address dest(elements, ToInt32(lir->index()) * width);
+        masm.atomicExchangeToTypedIntArray(arrayType, dest, value, temp, output);
+    } else {
+        BaseIndex dest(elements, ToRegister(lir->index()), ScaleFromElemWidth(width));
+        masm.atomicExchangeToTypedIntArray(arrayType, dest, value, temp, output);
+    }
+}
 
 template<typename S, typename T>
 void
@@ -1700,7 +1742,6 @@ CodeGeneratorARM::atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType
     MOZ_ASSERT(flagTemp != InvalidReg);
     MOZ_ASSERT_IF(arrayType == Scalar::Uint32, outTemp != InvalidReg);
 
-    // Uint8Clamped is explicitly not supported here
     switch (arrayType) {
       case Scalar::Int8:
         switch (op) {
@@ -1866,7 +1907,6 @@ CodeGeneratorARM::atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType
 {
     MOZ_ASSERT(flagTemp != InvalidReg);
 
-    // Uint8Clamped is explicitly not supported here
     switch (arrayType) {
       case Scalar::Int8:
       case Scalar::Uint8:
@@ -2130,24 +2170,24 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap* ins)
         FloatRegister dst = ToFloatRegister(ins->output());
         VFPRegister vd(dst);
         if (size == 32) {
-            masm.ma_vldr(Address(GlobalReg, AsmJSNaN32GlobalDataOffset - AsmJSGlobalRegBias),
+            masm.ma_vldr(Address(GlobalReg, wasm::NaN32GlobalDataOffset - AsmJSGlobalRegBias),
                          vd.singleOverlay(), Assembler::AboveOrEqual);
             masm.ma_vldr(vd.singleOverlay(), HeapReg, ptrReg, 0, Assembler::Below);
         } else {
-            masm.ma_vldr(Address(GlobalReg, AsmJSNaN64GlobalDataOffset - AsmJSGlobalRegBias),
+            masm.ma_vldr(Address(GlobalReg, wasm::NaN64GlobalDataOffset - AsmJSGlobalRegBias),
                          vd, Assembler::AboveOrEqual);
             masm.ma_vldr(vd, HeapReg, ptrReg, 0, Assembler::Below);
         }
     } else {
         Register d = ToRegister(ins->output());
         if (mir->isAtomicAccess())
-            masm.ma_b(gen->outOfBoundsLabel(), Assembler::AboveOrEqual);
+            masm.ma_b(masm.asmOnOutOfBoundsLabel(), Assembler::AboveOrEqual);
         else
             masm.ma_mov(Imm32(0), d, LeaveCC, Assembler::AboveOrEqual);
         masm.ma_dataTransferN(IsLoad, size, isSigned, HeapReg, ptrReg, d, Offset, Assembler::Below);
     }
     memoryBarrier(mir->barrierAfter());
-    masm.append(AsmJSHeapAccess(bo.getOffset()));
+    masm.append(wasm::HeapAccess(bo.getOffset()));
 }
 
 void
@@ -2215,12 +2255,12 @@ CodeGeneratorARM::visitAsmJSStoreHeap(LAsmJSStoreHeap* ins)
             masm.ma_vstr(vd, HeapReg, ptrReg, 0, 0, Assembler::Below);
     } else {
         if (mir->isAtomicAccess())
-            masm.ma_b(gen->outOfBoundsLabel(), Assembler::AboveOrEqual);
+            masm.ma_b(masm.asmOnOutOfBoundsLabel(), Assembler::AboveOrEqual);
         masm.ma_dataTransferN(IsStore, size, isSigned, HeapReg, ptrReg,
                               ToRegister(ins->value()), Offset, Assembler::Below);
     }
     memoryBarrier(mir->barrierAfter());
-    masm.append(AsmJSHeapAccess(bo.getOffset()));
+    masm.append(wasm::HeapAccess(bo.getOffset()));
 }
 
 void
@@ -2240,13 +2280,13 @@ CodeGeneratorARM::visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap* ins)
     if (mir->needsBoundsCheck()) {
         BufferOffset bo = masm.ma_BoundsCheck(ptrReg);
         maybeCmpOffset = bo.getOffset();
-        masm.ma_b(gen->outOfBoundsLabel(), Assembler::AboveOrEqual);
+        masm.ma_b(masm.asmOnOutOfBoundsLabel(), Assembler::AboveOrEqual);
     }
     masm.compareExchangeToTypedIntArray(vt == Scalar::Uint32 ? Scalar::Int32 : vt,
                                         srcAddr, oldval, newval, InvalidReg,
                                         ToAnyRegister(ins->output()));
     if (mir->needsBoundsCheck())
-        masm.append(AsmJSHeapAccess(maybeCmpOffset));
+        masm.append(wasm::HeapAccess(maybeCmpOffset));
 }
 
 void
@@ -2269,7 +2309,7 @@ CodeGeneratorARM::visitAsmJSCompareExchangeCallout(LAsmJSCompareExchangeCallout*
         masm.passABIArg(oldval);
         masm.passABIArg(newval);
     }
-    masm.callWithABI(AsmJSImm_AtomicCmpXchg);
+    masm.callWithABI(wasm::SymbolicAddress::AtomicCmpXchg);
 }
 
 void
@@ -2286,14 +2326,14 @@ CodeGeneratorARM::visitAsmJSAtomicExchangeHeap(LAsmJSAtomicExchangeHeap* ins)
     if (mir->needsBoundsCheck()) {
         BufferOffset bo = masm.ma_BoundsCheck(ptrReg);
         maybeCmpOffset = bo.getOffset();
-        masm.ma_b(gen->outOfBoundsLabel(), Assembler::AboveOrEqual);
+        masm.ma_b(masm.asmOnOutOfBoundsLabel(), Assembler::AboveOrEqual);
     }
 
     masm.atomicExchangeToTypedIntArray(vt == Scalar::Uint32 ? Scalar::Int32 : vt,
                                        srcAddr, value, InvalidReg, ToAnyRegister(ins->output()));
 
     if (mir->needsBoundsCheck())
-        masm.append(AsmJSHeapAccess(maybeCmpOffset));
+        masm.append(wasm::HeapAccess(maybeCmpOffset));
 }
 
 void
@@ -2315,7 +2355,7 @@ CodeGeneratorARM::visitAsmJSAtomicExchangeCallout(LAsmJSAtomicExchangeCallout* i
     masm.passABIArg(ptr);
     masm.passABIArg(value);
 
-    masm.callWithABI(AsmJSImm_AtomicXchg);
+    masm.callWithABI(wasm::SymbolicAddress::AtomicXchg);
 }
 
 void
@@ -2337,7 +2377,7 @@ CodeGeneratorARM::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins)
     if (mir->needsBoundsCheck()) {
         BufferOffset bo = masm.ma_BoundsCheck(ptrReg);
         maybeCmpOffset = bo.getOffset();
-        masm.ma_b(gen->outOfBoundsLabel(), Assembler::AboveOrEqual);
+        masm.ma_b(masm.asmOnOutOfBoundsLabel(), Assembler::AboveOrEqual);
     }
 
     if (value->isConstant())
@@ -2350,7 +2390,7 @@ CodeGeneratorARM::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap* ins)
                                    ToAnyRegister(ins->output()));
 
     if (mir->needsBoundsCheck())
-        masm.append(AsmJSHeapAccess(maybeCmpOffset));
+        masm.append(wasm::HeapAccess(maybeCmpOffset));
 }
 
 void
@@ -2372,7 +2412,7 @@ CodeGeneratorARM::visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEff
     if (mir->needsBoundsCheck()) {
         BufferOffset bo = masm.ma_BoundsCheck(ptrReg);
         maybeCmpOffset = bo.getOffset();
-        masm.ma_b(gen->outOfBoundsLabel(), Assembler::AboveOrEqual);
+        masm.ma_b(masm.asmOnOutOfBoundsLabel(), Assembler::AboveOrEqual);
     }
 
     if (value->isConstant())
@@ -2381,7 +2421,7 @@ CodeGeneratorARM::visitAsmJSAtomicBinopHeapForEffect(LAsmJSAtomicBinopHeapForEff
         atomicBinopToTypedIntArray(op, vt, ToRegister(value), srcAddr, flagTemp);
 
     if (mir->needsBoundsCheck())
-        masm.append(AsmJSHeapAccess(maybeCmpOffset));
+        masm.append(wasm::HeapAccess(maybeCmpOffset));
 }
 
 void
@@ -2403,19 +2443,19 @@ CodeGeneratorARM::visitAsmJSAtomicBinopCallout(LAsmJSAtomicBinopCallout* ins)
 
     switch (mir->operation()) {
       case AtomicFetchAddOp:
-        masm.callWithABI(AsmJSImm_AtomicFetchAdd);
+        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchAdd);
         break;
       case AtomicFetchSubOp:
-        masm.callWithABI(AsmJSImm_AtomicFetchSub);
+        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchSub);
         break;
       case AtomicFetchAndOp:
-        masm.callWithABI(AsmJSImm_AtomicFetchAnd);
+        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchAnd);
         break;
       case AtomicFetchOrOp:
-        masm.callWithABI(AsmJSImm_AtomicFetchOr);
+        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchOr);
         break;
       case AtomicFetchXorOp:
-        masm.callWithABI(AsmJSImm_AtomicFetchXor);
+        masm.callWithABI(wasm::SymbolicAddress::AtomicFetchXor);
         break;
       default:
         MOZ_CRASH("Unknown op");
@@ -2543,7 +2583,7 @@ CodeGeneratorARM::visitSoftUDivOrMod(LSoftUDivOrMod* ins)
     masm.passABIArg(lhs);
     masm.passABIArg(rhs);
     if (gen->compilingAsmJS())
-        masm.callWithABI(AsmJSImm_aeabi_uidivmod);
+        masm.callWithABI(wasm::SymbolicAddress::aeabi_uidivmod);
     else
         masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, __aeabi_uidivmod));
 

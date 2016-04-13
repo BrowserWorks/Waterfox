@@ -32,17 +32,9 @@
 #include "nsPrintfCString.h"
 #include <algorithm>
 
-#ifdef DEBUG
-#undef NOISY
-#else
-#undef NOISY
-#endif
-
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::layout;
-
-NS_IMPL_FRAMEARENA_HELPERS(nsContainerFrame)
 
 nsContainerFrame::~nsContainerFrame()
 {
@@ -431,7 +423,7 @@ nsContainerFrame::CreateViewForFrame(nsIFrame* aFrame,
 
   NS_FRAME_LOG(NS_FRAME_TRACE_CALLS,
                ("nsContainerFrame::CreateViewForFrame: frame=%p view=%p",
-                aFrame));
+                aFrame, view));
 }
 
 /**
@@ -602,8 +594,8 @@ IsTopLevelWidget(nsIWidget* aWidget)
   nsWindowType windowType = aWidget->WindowType();
   return windowType == eWindowType_toplevel ||
          windowType == eWindowType_dialog ||
+         windowType == eWindowType_popup ||
          windowType == eWindowType_sheet;
-  // popups aren't toplevel so they're not handled here
 }
 
 void
@@ -852,7 +844,7 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
   }
 
   const nsLineList_iterator* savedLine = aData->line;
-  nsIFrame* const savedLineContainer = aData->lineContainer;
+  nsIFrame* const savedLineContainer = aData->LineContainer();
 
   nsContainerFrame *lastInFlow;
   for (nsContainerFrame *nif = this; nif;
@@ -872,13 +864,13 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
     // After we advance to our next-in-flow, the stored line and line container
     // may no longer be correct. Just forget them.
     aData->line = nullptr;
-    aData->lineContainer = nullptr;
+    aData->SetLineContainer(nullptr);
 
     lastInFlow = nif;
   }
 
   aData->line = savedLine;
-  aData->lineContainer = savedLineContainer;
+  aData->SetLineContainer(savedLineContainer);
 
   // This goes at the end no matter how things are broken and how
   // messy the bidi situations are, since per CSS2.1 section 8.6

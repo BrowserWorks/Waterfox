@@ -27,7 +27,7 @@
 #include <android/log.h>
 #define GADM_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "GonkAudioDecoderManager", __VA_ARGS__)
 
-extern PRLogModuleInfo* GetPDMLog();
+extern mozilla::LogModule* GetPDMLog();
 #define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 using namespace android;
@@ -70,7 +70,7 @@ GonkAudioDecoderManager::InitMediaCodecProxy()
     return false;
   }
 
-  mDecoder = MediaCodecProxy::CreateByType(mDecodeLooper, mMimeType.get(), false, nullptr);
+  mDecoder = MediaCodecProxy::CreateByType(mDecodeLooper, mMimeType.get(), false);
   if (!mDecoder.get()) {
     return false;
   }
@@ -155,25 +155,6 @@ GonkAudioDecoderManager::CreateAudioData(MediaBuffer* aBuffer, int64_t aStreamOf
   return NS_OK;
 }
 
-class AutoReleaseAudioBuffer
-{
-public:
-  AutoReleaseAudioBuffer(MediaBuffer* aBuffer, MediaCodecProxy* aCodecProxy)
-    : mAudioBuffer(aBuffer)
-    , mCodecProxy(aCodecProxy)
-  {}
-
-  ~AutoReleaseAudioBuffer()
-  {
-    if (mAudioBuffer) {
-      mCodecProxy->ReleaseMediaBuffer(mAudioBuffer);
-    }
-  }
-private:
-  MediaBuffer* mAudioBuffer;
-  sp<MediaCodecProxy> mCodecProxy;
-};
-
 nsresult
 GonkAudioDecoderManager::Output(int64_t aStreamOffset,
                                 RefPtr<MediaData>& aOutData)
@@ -187,7 +168,7 @@ GonkAudioDecoderManager::Output(int64_t aStreamOffset,
   status_t err;
   MediaBuffer* audioBuffer = nullptr;
   err = mDecoder->Output(&audioBuffer, READ_OUTPUT_BUFFER_TIMEOUT_US);
-  AutoReleaseAudioBuffer a(audioBuffer, mDecoder.get());
+  AutoReleaseMediaBuffer a(audioBuffer, mDecoder.get());
 
   switch (err) {
     case OK:
@@ -263,13 +244,13 @@ GonkAudioDecoderManager::Output(int64_t aStreamOffset,
   return NS_ERROR_NOT_AVAILABLE;
 }
 
-nsresult
-GonkAudioDecoderManager::Flush()
+void
+GonkAudioDecoderManager::ProcessFlush()
 {
   GADM_LOG("FLUSH<<<");
   mAudioQueue.Reset();
   GADM_LOG(">>>FLUSH");
-  return GonkDecoderManager::Flush();
+  GonkDecoderManager::ProcessFlush();
 }
 
 } // namespace mozilla

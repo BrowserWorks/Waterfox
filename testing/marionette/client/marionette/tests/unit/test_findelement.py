@@ -70,7 +70,7 @@ class TestElements(MarionetteTestCase):
         self.assertEqual(HTMLElement, type(found_el))
         self.assertEqual(el, found_el)
 
-    def test_selector(self):
+    def test_css_selector(self):
         test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         el = self.marionette.execute_script("return window.document.getElementById('testh1');")
@@ -80,6 +80,10 @@ class TestElements(MarionetteTestCase):
         found_el = self.marionette.find_elements(By.CSS_SELECTOR, "h1")[0]
         self.assertEqual(HTMLElement, type(found_el))
         self.assertEqual(el, found_el)
+
+    def test_invalid_css_selector_should_throw(self):
+        with self.assertRaises(InvalidSelectorException):
+            self.marionette.find_element(By.CSS_SELECTOR, "#")
 
     def test_link_text(self):
         test_html = self.marionette.absolute_url("test.html")
@@ -155,10 +159,9 @@ class TestElements(MarionetteTestCase):
         abody = self.marionette.get_active_element()
         self.assertEqual(fbody, abody)
 
-    def test_throws_error_when_trying_to_use_invalid_selector_type(self):
-        test_html = self.marionette.absolute_url("test.html")
-        self.marionette.navigate(test_html)
-        self.assertRaises(InvalidSelectorException, self.marionette.find_element, "Brie Search Type", "doesn't matter")
+    def test_unknown_selector(self):
+        with self.assertRaises(InvalidSelectorException):
+            self.marionette.find_element("foo", "bar")
 
     def test_element_id_is_valid_uuid(self):
         import re
@@ -169,6 +172,7 @@ class TestElements(MarionetteTestCase):
         self.assertIsNotNone(re.search(uuid_regex, el.id),
                              'UUID for the WebElement is not valid. ID is {}'\
                              .format(el.id))
+
     def test_should_find_elements_by_link_text(self):
         test_html = self.marionette.absolute_url("nestedElements.html")
         self.marionette.navigate(test_html)
@@ -177,3 +181,47 @@ class TestElements(MarionetteTestCase):
         self.assertEqual(len(children), 2)
         self.assertEqual("link1", children[0].get_attribute("name"))
         self.assertEqual("link2", children[1].get_attribute("name"))
+
+    def test_should_throw_invalidselectorexception_when_invalid_xPath_in_driver_find_element(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        self.assertRaises(InvalidSelectorException, self.marionette.find_element, By.XPATH, "count(//input)")
+
+    def test_should_throw_invalidselectorexception_when_invalid_xpath_in_driver_find_elements(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        self.assertRaises(InvalidSelectorException, self.marionette.find_elements, By.XPATH, "count(//input)")
+
+    def test_should_throw_invalidselectorexception_when_invalid_xpath_in_element_find_element(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        body = self.marionette.find_element(By.TAG_NAME, "body")
+        self.assertRaises(InvalidSelectorException, body.find_element, By.XPATH, "count(//input)")
+
+    def test_should_throw_invalidselectorexception_when_invalid_xpath_in_element_find_elements(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        body = self.marionette.find_element(By.TAG_NAME, "body")
+        self.assertRaises(InvalidSelectorException, body.find_elements, By.XPATH, "count(//input)")
+
+    def test_should_throw_invalidselectorexception_when_css_is_empty_in_driver_find_element(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        self.assertRaises(InvalidSelectorException, self.marionette.find_element, By.CSS_SELECTOR, "")
+
+    def test_should_throw_invalidselectorexception_when_css_is_empty_in_driver_find_elements(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        self.assertRaises(InvalidSelectorException, self.marionette.find_elements, By.CSS_SELECTOR, "")
+
+    def test_should_throw_invalidselectorexception_when_css_is_empty_in_element_find_element(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        body = self.marionette.find_element(By.TAG_NAME, "body")
+        self.assertRaises(InvalidSelectorException, body.find_element, By.CSS_SELECTOR, "")
+
+    def test_should_throw_invalidselectorexception_when_css_is_empty_in_element_find_elements(self):
+        test_html = self.marionette.absolute_url("formPage.html")
+        self.marionette.navigate(test_html)
+        body = self.marionette.find_element(By.TAG_NAME, "body")
+        self.assertRaises(InvalidSelectorException, body.find_elements, By.CSS_SELECTOR, "")

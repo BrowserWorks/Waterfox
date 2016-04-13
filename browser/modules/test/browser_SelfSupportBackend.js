@@ -155,6 +155,8 @@ add_task(function* test_selfSupport() {
         if (event != "Heartbeat:Engaged") {
           return;
         }
+        is(data.flowId, "myFlowID", "Check flowId");
+        ok(!!data.timestamp, "Check timestamp");
         resolve(data);
       }, () => {});
     });

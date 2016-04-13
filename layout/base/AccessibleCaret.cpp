@@ -126,7 +126,7 @@ AccessibleCaret::SetSelectionBarEnabled(bool aEnabled)
     return;
   }
 
-  AC_LOG("Set selection bar %s", __FUNCTION__, aEnabled ? "Enabled" : "Disabled");
+  AC_LOG("Set selection bar %s", aEnabled ? "Enabled" : "Disabled");
 
   ErrorResult rv;
   CaretElement()->ClassList()->Toggle(NS_LITERAL_STRING("no-bar"),
@@ -236,6 +236,7 @@ AccessibleCaret::RemoveCaretElement(nsIDocument* aDocument)
   ErrorResult rv;
   aDocument->RemoveAnonymousContent(*mCaretElementHolder, rv);
   // It's OK rv is failed since nsCanvasFrame might not exists now.
+  rv.SuppressException();
 }
 
 AccessibleCaret::PositionChangedResult

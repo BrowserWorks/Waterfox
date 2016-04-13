@@ -16,9 +16,9 @@ SEARCHSTRINGSPATH = $(abspath $(call MERGE_FILE,search_strings.dtd))
 SYNCSTRINGSPATH = $(abspath $(call MERGE_FILE,sync_strings.dtd))
 STRINGSPATH = $(abspath $(call MERGE_FILE,android_strings.dtd))
 ifeq (,$(XPI_NAME))
-BRANDPATH = $(abspath $(DEPTH)/dist/bin/chrome/$(AB_CD)/locale/branding/brand.dtd)
+BRANDPATH = $(topobjdir)/dist/bin/chrome/$(AB_CD)/locale/branding/brand.dtd
 else
-BRANDPATH = $(abspath $(DIST)/xpi-stage/$(XPI_NAME)/chrome/$(AB_CD)/locale/branding/brand.dtd)
+BRANDPATH = $(ABS_DIST)/xpi-stage/$(XPI_NAME)/chrome/$(AB_CD)/locale/branding/brand.dtd
 endif
 $(warnIfEmpty,AB_CD) # todo: $(errorIfEmpty )
 
@@ -66,6 +66,7 @@ $(if $(MOZ_ANDROID_SHARED_FXACCOUNT_TYPE),,$(error Missing MOZ_ANDROID_SHARED_FX
 $(dir-strings-xml)/strings.xml: $(strings-xml-preqs)
 	$(call py_action,preprocessor, \
       $(DEFINES) \
+      $(ACDEFINES) \
 	  -DANDROID_PACKAGE_NAME=$(ANDROID_PACKAGE_NAME) \
 	  -DBRANDPATH='$(BRANDPATH)' \
 	  -DMOZ_ANDROID_SHARED_ACCOUNT_TYPE=$(MOZ_ANDROID_SHARED_ACCOUNT_TYPE) \

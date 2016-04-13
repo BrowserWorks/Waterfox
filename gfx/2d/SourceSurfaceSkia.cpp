@@ -50,42 +50,29 @@ SourceSurfaceSkia::InitFromCanvas(SkCanvas* aCanvas,
                                   SurfaceFormat aFormat,
                                   DrawTargetSkia* aOwner)
 {
-  SkISize size = aCanvas->getDeviceSize();
-
-  mBitmap = (SkBitmap)aCanvas->getDevice()->accessBitmap(false);
+  mBitmap = aCanvas->getDevice()->accessBitmap(false);
 
   mFormat = aFormat;
 
-  mSize = IntSize(size.fWidth, size.fHeight);
+  mSize = IntSize(mBitmap.width(), mBitmap.height());
   mStride = mBitmap.rowBytes();
   mDrawTarget = aOwner;
 
   return true;
 }
 
-bool 
+bool
 SourceSurfaceSkia::InitFromData(unsigned char* aData,
                                 const IntSize &aSize,
                                 int32_t aStride,
                                 SurfaceFormat aFormat)
 {
   SkBitmap temp;
-  SkAlphaType alphaType = (aFormat == SurfaceFormat::B8G8R8X8) ?
-    kOpaque_SkAlphaType : kPremul_SkAlphaType;
-
-  SkImageInfo info = SkImageInfo::Make(aSize.width,
-                                       aSize.height,
-                                       GfxFormatToSkiaColorType(aFormat),
-                                       alphaType);
-  temp.setInfo(info, aStride);
+  temp.setInfo(MakeSkiaImageInfo(aSize, aFormat), aStride);
   temp.setPixels(aData);
 
-  if (!temp.copyTo(&mBitmap, GfxFormatToSkiaColorType(aFormat))) {
+  if (!temp.copyTo(&mBitmap)) {
     return false;
-  }
-
-  if (aFormat == SurfaceFormat::B8G8R8X8) {
-    mBitmap.setAlphaType(kIgnore_SkAlphaType);
   }
 
   mSize = aSize;
@@ -94,35 +81,37 @@ SourceSurfaceSkia::InitFromData(unsigned char* aData,
   return true;
 }
 
-bool
-SourceSurfaceSkia::InitFromTexture(DrawTargetSkia* aOwner,
-                                   unsigned int aTexture,
-                                   const IntSize &aSize,
-                                   SurfaceFormat aFormat)
+void
+SourceSurfaceSkia::InitFromBitmap(const SkBitmap& aBitmap)
 {
-  MOZ_ASSERT(aOwner, "null GrContext");
-#ifdef USE_SKIA_GPU
-  GrBackendTextureDesc skiaTexGlue;
-  mSize.width = skiaTexGlue.fWidth = aSize.width;
-  mSize.height = skiaTexGlue.fHeight = aSize.height;
-  skiaTexGlue.fFlags = kNone_GrBackendTextureFlag;
-  skiaTexGlue.fOrigin = kTopLeft_GrSurfaceOrigin;
-  skiaTexGlue.fConfig = GfxFormatToGrConfig(aFormat);
-  skiaTexGlue.fSampleCnt = 0;
-  skiaTexGlue.fTextureHandle = aTexture;
+  mBitmap = aBitmap;
 
-  GrTexture *skiaTexture = aOwner->mGrContext->wrapBackendTexture(skiaTexGlue);
-  SkImageInfo imgInfo = SkImageInfo::Make(aSize.width, aSize.height, GfxFormatToSkiaColorType(aFormat), kOpaque_SkAlphaType);
-  SkGrPixelRef *texRef = new SkGrPixelRef(imgInfo, skiaTexture, false);
+  mSize = IntSize(mBitmap.width(), mBitmap.height());
+  mFormat = SkiaColorTypeToGfxFormat(mBitmap.colorType(), mBitmap.alphaType());
+  mStride = mBitmap.rowBytes();
+}
+
+#ifdef USE_SKIA_GPU
+bool
+SourceSurfaceSkia::InitFromGrTexture(GrTexture* aTexture,
+                                     const IntSize &aSize,
+                                     SurfaceFormat aFormat)
+{
+  if (!aTexture) {
+    return false;
+  }
+
+  // Create a GPU pixelref wrapping the texture.
+  SkImageInfo imgInfo = MakeSkiaImageInfo(aSize, aFormat);
   mBitmap.setInfo(imgInfo);
-  mBitmap.setPixelRef(texRef);
+  mBitmap.setPixelRef(new SkGrPixelRef(imgInfo, aTexture))->unref();
+
+  mSize = aSize;
   mFormat = aFormat;
   mStride = mBitmap.rowBytes();
-#endif
-
-  mDrawTarget = aOwner;
   return true;
 }
+#endif
 
 unsigned char*
 SourceSurfaceSkia::GetData()
@@ -143,9 +132,13 @@ SourceSurfaceSkia::DrawTargetWillChange()
     MaybeUnlock();
 
     mDrawTarget = nullptr;
-    SkBitmap temp = mBitmap;
-    mBitmap.reset();
-    temp.copyTo(&mBitmap, temp.colorType());
+
+    // First try a deep copy to avoid a readback from the GPU.
+    // If that fails, try the CPU copy.
+    if (!mBitmap.deepCopyTo(&mBitmap) ||
+        !mBitmap.copyTo(&mBitmap)) {
+      mBitmap.reset();
+    }
   }
 }
 

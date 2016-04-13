@@ -1,6 +1,16 @@
+//
+// Copyright 2015 The ANGLE Project Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+//
+// ANGLETest:
+//   Implementation of common ANGLE testing fixture.
+//
+
 #include "ANGLETest.h"
 #include "EGLWindow.h"
 #include "OSWindow.h"
+#include "system_utils.h"
 
 ANGLETest::ANGLETest()
     : mEGLWindow(nullptr),
@@ -47,10 +57,16 @@ void ANGLETest::SetUp()
     // taking OpenGL traces can guess the size of the default framebuffer and show it
     // in their UIs
     glViewport(0, 0, mWidth, mHeight);
+
+    const auto &info = testing::UnitTest::GetInstance()->current_test_info();
+    angle::WriteDebugMessage("Entering %s.%s\n", info->test_case_name(), info->name());
 }
 
 void ANGLETest::TearDown()
 {
+    const auto &info = testing::UnitTest::GetInstance()->current_test_info();
+    angle::WriteDebugMessage("Exiting %s.%s\n", info->test_case_name(), info->name());
+
     swapBuffers();
     mOSWindow->messageLoop();
 
@@ -122,10 +138,17 @@ GLuint ANGLETest::compileShader(GLenum type, const std::string &source)
         GLint infoLogLength;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
 
-        std::vector<GLchar> infoLog(infoLogLength);
-        glGetShaderInfoLog(shader, static_cast<GLsizei>(infoLog.size()), NULL, &infoLog[0]);
+        if (infoLogLength == 0)
+        {
+            std::cerr << "shader compilation failed with empty log." << std::endl;
+        }
+        else
+        {
+            std::vector<GLchar> infoLog(infoLogLength);
+            glGetShaderInfoLog(shader, static_cast<GLsizei>(infoLog.size()), NULL, &infoLog[0]);
 
-        std::cerr << "shader compilation failed: " << &infoLog[0];
+            std::cerr << "shader compilation failed: " << &infoLog[0];
+        }
 
         glDeleteShader(shader);
         shader = 0;
@@ -283,6 +306,30 @@ bool ANGLETest::isNVidia() const
 {
     std::string rendererString(reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
     return (rendererString.find("NVIDIA") != std::string::npos);
+}
+
+bool ANGLETest::isD3D11() const
+{
+    std::string rendererString(reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
+    return (rendererString.find("Direct3D11 vs_5_0") != std::string::npos);
+}
+
+bool ANGLETest::isD3D11_FL93() const
+{
+    std::string rendererString(reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
+    return (rendererString.find("Direct3D11 vs_4_0_") != std::string::npos);
+}
+
+bool ANGLETest::isD3D9() const
+{
+    std::string rendererString(reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
+    return (rendererString.find("Direct3D9") != std::string::npos);
+}
+
+bool ANGLETest::isD3DSM3() const
+{
+    std::string rendererString(reinterpret_cast<const char *>(glGetString(GL_RENDERER)));
+    return isD3D9() || isD3D11_FL93();
 }
 
 EGLint ANGLETest::getPlatformRenderer() const

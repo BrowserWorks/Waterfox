@@ -48,7 +48,7 @@ public:
   MediaRecorder(AudioNode& aSrcAudioNode, uint32_t aSrcOutput, nsPIDOMWindow* aOwnerWindow);
 
   // nsWrapperCache
-  virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
+  JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   nsPIDOMWindow* GetParentObject() { return GetOwner(); }
 
@@ -156,7 +156,7 @@ private:
   void RegisterActivityObserver();
   void UnRegisterActivityObserver();
 
-  bool Check3gppPermission();
+  bool CheckPermission(const nsString &aType);
 };
 
 } // namespace dom

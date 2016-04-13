@@ -10,8 +10,10 @@ const { Cu, Ci } = require("chrome");
 const { GeneratedLocation } = require("devtools/server/actors/common");
 const { DebuggerServer } = require("devtools/server/main")
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
-const { dbg_assert, dumpn } = DevToolsUtils;
+const { assert, dumpn } = DevToolsUtils;
 const PromiseDebugging = require("PromiseDebugging");
+
+loader.lazyRequireGetter(this, "ThreadSafeChromeUtils");
 
 const TYPED_ARRAY_CLASSES = ["Uint8Array", "Uint8ClampedArray", "Uint16Array",
       "Uint32Array", "Int8Array", "Int16Array", "Int32Array", "Float32Array",
@@ -54,8 +56,8 @@ function ObjectActor(obj, {
   decrementGripDepth,
   getGlobalDebugObject
 }) {
-  dbg_assert(!obj.optimizedOut,
-    "Should not create object actors for optimized out values!");
+  assert(!obj.optimizedOut,
+         "Should not create object actors for optimized out values!");
   this.obj = obj;
   this.hooks = {
     createValueGrip,
@@ -874,52 +876,16 @@ PropertyIteratorActor.prototype.requestTypes = {
  * information for the debugger object, or true otherwise.
  */
 DebuggerServer.ObjectActorPreviewers = {
-  String: [function({obj, hooks}, grip) {
-    let result = genericObjectPreviewer("String", String, obj, hooks);
-    let length = DevToolsUtils.getProperty(obj, "length");
-
-    if (!result || typeof length != "number") {
-      return false;
-    }
-
-    grip.preview = {
-      kind: "ArrayLike",
-      length: length
-    };
-
-    if (hooks.getGripDepth() > 1) {
-      return true;
-    }
-
-    let items = grip.preview.items = [];
-
-    const max = Math.min(result.value.length, OBJECT_PREVIEW_MAX_ITEMS);
-    for (let i = 0; i < max; i++) {
-      let value = hooks.createValueGrip(result.value[i]);
-      items.push(value);
-    }
-
-    return true;
+  String: [function(objectActor, grip) {
+    return wrappedPrimitivePreviewer("String", String, objectActor, grip);
   }],
 
-  Boolean: [function({obj, hooks}, grip) {
-    let result = genericObjectPreviewer("Boolean", Boolean, obj, hooks);
-    if (result) {
-      grip.preview = result;
-      return true;
-    }
-
-    return false;
+  Boolean: [function(objectActor, grip) {
+    return wrappedPrimitivePreviewer("Boolean", Boolean, objectActor, grip);
   }],
 
-  Number: [function({obj, hooks}, grip) {
-    let result = genericObjectPreviewer("Number", Number, obj, hooks);
-    if (result) {
-      grip.preview = result;
-      return true;
-    }
-
-    return false;
+  Number: [function(objectActor, grip) {
+    return wrappedPrimitivePreviewer("Number", Number, objectActor, grip);
   }],
 
   Function: [function({obj, hooks}, grip) {
@@ -1067,6 +1033,43 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
+  WeakSet: [function({obj, hooks}, grip) {
+    let raw = obj.unsafeDereference();
+
+    // We currently lack XrayWrappers for WeakSet, so when we iterate over
+    // the values, the temporary iterator objects get created in the target
+    // compartment. However, we _do_ have Xrays to Object now, so we end up
+    // Xraying those temporary objects, and filtering access to |it.value|
+    // based on whether or not it's Xrayable and/or callable, which breaks
+    // the for/of iteration.
+    //
+    // This code is designed to handle untrusted objects, so we can safely
+    // waive Xrays on the iterable, and relying on the Debugger machinery to
+    // make sure we handle the resulting objects carefully.
+    let keys = Cu.waiveXrays(ThreadSafeChromeUtils.nondeterministicGetWeakSetKeys(raw));
+    grip.preview = {
+      kind: "ArrayLike",
+      length: keys.length,
+    };
+
+    // Avoid recursive object grips.
+    if (hooks.getGripDepth() > 1) {
+      return true;
+    }
+
+    let items = grip.preview.items = [];
+    for (let item of keys) {
+      item = Cu.unwaiveXrays(item);
+      item = makeDebuggeeValueIfNeeded(obj, item);
+      items.push(hooks.createValueGrip(item));
+      if (items.length == OBJECT_PREVIEW_MAX_ITEMS) {
+        break;
+      }
+    }
+
+    return true;
+  }],
+
   Map: [function({obj, hooks}, grip) {
     let size = DevToolsUtils.getProperty(obj, "size");
     if (typeof size != "number") {
@@ -1111,6 +1114,45 @@ DebuggerServer.ObjectActorPreviewers = {
     return true;
   }],
 
+  WeakMap: [function({obj, hooks}, grip) {
+    let raw = obj.unsafeDereference();
+    // We currently lack XrayWrappers for WeakMap, so when we iterate over
+    // the values, the temporary iterator objects get created in the target
+    // compartment. However, we _do_ have Xrays to Object now, so we end up
+    // Xraying those temporary objects, and filtering access to |it.value|
+    // based on whether or not it's Xrayable and/or callable, which breaks
+    // the for/of iteration.
+    //
+    // This code is designed to handle untrusted objects, so we can safely
+    // waive Xrays on the iterable, and relying on the Debugger machinery to
+    // make sure we handle the resulting objects carefully.
+    let rawEntries = Cu.waiveXrays(ThreadSafeChromeUtils.nondeterministicGetWeakMapKeys(raw));
+
+    grip.preview = {
+      kind: "MapLike",
+      size: rawEntries.length,
+    };
+
+    if (hooks.getGripDepth() > 1) {
+      return true;
+    }
+
+    let entries = grip.preview.entries = [];
+    for (let key of rawEntries) {
+      let value = Cu.unwaiveXrays(WeakMap.prototype.get.call(raw, key));
+      key = Cu.unwaiveXrays(key);
+      key = makeDebuggeeValueIfNeeded(obj, key);
+      value = makeDebuggeeValueIfNeeded(obj, value);
+      entries.push([hooks.createValueGrip(key),
+                    hooks.createValueGrip(value)]);
+      if (entries.length == OBJECT_PREVIEW_MAX_ITEMS) {
+        break;
+      }
+    }
+
+    return true;
+  }],
+
   DOMStringMap: [function({obj, hooks}, grip, rawObj) {
     if (!rawObj) {
       return false;
@@ -1140,25 +1182,25 @@ DebuggerServer.ObjectActorPreviewers = {
 };
 
 /**
- * Generic previewer for "simple" classes like String, Number and Boolean.
+ * Generic previewer for classes wrapping primitives, like String,
+ * Number and Boolean.
  *
  * @param string className
  *        Class name to expect.
  * @param object classObj
  *        The class to expect, eg. String. The valueOf() method of the class is
  *        invoked on the given object.
- * @param Debugger.Object obj
- *        The debugger object we need to preview.
- * @param object hooks
- *        The thread actor to use to create a value grip.
- * @return object|null
- *         An object with one property, "value", which holds the value grip that
- *         represents the given object. Null is returned if we cant preview the
- *         object.
+ * @param ObjectActor objectActor
+ *        The object actor
+ * @param Object grip
+ *        The result grip to fill in
+ * @return Booolean true if the object was handled, false otherwise
  */
-function genericObjectPreviewer(className, classObj, obj, hooks) {
+function wrappedPrimitivePreviewer(className, classObj, objectActor, grip) {
+  let {obj, hooks} = objectActor;
+
   if (!obj.proto || obj.proto.class != className) {
-    return null;
+    return false;
   }
 
   let raw = obj.unsafeDereference();
@@ -1167,15 +1209,78 @@ function genericObjectPreviewer(className, classObj, obj, hooks) {
     v = classObj.prototype.valueOf.call(raw);
   } catch (ex) {
     // valueOf() can throw if the raw JS object is "misbehaved".
-    return null;
+    return false;
   }
 
-  if (v !== null) {
-    v = hooks.createValueGrip(makeDebuggeeValueIfNeeded(obj, v));
-    return { value: v };
+  if (v === null) {
+    return false;
   }
 
-  return null;
+  let canHandle = GenericObject(objectActor, grip, className === "String");
+  if (!canHandle) {
+    return false;
+  }
+
+  grip.preview.wrappedValue =
+    hooks.createValueGrip(makeDebuggeeValueIfNeeded(obj, v));
+  return true;
+}
+
+function GenericObject(objectActor, grip, specialStringBehavior = false) {
+  let {obj, hooks} = objectActor;
+  if (grip.preview || grip.displayString || hooks.getGripDepth() > 1) {
+    return false;
+  }
+
+  let i = 0, names = [];
+  let preview = grip.preview = {
+    kind: "Object",
+    ownProperties: Object.create(null),
+  };
+
+  try {
+    names = obj.getOwnPropertyNames();
+  } catch (ex) {
+    // Calling getOwnPropertyNames() on some wrapped native prototypes is not
+    // allowed: "cannot modify properties of a WrappedNative". See bug 952093.
+  }
+
+  preview.ownPropertiesLength = names.length;
+
+  let length;
+  if (specialStringBehavior) {
+    length = DevToolsUtils.getProperty(obj, "length");
+    if (typeof length != "number") {
+      specialStringBehavior = false;
+    }
+  }
+
+  for (let name of names) {
+    if (specialStringBehavior && /^[0-9]+$/.test(name)) {
+      let num = parseInt(name, 10);
+      if (num.toString() === name && num >= 0 && num < length) {
+        continue;
+      }
+    }
+
+    let desc = objectActor._propertyDescriptor(name, true);
+    if (!desc) {
+      continue;
+    }
+
+    preview.ownProperties[name] = desc;
+    if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
+      break;
+    }
+  }
+
+  if (i < OBJECT_PREVIEW_MAX_ITEMS) {
+    preview.safeGetterValues = objectActor._findSafeGetterValues(
+      Object.keys(preview.ownProperties),
+      OBJECT_PREVIEW_MAX_ITEMS - i);
+  }
+
+  return true;
 }
 
 // Preview functions that do not rely on the object class.
@@ -1391,9 +1496,6 @@ DebuggerServer.ObjectActorPreviewers.Object = [
       preview.attributesLength = rawObj.attributes.length;
       for (let attr of rawObj.attributes) {
         preview.attributes[attr.nodeName] = hooks.createValueGrip(attr.value);
-        if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
-          break;
-        }
       }
     } else if (rawObj instanceof Ci.nsIDOMAttr) {
       preview.value = hooks.createValueGrip(rawObj.value);
@@ -1544,47 +1646,7 @@ DebuggerServer.ObjectActorPreviewers.Object = [
     return true;
   },
 
-  function GenericObject(objectActor, grip) {
-    let {obj, hooks} = objectActor;
-    if (grip.preview || grip.displayString || hooks.getGripDepth() > 1) {
-      return false;
-    }
-
-    let i = 0, names = [];
-    let preview = grip.preview = {
-      kind: "Object",
-      ownProperties: Object.create(null),
-    };
-
-    try {
-      names = obj.getOwnPropertyNames();
-    } catch (ex) {
-      // Calling getOwnPropertyNames() on some wrapped native prototypes is not
-      // allowed: "cannot modify properties of a WrappedNative". See bug 952093.
-    }
-
-    preview.ownPropertiesLength = names.length;
-
-    for (let name of names) {
-      let desc = objectActor._propertyDescriptor(name, true);
-      if (!desc) {
-        continue;
-      }
-
-      preview.ownProperties[name] = desc;
-      if (++i == OBJECT_PREVIEW_MAX_ITEMS) {
-        break;
-      }
-    }
-
-    if (i < OBJECT_PREVIEW_MAX_ITEMS) {
-      preview.safeGetterValues = objectActor._findSafeGetterValues(
-                                    Object.keys(preview.ownProperties),
-                                    OBJECT_PREVIEW_MAX_ITEMS - i);
-    }
-
-    return true;
-  },
+  GenericObject,
 ];
 
 /**
@@ -1923,7 +1985,7 @@ function createValueGrip(value, pool, makeObjectGrip) {
       return form;
 
     default:
-      dbg_assert(false, "Failed to provide a grip for: " + value);
+      assert(false, "Failed to provide a grip for: " + value);
       return null;
   }
 }

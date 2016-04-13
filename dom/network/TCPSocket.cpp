@@ -14,6 +14,7 @@
 #include "mozilla/dom/TCPSocketEvent.h"
 #include "mozilla/dom/TCPSocketEventBinding.h"
 #include "mozilla/dom/ToJSValue.h"
+#include "nsContentUtils.h"
 #include "nsIArrayBufferInputStream.h"
 #include "nsISocketTransportService.h"
 #include "nsISocketTransport.h"
@@ -400,7 +401,7 @@ TCPSocket::NotifyCopyComplete(nsresult aStatus)
   mAsyncCopierActive = false;
   mMultiplexStream->RemoveStream(0);
   if (mSocketBridgeParent) {
-    mozilla::unused << mSocketBridgeParent->SendUpdateBufferedAmount(BufferedAmount(),
+    mozilla::Unused << mSocketBridgeParent->SendUpdateBufferedAmount(BufferedAmount(),
                                                                      mTrackingNumber);
   }
 

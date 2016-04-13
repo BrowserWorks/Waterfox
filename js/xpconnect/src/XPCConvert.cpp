@@ -492,7 +492,7 @@ XPCConvert::JSData2Native(void* d, HandleValue s,
             (**((nsAString**)d)).SetIsVoid(true);
             return true;
         }
-        // Fall through to T_DOMSTRING case.
+        MOZ_FALLTHROUGH;
     }
     case nsXPTType::T_DOMSTRING:
     {
@@ -904,7 +904,7 @@ XPCConvert::JSObject2NativeInterface(void** dest, HandleObject src,
         // because the caller may explicitly want to create the XPCWrappedJS
         // around a security wrapper. XBL does this with Xrays from the XBL
         // scope - see nsBindingManager::GetBindingImplementation.
-        JSObject* inner = js::CheckedUnwrap(src, /* stopAtOuter = */ false);
+        JSObject* inner = js::CheckedUnwrap(src, /* stopAtWindowProxy = */ false);
         if (!inner) {
             if (pErr)
                 *pErr = NS_ERROR_XPC_SECURITY_MANAGER_VETO;
@@ -1037,7 +1037,7 @@ XPCConvert::JSValToXPCException(MutableHandleValue s,
         }
 
         // is this really a native xpcom object with a wrapper?
-        JSObject* unwrapped = js::CheckedUnwrap(obj, /* stopAtOuter = */ false);
+        JSObject* unwrapped = js::CheckedUnwrap(obj, /* stopAtWindowProxy = */ false);
         if (!unwrapped)
             return NS_ERROR_XPC_SECURITY_MANAGER_VETO;
         XPCWrappedNative* wrapper = IS_WN_REFLECTOR(unwrapped) ? XPCWrappedNative::Get(unwrapped)
@@ -1206,16 +1206,15 @@ XPCConvert::JSErrorToXPCException(const char* message,
             bestMessage.AssignLiteral("JavaScript Error");
         }
 
-        const char16_t* uclinebuf =
-            static_cast<const char16_t*>(report->uclinebuf);
+        const char16_t* linebuf = report->linebuf();
 
         data = new nsScriptError();
         data->InitWithWindowID(
             bestMessage,
             NS_ConvertASCIItoUTF16(report->filename),
-            uclinebuf ? nsDependentString(uclinebuf) : EmptyString(),
+            linebuf ? nsDependentString(linebuf, report->linebufLength()) : EmptyString(),
             report->lineno,
-            report->uctokenptr - report->uclinebuf, report->flags,
+            report->tokenOffset(), report->flags,
             NS_LITERAL_CSTRING("XPConnect JavaScript"),
             nsJSUtils::GetCurrentlyRunningCodeInnerWindowID(cx));
     }
@@ -1353,7 +1352,18 @@ CheckTargetAndPopulate(const nsXPTType& type,
     }
 
     JS::AutoCheckCannotGC nogc;
-    memcpy(*output, JS_GetArrayBufferViewData(tArr, nogc), byteSize);
+    bool isShared;
+    void* buf = JS_GetArrayBufferViewData(tArr, &isShared, nogc);
+
+    // Require opting in to shared memory - a future project.
+    if (isShared) {
+        if (pErr)
+            *pErr = NS_ERROR_XPC_BAD_CONVERT_JS;
+
+        return false;
+    }
+
+    memcpy(*output, buf, byteSize);
     return true;
 }
 

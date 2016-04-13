@@ -31,7 +31,7 @@
 #undef LOG
 #endif
 
-PRLogModuleInfo* gMediaRecorderLog;
+mozilla::LazyLogModule gMediaRecorderLog("MediaRecorder");
 #define LOG(type, msg) MOZ_LOG(gMediaRecorderLog, type, msg)
 
 namespace mozilla {
@@ -455,8 +455,7 @@ public:
   size_t
   SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
   {
-    size_t amount = mEncoder->SizeOfExcludingThis(aMallocSizeOf);
-    return amount;
+    return (mEncoder ?  mEncoder->SizeOfExcludingThis(aMallocSizeOf) : 0);
   }
 
 
@@ -553,7 +552,7 @@ private:
     }
   }
 
-  bool Check3gppPermission()
+  bool CheckPermission(const char* aType)
   {
     nsCOMPtr<nsIDocument> doc = mRecorder->GetOwner()->GetExtantDoc();
     if (!doc) {
@@ -576,7 +575,7 @@ private:
     }
 
     uint32_t perm = nsIPermissionManager::DENY_ACTION;
-    pm->TestExactPermissionFromPrincipal(doc->NodePrincipal(), "audio-capture:3gpp", &perm);
+    pm->TestExactPermissionFromPrincipal(doc->NodePrincipal(), aType, &perm);
     return perm == nsIPermissionManager::ALLOW_ACTION;
   }
 
@@ -593,8 +592,14 @@ private:
     // At this stage, the API doesn't allow UA to choose the output mimeType format.
 
     // Make sure the application has permission to assign AUDIO_3GPP
-    if (mRecorder->mMimeType.EqualsLiteral(AUDIO_3GPP) && Check3gppPermission()) {
+    if (mRecorder->mMimeType.EqualsLiteral(AUDIO_3GPP) && CheckPermission("audio-capture:3gpp")) {
       mEncoder = MediaEncoder::CreateEncoder(NS_LITERAL_STRING(AUDIO_3GPP),
+                                             mRecorder->GetAudioBitrate(),
+                                             mRecorder->GetVideoBitrate(),
+                                             mRecorder->GetBitrate(),
+                                             aTrackTypes);
+    } else if (mRecorder->mMimeType.EqualsLiteral(AUDIO_3GPP2) && CheckPermission("audio-capture:3gpp2")) {
+      mEncoder = MediaEncoder::CreateEncoder(NS_LITERAL_STRING(AUDIO_3GPP2),
                                              mRecorder->GetAudioBitrate(),
                                              mRecorder->GetVideoBitrate(),
                                              mRecorder->GetBitrate(),
@@ -770,9 +775,7 @@ MediaRecorder::MediaRecorder(DOMMediaStream& aSourceMediaStream,
   MOZ_ASSERT(aOwnerWindow);
   MOZ_ASSERT(aOwnerWindow->IsInnerWindow());
   mDOMStream = &aSourceMediaStream;
-  if (!gMediaRecorderLog) {
-    gMediaRecorderLog = PR_NewLogModule("MediaRecorder");
-  }
+
   RegisterActivityObserver();
 }
 
@@ -803,9 +806,7 @@ MediaRecorder::MediaRecorder(AudioNode& aSrcAudioNode,
     }
   }
   mAudioNode = &aSrcAudioNode;
-  if (!gMediaRecorderLog) {
-    gMediaRecorderLog = PR_NewLogModule("MediaRecorder");
-  }
+
   RegisterActivityObserver();
 }
 
@@ -988,7 +989,7 @@ MediaRecorder::Constructor(const GlobalObject& aGlobal,
     // Pretending that this constructor is not defined.
     NS_NAMED_LITERAL_STRING(argStr, "Argument 1 of MediaRecorder.constructor");
     NS_NAMED_LITERAL_STRING(typeStr, "MediaStream");
-    aRv.ThrowTypeError<MSG_DOES_NOT_IMPLEMENT_INTERFACE>(&argStr, &typeStr);
+    aRv.ThrowTypeError<MSG_DOES_NOT_IMPLEMENT_INTERFACE>(argStr, typeStr);
     return nullptr;
   }
 
@@ -1069,13 +1070,7 @@ MediaRecorder::DispatchSimpleEvent(const nsAString & aStr)
   }
 
   RefPtr<Event> event = NS_NewDOMEvent(this, nullptr, nullptr);
-  rv = event->InitEvent(aStr, false, false);
-
-  if (NS_FAILED(rv)) {
-    NS_WARNING("Failed to init the error event!!!");
-    return;
-  }
-
+  event->InitEvent(aStr, false, false);
   event->SetTrusted(true);
 
   rv = DispatchDOMEvent(nullptr, event, nullptr, nullptr);
@@ -1166,6 +1161,7 @@ MediaRecorder::NotifyOwnerDocumentActivityChanged()
     // Stop the session.
     ErrorResult result;
     Stop(result);
+    result.SuppressException();
   }
 }
 

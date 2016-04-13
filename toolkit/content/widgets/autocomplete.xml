@@ -1,9 +1,7 @@
 <?xml version="1.0"?>
-
-# -*- Mode: HTML -*-
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <bindings id="autocompleteBindings"
           xmlns="http://www.mozilla.org/xbl"
@@ -28,7 +26,7 @@
           <children/>
           <html:input anonid="input" class="autocomplete-textbox textbox-input"
                       allowevents="true"
-                      xbl:inherits="tooltiptext=inputtooltiptext,value,type,maxlength,disabled,size,readonly,placeholder,tabindex,accesskey,mozactionhint"/>
+                      xbl:inherits="tooltiptext=inputtooltiptext,value,type=inputtype,maxlength,disabled,size,readonly,placeholder,tabindex,accesskey,mozactionhint"/>
         </xul:hbox>
         <children includes="hbox"/>
       </xul:hbox>
@@ -448,15 +446,13 @@
 
           var cancel = false;
 
+          let { AppConstants } =
+              Components.utils.import("resource://gre/modules/AppConstants.jsm", {});
           // Catch any keys that could potentially move the caret. Ctrl can be
           // used in combination with these keys on Windows and Linux; and Alt
           // can be used on OS X, so make sure the unused one isn't used.
-          if (!this.disableKeyNavigation &&
-#ifdef XP_MACOSX
-              !aEvent.ctrlKey) {
-#else
-              !aEvent.altKey) {
-#endif
+          let metaKey = AppConstants.platform == "macosx" ? aEvent.ctrlKey : aEvent.altKey;
+          if (!this.disableKeyNavigation && !metaKey) {
             switch (aEvent.keyCode) {
               case KeyEvent.DOM_VK_LEFT:
               case KeyEvent.DOM_VK_RIGHT:
@@ -493,11 +489,11 @@
               cancel = this.mController.handleEscape();
               break;
             case KeyEvent.DOM_VK_RETURN:
-#ifdef XP_MACOSX
-              // Prevent the default action, since it will beep on Mac
-              if (aEvent.metaKey)
-                aEvent.preventDefault();
-#endif
+              if (AppConstants.platform == "macosx") {
+                // Prevent the default action, since it will beep on Mac
+                if (aEvent.metaKey)
+                  aEvent.preventDefault();
+              }
               this.mEnterEvent = aEvent;
               if (this.mController.selection) {
                 this._selectionDetails = {
@@ -508,22 +504,26 @@
               cancel = this.handleEnter();
               break;
             case KeyEvent.DOM_VK_DELETE:
-#ifdef XP_MACOSX
-            case KeyEvent.DOM_VK_BACK_SPACE:
-              if (aEvent.shiftKey)
-#endif
+              if (AppConstants.platform == "macosx" && !aEvent.shiftKey) {
+                break;
+              }
               cancel = this.handleDelete();
+              break;
+            case KeyEvent.DOM_VK_BACK_SPACE:
+              if (AppConstants.platform == "macosx" && aEvent.shiftKey) {
+                cancel = this.handleDelete();
+              }
               break;
             case KeyEvent.DOM_VK_DOWN:
             case KeyEvent.DOM_VK_UP:
               if (aEvent.altKey)
                 this.toggleHistoryPopup();
               break;
-#ifndef XP_MACOSX
             case KeyEvent.DOM_VK_F4:
-              this.toggleHistoryPopup();
+              if (AppConstants.platform != "macosx") {
+                this.toggleHistoryPopup();
+              }
               break;
-#endif
           }
 
           if (cancel) {
@@ -1087,18 +1087,20 @@ extends="chrome://global/content/bindings/popup.xml#popup">
       </method>
 
       <method name="invalidate">
+        <parameter name="reason"/>
         <body>
           <![CDATA[
           // Don't bother doing work if we're not even showing
           if (!this.mPopupOpen)
             return;
 
-          this._invalidate();
+          this._invalidate(reason);
           ]]>
         </body>
       </method>
 
       <method name="_invalidate">
+        <parameter name="reason"/>
         <body>
           <![CDATA[
           // collapsed if no matches
@@ -1117,7 +1119,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
           if (this._appendResultTimeout) {
             clearTimeout(this._appendResultTimeout);
           }
-          this._appendCurrentResult();
+          this._appendCurrentResult(reason);
         ]]>
         </body>
       </method>
@@ -1209,6 +1211,7 @@ extends="chrome://global/content/bindings/popup.xml#popup">
       </method>
 
       <method name="_appendCurrentResult">
+        <parameter name="invalidateReason"/>
         <body>
           <![CDATA[
           var controller = this.mInput.controller;
@@ -1234,13 +1237,15 @@ extends="chrome://global/content/bindings/popup.xml#popup">
               // re-use the existing item
               item = this.richlistbox.childNodes[this._currentIndex];
 
-              // Completely re-use the existing richlistitem if it's the same.
-              // Also re-use it if we are about to replace the currently mouse
-              // selected item, to avoid surprising the user.
+              // Completely reuse the existing richlistitem for invalidation
+              // due to new results, but only when: the item is the same, *OR*
+              // we are about to replace the currently mouse-selected item, to
+              // avoid surprising the user.
+              let iface = Components.interfaces.nsIAutoCompletePopup;
               if (item.getAttribute("text") == trimmedSearchString &&
-                   (item.getAttribute("url") == url ||
-                    this.richlistbox.mouseSelectedIndex === this._currentIndex)
-                  ) {
+                  invalidateReason == iface.INVALIDATE_REASON_NEW_RESULT &&
+                  (item.getAttribute("url") == url ||
+                   this.richlistbox.mouseSelectedIndex === this._currentIndex)) {
                 item.collapsed = false;
                 this._currentIndex++;
                 continue;
@@ -1718,6 +1723,10 @@ extends="chrome://global/content/bindings/popup.xml#popup">
               this.classList.add("overridable-action");
               displayUrl = action.params.url;
               let desc = this._stringBundle.GetStringFromName("switchToTab");
+              this._setUpDescription(this._action, desc, true);
+            } else if (action.type == "remotetab") {
+              displayUrl = action.params.url;
+              let desc = action.params.deviceName;
               this._setUpDescription(this._action, desc, true);
             } else if (action.type == "searchengine") {
               emphasiseUrl = false;

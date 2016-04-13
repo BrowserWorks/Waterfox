@@ -16,17 +16,20 @@
 #include "BluetoothDaemonHelpers.h"
 #include "BluetoothDaemonSetupInterface.h"
 #include "BluetoothDaemonSocketInterface.h"
+#include "mozilla/Hal.h"
 #include "mozilla/ipc/DaemonRunnables.h"
 #include "mozilla/ipc/DaemonSocket.h"
 #include "mozilla/ipc/DaemonSocketConnector.h"
 #include "mozilla/ipc/ListenSocket.h"
-#include "mozilla/unused.h"
 
 BEGIN_BLUETOOTH_NAMESPACE
 
 using namespace mozilla::ipc;
 
 static const int sRetryInterval = 100; // ms
+
+BluetoothNotificationHandler*
+  BluetoothDaemonInterface::sNotificationHandler;
 
 //
 // Protocol handling
@@ -142,14 +145,14 @@ BluetoothDaemonProtocol::Send(DaemonSocketPDU* aPDU,
   MOZ_ASSERT(mConnection);
   MOZ_ASSERT(aPDU);
 
-  aPDU->SetConsumer(this);
-  aPDU->SetResultHandler(aRes);
-  aPDU->UpdateHeader();
-
   if (mConnection->GetConnectionStatus() == SOCKET_DISCONNECTED) {
     BT_LOGR("Connection to Bluetooth daemon is closed.");
     return NS_ERROR_FAILURE;
   }
+
+  aPDU->SetConsumer(this);
+  aPDU->SetResultHandler(aRes);
+  aPDU->UpdateHeader();
 
   mConnection->SendSocketData(aPDU); // Forward PDU to command channel
 
@@ -278,26 +281,6 @@ BluetoothDaemonProtocol::FetchResultHandler(
 // Interface
 //
 
-/* returns the container structure of a variable; _t is the container's
- * type, _v the name of the variable, and _m is _v's field within _t
- */
-#define container(_t, _v, _m) \
-  ( (_t*)( ((const unsigned char*)(_v)) - offsetof(_t, _m) ) )
-
-
-static bool
-IsDaemonRunning()
-{
-  char value[PROPERTY_VALUE_MAX];
-  NS_WARN_IF(property_get("init.svc.bluetoothd", value, "") < 0);
-  if (strcmp(value, "running")) {
-    BT_LOGR("[RESTART] Bluetooth daemon state <%s>", value);
-    return false;
-  }
-
-  return true;
-}
-
 BluetoothDaemonInterface*
 BluetoothDaemonInterface::GetInstance()
 {
@@ -317,42 +300,6 @@ BluetoothDaemonInterface::BluetoothDaemonInterface()
 
 BluetoothDaemonInterface::~BluetoothDaemonInterface()
 { }
-
-class BluetoothDaemonInterface::StartDaemonTask final : public Task
-{
-public:
-  StartDaemonTask(BluetoothDaemonInterface* aInterface,
-                  const nsACString& aCommand)
-    : mInterface(aInterface)
-    , mCommand(aCommand)
-  {
-    MOZ_ASSERT(mInterface);
-  }
-
-  void Run() override
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-
-    BT_LOGR("Start Daemon Task");
-    // Start Bluetooth daemon again
-    if (NS_WARN_IF(property_set("ctl.start", mCommand.get()) < 0)) {
-      mInterface->OnConnectError(CMD_CHANNEL);
-    }
-
-    // We're done if Bluetooth daemon is already running
-    if (IsDaemonRunning()) {
-      return;
-    }
-
-    // Otherwise try again later
-    MessageLoop::current()->PostDelayedTask(FROM_HERE,
-      new StartDaemonTask(mInterface, mCommand), sRetryInterval);
-  }
-
-private:
-  BluetoothDaemonInterface* mInterface;
-  nsCString mCommand;
-};
 
 class BluetoothDaemonInterface::InitResultHandler final
   : public BluetoothSetupResultHandler
@@ -442,18 +389,20 @@ BluetoothDaemonInterface::Init(
 #define BASE_SOCKET_NAME "bluetoothd"
   static unsigned long POSTFIX_LENGTH = 16;
 
+  // First of all, we set the notification handler. Backend crashes
+  // will be reported this way.
+  sNotificationHandler = aNotificationHandler;
+
   // If we could not cleanup properly before and an old
   // instance of the daemon is still running, we kill it
   // here.
-  unused << NS_WARN_IF(property_set("ctl.stop", "bluetoothd"));
+  mozilla::hal::StopSystemService("bluetoothd");
 
   mResultHandlerQ.AppendElement(aRes);
 
   if (!mProtocol) {
     mProtocol = new BluetoothDaemonProtocol();
   }
-  static_cast<BluetoothDaemonCoreModule*>(mProtocol)->SetNotificationHandler(
-    aNotificationHandler);
 
   if (!mListenSocket) {
     mListenSocket = new ListenSocket(this, LISTEN_SOCKET);
@@ -563,8 +512,7 @@ private:
 void
 BluetoothDaemonInterface::Cleanup(BluetoothResultHandler* aRes)
 {
-  static_cast<BluetoothDaemonCoreModule*>(mProtocol)->SetNotificationHandler(
-    nullptr);
+  sNotificationHandler = nullptr;
 
   // Cleanup, step 1: Unregister Socket module
   nsresult rv = mProtocol->UnregisterModuleCmd(
@@ -575,264 +523,6 @@ BluetoothDaemonInterface::Cleanup(BluetoothResultHandler* aRes)
   }
 
   mResultHandlerQ.AppendElement(aRes);
-}
-
-void
-BluetoothDaemonInterface::Enable(BluetoothResultHandler* aRes)
-{
-  nsresult rv =
-    static_cast<BluetoothDaemonCoreModule*>(mProtocol)->EnableCmd(aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::Disable(BluetoothResultHandler* aRes)
-{
-  nsresult rv =
-    static_cast<BluetoothDaemonCoreModule*>(mProtocol)->DisableCmd(aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* Adapter Properties */
-
-void
-BluetoothDaemonInterface::GetAdapterProperties(BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetAdapterPropertiesCmd(aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::GetAdapterProperty(BluetoothPropertyType aType,
-                                             BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetAdapterPropertyCmd(aType, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::SetAdapterProperty(
-  const BluetoothProperty& aProperty, BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->SetAdapterPropertyCmd(aProperty, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* Remote Device Properties */
-
-void
-BluetoothDaemonInterface::GetRemoteDeviceProperties(
-  const BluetoothAddress& aRemoteAddr, BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetRemoteDevicePropertiesCmd(aRemoteAddr, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::GetRemoteDeviceProperty(
-  const BluetoothAddress& aRemoteAddr, BluetoothPropertyType aType,
-  BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetRemoteDevicePropertyCmd(aRemoteAddr, aType, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::SetRemoteDeviceProperty(
-  const BluetoothAddress& aRemoteAddr, const BluetoothProperty& aProperty,
-  BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->SetRemoteDevicePropertyCmd(aRemoteAddr, aProperty, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* Remote Services */
-
-void
-BluetoothDaemonInterface::GetRemoteServiceRecord(
-  const BluetoothAddress& aRemoteAddr, const BluetoothUuid& aUuid,
-  BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetRemoteServiceRecordCmd(aRemoteAddr, aUuid, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::GetRemoteServices(
-  const BluetoothAddress& aRemoteAddr, BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->GetRemoteServicesCmd(aRemoteAddr, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* Discovery */
-
-void
-BluetoothDaemonInterface::StartDiscovery(BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->StartDiscoveryCmd(aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::CancelDiscovery(BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->CancelDiscoveryCmd(aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* Bonds */
-
-void
-BluetoothDaemonInterface::CreateBond(const BluetoothAddress& aBdAddr,
-                                     BluetoothTransport aTransport,
-                                     BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->CreateBondCmd(aBdAddr, aTransport, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::RemoveBond(const BluetoothAddress& aBdAddr,
-                                     BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->RemoveBondCmd(aBdAddr, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::CancelBond(const BluetoothAddress& aBdAddr,
-                                     BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->CancelBondCmd(aBdAddr, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* Connection */
-
-void
-BluetoothDaemonInterface::GetConnectionState(const BluetoothAddress& aBdAddr,
-                                             BluetoothResultHandler* aRes)
-{
-  // NO-OP: no corresponding interface of current BlueZ
-}
-
-/* Authentication */
-
-void
-BluetoothDaemonInterface::PinReply(const BluetoothAddress& aBdAddr,
-                                   bool aAccept,
-                                   const BluetoothPinCode& aPinCode,
-                                   BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->PinReplyCmd(aBdAddr, aAccept, aPinCode, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::SspReply(const BluetoothAddress& aBdAddr,
-                                   BluetoothSspVariant aVariant,
-                                   bool aAccept, uint32_t aPasskey,
-                                   BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->SspReplyCmd(aBdAddr, aVariant, aAccept, aPasskey, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* DUT Mode */
-
-void
-BluetoothDaemonInterface::DutModeConfigure(bool aEnable,
-                                           BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->DutModeConfigureCmd(aEnable, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-void
-BluetoothDaemonInterface::DutModeSend(uint16_t aOpcode, uint8_t* aBuf,
-                                      uint8_t aLen,
-                                      BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->DutModeSendCmd(aOpcode, aBuf, aLen, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* LE Mode */
-
-void
-BluetoothDaemonInterface::LeTestMode(uint16_t aOpcode, uint8_t* aBuf,
-                                     uint8_t aLen,
-                                     BluetoothResultHandler* aRes)
-{
-  nsresult rv = static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->LeTestModeCmd(aOpcode, aBuf, aLen, aRes);
-  if (NS_FAILED(rv)) {
-    DispatchError(aRes, rv);
-  }
-}
-
-/* Energy Information */
-
-void
-BluetoothDaemonInterface::ReadEnergyInfo(BluetoothResultHandler* aRes)
-{
-  // NO-OP: no corresponding interface of current BlueZ
 }
 
 void
@@ -870,6 +560,18 @@ BluetoothDaemonInterface::GetBluetoothSetupInterface()
   mSetupInterface = new BluetoothDaemonSetupInterface(mProtocol);
 
   return mSetupInterface;
+}
+
+BluetoothCoreInterface*
+BluetoothDaemonInterface::GetBluetoothCoreInterface()
+{
+  if (mCoreInterface) {
+    return mCoreInterface;
+  }
+
+  mCoreInterface = new BluetoothDaemonCoreInterface(mProtocol);
+
+  return mCoreInterface;
 }
 
 BluetoothSocketInterface*
@@ -943,24 +645,9 @@ BluetoothDaemonInterface::OnConnectSuccess(int aIndex)
   switch (aIndex) {
     case LISTEN_SOCKET: {
         // Init, step 2: Start Bluetooth daemon */
-        nsCString value("bluetoothd:-a ");
-        value.Append(mListenSocketName);
-        if (NS_WARN_IF(property_set("ctl.start", value.get()) < 0)) {
-          OnConnectError(CMD_CHANNEL);
-        }
-
-        /*
-         * If Bluetooth daemon is not running, retry to start it later.
-         *
-         * This condition happens when when we restart Bluetooth daemon
-         * immediately after it crashed, as the daemon state remains 'stopping'
-         * instead of 'stopped'. Due to the limitation of property service,
-         * hereby add delay. See Bug 1143925 Comment 41.
-         */
-        if (!IsDaemonRunning()) {
-          MessageLoop::current()->PostDelayedTask(FROM_HERE,
-              new StartDaemonTask(this, value), sRetryInterval);
-        }
+        nsCString args("-a ");
+        args.Append(mListenSocketName);
+        mozilla::hal::StartSystemService("bluetoothd", args.get());
       }
       break;
     case CMD_CHANNEL:
@@ -1006,7 +693,7 @@ BluetoothDaemonInterface::OnConnectError(int aIndex)
       mCmdChannel->Close();
     case CMD_CHANNEL:
       // Stop daemon and close listen socket
-      unused << NS_WARN_IF(property_set("ctl.stop", "bluetoothd"));
+      mozilla::hal::StopSystemService("bluetoothd");
       mListenSocket->Close();
     case LISTEN_SOCKET:
       if (!mResultHandlerQ.IsEmpty()) {
@@ -1064,22 +751,17 @@ BluetoothDaemonInterface::OnDisconnect(int aIndex)
       break;
   }
 
-  BluetoothNotificationHandler* notificationHandler =
-    static_cast<BluetoothDaemonCoreModule*>(mProtocol)->
-      GetNotificationHandler();
-
   /* For recovery make sure all sockets disconnected, in order to avoid
    * the remaining disconnects interfere with the restart procedure.
    */
-  if (notificationHandler && mResultHandlerQ.IsEmpty()) {
+  if (sNotificationHandler && mResultHandlerQ.IsEmpty()) {
     if (mListenSocket->GetConnectionStatus() == SOCKET_DISCONNECTED &&
         mCmdChannel->GetConnectionStatus() == SOCKET_DISCONNECTED &&
         mNtfChannel->GetConnectionStatus() == SOCKET_DISCONNECTED) {
       // Assume daemon crashed during regular service; notify
       // BluetoothServiceBluedroid to prepare restart-daemon procedure
-      notificationHandler->BackendErrorNotification(true);
-      static_cast<BluetoothDaemonCoreModule*>(mProtocol)->
-        SetNotificationHandler(nullptr);
+      sNotificationHandler->BackendErrorNotification(true);
+      sNotificationHandler = nullptr;
     }
   }
 }

@@ -14,11 +14,11 @@ const { method } = require('../lang/functional');
 const { getInnerId } = require('../window/utils');
 const { EventTarget } = require('../event/target');
 const { isPrivate } = require('../private-browsing/utils');
-const { getTabForBrowser, getTabForContentWindow, getBrowserForTab } = require('../tabs/utils');
+const { getTabForBrowser, getTabForContentWindowNoShim, getBrowserForTab } = require('../tabs/utils');
 const { attach, connect, detach, destroy, makeChildOptions } = require('./utils');
 const { ensure } = require('../system/unload');
 const { on: observe } = require('../system/events');
-const { Ci } = require('chrome');
+const { Ci, Cu } = require('chrome');
 const { modelFor: tabFor } = require('sdk/model/core');
 const { remoteRequire, processes, frames } = require('../remote/parent');
 remoteRequire('sdk/content/worker-child');
@@ -116,24 +116,21 @@ const Worker = Class({
 exports.Worker = Worker;
 
 attach.define(Worker, function(worker, window) {
-  // This method of attaching should be deprecated
   let model = modelFor(worker);
   if (model.attached)
     detach(worker);
 
-  model.window = window;
-  let frame = null;
-  let tab = getTabForContentWindow(window.top);
-  if (tab)
-    frame = frames.getFrameForBrowser(getBrowserForTab(tab));
-
   let childOptions = makeChildOptions(model.options);
-  childOptions.windowId = getInnerId(window);
+  processes.port.emitCPOW('sdk/worker/create', [childOptions], { window });
 
-  processes.port.emit('sdk/worker/create', childOptions);
-
-  connect(worker, frame, { id: childOptions.id, url: String(window.location) });
-})
+  let listener = (frame, id, url) => {
+    if (id != childOptions.id)
+      return;
+    frames.port.off('sdk/worker/connect', listener);
+    connect(worker, frame, { id, url });
+  };
+  frames.port.on('sdk/worker/connect', listener);
+});
 
 connect.define(Worker, function(worker, frame, { id, url }) {
   let model = modelFor(worker);
@@ -154,7 +151,7 @@ connect.define(Worker, function(worker, frame, { id, url }) {
 
   model.earlyEvents.forEach(args => worker.send(...args));
   model.earlyEvents = [];
-  emit(worker, 'attach', model.window);
+  emit(worker, 'attach');
 });
 
 // unload and release the child worker, release window reference
@@ -166,7 +163,6 @@ detach.define(Worker, function(worker) {
   processes.port.off('sdk/worker/event', worker.receive);
   model.attached = false;
   model.destroyed = true;
-  model.window = null;
   emit(worker, 'detach');
 });
 

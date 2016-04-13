@@ -145,9 +145,13 @@ const char CPOWProxyHandler::family = 0;
 const CPOWProxyHandler CPOWProxyHandler::singleton;
 
 #define FORWARD(call, args)                                             \
+    PROFILER_LABEL_FUNC(js::ProfileEntry::Category::JS);                \
     WrapperOwner* owner = OwnerOf(proxy);                               \
     if (!owner->active()) {                                             \
         JS_ReportError(cx, "cannot use a CPOW whose process is gone");  \
+        return false;                                                   \
+    }                                                                   \
+    if (!owner->allowMessage(cx)) {                                     \
         return false;                                                   \
     }                                                                   \
     {                                                                   \
@@ -892,7 +896,7 @@ WrapperOwner::drop(JSObject* obj)
 
     cpows_.remove(objId);
     if (active())
-        unused << SendDropObject(objId);
+        Unused << SendDropObject(objId);
     decref();
 }
 
@@ -978,8 +982,9 @@ InstanceOf(JSObject* proxy, const nsID* id, bool* bp)
 }
 
 bool
-DOMInstanceOf(JSContext* cx, JSObject* proxy, int prototypeID, int depth, bool* bp)
+DOMInstanceOf(JSContext* cx, JSObject* proxyArg, int prototypeID, int depth, bool* bp)
 {
+    RootedObject proxy(cx, proxyArg);
     FORWARD(domInstanceOf, (cx, proxy, prototypeID, depth, bp));
 }
 
