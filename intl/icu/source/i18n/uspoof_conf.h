@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2008-2011, International Business Machines
+*   Copyright (C) 2008-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -23,6 +23,8 @@
 
 #if !UCONFIG_NO_REGULAR_EXPRESSIONS 
 
+#include "unicode/uregex.h"
+#include "uhash.h"
 #include "uspoof_impl.h"
 
 U_NAMESPACE_BEGIN

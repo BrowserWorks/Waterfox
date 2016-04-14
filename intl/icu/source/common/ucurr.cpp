@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2002-2014, International Business Machines
+* Copyright (c) 2002-2016, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
@@ -13,20 +13,20 @@
 #include "unicode/locid.h"
 #include "unicode/ures.h"
 #include "unicode/ustring.h"
-#include "unicode/choicfmt.h"
 #include "unicode/parsepos.h"
 #include "ustr_imp.h"
 #include "cmemory.h"
 #include "cstring.h"
 #include "uassert.h"
 #include "umutex.h"
-#include "ucln_in.h"
+#include "ucln_cmn.h"
 #include "uenumimp.h"
 #include "uhash.h"
 #include "hash.h"
 #include "uresimp.h"
 #include "ulist.h"
 #include "ureslocs.h"
+#include "ulocimp.h"
 
 //#define UCURR_DEBUG_EQUIV 1
 #ifdef UCURR_DEBUG_EQUIV
@@ -56,7 +56,7 @@ static const int32_t LAST_RESORT_DATA[] = { 2, 0, 2, 0 };
 static const int32_t POW10[] = { 1, 10, 100, 1000, 10000, 100000,
                                  1000000, 10000000, 100000000, 1000000000 };
 
-static const int32_t MAX_POW10 = (sizeof(POW10)/sizeof(POW10[0])) - 1;
+static const int32_t MAX_POW10 = UPRV_LENGTHOF(POW10) - 1;
 
 // Defines equivalent currency symbols.
 static const char *EQUIV_CURRENCY_SYMBOLS[][2] = {
@@ -102,12 +102,6 @@ static const char VAR_DELIM_STR[] = "_";
 // Tag for localized display names (symbols) of currencies
 static const char CURRENCIES[] = "Currencies";
 static const char CURRENCYPLURALS[] = "CurrencyPlurals";
-
-// Marker character indicating that a display name is a ChoiceFormat
-// pattern.  Strings that start with one mark are ChoiceFormat
-// patterns.  Strings that start with 2 marks are static strings, and
-// the first mark is deleted.
-static const UChar CHOICE_FORMAT_MARK = 0x003D; // Equals sign
 
 static const UChar EUR_STR[] = {0x0045,0x0055,0x0052,0};
 
@@ -374,7 +368,7 @@ idForLocale(const char* locale, char* countryAndVariant, int capacity, UErrorCod
     // Extract the country name and variant name.  We only
     // recognize two variant names, EURO and PREEURO.
     char variant[ULOC_FULLNAME_CAPACITY];
-    uloc_getCountry(locale, countryAndVariant, capacity, ec);
+    ulocimp_getRegionForSupplementalData(locale, FALSE, countryAndVariant, capacity, ec);
     uloc_getVariant(locale, variant, sizeof(variant), ec);
     if (variant[0] != 0) {
         variantType = (uint32_t)(0 == uprv_strcmp(variant, VAR_EURO))
@@ -432,7 +426,7 @@ struct CReg : public icu::UMemory {
                 umtx_lock(&gCRegLock);
                 if (!gCRegHead) {
                     /* register for the first time */
-                    ucln_i18n_registerCleanup(UCLN_I18N_CURRENCY, currency_cleanup);
+                    ucln_common_registerCleanup(UCLN_COMMON_CURRENCY, currency_cleanup);
                 }
                 n->next = gCRegHead;
                 gCRegHead = n;
@@ -469,7 +463,7 @@ struct CReg : public icu::UMemory {
         CReg* p = gCRegHead;
 
         /* register cleanup of the mutex */
-        ucln_i18n_registerCleanup(UCLN_I18N_CURRENCY, currency_cleanup);
+        ucln_common_registerCleanup(UCLN_COMMON_CURRENCY, currency_cleanup);
         while (p) {
             if (uprv_strcmp(id, p->id) == 0) {
                 result = p->iso;
@@ -740,20 +734,11 @@ ucurr_getName(const UChar* currency,
         }
     }
 
-    // Determine if this is a ChoiceFormat pattern.  One leading mark
-    // indicates a ChoiceFormat.  Two indicates a static string that
-    // starts with a mark.  In either case, the first mark is ignored,
-    // if present.  Marks in the rest of the string have no special
-    // meaning.
+    // We no longer support choice format data in names.  Data should not contain
+    // choice patterns.
     *isChoiceFormat = FALSE;
     if (U_SUCCESS(ec2)) {
         U_ASSERT(s != NULL);
-        int32_t i=0;
-        while (i < *len && s[i] == CHOICE_FORMAT_MARK && i < 2) {
-            ++i;
-        }
-        *isChoiceFormat = (i == 1);
-        if (i != 0) ++s; // Skip over first mark
         return s;
     }
 
@@ -915,26 +900,10 @@ getCurrencyNameCount(const char* loc, int32_t* total_currency_name_count, int32_
             UResourceBundle* names = ures_getByIndex(curr, i, NULL, &ec2);
             int32_t len;
             s = ures_getStringByIndex(names, UCURR_SYMBOL_NAME, &len, &ec2);
-            UBool isChoice = FALSE;
-            if (len > 0 && s[0] == CHOICE_FORMAT_MARK) {
-                ++s;
-                --len;
-                if (len > 0 && s[0] != CHOICE_FORMAT_MARK) {
-                    isChoice = TRUE;
-                }
+            ++(*total_currency_symbol_count);  // currency symbol
+            if (currencySymbolsEquiv != NULL) {
+                *total_currency_symbol_count += countEquivalent(*currencySymbolsEquiv, UnicodeString(TRUE, s, len));
             }
-            if (isChoice) {
-                ChoiceFormat fmt(UnicodeString(TRUE, s, len), ec2);
-                int32_t fmt_count;
-                fmt.getFormats(fmt_count);
-                *total_currency_symbol_count += fmt_count;
-            } else {
-                ++(*total_currency_symbol_count);  // currency symbol
-                if (currencySymbolsEquiv != NULL) {
-                    *total_currency_symbol_count += countEquivalent(*currencySymbolsEquiv, UnicodeString(TRUE, s, len));
-                }
-            }
-
             ++(*total_currency_symbol_count); // iso code
             ++(*total_currency_name_count); // long name
             ures_close(names);
@@ -1047,44 +1016,20 @@ collectCurrencyNames(const char* locale,
                     uhash_put(currencyIsoCodes, iso, iso, &ec3); 
                 }
             }
-            UBool isChoice = FALSE;
-            if (len > 0 && s[0] == CHOICE_FORMAT_MARK) {
-                ++s;
-                --len;
-                if (len > 0 && s[0] != CHOICE_FORMAT_MARK) {
-                    isChoice = TRUE;
-                }
-            }
-            if (isChoice) {
-                ChoiceFormat fmt(UnicodeString(TRUE, s, len), ec2);
-                int32_t fmt_count;
-                const UnicodeString* formats = fmt.getFormats(fmt_count);
-                for (int i = 0; i < fmt_count; ++i) {
-                    // put iso, formats[i]; into array
-                    int32_t length = formats[i].length();
-                    UChar* name = (UChar*)uprv_malloc(sizeof(UChar)*length);
-                    formats[i].extract(0, length, name);
+            // Add currency symbol.
+            (*currencySymbols)[*total_currency_symbol_count].IsoCode = iso;
+            (*currencySymbols)[*total_currency_symbol_count].currencyName = (UChar*)s;
+            (*currencySymbols)[*total_currency_symbol_count].flag = 0;
+            (*currencySymbols)[(*total_currency_symbol_count)++].currencyNameLen = len;
+            // Add equivalent symbols
+            if (currencySymbolsEquiv != NULL) {
+                icu::EquivIterator iter(*currencySymbolsEquiv, UnicodeString(TRUE, s, len));
+                const UnicodeString *symbol;
+                while ((symbol = iter.next()) != NULL) {
                     (*currencySymbols)[*total_currency_symbol_count].IsoCode = iso;
-                    (*currencySymbols)[*total_currency_symbol_count].currencyName = name;
-                    (*currencySymbols)[*total_currency_symbol_count].flag = NEED_TO_BE_DELETED;
-                    (*currencySymbols)[(*total_currency_symbol_count)++].currencyNameLen = length;
-                }
-            } else {
-                // Add currency symbol.
-                (*currencySymbols)[*total_currency_symbol_count].IsoCode = iso;
-                (*currencySymbols)[*total_currency_symbol_count].currencyName = (UChar*)s;
-                (*currencySymbols)[*total_currency_symbol_count].flag = 0;
-                (*currencySymbols)[(*total_currency_symbol_count)++].currencyNameLen = len;
-                // Add equivalent symbols
-                if (currencySymbolsEquiv != NULL) {
-                  icu::EquivIterator iter(*currencySymbolsEquiv, UnicodeString(TRUE, s, len));
-                    const UnicodeString *symbol;
-                    while ((symbol = iter.next()) != NULL) {
-                        (*currencySymbols)[*total_currency_symbol_count].IsoCode = iso;
-                        (*currencySymbols)[*total_currency_symbol_count].currencyName = (UChar*) symbol->getBuffer();
-                        (*currencySymbols)[*total_currency_symbol_count].flag = 0;
-                        (*currencySymbols)[(*total_currency_symbol_count)++].currencyNameLen = symbol->length();
-                    }
+                    (*currencySymbols)[*total_currency_symbol_count].currencyName = (UChar*) symbol->getBuffer();
+                    (*currencySymbols)[*total_currency_symbol_count].flag = 0;
+                    (*currencySymbols)[(*total_currency_symbol_count)++].currencyNameLen = symbol->length();
                 }
             }
 
@@ -1450,7 +1395,7 @@ currency_cache_cleanup(void) {
 }
 
 
-U_CFUNC void
+U_CAPI void
 uprv_parseCurrency(const char* locale,
                    const icu::UnicodeString& text,
                    icu::ParsePosition& pos,
@@ -1528,8 +1473,7 @@ uprv_parseCurrency(const char* locale,
             cacheEntry->totalCurrencySymbolCount = total_currency_symbol_count;
             cacheEntry->refCount = 2; // one for cache, one for reference
             currentCacheEntryIndex = (currentCacheEntryIndex + 1) % CURRENCY_NAME_CACHE_NUM;
-            ucln_i18n_registerCleanup(UCLN_I18N_CURRENCY, currency_cache_cleanup);
-            
+            ucln_common_registerCleanup(UCLN_COMMON_CURRENCY, currency_cache_cleanup);
         } else {
             deleteCurrencyNames(currencyNames, total_currency_name_count);
             deleteCurrencyNames(currencySymbols, total_currency_symbol_count);
@@ -1606,7 +1550,7 @@ uprv_parseCurrency(const char* locale,
  * This is used for backward compatibility with old currency logic in
  * DecimalFormat and DecimalFormatSymbols.
  */
-U_CFUNC void
+U_CAPI void
 uprv_getStaticCurrencyName(const UChar* iso, const char* loc,
                            icu::UnicodeString& result, UErrorCode& ec)
 {
@@ -1617,19 +1561,7 @@ uprv_getStaticCurrencyName(const UChar* iso, const char* loc,
     const UChar* currname = ucurr_getName(iso, loc, UCURR_SYMBOL_NAME,
                                           &isChoiceFormat, &len, &ec);
     if (U_SUCCESS(ec)) {
-        // If this is a ChoiceFormat currency, then format an
-        // arbitrary value; pick something != 1; more common.
-        result.truncate(0);
-        if (isChoiceFormat) {
-            ChoiceFormat f(UnicodeString(TRUE, currname, len), ec);
-            if (U_SUCCESS(ec)) {
-                f.format(2.0, result);
-            } else {
-                result.setTo(iso, -1);
-            }
-        } else {
-            result.setTo(currname, -1);
-        }
+        result.setTo(currname, len);
     }
 }
 
@@ -2044,7 +1976,7 @@ ucurr_nextCurrencyList(UEnumeration *enumerator,
     UCurrencyContext *myContext = (UCurrencyContext *)(enumerator->context);
 
     /* Find the next in the list that matches the type we are looking for. */
-    while (myContext->listIdx < (sizeof(gCurrencyList)/sizeof(gCurrencyList[0]))-1) {
+    while (myContext->listIdx < UPRV_LENGTHOF(gCurrencyList)-1) {
         const struct CurrencyList *currItem = &gCurrencyList[myContext->listIdx++];
         if (UCURR_MATCHES_BITMASK(currItem->currType, myContext->currType))
         {
@@ -2167,7 +2099,7 @@ U_CDECL_END
 
 static void U_CALLCONV initIsoCodes(UErrorCode &status) {
     U_ASSERT(gIsoCodes == NULL);
-    ucln_i18n_registerCleanup(UCLN_I18N_CURRENCY, currency_cleanup);
+    ucln_common_registerCleanup(UCLN_COMMON_CURRENCY, currency_cleanup);
 
     UHashtable *isoCodes = uhash_open(uhash_hashUChars, uhash_compareUChars, NULL, &status);
     if (U_FAILURE(status)) {
@@ -2188,7 +2120,7 @@ static void populateCurrSymbolsEquiv(icu::Hashtable *hash, UErrorCode &status) {
     if (U_FAILURE(status)) {
         return;
     }
-    int32_t length = sizeof(EQUIV_CURRENCY_SYMBOLS) / sizeof(EQUIV_CURRENCY_SYMBOLS[0]);
+    int32_t length = UPRV_LENGTHOF(EQUIV_CURRENCY_SYMBOLS);
     for (int32_t i = 0; i < length; ++i) {
         icu::UnicodeString lhs(EQUIV_CURRENCY_SYMBOLS[i][0], -1, US_INV);
         icu::UnicodeString rhs(EQUIV_CURRENCY_SYMBOLS[i][1], -1, US_INV);
@@ -2202,7 +2134,7 @@ static void populateCurrSymbolsEquiv(icu::Hashtable *hash, UErrorCode &status) {
 static void U_CALLCONV initCurrSymbolsEquiv() {
     U_ASSERT(gCurrSymbolsEquiv == NULL);
     UErrorCode status = U_ZERO_ERROR;
-    ucln_i18n_registerCleanup(UCLN_I18N_CURRENCY, currency_cleanup);
+    ucln_common_registerCleanup(UCLN_COMMON_CURRENCY, currency_cleanup);
     icu::Hashtable *temp = new icu::Hashtable(status);
     if (temp == NULL) {
         return;
@@ -2541,15 +2473,8 @@ static const UEnumeration defaultKeywordValues = {
 
 U_CAPI UEnumeration *U_EXPORT2 ucurr_getKeywordValuesForLocale(const char *key, const char *locale, UBool commonlyUsed, UErrorCode* status) {
     // Resolve region
-    char prefRegion[ULOC_FULLNAME_CAPACITY] = "";
-    int32_t prefRegionLength = 0;
-    prefRegionLength = uloc_getCountry(locale, prefRegion, sizeof(prefRegion), status);
-    if (prefRegionLength == 0) {
-        char loc[ULOC_FULLNAME_CAPACITY] = "";
-        uloc_addLikelySubtags(locale, loc, sizeof(loc), status);
-        
-        /*prefRegionLength = */ uloc_getCountry(loc, prefRegion, sizeof(prefRegion), status);
-    }
+    char prefRegion[ULOC_COUNTRY_CAPACITY];
+    ulocimp_getRegionForSupplementalData(locale, TRUE, prefRegion, sizeof(prefRegion), status);
     
     // Read value from supplementalData
     UList *values = ulist_createEmptyList(status);

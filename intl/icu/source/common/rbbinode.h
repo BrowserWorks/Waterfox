@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 2001-2006, International Business Machines Corporation and
+ * Copyright (c) 2001-2016, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -8,6 +8,7 @@
 #define RBBINODE_H
 
 #include "unicode/utypes.h"
+#include "unicode/unistr.h"
 #include "unicode/uobject.h"
 
 //
@@ -79,6 +80,10 @@ class RBBINode : public UMemory {
         UBool         fLookAheadEnd;        // For endMark nodes, set TRUE if
                                             //   marking the end of a look-ahead rule.
 
+        UBool         fRuleRoot;            // True if this node is the root of a rule.
+        UBool         fChainIn;             // True if chaining into this rule is allowed
+                                            //     (no '^' present).
+
         UVector       *fFirstPosSet;
         UVector       *fLastPosSet;         // TODO: rename fFirstPos & fLastPos to avoid confusion.
         UVector       *fFollowPos;
@@ -94,6 +99,7 @@ class RBBINode : public UMemory {
         void         findNodes(UVector *dest, RBBINode::NodeType kind, UErrorCode &status);
 
 #ifdef RBBI_DEBUG
+        static void printNodeHeader();
         void        printNode();
         void        printTree(UBool withHeading);
 #endif
@@ -103,6 +109,7 @@ class RBBINode : public UMemory {
         UBool operator == (const RBBINode &other);    // Private, so these functions won't accidently be used.
 
 #ifdef RBBI_DEBUG
+    public:
         int           fSerialNum;           //  Debugging aids.
 #endif
 };

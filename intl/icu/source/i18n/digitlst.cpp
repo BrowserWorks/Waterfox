@@ -118,9 +118,7 @@ DigitList::operator=(const DigitList& other)
             Mutex mutex;
 
             if(other.fHave==kDouble) {
-              fUnion.fDouble = other.fUnion.fDouble;
-            } else if(other.fHave==kInt64) {
-              fUnion.fInt64 = other.fUnion.fInt64;
+                fUnion.fDouble = other.fUnion.fDouble;
             }
             fHave = other.fHave;
         }
@@ -436,8 +434,6 @@ DigitList::getDouble() const
         Mutex mutex;
         if (fHave == kDouble) {
             return fUnion.fDouble;
-        } else if(fHave == kInt64) {
-            return (double)fUnion.fInt64;
         }
         decimalSeparator = gDecimal;
     }
@@ -537,9 +533,8 @@ int32_t DigitList::getLong() /*const*/
  *  Return zero if the number cannot be represented.
  */
 int64_t DigitList::getInt64() /*const*/ {
-    if(fHave==kInt64) {
-      return fUnion.fInt64;
-    } 
+    // TODO: fast conversion if fHave == fDouble
+
     // Truncate if non-integer.
     // Return 0 if out of range.
     // Range of in64_t is -9223372036854775808 to 9223372036854775807  (19 digits)
@@ -728,17 +723,6 @@ DigitList::set(int64_t source)
     uprv_decNumberFromString(fDecNumber, str, &fContext);
     internalSetDouble(static_cast<double>(source));
 }
-
-/**
- * Set an int64, with no decnumber
- */
-void
-DigitList::setInteger(int64_t source)
-{
-  fDecNumber=NULL;
-  internalSetInt64(source);
-}
-
 
 // -------------------------------------
 /**

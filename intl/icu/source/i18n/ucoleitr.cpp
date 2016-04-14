@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-*   Copyright (C) 2001-2015, International Business Machines
+*   Copyright (C) 2001-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ******************************************************************************
 *
@@ -222,11 +222,11 @@ uint64_t UCollationPCE::processCE(uint32_t ce)
     switch(strength) {
     default:
         tertiary = ucol_tertiaryOrder(ce);
-        /* note fall-through */
+        U_FALLTHROUGH;
 
     case UCOL_SECONDARY:
         secondary = ucol_secondaryOrder(ce);
-        /* note fall-through */
+        U_FALLTHROUGH;
 
     case UCOL_PRIMARY:
         primary = ucol_primaryOrder(ce);

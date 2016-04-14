@@ -1,6 +1,6 @@
 /*
  **********************************************************************
- *   Copyright (C) 2005-2015, International Business Machines
+ *   Copyright (C) 2005-2016, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  **********************************************************************
  */
@@ -26,8 +26,6 @@
 #include "csrutf8.h"
 #include "csrucode.h"
 #include "csr2022.h"
-
-#define ARRAY_SIZE(array) (sizeof array / sizeof array[0])
 
 #define NEW_ARRAY(type,count) (type *) uprv_malloc((count) * sizeof(type))
 #define DELETE_ARRAY(array) uprv_free((void *) (array))
@@ -120,7 +118,7 @@ static void U_CALLCONV initRecognizers(UErrorCode &status) {
         new CSRecognizerInfo(new CharsetRecog_IBM420_ar_ltr(), FALSE)
 #endif
     };
-    int32_t rCount = ARRAY_SIZE(tempArray);
+    int32_t rCount = UPRV_LENGTHOF(tempArray);
 
     fCSRecognizers = NEW_ARRAY(CSRecognizerInfo *, rCount);
 

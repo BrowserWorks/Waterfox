@@ -1,7 +1,7 @@
 /*
  ******************************************************************************
  *
- *   Copyright (C) 1998-2014, International Business Machines
+ *   Copyright (C) 1998-2016, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  ******************************************************************************
@@ -296,7 +296,7 @@ u_fputc(UChar32      uc,
     int32_t idx = 0;
     UBool isError = FALSE;
 
-    U16_APPEND(buf, idx, sizeof(buf)/sizeof(*buf), uc, isError);
+    U16_APPEND(buf, idx, UPRV_LENGTHOF(buf), uc, isError);
     if (isError) {
         return U_EOF;
     }

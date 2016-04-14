@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (c) 2001-2011, International Business Machines
+*   Copyright (c) 2001-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   Date        Name        Description
@@ -101,6 +101,7 @@ int32_t ICU_Utility::parsePattern(const UnicodeString& rule, int32_t pos, int32_
                 return -1;
             }
             // FALL THROUGH to skipWhitespace
+            U_FALLTHROUGH;
         case 126 /*'~'*/:
             pos = skipWhitespace(rule, pos);
             break;

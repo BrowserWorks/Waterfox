@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2015 International Business Machines
+// * Copyright (C) 2016 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/to.xml
@@ -137,7 +137,7 @@ to{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.19.14"}
+    Version{"2.1.23.79"}
     calendar{
         generic{
             DateTimePatterns{
@@ -282,6 +282,10 @@ to{
         }
         gregorian{
             AmPmMarkers{
+                "AM",
+                "PM",
+            }
+            AmPmMarkersAbbr{
                 "AM",
                 "PM",
             }
@@ -715,7 +719,10 @@ to{
         day-narrow{
             dn{"ʻaho"}
             relative{
+                "-1"{"ʻaneafi"}
                 "-2"{"ʻaneheafi"}
+                "0"{"ʻahó ni"}
+                "1"{"ʻapongipongi"}
                 "2"{"ʻahepongipongi"}
             }
             relativeTime{
@@ -730,7 +737,10 @@ to{
         day-short{
             dn{"ʻaho"}
             relative{
+                "-1"{"ʻaneafi"}
                 "-2"{"ʻaneheafi"}
+                "0"{"ʻahó ni"}
+                "1"{"ʻapongipongi"}
                 "2"{"ʻahepongipongi"}
             }
             relativeTime{

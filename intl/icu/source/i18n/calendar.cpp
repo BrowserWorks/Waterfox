@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2015, International Business Machines Corporation and    *
+* Copyright (C) 1997-2016, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 *
@@ -59,6 +59,7 @@
 #include "olsontz.h"
 #include "sharedcalendar.h"
 #include "unifiedcache.h"
+#include "ulocimp.h"
 
 #if !UCONFIG_NO_SERVICE
 static icu::ICULocaleService* gService = NULL;
@@ -284,17 +285,10 @@ static ECalType getCalendarTypeForLocale(const char *locid) {
     // when calendar keyword is not available or not supported, read supplementalData
     // to get the default calendar type for the locale's region
     char region[ULOC_COUNTRY_CAPACITY];
-    int32_t regionLen = 0;
-    regionLen = uloc_getCountry(canonicalName, region, sizeof(region) - 1, &status);
-    if (regionLen == 0) {
-        char fullLoc[256];
-        uloc_addLikelySubtags(locid, fullLoc, sizeof(fullLoc) - 1, &status);
-        regionLen = uloc_getCountry(fullLoc, region, sizeof(region) - 1, &status);
-    }
+    (void)ulocimp_getRegionForSupplementalData(canonicalName, TRUE, region, sizeof(region), &status);
     if (U_FAILURE(status)) {
         return CALTYPE_GREGORIAN;
     }
-    region[regionLen] = 0;
     
     // Read preferred calendar values from supplementalData calendarPreference
     UResourceBundle *rb = ures_openDirect(NULL, "supplementalData", &status);
@@ -2131,6 +2125,7 @@ void Calendar::add(UCalendarDateFields field, int32_t amount, UErrorCode& status
         }
       }
       // Fall through into normal handling
+      U_FALLTHROUGH;
     case UCAL_EXTENDED_YEAR:
     case UCAL_MONTH:
       {
@@ -2607,6 +2602,7 @@ Calendar::isWeekend(void) const
                             (millisInDay <  transitionMillis);
                     }
                     // else fall through, return FALSE
+                    U_FALLTHROUGH;
                 }
             default:
                 break;
@@ -3645,7 +3641,7 @@ void Calendar::prepareGetActual(UCalendarDateFields field, UBool isMinimum, UErr
 
     case UCAL_YEAR_WOY:
         set(UCAL_WEEK_OF_YEAR, getGreatestMinimum(UCAL_WEEK_OF_YEAR));
-
+        U_FALLTHROUGH;
     case UCAL_MONTH:
         set(UCAL_DATE, getGreatestMinimum(UCAL_DATE));
         break;
@@ -3806,11 +3802,13 @@ Calendar::setWeekData(const Locale& desiredLocale, const char *type, UErrorCode&
         return;
     }
 
-    
+    char region[ULOC_COUNTRY_CAPACITY];
+    (void)ulocimp_getRegionForSupplementalData(desiredLocale.getName(), TRUE, region, sizeof(region), &status);
+
     // Read week data values from supplementalData week data
     UResourceBundle *rb = ures_openDirect(NULL, "supplementalData", &status);
     ures_getByKey(rb, "weekData", rb, &status);
-    UResourceBundle *weekData = ures_getByKey(rb, useLocale.getCountry(), NULL, &status);
+    UResourceBundle *weekData = ures_getByKey(rb, region, NULL, &status);
     if (status == U_MISSING_RESOURCE_ERROR && rb != NULL) {
         status = U_ZERO_ERROR;
         weekData = ures_getByKey(rb, "001", NULL, &status);

@@ -2,7 +2,7 @@
 #
 # Yves Arrouye.
 #
-# Copyright (C) 2000-2014, International Business Machines Corporation and others.
+# Copyright (C) 2000-2016, International Business Machines Corporation and others.
 # All Rights Reserved.
 
 #
@@ -165,8 +165,8 @@ COMPILE.c=    $(CC) $(CPPFLAGS) $(DEFS) $(CFLAGS) -c
 COMPILE.cc=   $(CXX) $(CPPFLAGS) $(DEFS) $(CXXFLAGS) -c
 
 # Commands to link
-LINK.c=       $(CC) $(CFLAGS) $(LDFLAGS)
-LINK.cc=      $(CXX) $(CXXFLAGS) $(LDFLAGS)
+LINK.c=       $(CC) $(CFLAGS) $(LDFLAGS) $(LINKFLAGS)
+LINK.cc=      $(CXX) $(CXXFLAGS) $(LDFLAGS) $(LINKFLAGS)
 
 # Commands to make a shared library
 SHLIB.c=      $(CC) $(CFLAGS) $(LDFLAGS) -shared $(LD_SOOPTIONS)

@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2002-2011, International Business Machines
+* Copyright (c) 2002-2016, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
@@ -22,7 +22,7 @@
  * This is used for backward compatibility with old currency logic in
  * DecimalFormat and DecimalFormatSymbols.
  */
-U_CFUNC void
+U_CAPI void
 uprv_getStaticCurrencyName(const UChar* iso, const char* loc,
                            icu::UnicodeString& result, UErrorCode& ec);
 
@@ -46,7 +46,7 @@ uprv_getStaticCurrencyName(const UChar* iso, const char* loc,
  *
  * @internal
  */
-U_CFUNC void
+U_CAPI void
 uprv_parseCurrency(const char* locale,
                    const icu::UnicodeString& text,
                    icu::ParsePosition& pos,

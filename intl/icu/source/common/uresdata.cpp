@@ -1,9 +1,9 @@
 /*
 *******************************************************************************
-* Copyright (C) 1999-2015, International Business Machines Corporation
+* Copyright (C) 1999-2016, International Business Machines Corporation
 *               and others. All Rights Reserved.
 *******************************************************************************
-*   file name:  uresdata.c
+*   file name:  uresdata.cpp
 *   encoding:   US-ASCII
 *   tab size:   8 (not used)
 *   indentation:4
@@ -23,13 +23,14 @@
 #include "unicode/utf16.h"
 #include "cmemory.h"
 #include "cstring.h"
+#include "resource.h"
 #include "uarrsort.h"
-#include "udataswp.h"
+#include "uassert.h"
 #include "ucol_swp.h"
+#include "udataswp.h"
 #include "uinvchar.h"
 #include "uresdata.h"
 #include "uresimp.h"
-#include "uassert.h"
 
 /*
  * Resource access helpers
@@ -133,7 +134,7 @@ _res_findTable32Item(const ResourceData *pResData, const int32_t *keyOffsets, in
 
 static UBool U_CALLCONV
 isAcceptable(void *context,
-             const char *type, const char *name,
+             const char * /*type*/, const char * /*name*/,
              const UDataInfo *pInfo) {
     uprv_memcpy(context, pInfo->formatVersion, 4);
     return (UBool)(
@@ -310,7 +311,7 @@ res_getString(const ResourceData *pResData, Resource res, int32_t *pLength) {
     int32_t length;
     if(RES_GET_TYPE(res)==URES_STRING_V2) {
         int32_t first;
-        if(offset<pResData->poolStringIndexLimit) {
+        if((int32_t)offset<pResData->poolStringIndexLimit) {
             p=(const UChar *)pResData->poolBundleStrings+offset;
         } else {
             p=(const UChar *)pResData->p16BitUnits+(offset-pResData->poolStringIndexLimit);
@@ -341,6 +342,45 @@ res_getString(const ResourceData *pResData, Resource res, int32_t *pLength) {
     }
     return p;
 }
+
+namespace {
+
+/**
+ * CLDR string value (three empty-set symbols)=={2205, 2205, 2205}
+ * prevents fallback to the parent bundle.
+ * TODO: combine with other code that handles this marker, use EMPTY_SET constant.
+ * TODO: maybe move to uresbund.cpp?
+ */
+UBool isNoInheritanceMarker(const ResourceData *pResData, Resource res) {
+    uint32_t offset=RES_GET_OFFSET(res);
+    if (offset == 0) {
+        // empty string
+    } else if (res == offset) {
+        const int32_t *p32=pResData->pRoot+res;
+        int32_t length=*p32;
+        const UChar *p=(const UChar *)p32;
+        return length == 3 && p[2] == 0x2205 && p[3] == 0x2205 && p[4] == 0x2205;
+    } else if (RES_GET_TYPE(res) == URES_STRING_V2) {
+        const UChar *p;
+        if((int32_t)offset<pResData->poolStringIndexLimit) {
+            p=(const UChar *)pResData->poolBundleStrings+offset;
+        } else {
+            p=(const UChar *)pResData->p16BitUnits+(offset-pResData->poolStringIndexLimit);
+        }
+        int32_t first=*p;
+        if (first == 0x2205) {  // implicit length
+            return p[1] == 0x2205 && p[2] == 0x2205 && p[3] == 0;
+        } else if (first == 0xdc03) {  // explicit length 3 (should not occur)
+            return p[1] == 0x2205 && p[2] == 0x2205 && p[3] == 0x2205;
+        } else {
+            // Assume that the string has not been stored with more length units than necessary.
+            return FALSE;
+        }
+    }
+    return FALSE;
+}
+
+}  // namespace
 
 U_CAPI const UChar * U_EXPORT2
 res_getAlias(const ResourceData *pResData, Resource res, int32_t *pLength) {
@@ -422,6 +462,116 @@ res_countArrayItems(const ResourceData *pResData, Resource res) {
         return 0;
     }
 }
+
+namespace {
+
+int32_t getArrayLength(const ResourceData *pResData, Resource res) {
+    uint32_t offset=RES_GET_OFFSET(res);
+    if(offset == 0) {
+        return 0;
+    }
+    int32_t type = RES_GET_TYPE(res);
+    if(type == URES_ARRAY) {
+        return *(pResData->pRoot+offset);
+    } else if(type == URES_ARRAY16) {
+        return pResData->p16BitUnits[offset];
+    } else {
+        return 0;
+    }
+}
+
+int32_t getTableLength(const ResourceData *pResData, Resource res) {
+    uint32_t offset=RES_GET_OFFSET(res);
+    if(offset == 0) {
+        return 0;
+    }
+    int32_t type = RES_GET_TYPE(res);
+    if(type == URES_TABLE) {
+        return *((const uint16_t *)(pResData->pRoot+offset));
+    } else if(type == URES_TABLE16) {
+        return pResData->p16BitUnits[offset];
+    } else if(type == URES_TABLE32) {
+        return *(pResData->pRoot+offset);
+    } else {
+        return 0;
+    }
+}
+
+}  // namespace
+
+U_NAMESPACE_BEGIN
+
+ResourceDataValue::~ResourceDataValue() {}
+
+UResType ResourceDataValue::getType() const {
+    return res_getPublicType(res);
+}
+
+const UChar *ResourceDataValue::getString(int32_t &length, UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return NULL;
+    }
+    const UChar *s = res_getString(pResData, res, &length);
+    if(s == NULL) {
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+    }
+    return s;
+}
+
+const UChar *ResourceDataValue::getAliasString(int32_t &length, UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return NULL;
+    }
+    const UChar *s = res_getAlias(pResData, res, &length);
+    if(s == NULL) {
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+    }
+    return s;
+}
+
+int32_t ResourceDataValue::getInt(UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return 0;
+    }
+    if(RES_GET_TYPE(res) != URES_INT) {
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+    }
+    return RES_GET_INT(res);
+}
+
+uint32_t ResourceDataValue::getUInt(UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return 0;
+    }
+    if(RES_GET_TYPE(res) != URES_INT) {
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+    }
+    return RES_GET_UINT(res);
+}
+
+const int32_t *ResourceDataValue::getIntVector(int32_t &length, UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return NULL;
+    }
+    const int32_t *iv = res_getIntVector(pResData, res, &length);
+    if(iv == NULL) {
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+    }
+    return iv;
+}
+
+const uint8_t *ResourceDataValue::getBinary(int32_t &length, UErrorCode &errorCode) const {
+    if(U_FAILURE(errorCode)) {
+        return NULL;
+    }
+    const uint8_t *b = res_getBinary(pResData, res, &length);
+    if(b == NULL) {
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+    }
+    return b;
+}
+
+U_NAMESPACE_END
 
 static Resource
 makeResourceFrom16(const ResourceData *pResData, int32_t res16) {
@@ -541,6 +691,93 @@ res_getResource(const ResourceData *pResData, const char *key) {
     return res_getTableItemByKey(pResData, pResData->rootRes, &idx, &realKey);
 }
 
+// TODO: Ported from Java, but enumerating at this low level may prevent us
+// from doing necessary things, like resolving aliases,
+// which need access to higher-level UResourceBundle code.
+// Consider porting the low-level Container/Array/Table classes from Java,
+// with getters for keys and values,
+// and doing the enumeration in the higher-level code on top of those accessors.
+U_CFUNC void
+ures_getAllTableItems(const ResourceData *pResData, Resource table,
+                      icu::ResourceDataValue &value, icu::ResourceTableSink &sink,
+                      UErrorCode &errorCode) {
+    if(U_FAILURE(errorCode)) { return; }
+    const uint16_t *keys16 = NULL;
+    const int32_t *keys32 = NULL;
+    const uint16_t *items16 = NULL;
+    const Resource *items32 = NULL;
+    uint32_t offset = RES_GET_OFFSET(table);
+    int32_t length = 0;
+    switch(RES_GET_TYPE(table)) {
+    case URES_TABLE: {
+        if (offset != 0) { /* empty if offset==0 */
+            keys16 = (const uint16_t *)(pResData->pRoot+offset);
+            length = *keys16++;
+            items32 = (const Resource *)(keys16+length+(~length&1));
+        }
+        break;
+    }
+    case URES_TABLE16: {
+        keys16 = pResData->p16BitUnits+offset;
+        length = *keys16++;
+        items16 = keys16 + length;
+        break;
+    }
+    case URES_TABLE32: {
+        if (offset != 0) { /* empty if offset==0 */
+            keys32 = pResData->pRoot+offset;
+            length = *keys32++;
+            items32 = (const Resource *)keys32 + length;
+        }
+        break;
+    }
+    default:
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+        return;
+    }
+
+    for (int32_t i = 0; i < length; ++i) {
+        const char *key;
+        if (keys16 != NULL) {
+            key=RES_GET_KEY16(pResData, keys16[i]);
+        } else {
+            key=RES_GET_KEY32(pResData, keys32[i]);
+        }
+        Resource res;
+        if (items16 != NULL) {
+            res = makeResourceFrom16(pResData, items16[i]);
+        } else {
+            res = items32[i];
+        }
+        int32_t type = RES_GET_TYPE(res);
+        if (URES_IS_ARRAY(type)) {
+            int32_t numItems = getArrayLength(pResData, res);
+            icu::ResourceArraySink *subSink = sink.getOrCreateArraySink(key, numItems, errorCode);
+            if (subSink != NULL) {
+                ures_getAllArrayItems(pResData, res, value, *subSink, errorCode);
+            }
+        } else if (URES_IS_TABLE(type)) {
+            int32_t numItems = getTableLength(pResData, res);
+            icu::ResourceTableSink *subSink = sink.getOrCreateTableSink(key, numItems, errorCode);
+            if (subSink != NULL) {
+                ures_getAllTableItems(pResData, res, value, *subSink, errorCode);
+            }
+        /* TODO: settle on how to deal with aliases, port to Java
+        } else if (type == URES_ALIAS) {
+            // aliases not handled in resource enumeration
+            errorCode = U_UNSUPPORTED_ERROR;
+            return; */
+        } else if (isNoInheritanceMarker(pResData, res)) {
+            sink.putNoFallback(key, errorCode);
+        } else {
+            value.setResource(res);
+            sink.put(key, value, errorCode);
+        }
+        if(U_FAILURE(errorCode)) { return; }
+    }
+    sink.leave(errorCode);
+}
+
 U_CAPI Resource U_EXPORT2
 res_getArrayItem(const ResourceData *pResData, Resource array, int32_t indexR) {
     uint32_t offset=RES_GET_OFFSET(array);
@@ -568,13 +805,69 @@ res_getArrayItem(const ResourceData *pResData, Resource array, int32_t indexR) {
     return RES_BOGUS;
 }
 
+U_CFUNC void
+ures_getAllArrayItems(const ResourceData *pResData, Resource array,
+                      icu::ResourceDataValue &value, icu::ResourceArraySink &sink,
+                      UErrorCode &errorCode) {
+    if(U_FAILURE(errorCode)) { return; }
+    const uint16_t *items16 = NULL;
+    const Resource *items32 = NULL;
+    uint32_t offset=RES_GET_OFFSET(array);
+    int32_t length = 0;
+    switch(RES_GET_TYPE(array)) {
+    case URES_ARRAY: {
+        if (offset!=0) { /* empty if offset==0 */
+            items32 = (const Resource *)pResData->pRoot+offset;
+            length = *items32++;
+        }
+        break;
+    }
+    case URES_ARRAY16: {
+        items16 = pResData->p16BitUnits+offset;
+        length = *items16++;
+        break;
+    }
+    default:
+        errorCode = U_RESOURCE_TYPE_MISMATCH;
+        return;
+    }
+
+    for (int32_t i = 0; i < length; ++i) {
+        Resource res;
+        if (items16 != NULL) {
+            res = makeResourceFrom16(pResData, items16[i]);
+        } else {
+            res = items32[i];
+        }
+        int32_t type = RES_GET_TYPE(res);
+        if (URES_IS_ARRAY(type)) {
+            int32_t numItems = getArrayLength(pResData, res);
+            icu::ResourceArraySink *subSink = sink.getOrCreateArraySink(i, numItems, errorCode);
+            if (subSink != NULL) {
+                ures_getAllArrayItems(pResData, res, value, *subSink, errorCode);
+            }
+        } else if (URES_IS_TABLE(type)) {
+            int32_t numItems = getTableLength(pResData, res);
+            icu::ResourceTableSink *subSink = sink.getOrCreateTableSink(i, numItems, errorCode);
+            if (subSink != NULL) {
+                ures_getAllTableItems(pResData, res, value, *subSink, errorCode);
+            }
+        /* TODO: settle on how to deal with aliases, port to Java
+        } else if (type == URES_ALIAS) {
+            // aliases not handled in resource enumeration
+            errorCode = U_UNSUPPORTED_ERROR;
+            return; */
+        } else {
+            value.setResource(res);
+            sink.put(i, value, errorCode);
+        }
+        if(U_FAILURE(errorCode)) { return; }
+    }
+    sink.leave(errorCode);
+}
+
 U_CFUNC Resource
 res_findResource(const ResourceData *pResData, Resource r, char** path, const char** key) {
-  /* we pass in a path. CollationElements/Sequence or zoneStrings/3/2 etc. 
-   * iterates over a path and stops when a scalar resource is found. This  
-   * CAN be an alias. Path gets set to the part that has not yet been processed. 
-   */
-
   char *pathP = *path, *nextSepP = *path;
   char *closeIndex = NULL;
   Resource t1 = r;
@@ -601,6 +894,10 @@ res_findResource(const ResourceData *pResData, Resource r, char** path, const ch
      * and set path to the remaining part of the string
      */
     if(nextSepP != NULL) {
+      if(nextSepP == pathP) {
+        // Empty key string.
+        return RES_BOGUS;
+      }
       *nextSepP = 0; /* overwrite the separator with a NUL to terminate the key */
       *path = nextSepP+1;
     } else {
@@ -615,14 +912,14 @@ res_findResource(const ResourceData *pResData, Resource r, char** path, const ch
       if(t2 == RES_BOGUS) { 
         /* if we fail to get the resource by key, maybe we got an index */
         indexR = uprv_strtol(pathP, &closeIndex, 10);
-        if(closeIndex != pathP) {
+        if(*closeIndex == 0) {
           /* if we indeed have an index, try to get the item by index */
           t2 = res_getTableItemByIndex(pResData, t1, indexR, key);
         }
       }
     } else if(URES_IS_ARRAY(type)) {
       indexR = uprv_strtol(pathP, &closeIndex, 10);
-      if(closeIndex != pathP) {
+      if(*closeIndex == 0) {
         t2 = res_getArrayItem(pResData, t1, indexR);
       } else {
         t2 = RES_BOGUS; /* have an array, but don't have a valid index */
@@ -753,6 +1050,7 @@ ures_swapResource(const UDataSwapper *ds,
     switch(RES_GET_TYPE(res)) {
     case URES_ALIAS:
         /* physically same value layout as string, fall through */
+        U_FALLTHROUGH;
     case URES_STRING:
         count=udata_readInt32(ds, (int32_t)*p);
         /* swap length */
@@ -1094,7 +1392,7 @@ ures_swap(const UDataSwapper *ds,
          */
         resFlagsLength=(length+31)>>5;          /* number of bytes needed */
         resFlagsLength=(resFlagsLength+3)&~3;   /* multiple of 4 bytes for uint32_t */
-        if(resFlagsLength<=sizeof(stackResFlags)) {
+        if(resFlagsLength<=(int32_t)sizeof(stackResFlags)) {
             tempTable.resFlags=stackResFlags;
         } else {
             tempTable.resFlags=(uint32_t *)uprv_malloc(resFlagsLength);

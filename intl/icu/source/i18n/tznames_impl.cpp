@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2011-2014, International Business Machines Corporation and
+* Copyright (C) 2011-2016, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -38,7 +38,7 @@ static const char gZoneStrings[]        = "zoneStrings";
 static const char gMZPrefix[]           = "meta:";
 
 static const char* KEYS[]               = {"lg", "ls", "ld", "sg", "ss", "sd"};
-static const int32_t KEYS_SIZE = (sizeof KEYS / sizeof KEYS[0]);
+static const int32_t KEYS_SIZE = UPRV_LENGTHOF(KEYS);
 
 static const char gEcTag[]              = "ec";
 
@@ -53,7 +53,7 @@ static const UTimeZoneNameType ALL_NAME_TYPES[] = {
 
 // stuff for TZDBTimeZoneNames
 static const char* TZDBNAMES_KEYS[]               = {"ss", "sd"};
-static const int32_t TZDBNAMES_KEYS_SIZE = (sizeof TZDBNAMES_KEYS / sizeof TZDBNAMES_KEYS[0]);
+static const int32_t TZDBNAMES_KEYS_SIZE = UPRV_LENGTHOF(TZDBNAMES_KEYS);
 
 static UMutex gTZDBNamesMapLock = U_MUTEX_INITIALIZER;
 

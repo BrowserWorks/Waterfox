@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2000-2015, International Business Machines
+*   Copyright (C) 2000-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -963,11 +963,14 @@ ucnv_MBCSGetFilteredUnicodeSetForUnicode(const UConverterSharedData *sharedData,
                                     switch(st3Multiplier) {
                                     case 4:
                                         b|=*stage3++;
-                                    case 3: /*fall through*/
+                                        U_FALLTHROUGH;
+                                    case 3:
                                         b|=*stage3++;
-                                    case 2: /*fall through*/
+                                        U_FALLTHROUGH;
+                                    case 2:
                                         b|=stage3[0]|stage3[1];
                                         stage3+=2;
+                                        U_FALLTHROUGH;
                                     default:
                                         break;
                                     }
@@ -4634,12 +4637,16 @@ unassigned:
                         /* each branch falls through to the next one */
                     case 4:
                         *target++=(uint8_t)(value>>24);
-                    case 3: /*fall through*/
+                        U_FALLTHROUGH;
+                    case 3:
                         *target++=(uint8_t)(value>>16);
-                    case 2: /*fall through*/
+                        U_FALLTHROUGH;
+                    case 2:
                         *target++=(uint8_t)(value>>8);
-                    case 1: /*fall through*/
+                        U_FALLTHROUGH;
+                    case 1:
                         *target++=(uint8_t)value;
+                        U_FALLTHROUGH;
                     default:
                         /* will never occur */
                         break;
@@ -4650,15 +4657,19 @@ unassigned:
                     case 4:
                         *target++=(uint8_t)(value>>24);
                         *offsets++=sourceIndex;
-                    case 3: /*fall through*/
+                        U_FALLTHROUGH;
+                    case 3:
                         *target++=(uint8_t)(value>>16);
                         *offsets++=sourceIndex;
-                    case 2: /*fall through*/
+                        U_FALLTHROUGH;
+                    case 2:
                         *target++=(uint8_t)(value>>8);
                         *offsets++=sourceIndex;
-                    case 1: /*fall through*/
+                        U_FALLTHROUGH;
+                    case 1:
                         *target++=(uint8_t)value;
                         *offsets++=sourceIndex;
+                        U_FALLTHROUGH;
                     default:
                         /* will never occur */
                         break;
@@ -4681,10 +4692,13 @@ unassigned:
                     /* each branch falls through to the next one */
                 case 3:
                     *charErrorBuffer++=(uint8_t)(value>>16);
-                case 2: /*fall through*/
+                    U_FALLTHROUGH;
+                case 2:
                     *charErrorBuffer++=(uint8_t)(value>>8);
-                case 1: /*fall through*/
+                    U_FALLTHROUGH;
+                case 1:
                     *charErrorBuffer=(uint8_t)value;
+                    U_FALLTHROUGH;
                 default:
                     /* will never occur */
                     break;
@@ -4700,16 +4714,19 @@ unassigned:
                     if(offsets!=NULL) {
                         *offsets++=sourceIndex;
                     }
-                case 2: /*fall through*/
+                    U_FALLTHROUGH;
+                case 2:
                     *target++=(uint8_t)(value>>8);
                     if(offsets!=NULL) {
                         *offsets++=sourceIndex;
                     }
-                case 1: /*fall through*/
+                    U_FALLTHROUGH;
+                case 1:
                     *target++=(uint8_t)value;
                     if(offsets!=NULL) {
                         *offsets++=sourceIndex;
                     }
+                    U_FALLTHROUGH;
                 default:
                     /* will never occur */
                     break;

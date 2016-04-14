@@ -1,12 +1,12 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1998-2014, International Business Machines
+*   Copyright (C) 1998-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
 *
-* File ucbuf.c
+* File ucbuf.cpp
 *
 * Modification History:
 *
@@ -415,7 +415,7 @@ ucbuf_getcx32(UCHARBUF* buf,UErrorCode* error) {
     /* check if u_unescapeAt unescaped and converted
      * to c32 or not
      */
-    if(c32==0xFFFFFFFF){
+    if(c32==(UChar32)0xFFFFFFFF){
         if(buf->showWarning) {
             char context[CONTEXT_LEN+1];
             int32_t len = CONTEXT_LEN;

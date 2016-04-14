@@ -243,14 +243,22 @@
     <ClCompile Include="parse.cpp">
       <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
-    <ClCompile Include="prscmnts.cpp" />
+    <ClCompile Include="prscmnts.cpp">
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+    </ClCompile>
     <ClCompile Include="rbutil.c" />
     <ClCompile Include="read.c" />
-    <ClCompile Include="reslist.cpp" />
+    <ClCompile Include="reslist.cpp">
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+    </ClCompile>
     <ClCompile Include="rle.c" />
     <ClCompile Include="ustr.c" />
-    <ClCompile Include="wrtjava.cpp" />
-    <ClCompile Include="wrtxml.cpp" />
+    <ClCompile Include="wrtjava.cpp">
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+    </ClCompile>
+    <ClCompile Include="wrtxml.cpp">
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="errmsg.h" />
