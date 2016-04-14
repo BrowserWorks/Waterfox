@@ -216,7 +216,7 @@ pref("browser.uitour.readerViewTrigger", "^https:\\/\\/www\\.mozilla\\.org\\/[^\
 pref("browser.uitour.surveyDuration", 7200);
 
 pref("browser.customizemode.tip0.shown", false);
-pref("browser.customizemode.tip0.learnMoreUrl", "about:config");
+pref("browser.customizemode.tip0.learnMoreUrl", "");
 
 pref("keyword.enabled", true);
 pref("browser.fixup.domainwhitelist.localhost", true);
@@ -393,7 +393,7 @@ pref("browser.search.redirectWindowsSearch", false);
 #endif
 
 pref("browser.usedOnWindows10", false);
-pref("browser.usedOnWindows10.introURL", "about:config");
+pref("browser.usedOnWindows10.introURL", "");
 
 pref("browser.sessionhistory.max_entries", 50);
 
