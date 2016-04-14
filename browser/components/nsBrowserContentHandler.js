@@ -557,7 +557,7 @@ nsBrowserContentHandler.prototype = {
     if (AppConstants.platform == "win" &&
         Services.vc.compare(platformVersion, "10") == 0 &&
         !Services.prefs.getBoolPref("browser.usedOnWindows10")) {
-      Services.prefs.setBoolPref("browser.usedOnWindows10", true);
+      Services.prefs.setBoolPref("browser.usedOnWindows10", false);
       let firstUseOnWindows10URL = Services.urlFormatter.formatURLPref("browser.usedOnWindows10.introURL");
 
       if (firstUseOnWindows10URL && firstUseOnWindows10URL.length) {
