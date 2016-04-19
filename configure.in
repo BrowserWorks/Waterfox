@@ -5308,7 +5308,6 @@ fi
 
 if test -n "$MOZ_FMP4"; then
     AC_DEFINE(MOZ_FMP4)
-    MOZ_EME=1
 fi;
 
 if test x"$MOZ_WIDGET_TOOLKIT" = x"gonk" -a -n "$MOZ_FMP4" -a -n "$ANDROID_VERSION"; then
@@ -5317,37 +5316,6 @@ if test x"$MOZ_WIDGET_TOOLKIT" = x"gonk" -a -n "$MOZ_FMP4" -a -n "$ANDROID_VERSI
         MOZ_GONK_MEDIACODEC=1
         AC_SUBST(MOZ_GONK_MEDIACODEC)
     fi
-fi
-
-
-dnl ========================================================
-dnl = EME support
-dnl ========================================================
-
-MOZ_ARG_ENABLE_STRING(eme,
-[  --enable-eme[=adobe]  Enable support for Encrypted Media Extensions  ],
-    MOZ_EME_ARGS=$enableval)
-
-if test "$MOZ_EME_ARGS"; then
-    if test "$MOZ_EME_ARGS" = "no"; then
-        dnl EME explicitly disabled with --disable-eme
-        MOZ_EME=
-    elif test "$MOZ_EME_ARGS" = "yes"; then
-        dnl EME explicitly enabled with --enable-eme
-        MOZ_EME=1
-    else
-        dnl EME explicitly enabled with --enable-eme=<args>
-        MOZ_EME=1
-        MOZ_EME_MODULES=`echo $MOZ_EME_ARGS | sed -e 's/,/ /g'`
-    fi
-fi
-
-AC_SUBST_SET(MOZ_EME_MODULES)
-if test -n "$MOZ_EME"; then
-    if test -z "$MOZ_FMP4"; then
-        AC_MSG_ERROR([Encrypted Media Extension support requires Fragmented MP4 support])
-    fi
-    AC_DEFINE(MOZ_EME)
 fi
 
 dnl ========================================================
@@ -8931,7 +8899,6 @@ AC_SUBST(MOZ_FFVPX)
 AC_SUBST(FFVPX_AS)
 AC_SUBST_LIST(FFVPX_ASFLAGS)
 AC_SUBST(MOZ_FMP4)
-AC_SUBST(MOZ_EME)
 AC_SUBST(MOZ_DIRECTSHOW)
 AC_SUBST(MOZ_ANDROID_OMX)
 AC_SUBST(MOZ_APPLEMEDIA)
