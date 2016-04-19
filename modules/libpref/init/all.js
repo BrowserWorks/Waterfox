@@ -4487,7 +4487,7 @@ pref("browser.history.allowPopState", true);
 pref("browser.history.maxStateObjectSize", 655360);
 
 // XPInstall prefs
-pref("xpinstall.whitelist.required", true);
+pref("xpinstall.whitelist.required", false);
 // Only Firefox requires add-on signatures
 pref("xpinstall.signatures.required", false);
 pref("extensions.alwaysUnpack", false);

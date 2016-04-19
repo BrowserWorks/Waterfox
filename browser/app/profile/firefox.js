@@ -1312,7 +1312,7 @@ pref("services.sync.prefs.sync.security.tls.version.min", true);
 pref("services.sync.prefs.sync.security.tls.version.max", true);
 pref("services.sync.prefs.sync.signon.rememberSignons", true);
 pref("services.sync.prefs.sync.spellchecker.dictionary", true);
-pref("services.sync.prefs.sync.xpinstall.whitelist.required", true);
+pref("services.sync.prefs.sync.xpinstall.whitelist.required", false);
 
 #ifdef NIGHTLY_BUILD
 pref("services.sync.syncedTabsUIRefresh", true);
