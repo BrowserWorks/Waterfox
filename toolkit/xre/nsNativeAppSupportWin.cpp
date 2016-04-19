@@ -459,7 +459,7 @@ NS_CreateNativeAppSupport( nsINativeAppSupport **aResult ) {
 }
 
 // Constants
-#define MOZ_DDE_APPLICATION    "Mozilla"
+#define MOZ_DDE_APPLICATION    "WaterfoxProject"
 #define MOZ_MUTEX_NAMESPACE    L"Local\\"
 #define MOZ_STARTUP_MUTEX_NAME L"StartupMutex"
 #define MOZ_DDE_START_TIMEOUT 30000

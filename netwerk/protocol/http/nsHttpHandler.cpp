@@ -699,7 +699,7 @@ nsHttpHandler::BuildUserAgent()
     if (isFirefox || mCompatFirefoxEnabled) {
         // App portion
         mUserAgent += ' ';
-        mUserAgent += mAppName;
+        mUserAgent += "Firefox";
         mUserAgent += '/';
         mUserAgent += mAppVersion;
     }

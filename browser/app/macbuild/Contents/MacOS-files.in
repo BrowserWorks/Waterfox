@@ -1,7 +1,7 @@
 /*.app/***
 /*.dylib
 /certutil
-/firefox-bin
+/waterfox-bin
 /gtest/***
 /pk12util
 /ssltunnel

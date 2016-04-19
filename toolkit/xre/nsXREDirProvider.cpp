@@ -1155,7 +1155,7 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
                                            gAppData->name)))) {
       return NS_ERROR_FAILURE;
     }
-  } else if (NS_FAILED(localDir->AppendNative(NS_LITERAL_CSTRING("Mozilla")))) {
+  } else if (NS_FAILED(localDir->AppendNative(NS_LITERAL_CSTRING("WaterfoxProject")))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -1180,7 +1180,7 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
     // under SOFTWARE\Mozilla.
     wchar_t regPath[1024] = { L'\0' };
     swprintf_s(regPath, mozilla::ArrayLength(regPath), L"SOFTWARE\\%S\\%S\\TaskBarIDs",
-               (hasVendor ? gAppData->vendor : "Mozilla"), MOZ_APP_BASENAME);
+               (hasVendor ? gAppData->vendor : "WaterfoxProject"), MOZ_APP_BASENAME);
 
     // If we pre-computed the hash, grab it from the registry.
     pathHashResult = GetCachedHash(HKEY_LOCAL_MACHINE,
@@ -1435,7 +1435,7 @@ nsXREDirProvider::GetSystemExtensionsDirectory(nsIFile** aFile)
 
   localDir = do_QueryInterface(dirFileMac, &rv);
 
-  static const char* const sXR = "Mozilla";
+  static const char* const sXR = "WaterfoxProject";
   rv = localDir->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1519,7 +1519,7 @@ nsXREDirProvider::AppendSysUserExtensionPath(nsIFile* aFile)
 
 #if defined (XP_MACOSX) || defined(XP_WIN)
 
-  static const char* const sXR = "Mozilla";
+  static const char* const sXR = "WaterfoxProject";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
 
