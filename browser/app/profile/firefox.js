@@ -1142,7 +1142,7 @@ pref("browser.privatebrowsing.autostart", false);
 // bookmarking dialog
 pref("browser.bookmarks.editDialog.firstEditField", "namePicker");
 
-pref("dom.ipc.plugins.flash.disable-protected-mode", false);
+pref("dom.ipc.plugins.flash.disable-protected-mode", true);
 
 // Feature-disable the protected-mode auto-flip
 pref("browser.flash-protected-mode-flip.enable", false);

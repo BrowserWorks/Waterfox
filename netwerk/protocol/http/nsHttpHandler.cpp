@@ -726,9 +726,6 @@ nsHttpHandler::BuildUserAgent()
         mUserAgent += "Firefox";
         mUserAgent += '/';
         mUserAgent += mAppVersion;
-    }
-    if (!isFirefox) {
-        // "Firefox/x.y" (compatibility) app token
         mUserAgent += ' ';
         mUserAgent += mCompatFirefox;
     }

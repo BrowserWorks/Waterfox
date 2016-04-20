@@ -1081,7 +1081,7 @@ pref("dom.min_timeout_value", 4);
 pref("dom.min_background_timeout_value", 1000);
 
 // Don't use new input types
-pref("dom.experimental_forms", false);
+pref("dom.experimental_forms", true);
 
 // Enable <input type=number>:
 pref("dom.forms.number", true);
@@ -2618,7 +2618,7 @@ pref("dom.ipc.plugins.hangUIMinDisplaySecs", 0);
 pref("dom.ipc.tabs.shutdownTimeoutSecs", 0);
 #endif
 
-pref("dom.ipc.plugins.flash.disable-protected-mode", false);
+pref("dom.ipc.plugins.flash.disable-protected-mode", true);
 
 pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", true);
 pref("dom.ipc.plugins.reportCrashURL", true);
@@ -4640,7 +4640,7 @@ pref("dom.w3c_touch_events.enabled", 2);
 #endif
 
 // W3C draft pointer events
-pref("dom.w3c_pointer_events.enabled", false);
+pref("dom.w3c_pointer_events.enabled", true);
 
 // W3C draft ImageCapture API
 pref("dom.imagecapture.enabled", false);

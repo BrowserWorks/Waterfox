@@ -249,7 +249,7 @@ Section "-InstallStartCleanup"
   ${EndIf}
 
   ; setup the application model id registration value
-  ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
+  ${InitHashAppModelId} "$INSTDIR" "Software\WaterfoxProject\${AppName}\TaskBarIDs"
 
   ; Remove the updates directory for Vista and above
   ${CleanUpdateDirectories} "Mozilla\Firefox" "Mozilla\updates"
@@ -319,7 +319,7 @@ Section "-Application" APP_IDX
   ; Default for creating Quick Launch shortcut (1 = create, 0 = don't create)
   ${If} $AddQuickLaunchSC == ""
     ; Don't install the quick launch shortcut on Windows 7
-    ${If} ${AtLeastWin7}
+    ${If} ${AtLeastWinXP}
       StrCpy $AddQuickLaunchSC "0"
     ${Else}
       StrCpy $AddQuickLaunchSC "1"
@@ -333,25 +333,25 @@ Section "-Application" APP_IDX
 
   ${LogHeader} "Adding Registry Entries"
   SetShellVarContext current  ; Set SHCTX to HKCU
-  ${RegCleanMain} "Software\Mozilla"
+  ${RegCleanMain} "Software\WaterfoxProject"
   ${RegCleanUninstall}
   ${UpdateProtocolHandlers}
 
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     StrCpy $TmpVal "HKCU" ; used primarily for logging
   ${Else}
     SetShellVarContext all  ; Set SHCTX to HKLM
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
     StrCpy $TmpVal "HKLM" ; used primarily for logging
-    ${RegCleanMain} "Software\Mozilla"
+    ${RegCleanMain} "Software\WaterfoxProject"
     ${RegCleanUninstall}
     ${UpdateProtocolHandlers}
 
-    ReadRegStr $0 HKLM "Software\mozilla.org\Mozilla" "CurrentVersion"
+    ReadRegStr $0 HKLM "Software\mozilla.org\WaterfoxProject" "CurrentVersion"
     ${If} "$0" != "${GREVersion}"
-      WriteRegStr HKLM "Software\mozilla.org\Mozilla" "CurrentVersion" "${GREVersion}"
+      WriteRegStr HKLM "Software\mozilla.org\WaterfoxProject" "CurrentVersion" "${GREVersion}"
     ${EndIf}
   ${EndIf}
 
@@ -527,7 +527,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                            "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -542,7 +542,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" \
                                              "$INSTDIR"
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID"  "true"
       ${EndIf}
@@ -555,7 +555,7 @@ Section "-Application" APP_IDX
   ; If elevated the Quick Launch shortcut must be added from the unelevated
   ; original process.
   ${If} $AddQuickLaunchSC == 1
-    ${Unless} ${AtLeastWin7}
+    ${Unless} ${AtLeastWinXP}
       ClearErrors
       ${GetParameters} $0
       ${GetOptions} "$0" "/UAC:" $0
@@ -901,7 +901,7 @@ Function leaveShortcuts
   ${MUI_INSTALLOPTIONS_READ} $AddStartMenuSC "shortcuts.ini" "Field 3" "State"
 
   ; Don't install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     ${MUI_INSTALLOPTIONS_READ} $AddQuickLaunchSC "shortcuts.ini" "Field 4" "State"
   ${EndUnless}
 
@@ -936,13 +936,13 @@ Function preComponents
 
   ; Only show the maintenance service page if we have write access to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" \
+  WriteRegStr HKLM "Software\WaterfoxProject" \
               "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     ClearErrors
     Abort
   ${Else}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
   ${EndIf}
 
   StrCpy $PageName "Components"
@@ -1008,9 +1008,9 @@ Function preSummary
 
   ; Check if it is possible to write to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" "Write Test"
   ${Unless} ${Errors}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
     ; Check if Firefox is the http handler for this user.
     SetShellVarContext current ; Set SHCTX to the current user
     ${IsHandlerForInstallDir} "http" $R9
@@ -1104,7 +1104,7 @@ Function .onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif
@@ -1156,7 +1156,7 @@ Function .onInit
 
   ; Setup the shortcuts.ini file for the Custom Shortcuts Page
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "3"
   ${Else}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "4"
@@ -1187,7 +1187,7 @@ Function .onInit
   WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 3" State  "1"
 
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWin7}
+  ${Unless} ${AtLeastWinXP}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Type   "checkbox"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Text   "$(ICONS_QUICKLAUNCH)"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Left   "0"

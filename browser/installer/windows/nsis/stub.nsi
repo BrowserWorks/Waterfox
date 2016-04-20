@@ -316,7 +316,7 @@ Function .onInit
 !ifdef HAVE_64BIT_BUILD
   ; Restrict x64 builds from being installed on x86 and pre Win7
   ${Unless} ${RunningX64}
-  ${OrUnless} ${AtLeastWin7}
+  ${OrUnless} ${AtLeastWinXP}
     MessageBox MB_OK|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_OS_MSG)"
     Quit
   ${EndUnless}
@@ -360,17 +360,17 @@ Function .onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif
 
   SetShellVarContext all ; Set SHCTX to HKLM
-  ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+  ${GetSingleInstallPath} "Software\WaterfoxProject\${BrandFullNameInternal}" $R9
 
   ${If} "$R9" == "false"
     SetShellVarContext current ; Set SHCTX to HKCU
-    ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+    ${GetSingleInstallPath} "Software\WaterfoxProject\${BrandFullNameInternal}" $R9
 
     ${If} ${RunningX64}
       ; In HKCU there is no WOW64 redirection, which means we may have gotten
@@ -402,7 +402,7 @@ Function .onInit
   StrCpy $InitialInstallDir "$INSTDIR"
 
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" \
                    "Write Test"
 
   ; Only display set as default when there is write access to HKLM and on Win7
@@ -412,12 +412,12 @@ Function .onInit
     StrCpy $CanSetAsDefault "false"
     StrCpy $CheckboxSetAsDefault "0"
   ${Else}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
     StrCpy $CanSetAsDefault "true"
   ${EndIf}
 
   ; The interval in MS used for the progress bars set as marquee.
-  ${If} ${AtLeastWinVista}
+  ${If} ${AtLeastWinXP}
     StrCpy $ProgressbarMarqueeIntervalMS "10"
   ${Else}
     StrCpy $ProgressbarMarqueeIntervalMS "50"
@@ -627,12 +627,12 @@ Function SendPing
     ${EndIf}
 
     ClearErrors
-    WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
+    WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" \
                      "Write Test"
     ${If} ${Errors}
       StrCpy $R8 "0"
     ${Else}
-      DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+      DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
       StrCpy $R8 "1"
     ${EndIf}
 
@@ -662,7 +662,7 @@ Function SendPing
     ${EndIf}
 
     ${If} "$R2" == "0"
-    ${AndIf} ${AtLeastWinVista}
+    ${AndIf} ${AtLeastWinXP}
       ; Check to see if this install location is currently set as the default
       ; browser by Default Programs which is only available on Vista and above.
       ClearErrors
@@ -918,7 +918,7 @@ Function createOptions
   SetCtlColors $0 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
   SendMessage $0 ${WM_SETFONT} $FontNormal 0
 
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     StrCpy $0 "$(ADD_SC_TASKBAR)"
   ${Else}
     StrCpy $0 "$(ADD_SC_QUICKLAUNCHBAR)"
@@ -1056,13 +1056,13 @@ Function createOptions
   
   ; Only show the maintenance service checkbox if we have write access to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" \
                    "Write Test"
   ${If} ${Errors}
   ${OrIf} $0 != "true"
     StrCpy $CheckboxInstallMaintSvc "0"
   ${Else}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
     ; Read the registry instead of using ServicesHelper::IsInstalled so the
     ; plugin isn't included in the stub installer to lessen its size.
     ClearErrors
@@ -1310,7 +1310,7 @@ Function createInstall
     StrCpy $ExistingBuildID "0"
   ${EndIf}
 
-  ${If} ${FileExists} "$LOCALAPPDATA\Mozilla\Firefox"
+  ${If} ${FileExists} "$LOCALAPPDATA\WaterfoxProject\Firefox"
     StrCpy $ExistingProfile "1"
   ${Else}
     StrCpy $ExistingProfile "0"
