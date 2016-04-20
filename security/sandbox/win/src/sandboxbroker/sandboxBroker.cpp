@@ -17,21 +17,30 @@ namespace mozilla
 
 sandbox::BrokerServices *SandboxBroker::sBrokerService = nullptr;
 
-SandboxBroker::SandboxBroker()
+/* static */
+bool
+SandboxBroker::Initialize()
 {
-  // XXX: This is not thread-safe! Two threads could simultaneously try
-  // to set `sBrokerService`
+  sBrokerService = sandbox::SandboxFactory::GetBrokerServices();
   if (!sBrokerService) {
-    sBrokerService = sandbox::SandboxFactory::GetBrokerServices();
-    if (sBrokerService) {
-      sandbox::ResultCode result = sBrokerService->Init();
-      if (result != sandbox::SBOX_ALL_OK) {
-        sBrokerService = nullptr;
-      }
-    }
+    return false;
   }
 
-  mPolicy = sBrokerService->CreatePolicy();
+  if (sBrokerService->Init() != sandbox::SBOX_ALL_OK) {
+    sBrokerService = nullptr;
+    return false;
+  }
+
+  return true;
+}
+
+SandboxBroker::SandboxBroker()
+{
+  if (sBrokerService) {
+    mPolicy = sBrokerService->CreatePolicy();
+  } else {
+    mPolicy = nullptr;
+  }
 }
 
 bool
@@ -410,6 +419,10 @@ SandboxBroker::SetSecurityLevelForGMPlugin()
 bool
 SandboxBroker::AllowReadFile(wchar_t const *file)
 {
+  if (!mPolicy) {
+    return false;
+  }
+
   auto result =
     mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                      sandbox::TargetPolicy::FILES_ALLOW_READONLY,
@@ -420,6 +433,10 @@ SandboxBroker::AllowReadFile(wchar_t const *file)
 bool
 SandboxBroker::AllowReadWriteFile(wchar_t const *file)
 {
+  if (!mPolicy) {
+    return false;
+  }
+
   auto result =
     mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                      sandbox::TargetPolicy::FILES_ALLOW_ANY,
@@ -430,6 +447,10 @@ SandboxBroker::AllowReadWriteFile(wchar_t const *file)
 bool
 SandboxBroker::AllowDirectory(wchar_t const *dir)
 {
+  if (!mPolicy) {
+    return false;
+  }
+
   auto result =
     mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                      sandbox::TargetPolicy::FILES_ALLOW_DIR_ANY,
@@ -440,6 +461,10 @@ SandboxBroker::AllowDirectory(wchar_t const *dir)
 bool
 SandboxBroker::AddTargetPeer(HANDLE aPeerProcess)
 {
+  if (!sBrokerService) {
+    return false;
+  }
+
   sandbox::ResultCode result = sBrokerService->AddTargetPeer(aPeerProcess);
   return (sandbox::SBOX_ALL_OK == result);
 }

@@ -123,6 +123,30 @@ NewURI(const nsACString &aSpec,
     return NS_OK;
 }
 
+#ifdef ANDROID
+static nsCString
+GetDeviceModelId() {
+    // Assumed to be running on the main thread
+    // We need the device property in either case
+    nsAutoCString deviceModelId;
+    nsCOMPtr<nsIPropertyBag2> infoService = do_GetService("@mozilla.org/system-info;1");
+    MOZ_ASSERT(infoService, "Could not find a system info service");
+    nsAutoString androidDevice;
+    nsresult rv = infoService->GetPropertyAsAString(NS_LITERAL_STRING("device"), androidDevice);
+    if (NS_SUCCEEDED(rv)) {
+        deviceModelId = NS_LossyConvertUTF16toASCII(androidDevice);
+    }
+    nsAutoCString deviceString;
+    rv = Preferences::GetCString(UA_PREF("device_string"), &deviceString);
+    if (NS_SUCCEEDED(rv)) {
+        deviceString.Trim(" ", true, true);
+        deviceString.ReplaceSubstring(NS_LITERAL_CSTRING("%DEVICEID%"), deviceModelId);
+        return deviceString;
+    }
+    return deviceModelId;
+}
+#endif
+
 //-----------------------------------------------------------------------------
 // nsHttpHandler <public>
 //-----------------------------------------------------------------------------
@@ -775,6 +799,10 @@ nsHttpHandler::InitUserAgentComponents()
             mCompatDevice.AssignLiteral("Mobile");
         }
     }
+
+    if (Preferences::GetBool(UA_PREF("use_device"), false)) {
+        mDeviceModelId = mozilla::net::GetDeviceModelId();
+    }
 #endif // ANDROID
 
 #ifdef FXOS_SIMULATOR
@@ -952,6 +980,18 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
                             getter_Copies(mUserAgentOverride));
         mUserAgentIsDirty = true;
     }
+
+#ifdef ANDROID
+    // general.useragent.use_device
+    if (PREF_CHANGED(UA_PREF("use_device"))) {
+        if (Preferences::GetBool(UA_PREF("use_device"), false)) {
+            mDeviceModelId = mozilla::net::GetDeviceModelId();
+        } else {
+            mDeviceModelId = EmptyCString();
+        }
+        mUserAgentIsDirty = true;
+    }
+#endif
 
     //
     // HTTP options
