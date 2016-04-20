@@ -1,7 +1,17 @@
-The Waterfox source code is made to be able to be compiled by Intel's C++ compiler for Windows. You should be able to
+The Waterfox source code is a specialised modification of the Mozilla platform, designed for privacy and user choice in mind. You should be able to
 install it and compile Waterfox without any issues. Other modifications and patches that are more
 upstream have been implemented as well to fix any compatibility/security issues that Mozilla may 
 lag behind in implementing (usually due to not being high priority). High request features removed by Mozilla but wanted by users are retained (if they aren't removed due to security).
+
+### Features
+
+* Disabled EME
+* Removal of Pocket at build time
+* Removal of all telemetry/data collection being sent back to Mozilla
+* Disabled the 64-Bit NPAPI white-list so that the user can decide what plugins they can run 
+* Disable signed extension requirement
+* Windows XP 64-Bit support
+* Updated ICU to 57.1 (current Mozilla base is on 56.1)
 
 Waterfox is released under the Mozilla Public License Version 2.0:
 
