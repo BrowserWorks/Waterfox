@@ -28,7 +28,7 @@ ac_add_options --enable-update-packaging
 ac_add_options --host=x86_64-pc-mingw32
 ac_add_options --target=x86_64-pc-mingw32
 
-ac_add_options --with-app-name=Waterfox
+ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
 ac_add_options --with-branding=browser/branding/waterfox
 ac_add_options --with-distribution-id=org.Waterfoxproject
