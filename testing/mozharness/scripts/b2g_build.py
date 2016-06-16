@@ -26,7 +26,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 
 # import the guts
 from mozharness.base.config import parse_config_file
-from mozharness.base.log import WARNING, ERROR, FATAL
+from mozharness.base.log import WARNING, FATAL
 from mozharness.mozilla.l10n.locales import GaiaLocalesMixin, LocalesMixin
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.signing import SigningMixin
@@ -963,11 +963,12 @@ class B2GBuild(LocalesMixin, PurgeMixin,
                     symbols_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
                     downloadables.append(symbols_url)
                     self.set_buildbot_property('symbolsUrl', symbols_url, write_to_file=True)
-                matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*tests.zip'))
+                matches = glob.glob(os.path.join(dirs['abs_upload_dir'], 'b2g*test_packages.json'))
                 if matches:
-                    tests_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
-                    downloadables.append(tests_url)
-                    self.set_buildbot_property('testsUrl', tests_url, write_to_file=True)
+                    test_packages_url = "%s/%s" % (download_url, os.path.basename(matches[0]))
+                    downloadables.append(test_packages_url)
+                    self.set_buildbot_property('testPackagesUrl', test_packages_url,
+                                               write_to_file=True)
                     self.invoke_sendchange(downloadables=downloadables)
 
         if self.query_is_nightly() and os.path.exists(dirs['abs_public_upload_dir']) and self.config['upload'].get('public'):

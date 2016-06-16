@@ -6,7 +6,6 @@
 
 "use strict";
 
-const {Cu} = require("chrome");
 const EventEmitter = require("devtools/shared/event-emitter");
 
 loader.lazyRequireGetter(this, "StorageFront",
@@ -57,7 +56,10 @@ StoragePanel.prototype = {
       this.emit("ready");
 
       return this;
-    }).catch(this.destroy);
+    }).catch(e => {
+      console.log("error while opening storage panel", e);
+      this.destroy();
+    });
   },
 
   /**

@@ -308,7 +308,7 @@ template<typename T> class ConcreteStackFrame;
 // valid within the scope of an AutoCheckCannotGC; if the graph being analyzed
 // is an offline heap snapshot, the JS::ubi::StackFrame is valid as long as the
 // offline heap snapshot is alive.
-class StackFrame : public JS::Traceable {
+class StackFrame {
     // Storage in which we allocate BaseStackFrame subclasses.
     mozilla::AlignedStorage2<BaseStackFrame> storage;
 
@@ -397,12 +397,6 @@ class StackFrame : public JS::Traceable {
     // Get the size of the respective strings. 0 is returned for null strings.
     size_t sourceLength();
     size_t functionDisplayNameLength();
-
-    // JS::Traceable implementation just forwards to our virtual trace method.
-    static void trace(StackFrame* frame, JSTracer* trc) {
-        if (frame)
-            frame->trace(trc);
-    }
 
     // Methods that forward to virtual calls through BaseStackFrame.
 
@@ -814,6 +808,8 @@ class Node {
     };
 };
 
+using NodeSet = js::HashSet<Node, js::DefaultHasher<Node>, js::SystemAllocPolicy>;
+using NodeSetPtr = mozilla::UniquePtr<NodeSet, JS::DeletePolicy<NodeSet>>;
 
 /*** Edge and EdgeRange ***************************************************************************/
 
@@ -850,7 +846,8 @@ class Edge {
     // false as the wantNames parameter.
     //
     // The storage is owned by this Edge, and will be freed when this Edge is
-    // destructed.
+    // destructed. You may take ownership of the name by `mozilla::Move`ing it
+    // out of the edge; it is just a UniquePtr.
     //
     // (In real life we'll want a better representation for names, to avoid
     // creating tons of strings when the names follow a pattern; and we'll need

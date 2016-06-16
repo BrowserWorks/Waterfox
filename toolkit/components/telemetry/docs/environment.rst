@@ -45,7 +45,6 @@ Structure::
         e10sEnabled: <bool>, // whether e10s is on, i.e. browser tabs open by default in a different process
         e10sCohort: <string>, // which e10s cohort was assigned for this user
         telemetryEnabled: <bool>, // false on failure
-        isInOptoutSample: <bool>, // whether this client is part of the opt-out sample
         locale: <string>, // e.g. "it", null on failure
         update: {
           channel: <string>, // e.g. "release", null on failure
@@ -82,9 +81,9 @@ Structure::
             count: <number>,  // desktop only, e.g. 8, or null on failure - logical cpus
             cores: <number>, // desktop only, e.g., 4, or null on failure - physical cores
             vendor: <string>, // desktop only, e.g. "GenuineIntel", or null on failure
-            family: <string>, // desktop only, null on failure
-            model: <string>, // desktop only, null on failure
-            stepping: <string>, // desktop only, null on failure
+            family: <number>, // desktop only, null on failure
+            model: <number, // desktop only, null on failure
+            stepping: <number>, // desktop only, null on failure
             l2cacheKB: <number>, // L2 cache size in KB, only on windows & mac
             l3cacheKB: <number>, // desktop only, L3 cache size in KB
             speedMHz: <number>, // desktop only, cpu clock speed in MHz
@@ -108,6 +107,9 @@ Structure::
             kernelVersion: <string>, // android/b2g only or null on failure
             servicePackMajor: <number>, // windows only or null on failure
             servicePackMinor: <number>, // windows only or null on failure
+            windowsBuildNumber: <number>, // windows 10 only or null on failure
+            windowsUBR: <number>, // windows 10 only or null on failure
+            installYear: <number>, // windows only or null on failure
             locale: <string>, // "en" or null on failure
         },
         hdd: {
@@ -197,6 +199,7 @@ Structure::
             installDay: <number>, // days since UNIX epoch, 0 on failure
             updateDay: <number>, // days since UNIX epoch, 0 on failure
             signedState: <integer>, // whether the add-on is signed by AMO, only present for extensions
+            isSystem: <bool>, // true if this is a System Add-on
           },
           ...
         },
@@ -231,7 +234,7 @@ Structure::
             <gmp id>: {
                 version: <string>,
                 userDisabled: <bool>,
-                applyBackgroundUpdates: <bool>,
+                applyBackgroundUpdates: <integer>,
             },
             ...
         ],
@@ -242,6 +245,13 @@ Structure::
         persona: <string>, // id of the current persona, null on GONK
       },
     }
+
+build
+-----
+
+buildId
+~~~~~~~
+Firefox builds downloaded from mozilla.org use a 14-digit buildId. Builds included in other distributions may have a different format (e.g. only 10 digits).
 
 Settings
 --------
@@ -302,9 +312,37 @@ The following is a partial list of collected preferences.
 - ``browser.urlbar.userMadeSearchSuggestionsChoice``: True if the user has clicked Yes or No in the urlbar's opt-in notification. Defaults to false.
 
 partner
-~~~~~~~
+-------
 
 If the user is using a partner repack, this contains information identifying the repack being used, otherwise "partnerNames" will be an empty array and other entries will be null. The information may be missing when the profile just becomes available. In Firefox for desktop, the information along with other customizations defined in distribution.ini are processed later in the startup phase, and will be fully applied when "distribution-customization-complete" notification is sent.
+
+Distributions are most reliably identified by the ``distributionId`` field. Partner information can be found in the `partner repacks <https://github.com/mozilla-partners>`_ (`the old one <http://hg.mozilla.org/build/partner-repacks/>`_ is deprecated): it contains one private repository per partner.
+Important values for ``distributionId`` include:
+
+- "MozillaOnline" for the Mozilla China repack.
+- "canonical", for the `Ubuntu Firefox repack <http://bazaar.launchpad.net/~mozillateam/firefox/firefox.trusty/view/head:/debian/distribution.ini>`_.
+- "yandex", for the Firefox Build by Yandex.
+
+system
+------
+
+os
+~~
+
+This object contains operating system information.
+
+- ``name``: the name of the OS.
+- ``version``: a string representing the OS version.
+- ``kernelVersion``: an Android/B2G only string representing the kernel version.
+- ``servicePackMajor``: the Windows only major version number for the installed service pack.
+- ``servicePackMinor``: the Windows only minor version number for the installed service pack.
+- ``windowsBuildNumber``: the Windows build number, only available for Windows >= 10.
+- ``windowsUBR``: the Windows UBR number, only available for Windows >= 10. This value is incremented by Windows cumulative updates patches.
+- ``installYear``: the Windows only integer representing the year the OS was installed.
+- ``locale``: the string representing the OS locale.
+
+addons
+------
 
 activeAddons
 ~~~~~~~~~~~~

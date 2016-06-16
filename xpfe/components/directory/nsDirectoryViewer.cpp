@@ -41,7 +41,6 @@
 #include "nsIAuthPrompt.h"
 #include "nsIProgressEventSink.h"
 #include "nsIDOMWindow.h"
-#include "nsIDOMWindowCollection.h"
 #include "nsIDOMElement.h"
 #include "nsIStreamConverterService.h"
 #include "nsICategoryManager.h"
@@ -106,7 +105,7 @@ nsHTTPIndex::GetInterface(const nsIID &anIID, void **aResult )
         if (!mRequestor) 
             return NS_ERROR_NO_INTERFACE;
 
-        nsCOMPtr<nsIDOMWindow> aDOMWindow = do_GetInterface(mRequestor);
+        nsCOMPtr<nsPIDOMWindowOuter> aDOMWindow = do_GetInterface(mRequestor);
         if (!aDOMWindow) 
             return NS_ERROR_NO_INTERFACE;
 
@@ -120,7 +119,7 @@ nsHTTPIndex::GetInterface(const nsIID &anIID, void **aResult )
         if (!mRequestor) 
             return NS_ERROR_NO_INTERFACE;
 
-        nsCOMPtr<nsIDOMWindow> aDOMWindow = do_GetInterface(mRequestor);
+        nsCOMPtr<nsPIDOMWindowOuter> aDOMWindow = do_GetInterface(mRequestor);
         if (!aDOMWindow) 
             return NS_ERROR_NO_INTERFACE;
 
@@ -652,9 +651,6 @@ nsHTTPIndex::Create(nsIURI* aBaseURL, nsIInterfaceRequestor* aRequestor,
   *aResult = nullptr;
 
   nsHTTPIndex* result = new nsHTTPIndex(aRequestor);
-  if (! result)
-    return NS_ERROR_OUT_OF_MEMORY;
-
   nsresult rv = result->Init(aBaseURL);
   if (NS_SUCCEEDED(rv))
   {

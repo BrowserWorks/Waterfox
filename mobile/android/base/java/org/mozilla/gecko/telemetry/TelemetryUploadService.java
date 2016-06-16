@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import ch.boye.httpclientandroidlib.HttpResponse;
@@ -82,13 +83,14 @@ public class TelemetryUploadService extends BackgroundService {
             return;
         }
 
+        final String defaultSearchEngine = intent.getStringExtra(TelemetryConstants.EXTRA_DEFAULT_SEARCH_ENGINE);
         final String docId = intent.getStringExtra(TelemetryConstants.EXTRA_DOC_ID);
         final int seq = intent.getIntExtra(TelemetryConstants.EXTRA_SEQ, -1);
 
         final String profileName = intent.getStringExtra(TelemetryConstants.EXTRA_PROFILE_NAME);
         final String profilePath = intent.getStringExtra(TelemetryConstants.EXTRA_PROFILE_PATH);
 
-        uploadCorePing(docId, seq, profileName, profilePath);
+        uploadCorePing(docId, seq, profileName, profilePath, defaultSearchEngine);
     }
 
     /**
@@ -166,7 +168,7 @@ public class TelemetryUploadService extends BackgroundService {
 
     @WorkerThread
     private void uploadCorePing(@NonNull final String docId, final int seq, @NonNull final String profileName,
-                @NonNull final String profilePath) {
+                @NonNull final String profilePath, @Nullable final String defaultSearchEngine) {
         final GeckoProfile profile = GeckoProfile.get(this, profileName, profilePath);
         final long profileCreationDate = getProfileCreationDate(profile);
         final String clientId;
@@ -184,7 +186,7 @@ public class TelemetryUploadService extends BackgroundService {
                 sharedPrefs.getString(TelemetryConstants.PREF_SERVER_URL, TelemetryConstants.DEFAULT_SERVER_URL);
         final String distributionId = sharedPrefs.getString(DistributionStoreCallback.PREF_DISTRIBUTION_ID, null);
         final TelemetryPing corePing = TelemetryPingGenerator.createCorePing(this, docId, clientId,
-                serverURLSchemeHostPort, seq, profileCreationDate, distributionId);
+                serverURLSchemeHostPort, seq, profileCreationDate, distributionId, defaultSearchEngine);
         final CorePingResultDelegate resultDelegate = new CorePingResultDelegate();
         uploadPing(corePing, resultDelegate);
     }
@@ -200,6 +202,8 @@ public class TelemetryUploadService extends BackgroundService {
 
         delegate.setResource(resource);
         resource.delegate = delegate;
+        resource.setShouldCompressUploadedEntity(true);
+        resource.setShouldChunkUploadsHint(false); // Telemetry servers don't support chunking.
 
         // We're in a background thread so we don't have any reason to do this asynchronously.
         // If we tried, onStartCommand would return and IntentService might stop itself before we finish.
@@ -211,8 +215,8 @@ public class TelemetryUploadService extends BackgroundService {
      */
     @WorkerThread
     private long getProfileCreationDate(final GeckoProfile profile) {
-        final long profileMillis = profile.getProfileCreationDate();
-        // TODO (bug 1246816): Remove this work-around when finishing bug. getProfileCreationDate can return -1,
+        final long profileMillis = profile.getAndPersistProfileCreationDate(this);
+        // getAndPersistProfileCreationDate can return -1,
         // and we don't want to truncate (-1 / MILLIS) to 0.
         if (profileMillis < 0) {
             return profileMillis;

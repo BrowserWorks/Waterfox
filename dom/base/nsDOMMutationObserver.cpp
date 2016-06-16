@@ -22,7 +22,7 @@
 using mozilla::dom::TreeOrderComparator;
 using mozilla::dom::Animation;
 
-nsAutoTArray<RefPtr<nsDOMMutationObserver>, 4>*
+AutoTArray<RefPtr<nsDOMMutationObserver>, 4>*
   nsDOMMutationObserver::sScheduledMutationObservers = nullptr;
 
 nsDOMMutationObserver* nsDOMMutationObserver::sCurrentObserver = nullptr;
@@ -30,7 +30,7 @@ nsDOMMutationObserver* nsDOMMutationObserver::sCurrentObserver = nullptr;
 uint32_t nsDOMMutationObserver::sMutationLevel = 0;
 uint64_t nsDOMMutationObserver::sCount = 0;
 
-nsAutoTArray<nsAutoTArray<RefPtr<nsDOMMutationObserver>, 4>, 4>*
+AutoTArray<AutoTArray<RefPtr<nsDOMMutationObserver>, 4>, 4>*
 nsDOMMutationObserver::sCurrentlyHandlingObservers = nullptr;
 
 nsINodeList*
@@ -388,7 +388,9 @@ nsAnimationReceiver::RecordAnimationMutation(Animation* aAnimation,
     return;
   }
 
-  mozilla::dom::Element* animationTarget = effect->GetTarget();
+  mozilla::dom::Element* animationTarget;
+  CSSPseudoElementType pseudoType;
+  effect->GetTarget(animationTarget, pseudoType);
   if (!animationTarget) {
     return;
   }
@@ -585,7 +587,7 @@ void
 nsDOMMutationObserver::RescheduleForRun()
 {
   if (!sScheduledMutationObservers) {
-    sScheduledMutationObservers = new nsAutoTArray<RefPtr<nsDOMMutationObserver>, 4>;
+    sScheduledMutationObservers = new AutoTArray<RefPtr<nsDOMMutationObserver>, 4>;
   }
 
   bool didInsert = false;
@@ -779,7 +781,7 @@ nsDOMMutationObserver::Constructor(const mozilla::dom::GlobalObject& aGlobal,
                                    mozilla::dom::MutationCallback& aCb,
                                    mozilla::ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal.GetAsSupports());
   if (!window) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -820,7 +822,7 @@ nsDOMMutationObserver::HandleMutation()
   }
   mTransientReceivers.Clear();
 
-  nsPIDOMWindow* outer = mOwner->GetOuterWindow();
+  nsPIDOMWindowOuter* outer = mOwner->GetOuterWindow();
   if (!mPendingMutationCount || !outer ||
       outer->GetCurrentInnerWindow() != mOwner) {
     ClearPendingRecords();
@@ -882,7 +884,7 @@ nsDOMMutationObserver::HandleMutationsInternal()
   nsTArray<RefPtr<nsDOMMutationObserver> >* suppressedObservers = nullptr;
 
   while (sScheduledMutationObservers) {
-    nsAutoTArray<RefPtr<nsDOMMutationObserver>, 4>* observers =
+    AutoTArray<RefPtr<nsDOMMutationObserver>, 4>* observers =
       sScheduledMutationObservers;
     sScheduledMutationObservers = nullptr;
     for (uint32_t i = 0; i < observers->Length(); ++i) {
@@ -995,7 +997,7 @@ nsDOMMutationObserver::AddCurrentlyHandlingObserver(nsDOMMutationObserver* aObse
 
   if (!sCurrentlyHandlingObservers) {
     sCurrentlyHandlingObservers =
-      new nsAutoTArray<nsAutoTArray<RefPtr<nsDOMMutationObserver>, 4>, 4>;
+      new AutoTArray<AutoTArray<RefPtr<nsDOMMutationObserver>, 4>, 4>;
   }
 
   while (sCurrentlyHandlingObservers->Length() < aMutationLevel) {

@@ -96,6 +96,7 @@ EXPORTS += [
     'nsTextRunTransformations.h',
     'RubyUtils.h',
     'ScrollbarActivity.h',
+    'ScrollSnap.h',
 ]
 
 EXPORTS.mozilla += [
@@ -112,9 +113,11 @@ EXPORTS.mozilla.layout += [
 
 UNIFIED_SOURCES += [
     'AsyncScrollBase.cpp',
+    'DetailsFrame.cpp',
     'FrameChildList.cpp',
     'MathMLTextRunFactory.cpp',
     'nsAbsoluteContainingBlock.cpp',
+    'nsBackdropFrame.cpp',
     'nsBlockFrame.cpp',
     'nsBlockReflowContext.cpp',
     'nsBlockReflowState.cpp',
@@ -163,8 +166,10 @@ UNIFIED_SOURCES += [
     'nsViewportFrame.cpp',
     'RubyUtils.cpp',
     'ScrollbarActivity.cpp',
+    'ScrollSnap.cpp',
     'ScrollVelocityQueue.cpp',
     'StickyScrollContainer.cpp',
+    'SummaryFrame.cpp',
     'TextOverflow.cpp',
 ]
 
@@ -190,6 +195,7 @@ LOCAL_INCLUDES += [
     '/dom/base',
     '/dom/html',
     '/dom/xul',
+    '/editor/libeditor'
 ]
 
 JAR_MANIFESTS += ['jar.mn']

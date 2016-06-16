@@ -7,6 +7,7 @@
 #include "ImageContainer.h"
 #include "nsITimer.h"
 #include "mozilla/Monitor.h"
+#include "mozilla/UniquePtr.h"
 #include "nsITabSource.h"
 
 namespace mozilla {
@@ -23,7 +24,8 @@ class MediaEngineTabVideoSource : public MediaEngineVideoSource, nsIDOMEventList
     void GetUUID(nsACString_internal&) override;
     nsresult Allocate(const dom::MediaTrackConstraints &,
                       const mozilla::MediaEnginePrefs&,
-                      const nsString& aDeviceId) override;
+                      const nsString& aDeviceId,
+                      const nsACString& aOrigin) override;
     nsresult Deallocate() override;
     nsresult Start(mozilla::SourceMediaStream*, mozilla::TrackID) override;
     void SetDirectListeners(bool aHasDirectListeners) override {};
@@ -84,9 +86,11 @@ private:
     int32_t mViewportWidth;
     int32_t mViewportHeight;
     int32_t mTimePerFrame;
-    ScopedFreePtr<unsigned char> mData;
+    UniquePtr<unsigned char[]> mData;
     size_t mDataSize;
-    nsCOMPtr<nsIDOMWindow> mWindow;
+    nsCOMPtr<nsPIDOMWindowOuter> mWindow;
+    // If this is set, we will run despite mWindow == nullptr.
+    bool mBlackedoutWindow;
     RefPtr<layers::SourceSurfaceImage> mImage;
     nsCOMPtr<nsITimer> mTimer;
     Monitor mMonitor;

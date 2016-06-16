@@ -17,13 +17,13 @@ namespace mozilla {
 class JavascriptTimelineMarker : public TimelineMarker
 {
 public:
-  explicit JavascriptTimelineMarker(const char* aReason,
-                                    const char16_t* aFunctionName,
-                                    const char16_t* aFileName,
-                                    uint32_t aLineNumber,
-                                    MarkerTracingType aTracingType,
-                                    JS::Handle<JS::Value> aAsyncStack,
-                                    JS::Handle<JS::Value> aAsyncCause)
+  JavascriptTimelineMarker(const char* aReason,
+                           const char16_t* aFunctionName,
+                           const char16_t* aFileName,
+                           uint32_t aLineNumber,
+                           MarkerTracingType aTracingType,
+                           JS::Handle<JS::Value> aAsyncStack,
+                           JS::Handle<JS::Value> aAsyncCause)
     : TimelineMarker("Javascript", aTracingType, MarkerStackRequest::NO_STACK)
     , mCause(NS_ConvertUTF8toUTF16(aReason))
     , mFunctionName(aFunctionName)
@@ -54,7 +54,8 @@ public:
         JS::Rooted<JSObject*> asyncStack(aCx, mAsyncStack.toObjectOrNull());
         JS::Rooted<JSString*> asyncCause(aCx, mAsyncCause.toString());
         JS::Rooted<JSObject*> parentFrame(aCx);
-        if (!JS::CopyAsyncStack(aCx, asyncStack, asyncCause, &parentFrame, 0)) {
+        if (JS::IsSavedFrame(asyncStack) &&
+            !JS::CopyAsyncStack(aCx, asyncStack, asyncCause, &parentFrame, 0)) {
           JS_ClearPendingException(aCx);
         } else {
           stackFrame.mAsyncParent = parentFrame;

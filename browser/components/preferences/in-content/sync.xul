@@ -4,8 +4,7 @@
 
 <!-- Sync panel -->
 
-<preferences id="syncEnginePrefs" hidden="true" data-category="paneSync"
-             onchange="gSyncPane.onPreferenceChanged();">
+<preferences id="syncEnginePrefs" hidden="true" data-category="paneSync">
   <preference id="engine.addons"
               name="services.sync.engine.addons"
               type="bool"/>
@@ -200,8 +199,8 @@
               <vbox flex="1">
                 <label id="signedOutAccountBoxTitle">&signedOut.accountBox.title;</label>
                 <hbox class="fxaAccountBoxButtons" align="center">
-                  <button id="noFxaSignUp">&signedOut.accountBox.create;</button>
-                  <button id="noFxaSignIn">&signedOut.accountBox.signin;</button>
+                  <button id="noFxaSignUp" label="&signedOut.accountBox.create;"></button>
+                  <button id="noFxaSignIn" label="&signedOut.accountBox.signin;"></button>
                 </hbox>
               </vbox>
             </hbox>
@@ -213,15 +212,15 @@
       </vbox>
     </hbox>
     <label class="fxaMobilePromo">
-        &mobilePromo2.start;<!-- We put these comments to avoid inserting white spaces
+        &mobilePromo3.start;<!-- We put these comments to avoid inserting white spaces
         --><label id="fxaMobilePromo-android"
                   class="androidLink text-link"><!--
-        -->&mobilePromo2.androidLink;</label><!--
-        -->&mobilePromo2.iOSBefore;<!--
+        -->&mobilePromo3.androidLink;</label><!--
+        -->&mobilePromo3.iOSBefore;<!--
         --><label id="fxaMobilePromo-ios"
                   class="iOSLink text-link"><!--
-        -->&mobilePromo2.iOSLink;</label><!--
-        -->&mobilePromo2.end;
+        -->&mobilePromo3.iOSLink;</label><!--
+        -->&mobilePromo3.end;
     </label>
   </vbox>
 
@@ -235,16 +234,21 @@
             <!-- logged in and verified and all is good -->
             <hbox id="fxaLoginVerified" class="fxaAccountBox">
               <vbox>
-                <image id="fxaProfileImage"
-                    onclick="gSyncPane.openChangeProfileImage();" hidden="true"
-                    tooltiptext="&profilePicture.tooltip;" class="actionable"/>
+                <image id="fxaProfileImage" class="actionable"
+                    role="button"
+                    onclick="gSyncPane.openChangeProfileImage(event);" hidden="true"
+                    onkeypress="gSyncPane.openChangeProfileImage(event);"
+                    tooltiptext="&profilePicture.tooltip;"/>
               </vbox>
               <vbox flex="1">
                 <label id="fxaEmailAddress1"/>
                 <label id="fxaDisplayName" hidden="true"/>
                 <hbox class="fxaAccountBoxButtons" align="center">
-                  <button id="fxaUnlinkButton">&disconnect.label;</button>
-                  <label id="verifiedManage" class="text-link">&verifiedManage.label;</label>
+                  <button id="fxaUnlinkButton" label="&disconnect.label;"/>
+                  <label id="verifiedManage" class="text-link"
+                         onclick="gSyncPane.openManageFirefoxAccount(event);"
+                         onkeypress="gSyncPane.openManageFirefoxAccount(event);"><!--
+                  -->&verifiedManage.label;</label>
                 </hbox>
               </vbox>
             </hbox>
@@ -347,15 +351,15 @@
       </hbox>
     </groupbox>
     <label class="fxaMobilePromo">
-        &mobilePromo2.start;<!-- We put these comments to avoid inserting white spaces
+        &mobilePromo3.start;<!-- We put these comments to avoid inserting white spaces
         --><label class="androidLink text-link"
                   href="https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&amp;utm_medium=firefox-browser&amp;utm_campaign=sync-preferences"><!--
-        -->&mobilePromo2.androidLink;</label><!--
-        -->&mobilePromo2.iOSBefore;<!--
+        -->&mobilePromo3.androidLink;</label><!--
+        -->&mobilePromo3.iOSBefore;<!--
         --><label class="iOSLink text-link"
                   href="https://www.mozilla.org/firefox/ios/?utm_source=firefox-browser&amp;utm_medium=firefox-browser&amp;utm_campaign=sync-preferences"><!--
-        -->&mobilePromo2.iOSLink;</label><!--
-        -->&mobilePromo2.end;
+        -->&mobilePromo3.iOSLink;</label><!--
+        -->&mobilePromo3.end;
     </label>
     <vbox id="tosPP-small" align="start">
       <label id="tosPP-small-ToS" class="text-link">

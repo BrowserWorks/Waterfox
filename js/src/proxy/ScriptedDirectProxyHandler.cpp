@@ -128,17 +128,6 @@ GetDirectProxyHandlerObject(JSObject* proxy)
     return proxy->as<ProxyObject>().extra(ScriptedDirectProxyHandler::HANDLER_EXTRA).toObjectOrNull();
 }
 
-static inline void
-ReportInvalidTrapResult(JSContext* cx, JSObject* proxy, JSAtom* atom)
-{
-    RootedValue v(cx, ObjectOrNullValue(proxy));
-    JSAutoByteString bytes;
-    if (!AtomToPrintableString(cx, atom, &bytes))
-        return;
-    ReportValueError2(cx, JSMSG_INVALID_TRAP_RESULT, JSDVG_IGNORE_STACK, v,
-                      nullptr, bytes.ptr());
-}
-
 // ES6 implements both getPrototype and setPrototype traps. We don't have them yet (see bug
 // 888969). For now, use these, to account for proxy revocation.
 bool
@@ -724,52 +713,6 @@ ScriptedDirectProxyHandler::delete_(JSContext* cx, HandleObject proxy, HandleId 
     return result.succeed();
 }
 
-// ES6 (14 October, 2014) 9.5.11 Proxy.[[Enumerate]]
-bool
-ScriptedDirectProxyHandler::enumerate(JSContext* cx, HandleObject proxy,
-                                      MutableHandleObject objp) const
-{
-    // step 1
-    RootedObject handler(cx, GetDirectProxyHandlerObject(proxy));
-
-    // step 2
-    if (!handler) {
-        JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_PROXY_REVOKED);
-        return false;
-    }
-
-    // step 3: unnecessary assert
-    // step 4
-    RootedObject target(cx, proxy->as<ProxyObject>().target());
-
-    // step 5-6
-    RootedValue trap(cx);
-    if (!GetProperty(cx, handler, handler, cx->names().enumerate, &trap))
-        return false;
-
-    // step 7
-    if (trap.isUndefined())
-        return GetIterator(cx, target, 0, objp);
-
-    // step 8-9
-    Value argv[] = {
-        ObjectOrNullValue(target)
-    };
-    RootedValue trapResult(cx);
-    if (!Invoke(cx, ObjectValue(*handler), trap, ArrayLength(argv), argv, &trapResult))
-        return false;
-
-    // step 10
-    if (trapResult.isPrimitive()) {
-        ReportInvalidTrapResult(cx, proxy, cx->names().enumerate);
-        return false;
-    }
-
-    // step 11
-    objp.set(&trapResult.toObject());
-    return true;
-}
-
 // ES6 (22 May, 2014) 9.5.7 Proxy.[[HasProperty]](P)
 bool
 ScriptedDirectProxyHandler::has(JSContext* cx, HandleObject proxy, HandleId id, bool* bp) const
@@ -1050,7 +993,12 @@ ScriptedDirectProxyHandler::construct(JSContext* cx, HandleObject proxy, const C
             return false;
 
         RootedValue targetv(cx, ObjectValue(*target));
-        return Construct(cx, targetv, cargs, args.newTarget(), args.rval());
+        RootedObject obj(cx);
+        if (!Construct(cx, targetv, cargs, args.newTarget(), &obj))
+            return false;
+
+        args.rval().setObject(*obj);
+        return true;
     }
 
     // step 8-9

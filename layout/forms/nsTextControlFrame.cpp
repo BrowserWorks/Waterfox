@@ -10,6 +10,7 @@
 #include "nsTextControlFrame.h"
 #include "nsIPlaintextEditor.h"
 #include "nsCaret.h"
+#include "nsCSSPseudoElements.h"
 #include "nsGenericHTMLElement.h"
 #include "nsIEditor.h"
 #include "nsIEditorIMESupport.h"
@@ -43,7 +44,8 @@
 #include "mozilla/dom/Selection.h"
 #include "nsContentUtils.h"
 #include "nsTextNode.h"
-#include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/MathAlgorithms.h"
 #include "nsFrameSelection.h"
@@ -210,7 +212,7 @@ nsTextControlFrame::CalcIntrinsicSize(nsRenderingContext* aRenderingContext,
 
   // Add in the size of the scrollbars for textarea
   if (IsTextArea()) {
-    nsIFrame* first = GetFirstPrincipalChild();
+    nsIFrame* first = PrincipalChildList().FirstChild();
 
     nsIScrollableFrame *scrollableFrame = do_QueryFrame(first);
     NS_ASSERTION(scrollableFrame, "Child must be scrollable");
@@ -346,8 +348,7 @@ nsTextControlFrame::CreateAnonymousContent(nsTArray<ContentInfo>& aElements)
     NS_ENSURE_TRUE(placeholderNode, NS_ERROR_OUT_OF_MEMORY);
 
     // Associate ::-moz-placeholder pseudo-element with the placeholder node.
-    nsCSSPseudoElements::Type pseudoType =
-      nsCSSPseudoElements::ePseudo_mozPlaceholder;
+    CSSPseudoElementType pseudoType = CSSPseudoElementType::mozPlaceholder;
 
     RefPtr<nsStyleContext> placeholderStyleContext =
       PresContext()->StyleSet()->ResolvePseudoElementStyle(
@@ -1224,21 +1225,21 @@ nsTextControlFrame::SetInitialChildList(ChildListID     aListID,
                                         nsFrameList&    aChildList)
 {
   nsContainerFrame::SetInitialChildList(aListID, aChildList);
-
-  nsIFrame* first = GetFirstPrincipalChild();
+  if (aListID != kPrincipalList) {
+    return;
+  }
 
   // Mark the scroll frame as being a reflow root. This will allow
   // incremental reflows to be initiated at the scroll frame, rather
   // than descending from the root frame of the frame hierarchy.
-  if (first) {
+  if (nsIFrame* first = PrincipalChildList().FirstChild()) {
     first->AddStateBits(NS_FRAME_REFLOW_ROOT);
 
     nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
     NS_ASSERTION(txtCtrl, "Content not a text control element");
     txtCtrl->InitializeKeyboardEventListeners();
 
-    nsPoint* contentScrollPos = static_cast<nsPoint*>
-      (Properties().Get(ContentScrollPos()));
+    nsPoint* contentScrollPos = Properties().Get(ContentScrollPos());
     if (contentScrollPos) {
       // If we have a scroll pos stored to be passed to our anonymous
       // div, do it here!
@@ -1444,9 +1445,9 @@ nsTextControlFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 }
 
 mozilla::dom::Element*
-nsTextControlFrame::GetPseudoElement(nsCSSPseudoElements::Type aType)
+nsTextControlFrame::GetPseudoElement(CSSPseudoElementType aType)
 {
-  if (aType == nsCSSPseudoElements::ePseudo_mozPlaceholder) {
+  if (aType == CSSPseudoElementType::mozPlaceholder) {
     nsCOMPtr<nsITextControlElement> txtCtrl = do_QueryInterface(GetContent());
     return txtCtrl->GetPlaceholderNode();
   }

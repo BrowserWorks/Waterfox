@@ -39,7 +39,8 @@
 #include "nsCSSRules.h"
 #include "nsPrintfCString.h"
 #include "nsIFrame.h"
-#include "RestyleManager.h"
+#include "mozilla/RestyleManagerHandle.h"
+#include "mozilla/RestyleManagerHandleInlines.h"
 #include "nsQueryObject.h"
 
 #include <inttypes.h>
@@ -171,7 +172,8 @@ static const SheetType gCSSSheetTypes[] = {
   SheetType::Override
 };
 
-static bool IsCSSSheetType(SheetType aSheetType)
+/* static */ bool
+nsStyleSet::IsCSSSheetType(SheetType aSheetType)
 {
   for (SheetType type : gCSSSheetTypes) {
     if (type == aSheetType) {
@@ -185,11 +187,16 @@ nsStyleSet::nsStyleSet()
   : mRuleTree(nullptr),
     mBatching(0),
     mInShutdown(false),
+    mInGC(false),
     mAuthorStyleDisabled(false),
     mInReconstruct(false),
     mInitFontFeatureValuesLookup(true),
     mNeedsRestyleAfterEnsureUniqueInner(false),
     mDirty(0),
+    mRootStyleContextCount(0),
+#ifdef DEBUG
+    mOldRootNode(nullptr),
+#endif
     mUnusedRuleNodeCount(0)
 {
 }
@@ -244,9 +251,6 @@ nsStyleSet::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
   }
   n += mScopedDocSheetRuleProcessors.ShallowSizeOfExcludingThis(aMallocSizeOf);
 
-  n += mRoots.ShallowSizeOfExcludingThis(aMallocSizeOf);
-  n += mOldRuleTrees.ShallowSizeOfExcludingThis(aMallocSizeOf);
-
   return n;
 }
 
@@ -275,26 +279,21 @@ nsStyleSet::BeginReconstruct()
 {
   NS_ASSERTION(!mInReconstruct, "Unmatched begin/end?");
   NS_ASSERTION(mRuleTree, "Reconstructing before first construction?");
+  mInReconstruct = true;
 
   // Clear any ArenaRefPtr-managed style contexts, as we don't want them
   // held on to after the rule tree has been reconstructed.
   PresContext()->PresShell()->ClearArenaRefPtrs(eArenaObjectID_nsStyleContext);
 
-  // Create a new rule tree root
-  nsRuleNode* newTree = nsRuleNode::CreateRootNode(mRuleTree->PresContext());
+#ifdef DEBUG
+  MOZ_ASSERT(!mOldRootNode);
+  mOldRootNode = mRuleTree;
+#endif
 
-  // Save the old rule tree so we can destroy it later
-  if (!mOldRuleTrees.AppendElement(mRuleTree)) {
-    newTree->Destroy();
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
-
-  // We need to keep mRoots so that the rule tree GC will only free the
-  // rule trees that really aren't referenced anymore (which should be
-  // all of them, if there are no bugs in reresolution code).
-
-  mInReconstruct = true;
-  mRuleTree = newTree;
+  // Create a new rule tree root, dropping the reference to our old rule tree.
+  // After reconstruction, we will re-enable GC, and allow everything to be
+  // collected.
+  mRuleTree = nsRuleNode::CreateRootNode(mRuleTree->PresContext());
 
   return NS_OK;
 }
@@ -304,22 +303,6 @@ nsStyleSet::EndReconstruct()
 {
   NS_ASSERTION(mInReconstruct, "Unmatched begin/end?");
   mInReconstruct = false;
-#ifdef DEBUG
-  for (int32_t i = mRoots.Length() - 1; i >= 0; --i) {
-    // Since nsStyleContext's mParent and mRuleNode are immutable, and
-    // style contexts own their parents, and nsStyleContext asserts in
-    // its constructor that the style context and its parent are in the
-    // same rule tree, we don't need to check any of the children of
-    // mRoots; we only need to check the rule nodes of mRoots
-    // themselves.
-
-    NS_ASSERTION(mRoots[i]->RuleNode()->RuleTree() == mRuleTree,
-                 "style context has old rule node");
-  }
-#endif
-  // This *should* destroy the only element of mOldRuleTrees, but in
-  // case of some bugs (which would trigger the above assertions), it
-  // won't.
   GCRuleTrees();
 }
 
@@ -745,11 +728,15 @@ nsStyleSet::AddDocStyleSheet(CSSStyleSheet* aSheet, nsIDocument* aDocument)
     if (sheetDocIndex < 0) {
       if (sheetService) {
         auto& authorSheets = *sheetService->AuthorStyleSheets();
-        if (authorSheets.IndexOf(sheet) != authorSheets.NoIndex) {
+        StyleSheetHandle handle = sheet;
+        if (authorSheets.IndexOf(handle) != authorSheets.NoIndex) {
           break;
         }
       }
-      if (sheet == aDocument->FirstAdditionalAuthorSheet()) {
+      MOZ_ASSERT(!aDocument->GetFirstAdditionalAuthorSheet() ||
+                 aDocument->GetFirstAdditionalAuthorSheet()->IsGecko(),
+                 "why do we have a ServoStyleSheet for an nsStyleSet?");
+      if (sheet == aDocument->GetFirstAdditionalAuthorSheet()->GetAsGecko()) {
         break;
       }
     }
@@ -762,6 +749,23 @@ nsStyleSet::AddDocStyleSheet(CSSStyleSheet* aSheet, nsIDocument* aDocument)
   }
 
   return DirtyRuleProcessors(type);
+}
+
+void
+nsStyleSet::AppendAllXBLStyleSheets(nsTArray<mozilla::CSSStyleSheet*>& aArray) const
+{
+  if (mBindingManager) {
+    // XXXheycam stylo: AppendAllSheets will need to be able to return either
+    // CSSStyleSheets or ServoStyleSheets, on request (and then here requesting
+    // CSSStyleSheets).
+    AutoTArray<StyleSheetHandle, 32> sheets;
+    mBindingManager->AppendAllSheets(sheets);
+    for (StyleSheetHandle handle : sheets) {
+      MOZ_ASSERT(handle->IsGecko(), "stylo: AppendAllSheets shouldn't give us "
+                                    "ServoStyleSheets yet");
+      aArray.AppendElement(handle->AsGecko());
+    }
+  }
 }
 
 nsresult
@@ -885,13 +889,13 @@ nsStyleSet::GetContext(nsStyleContext* aParentContext,
                        // should be used.)
                        nsRuleNode* aVisitedRuleNode,
                        nsIAtom* aPseudoTag,
-                       nsCSSPseudoElements::Type aPseudoType,
+                       CSSPseudoElementType aPseudoType,
                        Element* aElementForAnimation,
                        uint32_t aFlags)
 {
   NS_PRECONDITION((!aPseudoTag &&
                    aPseudoType ==
-                     nsCSSPseudoElements::ePseudo_NotPseudoElement) ||
+                     CSSPseudoElementType::NotPseudo) ||
                   (aPseudoTag &&
                    nsCSSPseudoElements::GetPseudoType(aPseudoTag) ==
                      aPseudoType),
@@ -964,13 +968,24 @@ nsStyleSet::GetContext(nsStyleContext* aParentContext,
   }
 
   if (aFlags & eDoAnimation) {
-    // Normally the animation manager has already added the correct
-    // style rule.  However, if the animation-name just changed, it
-    // might have been wrong.  So ask it to double-check based on the
-    // resulting style context.
+
     nsIStyleRule *oldAnimRule = GetAnimationRule(aRuleNode);
-    nsIStyleRule *animRule = PresContext()->AnimationManager()->
-      CheckAnimationRule(result, aElementForAnimation);
+    nsIStyleRule *animRule = nullptr;
+
+    // Ignore animations for print or print preview, and for elements
+    // that are not attached to the document tree.
+    if (PresContext()->IsDynamic() &&
+        aElementForAnimation->IsInComposedDoc()) {
+      // Update CSS animations in case the animation-name has just changed.
+      PresContext()->AnimationManager()->UpdateAnimations(result,
+                                                          aElementForAnimation);
+
+      animRule = PresContext()->EffectCompositor()->
+                   GetAnimationRule(aElementForAnimation,
+                                    result->GetPseudoType(),
+                                    EffectCompositor::CascadeLevel::Animations);
+    }
+
     MOZ_ASSERT(result->RuleNode() == aRuleNode,
                "unexpected rule node");
     MOZ_ASSERT(!result->GetStyleIfVisited() == !aVisitedRuleNode,
@@ -999,7 +1014,7 @@ nsStyleSet::GetContext(nsStyleContext* aParentContext,
 
   if (aElementForAnimation &&
       aElementForAnimation->IsHTMLElement(nsGkAtoms::body) &&
-      aPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement &&
+      aPseudoType == CSSPseudoElementType::NotPseudo &&
       PresContext()->CompatibilityMode() == eCompatibility_NavQuirks) {
     nsIDocument* doc = aElementForAnimation->GetCurrentDoc();
     if (doc && doc->GetBodyElement() == aElementForAnimation) {
@@ -1019,7 +1034,7 @@ nsStyleSet::AddImportantRules(nsRuleNode* aCurrLevelNode,
   NS_ASSERTION(aCurrLevelNode &&
                aCurrLevelNode != aLastPrevLevelNode, "How did we get here?");
 
-  nsAutoTArray<nsIStyleRule*, 16> importantRules;
+  AutoTArray<nsIStyleRule*, 16> importantRules;
   for (nsRuleNode *node = aCurrLevelNode; node != aLastPrevLevelNode;
        node = node->GetParent()) {
     // We guarantee that we never walk the root node here, so no need
@@ -1378,7 +1393,7 @@ nsStyleSet::ResolveStyleFor(Element* aElement,
   }
 
   return GetContext(aParentContext, ruleNode, visitedRuleNode,
-                    nullptr, nsCSSPseudoElements::ePseudo_NotPseudoElement,
+                    nullptr, CSSPseudoElementType::NotPseudo,
                     aElement, flags);
 }
 
@@ -1397,7 +1412,7 @@ nsStyleSet::ResolveStyleForRules(nsStyleContext* aParentContext,
   }
 
   return GetContext(aParentContext, ruleWalker.CurrentNode(), nullptr,
-                    nullptr, nsCSSPseudoElements::ePseudo_NotPseudoElement,
+                    nullptr, CSSPseudoElementType::NotPseudo,
                     nullptr, eNoFlags);
 }
 
@@ -1487,13 +1502,13 @@ nsRuleNode*
 nsStyleSet::RuleNodeWithReplacement(Element* aElement,
                                     Element* aPseudoElement,
                                     nsRuleNode* aOldRuleNode,
-                                    nsCSSPseudoElements::Type aPseudoType,
+                                    CSSPseudoElementType aPseudoType,
                                     nsRestyleHint aReplacements)
 {
   NS_ASSERTION(mBatching == 0, "rule processors out of date");
 
   MOZ_ASSERT(!aPseudoElement ==
-             (aPseudoType >= nsCSSPseudoElements::ePseudo_PseudoElementCount ||
+             (aPseudoType >= CSSPseudoElementType::Count ||
               !(nsCSSPseudoElements::PseudoElementSupportsStyleAttribute(aPseudoType) ||
                 nsCSSPseudoElements::PseudoElementSupportsUserActionState(aPseudoType))),
              "should have aPseudoElement only for certain pseudo elements");
@@ -1517,7 +1532,7 @@ nsStyleSet::RuleNodeWithReplacement(Element* aElement,
 
   // This array can be hot and often grows to ~20 elements, so inline storage
   // is best.
-  nsAutoTArray<RuleNodeInfo, 30> rules;
+  AutoTArray<RuleNodeInfo, 30> rules;
   for (nsRuleNode* ruleNode = aOldRuleNode; !ruleNode->IsRoot();
        ruleNode = ruleNode->GetParent()) {
     RuleNodeInfo* curRule = rules.AppendElement();
@@ -1548,9 +1563,9 @@ nsStyleSet::RuleNodeWithReplacement(Element* aElement,
     if (doReplace) {
       switch (level->mLevel) {
         case SheetType::Animation: {
-          if (aPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement ||
-              aPseudoType == nsCSSPseudoElements::ePseudo_before ||
-              aPseudoType == nsCSSPseudoElements::ePseudo_after) {
+          if (aPseudoType == CSSPseudoElementType::NotPseudo ||
+              aPseudoType == CSSPseudoElementType::before ||
+              aPseudoType == CSSPseudoElementType::after) {
             nsIStyleRule* rule = PresContext()->EffectCompositor()->
               GetAnimationRule(aElement, aPseudoType,
                                EffectCompositor::CascadeLevel::Animations);
@@ -1562,9 +1577,9 @@ nsStyleSet::RuleNodeWithReplacement(Element* aElement,
           break;
         }
         case SheetType::Transition: {
-          if (aPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement ||
-              aPseudoType == nsCSSPseudoElements::ePseudo_before ||
-              aPseudoType == nsCSSPseudoElements::ePseudo_after) {
+          if (aPseudoType == CSSPseudoElementType::NotPseudo ||
+              aPseudoType == CSSPseudoElementType::before ||
+              aPseudoType == CSSPseudoElementType::after) {
             nsIStyleRule* rule = PresContext()->EffectCompositor()->
               GetAnimationRule(aElement, aPseudoType,
                                EffectCompositor::CascadeLevel::Transitions);
@@ -1580,7 +1595,7 @@ nsStyleSet::RuleNodeWithReplacement(Element* aElement,
             static_cast<SVGAttrAnimationRuleProcessor*>(
               mRuleProcessors[SheetType::SVGAttrAnimation].get());
           if (ruleProcessor &&
-              aPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+              aPseudoType == CSSPseudoElementType::NotPseudo) {
             ruleProcessor->ElementRulesMatching(aElement, &ruleWalker);
           }
           break;
@@ -1594,12 +1609,12 @@ nsStyleSet::RuleNodeWithReplacement(Element* aElement,
             if (ruleProcessor) {
               lastScopedRN = ruleWalker.CurrentNode();
               if (aPseudoType ==
-                    nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+                    CSSPseudoElementType::NotPseudo) {
                 ruleProcessor->ElementRulesMatching(PresContext(),
                                                     aElement,
                                                     &ruleWalker);
               } else if (aPseudoType <
-                           nsCSSPseudoElements::ePseudo_PseudoElementCount &&
+                           CSSPseudoElementType::Count &&
                          nsCSSPseudoElements::
                            PseudoElementSupportsStyleAttribute(aPseudoType)) {
                 ruleProcessor->PseudoElementRulesMatching(aPseudoElement,
@@ -1689,12 +1704,12 @@ nsStyleSet::ResolveStyleWithReplacement(Element* aElement,
     }
   }
 
-  nsCSSPseudoElements::Type pseudoType = aOldStyleContext->GetPseudoType();
+  CSSPseudoElementType pseudoType = aOldStyleContext->GetPseudoType();
   Element* elementForAnimation = nullptr;
   if (!(aFlags & eSkipStartingAnimations) &&
-      (pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement ||
-       pseudoType == nsCSSPseudoElements::ePseudo_before ||
-       pseudoType == nsCSSPseudoElements::ePseudo_after)) {
+      (pseudoType == CSSPseudoElementType::NotPseudo ||
+       pseudoType == CSSPseudoElementType::before ||
+       pseudoType == CSSPseudoElementType::after)) {
     // We want to compute a correct elementForAnimation to pass in
     // because at this point the parameter is more than just the element
     // for animation; it's also used for the SetBodyTextColor call when
@@ -1708,12 +1723,16 @@ nsStyleSet::ResolveStyleWithReplacement(Element* aElement,
       flags |= eDoAnimation;
     }
     elementForAnimation = aElement;
-    NS_ASSERTION(pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement ||
-                 !elementForAnimation->GetPrimaryFrame() ||
-                 elementForAnimation->GetPrimaryFrame()->StyleContext()->
-                     GetPseudoType() ==
-                   nsCSSPseudoElements::ePseudo_NotPseudoElement,
-                 "aElement should be the element and not the pseudo-element");
+#ifdef DEBUG
+    {
+      nsIFrame* styleFrame = nsLayoutUtils::GetStyleFrame(elementForAnimation);
+      NS_ASSERTION(pseudoType == CSSPseudoElementType::NotPseudo ||
+                   !styleFrame ||
+                   styleFrame->StyleContext()->GetPseudoType() ==
+                     CSSPseudoElementType::NotPseudo,
+                   "aElement should be the element and not the pseudo-element");
+    }
+#endif
   }
 
   if (aElement && aElement->IsRootOfAnonymousSubtree()) {
@@ -1735,13 +1754,16 @@ nsStyleSet::ResolveStyleWithoutAnimation(dom::Element* aTarget,
                                          nsRestyleHint aWhichToRemove)
 {
 #ifdef DEBUG
-  nsCSSPseudoElements::Type pseudoType = aStyleContext->GetPseudoType();
+  CSSPseudoElementType pseudoType = aStyleContext->GetPseudoType();
 #endif
-  MOZ_ASSERT(pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement ||
-             pseudoType == nsCSSPseudoElements::ePseudo_before ||
-             pseudoType == nsCSSPseudoElements::ePseudo_after,
+  MOZ_ASSERT(pseudoType == CSSPseudoElementType::NotPseudo ||
+             pseudoType == CSSPseudoElementType::before ||
+             pseudoType == CSSPseudoElementType::after,
              "unexpected type for animations");
-  RestyleManager* restyleManager = PresContext()->RestyleManager();
+  MOZ_ASSERT(PresContext()->RestyleManager()->IsGecko(),
+             "stylo: the style set and restyle manager must have the same "
+             "StyleBackendType");
+  RestyleManager* restyleManager = PresContext()->RestyleManager()->AsGecko();
 
   bool oldSkipAnimationRules = restyleManager->SkipAnimationRules();
   restyleManager->SetSkipAnimationRules(true);
@@ -1761,21 +1783,21 @@ nsStyleSet::ResolveStyleForNonElement(nsStyleContext* aParentContext)
 {
   return GetContext(aParentContext, mRuleTree, nullptr,
                     nsCSSAnonBoxes::mozNonElement,
-                    nsCSSPseudoElements::ePseudo_AnonBox, nullptr,
+                    CSSPseudoElementType::AnonBox, nullptr,
                     eNoFlags);
 }
 
 void
-nsStyleSet::WalkRestrictionRule(nsCSSPseudoElements::Type aPseudoType,
+nsStyleSet::WalkRestrictionRule(CSSPseudoElementType aPseudoType,
                                 nsRuleWalker* aRuleWalker)
 {
   // This needs to match GetPseudoRestriction in nsRuleNode.cpp.
   aRuleWalker->SetLevel(SheetType::Agent, false, false);
-  if (aPseudoType == nsCSSPseudoElements::ePseudo_firstLetter)
+  if (aPseudoType == CSSPseudoElementType::firstLetter)
     aRuleWalker->Forward(mFirstLetterRule);
-  else if (aPseudoType == nsCSSPseudoElements::ePseudo_firstLine)
+  else if (aPseudoType == CSSPseudoElementType::firstLine)
     aRuleWalker->Forward(mFirstLineRule);
-  else if (aPseudoType == nsCSSPseudoElements::ePseudo_mozPlaceholder)
+  else if (aPseudoType == CSSPseudoElementType::mozPlaceholder)
     aRuleWalker->Forward(mPlaceholderRule);
 }
 
@@ -1789,13 +1811,13 @@ nsStyleSet::WalkDisableTextZoomRule(Element* aElement, nsRuleWalker* aRuleWalker
 
 already_AddRefed<nsStyleContext>
 nsStyleSet::ResolvePseudoElementStyle(Element* aParentElement,
-                                      nsCSSPseudoElements::Type aType,
+                                      CSSPseudoElementType aType,
                                       nsStyleContext* aParentContext,
                                       Element* aPseudoElement)
 {
   NS_ENSURE_FALSE(mInShutdown, nullptr);
 
-  NS_ASSERTION(aType < nsCSSPseudoElements::ePseudo_PseudoElementCount,
+  NS_ASSERTION(aType < CSSPseudoElementType::Count,
                "must have pseudo element type");
   NS_ASSERTION(aParentElement, "Must have parent element");
 
@@ -1825,8 +1847,8 @@ nsStyleSet::ResolvePseudoElementStyle(Element* aParentElement,
   // For pseudos, |data.IsLink()| being true means that
   // our parent node is a link.
   uint32_t flags = eNoFlags;
-  if (aType == nsCSSPseudoElements::ePseudo_before ||
-      aType == nsCSSPseudoElements::ePseudo_after) {
+  if (aType == CSSPseudoElementType::before ||
+      aType == CSSPseudoElementType::after) {
     flags |= eDoAnimation;
   } else {
     // Flex and grid containers don't expect to have any pseudo-element children
@@ -1843,7 +1865,7 @@ nsStyleSet::ResolvePseudoElementStyle(Element* aParentElement,
 
 already_AddRefed<nsStyleContext>
 nsStyleSet::ProbePseudoElementStyle(Element* aParentElement,
-                                    nsCSSPseudoElements::Type aType,
+                                    CSSPseudoElementType aType,
                                     nsStyleContext* aParentContext)
 {
   TreeMatchContext treeContext(true, nsRuleWalker::eRelevantLinkUnvisited,
@@ -1855,14 +1877,14 @@ nsStyleSet::ProbePseudoElementStyle(Element* aParentElement,
 
 already_AddRefed<nsStyleContext>
 nsStyleSet::ProbePseudoElementStyle(Element* aParentElement,
-                                    nsCSSPseudoElements::Type aType,
+                                    CSSPseudoElementType aType,
                                     nsStyleContext* aParentContext,
                                     TreeMatchContext& aTreeMatchContext,
                                     Element* aPseudoElement)
 {
   NS_ENSURE_FALSE(mInShutdown, nullptr);
 
-  NS_ASSERTION(aType < nsCSSPseudoElements::ePseudo_PseudoElementCount,
+  NS_ASSERTION(aType < CSSPseudoElementType::Count,
                "must have pseudo element type");
   NS_ASSERTION(aParentElement, "aParentElement must not be null");
 
@@ -1897,8 +1919,8 @@ nsStyleSet::ProbePseudoElementStyle(Element* aParentElement,
   // For pseudos, |data.IsLink()| being true means that
   // our parent node is a link.
   uint32_t flags = eNoFlags;
-  if (aType == nsCSSPseudoElements::ePseudo_before ||
-      aType == nsCSSPseudoElements::ePseudo_after) {
+  if (aType == CSSPseudoElementType::before ||
+      aType == CSSPseudoElementType::after) {
     flags |= eDoAnimation;
   } else {
     // Flex and grid containers don't expect to have any pseudo-element children
@@ -1973,7 +1995,7 @@ nsStyleSet::ResolveAnonymousBoxStyle(nsIAtom* aPseudoTag,
   }
 
   return GetContext(aParentContext, ruleWalker.CurrentNode(), nullptr,
-                    aPseudoTag, nsCSSPseudoElements::ePseudo_AnonBox,
+                    aPseudoTag, CSSPseudoElementType::AnonBox,
                     nullptr, aFlags);
 }
 
@@ -2013,7 +2035,7 @@ nsStyleSet::ResolveXULTreePseudoStyle(Element* aParentElement,
   return GetContext(aParentContext, ruleNode, visitedRuleNode,
                     // For pseudos, |data.IsLink()| being true means that
                     // our parent node is a link.
-                    aPseudoTag, nsCSSPseudoElements::ePseudo_XULTree,
+                    aPseudoTag, CSSPseudoElementType::XULTree,
                     nullptr, eNoFlags);
 }
 #endif
@@ -2156,87 +2178,43 @@ void
 nsStyleSet::BeginShutdown()
 {
   mInShutdown = 1;
-  mRoots.Clear(); // no longer valid, since we won't keep it up to date
 }
 
 void
 nsStyleSet::Shutdown()
 {
-  mRuleTree->Destroy();
   mRuleTree = nullptr;
-
-  // We can have old rule trees either because:
-  //   (1) we failed the assertions in EndReconstruct, or
-  //   (2) we're shutting down within a reconstruct (see bug 462392)
-  for (uint32_t i = mOldRuleTrees.Length(); i > 0; ) {
-    --i;
-    mOldRuleTrees[i]->Destroy();
-  }
-  mOldRuleTrees.Clear();
+  GCRuleTrees();
+  MOZ_ASSERT(mUnusedRuleNodeList.isEmpty());
+  MOZ_ASSERT(mUnusedRuleNodeCount == 0);
 }
 
-static const uint32_t kGCInterval = 300;
-
-// Notification that a style context with a null parent has been created.
-void
-nsStyleSet::AddStyleContextRoot(nsStyleContext* aStyleContext)
-{
-  // aStyleContext has not been fully initialized, but its parent and
-  // rule node are correct.
-  MOZ_ASSERT(!aStyleContext->GetParent());
-  mRoots.AppendElement(aStyleContext);
-}
-
-void
-nsStyleSet::NotifyStyleContextDestroyed(nsStyleContext* aStyleContext)
-{
-  if (mInShutdown)
-    return;
-
-  // Remove style contexts from mRoots even if mOldRuleTree is non-null.  This
-  // could be a style context from the new ruletree!
-  if (!aStyleContext->GetParent()) {
-    mRoots.RemoveElement(aStyleContext);
-  }
-
-  if (mInReconstruct)
-    return;
-
-  if (mUnusedRuleNodeCount >= kGCInterval) {
-    GCRuleTrees();
-  }
-}
 
 void
 nsStyleSet::GCRuleTrees()
 {
-  mUnusedRuleNodeCount = 0;
+  MOZ_ASSERT(!mInReconstruct);
+  MOZ_ASSERT(!mInGC);
+  mInGC = true;
 
-  // Mark the style context tree by marking all style contexts which
-  // have no parent, which will mark all descendants.  This will reach
-  // style contexts in the undisplayed map and "additional style
-  // contexts" since they are descendants of the roots.
-  for (int32_t i = mRoots.Length() - 1; i >= 0; --i) {
-    mRoots[i]->Mark();
-  }
-
-  // Sweep the rule tree.
+  while (!mUnusedRuleNodeList.isEmpty()) {
+    nsRuleNode* node = mUnusedRuleNodeList.popFirst();
 #ifdef DEBUG
-  bool deleted =
-#endif
-    mRuleTree->Sweep();
-  NS_ASSERTION(!deleted, "Root node must not be gc'd");
-
-  // Sweep the old rule trees.
-  for (uint32_t i = mOldRuleTrees.Length(); i > 0; ) {
-    --i;
-    if (mOldRuleTrees[i]->Sweep()) {
-      // It was deleted, as it should be.
-      mOldRuleTrees.RemoveElementAt(i);
-    } else {
-      NS_NOTREACHED("old rule tree still referenced");
+    if (node == mOldRootNode) {
+      // Flag that we've GCed the old root, if any.
+      mOldRootNode = nullptr;
     }
+#endif
+    node->Destroy();
   }
+
+#ifdef DEBUG
+  NS_ASSERTION(!mOldRootNode, "Should have GCed old root node");
+  mOldRootNode = nullptr;
+#endif
+
+  mUnusedRuleNodeCount = 0;
+  mInGC = false;
 }
 
 already_AddRefed<nsStyleContext>
@@ -2254,10 +2232,13 @@ nsStyleSet::ReparentStyleContext(nsStyleContext* aStyleContext,
   }
 
   nsIAtom* pseudoTag = aStyleContext->GetPseudo();
-  nsCSSPseudoElements::Type pseudoType = aStyleContext->GetPseudoType();
+  CSSPseudoElementType pseudoType = aStyleContext->GetPseudoType();
   nsRuleNode* ruleNode = aStyleContext->RuleNode();
 
-  NS_ASSERTION(!PresContext()->RestyleManager()->SkipAnimationRules(),
+  MOZ_ASSERT(PresContext()->RestyleManager()->IsGecko(),
+             "stylo: the style set and restyle manager must have the same "
+             "StyleBackendType");
+  NS_ASSERTION(!PresContext()->RestyleManager()->AsGecko()->SkipAnimationRules(),
                "we no longer handle SkipAnimationRules()");
 
   nsRuleNode* visitedRuleNode = nullptr;
@@ -2282,9 +2263,9 @@ nsStyleSet::ReparentStyleContext(nsStyleContext* aStyleContext,
     }
   }
 
-  if (pseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement ||
-      pseudoType == nsCSSPseudoElements::ePseudo_before ||
-      pseudoType == nsCSSPseudoElements::ePseudo_after) {
+  if (pseudoType == CSSPseudoElementType::NotPseudo ||
+      pseudoType == CSSPseudoElementType::before ||
+      pseudoType == CSSPseudoElementType::after) {
     flags |= eDoAnimation;
   }
 
@@ -2313,7 +2294,7 @@ struct MOZ_STACK_CLASS StatefulData : public StateRuleProcessorData {
 
 struct MOZ_STACK_CLASS StatefulPseudoElementData : public PseudoElementStateRuleProcessorData {
   StatefulPseudoElementData(nsPresContext* aPresContext, Element* aElement,
-               EventStates aStateMask, nsCSSPseudoElements::Type aPseudoType,
+               EventStates aStateMask, CSSPseudoElementType aPseudoType,
                TreeMatchContext& aTreeMatchContext, Element* aPseudoElement)
     : PseudoElementStateRuleProcessorData(aPresContext, aElement, aStateMask,
                                           aPseudoType, aTreeMatchContext,
@@ -2384,7 +2365,7 @@ nsStyleSet::HasStateDependentStyle(Element*             aElement,
 
 nsRestyleHint
 nsStyleSet::HasStateDependentStyle(Element* aElement,
-                                   nsCSSPseudoElements::Type aPseudoType,
+                                   CSSPseudoElementType aPseudoType,
                                    Element* aPseudoElement,
                                    EventStates aStateMask)
 {
@@ -2478,7 +2459,7 @@ nsStyleSet::MediumFeaturesChanged()
 bool
 nsStyleSet::EnsureUniqueInnerOnCSSSheets()
 {
-  nsAutoTArray<CSSStyleSheet*, 32> queue;
+  AutoTArray<CSSStyleSheet*, 32> queue;
   for (SheetType type : gCSSSheetTypes) {
     for (CSSStyleSheet* sheet : mSheets[type]) {
       queue.AppendElement(sheet);
@@ -2486,7 +2467,16 @@ nsStyleSet::EnsureUniqueInnerOnCSSSheets()
   }
 
   if (mBindingManager) {
-    mBindingManager->AppendAllSheets(queue);
+    AutoTArray<StyleSheetHandle, 32> sheets;
+    // XXXheycam stylo: AppendAllSheets will need to be able to return either
+    // CSSStyleSheets or ServoStyleSheets, on request (and then here requesting
+    // CSSStyleSheets).
+    mBindingManager->AppendAllSheets(sheets);
+    for (StyleSheetHandle sheet : sheets) {
+      MOZ_ASSERT(sheet->IsGecko(), "stylo: AppendAllSheets shouldn't give us "
+                                   "ServoStyleSheets yet");
+      queue.AppendElement(sheet->AsGecko());
+    }
   }
 
   while (!queue.IsEmpty()) {
@@ -2533,5 +2523,8 @@ nsStyleSet::ClearSelectors()
   if (!mRuleTree) {
     return;
   }
-  PresContext()->RestyleManager()->ClearSelectors();
+  MOZ_ASSERT(PresContext()->RestyleManager()->IsGecko(),
+             "stylo: the style set and restyle manager must have the same "
+             "StyleBackendType");
+  PresContext()->RestyleManager()->AsGecko()->ClearSelectors();
 }

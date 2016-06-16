@@ -368,8 +368,7 @@ void SetLocationForGlobal(JSObject* global, nsIURI* locationURI);
 // of JS::ZoneStats.
 class ZoneStatsExtras {
 public:
-    ZoneStatsExtras()
-    {}
+    ZoneStatsExtras() {}
 
     nsCString pathPrefix;
 
@@ -382,14 +381,11 @@ private:
 // of JS::CompartmentStats.
 class CompartmentStatsExtras {
 public:
-    CompartmentStatsExtras()
-      : sizeOfXPCPrivate(0)
-    {}
+    CompartmentStatsExtras() {}
 
     nsCString jsPathPrefix;
     nsCString domPathPrefix;
     nsCOMPtr<nsIURI> location;
-    size_t sizeOfXPCPrivate;
 
 private:
     CompartmentStatsExtras(const CompartmentStatsExtras& other) = delete;
@@ -517,6 +513,12 @@ class ErrorReport {
     void LogToConsole();
     void LogToConsoleWithStack(JS::HandleObject aStack);
 
+    // Produce an error event message string from the given JSErrorReport.  Note
+    // that this may produce an empty string if aReport doesn't have a
+    // message attached.
+    static void ErrorReportToMessageString(JSErrorReport* aReport,
+                                           nsAString& aString);
+
   public:
 
     nsCString mCategory;
@@ -534,7 +536,7 @@ class ErrorReport {
 };
 
 void
-DispatchScriptErrorEvent(nsPIDOMWindow* win, JSRuntime* rt, xpc::ErrorReport* xpcReport,
+DispatchScriptErrorEvent(nsPIDOMWindowInner* win, JSRuntime* rt, xpc::ErrorReport* xpcReport,
                          JS::Handle<JS::Value> exception);
 
 // Return a name for the compartment.

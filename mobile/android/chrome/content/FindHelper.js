@@ -40,19 +40,23 @@ var FindHelper = {
     }
 
     Messaging.addListener((data) => {
-      this.doFind(data.searchString, data.matchCase);
-      return this._getMatchesCountResult(data.searchString);
+      this.doFind(data);
+      return this._getMatchesCountResult(data);
     }, "FindInPage:Find");
 
     Messaging.addListener((data) => {
-      this.findAgain(data.searchString, false, data.matchCase);
-      return this._getMatchesCountResult(data.searchString);
+      this.findAgain(data, false);
+      return this._getMatchesCountResult(data);
     }, "FindInPage:Next");
 
     Messaging.addListener((data) => {
-      this.findAgain(data.searchString, true, data.matchCase);
-      return this._getMatchesCountResult(data.searchString);
+      this.findAgain(data, true);
+      return this._getMatchesCountResult(data);
     }, "FindInPage:Prev");
+
+    // Initialize the finder component for the current page by performing a fake find.
+    this._init();
+    this._finder.requestMatchesCount("", 1);
   },
 
   _init: function() {
@@ -116,25 +120,23 @@ var FindHelper = {
     this._result.limit = this._limit;
   },
 
-  doFind: function(searchString, matchCase) {
+  doFind: function(searchString) {
     if (!this._finder) {
       this._init();
     }
 
-    this._finder.caseSensitive = matchCase;
     this._finder.fastFind(searchString, false);
   },
 
-  findAgain: function(searchString, findBackwards, matchCase) {
+  findAgain: function(searchString, findBackwards) {
     // This always happens if the user taps next/previous after re-opening the
     // search bar, and not only forces _init() but also an initial fastFind(STRING)
     // before any findAgain(DIRECTION).
     if (!this._finder) {
-      this.doFind(searchString, matchCase);
+      this.doFind(searchString);
       return;
     }
 
-    this._finder.caseSensitive = matchCase;
     this._finder.findAgain(findBackwards, false, false);
   },
 

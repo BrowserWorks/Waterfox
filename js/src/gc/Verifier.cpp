@@ -250,7 +250,7 @@ oom:
 static bool
 IsMarkedOrAllocated(TenuredCell* cell)
 {
-    return cell->isMarked() || cell->arenaHeader()->allocatedDuringIncremental;
+    return cell->isMarked() || cell->arena()->allocatedDuringIncremental;
 }
 
 struct CheckEdgeTracer : public JS::CallbackTracer {
@@ -381,7 +381,7 @@ gc::VerifyBarriers(JSRuntime* rt, VerifierType type)
 void
 gc::GCRuntime::maybeVerifyPreBarriers(bool always)
 {
-    if (zealMode != ZealVerifierPreValue)
+    if (!hasZealMode(ZealMode::VerifierPre))
         return;
 
     if (rt->mainThread.suppressGC)

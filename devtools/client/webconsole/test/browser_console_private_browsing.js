@@ -1,7 +1,7 @@
-/*
- * Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/
- */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 // Bug 874061: test for how the browser and web consoles display messages coming
 // from private windows. See bug for description of expected behavior.
@@ -127,7 +127,7 @@ function test() {
     info("testBrowserConsole()");
     closeConsole(privateTab).then(() => {
       info("web console closed");
-      privateWindow.HUDService.toggleBrowserConsole().then(onBrowserConsoleOpen);
+      HUDService.toggleBrowserConsole().then(onBrowserConsoleOpen);
     });
   }
 
@@ -163,7 +163,7 @@ function test() {
       checkNoPrivateMessages();
 
       info("close the browser console");
-      privateWindow.HUDService.toggleBrowserConsole().then(() => {
+      HUDService.toggleBrowserConsole().then(() => {
         info("reopen the browser console");
         executeSoon(() =>
           HUDService.toggleBrowserConsole().then(onBrowserConsoleReopen));

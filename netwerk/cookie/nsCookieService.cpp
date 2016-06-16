@@ -12,11 +12,13 @@
 #include "mozilla/net/NeckoCommon.h"
 
 #include "nsCookieService.h"
+#include "nsContentUtils.h"
 #include "nsIServiceManager.h"
 
 #include "nsIIOService.h"
 #include "nsIPrefBranch.h"
 #include "nsIPrefService.h"
+#include "nsIScriptError.h"
 #include "nsICookiePermission.h"
 #include "nsIURI.h"
 #include "nsIURL.h"
@@ -583,7 +585,7 @@ public:
 
     // TODO: We should add a new interface RemoveCookiesForOriginAttributes in
     // nsICookieManager2 and use it instead of RemoveCookiesForApp.
-    return cookieManager->RemoveCookiesForApp(attrs.mAppId, attrs.mInBrowser);
+    return cookieManager->RemoveCookiesForApp(attrs.mAppId, attrs.mInIsolatedMozBrowser);
   }
 };
 
@@ -825,16 +827,16 @@ ConvertAppIdToOriginAttrsSQLFunction::OnFunctionCall(
   mozIStorageValueArray* aFunctionArguments, nsIVariant** aResult)
 {
   nsresult rv;
-  int32_t appId, inBrowser;
+  int32_t appId, inIsolatedMozBrowser;
 
   rv = aFunctionArguments->GetInt32(0, &appId);
   NS_ENSURE_SUCCESS(rv, rv);
-  rv = aFunctionArguments->GetInt32(1, &inBrowser);
+  rv = aFunctionArguments->GetInt32(1, &inIsolatedMozBrowser);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  // Create an originAttributes object by appId and inBrowserElemnt.
+  // Create an originAttributes object by appId and inIsolatedMozBrowser.
   // Then create the originSuffix string from this object.
-  NeckoOriginAttributes attrs(appId, (inBrowser ? 1 : 0));
+  NeckoOriginAttributes attrs(appId, (inIsolatedMozBrowser ? 1 : 0));
   nsAutoCString suffix;
   attrs.CreateSuffix(suffix);
 
@@ -901,7 +903,7 @@ SetInBrowserFromOriginAttributesSQLFunction::OnFunctionCall(
   attrs.PopulateFromSuffix(suffix);
 
   RefPtr<nsVariant> outVar(new nsVariant());
-  rv = outVar->SetAsInt32(attrs.mInBrowser);
+  rv = outVar->SetAsInt32(attrs.mInIsolatedMozBrowser);
   NS_ENSURE_SUCCESS(rv, rv);
 
   outVar.forget(aResult);
@@ -1208,8 +1210,8 @@ nsCookieService::TryInitDB(bool aRecreateDB)
         // |inBrowserElement| by a single column |originAttributes|.
         //
         // Why we made this change: FxOS new security model (NSec) encapsulates
-        // "appId/inBrowser" in nsIPrincipal::originAttributes to make it easier
-        // to modify the contents of this structure in the future.
+        // "appId/inIsolatedMozBrowser" in nsIPrincipal::originAttributes to make
+        // it easier to modify the contents of this structure in the future.
         //
         // We do the migration in several steps:
         // 1. Rename the old table.
@@ -1944,7 +1946,7 @@ nsCookieService::SetCookieStringFromHttp(nsIURI     *aHostURI,
                                          nsIPrompt  *aPrompt,
                                          const char *aCookieHeader,
                                          const char *aServerTime,
-                                         nsIChannel *aChannel) 
+                                         nsIChannel *aChannel)
 {
   // The aPrompt argument is deprecated and unused.  Avoid introducing new
   // code that uses this argument by warning if the value is non-null.
@@ -1966,7 +1968,7 @@ nsCookieService::SetCookieStringCommon(nsIURI *aHostURI,
                                        const char *aCookieHeader,
                                        const char *aServerTime,
                                        nsIChannel *aChannel,
-                                       bool aFromHttp) 
+                                       bool aFromHttp)
 {
   NS_ENSURE_ARG(aHostURI);
   NS_ENSURE_ARG(aCookieHeader);
@@ -2366,10 +2368,46 @@ NS_IMETHODIMP
 nsCookieService::Remove(const nsACString &aHost,
                         const nsACString &aName,
                         const nsACString &aPath,
-                        bool             aBlocked)
+                        bool             aBlocked,
+                        JS::HandleValue  aOriginAttributes,
+                        JSContext*       aCx,
+                        uint8_t          aArgc)
 {
+  MOZ_ASSERT(aArgc == 0 || aArgc == 1);
+  if (aArgc == 0) {
+    // This is supposed to be temporary and in 1 or 2 releases we want to
+    // have originAttributes param as mandatory. But for now, we don't want to
+    // break existing addons, so we write a console message to inform the addon
+    // developers about it.
+    nsContentUtils::ReportToConsoleNonLocalized(
+      NS_LITERAL_STRING("“nsICookieManager.remove()” is changed. Update your code and pass the correct originAttributes. Read more on MDN: https://developer.mozilla.org/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsICookieManager"),
+      nsIScriptError::warningFlag,
+      NS_LITERAL_CSTRING("Cookie Manager"),
+      nullptr);
+  }
+
   NeckoOriginAttributes attrs;
-  return Remove(aHost, attrs, aName, aPath, aBlocked);
+  MOZ_ASSERT(attrs.Init(aCx, aOriginAttributes));
+  return RemoveNative(aHost, aName, aPath, aBlocked, &attrs);
+}
+
+NS_IMETHODIMP_(nsresult)
+nsCookieService::RemoveNative(const nsACString &aHost,
+                              const nsACString &aName,
+                              const nsACString &aPath,
+                              bool aBlocked,
+                              NeckoOriginAttributes* aOriginAttributes)
+{
+  if (NS_WARN_IF(!aOriginAttributes)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsresult rv = Remove(aHost, *aOriginAttributes, aName, aPath, aBlocked);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  return NS_OK;
 }
 
 /******************************************************************************
@@ -2598,7 +2636,7 @@ nsCookieService::EnsureReadDomain(const nsCookieKey &aKey)
 
   bool hasResult;
   nsCString name, value, host, path;
-  nsAutoTArray<RefPtr<nsCookie>, kMaxCookiesPerHost> array;
+  AutoTArray<RefPtr<nsCookie>, kMaxCookiesPerHost> array;
   while (1) {
     rv = mDefaultDBState->stmtReadDomain->ExecuteStep(&hasResult);
     if (NS_FAILED(rv)) {
@@ -2675,7 +2713,7 @@ nsCookieService::EnsureReadComplete()
 
   nsCString baseDomain, name, value, host, path;
   bool hasResult;
-  nsAutoTArray<CookieDomainTuple, kMaxNumberOfCookies> array;
+  AutoTArray<CookieDomainTuple, kMaxNumberOfCookies> array;
   while (1) {
     rv = stmt->ExecuteStep(&hasResult);
     if (NS_FAILED(rv)) {
@@ -2842,7 +2880,7 @@ nsCookieService::ImportCookies(nsIFile *aCookieFile)
     if (NS_FAILED(rv))
       continue;
 
-    // pre-existing cookies have appId=0, inBrowser=false set by default
+    // pre-existing cookies have appId=0, inIsolatedMozBrowser=false set by default
     // constructor of NeckoOriginAttributes().
     nsCookieKey key = DEFAULT_APP_KEY(baseDomain);
 
@@ -2863,7 +2901,7 @@ nsCookieService::ImportCookies(nsIFile *aCookieFile)
     if (!newCookie) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    
+
     // trick: preserve the most-recently-used cookie ordering,
     // by successively decrementing the lastAccessed time
     lastAccessedCounter--;
@@ -2992,7 +3030,7 @@ nsCookieService::GetCookieStringInternal(nsIURI *aHostURI,
   }
 
   nsCookie *cookie;
-  nsAutoTArray<nsCookie*, 8> foundCookieList;
+  AutoTArray<nsCookie*, 8> foundCookieList;
   int64_t currentTimeInUsec = PR_Now();
   int64_t currentTime = currentTimeInUsec / PR_USEC_PER_SEC;
   bool stale = false;
@@ -3454,7 +3492,7 @@ nsCookieService::AddInternal(const nsCookieKey             &aKey,
     5. cookie <NAME> is optional, where spec requires it. This is a fairly
        trivial case, but allows the flexibility of setting only a cookie <VALUE>
        with a blank <NAME> and is required by some sites (see bug 169091).
-       
+
     6. Attribute "HttpOnly", not covered in the RFCs, is supported
        (see bug 178993).
 
@@ -3583,7 +3621,7 @@ nsCookieService::ParseAttributes(nsDependentCString &aCookieHeader,
 
   aCookieAttributes.isSecure = false;
   aCookieAttributes.isHttpOnly = false;
-  
+
   nsDependentCSubstring tokenString(cookieStart, cookieStart);
   nsDependentCSubstring tokenValue (cookieStart, cookieStart);
   bool newCookie, equalsFound;
@@ -3626,7 +3664,7 @@ nsCookieService::ParseAttributes(nsDependentCString &aCookieHeader,
     // ignore any tokenValue for isSecure; just set the boolean
     else if (tokenString.LowerCaseEqualsLiteral(kSecure))
       aCookieAttributes.isSecure = true;
-      
+
     // ignore any tokenValue for isHttpOnly (see bug 178993);
     // just set the boolean
     else if (tokenString.LowerCaseEqualsLiteral(kHttpOnly))
@@ -3953,8 +3991,8 @@ nsCookieService::GetExpiry(nsCookieAttributes &aCookieAttributes,
                            int64_t             aServerTime,
                            int64_t             aCurrentTime)
 {
-  /* Determine when the cookie should expire. This is done by taking the difference between 
-   * the server time and the time the server wants the cookie to expire, and adding that 
+  /* Determine when the cookie should expire. This is done by taking the difference between
+   * the server time and the time the server wants the cookie to expire, and adding that
    * difference to the client time. This localizes the client time regardless of whether or
    * not the TZ environment variable was set on the client.
    *
@@ -4065,7 +4103,7 @@ nsCookieService::PurgeCookies(int64_t aCurrentTimeInUsec)
     ("PurgeCookies(): beginning purge with %ld cookies and %lld oldest age",
      mDBState->cookieCount, aCurrentTimeInUsec - mDBState->cookieOldestTime));
 
-  typedef nsAutoTArray<nsListIter, kMaxNumberOfCookies> PurgeList;
+  typedef AutoTArray<nsListIter, kMaxNumberOfCookies> PurgeList;
   PurgeList purgeList;
 
   nsCOMPtr<nsIMutableArray> removedList = do_CreateInstance(NS_ARRAY_CONTRACTID);
@@ -4293,7 +4331,7 @@ nsCookieService::GetCookiesFromHost(const nsACString     &aHost,
 }
 
 NS_IMETHODIMP
-nsCookieService::GetCookiesForApp(uint32_t aAppId, bool aOnlyBrowserElement,
+nsCookieService::GetCookiesForApp(uint32_t aAppId, bool aOnlyIsolatedMozBrowser,
                                   nsISimpleEnumerator** aEnumerator)
 {
   if (!mDBState) {
@@ -4308,7 +4346,7 @@ nsCookieService::GetCookiesForApp(uint32_t aAppId, bool aOnlyBrowserElement,
     nsCookieEntry* entry = iter.Get();
 
     if (entry->mOriginAttributes.mAppId != aAppId ||
-        (aOnlyBrowserElement && !entry->mOriginAttributes.mInBrowser)) {
+        (aOnlyIsolatedMozBrowser && !entry->mOriginAttributes.mInIsolatedMozBrowser)) {
       continue;
     }
 
@@ -4323,10 +4361,11 @@ nsCookieService::GetCookiesForApp(uint32_t aAppId, bool aOnlyBrowserElement,
 }
 
 NS_IMETHODIMP
-nsCookieService::RemoveCookiesForApp(uint32_t aAppId, bool aOnlyBrowserElement)
+nsCookieService::RemoveCookiesForApp(uint32_t aAppId,
+                                     bool aOnlyIsolatedMozBrowser)
 {
   nsCOMPtr<nsISimpleEnumerator> enumerator;
-  nsresult rv = GetCookiesForApp(aAppId, aOnlyBrowserElement,
+  nsresult rv = GetCookiesForApp(aAppId, aOnlyIsolatedMozBrowser,
                                  getter_AddRefs(enumerator));
 
   NS_ENSURE_SUCCESS(rv, rv);
@@ -4349,21 +4388,21 @@ nsCookieService::RemoveCookiesForApp(uint32_t aAppId, bool aOnlyBrowserElement)
     nsAutoCString path;
     cookie->GetPath(path);
 
-    // nsICookie do not carry the appId/inBrowserElement information.
+    // nsICookie do not carry the appId/isIsolatedBrowser information.
     // That means we have to guess. This is easy for appId but not for
-    // inBrowserElement flag.
+    // isIsolatedBrowser flag.
     // A simple solution is to always ask to remove the cookie with
-    // inBrowserElement = true and only ask for the other one to be removed if
+    // isIsolatedBrowser = true and only ask for the other one to be removed if
     // we happen to be in the case of !aOnlyBrowserElement.
-    // Anyway, with this solution, we will likely be looking for unexistant
+    // Anyway, with this solution, we will likely be looking for non-existent
     // cookies.
     //
     // NOTE: we could make this better by getting nsCookieEntry objects instead
     // of plain nsICookie.
     NeckoOriginAttributes attrs(aAppId, true);
     Remove(host, attrs, name, path, false);
-    if (!aOnlyBrowserElement) {
-      attrs.mInBrowser = false;
+    if (!aOnlyIsolatedMozBrowser) {
+      attrs.mInIsolatedMozBrowser = false;
       Remove(host, attrs, name, path, false);
     }
   }

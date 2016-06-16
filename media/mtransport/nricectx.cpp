@@ -93,6 +93,7 @@ extern "C" {
 #include "nr_socket_prsock.h"
 #include "nrinterfaceprioritizer.h"
 #include "rlogringbuffer.h"
+#include "test_nr_socket.h"
 
 namespace mozilla {
 
@@ -268,6 +269,25 @@ nsresult NrIceTurnServer::ToNicerTurnStruct(nr_ice_turn_server *server) const {
   return NS_OK;
 }
 
+NrIceCtx::NrIceCtx(const std::string& name,
+                   bool offerer,
+                   Policy policy)
+  : connection_state_(ICE_CTX_INIT),
+    gathering_state_(ICE_CTX_GATHER_INIT),
+    name_(name),
+    offerer_(offerer),
+    streams_(),
+    ctx_(nullptr),
+    peer_(nullptr),
+    ice_handler_vtbl_(nullptr),
+    ice_handler_(nullptr),
+    trickle_(true),
+    policy_(policy),
+    nat_ (nullptr) {
+  // XXX: offerer_ will be used eventually;  placate clang in the meantime.
+  (void)offerer_;
+}
+
 // Handler callbacks
 int NrIceCtx::select_pair(void *obj,nr_ice_media_stream *stream,
                    int component_id, nr_ice_cand_pair **potentials,
@@ -376,19 +396,13 @@ void NrIceCtx::trickle_cb(void *arg, nr_ice_ctx *ice_ctx,
   s->SignalCandidate(s, candidate_str);
 }
 
-RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name,
-                                  bool offerer,
-                                  bool allow_loopback,
-                                  bool tcp_enabled,
-                                  bool allow_link_local,
-                                  bool hide_non_default,
-                                  Policy policy) {
-   RefPtr<NrIceCtx> ctx = new NrIceCtx(name, offerer, policy);
-
+void NrIceCtx::Init(bool allow_loopback,
+                    bool tcp_enabled,
+                    bool allow_link_local)
+{
   // Initialize the crypto callbacks and logging stuff
   if (!initialized) {
     NR_reg_init(NR_REG_MODE_LOCAL);
-    RLogRingBuffer::CreateInstance();
     nr_crypto_vtbl = &nr_ice_crypto_nss_vtbl;
     initialized = true;
 
@@ -408,7 +422,6 @@ RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name,
     int32_t ice_tcp_so_sock_count = 3;
     int32_t ice_tcp_listen_backlog = 10;
     nsAutoCString force_net_interface;
-#ifndef MOZILLA_XPCOMRT_API
     nsresult res;
     nsCOMPtr<nsIPrefService> prefs =
       do_GetService("@mozilla.org/preferences-service;1", &res);
@@ -433,7 +446,7 @@ RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name,
             getter_Copies(force_net_interface));
       }
     }
-#endif
+
     NR_reg_set_uint4((char *)"stun.client.maximum_transmits",
                      stun_client_maximum_transmits);
     NR_reg_set_uint4((char *)NR_ICE_REG_TRICKLE_GRACE_PERIOD,
@@ -458,6 +471,19 @@ RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name,
       NR_reg_set_string((char *)NR_ICE_REG_PREF_FORCE_INTERFACE_NAME, const_cast<char*>(flat.get()));
     }
   }
+}
+
+RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name,
+                                  bool offerer,
+                                  bool allow_loopback,
+                                  bool tcp_enabled,
+                                  bool allow_link_local,
+                                  bool hide_non_default,
+                                  Policy policy) {
+   RefPtr<NrIceCtx> ctx = new NrIceCtx(name, offerer, policy);
+
+  // Initialize the crypto callbacks and logging stuff
+  Init(allow_loopback, tcp_enabled, allow_link_local);
 
   // Create the ICE context
   int r;
@@ -499,6 +525,41 @@ RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name,
     }
   }
 
+  char* mapping_type = nullptr;
+  char* filtering_type = nullptr;
+  bool block_udp = false;
+
+  nsresult rv;
+  nsCOMPtr<nsIPrefService> pref_service =
+    do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
+
+  if (NS_SUCCEEDED(rv)) {
+    nsCOMPtr<nsIPrefBranch> pref_branch;
+    rv = pref_service->GetBranch(nullptr, getter_AddRefs(pref_branch));
+    if (NS_SUCCEEDED(rv)) {
+      rv = pref_branch->GetCharPref(
+          "media.peerconnection.nat_simulator.mapping_type",
+          &mapping_type);
+      rv = pref_branch->GetCharPref(
+          "media.peerconnection.nat_simulator.filtering_type",
+          &filtering_type);
+      rv = pref_branch->GetBoolPref(
+          "media.peerconnection.nat_simulator.block_udp",
+          &block_udp);
+    }
+  }
+
+  if (mapping_type && filtering_type) {
+    MOZ_MTLOG(ML_DEBUG, "NAT filtering type: " << filtering_type);
+    MOZ_MTLOG(ML_DEBUG, "NAT mapping type: " << mapping_type);
+    TestNat* test_nat = new TestNat;
+    test_nat->filtering_type_ = TestNat::ToNatBehavior(filtering_type);
+    test_nat->mapping_type_ = TestNat::ToNatBehavior(mapping_type);
+    test_nat->block_udp_ = block_udp;
+    test_nat->enabled_ = true;
+    ctx->SetNat(test_nat);
+  }
+
   // Create the handler objects
   ctx->ice_handler_vtbl_ = new nr_ice_handler_vtbl();
   ctx->ice_handler_vtbl_->select_pair = &NrIceCtx::select_pair;
@@ -523,13 +584,23 @@ RefPtr<NrIceCtx> NrIceCtx::Create(const std::string& name,
     return nullptr;
   }
 
-  nsresult rv;
   ctx->sts_target_ = do_GetService(NS_SOCKETTRANSPORTSERVICE_CONTRACTID, &rv);
 
   if (!NS_SUCCEEDED(rv))
     return nullptr;
 
   return ctx;
+}
+
+int NrIceCtx::SetNat(const RefPtr<TestNat>& aNat) {
+  nat_ = aNat;
+  nr_socket_factory *fac;
+  int r = nat_->create_socket_factory(&fac);
+  if (r) {
+    return r;
+  }
+  nr_ice_ctx_set_socket_factory(ctx_, fac);
+  return 0;
 }
 
 // ONLY USE THIS FOR TESTING. Will cause totally unpredictable and possibly very

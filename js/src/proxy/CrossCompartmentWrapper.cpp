@@ -493,7 +493,9 @@ js::NukeCrossCompartmentWrappers(JSContext* cx,
 // Given a cross-compartment wrapper |wobj|, update it to point to
 // |newTarget|. This recomputes the wrapper with JS_WrapValue, and thus can be
 // useful even if wrapper already points to newTarget.
-bool
+// This operation crashes on failure rather than leaving the heap in an
+// inconsistent state.
+void
 js::RemapWrapper(JSContext* cx, JSObject* wobjArg, JSObject* newTargetArg)
 {
     RootedObject wobj(cx, wobjArg);
@@ -520,7 +522,7 @@ js::RemapWrapper(JSContext* cx, JSObject* wobjArg, JSObject* newTargetArg)
     wcompartment->removeWrapper(p);
 
     // When we remove origv from the wrapper map, its wrapper, wobj, must
-    // immediately cease to be a cross-compartment wrapper. Neuter it.
+    // immediately cease to be a cross-compartment wrapper. Nuke it.
     NukeCrossCompartmentWrapper(cx, wobj);
 
     // First, we wrap it in the new compartment. We try to use the existing
@@ -550,8 +552,8 @@ js::RemapWrapper(JSContext* cx, JSObject* wobjArg, JSObject* newTargetArg)
     // Update the entry in the compartment's wrapper map to point to the old
     // wrapper, which has now been updated (via reuse or swap).
     MOZ_ASSERT(wobj->is<WrapperObject>());
-    wcompartment->putWrapper(cx, CrossCompartmentKey(newTarget), ObjectValue(*wobj));
-    return true;
+    if (!wcompartment->putWrapper(cx, CrossCompartmentKey(newTarget), ObjectValue(*wobj)))
+        MOZ_CRASH();
 }
 
 // Remap all cross-compartment wrappers pointing to |oldTarget| to point to
@@ -574,10 +576,8 @@ js::RemapAllWrappersForObject(JSContext* cx, JSObject* oldTargetArg,
         }
     }
 
-    for (const WrapperValue& v : toTransplant) {
-        if (!RemapWrapper(cx, &v.toObject(), newTarget))
-            MOZ_CRASH();
-    }
+    for (const WrapperValue& v : toTransplant)
+        RemapWrapper(cx, &v.toObject(), newTarget);
 
     return true;
 }
@@ -614,8 +614,7 @@ js::RecomputeWrappers(JSContext* cx, const CompartmentFilter& sourceFilter,
     for (const WrapperValue& v : toRecompute) {
         JSObject* wrapper = &v.toObject();
         JSObject* wrapped = Wrapper::wrappedObject(wrapper);
-        if (!RemapWrapper(cx, wrapper, wrapped))
-            MOZ_CRASH();
+        RemapWrapper(cx, wrapper, wrapped);
     }
 
     return true;

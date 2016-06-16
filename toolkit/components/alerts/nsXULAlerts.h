@@ -9,14 +9,16 @@
 #include "nsHashKeys.h"
 #include "nsInterfaceHashtable.h"
 
-#include "nsIDOMWindow.h"
+#include "mozIDOMWindow.h"
 #include "nsIObserver.h"
 
 class nsXULAlerts : public nsIAlertsService,
-                    public nsIAlertsDoNotDisturb
+                    public nsIAlertsDoNotDisturb,
+                    public nsIAlertsIconURI
 {
   friend class nsXULAlertObserver;
 public:
+  NS_DECL_NSIALERTSICONURI
   NS_DECL_NSIALERTSDONOTDISTURB
   NS_DECL_NSIALERTSSERVICE
   NS_DECL_ISUPPORTS
@@ -30,7 +32,7 @@ public:
 protected:
   virtual ~nsXULAlerts() {}
 
-  nsInterfaceHashtable<nsStringHashKey, nsIDOMWindow> mNamedWindows;
+  nsInterfaceHashtable<nsStringHashKey, mozIDOMWindowProxy> mNamedWindows;
   bool mDoNotDisturb = false;
 };
 
@@ -49,14 +51,14 @@ public:
     : mXULAlerts(aXULAlerts), mAlertName(aAlertName),
       mObserver(aObserver) {}
 
-  void SetAlertWindow(nsIDOMWindow* aWindow) { mAlertWindow = aWindow; }
+  void SetAlertWindow(mozIDOMWindowProxy* aWindow) { mAlertWindow = aWindow; }
 
 protected:
   virtual ~nsXULAlertObserver() {}
 
   RefPtr<nsXULAlerts> mXULAlerts;
   nsString mAlertName;
-  nsCOMPtr<nsIDOMWindow> mAlertWindow;
+  nsCOMPtr<mozIDOMWindowProxy> mAlertWindow;
   nsCOMPtr<nsIObserver> mObserver;
 };
 

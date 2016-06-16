@@ -67,7 +67,13 @@ std::ostream& operator<<(std::ostream& aStream,
 /*static*/ bool
 AccessibleCaretManager::sSelectionBarEnabled = false;
 /*static*/ bool
+AccessibleCaretManager::sCaretShownWhenLongTappingOnEmptyContent = false;
+/*static*/ bool
 AccessibleCaretManager::sCaretsExtendedVisibility = false;
+/*static*/ bool
+AccessibleCaretManager::sCaretsAlwaysTilt = false;
+/*static*/ bool
+AccessibleCaretManager::sCaretsScriptUpdates = false;
 /*static*/ bool
 AccessibleCaretManager::sHapticFeedback = false;
 
@@ -87,8 +93,14 @@ AccessibleCaretManager::AccessibleCaretManager(nsIPresShell* aPresShell)
   if (!addedPrefs) {
     Preferences::AddBoolVarCache(&sSelectionBarEnabled,
                                  "layout.accessiblecaret.bar.enabled");
+    Preferences::AddBoolVarCache(&sCaretShownWhenLongTappingOnEmptyContent,
+      "layout.accessiblecaret.caret_shown_when_long_tapping_on_empty_content");
     Preferences::AddBoolVarCache(&sCaretsExtendedVisibility,
                                  "layout.accessiblecaret.extendedvisibility");
+    Preferences::AddBoolVarCache(&sCaretsAlwaysTilt,
+                                 "layout.accessiblecaret.always_tilt");
+    Preferences::AddBoolVarCache(&sCaretsScriptUpdates,
+      "layout.accessiblecaret.allow_script_change_updates");
     Preferences::AddBoolVarCache(&sHapticFeedback,
                                  "layout.accessiblecaret.hapticfeedback");
     addedPrefs = true;
@@ -97,7 +109,17 @@ AccessibleCaretManager::AccessibleCaretManager(nsIPresShell* aPresShell)
 
 AccessibleCaretManager::~AccessibleCaretManager()
 {
+}
+
+void
+AccessibleCaretManager::Terminate()
+{
   CancelCaretTimeoutTimer();
+  mCaretTimeoutTimer = nullptr;
+  mFirstCaret = nullptr;
+  mSecondCaret = nullptr;
+  mActiveCaret = nullptr;
+  mPresShell = nullptr;
 }
 
 nsresult
@@ -112,27 +134,18 @@ AccessibleCaretManager::OnSelectionChanged(nsIDOMDocument* aDoc,
   }
 
   // eSetSelection events from the Fennec widget IME can be generated
-  // by autoSuggest, autoCorrect, and nsCaret position changes.
+  // by autoSuggest / autoCorrect composition changes, or by TYPE_REPLACE_TEXT
+  // actions, either positioning cursor for text insert, or selecting
+  // text-to-be-replaced. None should affect AccessibleCaret visibility.
   if (aReason & nsISelectionListener::IME_REASON) {
-    if (GetCaretMode() == CaretMode::Cursor) {
-      // Caret position changes need us to open/update,
-      // or hide the AccessibleCaret.
-      FlushLayout();
-      UpdateCarets();
-    } else {
-      // Ignore transient autoSuggest selection styling,
-      // or autoCorrect text updates.
-    }
     return NS_OK;
   }
 
   // Move the cursor by Javascript / or unknown internal.
   if (aReason == nsISelectionListener::NO_REASON) {
-    // Extended visibility won't make hidden carets visible. Visible carets will
-    // be updated or hidden as appropriate.
-    if (sCaretsExtendedVisibility &&
+    // Update visible carets, if javascript changes are allowed.
+    if (sCaretsScriptUpdates &&
         (mFirstCaret->IsLogicallyVisible() || mSecondCaret->IsLogicallyVisible())) {
-        FlushLayout();
         UpdateCarets();
         return NS_OK;
     }
@@ -192,6 +205,11 @@ AccessibleCaretManager::DoNotShowCarets()
 void
 AccessibleCaretManager::UpdateCarets(UpdateCaretsHint aHint)
 {
+  FlushLayout();
+  if (IsTerminated()) {
+    return;
+  }
+
   mLastUpdateCaretMode = GetCaretMode();
 
   switch (mLastUpdateCaretMode) {
@@ -202,7 +220,7 @@ AccessibleCaretManager::UpdateCarets(UpdateCaretsHint aHint)
     UpdateCaretsForCursorMode(aHint);
     break;
   case CaretMode::Selection:
-    UpdateCaretsForSelectionMode();
+    UpdateCaretsForSelectionMode(aHint);
     break;
   }
 }
@@ -269,19 +287,32 @@ AccessibleCaretManager::UpdateCaretsForCursorMode(UpdateCaretsHint aHint)
     case PositionChangedResult::Changed:
       switch (aHint) {
         case UpdateCaretsHint::Default:
-          // On Fennec, always show accessiblecaret even if the input is empty
-          // to make ActionBar visible.
-          if (sCaretsExtendedVisibility ||
-              HasNonEmptyTextContent(GetEditingHostForFrame(frame))) {
+          if (HasNonEmptyTextContent(GetEditingHostForFrame(frame))) {
             mFirstCaret->SetAppearance(Appearance::Normal);
+          } else if (sCaretShownWhenLongTappingOnEmptyContent) {
+            if (mFirstCaret->IsLogicallyVisible()) {
+              // Possible cases are: 1) SelectWordOrShortcut() sets the
+              // appearance to Normal. 2) When the caret is out of viewport and
+              // now scrolling into viewport, it has appearance NormalNotShown.
+              mFirstCaret->SetAppearance(Appearance::Normal);
+            } else {
+              // Possible cases are: a) Single tap on current empty content;
+              // OnSelectionChanged() sets the appearance to None due to
+              // MOUSEDOWN_REASON. b) Single tap on other empty content;
+              // OnBlur() sets the appearance to None.
+              //
+              // Do nothing to make the appearance remains None so that it can
+              // be distinguished from case 2). Also do not set the appearance
+              // to NormalNotShown here like the default update behavior.
+            }
           } else {
             mFirstCaret->SetAppearance(Appearance::NormalNotShown);
           }
           break;
 
         case UpdateCaretsHint::RespectOldAppearance:
-          // Do nothing to prevent the appearance of the caret being
-          // changed from NormalNotShown to Normal.
+          // Do nothing to preserve the appearance of the caret set by the
+          // caller.
           break;
       }
       break;
@@ -303,7 +334,7 @@ AccessibleCaretManager::UpdateCaretsForCursorMode(UpdateCaretsHint aHint)
 }
 
 void
-AccessibleCaretManager::UpdateCaretsForSelectionMode()
+AccessibleCaretManager::UpdateCaretsForSelectionMode(UpdateCaretsHint aHint)
 {
   AC_LOG("%s: selection: %p", __FUNCTION__, GetSelection());
 
@@ -319,8 +350,8 @@ AccessibleCaretManager::UpdateCaretsForSelectionMode()
     return;
   }
 
-  auto updateSingleCaret = [](AccessibleCaret* aCaret, nsIFrame* aFrame,
-                              int32_t aOffset) -> PositionChangedResult
+  auto updateSingleCaret = [aHint](AccessibleCaret* aCaret, nsIFrame* aFrame,
+                                   int32_t aOffset) -> PositionChangedResult
   {
     PositionChangedResult result = aCaret->SetPosition(aFrame, aOffset);
     aCaret->SetSelectionBarEnabled(sSelectionBarEnabled);
@@ -331,7 +362,16 @@ AccessibleCaretManager::UpdateCaretsForSelectionMode()
         break;
 
       case PositionChangedResult::Changed:
-        aCaret->SetAppearance(Appearance::Normal);
+        switch (aHint) {
+          case UpdateCaretsHint::Default:
+            aCaret->SetAppearance(Appearance::Normal);
+            break;
+
+          case UpdateCaretsHint::RespectOldAppearance:
+            // Do nothing to preserve the appearance of the caret set by the
+            // caller.
+            break;
+        }
         break;
 
       case PositionChangedResult::Invisible:
@@ -350,9 +390,20 @@ AccessibleCaretManager::UpdateCaretsForSelectionMode()
       secondCaretResult == PositionChangedResult::Changed) {
     // Flush layout to make the carets intersection correct.
     FlushLayout();
+    if (IsTerminated()) {
+      return;
+    }
   }
 
-  UpdateCaretsForTilt();
+  if (aHint == UpdateCaretsHint::Default) {
+    // Only check for tilt carets with default update hint. Otherwise we might
+    // override the appearance set by the caller.
+    if (sCaretsAlwaysTilt) {
+      UpdateCaretsForAlwaysTilt(startFrame, endFrame);
+    } else {
+      UpdateCaretsForOverlappingTilt();
+    }
+  }
 
   if (!mActiveCaret) {
     DispatchCaretStateChangedEvent(CaretChangedReason::Updateposition);
@@ -360,7 +411,7 @@ AccessibleCaretManager::UpdateCaretsForSelectionMode()
 }
 
 void
-AccessibleCaretManager::UpdateCaretsForTilt()
+AccessibleCaretManager::UpdateCaretsForOverlappingTilt()
 {
   if (mFirstCaret->IsVisuallyVisible() && mSecondCaret->IsVisuallyVisible()) {
     if (mFirstCaret->Intersects(*mSecondCaret)) {
@@ -376,6 +427,22 @@ AccessibleCaretManager::UpdateCaretsForTilt()
       mFirstCaret->SetAppearance(Appearance::Normal);
       mSecondCaret->SetAppearance(Appearance::Normal);
     }
+  }
+}
+
+void
+AccessibleCaretManager::UpdateCaretsForAlwaysTilt(nsIFrame* aStartFrame,
+                                                  nsIFrame* aEndFrame)
+{
+  if (mFirstCaret->IsVisuallyVisible()) {
+    auto startFrameWritingMode = aStartFrame->GetWritingMode();
+    mFirstCaret->SetAppearance(startFrameWritingMode.IsBidiLTR() ?
+                               Appearance::Left : Appearance::Right);
+  }
+  if (mSecondCaret->IsVisuallyVisible()) {
+    auto endFrameWritingMode = aEndFrame->GetWritingMode();
+    mSecondCaret->SetAppearance(endFrameWritingMode.IsBidiLTR() ?
+                                Appearance::Right : Appearance::Left);
   }
 }
 
@@ -456,6 +523,11 @@ AccessibleCaretManager::TapCaret(const nsPoint& aPoint)
 nsresult
 AccessibleCaretManager::SelectWordOrShortcut(const nsPoint& aPoint)
 {
+  auto UpdateCaretsWithHapticFeedback = [this] {
+    UpdateCarets();
+    ProvideHapticFeedback();
+  };
+
   if (!mPresShell) {
     return NS_ERROR_UNEXPECTED;
   }
@@ -486,10 +558,13 @@ AccessibleCaretManager::SelectWordOrShortcut(const nsPoint& aPoint)
   if (focusableFrame && newFocusEditingHost &&
       !HasNonEmptyTextContent(newFocusEditingHost)) {
     ChangeFocusToOrClearOldFocus(focusableFrame);
+
+    if (sCaretShownWhenLongTappingOnEmptyContent) {
+      mFirstCaret->SetAppearance(Appearance::Normal);
+    }
     // We need to update carets to get correct information before dispatching
     // CaretStateChangedEvent.
-    UpdateCarets();
-    ProvideHapticFeedback();
+    UpdateCaretsWithHapticFeedback();
     DispatchCaretStateChangedEvent(CaretChangedReason::Longpressonemptycontent);
     return NS_OK;
   }
@@ -514,13 +589,22 @@ AccessibleCaretManager::SelectWordOrShortcut(const nsPoint& aPoint)
   // ptFrame is selectable. Now change the focus.
   ChangeFocusToOrClearOldFocus(focusableFrame);
 
+  if (GetCaretMode() == CaretMode::Selection &&
+      !mFirstCaret->IsLogicallyVisible() && !mSecondCaret->IsLogicallyVisible()) {
+    // We have a selection while both carets have Appearance::None because of
+    // previous operations like blur event. Just update carets on the selection
+    // without selecting a new word.
+    AC_LOG("%s: UpdateCarets() for current selection", __FUNCTION__);
+    UpdateCaretsWithHapticFeedback();
+    return NS_OK;
+  }
+
   // Then try select a word under point.
   nsPoint ptInFrame = aPoint;
   nsLayoutUtils::TransformPoint(rootFrame, ptFrame, ptInFrame);
 
   nsresult rv = SelectWord(ptFrame, ptInFrame);
-  UpdateCarets();
-  ProvideHapticFeedback();
+  UpdateCaretsWithHapticFeedback();
 
   return rv;
 }
@@ -530,9 +614,8 @@ AccessibleCaretManager::OnScrollStart()
 {
   AC_LOG("%s", __FUNCTION__);
 
-  if (GetCaretMode() == CaretMode::Cursor) {
-    mFirstCaretAppearanceOnScrollStart = mFirstCaret->GetAppearance();
-  }
+  mFirstCaretAppearanceOnScrollStart = mFirstCaret->GetAppearance();
+  mSecondCaretAppearanceOnScrollStart = mSecondCaret->GetAppearance();
 
   // Hide the carets. (Extended visibility makes them "NormalNotShown").
   if (sCaretsExtendedVisibility) {
@@ -549,11 +632,13 @@ AccessibleCaretManager::OnScrollEnd()
     return;
   }
 
+  mFirstCaret->SetAppearance(mFirstCaretAppearanceOnScrollStart);
+  mSecondCaret->SetAppearance(mSecondCaretAppearanceOnScrollStart);
+
   if (GetCaretMode() == CaretMode::Cursor) {
-    mFirstCaret->SetAppearance(mFirstCaretAppearanceOnScrollStart);
     if (!mFirstCaret->IsLogicallyVisible()) {
-      // If the caret is hide (Appearance::None) due to timeout or blur, no need
-      // to update it.
+      // If the caret is hidden (Appearance::None) due to timeout or blur, no
+      // need to update it.
       return;
     }
   }
@@ -708,7 +793,7 @@ AccessibleCaretManager::ChangeFocusToOrClearOldFocus(nsIFrame* aFrame) const
     nsCOMPtr<nsIDOMElement> focusableElement = do_QueryInterface(focusableContent);
     fm->SetFocus(focusableElement, nsIFocusManager::FLAG_BYMOUSE);
   } else {
-    nsIDOMWindow* win = mPresShell->GetDocument()->GetWindow();
+    nsPIDOMWindowOuter* win = mPresShell->GetDocument()->GetWindow();
     if (win) {
       fm->ClearFocus(win);
       fm->SetFocusedWindow(win);
@@ -1083,7 +1168,7 @@ AccessibleCaretManager::CaretTimeoutMs() const
 void
 AccessibleCaretManager::LaunchCaretTimeoutTimer()
 {
-  if (!mCaretTimeoutTimer || CaretTimeoutMs() == 0 ||
+  if (!mPresShell || !mCaretTimeoutTimer || CaretTimeoutMs() == 0 ||
       GetCaretMode() != CaretMode::Cursor || mActiveCaret) {
     return;
   }
@@ -1110,11 +1195,12 @@ AccessibleCaretManager::CancelCaretTimeoutTimer()
 void
 AccessibleCaretManager::DispatchCaretStateChangedEvent(CaretChangedReason aReason) const
 {
-  // Holding PresShell to prevent AccessibleCaretManager to be destroyed.
-  nsCOMPtr<nsIPresShell> presShell = mPresShell;
+  if (!mPresShell) {
+    return;
+  }
 
   FlushLayout();
-  if (presShell->IsDestroying()) {
+  if (IsTerminated()) {
     return;
   }
 
@@ -1179,7 +1265,7 @@ AccessibleCaretManager::DispatchCaretStateChangedEvent(CaretChangedReason aReaso
     CaretStateChangedEvent::Constructor(doc, NS_LITERAL_STRING("mozcaretstatechanged"), init);
 
   event->SetTrusted(true);
-  event->GetInternalNSEvent()->mFlags.mOnlyChromeDispatch = true;
+  event->WidgetEventPtr()->mFlags.mOnlyChromeDispatch = true;
 
   AC_LOG("%s: reason %d, collapsed %d, caretVisible %d", __FUNCTION__,
          init.mReason, init.mCollapsed, init.mCaretVisible);

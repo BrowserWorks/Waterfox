@@ -222,13 +222,13 @@ RotatedContentBuffer::DrawTo(PaintedLayer* aLayer,
   if (!aLayer->GetValidRegion().Contains(BufferRect()) ||
       (ToData(aLayer)->GetClipToVisibleRegion() &&
        !aLayer->GetVisibleRegion().ToUnknownRegion().Contains(BufferRect())) ||
-      IsClippingCheap(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion())) {
+      IsClippingCheap(aTarget, aLayer->GetLocalVisibleRegion().ToUnknownRegion())) {
     // We don't want to draw invalid stuff, so we need to clip. Might as
     // well clip to the smallest area possible --- the visible region.
     // Bug 599189 if there is a non-integer-translation transform in aTarget,
-    // we might sample pixels outside GetEffectiveVisibleRegion(), which is wrong
+    // we might sample pixels outside GetLocalVisibleRegion(), which is wrong
     // and may cause gray lines.
-    gfxUtils::ClipToRegion(aTarget, aLayer->GetEffectiveVisibleRegion().ToUnknownRegion());
+    gfxUtils::ClipToRegion(aTarget, aLayer->GetLocalVisibleRegion().ToUnknownRegion());
     clipped = true;
   }
 
@@ -759,20 +759,18 @@ RotatedContentBuffer::BorrowDrawTargetForPainting(PaintState& aPaintState,
       // requested.
       return nullptr;
     }
-    nsIntRegionRectIterator iter(*drawPtr);
-    const IntRect *iterRect;
-    while ((iterRect = iter.Next())) {
-      mDTBuffer->FillRect(Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height),
+    for (auto iter = drawPtr->RectIter(); !iter.Done(); iter.Next()) {
+      const IntRect& rect = iter.Get();
+      mDTBuffer->FillRect(Rect(rect.x, rect.y, rect.width, rect.height),
                           ColorPattern(Color(0.0, 0.0, 0.0, 1.0)));
-      mDTBufferOnWhite->FillRect(Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height),
+      mDTBufferOnWhite->FillRect(Rect(rect.x, rect.y, rect.width, rect.height),
                                  ColorPattern(Color(1.0, 1.0, 1.0, 1.0)));
     }
   } else if (aPaintState.mContentType == gfxContentType::COLOR_ALPHA && HaveBuffer()) {
     // HaveBuffer() => we have an existing buffer that we must clear
-    nsIntRegionRectIterator iter(*drawPtr);
-    const IntRect *iterRect;
-    while ((iterRect = iter.Next())) {
-      result->ClearRect(Rect(iterRect->x, iterRect->y, iterRect->width, iterRect->height));
+    for (auto iter = drawPtr->RectIter(); !iter.Done(); iter.Next()) {
+      const IntRect& rect = iter.Get();
+      result->ClearRect(Rect(rect.x, rect.y, rect.width, rect.height));
     }
   }
 

@@ -13,6 +13,8 @@
 #include "nsDataHashtable.h"
 #include "mozilla/Atomics.h"
 #include "nsThreadUtils.h"
+#include "mozilla/MozPromise.h"
+#include "GMPStorage.h"
 
 template <class> struct already_AddRefed;
 
@@ -55,6 +57,13 @@ public:
 #ifdef MOZ_CRASHREPORTER
   void SetAsyncShutdownPluginState(GMPParent* aGMPParent, char aId, const nsCString& aState);
 #endif // MOZ_CRASHREPORTER
+  RefPtr<GenericPromise> EnsureInitialized();
+  RefPtr<GenericPromise> AsyncAddPluginDirectory(const nsAString& aDirectory);
+
+  already_AddRefed<GMPStorage> GetMemoryStorageFor(const nsACString& aNodeId);
+
+  // GMP thread access only
+  bool IsShuttingDown();
 
 private:
   friend class GMPServiceParent;
@@ -63,13 +72,14 @@ private:
 
   void ClearStorage();
 
-  GMPParent* SelectPluginForAPI(const nsACString& aNodeId,
-                                const nsCString& aAPI,
-                                const nsTArray<nsCString>& aTags);
-  GMPParent* FindPluginForAPIFrom(size_t aSearchStartIndex,
-                                  const nsCString& aAPI,
-                                  const nsTArray<nsCString>& aTags,
-                                  size_t* aOutPluginIndex);
+  already_AddRefed<GMPParent> SelectPluginForAPI(const nsACString& aNodeId,
+                                                 const nsCString& aAPI,
+                                                 const nsTArray<nsCString>& aTags);
+
+  already_AddRefed<GMPParent> FindPluginForAPIFrom(size_t aSearchStartIndex,
+                                                   const nsCString& aAPI,
+                                                   const nsTArray<nsCString>& aTags,
+                                                   size_t* aOutPluginIndex);
 
   nsresult GetNodeId(const nsAString& aOrigin, const nsAString& aTopLevelOrigin,
                      const nsAString& aGMPName,
@@ -80,10 +90,8 @@ private:
   void NotifySyncShutdownComplete();
   void NotifyAsyncShutdownComplete();
 
-  void LoadFromEnvironment();
   void ProcessPossiblePlugin(nsIFile* aDir);
 
-  void AddOnGMPThread(const nsAString& aDirectory);
   void RemoveOnGMPThread(const nsAString& aDirectory,
                          const bool aDeleteFromDisk,
                          const bool aCanDefer);
@@ -104,14 +112,18 @@ protected:
   friend class GMPParent;
   void ReAddOnGMPThread(const RefPtr<GMPParent>& aOld);
   void PluginTerminated(const RefPtr<GMPParent>& aOld);
-  void InitializePlugins() override;
+  void InitializePlugins(AbstractThread* aAbstractGMPThread) override;
+  RefPtr<GenericPromise::AllPromiseType> LoadFromEnvironment();
+  RefPtr<GenericPromise> AddOnGMPThread(nsString aDirectory);
   bool GetContentParentFrom(const nsACString& aNodeId,
                             const nsCString& aAPI,
                             const nsTArray<nsCString>& aTags,
                             UniquePtr<GetGMPContentParentCallback>&& aCallback)
     override;
 private:
-  GMPParent* ClonePlugin(const GMPParent* aOriginal);
+  // Creates a copy of aOriginal. Note that the caller is responsible for
+  // adding this to GeckoMediaPluginServiceParent::mPlugins.
+  already_AddRefed<GMPParent> ClonePlugin(const GMPParent* aOriginal);
   nsresult EnsurePluginsOnDiskScanned();
   nsresult InitStorage();
 
@@ -119,7 +131,6 @@ private:
   {
   public:
     enum EOperation {
-      ADD,
       REMOVE,
       REMOVE_AND_DELETE_FROM_DISK,
     };
@@ -193,6 +204,15 @@ private:
   // Hashes node id to whether that node id is allowed to store data
   // persistently on disk.
   nsDataHashtable<nsCStringHashKey, bool> mPersistentStorageAllowed;
+
+  // Synchronization for barrier that ensures we've loaded GMPs from
+  // MOZ_GMP_PATH before allowing GetContentParentFrom() to proceed.
+  Monitor mInitPromiseMonitor;
+  MozPromiseHolder<GenericPromise> mInitPromise;
+  bool mLoadPluginsFromDiskComplete;
+
+  // Hashes nodeId to the hashtable of storage for that nodeId.
+  nsRefPtrHashtable<nsCStringHashKey, GMPStorage> mTempGMPStorage;
 };
 
 nsresult ReadSalt(nsIFile* aPath, nsACString& aOutData);
@@ -213,7 +233,8 @@ public:
                    nsTArray<ProcessId>&& aAlreadyBridgedTo,
                    base::ProcessId* aID,
                    nsCString* aDisplayName,
-                   uint32_t* aPluginId) override;
+                   uint32_t* aPluginId,
+                   nsresult* aRv) override;
   bool RecvGetGMPNodeId(const nsString& aOrigin,
                         const nsString& aTopLevelOrigin,
                         const nsString& aGMPName,

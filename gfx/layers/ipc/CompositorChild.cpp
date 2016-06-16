@@ -95,7 +95,7 @@ CompositorChild::Destroy()
     mLayerManager = nullptr;
   }
 
-  nsAutoTArray<PLayerTransactionChild*, 16> transactions;
+  AutoTArray<PLayerTransactionChild*, 16> transactions;
   ManagedPLayerTransactionChild(transactions);
   for (int i = transactions.Length() - 1; i >= 0; --i) {
     RefPtr<LayerTransactionChild> layers =
@@ -197,10 +197,31 @@ CompositorChild::DeallocPLayerTransactionChild(PLayerTransactionChild* actor)
 }
 
 bool
-CompositorChild::RecvInvalidateAll()
+CompositorChild::RecvInvalidateLayers(const uint64_t& aLayersId)
 {
   if (mLayerManager) {
+    MOZ_ASSERT(aLayersId == 0);
     FrameLayerBuilder::InvalidateAllLayers(mLayerManager);
+  } else if (aLayersId != 0) {
+    if (dom::TabChild* child = dom::TabChild::GetFrom(aLayersId)) {
+      child->InvalidateLayers();
+    }
+  }
+  return true;
+}
+
+bool
+CompositorChild::RecvCompositorUpdated(const uint64_t& aLayersId,
+                                       const TextureFactoryIdentifier& aNewIdentifier)
+{
+  if (mLayerManager) {
+    // This case is handled directly by nsBaseWidget.
+    MOZ_ASSERT(aLayersId == 0);
+  } else if (aLayersId != 0) {
+    if (dom::TabChild* child = dom::TabChild::GetFrom(aLayersId)) {
+      child->CompositorUpdated(aNewIdentifier);
+    }
+    SendAcknowledgeCompositorUpdate(aLayersId);
   }
   return true;
 }
@@ -234,10 +255,10 @@ static void CalculatePluginClip(const LayoutDeviceIntRect& aBounds,
   }
   // shift to plugin widget origin
   contentVisibleRegion.MoveBy(-aBounds.x, -aBounds.y);
-  LayoutDeviceIntRegion::RectIterator iter(contentVisibleRegion);
-  for (const LayoutDeviceIntRect* rgnRect = iter.Next(); rgnRect; rgnRect = iter.Next()) {
-    aResult.AppendElement(*rgnRect);
-    aVisibleBounds.UnionRect(aVisibleBounds, *rgnRect);
+  for (auto iter = contentVisibleRegion.RectIter(); !iter.Done(); iter.Next()) {
+    const LayoutDeviceIntRect& rect = iter.Get();
+    aResult.AppendElement(rect);
+    aVisibleBounds.UnionRect(aVisibleBounds, rect);
   }
 }
 #endif
@@ -277,14 +298,8 @@ CompositorChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint& aCon
       LayoutDeviceIntRect visibleBounds;
       // If the plugin is visible update it's geometry.
       if (isVisible) {
-        // bounds (content origin) - don't pass true to Resize, it triggers a
-        // sync paint update to the plugin process on Windows, which happens
-        // prior to clipping information being applied.
+        // Set bounds (content origin)
         bounds = aPlugins[pluginsIdx].bounds();
-        rv = widget->Resize(aContentOffset.x + bounds.x,
-                            aContentOffset.y + bounds.y,
-                            bounds.width, bounds.height, false);
-        NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
         nsTArray<LayoutDeviceIntRect> rectsOut;
         // This call may change the value of isVisible
         CalculatePluginClip(bounds, aPlugins[pluginsIdx].clip(),
@@ -293,6 +308,14 @@ CompositorChild::RecvUpdatePluginConfigurations(const LayoutDeviceIntPoint& aCon
                             rectsOut, visibleBounds, isVisible);
         // content clipping region (widget origin)
         rv = widget->SetWindowClipRegion(rectsOut, false);
+        NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+        // This will trigger a browser window paint event for areas uncovered
+        // by a child window move, and will call invalidate on the plugin
+        // parent window which the browser owns. The latter gets picked up in
+        // our OnPaint handler and forwarded over to the plugin process async.
+        rv = widget->Resize(aContentOffset.x + bounds.x,
+                            aContentOffset.y + bounds.y,
+                            bounds.width, bounds.height, true);
         NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
       }
 
@@ -451,7 +474,8 @@ CompositorChild::SharedFrameMetricsData::SharedFrameMetricsData(
   , mLayersId(aLayersId)
   , mAPZCId(aAPZCId)
 {
-  mBuffer = new ipc::SharedMemoryBasic(metrics);
+  mBuffer = new ipc::SharedMemoryBasic;
+  mBuffer->SetHandle(metrics);
   mBuffer->Map(sizeof(FrameMetrics));
   mMutex = new CrossProcessMutex(handle);
   MOZ_COUNT_CTOR(SharedFrameMetricsData);

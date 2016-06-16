@@ -58,8 +58,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "prnetdb.h"
 
 #include "mozilla/RefPtr.h"
-#include "mozilla/Scoped.h"
 #include "mozilla/TimeStamp.h"
+#include "mozilla/UniquePtr.h"
 #include "nsAutoPtr.h"
 #include "nsIEventTarget.h"
 #include "nsITimer.h"
@@ -99,16 +99,15 @@ class NrIceStunServer {
   }
 
    // The main function to use. Will take either an address or a hostname.
-  static NrIceStunServer* Create(const std::string& addr, uint16_t port,
+  static UniquePtr<NrIceStunServer> Create(const std::string& addr, uint16_t port,
       const char *transport = kNrIceTransportUdp) {
-    ScopedDeletePtr<NrIceStunServer> server(
-        new NrIceStunServer(transport));
+    UniquePtr<NrIceStunServer> server(new NrIceStunServer(transport));
 
     nsresult rv = server->Init(addr, port);
     if (NS_FAILED(rv))
       return nullptr;
 
-    return server.forget();
+    return server;
   }
 
   nsresult ToNicerStunStruct(nr_ice_stun_server* server) const;
@@ -146,18 +145,17 @@ class NrIceStunServer {
 
 class NrIceTurnServer : public NrIceStunServer {
  public:
-  static NrIceTurnServer *Create(const std::string& addr, uint16_t port,
-                                 const std::string& username,
-                                 const std::vector<unsigned char>& password,
-                                 const char *transport = kNrIceTransportUdp) {
-    ScopedDeletePtr<NrIceTurnServer> server(
-        new NrIceTurnServer(username, password, transport));
+  static UniquePtr<NrIceTurnServer> Create(const std::string& addr, uint16_t port,
+                                           const std::string& username,
+                                           const std::vector<unsigned char>& password,
+                                           const char *transport = kNrIceTransportUdp) {
+    UniquePtr<NrIceTurnServer> server(new NrIceTurnServer(username, password, transport));
 
     nsresult rv = server->Init(addr, port);
     if (NS_FAILED(rv))
       return nullptr;
 
-    return server.forget();
+    return server;
   }
 
   nsresult ToNicerTurnStruct(nr_ice_turn_server *server) const;
@@ -191,6 +189,7 @@ class NrIceProxyServer {
   std::string alpn_;
 };
 
+class TestNat;
 
 class NrIceCtx {
  public:
@@ -214,6 +213,10 @@ class NrIceCtx {
                 ICE_POLICY_ALL
   };
 
+  static void Init(bool allow_loopback = false,
+                   bool tcp_enabled = true,
+                   bool allow_link_local = false);
+
   // TODO(ekr@rtfm.com): Too many bools here. Bug 1193437.
   static RefPtr<NrIceCtx> Create(const std::string& name,
                                  bool offerer,
@@ -222,6 +225,8 @@ class NrIceCtx {
                                  bool allow_link_local = false,
                                  bool hide_non_default = false,
                                  Policy policy = ICE_POLICY_ALL);
+
+  int SetNat(const RefPtr<TestNat>& aNat);
 
   // Deinitialize all ICE global state. Used only for testing.
   static void internal_DeinitializeGlobal();
@@ -332,21 +337,7 @@ class NrIceCtx {
  private:
   NrIceCtx(const std::string& name,
            bool offerer,
-           Policy policy)
-  : connection_state_(ICE_CTX_INIT),
-    gathering_state_(ICE_CTX_GATHER_INIT),
-    name_(name),
-    offerer_(offerer),
-    streams_(),
-    ctx_(nullptr),
-    peer_(nullptr),
-    ice_handler_vtbl_(nullptr),
-    ice_handler_(nullptr),
-    trickle_(true),
-    policy_(policy) {
-    // XXX: offerer_ will be used eventually;  placate clang in the meantime.
-    (void)offerer_;
-  }
+           Policy policy);
 
   virtual ~NrIceCtx();
 
@@ -390,6 +381,7 @@ class NrIceCtx {
   bool trickle_;
   nsCOMPtr<nsIEventTarget> sts_target_; // The thread to run on
   Policy policy_;
+  RefPtr<TestNat> nat_;
 };
 
 

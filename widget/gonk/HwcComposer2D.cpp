@@ -280,7 +280,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
 
     bool fillColor = false;
 
-    const nsIntRegion visibleRegion = aLayer->GetEffectiveVisibleRegion().ToUnknownRegion();
+    const nsIntRegion visibleRegion = aLayer->GetLocalVisibleRegion().ToUnknownRegion();
     if (visibleRegion.IsEmpty()) {
         return true;
     }
@@ -341,7 +341,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
             LOGD("Container layer needs intermediate surface");
             return false;
         }
-        nsAutoTArray<Layer*, 12> children;
+        AutoTArray<Layer*, 12> children;
         container->SortChildrenBy3DZOrder(children);
 
         for (uint32_t i = 0; i < children.Length(); i++) {

@@ -495,9 +495,10 @@ WebGLContext::ValidateUniformArraySetter(WebGLUniformLocation* loc,
     if (!loc->ValidateArrayLength(setterElemSize, setterArraySize, this, funcName))
         return false;
 
+    MOZ_ASSERT((size_t)loc->mActiveInfo->mElemCount > loc->mArrayIndex);
+    size_t uniformElemCount = loc->mActiveInfo->mElemCount - loc->mArrayIndex;
     *out_rawLoc = loc->mLoc;
-    *out_numElementsToUpload = std::min((size_t)loc->mActiveInfo->mElemCount,
-                                        setterArraySize / setterElemSize);
+    *out_numElementsToUpload = std::min(uniformElemCount, setterArraySize / setterElemSize);
     return true;
 }
 
@@ -529,9 +530,11 @@ WebGLContext::ValidateUniformMatrixArraySetter(WebGLUniformLocation* loc,
     if (!ValidateUniformMatrixTranspose(setterTranspose, funcName))
         return false;
 
+    MOZ_ASSERT((size_t)loc->mActiveInfo->mElemCount > loc->mArrayIndex);
+    size_t uniformElemCount = loc->mActiveInfo->mElemCount - loc->mArrayIndex;
     *out_rawLoc = loc->mLoc;
-    *out_numElementsToUpload = std::min((size_t)loc->mActiveInfo->mElemCount,
-                                        setterArraySize / setterElemSize);
+    *out_numElementsToUpload = std::min(uniformElemCount, setterArraySize / setterElemSize);
+
     return true;
 }
 
@@ -786,8 +789,6 @@ WebGLContext::InitAndValidateGL()
 
         mGLMaxTextureImageUnits = MINVALUE_GL_MAX_TEXTURE_IMAGE_UNITS;
         mGLMaxVertexTextureImageUnits = MINVALUE_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
-
-        mGLMaxSamples = 1;
     } else {
         gl->fGetIntegerv(LOCAL_GL_MAX_TEXTURE_SIZE, (GLint*)&mImplMaxTextureSize);
         gl->fGetIntegerv(LOCAL_GL_MAX_CUBE_MAP_TEXTURE_SIZE, (GLint*)&mImplMaxCubeMapTextureSize);
@@ -800,9 +801,6 @@ WebGLContext::InitAndValidateGL()
 
         gl->fGetIntegerv(LOCAL_GL_MAX_TEXTURE_IMAGE_UNITS, &mGLMaxTextureImageUnits);
         gl->fGetIntegerv(LOCAL_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &mGLMaxVertexTextureImageUnits);
-
-        if (!gl->GetPotentialInteger(LOCAL_GL_MAX_SAMPLES, (GLint*)&mGLMaxSamples))
-            mGLMaxSamples = 1;
     }
 
     // If we don't support a target, its max size is 0. We should only floor-to-POT if the
@@ -915,6 +913,10 @@ WebGLContext::InitAndValidateGL()
                              LOCAL_GL_LOWER_LEFT);
     }
 #endif
+
+    if (gl->IsSupported(gl::GLFeature::seamless_cube_map_opt_in)) {
+        gl->fEnable(LOCAL_GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    }
 
     // Check the shader validator pref
     mBypassShaderValidation = gfxPrefs::WebGLBypassShaderValidator();

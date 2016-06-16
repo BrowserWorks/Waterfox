@@ -13,8 +13,8 @@
 #include "mozilla/Services.h"
 #include "mozilla/unused.h"
 
+#include "mozilla/dom/BodyUtil.h"
 #include "mozilla/dom/ContentParent.h"
-#include "mozilla/dom/FetchUtil.h"
 
 namespace mozilla {
 namespace dom {
@@ -131,7 +131,7 @@ PushNotifier::NotifyPushWorkers(const nsACString& aScope,
 
   // Otherwise, we're in the parent and e10s is enabled. Broadcast the event
   // to all content processes.
-  bool ok = false;
+  bool ok = true;
   nsTArray<ContentParent*> contentActors;
   ContentParent::GetAll(contentActors);
   for (uint32_t i = 0; i < contentActors.Length(); ++i) {
@@ -169,7 +169,7 @@ PushNotifier::NotifySubscriptionChangeWorkers(const nsACString& aScope,
   }
 
   // Parent process, e10s enabled.
-  bool ok = false;
+  bool ok = true;
   nsTArray<ContentParent*> contentActors;
   ContentParent::GetAll(contentActors);
   for (uint32_t i = 0; i < contentActors.Length(); ++i) {
@@ -192,7 +192,7 @@ PushNotifier::NotifyPushObservers(const nsACString& aScope,
   if (aData) {
     message = new PushMessage(aData.ref());
   }
-  return obsService->NotifyObservers(message, "push-message",
+  return obsService->NotifyObservers(message, OBSERVER_TOPIC_PUSH,
                                      NS_ConvertUTF8toUTF16(aScope).get());
 }
 
@@ -204,7 +204,8 @@ PushNotifier::NotifySubscriptionChangeObservers(const nsACString& aScope)
   if (!obsService) {
     return NS_ERROR_FAILURE;
   }
-  return obsService->NotifyObservers(nullptr, "push-subscription-change",
+  return obsService->NotifyObservers(nullptr,
+                                     OBSERVER_TOPIC_SUBSCRIPTION_CHANGE,
                                      NS_ConvertUTF8toUTF16(aScope).get());
 }
 
@@ -250,7 +251,7 @@ PushMessage::EnsureDecodedText()
   if (mData.IsEmpty() || !mDecodedText.IsEmpty()) {
     return NS_OK;
   }
-  nsresult rv = FetchUtil::ConsumeText(
+  nsresult rv = BodyUtil::ConsumeText(
     mData.Length(),
     reinterpret_cast<uint8_t*>(mData.Elements()),
     mDecodedText
@@ -282,7 +283,7 @@ PushMessage::Json(JSContext* aCx,
     return rv;
   }
   ErrorResult error;
-  FetchUtil::ConsumeJson(aCx, aResult, mDecodedText, error);
+  BodyUtil::ConsumeJson(aCx, aResult, mDecodedText, error);
   if (error.Failed()) {
     return error.StealNSResult();
   }

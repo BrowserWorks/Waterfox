@@ -129,13 +129,33 @@ class WinUtils
 {
 public:
   /**
+   * Get the system's default logical-to-physical DPI scaling factor,
+   * which is based on the primary display. Note however that unlike
+   * LogToPhysFactor(GetPrimaryMonitor()), this will not change during
+   * a session even if the displays are reconfigured. This scale factor
+   * is used by Windows theme metrics etc, which do not fully support
+   * dynamic resolution changes but are only updated on logout.
+   */
+  static double SystemScaleFactor();
+
+  static bool IsPerMonitorDPIAware();
+  /**
    * Functions to convert between logical pixels as used by most Windows APIs
    * and physical (device) pixels.
    */
-  static double LogToPhysFactor();
-  static double PhysToLogFactor();
-  static int32_t LogToPhys(double aValue);
-  static double PhysToLog(int32_t aValue);
+  static double LogToPhysFactor(HMONITOR aMonitor);
+  static double LogToPhysFactor(HWND aWnd) {
+    // if there's an ancestor window, we want to share its DPI setting
+    HWND ancestor = ::GetAncestor(aWnd, GA_ROOTOWNER);
+    return LogToPhysFactor(::MonitorFromWindow(ancestor ? ancestor : aWnd,
+                                               MONITOR_DEFAULTTOPRIMARY));
+  }
+  static double LogToPhysFactor(HDC aDC) {
+    return LogToPhysFactor(::WindowFromDC(aDC));
+  }
+  static int32_t LogToPhys(HMONITOR aMonitor, double aValue);
+  static HMONITOR GetPrimaryMonitor();
+  static HMONITOR MonitorFromRect(const gfx::Rect& rect);
 
   /**
    * Logging helpers that dump output to prlog module 'Widget', console, and
@@ -428,6 +448,18 @@ public:
 
   static bool ShouldHideScrollbars();
 
+  /**
+   * This function normalizes the input path, converts short filenames to long
+   * filenames, and substitutes environment variables for system paths.
+   * The resulting output string length is guaranteed to be <= MAX_PATH.
+   */
+  static bool SanitizePath(const wchar_t* aInputPath, nsAString& aOutput);
+
+  /**
+   * Retrieve a semicolon-delimited list of DLL files derived from AppInit_DLLs
+   */
+  static bool GetAppInitDLLs(nsAString& aOutput);
+
 private:
   typedef HRESULT (WINAPI * SHCreateItemFromParsingNamePtr)(PCWSTR pszPath,
                                                             IBindCtx *pbc,
@@ -439,6 +471,9 @@ private:
                                                      HANDLE hToken,
                                                      PWSTR *ppszPath);
   static SHGetKnownFolderPathPtr sGetKnownFolderPath;
+
+  static void GetWhitelistedPaths(
+      nsTArray<mozilla::Pair<nsString,nsDependentString>>& aOutput);
 };
 
 #ifdef MOZ_PLACES

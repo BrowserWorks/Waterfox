@@ -32,6 +32,7 @@ using mozilla::plugins::PluginInstanceParent;
 #include "mozilla/gfx/DataSurfaceHelpers.h"
 #include "mozilla/gfx/Tools.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/UniquePtrExtensions.h"
 #include "nsGfxCIID.h"
 #include "gfxContext.h"
 #include "prmem.h"
@@ -42,6 +43,7 @@ using mozilla::plugins::PluginInstanceParent;
 #include "nsIXULRuntime.h"
 
 #include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorChild.h"
 #include "ClientLayerManager.h"
 
 #include "nsUXThemeData.h"
@@ -69,7 +71,7 @@ using namespace mozilla::plugins;
  *
  **************************************************************/
 
-static nsAutoPtr<uint8_t>  sSharedSurfaceData;
+static UniquePtr<uint8_t[]> sSharedSurfaceData;
 static IntSize             sSharedSurfaceSize;
 
 struct IconMetrics {
@@ -151,11 +153,11 @@ EnsureSharedSurfaceSize(IntSize size)
 
   if (!sSharedSurfaceData || (WORDSSIZE(size) > WORDSSIZE(sSharedSurfaceSize))) {
     sSharedSurfaceSize = size;
-    sSharedSurfaceData = nullptr;
-    sSharedSurfaceData = (uint8_t *)malloc(WORDSSIZE(sSharedSurfaceSize) * 4);
+    sSharedSurfaceData =
+      MakeUniqueFallible<uint8_t[]>(WORDSSIZE(sSharedSurfaceSize) * 4);
   }
 
-  return (sSharedSurfaceData != nullptr);
+  return !sSharedSurfaceData;
 }
 
 nsIWidgetListener* nsWindow::GetPaintListener()
@@ -163,6 +165,15 @@ nsIWidgetListener* nsWindow::GetPaintListener()
   if (mDestroyCalled)
     return nullptr;
   return mAttachedWidgetListener ? mAttachedWidgetListener : mWidgetListener;
+}
+
+void nsWindow::ForcePresent()
+{
+  if (mResizeState != RESIZING) {
+    if (CompositorChild* remoteRenderer = GetRemoteRenderer()) {
+      remoteRenderer->SendForcePresent();
+    }
+  }
 }
 
 bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
@@ -176,7 +187,9 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
 
   if (gfxWindowsPlatform::GetPlatform()->DidRenderingDeviceReset()) {
     gfxWindowsPlatform::GetPlatform()->UpdateRenderMode();
-    EnumAllWindows(ClearCompositor);
+    EnumAllWindows([] (nsWindow* aWindow) -> void {
+      aWindow->OnRenderingDeviceReset();
+    });
     return false;
   }
 
@@ -217,10 +230,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
     return true;
   }
 
-  ClientLayerManager *clientLayerManager =
-      (GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT)
-      ? static_cast<ClientLayerManager*>(GetLayerManager())
-      : nullptr;
+  ClientLayerManager *clientLayerManager = GetLayerManager()->AsClientLayerManager();
 
   if (clientLayerManager && mCompositorParent &&
       !mBounds.IsEqualEdges(mLastPaintBounds))
@@ -279,6 +289,8 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
     clientLayerManager->SetNeedsComposite(true);
     clientLayerManager->SendInvalidRegion(region);
   }
+
+  RefPtr<nsWindow> strongThis(this);
 
   nsIWidgetListener* listener = GetPaintListener();
   if (listener) {
@@ -515,8 +527,15 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
         }
         break;
       case LayersBackend::LAYERS_CLIENT:
-        result = listener->PaintWindow(
-          this, LayoutDeviceIntRegion::FromUnknownRegion(region));
+        {
+          result = listener->PaintWindow(
+            this, LayoutDeviceIntRegion::FromUnknownRegion(region));
+          if (gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled()) {
+            nsCOMPtr<nsIRunnable> event =
+              NS_NewRunnableMethod(this, &nsWindow::ForcePresent);
+            NS_DispatchToMainThread(event);
+          }
+        }
         break;
       default:
         NS_ERROR("Unknown layers backend used!");

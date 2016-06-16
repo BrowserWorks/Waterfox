@@ -44,6 +44,7 @@
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 #include "mozilla/ipc/TestShellChild.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
+#include "mozilla/layers/APZChild.h"
 #include "mozilla/layers/CompositorChild.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/layers/PCompositorChild.h"
@@ -72,6 +73,7 @@
 #include "mozilla/unused.h"
 
 #include "mozInlineSpellChecker.h"
+#include "nsDocShell.h"
 #include "nsIConsoleListener.h"
 #include "nsICycleCollectorListener.h"
 #include "nsIDragService.h"
@@ -100,6 +102,7 @@
 #include "nsISpellChecker.h"
 #include "nsClipboardProxy.h"
 #include "nsISystemMessageCache.h"
+#include "nsDirectoryService.h"
 #include "nsDirectoryServiceUtils.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsContentPermissionHelper.h"
@@ -144,6 +147,7 @@
 #ifdef XP_WIN
 #include <process.h>
 #define getpid _getpid
+#include "mozilla/widget/AudioSession.h"
 #endif
 
 #ifdef MOZ_X11
@@ -423,6 +427,19 @@ private:
 
 NS_IMPL_ISUPPORTS(ConsoleListener, nsIConsoleListener)
 
+// Before we send the error to the parent process (which
+// involves copying the memory), truncate any long lines.  CSS
+// errors in particular share the memory for long lines with
+// repeated errors, but the IPC communication we're about to do
+// will break that sharing, so we better truncate now.
+static void
+TruncateString(nsAString& aString)
+{
+  if (aString.Length() > 1000) {
+    aString.Truncate(1000);
+  }
+}
+
 NS_IMETHODIMP
 ConsoleListener::Observe(nsIConsoleMessage* aMessage)
 {
@@ -438,22 +455,13 @@ ConsoleListener::Observe(nsIConsoleMessage* aMessage)
 
     nsresult rv = scriptError->GetErrorMessage(msg);
     NS_ENSURE_SUCCESS(rv, rv);
+    TruncateString(msg);
     rv = scriptError->GetSourceName(sourceName);
     NS_ENSURE_SUCCESS(rv, rv);
+    TruncateString(sourceName);
     rv = scriptError->GetSourceLine(sourceLine);
     NS_ENSURE_SUCCESS(rv, rv);
-
-    // Before we send the error to the parent process (which
-    // involves copying the memory), truncate any long lines.  CSS
-    // errors in particular share the memory for long lines with
-    // repeated errors, but the IPC communication we're about to do
-    // will break that sharing, so we better truncate now.
-    if (sourceName.Length() > 1000) {
-      sourceName.Truncate(1000);
-    }
-    if (sourceLine.Length() > 1000) {
-      sourceLine.Truncate(1000);
-    }
+    TruncateString(sourceLine);
 
     rv = scriptError->GetCategory(getter_Copies(category));
     NS_ENSURE_SUCCESS(rv, rv);
@@ -463,6 +471,7 @@ ConsoleListener::Observe(nsIConsoleMessage* aMessage)
     NS_ENSURE_SUCCESS(rv, rv);
     rv = scriptError->GetFlags(&flags);
     NS_ENSURE_SUCCESS(rv, rv);
+
     mChild->SendScriptError(msg, sourceName, sourceLine,
                             lineNum, colNum, flags, category);
     return NS_OK;
@@ -673,10 +682,6 @@ ContentChild::Init(MessageLoop* aIOLoop,
   }
   sSingleton = this;
 
-  // Make sure there's an nsAutoScriptBlocker on the stack when dispatching
-  // urgent messages.
-  GetIPCChannel()->BlockScripts();
-
   // If communications with the parent have broken down, take the process
   // down so it's not hanging around.
   bool abortOnError = true;
@@ -767,7 +772,7 @@ ContentChild::SetProcessName(const nsAString& aName, bool aDontOverride)
 }
 
 NS_IMETHODIMP
-ContentChild::ProvideWindow(nsIDOMWindow* aParent,
+ContentChild::ProvideWindow(mozIDOMWindowProxy* aParent,
                             uint32_t aChromeFlags,
                             bool aCalledFromJS,
                             bool aPositionSpecified,
@@ -776,7 +781,7 @@ ContentChild::ProvideWindow(nsIDOMWindow* aParent,
                             const nsAString& aName,
                             const nsACString& aFeatures,
                             bool* aWindowIsNew,
-                            nsIDOMWindow** aReturn)
+                            mozIDOMWindowProxy** aReturn)
 {
   return ProvideWindowCommon(nullptr, aParent, false, aChromeFlags,
                              aCalledFromJS, aPositionSpecified,
@@ -786,7 +791,7 @@ ContentChild::ProvideWindow(nsIDOMWindow* aParent,
 
 nsresult
 ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
-                                  nsIDOMWindow* aParent,
+                                  mozIDOMWindowProxy* aParent,
                                   bool aIframeMoz,
                                   uint32_t aChromeFlags,
                                   bool aCalledFromJS,
@@ -796,7 +801,7 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
                                   const nsAString& aName,
                                   const nsACString& aFeatures,
                                   bool* aWindowIsNew,
-                                  nsIDOMWindow** aReturn)
+                                  mozIDOMWindowProxy** aReturn)
 {
   *aReturn = nullptr;
 
@@ -807,7 +812,7 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
     PopupIPCTabContext context;
     openerTabId = aTabOpener->GetTabId();
     context.opener() = openerTabId;
-    context.isBrowserElement() = aTabOpener->IsBrowserElement();
+    context.isMozBrowserElement() = aTabOpener->IsMozBrowserElement();
     ipcContext = new IPCTabContext(context);
   } else {
     // It's possible to not have a TabChild opener in the case
@@ -864,7 +869,7 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
   } else {
     nsAutoCString baseURIString;
     if (aTabOpener) {
-      nsCOMPtr<nsPIDOMWindow> opener = do_QueryInterface(aParent);
+      auto* opener = nsPIDOMWindowOuter::From(aParent);
       nsCOMPtr<nsIDocument> doc = opener->GetDoc();
       nsCOMPtr<nsIURI> baseURI = doc->GetDocBaseURI();
       if (!baseURI) {
@@ -875,12 +880,22 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
       baseURI->GetSpec(baseURIString);
     }
 
+    auto* opener = nsPIDOMWindowOuter::From(aParent);
+    nsIDocShell* openerShell;
+    RefPtr<nsDocShell> openerDocShell;
+    if (opener && (openerShell = opener->GetDocShell())) {
+      openerDocShell = static_cast<nsDocShell*>(openerShell);
+    }
+
     nsresult rv;
     if (!SendCreateWindow(aTabOpener, newChild,
                           aChromeFlags, aCalledFromJS, aPositionSpecified,
                           aSizeSpecified, url,
                           name, features,
                           baseURIString,
+                          openerDocShell
+                            ? openerDocShell->GetOriginAttributes()
+                            : DocShellOriginAttributes(),
                           &rv,
                           aWindowIsNew,
                           &frameScripts,
@@ -909,7 +924,7 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
   }
 
   ShowInfo showInfo(EmptyString(), false, false, true, 0, 0);
-  nsCOMPtr<nsPIDOMWindow> opener = do_QueryInterface(aParent);
+  auto* opener = nsPIDOMWindowOuter::From(aParent);
   nsIDocShell* openerShell;
   if (opener && (openerShell = opener->GetDocShell())) {
     nsCOMPtr<nsILoadContext> context = do_QueryInterface(openerShell);
@@ -934,7 +949,7 @@ ContentChild::ProvideWindowCommon(TabChild* aTabOpener,
     newChild->RecvLoadURL(urlToLoad, BrowserConfiguration(), showInfo);
   }
 
-  nsCOMPtr<nsIDOMWindow> win = do_GetInterface(newChild->WebNavigation());
+  nsCOMPtr<mozIDOMWindowProxy> win = do_GetInterface(newChild->WebNavigation());
   win.forget(aReturn);
   return NS_OK;
 }
@@ -1264,6 +1279,19 @@ ContentChild::AllocPGMPServiceChild(mozilla::ipc::Transport* aTransport,
   return GMPServiceChild::Create(aTransport, aOtherProcess);
 }
 
+PAPZChild*
+ContentChild::AllocPAPZChild(const TabId& aTabId)
+{
+  return APZChild::Create(aTabId);
+}
+
+bool
+ContentChild::DeallocPAPZChild(PAPZChild* aActor)
+{
+  delete aActor;
+  return true;
+}
+
 PCompositorChild*
 ContentChild::AllocPCompositorChild(mozilla::ipc::Transport* aTransport,
                                     base::ProcessId aOtherProcess)
@@ -1389,12 +1417,29 @@ StartMacOSContentSandbox()
     MOZ_CRASH("Error resolving child process path");
   }
 
+  // During sandboxed content process startup, before reaching
+  // this point, NS_OS_TEMP_DIR is modified to refer to a sandbox-
+  // writable temporary directory
+  nsCOMPtr<nsIFile> tempDir;
+  nsresult rv = nsDirectoryService::gService->Get(NS_OS_TEMP_DIR,
+      NS_GET_IID(nsIFile), getter_AddRefs(tempDir));
+  if (NS_FAILED(rv)) {
+    MOZ_CRASH("Failed to get NS_OS_TEMP_DIR");
+  }
+
+  nsAutoCString tempDirPath;
+  rv = tempDir->GetNativePath(tempDirPath);
+  if (NS_FAILED(rv)) {
+    MOZ_CRASH("Failed to get NS_OS_TEMP_DIR path");
+  }
+
   MacSandboxInfo info;
   info.type = MacSandboxType_Content;
   info.level = Preferences::GetInt("security.sandbox.content.level");
   info.appPath.assign(appPath.get());
   info.appBinaryPath.assign(appBinaryPath.get());
   info.appDir.assign(appDir.get());
+  info.appTempDir.assign(tempDirPath.get());
 
   std::string err;
   if (!mozilla::StartMacSandbox(info, err)) {
@@ -2274,7 +2319,15 @@ void
 ContentChild::QuickExit()
 {
   NS_WARNING("content process _exit()ing");
+
+#ifdef XP_WIN
+  // In bug 1254829, the destructor got called when dll got detached on windows,
+  // switch to TerminateProcess to bypass dll detach handler during the process
+  // termination.
+  TerminateProcess(GetCurrentProcess(), 0);
+#else
   _exit(0);
+#endif
 }
 
 nsresult
@@ -2385,9 +2438,9 @@ ContentChild::RecvLoadProcessScript(const nsString& aURL)
 
 bool
 ContentChild::RecvAsyncMessage(const nsString& aMsg,
-                               const ClonedMessageData& aData,
                                InfallibleTArray<CpowEntry>&& aCpows,
-                               const IPC::Principal& aPrincipal)
+                               const IPC::Principal& aPrincipal,
+                               const ClonedMessageData& aData)
 {
   RefPtr<nsFrameMessageManager> cpm =
     nsFrameMessageManager::GetChildProcessManager();
@@ -2563,7 +2616,10 @@ static void
 PreloadSlowThings()
 {
   // This fetches and creates all the built-in stylesheets.
-  nsLayoutStylesheetCache::UserContentSheet();
+  //
+  // XXXheycam In the future we might want to preload the Servo-flavoured
+  // UA sheets too, but for now that will be a waste of time.
+  nsLayoutStylesheetCache::For(StyleBackendType::Gecko)->UserContentSheet();
 
   TabChild::PreloadSlowThings();
 
@@ -3001,6 +3057,10 @@ ContentChild::RecvShutdown()
                           "content-child-shutdown", nullptr);
   }
 
+#if defined(XP_WIN)
+    mozilla::widget::StopAudioSession();
+#endif
+
   GetIPCChannel()->SetAbortOnError(false);
 
 #ifdef MOZ_ENABLE_PROFILER_SPS
@@ -3119,6 +3179,26 @@ ContentChild::RecvGamepadUpdate(const GamepadChangeEvent& aGamepadEvent)
   return true;
 }
 
+bool
+ContentChild::RecvSetAudioSessionData(const nsID& aId,
+                                      const nsString& aDisplayName,
+                                      const nsString& aIconPath)
+{
+#if defined(XP_WIN)
+    if (NS_FAILED(mozilla::widget::RecvAudioSessionData(aId, aDisplayName,
+                                                        aIconPath))) {
+      return true;
+    }
+
+    // Ignore failures here; we can't really do anything about them
+    mozilla::widget::StartAudioSession();
+    return true;
+#else
+    NS_RUNTIMEABORT("Not Reached!");
+    return false;
+#endif
+}
+
 // This code goes here rather than nsGlobalWindow.cpp because nsGlobalWindow.cpp
 // can't include ContentChild.h since it includes windows.h.
 
@@ -3209,15 +3289,6 @@ ContentChild::RecvEndDragSession(const bool& aDoneDrag,
     }
     dragService->EndDragSession(aDoneDrag);
   }
-  return true;
-}
-
-bool
-ContentChild::RecvTestGraphicsDeviceReset(const uint32_t& aResetReason)
-{
-#if defined(XP_WIN)
-  gfxPlatform::GetPlatform()->TestDeviceReset(DeviceResetReason(aResetReason));
-#endif
   return true;
 }
 

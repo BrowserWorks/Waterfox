@@ -24,6 +24,7 @@
 "use strict";
 
 const {Ci, Cu, Cc} = require("chrome");
+const Services = require("Services");
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
 const CONTENT_TYPES = {
@@ -37,7 +38,6 @@ const MAX_POPUP_ENTRIES = 10;
 const FOCUS_FORWARD = Ci.nsIFocusManager.MOVEFOCUS_FORWARD;
 const FOCUS_BACKWARD = Ci.nsIFocusManager.MOVEFOCUS_BACKWARD;
 
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://devtools/shared/event-emitter.js");
 
@@ -373,11 +373,7 @@ InplaceEditor.prototype = {
     // will be wrong.
     this._measurement.textContent = this.input.value.replace(/ /g, "\u00a0");
 
-    // We add a bit of padding to the end.  Should be enough to fit
-    // any letter that could be typed, otherwise we'll scroll before
-    // we get a chance to resize.  Yuck.
-    let width = this._measurement.offsetWidth + 10;
-
+    let width = this._measurement.offsetWidth;
     if (this.multiline) {
       // Make sure there's some content in the current line.  This is a hack to
       // account for the fact that after adding a newline the <pre> doesn't grow
@@ -386,7 +382,14 @@ InplaceEditor.prototype = {
       this.input.style.height = this._measurement.offsetHeight + "px";
     }
 
-    this.input.style.width = width + "px";
+    if (width === 0) {
+      // If the editor is empty use a width corresponding to 1 character.
+      this.input.style.width = "1ch";
+    } else {
+      // Add 2 pixels to ensure the caret will be visible
+      width = width + 2;
+      this.input.style.width = width + "px";
+    }
   },
 
   /**
@@ -447,11 +450,19 @@ InplaceEditor.prototype = {
   _incrementCSSValue: function(value, increment, selStart, selEnd) {
     let range = this._parseCSSValue(value, selStart);
     let type = (range && range.type) || "";
-    let rawValue = (range ? value.substring(range.start, range.end) : "");
-    let incrementedValue = null, selection;
+    let rawValue = range ? value.substring(range.start, range.end) : "";
+    let preRawValue = range ? value.substr(0, range.start) : "";
+    let postRawValue = range ? value.substr(range.end) : "";
+    let info;
 
+    let incrementedValue = null, selection;
     if (type === "num") {
-      let newValue = this._incrementRawValue(rawValue, increment);
+      if (rawValue == "0") {
+        info = {};
+        info.units = this._findCompatibleUnit(preRawValue, postRawValue);
+      }
+
+      let newValue = this._incrementRawValue(rawValue, increment, info);
       if (newValue !== null) {
         incrementedValue = newValue;
         selection = [0, incrementedValue.length];
@@ -466,7 +477,6 @@ InplaceEditor.prototype = {
         selection = newValue.selection;
       }
     } else {
-      let info;
       if (type === "rgb" || type === "hsl") {
         info = {};
         let part = value.substring(range.start, selStart).split(",").length - 1;
@@ -495,14 +505,40 @@ InplaceEditor.prototype = {
       return null;
     }
 
-    let preRawValue = value.substr(0, range.start);
-    let postRawValue = value.substr(range.end);
-
     return {
       value: preRawValue + incrementedValue + postRawValue,
       start: range.start + selection[0],
       end: range.start + selection[1]
     };
+  },
+
+  /**
+   * Find a compatible unit to use for a CSS number value inserted between the
+   * provided beforeValue and afterValue. The compatible unit will be picked
+   * from a selection of default units corresponding to supported CSS value
+   * dimensions (distance, angle, duration).
+   *
+   * @param {String} beforeValue
+   *        The string preceeding the number value in the current property
+   *        value.
+   * @param {String} afterValue
+   *        The string following the number value in the current property value.
+   * @return {String} a valid unit that can be used for this number value or
+   *         empty string if no match could be found.
+   */
+  _findCompatibleUnit: function(beforeValue, afterValue) {
+    if (!this.property || !this.property.name) {
+      return "";
+    }
+
+    let units = ["px", "deg", "s"];
+    for (let unit of units) {
+      let value = beforeValue + "1" + unit + afterValue;
+      if (domUtils.cssPropertyIsValid(this.property.name, value)) {
+        return unit;
+      }
+    }
+    return "";
   },
 
   /**
@@ -640,7 +676,11 @@ InplaceEditor.prototype = {
     }
 
     let number = /\d+(\.\d+)?/.exec(rawValue);
+
     let units = rawValue.substr(number.index + number[0].length);
+    if (info && "units" in info) {
+      units = info.units;
+    }
 
     // avoid rounding errors
     let newValue = Math.round((num + increment) * 1000) / 1000;
@@ -819,7 +859,7 @@ InplaceEditor.prototype = {
   /**
    * Handle loss of focus by calling done if it hasn't been called yet.
    */
-  _onBlur: function(event, doNotClear) {
+  _onBlur: function(event) {
     if (event && this.popup && this.popup.isOpen &&
         this.popup.selectedIndex >= 0) {
       let label, preLabel;
@@ -865,19 +905,11 @@ InplaceEditor.prototype = {
       };
       this.popup._panel.addEventListener("popuphidden", onPopupHidden);
       this.popup.hidePopup();
-      // Content type other than CSS_MIXED is used in rule-view where the values
-      // are live previewed. So we apply the value before returning.
-      if (this.contentType != CONTENT_TYPES.CSS_MIXED) {
-        this._apply();
-      }
       return;
     }
 
     this._apply();
-
-    if (!doNotClear) {
-      this._clear();
-    }
+    this._clear();
   },
 
   /**

@@ -220,7 +220,7 @@ NS_IMETHODIMP nsDeviceSensors::RemoveWindowAsListener(nsIDOMWindow *aWindow)
 }
 
 static bool
-WindowCannotReceiveSensorEvent (nsPIDOMWindow* aWindow)
+WindowCannotReceiveSensorEvent (nsPIDOMWindowInner* aWindow)
 {
   // Check to see if this window is in the background.  If
   // it is and it does not have the "background-sensors" permission,
@@ -232,7 +232,7 @@ WindowCannotReceiveSensorEvent (nsPIDOMWindow* aWindow)
   bool disabled = aWindow->GetOuterWindow()->IsBackground() ||
                   !aWindow->IsTopLevelWindowActive();
   if (!disabled) {
-    nsCOMPtr<nsPIDOMWindow> top = aWindow->GetScriptableTop();
+    nsCOMPtr<nsPIDOMWindowOuter> top = aWindow->GetScriptableTop();
     nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(aWindow);
     nsCOMPtr<nsIScriptObjectPrincipal> topSop = do_QueryInterface(top);
     if (!sop || !topSop) {
@@ -341,7 +341,7 @@ nsDeviceSensors::Notify(const mozilla::hal::SensorData& aSensorData)
   for (uint32_t i = windowListeners.Count(); i > 0 ; ) {
     --i;
 
-    nsCOMPtr<nsPIDOMWindow> pwindow = do_QueryInterface(windowListeners[i]);
+    nsCOMPtr<nsPIDOMWindowInner> pwindow = do_QueryInterface(windowListeners[i]);
     if (WindowCannotReceiveSensorEvent(pwindow)) {
         continue;
     }

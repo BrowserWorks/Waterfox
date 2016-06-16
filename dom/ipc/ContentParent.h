@@ -213,6 +213,10 @@ public:
 
   virtual bool RecvUngrabPointer(const uint32_t& aTime) override;
 
+  virtual bool RecvRemovePermission(const IPC::Principal& aPrincipal,
+                                    const nsCString& aPermissionType,
+                                    nsresult* aRv) override;
+
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(ContentParent, nsIObserver)
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -336,21 +340,11 @@ public:
    * Kill our subprocess and make sure it dies.  Should only be used
    * in emergency situations since it bypasses the normal shutdown
    * process.
+   *
+   * WARNING: aReason appears in telemetry, so any new value passed in requires
+   * data review.
    */
   void KillHard(const char* aWhy);
-
-  /**
-   * API for adding a crash reporter annotation that provides a reason
-   * for a listener request to abort the child.
-   */
-  bool IsKillHardAnnotationSet() const { return mKillHardAnnotation.IsEmpty(); }
-
-  const nsCString& GetKillHardAnnotation() const { return mKillHardAnnotation; }
-
-  void SetKillHardAnnotation(const nsACString& aReason)
-  {
-    mKillHardAnnotation = aReason;
-  }
 
   ContentParentId ChildID() const override { return mChildID; }
 
@@ -501,10 +495,13 @@ public:
                                 const nsString& aName,
                                 const nsCString& aFeatures,
                                 const nsCString& aBaseURI,
+                                const DocShellOriginAttributes& aOpenerOriginAttributes,
                                 nsresult* aResult,
                                 bool* aWindowIsNew,
                                 InfallibleTArray<FrameScriptInfo>* aFrameScripts,
                                 nsCString* aURLToLoad) override;
+
+  static bool AllocateLayerTreeId(TabParent* aTabParent, uint64_t* aId);
 
 protected:
   void OnChannelConnected(int32_t pid) override;
@@ -650,9 +647,18 @@ private:
 
   static void ForceKillTimerCallback(nsITimer* aTimer, void* aClosure);
 
+  static bool AllocateLayerTreeId(ContentParent* aContent,
+                                  TabParent* aTopLevel, const TabId& aTabId,
+                                  uint64_t* aId);
+
   PGMPServiceParent*
   AllocPGMPServiceParent(mozilla::ipc::Transport* aTransport,
                          base::ProcessId aOtherProcess) override;
+
+  PAPZParent*
+  AllocPAPZParent(const TabId& aTabId) override;
+  bool
+  DeallocPAPZParent(PAPZParent* aActor) override;
 
   PCompositorParent*
   AllocPCompositorParent(mozilla::ipc::Transport* aTransport,
@@ -924,9 +930,9 @@ private:
                               nsTArray<StructuredCloneData>* aRetvals) override;
 
   virtual bool RecvAsyncMessage(const nsString& aMsg,
-                                const ClonedMessageData& aData,
                                 InfallibleTArray<CpowEntry>&& aCpows,
-                                const IPC::Principal& aPrincipal) override;
+                                const IPC::Principal& aPrincipal,
+                                const ClonedMessageData& aData) override;
 
   virtual bool RecvFilePathUpdateNotify(const nsString& aType,
                                         const nsString& aStorageName,
@@ -1004,13 +1010,17 @@ private:
 
   virtual void ProcessingError(Result aCode, const char* aMsgName) override;
 
-  virtual bool RecvAllocateLayerTreeId(uint64_t* aId) override;
+  virtual bool RecvAllocateLayerTreeId(const ContentParentId& aCpId,
+                                       const TabId& aTabId,
+                                       uint64_t* aId) override;
 
   virtual bool RecvDeallocateLayerTreeId(const uint64_t& aId) override;
 
   virtual bool RecvGetGraphicsFeatureStatus(const int32_t& aFeature,
                                             int32_t* aStatus,
                                             bool* aSuccess) override;
+
+  virtual bool RecvGraphicsError(const nsCString& aError) override;
 
   virtual bool
   RecvBeginDriverCrashGuard(const uint32_t& aGuardType,
@@ -1045,9 +1055,6 @@ private:
   virtual bool
   DeallocPFileDescriptorSetParent(PFileDescriptorSetParent*) override;
 
-  virtual bool
-  RecvFlushPendingFileDeletions() override;
-
   virtual PWebrtcGlobalParent* AllocPWebrtcGlobalParent() override;
   virtual bool DeallocPWebrtcGlobalParent(PWebrtcGlobalParent *aActor) override;
 
@@ -1074,6 +1081,9 @@ private:
   virtual bool RecvGetDeviceStorageLocations(DeviceStorageLocationInfo* info) override;
 
   virtual bool RecvGetAndroidSystemInfo(AndroidSystemInfo* aInfo) override;
+
+  virtual bool RecvNotifyBenchmarkResult(const nsString& aCodecName,
+                                         const uint32_t& aDecodeFPS) override;
 
   // If you add strong pointers to cycle collected objects here, be sure to
   // release these objects in ShutDownProcess.  See the comment there for more

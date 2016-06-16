@@ -28,10 +28,12 @@
 #include "Layers.h"
 #include "FrameLayerBuilder.h"
 #include "nsCSSProps.h"
+#include "nsCSSPseudoElements.h"
 #include "nsDisplayList.h"
 #include "nsStyleChangeList.h"
 #include "nsStyleSet.h"
-#include "RestyleManager.h"
+#include "mozilla/RestyleManagerHandle.h"
+#include "mozilla/RestyleManagerHandleInlines.h"
 #include "nsDOMMutationObserver.h"
 
 using mozilla::TimeStamp;
@@ -65,8 +67,9 @@ ElementPropertyTransition::CurrentValuePortion() const
              "Should have one animation property for a transition");
   MOZ_ASSERT(mProperties[0].mSegments.Length() == 1,
              "Animation property should have one segment for a transition");
-  return mProperties[0].mSegments[0].mTimingFunction
-         .GetValue(computedTiming.mProgress.Value());
+  return ComputedTimingFunction::GetPortion(
+           mProperties[0].mSegments[0].mTimingFunction,
+           computedTiming.mProgress.Value());
 }
 
 ////////////////////////// CSSTransition ////////////////////////////
@@ -128,7 +131,7 @@ CSSTransition::QueueEvents()
   }
 
   dom::Element* owningElement;
-  nsCSSPseudoElements::Type owningPseudoType;
+  CSSPseudoElementType owningPseudoType;
   mOwningElement.GetElement(owningElement, owningPseudoType);
   MOZ_ASSERT(owningElement, "Owning element should be set");
 
@@ -260,16 +263,16 @@ nsTransitionManager::StyleContextChanged(dom::Element *aElement,
   // Return sooner (before the startedAny check below) for the most
   // common case: no transitions specified or running.
   const nsStyleDisplay *disp = newStyleContext->StyleDisplay();
-  nsCSSPseudoElements::Type pseudoType = newStyleContext->GetPseudoType();
-  if (pseudoType != nsCSSPseudoElements::ePseudo_NotPseudoElement) {
-    if (pseudoType != nsCSSPseudoElements::ePseudo_before &&
-        pseudoType != nsCSSPseudoElements::ePseudo_after) {
+  CSSPseudoElementType pseudoType = newStyleContext->GetPseudoType();
+  if (pseudoType != CSSPseudoElementType::NotPseudo) {
+    if (pseudoType != CSSPseudoElementType::before &&
+        pseudoType != CSSPseudoElementType::after) {
       return;
     }
 
-    NS_ASSERTION((pseudoType == nsCSSPseudoElements::ePseudo_before &&
+    NS_ASSERTION((pseudoType == CSSPseudoElementType::before &&
                   aElement->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentbefore) ||
-                 (pseudoType == nsCSSPseudoElements::ePseudo_after &&
+                 (pseudoType == CSSPseudoElementType::after &&
                   aElement->NodeInfo()->NameAtom() == nsGkAtoms::mozgeneratedcontentafter),
                  "Unexpected aElement coming through");
 
@@ -286,9 +289,12 @@ nsTransitionManager::StyleContextChanged(dom::Element *aElement,
     return;
   }
 
+  MOZ_ASSERT(mPresContext->RestyleManager()->IsGecko(),
+             "ServoRestyleManager should not use nsTransitionManager "
+             "for transitions");
   if (collection &&
       collection->mCheckGeneration ==
-        mPresContext->RestyleManager()->GetAnimationGeneration()) {
+        mPresContext->RestyleManager()->AsGecko()->GetAnimationGeneration()) {
     // When we start a new transition, we immediately post a restyle.
     // If the animation generation on the collection is current, that
     // means *this* is that restyle, since we bump the animation
@@ -316,7 +322,10 @@ nsTransitionManager::StyleContextChanged(dom::Element *aElement,
   // not stopping or starting right now.
   RefPtr<nsStyleContext> afterChangeStyle;
   if (collection) {
-    nsStyleSet* styleSet = mPresContext->StyleSet();
+    MOZ_ASSERT(mPresContext->StyleSet()->IsGecko(),
+               "ServoStyleSets should not use nsTransitionManager "
+               "for transitions");
+    nsStyleSet* styleSet = mPresContext->StyleSet()->AsGecko();
     afterChangeStyle =
       styleSet->ResolveStyleWithoutAnimation(aElement, newStyleContext,
                                              eRestyle_CSSTransitions);
@@ -562,10 +571,7 @@ nsTransitionManager::ConsiderStartingTransition(
   // endpoint of our finished transition, we also don't want to start
   // a new transition for the reasons described in
   // https://lists.w3.org/Archives/Public/www-style/2015Jan/0444.html .
-  MOZ_ASSERT(!oldPT || oldPT->Properties()[0].mSegments.Length() == 1,
-             "Should have one animation property segment for a transition");
-  if (haveCurrentTransition && haveValues &&
-      oldPT->Properties()[0].mSegments[0].mToValue == endValue) {
+  if (haveCurrentTransition && haveValues && oldPT->ToValue() == endValue) {
     // GetAnimationRule already called RestyleForAnimation.
     return;
   }
@@ -644,7 +650,7 @@ nsTransitionManager::ConsiderStartingTransition(
 
     duration *= valuePortion;
 
-    startForReversingTest = oldPT->Properties()[0].mSegments[0].mToValue;
+    startForReversingTest = oldPT->ToValue();
     reversePortion = valuePortion;
   }
 
@@ -668,7 +674,15 @@ nsTransitionManager::ConsiderStartingTransition(
   segment.mToValue = endValue;
   segment.mFromKey = 0;
   segment.mToKey = 1;
-  segment.mTimingFunction.Init(tf);
+  if (tf.mType != nsTimingFunction::Type::Linear) {
+    ComputedTimingFunction computedTimingFunction;
+    computedTimingFunction.Init(tf);
+    segment.mTimingFunction = Some(computedTimingFunction);
+  }
+
+  MOZ_ASSERT(mPresContext->RestyleManager()->IsGecko(),
+             "ServoRestyleManager should not use nsTransitionManager "
+             "for transitions");
 
   RefPtr<CSSTransition> animation =
     new CSSTransition(mPresContext->Document()->GetScopeObject());
@@ -676,7 +690,7 @@ nsTransitionManager::ConsiderStartingTransition(
     OwningElementRef(*aElement, aNewStyleContext->GetPseudoType()));
   animation->SetTimeline(timeline);
   animation->SetCreationSequence(
-    mPresContext->RestyleManager()->GetAnimationGeneration());
+    mPresContext->RestyleManager()->AsGecko()->GetAnimationGeneration());
   // The order of the following two calls is important since PlayFromStyle
   // will add the animation to the PendingAnimationTracker of its effect's
   // document. When we come to make effect writeable (bug 1049975) we should
@@ -729,8 +743,7 @@ nsTransitionManager::ConsiderStartingTransition(
 
 void
 nsTransitionManager::PruneCompletedTransitions(mozilla::dom::Element* aElement,
-                                               nsCSSPseudoElements::Type
-                                                 aPseudoType,
+                                               CSSPseudoElementType aPseudoType,
                                                nsStyleContext* aNewStyleContext)
 {
   AnimationCollection* collection =

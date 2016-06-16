@@ -44,7 +44,7 @@ class FutexWaiter;
 class SharedArrayRawBuffer
 {
   private:
-    mozilla::Atomic<uint32_t, mozilla::ReleaseAcquire> refcount;
+    mozilla::Atomic<uint32_t, mozilla::ReleaseAcquire> refcount_;
     uint32_t length;
 
     // A list of structures representing tasks waiting on some
@@ -53,7 +53,7 @@ class SharedArrayRawBuffer
 
   protected:
     SharedArrayRawBuffer(uint8_t* buffer, uint32_t length)
-      : refcount(1),
+      : refcount_(1),
         length(length),
         waiters_(nullptr)
     {
@@ -84,6 +84,8 @@ class SharedArrayRawBuffer
         return length;
     }
 
+    uint32_t refcount() const { return refcount_; }
+
     void addReference();
     void dropReference();
 };
@@ -91,7 +93,7 @@ class SharedArrayRawBuffer
 /*
  * SharedArrayBufferObject
  *
- * When transferred to a WebWorker, the buffer is not neutered on the
+ * When transferred to a WebWorker, the buffer is not detached on the
  * parent side, and both child and parent reference the same buffer.
  *
  * The underlying memory is memory-mapped and reference counted

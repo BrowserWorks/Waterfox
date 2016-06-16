@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/dom/TextTrack.h"
 #include "mozilla/dom/TextTrackBinding.h"
 #include "mozilla/dom/TextTrackList.h"
@@ -28,7 +29,7 @@ NS_IMPL_RELEASE_INHERITED(TextTrack, DOMEventTargetHelper)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(TextTrack)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
-TextTrack::TextTrack(nsPIDOMWindow* aOwnerWindow,
+TextTrack::TextTrack(nsPIDOMWindowInner* aOwnerWindow,
                      TextTrackKind aKind,
                      const nsAString& aLabel,
                      const nsAString& aLanguage,
@@ -46,7 +47,7 @@ TextTrack::TextTrack(nsPIDOMWindow* aOwnerWindow,
   SetDefaultSettings();
 }
 
-TextTrack::TextTrack(nsPIDOMWindow* aOwnerWindow,
+TextTrack::TextTrack(nsPIDOMWindowInner* aOwnerWindow,
                      TextTrackList* aTextTrackList,
                      TextTrackKind aKind,
                      const nsAString& aLabel,
@@ -73,7 +74,7 @@ TextTrack::~TextTrack()
 void
 TextTrack::SetDefaultSettings()
 {
-  nsPIDOMWindow* ownerWindow = GetOwner();
+  nsPIDOMWindowInner* ownerWindow = GetOwner();
   mCueList = new TextTrackCueList(ownerWindow);
   mActiveCueList = new TextTrackCueList(ownerWindow);
   mCuePos = 0;
@@ -148,6 +149,10 @@ TextTrack::UpdateActiveCueList()
     return;
   }
 
+  // Flag that indicates whether or not this call of UpdateActiveCueList has
+  // changed the activeCueList.
+  bool hasChanged = false;
+
   // If we are dirty, i.e. an event happened that may cause the sorted mCueList
   // to have changed like a seek or an insert for a cue, than we need to rebuild
   // the active cue list from scratch.
@@ -163,6 +168,7 @@ TextTrack::UpdateActiveCueList()
   for (uint32_t i = mActiveCueList->Length(); i > 0; i--) {
     if ((*mActiveCueList)[i - 1]->EndTime() < playbackTime) {
       mActiveCueList->RemoveCueAt(i - 1);
+      hasChanged = true;
     }
   }
   // Add all the cues, starting from the position of the last cue that was
@@ -173,6 +179,16 @@ TextTrack::UpdateActiveCueList()
          (*mCueList)[mCuePos]->StartTime() <= playbackTime; mCuePos++) {
     if ((*mCueList)[mCuePos]->EndTime() >= playbackTime) {
       mActiveCueList->AddCue(*(*mCueList)[mCuePos]);
+      hasChanged = true;
+      }
+    }
+
+    if (hasChanged) {
+      RefPtr<AsyncEventDispatcher> asyncDispatcher =
+        new AsyncEventDispatcher(this, NS_LITERAL_STRING("cuechange"), false);
+      asyncDispatcher->PostDOMEvent();
+      if (mTrackElement) {
+        mTrackElement->DispatchTrackRunnable(NS_LITERAL_STRING("cuechange"));
     }
   }
 }

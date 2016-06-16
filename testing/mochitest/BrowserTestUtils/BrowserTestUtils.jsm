@@ -23,6 +23,7 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
 Cu.import("resource://testing-common/TestUtils.jsm");
+Cu.import("resource://testing-common/ContentTask.jsm");
 
 Cc["@mozilla.org/globalmessagemanager;1"]
   .getService(Ci.nsIMessageListenerManager)
@@ -32,7 +33,14 @@ Cc["@mozilla.org/globalmessagemanager;1"]
 XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
   "resource:///modules/E10SUtils.jsm");
 
+// For now, we'll allow tests to use CPOWs in this module for
+// some cases.
+Cu.permitCPOWsInScope(this);
+
 var gSendCharCount = 0;
+var gSynthesizeKeyCount = 0;
+var gSynthesizeCompositionCount = 0;
+var gSynthesizeCompositionChangeCount = 0;
 
 this.BrowserTestUtils = {
   /**
@@ -489,6 +497,53 @@ this.BrowserTestUtils = {
   },
 
   /**
+   * Like waitForEvent, but adds the event listener to the message manager
+   * global for browser.
+   *
+   * @param {string} eventName
+   *        Name of the event to listen to.
+   * @param {bool} capture [optional]
+   *        Whether to use a capturing listener.
+   * @param {function} checkFn [optional]
+   *        Called with the Event object as argument, should return true if the
+   *        event is the expected one, or false if it should be ignored and
+   *        listening should continue. If not specified, the first event with
+   *        the specified name resolves the returned promise.
+   *
+   * @note Because this function is intended for testing, any error in checkFn
+   *       will cause the returned promise to be rejected instead of waiting for
+   *       the next event, since this is probably a bug in the test.
+   *
+   * @returns {Promise}
+   */
+  waitForContentEvent(browser, eventName, capture, checkFn) {
+    let parameters = { eventName,
+                       capture,
+                       checkFnSource: checkFn ? checkFn.toSource() : null };
+    return ContentTask.spawn(browser, parameters,
+        function({ eventName, capture, checkFnSource }) {
+          let checkFn;
+          if (checkFnSource) {
+            checkFn = eval(`(() => (${checkFnSource}))()`);
+          }
+          return new Promise((resolve, reject) => {
+            addEventListener(eventName, function listener(event) {
+              let completion = resolve;
+              try {
+                if (checkFn && !checkFn(event)) {
+                  return;
+                }
+              } catch (e) {
+                completion = () => reject(e);
+              }
+              removeEventListener(eventName, listener, capture);
+              completion();
+            }, capture);
+          });
+        });
+  },
+
+  /**
    *  Versions of EventUtils.jsm synthesizeMouse functions that synthesize a
    *  mouse event in a child process and return promises that resolve when the
    *  event has fired and completed. Instead of a window, a browser is required
@@ -536,6 +591,27 @@ this.BrowserTestUtils = {
       mm.sendAsyncMessage("Test:SynthesizeMouse",
                           {target, targetFn, x: offsetX, y: offsetY, event: event},
                           {object: cpowObject});
+    });
+  },
+
+  /**
+   * Wait for a message to be fired from a particular message manager
+   *
+   * @param {nsIMessageManager} messageManager
+   *                            The message manager that should be used.
+   * @param {String}            message
+   *                            The message we're waiting for.
+   * @param {Function}          checkFn (optional)
+   *                            Optional function to invoke to check the message.
+   */
+  waitForMessage(messageManager, message, checkFn) {
+    return new Promise(resolve => {
+      messageManager.addMessageListener(message, function onMessage(msg) {
+        if (!checkFn || checkFn(msg)) {
+          messageManager.removeMessageListener(message, onMessage);
+          resolve();
+        }
+      });
     });
   },
 
@@ -754,7 +830,7 @@ this.BrowserTestUtils = {
 
   /**
    * Version of EventUtils' `sendChar` function; it will synthesize a keypress
-   * event in a child process and returns a Promise that will result when the
+   * event in a child process and returns a Promise that will resolve when the
    * event was fired. Instead of a Window, a Browser object is required to be
    * passed to this function.
    *
@@ -776,13 +852,106 @@ this.BrowserTestUtils = {
           return;
 
         mm.removeMessageListener("Test:SendCharDone", charMsg);
-        resolve(message.data.sendCharResult);
+        resolve(message.data.result);
       });
 
       mm.sendAsyncMessage("Test:SendChar", {
         char: char,
         seq: seq
       });
+    });
+  },
+
+  /**
+   * Version of EventUtils' `synthesizeKey` function; it will synthesize a key
+   * event in a child process and returns a Promise that will resolve when the
+   * event was fired. Instead of a Window, a Browser object is required to be
+   * passed to this function.
+   *
+   * @param {String} key
+   *        See the documentation available for EventUtils#synthesizeKey.
+   * @param {Object} event
+   *        See the documentation available for EventUtils#synthesizeKey.
+   * @param {Browser} browser
+   *        Browser element, must not be null.
+   *
+   * @returns {Promise}
+   */
+  synthesizeKey(key, event, browser) {
+    return new Promise(resolve => {
+      let seq = ++gSynthesizeKeyCount;
+      let mm = browser.messageManager;
+
+      mm.addMessageListener("Test:SynthesizeKeyDone", function keyMsg(message) {
+        if (message.data.seq != seq)
+          return;
+
+        mm.removeMessageListener("Test:SynthesizeKeyDone", keyMsg);
+        resolve();
+      });
+
+      mm.sendAsyncMessage("Test:SynthesizeKey", { key, event, seq });
+    });
+  },
+
+  /**
+   * Version of EventUtils' `synthesizeComposition` function; it will synthesize
+   * a composition event in a child process and returns a Promise that will
+   * resolve when the event was fired. Instead of a Window, a Browser object is
+   * required to be passed to this function.
+   *
+   * @param {Object} event
+   *        See the documentation available for EventUtils#synthesizeComposition.
+   * @param {Browser} browser
+   *        Browser element, must not be null.
+   *
+   * @returns {Promise}
+   * @resolves False if the composition event could not be synthesized.
+   */
+  synthesizeComposition(event, browser) {
+    return new Promise(resolve => {
+      let seq = ++gSynthesizeCompositionCount;
+      let mm = browser.messageManager;
+
+      mm.addMessageListener("Test:SynthesizeCompositionDone", function compMsg(message) {
+        if (message.data.seq != seq)
+          return;
+
+        mm.removeMessageListener("Test:SynthesizeCompositionDone", compMsg);
+        resolve(message.data.result);
+      });
+
+      mm.sendAsyncMessage("Test:SynthesizeComposition", { event, seq });
+    });
+  },
+
+  /**
+   * Version of EventUtils' `synthesizeCompositionChange` function; it will
+   * synthesize a compositionchange event in a child process and returns a
+   * Promise that will resolve when the event was fired. Instead of a Window, a
+   * Browser object is required to be passed to this function.
+   *
+   * @param {Object} event
+   *        See the documentation available for EventUtils#synthesizeCompositionChange.
+   * @param {Browser} browser
+   *        Browser element, must not be null.
+   *
+   * @returns {Promise}
+   */
+  synthesizeCompositionChange(event, browser) {
+    return new Promise(resolve => {
+      let seq = ++gSynthesizeCompositionChangeCount;
+      let mm = browser.messageManager;
+
+      mm.addMessageListener("Test:SynthesizeCompositionChangeDone", function compMsg(message) {
+        if (message.data.seq != seq)
+          return;
+
+        mm.removeMessageListener("Test:SynthesizeCompositionChangeDone", compMsg);
+        resolve();
+      });
+
+      mm.sendAsyncMessage("Test:SynthesizeCompositionChange", { event, seq });
     });
   },
 

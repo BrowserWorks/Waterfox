@@ -7,11 +7,11 @@ const { assert, reportException } = require("devtools/shared/DevToolsUtils");
 const {
   censusIsUpToDate,
   getSnapshot,
-  breakdownEquals,
   createSnapshot,
   dominatorTreeIsComputed,
 } = require("../utils");
 const { actions, snapshotState: states, viewState, dominatorTreeState } = require("../constants");
+const telemetry = require("../telemetry");
 const view = require("./view");
 const refresh = require("./refresh");
 
@@ -43,7 +43,7 @@ const takeSnapshotAndCensus = exports.takeSnapshotAndCensus = function (front, h
 
 /**
  * Selects a snapshot and if the snapshot's census is using a different
- * breakdown, take a new census.
+ * display, take a new census.
  *
  * @param {HeapAnalysesClient} heapWorker
  * @param {snapshotId} id
@@ -67,6 +67,8 @@ const selectSnapshotAndRefresh = exports.selectSnapshotAndRefresh = function (he
  */
 const takeSnapshot = exports.takeSnapshot = function (front) {
   return function *(dispatch, getState) {
+    telemetry.countTakeSnapshot();
+
     if (getState().diffing) {
       dispatch(view.changeView(viewState.CENSUS));
     }
@@ -133,61 +135,64 @@ const takeCensus = exports.takeCensus = function (heapWorker, id) {
     assert([states.READ, states.SAVED_CENSUS].includes(snapshot.state),
       `Can only take census of snapshots in READ or SAVED_CENSUS state, found ${snapshot.state}`);
 
-    let report;
-    let inverted = getState().inverted;
-    let breakdown = getState().breakdown;
+    let report, parentMap;
+    let display = getState().censusDisplay;
     let filter = getState().filter;
 
-    // If breakdown, filter and inversion haven't changed, don't do anything.
-    if (censusIsUpToDate(inverted, filter, breakdown, snapshot.census)) {
+    // If display, filter and inversion haven't changed, don't do anything.
+    if (censusIsUpToDate(filter, display, snapshot.census)) {
       return;
     }
 
-    // Keep taking a census if the breakdown changes during. Recheck
-    // that the breakdown used for the census is the same as
-    // the state's breakdown.
+    // Keep taking a census if the display changes while our request is in
+    // flight. Recheck that the display used for the census is the same as the
+    // state's display.
     do {
-      inverted = getState().inverted;
-      breakdown = getState().breakdown;
+      display = getState().censusDisplay;
       filter = getState().filter;
 
       dispatch({
         type: actions.TAKE_CENSUS_START,
         id,
-        inverted,
         filter,
-        breakdown
+        display
       });
 
-      let opts = inverted ? { asInvertedTreeNode: true } : { asTreeNode: true };
+      let opts = display.inverted
+        ? { asInvertedTreeNode: true }
+        : { asTreeNode: true };
       opts.filter = filter || null;
 
       try {
-        report = yield heapWorker.takeCensus(snapshot.path, { breakdown }, opts);
+        ({ report, parentMap } = yield heapWorker.takeCensus(
+          snapshot.path,
+          { breakdown: display.breakdown },
+          opts));
       } catch (error) {
         reportException("takeCensus", error);
         dispatch({ type: actions.SNAPSHOT_ERROR, id, error });
         return;
       }
     }
-    while (inverted !== getState().inverted ||
-           filter !== getState().filter ||
-           !breakdownEquals(breakdown, getState().breakdown));
+    while (filter !== getState().filter ||
+           display !== getState().censusDisplay);
 
     dispatch({
       type: actions.TAKE_CENSUS_END,
       id,
-      breakdown,
-      inverted,
+      display,
       filter,
-      report
+      report,
+      parentMap
     });
+
+    telemetry.countCensus({ filter, display });
   };
 };
 
 /**
  * Refresh the selected snapshot's census data, if need be (for example,
- * breakdown configuration changed).
+ * display configuration changed).
  *
  * @param {HeapAnalysesClient} heapWorker
  */
@@ -253,18 +258,19 @@ const fetchDominatorTree = exports.fetchDominatorTree = function (heapWorker, id
     assert(dominatorTreeIsComputed(snapshot),
            "Should have dominator tree model and it should be computed");
 
-    let breakdown;
+    let display;
     let root;
     do {
-      breakdown = getState().dominatorTreeBreakdown;
-      assert(breakdown, "Should have a breakdown to describe nodes with.");
+      display = getState().dominatorTreeDisplay;
+      assert(display && display.breakdown,
+             `Should have a breakdown to describe nodes with, got: ${uneval(display)}`);
 
-      dispatch({ type: actions.FETCH_DOMINATOR_TREE_START, id, breakdown });
+      dispatch({ type: actions.FETCH_DOMINATOR_TREE_START, id, display });
 
       try {
         root = yield heapWorker.getDominatorTree({
           dominatorTreeId: snapshot.dominatorTree.dominatorTreeId,
-          breakdown,
+          breakdown: display.breakdown,
         });
       } catch (error) {
         reportException("actions/snapshot/fetchDominatorTree", error);
@@ -272,9 +278,10 @@ const fetchDominatorTree = exports.fetchDominatorTree = function (heapWorker, id
         return null;
       }
     }
-    while (!breakdownEquals(breakdown, getState().dominatorTreeBreakdown));
+    while (display !== getState().dominatorTreeDisplay);
 
     dispatch({ type: actions.FETCH_DOMINATOR_TREE_END, id, root });
+    telemetry.countDominatorTree({ display });
     return root;
   };
 };
@@ -296,18 +303,18 @@ const fetchImmediatelyDominated = exports.fetchImmediatelyDominated = function (
            "Cannot fetch immediately dominated nodes in a dominator tree unless " +
            " the dominator tree has already been computed");
 
-    let breakdown;
+    let display;
     let response;
     do {
-      breakdown = getState().dominatorTreeBreakdown;
-      assert(breakdown, "Should have a breakdown to describe nodes with.");
+      display = getState().dominatorTreeDisplay;
+      assert(display, "Should have a display to describe nodes with.");
 
       dispatch({ type: actions.FETCH_IMMEDIATELY_DOMINATED_START, id });
 
       try {
         response = yield heapWorker.getImmediatelyDominated({
           dominatorTreeId: snapshot.dominatorTree.dominatorTreeId,
-          breakdown,
+          breakdown: display.breakdown,
           nodeId: lazyChildren.parentNodeId(),
           startIndex: lazyChildren.siblingIndex(),
         });
@@ -317,7 +324,7 @@ const fetchImmediatelyDominated = exports.fetchImmediatelyDominated = function (
         return null;
       }
     }
-    while (!breakdownEquals(breakdown, getState().dominatorTreeBreakdown));
+    while (display !== getState().dominatorTreeDisplay);
 
     dispatch({
       type: actions.FETCH_IMMEDIATELY_DOMINATED_END,
@@ -420,11 +427,10 @@ const clearSnapshots = exports.clearSnapshots = function (heapWorker) {
 
     dispatch({ type: actions.DELETE_SNAPSHOTS_START, ids });
 
-    Promise.all(snapshots.map(s => {
-      heapWorker.deleteHeapSnapshot(s.path)
-      .catch(error => {
+    yield Promise.all(snapshots.map(snapshot => {
+      return heapWorker.deleteHeapSnapshot(snapshot.path).catch(error => {
         reportException("clearSnapshots", error);
-        dispatch({ type: actions.SNAPSHOT_ERROR, id: s.id, error });
+        dispatch({ type: actions.SNAPSHOT_ERROR, id: snapshot.id, error });
       });
     }));
 

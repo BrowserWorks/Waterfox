@@ -4,6 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+for cdm in CONFIG['MOZ_EME_MODULES']:
+    DEFINES['MOZ_%s_EME' % cdm.upper()] = True
+
 XPIDL_MODULE = 'content_geckomediaplugins'
 
 XPIDL_SOURCES += [
@@ -52,6 +55,7 @@ EXPORTS += [
     'GMPServiceChild.h',
     'GMPServiceParent.h',
     'GMPSharedMemManager.h',
+    'GMPStorage.h',
     'GMPStorageChild.h',
     'GMPStorageParent.h',
     'GMPTimerChild.h',
@@ -85,7 +89,9 @@ UNIFIED_SOURCES += [
     'GMPContentParent.cpp',
     'GMPDecryptorChild.cpp',
     'GMPDecryptorParent.cpp',
+    'GMPDiskStorage.cpp',
     'GMPEncryptedBufferDataImpl.cpp',
+    'GMPMemoryStorage.cpp',
     'GMPParent.cpp',
     'GMPPlatform.cpp',
     'GMPProcessChild.cpp',
@@ -112,6 +118,11 @@ UNIFIED_SOURCES += [
 if CONFIG['OS_TARGET'] in ('WINNT', 'Darwin'):
   DIRS += [
       'rlz',
+  ]
+
+if 'widevine' in CONFIG['MOZ_EME_MODULES']:
+  DIRS += [
+      'widevine-adapter',
   ]
 
 IPDL_SOURCES += [

@@ -53,7 +53,7 @@ function test() {
                     .get("TmpD", Ci.nsIFile);
     saveDir.append("testsavedir");
     if (!saveDir.exists())
-      saveDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0755);
+      saveDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
     return saveDir;
   }
 
@@ -106,7 +106,7 @@ function test() {
         EventUtils.synthesizeMouseAtCenter(img,
                                            { type: "contextmenu", button: 2 },
                                            aWindow.gBrowser.contentWindow);
-      }, aWindow.gBrowser.selectedBrowser.contentWindow);
+      }, aWindow.gBrowser.selectedBrowser);
     });
   }
 

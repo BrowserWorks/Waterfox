@@ -4,7 +4,8 @@
 
 "use strict";
 
-var { console } = Cu.import("resource://gre/modules/Console.jsm", {});
+/* eslint no-unused-vars: [2, {"vars": "local"}] */
+
 var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 var { TargetFactory } = require("devtools/client/framework/target");
 var promise = require("promise");
@@ -14,6 +15,8 @@ const SPLIT_CONSOLE_PREF = "devtools.toolbox.splitconsoleEnabled";
 const STORAGE_PREF = "devtools.storage.enabled";
 const DUMPEMIT_PREF = "devtools.dump.emit";
 const DEBUGGERLOG_PREF = "devtools.debugger.log";
+// Allows Cache API to be working on usage `http` test page
+const CACHES_ON_HTTP_PREF = "dom.caches.testing.enabled";
 const PATH = "browser/devtools/client/storage/test/";
 const MAIN_DOMAIN = "http://test1.example.org/" + PATH;
 const ALT_DOMAIN = "http://sectest1.example.org/" + PATH;
@@ -27,6 +30,7 @@ var gToolbox, gPanelWindow, gWindow, gUI;
 // Services.prefs.setBoolPref(DEBUGGERLOG_PREF, true);
 
 Services.prefs.setBoolPref(STORAGE_PREF, true);
+Services.prefs.setBoolPref(CACHES_ON_HTTP_PREF, true);
 DevToolsUtils.testing = true;
 registerCleanupFunction(() => {
   gToolbox = gPanelWindow = gWindow = gUI = null;
@@ -34,6 +38,7 @@ registerCleanupFunction(() => {
   Services.prefs.clearUserPref(SPLIT_CONSOLE_PREF);
   Services.prefs.clearUserPref(DUMPEMIT_PREF);
   Services.prefs.clearUserPref(DEBUGGERLOG_PREF);
+  Services.prefs.clearUserPref(CACHES_ON_HTTP_PREF);
   DevToolsUtils.testing = false;
   while (gBrowser.tabs.length > 1) {
     gBrowser.removeCurrentTab();
@@ -82,35 +87,43 @@ function addTab(url) {
  * @return {Promise} A promise that resolves after storage inspector is ready
  */
 function* openTabAndSetupStorage(url) {
-  /**
-   * This method iterates over iframes in a window and setups the indexed db
-   * required for this test.
-   */
-  let setupIDBInFrames = (w, i, c) => {
-    if (w[i] && w[i].idbGenerator) {
-      w[i].setupIDB = w[i].idbGenerator(() => setupIDBInFrames(w, i + 1, c));
-      w[i].setupIDB.next();
-    } else if (w[i] && w[i + 1]) {
-      setupIDBInFrames(w, i + 1, c);
-    } else {
-      c();
-    }
-  };
-
   let content = yield addTab(url);
 
-  let def = promise.defer();
-  // Setup the indexed db in main window.
   gWindow = content.wrappedJSObject;
-  if (gWindow.idbGenerator) {
-    gWindow.setupIDB = gWindow.idbGenerator(() => {
-      setupIDBInFrames(gWindow, 0, () => {
-        def.resolve();
-      });
-    });
-    gWindow.setupIDB.next();
-    yield def.promise;
-  }
+
+  // Setup the async storages in main window and for all its iframes
+  yield ContentTask.spawn(gBrowser.selectedBrowser, null, function*() {
+    /**
+     * Get all windows including frames recursively.
+     *
+     * @param {Window} [baseWindow]
+     *        The base window at which to start looking for child windows
+     *        (optional).
+     * @return {Set}
+     *         A set of windows.
+     */
+    function getAllWindows(baseWindow) {
+      let windows = new Set();
+
+      let _getAllWindows = function(win) {
+        windows.add(win.wrappedJSObject);
+
+        for (let i = 0; i < win.length; i++) {
+          _getAllWindows(win[i]);
+        }
+      };
+      _getAllWindows(baseWindow);
+
+      return windows;
+    }
+
+    let windows = getAllWindows(content);
+    for (let win of windows) {
+      if (win.setup) {
+        yield win.setup();
+      }
+    }
+  });
 
   // open storage inspector
   return yield openStoragePanel();
@@ -204,40 +217,43 @@ function forceCollections() {
 }
 
 /**
- * Get all windows including frames recursively.
- *
- * @param {Window} [baseWindow]
- *        The base window at which to start looking for child windows
- *        (optional).
- * @return {Set}
- *         A set of windows.
- */
-function getAllWindows(baseWindow=gWindow) {
-  let windows = new Set();
-
-  let _getAllWindows = function(win) {
-    windows.add(win);
-
-    for (let i = 0; i < win.length; i++) {
-      _getAllWindows(win[i]);
-    }
-  };
-  _getAllWindows(baseWindow);
-
-  return windows;
-}
-
-/**
  * Cleans up and finishes the test
  */
 function* finishTests() {
-  for (let win of getAllWindows()) {
-    if (win.clear) {
-      console.log("Clearing cookies, localStorage and indexedDBs from " +
-                  win.document.location);
-      yield win.clear();
+  // Bug 1233497 makes it so that we can no longer yield CPOWs from Tasks.
+  // We work around this by calling clear() via a ContentTask instead.
+  yield ContentTask.spawn(gBrowser.selectedBrowser, null, function*() {
+    /**
+     * Get all windows including frames recursively.
+     *
+     * @param {Window} [baseWindow]
+     *        The base window at which to start looking for child windows
+     *        (optional).
+     * @return {Set}
+     *         A set of windows.
+     */
+    function getAllWindows(baseWindow) {
+      let windows = new Set();
+
+      let _getAllWindows = function(win) {
+        windows.add(win.wrappedJSObject);
+
+        for (let i = 0; i < win.length; i++) {
+          _getAllWindows(win[i]);
+        }
+      };
+      _getAllWindows(baseWindow);
+
+      return windows;
     }
-  }
+
+    let windows = getAllWindows(content);
+    for (let win of windows) {
+      if (win.clear) {
+        yield win.clear();
+      }
+    }
+  });
 
   forceCollections();
   finish();
@@ -262,7 +278,7 @@ function* click(node) {
 /**
  * Recursively expand the variables view up to a given property.
  *
- * @param aOptions
+ * @param options
  *        Options for view expansion:
  *        - rootVariable: start from the given scope/variable/property.
  *        - expandTo: string made up of property names you want to expand.
@@ -274,14 +290,14 @@ function* click(node) {
  *         last property - |nextSibling| in the example above. Rejection is
  *         always the last property that was found.
  */
-function variablesViewExpandTo(aOptions) {
-  let root = aOptions.rootVariable;
-  let expandTo = aOptions.expandTo.split(".");
+function variablesViewExpandTo(options) {
+  let root = options.rootVariable;
+  let expandTo = options.expandTo.split(".");
   let lastDeferred = promise.defer();
 
-  function getNext(aProp) {
+  function getNext(prop) {
     let name = expandTo.shift();
-    let newProp = aProp.get(name);
+    let newProp = prop.get(name);
 
     if (expandTo.length > 0) {
       ok(newProp, "found property " + name);
@@ -289,17 +305,13 @@ function variablesViewExpandTo(aOptions) {
         newProp.expand();
         getNext(newProp);
       } else {
-        lastDeferred.reject(aProp);
+        lastDeferred.reject(prop);
       }
     } else if (newProp) {
       lastDeferred.resolve(newProp);
     } else {
-      lastDeferred.reject(aProp);
+      lastDeferred.reject(prop);
     }
-  }
-
-  function fetchError(aProp) {
-    lastDeferred.reject(aProp);
   }
 
   if (root && root.expand) {
@@ -315,12 +327,12 @@ function variablesViewExpandTo(aOptions) {
 /**
  * Find variables or properties in a VariablesView instance.
  *
- * @param array aRules
+ * @param array ruleArray
  *        The array of rules you want to match. Each rule is an object with:
  *        - name (string|regexp): property name to match.
  *        - value (string|regexp): property value to match.
  *        - dontMatch (boolean): make sure the rule doesn't match any property.
- * @param boolean aParsed
+ * @param boolean parsed
  *        true if we want to test the rules in the parse value section of the
  *        storage sidebar
  * @return object
@@ -331,23 +343,23 @@ function variablesViewExpandTo(aOptions) {
  *         VariablesView. If the rule did not match, then |matchedProp| is
  *         undefined.
  */
-function findVariableViewProperties(aRules, aParsed) {
+function findVariableViewProperties(ruleArray, parsed) {
   // Initialize the search.
   function init() {
-    // If aParsed is true, we are checking rules in the parsed value section of
+    // If parsed is true, we are checking rules in the parsed value section of
     // the storage sidebar. That scope uses a blank variable as a placeholder
     // Thus, adding a blank parent to each name
-    if (aParsed) {
-      aRules = aRules.map(({name, value, dontMatch}) => {
+    if (parsed) {
+      ruleArray = ruleArray.map(({name, value, dontMatch}) => {
         return {name: "." + name, value, dontMatch};
       });
     }
     // Separate out the rules that require expanding properties throughout the
     // view.
     let expandRules = [];
-    let rules = aRules.filter((aRule) => {
-      if (typeof aRule.name == "string" && aRule.name.indexOf(".") > -1) {
-        expandRules.push(aRule);
+    let rules = ruleArray.filter(rule => {
+      if (typeof rule.name == "string" && rule.name.indexOf(".") > -1) {
+        expandRules.push(rule);
         return false;
       }
       return true;
@@ -363,24 +375,24 @@ function findVariableViewProperties(aRules, aParsed) {
     // Process the rules that need to expand properties.
     let lastStep = processExpandRules.bind(null, expandRules);
 
-    // Return the results - a promise resolved to hold the updated aRules array.
-    let returnResults = onAllRulesMatched.bind(null, aRules);
+    // Return the results - a promise resolved to hold the updated ruleArray.
+    let returnResults = onAllRulesMatched.bind(null, ruleArray);
 
     return promise.all(outstanding).then(lastStep).then(returnResults);
   }
 
-  function onMatch(aProp, aRule, aMatched) {
-    if (aMatched && !aRule.matchedProp) {
-      aRule.matchedProp = aProp;
+  function onMatch(prop, rule, matched) {
+    if (matched && !rule.matchedProp) {
+      rule.matchedProp = prop;
     }
   }
 
-  function finder(rules, aView, aPromises) {
-    for (let scope of aView) {
+  function finder(rules, view, promises) {
+    for (let scope of view) {
       for (let [, prop] of scope) {
         for (let rule of rules) {
           let matcher = matchVariablesViewProperty(prop, rule);
-          aPromises.push(matcher.then(onMatch.bind(null, prop, rule)));
+          promises.push(matcher.then(onMatch.bind(null, prop, rule)));
         }
       }
     }
@@ -394,17 +406,17 @@ function findVariableViewProperties(aRules, aParsed) {
 
     let deferred = promise.defer();
     let expandOptions = {
-      rootVariable: gUI.view.getScopeAtIndex(aParsed ? 1 : 0),
+      rootVariable: gUI.view.getScopeAtIndex(parsed ? 1 : 0),
       expandTo: rule.name
     };
 
-    variablesViewExpandTo(expandOptions).then(function onSuccess(aProp) {
+    variablesViewExpandTo(expandOptions).then(function onSuccess(prop) {
       let name = rule.name;
       let lastName = name.split(".").pop();
       rule.name = lastName;
 
-      let matched = matchVariablesViewProperty(aProp, rule);
-      return matched.then(onMatch.bind(null, aProp, rule)).then(function() {
+      let matched = matchVariablesViewProperty(prop, rule);
+      return matched.then(onMatch.bind(null, prop, rule)).then(function() {
         rule.name = name;
       });
     }, function onFailure() {
@@ -438,9 +450,9 @@ function findVariableViewProperties(aRules, aParsed) {
  * Check if a given Property object from the variables view matches the given
  * rule.
  *
- * @param object aProp
+ * @param object prop
  *        The variable's view Property instance.
- * @param object aRule
+ * @param object rule
  *        Rules for matching the property. See findVariableViewProperties() for
  *        details.
  * @return object
@@ -448,36 +460,36 @@ function findVariableViewProperties(aRules, aParsed) {
  *         result is a boolean that tells your promise callback the match
  *         result: true or false.
  */
-function matchVariablesViewProperty(aProp, aRule) {
-  function resolve(aResult) {
-    return promise.resolve(aResult);
+function matchVariablesViewProperty(prop, rule) {
+  function resolve(result) {
+    return promise.resolve(result);
   }
 
-  if (!aProp) {
+  if (!prop) {
     return resolve(false);
   }
 
-  if (aRule.name) {
-    let match = aRule.name instanceof RegExp ?
-                aRule.name.test(aProp.name) :
-                aProp.name == aRule.name;
+  if (rule.name) {
+    let match = rule.name instanceof RegExp ?
+                rule.name.test(prop.name) :
+                prop.name == rule.name;
     if (!match) {
       return resolve(false);
     }
   }
 
-  if ("value" in aRule) {
-    let displayValue = aProp.displayValue;
-    if (aProp.displayValueClassName == "token-string") {
+  if ("value" in rule) {
+    let displayValue = prop.displayValue;
+    if (prop.displayValueClassName == "token-string") {
       displayValue = displayValue.substring(1, displayValue.length - 1);
     }
 
-    let match = aRule.value instanceof RegExp ?
-                aRule.value.test(displayValue) :
-                displayValue == aRule.value;
+    let match = rule.value instanceof RegExp ?
+                rule.value.test(displayValue) :
+                displayValue == rule.value;
     if (!match) {
-      info("rule " + aRule.name + " did not match value, expected '" +
-           aRule.value + "', found '" + displayValue + "'");
+      info("rule " + rule.name + " did not match value, expected '" +
+           rule.value + "', found '" + displayValue + "'");
       return resolve(false);
     }
   }
@@ -498,6 +510,7 @@ function* selectTreeItem(ids) {
 
   let selector = "[data-id='" + JSON.stringify(ids) + "'] > .tree-widget-item";
   let target = gPanelWindow.document.querySelector(selector);
+  ok(target, "tree item found with ids " + JSON.stringify(ids));
 
   let updated = gUI.once("store-objects-updated");
 
@@ -514,6 +527,7 @@ function* selectTreeItem(ids) {
 function* selectTableItem(id) {
   let selector = ".table-widget-cell[data-id='" + id + "']";
   let target = gPanelWindow.document.querySelector(selector);
+  ok(target, "table item found with ids " + id);
 
   yield click(target);
   yield gUI.once("sidebar-updated");
@@ -527,7 +541,7 @@ function* selectTableItem(id) {
  * @param {Boolean} [useCapture] for addEventListener/removeEventListener
  * @return A promise that resolves when the event has been handled
  */
-function once(target, eventName, useCapture=false) {
+function once(target, eventName, useCapture = false) {
   info("Waiting for event: '" + eventName + "' on " + target + ".");
 
   let deferred = promise.defer();

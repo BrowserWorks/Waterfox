@@ -440,17 +440,12 @@ DrawTargetSkia::DrawSurfaceWithShadow(SourceSurface *aSurface,
   shadowPaint.setImageFilter(blurFilter.get());
   shadowPaint.setColorFilter(colorFilter.get());
 
-  // drawBitmap implicitly calls saveLayer with a src-over xfer mode if given
-  // an image filter, whereas the supplied xfer mode gets used to render into
-  // the layer, which is the wrong order. We instead must use drawSprite which
-  // applies the image filter directly to the bitmap without rendering it first,
-  // then uses the xfer mode to composite it.
   IntPoint shadowDest = RoundedToInt(aDest + aOffset);
-  mCanvas->drawSprite(bitmap, shadowDest.x, shadowDest.y, &shadowPaint);
+  mCanvas->drawBitmap(bitmap, shadowDest.x, shadowDest.y, &shadowPaint);
 
   // Composite the original image after the shadow
   IntPoint dest = RoundedToInt(aDest);
-  mCanvas->drawSprite(bitmap, dest.x, dest.y, &paint);
+  mCanvas->drawBitmap(bitmap, dest.x, dest.y, &paint);
 
   mCanvas->restore();
 }
@@ -559,6 +554,8 @@ DrawTargetSkia::ShouldLCDRenderText(FontType aFontType, AntialiasMode aAntialias
   if (aAntialiasMode == AntialiasMode::DEFAULT) {
     switch (aFontType) {
       case FontType::MAC:
+      case FontType::GDI:
+      case FontType::DWRITE:
         return true;
       default:
         // TODO: Figure out what to do for the other platforms.
@@ -585,9 +582,13 @@ DrawTargetSkia::FillGlyphs(ScaledFont *aFont,
   MarkChanged();
 
   ScaledFontBase* skiaFont = static_cast<ScaledFontBase*>(aFont);
+  SkTypeface* typeface = skiaFont->GetSkTypeface();
+  if (!typeface) {
+    return;
+  }
 
   AutoPaintSetup paint(mCanvas.get(), aOptions, aPattern);
-  paint.mPaint.setTypeface(skiaFont->GetSkTypeface());
+  paint.mPaint.setTypeface(typeface);
   paint.mPaint.setTextSize(SkFloatToScalar(skiaFont->mSize));
   paint.mPaint.setTextEncoding(SkPaint::kGlyphID_TextEncoding);
 
@@ -668,10 +669,11 @@ DrawTargetSkia::MaskSurface(const Pattern &aSource,
     return;
   }
 
-  if (aOffset != Point(0, 0)) {
+  if (aOffset != Point(0, 0) &&
+      paint.mPaint.getShader()) {
     SkMatrix transform;
-    transform.setTranslate(SkFloatToScalar(-aOffset.x), SkFloatToScalar(-aOffset.y));
-    SkShader* matrixShader = SkShader::CreateLocalMatrixShader(paint.mPaint.getShader(), transform);
+    transform.setTranslate(PointToSkPoint(-aOffset));
+    SkShader* matrixShader = paint.mPaint.getShader()->newWithLocalMatrix(transform);
     SkSafeUnref(paint.mPaint.setShader(matrixShader));
   }
 
@@ -918,13 +920,35 @@ DrawTargetSkia::InitWithGrContext(GrContext* aGrContext,
 
 #endif
 
+#ifdef DEBUG
+bool
+VerifyRGBXFormat(uint8_t* aData, const IntSize &aSize, const int32_t aStride, SurfaceFormat aFormat)
+{
+  // We should've initialized the data to be opaque already
+  // On debug builds, verify that this is actually true.
+  int height = aSize.height;
+  int width = aSize.width;
+
+  for (int row = 0; row < height; ++row) {
+    for (int column = 0; column < width; column += 4) {
+#ifdef IS_BIG_ENDIAN
+      MOZ_ASSERT(aData[column] == 0xFF);
+#else
+      MOZ_ASSERT(aData[column + 3] == 0xFF);
+#endif
+    }
+    aData += aStride;
+  }
+
+  return true;
+}
+#endif
+
 void
 DrawTargetSkia::Init(unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat)
 {
-  if (aFormat == SurfaceFormat::B8G8R8X8) {
-    // We have to manually set the A channel to be 255 as Skia doesn't understand BGRX
-    ConvertBGRXToBGRA(aData, aSize, aStride);
-  }
+  MOZ_ASSERT((aFormat != SurfaceFormat::B8G8R8X8) ||
+              VerifyRGBXFormat(aData, aSize, aStride, aFormat));
 
   SkBitmap bitmap;
   bitmap.setInfo(MakeSkiaImageInfo(aSize, aFormat), aStride);
@@ -1008,6 +1032,40 @@ DrawTargetSkia::PopClip()
   mCanvas->restore();
 }
 
+// Image filter that just passes the source through to the result unmodified.
+class CopyLayerImageFilter : public SkImageFilter
+{
+public:
+  CopyLayerImageFilter()
+    : SkImageFilter(0, nullptr)
+  {}
+
+  virtual bool onFilterImage(Proxy*, const SkBitmap& src, const Context&,
+                             SkBitmap* result, SkIPoint* offset) const override {
+    *result = src;
+    offset->set(0, 0);
+    return true;
+  }
+
+  SK_TO_STRING_OVERRIDE()
+  SK_DECLARE_PUBLIC_FLATTENABLE_DESERIALIZATION_PROCS(CopyLayerImageFilter)
+};
+
+SkFlattenable*
+CopyLayerImageFilter::CreateProc(SkReadBuffer& buffer)
+{
+  SK_IMAGEFILTER_UNFLATTEN_COMMON(common, 0);
+  return new CopyLayerImageFilter;
+}
+
+#ifndef SK_IGNORE_TO_STRING
+void
+CopyLayerImageFilter::toString(SkString* str) const
+{
+  str->append("CopyLayerImageFilter: ()");
+}
+#endif
+
 void
 DrawTargetSkia::PushLayer(bool aOpaque, Float aOpacity, SourceSurface* aMask,
                           const Matrix& aMaskTransform, const IntRect& aBounds,
@@ -1023,35 +1081,15 @@ DrawTargetSkia::PushLayer(bool aOpaque, Float aOpacity, SourceSurface* aMask,
   paint.setAlpha(aMask ? 0 : ColorFloatToByte(aOpacity));
 
   SkRect bounds = IntRectToSkRect(aBounds);
-  SkRect* boundsPtr = aBounds.IsEmpty() ? nullptr : &bounds;
 
-  // TODO: Replace this with SaveLayerFlags when available in Skia update (m49+)
-  SkCanvas::SaveFlags saveFlags =
-    aOpaque ?
-      SkCanvas::SaveFlags(SkCanvas::kARGB_ClipLayer_SaveFlag & ~SkCanvas::kHasAlphaLayer_SaveFlag) :
-      SkCanvas::kARGB_ClipLayer_SaveFlag;
+  SkAutoTUnref<SkImageFilter> backdrop(aCopyBackground ? new CopyLayerImageFilter : nullptr);
 
-  if (aCopyBackground) {
-    // Get a reference to the background before we save the layer.
-    SkAutoTUnref<SkBaseDevice> bgDevice(SkSafeRef(mCanvas->getTopDevice()));
-    SkIPoint bgOrigin = bgDevice->getOrigin();
-    SkBitmap bgBitmap = bgDevice->accessBitmap(false);
+  SkCanvas::SaveLayerRec saveRec(aBounds.IsEmpty() ? nullptr : &bounds,
+                                 &paint,
+                                 backdrop.get(),
+                                 aOpaque ? SkCanvas::kIsOpaque_SaveLayerFlag : 0);
 
-    mCanvas->saveLayer(boundsPtr, &paint, saveFlags);
-
-    // Draw the background into the layer.
-    SkPaint bgPaint;
-    if (!bgBitmap.isOpaque()) {
-      bgPaint.setXfermodeMode(SkXfermode::kSrc_Mode);
-    }
-
-    mCanvas->save();
-    mCanvas->resetMatrix();
-    mCanvas->drawBitmap(bgBitmap, bgOrigin.x(), bgOrigin.y(), &bgPaint);
-    mCanvas->restore();
-  } else {
-    mCanvas->saveLayer(boundsPtr, &paint, saveFlags);
-  }
+  mCanvas->saveLayer(saveRec);
 
   SetPermitSubpixelAA(aOpaque);
 }

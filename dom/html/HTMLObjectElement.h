@@ -154,7 +154,7 @@ public:
     SetHTMLAttr(nsGkAtoms::height, aValue, aRv);
   }
   using nsObjectLoadingContent::GetContentDocument;
-  nsIDOMWindow* GetContentWindow();
+  nsPIDOMWindowOuter* GetContentWindow();
   using nsIConstraintValidation::CheckValidity;
   using nsIConstraintValidation::GetValidationMessage;
   void GetAlign(DOMString& aValue)

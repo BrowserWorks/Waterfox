@@ -21,9 +21,10 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
-IDBFileRequest::IDBFileRequest(nsPIDOMWindow* aWindow,
+using namespace mozilla::dom::indexedDB;
+
+IDBFileRequest::IDBFileRequest(nsPIDOMWindowInner* aWindow,
                                IDBFileHandle* aFileHandle,
                                bool aWrapAsDOMRequest)
   : DOMRequest(aWindow)
@@ -41,7 +42,7 @@ IDBFileRequest::~IDBFileRequest()
 
 // static
 already_AddRefed<IDBFileRequest>
-IDBFileRequest::Create(nsPIDOMWindow* aOwner, IDBFileHandle* aFileHandle,
+IDBFileRequest::Create(nsPIDOMWindowInner* aOwner, IDBFileHandle* aFileHandle,
                        bool aWrapAsDOMRequest)
 {
   MOZ_ASSERT(aFileHandle);
@@ -152,6 +153,5 @@ IDBFileRequest::FireProgressEvent(uint64_t aLoaded, uint64_t aTotal)
   DispatchTrustedEvent(event);
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

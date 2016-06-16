@@ -1,4 +1,5 @@
 #filter substitution
+#include @TOPOBJDIR@/source-repo.h
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -240,6 +241,13 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_NATIVE_NSS:
+#ifdef MOZ_NATIVE_NSS
+  true,
+#else
+  false,
+#endif
+
   MOZ_PLACES:
 #ifdef MOZ_PLACES
   true,
@@ -275,6 +283,20 @@ this.AppConstants = Object.freeze({
   false,
 #endif
 
+  MOZ_TOOLKIT_SEARCH:
+#ifdef MOZ_TOOLKIT_SEARCH
+  true,
+#else
+  false,
+#endif
+
+  MOZ_ENABLE_PROFILER_SPS:
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  true,
+#else
+  false,
+#endif
+
   DLL_PREFIX: "@DLL_PREFIX@",
   DLL_SUFFIX: "@DLL_SUFFIX@",
 
@@ -301,7 +323,10 @@ this.AppConstants = Object.freeze({
   // URL to the hg revision this was built from (e.g.
   // "https://hg.mozilla.org/mozilla-central/rev/6256ec9113c1")
   // On unofficial builds, this is an empty string.
-  SOURCE_REVISION_URL: "@SOURCE_REV_URL@",
+#ifndef MOZ_SOURCE_URL
+#define MOZ_SOURCE_URL
+#endif
+  SOURCE_REVISION_URL: "@MOZ_SOURCE_URL@",
 
   MOZ_NUWA_PROCESS:
 #ifdef MOZ_NUWA_PROCESS

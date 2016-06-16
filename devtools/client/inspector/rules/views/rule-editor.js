@@ -26,6 +26,7 @@ const {
   SELECTOR_PSEUDO_CLASS
 } = require("devtools/client/shared/css-parsing-utils");
 const promise = require("promise");
+const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
 
 XPCOMUtils.defineLazyGetter(this, "_strings", function() {
@@ -177,11 +178,22 @@ RuleEditor.prototype = {
     });
 
     if (this.isEditable) {
+      // A newProperty editor should only be created when no editor was
+      // previously displayed. Since the editors are cleared on blur,
+      // check this.ruleview.isEditing on mousedown
+      this._ruleViewIsEditing = false;
+
+      code.addEventListener("mousedown", () => {
+        this._ruleViewIsEditing = this.ruleView.isEditing;
+      });
+
       code.addEventListener("click", () => {
         let selection = this.doc.defaultView.getSelection();
-        if (selection.isCollapsed) {
+        if (selection.isCollapsed && !this._ruleViewIsEditing) {
           this.newProperty();
         }
+        // Cleanup the _ruleViewIsEditing flag
+        this._ruleViewIsEditing = false;
       }, false);
 
       this.element.addEventListener("mousedown", () => {

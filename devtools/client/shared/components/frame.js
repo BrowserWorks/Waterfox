@@ -2,13 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const { Cu } = require("chrome");
-Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
-const STRINGS_URI = "chrome://devtools/locale/components.properties";
-const L10N = new ViewHelpers.L10N(STRINGS_URI);
 const { DOM: dom, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
 const { getSourceNames } = require("devtools/client/shared/source-utils");
-const UNKNOWN_SOURCE_STRING = L10N.getStr("frame.unknownSource");
+const { L10N } = require("resource://devtools/client/shared/widgets/ViewHelpers.jsm").ViewHelpers;
+const l10n = new L10N("chrome://devtools/locale/components.properties");
 
 const Frame = module.exports = createClass({
   displayName: "Frame",
@@ -26,7 +23,7 @@ const Frame = module.exports = createClass({
       functionDisplayName: PropTypes.string,
       source: PropTypes.string.isRequired,
       line: PropTypes.number.isRequired,
-      column: PropTypes.number.isRequired,
+      column: PropTypes.number,
     }).isRequired,
     // Clicking on the frame link -- probably should link to the debugger.
     onClick: PropTypes.func.isRequired,
@@ -39,19 +36,19 @@ const Frame = module.exports = createClass({
   render() {
     let { onClick, frame, showFunctionName, showHost } = this.props;
 
-    const { short, long, host } = getSourceNames(frame.source, UNKNOWN_SOURCE_STRING);
+    const { short, long, host } = getSourceNames(frame.source);
 
     let tooltip = `${long}:${frame.line}`;
     if (frame.column) {
       tooltip += `:${frame.column}`;
     }
 
-    let sourceString = `${frame.source}:${frame.line}`;
+    let sourceString = `${long}:${frame.line}`;
     if (frame.column) {
       sourceString += `:${frame.column}`;
     }
 
-    let onClickTooltipString = L10N.getFormatStr("frame.viewsourceindebugger", sourceString);
+    let onClickTooltipString = l10n.getFormatStr("frame.viewsourceindebugger", sourceString);
 
     let fields = [
       dom.a({

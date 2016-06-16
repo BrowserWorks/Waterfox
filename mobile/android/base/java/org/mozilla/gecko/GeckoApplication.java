@@ -24,6 +24,8 @@ import android.content.res.Configuration;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.squareup.leakcanary.LeakCanary;
+
 import java.io.File;
 
 public class GeckoApplication extends Application 
@@ -127,6 +129,8 @@ public class GeckoApplication extends Application
     public void onCreate() {
         Log.i(LOG_TAG, "zerdatime " + SystemClock.uptimeMillis() + " - Fennec application start");
 
+        LeakCanary.install(this);
+
         final Context context = getApplicationContext();
         HardwareUtils.init(context);
         Clipboard.init(context);
@@ -141,7 +145,6 @@ public class GeckoApplication extends Application
 
         // Make sure that all browser-ish applications default to the real LocalBrowserDB.
         // GeckoView consumers use their own Application class, so this doesn't affect them.
-        // WebappImpl overrides this on creation.
         //
         // We need to do this before any access to the profile; it controls
         // which database class is used.

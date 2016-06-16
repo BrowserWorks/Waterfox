@@ -5,17 +5,14 @@ task:
   payload:
     command:
       - --e10s
-  scopes:
-    - 'docker-worker:capability:device:loopbackVideo'
-    - 'docker-worker:capability:device:loopbackAudio'
-  metadata:
-    name: '[TC] Linux64 mochitest-browser-chrome e10s M(bc{{chunk}})'
-    description: Mochitest browser-chrome e10s run {{chunk}}
-  payload:
     capabilities:
       devices:
         loopbackVideo: true
-        loopbackAudio: true
+  scopes:
+    - 'docker-worker:capability:device:loopbackVideo'
+  metadata:
+    name: '[TC] Linux64 mochitest-browser-chrome-e10s-{{chunk}}'
+    description: Mochitest browser-chrome e10s run {{chunk}}
   extra:
     chunks:
       total: 7

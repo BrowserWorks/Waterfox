@@ -172,7 +172,7 @@ nsLoadGroup::GetName(nsACString &result)
         result.Truncate();
         return NS_OK;
     }
-    
+
     return mDefaultLoadRequest->GetName(result);
 }
 
@@ -188,9 +188,9 @@ nsLoadGroup::GetStatus(nsresult *status)
 {
     if (NS_SUCCEEDED(mStatus) && mDefaultLoadRequest)
         return mDefaultLoadRequest->GetStatus(status);
-    
+
     *status = mStatus;
-    return NS_OK; 
+    return NS_OK;
 }
 
 static bool
@@ -226,7 +226,7 @@ nsLoadGroup::Cancel(nsresult status)
     nsresult rv;
     uint32_t count = mRequests.EntryCount();
 
-    nsAutoTArray<nsIRequest*, 8> requests;
+    AutoTArray<nsIRequest*, 8> requests;
 
     if (!AppendRequestsToArray(&mRequests, &requests)) {
         return NS_ERROR_OUT_OF_MEMORY;
@@ -298,7 +298,7 @@ nsLoadGroup::Suspend()
     nsresult rv, firstError;
     uint32_t count = mRequests.EntryCount();
 
-    nsAutoTArray<nsIRequest*, 8> requests;
+    AutoTArray<nsIRequest*, 8> requests;
 
     if (!AppendRequestsToArray(&mRequests, &requests)) {
         return NS_ERROR_OUT_OF_MEMORY;
@@ -343,7 +343,7 @@ nsLoadGroup::Resume()
     nsresult rv, firstError;
     uint32_t count = mRequests.EntryCount();
 
-    nsAutoTArray<nsIRequest*, 8> requests;
+    AutoTArray<nsIRequest*, 8> requests;
 
     if (!AppendRequestsToArray(&mRequests, &requests)) {
         return NS_ERROR_OUT_OF_MEMORY;
@@ -480,7 +480,7 @@ nsLoadGroup::AddRequest(nsIRequest *request, nsISupports* ctxt)
         rv = MergeLoadFlags(request, flags);
     }
     if (NS_FAILED(rv)) return rv;
-    
+
     //
     // Add the request to the list of active requests...
     //
@@ -810,10 +810,24 @@ nsLoadGroup::SetDefaultLoadFlags(uint32_t aFlags)
     return NS_OK;
 }
 
+NS_IMETHODIMP
+nsLoadGroup::GetUserAgentOverrideCache(nsACString & aUserAgentOverrideCache)
+{
+  aUserAgentOverrideCache = mUserAgentOverrideCache;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsLoadGroup::SetUserAgentOverrideCache(const nsACString & aUserAgentOverrideCache)
+{
+  mUserAgentOverrideCache = aUserAgentOverrideCache;
+  return NS_OK;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void 
+void
 nsLoadGroup::TelemetryReport()
 {
     if (mDefaultLoadIsTimed) {

@@ -9,12 +9,24 @@ XPCSHELL_NAME = "xpcshell"
 EXE_SUFFIX = ""
 DISABLE_SCREEN_SAVER = True
 ADJUST_MOUSE_AND_SCREEN = False
+
+# Note: keep these Valgrind .sup file names consistent with those
+# in testing/mochitest/mochitest_options.py.
+VALGRIND_SUPP_DIR = os.path.join(os.getcwd(), "build/tests/mochitest")
+VALGRIND_SUPP_CROSS_ARCH = os.path.join(VALGRIND_SUPP_DIR,
+                                        "cross-architecture.sup")
+VALGRIND_SUPP_ARCH = None
+
 if platform.architecture()[0] == "64bit":
     TOOLTOOL_MANIFEST_PATH = "config/tooltool-manifests/linux64/releng.manifest"
     MINIDUMP_STACKWALK_PATH = "linux64-minidump_stackwalk"
+    VALGRIND_SUPP_ARCH = os.path.join(VALGRIND_SUPP_DIR,
+                                      "x86_64-redhat-linux-gnu.sup")
 else:
     TOOLTOOL_MANIFEST_PATH = "config/tooltool-manifests/linux32/releng.manifest"
     MINIDUMP_STACKWALK_PATH = "linux32-minidump_stackwalk"
+    VALGRIND_SUPP_ARCH = os.path.join(VALGRIND_SUPP_DIR,
+                                      "i386-redhat-linux-gnu.sup")
 
 #####
 config = {
@@ -146,7 +158,9 @@ config = {
                 "--appname=%(binary_path)s",
                 "--utility-path=tests/bin",
                 "--extra-profile-file=tests/bin/plugins",
-                "--symbols-path=%(symbols_path)s"
+                "--symbols-path=%(symbols_path)s",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
             ],
             "run_filename": "runreftest.py",
             "testsdir": "reftest"
@@ -189,14 +203,19 @@ config = {
     },
     # local mochi suites
     "all_mochitest_suites": {
-        "plain": [],
+        "valgrind-plain": ["--valgrind=/usr/bin/valgrind",
+                           "--valgrind-supp-files=" + VALGRIND_SUPP_ARCH +
+                               "," + VALGRIND_SUPP_CROSS_ARCH,
+                           "--timeout=900", "--max-timeouts=50"],
+         "plain": [],
         "plain-chunked": ["--chunk-by-dir=4"],
         "chrome": ["--chrome"],
         "chrome-chunked": ["--chrome", "--chunk-by-dir=4"],
         "browser-chrome": ["--browser-chrome"],
         "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-runtime"],
         "browser-chrome-addons": ["--browser-chrome", "--chunk-by-runtime", "--tag=addons"],
-        "browser-chrome-coverage": ["--timeout=1200"],
+        "browser-chrome-coverage": ["--browser-chrome", "--chunk-by-runtime", "--timeout=1200"],
+        "browser-chrome-screenshots": ["--browser-chrome", "--subsuite=screenshots"],
         "mochitest-gl": ["--subsuite=webgl"],
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-devtools-chrome-chunked": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-runtime"],
@@ -233,7 +252,6 @@ config = {
                         "--setpref=browser.tabs.remote=true",
                         "--setpref=browser.tabs.remote.autostart=true",
                         "--setpref=extensions.e10sBlocksEnabling=false",
-                        "--setpref=layers.offmainthreadcomposition.testing.enabled=true",
                         "--setpref=layers.async-pan-zoom.enabled=true"],
             "tests": ["tests/reftest/tests/layout/reftests/reftest-sanity/reftest.list"]
         },
@@ -250,7 +268,6 @@ config = {
                         "--setpref=browser.tabs.remote=true",
                         "--setpref=browser.tabs.remote.autostart=true",
                         "--setpref=extensions.e10sBlocksEnabling=false",
-                        "--setpref=layers.offmainthreadcomposition.testing.enabled=true",
                         "--setpref=layers.async-pan-zoom.enabled=true"],
             "tests": ["tests/reftest/tests/testing/crashtest/crashtests.list"]
         },
@@ -258,13 +275,13 @@ config = {
     "all_xpcshell_suites": {
         "xpcshell": {
             "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
-                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+                        "--manifest=tests/xpcshell/tests/xpcshell.ini"],
             "tests": []
         },
         "xpcshell-addons": {
             "options": ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
                         "--tag=addons",
-                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+                        "--manifest=tests/xpcshell/tests/xpcshell.ini"],
             "tests": []
         },
     },

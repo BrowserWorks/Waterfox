@@ -92,11 +92,11 @@ ScrollFrameTo(nsIScrollableFrame* aFrame, const CSSPoint& aPoint, bool& aSuccess
 
   // If the scrollable frame is currently in the middle of an async or smooth
   // scroll then we don't want to interrupt it (see bug 961280).
-  // Also if the scrollable frame got a scroll request from something other than us
+  // Also if the scrollable frame got a scroll request from a higher priority origin
   // since the last layers update, then we don't want to push our scroll request
   // because we'll clobber that one, which is bad.
   bool scrollInProgress = aFrame->IsProcessingAsyncScroll()
-      || (aFrame->LastScrollOrigin() && aFrame->LastScrollOrigin() != nsGkAtoms::apz)
+      || nsLayoutUtils::CanScrollOriginClobberApz(aFrame->LastScrollOrigin())
       || aFrame->LastSmoothScrollOrigin();
   if (!scrollInProgress) {
     aFrame->ScrollToCSSPixelsApproximate(targetScrollPosition, nsGkAtoms::apz);
@@ -892,9 +892,19 @@ APZCCallbackHelper::NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrol
 }
 
 void
-APZCCallbackHelper::NotifyFlushComplete()
+APZCCallbackHelper::NotifyFlushComplete(nsIPresShell* aShell)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  // In some cases, flushing the APZ state to the main thread doesn't actually
+  // trigger a flush and repaint (this is an intentional optimization - the stuff
+  // visible to the user is still correct). However, reftests update their
+  // snapshot based on invalidation events that are emitted during paints,
+  // so we ensure that we kick off a paint when an APZ flush is done. Note that
+  // only chrome/testing code can trigger this behaviour.
+  if (aShell && aShell->GetRootFrame()) {
+    aShell->GetRootFrame()->SchedulePaint();
+  }
+
   nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
   MOZ_ASSERT(observerService);
   observerService->NotifyObservers(nullptr, "apz-repaints-flushed", nullptr);

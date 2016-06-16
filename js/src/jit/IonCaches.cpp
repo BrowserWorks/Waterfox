@@ -1023,7 +1023,8 @@ EmitGetterCall(JSContext* cx, MacroAssembler& masm,
         uint32_t framePushedBefore = masm.framePushed();
 
         // Construct IonAccessorICFrameLayout.
-        uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonJS);
+        uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonJS,
+                                                  IonAccessorICFrameLayout::Size());
         attacher.pushStubCodePointer(masm);
         masm.Push(Imm32(descriptor));
         masm.Push(ImmPtr(returnAddr));
@@ -1043,7 +1044,8 @@ EmitGetterCall(JSContext* cx, MacroAssembler& masm,
 
         masm.movePtr(ImmGCPtr(target), scratchReg);
 
-        descriptor = MakeFrameDescriptor(argSize + padding, JitFrame_IonAccessorIC);
+        descriptor = MakeFrameDescriptor(argSize + padding, JitFrame_IonAccessorIC,
+                                         JitFrameLayout::Size());
         masm.Push(Imm32(0)); // argc
         masm.Push(scratchReg);
         masm.Push(Imm32(descriptor));
@@ -2253,10 +2255,10 @@ GetPropertyIC::update(JSContext* cx, HandleScript outerScript, size_t cacheIndex
         outerScript->setInvalidatedIdempotentCache();
 
         // Do not re-invalidate if the lookup already caused invalidation.
-        if (!outerScript->hasIonScript())
-            return true;
+        if (outerScript->hasIonScript())
+            Invalidate(cx, outerScript);
 
-        return Invalidate(cx, outerScript);
+        return true;
     }
 
     jsbytecode* pc = cache.idempotent() ? nullptr : cache.pc();
@@ -2842,7 +2844,8 @@ GenerateCallSetter(JSContext* cx, IonScript* ion, MacroAssembler& masm,
         uint32_t framePushedBefore = masm.framePushed();
 
         // Construct IonAccessorICFrameLayout.
-        uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonJS);
+        uint32_t descriptor = MakeFrameDescriptor(masm.framePushed(), JitFrame_IonJS,
+                                                  IonAccessorICFrameLayout::Size());
         attacher.pushStubCodePointer(masm);
         masm.Push(Imm32(descriptor));
         masm.Push(ImmPtr(returnAddr));
@@ -2864,7 +2867,8 @@ GenerateCallSetter(JSContext* cx, IonScript* ion, MacroAssembler& masm,
 
         masm.movePtr(ImmGCPtr(target), tempReg);
 
-        descriptor = MakeFrameDescriptor(argSize + padding, JitFrame_IonAccessorIC);
+        descriptor = MakeFrameDescriptor(argSize + padding, JitFrame_IonAccessorIC,
+                                         JitFrameLayout::Size());
         masm.Push(Imm32(1)); // argc
         masm.Push(tempReg);
         masm.Push(Imm32(descriptor));
@@ -4450,19 +4454,19 @@ GenerateSetDenseElement(JSContext* cx, MacroAssembler& masm, IonCache::StubAttac
             masm.branch32(Assembler::NotEqual, initLength, indexReg, &inBounds);
             {
                 // Increase initialize length.
-                Int32Key newLength(indexReg);
-                masm.bumpKey(&newLength, 1);
-                masm.storeKey(newLength, initLength);
+                Register newLength = indexReg;
+                masm.add32(Imm32(1), newLength);
+                masm.store32(newLength, initLength);
 
                 // Increase length if needed.
                 Label bumpedLength;
                 Address length(elements, ObjectElements::offsetOfLength());
                 masm.branch32(Assembler::AboveOrEqual, length, indexReg, &bumpedLength);
-                masm.storeKey(newLength, length);
+                masm.store32(newLength, length);
                 masm.bind(&bumpedLength);
 
                 // Restore the index.
-                masm.bumpKey(&newLength, -1);
+                masm.add32(Imm32(-1), newLength);
                 masm.jump(&storeElement);
             }
             // else

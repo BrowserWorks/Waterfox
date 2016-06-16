@@ -19,6 +19,7 @@ const AUTH_TYPE = {
   SCHEME_DIGEST: 2
 };
 
+Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
@@ -30,12 +31,36 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
                                   "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OSCrypto",
                                   "resource://gre/modules/OSCrypto.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Sqlite",
+                                  "resource://gre/modules/Sqlite.jsm");
+/**
+ * Get an nsIFile instance representing the expected location of user data
+ * for this copy of Chrome/Chromium/Canary on different OSes.
+ * @param subfoldersWin {Array} an array of subfolders to use for Windows
+ * @param subfoldersOSX {Array} an array of subfolders to use for OS X
+ * @param subfoldersUnix {Array} an array of subfolders to use for *nix systems
+ * @returns {nsIFile} the place we expect data to live. Might not actually exist!
+ */
+function getDataFolder(subfoldersWin, subfoldersOSX, subfoldersUnix) {
+  let dirServiceID, subfolders;
+  if (AppConstants.platform == "win") {
+    dirServiceID = "LocalAppData";
+    subfolders = subfoldersWin.concat(["User Data"]);
+  } else if (AppConstants.platform == "macosx") {
+    dirServiceID = "ULibDir";
+    subfolders = ["Application Support"].concat(subfoldersOSX);
+  } else {
+    dirServiceID = "Home";
+    subfolders = [".config"].concat(subfoldersUnix);
+  }
+  return FileUtils.getDir(dirServiceID, subfolders, false);
+}
 
 /**
  * Convert Chrome time format to Date object
  *
  * @param   aTime
- *          Chrome time 
+ *          Chrome time
  * @return  converted Date object
  * @note    Google Chrome uses FILETIME / 10 as time.
  *          FILETIME is based on same structure of Windows.
@@ -83,15 +108,8 @@ function* insertBookmarkItems(parentGuid, items, errorAccumulator) {
 
 
 function ChromeProfileMigrator() {
-  let chromeUserDataFolder = FileUtils.getDir(
-#ifdef XP_WIN
-    "LocalAppData", ["Google", "Chrome", "User Data"]
-#elifdef XP_MACOSX
-    "ULibDir", ["Application Support", "Google", "Chrome"]
-#else
-    "Home", [".config", "google-chrome"]
-#endif
-    , false);
+  let chromeUserDataFolder =
+    getDataFolder(["Google", "Chrome"], ["Google", "Chrome"], ["google-chrome"]);
   this._chromeUserDataFolder = chromeUserDataFolder.exists() ?
     chromeUserDataFolder : null;
 }
@@ -104,13 +122,14 @@ ChromeProfileMigrator.prototype.getResources =
       let profileFolder = this._chromeUserDataFolder.clone();
       profileFolder.append(aProfile.id);
       if (profileFolder.exists()) {
-        let possibleResources = [GetBookmarksResource(profileFolder),
-                                 GetHistoryResource(profileFolder),
-                                 GetCookiesResource(profileFolder),
-#ifdef XP_WIN
-                                 GetWindowsPasswordsResource(profileFolder)
-#endif
-                                 ];
+        let possibleResources = [
+          GetBookmarksResource(profileFolder),
+          GetHistoryResource(profileFolder),
+          GetCookiesResource(profileFolder),
+        ];
+        if (AppConstants.platform == "win") {
+          possibleResources.push(GetWindowsPasswordsResource(profileFolder));
+        }
         return possibleResources.filter(r => r != null);
       }
     }
@@ -272,54 +291,63 @@ function GetHistoryResource(aProfileFolder) {
   return {
     type: MigrationUtils.resourceTypes.HISTORY,
 
-    migrate: function(aCallback) {
-      let dbConn = Services.storage.openUnsharedDatabase(historyFile);
-      let stmt = dbConn.createAsyncStatement(
-        "SELECT url, title, last_visit_time, typed_count FROM urls WHERE hidden = 0");
+    migrate(aCallback) {
+      Task.spawn(function* () {
+        let db = yield Sqlite.openConnection({
+          path: historyFile.path
+        });
 
-      stmt.executeAsync({
-        handleResult : function(aResults) {
-          let places = [];
-          for (let row = aResults.getNextRow(); row; row = aResults.getNextRow()) {
-            try {
-              // if having typed_count, we changes transition type to typed.
-              let transType = PlacesUtils.history.TRANSITION_LINK;
-              if (row.getResultByName("typed_count") > 0)
-                transType = PlacesUtils.history.TRANSITION_TYPED;
+        let rows = yield db.execute(`SELECT url, title, last_visit_time, typed_count
+                                     FROM urls WHERE hidden = 0`);
+        yield db.close();
 
-              places.push({
-                uri: NetUtil.newURI(row.getResultByName("url")),
-                title: row.getResultByName("title"),
-                visits: [{
-                  transitionType: transType,
-                  visitDate: chromeTimeToDate(
-                               row.getResultByName(
-                                 "last_visit_time")) * 1000,
-                }],
-              });
-            } catch (e) {
-              Cu.reportError(e);
-            }
-          }
-
+        let places = [];
+        for (let row of rows) {
           try {
-            PlacesUtils.asyncHistory.updatePlaces(places);
+            // if having typed_count, we changes transition type to typed.
+            let transType = PlacesUtils.history.TRANSITION_LINK;
+            if (row.getResultByName("typed_count") > 0)
+              transType = PlacesUtils.history.TRANSITION_TYPED;
+
+            places.push({
+              uri: NetUtil.newURI(row.getResultByName("url")),
+              title: row.getResultByName("title"),
+              visits: [{
+                transitionType: transType,
+                visitDate: chromeTimeToDate(
+                             row.getResultByName(
+                               "last_visit_time")) * 1000,
+              }],
+            });
           } catch (e) {
             Cu.reportError(e);
           }
-        },
-
-        handleError : function(aError) {
-          Cu.reportError("Async statement execution returned with '" +
-                         aError.result + "', '" + aError.message + "'");
-        },
-
-        handleCompletion : function(aReason) {
-          dbConn.asyncClose();
-          aCallback(aReason == Ci.mozIStorageStatementCallback.REASON_FINISHED);
         }
-      });
-      stmt.finalize();
+
+        if (places.length > 0) {
+          yield new Promise((resolve, reject) => {
+            PlacesUtils.asyncHistory.updatePlaces(places, {
+              _success: false,
+              handleResult: function() {
+                // Importing any entry is considered a successful import.
+                this._success = true;
+              },
+              handleError: function() {},
+              handleCompletion: function() {
+                if (this._success) {
+                  resolve();
+                } else {
+                  reject(new Error("Couldn't add visits"));
+                }
+              }
+            });
+          });
+        }
+      }).then(() => { aCallback(true); },
+              ex => {
+                Cu.reportError(ex);
+                aCallback(false);
+              });
     }
   };
 }
@@ -488,15 +516,7 @@ ChromeProfileMigrator.prototype.classID = Components.ID("{4cec1de4-1671-4fc3-a53
  *  Chromium migration
  **/
 function ChromiumProfileMigrator() {
-  let chromiumUserDataFolder = FileUtils.getDir(
-#ifdef XP_WIN
-    "LocalAppData", ["Chromium", "User Data"]
-#elifdef XP_MACOSX
-    "ULibDir", ["Application Support", "Chromium"]
-#else
-    "Home", [".config", "chromium"]
-#endif
-    , false);
+  let chromiumUserDataFolder = getDataFolder(["Chromium"], ["Chromium"], ["chromium"]);
   this._chromeUserDataFolder = chromiumUserDataFolder.exists() ? chromiumUserDataFolder : null;
 }
 
@@ -507,19 +527,12 @@ ChromiumProfileMigrator.prototype.classID = Components.ID("{8cece922-9720-42de-b
 
 var componentsArray = [ChromeProfileMigrator, ChromiumProfileMigrator];
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
 /**
  * Chrome Canary
  * Not available on Linux
  **/
 function CanaryProfileMigrator() {
-  let chromeUserDataFolder = FileUtils.getDir(
-#ifdef XP_WIN
-    "LocalAppData", ["Google", "Chrome SxS", "User Data"]
-#elifdef XP_MACOSX
-    "ULibDir", ["Application Support", "Google", "Chrome Canary"]
-#endif
-    , false);
+  let chromeUserDataFolder = getDataFolder(["Google", "Chrome SxS"], ["Google", "Chrome Canary"]);
   this._chromeUserDataFolder = chromeUserDataFolder.exists() ? chromeUserDataFolder : null;
 }
 CanaryProfileMigrator.prototype = Object.create(ChromeProfileMigrator.prototype);
@@ -527,7 +540,8 @@ CanaryProfileMigrator.prototype.classDescription = "Chrome Canary Profile Migrat
 CanaryProfileMigrator.prototype.contractID = "@mozilla.org/profile/migrator;1?app=browser&type=canary";
 CanaryProfileMigrator.prototype.classID = Components.ID("{4bf85aa5-4e21-46ca-825f-f9c51a5e8c76}");
 
-componentsArray.push(CanaryProfileMigrator);
-#endif
+if (AppConstants.platform == "win" || AppConstants.platform == "macosx") {
+  componentsArray.push(CanaryProfileMigrator);
+}
 
 this.NSGetFactory = XPCOMUtils.generateNSGetFactory(componentsArray);

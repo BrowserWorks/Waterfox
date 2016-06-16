@@ -177,9 +177,19 @@ var SessionFileInternal = {
     },
   }),
 
-  // `true` once `write` has succeeded at last once.
-  // Used for error-reporting.
-  _hasWriteEverSucceeded: false,
+  // Number of attempted calls to `write`.
+  // Note that we may have _attempts > _successes + _failures,
+  // if attempts never complete.
+  // Used for error reporting.
+  _attempts: 0,
+
+  // Number of successful calls to `write`.
+  // Used for error reporting.
+  _successes: 0,
+
+  // Number of failed calls to `write`.
+  // Used for error reporting.
+  _failures: 0,
 
   // Resolved once initialization is complete.
   // The promise never rejects.
@@ -316,6 +326,7 @@ var SessionFileInternal = {
     let performShutdownCleanup = isFinalWrite &&
       !sessionStartup.isAutomaticRestoreEnabled();
 
+    this._attempts++;
     let options = {isFinalWrite, performShutdownCleanup};
     let promise = this._postToWorker("write", [aData, options]);
 
@@ -323,7 +334,7 @@ var SessionFileInternal = {
     promise = promise.then(msg => {
       // Record how long the write took.
       this._recordTelemetry(msg.telemetry);
-      this._hasWriteEverSucceeded = true;
+      this._successes++;
       if (msg.result.upgradeBackup) {
         // We have just completed a backup-on-upgrade, store the information
         // in preferences.
@@ -333,6 +344,7 @@ var SessionFileInternal = {
     }, err => {
       // Catch and report any errors.
       console.error("Could not write session state file ", err, err.stack);
+      this._failures++;
       // By not doing anything special here we ensure that |promise| cannot
       // be rejected anymore. The shutdown/cleanup code at the end of the
       // function will thus always be executed.
@@ -346,7 +358,9 @@ var SessionFileInternal = {
       {
         fetchState: () => ({
           options,
-          hasEverSucceeded: this._hasWriteEverSucceeded
+          attempts: this._attempts,
+          successes: this._successes,
+          failures: this._failures,
         })
       });
 

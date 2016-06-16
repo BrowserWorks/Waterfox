@@ -196,7 +196,7 @@ GetGutterSize(HANDLE theme, HDC hdc)
     // Figure out how big the menuitem's icon will be (if present) at current DPI
     double scaleFactor = nsIWidget::DefaultScaleOverride();
     if (scaleFactor <= 0.0) {
-      scaleFactor = gfxWindowsPlatform::GetPlatform()->GetDPIScale();
+      scaleFactor = WinUtils::LogToPhysFactor(hdc);
     }
     int iconDevicePixels = NSToIntRound(16 * scaleFactor);
     SIZE iconSize = {
@@ -1546,6 +1546,23 @@ AssumeThemePartAndStateAreTransparent(int32_t aPart, int32_t aState)
   return false;
 }
 
+// When running with per-monitor DPI (on Win8.1+), and rendering on a display
+// with a different DPI setting from the system's default scaling, we need to
+// apply scaling to native-themed elements as the Windows theme APIs assume
+// the system default resolution.
+static inline double
+GetThemeDpiScaleFactor(nsIFrame* aFrame)
+{
+  if (WinUtils::IsPerMonitorDPIAware()) {
+    nsIWidget* rootWidget = aFrame->PresContext()->GetRootWidget();
+    if (rootWidget) {
+      double systemScale = WinUtils::SystemScaleFactor();
+      return rootWidget->GetDefaultScale().scale / systemScale;
+    }
+  }
+  return 1.0;
+}
+
 NS_IMETHODIMP
 nsNativeThemeWin::DrawWidgetBackground(nsRenderingContext* aContext,
                                        nsIFrame* aFrame,
@@ -1599,16 +1616,22 @@ nsNativeThemeWin::DrawWidgetBackground(nsRenderingContext* aContext,
     return NS_OK;
   }
 
+  RefPtr<gfxContext> ctx = aContext->ThebesContext();
+  gfxContextMatrixAutoSaveRestore save(ctx);
+
+  double themeScale = GetThemeDpiScaleFactor(aFrame);
+  if (themeScale != 1.0) {
+    ctx->SetMatrix(ctx->CurrentMatrix().Scale(themeScale, themeScale));
+  }
+
   gfxFloat p2a = gfxFloat(aFrame->PresContext()->AppUnitsPerDevPixel());
   RECT widgetRect;
   RECT clipRect;
   gfxRect tr(aRect.x, aRect.y, aRect.width, aRect.height),
           dr(aDirtyRect.x, aDirtyRect.y, aDirtyRect.width, aDirtyRect.height);
 
-  tr.ScaleInverse(p2a);
-  dr.ScaleInverse(p2a);
-
-  RefPtr<gfxContext> ctx = aContext->ThebesContext();
+  tr.ScaleInverse(p2a * themeScale);
+  dr.ScaleInverse(p2a * themeScale);
 
   gfxWindowsNativeDrawing nativeDrawing(ctx, dr, GetWidgetNativeDrawingFlags(aWidgetType));
 
@@ -1972,6 +1995,28 @@ RENDER_AGAIN:
   return NS_OK;
 }
 
+static void
+ScaleForFrameDPI(nsIntMargin* aMargin, nsIFrame* aFrame)
+{
+  double themeScale = GetThemeDpiScaleFactor(aFrame);
+  if (themeScale != 1.0) {
+    aMargin->top = NSToIntRound(aMargin->top * themeScale);
+    aMargin->left = NSToIntRound(aMargin->left * themeScale);
+    aMargin->bottom = NSToIntRound(aMargin->bottom * themeScale);
+    aMargin->right = NSToIntRound(aMargin->right * themeScale);
+  }
+}
+
+static void
+ScaleForFrameDPI(LayoutDeviceIntSize* aSize, nsIFrame* aFrame)
+{
+  double themeScale = GetThemeDpiScaleFactor(aFrame);
+  if (themeScale != 1.0) {
+    aSize->width = NSToIntRound(aSize->width * themeScale);
+    aSize->height = NSToIntRound(aSize->height * themeScale);
+  }
+}
+
 NS_IMETHODIMP
 nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext, 
                                   nsIFrame* aFrame,
@@ -1979,10 +2024,14 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
                                   nsIntMargin* aResult)
 {
   HANDLE theme = GetTheme(aWidgetType);
-  if (!theme)
-    return ClassicGetWidgetBorder(aContext, aFrame, aWidgetType, aResult); 
+  nsresult rv = NS_OK;
+  if (!theme) {
+    rv = ClassicGetWidgetBorder(aContext, aFrame, aWidgetType, aResult);
+    ScaleForFrameDPI(aResult, aFrame);
+    return rv;
+  }
 
-  (*aResult).top = (*aResult).bottom = (*aResult).left = (*aResult).right = 0;
+  aResult->top = aResult->bottom = aResult->left = aResult->right = 0;
 
   if (!WidgetIsContainer(aWidgetType) ||
       aWidgetType == NS_THEME_TOOLBOX || 
@@ -2003,7 +2052,7 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
     return NS_OK; // Don't worry about it.
 
   int32_t part, state;
-  nsresult rv = GetThemePartAndState(aFrame, aWidgetType, part, state);
+  rv = GetThemePartAndState(aFrame, aWidgetType, part, state);
   if (NS_FAILED(rv))
     return rv;
 
@@ -2055,7 +2104,8 @@ nsNativeThemeWin::GetWidgetBorder(nsDeviceContext* aContext,
     }
   }
 
-  return NS_OK;
+  ScaleForFrameDPI(aResult, aFrame);
+  return rv;
 }
 
 bool
@@ -2074,7 +2124,7 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
       return true;
   }
 
-  HANDLE theme = GetTheme(aWidgetType);
+  bool ok = true;
 
   if (aWidgetType == NS_THEME_WINDOW_BUTTON_BOX ||
       aWidgetType == NS_THEME_WINDOW_BUTTON_BOX_MAXIMIZED) {
@@ -2088,7 +2138,8 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
     if (aWidgetType == NS_THEME_WINDOW_BUTTON_BOX) {
       aResult->top = GetSystemMetrics(SM_CXFRAME);
     }
-    return true;
+    ScaleForFrameDPI(aResult, aFrame);
+    return ok;
   }
 
   // Content padding
@@ -2101,11 +2152,15 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
     if (aWidgetType == NS_THEME_WINDOW_TITLEBAR_MAXIMIZED)
       aResult->top = GetSystemMetrics(SM_CXFRAME)
                    + GetSystemMetrics(SM_CXPADDEDBORDER);
-    return true;
+    return ok;
   }
 
-  if (!theme)
-    return ClassicGetWidgetPadding(aContext, aFrame, aWidgetType, aResult);
+  HANDLE theme = GetTheme(aWidgetType);
+  if (!theme) {
+    ok = ClassicGetWidgetPadding(aContext, aFrame, aWidgetType, aResult);
+    ScaleForFrameDPI(aResult, aFrame);
+    return ok;
+  }
 
   if (aWidgetType == NS_THEME_MENUPOPUP)
   {
@@ -2113,7 +2168,8 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
     GetThemePartSize(theme, nullptr, MENU_POPUPBORDERS, /* state */ 0, nullptr, TS_TRUE, &popupSize);
     aResult->top = aResult->bottom = popupSize.cy;
     aResult->left = aResult->right = popupSize.cx;
-    return true;
+    ScaleForFrameDPI(aResult, aFrame);
+    return ok;
   }
 
   if (IsVistaOrLater()) {
@@ -2138,7 +2194,8 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
         aWidgetType == NS_THEME_TEXTFIELD_MULTILINE) {
       aResult->top = aResult->bottom = 2;
       aResult->left = aResult->right = 2;
-      return true;
+      ScaleForFrameDPI(aResult, aFrame);
+      return ok;
     } else if (IsHTMLContent(aFrame) && aWidgetType == NS_THEME_DROPDOWN) {
       /* For content menulist controls, we need an extra pixel so
        * that we have room to draw our focus rectangle stuff.
@@ -2147,7 +2204,8 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
        */
       aResult->top = aResult->bottom = 1;
       aResult->left = aResult->right = 1;
-      return true;
+      ScaleForFrameDPI(aResult, aFrame);
+      return ok;
     }
   }
 
@@ -2194,8 +2252,9 @@ nsNativeThemeWin::GetWidgetPadding(nsDeviceContext* aContext,
     aResult->right = right;
     aResult->left = left;
   }
-  
-  return true;
+
+  ScaleForFrameDPI(aResult, aFrame);
+  return ok;
 }
 
 bool
@@ -2254,12 +2313,15 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
                                        uint8_t aWidgetType,
                                        LayoutDeviceIntSize* aResult, bool* aIsOverridable)
 {
-  (*aResult).width = (*aResult).height = 0;
+  aResult->width = aResult->height = 0;
   *aIsOverridable = true;
+  nsresult rv = NS_OK;
 
   HANDLE theme = GetTheme(aWidgetType);
   if (!theme) {
-    return ClassicGetMinimumWidgetSize(aFrame, aWidgetType, aResult, aIsOverridable);
+    rv = ClassicGetMinimumWidgetSize(aFrame, aWidgetType, aResult, aIsOverridable);
+    ScaleForFrameDPI(aResult, aFrame);
+    return rv;
   }
   switch (aWidgetType) {
     case NS_THEME_GROUPBOX:
@@ -2299,9 +2361,11 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
     case NS_THEME_SCROLLBAR_BUTTON_RIGHT:
     case NS_THEME_SCROLLBAR_HORIZONTAL:
     case NS_THEME_SCROLLBAR_VERTICAL:
-    case NS_THEME_DROPDOWN_BUTTON:
-      return ClassicGetMinimumWidgetSize(aFrame, aWidgetType, aResult, aIsOverridable);
-
+    case NS_THEME_DROPDOWN_BUTTON: {
+      rv = ClassicGetMinimumWidgetSize(aFrame, aWidgetType, aResult, aIsOverridable);
+      ScaleForFrameDPI(aResult, aFrame);
+      return rv;
+    }
     case NS_THEME_MENUITEM:
     case NS_THEME_CHECKMENUITEM:
     case NS_THEME_RADIOMENUITEM:
@@ -2310,7 +2374,8 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
         SIZE gutterSize(GetGutterSize(theme, nullptr));
         aResult->width = gutterSize.cx;
         aResult->height = gutterSize.cy;
-        return NS_OK;
+        ScaleForFrameDPI(aResult, aFrame);
+        return rv;
       }
       break;
 
@@ -2322,6 +2387,8 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
         aResult->width = boxSize.cx+2;
         aResult->height = boxSize.cy;
         *aIsOverridable = false;
+        ScaleForFrameDPI(aResult, aFrame);
+        return rv;
       }
 
     case NS_THEME_MENUITEMTEXT:
@@ -2356,7 +2423,8 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
           aResult->width = 20;
           aResult->height = 12;
         }
-        return NS_OK;
+        ScaleForFrameDPI(aResult, aFrame);
+        return rv;
       }
       break;
     }
@@ -2367,7 +2435,8 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
             nsLookAndFeel::eIntID_UseOverlayScrollbars) != 0) {
         aResult->SizeTo(::GetSystemMetrics(SM_CXHSCROLL),
                         ::GetSystemMetrics(SM_CYVSCROLL));
-        return NS_OK;
+        ScaleForFrameDPI(aResult, aFrame);
+        return rv;
       }
       break;
     }
@@ -2376,7 +2445,8 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
       // that's 2px left margin, 2px right margin and 2px separator
       // (the margin is drawn as part of the separator, though)
       aResult->width = 6;
-      return NS_OK;
+      ScaleForFrameDPI(aResult, aFrame);
+      return rv;
 
     case NS_THEME_BUTTON:
       // We should let HTML buttons shrink to their min size.
@@ -2402,7 +2472,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
       }
       AddPaddingRect(aResult, CAPTIONBUTTON_RESTORE);
       *aIsOverridable = false;
-      return NS_OK;
+      return rv;
 
     case NS_THEME_WINDOW_BUTTON_MINIMIZE:
       aResult->width = nsUXThemeData::sCommandButtons[CMDBUTTONIDX_MINIMIZE].cx;
@@ -2413,7 +2483,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
       }
       AddPaddingRect(aResult, CAPTIONBUTTON_MINIMIZE);
       *aIsOverridable = false;
-      return NS_OK;
+      return rv;
 
     case NS_THEME_WINDOW_BUTTON_CLOSE:
       aResult->width = nsUXThemeData::sCommandButtons[CMDBUTTONIDX_CLOSE].cx;
@@ -2424,15 +2494,24 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
       }
       AddPaddingRect(aResult, CAPTIONBUTTON_CLOSE);
       *aIsOverridable = false;
-      return NS_OK;
+      return rv;
 
     case NS_THEME_WINDOW_TITLEBAR:
     case NS_THEME_WINDOW_TITLEBAR_MAXIMIZED:
       aResult->height = GetSystemMetrics(SM_CYCAPTION);
       aResult->height += GetSystemMetrics(SM_CYFRAME);
       aResult->height += GetSystemMetrics(SM_CXPADDEDBORDER);
+      // On Win8.1, we don't want this scaling, because Windows doesn't scale
+      // the non-client area of the window, and we can end up with ugly overlap
+      // of the window frame controls into the tab bar or content area. But on
+      // Win10, we render the window controls ourselves, and the result looks
+      // better if we do apply this scaling (particularly with themes such as
+      // DevEdition; see bug 1267636).
+      if (IsWin10OrLater()) {
+        ScaleForFrameDPI(aResult, aFrame);
+      }
       *aIsOverridable = false;
-      return NS_OK;
+      return rv;
 
     case NS_THEME_WINDOW_BUTTON_BOX:
     case NS_THEME_WINDOW_BUTTON_BOX_MAXIMIZED:
@@ -2446,7 +2525,7 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
           aResult->height -= 2;
         }
         *aIsOverridable = false;
-        return NS_OK;
+        return rv;
       }
       break;
 
@@ -2456,15 +2535,15 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
       aResult->width = GetSystemMetrics(SM_CXFRAME);
       aResult->height = GetSystemMetrics(SM_CYFRAME);
       *aIsOverridable = false;
-      return NS_OK;
+      return rv;
   }
 
   int32_t part, state;
-  nsresult rv = GetThemePartAndState(aFrame, aWidgetType, part, state);
+  rv = GetThemePartAndState(aFrame, aWidgetType, part, state);
   if (NS_FAILED(rv))
     return rv;
 
-  HDC hdc = ::GetDC(nullptr);
+  HDC hdc = ::GetDC(NULL);
   if (!hdc)
     return NS_ERROR_FAILURE;
 
@@ -2497,7 +2576,9 @@ nsNativeThemeWin::GetMinimumWidgetSize(nsPresContext* aPresContext, nsIFrame* aF
   }
 
   ::ReleaseDC(nullptr, hdc);
-  return NS_OK;
+
+  ScaleForFrameDPI(aResult, aFrame);
+  return rv;
 }
 
 NS_IMETHODIMP

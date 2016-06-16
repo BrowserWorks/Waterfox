@@ -221,6 +221,12 @@ BOffImm16::BOffImm16(InstImm inst)
 {
 }
 
+Instruction*
+BOffImm16::getDest(Instruction* src) const
+{
+    return &src[(((int32_t)data << 16) >> 16) + 1];
+}
+
 bool
 AssemblerMIPSShared::oom() const
 {
@@ -1327,6 +1333,26 @@ AssemblerMIPSShared::bind(Label* label, BufferOffset boff)
 }
 
 void
+AssemblerMIPSShared::bindLater(Label* label, wasm::JumpTarget target)
+{
+    if (label->used()) {
+        int32_t next;
+
+        BufferOffset b(label);
+        do {
+            Instruction* inst = editSrc(b);
+
+            append(target, b.getOffset());
+            next = inst[1].encode();
+            inst[1].makeNop();
+
+            b = BufferOffset(next);
+        } while (next != LabelBase::INVALID_OFFSET);
+    }
+    label->reset();
+}
+
+void
 AssemblerMIPSShared::retarget(Label* label, Label* target)
 {
     if (label->used() && !oom()) {
@@ -1360,28 +1386,6 @@ AssemblerMIPSShared::retarget(Label* label, Label* target)
         }
     }
     label->reset();
-}
-
-void
-AssemblerMIPSShared::retargetWithOffset(size_t baseOffset, const LabelBase* label, Label* target)
-{
-    if (!label->used())
-        return;
-
-    MOZ_ASSERT(!target->bound());
-    int32_t next;
-    BufferOffset labelBranchOffset(label->offset() + baseOffset);
-    do {
-        Instruction* inst = editSrc(labelBranchOffset);
-        int32_t prev = target->use(labelBranchOffset.getOffset());
-
-        MOZ_RELEASE_ASSERT(prev == Label::INVALID_OFFSET || unsigned(prev) < size());
-
-        next = inst[1].encode();
-        inst[1].setData(prev);
-
-        labelBranchOffset = BufferOffset(next + baseOffset);
-    } while (next != LabelBase::INVALID_OFFSET);
 }
 
 void dbg_break() {}

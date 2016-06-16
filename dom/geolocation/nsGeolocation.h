@@ -34,7 +34,6 @@
 
 #include "nsIGeolocationProvider.h"
 #include "nsIContentPermissionPrompt.h"
-#include "nsIDOMWindow.h"
 #include "mozilla/Attributes.h"
 
 class nsGeolocationService;
@@ -145,9 +144,9 @@ public:
 
   Geolocation();
 
-  nsresult Init(nsIDOMWindow* contentDom=nullptr);
+  nsresult Init(nsPIDOMWindowInner* aContentDom = nullptr);
 
-  nsIDOMWindow* GetParentObject() const;
+  nsPIDOMWindowInner* GetParentObject() const;
   virtual JSObject* WrapObject(JSContext *aCtx, JS::Handle<JSObject*> aGivenProto) override;
 
   int32_t WatchPosition(PositionCallback& aCallback, PositionErrorCallback* aErrorCallback, const PositionOptions& aOptions, ErrorResult& aRv);
@@ -178,7 +177,7 @@ public:
   // Getter for the window that this Geolocation is owned by
   nsIWeakReference* GetOwner() { return mOwner; }
 
-  // Check to see if the widnow still exists
+  // Check to see if the window still exists
   bool WindowOwnerStillExists();
 
   // Check to see if any active request requires high accuracy

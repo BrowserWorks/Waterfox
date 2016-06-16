@@ -32,7 +32,7 @@ const Census = module.exports = createClass({
     } = this.props;
 
     const report = census.report;
-    let parentMap = createParentMap(report);
+    let parentMap = census.parentMap;
     const { totalBytes, totalCount } = report;
 
     const getPercentBytes = totalBytes === 0
@@ -66,6 +66,7 @@ const Census = module.exports = createClass({
           getPercentBytes,
           getPercentCount,
           showSign: !!diffing,
+          inverted: census.display.inverted,
         }),
       getRoots: () => report.children || [],
       getKey: node => node.id,

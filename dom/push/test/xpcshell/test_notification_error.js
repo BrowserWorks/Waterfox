@@ -50,7 +50,7 @@ add_task(function* test_notification_error() {
   }
 
   let scopes = [];
-  let notifyPromise = promiseObserverNotification('push-message', (subject, data) =>
+  let notifyPromise = promiseObserverNotification(PushServiceComponent.pushTopic, (subject, data) =>
     scopes.push(data) == 2);
 
   let ackDone;
@@ -87,18 +87,13 @@ add_task(function* test_notification_error() {
     }
   });
 
-  yield waitForPromise(
-    notifyPromise,
-    DEFAULT_TIMEOUT,
-    'Timed out waiting for notifications'
-  );
+  yield notifyPromise;
   ok(scopes.includes('https://example.com/a'),
     'Missing scope for notification A');
   ok(scopes.includes('https://example.com/c'),
     'Missing scope for notification C');
 
-  yield waitForPromise(ackPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for acknowledgements');
+  yield ackPromise;
 
   let aRecord = yield db.getByIdentifiers({scope: 'https://example.com/a',
                                            originAttributes: originAttributes });

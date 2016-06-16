@@ -14,7 +14,7 @@ function* testHasNoPermission(params) {
     browser.test.onMessage.addListener(msg => {
       browser.test.assertEq(msg, "execute-script");
 
-      browser.tabs.query({ currentWindow: true }, tabs => {
+      browser.tabs.query({currentWindow: true}, tabs => {
         browser.tabs.executeScript({
           file: "script.js",
         });
@@ -70,12 +70,12 @@ add_task(function* testBadPermissions() {
 
   info("Test no special permissions");
   yield testHasNoPermission({
-    manifest: { "permissions": ["http://example.com/"] },
+    manifest: {"permissions": ["http://example.com/"]},
   });
 
   info("Test tabs permissions");
   yield testHasNoPermission({
-    manifest: { "permissions": ["http://example.com/", "tabs"] },
+    manifest: {"permissions": ["http://example.com/", "tabs"]},
   });
 
   info("Test active tab, browser action, no click");
@@ -94,7 +94,7 @@ add_task(function* testBadPermissions() {
     },
     contentSetup() {
       return new Promise(resolve => {
-        browser.tabs.query({ active: true, currentWindow: true }, tabs => {
+        browser.tabs.query({active: true, currentWindow: true}, tabs => {
           browser.pageAction.show(tabs[0].id);
           resolve();
         });
@@ -104,6 +104,75 @@ add_task(function* testBadPermissions() {
 
   yield BrowserTestUtils.removeTab(tab2);
   yield BrowserTestUtils.removeTab(tab1);
+});
+
+add_task(function* testBadURL() {
+  function background() {
+    browser.tabs.query({currentWindow: true}, tabs => {
+      let promises = [
+        new Promise(resolve => {
+          browser.tabs.executeScript({
+            file: "http://example.com/script.js",
+          }, result => {
+            browser.test.assertEq(undefined, result, "Result value");
+
+            browser.test.assertTrue(browser.extension.lastError instanceof Error,
+                                    "runtime.lastError is Error");
+
+            browser.test.assertTrue(browser.runtime.lastError instanceof Error,
+                                    "runtime.lastError is Error");
+
+            browser.test.assertEq(
+              "Files to be injected must be within the extension",
+              browser.extension.lastError && browser.extension.lastError.message,
+              "extension.lastError value");
+
+            browser.test.assertEq(
+              "Files to be injected must be within the extension",
+              browser.runtime.lastError && browser.runtime.lastError.message,
+              "runtime.lastError value");
+
+            resolve();
+          });
+        }),
+
+        browser.tabs.executeScript({
+          file: "http://example.com/script.js",
+        }).catch(error => {
+          browser.test.assertTrue(error instanceof Error, "Error is Error");
+
+          browser.test.assertEq(null, browser.extension.lastError,
+                                "extension.lastError value");
+
+          browser.test.assertEq(null, browser.runtime.lastError,
+                                "runtime.lastError value");
+
+          browser.test.assertEq(
+            "Files to be injected must be within the extension",
+            error && error.message,
+            "error value");
+        }),
+      ];
+
+      Promise.all(promises).then(() => {
+        browser.test.notifyPass("executeScript-lastError");
+      });
+    });
+  }
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      "permissions": ["<all_urls>"],
+    },
+
+    background,
+  });
+
+  yield extension.startup();
+
+  yield extension.awaitFinish("executeScript-lastError");
+
+  yield extension.unload();
 });
 
 // TODO: Test that |executeScript| fails if the tab has navigated to a

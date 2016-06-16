@@ -129,11 +129,11 @@ TestUnsampled(const char* aTestName, int aNum, const char* aMode, int aSeven)
   // A no-op.
   free(nullptr);
 
-  // Note: 8 bytes is the smallest requested size that gives consistent
+  // Note: 16 bytes is the smallest requested size that gives consistent
   // behaviour across all platforms with jemalloc.
   // Analyze 1: reported.
   // Analyze 2: thrice-reported.
-  char* a2 = (char*) malloc(8);
+  char* a2 = (char*) malloc(16);
   Report(a2);
 
   // Analyze 1: reported.
@@ -144,7 +144,7 @@ TestUnsampled(const char* aTestName, int aNum, const char* aMode, int aSeven)
   // ReportOnAlloc, then freed.
   // Analyze 1: freed, irrelevant.
   // Analyze 2: freed, irrelevant.
-  char* b2 = (char*) malloc(8);
+  char* b2 = (char*) malloc(16);
   ReportOnAlloc(b2);
   free(b2);
 
@@ -294,14 +294,15 @@ TestSampled(const char* aTestName, const char* aMode, int aSeven)
   UseItOrLoseIt(s, aSeven);
 
   // These together constitute exactly one sample.
+  // TODO(ER): Isn't this two samples?
   for (int i = 0; i < aSeven + 9; i++) {
-    s = (char*) malloc(8);
+    s = (char*) malloc(16);
     UseItOrLoseIt(s, aSeven);
   }
 
-  // These fall 8 bytes short of a full sample.
-  for (int i = 0; i < aSeven + 8; i++) {
-    s = (char*) malloc(8);
+  // These fall 16 bytes short of a full sample.
+  for (int i = 0; i < aSeven; i++) {
+    s = (char*) malloc(16);
     UseItOrLoseIt(s, aSeven);
   }
 
@@ -309,13 +310,13 @@ TestSampled(const char* aTestName, const char* aMode, int aSeven)
   s = (char*) malloc(256);
   UseItOrLoseIt(s, aSeven);
 
-  // This gets more than to a full sample from the |i < aSeven + 8| loop above.
+  // This gets more than to a full sample from the |i < aSeven| loop above.
   s = (char*) malloc(96);
   UseItOrLoseIt(s, aSeven);
 
   // This gets to another full sample.
-  for (int i = 0; i < aSeven - 2; i++) {
-    s = (char*) malloc(8);
+  for (int i = 0; i < aSeven - 4; i++) {
+    s = (char*) malloc(16);
     UseItOrLoseIt(s, aSeven);
   }
 

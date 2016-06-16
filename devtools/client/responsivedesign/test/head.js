@@ -24,6 +24,8 @@ registerCleanupFunction(() => {
 
 SimpleTest.requestCompleteLog();
 
+const { ResponsiveUIManager } = Cu.import("resource://devtools/client/responsivedesign/responsivedesign.jsm", {});
+
 /**
  * Open the Responsive Design Mode
  * @param {Tab} The browser tab to open it into (defaults to the selected tab).
@@ -32,7 +34,7 @@ SimpleTest.requestCompleteLog();
  */
 var openRDM = Task.async(function*(tab = gBrowser.selectedTab,
                                    method = "menu") {
-  let manager = ResponsiveUI.ResponsiveUIManager;
+  let manager = ResponsiveUIManager;
 
   let opened = once(manager, "on");
   let resized = once(manager, "contentResize");
@@ -61,7 +63,7 @@ var openRDM = Task.async(function*(tab = gBrowser.selectedTab,
  * @param {rdm} ResponsiveUI instance for the tab
  */
 var closeRDM = Task.async(function*(rdm) {
-  let manager = ResponsiveUI.ResponsiveUIManager;
+  let manager = ResponsiveUIManager;
   if (!rdm) {
     rdm = manager.getResponsiveUIForTab(gBrowser.selectedTab);
   }
@@ -103,7 +105,9 @@ var openInspector = Task.async(function*() {
   inspector = toolbox.getPanel("inspector");
 
   info("Waiting for the inspector to update");
-  yield inspector.once("inspector-updated");
+  if (inspector._updateProgress) {
+    yield inspector.once("inspector-updated");
+  }
 
   return {
     toolbox: toolbox,
@@ -138,18 +142,13 @@ function waitForToolboxFrameFocus(toolbox) {
 var openInspectorSideBar = Task.async(function*(id) {
   let {toolbox, inspector} = yield openInspector();
 
-  if (!hasSideBarTab(inspector, id)) {
-    info("Waiting for the " + id + " sidebar to be ready");
-    yield inspector.sidebar.once(id + "-ready");
-  }
-
   info("Selecting the " + id + " sidebar");
   inspector.sidebar.select(id);
 
   return {
     toolbox: toolbox,
     inspector: inspector,
-    view: inspector.sidebar.getWindowForTab(id)[id].view
+    view: inspector[id].view
   };
 });
 

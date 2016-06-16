@@ -9,7 +9,7 @@
 #include <stdio.h>
 %}
 
-interface nsIDOMWindow;
+interface mozIDOMWindowProxy;
 interface nsIRunnable;
 interface nsISimpleEnumerator;
 [ptr] native FILE(FILE);
@@ -205,7 +205,7 @@ interface nsIFinishReportingCallback : nsISupports
   void callback(in nsISupports data);
 };
 
-[scriptable, builtinclass, uuid(61de6dc7-ed11-4104-a577-79941f22f434)]
+[scriptable, builtinclass, uuid(2998574d-8993-407a-b1a5-8ad7417653e1)]
 interface nsIMemoryReporterManager : nsISupports
 {
   /*
@@ -345,8 +345,8 @@ interface nsIMemoryReporterManager : nsISupports
    *
    * |heapAllocated| (UNITS_BYTES)  Memory mapped by the heap allocator.
    *
-   * |heapOverheadRatio| (UNITS_PERCENTAGE)  In the heap allocator, this is the
-   * ratio of committed, unused bytes to allocated bytes.  Like all
+   * |heapOverheadFraction| (UNITS_PERCENTAGE)  In the heap allocator, this is
+   * the fraction of committed heap bytes that are overhead. Like all
    * UNITS_PERCENTAGE measurements, its amount is multiplied by 100x so it can
    * be represented by an int64_t.
    *
@@ -381,7 +381,7 @@ interface nsIMemoryReporterManager : nsISupports
   readonly attribute int64_t residentUnique;
 
   readonly attribute int64_t heapAllocated;
-  readonly attribute int64_t heapOverheadRatio;
+  readonly attribute int64_t heapOverheadFraction;
 
   readonly attribute int64_t JSMainRuntimeGCHeap;
   readonly attribute int64_t JSMainRuntimeTemporaryPeak;
@@ -428,7 +428,7 @@ interface nsIMemoryReporterManager : nsISupports
    * The time taken for the measurement (split into JS and non-JS parts) is
    * also returned.
    */
-  void sizeOfTab(in nsIDOMWindow window,
+  void sizeOfTab(in mozIDOMWindowProxy window,
                  out int64_t jsObjectsSize, out int64_t jsStringsSize,
                  out int64_t jsOtherSize, out int64_t domSize,
                  out int64_t styleSize, out int64_t otherSize,
@@ -442,7 +442,7 @@ interface nsIMemoryReporterManager : nsISupports
 #include "nsStringGlue.h"
 #include "nsTArray.h"
 
-class nsPIDOMWindow;
+class nsPIDOMWindowOuter;
 
 // nsIHandleReportCallback is a better name, but keep nsIMemoryReporterCallback
 // around for backwards compatibility.
@@ -505,7 +505,7 @@ typedef nsresult (*JSSizeOfTabFn)(JSObject* aObj,
                                   size_t* aJsStringSize,
                                   size_t* aJsPrivateSize,
                                   size_t* aJsOtherSize);
-typedef nsresult (*NonJSSizeOfTabFn)(nsPIDOMWindow* aWindow,
+typedef nsresult (*NonJSSizeOfTabFn)(nsPIDOMWindowOuter* aWindow,
                                      size_t* aDomSize,
                                      size_t* aStyleSize,
                                      size_t* aOtherSize);
@@ -515,7 +515,7 @@ nsresult RegisterNonJSSizeOfTab(NonJSSizeOfTabFn aSizeOfTabFn);
 
 }
 
-#if defined(MOZ_DMD) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZ_DMD)
 #if !defined(MOZ_MEMORY)
 #error "MOZ_DMD requires MOZ_MEMORY"
 #endif

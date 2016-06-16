@@ -5,7 +5,7 @@
 "use strict";
 
 /* global content, docShell, addEventListener, addMessageListener,
-   removeEventListener, removeMessageListener, sendAsyncMessage */
+   removeEventListener, removeMessageListener, sendAsyncMessage, Services */
 
 var global = this;
 
@@ -17,7 +17,7 @@ var global = this;
 
   var Ci = Components.interfaces;
   const gDeviceSizeWasPageSize = docShell.deviceSizeIsPageSize;
-  const gFloatingScrollbarsStylesheet = Services.io.newURI("chrome://devtools/skin/floating-scrollbars.css", null, null);
+  const gFloatingScrollbarsStylesheet = Services.io.newURI("chrome://devtools/skin/floating-scrollbars-responsive-design.css", null, null);
   var gRequiresFloatingScrollbars;
 
   var active = false;

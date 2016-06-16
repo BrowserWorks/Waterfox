@@ -11,7 +11,6 @@ config = {
     "objdir": OBJDIR,
     "is_automation": True,
     "buildbot_json_path": "buildprops.json",
-    "purge_minsize": 10,
     "force_clobber": True,
     "clobberer_url": "https://api.pub.build.mozilla.org/clobberer/lastclobber",
     "locales_file": "%s/mobile/android/locales/all-locales" % MOZILLA_DIR,
@@ -25,7 +24,7 @@ config = {
         "output_dir": "%(abs_work_dir)s/" + MOZILLA_DIR,
     },
     "exes": {
-        'tooltool.py': '/tools/tooltool.py',
+        'tooltool.py': '/builds/tooltool.py',
     },
     "repos": [{
         "repo": "https://hg.mozilla.org/releases/mozilla-aurora",
@@ -59,7 +58,6 @@ config = {
     "upload_branch": "%s-android-api-9" % BRANCH,
     "ssh_key_dir": "~/.ssh",
     "merge_locales": True,
-    "make_dirs": ['config'],
     "mozilla_dir": MOZILLA_DIR,
     "mozconfig": "%s/mobile/android/config/mozconfigs/android-api-9-10-constrained/l10n-nightly" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",
@@ -94,6 +92,9 @@ config = {
                       ],
     "mock_files": [
         ("/home/cltbld/.ssh", "/home/mock_mozilla/.ssh"),
+        ('/home/cltbld/.hgrc', '/builds/.hgrc'),
+        ('/builds/relengapi.tok', '/builds/relengapi.tok'),
+        ('/tools/tooltool.py', '/builds/tooltool.py'),
         ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
     ],
 }

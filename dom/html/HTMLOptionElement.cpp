@@ -354,19 +354,21 @@ HTMLOptionElement::IntrinsicState() const
 HTMLSelectElement*
 HTMLOptionElement::GetSelect()
 {
-  nsIContent* parent = this;
-  while ((parent = parent->GetParent()) &&
-         parent->IsHTMLElement()) {
-    HTMLSelectElement* select = HTMLSelectElement::FromContent(parent);
-    if (select) {
-      return select;
-    }
-    if (!parent->IsHTMLElement(nsGkAtoms::optgroup)) {
-      break;
-    }
+  nsIContent* parent = GetParent();
+  if (!parent) {
+    return nullptr;
   }
 
-  return nullptr;
+  HTMLSelectElement* select = HTMLSelectElement::FromContent(parent);
+  if (select) {
+    return select;
+  }
+
+  if (!parent->IsHTMLElement(nsGkAtoms::optgroup)) {
+    return nullptr;
+  }
+
+  return HTMLSelectElement::FromContentOrNull(parent->GetParent());
 }
 
 already_AddRefed<HTMLOptionElement>
@@ -376,7 +378,7 @@ HTMLOptionElement::Option(const GlobalObject& aGlobal,
                           const Optional<bool>& aDefaultSelected,
                           const Optional<bool>& aSelected, ErrorResult& aError)
 {
-  nsCOMPtr<nsPIDOMWindow> win = do_QueryInterface(aGlobal.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(aGlobal.GetAsSupports());
   nsIDocument* doc;
   if (!win || !(doc = win->GetExtantDoc())) {
     aError.Throw(NS_ERROR_FAILURE);

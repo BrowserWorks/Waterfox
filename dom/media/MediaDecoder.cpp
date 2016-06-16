@@ -732,7 +732,7 @@ MediaDecoder::InitializeStateMachine()
   MOZ_ASSERT(NS_IsMainThread());
   NS_ASSERTION(mDecoderStateMachine, "Cannot initialize null state machine!");
 
-  nsresult rv = mDecoderStateMachine->Init();
+  nsresult rv = mDecoderStateMachine->Init(this);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // If some parameters got set before the state machine got created,
@@ -809,9 +809,7 @@ MediaDecoder::Seek(double aTime, SeekTarget::Type aSeekType)
   MOZ_ASSERT(!mIsDormant, "should be out of dormant by now");
   MOZ_ASSERT(aTime >= 0.0, "Cannot seek to a negative value.");
 
-  int64_t timeUsecs = 0;
-  nsresult rv = SecondsToUsecs(aTime, timeUsecs);
-  NS_ENSURE_SUCCESS(rv, rv);
+  int64_t timeUsecs = TimeUnit::FromSeconds(aTime).ToMicroseconds();
 
   mLogicalPosition = aTime;
   mWasEndedWhenEnteredDormant = false;

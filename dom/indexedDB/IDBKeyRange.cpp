@@ -14,7 +14,8 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
+
+using namespace mozilla::dom::indexedDB;
 
 namespace {
 
@@ -241,8 +242,8 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBKeyRange)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBKeyRange)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedLowerVal)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedUpperVal)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedLowerVal)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedUpperVal)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(IDBKeyRange)
@@ -331,6 +332,55 @@ IDBKeyRange::GetUpper(JSContext* aCx, JS::MutableHandle<JS::Value> aResult,
 
   JS::ExposeValueToActiveJS(mCachedUpperVal);
   aResult.set(mCachedUpperVal);
+}
+
+bool
+IDBKeyRange::Includes(JSContext* aCx,
+                      JS::Handle<JS::Value> aValue,
+                      ErrorResult& aRv) const
+{
+  Key key;
+  aRv = GetKeyFromJSVal(aCx, aValue, key);
+  if (aRv.Failed()) {
+    return false;
+  }
+
+  switch (Key::CompareKeys(Lower(), key)) {
+  case 1:
+    return false;
+  case 0:
+    // Identical keys.
+    if (LowerOpen()) {
+      return false;
+    }
+    break;
+  case -1:
+    if (IsOnly()) {
+      return false;
+    }
+    break;
+  default:
+    MOZ_CRASH();
+  }
+
+  if (!IsOnly()) {
+    switch (Key::CompareKeys(key, Upper())) {
+    case 1:
+      return false;
+    case 0:
+      // Identical keys.
+      if (UpperOpen()) {
+        return false;
+      }
+      break;
+    case -1:
+      break;
+    }
+  } else {
+    MOZ_ASSERT(key == Lower());
+  }
+
+  return true;
 }
 
 // static
@@ -447,6 +497,5 @@ IDBLocaleAwareKeyRange::Bound(const GlobalObject& aGlobal,
   return keyRange.forget();
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

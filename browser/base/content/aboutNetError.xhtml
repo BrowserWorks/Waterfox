@@ -144,12 +144,6 @@
         }
       }
 
-      function sendErrorReport() {
-        var event = new CustomEvent("AboutNetErrorSendReport", {bubbles:true});
-
-        document.dispatchEvent(event);
-      }
-
       function initPage()
       {
         var err = getErrorCode();
@@ -260,13 +254,7 @@
                   var event = new CustomEvent("AboutNetErrorSetAutomatic",
                     {bubbles:true, detail:evt.target.checked});
                   document.dispatchEvent(event);
-                  if (evt.target.checked) {
-                    sendErrorReport();
-                  }
                 }, false);
-
-              var retryBtn = document.getElementById('reportCertificateErrorRetry');
-              retryBtn.addEventListener('click', sendErrorReport, false);
             }
           }
           if (getErrorCode() == "weakCryptoUsed" || getErrorCode() == "sslv3Used") {
@@ -426,9 +414,6 @@
         <h1 id="et_unsafeContentType">&unsafeContentType.title;</h1>
         <h1 id="et_nssFailure2">&nssFailure2.title;</h1>
         <h1 id="et_nssBadCert">&nssBadCert.title;</h1>
-        <h1 id="et_malwareBlocked">&malwareBlocked.title;</h1>
-        <h1 id="et_unwantedBlocked">&unwantedBlocked.title;</h1>
-        <h1 id="et_forbiddenBlocked">&forbiddenBlocked.title;</h1>
         <h1 id="et_cspBlocked">&cspBlocked.title;</h1>
         <h1 id="et_remoteXUL">&remoteXUL.title;</h1>
         <h1 id="et_corruptedContentError">&corruptedContentError.title;</h1>
@@ -456,9 +441,6 @@
         <div id="ed_unsafeContentType">&unsafeContentType.longDesc;</div>
         <div id="ed_nssFailure2">&nssFailure2.longDesc2;</div>
         <div id="ed_nssBadCert">&nssBadCert.longDesc2;</div>
-        <div id="ed_malwareBlocked">&malwareBlocked.longDesc;</div>
-        <div id="ed_unwantedBlocked">&unwantedBlocked.longDesc;</div>
-        <div id="ed_forbiddenBlocked">&forbiddenBlocked.longDesc;</div>
         <div id="ed_cspBlocked">&cspBlocked.longDesc;</div>
         <div id="ed_remoteXUL">&remoteXUL.longDesc;</div>
         <div id="ed_corruptedContentError">&corruptedContentError.longDesc;</div>
@@ -527,22 +509,18 @@
         <p>
           <input type="checkbox" id="automaticallyReportInFuture" />
           <label for="automaticallyReportInFuture" id="automaticallyReportInFuture">&errorReporting.automatic2;</label>
-
-          <span id="reportingState">
-            <button id="reportCertificateErrorRetry">&errorReporting.tryAgain;</button>
-            <span id="reportSendingMessage">&errorReporting.sending;</span>
-            <span id="reportSentMessage">&errorReporting.sent;</span>
-          </span>
         </p>
       </div>
 
-      <div id="weakCryptoAdvancedPanel">
-        <div id="weakCryptoAdvancedDescription">
-          <p>&weakCryptoAdvanced.longDesc;</p>
-        </div>
-        <div id="advancedLongDesc" />
-        <div id="overrideWeakCryptoPanel">
-          <a id="overrideWeakCrypto" href="#">&weakCryptoAdvanced.override;</a>
+      <div id="advancedPanelContainer">
+        <div id="weakCryptoAdvancedPanel">
+          <div id="weakCryptoAdvancedDescription">
+            <p>&weakCryptoAdvanced.longDesc;</p>
+          </div>
+          <div id="advancedLongDesc" />
+          <div id="overrideWeakCryptoPanel">
+            <a id="overrideWeakCrypto" href="#">&weakCryptoAdvanced.override;</a>
+          </div>
         </div>
       </div>
 

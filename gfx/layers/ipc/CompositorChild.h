@@ -79,7 +79,11 @@ public:
                    const TimeStamp& aCompositeEnd) override;
 
   virtual bool
-  RecvInvalidateAll() override;
+  RecvInvalidateLayers(const uint64_t& aLayersId) override;
+
+  virtual bool
+  RecvCompositorUpdated(const uint64_t& aLayersId,
+                        const TextureFactoryIdentifier& aNewIdentifier) override;
 
   virtual bool
   RecvOverfill(const uint32_t &aOverfill) override;
@@ -195,7 +199,7 @@ private:
   DISALLOW_EVIL_CONSTRUCTORS(CompositorChild);
 
   // When we receive overfill numbers, notify these client layer managers
-  nsAutoTArray<ClientLayerManager*,0> mOverfillObservers;
+  AutoTArray<ClientLayerManager*,0> mOverfillObservers;
 
   // True until the beginning of the two-step shutdown sequence of this actor.
   bool mCanSend;

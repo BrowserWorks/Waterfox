@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 from automation import Automation
-from devicemanager import DMError, DeviceManager
+from mozdevice import DMError, DeviceManager
 from mozlog import get_default_logger
 import mozcrash
 
@@ -85,6 +85,10 @@ class RemoteAutomation(Automation):
         # enable non-local connections for the purposes of local testing.
         # Don't override the user's choice here.  See bug 1049688.
         env.setdefault('MOZ_DISABLE_NONLOCAL_CONNECTIONS', '1')
+
+        # Disable Switchboard by default. This will prevent nonlocal
+        # network connections to the Switchboard server.
+        env.setdefault('MOZ_DISABLE_SWITCHBOARD', '1')
 
         # Set WebRTC logging in case it is not set yet.
         # On Android, environment variables cannot contain ',' so the

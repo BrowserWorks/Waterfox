@@ -101,10 +101,6 @@
   margin-top: var(--space-above-tabbar);
 }
 
-#toolbar-menubar:not([autohide="true"]) {
-  -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-drag");
-}
-
 #main-window[customize-entered][tabsintitlebar]:not([inFullscreen]) #toolbar-menubar[customizing-dragovertarget].customization-target::before,
 #main-window[customize-entered][tabsintitlebar]:not([inFullscreen]) #TabsToolbar[customizing-dragovertarget].customization-target::before,
 #main-window[customize-entered][tabsintitlebar]:not([inFullscreen]) #toolbar-menubar.customization-target:hover::before,
@@ -1370,7 +1366,11 @@ html|*.urlbar-input:-moz-lwtheme::-moz-placeholder,
   transition: opacity 0.15s ease;
 }
 
-#navigator-toolbox:not(:hover) .urlbar-history-dropmarker {
+#urlbar-wrapper[switchingtabs] > #urlbar > .urlbar-textbox-container > .urlbar-history-dropmarker {
+  transition: none;
+}
+
+#navigator-toolbox:not(:hover) #urlbar:not([focused]) > .urlbar-textbox-container > .urlbar-history-dropmarker {
   opacity: 0;
 }
 
@@ -2298,9 +2298,7 @@ notification[value="translation"] {
 
 /* Bookmarks roots menu-items */
 #subscribeToPageMenuitem:not([disabled]),
-#subscribeToPageMenupopup,
-#BMB_subscribeToPageMenuitem:not([disabled]),
-#BMB_subscribeToPageMenupopup {
+#subscribeToPageMenupopup {
   list-style-image: url("chrome://browser/skin/feeds/feedIcon16.png");
 }
 
@@ -2441,7 +2439,19 @@ notification[value="translation"] {
 %include ../shared/fullscreen/warning.inc.css
 %include ../../../devtools/client/themes/responsivedesign.inc.css
 %include ../../../devtools/client/themes/commandline.inc.css
+
 %include ../shared/plugin-doorhanger.inc.css
+
+notification.pluginVulnerable > .notification-inner > .messageCloseButton {
+  list-style-image: url("chrome://global/skin/icons/close-inverted.png");
+}
+
+@media (min-resolution: 1.1dppx) {
+  notification.pluginVulnerable > .notification-inner > .messageCloseButton {
+    list-style-image: url("chrome://global/skin/icons/close-inverted@2x.png");
+  }
+}
+
 %include ../shared/login-doorhanger.inc.css
 
 %include downloads/indicator.css

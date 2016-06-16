@@ -68,7 +68,7 @@ function async_write_file(aContractId, aDeferOpen)
              getService(Ci.nsIProperties).
              get("ProfD", Ci.nsIFile);
   file.append("NetUtil-async-test-file.tmp");
-  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
 
   // Then, we need an output stream to our output file.
   let ostream = Cc[aContractId].createInstance(Ci.nsIFileOutputStream);
@@ -123,7 +123,7 @@ function test_async_copy()
       getService(Ci.nsIProperties).
       get("ProfD", Ci.nsIFile);
     file.append("NetUtil-asyncFetch-test-file.tmp");
-    file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+    file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
 
     let ostream = Cc["@mozilla.org/network/file-output-stream;1"].
       createInstance(Ci.nsIFileOutputStream);
@@ -144,7 +144,7 @@ function test_async_copy()
       getService(Ci.nsIProperties).
       get("ProfD", Ci.nsIFile);
     file.append("NetUtil-asyncFetch-test-file.tmp");
-    file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+    file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
 
     let ostream = Cc["@mozilla.org/network/file-output-stream;1"].
       createInstance(Ci.nsIFileOutputStream);
@@ -358,7 +358,7 @@ function test_asyncFetch_with_nsIURI()
   null,      // aLoadingNode
   Services.scriptSecurityManager.getSystemPrincipal(),
   null,      // aTriggeringPrincipal
-  Ci.nsILoadInfo.SEC_NORMAL,
+  Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
   Ci.nsIContentPolicy.TYPE_OTHER);
 }
 
@@ -396,7 +396,7 @@ function test_asyncFetch_with_string()
   null,      // aLoadingNode
   Services.scriptSecurityManager.getSystemPrincipal(),
   null,      // aTriggeringPrincipal
-  Ci.nsILoadInfo.SEC_NORMAL,
+  Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
   Ci.nsIContentPolicy.TYPE_OTHER);
 }
 
@@ -409,7 +409,7 @@ function test_asyncFetch_with_nsIFile()
              getService(Ci.nsIProperties).
              get("ProfD", Ci.nsIFile);
   file.append("NetUtil-asyncFetch-test-file.tmp");
-  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0666);
+  file.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, 0o666);
 
   // Write the test data to the file.
   let ostream = Cc["@mozilla.org/network/file-output-stream;1"].
@@ -442,7 +442,7 @@ function test_asyncFetch_with_nsIFile()
   null,      // aLoadingNode
   Services.scriptSecurityManager.getSystemPrincipal(),
   null,      // aTriggeringPrincipal
-  Ci.nsILoadInfo.SEC_NORMAL,
+  Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
   Ci.nsIContentPolicy.TYPE_OTHER);
 }
 
@@ -468,7 +468,7 @@ function test_asyncFetch_with_nsIInputString()
   null,      // aLoadingNode
   Services.scriptSecurityManager.getSystemPrincipal(),
   null,      // aTriggeringPrincipal
-  Ci.nsILoadInfo.SEC_NORMAL,
+  Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
   Ci.nsIContentPolicy.TYPE_OTHER);
 }
 
@@ -528,7 +528,7 @@ function test_newChannel_with_string()
                                    null,      // aLoadingNode
                                    Services.scriptSecurityManager.getSystemPrincipal(),
                                    null,      // aTriggeringPrincipal
-                                   Ci.nsILoadInfo.SEC_NORMAL,
+                                   Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                    Ci.nsIContentPolicy.TYPE_OTHER);
   let NetUtilChannel = NetUtil.newChannel({
     uri: TEST_SPEC,
@@ -550,7 +550,7 @@ function test_newChannel_with_nsIURI()
                                                         null,      // aLoadingNode
                                                         Services.scriptSecurityManager.getSystemPrincipal(),
                                                         null,      // aTriggeringPrincipal
-                                                        Ci.nsILoadInfo.SEC_NORMAL,
+                                                        Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                                         Ci.nsIContentPolicy.TYPE_OTHER);
   let NetUtilChannel = NetUtil.newChannel({
     uri: uri,
@@ -569,7 +569,7 @@ function test_newChannel_with_options()
                                                         null,      // aLoadingNode
                                                         Services.scriptSecurityManager.getSystemPrincipal(),
                                                         null,      // aTriggeringPrincipal
-                                                        Ci.nsILoadInfo.SEC_NORMAL,
+                                                        Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL,
                                                         Ci.nsIContentPolicy.TYPE_OTHER);
 
   function checkEqualToIOSChannel(channel) {

@@ -14,8 +14,14 @@ const Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+                                  "resource://gre/modules/AppConstants.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "LanguageDetector",
+                                  "resource:///modules/translation/LanguageDetector.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Locale",
                                   "resource://gre/modules/Locale.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
+                                  "resource://gre/modules/Preferences.jsm");
 
 function filterStack(error) {
   return String(error.stack).replace(/(^.*(Task\.jsm|Promise-backend\.js).*\n)+/gm, "<Promise Chain>\n");
@@ -112,6 +118,161 @@ DefaultWeakMap.prototype = {
   },
 };
 
+class SpreadArgs extends Array {
+  constructor(args) {
+    super();
+    this.push(...args);
+  }
+}
+
+class BaseContext {
+  constructor() {
+    this.onClose = new Set();
+    this.checkedLastError = false;
+    this._lastError = null;
+  }
+
+  get cloneScope() {
+    throw new Error("Not implemented");
+  }
+
+  get principal() {
+    throw new Error("Not implemented");
+  }
+
+  checkLoadURL(url, options = {}) {
+    let ssm = Services.scriptSecurityManager;
+
+    let flags = ssm.STANDARD;
+    if (!options.allowScript) {
+      flags |= ssm.DISALLOW_SCRIPT;
+    }
+    if (!options.allowInheritsPrincipal) {
+      flags |= ssm.DISALLOW_INHERIT_PRINCIPAL;
+    }
+    if (options.dontReportErrors) {
+      flags |= ssm.DONT_REPORT_ERRORS;
+    }
+
+    try {
+      ssm.checkLoadURIStrWithPrincipal(this.principal, url, flags);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
+  callOnClose(obj) {
+    this.onClose.add(obj);
+  }
+
+  forgetOnClose(obj) {
+    this.onClose.delete(obj);
+  }
+
+  get lastError() {
+    this.checkedLastError = true;
+    return this._lastError;
+  }
+
+  set lastError(val) {
+    this.checkedLastError = false;
+    this._lastError = val;
+  }
+
+  /**
+   * Sets the value of `.lastError` to `error`, calls the given
+   * callback, and reports an error if the value has not been checked
+   * when the callback returns.
+   *
+   * @param {object} error An object with a `message` property. May
+   *     optionally be an `Error` object belonging to the target scope.
+   * @param {function} callback The callback to call.
+   * @returns {*} The return value of callback.
+   */
+  withLastError(error, callback) {
+    if (!(error instanceof this.cloneScope.Error)) {
+      error = new this.cloneScope.Error(error.message);
+    }
+    this.lastError = error;
+    try {
+      return callback();
+    } finally {
+      if (!this.checkedLastError) {
+        Cu.reportError(`Unchecked lastError value: ${error}`);
+      }
+      this.lastError = null;
+    }
+  }
+
+  /**
+   * Wraps the given promise so it can be safely returned to extension
+   * code in this context.
+   *
+   * If `callback` is provided, however, it is used as a completion
+   * function for the promise, and no promise is returned. In this case,
+   * the callback is called when the promise resolves or rejects. In the
+   * latter case, `lastError` is set to the rejection value, and the
+   * callback function must check `browser.runtime.lastError` or
+   * `extension.runtime.lastError` in order to prevent it being reported
+   * to the console.
+   *
+   * @param {Promise} promise The promise with which to wrap the
+   *     callback. May resolve to a `SpreadArgs` instance, in which case
+   *     each element will be used as a separate argument.
+   *
+   *     Unless the promise object belongs to the cloneScope global, its
+   *     resolution value is cloned into cloneScope prior to calling the
+   *     `callback` function or resolving the wrapped promise.
+   *
+   * @param {function} [callback] The callback function to wrap
+   *
+   * @returns {Promise|undefined} If callback is null, a promise object
+   *     belonging to the target scope. Otherwise, undefined.
+   */
+  wrapPromise(promise, callback = null) {
+    // Note: `promise instanceof this.cloneScope.Promise` returns true
+    // here even for promises that do not belong to the content scope.
+    let runSafe = runSafeSync.bind(null, this);
+    if (promise.constructor === this.cloneScope.Promise) {
+      runSafe = runSafeSyncWithoutClone;
+    }
+
+    if (callback) {
+      promise.then(
+        args => {
+          if (args instanceof SpreadArgs) {
+            runSafe(callback, ...args);
+          } else {
+            runSafe(callback, args);
+          }
+        },
+        error => {
+          this.withLastError(error, () => {
+            runSafeSyncWithoutClone(callback);
+          });
+        });
+    } else {
+      return new this.cloneScope.Promise((resolve, reject) => {
+        promise.then(
+          value => { runSafe(resolve, value); },
+          value => {
+            if (!(value instanceof this.cloneScope.Error)) {
+              value = new this.cloneScope.Error(value.message);
+            }
+            runSafeSyncWithoutClone(reject, value);
+          });
+      });
+    }
+  }
+
+  unload() {
+    for (let obj of this.onClose) {
+      obj.close();
+    }
+  }
+}
+
 function LocaleData(data) {
   this.defaultLocale = data.defaultLocale;
   this.selectedLocale = data.selectedLocale;
@@ -181,9 +342,7 @@ LocaleData.prototype = {
 
     // Check for certain pre-defined messages.
     if (message == "@@ui_locale") {
-      // Return the browser locale, but convert it to a Chrome-style
-      // locale code.
-      return Locale.getLocale().replace(/-/g, "_");
+      return this.uiLocale;
     } else if (message.startsWith("@@bidi_")) {
       let registry = Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIXULChromeRegistry);
       let rtl = registry.isLocaleRTL("global");
@@ -274,6 +433,18 @@ LocaleData.prototype = {
     this.messages.set(locale, result);
     return result;
   },
+
+  get acceptLanguages() {
+    let result = Preferences.get("intl.accept_languages", "", Ci.nsIPrefLocalizedString);
+    return result.split(/\s*,\s*/g);
+  },
+
+
+  get uiLocale() {
+    // Return the browser locale, but convert it to a Chrome-style
+    // locale code.
+    return Locale.getLocale().replace(/-/g, "_");
+  },
 };
 
 // This is a generic class for managing event listeners. Example usage:
@@ -304,7 +475,6 @@ function EventManager(context, name, register) {
   this.register = register;
   this.unregister = null;
   this.callbacks = new Set();
-  this.registered = false;
 }
 
 EventManager.prototype = {
@@ -314,25 +484,24 @@ EventManager.prototype = {
       return;
     }
 
-    if (!this.registered) {
+    if (!this.callbacks.size) {
       this.context.callOnClose(this);
 
       let fireFunc = this.fire.bind(this);
       let fireWithoutClone = this.fireWithoutClone.bind(this);
       fireFunc.withoutClone = fireWithoutClone;
       this.unregister = this.register(fireFunc);
-      this.registered = true;
     }
     this.callbacks.add(callback);
   },
 
   removeListener(callback) {
-    if (!this.registered) {
+    if (!this.callbacks.size) {
       return;
     }
 
     this.callbacks.delete(callback);
-    if (this.callbacks.length == 0) {
+    if (this.callbacks.size == 0) {
       this.unregister();
 
       this.context.forgetOnClose(this);
@@ -356,7 +525,10 @@ EventManager.prototype = {
   },
 
   close() {
-    this.unregister();
+    if (this.callbacks.size) {
+      this.unregister();
+    }
+    this.callbacks = null;
   },
 
   api() {
@@ -446,16 +618,38 @@ function injectAPI(source, dest) {
       continue;
     }
 
-    let value = source[prop];
-    if (typeof(value) == "function") {
-      Cu.exportFunction(value, dest, {defineAs: prop});
-    } else if (typeof(value) == "object") {
+    let desc = Object.getOwnPropertyDescriptor(source, prop);
+    if (typeof(desc.value) == "function") {
+      Cu.exportFunction(desc.value, dest, {defineAs: prop});
+    } else if (typeof(desc.value) == "object") {
       let obj = Cu.createObjectIn(dest, {defineAs: prop});
-      injectAPI(value, obj);
+      injectAPI(desc.value, obj);
     } else {
-      dest[prop] = value;
+      Object.defineProperty(dest, prop, desc);
     }
   }
+}
+
+/**
+ * Returns a Promise which resolves when the given document's DOM has
+ * fully loaded.
+ *
+ * @param {Document} doc The document to await the load of.
+ * @returns {Promise<Document>}
+ */
+function promiseDocumentReady(doc) {
+  if (doc.readyState == "interactive" || doc.readyState == "complete") {
+    return Promise.resolve(doc);
+  }
+
+  return new Promise(resolve => {
+    doc.addEventListener("DOMContentLoaded", function onReady(event) {
+      if (event.target === event.currentTarget) {
+        doc.removeEventListener("DOMContentLoaded", onReady, true);
+        resolve(doc);
+      }
+    }, true);
+  });
 }
 
 /*
@@ -690,25 +884,34 @@ Messenger.prototype = {
     recipient.messageId = id;
     this.broker.sendMessage(messageManager, "message", msg, this.sender, recipient);
 
-    let onClose;
-    let listener = ({data: response}) => {
-      messageManager.removeMessageListener(replyName, listener);
-      this.context.forgetOnClose(onClose);
-
-      if (response.gotData) {
-        // TODO: Handle failure to connect to the extension?
-        runSafe(this.context, responseCallback, response.data);
-      }
-    };
-    onClose = {
-      close() {
+    let promise = new Promise((resolve, reject) => {
+      let onClose;
+      let listener = ({data: response}) => {
         messageManager.removeMessageListener(replyName, listener);
-      },
-    };
-    if (responseCallback) {
+        this.context.forgetOnClose(onClose);
+
+        if (response.gotData) {
+          resolve(response.data);
+        } else if (response.error) {
+          reject(response.error);
+        } else if (!responseCallback) {
+          // As a special case, we don't call the callback variant if we
+          // receive no response, but the promise needs to resolve or
+          // reject in either case.
+          resolve();
+        }
+      };
+      onClose = {
+        close() {
+          messageManager.removeMessageListener(replyName, listener);
+        },
+      };
+
       messageManager.addMessageListener(replyName, listener);
       this.context.callOnClose(onClose);
-    }
+    });
+
+    return this.context.wrapPromise(promise, responseCallback);
   },
 
   onMessage(name) {
@@ -723,23 +926,33 @@ Messenger.prototype = {
         let mm = getMessageManager(target);
         let replyName = `Extension:Reply-${recipient.messageId}`;
 
-        let valid = true, sent = false;
-        let sendResponse = data => {
-          if (!valid) {
-            return;
-          }
-          sent = true;
-          mm.sendAsyncMessage(replyName, {data, gotData: true});
-        };
-        sendResponse = Cu.exportFunction(sendResponse, this.context.cloneScope);
+        new Promise((resolve, reject) => {
+          let sendResponse = Cu.exportFunction(resolve, this.context.cloneScope);
 
-        let result = runSafeSyncWithoutClone(callback, message, sender, sendResponse);
-        if (result !== true) {
-          valid = false;
-          if (!sent) {
-            mm.sendAsyncMessage(replyName, {gotData: false});
+          // Note: We intentionally do not use runSafe here so that any
+          // errors are propagated to the message sender.
+          let result = callback(message, sender, sendResponse);
+          if (result instanceof Promise) {
+            resolve(result);
+          } else if (result !== true) {
+            reject();
           }
-        }
+        }).then(
+          data => {
+            mm.sendAsyncMessage(replyName, {data, gotData: true});
+          },
+          error => {
+            if (error) {
+              // The result needs to be structured-clonable, which
+              // ordinary Error objects are not.
+              try {
+                error = {message: String(error.message), stack: String(error.stack)};
+              } catch (e) {
+                error = {message: String(error)};
+              }
+            }
+            mm.sendAsyncMessage(replyName, {error, gotData: false});
+          });
       };
 
       this.broker.addListener("message", listener, this.filter);
@@ -781,20 +994,57 @@ function flushJarCache(jarFile) {
   Services.obs.notifyObservers(jarFile, "flush-cache-entry", null);
 }
 
+const PlatformInfo = Object.freeze({
+  os: (function() {
+    let os = AppConstants.platform;
+    if (os == "macosx") {
+      os = "mac";
+    }
+    return os;
+  })(),
+  arch: (function() {
+    let abi = Services.appinfo.XPCOMABI;
+    let [arch] = abi.split("-");
+    if (arch == "x86") {
+      arch = "x86-32";
+    } else if (arch == "x86_64") {
+      arch = "x86-64";
+    }
+    return arch;
+  })(),
+});
+
+function detectLanguage(text) {
+  return LanguageDetector.detectLanguage(text).then(result => ({
+    isReliable: result.confident,
+    languages: result.languages.map(lang => {
+      return {
+        language: lang.languageCode,
+        percentage: lang.percent,
+      };
+    }),
+  }));
+}
+
 this.ExtensionUtils = {
-  runSafeWithoutClone,
-  runSafeSyncWithoutClone,
+  detectLanguage,
+  extend,
+  flushJarCache,
+  ignoreEvent,
+  injectAPI,
+  instanceOf,
+  promiseDocumentReady,
   runSafe,
   runSafeSync,
+  runSafeSyncWithoutClone,
+  runSafeWithoutClone,
+  BaseContext,
   DefaultWeakMap,
   EventManager,
   LocaleData,
-  SingletonEventManager,
-  ignoreEvent,
-  injectAPI,
   MessageBroker,
   Messenger,
-  extend,
-  flushJarCache,
-  instanceOf,
+  PlatformInfo,
+  SingletonEventManager,
+  SpreadArgs,
 };

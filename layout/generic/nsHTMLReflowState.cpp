@@ -570,7 +570,7 @@ nsHTMLReflowState::InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameT
       if (frame->GetType() == nsGkAtoms::svgForeignObjectFrame) {
         // Foreign object frames use dirty bits in a special way.
         frame->AddStateBits(NS_FRAME_HAS_DIRTY_CHILDREN);
-        nsIFrame *kid = frame->GetFirstPrincipalChild();
+        nsIFrame *kid = frame->PrincipalChildList().FirstChild();
         if (kid) {
           kid->AddStateBits(NS_FRAME_IS_DIRTY);
         }
@@ -598,7 +598,7 @@ nsHTMLReflowState::InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameT
       // frame tree geometry (the width on an ancestor) rather than
       // style.
 
-      nsAutoTArray<nsIFrame*, 32> stack;
+      AutoTArray<nsIFrame*, 32> stack;
       stack.AppendElement(frame);
 
       do {
@@ -638,6 +638,29 @@ nsHTMLReflowState::InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameT
     // Possibly; in that case we should at least be checking
     // NS_SUBTREE_DIRTY, I'd think.
     SetBResize(mCBReflowState->IsBResize());
+  } else if (mCBReflowState && !nsLayoutUtils::GetAsBlock(frame)) {
+    // Some non-block frames (e.g. table frames) aggressively optimize out their
+    // BSize recomputation when they don't have the BResize flag set.  This
+    // means that if they go from having a computed non-auto height to having an
+    // auto height and don't have that flag set, they will not actually compute
+    // their auto height and will just remain at whatever size they already
+    // were.  We can end up in that situation if the child has a percentage
+    // specified height and the parent changes from non-auto height to auto
+    // height.  When that happens, the parent will typically have the BResize
+    // flag set, and we want to propagate that flag to the kid.
+    //
+    // Ideally it seems like we'd do this for blocks too, of course... but we'd
+    // really want to restrict it to the percentage height case or something, to
+    // avoid extra reflows in common cases.  Maybe we should be examining
+    // mStylePosition->BSize(wm).GetUnit() for that purpose?
+    //
+    // Note that we _also_ need to set the BResize flag if we have auto
+    // ComputedBSize() and a dirty subtree, since that might require us to
+    // change BSize due to kids having been added or removed.
+    SetBResize(mCBReflowState->IsBResize());
+    if (ComputedBSize() == NS_AUTOHEIGHT) {
+      SetBResize(IsBResize() || NS_SUBTREE_DIRTY(frame));
+    }
   } else if (ComputedBSize() == NS_AUTOHEIGHT) {
     if (eCompatibility_NavQuirks == aPresContext->CompatibilityMode() &&
         mCBReflowState) {
@@ -1799,15 +1822,10 @@ nsHTMLReflowState::InitAbsoluteConstraints(nsPresContext* aPresContext,
 
     if (marginBStartIsAuto) {
       if (marginBEndIsAuto) {
-        if (availMarginSpace < 0) {
-          // FIXME: Note that the spec doesn't actually say we should do this!
-          margin.BEnd(cbwm) = availMarginSpace;
-        } else {
-          // Both margin-block-start and -end are 'auto', so they get
-          // equal values
-          margin.BStart(cbwm) = availMarginSpace / 2;
-          margin.BEnd(cbwm) = availMarginSpace - margin.BStart(cbwm);
-        }
+        // Both 'margin-top' and 'margin-bottom' are 'auto', so they get
+        // equal values
+        margin.BStart(cbwm) = availMarginSpace / 2;
+        margin.BEnd(cbwm) = availMarginSpace - margin.BStart(cbwm);
       } else {
         // Just margin-block-start is 'auto'
         margin.BStart(cbwm) = availMarginSpace;
@@ -2382,12 +2400,12 @@ nsHTMLReflowState::InitConstraints(nsPresContext*     aPresContext,
 
 static void
 UpdateProp(FrameProperties& aProps,
-           const FramePropertyDescriptor* aProperty,
+           const FramePropertyDescriptor<nsMargin>* aProperty,
            bool aNeeded,
            nsMargin& aNewValue)
 {
   if (aNeeded) {
-    nsMargin* propValue = static_cast<nsMargin*>(aProps.Get(aProperty));
+    nsMargin* propValue = aProps.Get(aProperty);
     if (propValue) {
       *propValue = aNewValue;
     } else {

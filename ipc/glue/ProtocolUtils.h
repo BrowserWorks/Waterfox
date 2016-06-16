@@ -173,7 +173,6 @@ public:
 
     virtual Shmem::SharedMemory* CreateSharedMemory(
         size_t, SharedMemory::SharedMemoryType, bool, int32_t*) = 0;
-    virtual bool AdoptSharedMemory(Shmem::SharedMemory*, int32_t*) = 0;
     virtual Shmem::SharedMemory* LookupSharedMemory(int32_t) = 0;
     virtual bool IsTrackingSharedMemory(Shmem::SharedMemory*) = 0;
     virtual bool DestroySharedMemory(Shmem&) = 0;
@@ -332,6 +331,18 @@ DuplicateHandle(HANDLE aSourceHandle,
                 HANDLE* aTargetHandle,
                 DWORD aDesiredAccess,
                 DWORD aOptions);
+#endif
+
+/**
+ * Annotate the crash reporter with the error code from the most recent system
+ * call. Returns the system error.
+ */
+#ifdef MOZ_CRASHREPORTER
+void AnnotateSystemError();
+void AnnotateProcessInformation(base::ProcessId aPid);
+#else
+#define AnnotateSystemError() do { } while (0)
+#define AnnotateProcessInformation(...) do { } while (0)
 #endif
 
 /**

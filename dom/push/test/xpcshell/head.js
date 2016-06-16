@@ -14,10 +14,13 @@ Cu.import('resource://gre/modules/Preferences.jsm');
 Cu.import('resource://gre/modules/PlacesUtils.jsm');
 Cu.import('resource://gre/modules/ObjectUtils.jsm');
 
+XPCOMUtils.defineLazyModuleGetter(this, 'PlacesTestUtils',
+                                  'resource://testing-common/PlacesTestUtils.jsm');
+XPCOMUtils.defineLazyServiceGetter(this, 'PushServiceComponent',
+                                   '@mozilla.org/push/Service;1', 'nsIPushService');
+
 const serviceExports = Cu.import('resource://gre/modules/PushService.jsm', {});
 const servicePrefs = new Preferences('dom.push.');
-
-const DEFAULT_TIMEOUT = 5000;
 
 const WEBSOCKET_CLOSE_GOING_AWAY = 1001;
 
@@ -62,25 +65,6 @@ function after(times, func) {
 }
 
 /**
- * Updates the places database.
- *
- * @param {mozIPlaceInfo} place A place record to insert.
- * @returns {Promise} A promise that fulfills when the database is updated.
- */
-function addVisit(place) {
-  return new Promise((resolve, reject) => {
-    if (typeof place.uri == 'string') {
-      place.uri = Services.io.newURI(place.uri, null, null);
-    }
-    PlacesUtils.asyncHistory.updatePlaces(place, {
-      handleCompletion: resolve,
-      handleError: reject,
-      handleResult() {},
-    });
-  });
-}
-
-/**
  * Defers one or more callbacks until the next turn of the event loop. Multiple
  * callbacks are executed in order.
  *
@@ -110,31 +94,6 @@ function promiseObserverNotification(topic, matchFunc) {
       resolve({subject, data});
     }, topic, false);
   });
-}
-
-/**
- * Waits for a promise to settle. Returns a rejected promise if the promise
- * is not resolved or rejected within the given delay.
- *
- * @param {Promise} promise The pending promise.
- * @param {Number} delay The time to wait before rejecting the promise.
- * @param {String} [message] The rejection message if the promise times out.
- * @returns {Promise} A promise that settles with the value of the pending
- *  promise, or rejects if the pending promise times out.
- */
-function waitForPromise(promise, delay, message = 'Timed out waiting on promise') {
-  let timeoutDefer = Promise.defer();
-  let id = setTimeout(() => timeoutDefer.reject(new Error(message)), delay);
-  return Promise.race([
-    promise.then(value => {
-      clearTimeout(id);
-      return value;
-    }, error => {
-      clearTimeout(id);
-      throw error;
-    }),
-    timeoutDefer.promise
-  ]);
 }
 
 /**
@@ -524,7 +483,7 @@ var tearDownServiceInParent = Task.async(function* (db) {
   record = yield db.getByIdentifiers({
     scope: 'https://example.net/scope/1',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: 1, inBrowser: true }),
+      { appId: 1, inIsolatedMozBrowser: true }),
   });
   ok(record.pushEndpoint.startsWith('https://example.org/push'),
     'Wrong push endpoint in app record');

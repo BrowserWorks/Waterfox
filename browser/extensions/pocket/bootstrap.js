@@ -41,6 +41,10 @@ const PREFS = {
 function setDefaultPrefs() {
   let branch = Services.prefs.getDefaultBranch(PREF_BRANCH);
   for (let [key, val] in Iterator(PREFS)) {
+    // If someone beat us to setting a default, don't overwrite it.  This can
+    // happen if distribution.ini sets the default first.
+    if (branch.getPrefType(key) != branch.PREF_INVALID)
+      continue;
     switch (typeof val) {
       case "boolean":
         branch.setBoolPref(key, val);
@@ -52,17 +56,6 @@ function setDefaultPrefs() {
         branch.setCharPref(key, val);
         break;
     }
-  }
-}
-
-function* allBrowserWindows() {
-  var winEnum = Services.wm.getEnumerator("navigator:browser");
-  while (winEnum.hasMoreElements()) {
-    let win = winEnum.getNext();
-    // skip closed windows
-    if (win.closed)
-      continue;
-    yield win;
   }
 }
 
@@ -204,7 +197,7 @@ function CreatePocketWidget(reason) {
     }
   });
 
-};
+}
 
 // PocketContextMenu
 // When the context menu is opened check if we need to build and enable pocket UI.
@@ -216,7 +209,7 @@ var PocketContextMenu = {
     Services.obs.removeObserver(this, "on-build-contextmenu");
     // loop through windows and remove context menus
     // iterate through all windows and add pocket to them
-    for (let win of allBrowserWindows()) {
+    for (let win of CustomizableUI.windows) {
       let document = win.document;
       for (let id of ["context-pocket", "context-savelinktopocket"]) {
         let element = document.getElementById(id);
@@ -226,7 +219,7 @@ var PocketContextMenu = {
     }
   },
   observe: function(aSubject, aTopic, aData) {
-    let subject = aSubject.wrappedJSObject;;
+    let subject = aSubject.wrappedJSObject;
     let document = subject.menu.ownerDocument;
     let window = document.defaultView;
     let pocketEnabled = CustomizableUI.getPlacementOfWidget("pocket-button");
@@ -267,7 +260,7 @@ var PocketContextMenu = {
         "accesskey": gPocketBundle.GetStringFromName("saveLinkToPocketCmd.accesskey"),
         "oncommand": "Pocket.savePage(gContextMenu.browser, gContextMenu.linkURL);"
       });
-      sibling = document.getElementById("context-savelink");
+      let sibling = document.getElementById("context-savelink");
       if (sibling.nextSibling) {
         sibling.parentNode.insertBefore(menu, sibling.nextSibling);
       } else {
@@ -354,6 +347,7 @@ function pktUIGetter(prop, window) {
     get: function() {
       // delete any getters for properties loaded from main.js so we only load main.js once
       delete window.pktUI;
+      delete window.pktApi;
       delete window.pktUIMessaging;
       Services.scriptloader.loadSubScript("chrome://pocket/content/main.js", window);
       return window[prop];
@@ -377,7 +371,7 @@ var PocketOverlay = {
     CreatePocketWidget(reason);
     PocketContextMenu.init();
 
-    for (let win of allBrowserWindows()) {
+    for (let win of CustomizableUI.windows) {
       this.onWindowOpened(win);
     }
   },
@@ -385,7 +379,7 @@ var PocketOverlay = {
     AboutSaved.unregister();
     AboutSignup.unregister();
     CustomizableUI.removeListener(this);
-    for (let window of allBrowserWindows()) {
+    for (let window of CustomizableUI.windows) {
       for (let id of ["panelMenu_pocket", "menu_pocket", "BMB_pocket",
                       "panelMenu_pocketSeparator", "menu_pocketSeparator",
                       "BMB_pocketSeparator"]) {
@@ -396,6 +390,7 @@ var PocketOverlay = {
       this.removeStyles(window);
       // remove script getters/objects
       delete window.Pocket;
+      delete window.pktApi;
       delete window.pktUI;
       delete window.pktUIMessaging;
     }
@@ -415,6 +410,7 @@ var PocketOverlay = {
                                       "chrome://pocket/content/Pocket.jsm");
     // Can't use XPCOMUtils for these because the scripts try to define the variables
     // on window, and so the defineProperty inside defineLazyGetter fails.
+    Object.defineProperty(window, "pktApi", pktUIGetter("pktApi", window));
     Object.defineProperty(window, "pktUI", pktUIGetter("pktUI", window));
     Object.defineProperty(window, "pktUIMessaging", pktUIGetter("pktUIMessaging", window));
   },
@@ -443,7 +439,7 @@ var PocketOverlay = {
     }
 
     // add to bookmarks-menu-button
-    sib = document.getElementById("BMB_subscribeToPageMenuitem");
+    sib = document.getElementById("BMB_bookmarksToolbar");
     if (sib && !document.getElementById("BMB_pocket")) {
       let menu = createElementWithAttrs(document, "menuitem", {
         "id": "BMB_pocket",
@@ -532,8 +528,7 @@ function startup(data, reason) {
     }
     // watch pref change and enable/disable if necessary
     Services.prefs.addObserver("extensions.pocket.enabled", prefObserver, false);
-    if (Services.prefs.prefHasUserValue("extensions.pocket.enabled") &&
-        !Services.prefs.getBoolPref("extensions.pocket.enabled"))
+    if (!Services.prefs.getBoolPref("extensions.pocket.enabled"))
       return;
     PocketOverlay.startup(reason);
   });

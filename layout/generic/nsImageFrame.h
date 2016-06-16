@@ -8,7 +8,7 @@
 #ifndef nsImageFrame_h___
 #define nsImageFrame_h___
 
-#include "nsSplittableFrame.h"
+#include "nsAtomicContainerFrame.h"
 #include "nsIIOService.h"
 #include "nsIObserver.h"
 
@@ -58,7 +58,7 @@ private:
   nsImageFrame *mFrame;
 };
 
-typedef nsSplittableFrame ImageFrameSuper;
+typedef nsAtomicContainerFrame ImageFrameSuper;
 
 class nsImageFrame : public ImageFrameSuper,
                      public nsIReflowCallback {
@@ -121,6 +121,11 @@ public:
   void List(FILE* out = stderr, const char* aPrefix = "", 
             uint32_t aFlags = 0) const override;
 #endif
+
+  nsSplittableType GetSplittableType() const override
+  {
+    return NS_FRAME_SPLITTABLE;
+  }
 
   virtual LogicalSides GetLogicalSkipSides(const nsHTMLReflowState* aReflowState = nullptr) const override;
 
@@ -321,6 +326,7 @@ private:
   nsCOMPtr<imgINotificationObserver> mListener;
 
   nsCOMPtr<imgIContainer> mImage;
+  nsCOMPtr<imgIContainer> mPrevImage;
   nsSize mComputedSize;
   mozilla::IntrinsicSize mIntrinsicSize;
   nsSize mIntrinsicRatio;
@@ -401,8 +407,11 @@ public:
   typedef mozilla::layers::LayerManager LayerManager;
 
   nsDisplayImage(nsDisplayListBuilder* aBuilder, nsImageFrame* aFrame,
-                 imgIContainer* aImage)
-    : nsDisplayImageContainer(aBuilder, aFrame), mImage(aImage) {
+                 imgIContainer* aImage, imgIContainer* aPrevImage)
+    : nsDisplayImageContainer(aBuilder, aFrame)
+    , mImage(aImage)
+    , mPrevImage(aPrevImage)
+  {
     MOZ_COUNT_CTOR(nsDisplayImage);
   }
   virtual ~nsDisplayImage() {
@@ -466,6 +475,7 @@ public:
   NS_DISPLAY_DECL_NAME("Image", TYPE_IMAGE)
 private:
   nsCOMPtr<imgIContainer> mImage;
+  nsCOMPtr<imgIContainer> mPrevImage;
 };
 
 #endif /* nsImageFrame_h___ */

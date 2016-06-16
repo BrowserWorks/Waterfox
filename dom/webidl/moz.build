@@ -11,6 +11,8 @@ GENERATED_WEBIDL_FILES = [
 PREPROCESSED_WEBIDL_FILES = [
     'HTMLMediaElement.webidl',
     'Navigator.webidl',
+    'Promise.webidl',
+    'PromiseDebugging.webidl',
     'ServiceWorkerRegistration.webidl',
     'Window.webidl',
 ]
@@ -23,13 +25,13 @@ WEBIDL_FILES = [
     'Animatable.webidl',
     'Animation.webidl',
     'AnimationEffectReadOnly.webidl',
+    'AnimationEffectTiming.webidl',
     'AnimationEffectTimingReadOnly.webidl',
     'AnimationEvent.webidl',
     'AnimationTimeline.webidl',
     'AnonymousContent.webidl',
     'AppInfo.webidl',
     'AppNotificationServiceOptions.webidl',
-    'Apps.webidl',
     'APZTestData.webidl',
     'ArchiveReader.webidl',
     'ArchiveRequest.webidl',
@@ -98,6 +100,7 @@ WEBIDL_FILES = [
     'CSSAnimation.webidl',
     'CSSLexer.webidl',
     'CSSPrimitiveValue.webidl',
+    'CSSPseudoElement.webidl',
     'CSSRuleList.webidl',
     'CSSStyleDeclaration.webidl',
     'CSSStyleSheet.webidl',
@@ -133,7 +136,6 @@ WEBIDL_FILES = [
     'DOMRect.webidl',
     'DOMRectList.webidl',
     'DOMRequest.webidl',
-    'DOMSettableTokenList.webidl',
     'DOMStringList.webidl',
     'DOMStringMap.webidl',
     'DOMTokenList.webidl',
@@ -187,6 +189,7 @@ WEBIDL_FILES = [
     'HTMLContentElement.webidl',
     'HTMLDataElement.webidl',
     'HTMLDataListElement.webidl',
+    'HTMLDetailsElement.webidl',
     'HTMLDirectoryElement.webidl',
     'HTMLDivElement.webidl',
     'HTMLDListElement.webidl',
@@ -389,8 +392,6 @@ WEBIDL_FILES = [
     'PresentationRequest.webidl',
     'ProcessingInstruction.webidl',
     'ProfileTimelineMarker.webidl',
-    'Promise.webidl',
-    'PromiseDebugging.webidl',
     'PropertyIndexedKeyframes.webidl',
     'RadioNodeList.webidl',
     'Range.webidl',
@@ -571,6 +572,7 @@ WEBIDL_FILES = [
     'TVProgram.webidl',
     'TVSource.webidl',
     'TVTuner.webidl',
+    'U2F.webidl',
     'UDPMessageEvent.webidl',
     'UDPSocket.webidl',
     'UIEvent.webidl',
@@ -672,7 +674,6 @@ WEBIDL_FILES += [
     'DeviceStorageChangeEvent.webidl',
     'DOMTransactionEvent.webidl',
     'HashChangeEvent.webidl',
-    'MozApplicationEvent.webidl',
     'MozSettingsEvent.webidl',
     'PageTransitionEvent.webidl',
     'PopStateEvent.webidl',
@@ -712,6 +713,7 @@ if CONFIG['MOZ_B2G_BT']:
         'BluetoothPairingListener.webidl',
         'BluetoothPbapParameters.webidl',
         'BluetoothPbapRequestHandle.webidl',
+        'BluetoothUUID.webidl',
     ]
 
 if CONFIG['MOZ_SIMPLEPUSH']:
@@ -750,6 +752,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'MozNetworkStatsAlarm.webidl',
         'MozNetworkStatsData.webidl',
         'MozNetworkStatsInterface.webidl',
+        'MozNetworkStatsManager.webidl',
         'MozSpeakerManager.webidl',
         'MozWifiCapabilities.webidl',
         'MozWifiManager.webidl',
@@ -794,7 +797,6 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'IccChangeEvent.webidl',
     'ImageCaptureErrorEvent.webidl',
     'MediaStreamEvent.webidl',
-    'MozApplicationEvent.webidl',
     'MozCellBroadcastEvent.webidl',
     'MozClirModeEvent.webidl',
     'MozContactChangeEvent.webidl',
@@ -909,6 +911,7 @@ if CONFIG['MOZ_EME']:
         'MediaKeysRequestStatus.webidl',
         'MediaKeyStatusMap.webidl',
         'MediaKeySystemAccess.webidl',
+        'WidevineCDMManifest.webidl',
     ]
 
 if CONFIG['MOZ_PAY']:
@@ -918,5 +921,10 @@ if CONFIG['MOZ_PAY']:
 
 if CONFIG['MOZ_B2G']:
     WEBIDL_FILES += [
-        'Identity.webidl'
+        'Apps.webidl',
+        'Identity.webidl',
+        'MozApplicationEvent.webidl'
+    ]
+    GENERATED_EVENTS_WEBIDL_FILES += [
+        'MozApplicationEvent.webidl'
     ]

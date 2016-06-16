@@ -219,6 +219,11 @@ static gboolean window_state_event_cb     (GtkWidget *widget,
 static void     theme_changed_cb          (GtkSettings *settings,
                                            GParamSpec *pspec,
                                            nsWindow *data);
+#if (MOZ_WIDGET_GTK == 3)
+static void     scale_changed_cb          (GtkWidget* widget,
+                                           GParamSpec* aPSpec,
+                                           gpointer aPointer);
+#endif
 #if GTK_CHECK_VERSION(3,4,0)
 static gboolean touch_event_cb            (GtkWidget* aWidget,
                                            GdkEventTouch* aEvent);
@@ -551,6 +556,12 @@ nsWindow::MaybeDispatchResized()
     }
 }
 
+nsIWidgetListener*
+nsWindow::GetListener()
+{
+    return mAttachedWidgetListener ? mAttachedWidgetListener : mWidgetListener;
+}
+
 nsresult
 nsWindow::DispatchEvent(WidgetGUIEvent* aEvent, nsEventStatus& aStatus)
 {
@@ -559,8 +570,7 @@ nsWindow::DispatchEvent(WidgetGUIEvent* aEvent, nsEventStatus& aStatus)
                     nsAutoCString("something"), 0);
 #endif
     aStatus = nsEventStatus_eIgnore;
-    nsIWidgetListener* listener =
-        mAttachedWidgetListener ? mAttachedWidgetListener : mWidgetListener;
+    nsIWidgetListener* listener = GetListener();
     if (listener) {
       aStatus = listener->HandleEvent(aEvent, mUseAttachedEvents);
     }
@@ -1086,10 +1096,9 @@ nsWindow::Show(bool aState)
 NS_IMETHODIMP
 nsWindow::Resize(double aWidth, double aHeight, bool aRepaint)
 {
-    CSSToLayoutDeviceScale scale = BoundsUseDisplayPixels() ? GetDefaultScale()
-                                    : CSSToLayoutDeviceScale(1.0);
-    int32_t width = NSToIntRound(scale.scale * aWidth);
-    int32_t height = NSToIntRound(scale.scale * aHeight);
+    double scale = BoundsUseDesktopPixels() ? GetDesktopToDeviceScale().scale : 1.0;
+    int32_t width = NSToIntRound(scale * aWidth);
+    int32_t height = NSToIntRound(scale * aHeight);
     ConstrainSize(&width, &height);
 
     // For top-level windows, aWidth and aHeight should possibly be
@@ -1118,14 +1127,13 @@ NS_IMETHODIMP
 nsWindow::Resize(double aX, double aY, double aWidth, double aHeight,
                  bool aRepaint)
 {
-    CSSToLayoutDeviceScale scale = BoundsUseDisplayPixels() ? GetDefaultScale()
-                                    : CSSToLayoutDeviceScale(1.0);
-    int32_t width = NSToIntRound(scale.scale * aWidth);
-    int32_t height = NSToIntRound(scale.scale * aHeight);
+    double scale = BoundsUseDesktopPixels() ? GetDesktopToDeviceScale().scale : 1.0;
+    int32_t width = NSToIntRound(scale * aWidth);
+    int32_t height = NSToIntRound(scale * aHeight);
     ConstrainSize(&width, &height);
 
-    int32_t x = NSToIntRound(scale.scale * aX);
-    int32_t y = NSToIntRound(scale.scale * aY);
+    int32_t x = NSToIntRound(scale * aX);
+    int32_t y = NSToIntRound(scale * aY);
     mBounds.x = x;
     mBounds.y = y;
     mBounds.SizeTo(width, height);
@@ -1184,10 +1192,9 @@ nsWindow::Move(double aX, double aY)
     LOG(("nsWindow::Move [%p] %f %f\n", (void *)this,
          aX, aY));
 
-    CSSToLayoutDeviceScale scale = BoundsUseDisplayPixels() ? GetDefaultScale()
-                                   : CSSToLayoutDeviceScale(1.0);
-    int32_t x = NSToIntRound(aX * scale.scale);
-    int32_t y = NSToIntRound(aY * scale.scale);
+    double scale = BoundsUseDesktopPixels() ? GetDesktopToDeviceScale().scale : 1.0;
+    int32_t x = NSToIntRound(aX * scale);
+    int32_t y = NSToIntRound(aY * scale);
 
     if (mWindowType == eWindowType_toplevel ||
         mWindowType == eWindowType_dialog) {
@@ -2120,8 +2127,7 @@ nsWindow::OnExposeEvent(cairo_t *cr)
     if (!mGdkWindow || mIsFullyObscured || !mHasMappedToplevel)
         return FALSE;
 
-    nsIWidgetListener *listener =
-        mAttachedWidgetListener ? mAttachedWidgetListener : mWidgetListener;
+    nsIWidgetListener *listener = GetListener();
     if (!listener)
         return FALSE;
 
@@ -2150,6 +2156,8 @@ nsWindow::OnExposeEvent(cairo_t *cr)
         clientLayers->SendInvalidRegion(region.ToUnknownRegion());
     }
 
+    RefPtr<nsWindow> strongThis(this);
+
     // Dispatch WillPaintWindow notification to allow scripts etc. to run
     // before we paint
     {
@@ -2162,8 +2170,7 @@ nsWindow::OnExposeEvent(cairo_t *cr)
 
         // Re-get the listener since the will paint notification might have
         // killed it.
-        listener =
-            mAttachedWidgetListener ? mAttachedWidgetListener : mWidgetListener;
+        listener = GetListener();
         if (!listener)
             return FALSE;
     }
@@ -2204,7 +2211,7 @@ nsWindow::OnExposeEvent(cairo_t *cr)
             GdkWindow *gdkWin = GDK_WINDOW(children->data);
             nsWindow *kid = get_window_for_gdk_window(gdkWin);
             if (kid && gdk_window_is_visible(gdkWin)) {
-                nsAutoTArray<LayoutDeviceIntRect,1> clipRects;
+                AutoTArray<LayoutDeviceIntRect,1> clipRects;
                 kid->GetWindowClipRegion(&clipRects);
                 LayoutDeviceIntRect bounds;
                 kid->GetBounds(bounds);
@@ -2224,32 +2231,38 @@ nsWindow::OnExposeEvent(cairo_t *cr)
     // If this widget uses OMTC...
     if (GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_CLIENT) {
         listener->PaintWindow(this, region);
+
+        // Re-get the listener since the will paint notification might have
+        // killed it.
+        listener = GetListener();
+        if (!listener)
+            return TRUE;
+
         listener->DidPaintWindow();
         return TRUE;
     }
 
-    RefPtr<DrawTarget> dt = GetDrawTarget(region);
+    BufferMode layerBuffering = BufferMode::BUFFERED;
+    RefPtr<DrawTarget> dt = GetDrawTarget(region, &layerBuffering);
     if (!dt) {
         return FALSE;
     }
     RefPtr<gfxContext> ctx;
+    IntRect boundsRect = region.GetBounds().ToUnknownRect();
+    IntPoint offset(0, 0);
+    if (dt->GetSize() == boundsRect.Size()) {
+      offset = boundsRect.TopLeft();
+      dt->SetTransform(Matrix::Translation(-offset));
+    }
 
 #ifdef MOZ_X11
-    nsIntRect boundsRect; // for shaped only
-
     if (shaped) {
         // Collapse update area to the bounding box. This is so we only have to
         // call UpdateTranslucentWindowAlpha once. After we have dropped
         // support for non-Thebes graphics, UpdateTranslucentWindowAlpha will be
         // our private interface so we can rework things to avoid this.
-        boundsRect = region.GetBounds().ToUnknownRect();
         dt->PushClipRect(Rect(boundsRect));
-    } else {
-        gfxUtils::ClipToRegion(dt, region.ToUnknownRegion());
-    }
 
-    BufferMode layerBuffering;
-    if (shaped) {
         // The double buffering is done here to extract the shape mask.
         // (The shape mask won't be necessary when a visual with an alpha
         // channel is used on compositing window managers.)
@@ -2257,17 +2270,9 @@ nsWindow::OnExposeEvent(cairo_t *cr)
         RefPtr<DrawTarget> destDT = dt->CreateSimilarDrawTarget(boundsRect.Size(), SurfaceFormat::B8G8R8A8);
         ctx = new gfxContext(destDT, boundsRect.TopLeft());
     } else {
-#ifdef MOZ_HAVE_SHMIMAGE
-        if (nsShmImage::UseShm()) {
-            // We're using an xshm mapping as a back buffer.
-            layerBuffering = BufferMode::BUFFER_NONE;
-        } else
-#endif // MOZ_HAVE_SHMIMAGE
-        {
-            // Get the layer manager to do double buffering (if necessary).
-            layerBuffering = BufferMode::BUFFERED;
-        }
-        ctx = new gfxContext(dt);
+        gfxUtils::ClipToRegion(dt, region.ToUnknownRegion());
+
+        ctx = new gfxContext(dt, offset);
     }
 
 #if 0
@@ -2286,8 +2291,26 @@ nsWindow::OnExposeEvent(cairo_t *cr)
     bool painted = false;
     {
       if (GetLayerManager()->GetBackendType() == LayersBackend::LAYERS_BASIC) {
+        GdkScreen *screen = gdk_window_get_screen(mGdkWindow);
+        if (GetTransparencyMode() == eTransparencyTransparent &&
+            layerBuffering == BufferMode::BUFFER_NONE &&
+            gdk_screen_is_composited(screen) &&
+            gdk_window_get_visual(mGdkWindow) ==
+            gdk_screen_get_rgba_visual(screen)) {
+          // If our draw target is unbuffered and we use an alpha channel,
+          // clear the image beforehand to ensure we don't get artifacts from a
+          // reused SHM image. See bug 1258086.
+          dt->ClearRect(Rect(boundsRect));
+        }
         AutoLayerManagerSetup setupLayerManager(this, ctx, layerBuffering);
         painted = listener->PaintWindow(this, region);
+
+        // Re-get the listener since the will paint notification might have
+        // killed it.
+        listener = GetListener();
+        if (!listener)
+            return TRUE;
+
       }
     }
 
@@ -2311,8 +2334,8 @@ nsWindow::OnExposeEvent(cairo_t *cr)
     dt->PopClip();
 
 #  ifdef MOZ_HAVE_SHMIMAGE
-    if (mShmImage && MOZ_LIKELY(!mIsDestroyed)) {
-      mShmImage->Put(mXDisplay, mXWindow, region);
+    if (mBackShmImage && MOZ_LIKELY(!mIsDestroyed)) {
+      mBackShmImage->Put(region);
     }
 #  endif  // MOZ_HAVE_SHMIMAGE
 #endif // MOZ_X11
@@ -3361,6 +3384,19 @@ nsWindow::ThemeChanged()
 }
 
 void
+nsWindow::OnDPIChanged()
+{
+  if (mWidgetListener) {
+    nsIPresShell* presShell = mWidgetListener->GetPresShell();
+    if (presShell) {
+      presShell->BackingScaleFactorChanged();
+      // Update menu's font size etc
+      presShell->ThemeChanged();
+    }
+  }
+}
+
+void
 nsWindow::DispatchDragEvent(EventMessage aMsg, const LayoutDeviceIntPoint& aRefPoint,
                             guint aTime)
 {
@@ -3529,7 +3565,7 @@ nsWindow::Create(nsIWidget* aParent,
     nsGTKToolkit::GetToolkit();
 
     // initialize all the common bits of this class
-    BaseCreate(baseParent, aRect, aInitData);
+    BaseCreate(baseParent, aInitData);
 
     // Do we need to listen for resizes?
     bool listenForResizes = false;;
@@ -3835,6 +3871,10 @@ nsWindow::Create(nsIWidget* aParent,
                                G_CALLBACK(size_allocate_cb), nullptr);
         g_signal_connect(mContainer, "hierarchy-changed",
                          G_CALLBACK(hierarchy_changed_cb), nullptr);
+#if (MOZ_WIDGET_GTK == 3)
+        g_signal_connect(mContainer, "notify::scale-factor",
+                         G_CALLBACK(scale_changed_cb), nullptr);
+#endif
         // Initialize mHasMappedToplevel.
         hierarchy_changed_cb(GTK_WIDGET(mContainer), nullptr);
         // Expose, focus, key, and drag events are sent even to GTK_NO_WINDOW
@@ -4318,9 +4358,9 @@ nsWindow::SetWindowClipRegion(const nsTArray<LayoutDeviceIntRect>& aRects,
 {
     const nsTArray<LayoutDeviceIntRect>* newRects = &aRects;
 
-    nsAutoTArray<LayoutDeviceIntRect,1> intersectRects;
+    AutoTArray<LayoutDeviceIntRect,1> intersectRects;
     if (aIntersectWithExisting) {
-        nsAutoTArray<LayoutDeviceIntRect,1> existingRects;
+        AutoTArray<LayoutDeviceIntRect,1> existingRects;
         GetWindowClipRegion(&existingRects);
 
         LayoutDeviceIntRegion existingRegion = RegionFromArray(existingRects);
@@ -5092,7 +5132,7 @@ nsWindow::CheckForRollup(gdouble aMouseX, gdouble aMouseY,
         // the current submenu
         uint32_t popupsToRollup = UINT32_MAX;
         if (!aAlwaysRollup) {
-            nsAutoTArray<nsIWidget*, 5> widgetChain;
+            AutoTArray<nsIWidget*, 5> widgetChain;
             uint32_t sameTypeCount = rollupListener->GetSubmenuWidgetChain(&widgetChain);
             for (uint32_t i=0; i<widgetChain.Length(); ++i) {
                 nsIWidget* widget = widgetChain[i];
@@ -5983,6 +6023,24 @@ theme_changed_cb (GtkSettings *settings, GParamSpec *pspec, nsWindow *data)
     window->ThemeChanged();
 }
 
+#if (MOZ_WIDGET_GTK == 3)
+static void
+scale_changed_cb (GtkWidget* widget, GParamSpec* aPSpec, gpointer aPointer)
+{
+    RefPtr<nsWindow> window = get_window_for_gtk_widget(widget);
+    if (!window) {
+      return;
+    }
+    window->OnDPIChanged();
+
+    // configure_event is already fired before scale-factor signal,
+    // but size-allocate isn't fired by changing scale
+    GtkAllocation allocation;
+    gtk_widget_get_allocation(widget, &allocation);
+    window->OnSizeAllocate(&allocation);
+}
+#endif
+
 #if GTK_CHECK_VERSION(3,4,0)
 static gboolean
 touch_event_cb(GtkWidget* aWidget, GdkEventTouch* aEvent)
@@ -6458,15 +6516,9 @@ nsWindow::GetSurfaceForGdkDrawable(GdkDrawable* aDrawable,
 #endif
 
 already_AddRefed<DrawTarget>
-nsWindow::GetDrawTarget(const LayoutDeviceIntRegion& aRegion)
+nsWindow::GetDrawTarget(const LayoutDeviceIntRegion& aRegion, BufferMode* aBufferMode)
 {
-  if (!mGdkWindow) {
-    return nullptr;
-  }
-
-  LayoutDeviceIntRect bounds = aRegion.GetBounds();
-  LayoutDeviceIntSize size(bounds.XMost(), bounds.YMost());
-  if (size.width <= 0 || size.height <= 0) {
+  if (!mGdkWindow || aRegion.IsEmpty()) {
     return nullptr;
   }
 
@@ -6474,15 +6526,28 @@ nsWindow::GetDrawTarget(const LayoutDeviceIntRegion& aRegion)
 
 #ifdef MOZ_X11
 #  ifdef MOZ_HAVE_SHMIMAGE
+#    ifdef MOZ_WIDGET_GTK
+  if (!gfxPlatformGtk::GetPlatform()->UseXRender())
+#    endif
   if (nsShmImage::UseShm()) {
-    dt = nsShmImage::EnsureShmImage(size,
-                                    mXDisplay, mXVisual, mXDepth, mShmImage);
+    mBackShmImage.swap(mFrontShmImage);
+    if (!mBackShmImage) {
+      mBackShmImage = new nsShmImage(mXDisplay, mXWindow, mXVisual, mXDepth);
+    }
+    dt = mBackShmImage->CreateDrawTarget(aRegion);
+    *aBufferMode = BufferMode::BUFFER_NONE;
+    if (!dt) {
+      mBackShmImage = nullptr;
+    }
   }
 #  endif  // MOZ_HAVE_SHMIMAGE
   if (!dt) {
+    LayoutDeviceIntRect bounds = aRegion.GetBounds();
+    LayoutDeviceIntSize size(bounds.XMost(), bounds.YMost());
     RefPtr<gfxXlibSurface> surf = new gfxXlibSurface(mXDisplay, mXWindow, mXVisual, size.ToUnknownSize());
     if (!surf->CairoStatus()) {
       dt = gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(surf.get(), surf->GetSize());
+      *aBufferMode = BufferMode::BUFFERED;
     }
   }
 #endif // MOZ_X11
@@ -6491,9 +6556,9 @@ nsWindow::GetDrawTarget(const LayoutDeviceIntRegion& aRegion)
 }
 
 already_AddRefed<DrawTarget>
-nsWindow::StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion)
+nsWindow::StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion, BufferMode* aBufferMode)
 {
-  return GetDrawTarget(aInvalidRegion);
+  return GetDrawTarget(aInvalidRegion, aBufferMode);
 }
 
 void
@@ -6502,11 +6567,11 @@ nsWindow::EndRemoteDrawingInRegion(DrawTarget* aDrawTarget,
 {
 #ifdef MOZ_X11
 #  ifdef MOZ_HAVE_SHMIMAGE
-  if (!mGdkWindow || !mShmImage) {
+  if (!mGdkWindow || !mBackShmImage) {
     return;
   }
 
-  mShmImage->Put(mXDisplay, mXWindow, aInvalidRegion);
+  mBackShmImage->Put(aInvalidRegion);
 #  endif // MOZ_HAVE_SHMIMAGE
 #endif // MOZ_X11
 }
@@ -6853,6 +6918,88 @@ nsWindow::SynthesizeNativeMouseScrollEvent(mozilla::LayoutDeviceIntPoint aPoint,
 
   return NS_OK;
 }
+
+#if GTK_CHECK_VERSION(3,4,0)
+nsresult
+nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
+                                     TouchPointerState aPointerState,
+                                     ScreenIntPoint aPointerScreenPoint,
+                                     double aPointerPressure,
+                                     uint32_t aPointerOrientation,
+                                     nsIObserver* aObserver)
+{
+  AutoObserverNotifier notifier(aObserver, "touchpoint");
+
+  if (!mGdkWindow) {
+    return NS_OK;
+  }
+
+  GdkEvent event;
+  memset(&event, 0, sizeof(GdkEvent));
+
+  static std::map<uint32_t, GdkEventSequence*> sKnownPointers;
+
+  auto result = sKnownPointers.find(aPointerId);
+  switch (aPointerState) {
+  case TOUCH_CONTACT:
+    if (result == sKnownPointers.end()) {
+      // GdkEventSequence isn't a thing we can instantiate, and never gets
+      // dereferenced in the gtk code. It's an opaque pointer, the only
+      // requirement is that it be distinct from other instances of
+      // GdkEventSequence*.
+      event.touch.sequence = (GdkEventSequence*)((uintptr_t)aPointerId);
+      sKnownPointers[aPointerId] = event.touch.sequence;
+      event.type = GDK_TOUCH_BEGIN;
+    } else {
+      event.touch.sequence = result->second;
+      event.type = GDK_TOUCH_UPDATE;
+    }
+    break;
+  case TOUCH_REMOVE:
+    event.type = GDK_TOUCH_END;
+    if (result == sKnownPointers.end()) {
+      NS_WARNING("Tried to synthesize touch-end for unknown pointer!");
+      return NS_ERROR_UNEXPECTED;
+    }
+    event.touch.sequence = result->second;
+    sKnownPointers.erase(result);
+    break;
+  case TOUCH_CANCEL:
+    event.type = GDK_TOUCH_CANCEL;
+    if (result == sKnownPointers.end()) {
+      NS_WARNING("Tried to synthesize touch-cancel for unknown pointer!");
+      return NS_ERROR_UNEXPECTED;
+    }
+    event.touch.sequence = result->second;
+    sKnownPointers.erase(result);
+    break;
+  case TOUCH_HOVER:
+  default:
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+  event.touch.window = mGdkWindow;
+  event.touch.time = GDK_CURRENT_TIME;
+
+  GdkDisplay* display = gdk_window_get_display(mGdkWindow);
+  GdkDeviceManager* device_manager = gdk_display_get_device_manager(display);
+  event.touch.device = gdk_device_manager_get_client_pointer(device_manager);
+
+  event.touch.x_root = DevicePixelsToGdkCoordRoundDown(aPointerScreenPoint.x);
+  event.touch.y_root = DevicePixelsToGdkCoordRoundDown(aPointerScreenPoint.y);
+
+  LayoutDeviceIntPoint pointInWindow =
+    ViewAs<LayoutDevicePixel>(aPointerScreenPoint,
+                              PixelCastJustification::LayoutDeviceIsScreenForUntransformedEvent)
+    - WidgetToScreenOffset();
+  event.touch.x = DevicePixelsToGdkCoordRoundDown(pointInWindow.x);
+  event.touch.y = DevicePixelsToGdkCoordRoundDown(pointInWindow.y);
+
+  gdk_event_put(&event);
+
+  return NS_OK;
+}
+#endif
 
 int32_t
 nsWindow::RoundsWidgetCoordinatesTo()

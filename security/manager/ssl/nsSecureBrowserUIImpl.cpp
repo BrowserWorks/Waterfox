@@ -107,6 +107,7 @@ nsSecureBrowserUIImpl::nsSecureBrowserUIImpl()
   , mIsViewSource(false)
   , mSubRequestsBrokenSecurity(0)
   , mSubRequestsNoSecurity(0)
+  , mCertUserOverridden(false)
   , mRestoreSubrequests(false)
   , mOnLocationChangeSeen(false)
 #ifdef DEBUG
@@ -129,7 +130,7 @@ NS_IMPL_ISUPPORTS(nsSecureBrowserUIImpl,
                   nsISSLStatusProvider)
 
 NS_IMETHODIMP
-nsSecureBrowserUIImpl::Init(nsIDOMWindow* aWindow)
+nsSecureBrowserUIImpl::Init(mozIDOMWindowProxy* aWindow)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -151,18 +152,11 @@ nsSecureBrowserUIImpl::Init(nsIDOMWindow* aWindow)
     return NS_ERROR_ALREADY_INITIALIZED;
   }
 
-  nsCOMPtr<nsPIDOMWindow> pwin(do_QueryInterface(aWindow));
-  if (pwin->IsInnerWindow()) {
-    pwin = pwin->GetOuterWindow();
-  }
-
   nsresult rv;
-  mWindow = do_GetWeakReference(pwin, &rv);
+  mWindow = do_GetWeakReference(aWindow, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsPIDOMWindow> piwindow(do_QueryInterface(aWindow));
-  if (!piwindow) return NS_ERROR_FAILURE;
-
+  auto* piwindow = nsPIDOMWindowOuter::From(aWindow);
   nsIDocShell *docShell = piwindow->GetDocShell();
 
   // The Docshell will own the SecureBrowserUI object
@@ -240,6 +234,10 @@ nsSecureBrowserUIImpl::MapInternalToExternalState(uint32_t* aState, lockIconStat
   if (ev && (*aState & STATE_IS_SECURE))
     *aState |= nsIWebProgressListener::STATE_IDENTITY_EV_TOPLEVEL;
 
+  if (mCertUserOverridden && (*aState & STATE_IS_SECURE)) {
+    *aState |= nsIWebProgressListener::STATE_CERT_USER_OVERRIDDEN;
+  }
+
   nsCOMPtr<nsIDocShell> docShell = do_QueryReferent(mDocShell);
   if (!docShell)
     return NS_OK;
@@ -266,6 +264,9 @@ nsSecureBrowserUIImpl::MapInternalToExternalState(uint32_t* aState, lockIconStat
     *aState = STATE_IS_SECURE;
     if (ev) {
       *aState |= nsIWebProgressListener::STATE_IDENTITY_EV_TOPLEVEL;
+    }
+    if (mCertUserOverridden) {
+      *aState |= nsIWebProgressListener::STATE_CERT_USER_OVERRIDDEN;
     }
   }
   // * If so, the state should be broken or insecure; overriding the previous
@@ -565,10 +566,10 @@ nsSecureBrowserUIImpl::OnStateChange(nsIWebProgress* aWebProgress,
     regardless of whether the load flags indicate a top level document.
   */
 
-  nsCOMPtr<nsIDOMWindow> windowForProgress;
+  nsCOMPtr<mozIDOMWindowProxy> windowForProgress;
   aWebProgress->GetDOMWindow(getter_AddRefs(windowForProgress));
 
-  nsCOMPtr<nsIDOMWindow> window(do_QueryReferent(mWindow));
+  nsCOMPtr<mozIDOMWindowProxy> window(do_QueryReferent(mWindow));
   NS_ASSERTION(window, "Window has gone away?!");
 
   if (!mIOService) {
@@ -799,6 +800,11 @@ nsSecureBrowserUIImpl::OnStateChange(nsIWebProgress* aWebProgress,
   {
     f -= nsIWebProgressListener::STATE_SECURE_HIGH;
     info.AppendLiteral("SECURE_HIGH ");
+  }
+  if (f & nsIWebProgressListener::STATE_CERT_USER_OVERRIDDEN)
+  {
+    f -= nsIWebProgressListener::STATE_CERT_USER_OVERRIDDEN;
+    info.AppendLiteral("STATE_CERT_USER_OVERRIDDEN ");
   }
   if (f & nsIWebProgressListener::STATE_RESTORING)
   {
@@ -1138,6 +1144,9 @@ nsSecureBrowserUIImpl::UpdateSecurityState(nsIRequest* aRequest,
     newSecurityState = lis_broken_security;
   }
 
+  mCertUserOverridden =
+    mNewToplevelSecurityState & STATE_CERT_USER_OVERRIDDEN;
+
   MOZ_LOG(gSecureDocLog, LogLevel::Debug,
          ("SecureUI:%p: UpdateSecurityState:  old-new  %d - %d\n", this,
           mNotifiedSecurityState, newSecurityState));
@@ -1201,7 +1210,7 @@ nsSecureBrowserUIImpl::OnLocationChange(nsIWebProgress* aWebProgress,
 
   bool updateIsViewSource = false;
   bool temp_IsViewSource = false;
-  nsCOMPtr<nsIDOMWindow> window;
+  nsCOMPtr<mozIDOMWindowProxy> window;
 
   if (aLocation)
   {
@@ -1240,7 +1249,7 @@ nsSecureBrowserUIImpl::OnLocationChange(nsIWebProgress* aWebProgress,
   // loading may never end in some edge cases (perhaps by a site with malicious
   // intent).
 
-  nsCOMPtr<nsIDOMWindow> windowForProgress;
+  nsCOMPtr<mozIDOMWindowProxy> windowForProgress;
   aWebProgress->GetDOMWindow(getter_AddRefs(windowForProgress));
 
   nsCOMPtr<nsISupports> securityInfo(ExtractSecurityInfo(aRequest));

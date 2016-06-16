@@ -42,6 +42,11 @@
   --timeline-background-color: var(--theme-highlight-blue);
 }
 
+.animation.scriptanimation {
+  --timeline-border-color: var(--theme-highlight-green);
+  --timeline-background-color: var(--theme-graphs-green);
+}
+
 html {
   height: 100%;
 }
@@ -115,6 +120,7 @@ body {
 #global-toolbar > *,
 #timeline-toolbar > * {
   min-height: var(--toolbar-height);
+  border-color: var(--theme-splitter-color);
   border-width: 0 0 0 1px;
   display: flex;
   justify-content: center;
@@ -169,8 +175,23 @@ body {
 #timeline-rate select {
   -moz-appearance: none;
   text-align: center;
-  color: inherit;
   font-family: inherit;
+  color: var(--theme-body-color);
+  font-size: 1em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("chrome://devtools/skin/images/dropmarker.svg");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 4px) center;
+  padding-right: 1em;
+}
+
+#timeline-rate {
+  position: relative;
+  width: 4.5em;
 }
 
 /* Animation timeline component */
@@ -511,6 +532,10 @@ body {
 
 .keyframes.csstransition {
   background-color: var(--theme-highlight-blue);
+}
+
+.keyframes.scriptanimation {
+  background-color: var(--theme-graphs-green);
 }
 
 .keyframes .frame {

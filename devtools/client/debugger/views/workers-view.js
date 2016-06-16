@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -26,22 +28,24 @@ WorkersView.prototype = Heritage.extend(WidgetMethods, {
     this.widget.addEventListener("select", this._onWorkerSelect, false);
   },
 
-  addWorker: function (actor, name) {
+  addWorker: function (workerForm) {
     let element = document.createElement("label");
     element.className = "plain dbg-worker-item";
-    element.setAttribute("value", name);
+    element.setAttribute("value", workerForm.url);
     element.setAttribute("flex", "1");
 
-    this.push([element, actor], {});
+    this.push([element, workerForm.actor], {
+      attachment: workerForm
+    });
   },
 
-  removeWorker: function (actor) {
-    this.remove(this.getItemByValue(actor));
+  removeWorker: function (workerForm) {
+    this.remove(this.getItemByValue(workerForm.actor));
   },
 
   _onWorkerSelect: function () {
     if (this.selectedItem !== null) {
-      DebuggerController.Workers._onWorkerSelect(this.selectedItem.value);
+      DebuggerController.Workers._onWorkerSelect(this.selectedItem.attachment);
       this.selectedItem = null;
     }
   }

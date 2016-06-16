@@ -17,7 +17,7 @@ function certFromFile(cert_name) {
 
 function loadCert(cert_name, trust_string) {
   let cert_filename = "test_pinning_dynamic/" + cert_name + ".pem";
-  addCertFromFile(certdb,  cert_filename, trust_string);
+  addCertFromFile(certdb, cert_filename, trust_string);
   return constructCertFromFile(cert_filename);
 }
 
@@ -25,13 +25,10 @@ function checkFailParseInvalidPin(pinValue) {
   let sslStatus = new FakeSSLStatus(
                         certFromFile('cn-a.pinning2.example.com-pinningroot'));
   let uri = Services.io.newURI("https://a.pinning2.example.com", null, null);
-  try {
+  throws(() => {
     gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HPKP, uri,
                              pinValue, sslStatus, 0);
-    ok(false, "Invalid pin should have been rejected");
-  } catch (e) {
-    ok(true, "Invalid pin should be rejected");
-  }
+  }, /NS_ERROR_FAILURE/, `Invalid pin "${pinValue}" should be rejected`);
 }
 
 function checkPassValidPin(pinValue, settingPin) {
@@ -45,7 +42,7 @@ function checkPassValidPin(pinValue, settingPin) {
     gSSService.removeState(Ci.nsISiteSecurityService.HEADER_HPKP, uri, 0);
   } else {
     // add a known valid pin!
-    let validPinValue ="max-age=5000;" + VALID_PIN1 + BACKUP_PIN1;
+    let validPinValue = "max-age=5000;" + VALID_PIN1 + BACKUP_PIN1;
     gSSService.processHeader(Ci.nsISiteSecurityService.HEADER_HPKP, uri,
                              validPinValue, sslStatus, 0);
   }
@@ -78,10 +75,10 @@ function checkPassRemovingPin(pinValue) {
 const NON_ISSUED_KEY_HASH1 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 const NON_ISSUED_KEY_HASH2 = "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ=";
 const PINNING_ROOT_KEY_HASH = "VCIlmPM9NkgFQtrs4Oa5TeFcDu6MWRTKSNdePEhOgD8=";
-const MAX_AGE_ZERO = "max-age=0;"
-const VALID_PIN1 = "pin-sha256=\""+ PINNING_ROOT_KEY_HASH + "\";";
-const BACKUP_PIN1 = "pin-sha256=\""+ NON_ISSUED_KEY_HASH1 + "\";";
-const BACKUP_PIN2 = "pin-sha256=\""+ NON_ISSUED_KEY_HASH2 + "\";";
+const MAX_AGE_ZERO = "max-age=0;";
+const VALID_PIN1 = `pin-sha256="${PINNING_ROOT_KEY_HASH}";`;
+const BACKUP_PIN1 = `pin-sha256="${NON_ISSUED_KEY_HASH1}";`;
+const BACKUP_PIN2 = `pin-sha256="${NON_ISSUED_KEY_HASH2}";`;
 const BROKEN_PIN1 = "pin-sha256=\"jdjsjsjs\";";
 const GOOD_MAX_AGE = "max-age=69403;";
 const INCLUDE_SUBDOMAINS = "includeSubdomains;";

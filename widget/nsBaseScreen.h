@@ -21,7 +21,7 @@ public:
   // nsIScreen interface
 
   // These simply forward to the device-pixel versions;
-  // implementations where global display pixels may not correspond
+  // implementations where desktop pixels may not correspond
   // to per-screen device pixels must override.
   NS_IMETHOD GetRectDisplayPix(int32_t *outLeft,  int32_t *outTop,
                                int32_t *outWidth, int32_t *outHeight) override;
@@ -42,6 +42,8 @@ public:
   NS_IMETHOD SetRotation(uint32_t aRotation) override { return NS_ERROR_NOT_AVAILABLE; }
 
   NS_IMETHOD GetContentsScaleFactor(double* aContentsScaleFactor) override;
+
+  NS_IMETHOD GetDefaultCSSScaleFactor(double* aScaleFactor) override;
 
 protected:
   virtual ~nsBaseScreen();

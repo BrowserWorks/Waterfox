@@ -12,6 +12,7 @@ loader.lazyRequireGetter(this, "CustomSimulatorProcess", "devtools/client/webide
 const asyncStorage = require("devtools/shared/async-storage");
 const EventEmitter = require("devtools/shared/event-emitter");
 const promise = require("promise");
+const Services = require("Services");
 
 const SimulatorRegExp = new RegExp(Services.prefs.getCharPref("devtools.webide.simulatorAddonRegExp"));
 const LocaleCompare = (a, b) => {
@@ -44,13 +45,13 @@ var Simulators = {
 
           // If the simulator had a reference to an addon, fix it.
           if (options.addonID) {
-            let job = promise.defer();
+            let deferred = promise.defer();
             AddonManager.getAddonByID(options.addonID, addon => {
               simulator.addon = addon;
               delete simulator.options.addonID;
-              job.resolve();
+              deferred.resolve();
             });
-            jobs.push(job);
+            jobs.push(deferred.promise);
           }
         });
       }
@@ -232,7 +233,7 @@ var Simulators = {
   },
 
   emitUpdated() {
-    this.emit("updated");
+    this.emit("updated", { length: this._simulators.length });
     this._simulators.sort(LocaleCompare);
     this._save();
   },

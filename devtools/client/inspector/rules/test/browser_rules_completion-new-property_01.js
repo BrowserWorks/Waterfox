@@ -41,13 +41,13 @@ const TEST_URI = "<h1 style='border: 1px solid red'>Header</h1>";
 
 add_task(function*() {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
-  let {toolbox, inspector, view} = yield openRuleView();
+  let {toolbox, inspector, view, testActor} = yield openRuleView();
 
   info("Test autocompletion after 1st page load");
   yield runAutocompletionTest(toolbox, inspector, view);
 
   info("Test autocompletion after page navigation");
-  yield reloadPage(inspector);
+  yield reloadPage(inspector, testActor);
   yield runAutocompletionTest(toolbox, inspector, view);
 });
 
@@ -56,8 +56,8 @@ function* runAutocompletionTest(toolbox, inspector, view) {
   yield selectNode("h1", inspector);
 
   info("Focusing the css property editable field");
-  let brace = view.styleDocument.querySelector(".ruleview-ruleclose");
-  let editor = yield focusEditableField(view, brace);
+  let ruleEditor = getRuleViewRuleEditor(view, 0);
+  let editor = yield focusNewRuleViewProperty(ruleEditor);
 
   info("Starting to test for css property completion");
   for (let i = 0; i < testData.length; i++) {
@@ -83,7 +83,7 @@ function* testCompletion([key, completion, index, total], editor, view) {
   EventUtils.synthesizeKey(key, {}, view.styleWindow);
 
   yield onSuggest;
-  yield wait(1); // Equivalent of executeSoon
+  yield waitForTick();
 
   info("Checking the state");
   if (completion != null) {

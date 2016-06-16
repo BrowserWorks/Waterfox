@@ -4,26 +4,32 @@
 
 include $(topsrcdir)/config/rules.mk
 
+REDIST_FILES =
+
 ifdef WIN32_REDIST_DIR
+REDIST_FILES += '$(WIN32_REDIST_DIR)'/$(MSVC_C_RUNTIME_DLL)
+REDIST_FILES += '$(WIN32_REDIST_DIR)'/$(MSVC_CXX_RUNTIME_DLL)
+endif
 
-REDIST_FILES = \
-  $(MSVC_C_RUNTIME_DLL) \
-  $(MSVC_CXX_RUNTIME_DLL) \
-  $(MSVC_APPCRT_DLL) \
-  $(MSVC_DESKTOPCRT_DLL) \
-  $(NULL)
+ifdef WIN_UCRT_REDIST_DIR
+REDIST_FILES += $(wildcard $(WIN_UCRT_REDIST_DIR)/api-ms-win-*.dll)
+REDIST_FILES += '$(WIN_UCRT_REDIST_DIR)'/ucrtbase.dll
+endif
 
+ifdef REDIST_FILES
 libs-preqs = \
-  $(call mkdir_deps,$(FINAL_TARGET)) \
-  $(NULL)
+	$(call mkdir_deps,$(FINAL_TARGET)) \
+	$(NULL)
 
 libs:: $(libs-preqs)
-	install --preserve-timestamps $(foreach f,$(REDIST_FILES),'$(WIN32_REDIST_DIR)'/$(f)) $(FINAL_TARGET)
-
-endif # WIN32_REDIST_DIR
+	install --preserve-timestamps $(REDIST_FILES) $(FINAL_TARGET)
+endif
 
 # run the binscope tool to make sure the binary and all libraries
 # are using all available Windows OS-level security mechanisms
+# Don't do this in clang-cl since it doesn't support debug information yet.
+ifndef CLANG_CL
 check::
 	$(PYTHON) $(srcdir)/autobinscope.py $(DIST)/bin/$(MOZ_APP_NAME)$(BIN_SUFFIX) $(DIST)/crashreporter-symbols/
 	$(PYTHON) $(srcdir)/autobinscope.py $(DIST)/bin/plugin-container.exe $(DIST)/crashreporter-symbols/
+endif

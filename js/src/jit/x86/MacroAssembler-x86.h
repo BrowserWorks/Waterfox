@@ -50,10 +50,9 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void setupABICall(uint32_t args);
 
   public:
-    using MacroAssemblerX86Shared::branch32;
-    using MacroAssemblerX86Shared::branchTest32;
     using MacroAssemblerX86Shared::load32;
     using MacroAssemblerX86Shared::store32;
+    using MacroAssemblerX86Shared::store16;
     using MacroAssemblerX86Shared::call;
 
     MacroAssemblerX86()
@@ -72,6 +71,9 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         return base;
     }
     Address ToPayload(Address base) {
+        return base;
+    }
+    BaseIndex ToPayload(BaseIndex base) {
         return base;
     }
     Operand ToType(Operand base) {
@@ -465,26 +467,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         return cond == Equal ? AboveOrEqual : Below;
     }
 
-
-
-    void branchTestValue(Condition cond, const ValueOperand& value, const Value& v, Label* label);
-    void branchTestValue(Condition cond, const Address& valaddr, const ValueOperand& value,
-                         Label* label)
-    {
-        MOZ_ASSERT(cond == Equal || cond == NotEqual);
-        // Check payload before tag, since payload is more likely to differ.
-        if (cond == NotEqual) {
-            branchPtr(NotEqual, payloadOf(valaddr), value.payloadReg(), label);
-            branchPtr(NotEqual, tagOf(valaddr), value.typeReg(), label);
-
-        } else {
-            Label fallthrough;
-            branchPtr(NotEqual, payloadOf(valaddr), value.payloadReg(), &fallthrough);
-            branchPtr(Equal, tagOf(valaddr), value.typeReg(), label);
-            bind(&fallthrough);
-        }
-    }
-
     void testNullSet(Condition cond, const ValueOperand& value, Register dest) {
         cond = testNull(cond, value);
         emitSet(cond, dest);
@@ -566,42 +548,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     // Common interface.
     /////////////////////////////////////////////////////////////////
 
-    void branch32(Condition cond, AbsoluteAddress lhs, Imm32 rhs, Label* label) {
-        cmp32(Operand(lhs), rhs);
-        j(cond, label);
-    }
-    void branch32(Condition cond, wasm::SymbolicAddress lhs, Imm32 rhs, Label* label) {
-        cmpl(rhs, lhs);
-        j(cond, label);
-    }
-    void branch32(Condition cond, AbsoluteAddress lhs, Register rhs, Label* label) {
-        cmp32(Operand(lhs), rhs);
-        j(cond, label);
-    }
-    void branchTest32(Condition cond, AbsoluteAddress address, Imm32 imm, Label* label) {
-        test32(Operand(address), imm);
-        j(cond, label);
-    }
-
-    void branchPtr(Condition cond, wasm::SymbolicAddress lhs, Register ptr, Label* label) {
-        cmpl(ptr, lhs);
-        j(cond, label);
-    }
-
-    template <typename T, typename S>
-    void branchPtr(Condition cond, T lhs, S ptr, Label* label) {
-        cmpPtr(Operand(lhs), ptr);
-        j(cond, label);
-    }
-
-    void branchPrivatePtr(Condition cond, const Address& lhs, ImmPtr ptr, Label* label) {
-        branchPtr(cond, lhs, ptr, label);
-    }
-
-    void branchPrivatePtr(Condition cond, const Address& lhs, Register ptr, Label* label) {
-        branchPtr(cond, lhs, ptr, label);
-    }
-
     template <typename T, typename S>
     void branchPtr(Condition cond, T lhs, S ptr, RepatchLabel* label) {
         cmpPtr(Operand(lhs), ptr);
@@ -624,46 +570,9 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         return jumpWithPatch(label);
     }
 
-    template <typename S, typename T>
-    CodeOffsetJump branchPtrWithPatch(Condition cond, S lhs, T ptr, RepatchLabel* label) {
-        branchPtr(cond, lhs, ptr, label);
-        return CodeOffsetJump(size());
-    }
     void branchPtr(Condition cond, Register lhs, Register rhs, RepatchLabel* label) {
         cmpPtr(lhs, rhs);
         j(cond, label);
-    }
-    void branchPtr(Condition cond, Register lhs, Register rhs, Label* label) {
-        cmpPtr(lhs, rhs);
-        j(cond, label);
-    }
-    void branchTestPtr(Condition cond, Register lhs, Register rhs, Label* label) {
-        testPtr(lhs, rhs);
-        j(cond, label);
-    }
-    void branchTestPtr(Condition cond, Register lhs, Imm32 imm, Label* label) {
-        testPtr(lhs, imm);
-        j(cond, label);
-    }
-    void branchTestPtr(Condition cond, const Address& lhs, Imm32 imm, Label* label) {
-        testPtr(Operand(lhs), imm);
-        j(cond, label);
-    }
-    void decBranchPtr(Condition cond, Register lhs, Imm32 imm, Label* label) {
-        subl(imm, lhs);
-        j(cond, label);
-    }
-
-    void branchTest64(Condition cond, Register64 lhs, Register64 rhs, Register temp, Label* label) {
-        if (cond == Assembler::Zero) {
-            MOZ_ASSERT(lhs.low == rhs.low);
-            MOZ_ASSERT(lhs.high == rhs.high);
-            movl(lhs.low, temp);
-            orl(lhs.high, temp);
-            branchTestPtr(cond, temp, temp, label);
-        } else {
-            MOZ_CRASH("Unsupported condition");
-        }
     }
 
     void movePtr(ImmWord imm, Register dest) {
@@ -677,10 +586,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     }
     void movePtr(ImmGCPtr imm, Register dest) {
         movl(imm, dest);
-    }
-    void move64(Register64 src, Register64 dest) {
-        movl(src.low, dest.low);
-        movl(src.high, dest.high);
     }
     void loadPtr(const Address& address, Register dest) {
         movl(Operand(address), dest);
@@ -704,30 +609,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         movl(Operand(address), dest.low);
         movl(Operand(Address(address.base, address.offset + 4)), dest.high);
     }
-
-    void branch64(Condition cond, const Address& lhs, Imm64 val, Label* label) {
-        MOZ_ASSERT(cond == Assembler::NotEqual,
-                   "other condition codes not supported");
-
-        branch32(cond, lhs, val.firstHalf(), label);
-        branch32(cond, Address(lhs.base, lhs.offset + sizeof(uint32_t)), val.secondHalf(), label);
-    }
-
-    void branch64(Condition cond, const Address& lhs, const Address& rhs, Register scratch,
-                  Label* label)
-    {
-        MOZ_ASSERT(cond == Assembler::NotEqual,
-                   "other condition codes not supported");
-        MOZ_ASSERT(lhs.base != scratch);
-        MOZ_ASSERT(rhs.base != scratch);
-
-        load32(rhs, scratch);
-        branch32(cond, lhs, scratch, label);
-
-        load32(Address(rhs.base, rhs.offset + sizeof(uint32_t)), scratch);
-        branch32(cond, Address(lhs.base, lhs.offset + sizeof(uint32_t)), scratch, label);
-    }
-
     template <typename T>
     void storePtr(ImmWord imm, T address) {
         movl(Imm32(imm.value), Operand(address));
@@ -755,6 +636,9 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void store32(Register src, AbsoluteAddress address) {
         movl(src, Operand(address));
     }
+    void store16(Register src, AbsoluteAddress address) {
+        movw(src, Operand(address));
+    }
     void store64(Register64 src, Address address) {
         movl(src.low, Operand(address));
         movl(src.high, Operand(Address(address.base, address.offset + 4)));
@@ -762,75 +646,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
 
     void setStackArg(Register reg, uint32_t arg) {
         movl(reg, Operand(esp, arg * sizeof(intptr_t)));
-    }
-
-    // Type testing instructions can take a tag in a register or a
-    // ValueOperand.
-    template <typename T>
-    void branchTestUndefined(Condition cond, const T& t, Label* label) {
-        cond = testUndefined(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestInt32(Condition cond, const T& t, Label* label) {
-        cond = testInt32(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestBoolean(Condition cond, const T& t, Label* label) {
-        cond = testBoolean(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestDouble(Condition cond, const T& t, Label* label) {
-        cond = testDouble(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestNull(Condition cond, const T& t, Label* label) {
-        cond = testNull(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestString(Condition cond, const T& t, Label* label) {
-        cond = testString(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestSymbol(Condition cond, const T& t, Label* label) {
-        cond = testSymbol(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestObject(Condition cond, const T& t, Label* label) {
-        cond = testObject(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestNumber(Condition cond, const T& t, Label* label) {
-        cond = testNumber(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestGCThing(Condition cond, const T& t, Label* label) {
-        cond = testGCThing(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestPrimitive(Condition cond, const T& t, Label* label) {
-        cond = testPrimitive(cond, t);
-        j(cond, label);
-    }
-    template <typename T>
-    void branchTestMagic(Condition cond, const T& t, Label* label) {
-        cond = testMagic(cond, t);
-        j(cond, label);
-    }
-    void branchTestMagicValue(Condition cond, const ValueOperand& val, JSWhyMagic why,
-                              Label* label)
-    {
-        MOZ_ASSERT(cond == Equal || cond == NotEqual);
-        branchTestValue(cond, val, MagicValue(why), label);
     }
 
     // Note: this function clobbers the source register.
@@ -901,20 +716,7 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
             vunpcklps(ScratchDoubleReg, dest, dest);
         }
     }
-    void unboxValue(const ValueOperand& src, AnyRegister dest) {
-        if (dest.isFloat()) {
-            Label notInt32, end;
-            branchTestInt32(Assembler::NotEqual, src, &notInt32);
-            convertInt32ToDouble(src.payloadReg(), dest.fpu());
-            jump(&end);
-            bind(&notInt32);
-            unboxDouble(src, dest.fpu());
-            bind(&end);
-        } else {
-            if (src.payloadReg() != dest.gpr())
-                movl(src.payloadReg(), dest.gpr());
-        }
-    }
+    inline void unboxValue(const ValueOperand& src, AnyRegister dest);
     void unboxPrivate(const ValueOperand& src, Register dest) {
         if (src.payloadReg() != dest)
             movl(src.payloadReg(), dest);
@@ -966,64 +768,21 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void loadConstantInt32x4(const SimdConstant& v, FloatRegister dest);
     void loadConstantFloat32x4(const SimdConstant& v, FloatRegister dest);
 
-    void branchTruncateDouble(FloatRegister src, Register dest, Label* fail) {
-        vcvttsd2si(src, dest);
-
-        // vcvttsd2si returns 0x80000000 on failure. Test for it by
-        // subtracting 1 and testing overflow (this permits the use of a
-        // smaller immediate field).
-        cmp32(dest, Imm32(1));
-        j(Assembler::Overflow, fail);
-    }
-    void branchTruncateFloat32(FloatRegister src, Register dest, Label* fail) {
-        vcvttss2si(src, dest);
-
-        // vcvttss2si returns 0x80000000 on failure. Test for it by
-        // subtracting 1 and testing overflow (this permits the use of a
-        // smaller immediate field).
-        cmp32(dest, Imm32(1));
-        j(Assembler::Overflow, fail);
-    }
-
     Condition testInt32Truthy(bool truthy, const ValueOperand& operand) {
         test32(operand.payloadReg(), operand.payloadReg());
         return truthy ? NonZero : Zero;
-    }
-    void branchTestInt32Truthy(bool truthy, const ValueOperand& operand, Label* label) {
-        Condition cond = testInt32Truthy(truthy, operand);
-        j(cond, label);
-    }
-    void branchTestBooleanTruthy(bool truthy, const ValueOperand& operand, Label* label) {
-        test32(operand.payloadReg(), operand.payloadReg());
-        j(truthy ? NonZero : Zero, label);
     }
     Condition testStringTruthy(bool truthy, const ValueOperand& value) {
         Register string = value.payloadReg();
         cmp32(Operand(string, JSString::offsetOfLength()), Imm32(0));
         return truthy ? Assembler::NotEqual : Assembler::Equal;
     }
-    void branchTestStringTruthy(bool truthy, const ValueOperand& value, Label* label) {
-        Condition cond = testStringTruthy(truthy, value);
-        j(cond, label);
-    }
-
-    void loadInt32OrDouble(const Operand& operand, FloatRegister dest) {
-        Label notInt32, end;
-        branchTestInt32(Assembler::NotEqual, operand, &notInt32);
-        convertInt32ToDouble(ToPayload(operand), dest);
-        jump(&end);
-        bind(&notInt32);
-        loadDouble(operand, dest);
-        bind(&end);
-    }
 
     template <typename T>
-    void loadUnboxedValue(const T& src, MIRType type, AnyRegister dest) {
-        if (dest.isFloat())
-            loadInt32OrDouble(Operand(src), dest.fpu());
-        else
-            movl(Operand(src), dest.gpr());
-    }
+    inline void loadInt32OrDouble(const T& src, FloatRegister dest);
+
+    template <typename T>
+    inline void loadUnboxedValue(const T& src, MIRType type, AnyRegister dest);
 
     template <typename T>
     void storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
@@ -1058,28 +817,11 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
         addl(Imm32(1), payloadOf(addr));
     }
 
-    // If source is a double, load it into dest. If source is int32,
-    // convert it to double. Else, branch to failure.
-    void ensureDouble(const ValueOperand& source, FloatRegister dest, Label* failure) {
-        Label isDouble, done;
-        branchTestDouble(Assembler::Equal, source.typeReg(), &isDouble);
-        branchTestInt32(Assembler::NotEqual, source.typeReg(), failure);
-
-        convertInt32ToDouble(source.payloadReg(), dest);
-        jump(&done);
-
-        bind(&isDouble);
-        unboxDouble(source, dest);
-
-        bind(&done);
-    }
+    inline void ensureDouble(const ValueOperand& source, FloatRegister dest, Label* failure);
 
   public:
     // Used from within an Exit frame to handle a pending exception.
     void handleFailureWithHandlerTail(void* handler);
-
-    void branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label);
-    void branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp, Label* label);
 
     // Instrumentation for entering and leaving the profiler.
     void profilerEnterFrame(Register framePtr, Register scratch);

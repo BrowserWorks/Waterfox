@@ -563,6 +563,13 @@ void AnnotateOOMAllocationSize(size_t size)
   gOOMAllocationSize = size;
 }
 
+static size_t gTexturesSize = 0;
+
+void AnnotateTexturesSize(size_t size)
+{
+  gTexturesSize = size;
+}
+
 #ifndef XP_WIN
 // Like Windows CopyFile for *nix
 bool copy_file(const char* from, const char* to)
@@ -761,6 +768,39 @@ OpenAPIData(PlatformWriter& aWriter,
   aWriter.Open(extraDataPath);
 }
 
+#ifdef XP_WIN
+void
+WriteGlobalMemoryStatus(PlatformWriter* apiData, PlatformWriter* eventFile)
+{
+  char buffer[128];
+
+  // Try to get some information about memory.
+  MEMORYSTATUSEX statex;
+  statex.dwLength = sizeof(statex);
+  if (GlobalMemoryStatusEx(&statex)) {
+
+#define WRITE_STATEX_FIELD(field, name, conversionFunc)        \
+    conversionFunc(statex.field, buffer, 10);                  \
+    if (apiData) {                                             \
+      WriteAnnotation(*apiData, name, buffer);                  \
+    }                                                          \
+    if (eventFile) {                                           \
+      WriteAnnotation(*eventFile, name, buffer);                \
+    }
+
+    WRITE_STATEX_FIELD(dwMemoryLoad, "SystemMemoryUsePercentage", ltoa);
+    WRITE_STATEX_FIELD(ullTotalVirtual, "TotalVirtualMemory", _ui64toa);
+    WRITE_STATEX_FIELD(ullAvailVirtual, "AvailableVirtualMemory", _ui64toa);
+    WRITE_STATEX_FIELD(ullTotalPageFile, "TotalPageFile", _ui64toa);
+    WRITE_STATEX_FIELD(ullAvailPageFile, "AvailablePageFile", _ui64toa);
+    WRITE_STATEX_FIELD(ullTotalPhys, "TotalPhysicalMemory", _ui64toa);
+    WRITE_STATEX_FIELD(ullAvailPhys, "AvailablePhysicalMemory", _ui64toa);
+
+#undef WRITE_STATEX_FIELD
+  }
+}
+#endif
+
 bool MinidumpCallback(
 #ifdef XP_LINUX
                       const MinidumpDescriptor& descriptor,
@@ -824,6 +864,11 @@ bool MinidumpCallback(
   char oomAllocationSizeBuffer[32] = "";
   if (gOOMAllocationSize) {
     XP_STOA(gOOMAllocationSize, oomAllocationSizeBuffer, 10);
+  }
+
+  char texturesSizeBuffer[32] = "";
+  if (gTexturesSize) {
+    XP_STOA(gTexturesSize, texturesSizeBuffer, 10);
   }
 
   // calculate time since last crash (if possible), and store
@@ -956,27 +1001,7 @@ bool MinidumpCallback(
       DllBlocklist_WriteNotes(eventFile.Handle());
     }
 #endif
-
-    // Try to get some information about memory.
-    MEMORYSTATUSEX statex;
-    statex.dwLength = sizeof(statex);
-    if (GlobalMemoryStatusEx(&statex)) {
-
-#define WRITE_STATEX_FIELD(field, name, conversionFunc)          \
-      conversionFunc(statex.field, buffer, 10);                  \
-      WriteAnnotation(apiData, name, buffer);                    \
-      WriteAnnotation(eventFile, name, buffer);
-
-      WRITE_STATEX_FIELD(dwMemoryLoad, "SystemMemoryUsePercentage", ltoa);
-      WRITE_STATEX_FIELD(ullTotalVirtual, "TotalVirtualMemory", _ui64toa);
-      WRITE_STATEX_FIELD(ullAvailVirtual, "AvailableVirtualMemory", _ui64toa);
-      WRITE_STATEX_FIELD(ullTotalPageFile, "TotalPageFile", _ui64toa);
-      WRITE_STATEX_FIELD(ullAvailPageFile, "AvailablePageFile", _ui64toa);
-      WRITE_STATEX_FIELD(ullTotalPhys, "TotalPhysicalMemory", _ui64toa);
-      WRITE_STATEX_FIELD(ullAvailPhys, "AvailablePhysicalMemory", _ui64toa);
-
-#undef WRITE_STATEX_FIELD
-    }
+    WriteGlobalMemoryStatus(&apiData, &eventFile);
 #endif // XP_WIN
 
     if (gMozCrashReason) {
@@ -987,6 +1012,11 @@ bool MinidumpCallback(
     if (oomAllocationSizeBuffer[0]) {
       WriteAnnotation(apiData, "OOMAllocationSize", oomAllocationSizeBuffer);
       WriteAnnotation(eventFile, "OOMAllocationSize", oomAllocationSizeBuffer);
+    }
+
+    if (texturesSizeBuffer[0]) {
+      WriteAnnotation(apiData, "TextureUsage", texturesSizeBuffer);
+      WriteAnnotation(eventFile, "TextureUsage", texturesSizeBuffer);
     }
 
     if (memoryReportPath) {
@@ -1246,6 +1276,10 @@ PrepareChildExceptionTimeAnnotations()
 
   // ...and write out any annotations. These must be escaped if necessary
   // (but don't call EscapeAnnotation here, because it touches the heap).
+#ifdef XP_WIN
+  WriteGlobalMemoryStatus(&apiData, nullptr);
+#endif
+
   char oomAllocationSizeBuffer[32] = "";
   if (gOOMAllocationSize) {
     XP_STOA(gOOMAllocationSize, oomAllocationSizeBuffer, 10);
@@ -1320,6 +1354,41 @@ ChildFPEFilter(void* context, EXCEPTION_POINTERS* exinfo,
     PrepareChildExceptionTimeAnnotations();
   }
   return result;
+}
+
+MINIDUMP_TYPE GetMinidumpType()
+{
+  MINIDUMP_TYPE minidump_type = MiniDumpNormal;
+
+  // Try to determine what version of dbghelp.dll we're using.
+  // MinidumpWithFullMemoryInfo is only available in 6.1.x or newer.
+
+  DWORD version_size = GetFileVersionInfoSizeW(L"dbghelp.dll", nullptr);
+  if (version_size > 0) {
+    std::vector<BYTE> buffer(version_size);
+    if (GetFileVersionInfoW(L"dbghelp.dll",
+                            0,
+                            version_size,
+                            &buffer[0])) {
+      UINT len;
+      VS_FIXEDFILEINFO* file_info;
+      VerQueryValue(&buffer[0], L"\\", (void**)&file_info, &len);
+      WORD major = HIWORD(file_info->dwFileVersionMS),
+        minor = LOWORD(file_info->dwFileVersionMS),
+        revision = HIWORD(file_info->dwFileVersionLS);
+      if (major > 6 || (major == 6 && minor > 1) ||
+          (major == 6 && minor == 1 && revision >= 7600)) {
+        minidump_type = MiniDumpWithFullMemoryInfo;
+      }
+    }
+  }
+
+  const char* e = PR_GetEnv("MOZ_CRASHREPORTER_FULLDUMP");
+  if (e && *e) {
+    minidump_type = MiniDumpWithFullMemory;
+  }
+
+  return minidump_type;
 }
 
 #endif // XP_WIN
@@ -1479,36 +1548,6 @@ nsresult SetExceptionHandler(nsIFile* aXREDirectory,
 
 #ifdef XP_WIN32
   ReserveBreakpadVM();
-
-  MINIDUMP_TYPE minidump_type = MiniDumpNormal;
-
-  // Try to determine what version of dbghelp.dll we're using.
-  // MinidumpWithFullMemoryInfo is only available in 6.1.x or newer.
-
-  DWORD version_size = GetFileVersionInfoSizeW(L"dbghelp.dll", nullptr);
-  if (version_size > 0) {
-    std::vector<BYTE> buffer(version_size);
-    if (GetFileVersionInfoW(L"dbghelp.dll",
-                            0,
-                            version_size,
-                            &buffer[0])) {
-      UINT len;
-      VS_FIXEDFILEINFO* file_info;
-      VerQueryValue(&buffer[0], L"\\", (void**)&file_info, &len);
-      WORD major = HIWORD(file_info->dwFileVersionMS),
-           minor = LOWORD(file_info->dwFileVersionMS),
-           revision = HIWORD(file_info->dwFileVersionLS);
-      if (major > 6 || (major == 6 && minor > 1) ||
-          (major == 6 && minor == 1 && revision >= 7600)) {
-        minidump_type = MiniDumpWithFullMemoryInfo;
-      }
-    }
-  }
-
-  const char* e = PR_GetEnv("MOZ_CRASHREPORTER_FULLDUMP");
-  if (e && *e) {
-    minidump_type = MiniDumpWithFullMemory;
-  }
 #endif // XP_WIN32
 
 #ifdef MOZ_WIDGET_ANDROID
@@ -1552,7 +1591,7 @@ nsresult SetExceptionHandler(nsIFile* aXREDirectory,
                      nullptr,
 #ifdef XP_WIN32
                      google_breakpad::ExceptionHandler::HANDLER_ALL,
-                     minidump_type,
+                     GetMinidumpType(),
                      (const wchar_t*) nullptr,
                      nullptr);
 #else
@@ -3440,7 +3479,7 @@ SetRemoteExceptionHandler(const nsACString& crashPipe)
                      nullptr,    // no minidump callback
                      nullptr,    // no callback context
                      google_breakpad::ExceptionHandler::HANDLER_ALL,
-                     MiniDumpNormal,
+                     GetMinidumpType(),
                      NS_ConvertASCIItoUTF16(crashPipe).get(),
                      nullptr);
   gExceptionHandler->set_handle_debug_exceptions(true);

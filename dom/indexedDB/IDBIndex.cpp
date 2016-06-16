@@ -25,7 +25,6 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
 namespace {
 
@@ -177,7 +176,7 @@ IDBIndex::LocaleAware() const
   return mMetadata->locale().IsEmpty();
 }
 
-const KeyPath&
+const indexedDB::KeyPath&
 IDBIndex::GetKeyPath() const
 {
   AssertIsOnOwningThread();
@@ -217,7 +216,7 @@ IDBIndex::IsAutoLocale() const
   return mMetadata->autoLocale();
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 IDBIndex::GetParentObject() const
 {
   AssertIsOnOwningThread();
@@ -594,7 +593,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(IDBIndex)
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBIndex)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedKeyPath)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedKeyPath)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBIndex)
@@ -621,6 +620,5 @@ IDBIndex::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return IDBIndexBinding::Wrap(aCx, this, aGivenProto);
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

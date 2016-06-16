@@ -2,6 +2,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* eslint no-unused-vars: [2, {"vars": "local"}] */
+/* import-globals-from ../../framework/test/shared-head.js */
 "use strict";
 
 // Load the shared-head file first.
@@ -176,6 +178,36 @@ function getActiveInspector() {
 }
 
 /**
+ * Right click on a node in the test page and click on the inspect menu item.
+ * @param {TestActor}
+ * @param {String} selector The selector for the node to click on in the page.
+ * @return {Promise} Resolves to the inspector when it has opened and is updated
+ */
+var clickOnInspectMenuItem = Task.async(function*(testActor, selector) {
+  info("Showing the contextual menu on node " + selector);
+  let contentAreaContextMenu = document.querySelector("#contentAreaContextMenu");
+  let contextOpened = once(contentAreaContextMenu, "popupshown");
+
+  yield testActor.synthesizeMouse({
+    selector: selector,
+    center: true,
+    options: {type: "contextmenu", button: 2}
+  });
+
+  yield contextOpened;
+
+  info("Triggering the inspect action");
+  yield gContextMenu.inspectNode();
+
+  info("Hiding the menu");
+  let contextClosed = once(contentAreaContextMenu, "popuphidden");
+  contentAreaContextMenu.hidePopup();
+  yield contextClosed;
+
+  return getActiveInspector();
+});
+
+/**
  * Open the toolbox, with the inspector tool visible, and the one of the sidebar
  * tabs selected.
  * @param {String} id The ID of the sidebar tab to be opened
@@ -184,33 +216,17 @@ function getActiveInspector() {
  * visible and ready
  */
 var openInspectorSidebarTab = Task.async(function*(id, hostType) {
-  let {toolbox, inspector} = yield openInspector();
-
-  if (!hasSideBarTab(inspector, id)) {
-    info("Waiting for the " + id + " sidebar to be ready");
-    yield inspector.sidebar.once(id + "-ready");
-  }
+  let {toolbox, inspector, testActor} = yield openInspector();
 
   info("Selecting the " + id + " sidebar");
   inspector.sidebar.select(id);
 
   return {
-    toolbox: toolbox,
-    inspector: inspector,
-    view: inspector.sidebar.getWindowForTab(id)[id]
+    toolbox,
+    inspector,
+    testActor
   };
 });
-
-/**
- * Checks whether the inspector's sidebar corresponding to the given id already
- * exists
- * @param {InspectorPanel}
- * @param {String}
- * @return {Boolean}
- */
-function hasSideBarTab(inspector, id) {
-  return !!inspector.sidebar.getWindowForTab(id);
-}
 
 /**
  * Get the NodeFront for a node that matches a given css selector, via the

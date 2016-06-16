@@ -153,13 +153,6 @@ nsPNGDecoder::CreateFrame(png_uint_32 aXOffset, png_uint_32 aYOffset,
   IntRect frameRect(aXOffset, aYOffset, aWidth, aHeight);
   CheckForTransparency(aFormat, frameRect);
 
-  // XXX(seth): Some tests depend on the first frame of PNGs being B8G8R8A8.
-  // This is something we should fix.
-  gfx::SurfaceFormat format = aFormat;
-  if (mNumFrames == 0) {
-    format = gfx::SurfaceFormat::B8G8R8A8;
-  }
-
   // Make sure there's no animation or padding if we're downscaling.
   MOZ_ASSERT_IF(mDownscaler, !GetImageMetadata().HasAnimation());
   MOZ_ASSERT_IF(mDownscaler,
@@ -169,7 +162,7 @@ nsPNGDecoder::CreateFrame(png_uint_32 aXOffset, png_uint_32 aYOffset,
                                    : GetSize();
   IntRect targetFrameRect = mDownscaler ? IntRect(IntPoint(), targetSize)
                                         : frameRect;
-  nsresult rv = AllocateFrame(mNumFrames, targetSize, targetFrameRect, format);
+  nsresult rv = AllocateFrame(mNumFrames, targetSize, targetFrameRect, aFormat);
   if (NS_FAILED(rv)) {
     return rv;
   }

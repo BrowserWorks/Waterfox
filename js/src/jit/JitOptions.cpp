@@ -111,7 +111,7 @@ DefaultJitOptions::DefaultJitOptions()
     SET_DEFAULT(disableScalarReplacement, false);
 
     // Toggles whether shared stubs are used in Ionmonkey.
-    SET_DEFAULT(disableSharedStubs, true);
+    SET_DEFAULT(disableSharedStubs, false);
 
     // Toggles whether sincos optimization is globally disabled.
     // See bug984018: The MacOS is the only one that has the sincos fast.
@@ -160,6 +160,10 @@ DefaultJitOptions::DefaultJitOptions()
 
     // The bytecode length limit for small function.
     SET_DEFAULT(smallFunctionMaxBytecodeLength_, 120);
+
+    // An artificial testing limit for the maximum supported offset of
+    // pc-relative jump and call instructions.
+    SET_DEFAULT(jumpThreshold, UINT32_MAX);
 
     // Force how many invocation or loop iterations are needed before compiling
     // a function with the highest ionmonkey optimization level.

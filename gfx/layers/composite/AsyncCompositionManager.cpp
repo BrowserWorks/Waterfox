@@ -23,6 +23,7 @@
 #include "mozilla/layers/APZUtils.h"    // for CompleteAsyncTransform
 #include "mozilla/layers/Compositor.h"  // for Compositor
 #include "mozilla/layers/CompositorParent.h" // for CompositorParent, etc
+#include "mozilla/layers/LayerAnimationUtils.h" // for TimingFunctionToComputedTimingFunction
 #include "mozilla/layers/LayerMetricsWrapper.h" // for LayerMetricsWrapper
 #include "nsCoord.h"                    // for NSAppUnitsToFloatPixels, etc
 #include "nsDebug.h"                    // for NS_ASSERTION, etc
@@ -82,7 +83,7 @@ WalkTheTree(Layer* aLayer,
     aHasRemote = true;
     if (const CompositorParent::LayerTreeState* state = CompositorParent::GetIndirectShadowTree(ref->GetReferentId())) {
       if (Layer* referent = state->mRoot) {
-        if (!ref->GetVisibleRegion().IsEmpty()) {
+        if (!ref->GetLocalVisibleRegion().IsEmpty()) {
           dom::ScreenOrientationInternal chromeOrientation = aTargetConfig.orientation();
           dom::ScreenOrientationInternal contentOrientation = state->mTargetConfig.orientation();
           if (!IsSameDimension(chromeOrientation, contentOrientation) &&
@@ -233,7 +234,7 @@ SetShadowTransform(Layer* aLayer, LayerToParentLayerMatrix4x4 aTransform)
   aTransform.PostScale(1.0f / aLayer->GetPostXScale(),
                        1.0f / aLayer->GetPostYScale(),
                        1);
-  aLayer->AsLayerComposite()->SetShadowTransform(aTransform.ToUnknownMatrix());
+  aLayer->AsLayerComposite()->SetShadowBaseTransform(aTransform.ToUnknownMatrix());
 }
 
 static void
@@ -329,7 +330,7 @@ IntervalOverlap(gfxFloat aTranslation, gfxFloat aMin, gfxFloat aMax)
 static LayerMetricsWrapper
 FindMetricsWithScrollId(Layer* aLayer, FrameMetrics::ViewID aScrollId)
 {
-  for (uint64_t i = 0; i < aLayer->GetFrameMetricsCount(); ++i) {
+  for (uint64_t i = 0; i < aLayer->GetScrollMetadataCount(); ++i) {
     if (aLayer->GetFrameMetrics(i).GetScrollId() == aScrollId) {
       return LayerMetricsWrapper(aLayer, i);
     }
@@ -588,6 +589,7 @@ SampleAnimations(Layer* aLayer, TimeStamp aPoint)
     // into their start time, hence the delay is effectively zero.
     timing.mDelay = TimeDuration(0);
     timing.mIterations = animation.iterations();
+    timing.mIterationStart = animation.iterationStart();
     timing.mDirection =
       static_cast<dom::PlaybackDirection>(animation.direction());
     // Animations typically only run on the compositor during their active
@@ -595,19 +597,22 @@ SampleAnimations(Layer* aLayer, TimeStamp aPoint)
     // example, while they are waiting to be removed) we currently just
     // assume that we should fill.
     timing.mFill = dom::FillMode::Both;
+    timing.mFunction =
+      AnimationUtils::TimingFunctionToComputedTimingFunction(
+        animation.easingFunction());
 
     ComputedTiming computedTiming =
       dom::KeyframeEffectReadOnly::GetComputedTimingAt(
         Nullable<TimeDuration>(elapsedDuration), timing);
 
-    MOZ_ASSERT(!computedTiming.mProgress.IsNull() &&
-               0.0 <= computedTiming.mProgress.Value() &&
-               computedTiming.mProgress.Value() <= 1.0,
-               "iteration progress should be in [0-1]");
+    MOZ_ASSERT(!computedTiming.mProgress.IsNull(),
+               "iteration progress should not be null");
 
-    int segmentIndex = 0;
+    uint32_t segmentIndex = 0;
+    size_t segmentSize = animation.segments().Length();
     AnimationSegment* segment = animation.segments().Elements();
-    while (segment->endPortion() < computedTiming.mProgress.Value()) {
+    while (segment->endPortion() < computedTiming.mProgress.Value() &&
+           segmentIndex < segmentSize - 1) {
       ++segment;
       ++segmentIndex;
     }
@@ -617,7 +622,8 @@ SampleAnimations(Layer* aLayer, TimeStamp aPoint)
       (segment->endPortion() - segment->startPortion());
 
     double portion =
-      animData.mFunctions[segmentIndex]->GetValue(positionInSegment);
+      ComputedTimingFunction::GetPortion(animData.mFunctions[segmentIndex],
+                                         positionInSegment);
 
     // interpolate the property
     Animatable interpolatedValue;
@@ -636,7 +642,7 @@ SampleAnimations(Layer* aLayer, TimeStamp aPoint)
       if (ContainerLayer* c = aLayer->AsContainerLayer()) {
         matrix.PostScale(c->GetInheritedXScale(), c->GetInheritedYScale(), 1);
       }
-      layerComposite->SetShadowTransform(matrix);
+      layerComposite->SetShadowBaseTransform(matrix);
       layerComposite->SetShadowTransformSetByAnimation(true);
       break;
     }
@@ -681,12 +687,12 @@ AsyncCompositionManager::RecordShadowTransforms(Layer* aLayer)
       RecordShadowTransforms(child);
   }
 
-  for (uint32_t i = 0; i < aLayer->GetFrameMetricsCount(); i++) {
+  for (uint32_t i = 0; i < aLayer->GetScrollMetadataCount(); i++) {
     AsyncPanZoomController* apzc = aLayer->GetAsyncPanZoomController(i);
     if (!apzc) {
       continue;
     }
-    gfx::Matrix4x4 shadowTransform = aLayer->AsLayerComposite()->GetShadowTransform();
+    gfx::Matrix4x4 shadowTransform = aLayer->AsLayerComposite()->GetShadowBaseTransform();
     if (!shadowTransform.Is2D()) {
       continue;
     }
@@ -819,6 +825,11 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
   // The final clip for the layer is the intersection of these clips.
   Maybe<ParentLayerIntRect> asyncClip = aLayer->GetClipRect();
 
+  // If we are a perspective transform ContainerLayer, apply the clip deferred
+  // from our child (if there is any) before we iterate over our frame metrics,
+  // because this clip is subject to all async transforms of this layer.
+  asyncClip = IntersectMaybeRects(asyncClip, clipDeferredFromChildren);
+
   // The transform of a mask layer is relative to the masked layer's parent
   // layer. So whenever we apply an async transform to a layer, we need to
   // apply that same transform to the layer's own mask layer.
@@ -831,7 +842,7 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
   // of all scroll frames inside the current one.
   nsTArray<Layer*> ancestorMaskLayers;
 
-  for (uint32_t i = 0; i < aLayer->GetFrameMetricsCount(); i++) {
+  for (uint32_t i = 0; i < aLayer->GetScrollMetadataCount(); i++) {
     AsyncPanZoomController* controller = aLayer->GetAsyncPanZoomController(i);
     if (!controller) {
       continue;
@@ -852,7 +863,8 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
       controller->MarkAsyncTransformAppliedToContent();
     }
 
-    const FrameMetrics& metrics = aLayer->GetFrameMetrics(i);
+    const ScrollMetadata& scrollMetadata = aLayer->GetScrollMetadata(i);
+    const FrameMetrics& metrics = scrollMetadata.GetMetrics();
 
 #if defined(MOZ_ANDROID_APZ)
     // If we find a metrics which is the root content doc, use that. If not, use
@@ -864,7 +876,7 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
     if (!(*aOutFoundRoot)) {
       *aOutFoundRoot = metrics.IsRootContent() ||       /* RCD */
             (aLayer->GetParent() == nullptr &&          /* rootmost metrics */
-             i + 1 >= aLayer->GetFrameMetricsCount());
+             i + 1 >= aLayer->GetScrollMetadataCount());
       if (*aOutFoundRoot) {
         mRootScrollableId = metrics.GetScrollId();
         CSSToLayerScale geckoZoom = metrics.LayersPixelsPerCSSPixel().ToScaleFactor();
@@ -933,13 +945,19 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
     // Combine the local clip with the ancestor scrollframe clip. This is not
     // included in the async transform above, since the ancestor clip should not
     // move with this APZC.
-    if (metrics.HasClipRect()) {
-      ParentLayerIntRect clip = metrics.ClipRect();
+    if (scrollMetadata.HasClipRect()) {
+      ParentLayerIntRect clip = scrollMetadata.ClipRect();
       if (aLayer->GetParent() && aLayer->GetParent()->GetTransformIsPerspective()) {
         // If our parent layer has a perspective transform, we want to apply
         // our scroll clip to it instead of to this layer (see bug 1168263).
         // A layer with a perspective transform shouldn't have multiple
         // children with FrameMetrics, nor a child with multiple FrameMetrics.
+        // (A child with multiple FrameMetrics would mean that there's *another*
+        // scrollable element between the one with the CSS perspective and the
+        // transformed element. But you'd have to use preserve-3d on the inner
+        // scrollable element in order to have the perspective apply to the
+        // transformed child, and preserve-3d is not supported on scrollable
+        // elements, so this case can't occur.)
         MOZ_ASSERT(!aClipDeferredToParent);
         aClipDeferredToParent = Some(clip);
       } else {
@@ -956,16 +974,15 @@ AsyncCompositionManager::ApplyAsyncContentTransformToTree(Layer *aLayer,
     }
 
     // Append the ancestor mask layer for this scroll frame to ancestorMaskLayers.
-    if (metrics.GetMaskLayerIndex()) {
-      size_t maskLayerIndex = metrics.GetMaskLayerIndex().value();
+    if (scrollMetadata.GetMaskLayerIndex()) {
+      size_t maskLayerIndex = scrollMetadata.GetMaskLayerIndex().value();
       Layer* ancestorMaskLayer = aLayer->GetAncestorMaskLayerAt(maskLayerIndex);
       ancestorMaskLayers.AppendElement(ancestorMaskLayer);
     }
   }
 
   if (hasAsyncTransform || clipDeferredFromChildren) {
-    aLayer->AsLayerComposite()->SetShadowClipRect(
-        IntersectMaybeRects(asyncClip, clipDeferredFromChildren));
+    aLayer->AsLayerComposite()->SetShadowClipRect(asyncClip);
   }
 
   if (hasAsyncTransform) {
@@ -1401,7 +1418,7 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
       }
 #endif
     } else {
-      nsAutoTArray<Layer*,1> scrollableLayers;
+      AutoTArray<Layer*,1> scrollableLayers;
 #ifdef MOZ_WIDGET_ANDROID
       mLayerManager->GetRootScrollableLayers(scrollableLayers);
 #else
@@ -1427,9 +1444,9 @@ AsyncCompositionManager::TransformShadowTree(TimeStamp aCurrentFrame,
 
   LayerComposite* rootComposite = root->AsLayerComposite();
 
-  gfx::Matrix4x4 trans = rootComposite->GetShadowTransform();
+  gfx::Matrix4x4 trans = rootComposite->GetShadowBaseTransform();
   trans *= gfx::Matrix4x4::From2D(mWorldTransform);
-  rootComposite->SetShadowTransform(trans);
+  rootComposite->SetShadowBaseTransform(trans);
 
   if (gfxPrefs::CollectScrollTransforms()) {
     RecordShadowTransforms(root);

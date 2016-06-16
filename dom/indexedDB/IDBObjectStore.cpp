@@ -54,7 +54,6 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
 using namespace mozilla::dom::quota;
 using namespace mozilla::dom::workers;
@@ -1612,7 +1611,7 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(IDBObjectStore)
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBObjectStore)
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedKeyPath)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedKeyPath)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(IDBObjectStore)
@@ -1650,7 +1649,7 @@ IDBObjectStore::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   return IDBObjectStoreBinding::Wrap(aCx, this, aGivenProto);
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 IDBObjectStore::GetParentObject() const
 {
   return mTransaction->GetParentObject();
@@ -2274,7 +2273,7 @@ IDBObjectStore::AutoIncrement() const
   return mSpec->metadata().autoIncrement();
 }
 
-const KeyPath&
+const indexedDB::KeyPath&
 IDBObjectStore::GetKeyPath() const
 {
   AssertIsOnOwningThread();
@@ -2292,6 +2291,5 @@ IDBObjectStore::HasValidKeyPath() const
   return GetKeyPath().IsValid();
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

@@ -9,6 +9,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm", this);
 Cu.import("resource://testing-common/AddonManagerTesting.jsm");
 Cu.import("resource://testing-common/httpd.js");
 Cu.import("resource://testing-common/MockRegistrar.jsm", this);
+Cu.import("resource://gre/modules/FileUtils.jsm");
 
 // Lazy load |LightweightThemeManager|, we won't be using it on Gonk.
 XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
@@ -66,6 +67,9 @@ const PERSONA_NAME = "Test Theme";
 const PERSONA_DESCRIPTION = "A nice theme/persona description.";
 
 const PLUGIN_UPDATED_TOPIC     = "plugins-list-updated";
+
+// system add-ons are enabled at startup, so record date when the test starts
+const SYSTEM_ADDON_INSTALL_DATE = Date.now();
 
 /**
  * Used to mock plugin tags in our fake plugin host.
@@ -213,7 +217,7 @@ function createMockAddonProvider(aName) {
   };
 
   return mockProvider;
-};
+}
 
 /**
  * Used to spoof the Persona Id.
@@ -339,7 +343,6 @@ function checkSettingsSection(data) {
     e10sEnabled: "boolean",
     e10sCohort: "string",
     telemetryEnabled: "boolean",
-    isInOptoutSample: "boolean",
     locale: "string",
     update: "object",
     userPrefs: "object",
@@ -408,7 +411,7 @@ function checkPartnerSection(data, isInitial) {
   if (isInitial) {
     Assert.equal(data.partner.partnerNames.length, 0);
   } else {
-    Assert.ok(data.partner.partnerNames.indexOf(PARTNER_NAME) >= 0);
+    Assert.ok(data.partner.partnerNames.includes(PARTNER_NAME));
   }
 }
 
@@ -508,6 +511,16 @@ function checkSystemSection(data) {
               "ServicePackMajor must be a number.");
     Assert.ok(Number.isFinite(osData["servicePackMinor"]),
               "ServicePackMinor must be a number.");
+    if ("windowsBuildNumber" in osData) {
+      // This might not be available on all Windows platforms.
+      Assert.ok(Number.isFinite(osData["windowsBuildNumber"]),
+                "windowsBuildNumber must be a number.");
+    }
+    if ("windowsUBR" in osData) {
+      // This might not be available on all Windows platforms.
+      Assert.ok((osData["windowsUBR"] === null) || Number.isFinite(osData["windowsUBR"]),
+                "windowsUBR must be null or a number.");
+    }
   } else if (gIsAndroid || gIsGonk) {
     Assert.ok(checkNullOrString(osData.kernelVersion));
   }
@@ -573,6 +586,11 @@ function checkSystemSection(data) {
 }
 
 function checkActiveAddon(data){
+  let signedState = mozinfo.addon_signing ? "number" : "undefined";
+  // system add-ons have an undefined signState
+  if (data.isSystem)
+    signedState = "undefined";
+
   const EXPECTED_ADDON_FIELDS_TYPES = {
     blocklisted: "boolean",
     name: "string",
@@ -585,7 +603,8 @@ function checkActiveAddon(data){
     hasBinaryComponents: "boolean",
     installDay: "number",
     updateDay: "number",
-    signedState: mozinfo.addon_signing ? "number" : "undefined",
+    signedState: signedState,
+    isSystem: "boolean",
   };
 
   for (let f in EXPECTED_ADDON_FIELDS_TYPES) {
@@ -717,6 +736,13 @@ function run_test() {
   do_test_pending();
   spoofGfxAdapter();
   do_get_profile();
+
+  // The system add-on must be installed before AddonManager is started.
+  const distroDir = FileUtils.getDir("ProfD", ["sysfeatures", "app0"], true);
+  do_get_file("system.xpi").copyTo(distroDir, "tel-system-xpi@tests.mozilla.org.xpi");
+  let system_addon = FileUtils.File(distroDir.path);
+  system_addon.append("tel-system-xpi@tests.mozilla.org.xpi");
+  system_addon.lastModifiedTime = SYSTEM_ADDON_INSTALL_DATE;
   loadAddonManager(APP_ID, APP_NAME, APP_VERSION, PLATFORM_VERSION);
 
   // Spoof the persona ID, but not on Gonk.
@@ -1018,6 +1044,24 @@ add_task(function* test_addonsAndPlugins() {
     installDay: ADDON_INSTALL_DATE,
     updateDay: ADDON_INSTALL_DATE,
     signedState: mozinfo.addon_signing ? AddonManager.SIGNEDSTATE_SIGNED : AddonManager.SIGNEDSTATE_NOT_REQUIRED,
+    isSystem: false,
+  };
+  const SYSTEM_ADDON_ID = "tel-system-xpi@tests.mozilla.org";
+  const EXPECTED_SYSTEM_ADDON_DATA = {
+    blocklisted: false,
+    description: "A system addon which is shipped with Firefox.",
+    name: "XPI Telemetry System Add-on Test",
+    userDisabled: false,
+    appDisabled: false,
+    version: "1.0",
+    scope: 1,
+    type: "extension",
+    foreignInstall: false,
+    hasBinaryComponents: false,
+    installDay: truncateToDays(SYSTEM_ADDON_INSTALL_DATE),
+    updateDay: truncateToDays(SYSTEM_ADDON_INSTALL_DATE),
+    signedState: undefined,
+    isSystem: true,
   };
 
   const EXPECTED_PLUGIN_DATA = {
@@ -1040,6 +1084,13 @@ add_task(function* test_addonsAndPlugins() {
   let targetAddon = data.addons.activeAddons[ADDON_ID];
   for (let f in EXPECTED_ADDON_DATA) {
     Assert.equal(targetAddon[f], EXPECTED_ADDON_DATA[f], f + " must have the correct value.");
+  }
+
+  // Check system add-on data.
+  Assert.ok(SYSTEM_ADDON_ID in data.addons.activeAddons, "We must have one active system addon.");
+  let targetSystemAddon = data.addons.activeAddons[SYSTEM_ADDON_ID];
+  for (let f in EXPECTED_SYSTEM_ADDON_DATA) {
+    Assert.equal(targetSystemAddon[f], EXPECTED_SYSTEM_ADDON_DATA[f], f + " must have the correct value.");
   }
 
   // Check theme data.
@@ -1371,6 +1422,31 @@ add_task(function* test_defaultSearchEngine() {
   Services.obs.notifyObservers(null, "browser-search-service", "init-complete");
   data = TelemetryEnvironment.currentEnvironment;
   Assert.equal(data.settings.searchCohort, "testcohort");
+});
+
+add_task(function* test_environmentShutdown() {
+  // Define and reset the test preference.
+  const PREF_TEST = "toolkit.telemetry.test.pref1";
+  const PREFS_TO_WATCH = new Map([
+    [PREF_TEST, {what: TelemetryEnvironment.RECORD_PREF_STATE}],
+  ]);
+  Preferences.reset(PREF_TEST);
+  gNow = futureDate(gNow, 10 * MILLISECONDS_PER_MINUTE);
+  fakeNow(gNow);
+
+  // Set up the preferences and listener, then the trigger shutdown
+  TelemetryEnvironment._watchPreferences(PREFS_TO_WATCH);
+  TelemetryEnvironment.registerChangeListener("test_environmentShutdownChange", () => {
+  // Register a new change listener that asserts if change is propogated
+    Assert.ok(false, "No change should be propagated after shutdown.");
+  });
+  TelemetryEnvironment.shutdown();
+
+  // Flipping  the test preference after shutdown should not trigger the listener
+  Preferences.set(PREF_TEST, 1);
+
+  // Unregister the listener.
+  TelemetryEnvironment.unregisterChangeListener("test_environmentShutdownChange");
 });
 
 add_task(function*() {

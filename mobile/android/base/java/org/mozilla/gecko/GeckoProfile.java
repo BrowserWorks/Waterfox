@@ -39,6 +39,7 @@ import org.mozilla.gecko.util.INISection;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
@@ -83,7 +84,6 @@ public final class GeckoProfile {
 
     private final String mName;
     private final File mMozillaDir;
-    private final boolean mIsWebAppProfile;
     private final Context mApplicationContext;
 
     private final BrowserDB mDB;
@@ -306,6 +306,8 @@ public final class GeckoProfile {
         }
     }
 
+    // Currently unused outside of testing.
+    @RobocopTarget
     public static boolean removeProfile(Context context, String profileName) {
         if (profileName == null) {
             Log.w(LOGTAG, "Unable to remove profile: null profile name.");
@@ -457,7 +459,6 @@ public final class GeckoProfile {
 
         mApplicationContext = context.getApplicationContext();
         mName = profileName;
-        mIsWebAppProfile = profileName.startsWith("webapp");
         mMozillaDir = GeckoProfileDirectories.getMozillaDirectory(context);
 
         // This apes the behavior of setDir.
@@ -473,9 +474,6 @@ public final class GeckoProfile {
         return mDB;
     }
 
-    public boolean isWebAppProfile() {
-        return mIsWebAppProfile;
-    }
 
     // Warning, Changing the lock file state from outside apis will cause this to become out of sync
     public boolean locked() {
@@ -634,7 +632,7 @@ public final class GeckoProfile {
         } catch (final IOException e) {
             // Avoid log spam: don't log the full Exception w/ the stack trace.
             Log.d(LOGTAG, "Could not migrate client ID from FHR – creating a new one: " + e.getLocalizedMessage());
-            clientIdToWrite = UUID.randomUUID().toString();
+            clientIdToWrite = generateNewClientId();
         }
 
         // There is a possibility Gecko is running and the Gecko telemetry implementation decided it's time to generate
@@ -648,6 +646,10 @@ public final class GeckoProfile {
         // In any case, if we get an exception, intentionally throw - there's nothing more to do here.
         persistClientId(clientIdToWrite);
         return getValidClientIdFromDisk(CLIENT_ID_FILE_PATH);
+    }
+
+    protected static String generateNewClientId() {
+        return UUID.randomUUID().toString();
     }
 
     /**
@@ -664,6 +666,9 @@ public final class GeckoProfile {
         throw new IOException("Received client ID is invalid: " + clientId);
     }
 
+    /**
+     * Persists the given client ID to disk. This will overwrite any existing files.
+     */
     @WorkerThread
     private void persistClientId(final String clientId) throws IOException {
         if (!ensureParentDirs(CLIENT_ID_FILE_PATH)) {
@@ -692,15 +697,38 @@ public final class GeckoProfile {
     }
 
     /**
-     * @return the profile creation date in the format returned by {@link System#currentTimeMillis()} or -1 if the value
-     *         was not found.
+     * Gets the profile creation date and persists it if it had to be generated.
+     *
+     * To get this value, we first look in times.json. If that could not be accessed, we
+     * return the package's first install date. This is not a perfect solution because a
+     * user may have large gap between install time and first use.
+     *
+     * A more correct algorithm could be the one performed by the JS code in ProfileAge.jsm
+     * getOldestProfileTimestamp: walk the tree and return the oldest timestamp on the files
+     * within the profile. However, since times.json will only not exist for the small
+     * number of really old profiles, we're okay with the package install date compromise for
+     * simplicity.
+     *
+     * @return the profile creation date in the format returned by {@link System#currentTimeMillis()}
+     *         or -1 if the value could not be persisted.
      */
     @WorkerThread
-    public long getProfileCreationDate() {
+    public long getAndPersistProfileCreationDate(final Context context) {
         try {
             return getProfileCreationDateFromTimesFile();
         } catch (final IOException e) {
-            return getAndPersistProfileCreationDateFromFilesystem();
+            Log.d(LOGTAG, "Unable to retrieve profile creation date from times.json. Getting from system...");
+            final long packageInstallMillis = org.mozilla.gecko.util.ContextUtils.getPackageInstallTime(context);
+            try {
+                persistProfileCreationDateToTimesFile(packageInstallMillis);
+            } catch (final IOException ioEx) {
+                // We return -1 to ensure the profileCreationDate
+                // will either be an error (-1) or a consistent value.
+                Log.w(LOGTAG, "Unable to persist profile creation date - returning -1");
+                return -1;
+            }
+
+            return packageInstallMillis;
         }
     }
 
@@ -715,14 +743,17 @@ public final class GeckoProfile {
         }
     }
 
-    /**
-     * TODO (bug 1246816): Implement ProfileAge.jsm - getOldestProfileTimestamp. Persist results to times.json.
-     * Update comment in getProfileCreationDate too.
-     * @return -1 until implemented.
-     */
     @WorkerThread
-    private long getAndPersistProfileCreationDateFromFilesystem() {
-        return -1;
+    private void persistProfileCreationDateToTimesFile(final long profileCreationMillis) throws IOException {
+        final JSONObject obj = new JSONObject();
+        try {
+            obj.put(PROFILE_CREATION_DATE_JSON_ATTR, profileCreationMillis);
+        } catch (final JSONException e) {
+            // Don't log to avoid leaking data in JSONObject.
+            throw new IOException("Unable to persist profile creation date to times file");
+        }
+        Log.d(LOGTAG, "Attempting to write new profile creation date");
+        writeFile(TIMES_PATH, obj.toString()); // Ideally we'd throw here too.
     }
 
     /**
@@ -963,6 +994,7 @@ public final class GeckoProfile {
         return GeckoProfileDirectories.findProfileDir(mMozillaDir, mName);
     }
 
+    @WorkerThread
     private File createProfileDir() throws IOException {
         INIParser parser = GeckoProfileDirectories.getProfilesINI(mMozillaDir);
 
@@ -1004,9 +1036,8 @@ public final class GeckoProfile {
             parser.addSection(generalSection);
         }
 
-        if (!isDefaultSet && !mIsWebAppProfile) {
-            // only set as default if this is the first non-webapp
-            // profile we're creating
+        if (!isDefaultSet) {
+            // only set as default if this is the first profile we're creating
             profileSection.setProperty("Default", 1);
 
             // We have no intention of stopping this session. The FIRSTRUN session
@@ -1018,10 +1049,7 @@ public final class GeckoProfile {
         parser.addSection(profileSection);
         parser.write();
 
-        // Trigger init for non-webapp profiles.
-        if (!mIsWebAppProfile) {
-            enqueueInitialization(profileDir);
-        }
+        enqueueInitialization(profileDir);
 
         // Write out profile creation time, mirroring the logic in nsToolkitProfileService.
         try {
@@ -1037,11 +1065,14 @@ public final class GeckoProfile {
             Log.w(LOGTAG, "Couldn't write times.json.", e);
         }
 
-        // Initialize pref flag for displaying the start pane for a new non-webapp profile.
-        if (!mIsWebAppProfile) {
-            final SharedPreferences prefs = GeckoSharedPrefs.forProfile(mApplicationContext);
-            prefs.edit().putBoolean(FirstrunAnimationContainer.PREF_FIRSTRUN_ENABLED, true).apply();
-        }
+        // Create the client ID file before Gecko starts (we assume this method
+        // is called before Gecko starts). If we let Gecko start, the JS telemetry
+        // code may try to write to the file at the same time Java does.
+        persistClientId(generateNewClientId());
+
+        // Initialize pref flag for displaying the start pane for a new profile.
+        final SharedPreferences prefs = GeckoSharedPrefs.forProfile(mApplicationContext);
+        prefs.edit().putBoolean(FirstrunAnimationContainer.PREF_FIRSTRUN_ENABLED, true).apply();
 
         return profileDir;
     }

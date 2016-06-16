@@ -1,4 +1,7 @@
-
+/* -*- Mode: Java; c-basic-offset: 4; tab-width: 20; indent-tabs-mode: nil; -*-
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 package org.mozilla.gecko.dlc;
 
@@ -7,6 +10,7 @@ import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.dlc.catalog.DownloadContent;
 import org.mozilla.gecko.dlc.catalog.DownloadContentCatalog;
+import org.mozilla.gecko.util.HardwareUtils;
 
 import android.app.IntentService;
 import android.content.ComponentName;
@@ -58,6 +62,12 @@ public class DownloadContentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (!AppConstants.MOZ_ANDROID_DOWNLOAD_CONTENT_SERVICE) {
             Log.w(LOGTAG, "Download content is not enabled. Stop.");
+            return;
+        }
+
+        if (!HardwareUtils.isSupportedSystem()) {
+            // This service is running very early before checks in BrowserApp can prevent us from running.
+            Log.w(LOGTAG, "System is not supported. Stop.");
             return;
         }
 

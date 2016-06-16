@@ -334,7 +334,7 @@ CDMProxy::SetServerCertificate(PromiseId aPromiseId,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mGMPThread);
 
-  nsAutoPtr<SetServerCertificateData> data;
+  nsAutoPtr<SetServerCertificateData> data(new SetServerCertificateData());
   data->mPromiseId = aPromiseId;
   data->mCert = Move(aCert);
   nsCOMPtr<nsIRunnable> task(
@@ -580,6 +580,9 @@ CDMProxy::OnExpirationChange(const nsAString& aSessionId,
                              GMPTimestamp aExpiryTime)
 {
   MOZ_ASSERT(NS_IsMainThread());
+  if (mKeys.IsNull()) {
+    return;
+  }
   RefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
     session->SetExpiration(static_cast<double>(aExpiryTime));

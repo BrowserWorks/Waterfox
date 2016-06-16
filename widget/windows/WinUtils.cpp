@@ -48,12 +48,15 @@
 #include "nsIThread.h"
 #include "MainThreadUtils.h"
 #include "nsLookAndFeel.h"
+#include "nsUnicharUtils.h"
 #include "nsWindowsHelpers.h"
 
 #ifdef NS_ENABLE_TSF
 #include <textstor.h>
 #include "TSFTextStore.h"
 #endif // #ifdef NS_ENABLE_TSF
+
+#include <shlwapi.h>
 
 PRLogModuleInfo* gWindowsLog = nullptr;
 
@@ -542,45 +545,126 @@ WinUtils::Log(const char *fmt, ...)
   delete[] buffer;
 }
 
-/* static */
+// static
 double
-WinUtils::LogToPhysFactor()
+WinUtils::SystemScaleFactor()
 {
-  // dpi / 96.0
-  HDC hdc = ::GetDC(nullptr);
-  double result = ::GetDeviceCaps(hdc, LOGPIXELSY) / 96.0;
-  ::ReleaseDC(nullptr, hdc);
+  // The result of GetDeviceCaps won't change dynamically, as it predates
+  // per-monitor DPI and support for on-the-fly resolution changes.
+  // Therefore, we only need to look it up once.
+  static double systemScale = 0;
+  if (systemScale == 0) {
+    HDC screenDC = GetDC(nullptr);
+    systemScale = GetDeviceCaps(screenDC, LOGPIXELSY) / 96.0;
+    ReleaseDC(nullptr, screenDC);
 
-  if (result == 0) {
-    // Bug 1012487 - This can occur when the Screen DC is used off the
-    // main thread on windows. For now just assume a 100% DPI for this
-    // drawing call.
-    // XXX - fixme!
-    result = 1.0;
+    if (systemScale == 0) {
+      // Bug 1012487 - This can occur when the Screen DC is used off the
+      // main thread on windows. For now just assume a 100% DPI for this
+      // drawing call.
+      // XXX - fixme!
+      return 1.0;
+    }
   }
-  return result;
+  return systemScale;
+}
+
+#ifndef WM_DPICHANGED
+typedef enum {
+  MDT_EFFECTIVE_DPI = 0,
+  MDT_ANGULAR_DPI = 1,
+  MDT_RAW_DPI = 2,
+  MDT_DEFAULT = MDT_EFFECTIVE_DPI
+} MONITOR_DPI_TYPE;
+
+typedef enum {
+  PROCESS_DPI_UNAWARE = 0,
+  PROCESS_SYSTEM_DPI_AWARE = 1,
+  PROCESS_PER_MONITOR_DPI_AWARE = 2
+} PROCESS_DPI_AWARENESS;
+#endif
+
+typedef HRESULT
+(WINAPI *GETDPIFORMONITORPROC)(HMONITOR, MONITOR_DPI_TYPE, UINT*, UINT*);
+
+typedef HRESULT
+(WINAPI *GETPROCESSDPIAWARENESSPROC)(HANDLE, PROCESS_DPI_AWARENESS*);
+
+GETDPIFORMONITORPROC sGetDpiForMonitor;
+GETPROCESSDPIAWARENESSPROC sGetProcessDpiAwareness;
+
+static bool
+SlowIsPerMonitorDPIAware()
+{
+  if (IsVistaOrLater()) {
+    // Intentionally leak the handle.
+    HMODULE shcore =
+      LoadLibraryEx(L"shcore", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (shcore) {
+      sGetDpiForMonitor =
+        (GETDPIFORMONITORPROC) GetProcAddress(shcore, "GetDpiForMonitor");
+      sGetProcessDpiAwareness =
+        (GETPROCESSDPIAWARENESSPROC) GetProcAddress(shcore, "GetProcessDpiAwareness");
+    }
+  }
+  PROCESS_DPI_AWARENESS dpiAwareness;
+  return sGetDpiForMonitor && sGetProcessDpiAwareness &&
+      SUCCEEDED(sGetProcessDpiAwareness(GetCurrentProcess(), &dpiAwareness)) &&
+      dpiAwareness == PROCESS_PER_MONITOR_DPI_AWARE;
+}
+
+/* static */ bool
+WinUtils::IsPerMonitorDPIAware()
+{
+  static bool perMonitorDPIAware = SlowIsPerMonitorDPIAware();
+  return perMonitorDPIAware;
 }
 
 /* static */
 double
-WinUtils::PhysToLogFactor()
+WinUtils::LogToPhysFactor(HMONITOR aMonitor)
 {
-  // 1.0 / (dpi / 96.0)
-  return 1.0 / LogToPhysFactor();
-}
+  if (IsPerMonitorDPIAware()) {
+    UINT dpiX, dpiY = 96;
+    sGetDpiForMonitor(aMonitor ? aMonitor : GetPrimaryMonitor(),
+                      MDT_EFFECTIVE_DPI, &dpiX, &dpiY);
+    return dpiY / 96.0;
+  }
 
-/* static */
-double
-WinUtils::PhysToLog(int32_t aValue)
-{
-  return double(aValue) * PhysToLogFactor();
+  return SystemScaleFactor();
 }
 
 /* static */
 int32_t
-WinUtils::LogToPhys(double aValue)
+WinUtils::LogToPhys(HMONITOR aMonitor, double aValue)
 {
-  return int32_t(NS_round(aValue * LogToPhysFactor()));
+  return int32_t(NS_round(aValue * LogToPhysFactor(aMonitor)));
+}
+
+/* static */
+HMONITOR
+WinUtils::GetPrimaryMonitor()
+{
+  const POINT pt = { 0, 0 };
+  return ::MonitorFromPoint(pt, MONITOR_DEFAULTTOPRIMARY);
+}
+
+/* static */
+HMONITOR
+WinUtils::MonitorFromRect(const gfx::Rect& rect)
+{
+  // convert coordinates from desktop to device pixels for MonitorFromRect
+  double dpiScale =
+    IsPerMonitorDPIAware() ? 1.0 : LogToPhysFactor(GetPrimaryMonitor());
+
+  RECT globalWindowBounds = {
+    NSToIntRound(dpiScale * rect.x),
+    NSToIntRound(dpiScale * rect.y),
+    NSToIntRound(dpiScale * (rect.x + rect.width)),
+    NSToIntRound(dpiScale * (rect.y + rect.height))
+  };
+
+  return ::MonitorFromRect(&globalWindowBounds, MONITOR_DEFAULTTONEAREST);
 }
 
 /* static */
@@ -1624,7 +1708,7 @@ WinUtils::ConvertHRGNToRegion(HRGN aRgn)
   nsIntRegion rgn;
 
   DWORD size = ::GetRegionData(aRgn, 0, nullptr);
-  nsAutoTArray<uint8_t,100> buffer;
+  AutoTArray<uint8_t,100> buffer;
   buffer.SetLength(size);
 
   RGNDATA* data = reinterpret_cast<RGNDATA*>(buffer.Elements());
@@ -1818,6 +1902,167 @@ WinUtils::ResolveMovedUsersFolder(std::wstring& aPath)
   }
 
   aPath.replace(0, usersLen, substituteName, substituteLen);
+  return true;
+}
+
+/* static */
+bool
+WinUtils::SanitizePath(const wchar_t* aInputPath, nsAString& aOutput)
+{
+  aOutput.Truncate();
+  wchar_t buffer[MAX_PATH + 1] = {0};
+  if (!PathCanonicalizeW(buffer, aInputPath)) {
+    return false;
+  }
+  wchar_t longBuffer[MAX_PATH + 1] = {0};
+  DWORD longResult = GetLongPathNameW(buffer, longBuffer, MAX_PATH);
+  if (longResult == 0 || longResult > MAX_PATH - 1) {
+    return false;
+  }
+  aOutput.SetLength(MAX_PATH + 1);
+  wchar_t* output = reinterpret_cast<wchar_t*>(aOutput.BeginWriting());
+  if (!PathUnExpandEnvStringsW(longBuffer, output, MAX_PATH)) {
+    return false;
+  }
+  // Truncate to correct length
+  aOutput.Truncate(wcslen(char16ptr_t(aOutput.BeginReading())));
+  MOZ_ASSERT(aOutput.Length() <= MAX_PATH);
+  return true;
+}
+
+/**
+ * This function provides an array of (system path, substitution) pairs that are
+ * considered to be acceptable with respect to privacy, for the purposes of
+ * submitting within telemetry or crash reports.
+ *
+ * The substitution string's void flag may be set. If it is, no subsitution is
+ * necessary. Otherwise, the consumer should replace the system path with the
+ * substitution.
+ *
+ * @see GetAppInitDLLs for an example of its usage.
+ */
+/* static */
+void
+WinUtils::GetWhitelistedPaths(
+    nsTArray<mozilla::Pair<nsString,nsDependentString>>& aOutput)
+{
+  aOutput.Clear();
+  aOutput.AppendElement(mozilla::MakePair(
+                          nsString(NS_LITERAL_STRING("%ProgramFiles%")),
+                          nsDependentString()));
+  // When no substitution is required, set the void flag
+  aOutput.LastElement().second().SetIsVoid(true);
+  wchar_t tmpPath[MAX_PATH + 1] = {0};
+  if (GetTempPath(MAX_PATH, tmpPath)) {
+    // GetTempPath's result always ends with a backslash, which we don't want
+    uint32_t tmpPathLen = wcslen(tmpPath);
+    if (tmpPathLen) {
+      tmpPath[tmpPathLen - 1] = 0;
+    }
+    nsAutoString cleanTmpPath;
+    if (SanitizePath(tmpPath, cleanTmpPath)) {
+      aOutput.AppendElement(mozilla::MakePair(nsString(cleanTmpPath),
+                              nsDependentString(L"%TEMP%")));
+    }
+  }
+}
+
+/**
+ * This function is located here (as opposed to nsSystemInfo or elsewhere)
+ * because we need to gather this information as early as possible during
+ * startup.
+ */
+/* static */
+bool
+WinUtils::GetAppInitDLLs(nsAString& aOutput)
+{
+  aOutput.Truncate();
+  HKEY hkey = NULL;
+  if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Windows",
+        0, KEY_QUERY_VALUE, &hkey)) {
+    return false;
+  }
+  nsAutoRegKey key(hkey);
+  LONG status;
+  if (IsVistaOrLater()) {
+    const wchar_t kLoadAppInitDLLs[] = L"LoadAppInit_DLLs";
+    DWORD loadAppInitDLLs = 0;
+    DWORD loadAppInitDLLsLen = sizeof(loadAppInitDLLs);
+    status = RegQueryValueExW(hkey, kLoadAppInitDLLs, nullptr,
+                              nullptr, (LPBYTE)&loadAppInitDLLs,
+                              &loadAppInitDLLsLen);
+    if (status != ERROR_SUCCESS) {
+      return false;
+    }
+    if (!loadAppInitDLLs) {
+      // If loadAppInitDLLs is zero then AppInit_DLLs is disabled.
+      // In this case we'll return true along with an empty output string.
+      return true;
+    }
+  }
+  DWORD numBytes = 0;
+  const wchar_t kAppInitDLLs[] = L"AppInit_DLLs";
+  // Query for required buffer size
+  status = RegQueryValueExW(hkey, kAppInitDLLs, nullptr, nullptr, nullptr,
+                            &numBytes);
+  if (status != ERROR_SUCCESS) {
+    return false;
+  }
+  // Allocate the buffer and query for the actual data
+  mozilla::UniquePtr<wchar_t[]> data =
+    mozilla::MakeUnique<wchar_t[]>(numBytes / sizeof(wchar_t));
+  status = RegQueryValueExW(hkey, kAppInitDLLs, nullptr,
+                            nullptr, (LPBYTE)data.get(), &numBytes);
+  if (status != ERROR_SUCCESS) {
+    return false;
+  }
+  nsTArray<mozilla::Pair<nsString,nsDependentString>> whitelistedPaths;
+  GetWhitelistedPaths(whitelistedPaths);
+  // For each token, split up the filename components and then check the
+  // name of the file.
+  const wchar_t kDelimiters[] = L", ";
+  wchar_t* tokenContext = nullptr;
+  wchar_t* token = wcstok_s(data.get(), kDelimiters, &tokenContext);
+  while (token) {
+    nsAutoString cleanPath;
+    // Since these paths are short paths originating from the registry, we need
+    // to canonicalize them, lengthen them, and sanitize them before we can
+    // check them against the whitelist
+    if (SanitizePath(token, cleanPath)) {
+      bool needsStrip = true;
+      for (uint32_t i = 0; i < whitelistedPaths.Length(); ++i) {
+        const nsString& testPath = whitelistedPaths[i].first();
+        const nsDependentString& substitution = whitelistedPaths[i].second();
+        if (StringBeginsWith(cleanPath, testPath,
+                             nsCaseInsensitiveStringComparator())) {
+          if (!substitution.IsVoid()) {
+            cleanPath.Replace(0, testPath.Length(), substitution);
+          }
+          // Whitelisted paths may be used as-is provided that they have been
+          // previously sanitized.
+          needsStrip = false;
+          break;
+        }
+      }
+      if (!aOutput.IsEmpty()) {
+        aOutput += L";";
+      }
+      // For non-whitelisted paths, we strip the path component and just leave
+      // the filename.
+      if (needsStrip) {
+        // nsLocalFile doesn't like non-absolute paths. Since these paths might
+        // contain environment variables instead of roots, we can't use it.
+        wchar_t tmpPath[MAX_PATH + 1] = {0};
+        wcsncpy(tmpPath, cleanPath.get(), cleanPath.Length());
+        PathStripPath(tmpPath);
+        aOutput += tmpPath;
+      } else {
+        aOutput += cleanPath;
+      }
+    }
+    token = wcstok_s(nullptr, kDelimiters, &tokenContext);
+  }
   return true;
 }
 

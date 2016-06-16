@@ -87,7 +87,8 @@ MediaEngineDefaultVideoSource::GetBestFitnessDistance(
 nsresult
 MediaEngineDefaultVideoSource::Allocate(const dom::MediaTrackConstraints &aConstraints,
                                         const MediaEnginePrefs &aPrefs,
-                                        const nsString& aDeviceId)
+                                        const nsString& aDeviceId,
+                                        const nsACString& aOrigin)
 {
   if (mState != kReleased) {
     return NS_ERROR_FAILURE;
@@ -396,7 +397,8 @@ MediaEngineDefaultAudioSource::GetBestFitnessDistance(
 nsresult
 MediaEngineDefaultAudioSource::Allocate(const dom::MediaTrackConstraints &aConstraints,
                                         const MediaEnginePrefs &aPrefs,
-                                        const nsString& aDeviceId)
+                                        const nsString& aDeviceId,
+                                        const nsACString& aOrigin)
 {
   if (mState != kReleased) {
     return NS_ERROR_FAILURE;
@@ -510,7 +512,7 @@ MediaEngineDefaultAudioSource::AppendToSegment(AudioSegment& aSegment,
   int16_t* dest = static_cast<int16_t*>(buffer->Data());
 
   mSineGenerator->generate(dest, aSamples);
-  nsAutoTArray<const int16_t*,1> channels;
+  AutoTArray<const int16_t*,1> channels;
   channels.AppendElement(dest);
   aSegment.AppendFrames(buffer.forget(), channels, aSamples);
 }

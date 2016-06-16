@@ -249,7 +249,8 @@ Sanitizer.prototype = {
 
               if (cookie.creationTime > range[0]) {
                 // This cookie was created after our cutoff, clear it
-                cookieMgr.remove(cookie.host, cookie.name, cookie.path, false);
+                cookieMgr.remove(cookie.host, cookie.name, cookie.path,
+                                 false, cookie.originAttributes);
 
                 if (++yieldCounter % YIELD_PERIOD == 0) {
                   yield new Promise(resolve => setTimeout(resolve, 0)); // Don't block the main thread too long
@@ -317,9 +318,8 @@ Sanitizer.prototype = {
       }),
 
       promiseClearPluginCookies: Task.async(function* (range) {
-        const phInterface = Ci.nsIPluginHost;
-        const FLAG_CLEAR_ALL = phInterface.FLAG_CLEAR_ALL;
-        let ph = Cc["@mozilla.org/plugin/host;1"].getService(phInterface);
+        const FLAG_CLEAR_ALL = Ci.nsIPluginHost.FLAG_CLEAR_ALL;
+        let ph = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
 
         // Determine age range in seconds. (-1 means clear all.) We don't know
         // that range[1] is actually now, so we compute age range based
@@ -328,6 +328,13 @@ Sanitizer.prototype = {
         if (!range || age >= 0) {
           let tags = ph.getPluginTags();
           for (let tag of tags) {
+            let refObj = {};
+            let probe = "";
+            if (/\bFlash\b/.test(tag.name)) {
+              probe = tag.loaded ? "FX_SANITIZE_LOADED_FLASH"
+                                 : "FX_SANITIZE_UNLOADED_FLASH";
+              TelemetryStopwatch.start(probe, refObj);
+            }
             try {
               let rv = yield new Promise(resolve =>
                 ph.clearSiteData(tag, null, FLAG_CLEAR_ALL, age, resolve)
@@ -338,8 +345,14 @@ Sanitizer.prototype = {
                   ph.clearSiteData(tag, null, FLAG_CLEAR_ALL, -1, resolve)
                 );
               }
+              if (probe) {
+                TelemetryStopwatch.finish(probe, refObj);
+              }
             } catch (ex) {
               // Ignore errors from plug-ins
+              if (probe) {
+                TelemetryStopwatch.cancel(probe, refObj);
+              }
             }
           }
         }
@@ -836,20 +849,6 @@ Sanitizer.onStartup = Task.async(function*() {
       fetchState: () => ({ progress })
     }
   );
-
-    // One time migration to remove support for the clear saved passwords on exit feature.
-    if (!Services.prefs.getBoolPref("privacy.sanitize.migrateClearSavedPwdsOnExit")) {
-      let deprecatedPref = "privacy.clearOnShutdown.passwords";
-      let doUpdate = Services.prefs.getBoolPref("privacy.sanitize.sanitizeOnShutdown") &&
-                     Services.prefs.prefHasUserValue(deprecatedPref) &&
-                     Services.prefs.getBoolPref(deprecatedPref);
-      if (doUpdate) {
-        Services.logins.removeAllLogins();
-        Services.prefs.setBoolPref("signon.rememberSignons", false);
-      }
-      Services.prefs.clearUserPref(deprecatedPref);
-      Services.prefs.setBoolPref("privacy.sanitize.migrateClearSavedPwdsOnExit", true);
-  }
 
   // Check if Firefox crashed during a sanitization.
   let lastInterruptedSanitization = Preferences.get(Sanitizer.PREF_SANITIZE_IN_PROGRESS, "");

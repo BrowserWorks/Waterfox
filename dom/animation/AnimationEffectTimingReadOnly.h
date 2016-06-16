@@ -24,17 +24,37 @@
 
 namespace mozilla {
 
+namespace dom {
+struct AnimationEffectTimingProperties;
+class Element;
+class UnrestrictedDoubleOrKeyframeEffectOptions;
+class UnrestrictedDoubleOrKeyframeAnimationOptions;
+class ElementOrCSSPseudoElement;
+}
+
 struct TimingParams
 {
+  TimingParams() = default;
+  TimingParams(const dom::AnimationEffectTimingProperties& aTimingProperties,
+               const dom::Element* aTarget);
+  explicit TimingParams(double aDuration);
+
+  static TimingParams FromOptionsUnion(
+    const dom::UnrestrictedDoubleOrKeyframeEffectOptions& aOptions,
+    const Nullable<dom::ElementOrCSSPseudoElement>& aTarget);
+  static TimingParams FromOptionsUnion(
+    const dom::UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
+    const Nullable<dom::ElementOrCSSPseudoElement>& aTarget);
+
   // The unitialized state of mDuration represents "auto".
   // Bug 1237173: We will replace this with Maybe<TimeDuration>.
   dom::OwningUnrestrictedDoubleOrString mDuration;
   TimeDuration mDelay;      // Initializes to zero
   double mIterations = 1.0; // Can be NaN, negative, +/-Infinity
+  double mIterationStart = 0.0;
   dom::PlaybackDirection mDirection = dom::PlaybackDirection::Normal;
   dom::FillMode mFill = dom::FillMode::Auto;
-
-  TimingParams& operator=(const dom::AnimationEffectTimingProperties& aRhs);
+  Maybe<ComputedTimingFunction> mFunction;
 
   bool operator==(const TimingParams& aOther) const;
   bool operator!=(const TimingParams& aOther) const
@@ -66,17 +86,19 @@ public:
   double Delay() const { return mTiming.mDelay.ToMilliseconds(); }
   double EndDelay() const { return 0.0; }
   FillMode Fill() const { return mTiming.mFill; }
-  double IterationStart() const { return 0.0; }
+  double IterationStart() const { return mTiming.mIterationStart; }
   double Iterations() const { return mTiming.mIterations; }
   void GetDuration(OwningUnrestrictedDoubleOrString& aRetVal) const
   {
     aRetVal = mTiming.mDuration;
   }
   PlaybackDirection Direction() const { return mTiming.mDirection; }
-  void GetEasing(nsString& aRetVal) const { aRetVal.AssignLiteral("linear"); }
+  void GetEasing(nsString& aRetVal) const;
 
   const TimingParams& AsTimingParams() const { return mTiming; }
   void SetTimingParams(const TimingParams& aTiming) { mTiming = aTiming; }
+
+  virtual void Unlink() { }
 
 protected:
   nsCOMPtr<nsISupports> mParent;

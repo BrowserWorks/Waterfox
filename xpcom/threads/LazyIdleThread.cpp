@@ -179,10 +179,8 @@ LazyIdleThread::EnsureThread()
 void
 LazyIdleThread::InitThread()
 {
-#if !defined(MOZILLA_XPCOMRT_API)
   char aLocal;
   profiler_register_thread(mName.get(), &aLocal);
-#endif // !defined(MOZILLA_XPCOMRT_API)
 
   PR_SetCurrentThreadName(mName.get());
 
@@ -213,9 +211,7 @@ LazyIdleThread::CleanupThread()
     mThreadIsShuttingDown = true;
   }
 
-#if !defined(MOZILLA_XPCOMRT_API)
   profiler_unregister_thread();
-#endif // !defined(MOZILLA_XPCOMRT_API)
 }
 
 void
@@ -254,7 +250,7 @@ LazyIdleThread::ShutdownThread()
   // Before calling Shutdown() on the real thread we need to put a queue in
   // place in case a runnable is posted to the thread while it's in the
   // process of shutting down. This will be our queue.
-  nsAutoTArray<nsCOMPtr<nsIRunnable>, 10> queuedRunnables;
+  AutoTArray<nsCOMPtr<nsIRunnable>, 10> queuedRunnables;
 
   nsresult rv;
 

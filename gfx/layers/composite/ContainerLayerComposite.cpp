@@ -29,7 +29,7 @@
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsISupportsUtils.h"           // for NS_ADDREF, NS_RELEASE
 #include "nsRegion.h"                   // for nsIntRegion
-#include "nsTArray.h"                   // for nsAutoTArray
+#include "nsTArray.h"                   // for AutoTArray
 #include "TextRenderer.h"               // for TextRenderer
 #include <vector>
 #include "VRManager.h"                  // for VRManager
@@ -97,7 +97,7 @@ static void DrawLayerInfo(const RenderTargetIntRect& aClipRect,
 template<class ContainerT>
 static gfx::IntRect ContainerVisibleRect(ContainerT* aContainer)
 {
-  gfx::IntRect surfaceRect = aContainer->GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds();
+  gfx::IntRect surfaceRect = aContainer->GetLocalVisibleRegion().ToUnknownRegion().GetBounds();
   return surfaceRect;
 }
 
@@ -109,12 +109,12 @@ static void PrintUniformityInfo(Layer* aLayer)
   }
 
   // Don't want to print a log for smaller layers
-  if (aLayer->GetEffectiveVisibleRegion().GetBounds().width < 300 ||
-      aLayer->GetEffectiveVisibleRegion().GetBounds().height < 300) {
+  if (aLayer->GetLocalVisibleRegion().GetBounds().width < 300 ||
+      aLayer->GetLocalVisibleRegion().GetBounds().height < 300) {
     return;
   }
 
-  Matrix4x4 transform = aLayer->AsLayerComposite()->GetShadowTransform();
+  Matrix4x4 transform = aLayer->AsLayerComposite()->GetShadowBaseTransform();
   if (!transform.Is2D()) {
     return;
   }
@@ -141,6 +141,8 @@ ContainerRenderVR(ContainerT* aContainer,
                   const gfx::IntRect& aClipRect,
                   RefPtr<gfx::VRHMDInfo> aHMD)
 {
+  int32_t inputFrameID = -1;
+
   RefPtr<CompositingRenderTarget> surface;
 
   Compositor* compositor = aManager->GetCompositor();
@@ -190,7 +192,7 @@ ContainerRenderVR(ContainerT* aContainer,
 
   compositor->SetRenderTarget(surface);
 
-  nsAutoTArray<Layer*, 12> children;
+  AutoTArray<Layer*, 12> children;
   aContainer->SortChildrenBy3DZOrder(children);
 
   gfx::Matrix4x4 origTransform = aContainer->GetEffectiveTransform();
@@ -205,6 +207,9 @@ ContainerRenderVR(ContainerT* aContainer,
     }
 
     if (!layer->IsVisible() && !layer->AsContainerLayer()) {
+      continue;
+    }
+    if (layerToRender->HasStaleCompositor()) {
       continue;
     }
 
@@ -234,7 +239,7 @@ ContainerRenderVR(ContainerT* aContainer,
           IntRectToRect(static_cast<CanvasLayer*>(layer)->GetBounds());
       } else {
         layerBounds =
-          IntRectToRect(layer->GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds());
+          IntRectToRect(layer->GetLocalVisibleRegion().ToUnknownRegion().GetBounds());
       }
       const gfx::Matrix4x4 childTransform = layer->GetEffectiveTransform();
       layerBounds = childTransform.TransformBounds(layerBounds);
@@ -265,6 +270,32 @@ ContainerRenderVR(ContainerT* aContainer,
                                                  surfaceRect.width, surfaceRect.height));
       layerToRender->RenderLayer(surfaceRect);
 
+      // Search all children recursively until we find the canvas with
+      // an inputFrameID
+      std::stack<LayerComposite*> searchLayers;
+      searchLayers.push(layerToRender);
+      while (!searchLayers.empty() && inputFrameID == -1) {
+        LayerComposite* searchLayer = searchLayers.top();
+        searchLayers.pop();
+        if (searchLayer) {
+          searchLayers.push(searchLayer->GetFirstChildComposite());
+          Layer* sibling = searchLayer->GetLayer();
+          if (sibling) {
+            sibling = sibling->GetNextSibling();
+          }
+          if (sibling) {
+            searchLayers.push(sibling->AsLayerComposite());
+          }
+          CompositableHost *ch = searchLayer->GetCompositableHost();
+          if (ch) {
+            int32_t compositableInputFrameID = ch->GetLastInputFrameID();
+            if (compositableInputFrameID != -1) {
+              inputFrameID = compositableInputFrameID;
+            }
+          }
+        }
+      }
+
       if (restoreTransform) {
         layer->ReplaceEffectiveTransform(childTransform);
       }
@@ -282,7 +313,7 @@ ContainerRenderVR(ContainerT* aContainer,
   compositor->SetRenderTarget(previousTarget);
 
   if (vrRendering) {
-    vrRendering->SubmitFrame(aContainer->mVRRenderTargetSet);
+    vrRendering->SubmitFrame(aContainer->mVRRenderTargetSet, inputFrameID);
     DUMP("<<< ContainerRenderVR [used vrRendering] [%p]\n", aContainer);
     if (!gfxPrefs::VRMirrorTextures()) {
       return;
@@ -327,7 +358,8 @@ ContainerRenderVR(ContainerT* aContainer,
 static bool
 NeedToDrawCheckerboardingForLayer(Layer* aLayer, Color* aOutCheckerboardingColor)
 {
-  return (aLayer->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
+  return (aLayer->Manager()->AsyncPanZoomEnabled() &&
+         aLayer->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
          aLayer->IsOpaqueForVisibility() &&
          LayerHasCheckerboardingAPZC(aLayer, aOutCheckerboardingColor);
 }
@@ -336,7 +368,7 @@ NeedToDrawCheckerboardingForLayer(Layer* aLayer, Color* aOutCheckerboardingColor
 struct PreparedData
 {
   RefPtr<CompositingRenderTarget> mTmpTarget;
-  nsAutoTArray<PreparedLayer, 12> mLayers;
+  AutoTArray<PreparedLayer, 12> mLayers;
   bool mNeedsSurfaceCopy;
 };
 
@@ -361,7 +393,7 @@ ContainerPrepare(ContainerT* aContainer,
   /**
    * Determine which layers to draw.
    */
-  nsAutoTArray<Layer*, 12> children;
+  AutoTArray<Layer*, 12> children;
   aContainer->SortChildrenBy3DZOrder(children);
 
   for (uint32_t i = 0; i < children.Length(); i++) {
@@ -445,7 +477,7 @@ RenderMinimap(ContainerT* aContainer, LayerManagerComposite* aManager,
 {
   Compositor* compositor = aManager->GetCompositor();
 
-  if (aLayer->GetFrameMetricsCount() < 1) {
+  if (aLayer->GetScrollMetadataCount() < 1) {
     return;
   }
 
@@ -542,6 +574,10 @@ RenderLayers(ContainerT* aContainer,
     const RenderTargetIntRect& clipRect = preparedData.mClipRect;
     Layer* layer = layerToRender->GetLayer();
 
+    if (layerToRender->HasStaleCompositor()) {
+      continue;
+    }
+
     Color color;
     if (NeedToDrawCheckerboardingForLayer(layer, &color)) {
       if (gfxPrefs::APZHighlightCheckerboardedAreas()) {
@@ -564,8 +600,8 @@ RenderLayers(ContainerT* aContainer,
 
     if (layerToRender->HasLayerBeenComposited()) {
       // Composer2D will compose this layer so skip GPU composition
-      // this time & reset composition flag for next composition phase
-      layerToRender->SetLayerComposited(false);
+      // this time. The flag will be reset for the next composition phase
+      // at the beginning of LayerManagerComposite::Rener().
       gfx::IntRect clearRect = layerToRender->GetClearRect();
       if (!clearRect.IsEmpty()) {
         // Clear layer's visible rect on FrameBuffer with transparent pixels
@@ -593,7 +629,7 @@ RenderLayers(ContainerT* aContainer,
     // frames higher up, so loop from the top down, and accumulate an async
     // transform as we go along.
     Matrix4x4 asyncTransform;
-    for (uint32_t i = layer->GetFrameMetricsCount(); i > 0; --i) {
+    for (uint32_t i = layer->GetScrollMetadataCount(); i > 0; --i) {
       if (layer->GetFrameMetrics(i - 1).IsScrollable()) {
         // Since the composition bounds are in the parent layer's coordinates,
         // use the parent's effective transform rather than the layer's own.
@@ -625,7 +661,7 @@ CreateOrRecycleTarget(ContainerT* aContainer,
   Compositor* compositor = aManager->GetCompositor();
   SurfaceInitMode mode = INIT_MODE_CLEAR;
   gfx::IntRect surfaceRect = ContainerVisibleRect(aContainer);
-  if (aContainer->GetEffectiveVisibleRegion().GetNumRects() == 1 &&
+  if (aContainer->GetLocalVisibleRegion().GetNumRects() == 1 &&
       (aContainer->GetContentFlags() & Layer::CONTENT_OPAQUE))
   {
     mode = INIT_MODE_NONE;
@@ -650,7 +686,7 @@ CreateTemporaryTargetAndCopyFromBackground(ContainerT* aContainer,
                                            LayerManagerComposite* aManager)
 {
   Compositor* compositor = aManager->GetCompositor();
-  gfx::IntRect visibleRect = aContainer->GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds();
+  gfx::IntRect visibleRect = aContainer->GetLocalVisibleRegion().ToUnknownRegion().GetBounds();
   RefPtr<CompositingRenderTarget> previousTarget = compositor->GetCurrentRenderTarget();
   gfx::IntRect surfaceRect = gfx::IntRect(visibleRect.x, visibleRect.y,
                                           visibleRect.width, visibleRect.height);
@@ -718,7 +754,7 @@ ContainerRender(ContainerT* aContainer,
       return;
     }
 
-    gfx::Rect visibleRect(aContainer->GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds());
+    gfx::Rect visibleRect(aContainer->GetLocalVisibleRegion().ToUnknownRegion().GetBounds());
     RefPtr<Compositor> compositor = aManager->GetCompositor();
 #ifdef MOZ_DUMP_PAINTING
     if (gfxEnv::DumpCompositorTextures()) {

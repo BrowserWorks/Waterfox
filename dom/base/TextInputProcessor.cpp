@@ -97,7 +97,7 @@ TextInputProcessor::GetHasComposition(bool* aHasComposition)
 
 NS_IMETHODIMP
 TextInputProcessor::BeginInputTransaction(
-                      nsIDOMWindow* aWindow,
+                      mozIDOMWindow* aWindow,
                       nsITextInputProcessorCallback* aCallback,
                       bool* aSucceeded)
 {
@@ -112,7 +112,7 @@ TextInputProcessor::BeginInputTransaction(
 
 NS_IMETHODIMP
 TextInputProcessor::BeginInputTransactionForTests(
-                      nsIDOMWindow* aWindow,
+                      mozIDOMWindow* aWindow,
                       nsITextInputProcessorCallback* aCallback,
                       uint8_t aOptionalArgc,
                       bool* aSucceeded)
@@ -126,7 +126,7 @@ TextInputProcessor::BeginInputTransactionForTests(
 
 nsresult
 TextInputProcessor::BeginInputTransactionInternal(
-                      nsIDOMWindow* aWindow,
+                      mozIDOMWindow* aWindow,
                       nsITextInputProcessorCallback* aCallback,
                       bool aForTests,
                       bool& aSucceeded)
@@ -135,7 +135,7 @@ TextInputProcessor::BeginInputTransactionInternal(
   if (NS_WARN_IF(!aWindow)) {
     return NS_ERROR_INVALID_ARG;
   }
-  nsCOMPtr<nsPIDOMWindow> pWindow(do_QueryInterface(aWindow));
+  nsCOMPtr<nsPIDOMWindowInner> pWindow = nsPIDOMWindowInner::From(aWindow);
   if (NS_WARN_IF(!pWindow)) {
     return NS_ERROR_INVALID_ARG;
   }
@@ -344,7 +344,7 @@ TextInputProcessor::PrepareKeyboardEventForComposition(
 
   aKeyboardEvent =
     aOptionalArgc && aDOMKeyEvent ?
-      aDOMKeyEvent->AsEvent()->GetInternalNSEvent()->AsKeyboardEvent() : nullptr;
+      aDOMKeyEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent() : nullptr;
   if (!aKeyboardEvent || aOptionalArgc < 2) {
     aKeyFlags = 0;
   }
@@ -769,7 +769,7 @@ TextInputProcessor::Keydown(nsIDOMKeyEvent* aDOMKeyEvent,
     return NS_ERROR_INVALID_ARG;
   }
   WidgetKeyboardEvent* originalKeyEvent =
-    aDOMKeyEvent->AsEvent()->GetInternalNSEvent()->AsKeyboardEvent();
+    aDOMKeyEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent();
   if (NS_WARN_IF(!originalKeyEvent)) {
     return NS_ERROR_INVALID_ARG;
   }
@@ -875,7 +875,7 @@ TextInputProcessor::Keyup(nsIDOMKeyEvent* aDOMKeyEvent,
     return NS_ERROR_INVALID_ARG;
   }
   WidgetKeyboardEvent* originalKeyEvent =
-    aDOMKeyEvent->AsEvent()->GetInternalNSEvent()->AsKeyboardEvent();
+    aDOMKeyEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent();
   if (NS_WARN_IF(!originalKeyEvent)) {
     return NS_ERROR_INVALID_ARG;
   }

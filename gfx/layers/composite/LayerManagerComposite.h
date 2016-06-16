@@ -77,11 +77,6 @@ public:
   virtual void Destroy() override;
 
   /**
-   * return True if initialization was succesful, false when it was not.
-   */
-  bool Initialize();
-
-  /**
    * Sets the clipping region for this layer manager. This is important on
    * windows because using OGL we no longer have GDI's native clipping. Therefor
    * widget must tell us what part of the screen is being invalidated,
@@ -230,6 +225,12 @@ public:
     return mCompositor;
   }
 
+  // Called by CompositorParent when a new compositor has been created due
+  // to a device reset. The layer manager must clear any cached resources
+  // attached to the old compositor, and make a best effort at ignoring
+  // layer or texture updates against the old compositor.
+  void ChangeCompositor(Compositor* aNewCompositor);
+
   /**
    * LayerManagerComposite provides sophisticated debug overlays
    * that can request a next frame.
@@ -285,6 +286,12 @@ public:
   // overlay.
   void SetWindowOverlayChanged() { mWindowOverlayChanged = true; }
 
+  void ForcePresent() { mCompositor->ForcePresent(); }
+
+  void HoldTextureUntilNextComposite(TextureHost* aTextureHost) {
+    mCurrentHeldTextureHosts.AppendElement(aTextureHost);
+  }
+
 private:
   /** Region we're clipping our current drawing to. */
   nsIntRegion mClippingRegion;
@@ -335,6 +342,8 @@ private:
                                bool aInvertEffect,
                                float aContrastEffect);
 
+  void ChangeCompositorInternal(Compositor* aNewCompositor);
+
   float mWarningLevel;
   mozilla::TimeStamp mWarnTime;
   bool mUnusedApzTransformWarning;
@@ -342,6 +351,9 @@ private:
   UniquePtr<LayerProperties> mClonedLayerTreeProperties;
 
   nsTArray<ImageCompositeNotification> mImageCompositeNotifications;
+
+  nsTArray<RefPtr<TextureHost>> mCurrentHeldTextureHosts;
+  nsTArray<RefPtr<TextureHost>> mPreviousHeldTextureHosts;
 
   /**
    * Context target, nullptr when drawing directly to our swap chain.
@@ -457,7 +469,7 @@ public:
     mShadowClipRect = aRect;
   }
 
-  void SetShadowTransform(const gfx::Matrix4x4& aMatrix)
+  void SetShadowBaseTransform(const gfx::Matrix4x4& aMatrix)
   {
     mShadowTransform = aMatrix;
   }
@@ -480,10 +492,13 @@ public:
   float GetShadowOpacity() { return mShadowOpacity; }
   const Maybe<ParentLayerIntRect>& GetShadowClipRect() { return mShadowClipRect; }
   const LayerIntRegion& GetShadowVisibleRegion() { return mShadowVisibleRegion; }
-  const gfx::Matrix4x4& GetShadowTransform() { return mShadowTransform; }
+  const gfx::Matrix4x4& GetShadowBaseTransform() { return mShadowTransform; }
   bool GetShadowTransformSetByAnimation() { return mShadowTransformSetByAnimation; }
   bool HasLayerBeenComposited() { return mLayerComposited; }
   gfx::IntRect GetClearRect() { return mClearRect; }
+
+  // Returns false if the layer is attached to an older compositor.
+  bool HasStaleCompositor() const;
 
   /**
    * Return the part of the visible region that has been fully rendered.
@@ -569,7 +584,7 @@ RenderWithAllMasks(Layer* aLayer, Compositor* aCompositor,
   // into. The final mask gets rendered into the original render target.
 
   // Calculate the size of the intermediate surfaces.
-  gfx::Rect visibleRect(aLayer->GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds());
+  gfx::Rect visibleRect(aLayer->GetLocalVisibleRegion().ToUnknownRegion().GetBounds());
   gfx::Matrix4x4 transform = aLayer->GetEffectiveTransform();
   // TODO: Use RenderTargetIntRect and TransformBy here
   gfx::IntRect surfaceRect =

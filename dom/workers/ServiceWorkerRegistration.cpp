@@ -75,7 +75,7 @@ NS_IMPL_RELEASE_INHERITED(ServiceWorkerRegistrationBase, DOMEventTargetHelper)
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(ServiceWorkerRegistrationBase)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 
-ServiceWorkerRegistrationBase::ServiceWorkerRegistrationBase(nsPIDOMWindow* aWindow,
+ServiceWorkerRegistrationBase::ServiceWorkerRegistrationBase(nsPIDOMWindowInner* aWindow,
                                                              const nsAString& aScope)
   : DOMEventTargetHelper(aWindow)
   , mScope(aScope)
@@ -98,7 +98,7 @@ NS_IMPL_CYCLE_COLLECTION_INHERITED(ServiceWorkerRegistrationMainThread, ServiceW
                                    mInstallingWorker, mWaitingWorker, mActiveWorker);
 #endif
 
-ServiceWorkerRegistrationMainThread::ServiceWorkerRegistrationMainThread(nsPIDOMWindow* aWindow,
+ServiceWorkerRegistrationMainThread::ServiceWorkerRegistrationMainThread(nsPIDOMWindowInner* aWindow,
                                                                          const nsAString& aScope)
   : ServiceWorkerRegistrationBase(aWindow, aScope)
   , mListeningForEvents(false)
@@ -119,7 +119,7 @@ ServiceWorkerRegistrationMainThread::~ServiceWorkerRegistrationMainThread()
 already_AddRefed<workers::ServiceWorker>
 ServiceWorkerRegistrationMainThread::GetWorkerReference(WhichServiceWorker aWhichOne)
 {
-  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
   if (!window) {
     return nullptr;
   }
@@ -259,8 +259,7 @@ ServiceWorkerRegistrationMainThread::RegistrationRemoved()
   // If the registration is being removed completely, remove it from the
   // window registration hash table so that a new registration would get a new
   // wrapper JS object.
-  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
-  if (window) {
+  if (nsCOMPtr<nsPIDOMWindowInner> window = GetOwner()) {
     window->InvalidateServiceWorkerRegistration(mScope);
   }
 }
@@ -334,13 +333,12 @@ public:
       promise->MaybeResolve(JS::UndefinedHandleValue);
     }
     mStatus.SuppressException();
-    mPromiseProxy->CleanUp(aCx);
+    mPromiseProxy->CleanUp();
     return true;
   }
 
   void
-  PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aSuccess) override
+  PostDispatch(WorkerPrivate* aWorkerPrivate, bool aSuccess) override
   {
     if (!aSuccess) {
       mStatus.SuppressException();
@@ -390,12 +388,9 @@ public:
       return;
     }
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-
     RefPtr<UpdateResultRunnable> r =
       new UpdateResultRunnable(proxy, aStatus);
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
   }
 };
 
@@ -503,7 +498,7 @@ public:
       promise->MaybeReject(NS_ERROR_DOM_SECURITY_ERR);
     }
 
-    mPromiseWorkerProxy->CleanUp(aCx);
+    mPromiseWorkerProxy->CleanUp();
     return true;
   }
 };
@@ -557,9 +552,7 @@ private:
     RefPtr<WorkerRunnable> r =
       new FulfillUnregisterPromiseRunnable(proxy, aState);
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
   }
 };
 
@@ -716,7 +709,7 @@ ServiceWorkerRegistrationMainThread::ShowNotification(JSContext* aCx,
                                                       ErrorResult& aRv)
 {
   AssertIsOnMainThread();
-  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
   if (NS_WARN_IF(!window)) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -749,7 +742,7 @@ already_AddRefed<Promise>
 ServiceWorkerRegistrationMainThread::GetNotifications(const GetNotificationOptions& aOptions, ErrorResult& aRv)
 {
   AssertIsOnMainThread();
-  nsCOMPtr<nsPIDOMWindow> window = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> window = GetOwner();
   if (NS_WARN_IF(!window)) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return nullptr;
@@ -1077,7 +1070,7 @@ ServiceWorkerRegistrationWorkerThread::InitListener()
   worker->AssertIsOnWorkerThread();
 
   mListener = new WorkerListener(worker, this);
-  if (!worker->AddFeature(worker->GetJSContext(), this)) {
+  if (!worker->AddFeature(this)) {
     mListener = nullptr;
     NS_WARNING("Could not add feature");
     return;
@@ -1135,7 +1128,7 @@ ServiceWorkerRegistrationWorkerThread::ReleaseListener(Reason aReason)
   //    be null and we won't reach here.
   // 2) Otherwise, worker is still around even if we are going away.
   mWorkerPrivate->AssertIsOnWorkerThread();
-  mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+  mWorkerPrivate->RemoveFeature(this);
 
   mListener->ClearRegistration();
 
@@ -1203,10 +1196,7 @@ WorkerListener::UpdateFound()
   if (mWorkerPrivate) {
     RefPtr<FireUpdateFoundRunnable> r =
       new FireUpdateFoundRunnable(mWorkerPrivate, this);
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    if (NS_WARN_IF(!r->Dispatch(jsapi.cx()))) {
-    }
+    NS_WARN_IF(!r->Dispatch());
   }
 }
 

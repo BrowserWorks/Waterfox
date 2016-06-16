@@ -80,7 +80,9 @@ var JsFlameGraphView = Heritage.extend(DetailsSubview, {
       }
     });
 
-    this.emit(EVENTS.JS_FLAMEGRAPH_RENDERED);
+    this.graph.focus();
+
+    this.emit(EVENTS.UI_JS_FLAMEGRAPH_RENDERED);
   },
 
   /**

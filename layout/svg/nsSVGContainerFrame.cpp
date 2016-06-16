@@ -7,13 +7,14 @@
 #include "nsSVGContainerFrame.h"
 
 // Keep others in (case-insensitive) order:
+#include "mozilla/RestyleManagerHandle.h"
+#include "mozilla/RestyleManagerHandleInlines.h"
 #include "nsCSSFrameConstructor.h"
 #include "nsSVGEffects.h"
 #include "nsSVGElement.h"
 #include "nsSVGUtils.h"
 #include "nsSVGAnimatedTransformList.h"
 #include "SVGTextFrame.h"
-#include "RestyleManager.h"
 
 using namespace mozilla;
 
@@ -112,8 +113,7 @@ nsSVGContainerFrame::ReflowSVGNonDisplayText(nsIFrame* aContainer)
                !aContainer->IsFrameOfType(nsIFrame::eSVG),
                "it is wasteful to call ReflowSVGNonDisplayText on a container "
                "frame that is not NS_FRAME_IS_NONDISPLAY");
-  for (nsIFrame* kid = aContainer->GetFirstPrincipalChild(); kid;
-       kid = kid->GetNextSibling()) {
+  for (nsIFrame* kid : aContainer->PrincipalChildList()) {
     nsIAtom* type = kid->GetType();
     if (type == nsGkAtoms::svgTextFrame) {
       static_cast<SVGTextFrame*>(kid)->ReflowSVGNonDisplayText();

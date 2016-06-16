@@ -87,7 +87,7 @@ html, body, #app, #memory-tool {
   margin-inline-end: 5px;
 }
 
-.devtools-toolbar > .toolbar-group > label.breakdown-by > span {
+.devtools-toolbar > .toolbar-group > label.display-by > span {
   margin-inline-end: 5px;
 }
 
@@ -102,6 +102,15 @@ html, body, #app, #memory-tool {
 #take-snapshot::before {
   background-image: url(images/command-screenshot.png);
 }
+
+#clear-snapshots::before {
+  background-image: url(chrome://devtools/skin/images/clear.svg);
+}
+
+#diff-snapshots::before {
+  background-image: url(chrome://devtools/skin/images/diff.svg);
+}
+
 @media (min-resolution: 1.1dppx) {
   #take-snapshot::before {
     background-image: url(images/command-screenshot@2x.png);
@@ -172,11 +181,17 @@ html, body, #app, #memory-tool {
   color: var(--theme-body-color);
   border-bottom: 1px solid rgba(128,128,128,0.15);
   padding: 8px;
+  cursor: default;
 }
 
 .snapshot-list-item.selected {
   background-color: var(--theme-selection-background);
   color: var(--theme-selection-color);
+}
+
+.snapshot-list-item.selected ::-moz-selection {
+  background-color: var(--theme-selection-color);
+  color: var(--theme-selection-background);
 }
 
 .snapshot-list-item .snapshot-info {
@@ -215,6 +230,26 @@ html, body, #app, #memory-tool {
  * Main panel
  */
 
+.vbox {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
+}
+
+.vbox > * {
+  flex: 1;
+
+  /**
+   * By default, flex items have min-width: auto;
+   * (https://drafts.csswg.org/css-flexbox/#min-size-auto)
+   */
+  min-width: 0;
+}
+
 #heap-view {
   /**
    * Flex: contains a .heap-view-panel which needs to fill out all the
@@ -233,6 +268,7 @@ html, body, #app, #memory-tool {
    * (https://drafts.csswg.org/css-flexbox/#min-size-auto)
    */
   min-width: 0;
+  font-size: 90%;
 }
 
 #heap-view > .heap-view-panel {
@@ -257,7 +293,8 @@ html, body, #app, #memory-tool {
 }
 
 #heap-view > .heap-view-panel > .snapshot-status,
-#heap-view > .heap-view-panel > .take-snapshot {
+#heap-view > .heap-view-panel > .take-snapshot,
+#shortest-paths-select-node-msg {
   margin: auto;
   margin-top: 65px;
   font-size: 120%;
@@ -287,19 +324,35 @@ html, body, #app, #memory-tool {
   color: var(--theme-body-color);
   background-color: var(--theme-tab-toolbar-background);
   border-bottom: 1px solid var(--cell-border-color);
+  flex: 0;
+}
+
+.header > span,
+#shortest-paths-header {
+  text-overflow: ellipsis;
+  line-height: var(--heap-tree-header-height);
+  justify-content: center;
+  justify-self: center;
+  white-space: nowrap;
 }
 
 .header > span {
   overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: var(--heap-tree-header-height);
-  justify-content: center;
-  font-size: 90%;
-  white-space: nowrap;
 }
 
 .header > .heap-tree-item-name {
   justify-content: flex-start;
+}
+
+#shortest-paths {
+  background-color: var(--theme-body-background);
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+#shortest-paths-select-node-msg {
+  justify-self: center;
 }
 
 /**
@@ -317,6 +370,12 @@ html, body, #app, #memory-tool {
 
 .tree-node {
   height: var(--heap-tree-row-height);
+  line-height: var(--heap-tree-row-height);
+  cursor: default;
+}
+
+.children-pointer {
+  padding-inline-end: 5px;
 }
 
 /**
@@ -345,6 +404,11 @@ html, body, #app, #memory-tool {
   color: var(--theme-selection-color);
 }
 
+.heap-tree-item.focused ::-moz-selection {
+  background-color: var(--theme-selection-color);
+  color: var(--theme-selection-background);
+}
+
 .heap-tree-item-bytes,
 .heap-tree-item-count,
 .heap-tree-item-total-bytes,
@@ -363,6 +427,20 @@ html, body, #app, #memory-tool {
 .heap-tree-item-bytes,
 .heap-tree-item-total-bytes {
   width: 10%;
+  /*
+   * Provision for up to 19 characters:
+   *
+   *     GG_MMM_KKK_BBB_100%
+   *     |            |||  |
+   *     '------------'|'--'
+   *     14 ch for 10s | 4 ch for the largest % we will
+   *     of GB and     | normally see: "100%"
+   *     spaces every  |
+   *     3 digits      |
+   *                   |
+   *             A space between the number and percent
+   */
+  min-width: 19ch;
 }
 
 .heap-tree-item-name {
@@ -410,7 +488,7 @@ html, body, #app, #memory-tool {
 }
 
 .heap-tree-percent {
-  width: 2.5em;
+  width: 4ch;
 }
 
 .heap-tree-item.focused .heap-tree-number,
@@ -453,43 +531,57 @@ html, body, #app, #memory-tool {
   margin-right: .5em;
 }
 
-.focused .frame-link-filename,
-.focused .frame-link-column,
-.focused .frame-link-line,
-.focused .frame-link-host,
-.focused .frame-link-colon {
-  color: var(--theme-selection-color);
-}
-
-.frame-link-filename {
-  color: var(--theme-highlight-blue);
-  cursor: pointer;
-}
-
-.frame-link-filename:hover {
-  text-decoration: underline;
-}
-
-.frame-link-column,
-.frame-link-line,
-.frame-link-colon {
-  color: var(--theme-highlight-orange);
-}
-
-.frame-link-host {
-  margin-inline-start: 5px;
-  font-size: 90%;
-  color: var(--theme-content-color2);
-}
-
-.frame-link-function-display-name {
-  margin-inline-end: 5px;
-}
-
 .no-allocation-stacks {
-    border-color: var(--theme-splitter-color);
-    border-style: solid;
-    border-width: 0px 0px 1px 0px;
-    text-align: center;
-    padding: 5px;
+  border-color: var(--theme-splitter-color);
+  border-style: solid;
+  border-width: 0px 0px 1px 0px;
+  text-align: center;
+  padding: 5px;
+}
+
+/**
+ * Dagre-D3 graphs
+ */
+
+.edgePath path {
+  stroke-width: 1px;
+  fill: none;
+}
+
+.theme-dark .edgePath path {
+  stroke: var(--theme-body-color-alt);
+}
+.theme-light .edgePath path {
+  stroke: var(--theme-splitter-color);
+}
+
+g.edgeLabel rect {
+  fill: var(--theme-body-background);
+}
+g.edgeLabel tspan {
+  fill: var(--theme-body-color-alt);
+}
+
+.nodes rect {
+  stroke-width: 1px;
+}
+
+.nodes rect {
+  stroke: var(--theme-tab-toolbar-background);
+}
+.theme-light rect {
+  fill: var(--theme-tab-toolbar-background);
+}
+.theme-dark rect {
+  fill: var(--theme-toolbar-background);
+}
+
+text {
+  font-weight: 300;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serf;
+  font-size: 14px;
+}
+
+text {
+  fill: var(--theme-body-color-alt);
 }

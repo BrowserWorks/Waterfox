@@ -569,22 +569,15 @@ TileClient::Dump(std::stringstream& aStream)
 void
 TileClient::Flip()
 {
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-  if (mFrontBuffer && mFrontBuffer->GetIPDLActor() &&
-      mCompositableClient && mCompositableClient->GetIPDLActor()) {
-    // remove old buffer from CompositableHost
-    RefPtr<AsyncTransactionWaiter> waiter = new AsyncTransactionWaiter();
-    RefPtr<AsyncTransactionTracker> tracker =
-        new RemoveTextureFromCompositableTracker(waiter);
-    // Hold TextureClient until transaction complete.
-    tracker->SetTextureClient(mFrontBuffer);
-    mFrontBuffer->SetRemoveFromCompositableWaiter(waiter);
-    // RemoveTextureFromCompositableAsync() expects CompositorChild's presence.
-    mManager->AsShadowForwarder()->RemoveTextureFromCompositableAsync(tracker,
-                                                                      mCompositableClient,
-                                                                      mFrontBuffer);
+  if (mCompositableClient) {
+    if (mFrontBuffer) {
+      mFrontBuffer->RemoveFromCompositable(mCompositableClient);
+    }
+    if (mFrontBufferOnWhite) {
+      mFrontBufferOnWhite->RemoveFromCompositable(mCompositableClient);
+    }
   }
-#endif
+
   RefPtr<TextureClient> frontBuffer = mFrontBuffer;
   RefPtr<TextureClient> frontBufferOnWhite = mFrontBufferOnWhite;
   mFrontBuffer = mBackBuffer;
@@ -667,25 +660,14 @@ TileClient::DiscardFrontBuffer()
 {
   if (mFrontBuffer) {
     MOZ_ASSERT(mFrontLock);
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
-    MOZ_ASSERT(!mFrontBufferOnWhite);
-    if (mFrontBuffer->GetIPDLActor() &&
-        mCompositableClient && mCompositableClient->GetIPDLActor()) {
-      // remove old buffer from CompositableHost
-      RefPtr<AsyncTransactionWaiter> waiter = new AsyncTransactionWaiter();
-      RefPtr<AsyncTransactionTracker> tracker =
-          new RemoveTextureFromCompositableTracker(waiter);
-      // Hold TextureClient until transaction complete.
-      tracker->SetTextureClient(mFrontBuffer);
-      mFrontBuffer->SetRemoveFromCompositableWaiter(waiter);
-      // RemoveTextureFromCompositableAsync() expects CompositorChild's presence.
-      mManager->AsShadowForwarder()->RemoveTextureFromCompositableAsync(tracker,
-                                                                        mCompositableClient,
-                                                                        mFrontBuffer);
+
+    if (mCompositableClient) {
+      mFrontBuffer->RemoveFromCompositable(mCompositableClient);
     }
-#endif
+
     mAllocator->ReturnTextureClientDeferred(mFrontBuffer);
     if (mFrontBufferOnWhite) {
+      mFrontBufferOnWhite->RemoveFromCompositable(mCompositableClient);
       mAllocator->ReturnTextureClientDeferred(mFrontBufferOnWhite);
     }
     mFrontLock->ReadUnlock();
@@ -743,7 +725,7 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
   // Try to re-use the front-buffer if possible
   bool createdTextureClient = false;
   if (mFrontBuffer &&
-      mFrontBuffer->HasInternalBuffer() &&
+      mFrontBuffer->HasIntermediateBuffer() &&
       mFrontLock->GetReadCount() == 1 &&
       !(aMode == SurfaceMode::SURFACE_COMPONENT_ALPHA && !mFrontBufferOnWhite)) {
     // If we had a backbuffer we no longer care about it since we'll
@@ -976,9 +958,10 @@ ClientMultiTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
     printf_stderr("Time to draw %i: %i, %i, %i, %i\n", PR_IntervalNow() - start, bounds.x, bounds.y, bounds.width, bounds.height);
     if (aPaintRegion.IsComplex()) {
       printf_stderr("Complex region\n");
-      nsIntRegionRectIterator it(aPaintRegion);
-      for (const IntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
-        printf_stderr(" rect %i, %i, %i, %i\n", rect->x, rect->y, rect->width, rect->height);
+      for (auto iter = aPaintRegion.RectIter(); !iter.Done(); iter.Next()) {
+        const IntRect& rect = iter.Get();
+        printf_stderr(" rect %i, %i, %i, %i\n",
+                      rect.x, rect.y, rect.width, rect.height);
       }
     }
   }
@@ -1291,12 +1274,12 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
     mTilingOrigin.x = std::min(mTilingOrigin.x, moz2DTile.mTileOrigin.x);
     mTilingOrigin.y = std::min(mTilingOrigin.y, moz2DTile.mTileOrigin.y);
 
-    nsIntRegionRectIterator it(aDirtyRegion);
-    for (const IntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
-      gfx::Rect drawRect(dirtyRect->x - aTileOrigin.x,
-                         dirtyRect->y - aTileOrigin.y,
-                         dirtyRect->width,
-                         dirtyRect->height);
+    for (auto iter = aDirtyRegion.RectIter(); !iter.Done(); iter.Next()) {
+      const IntRect& dirtyRect = iter.Get();
+      gfx::Rect drawRect(dirtyRect.x - aTileOrigin.x,
+                         dirtyRect.y - aTileOrigin.y,
+                         dirtyRect.width,
+                         dirtyRect.height);
       drawRect.Scale(mResolution);
 
       // Mark the newly updated area as invalid in the front buffer
@@ -1332,20 +1315,20 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
 
   // XXX Perhaps we should just copy the bounding rectangle here?
   RefPtr<gfx::SourceSurface> source = mSinglePaintDrawTarget->Snapshot();
-  nsIntRegionRectIterator it(aDirtyRegion);
-  for (const IntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
+  for (auto iter = aDirtyRegion.RectIter(); !iter.Done(); iter.Next()) {
+    const IntRect& dirtyRect = iter.Get();
 #ifdef GFX_TILEDLAYER_PREF_WARNINGS
     printf_stderr(" break into subdirtyRect %i, %i, %i, %i\n",
-                  dirtyRect->x, dirtyRect->y, dirtyRect->width, dirtyRect->height);
+                  dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
 #endif
-    gfx::Rect drawRect(dirtyRect->x - aTileOrigin.x,
-                       dirtyRect->y - aTileOrigin.y,
-                       dirtyRect->width,
-                       dirtyRect->height);
+    gfx::Rect drawRect(dirtyRect.x - aTileOrigin.x,
+                       dirtyRect.y - aTileOrigin.y,
+                       dirtyRect.width,
+                       dirtyRect.height);
     drawRect.Scale(mResolution);
 
-    gfx::IntRect copyRect(NS_lroundf((dirtyRect->x - mSinglePaintBufferOffset.x) * mResolution),
-                          NS_lroundf((dirtyRect->y - mSinglePaintBufferOffset.y) * mResolution),
+    gfx::IntRect copyRect(NS_lroundf((dirtyRect.x - mSinglePaintBufferOffset.x) * mResolution),
+                          NS_lroundf((dirtyRect.y - mSinglePaintBufferOffset.y) * mResolution),
                           drawRect.width,
                           drawRect.height);
     gfx::IntPoint copyTarget(NS_lroundf(drawRect.x), NS_lroundf(drawRect.y));
@@ -1379,7 +1362,7 @@ ClientMultiTiledLayerBuffer::ValidateTile(TileClient& aTile,
   // Note, we don't call UpdatedTexture. The Updated function is called manually
   // by the TiledContentHost before composition.
 
-  if (backBuffer->HasInternalBuffer()) {
+  if (backBuffer->HasIntermediateBuffer()) {
     // If our new buffer has an internal buffer, we don't want to keep another
     // TextureClient around unnecessarily, so discard the back-buffer.
     aTile.DiscardBackBuffer();

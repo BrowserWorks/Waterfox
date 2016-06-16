@@ -743,7 +743,7 @@ DispatchErrorEvent(IDBRequest* aRequest,
   MOZ_ASSERT(!transaction || transaction->IsOpen() || transaction->IsAborted());
 
   if (transaction && transaction->IsOpen()) {
-    WidgetEvent* internalEvent = aEvent->GetInternalNSEvent();
+    WidgetEvent* internalEvent = aEvent->WidgetEventPtr();
     MOZ_ASSERT(internalEvent);
 
     if (internalEvent->mFlags.mExceptionHasBeenRisen) {
@@ -816,7 +816,7 @@ DispatchSuccessEvent(ResultHelper* aResultHelper,
   MOZ_ASSERT_IF(transaction,
                 transaction->IsOpen() || transaction->IsAborted());
 
-  WidgetEvent* internalEvent = aEvent->GetInternalNSEvent();
+  WidgetEvent* internalEvent = aEvent->WidgetEventPtr();
   MOZ_ASSERT(internalEvent);
 
   if (transaction &&
@@ -943,7 +943,7 @@ public:
       RefPtr<WorkerPermissionOperationCompleted> runnable =
         new WorkerPermissionOperationCompleted(mWorkerPrivate, this);
 
-      MOZ_ALWAYS_TRUE(runnable->Dispatch(nullptr));
+      MOZ_ALWAYS_TRUE(runnable->Dispatch());
       return;
     }
 
@@ -959,8 +959,7 @@ public:
     mActor = nullptr;
 
     mWorkerPrivate->AssertIsOnWorkerThread();
-    JSContext* cx = mWorkerPrivate->GetJSContext();
-    mWorkerPrivate->RemoveFeature(cx, this);
+    mWorkerPrivate->RemoveFeature(this);
   }
 
 private:
@@ -975,7 +974,7 @@ private:
       wp = wp->GetParent();
     }
 
-    nsPIDOMWindow* window = wp->GetWindow();
+    nsPIDOMWindowInner* window = wp->GetWindow();
     if (!window) {
       return true;
     }
@@ -1412,10 +1411,7 @@ BackgroundFactoryRequestChild::RecvPermissionChallenge(
       new WorkerPermissionChallenge(workerPrivate, this, mFactory,
                                     aPrincipalInfo);
 
-    JSContext* cx = workerPrivate->GetJSContext();
-    MOZ_ASSERT(cx);
-
-    if (NS_WARN_IF(!workerPrivate->AddFeature(cx, challenge))) {
+    if (NS_WARN_IF(!workerPrivate->AddFeature(challenge))) {
       return false;
     }
 
@@ -1431,7 +1427,7 @@ BackgroundFactoryRequestChild::RecvPermissionChallenge(
   }
 
   if (XRE_IsParentProcess()) {
-    nsCOMPtr<nsPIDOMWindow> window = mFactory->GetParentObject();
+    nsCOMPtr<nsPIDOMWindowInner> window = mFactory->GetParentObject();
     MOZ_ASSERT(window);
 
     nsCOMPtr<Element> ownerElement =
@@ -1794,7 +1790,7 @@ BackgroundDatabaseChild::RecvVersionChange(const uint64_t& aOldVersion,
   RefPtr<IDBDatabase> kungFuDeathGrip = mDatabase;
 
   // Handle bfcache'd windows.
-  if (nsPIDOMWindow* owner = mDatabase->GetOwner()) {
+  if (nsPIDOMWindowInner* owner = mDatabase->GetOwner()) {
     // The database must be closed if the window is already frozen.
     bool shouldAbortAndClose = owner->IsFrozen();
 

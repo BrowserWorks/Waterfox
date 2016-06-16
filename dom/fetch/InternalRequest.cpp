@@ -37,6 +37,7 @@ InternalRequest::GetRequestConstructorCopy(nsIGlobalObject* aGlobal, ErrorResult
   copy->mSameOriginDataURL = true;
   copy->mPreserveContentCodings = true;
   // The default referrer is already about:client.
+  copy->mReferrerPolicy = mReferrerPolicy;
 
   copy->mContentPolicyType = nsIContentPolicy::TYPE_FETCH;
   copy->mMode = mMode;
@@ -77,6 +78,7 @@ InternalRequest::InternalRequest(const InternalRequest& aOther)
   , mHeaders(new InternalHeaders(*aOther.mHeaders))
   , mContentPolicyType(aOther.mContentPolicyType)
   , mReferrer(aOther.mReferrer)
+  , mReferrerPolicy(aOther.mReferrerPolicy)
   , mMode(aOther.mMode)
   , mCredentialsMode(aOther.mCredentialsMode)
   , mResponseTainting(aOther.mResponseTainting)
@@ -305,14 +307,6 @@ InternalRequest::MapChannelToRequestMode(nsIChannel* aChannel)
   }
 
   // TODO: remove following code once securityMode is fully implemented (bug 1189945)
-
-  // We only support app:// protocol interception in non-release builds.
-#ifndef RELEASE_BUILD
-  nsCOMPtr<nsIJARChannel> jarChannel = do_QueryInterface(aChannel);
-  if (jarChannel) {
-    return RequestMode::No_cors;
-  }
-#endif
 
   nsCOMPtr<nsIHttpChannelInternal> httpChannel = do_QueryInterface(aChannel);
 

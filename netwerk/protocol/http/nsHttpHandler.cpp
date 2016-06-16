@@ -350,7 +350,7 @@ nsHttpHandler::Init()
     mSchedulingContextService =
         do_GetService("@mozilla.org/network/scheduling-context-service;1");
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(MOZ_MULET)
     mProductSub.AssignLiteral(MOZILLA_UAVERSION);
 #else
     mProductSub.AssignLiteral("20100101");
@@ -802,7 +802,7 @@ nsHttpHandler::InitUserAgentComponents()
     }
 #endif // ANDROID
 
-#ifdef FXOS_SIMULATOR
+#ifdef MOZ_MULET
     {
         // Add the `Mobile` or `Tablet` or `TV` token when running in the b2g
         // desktop simulator via preference.
@@ -814,7 +814,7 @@ nsHttpHandler::InitUserAgentComponents()
             mCompatDevice.AssignLiteral("Mobile");
         }
     }
-#endif // FXOS_SIMULATOR
+#endif // MOZ_MULET
 
 #if defined(MOZ_WIDGET_GONK)
     // Device model identifier should be a simple token, which can be composed
@@ -2284,7 +2284,7 @@ nsHttpHandler::TickleWifi(nsIInterfaceRequestor *cb)
     // on B2G, contains the necessary information on wifi and gateway
 
     nsCOMPtr<nsIDOMWindow> domWindow = do_GetInterface(cb);
-    nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(domWindow);
+    nsCOMPtr<nsPIDOMWindowOuter> piWindow = do_QueryInterface(domWindow);
     if (!piWindow)
         return;
 

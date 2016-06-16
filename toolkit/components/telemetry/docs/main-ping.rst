@@ -46,7 +46,7 @@ Structure::
         addons: <string>, // obsolete, use ``environment.addons``
       },
 
-      childPayloads: {...}, // only present with e10s; a reduced payload from content processes, null on failure
+      childPayloads: [...], // only present with e10s; reduced payloads from content processes, null on failure
       simpleMeasurements: {...},
 
       // The following properties may all be null if we fail to collect them.
@@ -60,7 +60,7 @@ Structure::
       lateWrites: {...},
       addonDetails: {...},
       addonHistograms: {...},
-      UIMeasurements: {...},
+      UIMeasurements: [...],
       slowSQL: {...},
       slowSQLstartup: {...},
     }
@@ -82,6 +82,14 @@ The length of this subsession in seconds.
 This uses a monotonic clock, so this may mismatch with other measurements that are not monotonic (e.g. based on Date.now()).
 
 If ``sessionLength`` is ``-1``, the monotonic clock is not working.
+
+childPayloads
+-------------
+The Telemetry payloads sent by child processes, recorded on child process shutdown (event ``content-child-shutdown`` observed) and whenever ``TelemetrySession.requestChildPayloads()`` is called (currently only used in tests). They are reduced session payloads, only available with e10s. Among some other things, they don't report addon details, addon histograms or UI Telemetry.
+
+Any histogram whose Accumulate call happens on a child process will be accumulated into a childPayload's histogram, not the parent's. As such, some histograms in childPayloads will contain different data (e.g. ``GC_MS`` will be much different in childPayloads, for instance, because the child GC needs to content with content scripts and parent doesn't) and some histograms will be absent (``EVENTLOOP_UI_ACTIVITY`` is parent-process-only because it measures inter-event timings where the OS delivers the events in the parent).
+
+Note: Child payloads are not collected and cleared with subsession splits, they are currently only meaningful when analysed from ``saved-session`` or ``main`` pings with ``reason`` set to ``shutdown``.
 
 simpleMeasurements
 ------------------
@@ -164,6 +172,14 @@ pingsOverdue
 ~~~~~~~~~~~~
 Integer count of pending pings that are overdue.
 
+histograms
+----------
+This section contains the histograms that are valid for the current platform. ``Flag`` and ``count`` histograms are always created and submitted, with their default value being respectively ``false`` and ``0``. Other histogram types (`see here <https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Adding_a_new_Telemetry_probe#Choosing_a_Histogram_Type>`_) are not created nor submitted if no data was added to them. The type and format of the reported histograms is described by the ``Histograms.json`` file. Its most recent version is available `here <https://dxr.mozilla.org/mozilla-central/source/toolkit/components/telemetry/Histograms.json>`_. The ``info.revision`` field indicates the revision of the file that describes the reported histograms.
+
+keyedHistograms
+---------------
+This section contains the keyed histograms available for the current platform. Unlike the ``histograms`` section, this section always reports all the keyed histograms, even though they contain no data.
+
 threadHangStats
 ---------------
 Contains the statistics about the hangs in main and background threads. Note that hangs in this section capture the [C++ pseudostack](https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Profiling_with_the_Built-in_Profiler#Native_stack_vs._Pseudo_stack) and an incomplete JS stack, which is not 100% precise.
@@ -193,8 +209,7 @@ Structure::
             "annotations" : [
               {
                 "pluginName" : "Shockwave Flash",
-                "pluginVersion" : "18.0.0.209",
-                "pluginIsWhitelistedForShumway" : "false"
+                "pluginVersion" : "18.0.0.209"
               },
               ... other annotations ...
             ]
@@ -241,7 +256,6 @@ Structure::
           {
             "pluginName" : "Shockwave Flash",
             "pluginVersion" : "18.0.0.209",
-            "pluginIsWhitelistedForShumway" : "false",
             ... other annotations as key:value pairs ...
           }
         ],
@@ -249,9 +263,25 @@ Structure::
       ]
     },
 
+log
+---
+This section contains a log of important or unusual events reported through Telemetry.
+
+Structure::
+
+    "log": [
+      [
+        "Event_ID",
+        3785, // the timestamp (in milliseconds) for the log entry
+        ... other data ...
+      ],
+      ...
+    ]
+
+
 webrtc
 ------
-Contains special statistics gathered by WebRTC releated components.
+Contains special statistics gathered by WebRTC related components.
 
 So far only a bitmask for the ICE candidate type present in a successful or
 failed WebRTC connection is getting reported through C++ code as
@@ -287,3 +317,127 @@ Structure::
         }
       }
     },
+
+fileIOReports
+-------------
+Contains the statistics of main-thread I/O recorded during the execution. Only the I/O stats for the XRE and the profile directories are currently reported, neither of them disclosing the full local path.
+
+Structure::
+
+    "fileIOReports": {
+      "{xre}": [
+        totalTime, // Accumulated duration of all operations
+        creates, // Number of create/open operations
+        reads, // Number of read operations
+        writes, // Number of write operations
+        fsyncs, // Number of fsync operations
+        stats, // Number of stat operations
+      ],
+      "{profile}": [ ... ],
+      ...
+    }
+
+lateWrites
+----------
+This sections reports writes to the file system that happen during shutdown. The reported data contains the stack and the loaded libraries at the time the writes happened.
+
+Structure::
+
+    "lateWrites" : {
+      "memoryMap" : [
+        ["wgdi32.pdb", "08A541B5942242BDB4AEABD8C87E4CFF2"],
+        ... other entries in the format ["module name", "breakpad identifier"] ...
+       ],
+      "stacks" : [
+        [
+          [
+            0, // the module index or -1 for invalid module indices
+            190649 // the offset of this program counter in its module or an absolute pc
+          ],
+          [1, 2540075],
+          ... other frames ...
+         ],
+         ... other stacks ...
+      ],
+    },
+
+addonDetails
+------------
+This section contains per-addon telemetry details, as reported by each addon provider. The XPI provider is the only one reporting at the time of writing (`see DXR <https://dxr.mozilla.org/mozilla-central/search?q=setTelemetryDetails&case=true>`_). Telemetry does not manipulate or enforce a specific format for the supplied provider's data.
+
+Structure::
+
+    "addonDetails": {
+      "XPI": {
+        "adbhelper@mozilla.org": {
+          "scan_items": 24,
+          "scan_MS": 3,
+          "location": "app-profile",
+          "name": "ADB Helper",
+          "creator": "Mozilla & Android Open Source Project",
+          "startup_MS": 30
+        },
+        ...
+      },
+      ...
+    }
+
+addonHistograms
+---------------
+This section contains the histogram registered by the addons (`see here <https://dxr.mozilla.org/mozilla-central/rev/584870f1cbc5d060a57e147ce249f736956e2b62/toolkit/components/telemetry/nsITelemetry.idl#303>`_). This section is not present if no addon histogram is available.
+
+UITelemetry
+-----------
+See the ``UITelemetry data format`` documentation.
+
+slowSQL
+-------
+This section contains the informations about the slow SQL queries for both the main and other threads. The execution of an SQL statement is considered slow if it takes 50ms or more on the main thread or 100ms or more on other threads. Slow SQL statements will be automatically trimmed to 1000 characters. This limit doesn't include the ellipsis and database name, that are appended at the end of the stored statement.
+
+Structure::
+
+    "slowSQL": {
+      "mainThread": {
+        "Sanitized SQL Statement": [
+          1, // the number of times this statement was hit
+          200  // the total time (in milliseconds) that was spent on this statement
+        ],
+        ...
+      },
+      "otherThreads": {
+        "VACUUM /* places.sqlite */": [
+          1,
+          330
+        ],
+        ...
+      }
+    },
+
+slowSQLStartup
+--------------
+This section contains the slow SQL statements gathered at startup (until the "sessionstore-windows-restored" event is fired). The structure of this section resembles the one for `slowSQL`_.
+
+UIMeasurements
+--------------
+This section contains UI specific telemetry measurements and events. This section is mainly populated with Android-specific data and events (`see here <https://dxr.mozilla.org/mozilla-central/search?q=regexp%3AUITelemetry.%28addEvent|startSession|stopSession%29&redirect=false&case=false>`_).
+
+Structure::
+
+    "UIMeasurements": [
+      {
+        "type": "event", // either "session" or "event"
+        "action": "action.1",
+        "method": "menu",
+        "sessions": [],
+        "timestamp": 12345,
+        "extras": "settings"
+      },
+      {
+        "type": "session",
+        "name": "awesomescreen.1",
+        "reason": "commit",
+        "start": 123,
+        "end": 456
+      }
+      ...
+    ],

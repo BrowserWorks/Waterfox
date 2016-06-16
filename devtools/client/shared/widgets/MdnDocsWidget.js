@@ -25,7 +25,7 @@
 "use strict";
 
 const {Cc, Cu, Ci} = require("chrome");
-Cu.import("resource://gre/modules/Services.jsm");
+const Services = require("Services");
 const Promise = require("promise");
 const DOMUtils = Cc["@mozilla.org/inspector/dom-utils;1"]
                  .getService(Ci.inIDOMUtils);
@@ -41,6 +41,7 @@ var XHR_CSS_URL = "https://developer.mozilla.org/en-US/docs/Web/CSS/";
 const PAGE_LINK_PARAMS = "?utm_source=mozilla&utm_medium=firefox-inspector&utm_campaign=default"
 // URL for the page link omits locale, so a locale-specific page will be loaded
 var PAGE_LINK_URL = "https://developer.mozilla.org/docs/Web/CSS/";
+exports.PAGE_LINK_URL = PAGE_LINK_URL;
 
 const BROWSER_WINDOW = 'navigator:browser';
 

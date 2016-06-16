@@ -44,12 +44,12 @@ def run_marionette(tests, b2g_path=None, emulator=None, testtype=None,
 
     parser = BaseMarionetteArguments()
     commandline.add_logging_group(parser)
-    args = parser.parse_args()
 
     if not tests:
         tests = [os.path.join(topsrcdir,
-                 'testing/marionette/client/marionette/tests/unit-tests.ini')]
-    args.tests = tests
+                 'testing/marionette/harness/marionette/tests/unit-tests.ini')]
+
+    args = parser.parse_args(args=tests)
 
     if b2g_path:
         args.homedir = b2g_path
@@ -67,7 +67,7 @@ def run_marionette(tests, b2g_path=None, emulator=None, testtype=None,
     args.logger = commandline.setup_logging("Marionette Unit Tests",
                                             args,
                                             {"mach": sys.stdout})
-    failed = MarionetteHarness(MarionetteTestRunner, args=args).run()
+    failed = MarionetteHarness(MarionetteTestRunner, args=vars(args)).run()
     if failed > 0:
         return 1
     else:

@@ -265,6 +265,9 @@ nsHttpConnection::StartSpdy(uint8_t spdyVersion)
     } else {
         mTLSFilter->SetProxiedTransaction(mSpdySession);
     }
+    if (mDontReuse) {
+        mSpdySession->DontReuse();
+    }
 }
 
 bool
@@ -348,7 +351,7 @@ nsresult
 nsHttpConnection::Activate(nsAHttpTransaction *trans, uint32_t caps, int32_t pri)
 {
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
-    LOG(("nsHttpConnection::Activate [this=%p trans=%x caps=%x]\n",
+    LOG(("nsHttpConnection::Activate [this=%p trans=%p caps=%x]\n",
          this, trans, caps));
 
     if (!trans->IsNullTransaction())
@@ -657,6 +660,7 @@ nsHttpConnection::InitSSLParams(bool connectingToProxy, bool proxyStartSSL)
 void
 nsHttpConnection::DontReuse()
 {
+    LOG(("nsHttpConnection::DontReuse %p spdysession=%p\n", this, mSpdySession.get()));
     mKeepAliveMask = false;
     mKeepAlive = false;
     mDontReuse = true;
@@ -1765,24 +1769,28 @@ nsHttpConnection::OnSocketReadable()
             break;
         }
 
+        mSocketInCondition = NS_OK;
         rv = mTransaction->
             WriteSegmentsAgain(this, nsIOService::gDefaultSegmentSize, &n, &again);
+        LOG(("nsHttpConnection::OnSocketReadable %p trans->ws rv=%x n=%d socketin=%x\n",
+             this, rv, n, mSocketInCondition));
         if (NS_FAILED(rv)) {
             // if the transaction didn't want to take any more data, then
             // wait for the transaction to call ResumeRecv.
-            if (rv == NS_BASE_STREAM_WOULD_BLOCK)
+            if (rv == NS_BASE_STREAM_WOULD_BLOCK) {
                 rv = NS_OK;
+            }
             again = false;
-        }
-        else {
+        } else {
             mCurrentBytesRead += n;
             mTotalBytesRead += n;
             if (NS_FAILED(mSocketInCondition)) {
                 // continue waiting for the socket if necessary...
-                if (mSocketInCondition == NS_BASE_STREAM_WOULD_BLOCK)
+                if (mSocketInCondition == NS_BASE_STREAM_WOULD_BLOCK) {
                     rv = ResumeRecv();
-                else
+                } else {
                     rv = mSocketInCondition;
+                }
                 again = false;
             }
         }

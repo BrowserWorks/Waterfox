@@ -58,12 +58,9 @@ Compositor::DrawDiagnostics(DiagnosticFlags aFlags,
   }
 
   if (aVisibleRegion.GetNumRects() > 1) {
-    nsIntRegionRectIterator screenIter(aVisibleRegion);
-
-    while (const gfx::IntRect* rect = screenIter.Next())
-    {
+    for (auto iter = aVisibleRegion.RectIter(); !iter.Done(); iter.Next()) {
       DrawDiagnostics(aFlags | DiagnosticFlags::REGION_RECT,
-                      IntRectToRect(*rect), aClipRect, aTransform,
+                      IntRectToRect(iter.Get()), aClipRect, aTransform,
                       aFlashCounter);
     }
   }
@@ -399,6 +396,18 @@ Compositor::ComputeBackdropCopyRect(const gfx::Rect& aRect,
   transform.PostScale(1 / float(result.width), 1 / float(result.height), 1.0);
   *aOutTransform = transform;
   return result;
+}
+
+void
+Compositor::SetInvalid()
+{
+  mParent = nullptr;
+}
+
+bool
+Compositor::IsValid() const
+{
+  return !mParent;
 }
 
 #if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17

@@ -2,13 +2,14 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
- 
+
 /* the interface (to internal code) for retrieving computed style data */
 
 #include "CSSVariableImageTable.h"
 #include "mozilla/DebugOnly.h"
 
 #include "nsCSSAnonBoxes.h"
+#include "nsCSSPseudoElements.h"
 #include "nsStyleConsts.h"
 #include "nsString.h"
 #include "nsPresContext.h"
@@ -24,8 +25,11 @@
 #include "GeckoProfiler.h"
 #include "nsIDocument.h"
 #include "nsPrintfCString.h"
+#include "RubyUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/ArenaObjectID.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 
 #ifdef DEBUG
 // #define NOISY_DEBUG
@@ -69,7 +73,7 @@ static bool sExpensiveStyleStructAssertionsEnabled;
 
 nsStyleContext::nsStyleContext(nsStyleContext* aParent,
                                nsIAtom* aPseudoTag,
-                               nsCSSPseudoElements::Type aPseudoType,
+                               CSSPseudoElementType aPseudoType,
                                nsRuleNode* aRuleNode,
                                bool aSkipParentDisplayBasedStyleFixup)
   : mParent(aParent)
@@ -88,7 +92,8 @@ nsStyleContext::nsStyleContext(nsStyleContext* aParent,
   // This check has to be done "backward", because if it were written the
   // more natural way it wouldn't fail even when it needed to.
   static_assert((UINT64_MAX >> NS_STYLE_CONTEXT_TYPE_SHIFT) >=
-                nsCSSPseudoElements::ePseudo_MAX,
+                 static_cast<CSSPseudoElementTypeBase>(
+                   CSSPseudoElementType::MAX),
                 "pseudo element bits no longer fit in a uint64_t");
   MOZ_ASSERT(aRuleNode);
 
@@ -101,7 +106,6 @@ nsStyleContext::nsStyleContext(nsStyleContext* aParent,
   mNextSibling = this;
   mPrevSibling = this;
   if (mParent) {
-    mParent->AddRef();
     mParent->AddChild(this);
 #ifdef DEBUG
     nsRuleNode *r1 = mParent->RuleNode(), *r2 = aRuleNode;
@@ -111,18 +115,11 @@ nsStyleContext::nsStyleContext(nsStyleContext* aParent,
       r2 = r2->GetParent();
     NS_ASSERTION(r1 == r2, "must be in the same rule tree as parent");
 #endif
+  } else {
+    mRuleNode->PresContext()->PresShell()->StyleSet()->RootStyleContextAdded();
   }
 
-  mRuleNode->AddRef();
   mRuleNode->SetUsedDirectly(); // before ApplyStyleFixups()!
-
-  if (!mParent) {
-    // Add as a root before ApplyStyleFixups, since ApplyStyleFixups
-    // can trigger rule tree GC.
-    nsStyleSet* styleSet = mRuleNode->PresContext()->PresShell()->StyleSet();
-    styleSet->AddStyleContextRoot(this);
-  }
-
   ApplyStyleFixups(aSkipParentDisplayBasedStyleFixup);
 
   #define eStyleStruct_LastItem (nsStyleStructID_Length - 1)
@@ -136,10 +133,10 @@ nsStyleContext::~nsStyleContext()
   NS_ASSERTION((nullptr == mChild) && (nullptr == mEmptyChild), "destructing context with children");
 
   nsPresContext *presContext = mRuleNode->PresContext();
-  nsStyleSet* styleSet = presContext->PresShell()->StyleSet();
-
-  NS_ASSERTION(styleSet->GetRuleTree() == mRuleNode->RuleTree() ||
-               styleSet->IsInRuleTreeReconstruct(),
+  StyleSetHandle styleSet = presContext->PresShell()->StyleSet();
+  NS_ASSERTION(!styleSet->IsGecko() ||
+               styleSet->AsGecko()->GetRuleTree() == mRuleNode->RuleTree() ||
+               styleSet->AsGecko()->IsInRuleTreeReconstruct(),
                "destroying style context from old rule tree too late");
 
 #ifdef DEBUG
@@ -160,13 +157,10 @@ nsStyleContext::~nsStyleContext()
   }
 #endif
 
-  mRuleNode->Release();
-
-  styleSet->NotifyStyleContextDestroyed(this);
-
   if (mParent) {
     mParent->RemoveChild(this);
-    mParent->Release();
+  } else {
+    styleSet->RootStyleContextRemoved();
   }
 
   // Free up our data structs.
@@ -324,25 +318,18 @@ nsStyleContext::MoveTo(nsStyleContext* aNewParent)
   MOZ_ASSERT(!aNewParent->IsStyleIfVisited());
   MOZ_ASSERT(!mStyleIfVisited || mStyleIfVisited->mParent == mParent);
 
-  nsStyleContext* oldParent = mParent;
-
-  if (oldParent->HasChildThatUsesResetStyle()) {
+  if (mParent->HasChildThatUsesResetStyle()) {
     aNewParent->AddStyleBit(NS_STYLE_HAS_CHILD_THAT_USES_RESET_STYLE);
   }
 
-  aNewParent->AddRef();
   mParent->RemoveChild(this);
   mParent = aNewParent;
   mParent->AddChild(this);
-  oldParent->Release();
 
   if (mStyleIfVisited) {
-    oldParent = mStyleIfVisited->mParent;
-    aNewParent->AddRef();
     mStyleIfVisited->mParent->RemoveChild(mStyleIfVisited);
     mStyleIfVisited->mParent = aNewParent;
     mStyleIfVisited->mParent->AddChild(mStyleIfVisited);
-    oldParent->Release();
   }
 }
 
@@ -518,12 +505,23 @@ nsStyleContext::SetStyle(nsStyleStructID aSID, void* aStruct)
 }
 
 static bool
-ShouldSuppressLineBreak(const nsStyleDisplay* aStyleDisplay,
+ShouldSuppressLineBreak(const nsStyleContext* aContext,
+                        const nsStyleDisplay* aDisplay,
                         const nsStyleContext* aParentContext,
                         const nsStyleDisplay* aParentDisplay)
 {
   // The display change should only occur for "in-flow" children
-  if (aStyleDisplay->IsOutOfFlowStyle()) {
+  if (aDisplay->IsOutOfFlowStyle()) {
+    return false;
+  }
+  // Display value of any anonymous box should not be touched. In most
+  // cases, anonymous boxes are actually not in ruby frame, but instead,
+  // some other frame with a ruby display value. Non-element pseudos
+  // which represents text frames, as well as ruby pseudos are excluded
+  // because we still want to set the flag for them.
+  if (aContext->GetPseudoType() == CSSPseudoElementType::AnonBox &&
+      aContext->GetPseudo() != nsCSSAnonBoxes::mozNonElement &&
+      !RubyUtils::IsRubyPseudo(aContext->GetPseudo())) {
     return false;
   }
   if (aParentContext->ShouldSuppressLineBreak()) {
@@ -557,12 +555,12 @@ ShouldSuppressLineBreak(const nsStyleDisplay* aStyleDisplay,
   // directly affects the line layout. This case is handled by the BR
   // frame which checks the flag of its parent frame instead of itself.
   if ((aParentDisplay->IsRubyDisplayType() &&
-       aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER &&
-       aStyleDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) ||
+       aDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER &&
+       aDisplay->mDisplay != NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER) ||
       // Since ruby base and ruby text may exist themselves without any
       // non-anonymous frame outside, we should also check them.
-      aStyleDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE ||
-      aStyleDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_TEXT) {
+      aDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_BASE ||
+      aDisplay->mDisplay == NS_STYLE_DISPLAY_RUBY_TEXT) {
     return true;
   }
   return false;
@@ -655,8 +653,8 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
     }
   }
 
-  // Adjust the "display" values of flex and grid items (but not for raw text,
-  // placeholders, or table-parts). CSS3 Flexbox section 4 says:
+  // Adjust the "display" values of flex and grid items (but not for raw text
+  // or placeholders). CSS3 Flexbox section 4 says:
   //   # The computed 'display' of a flex item is determined
   //   # by applying the table in CSS 2.1 Chapter 9.7.
   // ...which converts inline-level elements to their block-level equivalents.
@@ -679,38 +677,23 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
     }
     if (containerDisp->IsFlexOrGridDisplayType() &&
         GetPseudo() != nsCSSAnonBoxes::mozNonElement) {
+      // NOTE: Technically, we shouldn't modify the 'display' value of
+      // positioned elements, since they aren't flex/grid items. However,
+      // we don't need to worry about checking for that, because if we're
+      // positioned, we'll have already been through a call to
+      // EnsureBlockDisplay() in nsRuleNode, so this call here won't change
+      // anything. So we're OK.
       uint8_t displayVal = disp->mDisplay;
-      // Skip table parts.
-      // NOTE: This list needs to be kept in sync with
-      // nsCSSFrameConstructor::FindDisplayData() -- specifically,
-      // this should be the list of display-values that returns
-      // FCDATA_DESIRED_PARENT_TYPE_TO_BITS from that method.
-      if (NS_STYLE_DISPLAY_TABLE_CAPTION      != displayVal &&
-          NS_STYLE_DISPLAY_TABLE_ROW_GROUP    != displayVal &&
-          NS_STYLE_DISPLAY_TABLE_HEADER_GROUP != displayVal &&
-          NS_STYLE_DISPLAY_TABLE_FOOTER_GROUP != displayVal &&
-          NS_STYLE_DISPLAY_TABLE_COLUMN_GROUP != displayVal &&
-          NS_STYLE_DISPLAY_TABLE_COLUMN       != displayVal &&
-          NS_STYLE_DISPLAY_TABLE_ROW          != displayVal &&
-          NS_STYLE_DISPLAY_TABLE_CELL         != displayVal) {
-
-        // NOTE: Technically, we shouldn't modify the 'display' value of
-        // positioned elements, since they aren't flex/grid items. However,
-        // we don't need to worry about checking for that, because if we're
-        // positioned, we'll have already been through a call to
-        // EnsureBlockDisplay() in nsRuleNode, so this call here won't change
-        // anything. So we're OK.
-        nsRuleNode::EnsureBlockDisplay(displayVal);
-        if (displayVal != disp->mDisplay) {
-          NS_ASSERTION(!disp->IsAbsolutelyPositionedStyle(),
-                       "We shouldn't be changing the display value of "
-                       "positioned content (and we should have already "
-                       "converted its display value to be block-level...)");
-          nsStyleDisplay* mutable_display =
-            static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
-          disp = mutable_display;
-          mutable_display->mDisplay = displayVal;
-        }
+      nsRuleNode::EnsureBlockDisplay(displayVal);
+      if (displayVal != disp->mDisplay) {
+        NS_ASSERTION(!disp->IsAbsolutelyPositionedStyle(),
+                     "We shouldn't be changing the display value of "
+                     "positioned content (and we should have already "
+                     "converted its display value to be block-level...)");
+        nsStyleDisplay* mutable_display =
+          static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
+        disp = mutable_display;
+        mutable_display->mDisplay = displayVal;
       }
     }
   }
@@ -721,7 +704,7 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
     mBits |= NS_STYLE_IN_DISPLAY_NONE_SUBTREE;
   }
 
-  if (mParent && ::ShouldSuppressLineBreak(disp, mParent,
+  if (mParent && ::ShouldSuppressLineBreak(this, disp, mParent,
                                            mParent->StyleDisplay())) {
     mBits |= NS_STYLE_SUPPRESS_LINEBREAK;
     uint8_t displayVal = disp->mDisplay;
@@ -1100,30 +1083,6 @@ nsStyleContext::CalcStyleDifference(nsStyleContext* aOther,
   return NS_SubtractHint(hint, nsChangeHint_NeutralChange);
 }
 
-void
-nsStyleContext::Mark()
-{
-  // Mark our rule node.
-  mRuleNode->Mark();
-
-  // Mark our children (i.e., tell them to mark their rule nodes, etc.).
-  if (mChild) {
-    nsStyleContext* child = mChild;
-    do {
-      child->Mark();
-      child = child->mNextSibling;
-    } while (mChild != child);
-  }
-  
-  if (mEmptyChild) {
-    nsStyleContext* child = mEmptyChild;
-    do {
-      child->Mark();
-      child = child->mNextSibling;
-    } while (mEmptyChild != child);
-  }
-}
-
 #ifdef DEBUG
 void nsStyleContext::List(FILE* out, int32_t aIndent, bool aListDescendants)
 {
@@ -1211,7 +1170,7 @@ nsStyleContext::Destroy()
 already_AddRefed<nsStyleContext>
 NS_NewStyleContext(nsStyleContext* aParentContext,
                    nsIAtom* aPseudoTag,
-                   nsCSSPseudoElements::Type aPseudoType,
+                   CSSPseudoElementType aPseudoType,
                    nsRuleNode* aRuleNode,
                    bool aSkipParentDisplayBasedStyleFixup)
 {
@@ -1563,7 +1522,7 @@ nsStyleContext::LogStyleContextTree(bool aFirst, uint32_t aStructs)
 
   nsCString parent;
   if (aFirst) {
-    parent.AppendPrintf("parent=%p ", mParent);
+    parent.AppendPrintf("parent=%p ", mParent.get());
   }
 
   LOG_RESTYLE("%p(%d) %s%s%s%s",

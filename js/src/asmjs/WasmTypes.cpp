@@ -21,6 +21,7 @@
 #include "jslibmath.h"
 #include "jsmath.h"
 
+#include "asmjs/Wasm.h"
 #include "asmjs/WasmModule.h"
 #include "js/Conversions.h"
 #include "vm/Interpreter.h"
@@ -67,6 +68,13 @@ OnImpreciseConversion()
 {
     JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
     JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SIMD_FAILED_CONVERSION);
+}
+
+static void
+BadIndirectCall()
+{
+    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_WASM_BAD_IND_CALL);
 }
 
 static int32_t
@@ -174,6 +182,8 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
         return FuncCast(OnOutOfBounds, Args_General0);
       case SymbolicAddress::OnImpreciseConversion:
         return FuncCast(OnImpreciseConversion, Args_General0);
+      case SymbolicAddress::BadIndirectCall:
+        return FuncCast(BadIndirectCall, Args_General0);
       case SymbolicAddress::HandleExecutionInterrupt:
         return FuncCast(WasmHandleExecutionInterrupt, Args_General0);
       case SymbolicAddress::InvokeImport_Void:
@@ -252,8 +262,12 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
 
 CompileArgs::CompileArgs(ExclusiveContext* cx)
   :
-#if defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
-    useSignalHandlersForOOB(cx->canUseSignalHandlers()),
+#ifdef ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB
+    // Signal-handling is only used to eliminate bounds checks when the OS page
+    // size is an even divisor of the WebAssembly page size.
+    useSignalHandlersForOOB(cx->canUseSignalHandlers() &&
+                            gc::SystemPageSize() <= PageSize &&
+                            PageSize % gc::SystemPageSize() == 0),
 #else
     useSignalHandlersForOOB(false),
 #endif

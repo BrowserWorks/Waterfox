@@ -104,7 +104,6 @@ GK_ATOM(applet, "applet")
 GK_ATOM(applyImports, "apply-imports")
 GK_ATOM(applyTemplates, "apply-templates")
 GK_ATOM(mozapptype, "mozapptype")
-GK_ATOM(apz, "apz")
 GK_ATOM(archive, "archive")
 GK_ATOM(area, "area")
 GK_ATOM(arrow, "arrow")
@@ -126,6 +125,7 @@ GK_ATOM(autoplay, "autoplay")
 GK_ATOM(autorepeatbutton, "autorepeatbutton")
 GK_ATOM(axis, "axis")
 GK_ATOM(b, "b")
+GK_ATOM(backdropFrame, "BackdropFrame")
 GK_ATOM(background, "background")
 GK_ATOM(base, "base")
 GK_ATOM(basefont, "basefont")
@@ -308,6 +308,7 @@ GK_ATOM(disableOutputEscaping, "disable-output-escaping")
 GK_ATOM(disabled, "disabled")
 GK_ATOM(disablehistory, "disablehistory")
 GK_ATOM(display, "display")
+GK_ATOM(displayMode, "display-mode")
 GK_ATOM(distinct, "distinct")
 GK_ATOM(div, "div")
 GK_ATOM(dl, "dl")
@@ -412,6 +413,8 @@ GK_ATOM(frame, "frame")
 GK_ATOM(frameborder, "frameborder")
 GK_ATOM(frameset, "frameset")
 GK_ATOM(from, "from")
+GK_ATOM(fullscreenchange, "fullscreenchange")
+GK_ATOM(fullscreenerror, "fullscreenerror")
 GK_ATOM(functionAvailable, "function-available")
 GK_ATOM(generateId, "generate-id")
 GK_ATOM(getter, "getter")
@@ -654,6 +657,7 @@ GK_ATOM(nodeSet, "node-set")
 GK_ATOM(noembed, "noembed")
 GK_ATOM(noframes, "noframes")
 GK_ATOM(nohref, "nohref")
+GK_ATOM(noisolation, "noisolation")
 GK_ATOM(nonce, "nonce")
 GK_ATOM(none, "none")
 GK_ATOM(noresize, "noresize")
@@ -785,6 +789,8 @@ GK_ATOM(onfetch, "onfetch")
 GK_ATOM(onfinish, "onfinish")
 GK_ATOM(onfocus, "onfocus")
 GK_ATOM(onfrequencychange, "onfrequencychange")
+GK_ATOM(onfullscreenchange, "onfullscreenchange")
+GK_ATOM(onfullscreenerror, "onfullscreenerror")
 GK_ATOM(onspeakerforcedchange, "onspeakerforcedchange")
 GK_ATOM(onget, "onget")
 GK_ATOM(ongroupchange, "ongroupchange")
@@ -1958,6 +1964,7 @@ GK_ATOM(columnSetFrame, "ColumnSetFrame")
 GK_ATOM(comboboxControlFrame, "ComboboxControlFrame")
 GK_ATOM(comboboxDisplayFrame, "ComboboxDisplayFrame")
 GK_ATOM(deckFrame, "DeckFrame")
+GK_ATOM(detailsFrame, "DetailsFrame")
 GK_ATOM(fieldSetFrame, "FieldSetFrame")
 GK_ATOM(flexContainerFrame, "FlexContainerFrame")
 GK_ATOM(formControlFrame, "FormControlFrame") // radio or checkbox
@@ -1999,6 +2006,7 @@ GK_ATOM(scrollFrame, "ScrollFrame")
 GK_ATOM(scrollbarFrame, "ScrollbarFrame")
 GK_ATOM(sequenceFrame, "SequenceFrame")
 GK_ATOM(sliderFrame, "sliderFrame")
+GK_ATOM(summaryFrame, "SummaryFrame")
 GK_ATOM(tableCellFrame, "TableCellFrame")
 GK_ATOM(tableColFrame, "TableColFrame")
 GK_ATOM(tableColGroupFrame, "TableColGroupFrame")
@@ -2111,6 +2119,8 @@ GK_ATOM(animationsOfAfterProperty, "AnimationsOfAfterProperty") // FrameAnimatio
 GK_ATOM(animationEffectsProperty, "AnimationEffectsProperty") // EffectSet*
 GK_ATOM(animationEffectsForBeforeProperty, "AnimationsEffectsForBeforeProperty") // EffectSet*
 GK_ATOM(animationEffectsForAfterProperty, "AnimationsEffectsForAfterProperty") // EffectSet*
+GK_ATOM(cssPseudoElementBeforeProperty, "CSSPseudoElementBeforeProperty") // CSSPseudoElement*
+GK_ATOM(cssPseudoElementAfterProperty, "CSSPseudoElementAfterProperty") // CSSPseudoElement*
 GK_ATOM(transitionsProperty, "TransitionsProperty")        // FrameTransitions*
 GK_ATOM(transitionsOfBeforeProperty, "TransitionsOfBeforeProperty") // FrameTransitions*
 GK_ATOM(transitionsOfAfterProperty, "TransitionsOfAfterProperty") // FrameTransitions*
@@ -2267,13 +2277,20 @@ GK_ATOM(SendMail, "SendMail")
 GK_ATOM(ForwardMail, "ForwardMail")
 GK_ATOM(ReplyToMail, "ReplyToMail")
 
-// Smooth scroll events origins
+// Scroll origins (these are used in various scrolling functions in
+// nsIScrollableFrame and ScrollFrameHelper). These are divided into two lists
+// - origins in the first one have smooth-scrolling prefs associated with them,
+// under the "general.smoothScroll.<origin>.*" pref branch. Origins in the
+// second one do not.
 GK_ATOM(mouseWheel, "mouseWheel")  // For discrete wheel events (e.g. not OSX magic mouse)
 GK_ATOM(pixels,     "pixels")
 GK_ATOM(lines,      "lines")
 GK_ATOM(pages,      "pages")
 GK_ATOM(scrollbars, "scrollbars")
 GK_ATOM(other,      "other")
+// Scroll origins without smooth-scrolling prefs
+GK_ATOM(apz,        "apz")
+GK_ATOM(restore,    "restore")
 
 #ifdef ACCESSIBILITY
 GK_ATOM(alert, "alert")

@@ -1,7 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -12,6 +12,7 @@ var {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 var {Utils: WebConsoleUtils} = require("devtools/shared/webconsole/utils");
 var {Messages} = require("devtools/client/webconsole/console-output");
 const asyncStorage = require("devtools/shared/async-storage");
+const HUDService = require("devtools/client/webconsole/hudservice");
 
 // Services.prefs.setBoolPref("devtools.debugger.log", true);
 
@@ -38,7 +39,7 @@ const GROUP_INDENT = 12;
 
 const WEBCONSOLE_STRINGS_URI = "chrome://devtools/locale/" +
                                "webconsole.properties";
-var WCUL10n = new WebConsoleUtils.l10n(WEBCONSOLE_STRINGS_URI);
+var WCUL10n = new WebConsoleUtils.L10n(WEBCONSOLE_STRINGS_URI);
 
 DevToolsUtils.testing = true;
 
@@ -1476,7 +1477,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function* checkConsoleLog(entry) {
-    info("Logging: " + entry.input);
+    info("Logging");
     hud.jsterm.clearOutput();
     hud.jsterm.execute("console.log(" + entry.input + ")");
 
@@ -1500,13 +1501,13 @@ function checkOutputForInputs(hud, inputTests) {
     }
 
     if (typeof entry.inspectorIcon == "boolean") {
-      info("Checking Inspector Link: " + entry.input);
+      info("Checking Inspector Link");
       yield checkLinkToInspector(entry.inspectorIcon, msg);
     }
   }
 
   function checkPrintOutput(entry) {
-    info("Printing: " + entry.input);
+    info("Printing");
     hud.jsterm.clearOutput();
     hud.jsterm.execute("print(" + entry.input + ")");
 
@@ -1523,7 +1524,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function* checkJSEval(entry) {
-    info("Evaluating: " + entry.input);
+    info("Evaluating");
     hud.jsterm.clearOutput();
     hud.jsterm.execute(entry.input);
 
@@ -1549,7 +1550,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function* checkObjectClick(entry, msg) {
-    info("Clicking: " + entry.input);
+    info("Clicking");
     let body;
     if (entry.getClickableNode) {
       body = entry.getClickableNode(msg);
@@ -1594,7 +1595,7 @@ function checkOutputForInputs(hud, inputTests) {
   }
 
   function onVariablesViewOpen(entry, {resolve, reject}, event, view, options) {
-    info("Variables view opened: " + entry.input);
+    info("Variables view opened");
     let label = entry.variablesViewLabel || entry.output;
     if (typeof label == "string" && options.label != label) {
       return;
@@ -1631,16 +1632,30 @@ function checkOutputForInputs(hud, inputTests) {
 /**
  * Finish the request and resolve with the request object.
  *
+ * @param {Function} predicate A predicate function that takes the request
+ * object as an argument and returns true if the request was the expected one,
+ * false otherwise. The returned promise is resolved ONLY if the predicate
+ * matches a request. Defaults to accepting any request.
  * @return promise
  * @resolves The request object.
  */
-function waitForFinishedRequest() {
+function waitForFinishedRequest(predicate = () => true) {
   registerCleanupFunction(function() {
     HUDService.lastFinishedRequest.callback = null;
   });
 
   return new Promise(resolve => {
-    HUDService.lastFinishedRequest.callback = request => { resolve(request) };
+    HUDService.lastFinishedRequest.callback = request => {
+      // Check if this is the expected request
+      if (predicate(request)) {
+        // Match found. Clear the listener.
+        HUDService.lastFinishedRequest.callback = null;
+
+        resolve(request);
+      } else {
+        info(`Ignoring unexpected request ${JSON.stringify(request, null, 2)}`);
+      }
+    }
   });
 }
 

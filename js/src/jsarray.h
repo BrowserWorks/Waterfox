@@ -119,6 +119,9 @@ extern JSObject*
 NewCopiedArrayForCallingAllocationSite(JSContext* cx, const Value* vp, size_t length,
                                        HandleObject proto = nullptr);
 
+extern bool
+NewValuePair(JSContext* cx, const Value& val1, const Value& val2, MutableHandleValue rval);
+
 /*
  * Determines whether a write to the given element on |obj| should fail because
  * |obj| is an Array with a non-writable length, and writing that element would
@@ -212,6 +215,10 @@ ArrayInfo(JSContext* cx, unsigned argc, Value* vp);
 /* Array constructor native. Exposed only so the JIT can know its address. */
 extern bool
 ArrayConstructor(JSContext* cx, unsigned argc, Value* vp);
+
+// Like Array constructor, but doesn't perform GetPrototypeFromConstructor.
+extern bool
+array_construct(JSContext* cx, unsigned argc, Value* vp);
 
 } /* namespace js */
 

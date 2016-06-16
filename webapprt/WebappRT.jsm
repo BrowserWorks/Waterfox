@@ -107,6 +107,9 @@ this.WebappRT = {
                        getService(Ci.nsIUpdateTimerManager);
     timerManager.registerTimer("updateTimer", () => {
       let window = Services.wm.getMostRecentWindow("webapprt:webapp");
+      if (!window.navigator.mozApps) {
+        return;
+      }
       window.navigator.mozApps.mgmt.getAll().onsuccess = function() {
         let thisApp = null;
         for (let app of this.result) {

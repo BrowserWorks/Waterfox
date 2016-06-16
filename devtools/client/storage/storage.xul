@@ -4,9 +4,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/content/shared/widgets/widgets.css" type="text/css"?>
-<?xml-stylesheet href="chrome://devtools/skin/common.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/widgets.css" type="text/css"?>
 <?xml-stylesheet href="chrome://devtools/skin/storage.css" type="text/css"?>
+
+<!DOCTYPE window [
+  <!ENTITY % storageDTD SYSTEM "chrome://devtools/locale/storage.dtd">
+  %storageDTD;
+]>
 
 <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
 
@@ -21,7 +25,16 @@
   <box flex="1" class="devtools-responsive-container theme-body">
     <vbox id="storage-tree"/>
     <splitter class="devtools-side-splitter"/>
-    <vbox id="storage-table" class="theme-sidebar" flex="1"/>
+    <vbox flex="1">
+      <hbox id="storage-toolbar" class="devtools-toolbar">
+        <textbox id="storage-searchbox"
+                 class="devtools-searchinput"
+                 type="search"
+                 timeout="200"
+                 placeholder="&searchBox.placeholder;"/>
+      </hbox>
+      <vbox id="storage-table" class="theme-sidebar" flex="1"/>
+    </vbox>
     <splitter class="devtools-side-splitter"/>
     <vbox id="storage-sidebar" class="devtools-sidebar-tabs" hidden="true">
       <vbox flex="1"/>

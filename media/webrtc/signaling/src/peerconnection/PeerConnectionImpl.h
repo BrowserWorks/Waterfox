@@ -157,12 +157,11 @@ public:
   bool addStunServer(const std::string& addr, uint16_t port,
                      const char* transport)
   {
-    NrIceStunServer* server(NrIceStunServer::Create(addr, port, transport));
+    UniquePtr<NrIceStunServer> server(NrIceStunServer::Create(addr, port, transport));
     if (!server) {
       return false;
     }
     addStunServer(*server);
-    delete server;
     return true;
   }
   bool addTurnServer(const std::string& addr, uint16_t port,
@@ -174,13 +173,12 @@ public:
     // username and password. Bug # ???
     std::vector<unsigned char> password(pwd.begin(), pwd.end());
 
-    NrIceTurnServer* server(NrIceTurnServer::Create(addr, port, username, password,
-                                                    transport));
+    UniquePtr<NrIceTurnServer> server(NrIceTurnServer::Create(addr, port, username, password,
+							      transport));
     if (!server) {
       return false;
     }
     addTurnServer(*server);
-    delete server;
     return true;
   }
   void addStunServer(const NrIceStunServer& server) { mStunServers.push_back (server); }
@@ -340,7 +338,7 @@ public:
     return mSTSThread;
   }
 
-  nsPIDOMWindow* GetWindow() const {
+  nsPIDOMWindowInner* GetWindow() const {
     PC_AUTO_ENTER_API_CALL_NO_CHECK();
     return mWindow;
   }
@@ -619,10 +617,6 @@ public:
   // is called to start the list over.
   void ClearSdpParseErrorMessages();
 
-  void OnAddIceCandidateError() {
-    ++mAddCandidateErrorCount;
-  }
-
   // Called to retreive the list of parsing errors.
   const std::vector<std::string> &GetSdpParseErrors();
 
@@ -759,7 +753,7 @@ private:
   // TODO: Remove if we ever properly wire PeerConnection for cycle-collection.
   nsWeakPtr mPCObserver;
 
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsCOMPtr<nsPIDOMWindowInner> mWindow;
 
   // The SDP sent in from JS - here for debugging.
   std::string mLocalRequestedSDP;
@@ -832,6 +826,8 @@ private:
   bool mTrickle;
 
   bool mNegotiationNeeded;
+
+  bool mPrivateWindow;
 
   // storage for Telemetry data
   uint16_t mMaxReceiving[SdpMediaSection::kMediaTypes];

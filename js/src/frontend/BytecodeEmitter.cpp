@@ -1900,9 +1900,18 @@ BytecodeEmitter::bindNameToSlotHelper(ParseNode* pn)
      * bloat where a single live function keeps its whole global script
      * alive.), ScopeCoordinateToTypeSet is not able to find the var/let's
      * associated TypeSet.
+     *
+     * Note the following does not prevent us from optimizing block scopes at
+     * global level, e.g.,
+     *
+     *   { let x; function f() { x = 42; } }
      */
-    if (bceOfDef != this && bceOfDef->sc->isGlobalContext())
+    if (dn->kind() == Definition::LET || dn->kind() == Definition::CONSTANT) {
+        if (IsStaticGlobalLexicalScope(blockScopeOfDef(dn)))
+            return true;
+    } else if (bceOfDef != this && bceOfDef->sc->isGlobalContext()) {
         return true;
+    }
 
     if (!pn->pn_scopecoord.set(parser->tokenStream, hops, slot))
         return false;
@@ -3759,7 +3768,6 @@ BytecodeEmitter::emitDestructuringDeclsWithEmitter(JSOp prologueOp, ParseNode* p
                 continue;
             ParseNode* target = element;
             if (element->isKind(PNK_SPREAD)) {
-                MOZ_ASSERT(element->pn_kid->isKind(PNK_NAME));
                 target = element->pn_kid;
             }
             if (target->isKind(PNK_ASSIGN))
@@ -4972,6 +4980,7 @@ BytecodeEmitter::emitCatch(ParseNode* pn)
     StmtInfoBCE* stmt = innermostStmt();
     MOZ_ASSERT(stmt->type == StmtType::BLOCK && stmt->isBlockScope);
     stmt->type = StmtType::CATCH;
+    stmt->staticBlock().setIsForCatchParameters();
 
     /* Go up one statement info record to the TRY or FINALLY record. */
     stmt = stmt->enclosing;
@@ -8915,7 +8924,7 @@ BytecodeEmitter::emitTree(ParseNode* pn, EmitLineNumberNote emitLineNote)
         break;
 
       case PNK_REGEXP:
-        if (!emitRegExp(regexpList.add(pn->as<RegExpLiteral>().objbox())))
+        if (!emitRegExp(objectList.add(pn->as<RegExpLiteral>().objbox())))
             return false;
         break;
 
@@ -9202,43 +9211,9 @@ CGConstList::finish(ConstArray* array)
  * Find the index of the given object for code generator.
  *
  * Since the emitter refers to each parsed object only once, for the index we
- * use the number of already indexes objects. We also add the object to a list
+ * use the number of already indexed objects. We also add the object to a list
  * to convert the list to a fixed-size array when we complete code generation,
  * see js::CGObjectList::finish below.
- *
- * Most of the objects go to BytecodeEmitter::objectList but for regexp we use
- * a separated BytecodeEmitter::regexpList. In this way the emitted index can
- * be directly used to store and fetch a reference to a cloned RegExp object
- * that shares the same JSRegExp private data created for the object literal in
- * objbox. We need a cloned object to hold lastIndex and other direct
- * properties that should not be shared among threads sharing a precompiled
- * function or script.
- *
- * If the code being compiled is function code, allocate a reserved slot in
- * the cloned function object that shares its precompiled script with other
- * cloned function objects and with the compiler-created clone-parent. There
- * are nregexps = script->regexps()->length such reserved slots in each
- * function object cloned from fun->object. NB: during compilation, a funobj
- * slots element must never be allocated, because JSObject::allocSlot could
- * hand out one of the slots that should be given to a regexp clone.
- *
- * If the code being compiled is global code, the cloned regexp are stored in
- * fp->vars slot and to protect regexp slots from GC we set fp->nvars to
- * nregexps.
- *
- * The slots initially contain undefined or null. We populate them lazily when
- * JSOP_REGEXP is executed for the first time.
- *
- * Why clone regexp objects?  ECMA specifies that when a regular expression
- * literal is scanned, a RegExp object is created.  In the spec, compilation
- * and execution happen indivisibly, but in this implementation and many of
- * its embeddings, code is precompiled early and re-executed in multiple
- * threads, or using multiple global objects, or both, for efficiency.
- *
- * In such cases, naively following ECMA leads to wrongful sharing of RegExp
- * objects, which makes for collisions on the lastIndex property (especially
- * for global regexps) and on any ad-hoc properties.  Also, __proto__ refers to
- * the pre-compilation prototype, a pigeon-hole problem for instanceof tests.
  */
 unsigned
 CGObjectList::add(ObjectBox* objbox)

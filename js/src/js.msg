@@ -205,7 +205,6 @@ MSG_DEF(JSMSG_BAD_FOR_LEFTSIDE,        0, JSEXN_SYNTAXERR, "invalid for-in/of le
 MSG_DEF(JSMSG_LEXICAL_DECL_DEFINES_LET,0, JSEXN_SYNTAXERR, "a lexical declaration can't define a 'let' binding")
 MSG_DEF(JSMSG_LET_STARTING_FOROF_LHS,  0, JSEXN_SYNTAXERR, "an expression X in 'for (X of Y)' must not start with 'let'")
 MSG_DEF(JSMSG_BAD_GENERATOR_RETURN,    1, JSEXN_TYPEERR,   "generator function {0} returns a value")
-MSG_DEF(JSMSG_BAD_YIELD_SYNTAX,        0, JSEXN_SYNTAXERR, "yield expression must be parenthesized")
 MSG_DEF(JSMSG_BAD_GENERATOR_SYNTAX,    0, JSEXN_SYNTAXERR, "generator expression must be parenthesized")
 MSG_DEF(JSMSG_BAD_GENEXP_BODY,         1, JSEXN_SYNTAXERR, "illegal use of {0} in generator expression")
 MSG_DEF(JSMSG_BAD_INCOP_OPERAND,       0, JSEXN_REFERENCEERR, "invalid increment/decrement operand")
@@ -295,6 +294,7 @@ MSG_DEF(JSMSG_NO_CLASS_CONSTRUCTOR,    0, JSEXN_TYPEERR,   "class default constr
 MSG_DEF(JSMSG_NO_EXPORT_NAME,          0, JSEXN_SYNTAXERR, "missing export name")
 MSG_DEF(JSMSG_NO_IMPORT_NAME,          0, JSEXN_SYNTAXERR, "missing import name")
 MSG_DEF(JSMSG_NO_VARIABLE_NAME,        0, JSEXN_SYNTAXERR, "missing variable name")
+MSG_DEF(JSMSG_OBSOLETE_FLAGS_ARG,      0, JSEXN_NONE, "flags argument of String.prototype.{search,match,replace} is no longer supported")
 MSG_DEF(JSMSG_OF_AFTER_FOR_NAME,       0, JSEXN_SYNTAXERR, "missing 'of' after for")
 MSG_DEF(JSMSG_PAREN_AFTER_ARGS,        0, JSEXN_SYNTAXERR, "missing ) after argument list")
 MSG_DEF(JSMSG_PAREN_AFTER_CATCH,       0, JSEXN_SYNTAXERR, "missing ) after catch")
@@ -361,6 +361,14 @@ MSG_DEF(JSMSG_USE_ASM_TYPE_FAIL,       1, JSEXN_TYPEERR, "asm.js type error: {0}
 MSG_DEF(JSMSG_USE_ASM_LINK_FAIL,       1, JSEXN_TYPEERR, "asm.js link error: {0}")
 MSG_DEF(JSMSG_USE_ASM_TYPE_OK,         1, JSEXN_NONE,    "Successfully compiled asm.js code ({0})")
 
+// wasm
+MSG_DEF(JSMSG_WASM_FAIL,               1, JSEXN_TYPEERR, "wasm error: {0}")
+MSG_DEF(JSMSG_WASM_DECODE_FAIL,        2, JSEXN_TYPEERR, "wasm validation error at offset {0}: {1}")
+MSG_DEF(JSMSG_WASM_TEXT_FAIL,          1, JSEXN_SYNTAXERR, "wasm text error: {0}")
+MSG_DEF(JSMSG_WASM_BAD_IND_CALL,       0, JSEXN_ERR,     "wasm indirect call signature mismatch")
+MSG_DEF(JSMSG_WASM_BAD_BUF_ARG,        0, JSEXN_TYPEERR, "first argument must be a typed array")
+MSG_DEF(JSMSG_WASM_BAD_IMPORT_ARG,     0, JSEXN_TYPEERR, "second argument, if present, must be an object")
+
 // Proxy
 MSG_DEF(JSMSG_BAD_TRAP_RETURN_VALUE,   2, JSEXN_TYPEERR,"trap {1} for {0} returned a primitive value")
 MSG_DEF(JSMSG_CANT_CHANGE_EXTENSIBILITY, 0, JSEXN_TYPEERR, "can't change object's extensibility")
@@ -392,6 +400,7 @@ MSG_DEF(JSMSG_PROXY_EXTENSIBILITY,     0, JSEXN_TYPEERR, "proxy must report same
 MSG_DEF(JSMSG_PROXY_GETOWN_OBJORUNDEF, 0, JSEXN_TYPEERR, "proxy [[GetOwnProperty]] must return an object or undefined")
 MSG_DEF(JSMSG_PROXY_REVOKED,           0, JSEXN_TYPEERR, "illegal operation attempted on a revoked proxy")
 MSG_DEF(JSMSG_PROXY_ARG_REVOKED,       1, JSEXN_TYPEERR, "argument {0} cannot be a revoked proxy")
+MSG_DEF(JSMSG_DEPRECATED_PROXY_CREATE, 0, JSEXN_NONE, "Proxy.create and Proxy.createFunction are deprecated, use new Proxy instead")
 
 // Structured cloning
 MSG_DEF(JSMSG_SC_BAD_CLONE_VERSION,    0, JSEXN_ERR, "unsupported structured clone version")
@@ -422,6 +431,7 @@ MSG_DEF(JSMSG_DEBUG_OPTIMIZED_OUT,     1, JSEXN_ERR, "variable `{0}' has been op
 MSG_DEF(JSMSG_DEBUG_RESUMPTION_VALUE_DISALLOWED, 0, JSEXN_TYPEERR, "resumption values are disallowed in this hook")
 MSG_DEF(JSMSG_DEBUG_VARIABLE_NOT_FOUND,0, JSEXN_TYPEERR, "variable not found in environment")
 MSG_DEF(JSMSG_DEBUG_WRAPPER_IN_WAY,    3, JSEXN_TYPEERR, "{0} is {1}{2}a global object, but a direct reference is required")
+MSG_DEF(JSMSG_DEBUGGEE_WOULD_RUN,      2, JSEXN_DEBUGGEEWOULDRUN, "debuggee `{0}:{1}' would run")
 MSG_DEF(JSMSG_NOT_CALLABLE_OR_UNDEFINED, 0, JSEXN_TYPEERR, "value is not a function or undefined")
 MSG_DEF(JSMSG_NOT_TRACKING_ALLOCATIONS, 1, JSEXN_ERR, "Cannot call {0} without setting trackingAllocationSites to true")
 MSG_DEF(JSMSG_NOT_TRACKING_TENURINGS,  1, JSEXN_ERR, "Cannot call {0} without setting trackingTenurePromotions to true")

@@ -10,6 +10,7 @@
 
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WritingModes.h"
+#include "nsLineLayout.h"
 #include "nsPresContext.h"
 #include "nsStyleContext.h"
 
@@ -67,7 +68,9 @@ nsRubyTextContainerFrame::SetInitialChildList(ChildListID aListID,
                                               nsFrameList& aChildList)
 {
   nsRubyTextContainerFrameSuper::SetInitialChildList(aListID, aChildList);
-  UpdateSpanFlag();
+  if (aListID == kPrincipalList) {
+    UpdateSpanFlag();
+  }
 }
 
 /* virtual */ void

@@ -26,7 +26,7 @@
 #include "nsIRunnable.h"
 #include "nsISupportsImpl.h"
 
-class nsIDOMWindow;
+class nsPIDOMWindowInner;
 
 namespace mozilla {
    class MediaStreamGraphImpl;
@@ -352,7 +352,9 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
   static already_AddRefed<Fake_DOMMediaStream>
-  CreateSourceStream(nsIDOMWindow* aWindow, mozilla::MediaStreamGraph* aGraph, uint32_t aHintContents = 0) {
+  CreateSourceStream(nsPIDOMWindowInner* aWindow,
+		     mozilla::MediaStreamGraph* aGraph,
+		     uint32_t aHintContents = 0) {
     Fake_SourceMediaStream *source = new Fake_SourceMediaStream();
 
     RefPtr<Fake_DOMMediaStream> ds = new Fake_DOMMediaStream(source);
@@ -410,6 +412,12 @@ public:
   {
     return ((mHintContents & HINT_CONTENTS_AUDIO) && aTrack.AsAudioStreamTrack()) ||
            ((mHintContents & HINT_CONTENTS_VIDEO) && aTrack.AsVideoStreamTrack());
+  }
+
+  bool
+  OwnsTrack(const Fake_MediaStreamTrack& aTrack) const
+  {
+    return HasTrack(aTrack);
   }
 
   void SetTrackEnabled(mozilla::TrackID aTrackID, bool aEnabled) {}

@@ -2294,16 +2294,44 @@ nsXPCComponents_Utils::ReportError(HandleValue error, JSContext* cx)
     // This function shall never fail! Silently eat any failure conditions.
 
     nsCOMPtr<nsIConsoleService> console(do_GetService(NS_CONSOLESERVICE_CONTRACTID));
-
-    nsCOMPtr<nsIScriptError> scripterr(do_CreateInstance(NS_SCRIPTERROR_CONTRACTID));
-
-    if (!scripterr || !console)
+    if (!console)
         return NS_OK;
 
     const uint64_t innerWindowID = nsJSUtils::GetCurrentlyRunningCodeInnerWindowID(cx);
 
     RootedObject errorObj(cx, error.isObject() ? &error.toObject() : nullptr);
     JSErrorReport* err = errorObj ? JS_ErrorFromException(cx, errorObj) : nullptr;
+
+    nsCOMPtr<nsIScriptError> scripterr;
+
+    if (errorObj) {
+        JS::RootedObject stackVal(cx, ExceptionStackOrNull(cx, errorObj));
+        if (stackVal) {
+            scripterr = new nsScriptErrorWithStack(stackVal);
+        }
+    }
+
+    nsString fileName;
+    int32_t lineNo = 0;
+
+    if (!scripterr) {
+        nsCOMPtr<nsIStackFrame> frame = dom::GetCurrentJSStack();
+        if (frame) {
+            frame->GetFilename(fileName);
+            frame->GetLineNumber(&lineNo);
+            JS::Rooted<JS::Value> stack(cx);
+            nsresult rv = frame->GetNativeSavedFrame(&stack);
+            if (NS_SUCCEEDED(rv) && stack.isObject()) {
+              JS::Rooted<JSObject*> stackObj(cx, &stack.toObject());
+              scripterr = new nsScriptErrorWithStack(stackObj);
+            }
+        }
+    }
+
+    if (!scripterr) {
+        scripterr = new nsScriptError();
+    }
+
     if (err) {
         // It's a proper JS Error
         nsAutoString fileUni;
@@ -2330,17 +2358,6 @@ nsXPCComponents_Utils::ReportError(HandleValue error, JSContext* cx)
     RootedString msgstr(cx, ToString(cx, error));
     if (!msgstr)
         return NS_OK;
-
-    nsCOMPtr<nsIStackFrame> frame;
-    nsXPConnect* xpc = nsXPConnect::XPConnect();
-    xpc->GetCurrentJSStack(getter_AddRefs(frame));
-
-    nsString fileName;
-    int32_t lineNo = 0;
-    if (frame) {
-        frame->GetFilename(fileName);
-        frame->GetLineNumber(&lineNo);
-    }
 
     nsAutoJSString msg;
     if (!msg.init(cx, msgstr))
@@ -2855,6 +2872,17 @@ nsXPCComponents_Utils::GetCrossProcessWrapperTag(HandleValue obj, nsACString& ou
         return NS_ERROR_INVALID_ARG;
 
     jsipc::GetWrappedCPOWTag(&obj.toObject(), out);
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsXPCComponents_Utils::PermitCPOWsInScope(HandleValue obj)
+{
+    if (!obj.isObject())
+        return NS_ERROR_INVALID_ARG;
+
+    JSObject* scopeObj = js::UncheckedUnwrap(&obj.toObject());
+    CompartmentPrivate::Get(scopeObj)->allowCPOWs = true;
     return NS_OK;
 }
 
@@ -3487,11 +3515,14 @@ NS_IMETHODIMP nsXPCComponents::ReportError(HandleValue error, JSContext* cx)
 class ComponentsSH : public nsIXPCScriptable
 {
 public:
-    explicit ComponentsSH(unsigned dummy)
+    explicit MOZ_CONSTEXPR ComponentsSH(unsigned dummy)
     {
     }
 
-    NS_DECL_ISUPPORTS
+    // We don't actually inherit any ref counting infrastructure, but we don't
+    // need an nsAutoRefCnt member, so the _INHERITED macro is a hack to avoid
+    // having one.
+    NS_DECL_ISUPPORTS_INHERITED
     NS_DECL_NSIXPCSCRIPTABLE
     // The NS_IMETHODIMP isn't really accurate here, but NS_CALLBACK requires
     // the referent to be declared __stdcall on Windows, and this is the only

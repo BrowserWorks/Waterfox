@@ -36,8 +36,6 @@ typedef _cairo_surface cairo_surface_t;
 struct _cairo_scaled_font;
 typedef _cairo_scaled_font cairo_scaled_font_t;
 
-struct ID3D10Device1;
-struct ID3D10Texture2D;
 struct ID3D11Texture2D;
 struct ID3D11Device;
 struct ID2D1Device;
@@ -541,9 +539,18 @@ public:
   /** This returns a PathBuilder object that contains a copy of the contents of
    * this path and is still writable.
    */
-  virtual already_AddRefed<PathBuilder> CopyToBuilder(FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
+  inline already_AddRefed<PathBuilder> CopyToBuilder() const {
+    return CopyToBuilder(GetFillRule());
+  }
+  inline already_AddRefed<PathBuilder> TransformedCopyToBuilder(const Matrix &aTransform) const {
+    return TransformedCopyToBuilder(aTransform, GetFillRule());
+  }
+  /** This returns a PathBuilder object that contains a copy of the contents of
+   * this path, converted to use the specified FillRule, and still writable.
+   */
+  virtual already_AddRefed<PathBuilder> CopyToBuilder(FillRule aFillRule) const = 0;
   virtual already_AddRefed<PathBuilder> TransformedCopyToBuilder(const Matrix &aTransform,
-                                                             FillRule aFillRule = FillRule::FILL_WINDING) const = 0;
+                                                             FillRule aFillRule) const = 0;
 
   /** This function checks if a point lies within a path. It allows passing a
    * transform that will transform the path to the coordinate space in which
@@ -1355,14 +1362,6 @@ public:
 #endif
 
 #ifdef WIN32
-  static already_AddRefed<DrawTarget> CreateDrawTargetForD3D10Texture(ID3D10Texture2D *aTexture, SurfaceFormat aFormat);
-  static already_AddRefed<DrawTarget>
-    CreateDualDrawTargetForD3D10Textures(ID3D10Texture2D *aTextureA,
-                                         ID3D10Texture2D *aTextureB,
-                                         SurfaceFormat aFormat);
-
-  static void SetDirect3D10Device(ID3D10Device1 *aDevice);
-  static ID3D10Device1 *GetDirect3D10Device();
   static already_AddRefed<DrawTarget> CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat);
 
   /*
@@ -1389,7 +1388,6 @@ public:
 
 private:
   static ID2D1Device *mD2D1Device;
-  static ID3D10Device1 *mD3D10Device;
   static ID3D11Device *mD3D11Device;
 #endif
 

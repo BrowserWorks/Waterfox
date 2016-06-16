@@ -14,7 +14,7 @@ config = {
         # bug 1222227 - temporarily disable for S3 migration
         # 'make-socorro-json',
         # 'upload-source-manifest',
-        'submit-to-balrog',
+        # 'submit-to-balrog',
     ],
     "upload": {
         "default": {
@@ -69,7 +69,6 @@ config = {
         "WGET_OPTS": "-c -q",
         "PATH": "/tools/python27/bin:%(PATH)s",
     },
-    "purge_minsize": 15,
     "clobberer_url": "https://api.pub.build.mozilla.org/clobberer/lastclobber",
     "is_automation": True,
     "repo_mirror_dir": "/builds/git-shared/repo",

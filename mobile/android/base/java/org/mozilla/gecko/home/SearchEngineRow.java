@@ -40,7 +40,9 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 class SearchEngineRow extends AnimatedHeightLayout {
     // Duration for fade-in animation
@@ -80,6 +82,8 @@ class SearchEngineRow extends AnimatedHeightLayout {
     // Maximums for suggestions
     private int mMaxSavedSuggestions;
     private int mMaxSearchSuggestions;
+
+    private final List<Integer> mOccurrences = new ArrayList<Integer>();
 
     public SearchEngineRow(Context context) {
         this(context, null);
@@ -165,13 +169,13 @@ class SearchEngineRow extends AnimatedHeightLayout {
      * @param pattern The pattern that is searched for
      * @param string The string where we search for the pattern
      */
-    private List<Integer> findAllOccurrencesOf(String pattern, String string) {
-        List<Integer> occurrences = new ArrayList<>();
+    private void refreshOccurrencesWith(String pattern, String string) {
+        mOccurrences.clear();
 
         // Don't try to search for an empty string - String.indexOf will return 0, which would result
         // in us iterating with lastIndexOfMatch = 0, which eventually results in an OOM.
         if (TextUtils.isEmpty(pattern)) {
-            return occurrences;
+            return;
         }
 
         final int patternLength = pattern.length();
@@ -182,10 +186,9 @@ class SearchEngineRow extends AnimatedHeightLayout {
             indexOfMatch = string.indexOf(pattern, lastIndexOfMatch);
             lastIndexOfMatch = indexOfMatch + patternLength;
             if(indexOfMatch != -1) {
-                occurrences.add(indexOfMatch);
+                mOccurrences.add(indexOfMatch);
             }
         }
-        return occurrences;
     }
 
     /**
@@ -210,18 +213,19 @@ class SearchEngineRow extends AnimatedHeightLayout {
         final TextView suggestionText = (TextView) v.findViewById(R.id.suggestion_text);
         final String searchTerm = getSuggestionTextFromView(mUserEnteredView);
         final int searchTermLength = searchTerm.length();
-        final List<Integer> occurrences = findAllOccurrencesOf(searchTerm, suggestion);
-        if (occurrences.size() > 0) {
+        refreshOccurrencesWith(searchTerm, suggestion);
+        if (mOccurrences.size() > 0) {
             final SpannableStringBuilder sb = new SpannableStringBuilder(suggestion);
             int nextStartSpanIndex = 0;
             // Done to make sure that the stretch of text after the last occurrence, till the end of the suggestion, is made bold
-            occurrences.add(suggestion.length());
-            for(int occurrence : occurrences) {
+            mOccurrences.add(suggestion.length());
+            for (int occurrence : mOccurrences) {
                 // Even though they're the same style, SpannableStringBuilder will interpret there as being only one Span present if we re-use a StyleSpan
                 StyleSpan boldSpan = new StyleSpan(Typeface.BOLD);
                 sb.setSpan(boldSpan, nextStartSpanIndex, occurrence, Spannable.SPAN_INCLUSIVE_INCLUSIVE);
                 nextStartSpanIndex = occurrence + searchTermLength;
             }
+            mOccurrences.clear();
             suggestionText.setText(sb);
         } else {
             suggestionText.setText(suggestion);
@@ -389,6 +393,18 @@ class SearchEngineRow extends AnimatedHeightLayout {
 
         // Remove duplicates of search engine suggestions from saved searches.
         List<String> searchHistorySuggestions = (rawSearchHistorySuggestions != null) ? rawSearchHistorySuggestions : new ArrayList<String>();
+
+        // Filter out URLs and long search suggestions
+        Iterator<String> searchHistoryIterator = searchHistorySuggestions.iterator();
+        while (searchHistoryIterator.hasNext()) {
+            final String currentSearchHistory = searchHistoryIterator.next();
+
+            if (currentSearchHistory.length() > 50 || Pattern.matches("^(https?|ftp|file)://.*", currentSearchHistory)) {
+                searchHistoryIterator.remove();
+            }
+        }
+
+
         List<String> searchEngineSuggestions = new ArrayList<String>();
         for (String suggestion : searchEngine.getSuggestions()) {
             searchHistorySuggestions.remove(suggestion);

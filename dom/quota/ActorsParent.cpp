@@ -1355,7 +1355,7 @@ class MOZ_STACK_CLASS OriginParser final
 
   SchemaType mSchemaType;
   State mState;
-  bool mInMozBrowser;
+  bool mInIsolatedMozBrowser;
   bool mMaybeDriveLetter;
   bool mError;
 
@@ -1367,7 +1367,7 @@ public:
     , mPort()
     , mSchemaType(eNone)
     , mState(eExpectingAppIdOrSchema)
-    , mInMozBrowser(false)
+    , mInIsolatedMozBrowser(false)
     , mMaybeDriveLetter(false)
     , mError(false)
   { }
@@ -2470,7 +2470,7 @@ QuotaObject::MaybeUpdateSize(int64_t aSize, bool aTruncate)
   if (newTemporaryStorageUsage > quotaManager->mTemporaryStorageLimit) {
     // This will block the thread without holding the lock while waitting.
 
-    nsAutoTArray<RefPtr<DirectoryLockImpl>, 10> locks;
+    AutoTArray<RefPtr<DirectoryLockImpl>, 10> locks;
 
     uint64_t sizeToBeFreed =
       quotaManager->LockedCollectOriginsForEviction(delta, locks);
@@ -3773,6 +3773,7 @@ QuotaManager::OpenDirectory(PersistenceType aPersistenceType,
 void
 QuotaManager::OpenDirectoryInternal(Nullable<PersistenceType> aPersistenceType,
                                     const OriginScope& aOriginScope,
+                                    Nullable<Client::Type> aClientType,
                                     bool aExclusive,
                                     OpenDirectoryListener* aOpenListener)
 {
@@ -3783,7 +3784,7 @@ QuotaManager::OpenDirectoryInternal(Nullable<PersistenceType> aPersistenceType,
                         EmptyCString(),
                         aOriginScope,
                         Nullable<bool>(),
-                        Nullable<Client::Type>(),
+                        Nullable<Client::Type>(aClientType),
                         aExclusive,
                         true,
                         aOpenListener);
@@ -3795,7 +3796,7 @@ QuotaManager::OpenDirectoryInternal(Nullable<PersistenceType> aPersistenceType,
 
   // All the locks that block this new exclusive lock need to be invalidated.
   // We also need to notify clients to abort operations for them.
-  nsAutoTArray<nsAutoPtr<nsTHashtable<nsCStringHashKey>>,
+  AutoTArray<nsAutoPtr<nsTHashtable<nsCStringHashKey>>,
                Client::TYPE_MAX> origins;
   origins.SetLength(Client::TYPE_MAX);
 
@@ -4160,7 +4161,7 @@ QuotaManager::GetInfoFromPrincipal(nsIPrincipal* aPrincipal,
 
 // static
 nsresult
-QuotaManager::GetInfoFromWindow(nsPIDOMWindow* aWindow,
+QuotaManager::GetInfoFromWindow(nsPIDOMWindowOuter* aWindow,
                                 nsACString* aGroup,
                                 nsACString* aOrigin,
                                 bool* aIsApp)
@@ -5029,6 +5030,7 @@ NormalOriginOperationBase::Open()
 
   QuotaManager::Get()->OpenDirectoryInternal(mPersistenceType,
                                              mOriginScope,
+                                             Nullable<Client::Type>(),
                                              mExclusive,
                                              this);
 }
@@ -5711,7 +5713,7 @@ OriginClearOp::DoInitOnMainThread()
     mozilla::BasePrincipal::Cast(principal)->OriginAttributesRef();
 
   nsAutoCString pattern;
-  QuotaManager::GetOriginPatternString(attrs.mAppId, attrs.mInBrowser, origin,
+  QuotaManager::GetOriginPatternString(attrs.mAppId, attrs.mInIsolatedMozBrowser, origin,
                                        pattern);
 
   mOriginScope.SetFromPattern(pattern);
@@ -6264,7 +6266,7 @@ OriginParser::Parse(nsACString& aSpec, PrincipalOriginAttributes* aAttrs)
 
   MOZ_ASSERT(mState == eComplete || mState == eHandledTrailingSeparator);
 
-  *aAttrs = PrincipalOriginAttributes(mAppId, mInMozBrowser);
+  *aAttrs = PrincipalOriginAttributes(mAppId, mInIsolatedMozBrowser);
 
   nsAutoCString spec(mSchema);
 
@@ -6389,9 +6391,9 @@ OriginParser::HandleToken(const nsDependentCSubstring& aToken)
       }
 
       if (aToken.First() == 't') {
-        mInMozBrowser = true;
+        mInIsolatedMozBrowser = true;
       } else if (aToken.First() == 'f') {
-        mInMozBrowser = false;
+        mInIsolatedMozBrowser = false;
       } else {
         QM_WARNING("'%s' is not a valid value for the inMozBrowser flag!",
                    nsCString(aToken).get());

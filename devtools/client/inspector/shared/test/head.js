@@ -5,8 +5,8 @@
 "use strict";
 
 var Cu = Components.utils;
-var {gDevTools} = Cu.import("resource://devtools/client/framework/gDevTools.jsm", {});
 var {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+var {gDevTools} = require("devtools/client/framework/devtools");
 var {TargetFactory} = require("devtools/client/framework/target");
 var {CssRuleView, _ElementStyle} = require("devtools/client/inspector/rules/rules");
 var {CssLogic, CssSelector} = require("devtools/shared/inspector/css-logic");
@@ -14,8 +14,7 @@ var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var promise = require("promise");
 var {editableField, getInplaceEditorForSpan: inplaceEditor} =
   require("devtools/client/shared/inplace-editor");
-var {console} =
-  Components.utils.import("resource://gre/modules/Console.jsm", {});
+var {console} = Cu.import("resource://gre/modules/Console.jsm", {});
 
 // All tests are asynchronous
 waitForExplicitFinish();
@@ -218,7 +217,9 @@ var openInspector = Task.async(function*() {
   inspector = toolbox.getPanel("inspector");
 
   info("Waiting for the inspector to update");
-  yield inspector.once("inspector-updated");
+  if (inspector._updateProgress) {
+    yield inspector.once("inspector-updated");
+  }
 
   return {
     toolbox: toolbox,
@@ -250,18 +251,13 @@ function waitForToolboxFrameFocus(toolbox) {
 var openInspectorSideBar = Task.async(function*(id) {
   let {toolbox, inspector} = yield openInspector();
 
-  if (!hasSideBarTab(inspector, id)) {
-    info("Waiting for the " + id + " sidebar to be ready");
-    yield inspector.sidebar.once(id + "-ready");
-  }
-
   info("Selecting the " + id + " sidebar");
   inspector.sidebar.select(id);
 
   return {
     toolbox: toolbox,
     inspector: inspector,
-    view: inspector.sidebar.getWindowForTab(id)[id].view
+    view: inspector[id].view
   };
 });
 

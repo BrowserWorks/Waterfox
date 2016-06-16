@@ -3,7 +3,12 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/* animation-panel.js is loaded in the same scope but we don't use
+   import-globals-from to avoid infinite loops since animation-panel.js already
+   imports globals from animation-controller.js */
 /* globals AnimationsPanel */
+/* eslint no-unused-vars: [2, {"vars": "local", "args": "none"}] */
 
 "use strict";
 
@@ -15,10 +20,8 @@ Cu.import("resource://gre/modules/Console.jsm");
 Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
 
 loader.lazyRequireGetter(this, "promise");
-loader.lazyRequireGetter(this, "EventEmitter",
-                               "devtools/shared/event-emitter");
-loader.lazyRequireGetter(this, "AnimationsFront",
-                               "devtools/server/actors/animation", true);
+loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
+loader.lazyRequireGetter(this, "AnimationsFront", "devtools/server/actors/animation", true);
 
 const STRINGS_URI = "chrome://devtools/locale/animationinspector.properties";
 const L10N = new ViewHelpers.L10N(STRINGS_URI);
@@ -126,6 +129,7 @@ var getServerTraits = Task.async(function*(target) {
  */
 var AnimationsController = {
   PLAYERS_UPDATED_EVENT: "players-updated",
+  ALL_ANIMATIONS_TOGGLED_EVENT: "all-animations-toggled",
 
   initialize: Task.async(function*() {
     if (this.initialized) {
@@ -173,7 +177,7 @@ var AnimationsController = {
     this.destroyed = promise.defer();
 
     this.stopListeners();
-    yield this.destroyAnimationPlayers();
+    this.destroyAnimationPlayers();
     this.nodeFront = null;
 
     if (this.animationsFront) {
@@ -224,7 +228,7 @@ var AnimationsController = {
 
     if (!gInspector.selection.isConnected() ||
         !gInspector.selection.isElementNode()) {
-      yield this.destroyAnimationPlayers();
+      this.destroyAnimationPlayers();
       this.emit(this.PLAYERS_UPDATED_EVENT);
       done();
       return;
@@ -245,7 +249,9 @@ var AnimationsController = {
       return promise.resolve();
     }
 
-    return this.animationsFront.toggleAll().catch(e => console.error(e));
+    return this.animationsFront.toggleAll()
+      .then(() => this.emit(this.ALL_ANIMATIONS_TOGGLED_EVENT, this))
+      .catch(e => console.error(e));
   },
 
   /**
@@ -318,7 +324,7 @@ var AnimationsController = {
   animationPlayers: [],
 
   refreshAnimationPlayers: Task.async(function*(nodeFront) {
-    yield this.destroyAnimationPlayers();
+    this.destroyAnimationPlayers();
 
     this.animationPlayers = yield this.animationsFront
                                       .getAnimationPlayersForNode(nodeFront);
@@ -331,7 +337,7 @@ var AnimationsController = {
     }
   }),
 
-  onAnimationMutations: Task.async(function*(changes) {
+  onAnimationMutations: function(changes) {
     // Insert new players into this.animationPlayers when new animations are
     // added.
     for (let {type, player} of changes) {
@@ -340,7 +346,6 @@ var AnimationsController = {
       }
 
       if (type === "removed") {
-        yield player.release();
         let index = this.animationPlayers.indexOf(player);
         this.animationPlayers.splice(index, 1);
       }
@@ -348,7 +353,7 @@ var AnimationsController = {
 
     // Let the UI know the list has been updated.
     this.emit(this.PLAYERS_UPDATED_EVENT, this.animationPlayers);
-  }),
+  },
 
   /**
    * Get the latest known current time of document.timeline.
@@ -369,19 +374,9 @@ var AnimationsController = {
     return time;
   },
 
-  destroyAnimationPlayers: Task.async(function*() {
-    // Let the server know that we're not interested in receiving updates about
-    // players for the current node. We're either being destroyed or a new node
-    // has been selected.
-    if (this.traits.hasMutationEvents) {
-      yield this.animationsFront.stopAnimationPlayerUpdates();
-    }
-
-    for (let front of this.animationPlayers) {
-      yield front.release();
-    }
+  destroyAnimationPlayers: function() {
     this.animationPlayers = [];
-  })
+  }
 };
 
 EventEmitter.decorate(AnimationsController);

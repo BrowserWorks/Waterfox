@@ -73,7 +73,7 @@ ContentClient::CreateContentClient(CompositableForwarder* aForwarder)
 
 #ifdef XP_WIN
   if (backend == LayersBackend::LAYERS_D3D11) {
-    useDoubleBuffering = !!gfxWindowsPlatform::GetPlatform()->GetD3D10Device();
+    useDoubleBuffering = gfxWindowsPlatform::GetPlatform()->GetRenderMode() == gfxWindowsPlatform::RENDER_DIRECT2D;
   } else
 #endif
 #ifdef MOZ_WIDGET_GTK
@@ -290,10 +290,15 @@ void
 ContentClientRemoteBuffer::CreateBackBuffer(const IntRect& aBufferRect)
 {
   // gfx::BackendType::NONE means fallback to the content backend
+  TextureAllocationFlags textureAllocFlags
+                         = (mTextureFlags & TextureFlags::COMPONENT_ALPHA) ?
+                            TextureAllocationFlags::ALLOC_CLEAR_BUFFER_BLACK :
+                            TextureAllocationFlags::ALLOC_CLEAR_BUFFER;
+
   mTextureClient = CreateTextureClientForDrawing(
     mSurfaceFormat, mSize, BackendSelector::Content,
     mTextureFlags | ExtraTextureFlags(),
-    TextureAllocationFlags::ALLOC_CLEAR_BUFFER
+    textureAllocFlags
   );
   if (!mTextureClient || !AddTextureClient(mTextureClient)) {
     AbortTextureClientCreation();
@@ -352,7 +357,7 @@ ContentClientRemoteBuffer::GetUpdatedRegion(const nsIntRegion& aRegionToDraw,
     // changes and some changed buffer content isn't reflected in the
     // draw or invalidate region (on purpose!).  When this happens, we
     // need to read back the entire buffer too.
-    updatedRegion = aVisibleRegion;
+    updatedRegion = aVisibleRegion.GetBounds();
     mIsNewBuffer = false;
   } else {
     updatedRegion = aRegionToDraw;
@@ -379,7 +384,7 @@ ContentClientRemoteBuffer::Updated(const nsIntRegion& aRegionToDraw,
     mForwarder->UseComponentAlphaTextures(this, mTextureClient,
                                           mTextureClientOnWhite);
   } else {
-    nsAutoTArray<CompositableForwarder::TimedTextureClient,1> textures;
+    AutoTArray<CompositableForwarder::TimedTextureClient,1> textures;
     CompositableForwarder::TimedTextureClient* t = textures.AppendElement();
     t->mTextureClient = mTextureClient;
     IntSize size = mTextureClient->GetSize();
@@ -443,31 +448,13 @@ ContentClientDoubleBuffered::Updated(const nsIntRegion& aRegionToDraw,
 {
   ContentClientRemoteBuffer::Updated(aRegionToDraw, aVisibleRegion, aDidSelfCopy);
 
-#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
   if (mFrontClient) {
-    // remove old buffer from CompositableHost
-    RefPtr<AsyncTransactionWaiter> waiter = new AsyncTransactionWaiter();
-    RefPtr<AsyncTransactionTracker> tracker =
-        new RemoveTextureFromCompositableTracker(waiter);
-    // Hold TextureClient until transaction complete.
-    tracker->SetTextureClient(mFrontClient);
-    mFrontClient->SetRemoveFromCompositableWaiter(waiter);
-    // RemoveTextureFromCompositableAsync() expects CompositorChild's presence.
-    GetForwarder()->RemoveTextureFromCompositableAsync(tracker, this, mFrontClient);
+    mFrontClient->RemoveFromCompositable(this);
   }
 
   if (mFrontClientOnWhite) {
-    // remove old buffer from CompositableHost
-    RefPtr<AsyncTransactionWaiter> waiter = new AsyncTransactionWaiter();
-    RefPtr<AsyncTransactionTracker> tracker =
-        new RemoveTextureFromCompositableTracker(waiter);
-    // Hold TextureClient until transaction complete.
-    tracker->SetTextureClient(mFrontClientOnWhite);
-    mFrontClientOnWhite->SetRemoveFromCompositableWaiter(waiter);
-    // RemoveTextureFromCompositableAsync() expects CompositorChild's presence.
-    GetForwarder()->RemoveTextureFromCompositableAsync(tracker, this, mFrontClientOnWhite);
+    mFrontClientOnWhite->RemoveFromCompositable(this);
   }
-#endif
 }
 
 void

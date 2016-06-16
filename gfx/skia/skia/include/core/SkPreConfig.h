@@ -30,7 +30,8 @@
         #define SK_BUILD_FOR_ANDROID
     #elif defined(linux) || defined(__linux) || defined(__FreeBSD__) || \
           defined(__OpenBSD__) || defined(__sun) || defined(__NetBSD__) || \
-          defined(__DragonFly__) || defined(__GLIBC__) || defined(__GNU__)
+          defined(__DragonFly__) || defined(__GLIBC__) || defined(__GNU__) || \
+          defined(__unix__)
         #define SK_BUILD_FOR_UNIX
     #elif TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
         #define SK_BUILD_FOR_IOS
@@ -192,7 +193,7 @@
 
 // All 64-bit ARM chips have NEON.  Many 32-bit ARM chips do too.
 // TODO: Why don't we want NEON on iOS?
-#if !defined(SK_ARM_HAS_NEON) && !defined(SK_BUILD_FOR_IOS) && defined(__ARM_NEON)
+#if !defined(SK_ARM_HAS_NEON) && !defined(SK_BUILD_FOR_IOS) && (defined(__ARM_NEON__) || defined(__ARM_NEON))
     #define SK_ARM_HAS_NEON
 #endif
 

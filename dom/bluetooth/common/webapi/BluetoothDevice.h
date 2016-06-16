@@ -59,10 +59,7 @@ public:
     return mPaired;
   }
 
-  void GetUuids(nsTArray<nsString>& aUuids) const
-  {
-    aUuids = mUuids;
-  }
+  void GetUuids(nsTArray<nsString>& aUuids) const;
 
   BluetoothDeviceType Type() const
   {
@@ -85,10 +82,10 @@ public:
    * Others
    ***************************************************************************/
   static already_AddRefed<BluetoothDevice>
-    Create(nsPIDOMWindow* aOwner, const BluetoothValue& aValue);
+    Create(nsPIDOMWindowInner* aOwner, const BluetoothValue& aValue);
 
   void Notify(const BluetoothSignal& aParam); // BluetoothSignalObserver
-  nsPIDOMWindow* GetParentObject() const
+  nsPIDOMWindowInner* GetParentObject() const
   {
      return GetOwner();
   }
@@ -97,8 +94,13 @@ public:
                                JS::Handle<JSObject*> aGivenProto) override;
   virtual void DisconnectFromOwner() override;
 
+  void GetUuids(nsTArray<BluetoothUuid>& aUuids) const
+  {
+    aUuids = mUuids;
+  }
+
 private:
-  BluetoothDevice(nsPIDOMWindow* aOwner, const BluetoothValue& aValue);
+  BluetoothDevice(nsPIDOMWindowInner* aOwner, const BluetoothValue& aValue);
   ~BluetoothDevice();
 
   /**
@@ -188,7 +190,7 @@ private:
   /**
    * Cached UUID list of services which this device provides.
    */
-  nsTArray<nsString> mUuids;
+  nsTArray<BluetoothUuid> mUuids;
 
   /**
    * Type of this device. Can be unknown/classic/le/dual.

@@ -19,6 +19,7 @@ namespace dom {
 
 class Console;
 class Function;
+class IDBFactory;
 class Promise;
 class RequestOrUSVString;
 class ServiceWorkerRegistrationWorkerThread;
@@ -28,13 +29,6 @@ namespace cache {
 class CacheStorage;
 
 } // namespace cache
-
-namespace indexedDB {
-
-class IDBFactory;
-
-} // namespace indexedDB
-
 } // namespace dom
 } // namespace mozilla
 
@@ -50,7 +44,7 @@ class WorkerGlobalScope : public DOMEventTargetHelper,
                           public nsIGlobalObject,
                           public nsSupportsWeakReference
 {
-  typedef mozilla::dom::indexedDB::IDBFactory IDBFactory;
+  typedef mozilla::dom::IDBFactory IDBFactory;
 
   RefPtr<Console> mConsole;
   RefPtr<WorkerLocation> mLocation;
@@ -111,8 +105,7 @@ public:
   SetOnerror(OnErrorEventHandlerNonNull* aHandler);
 
   void
-  ImportScripts(JSContext* aCx, const Sequence<nsString>& aScriptURLs,
-                ErrorResult& aRv);
+  ImportScripts(const Sequence<nsString>& aScriptURLs, ErrorResult& aRv);
 
   int32_t
   SetTimeout(JSContext* aCx, Function& aHandler, const int32_t aTimeout,
@@ -247,9 +240,6 @@ public:
                    JS::MutableHandle<JSObject*> aReflector) override;
 
   static bool
-  InterceptionEnabled(JSContext* aCx, JSObject* aObj);
-
-  static bool
   OpenWindowEnabled(JSContext* aCx, JSObject* aObj);
 
   void
@@ -281,11 +271,14 @@ class WorkerDebuggerGlobalScope final : public DOMEventTargetHelper,
                                         public nsIGlobalObject
 {
   WorkerPrivate* mWorkerPrivate;
+  RefPtr<Console> mConsole;
 
 public:
   explicit WorkerDebuggerGlobalScope(WorkerPrivate* aWorkerPrivate);
 
   NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS_INHERITED(WorkerDebuggerGlobalScope,
+                                                         DOMEventTargetHelper)
 
   virtual JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override
@@ -328,10 +321,13 @@ public:
   IMPL_EVENT_HANDLER(message)
 
   void
-  SetImmediate(JSContext* aCx, Function& aHandler, ErrorResult& aRv);
+  SetImmediate(Function& aHandler, ErrorResult& aRv);
 
   void
   ReportError(JSContext* aCx, const nsAString& aMessage);
+
+  Console*
+  GetConsole(ErrorResult& aRv);
 
   void
   Dump(JSContext* aCx, const Optional<nsAString>& aString) const;

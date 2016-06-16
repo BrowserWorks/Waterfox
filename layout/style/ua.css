@@ -276,13 +276,12 @@
 
 }
 
-*|*:-moz-full-screen:not(:root) {
+*|*:fullscreen:not(:root) {
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
-  background: black;
   width: 100% !important;
   height: 100% !important;
   margin: 0 !important;
@@ -297,8 +296,20 @@
 
 /* Selectors here should match the check in
  * nsViewportFrame.cpp:ShouldInTopLayerForFullscreen() */
-*|*:-moz-full-screen:not(:root):not(:-moz-browser-frame) {
+*|*:fullscreen:not(:root):not(:-moz-browser-frame) {
   -moz-top-layer: top !important;
+}
+
+*|*::backdrop {
+  -moz-top-layer: top !important;
+  display: block;
+  position: fixed;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+}
+
+*|*:-moz-full-screen:not(:root)::backdrop {
+  background: black;
 }
 
 /* XML parse error reporting */
@@ -359,16 +370,16 @@ div:-moz-native-anonymous.moz-accessiblecaret.no-bar > div.bar {
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-  background-image: url("resource://gre/res/accessiblecaret.png");
+  background-image: url("resource://gre-resources/accessiblecaret-normal@1x.png");
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-  background-image: url("resource://gre/res/accessiblecaret_tilt_left.png");
+  background-image: url("resource://gre-resources/accessiblecaret-tilt-left@1x.png");
   margin-left: -39%;
 }
 
 div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-  background-image: url("resource://gre/res/accessiblecaret_tilt_right.png");
+  background-image: url("resource://gre-resources/accessiblecaret-tilt-right@1x.png");
   margin-left: 41%;
 }
 
@@ -378,43 +389,43 @@ div:-moz-native-anonymous.moz-accessiblecaret.none {
 
 @media (min-resolution: 1.5dppx) {
   div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-    background-image: url("resource://gre/res/accessiblecaret@1.5x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-normal@1.5x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-    background-image: url("resource://gre/res/accessiblecaret_tilt_left@1.5x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-tilt-left@1.5x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-    background-image: url("resource://gre/res/accessiblecaret_tilt_right@1.5x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-tilt-right@1.5x.png");
   }
 }
 
 @media (min-resolution: 2dppx) {
   div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-    background-image: url("resource://gre/res/accessiblecaret@2x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-normal@2x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-    background-image: url("resource://gre/res/accessiblecaret_tilt_left@2x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-tilt-left@2x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-    background-image: url("resource://gre/res/accessiblecaret_tilt_right@2x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-tilt-right@2x.png");
   }
 }
 
 @media (min-resolution: 2.25dppx) {
   div:-moz-native-anonymous.moz-accessiblecaret.normal > div.image {
-    background-image: url("resource://gre/res/accessiblecaret@2.25x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-normal@2.25x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.left > div.image {
-    background-image: url("resource://gre/res/accessiblecaret_tilt_left@2.25x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-tilt-left@2.25x.png");
   }
 
   div:-moz-native-anonymous.moz-accessiblecaret.right > div.image {
-    background-image: url("resource://gre/res/accessiblecaret_tilt_right@2.25x.png");
+    background-image: url("resource://gre-resources/accessiblecaret-tilt-right@2.25x.png");
   }
 }
 

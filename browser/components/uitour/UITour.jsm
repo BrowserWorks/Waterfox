@@ -45,7 +45,6 @@ const PREF_READERVIEW_TRIGGER = "browser.uitour.readerViewTrigger";
 const PREF_SURVEY_DURATION = "browser.uitour.surveyDuration";
 
 const BACKGROUND_PAGE_ACTIONS_ALLOWED = new Set([
-  "endUrlbarCapture",
   "forceShowReaderIcon",
   "getConfiguration",
   "getTreatmentTag",
@@ -92,7 +91,6 @@ this.UITour = {
   pageIDSourceBrowsers: new WeakMap(),
   /* Map from browser chrome windows to a Set of <browser>s in which a tour is open (both visible and hidden) */
   tourBrowsersByWindow: new WeakMap(),
-  urlbarCapture: new WeakMap(),
   appMenuOpenForAnnotation: new Set(),
   availableTargetsCache: new WeakMap(),
   clearAvailableTargetsCache() {
@@ -579,41 +577,6 @@ this.UITour = {
         break;
       }
 
-      case "startUrlbarCapture": {
-        if (typeof data.text != "string" || !data.text ||
-            typeof data.url != "string" || !data.url) {
-          log.warn("startUrlbarCapture: Text or URL not specified");
-          return false;
-        }
-
-        let uri = null;
-        try {
-          uri = Services.io.newURI(data.url, null, null);
-        } catch (e) {
-          log.warn("startUrlbarCapture: Malformed URL specified");
-          return false;
-        }
-
-        let secman = Services.scriptSecurityManager;
-        let contentDocument = browser.contentWindow.document;
-        let principal = contentDocument.nodePrincipal;
-        let flags = secman.DISALLOW_INHERIT_PRINCIPAL;
-        try {
-          secman.checkLoadURIWithPrincipal(principal, uri, flags);
-        } catch (e) {
-          log.warn("startUrlbarCapture: Orginating page doesn't have permission to open specified URL");
-          return false;
-        }
-
-        this.startUrlbarCapture(window, data.text, data.url);
-        break;
-      }
-
-      case "endUrlbarCapture": {
-        this.endUrlbarCapture(window);
-        break;
-      }
-
       case "getConfiguration": {
         if (typeof data.configuration != "string") {
           log.warn("getConfiguration: No configuration option specified");
@@ -647,8 +610,15 @@ this.UITour = {
       case "showFirefoxAccounts": {
         // 'signup' is the only action that makes sense currently, so we don't
         // accept arbitrary actions just to be safe...
+        let p = new URLSearchParams("action=signup&entrypoint=uitour");
+        // Call our helper to validate extraURLCampaignParams and populate URLSearchParams
+        if (!this._populateCampaignParams(p, data.extraURLCampaignParams)) {
+          log.warn("showFirefoxAccounts: invalid campaign args specified");
+          return false;
+        }
+
         // We want to replace the current tab.
-        browser.loadURI("about:accounts?action=signup&entrypoint=uitour");
+        browser.loadURI("about:accounts?" + p.toString());
         break;
       }
 
@@ -700,8 +670,8 @@ this.UITour = {
         targetPromise.then(target => {
           let searchbar = target.node;
           searchbar.value = data.term;
-          searchbar.inputChanged();
-        }).then(null, Cu.reportError);
+          searchbar.updateGoButtonVisibility();
+        });
         break;
       }
 
@@ -808,14 +778,6 @@ this.UITour = {
         this.teardownTourForWindow(window);
         break;
       }
-
-      case "input": {
-        if (aEvent.target.id == "urlbar") {
-          let window = aEvent.target.ownerDocument.defaultView;
-          this.handleUrlbarInput(window);
-        }
-        break;
-      }
     }
   },
 
@@ -848,6 +810,52 @@ this.UITour = {
         break;
       }
     }
+  },
+
+  // Given a string that is a JSONified represenation of an object with
+  // additional utm_* URL params that should be appended, validate and append
+  // them to the passed URLSearchParams object. Returns true if the params
+  // were validated and appended, and false if the request should be ignored.
+  _populateCampaignParams: function(urlSearchParams, extraURLCampaignParams) {
+    // We are extra paranoid about what params we allow to be appended.
+    if (typeof extraURLCampaignParams == "undefined") {
+      // no params, so it's all good.
+      return true;
+    }
+    if (typeof extraURLCampaignParams != "string") {
+      log.warn("_populateCampaignParams: extraURLCampaignParams is not a string");
+      return false;
+    }
+    let campaignParams;
+    try {
+      if (extraURLCampaignParams) {
+        campaignParams = JSON.parse(extraURLCampaignParams);
+        if (typeof campaignParams != "object") {
+          log.warn("_populateCampaignParams: extraURLCampaignParams is not a stringified object");
+          return false;
+        }
+      }
+    } catch (ex) {
+      log.warn("_populateCampaignParams: extraURLCampaignParams is not a JSON object");
+      return false;
+    }
+    if (campaignParams) {
+      // The regex that the name of each param must match - there's no
+      // character restriction on the value - they will be escaped as necessary.
+      let reSimpleString = /^[-_a-zA-Z0-9]*$/;
+      for (let name in campaignParams) {
+        let value = campaignParams[name];
+        if (typeof name != "string" || typeof value != "string" ||
+            !name.startsWith("utm_") ||
+            value.length == 0 ||
+            !reSimpleString.test(name)) {
+          log.warn("_populateCampaignParams: invalid campaign param specified");
+          return false;
+        }
+        urlSearchParams.append(name, value);
+      }
+    }
+    return true;
   },
 
   setTelemetryBucket: function(aPageID) {
@@ -905,7 +913,6 @@ this.UITour = {
     controlCenterPanel.removeEventListener("popuphidden", this.onPanelHidden);
     controlCenterPanel.removeEventListener("popuphiding", this.hideControlCenterAnnotations);
 
-    this.endUrlbarCapture(aWindow);
     this.resetTheme();
 
     // If there are no more tour tabs left in the window, teardown the tour for the whole window.
@@ -1746,7 +1753,7 @@ this.UITour = {
 
       // An event object is expected but we don't want to toggle the panel with a click if the panel
       // is already open.
-      aWindow.LoopUI.openCallPanel({ target: toolbarButton.node, }, "rooms").then(() => {
+      aWindow.LoopUI.openPanel({ target: toolbarButton.node, }, "rooms").then(() => {
         if (aOpenCallback) {
           aOpenCallback();
         }
@@ -1876,41 +1883,6 @@ this.UITour = {
     aPanel.hidden = true;
     aPanel.clientWidth; // flush
     aPanel.hidden = false;
-  },
-
-  startUrlbarCapture: function(aWindow, aExpectedText, aUrl) {
-    let urlbar = aWindow.document.getElementById("urlbar");
-    this.urlbarCapture.set(aWindow, {
-      expected: aExpectedText.toLocaleLowerCase(),
-      url: aUrl
-    });
-    urlbar.addEventListener("input", this);
-  },
-
-  endUrlbarCapture: function(aWindow) {
-    let urlbar = aWindow.document.getElementById("urlbar");
-    urlbar.removeEventListener("input", this);
-    this.urlbarCapture.delete(aWindow);
-  },
-
-  handleUrlbarInput: function(aWindow) {
-    if (!this.urlbarCapture.has(aWindow))
-      return;
-
-    let urlbar = aWindow.document.getElementById("urlbar");
-
-    let {expected, url} = this.urlbarCapture.get(aWindow);
-
-    if (urlbar.value.toLocaleLowerCase().localeCompare(expected) != 0)
-      return;
-
-    urlbar.handleRevert();
-
-    let tab = aWindow.gBrowser.addTab(url, {
-      owner: aWindow.gBrowser.selectedTab,
-      relatedToCurrent: true
-    });
-    aWindow.gBrowser.selectedTab = tab;
   },
 
   getConfiguration: function(aMessageManager, aWindow, aConfiguration, aCallbackID) {

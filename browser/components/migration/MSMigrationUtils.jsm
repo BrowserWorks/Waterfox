@@ -310,7 +310,7 @@ function getEdgeLocalDataFolder() {
     Cu.reportError("Exception trying to find the Edge favorites directory: " + ex);
   }
   return null;
-};
+}
 
 
 function Bookmarks(migrationType) {
@@ -623,7 +623,7 @@ Cookies.prototype = {
       // a domain cookie.  See bug 222343.
       if (host.length > 0) {
         // Fist delete any possible extant matching host cookie.
-        Services.cookies.remove(host, name, path, false);
+        Services.cookies.remove(host, name, path, false, {});
         // Now make it a domain cookie.
         if (host[0] != "." && !hostIsIPAddress(host))
           host = "." + host;

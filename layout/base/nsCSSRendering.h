@@ -175,7 +175,7 @@ public:
    *
    * Points are returned relative to aOriginBounds.
    */
-  static void ComputeObjectAnchorPoint(const nsStyleBackground::Position& aPos,
+  static void ComputeObjectAnchorPoint(const nsStyleImageLayers::Position& aPos,
                                        const nsSize& aOriginBounds,
                                        const nsSize& aImageSize,
                                        nsPoint* aTopLeft,
@@ -304,7 +304,7 @@ private:
 /**
  * A struct representing all the information needed to paint a background
  * image to some target, taking into account all CSS background-* properties.
- * See PrepareBackgroundLayer.
+ * See PrepareImageLayer.
  */
 struct nsBackgroundLayerState {
   typedef mozilla::gfx::CompositionOp CompositionOp;
@@ -315,7 +315,6 @@ struct nsBackgroundLayerState {
   nsBackgroundLayerState(nsIFrame* aForFrame, const nsStyleImage* aImage,
                          uint32_t aFlags)
     : mImageRenderer(aForFrame, aImage, aFlags)
-    , mCompositionOp(CompositionOp::OP_OVER)
   {}
 
   /**
@@ -325,25 +324,21 @@ struct nsBackgroundLayerState {
   /**
    * A rectangle that one copy of the image tile is mapped onto. Same
    * coordinate system as aBorderArea/aBGClipRect passed into
-   * PrepareBackgroundLayer.
+   * PrepareImageLayer.
    */
   nsRect mDestArea;
   /**
    * The actual rectangle that should be filled with (complete or partial)
    * image tiles. Same coordinate system as aBorderArea/aBGClipRect passed into
-   * PrepareBackgroundLayer.
+   * PrepareImageLayer.
    */
   nsRect mFillArea;
   /**
    * The anchor point that should be snapped to a pixel corner. Same
    * coordinate system as aBorderArea/aBGClipRect passed into
-   * PrepareBackgroundLayer.
+   * PrepareImageLayer.
    */
   nsPoint mAnchor;
-  /**
-   * The composition operation that the image should use.
-   */
-  CompositionOp mCompositionOp;
 };
 
 struct nsCSSRendering {
@@ -532,21 +527,22 @@ struct nsCSSRendering {
                            bool& aDrawBackgroundColor);
 
   static nsRect
-  ComputeBackgroundPositioningArea(nsPresContext* aPresContext,
+  ComputeImageLayerPositioningArea(nsPresContext* aPresContext,
                                    nsIFrame* aForFrame,
                                    const nsRect& aBorderArea,
-                                   const nsStyleBackground::Layer& aLayer,
+                                   const nsStyleImageLayers::Layer& aLayer,
                                    nsIFrame** aAttachedToFrame);
 
   static nsBackgroundLayerState
-  PrepareBackgroundLayer(nsPresContext* aPresContext,
-                         nsIFrame* aForFrame,
-                         uint32_t aFlags,
-                         const nsRect& aBorderArea,
-                         const nsRect& aBGClipRect,
-                         const nsStyleBackground::Layer& aLayer);
+  PrepareImageLayer(nsPresContext* aPresContext,
+                    nsIFrame* aForFrame,
+                    uint32_t aFlags,
+                    const nsRect& aBorderArea,
+                    const nsRect& aBGClipRect,
+                    const nsStyleImageLayers::Layer& aLayer,
+                    CompositionOp aCompositionOp = CompositionOp::OP_OVER);
 
-  struct BackgroundClipState {
+  struct ImageLayerClipState {
     nsRect mBGClipArea;  // Affected by mClippedRadii
     nsRect mAdditionalBGClipArea;  // Not affected by mClippedRadii
     nsRect mDirtyRect;
@@ -563,15 +559,15 @@ struct nsCSSRendering {
   };
 
   static void
-  GetBackgroundClip(const nsStyleBackground::Layer& aLayer,
-                    nsIFrame* aForFrame, const nsStyleBorder& aBorder, const nsRect& aBorderArea,
-                    const nsRect& aCallerDirtyRect, bool aWillPaintBorder,
-                    nscoord aAppUnitsPerPixel,
-                    /* out */ BackgroundClipState* aClipState);
+  GetImageLayerClip(const nsStyleImageLayers::Layer& aLayer,
+                    nsIFrame* aForFrame, const nsStyleBorder& aBorder,
+                    const nsRect& aBorderArea, const nsRect& aCallerDirtyRect,
+                    bool aWillPaintBorder, nscoord aAppUnitsPerPixel,
+                    /* out */ ImageLayerClipState* aClipState);
 
   /**
    * Render the background for an element using css rendering rules
-   * for backgrounds.
+   * for backgrounds or mask.
    */
   enum {
     /**
@@ -587,7 +583,12 @@ struct nsCSSRendering {
      * When this flag is passed, painting will go to the screen so we can
      * take advantage of the fact that it will be clipped to the viewport.
      */
-    PAINTBG_TO_WINDOW = 0x04
+    PAINTBG_TO_WINDOW = 0x04,
+    /**
+     * When this flag is passed, painting will read properties of mask-image
+     * style, instead of background-image.
+     */
+    PAINTBG_MASK_IMAGE = 0x08
   };
   static DrawResult PaintBackground(nsPresContext* aPresContext,
                                     nsRenderingContext& aRenderingContext,
@@ -596,7 +597,9 @@ struct nsCSSRendering {
                                     const nsRect& aBorderArea,
                                     uint32_t aFlags,
                                     nsRect* aBGClipRect = nullptr,
-                                    int32_t aLayer = -1);
+                                    int32_t aLayer = -1,
+                                    CompositionOp aCompositionOp = CompositionOp::OP_OVER);
+
 
   /**
    * Same as |PaintBackground|, except using the provided style structs.
@@ -606,6 +609,9 @@ struct nsCSSRendering {
    * The default value for aLayer, -1, means that all layers will be painted.
    * The background color will only be painted if the back-most layer is also
    * being painted.
+   * aCompositionOp is only respected if a single layer is specified (aLayer != -1).
+   * If all layers are painted, the image layer's blend mode (or the mask
+   * layer's composition mode) will be used.
    */
   static DrawResult PaintBackgroundWithSC(nsPresContext* aPresContext,
                                           nsRenderingContext& aRenderingContext,
@@ -616,7 +622,8 @@ struct nsCSSRendering {
                                           const nsStyleBorder& aBorder,
                                           uint32_t aFlags,
                                           nsRect* aBGClipRect = nullptr,
-                                          int32_t aLayer = -1);
+                                          int32_t aLayer = -1,
+                                          CompositionOp aCompositionOp = CompositionOp::OP_OVER);
 
   /**
    * Returns the rectangle covered by the given background layer image, taking
@@ -627,7 +634,7 @@ struct nsCSSRendering {
                                        nsIFrame* aForFrame,
                                        const nsRect& aBorderArea,
                                        const nsRect& aClipRect,
-                                       const nsStyleBackground::Layer& aLayer,
+                                       const nsStyleImageLayers::Layer& aLayer,
                                        uint32_t aFlags);
 
   /**
@@ -795,6 +802,16 @@ struct nsCSSRendering {
     }
   }
 
+  static CompositionOp GetGFXCompositeMode(uint8_t aCompositeMode) {
+    switch (aCompositeMode) {
+      case NS_STYLE_MASK_COMPOSITE_ADD:        return CompositionOp::OP_OVER;
+      case NS_STYLE_MASK_COMPOSITE_SUBSTRACT:  return CompositionOp::OP_OUT;
+      case NS_STYLE_MASK_COMPOSITE_INTERSECT:  return CompositionOp::OP_IN;
+      case NS_STYLE_MASK_COMPOSITE_EXCLUDE:    return CompositionOp::OP_XOR;
+      default:              MOZ_ASSERT(false); return CompositionOp::OP_OVER;
+    }
+
+  }
 protected:
   static gfxRect GetTextDecorationRectInternal(const Point& aPt,
                                                const Size& aLineSize,

@@ -387,7 +387,7 @@ static nsresult GetDownloadDirectory(nsIFile **_directory,
   nsresult rv;
   if (downloadDir) {
     nsCOMPtr<nsIFile> ldir;
-    rv = NS_NewNativeLocalFile(nsCString(downloadDir),
+    rv = NS_NewNativeLocalFile(downloadDir->ToCString(),
                                true, getter_AddRefs(ldir));
 
     NS_ENSURE_SUCCESS(rv, rv);
@@ -685,7 +685,7 @@ nsExternalHelperAppService::DoContentContentProcessHelper(const nsACString& aMim
                                                           nsIInterfaceRequestor *aWindowContext,
                                                           nsIStreamListener ** aStreamListener)
 {
-  nsCOMPtr<nsIDOMWindow> window = do_GetInterface(aContentContext);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_GetInterface(aContentContext);
   NS_ENSURE_STATE(window);
 
   // We need to get a hold of a ContentChild so that we can begin forwarding
@@ -1935,7 +1935,7 @@ void nsExternalAppHandler::SendStatusChange(ErrorType type, nsresult rv, nsIRequ
                 // If we didn't have a prompter we will try and get a window
                 // instead, get it's docshell and use it to alert the user.
                 if (!prompter) {
-                  nsCOMPtr<nsPIDOMWindow> window(do_GetInterface(GetDialogParent()));
+                  nsCOMPtr<nsPIDOMWindowOuter> window(do_GetInterface(GetDialogParent()));
                   if (!window || !window->GetDocShell()) {
                     return;
                   }
@@ -2560,13 +2560,13 @@ bool nsExternalAppHandler::GetNeverAskFlagFromPref(const char * prefName, const 
 
 nsresult nsExternalAppHandler::MaybeCloseWindow()
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_GetInterface(mContentContext);
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_GetInterface(mContentContext);
   NS_ENSURE_STATE(window);
 
   if (mShouldCloseWindow) {
     // Reset the window context to the opener window so that the dependent
     // dialogs have a parent
-    nsCOMPtr<nsPIDOMWindow> opener = window->GetOpener();
+    nsCOMPtr<nsPIDOMWindowOuter> opener = window->GetOpener();
 
     if (opener && !opener->Closed()) {
       mContentContext = do_GetInterface(opener);
@@ -2592,8 +2592,7 @@ nsExternalAppHandler::Notify(nsITimer* timer)
 {
   NS_ASSERTION(mWindowToClose, "No window to close after timer fired");
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(mWindowToClose);
-  window->Close();
+  mWindowToClose->Close();
   mWindowToClose = nullptr;
   mTimer = nullptr;
 

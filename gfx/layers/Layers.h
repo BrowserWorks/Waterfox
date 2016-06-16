@@ -704,7 +704,7 @@ typedef InfallibleTArray<Animation> AnimationArray;
 struct AnimData {
   InfallibleTArray<mozilla::StyleAnimationValue> mStartValues;
   InfallibleTArray<mozilla::StyleAnimationValue> mEndValues;
-  InfallibleTArray<nsAutoPtr<mozilla::ComputedTimingFunction> > mFunctions;
+  InfallibleTArray<Maybe<mozilla::ComputedTimingFunction>> mFunctions;
 };
 
 /**
@@ -854,12 +854,12 @@ public:
    * them with the provided FrameMetrics. See the documentation for
    * SetFrameMetrics(const nsTArray<FrameMetrics>&) for more details.
    */
-  void SetFrameMetrics(const FrameMetrics& aFrameMetrics)
+  void SetScrollMetadata(const ScrollMetadata& aScrollMetadata)
   {
-    if (mFrameMetrics.Length() != 1 || mFrameMetrics[0] != aFrameMetrics) {
+    if (mScrollMetadata.Length() != 1 || mScrollMetadata[0] != aScrollMetadata) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
-      mFrameMetrics.ReplaceElementsAt(0, mFrameMetrics.Length(), aFrameMetrics);
-      FrameMetricsChanged();
+      mScrollMetadata.ReplaceElementsAt(0, mScrollMetadata.Length(), aScrollMetadata);
+      ScrollMetadataChanged();
       Mutated();
     }
   }
@@ -870,23 +870,23 @@ public:
    * rooted at this. There might be multiple metrics on this layer
    * because the layer may, for example, be contained inside multiple
    * nested scrolling subdocuments. In general a Layer having multiple
-   * FrameMetrics objects is conceptually equivalent to having a stack
+   * ScrollMetadata objects is conceptually equivalent to having a stack
    * of ContainerLayers that have been flattened into this Layer.
    * See the documentation in LayerMetricsWrapper.h for a more detailed
    * explanation of this conceptual equivalence.
    *
    * Note also that there is actually a many-to-many relationship between
-   * Layers and FrameMetrics, because multiple Layers may have identical
-   * FrameMetrics objects. This happens when those layers belong to the
+   * Layers and ScrollMetadata, because multiple Layers may have identical
+   * ScrollMetadata objects. This happens when those layers belong to the
    * same scrolling subdocument and therefore end up with the same async
    * transform when they are scrolled by the APZ code.
    */
-  void SetFrameMetrics(const nsTArray<FrameMetrics>& aMetricsArray)
+  void SetScrollMetadata(const nsTArray<ScrollMetadata>& aMetadataArray)
   {
-    if (mFrameMetrics != aMetricsArray) {
+    if (mScrollMetadata != aMetadataArray) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
-      mFrameMetrics = aMetricsArray;
-      FrameMetricsChanged();
+      mScrollMetadata = aMetadataArray;
+      ScrollMetadataChanged();
       Mutated();
     }
   }
@@ -1253,9 +1253,10 @@ public:
   uint32_t GetContentFlags() { return mContentFlags; }
   const gfx::IntRect& GetLayerBounds() const { return mLayerBounds; }
   const LayerIntRegion& GetVisibleRegion() const { return mVisibleRegion; }
+  const ScrollMetadata& GetScrollMetadata(uint32_t aIndex) const;
   const FrameMetrics& GetFrameMetrics(uint32_t aIndex) const;
-  uint32_t GetFrameMetricsCount() const { return mFrameMetrics.Length(); }
-  const nsTArray<FrameMetrics>& GetAllFrameMetrics() { return mFrameMetrics; }
+  uint32_t GetScrollMetadataCount() const { return mScrollMetadata.Length(); }
+  const nsTArray<ScrollMetadata>& GetAllScrollMetadata() { return mScrollMetadata; }
   bool HasScrollableFrameMetrics() const;
   bool IsScrollInfoLayer() const;
   const EventRegions& GetEventRegions() const { return mEventRegions; }
@@ -1340,7 +1341,7 @@ public:
 
   /**
    * Returns the local transform for this layer: either mTransform or,
-   * for shadow layers, GetShadowTransform(), in either case with the
+   * for shadow layers, GetShadowBaseTransform(), in either case with the
    * pre- and post-scales applied.
    */
   const gfx::Matrix4x4 GetLocalTransform();
@@ -1474,7 +1475,7 @@ public:
   // values that should be used when drawing this layer to screen,
   // accounting for this layer possibly being a shadow.
   const Maybe<ParentLayerIntRect>& GetEffectiveClipRect();
-  const LayerIntRegion& GetEffectiveVisibleRegion();
+  const LayerIntRegion& GetLocalVisibleRegion();
 
   bool Extend3DContext() {
     return GetContentFlags() & CONTENT_EXTEND_3D_CONTEXT;
@@ -1496,7 +1497,7 @@ public:
     // For containers extending 3D context, visible region
     // is meaningless, since they are just intermediate result of
     // content.
-    return !GetEffectiveVisibleRegion().IsEmpty() || Extend3DContext();
+    return !GetLocalVisibleRegion().IsEmpty() || Extend3DContext();
   }
 
   /**
@@ -1665,10 +1666,10 @@ public:
   // The aIndex for these functions must be less than GetFrameMetricsCount().
   void SetAsyncPanZoomController(uint32_t aIndex, AsyncPanZoomController *controller);
   AsyncPanZoomController* GetAsyncPanZoomController(uint32_t aIndex) const;
-  // The FrameMetricsChanged function is used internally to ensure the APZC array length
+  // The ScrollMetadataChanged function is used internally to ensure the APZC array length
   // matches the frame metrics array length.
 private:
-  void FrameMetricsChanged();
+  void ScrollMetadataChanged();
 public:
 
   void ApplyPendingUpdatesForThisTransaction();
@@ -1789,7 +1790,7 @@ protected:
   gfx::UserData mUserData;
   gfx::IntRect mLayerBounds;
   LayerIntRegion mVisibleRegion;
-  nsTArray<FrameMetrics> mFrameMetrics;
+  nsTArray<ScrollMetadata> mScrollMetadata;
   EventRegions mEventRegions;
   gfx::Matrix4x4 mTransform;
   // A mutation of |mTransform| that we've queued to be applied at the
@@ -2089,7 +2090,7 @@ public:
   RenderTargetIntRect GetIntermediateSurfaceRect()
   {
     NS_ASSERTION(mUseIntermediateSurface, "Must have intermediate surface");
-    return RenderTargetIntRect::FromUnknownRect(GetEffectiveVisibleRegion().ToUnknownRegion().GetBounds());
+    return RenderTargetIntRect::FromUnknownRect(GetLocalVisibleRegion().ToUnknownRegion().GetBounds());
   }
 
   /**
@@ -2132,9 +2133,17 @@ public:
    */
   void SetVRDeviceID(uint32_t aVRDeviceID) {
     mVRDeviceID = aVRDeviceID;
+    Mutated();
   }
   uint32_t GetVRDeviceID() {
     return mVRDeviceID;
+  }
+  void SetInputFrameID(int32_t aInputFrameID) {
+    mInputFrameID = aInputFrameID;
+    Mutated();
+  }
+  int32_t GetInputFrameID() {
+    return mInputFrameID;
   }
 
   /**
@@ -2212,6 +2221,7 @@ protected:
   bool mChildrenChanged;
   EventRegionsOverride mEventRegionsOverride;
   uint32_t mVRDeviceID;
+  int32_t mInputFrameID;
 };
 
 /**
@@ -2484,8 +2494,6 @@ private:
 
   virtual bool RepositionChild(Layer* aChild, Layer* aAfter) override
   { MOZ_CRASH(); return false; }
-
-  using Layer::SetFrameMetrics;
 
 public:
   /**

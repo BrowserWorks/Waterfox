@@ -40,6 +40,7 @@
 #if defined(MOZ_SANDBOX)
 #include "mozilla/Preferences.h"
 #include "mozilla/sandboxing/sandboxLogging.h"
+#include "nsDirectoryServiceUtils.h"
 #endif
 #endif
 
@@ -603,6 +604,46 @@ MaybeAddNsprLogFileAccess(std::vector<std::wstring>& aAllowedFilesReadWrite)
   AppendUTF16toUTF8(resolvedFilePath, resolvedEnvVar);
   PR_SetEnv(resolvedEnvVar.get());
 }
+
+static void
+AddContentSandboxAllowedFiles(int32_t aSandboxLevel,
+                              std::vector<std::wstring>& aAllowedFilesRead)
+{
+  if (aSandboxLevel < 1) {
+    return;
+  }
+
+  nsCOMPtr<nsIFile> binDir;
+  nsresult rv = NS_GetSpecialDirectory(NS_GRE_DIR, getter_AddRefs(binDir));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  nsAutoString binDirPath;
+  rv = binDir->GetPath(binDirPath);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return;
+  }
+
+  // If bin directory is on a remote drive add read access.
+  wchar_t volPath[MAX_PATH];
+  if (!::GetVolumePathNameW(binDirPath.get(), volPath, MAX_PATH)) {
+    return;
+  }
+
+  if (::GetDriveTypeW(volPath) != DRIVE_REMOTE) {
+    return;
+  }
+
+  // Convert network share path to format for sandbox policy.
+  if (Substring(binDirPath, 0, 2).Equals(L"\\\\")) {
+    binDirPath.InsertLiteral(MOZ_UTF16("??\\UNC"), 1);
+  }
+
+  binDirPath.AppendLiteral(MOZ_UTF16("\\*"));
+
+  aAllowedFilesRead.push_back(std::wstring(binDirPath.get()));
+}
 #endif
 
 bool
@@ -910,6 +951,7 @@ GeckoChildProcessHost::PerformAsyncLaunchInternal(std::vector<std::string>& aExt
         mSandboxBroker.SetSecurityLevelForContentProcess(mSandboxLevel);
         cmdLine.AppendLooseValue(UTF8ToWide("-sandbox"));
         shouldSandboxCurrentProcess = true;
+        AddContentSandboxAllowedFiles(mSandboxLevel, mAllowedFilesRead);
       }
 #endif // MOZ_CONTENT_SANDBOX
       break;
@@ -929,7 +971,14 @@ GeckoChildProcessHost::PerformAsyncLaunchInternal(std::vector<std::string>& aExt
       break;
     case GeckoProcessType_GMPlugin:
       if (!PR_GetEnv("MOZ_DISABLE_GMP_SANDBOX")) {
-        mSandboxBroker.SetSecurityLevelForGMPlugin();
+        // The Widevine CDM on Windows can only load at USER_RESTRICTED,
+        // not at USER_LOCKDOWN. So look in the command line arguments
+        // to see if we're loading the path to the Widevine CDM, and if
+        // so use sandbox level USER_RESTRICTED instead of USER_LOCKDOWN.
+        bool isWidevine = std::any_of(aExtraOpts.begin(), aExtraOpts.end(),
+          [](const std::string arg) { return arg.find("gmp-widevinecdm") != std::string::npos; });
+        auto level = isWidevine ? SandboxBroker::Restricted : SandboxBroker::LockDown;
+        mSandboxBroker.SetSecurityLevelForGMPlugin(level);
         cmdLine.AppendLooseValue(UTF8ToWide("-sandbox"));
         shouldSandboxCurrentProcess = true;
       }
@@ -985,10 +1034,15 @@ GeckoChildProcessHost::PerformAsyncLaunchInternal(std::vector<std::string>& aExt
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
   if (shouldSandboxCurrentProcess) {
-    mSandboxBroker.LaunchApp(cmdLine.program().c_str(),
-                             cmdLine.command_line_string().c_str(),
-                             mEnableSandboxLogging,
-                             &process);
+    if (mSandboxBroker.LaunchApp(cmdLine.program().c_str(),
+                                 cmdLine.command_line_string().c_str(),
+                                 mEnableSandboxLogging,
+                                 &process)) {
+      EnvironmentLog("MOZ_PROCESS_LOG").print(
+        "==> process %d launched child process %d (%S)\n",
+        base::GetCurrentProcId(), base::GetProcId(process),
+        cmdLine.command_line_string().c_str());
+    }
   } else
 #endif
   {
@@ -1057,11 +1111,11 @@ GeckoChildProcessHost::OnChannelConnected(int32_t peer_pid)
 }
 
 void
-GeckoChildProcessHost::OnMessageReceived(const IPC::Message& aMsg)
+GeckoChildProcessHost::OnMessageReceived(IPC::Message&& aMsg)
 {
   // We never process messages ourself, just save them up for the next
   // listener.
-  mQueue.push(aMsg);
+  mQueue.push(Move(aMsg));
 }
 
 void

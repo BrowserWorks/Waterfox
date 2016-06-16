@@ -1,15 +1,22 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
-var { gDevTools } = Cu.import("resource://devtools/client/framework/gDevTools.jsm", {});
-var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+var { loader, require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
+// Require this module just to setup things like themes and tools
+// devtools-browser is special as it loads main module
+// To be cleaned up in bug 1247203.
+require("devtools/client/framework/devtools-browser");
+var { gDevTools } = require("devtools/client/framework/devtools");
 var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
-var { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
+var Services = require("Services");
 var { DebuggerClient } = require("devtools/shared/client/main");
 var { ViewHelpers } =
   Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm", {});
@@ -33,7 +40,7 @@ var connect = Task.async(function*() {
     port: Prefs.chromeDebuggingPort
   });
   gClient = new DebuggerClient(transport);
-  gClient.connect(() => {
+  gClient.connect().then(() => {
     let addonID = getParameterByName("addonID");
 
     if (addonID) {
@@ -55,6 +62,8 @@ function setPrefDefaults() {
   Services.prefs.setBoolPref("devtools.performance.ui.show-platform-data", true);
   Services.prefs.setBoolPref("devtools.inspector.showAllAnonymousContent", true);
   Services.prefs.setBoolPref("browser.dom.window.dump.enabled", true);
+  Services.prefs.setBoolPref("devtools.command-button-noautohide.enabled", true);
+  Services.prefs.setBoolPref("devtools.scratchpad.enabled", true);
 }
 
 window.addEventListener("load", function() {
@@ -105,9 +114,26 @@ function openToolbox({ form, chrome, isTabActor }) {
 }
 
 function onNewToolbox(toolbox) {
-   gToolbox = toolbox;
-   bindToolboxHandlers();
-   raise();
+  gToolbox = toolbox;
+  bindToolboxHandlers();
+  raise();
+  let testScript = getParameterByName("testScript");
+  if (testScript) {
+    // Only allow executing random chrome scripts when a special
+    // test-only pref is set
+    let prefName = "devtools.browser-toolbox.allow-unsafe-script";
+    if (Services.prefs.getPrefType(prefName) == Services.prefs.PREF_BOOL &&
+        Services.prefs.getBoolPref(prefName) === true) {
+      evaluateTestScript(testScript, toolbox);
+    }
+  }
+}
+
+function evaluateTestScript(script, toolbox) {
+  let sandbox = Cu.Sandbox(window);
+  sandbox.window = window;
+  sandbox.toolbox = toolbox;
+  Cu.evalInSandbox(script, sandbox);
 }
 
 function bindToolboxHandlers() {

@@ -43,8 +43,6 @@ import org.mozilla.gecko.util.NativeEventListener;
 import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.util.PrefUtils;
 import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.webapp.EventListener;
-import org.mozilla.gecko.webapp.UninstallListener;
 import org.mozilla.gecko.widget.ButtonToast;
 
 import android.annotation.SuppressLint;
@@ -140,16 +138,6 @@ public abstract class GeckoApp
     private static final String LOGTAG = "GeckoApp";
     private static final int ONE_DAY_MS = 1000*60*60*24;
 
-    public enum StartupAction {
-        NORMAL,     /* normal application start */
-        URL,        /* launched with a passed URL */
-        PREFETCH,   /* launched with a passed URL that we prefetch */
-        WEBAPP,     /* launched as a webapp runtime */
-        GUEST,      /* launched in guest browsing */
-        RESTRICTED, /* launched with restricted profile */
-        SHORTCUT    /* launched from a homescreen shortcut */
-    }
-
     public static final String ACTION_ALERT_CALLBACK       = "org.mozilla.gecko.ACTION_ALERT_CALLBACK";
     public static final String ACTION_HOMESCREEN_SHORTCUT  = "org.mozilla.gecko.BOOKMARK";
     public static final String ACTION_DEBUG                = "org.mozilla.gecko.DEBUG";
@@ -187,6 +175,9 @@ public abstract class GeckoApp
     protected GeckoProfile mProfile;
     protected boolean mIsRestoringActivity;
 
+    /** Tells if we're aborting app launch, e.g. if this is an unsupported device configuration. */
+    protected boolean mIsAbortingAppLaunch;
+
     private ContactService mContactService;
     private PromptService mPromptService;
     private TextSelection mTextSelection;
@@ -214,9 +205,9 @@ public abstract class GeckoApp
     private volatile HealthRecorder mHealthRecorder;
     private volatile Locale mLastLocale;
 
-    private EventListener mWebappEventListener;
-
     private Intent mRestartIntent;
+
+    private boolean mWasFirstTabShownAfterActivityUnhidden;
 
     abstract public int getLayout();
 
@@ -691,9 +682,7 @@ public abstract class GeckoApp
     @Override
     public void handleMessage(String event, JSONObject message) {
         try {
-            if (event.equals("Gecko:DelayedStartup")) {
-                ThreadUtils.postToBackgroundThread(new UninstallListener.DelayedStartupTask(this));
-            } else if (event.equals("Gecko:Ready")) {
+            if (event.equals("Gecko:Ready")) {
                 mGeckoReadyStartupTimer.stop();
                 geckoConnected();
 
@@ -711,10 +700,6 @@ public abstract class GeckoApp
                 doShutdown();
                 return;
 
-            } else if ("NativeApp:IsDebuggable".equals(event)) {
-                JSONObject ret = new JSONObject();
-                ret.put("isDebuggable", getIsDebuggable());
-                EventDispatcher.sendResponse(message, ret);
             } else if (event.equals("Accessibility:Event")) {
                 GeckoAccessibility.sendAccessibilityEvent(message);
             }
@@ -1163,8 +1148,9 @@ public abstract class GeckoApp
             enableStrictMode();
         }
 
-        if (!isSupportedSystem()) {
+        if (!HardwareUtils.isSupportedSystem()) {
             // This build does not support the Android version of the device: Show an error and finish the app.
+            mIsAbortingAppLaunch = true;
             super.onCreate(savedInstanceState);
             showSDKVersionError();
             finish();
@@ -1268,10 +1254,8 @@ public abstract class GeckoApp
 
         EventDispatcher.getInstance().registerGeckoThreadListener((GeckoEventListener)this,
             "Gecko:Ready",
-            "Gecko:DelayedStartup",
             "Gecko:Exited",
-            "Accessibility:Event",
-            "NativeApp:IsDebuggable");
+            "Accessibility:Event");
 
         EventDispatcher.getInstance().registerGeckoThreadListener((NativeEventListener)this,
             "Accessibility:Ready",
@@ -1298,11 +1282,6 @@ public abstract class GeckoApp
 
         EventDispatcher.getInstance().registerBackgroundThreadListener((BundleEventListener) this,
                 "History:GetPrePathLastVisitedTimeMilliseconds");
-
-        if (mWebappEventListener == null) {
-            mWebappEventListener = new EventListener();
-            mWebappEventListener.registerEvents();
-        }
 
         GeckoThread.launch();
 
@@ -1420,6 +1399,26 @@ public abstract class GeckoApp
         IntentHelper.init(this);
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (mIsAbortingAppLaunch) {
+            return;
+        }
+
+        mWasFirstTabShownAfterActivityUnhidden = false; // onStart indicates we were hidden.
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Overriding here is not necessary, but we do this so we don't
+        // forget to add the abort if we override this method later.
+        if (mIsAbortingAppLaunch) {
+            return;
+        }
+    }
+
     /**
      * At this point, the resource system and the rest of the browser are
      * aware of the locale.
@@ -1513,6 +1512,9 @@ public abstract class GeckoApp
     private void initialize() {
         mInitialized = true;
 
+        final boolean isFirstTab = !mWasFirstTabShownAfterActivityUnhidden;
+        mWasFirstTabShownAfterActivityUnhidden = true; // Reset since we'll be loading a tab.
+
         final SafeIntent intent = new SafeIntent(getIntent());
         final String action = intent.getAction();
 
@@ -1570,6 +1572,9 @@ public abstract class GeckoApp
                     if (ACTION_HOMESCREEN_SHORTCUT.equals(action)) {
                         flags |= Tabs.LOADURL_PINNED;
                     }
+                    if (isFirstTab) {
+                        flags |= Tabs.LOADURL_FIRST_AFTER_ACTIVITY_UNHIDDEN;
+                    }
                     loadStartupTab(passedUri, intent, flags);
                 }
             });
@@ -1589,8 +1594,7 @@ public abstract class GeckoApp
             getProfile().moveSessionFile();
         }
 
-        final StartupAction startupAction = getStartupAction(passedUri, action);
-        Telemetry.addToHistogram("FENNEC_GECKOAPP_STARTUP_ACTION", startupAction.ordinal());
+        recordStartupActionTelemetry(passedUri, action);
 
         // Check if launched from data reporting notification.
         if (ACTION_LAUNCH_SETTINGS.equals(action)) {
@@ -1893,6 +1897,9 @@ public abstract class GeckoApp
     protected void onNewIntent(Intent externalIntent) {
         final SafeIntent intent = new SafeIntent(externalIntent);
 
+        final boolean isFirstTab = !mWasFirstTabShownAfterActivityUnhidden;
+        mWasFirstTabShownAfterActivityUnhidden = true; // Reset since we'll be loading a tab.
+
         // if we were previously OOM killed, we can end up here when launching
         // from external shortcuts, so set this as the intent for initialization
         if (!mInitialized) {
@@ -1902,24 +1909,31 @@ public abstract class GeckoApp
 
         final String action = intent.getAction();
 
+        final String uri = getURIFromIntent(intent);
+        final String passedUri;
+        if (!TextUtils.isEmpty(uri)) {
+            passedUri = uri;
+        } else {
+            passedUri = null;
+        }
+
         if (ACTION_LOAD.equals(action)) {
-            String uri = intent.getDataString();
-            Tabs.getInstance().loadUrl(uri);
+            Tabs.getInstance().loadUrl(intent.getDataString());
         } else if (Intent.ACTION_VIEW.equals(action)) {
             processActionViewIntent(new Runnable() {
                 @Override
                 public void run() {
                     final String url = intent.getDataString();
-                    Tabs.getInstance().loadUrlWithIntentExtras(url, intent, Tabs.LOADURL_NEW_TAB |
-                                                                                    Tabs.LOADURL_USER_ENTERED |
-                                                                                    Tabs.LOADURL_EXTERNAL);
+                    int flags = Tabs.LOADURL_NEW_TAB | Tabs.LOADURL_USER_ENTERED | Tabs.LOADURL_EXTERNAL;
+                    if (isFirstTab) {
+                        flags |= Tabs.LOADURL_FIRST_AFTER_ACTIVITY_UNHIDDEN;
+                    }
+                    Tabs.getInstance().loadUrlWithIntentExtras(url, intent, flags);
                 }
             });
         } else if (ACTION_HOMESCREEN_SHORTCUT.equals(action)) {
-            String uri = getURIFromIntent(intent);
             GeckoAppShell.sendEventToGecko(GeckoEvent.createBookmarkLoadEvent(uri));
         } else if (Intent.ACTION_SEARCH.equals(action)) {
-            String uri = getURIFromIntent(intent);
             GeckoAppShell.sendEventToGecko(GeckoEvent.createURILoadEvent(uri));
         } else if (ACTION_ALERT_CALLBACK.equals(action)) {
             processAlertCallback(intent);
@@ -1932,6 +1946,8 @@ public abstract class GeckoApp
             settingsIntent.putExtras(intent.getUnsafe());
             startActivity(settingsIntent);
         }
+
+        recordStartupActionTelemetry(passedUri, action);
     }
 
     /**
@@ -1957,6 +1973,9 @@ public abstract class GeckoApp
         // After an onPause, the activity is back in the foreground.
         // Undo whatever we did in onPause.
         super.onResume();
+        if (mIsAbortingAppLaunch) {
+            return;
+        }
 
         int newOrientation = getResources().getConfiguration().orientation;
         if (GeckoScreenOrientation.getInstance().update(newOrientation)) {
@@ -2027,6 +2046,11 @@ public abstract class GeckoApp
     @Override
     public void onPause()
     {
+        if (mIsAbortingAppLaunch) {
+            super.onPause();
+            return;
+        }
+
         final HealthRecorder rec = mHealthRecorder;
         final Context context = this;
 
@@ -2071,6 +2095,11 @@ public abstract class GeckoApp
 
     @Override
     public void onRestart() {
+        if (mIsAbortingAppLaunch) {
+            super.onRestart();
+            return;
+        }
+
         // Faster on main thread with an async apply().
         final StrictMode.ThreadPolicy savedPolicy = StrictMode.allowThreadDiskReads();
         try {
@@ -2086,7 +2115,7 @@ public abstract class GeckoApp
 
     @Override
     public void onDestroy() {
-        if (!isSupportedSystem()) {
+        if (mIsAbortingAppLaunch) {
             // This build does not support the Android version of the device:
             // We did not initialize anything, so skip cleaning up.
             super.onDestroy();
@@ -2095,10 +2124,8 @@ public abstract class GeckoApp
 
         EventDispatcher.getInstance().unregisterGeckoThreadListener((GeckoEventListener)this,
             "Gecko:Ready",
-            "Gecko:DelayedStartup",
             "Gecko:Exited",
-            "Accessibility:Event",
-            "NativeApp:IsDebuggable");
+            "Accessibility:Event");
 
         EventDispatcher.getInstance().unregisterGeckoThreadListener((NativeEventListener)this,
             "Accessibility:Ready",
@@ -2124,11 +2151,6 @@ public abstract class GeckoApp
 
         EventDispatcher.getInstance().unregisterBackgroundThreadListener((BundleEventListener) this,
                 "History:GetPrePathLastVisitedTimeMilliseconds");
-
-        if (mWebappEventListener != null) {
-            mWebappEventListener.unregisterEvents();
-            mWebappEventListener = null;
-        }
 
         deleteTempFiles();
 
@@ -2192,32 +2214,6 @@ public abstract class GeckoApp
             // Exiting, so kill our own process.
             Process.killProcess(Process.myPid());
         }
-    }
-
-    protected boolean isSupportedSystem() {
-        if (Build.VERSION.SDK_INT < Versions.MIN_SDK_VERSION ||
-            Build.VERSION.SDK_INT > Versions.MAX_SDK_VERSION) {
-            return false;
-        }
-
-        // See http://developer.android.com/ndk/guides/abis.html
-        boolean isSystemARM = Build.CPU_ABI != null && Build.CPU_ABI.startsWith("arm");
-        boolean isSystemX86 = Build.CPU_ABI != null && Build.CPU_ABI.startsWith("x86");
-
-        boolean isAppARM = AppConstants.ANDROID_CPU_ARCH.startsWith("arm");
-        boolean isAppX86 = AppConstants.ANDROID_CPU_ARCH.startsWith("x86");
-
-        // Only reject known incompatible ABIs. Better safe than sorry.
-        if ((isSystemX86 && isAppARM) || (isSystemARM && isAppX86)) {
-            return false;
-        }
-
-        if ((isSystemX86 && isAppX86) || (isSystemARM && isAppARM)) {
-            return true;
-        }
-
-        Log.w(LOGTAG, "Unknown app/system ABI combination: " + AppConstants.MOZ_APP_ABI + " / " + Build.CPU_ABI);
-        return true;
     }
 
     public void showSDKVersionError() {
@@ -2691,23 +2687,6 @@ public abstract class GeckoApp
         return versionCode;
     }
 
-    protected boolean getIsDebuggable() {
-        // Return false so Fennec doesn't appear to be debuggable.  WebappImpl
-        // then overrides this and returns the value of android:debuggable for
-        // the webapp APK, so webapps get the behavior supported by this method
-        // (i.e. automatic configuration and enabling of the remote debugger).
-        return false;
-
-        // If we ever want to expose this for Fennec, here's how we would do it:
-        // int flags = 0;
-        // try {
-        //     flags = getPackageManager().getPackageInfo(getPackageName(), 0).applicationInfo.flags;
-        // } catch (NameNotFoundException e) {
-        //     Log.wtf(LOGTAG, getPackageName() + " not found", e);
-        // }
-        // return (flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
-    }
-
     // FHR reason code for a session end prior to a restart for a
     // locale change.
     private static final String SESSION_END_LOCALE_CHANGED = "L";
@@ -2795,8 +2774,6 @@ public abstract class GeckoApp
         return new StubbedHealthRecorder();
     }
 
-    protected StartupAction getStartupAction(final String passedURL, final String action) {
-        // Default to NORMAL here. Subclasses can handle the other types.
-        return StartupAction.NORMAL;
+    protected void recordStartupActionTelemetry(final String passedURL, final String action) {
     }
 }

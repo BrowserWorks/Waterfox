@@ -24,6 +24,14 @@ using namespace mozilla::dom;
 
 namespace mozilla {
 
+static void
+InheritOriginAttributes(nsIPrincipal* aLoadingPrincipal, NeckoOriginAttributes& aAttrs)
+{
+  const PrincipalOriginAttributes attrs =
+    BasePrincipal::Cast(aLoadingPrincipal)->OriginAttributesRef();
+  aAttrs.InheritFromDocToNecko(attrs);
+}
+
 LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
                    nsINode* aLoadingContext,
@@ -67,12 +75,12 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   }
 
   if (aLoadingContext) {
-    nsCOMPtr<nsPIDOMWindow> contextOuter = aLoadingContext->OwnerDoc()->GetWindow();
+    nsCOMPtr<nsPIDOMWindowOuter> contextOuter = aLoadingContext->OwnerDoc()->GetWindow();
     if (contextOuter) {
       ComputeIsThirdPartyContext(contextOuter);
     }
 
-    nsCOMPtr<nsPIDOMWindow> outerWindow;
+    nsCOMPtr<nsPIDOMWindowOuter> outerWindow;
 
     // When the element being loaded is a frame, we choose the frame's window
     // for the window ID and the frame element's window as the parent
@@ -95,11 +103,11 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
     }
 
     if (outerWindow) {
-      nsCOMPtr<nsPIDOMWindow> inner = outerWindow->GetCurrentInnerWindow();
+      nsCOMPtr<nsPIDOMWindowInner> inner = outerWindow->GetCurrentInnerWindow();
       mInnerWindowID = inner ? inner->WindowID() : 0;
       mOuterWindowID = outerWindow->WindowID();
 
-      nsCOMPtr<nsPIDOMWindow> parent = outerWindow->GetScriptableParent();
+      nsCOMPtr<nsPIDOMWindowOuter> parent = outerWindow->GetScriptableParent();
       mParentOuterWindowID = parent->WindowID();
     }
 
@@ -112,8 +120,46 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
        aLoadingContext->OwnerDoc()->GetUpgradeInsecureRequests(true));
   }
 
-  const PrincipalOriginAttributes attrs = BasePrincipal::Cast(mLoadingPrincipal)->OriginAttributesRef();
-  mOriginAttributes.InheritFromDocToNecko(attrs);
+  InheritOriginAttributes(mLoadingPrincipal, mOriginAttributes);
+}
+
+LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
+                   nsIPrincipal* aLoadingPrincipal,
+                   nsIPrincipal* aTriggeringPrincipal,
+                   nsSecurityFlags aSecurityFlags)
+  : mLoadingPrincipal(aLoadingPrincipal)
+  , mTriggeringPrincipal(aTriggeringPrincipal)
+  , mSecurityFlags(aSecurityFlags)
+  , mInternalContentPolicyType(nsIContentPolicy::TYPE_DOCUMENT)
+  , mTainting(LoadTainting::Basic)
+  , mUpgradeInsecureRequests(false)
+  , mInnerWindowID(0)
+  , mOuterWindowID(0)
+  , mParentOuterWindowID(0)
+  , mEnforceSecurity(false)
+  , mInitialSecurityCheckDone(false)
+  , mIsThirdPartyContext(false) // NB: TYPE_DOCUMENT implies not third-party.
+  , mForcePreflight(false)
+  , mIsPreflight(false)
+{
+  // Top-level loads are never third-party
+  // Grab the information we can out of the window.
+  MOZ_ASSERT(aOuterWindow);
+
+  // if the load is sandboxed, we can not also inherit the principal
+  if (mSecurityFlags & nsILoadInfo::SEC_SANDBOXED) {
+    mSecurityFlags ^= nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
+  }
+
+  // NB: Ignore the current inner window since we're navigating away from it.
+  mOuterWindowID = aOuterWindow->WindowID();
+
+  // TODO We can have a parent without a frame element in some cases dealing
+  // with the hidden window.
+  nsCOMPtr<nsPIDOMWindowOuter> parent = aOuterWindow->GetScriptableParent();
+  mParentOuterWindowID = parent ? parent->WindowID() : 0;
+
+  InheritOriginAttributes(mLoadingPrincipal, mOriginAttributes);
 }
 
 LoadInfo::LoadInfo(const LoadInfo& rhs)
@@ -189,7 +235,7 @@ LoadInfo::~LoadInfo()
 }
 
 void
-LoadInfo::ComputeIsThirdPartyContext(nsPIDOMWindow* aOuterWindow)
+LoadInfo::ComputeIsThirdPartyContext(nsPIDOMWindowOuter* aOuterWindow)
 {
   nsContentPolicyType type =
     nsContentUtils::InternalContentPolicyTypeToExternal(mInternalContentPolicyType);

@@ -110,7 +110,6 @@ const ACTIVITY_TYPE = {
   DISABLE_CACHE: 4
 };
 
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://devtools/client/shared/widgets/SideMenuWidget.jsm");
 Cu.import("resource://devtools/client/shared/widgets/VariablesView.jsm");
@@ -119,6 +118,7 @@ Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
 
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const promise = require("promise");
+const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
 const Editor = require("devtools/client/sourceeditor/editor");
 const {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
@@ -253,7 +253,9 @@ var NetMonitorController = {
     this._disconnection = promise.defer();
 
     // Wait for the connection to finish first.
-    yield this._connection.promise;
+    if (!this.isConnected()) {
+      yield this._connection.promise;
+    }
 
     // When debugging local or a remote instance, the connection is closed by
     // the RemoteTarget. The webconsole actor is stopped on disconnect.

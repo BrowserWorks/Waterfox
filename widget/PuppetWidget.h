@@ -54,6 +54,7 @@ protected:
 public:
   NS_DECL_ISUPPORTS_INHERITED
 
+  using nsBaseWidget::Create; // for Create signature not overridden here
   NS_IMETHOD Create(nsIWidget* aParent,
                     nsNativeWidget aNativeParent,
                     const LayoutDeviceIntRect& aRect,
@@ -252,7 +253,8 @@ public:
 
   virtual void StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics) override;
 
-  virtual void SetCandidateWindowForPlugin(int32_t aX, int32_t aY) override;
+  virtual void SetCandidateWindowForPlugin(
+                 const CandidateWindowPosition& aPosition) override;
 
   virtual void ZoomToRect(const uint32_t& aPresShellId,
                           const FrameMetrics::ViewID& aViewId,

@@ -4,19 +4,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_dom_indexeddb_idbwrappercache_h__
-#define mozilla_dom_indexeddb_idbwrappercache_h__
+#ifndef mozilla_dom_idbwrappercache_h__
+#define mozilla_dom_idbwrappercache_h__
 
 #include "js/RootingAPI.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsWrapperCache.h"
 
-class nsPIDOMWindow;
+class nsPIDOMWindowInnter;
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
 class IDBWrapperCache : public DOMEventTargetHelper
 {
@@ -45,13 +44,12 @@ public:
 
 protected:
   explicit IDBWrapperCache(DOMEventTargetHelper* aOwner);
-  explicit IDBWrapperCache(nsPIDOMWindow* aOwner);
+  explicit IDBWrapperCache(nsPIDOMWindowInner* aOwner);
 
   virtual ~IDBWrapperCache();
 };
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla
 
-#endif // mozilla_dom_indexeddb_idbwrappercache_h__
+#endif // mozilla_dom_idbwrappercache_h__

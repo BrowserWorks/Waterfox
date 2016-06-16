@@ -114,8 +114,7 @@ add_task(function* test_notification_ack_data_setup() {
       });
     }
   });
-  yield waitForPromise(setupDonePromise, DEFAULT_TIMEOUT,
-                       'Timed out waiting for notifications');
+  yield setupDonePromise;
 });
 
 add_task(function* test_notification_ack_data() {
@@ -223,7 +222,7 @@ add_task(function* test_notification_ack_data() {
   ];
 
   let sendAndReceive = testData => {
-    let messageReceived = promiseObserverNotification('push-message', (subject, data) => {
+    let messageReceived = promiseObserverNotification(PushServiceComponent.pushTopic, (subject, data) => {
       let notification = subject.QueryInterface(Ci.nsIPushMessage);
       equal(notification.text(), testData.receive.data,
             'Check data for notification ' + testData.version);
@@ -249,10 +248,7 @@ add_task(function* test_notification_ack_data() {
     return Promise.all([messageReceived, ackReceived]);
   };
 
-  yield waitForPromise(
-    allTestData.reduce((p, testData) => {
-      return p.then(_ => sendAndReceive(testData));
-    }, Promise.resolve()),
-    DEFAULT_TIMEOUT,
-    'Timed out waiting for message exchange to complete');
+  yield allTestData.reduce((p, testData) => {
+    return p.then(_ => sendAndReceive(testData));
+  }, Promise.resolve());
 });

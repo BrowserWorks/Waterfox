@@ -71,7 +71,9 @@ var gCookiesWindow = {
   _cookieEquals: function (aCookieA, aCookieB, aStrippedHost) {
     return aCookieA.rawHost == aStrippedHost &&
            aCookieA.name == aCookieB.name &&
-           aCookieA.path == aCookieB.path;
+           aCookieA.path == aCookieB.path &&
+           ChromeUtils.isOriginAttributesEqual(aCookieA.originAttributes,
+                                               aCookieB.originAttributes);
   },
 
   observe: function (aCookie, aTopic, aData) {
@@ -276,15 +278,19 @@ var gCookiesWindow = {
       var item = this._getItemAtIndex(aIndex);
       if (!item) return;
       this._invalidateCache(aIndex - 1);
-      if (item.container)
+      if (item.container) {
         gCookiesWindow._hosts[item.rawHost] = null;
-      else {
+      } else {
         var parent = this._getItemAtIndex(item.parentIndex);
         for (var i = 0; i < parent.cookies.length; ++i) {
           var cookie = parent.cookies[i];
           if (item.rawHost == cookie.rawHost &&
-              item.name == cookie.name && item.path == cookie.path)
+              item.name == cookie.name &&
+              item.path == cookie.path &&
+              ChromeUtils.isOriginAttributesEqual(item.originAttributes,
+                                                  cookie.originAttributes)) {
             parent.cookies.splice(i, removeCount);
+          }
         }
       }
     },
@@ -505,6 +511,14 @@ var gCookiesWindow = {
     return this._bundle.getString("expireAtEndOfSession");
   },
 
+  _getUserContextString: function(aUserContextId) {
+    if (parseInt(aUserContextId) == 0) {
+      return this._bundle.getString("defaultUserContextLabel");
+    }
+
+    return UserContextUI.getUserContextLabel(aUserContextId);
+  },
+
   _updateCookieData: function (aItem) {
     var seln = this._view.selection;
     var ids = ["name", "value", "host", "path", "isSecure", "expires", "userContext"];
@@ -517,7 +531,7 @@ var gCookiesWindow = {
                                               : this._bundle.getString("hostColon"),
                      isSecure: aItem.isSecure ? this._bundle.getString("forSecureOnly")
                                               : this._bundle.getString("forAnyConnection"),
-                     userContext: UserContextUI.getUserContextLabel(aItem.originAttributes.userContextId) };
+                     userContext: this._getUserContextString(aItem.originAttributes.userContextId) };
       for (var i = 0; i < ids.length; ++i) {
         document.getElementById(ids[i]).disabled = false;
       }
@@ -576,7 +590,8 @@ var gCookiesWindow = {
       blockFutureCookies = psvc.getBoolPref("network.cookie.blockFutureCookies");
     for (var i = 0; i < deleteItems.length; ++i) {
       var item = deleteItems[i];
-      this._cm.remove(item.host, item.name, item.path, blockFutureCookies);
+      this._cm.remove(item.host, item.name, item.path,
+                      blockFutureCookies, item.originAttributes);
     }
   },
 

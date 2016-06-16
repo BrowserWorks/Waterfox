@@ -7,6 +7,7 @@ include ../../accessible/tests/crashtests/crashtests.list
 
 include ../../docshell/base/crashtests/crashtests.list
 
+include ../../dom/animation/test/crashtests/crashtests.list
 include ../../dom/audiochannel/crashtests/crashtests.list
 include ../../dom/base/crashtests/crashtests.list
 include ../../dom/bindings/crashtests/crashtests.list
@@ -19,6 +20,7 @@ include ../../dom/mathml/crashtests/crashtests.list
 include ../../dom/media/mediasource/test/crashtests/crashtests.list
 include ../../dom/media/test/crashtests/crashtests.list
 skip-if(!webrtc) include ../../dom/media/tests/crashtests/crashtests.list
+include ../../dom/media/webspeech/synth/crashtests/crashtests.list
 include ../../dom/offline/crashtests/crashtests.list
 include ../../dom/plugins/test/crashtests/crashtests.list
 include ../../dom/smil/crashtests/crashtests.list

@@ -84,7 +84,6 @@ hardware (via AudioStream).
 
 #include "mozilla/Attributes.h"
 #include "mozilla/ReentrantMonitor.h"
-#include "mozilla/RollingMean.h"
 #include "mozilla/StateMirroring.h"
 
 #include "nsThreadUtils.h"
@@ -142,7 +141,7 @@ public:
                            MediaDecoderReader* aReader,
                            bool aRealTime = false);
 
-  nsresult Init();
+  nsresult Init(MediaDecoder* aDecoder);
 
   // Enumeration for the valid decoding states
   enum State {
@@ -212,12 +211,10 @@ public:
     OwnerThread()->Dispatch(r.forget());
   }
 
-  // Drop reference to mReader and mResource. Only called during shutdown dance.
+  // Drop reference to mResource. Only called during shutdown dance.
   void BreakCycles() {
     MOZ_ASSERT(NS_IsMainThread());
-    if (mReader) {
-      mReader->BreakCycles();
-    }
+    mReader->BreakCycles();
     mResource = nullptr;
   }
 
@@ -248,17 +245,11 @@ public:
   bool IsRealTime() const { return mRealTime; }
 
   size_t SizeOfVideoQueue() {
-    if (mReader) {
-      return mReader->SizeOfVideoQueueInBytes();
-    }
-    return 0;
+    return mReader->SizeOfVideoQueueInBytes();
   }
 
   size_t SizeOfAudioQueue() {
-    if (mReader) {
-      return mReader->SizeOfAudioQueueInBytes();
-    }
-    return 0;
+    return mReader->SizeOfAudioQueueInBytes();
   }
 
 private:
@@ -471,10 +462,6 @@ protected:
   // media element -- use UpdatePlaybackPosition for that.  Called on the state
   // machine thread, caller must hold the decoder lock.
   void UpdatePlaybackPositionInternal(int64_t aTime);
-
-  // Decode monitor must be held. To determine if MDSM needs to turn off HW
-  // acceleration.
-  void CheckFrameValidity(VideoData* aData);
 
   // Update playback position and trigger next update by default time period.
   // Called on the state machine thread.
@@ -903,7 +890,7 @@ private:
 
   // The reader, don't call its methods with the decoder monitor held.
   // This is created in the state machine's constructor.
-  RefPtr<MediaDecoderReader> mReader;
+  const RefPtr<MediaDecoderReader> mReader;
 
   // The end time of the last audio frame that's been pushed onto the media sink
   // in microseconds. This will approximately be the end time
@@ -1129,10 +1116,6 @@ private:
   bool mDropAudioUntilNextDiscontinuity;
   bool mDropVideoUntilNextDiscontinuity;
 
-  // True if we need to decode forwards to the seek target inside
-  // mCurrentSeekTarget.
-  bool mDecodeToSeekTarget;
-
   // Track the current seek promise made by the reader.
   MozPromiseRequestHolder<MediaDecoderReader::SeekPromise> mSeekRequest;
 
@@ -1151,8 +1134,6 @@ private:
   nsAutoPtr<MetadataTags> mMetadataTags;
 
   mozilla::MediaMetadataManager mMetadataManager;
-
-  mozilla::RollingMean<uint32_t, uint32_t> mCorruptFrames;
 
   // True if we need to call FinishDecodeFirstFrame() upon frame decoding
   // successeeding.

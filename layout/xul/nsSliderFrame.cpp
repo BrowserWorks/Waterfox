@@ -22,11 +22,13 @@
 #include "nsHTMLParts.h"
 #include "nsIPresShell.h"
 #include "nsCSSRendering.h"
+#include "nsIDOMEvent.h"
 #include "nsIDOMMouseEvent.h"
 #include "nsScrollbarButtonFrame.h"
 #include "nsISliderListener.h"
 #include "nsIScrollableFrame.h"
 #include "nsIScrollbarMediator.h"
+#include "nsISupportsImpl.h"
 #include "nsScrollbarFrame.h"
 #include "nsRepeatService.h"
 #include "nsBoxLayoutState.h"
@@ -35,16 +37,22 @@
 #include "nsContentUtils.h"
 #include "nsLayoutUtils.h"
 #include "nsDisplayList.h"
+#include "mozilla/Assertions.h"         // for MOZ_ASSERT
 #include "mozilla/Preferences.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/MouseEvents.h"
+#include "mozilla/Telemetry.h"
+#include "mozilla/layers/APZCCallbackHelper.h"
 #include "mozilla/layers/AsyncDragMetrics.h"
 #include "mozilla/layers/InputAPZContext.h"
+#include "mozilla/layers/ScrollInputMethods.h"
 #include <algorithm>
 
 using namespace mozilla;
+using mozilla::layers::APZCCallbackHelper;
 using mozilla::layers::AsyncDragMetrics;
 using mozilla::layers::InputAPZContext;
+using mozilla::layers::ScrollInputMethod;
 
 bool nsSliderFrame::gMiddlePref = false;
 int32_t nsSliderFrame::gSnapMultiplier;
@@ -77,13 +85,19 @@ nsSliderFrame::nsSliderFrame(nsStyleContext* aContext):
   mChange(0),
   mDragFinished(true),
   mUserChanged(false),
-  mScrollingWithAPZ(false)
+  mScrollingWithAPZ(false),
+  mSuppressionActive(false)
 {
 }
 
 // stop timer
 nsSliderFrame::~nsSliderFrame()
 {
+  if (mSuppressionActive) {
+    APZCCallbackHelper::SuppressDisplayport(false, PresContext() ?
+                                                   PresContext()->PresShell() :
+                                                   nullptr);
+  }
 }
 
 void
@@ -515,6 +529,9 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
         return NS_OK;
       }
 
+      mozilla::Telemetry::Accumulate(mozilla::Telemetry::SCROLL_INPUT_METHODS,
+          (uint32_t) ScrollInputMethod::MainThreadScrollbarDrag);
+
       // take our current position and subtract the start location
       pos -= mDragStart;
       bool isMouseOutsideThumb = false;
@@ -580,6 +597,9 @@ nsSliderFrame::HandleEvent(nsPresContext* aPresContext,
     }
     nsSize thumbSize = thumbFrame->GetSize();
     nscoord thumbLength = isHorizontal ? thumbSize.width : thumbSize.height;
+
+    mozilla::Telemetry::Accumulate(mozilla::Telemetry::SCROLL_INPUT_METHODS,
+        (uint32_t) ScrollInputMethod::MainThreadScrollbarTrackClick);
 
     // set it
     nsWeakFrame weakFrame(this);
@@ -895,7 +915,9 @@ nsSliderFrame::SetInitialChildList(ChildListID     aListID,
                                    nsFrameList&    aChildList)
 {
   nsBoxFrame::SetInitialChildList(aListID, aChildList);
-  AddListener();
+  if (aListID == kPrincipalList) {
+    AddListener();
+  }
 }
 
 nsresult
@@ -969,7 +991,7 @@ nsSliderFrame::StartDrag(nsIDOMEvent* aEvent)
                             nsGkAtoms::_true, eCaseMatters))
     return NS_OK;
 
-  WidgetGUIEvent* event = aEvent->GetInternalNSEvent()->AsGUIEvent();
+  WidgetGUIEvent* event = aEvent->WidgetEventPtr()->AsGUIEvent();
 
   if (!ShouldScrollForEvent(event)) {
     return NS_OK;
@@ -1032,6 +1054,12 @@ nsSliderFrame::StartDrag(nsIDOMEvent* aEvent)
   printf("Pressed mDragStart=%d\n",mDragStart);
 #endif
 
+  if (!mScrollingWithAPZ && !mSuppressionActive) {
+    MOZ_ASSERT(PresContext()->PresShell());
+    APZCCallbackHelper::SuppressDisplayport(true, PresContext()->PresShell());
+    mSuppressionActive = true;
+  }
+
   return NS_OK;
 }
 
@@ -1042,6 +1070,12 @@ nsSliderFrame::StopDrag()
   DragThumb(false);
 
   mScrollingWithAPZ = false;
+
+  if (mSuppressionActive) {
+    MOZ_ASSERT(PresContext()->PresShell());
+    APZCCallbackHelper::SuppressDisplayport(false, PresContext()->PresShell());
+    mSuppressionActive = false;
+  }
 
 #ifdef MOZ_WIDGET_GTK
   nsIFrame* thumbFrame = mFrames.FirstChild();

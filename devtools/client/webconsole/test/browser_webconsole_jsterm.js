@@ -1,7 +1,7 @@
-/* vim:set ts=2 sw=2 sts=2 et: */
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -142,4 +142,28 @@ function* testJSTerm(hud) {
   jsterm.clearOutput();
   yield jsterm.execute("undefined");
   yield checkResult("undefined", "undefined is printed");
+
+  // check that thrown strings produce error messages,
+  // and the message text matches that of a stringified error object
+  // bug 1099071
+  jsterm.clearOutput();
+  yield jsterm.execute("throw '';");
+  yield checkResult((node) => {
+    return node.parentNode.getAttribute("severity") === "error" &&
+      node.textContent === new Error("").toString();
+  }, "thrown empty string generates error message");
+
+  jsterm.clearOutput();
+  yield jsterm.execute("throw 'tomatoes';");
+  yield checkResult((node) => {
+    return node.parentNode.getAttribute("severity") === "error" &&
+      node.textContent === new Error("tomatoes").toString();
+  }, "thrown non-empty string generates error message");
+
+  jsterm.clearOutput();
+  yield jsterm.execute("throw { foo: 'bar' };");
+  yield checkResult((node) => {
+    return node.parentNode.getAttribute("severity") === "error" &&
+      node.textContent === Object.prototype.toString();
+  }, "thrown object generates error message");
 }

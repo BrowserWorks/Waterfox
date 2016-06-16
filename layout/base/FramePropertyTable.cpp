@@ -10,8 +10,8 @@
 namespace mozilla {
 
 void
-FramePropertyTable::Set(nsIFrame* aFrame, const FramePropertyDescriptor* aProperty,
-                        void* aValue)
+FramePropertyTable::SetInternal(
+  const nsIFrame* aFrame, UntypedDescriptor aProperty, void* aValue)
 {
   NS_ASSERTION(aFrame, "Null frame?");
   NS_ASSERTION(aProperty, "Null property?");
@@ -59,9 +59,8 @@ FramePropertyTable::Set(nsIFrame* aFrame, const FramePropertyDescriptor* aProper
 }
 
 void*
-FramePropertyTable::Get(const nsIFrame* aFrame,
-                        const FramePropertyDescriptor* aProperty,
-                        bool* aFoundResult)
+FramePropertyTable::GetInternal(
+  const nsIFrame* aFrame, UntypedDescriptor aProperty, bool* aFoundResult)
 {
   NS_ASSERTION(aFrame, "Null frame?");
   NS_ASSERTION(aProperty, "Null property?");
@@ -71,7 +70,7 @@ FramePropertyTable::Get(const nsIFrame* aFrame,
   }
 
   if (mLastFrame != aFrame) {
-    mLastFrame = const_cast<nsIFrame*>(aFrame);
+    mLastFrame = aFrame;
     mLastEntry = mEntries.GetEntry(mLastFrame);
   }
   Entry* entry = mLastEntry;
@@ -103,8 +102,8 @@ FramePropertyTable::Get(const nsIFrame* aFrame,
 }
 
 void*
-FramePropertyTable::Remove(nsIFrame* aFrame, const FramePropertyDescriptor* aProperty,
-                           bool* aFoundResult)
+FramePropertyTable::RemoveInternal(
+  const nsIFrame* aFrame, UntypedDescriptor aProperty, bool* aFoundResult)
 {
   NS_ASSERTION(aFrame, "Null frame?");
   NS_ASSERTION(aProperty, "Null property?");
@@ -124,7 +123,10 @@ FramePropertyTable::Remove(nsIFrame* aFrame, const FramePropertyDescriptor* aPro
   if (entry->mProp.mProperty == aProperty) {
     // There's only one entry and it's the one we want
     void* value = entry->mProp.mValue;
-    mEntries.RawRemoveEntry(entry);
+
+    // Here it's ok to use RemoveEntry() -- which may resize mEntries --
+    // because we null mLastEntry at the same time.
+    mEntries.RemoveEntry(entry);
     mLastEntry = nullptr;
     if (aFoundResult) {
       *aFoundResult = true;
@@ -164,13 +166,14 @@ FramePropertyTable::Remove(nsIFrame* aFrame, const FramePropertyDescriptor* aPro
 }
 
 void
-FramePropertyTable::Delete(nsIFrame* aFrame, const FramePropertyDescriptor* aProperty)
+FramePropertyTable::DeleteInternal(
+  const nsIFrame* aFrame, UntypedDescriptor aProperty)
 {
   NS_ASSERTION(aFrame, "Null frame?");
   NS_ASSERTION(aProperty, "Null property?");
 
   bool found;
-  void* v = Remove(aFrame, aProperty, &found);
+  void* v = RemoveInternal(aFrame, aProperty, &found);
   if (found) {
     PropertyValue pv(aProperty, v);
     pv.DestroyValueFor(aFrame);
@@ -193,7 +196,7 @@ FramePropertyTable::DeleteAllForEntry(Entry* aEntry)
 }
 
 void
-FramePropertyTable::DeleteAllFor(nsIFrame* aFrame)
+FramePropertyTable::DeleteAllFor(const nsIFrame* aFrame)
 {
   NS_ASSERTION(aFrame, "Null frame?");
 
@@ -209,6 +212,9 @@ FramePropertyTable::DeleteAllFor(nsIFrame* aFrame)
   }
 
   DeleteAllForEntry(entry);
+
+  // mLastEntry points into mEntries, so we use RawRemoveEntry() which will not
+  // resize mEntries.
   mEntries.RawRemoveEntry(entry);
 }
 

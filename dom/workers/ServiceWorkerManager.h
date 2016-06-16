@@ -209,7 +209,7 @@ private:
   // addition and removal.
   // There is a high chance of there being at least one ServiceWorker
   // associated with this all the time.
-  nsAutoTArray<ServiceWorker*, 1> mInstances;
+  AutoTArray<ServiceWorker*, 1> mInstances;
 
   RefPtr<ServiceWorkerPrivate> mServiceWorkerPrivate;
   bool mSkipWaitingFlag;
@@ -303,7 +303,7 @@ public:
   RemoveWorker(ServiceWorker* aWorker);
 
   already_AddRefed<ServiceWorker>
-  GetOrCreateInstance(nsPIDOMWindow* aWindow);
+  GetOrCreateInstance(nsPIDOMWindowInner* aWindow);
 };
 
 #define NS_SERVICEWORKERMANAGER_IMPL_IID                 \
@@ -501,6 +501,9 @@ public:
                 const nsACString& aScope,
                 Maybe<nsTArray<uint8_t>> aData);
 
+  nsresult
+  NotifyUnregister(nsIPrincipal* aPrincipal, const nsAString& aScope);
+
 private:
   ServiceWorkerManager();
   ~ServiceWorkerManager();
@@ -529,8 +532,8 @@ private:
   GetDocumentRegistration(nsIDocument* aDoc,
                           ServiceWorkerRegistrationInfo** aRegistrationInfo);
 
-  NS_IMETHODIMP
-  GetServiceWorkerForScope(nsIDOMWindow* aWindow,
+  nsresult
+  GetServiceWorkerForScope(nsPIDOMWindowInner* aWindow,
                            const nsAString& aScope,
                            WhichServiceWorker aWhichWorker,
                            nsISupports** aServiceWorker);
@@ -558,7 +561,7 @@ private:
   StopControllingADocument(ServiceWorkerRegistrationInfo* aRegistration);
 
   already_AddRefed<ServiceWorkerRegistrationInfo>
-  GetServiceWorkerRegistrationInfo(nsPIDOMWindow* aWindow);
+  GetServiceWorkerRegistrationInfo(nsPIDOMWindowInner* aWindow);
 
   already_AddRefed<ServiceWorkerRegistrationInfo>
   GetServiceWorkerRegistrationInfo(nsIDocument* aDoc);
@@ -606,14 +609,15 @@ private:
   FireControllerChange(ServiceWorkerRegistrationInfo* aRegistration);
 
   void
-  StorePendingReadyPromise(nsPIDOMWindow* aWindow, nsIURI* aURI,
+  StorePendingReadyPromise(nsPIDOMWindowInner* aWindow, nsIURI* aURI,
                            Promise* aPromise);
 
   void
   CheckPendingReadyPromises();
 
   bool
-  CheckReadyPromise(nsPIDOMWindow* aWindow, nsIURI* aURI, Promise* aPromise);
+  CheckReadyPromise(nsPIDOMWindowInner* aWindow, nsIURI* aURI,
+                    Promise* aPromise);
 
   struct PendingReadyPromise final
   {
@@ -638,14 +642,6 @@ private:
 
   void
   MaybeRemoveRegistration(ServiceWorkerRegistrationInfo* aRegistration);
-
-  // Does all cleanup except removing the registration from
-  // mServiceWorkerRegistrationInfos. This is useful when we clear
-  // registrations via remove()/removeAll() since we are iterating over the
-  // hashtable and can cleanly remove within the hashtable enumeration
-  // function.
-  void
-  RemoveRegistrationInternal(ServiceWorkerRegistrationInfo* aRegistration);
 
   // Removes all service worker registrations that matches the given pattern.
   void

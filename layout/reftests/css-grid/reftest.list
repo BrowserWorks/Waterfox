@@ -34,7 +34,7 @@ fails == grid-whitespace-handling-1b.xhtml grid-whitespace-handling-1-ref.xhtml
 == grid-abspos-items-015.html grid-abspos-items-015-ref.html
 == grid-order-abspos-items-001.html grid-order-abspos-items-001-ref.html
 == grid-order-placement-auto-001.html grid-order-placement-auto-001-ref.html
-== grid-order-placement-definite-001.html grid-order-placement-definite-001-ref.html
+fuzzy-if(skiaContent,1,200) == grid-order-placement-definite-001.html grid-order-placement-definite-001-ref.html
 skip-if(Android) == grid-placement-definite-implicit-001.html grid-placement-definite-implicit-001-ref.html
 == grid-placement-definite-implicit-002.html grid-placement-definite-implicit-002-ref.html
 skip-if(Android) fuzzy-if(winWidget,1,32) == grid-placement-auto-implicit-001.html grid-placement-auto-implicit-001-ref.html
@@ -77,15 +77,15 @@ fuzzy-if(winWidget,1,36) == grid-auto-min-sizing-definite-001.html grid-auto-min
 == grid-item-stretch-001.html grid-item-stretch-001-ref.html
 == grid-align-content-001.html grid-align-content-001-ref.html
 == grid-justify-content-001.html grid-justify-content-001-ref.html
-== grid-justify-content-002.html grid-justify-content-002-ref.html
-== grid-justify-content-003.html grid-justify-content-003-ref.html
-== grid-column-gap-001.html grid-column-gap-001-ref.html
+skip-if(Android&&isDebugBuild) == grid-justify-content-002.html grid-justify-content-002-ref.html # Bug 1245884 - slow
+skip-if(Android&&isDebugBuild) == grid-justify-content-003.html grid-justify-content-003-ref.html # Bug 1245884 - slow
+skip-if(Android&&isDebugBuild) == grid-column-gap-001.html grid-column-gap-001-ref.html # Bug 1245884 - slow
 == grid-column-gap-002.html grid-column-gap-002-ref.html
 == grid-column-gap-003.html grid-column-gap-003-ref.html
 == grid-row-gap-001.html grid-row-gap-001-ref.html
-== grid-row-gap-002.html grid-row-gap-002-ref.html
-== grid-row-gap-003.html grid-row-gap-003-ref.html
-== grid-row-gap-004.html grid-row-gap-004-ref.html
+skip-if(Android&&isDebugBuild) == grid-row-gap-002.html grid-row-gap-002-ref.html # Bug 1245884 - slow
+skip-if(Android&&isDebugBuild) == grid-row-gap-003.html grid-row-gap-003-ref.html # Bug 1245884 - slow
+skip-if(Android&&isDebugBuild) == grid-row-gap-004.html grid-row-gap-004-ref.html # Bug 1245884 - slow
 == grid-container-overflow-001.html grid-container-overflow-001-ref.html
 == grid-item-margin-left-auto-001.html grid-item-margin-left-auto-001-ref.html
 == grid-item-margin-left-auto-002.html grid-item-margin-left-auto-002-ref.html
@@ -110,3 +110,5 @@ fuzzy-if(winWidget,1,36) == grid-auto-min-sizing-definite-001.html grid-auto-min
 == grid-repeat-auto-fill-fit-006.html grid-repeat-auto-fill-fit-006-ref.html
 == grid-repeat-auto-fill-fit-007.html grid-repeat-auto-fill-fit-007-ref.html
 == grid-repeat-auto-fill-fit-008.html grid-repeat-auto-fill-fit-008-ref.html
+== grid-repeat-auto-fill-fit-009.html grid-repeat-auto-fill-fit-009-ref.html
+== grid-item-blockifying-001.html grid-item-blockifying-001-ref.html

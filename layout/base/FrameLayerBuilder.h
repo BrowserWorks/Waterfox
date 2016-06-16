@@ -365,7 +365,7 @@ public:
    * frame's display items (i.e. zero, or more than one).
    * This function is for testing purposes and not performance sensitive.
    */
-  static Layer* GetDebugSingleOldLayerForFrame(nsIFrame* aFrame);
+  static PaintedLayer* GetDebugSingleOldPaintedLayerForFrame(nsIFrame* aFrame);
 
   /**
    * Destroy any stored LayerManagerDataProperty and the associated data for
@@ -417,6 +417,7 @@ public:
   void StoreOptimizedLayerForFrame(nsDisplayItem* aItem, Layer* aLayer);
   
   NS_DECLARE_FRAME_PROPERTY_WITH_FRAME_IN_DTOR(LayerManagerDataProperty,
+                                               nsTArray<DisplayItemData*>,
                                                RemoveFrameFromLayerManager)
 
   /**
@@ -495,7 +496,7 @@ public:
     RefPtr<Layer> mLayer;
     RefPtr<Layer> mOptLayer;
     RefPtr<BasicLayerManager> mInactiveManager;
-    nsAutoTArray<nsIFrame*, 1> mFrameList;
+    AutoTArray<nsIFrame*, 1> mFrameList;
     nsAutoPtr<nsDisplayItemGeometry> mGeometry;
     DisplayItemClip mClip;
     uint32_t        mDisplayItemKey;
@@ -507,7 +508,7 @@ public:
      * BeginUpdate and EndUpdate.
      */
     nsDisplayItem* mItem;
-    nsAutoTArray<nsIFrame*, 1> mFrameListChanges;
+    AutoTArray<nsIFrame*, 1> mFrameListChanges;
 
     /**
      * Used to track if data currently stored in mFramesWithLayers (from an existing
@@ -521,7 +522,8 @@ protected:
 
   friend class LayerManagerData;
 
-  static void RemoveFrameFromLayerManager(nsIFrame* aFrame, void* aPropertyValue);
+  static void RemoveFrameFromLayerManager(const nsIFrame* aFrame,
+                                          nsTArray<DisplayItemData*>* aArray);
 
   /**
    * Given a frame and a display item key that uniquely identifies a

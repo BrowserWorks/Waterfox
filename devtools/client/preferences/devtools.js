@@ -17,6 +17,9 @@ pref("devtools.devedition.promo.url", "https://www.mozilla.org/firefox/developer
 // Disable the error console
 pref("devtools.errorconsole.enabled", false);
 
+// DevTools development workflow
+pref("devtools.loader.hotreload", false);
+
 // Developer toolbar preferences
 pref("devtools.toolbar.enabled", true);
 pref("devtools.toolbar.visible", false);
@@ -30,7 +33,7 @@ pref("devtools.toolbox.sidebar.width", 500);
 pref("devtools.toolbox.host", "bottom");
 pref("devtools.toolbox.previousHost", "side");
 pref("devtools.toolbox.selectedTool", "webconsole");
-pref("devtools.toolbox.toolbarSpec", '["splitconsole", "paintflashing toggle","tilt toggle","scratchpad","resize toggle","eyedropper","screenshot --fullpage", "rulers", "measure"]');
+pref("devtools.toolbox.toolbarSpec", '["splitconsole", "paintflashing toggle","scratchpad","resize toggle","eyedropper","screenshot --fullpage", "rulers", "measure"]');
 pref("devtools.toolbox.sideEnabled", true);
 pref("devtools.toolbox.zoomValue", "1");
 pref("devtools.toolbox.splitconsoleEnabled", false);
@@ -41,13 +44,13 @@ pref("devtools.command-button-pick.enabled", true);
 pref("devtools.command-button-frames.enabled", true);
 pref("devtools.command-button-splitconsole.enabled", true);
 pref("devtools.command-button-paintflashing.enabled", false);
-pref("devtools.command-button-tilt.enabled", false);
 pref("devtools.command-button-scratchpad.enabled", false);
 pref("devtools.command-button-responsive.enabled", true);
 pref("devtools.command-button-eyedropper.enabled", false);
 pref("devtools.command-button-screenshot.enabled", false);
 pref("devtools.command-button-rulers.enabled", false);
 pref("devtools.command-button-measure.enabled", false);
+pref("devtools.command-button-noautohide.enabled", false);
 
 // Inspector preferences
 // Enable the Inspector
@@ -66,8 +69,10 @@ pref("devtools.inspector.showAllAnonymousContent", false);
 // Enable the MDN docs tooltip
 pref("devtools.inspector.mdnDocsTooltip.enabled", true);
 
-// Collapse attributes that are too long.
-// Use -1 to not collapse attributes at all.
+// Enable to collapse attributes that are too long.
+pref("devtools.markup.collapseAttributes", true);
+
+// Length to collapse attributes
 pref("devtools.markup.collapseAttributeLength", 120);
 
 // DevTools default color unit
@@ -102,8 +107,8 @@ pref("devtools.debugger.ui.variables-searchbox-visible", false);
 // Enable the Memory tools
 pref("devtools.memory.enabled", false);
 
-pref("devtools.memory.custom-breakdowns", "{}");
-pref("devtools.memory.custom-dominator-tree-breakdowns", "{}");
+pref("devtools.memory.custom-census-displays", "{}");
+pref("devtools.memory.custom-dominator-tree-displays", "{}");
 
 // Enable the Performance tools
 pref("devtools.performance.enabled", true);
@@ -125,7 +130,7 @@ pref("devtools.performance.ui.show-idle-blocks", true);
 pref("devtools.performance.ui.enable-memory", false);
 pref("devtools.performance.ui.enable-allocations", false);
 pref("devtools.performance.ui.enable-framerate", true);
-pref("devtools.performance.ui.enable-jit-optimizations", false);
+pref("devtools.performance.ui.show-jit-optimizations", false);
 pref("devtools.performance.ui.show-triggers-for-gc-types",
   "TOO_MUCH_MALLOC ALLOC_TRIGGER LAST_DITCH EAGER_ALLOC_TRIGGER");
 
@@ -166,11 +171,6 @@ pref("devtools.netmonitor.har.forceExport", false);
 pref("devtools.netmonitor.har.pageLoadedTimeout", 1500);
 pref("devtools.netmonitor.har.enableAutoExportToFile", false);
 
-// Enable the Tilt inspector
-pref("devtools.tilt.enabled", true);
-pref("devtools.tilt.intro_transition", true);
-pref("devtools.tilt.outro_transition", true);
-
 // Scratchpad settings
 // - recentFileMax: The maximum number of recently-opened files
 //                  stored. Setting this preference to 0 will not
@@ -208,6 +208,9 @@ pref("devtools.canvasdebugger.enabled", false);
 
 // Enable the Web Audio Editor
 pref("devtools.webaudioeditor.enabled", false);
+
+// Enable Scratchpad
+pref("devtools.scratchpad.enabled", false);
 
 // Web Audio Editor Inspector Width should be a preference
 pref("devtools.webaudioeditor.inspectorWidth", 300);
@@ -285,6 +288,10 @@ pref("devtools.webconsole.persistlog", false);
 // any timestamps.
 pref("devtools.webconsole.timestampMessages", false);
 
+// Web Console automatic multiline mode: |true| if you want incomplete statements
+// to automatically trigger multiline editing (equivalent to shift + enter).
+pref("devtools.webconsole.autoMultiline", true);
+
 // The number of lines that are displayed in the web console for the Net,
 // CSS, JS and Web Developer categories. These defaults should be kept in sync
 // with DEFAULT_LOG_LIMIT in the webconsole frontend.
@@ -312,16 +319,21 @@ pref("devtools.editor.enableCodeFolding", true);
 pref("devtools.editor.autocomplete", true);
 
 // Enable the Font Inspector
-pref("devtools.fontinspector.enabled", true);
+pref("devtools.fontinspector.enabled", false);
 
 // Pref to store the browser version at the time of a telemetry ping for an
 // opened developer tool. This allows us to ping telemetry just once per browser
 // version for each user.
 pref("devtools.telemetry.tools.opened.version", "{}");
 
-// Enable the JSON View tool (an inspector for application/json documents)
-#ifdef MOZ_DEV_EDITION
-  pref("devtools.jsonview.enabled", true);
+// Enable the JSON View tool (an inspector for application/json documents) on
+// Nightly and Dev. Edition.
+#ifdef RELEASE_BUILD
+pref("devtools.jsonview.enabled", false);
 #else
-  pref("devtools.jsonview.enabled", false);
+pref("devtools.jsonview.enabled", true);
 #endif
+
+// Disable the HTML responsive design tool by default.  Currently disabled until
+// ready to replace the legacy XUL version.
+pref("devtools.responsive.html.enabled", false);

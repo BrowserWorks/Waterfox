@@ -125,10 +125,10 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
     return NS_ERROR_INVALID_ARG;
   }
 
-  ScopedDeletePtr<VideoCodecConfigH264> h264Config;
+  UniquePtr<VideoCodecConfigH264> h264Config;
 
   if (desc.mName == "H264") {
-    h264Config = new VideoCodecConfigH264;
+    h264Config = MakeUnique<VideoCodecConfigH264>();
     size_t spropSize = sizeof(h264Config->sprop_parameter_sets);
     strncpy(h264Config->sprop_parameter_sets,
             desc.mSpropParameterSets.c_str(),
@@ -141,7 +141,7 @@ JsepCodecDescToCodecConfig(const JsepCodecDescription& aCodec,
 
   VideoCodecConfig* configRaw;
   configRaw = new VideoCodecConfig(
-      pt, desc.mName, desc.mConstraints, h264Config);
+      pt, desc.mName, desc.mConstraints, h264Config.get());
 
   configRaw->mAckFbTypes = desc.mAckFbTypes;
   configRaw->mNackFbTypes = desc.mNackFbTypes;
@@ -953,7 +953,7 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
 #ifdef MOZ_WEBRTC_OMX
       encoder =
           OMXVideoCodec::CreateEncoder(OMXVideoCodec::CodecType::CODEC_H264);
-#elif !defined(MOZILLA_XPCOMRT_API)
+#else
       encoder = GmpVideoCodec::CreateEncoder();
 #endif
       if (encoder) {
@@ -966,7 +966,7 @@ MediaPipelineFactory::EnsureExternalCodec(VideoSessionConduit& aConduit,
 #ifdef MOZ_WEBRTC_OMX
       decoder =
           OMXVideoCodec::CreateDecoder(OMXVideoCodec::CodecType::CODEC_H264);
-#elif !defined(MOZILLA_XPCOMRT_API)
+#else
       decoder = GmpVideoCodec::CreateDecoder();
 #endif
       if (decoder) {

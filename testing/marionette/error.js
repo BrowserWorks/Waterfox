@@ -4,9 +4,9 @@
 
 "use strict";
 
-var {interfaces: Ci, utils: Cu} = Components;
+const {interfaces: Ci, utils: Cu} = Components;
 
-const errors = [
+const ERRORS = [
   "ElementNotAccessibleError",
   "ElementNotVisibleError",
   "InvalidArgumentError",
@@ -29,9 +29,20 @@ const errors = [
   "WebDriverError",
 ];
 
-this.EXPORTED_SYMBOLS = ["error"].concat(errors);
+this.EXPORTED_SYMBOLS = ["error"].concat(ERRORS);
 
 this.error = {};
+
+error.BuiltinErrors = {
+  Error: 0,
+  EvalError: 1,
+  InternalError: 2,
+  RangeError: 3,
+  ReferenceError: 4,
+  SyntaxError: 5,
+  TypeError: 6,
+  URIError: 7,
+};
 
 /**
  * Checks if obj is an instance of the Error prototype in a safe manner.
@@ -50,7 +61,7 @@ error.isError = function(val) {
   } else if (val instanceof Ci.nsIException) {
     return true;
   } else {
-    return Object.getPrototypeOf(val) == "Error";
+    return Object.getPrototypeOf(val) in error.BuiltinErrors;
   }
 };
 
@@ -59,7 +70,18 @@ error.isError = function(val) {
  */
 error.isWebDriverError = function(obj) {
   return error.isError(obj) &&
-      ("name" in obj && errors.indexOf(obj.name) >= 0);
+      ("name" in obj && ERRORS.indexOf(obj.name) >= 0);
+};
+
+/**
+ * Wraps an Error prototype in a WebDriverError.  If the given error is
+ * already a WebDriverError, this is effectively a no-op.
+ */
+error.wrap = function(err) {
+  if (error.isWebDriverError(err)) {
+    return err;
+  }
+  return new WebDriverError(`${err.name}: ${err.message}`, err.stack);
 };
 
 /**
@@ -90,15 +112,21 @@ error.stringify = function(err) {
 };
 
 /**
- * Marshal an Error to a JSON structure.
+ * Marshal a WebDriverError prototype to a JSON dictionary.
  *
- * @param {Error} err
- *     The Error to serialise.
+ * @param {WebDriverError} err
+ *     Error to serialise.
  *
  * @return {Object.<string, Object>}
- *     JSON structure with the keys "error", "message", and "stacktrace".
+ *     JSON dictionary with the keys "error", "message", and "stacktrace".
+ * @throws {TypeError}
+ *     If error type is not serialisable.
  */
 error.toJson = function(err) {
+  if (!error.isWebDriverError(err)) {
+    throw new TypeError(`Unserialisable error type: ${err}`);
+  }
+
   let json = {
     error: err.status,
     message: err.message || null,
@@ -108,15 +136,38 @@ error.toJson = function(err) {
 };
 
 /**
+ * Unmarshal a JSON dictionary to a WebDriverError prototype.
+ *
+ * @param {Object.<string, string>} json
+ *     JSON dictionary with the keys "error", "message", and "stacktrace".
+ *
+ * @return {WebDriverError}
+ *     Deserialised error prototype.
+ */
+error.fromJson = function(json) {
+  if (!statusLookup.has(json.error)) {
+    throw new TypeError(`Undeserialisable error type: ${json.error}`);
+  }
+
+  let errCls = statusLookup.get(json.error);
+  let err = new errCls(json.message);
+  if ("stacktrace" in json) {
+    err.stack = json.stacktrace;
+  }
+  return err;
+};
+
+/**
  * WebDriverError is the prototypal parent of all WebDriver errors.
  * It should not be used directly, as it does not correspond to a real
  * error in the specification.
  */
-this.WebDriverError = function(msg) {
+this.WebDriverError = function(msg, stack = undefined) {
   Error.call(this, msg);
   this.name = "WebDriverError";
   this.message = msg;
   this.status = "webdriver error";
+  this.stack = stack;
 };
 WebDriverError.prototype = Object.create(Error.prototype);
 
@@ -297,3 +348,12 @@ this.UnsupportedOperationError = function(msg) {
   this.status = "unsupported operation";
 };
 UnsupportedOperationError.prototype = Object.create(WebDriverError.prototype);
+
+const nameLookup = new Map();
+const statusLookup = new Map();
+for (let s of ERRORS) {
+  let cls = this[s];
+  let inst = new cls();
+  nameLookup.set(inst.name, cls);
+  statusLookup.set(inst.status, cls);
+};

@@ -22,7 +22,6 @@ EXTRA_JS_MODULES += [
     'ContentObservers.jsm',
     'ContentSearch.jsm',
     'ContentWebRTC.jsm',
-    'CustomizationTabPreloader.jsm',
     'DirectoryLinksProvider.jsm',
     'E10SUtils.jsm',
     'Feeds.jsm',
@@ -54,9 +53,4 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'Windows8WindowFrameColor.jsm',
         'WindowsJumpLists.jsm',
         'WindowsPreviewPerTab.jsm',
-    ]
-
-if CONFIG['NIGHTLY_BUILD']:
-    EXTRA_JS_MODULES += [
-        'SignInToWebsite.jsm',
     ]

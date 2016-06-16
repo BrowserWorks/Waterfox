@@ -75,7 +75,7 @@ struct nsProtocolInfo {
 static nsresult
 GetProxyURI(nsIChannel *channel, nsIURI **aOut)
 {
-  nsresult rv;
+  nsresult rv = NS_OK;
   nsCOMPtr<nsIURI> proxyURI;
   nsCOMPtr<nsIHttpChannelInternal> httpChannel(do_QueryInterface(channel));
   if (httpChannel) {
@@ -104,7 +104,7 @@ public:
     NS_DECL_THREADSAFE_ISUPPORTS
 
     nsAsyncResolveRequest(nsProtocolProxyService *pps, nsIChannel *channel,
-                          uint32_t aAppId, bool aIsInBrowser,
+                          uint32_t aAppId, bool aIsInIsolatedMozBrowser,
                           uint32_t aResolveFlags,
                           nsIProtocolProxyCallback *callback)
         : mStatus(NS_OK)
@@ -114,7 +114,7 @@ public:
         , mXPComPPS(pps)
         , mChannel(channel)
         , mAppId(aAppId)
-        , mIsInBrowser(aIsInBrowser)
+        , mIsInIsolatedMozBrowser(aIsInIsolatedMozBrowser)
         , mCallback(callback)
     {
         NS_ASSERTION(mCallback, "null callback");
@@ -128,31 +128,20 @@ private:
             // main thread to delete safely, but if this request had its
             // callbacks called normally they will all be null and this is a nop
 
-            nsCOMPtr<nsIThread> mainThread;
-            NS_GetMainThread(getter_AddRefs(mainThread));
-
             if (mChannel) {
-                nsIChannel *forgettable;
-                mChannel.forget(&forgettable);
-                NS_ProxyRelease(mainThread, forgettable, false);
+                NS_ReleaseOnMainThread(mChannel.forget());
             }
 
             if (mCallback) {
-                nsIProtocolProxyCallback *forgettable;
-                mCallback.forget(&forgettable);
-                NS_ProxyRelease(mainThread, forgettable, false);
+                NS_ReleaseOnMainThread(mCallback.forget());
             }
 
             if (mProxyInfo) {
-                nsIProxyInfo *forgettable;
-                mProxyInfo.forget(&forgettable);
-                NS_ProxyRelease(mainThread, forgettable, false);
+                NS_ReleaseOnMainThread(mProxyInfo.forget());
             }
 
             if (mXPComPPS) {
-                nsIProtocolProxyService *forgettable;
-                mXPComPPS.forget(&forgettable);
-                NS_ProxyRelease(mainThread, forgettable, false);
+                NS_ReleaseOnMainThread(mXPComPPS.forget());
             }
         }
     }
@@ -267,10 +256,10 @@ private:
                 // now that the load is triggered, we can resubmit the query
                 RefPtr<nsAsyncResolveRequest> newRequest =
                     new nsAsyncResolveRequest(mPPS, mChannel, mAppId,
-                                              mIsInBrowser, mResolveFlags,
+                                              mIsInIsolatedMozBrowser, mResolveFlags,
                                               mCallback);
                 rv = mPPS->mPACMan->AsyncGetProxyForURI(proxyURI, mAppId,
-                                                        mIsInBrowser,
+                                                        mIsInIsolatedMozBrowser,
                                                         newRequest,
                                                         true);
             }
@@ -310,7 +299,7 @@ private:
     nsCOMPtr<nsIProtocolProxyService>  mXPComPPS;
     nsCOMPtr<nsIChannel>               mChannel;
     uint32_t                           mAppId;
-    bool                               mIsInBrowser;
+    bool                               mIsInIsolatedMozBrowser;
     nsCOMPtr<nsIProtocolProxyCallback> mCallback;
     nsCOMPtr<nsIProxyInfo>             mProxyInfo;
 };
@@ -1272,13 +1261,13 @@ nsProtocolProxyService::AsyncResolveInternal(nsIChannel *channel, uint32_t flags
     if (NS_FAILED(rv)) return rv;
 
     uint32_t appId = NECKO_NO_APP_ID;
-    bool isInBrowser = false;
-    NS_GetAppInfo(channel, &appId, &isInBrowser);
+    bool isInIsolatedMozBrowser = false;
+    NS_GetAppInfo(channel, &appId, &isInIsolatedMozBrowser);
 
     *result = nullptr;
     RefPtr<nsAsyncResolveRequest> ctx =
-        new nsAsyncResolveRequest(this, channel, appId, isInBrowser, flags,
-                                  callback);
+        new nsAsyncResolveRequest(this, channel, appId, isInIsolatedMozBrowser,
+                                  flags, callback);
 
     nsProtocolInfo info;
     rv = GetProtocolInfo(uri, &info);
@@ -1292,7 +1281,7 @@ nsProtocolProxyService::AsyncResolveInternal(nsIChannel *channel, uint32_t flags
     // but if neither of them are in use, we can just do the work
     // right here and directly invoke the callback
 
-    rv = Resolve_Internal(channel, appId, isInBrowser, info, flags,
+    rv = Resolve_Internal(channel, appId, isInIsolatedMozBrowser, info, flags,
                           &usePACThread, getter_AddRefs(pi));
     if (NS_FAILED(rv))
         return rv;
@@ -1314,7 +1303,8 @@ nsProtocolProxyService::AsyncResolveInternal(nsIChannel *channel, uint32_t flags
 
     // else kick off a PAC thread query
 
-    rv = mPACMan->AsyncGetProxyForURI(uri, appId, isInBrowser, ctx, true);
+    rv = mPACMan->AsyncGetProxyForURI(uri, appId, isInIsolatedMozBrowser, ctx,
+                                      true);
     if (NS_SUCCEEDED(rv))
         ctx.forget(result);
     return rv;

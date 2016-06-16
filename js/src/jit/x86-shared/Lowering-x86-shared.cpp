@@ -29,7 +29,8 @@ LIRGeneratorX86Shared::newLTableSwitch(const LAllocation& in, const LDefinition&
 LTableSwitchV*
 LIRGeneratorX86Shared::newLTableSwitchV(MTableSwitch* tableswitch)
 {
-    return new(alloc()) LTableSwitchV(temp(), tempDouble(), temp(), tableswitch);
+    return new(alloc()) LTableSwitchV(useBox(tableswitch->getOperand(0)),
+                                      temp(), tempDouble(), temp(), tableswitch);
 }
 
 void
@@ -80,6 +81,30 @@ LIRGeneratorX86Shared::lowerForShift(LInstructionHelper<1, 2, 0>* ins, MDefiniti
 }
 
 void
+LIRGeneratorX86Shared::lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, 0>* ins,
+                                          MDefinition* mir, MDefinition* lhs, MDefinition* rhs)
+{
+    ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
+
+    // shift operator should be constant or in register ecx
+    // x86 can't shift a non-ecx register
+    if (rhs->isConstant()) {
+        ins->setOperand(INT64_PIECES, useOrConstantAtStart(rhs));
+    } else {
+        // The operands are int64, but we only care about the lower 32 bits of
+        // the RHS. On 32-bit, the code below will load that part in ecx and
+        // will discard the upper half.
+        ensureDefined(rhs);
+        bool useAtStart = (lhs == rhs);
+        LUse use(ecx, useAtStart);
+        use.setVirtualRegister(rhs->virtualRegister());
+        ins->setOperand(INT64_PIECES, use);
+    }
+
+    defineInt64ReuseInput(ins, mir, 0);
+}
+
+void
 LIRGeneratorX86Shared::lowerForALU(LInstructionHelper<1, 1, 0>* ins, MDefinition* mir,
                                    MDefinition* input)
 {
@@ -94,6 +119,16 @@ LIRGeneratorX86Shared::lowerForALU(LInstructionHelper<1, 2, 0>* ins, MDefinition
     ins->setOperand(0, useRegisterAtStart(lhs));
     ins->setOperand(1, lhs != rhs ? useOrConstant(rhs) : useOrConstantAtStart(rhs));
     defineReuseInput(ins, mir, 0);
+}
+
+void
+LIRGeneratorX86Shared::lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins,
+                                        MDefinition* mir, MDefinition* lhs, MDefinition* rhs)
+{
+    ins->setInt64Operand(0, useInt64RegisterAtStart(lhs));
+    ins->setInt64Operand(INT64_PIECES,
+                         lhs != rhs ? useInt64OrConstant(rhs) : useInt64OrConstantAtStart(rhs));
+    defineInt64ReuseInput(ins, mir, 0);
 }
 
 template<size_t Temps>
@@ -179,7 +214,7 @@ LIRGeneratorX86Shared::lowerDivI(MDiv* div)
     // Division instructions are slow. Division by constant denominators can be
     // rewritten to use other instructions.
     if (div->rhs()->isConstant()) {
-        int32_t rhs = div->rhs()->toConstant()->value().toInt32();
+        int32_t rhs = div->rhs()->toConstant()->toInt32();
 
         // Division by powers of two can be done by shifting, and division by
         // other numbers can be done by a reciprocal multiplication technique.
@@ -226,7 +261,7 @@ LIRGeneratorX86Shared::lowerModI(MMod* mod)
     }
 
     if (mod->rhs()->isConstant()) {
-        int32_t rhs = mod->rhs()->toConstant()->value().toInt32();
+        int32_t rhs = mod->rhs()->toConstant()->toInt32();
         int32_t shift = FloorLog2(Abs(rhs));
         if (rhs != 0 && uint32_t(1) << shift == Abs(rhs)) {
             LModPowTwoI* lir = new(alloc()) LModPowTwoI(useRegisterAtStart(mod->lhs()), shift);
@@ -275,7 +310,7 @@ void
 LIRGeneratorX86Shared::lowerUDiv(MDiv* div)
 {
     if (div->rhs()->isConstant()) {
-        uint32_t rhs = div->rhs()->toConstant()->value().toInt32();
+        uint32_t rhs = div->rhs()->toConstant()->toInt32();
         int32_t shift = FloorLog2(rhs);
 
         LAllocation lhs = useRegisterAtStart(div->lhs());
@@ -306,7 +341,7 @@ void
 LIRGeneratorX86Shared::lowerUMod(MMod* mod)
 {
     if (mod->rhs()->isConstant()) {
-        uint32_t rhs = mod->rhs()->toConstant()->value().toInt32();
+        uint32_t rhs = mod->rhs()->toConstant()->toInt32();
         int32_t shift = FloorLog2(rhs);
 
         if (rhs != 0 && uint32_t(1) << shift == rhs) {

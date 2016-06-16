@@ -40,6 +40,7 @@
 
 #include "builtin/TypedObject.h"
 #include "ctypes/Library.h"
+#include "gc/Policy.h"
 #include "gc/Zone.h"
 #include "js/Vector.h"
 
@@ -881,7 +882,7 @@ GetABICode(JSObject* obj)
 
 static const JSErrorFormatString ErrorFormatString[CTYPESERR_LIMIT] = {
 #define MSG_DEF(name, count, exception, format) \
-  { format, count, exception } ,
+  { #name, format, count, exception } ,
 #include "ctypes/ctypes.msg"
 #undef MSG_DEF
 };

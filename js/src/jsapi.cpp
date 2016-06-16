@@ -59,6 +59,7 @@
 #include "frontend/FullParseHandler.h"  // for JS_BufferIsCompileableUnit
 #include "frontend/Parser.h" // for JS_BufferIsCompileableUnit
 #include "gc/Marking.h"
+#include "gc/Policy.h"
 #include "jit/JitCommon.h"
 #include "js/CharacterEncoding.h"
 #include "js/Conversions.h"
@@ -717,6 +718,13 @@ JS_SetDestroyCompartmentCallback(JSRuntime* rt, JSDestroyCompartmentCallback cal
 }
 
 JS_PUBLIC_API(void)
+JS_SetSizeOfIncludingThisCompartmentCallback(JSRuntime* rt,
+                                             JSSizeOfIncludingThisCompartmentCallback callback)
+{
+    rt->sizeOfIncludingThisCompartmentCallback = callback;
+}
+
+JS_PUBLIC_API(void)
 JS_SetDestroyZoneCallback(JSRuntime* rt, JSZoneCallback callback)
 {
     rt->destroyZoneCallback = callback;
@@ -908,53 +916,55 @@ JS_TransplantObject(JSContext* cx, HandleObject origobj, HandleObject target)
     RootedValue origv(cx, ObjectValue(*origobj));
     RootedObject newIdentity(cx);
 
-    {
-        AutoDisableProxyCheck adpc(cx->runtime());
+    // Don't allow a compacting GC to observe any intermediate state.
+    AutoDisableCompactingGC nocgc(cx->runtime());
 
-        JSCompartment* destination = target->compartment();
+    AutoDisableProxyCheck adpc(cx->runtime());
 
-        if (origobj->compartment() == destination) {
-            // If the original object is in the same compartment as the
-            // destination, then we know that we won't find a wrapper in the
-            // destination's cross compartment map and that the same
-            // object will continue to work.
-            if (!JSObject::swap(cx, origobj, target))
-                MOZ_CRASH();
-            newIdentity = origobj;
-        } else if (WrapperMap::Ptr p = destination->lookupWrapper(origv)) {
-            // There might already be a wrapper for the original object in
-            // the new compartment. If there is, we use its identity and swap
-            // in the contents of |target|.
-            newIdentity = &p->value().get().toObject();
+    JSCompartment* destination = target->compartment();
 
-            // When we remove origv from the wrapper map, its wrapper, newIdentity,
-            // must immediately cease to be a cross-compartment wrapper. Neuter it.
-            destination->removeWrapper(p);
-            NukeCrossCompartmentWrapper(cx, newIdentity);
-
-            if (!JSObject::swap(cx, newIdentity, target))
-                MOZ_CRASH();
-        } else {
-            // Otherwise, we use |target| for the new identity object.
-            newIdentity = target;
-        }
-
-        // Now, iterate through other scopes looking for references to the
-        // old object, and update the relevant cross-compartment wrappers.
-        if (!RemapAllWrappersForObject(cx, origobj, newIdentity))
+    if (origobj->compartment() == destination) {
+        // If the original object is in the same compartment as the
+        // destination, then we know that we won't find a wrapper in the
+        // destination's cross compartment map and that the same
+        // object will continue to work.
+        if (!JSObject::swap(cx, origobj, target))
             MOZ_CRASH();
+        newIdentity = origobj;
+    } else if (WrapperMap::Ptr p = destination->lookupWrapper(origv)) {
+        // There might already be a wrapper for the original object in
+        // the new compartment. If there is, we use its identity and swap
+        // in the contents of |target|.
+        newIdentity = &p->value().get().toObject();
 
-        // Lastly, update the original object to point to the new one.
-        if (origobj->compartment() != destination) {
-            RootedObject newIdentityWrapper(cx, newIdentity);
-            AutoCompartment ac(cx, origobj);
-            if (!JS_WrapObject(cx, &newIdentityWrapper))
-                MOZ_CRASH();
-            MOZ_ASSERT(Wrapper::wrappedObject(newIdentityWrapper) == newIdentity);
-            if (!JSObject::swap(cx, origobj, newIdentityWrapper))
-                MOZ_CRASH();
-            origobj->compartment()->putWrapper(cx, CrossCompartmentKey(newIdentity), origv);
-        }
+        // When we remove origv from the wrapper map, its wrapper, newIdentity,
+        // must immediately cease to be a cross-compartment wrapper. Nuke it.
+        destination->removeWrapper(p);
+        NukeCrossCompartmentWrapper(cx, newIdentity);
+
+        if (!JSObject::swap(cx, newIdentity, target))
+            MOZ_CRASH();
+    } else {
+        // Otherwise, we use |target| for the new identity object.
+        newIdentity = target;
+    }
+
+    // Now, iterate through other scopes looking for references to the
+    // old object, and update the relevant cross-compartment wrappers.
+    if (!RemapAllWrappersForObject(cx, origobj, newIdentity))
+        MOZ_CRASH();
+
+    // Lastly, update the original object to point to the new one.
+    if (origobj->compartment() != destination) {
+        RootedObject newIdentityWrapper(cx, newIdentity);
+        AutoCompartment ac(cx, origobj);
+        if (!JS_WrapObject(cx, &newIdentityWrapper))
+            MOZ_CRASH();
+        MOZ_ASSERT(Wrapper::wrappedObject(newIdentityWrapper) == newIdentity);
+        if (!JSObject::swap(cx, origobj, newIdentityWrapper))
+            MOZ_CRASH();
+        if (!origobj->compartment()->putWrapper(cx, CrossCompartmentKey(newIdentity), origv))
+            MOZ_CRASH();
     }
 
     // The new identity object might be one of several things. Return it to avoid
@@ -2017,7 +2027,7 @@ JS_SetImmutablePrototype(JSContext *cx, JS::HandleObject obj, bool *succeeded)
 
 JS_PUBLIC_API(bool)
 JS_GetOwnPropertyDescriptorById(JSContext* cx, HandleObject obj, HandleId id,
-                                MutableHandle<JSPropertyDescriptor> desc)
+                                MutableHandle<PropertyDescriptor> desc)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
@@ -2027,7 +2037,7 @@ JS_GetOwnPropertyDescriptorById(JSContext* cx, HandleObject obj, HandleId id,
 
 JS_PUBLIC_API(bool)
 JS_GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, const char* name,
-                            MutableHandle<JSPropertyDescriptor> desc)
+                            MutableHandle<PropertyDescriptor> desc)
 {
     JSAtom* atom = Atomize(cx, name, strlen(name));
     if (!atom)
@@ -2038,7 +2048,7 @@ JS_GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, const char* name,
 
 JS_PUBLIC_API(bool)
 JS_GetOwnUCPropertyDescriptor(JSContext* cx, HandleObject obj, const char16_t* name,
-                              MutableHandle<JSPropertyDescriptor> desc)
+                              MutableHandle<PropertyDescriptor> desc)
 {
     JSAtom* atom = AtomizeChars(cx, name, js_strlen(name));
     if (!atom)
@@ -2049,14 +2059,14 @@ JS_GetOwnUCPropertyDescriptor(JSContext* cx, HandleObject obj, const char16_t* n
 
 JS_PUBLIC_API(bool)
 JS_GetPropertyDescriptorById(JSContext* cx, HandleObject obj, HandleId id,
-                             MutableHandle<JSPropertyDescriptor> desc)
+                             MutableHandle<PropertyDescriptor> desc)
 {
     return GetPropertyDescriptor(cx, obj, id, desc);
 }
 
 JS_PUBLIC_API(bool)
 JS_GetPropertyDescriptor(JSContext* cx, HandleObject obj, const char* name,
-                         MutableHandle<JSPropertyDescriptor> desc)
+                         MutableHandle<PropertyDescriptor> desc)
 {
     JSAtom* atom = Atomize(cx, name, strlen(name));
     if (!atom)
@@ -2067,7 +2077,7 @@ JS_GetPropertyDescriptor(JSContext* cx, HandleObject obj, const char* name,
 
 static bool
 DefinePropertyByDescriptor(JSContext* cx, HandleObject obj, HandleId id,
-                           Handle<JSPropertyDescriptor> desc, ObjectOpResult& result)
+                           Handle<PropertyDescriptor> desc, ObjectOpResult& result)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
@@ -2078,14 +2088,14 @@ DefinePropertyByDescriptor(JSContext* cx, HandleObject obj, HandleId id,
 
 JS_PUBLIC_API(bool)
 JS_DefinePropertyById(JSContext* cx, HandleObject obj, HandleId id,
-                      Handle<JSPropertyDescriptor> desc, ObjectOpResult& result)
+                      Handle<PropertyDescriptor> desc, ObjectOpResult& result)
 {
     return DefinePropertyByDescriptor(cx, obj, id, desc, result);
 }
 
 JS_PUBLIC_API(bool)
 JS_DefinePropertyById(JSContext* cx, HandleObject obj, HandleId id,
-                      Handle<JSPropertyDescriptor> desc)
+                      Handle<PropertyDescriptor> desc)
 {
     ObjectOpResult result;
     return DefinePropertyByDescriptor(cx, obj, id, desc, result) &&
@@ -2338,7 +2348,7 @@ JS_DefineProperty(JSContext* cx, HandleObject obj, const char* name, double valu
 
 JS_PUBLIC_API(bool)
 JS_DefineUCProperty(JSContext* cx, HandleObject obj, const char16_t* name, size_t namelen,
-                    Handle<JSPropertyDescriptor> desc,
+                    Handle<PropertyDescriptor> desc,
                     ObjectOpResult& result)
 {
     JSAtom* atom = AtomizeChars(cx, name, AUTO_NAMELEN(name, namelen));
@@ -2350,7 +2360,7 @@ JS_DefineUCProperty(JSContext* cx, HandleObject obj, const char16_t* name, size_
 
 JS_PUBLIC_API(bool)
 JS_DefineUCProperty(JSContext* cx, HandleObject obj, const char16_t* name, size_t namelen,
-                    Handle<JSPropertyDescriptor> desc)
+                    Handle<PropertyDescriptor> desc)
 {
     JSAtom* atom = AtomizeChars(cx, name, AUTO_NAMELEN(name, namelen));
     if (!atom)
@@ -2884,7 +2894,7 @@ JS::Call(JSContext* cx, HandleValue thisv, HandleValue fval, const JS::HandleVal
 
 JS_PUBLIC_API(bool)
 JS::Construct(JSContext* cx, HandleValue fval, HandleObject newTarget, const JS::HandleValueArray& args,
-              MutableHandleValue rval)
+              MutableHandleObject objp)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
@@ -2906,12 +2916,12 @@ JS::Construct(JSContext* cx, HandleValue fval, HandleObject newTarget, const JS:
     if (!FillArgumentsFromArraylike(cx, cargs, args))
         return false;
 
-    return js::Construct(cx, fval, cargs, newTargetVal, rval);
+    return js::Construct(cx, fval, cargs, newTargetVal, objp);
 }
 
 JS_PUBLIC_API(bool)
 JS::Construct(JSContext* cx, HandleValue fval, const JS::HandleValueArray& args,
-              MutableHandleValue rval)
+              MutableHandleObject objp)
 {
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
@@ -2927,7 +2937,7 @@ JS::Construct(JSContext* cx, HandleValue fval, const JS::HandleValueArray& args,
     if (!FillArgumentsFromArraylike(cx, cargs, args))
         return false;
 
-    return js::Construct(cx, fval, cargs, fval, rval);
+    return js::Construct(cx, fval, cargs, fval, objp);
 }
 
 
@@ -3061,7 +3071,7 @@ DefineSelfHostedProperty(JSContext* cx, HandleObject obj, HandleId id,
             return false;
         }
         MOZ_ASSERT(setterValue.isObject() && setterValue.toObject().is<JSFunction>());
-        setterFunc = &getterValue.toObject().as<JSFunction>();
+        setterFunc = &setterValue.toObject().as<JSFunction>();
     }
     JSNative setterOp = JS_DATA_TO_FUNC_PTR(JSNative, setterFunc.get());
 
@@ -3201,7 +3211,7 @@ JS_PUBLIC_API(bool)
 JS::ObjectToCompletePropertyDescriptor(JSContext* cx,
                                        HandleObject obj,
                                        HandleValue descObj,
-                                       MutableHandle<JSPropertyDescriptor> desc)
+                                       MutableHandle<PropertyDescriptor> desc)
 {
     if (!ToPropertyDescriptor(cx, descObj, true, desc))
         return false;
@@ -3659,15 +3669,14 @@ JS_IsConstructor(JSFunction* fun)
 }
 
 JS_PUBLIC_API(bool)
-JS_DefineFunctions(JSContext* cx, HandleObject obj, const JSFunctionSpec* fs,
-                   PropertyDefinitionBehavior behavior)
+JS_DefineFunctions(JSContext* cx, HandleObject obj, const JSFunctionSpec* fs)
 {
     MOZ_ASSERT(!cx->runtime()->isAtomsCompartment(cx->compartment()));
     AssertHeapIsIdle(cx);
     CHECK_REQUEST(cx);
     assertSameCompartment(cx, obj);
 
-    return DefineFunctions(cx, obj, fs, NotIntrinsic, behavior);
+    return DefineFunctions(cx, obj, fs, NotIntrinsic);
 }
 
 JS_PUBLIC_API(JSFunction*)
@@ -4123,11 +4132,11 @@ JS::FinishOffThreadScript(JSContext* maybecx, JSRuntime* rt, void* token)
         RootedScript script(maybecx);
         {
             AutoLastFrameCheck lfc(maybecx);
-            script = HelperThreadState().finishParseTask(maybecx, rt, token);
+            script = HelperThreadState().finishScriptParseTask(maybecx, rt, token);
         }
         return script;
     } else {
-        return HelperThreadState().finishParseTask(maybecx, rt, token);
+        return HelperThreadState().finishScriptParseTask(maybecx, rt, token);
     }
 }
 
@@ -4577,11 +4586,11 @@ JS_NewHelper(JSContext* cx, HandleObject ctor, const JS::HandleValueArray& input
     if (!FillArgumentsFromArraylike(cx, args, inputArgs))
         return nullptr;
 
-    RootedValue rval(cx);
-    if (!js::Construct(cx, ctorVal, args, ctorVal, &rval))
+    RootedObject obj(cx);
+    if (!js::Construct(cx, ctorVal, args, ctorVal, &obj))
         return nullptr;
 
-    return &rval.toObject();
+    return obj;
 }
 
 JS_PUBLIC_API(JSObject*)
@@ -4728,6 +4737,20 @@ JS_AtomizeAndPinJSString(JSContext* cx, HandleString str)
 }
 
 JS_PUBLIC_API(JSString*)
+JS_AtomizeString(JSContext* cx, const char* s)
+{
+    return JS_AtomizeStringN(cx, s, strlen(s));
+}
+
+JS_PUBLIC_API(JSString*)
+JS_AtomizeStringN(JSContext* cx, const char* s, size_t length)
+{
+    AssertHeapIsIdle(cx);
+    CHECK_REQUEST(cx);
+    return Atomize(cx, s, length, DoNotPinAtom);
+}
+
+JS_PUBLIC_API(JSString*)
 JS_AtomizeAndPinString(JSContext* cx, const char* s)
 {
     return JS_AtomizeAndPinStringN(cx, s, strlen(s));
@@ -4769,6 +4792,20 @@ JS_NewUCStringCopyZ(JSContext* cx, const char16_t* s)
     if (!s)
         return cx->runtime()->emptyString;
     return NewStringCopyZ<CanGC>(cx, s);
+}
+
+JS_PUBLIC_API(JSString*)
+JS_AtomizeUCString(JSContext* cx, const char16_t* s)
+{
+    return JS_AtomizeUCStringN(cx, s, js_strlen(s));
+}
+
+JS_PUBLIC_API(JSString*)
+JS_AtomizeUCStringN(JSContext* cx, const char16_t* s, size_t length)
+{
+    AssertHeapIsIdle(cx);
+    CHECK_REQUEST(cx);
+    return AtomizeChars(cx, s, length, DoNotPinAtom);
 }
 
 JS_PUBLIC_API(JSString*)
@@ -5183,10 +5220,33 @@ JS_Stringify(JSContext* cx, MutableHandleValue vp, HandleObject replacer,
     StringBuffer sb(cx);
     if (!sb.ensureTwoByteChars())
         return false;
-    if (!Stringify(cx, vp, replacer, space, sb))
+    if (!Stringify(cx, vp, replacer, space, sb, StringifyBehavior::Normal))
         return false;
     if (sb.empty() && !sb.append(cx->names().null))
         return false;
+    return callback(sb.rawTwoByteBegin(), sb.length(), data);
+}
+
+JS_PUBLIC_API(bool)
+JS::ToJSONMaybeSafely(JSContext* cx, JS::HandleObject input,
+                      JSONWriteCallback callback, void* data)
+{
+    AssertHeapIsIdle(cx);
+    CHECK_REQUEST(cx);
+    assertSameCompartment(cx, input);
+
+    StringBuffer sb(cx);
+    if (!sb.ensureTwoByteChars())
+        return false;
+
+    RootedValue inputValue(cx, ObjectValue(*input));
+    if (!Stringify(cx, &inputValue, nullptr, NullHandleValue, sb,
+                   StringifyBehavior::RestrictedSafe))
+        return false;
+
+    if (sb.empty() && !sb.append(cx->names().null))
+        return false;
+
     return callback(sb.rawTwoByteBegin(), sb.length(), data);
 }
 
@@ -5762,9 +5822,9 @@ JS_AbortIfWrongThread(JSRuntime* rt)
 
 #ifdef JS_GC_ZEAL
 JS_PUBLIC_API(void)
-JS_GetGCZeal(JSContext* cx, uint8_t* zeal, uint32_t* frequency, uint32_t* nextScheduled)
+JS_GetGCZealBits(JSContext* cx, uint32_t* zealBits, uint32_t* frequency, uint32_t* nextScheduled)
 {
-    cx->runtime()->gc.getZeal(zeal, frequency, nextScheduled);
+    cx->runtime()->gc.getZealBits(zealBits, frequency, nextScheduled);
 }
 
 JS_PUBLIC_API(void)
@@ -5867,6 +5927,13 @@ JS_SetGlobalJitCompilerOption(JSRuntime* rt, JSJitCompilerOption opt, uint32_t v
             rt->setCanUseSignalHandlers(false);
             JitSpew(js::jit::JitSpew_IonScripts, "Disable signals");
         }
+        break;
+      case JSJITCOMPILER_JUMP_THRESHOLD:
+        if (value == uint32_t(-1)) {
+            jit::DefaultJitOptions defaultValues;
+            value = defaultValues.jumpThreshold;
+        }
+        jit::JitOptions.jumpThreshold = value;
         break;
       default:
         break;

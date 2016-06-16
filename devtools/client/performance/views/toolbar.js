@@ -96,7 +96,7 @@ var ToolbarView = {
    * hiding or showing all elements with class "experimental-option".
    *
    * TODO re-enable "#option-enable-memory" permanently once stable in bug 1163350
-   * TODO re-enable "#option-enable-jit-optimizations" permanently once stable in bug 1163351
+   * TODO re-enable "#option-show-jit-optimizations" permanently once stable in bug 1163351
    *
    * @param {boolean} isEnabled
    */
@@ -144,7 +144,7 @@ var ToolbarView = {
       this._toggleExperimentalUI(value);
     }
 
-    this.emit(EVENTS.PREF_CHANGED, prefName, value);
+    this.emit(EVENTS.UI_PREF_CHANGED, prefName, value);
   },
 
   toString: () => "[object ToolbarView]"

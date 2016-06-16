@@ -1,6 +1,6 @@
 "use strict";
 
-var { interfaces: Ci, utils: Cu } = Components;
+var {interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 
@@ -76,15 +76,8 @@ BackgroundPage.prototype = {
       if (this.scripts) {
         let doc = window.document;
         for (let script of this.scripts) {
-          let url = this.extension.baseURI.resolve(script);
-
-          if (!this.extension.isExtensionURL(url)) {
-            this.extension.manifestError("Background scripts must be files within the extension");
-            continue;
-          }
-
           let tag = doc.createElement("script");
-          tag.setAttribute("src", url);
+          tag.setAttribute("src", script);
           tag.async = false;
           doc.body.appendChild(tag);
         }
@@ -133,8 +126,8 @@ extensions.registerSchemaAPI("extension", null, (extension, context) => {
     },
 
     runtime: {
-      getBackgroundPage: function(callback) {
-        runSafe(context, callback, backgroundPagesMap.get(extension).contentWindow);
+      getBackgroundPage() {
+        return context.cloneScope.Promise.resolve(backgroundPagesMap.get(extension).contentWindow);
       },
     },
   };

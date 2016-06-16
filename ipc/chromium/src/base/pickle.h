@@ -32,6 +32,11 @@
 //
 class Pickle {
  public:
+  enum Ownership {
+    BORROWS,
+    OWNS,
+  };
+
   ~Pickle();
 
   // Initialize a Pickle object using the default header size.
@@ -42,11 +47,13 @@ class Pickle {
   // will be rounded up to ensure that the header size is 32bit-aligned.
   explicit Pickle(int header_size);
 
-  // Initializes a Pickle from a const block of data.  The data is not copied;
-  // instead the data is merely referenced by this Pickle.  Only const methods
-  // should be used on the Pickle when initialized this way.  The header
-  // padding size is deduced from the data length.
-  Pickle(const char* data, int data_len);
+  // Initializes a Pickle from a const block of data. If ownership == BORROWS,
+  // the data is not copied; instead the data is merely referenced by this
+  // Pickle. Only const methods should be used on the Pickle when initialized
+  // this way. The header padding size is deduced from the data length.  If
+  // ownership == OWNS, then again no copying takes place. However, the buffer
+  // is writable and will be freed when this Pickle is destroyed.
+  Pickle(const char* data, int data_len, Ownership ownership = BORROWS);
 
   // Initializes a Pickle as a deep copy of another Pickle.
   Pickle(const Pickle& other);
@@ -61,6 +68,11 @@ class Pickle {
   // Returns the size of the Pickle's data.
   int size() const { return static_cast<int>(header_size_ +
                                              header_->payload_size); }
+
+  // Return the full size of the memory allocated for this Pickle's data.
+  uint32_t capacity() const {
+    return capacity_;
+  }
 
   // Returns the data for this Pickle.
   const void* data() const { return header_; }
@@ -234,10 +246,6 @@ class Pickle {
     return header_ ? payload() + payload_size() : nullptr;
   }
 
-  uint32_t capacity() const {
-    return capacity_;
-  }
-
   // Resizes the buffer for use when writing the specified amount of data. The
   // location that the data should be written at is returned, or NULL if there
   // was an error. Call EndWrite with the returned offset and the given length
@@ -253,7 +261,7 @@ class Pickle {
   // the header: new_capacity = sizeof(Header) + desired_payload_capacity.
   // A realloc() failure will cause a Resize failure... and caller should check
   // the return result for true (i.e., successful resizing).
-  bool Resize(uint32_t new_capacity);
+  void Resize(uint32_t new_capacity);
 
   // Round 'bytes' up to the next multiple of 'alignment'.  'alignment' must be
   // a power of 2.
@@ -281,6 +289,12 @@ class Pickle {
   static const char* FindNext(uint32_t header_size,
                               const char* range_start,
                               const char* range_end);
+
+  // If the given range contains at least header_size bytes, return the length
+  // of the pickled data including the header.
+  static uint32_t GetLength(uint32_t header_size,
+                            const char* range_start,
+                            const char* range_end);
 
   // The allocation granularity of the payload.
   static const int kPayloadUnit;

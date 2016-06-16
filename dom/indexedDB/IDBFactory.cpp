@@ -43,7 +43,6 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
 using namespace mozilla::dom::quota;
 using namespace mozilla::ipc;
@@ -121,12 +120,11 @@ IDBFactory::~IDBFactory()
 
 // static
 nsresult
-IDBFactory::CreateForWindow(nsPIDOMWindow* aWindow,
+IDBFactory::CreateForWindow(nsPIDOMWindowInner* aWindow,
                             IDBFactory** aFactory)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
-  MOZ_ASSERT(aWindow->IsInnerWindow());
   MOZ_ASSERT(aFactory);
 
   nsCOMPtr<nsIPrincipal> principal;
@@ -334,11 +332,10 @@ IDBFactory::CreateForJSInternal(JSContext* aCx,
 
 // static
 bool
-IDBFactory::AllowedForWindow(nsPIDOMWindow* aWindow)
+IDBFactory::AllowedForWindow(nsPIDOMWindowInner* aWindow)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
-  MOZ_ASSERT(aWindow->IsInnerWindow());
 
   nsCOMPtr<nsIPrincipal> principal;
   nsresult rv = AllowedForWindowInternal(aWindow, getter_AddRefs(principal));
@@ -351,12 +348,11 @@ IDBFactory::AllowedForWindow(nsPIDOMWindow* aWindow)
 
 // static
 nsresult
-IDBFactory::AllowedForWindowInternal(nsPIDOMWindow* aWindow,
+IDBFactory::AllowedForWindowInternal(nsPIDOMWindowInner* aWindow,
                                      nsIPrincipal** aPrincipal)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
-  MOZ_ASSERT(aWindow->IsInnerWindow());
 
   if (NS_WARN_IF(!IndexedDatabaseManager::GetOrCreate())) {
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -740,7 +736,7 @@ IDBFactory::OpenInternal(nsIPrincipal* aPrincipal,
     }
 
     JS::Rooted<JSObject*> scriptOwner(cx,
-      static_cast<nsGlobalWindow*>(mWindow.get())->FastGetGlobalJSObject());
+                                      static_cast<nsGlobalWindow*>(reinterpret_cast<nsPIDOMWindow<nsISupports>*>(mWindow.get()))->FastGetGlobalJSObject());
     MOZ_ASSERT(scriptOwner);
 
     request = IDBOpenDBRequest::CreateForWindow(this, mWindow, scriptOwner);
@@ -958,6 +954,5 @@ IDBFactory::BackgroundCreateCallback::ActorFailed()
   factory->BackgroundActorFailed();
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

@@ -23,6 +23,8 @@ public:
     , mSize(aRect.Size())
   { }
 
+  virtual const char* Name() const override { return "BasicCompositingRenderTarget"; }
+
   virtual gfx::IntSize GetSize() const override { return mSize; }
 
   void BindRenderTarget();
@@ -40,12 +42,15 @@ public:
 class BasicCompositor : public Compositor
 {
 public:
-  explicit BasicCompositor(nsIWidget *aWidget);
+  explicit BasicCompositor(CompositorParent* aParent, nsIWidget *aWidget);
 
 protected:
   virtual ~BasicCompositor();
 
 public:
+
+  virtual BasicCompositor* AsBasicCompositor() override { return this; }
+
   virtual bool Initialize() override;
 
   virtual void Destroy() override;
@@ -60,8 +65,16 @@ public:
                                const CompositingRenderTarget *aSource,
                                const gfx::IntPoint &aSourcePoint) override;
 
+  virtual already_AddRefed<CompositingRenderTarget>
+  CreateRenderTargetForWindow(const gfx::IntRect& aRect,
+                              SurfaceInitMode aInit,
+                              BufferMode aBufferMode);
+
   virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
+
+  virtual already_AddRefed<DataTextureSource>
+  CreateDataTextureSourceAround(gfx::DataSourceSurface* aSurface) override;
 
   virtual bool SupportsEffect(EffectTypes aEffect) override;
 
@@ -87,6 +100,7 @@ public:
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
                           const gfx::Rect *aClipRectIn,
                           const gfx::Rect& aRenderBounds,
+                          bool aOpaque,
                           gfx::Rect *aClipRectOut = nullptr,
                           gfx::Rect *aRenderBoundsOut = nullptr) override;
   virtual void EndFrame() override;
@@ -130,6 +144,8 @@ private:
 
   uint32_t mMaxTextureSize;
 };
+
+BasicCompositor* AssertBasicCompositor(Compositor* aCompositor);
 
 } // namespace layers
 } // namespace mozilla

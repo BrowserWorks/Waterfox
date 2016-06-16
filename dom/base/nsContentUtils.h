@@ -61,7 +61,6 @@ class nsIDOMEvent;
 class nsIDOMHTMLInputElement;
 class nsIDOMKeyEvent;
 class nsIDOMNode;
-class nsIDOMWindow;
 class nsIDragSession;
 class nsIEditor;
 class nsIFragmentContentSink;
@@ -92,7 +91,8 @@ class nsIWidget;
 class nsIWordBreaker;
 class nsIXPConnect;
 class nsNodeInfoManager;
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
+class nsPIDOMWindowOuter;
 class nsPresContext;
 class nsStringBuffer;
 class nsStringHashKey;
@@ -105,7 +105,6 @@ class nsITransferable;
 class nsPIWindowRoot;
 class nsIWindowProvider;
 
-struct JSPropertyDescriptor;
 struct JSRuntime;
 
 template<class E> class nsCOMArray;
@@ -122,6 +121,7 @@ class DocumentFragment;
 class Element;
 class EventTarget;
 class IPCDataTransfer;
+class IPCDataTransferItem;
 class NodeInfo;
 class nsIContentChild;
 class nsIContentParent;
@@ -239,7 +239,7 @@ public:
 
   static bool LookupBindingMember(JSContext* aCx, nsIContent *aContent,
                                   JS::Handle<jsid> aId,
-                                  JS::MutableHandle<JSPropertyDescriptor> aDesc);
+                                  JS::MutableHandle<JS::PropertyDescriptor> aDesc);
 
   // Check whether we should avoid leaking distinguishing information to JS/CSS.
   static bool ShouldResistFingerprinting(nsIDocShell* aDocShell);
@@ -480,7 +480,7 @@ public:
 
   // Check if the (JS) caller can access aWindow.
   // aWindow can be either outer or inner window.
-  static bool CanCallerAccess(nsPIDOMWindow* aWindow);
+  static bool CanCallerAccess(nsPIDOMWindowInner* aWindow);
 
   /**
    * GetDocumentFromCaller gets its document by looking at the last called
@@ -917,6 +917,7 @@ public:
    */
   static nsresult GenerateUUIDInPlace(nsID& aUUID);
 
+  static bool PrefetchEnabled(nsIDocShell* aDocShell);
 
   /**
    * Fill (with the parameters given) the localized string named |aKey| in
@@ -1595,7 +1596,7 @@ public:
    * If offline-apps.allow_by_default is true, we set offline-app permission
    * for the principal and return true.  Otherwise false.
    */
-  static bool MaybeAllowOfflineAppByDefault(nsIPrincipal *aPrincipal, nsIDOMWindow *aWindow);
+  static bool MaybeAllowOfflineAppByDefault(nsIPrincipal *aPrincipal);
 
   /**
    * Increases the count of blockers preventing scripts from running.
@@ -1644,7 +1645,7 @@ public:
 
   // Returns the browser window with the most recent time stamp that is
   // not in private browsing mode.
-  static already_AddRefed<nsPIDOMWindow>
+  static already_AddRefed<nsPIDOMWindowOuter>
   GetMostRecentNonPBWindow();
 
   /**
@@ -1940,6 +1941,12 @@ public:
   static bool IsFullScreenApiEnabled();
 
   /**
+   * Returns true if the unprefixed fullscreen API is enabled.
+   */
+  static bool IsUnprefixedFullscreenApiEnabled()
+    { return sIsUnprefixedFullscreenApiEnabled; }
+
+  /**
    * Returns true if requests for full-screen are allowed in the current
    * context. Requests are only allowed if the user initiated them (like with
    * a mouse-click or key press), unless this check has been disabled by
@@ -1993,14 +2000,6 @@ public:
   static bool SendPerformanceTimingNotifications()
   {
     return sSendPerformanceTimingNotifications;
-  }
-
-  /*
-   * Returns true if ServiceWorker Interception is enabled by pref.
-   */
-  static bool ServiceWorkerInterceptionEnabled()
-  {
-    return sSWInterceptionEnabled;
   }
 
   /*
@@ -2070,7 +2069,7 @@ public:
    * Returns true if aWin and the current pointer lock document
    * have common scriptable top window.
    */
-  static bool IsInPointerLockContext(nsPIDOMWindow* aWin);
+  static bool IsInPointerLockContext(nsPIDOMWindowOuter* aWin);
 
   /**
    * Returns the time limit on handling user input before
@@ -2117,7 +2116,7 @@ public:
    * @param aWindow the window the flush should start at
    *
    */
-  static void FlushLayoutForTree(nsIDOMWindow* aWindow);
+  static void FlushLayoutForTree(nsPIDOMWindowOuter* aWindow);
 
   /**
    * Returns true if content with the given principal is allowed to use XUL
@@ -2403,14 +2402,14 @@ public:
    * If the hostname for aURI is an IPv6 it encloses it in brackets,
    * otherwise it just outputs the hostname in aHost.
    */
-  static void GetHostOrIPv6WithBrackets(nsIURI* aURI, nsAString& aHost);
-  static void GetHostOrIPv6WithBrackets(nsIURI* aURI, nsCString& aHost);
+  static nsresult GetHostOrIPv6WithBrackets(nsIURI* aURI, nsAString& aHost);
+  static nsresult GetHostOrIPv6WithBrackets(nsIURI* aURI, nsCString& aHost);
 
   /*
    * Call the given callback on all remote children of the given top-level
    * window.
    */
-  static void CallOnAllRemoteChildren(nsIDOMWindow* aWindow,
+  static void CallOnAllRemoteChildren(nsPIDOMWindowOuter* aWindow,
                                       CallOnRemoteChildFunction aCallback,
                                       void* aArg);
 
@@ -2428,6 +2427,21 @@ public:
    * The content type is returned in aType.
    */
   static bool IsFileImage(nsIFile* aFile, nsACString& aType);
+
+  /**
+   * Given an IPCDataTransferItem that has a flavor for which IsFlavorImage
+   * returns true and whose IPCDataTransferData is of type nsCString (raw image
+   * data), construct an imgIContainer for the image encoded by the transfer
+   * item.
+   */
+  static nsresult DataTransferItemToImage(const mozilla::dom::IPCDataTransferItem& aItem,
+                                          imgIContainer** aContainer);
+
+  /**
+   * Given a flavor obtained from an IPCDataTransferItem or nsITransferable,
+   * returns true if we should treat the data as an image.
+   */
+  static bool IsFlavorImage(const nsACString& aFlavor);
 
   static void TransferablesToIPCTransferables(nsISupportsArray* aTransferables,
                                               nsTArray<mozilla::dom::IPCDataTransfer>& aIPC,
@@ -2515,7 +2529,8 @@ public:
    */
   static nsresult SetFetchReferrerURIWithPolicy(nsIPrincipal* aPrincipal,
                                                 nsIDocument* aDoc,
-                                                nsIHttpChannel* aChannel);
+                                                nsIHttpChannel* aChannel,
+                                                mozilla::net::ReferrerPolicy aReferrerPolicy);
 
   static bool PushEnabled(JSContext* aCx, JSObject* aObj);
 
@@ -2549,7 +2564,7 @@ public:
    * persistent storage which are available to web pages. Cookies don't use
    * this logic, and security logic related to them must be updated separately.
    */
-  static StorageAccess StorageAllowedForWindow(nsPIDOMWindow* aWindow);
+  static StorageAccess StorageAllowedForWindow(nsPIDOMWindowInner* aWindow);
 
   /*
    * Checks if storage for the given principal is permitted by the user's
@@ -2623,7 +2638,7 @@ private:
    * StorageAllowedForPrincipal.
    */
   static StorageAccess InternalStorageAllowedForPrincipal(nsIPrincipal* aPrincipal,
-                                                          nsPIDOMWindow* aWindow);
+                                                          nsPIDOMWindowInner* aWindow);
 
   static nsIXPConnect *sXPConnect;
 
@@ -2678,6 +2693,7 @@ private:
   static bool sIsHandlingKeyBoardEvent;
   static bool sAllowXULXBL_for_file;
   static bool sIsFullScreenApiEnabled;
+  static bool sIsUnprefixedFullscreenApiEnabled;
   static bool sTrustedFullScreenOnly;
   static bool sIsCutCopyAllowed;
   static uint32_t sHandlingInputTimeout;
@@ -2690,7 +2706,6 @@ private:
   static bool sGettersDecodeURLHash;
   static bool sPrivacyResistFingerprinting;
   static bool sSendPerformanceTimingNotifications;
-  static bool sSWInterceptionEnabled;
   static uint32_t sCookiesLifetimePolicy;
   static uint32_t sCookiesBehavior;
 

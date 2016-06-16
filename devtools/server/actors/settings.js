@@ -7,10 +7,10 @@ const protocol = require("devtools/server/protocol");
 const {Arg, method, RetVal} = protocol;
 const {DebuggerServer} = require("devtools/server/main");
 const promise = require("promise");
+const Services = require("Services");
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
-Cu.import("resource://gre/modules/Services.jsm");
 
 var defaultSettings = {};
 var settingsFile;
@@ -26,7 +26,7 @@ function getDefaultSettings() {
   let chan = NetUtil.newChannel({
     uri: NetUtil.newURI(settingsFile),
     loadUsingSystemPrincipal: true});
-  let stream = chan.open();
+  let stream = chan.open2();
   // Obtain a converter to read from a UTF-8 encoded input stream.
   let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
                   .createInstance(Ci.nsIScriptableUnicodeConverter);

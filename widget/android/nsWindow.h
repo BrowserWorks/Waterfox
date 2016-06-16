@@ -78,10 +78,14 @@ public:
     void InitEvent(mozilla::WidgetGUIEvent& event,
                    LayoutDeviceIntPoint* aPoint = 0);
 
+    void UpdateOverscrollVelocity(const float aX, const float aY);
+    void UpdateOverscrollOffset(const float aX, const float aY);
+
     //
     // nsIWidget
     //
 
+    using nsBaseWidget::Create; // for Create signature not overridden here
     NS_IMETHOD Create(nsIWidget* aParent,
                       nsNativeWidget aNativeParent,
                       const LayoutDeviceIntRect& aRect,
@@ -181,6 +185,13 @@ public:
     void UpdateZoomConstraints(const uint32_t& aPresShellId,
                                const FrameMetrics::ViewID& aViewId,
                                const mozilla::Maybe<ZoomConstraints>& aConstraints) override;
+
+    nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
+                                        TouchPointerState aPointerState,
+                                        ScreenIntPoint aPointerScreenPoint,
+                                        double aPointerPressure,
+                                        uint32_t aPointerOrientation,
+                                        nsIObserver* aObserver) override;
 
 protected:
     void BringToFront();

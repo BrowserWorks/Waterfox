@@ -1,5 +1,8 @@
-/* Any copyright is dedicated to the Public Domain.
- * http://creativecommons.org/publicdomain/zero/1.0/ */
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft= javascript ts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
 
@@ -7,13 +10,13 @@ var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
-Cu.import("resource://gre/modules/Services.jsm");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 
 // This gives logging to stdout for tests
 var {console} = Cu.import("resource://gre/modules/Console.jsm", {});
 
 var {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+var Services = require("Services");
 var WebConsoleUtils = require("devtools/shared/webconsole/utils").Utils;
 
 var ConsoleAPIStorage = Cc["@mozilla.org/consoleAPI-storage;1"]
@@ -47,7 +50,7 @@ function connectToDebugger(aCallback)
   let client = new DebuggerClient(transport);
 
   let dbgState = { dbgClient: client };
-  client.connect(aCallback.bind(null, dbgState));
+  client.connect().then(response => aCallback(dbgState, response));
 }
 
 function attachConsole(aListeners, aCallback) {

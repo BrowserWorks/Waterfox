@@ -55,12 +55,9 @@ public:
   // other lower-level methods.
   bool getOwnPropertyDescriptor(JSContext* cx, JS::Handle<JSObject*> proxy,
                                 JS::Handle<jsid> id,
-                                JS::MutableHandle<JSPropertyDescriptor> desc) const override;
+                                JS::MutableHandle<JS::PropertyDescriptor> desc) const override;
   virtual bool ownPropertyKeys(JSContext* cx, JS::Handle<JSObject*> proxy,
                                JS::AutoIdVector &props) const override;
-
-  virtual bool enumerate(JSContext *cx, JS::Handle<JSObject*> proxy,
-                         JS::MutableHandle<JSObject*> objp) const override;
 
   // We override getOwnEnumerablePropertyKeys() and implement it directly
   // instead of using the default implementation, which would call
@@ -91,7 +88,7 @@ protected:
                                     JS::Handle<JSObject*> proxy,
                                     JS::Handle<jsid> id,
                                     bool ignoreNamedProps,
-                                    JS::MutableHandle<JSPropertyDescriptor> desc) const = 0;
+                                    JS::MutableHandle<JS::PropertyDescriptor> desc) const = 0;
 };
 
 class DOMProxyHandler : public BaseDOMProxyHandler
@@ -102,14 +99,14 @@ public:
   {}
 
   bool defineProperty(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
-                      JS::Handle<JSPropertyDescriptor> desc,
+                      JS::Handle<JS::PropertyDescriptor> desc,
                       JS::ObjectOpResult &result) const override
   {
     bool unused;
     return defineProperty(cx, proxy, id, desc, result, &unused);
   }
   virtual bool defineProperty(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
-                              JS::Handle<JSPropertyDescriptor> desc,
+                              JS::Handle<JS::PropertyDescriptor> desc,
                               JS::ObjectOpResult &result, bool *defined) const;
   bool delete_(JSContext* cx, JS::Handle<JSObject*> proxy, JS::Handle<jsid> id,
                JS::ObjectOpResult &result) const override;
@@ -198,7 +195,7 @@ IsArrayIndex(int32_t index)
 }
 
 inline void
-FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
+FillPropertyDescriptor(JS::MutableHandle<JS::PropertyDescriptor> desc,
                        JSObject* obj, bool readonly, bool enumerable = true)
 {
   desc.object().set(obj);
@@ -209,7 +206,7 @@ FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
 }
 
 inline void
-FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
+FillPropertyDescriptor(JS::MutableHandle<JS::PropertyDescriptor> desc,
                        JSObject* obj, JS::Value v,
                        bool readonly, bool enumerable = true)
 {
@@ -218,7 +215,7 @@ FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
 }
 
 inline void
-FillPropertyDescriptor(JS::MutableHandle<JSPropertyDescriptor> desc,
+FillPropertyDescriptor(JS::MutableHandle<JS::PropertyDescriptor> desc,
                        JSObject* obj, unsigned attributes, JS::Value v)
 {
   desc.object().set(obj);

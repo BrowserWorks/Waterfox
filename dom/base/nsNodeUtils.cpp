@@ -6,6 +6,7 @@
 
 #include "nsNodeUtils.h"
 #include "nsContentUtils.h"
+#include "nsCSSPseudoElements.h"
 #include "nsINode.h"
 #include "nsIContent.h"
 #include "mozilla/dom/Element.h"
@@ -235,17 +236,17 @@ nsNodeUtils::GetTargetForAnimation(const Animation* aAnimation)
   }
 
   Element* target;
-  nsCSSPseudoElements::Type pseudoType;
+  CSSPseudoElementType pseudoType;
   effect->GetTarget(target, pseudoType);
 
   // If the animation targets a pseudo-element, we don't dispatch
   // notifications for it.  (In the future we will have PseudoElement
   // objects we can use as the target of the notifications.)
-  if (pseudoType != nsCSSPseudoElements::ePseudo_NotPseudoElement) {
+  if (pseudoType != CSSPseudoElementType::NotPseudo) {
     return nullptr;
   }
 
-  return effect->GetTarget();
+  return target;
 }
 
 void
@@ -367,7 +368,8 @@ nsNodeUtils::LastRelease(nsINode* aNode)
     // attached
     if (aNode->HasFlag(NODE_FORCE_XBL_BINDINGS) &&
         ownerDoc->BindingManager()) {
-      ownerDoc->BindingManager()->RemovedFromDocument(elem, ownerDoc);
+      ownerDoc->BindingManager()->RemovedFromDocument(elem, ownerDoc,
+                                                      nsBindingManager::eRunDtor);
     }
   }
 
@@ -524,8 +526,7 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
         newDoc->RegisterActivityObserver(aNode->AsElement());
       }
 
-      nsPIDOMWindow* window = newDoc->GetInnerWindow();
-      if (window) {
+      if (nsPIDOMWindowInner* window = newDoc->GetInnerWindow()) {
         EventListenerManager* elm = aNode->GetExistingListenerManager();
         if (elm) {
           window->SetMutationListeners(elm->MutationListenerBits());

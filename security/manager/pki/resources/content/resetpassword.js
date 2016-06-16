@@ -43,8 +43,7 @@ function resetPassword()
           wallet.WALLET_DeleteAll();
         }
       }
-    }
-    catch(e) {
+    } catch (e) {
       // wallet.crypto pref is missing
     }
   }
@@ -54,8 +53,8 @@ function resetPassword()
   promptService = promptService.QueryInterface(Components.interfaces.nsIPromptService);
   if (promptService && bundle) {
     promptService.alert(window,
-      bundle.getString("resetPasswordConfirmationTitle"), 
-      bundle.getString("resetPasswordConfirmationMessage"));
+                        bundle.getString("resetPasswordConfirmationTitle"),
+                        bundle.getString("resetPasswordConfirmationMessage"));
   }
 
   return true;

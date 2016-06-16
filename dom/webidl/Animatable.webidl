@@ -10,8 +10,17 @@
  * liability, trademark and document use rules apply.
  */
 
+dictionary KeyframeAnimationOptions : KeyframeEffectOptions {
+  DOMString id = "";
+};
+
 [NoInterfaceObject]
 interface Animatable {
+  // Bug 1253507: Disabled in Firefox 47 branch
+  [ChromeOnly, Throws]
+  Animation animate(object? frames,
+                    optional (unrestricted double or KeyframeAnimationOptions)
+                      options);
   [Func="nsDocument::IsWebAnimationsEnabled"]
   sequence<Animation> getAnimations();
 };

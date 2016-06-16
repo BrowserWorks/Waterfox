@@ -19,7 +19,7 @@
 #include "GeckoProfiler.h"
 #include "mozilla/Maybe.h"
 
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZ_ENABLE_PROFILER_SPS)
 #include "ProfilerBacktrace.h"
 #endif
 
@@ -128,13 +128,9 @@ public:
         // Take a faster path that doesn't require unioning the overflow areas
         // of our children.
 
-#ifdef DEBUG
-        bool hasInitialOverflowPropertyApplied = false;
-        frame->Properties().Get(nsIFrame::DebugInitialOverflowPropertyApplied(),
-                                 &hasInitialOverflowPropertyApplied);
-        NS_ASSERTION(hasInitialOverflowPropertyApplied,
+        NS_ASSERTION(frame->Properties().Get(
+                       nsIFrame::DebugInitialOverflowPropertyApplied()),
                      "InitialOverflowProperty must be set first.");
-#endif
 
         nsOverflowAreas* overflow = 
           static_cast<nsOverflowAreas*>(frame->Properties().Get(nsIFrame::InitialOverflowProperty()));
@@ -319,7 +315,7 @@ public:
     // that we called AddPendingRestyle for and found the element this is
     // the RestyleData for as its nearest restyle root.
     nsTArray<RefPtr<Element>> mDescendants;
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZ_ENABLE_PROFILER_SPS)
     UniquePtr<ProfilerBacktrace> mBacktrace;
 #endif
   };
@@ -394,7 +390,7 @@ private:
                                 const RestyleHintData& aRestyleHintData);
 
   typedef nsClassHashtable<nsISupportsHashKey, RestyleData> PendingRestyleTable;
-  typedef nsAutoTArray< RefPtr<Element>, 32> RestyleRootArray;
+  typedef AutoTArray< RefPtr<Element>, 32> RestyleRootArray;
   // Our restyle bits.  These will be a subset of ELEMENT_ALL_RESTYLE_FLAGS, and
   // will include one flag from ELEMENT_PENDING_RESTYLE_FLAGS, one flag
   // from ELEMENT_POTENTIAL_RESTYLE_ROOT_FLAGS, and might also include
@@ -456,7 +452,7 @@ RestyleTracker::AddPendingRestyleToTable(Element* aElement,
   if (!existingData) {
     RestyleData* rd =
       new RestyleData(aRestyleHint, aMinChangeHint, aRestyleHintData);
-#if defined(MOZ_ENABLE_PROFILER_SPS) && !defined(MOZILLA_XPCOMRT_API)
+#if defined(MOZ_ENABLE_PROFILER_SPS)
     if (profiler_feature_active("restyle")) {
       rd->mBacktrace.reset(profiler_get_backtrace());
     }

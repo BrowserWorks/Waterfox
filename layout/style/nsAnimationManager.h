@@ -9,7 +9,6 @@
 #include "mozilla/ContentEvents.h"
 #include "mozilla/EventForwards.h"
 #include "AnimationCommon.h"
-#include "nsCSSPseudoElements.h"
 #include "mozilla/dom/Animation.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/TimeStamp.h"
@@ -26,6 +25,8 @@ class KeyframeEffectReadOnly;
 class Promise;
 } /* namespace dom */
 
+enum class CSSPseudoElementType : uint8_t;
+
 struct AnimationEventInfo {
   RefPtr<dom::Element> mElement;
   RefPtr<dom::Animation> mAnimation;
@@ -33,7 +34,7 @@ struct AnimationEventInfo {
   TimeStamp mTimeStamp;
 
   AnimationEventInfo(dom::Element* aElement,
-                     nsCSSPseudoElements::Type aPseudoType,
+                     CSSPseudoElementType aPseudoType,
                      EventMessage aMessage,
                      const nsSubstring& aAnimationName,
                      const StickyTimeDuration& aElapsedTime,
@@ -75,7 +76,6 @@ public:
     , mPauseShouldStick(false)
     , mNeedsNewAnimationIndexWhenRun(false)
     , mPreviousPhaseOrIteration(PREVIOUS_PHASE_BEFORE)
-    , mInitialPlayState(NS_STYLE_ANIMATION_PLAY_STATE_PAUSED)
   {
     // We might need to drop this assertion once we add a script-accessible
     // constructor but for animations generated from CSS markup the
@@ -138,11 +138,6 @@ public:
     MOZ_ASSERT(IsTiedToMarkup());
     mAnimationIndex = aIndex;
   }
-  void CopyAnimationIndex(const CSSAnimation& aOther)
-  {
-    MOZ_ASSERT(IsTiedToMarkup() && aOther.IsTiedToMarkup());
-    mAnimationIndex = aOther.mAnimationIndex;
-  }
 
   // Sets the owning element which is used for determining the composite
   // order of CSSAnimation objects generated from CSS markup.
@@ -155,13 +150,6 @@ public:
   // True for animations that are generated from CSS markup and continue to
   // reflect changes to that markup.
   bool IsTiedToMarkup() const { return mOwningElement.IsSet(); }
-
-  void SetInitialPlayState(uint8_t aPlayState)
-  {
-    mInitialPlayState = aPlayState;
-  }
-  uint8_t InitialPlayState() const { return mInitialPlayState; }
-  void PlayOrPauseFromStyle();
 
 protected:
   virtual ~CSSAnimation()
@@ -274,10 +262,6 @@ protected:
   // One of the PREVIOUS_PHASE_* constants, or an integer for the iteration
   // whose start we last notified on.
   uint64_t mPreviousPhaseOrIteration;
-
-  // Represents initial play state specified by style.  This is used to avoid
-  // requesting a restyle for temporary animations.
-  uint8_t mInitialPlayState;
 };
 
 } /* namespace dom */
@@ -296,18 +280,15 @@ public:
   NS_DECL_CYCLE_COLLECTION_NATIVE_CLASS(nsAnimationManager)
 
   /**
-   * Return the style rule that RulesMatching should add for
-   * aStyleContext.  This might be different from what RulesMatching
-   * actually added during aStyleContext's construction because the
-   * element's animation-name may have changed.  (However, this does
-   * return null during the non-animation restyling phase, as
-   * RulesMatching does.)
+   * Update the set of animations on |aElement| based on |aStyleContext|.
+   * If necessary, this will notify the corresponding EffectCompositor so
+   * that it can update its animation rule.
    *
    * aStyleContext may be a style context for aElement or for its
    * :before or :after pseudo-element.
    */
-  nsIStyleRule* CheckAnimationRule(nsStyleContext* aStyleContext,
-                                   mozilla::dom::Element* aElement);
+  void UpdateAnimations(nsStyleContext* aStyleContext,
+                        mozilla::dom::Element* aElement);
 
   /**
    * Add a pending event.
@@ -337,11 +318,7 @@ public:
   // rather than the element for the generated content for animations on
   // ::before and ::after.
   void StopAnimationsForElement(mozilla::dom::Element* aElement,
-                                nsCSSPseudoElements::Type aPseudoType);
-
-  bool IsAnimationManager() override {
-    return true;
-  }
+                                mozilla::CSSPseudoElementType aPseudoType);
 
 protected:
   virtual ~nsAnimationManager() {}
@@ -361,15 +338,8 @@ protected:
 private:
   void BuildAnimations(nsStyleContext* aStyleContext,
                        mozilla::dom::Element* aTarget,
-                       mozilla::dom::AnimationTimeline* aTimeline,
+                       mozilla::AnimationCollection* aCollection,
                        mozilla::AnimationPtrArray& aAnimations);
-  bool BuildSegment(InfallibleTArray<mozilla::AnimationPropertySegment>&
-                      aSegments,
-                    nsCSSProperty aProperty,
-                    const mozilla::StyleAnimation& aAnimation,
-                    float aFromKey, nsStyleContext* aFromContext,
-                    mozilla::css::Declaration* aFromDeclaration,
-                    float aToKey, nsStyleContext* aToContext);
 };
 
 #endif /* !defined(nsAnimationManager_h_) */

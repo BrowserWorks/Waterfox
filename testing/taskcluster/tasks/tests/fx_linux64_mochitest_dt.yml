@@ -4,21 +4,21 @@ $inherits:
 task:
   scopes:
     - 'docker-worker:capability:device:loopbackVideo'
-    - 'docker-worker:capability:device:loopbackAudio'
   metadata:
-    name: '[TC] Linux64 mochitest-devtools-chrome M(dt{{chunk}})'
+    name: '[TC] Linux64 mochitest-devtools-chrome-{{chunk}}'
     description: Mochitest devtools-chrome run {{chunk}}
   payload:
+    # these tests take longer than most to complete
+    maxRunTime: 5400
     capabilities:
       devices:
         loopbackVideo: true
-        loopbackAudio: true
   extra:
     chunks:
       total: 10
     suite:
       name: mochitest
-      flavor: mochitest-devtools-chrome
+      flavor: mochitest-devtools-chrome-chunked
     treeherder:
       groupName: Desktop mochitests
       groupSymbol: tc-M

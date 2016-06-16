@@ -16,11 +16,13 @@
 #include "nsIBoxObject.h"
 #include "nsIDOMXULElement.h"
 #include "nsIDocShell.h"
+#include "nsIObserverService.h"
 #include "nsIPresShell.h"
 #include "nsPresContext.h"
 #include "nsIScrollableFrame.h"
 #include "nsISelectionPrivate.h"
 #include "nsISelectionController.h"
+#include "nsISimpleEnumerator.h"
 #include "mozilla/dom/TouchEvent.h"
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStateManager.h"
@@ -219,28 +221,6 @@ nsCoreUtils::GetDOMNodeFromDOMPoint(nsINode *aNode, uint32_t aOffset)
   }
 
   return aNode;
-}
-
-nsIContent*
-nsCoreUtils::GetRoleContent(nsINode *aNode)
-{
-  nsCOMPtr<nsIContent> content(do_QueryInterface(aNode));
-  if (!content) {
-    nsCOMPtr<nsIDocument> doc(do_QueryInterface(aNode));
-    if (doc) {
-      nsCOMPtr<nsIDOMHTMLDocument> htmlDoc(do_QueryInterface(aNode));
-      if (htmlDoc) {
-        nsCOMPtr<nsIDOMHTMLElement> bodyElement;
-        htmlDoc->GetBody(getter_AddRefs(bodyElement));
-        content = do_QueryInterface(bodyElement);
-      }
-      else {
-        return doc->GetDocumentElement();
-      }
-    }
-  }
-
-  return content;
 }
 
 bool
@@ -657,4 +637,42 @@ nsCoreUtils::IsWhitespaceString(const nsSubstring& aString)
     ++iterBegin;
 
   return iterBegin == iterEnd;
+}
+
+bool
+nsCoreUtils::AccEventObserversExist()
+{
+  nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
+  NS_ENSURE_TRUE(obsService, false);
+
+  nsCOMPtr<nsISimpleEnumerator> observers;
+  obsService->EnumerateObservers(NS_ACCESSIBLE_EVENT_TOPIC,
+                                 getter_AddRefs(observers));
+  NS_ENSURE_TRUE(observers, false);
+
+  bool hasObservers = false;
+  observers->HasMoreElements(&hasObservers);
+
+  return hasObservers;
+}
+
+void
+nsCoreUtils::DispatchAccEvent(RefPtr<nsIAccessibleEvent> event)
+{
+  nsCOMPtr<nsIObserverService> obsService = services::GetObserverService();
+  NS_ENSURE_TRUE_VOID(obsService);
+
+  obsService->NotifyObservers(event, NS_ACCESSIBLE_EVENT_TOPIC, nullptr);
+}
+
+void
+nsCoreUtils::XBLBindingRole(const nsIContent* aEl, nsAString& aRole)
+{
+  for (const nsXBLBinding* binding = aEl->GetXBLBinding(); binding;
+       binding = binding->GetBaseBinding()) {
+    nsIContent* bindingElm = binding->PrototypeBinding()->GetBindingElement();
+    bindingElm->GetAttr(kNameSpaceID_None, nsGkAtoms::role, aRole);
+    if (!aRole.IsEmpty())
+      break;
+  }
 }

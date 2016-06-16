@@ -17,7 +17,7 @@
 #include "mozilla/BasePrincipal.h"
 
 class nsINode;
-class nsPIDOMWindow;
+class nsPIDOMWindowOuter;
 class nsXMLHttpRequest;
 
 namespace mozilla {
@@ -53,6 +53,12 @@ public:
            nsINode* aLoadingContext,
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType);
+
+  // Constructor used for TYPE_DOCUMENT loads with no reasonable loadingNode.
+  LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
+           nsIPrincipal* aLoadingPrincipal,
+           nsIPrincipal* aTriggeringPrincipal,
+           nsSecurityFlags aSecurityFlags);
 
   // create an exact copy of the loadinfo
   already_AddRefed<nsILoadInfo> Clone() const;
@@ -95,7 +101,7 @@ private:
 
   ~LoadInfo();
 
-  void ComputeIsThirdPartyContext(nsPIDOMWindow* aOuterWindow);
+  void ComputeIsThirdPartyContext(nsPIDOMWindowOuter* aOuterWindow);
 
   // This function is the *only* function which can change the securityflags
   // of a loadinfo. It only exists because of the XHR code. Don't call it

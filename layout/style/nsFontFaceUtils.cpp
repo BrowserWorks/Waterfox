@@ -21,7 +21,7 @@ StyleContextContainsFont(nsStyleContext* aStyleContext,
   // if the font is null, simply check to see whether fontlist includes
   // downloadable fonts
   if (!aFont) {
-    const FontFamilyList& fontlist =
+    const mozilla::FontFamilyList& fontlist =
       aStyleContext->StyleFont()->mFont.fontlist;
     return aUserFontSet->ContainsUserFontSetFonts(fontlist);
   }
@@ -107,7 +107,7 @@ ScheduleReflow(nsIPresShell* aShell, nsIFrame* aFrame)
 nsFontFaceUtils::MarkDirtyForFontChange(nsIFrame* aSubtreeRoot,
                                         const gfxUserFontEntry* aFont)
 {
-  nsAutoTArray<nsIFrame*, 4> subtrees;
+  AutoTArray<nsIFrame*, 4> subtrees;
   subtrees.AppendElement(aSubtreeRoot);
 
   nsIPresShell* ps = aSubtreeRoot->PresContext()->PresShell();
@@ -119,7 +119,7 @@ nsFontFaceUtils::MarkDirtyForFontChange(nsIFrame* aSubtreeRoot,
     subtrees.RemoveElementAt(subtrees.Length() - 1);
 
     // Check all descendants to see if they use the font
-    nsAutoTArray<nsIFrame*, 32> stack;
+    AutoTArray<nsIFrame*, 32> stack;
     stack.AppendElement(subtreeRoot);
 
     do {

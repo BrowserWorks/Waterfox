@@ -18,7 +18,8 @@
 #include "nsDocShell.h"
 #include "nsIContentViewer.h"
 #include "nsPIDOMWindow.h"
-#include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "nsIContent.h"
 #include "nsIFrame.h"
 #include "nsIDocument.h"
@@ -34,7 +35,9 @@
 #include "nsFrameManager.h"
 #include "nsLayoutUtils.h"
 #include "nsViewManager.h"
-#include "RestyleManager.h"
+#include "mozilla/RestyleManager.h"
+#include "mozilla/RestyleManagerHandle.h"
+#include "mozilla/RestyleManagerHandleInlines.h"
 #include "SurfaceCache.h"
 #include "nsCSSRuleProcessor.h"
 #include "nsRuleNode.h"
@@ -72,6 +75,8 @@
 #include "gfxTextRun.h"
 #include "nsFontFaceUtils.h"
 #include "nsLayoutStylesheetCache.h"
+#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheetHandleInlines.h"
 
 #if defined(MOZ_WIDGET_GTK)
 #include "gfxPlatformGtk.h" // xxx - for UseFcFontList
@@ -1198,9 +1203,14 @@ nsPresContext::SetShell(nsIPresShell* aShell)
     }
 
     if (IsRoot()) {
+      nsRootPresContext* thisRoot = static_cast<nsRootPresContext*>(this);
+
       // Have to cancel our plugin geometry timer, because the
       // callback for that depends on a non-null presshell.
-      static_cast<nsRootPresContext*>(this)->CancelApplyPluginGeometryTimer();
+      thisRoot->CancelApplyPluginGeometryTimer();
+
+      // The did-paint timer also depends on a non-null pres shell.
+      thisRoot->CancelDidPaintTimer();
     }
   }
 }
@@ -1355,8 +1365,9 @@ nsPresContext::CompatibilityModeChanged()
     return;
   }
 
-  nsStyleSet* styleSet = mShell->StyleSet();
-  CSSStyleSheet* sheet = nsLayoutStylesheetCache::QuirkSheet();
+  StyleSetHandle styleSet = mShell->StyleSet();
+  auto cache = nsLayoutStylesheetCache::For(styleSet->BackendType());
+  StyleSheetHandle sheet = cache->QuirkSheet();
 
   if (needsQuirkSheet) {
     // quirk.css needs to come after html.css; we just keep it at the end.
@@ -1619,7 +1630,7 @@ GetPropagatedScrollbarStylesForViewport(nsPresContext* aPresContext,
   }
 
   // Check the style on the document root element
-  nsStyleSet *styleSet = aPresContext->StyleSet();
+  StyleSetHandle styleSet = aPresContext->StyleSet();
   RefPtr<nsStyleContext> rootStyle;
   rootStyle = styleSet->ResolveStyleFor(docElement, nullptr);
   if (CheckOverflow(rootStyle->StyleDisplay(), aStyles)) {
@@ -1666,7 +1677,7 @@ nsPresContext::UpdateViewportScrollbarStylesOverride()
     GetPropagatedScrollbarStylesForViewport(this, &mViewportStyleScrollbar);
 
   nsIDocument* document = Document();
-  if (Element* fullscreenElement = document->GetFullScreenElement()) {
+  if (Element* fullscreenElement = document->GetFullscreenElement()) {
     // If the document is in fullscreen, but the fullscreen element is
     // not the root element, we should explicitly suppress the scrollbar
     // here. Note that, we still need to return the original element
@@ -1810,7 +1821,7 @@ nsPresContext::IsTopLevelWindowInactive()
     return false;
   }
 
-  nsCOMPtr<nsPIDOMWindow> domWindow = rootItem->GetWindow();
+  nsCOMPtr<nsPIDOMWindowOuter> domWindow = rootItem->GetWindow();
 
   return domWindow && !domWindow->IsActive();
 }
@@ -1938,7 +1949,7 @@ nsPresContext::UIResolutionChangedSync()
 {
   if (!mPendingUIResolutionChanged) {
     mPendingUIResolutionChanged = true;
-    UIResolutionChangedInternal();
+    UIResolutionChangedInternalScale(0.0);
   }
 }
 
@@ -1950,7 +1961,12 @@ nsPresContext::UIResolutionChangedSubdocumentCallback(nsIDocument* aDocument,
   if (shell) {
     nsPresContext* pc = shell->GetPresContext();
     if (pc) {
-      pc->UIResolutionChangedInternal();
+      // For subdocuments, we want to apply the parent's scale, because there
+      // are cases where the subdoc's device context is connected to a widget
+      // that has an out-of-date resolution (it's on a different screen, but
+      // currently hidden, and will not be updated until shown): bug 1249279.
+      double scale = *static_cast<double*>(aData);
+      pc->UIResolutionChangedInternalScale(scale);
     }
   }
   return true;
@@ -1963,13 +1979,9 @@ NotifyTabUIResolutionChanged(TabParent* aTab, void *aArg)
 }
 
 static void
-NotifyChildrenUIResolutionChanged(nsIDOMWindow* aWindow)
+NotifyChildrenUIResolutionChanged(nsPIDOMWindowOuter* aWindow)
 {
-  nsCOMPtr<nsPIDOMWindow> piWin = do_QueryInterface(aWindow);
-  if (!piWin) {
-    return;
-  }
-  nsCOMPtr<nsIDocument> doc = piWin->GetExtantDoc();
+  nsCOMPtr<nsIDocument> doc = aWindow->GetExtantDoc();
   RefPtr<nsPIWindowRoot> topLevelWin = nsContentUtils::GetWindowRoot(doc);
   if (!topLevelWin) {
     return;
@@ -1980,18 +1992,26 @@ NotifyChildrenUIResolutionChanged(nsIDOMWindow* aWindow)
 void
 nsPresContext::UIResolutionChangedInternal()
 {
+  UIResolutionChangedInternalScale(0.0);
+}
+
+void
+nsPresContext::UIResolutionChangedInternalScale(double aScale)
+{
   mPendingUIResolutionChanged = false;
 
-  mDeviceContext->CheckDPIChange();
+  mDeviceContext->CheckDPIChange(&aScale);
   if (mCurAppUnitsPerDevPixel != AppUnitsPerDevPixel()) {
     AppUnitsPerDevPixelChanged();
   }
 
   // Recursively notify all remote leaf descendants of the change.
-  NotifyChildrenUIResolutionChanged(mDocument->GetWindow());
+  if (nsPIDOMWindowOuter* window = mDocument->GetWindow()) {
+    NotifyChildrenUIResolutionChanged(window);
+  }
 
   mDocument->EnumerateSubDocuments(UIResolutionChangedSubdocumentCallback,
-                                   nullptr);
+                                   &aScale);
 }
 
 void
@@ -2047,6 +2067,39 @@ nsPresContext::PostRebuildAllStyleDataEvent(nsChangeHint aExtraHint,
   RestyleManager()->PostRebuildAllStyleDataEvent(aExtraHint, aRestyleHint);
 }
 
+struct MediaFeatureHints
+{
+  nsRestyleHint restyleHint;
+  nsChangeHint changeHint;
+};
+
+static bool
+MediaFeatureValuesChangedAllDocumentsCallback(nsIDocument* aDocument, void* aHints)
+{
+  MediaFeatureHints* hints = static_cast<MediaFeatureHints*>(aHints);
+  if (nsIPresShell* shell = aDocument->GetShell()) {
+    if (nsPresContext* pc = shell->GetPresContext()) {
+      pc->MediaFeatureValuesChangedAllDocuments(hints->restyleHint,
+                                                hints->changeHint);
+    }
+  }
+  return true;
+}
+
+void
+nsPresContext::MediaFeatureValuesChangedAllDocuments(nsRestyleHint aRestyleHint,
+                                                     nsChangeHint aChangeHint)
+{
+    MediaFeatureValuesChanged(aRestyleHint, aChangeHint);
+    MediaFeatureHints hints = {
+      aRestyleHint,
+      aChangeHint
+    };
+
+    mDocument->EnumerateSubDocuments(MediaFeatureValuesChangedAllDocumentsCallback,
+                                     &hints);
+}
+
 void
 nsPresContext::MediaFeatureValuesChanged(nsRestyleHint aRestyleHint,
                                          nsChangeHint aChangeHint)
@@ -2054,8 +2107,17 @@ nsPresContext::MediaFeatureValuesChanged(nsRestyleHint aRestyleHint,
   mPendingMediaFeatureValuesChanged = false;
 
   // MediumFeaturesChanged updates the applied rules, so it always gets called.
-  if (mShell && mShell->StyleSet()->MediumFeaturesChanged()) {
-    aRestyleHint |= eRestyle_Subtree;
+  if (mShell) {
+    // XXXheycam ServoStyleSets don't support responding to medium
+    // changes yet.
+    if (mShell->StyleSet()->IsGecko()) {
+      if (mShell->StyleSet()->AsGecko()->MediumFeaturesChanged()) {
+        aRestyleHint |= eRestyle_Subtree;
+      }
+    } else {
+      NS_ERROR("stylo: ServoStyleSets don't support responding to medium "
+               "changes yet");
+    }
   }
 
   if (mUsesViewportUnits && mPendingViewportChange) {
@@ -2141,6 +2203,24 @@ nsPresContext::HandleMediaFeatureValuesChangedEvent()
   // event is the only thing holding the pres context alive).
   if (mPendingMediaFeatureValuesChanged && mShell) {
     MediaFeatureValuesChanged(nsRestyleHint(0));
+  }
+}
+
+static void
+NotifyTabSizeModeChanged(TabParent* aTab, void* aArg)
+{
+  nsSizeMode* sizeMode = static_cast<nsSizeMode*>(aArg);
+  aTab->SizeModeChanged(*sizeMode);
+}
+
+void
+nsPresContext::SizeModeChanged(nsSizeMode aSizeMode)
+{
+  if (HasCachedStyleData()) {
+    nsContentUtils::CallOnAllRemoteChildren(mDocument->GetWindow(),
+                                            NotifyTabSizeModeChanged,
+                                            &aSizeMode);
+    MediaFeatureValuesChangedAllDocuments(nsRestyleHint(0));
   }
 }
 
@@ -2317,7 +2397,14 @@ nsPresContext::NotifyMissingFonts()
 void
 nsPresContext::EnsureSafeToHandOutCSSRules()
 {
-  if (!mShell->StyleSet()->EnsureUniqueInnerOnCSSSheets()) {
+  nsStyleSet* styleSet = mShell->StyleSet()->GetAsGecko();
+  if (!styleSet) {
+    // ServoStyleSets do not need to handle copy-on-write style sheet
+    // innards like with CSSStyleSheets.
+    return;
+  }
+
+  if (!styleSet->EnsureUniqueInnerOnCSSSheets()) {
     // Nothing to do.
     return;
   }
@@ -2328,7 +2415,7 @@ nsPresContext::EnsureSafeToHandOutCSSRules()
 void
 nsPresContext::FireDOMPaintEvent(nsInvalidateRequestList* aList)
 {
-  nsPIDOMWindow* ourWindow = mDocument->GetWindow();
+  nsPIDOMWindowInner* ourWindow = mDocument->GetInnerWindow();
   if (!ourWindow)
     return;
 
@@ -2381,7 +2468,7 @@ MayHavePaintEventListenerSubdocumentCallback(nsIDocument* aDocument, void* aData
 }
 
 static bool
-MayHavePaintEventListener(nsPIDOMWindow* aInnerWindow)
+MayHavePaintEventListener(nsPIDOMWindowInner* aInnerWindow)
 {
   if (!aInnerWindow)
     return false;
@@ -2413,7 +2500,7 @@ MayHavePaintEventListener(nsPIDOMWindow* aInnerWindow)
   if (node)
     return MayHavePaintEventListener(node->OwnerDoc()->GetInnerWindow());
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(parentTarget);
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(parentTarget);
   if (window)
     return MayHavePaintEventListener(window);
 
@@ -2522,9 +2609,8 @@ nsPresContext::NotifySubDocInvalidation(ContainerLayer* aContainer,
 
   nsIntPoint topLeft = aContainer->GetVisibleRegion().ToUnknownRegion().GetBounds().TopLeft();
 
-  nsIntRegionRectIterator iter(aRegion);
-  while (const nsIntRect* r = iter.Next()) {
-    nsIntRect rect = *r;
+  for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+    nsIntRect rect(iter.Get());
     //PresContext coordinate space is relative to the start of our visible
     // region. Is this really true? This feels like the wrong way to get the right
     // answer.
@@ -2643,7 +2729,18 @@ nsPresContext::NotifyDidPaintForSubtree(uint32_t aFlags)
 bool
 nsPresContext::HasCachedStyleData()
 {
-  return mShell && mShell->StyleSet()->HasCachedStyleData();
+  if (!mShell) {
+    return false;
+  }
+
+  nsStyleSet* styleSet = mShell->StyleSet()->GetAsGecko();
+  if (!styleSet) {
+    // XXXheycam ServoStyleSets do not use the rule tree, so just assume for now
+    // that we need to restyle when e.g. dppx changes.
+    return true;
+  }
+
+  return styleSet->HasCachedStyleData();
 }
 
 already_AddRefed<nsITimer>
@@ -2859,7 +2956,7 @@ nsPresContext::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 }
 
 bool
-nsPresContext::IsRootContentDocument()
+nsPresContext::IsRootContentDocument() const
 {
   // We are a root content document if: we are not a resource doc, we are
   // not chrome, and we either have no parent or our parent is chrome.
@@ -3126,7 +3223,7 @@ SortConfigurations(nsTArray<nsIWidget::Configuration>* aConfigurations)
           continue;
         LayoutDeviceIntRect bounds;
         pluginsToMove[j].mChild->GetBounds(bounds);
-        nsAutoTArray<LayoutDeviceIntRect,1> clipRects;
+        AutoTArray<LayoutDeviceIntRect,1> clipRects;
         pluginsToMove[j].mChild->GetWindowClipRegion(&clipRects);
         if (HasOverlap(bounds.TopLeft(), clipRects,
                        config->mBounds.TopLeft(),

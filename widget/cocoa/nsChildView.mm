@@ -53,6 +53,7 @@
 #include "Layers.h"
 #include "ClientLayerManager.h"
 #include "mozilla/layers/LayerManagerComposite.h"
+#include "GfxTexturesReporter.h"
 #include "GLTextureImage.h"
 #include "GLContextProvider.h"
 #include "GLContextCGL.h"
@@ -501,7 +502,7 @@ nsresult nsChildView::Create(nsIWidget* aParent,
   // Ensure that the toolkit is created.
   nsToolkit::GetToolkit();
 
-  BaseCreate(aParent, aRect, aInitData);
+  BaseCreate(aParent, aInitData);
 
   // inherit things from the parent view and create our parallel
   // NSView in the Cocoa display system
@@ -627,6 +628,9 @@ NS_IMETHODIMP nsChildView::Destroy()
   if (mOnDestroyCalled)
     return NS_OK;
   mOnDestroyCalled = true;
+
+  // Stuff below may delete the last ref to this
+  nsCOMPtr<nsIWidget> kungFuDeathGrip(this);
 
   [mView widgetDestroyed];
 
@@ -2636,7 +2640,8 @@ nsChildView::SwipeFinished()
 }
 
 already_AddRefed<gfx::DrawTarget>
-nsChildView::StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion)
+nsChildView::StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion,
+                                        BufferMode* aBufferMode)
 {
   // should have created the GLPresenter in InitCompositor.
   MOZ_ASSERT(mGLPresenter);
@@ -2966,14 +2971,14 @@ RectTextureImage::EndUpdate(bool aKeepSurface)
 {
   MOZ_ASSERT(mInUpdate, "Ending update while not in update");
 
-  bool overwriteTexture = false;
+  bool needInit = !mTexture;
   LayoutDeviceIntRegion updateRegion = mUpdateRegion;
-  if (!mTexture || (mTextureSize != mBufferSize)) {
-    overwriteTexture = true;
+  if (mTextureSize != mBufferSize) {
     mTextureSize = mBufferSize;
+    needInit = true;
   }
 
-  if (overwriteTexture || !CanUploadSubtextures()) {
+  if (needInit || !CanUploadSubtextures()) {
     updateRegion =
       LayoutDeviceIntRect(LayoutDeviceIntPoint(0, 0), mTextureSize);
   }
@@ -2986,10 +2991,12 @@ RectTextureImage::EndUpdate(bool aKeepSurface)
   data += srcPoint.y * stride + srcPoint.x * bpp;
 
   UploadImageDataToTexture(mGLContext, data, stride, format,
-                           updateRegion.ToUnknownRegion(), mTexture,
-                           overwriteTexture, /* aPixelBuffer = */ false,
+                           updateRegion.ToUnknownRegion(), mTexture, nullptr,
+                           needInit, /* aPixelBuffer = */ false,
                            LOCAL_GL_TEXTURE0,
                            LOCAL_GL_TEXTURE_RECTANGLE_ARB);
+
+
 
   if (!aKeepSurface) {
     mUpdateDrawTarget = nullptr;
@@ -3755,13 +3762,10 @@ NSEvent* gLastDragMouseDownEvent = nil;
   RefPtr<gfxContext> targetContext = new gfxContext(dt);
 
   // Set up the clip region.
-  LayoutDeviceIntRegion::RectIterator iter(region);
   targetContext->NewPath();
-  for (;;) {
-    const LayoutDeviceIntRect* r = iter.Next();
-    if (!r)
-      break;
-    targetContext->Rectangle(gfxRect(r->x, r->y, r->width, r->height));
+  for (auto iter = region.RectIter(); !iter.Done(); iter.Next()) {
+    const LayoutDeviceIntRect& r = iter.Get();
+    targetContext->Rectangle(gfxRect(r.x, r.y, r.width, r.height));
   }
   targetContext->Clip();
 
@@ -3997,6 +4001,8 @@ NSEvent* gLastDragMouseDownEvent = nil;
 
 - (void)viewWillDraw
 {
+  nsAutoRetainCocoaObject kungFuDeathGrip(self);
+
   if (mGeckoChild) {
     // The OS normally *will* draw our NSWindow, no matter what we do here.
     // But Gecko can delete our parent widget(s) (along with mGeckoChild)
@@ -4130,7 +4136,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
       // we don't want to rollup if the click is in a parent menu of
       // the current submenu
       uint32_t popupsToRollup = UINT32_MAX;
-      nsAutoTArray<nsIWidget*, 5> widgetChain;
+      AutoTArray<nsIWidget*, 5> widgetChain;
       uint32_t sameTypeCount = rollupListener->GetSubmenuWidgetChain(&widgetChain);
       for (uint32_t i = 0; i < widgetChain.Length(); i++) {
         nsIWidget* widget = widgetChain[i];
@@ -4634,13 +4640,8 @@ NewCGSRegionFromRegion(const LayoutDeviceIntRegion& aRegion,
                        CGRect (^aRectConverter)(const LayoutDeviceIntRect&))
 {
   nsTArray<CGRect> rects;
-  LayoutDeviceIntRegion::RectIterator iter(aRegion);
-  for (;;) {
-    const LayoutDeviceIntRect* r = iter.Next();
-    if (!r) {
-      break;
-    }
-    rects.AppendElement(aRectConverter(*r));
+  for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+    rects.AppendElement(aRectConverter(iter.Get()));
   }
 
   CGSRegionObj region;
@@ -4966,6 +4967,20 @@ PanGestureTypeForEvent(NSEvent* aEvent)
                              position, preciseDelta, modifiers);
     panEvent.mLineOrPageDeltaX = lineOrPageDeltaX;
     panEvent.mLineOrPageDeltaY = lineOrPageDeltaY;
+
+    if (panEvent.mType == PanGestureInput::PANGESTURE_END) {
+      // Check if there's a momentum start event in the event queue, so that we
+      // can annotate this event.
+      NSEvent* nextWheelEvent =
+        [NSApp nextEventMatchingMask:NSScrollWheelMask
+                           untilDate:[NSDate distantPast]
+                              inMode:NSDefaultRunLoopMode
+                             dequeue:NO];
+      if (nextWheelEvent &&
+          PanGestureTypeForEvent(nextWheelEvent) == PanGestureInput::PANGESTURE_MOMENTUMSTART) {
+        panEvent.mFollowedByMomentum = true;
+      }
+    }
 
     bool canTriggerSwipe = [self shouldConsiderStartingSwipeFromEvent:theEvent];
     panEvent.mRequiresContentResponseIfCannotScrollHorizontallyInStartDirection = canTriggerSwipe;

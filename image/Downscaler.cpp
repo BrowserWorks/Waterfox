@@ -72,6 +72,13 @@ Downscaler::BeginFrame(const nsIntSize& aOriginalSize,
   MOZ_ASSERT(aOriginalSize.width > 0 && aOriginalSize.height > 0,
              "Invalid original size");
 
+  // Only downscale from reasonable sizes to avoid using too much memory/cpu
+  // downscaling and decoding. 1 << 20 == 1,048,576 seems a reasonable limit.
+  if (aOriginalSize.width > (1 << 20) || aOriginalSize.height > (1 << 20)) {
+    NS_WARNING("Trying to downscale image frame that is too large");
+    return NS_ERROR_INVALID_ARG;
+  }
+
   mFrameRect = aFrameRect.valueOr(nsIntRect(nsIntPoint(), aOriginalSize));
   MOZ_ASSERT(mFrameRect.x >= 0 && mFrameRect.y >= 0 &&
              mFrameRect.width >= 0 && mFrameRect.height >= 0,
@@ -195,9 +202,9 @@ GetFilterOffsetAndLength(UniquePtr<skia::ConvolutionFilter1D>& aFilter,
 }
 
 void
-Downscaler::ClearRow(uint32_t aStartingAtCol)
+Downscaler::ClearRestOfRow(uint32_t aStartingAtCol)
 {
-  MOZ_ASSERT(int64_t(mOriginalSize.width) > int64_t(aStartingAtCol));
+  MOZ_ASSERT(int64_t(aStartingAtCol) <= int64_t(mOriginalSize.width));
   uint32_t bytesToClear = (mOriginalSize.width - aStartingAtCol)
                         * sizeof(uint32_t);
   memset(mRowBuffer.get() + (aStartingAtCol * sizeof(uint32_t)),

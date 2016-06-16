@@ -13,7 +13,6 @@
 #include "I420ColorConverterHelper.h"
 #include "MediaCodecProxy.h"
 #include "GonkNativeWindow.h"
-#include "GonkNativeWindowClient.h"
 #include "mozilla/layers/FenceUtils.h"
 #include "mozilla/UniquePtr.h"
 #include <ui/Fence.h>
@@ -102,17 +101,11 @@ private:
   void PostReleaseVideoBuffer(android::MediaBuffer *aBuffer,
                               layers::FenceHandle mReleaseFence);
 
-  uint32_t mVideoWidth;
-  uint32_t mVideoHeight;
-  uint32_t mDisplayWidth;
-  uint32_t mDisplayHeight;
-  nsIntRect mPicture;
-  nsIntSize mInitialFrame;
+  VideoInfo mConfig;
 
   RefPtr<layers::ImageContainer> mImageContainer;
   RefPtr<layers::TextureClientRecycleAllocator> mCopyAllocator;
 
-  MediaInfo mInfo;
   MozPromiseRequestHolder<android::MediaCodecProxy::CodecPromise> mVideoCodecRequest;
   FrameInfo mFrameInfo;
 

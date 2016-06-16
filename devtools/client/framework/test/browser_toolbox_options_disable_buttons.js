@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -60,6 +62,9 @@ function testPreferenceAndUIStateIsConsistent() {
   toolboxButtonNodes.push(doc.getElementById("command-button-frames"));
   let toggleableTools = toolbox.toolboxButtons;
 
+  // The noautohide button is only displayed in the browser toolbox
+  toggleableTools = toggleableTools.filter(tool => tool.id != "command-button-noautohide");
+
   for (let tool of toggleableTools) {
     let isVisible = getBoolPref(tool.visibilityswitch);
 
@@ -76,11 +81,9 @@ function testToggleToolboxButtons() {
   let toolboxButtonNodes = [...doc.querySelectorAll(".command-button")];
   let toggleableTools = toolbox.toolboxButtons;
 
-  // Tilt is disabled in E10S mode so we skip the tilt button if E10S is
-  // enabled.
-  if (toolbox.target.isMultiProcess) {
-    toolboxButtonNodes = [...doc.querySelectorAll(".command-button:not(#command-button-tilt)")];
-  }
+  // The noautohide button is only displayed in the browser toolbox
+  toggleableTools = toggleableTools.filter(tool => tool.id != "command-button-noautohide");
+  toolboxButtonNodes = toolboxButtonNodes.filter(btn => btn.id != "command-button-noautohide");
 
   is (checkNodes.length, toggleableTools.length, "All of the buttons are toggleable." );
   is (checkNodes.length, toolboxButtonNodes.length, "All of the DOM buttons are toggleable." );
@@ -89,9 +92,9 @@ function testToggleToolboxButtons() {
     let id = tool.id;
     let matchedCheckboxes = checkNodes.filter(node=>node.id === id);
     let matchedButtons = toolboxButtonNodes.filter(button=>button.id === id);
-    ok (matchedCheckboxes.length === 1,
+    is (matchedCheckboxes.length, 1,
       "There should be a single toggle checkbox for: " + id);
-    ok (matchedButtons.length === 1,
+    is (matchedButtons.length, 1,
       "There should be a DOM button for: " + id);
     is (matchedButtons[0], tool.button,
       "DOM buttons should match for: " + id);

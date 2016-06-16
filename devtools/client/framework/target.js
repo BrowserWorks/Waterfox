@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -7,6 +9,7 @@
 const { Ci, Cu } = require("chrome");
 const promise = require("promise");
 const EventEmitter = require("devtools/shared/event-emitter");
+const Services = require("Services");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 loader.lazyRequireGetter(this, "DebuggerServer", "devtools/server/main", true);
@@ -414,12 +417,12 @@ TabTarget.prototype = {
     };
 
     if (this.isLocalTab) {
-      this._client.connect(() => {
-        this._client.getTab({ tab: this.tab }).then(response => {
+      this._client.connect()
+        .then(() => this._client.getTab({ tab: this.tab }))
+        .then(response => {
           this._form = response.tab;
           attachTab();
         });
-      });
     } else if (this.isTabActor) {
       // In the remote debugging case, the protocol connection will have been
       // already initialized in the connection screen code.
@@ -593,6 +596,7 @@ TabTarget.prototype = {
     this._tab = null;
     this._form = null;
     this._remote = null;
+    this._root = null;
   },
 
   toString: function() {
@@ -726,6 +730,10 @@ WorkerTarget.prototype = {
   destroy: function() {},
 
   hasActor: function (name) {
+    // console is the only one actor implemented by WorkerActor
+    if (name == "console") {
+      return true;
+    }
     return false;
   },
 

@@ -6,6 +6,8 @@
 
 #include "jit/Bailouts.h"
 
+#include "mozilla/ScopeExit.h"
+
 #include "jscntxt.h"
 
 #include "jit/BaselineJIT.h"
@@ -61,8 +63,6 @@ jit::Bailout(BailoutStack* sp, BaselineBailoutInfo** bailoutInfo)
         JSScript* script = iter.script();
         probes::ExitScript(cx, script, script->functionNonDelazifying(),
                            /* popSPSFrame = */ false);
-
-        EnsureExitFrame(iter.jsFrame());
     }
 
     // This condition was wrong when we entered this bailout function, but it
@@ -149,19 +149,14 @@ jit::InvalidationBailout(InvalidationBailoutStack* sp, size_t* frameSizeOut,
         probes::ExitScript(cx, script, script->functionNonDelazifying(),
                            /* popSPSFrame = */ false);
 
+#ifdef JS_JITSPEW
         JitFrameLayout* frame = iter.jsFrame();
-        JitSpew(JitSpew_IonInvalidate, "Bailout failed (%s): converting to exit frame",
+        JitSpew(JitSpew_IonInvalidate, "Bailout failed (%s)",
                 (retval == BAILOUT_RETURN_FATAL_ERROR) ? "Fatal Error" : "Over Recursion");
-        JitSpew(JitSpew_IonInvalidate, "   orig calleeToken %p", (void*) frame->calleeToken());
-        JitSpew(JitSpew_IonInvalidate, "   orig frameSize %u", unsigned(frame->prevFrameLocalSize()));
-        JitSpew(JitSpew_IonInvalidate, "   orig ra %p", (void*) frame->returnAddress());
-
-        frame->replaceCalleeToken(nullptr);
-        EnsureExitFrame(frame);
-
-        JitSpew(JitSpew_IonInvalidate, "   new  calleeToken %p", (void*) frame->calleeToken());
-        JitSpew(JitSpew_IonInvalidate, "   new  frameSize %u", unsigned(frame->prevFrameLocalSize()));
-        JitSpew(JitSpew_IonInvalidate, "   new  ra %p", (void*) frame->returnAddress());
+        JitSpew(JitSpew_IonInvalidate, "   calleeToken %p", (void*) frame->calleeToken());
+        JitSpew(JitSpew_IonInvalidate, "   frameSize %u", unsigned(frame->prevFrameLocalSize()));
+        JitSpew(JitSpew_IonInvalidate, "   ra %p", (void*) frame->returnAddress());
+#endif
     }
 
     iter.ionScript()->decrementInvalidationCount(cx->runtime()->defaultFreeOp());
@@ -197,7 +192,10 @@ jit::ExceptionHandlerBailout(JSContext* cx, const InlineFrameIterator& frame,
     // operation callback like a timeout handler.
     MOZ_ASSERT_IF(!excInfo.propagatingIonExceptionForDebugMode(), cx->isExceptionPending());
 
+    uint8_t* prevJitTop = cx->runtime()->jitTop;
+    auto restoreJitTop = mozilla::MakeScopeExit([&]() { cx->runtime()->jitTop = prevJitTop; });
     cx->runtime()->jitTop = FAKE_JIT_TOP_FOR_BAILOUT;
+
     gc::AutoSuppressGC suppress(cx);
 
     JitActivationIterator jitActivations(cx->runtime());
@@ -272,7 +270,7 @@ jit::EnsureHasScopeObjects(JSContext* cx, AbstractFramePtr fp)
     return true;
 }
 
-bool
+void
 jit::CheckFrequentBailouts(JSContext* cx, JSScript* script, BailoutKind bailoutKind)
 {
     if (script->hasIonScript()) {
@@ -280,7 +278,7 @@ jit::CheckFrequentBailouts(JSContext* cx, JSScript* script, BailoutKind bailoutK
         // we compile this script LICM will be disabled.
         IonScript* ionScript = script->ionScript();
 
-        if (ionScript->numBailouts() >= JitOptions.frequentBailoutThreshold) {
+        if (ionScript->bailoutExpected()) {
             // If we bailout because of the first execution of a basic block,
             // then we should record which basic block we are returning in,
             // which should prevent this from happening again.  Also note that
@@ -291,12 +289,9 @@ jit::CheckFrequentBailouts(JSContext* cx, JSScript* script, BailoutKind bailoutK
 
             JitSpew(JitSpew_IonInvalidate, "Invalidating due to too many bailouts");
 
-            if (!Invalidate(cx, script))
-                return false;
+            Invalidate(cx, script);
         }
     }
-
-    return true;
 }
 
 void

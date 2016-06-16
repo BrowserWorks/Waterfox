@@ -12,12 +12,19 @@
 #include "mozilla/FileUtils.h"
 #include "mozilla/Mutex.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/Snprintf.h"
 #include "nsClassHashtable.h"
 #include "nsDebug.h"
 #include "NSPRLogModulesParser.h"
 
 #include "prenv.h"
 #include "prprf.h"
+#ifdef XP_WIN
+#include <process.h>
+#else
+#include <sys/types.h>
+#include <unistd.h>
+#endif
 
 // NB: Initial amount determined by auditing the codebase for the total amount
 //     of unique module names and padding up to the next power of 2.
@@ -47,6 +54,15 @@ void log_print(const LogModule* aModule,
   va_start(ap, aFmt);
   aModule->Printv(aLevel, aFmt, ap);
   va_end(ap);
+}
+
+int log_pid()
+{
+#ifdef XP_WIN
+  return _getpid();
+#else
+  return getpid();
+#endif
 }
 
 }
@@ -86,7 +102,9 @@ public:
     : mModulesLock("logmodules")
     , mModules(kInitialModuleCount)
     , mOutFile(nullptr)
+    , mMainThread(PR_GetCurrentThread())
     , mAddTimestamp(false)
+    , mIsSync(false)
   {
   }
 
@@ -103,23 +121,39 @@ public:
   {
     bool shouldAppend = false;
     bool addTimestamp = false;
+    bool isSync = false;
     const char* modules = PR_GetEnv("NSPR_LOG_MODULES");
     NSPRLogModulesParser(modules,
-        [&shouldAppend, &addTimestamp]
+        [&shouldAppend, &addTimestamp, &isSync]
             (const char* aName, LogLevel aLevel) mutable {
           if (strcmp(aName, "append") == 0) {
             shouldAppend = true;
           } else if (strcmp(aName, "timestamp") == 0) {
             addTimestamp = true;
+          } else if (strcmp(aName, "sync") == 0) {
+            isSync = true;
           } else {
             LogModule::Get(aName)->SetLevel(aLevel);
           }
     });
 
     mAddTimestamp = addTimestamp;
+    mIsSync = isSync;
 
     const char* logFile = PR_GetEnv("NSPR_LOG_FILE");
     if (logFile && logFile[0]) {
+      static const char kPIDToken[] = "%PID";
+      const char* pidTokenPtr = strstr(logFile, kPIDToken);
+      char buf[2048];
+      if (pidTokenPtr &&
+          snprintf_literal(buf, "%.*s%d%s",
+            static_cast<int>(pidTokenPtr - logFile), logFile,
+            detail::log_pid(),
+            pidTokenPtr + strlen(kPIDToken)) > 0)
+      {
+        logFile = buf;
+      }
+
       mOutFile = fopen(logFile, shouldAppend ? "a" : "w");
     }
   }
@@ -171,21 +205,36 @@ public:
     //
     // Additionally we prefix the output with the abbreviated log level
     // and the module name.
+    PRThread *currentThread = PR_GetCurrentThread();
+    const char *currentThreadName = (mMainThread == currentThread)
+      ? "Main Thread"
+      : PR_GetThreadName(currentThread);
+
+    char noNameThread[40];
+    if (!currentThreadName) {
+      snprintf_literal(noNameThread, "Unnamed thread %p", currentThread);
+      currentThreadName = noNameThread;
+    }
+
     if (!mAddTimestamp) {
       fprintf_stderr(out,
-                     "[%p]: %s/%s %s%s",
-                     PR_GetCurrentThread(), ToLogStr(aLevel),
+                     "[%s]: %s/%s %s%s",
+                     currentThreadName, ToLogStr(aLevel),
                      aName, buffToWrite, newline);
     } else {
       PRExplodedTime now;
       PR_ExplodeTime(PR_Now(), PR_GMTParameters, &now);
       fprintf_stderr(
           out,
-          "%04d-%02d-%02d %02d:%02d:%02d.%06d UTC - [%p]: %s/%s %s%s",
+          "%04d-%02d-%02d %02d:%02d:%02d.%06d UTC - [%s]: %s/%s %s%s",
           now.tm_year, now.tm_month + 1, now.tm_mday,
           now.tm_hour, now.tm_min, now.tm_sec, now.tm_usec,
-          PR_GetCurrentThread(), ToLogStr(aLevel),
+          currentThreadName, ToLogStr(aLevel),
           aName, buffToWrite, newline);
+    }
+
+    if (mIsSync) {
+      fflush(out);
     }
 
     if (buffToWrite != buff) {
@@ -197,7 +246,9 @@ private:
   OffTheBooksMutex mModulesLock;
   nsClassHashtable<nsCharPtrHashKey, LogModule> mModules;
   ScopedCloseFile mOutFile;
+  PRThread *mMainThread;
   bool mAddTimestamp;
+  bool mIsSync;
 };
 
 StaticAutoPtr<LogModuleManager> sLogModuleManager;

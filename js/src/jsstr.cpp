@@ -13,6 +13,7 @@
 #include "mozilla/PodOperations.h"
 #include "mozilla/Range.h"
 #include "mozilla/TypeTraits.h"
+#include "mozilla/unused.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -645,7 +646,7 @@ ToLowerCase(JSContext* cx, JSLinearString* str)
     if (!res)
         return nullptr;
 
-    newChars.release();
+    mozilla::Unused << newChars.release();
     return res;
 }
 
@@ -788,13 +789,13 @@ ToUpperCase(JSContext* cx, JSLinearString* str)
         if (!res)
             return nullptr;
 
-        newChars.ref<Latin1CharPtr>().release();
+        mozilla::Unused << newChars.ref<Latin1CharPtr>().release();
     } else {
         res = NewStringDontDeflate<CanGC>(cx, newChars.ref<TwoByteCharPtr>().get(), length);
         if (!res)
             return nullptr;
 
-        newChars.ref<TwoByteCharPtr>().release();
+        mozilla::Unused << newChars.ref<TwoByteCharPtr>().release();
     }
 
     return res;
@@ -1585,12 +1586,10 @@ str_includes(JSContext* cx, unsigned argc, Value* vp)
 static bool
 str_contains(JSContext *cx, unsigned argc, Value *vp)
 {
-#ifndef RELEASE_BUILD
     CallArgs args = CallArgsFromVp(argc, vp);
     RootedObject callee(cx, &args.callee());
     if (!GlobalObject::warnOnceAboutStringContains(cx, callee))
         return false;
-#endif
     return str_includes(cx, argc, vp);
 }
 
@@ -2184,23 +2183,32 @@ class MOZ_STACK_CLASS StringRegExpGuard
         /* Build RegExp from pattern string. */
         RootedString opt(cx);
         if (optarg < args.length()) {
+            // flag argument is enabled only in release build by default.
+            // In non-release build, both telemetry and warning are still
+            // enabled, but the value of flag argument is ignored.
+
             if (JSScript* script = cx->currentScript()) {
                 const char* filename = script->filename();
                 cx->compartment()->addTelemetry(filename, JSCompartment::DeprecatedFlagsArgument);
             }
 
+            bool flagArgumentEnabled = cx->runtime()->options().matchFlagArgument();
             if (!cx->compartment()->warnedAboutFlagsArgument) {
                 if (!JS_ReportErrorFlagsAndNumber(cx, JSREPORT_WARNING, GetErrorMessage, nullptr,
-                                                  JSMSG_DEPRECATED_FLAGS_ARG))
+                                                  flagArgumentEnabled
+                                                  ? JSMSG_DEPRECATED_FLAGS_ARG
+                                                  : JSMSG_OBSOLETE_FLAGS_ARG))
+                {
                     return false;
+                }
                 cx->compartment()->warnedAboutFlagsArgument = true;
             }
 
-            opt = ToString<CanGC>(cx, args[optarg]);
-            if (!opt)
-                return false;
-        } else {
-            opt = nullptr;
+            if (flagArgumentEnabled) {
+                opt = ToString<CanGC>(cx, args[optarg]);
+                if (!opt)
+                    return false;
+            }
         }
 
         Rooted<JSAtom*> pat(cx);

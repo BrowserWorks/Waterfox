@@ -131,7 +131,7 @@ class StartLeScanTask final : public BluetoothReplyRunnable
 {
 public:
   StartLeScanTask(BluetoothAdapter* aAdapter, Promise* aPromise,
-                  const nsTArray<nsString>& aServiceUuids)
+                  const nsTArray<BluetoothUuid>& aServiceUuids)
     : BluetoothReplyRunnable(nullptr, aPromise)
     , mAdapter(aAdapter)
     , mServiceUuids(aServiceUuids)
@@ -150,7 +150,7 @@ public:
     JSContext* cx = jsapi.cx();
 
     const BluetoothValue& v = mReply->get_BluetoothReplySuccess().value();
-    NS_ENSURE_TRUE(v.type() == BluetoothValue::TnsString, false);
+    NS_ENSURE_TRUE(v.type() == BluetoothValue::TBluetoothUuid, false);
 
     /**
      * Create a new discovery handle and wrap it to return. Each
@@ -158,7 +158,7 @@ public:
      */
     RefPtr<BluetoothDiscoveryHandle> discoveryHandle =
       BluetoothDiscoveryHandle::Create(mAdapter->GetParentObject(),
-                                       mServiceUuids, v.get_nsString());
+                                       mServiceUuids, v.get_BluetoothUuid());
 
     if (!ToJSValue(cx, discoveryHandle, aValue)) {
       JS_ClearPendingException(cx);
@@ -180,7 +180,7 @@ public:
 
 private:
   RefPtr<BluetoothAdapter> mAdapter;
-  nsTArray<nsString> mServiceUuids;
+  nsTArray<BluetoothUuid> mServiceUuids;
 };
 
 class StopLeScanTask final : public BluetoothReplyRunnable
@@ -188,14 +188,14 @@ class StopLeScanTask final : public BluetoothReplyRunnable
 public:
   StopLeScanTask(BluetoothAdapter* aAdapter,
                  Promise* aPromise,
-                 const nsAString& aScanUuid)
+                 const BluetoothUuid& aScanUuid)
       : BluetoothReplyRunnable(nullptr, aPromise)
       , mAdapter(aAdapter)
       , mScanUuid(aScanUuid)
   {
     MOZ_ASSERT(aPromise);
     MOZ_ASSERT(aAdapter);
-    MOZ_ASSERT(!aScanUuid.IsEmpty());
+    MOZ_ASSERT(!aScanUuid.IsCleared());
   }
 
 protected:
@@ -216,7 +216,7 @@ protected:
 
 private:
   RefPtr<BluetoothAdapter> mAdapter;
-  nsString mScanUuid;
+  BluetoothUuid mScanUuid;
 };
 
 class GetDevicesTask : public BluetoothReplyRunnable
@@ -319,7 +319,7 @@ public:
 
 static int kCreatePairedDeviceTimeout = 50000; // unit: msec
 
-BluetoothAdapter::BluetoothAdapter(nsPIDOMWindow* aWindow,
+BluetoothAdapter::BluetoothAdapter(nsPIDOMWindowInner* aWindow,
                                    const BluetoothValue& aValue)
   : DOMEventTargetHelper(aWindow)
   , mState(BluetoothAdapterState::Disabled)
@@ -366,16 +366,12 @@ BluetoothAdapter::Cleanup()
     BluetoothService* bs = BluetoothService::Get();
     NS_ENSURE_TRUE_VOID(bs);
 
-    nsString uuidStr;
-    for (uint32_t i = 0; i < mLeScanHandleArray.Length(); ++i) {
-      mLeScanHandleArray[i]->GetLeScanUuid(uuidStr);
+    for (size_t i = 0; i < mLeScanHandleArray.Length(); ++i) {
+      BluetoothUuid uuid;
+      mLeScanHandleArray[i]->GetLeScanUuid(uuid);
       RefPtr<BluetoothVoidReplyRunnable> results =
         new BluetoothVoidReplyRunnable(nullptr);
-
-      BluetoothUuid uuid;
-      if (NS_SUCCEEDED(StringToUuid(uuidStr, uuid))) {
-        bs->StopLeScanInternal(uuid, results);
-      }
+      bs->StopLeScanInternal(uuid, results);
     }
     mLeScanHandleArray.Clear();
   }
@@ -504,7 +500,7 @@ BluetoothAdapter::SetPropertyByValue(const BluetoothNamedValue& aValue)
 
 // static
 already_AddRefed<BluetoothAdapter>
-BluetoothAdapter::Create(nsPIDOMWindow* aWindow, const BluetoothValue& aValue)
+BluetoothAdapter::Create(nsPIDOMWindowInner* aWindow, const BluetoothValue& aValue)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aWindow);
@@ -606,12 +602,12 @@ BluetoothAdapter::AppendLeScanHandle(
 }
 
 void
-BluetoothAdapter::RemoveLeScanHandle(const nsAString& aScanUuid)
+BluetoothAdapter::RemoveLeScanHandle(const BluetoothUuid& aScanUuid)
 {
-  nsString uuid;
-  for (uint32_t i = 0; i < mLeScanHandleArray.Length(); ++i) {
+  for (size_t i = 0; i < mLeScanHandleArray.Length(); ++i) {
+    BluetoothUuid uuid;
     mLeScanHandleArray[i]->GetLeScanUuid(uuid);
-    if (aScanUuid.Equals(uuid)) {
+    if (aScanUuid == uuid) {
       mLeScanHandleArray.RemoveElementAt(i);
       break;
     }
@@ -718,7 +714,7 @@ BluetoothAdapter::StartLeScan(const nsTArray<nsString>& aServiceUuids,
   BT_ENSURE_TRUE_REJECT(bs, promise, NS_ERROR_NOT_AVAILABLE);
 
   RefPtr<BluetoothReplyRunnable> result =
-    new StartLeScanTask(this, promise, aServiceUuids);
+    new StartLeScanTask(this, promise, serviceUuids);
   bs->StartLeScanInternal(serviceUuids, result);
 
   return promise.forget();
@@ -749,16 +745,11 @@ BluetoothAdapter::StopLeScan(BluetoothDiscoveryHandle& aDiscoveryHandle,
                         promise,
                         NS_ERROR_DOM_BLUETOOTH_DONE);
 
-  nsString scanUuidStr;
-  aDiscoveryHandle.GetLeScanUuid(scanUuidStr);
-
   BluetoothUuid scanUuid;
-  BT_ENSURE_TRUE_REJECT(NS_SUCCEEDED(StringToUuid(scanUuidStr, scanUuid)),
-                        promise,
-                        NS_ERROR_DOM_OPERATION_ERR);
+  aDiscoveryHandle.GetLeScanUuid(scanUuid);
 
   RefPtr<BluetoothReplyRunnable> result =
-    new StopLeScanTask(this, promise, scanUuidStr);
+    new StopLeScanTask(this, promise, scanUuid);
   bs->StopLeScanInternal(scanUuid, result);
 
   return promise.forget();
@@ -847,7 +838,7 @@ BluetoothAdapter::GetConnectedDevices(uint16_t aServiceUuid, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1707,7 +1698,7 @@ BluetoothAdapter::Connect(BluetoothDevice& aDevice,
                           const Optional<short unsigned int>& aServiceUuid,
                           ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1746,7 +1737,7 @@ BluetoothAdapter::Disconnect(BluetoothDevice& aDevice,
                              const Optional<short unsigned int>& aServiceUuid,
                              ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1783,7 +1774,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::SendFile(const nsAString& aDeviceAddress,
                            Blob& aBlob, ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1832,7 +1823,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::StopSendingFile(
   const nsAString& aDeviceAddress, ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1863,7 +1854,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::ConfirmReceivingFile(const nsAString& aDeviceAddress,
                                        bool aConfirmation, ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1893,7 +1884,7 @@ BluetoothAdapter::ConfirmReceivingFile(const nsAString& aDeviceAddress,
 already_AddRefed<DOMRequest>
 BluetoothAdapter::ConnectSco(ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1916,7 +1907,7 @@ BluetoothAdapter::ConnectSco(ErrorResult& aRv)
 already_AddRefed<DOMRequest>
 BluetoothAdapter::DisconnectSco(ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1939,7 +1930,7 @@ BluetoothAdapter::DisconnectSco(ErrorResult& aRv)
 already_AddRefed<DOMRequest>
 BluetoothAdapter::IsScoConnected(ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1963,7 +1954,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::AnswerWaitingCall(ErrorResult& aRv)
 {
 #ifdef MOZ_B2G_RIL
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -1991,7 +1982,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::IgnoreWaitingCall(ErrorResult& aRv)
 {
 #ifdef MOZ_B2G_RIL
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -2019,7 +2010,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::ToggleCalls(ErrorResult& aRv)
 {
 #ifdef MOZ_B2G_RIL
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -2047,7 +2038,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::SendMediaMetaData(
   const MediaMetaData& aMediaMetaData, ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
@@ -2077,7 +2068,7 @@ already_AddRefed<DOMRequest>
 BluetoothAdapter::SendMediaPlayStatus(
   const MediaPlayStatus& aMediaPlayStatus, ErrorResult& aRv)
 {
-  nsCOMPtr<nsPIDOMWindow> win = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> win = GetOwner();
   if (!win) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;

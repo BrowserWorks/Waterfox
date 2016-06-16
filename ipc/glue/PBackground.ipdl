@@ -60,46 +60,49 @@ sync protocol PBackground
 
 parent:
   // Only called at startup during mochitests to check the basic infrastructure.
-  PBackgroundTest(nsCString testArg);
+  async PBackgroundTest(nsCString testArg);
 
-  PBackgroundIDBFactory(LoggingInfo loggingInfo);
+  async PBackgroundIDBFactory(LoggingInfo loggingInfo);
 
-  PBackgroundIndexedDBUtils();
+  async PBackgroundIndexedDBUtils();
 
-  PVsync();
+  // Use only for testing!
+  async FlushPendingFileDeletions();
 
-  PCameras();
+  async PVsync();
 
-  PUDPSocket(OptionalPrincipalInfo pInfo, nsCString filter);
-  PBroadcastChannel(PrincipalInfo pInfo, nsCString origin, nsString channel,
-                    bool privateBrowsing);
+  async PCameras();
 
-  PServiceWorkerManager();
+  async PUDPSocket(OptionalPrincipalInfo pInfo, nsCString filter);
+  async PBroadcastChannel(PrincipalInfo pInfo, nsCString origin, nsString channel,
+                          bool privateBrowsing);
 
-  ShutdownServiceWorkerRegistrar();
+  async PServiceWorkerManager();
 
-  PCacheStorage(Namespace aNamespace, PrincipalInfo aPrincipalInfo);
+  async ShutdownServiceWorkerRegistrar();
 
-  PMessagePort(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
+  async PCacheStorage(Namespace aNamespace, PrincipalInfo aPrincipalInfo);
 
-  PNuwa();
+  async PMessagePort(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
 
-  MessagePortForceClose(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
+  async PNuwa();
 
-  PAsmJSCacheEntry(OpenMode openMode,
-                   WriteParams write,
-                   PrincipalInfo principalInfo);
+  async MessagePortForceClose(nsID uuid, nsID destinationUuid, uint32_t sequenceId);
 
-  PQuota();
+  async PAsmJSCacheEntry(OpenMode openMode,
+                         WriteParams write,
+                         PrincipalInfo principalInfo);
+
+  async PQuota();
 
 child:
-  PCache();
-  PCacheStreamControl();
+  async PCache();
+  async PCacheStreamControl();
 
 both:
-  PBlob(BlobConstructorParams params);
+  async PBlob(BlobConstructorParams params);
 
-  PFileDescriptorSet(FileDescriptor fd);
+  async PFileDescriptorSet(FileDescriptor fd);
 };
 
 } // namespace ipc

@@ -39,8 +39,6 @@ parser/**
 probes/**
 python/**
 rdf/**
-security/**
-services/**
 startupcache/**
 testing/**
 tools/**
@@ -66,8 +64,6 @@ browser/base/content/test/**
 browser/base/content/newtab/**
 browser/components/downloads/**
 browser/components/feeds/**
-browser/components/migration/**
-browser/components/pocket/**
 browser/components/preferences/**
 browser/components/privatebrowsing/**
 browser/components/sessionstore/**
@@ -76,8 +72,6 @@ browser/components/tabview/**
 browser/components/translation/**
 browser/extensions/pdfjs/**
 browser/extensions/pocket/content/panels/js/vendor/**
-browser/extensions/shumway/**
-browser/fuel/**
 browser/locales/**
 
 # Ignore all of loop since it is imported from github and checked at source.
@@ -85,9 +79,6 @@ browser/extensions/loop/**
 
 # devtools/ exclusions
 devtools/*.js
-devtools/client/*.js
-devtools/client/aboutdebugging/**
-devtools/client/animationinspector/**
 devtools/client/canvasdebugger/**
 devtools/client/commandline/**
 devtools/client/debugger/**
@@ -97,9 +88,6 @@ devtools/client/framework/**
 # included in the ignore list.
 devtools/client/inspector/computed/**
 devtools/client/inspector/fonts/**
-devtools/client/inspector/layout/**
-devtools/client/inspector/markup/**
-devtools/client/inspector/rules/**
 devtools/client/inspector/shared/test/**
 devtools/client/inspector/test/**
 devtools/client/inspector/*.js
@@ -114,9 +102,6 @@ devtools/client/scratchpad/**
 devtools/client/shadereditor/**
 devtools/client/shared/**
 devtools/client/sourceeditor/**
-devtools/client/storage/**
-devtools/client/styleeditor/**
-devtools/client/tilt/**
 devtools/client/webaudioeditor/**
 devtools/client/webconsole/**
 devtools/client/webide/**
@@ -143,7 +128,7 @@ devtools/client/webaudioeditor/lib/dagre-d3.js
 devtools/client/sourceeditor/codemirror/*.js
 devtools/client/sourceeditor/codemirror/**/*.js
 devtools/client/sourceeditor/test/codemirror/*
-devtools/client/markupview/test/lib_*
+devtools/client/inspector/markup/test/lib_*
 
 # mobile/android/ exclusions
 mobile/android/chrome/content
@@ -164,15 +149,16 @@ mobile/android/locales/
 # Pretty sure we're disabling this one anyway
 mobile/android/modules/ContactService.jsm
 
-# es7 proposed: array comprehensions
-#   https://github.com/eslint/espree/issues/125
-mobile/android/modules/WebappManager.jsm
-
 # Non-standard `(catch ex if ...)`
 mobile/android/components/Snippets.js
 
 # Bug 1178739: Ignore this file as a quick fix for "Illegal yield expression"
 mobile/android/modules/HomeProvider.jsm
+
+# services/ exclusions
+
+# Uses `#filter substitution`
+services/sync/modules/constants.js
 
 # toolkit/ exclusions
 
@@ -187,11 +173,10 @@ toolkit/modules/tests/xpcshell/test_task.js
 
 # Not yet updated
 toolkit/components/osfile/**
-toolkit/components/passwordmgr/**
 
 # Uses preprocessing
-toolkit/content/contentAreaUtils.js
 toolkit/content/widgets/videocontrols.xml
+toolkit/content/widgets/wizard.xml
 toolkit/components/jsdownloads/src/DownloadIntegration.jsm
 toolkit/components/search/nsSearchService.js
 toolkit/components/url-classifier/**

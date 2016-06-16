@@ -7,21 +7,17 @@
 #define mozilla_css_AnimationCommon_h
 
 #include <algorithm> // For <std::stable_sort>
-#include "nsChangeHint.h"
-#include "nsCSSProperty.h"
-#include "nsDisplayList.h" // For nsDisplayItem::Type
+#include "mozilla/AnimationCollection.h"
 #include "mozilla/AnimationComparator.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/LinkedList.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/StyleAnimationValue.h"
 #include "mozilla/dom/Animation.h"
-#include "mozilla/dom/Element.h"
-#include "mozilla/dom/Nullable.h"
-#include "mozilla/Attributes.h"
+#include "mozilla/Attributes.h" // For MOZ_NON_OWNING_REF
 #include "mozilla/Assertions.h"
-#include "mozilla/FloatingPoint.h"
 #include "nsContentUtils.h"
+#include "nsCSSProperty.h"
 #include "nsCSSPseudoElements.h"
 #include "nsCycleCollectionParticipant.h"
 
@@ -30,7 +26,9 @@ class nsPresContext;
 
 namespace mozilla {
 
-struct AnimationCollection;
+namespace dom {
+class Element;
+}
 
 class CommonAnimationManager {
 public:
@@ -44,35 +42,16 @@ public:
    */
   void Disconnect();
 
-  // Returns true if aContent or any of its ancestors has an animation
-  // or transition.
-  static bool ContentOrAncestorHasAnimation(nsIContent* aContent) {
-    do {
-      if (aContent->GetProperty(nsGkAtoms::animationsProperty) ||
-          aContent->GetProperty(nsGkAtoms::transitionsProperty)) {
-        return true;
-      }
-    } while ((aContent = aContent->GetParent()));
-
-    return false;
-  }
-
   static bool ExtractComputedValueForTransition(
                   nsCSSProperty aProperty,
                   nsStyleContext* aStyleContext,
                   StyleAnimationValue& aComputedValue);
-
-  virtual bool IsAnimationManager() {
-    return false;
-  }
 
 protected:
   virtual ~CommonAnimationManager();
 
   void AddElementCollection(AnimationCollection* aCollection);
   void RemoveAllElementCollections();
-
-  bool NeedsRefresh() const;
 
   virtual nsIAtom* GetAnimationsAtom() = 0;
   virtual nsIAtom* GetAnimationsBeforeAtom() = 0;
@@ -83,7 +62,7 @@ public:
   // by this class for the given |aElement| and |aPseudoType|.
   AnimationCollection*
   GetAnimationCollection(dom::Element *aElement,
-                         nsCSSPseudoElements::Type aPseudoType,
+                         CSSPseudoElementType aPseudoType,
                          bool aCreateIfNeeded);
 
   // Given the frame |aFrame| with possibly animated content, finds its
@@ -95,125 +74,6 @@ public:
 protected:
   LinkedList<AnimationCollection> mElementCollections;
   nsPresContext *mPresContext; // weak (non-null from ctor to Disconnect)
-};
-
-typedef InfallibleTArray<RefPtr<dom::Animation>> AnimationPtrArray;
-
-struct AnimationCollection : public LinkedListElement<AnimationCollection>
-{
-  AnimationCollection(dom::Element *aElement, nsIAtom *aElementProperty,
-                      CommonAnimationManager *aManager)
-    : mElement(aElement)
-    , mElementProperty(aElementProperty)
-    , mManager(aManager)
-    , mCheckGeneration(0)
-#ifdef DEBUG
-    , mCalledPropertyDtor(false)
-#endif
-  {
-    MOZ_COUNT_CTOR(AnimationCollection);
-  }
-  ~AnimationCollection()
-  {
-    MOZ_ASSERT(mCalledPropertyDtor,
-               "must call destructor through element property dtor");
-    MOZ_COUNT_DTOR(AnimationCollection);
-    remove();
-  }
-
-  void Destroy()
-  {
-    // This will call our destructor.
-    mElement->DeleteProperty(mElementProperty);
-  }
-
-  static void PropertyDtor(void *aObject, nsIAtom *aPropertyName,
-                           void *aPropertyValue, void *aData);
-
-  void Tick();
-
-public:
-  // True if this animation can be performed on the compositor thread.
-  //
-  // Returns whether the state of this element's animations at the current
-  // refresh driver time contains animation data that can be done on the
-  // compositor thread.  (This is used for determining whether a layer
-  // should be active, or whether to send data to the layer.)
-  //
-  // Note that this does not test whether the element's layer uses
-  // off-main-thread compositing, although it does check whether
-  // off-main-thread compositing is enabled as a whole.
-  bool CanPerformOnCompositorThread(const nsIFrame* aFrame) const;
-
-  bool HasCurrentAnimationOfProperty(nsCSSProperty aProperty) const;
-
-  bool IsForElement() const { // rather than for a pseudo-element
-    return mElementProperty == nsGkAtoms::animationsProperty ||
-           mElementProperty == nsGkAtoms::transitionsProperty;
-  }
-
-  bool IsForBeforePseudo() const {
-    return mElementProperty == nsGkAtoms::animationsOfBeforeProperty ||
-           mElementProperty == nsGkAtoms::transitionsOfBeforeProperty;
-  }
-
-  bool IsForAfterPseudo() const {
-    return mElementProperty == nsGkAtoms::animationsOfAfterProperty ||
-           mElementProperty == nsGkAtoms::transitionsOfAfterProperty;
-  }
-
-  bool IsForTransitions() const {
-    return mElementProperty == nsGkAtoms::transitionsProperty ||
-           mElementProperty == nsGkAtoms::transitionsOfBeforeProperty ||
-           mElementProperty == nsGkAtoms::transitionsOfAfterProperty;
-  }
-
-  bool IsForAnimations() const {
-    return mElementProperty == nsGkAtoms::animationsProperty ||
-           mElementProperty == nsGkAtoms::animationsOfBeforeProperty ||
-           mElementProperty == nsGkAtoms::animationsOfAfterProperty;
-  }
-
-  nsCSSPseudoElements::Type PseudoElementType() const
-  {
-    if (IsForElement()) {
-      return nsCSSPseudoElements::ePseudo_NotPseudoElement;
-    }
-    if (IsForBeforePseudo()) {
-      return nsCSSPseudoElements::ePseudo_before;
-    }
-    MOZ_ASSERT(IsForAfterPseudo(),
-               "::before & ::after should be the only pseudo-elements here");
-    return nsCSSPseudoElements::ePseudo_after;
-  }
-
-  static nsString PseudoTypeAsString(nsCSSPseudoElements::Type aPseudoType);
-
-  dom::Element* GetElementToRestyle() const;
-
-  dom::Element *mElement;
-
-  // the atom we use in mElement's prop table (must be a static atom,
-  // i.e., in an atom list)
-  nsIAtom *mElementProperty;
-
-  CommonAnimationManager *mManager;
-
-  AnimationPtrArray mAnimations;
-
-  // For CSS transitions only, we record the most recent generation
-  // for which we've done the transition update, so that we avoid doing
-  // it more than once per style change.
-  // (Note that we also store an animation generation on each EffectSet in
-  // order to track when we need to update animations on layers.)
-  uint64_t mCheckGeneration;
-  // Update mCheckGeneration to RestyleManager's count
-  void UpdateCheckGeneration(nsPresContext* aPresContext);
-
-private:
-#ifdef DEBUG
-  bool mCalledPropertyDtor;
-#endif
 };
 
 /**
@@ -235,11 +95,11 @@ class OwningElementRef final
 public:
   OwningElementRef()
     : mElement(nullptr)
-    , mPseudoType(nsCSSPseudoElements::ePseudo_NotPseudoElement)
+    , mPseudoType(CSSPseudoElementType::NotPseudo)
   { }
 
   OwningElementRef(dom::Element& aElement,
-                   nsCSSPseudoElements::Type aPseudoType)
+                   CSSPseudoElementType aPseudoType)
     : mElement(&aElement)
     , mPseudoType(aPseudoType)
   { }
@@ -259,15 +119,15 @@ public:
       return nsContentUtils::PositionIsBefore(mElement, aOther.mElement);
     }
 
-    return mPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement ||
-          (mPseudoType == nsCSSPseudoElements::ePseudo_before &&
-           aOther.mPseudoType == nsCSSPseudoElements::ePseudo_after);
+    return mPseudoType == CSSPseudoElementType::NotPseudo ||
+          (mPseudoType == CSSPseudoElementType::before &&
+           aOther.mPseudoType == CSSPseudoElementType::after);
   }
 
   bool IsSet() const { return !!mElement; }
 
   void GetElement(dom::Element*& aElement,
-                  nsCSSPseudoElements::Type& aPseudoType) const {
+                  CSSPseudoElementType& aPseudoType) const {
     aElement = mElement;
     aPseudoType = mPseudoType;
   }
@@ -276,7 +136,7 @@ public:
 
 private:
   dom::Element* MOZ_NON_OWNING_REF mElement;
-  nsCSSPseudoElements::Type        mPseudoType;
+  CSSPseudoElementType             mPseudoType;
 };
 
 template <class EventInfo>

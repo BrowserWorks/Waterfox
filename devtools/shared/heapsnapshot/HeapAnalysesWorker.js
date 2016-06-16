@@ -58,17 +58,19 @@ workerHelper.createTask(self, "takeCensus", ({ snapshotFilePath, censusOptions, 
     throw new Error(`No known heap snapshot for '${snapshotFilePath}'`);
   }
 
-  const report = snapshots[snapshotFilePath].takeCensus(censusOptions);
+  let report = snapshots[snapshotFilePath].takeCensus(censusOptions);
+  let parentMap;
 
   if (requestOptions.asTreeNode || requestOptions.asInvertedTreeNode) {
     const opts = { filter: requestOptions.filter || null };
     if (requestOptions.asInvertedTreeNode) {
       opts.invert = true;
     }
-    return censusReportToCensusTreeNode(censusOptions.breakdown, report, opts);
+    report = censusReportToCensusTreeNode(censusOptions.breakdown, report, opts);
+    parentMap = CensusUtils.createParentMap(report);
   }
 
-  return report;
+  return { report, parentMap };
 });
 
 /**
@@ -92,17 +94,19 @@ workerHelper.createTask(self, "takeCensusDiff", request => {
 
   const first = snapshots[firstSnapshotFilePath].takeCensus(censusOptions);
   const second = snapshots[secondSnapshotFilePath].takeCensus(censusOptions);
-  const delta = CensusUtils.diff(censusOptions.breakdown, first, second);
+  let delta = CensusUtils.diff(censusOptions.breakdown, first, second);
+  let parentMap;
 
   if (requestOptions.asTreeNode || requestOptions.asInvertedTreeNode) {
     const opts = { filter: requestOptions.filter || null };
     if (requestOptions.asInvertedTreeNode) {
       opts.invert = true;
     }
-    return censusReportToCensusTreeNode(censusOptions.breakdown, delta, opts);
+    delta = censusReportToCensusTreeNode(censusOptions.breakdown, delta, opts);
+    parentMap = CensusUtils.createParentMap(delta);
   }
 
-  return delta;
+  return { delta, parentMap };
 });
 
 /**
@@ -153,7 +157,8 @@ workerHelper.createTask(self, "getDominatorTree", request => {
     dominatorTreeId,
     breakdown,
     maxDepth,
-    maxSiblings
+    maxSiblings,
+    maxRetainingPaths,
   } = request;
 
   if (!(0 <= dominatorTreeId && dominatorTreeId < dominatorTrees.length)) {
@@ -164,11 +169,29 @@ workerHelper.createTask(self, "getDominatorTree", request => {
   const dominatorTree = dominatorTrees[dominatorTreeId];
   const snapshot = dominatorTreeSnapshots[dominatorTreeId];
 
-  return DominatorTreeNode.partialTraversal(dominatorTree,
-                                            snapshot,
-                                            breakdown,
-                                            maxDepth,
-                                            maxSiblings);
+  const tree = DominatorTreeNode.partialTraversal(dominatorTree,
+                                                  snapshot,
+                                                  breakdown,
+                                                  maxDepth,
+                                                  maxSiblings);
+
+  const nodes = [];
+  (function getNodes(node) {
+    nodes.push(node);
+    if (node.children) {
+      for (let i = 0, length = node.children.length; i < length; i++) {
+        getNodes(node.children[i]);
+      }
+    }
+  }(tree));
+
+  DominatorTreeNode.attachShortestPaths(snapshot,
+                                        breakdown,
+                                        dominatorTree.root,
+                                        nodes,
+                                        maxRetainingPaths);
+
+  return tree;
 });
 
 /**
@@ -180,7 +203,8 @@ workerHelper.createTask(self, "getImmediatelyDominated", request => {
     nodeId,
     breakdown,
     startIndex,
-    maxCount
+    maxCount,
+    maxRetainingPaths,
   } = request;
 
   if (!(0 <= dominatorTreeId && dominatorTreeId < dominatorTrees.length)) {
@@ -223,6 +247,12 @@ workerHelper.createTask(self, "getImmediatelyDominated", request => {
   path.reverse();
 
   const moreChildrenAvailable = childIds.length > end;
+
+  DominatorTreeNode.attachShortestPaths(snapshot,
+                                        breakdown,
+                                        dominatorTree.root,
+                                        nodes,
+                                        maxRetainingPaths);
 
   return { nodes, moreChildrenAvailable, path };
 });

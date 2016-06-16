@@ -35,7 +35,7 @@ var Frames = {
     }
 
     Services.mm.addMessageListener("Extension:TopWindowID", this);
-    Services.mm.addMessageListener("Extension:RemoveTopWindowID", this);
+    Services.mm.addMessageListener("Extension:RemoveTopWindowID", this, true);
   },
 
   isTopWindowId(windowId) {
@@ -184,7 +184,7 @@ var Service = {
       return false;
     }
 
-    let path = uri.path;
+    let path = uri.QueryInterface(Ci.nsIURL).filePath;
     if (path.length > 0 && path[0] == "/") {
       path = path.substr(1);
     }
@@ -228,7 +228,7 @@ const API_LEVELS = Object.freeze({
 // Finds the API Level ("FULL_PRIVILEGES", "CONTENTSCRIPT_PRIVILEGES", "NO_PRIVILEGES")
 // with a given a window object.
 function getAPILevelForWindow(window, addonId) {
-  const { NO_PRIVILEGES, CONTENTSCRIPT_PRIVILEGES, FULL_PRIVILEGES } = API_LEVELS;
+  const {NO_PRIVILEGES, CONTENTSCRIPT_PRIVILEGES, FULL_PRIVILEGES} = API_LEVELS;
 
   // Non WebExtension URLs and WebExtension URLs from a different extension
   // has no access to APIs.

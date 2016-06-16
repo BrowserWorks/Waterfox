@@ -28,7 +28,7 @@
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_ASSERTION, NS_WARNING
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
-#include "nsTArray.h"                   // for nsAutoTArray, nsTArray, etc
+#include "nsTArray.h"                   // for AutoTArray, nsTArray, etc
 #include "nsThreadUtils.h"              // for nsRunnable
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType
 #include "nscore.h"                     // for NS_IMETHOD
@@ -193,13 +193,16 @@ class CompositorOGL final : public Compositor
 
   std::map<ShaderConfigOGL, ShaderProgramOGL*> mPrograms;
 public:
-  explicit CompositorOGL(nsIWidget *aWidget, int aSurfaceWidth = -1, int aSurfaceHeight = -1,
+  explicit CompositorOGL(CompositorParent* aParent,
+                         nsIWidget *aWidget, int aSurfaceWidth = -1, int aSurfaceHeight = -1,
                          bool aUseExternalSurfaceSize = false);
 
 protected:
   virtual ~CompositorOGL();
 
 public:
+  virtual CompositorOGL* AsCompositorOGL() override { return this; }
+
   virtual already_AddRefed<DataTextureSource>
   CreateDataTextureSource(TextureFlags aFlags = TextureFlags::NO_FLAGS) override;
 
@@ -401,6 +404,7 @@ private:
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
                           const gfx::Rect *aClipRectIn,
                           const gfx::Rect& aRenderBounds,
+                          bool aOpaque,
                           gfx::Rect *aClipRectOut = nullptr,
                           gfx::Rect *aRenderBoundsOut = nullptr) override;
 

@@ -13,7 +13,6 @@
 #include "nsMemoryReporterManager.h"
 #include "nsITimer.h"
 #include "nsThreadUtils.h"
-#include "nsIDOMWindow.h"
 #include "nsPIDOMWindow.h"
 #include "nsIObserverService.h"
 #include "nsIGlobalObject.h"
@@ -24,9 +23,9 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/PodOperations.h"
 #include "mozilla/Preferences.h"
-#include "mozilla/Scoped.h"
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/UniquePtrExtensions.h"
 #include "mozilla/dom/PMemoryReportRequestParent.h" // for dom::MemoryReport
 #include "mozilla/dom/ContentParent.h"
 #include "mozilla/ipc/FileDescriptorUtils.h"
@@ -623,14 +622,14 @@ ResidentUniqueDistinguishedAmount(int64_t* aN)
   }
 
   DWORD infoArraySize = tmpSize + (entries * sizeof(PSAPI_WORKING_SET_BLOCK));
-  mozilla::ScopedFreePtr<PSAPI_WORKING_SET_INFORMATION> infoArray(
+  UniqueFreePtr<PSAPI_WORKING_SET_INFORMATION> infoArray(
       static_cast<PSAPI_WORKING_SET_INFORMATION*>(malloc(infoArraySize)));
 
   if (!infoArray) {
     return NS_ERROR_FAILURE;
   }
 
-  if (!QueryWorkingSet(proc, infoArray, infoArraySize)) {
+  if (!QueryWorkingSet(proc, infoArray.get(), infoArraySize)) {
     return NS_ERROR_FAILURE;
   }
 
@@ -1276,13 +1275,21 @@ NS_IMPL_ISUPPORTS(PageFaultsHardReporter, nsIMemoryReporter)
 
 #ifdef HAVE_JEMALLOC_STATS
 
-// This has UNITS_PERCENTAGE, so it is multiplied by 100.
-static int64_t
-HeapOverheadRatio(jemalloc_stats_t* aStats)
+static size_t
+HeapOverhead(jemalloc_stats_t* aStats)
 {
-  return (int64_t)10000 *
-    (aStats->waste + aStats->bookkeeping + aStats->page_cache) /
-    ((double)aStats->allocated);
+  return aStats->waste + aStats->bookkeeping +
+         aStats->page_cache + aStats->bin_unused;
+}
+
+// This has UNITS_PERCENTAGE, so it is multiplied by 100x *again* on top of the
+// 100x for the percentage.
+static int64_t
+HeapOverheadFraction(jemalloc_stats_t* aStats)
+{
+  size_t heapOverhead = HeapOverhead(aStats);
+  size_t heapCommitted = aStats->allocated + heapOverhead;
+  return int64_t(10000 * (heapOverhead / (double)heapCommitted));
 }
 
 class JemallocHeapReporter final : public nsIMemoryReporter
@@ -1301,11 +1308,16 @@ public:
     nsresult rv;
 
     rv = MOZ_COLLECT_REPORT(
-      "heap-allocated", KIND_OTHER, UNITS_BYTES, stats.allocated,
+      "heap-committed/allocated", KIND_OTHER, UNITS_BYTES, stats.allocated,
 "Memory mapped by the heap allocator that is currently allocated to the "
 "application.  This may exceed the amount of memory requested by the "
 "application because the allocator regularly rounds up request sizes. (The "
 "exact amount requested is not recorded.)");
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = MOZ_COLLECT_REPORT(
+      "heap-allocated", KIND_OTHER, UNITS_BYTES, stats.allocated,
+"The same as 'heap-committed/allocated'.");
     NS_ENSURE_SUCCESS(rv, rv);
 
     // We mark this and the other heap-overhead reporters as KIND_NONHEAP
@@ -1314,20 +1326,19 @@ public:
     rv = MOZ_COLLECT_REPORT(
       "explicit/heap-overhead/bin-unused", KIND_NONHEAP, UNITS_BYTES,
       stats.bin_unused,
-"Bytes reserved for bins of fixed-size allocations which do not correspond to "
-"an active allocation.");
+"Unused bytes due to fragmentation in the bins used for 'small' (<= 2 KiB) "
+"allocations. These bytes will be used if additional allocations occur.");
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = MOZ_COLLECT_REPORT(
-      "explicit/heap-overhead/waste", KIND_NONHEAP, UNITS_BYTES,
-      stats.waste,
+    if (stats.waste > 0) {
+      rv = MOZ_COLLECT_REPORT(
+        "explicit/heap-overhead/waste", KIND_NONHEAP, UNITS_BYTES,
+        stats.waste,
 "Committed bytes which do not correspond to an active allocation and which the "
-"allocator is not intentionally keeping alive (i.e., not 'heap-bookkeeping' or "
-"'heap-page-cache' or 'heap-bin-unused').  Although the allocator will waste "
-"some space under any circumstances, a large value here may indicate that the "
-"heap is highly fragmented, or that allocator is performing poorly for some "
-"other reason.");
-    NS_ENSURE_SUCCESS(rv, rv);
+"allocator is not intentionally keeping alive (i.e., not "
+"'explicit/heap-overhead/{bookkeeping,page-cache,bin-unused}').");
+      NS_ENSURE_SUCCESS(rv, rv);
+    }
 
     rv = MOZ_COLLECT_REPORT(
       "explicit/heap-overhead/bookkeeping", KIND_NONHEAP, UNITS_BYTES,
@@ -1345,36 +1356,20 @@ public:
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = MOZ_COLLECT_REPORT(
-      "heap-committed", KIND_OTHER, UNITS_BYTES,
-      stats.allocated + stats.waste + stats.bookkeeping + stats.page_cache,
-"Memory mapped by the heap allocator that is committed, i.e. in physical "
-"memory or paged to disk.  This value corresponds to 'heap-allocated' + "
-"'heap-waste' + 'heap-bookkeeping' + 'heap-page-cache', but because "
-"these values are read at different times, the result probably won't match "
-"exactly.");
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = MOZ_COLLECT_REPORT(
-      "heap-overhead-ratio", KIND_OTHER, UNITS_PERCENTAGE,
-      HeapOverheadRatio(&stats),
-"Ratio of committed, unused bytes to allocated bytes; i.e., "
-"'heap-overhead' / 'heap-allocated'.  This measures the overhead of "
-"the heap allocator relative to amount of memory allocated.");
+      "heap-committed/overhead", KIND_OTHER, UNITS_BYTES,
+      HeapOverhead(&stats),
+"The sum of 'explicit/heap-overhead/*'.");
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = MOZ_COLLECT_REPORT(
       "heap-mapped", KIND_OTHER, UNITS_BYTES, stats.mapped,
-      "Amount of memory currently mapped.");
+"Amount of memory currently mapped. Includes memory that is uncommitted, i.e. "
+"neither in physical memory nor paged to disk.");
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = MOZ_COLLECT_REPORT(
       "heap-chunksize", KIND_OTHER, UNITS_BYTES, stats.chunksize,
       "Size of chunks.");
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = MOZ_COLLECT_REPORT(
-      "heap-chunks", KIND_OTHER, UNITS_COUNT, (stats.mapped / stats.chunksize),
-      "Number of chunks currently mapped.");
     NS_ENSURE_SUCCESS(rv, rv);
 
     return NS_OK;
@@ -1521,6 +1516,30 @@ NS_IMPL_ISUPPORTS(nsMemoryReporterManager, nsIMemoryReporterManager)
 NS_IMETHODIMP
 nsMemoryReporterManager::Init()
 {
+  if (!NS_IsMainThread()) {
+    MOZ_CRASH();
+  }
+
+  // Under normal circumstances this function is only called once. However,
+  // we've (infrequently) seen memory report dumps in crash reports that
+  // suggest that this function is sometimes called multiple times. That in
+  // turn means that multiple reporters of each kind are registered, which
+  // leads to duplicated reports of individual measurements such as "resident",
+  // "vsize", etc.
+  //
+  // It's unclear how these multiple calls can occur. The only plausible theory
+  // so far is badly-written extensions, because this function is callable from
+  // JS code via nsIMemoryReporter.idl.
+  //
+  // Whatever the cause, it's a bad thing. So we protect against it with the
+  // following check.
+  static bool isInited = false;
+  if (isInited) {
+    NS_WARNING("nsMemoryReporterManager::Init() has already been called!");
+    return NS_OK;
+  }
+  isInited = true;
+
 #if defined(HAVE_JEMALLOC_STATS) && defined(MOZ_GLUE_IN_PROGRAM)
   if (!jemalloc_stats) {
     return NS_ERROR_FAILURE;
@@ -2365,12 +2384,12 @@ nsMemoryReporterManager::GetHeapAllocated(int64_t* aAmount)
 
 // This has UNITS_PERCENTAGE, so it is multiplied by 100x.
 NS_IMETHODIMP
-nsMemoryReporterManager::GetHeapOverheadRatio(int64_t* aAmount)
+nsMemoryReporterManager::GetHeapOverheadFraction(int64_t* aAmount)
 {
 #ifdef HAVE_JEMALLOC_STATS
   jemalloc_stats_t stats;
   jemalloc_stats(&stats);
-  *aAmount = HeapOverheadRatio(&stats);
+  *aAmount = HeapOverheadFraction(&stats);
   return NS_OK;
 #else
   *aAmount = 0;
@@ -2557,7 +2576,7 @@ nsMemoryReporterManager::MinimizeMemoryUsage(nsIRunnable* aCallback)
 }
 
 NS_IMETHODIMP
-nsMemoryReporterManager::SizeOfTab(nsIDOMWindow* aTopWindow,
+nsMemoryReporterManager::SizeOfTab(mozIDOMWindowProxy* aTopWindow,
                                    int64_t* aJSObjectsSize,
                                    int64_t* aJSStringsSize,
                                    int64_t* aJSOtherSize,
@@ -2569,7 +2588,7 @@ nsMemoryReporterManager::SizeOfTab(nsIDOMWindow* aTopWindow,
                                    double*  aNonJSMilliseconds)
 {
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aTopWindow);
-  nsCOMPtr<nsPIDOMWindow> piWindow = do_QueryInterface(aTopWindow);
+  auto* piWindow = nsPIDOMWindowOuter::From(aTopWindow);
   if (NS_WARN_IF(!global) || NS_WARN_IF(!piWindow)) {
     return NS_ERROR_FAILURE;
   }

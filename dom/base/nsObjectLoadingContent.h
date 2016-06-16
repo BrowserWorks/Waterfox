@@ -168,7 +168,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // Helper for WebIDL NeedResolve
     bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
                    JS::Handle<jsid> aId,
-                   JS::MutableHandle<JSPropertyDescriptor> aDesc);
+                   JS::MutableHandle<JS::PropertyDescriptor> aDesc);
     // The return value is whether DoResolve might end up resolving the given
     // id.  If in doubt, return true.
     static bool MayResolve(jsid aId);
@@ -538,7 +538,9 @@ class nsObjectLoadingContent : public nsImageLoadingContent
      * our type to eType_Document so that we render similarly to an iframe
      * embed.
      */
-    bool ShouldRewriteYoutubeEmbed(nsIURI* uri);
+    void MaybeRewriteYoutubeEmbed(nsIURI* aURI,
+                                  nsIURI* aBaseURI,
+                                  nsIURI** aRewrittenURI);
 
     // Helper class for SetupProtoChain
     class SetupProtoChainRunner final : public nsIRunnable

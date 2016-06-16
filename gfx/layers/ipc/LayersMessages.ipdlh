@@ -41,7 +41,7 @@ using mozilla::layers::ScaleMode from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegions from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::EventRegionsOverride from "mozilla/layers/LayersTypes.h";
 using mozilla::layers::DiagnosticTypes from "mozilla/layers/CompositorTypes.h";
-using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
+using struct mozilla::layers::ScrollMetadata from "FrameMetrics.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::FenceHandle from "mozilla/layers/FenceUtils.h";
 using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
@@ -93,6 +93,7 @@ struct StepFunction {
 };
 
 union TimingFunction {
+  null_t;
   CubicBezierFunction;
   StepFunction;
 };
@@ -194,11 +195,14 @@ struct Animation {
   // Values <= 0 mean the animation will not play (although events are still
   // dispatched on the main thread).
   float iterations;
+  float iterationStart;
   // This uses the NS_STYLE_ANIMATION_DIRECTION_* constants.
   int32_t direction;
   nsCSSProperty property;
   AnimationData data;
   float playbackRate;
+  // This is used in the transformed progress calculation.
+  TimingFunction easingFunction;
 };
 
 // Change a layer's attributes
@@ -233,7 +237,7 @@ struct CommonLayerAttributes {
   // Animated colors will only honored for ColorLayers.
   Animation[] animations;
   nsIntRegion invalidRegion;
-  FrameMetrics[] metrics;
+  ScrollMetadata[] scrollMetadata;
   nsCString displayListLog;
 };
 
@@ -249,6 +253,7 @@ struct ContainerLayerAttributes {
   bool scaleToResolution;
   EventRegionsOverride eventRegionsOverride;
   uint32_t hmdDeviceID;
+  int32_t inputFrameID;
 };
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
 struct CanvasLayerAttributes    { Filter filter; IntRect bounds; };
@@ -345,18 +350,15 @@ struct SurfaceDescriptorTiles {
 };
 
 struct OpUseTiledLayerBuffer {
-  PCompositable compositable;
   SurfaceDescriptorTiles tileLayerDescriptor;
 };
 
 struct OpUseOverlaySource {
-  PCompositable compositable;
   OverlaySource overlay;
   IntRect picture;
 };
 
 struct OpPaintTextureRegion {
-  PCompositable compositable;
   ThebesBufferData bufferData;
   nsIntRegion updatedRegion;
 };
@@ -365,7 +367,6 @@ struct OpPaintTextureRegion {
  * Tells the CompositableHost to remove the corresponding TextureHost
  */
 struct OpRemoveTexture {
-  PCompositable compositable;
   PTexture texture;
 };
 
@@ -393,6 +394,7 @@ struct TimedTexture {
   IntRect picture;
   uint32_t frameID;
   uint32_t producerID;
+  int32_t inputFrameID;
 };
 
 /**
@@ -406,12 +408,10 @@ struct TimedTexture {
  * The list must not be empty.
  */
 struct OpUseTexture {
-  PCompositable compositable;
   TimedTexture[] textures;
 };
 
 struct OpUseComponentAlphaTextures {
-  PCompositable compositable;
   PTexture textureOnBlack;
   PTexture textureOnWhite;
 };
@@ -432,7 +432,7 @@ struct OpDeliverFenceToTracker {
   FenceHandle fence;
 };
 
-union CompositableOperation {
+union CompositableOperationDetail {
   OpPaintTextureRegion;
 
   OpUseTiledLayerBuffer;
@@ -443,6 +443,11 @@ union CompositableOperation {
   OpUseTexture;
   OpUseComponentAlphaTextures;
   OpUseOverlaySource;
+};
+
+struct CompositableOperation {
+  PCompositable compositable;
+  CompositableOperationDetail detail;
 };
 
 // A unit of a changeset; a set of these comprise a changeset

@@ -36,7 +36,7 @@ add_task(function* test_registration_success() {
     pushEndpoint: 'https://example.org/update/different-manifest',
     scope: 'https://example.org/c',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: 42, inBrowser: true }),
+      { appId: 42, inIsolatedMozBrowser: true }),
     version: 15,
     quota: Infinity,
   }];
@@ -64,11 +64,7 @@ add_task(function* test_registration_success() {
     }
   });
 
-  yield waitForPromise(
-    handshakePromise,
-    DEFAULT_TIMEOUT,
-    'Timed out waiting for handshake'
-  );
+  yield handshakePromise;
 
   let registration = yield PushService.registration({
     scope: 'https://example.net/a',

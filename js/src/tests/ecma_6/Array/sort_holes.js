@@ -54,19 +54,13 @@ assertDeepEq(oneHole[0], {size: 27});
 assertEq(oneHole.length, 2600);
 assertEq(denseCount(oneHole), 1);
 
-// Ensure that the array setter is touch touched during sorting.
+// Sealed objects should be sortable, including those with holes (so long
+// as the holes appear at the end, so that they don't need to be moved).
+assertDeepEq(Object.seal([0, 99, -1]).sort((x, y) => 1 * x - y),
+             Object.seal([-1, 0, 99]));
 
-Object.defineProperty(Array.prototype, "0", {
-    set: (value) => {throw "Illegally touched the array's setter!"},
-    configurable: true
-});
-
-assertThrows(() => {o[1] = 11;});
-
-let o = [,,,,,,,,,,,,,,,,,,,,{size: 1},{size: 2}];
-o.sort((a, b) => {+a.size - +b.size});
-
-delete Array.prototype["0"];
+assertDeepEq(Object.seal([1, 5, 4, , ,]).sort((x, y) => 1 * x - y),
+             Object.seal([1, 4, 5, , ,]));
 
 if (typeof reportCompare === 'function')
     reportCompare(0, 0);

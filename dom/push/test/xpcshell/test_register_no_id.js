@@ -53,12 +53,11 @@ add_task(function* test_register_no_id() {
     PushService.register({
       scope: 'https://example.com/incomplete',
       originAttributes: ChromeUtils.originAttributesToSuffix(
-        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
     }),
     'Expected error for incomplete register response'
   );
 
-  yield waitForPromise(helloPromise, DEFAULT_TIMEOUT,
-    'Reconnect after incomplete register response timed out');
+  yield helloPromise;
   equal(registers, 1, 'Wrong register count');
 });

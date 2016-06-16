@@ -8,10 +8,10 @@
 "use strict";
 
 const {PREF_ORIG_SOURCES} = require("devtools/client/styleeditor/utils");
+const Services = require("Services");
 
 loader.lazyRequireGetter(this, "overlays",
   "devtools/client/inspector/shared/style-inspector-overlays");
-loader.lazyImporter(this, "Services", "resource://gre/modules/Services.jsm");
 loader.lazyServiceGetter(this, "clipboardHelper",
   "@mozilla.org/widget/clipboardhelper;1", "nsIClipboardHelper");
 loader.lazyGetter(this, "_strings", () => {
@@ -369,7 +369,7 @@ StyleInspectorMenu.prototype = {
    */
   _onSelectAll: function() {
     let selection = this.styleWindow.getSelection();
-    selection.selectAllChildren(this.styleDocument.documentElement);
+    selection.selectAllChildren(this.view.element);
   },
 
   /**

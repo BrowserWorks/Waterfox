@@ -176,6 +176,12 @@ static_assert(CodeAlignment % SimdMemoryAlignment == 0,
 static const uint32_t AsmJSStackAlignment = SimdMemoryAlignment;
 static const int32_t AsmJSGlobalRegBias = 1024;
 
+// Does this architecture support SIMD conversions between Uint32x4 and Float32x4?
+static MOZ_CONSTEXPR_VAR bool SupportsUint32x4FloatConversions = false;
+
+// Does this architecture support comparisons of unsigned 32x4 integer vectors?
+static MOZ_CONSTEXPR_VAR bool SupportsUint32x4Compares = false;
+
 class Assembler : public vixl::Assembler
 {
   public:
@@ -207,6 +213,9 @@ class Assembler : public vixl::Assembler
     void bind(Label* label) { bind(label, nextOffset()); }
     void bind(Label* label, BufferOffset boff);
     void bind(RepatchLabel* label);
+    void bindLater(Label* label, wasm::JumpTarget target) {
+        MOZ_CRASH("NYI");
+    }
 
     bool oom() const {
         return AssemblerShared::oom() ||
@@ -257,9 +266,6 @@ class Assembler : public vixl::Assembler
     }
 
     void retarget(Label* cur, Label* next);
-    void retargetWithOffset(size_t baseOffset, const LabelBase* label, LabelBase* target) {
-        MOZ_CRASH("NYI");
-    }
 
     // The buffer is about to be linked. Ensure any constant pools or
     // excess bookkeeping has been flushed to the instruction stream.

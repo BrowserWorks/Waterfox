@@ -20,7 +20,7 @@
 #include "mozilla/dom/ValidityState.h"
 #include "mozilla/dom/ElementInlines.h"
 
-class nsDOMSettableTokenList;
+class nsDOMTokenList;
 class nsIDOMHTMLMenuElement;
 class nsIEditor;
 class nsIFormControlFrame;
@@ -104,7 +104,7 @@ public:
   {
     SetHTMLBoolAttr(nsGkAtoms::itemscope, aItemScope, aError);
   }
-  nsDOMSettableTokenList* ItemType()
+  nsDOMTokenList* ItemType()
   {
     return GetTokenList(nsGkAtoms::itemtype);
   }
@@ -116,11 +116,11 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::itemid, aItemID, aError);
   }
-  nsDOMSettableTokenList* ItemRef()
+  nsDOMTokenList* ItemRef()
   {
     return GetTokenList(nsGkAtoms::itemref);
   }
-  nsDOMSettableTokenList* ItemProp()
+  nsDOMTokenList* ItemProp()
   {
     return GetTokenList(nsGkAtoms::itemprop);
   }
@@ -1763,6 +1763,7 @@ NS_DECLARE_NS_NEW_HTML_ELEMENT(Content)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Mod)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Data)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(DataList)
+NS_DECLARE_NS_NEW_HTML_ELEMENT(Details)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Div)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(ExtApp)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(FieldSet)
@@ -1800,6 +1801,7 @@ NS_DECLARE_NS_NEW_HTML_ELEMENT(Shadow)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Source)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Span)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Style)
+NS_DECLARE_NS_NEW_HTML_ELEMENT(Summary)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(TableCaption)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(TableCell)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(TableCol)

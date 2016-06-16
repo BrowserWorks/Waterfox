@@ -567,10 +567,7 @@ class ChainedIter
     T operator->() const { return get(); }
 };
 
-typedef js::HashMap<Value*,
-                    const char*,
-                    js::DefaultHasher<Value*>,
-                    js::SystemAllocPolicy> RootedValueMap;
+typedef HashMap<Value*, const char*, DefaultHasher<Value*>, SystemAllocPolicy> RootedValueMap;
 
 class GCRuntime
 {
@@ -580,7 +577,8 @@ class GCRuntime
     void finishRoots();
     void finish();
 
-    inline int zeal();
+    inline bool hasZealMode(ZealMode mode);
+    inline void clearZealMode(ZealMode mode);
     inline bool upcomingZealousGC();
     inline bool needZealousGC();
 
@@ -636,8 +634,8 @@ class GCRuntime
     void onOutOfMallocMemory(const AutoLockGC& lock);
 
 #ifdef JS_GC_ZEAL
-    const void* addressOfZealMode() { return &zealMode; }
-    void getZeal(uint8_t* zeal, uint32_t* frequency, uint32_t* nextScheduled);
+    const void* addressOfZealModeBits() { return &zealModeBits; }
+    void getZealBits(uint32_t* zealBits, uint32_t* frequency, uint32_t* nextScheduled);
     void setZeal(uint8_t zeal, uint32_t frequency);
     bool parseAndSetZeal(const char* str);
     void setNextScheduled(uint32_t count);
@@ -657,7 +655,7 @@ class GCRuntime
 
   public:
     // Internal public interface
-    js::gc::State state() const { return incrementalState; }
+    State state() const { return incrementalState; }
     bool isHeapCompacting() const { return state() == COMPACT; }
     bool isForegroundSweeping() const { return state() == SWEEP; }
     bool isBackgroundSweeping() { return helperState.isBackgroundSweeping(); }
@@ -707,6 +705,13 @@ class GCRuntime
         --noGCOrAllocationCheck;
     }
 
+    bool isNurseryAllocAllowed() { return noNurseryAllocationCheck == 0; }
+    void disallowNurseryAlloc() { ++noNurseryAllocationCheck; }
+    void allowNurseryAlloc() {
+        MOZ_ASSERT(!isNurseryAllocAllowed());
+        --noNurseryAllocationCheck;
+    }
+
     bool isInsideUnsafeRegion() { return inUnsafeRegion != 0; }
     void enterUnsafeRegion() { ++inUnsafeRegion; }
     void leaveUnsafeRegion() {
@@ -728,7 +733,7 @@ class GCRuntime
     void disallowIncrementalGC() { incrementalAllowed = false; }
 
     bool isIncrementalGCEnabled() const { return mode == JSGC_MODE_INCREMENTAL && incrementalAllowed; }
-    bool isIncrementalGCInProgress() const { return state() != gc::NO_INCREMENTAL; }
+    bool isIncrementalGCInProgress() const { return state() != NO_INCREMENTAL; }
 
     bool isGenerationalGCEnabled() const { return generationalDisabled == 0; }
     void disableGenerationalGC();
@@ -789,6 +794,7 @@ class GCRuntime
 
     bool isIncrementalGc() const { return isIncremental; }
     bool isFullGc() const { return isFull; }
+    bool isCompactingGc() const { return isCompacting; }
 
     bool shouldCleanUpEverything() { return cleanUpEverything; }
 
@@ -838,7 +844,7 @@ class GCRuntime
     void freeAllLifoBlocksAfterSweeping(LifoAlloc* lifo);
 
     // Public here for ReleaseArenaLists and FinalizeTypedArenas.
-    void releaseArena(ArenaHeader* aheader, const AutoLockGC& lock);
+    void releaseArena(Arena* arena, const AutoLockGC& lock);
 
     void releaseHeldRelocatedArenas();
     void releaseHeldRelocatedArenasWithoutUnlocking(const AutoLockGC& lock);
@@ -869,8 +875,8 @@ class GCRuntime
     friend class ArenaLists;
     Chunk* pickChunk(const AutoLockGC& lock,
                      AutoMaybeStartBackgroundAllocation& maybeStartBGAlloc);
-    ArenaHeader* allocateArena(Chunk* chunk, Zone* zone, AllocKind kind, const AutoLockGC& lock);
-    void arenaAllocatedDuringGC(JS::Zone* zone, ArenaHeader* arena);
+    Arena* allocateArena(Chunk* chunk, Zone* zone, AllocKind kind, const AutoLockGC& lock);
+    void arenaAllocatedDuringGC(JS::Zone* zone, Arena* arena);
 
     // Allocator internals
     bool gcIfNeededPerAllocation(JSContext* cx);
@@ -947,20 +953,20 @@ class GCRuntime
     void sweepBackgroundThings(ZoneList& zones, LifoAlloc& freeBlocks, ThreadType threadType);
     void assertBackgroundSweepingFinished();
     bool shouldCompact();
-    IncrementalProgress beginCompactPhase();
+    void beginCompactPhase();
     IncrementalProgress compactPhase(JS::gcreason::Reason reason, SliceBudget& sliceBudget);
     void endCompactPhase(JS::gcreason::Reason reason);
     void sweepTypesAfterCompacting(Zone* zone);
     void sweepZoneAfterCompacting(Zone* zone);
-    bool relocateArenas(Zone* zone, JS::gcreason::Reason reason, ArenaHeader*& relocatedListOut,
+    bool relocateArenas(Zone* zone, JS::gcreason::Reason reason, Arena*& relocatedListOut,
                         SliceBudget& sliceBudget);
     void updateAllCellPointersParallel(MovingTracer* trc, Zone* zone);
     void updateAllCellPointersSerial(MovingTracer* trc, Zone* zone);
     void updatePointersToRelocatedCells(Zone* zone);
-    void protectAndHoldArenas(ArenaHeader* arenaList);
+    void protectAndHoldArenas(Arena* arenaList);
     void unprotectHeldRelocatedArenas();
-    void releaseRelocatedArenas(ArenaHeader* arenaList);
-    void releaseRelocatedArenasWithoutUnlocking(ArenaHeader* arenaList, const AutoLockGC& lock);
+    void releaseRelocatedArenas(Arena* arenaList);
+    void releaseRelocatedArenasWithoutUnlocking(Arena* arenaList, const AutoLockGC& lock);
     void finishCollection(JS::gcreason::Reason reason);
 
     void computeNonIncrementalMarkingForValidation();
@@ -982,14 +988,14 @@ class GCRuntime
     JS::Zone* systemZone;
 
     /* List of compartments and zones (protected by the GC lock). */
-    js::gc::ZoneVector zones;
+    ZoneVector zones;
 
-    js::Nursery nursery;
-    js::gc::StoreBuffer storeBuffer;
+    Nursery nursery;
+    StoreBuffer storeBuffer;
 
-    js::gcstats::Statistics stats;
+    gcstats::Statistics stats;
 
-    js::GCMarker marker;
+    GCMarker marker;
 
     /* Track heap usage for this runtime. */
     HeapUsage usage;
@@ -1122,7 +1128,7 @@ class GCRuntime
      * The current incremental GC phase. This is also used internally in
      * non-incremental GC.
      */
-    js::gc::State incrementalState;
+    State incrementalState;
 
     /* Indicates that the last incremental slice exhausted the mark stack. */
     bool lastMarkSlice;
@@ -1143,7 +1149,7 @@ class GCRuntime
      * Free LIFO blocks are transferred to this allocator before being freed on
      * the background GC thread.
      */
-    js::LifoAlloc freeLifoAlloc;
+    LifoAlloc freeLifoAlloc;
 
     /* Index of current zone group (for stats). */
     unsigned zoneGroupIndex;
@@ -1168,17 +1174,17 @@ class GCRuntime
     /*
      * List head of arenas allocated during the sweep phase.
      */
-    js::gc::ArenaHeader* arenasAllocatedDuringSweep;
+    Arena* arenasAllocatedDuringSweep;
 
     /*
      * Incremental compacting state.
      */
     bool startedCompacting;
-    js::gc::ZoneList zonesToMaybeCompact;
-    ArenaHeader* relocatedArenasToRelease;
+    ZoneList zonesToMaybeCompact;
+    Arena* relocatedArenasToRelease;
 
 #ifdef JS_GC_ZEAL
-    js::gc::MarkingValidator* markingValidator;
+    MarkingValidator* markingValidator;
 #endif
 
     /*
@@ -1192,7 +1198,7 @@ class GCRuntime
     int64_t defaultTimeBudget_;
 
     /*
-     * We disable incremental GC if we encounter a js::Class with a trace hook
+     * We disable incremental GC if we encounter a Class with a trace hook
      * that does not implement write barriers.
      */
     bool incrementalAllowed;
@@ -1259,13 +1265,13 @@ class GCRuntime
      * zeal_ value 14 performs periodic shrinking collections.
      */
 #ifdef JS_GC_ZEAL
-    int zealMode;
+    uint32_t zealModeBits;
     int zealFrequency;
     int nextScheduled;
     bool deterministicOnly;
     int incrementalLimit;
 
-    js::Vector<JSObject*, 0, js::SystemAllocPolicy> selectedForMarking;
+    Vector<JSObject*, 0, SystemAllocPolicy> selectedForMarking;
 #endif
 
     bool fullCompartmentChecks;
@@ -1310,6 +1316,7 @@ class GCRuntime
     int inUnsafeRegion;
 
     size_t noGCOrAllocationCheck;
+    size_t noNurseryAllocationCheck;
 #endif
 
     /* Synchronize GC heap access between main thread and GCHelperState. */
@@ -1326,8 +1333,8 @@ class GCRuntime
     SortedArenaList incrementalSweepList;
 
     friend class js::GCHelperState;
-    friend class js::gc::MarkingValidator;
-    friend class js::gc::AutoTraceSession;
+    friend class MarkingValidator;
+    friend class AutoTraceSession;
     friend class AutoEnterIteration;
 };
 
@@ -1347,9 +1354,20 @@ class MOZ_RAII AutoEnterIteration {
 };
 
 #ifdef JS_GC_ZEAL
-inline int
-GCRuntime::zeal() {
-    return zealMode;
+
+inline bool
+GCRuntime::hasZealMode(ZealMode mode)
+{
+    static_assert(size_t(ZealMode::Limit) < sizeof(zealModeBits) * 8,
+                  "Zeal modes must fit in zealModeBits");
+    return zealModeBits & (1 << uint32_t(mode));
+}
+
+inline void
+GCRuntime::clearZealMode(ZealMode mode)
+{
+    zealModeBits &= ~(1 << uint32_t(mode));
+    MOZ_ASSERT(!hasZealMode(mode));
 }
 
 inline bool
@@ -1360,11 +1378,12 @@ GCRuntime::upcomingZealousGC() {
 inline bool
 GCRuntime::needZealousGC() {
     if (nextScheduled > 0 && --nextScheduled == 0) {
-        if (zealMode == ZealAllocValue ||
-            zealMode == ZealGenerationalGCValue ||
-            (zealMode >= ZealIncrementalRootsThenFinish &&
-             zealMode <= ZealIncrementalMultipleSlices) ||
-            zealMode == ZealCompactValue)
+        if (hasZealMode(ZealMode::Alloc) ||
+            hasZealMode(ZealMode::GenerationalGC) ||
+            hasZealMode(ZealMode::IncrementalRootsThenFinish) ||
+            hasZealMode(ZealMode::IncrementalMarkAllThenFinish) ||
+            hasZealMode(ZealMode::IncrementalMultipleSlices) ||
+            hasZealMode(ZealMode::Compact))
         {
             nextScheduled = zealFrequency;
         }
@@ -1373,7 +1392,8 @@ GCRuntime::needZealousGC() {
     return false;
 }
 #else
-inline int GCRuntime::zeal() { return 0; }
+inline bool GCRuntime::hasZealMode(ZealMode mode) { return false; }
+inline void GCRuntime::clearZealMode(ZealMode mode) { }
 inline bool GCRuntime::upcomingZealousGC() { return false; }
 inline bool GCRuntime::needZealousGC() { return false; }
 #endif

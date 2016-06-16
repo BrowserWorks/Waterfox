@@ -1623,7 +1623,11 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
   transition: opacity 0.15s ease;
 }
 
-#navigator-toolbox:not(:hover) .urlbar-history-dropmarker {
+#urlbar-wrapper[switchingtabs] > #urlbar > .urlbar-textbox-container > .urlbar-history-dropmarker {
+  transition: none;
+}
+
+#navigator-toolbox:not(:hover) #urlbar:not([focused]) > .urlbar-textbox-container > .urlbar-history-dropmarker {
   opacity: 0;
 }
 
@@ -3240,13 +3244,6 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 
 .gclitoolbar-input-node > .textbox-input-box > html|*.textbox-input::-moz-selection {
   color: hsl(210,11%,16%);
-}
-
-/* Developer Toolbar */
-
-#developer-toolbar-closebutton {
-  margin-left: 8px;
-  margin-right: 8px;
 }
 
 /* Error counter */

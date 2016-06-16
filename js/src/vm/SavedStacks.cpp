@@ -23,6 +23,7 @@
 #include "jsscript.h"
 
 #include "gc/Marking.h"
+#include "gc/Policy.h"
 #include "gc/Rooting.h"
 #include "js/Vector.h"
 #include "vm/Debugger.h"
@@ -64,13 +65,13 @@ LiveSavedFrameCache::getFramePtr(FrameIter& iter)
     return Nothing();
 }
 
-/* static */ void
-LiveSavedFrameCache::trace(LiveSavedFrameCache* cache, JSTracer* trc)
+void
+LiveSavedFrameCache::trace(JSTracer* trc)
 {
-    if (!cache->initialized())
+    if (!initialized())
         return;
 
-    for (auto* entry = cache->frames->begin(); entry < cache->frames->end(); entry++) {
+    for (auto* entry = frames->begin(); entry < frames->end(); entry++) {
         TraceEdge(trc,
                   &entry->savedFrame,
                   "LiveSavedFrameCache::frames SavedFrame");
@@ -157,6 +158,10 @@ struct SavedFrame::Lookup {
         MOZ_ASSERT(source);
         MOZ_ASSERT_IF(framePtr.isSome(), pc);
         MOZ_ASSERT_IF(framePtr.isSome(), activation);
+
+#ifdef JS_MORE_DETERMINISTIC
+        column = 0;
+#endif
     }
 
     explicit Lookup(SavedFrame& savedFrame)
@@ -423,6 +428,9 @@ SavedFrame::initLine(uint32_t line)
 void
 SavedFrame::initColumn(uint32_t column)
 {
+#ifdef JS_MORE_DETERMINISTIC
+    column = 0;
+#endif
     initReservedSlot(JSSLOT_COLUMN, PrivateUint32Value(column));
 }
 
@@ -878,6 +886,19 @@ BuildStackString(JSContext* cx, HandleObject stack, MutableHandleString stringp,
     return true;
 }
 
+JS_PUBLIC_API(bool)
+IsSavedFrame(JSObject* obj)
+{
+    if (!obj)
+        return false;
+
+    JSObject* unwrapped = js::CheckedUnwrap(obj);
+    if (!unwrapped)
+        return false;
+
+    return js::SavedFrame::isSavedFrameAndNotProto(*unwrapped);
+}
+
 } /* namespace JS */
 
 namespace js {
@@ -991,10 +1012,8 @@ SavedFrame::toStringMethod(JSContext* cx, unsigned argc, Value* vp)
 bool
 SavedStacks::init()
 {
-    if (!pcLocationMap.init())
-        return false;
-
-    return frames.init();
+    return frames.init() &&
+           pcLocationMap.init();
 }
 
 bool
@@ -1032,22 +1051,16 @@ SavedStacks::copyAsyncStack(JSContext* cx, HandleObject asyncStack, HandleString
 }
 
 void
-SavedStacks::sweep(JSRuntime* rt)
+SavedStacks::sweep()
 {
     frames.sweep();
-    sweepPCLocationMap();
+    pcLocationMap.sweep();
 }
 
 void
 SavedStacks::trace(JSTracer* trc)
 {
-    if (pcLocationMap.initialized()) {
-        // Mark each of the source strings in our pc to location cache.
-        for (PCLocationMap::Enum e(pcLocationMap); !e.empty(); e.popFront()) {
-            LocationValue& loc = e.front().value();
-            TraceEdge(trc, &loc.source, "SavedStacks::PCLocationMap's memoized script source name");
-        }
-    }
+    pcLocationMap.trace(trc);
 }
 
 uint32_t
@@ -1308,24 +1321,6 @@ SavedStacks::createFrameFromLookup(JSContext* cx, SavedFrame::HandleLookup looku
     return frame;
 }
 
-/*
- * Remove entries from the table whose JSScript is being collected.
- */
-void
-SavedStacks::sweepPCLocationMap()
-{
-    for (PCLocationMap::Enum e(pcLocationMap); !e.empty(); e.popFront()) {
-        PCKey key = e.front().key();
-        JSScript* script = key.script.get();
-        if (IsAboutToBeFinalizedUnbarriered(&script)) {
-            e.removeFront();
-        } else if (script != key.script.get()) {
-            key.script = script;
-            e.rekeyFront(key);
-        }
-    }
-}
-
 bool
 SavedStacks::getLocation(JSContext* cx, const FrameIter& iter,
                          MutableHandle<LocationValue> locationp)
@@ -1431,7 +1426,7 @@ SavedStacks::chooseSamplingProbability(JSCompartment* compartment)
 }
 
 JSObject*
-SavedStacksMetadataCallback(JSContext* cx, JSObject* target)
+SavedStacksMetadataCallback(JSContext* cx, HandleObject target)
 {
     RootedObject obj(cx, target);
 

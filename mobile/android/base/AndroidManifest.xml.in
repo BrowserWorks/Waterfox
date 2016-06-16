@@ -44,6 +44,11 @@
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version" />
 #endif
 
+        <!-- Fennec is shipped as the Android package named
+             org.mozilla.{fennec,firefox,firefox_beta}.  The internal Java
+             package hierarchy inside the Android package used to have an
+             org.mozilla.{fennec,firefox,firefox_beta} subtree *and* an
+             org.mozilla.gecko subtree; it now only has org.mozilla.gecko. -->
         <activity android:name="@MOZ_ANDROID_BROWSER_INTENT_CLASS@"
                   android:label="@string/moz_app_displayname"
                   android:taskAffinity="@ANDROID_PACKAGE_NAME@.BROWSER"
@@ -52,26 +57,15 @@
                   android:windowSoftInputMode="stateUnspecified|adjustResize"
                   android:launchMode="singleTask"
                   android:exported="true"
-                  android:theme="@style/Gecko.App">
-          <!-- We export this activity so that it can be launched by explicit
-               intents, in particular homescreen shortcuts.  See Bug 1032217.
-               In future we would prefer to move all intent filters off the .App
-               alias and onto BrowserApp so that we can deprecate activities
-               that refer to pre-processed class names. -->
-        </activity>
+                  android:theme="@style/Gecko.App" />
 
-        <!-- Fennec is shipped as the Android package named
-             org.mozilla.{fennec,firefox,firefox_beta}.  The internal Java package
-             hierarchy inside the Android package has both an
-             org.mozilla.{fennec,firefox,firefox_beta} subtree *and* an
-             org.mozilla.gecko subtree.  The non-org.mozilla.gecko is deprecated
-             and we would like to get rid of it entirely.  Until that happens, we
-             have external consumers (such as intents and bookmarks) of
-             non-org.mozilla.gecko Activity classes, so we define activity aliases
-             for backwards compatibility. -->
+        <!-- Bug 1256615 / Bug 1268455: We published an .App alias and we need to maintain it
+             forever.  If we don't, home screen shortcuts will disappear because the intent
+             filter details change. -->
         <activity-alias android:name=".App"
                         android:label="@MOZ_APP_DISPLAYNAME@"
                         android:targetActivity="@MOZ_ANDROID_BROWSER_INTENT_CLASS@">
+
             <!-- android:priority ranges between -1000 and 1000.  We never want
                  another activity to usurp the MAIN action, so we ratchet our
                  priority up. -->
@@ -197,73 +191,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="org.mozilla.gecko.webapp.Dispatcher"
-            android:noHistory="true" >
-            <intent-filter>
-                <!-- catch links from synthetic apks -->
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="application/webapp" />
-            </intent-filter>
-        </activity>
-
-        <receiver android:name="org.mozilla.gecko.webapp.UninstallListener" >
-          <intent-filter>
-             <action android:name="android.intent.action.PACKAGE_REMOVED" />
-             <data android:scheme="package" />
-          </intent-filter>
-        </receiver>
-
-        <receiver android:name="org.mozilla.gecko.webapp.TaskKiller">
-          <intent-filter>
-             <action android:name="org.mozilla.webapp.TASK_REMOVED" />
-             <category android:name="android.intent.category.DEFAULT" />
-          </intent-filter>
-        </receiver>
-
         <receiver android:name="org.mozilla.gecko.restrictions.RestrictionProvider">
           <intent-filter>
             <action android:name="android.intent.action.GET_RESTRICTION_ENTRIES" />
           </intent-filter>
         </receiver>
-
-        <!-- Activity used for launching non-privileged WebApps via a URL -->
-        <activity android:name="org.mozilla.gecko.Webapp"
-                  android:label="@string/webapp_generic_name"
-                  android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize"
-                  android:windowSoftInputMode="stateUnspecified|adjustResize"
-                  android:launchMode="singleTask"
-                  android:taskAffinity="org.mozilla.gecko.WEBAPP"
-                  android:process=":@ANDROID_PACKAGE_NAME@.Webapp"
-                  android:excludeFromRecents="true"
-                  android:exported="true"
-                  android:theme="@style/Gecko.App">
-          <!-- We export this activity so that it can be launched by explicit
-               intents, in particular old-style WebApp launching homescreen
-               shortcuts. Such shortcuts were made before the new "synthetic
-               APK" WebApps were deployed. See Bug 1032217. -->
-        </activity>
-
-        <!-- Alias Webapp so we can launch it from the package namespace. Prefer
-             to launch with the fully qualified name "org.mozilla.gecko.Webapp". -->
-        <activity-alias android:name=".Webapp"
-                        android:label="@string/webapp_generic_name"
-                        android:targetActivity="org.mozilla.gecko.Webapp">
-            <intent-filter>
-                <action android:name="org.mozilla.gecko.WEBAPP" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="org.mozilla.gecko.ACTION_ALERT_CALLBACK" />
-            </intent-filter>
-        </activity-alias>
-
-        <!-- Declare a predefined number of Webapp<num> activities. These are
-             used so that each web app can launch in its own process. Keep
-             this number in sync with the total number of web apps handled in
-             WebappAllocator. -->
-
-#define FRAGMENT WebappManifestFragment.xml.frag.in
-#include WebappFragmentRepeater.inc
 
         <!-- Masquerade as the Resolver so that we can be opened from the Marketplace. -->
         <activity-alias
@@ -295,6 +227,15 @@
         </service>
 
         <receiver android:name="org.mozilla.gecko.AlarmReceiver" >
+        </receiver>
+
+        <receiver
+            android:name="org.mozilla.gecko.notifications.WhatsNewReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package" android:path="org.mozilla.gecko" />
+            </intent-filter>
         </receiver>
 
 #include ../services/manifests/FxAccountAndroidManifest_activities.xml.in
@@ -359,6 +300,11 @@
                   android:exported="false"
                   android:process="@MANGLED_ANDROID_PACKAGE_NAME@.PasswordsProvider"/>
 
+        <provider android:name="org.mozilla.gecko.db.LoginsProvider"
+                  android:label="@string/sync_configure_engines_title_passwords"
+                  android:authorities="@ANDROID_PACKAGE_NAME@.db.logins"
+                  android:exported="false"/>
+
         <provider android:name="org.mozilla.gecko.db.FormHistoryProvider"
                   android:label="@string/sync_configure_engines_title_history"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.formhistory"
@@ -418,6 +364,10 @@
 #endif
 #ifdef MOZ_ANDROID_MLS_STUMBLER
 #include ../stumbler/manifests/StumblerManifest_services.xml.in
+#endif
+
+#ifdef MOZ_ANDROID_GCM
+#include GcmAndroidManifest_services.xml.in
 #endif
 
     </application>

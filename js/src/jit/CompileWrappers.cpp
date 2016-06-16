@@ -78,9 +78,9 @@ CompileRuntime::addressOfLastCachedNativeIterator()
 
 #ifdef JS_GC_ZEAL
 const void*
-CompileRuntime::addressOfGCZeal()
+CompileRuntime::addressOfGCZealModeBits()
 {
-    return runtime()->gc.addressOfZealMode();
+    return runtime()->gc.addressOfZealModeBits();
 }
 #endif
 
@@ -215,15 +215,9 @@ CompileZone::addressOfNeedsIncrementalBarrier()
 }
 
 const void*
-CompileZone::addressOfFreeListFirst(gc::AllocKind allocKind)
+CompileZone::addressOfFreeList(gc::AllocKind allocKind)
 {
-    return zone()->arenas.getFreeList(allocKind)->addressOfFirst();
-}
-
-const void*
-CompileZone::addressOfFreeListLast(gc::AllocKind allocKind)
-{
-    return zone()->arenas.getFreeList(allocKind)->addressOfLast();
+    return zone()->arenas.addressOfFreeList(allocKind);
 }
 
 JSCompartment*

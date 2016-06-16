@@ -250,7 +250,15 @@ abort:
 
 static void nr_socket_buffered_stun_failed(nr_socket_buffered_stun *sock)
   {
+    NR_SOCKET fd;
+
     sock->read_state = NR_ICE_SOCKET_READ_FAILED;
+
+    /* Cancel waiting on the socket */
+    if (sock->inner && !nr_socket_getfd(sock->inner, &fd)) {
+      NR_ASYNC_CANCEL(fd, NR_ASYNC_WAIT_WRITE);
+      NR_ASYNC_CANCEL(fd, NR_ASYNC_WAIT_READ);
+    }
   }
 
 static int nr_socket_buffered_stun_recvfrom(void *obj,void * restrict buf,
@@ -506,9 +514,10 @@ static int nr_socket_buffered_stun_write(void *obj,const void *msg, size_t len, 
       if ((r=nr_socket_buffered_stun_arm_writable_cb(sock)))
         ABORT(r);
     }
-    r_log(LOG_GENERIC, LOG_INFO, "Write buffer not empty for %s  %u - %s armed (@%p)",
+    r_log(LOG_GENERIC, LOG_INFO, "Write buffer not empty for %s  %u - %s armed (@%p),%s connected",
           sock->remote_addr.as_string, (uint32_t)sock->pending,
-          already_armed ? "already" : "", &sock->pending);
+          already_armed ? "already" : "", &sock->pending,
+          sock->connected ? "" : " not");
   }
 
   *written = original_len;

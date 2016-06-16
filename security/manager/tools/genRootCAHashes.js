@@ -130,7 +130,7 @@ function writeRootHashes(fos) {
       let fpBytes = atob(fp.sha256Fingerprint);
 
       writeString(fos, "  {\n");
-      writeString(fos, "    /* "+fp.label+" */\n");
+      writeString(fos, "    /* " + fp.label + " */\n");
       writeString(fos, "    { " + hexSlice(fpBytes, 0, 16) + ",\n");
       writeString(fos, "      " + hexSlice(fpBytes, 16, 32) + " },\n");
       writeString(fos, "      " + fp.binNumber + " /* Bin Number */\n");
@@ -166,14 +166,14 @@ function getLabelForCert(cert) {
   }
 
   // replace non-ascii characters
-  label = label.replace( /[^[:ascii:]]/g, "_");
+  label = label.replace(/[^[:ascii:]]/g, "_");
   // replace non-word characters
-  label = label.replace(/[^A-Za-z0-9]/g ,"_");
+  label = label.replace(/[^A-Za-z0-9]/g, "_");
   return label;
 }
 
 // Fill in the gTrustAnchors list with trust anchors from the database.
-function insertTrustAnchorsFromDatabase(){
+function insertTrustAnchorsFromDatabase() {
   // We only want CA certs for SSL
   const CERT_TYPE = Ci.nsIX509Cert.CA_CERT;
   const TRUST_TYPE = Ci.nsIX509CertDB.TRUSTED_SSL;
@@ -215,8 +215,9 @@ function insertTrustAnchorsFromDatabase(){
 //  PRIMARY LOGIC
 //
 
-if (arguments.length < 1) {
-  throw "Usage: genRootCAHashes.js <absolute path to current RootHashes.inc>";
+if (arguments.length != 1) {
+  throw new Error("Usage: genRootCAHashes.js " +
+                  "<absolute path to current RootHashes.inc>");
 }
 
 var trustAnchorsFile = FileUtils.getFile("CurWorkD", [FILENAME_TRUST_ANCHORS]);
@@ -238,14 +239,15 @@ writeTrustAnchors(trustAnchorsFile);
 gTrustAnchors.roots.sort(function(a, b) {
   // We need to work from the binary values, not the base64 values.
   let aBin = atob(a.sha256Fingerprint);
-  let bBin = atob(b.sha256Fingerprint)
+  let bBin = atob(b.sha256Fingerprint);
 
-  if (aBin < bBin)
-     return -1;
-  else if (aBin > bBin)
-     return 1;
-   else
-     return 0;
+  if (aBin < bBin) {
+    return -1;
+  }
+  if (aBin > bBin) {
+    return 1;
+  }
+  return 0;
 });
 
 // Write the output file.

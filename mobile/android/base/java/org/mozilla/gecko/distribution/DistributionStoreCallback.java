@@ -44,13 +44,13 @@ public class DistributionStoreCallback implements Distribution.ReadyCallback {
     private void storeDistribution(final Distribution distribution) {
         final Context context = contextReference.get();
         if (context == null) {
-            Log.w(LOGTAG, "Context is no longer alive, couldn't retrieve shared prefs to store distribution");
+            Log.w(LOGTAG, "Context is no longer alive, could retrieve shared prefs to store distribution");
             return;
         }
 
         // While the distribution preferences are per install and not per profile, it's okay to use the
         // profile-specific prefs because:
-        //   1) We don't really support multiple profiles for end-users
+        //   1) We don't really support mulitple profiles for end-users
         //   2) The TelemetryUploadService already accesses profile-specific shared prefs so this keeps things simple.
         final SharedPreferences sharedPrefs = GeckoSharedPrefs.forProfileName(context, profileName);
         final Distribution.DistributionDescriptor desc = distribution.getDescriptor();

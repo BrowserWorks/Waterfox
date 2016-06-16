@@ -4,15 +4,13 @@
 
 "use strict";
 
-const env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
-
-add_task(function* test() {
-  let { TestRunner } = Cu.import("chrome://mozscreenshots/content/TestRunner.jsm", {});
-  let sets = ["TabsInTitlebar", "Tabs", "WindowSize", "Toolbars", "LightweightThemes"];
+add_task(function* capture() {
   let setsEnv = env.get("MOZSCREENSHOTS_SETS");
-  if (setsEnv) {
-    sets = setsEnv.trim().split(",");
+  if (!setsEnv) {
+    ok(true, "MOZSCREENSHOTS_SETS wasn't specified so there's nothing to capture");
+    return;
   }
 
+  let sets = setsEnv.trim().split(",");
   yield TestRunner.start(sets);
 });

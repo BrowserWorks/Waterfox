@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 "use strict";
 
@@ -11,6 +13,10 @@ const URL = "data:text/html;charset=utf-8,Toggling devtools using shortcuts";
 var {Toolbox} = require("devtools/client/framework/toolbox");
 
 add_task(function*() {
+  // Make sure this test starts with the selectedTool pref cleared. Previous
+  // tests select various tools, and that sets this pref.
+  Services.prefs.clearUserPref("devtools.toolbox.selectedTool");
+
   // Test with ACCEL+SHIFT+I / ACCEL+ALT+I (MacOSX) ; modifiers should match :
   // - toolbox-key-toggle in devtools/client/framework/toolbox-window.xul
   // - key_devToolboxMenuItem in browser/base/content/browser.xul
@@ -36,7 +42,7 @@ function* testToggle(key, modifiers) {
   yield cleanup();
 }
 
-function* testToggleDockedToolbox (tab, key, modifiers) {
+function* testToggleDockedToolbox(tab, key, modifiers) {
   let toolbox = getToolboxForTab(tab);
 
   isnot(toolbox.hostType, Toolbox.HostType.WINDOW,
@@ -55,7 +61,7 @@ function* testToggleDockedToolbox (tab, key, modifiers) {
   ok(true, "Toolbox is created by using when toggle key");
 }
 
-function* testToggleDetachedToolbox (tab, key, modifiers) {
+function* testToggleDetachedToolbox(tab, key, modifiers) {
   let toolbox = getToolboxForTab(tab);
 
   info("change the toolbox hostType to WINDOW");

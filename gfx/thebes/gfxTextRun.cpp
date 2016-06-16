@@ -397,7 +397,7 @@ gfxTextRun::DrawGlyphs(gfxFont *aFont, uint32_t aStart, uint32_t aEnd,
                        uint32_t aSpacingStart, uint32_t aSpacingEnd,
                        TextRunDrawParams& aParams, uint16_t aOrientation)
 {
-    nsAutoTArray<PropertyProvider::Spacing,200> spacingBuffer;
+    AutoTArray<PropertyProvider::Spacing,200> spacingBuffer;
     bool haveSpacing = GetAdjustedSpacingArray(aStart, aEnd, aProvider,
         aSpacingStart, aSpacingEnd, &spacingBuffer);
     aParams.spacing = haveSpacing ? spacingBuffer.Elements() : nullptr;
@@ -711,7 +711,7 @@ gfxTextRun::DrawEmphasisMarks(gfxContext *aContext, gfxTextRun* aMark,
         inlineCoord += direction *
             ComputePartialLigatureWidth(start, ligatureRunStart, aProvider);
 
-        nsAutoTArray<PropertyProvider::Spacing, 200> spacingBuffer;
+        AutoTArray<PropertyProvider::Spacing, 200> spacingBuffer;
         bool haveSpacing = GetAdjustedSpacingArray(
             ligatureRunStart, ligatureRunEnd, aProvider,
             ligatureRunStart, ligatureRunEnd, &spacingBuffer);
@@ -734,7 +734,7 @@ gfxTextRun::AccumulateMetricsForRun(gfxFont *aFont,
                                     uint16_t aOrientation,
                                     Metrics *aMetrics)
 {
-    nsAutoTArray<PropertyProvider::Spacing,200> spacingBuffer;
+    AutoTArray<PropertyProvider::Spacing,200> spacingBuffer;
     bool haveSpacing = GetAdjustedSpacingArray(aStart, aEnd, aProvider,
         aSpacingStart, aSpacingEnd, &spacingBuffer);
     Metrics metrics = aFont->Measure(this, aStart, aEnd, aBoundingBoxType,
@@ -1027,7 +1027,7 @@ gfxTextRun::GetAdvanceWidth(uint32_t aStart, uint32_t aLength,
     // processing it along with the glyphs.
     if (aProvider && (mFlags & gfxTextRunFactory::TEXT_ENABLE_SPACING)) {
         uint32_t i;
-        nsAutoTArray<PropertyProvider::Spacing,200> spacingBuffer;
+        AutoTArray<PropertyProvider::Spacing,200> spacingBuffer;
         if (spacingBuffer.AppendElements(aLength)) {
             GetAdjustedSpacing(this, ligatureRunStart, ligatureRunEnd, aProvider,
                                spacingBuffer.Elements());
@@ -1614,7 +1614,7 @@ gfxFontGroup::BuildFontList()
     }
 
     // initialize fonts in the font family list
-    nsAutoTArray<gfxFontFamily*,4> fonts;
+    AutoTArray<gfxFontFamily*,10> fonts;
     gfxPlatformFontList *pfl = gfxPlatformFontList::PlatformFontList();
 
     // lookup fonts in the fontlist
@@ -1649,8 +1649,6 @@ void
 gfxFontGroup::AddPlatformFont(const nsAString& aName,
                               nsTArray<gfxFontFamily*>& aFamilyList)
 {
-    gfxFontFamily* family = nullptr;
-
     // First, look up in the user font set...
     // If the fontSet matches the family, we must not look for a platform
     // font of the same name, even if we fail to actually get a fontEntry
@@ -1658,25 +1656,23 @@ gfxFontGroup::AddPlatformFont(const nsAString& aName,
     if (mUserFontSet) {
         // Add userfonts to the fontlist whether already loaded
         // or not. Loading is initiated during font matching.
-        family = mUserFontSet->LookupFamily(aName);
+        gfxFontFamily* family = mUserFontSet->LookupFamily(aName);
+        if (family) {
+            aFamilyList.AppendElement(family);
+            return;
+        }
     }
 
     // Not known in the user font set ==> check system fonts
-    gfxPlatformFontList* fontList = gfxPlatformFontList::PlatformFontList();
-    if (!family) {
-        family = fontList->FindFamily(aName, &mStyle, mDevToCssSize);
-    }
-
-    if (family) {
-        aFamilyList.AppendElement(family);
-    }
+    gfxPlatformFontList::PlatformFontList()
+        ->FindAndAddFamilies(aName, &aFamilyList, &mStyle, mDevToCssSize);
 }
 
 void
 gfxFontGroup::AddFamilyToFontList(gfxFontFamily* aFamily)
 {
     NS_ASSERTION(aFamily, "trying to add a null font family to fontlist");
-    nsAutoTArray<gfxFontEntry*,4> fontEntryList;
+    AutoTArray<gfxFontEntry*,4> fontEntryList;
     bool needsBold;
     aFamily->FindAllFontsForStyle(mStyle, fontEntryList, needsBold);
     // add these to the fontlist
@@ -1840,7 +1836,7 @@ gfxFontGroup::GetDefaultFont()
         // that assumes it will be able to get valid metrics for layout,
         // just look for the first usable font and put in the list.
         // (see bug 554544)
-        nsAutoTArray<RefPtr<gfxFontFamily>,200> familyList;
+        AutoTArray<RefPtr<gfxFontFamily>,200> familyList;
         pfl->GetFontFamilyList(familyList);
         numFonts = familyList.Length();
         for (uint32_t i = 0; i < numFonts; ++i) {
@@ -2339,7 +2335,7 @@ gfxFontGroup::InitScriptRun(DrawTarget* aDrawTarget,
     gfxFont *mainFont = GetFirstValidFont();
 
     uint32_t runStart = 0;
-    nsAutoTArray<gfxTextRange,3> fontRanges;
+    AutoTArray<gfxTextRange,3> fontRanges;
     ComputeRanges(fontRanges, aString, aLength, aRunScript,
                   aTextRun->GetFlags() & gfxTextRunFactory::TEXT_ORIENT_MASK);
     uint32_t numRanges = fontRanges.Length();
@@ -2968,10 +2964,11 @@ void gfxFontGroup::ComputeRanges(nsTArray<gfxTextRange>& aRanges,
             lastRangeIndex++;
             prevFont = font;
         } else {
-            // if font has changed, make a new range
+            // if font or orientation has changed, make a new range...
+            // unless ch is a variation selector (bug 1248248)
             gfxTextRange& prevRange = aRanges[lastRangeIndex];
             if (prevRange.font != font || prevRange.matchType != matchType ||
-                prevRange.orientation != orient) {
+                (prevRange.orientation != orient && !IsClusterExtender(ch))) {
                 // close out the previous range
                 prevRange.end = origI;
                 aRanges.AppendElement(gfxTextRange(origI, i + 1,

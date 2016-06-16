@@ -90,7 +90,7 @@ nsXBLKeyEventHandler::ExecuteMatchedHandlers(
                         uint32_t aCharCode,
                         const IgnoreModifierState& aIgnoreModifierState)
 {
-  WidgetEvent* event = aKeyEvent->AsEvent()->GetInternalNSEvent();
+  WidgetEvent* event = aKeyEvent->AsEvent()->WidgetEventPtr();
   nsCOMPtr<EventTarget> target = aKeyEvent->AsEvent()->InternalDOMEvent()->GetCurrentTarget();
 
   bool executed = false;
@@ -140,7 +140,7 @@ nsXBLKeyEventHandler::HandleEvent(nsIDOMEvent* aEvent)
   if (!key)
     return NS_OK;
 
-  nsAutoTArray<nsShortcutCandidate, 10> accessKeys;
+  AutoTArray<nsShortcutCandidate, 10> accessKeys;
   nsContentUtils::GetAccelKeyCandidates(key, accessKeys);
 
   if (accessKeys.IsEmpty()) {

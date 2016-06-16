@@ -29,8 +29,8 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
+using namespace mozilla::dom::indexedDB;
 using namespace mozilla::dom::workers;
 using namespace mozilla::ipc;
 
@@ -62,7 +62,7 @@ public:
 
     MOZ_COUNT_DTOR(IDBTransaction::WorkerFeature);
 
-    mWorkerPrivate->RemoveFeature(mWorkerPrivate->GetJSContext(), this);
+    mWorkerPrivate->RemoveFeature(this);
   }
 
 private:
@@ -239,11 +239,8 @@ IDBTransaction::Create(IDBDatabase* aDatabase,
 
     workerPrivate->AssertIsOnWorkerThread();
 
-    JSContext* cx = workerPrivate->GetJSContext();
-    MOZ_ASSERT(cx);
-
     transaction->mWorkerFeature = new WorkerFeature(workerPrivate, transaction);
-    MOZ_ALWAYS_TRUE(workerPrivate->AddFeature(cx, transaction->mWorkerFeature));
+    MOZ_ALWAYS_TRUE(workerPrivate->AddFeature(transaction->mWorkerFeature));
   }
 
   return transaction.forget();
@@ -279,7 +276,7 @@ IDBTransaction::AssertIsOnOwningThread() const
 #endif // DEBUG
 
 void
-IDBTransaction::SetBackgroundActor(BackgroundTransactionChild* aBackgroundActor)
+IDBTransaction::SetBackgroundActor(indexedDB::BackgroundTransactionChild* aBackgroundActor)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aBackgroundActor);
@@ -570,7 +567,7 @@ IDBTransaction::DeleteObjectStore(int64_t aObjectStoreId)
 
 void
 IDBTransaction::CreateIndex(IDBObjectStore* aObjectStore,
-                            const IndexMetadata& aMetadata)
+                            const indexedDB::IndexMetadata& aMetadata)
 {
   AssertIsOnOwningThread();
   MOZ_ASSERT(aObjectStore);
@@ -818,7 +815,7 @@ IDBTransaction::NextIndexId()
   return mNextIndexId++;
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 IDBTransaction::GetParentObject() const
 {
   AssertIsOnOwningThread();
@@ -1012,6 +1009,5 @@ WorkerFeature::Notify(JSContext* aCx, Status aStatus)
   return true;
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

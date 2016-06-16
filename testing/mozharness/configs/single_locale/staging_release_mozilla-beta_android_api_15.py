@@ -7,12 +7,10 @@ EN_US_BINARY_URL = "http://" + STAGE_SERVER + "/pub/mobile/candidates/%(version)
 HG_SHARE_BASE_DIR = "/builds/hg-shared"
 
 config = {
-    "stage_product": "mobile",
     "log_name": "single_locale",
     "objdir": OBJDIR,
     "is_automation": True,
     "buildbot_json_path": "buildprops.json",
-    "purge_minsize": 10,
     "force_clobber": True,
     "clobberer_url": "https://api-pub-build.allizom.org/clobberer/lastclobber",
     "locales_file": "buildbot-configs/mozilla/l10n-changesets_mobile-beta.json",
@@ -64,7 +62,6 @@ config = {
     "ssh_key_dir": "~/.ssh",
     "base_post_upload_cmd": "post_upload.py -p mobile -n %(buildnum)s -v %(version)s --builddir android-api-15/%(locale)s --release-to-mobile-candidates-dir --nightly-dir=candidates %(post_upload_extra)s",
     "merge_locales": True,
-    "make_dirs": ['config'],
     "mozilla_dir": MOZILLA_DIR,
     "mozconfig": "%s/mobile/android/config/mozconfigs/android-api-15/l10n-release" % MOZILLA_DIR,
     "signature_verification_script": "tools/release/signing/verify-android-signature.sh",

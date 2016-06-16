@@ -670,12 +670,14 @@ public:
   static const KTableEntry kAzimuthKTable[];
   static const KTableEntry kBackfaceVisibilityKTable[];
   static const KTableEntry kTransformStyleKTable[];
-  static const KTableEntry kBackgroundAttachmentKTable[];
-  static const KTableEntry kBackgroundOriginKTable[];
-  static const KTableEntry kBackgroundPositionKTable[];
-  static const KTableEntry kBackgroundRepeatKTable[];
-  static const KTableEntry kBackgroundRepeatPartKTable[];
-  static const KTableEntry kBackgroundSizeKTable[];
+  static const KTableEntry kImageLayerAttachmentKTable[];
+  static const KTableEntry kImageLayerOriginKTable[];
+  static const KTableEntry kImageLayerPositionKTable[];
+  static const KTableEntry kImageLayerRepeatKTable[];
+  static const KTableEntry kImageLayerRepeatPartKTable[];
+  static const KTableEntry kImageLayerSizeKTable[];
+  static const KTableEntry kImageLayerCompositeKTable[];
+  static const KTableEntry kImageLayerModeKTable[];
   static const KTableEntry kBlendModeKTable[];
   static const KTableEntry kBorderCollapseKTable[];
   static const KTableEntry kBorderColorKTable[];
@@ -724,7 +726,7 @@ public:
   static KTableEntry kDisplayKTable[];
   static const KTableEntry kElevationKTable[];
   static const KTableEntry kEmptyCellsKTable[];
-  // -- tables for the align-/justify-content/items/self properties --
+  // -- tables for parsing the {align,justify}-{content,items,self} properties --
   static const KTableEntry kAlignAllKeywords[];
   static const KTableEntry kAlignOverflowPosition[]; // <overflow-position>
   static const KTableEntry kAlignSelfPosition[];     // <self-position>
@@ -735,8 +737,10 @@ public:
   static const KTableEntry kAlignNormalBaseline[]; // 'normal/baseline/last-baseline'
   static const KTableEntry kAlignContentDistribution[]; // <content-distribution>
   static const KTableEntry kAlignContentPosition[]; // <content-position>
-  static const KTableEntry kAlignSelfKTable[];
-  static const KTableEntry kJustifyContentKTable[];
+  // -- tables for auto-completion of the {align,justify}-{content,items,self} properties --
+  static const KTableEntry kAutoCompletionAlignJustifySelf[];
+  static const KTableEntry kAutoCompletionAlignItems[];
+  static const KTableEntry kAutoCompletionAlignJustifyContent[];
   // ------------------------------------------------------------------
   static const KTableEntry kFlexDirectionKTable[];
   static const KTableEntry kFlexWrapKTable[];
@@ -809,7 +813,7 @@ public:
   static const KTableEntry kStackSizingKTable[];
   static const KTableEntry kTableLayoutKTable[];
   // Not const because we modify its entries when the pref
-  // "layout.css.text-align-true-value.enabled" changes:
+  // "layout.css.text-align-unsafe-value.enabled" changes:
   static KTableEntry kTextAlignKTable[];
   static KTableEntry kTextAlignLastKTable[];
   static const KTableEntry kTextCombineUprightKTable[];

@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<?xml-stylesheet href="chrome://tabgroups/skin/migrate.css" type="text/css"?>
-<overlay id="migrate_overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-
-	<command id="Browser:ToggleTabView" disabled="true"/>
-	<key id="key_tabview" disabled="true"/>
-
-</overlay>

@@ -38,12 +38,7 @@ nsIconChannel::nsIconChannel()
 nsIconChannel::~nsIconChannel()
 {
   if (mLoadInfo) {
-    nsCOMPtr<nsIThread> mainThread;
-    NS_GetMainThread(getter_AddRefs(mainThread));
-
-    nsILoadInfo* forgetableLoadInfo;
-    mLoadInfo.forget(&forgetableLoadInfo);
-    NS_ProxyRelease(mainThread, forgetableLoadInfo, false);
+    NS_ReleaseOnMainThread(mLoadInfo.forget());
   }
 }
 
@@ -350,7 +345,7 @@ nsIconChannel::MakeInputStream(nsIInputStream** _retval,
 
   // create our buffer
   int32_t bufferCapacity = 2 + [bitmapRep bytesPerPlane];
-  nsAutoTArray<uint8_t, 3 + 16 * 16 * 5> iconBuffer; // initial size is for
+  AutoTArray<uint8_t, 3 + 16 * 16 * 5> iconBuffer; // initial size is for
                                                      // 16x16
   iconBuffer.SetLength(bufferCapacity);
 

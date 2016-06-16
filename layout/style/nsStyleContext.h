@@ -11,10 +11,13 @@
 #include "mozilla/RestyleLogging.h"
 #include "mozilla/Assertions.h"
 #include "nsRuleNode.h"
-#include "nsCSSPseudoElements.h"
 
 class nsIAtom;
 class nsPresContext;
+
+namespace mozilla {
+enum class CSSPseudoElementType : uint8_t;
+} // namespace mozilla
 
 /**
  * An nsStyleContext represents the computed style data for an element.
@@ -34,8 +37,6 @@ class nsPresContext;
  *  1. the |nsIFrame|s that are using the style context and
  *  2. any *child* style contexts (this might be the reverse of
  *     expectation, but it makes sense in this case)
- * Style contexts participate in the mark phase of rule node garbage
- * collection.
  */
 
 class nsStyleContext final
@@ -60,13 +61,13 @@ public:
    *                   matches.  See |nsRuleNode| and |nsIStyleRule|.
    * @param aSkipParentDisplayBasedStyleFixup
    *                 If set, this flag indicates that we should skip
-   *                 the chunk of ApplyStyleFixups() that applies to 
-   *                 special cases where a child element's style may 
-   *                 need to be modified based on its parent's display 
+   *                 the chunk of ApplyStyleFixups() that applies to
+   *                 special cases where a child element's style may
+   *                 need to be modified based on its parent's display
    *                 value.
    */
   nsStyleContext(nsStyleContext* aParent, nsIAtom* aPseudoTag,
-                 nsCSSPseudoElements::Type aPseudoType,
+                 mozilla::CSSPseudoElementType aPseudoType,
                  nsRuleNode* aRuleNode,
                  bool aSkipParentDisplayBasedStyleFixup);
 
@@ -137,9 +138,9 @@ public:
   nsStyleContext* GetParent() const { return mParent; }
 
   nsIAtom* GetPseudo() const { return mPseudoTag; }
-  nsCSSPseudoElements::Type GetPseudoType() const {
-    return static_cast<nsCSSPseudoElements::Type>(mBits >>
-                                                  NS_STYLE_CONTEXT_TYPE_SHIFT);
+  mozilla::CSSPseudoElementType GetPseudoType() const {
+    return static_cast<mozilla::CSSPseudoElementType>(
+             mBits >> NS_STYLE_CONTEXT_TYPE_SHIFT);
   }
 
   // Find, if it already exists *and is easily findable* (i.e., near the
@@ -272,12 +273,6 @@ public:
 
   nsRuleNode* RuleNode() { return mRuleNode; }
   void AddStyleBit(const uint64_t& aBit) { mBits |= aBit; }
-
-  /*
-   * Mark this style context's rule node (and its ancestors) to prevent
-   * it from being garbage collected.
-   */
-  void Mark();
 
   /*
    * Get the style data for a style struct.  This is the most important
@@ -557,7 +552,7 @@ private:
   bool ShouldLogRestyle() { return true; }
 #endif
 
-  nsStyleContext* mParent; // STRONG
+  RefPtr<nsStyleContext> mParent;
 
   // Children are kept in two circularly-linked lists.  The list anchor
   // is not part of the list (null for empty), and we point to the first
@@ -585,7 +580,7 @@ private:
   // specific rule matched is the one whose rule node is a child of the
   // root of the rule tree, and the most specific rule matched is the
   // |mRule| member of |mRuleNode|.
-  nsRuleNode* const       mRuleNode;
+  const RefPtr<nsRuleNode> mRuleNode;
 
   // mCachedInheritedData and mCachedResetData point to both structs that
   // are owned by this style context and structs that are owned by one of
@@ -629,7 +624,7 @@ private:
 already_AddRefed<nsStyleContext>
 NS_NewStyleContext(nsStyleContext* aParentContext,
                    nsIAtom* aPseudoTag,
-                   nsCSSPseudoElements::Type aPseudoType,
+                   mozilla::CSSPseudoElementType aPseudoType,
                    nsRuleNode* aRuleNode,
                    bool aSkipParentDisplayBasedStyleFixup);
 #endif

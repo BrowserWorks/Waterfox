@@ -86,7 +86,7 @@
       testRelation(browserDocument(), RELATION_EMBEDS,
                    getAccessible(currentTabDocument()));
 
-      //enableLogging("docload");
+      enableLogging("docload");
       gQueue = new eventQueue();
 
       gQueue.push(new loadURI("about:about"));
@@ -94,7 +94,7 @@
 
       gQueue.onFinish = function()
       {
-        //disableLogging();
+        disableLogging();
         closeBrowserWindow();
       }
       gQueue.invoke();

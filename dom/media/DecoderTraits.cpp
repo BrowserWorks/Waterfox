@@ -9,12 +9,10 @@
 #include "nsCharSeparatedTokenizer.h"
 #include "nsMimeTypes.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Telemetry.h"
 
 #include "OggDecoder.h"
 #include "OggReader.h"
-
-#include "WaveDecoder.h"
-#include "WaveReader.h"
 
 #include "WebMDecoder.h"
 #include "WebMDemuxer.h"
@@ -51,8 +49,14 @@
 #include "MP3Decoder.h"
 #include "MP3Demuxer.h"
 
+#include "WaveDecoder.h"
+#include "WaveDemuxer.h"
+#include "WaveReader.h"
+
 #include "ADTSDecoder.h"
 #include "ADTSDemuxer.h"
+
+#include "nsPluginHost.h"
 
 namespace mozilla
 {
@@ -133,8 +137,10 @@ static const char* const gWaveTypes[5] = {
   nullptr
 };
 
-static char const *const gWaveCodecs[2] = {
+static char const *const gWaveCodecs[4] = {
   "1", // Microsoft PCM Format
+  "6", // aLaw Encoding
+  "7", // uLaw Encoding
   nullptr
 };
 
@@ -165,6 +171,21 @@ DecoderTraits::IsWebMTypeAndEnabled(const nsACString& aType)
 DecoderTraits::IsWebMAudioType(const nsACString& aType)
 {
   return aType.EqualsASCII("audio/webm");
+}
+
+static char const *const gHttpLiveStreamingTypes[] = {
+  // For m3u8.
+  // https://tools.ietf.org/html/draft-pantos-http-live-streaming-19#section-10
+  "application/vnd.apple.mpegurl",
+  // Some sites serve these as the informal m3u type.
+  "audio/x-mpegurl",
+  nullptr
+};
+
+static bool
+IsHttpLiveStreamingType(const nsACString& aType)
+{
+  return CodecListContains(gHttpLiveStreamingTypes, aType);
 }
 
 #ifdef MOZ_OMX_DECODER
@@ -333,6 +354,13 @@ IsAACSupportedType(const nsACString& aType,
   return ADTSDecoder::CanHandleMediaType(aType, aCodecs);
 }
 
+static bool
+IsWAVSupportedType(const nsACString& aType,
+                   const nsAString& aCodecs = EmptyString())
+{
+  return WaveDecoder::CanHandleMediaType(aType, aCodecs);
+}
+
 /* static */
 bool DecoderTraits::ShouldHandleMediaType(const char* aMIMEType)
 {
@@ -344,6 +372,18 @@ bool DecoderTraits::ShouldHandleMediaType(const char* aMIMEType)
     // means.
     return false;
   }
+
+  // If an external plugin which can handle quicktime video is available
+  // (and not disabled), prefer it over native playback as there several
+  // codecs found in the wild that we do not handle.
+  if (nsDependentCString(aMIMEType).EqualsASCII("video/quicktime")) {
+    RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();
+    if (pluginHost &&
+        pluginHost->HavePluginForType(nsDependentCString(aMIMEType))) {
+      return false;
+    }
+  }
+
   return CanHandleMediaType(aMIMEType, false, EmptyString()) != CANPLAY_NO;
 }
 
@@ -446,6 +486,10 @@ DecoderTraits::CanHandleMediaType(const char* aMIMEType,
                                   const nsAString& aRequestedCodecs)
 {
   MOZ_ASSERT(NS_IsMainThread());
+
+  if (IsHttpLiveStreamingType(nsDependentCString(aMIMEType))) {
+    Telemetry::Accumulate(Telemetry::MEDIA_HLS_CANPLAY_REQUESTED, true);
+  }
 
   if (aHaveRequestedCodecs) {
     CanPlayStatus result = CanHandleCodecsType(aMIMEType, aRequestedCodecs);
@@ -587,6 +631,11 @@ InstantiateDecoder(const nsACString& aType, MediaDecoderOwner* aOwner)
   }
 #endif
 
+  if (IsHttpLiveStreamingType(aType)) {
+    // We don't have an HLS decoder.
+    Telemetry::Accumulate(Telemetry::MEDIA_HLS_DECODER_SUCCESS, false);
+  }
+
   return nullptr;
 }
 
@@ -617,6 +666,9 @@ MediaDecoderReader* DecoderTraits::CreateReader(const nsACString& aType, Abstrac
   } else
   if (IsAACSupportedType(aType)) {
     decoderReader = new MediaFormatReader(aDecoder, new ADTSDemuxer(aDecoder->GetResource()));
+  } else
+  if (IsWAVSupportedType(aType)) {
+    decoderReader = new MediaFormatReader(aDecoder, new WAVDemuxer(aDecoder->GetResource()));
   } else
 #ifdef MOZ_RAW
   if (IsRawType(aType)) {

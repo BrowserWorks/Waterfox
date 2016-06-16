@@ -33,7 +33,7 @@ nsXULAlertObserver::Observe(nsISupports* aSubject, const char* aTopic,
                             const char16_t* aData)
 {
   if (!strcmp("alertfinished", aTopic)) {
-    nsIDOMWindow* currentAlert = mXULAlerts->mNamedWindows.GetWeak(mAlertName);
+    mozIDOMWindowProxy* currentAlert = mXULAlerts->mNamedWindows.GetWeak(mAlertName);
     // The window in mNamedWindows might be a replacement, thus it should only
     // be removed if it is the same window that is associated with this listener.
     if (currentAlert == mAlertWindow) {
@@ -48,7 +48,7 @@ nsXULAlertObserver::Observe(nsISupports* aSubject, const char* aTopic,
   return rv;
 }
 
-NS_IMPL_ISUPPORTS(nsXULAlerts, nsIAlertsService, nsIAlertsDoNotDisturb)
+NS_IMPL_ISUPPORTS(nsXULAlerts, nsIAlertsService, nsIAlertsDoNotDisturb, nsIAlertsIconURI)
 
 /* static */ already_AddRefed<nsXULAlerts>
 nsXULAlerts::GetInstance()
@@ -83,6 +83,14 @@ nsXULAlerts::ShowAlertNotification(const nsAString& aImageUrl, const nsAString& 
 NS_IMETHODIMP
 nsXULAlerts::ShowAlert(nsIAlertNotification* aAlert,
                        nsIObserver* aAlertListener)
+{
+  return ShowAlertWithIconURI(aAlert, aAlertListener, nullptr);
+}
+
+NS_IMETHODIMP
+nsXULAlerts::ShowAlertWithIconURI(nsIAlertNotification* aAlert,
+                                  nsIObserver* aAlertListener,
+                                  nsIURI* aIconURI)
 {
   bool inPrivateBrowsing;
   nsresult rv = aAlert->GetInPrivateBrowsing(&inPrivateBrowsing);
@@ -215,9 +223,9 @@ nsXULAlerts::ShowAlert(nsIAlertNotification* aAlert,
   // it may take the same position.
   nsCOMPtr<nsISupportsInterfacePointer> replacedWindow = do_CreateInstance(NS_SUPPORTS_INTERFACE_POINTER_CONTRACTID, &rv);
   NS_ENSURE_TRUE(replacedWindow, NS_ERROR_FAILURE);
-  nsIDOMWindow* previousAlert = mNamedWindows.GetWeak(name);
+  mozIDOMWindowProxy* previousAlert = mNamedWindows.GetWeak(name);
   replacedWindow->SetData(previousAlert);
-  replacedWindow->SetDataIID(&NS_GET_IID(nsIDOMWindow));
+  replacedWindow->SetDataIID(&NS_GET_IID(mozIDOMWindowProxy));
   rv = argsArray->AppendElement(replacedWindow);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -240,12 +248,23 @@ nsXULAlerts::ShowAlert(nsIAlertNotification* aAlert,
   rv = argsArray->AppendElement(scriptableAlertSource);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIDOMWindow> newWindow;
+  nsCOMPtr<nsISupportsCString> scriptableIconURL (do_CreateInstance(NS_SUPPORTS_CSTRING_CONTRACTID));
+  NS_ENSURE_TRUE(scriptableIconURL, NS_ERROR_FAILURE);
+  if (aIconURI) {
+    nsAutoCString iconURL;
+    rv = aIconURI->GetSpec(iconURL);
+    NS_ENSURE_SUCCESS(rv, rv);
+    scriptableIconURL->SetData(iconURL);
+  }
+  rv = argsArray->AppendElement(scriptableIconURL);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<mozIDOMWindowProxy> newWindow;
   nsAutoCString features("chrome,dialog=yes,titlebar=no,popup=yes");
   if (inPrivateBrowsing) {
     features.AppendLiteral(",private");
   }
-  rv = wwatch->OpenWindow(0, ALERT_CHROME_URL, "_blank", features.get(),
+  rv = wwatch->OpenWindow(nullptr, ALERT_CHROME_URL, "_blank", features.get(),
                           argsArray, getter_AddRefs(newWindow));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -273,10 +292,8 @@ NS_IMETHODIMP
 nsXULAlerts::CloseAlert(const nsAString& aAlertName,
                         nsIPrincipal* aPrincipal)
 {
-  nsIDOMWindow* alert = mNamedWindows.GetWeak(aAlertName);
-  nsCOMPtr<nsPIDOMWindow> domWindow = do_QueryInterface(alert);
-  if (domWindow) {
-    MOZ_ASSERT(domWindow->IsOuterWindow());
+  mozIDOMWindowProxy* alert = mNamedWindows.GetWeak(aAlertName);
+  if (nsCOMPtr<nsPIDOMWindowOuter> domWindow = nsPIDOMWindowOuter::From(alert)) {
     domWindow->DispatchCustomEvent(NS_LITERAL_STRING("XULAlertClose"));
   }
   return NS_OK;

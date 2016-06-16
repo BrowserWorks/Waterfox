@@ -9,9 +9,9 @@
 
 #include "nsAutoPtr.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsCSSPseudoElements.h"
 #include "nsIDocument.h"
 #include "nsWrapperCache.h"
+#include "mozilla/AnimationPerformanceWarning.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ComputedTimingFunction.h" // ComputedTimingFunction
 #include "mozilla/LayerAnimationInfo.h"     // LayerAnimations::kRecords
@@ -35,13 +35,16 @@ class nsPresContext;
 
 namespace mozilla {
 
-struct AnimationCollection;
 class AnimValuesStyleRule;
+enum class CSSPseudoElementType : uint8_t;
 
 namespace dom {
+class ElementOrCSSPseudoElement;
+class OwningElementOrCSSPseudoElement;
 class UnrestrictedDoubleOrKeyframeEffectOptions;
 enum class IterationCompositeOperation : uint32_t;
 enum class CompositeOperation : uint32_t;
+struct AnimationPropertyState;
 }
 
 /**
@@ -54,6 +57,10 @@ struct ComputedTiming
   // Will equal StickyTimeDuration::Forever() if the animation repeats
   // indefinitely.
   StickyTimeDuration  mActiveDuration;
+  // The effect end time in local time (i.e. an offset from the effect's
+  // start time). Will equal StickyTimeDuration::Forever() if the animation
+  // plays indefinitely.
+  StickyTimeDuration  mEndTime;
   // Progress towards the end of the current iteration. If the effect is
   // being sampled backwards, this will go from 1.0 to 0.0.
   // Will be null if the animation is neither animating nor
@@ -64,6 +71,7 @@ struct ComputedTiming
   // Unlike TimingParams::mIterations, this value is
   // guaranteed to be in the range [0, Infinity].
   double              mIterations = 1.0;
+  double              mIterationStart = 0.0;
   StickyTimeDuration  mDuration;
 
   // This is the computed fill mode so it is never auto
@@ -94,7 +102,7 @@ struct AnimationPropertySegment
 {
   float mFromKey, mToKey;
   StyleAnimationValue mFromValue, mToValue;
-  ComputedTimingFunction mTimingFunction;
+  Maybe<ComputedTimingFunction> mTimingFunction;
 
   bool operator==(const AnimationPropertySegment& aOther) const {
     return mFromKey == aOther.mFromKey &&
@@ -131,13 +139,15 @@ struct AnimationProperty
   // If true, the propery is currently being animated on the compositor.
   //
   // Note that when the owning Animation requests a non-throttled restyle, in
-  // between calling RequestRestyle on its AnimationCollection and when the
+  // between calling RequestRestyle on its EffectCompositor and when the
   // restyle is performed, this member may temporarily become false even if
   // the animation remains on the layer after the restyle.
   //
   // **NOTE**: This member is not included when comparing AnimationProperty
   // objects for equality.
   bool mIsRunningOnCompositor = false;
+
+  Maybe<AnimationPerformanceWarning> mPerformanceWarning;
 
   InfallibleTArray<AnimationPropertySegment> mSegments;
 
@@ -169,7 +179,7 @@ class KeyframeEffectReadOnly : public AnimationEffectReadOnly
 public:
   KeyframeEffectReadOnly(nsIDocument* aDocument,
                          Element* aTarget,
-                         nsCSSPseudoElements::Type aPseudoType,
+                         CSSPseudoElementType aPseudoType,
                          const TimingParams& aTiming);
 
   NS_DECL_ISUPPORTS_INHERITED
@@ -188,19 +198,17 @@ public:
   // KeyframeEffectReadOnly interface
   static already_AddRefed<KeyframeEffectReadOnly>
   Constructor(const GlobalObject& aGlobal,
-              Element* aTarget,
-              const Optional<JS::Handle<JSObject*>>& aFrames,
+              const Nullable<ElementOrCSSPseudoElement>& aTarget,
+              JS::Handle<JSObject*> aFrames,
               const UnrestrictedDoubleOrKeyframeEffectOptions& aOptions,
-              ErrorResult& aRv);
-  Element* GetTarget() const {
-    // Currently we never return animations from the API whose effect
-    // targets a pseudo-element so this should never be called when
-    // mPseudoType is not 'none' (see bug 1174575).
-    MOZ_ASSERT(mPseudoType == nsCSSPseudoElements::ePseudo_NotPseudoElement,
-               "Requesting the target of a KeyframeEffect that targets a"
-               " pseudo-element is not yet supported.");
-    return mTarget;
+              ErrorResult& aRv)
+  {
+    return ConstructKeyframeEffect<KeyframeEffectReadOnly>(
+      aGlobal, aTarget, aFrames,
+      TimingParams::FromOptionsUnion(aOptions, aTarget), aRv);
   }
+
+  void GetTarget(Nullable<OwningElementOrCSSPseudoElement>& aRv) const;
   void GetFrames(JSContext*& aCx,
                  nsTArray<JSObject*>& aResult,
                  ErrorResult& aRv);
@@ -208,7 +216,7 @@ public:
   // Temporary workaround to return both the target element and pseudo-type
   // until we implement PseudoElement (bug 1174575).
   void GetTarget(Element*& aTarget,
-                 nsCSSPseudoElements::Type& aPseudoType) const {
+                 CSSPseudoElementType& aPseudoType) const {
     aTarget = mTarget;
     aPseudoType = mPseudoType;
   }
@@ -282,10 +290,12 @@ public:
   InfallibleTArray<AnimationProperty>& Properties() {
     return mProperties;
   }
-  // Copies the properties from another keyframe effect whilst preserving
-  // the mWinsInCascade and mIsRunningOnCompositor state of matching
+  // Updates the set of properties using the supplied list whilst preserving
+  // the mWinsInCascade and mIsRunningOnCompositor state of any matching
   // properties.
-  void CopyPropertiesFrom(const KeyframeEffectReadOnly& aOther);
+  // Returns true if we updated anything in the properties.
+  bool UpdateProperties(
+    const InfallibleTArray<AnimationProperty>& aProperties);
 
   // Updates |aStyleRule| with the animation values produced by this
   // AnimationEffect for the current time except any properties already
@@ -296,6 +306,8 @@ public:
   // Returns true if at least one property is being animated on compositor.
   bool IsRunningOnCompositor() const;
   void SetIsRunningOnCompositor(nsCSSProperty aProperty, bool aIsRunning);
+
+  void GetPropertyState(nsTArray<AnimationPropertyState>& aStates) const;
 
   // Returns true if this effect, applied to |aFrame|, contains
   // properties that mean we shouldn't run *any* compositor animations on this
@@ -311,15 +323,40 @@ public:
   //
   // Bug 1218620 - It seems like we don't need to be this restrictive. Wouldn't
   // it be ok to do 'opacity' animations on the compositor in either case?
-  bool ShouldBlockCompositorAnimations(const nsIFrame* aFrame) const;
+  //
+  // When returning true, |aOutPerformanceWarning| stores the reason why
+  // we shouldn't run the compositor animations.
+  bool ShouldBlockCompositorAnimations(
+    const nsIFrame* aFrame,
+    AnimationPerformanceWarning::Type& aPerformanceWarning) const;
 
   nsIDocument* GetRenderedDocument() const;
   nsPresContext* GetPresContext() const;
 
-  inline AnimationCollection* GetCollection() const;
+  // Associates a warning with the animated property on the specified frame
+  // indicating why, for example, the property could not be animated on the
+  // compositor. |aParams| and |aParamsLength| are optional parameters which
+  // will be used to generate a localized message for devtools.
+  void SetPerformanceWarning(
+    nsCSSProperty aProperty,
+    const AnimationPerformanceWarning& aWarning);
 
 protected:
+  KeyframeEffectReadOnly(nsIDocument* aDocument,
+                         Element* aTarget,
+                         CSSPseudoElementType aPseudoType,
+                         AnimationEffectTimingReadOnly* aTiming);
+
   virtual ~KeyframeEffectReadOnly();
+
+  template<typename KeyframeEffectType>
+  static already_AddRefed<KeyframeEffectType>
+  ConstructKeyframeEffect(const GlobalObject& aGlobal,
+                          const Nullable<ElementOrCSSPseudoElement>& aTarget,
+                          JS::Handle<JSObject*> aFrames,
+                          const TimingParams& aTiming,
+                          ErrorResult& aRv);
+
   void ResetIsRunningOnCompositor();
 
   // This effect is registered with its target element so long as:
@@ -333,13 +370,11 @@ protected:
   // owning Animation's timing.
   void UpdateTargetRegistration();
 
-  static TimingParams ConvertKeyframeEffectOptions(
-    const UnrestrictedDoubleOrKeyframeEffectOptions& aOptions);
-
   static void BuildAnimationPropertyList(
     JSContext* aCx,
     Element* aTarget,
-    const Optional<JS::Handle<JSObject*>>& aFrames,
+    CSSPseudoElementType aPseudoType,
+    JS::Handle<JSObject*> aFrames,
     InfallibleTArray<AnimationProperty>& aResult,
     ErrorResult& aRv);
 
@@ -347,7 +382,7 @@ protected:
   RefPtr<Animation> mAnimation;
 
   OwningNonNull<AnimationEffectTimingReadOnly> mTiming;
-  nsCSSPseudoElements::Type mPseudoType;
+  CSSPseudoElementType mPseudoType;
 
   InfallibleTArray<AnimationProperty> mProperties;
 
@@ -367,14 +402,56 @@ private:
   bool CanThrottleTransformChanges(nsIFrame& aFrame) const;
 
   // Returns true unless Gecko limitations prevent performing transform
-  // animations for |aFrame|. Any limitations that are encountered are
-  // logged using |aContent| to describe the affected content.
-  // If |aContent| is nullptr, no logging is performed
-  static bool CanAnimateTransformOnCompositor(const nsIFrame* aFrame,
-                                              const nsIContent* aContent);
+  // animations for |aFrame|. When returning true, the reason for the
+  // limitation is stored in |aOutPerformanceWarning|.
+  static bool CanAnimateTransformOnCompositor(
+    const nsIFrame* aFrame,
+    AnimationPerformanceWarning::Type& aPerformanceWarning);
   static bool IsGeometricProperty(const nsCSSProperty aProperty);
 
   static const TimeDuration OverflowRegionRefreshInterval();
+};
+
+class KeyframeEffect : public KeyframeEffectReadOnly
+{
+public:
+  KeyframeEffect(nsIDocument* aDocument,
+                 Element* aTarget,
+                 CSSPseudoElementType aPseudoType,
+                 const TimingParams& aTiming);
+
+  JSObject* WrapObject(JSContext* aCx,
+                       JS::Handle<JSObject*> aGivenProto) override;
+
+  static already_AddRefed<KeyframeEffect>
+  Constructor(const GlobalObject& aGlobal,
+              const Nullable<ElementOrCSSPseudoElement>& aTarget,
+              JS::Handle<JSObject*> aFrames,
+              const UnrestrictedDoubleOrKeyframeEffectOptions& aOptions,
+              ErrorResult& aRv)
+  {
+    return ConstructKeyframeEffect<KeyframeEffect>(
+      aGlobal, aTarget, aFrames,
+      TimingParams::FromOptionsUnion(aOptions, aTarget), aRv);
+  }
+
+  // More generalized version for Animatable.animate.
+  // Not exposed to content.
+  static already_AddRefed<KeyframeEffect>
+  inline Constructor(const GlobalObject& aGlobal,
+                     const Nullable<ElementOrCSSPseudoElement>& aTarget,
+                     JS::Handle<JSObject*> aFrames,
+                     const TimingParams& aTiming,
+                     ErrorResult& aRv)
+  {
+    return ConstructKeyframeEffect<KeyframeEffect>(aGlobal, aTarget, aFrames,
+                                                   aTiming, aRv);
+  }
+
+  void NotifySpecifiedTimingUpdated();
+
+protected:
+  ~KeyframeEffect() override;
 };
 
 } // namespace dom

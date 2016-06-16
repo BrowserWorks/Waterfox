@@ -216,7 +216,7 @@ nsXULElement::MaybeUpdatePrivateLifetime()
         return;
     }
 
-    nsPIDOMWindow* win = OwnerDoc()->GetWindow();
+    nsPIDOMWindowOuter* win = OwnerDoc()->GetWindow();
     nsCOMPtr<nsIDocShell> docShell = win ? win->GetDocShell() : nullptr;
     if (docShell) {
         docShell->SetAffectPrivateSessionLifetime(false);
@@ -501,7 +501,7 @@ nsXULElement::GetEventListenerManagerForAttr(nsIAtom* aAttrName, bool* aDefer)
     // listeners there?
     nsIDocument* doc = OwnerDoc();
 
-    nsPIDOMWindow *window;
+    nsPIDOMWindowInner *window;
     Element *root = doc->GetRootElement();
     if ((!root || root == this) && !mNodeInfo->Equals(nsGkAtoms::overlay) &&
         (window = doc->GetInnerWindow())) {
@@ -679,7 +679,7 @@ nsXULElement::PerformAccesskey(bool aKeyCausesActivation,
               fm->SetFocus(elementToFocus, nsIFocusManager::FLAG_BYKEY);
 
               // Return true if the element became focused.
-              nsPIDOMWindow* window = OwnerDoc()->GetWindow();
+              nsPIDOMWindowOuter* window = OwnerDoc()->GetWindow();
               focused = (window && window->GetFocusedNode());
             }
           }
@@ -859,7 +859,8 @@ nsXULElement::BindToTree(nsIDocument* aDocument,
     // can be moved from the document that creates them to another document.
 
     if (!XULElementsRulesInMinimalXULSheet(NodeInfo()->NameAtom())) {
-      doc->EnsureOnDemandBuiltInUASheet(nsLayoutStylesheetCache::XULSheet());
+      auto cache = nsLayoutStylesheetCache::For(doc->GetStyleBackendType());
+      doc->EnsureOnDemandBuiltInUASheet(cache->XULSheet());
       // To keep memory usage down it is important that we try and avoid
       // pulling xul.css into non-XUL documents. That should be very rare, and
       // for HTML we currently should only pull it in if the document contains
@@ -1726,7 +1727,7 @@ nsXULElement::Blur(ErrorResult& rv)
     if (!doc)
       return;
 
-    nsIDOMWindow* win = doc->GetWindow();
+    nsPIDOMWindowOuter* win = doc->GetWindow();
     nsIFocusManager* fm = nsFocusManager::GetFocusManager();
     if (win && fm) {
       rv = fm->ClearFocus(win);

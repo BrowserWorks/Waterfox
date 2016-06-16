@@ -83,7 +83,7 @@ add_task(function* test_pushNotifications() {
       y: '26jk0IFbqcK6-JxhHAm-rsHEwy0CyVJjtnfOcqc1tgA'
     },
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
     quota: Infinity,
     systemRecord: true,
   }, {
@@ -102,7 +102,7 @@ add_task(function* test_pushNotifications() {
       y: '5TZ1rK8Ldih6ljyxVwnBA-nygQHGRpEmu1jV5K8437E'
     },
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
     quota: Infinity,
     systemRecord: true,
   }, {
@@ -121,7 +121,7 @@ add_task(function* test_pushNotifications() {
       y: 'Ja6n3YH8TOcH8narDF6t8mKVvg2ioLW-8MH5O4dzGcI'
     },
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
     quota: Infinity,
     systemRecord: true,
   }, {
@@ -151,28 +151,28 @@ add_task(function* test_pushNotifications() {
   }
 
   let notifyPromise = Promise.all([
-    promiseObserverNotification('push-message', function(subject, data) {
+    promiseObserverNotification(PushServiceComponent.pushTopic, function(subject, data) {
       var message = subject.QueryInterface(Ci.nsIPushMessage);
       if (message && (data == "https://example.com/page/1")){
         equal(message.text(), "Some message", "decoded message is incorrect");
         return true;
       }
     }),
-    promiseObserverNotification('push-message', function(subject, data) {
+    promiseObserverNotification(PushServiceComponent.pushTopic, function(subject, data) {
       var message = subject.QueryInterface(Ci.nsIPushMessage);
       if (message && (data == "https://example.com/page/2")){
         equal(message.text(), "Some message", "decoded message is incorrect");
         return true;
       }
     }),
-    promiseObserverNotification('push-message', function(subject, data) {
+    promiseObserverNotification(PushServiceComponent.pushTopic, function(subject, data) {
       var message = subject.QueryInterface(Ci.nsIPushMessage);
       if (message && (data == "https://example.com/page/3")){
         equal(message.text(), "Some message", "decoded message is incorrect");
         return true;
       }
     }),
-    promiseObserverNotification('push-message', function(subject, data) {
+    promiseObserverNotification(PushServiceComponent.pushTopic, function(subject, data) {
       var message = subject.QueryInterface(Ci.nsIPushMessage);
       if (message && (data == "https://example.com/page/4")){
         equal(message.text(), "Yet another message", "decoded message is incorrect");
@@ -186,8 +186,7 @@ add_task(function* test_pushNotifications() {
     db
   });
 
-  yield waitForPromise(notifyPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for notifications');
+  yield notifyPromise;
 });
 
 add_task(function* test_complete() {

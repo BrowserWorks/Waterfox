@@ -135,7 +135,8 @@ TextureClientRecycleAllocator::CreateOrRecycle(ITextureClientAllocationHelper& a
   // This class does not handle ContentClient's TextureClient allocation.
   MOZ_ASSERT(aHelper.mAllocationFlags == TextureAllocationFlags::ALLOC_DEFAULT ||
              aHelper.mAllocationFlags == TextureAllocationFlags::ALLOC_DISALLOW_BUFFERTEXTURECLIENT ||
-             aHelper.mAllocationFlags == TextureAllocationFlags::ALLOC_FOR_OUT_OF_BAND_CONTENT);
+             aHelper.mAllocationFlags == TextureAllocationFlags::ALLOC_FOR_OUT_OF_BAND_CONTENT ||
+             aHelper.mAllocationFlags == TextureAllocationFlags::ALLOC_MANUAL_SYNCHRONIZATION);
   MOZ_ASSERT(aHelper.mTextureFlags & TextureFlags::RECYCLE);
 
   RefPtr<TextureClientHolder> textureHolder;
@@ -179,6 +180,7 @@ TextureClientRecycleAllocator::CreateOrRecycle(ITextureClientAllocationHelper& a
   // Make sure the texture holds a reference to us, and ask it to call RecycleTextureClient when its
   // ref count drops to 1.
   client->SetRecycleAllocator(this);
+  client->SetInUse(true);
   return client.forget();
 }
 
@@ -193,9 +195,34 @@ TextureClientRecycleAllocator::Allocate(gfx::SurfaceFormat aFormat,
                                          aTextureFlags, aAllocFlags);
 }
 
+class TextureClientWaitTask : public Task
+{
+public:
+  explicit TextureClientWaitTask(TextureClient* aClient)
+    : mTextureClient(aClient)
+  {}
+
+  virtual void Run() override
+  {
+    mTextureClient->WaitForCompositorRecycle();
+  }
+
+private:
+  RefPtr<TextureClient> mTextureClient;
+};
+
 void
 TextureClientRecycleAllocator::RecycleTextureClient(TextureClient* aClient)
 {
+  if (aClient->IsInUse()) {
+    aClient->SetInUse(false);
+    // This adds another ref to aClient, and drops it after a round trip
+    // to the compositor. We should then get this callback a second time
+    // and can recycle properly.
+    Task* task = new TextureClientWaitTask(aClient);
+    mSurfaceAllocator->GetMessageLoop()->PostTask(FROM_HERE, task);
+    return;
+  }
   // Clearing the recycle allocator drops a reference, so make sure we stay alive
   // for the duration of this function.
   RefPtr<TextureClientRecycleAllocator> kungFuDeathGrip(this);

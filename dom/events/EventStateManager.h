@@ -840,7 +840,7 @@ protected:
    * aSelection - [out] set to the selection to be dragged
    * aTargetNode - [out] the draggable node, or null if there isn't one
    */
-  void DetermineDragTargetAndDefaultData(nsPIDOMWindow* aWindow,
+  void DetermineDragTargetAndDefaultData(nsPIDOMWindowOuter* aWindow,
                                          nsIContent* aSelectionTarget,
                                          dom::DataTransfer* aDataTransfer,
                                          nsISelection** aSelection,
@@ -896,9 +896,9 @@ private:
                                   nsIContent* aStopBefore,
                                   EventStates aState,
                                   bool aAddState);
-  static PLDHashOperator ResetLastOverForContent(const uint32_t& aIdx,
-                                                 RefPtr<OverOutElementsWrapper>& aChunk,
-                                                 void* aClosure);
+  static void ResetLastOverForContent(const uint32_t& aIdx,
+                                      RefPtr<OverOutElementsWrapper>& aChunk,
+                                      nsIContent* aClosure);
   void PostHandleKeyboardEvent(WidgetKeyboardEvent* aKeyboardEvent,
                                nsEventStatus& aStatus,
                                bool dispatchedToContentProcess);

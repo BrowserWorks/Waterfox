@@ -30,6 +30,7 @@
 #include "mozilla/media/MediaChild.h"
 #include "mozilla/media/MediaParent.h"
 #include "mozilla/Logging.h"
+#include "mozilla/UniquePtr.h"
 #include "DOMMediaStream.h"
 
 #ifdef MOZ_WEBRTC
@@ -94,7 +95,8 @@ public:
   NS_IMETHOD GetType(nsAString& aType);
   Source* GetSource();
   nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
-                    const MediaEnginePrefs &aPrefs);
+                    const MediaEnginePrefs &aPrefs,
+                    const nsACString& aOrigin);
   nsresult Restart(const dom::MediaTrackConstraints &aConstraints,
                    const MediaEnginePrefs &aPrefs);
 };
@@ -108,7 +110,8 @@ public:
   NS_IMETHOD GetType(nsAString& aType);
   Source* GetSource();
   nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
-                    const MediaEnginePrefs &aPrefs);
+                    const MediaEnginePrefs &aPrefs,
+                    const nsACString& aOrigin);
   nsresult Restart(const dom::MediaTrackConstraints &aConstraints,
                    const MediaEnginePrefs &aPrefs);
 };
@@ -166,12 +169,12 @@ public:
 
   void StopSharing();
 
-  void StopTrack(TrackID aID, bool aIsAudio);
+  void StopTrack(TrackID aID);
 
   typedef media::Pledge<bool, dom::MediaStreamError*> PledgeVoid;
 
   already_AddRefed<PledgeVoid>
-  ApplyConstraintsToTrack(nsPIDOMWindow* aWindow,
+  ApplyConstraintsToTrack(nsPIDOMWindowInner* aWindow,
                           TrackID aID, bool aIsAudio,
                           const dom::MediaTrackConstraints& aConstraints);
 
@@ -225,7 +228,7 @@ public:
 
   // implement in .cpp to avoid circular dependency with MediaOperationTask
   // Can be invoked from EITHER MainThread or MSG thread
-  void Invalidate();
+  void Stop();
 
   void
   AudioConfig(bool aEchoOn, uint32_t aEcho,
@@ -318,7 +321,7 @@ private:
   // MainThread only.
   bool mAudioStopped;
 
-  // true if we have sent MEDIA_STOP or MEDIA_STOP_TRACK for mAudioDevice.
+  // true if we have sent MEDIA_STOP or MEDIA_STOP_TRACK for mVideoDevice.
   // MainThread only.
   bool mVideoStopped;
 
@@ -426,7 +429,7 @@ public:
     return !!sSingleton;
   }
 
-  static nsresult NotifyRecordingStatusChange(nsPIDOMWindow* aWindow,
+  static nsresult NotifyRecordingStatusChange(nsPIDOMWindowInner* aWindow,
                                               const nsString& aMsg,
                                               const bool& aIsAudio,
                                               const bool& aIsVideo);
@@ -450,30 +453,30 @@ public:
     GetUserMediaCallbackMediaStreamListener *aListener);
 
   nsresult GetUserMedia(
-    nsPIDOMWindow* aWindow,
+    nsPIDOMWindowInner* aWindow,
     const dom::MediaStreamConstraints& aConstraints,
     nsIDOMGetUserMediaSuccessCallback* onSuccess,
     nsIDOMGetUserMediaErrorCallback* onError);
 
-  nsresult GetUserMediaDevices(nsPIDOMWindow* aWindow,
+  nsresult GetUserMediaDevices(nsPIDOMWindowInner* aWindow,
                                const dom::MediaStreamConstraints& aConstraints,
                                nsIGetUserMediaDevicesSuccessCallback* onSuccess,
                                nsIDOMGetUserMediaErrorCallback* onError,
                                uint64_t aInnerWindowID = 0,
                                const nsAString& aCallID = nsString());
 
-  nsresult EnumerateDevices(nsPIDOMWindow* aWindow,
+  nsresult EnumerateDevices(nsPIDOMWindowInner* aWindow,
                             nsIGetUserMediaDevicesSuccessCallback* aOnSuccess,
                             nsIDOMGetUserMediaErrorCallback* aOnFailure);
 
-  nsresult EnumerateDevices(nsPIDOMWindow* aWindow, dom::Promise& aPromise);
+  nsresult EnumerateDevices(nsPIDOMWindowInner* aWindow, dom::Promise& aPromise);
   void OnNavigation(uint64_t aWindowID);
   bool IsActivelyCapturingOrHasAPermission(uint64_t aWindowId);
 
   MediaEnginePrefs mPrefs;
 
   typedef nsTArray<RefPtr<MediaDevice>> SourceSet;
-  static bool IsPrivateBrowsing(nsPIDOMWindow *window);
+  static bool IsPrivateBrowsing(nsPIDOMWindowInner* window);
 private:
   typedef media::Pledge<SourceSet*, dom::MediaStreamError*> PledgeSourceSet;
   typedef media::Pledge<const char*, dom::MediaStreamError*> PledgeChar;
@@ -499,7 +502,7 @@ private:
   already_AddRefed<PledgeChar>
   SelectSettings(
       dom::MediaStreamConstraints& aConstraints,
-      RefPtr<media::Refcountable<ScopedDeletePtr<SourceSet>>>& aSources);
+      RefPtr<media::Refcountable<UniquePtr<SourceSet>>>& aSources);
 
   StreamListeners* AddWindowID(uint64_t aWindowId);
   WindowTable *GetActiveWindows() {
@@ -520,7 +523,7 @@ private:
   void Shutdown();
 
   void StopScreensharing(uint64_t aWindowID);
-  void IterateWindowListeners(nsPIDOMWindow *aWindow,
+  void IterateWindowListeners(nsPIDOMWindowInner *aWindow,
                               WindowListenerCallback aCallback,
                               void *aData);
 
@@ -548,7 +551,7 @@ private:
 #endif
 public:
   media::CoatCheck<media::Pledge<nsCString>> mGetOriginKeyPledges;
-  ScopedDeletePtr<media::Parent<media::NonE10s>> mNonE10sParent;
+  UniquePtr<media::Parent<media::NonE10s>> mNonE10sParent;
 };
 
 } // namespace mozilla

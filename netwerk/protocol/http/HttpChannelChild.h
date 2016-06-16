@@ -8,6 +8,7 @@
 #ifndef mozilla_net_HttpChannelChild_h
 #define mozilla_net_HttpChannelChild_h
 
+#include "mozilla/UniquePtr.h"
 #include "mozilla/net/HttpBaseChannel.h"
 #include "mozilla/net/PHttpChannelChild.h"
 #include "mozilla/net/ChannelEventQueue.h"
@@ -125,9 +126,9 @@ protected:
                               const nsresult& status,
                               const uint64_t& progress,
                               const uint64_t& progressMax,
-                              const nsCString& data,
                               const uint64_t& offset,
-                              const uint32_t& count) override;
+                              const uint32_t& count,
+                              const nsCString& data) override;
   bool RecvOnStopRequest(const nsresult& statusCode, const ResourceTimingStruct& timing) override;
   bool RecvOnProgress(const int64_t& progress, const int64_t& progressMax) override;
   bool RecvOnStatus(const nsresult& status) override;
@@ -204,7 +205,7 @@ private:
   // If nsUnknownDecoder is involved OnStartRequest call will be delayed and
   // this queue keeps OnDataAvailable data until OnStartRequest is finally
   // called.
-  nsTArray<nsAutoPtr<ChannelEvent>> mUnknownDecoderEventQ;
+  nsTArray<UniquePtr<ChannelEvent>> mUnknownDecoderEventQ;
   bool mUnknownDecoderInvolved;
 
   // Once set, OnData and possibly OnStop will be diverted to the parent.
@@ -267,9 +268,9 @@ private:
                           const nsresult& status,
                           const uint64_t progress,
                           const uint64_t& progressMax,
-                          const nsCString& data,
                           const uint64_t& offset,
-                          const uint32_t& count);
+                          const uint32_t& count,
+                          const nsCString& data);
   void OnStopRequest(const nsresult& channelStatus, const ResourceTimingStruct& timing);
   void MaybeDivertOnStop(const nsresult& aChannelStatus);
   void OnProgress(const int64_t& progress, const int64_t& progressMax);

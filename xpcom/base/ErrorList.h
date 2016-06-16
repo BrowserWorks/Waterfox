@@ -637,8 +637,6 @@
   ERROR(NS_ERROR_XPC_BAD_CONVERT_JS_ZERO_ISNOT_NULL,   FAILURE(53)),
   ERROR(NS_ERROR_XPC_CANT_PASS_CPOW_TO_NATIVE,         FAILURE(54)),
   /* any new errors here should have an associated entry added in xpc.msg */
-
-  ERROR(NS_SUCCESS_I_DID_SOMETHING,      SUCCESS(1)),
 #undef MODULE
 
 
@@ -707,6 +705,7 @@
   ERROR(NS_ERROR_TRACKING_URI,          FAILURE(34)),
   ERROR(NS_ERROR_UNWANTED_URI,          FAILURE(35)),
   ERROR(NS_ERROR_FORBIDDEN_URI,         FAILURE(36)),
+  ERROR(NS_ERROR_BLOCKED_URI,           FAILURE(37)),
   /* Used when "Save Link As..." doesn't see the headers quickly enough to
    * choose a filename.  See nsContextMenu.js. */
   ERROR(NS_ERROR_SAVE_LINK_AS_TIMEOUT,  FAILURE(32)),
@@ -933,6 +932,7 @@
 #define MODULE NS_ERROR_MODULE_DOM_ANIM
   ERROR(NS_ERROR_DOM_ANIM_MISSING_PROPS_ERR,              FAILURE(1)),
   ERROR(NS_ERROR_DOM_ANIM_NO_TARGET_ERR,                  FAILURE(2)),
+  ERROR(NS_ERROR_DOM_ANIM_TARGET_NOT_IN_DOC_ERR,          FAILURE(3)),
 #undef MODULE
 
   /* ======================================================================= */

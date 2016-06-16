@@ -36,7 +36,8 @@
 #include "nsIDocument.h"
 
 #include "nsCSSPseudoElements.h"
-#include "nsStyleSet.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 #include "imgIRequest.h"
 #include "nsLayoutUtils.h"
 #include "nsCSSKeywords.h"
@@ -484,12 +485,12 @@ nsComputedDOMStyle::GetStyleContextForElementNoFlush(Element* aElement,
   if (!presContext)
     return nullptr;
 
-  nsStyleSet *styleSet = presShell->StyleSet();
+  StyleSetHandle styleSet = presShell->StyleSet();
 
   RefPtr<nsStyleContext> sc;
   if (aPseudo) {
-    nsCSSPseudoElements::Type type = nsCSSPseudoElements::GetPseudoType(aPseudo);
-    if (type >= nsCSSPseudoElements::ePseudo_PseudoElementCount) {
+    CSSPseudoElementType type = nsCSSPseudoElements::GetPseudoType(aPseudo);
+    if (type >= CSSPseudoElementType::Count) {
       return nullptr;
     }
     nsIFrame* frame = nsLayoutUtils::GetStyleFrame(aElement);
@@ -502,6 +503,11 @@ nsComputedDOMStyle::GetStyleContextForElementNoFlush(Element* aElement,
   }
 
   if (aStyleType == eDefaultOnly) {
+    if (styleSet->IsServo()) {
+      NS_ERROR("stylo: ServoStyleSets cannot supply UA-only styles yet");
+      return nullptr;
+    }
+
     // We really only want the user and UA rules.  Filter out the other ones.
     nsTArray< nsCOMPtr<nsIStyleRule> > rules;
     for (nsRuleNode* ruleNode = sc->RuleNode();
@@ -522,7 +528,7 @@ nsComputedDOMStyle::GetStyleContextForElementNoFlush(Element* aElement,
       rules[i].swap(rules[length - i - 1]);
     }
     
-    sc = styleSet->ResolveStyleForRules(parentContext, rules);
+    sc = styleSet->AsGecko()->ResolveStyleForRules(parentContext, rules);
   }
 
   return sc.forget();
@@ -673,7 +679,7 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
       if (type == nsGkAtoms::tableOuterFrame) {
         // If the frame is an outer table frame then we should get the style
         // from the inner table frame.
-        mInnerFrame = mOuterFrame->GetFirstPrincipalChild();
+        mInnerFrame = mOuterFrame->PrincipalChildList().FirstChild();
         NS_ASSERTION(mInnerFrame, "Outer table must have an inner");
         NS_ASSERTION(!mInnerFrame->GetNextSibling(),
                      "Outer table frames should have just one child, "
@@ -696,8 +702,7 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
       while (topWithPseudoElementData->GetParent()->HasPseudoElementData()) {
         topWithPseudoElementData = topWithPseudoElementData->GetParent();
       }
-      nsCSSPseudoElements::Type pseudo =
-        topWithPseudoElementData->GetPseudoType();
+      CSSPseudoElementType pseudo = topWithPseudoElementData->GetPseudoType();
       nsIAtom* pseudoAtom = nsCSSPseudoElements::GetPseudoAtom(pseudo);
       nsAutoString assertMsg(
         NS_LITERAL_STRING("we should be in a pseudo-element that is expected to contain elements ("));
@@ -1798,17 +1803,16 @@ nsComputedDOMStyle::DoGetFontVariantPosition()
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::GetBackgroundList(uint8_t nsStyleBackground::Layer::* aMember,
-                                      uint32_t nsStyleBackground::* aCount,
+nsComputedDOMStyle::GetBackgroundList(uint8_t nsStyleImageLayers::Layer::* aMember,
+                                      uint32_t nsStyleImageLayers::* aCount,
+                                      const nsStyleImageLayers& aLayers,
                                       const KTableEntry aTable[])
 {
-  const nsStyleBackground* bg = StyleBackground();
-
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
 
-  for (uint32_t i = 0, i_end = bg->*aCount; i < i_end; ++i) {
+  for (uint32_t i = 0, i_end = aLayers.*aCount; i < i_end; ++i) {
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-    val->SetIdent(nsCSSProps::ValueToKeywordEnum(bg->mLayers[i].*aMember,
+    val->SetIdent(nsCSSProps::ValueToKeywordEnum(aLayers.mLayers[i].*aMember,
                                                  aTable));
     valueList->AppendCSSValue(val.forget());
   }
@@ -1819,17 +1823,19 @@ nsComputedDOMStyle::GetBackgroundList(uint8_t nsStyleBackground::Layer::* aMembe
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetBackgroundAttachment()
 {
-  return GetBackgroundList(&nsStyleBackground::Layer::mAttachment,
-                           &nsStyleBackground::mAttachmentCount,
-                           nsCSSProps::kBackgroundAttachmentKTable);
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mAttachment,
+                           &nsStyleImageLayers::mAttachmentCount,
+                           StyleBackground()->mImage,
+                           nsCSSProps::kImageLayerAttachmentKTable);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetBackgroundClip()
 {
-  return GetBackgroundList(&nsStyleBackground::Layer::mClip,
-                           &nsStyleBackground::mClipCount,
-                           nsCSSProps::kBackgroundOriginKTable);
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mClip,
+                           &nsStyleImageLayers::mClipCount,
+                           StyleBackground()->mImage,
+                           nsCSSProps::kImageLayerOriginKTable);
 }
 
 already_AddRefed<CSSValue>
@@ -2125,16 +2131,14 @@ nsComputedDOMStyle::SetValueToStyleImage(const nsStyleImage& aStyleImage,
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetBackgroundImage()
+nsComputedDOMStyle::DoGetImageLayerImage(const nsStyleImageLayers& aLayers)
 {
-  const nsStyleBackground* bg = StyleBackground();
-
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
 
-  for (uint32_t i = 0, i_end = bg->mImageCount; i < i_end; ++i) {
+  for (uint32_t i = 0, i_end = aLayers.mImageCount; i < i_end; ++i) {
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-    const nsStyleImage& image = bg->mLayers[i].mImage;
+    const nsStyleImage& image = aLayers.mLayers[i].mImage;
     SetValueToStyleImage(image, val);
     valueList->AppendCSSValue(val.forget());
   }
@@ -2143,61 +2147,14 @@ nsComputedDOMStyle::DoGetBackgroundImage()
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetBackgroundBlendMode()
+nsComputedDOMStyle::DoGetImageLayerPosition(const nsStyleImageLayers& aLayers)
 {
-  return GetBackgroundList(&nsStyleBackground::Layer::mBlendMode,
-                           &nsStyleBackground::mBlendModeCount,
-                           nsCSSProps::kBlendModeKTable);
-}
-
-already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetBackgroundOrigin()
-{
-  return GetBackgroundList(&nsStyleBackground::Layer::mOrigin,
-                           &nsStyleBackground::mOriginCount,
-                           nsCSSProps::kBackgroundOriginKTable);
-}
-
-void
-nsComputedDOMStyle::SetValueToPositionCoord(
-    const nsStyleBackground::Position::PositionCoord& aCoord,
-    nsROCSSPrimitiveValue* aValue)
-{
-  if (!aCoord.mHasPercent) {
-    MOZ_ASSERT(aCoord.mPercent == 0.0f,
-               "Shouldn't have mPercent!");
-    aValue->SetAppUnits(aCoord.mLength);
-  } else if (aCoord.mLength == 0) {
-    aValue->SetPercent(aCoord.mPercent);
-  } else {
-    SetValueToCalc(&aCoord, aValue);
-  }
-}
-
-void
-nsComputedDOMStyle::SetValueToPosition(
-    const nsStyleBackground::Position& aPosition,
-    nsDOMCSSValueList* aValueList)
-{
-  RefPtr<nsROCSSPrimitiveValue> valX = new nsROCSSPrimitiveValue;
-  SetValueToPositionCoord(aPosition.mXPosition, valX);
-  aValueList->AppendCSSValue(valX.forget());
-
-  RefPtr<nsROCSSPrimitiveValue> valY = new nsROCSSPrimitiveValue;
-  SetValueToPositionCoord(aPosition.mYPosition, valY);
-  aValueList->AppendCSSValue(valY.forget());
-}
-
-already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetBackgroundPosition()
-{
-  const nsStyleBackground* bg = StyleBackground();
-
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
 
-  for (uint32_t i = 0, i_end = bg->mPositionCount; i < i_end; ++i) {
+  for (uint32_t i = 0, i_end = aLayers.mPositionCount; i < i_end; ++i) {
     RefPtr<nsDOMCSSValueList> itemList = GetROCSSValueList(false);
-    SetValueToPosition(bg->mLayers[i].mPosition, itemList);
+
+    SetValueToPosition(aLayers.mLayers[i].mPosition, itemList);
     valueList->AppendCSSValue(itemList.forget());
   }
 
@@ -2205,29 +2162,27 @@ nsComputedDOMStyle::DoGetBackgroundPosition()
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetBackgroundRepeat()
+nsComputedDOMStyle::DoGetImageLayerRepeat(const nsStyleImageLayers& aLayers)
 {
-  const nsStyleBackground* bg = StyleBackground();
-
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
 
-  for (uint32_t i = 0, i_end = bg->mRepeatCount; i < i_end; ++i) {
+  for (uint32_t i = 0, i_end = aLayers.mRepeatCount; i < i_end; ++i) {
     RefPtr<nsDOMCSSValueList> itemList = GetROCSSValueList(false);
     RefPtr<nsROCSSPrimitiveValue> valX = new nsROCSSPrimitiveValue;
 
-    const uint8_t& xRepeat = bg->mLayers[i].mRepeat.mXRepeat;
-    const uint8_t& yRepeat = bg->mLayers[i].mRepeat.mYRepeat;
+    const uint8_t& xRepeat = aLayers.mLayers[i].mRepeat.mXRepeat;
+    const uint8_t& yRepeat = aLayers.mLayers[i].mRepeat.mYRepeat;
 
     bool hasContraction = true;
     unsigned contraction;
     if (xRepeat == yRepeat) {
       contraction = xRepeat;
-    } else if (xRepeat == NS_STYLE_BG_REPEAT_REPEAT &&
-               yRepeat == NS_STYLE_BG_REPEAT_NO_REPEAT) {
-      contraction = NS_STYLE_BG_REPEAT_REPEAT_X;
-    } else if (xRepeat == NS_STYLE_BG_REPEAT_NO_REPEAT &&
-               yRepeat == NS_STYLE_BG_REPEAT_REPEAT) {
-      contraction = NS_STYLE_BG_REPEAT_REPEAT_Y;
+    } else if (xRepeat == NS_STYLE_IMAGELAYER_REPEAT_REPEAT &&
+               yRepeat == NS_STYLE_IMAGELAYER_REPEAT_NO_REPEAT) {
+      contraction = NS_STYLE_IMAGELAYER_REPEAT_REPEAT_X;
+    } else if (xRepeat == NS_STYLE_IMAGELAYER_REPEAT_NO_REPEAT &&
+               yRepeat == NS_STYLE_IMAGELAYER_REPEAT_REPEAT) {
+      contraction = NS_STYLE_IMAGELAYER_REPEAT_REPEAT_Y;
     } else {
       hasContraction = false;
     }
@@ -2235,14 +2190,14 @@ nsComputedDOMStyle::DoGetBackgroundRepeat()
     RefPtr<nsROCSSPrimitiveValue> valY;
     if (hasContraction) {
       valX->SetIdent(nsCSSProps::ValueToKeywordEnum(contraction,
-                                         nsCSSProps::kBackgroundRepeatKTable));
+                                         nsCSSProps::kImageLayerRepeatKTable));
     } else {
       valY = new nsROCSSPrimitiveValue;
       
       valX->SetIdent(nsCSSProps::ValueToKeywordEnum(xRepeat,
-                                          nsCSSProps::kBackgroundRepeatKTable));
+                                          nsCSSProps::kImageLayerRepeatKTable));
       valY->SetIdent(nsCSSProps::ValueToKeywordEnum(yRepeat,
-                                          nsCSSProps::kBackgroundRepeatKTable));
+                                          nsCSSProps::kImageLayerRepeatKTable));
     }
     itemList->AppendCSSValue(valX.forget());
     if (valY) {
@@ -2255,21 +2210,19 @@ nsComputedDOMStyle::DoGetBackgroundRepeat()
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetBackgroundSize()
+nsComputedDOMStyle::DoGetImageLayerSize(const nsStyleImageLayers& aLayers)
 {
-  const nsStyleBackground* bg = StyleBackground();
-
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
 
-  for (uint32_t i = 0, i_end = bg->mSizeCount; i < i_end; ++i) {
-    const nsStyleBackground::Size &size = bg->mLayers[i].mSize;
+  for (uint32_t i = 0, i_end = aLayers.mSizeCount; i < i_end; ++i) {
+    const nsStyleImageLayers::Size &size = aLayers.mLayers[i].mSize;
 
     switch (size.mWidthType) {
-      case nsStyleBackground::Size::eContain:
-      case nsStyleBackground::Size::eCover: {
+      case nsStyleImageLayers::Size::eContain:
+      case nsStyleImageLayers::Size::eCover: {
         MOZ_ASSERT(size.mWidthType == size.mHeightType,
                    "unsynced types");
-        nsCSSKeyword keyword = size.mWidthType == nsStyleBackground::Size::eContain
+        nsCSSKeyword keyword = size.mWidthType == nsStyleImageLayers::Size::eContain
                              ? eCSSKeyword_contain
                              : eCSSKeyword_cover;
         RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
@@ -2283,11 +2236,11 @@ nsComputedDOMStyle::DoGetBackgroundSize()
         RefPtr<nsROCSSPrimitiveValue> valX = new nsROCSSPrimitiveValue;
         RefPtr<nsROCSSPrimitiveValue> valY = new nsROCSSPrimitiveValue;
 
-        if (size.mWidthType == nsStyleBackground::Size::eAuto) {
+        if (size.mWidthType == nsStyleImageLayers::Size::eAuto) {
           valX->SetIdent(eCSSKeyword_auto);
         } else {
           MOZ_ASSERT(size.mWidthType ==
-                       nsStyleBackground::Size::eLengthPercentage,
+                       nsStyleImageLayers::Size::eLengthPercentage,
                      "bad mWidthType");
           if (!size.mWidth.mHasPercent &&
               // negative values must have come from calc()
@@ -2304,11 +2257,11 @@ nsComputedDOMStyle::DoGetBackgroundSize()
           }
         }
 
-        if (size.mHeightType == nsStyleBackground::Size::eAuto) {
+        if (size.mHeightType == nsStyleImageLayers::Size::eAuto) {
           valY->SetIdent(eCSSKeyword_auto);
         } else {
           MOZ_ASSERT(size.mHeightType ==
-                       nsStyleBackground::Size::eLengthPercentage,
+                       nsStyleImageLayers::Size::eLengthPercentage,
                      "bad mHeightType");
           if (!size.mHeight.mHasPercent &&
               // negative values must have come from calc()
@@ -2333,6 +2286,82 @@ nsComputedDOMStyle::DoGetBackgroundSize()
   }
 
   return valueList.forget();
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundImage()
+{
+  const nsStyleImageLayers& layers = StyleBackground()->mImage;
+  return DoGetImageLayerImage(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundBlendMode()
+{
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mBlendMode,
+                           &nsStyleImageLayers::mBlendModeCount,
+                           StyleBackground()->mImage,
+                           nsCSSProps::kBlendModeKTable);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundOrigin()
+{
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mOrigin,
+                           &nsStyleImageLayers::mOriginCount,
+                           StyleBackground()->mImage,
+                           nsCSSProps::kImageLayerOriginKTable);
+}
+
+void
+nsComputedDOMStyle::SetValueToPositionCoord(
+    const nsStyleImageLayers::Position::PositionCoord& aCoord,
+    nsROCSSPrimitiveValue* aValue)
+{
+  if (!aCoord.mHasPercent) {
+    MOZ_ASSERT(aCoord.mPercent == 0.0f,
+               "Shouldn't have mPercent!");
+    aValue->SetAppUnits(aCoord.mLength);
+  } else if (aCoord.mLength == 0) {
+    aValue->SetPercent(aCoord.mPercent);
+  } else {
+    SetValueToCalc(&aCoord, aValue);
+  }
+}
+
+void
+nsComputedDOMStyle::SetValueToPosition(
+    const nsStyleImageLayers::Position& aPosition,
+    nsDOMCSSValueList* aValueList)
+{
+  RefPtr<nsROCSSPrimitiveValue> valX = new nsROCSSPrimitiveValue;
+  SetValueToPositionCoord(aPosition.mXPosition, valX);
+  aValueList->AppendCSSValue(valX.forget());
+
+  RefPtr<nsROCSSPrimitiveValue> valY = new nsROCSSPrimitiveValue;
+  SetValueToPositionCoord(aPosition.mYPosition, valY);
+  aValueList->AppendCSSValue(valY.forget());
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundPosition()
+{
+  const nsStyleImageLayers& layers = StyleBackground()->mImage;
+  return DoGetImageLayerPosition(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundRepeat()
+{
+  const nsStyleImageLayers& layers = StyleBackground()->mImage;
+  return DoGetImageLayerRepeat(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundSize()
+{
+  const nsStyleImageLayers& layers = StyleBackground()->mImage;
+  return DoGetImageLayerSize(layers);
 }
 
 already_AddRefed<CSSValue>
@@ -2363,8 +2392,10 @@ void
 nsComputedDOMStyle::AppendGridLineNames(nsString& aResult,
                                         const nsTArray<nsString>& aLineNames)
 {
-  MOZ_ASSERT(!aLineNames.IsEmpty(), "expected some line names");
   uint32_t numLines = aLineNames.Length();
+  if (numLines == 0) {
+    return;
+  }
   for (uint32_t i = 0;;) {
     nsStyleUtil::AppendEscapedCSSIdent(aLineNames[i], aResult);
     if (++i == numLines) {
@@ -2376,9 +2407,10 @@ nsComputedDOMStyle::AppendGridLineNames(nsString& aResult,
 
 void
 nsComputedDOMStyle::AppendGridLineNames(nsDOMCSSValueList* aValueList,
-                                        const nsTArray<nsString>& aLineNames)
+                                        const nsTArray<nsString>& aLineNames,
+                                        bool aSuppressEmptyList)
 {
-  if (aLineNames.IsEmpty()) {
+  if (aLineNames.IsEmpty() && aSuppressEmptyList) {
     return;
   }
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
@@ -2448,10 +2480,9 @@ nsComputedDOMStyle::GetGridTrackSize(const nsStyleCoord& aMinValue,
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::GetGridTemplateColumnsRows(const nsStyleGridTemplate& aTrackList,
-                                               const uint32_t aNumLeadingImplicitTracks,
-                                               const uint32_t aNumExplicitTracks,
-                                               const nsTArray<nscoord>* aTrackSizes)
+nsComputedDOMStyle::GetGridTemplateColumnsRows(
+  const nsStyleGridTemplate&   aTrackList,
+  const ComputedGridTrackInfo* aTrackInfo)
 {
   if (aTrackList.mIsSubgrid) {
     // XXX TODO: add support for repeat(auto-fill) for 'subgrid' (bug 1234311)
@@ -2464,22 +2495,25 @@ nsComputedDOMStyle::GetGridTemplateColumnsRows(const nsStyleGridTemplate& aTrack
     subgridKeyword->SetIdent(eCSSKeyword_subgrid);
     valueList->AppendCSSValue(subgridKeyword.forget());
 
-    for (uint32_t i = 0; i < aTrackList.mLineNameLists.Length(); i++) {
+    for (uint32_t i = 0, len = aTrackList.mLineNameLists.Length(); ; ++i) {
       if (MOZ_UNLIKELY(aTrackList.IsRepeatAutoIndex(i))) {
         MOZ_ASSERT(aTrackList.mIsAutoFill, "subgrid can only have 'auto-fill'");
-        MOZ_ASSERT(!aTrackList.mRepeatAutoLineNameListBefore.IsEmpty(),
-                   "The syntax is <line-names>+ so this shouldn't be empty");
         MOZ_ASSERT(aTrackList.mRepeatAutoLineNameListAfter.IsEmpty(),
                    "mRepeatAutoLineNameListAfter isn't used for subgrid");
         RefPtr<nsROCSSPrimitiveValue> start = new nsROCSSPrimitiveValue;
         start->SetString(NS_LITERAL_STRING("repeat(auto-fill,"));
         valueList->AppendCSSValue(start.forget());
-        AppendGridLineNames(valueList, aTrackList.mRepeatAutoLineNameListBefore);
+        AppendGridLineNames(valueList, aTrackList.mRepeatAutoLineNameListBefore,
+                            /*aSuppressEmptyList*/ false);
         RefPtr<nsROCSSPrimitiveValue> end = new nsROCSSPrimitiveValue;
         end->SetString(NS_LITERAL_STRING(")"));
         valueList->AppendCSSValue(end.forget());
       }
-      AppendGridLineNames(valueList, aTrackList.mLineNameLists[i]);
+      if (i == len) {
+        break;
+      }
+      AppendGridLineNames(valueList, aTrackList.mLineNameLists[i],
+                          /*aSuppressEmptyList*/ false);
     }
     return valueList.forget();
   }
@@ -2487,17 +2521,18 @@ nsComputedDOMStyle::GetGridTemplateColumnsRows(const nsStyleGridTemplate& aTrack
   uint32_t numSizes = aTrackList.mMinTrackSizingFunctions.Length();
   MOZ_ASSERT(aTrackList.mMaxTrackSizingFunctions.Length() == numSizes,
              "Different number of min and max track sizing functions");
-  if (aTrackSizes) {
+  if (aTrackInfo) {
     DebugOnly<bool> isAutoFill =
       aTrackList.HasRepeatAuto() && aTrackList.mIsAutoFill;
     DebugOnly<bool> isAutoFit =
       aTrackList.HasRepeatAuto() && !aTrackList.mIsAutoFill;
-    MOZ_ASSERT(aNumExplicitTracks == numSizes ||
-               (isAutoFill && aNumExplicitTracks >= numSizes) ||
-               (isAutoFit && aNumExplicitTracks + 1 >= numSizes),
+    DebugOnly<uint32_t> numExplicitTracks = aTrackInfo->mNumExplicitTracks;
+    MOZ_ASSERT(numExplicitTracks == numSizes ||
+               (isAutoFill && numExplicitTracks >= numSizes) ||
+               (isAutoFit && numExplicitTracks + 1 >= numSizes),
                "expected all explicit tracks (or possibly one less, if there's "
                "an 'auto-fit' track, since that can collapse away)");
-    numSizes = aTrackSizes->Length();
+    numSizes = aTrackInfo->mSizes.Length();
   }
 
   // An empty <track-list> is represented as "none" in syntax.
@@ -2508,29 +2543,32 @@ nsComputedDOMStyle::GetGridTemplateColumnsRows(const nsStyleGridTemplate& aTrack
   }
 
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
-  if (aTrackSizes) {
+  if (aTrackInfo) {
     // We've done layout on the grid and have resolved the sizes of its tracks,
     // so we'll return those sizes here.  The grid spec says we MAY use
     // repeat(<positive-integer>, Npx) here for consecutive tracks with the same
     // size, but that doesn't seem worth doing since even for repeat(auto-*)
     // the resolved size might differ for the repeated tracks.
+    const nsTArray<nscoord>& trackSizes = aTrackInfo->mSizes;
+    const uint32_t numExplicitTracks = aTrackInfo->mNumExplicitTracks;
+    const uint32_t numLeadingImplicitTracks = aTrackInfo->mNumLeadingImplicitTracks;
     MOZ_ASSERT(numSizes > 0 &&
-               numSizes >= aNumLeadingImplicitTracks + aNumExplicitTracks);
+               numSizes >= numLeadingImplicitTracks + numExplicitTracks);
 
     // Add any leading implicit tracks.
-    for (uint32_t i = 0; i < aNumLeadingImplicitTracks; ++i) {
+    for (uint32_t i = 0; i < numLeadingImplicitTracks; ++i) {
       RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-      val->SetAppUnits((*aTrackSizes)[i]);
+      val->SetAppUnits(trackSizes[i]);
       valueList->AppendCSSValue(val.forget());
     }
 
     // Then add any explicit tracks.
-    if (aNumExplicitTracks) {
+    if (numExplicitTracks) {
       int32_t endOfRepeat = 0;  // first index after any repeat() tracks
       int32_t offsetToLastRepeat = 0;
       if (aTrackList.HasRepeatAuto()) {
         // offsetToLastRepeat is -1 if all repeat(auto-fit) tracks are empty
-        offsetToLastRepeat = aNumExplicitTracks + 1 - aTrackList.mLineNameLists.Length();
+        offsetToLastRepeat = numExplicitTracks + 1 - aTrackList.mLineNameLists.Length();
         endOfRepeat = aTrackList.mRepeatAutoIndex + offsetToLastRepeat + 1;
       }
       for (int32_t i = 0;; i++) {
@@ -2565,20 +2603,20 @@ nsComputedDOMStyle::GetGridTemplateColumnsRows(const nsStyleGridTemplate& aTrack
           const nsTArray<nsString>& lineNames = aTrackList.mLineNameLists[i];
           AppendGridLineNames(valueList, lineNames);
         }
-        if (uint32_t(i) == aNumExplicitTracks) {
+        if (uint32_t(i) == numExplicitTracks) {
           break;
         }
         RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-        val->SetAppUnits((*aTrackSizes)[i + aNumLeadingImplicitTracks]);
+        val->SetAppUnits(trackSizes[i + numLeadingImplicitTracks]);
         valueList->AppendCSSValue(val.forget());
       }
     }
 
     // Add any trailing implicit tracks.
-    for (uint32_t i = aNumLeadingImplicitTracks + aNumExplicitTracks;
+    for (uint32_t i = numLeadingImplicitTracks + numExplicitTracks;
          i < numSizes; ++i) {
       RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-      val->SetAppUnits((*aTrackSizes)[i]);
+      val->SetAppUnits(trackSizes[i]);
       valueList->AppendCSSValue(val.forget());
     }
   } else {
@@ -2652,45 +2690,31 @@ nsComputedDOMStyle::DoGetGridAutoRows()
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetGridTemplateColumns()
 {
-  const nsTArray<nscoord>* trackSizes = nullptr;
-  uint32_t numLeadingImplicitTracks = 0;
-  uint32_t numExplicitTracks = 0;
+  const ComputedGridTrackInfo* info = nullptr;
   if (mInnerFrame) {
     nsIFrame* gridContainerCandidate = mInnerFrame->GetContentInsertionFrame();
     if (gridContainerCandidate &&
         gridContainerCandidate->GetType() == nsGkAtoms::gridContainerFrame) {
-      auto gridContainer = static_cast<nsGridContainerFrame*>(gridContainerCandidate);
-      trackSizes = gridContainer->GetComputedTemplateColumns();
-      numLeadingImplicitTracks = gridContainer->NumImplicitLeadingCols();
-      numExplicitTracks = gridContainer->NumExplicitCols();
+      info = static_cast<nsGridContainerFrame*>(gridContainerCandidate)->
+        GetComputedTemplateColumns();
     }
   }
-  return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateColumns,
-                                    numLeadingImplicitTracks,
-                                    numExplicitTracks,
-                                    trackSizes);
+  return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateColumns, info);
 }
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetGridTemplateRows()
 {
-  const nsTArray<nscoord>* trackSizes = nullptr;
-  uint32_t numLeadingImplicitTracks = 0;
-  uint32_t numExplicitTracks = 0;
+  const ComputedGridTrackInfo* info = nullptr;
   if (mInnerFrame) {
     nsIFrame* gridContainerCandidate = mInnerFrame->GetContentInsertionFrame();
     if (gridContainerCandidate &&
         gridContainerCandidate->GetType() == nsGkAtoms::gridContainerFrame) {
-      auto gridContainer = static_cast<nsGridContainerFrame*>(gridContainerCandidate);
-      trackSizes = gridContainer->GetComputedTemplateRows();
-      numLeadingImplicitTracks = gridContainer->NumImplicitLeadingRows();
-      numExplicitTracks = gridContainer->NumExplicitRows();
+      info = static_cast<nsGridContainerFrame*>(gridContainerCandidate)->
+        GetComputedTemplateRows();
      }
   }
-  return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateRows,
-                                    numLeadingImplicitTracks,
-                                    numExplicitTracks,
-                                    trackSizes);
+  return GetGridTemplateColumnsRows(StylePosition()->mGridTemplateRows, info);
 }
 
 already_AddRefed<CSSValue>
@@ -3516,7 +3540,7 @@ nsComputedDOMStyle::CreateTextAlignValue(uint8_t aAlign, bool aAlignTrue,
   }
 
   RefPtr<nsROCSSPrimitiveValue> first = new nsROCSSPrimitiveValue;
-  first->SetIdent(eCSSKeyword_true);
+  first->SetIdent(eCSSKeyword_unsafe);
 
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
   valueList->AppendCSSValue(first.forget());
@@ -3827,7 +3851,7 @@ nsComputedDOMStyle::DoGetWindowDragging()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleUserInterface()->mWindowDragging,
+    nsCSSProps::ValueToKeywordEnum(StyleUIReset()->mWindowDragging,
                                    nsCSSProps::kWindowDraggingKTable));
   return val.forget();
 }
@@ -4874,7 +4898,7 @@ nsComputedDOMStyle::GetAbsoluteOffset(mozilla::css::Side aSide)
     // the containing block is the viewport, which _does_ include
     // scrollbars.  We have to do some extra work.
     // the first child in the default frame list is what we want
-    nsIFrame* scrollingChild = container->GetFirstPrincipalChild();
+    nsIFrame* scrollingChild = container->PrincipalChildList().FirstChild();
     nsIScrollableFrame *scrollFrame = do_QueryFrame(scrollingChild);
     if (scrollFrame) {
       scrollbarSizes = scrollFrame->GetActualScrollbarSizes();
@@ -5738,31 +5762,6 @@ nsComputedDOMStyle::DoGetStopColor()
   return val.forget();
 }
 
-inline void AppendBasicShapeTypeToString(nsStyleBasicShape::Type aType,
-                                         nsAutoString& aString)
-{
-  nsCSSKeyword functionName;
-  switch (aType) {
-    case nsStyleBasicShape::Type::ePolygon:
-      functionName = eCSSKeyword_polygon;
-      break;
-    case nsStyleBasicShape::Type::eCircle:
-      functionName = eCSSKeyword_circle;
-      break;
-    case nsStyleBasicShape::Type::eEllipse:
-      functionName = eCSSKeyword_ellipse;
-      break;
-    case nsStyleBasicShape::Type::eInset:
-      functionName = eCSSKeyword_inset;
-      break;
-    default:
-      functionName = eCSSKeyword_UNKNOWN;
-      NS_NOTREACHED("unexpected type");
-  }
-  AppendASCIItoUTF16(nsCSSKeywords::GetStringValue(functionName),
-                     aString);
-}
-
 void
 nsComputedDOMStyle::BoxValuesToString(nsAString& aString,
                                       const nsTArray<nsStyleCoord>& aBoxValues)
@@ -5822,7 +5821,9 @@ nsComputedDOMStyle::CreatePrimitiveValueForClipPath(
     nsStyleBasicShape::Type type = aStyleBasicShape->GetShapeType();
     // Shape function name and opening parenthesis.
     nsAutoString shapeFunctionString;
-    AppendBasicShapeTypeToString(type, shapeFunctionString);
+    AppendASCIItoUTF16(nsCSSKeywords::GetStringValue(
+                         aStyleBasicShape->GetShapeTypeName()),
+                       shapeFunctionString);
     shapeFunctionString.Append('(');
     switch (type) {
       case nsStyleBasicShape::Type::ePolygon: {
@@ -5850,7 +5851,8 @@ nsComputedDOMStyle::CreatePrimitiveValueForClipPath(
       case nsStyleBasicShape::Type::eCircle:
       case nsStyleBasicShape::Type::eEllipse: {
         const nsTArray<nsStyleCoord>& radii = aStyleBasicShape->Coordinates();
-        MOZ_ASSERT(radii.Length() == (nsStyleBasicShape::Type::eCircle ? 1 : 2),
+        MOZ_ASSERT(radii.Length() ==
+                   (type == nsStyleBasicShape::Type::eCircle ? 1 : 2),
                    "wrong number of radii");
         for (size_t i = 0; i < radii.Length(); ++i) {
           nsAutoString radius;
@@ -6006,17 +6008,101 @@ nsComputedDOMStyle::DoGetFilter()
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetMask()
 {
+  const nsStyleSVGReset* svg = StyleSVGReset();
+  const nsStyleImageLayers::Layer& firstLayer = svg->mMask.mLayers[0];
+
+  // Mask is now a shorthand, but it used to be a longhand, so that we
+  // need to support computed style for the cases where it used  to be
+  // a longhand.
+  if (svg->mMask.mImageCount > 1 ||
+      firstLayer.mClip != NS_STYLE_IMAGELAYER_CLIP_BORDER ||
+      firstLayer.mOrigin != NS_STYLE_IMAGELAYER_ORIGIN_PADDING ||
+      firstLayer.mComposite != NS_STYLE_MASK_COMPOSITE_ADD ||
+      firstLayer.mMaskMode != NS_STYLE_MASK_MODE_MATCH_SOURCE ||
+      !firstLayer.mPosition.IsInitialValue() ||
+      !firstLayer.mRepeat.IsInitialValue() ||
+      !firstLayer.mSize.IsInitialValue() ||
+      !(firstLayer.mImage.GetType() == eStyleImageType_Null ||
+          firstLayer.mImage.GetType() == eStyleImageType_Image)){
+    return nullptr;
+  }
+
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
 
-  const nsStyleSVGReset* svg = StyleSVGReset();
-
-  if (svg->mMask)
-    val->SetURI(svg->mMask);
-  else
+  if (firstLayer.mSourceURI) {
+    val->SetURI(firstLayer.mSourceURI);
+  } else {
     val->SetIdent(eCSSKeyword_none);
+  }
 
   return val.forget();
 }
+
+#ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskClip()
+{
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mClip,
+                           &nsStyleImageLayers::mClipCount,
+                           StyleSVGReset()->mMask,
+                           nsCSSProps::kImageLayerOriginKTable);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskComposite()
+{
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mComposite,
+                           &nsStyleImageLayers::mCompositeCount,
+                           StyleSVGReset()->mMask,
+                           nsCSSProps::kImageLayerCompositeKTable);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskImage()
+{
+  const nsStyleImageLayers& layers = StyleSVGReset()->mMask;
+  return DoGetImageLayerImage(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskMode()
+{
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mMaskMode,
+                           &nsStyleImageLayers::mMaskModeCount,
+                           StyleSVGReset()->mMask,
+                           nsCSSProps::kImageLayerModeKTable);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskOrigin()
+{
+  return GetBackgroundList(&nsStyleImageLayers::Layer::mOrigin,
+                           &nsStyleImageLayers::mOriginCount,
+                           StyleSVGReset()->mMask,
+                           nsCSSProps::kImageLayerOriginKTable);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskPosition()
+{
+  const nsStyleImageLayers& layers = StyleSVGReset()->mMask;
+  return DoGetImageLayerPosition(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskRepeat()
+{
+  const nsStyleImageLayers& layers = StyleSVGReset()->mMask;
+  return DoGetImageLayerRepeat(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskSize()
+{
+  const nsStyleImageLayers& layers = StyleSVGReset()->mMask;
+  return DoGetImageLayerSize(layers);
+}
+#endif
 
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetMaskType()

@@ -143,7 +143,7 @@ nsWindow::Create(nsIWidget* aParent,
     nsIWidget *baseParent = aParent;
 
     // initialize all the common bits of this class
-    BaseCreate(baseParent, aRect, aInitData);
+    BaseCreate(baseParent, aInitData);
 
     mVisible = true;
 
@@ -857,17 +857,27 @@ nsWindow::SetTitle(const nsAString& aTitle)
 
 // EVENTS
 
+nsIWidgetListener*
+nsWindow::GetPaintListener()
+{
+    return mAttachedWidgetListener ? mAttachedWidgetListener : mWidgetListener;
+}
+
 void
 nsWindow::OnPaint()
 {
     LOGDRAW(("nsWindow::%s [%p]\n", __FUNCTION__, (void *)this));
-    nsIWidgetListener* listener =
-        mAttachedWidgetListener ? mAttachedWidgetListener : mWidgetListener;
+    nsIWidgetListener* listener = GetPaintListener();
     if (!listener) {
         return;
     }
 
     listener->WillPaintWindow(this);
+
+    nsIWidgetListener* listener = GetPaintListener();
+    if (!listener) {
+        return;
+    }
 
     switch (GetLayerManager()->GetBackendType()) {
         case mozilla::layers::LayersBackend::LAYERS_CLIENT: {
@@ -878,6 +888,11 @@ nsWindow::OnPaint()
         }
         default:
             NS_ERROR("Invalid layer manager");
+    }
+
+    nsIWidgetListener* listener = GetPaintListener();
+    if (!listener) {
+        return;
     }
 
     listener->DidPaintWindow();
@@ -1593,7 +1608,7 @@ nsWindow::CheckForRollup(double aMouseX, double aMouseY,
         // the current submenu
         uint32_t popupsToRollup = UINT32_MAX;
         if (rollupListener) {
-            nsAutoTArray<nsIWidget*, 5> widgetChain;
+            AutoTArray<nsIWidget*, 5> widgetChain;
             uint32_t sameTypeCount = rollupListener->GetSubmenuWidgetChain(&widgetChain);
             for (uint32_t i=0; i<widgetChain.Length(); ++i) {
                 nsIWidget* widget =  widgetChain[i];

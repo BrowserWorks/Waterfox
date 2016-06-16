@@ -11,7 +11,7 @@ const PHONE_REGEX = /^\+?[0-9\s,-.\(\)*#pw]{1,30}$/; // Are we a phone #?
 
 /**
  * ActionBarHandler Object and methods. Interface between Gecko Text Selection code
- * (TouchCaret, SelectionCarets, etc) and the Mobile ActionBar UI.
+ * (AccessibleCaret, etc) and the Mobile ActionBar UI.
  */
 var ActionBarHandler = {
   // Error codes returned from _init().
@@ -35,6 +35,26 @@ var ActionBarHandler = {
       return;
     }
 
+    if (!this._selectionID && e.collapsed) {
+      switch (e.reason) {
+        case 'longpressonemptycontent':
+        case 'taponcaret':
+          // Show ActionBar when long pressing on an empty input or single
+          // tapping on the caret.
+          this._init();
+          break;
+
+        case 'updateposition':
+          // Do not show ActionBar when single tapping on an non-empty editable
+          // input.
+          break;
+
+        default:
+          break;
+      }
+      return;
+    }
+
     // Open a closed ActionBar if carets actually visible.
     if (!this._selectionID && e.caretVisuallyVisible) {
       this._init();
@@ -43,8 +63,9 @@ var ActionBarHandler = {
 
     // Else, update an open ActionBar.
     if (this._selectionID) {
-      if ([this._targetElement, this._contentWindow] ===
-          [Services.focus.focusedElement, Services.focus.focusedWindow]) {
+      let [element, win] = this._getSelectionTargets();
+      if (this._targetElement === element &&
+          this._contentWindow === win) {
         // We have the same focused window/element as before. Trigger "TextSelection:ActionbarStatus"
         // message only if available actions differ from when last we checked.
         this._sendActionBarActions();
@@ -100,7 +121,7 @@ var ActionBarHandler = {
   },
 
   /**
-   * Called when Gecko TouchCaret or SelectionCarets become visible.
+   * Called when Gecko AccessibleCaret becomes visible.
    */
   _init: function() {
     let [element, win] = this._getSelectionTargets();
@@ -145,7 +166,7 @@ var ActionBarHandler = {
   },
 
   /**
-   * Called when Gecko TouchCaret or SelectionCarets become hidden,
+   * Called when Gecko AccessibleCaret becomes hidden,
    * ActionBar is closed by user "close" request, or as a result of object
    * methods such as SELECT_ALL, PASTE, etc.
    */
@@ -166,7 +187,7 @@ var ActionBarHandler = {
     this._selectionID = null;
 
     // Clear selection required if triggered by self, or TextSelection icon
-    // actions. If called by Gecko TouchCaret/SelectionCarets state change,
+    // actions. If called by Gecko CaretStateChangedEvent,
     // visibility state is already correct.
     if (clearSelection) {
       this._clearSelection();
@@ -205,8 +226,14 @@ var ActionBarHandler = {
    */
   _sendActionBarActions: function(sendAlways) {
     let actions = this._getActionBarActions();
+    let actionCountUnchanged = this._actionBarActions &&
+      actions.length === this._actionBarActions.length;
+    let actionsMatch = actionCountUnchanged &&
+      this._actionBarActions.every((e,i) => {
+        return e.id === actions[i].id;
+      });
 
-    if (sendAlways || actions !== this._actionBarActions) {
+    if (sendAlways || !actionsMatch) {
       Messaging.sendRequest({
         type: "TextSelection:ActionbarStatus",
         actions: actions,

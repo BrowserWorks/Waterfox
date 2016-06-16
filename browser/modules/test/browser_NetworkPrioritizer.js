@@ -47,7 +47,7 @@ function* isWindowState(aWindow, aTabPriorities) {
      "Window has expected number of tabs");
   // aState should be in format [ priority, priority, priority ]
   for (let i = 0; i < browsers.length; i++) {
-    is((yield getPriority(browsers[i])), aTabPriorities[i],
+    is(yield getPriority(browsers[i]), aTabPriorities[i],
        "Tab " + i + " had expected priority");
   }
 }
@@ -124,13 +124,13 @@ add_task(function*() {
   let tab2 = gBrowser.addTab("http://example.com");
   yield BrowserTestUtils.browserLoaded(tab2.linkedBrowser);
   gBrowser.selectedTab = tab2;
-  is((yield getPriority(tab1)), LOWEST - DELTA, "Can adjust priority beyond 'lowest'");
+  is(yield getPriority(tab1), LOWEST - DELTA, "Can adjust priority beyond 'lowest'");
 
   // Now set priority to "highest" and make sure that no errors occur.
   yield setPriority(tab1, HIGHEST);
   gBrowser.selectedTab = tab1;
 
-  is((yield getPriority(tab1)), HIGHEST + DELTA, "Can adjust priority beyond 'highest'");
+  is(yield getPriority(tab1), HIGHEST + DELTA, "Can adjust priority beyond 'highest'");
 
   // Cleanup
   gBrowser.removeTab(tab2);
@@ -149,17 +149,17 @@ add_task(function*() {
   browser.loadURI("http://example.com");
   yield BrowserTestUtils.browserLoaded(browser);
   ok(browser.isRemoteBrowser, "web page should be loaded in remote browser");
-  is((yield getPriority(browser)), HIGH, "priority of selected tab should be 'high'");
+  is(yield getPriority(browser), HIGH, "priority of selected tab should be 'high'");
 
   browser.loadURI("about:rights");
   yield BrowserTestUtils.browserLoaded(browser);
   ok(!browser.isRemoteBrowser, "about:rights should switch browser to non-remote");
-  is((yield getPriority(browser)), HIGH,
+  is(yield getPriority(browser), HIGH,
      "priority of selected tab should be 'high' when going from remote to non-remote");
 
   browser.loadURI("http://example.com");
   yield BrowserTestUtils.browserLoaded(browser);
   ok(browser.isRemoteBrowser, "going from about:rights to web page should switch browser to remote");
-  is((yield getPriority(browser)), HIGH,
+  is(yield getPriority(browser), HIGH,
      "priority of selected tab should be 'high' when going from non-remote to remote");
 });

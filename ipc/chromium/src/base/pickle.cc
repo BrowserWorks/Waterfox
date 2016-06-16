@@ -24,6 +24,8 @@ static_assert(MOZ_ALIGNOF(Pickle::memberAlignmentType) >= MOZ_ALIGNOF(uint32_t),
 // static
 const int Pickle::kPayloadUnit = 64;
 
+const uint32_t kFastGrowthCap = 128 * 1024;
+
 // We mark a read only pickle with a special capacity_.
 static const uint32_t kCapacityReadOnly = (uint32_t) -1;
 
@@ -122,10 +124,10 @@ Pickle::Pickle(int header_size)
   header_->payload_size = 0;
 }
 
-Pickle::Pickle(const char* data, int data_len)
+Pickle::Pickle(const char* data, int data_len, Ownership ownership)
     : header_(reinterpret_cast<Header*>(const_cast<char*>(data))),
       header_size_(0),
-      capacity_(kCapacityReadOnly),
+      capacity_(ownership == BORROWS ? kCapacityReadOnly : data_len),
       variable_buffer_offset_(0) {
   if (data_len >= static_cast<int>(sizeof(Header)))
     header_size_ = data_len - header_->payload_size;
@@ -147,10 +149,7 @@ Pickle::Pickle(const Pickle& other)
       capacity_(0),
       variable_buffer_offset_(other.variable_buffer_offset_) {
   uint32_t payload_size = header_size_ + other.header_->payload_size;
-  bool resized = Resize(payload_size);
-  if (!resized) {
-    NS_ABORT_OOM(payload_size);
-  }
+  Resize(payload_size);
   memcpy(header_, other.header_, payload_size);
 }
 
@@ -175,10 +174,7 @@ Pickle& Pickle::operator=(const Pickle& other) {
     header_ = NULL;
     header_size_ = other.header_size_;
   }
-  bool resized = Resize(other.header_size_ + other.header_->payload_size);
-  if (!resized) {
-    NS_ABORT_OOM(other.header_size_ + other.header_->payload_size);
-  }
+  Resize(other.header_size_ + other.header_->payload_size);
   memcpy(header_, other.header_, header_size_ + other.header_->payload_size);
   variable_buffer_offset_ = other.variable_buffer_offset_;
   return *this;
@@ -520,8 +516,10 @@ char* Pickle::BeginWrite(uint32_t length, uint32_t alignment) {
   uint32_t new_size = offset + padding + AlignInt(length);
   uint32_t needed_size = header_size_ + new_size;
 
-  if (needed_size > capacity_ && !Resize(std::max(capacity_ * 2, needed_size)))
-    return NULL;
+  if (needed_size > capacity_) {
+    double growth_rate = capacity_ < kFastGrowthCap ? 2.0 : 1.4;
+    Resize(std::max(static_cast<uint32_t>(capacity_ * growth_rate), needed_size));
+  }
 
   DCHECK(intptr_t(header_) % alignment == 0);
 
@@ -639,16 +637,13 @@ void Pickle::TrimWriteData(int new_length) {
   *cur_length = new_length;
 }
 
-bool Pickle::Resize(uint32_t new_capacity) {
+void Pickle::Resize(uint32_t new_capacity) {
   new_capacity = ConstantAligner<kPayloadUnit>::align(new_capacity);
 
-  void* p = realloc(header_, new_capacity);
-  if (!p)
-    return false;
+  void* p = moz_xrealloc(header_, new_capacity);
 
   header_ = reinterpret_cast<Header*>(p);
   capacity_ = new_capacity;
-  return true;
 }
 
 // static
@@ -669,4 +664,24 @@ const char* Pickle::FindNext(uint32_t header_size,
     return nullptr;
 
   return start + header_size + hdr->payload_size;
+}
+
+// static
+uint32_t Pickle::GetLength(uint32_t header_size,
+			   const char* start,
+			   const char* end) {
+  DCHECK(header_size == AlignInt(header_size));
+  DCHECK(header_size <= static_cast<memberAlignmentType>(kPayloadUnit));
+
+  if (end < start)
+    return 0;
+  size_t length = static_cast<size_t>(end - start);
+  if (length < sizeof(Header))
+    return 0;
+
+  const Header* hdr = reinterpret_cast<const Header*>(start);
+  if (length < header_size)
+    return 0;
+
+  return header_size + hdr->payload_size;
 }

@@ -60,7 +60,10 @@ nsXPConnect::nsXPConnect()
     :   mRuntime(nullptr),
         mShuttingDown(false)
 {
-    mRuntime = XPCJSRuntime::newXPCJSRuntime(this);
+    mRuntime = XPCJSRuntime::newXPCJSRuntime();
+    if (!mRuntime) {
+        NS_RUNTIMEABORT("Couldn't create XPCJSRuntime.");
+    }
 
     char* reportableEnv = PR_GetEnv("MOZ_REPORT_ALL_JS_EXCEPTIONS");
     if (reportableEnv && *reportableEnv)
@@ -174,15 +177,7 @@ xpc::ErrorReport::Init(JSErrorReport* aReport, const char* aFallbackMessage,
                           : NS_LITERAL_CSTRING("content javascript");
     mWindowID = aWindowID;
 
-    const char16_t* m = static_cast<const char16_t*>(aReport->ucmessage);
-    if (m) {
-        JSFlatString* name = js::GetErrorTypeName(CycleCollectedJSRuntime::Get()->Runtime(), aReport->exnType);
-        if (name) {
-            AssignJSFlatString(mErrorMsg, name);
-            mErrorMsg.AppendLiteral(": ");
-        }
-        mErrorMsg.Append(m);
-    }
+    ErrorReportToMessageString(aReport, mErrorMsg);
 
     if (mErrorMsg.IsEmpty() && aFallbackMessage) {
         mErrorMsg.AssignWithConversion(aFallbackMessage);
@@ -266,6 +261,23 @@ xpc::ErrorReport::LogToConsoleWithStack(JS::HandleObject aStack)
     NS_ENSURE_SUCCESS_VOID(rv);
     consoleService->LogMessage(errorObject);
 
+}
+
+/* static */
+void
+xpc::ErrorReport::ErrorReportToMessageString(JSErrorReport* aReport,
+                                             nsAString& aString)
+{
+    aString.Truncate();
+    const char16_t* m = aReport->ucmessage;
+    if (m) {
+        JSFlatString* name = js::GetErrorTypeName(CycleCollectedJSRuntime::Get()->Runtime(), aReport->exnType);
+        if (name) {
+            AssignJSFlatString(aString, name);
+            aString.AppendLiteral(": ");
+        }
+        aString.Append(m);
+    }
 }
 
 /***************************************************************************/
@@ -389,12 +401,49 @@ CreateGlobalObject(JSContext* cx, const JSClass* clasp, nsIPrincipal* principal,
     return global;
 }
 
+void
+InitGlobalObjectOptions(JS::CompartmentOptions& aOptions,
+                        nsIPrincipal* aPrincipal)
+{
+    bool shouldDiscardSystemSource = ShouldDiscardSystemSource();
+    bool extraWarningsForSystemJS = ExtraWarningsForSystemJS();
+
+    bool isSystem = false;
+    if (shouldDiscardSystemSource || extraWarningsForSystemJS)
+        isSystem = nsContentUtils::IsSystemPrincipal(aPrincipal);
+
+    short status = aPrincipal->GetAppStatus();
+
+    // Enable the ECMA-402 experimental formatToParts in certified apps.
+    if (status == nsIPrincipal::APP_STATUS_CERTIFIED) {
+        aOptions.creationOptions()
+                .setExperimentalDateTimeFormatFormatToPartsEnabled(true);
+    }
+
+    if (shouldDiscardSystemSource) {
+        bool discardSource = isSystem ||
+                             (status == nsIPrincipal::APP_STATUS_PRIVILEGED ||
+                              status == nsIPrincipal::APP_STATUS_CERTIFIED);
+
+        aOptions.behaviors().setDiscardSource(discardSource);
+    }
+
+    if (extraWarningsForSystemJS) {
+        if (isSystem)
+            aOptions.behaviors().extraWarningsOverride().set(true);
+    }
+}
+
 bool
 InitGlobalObject(JSContext* aJSContext, JS::Handle<JSObject*> aGlobal, uint32_t aFlags)
 {
-    // Immediately enter the global's compartment, so that everything else we
-    // create ends up there.
+    // Immediately enter the global's compartment so that everything we create
+    // ends up there.
     JSAutoCompartment ac(aJSContext, aGlobal);
+
+    // Stuff coming through this path always ends up as a DOM global.
+    MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL);
+
     if (!(aFlags & nsIXPConnect::OMIT_COMPONENTS_OBJECT)) {
         // XPCCallContext gives us an active request needed to save/restore.
         if (!CompartmentPrivate::Get(aGlobal)->scope->AttachComponentsObject(aJSContext) ||
@@ -402,27 +451,6 @@ InitGlobalObject(JSContext* aJSContext, JS::Handle<JSObject*> aGlobal, uint32_t 
             return UnexpectedFailure(false);
         }
     }
-
-    if (ShouldDiscardSystemSource()) {
-        nsIPrincipal* prin = GetObjectPrincipal(aGlobal);
-        bool isSystem = nsContentUtils::IsSystemPrincipal(prin);
-        if (!isSystem) {
-            short status = prin->GetAppStatus();
-            isSystem = status == nsIPrincipal::APP_STATUS_PRIVILEGED ||
-                       status == nsIPrincipal::APP_STATUS_CERTIFIED;
-        }
-        JS::CompartmentBehaviorsRef(aGlobal).setDiscardSource(isSystem);
-    }
-
-    if (ExtraWarningsForSystemJS()) {
-        nsIPrincipal* prin = GetObjectPrincipal(aGlobal);
-        bool isSystem = nsContentUtils::IsSystemPrincipal(prin);
-        if (isSystem)
-            JS::CompartmentBehaviorsRef(aGlobal).extraWarningsOverride().set(true);
-    }
-
-    // Stuff coming through this path always ends up as a DOM global.
-    MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL);
 
     if (!(aFlags & nsIXPConnect::DONT_FIRE_ONNEWGLOBALHOOK))
         JS_FireOnNewGlobalObject(aJSContext, aGlobal);
@@ -447,6 +475,8 @@ nsXPConnect::InitClassesWithNewWrappedGlobal(JSContext * aJSContext,
     // We pass null for the 'extra' pointer during global object creation, so
     // we need to have a principal.
     MOZ_ASSERT(aPrincipal);
+
+    InitGlobalObjectOptions(aOptions, aPrincipal);
 
     // Call into XPCWrappedNative to make a new global object, scope, and global
     // prototype.

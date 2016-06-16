@@ -703,6 +703,7 @@ class TelemetryImpl final
 public:
   void InitMemoryReporter();
 
+  static bool IsInitialized();
   static bool CanRecordBase();
   static bool CanRecordExtended();
   static already_AddRefed<nsITelemetry> CreateTelemetryInstance();
@@ -1960,6 +1961,23 @@ mFailedLockCount(0)
   // histograms) using InitHistogramRecordingEnabled() will happen after instantiating
   // sTelemetry since it depends on the static GetKeyedHistogramById(...) - which
   // uses the singleton instance at sTelemetry.
+
+  // Some Telemetry histograms depend on the value of C++ constants and hardcode
+  // their values in Histograms.json.
+  // We add static asserts here for those values to match so that future changes
+  // don't go unnoticed.
+  // TODO: Compare explicitly with gHistograms[<histogram id>].bucketCount here
+  // once we can make gHistograms constexpr (requires VS2015).
+  static_assert((JS::gcreason::NUM_TELEMETRY_REASONS == 100),
+      "NUM_TELEMETRY_REASONS is assumed to be a fixed value in Histograms.json."
+      " If this was an intentional change, update this assert with its value "
+      "and update the n_values for the following in Histograms.json: "
+      "GC_MINOR_REASON, GC_MINOR_REASON_LONG, GC_REASON_2");
+  static_assert((mozilla::StartupTimeline::MAX_EVENT_ID == 16),
+      "MAX_EVENT_ID is assumed to be a fixed value in Histograms.json.  If this"
+      " was an intentional change, update this assert with its value and update"
+      " the n_values for the following in Histograms.json:"
+      " STARTUP_MEASUREMENT_ERRORS");
 }
 
 TelemetryImpl::~TelemetryImpl() {
@@ -3305,6 +3323,12 @@ TelemetryImpl::SetCanRecordBase(bool canRecord) {
   return NS_OK;
 }
 
+/* static */ bool
+TelemetryImpl::IsInitialized()
+{
+  return sTelemetry;
+}
+
 /**
  * Indicates if Telemetry can record base data (FHR data). This is true if the
  * FHR data reporting service or self-support are enabled.
@@ -3898,7 +3922,7 @@ Accumulate(ID aHistogram, uint32_t aSample)
 void
 Accumulate(ID aID, const nsCString& aKey, uint32_t aSample)
 {
-  if (!TelemetryImpl::CanRecordBase()) {
+  if (!TelemetryImpl::IsInitialized() || !TelemetryImpl::CanRecordBase()) {
     return;
   }
   const TelemetryHistogram& th = gHistograms[aID];

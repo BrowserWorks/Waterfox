@@ -286,7 +286,7 @@ add_test(function basic_mismatch() {
                                              function([a8, a9]) {
                   is(a8.version, "2.0", "bug557956-8 should have updated");
                   is(a9.version, "2.0", "bug557956-9 should have updated");
-  
+
                   check_telemetry({disabled: 5, metaenabled: 1, metadisabled: 0,
                                    upgraded: 2, failed: 0, declined: 1});
 

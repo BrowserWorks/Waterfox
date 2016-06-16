@@ -736,7 +736,8 @@ public class BrowserSearch extends HomeFragment
     }
 
     private void ensureSuggestClientIsSet(final String suggestTemplate) {
-        if (mSuggestClient != null) {
+        // Don't update the suggestClient if we already have a client with the correct template
+        if (mSuggestClient != null && suggestTemplate.equals(mSuggestClient.getSuggestTemplate())) {
             return;
         }
 
@@ -815,7 +816,7 @@ public class BrowserSearch extends HomeFragment
             }
         });
 
-        // Pref observer in gecko will also set prompted = true
+        PrefsHelper.setPref("browser.search.suggest.prompted", true);
         PrefsHelper.setPref("browser.search.suggest.enabled", enabled);
 
         Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, (enabled ? "suggestions_optin_yes" : "suggestions_optin_no"));

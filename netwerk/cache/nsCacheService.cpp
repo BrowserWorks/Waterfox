@@ -2691,7 +2691,7 @@ nsCacheService::ReleaseObject_Locked(nsISupports * obj,
     if (!target || (NS_SUCCEEDED(target->IsOnCurrentThread(&isCur)) && isCur)) {
         gService->mDoomedObjects.AppendElement(obj);
     } else {
-        NS_ProxyRelease(target, obj);
+        NS_ProxyRelease(target, dont_AddRef(obj));
     }
 }
 
@@ -2915,7 +2915,7 @@ nsCacheService::ClearDoomList()
 void
 nsCacheService::DoomActiveEntries(DoomCheckFn check)
 {
-    nsAutoTArray<nsCacheEntry*, 8> array;
+    AutoTArray<nsCacheEntry*, 8> array;
 
     for (auto iter = mActiveEntries.Iter(); !iter.Done(); iter.Next()) {
         nsCacheEntry* entry =

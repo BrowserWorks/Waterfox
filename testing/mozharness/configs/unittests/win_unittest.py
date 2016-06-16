@@ -121,7 +121,9 @@ config = {
                 "--appname=%(binary_path)s",
                 "--utility-path=tests/bin",
                 "--extra-profile-file=tests/bin/plugins",
-                "--symbols-path=%(symbols_path)s"
+                "--symbols-path=%(symbols_path)s",
+                "--log-raw=%(raw_log_file)s",
+                "--log-errorsummary=%(error_summary_file)s",
             ],
             "run_filename": "runreftest.py",
             "testsdir": "reftest"
@@ -172,6 +174,7 @@ config = {
         "browser-chrome": ["--browser-chrome"],
         "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-runtime"],
         "browser-chrome-addons": ["--browser-chrome", "--chunk-by-runtime", "--tag=addons"],
+        "browser-chrome-screenshots": ["--browser-chrome", "--subsuite=screenshots"],
         "mochitest-gl": ["--subsuite=webgl"],
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-devtools-chrome-chunked": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-runtime"],
@@ -230,13 +233,13 @@ config = {
     "all_xpcshell_suites": {
         "xpcshell": {
             'options': ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
-                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+                        "--manifest=tests/xpcshell/tests/xpcshell.ini"],
             'tests': []
         },
         "xpcshell-addons": {
             'options': ["--xpcshell=%(abs_app_dir)s/" + XPCSHELL_NAME,
                         "--tag=addons",
-                        "--manifest=tests/xpcshell/tests/all-test-dirs.list"],
+                        "--manifest=tests/xpcshell/tests/xpcshell.ini"],
             'tests': []
         },
     },

@@ -35,6 +35,8 @@ var TabsInTitlebar = {
     };
     CustomizableUI.addListener(this);
 
+    addEventListener("resolutionchange", this, false);
+
     this._initialized = true;
   },
 
@@ -63,6 +65,12 @@ var TabsInTitlebar = {
   observe: function (subject, topic, data) {
     if (topic == "nsPref:changed")
       this._readPref();
+  },
+
+  handleEvent: function (aEvent) {
+    if (aEvent.type == "resolutionchange" && aEvent.target == window) {
+      this._update(true);
+    }
   },
 
   _onMenuMutate: function (aMutations) {
@@ -202,9 +210,10 @@ var TabsInTitlebar = {
         titlebarContent.style.removeProperty("margin-bottom");
       }
 
-      // Then we bring up the titlebar by the same amount, but we add any negative margin:
-      titlebar.style.marginBottom = "-" + titlebarContentHeight + "px";
-
+      // Then add a negative margin to the titlebar, so that the following elements
+      // will overlap it by the lesser of the titlebar height or the tabstrip+menu.
+      let minTitlebarOrTabsHeight = Math.min(titlebarContentHeight, tabAndMenuHeight);
+      titlebar.style.marginBottom = "-" + minTitlebarOrTabsHeight + "px";
 
       // Finally, size the placeholders:
       if (AppConstants.platform == "macosx") {
@@ -212,21 +221,6 @@ var TabsInTitlebar = {
       }
       this._sizePlaceholder("caption-buttons", captionButtonsBoxWidth);
 
-      if (!this._draghandles) {
-        this._draghandles = {};
-        let tmp = {};
-        Components.utils.import("resource://gre/modules/WindowDraggingUtils.jsm", tmp);
-
-        let mouseDownCheck = function () {
-          return !this._dragBindingAlive && TabsInTitlebar.enabled;
-        };
-
-        this._draghandles.tabsToolbar = new tmp.WindowDraggingElement(tabsToolbar);
-        this._draghandles.tabsToolbar.mouseDownCheck = mouseDownCheck;
-
-        this._draghandles.navToolbox = new tmp.WindowDraggingElement(gNavToolbox);
-        this._draghandles.navToolbox.mouseDownCheck = mouseDownCheck;
-      }
     } else {
       document.documentElement.removeAttribute("tabsintitlebar");
       updateTitlebarDisplay();
@@ -256,6 +250,7 @@ var TabsInTitlebar = {
 
   uninit: function () {
     this._initialized = false;
+    removeEventListener("resolutionchange", this);
     Services.prefs.removeObserver(this._prefName, this);
     this._menuObserver.disconnect();
     CustomizableUI.removeListener(this);

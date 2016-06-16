@@ -3490,21 +3490,15 @@ this.DOMApplicationRegistry = {
     let requestChannel;
 
     let appURI = NetUtil.newURI(aNewApp.origin, null, null);
-    let principal =
-      Services.scriptSecurityManager.createCodebasePrincipal(appURI,
-                                                             {appId: aNewApp.localId});
-
     if (aIsLocalFileInstall) {
       requestChannel = NetUtil.newChannel({
         uri: aFullPackagePath,
-        loadingPrincipal: principal,
-        contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER}
+        loadUsingSystemPrincipal: true}
       ).QueryInterface(Ci.nsIFileChannel);
     } else {
       requestChannel = NetUtil.newChannel({
         uri: aFullPackagePath,
-        loadingPrincipal: principal,
-        contentPolicyType: Ci.nsIContentPolicy.TYPE_OTHER}
+        loadUsingSystemPrincipal: true}
       ).QueryInterface(Ci.nsIHttpChannel);
       requestChannel.loadFlags |= Ci.nsIRequest.INHIBIT_CACHING;
     }
@@ -3542,10 +3536,10 @@ this.DOMApplicationRegistry = {
 
       // nsILoadContext
       appId: aOldApp.installerAppId,
-      isInBrowserElement: aOldApp.installerIsBrowser,
+      isInIsolatedMozBrowserElement: aOldApp.installerIsBrowser,
       originAttributes: {
         appId: aOldApp.installerAppId,
-        inBrowser: aOldApp.installerIsBrowser
+        inIsolatedMozBrowser: aOldApp.installerIsBrowser
       },
       usePrivateBrowsing: false,
       isContent: false,
@@ -4805,6 +4799,10 @@ this.DOMApplicationRegistry = {
     return OS.Path.dirname(this.appsFile);
   },
 
+  areAnyAppsInstalled: function() {
+    return AppsUtils.areAnyAppsInstalled(this.webapps);
+  },
+
   updateDataStoreEntriesFromLocalId: function(aLocalId) {
     let app = appsService.getAppByLocalId(aLocalId);
     if (app) {
@@ -4908,7 +4906,7 @@ this.DOMApplicationRegistry = {
   _clearOriginData: function(appId, browserOnly) {
     let attributes = {appId: appId};
     if (browserOnly) {
-      attributes.inBrowser = true;
+      attributes.inIsolatedMozBrowser = true;
     }
     this._notifyCategoryAndObservers(null, "clear-origin-data", JSON.stringify(attributes));
   }

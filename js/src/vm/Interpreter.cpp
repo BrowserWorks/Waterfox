@@ -389,9 +389,12 @@ js::RunScript(JSContext* cx, RunState& state)
 {
     JS_CHECK_RECURSION(cx, return false);
 
-#if defined(NIGHTLY_BUILD) && defined(MOZ_HAVE_RDTSC)
+    if (!Debugger::checkNoExecute(cx, state.script()))
+        return false;
+
+#if defined(MOZ_HAVE_RDTSC)
     js::AutoStopwatch stopwatch(cx);
-#endif // defined(NIGHTLY_BUILD) && defined(MOZ_HAVE_RDTSC)
+#endif // defined(MOZ_HAVE_RDTSC)
 
     SPSEntryMarker marker(cx->runtime(), state.script());
 
@@ -593,7 +596,7 @@ ConstructFromStack(JSContext* cx, const CallArgs& args)
 
 bool
 js::Construct(JSContext* cx, HandleValue fval, const ConstructArgs& args, HandleValue newTarget,
-              MutableHandleValue rval)
+              MutableHandleObject objp)
 {
     args.setCallee(fval);
     args.setThis(MagicValue(JS_IS_CONSTRUCTING));
@@ -601,7 +604,8 @@ js::Construct(JSContext* cx, HandleValue fval, const ConstructArgs& args, Handle
     if (!InternalConstruct(cx, args))
         return false;
 
-    rval.set(args.rval());
+    MOZ_ASSERT(args.rval().isObject());
+    objp.set(&args.rval().toObject());
     return true;
 }
 
@@ -1017,7 +1021,7 @@ js::UnwindScopeToTryPc(JSScript* script, JSTryNote* tn)
 static bool
 ForcedReturn(JSContext* cx, ScopeIter& si, InterpreterRegs& regs, bool frameOk = true)
 {
-    bool ok = Debugger::onLeaveFrame(cx, regs.fp(), frameOk);
+    bool ok = Debugger::onLeaveFrame(cx, regs.fp(), regs.pc, frameOk);
     UnwindAllScopesInFrame(cx, si);
     // Point the frame to the end of the script, regardless of error. The
     // caller must jump to the correct continuation depending on 'ok'.
@@ -1203,7 +1207,7 @@ HandleError(JSContext* cx, InterpreterRegs& regs)
         }
 
         ok = HandleClosingGeneratorReturn(cx, regs.fp(), ok);
-        ok = Debugger::onLeaveFrame(cx, regs.fp(), ok);
+        ok = Debugger::onLeaveFrame(cx, regs.fp(), regs.pc, ok);
     } else {
         // We may be propagating a forced return from the interrupt
         // callback, which cannot easily force a return.
@@ -1481,11 +1485,11 @@ class ReservedRooted : public ReservedRootedBase<T>
     }
 
     explicit ReservedRooted(Rooted<T>* root) : savedRoot(root) {
-        *root = js::GCMethods<T>::initial();
+        *root = js::GCPolicy<T>::initial();
     }
 
     ~ReservedRooted() {
-        *savedRoot = js::GCMethods<T>::initial();
+        *savedRoot = js::GCPolicy<T>::initial();
     }
 
     void set(const T& p) const { *savedRoot = p; }
@@ -1661,9 +1665,10 @@ Interpret(JSContext* cx, RunState& state)
 
     /* State communicated between non-local jumps: */
     bool interpReturnOK;
+    bool frameHalfInitialized;
 
     if (!activation.entryFrame()->prologue(cx))
-        goto error;
+        goto prologue_error;
 
     switch (Debugger::onEnterFrame(cx, activation.entryFrame())) {
       case JSTRAP_CONTINUE:
@@ -1897,15 +1902,21 @@ CASE(JSOP_RETRVAL)
     interpReturnOK = true;
 
   return_continuation:
+    frameHalfInitialized = false;
+
+  prologue_return_continuation:
+
     if (activation.entryFrame() != REGS.fp()) {
         // Stop the engine. (No details about which engine exactly, could be
         // interpreter, Baseline or IonMonkey.)
         TraceLogStopEvent(logger, TraceLogger_Engine);
         TraceLogStopEvent(logger, TraceLogger_Scripts);
 
-        interpReturnOK = Debugger::onLeaveFrame(cx, REGS.fp(), interpReturnOK);
+        if (MOZ_LIKELY(!frameHalfInitialized)) {
+            interpReturnOK = Debugger::onLeaveFrame(cx, REGS.fp(), REGS.pc, interpReturnOK);
 
-        REGS.fp()->epilogue(cx);
+            REGS.fp()->epilogue(cx);
+        }
 
   jit_return_pop_frame:
 
@@ -2827,9 +2838,10 @@ CASE(JSOP_FUNCALL)
                 goto error;
             if (status == jit::Method_Compiled) {
                 jit::JitExecStatus exec = jit::IonCannon(cx, state.ref());
-                CHECK_BRANCH();
-                REGS.sp = args.spAfterCall();
                 interpReturnOK = !IsErrorStatus(exec);
+                if (interpReturnOK)
+                    CHECK_BRANCH();
+                REGS.sp = args.spAfterCall();
                 goto jit_return;
             }
         }
@@ -2840,9 +2852,10 @@ CASE(JSOP_FUNCALL)
                 goto error;
             if (status == jit::Method_Compiled) {
                 jit::JitExecStatus exec = jit::EnterBaselineMethod(cx, state.ref());
-                CHECK_BRANCH();
-                REGS.sp = args.spAfterCall();
                 interpReturnOK = !IsErrorStatus(exec);
+                if (interpReturnOK)
+                    CHECK_BRANCH();
+                REGS.sp = args.spAfterCall();
                 goto jit_return;
             }
         }
@@ -2866,7 +2879,7 @@ CASE(JSOP_FUNCALL)
     }
 
     if (!REGS.fp()->prologue(cx))
-        goto error;
+        goto prologue_error;
 
     switch (Debugger::onEnterFrame(cx, REGS.fp())) {
       case JSTRAP_CONTINUE:
@@ -3989,9 +4002,11 @@ DEFAULT()
     MOZ_CRASH("Invalid HandleError continuation");
 
   exit:
-    interpReturnOK = Debugger::onLeaveFrame(cx, REGS.fp(), interpReturnOK);
+    if (MOZ_LIKELY(!frameHalfInitialized)) {
+        interpReturnOK = Debugger::onLeaveFrame(cx, REGS.fp(), REGS.pc, interpReturnOK);
 
-    REGS.fp()->epilogue(cx);
+        REGS.fp()->epilogue(cx);
+    }
 
     gc::MaybeVerifyBarriers(cx, true);
 
@@ -4008,6 +4023,11 @@ DEFAULT()
         state.setReturnValue(activation.entryFrame()->returnValue());
 
     return interpReturnOK;
+
+  prologue_error:
+    interpReturnOK = false;
+    frameHalfInitialized = true;
+    goto prologue_return_continuation;
 }
 
 bool
@@ -4581,8 +4601,10 @@ js::SpreadCallOperation(JSContext* cx, HandleScript script, jsbytecode* pc, Hand
         if (!GetElements(cx, aobj, length, cargs.array()))
             return false;
 
-        if (!Construct(cx, callee, cargs, newTarget, res))
+        RootedObject obj(cx);
+        if (!Construct(cx, callee, cargs, newTarget, &obj))
             return false;
+        res.setObject(*obj);
     } else {
         InvokeArgs args(cx);
 

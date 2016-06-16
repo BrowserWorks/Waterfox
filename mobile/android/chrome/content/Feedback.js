@@ -7,7 +7,7 @@ var Feedback = {
 
   get _feedbackURL() {
     delete this._feedbackURL;
-    return this._feedbackURL = Services.prefs.getCharPref("app.feedbackURL");
+    return this._feedbackURL = Services.urlFormatter.formatURLPref("app.feedbackURL");
   },
 
   observe: function(aMessage, aTopic, aData) {
@@ -21,11 +21,20 @@ var Feedback = {
       return;
     } catch (e) {}
 
-    let url = this._feedbackURL + "?source=feedback-prompt";
+    let url = this._feedbackURL;
     let browser = BrowserApp.selectOrAddTab(url, { parentId: BrowserApp.selectedTab.id }).browser;
     browser.addEventListener("FeedbackClose", this, false, true);
     browser.addEventListener("FeedbackMaybeLater", this, false, true);
     browser.addEventListener("FeedbackOpenPlay", this, false, true);
+
+    // Dispatch a custom event to the page content when feedback is prompted by the browser.
+    // This will be used by the page to determine it's being loaded directly by the browser,
+    // instead of by the user visiting the page, e.g. through browser history.
+    function loadListener(event) {
+      browser.removeEventListener("DOMContentLoaded", loadListener, false);
+      browser.contentDocument.dispatchEvent(new CustomEvent("FeedbackPrompted"));
+    }
+    browser.addEventListener("DOMContentLoaded", loadListener, false);
   },
 
   handleEvent: function(event) {

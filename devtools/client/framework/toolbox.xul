@@ -3,7 +3,6 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
-<?xml-stylesheet href="chrome://devtools/skin/common.css" type="text/css"?>
 
 <?xul-overlay href="chrome://global/content/editMenuOverlay.xul"?>
 
@@ -95,10 +94,6 @@
          key="&toolboxToggle.key;"
          oncommand="void(0);"
          modifiers="accel shift"/>
-    <key id="tools-reload-key"
-         key="&toolboxReload.key;"
-         oncommand="void(0);"
-         modifiers="accel alt"/>
   </keyset>
 
   <popupset>
@@ -126,6 +121,10 @@
                        hidden="true">
           <menupopup position="bottomright topright"></menupopup>
         </toolbarbutton>
+        <toolbarbutton id="command-button-noautohide"
+                       class="command-button command-button-invertable"
+                       tooltiptext="&toolboxNoAutoHideTooltip;"
+                       hidden="true" />
       </hbox>
       <vbox id="toolbox-controls-separator" class="devtools-separator"/>
       <hbox id="toolbox-option-container"/>
@@ -136,7 +135,7 @@
                        tooltiptext="&toolboxCloseButton.tooltip;"/>
       </hbox>
     </toolbar>
-    <vbox flex="1">
+    <vbox flex="1" class="theme-body">
       <!-- Set large flex to allow the toolbox-panel-webconsole to have a
            height set to a small value without flexing to fill up extra
            space. There must be a flex on both to ensure that the console
@@ -145,5 +144,6 @@
       <splitter id="toolbox-console-splitter" class="devtools-horizontal-splitter" hidden="true" />
       <box minheight="75" flex="1" id="toolbox-panel-webconsole" collapsed="true" />
     </vbox>
+    <tooltip id="aHTMLTooltip" page="true" />
   </notificationbox>
 </window>

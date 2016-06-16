@@ -105,7 +105,7 @@ public:
     if (NS_SUCCEEDED(aStatus)) {
       mPromise->MaybeResolve(aSuccess);
     } else {
-      mPromise->MaybeReject(NS_ERROR_DOM_NETWORK_ERR);
+      mPromise->MaybeReject(NS_ERROR_DOM_PUSH_SERVICE_UNREACHABLE);
     }
 
     return NS_OK;
@@ -403,10 +403,10 @@ public:
     if (NS_SUCCEEDED(mStatus)) {
       promise->MaybeResolve(mSuccess);
     } else {
-      promise->MaybeReject(NS_ERROR_DOM_NETWORK_ERR);
+      promise->MaybeReject(NS_ERROR_DOM_PUSH_SERVICE_UNREACHABLE);
     }
 
-    mProxy->CleanUp(aCx);
+    mProxy->CleanUp();
     return true;
   }
 private:
@@ -442,12 +442,9 @@ public:
       return NS_OK;
     }
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-
     RefPtr<UnsubscribeResultRunnable> r =
       new UnsubscribeResultRunnable(proxy, aStatus, aSuccess);
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
     return NS_OK;
   }
 
@@ -477,10 +474,16 @@ public:
   Run() override
   {
     AssertIsOnMainThread();
-    MutexAutoLock lock(mProxy->Lock());
-    if (mProxy->CleanedUp()) {
-      return NS_OK;
+
+    nsCOMPtr<nsIPrincipal> principal;
+    {
+      MutexAutoLock lock(mProxy->Lock());
+      if (mProxy->CleanedUp()) {
+        return NS_OK;
+      }
+      principal = mProxy->GetWorkerPrivate()->GetPrincipal();
     }
+    MOZ_ASSERT(principal);
 
     RefPtr<WorkerUnsubscribeResultCallback> callback =
       new WorkerUnsubscribeResultCallback(mProxy);
@@ -492,7 +495,6 @@ public:
       return NS_OK;
     }
 
-    nsCOMPtr<nsIPrincipal> principal = mProxy->GetWorkerPrivate()->GetPrincipal();
     if (NS_WARN_IF(NS_FAILED(service->Unsubscribe(mScope, principal, callback)))) {
       callback->OnUnsubscribe(NS_ERROR_FAILURE, false);
       return NS_OK;
@@ -523,7 +525,7 @@ WorkerPushSubscription::Unsubscribe(ErrorResult &aRv)
 
   RefPtr<PromiseWorkerProxy> proxy = PromiseWorkerProxy::Create(worker, p);
   if (!proxy) {
-    p->MaybeReject(NS_ERROR_DOM_NETWORK_ERR);
+    p->MaybeReject(NS_ERROR_DOM_PUSH_SERVICE_UNREACHABLE);
     return p.forget();
   }
 
@@ -593,11 +595,13 @@ public:
                                        mRawP256dhKey, mAuthSecret);
         promise->MaybeResolve(sub);
       }
+    } else if (NS_ERROR_GET_MODULE(mStatus) == NS_ERROR_MODULE_DOM_PUSH ) {
+      promise->MaybeReject(mStatus);
     } else {
       promise->MaybeReject(NS_ERROR_DOM_PUSH_ABORT_ERR);
     }
 
-    mProxy->CleanUp(aCx);
+    mProxy->CleanUp();
     return true;
   }
 private:
@@ -637,9 +641,6 @@ public:
       return NS_OK;
     }
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-
     nsAutoString endpoint;
     nsTArray<uint8_t> rawP256dhKey, authSecret;
     if (NS_SUCCEEDED(aStatus)) {
@@ -654,7 +655,7 @@ public:
                                         mScope,
                                         rawP256dhKey,
                                         authSecret);
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
     return NS_OK;
   }
 
@@ -742,14 +743,22 @@ public:
   Run() override
   {
     AssertIsOnMainThread();
-    MutexAutoLock lock(mProxy->Lock());
-    if (mProxy->CleanedUp()) {
-      return NS_OK;
+
+    nsCOMPtr<nsIPrincipal> principal;
+    {
+      // Bug 1228723: If permission is revoked or an error occurs, the
+      // subscription callback will be called synchronously. This causes
+      // `GetSubscriptionCallback::OnPushSubscription` to deadlock when
+      // it tries to acquire the lock.
+      MutexAutoLock lock(mProxy->Lock());
+      if (mProxy->CleanedUp()) {
+        return NS_OK;
+      }
+      principal = mProxy->GetWorkerPrivate()->GetPrincipal();
     }
+    MOZ_ASSERT(principal);
 
     RefPtr<GetSubscriptionCallback> callback = new GetSubscriptionCallback(mProxy, mScope);
-
-    nsCOMPtr<nsIPrincipal> principal = mProxy->GetWorkerPrivate()->GetPrincipal();
 
     PushPermissionState state;
     nsresult rv = GetPermissionState(principal, state);
@@ -763,7 +772,7 @@ public:
         callback->OnPushSubscriptionError(NS_OK);
         return NS_OK;
       }
-      callback->OnPushSubscriptionError(NS_ERROR_FAILURE);
+      callback->OnPushSubscriptionError(NS_ERROR_DOM_PUSH_DENIED_ERR);
       return NS_OK;
     }
 
@@ -863,7 +872,7 @@ public:
       promise->MaybeReject(aCx, JS::UndefinedHandleValue);
     }
 
-    mProxy->CleanUp(aCx);
+    mProxy->CleanUp();
     return true;
   }
 
@@ -898,11 +907,9 @@ public:
       state
     );
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
     RefPtr<PermissionResultRunnable> r =
       new PermissionResultRunnable(mProxy, rv, state);
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
     return NS_OK;
   }
 

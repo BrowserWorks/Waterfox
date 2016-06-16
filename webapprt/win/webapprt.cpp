@@ -19,6 +19,7 @@
 #include "nsXPCOMPrivate.h"     // for MAXPATHLEN and XPCOM_DLL
 #include "nsXULAppAPI.h"
 #include "mozilla/AppData.h"
+#include "buildid.h"
 
 using namespace mozilla;
 
@@ -326,7 +327,7 @@ namespace {
                           MAXPATHLEN);
     NS_ENSURE_SUCCESS(rv, false);
 
-    if (0 == strcmp(buildid, NS_STRINGIFY(GRE_BUILDID))) {
+    if (0 == strcmp(buildid, NS_STRINGIFY(MOZ_BUILDID))) {
       return AttemptGRELoadAndLaunch(firefoxDir);
     }
 
@@ -523,7 +524,7 @@ main(int argc, char* argv[])
   }
 
   // We've done all we know how to do to try to find and launch FF
-  Output("This app requires that Firefox version 16 or above is installed."
-         " Firefox 16+ has not been detected.");
+  Output("This app requires a Firefox version between 16 and 47 to be installed."
+         " No compatible version of Firefox has been detected.");
   return 255;
 }

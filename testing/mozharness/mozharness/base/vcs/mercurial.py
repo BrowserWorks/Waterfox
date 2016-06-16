@@ -420,6 +420,7 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
         with "source" using Mercurial's share extension
         """
         self.info("Sharing %s to %s." % (source, dest))
+        self.mkdir_p(dest)
         if self.run_command(self.hg + ['share', '-U', source, dest],
                             error_list=HgErrorList):
             raise VCSException("Unable to share %s to %s!" % (source, dest))
@@ -512,6 +513,10 @@ class MercurialVCS(ScriptMixin, LogMixin, object):
                                      throw_exception=True)
                 except subprocess.CalledProcessError, e:
                     self.debug("Failed to rebase: %s" % str(e))
+                    # clean up any hanging rebase. ignore errors if we aren't
+                    # in the middle of a rebase.
+                    self.run_command(self.hg + ['rebase', '--abort'],
+                                     cwd=localrepo, success_codes=[0, 255])
                     self.update(localrepo, branch=branch)
                     for r in reversed(new_revs):
                         self.run_command(self.hg + ['strip', '-n', r[REVISION]],

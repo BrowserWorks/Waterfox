@@ -9,7 +9,8 @@
 const Services = require("Services");
 const { Cc, Ci, Cu } = require("chrome");
 const { DebuggerServer, ActorPool } = require("devtools/server/main");
-const { EnvironmentActor, ThreadActor } = require("devtools/server/actors/script");
+const { EnvironmentActor } = require("devtools/server/actors/environment");
+const { ThreadActor } = require("devtools/server/actors/script");
 const { ObjectActor, LongStringActor, createValueGrip, stringIsLong } = require("devtools/server/actors/object");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
@@ -19,6 +20,7 @@ loader.lazyRequireGetter(this, "ConsoleProgressListener", "devtools/shared/webco
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "ServerLoggingListener", "devtools/shared/webconsole/server-logger", true);
 loader.lazyRequireGetter(this, "JSPropertyProvider", "devtools/shared/webconsole/js-property-provider", true);
+loader.lazyRequireGetter(this, "Parser", "resource://devtools/shared/Parser.jsm", true);
 
 for (let name of ["WebConsoleUtils", "ConsoleServiceListener",
     "ConsoleAPIListener", "addWebConsoleCommands",
@@ -84,7 +86,7 @@ function WebConsoleActor(aConnection, aParentActor)
   };
 }
 
-WebConsoleActor.l10n = new WebConsoleUtils.l10n("chrome://global/locale/console.properties");
+WebConsoleActor.l10n = new WebConsoleUtils.L10n("chrome://global/locale/console.properties");
 
 WebConsoleActor.prototype =
 {
@@ -930,11 +932,12 @@ WebConsoleActor.prototype =
     // This is the case of the paused debugger
     if (frameActorId) {
       let frameActor = this.conn.getActor(frameActorId);
-      if (frameActor) {
+      try {
+        // Need to try/catch since accessing frame.environment
+        // can throw "Debugger.Frame is not live"
         let frame = frameActor.frame;
         environment = frame.environment;
-      }
-      else {
+      } catch(e) {
         DevToolsUtils.reportException("onAutocomplete",
           Error("The frame actor was not found: " + frameActorId));
       }
@@ -1277,6 +1280,66 @@ WebConsoleActor.prototype =
     }
     else {
       result = dbgWindow.executeInGlobalWithBindings(aString, bindings, evalOptions);
+      // Attempt to initialize any declarations found in the evaluated string
+      // since they may now be stuck in an "initializing" state due to the
+      // error. Already-initialized bindings will be ignored.
+      if ("throw" in result) {
+        let ast;
+        // Parse errors will raise an exception. We can/should ignore the error
+        // since it's already being handled elsewhere and we are only interested
+        // in initializing bindings.
+        try {
+          ast = Parser.reflectionAPI.parse(aString);
+        } catch (ex) {
+          ast = {"body": []};
+        }
+        for (let line of ast.body) {
+          // Only let and const declarations put bindings into an
+          // "initializing" state.
+          if (!(line.kind == "let" || line.kind == "const"))
+                continue;
+
+          let identifiers = [];
+          for (let decl of line.declarations) {
+            switch (decl.id.type) {
+              case "Identifier":
+                // let foo = bar;
+                identifiers.push(decl.id.name);
+                break;
+              case "ArrayPattern":
+                // let [foo, bar]    = [1, 2];
+                // let [foo=99, bar] = [1, 2];
+                for (let e of decl.id.elements) {
+                    if (e.type == "Identifier") {
+                      identifiers.push(e.name);
+                    } else if (e.type == "AssignmentExpression") {
+                      identifiers.push(e.left.name);
+                    }
+                }
+                break;
+              case "ObjectPattern":
+                // let {bilbo, my}    = {bilbo: "baggins", my: "precious"};
+                // let {blah: foo}    = {blah: yabba()}
+                // let {blah: foo=99} = {blah: yabba()}
+                for (let prop of decl.id.properties) {
+                  // key
+                  if (prop.key.type == "Identifier")
+                    identifiers.push(prop.key.name);
+                  // value
+                  if (prop.value.type == "Identifier") {
+                    identifiers.push(prop.value.name);
+                  } else if (prop.value.type == "AssignmentExpression") {
+                    identifiers.push(prop.value.left.name);
+                  }
+                }
+                break;
+            }
+          }
+
+          for (let name of identifiers)
+            dbgWindow.forceLexicalInitializationByName(name);
+        }
+      }
     }
 
     let helperResult = helpers.helperResult;

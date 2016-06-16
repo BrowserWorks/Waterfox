@@ -82,7 +82,10 @@ const EVENTS = {
   OPTIONS_POPUP_HIDDEN: "Debugger:OptionsPopupHidden",
 
   // When the widgets layout has been changed.
-  LAYOUT_CHANGED: "Debugger:LayoutChanged"
+  LAYOUT_CHANGED: "Debugger:LayoutChanged",
+
+  // When a worker has been selected.
+  WORKER_SELECTED: "Debugger::WorkerSelected"
 };
 
 // Descriptions for what a stack frame represents after the debugger pauses.
@@ -93,7 +96,6 @@ const FRAME_TYPE = {
   PUBLIC_CLIENT_EVAL: 3
 };
 
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://devtools/shared/event-emitter.js");
 Cu.import("resource://devtools/client/shared/widgets/SimpleListWidget.jsm");
@@ -109,8 +111,9 @@ Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
 var L10N = new ViewHelpers.L10N(DBG_STRINGS_URI);
 
 Cu.import("resource://devtools/client/shared/browser-loader.js");
-const require = BrowserLoader("resource://devtools/client/debugger/", this).require;
+const require = BrowserLoader("resource://devtools/client/debugger/", window).require;
 XPCOMUtils.defineConstant(this, "require", require);
+const { gDevTools } = require("devtools/client/framework/devtools");
 
 // React
 const React = require("devtools/client/shared/vendor/react");
@@ -136,6 +139,7 @@ var services = {
   WAIT_UNTIL: waitUntilService.NAME
 };
 
+var Services = require("Services");
 var {TargetFactory} = require("devtools/client/framework/target");
 var {Toolbox} = require("devtools/client/framework/toolbox");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
@@ -296,7 +300,9 @@ var DebuggerController = {
       }
     });
 
-    this.Workers.connect();
+    if (this._target.isTabActor) {
+      this.Workers.connect();
+    }
     this.ThreadState.connect();
     this.StackFrames.connect();
 
@@ -488,8 +494,8 @@ Workers.prototype = {
 
       for (let workerActor in this._workerForms) {
         if (!(workerActor in workerForms)) {
+          DebuggerView.Workers.removeWorker(this._workerForms[workerActor]);
           delete this._workerForms[workerActor];
-          DebuggerView.Workers.removeWorker(workerActor);
         }
       }
 
@@ -497,7 +503,7 @@ Workers.prototype = {
         if (!(workerActor in this._workerForms)) {
           let workerForm = workerForms[workerActor];
           this._workerForms[workerActor] = workerForm;
-          DebuggerView.Workers.addWorker(workerActor, workerForm.url);
+          DebuggerView.Workers.addWorker(workerForm);
         }
       }
     });
@@ -507,10 +513,11 @@ Workers.prototype = {
     this._updateWorkerList();
   },
 
-  _onWorkerSelect: function (workerActor) {
-    DebuggerController.client.attachWorker(workerActor, (response, workerClient) => {
-      gDevTools.showToolbox(TargetFactory.forWorker(workerClient),
-                            "jsdebugger", Toolbox.HostType.WINDOW);
+  _onWorkerSelect: function (workerForm) {
+    DebuggerController.client.attachWorker(workerForm.actor, (response, workerClient) => {
+      let toolbox = gDevTools.showToolbox(TargetFactory.forWorker(workerClient),
+                                          "jsdebugger", Toolbox.HostType.WINDOW);
+      window.emit(EVENTS.WORKER_SELECTED, toolbox);
     });
   }
 };

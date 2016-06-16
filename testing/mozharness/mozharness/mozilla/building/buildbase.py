@@ -357,6 +357,7 @@ class BuildOptionParser(object):
         'source': 'builds/releng_sub_%s_configs/%s_source.py',
         'api-9': 'builds/releng_sub_%s_configs/%s_api_9.py',
         'api-11': 'builds/releng_sub_%s_configs/%s_api_11.py',
+        'api-15-frontend': 'builds/releng_sub_%s_configs/%s_api_15_frontend.py',
         'api-15': 'builds/releng_sub_%s_configs/%s_api_15.py',
         'api-9-debug': 'builds/releng_sub_%s_configs/%s_api_9_debug.py',
         'api-11-debug': 'builds/releng_sub_%s_configs/%s_api_11_debug.py',
@@ -772,6 +773,11 @@ or run without that action (ie: --no-{action})"
                 buildid = self.buildbot_config['properties']['buildid'].encode(
                     'ascii', 'replace'
                 )
+            else:
+                # for taskcluster, there are no buildbot properties, and we pass
+                # MOZ_BUILD_DATE into mozharness as an environment variable, only
+                # to have it pass the same value out with the same name.
+                buildid = os.environ.get('MOZ_BUILD_DATE')
 
         if not buildid:
             self.info("Creating buildid through current time")
@@ -1036,6 +1042,8 @@ or run without that action (ie: --no-{action})"
             post_upload_cmd.append('--release-to-dated')
             if c['platform_supports_post_upload_to_latest']:
                 post_upload_cmd.append('--release-to-latest')
+        post_upload_cmd.extend(c.get('post_upload_extra', []))
+
         return post_upload_cmd
 
     def _ccache_z(self):
@@ -1215,26 +1223,20 @@ or run without that action (ie: --no-{action})"
     def _count_ctors(self):
         """count num of ctors and set testresults."""
         dirs = self.query_abs_dirs()
-        abs_count_ctors_path = os.path.join(dirs['abs_tools_dir'],
-                                            'buildfarm',
-                                            'utils',
+        python_path = os.path.join(dirs['abs_work_dir'], 'venv', 'bin',
+                                   'python')
+        abs_count_ctors_path = os.path.join(dirs['abs_src_dir'],
+                                            'build',
+                                            'util',
                                             'count_ctors.py')
         abs_libxul_path = os.path.join(dirs['abs_obj_dir'],
                                        'dist',
                                        'bin',
                                        'libxul.so')
 
-        cmd = ['python', abs_count_ctors_path, abs_libxul_path]
-        output = self.get_output_from_command(cmd, cwd=dirs['abs_src_dir'])
-        output = output.split("\t")
-        num_ctors = int(output[0])
-        testresults = [('num_ctors', 'num_ctors', num_ctors, str(num_ctors))]
-        self.set_buildbot_property('num_ctors',
-                                   num_ctors,
-                                   write_to_file=True)
-        self.set_buildbot_property('testresults',
-                                   testresults,
-                                   write_to_file=True)
+        cmd = [python_path, abs_count_ctors_path, abs_libxul_path]
+        self.get_output_from_command(cmd, cwd=dirs['abs_src_dir'],
+                                     throw_exception=True)
 
     def _generate_properties_file(self, path):
         # TODO it would be better to grab all the properties that were
@@ -1247,73 +1249,6 @@ or run without that action (ie: --no-{action})"
         # graph_server_post.py expects a file with 'properties' key
         graph_props = dict(properties=all_current_props)
         self.dump_config(path, graph_props)
-
-
-    def _graph_server_post(self):
-        """graph server post results."""
-        self._assert_cfg_valid_for_action(
-            ['base_name', 'graph_server', 'graph_selector'],
-            'generate-build-stats'
-        )
-        c = self.config
-        dirs = self.query_abs_dirs()
-
-        # grab any props available from previous run
-        self.generate_build_props(console_output=False,
-                                  halt_on_failure=False)
-
-        graph_server_post_path = os.path.join(dirs['abs_tools_dir'],
-                                              'buildfarm',
-                                              'utils',
-                                              'graph_server_post.py')
-        graph_server_path = os.path.join(dirs['abs_tools_dir'],
-                                         'lib',
-                                         'python')
-        # graph server takes all our build properties we had initially
-        # (buildbot_config) and what we updated to since
-        # the script ran (buildbot_properties)
-        graph_props_path = os.path.join(c['base_work_dir'], "graph_props.json")
-        self._generate_properties_file(graph_props_path)
-
-        gs_env = self.query_build_env()
-        gs_env.update({'PYTHONPATH': graph_server_path})
-        resultsname = c['base_name'] % {'branch': self.branch}
-        cmd = ['python', graph_server_post_path]
-        cmd.extend(['--server', c['graph_server']])
-        cmd.extend(['--selector', c['graph_selector']])
-        cmd.extend(['--branch', self._query_graph_server_branch_name()])
-        cmd.extend(['--buildid', self.query_buildid()])
-        cmd.extend(['--sourcestamp',
-                    self.query_buildbot_property('sourcestamp')])
-        cmd.extend(['--resultsname', resultsname])
-        cmd.extend(['--properties-file', graph_props_path])
-        cmd.extend(['--timestamp', str(self.epoch_timestamp)])
-
-        self.info("Obtaining graph server post results")
-        result_code = self.retry(self.run_command,
-                                 args=(cmd,),
-                                 kwargs={'cwd': dirs['abs_src_dir'],
-                                         'env': gs_env})
-        if result_code != 0:
-            self.add_summary('Automation Error: failed graph server post',
-                             level=ERROR)
-            self.worst_buildbot_status = self.worst_level(
-                TBPL_EXCEPTION, self.worst_buildbot_status,
-                TBPL_WORST_LEVEL_TUPLE
-            )
-
-        else:
-            self.info("graph server post ok")
-
-    def _query_graph_server_branch_name(self):
-        c = self.config
-        if c.get('graph_server_branch_name'):
-            return c['graph_server_branch_name']
-        else:
-            # capitalize every word in between '-'
-            branch_list = self.branch.split('-')
-            branch_list = [elem.capitalize() for elem in branch_list]
-            return '-'.join(branch_list)
 
     def _query_props_set_by_mach(self, console_output=True, error_level=FATAL):
         mach_properties_path = os.path.join(
@@ -1873,6 +1808,26 @@ or run without that action (ie: --no-{action})"
         if self.config.get('enable_ccache'):
             self._ccache_s()
 
+        # A list of argument lists.  Better names gratefully accepted!
+        mach_commands = self.config.get('postflight_build_mach_commands', [])
+        for mach_command in mach_commands:
+            self._execute_postflight_build_mach_command(mach_command)
+
+    def _execute_postflight_build_mach_command(self, mach_command_args):
+        env = self.query_build_env()
+        env.update(self.query_mach_build_env())
+        python = self.query_exe('python2.7')
+
+        command = [python, 'mach', '--log-no-times']
+        command.extend(mach_command_args)
+
+        self.run_command_m(
+            command=command,
+            cwd=self.query_abs_dirs()['abs_src_dir'],
+            env=env, output_timeout=self.config.get('max_build_output_timeout', 60 * 20),
+            halt_on_failure=True,
+        )
+
     def preflight_package_source(self):
         self._get_mozconfig()
 
@@ -1967,21 +1922,10 @@ or run without that action (ie: --no-{action})"
         """
         c = self.config
 
-        # grab any props available from this or previous unclobbered runs
-        self.generate_build_props(console_output=False,
-                                  halt_on_failure=False)
-
         if c.get('enable_count_ctors'):
             if c.get('enable_count_ctors'):
                 self.info("counting ctors...")
                 self._count_ctors()
-                num_ctors = self.buildbot_properties.get('num_ctors', 'unknown')
-                self.info("TinderboxPrint: num_ctors: %s" % (num_ctors,))
-            if not self.query_is_nightly():
-                self._graph_server_post()
-            else:
-                self.info("We are not posting to graph server as this is a "
-                          "nightly build.")
         else:
             self.info("Nothing to do for this action since ctors "
                       "counts are disabled for this build.")
@@ -2080,7 +2024,6 @@ or run without that action (ie: --no-{action})"
 
     def update(self):
         """ submit balrog update steps. """
-        c = self.config
         if not self.query_is_nightly():
             self.info("Not a nightly build, skipping balrog submission.")
             return

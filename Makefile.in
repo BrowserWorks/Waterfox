@@ -15,8 +15,10 @@ export TOPLEVEL_BUILD := 1
 
 default::
 
+ifndef TEST_MOZBUILD
 ifdef MOZ_BUILD_APP
 include $(topsrcdir)/$(MOZ_BUILD_APP)/build.mk
+endif
 endif
 
 include $(topsrcdir)/config/config.mk
@@ -27,6 +29,10 @@ DIST_GARBAGE = config.cache config.log config.status* config-defs.h \
    mozilla-config.h \
    netwerk/necko-config.h xpcom/xpcom-config.h xpcom/xpcom-private.h \
    .mozconfig.mk
+
+ifndef MOZ_PROFILE_USE
+buildid.h source-repo.h: FORCE
+endif
 
 ifdef JS_STANDALONE
 configure_dir = $(topsrcdir)/js/src
@@ -60,19 +66,19 @@ CLOBBER: $(topsrcdir)/CLOBBER
 	@exit 1
 endif
 
-$(topsrcdir)/configure: $(topsrcdir)/configure.in
-$(topsrcdir)/js/src/configure: $(topsrcdir)/js/src/configure.in
+$(topsrcdir)/configure: $(topsrcdir)/configure.in $(topsrcdir)/old-configure.in
+$(topsrcdir)/js/src/configure: $(topsrcdir)/js/src/configure.in $(topsrcdir)/js/src/old-configure.in
 $(topsrcdir)/configure $(topsrcdir)/js/src/configure:
-	@echo 'STOP!  $^ has changed, and your configure is out of date.'
+	@echo 'STOP!  $? has changed, and your configure is out of date.'
 	@echo 'Please rerun autoconf and re-configure your build directory.'
 	@echo 'To ignore this message, touch "$@",'
 	@echo 'but your build might not succeed.'
 	@exit 1
 
-config.status: $(configure_dir)/configure
-js/src/config.status: $(topsrcdir)/js/src/configure
+config.status: $(configure_dir)/configure $(configure_dir)/old-configure
+js/src/config.status: $(topsrcdir)/js/src/configure $(topsrcdir)/js/src/old-configure
 config.status js/src/config.status:
-	@echo 'STOP!  $^ has changed and needs to be run again.'
+	@echo 'STOP!  $? has changed and needs to be run again.'
 	@echo 'Please rerun it.'
 	@echo 'To ignore this message, touch "$(CURDIR)/$@",'
 	@echo 'but your build might not succeed.'
@@ -114,7 +120,9 @@ Makefile: $(BUILD_BACKEND_FILES)
 	@$(TOUCH) $@
 
 define build_backend_rule
-$(1): $$(shell cat $(1).in)
+$(1)_files := $$(shell cat $(1).in)
+$(1): $$($(1)_files)
+$$($(1)_files):
 
 endef
 $(foreach file,$(BUILD_BACKEND_FILES),$(eval $(call build_backend_rule,$(file))))
@@ -307,12 +315,6 @@ ifdef SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE
 else
 	$(SHELL) $(topsrcdir)/toolkit/crashreporter/tools/upload_symbols.sh $(SYMBOL_INDEX_NAME) '$(DIST)/$(PKG_PATH)$(SYMBOL_FULL_ARCHIVE_BASENAME).zip'
 endif
-
-# MOZ_SOURCE_STAMP is defined in package-name.mk with a deferred assignment.
-# exporting it makes make run its $(shell) command for each invoked submake,
-# so transform it to an immediate assignment.
-MOZ_SOURCE_STAMP := $(MOZ_SOURCE_STAMP)
-export MOZ_SOURCE_STAMP
 endif
 
 .PHONY: update-packaging

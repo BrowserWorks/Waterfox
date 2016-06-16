@@ -7,7 +7,10 @@
 // 2. [obtain firefox source code]
 // 3. [build/obtain firefox binaries]
 // 4. run `[path to]/run-mozilla.sh [path to]/xpcshell makeCNNICHashes.js \
+//                                  [path to]/intermediatesFile
 //                                  [path to]/certlist'
+//    Where |intermediatesFile| is a file containing PEM encoded intermediate
+//    certificates that the certificates in |certlist| may be issued by.
 //    where certlist is a file containing a list of paths to certificates to
 //    be included in the whitelist
 
@@ -232,7 +235,8 @@ function loadIntermediates(intermediatesFile) {
 ///////////////////////////////////////////////////////////////////////////////
 
 if (arguments.length != 2) {
-  throw "Usage: makeCNNICHashes.js <intermediates file> <path to list of certificates>";
+  throw new Error("Usage: makeCNNICHashes.js <PEM intermediates file> " +
+                  "<path to list of certificates>");
 }
 
 Services.prefs.setIntPref("security.OCSP.enabled", 0);
@@ -252,7 +256,7 @@ certs.sort(compareCertificatesByHash);
 // Write the output file.
 var outFile = relativePathToFile("CNNICHashWhitelist.inc");
 if (!outFile.exists()) {
-  outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0644);
+  outFile.create(Ci.nsIFile.NORMAL_FILE_TYPE, 0o644);
 }
 var outStream = Cc["@mozilla.org/network/file-output-stream;1"]
                   .createInstance(Ci.nsIFileOutputStream);

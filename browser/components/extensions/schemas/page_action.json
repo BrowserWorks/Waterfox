@@ -4,6 +4,37 @@
 
 [
   {
+    "namespace": "manifest",
+    "types": [
+      {
+        "$extend": "WebExtensionManifest",
+        "properties": {
+          "page_action": {
+            "type": "object",
+            "properties": {
+              "default_title": {
+                "type": "string",
+                "optional": true,
+                "preprocess": "localize"
+              },
+              "default_icon": {
+                "$ref": "IconPath",
+                "optional": true
+              },
+              "default_popup": {
+                "type": "string",
+                "format": "relativeUrl",
+                "optional": true,
+                "preprocess": "localize"
+              }
+            },
+            "optional": true
+          }
+        }
+      }
+    ]
+  },
+  {
     "namespace": "pageAction",
     "description": "Use the <code>browser.pageAction</code> API to put icons inside the address bar. Page actions represent actions that can be taken on the current page, but that aren't applicable to all pages.",
     "types": [
@@ -51,6 +82,7 @@
         "name": "getTitle",
         "type": "function",
         "description": "Gets the title of the page action.",
+        "async": "callback",
         "parameters": [
           {
             "name": "details",
@@ -78,6 +110,7 @@
         "name": "setIcon",
         "type": "function",
         "description": "Sets the icon for the page action. The icon can be specified either as the path to an image file or as the pixel data from a canvas element, or as dictionary of either one of those. Either the <b>path</b> or the <b>imageData</b> property must be specified.",
+        "async": "callback",
         "parameters": [
           {
             "name": "details",
@@ -138,6 +171,7 @@
         "name": "getPopup",
         "type": "function",
         "description": "Gets the html document set as the popup for this page action.",
+        "async": "callback",
         "parameters": [
           {
             "name": "details",

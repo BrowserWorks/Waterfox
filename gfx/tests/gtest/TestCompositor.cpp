@@ -59,6 +59,10 @@ public:
                                  nsNativeWidget aNativeParent,
                                  const LayoutDeviceIntRect& aRect,
                                  nsWidgetInitData* aInitData = nullptr) override { return NS_OK; }
+  NS_IMETHOD              Create(nsIWidget* aParent,
+                                 nsNativeWidget aNativeParent,
+                                 const DesktopIntRect& aRect,
+                                 nsWidgetInitData* aInitData = nullptr) override { return NS_OK; }
   NS_IMETHOD              Show(bool aState) override { return NS_OK; }
   virtual bool            IsVisible() const override { return true; }
   NS_IMETHOD              ConstrainPosition(bool aAllowSlop,
@@ -107,13 +111,14 @@ static already_AddRefed<Compositor> CreateTestCompositor(LayersBackend backend, 
   RefPtr<Compositor> compositor;
 
   if (backend == LayersBackend::LAYERS_OPENGL) {
-    compositor = new CompositorOGL(widget,
+    compositor = new CompositorOGL(nullptr,
+                                   widget,
                                    gCompWidth,
                                    gCompHeight,
                                    true);
     compositor->SetDestinationSurfaceSize(IntSize(gCompWidth, gCompHeight));
   } else if (backend == LayersBackend::LAYERS_BASIC) {
-    compositor = new BasicCompositor(widget);
+    compositor = new BasicCompositor(nullptr, widget);
 #ifdef XP_WIN
   } else if (backend == LayersBackend::LAYERS_D3D11) {
     //compositor = new CompositorD3D11();
@@ -124,7 +129,7 @@ static already_AddRefed<Compositor> CreateTestCompositor(LayersBackend backend, 
 #endif
   }
 
-  if (!compositor) {
+  if (!compositor || !compositor->Initialize()) {
     printf_stderr("Failed to construct layer manager for the requested backend\n");
     abort();
   }
@@ -146,8 +151,6 @@ static std::vector<LayerManagerData> GetLayerManagers(std::vector<LayersBackend>
     RefPtr<Compositor> compositor = CreateTestCompositor(backend, widget);
 
     RefPtr<LayerManagerComposite> layerManager = new LayerManagerComposite(compositor);
-
-    layerManager->Initialize();
 
     managers.push_back(LayerManagerData(compositor, widget, layerManager));
   }

@@ -391,7 +391,7 @@ EventTargetChainItemForChromeTarget(nsTArray<EventTargetChainItem>& aChain,
   if (!aNode->IsInComposedDoc()) {
     return nullptr;
   }
-  nsPIDOMWindow* win = aNode->OwnerDoc()->GetInnerWindow();
+  nsPIDOMWindowInner* win = aNode->OwnerDoc()->GetInnerWindow();
   EventTarget* piTarget = win ? win->GetParentTarget() : nullptr;
   NS_ENSURE_TRUE(piTarget, nullptr);
 
@@ -470,7 +470,7 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
   if (aEvent->mFlags.mOnlyChromeDispatch) {
     nsCOMPtr<nsINode> node = do_QueryInterface(aTarget);
     if (!node) {
-      nsCOMPtr<nsPIDOMWindow> win = do_QueryInterface(aTarget);
+      nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(aTarget);
       if (win) {
         node = win->GetExtantDoc();
       }
@@ -479,7 +479,7 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
     NS_ENSURE_STATE(node);
     nsIDocument* doc = node->OwnerDoc();
     if (!nsContentUtils::IsChromeDoc(doc)) {
-      nsPIDOMWindow* win = doc ? doc->GetInnerWindow() : nullptr;
+      nsPIDOMWindowInner* win = doc ? doc->GetInnerWindow() : nullptr;
       // If we can't dispatch the event to chrome, do nothing.
       EventTarget* piTarget = win ? win->GetParentTarget() : nullptr;
       if (!piTarget) {
@@ -509,7 +509,7 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
   }
 
   if (aDOMEvent) {
-    WidgetEvent* innerEvent = aDOMEvent->GetInternalNSEvent();
+    WidgetEvent* innerEvent = aDOMEvent->WidgetEventPtr();
     NS_ASSERTION(innerEvent == aEvent,
                   "The inner event of aDOMEvent is not the same as aEvent!");
   }
@@ -698,7 +698,7 @@ EventDispatcher::DispatchDOMEvent(nsISupports* aTarget,
                                   nsEventStatus* aEventStatus)
 {
   if (aDOMEvent) {
-    WidgetEvent* innerEvent = aDOMEvent->GetInternalNSEvent();
+    WidgetEvent* innerEvent = aDOMEvent->WidgetEventPtr();
     NS_ENSURE_TRUE(innerEvent, NS_ERROR_ILLEGAL_VALUE);
 
     bool dontResetTrusted = false;

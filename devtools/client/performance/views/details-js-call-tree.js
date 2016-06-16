@@ -14,6 +14,7 @@ var JsCallTreeView = Heritage.extend(DetailsSubview, {
     "invert-call-tree",
     "show-platform-data",
     "flatten-tree-recursion",
+    "show-jit-optimizations",
   ],
 
   rangeChangeDebounceTime: 75, // ms
@@ -29,14 +30,15 @@ var JsCallTreeView = Heritage.extend(DetailsSubview, {
 
     this.container = $("#js-calltree-view .call-tree-cells-container");
 
-    OptimizationsListView.initialize();
+    this.optimizationsElement = $("#jit-optimizations-view");
   },
 
   /**
    * Unbinds events.
    */
   destroy: function () {
-    OptimizationsListView.destroy();
+    ReactDOM.unmountComponentAtNode(this.optimizationsElement);
+    this.optimizationsElement = null;
     this.container = null;
     this.threadNode = null;
     DetailsSubview.destroy.call(this);
@@ -51,40 +53,64 @@ var JsCallTreeView = Heritage.extend(DetailsSubview, {
   render: function (interval={}) {
     let recording = PerformanceController.getCurrentRecording();
     let profile = recording.getProfile();
-    let optimizations = recording.getConfiguration().withJITOptimizations;
+    let showOptimizations = PerformanceController.getOption("show-jit-optimizations");
 
     let options = {
       contentOnly: !PerformanceController.getOption("show-platform-data"),
       invertTree: PerformanceController.getOption("invert-call-tree"),
       flattenRecursion: PerformanceController.getOption("flatten-tree-recursion"),
-      showOptimizationHint: optimizations
+      showOptimizationHint: showOptimizations
     };
     let threadNode = this.threadNode = this._prepareCallTree(profile, interval, options);
     this._populateCallTree(threadNode, options);
 
-    if (optimizations) {
-      this.showOptimizations();
-    } else {
-      this.hideOptimizations();
-    }
-    OptimizationsListView.reset();
+    // For better or worse, re-rendering loses frame selection,
+    // so we should always hide opts on rerender
+    this.hideOptimizations();
 
-    this.emit(EVENTS.JS_CALL_TREE_RENDERED);
+    this.emit(EVENTS.UI_JS_CALL_TREE_RENDERED);
   },
 
   showOptimizations: function () {
-    $("#jit-optimizations-view").classList.remove("hidden");
+    this.optimizationsElement.classList.remove("hidden");
   },
 
   hideOptimizations: function () {
-    $("#jit-optimizations-view").classList.add("hidden");
+    this.optimizationsElement.classList.add("hidden");
   },
 
   _onFocus: function (_, treeItem) {
-    if (PerformanceController.getCurrentRecording().getConfiguration().withJITOptimizations) {
-      OptimizationsListView.setCurrentFrame(this.threadNode, treeItem.frame);
-      OptimizationsListView.render();
+    let showOptimizations = PerformanceController.getOption("show-jit-optimizations");
+    let recording = PerformanceController.getCurrentRecording();
+    let frameNode = treeItem.frame;
+    let optimizationSites = frameNode && frameNode.hasOptimizations()
+                            ? frameNode.getOptimizations().optimizationSites
+                            : [];
+
+    if (!showOptimizations || !frameNode || optimizationSites.length === 0) {
+      this.hideOptimizations();
+      this.emit("focus", treeItem);
+      return;
     }
+
+    this.showOptimizations();
+
+    let frameData = frameNode.getInfo();
+    let optimizations = JITOptimizationsView({
+      frameData,
+      optimizationSites,
+      onViewSourceInDebugger: (url, line) => {
+        gToolbox.viewSourceInDebugger(url, line).then(success => {
+          if (success) {
+            this.emit(EVENTS.SOURCE_SHOWN_IN_JS_DEBUGGER);
+          } else {
+            this.emit(EVENTS.SOURCE_NOT_FOUND_IN_JS_DEBUGGER);
+          }
+        });
+      }
+    });
+
+    ReactDOM.render(optimizations, this.optimizationsElement);
 
     this.emit("focus", treeItem);
   },

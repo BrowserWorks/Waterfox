@@ -37,6 +37,7 @@ var snapshotFormatters = {
   application: function application(data) {
     $("application-box").textContent = data.name;
     $("useragent-box").textContent = data.userAgent;
+    $("osarch-box").textContent = data.osVersion + " " + data.arch;
     $("supportLink").href = data.supportURL;
     let version = AppConstants.MOZ_APP_VERSION_DISPLAY;
     if (data.vendor)
@@ -736,10 +737,8 @@ function openProfileDirectory() {
  * Profile reset is only supported for the default profile if the appropriate migrator exists.
  */
 function populateActionBox() {
-  if (ResetProfile.resetSupported()) {
     $("reset-box").style.display = "block";
     $("action-box").style.display = "block";
-  }
   if (!Services.appinfo.inSafeMode) {
     $("safe-mode-box").style.display = "block";
     $("action-box").style.display = "block";

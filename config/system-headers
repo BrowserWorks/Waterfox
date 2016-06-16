@@ -488,6 +488,7 @@ fstream
 fstream.h
 ft2build.h
 fts.h
+functional
 gconf/gconf-client.h
 Gdiplus.h
 gdk/gdk.h
@@ -566,6 +567,7 @@ ios
 iosfwd
 iostream
 iostream.h
+istream
 iterator
 JavaControl.h
 JavaEmbedding/JavaControl.h
@@ -749,6 +751,7 @@ media/stagefright/foundation/hexdump.h
 media/stagefright/MediaBuffer.h
 media/stagefright/MediaBufferGroup.h
 media/stagefright/MediaCodec.h
+media/stagefright/MediaCodecList.h
 media/stagefright/MediaCodecSource.h
 media/stagefright/MediaDefs.h
 media/stagefright/MediaErrors.h

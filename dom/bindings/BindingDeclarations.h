@@ -40,7 +40,7 @@ protected:
                  JS::MutableHandle<JS::Value> aVal);
 
   bool StringifyToJSON(JSContext* aCx,
-                       JS::MutableHandle<JS::Value> aValue,
+                       JS::Handle<JSObject*> aObj,
                        nsAString& aJSON) const;
 
   // Struct used as a way to force a dictionary constructor to not init the
@@ -50,11 +50,19 @@ protected:
   struct FastDictionaryInitializer {
   };
 
+  bool mIsAnyMemberPresent = false;
+
 private:
   // aString is expected to actually be an nsAString*.  Should only be
   // called from StringifyToJSON.
   static bool AppendJSONToString(const char16_t* aJSONData,
                                  uint32_t aDataLength, void* aString);
+
+public:
+  bool IsAnyMemberPresent() const
+  {
+    return mIsAnyMemberPresent;
+  }
 };
 
 // Struct that serves as a base class for all typed arrays and array buffers and

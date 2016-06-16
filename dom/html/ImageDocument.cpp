@@ -6,6 +6,7 @@
 
 #include "ImageDocument.h"
 #include "mozilla/dom/ImageDocumentBinding.h"
+#include "mozilla/dom/HTMLImageElement.h"
 #include "nsRect.h"
 #include "nsIImageLoadingContent.h"
 #include "nsGenericHTMLElement.h"
@@ -27,7 +28,6 @@
 #include "nsPresContext.h"
 #include "nsStyleContext.h"
 #include "nsAutoPtr.h"
-#include "nsStyleSet.h"
 #include "nsIChannel.h"
 #include "nsIContentPolicy.h"
 #include "nsContentPolicyUtils.h"
@@ -82,7 +82,7 @@ ImageListener::OnStartRequest(nsIRequest* request, nsISupports *ctxt)
     return NS_ERROR_FAILURE;
   }
 
-  nsCOMPtr<nsPIDOMWindow> domWindow = imgDoc->GetWindow();
+  nsCOMPtr<nsPIDOMWindowOuter> domWindow = imgDoc->GetWindow();
   NS_ENSURE_TRUE(domWindow, NS_ERROR_UNEXPECTED);
 
   // Do a ShouldProcess check to see whether to keep loading the image.
@@ -337,6 +337,23 @@ ImageDocument::ShrinkToFit()
   }
   if (GetZoomLevel() != mOriginalZoomLevel && mImageIsResized &&
       !nsContentUtils::IsChildOfSameType(this)) {
+    // If we're zoomed, so that we don't maintain the invariant that
+    // mImageIsResized if and only if its displayed width/height fit in
+    // mVisibleWidth/mVisibleHeight, then we may need to switch to/from the
+    // overflowingVertical class here, because our viewport size may have
+    // changed and we don't plan to adjust the image size to compensate.  Since
+    // mImageIsResized it has a "height" attribute set, and we can just get the
+    // displayed image height by getting .height on the HTMLImageElement.
+    HTMLImageElement* img = HTMLImageElement::FromContent(mImageContent);
+    uint32_t imageHeight = img->Height();
+    nsDOMTokenList* classList = img->ClassList();
+    ErrorResult ignored;
+    if (imageHeight > mVisibleHeight) {
+      classList->Add(NS_LITERAL_STRING("overflowingVertical"), ignored);
+    } else {
+      classList->Remove(NS_LITERAL_STRING("overflowingVertical"), ignored);
+    }
+    ignored.SuppressException();
     return;
   }
 
@@ -413,8 +430,12 @@ ImageDocument::RestoreImage()
   imageContent->UnsetAttr(kNameSpaceID_None, nsGkAtoms::width, true);
   imageContent->UnsetAttr(kNameSpaceID_None, nsGkAtoms::height, true);
   
-  if (mImageIsOverflowing) {
-    SetModeClass(eOverflowing);
+  if (ImageIsOverflowing()) {
+    if (!mImageIsOverflowingVertically) {
+      SetModeClass(eOverflowingHorizontalOnly);
+    } else {
+      SetModeClass(eOverflowingVertical);
+    }
   }
   else {
     SetModeClass(eNone);
@@ -441,7 +462,7 @@ ImageDocument::ToggleImageSize()
     ResetZoomLevel();
     RestoreImage();
   }
-  else if (mImageIsOverflowing) {
+  else if (ImageIsOverflowing()) {
     ResetZoomLevel();
     ShrinkToFit();
   }
@@ -498,7 +519,7 @@ void
 ImageDocument::SetModeClass(eModeClasses mode)
 {
   nsDOMTokenList* classList = mImageContent->AsElement()->ClassList();
-  mozilla::ErrorResult rv;
+  ErrorResult rv;
 
   if (mode == eShrinkToFit) {
     classList->Add(NS_LITERAL_STRING("shrinkToFit"), rv);
@@ -506,11 +527,19 @@ ImageDocument::SetModeClass(eModeClasses mode)
     classList->Remove(NS_LITERAL_STRING("shrinkToFit"), rv);
   }
 
-  if (mode == eOverflowing) {
-    classList->Add(NS_LITERAL_STRING("overflowing"), rv);
+  if (mode == eOverflowingVertical) {
+    classList->Add(NS_LITERAL_STRING("overflowingVertical"), rv);
   } else {
-    classList->Remove(NS_LITERAL_STRING("overflowing"), rv);
+    classList->Remove(NS_LITERAL_STRING("overflowingVertical"), rv);
   }
+
+  if (mode == eOverflowingHorizontalOnly) {
+    classList->Add(NS_LITERAL_STRING("overflowingHorizontalOnly"), rv);
+  } else {
+    classList->Remove(NS_LITERAL_STRING("overflowingHorizontalOnly"), rv);
+  }
+
+  rv.SuppressException();
 }
 
 nsresult
@@ -579,7 +608,7 @@ ImageDocument::HandleEvent(nsIDOMEvent* aEvent)
       mShouldResize = false;
       RestoreImageTo(x, y);
     }
-    else if (mImageIsOverflowing) {
+    else if (ImageIsOverflowing()) {
       ShrinkToFit();
     }
   } else if (eventType.EqualsLiteral("load")) {
@@ -681,18 +710,27 @@ ImageDocument::CheckOverflowing(bool changeState)
     mVisibleHeight = nsPresContext::AppUnitsToFloatCSSPixels(visibleArea.height);
   }
 
-  bool imageWasOverflowing = mImageIsOverflowing;
-  mImageIsOverflowing =
-    mImageWidth > mVisibleWidth || mImageHeight > mVisibleHeight;
-  bool windowBecameBigEnough = imageWasOverflowing && !mImageIsOverflowing;
+  bool imageWasOverflowing = ImageIsOverflowing();
+  bool imageWasOverflowingVertically = mImageIsOverflowingVertically;
+  mImageIsOverflowingHorizontally = mImageWidth > mVisibleWidth;
+  mImageIsOverflowingVertically = mImageHeight > mVisibleHeight;
+  bool windowBecameBigEnough = imageWasOverflowing && !ImageIsOverflowing();
+  bool verticalOverflowChanged =
+    mImageIsOverflowingVertically != imageWasOverflowingVertically;
 
   if (changeState || mShouldResize || mFirstResize ||
-      windowBecameBigEnough) {
-    if (mImageIsOverflowing && (changeState || mShouldResize)) {
+      windowBecameBigEnough || verticalOverflowChanged) {
+    if (ImageIsOverflowing() && (changeState || mShouldResize)) {
       ShrinkToFit();
     }
     else if (mImageIsResized || mFirstResize || windowBecameBigEnough) {
       RestoreImage();
+    } else if (!mImageIsResized && verticalOverflowChanged) {
+      if (mImageIsOverflowingVertically) {
+        SetModeClass(eOverflowingVertical);
+      } else {
+        SetModeClass(eOverflowingHorizontalOnly);
+      }
     }
   }
   mFirstResize = false;

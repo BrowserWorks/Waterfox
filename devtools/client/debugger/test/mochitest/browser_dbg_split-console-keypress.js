@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * When the split console is focused and the debugger is open,
@@ -52,7 +54,7 @@ function test() {
     // Focus the console and add event listener to track whether it loses focus
     // (Must happen after generateMouseClickInTab() call)
     let consoleLostFocus = false;
-    jsterm.inputNode.focus();
+    jsterm.focus();
     jsterm.inputNode.addEventListener('blur', () => {consoleLostFocus = true;});
 
     is(gThreadClient.paused, true,

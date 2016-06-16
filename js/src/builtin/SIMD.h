@@ -250,8 +250,6 @@
   V(subSaturate, (BinaryFunc<Int8x16, SubSaturate, Int8x16>), 2)                      \
   V(shiftLeftByScalar, (BinaryScalar<Int8x16, ShiftLeft>), 2)                         \
   V(shiftRightByScalar, (BinaryScalar<Int8x16, ShiftRightArithmetic>), 2)             \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Int8x16, ShiftRightArithmetic>), 2)   \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Int8x16, ShiftRightLogical>), 2)         \
   V(xor, (BinaryFunc<Int8x16, Xor, Int8x16>), 2)
 
 #define INT8X16_TERNARY_FUNCTION_LIST(V)                                              \
@@ -301,8 +299,6 @@
   V(subSaturate, (BinaryFunc<Uint8x16, SubSaturate, Uint8x16>), 2)                    \
   V(shiftLeftByScalar, (BinaryScalar<Uint8x16, ShiftLeft>), 2)                        \
   V(shiftRightByScalar, (BinaryScalar<Uint8x16, ShiftRightLogical>), 2)               \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Uint8x16, ShiftRightArithmetic>), 2)  \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Uint8x16, ShiftRightLogical>), 2)        \
   V(xor, (BinaryFunc<Uint8x16, Xor, Uint8x16>), 2)
 
 #define UINT8X16_TERNARY_FUNCTION_LIST(V)                                             \
@@ -352,8 +348,6 @@
   V(subSaturate, (BinaryFunc<Int16x8, SubSaturate, Int16x8>), 2)                      \
   V(shiftLeftByScalar, (BinaryScalar<Int16x8, ShiftLeft>), 2)                         \
   V(shiftRightByScalar, (BinaryScalar<Int16x8, ShiftRightArithmetic>), 2)             \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Int16x8, ShiftRightArithmetic>), 2)   \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Int16x8, ShiftRightLogical>), 2)         \
   V(xor, (BinaryFunc<Int16x8, Xor, Int16x8>), 2)
 
 #define INT16X8_TERNARY_FUNCTION_LIST(V)                                              \
@@ -403,8 +397,6 @@
   V(subSaturate, (BinaryFunc<Uint16x8, SubSaturate, Uint16x8>), 2)                    \
   V(shiftLeftByScalar, (BinaryScalar<Uint16x8, ShiftLeft>), 2)                        \
   V(shiftRightByScalar, (BinaryScalar<Uint16x8, ShiftRightLogical>), 2)               \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Uint16x8, ShiftRightArithmetic>), 2)  \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Uint16x8, ShiftRightLogical>), 2)        \
   V(xor, (BinaryFunc<Uint16x8, Xor, Uint16x8>), 2)
 
 #define UINT16X8_TERNARY_FUNCTION_LIST(V)                                             \
@@ -456,8 +448,6 @@
   V(sub, (BinaryFunc<Int32x4, Sub, Int32x4>), 2)                                      \
   V(shiftLeftByScalar, (BinaryScalar<Int32x4, ShiftLeft>), 2)                         \
   V(shiftRightByScalar, (BinaryScalar<Int32x4, ShiftRightArithmetic>), 2)             \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Int32x4, ShiftRightArithmetic>), 2)   \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Int32x4, ShiftRightLogical>), 2)         \
   V(xor, (BinaryFunc<Int32x4, Xor, Int32x4>), 2)
 
 #define INT32X4_TERNARY_FUNCTION_LIST(V)                                              \
@@ -512,8 +502,6 @@
   V(sub, (BinaryFunc<Uint32x4, Sub, Uint32x4>), 2)                                    \
   V(shiftLeftByScalar, (BinaryScalar<Uint32x4, ShiftLeft>), 2)                        \
   V(shiftRightByScalar, (BinaryScalar<Uint32x4, ShiftRightLogical>), 2)               \
-  V(shiftRightArithmeticByScalar, (BinaryScalar<Uint32x4, ShiftRightArithmetic>), 2)  \
-  V(shiftRightLogicalByScalar, (BinaryScalar<Uint32x4, ShiftRightLogical>), 2)        \
   V(xor, (BinaryFunc<Uint32x4, Xor, Uint32x4>), 2)
 
 #define UINT32X4_TERNARY_FUNCTION_LIST(V)                                             \
@@ -586,9 +574,7 @@
 // Bitwise shifts defined on integer SIMD types.
 #define FOREACH_SHIFT_SIMD_OP(_)      \
     _(shiftLeftByScalar)              \
-    _(shiftRightByScalar)             \
-    _(shiftRightArithmeticByScalar)   \
-    _(shiftRightLogicalByScalar)
+    _(shiftRightByScalar)
 
 // Unary arithmetic operators defined on numeric SIMD types.
 #define FOREACH_NUMERIC_SIMD_UNOP(_)  \
@@ -741,9 +727,13 @@
     _(fromFloat32x4)                  \
     _(fromFloat32x4Bits)              \
     _(fromInt32x4)                    \
-    _(fromInt32x4Bits)
+    _(fromInt32x4Bits)                \
+    _(fromUint32x4)                   \
+    _(fromUint32x4Bits)
 
-// All operations on Int32x4 in the asm.js world
+// All operations on Int32x4 or Uint32x4 in the asm.js world.
+// Note: this does not include conversions and casts to/from Uint32x4 because
+// this list is shared between Int32x4 and Uint32x4.
 #define FORALL_INT32X4_ASMJS_OP(_)    \
     FORALL_INT_SIMD_OP(_)             \
     FOREACH_MEMORY_X4_SIMD_OP(_)      \
@@ -755,27 +745,9 @@
     FORALL_FLOAT_SIMD_OP(_)           \
     FOREACH_MEMORY_X4_SIMD_OP(_)      \
     _(fromInt32x4)                    \
-    _(fromInt32x4Bits)
-
-// TODO: remove when all SIMD calls are inlined (bug 1112155)
-#define ION_COMMONX4_SIMD_OP(_)      \
-    FOREACH_NUMERIC_SIMD_BINOP(_)    \
-    _(extractLane)                   \
-    _(replaceLane)                   \
-    _(select)                        \
-    _(splat)                         \
-    _(neg)                           \
-    _(swizzle)                       \
-    _(shuffle)                       \
-    _(load)                          \
-    _(load1)                         \
-    _(load2)                         \
-    _(load3)                         \
-    _(store)                         \
-    _(store1)                        \
-    _(store2)                        \
-    _(store3)                        \
-    _(check)
+    _(fromInt32x4Bits)                \
+    _(fromUint32x4)                   \
+    _(fromUint32x4Bits)
 
 namespace js {
 
@@ -799,13 +771,121 @@ enum class SimdType : uint8_t {
     Count
 };
 
+// The integer SIMD types have a lot of operations that do the exact same thing
+// for signed and unsigned integer types. Sometimes it is simpler to treat
+// signed and unsigned integer SIMD types as the same type, using a SimdSign to
+// distinguish the few cases where there is a difference.
+enum class SimdSign {
+    // Signedness is not applicable to this type. (i.e., Float or Bool).
+    NotApplicable,
+    // Treat as an unsigned integer with a range 0 .. 2^N-1.
+    Unsigned,
+    // Treat as a signed integer in two's complement encoding.
+    Signed,
+};
+
+// Get the signedness of a SIMD type.
+inline SimdSign
+GetSimdSign(SimdType t)
+{
+    switch(t) {
+      case SimdType::Int8x16:
+      case SimdType::Int16x8:
+      case SimdType::Int32x4:
+        return SimdSign::Signed;
+
+      case SimdType::Uint8x16:
+      case SimdType::Uint16x8:
+      case SimdType::Uint32x4:
+        return SimdSign::Unsigned;
+
+      default:
+        return SimdSign::NotApplicable;
+    }
+}
+
+inline bool
+IsSignedIntSimdType(SimdType type)
+{
+    return GetSimdSign(type) == SimdSign::Signed;
+}
+
+// Get the boolean SIMD type with the same shape as t.
+//
+// This is the result type of a comparison operation, and it can also be used to
+// identify the geometry of a SIMD type.
+inline SimdType
+GetBooleanSimdType(SimdType t)
+{
+    switch(t) {
+      case SimdType::Int8x16:
+      case SimdType::Uint8x16:
+      case SimdType::Bool8x16:
+        return SimdType::Bool8x16;
+
+      case SimdType::Int16x8:
+      case SimdType::Uint16x8:
+      case SimdType::Bool16x8:
+        return SimdType::Bool16x8;
+
+      case SimdType::Int32x4:
+      case SimdType::Uint32x4:
+      case SimdType::Float32x4:
+      case SimdType::Bool32x4:
+        return SimdType::Bool32x4;
+
+      case SimdType::Float64x2:
+      case SimdType::Bool64x2:
+        return SimdType::Bool64x2;
+
+      case SimdType::Count:
+        break;
+    }
+    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Bad SIMD type");
+}
+
+// Get the number of lanes in a SIMD type.
+inline unsigned
+GetSimdLanes(SimdType t)
+{
+    switch(t) {
+      case SimdType::Int8x16:
+      case SimdType::Uint8x16:
+      case SimdType::Bool8x16:
+        return 16;
+
+      case SimdType::Int16x8:
+      case SimdType::Uint16x8:
+      case SimdType::Bool16x8:
+        return 8;
+
+      case SimdType::Int32x4:
+      case SimdType::Uint32x4:
+      case SimdType::Float32x4:
+      case SimdType::Bool32x4:
+        return 4;
+
+      case SimdType::Float64x2:
+      case SimdType::Bool64x2:
+        return 2;
+
+      case SimdType::Count:
+        break;
+    }
+    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Bad SIMD type");
+}
+
 // Complete set of SIMD operations.
 //
 // No SIMD types implement all of these operations.
 //
 // C++ defines keywords and/or/xor/not, so prepend Fn_ to all named functions to
 // avoid clashes.
-enum class SimdOperation : uint8_t {
+//
+// Note: because of a gcc < v4.8's compiler bug, uint8_t can't be used as the
+// storage class here. See bug 1243810. See also
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64037 .
+enum class SimdOperation {
     // The constructor call. No Fn_ prefix here.
     Constructor,
 
@@ -828,6 +908,8 @@ enum class SimdOperation : uint8_t {
     Fn_fromUint32x4Bits,
     Fn_fromFloat32x4Bits,
     Fn_fromFloat64x2Bits,
+
+    Last = Fn_fromFloat64x2Bits
 };
 
 class SimdObject : public JSObject
@@ -1007,9 +1089,14 @@ struct Bool64x2 {
     }
 };
 
-bool IsSignedIntSimdType(SimdType type);
+// Get the well known name of the SIMD.* object corresponding to type.
+PropertyName* SimdTypeToName(const JSAtomState& atoms, SimdType type);
 
-PropertyName* SimdTypeToName(JSContext* cx, SimdType type);
+// Check if name is the well known name of a SIMD type.
+// Returns true and sets *type iff name is known.
+bool IsSimdTypeName(const JSAtomState& atoms, const PropertyName* name, SimdType* type);
+
+const char* SimdTypeToString(SimdType type);
 
 template<typename V>
 JSObject* CreateSimd(JSContext* cx, const typename V::Elem* data);

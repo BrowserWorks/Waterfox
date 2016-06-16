@@ -18,6 +18,7 @@
 #include "nsWeakReference.h"
 #include "nsCOMArray.h"
 #include "nsRect.h"
+#include "Units.h"
 
 // Interfaces needed
 #include "nsIBaseWindow.h"
@@ -92,13 +93,14 @@ protected:
    void OnChromeLoaded();
    void StaggerPosition(int32_t &aRequestedX, int32_t &aRequestedY,
                         int32_t aSpecWidth, int32_t aSpecHeight);
-   bool       LoadPositionFromXUL();
-   bool       LoadSizeFromXUL();
+   bool       LoadPositionFromXUL(int32_t aSpecWidth, int32_t aSpecHeight);
+   bool       LoadSizeFromXUL(int32_t& aSpecWidth, int32_t& aSpecHeight);
+   void       SetSpecifiedSize(int32_t aSpecWidth, int32_t aSpecHeight);
    bool       LoadMiscPersistentAttributesFromXUL();
    void       SyncAttributesToWidget();
    NS_IMETHOD SavePersistentAttributes();
 
-   NS_IMETHOD GetWindowDOMWindow(nsIDOMWindow** aDOMWindow);
+   NS_IMETHOD GetWindowDOMWindow(mozIDOMWindowProxy** aDOMWindow);
    mozilla::dom::Element* GetWindowDOMElement() const;
 
    // See nsIDocShellTreeOwner for docs on next two methods
@@ -126,7 +128,7 @@ protected:
    nsContentTreeOwner*     mPrimaryContentTreeOwner;
    nsCOMPtr<nsIWidget>     mWindow;
    nsCOMPtr<nsIDocShell>   mDocShell;
-   nsCOMPtr<nsIDOMWindow>  mDOMWindow;
+   nsCOMPtr<nsPIDOMWindowOuter>  mDOMWindow;
    nsCOMPtr<nsIWeakReference> mParentWindow;
    nsCOMPtr<nsIPrompt>     mPrompter;
    nsCOMPtr<nsIAuthPrompt> mAuthPrompter;

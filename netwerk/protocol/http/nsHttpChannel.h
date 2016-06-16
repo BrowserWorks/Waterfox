@@ -272,7 +272,8 @@ private:
     void     SetupTransactionSchedulingContext();
     nsresult CallOnStartRequest();
     nsresult ProcessResponse();
-    nsresult ContinueProcessResponse(nsresult);
+    nsresult ContinueProcessResponse1(nsresult);
+    nsresult ContinueProcessResponse2(nsresult);
     nsresult ProcessNormal();
     nsresult ContinueProcessNormal(nsresult);
     void     ProcessAltService();
@@ -364,6 +365,11 @@ private:
      * the channel is ignored. This is called from ProcessResponse.
      */
     nsresult ProcessSecurityHeaders();
+
+    /**
+     * A function that will, if the feature is enabled, send security reports.
+     */
+    void ProcessSecurityReport(nsresult status);
 
     /**
      * A function to process a single security header (STS or PKP), assumes

@@ -361,12 +361,6 @@ txMozillaXSLTProcessor::txMozillaXSLTProcessor(nsISupports* aOwner)
 {
 }
 
-NS_IMETHODIMP
-txMozillaXSLTProcessor::Init(nsISupports* aOwner)
-{
-    return NS_OK;
-}
-
 txMozillaXSLTProcessor::~txMozillaXSLTProcessor()
 {
     if (mStylesheetDocument) {

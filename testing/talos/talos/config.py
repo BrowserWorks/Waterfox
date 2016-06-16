@@ -90,8 +90,6 @@ DEFAULTS = dict(
         'network.proxy.type': 1,
         'security.enable_java': False,
         'security.fileuri.strict_origin_policy': False,
-        'toolkit.telemetry.prompted': 999,
-        'toolkit.telemetry.notifiedOptOut': 999,
         'dom.send_after_paint_to_content': True,
         'security.turn_off_all_security_so_that_viruses_can_'
         'take_over_this_computer': True,
@@ -111,6 +109,7 @@ DEFAULTS = dict(
             'http://127.0.0.1/trackingprotection/tour',
         'browser.safebrowsing.enabled': False,
         'browser.safebrowsing.malware.enabled': False,
+        'browser.safebrowsing.blockedURIs.enabled': False,
         'browser.search.isUS': True,
         'browser.search.countryCode': 'US',
         'browser.selfsupport.url':
@@ -190,7 +189,6 @@ DEFAULTS = dict(
 # keys to generated self.config that are global overrides to tests
 GLOBAL_OVERRIDES = (
     'cycles',
-    'responsiveness',
     'sps_profile',
     'sps_profile_interval',
     'sps_profile_entries',

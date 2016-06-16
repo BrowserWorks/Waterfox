@@ -133,7 +133,7 @@ HttpChannelParent::Init(const HttpChannelCreationArgs& aArgs)
                        a.cacheKey(), a.schedulingContextID(), a.preflightArgs(),
                        a.initialRwin(), a.blockAuthPrompt(),
                        a.suspendAfterSynthesizeResponse(),
-                       a.allowStaleCacheContent());
+                       a.allowStaleCacheContent(), a.contentTypeHint());
   }
   case HttpChannelCreationArgs::THttpChannelConnectArgs:
   {
@@ -199,14 +199,10 @@ HttpChannelParent::GetInterface(const nsIID& aIID, void **result)
   if (mTabParent && aIID.Equals(NS_GET_IID(nsIPrompt))) {
     nsCOMPtr<Element> frameElement = mTabParent->GetOwnerElement();
     if (frameElement) {
+      nsCOMPtr<nsPIDOMWindowOuter> win =frameElement->OwnerDoc()->GetWindow();
+      NS_ENSURE_TRUE(win, NS_ERROR_UNEXPECTED);
+
       nsresult rv;
-      nsCOMPtr<nsIDOMWindow> win =
-        do_QueryInterface(frameElement->OwnerDoc()->GetWindow(), &rv);
-
-      if (NS_WARN_IF(!NS_SUCCEEDED(rv))) {
-        return rv;
-      }
-
       nsCOMPtr<nsIWindowWatcher> wwatch =
         do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
 
@@ -268,7 +264,8 @@ HttpChannelParent::DoAsyncOpen(  const URIParams&           aURI,
                                  const uint32_t&            aInitialRwin,
                                  const bool&                aBlockAuthPrompt,
                                  const bool&                aSuspendAfterSynthesizeResponse,
-                                 const bool&                aAllowStaleCacheContent)
+                                 const bool&                aAllowStaleCacheContent,
+                                 const nsCString&           aContentTypeHint)
 {
   nsCOMPtr<nsIURI> uri = DeserializeURI(aURI);
   if (!uri) {
@@ -418,6 +415,8 @@ HttpChannelParent::DoAsyncOpen(  const URIParams&           aURI,
   mChannel->SetCacheKey(cacheKey);
 
   mChannel->SetAllowStaleCacheContent(aAllowStaleCacheContent);
+
+  mChannel->SetContentType(aContentTypeHint);
 
   if (priority != nsISupportsPriority::PRIORITY_NORMAL) {
     mChannel->SetPriority(priority);
@@ -765,12 +764,8 @@ HttpChannelParent::RecvDivertOnDataAvailable(const nsCString& data,
     return true;
   }
 
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new DivertDataAvailableEvent(this, data, offset, count));
-    return true;
-  }
-
-  DivertOnDataAvailable(data, offset, count);
+  mEventQ->RunOrEnqueue(new DivertDataAvailableEvent(this, data, offset,
+                                                     count));
   return true;
 }
 
@@ -850,12 +845,7 @@ HttpChannelParent::RecvDivertOnStopRequest(const nsresult& statusCode)
     return false;
   }
 
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new DivertStopRequestEvent(this, statusCode));
-    return true;
-  }
-
-  DivertOnStopRequest(statusCode);
+  mEventQ->RunOrEnqueue(new DivertStopRequestEvent(this, statusCode));
   return true;
 }
 
@@ -913,12 +903,7 @@ HttpChannelParent::RecvDivertComplete()
     return false;
   }
 
-  if (mEventQ->ShouldEnqueue()) {
-    mEventQ->Enqueue(new DivertCompleteEvent(this));
-    return true;
-  }
-
-  DivertComplete();
+  mEventQ->RunOrEnqueue(new DivertCompleteEvent(this));
   return true;
 }
 
@@ -1155,23 +1140,39 @@ HttpChannelParent::OnDataAvailable(nsIRequest *aRequest,
   MOZ_RELEASE_ASSERT(!mDivertingFromChild,
     "Cannot call OnDataAvailable if diverting is set!");
 
-  nsCString data;
-  nsresult rv = NS_ReadInputStreamToString(aInputStream, data, aCount);
-  if (NS_FAILED(rv))
-    return rv;
-
   nsresult channelStatus = NS_OK;
   mChannel->GetStatus(&channelStatus);
 
-  // OnDataAvailable is always preceded by OnStatus/OnProgress calls that set
-  // mStoredStatus/mStoredProgress(Max) to appropriate values, unless
-  // LOAD_BACKGROUND set.  In that case, they'll have garbage values, but
-  // child doesn't use them.
-  if (mIPCClosed || !SendOnTransportAndData(channelStatus, mStoredStatus,
-                                            mStoredProgress, mStoredProgressMax,
-                                            data, aOffset, aCount)) {
-    return NS_ERROR_UNEXPECTED;
+  static uint32_t const kCopyChunkSize = 128 * 1024;
+  uint32_t toRead = std::min<uint32_t>(aCount, kCopyChunkSize);
+
+  nsCString data;
+  if (!data.SetCapacity(toRead, fallible)) {
+    LOG(("  out of memory!"));
+    return NS_ERROR_OUT_OF_MEMORY;
   }
+
+  while (aCount) {
+    nsresult rv = NS_ReadInputStreamToString(aInputStream, data, toRead);
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+
+    // OnDataAvailable is always preceded by OnStatus/OnProgress calls that set
+    // mStoredStatus/mStoredProgress(Max) to appropriate values, unless
+    // LOAD_BACKGROUND set.  In that case, they'll have garbage values, but
+    // child doesn't use them.
+    if (mIPCClosed || !SendOnTransportAndData(channelStatus, mStoredStatus,
+                                              mStoredProgress, mStoredProgressMax,
+                                              aOffset, toRead, data)) {
+      return NS_ERROR_UNEXPECTED;
+    }
+
+    aOffset += toRead;
+    aCount -= toRead;
+    toRead = std::min<uint32_t>(aCount, kCopyChunkSize);
+  }
+
   return NS_OK;
 }
 

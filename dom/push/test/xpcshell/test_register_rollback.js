@@ -75,14 +75,13 @@ add_task(function* test_register_rollback() {
     PushService.register({
       scope: 'https://example.com/storage-error',
       originAttributes: ChromeUtils.originAttributesToSuffix(
-        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+        { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
     }),
     'Expected error for unregister database failure'
   );
 
   // Should send an out-of-band unregister request.
-  yield waitForPromise(unregisterPromise, DEFAULT_TIMEOUT,
-    'Unregister request timed out');
+  yield unregisterPromise;
   equal(handshakes, 1, 'Wrong handshake count');
   equal(registers, 1, 'Wrong register count');
 });

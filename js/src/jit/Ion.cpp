@@ -552,27 +552,6 @@ FinishAllOffThreadCompilations(JSCompartment* comp)
     }
 }
 
-class MOZ_RAII AutoLazyLinkExitFrame
-{
-    JitActivation* jitActivation_;
-    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
-
-  public:
-    explicit AutoLazyLinkExitFrame(JitActivation* jitActivation
-                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : jitActivation_(jitActivation)
-    {
-        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
-        MOZ_ASSERT(!jitActivation_->isLazyLinkExitFrame(),
-                   "Cannot stack multiple lazy-link frames.");
-        jitActivation_->setLazyLinkExitFrame(true);
-    }
-
-    ~AutoLazyLinkExitFrame() {
-        jitActivation_->setLazyLinkExitFrame(false);
-    }
-};
-
 static bool
 LinkCodeGen(JSContext* cx, IonBuilder* builder, CodeGenerator *codegen,
             MutableHandle<ScriptVector> scripts, OnIonCompilationInfo* info)
@@ -654,11 +633,8 @@ jit::LazyLink(JSContext* cx, HandleScript calleeScript)
 uint8_t*
 jit::LazyLinkTopActivation(JSContext* cx)
 {
-    JitActivationIterator iter(cx->runtime());
-    AutoLazyLinkExitFrame lazyLinkExitFrame(iter->asJit());
-
     // First frame should be an exit frame.
-    JitFrameIterator it(iter);
+    JitFrameIterator it(cx);
     LazyLinkExitFrameLayout* ll = it.exitFrame()->as<LazyLinkExitFrameLayout>();
     RootedScript calleeScript(cx, ScriptFromCalleeToken(ll->jsFrame()->calleeToken()));
 
@@ -773,6 +749,15 @@ JitCompartment::toggleBarriers(bool enabled)
     }
 }
 
+size_t
+JitCompartment::sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
+{
+    size_t n = mallocSizeOf(this);
+    if (stubCodes_)
+        n += stubCodes_->sizeOfIncludingThis(mallocSizeOf);
+    return n;
+}
+
 JitCode*
 JitRuntime::getBailoutTable(const FrameSizeClass& frameClass) const
 {
@@ -879,8 +864,11 @@ JitCode::finalize(FreeOp* fop)
     // With W^X JIT code, reprotecting memory for each JitCode instance is
     // slow, so we record the ranges and poison them later all at once. It's
     // safe to ignore OOM here, it just means we won't poison the code.
-    if (fop->appendJitPoisonRange(JitPoisonRange(pool_, code_, bufferSize_)))
+    if (fop->appendJitPoisonRange(JitPoisonRange(pool_, code_ - headerSize_,
+                                                 headerSize_ + bufferSize_)))
+    {
         pool_->addRef();
+    }
     code_ = nullptr;
 
     // Code buffers are stored inside ExecutablePools. Pools are refcounted.
@@ -1279,9 +1267,7 @@ void
 IonScript::Destroy(FreeOp* fop, IonScript* script)
 {
     script->unlinkFromRuntime(fop);
-    // Frees the potential event we have set.
-    script->traceLoggerScriptEvent_ = TraceLoggerEvent();
-    fop->free_(script);
+    fop->delete_(script);
 }
 
 void
@@ -1318,15 +1304,19 @@ IonScript::purgeOptimizedStubs(Zone* zone)
                 stub = stub->next();
             }
 
+            lastStub->toFallbackStub()->setInvalid();
+
             if (lastStub->isMonitoredFallback()) {
                 // Monitor stubs can't make calls, so are always in the
                 // optimized stub space.
                 ICTypeMonitor_Fallback* lastMonStub =
                     lastStub->toMonitoredFallbackStub()->fallbackMonitorStub();
                 lastMonStub->resetMonitorStubChain(zone);
+                lastMonStub->setInvalid();
             }
         } else if (lastStub->isTypeMonitor_Fallback()) {
             lastStub->toTypeMonitor_Fallback()->resetMonitorStubChain(zone);
+            lastStub->toTypeMonitor_Fallback()->setInvalid();
         } else {
             MOZ_ASSERT(lastStub->isTableSwitch());
         }
@@ -1719,9 +1709,9 @@ OptimizeMIR(MIRGenerator* mir)
         }
     }
 
+    RangeAnalysis r(mir, graph);
     if (mir->optimizationInfo().rangeAnalysisEnabled()) {
         AutoTraceLog log(logger, TraceLogger_RangeAnalysis);
-        RangeAnalysis r(mir, graph);
         if (!r.addBetaNodes())
             return false;
         gs.spewPass("Beta");
@@ -1788,6 +1778,28 @@ OptimizeMIR(MIRGenerator* mir)
         }
     }
 
+    {
+        AutoTraceLog log(logger, TraceLogger_Sink);
+        if (!Sink(mir, graph))
+            return false;
+        gs.spewPass("Sink");
+        AssertExtendedGraphCoherency(graph);
+
+        if (mir->shouldCancel("Sink"))
+            return false;
+    }
+
+    if (mir->optimizationInfo().rangeAnalysisEnabled()) {
+        AutoTraceLog log(logger, TraceLogger_RemoveUnnecessaryBitops);
+        if (!r.removeUnnecessaryBitops())
+            return false;
+        gs.spewPass("Remove Unnecessary Bitops");
+        AssertExtendedGraphCoherency(graph);
+
+        if (mir->shouldCancel("Remove Unnecessary Bitops"))
+            return false;
+    }
+
     if (mir->optimizationInfo().eaaEnabled()) {
         AutoTraceLog log(logger, TraceLogger_EffectiveAddressAnalysis);
         EffectiveAddressAnalysis eaa(mir, graph);
@@ -1818,17 +1830,6 @@ OptimizeMIR(MIRGenerator* mir)
         AssertExtendedGraphCoherency(graph);
 
         if (mir->shouldCancel("DCE"))
-            return false;
-    }
-
-    {
-        AutoTraceLog log(logger, TraceLogger_EliminateDeadCode);
-        if (!Sink(mir, graph))
-            return false;
-        gs.spewPass("Sink");
-        AssertExtendedGraphCoherency(graph);
-
-        if (mir->shouldCancel("Sink"))
             return false;
     }
 
@@ -1886,7 +1887,8 @@ OptimizeMIR(MIRGenerator* mir)
 
     if (!mir->compilingAsmJS()) {
         AutoTraceLog log(logger, TraceLogger_AddKeepAliveInstructions);
-        AddKeepAliveInstructions(graph);
+        if (!AddKeepAliveInstructions(graph))
+            return false;
         gs.spewPass("Add KeepAlive Instructions");
         AssertGraphCoherency(graph);
     }
@@ -2913,13 +2915,17 @@ jit::FastInvoke(JSContext* cx, HandleFunction fun, CallArgs& args)
 {
     JS_CHECK_RECURSION(cx, return JitExec_Error);
 
+    RootedScript script(cx, fun->nonLazyScript());
+
+    if (!Debugger::checkNoExecute(cx, script))
+        return JitExec_Error;
+
 #ifdef DEBUG
     // See comment in EnterBaseline.
     mozilla::Maybe<JS::AutoAssertOnGC> nogc;
     nogc.emplace(cx->runtime());
 #endif
 
-    RootedScript script(cx, fun->nonLazyScript());
     IonScript* ion = script->ionScript();
     JitCode* code = ion->method();
     void* jitcode = code->raw();
@@ -2968,7 +2974,6 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
 #ifdef JS_JITSPEW
         switch (it.type()) {
           case JitFrame_Exit:
-          case JitFrame_LazyLink:
             JitSpew(JitSpew_IonInvalidate, "#%d exit frame @ %p", frameno, it.fp());
             break;
           case JitFrame_BaselineJS:
@@ -2998,15 +3003,6 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
             break;
           case JitFrame_Rectifier:
             JitSpew(JitSpew_IonInvalidate, "#%d rectifier frame @ %p", frameno, it.fp());
-            break;
-          case JitFrame_Unwound_IonJS:
-          case JitFrame_Unwound_IonStub:
-          case JitFrame_Unwound_BaselineJS:
-          case JitFrame_Unwound_BaselineStub:
-          case JitFrame_Unwound_IonAccessorIC:
-            MOZ_CRASH("invalid");
-          case JitFrame_Unwound_Rectifier:
-            JitSpew(JitSpew_IonInvalidate, "#%d unwound rectifier frame @ %p", frameno, it.fp());
             break;
           case JitFrame_IonAccessorIC:
             JitSpew(JitSpew_IonInvalidate, "#%d ion IC getter/setter frame @ %p", frameno, it.fp());
@@ -3237,7 +3233,7 @@ jit::IonScript::invalidate(JSContext* cx, bool resetUses, const char* reason)
     Invalidate(cx, list, resetUses, true);
 }
 
-bool
+void
 jit::Invalidate(JSContext* cx, JSScript* script, bool resetUses, bool cancelOffThread)
 {
     MOZ_ASSERT(script->hasIonScript());
@@ -3252,15 +3248,14 @@ jit::Invalidate(JSContext* cx, JSScript* script, bool resetUses, bool cancelOffT
         if (filename == nullptr)
             filename = "<unknown>";
 
-        size_t len = strlen(filename) + 20;
-        char* buf = js_pod_malloc<char>(len);
-        if (!buf)
-            return false;
-
         // Construct the descriptive string.
-        JS_snprintf(buf, len, "Invalidate %s:%" PRIuSIZE, filename, script->lineno());
-        cx->runtime()->spsProfiler.markEvent(buf);
-        js_free(buf);
+        char* buf = JS_smprintf("Invalidate %s:%" PRIuSIZE, filename, script->lineno());
+
+        // Ignore the event on allocation failure.
+        if (buf) {
+            cx->runtime()->spsProfiler.markEvent(buf);
+            JS_smprintf_free(buf);
+        }
     }
 
     // RecompileInfoVector has inline space for at least one element.
@@ -3270,7 +3265,6 @@ jit::Invalidate(JSContext* cx, JSScript* script, bool resetUses, bool cancelOffT
     scripts.infallibleAppend(script->ionScript()->recompileInfo());
 
     Invalidate(cx, scripts, resetUses, cancelOffThread);
-    return true;
 }
 
 static void
@@ -3308,15 +3302,8 @@ jit::ForbidCompilation(JSContext* cx, JSScript* script)
 
     CancelOffThreadIonCompile(cx->compartment(), script);
 
-    if (script->hasIonScript()) {
-        // It is only safe to modify script->ion if the script is not currently
-        // running, because JitFrameIterator needs to tell what ionScript to
-        // use (either the one on the JSScript, or the one hidden in the
-        // breadcrumbs Invalidation() leaves). Therefore, if invalidation
-        // fails, we cannot disable the script.
-        if (!Invalidate(cx, script, false))
-            return;
-    }
+    if (script->hasIonScript())
+        Invalidate(cx, script, false);
 
     script->setIonScript(cx, ION_DISABLED_SCRIPT);
 }

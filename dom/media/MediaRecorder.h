@@ -22,6 +22,7 @@ class ErrorResult;
 class MediaInputPort;
 struct MediaRecorderOptions;
 class MediaStream;
+class GlobalObject;
 
 namespace dom {
 
@@ -44,13 +45,15 @@ class MediaRecorder final : public DOMEventTargetHelper,
   class Session;
 
 public:
-  MediaRecorder(DOMMediaStream& aSourceMediaStream, nsPIDOMWindow* aOwnerWindow);
-  MediaRecorder(AudioNode& aSrcAudioNode, uint32_t aSrcOutput, nsPIDOMWindow* aOwnerWindow);
+  MediaRecorder(DOMMediaStream& aSourceMediaStream,
+                nsPIDOMWindowInner* aOwnerWindow);
+  MediaRecorder(AudioNode& aSrcAudioNode, uint32_t aSrcOutput,
+                nsPIDOMWindowInner* aOwnerWindow);
 
   // nsWrapperCache
   JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
-  nsPIDOMWindow* GetParentObject() { return GetOwner(); }
+  nsPIDOMWindowInner* GetParentObject() { return GetOwner(); }
 
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(MediaRecorder,
@@ -75,6 +78,9 @@ public:
   RecordingState State() const { return mState; }
   // Return the current encoding MIME type selected by the MediaEncoder.
   void GetMimeType(nsString &aMimeType);
+
+  static bool IsTypeSupported(GlobalObject& aGlobal, const nsAString& aType);
+  static bool IsTypeSupported(const nsAString& aType);
 
   // Construct a recorder with a DOM media stream object as its source.
   static already_AddRefed<MediaRecorder>

@@ -8,8 +8,13 @@ Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/framework/test/shared-head.js",
   this);
 
-var { snapshotState: states } = require("devtools/client/memory/constants");
-var { breakdownEquals, breakdownNameToSpec } = require("devtools/client/memory/utils");
+// Load the shared Redux helpers into this compartment.
+Services.scriptloader.loadSubScript(
+  "chrome://mochitests/content/browser/devtools/client/framework/test/shared-redux-head.js",
+  this);
+
+var { censusDisplays, snapshotState: states } = require("devtools/client/memory/constants");
+var { L10N } = require("devtools/client/memory/utils");
 
 Services.prefs.setBoolPref("devtools.memory.enabled", true);
 
@@ -67,33 +72,8 @@ function makeMemoryTest(url, generator) {
   });
 }
 
-
-function waitUntilState (store, predicate) {
-  let deferred = promise.defer();
-  let unsubscribe = store.subscribe(check);
-
-  function check () {
-    if (predicate(store.getState())) {
-      unsubscribe();
-      deferred.resolve()
-    }
-  }
-
-  // Fire the check immediately incase the action has already occurred
-  check();
-
-  return deferred.promise;
-}
-
-function waitUntilSnapshotState (store, expected) {
-  let predicate = () => {
-    let snapshots = store.getState().snapshots;
-    info(snapshots.map(x => x.state));
-    return snapshots.length === expected.length &&
-           expected.every((state, i) => state === "*" || snapshots[i].state === state);
-  };
-  info(`Waiting for snapshots to be of state: ${expected}`);
-  return waitUntilState(store, predicate);
+function dumpn(msg) {
+  dump(`MEMORY-TEST: ${msg}\n`);
 }
 
 /**
@@ -137,22 +117,22 @@ function clearSnapshots (window) {
 }
 
 /**
- * Sets breakdown and waits for currently selected breakdown to use it
- * and be completed the census.
+ * Sets the current requested display and waits for the selected snapshot to use
+ * it and complete the new census that entails.
  */
-function setBreakdown (window, type) {
-  info(`Setting breakdown to ${type}...`);
+function setCensusDisplay(window, display) {
+  info(`Setting census display to ${display}...`);
   let { gStore, gHeapAnalysesClient } = window;
   // XXX: Should handle this via clicking the DOM, but React doesn't
   // fire the onChange event, so just change it in the store.
-  // window.document.querySelector(`.select-breakdown`).value = type;
-  gStore.dispatch(require("devtools/client/memory/actions/breakdown")
-                         .setBreakdownAndRefresh(gHeapAnalysesClient, breakdownNameToSpec(type)));
+  // window.document.querySelector(`.select-display`).value = type;
+  gStore.dispatch(require("devtools/client/memory/actions/census-display")
+                         .setCensusDisplayAndRefresh(gHeapAnalysesClient, display));
 
   return waitUntilState(window.gStore, () => {
     let selected = window.gStore.getState().snapshots.find(s => s.selected);
     return selected.state === states.SAVED_CENSUS &&
-           breakdownEquals(breakdownNameToSpec(type), selected.census.breakdown);
+      selected.census.display === display;
   });
 }
 
@@ -165,4 +145,27 @@ function setBreakdown (window, type) {
 function getDisplayedSnapshotStatus(document) {
   const status = document.querySelector(".snapshot-status");
   return status ? status.textContent.trim() : null;
+}
+
+/**
+ * Get the index of the currently selected snapshot.
+ *
+ * @return {Number}
+ */
+function getSelectedSnapshotIndex(store) {
+  let snapshots = store.getState().snapshots;
+  let selectedSnapshot = snapshots.find(s => s.selected);
+  return snapshots.indexOf(selectedSnapshot);
+}
+
+/**
+ * Returns a promise that will resolve when the snapshot with provided index
+ * becomes selected.
+ *
+ * @return {Promise}
+ */
+function waitUntilSnapshotSelected(store, snapshotIndex) {
+  return waitUntilState(store, state =>
+    state.snapshots[snapshotIndex] &&
+    state.snapshots[snapshotIndex].selected === true);
 }

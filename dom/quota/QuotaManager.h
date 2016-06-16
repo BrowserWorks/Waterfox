@@ -26,7 +26,7 @@ class nsIPrincipal;
 class nsIThread;
 class nsITimer;
 class nsIURI;
-class nsPIDOMWindow;
+class nsPIDOMWindowOuter;
 class nsIRunnable;
 
 BEGIN_QUOTA_NAMESPACE
@@ -230,6 +230,7 @@ public:
   void
   OpenDirectoryInternal(Nullable<PersistenceType> aPersistenceType,
                         const OriginScope& aOriginScope,
+                        Nullable<Client::Type> aClientType,
                         bool aExclusive,
                         OpenDirectoryListener* aOpenListener);
 
@@ -327,7 +328,7 @@ public:
                        bool* aIsApp);
 
   static nsresult
-  GetInfoFromWindow(nsPIDOMWindow* aWindow,
+  GetInfoFromWindow(nsPIDOMWindowOuter* aWindow,
                     nsACString* aGroup,
                     nsACString* aOrigin,
                     bool* aIsApp);
@@ -500,7 +501,7 @@ private:
   // by any mutex but it is only ever touched on the IO thread.
   nsTArray<nsCString> mInitializedOrigins;
 
-  nsAutoTArray<RefPtr<Client>, Client::TYPE_MAX> mClients;
+  AutoTArray<RefPtr<Client>, Client::TYPE_MAX> mClients;
 
   nsString mIndexedDBPath;
   nsString mStoragePath;

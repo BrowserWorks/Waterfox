@@ -1,8 +1,0 @@
-@namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-
-#context_tabViewMenu,
-#menu_tabview,
-#tabview-button,
-#wrapper-tabview-button {
-	display: none;
-}

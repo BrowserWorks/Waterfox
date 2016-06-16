@@ -24,7 +24,8 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
+
+using namespace indexedDB;
 
 IDBCursor::IDBCursor(Type aType,
                      BackgroundCursorChild* aBackgroundActor,
@@ -261,7 +262,7 @@ IDBCursor::Reset()
   mContinueCalled = false;
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 IDBCursor::GetParentObject() const
 {
   AssertIsOnOwningThread();
@@ -866,9 +867,9 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(IDBCursor)
 
   NS_IMPL_CYCLE_COLLECTION_TRACE_PRESERVED_WRAPPER
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mScriptOwner)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedKey)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedPrimaryKey)
-  NS_IMPL_CYCLE_COLLECTION_TRACE_JSVAL_MEMBER_CALLBACK(mCachedValue)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedKey)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedPrimaryKey)
+  NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mCachedValue)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(IDBCursor)
@@ -896,6 +897,5 @@ IDBCursor::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
   }
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

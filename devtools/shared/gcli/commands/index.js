@@ -65,6 +65,7 @@ exports.devtoolsModules = [
   "devtools/shared/gcli/commands/inject",
   "devtools/shared/gcli/commands/jsb",
   "devtools/shared/gcli/commands/listen",
+  "devtools/shared/gcli/commands/mdn",
   "devtools/shared/gcli/commands/measure",
   "devtools/shared/gcli/commands/media",
   "devtools/shared/gcli/commands/pagemod",
@@ -74,7 +75,6 @@ exports.devtoolsModules = [
   "devtools/shared/gcli/commands/rulers",
   "devtools/shared/gcli/commands/screenshot",
   "devtools/shared/gcli/commands/security",
-  "devtools/shared/gcli/commands/tools",
 ];
 
 /**

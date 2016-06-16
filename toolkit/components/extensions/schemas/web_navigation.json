@@ -4,6 +4,20 @@
 
 [
   {
+    "namespace": "manifest",
+    "types": [
+      {
+        "$extend": "Permission",
+        "choices": [{
+          "type": "string",
+          "enum": [
+            "webNavigation"
+          ]
+        }]
+      }
+    ]
+  },
+  {
     "namespace": "webNavigation",
     "description": "Use the <code>browser.webNavigation</code> API to receive notifications about the status of navigation requests in-flight.",
     "types": [
@@ -22,9 +36,9 @@
     "functions": [
       {
         "name": "getFrame",
-        "unsupported": true,
         "type": "function",
         "description": "Retrieves information about the given frame. A frame refers to an &lt;iframe&gt; or a &lt;frame&gt; of a web page and is identified by a tab ID and a frame ID.",
+        "async": "callback",
         "parameters": [
           {
             "type": "object",
@@ -32,12 +46,14 @@
             "description": "Information about the frame to retrieve information about.",
             "properties": {
               "tabId": { "type": "integer", "minimum": 0, "description": "The ID of the tab in which the frame is." },
-              "processId": {"unsupported": true, "type": "integer", "description": "The ID of the process runs the renderer for this tab."},
+              "processId": {"optional": true, "type": "integer", "description": "The ID of the process runs the renderer for this tab."},
               "frameId": { "type": "integer", "minimum": 0, "description": "The ID of the frame in the given tab." }
             }
           },
           {
-            "type": "function", "name": "callback", "parameters": [
+            "type": "function",
+            "name": "callback",
+            "parameters": [
               {
                 "type": "object",
                 "name": "details",
@@ -45,6 +61,7 @@
                 "description": "Information about the requested frame, null if the specified frame ID and/or tab ID are invalid.",
                 "properties": {
                   "errorOccurred": {
+                    "unsupported": true,
                     "type": "boolean",
                     "description": "True if the last navigation in this frame was interrupted by an error, i.e. the onErrorOccurred event fired."
                   },
@@ -64,9 +81,9 @@
       },
       {
         "name": "getAllFrames",
-        "unsupported": true,
         "type": "function",
         "description": "Retrieves information about all frames of a given tab.",
+        "async": "callback",
         "parameters": [
           {
             "type": "object",
@@ -77,7 +94,9 @@
             }
           },
           {
-            "type": "function", "name": "callback", "parameters": [
+            "type": "function",
+            "name": "callback",
+            "parameters": [
               {
                 "name": "details",
                 "type": "array",
@@ -87,6 +106,7 @@
                   "type": "object",
                   "properties": {
                     "errorOccurred": {
+                      "unsupported": true,
                       "type": "boolean",
                       "description": "True if the last navigation in this frame was interrupted by an error, i.e. the onErrorOccurred event fired."
                     },
@@ -325,7 +345,6 @@
       },
       {
         "name": "onHistoryStateUpdated",
-        "unsupported": true,
         "type": "function",
         "description": "Fired when the frame's history was updated to a new URL. All future events for that frame will use the updated URL.",
         "filters": [

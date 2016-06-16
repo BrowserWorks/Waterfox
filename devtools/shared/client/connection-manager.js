@@ -12,8 +12,8 @@ const EventEmitter = require("devtools/shared/event-emitter");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const { DebuggerServer } = require("devtools/server/main");
 const { DebuggerClient } = require("devtools/shared/client/main");
+const Services = require("Services");
 
-Cu.import("resource://gre/modules/Services.jsm");
 DevToolsUtils.defineLazyModuleGetter(this, "Task",
   "resource://gre/modules/Task.jsm");
 
@@ -316,7 +316,7 @@ Connection.prototype = {
       }
       this._client = new DebuggerClient(transport);
       this._client.addOneTimeListener("closed", this._onDisconnected);
-      this._client.connect(this._onConnected);
+      this._client.connect().then(this._onConnected);
     }, e => {
       // If we're continuously trying to connect, we expect the connection to be
       // rejected a couple times, so don't log these.

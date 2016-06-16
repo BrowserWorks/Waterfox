@@ -30,7 +30,7 @@ find ${icu_dir}/source/test -name '*Makefile.in' -prune -or -type f -print | xar
 find ${icu_dir}/source/samples -name '*Makefile.in' -prune -or -type f -print | xargs rm
 
 # remove data that we currently don't need
-rm -rf ${icu_dir}/source/data/brkitr/*
+rm ${icu_dir}/source/data/brkitr/*
 rm ${icu_dir}/source/data/lang/*.mk
 rm ${icu_dir}/source/data/lang/*.txt
 rm ${icu_dir}/source/data/mappings/*.mk
@@ -57,11 +57,11 @@ patch -d ${icu_dir}/../../ -p1 < ${icu_dir}/../icu-patches/suppress-warnings.dif
 patch -d ${icu_dir}/../../ -p1 < ${icu_dir}/../icu-patches/bug-1172609-icu-fix.diff
 patch -d ${icu_dir}/../../ -p1 < ${icu_dir}/../icu-patches/bug-1172609-timezone-recreateDefault.diff
 patch -d ${icu_dir}/../../ -p1 < ${icu_dir}/../icu-patches/bug-1198952-workaround-make-3.82-bug.diff
-# patch -d ${icu_dir}/../../ -p1 < ${icu_dir}/../icu-patches/icu-release-56-1-flagparser-fix.patch
+patch -d ${icu_dir}/../../ -p1 < ${icu_dir}/../icu-patches/icu-release-56-1-flagparser-fix.patch
 patch -d ${icu_dir}/../../ -p1 < ${icu_dir}/../icu-patches/bug-1228227-libc++-gcc_hidden.diff
 
 # NOTE: If you're updating this script for a new ICU version, you have to rerun
 # js/src/tests/ecma_6/String/make-normalize-generateddata-input.py for any
 # normalization changes the new ICU implements.
 
-# hg addremove ${icu_dir}
+hg addremove ${icu_dir}

@@ -63,7 +63,7 @@ OrientationTypeToInternal(OrientationType aOrientation)
   }
 }
 
-ScreenOrientation::ScreenOrientation(nsPIDOMWindow* aWindow, nsScreen* aScreen)
+ScreenOrientation::ScreenOrientation(nsPIDOMWindowInner* aWindow, nsScreen* aScreen)
   : DOMEventTargetHelper(aWindow), mScreen(aScreen)
 {
   MOZ_ASSERT(aWindow);
@@ -289,7 +289,7 @@ ScreenOrientation::LockInternal(ScreenOrientationInternal aOrientation, ErrorRes
     return nullptr;
   }
 
-  nsCOMPtr<nsPIDOMWindow> owner = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner();
   if (NS_WARN_IF(!owner)) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return nullptr;
@@ -364,7 +364,7 @@ ScreenOrientation::LockDeviceOrientation(ScreenOrientationInternal aOrientation,
   // We are fullscreen and lock has been accepted.
   if (aIsFullScreen && !mFullScreenListener) {
     mFullScreenListener = new FullScreenEventListener();
-    aRv = target->AddSystemEventListener(NS_LITERAL_STRING("mozfullscreenchange"),
+    aRv = target->AddSystemEventListener(NS_LITERAL_STRING("fullscreenchange"),
                                          mFullScreenListener, /* useCapture = */ true);
     if (NS_WARN_IF(aRv.Failed())) {
       return false;
@@ -392,7 +392,7 @@ ScreenOrientation::UnlockDeviceOrientation()
   // Remove event listener in case of fullscreen lock.
   nsCOMPtr<EventTarget> target = do_QueryInterface(GetOwner()->GetDoc());
   if (target) {
-    nsresult rv = target->RemoveSystemEventListener(NS_LITERAL_STRING("mozfullscreenchange"),
+    nsresult rv = target->RemoveSystemEventListener(NS_LITERAL_STRING("fullscreenchange"),
                                                     mFullScreenListener, /* useCapture */ true);
     NS_WARN_IF(NS_FAILED(rv));
   }
@@ -439,7 +439,7 @@ ScreenOrientation::GetAngle(ErrorResult& aRv) const
 ScreenOrientation::LockPermission
 ScreenOrientation::GetLockOrientationPermission(bool aCheckSandbox) const
 {
-  nsCOMPtr<nsPIDOMWindow> owner = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner();
   if (!owner) {
     return LOCK_DENIED;
   }
@@ -478,7 +478,7 @@ ScreenOrientation::GetLockOrientationPermission(bool aCheckSandbox) const
 nsIDocument*
 ScreenOrientation::GetResponsibleDocument() const
 {
-  nsCOMPtr<nsPIDOMWindow> owner = GetOwner();
+  nsCOMPtr<nsPIDOMWindowInner> owner = GetOwner();
   if (!owner) {
     return nullptr;
   }
@@ -579,7 +579,7 @@ ScreenOrientation::VisibleEventListener::HandleEvent(nsIDOMEvent* aEvent)
     return NS_OK;
   }
 
-  nsGlobalWindow* win = static_cast<nsGlobalWindow*>(doc->GetInnerWindow());
+  auto* win = nsGlobalWindow::Cast(doc->GetInnerWindow());
   if (!win) {
     return NS_OK;
   }
@@ -629,7 +629,7 @@ ScreenOrientation::FullScreenEventListener::HandleEvent(nsIDOMEvent* aEvent)
   nsAutoString eventType;
   aEvent->GetType(eventType);
 
-  MOZ_ASSERT(eventType.EqualsLiteral("mozfullscreenchange"));
+  MOZ_ASSERT(eventType.EqualsLiteral("fullscreenchange"));
 #endif
 
   nsCOMPtr<EventTarget> target = aEvent->InternalDOMEvent()->GetCurrentTarget();
@@ -647,7 +647,7 @@ ScreenOrientation::FullScreenEventListener::HandleEvent(nsIDOMEvent* aEvent)
 
   hal::UnlockScreenOrientation();
 
-  nsresult rv = target->RemoveSystemEventListener(NS_LITERAL_STRING("mozfullscreenchange"),
+  nsresult rv = target->RemoveSystemEventListener(NS_LITERAL_STRING("fullscreenchange"),
                                                   this, true);
   NS_ENSURE_SUCCESS(rv, rv);
 

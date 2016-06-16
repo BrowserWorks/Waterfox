@@ -127,8 +127,7 @@ function setupPrefsAndMock(mockSocket) {
       ["dom.push.connection.enabled", true],
       ["dom.serviceWorkers.exemptFromPerDomainMax", true],
       ["dom.serviceWorkers.enabled", true],
-      ["dom.serviceWorkers.testing.enabled", true],
-      ["dom.serviceWorkers.interception.enabled", true]
+      ["dom.serviceWorkers.testing.enabled", true]
       ]}, resolve);
   });
 }

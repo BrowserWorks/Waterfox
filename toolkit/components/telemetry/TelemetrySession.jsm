@@ -674,13 +674,15 @@ var Impl = {
   // and payload is the telemetry payload from that child process.
   _childTelemetry: [],
   // Thread hangs from child processes.
+  // Used for TelemetrySession.getChildThreadHangs(); not sent with Telemetry pings.
+  // TelemetrySession.getChildThreadHangs() is used by extensions such as Statuser (https://github.com/chutten/statuser).
   // Each element is in the format {source: <weak-ref>, payload: <object>},
   // where source is a weak reference to the child process,
   // and payload contains the thread hang stats from that child process.
   _childThreadHangs: [],
-  // Array of the resolve functions of all the promises that are waiting for the child thread hang stats to arrive, used to resolve all those promises at once
+  // Array of the resolve functions of all the promises that are waiting for the child thread hang stats to arrive, used to resolve all those promises at once.
   _childThreadHangsResolveFunctions: [],
-  // Timeout function for child thread hang stats retrieval
+  // Timeout function for child thread hang stats retrieval.
   _childThreadHangsTimeout: null,
   // Unique id that identifies this session so the server can cope with duplicate
   // submissions, orphaning and other oddities. The id is shared across subsessions.
@@ -847,7 +849,7 @@ var Impl = {
    *   values: { bucket1: count1, bucket2: count2, ... } }
    */
   packHistogram: function packHistogram(hgram) {
-    let r = hgram.ranges;;
+    let r = hgram.ranges;
     let c = hgram.counts;
     let retgram = {
       range: [r[1], r[r.length - 1]],
@@ -1077,7 +1079,7 @@ var Impl = {
                   "telemetry accessed an unknown distinguished amount");
         boundHandleMemoryReport(id, units, amount);
       } catch (e) {
-      };
+      }
     }
     let b = (id, n) => h(id, Ci.nsIMemoryReporter.UNITS_BYTES, n);
     let c = (id, n) => h(id, Ci.nsIMemoryReporter.UNITS_COUNT, n);
@@ -1089,7 +1091,7 @@ var Impl = {
     b("MEMORY_RESIDENT_FAST", "residentFast");
     b("MEMORY_UNIQUE", "residentUnique");
     b("MEMORY_HEAP_ALLOCATED", "heapAllocated");
-    p("MEMORY_HEAP_COMMITTED_UNUSED_RATIO", "heapOverheadRatio");
+    p("MEMORY_HEAP_OVERHEAD_FRACTION", "heapOverheadFraction");
     b("MEMORY_JS_GC_HEAP", "JSMainRuntimeGCHeap");
     b("MEMORY_JS_MAIN_RUNTIME_TEMPORARY_PEAK", "JSMainRuntimeTemporaryPeak");
     c("MEMORY_JS_COMPARTMENTS_SYSTEM", "JSMainRuntimeCompartmentsSystem");
@@ -1258,7 +1260,9 @@ var Impl = {
       }
 
       payloadObj.addonDetails = protect(() => AddonManagerPrivate.getTelemetryDetails());
-      payloadObj.UIMeasurements = protect(() => UITelemetry.getUIMeasurements());
+
+      let clearUIsession = !(reason == REASON_GATHER_PAYLOAD || reason == REASON_GATHER_SUBSESSION_PAYLOAD);
+      payloadObj.UIMeasurements = protect(() => UITelemetry.getUIMeasurements(clearUIsession));
 
       if (this._slowSQLStartup &&
           Object.keys(this._slowSQLStartup).length != 0 &&
@@ -1290,7 +1294,7 @@ var Impl = {
   getSessionPayload: function getSessionPayload(reason, clearSubsession) {
     this._log.trace("getSessionPayload - reason: " + reason + ", clearSubsession: " + clearSubsession);
 
-    const isMobile = ["gonk", "android"].indexOf(AppConstants.platform) !== -1;
+    const isMobile = ["gonk", "android"].includes(AppConstants.platform);
     const isSubsession = isMobile ? false : !this._isClassicReason(reason);
 
     if (isMobile) {
@@ -2014,7 +2018,7 @@ var Impl = {
       REASON_GATHER_PAYLOAD,
       REASON_TEST_PING,
     ];
-    return classicReasons.indexOf(reason) != -1;
+    return classicReasons.includes(reason);
   },
 
   /**

@@ -310,7 +310,7 @@ nsDeviceContext::IsPrinterSurface()
 }
 
 void
-nsDeviceContext::SetDPI()
+nsDeviceContext::SetDPI(double* aScale)
 {
     float dpi = -1.0f;
 
@@ -339,9 +339,21 @@ nsDeviceContext::SetDPI()
             dpi = 96.0f;
         }
 
-        CSSToLayoutDeviceScale scale = mWidget ? mWidget->GetDefaultScale()
-                                               : CSSToLayoutDeviceScale(1.0);
-        double devPixelsPerCSSPixel = scale.scale;
+        double devPixelsPerCSSPixel;
+        if (aScale && *aScale > 0.0) {
+            // if caller provided a scale, we just use it
+            devPixelsPerCSSPixel = *aScale;
+        } else {
+            // otherwise get from the widget, and return it in aScale for
+            // the caller to pass to child contexts if needed
+            CSSToLayoutDeviceScale scale =
+                mWidget ? mWidget->GetDefaultScale()
+                        : CSSToLayoutDeviceScale(1.0);
+            devPixelsPerCSSPixel = scale.scale;
+            if (aScale) {
+                *aScale = devPixelsPerCSSPixel;
+            }
+        }
 
         mAppUnitsPerDevPixelAtUnitFullZoom =
             std::max(1, NS_lround(AppUnitsPerCSSPixel() / devPixelsPerCSSPixel));
@@ -658,6 +670,8 @@ nsDeviceContext::FindScreen(nsIScreen** outScreen)
         return;
     }
 
+    CheckDPIChange();
+
     if (mWidget->GetOwningTabChild()) {
         mScreenManager->ScreenForNativeWidget((void *)mWidget->GetOwningTabChild(),
                                               outScreen);
@@ -689,11 +703,12 @@ nsDeviceContext::CalcPrintingSize()
     return (mWidth > 0 && mHeight > 0);
 }
 
-bool nsDeviceContext::CheckDPIChange() {
+bool nsDeviceContext::CheckDPIChange(double* aScale)
+{
     int32_t oldDevPixels = mAppUnitsPerDevPixelAtUnitFullZoom;
     int32_t oldInches = mAppUnitsPerPhysicalInch;
 
-    SetDPI();
+    SetDPI(aScale);
 
     return oldDevPixels != mAppUnitsPerDevPixelAtUnitFullZoom ||
         oldInches != mAppUnitsPerPhysicalInch;
@@ -719,4 +734,19 @@ nsDeviceContext::UpdateAppUnitsForFullZoom()
         std::max(1, NSToIntRound(float(mAppUnitsPerDevPixelAtUnitFullZoom) / mFullZoom));
     // adjust mFullZoom to reflect appunit rounding
     mFullZoom = float(mAppUnitsPerDevPixelAtUnitFullZoom) / mAppUnitsPerDevPixel;
+}
+
+DesktopToLayoutDeviceScale
+nsDeviceContext::GetDesktopToDeviceScale()
+{
+    nsCOMPtr<nsIScreen> screen;
+    FindScreen(getter_AddRefs(screen));
+
+    if (screen) {
+        double scale;
+        screen->GetContentsScaleFactor(&scale);
+        return DesktopToLayoutDeviceScale(scale);
+    }
+
+    return DesktopToLayoutDeviceScale(1.0);
 }

@@ -228,12 +228,15 @@ nsResizerFrame::HandleEvent(nsPresContext* aPresContext,
         nsRect rootScreenRect = rootFrame->GetScreenRectInAppUnits();
 
         nsPopupLevel popupLevel = menuPopupFrame->PopupLevel();
-        nsRect screenRect = menuPopupFrame->GetConstraintRect(frameRect, rootScreenRect, popupLevel);
-        // round using ToInsidePixels as it's better to be a pixel too small
-        // than be too large. If the popup is too large it could get flipped
-        // to the opposite side of the anchor point while resizing.
-        nsIntRect screenRectPixels = screenRect.ToInsidePixels(aPresContext->AppUnitsPerDevPixel());
-        rect.IntersectRect(rect, LayoutDeviceIntRect::FromUnknownRect(screenRectPixels));
+        int32_t appPerDev = aPresContext->AppUnitsPerDevPixel();
+        LayoutDeviceIntRect screenRect = menuPopupFrame->GetConstraintRect
+          (LayoutDeviceIntRect::FromAppUnitsToNearest(frameRect, appPerDev),
+           // round using ...ToInside as it's better to be a pixel too small
+           // than be too large. If the popup is too large it could get flipped
+           // to the opposite side of the anchor point while resizing.
+           LayoutDeviceIntRect::FromAppUnitsToInside(rootScreenRect, appPerDev),
+           popupLevel);
+        rect.IntersectRect(rect, screenRect);
       }
 
       if (contentToResize) {
@@ -357,8 +360,7 @@ nsResizerFrame::GetContentToResize(nsIPresShell* aPresShell, nsIBaseWindow** aWi
     }
 
     // get the document and the window - should this be cached?
-    nsPIDOMWindow *domWindow = aPresShell->GetDocument()->GetWindow();
-    if (domWindow) {
+    if (nsPIDOMWindowOuter* domWindow = aPresShell->GetDocument()->GetWindow()) {
       nsCOMPtr<nsIDocShell> docShell = domWindow->GetDocShell();
       if (docShell) {
         nsCOMPtr<nsIDocShellTreeOwner> treeOwner;

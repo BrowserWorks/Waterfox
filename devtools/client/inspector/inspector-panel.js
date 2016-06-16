@@ -4,10 +4,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {Cc, Ci, Cu, Cr} = require("chrome");
+"use strict";
 
-Cu.import("resource://gre/modules/Services.jsm");
+const {Cc, Ci, Cu} = require("chrome");
 
+var Services = require("Services");
 var promise = require("promise");
 var EventEmitter = require("devtools/shared/event-emitter");
 var clipboard = require("sdk/clipboard");
@@ -19,6 +20,10 @@ loader.lazyGetter(this, "MarkupView", () => require("devtools/client/inspector/m
 loader.lazyGetter(this, "HTMLBreadcrumbs", () => require("devtools/client/inspector/breadcrumbs").HTMLBreadcrumbs);
 loader.lazyGetter(this, "ToolSidebar", () => require("devtools/client/framework/sidebar").ToolSidebar);
 loader.lazyGetter(this, "InspectorSearch", () => require("devtools/client/inspector/inspector-search").InspectorSearch);
+loader.lazyGetter(this, "RuleViewTool", () => require("devtools/client/inspector/rules/rules").RuleViewTool);
+loader.lazyGetter(this, "ComputedViewTool", () => require("devtools/client/inspector/computed/computed").ComputedViewTool);
+loader.lazyGetter(this, "FontInspector", () => require("devtools/client/inspector/fonts/fonts").FontInspector);
+loader.lazyGetter(this, "LayoutView", () => require("devtools/client/inspector/layout/layout").LayoutView);
 
 loader.lazyGetter(this, "strings", () => {
   return Services.strings.createBundle("chrome://devtools/locale/inspector.properties");
@@ -30,7 +35,7 @@ loader.lazyGetter(this, "clipboardHelper", () => {
   return Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
 });
 
-loader.lazyImporter(this, "CommandUtils", "resource://devtools/client/shared/DeveloperToolbar.jsm");
+loader.lazyRequireGetter(this, "CommandUtils", "devtools/client/shared/developer-toolbar", true);
 
 /**
  * Represents an open instance of the Inspector for a tab.
@@ -85,7 +90,6 @@ function InspectorPanel(iframeWindow, toolbox) {
   this.onNewSelection = this.onNewSelection.bind(this);
   this.onBeforeNewSelection = this.onBeforeNewSelection.bind(this);
   this.onDetached = this.onDetached.bind(this);
-  this.onToolboxHostChanged = this.onToolboxHostChanged.bind(this);
   this.onPaneToggleButtonClicked = this.onPaneToggleButtonClicked.bind(this);
   this._onMarkupFrameLoad = this._onMarkupFrameLoad.bind(this);
 
@@ -161,8 +165,6 @@ InspectorPanel.prototype = {
     this.selection.on("detached-front", this.onDetached);
 
     this.breadcrumbs = new HTMLBreadcrumbs(this);
-
-    this._toolbox.on("host-changed", this.onToolboxHostChanged);
 
     if (this.target.isLocalTab) {
       // Show a warning when the debugger is paused.
@@ -352,23 +354,16 @@ InspectorPanel.prototype = {
 
     this.sidebar.on("select", this._setDefaultSidebar);
 
-    this.sidebar.addTab("ruleview",
-                        "chrome://devtools/content/inspector/rules/rules.xhtml",
-                        "ruleview" == defaultTab);
+    this.ruleview = new RuleViewTool(this, this.panelWin);
+    this.computedview = new ComputedViewTool(this, this.panelWin);
 
-    this.sidebar.addTab("computedview",
-                        "chrome://devtools/content/inspector/computed/computed.xhtml",
-                        "computedview" == defaultTab);
-
-    if (Services.prefs.getBoolPref("devtools.fontinspector.enabled") && this.canGetUsedFontFaces) {
-      this.sidebar.addTab("fontinspector",
-                          "chrome://devtools/content/inspector/fonts/fonts.xhtml",
-                          "fontinspector" == defaultTab);
+    if (Services.prefs.getBoolPref("devtools.fontinspector.enabled") &&
+        this.canGetUsedFontFaces) {
+      this.fontInspector = new FontInspector(this, this.panelWin);
+      this.panelDoc.getElementById("sidebar-tab-fontinspector").hidden = false;
     }
 
-    this.sidebar.addTab("layoutview",
-                        "chrome://devtools/content/inspector/layout/layout.xhtml",
-                        "layoutview" == defaultTab);
+    this.layoutview = new LayoutView(this, this.panelWin);
 
     if (this.target.form.animationsActor) {
       this.sidebar.addTab("animationinspector",
@@ -376,7 +371,7 @@ InspectorPanel.prototype = {
                           "animationinspector" == defaultTab);
     }
 
-    this.sidebar.show();
+    this.sidebar.show(defaultTab);
 
     this.setupSidebarToggle();
   },
@@ -388,7 +383,6 @@ InspectorPanel.prototype = {
     this._paneToggleButton = this.panelDoc.getElementById("inspector-pane-toggle");
     this._paneToggleButton.addEventListener("mousedown",
       this.onPaneToggleButtonClicked);
-    this.updatePaneToggleButton();
   },
 
   /**
@@ -584,7 +578,22 @@ InspectorPanel.prototype = {
     this.target.off("thread-paused", this.updateDebuggerPausedWarning);
     this.target.off("thread-resumed", this.updateDebuggerPausedWarning);
     this._toolbox.off("select", this.updateDebuggerPausedWarning);
-    this._toolbox.off("host-changed", this.onToolboxHostChanged);
+
+    if (this.ruleview) {
+      this.ruleview.destroy();
+    }
+
+    if (this.computedview) {
+      this.computedview.destroy();
+    }
+
+    if (this.fontInspector) {
+      this.fontInspector.destroy();
+    }
+
+    if (this.layoutview) {
+      this.layoutview.destroy();
+    }
 
     this.sidebar.off("select", this._setDefaultSidebar);
     let sidebarDestroyer = this.sidebar.destroy();
@@ -966,13 +975,6 @@ InspectorPanel.prototype = {
   },
 
   /**
-   * When the type of toolbox host changes.
-   */
-  onToolboxHostChanged: function() {
-    this.updatePaneToggleButton();
-  },
-
-  /**
    * When the pane toggle button is clicked, toggle the pane, change the button
    * state and tooltip.
    */
@@ -981,10 +983,16 @@ InspectorPanel.prototype = {
     let button = this._paneToggleButton;
     let isVisible = !button.hasAttribute("pane-collapsed");
 
-    // Make sure the sidebar has a width attribute before collapsing because
-    // ViewHelpers needs it.
-    if (isVisible && !sidePane.hasAttribute("width")) {
-      sidePane.setAttribute("width", sidePane.getBoundingClientRect().width);
+    // Make sure the sidebar has width and height attributes before collapsing
+    // because ViewHelpers needs it.
+    if (isVisible) {
+      let rect = sidePane.getBoundingClientRect();
+      if (!sidePane.hasAttribute("width")) {
+        sidePane.setAttribute("width", rect.width);
+      }
+      // always refresh the height attribute before collapsing, it could have
+      // been modified by resizing the container.
+      sidePane.setAttribute("height", rect.height);
     }
 
     ViewHelpers.togglePane({
@@ -1000,14 +1008,6 @@ InspectorPanel.prototype = {
       button.removeAttribute("pane-collapsed");
       button.setAttribute("tooltiptext", strings.GetStringFromName("inspector.collapsePane"));
     }
-  },
-
-  /**
-   * Update the pane toggle button visibility depending on the toolbox host type.
-   */
-  updatePaneToggleButton: function() {
-    this._paneToggleButton.setAttribute("hidden",
-      this._toolbox.hostType === HostType.SIDE);
   },
 
   /**
@@ -1034,7 +1034,7 @@ InspectorPanel.prototype = {
       let jsterm = panel.hud.jsterm;
 
       jsterm.execute("inspect($0)");
-      jsterm.inputNode.focus();
+      jsterm.focus();
     });
   },
 

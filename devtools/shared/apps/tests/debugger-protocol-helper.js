@@ -8,8 +8,8 @@ var Cu = Components.utils;
 const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const { DebuggerClient } = require("devtools/shared/client/main");
 const { DebuggerServer } = require("devtools/server/main");
+const Services = require("Services");
 const { FileUtils } = Cu.import("resource://gre/modules/FileUtils.jsm");
-const { Services } = Cu.import("resource://gre/modules/Services.jsm");
 const { NetUtil } = Cu.import("resource://gre/modules/NetUtil.jsm");
 
 var gClient, gActor;
@@ -49,13 +49,13 @@ function connect(onDone) {
 function startClient(transport, onDone) {
   // Setup client and actor used in all tests
   gClient = new DebuggerClient(transport);
-  gClient.connect(function onConnect() {
-    gClient.listTabs(function onListTabs(aResponse) {
+  gClient.connect()
+    .then(() => gClient.listTabs())
+    .then(aResponse => {
       gActor = aResponse.webappsActor;
       if (gActor)
         webappActorRequest({type: "watchApps"}, onDone);
     });
-  });
 
   gClient.addListener("appInstall", function (aState, aType, aPacket) {
     sendAsyncMessage("installed-event", { manifestURL: aType.manifestURL });
@@ -96,7 +96,7 @@ function downloadURL(url, file) {
 
   let ostream = Cc["@mozilla.org/network/safe-file-output-stream;1"]
                   .createInstance(Ci.nsIFileOutputStream);
-  ostream.init(file, 0x04 | 0x08 | 0x20, 0600, 0);
+  ostream.init(file, 0x04 | 0x08 | 0x20, 0o600, 0);
   ostream.write(data, data.length);
   ostream.QueryInterface(Ci.nsISafeOutputStream).finish();
 }

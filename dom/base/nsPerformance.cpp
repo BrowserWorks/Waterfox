@@ -428,7 +428,7 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_END
 NS_IMPL_ADDREF_INHERITED(nsPerformance, PerformanceBase)
 NS_IMPL_RELEASE_INHERITED(nsPerformance, PerformanceBase)
 
-nsPerformance::nsPerformance(nsPIDOMWindow* aWindow,
+nsPerformance::nsPerformance(nsPIDOMWindowInner* aWindow,
                              nsDOMNavigationTiming* aDOMTiming,
                              nsITimedChannel* aChannel,
                              nsPerformance* aParentPerformance)
@@ -826,7 +826,7 @@ PerformanceBase::PerformanceBase()
   MOZ_ASSERT(!NS_IsMainThread());
 }
 
-PerformanceBase::PerformanceBase(nsPIDOMWindow* aWindow)
+PerformanceBase::PerformanceBase(nsPIDOMWindowInner* aWindow)
   : DOMEventTargetHelper(aWindow)
   , mResourceTimingBufferSize(kDefaultResourceTimingBufferSize)
   , mPendingNotificationObserversTask(false)
@@ -958,7 +958,7 @@ DOMHighResTimeStamp
 PerformanceBase::ResolveTimestampFromName(const nsAString& aName,
                                           ErrorResult& aRv)
 {
-  nsAutoTArray<RefPtr<PerformanceEntry>, 1> arr;
+  AutoTArray<RefPtr<PerformanceEntry>, 1> arr;
   DOMHighResTimeStamp ts;
   Optional<nsAString> typeParam;
   nsAutoString str;

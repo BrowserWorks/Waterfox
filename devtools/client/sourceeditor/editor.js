@@ -32,11 +32,11 @@ const MAX_VERTICAL_OFFSET = 3;
 const RE_SCRATCHPAD_ERROR = /(?:@Scratchpad\/\d+:|\()(\d+):?(\d+)?(?:\)|\n)/;
 const RE_JUMP_TO_LINE = /^(\d+):?(\d+)?/;
 
+const Services = require("Services");
 const promise = require("promise");
 const events = require("devtools/shared/event-emitter");
 const { PrefObserver } = require("devtools/client/styleeditor/utils");
 
-Cu.import("resource://gre/modules/Services.jsm");
 const L10N = Services.strings.createBundle(L10N_BUNDLE);
 
 const { OS } = Services.appinfo;
@@ -46,7 +46,6 @@ const { OS } = Services.appinfo;
 // order to initialize a CodeMirror instance.
 
 const CM_STYLES = [
-  "chrome://devtools/skin/common.css",
   "chrome://devtools/content/sourceeditor/codemirror/lib/codemirror.css",
   "chrome://devtools/content/sourceeditor/codemirror/addon/dialog/dialog.css",
   "chrome://devtools/content/sourceeditor/codemirror/mozilla.css"
@@ -160,6 +159,7 @@ function Editor(config) {
     matchBrackets: true,
     extraKeys: {},
     indentWithTabs: useTabs,
+    inputStyle: "textarea",
     styleActiveLine: true,
     autoCloseBrackets: "()[]{}''\"\"``",
     autoCloseEnabled: useAutoClose,

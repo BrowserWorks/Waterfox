@@ -56,7 +56,7 @@ VorbisTrackEncoder::Init(int aChannels, int aSamplingRate)
   double quality = mAudioBitrate ? (double)mAudioBitrate/aSamplingRate :
                    BASE_QUALITY;
 
-  printf("quality %f \n", quality);
+  VORBISLOG("quality %f", quality);
   ret = vorbis_encode_init_vbr(&mVorbisInfo, mChannels, mSamplingRate,
                                quality);
 
@@ -202,8 +202,8 @@ VorbisTrackEncoder::GetEncodedTrack(EncodedFrameContainer& aData)
     vorbis_analysis_buffer(&mVorbisDsp, (int)sourceSegment->GetDuration());
 
   int framesCopied = 0;
-  nsAutoTArray<AudioDataValue, 9600> interleavedPcm;
-  nsAutoTArray<AudioDataValue, 9600> nonInterleavedPcm;
+  AutoTArray<AudioDataValue, 9600> interleavedPcm;
+  AutoTArray<AudioDataValue, 9600> nonInterleavedPcm;
   interleavedPcm.SetLength(sourceSegment->GetDuration() * mChannels);
   nonInterleavedPcm.SetLength(sourceSegment->GetDuration() * mChannels);
   while (!iter.IsEnded()) {

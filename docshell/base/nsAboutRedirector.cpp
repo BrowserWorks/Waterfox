@@ -95,12 +95,10 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::ALLOW_SCRIPT |
       nsIAboutModule::HIDE_FROM_ABOUTABOUT
   },
-#ifdef NIGHTLY_BUILD
   {
     "performance", "chrome://global/content/aboutPerformance.xhtml",
     nsIAboutModule::ALLOW_SCRIPT
   },
-#endif
   {
     "plugins", "chrome://global/content/plugins.html",
     nsIAboutModule::URI_MUST_LOAD_IN_CHILD
@@ -134,7 +132,7 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::ALLOW_SCRIPT
   },
   {
-    "webrtc", "chrome://global/content/aboutwebrtc/aboutWebrtc.xhtml",
+    "webrtc", "chrome://global/content/aboutwebrtc/aboutWebrtc.html",
     nsIAboutModule::ALLOW_SCRIPT
   }
 };

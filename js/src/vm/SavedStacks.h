@@ -149,7 +149,7 @@ namespace js {
 
 class SavedStacks {
     friend class SavedFrame;
-    friend JSObject* SavedStacksMetadataCallback(JSContext* cx, JSObject* target);
+    friend JSObject* SavedStacksMetadataCallback(JSContext* cx, HandleObject target);
     friend bool JS::ubi::ConstructSavedFrameStackSlow(JSContext* cx,
                                                       JS::ubi::StackFrame& ubiFrame,
                                                       MutableHandleObject outSavedFrameStack);
@@ -167,7 +167,7 @@ class SavedStacks {
     bool     saveCurrentStack(JSContext* cx, MutableHandleSavedFrame frame, unsigned maxFrameCount = 0);
     bool     copyAsyncStack(JSContext* cx, HandleObject asyncStack, HandleString asyncCause,
                             MutableHandleSavedFrame adoptedStack, unsigned maxFrameCount = 0);
-    void     sweep(JSRuntime* rt);
+    void     sweep();
     void     trace(JSTracer* trc);
     uint32_t count();
     void     clear();
@@ -220,28 +220,37 @@ class SavedStacks {
     struct PCKey {
         PCKey(JSScript* script, jsbytecode* pc) : script(script), pc(pc) { }
 
-        PreBarrieredScript script;
-        jsbytecode*        pc;
+        RelocatablePtrScript script;
+        jsbytecode* pc;
+
+        void trace(JSTracer* trc) { /* PCKey is weak. */ }
+        bool needsSweep() { return IsAboutToBeFinalized(&script); }
     };
 
   public:
-    struct LocationValue : public JS::Traceable {
+    struct LocationValue {
         LocationValue() : source(nullptr), line(0), column(0) { }
         LocationValue(JSAtom* source, size_t line, uint32_t column)
-            : source(source),
-              line(line),
-              column(column)
+            : source(source), line(line), column(column)
         { }
 
-        static void trace(LocationValue* self, JSTracer* trc) { self->trace(trc); }
         void trace(JSTracer* trc) {
             if (source)
                 TraceEdge(trc, &source, "SavedStacks::LocationValue::source");
         }
 
-        PreBarrieredAtom source;
-        size_t           line;
-        uint32_t         column;
+        bool needsSweep() {
+            // LocationValue is always held strongly, but in a weak map.
+            // Assert that it has been marked already, but allow it to be
+            // ejected from the map when the key dies.
+            MOZ_ASSERT(source);
+            MOZ_ASSERT(!IsAboutToBeFinalized(&source));
+            return true;
+        }
+
+        RelocatablePtrAtom source;
+        size_t line;
+        uint32_t column;
     };
 
     template <typename Outer>
@@ -264,8 +273,8 @@ class SavedStacks {
 
   private:
     struct PCLocationHasher : public DefaultHasher<PCKey> {
-        typedef PointerHasher<JSScript*, 3>   ScriptPtrHasher;
-        typedef PointerHasher<jsbytecode*, 3> BytecodePtrHasher;
+        using ScriptPtrHasher = DefaultHasher<JSScript*>;
+        using BytecodePtrHasher = DefaultHasher<jsbytecode*>;
 
         static HashNumber hash(const PCKey& key) {
             return mozilla::AddToHash(ScriptPtrHasher::hash(key.script),
@@ -273,19 +282,25 @@ class SavedStacks {
         }
 
         static bool match(const PCKey& l, const PCKey& k) {
-            return l.script == k.script && l.pc == k.pc;
+            return ScriptPtrHasher::match(l.script, k.script) &&
+                   BytecodePtrHasher::match(l.pc, k.pc);
         }
     };
 
-    typedef HashMap<PCKey, LocationValue, PCLocationHasher, SystemAllocPolicy> PCLocationMap;
-
+    // We eagerly Atomize the script source stored in LocationValue because
+    // asm.js does not always have a JSScript and the source might not be
+    // available when we need it later. However, since the JSScript does not
+    // actually hold this atom, we have to trace it strongly to keep it alive.
+    // Thus, it takes two GC passes to fully clean up this table: the first GC
+    // removes the dead script; the second will clear out the source atom since
+    // it is no longer held by the table.
+    using PCLocationMap = GCHashMap<PCKey, LocationValue, PCLocationHasher, SystemAllocPolicy>;
     PCLocationMap pcLocationMap;
 
-    void sweepPCLocationMap();
     bool getLocation(JSContext* cx, const FrameIter& iter, MutableHandle<LocationValue> locationp);
 };
 
-JSObject* SavedStacksMetadataCallback(JSContext* cx, JSObject* target);
+JSObject* SavedStacksMetadataCallback(JSContext* cx, HandleObject target);
 
 template <>
 class RootedBase<SavedStacks::LocationValue>

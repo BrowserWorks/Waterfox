@@ -65,7 +65,7 @@ static const JSFunctionSpec exception_methods[] = {
     JS_FS_END
 };
 
-#define IMPLEMENT_ERROR_SUBCLASS(name) \
+#define IMPLEMENT_ERROR_SUBCLASS_EXTRA_FLAGS(name, extraClassSpecFlags)  \
     { \
         js_Error_str, /* yes, really */ \
         JSCLASS_HAS_CACHED_PROTO(JSProto_##name) | \
@@ -90,9 +90,12 @@ static const JSFunctionSpec exception_methods[] = {
             exception_methods, \
             exception_properties, \
             nullptr, \
-            JSProto_Error \
+            JSProto_Error | extraClassSpecFlags \
         } \
     }
+
+#define IMPLEMENT_ERROR_SUBCLASS(name) \
+    IMPLEMENT_ERROR_SUBCLASS_EXTRA_FLAGS(name, 0)
 
 const Class
 ErrorObject::classes[JSEXN_LIMIT] = {
@@ -128,7 +131,11 @@ ErrorObject::classes[JSEXN_LIMIT] = {
     IMPLEMENT_ERROR_SUBCLASS(ReferenceError),
     IMPLEMENT_ERROR_SUBCLASS(SyntaxError),
     IMPLEMENT_ERROR_SUBCLASS(TypeError),
-    IMPLEMENT_ERROR_SUBCLASS(URIError)
+    IMPLEMENT_ERROR_SUBCLASS(URIError),
+
+    // DebuggeeWouldRun is a subclass of Error but is accessible via the
+    // Debugger constructor, not the global.
+    IMPLEMENT_ERROR_SUBCLASS_EXTRA_FLAGS(DebuggeeWouldRun, ClassSpec::DontDefineConstructor),
 };
 
 JSErrorReport*
@@ -609,23 +616,40 @@ IsDuckTypedErrorObject(JSContext* cx, HandleObject exnObject, const char** filen
     return true;
 }
 
-JS_FRIEND_API(JSString*)
-js::ErrorReportToString(JSContext* cx, JSErrorReport* reportp)
+static JSString*
+ErrorReportToString(JSContext* cx, JSErrorReport* reportp)
 {
+    /*
+     * We do NOT want to use GetErrorTypeName() here because it will not do the
+     * "right thing" for JSEXN_INTERNALERR.  That is, the caller of this API
+     * expects that "InternalError: " will be prepended but GetErrorTypeName
+     * goes out of its way to avoid this.
+     */
     JSExnType type = static_cast<JSExnType>(reportp->exnType);
-    RootedString str(cx, cx->runtime()->emptyString);
+    RootedString str(cx);
     if (type != JSEXN_NONE)
         str = ClassName(GetExceptionProtoKey(type), cx);
-    RootedString toAppend(cx, JS_NewUCStringCopyN(cx, MOZ_UTF16(": "), 2));
-    if (!str || !toAppend)
+    /*
+     * If "str" is null at this point, that means we just want to use
+     * reportp->ucmessage without prefixing it with anything.
+     */
+    if (str) {
+        RootedString separator(cx, JS_NewUCStringCopyN(cx, MOZ_UTF16(": "), 2));
+        if (!separator)
+            return nullptr;
+        str = ConcatStrings<CanGC>(cx, str, separator);
+        if (!str)
+            return nullptr;
+    }
+
+    RootedString message(cx, JS_NewUCStringCopyZ(cx, reportp->ucmessage));
+    if (!message)
         return nullptr;
-    str = ConcatStrings<CanGC>(cx, str, toAppend);
+
     if (!str)
-        return nullptr;
-    toAppend = JS_NewUCStringCopyZ(cx, reportp->ucmessage);
-    if (toAppend)
-        str = ConcatStrings<CanGC>(cx, str, toAppend);
-    return str;
+        return message;
+
+    return ConcatStrings<CanGC>(cx, str, message);
 }
 
 bool

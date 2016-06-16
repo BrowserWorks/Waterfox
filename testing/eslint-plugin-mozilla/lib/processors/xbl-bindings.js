@@ -36,12 +36,15 @@ function XMLParser(parser) {
   parser.onopentag = this.onOpenTag.bind(this);
   parser.onclosetag = this.onCloseTag.bind(this);
   parser.ontext = this.onText.bind(this);
+  parser.onopencdata = this.onOpenCDATA.bind(this);
   parser.oncdata = this.onCDATA.bind(this);
+  parser.oncomment = this.onComment.bind(this);
 
   this.document = {
     local: "#document",
     uri: null,
     children: [],
+    comments: [],
   }
   this._currentNode = this.document;
 }
@@ -56,8 +59,11 @@ XMLParser.prototype = {
       namespace: tag.uri,
       attributes: {},
       children: [],
+      comments: [],
       textContent: "",
-      textStart: this.parser.line,
+      textLine: this.parser.line,
+      textColumn: this.parser.column,
+      textEndLine: this.parser.line
     }
 
     for (let attr of Object.keys(tag.attributes)) {
@@ -71,30 +77,90 @@ XMLParser.prototype = {
   },
 
   onCloseTag: function(tagname) {
+    this._currentNode.textEndLine = this.parser.line;
     this._currentNode = this._currentNode.parentNode;
+  },
+
+  addText: function(text) {
+    this._currentNode.textContent += text;
   },
 
   onText: function(text) {
     // Replace entities with some valid JS token.
-    this.onCDATA(text.replace(entityRegex, "null"));
+    this.addText(text.replace(entityRegex, "null"));
+  },
+
+  onOpenCDATA: function() {
+    // Turn the CDATA opening tag into whitespace for indent alignment
+    this.addText(" ".repeat("<![CDATA[".length));
   },
 
   onCDATA: function(text) {
-    this._currentNode.textContent += text;
+    this.addText(text);
+  },
+
+  onComment: function(text) {
+    this._currentNode.comments.push(text);
   }
 }
 
-// Strips the indentation from lines of text and adds a fixed two spaces indent
-function reindent(text) {
-  let lines = text.split("\n");
+// -----------------------------------------------------------------------------
+// Processor Definition
+// -----------------------------------------------------------------------------
 
-  // The last line is likely indentation for the XML closing tag.
-  if (lines[lines.length - 1].trim() == "") {
+const INDENT_LEVEL = 2;
+
+function indent(count) {
+  return " ".repeat(count * INDENT_LEVEL);
+}
+
+// Stores any XML parse error
+let xmlParseError = null;
+
+// Stores the lines of JS code generated from the XBL
+let scriptLines = [];
+// Stores a map from the synthetic line number to the real line number
+// and column offset.
+let lineMap = [];
+
+function addSyntheticLine(line, linePos) {
+  lineMap[scriptLines.length] = { line: linePos, offset: null };
+  scriptLines.push(line);
+}
+
+/**
+ * Adds generated lines from an XBL node to the script to be passed back to eslint.
+ */
+function addNodeLines(node, reindent) {
+  let lines = node.textContent.split("\n");
+  let startLine = node.textLine;
+  let startColumn = node.textColumn;
+
+  // The case where there are no whitespace lines before the first text is
+  // treated differently for indentation
+  let indentFirst = false;
+
+  // Strip off any preceeding whitespace only lines. These are often used to
+  // format the XML and CDATA blocks.
+  while (lines.length && lines[0].trim() == "") {
+    indentFirst = true;
+    startLine++;
+    lines.shift();
+  }
+
+  // Strip off any whitespace lines at the end. These are often used to line
+  // up the closing tags
+  while (lines.length && lines[lines.length - 1].trim() == "") {
     lines.pop();
   }
 
-  if (!lines.length) {
-    return "";
+  if (!indentFirst) {
+    let firstLine = lines.shift();
+    firstLine = " ".repeat(reindent * INDENT_LEVEL) + firstLine;
+    // ESLint counts columns starting at 1 rather than 0
+    lineMap[scriptLines.length] = { line: startLine, offset: reindent * INDENT_LEVEL - (startColumn - 1) };
+    scriptLines.push(firstLine);
+    startLine++;
   }
 
   // Find the preceeding whitespace for all lines that aren't entirely whitespace
@@ -103,26 +169,26 @@ function reindent(text) {
   // Find the smallest indent level in use
   let minIndent = Math.min.apply(null, indents);
 
-  // Strip off the found indent level and prepend the new indent level, but only
-  // if the string isn't already empty.
-  lines = lines.map(s => s.length > 0 ? "  " + s.substring(minIndent) : s);
-  return lines.join("\n") + "\n";
+  for (let line of lines) {
+    if (line.trim().length == 0) {
+      // Don't offset lines that are only whitespace, the only possible JS error
+      // is trailing whitespace and we want it to point at the right place
+      lineMap[scriptLines.length] = { line: startLine, offset: 0 };
+    } else {
+      line = " ".repeat(reindent * INDENT_LEVEL) + line.substring(minIndent);
+      lineMap[scriptLines.length] = { line: startLine, offset: reindent * INDENT_LEVEL - (minIndent - 1) };
+    }
+
+    scriptLines.push(line);
+    startLine++;
+  }
 }
-
-// -----------------------------------------------------------------------------
-// Processor Definition
-// -----------------------------------------------------------------------------
-
-// Stores any XML parse error
-let xmlParseError = null;
-
-// Stores the starting line for each script block generated
-let blockLines = [];
 
 module.exports = {
   preprocess: function(text, filename) {
     xmlParseError = null;
-    blockLines = [];
+    scriptLines = [];
+    lineMap = [];
 
     // Non-strict allows us to ignore many errors from entities and
     // preprocessing at the expense of failing to report some XML errors.
@@ -150,19 +216,33 @@ module.exports = {
       return [];
     }
 
-    let scripts = [];
+    for (let comment of document.comments) {
+      addSyntheticLine(`/*`, 0);
+      for (let line of comment.split("\n")) {
+        addSyntheticLine(`${line.trim()}`, 0);
+      }
+      addSyntheticLine(`*/`, 0);
+    }
+
+    addSyntheticLine(`var bindings = {`, bindings.textLine);
 
     for (let binding of bindings.children) {
       if (binding.local != "binding" || binding.namespace != NS_XBL) {
         continue;
       }
 
+      addSyntheticLine(indent(1) + `"${binding.attributes.id}": {`, binding.textLine);
+
       for (let part of binding.children) {
         if (part.namespace != NS_XBL) {
           continue;
         }
 
-        if (part.local != "implementation" && part.local != "handlers") {
+        if (part.local == "implementation") {
+          addSyntheticLine(indent(2) + `implementation: {`, part.textLine);
+        } else if (part.local == "handlers") {
+          addSyntheticLine(indent(2) + `handlers: [`, part.textLine);
+        } else {
           continue;
         }
 
@@ -173,33 +253,40 @@ module.exports = {
 
           switch (item.local) {
             case "field": {
-              // Fields get converted into variable declarations
-              let def = item.textContent.trimRight();
+              // Fields are something like lazy getter functions
+
               // Ignore empty fields
-              if (def.trim().length == 0) {
+              if (item.textContent.trim().length == 0) {
                 continue;
               }
-              blockLines.push(item.textStart);
-              scripts.push(`${def}\n`);
+
+              addSyntheticLine(indent(3) + `get ${item.attributes.name}() {`, item.textLine);
+              // TODO This will probably break some style rules when. We need
+              // to inject this next to the first non-whitespace character
+              addSyntheticLine(indent(4) + `return`, item.textLine);
+              addNodeLines(item, 4);
+              addSyntheticLine(indent(3) + `},`, item.textEndLine);
               break;
             }
             case "constructor":
             case "destructor": {
               // Constructors and destructors become function declarations
-              blockLines.push(item.textStart);
-              let content = reindent(item.textContent);
-              scripts.push(`function ${item.local}() {${content}}\n`);
+              addSyntheticLine(indent(3) + `${item.local}() {`, item.textLine);
+              addNodeLines(item, 4);
+              addSyntheticLine(indent(3) + `},`, item.textEndLine);
               break;
             }
             case "method": {
               // Methods become function declarations with the appropriate params
+
               let params = item.children.filter(n => n.local == "parameter" && n.namespace == NS_XBL)
                                         .map(n => n.attributes.name)
                                         .join(", ");
               let body = item.children.filter(n => n.local == "body" && n.namespace == NS_XBL)[0];
-              blockLines.push(body.textStart);
-              body = reindent(body.textContent);
-              scripts.push(`function ${item.attributes.name}(${params}) {${body}}\n`)
+
+              addSyntheticLine(indent(3) + `${item.attributes.name}(${params}) {`, item.textLine);
+              addNodeLines(body, 4);
+              addSyntheticLine(indent(3) + `},`, item.textEndLine);
               break;
             }
             case "property": {
@@ -209,28 +296,38 @@ module.exports = {
                   continue;
                 }
 
-                blockLines.push(propdef.textStart);
-                let content = reindent(propdef.textContent);
-                let params = propdef.local == "setter" ? "val" : "";
-                scripts.push(`function ${item.attributes.name}_${propdef.local}(${params}) {${content}}\n`);
+                if (propdef.local == "setter") {
+                  addSyntheticLine(indent(3) + `set ${item.attributes.name}(val) {`, propdef.textLine);
+                } else if (propdef.local == "getter") {
+                  addSyntheticLine(indent(3) + `get ${item.attributes.name}() {`, propdef.textLine);
+                } else {
+                  continue;
+                }
+                addNodeLines(propdef, 4);
+                addSyntheticLine(indent(3) + `},`, propdef.textEndLine);
               }
               break;
             }
             case "handler": {
               // Handlers become a function declaration with an `event` parameter
-              blockLines.push(item.textStart);
-              let content = reindent(item.textContent);
-              scripts.push(`function onevent(event) {${content}}\n`);
+              addSyntheticLine(indent(3) + `function(event) {`, item.textLine);
+              addNodeLines(item, 4);
+              addSyntheticLine(indent(3) + `},`, item.textEndLine);
               break;
             }
             default:
               continue;
           }
         }
-      }
-    }
 
-    return scripts;
+        addSyntheticLine(indent(2) + (part.local == "implementation" ? `},` : `],`), part.textEndLine);
+      }
+      addSyntheticLine(indent(1) + `},`, binding.textEndLine);
+    }
+    addSyntheticLine(`};`, bindings.textEndLine);
+
+    let script = scriptLines.join("\n") + "\n";
+    return [script];
   },
 
   postprocess: function(messages, filename) {
@@ -243,10 +340,17 @@ module.exports = {
     // correct place.
     let errors = [];
     for (let i = 0; i < messages.length; i++) {
-      let line = blockLines[i];
-
       for (let message of messages[i]) {
-        message.line += line;
+        // ESLint indexes lines starting at 1 but our arrays start at 0
+        let mapped = lineMap[message.line - 1];
+
+        message.line = mapped.line + 1;
+        if (mapped.offset) {
+          message.column -= mapped.offset;
+        } else {
+          message.column = NaN;
+        }
+
         errors.push(message);
       }
     }

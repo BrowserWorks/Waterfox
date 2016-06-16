@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 @import url(variables.css);
+@import url(common.css);
 @import url(toolbars.css);
 
 body {
@@ -66,9 +67,9 @@ body {
 }
 
 .theme-gutter {
-  background-color: hsl(0,0%,90%);
+  background-color: var(--theme-tab-toolbar-background);
   color: var(--theme-content-color3);
-  border-color: hsl(0,0%,65%);
+  border-color: var(--theme-splitter-color);
 }
 
 .theme-separator { /* grey */
@@ -172,7 +173,7 @@ body {
 .devtools-sidebar-tabs tabs,
 .devtools-sidebar-alltabs,
 .cm-s-mozilla .CodeMirror-dialog { /* General toolbar styling */
-  color: var(--theme-body-color-alt);
+  color: var(--theme-body-color);
   background-color: var(--theme-toolbar-background);
   border-color: var(--theme-splitter-color);
 }
@@ -224,14 +225,6 @@ div.cm-s-mozilla span.CodeMirror-matchingbracket { /* highlight brackets */
 /* Highlight for a line that contains an error. */
 div.CodeMirror div.error-line {
   background: rgba(255,0,0,0.2);
-}
-
-/* Highlight for a line that represents a stack frame's location. */
-div.CodeMirror div.debug-line {
-  background: rgba(0,128,255,0.1);
-  box-shadow:
-    0 1px 0 0 rgba(0,128,255,0.4),
-    0 -1px 0 0 rgba(0,128,255,0.4);
 }
 
 /* Generic highlighted text */

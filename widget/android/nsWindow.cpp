@@ -89,8 +89,6 @@ using namespace mozilla::layers;
 
 NS_IMPL_ISUPPORTS_INHERITED0(nsWindow, nsBaseWidget)
 
-// The dimensions of the current android view
-static gfx::IntSize gAndroidBounds = gfx::IntSize(0, 0);
 static gfx::IntSize gAndroidScreenBounds;
 
 #include "mozilla/layers/CompositorChild.h"
@@ -141,7 +139,7 @@ NS_IMPL_ISUPPORTS(ContentCreationNotifier,
                   nsIObserver)
 
 // All the toplevel windows that have been created; these are in
-// stacking order, so the window at gAndroidBounds[0] is the topmost
+// stacking order, so the window at gTopLevelWindows[0] is the topmost
 // one.
 static nsTArray<nsWindow*> gTopLevelWindows;
 
@@ -261,7 +259,7 @@ public:
      */
 public:
     // Create and attach a window.
-    static void Open(const jni::ClassObject::LocalRef& aCls,
+    static void Open(const jni::Class::LocalRef& aCls,
                      GeckoView::Window::Param aWindow,
                      GeckoView::Param aView, jni::Object::Param aGLController,
                      int32_t aWidth, int32_t aHeight);
@@ -312,8 +310,8 @@ private:
 
     // GeckoEditable instance used by this nsWindow;
     mozilla::widget::GeckoEditable::GlobalRef mEditable;
-    nsAutoTArray<mozilla::UniquePtr<mozilla::WidgetEvent>, 8> mIMEKeyEvents;
-    nsAutoTArray<IMETextChange, 4> mIMETextChanges;
+    AutoTArray<mozilla::UniquePtr<mozilla::WidgetEvent>, 8> mIMEKeyEvents;
+    AutoTArray<IMETextChange, 4> mIMETextChanges;
     InputContext mInputContext;
     RefPtr<mozilla::TextRangeArray> mIMERanges;
     int32_t mIMEMaskEventsCount; // Mask events when > 0
@@ -330,6 +328,7 @@ private:
     };
     void PostFlushIMEChanges();
     void FlushIMEChanges(FlushChangesFlag aFlags = FLUSH_FLAG_NONE);
+    void AsyncNotifyIME(int32_t aNotification);
 
 public:
     bool NotifyIME(const IMENotification& aIMENotification);
@@ -337,6 +336,8 @@ public:
                          const InputContextAction& aAction);
     InputContext GetInputContext();
 
+    // RAII helper class that automatically sends an event reply through
+    // OnImeSynchronize, as required by events like OnImeReplaceText.
     class AutoIMESynchronize {
         GeckoViewSupport* const mGVS;
     public:
@@ -349,7 +350,7 @@ public:
                     int32_t aMetaState, int64_t aTime, int32_t aUnicodeChar,
                     int32_t aBaseUnicodeChar, int32_t aDomPrintableKeyValue,
                     int32_t aRepeatCount, int32_t aFlags,
-                    bool aIsSynthesizedImeKey);
+                    bool aIsSynthesizedImeKey, jni::Object::Param originalEvent);
 
     // Synchronize Gecko thread with the InputConnection thread.
     void OnImeSynchronize();
@@ -497,11 +498,87 @@ public:
         }
     }
 
+    void AdjustScrollForSurfaceShift(float aX, float aY)
+    {
+        MOZ_ASSERT(AndroidBridge::IsJavaUiThread());
+
+        MutexAutoLock lock(mWindowLock);
+        if (!mWindow) {
+            // We already shut down.
+            return;
+        }
+
+        RefPtr<APZCTreeManager> controller = mWindow->mAPZC;
+        if (controller) {
+            controller->AdjustScrollForSurfaceShift(
+                ScreenPoint(aX, aY));
+        }
+    }
+
     void SetIsLongpressEnabled(bool aIsLongpressEnabled)
     {
         MOZ_ASSERT(AndroidBridge::IsJavaUiThread());
 
         APZCTreeManager::SetLongTapEnabled(aIsLongpressEnabled);
+    }
+
+    bool HandleScrollEvent(int64_t aTime, int32_t aMetaState,
+                           float aX, float aY,
+                           float aHScroll, float aVScroll)
+    {
+        MOZ_ASSERT(AndroidBridge::IsJavaUiThread());
+
+        MutexAutoLock lock(mWindowLock);
+        if (!mWindow) {
+            // We already shut down.
+            return false;
+        }
+
+        RefPtr<APZCTreeManager> controller = mWindow->mAPZC;
+        if (!controller) {
+            return false;
+        }
+
+        ScreenIntPoint offset = ViewAs<ScreenPixel>(mWindow->WidgetToScreenOffset(), PixelCastJustification::LayoutDeviceIsScreenForBounds);
+        ScreenPoint origin = ScreenPoint(aX, aY) - offset;
+
+        ScrollWheelInput input(aTime, TimeStamp::Now(), GetModifiers(aMetaState),
+                               ScrollWheelInput::SCROLLMODE_SMOOTH,
+                               ScrollWheelInput::SCROLLDELTA_PIXEL,
+                               origin,
+                               aHScroll, aVScroll,
+                               false);
+
+        ScrollableLayerGuid guid;
+        uint64_t blockId;
+        nsEventStatus status = controller->ReceiveInputEvent(input, &guid, &blockId);
+
+        if (status == nsEventStatus_eConsumeNoDefault) {
+            return true;
+        }
+
+        NativePanZoomController::GlobalRef npzc = mNPZC;
+        nsAppShell::PostEvent([npzc, input, guid, blockId, status] {
+            MOZ_ASSERT(NS_IsMainThread());
+
+            JNIEnv* const env = jni::GetGeckoThreadEnv();
+            NPZCSupport* npzcSupport = GetNative(
+                    NativePanZoomController::LocalRef(env, npzc));
+
+            if (!npzcSupport || !npzcSupport->mWindow) {
+                // We already shut down.
+                env->ExceptionClear();
+                return;
+            }
+
+            nsWindow* const window = npzcSupport->mWindow;
+            window->UserActivity();
+            WidgetWheelEvent wheelEvent = input.ToWidgetWheelEvent(window);
+            window->ProcessUntransformedAPZEvent(&wheelEvent, guid,
+                                                 blockId, status);
+        });
+
+        return true;
     }
 
     bool HandleMotionEvent(const NativePanZoomController::LocalRef& aInstance,
@@ -528,7 +605,7 @@ public:
             return false;
         }
 
-        nsTArray<int32_t> pointerId(aPointerId);
+        nsTArray<int32_t> pointerId(aPointerId->GetElements());
         MultiTouchInput::MultiTouchType type;
         size_t startIndex = 0;
         size_t endIndex = pointerId.Length();
@@ -561,12 +638,12 @@ public:
         input.modifiers = GetModifiers(aMetaState);
         input.mTouches.SetCapacity(endIndex - startIndex);
 
-        nsTArray<float> x(aX);
-        nsTArray<float> y(aY);
-        nsTArray<float> orientation(aOrientation);
-        nsTArray<float> pressure(aPressure);
-        nsTArray<float> toolMajor(aToolMajor);
-        nsTArray<float> toolMinor(aToolMinor);
+        nsTArray<float> x(aX->GetElements());
+        nsTArray<float> y(aY->GetElements());
+        nsTArray<float> orientation(aOrientation->GetElements());
+        nsTArray<float> pressure(aPressure->GetElements());
+        nsTArray<float> toolMajor(aToolMajor->GetElements());
+        nsTArray<float> toolMinor(aToolMinor->GetElements());
 
         MOZ_ASSERT(pointerId.Length() == x.Length());
         MOZ_ASSERT(pointerId.Length() == y.Length());
@@ -644,6 +721,16 @@ public:
             window->DispatchHitTest(touchEvent);
         });
         return true;
+    }
+
+    void UpdateOverscrollVelocity(const float x, const float y)
+    {
+        mNPZC->UpdateOverscrollVelocity(x, y);
+    }
+
+    void UpdateOverscrollOffset(const float x, const float y)
+    {
+        mNPZC->UpdateOverscrollOffset(x, y);
     }
 };
 
@@ -847,6 +934,58 @@ public:
 #endif
     }
 
+    void OnSizeChanged(int32_t aWindowWidth, int32_t aWindowHeight,
+                       int32_t aScreenWidth, int32_t aScreenHeight)
+    {
+        if (aWindowWidth != window.mBounds.width ||
+            aWindowHeight != window.mBounds.height) {
+
+            window.Resize(aWindowWidth, aWindowHeight, /* repaint */ false);
+        }
+
+        if (aScreenWidth == gAndroidScreenBounds.width &&
+            aScreenHeight == gAndroidScreenBounds.height) {
+
+            return;
+        }
+
+        gAndroidScreenBounds.width = aScreenWidth;
+        gAndroidScreenBounds.height = aScreenHeight;
+
+        if (!XRE_IsParentProcess() &&
+            !Preferences::GetBool("browser.tabs.remote.desktopbehavior",
+                                  false)) {
+            return;
+        }
+
+        // Tell the content process the new screen size.
+        nsTArray<ContentParent*> cplist;
+        ContentParent::GetAll(cplist);
+        for (uint32_t i = 0; i < cplist.Length(); ++i) {
+            Unused << cplist[i]->SendScreenSizeChanged(gAndroidScreenBounds);
+        }
+
+        if (gContentCreationNotifier) {
+            return;
+        }
+
+        // If the content process is not created yet, wait until it's
+        // created and then tell it the screen size.
+        nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
+        if (!obs) {
+            return;
+        }
+
+        RefPtr<ContentCreationNotifier> notifier = new ContentCreationNotifier;
+        if (NS_FAILED(obs->AddObserver(notifier, "xpcom-shutdown", false)) ||
+            NS_FAILED(obs->AddObserver(
+                notifier, "ipc:content-created", false))) {
+            return;
+        }
+
+        gContentCreationNotifier = notifier;
+    }
+
     void CreateCompositor(int32_t aWidth, int32_t aHeight)
     {
         window.CreateLayerManager(aWidth, aHeight);
@@ -909,7 +1048,7 @@ nsWindow::GeckoViewSupport::~GeckoViewSupport()
 }
 
 /* static */ void
-nsWindow::GeckoViewSupport::Open(const jni::ClassObject::LocalRef& aCls,
+nsWindow::GeckoViewSupport::Open(const jni::Class::LocalRef& aCls,
                                  GeckoView::Window::Param aWindow,
                                  GeckoView::Param aView,
                                  jni::Object::Param aGLController,
@@ -944,12 +1083,13 @@ nsWindow::GeckoViewSupport::Open(const jni::ClassObject::LocalRef& aCls,
         args->AppendElement(heightArg);
     }
 
-    nsCOMPtr<nsIDOMWindow> domWindow;
-    ww->OpenWindow(nullptr, url, "_blank", "chrome,dialog=no,all",
+    nsCOMPtr<mozIDOMWindowProxy> domWindow;
+    ww->OpenWindow(nullptr, url, nullptr, "chrome,dialog=0,resizable",
                    args, getter_AddRefs(domWindow));
     MOZ_ASSERT(domWindow);
 
-    nsCOMPtr<nsIWidget> widget = WidgetUtils::DOMWindowToWidget(domWindow);
+    nsCOMPtr<nsIWidget> widget =
+        WidgetUtils::DOMWindowToWidget(nsPIDOMWindowOuter::From(domWindow));
     MOZ_ASSERT(widget);
 
     const auto window = static_cast<nsWindow*>(widget.get());
@@ -964,6 +1104,16 @@ nsWindow::GeckoViewSupport::Open(const jni::ClassObject::LocalRef& aCls,
             aCls.Env(), GLController::Ref::From(aGLController)));
 
     gGeckoViewWindow = window;
+
+    if (window->mWidgetListener) {
+        nsCOMPtr<nsIXULWindow> xulWindow(
+                window->mWidgetListener->GetXULWindow());
+        if (xulWindow) {
+            // Out window is not intrinsically sized, so tell nsXULWindow to
+            // not set a size for us.
+            xulWindow->SetIntrinsicallySized(false);
+        }
+    }
 }
 
 void
@@ -1072,11 +1222,15 @@ nsWindow::Create(nsIWidget* aParent,
                  const LayoutDeviceIntRect& aRect,
                  nsWidgetInitData* aInitData)
 {
-    ALOG("nsWindow[%p]::Create %p [%d %d %d %d]", (void*)this, (void*)aParent, aRect.x, aRect.y, aRect.width, aRect.height);
+    ALOG("nsWindow[%p]::Create %p [%d %d %d %d]", (void*)this, (void*)aParent,
+         aRect.x, aRect.y, aRect.width, aRect.height);
+
     nsWindow *parent = (nsWindow*) aParent;
     if (aNativeParent) {
         if (parent) {
-            ALOG("Ignoring native parent on Android window [%p], since parent was specified (%p %p)", (void*)this, (void*)aNativeParent, (void*)aParent);
+            ALOG("Ignoring native parent on Android window [%p], "
+                 "since parent was specified (%p %p)", (void*)this,
+                 (void*)aNativeParent, (void*)aParent);
         } else {
             parent = (nsWindow*) aNativeParent;
         }
@@ -1084,23 +1238,15 @@ nsWindow::Create(nsIWidget* aParent,
 
     mBounds = aRect;
 
-    // for toplevel windows, bounds are fixed to full screen size
-    if (!parent) {
-        mBounds.x = 0;
-        mBounds.y = 0;
-        mBounds.width = gAndroidBounds.width;
-        mBounds.height = gAndroidBounds.height;
-    }
+    BaseCreate(nullptr, aInitData);
 
-    BaseCreate(nullptr, mBounds, aInitData);
-
-    NS_ASSERTION(IsTopLevel() || parent, "non top level windowdoesn't have a parent!");
+    NS_ASSERTION(IsTopLevel() || parent,
+                 "non-top-level window doesn't have a parent!");
 
     if (IsTopLevel()) {
         gTopLevelWindows.AppendElement(this);
-    }
 
-    if (parent) {
+    } else if (parent) {
         parent->mChildren.AppendElement(this);
         mParent = parent;
     }
@@ -1254,10 +1400,9 @@ nsWindow::Show(bool aState)
         // if Show() is the right place to do this, though.
 
         if (aState) {
-            // It just became visible, so send a resize update if necessary
-            // and bring it to the front.
-            Resize(0, 0, gAndroidBounds.width, gAndroidBounds.height, false);
+            // It just became visible, so bring it to the front.
             BringToFront();
+
         } else if (nsWindow::TopWindow() == this) {
             // find the next visible window to show
             unsigned int i;
@@ -1450,7 +1595,7 @@ nsWindow::BringToFront()
     // window that is created will be first in the window list but won't yet
     // be focused.
     nsCOMPtr<nsIFocusManager> fm = do_GetService(FOCUSMANAGER_CONTRACTID);
-    nsCOMPtr<nsIDOMWindow> existingTopWindow;
+    nsCOMPtr<mozIDOMWindowProxy> existingTopWindow;
     fm->GetActiveWindow(getter_AddRefs(existingTopWindow));
     if (existingTopWindow && FindTopLevel() == nsWindow::TopWindow())
         return;
@@ -1463,9 +1608,9 @@ nsWindow::BringToFront()
     RefPtr<nsWindow> kungFuDeathGrip(this);
 
     nsWindow *oldTop = nullptr;
-    nsWindow *newTop = this;
-    if (!gTopLevelWindows.IsEmpty())
+    if (!gTopLevelWindows.IsEmpty()) {
         oldTop = gTopLevelWindows[0];
+    }
 
     gTopLevelWindows.RemoveElement(this);
     gTopLevelWindows.InsertElementAt(0, this);
@@ -1477,21 +1622,10 @@ nsWindow::BringToFront()
       }
     }
 
-    if (Destroyed()) {
-        // somehow the deactivate event handler destroyed this window.
-        // try to recover by grabbing the next window in line and activating
-        // that instead
-        if (gTopLevelWindows.IsEmpty())
-            return;
-        newTop = gTopLevelWindows[0];
-    }
-
     if (mWidgetListener) {
         mWidgetListener->WindowActivated();
     }
 
-    // force a window resize
-    nsAppShell::Get()->ResendLastResizeEvent(newTop);
     RedrawAll();
 }
 
@@ -1608,76 +1742,6 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
         return;
 
     switch (ae->Type()) {
-        case AndroidGeckoEvent::FORCED_RESIZE:
-            win->mBounds.width = 0;
-            win->mBounds.height = 0;
-            // also resize the children
-            for (uint32_t i = 0; i < win->mChildren.Length(); i++) {
-                win->mChildren[i]->mBounds.width = 0;
-                win->mChildren[i]->mBounds.height = 0;
-            }
-        case AndroidGeckoEvent::SIZE_CHANGED: {
-            const nsTArray<nsIntPoint>& points = ae->Points();
-            NS_ASSERTION(points.Length() == 2, "Size changed does not have enough coordinates");
-
-            int nw = points[0].x;
-            int nh = points[0].y;
-
-            if (ae->Type() == AndroidGeckoEvent::FORCED_RESIZE || nw != gAndroidBounds.width ||
-                nh != gAndroidBounds.height) {
-                gAndroidBounds.width = nw;
-                gAndroidBounds.height = nh;
-
-                // tell all the windows about the new size
-                for (size_t i = 0; i < gTopLevelWindows.Length(); ++i) {
-                    if (gTopLevelWindows[i]->mIsVisible)
-                        gTopLevelWindows[i]->Resize(gAndroidBounds.width,
-                                                    gAndroidBounds.height,
-                                                    false);
-                }
-            }
-
-            int newScreenWidth = points[1].x;
-            int newScreenHeight = points[1].y;
-
-            if (newScreenWidth == gAndroidScreenBounds.width &&
-                newScreenHeight == gAndroidScreenBounds.height)
-                break;
-
-            gAndroidScreenBounds.width = newScreenWidth;
-            gAndroidScreenBounds.height = newScreenHeight;
-
-            if (!XRE_IsParentProcess() &&
-                !Preferences::GetBool("browser.tabs.remote.desktopbehavior", false)) {
-                break;
-            }
-
-            // Tell the content process the new screen size.
-            nsTArray<ContentParent*> cplist;
-            ContentParent::GetAll(cplist);
-            for (uint32_t i = 0; i < cplist.Length(); ++i)
-                Unused << cplist[i]->SendScreenSizeChanged(gAndroidScreenBounds);
-
-            if (gContentCreationNotifier)
-                break;
-
-            // If the content process is not created yet, wait until it's
-            // created and then tell it the screen size.
-            nsCOMPtr<nsIObserverService> obs =
-                mozilla::services::GetObserverService();
-            if (!obs)
-                break;
-
-            RefPtr<ContentCreationNotifier> notifier = new ContentCreationNotifier;
-            if (NS_SUCCEEDED(obs->AddObserver(notifier, "ipc:content-created", false))) {
-                if (NS_SUCCEEDED(obs->AddObserver(notifier, "xpcom-shutdown", false)))
-                    gContentCreationNotifier = notifier;
-                else
-                    obs->RemoveObserver(notifier, "ipc:content-created");
-            }
-            break;
-        }
-
         case AndroidGeckoEvent::APZ_INPUT_EVENT: {
             win->UserActivity();
 
@@ -1730,6 +1794,10 @@ nsWindow::OnSizeChanged(const gfx::IntSize& aSize)
     if (mWidgetListener) {
         mWidgetListener->WindowResized(this, aSize.width, aSize.height);
     }
+
+    if (mAttachedWidgetListener) {
+        mAttachedWidgetListener->WindowResized(this, aSize.width, aSize.height);
+    }
 }
 
 void
@@ -1743,6 +1811,22 @@ nsWindow::InitEvent(WidgetGUIEvent& event, LayoutDeviceIntPoint* aPoint)
     }
 
     event.time = PR_Now() / 1000;
+}
+
+void
+nsWindow::UpdateOverscrollVelocity(const float aX, const float aY)
+{
+    if (mNPZCSupport) {
+        mNPZCSupport->UpdateOverscrollVelocity(aX, aY);
+    }
+}
+
+void
+nsWindow::UpdateOverscrollOffset(const float aX, const float aY)
+{
+    if (mNPZCSupport) {
+        mNPZCSupport->UpdateOverscrollOffset(aX, aY);
+    }
 }
 
 gfx::IntSize
@@ -2361,7 +2445,7 @@ nsWindow::GeckoViewSupport::OnKeyEvent(int32_t aAction, int32_t aKeyCode,
         int32_t aScanCode, int32_t aMetaState, int64_t aTime,
         int32_t aUnicodeChar, int32_t aBaseUnicodeChar,
         int32_t aDomPrintableKeyValue, int32_t aRepeatCount, int32_t aFlags,
-        bool aIsSynthesizedImeKey)
+        bool aIsSynthesizedImeKey, jni::Object::Param originalEvent)
 {
     RefPtr<nsWindow> kungFuDeathGrip(&window);
     window.UserActivity();
@@ -2396,6 +2480,10 @@ nsWindow::GeckoViewSupport::OnKeyEvent(int32_t aAction, int32_t aKeyCode,
                 mozilla::UniquePtr<WidgetEvent>(event.Duplicate()));
     } else {
         window.DispatchEvent(&event, status);
+
+        if (status != nsEventStatus_eConsumeNoDefault) {
+            mEditable->OnDefaultKeyEvent(originalEvent);
+        }
     }
 
     if (window.Destroyed() ||
@@ -2599,7 +2687,7 @@ nsWindow::GeckoViewSupport::FlushIMEChanges(FlushChangesFlag aFlags)
         int32_t oldEnd;
         int32_t newEnd;
     };
-    nsAutoTArray<TextRecord, 4> textTransaction;
+    AutoTArray<TextRecord, 4> textTransaction;
     if (mIMETextChanges.Length() > textTransaction.Capacity()) {
         textTransaction.SetCapacity(mIMETextChanges.Length());
     }
@@ -2649,8 +2737,8 @@ nsWindow::GeckoViewSupport::FlushIMEChanges(FlushChangesFlag aFlags)
                            change.mOldEnd, change.mNewEnd});
     }
 
-    int32_t selStart;
-    int32_t selEnd;
+    int32_t selStart = -1;
+    int32_t selEnd = -1;
 
     if (mIMESelectionChanged) {
         WidgetQueryContentEvent event(true, eQuerySelectedText, &window);
@@ -2682,6 +2770,21 @@ nsWindow::GeckoViewSupport::FlushIMEChanges(FlushChangesFlag aFlags)
     }
 }
 
+void
+nsWindow::GeckoViewSupport::AsyncNotifyIME(int32_t aNotification)
+{
+    // Keep a strong reference to the window to keep 'this' alive.
+    RefPtr<nsWindow> window(&this->window);
+
+    nsAppShell::PostEvent([this, window, aNotification] {
+        if (mIMEMaskEventsCount) {
+            return;
+        }
+
+        mEditable->NotifyIME(aNotification);
+    });
+}
+
 bool
 nsWindow::GeckoViewSupport::NotifyIME(const IMENotification& aIMENotification)
 {
@@ -2690,17 +2793,20 @@ nsWindow::GeckoViewSupport::NotifyIME(const IMENotification& aIMENotification)
     switch (aIMENotification.mMessage) {
         case REQUEST_TO_COMMIT_COMPOSITION: {
             ALOGIME("IME: REQUEST_TO_COMMIT_COMPOSITION");
+
             window.RemoveIMEComposition();
-            mEditable->NotifyIME(REQUEST_TO_COMMIT_COMPOSITION);
+
+            AsyncNotifyIME(GeckoEditableListener::
+                           NOTIFY_IME_TO_COMMIT_COMPOSITION);
             return true;
         }
 
         case REQUEST_TO_CANCEL_COMPOSITION: {
             ALOGIME("IME: REQUEST_TO_CANCEL_COMPOSITION");
+            RefPtr<nsWindow> kungFuDeathGrip(&window);
 
             // Cancel composition on Gecko side
             if (window.GetIMEComposition()) {
-                RefPtr<nsWindow> kungFuDeathGrip(&window);
                 WidgetCompositionEvent compositionCommitEvent(
                         true, eCompositionCommit, &window);
                 window.InitEvent(compositionCommitEvent, nullptr);
@@ -2708,13 +2814,14 @@ nsWindow::GeckoViewSupport::NotifyIME(const IMENotification& aIMENotification)
                 window.DispatchEvent(&compositionCommitEvent);
             }
 
-            mEditable->NotifyIME(REQUEST_TO_CANCEL_COMPOSITION);
+            AsyncNotifyIME(GeckoEditableListener::
+                           NOTIFY_IME_TO_CANCEL_COMPOSITION);
             return true;
         }
 
         case NOTIFY_IME_OF_FOCUS: {
             ALOGIME("IME: NOTIFY_IME_OF_FOCUS");
-            mEditable->NotifyIME(NOTIFY_IME_OF_FOCUS);
+            mEditable->NotifyIME(GeckoEditableListener::NOTIFY_IME_OF_FOCUS);
             return true;
         }
 
@@ -2726,7 +2833,7 @@ nsWindow::GeckoViewSupport::NotifyIME(const IMENotification& aIMENotification)
             // event back to Gecko. That is where we unmask event handling
             mIMEMaskEventsCount++;
 
-            mEditable->NotifyIME(NOTIFY_IME_OF_BLUR);
+            mEditable->NotifyIME(GeckoEditableListener::NOTIFY_IME_OF_BLUR);
             return true;
         }
 
@@ -2874,7 +2981,7 @@ nsWindow::GeckoViewSupport::OnImeReplaceText(int32_t aStart, int32_t aEnd,
         Replace text in Gecko thread from aStart to aEnd with the string text.
     */
     RefPtr<nsWindow> kungFuDeathGrip(&window);
-    nsString string(aText);
+    nsString string(aText->ToString());
 
     const auto composition(window.GetIMEComposition());
     MOZ_ASSERT(!composition || !composition->IsEditorHandlingEvent());
@@ -2890,11 +2997,14 @@ nsWindow::GeckoViewSupport::OnImeReplaceText(int32_t aStart, int32_t aEnd,
         window.RemoveIMEComposition();
 
         {
+            // Use text selection to set target postion(s) for
+            // insert, or replace, of text.
             WidgetSelectionEvent event(true, eSetSelection, &window);
             window.InitEvent(event, nullptr);
             event.mOffset = uint32_t(aStart);
             event.mLength = uint32_t(aEnd - aStart);
             event.mExpandToClusterBoundary = false;
+            event.mReason = nsISelectionListener::IME_REASON;
             window.DispatchEvent(&event);
         }
 
@@ -3012,6 +3122,8 @@ nsWindow::GeckoViewSupport::OnImeUpdateComposition(int32_t aStart, int32_t aEnd)
         return;
     }
 
+    RefPtr<nsWindow> kungFuDeathGrip(&window);
+
     // A composition with no ranges means we want to set the selection.
     if (mIMERanges->IsEmpty()) {
         MOZ_ASSERT(aStart >= 0 && aEnd >= 0);
@@ -3037,7 +3149,6 @@ nsWindow::GeckoViewSupport::OnImeUpdateComposition(int32_t aStart, int32_t aEnd)
           to eliminate the possibility of this event altering the
           text content unintentionally.
     */
-    RefPtr<nsWindow> kungFuDeathGrip(&window);
     const auto composition(window.GetIMEComposition());
     MOZ_ASSERT(!composition || !composition->IsEditorHandlingEvent());
 
@@ -3180,6 +3291,45 @@ nsWindow::GetIMEUpdatePreference()
         nsIMEUpdatePreference::NOTIFY_SELECTION_CHANGE |
         nsIMEUpdatePreference::NOTIFY_TEXT_CHANGE);
 }
+
+nsresult
+nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
+                                     TouchPointerState aPointerState,
+                                     ScreenIntPoint aPointerScreenPoint,
+                                     double aPointerPressure,
+                                     uint32_t aPointerOrientation,
+                                     nsIObserver* aObserver)
+{
+    mozilla::widget::AutoObserverNotifier notifier(aObserver, "touchpoint");
+
+    int eventType;
+    switch (aPointerState) {
+    case TOUCH_CONTACT:
+        // This could be a ACTION_DOWN or ACTION_MOVE depending on the
+        // existing state; it is mapped to the right thing in Java.
+        eventType = sdk::MotionEvent::ACTION_POINTER_DOWN;
+        break;
+    case TOUCH_REMOVE:
+        // This could be turned into a ACTION_UP in Java
+        eventType = sdk::MotionEvent::ACTION_POINTER_UP;
+        break;
+    case TOUCH_CANCEL:
+        eventType = sdk::MotionEvent::ACTION_CANCEL;
+        break;
+    case TOUCH_HOVER:   // not supported for now
+    default:
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    MOZ_ASSERT(mGLControllerSupport);
+    GeckoLayerClient::LocalRef client = mGLControllerSupport->GetLayerClient();
+    client->SynthesizeNativeTouchPoint(aPointerId, eventType,
+        aPointerScreenPoint.x, aPointerScreenPoint.y, aPointerPressure,
+        aPointerOrientation);
+
+    return NS_OK;
+}
+
 
 void
 nsWindow::DrawWindowUnderlay(LayerManagerComposite* aManager,

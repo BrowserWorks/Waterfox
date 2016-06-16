@@ -231,13 +231,25 @@ TextureImageTextureSourceOGL::CopyTo(const gfx::IntRect& aSourceRect,
   dest->mTexImage->MarkValid();
 }
 
+CompositorOGL* AssertGLCompositor(Compositor* aCompositor)
+{
+  CompositorOGL* compositor = aCompositor ? aCompositor->AsCompositorOGL()
+                                          : nullptr;
+  if (!compositor) {
+    gfxCriticalNote << "[GL] attempt to set an incompatible compositor.";
+  }
+  return compositor;
+}
+
 void
 TextureImageTextureSourceOGL::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  CompositorOGL* glCompositor = static_cast<CompositorOGL*>(aCompositor);
-
-  if (!glCompositor || (mCompositor != glCompositor)) {
+  CompositorOGL* glCompositor = AssertGLCompositor(aCompositor);
+  if (!glCompositor) {
+    DeallocateDeviceData();
+    return;
+  }
+  if (mCompositor != glCompositor) {
     DeallocateDeviceData();
     mCompositor = glCompositor;
   }
@@ -340,8 +352,18 @@ GLTextureSource::BindTexture(GLenum aTextureUnit, gfx::Filter aFilter)
 void
 GLTextureSource::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  mCompositor = static_cast<CompositorOGL*>(aCompositor);
+  CompositorOGL* glCompositor = AssertGLCompositor(aCompositor);
+  if (!glCompositor) {
+    return;
+  }
+
+  if (mCompositor && mCompositor != glCompositor) {
+    gfxCriticalNote << "GLTextureSource does not support changing compositors";
+    return;
+  }
+
+  mCompositor = glCompositor;
+
   if (mNextSibling) {
     mNextSibling->SetCompositor(aCompositor);
   }
@@ -383,6 +405,7 @@ SurfaceTextureSource::SurfaceTextureSource(CompositorOGL* aCompositor,
 void
 SurfaceTextureSource::BindTexture(GLenum aTextureUnit, gfx::Filter aFilter)
 {
+  MOZ_ASSERT(mSurfTex);
   if (!gl()) {
     NS_WARNING("Trying to bind a texture without a GLContext");
     return;
@@ -402,12 +425,16 @@ SurfaceTextureSource::BindTexture(GLenum aTextureUnit, gfx::Filter aFilter)
 void
 SurfaceTextureSource::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  if (mCompositor != aCompositor) {
+  CompositorOGL* glCompositor = AssertGLCompositor(aCompositor);
+  if (!glCompositor) {
+    DeallocateDeviceData();
+    return;
+  }
+  if (mCompositor != glCompositor) {
     DeallocateDeviceData();
   }
 
-  mCompositor = static_cast<CompositorOGL*>(aCompositor);
+  mCompositor = glCompositor;
 }
 
 bool
@@ -425,10 +452,18 @@ SurfaceTextureSource::gl() const
 gfx::Matrix4x4
 SurfaceTextureSource::GetTextureTransform()
 {
+  MOZ_ASSERT(mSurfTex);
+
   gfx::Matrix4x4 ret;
   mSurfTex->GetTransformMatrix(ret);
 
   return ret;
+}
+
+void
+SurfaceTextureSource::DeallocateDeviceData()
+{
+  mSurfTex = nullptr;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -456,6 +491,7 @@ SurfaceTextureHost::gl() const
 bool
 SurfaceTextureHost::Lock()
 {
+  MOZ_ASSERT(mSurfTex);
   if (!mCompositor) {
     return false;
   }
@@ -478,14 +514,18 @@ SurfaceTextureHost::Lock()
 void
 SurfaceTextureHost::Unlock()
 {
+  MOZ_ASSERT(mSurfTex);
   mSurfTex->Detach();
 }
 
 void
 SurfaceTextureHost::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  CompositorOGL* glCompositor = static_cast<CompositorOGL*>(aCompositor);
+  CompositorOGL* glCompositor = AssertGLCompositor(aCompositor);
+  if (!glCompositor) {
+    DeallocateDeviceData();
+    return;
+  }
   mCompositor = glCompositor;
   if (mTextureSource) {
     mTextureSource->SetCompositor(glCompositor);
@@ -497,6 +537,15 @@ SurfaceTextureHost::GetFormat() const
 {
   MOZ_ASSERT(mTextureSource);
   return mTextureSource->GetFormat();
+}
+
+void
+SurfaceTextureHost::DeallocateDeviceData()
+{
+  if (mTextureSource) {
+    mTextureSource->DeallocateDeviceData();
+  }
+  mSurfTex = nullptr;
 }
 
 #endif // MOZ_WIDGET_ANDROID
@@ -546,8 +595,7 @@ EGLImageTextureSource::BindTexture(GLenum aTextureUnit, gfx::Filter aFilter)
 void
 EGLImageTextureSource::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  mCompositor = static_cast<CompositorOGL*>(aCompositor);
+  mCompositor = AssertGLCompositor(aCompositor);
 }
 
 bool
@@ -637,8 +685,12 @@ EGLImageTextureHost::Unlock()
 void
 EGLImageTextureHost::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  CompositorOGL* glCompositor = static_cast<CompositorOGL*>(aCompositor);
+  CompositorOGL* glCompositor = AssertGLCompositor(aCompositor);
+  if (!glCompositor) {
+    mCompositor = nullptr;
+    mTextureSource = nullptr;
+    return;
+  }
   mCompositor = glCompositor;
   if (mTextureSource) {
     mTextureSource->SetCompositor(glCompositor);
@@ -708,8 +760,12 @@ GLTextureHost::Lock()
 void
 GLTextureHost::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  CompositorOGL* glCompositor = static_cast<CompositorOGL*>(aCompositor);
+  CompositorOGL* glCompositor = AssertGLCompositor(aCompositor);
+  if (!glCompositor) {
+    mCompositor = nullptr;
+    mTextureSource = nullptr;
+    return;
+  }
   mCompositor = glCompositor;
   if (mTextureSource) {
     mTextureSource->SetCompositor(glCompositor);

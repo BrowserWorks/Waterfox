@@ -35,6 +35,23 @@ TEST_FAIL_STRING = "TEST-UNEXPECTED-FAIL"
 SIMPLE_PASSING_TEST = "function run_test() { do_check_true(true); }"
 SIMPLE_FAILING_TEST = "function run_test() { do_check_true(false); }"
 
+SIMPLE_UNCAUGHT_REJECTION_TEST = '''
+function run_test() {
+  Promise.reject(new Error("Test rejection."));
+  do_check_true(true);
+}
+'''
+
+SIMPLE_UNCAUGHT_REJECTION_JSM_TEST = '''
+Components.utils.import("resource://gre/modules/Promise.jsm");
+
+Promise.reject(new Error("Test rejection."));
+
+function run_test() {
+  do_check_true(true);
+}
+'''
+
 ADD_TEST_SIMPLE = '''
 function run_test() { run_next_test(); }
 
@@ -49,6 +66,26 @@ function run_test() { run_next_test(); }
 
 add_test(function test_failing() {
   do_check_true(false);
+  run_next_test();
+});
+'''
+
+ADD_TEST_UNCAUGHT_REJECTION = '''
+function run_test() { run_next_test(); }
+
+add_test(function test_uncaught_rejection() {
+  Promise.reject(new Error("Test rejection."));
+  run_next_test();
+});
+'''
+
+ADD_TEST_UNCAUGHT_REJECTION_JSM = '''
+Components.utils.import("resource://gre/modules/Promise.jsm");
+
+function run_test() { run_next_test(); }
+
+add_test(function test_uncaught_rejection() {
+  Promise.reject(new Error("Test rejection."));
   run_next_test();
 });
 '''
@@ -412,18 +449,21 @@ tail =
 
 """ + "\n".join(testlines))
 
-    def assertTestResult(self, expected, shuffle=False, verbose=False):
+    def assertTestResult(self, expected, shuffle=False, verbose=False,
+                         symbolsPath=None):
         """
         Assert that self.x.runTests with manifest=self.manifest
         returns |expected|.
         """
         self.assertEquals(expected,
                           self.x.runTests(xpcshellBin,
+                                          symbolsPath=symbolsPath,
                                           manifest=self.manifest,
                                           mozInfo=mozinfo.info,
                                           shuffle=shuffle,
                                           verbose=verbose,
                                           sequential=True,
+                                          testingModulesDir=os.path.join(objdir, '_tests', 'modules'),
                                           utility_path=self.utility_path),
                           msg="""Tests should have %s, log:
 ========
@@ -487,6 +527,14 @@ tail =
         """
         When an assertion is hit, we should produce a useful stack.
         """
+        # Passing symbolsPath will cause the stack fixer to use
+        # fix_stack_using_bpsyms and exercise the fileid utility in
+        # this test.
+        symbolsPath = None
+        candidate_path = os.path.join(build_obj.distdir, 'crashreporter-symbols')
+        if os.path.isdir(candidate_path):
+          symbolsPath = candidate_path
+
         self.writeFile("test_assert.js", '''
           add_test(function test_asserts_immediately() {
             Components.classes["@mozilla.org/xpcom/debug;1"]
@@ -497,8 +545,7 @@ tail =
         ''')
 
         self.writeManifest(["test_assert.js"])
-
-        self.assertTestResult(False)
+        self.assertTestResult(False, symbolsPath=symbolsPath)
 
         self.assertInLog("###!!! ASSERTION")
         log_lines = self.log.getvalue().splitlines()
@@ -802,6 +849,30 @@ add_test({
         self.assertInLog(TEST_FAIL_STRING)
         self.assertNotInLog(TEST_PASS_STRING)
 
+    def testUncaughtRejection(self):
+        """
+        Ensure a simple test with an uncaught rejection is reported.
+        """
+        self.writeFile("test_simple_uncaught_rejection.js", SIMPLE_UNCAUGHT_REJECTION_TEST)
+        self.writeManifest(["test_simple_uncaught_rejection.js"])
+
+        self.assertTestResult(False)
+        self.assertEquals(1, self.x.testCount)
+        self.assertEquals(0, self.x.passCount)
+        self.assertEquals(1, self.x.failCount)
+
+    def testUncaughtRejectionJSM(self):
+        """
+        Ensure a simple test with an uncaught rejection from Promise.jsm is reported.
+        """
+        self.writeFile("test_simple_uncaught_rejection_jsm.js", SIMPLE_UNCAUGHT_REJECTION_JSM_TEST)
+        self.writeManifest(["test_simple_uncaught_rejection_jsm.js"])
+
+        self.assertTestResult(False)
+        self.assertEquals(1, self.x.testCount)
+        self.assertEquals(0, self.x.passCount)
+        self.assertEquals(1, self.x.failCount)
+
     def testAddTestSimple(self):
         """
         Ensure simple add_test() works.
@@ -833,6 +904,30 @@ add_test({
         """
         self.writeFile("test_add_test_failing.js", ADD_TEST_FAILING)
         self.writeManifest(["test_add_test_failing.js"])
+
+        self.assertTestResult(False)
+        self.assertEquals(1, self.x.testCount)
+        self.assertEquals(0, self.x.passCount)
+        self.assertEquals(1, self.x.failCount)
+
+    def testAddTestUncaughtRejection(self):
+        """
+        Ensure add_test() with an uncaught rejection is reported.
+        """
+        self.writeFile("test_add_test_uncaught_rejection.js", ADD_TEST_UNCAUGHT_REJECTION)
+        self.writeManifest(["test_add_test_uncaught_rejection.js"])
+
+        self.assertTestResult(False)
+        self.assertEquals(1, self.x.testCount)
+        self.assertEquals(0, self.x.passCount)
+        self.assertEquals(1, self.x.failCount)
+
+    def testAddTestUncaughtRejectionJSM(self):
+        """
+        Ensure add_test() with an uncaught rejection from Promise.jsm is reported.
+        """
+        self.writeFile("test_add_test_uncaught_rejection_jsm.js", ADD_TEST_UNCAUGHT_REJECTION_JSM)
+        self.writeManifest(["test_add_test_uncaught_rejection_jsm.js"])
 
         self.assertTestResult(False)
         self.assertEquals(1, self.x.testCount)

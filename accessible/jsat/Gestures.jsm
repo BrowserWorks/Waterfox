@@ -156,6 +156,14 @@ this.GestureSettings = { // jshint ignore:line
     MAX_CONSECUTIVE_GESTURE_DELAY * TIMEOUT_MULTIPLIER,
 
   /**
+   * A maximum time we wait for a next pointer down event to consider a sequence
+   * a multi-action gesture.
+   * @type {Number}
+   */
+  maxGestureResolveTimeout:
+    MAX_CONSECUTIVE_GESTURE_DELAY * TIMEOUT_MULTIPLIER,
+
+  /**
    * Delay before tap turns into dwell
    * @type {Number}
    */
@@ -358,7 +366,7 @@ Gesture.prototype = {
     let delay = this._getDelay(aTimeStamp);
     let handler = () => {
       Logger.gesture('timer handler');
-      delete this._timer;
+      this.clearTimer();
       if (!this._inProgress) {
         this._deferred.reject();
       } else if (this._rejectToOnWait) {
@@ -501,6 +509,7 @@ Gesture.prototype = {
     }
     Logger.gesture('Resolving', this.id, 'gesture.');
     this.isComplete = true;
+    this.clearTimer();
     let detail = this.compile();
     if (detail) {
       this._emit(detail);
@@ -525,6 +534,7 @@ Gesture.prototype = {
     }
     Logger.gesture('Rejecting', this.id, 'gesture.');
     this.isComplete = true;
+    this.clearTimer();
     return {
       id: this.id,
       gestureType: aRejectTo
@@ -694,11 +704,12 @@ TapGesture.prototype.pointerup = function TapGesture_pointerup(aPoints) {
       let complete = this._update(aPoints, 'pointerup', false, true);
       if (complete) {
         this.clearTimer();
-        if (GestureSettings.maxConsecutiveGestureDelay) {
+        if (GestureSettings.maxGestureResolveTimeout) {
           this._pointerUpTimer = setTimeout(() => {
+            clearTimeout(this._pointerUpTimer);
             delete this._pointerUpTimer;
             this._deferred.resolve();
-          }, GestureSettings.maxConsecutiveGestureDelay);
+          }, GestureSettings.maxGestureResolveTimeout);
         } else {
           this._deferred.resolve();
         }

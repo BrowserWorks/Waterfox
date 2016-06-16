@@ -17,7 +17,6 @@ Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
   ignoreEvent,
-  runSafe,
 } = ExtensionUtils;
 
 // This function is pretty tightly tied to Extension.jsm.
@@ -119,13 +118,31 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
 
       onCreated: new EventManager(context, "tabs.onCreated", fire => {
         let listener = event => {
+          if (event.detail.adoptedTab) {
+            // This tab is being created to adopt a tab from another window. We
+            // map this event to an onAttached, rather than onCreated, event.
+            return;
+          }
+
+          // We need to delay sending this event until the next tick, since the
+          // tab does not have its final index when the TabOpen event is dispatched.
           let tab = event.originalTarget;
-          fire({tab: TabManager.convert(extension, tab)});
+          Promise.resolve().then(() => {
+            fire(TabManager.convert(extension, tab));
+          });
         };
 
         let windowListener = window => {
+          if (window.arguments[0] instanceof window.XULElement) {
+            // If the first window argument is a XUL element, it means the
+            // window is about to adopt a tab from another window to replace its
+            // initial tab, which means we need to skip the onCreated event, and
+            // fire an onAttached event instead.
+            return;
+          }
+
           for (let tab of window.gBrowser.tabs) {
-            fire({tab: TabManager.convert(extension, tab)});
+            fire(TabManager.convert(extension, tab));
           }
         };
 
@@ -134,6 +151,158 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
         return () => {
           WindowListManager.removeOpenListener(windowListener);
           AllWindowEvents.removeListener("TabOpen", listener);
+        };
+      }).api(),
+
+      /**
+       * Since multiple tabs currently can't be highlighted, onHighlighted
+       * essentially acts an alias for self.tabs.onActivated but returns
+       * the tabId in an array to match the API.
+       * @see  https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/Tabs/onHighlighted
+      */
+      onHighlighted: new WindowEventManager(context, "tabs.onHighlighted", "TabSelect", (fire, event) => {
+        let tab = event.originalTarget;
+        let tabIds = [TabManager.getId(tab)];
+        let windowId = WindowManager.getId(tab.ownerDocument.defaultView);
+        fire({tabIds, windowId});
+      }).api(),
+
+      onAttached: new EventManager(context, "tabs.onAttached", fire => {
+        let fireForTab = tab => {
+          let newWindowId = WindowManager.getId(tab.ownerDocument.defaultView);
+          fire(TabManager.getId(tab), {newWindowId, newPosition: tab._tPos});
+        };
+
+        let listener = event => {
+          if (event.detail.adoptedTab) {
+            // We need to delay sending this event until the next tick, since the
+            // tab does not have its final index when the TabOpen event is dispatched.
+            Promise.resolve().then(() => {
+              fireForTab(event.originalTarget);
+            });
+          }
+        };
+
+        let windowListener = window => {
+          if (window.arguments[0] instanceof window.XULElement) {
+            // If the first window argument is a XUL element, it means the
+            // window is about to adopt a tab from another window to replace its
+            // initial tab.
+            //
+            // Note that this event handler depends on running before the
+            // delayed startup code in browser.js, which is currently triggered
+            // by the first MozAfterPaint event. That code handles finally
+            // adopting the tab, and clears it from the arguments list in the
+            // process, so if we run later than it, we're too late.
+            let tab = window.arguments[0];
+
+            // We need to be sure to fire this event after the onDetached event
+            // for the original tab.
+            tab.addEventListener("TabClose", function listener(event) {
+              tab.removeEventListener("TabClose", listener);
+              Promise.resolve().then(() => {
+                fireForTab(event.detail.adoptedBy);
+              });
+            });
+          }
+        };
+
+        WindowListManager.addOpenListener(windowListener);
+        AllWindowEvents.addListener("TabOpen", listener);
+        return () => {
+          WindowListManager.removeOpenListener(windowListener);
+          AllWindowEvents.removeListener("TabOpen", listener);
+        };
+      }).api(),
+
+      onDetached: new EventManager(context, "tabs.onDetached", fire => {
+        let listener = event => {
+          if (event.detail.adoptedBy) {
+            let tab = event.originalTarget;
+            let oldWindowId = WindowManager.getId(tab.ownerDocument.defaultView);
+            fire(TabManager.getId(tab), {oldWindowId, oldPosition: tab._tPos});
+          }
+        };
+
+        AllWindowEvents.addListener("TabClose", listener);
+        return () => {
+          AllWindowEvents.removeListener("TabClose", listener);
+        };
+      }).api(),
+
+      onRemoved: new EventManager(context, "tabs.onRemoved", fire => {
+        let fireForTab = (tab, isWindowClosing) => {
+          let tabId = TabManager.getId(tab);
+          let windowId = WindowManager.getId(tab.ownerDocument.defaultView);
+
+          fire(tabId, {windowId, isWindowClosing});
+        };
+
+        let tabListener = event => {
+          // Only fire if this tab is not being moved to another window. If it
+          // is being adopted by another window, we fire an onDetached, rather
+          // than an onRemoved, event.
+          if (!event.detail.adoptedBy) {
+            fireForTab(event.originalTarget, false);
+          }
+        };
+
+        let windowListener = window => {
+          for (let tab of window.gBrowser.tabs) {
+            fireForTab(tab, true);
+          }
+        };
+
+        WindowListManager.addCloseListener(windowListener);
+        AllWindowEvents.addListener("TabClose", tabListener);
+        return () => {
+          WindowListManager.removeCloseListener(windowListener);
+          AllWindowEvents.removeListener("TabClose", tabListener);
+        };
+      }).api(),
+
+      onReplaced: ignoreEvent(context, "tabs.onReplaced"),
+
+      onMoved: new EventManager(context, "tabs.onMoved", fire => {
+        // There are certain circumstances where we need to ignore a move event.
+        //
+        // Namely, the first time the tab is moved after it's created, we need
+        // to report the final position as the initial position in the tab's
+        // onAttached or onCreated event. This is because most tabs are inserted
+        // in a temporary location and then moved after the TabOpen event fires,
+        // which generates a TabOpen event followed by a TabMove event, which
+        // does not match the contract of our API.
+        let ignoreNextMove = new WeakSet();
+
+        let openListener = event => {
+          ignoreNextMove.add(event.target);
+          // Remove the tab from the set on the next tick, since it will already
+          // have been moved by then.
+          Promise.resolve().then(() => {
+            ignoreNextMove.delete(event.target);
+          });
+        };
+
+        let moveListener = event => {
+          let tab = event.originalTarget;
+
+          if (ignoreNextMove.has(tab)) {
+            ignoreNextMove.delete(tab);
+            return;
+          }
+
+          fire(TabManager.getId(tab), {
+            windowId: WindowManager.getId(tab.ownerDocument.defaultView),
+            fromIndex: event.detail,
+            toIndex: tab._tPos,
+          });
+        };
+
+        AllWindowEvents.addListener("TabMove", moveListener);
+        AllWindowEvents.addListener("TabOpen", openListener);
+        return () => {
+          AllWindowEvents.removeListener("TabMove", moveListener);
+          AllWindowEvents.removeListener("TabOpen", openListener);
         };
       }).api(),
 
@@ -150,29 +319,48 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
           return [nonempty, result];
         }
 
-        let listener = event => {
-          let tab = event.originalTarget;
-          let window = tab.ownerDocument.defaultView;
-          let tabId = TabManager.getId(tab);
+        let fireForBrowser = (browser, changed) => {
+          let [needed, changeInfo] = sanitize(extension, changed);
+          if (needed) {
+            let gBrowser = browser.ownerDocument.defaultView.gBrowser;
+            let tabElem = gBrowser.getTabForBrowser(browser);
 
-          let changeInfo = {};
-          let needed = false;
+            let tab = TabManager.convert(extension, tabElem);
+            fire(tab.id, changeInfo, tab);
+          }
+        };
+
+        let listener = event => {
+          let needed = [];
           if (event.type == "TabAttrModified") {
-            if (event.detail.changed.indexOf("image") != -1) {
-              changeInfo.favIconUrl = window.gBrowser.getIcon(tab);
-              needed = true;
+            let changed = event.detail.changed;
+            if (changed.includes("image")) {
+              needed.push("favIconUrl");
+            }
+            if (changed.includes("muted")) {
+              needed.push("mutedInfo");
+            }
+            if (changed.includes("soundplaying")) {
+              needed.push("audible");
             }
           } else if (event.type == "TabPinned") {
-            changeInfo.pinned = true;
-            needed = true;
+            needed.push("pinned");
           } else if (event.type == "TabUnpinned") {
-            changeInfo.pinned = false;
-            needed = true;
+            needed.push("pinned");
           }
 
-          [needed, changeInfo] = sanitize(extension, changeInfo);
-          if (needed) {
-            fire(tabId, changeInfo, TabManager.convert(extension, tab));
+          if (needed.length && !extension.hasPermission("tabs")) {
+            needed = needed.filter(attr => attr != "url" && attr != "favIconUrl");
+          }
+
+          if (needed.length) {
+            let tab = TabManager.convert(extension, event.originalTarget);
+
+            let changeInfo = {};
+            for (let prop of needed) {
+              changeInfo[prop] = tab[prop];
+            }
+            fire(tab.id, changeInfo, tab);
           }
         };
         let progressListener = {
@@ -193,29 +381,18 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
               status = "complete";
             }
 
-            let gBrowser = browser.ownerDocument.defaultView.gBrowser;
-            let tab = gBrowser.getTabForBrowser(browser);
-            let tabId = TabManager.getId(tab);
-            let [needed, changeInfo] = sanitize(extension, {status});
-            if (needed) {
-              fire(tabId, changeInfo, TabManager.convert(extension, tab));
-            }
+            fireForBrowser(browser, {status});
           },
 
           onLocationChange(browser, webProgress, request, locationURI, flags) {
             if (!webProgress.isTopLevel) {
               return;
             }
-            let gBrowser = browser.ownerDocument.defaultView.gBrowser;
-            let tab = gBrowser.getTabForBrowser(browser);
-            let tabId = TabManager.getId(tab);
-            let [needed, changeInfo] = sanitize(extension, {
+
+            fireForBrowser(browser, {
               status: webProgress.isLoadingDocument ? "loading" : "complete",
               url: locationURI.spec,
             });
-            if (needed) {
-              fire(tabId, changeInfo, TabManager.convert(extension, tab));
-            }
           },
         };
 
@@ -232,94 +409,60 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
         };
       }).api(),
 
-      onReplaced: ignoreEvent(context, "tabs.onReplaced"),
+      create: function(createProperties) {
+        return new Promise((resolve, reject) => {
+          function createInWindow(window) {
+            let url;
 
-      onRemoved: new EventManager(context, "tabs.onRemoved", fire => {
-        let tabListener = event => {
-          let tab = event.originalTarget;
-          let tabId = TabManager.getId(tab);
-          let windowId = WindowManager.getId(tab.ownerDocument.defaultView);
-          let removeInfo = {windowId, isWindowClosing: false};
-          fire(tabId, removeInfo);
-        };
+            if (createProperties.url !== null) {
+              url = context.uri.resolve(createProperties.url);
 
-        let windowListener = window => {
-          for (let tab of window.gBrowser.tabs) {
-            let tabId = TabManager.getId(tab);
-            let windowId = WindowManager.getId(window);
-            let removeInfo = {windowId, isWindowClosing: true};
-            fire(tabId, removeInfo);
-          }
-        };
-
-        WindowListManager.addCloseListener(windowListener);
-        AllWindowEvents.addListener("TabClose", tabListener);
-        return () => {
-          WindowListManager.removeCloseListener(windowListener);
-          AllWindowEvents.removeListener("TabClose", tabListener);
-        };
-      }).api(),
-
-      create: function(createProperties, callback) {
-        let url;
-
-        if (createProperties.url) {
-          url = context.uri.resolve(createProperties.url);
-
-          if (!context.checkLoadURL(url)) {
-            // TODO: runtime.lastError should be set to `Invalid url: ${updateProperties.url}`
-            if (callback) {
-              runSafe(context, callback, undefined);
+              if (!context.checkLoadURL(url, {dontReportErrors: true})) {
+                reject({message: `URL not allowed: ${url}`});
+                return;
+              }
             }
 
-            return;
-          }
-        } else {
-          url = aboutNewTabService.newTabURL;
-        }
+            let tab = window.gBrowser.addTab(url || window.BROWSER_NEW_TAB_URL);
 
-        function createInWindow(window) {
-          let tab = window.gBrowser.addTab(url);
-
-          let active = true;
-          if (createProperties.active !== null) {
-            active = createProperties.active;
-          }
-          if (active) {
-            window.gBrowser.selectedTab = tab;
-          }
-
-          if (createProperties.index !== null) {
-            window.gBrowser.moveTabTo(tab, createProperties.index);
-          }
-
-          if (createProperties.pinned) {
-            window.gBrowser.pinTab(tab);
-          }
-
-          if (callback) {
-            runSafe(context, callback, TabManager.convert(extension, tab));
-          }
-        }
-
-        let window = createProperties.windowId !== null ?
-          WindowManager.getWindow(createProperties.windowId) :
-          WindowManager.topWindow;
-        if (!window.gBrowser) {
-          let obs = (finishedWindow, topic, data) => {
-            if (finishedWindow != window) {
-              return;
+            let active = true;
+            if (createProperties.active !== null) {
+              active = createProperties.active;
             }
-            Services.obs.removeObserver(obs, "browser-delayed-startup-finished");
+            if (active) {
+              window.gBrowser.selectedTab = tab;
+            }
+
+            if (createProperties.index !== null) {
+              window.gBrowser.moveTabTo(tab, createProperties.index);
+            }
+
+            if (createProperties.pinned) {
+              window.gBrowser.pinTab(tab);
+            }
+
+            resolve(TabManager.convert(extension, tab));
+          }
+
+          let window = createProperties.windowId !== null ?
+            WindowManager.getWindow(createProperties.windowId, context) :
+            WindowManager.topWindow;
+          if (!window.gBrowser) {
+            let obs = (finishedWindow, topic, data) => {
+              if (finishedWindow != window) {
+                return;
+              }
+              Services.obs.removeObserver(obs, "browser-delayed-startup-finished");
+              createInWindow(window);
+            };
+            Services.obs.addObserver(obs, "browser-delayed-startup-finished", false);
+          } else {
             createInWindow(window);
-          };
-          Services.obs.addObserver(obs, "browser-delayed-startup-finished", false);
-        } else {
-          createInWindow(window);
-        }
+          }
+        });
       },
 
-      remove: function(tabs, callback) {
+      remove: function(tabs) {
         if (!Array.isArray(tabs)) {
           tabs = [tabs];
         }
@@ -329,36 +472,27 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
           tab.ownerDocument.defaultView.gBrowser.removeTab(tab);
         }
 
-        if (callback) {
-          runSafe(context, callback);
-        }
+        return Promise.resolve();
       },
 
-      update: function(tabId, updateProperties, callback) {
+      update: function(tabId, updateProperties) {
         let tab = tabId !== null ? TabManager.getTab(tabId) : TabManager.activeTab;
-        let tabbrowser = tab.ownerDocument.defaultView.gBrowser;
 
         if (!tab) {
-          // TODO: runtime.lastError should be set to `No tab with id: ${tabId}`
-          if (callback) {
-            runSafe(context, callback, undefined);
-          }
-          return;
+          return Promise.reject({message: `No tab found with tabId: ${tabId}`});
         }
+
+        let tabbrowser = tab.ownerDocument.defaultView.gBrowser;
 
         if (updateProperties.url !== null) {
-          if (context.checkLoadURL(updateProperties.url)) {
-            tab.linkedBrowser.loadURI(updateProperties.url);
-          } else {
-            // TODO: runtime.lastError should be set to `Invalid url: ${updateProperties.url}`
-            if (callback) {
-              runSafe(context, callback, undefined);
-            }
-            return;
-          }
-        }
+          let url = context.uri.resolve(updateProperties.url);
 
-        // FIXME: highlighted/selected, muted, openerTabId
+          if (!context.checkLoadURL(url, {dontReportErrors: true})) {
+            return Promise.reject({message: `URL not allowed: ${url}`});
+          }
+
+          tab.linkedBrowser.loadURI(url);
+        }
 
         if (updateProperties.active !== null) {
           if (updateProperties.active) {
@@ -367,7 +501,11 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
             // Not sure what to do here? Which tab should we select?
           }
         }
-
+        if (updateProperties.muted !== null) {
+          if (tab.muted != updateProperties.muted) {
+            tab.toggleMuteAudio(extension.uuid);
+          }
+        }
         if (updateProperties.pinned !== null) {
           if (updateProperties.pinned) {
             tabbrowser.pinTab(tab);
@@ -375,13 +513,12 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
             tabbrowser.unpinTab(tab);
           }
         }
+        // FIXME: highlighted/selected, openerTabId
 
-        if (callback) {
-          runSafe(context, callback, TabManager.convert(extension, tab));
-        }
+        return Promise.resolve(TabManager.convert(extension, tab));
       },
 
-      reload: function(tabId, reloadProperties, callback) {
+      reload: function(tabId, reloadProperties) {
         let tab = tabId !== null ? TabManager.getTab(tabId) : TabManager.activeTab;
         let flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE;
         if (reloadProperties && reloadProperties.bypassCache) {
@@ -389,33 +526,31 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
         }
         tab.linkedBrowser.reloadWithFlags(flags);
 
-        if (callback) {
-          runSafe(context, callback);
-        }
+        return Promise.resolve();
       },
 
-      get: function(tabId, callback) {
+      get: function(tabId) {
         let tab = TabManager.getTab(tabId);
-        runSafe(context, callback, TabManager.convert(extension, tab));
+        return Promise.resolve(TabManager.convert(extension, tab));
       },
 
-      getCurrent(callback) {
+      getCurrent() {
         let tab;
         if (context.tabId) {
           tab = TabManager.convert(extension, TabManager.getTab(context.tabId));
         }
-        runSafe(context, callback, tab);
+        return Promise.resolve(tab);
       },
 
-      getAllInWindow: function(windowId, callback) {
+      getAllInWindow: function(windowId) {
         if (windowId === null) {
           windowId = WindowManager.topWindow.windowId;
         }
 
-        return self.tabs.query({windowId}, callback);
+        return self.tabs.query({windowId});
       },
 
-      query: function(queryInfo, callback) {
+      query: function(queryInfo) {
         let pattern = null;
         if (queryInfo.url !== null) {
           pattern = new MatchPattern(queryInfo.url);
@@ -449,6 +584,18 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
             }
           }
 
+          if (queryInfo.audible !== null) {
+            if (queryInfo.audible != tab.audible) {
+              return false;
+            }
+          }
+
+          if (queryInfo.muted !== null) {
+            if (queryInfo.muted != tab.mutedInfo.muted) {
+              return false;
+            }
+          }
+
           if (queryInfo.currentWindow !== null) {
             let eq = window == currentWindow(context);
             if (queryInfo.currentWindow != eq) {
@@ -472,24 +619,75 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
             }
           }
         }
-        runSafe(context, callback, result);
+        return Promise.resolve(result);
       },
 
-      _execute: function(tabId, details, kind, callback) {
+      captureVisibleTab: function(windowId, options) {
+        if (!extension.hasPermission("<all_urls>")) {
+          return Promise.reject({message: "The <all_urls> permission is required to use the captureVisibleTab API"});
+        }
+
+        let window = windowId == null ?
+          WindowManager.topWindow :
+          WindowManager.getWindow(windowId, context);
+
+        let browser = window.gBrowser.selectedBrowser;
+        let recipient = {
+          innerWindowID: browser.innerWindowID,
+        };
+
+        if (!options) {
+          options = {};
+        }
+        if (options.format == null) {
+          options.format = "png";
+        }
+        if (options.quality == null) {
+          options.quality = 92;
+        }
+
+        let message = {
+          options,
+          width: browser.clientWidth,
+          height: browser.clientHeight,
+        };
+
+        return context.sendMessage(browser.messageManager, "Extension:Capture",
+                                   message, recipient);
+      },
+
+      detectLanguage: function(tabId) {
+        let tab = tabId !== null ? TabManager.getTab(tabId) : TabManager.activeTab;
+        if (!tab) {
+          return Promise.reject({message: `Invalid tab ID: ${tabId}`});
+        }
+
+        let browser = tab.linkedBrowser;
+        let recipient = {innerWindowID: browser.innerWindowID};
+
+        return context.sendMessage(browser.messageManager, "Extension:DetectLanguage",
+                                   {}, recipient);
+      },
+
+      _execute: function(tabId, details, kind, method) {
         let tab = tabId !== null ? TabManager.getTab(tabId) : TabManager.activeTab;
         let mm = tab.linkedBrowser.messageManager;
 
         let options = {
           js: [],
           css: [],
+        };
 
-          // We need to send the inner window ID to make sure we only
-          // execute the script if the window is currently navigated to
-          // the document that we expect.
-          //
-          // TODO: When we add support for callbacks, non-matching
-          // window IDs and insufficient permissions need to result in a
-          // callback with |lastError| set.
+        // We require a `code` or a `file` property, but we can't accept both.
+        if ((details.code === null) == (details.file === null)) {
+          return Promise.reject({message: `${method} requires either a 'code' or a 'file' property, but not both`});
+        }
+
+        if (details.frameId !== null && details.allFrames) {
+          return Promise.reject({message: `'frameId' and 'allFrames' are mutually exclusive`});
+        }
+
+        let recipient = {
           innerWindowID: tab.linkedBrowser.innerWindowID,
         };
 
@@ -506,33 +704,35 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
         }
         if (details.file !== null) {
           let url = context.uri.resolve(details.file);
-          if (extension.isExtensionURL(url)) {
-            // We should really set |lastError| here, and go straight to
-            // the callback, but we don't have |lastError| yet.
-            options[kind].push(url);
+          if (!extension.isExtensionURL(url)) {
+            return Promise.reject({message: "Files to be injected must be within the extension"});
           }
+          options[kind].push(url);
         }
         if (details.allFrames) {
           options.all_frames = details.allFrames;
+        }
+        if (details.frameId !== null) {
+          options.frame_id = details.frameId;
         }
         if (details.matchAboutBlank) {
           options.match_about_blank = details.matchAboutBlank;
         }
         if (details.runAt !== null) {
           options.run_at = details.runAt;
+        } else {
+          options.run_at = "document_idle";
         }
-        mm.sendAsyncMessage("Extension:Execute",
-                            {extensionId: extension.id, options});
 
-        // TODO: Call the callback with the result (which is what???).
+        return context.sendMessage(mm, "Extension:Execute", {options}, recipient);
       },
 
-      executeScript: function(tabId, details, callback) {
-        self.tabs._execute(tabId, details, "js", callback);
+      executeScript: function(tabId, details) {
+        return self.tabs._execute(tabId, details, "js", "executeScript");
       },
 
-      insertCss: function(tabId, details, callback) {
-        self.tabs._execute(tabId, details, "css", callback);
+      insertCSS: function(tabId, details) {
+        return self.tabs._execute(tabId, details, "css", "insertCSS");
       },
 
       connect: function(tabId, connectInfo) {
@@ -565,7 +765,7 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
         return context.messenger.sendMessage(mm, message, recipient, responseCallback);
       },
 
-      move: function(tabIds, moveProperties, callback) {
+      move: function(tabIds, moveProperties) {
         let index = moveProperties.index;
         let tabsMoved = [];
         if (!Array.isArray(tabIds)) {
@@ -574,7 +774,7 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
 
         let destinationWindow = null;
         if (moveProperties.windowId !== null) {
-          destinationWindow = WindowManager.getWindow(moveProperties.windowId);
+          destinationWindow = WindowManager.getWindow(moveProperties.windowId, context);
           // Ignore invalid window.
           if (!destinationWindow) {
             return;
@@ -599,47 +799,71 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
 
           // If the window is not specified, use the window from the tab.
           let window = destinationWindow || tab.ownerDocument.defaultView;
-          let windowId = WindowManager.getId(window);
           let gBrowser = window.gBrowser;
 
-          let getInsertionPoint = () => {
-            let point = indexMap.get(window) || index;
-            // If the index is -1 it should go to the end of the tabs.
-            if (point == -1) {
-              point = gBrowser.tabs.length;
-            }
-            indexMap.set(window, point + 1);
-            return point;
-          };
+          let insertionPoint = indexMap.get(window) || index;
+          // If the index is -1 it should go to the end of the tabs.
+          if (insertionPoint == -1) {
+            insertionPoint = gBrowser.tabs.length;
+          }
 
-          if (WindowManager.getId(tab.ownerDocument.defaultView) !== windowId) {
+          // We can only move pinned tabs to a point within, or just after,
+          // the current set of pinned tabs. Unpinned tabs, likewise, can only
+          // be moved to a position after the current set of pinned tabs.
+          // Attempts to move a tab to an illegal position are ignored.
+          let numPinned = gBrowser._numPinnedTabs;
+          let ok = tab.pinned ? insertionPoint <= numPinned : insertionPoint >= numPinned;
+          if (!ok) {
+            continue;
+          }
+
+          indexMap.set(window, insertionPoint + 1);
+
+          if (tab.ownerDocument.defaultView !== window) {
             // If the window we are moving the tab in is different, then move the tab
             // to the new window.
-            let newTab = gBrowser.addTab("about:blank");
-            let newBrowser = gBrowser.getBrowserForTab(newTab);
-            gBrowser.updateBrowserRemotenessByURL(newBrowser, tab.linkedBrowser.currentURI.spec);
-            newBrowser.stop();
-            // This is necessary for getter side-effects.
-            void newBrowser.docShell;
-
-            if (tab.pinned) {
-              gBrowser.pinTab(newTab);
-            }
-
-            gBrowser.moveTabTo(newTab, getInsertionPoint());
-
-            tab.parentNode._finishAnimateTabMove();
-            gBrowser.swapBrowsersAndCloseOther(newTab, tab);
+            tab = gBrowser.adoptTab(tab, insertionPoint, false);
           } else {
             // If the window we are moving is the same, just move the tab.
-            gBrowser.moveTabTo(tab, getInsertionPoint());
+            gBrowser.moveTabTo(tab, insertionPoint);
           }
           tabsMoved.push(tab);
         }
 
-        if (callback) {
-          runSafe(context, callback, tabsMoved.map(tab => TabManager.convert(extension, tab)));
+        return Promise.resolve(tabsMoved.map(tab => TabManager.convert(extension, tab)));
+      },
+
+      duplicate: function(tabId) {
+        let tab = TabManager.getTab(tabId);
+        if (!tab) {
+          return Promise.reject({message: `Invalid tab ID: ${tabId}`});
         }
+
+        let gBrowser = tab.ownerDocument.defaultView.gBrowser;
+        let newTab = gBrowser.duplicateTab(tab);
+
+        return new Promise(resolve => {
+          // We need to use SSTabRestoring because any attributes set before
+          // are ignored. SSTabRestored is too late and results in a jump in
+          // the UI. See http://bit.ly/session-store-api for more information.
+          newTab.addEventListener("SSTabRestoring", function listener() {
+            // As the tab is restoring, move it to the correct position.
+            newTab.removeEventListener("SSTabRestoring", listener);
+            // Pinned tabs that are duplicated are inserted
+            // after the existing pinned tab and pinned.
+            if (tab.pinned) {
+              gBrowser.pinTab(newTab);
+            }
+            gBrowser.moveTabTo(newTab, tab._tPos + 1);
+          });
+
+          newTab.addEventListener("SSTabRestored", function listener() {
+            // Once it has been restored, select it and return the promise.
+            newTab.removeEventListener("SSTabRestored", listener);
+            gBrowser.selectedTab = newTab;
+            return resolve(TabManager.convert(extension, newTab));
+          });
+        });
       },
     },
   };

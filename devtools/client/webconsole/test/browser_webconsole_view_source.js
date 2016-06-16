@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
@@ -18,15 +20,18 @@ add_task(function*() {
   let hud = yield openConsole(null);
   info("console opened");
 
-  let button = content.document.querySelector("button");
-  ok(button, "we have the button on the page");
 
   // On e10s, the exception is triggered in child process
   // and is ignored by test harness
   if (!Services.appinfo.browserTabsRemoteAutostart) {
     expectUncaughtException();
   }
-  EventUtils.sendMouseEvent({ type: "click" }, button, content);
+
+  ContentTask.spawn(gBrowser.selectedBrowser, {}, function*() {
+    let button = content.document.querySelector("button");
+    ok(button, "we have the button on the page");
+    button.click();
+  });
 
   let { panelWin: { DebuggerView } } = yield openDebugger();
   info("debugger opened");

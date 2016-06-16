@@ -57,18 +57,18 @@ skip-if(B2G||Mulet) HTTP(..) == normalmedium.html normalmedium-ref.html # bug 77
 skip-if(B2G||Mulet) HTTP(..) != normalmedium.html normalmedium-notref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
 
 # Linux fails due to bug 604815
-HTTP(..) == weightmapping-12.html weightmapping-12-ref.html
+fuzzy-if(OSX==1010&&browserIsRemote,1,23) HTTP(..) == weightmapping-12.html weightmapping-12-ref.html
 HTTP(..) == weightmapping-25.html weightmapping-25-ref.html
 HTTP(..) == weightmapping-45.html weightmapping-45-ref.html
 HTTP(..) == weightmapping-458.html weightmapping-458-ref.html
 HTTP(..) == weightmapping-478.html weightmapping-478-ref.html
 HTTP(..) == weightmapping-7.html weightmapping-7-ref.html
-HTTP(..) == weightmapping-12579.html weightmapping-12579-ref.html
+fuzzy-if(OSX==1010,1,30) HTTP(..) == weightmapping-12579.html weightmapping-12579-ref.html
 
 skip-if(B2G||Mulet) HTTP(..) == stretchmapping-all.html stretchmapping-all-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) HTTP(..) == stretchmapping-reverse.html stretchmapping-reverse-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-fuzzy-if(Android,4,8) HTTP(..) == stretchmapping-35.html stretchmapping-35-ref.html
-HTTP(..) == stretchmapping-137.html stretchmapping-137-ref.html
+fuzzy-if(OSX==1010&&browserIsRemote,1,17) fuzzy-if(Android,4,8) HTTP(..) == stretchmapping-35.html stretchmapping-35-ref.html
+fuzzy-if(OSX==1010,3,5) HTTP(..) == stretchmapping-137.html stretchmapping-137-ref.html
 
 # test for font-stretch using @font-face
 skip-if(B2G||Mulet) skip-if(Android&&AndroidVersion>15) HTTP(..) == font-stretch-1.html font-stretch-1-ref.html # bugs 773482, 927602 # Initial mulet triage: parity with B2G/B2G Desktop

@@ -341,6 +341,10 @@ function RTCPeerConnection() {
 
   this._localType = null;
   this._remoteType = null;
+  // http://rtcweb-wg.github.io/jsep/#rfc.section.4.1.9
+  // canTrickle == null means unknown; when a remote description is received it
+  // is set to true or false based on the presence of the "trickle" ice-option
+  this._canTrickle = null;
 
   // States
   this._iceGatheringState = this._iceConnectionState = "new";
@@ -581,6 +585,13 @@ RTCPeerConnection.prototype = {
           if (!server.credential) {
             throw new this._win.DOMException(msg + " - missing credential: " + urlStr,
                                              "InvalidAccessError");
+          }
+          if (server.credentialType != "password") {
+            this.logWarning("RTCConfiguration TURN credentialType \""+
+                            server.credentialType +
+                            "\" is not yet implemented. Treating as password."+
+                            " https://bugzil.la/1247616",
+                            null, 0);
           }
         }
         else if (!(url.scheme in { stun:1, stuns:1 })) {
@@ -936,7 +947,7 @@ RTCPeerConnection.prototype = {
             this._onSetRemoteDescriptionSuccess = resolve;
             this._onSetRemoteDescriptionFailure = reject;
             this._impl.setRemoteDescription(type, desc.sdp);
-          }));
+          })).then(() => { this._updateCanTrickle(); });
 
         if (desc.type === "rollback") {
           return setRem;
@@ -964,10 +975,39 @@ RTCPeerConnection.prototype = {
     );
   },
 
-  updateIce: function(config) {
-    throw new this._win.DOMException("updateIce not yet implemented",
-                                     "NotSupportedError");
+  get canTrickleIceCandidates() {
+    return this._canTrickle;
   },
+
+  _updateCanTrickle: function() {
+    let containsTrickle = section => {
+      let lines = section.toLowerCase().split(/(?:\r\n?|\n)/);
+      return lines.some(line => {
+        let prefix = "a=ice-options:";
+        if (line.substring(0, prefix.length) !== prefix) {
+          return false;
+        }
+        let tokens = line.substring(prefix.length).split(" ");
+        return tokens.some(x => x === "trickle");
+      });
+    };
+
+    let desc = null;
+    try {
+      // The getter for remoteDescription can throw if the pc is closed.
+      desc = this.remoteDescription;
+    } catch (e) {}
+    if (!desc) {
+      this._canTrickle = null;
+      return;
+    }
+
+    let sections = desc.sdp.split(/(?:\r\n?|\n)m=/);
+    let topSection = sections.shift();
+    this._canTrickle =
+      containsTrickle(topSection) || sections.every(containsTrickle);
+  },
+
 
   addIceCandidate: function(c, onSuccess, onError) {
     return this._legacyCatch(onSuccess, onError, () => {
@@ -1013,7 +1053,13 @@ RTCPeerConnection.prototype = {
                                          "InvalidParameterError");
       }
     });
-    this._impl.addTrack(track, stream);
+    try {
+      this._impl.addTrack(track, stream);
+    } catch (e if (e.result == Cr.NS_ERROR_NOT_IMPLEMENTED)) {
+      throw new this._win.DOMException(
+          "track in constructed stream not yet supported (see Bug 1259236).",
+          "NotSupportedError");
+    }
     let sender = this._win.RTCRtpSender._create(this._win,
                                                 new RTCRtpSender(this, track,
                                                                  stream));
@@ -1059,6 +1105,9 @@ RTCPeerConnection.prototype = {
     var encodings = parameters.encodings || [];
 
     encodings.reduce((uniqueRids, encoding) => {
+      if (encoding.scaleResolutionDownBy < 1.0) {
+        throw new this._win.RangeError("scaleResolutionDownBy must be >= 1.0");
+      }
       if (!encoding.rid && encodings.length > 1) {
         throw new this._win.DOMException("Missing rid", "TypeError");
       }
@@ -1557,7 +1606,8 @@ RTCRtpSender.prototype = {
   },
 
   setParameters: function(parameters) {
-    return this._pc._setParameters(this, parameters);
+    return this._pc._win.Promise.resolve()
+      .then(() => this._pc._setParameters(this, parameters));
   },
 
   getParameters: function() {

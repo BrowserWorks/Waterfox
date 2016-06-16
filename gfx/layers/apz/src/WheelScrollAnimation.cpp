@@ -16,8 +16,7 @@ namespace layers {
 WheelScrollAnimation::WheelScrollAnimation(AsyncPanZoomController& aApzc,
                                            const nsPoint& aInitialPosition,
                                            ScrollWheelInput::ScrollDeltaType aDeltaType)
-  : AsyncPanZoomAnimation(TimeDuration::FromMilliseconds(gfxPrefs::APZSmoothScrollRepaintInterval()))
-  , AsyncScrollBase(aInitialPosition)
+  : AsyncScrollBase(aInitialPosition)
   , mApzc(aApzc)
   , mFinalDestination(aInitialPosition)
   , mDeltaType(aDeltaType)

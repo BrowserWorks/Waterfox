@@ -33,6 +33,7 @@
 #include "frontend/BytecodeCompiler.h"
 #include "frontend/TokenStream.h"
 #include "gc/Marking.h"
+#include "gc/Policy.h"
 #include "jit/InlinableNatives.h"
 #include "jit/Ion.h"
 #include "jit/JitFrameIterator.h"
@@ -1594,7 +1595,7 @@ const JSFunctionSpec js::function_methods[] = {
     JS_FN(js_apply_str,      fun_apply,      2,0),
     JS_FN(js_call_str,       fun_call,       1,0),
     JS_FN("isGenerator",     fun_isGenerator,0,0),
-    JS_SELF_HOSTED_FN("bind", "FunctionBind", 2,JSPROP_DEFINE_LATE|JSFUN_HAS_REST),
+    JS_SELF_HOSTED_FN("bind", "FunctionBind", 2,JSFUN_HAS_REST),
     JS_FS_END
 };
 

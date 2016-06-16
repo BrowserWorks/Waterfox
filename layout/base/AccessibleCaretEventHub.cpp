@@ -68,7 +68,8 @@ public:
     aContext->SetState(aContext->ScrollState());
   }
 
-  virtual void OnScrollPositionChanged(AccessibleCaretEventHub* aContext) override
+  virtual void OnScrollPositionChanged(
+    AccessibleCaretEventHub* aContext) override
   {
     aContext->mManager->OnScrollPositionChanged();
   }
@@ -327,9 +328,22 @@ public:
       rv = nsEventStatus_eConsumeNoDefault;
     }
 
+    return rv;
+  }
+
+  virtual nsEventStatus OnRelease(AccessibleCaretEventHub* aContext) override
+  {
     aContext->SetState(aContext->NoActionState());
 
-    return rv;
+    // Do not consume the release since the press is not consumed in
+    // PressNoCaretState either.
+    return nsEventStatus_eIgnore;
+  }
+
+  virtual void OnScrollStart(AccessibleCaretEventHub* aContext) override
+  {
+    aContext->mManager->OnScrollStart();
+    aContext->SetState(aContext->ScrollState());
   }
 
   virtual void OnReflow(AccessibleCaretEventHub* aContext) override
@@ -374,8 +388,8 @@ AccessibleCaretEventHub::AccessibleCaretEventHub(nsIPresShell* aPresShell)
 {
   static bool prefsAdded = false;
   if (!prefsAdded) {
-    Preferences::AddBoolVarCache(&sUseLongTapInjector,
-                                 "layout.accessiblecaret.use_long_tap_injector");
+    Preferences::AddBoolVarCache(
+      &sUseLongTapInjector, "layout.accessiblecaret.use_long_tap_injector");
     prefsAdded = true;
   }
 }
@@ -446,7 +460,7 @@ AccessibleCaretEventHub::Terminate()
     mScrollEndInjectorTimer->Cancel();
   }
 
-  mManager = nullptr;
+  mManager->Terminate();
   mPresShell = nullptr;
   mInitialized = false;
 }
@@ -460,21 +474,23 @@ AccessibleCaretEventHub::HandleEvent(WidgetEvent* aEvent)
     return status;
   }
 
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
+
   switch (aEvent->mClass) {
-  case eMouseEventClass:
-    status = HandleMouseEvent(aEvent->AsMouseEvent());
-    break;
+    case eMouseEventClass:
+      status = HandleMouseEvent(aEvent->AsMouseEvent());
+      break;
 
-  case eTouchEventClass:
-    status = HandleTouchEvent(aEvent->AsTouchEvent());
-    break;
+    case eTouchEventClass:
+      status = HandleTouchEvent(aEvent->AsTouchEvent());
+      break;
 
-  case eKeyboardEventClass:
-    status = HandleKeyboardEvent(aEvent->AsKeyboardEvent());
-    break;
+    case eKeyboardEventClass:
+      status = HandleKeyboardEvent(aEvent->AsKeyboardEvent());
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return status;
@@ -489,40 +505,38 @@ AccessibleCaretEventHub::HandleMouseEvent(WidgetMouseEvent* aEvent)
     return rv;
   }
 
-  int32_t id = (mActiveTouchId == kInvalidTouchId ?
-                kDefaultTouchId : mActiveTouchId);
+  int32_t id =
+    (mActiveTouchId == kInvalidTouchId ? kDefaultTouchId : mActiveTouchId);
   nsPoint point = GetMouseEventPosition(aEvent);
 
   switch (aEvent->mMessage) {
-  case eMouseDown:
-    AC_LOGV("Before eMouseDown, state: %s", mState->Name());
-    rv = mState->OnPress(this, point, id);
-    AC_LOGV("After eMouseDown, state: %s, consume: %d",
-            mState->Name(), rv);
-    break;
+    case eMouseDown:
+      AC_LOGV("Before eMouseDown, state: %s", mState->Name());
+      rv = mState->OnPress(this, point, id);
+      AC_LOGV("After eMouseDown, state: %s, consume: %d", mState->Name(), rv);
+      break;
 
-  case eMouseMove:
-    AC_LOGV("Before eMouseMove, state: %s", mState->Name());
-    rv = mState->OnMove(this, point);
-    AC_LOGV("After eMouseMove, state: %s, consume: %d", mState->Name(), rv);
-    break;
+    case eMouseMove:
+      AC_LOGV("Before eMouseMove, state: %s", mState->Name());
+      rv = mState->OnMove(this, point);
+      AC_LOGV("After eMouseMove, state: %s, consume: %d", mState->Name(), rv);
+      break;
 
-  case eMouseUp:
-    AC_LOGV("Before eMouseUp, state: %s", mState->Name());
-    rv = mState->OnRelease(this);
-    AC_LOGV("After eMouseUp, state: %s, consume: %d", mState->Name(),
-            rv);
-    break;
+    case eMouseUp:
+      AC_LOGV("Before eMouseUp, state: %s", mState->Name());
+      rv = mState->OnRelease(this);
+      AC_LOGV("After eMouseUp, state: %s, consume: %d", mState->Name(), rv);
+      break;
 
-  case eMouseLongTap:
-    AC_LOGV("Before eMouseLongTap, state: %s", mState->Name());
-    rv = mState->OnLongTap(this, point);
-    AC_LOGV("After eMouseLongTap, state: %s, consume: %d", mState->Name(),
-            rv);
-    break;
+    case eMouseLongTap:
+      AC_LOGV("Before eMouseLongTap, state: %s", mState->Name());
+      rv = mState->OnLongTap(this, point);
+      AC_LOGV("After eMouseLongTap, state: %s, consume: %d", mState->Name(),
+              rv);
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return rv;
@@ -531,40 +545,44 @@ AccessibleCaretEventHub::HandleMouseEvent(WidgetMouseEvent* aEvent)
 nsEventStatus
 AccessibleCaretEventHub::HandleTouchEvent(WidgetTouchEvent* aEvent)
 {
+  if (aEvent->touches.IsEmpty()) {
+    AC_LOG("%s: Receive a touch event without any touch data!", __FUNCTION__);
+    return nsEventStatus_eIgnore;
+  }
+
   nsEventStatus rv = nsEventStatus_eIgnore;
 
-  int32_t id = (mActiveTouchId == kInvalidTouchId ?
-                aEvent->touches[0]->Identifier() : mActiveTouchId);
+  int32_t id =
+    (mActiveTouchId == kInvalidTouchId ? aEvent->touches[0]->Identifier()
+                                       : mActiveTouchId);
   nsPoint point = GetTouchEventPosition(aEvent, id);
 
   switch (aEvent->mMessage) {
-  case eTouchStart:
-    AC_LOGV("Before eTouchStart, state: %s", mState->Name());
-    rv = mState->OnPress(this, point, id);
-    AC_LOGV("After eTouchStart, state: %s, consume: %d", mState->Name(), rv);
-    break;
+    case eTouchStart:
+      AC_LOGV("Before eTouchStart, state: %s", mState->Name());
+      rv = mState->OnPress(this, point, id);
+      AC_LOGV("After eTouchStart, state: %s, consume: %d", mState->Name(), rv);
+      break;
 
-  case eTouchMove:
-    AC_LOGV("Before eTouchMove, state: %s", mState->Name());
-    rv = mState->OnMove(this, point);
-    AC_LOGV("After eTouchMove, state: %s, consume: %d", mState->Name(), rv);
-    break;
+    case eTouchMove:
+      AC_LOGV("Before eTouchMove, state: %s", mState->Name());
+      rv = mState->OnMove(this, point);
+      AC_LOGV("After eTouchMove, state: %s, consume: %d", mState->Name(), rv);
+      break;
 
-  case eTouchEnd:
-    AC_LOGV("Before eTouchEnd, state: %s", mState->Name());
-    rv = mState->OnRelease(this);
-    AC_LOGV("After eTouchEnd, state: %s, consume: %d", mState->Name(), rv);
-    break;
+    case eTouchEnd:
+      AC_LOGV("Before eTouchEnd, state: %s", mState->Name());
+      rv = mState->OnRelease(this);
+      AC_LOGV("After eTouchEnd, state: %s, consume: %d", mState->Name(), rv);
+      break;
 
-  case eTouchCancel:
-    AC_LOGV("Before eTouchCancel, state: %s", mState->Name());
-    rv = mState->OnRelease(this);
-    AC_LOGV("After eTouchCancel, state: %s, consume: %d", mState->Name(),
-            rv);
-    break;
+    case eTouchCancel:
+      AC_LOGV("Got eTouchCancel, state: %s", mState->Name());
+      // Do nothing since we don't really care eTouchCancel anyway.
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return rv;
@@ -574,23 +592,23 @@ nsEventStatus
 AccessibleCaretEventHub::HandleKeyboardEvent(WidgetKeyboardEvent* aEvent)
 {
   switch (aEvent->mMessage) {
-  case eKeyUp:
-    AC_LOGV("eKeyUp, state: %s", mState->Name());
-    mManager->OnKeyboardEvent();
-    break;
+    case eKeyUp:
+      AC_LOGV("eKeyUp, state: %s", mState->Name());
+      mManager->OnKeyboardEvent();
+      break;
 
-  case eKeyDown:
-    AC_LOGV("eKeyDown, state: %s", mState->Name());
-    mManager->OnKeyboardEvent();
-    break;
+    case eKeyDown:
+      AC_LOGV("eKeyDown, state: %s", mState->Name());
+      mManager->OnKeyboardEvent();
+      break;
 
-  case eKeyPress:
-    AC_LOGV("eKeyPress, state: %s", mState->Name());
-    mManager->OnKeyboardEvent();
-    break;
+    case eKeyPress:
+      AC_LOGV("eKeyPress, state: %s", mState->Name());
+      mManager->OnKeyboardEvent();
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return nsEventStatus_eIgnore;
@@ -630,7 +648,7 @@ AccessibleCaretEventHub::CancelLongTapInjector()
 AccessibleCaretEventHub::FireLongTap(nsITimer* aTimer,
                                      void* aAccessibleCaretEventHub)
 {
-  auto self = static_cast<AccessibleCaretEventHub*>(aAccessibleCaretEventHub);
+  auto* self = static_cast<AccessibleCaretEventHub*>(aAccessibleCaretEventHub);
   self->mState->OnLongTap(self, self->mPressPoint);
 }
 
@@ -641,6 +659,8 @@ AccessibleCaretEventHub::Reflow(DOMHighResTimeStamp aStart,
   if (!mInitialized) {
     return NS_OK;
   }
+
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
 
   AC_LOG("%s, state: %s", __FUNCTION__, mState->Name());
   mState->OnReflow(this);
@@ -655,6 +675,8 @@ AccessibleCaretEventHub::ReflowInterruptible(DOMHighResTimeStamp aStart,
     return NS_OK;
   }
 
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
+
   return Reflow(aStart, aEnd);
 }
 
@@ -664,6 +686,8 @@ AccessibleCaretEventHub::AsyncPanZoomStarted()
   if (!mInitialized) {
     return;
   }
+
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
 
   AC_LOG("%s, state: %s", __FUNCTION__, mState->Name());
   mState->OnScrollStart(this);
@@ -676,6 +700,8 @@ AccessibleCaretEventHub::AsyncPanZoomStopped()
     return;
   }
 
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
+
   AC_LOG("%s, state: %s", __FUNCTION__, mState->Name());
   mState->OnScrollEnd(this);
 }
@@ -686,6 +712,8 @@ AccessibleCaretEventHub::ScrollPositionChanged()
   if (!mInitialized) {
     return;
   }
+
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
 
   AC_LOG("%s, state: %s", __FUNCTION__, mState->Name());
   mState->OnScrollPositionChanged(this);
@@ -716,7 +744,7 @@ AccessibleCaretEventHub::CancelScrollEndInjector()
 AccessibleCaretEventHub::FireScrollEnd(nsITimer* aTimer,
                                        void* aAccessibleCaretEventHub)
 {
-  auto self = static_cast<AccessibleCaretEventHub*>(aAccessibleCaretEventHub);
+  auto* self = static_cast<AccessibleCaretEventHub*>(aAccessibleCaretEventHub);
   self->mState->OnScrollEnd(self);
 }
 
@@ -729,6 +757,8 @@ AccessibleCaretEventHub::NotifySelectionChanged(nsIDOMDocument* aDoc,
     return NS_OK;
   }
 
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
+
   AC_LOG("%s, state: %s, reason: %d", __FUNCTION__, mState->Name(), aReason);
   mState->OnSelectionChanged(this, aDoc, aSel, aReason);
   return NS_OK;
@@ -740,6 +770,8 @@ AccessibleCaretEventHub::NotifyBlur(bool aIsLeavingDocument)
   if (!mInitialized) {
     return;
   }
+
+  MOZ_ASSERT(mRefCnt.get() > 1, "Expect caller holds us as well!");
 
   AC_LOG("%s, state: %s", __FUNCTION__, mState->Name());
   mState->OnBlur(this, aIsLeavingDocument);

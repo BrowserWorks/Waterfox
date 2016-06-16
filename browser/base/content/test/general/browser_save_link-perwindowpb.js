@@ -35,7 +35,7 @@ function triggerSave(aWindow, aCallback) {
                                          { type: "contextmenu", button: 2 },
                                          testBrowser.contentWindow);
       info("right clicked!");
-    }, testBrowser.contentWindow);
+    }, testBrowser);
   }, false);
 
   function contextMenuOpened(event) {
@@ -200,7 +200,7 @@ function createTemporarySaveDirectory() {
   saveDir.append("testsavedir");
   if (!saveDir.exists()) {
     info("create testsavedir!");
-    saveDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0755);
+    saveDir.create(Ci.nsIFile.DIRECTORY_TYPE, 0o755);
   }
   info("return from createTempSaveDir: " + saveDir.path);
   return saveDir;

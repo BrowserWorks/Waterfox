@@ -1,3 +1,5 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,7 +10,8 @@ const {Cu, Cc, Ci} = require("chrome");
 const Services = require("Services");
 const promise = require("promise");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "gDevTools", "resource://devtools/client/framework/gDevTools.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
+const {gDevTools} = require("devtools/client/framework/devtools");
 
 exports.OptionsPanel = OptionsPanel;
 
@@ -94,31 +97,21 @@ OptionsPanel.prototype = {
     return this.toolbox.target;
   },
 
-  open: function() {
-    let targetPromise;
-
+  open: Task.async(function*() {
     // For local debugging we need to make the target remote.
     if (!this.target.isRemote) {
-      targetPromise = this.target.makeRemote();
-    } else {
-      targetPromise = promise.resolve(this.target);
+      yield this.target.makeRemote();
     }
 
-    return targetPromise.then(() => {
-      this.setupToolsList();
-      this.setupToolbarButtonsList();
-      this.setupThemeList();
-      this.populatePreferences();
-      this.updateDefaultTheme();
-    }).then(() => {
-      this.isReady = true;
-      this.emit("ready");
-      return this;
-    }).then(null, function onError(aReason) {
-      Cu.reportError("OptionsPanel open failed. " +
-                     aReason.error + ": " + aReason.message);
-    });
-  },
+    this.setupToolsList();
+    this.setupToolbarButtonsList();
+    this.setupThemeList();
+    this.updateDefaultTheme();
+    yield this.populatePreferences();
+    this.isReady = true;
+    this.emit("ready");
+    return this;
+  }),
 
   _addListeners: function() {
     gDevTools.on("pref-changed", this._prefChanged);
@@ -181,7 +174,7 @@ OptionsPanel.prototype = {
     };
 
     for (let tool of toggleableButtons) {
-      if (this.toolbox.target.isMultiProcess && tool.id === "command-button-tilt") {
+      if (!tool.isTargetSupported(this.toolbox.target)) {
         continue;
       }
 
@@ -315,7 +308,7 @@ OptionsPanel.prototype = {
     }
 
     if (this.target.activeTab) {
-      this.target.client.attachTab(this.target.activeTab._actor, (response) => {
+      return this.target.client.attachTab(this.target.activeTab._actor).then(([response,client]) => {
         this._origJavascriptEnabled = !response.javascriptEnabled;
         this.disableJSNode.checked = this._origJavascriptEnabled;
         this.disableJSNode.addEventListener("click", this._disableJSClicked, false);

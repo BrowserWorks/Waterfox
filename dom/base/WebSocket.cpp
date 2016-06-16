@@ -14,6 +14,7 @@
 #include "mozilla/net/WebSocketChannel.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/MessageEvent.h"
+#include "mozilla/dom/MessageEventBinding.h"
 #include "mozilla/dom/nsCSPContext.h"
 #include "mozilla/dom/nsCSPUtils.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -152,9 +153,6 @@ public:
                                          nsresult aStatusCode);
   // 2nd half of ScheduleConnectionCloseEvents, run in its own event.
   void DispatchConnectionCloseEvents();
-
-  // Dispatch a runnable to the right thread.
-  nsresult DispatchRunnable(nsIRunnable* aRunnable);
 
   nsresult UpdateURI();
 
@@ -624,8 +622,8 @@ WebSocketImpl::Disconnect()
   // until the end of the method.
   RefPtr<WebSocketImpl> kungfuDeathGrip = this;
 
-  NS_ReleaseOnMainThread(mChannel);
-  NS_ReleaseOnMainThread(static_cast<nsIWebSocketEventService*>(mService.forget().take()));
+  NS_ReleaseOnMainThread(mChannel.forget());
+  NS_ReleaseOnMainThread(mService.forget());
 
   mWebSocket->DontKeepAliveAnyMore();
   mWebSocket->mImpl = nullptr;
@@ -906,7 +904,7 @@ WebSocketImpl::GetInterface(const nsIID& aIID, void** aResult)
       do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsPIDOMWindow> outerWindow = doc->GetWindow();
+    nsCOMPtr<nsPIDOMWindowOuter> outerWindow = doc->GetWindow();
     return wwatch->GetPrompt(outerWindow, aIID, aResult);
   }
 
@@ -917,7 +915,7 @@ WebSocketImpl::GetInterface(const nsIID& aIID, void** aResult)
 // WebSocket
 ////////////////////////////////////////////////////////////////////////////////
 
-WebSocket::WebSocket(nsPIDOMWindow* aOwnerWindow)
+WebSocket::WebSocket(nsPIDOMWindowInner* aOwnerWindow)
   : DOMEventTargetHelper(aOwnerWindow)
   , mIsMainThread(true)
   , mKeepingAlive(false)
@@ -1010,7 +1008,7 @@ public:
       wp = wp->GetParent();
     }
 
-    nsPIDOMWindow* window = wp->GetWindow();
+    nsPIDOMWindowInner* window = wp->GetWindow();
     if (window) {
       return InitWithWindow(window);
     }
@@ -1019,7 +1017,7 @@ public:
   }
 
 protected:
-  virtual bool InitWithWindow(nsPIDOMWindow* aWindow) = 0;
+  virtual bool InitWithWindow(nsPIDOMWindowInner* aWindow) = 0;
 
   virtual bool InitWindowless(WorkerPrivate* aTopLevelWorkerPrivate) = 0;
 };
@@ -1047,7 +1045,7 @@ public:
   }
 
 protected:
-  virtual bool InitWithWindow(nsPIDOMWindow* aWindow) override
+  virtual bool InitWithWindow(nsPIDOMWindowInner* aWindow) override
   {
     AutoJSAPI jsapi;
     if (NS_WARN_IF(!jsapi.Init(aWindow))) {
@@ -1110,7 +1108,7 @@ public:
   }
 
 protected:
-  virtual bool InitWithWindow(nsPIDOMWindow* aWindow) override
+  virtual bool InitWithWindow(nsPIDOMWindowInner* aWindow) override
   {
     AssertIsOnMainThread();
     MOZ_ASSERT(aWindow);
@@ -1127,20 +1125,15 @@ protected:
       return true;
     }
 
-    if (aWindow->IsOuterWindow()) {
-      aWindow = aWindow->GetCurrentInnerWindow();
-    }
-
-    MOZ_ASSERT(aWindow);
-
     uint64_t windowID = 0;
-    nsCOMPtr<nsPIDOMWindow> topWindow = aWindow->GetScriptableTop();
+    nsCOMPtr<nsPIDOMWindowOuter> topWindow = aWindow->GetScriptableTop();
+    nsCOMPtr<nsPIDOMWindowInner> topInner;
     if (topWindow) {
-      topWindow = topWindow->GetCurrentInnerWindow();
+      topInner = topWindow->GetCurrentInnerWindow();
     }
 
-    if (topWindow) {
-      windowID = topWindow->WindowID();
+    if (topInner) {
+      windowID = topInner->WindowID();
     }
 
     mImpl->AsyncOpen(principal, windowID, mRv);
@@ -1172,7 +1165,7 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
                        ErrorResult& aRv)
 {
   nsCOMPtr<nsIPrincipal> principal;
-  nsCOMPtr<nsPIDOMWindow> ownerWindow;
+  nsCOMPtr<nsPIDOMWindowInner> ownerWindow;
 
   if (NS_IsMainThread()) {
     nsCOMPtr<nsIScriptObjectPrincipal> scriptPrincipal =
@@ -1317,16 +1310,17 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
   if (NS_IsMainThread()) {
     MOZ_ASSERT(principal);
 
-    nsPIDOMWindow* outerWindow = ownerWindow->GetOuterWindow();
+    nsPIDOMWindowOuter* outerWindow = ownerWindow->GetOuterWindow();
 
     uint64_t windowID = 0;
-    nsCOMPtr<nsPIDOMWindow> topWindow = outerWindow->GetScriptableTop();
+    nsCOMPtr<nsPIDOMWindowOuter> topWindow = outerWindow->GetScriptableTop();
+    nsCOMPtr<nsPIDOMWindowInner> topInner;
     if (topWindow) {
-      topWindow = topWindow->GetCurrentInnerWindow();
+      topInner = topWindow->GetCurrentInnerWindow();
     }
 
-    if (topWindow) {
-      windowID = topWindow->WindowID();
+    if (topInner) {
+      windowID = topInner->WindowID();
     }
 
     webSocket->mImpl->AsyncOpen(principal, windowID, aRv);
@@ -1817,16 +1811,8 @@ WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
     }
   }
 
-  return CreateAndDispatchMessageEvent(jsapi.cx(), aData, aIsBinary);
-}
-
-nsresult
-WebSocket::CreateAndDispatchMessageEvent(JSContext* aCx,
-                                         const nsACString& aData,
-                                         bool aIsBinary)
-{
-  MOZ_ASSERT(mImpl);
-  AssertIsOnTargetThread();
+  jsapi.TakeOwnershipOfErrorReporting();
+  JSContext* cx = jsapi.cx();
 
   nsresult rv = CheckInnerWindowCorrectness();
   if (NS_FAILED(rv)) {
@@ -1836,19 +1822,19 @@ WebSocket::CreateAndDispatchMessageEvent(JSContext* aCx,
   uint16_t messageType = nsIWebSocketEventListener::TYPE_STRING;
 
   // Create appropriate JS object for message
-  JS::Rooted<JS::Value> jsData(aCx);
+  JS::Rooted<JS::Value> jsData(cx);
   if (aIsBinary) {
     if (mBinaryType == dom::BinaryType::Blob) {
       messageType = nsIWebSocketEventListener::TYPE_BLOB;
 
-      nsresult rv = nsContentUtils::CreateBlobBuffer(aCx, GetOwner(), aData,
+      nsresult rv = nsContentUtils::CreateBlobBuffer(cx, GetOwner(), aData,
                                                      &jsData);
       NS_ENSURE_SUCCESS(rv, rv);
     } else if (mBinaryType == dom::BinaryType::Arraybuffer) {
       messageType = nsIWebSocketEventListener::TYPE_ARRAYBUFFER;
 
-      JS::Rooted<JSObject*> arrayBuf(aCx);
-      nsresult rv = nsContentUtils::CreateArrayBuffer(aCx, aData,
+      JS::Rooted<JSObject*> arrayBuf(cx);
+      nsresult rv = nsContentUtils::CreateArrayBuffer(cx, aData,
                                                       arrayBuf.address());
       NS_ENSURE_SUCCESS(rv, rv);
       jsData.setObject(*arrayBuf);
@@ -1860,7 +1846,7 @@ WebSocket::CreateAndDispatchMessageEvent(JSContext* aCx,
     // JS string
     NS_ConvertUTF8toUTF16 utf16Data(aData);
     JSString* jsString;
-    jsString = JS_NewUCStringCopyN(aCx, utf16Data.get(), utf16Data.Length());
+    jsString = JS_NewUCStringCopyN(cx, utf16Data.get(), utf16Data.Length());
     NS_ENSURE_TRUE(jsString, NS_ERROR_FAILURE);
 
     jsData.setString(jsString);
@@ -1875,11 +1861,9 @@ WebSocket::CreateAndDispatchMessageEvent(JSContext* aCx,
 
   RefPtr<MessageEvent> event = NS_NewDOMMessageEvent(this, nullptr, nullptr);
 
-  rv = event->InitMessageEvent(NS_LITERAL_STRING("message"), false, false,
-                               jsData, mImpl->mUTF16Origin, EmptyString(),
-                               nullptr);
-  NS_ENSURE_SUCCESS(rv, rv);
-
+  event->InitMessageEvent(nullptr, NS_LITERAL_STRING("message"), false, false,
+                          jsData, mImpl->mUTF16Origin, EmptyString(), nullptr,
+                          nullptr);
   event->SetTrusted(true);
 
   return DispatchDOMEvent(nullptr, static_cast<Event*>(event), nullptr,
@@ -2133,8 +2117,7 @@ WebSocketImpl::RegisterFeature()
   MOZ_ASSERT(!mWorkerFeature);
   mWorkerFeature = new WebSocketWorkerFeature(this);
 
-  JSContext* cx = GetCurrentThreadJSContext();
-  if (!mWorkerPrivate->AddFeature(cx, mWorkerFeature)) {
+  if (!mWorkerPrivate->AddFeature(mWorkerFeature)) {
     NS_WARNING("Failed to register a feature.");
     mWorkerFeature = nullptr;
     return false;
@@ -2155,8 +2138,7 @@ WebSocketImpl::UnregisterFeature()
   mWorkerPrivate->AssertIsOnWorkerThread();
   MOZ_ASSERT(mWorkerFeature);
 
-  JSContext* cx = GetCurrentThreadJSContext();
-  mWorkerPrivate->RemoveFeature(cx, mWorkerFeature);
+  mWorkerPrivate->RemoveFeature(mWorkerFeature);
   mWorkerFeature = nullptr;
   mWorkerPrivate = nullptr;
 
@@ -2446,7 +2428,7 @@ WebSocketImpl::Observe(nsISupports* aSubject,
     return NS_OK;
   }
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aSubject);
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aSubject);
   if (!mWebSocket->GetOwner() || window != mWebSocket->GetOwner()) {
     return NS_OK;
   }
@@ -2503,28 +2485,34 @@ public:
   {
   }
 
-  bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
+  bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->AssertIsOnWorkerThread();
-    aWorkerPrivate->ModifyBusyCountFromWorker(aCx, true);
+    aWorkerPrivate->ModifyBusyCountFromWorker(true);
     return !NS_FAILED(mImpl->CancelInternal());
   }
 
-  void PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate, bool aRunResult)
+  void PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
+               bool aRunResult) override
   {
-    aWorkerPrivate->ModifyBusyCountFromWorker(aCx, false);
+    aWorkerPrivate->ModifyBusyCountFromWorker(false);
   }
 
   bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
+  PreDispatch(WorkerPrivate* aWorkerPrivate) override
   {
+    // We don't call WorkerRunnable::PreDispatch because it would assert the
+    // wrong thing about which thread we're on.
+    AssertIsOnMainThread();
     return true;
   }
 
   void
-  PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult)
+  PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override
   {
+    // We don't call WorkerRunnable::PostDispatch because it would assert the
+    // wrong thing about which thread we're on.
+    AssertIsOnMainThread();
   }
 
 private:
@@ -2543,7 +2531,7 @@ WebSocketImpl::Cancel(nsresult aStatus)
     MOZ_ASSERT(mWorkerPrivate);
     RefPtr<CancelRunnable> runnable =
       new CancelRunnable(mWorkerPrivate, this);
-    if (!runnable->Dispatch(nullptr)) {
+    if (!runnable->Dispatch()) {
       return NS_ERROR_FAILURE;
     }
 
@@ -2616,7 +2604,7 @@ WebSocketImpl::GetLoadGroup(nsILoadGroup** aLoadGroup)
     wp = wp->GetParent();
   }
 
-  nsPIDOMWindow* window = wp->GetWindow();
+  nsPIDOMWindowInner* window = wp->GetWindow();
   if (!window) {
     return NS_OK;
   }
@@ -2669,10 +2657,10 @@ public:
   {
   }
 
-  bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
+  bool WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->AssertIsOnWorkerThread();
-    aWorkerPrivate->ModifyBusyCountFromWorker(aCx, true);
+    aWorkerPrivate->ModifyBusyCountFromWorker(true);
 
     // No messages when disconnected.
     if (mWebSocketImpl->mDisconnectingOrDisconnected) {
@@ -2683,21 +2671,29 @@ public:
     return !NS_FAILED(mEvent->Run());
   }
 
-  void PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate, bool aRunResult)
+  void PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
+               bool aRunResult) override
   {
-    aWorkerPrivate->ModifyBusyCountFromWorker(aCx, false);
+    aWorkerPrivate->ModifyBusyCountFromWorker(false);
   }
 
   bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
+  PreDispatch(WorkerPrivate* aWorkerPrivate) override
   {
+    // We don't call WorkerRunnable::PreDispatch because it would assert the
+    // wrong thing about which thread we're on.  We're on whichever thread the
+    // channel implementation is running on (probably the main thread or socket
+    // transport thread).
     return true;
   }
 
   void
-  PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult)
+  PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override
   {
+    // We don't call WorkerRunnable::PreDispatch because it would assert the
+    // wrong thing about which thread we're on.  We're on whichever thread the
+    // channel implementation is running on (probably the main thread or socket
+    // transport thread).
   }
 
 private:
@@ -2738,7 +2734,7 @@ WebSocketImpl::Dispatch(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags)
   RefPtr<WorkerRunnableDispatcher> event =
     new WorkerRunnableDispatcher(this, mWorkerPrivate, event_ref.forget());
 
-  if (!event->Dispatch(nullptr)) {
+  if (!event->Dispatch()) {
     return NS_ERROR_FAILURE;
   }
 

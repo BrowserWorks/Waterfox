@@ -53,18 +53,12 @@ function encodeCommonNameAsBytes(commonName) {
 }
 
 function testInvalidDBKey(certDB, dbKey) {
-  let exceptionCaught = false;
-  try {
-    let cert = certDB.findCertByDBKey(dbKey, null);
-  } catch(e) {
-    do_print(e);
-    exceptionCaught = true;
-  }
-  ok(exceptionCaught, "should have thrown and caught an exception");
+  throws(() => certDB.findCertByDBKey(dbKey), /NS_ERROR_ILLEGAL_INPUT/,
+         `findCertByDBKey(${dbKey}) should raise NS_ERROR_ILLEGAL_INPUT`);
 }
 
 function testDBKeyForNonexistentCert(certDB, dbKey) {
-  let cert = certDB.findCertByDBKey(dbKey, null);
+  let cert = certDB.findCertByDBKey(dbKey);
   ok(!cert, "shouldn't find cert for given dbKey");
 }
 
@@ -98,7 +92,7 @@ function run_test() {
   equal(cert.dbKey, expectedDbKey,
         "actual and expected dbKey values should match");
 
-  let certFromDbKey = certDB.findCertByDBKey(expectedDbKey, null);
+  let certFromDbKey = certDB.findCertByDBKey(expectedDbKey);
   ok(certFromDbKey.equals(cert),
      "nsIX509CertDB.findCertByDBKey should find the right certificate");
 
@@ -107,14 +101,14 @@ function run_test() {
   let expectedDbKeyWithCRLF = expectedDbKey.replace(/(.{64})/, "$1\r\n");
   ok(expectedDbKeyWithCRLF.indexOf("\r\n") == 64,
      "test self-check: adding CRLF to dbKey should succeed");
-  certFromDbKey = certDB.findCertByDBKey(expectedDbKeyWithCRLF, null);
+  certFromDbKey = certDB.findCertByDBKey(expectedDbKeyWithCRLF);
   ok(certFromDbKey.equals(cert),
      "nsIX509CertDB.findCertByDBKey should work with dbKey with CRLF");
 
   let expectedDbKeyWithSpaces = expectedDbKey.replace(/(.{64})/, "$1  ");
   ok(expectedDbKeyWithSpaces.indexOf("  ") == 64,
      "test self-check: adding spaces to dbKey should succeed");
-  certFromDbKey = certDB.findCertByDBKey(expectedDbKeyWithSpaces, null);
+  certFromDbKey = certDB.findCertByDBKey(expectedDbKeyWithSpaces);
   ok(certFromDbKey.equals(cert),
      "nsIX509CertDB.findCertByDBKey should work with dbKey with spaces");
 

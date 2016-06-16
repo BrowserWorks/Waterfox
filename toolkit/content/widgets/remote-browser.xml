@@ -259,6 +259,11 @@
         ]]></body>
       </method>
 
+      <field name="_manifestURI"/>
+      <property name="manifestURI"
+                onget="return this._manifestURI"
+                readonly="true"/>
+
       <field name="mDestroyed">false</field>
 
       <field name="_permitUnloadId">0</field>
@@ -365,6 +370,7 @@
           this.messageManager.addMessageListener("ZoomChangeUsingMouseWheel", this);
           this.messageManager.addMessageListener("DOMFullscreen:RequestExit", this);
           this.messageManager.addMessageListener("DOMFullscreen:RequestRollback", this);
+          this.messageManager.addMessageListener("MozApplicationManifest", this);
           this.messageManager.loadFrameScript("chrome://global/content/browser-child.js", true);
 
           if (this.hasAttribute("selectmenulist")) {
@@ -374,7 +380,7 @@
           }
 
           if (!this.hasAttribute("disablehistory")) {
-            Services.obs.addObserver(this, "browser:purge-session-history", false)
+            Services.obs.addObserver(this, "browser:purge-session-history", true)
           }
 
           let jsm = "resource://gre/modules/RemoteController.jsm";
@@ -497,6 +503,10 @@
               break;
             }
 
+            case "MozApplicationManifest":
+              this._manifestURI = aMessage.data.manifest;
+              break;
+
             default:
               // Delegate to browser.xml.
               return this._receiveMessage(aMessage);
@@ -537,6 +547,16 @@
         </body>
       </method>
     </implementation>
+    <handlers>
+      <handler event="dragstart">
+      <![CDATA[
+        // If we're a remote browser dealing with a dragstart, stop it
+        // from propagating up, since our content process should be dealing
+        // with the mouse movement.
+        event.stopPropagation();
+      ]]>
+      </handler>
+    </handlers>
 
   </binding>
 

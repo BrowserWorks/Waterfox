@@ -24,12 +24,12 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   static already_AddRefed<BluetoothDiscoveryHandle>
-    Create(nsPIDOMWindow* aWindow);
+    Create(nsPIDOMWindowInner* aWindow);
 
   static already_AddRefed<BluetoothDiscoveryHandle>
-    Create(nsPIDOMWindow* aWindow,
-           const nsTArray<nsString>& aServiceUuids,
-           const nsAString& aLeScanUuid);
+    Create(nsPIDOMWindowInner* aWindow,
+           const nsTArray<BluetoothUuid>& aServiceUuids,
+           const BluetoothUuid& aLeScanUuid);
 
   void DispatchDeviceEvent(BluetoothDevice* aDevice);
 
@@ -39,7 +39,7 @@ public:
 
   IMPL_EVENT_HANDLER(devicefound);
 
-  void GetLeScanUuid(nsString& aLeScanUuid) const
+  void GetLeScanUuid(BluetoothUuid& aLeScanUuid) const
   {
     aLeScanUuid = mLeScanUuid;
   }
@@ -48,11 +48,11 @@ public:
                                JS::Handle<JSObject*> aGivenProto) override;
 
 private:
-  BluetoothDiscoveryHandle(nsPIDOMWindow* aWindow);
+  BluetoothDiscoveryHandle(nsPIDOMWindowInner* aWindow);
 
-  BluetoothDiscoveryHandle(nsPIDOMWindow* aWindow,
-                           const nsTArray<nsString>& aServiceUuids,
-                           const nsAString& aLeScanUuid);
+  BluetoothDiscoveryHandle(nsPIDOMWindowInner* aWindow,
+                           const nsTArray<BluetoothUuid>& aServiceUuids,
+                           const BluetoothUuid& aLeScanUuid);
 
   ~BluetoothDiscoveryHandle();
 
@@ -63,15 +63,15 @@ private:
    * If BluetoothDiscoveryHandle is built for classic discovery, the value would
    * remain empty string during the entire life cycle.
    */
-  nsString mLeScanUuid;
+  BluetoothUuid mLeScanUuid;
 
   /**
-   * A DOMString array of service UUIDs to discover / scan for.
+   * A BluetoothUuid array of service UUIDs to discover / scan for.
    *
    * This array is only used by LE scan. If BluetoothDiscoveryHandle is built
    * for classic discovery, the array should be empty.
    */
-  nsTArray<nsString> mServiceUuids;
+  nsTArray<BluetoothUuid> mServiceUuids;
 };
 
 END_BLUETOOTH_NAMESPACE

@@ -50,8 +50,7 @@ class DocAccessible : public HyperTextAccessibleWrap,
 
 public:
 
-  DocAccessible(nsIDocument* aDocument, nsIContent* aRootContent,
-                nsIPresShell* aPresShell);
+  DocAccessible(nsIDocument* aDocument, nsIPresShell* aPresShell);
 
   // nsIScrollPositionListener
   virtual void ScrollPositionWillChange(nscoord aX, nscoord aY) override {}
@@ -359,9 +358,6 @@ protected:
 
   void LastRelease();
 
-  // Accessible
-  virtual void CacheChildren() override;
-
   // DocAccessible
   virtual nsresult AddEventListeners();
   virtual nsresult RemoveEventListeners();
@@ -379,6 +375,11 @@ protected:
    * Can be overridden by wrappers to prepare initialization work.
    */
   virtual void DoInitialUpdate();
+
+  /**
+   * Updates root element and picks up ARIA role on it if any.
+   */
+  void UpdateRootElIfNeeded();
 
   /**
    * Process document load notification, fire document load and state busy

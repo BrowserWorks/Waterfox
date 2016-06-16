@@ -173,7 +173,7 @@ this.PlacesBackups = {
     this._entries.sort((a, b) => {
       let aDate = this.getDateForFile(a);
       let bDate = this.getDateForFile(b);
-      return aDate < bDate ? 1 : aDate > bDate ? -1 : 0;
+      return bDate - aDate;
     });
     return this._entries;
   },
@@ -197,7 +197,7 @@ this.PlacesBackups = {
         // safely remove .tmp files without risking to remove ongoing backups.
         if (aEntry.name.endsWith(".tmp")) {
           OS.File.remove(aEntry.path);
-          return;
+          return undefined;
         }
 
         if (filenamesRegex.test(aEntry.name)) {
@@ -215,7 +215,7 @@ this.PlacesBackups = {
       this._backupFiles.sort((a, b) => {
         let aDate = this.getDateForFile(a);
         let bDate = this.getDateForFile(b);
-        return aDate < bDate ? 1 : aDate > bDate ? -1 : 0;
+        return bDate - aDate;
       });
 
       return this._backupFiles;
@@ -515,7 +515,7 @@ this.PlacesBackups = {
    *         * index: the position in the parent
    *         * dateAdded: microseconds from the epoch
    *         * lastModified: microseconds from the epoch
-   *         * type: type of the originating node as defined in PlacesUtils 
+   *         * type: type of the originating node as defined in PlacesUtils
    *         The following properties exist only for a subset of bookmarks:
    *         * annos: array of annotations
    *         * uri: url

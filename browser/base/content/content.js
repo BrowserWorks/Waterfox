@@ -16,6 +16,8 @@ Cu.import("resource://gre/modules/InlineSpellChecker.jsm");
 Cu.import("resource://gre/modules/InlineSpellCheckerContent.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
+  "resource:///modules/E10SUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
   "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ContentLinkHandler",
@@ -49,7 +51,9 @@ var global = this;
 var formSubmitObserver = new FormSubmitObserver(content, this);
 
 addMessageListener("ContextMenu:DoCustomCommand", function(message) {
-  PageMenuChild.executeMenu(message.data);
+  E10SUtils.wrapHandlingUserInput(
+    content, message.data.handlingUserInput,
+    () => PageMenuChild.executeMenu(message.data.generatedItemId));
 });
 
 addMessageListener("RemoteLogins:fillForm", function(message) {
@@ -99,7 +103,8 @@ var handleContentContextMenu = function (event) {
   Services.obs.notifyObservers(subject, "content-contextmenu", null);
 
   let doc = event.target.ownerDocument;
-  let docLocation = doc.location ? doc.location.href : undefined;
+  let docLocation = doc.mozDocumentURIIfNotForErrorPages;
+  docLocation = docLocation && docLocation.spec;
   let charSet = doc.characterSet;
   let baseURI = doc.baseURI;
   let referrer = doc.referrer;
@@ -130,7 +135,7 @@ var handleContentContextMenu = function (event) {
     disableSetDesktopBg = disableSetDesktopBackground(event.target);
 
     try {
-      let imageCache = 
+      let imageCache =
         Cc["@mozilla.org/image/tools;1"].getService(Ci.imgITools)
                                         .getImgCacheForDocument(doc);
       let props =
@@ -210,10 +215,8 @@ const TLS_ERROR_REPORT_TELEMETRY_FAILURE  = 7;
 var AboutCertErrorListener = {
   init(chromeGlobal) {
     addMessageListener("AboutCertErrorDetails", this);
-    addMessageListener("Browser:SSLErrorReportStatus", this);
     chromeGlobal.addEventListener("AboutCertErrorLoad", this, false, true);
     chromeGlobal.addEventListener("AboutCertErrorSetAutomatic", this, false, true);
-    chromeGlobal.addEventListener("AboutCertErrorSendReport", this, false, true);
   },
 
   get isAboutCertError() {
@@ -232,9 +235,6 @@ var AboutCertErrorListener = {
       case "AboutCertErrorSetAutomatic":
         this.onSetAutomatic(event);
         break;
-      case "AboutCertErrorSendReport":
-        this.onSendReport();
-        break;
     }
   },
 
@@ -247,9 +247,6 @@ var AboutCertErrorListener = {
       case "AboutCertErrorDetails":
         this.onDetails(msg);
         break;
-      case "Browser:SSLErrorReportStatus":
-        this.onReportStatus(msg);
-        break;
     }
   },
 
@@ -258,6 +255,11 @@ var AboutCertErrorListener = {
     let ownerDoc = originalTarget.ownerDocument;
     ClickEventHandler.onAboutCertError(originalTarget, ownerDoc);
 
+    // Set up the TLS Error Reporting UI - reports are sent automatically
+    // (from nsHttpChannel::OnStopRequest) if the user has previously enabled
+    // automatic sending of reports. The UI ensures that a report is sent
+    // for the certificate error currently displayed if the user enables it
+    // here.
     let automatic = Services.prefs.getBoolPref("security.ssl.errorReporting.automatic");
     content.dispatchEvent(new content.CustomEvent("AboutCertErrorOptions", {
       detail: JSON.stringify({
@@ -265,10 +267,6 @@ var AboutCertErrorListener = {
         automatic,
       })
     }));
-
-    if (automatic) {
-      this.onSendReport();
-    }
   },
 
   onDetails(msg) {
@@ -277,68 +275,28 @@ var AboutCertErrorListener = {
   },
 
   onSetAutomatic(event) {
-    if (event.detail) {
-      this.onSendReport();
-    }
-
     sendAsyncMessage("Browser:SetSSLErrorReportAuto", {
       automatic: event.detail
     });
-  },
 
-  onSendReport() {
-    let doc = content.document;
-    let location = doc.location.href;
+    // if we're enabling reports, send a report for this failure
+    if (event.detail) {
+      let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
+          .getService(Ci.nsISerializationHelper);
 
-    let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
-                     .getService(Ci.nsISerializationHelper);
+      let serializable =  docShell.failedChannel.securityInfo
+          .QueryInterface(Ci.nsITransportSecurityInfo)
+          .QueryInterface(Ci.nsISerializable);
 
-    let serializable =  docShell.failedChannel.securityInfo
-                                .QueryInterface(Ci.nsITransportSecurityInfo)
-                                .QueryInterface(Ci.nsISerializable);
+      let serializedSecurityInfo = serhelper.serializeToString(serializable);
 
-    let serializedSecurityInfo = serhelper.serializeToString(serializable);
-
-    sendAsyncMessage("Browser:SendSSLErrorReport", {
-      documentURI: doc.documentURI,
-      location: {hostname: doc.location.hostname, port: doc.location.port},
-      securityInfo: serializedSecurityInfo
-    });
-  },
-
-  onReportStatus(msg) {
-    let doc = content.document;
-    if (doc.documentURI != msg.data.documentURI) {
-      return;
+      let {host, port} = content.document.mozDocumentURIIfNotForErrorPages;
+      sendAsyncMessage("Browser:SendSSLErrorReport", {
+        uri: { host, port },
+        securityInfo: serializedSecurityInfo
+      });
     }
-
-    let reportSendingMsg = doc.getElementById("reportSendingMessage");
-    let reportSentMsg = doc.getElementById("reportSentMessage");
-    let retryBtn = doc.getElementById("reportCertificateErrorRetry");
-
-    switch (msg.data.reportStatus) {
-      case "activity":
-        // Hide the button that was just clicked
-        retryBtn.style.removeProperty("display");
-        reportSentMsg.style.removeProperty("display");
-        reportSendingMsg.style.display = "block";
-        break;
-      case "error":
-        // show the retry button
-        retryBtn.style.display = "block";
-        reportSendingMsg.style.removeProperty("display");
-        sendAsyncMessage("Browser:SSLErrorReportTelemetry",
-                         {reportStatus: TLS_ERROR_REPORT_TELEMETRY_FAILURE});
-        break;
-      case "complete":
-        // Show a success indicator
-        reportSentMsg.style.display = "block";
-        reportSendingMsg.style.removeProperty("display");
-        sendAsyncMessage("Browser:SSLErrorReportTelemetry",
-                         {reportStatus: TLS_ERROR_REPORT_TELEMETRY_SUCCESS});
-        break;
-    }
-  }
+  },
 };
 
 AboutCertErrorListener.init(this);
@@ -348,8 +306,6 @@ var AboutNetErrorListener = {
   init: function(chromeGlobal) {
     chromeGlobal.addEventListener('AboutNetErrorLoad', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
-    chromeGlobal.addEventListener('AboutNetErrorSendReport', this, false, true);
-    chromeGlobal.addEventListener('AboutNetErrorUIExpanded', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorOverride', this, false, true);
   },
 
@@ -369,13 +325,6 @@ var AboutNetErrorListener = {
     case "AboutNetErrorSetAutomatic":
       this.onSetAutomatic(aEvent);
       break;
-    case "AboutNetErrorSendReport":
-      this.onSendReport(aEvent);
-      break;
-    case "AboutNetErrorUIExpanded":
-      sendAsyncMessage("Browser:SSLErrorReportTelemetry",
-                       {reportStatus: TLS_ERROR_REPORT_TELEMETRY_EXPANDED});
-      break;
     case "AboutNetErrorOverride":
       this.onOverride(aEvent);
       break;
@@ -385,101 +334,44 @@ var AboutNetErrorListener = {
   onPageLoad: function(evt) {
     let automatic = Services.prefs.getBoolPref("security.ssl.errorReporting.automatic");
     content.dispatchEvent(new content.CustomEvent("AboutNetErrorOptions", {
-            detail: JSON.stringify({
-              enabled: Services.prefs.getBoolPref("security.ssl.errorReporting.enabled"),
-            automatic: automatic
-            })
-          }
-    ));
+      detail: JSON.stringify({
+        enabled: Services.prefs.getBoolPref("security.ssl.errorReporting.enabled"),
+        automatic: automatic
+      })
+    }));
 
     sendAsyncMessage("Browser:SSLErrorReportTelemetry",
                      {reportStatus: TLS_ERROR_REPORT_TELEMETRY_UI_SHOWN});
-
-    if (automatic) {
-      this.onSendReport(evt);
-    }
-    // hide parts of the UI we don't need yet
-    let contentDoc = content.document;
-
-    let reportSendingMsg = contentDoc.getElementById("reportSendingMessage");
-    let reportSentMsg = contentDoc.getElementById("reportSentMessage");
-    let retryBtn = contentDoc.getElementById("reportCertificateErrorRetry");
-    reportSendingMsg.style.display = "none";
-    reportSentMsg.style.display = "none";
-    retryBtn.style.display = "none";
   },
 
   onSetAutomatic: function(evt) {
     sendAsyncMessage("Browser:SetSSLErrorReportAuto", {
-        automatic: evt.detail
+      automatic: evt.detail
+    });
+
+    // if we're enabling reports, send a report for this failure
+    if (evt.detail) {
+      let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
+                        .getService(Ci.nsISerializationHelper);
+
+      let serializable = docShell.failedChannel.securityInfo
+          .QueryInterface(Ci.nsITransportSecurityInfo)
+          .QueryInterface(Ci.nsISerializable);
+
+      let serializedSecurityInfo = serhelper.serializeToString(serializable);
+
+      let {host, port} = content.document.mozDocumentURIIfNotForErrorPages;
+      sendAsyncMessage("Browser:SendSSLErrorReport", {
+        uri: { host, port },
+        securityInfo: serializedSecurityInfo
       });
-  },
 
-  onSendReport: function(evt) {
-    let contentDoc = content.document;
-
-    let reportSendingMsg = contentDoc.getElementById("reportSendingMessage");
-    let reportSentMsg = contentDoc.getElementById("reportSentMessage");
-    let retryBtn = contentDoc.getElementById("reportCertificateErrorRetry");
-
-    addMessageListener("Browser:SSLErrorReportStatus", function(message) {
-      // show and hide bits - but only if this is a message for the right
-      // document - we'll compare on document URI
-      if (contentDoc.documentURI === message.data.documentURI) {
-        switch(message.data.reportStatus) {
-        case "activity":
-          // Hide the button that was just clicked
-          retryBtn.style.display = "none";
-          reportSentMsg.style.display = "none";
-          reportSendingMsg.style.removeProperty("display");
-          break;
-        case "error":
-          // show the retry button
-          retryBtn.style.removeProperty("display");
-          reportSendingMsg.style.display = "none";
-          sendAsyncMessage("Browser:SSLErrorReportTelemetry",
-                           {reportStatus: TLS_ERROR_REPORT_TELEMETRY_FAILURE});
-          break;
-        case "complete":
-          // Show a success indicator
-          reportSentMsg.style.removeProperty("display");
-          reportSendingMsg.style.display = "none";
-          sendAsyncMessage("Browser:SSLErrorReportTelemetry",
-                           {reportStatus: TLS_ERROR_REPORT_TELEMETRY_SUCCESS});
-          break;
-        }
-      }
-    });
-
-    let location = contentDoc.location.href;
-
-    let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
-                      .getService(Ci.nsISerializationHelper);
-
-    let serializable = docShell.failedChannel.securityInfo
-                               .QueryInterface(Ci.nsITransportSecurityInfo)
-                               .QueryInterface(Ci.nsISerializable);
-
-    let serializedSecurityInfo = serhelper.serializeToString(serializable);
-
-    sendAsyncMessage("Browser:SendSSLErrorReport", {
-      documentURI: contentDoc.documentURI,
-      location: {
-        hostname: contentDoc.location.hostname,
-        port: contentDoc.location.port
-      },
-      securityInfo: serializedSecurityInfo
-    });
+    }
   },
 
   onOverride: function(evt) {
-    let contentDoc = content.document;
-    let location = contentDoc.location;
-
-    sendAsyncMessage("Browser:OverrideWeakCrypto", {
-      documentURI: contentDoc.documentURI,
-      location: {hostname: location.hostname, port: location.port}
-    });
+    let {host, port} = content.document.mozDocumentURIIfNotForErrorPages;
+    sendAsyncMessage("Browser:OverrideWeakCrypto", { uri: {host, port} });
   }
 }
 
@@ -715,20 +607,20 @@ addEventListener("pageshow", function(event) {
 var PageMetadataMessenger = {
   init() {
     addMessageListener("PageMetadata:GetPageData", this);
-    addMessageListener("PageMetadata:GetMicrodata", this);
+    addMessageListener("PageMetadata:GetMicroformats", this);
   },
   receiveMessage(message) {
     switch(message.name) {
       case "PageMetadata:GetPageData": {
-        let result = PageMetadata.getData(content.document);
+        let target = message.objects.target;
+        let result = PageMetadata.getData(content.document, target);
         sendAsyncMessage("PageMetadata:PageDataResult", result);
         break;
       }
-
-      case "PageMetadata:GetMicrodata": {
+      case "PageMetadata:GetMicroformats": {
         let target = message.objects.target;
-        let result = PageMetadata.getMicrodata(content.document, target);
-        sendAsyncMessage("PageMetadata:MicrodataResult", result);
+        let result = PageMetadata.getMicroformats(content.document, target);
+        sendAsyncMessage("PageMetadata:MicroformatsResult", result);
         break;
       }
     }
@@ -817,8 +709,8 @@ addMessageListener("ContextMenu:MediaCommand", (message) => {
       media.dispatchEvent(event);
       break;
     case "fullscreen":
-      if (content.document.mozFullScreenEnabled)
-        media.mozRequestFullScreen();
+      if (content.document.fullscreenEnabled)
+        media.requestFullscreen();
       break;
   }
 });
@@ -1432,3 +1324,110 @@ var PageInfoListener = {
   }
 };
 PageInfoListener.init();
+
+let OfflineApps = {
+  _docId: 0,
+  _docIdMap: new Map(),
+
+  _docManifestSet: new Set(),
+
+  _observerAdded: false,
+  registerWindow(aWindow) {
+    if (!this._observerAdded) {
+      this._observerAdded = true;
+      Services.obs.addObserver(this, "offline-cache-update-completed", true);
+    }
+    let manifestURI = this._getManifestURI(aWindow);
+    this._docManifestSet.add(manifestURI.spec);
+  },
+
+  handleEvent(event) {
+    if (event.type == "MozApplicationManifest") {
+      this.offlineAppRequested(event.originalTarget.defaultView);
+    }
+  },
+
+  _getManifestURI(aWindow) {
+    if (!aWindow.document.documentElement)
+      return null;
+
+    var attr = aWindow.document.documentElement.getAttribute("manifest");
+    if (!attr)
+      return null;
+
+    try {
+      var contentURI = BrowserUtils.makeURI(aWindow.location.href, null, null);
+      return BrowserUtils.makeURI(attr, aWindow.document.characterSet, contentURI);
+    } catch (e) {
+      return null;
+    }
+  },
+
+  offlineAppRequested(aContentWindow) {
+    this.registerWindow(aContentWindow);
+    if (!Services.prefs.getBoolPref("browser.offline-apps.notify")) {
+      return;
+    }
+
+    let currentURI = aContentWindow.document.documentURIObject;
+    // don't bother showing UI if the user has already made a decision
+    if (Services.perms.testExactPermission(currentURI, "offline-app") != Services.perms.UNKNOWN_ACTION)
+      return;
+
+    try {
+      if (Services.prefs.getBoolPref("offline-apps.allow_by_default")) {
+        // all pages can use offline capabilities, no need to ask the user
+        return;
+      }
+    } catch(e) {
+      // this pref isn't set by default, ignore failures
+    }
+    let docId = ++this._docId;
+    this._docIdMap.set(docId, Cu.getWeakReference(aContentWindow.document));
+    sendAsyncMessage("OfflineApps:RequestPermission", {
+      uri: currentURI.spec,
+      docId,
+    });
+  },
+
+  _startFetching(aDocument) {
+    if (!aDocument.documentElement)
+      return;
+
+    let manifestURI = this._getManifestURI(aDocument.defaultView);
+    if (!manifestURI)
+      return;
+
+    var updateService = Cc["@mozilla.org/offlinecacheupdate-service;1"].
+                        getService(Ci.nsIOfflineCacheUpdateService);
+    updateService.scheduleUpdate(manifestURI, aDocument.documentURIObject,
+                                 aDocument.nodePrincipal, aDocument.defaultView);
+  },
+
+  receiveMessage(aMessage) {
+    if (aMessage.name == "OfflineApps:StartFetching") {
+      let doc = this._docIdMap.get(aMessage.data.docId);
+      doc = doc && doc.get();
+      if (doc) {
+        this._startFetching(doc);
+      }
+      this._docIdMap.delete(aMessage.data.docId);
+    }
+  },
+
+  observe(aSubject, aTopic, aState) {
+    if (aTopic == "offline-cache-update-completed") {
+      let cacheUpdate = aSubject.QueryInterface(Ci.nsIOfflineCacheUpdate);
+      let uri = cacheUpdate.manifestURI;
+      if (uri && this._docManifestSet.has(uri.spec)) {
+        sendAsyncMessage("OfflineApps:CheckUsage", {uri: uri.spec});
+      }
+    }
+  },
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
+                                         Ci.nsISupportsWeakReference]),
+};
+
+addEventListener("MozApplicationManifest", OfflineApps, false);
+addMessageListener("OfflineApps:StartFetching", OfflineApps);
+

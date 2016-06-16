@@ -1,11 +1,14 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 const {Cu} = require("chrome");
 Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
-const {
-  createNode,
-  TimeScale
-} = require("devtools/client/animationinspector/utils");
+const {createNode, TimeScale} = require("devtools/client/animationinspector/utils");
 
 const STRINGS_URI = "chrome://devtools/locale/animationinspector.properties";
 const L10N = new ViewHelpers.L10N(STRINGS_URI);
@@ -52,7 +55,7 @@ AnimationTimeBlock.prototype = {
     let {x, iterationW, delayX, delayW, negativeDelayW} =
       TimeScale.getAnimationDimensions(animation);
 
-    let iterations = createNode({
+    createNode({
       parent: this.containerEl,
       attributes: {
         "class": "iterations" + (state.iterationCount ? "" : " infinite"),
@@ -148,13 +151,24 @@ AnimationTimeBlock.prototype = {
 
 /**
  * Get a formatted title for this animation. This will be either:
- * "some-name", "some-name : CSS Transition", or "some-name : CSS Animation",
- * depending if the server provides the type, and what type it is.
+ * "some-name", "some-name : CSS Transition", "some-name : CSS Animation",
+ * "some-name : Script Animation", or "Script Animation", depending
+ * if the server provides the type, what type it is and if the animation
+ * has a name
  * @param {AnimationPlayerFront} animation
  */
 function getFormattedAnimationTitle({state}) {
-  // Older servers don't send the type.
-  return state.type
-    ? L10N.getFormatStr("timeline." + state.type + ".nameLabel", state.name)
-    : state.name;
+  // Older servers don't send a type, and only know about
+  // CSSAnimations and CSSTransitions, so it's safe to use
+  // just the name.
+  if (!state.type) {
+    return state.name;
+  }
+
+  // Script-generated animations may not have a name.
+  if (state.type === "scriptanimation" && !state.name) {
+    return L10N.getStr("timeline.scriptanimation.unnamedLabel");
+  }
+
+  return L10N.getFormatStr(`timeline.${state.type}.nameLabel`, state.name);
 }

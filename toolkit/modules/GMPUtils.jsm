@@ -11,7 +11,8 @@ this.EXPORTED_SYMBOLS = [ "EME_ADOBE_ID",
                           "GMP_PLUGIN_IDS",
                           "GMPPrefs",
                           "GMPUtils",
-                          "OPEN_H264_ID" ];
+                          "OPEN_H264_ID",
+                          "WIDEVINE_ID" ];
 
 Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -20,7 +21,8 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 // GMP IDs
 const OPEN_H264_ID  = "gmp-gmpopenh264";
 const EME_ADOBE_ID  = "gmp-eme-adobe";
-const GMP_PLUGIN_IDS = [ OPEN_H264_ID, EME_ADOBE_ID ];
+const WIDEVINE_ID   = "gmp-widevinecdm";
+const GMP_PLUGIN_IDS = [ OPEN_H264_ID, EME_ADOBE_ID, WIDEVINE_ID ];
 
 var GMPPluginUnsupportedReason = {
   NOT_WINDOWS: 1,
@@ -68,16 +70,21 @@ this.GMPUtils = {
    *          The plugin to check.
    */
   _isPluginSupported: function(aPlugin) {
-    if (aPlugin.id != EME_ADOBE_ID) {
-      // Only checking Adobe EME at the moment.
-      return true;
-    }
-
-    if (Services.appinfo.OS != "WINNT") {
-      // Non-Windows OSes currently unsupported.
-      this.maybeReportTelemetry(aPlugin.id,
-                                "VIDEO_EME_ADOBE_UNSUPPORTED_REASON",
-                                GMPPluginUnsupportedReason.NOT_WINDOWS);
+    if (aPlugin.id == EME_ADOBE_ID) {
+      if (Services.appinfo.OS != "WINNT") {
+        // Non-Windows OSes currently unsupported by Adobe EME
+        this.maybeReportTelemetry(aPlugin.id,
+                                  "VIDEO_EME_ADOBE_UNSUPPORTED_REASON",
+                                  GMPPluginUnsupportedReason.NOT_WINDOWS);
+        return false;
+      }
+    } else if (aPlugin.id == WIDEVINE_ID) {
+      // The Widevine plugin is available for Windows versions Vista and later
+      // and Mac OSX 10.7 and later.
+      if (AppConstants.isPlatformAndVersionAtLeast("win", "6") ||
+          AppConstants.isPlatformAndVersionAtLeast("macosx", "10.7")) {
+        return true;
+      }
       return false;
     }
 

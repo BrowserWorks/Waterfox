@@ -1078,7 +1078,10 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
                                  nsIWebProgressListener::STATE_USES_SSL_3);
   }
 
-  if (err == SSL_ERROR_INAPPROPRIATE_FALLBACK_ALERT) {
+  // NSS will return SSL_ERROR_RX_MALFORMED_SERVER_HELLO if anti-downgrade
+  // detected the downgrade.
+  if (err == SSL_ERROR_INAPPROPRIATE_FALLBACK_ALERT ||
+      err == SSL_ERROR_RX_MALFORMED_SERVER_HELLO) {
     // This is a clear signal that we've fallen back too many versions.  Treat
     // this as a hard failure, but forget any intolerance so that later attempts
     // don't use this version (i.e., range.max) and trigger the error again.
@@ -1303,19 +1306,19 @@ nsSSLIOLayerPoll(PRFileDesc* fd, int16_t in_flags, int16_t* out_flags)
     return in_flags;
   }
 
-  MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-         (socketInfo->IsWaitingForCertVerification()
-            ?  "[%p] polling SSL socket during certificate verification using lower %d\n"
-            :  "[%p] poll SSL socket using lower %d\n",
-         fd, (int) in_flags));
+  MOZ_LOG(gPIPNSSLog, LogLevel::Verbose,
+          (socketInfo->IsWaitingForCertVerification()
+             ?  "[%p] polling SSL socket during certificate verification using lower %d\n"
+             :  "[%p] poll SSL socket using lower %d\n",
+           fd, (int) in_flags));
 
   // We want the handshake to continue during certificate validation, so we
   // don't need to do anything special here. libssl automatically blocks when
   // it reaches any point that would be unsafe to send/receive something before
   // cert validation is complete.
   int16_t result = fd->lower->methods->poll(fd->lower, in_flags, out_flags);
-  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("[%p] poll SSL socket returned %d\n",
-                                    (void*) fd, (int) result));
+  MOZ_LOG(gPIPNSSLog, LogLevel::Verbose,
+          ("[%p] poll SSL socket returned %d\n", (void*) fd, (int) result));
   return result;
 }
 
@@ -1418,8 +1421,8 @@ PSMRecv(PRFileDesc* fd, void* buf, int32_t amount, int flags,
   int32_t bytesRead = fd->lower->methods->recv(fd->lower, buf, amount, flags,
                                                timeout);
 
-  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("[%p] read %d bytes\n", (void*) fd,
-         bytesRead));
+  MOZ_LOG(gPIPNSSLog, LogLevel::Verbose,
+          ("[%p] read %d bytes\n", (void*) fd, bytesRead));
 
 #ifdef DEBUG_SSL_VERBOSE
   DEBUG_DUMP_BUFFER((unsigned char*) buf, bytesRead);
@@ -1449,8 +1452,8 @@ PSMSend(PRFileDesc* fd, const void* buf, int32_t amount, int flags,
   int32_t bytesWritten = fd->lower->methods->send(fd->lower, buf, amount,
                                                   flags, timeout);
 
-  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("[%p] wrote %d bytes\n",
-         fd, bytesWritten));
+  MOZ_LOG(gPIPNSSLog, LogLevel::Verbose,
+          ("[%p] wrote %d bytes\n", fd, bytesWritten));
 
   return checkHandshake(bytesWritten, false, fd, socketInfo);
 }
@@ -2092,7 +2095,7 @@ ClientAuthDataRunnable::RunOnTargetThread()
   ScopedSECKEYPrivateKey privKey;
   ScopedCERTCertList certList;
   CERTCertListNode* node;
-  ScopedCERTCertNicknames nicknames;
+  UniqueCERTCertNicknames nicknames;
   int keyError = 0; // used for private key retrieval error
   SSM_UserCertChoice certChoice;
   int32_t NumberOfCerts = 0;
@@ -2237,7 +2240,7 @@ ClientAuthDataRunnable::RunOnTargetThread()
         if (certdb) {
           nsCOMPtr<nsIX509Cert> found_cert;
           nsresult find_rv =
-            certdb->FindCertByDBKey(rememberedDBKey.get(), nullptr,
+            certdb->FindCertByDBKey(rememberedDBKey.get(),
             getter_AddRefs(found_cert));
           if (NS_SUCCEEDED(find_rv) && found_cert) {
             nsNSSCertificate* obj_cert =
@@ -2296,7 +2299,7 @@ ClientAuthDataRunnable::RunOnTargetThread()
         goto noCert;
       }
 
-      nicknames = getNSSCertNicknamesFromCertList(certList.get());
+      nicknames.reset(getNSSCertNicknamesFromCertList(certList.get()));
 
       if (!nicknames) {
         goto loser;
@@ -2553,6 +2556,10 @@ nsSSLIOLayerSetOptions(PRFileDesc* fd, bool forSTARTTLS,
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
            ("[%p] nsSSLIOLayerSetOptions: enabling TLS_FALLBACK_SCSV\n", fd));
     if (SECSuccess != SSL_OptionSet(fd, SSL_ENABLE_FALLBACK_SCSV, true)) {
+      return NS_ERROR_FAILURE;
+    }
+    // tell NSS the max enabled version to make anti-downgrade effective
+    if (SECSuccess != SSL_SetDowngradeCheckVersion(fd, maxEnabledVersion)) {
       return NS_ERROR_FAILURE;
     }
   }

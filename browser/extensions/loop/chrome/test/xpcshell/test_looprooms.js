@@ -427,6 +427,7 @@ add_task(function* test_openRoom() {
 
   Assert.equal(windowData.type, "room", "window data should contain room as the type");
   Assert.equal(windowData.roomToken, "fakeToken", "window data should have the roomToken");
+  Assert.equal(LoopRooms.getNumParticipants("fakeToken"), 0, "LoopRooms getNumParticipants should contain no participants before join");
 });
 
 // Test if the rooms cache is refreshed after FxA signin or signout.
@@ -524,6 +525,8 @@ add_task(function* test_joinRoomGuest() {
   let roomToken = "_nxD4V4FflQ";
   let joinedData = yield LoopRooms.promise("join", roomToken, "guest");
   Assert.equal(joinedData.action, "join");
+  Assert.equal(LoopRooms.getNumParticipants("_nxD4V4FflQ"), 1, "LoopRooms getNumParticipants should have participant after join");
+  Assert.equal(LoopRoomsInternal.getNumParticipants("_nxD4V4FflQ"), 1, "LoopRoomsInternal getNumParticipants should have participant after join");
 });
 
 // Test if refreshing a room works as expected.
@@ -533,6 +536,7 @@ add_task(function* test_refreshMembership() {
     "fakeSessionToken");
   Assert.equal(refreshedData.action, "refresh");
   Assert.equal(refreshedData.sessionToken, "fakeSessionToken");
+  Assert.equal(LoopRooms.getNumParticipants("_nxD4V4FflQ"), 1, "LoopRooms getNumParticipants should still have participant after refresh");
 });
 
 // Test if leaving a room works as expected.
@@ -605,7 +609,7 @@ add_task(function* test_updateRoom_domains() {
 
   // Make sure one domain context is counted.
   yield addContext("https://www.mozilla.org");
-  Assert.deepEqual((yield LoopRooms.promise("logDomains", roomToken)), {
+  Assert.deepEqual(yield LoopRooms.promise("logDomains", roomToken), {
     action: "logDomain",
     domains: [{ count: 1, domain: "mozilla.org" }]
   });
@@ -614,7 +618,7 @@ add_task(function* test_updateRoom_domains() {
   yield addContext("https://www.mozilla.org/foo");
   yield addContext("https://www.mozilla.org/bar");
   yield addContext("https://www.mozilla.org/baz");
-  Assert.deepEqual((yield LoopRooms.promise("logDomains", roomToken)), {
+  Assert.deepEqual(yield LoopRooms.promise("logDomains", roomToken), {
     action: "logDomain",
     domains: [{ count: 3, domain: "mozilla.org" }]
   });
@@ -622,7 +626,7 @@ add_task(function* test_updateRoom_domains() {
   // Make sure multiple subdomains combine to one domain are counted.
   yield addContext("https://foo.mozilla.org");
   yield addContext("https://bar.baz.mozilla.org");
-  Assert.deepEqual((yield LoopRooms.promise("logDomains", roomToken)), {
+  Assert.deepEqual(yield LoopRooms.promise("logDomains", roomToken), {
     action: "logDomain",
     domains: [{ count: 2, domain: "mozilla.org" }]
   });
@@ -631,7 +635,7 @@ add_task(function* test_updateRoom_domains() {
   yield addContext("https://www.yahoo.com");
   yield addContext("https://www.mozilla.org");
   yield addContext("https://www.yahoo.com");
-  Assert.deepEqual((yield LoopRooms.promise("logDomains", roomToken)), {
+  Assert.deepEqual(yield LoopRooms.promise("logDomains", roomToken), {
     action: "logDomain",
     domains: [{ count: 2, domain: "yahoo.com" },
               { count: 1, domain: "mozilla.org" }]
@@ -644,7 +648,7 @@ add_task(function* test_updateRoom_domains() {
   yield addContext("http://127.0.0.1");
   yield addContext("http://blogspot.com");
   yield addContext("http://com");
-  Assert.deepEqual((yield LoopRooms.promise("logDomains", roomToken)), {
+  Assert.deepEqual(yield LoopRooms.promise("logDomains", roomToken), {
     action: "logDomain",
     domains: [{ count: 1, domain: "mozilla.org" }]
   });
@@ -654,7 +658,7 @@ add_task(function* test_updateRoom_domains() {
   yield addContext("https://www.mozilla.org");
   roomToken = "_nxD4V4FflQ";
   yield addContext("https://www.yahoo.com");
-  Assert.deepEqual((yield LoopRooms.promise("logDomains", roomToken)), {
+  Assert.deepEqual(yield LoopRooms.promise("logDomains", roomToken), {
     action: "logDomain",
     domains: [{ count: 1, domain: "yahoo.com" }]
   });
@@ -662,7 +666,7 @@ add_task(function* test_updateRoom_domains() {
   // Make sure nothing is logged if disabled.
   Services.prefs.setBoolPref("loop.logDomains", false);
   yield addContext("https://www.mozilla.org");
-  Assert.equal((yield LoopRooms.promise("logDomains", roomToken)), null);
+  Assert.equal(yield LoopRooms.promise("logDomains", roomToken), null);
 
   Services.prefs.clearUserPref("loop.logDomains");
 });

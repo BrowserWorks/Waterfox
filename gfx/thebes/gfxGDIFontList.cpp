@@ -173,7 +173,7 @@ GDIFontEntry::ReadCMAP(FontInfoData *aFontInfoData)
     } else {
         uint32_t kCMAP = TRUETYPE_TAG('c','m','a','p');
         charmap = new gfxCharacterMap();
-        AutoFallibleTArray<uint8_t,16384> cmap;
+        AutoTArray<uint8_t, 16384> cmap;
         rv = CopyFontTable(kCMAP, cmap);
 
         if (NS_SUCCEEDED(rv)) {
@@ -234,8 +234,7 @@ GDIFontEntry::CreateFontInstance(const gfxFontStyle* aFontStyle, bool aNeedsBold
 }
 
 nsresult
-GDIFontEntry::CopyFontTable(uint32_t aTableTag,
-                            FallibleTArray<uint8_t>& aBuffer)
+GDIFontEntry::CopyFontTable(uint32_t aTableTag, nsTArray<uint8_t>& aBuffer)
 {
     if (!IsTrueType()) {
         return NS_ERROR_FAILURE;
@@ -833,23 +832,27 @@ gfxGDIFontList::MakePlatformFont(const nsAString& aFontName,
     return fe;
 }
 
-gfxFontFamily*
-gfxGDIFontList::FindFamily(const nsAString& aFamily, gfxFontStyle* aStyle,
-                           gfxFloat aDevToCssSize)
+bool
+gfxGDIFontList::FindAndAddFamilies(const nsAString& aFamily,
+                                   nsTArray<gfxFontFamily*>* aOutput,
+                                   gfxFontStyle* aStyle,
+                                   gfxFloat aDevToCssSize)
 {
     nsAutoString keyName(aFamily);
     BuildKeyNameFromFontName(keyName);
 
     gfxFontFamily *ff = mFontSubstitutes.GetWeak(keyName);
     if (ff) {
-        return ff;
+        aOutput->AppendElement(ff);
+        return true;
     }
 
     if (mNonExistingFonts.Contains(keyName)) {
-        return nullptr;
+        return false;
     }
 
-    return gfxPlatformFontList::FindFamily(aFamily);
+    return gfxPlatformFontList::FindAndAddFamilies(aFamily, aOutput, aStyle,
+                                                   aDevToCssSize);
 }
 
 gfxFontFamily*
@@ -975,7 +978,7 @@ int CALLBACK GDIFontInfo::EnumerateFontsForFamily(
         uint32_t kNAME =
             NativeEndian::swapToBigEndian(TRUETYPE_TAG('n','a','m','e'));
         uint32_t nameSize;
-        AutoFallibleTArray<uint8_t, 1024> nameData;
+        AutoTArray<uint8_t, 1024> nameData;
 
         nameSize = ::GetFontData(hdc, kNAME, 0, nullptr, 0);
         if (nameSize != GDI_ERROR &&
@@ -1018,7 +1021,7 @@ int CALLBACK GDIFontInfo::EnumerateFontsForFamily(
         uint32_t kCMAP =
             NativeEndian::swapToBigEndian(TRUETYPE_TAG('c','m','a','p'));
         uint32_t cmapSize;
-        AutoFallibleTArray<uint8_t, 1024> cmapData;
+        AutoTArray<uint8_t, 1024> cmapData;
 
         cmapSize = ::GetFontData(hdc, kCMAP, 0, nullptr, 0);
         if (cmapSize != GDI_ERROR &&
@@ -1047,7 +1050,7 @@ int CALLBACK GDIFontInfo::EnumerateFontsForFamily(
         famData->mFontInfo.mFontFaceData.Put(fontName, fontData);
     }
 
-    return 1;
+    return famData->mFontInfo.mCanceled ? 0 : 1;
 }
 
 void

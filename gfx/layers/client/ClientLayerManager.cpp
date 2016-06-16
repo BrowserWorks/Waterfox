@@ -26,7 +26,7 @@
 #include "ClientReadbackLayer.h"        // for ClientReadbackLayer
 #include "nsAString.h"
 #include "nsIWidgetListener.h"
-#include "nsTArray.h"                   // for AutoInfallibleTArray
+#include "nsTArray.h"                   // for AutoTArray
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType, etc
 #include "TiledLayerBuffer.h"
 #include "mozilla/dom/WindowBinding.h"  // for Overfill Callback
@@ -102,6 +102,7 @@ ClientLayerManager::ClientLayerManager(nsIWidget* aWidget)
   , mNeedsComposite(false)
   , mPaintSequenceNumber(0)
   , mForwarder(new ShadowLayerForwarder)
+  , mDeviceCounter(gfxPlatform::GetPlatform()->GetDeviceCounter())
 {
   MOZ_COUNT_CTOR(ClientLayerManager);
   mMemoryPressureObserver = new MemoryPressureObserver(this);
@@ -188,6 +189,10 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
 
   NS_ASSERTION(!InTransaction(), "Nested transactions not allowed");
   mPhase = PHASE_CONSTRUCTION;
+
+  if (DependsOnStaleDevice()) {
+    FrameLayerBuilder::InvalidateAllLayers(this);
+  }
 
   MOZ_ASSERT(mKeepAlive.IsEmpty(), "uncommitted txn?");
 
@@ -551,6 +556,12 @@ ClientLayerManager::FlushRendering()
 }
 
 void
+ClientLayerManager::UpdateTextureFactoryIdentifier(const TextureFactoryIdentifier& aNewIdentifier)
+{
+  mForwarder->IdentifyTextureHost(aNewIdentifier);
+}
+
+void
 ClientLayerManager::SendInvalidRegion(const nsIntRegion& aRegion)
 {
   if (mWidget) {
@@ -603,7 +614,7 @@ ClientLayerManager::ForwardTransaction(bool aScheduleComposite)
 
   // forward this transaction's changeset to our LayerManagerComposite
   bool sent;
-  AutoInfallibleTArray<EditReply, 10> replies;
+  AutoTArray<EditReply, 10> replies;
   if (mForwarder->EndTransaction(&replies, mRegionToClear,
         mLatestTransactionId, aScheduleComposite, mPaintSequenceNumber,
         mIsRepeatTransaction, transactionStart, &sent)) {
@@ -825,6 +836,12 @@ void
 ClientLayerManager::RemoveDidCompositeObserver(DidCompositeObserver* aObserver)
 {
   mDidCompositeObservers.RemoveElement(aObserver);
+}
+
+bool
+ClientLayerManager::DependsOnStaleDevice() const
+{
+  return gfxPlatform::GetPlatform()->GetDeviceCounter() != mDeviceCounter;
 }
 
 ClientLayer::~ClientLayer()

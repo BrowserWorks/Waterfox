@@ -39,34 +39,6 @@ using mozilla::NumberIsInt32;
 
 static_assert(unsigned(SimdType::Count) == 12, "sync with TypedObjectConstants.h");
 
-bool
-js::IsSignedIntSimdType(SimdType type)
-{
-    switch (type) {
-      case SimdType::Int32x4:
-        return true;
-      case SimdType::Float32x4:
-      case SimdType::Bool32x4:
-        return false;
-      default:
-        break;
-   }
-    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("Unknown SIMD type");
-}
-
-PropertyName*
-js::SimdTypeToName(JSContext* cx, SimdType type)
-{
-    switch (type) {
-      case SimdType::Int32x4:   return cx->names().Int32x4;
-      case SimdType::Float32x4: return cx->names().Float32x4;
-      case SimdType::Bool32x4:  return cx->names().Bool32x4;
-      default:                  break;
-    }
-    MOZ_MAKE_COMPILER_ASSUME_IS_UNREACHABLE("unexpected SIMD type");
-}
-
-
 static bool
 CheckVectorObject(HandleValue v, SimdType expectedType)
 {
@@ -110,6 +82,42 @@ js::IsVectorObject(HandleValue v)
 FOR_EACH_SIMD(InstantiateIsVectorObject_)
 #undef InstantiateIsVectorObject_
 
+const char*
+js::SimdTypeToString(SimdType type)
+{
+    switch (type) {
+#define RETSTR_(TYPE) case SimdType::TYPE: return #TYPE;
+      FOR_EACH_SIMD(RETSTR_)
+#undef RETSTR_
+      case SimdType::Count: break;
+    }
+    return "<bad SimdType>";
+}
+
+PropertyName*
+js::SimdTypeToName(const JSAtomState& atoms, SimdType type)
+{
+    switch (type) {
+#define CASE_(TypeName) case SimdType::TypeName: return atoms.TypeName;
+      FOR_EACH_SIMD(CASE_)
+#undef CASE_
+      case SimdType::Count: break;
+    }
+    MOZ_CRASH("bad SIMD type");
+}
+
+bool
+js::IsSimdTypeName(const JSAtomState& atoms, const PropertyName* name, SimdType* type)
+{
+#define CHECK_(TypeName) if (name == atoms.TypeName) {   \
+                             *type = SimdType::TypeName; \
+                             return true;                \
+                         }
+    FOR_EACH_SIMD(CHECK_)
+#undef CHECK_
+    return false;
+}
+
 static inline bool
 ErrorBadArgs(JSContext* cx)
 {
@@ -140,7 +148,7 @@ static SimdTypeDescr*
 GetTypeDescr(JSContext* cx)
 {
     RootedGlobalObject global(cx, cx->global());
-    return GlobalObject::getOrCreateSimdTypeDescr<T>(cx, global);
+    return GlobalObject::getOrCreateSimdTypeDescr(cx, global, T::type);
 }
 
 template<typename V>
@@ -192,7 +200,6 @@ namespace {
 #define DEFINE_DEFN_(TypeName)                                       \
 class TypeName##Defn {                                               \
   public:                                                            \
-    static const SimdType type = SimdType::TypeName;                 \
     static const JSFunctionSpec Methods[];                           \
 };
 
@@ -228,6 +235,8 @@ static const JSFunctionSpec SimdTypedObjectMethods[] = {
 namespace js {
 namespace jit {
 
+static_assert(uint64_t(SimdOperation::Last) <= UINT16_MAX, "SimdOperation must fit in uint16_t");
+
 // See also JitInfo_* in MCallOptimize.cpp. We provide a JSJitInfo for all the
 // named functions here. The default JitInfo_SimdInt32x4 etc structs represent the
 // SimdOperation::Constructor.
@@ -250,6 +259,10 @@ FLOAT32X4_FUNCTION_LIST(TDEFN)
 
 #define TDEFN(Name, Func, Operands) DEFN(Int32x4, Name)
 INT32X4_FUNCTION_LIST(TDEFN)
+#undef TDEFN
+
+#define TDEFN(Name, Func, Operands) DEFN(Uint32x4, Name)
+UINT32X4_FUNCTION_LIST(TDEFN)
 #undef TDEFN
 
 #define TDEFN(Name, Func, Operands) DEFN(Bool32x4, Name)
@@ -317,7 +330,7 @@ const JSFunctionSpec Uint16x8Defn::Methods[] = {
 
 const JSFunctionSpec Uint32x4Defn::Methods[] = {
 #define SIMD_UINT32X4_FUNCTION_ITEM(Name, Func, Operands) \
-    JS_FN(#Name, js::simd_uint32x4_##Name, Operands, 0),
+    JS_INLINABLE_FN(#Name, js::simd_uint32x4_##Name, Operands, 0, SimdUint32x4_##Name),
     UINT32X4_FUNCTION_LIST(SIMD_UINT32X4_FUNCTION_ITEM)
 #undef SIMD_UINT32X4_FUNCTION_ITEM
     JS_FS_END
@@ -441,9 +454,9 @@ GlobalObject::initSimdObject(JSContext* cx, Handle<GlobalObject*> global)
     return true;
 }
 
-template<typename /* TypeDefn */ T>
 static bool
-CreateSimdType(JSContext* cx, Handle<GlobalObject*> global, HandlePropertyName stringRepr)
+CreateSimdType(JSContext* cx, Handle<GlobalObject*> global, HandlePropertyName stringRepr,
+               SimdType simdType, const JSFunctionSpec* methods)
 {
     RootedObject funcProto(cx, global->getOrCreateFunctionPrototype(cx));
     if (!funcProto)
@@ -455,7 +468,6 @@ CreateSimdType(JSContext* cx, Handle<GlobalObject*> global, HandlePropertyName s
     if (!typeDescr)
         return false;
 
-    const SimdType simdType = T::type;
     typeDescr->initReservedSlot(JS_DESCR_SLOT_KIND, Int32Value(type::Simd));
     typeDescr->initReservedSlot(JS_DESCR_SLOT_STRING_REPR, StringValue(stringRepr));
     typeDescr->initReservedSlot(JS_DESCR_SLOT_ALIGNMENT, Int32Value(SimdTypeDescr::alignment(simdType)));
@@ -491,7 +503,7 @@ CreateSimdType(JSContext* cx, Handle<GlobalObject*> global, HandlePropertyName s
     MOZ_ASSERT(globalSimdObject);
 
     RootedValue typeValue(cx, ObjectValue(*typeDescr));
-    if (!JS_DefineFunctions(cx, typeDescr, T::Methods) ||
+    if (!JS_DefineFunctions(cx, typeDescr, methods) ||
         !DefineProperty(cx, globalSimdObject, stringRepr, typeValue, nullptr, nullptr,
                         JSPROP_READONLY | JSPROP_PERMANENT | JSPROP_RESOLVING))
     {
@@ -505,18 +517,41 @@ CreateSimdType(JSContext* cx, Handle<GlobalObject*> global, HandlePropertyName s
 }
 
 bool
-GlobalObject::initSimdType(JSContext* cx, Handle<GlobalObject*> global, uint32_t simdTypeDescrType)
+GlobalObject::initSimdType(JSContext* cx, Handle<GlobalObject*> global, SimdType simdType)
 {
 #define CREATE_(Type) \
-    case SimdType::Type: return CreateSimdType<Type##Defn>(cx, global, cx->names().Type);
+    case SimdType::Type: \
+      return CreateSimdType(cx, global, cx->names().Type, simdType, Type##Defn::Methods);
 
-    switch (SimdType(simdTypeDescrType)) {
+    switch (simdType) {
       FOR_EACH_SIMD(CREATE_)
       case SimdType::Count: break;
     }
     MOZ_CRASH("unexpected simd type");
 
 #undef CREATE_
+}
+
+SimdTypeDescr*
+GlobalObject::getOrCreateSimdTypeDescr(JSContext* cx, Handle<GlobalObject*> global,
+                                       SimdType simdType)
+{
+    MOZ_ASSERT(unsigned(simdType) < unsigned(SimdType::Count), "Invalid SIMD type");
+
+    RootedObject globalSimdObject(cx, global->getOrCreateSimdGlobalObject(cx));
+    if (!globalSimdObject)
+       return nullptr;
+
+    uint32_t typeSlotIndex = uint32_t(simdType);
+    if (globalSimdObject->as<NativeObject>().getReservedSlot(typeSlotIndex).isUndefined() &&
+        !GlobalObject::initSimdType(cx, global, simdType))
+    {
+        return nullptr;
+    }
+
+    const Value& slot = globalSimdObject->as<NativeObject>().getReservedSlot(typeSlotIndex);
+    MOZ_ASSERT(slot.isObject());
+    return &slot.toObject().as<SimdTypeDescr>();
 }
 
 bool
@@ -529,7 +564,8 @@ SimdObject::resolve(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool* 
     Rooted<GlobalObject*> global(cx, cx->global());
 #define TRY_RESOLVE_(Type)                                                    \
     if (str == cx->names().Type) {                                            \
-        *resolved = CreateSimdType<Type##Defn>(cx, global, cx->names().Type); \
+        *resolved = CreateSimdType(cx, global, cx->names().Type,              \
+                                   SimdType::Type, Type##Defn::Methods);      \
         return *resolved;                                                     \
     }
     FOR_EACH_SIMD(TRY_RESOLVE_)
@@ -675,27 +711,37 @@ template<typename T>
 struct Or {
     static T apply(T l, T r) { return l | r; }
 };
+
 // For the following three operators, if the value v we're trying to shift is
 // such that v << bits can't fit in the int32 range, then we have undefined
-// behavior, according to C++11 [expr.shift]p2.
+// behavior, according to C++11 [expr.shift]p2. However, left-shifting an
+// unsigned type is well-defined.
+//
+// In C++, shifting by an amount outside the range [0;N-1] is undefined
+// behavior. SIMD.js reduces the shift amount modulo the number of bits in a
+// lane and has defined behavior for all shift amounts.
 template<typename T>
 struct ShiftLeft {
     static T apply(T v, int32_t bits) {
-        return uint32_t(bits) >= sizeof(T) * 8 ? 0 : v << bits;
+        typedef typename mozilla::MakeUnsigned<T>::Type UnsignedT;
+        uint32_t maskedBits = uint32_t(bits) % (sizeof(T) * 8);
+        return UnsignedT(v) << maskedBits;
     }
 };
 template<typename T>
 struct ShiftRightArithmetic {
     static T apply(T v, int32_t bits) {
         typedef typename mozilla::MakeSigned<T>::Type SignedT;
-        uint32_t maxBits = sizeof(T) * 8;
-        return SignedT(v) >> (uint32_t(bits) >= maxBits ? maxBits - 1 : bits);
+        uint32_t maskedBits = uint32_t(bits) % (sizeof(T) * 8);
+        return SignedT(v) >> maskedBits;
     }
 };
 template<typename T>
 struct ShiftRightLogical {
     static T apply(T v, int32_t bits) {
-        return uint32_t(bits) >= sizeof(T) * 8 ? 0 : uint32_t(v) >> bits;
+        typedef typename mozilla::MakeUnsigned<T>::Type UnsignedT;
+        uint32_t maskedBits = uint32_t(bits) % (sizeof(T) * 8);
+        return UnsignedT(v) >> maskedBits;
     }
 };
 

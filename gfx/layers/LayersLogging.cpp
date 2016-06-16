@@ -95,10 +95,9 @@ AppendToString(std::stringstream& aStream, const nsRegion& r,
 {
   aStream << pfx;
 
-  nsRegionRectIterator it(r);
   aStream << "< ";
-  while (const nsRect* sr = it.Next()) {
-    AppendToString(aStream, *sr);
+  for (auto iter = r.RectIter(); !iter.Done(); iter.Next()) {
+    AppendToString(aStream, iter.Get());
     aStream << "; ";
   }
   aStream << ">";
@@ -112,10 +111,9 @@ AppendToString(std::stringstream& aStream, const nsIntRegion& r,
 {
   aStream << pfx;
 
-  nsIntRegionRectIterator it(r);
   aStream << "< ";
-  while (const IntRect* sr = it.Next()) {
-    AppendToString(aStream, *sr);
+  for (auto iter = r.RectIter(); !iter.Done(); iter.Next()) {
+    AppendToString(aStream, iter.Get());
     aStream << "; ";
   }
   aStream << ">";
@@ -147,6 +145,18 @@ AppendToString(std::stringstream& aStream, const EventRegions& e,
 }
 
 void
+AppendToString(std::stringstream& aStream, const ScrollMetadata& m,
+               const char* pfx, const char* sfx)
+{
+  aStream << pfx;
+  AppendToString(aStream, m.GetMetrics(), "{ [metrics=", "]");
+  if (m.HasClipRect()) {
+    AppendToString(aStream, m.ClipRect(), " [clip=", "]");
+  }
+  aStream << "}" << sfx;
+}
+
+void
 AppendToString(std::stringstream& aStream, const FrameMetrics& m,
                const char* pfx, const char* sfx, bool detailed)
 {
@@ -167,9 +177,6 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
     }
     if (m.IsRootContent()) {
       aStream << "] [rcd";
-    }
-    if (m.HasClipRect()) {
-      AppendToString(aStream, m.ClipRect(), "] [clip=");
     }
     AppendToString(aStream, m.GetZoom(), "] [z=", "] }");
   } else {
@@ -302,6 +309,7 @@ AppendToString(std::stringstream& aStream, mozilla::gfx::SurfaceFormat format,
   case SurfaceFormat::A8:        aStream << "SurfaceFormat::A8"; break;
   case SurfaceFormat::YUV:       aStream << "SurfaceFormat::YUV"; break;
   case SurfaceFormat::NV12:      aStream << "SurfaceFormat::NV12"; break;
+  case SurfaceFormat::YUV422:    aStream << "SurfaceFormat::YUV422"; break;
   case SurfaceFormat::UNKNOWN:   aStream << "SurfaceFormat::UNKNOWN"; break;
   default:
     NS_ERROR("unknown surface format");

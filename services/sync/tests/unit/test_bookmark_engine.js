@@ -167,7 +167,7 @@ add_test(function test_processIncoming_error_orderChildren() {
   }
 });
 
-add_task(function test_restorePromptsReupload() {
+add_task(function* test_restorePromptsReupload() {
   _("Ensure that restoring from a backup will reupload all records.");
   let engine = new BookmarksEngine(Service);
   let store  = engine._store;
@@ -204,7 +204,7 @@ add_task(function test_restorePromptsReupload() {
     backupFile.append("t_b_e_" + Date.now() + ".json");
 
     _("Backing up to file " + backupFile.path);
-    backupFile.create(Ci.nsILocalFile.NORMAL_FILE_TYPE, 0600);
+    backupFile.create(Ci.nsILocalFile.NORMAL_FILE_TYPE, 0o600);
     yield BookmarkJSONUtils.exportToFile(backupFile);
 
     _("Create a different record and sync.");

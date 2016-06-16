@@ -149,7 +149,7 @@ endif
 ifdef NSS_DISABLE_ECC
 DEFINES += -DNSS_DISABLE_ECC
 endif
- 
+
 ifdef NSS_ECC_MORE_THAN_SUITE_B
 DEFINES += -DNSS_ECC_MORE_THAN_SUITE_B
 endif
@@ -164,6 +164,10 @@ endif
 
 ifdef NSS_DISABLE_DBM
 DEFINES += -DNSS_DISABLE_DBM
+endif
+
+ifdef NSS_DISABLE_CHACHAPOLY
+DEFINES += -DNSS_DISABLE_CHACHAPOLY
 endif
 
 ifdef NSS_PKIX_NO_LDAP
@@ -188,3 +192,16 @@ DEFINES += -DNO_NSPR_10_SUPPORT
 
 # Hide old, deprecated, TLS cipher suite names when building NSS
 DEFINES += -DSSL_DISABLE_DEPRECATED_CIPHER_SUITE_NAMES
+
+# Mozilla's mozilla/modules/zlib/src/zconf.h adds the MOZ_Z_ prefix to zlib
+# exported symbols, which causes problem when NSS is built as part of Mozilla.
+# So we add a NSS_SSL_ENABLE_ZLIB variable to allow Mozilla to turn this off.
+NSS_SSL_ENABLE_ZLIB = 1
+
+# Allow build-time configuration of TLS 1.3 (Experimental)
+ifdef NSS_ENABLE_TLS_1_3
+ifdef NSS_DISABLE_ECC
+$(error Setting NSS_ENABLE_TLS_1_3 and NSS_DISABLE_ECC isn't a good idea.)
+endif
+DEFINES += -DNSS_ENABLE_TLS_1_3
+endif

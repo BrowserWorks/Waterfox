@@ -407,28 +407,48 @@ nsCanvasFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
       return;
     }
 
+    const DisplayItemScrollClip* scrollClip =
+      aBuilder->ClipState().GetCurrentInnermostScrollClip();
+
     bool needBlendContainer = false;
 
     // Create separate items for each background layer.
-    NS_FOR_VISIBLE_BACKGROUND_LAYERS_BACK_TO_FRONT(i, bg) {
-      if (bg->mLayers[i].mImage.IsEmpty()) {
+    const nsStyleImageLayers& layers = bg->mImage;
+    NS_FOR_VISIBLE_IMAGE_LAYERS_BACK_TO_FRONT(i, layers) {
+      if (layers.mLayers[i].mImage.IsEmpty()) {
         continue;
       }
-      if (bg->mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
+      if (layers.mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
         needBlendContainer = true;
       }
-      aLists.BorderBackground()->AppendNewToTop(
-        new (aBuilder) nsDisplayCanvasBackgroundImage(aBuilder, this, i, bg));
+
+      nsDisplayList thisItemList;
+      nsDisplayCanvasBackgroundImage* bgItem =
+        new (aBuilder) nsDisplayCanvasBackgroundImage(aBuilder, this, i, bg);
+      if (bgItem->ShouldFixToViewport(aBuilder)) {
+        thisItemList.AppendNewToTop(
+          nsDisplayFixedPosition::CreateForFixedBackground(aBuilder, this, bgItem, i));
+      } else {
+        thisItemList.AppendNewToTop(bgItem);
+      }
+
+      if (layers.mLayers[i].mBlendMode != NS_STYLE_BLEND_NORMAL) {
+        thisItemList.AppendNewToTop(
+          new (aBuilder) nsDisplayBlendMode(aBuilder, this, &thisItemList,
+                                            layers.mLayers[i].mBlendMode,
+                                            scrollClip, i + 1));
+      }
+      aLists.BorderBackground()->AppendToTop(&thisItemList);
     }
 
     if (needBlendContainer) {
       aLists.BorderBackground()->AppendNewToTop(
-        new (aBuilder) nsDisplayBlendContainer(aBuilder, this, aLists.BorderBackground()));
+        new (aBuilder) nsDisplayBlendContainer(aBuilder, this, aLists.BorderBackground(),
+                                               scrollClip));
     }
   }
 
-  nsIFrame* kid;
-  for (kid = GetFirstPrincipalChild(); kid; kid = kid->GetNextSibling()) {
+  for (nsIFrame* kid : PrincipalChildList()) {
     // Put our child into its own pseudo-stack.
     BuildDisplayListForChild(aBuilder, kid, aDirtyRect, aLists);
   }

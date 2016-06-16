@@ -157,6 +157,9 @@ include counter-style/reftest.list
 # datalist
 include datalist/reftest.list
 
+# details and summary
+include details-summary/reftest.list
+
 # dom/
 include dom/reftest.list
 
@@ -259,6 +262,9 @@ skip-if(!B2G&&browserIsRemote) include ogg-video/reftest.list
 # webm-video/
 skip-if(!B2G&&browserIsRemote) include webm-video/reftest.list
 
+# mp4-video/
+skip-if(!B2G&&browserIsRemote) include mp4-video/reftest.list
+
 # parser/
 include ../../parser/htmlparser/tests/reftest/reftest.list
 
@@ -351,6 +357,9 @@ include transform-3d/reftest.list
 include unicode/reftest.list
 
 include view-source/reftest.list
+
+# web-animations
+include web-animations/reftest.list
 
 # webcomponents/
 include webcomponents/reftest.list

@@ -53,7 +53,7 @@ class CompileRuntime
     const void* addressOfLastCachedNativeIterator();
 
 #ifdef JS_GC_ZEAL
-    const void* addressOfGCZeal();
+    const void* addressOfGCZealModeBits();
 #endif
 
     const void* addressOfInterruptUint32();
@@ -97,9 +97,7 @@ class CompileZone
 
     const void* addressOfNeedsIncrementalBarrier();
 
-    // arenas.getFreeList(allocKind)
-    const void* addressOfFreeListFirst(gc::AllocKind allocKind);
-    const void* addressOfFreeListLast(gc::AllocKind allocKind);
+    const void* addressOfFreeList(gc::AllocKind allocKind);
 };
 
 class JitCompartment;

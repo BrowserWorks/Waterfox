@@ -138,8 +138,7 @@ JS_NewObjectWithUniqueType(JSContext* cx, const JSClass* clasp, HandleObject pro
 JS_FRIEND_API(JSObject*)
 JS_NewObjectWithoutMetadata(JSContext* cx, const JSClass* clasp, JS::Handle<JSObject*> proto)
 {
-    // Use an AutoEnterAnalysis to suppress invocation of the metadata callback.
-    AutoEnterAnalysis enter(cx);
+    AutoSuppressObjectMetadataCallback suppressMetadata(cx);
     return JS_NewObjectWithGivenProto(cx, clasp, proto);
 }
 
@@ -759,13 +758,17 @@ FormatFrame(JSContext* cx, const ScriptFrameIter& iter, char* buf, int num,
                         break;
                     }
                 }
-            } else if (script->argsObjAliasesFormals() && iter.hasArgsObj()) {
-                arg = iter.argsObj().arg(i);
-            } else {
-                if (iter.hasUsableAbstractFramePtr())
+            } else if (iter.hasUsableAbstractFramePtr()) {
+                if (script->analyzedArgsUsage() &&
+                    script->argsObjAliasesFormals() &&
+                    iter.hasArgsObj())
+                {
+                    arg = iter.argsObj().arg(i);
+                } else {
                     arg = iter.unaliasedActual(i, DONT_CHECK_ALIASING);
-                else
-                    arg = MagicValue(JS_OPTIMIZED_OUT);
+                }
+            } else {
+                arg = MagicValue(JS_OPTIMIZED_OUT);
             }
 
             JSAutoByteString valueBytes;
@@ -1005,7 +1008,7 @@ DumpHeapVisitArena(JSRuntime* rt, void* data, gc::Arena* arena,
 {
     DumpHeapTracer* dtrc = static_cast<DumpHeapTracer*>(data);
     fprintf(dtrc->output, "# arena allockind=%u size=%u\n",
-            unsigned(arena->aheader.getAllocKind()), unsigned(thingSize));
+            unsigned(arena->getAllocKind()), unsigned(thingSize));
 }
 
 static void

@@ -114,9 +114,15 @@ interface GlobalEventHandlers {
            [Pref="dom.w3c_pointer_events.enabled"]
            attribute EventHandler onlostpointercapture;
 
-           // Mozilla-specific handlers
+           // Fullscreen events handlers
+           [Func="nsDocument::IsUnprefixedFullscreenEnabled"]
+           attribute EventHandler onfullscreenchange;
+           [Func="nsDocument::IsUnprefixedFullscreenEnabled"]
+           attribute EventHandler onfullscreenerror;
            attribute EventHandler onmozfullscreenchange;
            attribute EventHandler onmozfullscreenerror;
+
+           // Mozilla-specific handlers
            attribute EventHandler onmozpointerlockchange;
            attribute EventHandler onmozpointerlockerror;
 };

@@ -143,7 +143,7 @@ function placementArraysEqual(areaId, actualPlacements, expectedPlacements) {
     } else if (expectedPlacements[i] instanceof RegExp) {
       ok(expectedPlacements[i].test(actualPlacements[i]),
          "Item " + i + " (" + actualPlacements[i] + ") in " +
-         areaId + " should match " + expectedPlacements[i]); 
+         areaId + " should match " + expectedPlacements[i]);
     } else {
       ok(false, "Unknown type of expected placement passed to " +
                 " assertAreaPlacements. Is your test broken?");
@@ -191,27 +191,7 @@ function endCustomizing(aWindow=window) {
   aWindow.gNavToolbox.addEventListener("aftercustomization", onCustomizationEnds);
   aWindow.gCustomizeMode.exit();
 
-  return deferredEndCustomizing.promise.then(function() {
-    let deferredLoadNewTab = Promise.defer();
-
-    //XXXgijs so some tests depend on this tab being about:blank. Make it so.
-    let newTabBrowser = aWindow.gBrowser.selectedBrowser;
-    newTabBrowser.stop();
-
-    // If we stop early enough, this might actually be about:blank.
-    if (newTabBrowser.contentDocument.location.href == "about:blank") {
-      return null;
-    }
-
-    // Otherwise, make it be about:blank, and wait for that to be done.
-    function onNewTabLoaded(e) {
-      newTabBrowser.removeEventListener("load", onNewTabLoaded, true);
-      deferredLoadNewTab.resolve();
-    }
-    newTabBrowser.addEventListener("load", onNewTabLoaded, true);
-    newTabBrowser.contentDocument.location.replace("about:blank");
-    return deferredLoadNewTab.promise;
-  });
+  return deferredEndCustomizing.promise;
 }
 
 function startCustomizing(aWindow=window) {
@@ -289,7 +269,7 @@ function promisePanelElementShown(win, aPanel) {
     aPanel.removeEventListener("popupshown", onPanelOpen);
     win.clearTimeout(timeoutId);
     deferred.resolve();
-  };
+  }
   aPanel.addEventListener("popupshown", onPanelOpen);
   return deferred.promise;
 }
@@ -332,7 +312,7 @@ function subviewShown(aSubview) {
     aSubview.removeEventListener("ViewShowing", onViewShowing);
     win.clearTimeout(timeoutId);
     deferred.resolve();
-  };
+  }
   aSubview.addEventListener("ViewShowing", onViewShowing);
   return deferred.promise;
 }
@@ -347,7 +327,7 @@ function subviewHidden(aSubview) {
     aSubview.removeEventListener("ViewHiding", onViewHiding);
     win.clearTimeout(timeoutId);
     deferred.resolve();
-  };
+  }
   aSubview.addEventListener("ViewHiding", onViewHiding);
   return deferred.promise;
 }
@@ -505,7 +485,7 @@ function promisePopupEvent(aPopup, aEventSuffix) {
   function onPopupEvent(e) {
     aPopup.removeEventListener(eventType, onPopupEvent);
     deferred.resolve();
-  };
+  }
 
   aPopup.addEventListener(eventType, onPopupEvent);
   return deferred.promise;

@@ -229,7 +229,7 @@ ContentPrefService.prototype = {
         let value = this._privModeStorage.get(group, aName);
         if (aCallback) {
           this._scheduleCallback(function(){aCallback.onResult(value);});
-          return;
+          return undefined;
         }
         return value;
       }
@@ -256,7 +256,7 @@ ContentPrefService.prototype = {
 
     if (aContext && aContext.usePrivateBrowsing) {
       this._privModeStorage.setWithCast(group, aName, aValue);
-      this._notifyPrefSet(group, aName, aValue);
+      this._notifyPrefSet(group, aName, aValue, aContext.usePrivateBrowsing);
       return;
     }
 
@@ -278,7 +278,9 @@ ContentPrefService.prototype = {
       this._insertPref(groupID, settingID, aValue);
 
     this._cache.setWithCast(group, aName, aValue);
-    this._notifyPrefSet(group, aName, aValue);
+
+    this._notifyPrefSet(group, aName, aValue,
+                        aContext ? aContext.usePrivateBrowsing : false);
   },
 
   hasPref: function ContentPrefService_hasPref(aGroup, aName, aContext) {
@@ -312,7 +314,7 @@ ContentPrefService.prototype = {
 
     if (aContext && aContext.usePrivateBrowsing) {
       this._privModeStorage.remove(group, aName);
-      this._notifyPrefRemoved(group, aName);
+      this._notifyPrefRemoved(group, aName, true);
       return;
     }
 
@@ -335,7 +337,7 @@ ContentPrefService.prototype = {
       this._deleteGroupIfUnused(groupID);
 
     this._cache.remove(group, aName);
-    this._notifyPrefRemoved(group, aName);
+    this._notifyPrefRemoved(group, aName, false);
   },
 
   removeGroupedPrefs: function ContentPrefService_removeGroupedPrefs(aContext) {
@@ -374,7 +376,7 @@ ContentPrefService.prototype = {
       for (let [group, name, ] of this._privModeStorage) {
         if (name === aName) {
           this._privModeStorage.remove(group, aName);
-          this._notifyPrefRemoved(group, aName);
+          this._notifyPrefRemoved(group, aName, true);
         }
       }
     }
@@ -382,19 +384,19 @@ ContentPrefService.prototype = {
     var settingID = this._selectSettingID(aName);
     if (!settingID)
       return;
-    
+
     var selectGroupsStmt = this._dbCreateStatement(`
       SELECT groups.id AS groupID, groups.name AS groupName
       FROM prefs
       JOIN groups ON prefs.groupID = groups.id
       WHERE prefs.settingID = :setting
     `);
-    
+
     var groupNames = [];
     var groupIDs = [];
     try {
       selectGroupsStmt.params.setting = settingID;
-    
+
       while (selectGroupsStmt.executeStep()) {
         groupIDs.push(selectGroupsStmt.row["groupID"]);
         groupNames.push(selectGroupsStmt.row["groupName"]);
@@ -403,7 +405,7 @@ ContentPrefService.prototype = {
     finally {
       selectGroupsStmt.reset();
     }
-    
+
     if (this.hasPref(null, aName)) {
       groupNames.push(null);
     }
@@ -416,7 +418,7 @@ ContentPrefService.prototype = {
       if (groupNames[i]) // ie. not null, which will be last (and i == groupIDs.length)
         this._deleteGroupIfUnused(groupIDs[i]);
       if (!aContext || !aContext.usePrivateBrowsing) {
-        this._notifyPrefRemoved(groupNames[i], aName);
+        this._notifyPrefRemoved(groupNames[i], aName, false);
       }
     }
   },
@@ -524,10 +526,10 @@ ContentPrefService.prototype = {
   /**
    * Notify all observers about the removal of a preference.
    */
-  _notifyPrefRemoved: function ContentPrefService__notifyPrefRemoved(aGroup, aName) {
+  _notifyPrefRemoved: function ContentPrefService__notifyPrefRemoved(aGroup, aName, aIsPrivate) {
     for (var observer of this._getObservers(aName)) {
       try {
-        observer.onContentPrefRemoved(aGroup, aName);
+        observer.onContentPrefRemoved(aGroup, aName, aIsPrivate);
       }
       catch(ex) {
         Cu.reportError(ex);
@@ -538,10 +540,10 @@ ContentPrefService.prototype = {
   /**
    * Notify all observers about a preference change.
    */
-  _notifyPrefSet: function ContentPrefService__notifyPrefSet(aGroup, aName, aValue) {
+  _notifyPrefSet: function ContentPrefService__notifyPrefSet(aGroup, aName, aValue, aIsPrivate) {
     for (var observer of this._getObservers(aName)) {
       try {
-        observer.onContentPrefSet(aGroup, aName, aValue);
+        observer.onContentPrefSet(aGroup, aName, aValue, aIsPrivate);
       }
       catch(ex) {
         Cu.reportError(ex);
@@ -596,7 +598,7 @@ ContentPrefService.prototype = {
       value = this._cache.get(aGroup, aSetting);
       if (aCallback) {
         this._scheduleCallback(function(){aCallback.onResult(value);});
-        return;
+        return undefined;
       }
       return value;
     }
@@ -646,7 +648,7 @@ ContentPrefService.prototype = {
       value = this._cache.get(null, aName);
       if (aCallback) {
         this._scheduleCallback(function(){aCallback.onResult(value);});
-        return;
+        return undefined;
       }
       return value;
     }
@@ -985,7 +987,7 @@ ContentPrefService.prototype = {
     finally {
       this._stmtSelectPrefsByName.reset();
     }
-    
+
     var global = this._selectGlobalPref(aName);
     if (typeof global != "undefined") {
       prefs.setProperty(null, global);
@@ -1261,7 +1263,7 @@ function HostnameGrouper() {}
 HostnameGrouper.prototype = {
   //**************************************************************************//
   // XPCOM Plumbing
-  
+
   classID:          Components.ID("{8df290ae-dcaa-4c11-98a5-2429a4dc97bb}"),
   QueryInterface:   XPCOMUtils.generateQI([Ci.nsIContentURIGrouper]),
 
@@ -1286,7 +1288,7 @@ HostnameGrouper.prototype = {
       // reference, and hash, if possible) as the group.  This means that URIs
       // like about:mozilla and about:blank will be considered separate groups,
       // but at least they'll be grouped somehow.
-      
+
       // This also means that each individual file: URL will be considered
       // its own group.  This seems suboptimal, but so does treating the entire
       // file: URL space as a single group (especially if folks start setting

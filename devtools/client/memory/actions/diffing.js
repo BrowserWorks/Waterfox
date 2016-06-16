@@ -5,8 +5,8 @@
 
 const { assert, reportException } = require("devtools/shared/DevToolsUtils");
 const { actions, diffingState, viewState } = require("../constants");
+const telemetry = require("../telemetry");
 const {
-  breakdownEquals,
   getSnapshot,
   censusIsUpToDate,
   snapshotIsDiffable
@@ -49,12 +49,11 @@ const takeCensusDiff = exports.takeCensusDiff = function (heapWorker, first, sec
     assert(snapshotIsDiffable(second),
            `Second snapshot must be in a diffable state, found ${second.state}`);
 
-    let report;
-    let inverted = getState().inverted;
-    let breakdown = getState().breakdown;
+    let report, parentMap;
+    let display = getState().censusDisplay;
     let filter = getState().filter;
 
-    if (censusIsUpToDate(inverted, filter, breakdown, getState().diffing.census)) {
+    if (censusIsUpToDate(filter, display, getState().diffing.census)) {
       return;
     }
 
@@ -69,53 +68,55 @@ const takeCensusDiff = exports.takeCensusDiff = function (heapWorker, first, sec
         return;
       }
 
-      inverted = getState().inverted;
-      breakdown = getState().breakdown;
+      display = getState().censusDisplay;
       filter = getState().filter;
 
       dispatch({
         type: actions.TAKE_CENSUS_DIFF_START,
         first,
         second,
-        inverted,
         filter,
-        breakdown,
+        display,
       });
 
-      let opts = inverted ? { asInvertedTreeNode: true } : { asTreeNode: true };
+      let opts = display.inverted
+        ? { asInvertedTreeNode: true }
+        : { asTreeNode: true };
       opts.filter = filter || null;
 
       try {
-        report = yield heapWorker.takeCensusDiff(first.path,
-                                                 second.path,
-                                                 { breakdown },
-                                                 opts);
+        ({ delta: report, parentMap } = yield heapWorker.takeCensusDiff(
+          first.path,
+          second.path,
+          { breakdown: display.breakdown },
+          opts));
       } catch (error) {
         reportException("actions/diffing/takeCensusDiff", error);
         dispatch({ type: actions.DIFFING_ERROR, error });
         return;
       }
     }
-    while (inverted !== getState().inverted
-           || filter !== getState().filter
-           || !breakdownEquals(breakdown, getState().breakdown));
+    while (filter !== getState().filter
+           || display !== getState().censusDisplay);
 
     dispatch({
       type: actions.TAKE_CENSUS_DIFF_END,
       first,
       second,
       report,
-      inverted,
+      parentMap,
       filter,
-      breakdown,
+      display,
     });
+
+    telemetry.countDiff({ filter, display });
   };
 };
 
 /**
  * Ensure that the current diffing data is up to date with the currently
- * selected breakdown, filter, inversion, etc. If the state is not up-to-date,
- * then a recompute is triggered.
+ * selected display, filter, etc. If the state is not up-to-date, then a
+ * recompute is triggered.
  *
  * @param {HeapAnalysesClient} heapWorker
  */

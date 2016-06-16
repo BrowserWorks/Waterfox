@@ -150,6 +150,9 @@ static const char pluginSandboxRules[] =
   "    (literal \"%s\")\n"
   "    (literal \"%s\"))\n";
 
+static const char widevinePluginSandboxRulesAddend[] =
+  "(allow mach-lookup (global-name \"com.apple.windowserver.active\"))\n";
+
 static const char contentSandboxRules[] =
   "(version 1)\n"
   "\n"
@@ -158,6 +161,7 @@ static const char contentSandboxRules[] =
   "(define appPath \"%s\")\n"
   "(define appBinaryPath \"%s\")\n"
   "(define appDir \"%s\")\n"
+  "(define appTempDir \"%s\")\n"
   "(define home-path \"%s\")\n"
   "\n"
   "(import \"/System/Library/Sandbox/Profiles/system.sb\")\n"
@@ -421,6 +425,12 @@ static const char contentSandboxRules[] =
   "; bug 1201935\n"
   "    (allow file-read*\n"
   "        (home-subpath \"/Library/Caches/TemporaryItems\"))\n"
+  "\n"
+  "; bug 1237847\n"
+  "    (allow file-read*\n"
+  "        (home-subpath appTempDir))\n"
+  "    (allow file-write*\n"
+  "        (home-subpath appTempDir))\n"
   "  )\n"
   ")\n";
 
@@ -441,6 +451,15 @@ bool StartMacSandbox(MacSandboxInfo aInfo, std::string &aErrorMessage)
                aInfo.appPath.c_str(),
                aInfo.appBinaryPath.c_str());
     }
+
+    if (profile &&
+      aInfo.pluginInfo.type == MacSandboxPluginType_GMPlugin_EME_Widevine) {
+      char *widevineProfile = NULL;
+      asprintf(&widevineProfile, "%s%s", profile,
+        widevinePluginSandboxRulesAddend);
+      free(profile);
+      profile = widevineProfile;
+    }
   }
   else if (aInfo.type == MacSandboxType_Content) {
     asprintf(&profile, contentSandboxRules, aInfo.level,
@@ -448,6 +467,7 @@ bool StartMacSandbox(MacSandboxInfo aInfo, std::string &aErrorMessage)
              aInfo.appPath.c_str(),
              aInfo.appBinaryPath.c_str(),
              aInfo.appDir.c_str(),
+             aInfo.appTempDir.c_str(),
              getenv("HOME"));
   }
   else {

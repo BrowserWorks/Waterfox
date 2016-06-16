@@ -8,16 +8,17 @@ package org.mozilla.gecko.telemetry;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.Nullable;
-import java.io.IOException;
-import java.util.Locale;
+import android.text.TextUtils;
 
-import com.keepsafe.switchboard.SwitchBoard;
-import org.json.JSONArray;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.telemetry.TelemetryConstants.CorePing;
+import org.mozilla.gecko.util.Experiments;
 import org.mozilla.gecko.util.StringUtils;
+
+import java.io.IOException;
+import java.util.Locale;
 
 /**
  * A class with static methods to generate the various Java-created Telemetry pings to upload to the telemetry server.
@@ -64,15 +65,16 @@ public class TelemetryPingGenerator {
      */
     public static TelemetryPing createCorePing(final Context context, final String docId, final String clientId,
             final String serverURLSchemeHostPort, final int seq, final long profileCreationDateDays,
-            @Nullable final String distributionId) {
+            @Nullable final String distributionId, @Nullable final String defaultSearchEngine) {
         final String serverURL = getTelemetryServerURL(docId, serverURLSchemeHostPort, CorePing.NAME);
         final ExtendedJSONObject payload =
-                createCorePingPayload(context, clientId, seq, profileCreationDateDays, distributionId);
+                createCorePingPayload(context, clientId, seq, profileCreationDateDays, distributionId, defaultSearchEngine);
         return new TelemetryPing(serverURL, payload);
     }
 
     private static ExtendedJSONObject createCorePingPayload(final Context context, final String clientId,
-            final int seq, final long profileCreationDate, @Nullable final String distributionId) {
+            final int seq, final long profileCreationDate, @Nullable final String distributionId,
+            @Nullable final String defaultSearchEngine) {
         final ExtendedJSONObject ping = new ExtendedJSONObject();
         ping.put(CorePing.VERSION_ATTR, CorePing.VERSION_VALUE);
         ping.put(CorePing.OS_ATTR, CorePing.OS_VALUE);
@@ -85,32 +87,21 @@ public class TelemetryPingGenerator {
 
         ping.put(CorePing.ARCHITECTURE, AppConstants.ANDROID_CPU_ARCH);
         ping.put(CorePing.CLIENT_ID, clientId);
+        ping.put(CorePing.DEFAULT_SEARCH_ENGINE, TextUtils.isEmpty(defaultSearchEngine) ? null : defaultSearchEngine);
         ping.put(CorePing.DEVICE, deviceDescriptor);
         ping.put(CorePing.LOCALE, Locales.getLanguageTag(Locale.getDefault()));
         ping.put(CorePing.OS_VERSION, Integer.toString(Build.VERSION.SDK_INT)); // A String for cross-platform reasons.
         ping.put(CorePing.SEQ, seq);
-        if (AppConstants.MOZ_SWITCHBOARD) {
-            ping.put(CorePing.EXPERIMENTS, getActiveExperiments(context));
-        }
+        ping.putArray(CorePing.EXPERIMENTS, Experiments.getActiveExperiments(context));
 
         // Optional.
         if (distributionId != null) {
             ping.put(CorePing.DISTRIBUTION_ID, distributionId);
         }
 
-        // TODO (bug 1246816): Remove this "optional" parameter work-around when
-        // GeckoProfile.getAndPersistProfileCreationDateFromFilesystem is implemented. That method returns -1
-        // while it's not implemented so we don't include the parameter in the ping if that's the case.
-        if (profileCreationDate >= 0) {
-            ping.put(CorePing.PROFILE_CREATION_DATE, profileCreationDate);
-        }
+        // `null` indicates failure more clearly than < 0.
+        final Long finalProfileCreationDate = (profileCreationDate < 0) ? null : profileCreationDate;
+        ping.put(CorePing.PROFILE_CREATION_DATE, finalProfileCreationDate);
         return ping;
-    }
-
-    private static JSONArray getActiveExperiments(final Context context) {
-        if (!AppConstants.MOZ_SWITCHBOARD) {
-            throw new IllegalStateException("This method should not be called with switchboard disabled");
-        }
-        return new JSONArray(SwitchBoard.getActiveExperiments(context));
     }
 }

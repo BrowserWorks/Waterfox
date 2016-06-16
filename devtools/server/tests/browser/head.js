@@ -6,13 +6,13 @@ var Cc = Components.classes;
 var Ci = Components.interfaces;
 var Cu = Components.utils;
 
-Cu.import("resource://gre/modules/Services.jsm");
 const {console} = Cu.import("resource://gre/modules/Console.jsm", {});
 const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const {DebuggerClient} = require("devtools/shared/client/main");
 const {DebuggerServer} = require("devtools/server/main");
 const {defer} = require("promise");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const Services = require("Services");
 
 const PATH = "browser/devtools/server/tests/browser/";
 const MAIN_DOMAIN = "http://test1.example.org/" + PATH;
@@ -25,7 +25,10 @@ waitForExplicitFinish();
 /**
  * Add a new test tab in the browser and load the given url.
  * @param {String} url The url to be loaded in the new tab
- * @return a promise that resolves to the document when the url is loaded
+ * @return a promise that resolves to the new browser that the document
+ *         is loaded in. Note that we cannot return the document
+ *         directly, since this would be a CPOW in the e10s case,
+ *         and Promises cannot be resolved with CPOWs (see bug 1233497).
  */
 var addTab = Task.async(function* (url) {
   info("Adding a new tab with URL: '" + url + "'");
@@ -42,7 +45,7 @@ var addTab = Task.async(function* (url) {
     waitForFocus(resolve, content, isBlank);
   });
 
-  return tab.linkedBrowser.contentWindow.document;
+  return tab.linkedBrowser;
 });
 
 function* initAnimationsFrontForUrl(url) {
@@ -78,13 +81,11 @@ function initDebuggerServer() {
  * connected.
  */
 function connectDebuggerClient(client) {
-  return new Promise(resolve => {
-    client.connect(() => {
-      client.listTabs(tabs => {
-        resolve(tabs.tabs[tabs.selected]);
-      });
+  return client.connect()
+    .then(() => client.listTabs())
+    .then(tabs => {
+      return tabs.tabs[tabs.selected];
     });
-  });
 }
 
 /**

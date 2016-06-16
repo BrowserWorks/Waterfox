@@ -239,15 +239,18 @@ Preferences::SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeO
     }
   }
   if (gObserverTable) {
-    n += aMallocSizeOf(gObserverTable);
     n += gObserverTable->ShallowSizeOfIncludingThis(aMallocSizeOf);
     for (auto iter = gObserverTable->Iter(); !iter.Done(); iter.Next()) {
       n += iter.Key()->mPrefName.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
       n += iter.Data()->mClosures.ShallowSizeOfExcludingThis(aMallocSizeOf);
     }
   }
-  // We don't measure sRootBranch and sDefaultRootBranch here because
-  // DMD indicates they are not significant.
+  if (sRootBranch) {
+    n += reinterpret_cast<nsPrefBranch*>(sRootBranch)->SizeOfIncludingThis(aMallocSizeOf);
+  }
+  if (sDefaultRootBranch) {
+    n += reinterpret_cast<nsPrefBranch*>(sDefaultRootBranch)->SizeOfIncludingThis(aMallocSizeOf);
+  }
   n += pref_SizeOfPrivateData(aMallocSizeOf);
   return n;
 }
@@ -1312,7 +1315,7 @@ static nsresult pref_InitInitialObjects()
   // channel, telemetry is on by default, otherwise not. This is necessary
   // so that beta users who are testing final release builds don't flipflop
   // defaults.
-  if (Preferences::GetDefaultType(kTelemetryPref) == PREF_INVALID) {
+  if (Preferences::GetDefaultType(kTelemetryPref) == nsIPrefBranch::PREF_INVALID) {
     bool prerelease = false;
 #ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
     prerelease = true;

@@ -4,6 +4,15 @@
 'use strict';
 
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://testing-common/PromiseTestUtils.jsm");
+
+///////////////////
+//
+// Whitelisting this test.
+// As part of bug 1077403, the leaking uncaught rejection should be fixed.
+//
+// Instances of the rejection "record is undefined" may or may not appear.
+PromiseTestUtils.thisTestLeaksUncaughtRejectionsAndShouldBeFixed();
 
 const {PushDB, PushService, PushServiceHttp2} = serviceExports;
 
@@ -57,7 +66,7 @@ add_task(function* test_pushUnsubscriptionSuccess() {
     pushReceiptEndpoint: serverURL + '/receiptPushEndpointUnsubscriptionSuccess',
     scope: 'https://example.com/page/unregister-success',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
     quota: Infinity,
   });
 
@@ -69,7 +78,7 @@ add_task(function* test_pushUnsubscriptionSuccess() {
   yield PushService.unregister({
     scope: 'https://example.com/page/unregister-success',
     originAttributes: ChromeUtils.originAttributesToSuffix(
-      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inBrowser: false }),
+      { appId: Ci.nsIScriptSecurityManager.NO_APP_ID, inIsolatedMozBrowser: false }),
   });
   let record = yield db.getByKeyID(serverURL + '/subscriptionUnsubscriptionSuccess');
   ok(!record, 'Unregister did not remove record');

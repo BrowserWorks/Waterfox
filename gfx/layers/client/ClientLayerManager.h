@@ -97,6 +97,7 @@ public:
   virtual already_AddRefed<ColorLayer> CreateColorLayer() override;
   virtual already_AddRefed<RefLayer> CreateRefLayer() override;
 
+  void UpdateTextureFactoryIdentifier(const TextureFactoryIdentifier& aNewIdentifier);
   TextureFactoryIdentifier GetTextureFactoryIdentifier()
   {
     return mForwarder->GetTextureFactoryIdentifier();
@@ -302,6 +303,8 @@ private:
                               void* aCallbackData,
                               EndTransactionFlags);
 
+  bool DependsOnStaleDevice() const;
+
   LayerRefArray mKeepAlive;
 
   nsIWidget* mWidget;
@@ -345,13 +348,14 @@ private:
   APZTestData mApzTestData;
 
   RefPtr<ShadowLayerForwarder> mForwarder;
-  nsAutoTArray<RefPtr<TextureClientPool>,2> mTexturePools;
-  nsAutoTArray<dom::OverfillCallback*,0> mOverfillCallbacks;
+  AutoTArray<RefPtr<TextureClientPool>,2> mTexturePools;
+  AutoTArray<dom::OverfillCallback*,0> mOverfillCallbacks;
   mozilla::TimeStamp mTransactionStart;
 
   nsTArray<DidCompositeObserver*> mDidCompositeObservers;
 
   RefPtr<MemoryPressureObserver> mMemoryPressureObserver;
+  uint64_t mDeviceCounter;
 };
 
 class ClientLayer : public ShadowableLayer

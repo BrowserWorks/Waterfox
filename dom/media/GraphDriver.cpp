@@ -53,7 +53,6 @@ GraphDriver::GraphDriver(MediaStreamGraphImpl* aGraphImpl)
     mIterationEnd(0),
     mGraphImpl(aGraphImpl),
     mWaitState(WAITSTATE_RUNNING),
-    mAudioInput(nullptr),
     mCurrentTimeStamp(TimeStamp::Now()),
     mPreviousDriver(nullptr),
     mNextDriver(nullptr)
@@ -166,10 +165,35 @@ ThreadedDriver::ThreadedDriver(MediaStreamGraphImpl* aGraphImpl)
   : GraphDriver(aGraphImpl)
 { }
 
+class MediaStreamGraphShutdownThreadRunnable : public nsRunnable {
+public:
+  explicit MediaStreamGraphShutdownThreadRunnable(already_AddRefed<nsIThread> aThread)
+    : mThread(aThread)
+  {
+  }
+  NS_IMETHOD Run()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(mThread);
+
+    mThread->Shutdown();
+    mThread = nullptr;
+    return NS_OK;
+  }
+private:
+  nsCOMPtr<nsIThread> mThread;
+};
+
 ThreadedDriver::~ThreadedDriver()
 {
   if (mThread) {
-    mThread->Shutdown();
+    if (NS_IsMainThread()) {
+      mThread->Shutdown();
+    } else {
+      nsCOMPtr<nsIRunnable> event =
+        new MediaStreamGraphShutdownThreadRunnable(mThread.forget());
+      NS_DispatchToMainThread(event);
+    }
   }
 }
 class MediaStreamGraphInitThreadRunnable : public nsRunnable {
@@ -418,34 +442,9 @@ OfflineClockDriver::OfflineClockDriver(MediaStreamGraphImpl* aGraphImpl, GraphTi
 
 }
 
-class MediaStreamGraphShutdownThreadRunnable : public nsRunnable {
-public:
-  explicit MediaStreamGraphShutdownThreadRunnable(nsIThread* aThread)
-    : mThread(aThread)
-  {
-  }
-  NS_IMETHOD Run()
-  {
-    MOZ_ASSERT(NS_IsMainThread());
-    MOZ_ASSERT(mThread);
-
-    mThread->Shutdown();
-    mThread = nullptr;
-    return NS_OK;
-  }
-private:
-  nsCOMPtr<nsIThread> mThread;
-};
 
 OfflineClockDriver::~OfflineClockDriver()
 {
-  // transfer the ownership of mThread to the event
-  // XXX should use .forget()/etc
-  if (mThread) {
-    nsCOMPtr<nsIRunnable> event = new MediaStreamGraphShutdownThreadRunnable(mThread);
-    mThread = nullptr;
-    NS_DispatchToMainThread(event);
-  }
 }
 
 MediaTime
@@ -551,6 +550,7 @@ StreamAndPromiseForOperation::StreamAndPromiseForOperation(MediaStream* aStream,
 AudioCallbackDriver::AudioCallbackDriver(MediaStreamGraphImpl* aGraphImpl)
   : GraphDriver(aGraphImpl)
   , mSampleRate(0)
+  , mInputChannels(1)
   , mIterationDurationMS(MEDIA_GRAPH_TARGET_PERIOD_MS)
   , mStarted(false)
   , mAudioInput(nullptr)
@@ -609,7 +609,7 @@ AudioCallbackDriver::Init()
   }
 
   input = output;
-  input.channels = 1; // change to support optional stereo capture
+  input.channels = mInputChannels; // change to support optional stereo capture
 
   cubeb_stream* stream;
   // XXX Only pass input input if we have an input listener.  Always
@@ -927,14 +927,14 @@ AudioCallbackDriver::DataCallback(const AudioDataValue* aInputBuffer,
   // removed/added to this list and TSAN issues, but input and output will
   // use separate callback methods.
   mGraphImpl->NotifyOutputData(aOutputBuffer, static_cast<size_t>(aFrames),
-                               ChannelCount);
+                               mSampleRate, ChannelCount);
 
   // Process mic data if any/needed -- after inserting far-end data for AEC!
   if (aInputBuffer) {
     if (mAudioInput) { // for this specific input-only or full-duplex stream
       mAudioInput->NotifyInputData(mGraphImpl, aInputBuffer,
                                    static_cast<size_t>(aFrames),
-                                   ChannelCount);
+                                   mSampleRate, mInputChannels);
     }
   }
 
@@ -1103,7 +1103,7 @@ AudioCallbackDriver::EnqueueStreamAndPromiseForOperation(MediaStream* aStream,
 
 void AudioCallbackDriver::CompleteAudioContextOperations(AsyncCubebOperation aOperation)
 {
-  nsAutoTArray<StreamAndPromiseForOperation, 1> array;
+  AutoTArray<StreamAndPromiseForOperation, 1> array;
 
   // We can't lock for the whole function because AudioContextOperationCompleted
   // will grab the monitor

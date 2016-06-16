@@ -646,12 +646,18 @@ SimpleTest.requestFlakyTimeout = function (reason) {
 SimpleTest._pendingWaitForFocusCount = 0;
 
 /**
- * Version of waitForFocus that returns a promise.
+ * Version of waitForFocus that returns a promise. The Promise will
+ * not resolve to the focused window, as it might be a CPOW (and Promises
+ * cannot be resolved with CPOWs). If you require the focused window,
+ * you should use waitForFocus instead.
  */
 SimpleTest.promiseFocus = function *(targetWindow, expectBlankPage)
 {
     return new Promise(function (resolve, reject) {
-        SimpleTest.waitForFocus(win => resolve(win), targetWindow, expectBlankPage);
+        SimpleTest.waitForFocus(win => {
+            // Just resolve, without passing the window (see bug 1233497)
+            resolve();
+        }, targetWindow, expectBlankPage);
     });
 }
 
@@ -1049,6 +1055,15 @@ SimpleTest.finish = function() {
                                + "SimpleTest.waitForExplicitFinish() if you need "
                                + "it.)");
         }
+        if (SimpleTest._expectingRegisteredServiceWorker) {
+            if (!SpecialPowers.isServiceWorkerRegistered()) {
+                SimpleTest.ok(false, "This test is expected to leave a service worker registered");
+            }
+        } else {
+            if (SpecialPowers.isServiceWorkerRegistered()) {
+                SimpleTest.ok(false, "This test left a service worker registered without cleaning it up");
+            }
+        }
 
         if (parentRunner) {
             /* We're running in an iframe, and the parent has a TestRunner */
@@ -1272,6 +1287,14 @@ SimpleTest.isIgnoringAllUncaughtExceptions = function () {
 };
 
 /**
+ * Indicates to the test framework that this test is expected to leave a
+ * service worker registered when it finishes.
+ */
+SimpleTest.expectRegisteredServiceWorker = function () {
+    SimpleTest._expectingRegisteredServiceWorker = true;
+};
+
+/**
  * Resets any state this SimpleTest object has.  This is important for
  * browser chrome mochitests, which reuse the same SimpleTest object
  * across a run.
@@ -1279,6 +1302,7 @@ SimpleTest.isIgnoringAllUncaughtExceptions = function () {
 SimpleTest.reset = function () {
     SimpleTest._ignoringAllUncaughtExceptions = false;
     SimpleTest._expectingUncaughtException = false;
+    SimpleTest._expectingRegisteredServiceWorker = false;
     SimpleTest._bufferedMessages = [];
 };
 
@@ -1538,7 +1562,7 @@ window.onerror = function simpletestOnerror(errorMsg, url, lineNumber) {
         }
     }
 
-    if (!SimpleTest._stopOnLoad && !isExpected) {
+    if (!SimpleTest._stopOnLoad && !isExpected && !SimpleTest._alreadyFinished) {
         // Need to finish() manually here, yet let the test actually end first.
         SimpleTest.executeSoon(SimpleTest.finish);
     }

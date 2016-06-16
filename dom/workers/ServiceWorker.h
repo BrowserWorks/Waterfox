@@ -11,7 +11,7 @@
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/ServiceWorkerBinding.h" // For ServiceWorkerState.
 
-class nsPIDOMWindow;
+class nsPIDOMWindowInner;
 
 namespace mozilla {
 namespace dom {
@@ -69,7 +69,7 @@ public:
 
 private:
   // This class can only be created from ServiceWorkerInfo::GetOrCreateInstance().
-  ServiceWorker(nsPIDOMWindow* aWindow, ServiceWorkerInfo* aInfo);
+  ServiceWorker(nsPIDOMWindowInner* aWindow, ServiceWorkerInfo* aInfo);
 
   // This class is reference-counted and will be destroyed from Release().
   ~ServiceWorker();

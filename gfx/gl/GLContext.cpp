@@ -99,6 +99,7 @@ static const char *sExtensionNames[] = {
     "GL_ARB_pixel_buffer_object",
     "GL_ARB_robustness",
     "GL_ARB_sampler_objects",
+    "GL_ARB_seamless_cube_map",
     "GL_ARB_sync",
     "GL_ARB_texture_compression",
     "GL_ARB_texture_float",
@@ -2354,12 +2355,13 @@ GLContext::MarkDestroyed()
     if (IsDestroyed())
         return;
 
+    // Null these before they're naturally nulled after dtor, as we want GLContext to
+    // still be alive in *their* dtors.
+    mScreen = nullptr;
+    mBlitHelper = nullptr;
+    mReadTexImageHelper = nullptr;
+
     if (MakeCurrent()) {
-        DestroyScreenBuffer();
-
-        mBlitHelper = nullptr;
-        mReadTexImageHelper = nullptr;
-
         mTexGarbageBin->GLContextTeardown();
     } else {
         NS_WARNING("MakeCurrent() failed during MarkDestroyed! Skipping GL object teardown.");
@@ -2603,8 +2605,6 @@ GLContext::CreateScreenBufferImpl(const IntSize& size, const SurfaceCaps& caps)
         return false;
     }
 
-    DestroyScreenBuffer();
-
     // This will rebind to 0 (Screen) if needed when
     // it falls out of scope.
     ScopedBindFramebuffer autoFB(this);
@@ -2621,12 +2621,6 @@ GLContext::ResizeScreenBuffer(const IntSize& size)
         return false;
 
     return mScreen->Resize(size);
-}
-
-void
-GLContext::DestroyScreenBuffer()
-{
-    mScreen = nullptr;
 }
 
 void

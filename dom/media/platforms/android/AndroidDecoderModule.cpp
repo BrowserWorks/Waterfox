@@ -4,12 +4,8 @@
 
 #include "AndroidDecoderModule.h"
 #include "AndroidBridge.h"
-#include "GLBlitHelper.h"
-#include "GLContext.h"
-#include "GLContextEGL.h"
-#include "GLContextProvider.h"
+#include "AndroidSurfaceTexture.h"
 #include "GLImages.h"
-#include "GLLibraryEGL.h"
 
 #include "MediaData.h"
 #include "MediaInfo.h"
@@ -107,7 +103,6 @@ public:
 
   void Cleanup() override
   {
-    mGLContext = nullptr;
   }
 
   nsresult Input(MediaRawData* aSample) override
@@ -118,10 +113,6 @@ public:
   nsresult PostOutput(BufferInfo::Param aInfo, MediaFormat::Param aFormat,
                       const TimeUnit& aDuration) override
   {
-    if (!EnsureGLContext()) {
-      return NS_ERROR_FAILURE;
-    }
-
     RefPtr<layers::Image> img =
       new SurfaceTextureImage(mSurfaceTexture.get(), mConfig.mDisplay,
                               gl::OriginPos::BottomLeft);
@@ -155,20 +146,9 @@ public:
   }
 
 protected:
-  bool EnsureGLContext()
-  {
-    if (mGLContext) {
-      return true;
-    }
-
-    mGLContext = GLContextProvider::CreateHeadless(CreateContextFlags::NONE);
-    return mGLContext;
-  }
-
   layers::ImageContainer* mImageContainer;
   const VideoInfo& mConfig;
   RefPtr<AndroidSurfaceTexture> mSurfaceTexture;
-  RefPtr<GLContext> mGLContext;
 };
 
 class AudioDataDecoder : public MediaCodecDataDecoder
@@ -257,6 +237,17 @@ AndroidDecoderModule::SupportsMimeType(const nsACString& aMimeType) const
       aMimeType.EqualsLiteral("video/avc")) {
     return true;
   }
+
+  // When checking "audio/x-wav", CreateDecoder can cause a JNI ERROR by
+  // Accessing a stale local reference leading to a SIGSEGV crash.
+  // To avoid this we check for wav types here.
+  if (aMimeType.EqualsLiteral("audio/x-wav") ||
+      aMimeType.EqualsLiteral("audio/wave; codecs=1") ||
+      aMimeType.EqualsLiteral("audio/wave; codecs=6") ||
+      aMimeType.EqualsLiteral("audio/wave; codecs=7") ||
+      aMimeType.EqualsLiteral("audio/wave; codecs=65534")) {
+    return false;
+  }  
 
   return widget::HardwareCodecCapabilityUtils::FindDecoderCodecInfoForMimeType(
       nsCString(TranslateMimeType(aMimeType)));
@@ -364,10 +355,11 @@ MediaCodecDataDecoder::InitDecoder(Surface::Param aSurface)
   NS_ENSURE_SUCCESS(rv = ResetInputBuffers(), rv);
   NS_ENSURE_SUCCESS(rv = ResetOutputBuffers(), rv);
 
-  NS_NewNamedThread("MC Decoder", getter_AddRefs(mThread),
-                    NS_NewRunnableMethod(this, &MediaCodecDataDecoder::DecoderLoop));
+  rv = NS_NewNamedThread(
+      "MC Decoder", getter_AddRefs(mThread),
+      NS_NewRunnableMethod(this, &MediaCodecDataDecoder::DecoderLoop));
 
-  return NS_OK;
+  return rv;
 }
 
 // This is in usec, so that's 10ms.
@@ -484,7 +476,7 @@ MediaCodecDataDecoder::QueueSample(const MediaRawData* aSample)
     return res;
   }
 
-  mDurations.push(TimeUnit::FromMicroseconds(aSample->mDuration));
+  mDurations.push_back(TimeUnit::FromMicroseconds(aSample->mDuration));
   return NS_OK;
 }
 
@@ -524,12 +516,14 @@ MediaCodecDataDecoder::HandleEOS(int32_t aOutputStatus)
   mDecoder->ReleaseOutputBuffer(aOutputStatus, false);
 }
 
-TimeUnit
+Maybe<TimeUnit>
 MediaCodecDataDecoder::GetOutputDuration()
 {
-  MOZ_ASSERT(!mDurations.empty(), "Should have had a duration queued");
-  const TimeUnit duration = mDurations.front();
-  mDurations.pop();
+  if (mDurations.empty()) {
+    return Nothing();
+  }
+  const Maybe<TimeUnit> duration = Some(mDurations.front());
+  mDurations.pop_front();
   return duration;
 }
 
@@ -539,19 +533,26 @@ MediaCodecDataDecoder::ProcessOutput(
 {
   AutoLocalJNIFrame frame(jni::GetEnvForThread(), 1);
 
-  const TimeUnit duration = GetOutputDuration();
+  const Maybe<TimeUnit> duration = GetOutputDuration();
+  if (!duration) {
+    // Some devices report failure in QueueSample while actually succeeding at
+    // it, in which case we get an output buffer without having a cached duration
+    // (bug 1273523).
+    return NS_OK;
+  }
+
   const auto buffer = jni::Object::LocalRef::Adopt(
       frame.GetEnv()->GetObjectArrayElement(mOutputBuffers.Get(), aStatus));
 
   if (buffer) {
     // The buffer will be null on Android L if we are decoding to a Surface.
     void* directBuffer = frame.GetEnv()->GetDirectBufferAddress(buffer.Get());
-    Output(aInfo, directBuffer, aFormat, duration);
+    Output(aInfo, directBuffer, aFormat, duration.value());
   }
 
   // The Surface will be updated at this point (for video).
   mDecoder->ReleaseOutputBuffer(aStatus, true);
-  PostOutput(aInfo, aFormat, duration);
+  PostOutput(aInfo, aFormat, duration.value());
 
   return NS_OK;
 }
@@ -582,7 +583,7 @@ MediaCodecDataDecoder::DecoderLoop()
         // We've fed this into the decoder, so remove it from the queue.
         MonitorAutoLock lock(mMonitor);
         MOZ_RELEASE_ASSERT(mQueue.size(), "Queue may not be empty");
-        mQueue.pop();
+        mQueue.pop_front();
         isOutputDone = false;
       }
     }
@@ -657,26 +658,27 @@ MediaCodecDataDecoder::State() const
   return mState;
 }
 
-void
+bool
 MediaCodecDataDecoder::State(ModuleState aState)
 {
-  LOG("%s -> %s", ModuleStateStr(mState), ModuleStateStr(aState));
+  bool ok = true;
 
-  if (aState == kDrainDecoder) {
-    MOZ_ASSERT(mState == kDrainQueue);
+  if (mState == kShutdown) {
+    ok = false;
+  } else if (mState == kStopping) {
+    ok = aState == kShutdown;
+  } else if (aState == kDrainDecoder) {
+    ok = mState == kDrainQueue;
   } else if (aState == kDrainWaitEOS) {
-    MOZ_ASSERT(mState == kDrainDecoder);
+    ok = mState == kDrainDecoder;
   }
 
-  mState = aState;
-}
+  if (ok) {
+    LOG("%s -> %s", ModuleStateStr(mState), ModuleStateStr(aState));
+    mState = aState;
+  }
 
-template<typename T>
-void
-Clear(T& aCont)
-{
-  T aEmpty = T();
-  swap(aCont, aEmpty);
+  return ok;
 }
 
 void
@@ -684,15 +686,15 @@ MediaCodecDataDecoder::ClearQueue()
 {
   mMonitor.AssertCurrentThreadOwns();
 
-  Clear(mQueue);
-  Clear(mDurations);
+  mQueue.clear();
+  mDurations.clear();
 }
 
 nsresult
 MediaCodecDataDecoder::Input(MediaRawData* aSample)
 {
   MonitorAutoLock lock(mMonitor);
-  mQueue.push(aSample);
+  mQueue.push_back(aSample);
   lock.NotifyAll();
 
   return NS_OK;
@@ -714,7 +716,9 @@ nsresult
 MediaCodecDataDecoder::Flush()
 {
   MonitorAutoLock lock(mMonitor);
-  State(kFlushing);
+  if (!State(kFlushing)) {
+    return NS_OK;
+  }
   lock.Notify();
 
   while (State() == kFlushing) {
@@ -744,15 +748,10 @@ MediaCodecDataDecoder::Shutdown()
 {
   MonitorAutoLock lock(mMonitor);
 
-  if (State() == kStopping) {
-    // Already shutdown or in the process of doing so
-    return NS_OK;
-  }
-
   State(kStopping);
   lock.Notify();
 
-  while (mThread && State() == kStopping) {
+  while (mThread && State() != kShutdown) {
     lock.Wait();
   }
 

@@ -62,6 +62,7 @@
 #include "TouchEvents.h"
 #include "WritingModes.h"
 #include "InputData.h"
+#include "FrameLayerBuilder.h"
 #ifdef ACCESSIBILITY
 #include "nsAccessibilityService.h"
 #endif
@@ -167,7 +168,7 @@ nsBaseWidget::nsBaseWidget()
 , mUpdateCursor(true)
 , mUseAttachedEvents(false)
 , mIMEHasFocus(false)
-#ifdef XP_WIN
+#if defined(XP_WIN) || defined(XP_MACOSX)
 , mAccessibilityInUseFlag(false)
 #endif
 {
@@ -235,7 +236,7 @@ WidgetShutdownObserver::Unregister()
   }
 }
 
-#ifdef XP_WIN
+#if defined(XP_WIN) || defined(XP_MACOSX)
 // defined in nsAppRunner.cpp
 extern const char* kAccessibilityLastRunDatePref;
 
@@ -257,12 +258,6 @@ nsBaseWidget::Shutdown()
     delete sPluginWidgetList;
     sPluginWidgetList = nullptr;
   }
-#if defined(XP_WIN)
-  if (mAccessibilityInUseFlag) {
-    uint32_t now = PRTimeToSeconds(PR_Now());
-    Preferences::SetInt(kAccessibilityLastRunDatePref, now);
-  }
-#endif
 #endif
 }
 
@@ -290,6 +285,47 @@ void nsBaseWidget::DestroyLayerManager()
     mLayerManager = nullptr;
   }
   DestroyCompositor();
+}
+
+void
+nsBaseWidget::OnRenderingDeviceReset()
+{
+  if (!mLayerManager || !mCompositorParent) {
+    return;
+  }
+
+  nsTArray<LayersBackend> backendHints;
+  gfxPlatform::GetPlatform()->GetCompositorBackends(ComputeShouldAccelerate(), backendHints);
+
+  // If the existing compositor does not use acceleration, and this widget
+  // should not be accelerated, then there's no point in resetting.
+  //
+  // Note that if this widget should be accelerated, but instead has a basic
+  // compositor, we still reset just in case we're now in the position to get
+  // accelerated layers again.
+  RefPtr<ClientLayerManager> clm = mLayerManager->AsClientLayerManager();
+  if (!ComputeShouldAccelerate() &&
+      clm->GetTextureFactoryIdentifier().mParentBackend != LayersBackend::LAYERS_BASIC)
+  {
+    return;
+  }
+
+  // Recreate the compositor.
+  TextureFactoryIdentifier identifier;
+  if (!mCompositorParent->ResetCompositor(backendHints, &identifier)) {
+    // No action was taken, so we don't have to do anything.
+    return;
+  }
+
+  // Invalidate all layers.
+  FrameLayerBuilder::InvalidateAllLayers(mLayerManager);
+
+  // Update the texture factory identifier.
+  clm->UpdateTextureFactoryIdentifier(identifier);
+  if (ShadowLayerForwarder* lf = clm->AsShadowForwarder()) {
+    lf->IdentifyTextureHost(identifier);
+  }
+  ImageBridgeChild::IdentifyCompositorTextureHost(identifier);
 }
 
 void
@@ -333,7 +369,6 @@ nsBaseWidget::~nsBaseWidget()
 //
 //-------------------------------------------------------------------------
 void nsBaseWidget::BaseCreate(nsIWidget* aParent,
-                              const LayoutDeviceIntRect& aRect,
                               nsWidgetInitData* aInitData)
 {
   static bool gDisableNativeThemeCached = false;
@@ -758,9 +793,8 @@ void
 nsBaseWidget::ArrayFromRegion(const LayoutDeviceIntRegion& aRegion,
                               nsTArray<LayoutDeviceIntRect>& aRects)
 {
-  const LayoutDeviceIntRect* r;
-  for (LayoutDeviceIntRegion::RectIterator iter(aRegion); (r = iter.Next()); ) {
-    aRects.AppendElement(*r);
+  for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+    aRects.AppendElement(iter.Get());
   }
 }
 
@@ -832,9 +866,9 @@ NS_IMETHODIMP nsBaseWidget::MakeFullScreen(bool aFullScreen, nsIScreen* aScreen)
 
   if (aFullScreen) {
     if (!mOriginalBounds) {
-      mOriginalBounds = new CSSIntRect();
+      mOriginalBounds = new LayoutDeviceIntRect();
     }
-    *mOriginalBounds = GetScaledScreenBounds();
+    GetScreenBounds(*mOriginalBounds);
 
     // Move to top-left corner of screen and size to the screen dimensions
     nsCOMPtr<nsIScreen> screen = aScreen;
@@ -848,8 +882,13 @@ NS_IMETHODIMP nsBaseWidget::MakeFullScreen(bool aFullScreen, nsIScreen* aScreen)
       }
     }
   } else if (mOriginalBounds) {
-    Resize(mOriginalBounds->x, mOriginalBounds->y, mOriginalBounds->width,
-           mOriginalBounds->height, true);
+    if (BoundsUseDesktopPixels()) {
+      DesktopRect deskRect = *mOriginalBounds / GetDesktopToDeviceScale();
+      Resize(deskRect.x, deskRect.y, deskRect.width, deskRect.height, true);
+    } else {
+      Resize(mOriginalBounds->x, mOriginalBounds->y, mOriginalBounds->width,
+             mOriginalBounds->height, true);
+    }
   }
 
   return NS_OK;
@@ -936,10 +975,10 @@ void nsBaseWidget::ConfigureAPZCTreeManager()
         aInputBlockId, aFlags));
   };
 
-  RefPtr<GeckoContentController> controller = CreateRootContentController();
-  if (controller) {
+  mRootContentController = CreateRootContentController();
+  if (mRootContentController) {
     uint64_t rootLayerTreeId = mCompositorParent->RootLayerTreeId();
-    CompositorParent::SetControllerForLayerTree(rootLayerTreeId, controller);
+    CompositorParent::SetControllerForLayerTree(rootLayerTreeId, mRootContentController);
   }
 
   // When APZ is enabled, we can actually enable raw touch events because we
@@ -1260,6 +1299,11 @@ void nsBaseWidget::CreateCompositor(int aWidth, int aHeight)
 
   if (!success || !lf) {
     NS_WARNING("Failed to create an OMT compositor.");
+    mAPZC = nullptr;
+    if (mRootContentController) {
+      mRootContentController->Destroy();
+      mRootContentController = nullptr;
+    }
     DestroyCompositor();
     mLayerManager = nullptr;
     mCompositorChild = nullptr;
@@ -1342,6 +1386,14 @@ void nsBaseWidget::OnDestroy()
     // Don't release it until this widget actually released because after this
     // is called, TextEventDispatcher() may create it again.
   }
+
+  // If this widget is being destroyed, let the APZ code know to drop references
+  // to this widget. Callers of this function all should be holding a deathgrip
+  // on this widget already.
+  if (mRootContentController) {
+    mRootContentController->Destroy();
+    mRootContentController = nullptr;
+  }
 }
 
 NS_METHOD nsBaseWidget::SetWindowClass(const nsAString& xulWinType)
@@ -1353,15 +1405,14 @@ NS_METHOD nsBaseWidget::MoveClient(double aX, double aY)
 {
   LayoutDeviceIntPoint clientOffset(GetClientOffset());
 
-  // GetClientOffset returns device pixels; scale back to display pixels
+  // GetClientOffset returns device pixels; scale back to desktop pixels
   // if that's what this widget uses for the Move/Resize APIs
-  CSSToLayoutDeviceScale scale = BoundsUseDisplayPixels()
-                                    ? GetDefaultScale()
-                                    : CSSToLayoutDeviceScale(1.0);
-  aX -= clientOffset.x * 1.0 / scale.scale;
-  aY -= clientOffset.y * 1.0 / scale.scale;
-
-  return Move(aX, aY);
+  if (BoundsUseDesktopPixels()) {
+    DesktopPoint desktopOffset = clientOffset / GetDesktopToDeviceScale();
+    return Move(aX - desktopOffset.x, aY - desktopOffset.y);
+  } else {
+    return Move(aX - clientOffset.x, aY - clientOffset.y);
+  }
 }
 
 NS_METHOD nsBaseWidget::ResizeClient(double aWidth,
@@ -1374,16 +1425,18 @@ NS_METHOD nsBaseWidget::ResizeClient(double aWidth,
   LayoutDeviceIntRect clientBounds;
   GetClientBounds(clientBounds);
 
-  // GetClientBounds and mBounds are device pixels; scale back to display pixels
+  // GetClientBounds and mBounds are device pixels; scale back to desktop pixels
   // if that's what this widget uses for the Move/Resize APIs
-  CSSToLayoutDeviceScale scale = BoundsUseDisplayPixels()
-                                    ? GetDefaultScale()
-                                    : CSSToLayoutDeviceScale(1.0);
-  double invScale = 1.0 / scale.scale;
-  aWidth = mBounds.width * invScale + (aWidth - clientBounds.width * invScale);
-  aHeight = mBounds.height * invScale + (aHeight - clientBounds.height * invScale);
-
-  return Resize(aWidth, aHeight, aRepaint);
+  if (BoundsUseDesktopPixels()) {
+    DesktopSize desktopDelta =
+      (LayoutDeviceIntSize(mBounds.width, mBounds.height) -
+       clientBounds.Size()) / GetDesktopToDeviceScale();
+    return Resize(aWidth + desktopDelta.width, aHeight + desktopDelta.height,
+                  aRepaint);
+  } else {
+    return Resize(mBounds.width + (aWidth - clientBounds.width),
+                  mBounds.height + (aHeight - clientBounds.height), aRepaint);
+  }
 }
 
 NS_METHOD nsBaseWidget::ResizeClient(double aX,
@@ -1398,15 +1451,23 @@ NS_METHOD nsBaseWidget::ResizeClient(double aX,
   LayoutDeviceIntRect clientBounds;
   GetClientBounds(clientBounds);
 
-  double scale = BoundsUseDisplayPixels() ? 1.0 / GetDefaultScale().scale : 1.0;
-  aWidth = mBounds.width * scale + (aWidth - clientBounds.width * scale);
-  aHeight = mBounds.height * scale + (aHeight - clientBounds.height * scale);
-
   LayoutDeviceIntPoint clientOffset(GetClientOffset());
-  aX -= clientOffset.x * scale;
-  aY -= clientOffset.y * scale;
 
-  return Resize(aX, aY, aWidth, aHeight, aRepaint);
+  if (BoundsUseDesktopPixels()) {
+    DesktopToLayoutDeviceScale scale = GetDesktopToDeviceScale();
+    DesktopPoint desktopOffset = clientOffset / scale;
+    DesktopSize desktopDelta =
+      (LayoutDeviceIntSize(mBounds.width, mBounds.height) -
+       clientBounds.Size()) / scale;
+    return Resize(aX - desktopOffset.x, aY - desktopOffset.y,
+                  aWidth + desktopDelta.width, aHeight + desktopDelta.height,
+                  aRepaint);
+  } else {
+    return Resize(aX - clientOffset.x, aY - clientOffset.y,
+                  aWidth + mBounds.width - clientBounds.width,
+                  aHeight + mBounds.height - clientBounds.height,
+                  aRepaint);
+  }
 }
 
 //-------------------------------------------------------------------------
@@ -1608,7 +1669,7 @@ void nsBaseWidget::SetSizeConstraints(const SizeConstraints& aConstraints)
   // probably in the middle of a reflow.
 }
 
-const widget::SizeConstraints& nsBaseWidget::GetSizeConstraints() const
+const widget::SizeConstraints nsBaseWidget::GetSizeConstraints()
 {
   return mSizeConstraints;
 }
@@ -1690,7 +1751,7 @@ nsBaseWidget::NotifyUIStateChanged(UIStateChangeType aShowAccelerators,
                                    UIStateChangeType aShowFocusRings)
 {
   if (nsIDocument* doc = GetDocument()) {
-    nsPIDOMWindow* win = doc->GetWindow();
+    nsPIDOMWindowOuter* win = doc->GetWindow();
     if (win) {
       win->SetKeyboardIndicators(aShowAccelerators, aShowFocusRings);
     }
@@ -1778,8 +1839,12 @@ nsBaseWidget::GetRootAccessible()
   nsCOMPtr<nsIAccessibilityService> accService =
     services::GetAccessibilityService();
   if (accService) {
-#ifdef XP_WIN
-    mAccessibilityInUseFlag = true;
+#if defined(XP_WIN) || defined(XP_MACOSX)
+    if (!mAccessibilityInUseFlag) {
+      mAccessibilityInUseFlag = true;
+      uint32_t now = PRTimeToSeconds(PR_Now());
+      Preferences::SetInt(kAccessibilityLastRunDatePref, now);
+    }
 #endif
     return accService->GetRootDocumentAccessible(presShell, nsContentUtils::IsSafeToRunScript());
   }
@@ -1805,18 +1870,6 @@ nsBaseWidget::StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics)
     NewRunnableMethod(mAPZC.get(), &APZCTreeManager::StartScrollbarDrag, guid, aDragMetrics));
 }
 
-CSSIntRect
-nsBaseWidget::GetScaledScreenBounds()
-{
-  LayoutDeviceIntRect bounds;
-  GetScreenBounds(bounds);
-
-  // *Dividing* a LayoutDeviceIntRect by a CSSToLayoutDeviceScale gives a
-  // CSSIntRect.
-  CSSToLayoutDeviceScale scale = GetDefaultScale();
-  return RoundedToInt(bounds / scale);
-}
-
 already_AddRefed<nsIScreen>
 nsBaseWidget::GetWidgetScreen()
 {
@@ -1826,7 +1879,8 @@ nsBaseWidget::GetWidgetScreen()
     return nullptr;
   }
 
-  CSSIntRect bounds = GetScaledScreenBounds();
+  LayoutDeviceIntRect bounds;
+  GetScreenBounds(bounds);
   nsCOMPtr<nsIScreen> screen;
   screenManager->ScreenForRect(bounds.x, bounds.y,
                                bounds.width, bounds.height,

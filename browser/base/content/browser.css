@@ -72,10 +72,6 @@ toolbar[customizable="true"] {
 #toolbar-menubar {
   -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-menubar-stub");
 }
-
-toolbar[customizable="true"]:not([nowindowdrag="true"]) {
-  -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-drag");
-}
 %endif
 
 #toolbar-menubar[autohide="true"] {
@@ -231,10 +227,7 @@ toolbar[customizing] > .overflow-button {
 
 #titlebar {
   -moz-binding: url("chrome://global/content/bindings/general.xml#windowdragbox");
-
-%ifdef XP_MACOSX
   -moz-window-dragging: drag;
-%endif
 }
 
 #titlebar-spacer {
@@ -301,6 +294,11 @@ toolbar[customizing] > .overflow-button {
   display: none !important;
 }
 
+#main-window[tabsintitlebar] #TabsToolbar,
+#main-window[tabsintitlebar] #toolbar-menubar:not([autohide=true]),
+#main-window[tabsintitlebar] #navigator-toolbox > toolbar:not(#toolbar-menubar):-moz-lwtheme {
+  -moz-window-dragging: drag;
+}
 %endif
 
 %endif
@@ -361,6 +359,16 @@ toolbarpaletteitem > #personal-bookmarks > #bookmarks-toolbar-placeholder,
 toolbar:not(#TabsToolbar) > #wrapper-personal-bookmarks,
 toolbar:not(#TabsToolbar) > #personal-bookmarks {
   -moz-box-flex: 1;
+}
+
+/* Ensure that empty parts of the bookmarks container can be dragged on OSX, and on other OSes
+ * only when a lwtheme is in use. */
+%ifdef XP_MACOSX
+#main-window[tabsintitlebar]:not([customizing]) #personal-bookmarks {
+%else
+#main-window[tabsintitlebar]:not([customizing]) #personal-bookmarks:-moz-lwtheme {
+%endif
+  -moz-window-dragging: drag;
 }
 
 #zoom-controls[cui-areatype="toolbar"]:not([overflowedItem=true]) > #zoom-reset-button > .toolbarbutton-text {
@@ -591,6 +599,10 @@ toolbarbutton.bookmark-item {
   #personal-bookmarks[cui-areatype="toolbar"] > #bookmarks-toolbar-placeholder > .toolbarbutton-icon {
     image-rendering: -moz-crisp-edges;
   }
+  /* Synced Tabs sidebar */
+  html|*.tabs-container html|*.item-tabs-list html|*.item-icon-container {
+    image-rendering: -moz-crisp-edges;
+  }
 }
 
 #editBMPanel_tagsSelector {
@@ -741,11 +753,6 @@ html|*#fullscreen-exit-button {
   display: none;
 }
 
-#notification-popup .text-link.custom-link {
-  -moz-binding: url("chrome://global/content/bindings/text.xml#text-label");
-  text-decoration: none;
-}
-
 #invalid-form-popup > description {
   max-width: 280px;
 }
@@ -760,10 +767,6 @@ html|*#fullscreen-exit-button {
 
 #addon-progress-notification {
   -moz-binding: url("chrome://browser/content/urlbarBindings.xml#addon-progress-notification");
-}
-
-#identity-request-notification {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#identity-request-notification");
 }
 
 #click-to-play-plugins-notification {
@@ -1021,37 +1024,15 @@ toolbar[mode="text"] > #downloads-button > .toolbarbutton-icon {
   visibility: collapse;
 }
 
-/* full screen chat window support */
-chatbar:-moz-full-screen-ancestor,
-chatbox:-moz-full-screen-ancestor  {
-  border: none;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0 !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  box-sizing: border-box !important;
-}
-
 /* hide chat chrome when chat is fullscreen */
-chatbox:-moz-full-screen-ancestor > .chat-titlebar {
+#chat-window[sizemode="fullscreen"] chatbox > .chat-titlebar {
   display: none;
 }
 
-/* hide chatbar if browser tab is fullscreen */
-*:-moz-full-screen-ancestor chatbar:not(:-moz-full-screen-ancestor) {
-  display: none;
-}
-
-/* hide sidebar when fullscreen */
-*:-moz-full-screen-ancestor #social-sidebar-box:not(:-moz-full-screen-ancestor) {
+/* hide chatbar and sidebar if browser tab is fullscreen */
+#main-window[inFullscreen][inDOMFullscreen] chatbar,
+#main-window[inFullscreen][inDOMFullscreen] #social-sidebar-box,
+#main-window[inFullscreen][inDOMFullscreen] #social-sidebar-splitter {
   display: none;
 }
 

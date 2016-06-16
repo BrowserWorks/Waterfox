@@ -61,19 +61,11 @@ XPCOMUtils.defineLazyModuleGetter(this, "WebappManager",
 XPCOMUtils.defineLazyModuleGetter(this, "PageThumbs",
                                   "resource://gre/modules/PageThumbs.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "CustomizationTabPreloader",
-                                  "resource:///modules/CustomizationTabPreloader.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "PdfJs",
                                   "resource://pdf.js/PdfJs.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ProcessHangMonitor",
                                   "resource:///modules/ProcessHangMonitor.jsm");
-
-if (AppConstants.NIGHTLY_BUILD) {
-  XPCOMUtils.defineLazyModuleGetter(this, "ShumwayUtils",
-                                    "resource://shumway/ShumwayUtils.jsm");
-}
 
 XPCOMUtils.defineLazyModuleGetter(this, "webrtcUI",
                                   "resource:///modules/webrtcUI.jsm");
@@ -122,11 +114,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerParent",
 
 XPCOMUtils.defineLazyModuleGetter(this, "SimpleServiceDiscovery",
                                   "resource://gre/modules/SimpleServiceDiscovery.jsm");
-
-if (AppConstants.NIGHTLY_BUILD) {
-  XPCOMUtils.defineLazyModuleGetter(this, "SignInToWebsiteUX",
-                                    "resource:///modules/SignInToWebsite.jsm");
-}
 
 XPCOMUtils.defineLazyModuleGetter(this, "ContentSearch",
                                   "resource:///modules/ContentSearch.jsm");
@@ -451,6 +438,9 @@ BrowserGlue.prototype = {
       case "test-initialize-sanitizer":
         this._sanitizer.onStartup();
         break;
+      case AddonWatcher.TOPIC_SLOW_ADDON_DETECTED:
+        this._notifySlowAddon(data);
+        break;
     }
   },
 
@@ -538,7 +528,7 @@ BrowserGlue.prototype = {
     this._isPlacesShutdownObserver = true;
     os.addObserver(this, "handle-xul-text-link", false);
     os.addObserver(this, "profile-before-change", false);
-    if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
+    if (AppConstants.MOZ_TELEMETRY_REPORTING) {
       os.addObserver(this, "keyword-search", false);
     }
     os.addObserver(this, "browser-search-engine-modified", false);
@@ -547,16 +537,23 @@ BrowserGlue.prototype = {
     os.addObserver(this, "xpi-signature-changed", false);
     os.addObserver(this, "autocomplete-did-enter-text", false);
 
+    if (AppConstants.NIGHTLY_BUILD) {
+      os.addObserver(this, AddonWatcher.TOPIC_SLOW_ADDON_DETECTED, false);
+    }
+
     ExtensionManagement.registerScript("chrome://browser/content/ext-utils.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-browserAction.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-pageAction.js");
+    ExtensionManagement.registerScript("chrome://browser/content/ext-commands.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-contextMenus.js");
+    ExtensionManagement.registerScript("chrome://browser/content/ext-desktop-runtime.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-tabs.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-windows.js");
     ExtensionManagement.registerScript("chrome://browser/content/ext-bookmarks.js");
 
     ExtensionManagement.registerSchema("chrome://browser/content/schemas/bookmarks.json");
     ExtensionManagement.registerSchema("chrome://browser/content/schemas/browser_action.json");
+    ExtensionManagement.registerSchema("chrome://browser/content/schemas/commands.json");
     ExtensionManagement.registerSchema("chrome://browser/content/schemas/context_menus.json");
     ExtensionManagement.registerSchema("chrome://browser/content/schemas/context_menus_internal.json");
     ExtensionManagement.registerSchema("chrome://browser/content/schemas/page_action.json");
@@ -597,7 +594,7 @@ BrowserGlue.prototype = {
       os.removeObserver(this, "places-shutdown");
     os.removeObserver(this, "handle-xul-text-link");
     os.removeObserver(this, "profile-before-change");
-    if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
+    if (AppConstants.MOZ_TELEMETRY_REPORTING) {
       os.removeObserver(this, "keyword-search");
     }
     os.removeObserver(this, "browser-search-engine-modified");
@@ -751,11 +748,6 @@ BrowserGlue.prototype = {
 	UserAgentOverrides.init();
     WebappManager.init();
     PageThumbs.init();
-    if (AppConstants.NIGHTLY_BUILD) {
-      if (Services.prefs.getBoolPref("dom.identity.enabled")) {
-        SignInToWebsiteUX.init();
-      }
-    }
     webrtcUI.init();
     AboutHome.init();
 
@@ -800,10 +792,6 @@ BrowserGlue.prototype = {
     }
 
     Services.obs.notifyObservers(null, "browser-ui-startup-complete", "");
-
-    if (AppConstants.NIGHTLY_BUILD) {
-      AddonWatcher.init(this._notifySlowAddon);
-    }
   },
 
   _checkForOldBuildUpdates: function () {
@@ -1006,13 +994,6 @@ BrowserGlue.prototype = {
     // passively.
     Services.ppmm.loadProcessScript("resource://pdf.js/pdfjschildbootstrap.js", true);
 
-    if (AppConstants.NIGHTLY_BUILD) {
-      // Registering Shumway bootstrap script the child processes.
-      Services.ppmm.loadProcessScript("chrome://shumway/content/bootstrap-content.js", true);
-      // Initializing Shumway (shall be run after child script registration).
-      ShumwayUtils.init();
-    }
-
     if (AppConstants.platform == "win") {
       // For Windows 7, initialize the jump list module.
       const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
@@ -1081,17 +1062,10 @@ BrowserGlue.prototype = {
 
     SelfSupportBackend.uninit();
 
-	UserAgentOverrides.uninit();
-    CustomizationTabPreloader.uninit();
     WebappManager.uninit();
-
+	UserAgentOverrides.uninit();
     NewTabPrefsProvider.prefs.uninit();
     AboutNewTab.uninit();
-    if (AppConstants.NIGHTLY_BUILD) {
-      if (Services.prefs.getBoolPref("dom.identity.enabled")) {
-        SignInToWebsiteUX.uninit();
-      }
-    }
     webrtcUI.uninit();
     FormValidationHandler.uninit();
     if (AppConstants.NIGHTLY_BUILD) {
@@ -1269,7 +1243,8 @@ BrowserGlue.prototype = {
     if (AppConstants.E10S_TESTING_ONLY) {
       E10SUINotification.checkStatus();
     }
-    if (AppConstants.platform == "win") {
+    if (AppConstants.platform == "win" ||
+        AppConstants.platform == "macosx") {
       // Handles prompting to inform about incompatibilites when accessibility
       // and e10s are active together.
       E10SAccessibilityCheck.init();
@@ -1825,12 +1800,18 @@ BrowserGlue.prototype = {
   },
 
   _migrateUI: function BG__migrateUI() {
-    const UI_VERSION = 36;
+    const UI_VERSION = 37;
     const BROWSER_DOCURL = "chrome://browser/content/browser.xul";
-    let currentUIVersion = 0;
-    try {
+
+    let currentUIVersion;
+    if (Services.prefs.prefHasUserValue("browser.migration.version")) {
       currentUIVersion = Services.prefs.getIntPref("browser.migration.version");
-    } catch(ex) {}
+    } else {
+      // This is a new profile, nothing to migrate.
+      Services.prefs.setIntPref("browser.migration.version", UI_VERSION);
+      return;
+    }
+
     if (currentUIVersion >= UI_VERSION)
       return;
 
@@ -2179,6 +2160,10 @@ BrowserGlue.prototype = {
       xulStore.removeValue("chrome://passwordmgr/content/passwordManager.xul",
                            "passwordCol",
                            "hidden");
+    }
+
+    if (currentUIVersion < 37) {
+      Services.prefs.clearUserPref("browser.sessionstore.restore_on_demand");
     }
 
     // Update the migration version.
@@ -2650,6 +2635,16 @@ ContentPermissionPrompt.prototype = {
     var options = {
       learnMoreURL:
         Services.urlFormatter.formatURLPref("app.support.baseURL") + "push",
+      eventCallback(type) {
+        if (type == "dismissed") {
+          // Bug 1259148: Hide the doorhanger icon. Unlike other permission
+          // doorhangers, the user can't restore the doorhanger using the icon
+          // in the location bar. Instead, the site will be notified that the
+          // doorhanger was dismissed.
+          this.remove();
+          aRequest.cancel();
+        }
+      },
     };
 
     this._showPrompt(aRequest, message, "desktop-notification", actions,
@@ -2695,7 +2690,7 @@ ContentPermissionPrompt.prototype = {
     options.removeOnDismissal = autoAllow;
     options.eventCallback = type => {
       if (type == "removed") {
-        notification.browser.removeEventListener("mozfullscreenchange", onFullScreen, true);
+        notification.browser.removeEventListener("fullscreenchange", onFullScreen, true);
         if (autoAllow) {
           aRequest.allow();
         }
@@ -2710,7 +2705,7 @@ ContentPermissionPrompt.prototype = {
     // upon exit), so if the page enters fullscreen mode after requesting
     // pointerLock (but before the user has granted permission), we should
     // remove the now-impotent notification.
-    notification.browser.addEventListener("mozfullscreenchange", onFullScreen, true);
+    notification.browser.addEventListener("fullscreenchange", onFullScreen, true);
   },
 
   prompt: function CPP_prompt(request) {

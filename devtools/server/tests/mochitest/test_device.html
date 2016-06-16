@@ -22,7 +22,7 @@ window.onload = function() {
   var {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
   var {DebuggerClient} = require("devtools/shared/client/main");
   var {DebuggerServer} = require("devtools/server/main");
-  Cu.import("resource://gre/modules/Services.jsm");
+  var Services = require("Services");
 
   SimpleTest.waitForExplicitFinish();
 
@@ -34,7 +34,7 @@ window.onload = function() {
   }
 
   var client = new DebuggerClient(DebuggerServer.connectPipe());
-  client.connect(function onConnect() {
+  client.connect().then(function onConnect() {
     client.listTabs(function onListTabs(aResponse) {
       var d = getDeviceFront(client, aResponse);
 

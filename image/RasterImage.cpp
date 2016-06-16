@@ -78,6 +78,8 @@ RasterImage::RasterImage(ImageURL* aURI /* = nullptr */) :
   mLockCount(0),
   mDecodeCount(0),
   mRequestedSampleSize(0),
+  mImageProducerID(ImageContainer::AllocateProducerID()),
+  mLastFrameID(0),
   mLastImageContainerDrawResult(DrawResult::NOT_READY),
 #ifdef DEBUG
   mFramesNotified(0),
@@ -629,11 +631,7 @@ RasterImage::GetCurrentImage(ImageContainer* aContainer, uint32_t aFlags)
     return MakePair(drawResult, RefPtr<layers::Image>());
   }
 
-  IntSize size;
-  GetWidth(&size.width);
-  GetHeight(&size.height);
-
-  RefPtr<layers::Image> image = new layers::SourceSurfaceImage(size, surface);
+  RefPtr<layers::Image> image = new layers::SourceSurfaceImage(surface);
   return MakePair(drawResult, Move(image));
 }
 
@@ -696,7 +694,11 @@ RasterImage::GetImageContainer(LayerManager* aManager, uint32_t aFlags)
   // |image| holds a reference to a SourceSurface which in turn holds a lock on
   // the current frame's VolatileBuffer, ensuring that it doesn't get freed as
   // long as the layer system keeps this ImageContainer alive.
-  container->SetCurrentImageInTransaction(image);
+  AutoTArray<ImageContainer::NonOwningImage, 1> imageList;
+  imageList.AppendElement(ImageContainer::NonOwningImage(image, TimeStamp(),
+                                                         mLastFrameID++,
+                                                         mImageProducerID));
+  container->SetCurrentImagesInTransaction(imageList);
 
   mLastImageContainerDrawResult = drawResult;
   mImageContainer = container;
@@ -722,8 +724,10 @@ RasterImage::UpdateImageContainer()
   }
 
   mLastImageContainerDrawResult = drawResult;
-  nsAutoTArray<ImageContainer::NonOwningImage, 1> imageList;
-  imageList.AppendElement(ImageContainer::NonOwningImage(image));
+  AutoTArray<ImageContainer::NonOwningImage, 1> imageList;
+  imageList.AppendElement(ImageContainer::NonOwningImage(image, TimeStamp(),
+                                                         mLastFrameID++,
+                                                         mImageProducerID));
   container->SetCurrentImages(imageList);
 }
 
@@ -1623,7 +1627,7 @@ RasterImage::DoError()
   if (mAnimating) {
     StopAnimation();
   }
-  mAnim.release();
+  mAnim = nullptr;
 
   // Release all locks.
   mLockCount = 0;

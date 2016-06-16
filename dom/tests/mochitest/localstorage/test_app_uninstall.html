@@ -76,7 +76,7 @@ SimpleTest.registerCleanupFunction(() => {
 });
 
 // URL of the manifest of the app we want to install.
-const gManifestURL = "http://www.example.com/chrome/dom/tests/mochitest/webapps/apps/basic.webapp";
+const gManifestURL = "http://www.example.com/chrome/dom/apps/tests/apps/basic.webapp";
 // ID of the installed app.
 var gTestAppId = 0;
 // Cookies currently in the system.
@@ -152,7 +152,7 @@ function browserLoadEvent() {
   setupStorage(gBrowserStorage.localStorage);
   setupStorage(gBrowserStorage.sessionStorage);
 
-  navigator.mozApps.mgmt.getNotInstalled().onsuccess = function() {
+  navigator.mozApps.mgmt.getAll().onsuccess = function() {
     for (i in this.result) {
       var app = this.result[i];
       if (app.manifestURL == gManifestURL) {

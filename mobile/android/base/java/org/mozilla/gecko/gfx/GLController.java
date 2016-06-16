@@ -74,6 +74,10 @@ public class GLController extends JNIObject {
     /* package */ native void attachToJava(GeckoLayerClient layerClient,
                                            NativePanZoomController npzc);
 
+    @WrapForJNI
+    /* package */ native void onSizeChanged(int windowWidth, int windowHeight,
+                                            int screenWidth, int screenHeight);
+
     // Gecko thread creates compositor; blocks UI thread.
     @WrapForJNI
     private native void createCompositor(int width, int height);
@@ -137,6 +141,10 @@ public class GLController extends JNIObject {
 
     void updateCompositor() {
         ThreadUtils.assertOnUiThread();
+
+        if (mView == null) {
+            return;
+        }
 
         if (mCompositorCreated) {
             // If the compositor has already been created, just resume it instead. We don't need

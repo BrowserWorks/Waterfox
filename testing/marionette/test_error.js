@@ -6,13 +6,22 @@ const {utils: Cu} = Components;
 
 Cu.import("chrome://marionette/content/error.js");
 
-function run_test() {
-  run_next_test();
-}
-
 function notok(condition) {
   ok(!(condition));
 }
+
+add_test(function test_BuiltinErrors() {
+  ok("Error" in error.BuiltinErrors);
+  ok("EvalError" in error.BuiltinErrors);
+  ok("InternalError" in error.BuiltinErrors);
+  ok("RangeError" in error.BuiltinErrors);
+  ok("ReferenceError" in error.BuiltinErrors);
+  ok("SyntaxError" in error.BuiltinErrors);
+  ok("TypeError" in error.BuiltinErrors);
+  ok("URIError" in error.BuiltinErrors);
+
+  run_next_test();
+});
 
 add_test(function test_isError() {
   notok(error.isError(null));
@@ -21,6 +30,13 @@ add_test(function test_isError() {
 
   ok(error.isError(new Components.Exception()));
   ok(error.isError(new Error()));
+  ok(error.isError(new EvalError()));
+  ok(error.isError(new InternalError()));
+  ok(error.isError(new RangeError()));
+  ok(error.isError(new ReferenceError()));
+  ok(error.isError(new SyntaxError()));
+  ok(error.isError(new TypeError()));
+  ok(error.isError(new URIError()));
   ok(error.isError(new WebDriverError()));
   ok(error.isError(new InvalidArgumentError()));
 
@@ -30,9 +46,31 @@ add_test(function test_isError() {
 add_test(function test_isWebDriverError() {
   notok(error.isWebDriverError(new Components.Exception()));
   notok(error.isWebDriverError(new Error()));
+  notok(error.isWebDriverError(new EvalError()));
+  notok(error.isWebDriverError(new InternalError()));
+  notok(error.isWebDriverError(new RangeError()));
+  notok(error.isWebDriverError(new ReferenceError()));
+  notok(error.isWebDriverError(new SyntaxError()));
+  notok(error.isWebDriverError(new TypeError()));
+  notok(error.isWebDriverError(new URIError()));
 
   ok(error.isWebDriverError(new WebDriverError()));
   ok(error.isWebDriverError(new InvalidArgumentError()));
+
+  run_next_test();
+});
+
+add_test(function test_wrap() {
+  equal(error.wrap(new WebDriverError()).name, "WebDriverError");
+  equal(error.wrap(new InvalidArgumentError()).name, "InvalidArgumentError");
+  equal(error.wrap(new Error()).name, "WebDriverError");
+  equal(error.wrap(new EvalError()).name, "WebDriverError");
+  equal(error.wrap(new InternalError()).name, "WebDriverError");
+  equal(error.wrap(new RangeError()).name, "WebDriverError");
+  equal(error.wrap(new ReferenceError()).name, "WebDriverError");
+  equal(error.wrap(new SyntaxError()).name, "WebDriverError");
+  equal(error.wrap(new TypeError()).name, "WebDriverError");
+  equal(error.wrap(new URIError()).name, "WebDriverError");
 
   run_next_test();
 });
@@ -52,19 +90,40 @@ add_test(function test_stringify() {
 });
 
 add_test(function test_toJson() {
-  deepEqual({error: "a", message: null, stacktrace: null},
-      error.toJson({status: "a"}));
-  deepEqual({error: "a", message: "b", stacktrace: null},
-      error.toJson({status: "a", message: "b"}));
-  deepEqual({error: "a", message: "b", stacktrace: "c"},
-      error.toJson({status: "a", message: "b", stack: "c"}));
+  Assert.throws(() => error.toJson(new Error()),
+      /Unserialisable error type: [object Error]/);
 
-  let e1 = new Error("b");
-  deepEqual({error: undefined, message: "b", stacktrace: e1.stack},
+  let e1 = new WebDriverError("a");
+  deepEqual({error: e1.status, message: "a", stacktrace: null},
       error.toJson(e1));
-  let e2 = new WebDriverError("b");
-  deepEqual({error: e2.status, message: "b", stacktrace: null},
-      error.toJson(e2));
+
+  let e2 = new JavaScriptError("first", "second", "third", "fourth");
+  let e2s = error.toJson(e2);
+  equal(e2.status, e2s.error);
+  equal(e2.message, e2s.message);
+  ok(e2s.stacktrace.match(/second/));
+  ok(e2s.stacktrace.match(/third/));
+  ok(e2s.stacktrace.match(/fourth/));
+
+  run_next_test();
+});
+
+add_test(function test_fromJson() {
+  Assert.throws(() => error.fromJson({error: "foo"}),
+      /Undeserialisable error type: foo/);
+  Assert.throws(() => error.fromJson({error: "Error"}),
+      /Undeserialisable error type: Error/);
+  Assert.throws(() => error.fromJson({}),
+      /Undeserialisable error type: undefined/);
+
+  let e1 = new WebDriverError("1");
+  deepEqual(e1, error.fromJson({error: "webdriver error", message: "1"}));
+  let e2 = new InvalidArgumentError("2");
+  deepEqual(e2, error.fromJson({error: "invalid argument", message: "2"}));
+
+  let e3 = new JavaScriptError("first", "second", "third", "fourth");
+  let e3s = error.toJson(e3);
+  deepEqual(e3, error.fromJson(e3s));
 
   run_next_test();
 });

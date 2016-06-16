@@ -12,7 +12,7 @@
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/Hal.h"
 #include "mozilla/IMEStateManager.h"
-#include "mozilla/layers/CompositorChild.h"
+#include "mozilla/layers/APZChild.h"
 #include "mozilla/layers/PLayerTransactionChild.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/TextComposition.h"
@@ -32,9 +32,8 @@ using namespace mozilla::widget;
 static void
 InvalidateRegion(nsIWidget* aWidget, const LayoutDeviceIntRegion& aRegion)
 {
-  LayoutDeviceIntRegion::RectIterator it(aRegion);
-  while(const LayoutDeviceIntRect* r = it.Next()) {
-    aWidget->Invalidate(*r);
+  for (auto iter = aRegion.RectIter(); !iter.Done(); iter.Next()) {
+    aWidget->Invalidate(iter.Get());
   }
 }
 
@@ -105,7 +104,7 @@ PuppetWidget::Create(nsIWidget* aParent,
 {
   MOZ_ASSERT(!aNativeParent, "got a non-Puppet native parent");
 
-  BaseCreate(nullptr, aRect, aInitData);
+  BaseCreate(nullptr, aInitData);
 
   mBounds = aRect;
   mEnabled = true;
@@ -513,7 +512,7 @@ PuppetWidget::SetConfirmedTargetAPZC(uint64_t aInputBlockId,
                                      const nsTArray<ScrollableLayerGuid>& aTargets) const
 {
   if (mTabChild) {
-    mTabChild->SendSetTargetAPZC(aInputBlockId, aTargets);
+    mTabChild->SetTargetAPZC(aInputBlockId, aTargets);
   }
 }
 
@@ -1002,12 +1001,16 @@ PuppetWidget::SetCursor(imgIContainer* aCursor,
 
   RefPtr<mozilla::gfx::DataSourceSurface> dataSurface =
     surface->GetDataSurface();
+  if (!dataSurface) {
+    return NS_ERROR_FAILURE;
+  }
+
   size_t length;
   int32_t stride;
   mozilla::UniquePtr<char[]> surfaceData =
     nsContentUtils::GetSurfaceData(dataSurface, &length, &stride);
 
-  nsCString cursorData = nsCString(surfaceData.get(), length);
+  nsDependentCString cursorData(surfaceData.get(), length);
   mozilla::gfx::IntSize size = dataSurface->GetSize();
   if (!mTabChild->SendSetCustomCursor(cursorData, size.width, size.height, stride,
                                       static_cast<uint8_t>(dataSurface->GetFormat()),
@@ -1044,6 +1047,8 @@ PuppetWidget::Paint()
   // reset repaint tracking
   mDirtyRegion.SetEmpty();
   mPaintTask.Revoke();
+
+  RefPtr<PuppetWidget> strongThis(this);
 
   GetCurrentWidgetListener()->WillPaintWindow(this);
 
@@ -1182,13 +1187,13 @@ PuppetWidget::GetNativeData(uint32_t aDataType)
     }
     return (void*)nativeData;
   }
+  case NS_NATIVE_WINDOW:
   case NS_NATIVE_WIDGET:
   case NS_NATIVE_DISPLAY:
-    // These types are ignored (see bug 1183828).
+    // These types are ignored (see bug 1183828, bug 1240891).
     break;
   case NS_RAW_NATIVE_IME_CONTEXT:
     MOZ_CRASH("You need to call GetNativeIMEContext() instead");
-  case NS_NATIVE_WINDOW:
   case NS_NATIVE_PLUGIN_PORT:
   case NS_NATIVE_GRAPHIC:
   case NS_NATIVE_SHELLWIDGET:
@@ -1262,7 +1267,7 @@ uint32_t PuppetWidget::GetMaxTouchPoints() const
 void
 PuppetWidget::StartAsyncScrollbarDrag(const AsyncDragMetrics& aDragMetrics)
 {
-  mTabChild->SendStartScrollbarDrag(aDragMetrics);
+  mTabChild->StartScrollbarDrag(aDragMetrics);
 }
 
 PuppetScreen::PuppetScreen(void *nativeScreen)
@@ -1415,13 +1420,14 @@ PuppetWidget::GetCurrentWidgetListener()
 }
 
 void
-PuppetWidget::SetCandidateWindowForPlugin(int32_t aX, int32_t aY)
+PuppetWidget::SetCandidateWindowForPlugin(
+                const CandidateWindowPosition& aPosition)
 {
   if (!mTabChild) {
     return;
   }
 
-  mTabChild->SendSetCandidateWindowForPlugin(aX, aY);
+  mTabChild->SendSetCandidateWindowForPlugin(aPosition);
 }
 
 void
@@ -1434,7 +1440,7 @@ PuppetWidget::ZoomToRect(const uint32_t& aPresShellId,
     return;
   }
 
-  mTabChild->SendZoomToRect(aPresShellId, aViewId, aRect, aFlags);
+  mTabChild->ZoomToRect(aPresShellId, aViewId, aRect, aFlags);
 }
 
 } // namespace widget

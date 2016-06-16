@@ -55,7 +55,9 @@ MediaEngineWebRTC::MediaEngineWebRTC(MediaEnginePrefs &aPrefs)
     mVoiceEngine(nullptr),
     mAudioInput(nullptr),
     mAudioEngineInit(false),
-    mFullDuplex(aPrefs.mFullDuplex)
+    mFullDuplex(aPrefs.mFullDuplex),
+    mExtendedFilter(aPrefs.mExtendedFilter),
+    mDelayAgnostic(aPrefs.mDelayAgnostic)
 {
 #ifndef MOZ_B2G_CAMERA
   nsCOMPtr<nsIComponentRegistrar> compMgr;
@@ -172,9 +174,6 @@ MediaEngineWebRTC::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
   num = mozilla::camera::GetChildAndCall(
     &mozilla::camera::CamerasChild::NumberOfCaptureDevices,
     capEngine);
-  if (num <= 0) {
-    return;
-  }
 
   for (int i = 0; i < num; i++) {
     char deviceName[MediaEngineSource::kMaxDeviceNameLength];
@@ -272,7 +271,10 @@ MediaEngineWebRTC::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
 #endif
 
   if (!mVoiceEngine) {
-    mVoiceEngine = webrtc::VoiceEngine::Create();
+    mConfig.Set<webrtc::ExtendedFilter>(new webrtc::ExtendedFilter(mExtendedFilter));
+    mConfig.Set<webrtc::DelayAgnostic>(new webrtc::DelayAgnostic(mDelayAgnostic));
+
+    mVoiceEngine = webrtc::VoiceEngine::Create(mConfig);
     if (!mVoiceEngine) {
       return;
     }

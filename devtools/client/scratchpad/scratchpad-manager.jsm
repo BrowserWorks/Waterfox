@@ -14,7 +14,10 @@ const Cu = Components.utils;
 const SCRATCHPAD_WINDOW_URL = "chrome://devtools/content/scratchpad/scratchpad.xul";
 const SCRATCHPAD_WINDOW_FEATURES = "chrome,titlebar,toolbar,centerscreen,resizable,dialog=no";
 
-Cu.import("resource://gre/modules/Services.jsm");
+const {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
+const Services = require("Services");
+const Telemetry = require("devtools/client/shared/telemetry");
+
 
 /**
  * The ScratchpadManager object opens new Scratchpad windows and manages the state
@@ -25,6 +28,8 @@ this.ScratchpadManager = {
 
   _nextUid: 1,
   _scratchpads: [],
+
+  _telemetry: new Telemetry(),
 
   /**
    * Get the saved states of open scratchpad windows. Called by
@@ -124,6 +129,12 @@ this.ScratchpadManager = {
 
     let win = Services.ww.openWindow(null, SCRATCHPAD_WINDOW_URL, "_blank",
                                      SCRATCHPAD_WINDOW_FEATURES, params);
+
+    this._telemetry.toolOpened("scratchpad-window");
+    let onClose = () => {
+      this._telemetry.toolClosed("scratchpad-window");
+    };
+    win.addEventListener("unload", onClose);
 
     // Only add the shutdown observer if we've opened a scratchpad window.
     ShutdownObserver.init();

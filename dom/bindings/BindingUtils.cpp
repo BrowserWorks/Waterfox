@@ -30,7 +30,7 @@
 #include "xpcprivate.h"
 #include "XrayWrapper.h"
 #include "nsPrintfCString.h"
-#include "prprf.h"
+#include "mozilla/Snprintf.h"
 #include "nsGlobalWindow.h"
 
 #include "mozilla/dom/ScriptSettings.h"
@@ -45,8 +45,9 @@
 #include "mozilla/dom/HTMLAppletElementBinding.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ResolveSystemBinding.h"
+#include "mozilla/dom/WorkerPrivate.h"
+#include "mozilla/dom/WorkerScope.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
-#include "WorkerPrivate.h"
 #include "nsDOMClassInfo.h"
 #include "ipc/ErrorIPCUtils.h"
 #include "mozilla/UseCounter.h"
@@ -56,7 +57,7 @@ namespace dom {
 
 JSErrorFormatString ErrorFormatString[] = {
 #define MSG_DEF(_name, _argc, _exn, _str) \
-  { _str, _argc, _exn },
+  { #_name, _str, _argc, _exn },
 #include "mozilla/dom/Errors.msg"
 #undef MSG_DEF
 };
@@ -494,6 +495,22 @@ ErrorResult::SetPendingException(JSContext* cx)
     return;
   }
   SetPendingGenericErrorException(cx);
+}
+
+void
+ErrorResult::StealExceptionFromJSContext(JSContext* cx)
+{
+  MOZ_ASSERT(mMightHaveUnreportedJSException,
+             "Why didn't you tell us you planned to throw a JS exception?");
+
+  JS::Rooted<JS::Value> exn(cx);
+  if (!JS_GetPendingException(cx, &exn)) {
+    ThrowUncatchableException();
+    return;
+  }
+
+  ThrowJSException(cx, exn);
+  JS_ClearPendingException(cx);
 }
 
 namespace dom {
@@ -1171,7 +1188,8 @@ static bool
 XrayResolveAttribute(JSContext* cx, JS::Handle<JSObject*> wrapper,
                      JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
                      const Prefable<const JSPropertySpec>* attributes, jsid* attributeIds,
-                     const JSPropertySpec* attributeSpecs, JS::MutableHandle<JSPropertyDescriptor> desc,
+                     const JSPropertySpec* attributeSpecs,
+                     JS::MutableHandle<JS::PropertyDescriptor> desc,
                      bool& cacheOnHolder)
 {
   for (; attributes->specs; ++attributes) {
@@ -1221,7 +1239,7 @@ XrayResolveMethod(JSContext* cx, JS::Handle<JSObject*> wrapper,
                   const Prefable<const JSFunctionSpec>* methods,
                   jsid* methodIds,
                   const JSFunctionSpec* methodSpecs,
-                  JS::MutableHandle<JSPropertyDescriptor> desc,
+                  JS::MutableHandle<JS::PropertyDescriptor> desc,
                   bool& cacheOnHolder)
 {
   const Prefable<const JSFunctionSpec>* method;
@@ -1272,7 +1290,7 @@ XrayResolveMethod(JSContext* cx, JS::Handle<JSObject*> wrapper,
 static bool
 XrayResolveUnforgeableProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
                                JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                               JS::MutableHandle<JSPropertyDescriptor> desc,
+                               JS::MutableHandle<JS::PropertyDescriptor> desc,
                                bool& cacheOnHolder,
                                const NativeProperties* nativeProperties)
 {
@@ -1314,7 +1332,7 @@ XrayResolveUnforgeableProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
 static bool
 XrayResolveProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
                     JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                    JS::MutableHandle<JSPropertyDescriptor> desc,
+                    JS::MutableHandle<JS::PropertyDescriptor> desc,
                     bool& cacheOnHolder, DOMObjectType type,
                     const NativeProperties* nativeProperties)
 {
@@ -1405,7 +1423,7 @@ static bool
 ResolvePrototypeOrConstructor(JSContext* cx, JS::Handle<JSObject*> wrapper,
                               JS::Handle<JSObject*> obj,
                               size_t protoAndIfaceCacheIndex, unsigned attrs,
-                              JS::MutableHandle<JSPropertyDescriptor> desc,
+                              JS::MutableHandle<JS::PropertyDescriptor> desc,
                               bool& cacheOnHolder)
 {
   JS::Rooted<JSObject*> global(cx, js::GetGlobalForObjectCrossCompartment(obj));
@@ -1445,7 +1463,7 @@ DEBUG_CheckXBLCallable(JSContext *cx, JSObject *obj)
 }
 
 static void
-DEBUG_CheckXBLLookup(JSContext *cx, JSPropertyDescriptor *desc)
+DEBUG_CheckXBLLookup(JSContext *cx, JS::PropertyDescriptor *desc)
 {
     if (!desc->obj)
         return;
@@ -1469,7 +1487,7 @@ DEBUG_CheckXBLLookup(JSContext *cx, JSPropertyDescriptor *desc)
 /* static */ bool
 XrayResolveOwnProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
                        JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                       JS::MutableHandle<JSPropertyDescriptor> desc,
+                       JS::MutableHandle<JS::PropertyDescriptor> desc,
                        bool& cacheOnHolder)
 {
   cacheOnHolder = false;
@@ -1599,7 +1617,7 @@ XrayResolveOwnProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
 bool
 XrayDefineProperty(JSContext* cx, JS::Handle<JSObject*> wrapper,
                    JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                   JS::Handle<JSPropertyDescriptor> desc,
+                   JS::Handle<JS::PropertyDescriptor> desc,
                    JS::ObjectOpResult &result, bool *defined)
 {
   if (!js::IsProxy(obj))
@@ -1866,11 +1884,10 @@ DictionaryBase::ParseJSON(JSContext* aCx,
 
 bool
 DictionaryBase::StringifyToJSON(JSContext* aCx,
-                                JS::MutableHandle<JS::Value> aValue,
+                                JS::Handle<JSObject*> aObj,
                                 nsAString& aJSON) const
 {
-  return JS_Stringify(aCx, aValue, nullptr, JS::NullHandleValue,
-                      AppendJSONToString, &aJSON);
+  return JS::ToJSONMaybeSafely(aCx, aObj, AppendJSONToString, &aJSON);
 }
 
 /* static */
@@ -2191,7 +2208,7 @@ ReportLenientThisUnwrappingFailure(JSContext* cx, JSObject* obj)
   if (global.Failed()) {
     return false;
   }
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(global.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(global.GetAsSupports());
   if (window && window->GetDoc()) {
     window->GetDoc()->WarnOnceAbout(nsIDocument::eLenientThis);
   }
@@ -2279,7 +2296,7 @@ ConstructJSImplementation(JSContext* aCx, const char* aContractId,
     // and our global is a window.
     nsCOMPtr<nsIDOMGlobalPropertyInitializer> gpi =
       do_QueryInterface(implISupports);
-    nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal);
+    nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal);
     if (gpi) {
       JS::Rooted<JS::Value> initReturn(aCx);
       rv = gpi->Init(window, &initReturn);
@@ -2407,13 +2424,13 @@ ConvertJSValueToByteString(JSContext* cx, JS::Handle<JS::Value> v,
       // 20 digits, plus one more for the null terminator.
       char index[21];
       static_assert(sizeof(size_t) <= 8, "index array too small");
-      PR_snprintf(index, sizeof(index), "%d", badCharIndex);
+      snprintf_literal(index, "%d", badCharIndex);
       // A char16_t is 16 bits long.  The biggest unsigned 16 bit
       // number (65,535) has 5 digits, plus one more for the null
       // terminator.
       char badCharArray[6];
       static_assert(sizeof(char16_t) <= 2, "badCharArray too small");
-      PR_snprintf(badCharArray, sizeof(badCharArray), "%d", badChar);
+      snprintf_literal(badCharArray, "%d", badChar);
       ThrowErrorMessage(cx, MSG_INVALID_BYTESTRING, index, badCharArray);
       return false;
     }
@@ -2499,7 +2516,7 @@ bool
 CheckAnyPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[])
 {
   JS::Rooted<JSObject*> rootedObj(aCx, aObj);
-  nsPIDOMWindow* window = xpc::WindowGlobalOrNull(rootedObj);
+  nsPIDOMWindowInner* window = xpc::WindowGlobalOrNull(rootedObj)->AsInner();
   if (!window) {
     return false;
   }
@@ -2521,7 +2538,7 @@ bool
 CheckAllPermissions(JSContext* aCx, JSObject* aObj, const char* const aPermissions[])
 {
   JS::Rooted<JSObject*> rootedObj(aCx, aObj);
-  nsPIDOMWindow* window = xpc::WindowGlobalOrNull(rootedObj);
+  nsPIDOMWindowInner* window = xpc::WindowGlobalOrNull(rootedObj)->AsInner();
   if (!window) {
     return false;
   }
@@ -2589,7 +2606,7 @@ IsNonExposedGlobal(JSContext* aCx, JSObject* aGlobal,
 }
 
 void
-HandlePrerenderingViolation(nsPIDOMWindow* aWindow)
+HandlePrerenderingViolation(nsPIDOMWindowInner* aWindow)
 {
   // Suspend the window and its workers, and its children too.
   aWindow->SuspendTimeouts();
@@ -2616,7 +2633,7 @@ EnforceNotInPrerendering(JSContext* aCx, JSObject* aObj)
   }
 
   if (window->GetIsPrerendered()) {
-    HandlePrerenderingViolation(window);
+    HandlePrerenderingViolation(window->AsInner());
     // When the bindings layer sees a false return value, it returns false form
     // the JSNative in order to trigger an uncatchable exception.
     return false;
@@ -2792,6 +2809,7 @@ ConvertExceptionToPromise(JSContext* cx,
                           JSObject* promiseScope,
                           JS::MutableHandle<JS::Value> rval)
 {
+#ifndef SPIDERMONKEY_PROMISE
   GlobalObject global(cx, promiseScope);
   if (global.Failed()) {
     return false;
@@ -2826,6 +2844,33 @@ ConvertExceptionToPromise(JSContext* cx,
   }
 
   return GetOrCreateDOMReflector(cx, promise, rval);
+#else // SPIDERMONKEY_PROMISE
+  {
+    JSAutoCompartment ac(cx, promiseScope);
+
+    JS::Rooted<JS::Value> exn(cx);
+    if (!JS_GetPendingException(cx, &exn)) {
+      // This is very important: if there is no pending exception here but we're
+      // ending up in this code, that means the callee threw an uncatchable
+      // exception.  Just propagate that out as-is.
+      return false;
+    }
+
+    JS_ClearPendingException(cx);
+
+    JSObject* promise = JS::CallOriginalPromiseReject(cx, exn);
+    if (!promise) {
+      // We just give up.  Put the exception back.
+      JS_SetPendingException(cx, exn);
+      return false;
+    }
+
+    rval.setObject(*promise);
+  }
+
+  // Now make sure we rewrap promise back into the compartment we want
+  return JS_WrapValue(cx, rval);
+#endif // SPIDERMONKEY_PROMISE
 }
 
 /* static */
@@ -2930,30 +2975,43 @@ UnwrapArgImpl(JS::Handle<JSObject*> src,
               const nsIID &iid,
               void **ppArg)
 {
-    if (!NS_IsMainThread()) {
-      return NS_ERROR_NOT_AVAILABLE;
+  if (!NS_IsMainThread()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  nsISupports *iface = xpc::UnwrapReflectorToISupports(src);
+  if (iface) {
+    if (NS_FAILED(iface->QueryInterface(iid, ppArg))) {
+      return NS_ERROR_XPC_BAD_CONVERT_JS;
     }
 
-    nsISupports *iface = xpc::UnwrapReflectorToISupports(src);
-    if (iface) {
-        if (NS_FAILED(iface->QueryInterface(iid, ppArg))) {
-            return NS_ERROR_XPC_BAD_CONVERT_JS;
-        }
+    return NS_OK;
+  }
 
-        return NS_OK;
-    }
+  RefPtr<nsXPCWrappedJS> wrappedJS;
+  nsresult rv = nsXPCWrappedJS::GetNewOrUsed(src, iid, getter_AddRefs(wrappedJS));
+  if (NS_FAILED(rv) || !wrappedJS) {
+    return rv;
+  }
 
-    RefPtr<nsXPCWrappedJS> wrappedJS;
-    nsresult rv = nsXPCWrappedJS::GetNewOrUsed(src, iid, getter_AddRefs(wrappedJS));
-    if (NS_FAILED(rv) || !wrappedJS) {
-        return rv;
-    }
+  // We need to go through the QueryInterface logic to make this return
+  // the right thing for the various 'special' interfaces; e.g.
+  // nsIPropertyBag. We must use AggregatedQueryInterface in cases where
+  // there is an outer to avoid nasty recursion.
+  return wrappedJS->QueryInterface(iid, ppArg);
+}
 
-    // We need to go through the QueryInterface logic to make this return
-    // the right thing for the various 'special' interfaces; e.g.
-    // nsIPropertyBag. We must use AggregatedQueryInterface in cases where
-    // there is an outer to avoid nasty recursion.
-    return wrappedJS->QueryInterface(iid, ppArg);
+nsresult
+UnwrapWindowProxyImpl(JS::Handle<JSObject*> src,
+                      nsPIDOMWindowOuter** ppArg)
+{
+  nsCOMPtr<nsPIDOMWindowInner> inner;
+  nsresult rv = UnwrapArg<nsPIDOMWindowInner>(src, getter_AddRefs(inner));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsPIDOMWindowOuter> outer = inner->GetOuterWindow();
+  outer.forget(ppArg);
+  return NS_OK;
 }
 
 bool
@@ -3194,11 +3252,23 @@ DeprecationWarning(JSContext* aCx, JSObject* aObject,
     return;
   }
 
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(global.GetAsSupports());
+  nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(global.GetAsSupports());
   if (window && window->GetExtantDoc()) {
     window->GetExtantDoc()->WarnOnceAbout(aOperation);
   }
 }
+
+namespace binding_detail {
+JSObject*
+UnprivilegedJunkScopeOrWorkerGlobal()
+{
+  if (NS_IsMainThread()) {
+    return xpc::UnprivilegedJunkScope();
+  }
+
+  return workers::GetCurrentThreadWorkerGlobal();
+}
+} // namespace binding_detail
 
 } // namespace dom
 } // namespace mozilla

@@ -4,8 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "mozilla/dom/ContentChild.h"
 #include "WindowIdentifier.h"
+
+#include "mozilla/dom/ContentChild.h"
 #include "nsPIDOMWindow.h"
 
 namespace mozilla {
@@ -17,14 +18,15 @@ WindowIdentifier::WindowIdentifier()
 {
 }
 
-WindowIdentifier::WindowIdentifier(nsIDOMWindow *window)
+WindowIdentifier::WindowIdentifier(nsPIDOMWindowInner* window)
   : mWindow(window)
   , mIsEmpty(false)
 {
   mID.AppendElement(GetWindowID());
 }
 
-WindowIdentifier::WindowIdentifier(const InfallibleTArray<uint64_t> &id, nsIDOMWindow *window)
+WindowIdentifier::WindowIdentifier(const InfallibleTArray<uint64_t> &id,
+                                   nsPIDOMWindowInner* window)
   : mID(id)
   , mWindow(window)
   , mIsEmpty(false)
@@ -64,14 +66,10 @@ uint64_t
 WindowIdentifier::GetWindowID() const
 {
   MOZ_ASSERT(!mIsEmpty);
-  nsCOMPtr<nsPIDOMWindow> pidomWindow = do_QueryInterface(mWindow);
-  if (!pidomWindow) {
-    return UINT64_MAX;
-  }
-  return pidomWindow->WindowID();
+  return mWindow ? mWindow->WindowID() : UINT64_MAX;
 }
 
-nsIDOMWindow*
+nsPIDOMWindowInner*
 WindowIdentifier::GetWindow() const
 {
   MOZ_ASSERT(!mIsEmpty);

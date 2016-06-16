@@ -64,7 +64,7 @@ var progressListener = {
       // On non-Windows platforms, we open new windows in fullscreen mode
       // if the opener window is in fullscreen mode, so we hide the menubar;
       // but on Mac we don't need to hide the menubar.
-      if (document.mozFullScreenElement) {
+      if (document.fullscreenElement) {
         document.getElementById("main-menubar").style.display = "none";
       }
     }
@@ -110,7 +110,8 @@ function onDOMContentLoaded() {
     // Set the principal to the correct app ID.  Since this is a subsequent
     // window, we know that WebappRT.configPromise has been resolved, so we
     // don't have to yield to it before accessing WebappRT.appID.
-    gAppBrowser.docShell.setIsApp(WebappRT.appID);
+    gAppBrowser.docShell.frameType = Ci.nsIDocShell.FRAME_TYPE_APP;
+    gAppBrowser.docShell.setOriginAttributes({appId: WebappRT.appID});
   }
 }
 window.addEventListener("DOMContentLoaded", onDOMContentLoaded, false);
@@ -137,8 +138,8 @@ window.addEventListener("unload", onUnload, false);
 // Fullscreen handling.
 
 #ifndef XP_MACOSX
-document.addEventListener('mozfullscreenchange', function() {
-  if (document.mozFullScreenElement) {
+document.addEventListener('fullscreenchange', function() {
+  if (document.fullscreenElement) {
     document.getElementById("main-menubar").style.display = "none";
   } else {
     document.getElementById("main-menubar").style.display = "";

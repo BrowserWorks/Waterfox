@@ -207,6 +207,9 @@ var ClickEventHandler = {
       this._scrollErrorX = (desiredScrollX - actualScrollX);
     }
 
+    const kAutoscroll = 15;  // defined in mozilla/layers/ScrollInputMethods.h
+    Services.telemetry.getHistogramById("SCROLL_INPUT_METHODS").add(kAutoscroll);
+
     if (this._scrollable instanceof content.Window) {
       this._scrollable.scrollBy(actualScrollX, actualScrollY);
     } else { // an element with overflow
@@ -629,7 +632,7 @@ var FindBar = {
   _onKeypress(event) {
     // Useless keys:
     if (event.ctrlKey || event.altKey || event.metaKey || event.defaultPrevented) {
-      return;
+      return undefined;
     }
 
     // Check the focused element etc.
@@ -637,7 +640,7 @@ var FindBar = {
 
     // Can we even use find in this page at all?
     if (!fastFind.can) {
-      return;
+      return undefined;
     }
 
     let fakeEvent = {};
@@ -966,7 +969,7 @@ var ViewSelectionSource = {
       topNode = topNode.parentNode;
     }
     if (!topNode)
-      return;
+      return undefined;
 
     // serialize
     const VIEW_SOURCE_CSS = "resource://gre-resources/viewsource.css";
@@ -1127,3 +1130,15 @@ var ViewSelectionSource = {
 };
 
 ViewSelectionSource.init();
+
+addEventListener("MozApplicationManifest", function(e) {
+  let doc = e.target;
+  let info = {
+    uri: doc.documentURI,
+    characterSet: doc.characterSet,
+    manifest: doc.documentElement.getAttribute("manifest"),
+    principal: doc.nodePrincipal,
+  };
+  sendAsyncMessage("MozApplicationManifest", info);
+}, false);
+

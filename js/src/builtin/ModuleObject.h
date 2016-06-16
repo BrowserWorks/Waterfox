@@ -43,9 +43,9 @@ class ImportEntryObject : public NativeObject
     };
 
     static const Class class_;
-    static JSObject* initClass(JSContext* cx, HandleObject obj);
+    static JSObject* initClass(ExclusiveContext* cx, HandleObject obj);
     static bool isInstance(HandleValue value);
-    static ImportEntryObject* create(JSContext* cx,
+    static ImportEntryObject* create(ExclusiveContext* cx,
                                      HandleAtom moduleRequest,
                                      HandleAtom importName,
                                      HandleAtom localName);
@@ -70,9 +70,9 @@ class ExportEntryObject : public NativeObject
     };
 
     static const Class class_;
-    static JSObject* initClass(JSContext* cx, HandleObject obj);
+    static JSObject* initClass(ExclusiveContext* cx, HandleObject obj);
     static bool isInstance(HandleValue value);
-    static ExportEntryObject* create(JSContext* cx,
+    static ExportEntryObject* create(ExclusiveContext* cx,
                                      HandleAtom maybeExportName,
                                      HandleAtom maybeModuleRequest,
                                      HandleAtom maybeImportName,
@@ -133,7 +133,7 @@ class ModuleNamespaceObject : public ProxyObject
     static ModuleNamespaceObject* create(JSContext* cx, HandleModuleObject module);
 
     ModuleObject& module();
-    ArrayObject& exports();
+    JSObject& exports();
     IndirectBindingMap& bindings();
 
     bool addBinding(JSContext* cx, HandleAtom exportedName, HandleModuleObject targetModule,
@@ -152,15 +152,14 @@ class ModuleNamespaceObject : public ProxyObject
         JS::Value getEnumerateFunction(HandleObject proxy) const;
 
         bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                      MutableHandle<JSPropertyDescriptor> desc) const override;
+                                      MutableHandle<PropertyDescriptor> desc) const override;
         bool defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                            Handle<JSPropertyDescriptor> desc,
+                            Handle<PropertyDescriptor> desc,
                             ObjectOpResult& result) const override;
         bool ownPropertyKeys(JSContext* cx, HandleObject proxy,
                              AutoIdVector& props) const override;
         bool delete_(JSContext* cx, HandleObject proxy, HandleId id,
                      ObjectOpResult& result) const override;
-        bool enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const override;
         bool getPrototype(JSContext* cx, HandleObject proxy,
                           MutableHandleObject protop) const override;
         bool setPrototype(JSContext* cx, HandleObject proxy, HandleObject proto,
@@ -233,6 +232,9 @@ class ModuleObject : public NativeObject
                               HandleArrayObject localExportEntries,
                               HandleArrayObject indiretExportEntries,
                               HandleArrayObject starExportEntries);
+    static bool FreezeArrayProperties(JSContext* cx, HandleModuleObject self);
+    static void AssertArrayPropertiesFrozen(JSContext* cx, HandleModuleObject self);
+    void fixScopesAfterCompartmentMerge(JSContext* cx);
 
     JSScript* script() const;
     JSObject* enclosingStaticScope() const;
@@ -246,7 +248,7 @@ class ModuleObject : public NativeObject
     ArrayObject& indirectExportEntries() const;
     ArrayObject& starExportEntries() const;
     IndirectBindingMap& importBindings();
-    ArrayObject* namespaceExports();
+    JSObject* namespaceExports();
     IndirectBindingMap* namespaceBindings();
 
     void createEnvironment();
@@ -258,7 +260,7 @@ class ModuleObject : public NativeObject
     static bool evaluate(JSContext* cx, HandleModuleObject self, MutableHandleValue rval);
 
     static ModuleNamespaceObject* createNamespace(JSContext* cx, HandleModuleObject self,
-                                                  HandleArrayObject exports);
+                                                  HandleObject exports);
 
   private:
     static void trace(JSTracer* trc, JSObject* obj);
@@ -274,7 +276,7 @@ class ModuleObject : public NativeObject
 class MOZ_STACK_CLASS ModuleBuilder
 {
   public:
-    explicit ModuleBuilder(JSContext* cx, HandleModuleObject module);
+    explicit ModuleBuilder(ExclusiveContext* cx, HandleModuleObject module);
 
     bool processImport(frontend::ParseNode* pn);
     bool processExport(frontend::ParseNode* pn);
@@ -297,7 +299,7 @@ class MOZ_STACK_CLASS ModuleBuilder
     using RootedImportEntryVector = JS::Rooted<ImportEntryVector>;
     using RootedExportEntryVector = JS::Rooted<ExportEntryVector>;
 
-    JSContext* cx_;
+    ExclusiveContext* cx_;
     RootedModuleObject module_;
     RootedAtomVector requestedModules_;
     RootedAtomVector importedBoundNames_;

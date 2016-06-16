@@ -322,14 +322,14 @@ void
 nsXBLWindowKeyHandler::HandleEventOnCapture(nsIDOMKeyEvent* aEvent)
 {
   WidgetKeyboardEvent* widgetEvent =
-    aEvent->AsEvent()->GetInternalNSEvent()->AsKeyboardEvent();
+    aEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent();
 
   if (widgetEvent->mFlags.mNoCrossProcessBoundaryForwarding) {
     return;
   }
 
   nsCOMPtr<mozilla::dom::Element> originalTarget =
-    do_QueryInterface(aEvent->AsEvent()->GetInternalNSEvent()->originalTarget);
+    do_QueryInterface(aEvent->AsEvent()->WidgetEventPtr()->originalTarget);
   if (!EventStateManager::IsRemoteTarget(originalTarget)) {
     return;
   }
@@ -381,12 +381,12 @@ nsXBLWindowKeyHandler::IsHTMLEditableFieldFocused()
   if (!fm)
     return false;
 
-  nsCOMPtr<nsIDOMWindow> focusedWindow;
+  nsCOMPtr<mozIDOMWindowProxy> focusedWindow;
   fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
   if (!focusedWindow)
     return false;
 
-  nsCOMPtr<nsPIDOMWindow> piwin(do_QueryInterface(focusedWindow));
+  auto* piwin = nsPIDOMWindowOuter::From(focusedWindow);
   nsIDocShell *docShell = piwin->GetDocShell();
   if (!docShell) {
     return false;
@@ -441,7 +441,7 @@ nsXBLWindowKeyHandler::WalkHandlersInternal(nsIDOMKeyEvent* aKeyEvent,
                                             bool aExecute,
                                             bool* aOutReservedForChrome)
 {
-  nsAutoTArray<nsShortcutCandidate, 10> accessKeys;
+  AutoTArray<nsShortcutCandidate, 10> accessKeys;
   nsContentUtils::GetAccelKeyCandidates(aKeyEvent, accessKeys);
 
   if (accessKeys.IsEmpty()) {
@@ -565,7 +565,7 @@ nsXBLWindowKeyHandler::WalkHandlersAndExecute(
   // retry to look for a shortcut key without the Windows-Logo key press.
   if (!aIgnoreModifierState.mOS) {
     WidgetKeyboardEvent* keyEvent =
-      aKeyEvent->AsEvent()->GetInternalNSEvent()->AsKeyboardEvent();
+      aKeyEvent->AsEvent()->WidgetEventPtr()->AsKeyboardEvent();
     if (keyEvent && keyEvent->IsOS()) {
       IgnoreModifierState ignoreModifierState(aIgnoreModifierState);
       ignoreModifierState.mOS = true;

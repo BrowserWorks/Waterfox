@@ -7,6 +7,7 @@ import org.mozilla.gecko.background.common.log.Logger;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**

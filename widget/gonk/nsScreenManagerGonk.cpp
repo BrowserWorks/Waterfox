@@ -27,6 +27,7 @@
 #include "HwcComposer2D.h"
 #include "VsyncSource.h"
 #include "nsWindow.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/layers/CompositorParent.h"
 #include "mozilla/Services.h"
 #include "mozilla/ProcessPriorityManager.h"
@@ -735,7 +736,7 @@ nsScreenGonk::UpdateMirroringWidget(already_AddRefed<nsWindow>& aWindow)
 
     if (mMirroringWidget) {
         nsCOMPtr<nsIWidget> widget = mMirroringWidget.forget();
-        NS_ReleaseOnMainThread(widget);
+        NS_ReleaseOnMainThread(widget.forget());
     }
     mMirroringWidget = aWindow;
 }
@@ -753,6 +754,9 @@ NS_IMPL_ISUPPORTS(nsScreenManagerGonk, nsIScreenManager)
 
 nsScreenManagerGonk::nsScreenManagerGonk()
     : mInitialized(false)
+#if ANDROID_VERSION >= 19
+    , mDisplayEnabled(false)
+#endif
 {
 }
 
@@ -760,19 +764,33 @@ nsScreenManagerGonk::~nsScreenManagerGonk()
 {
 }
 
+static StaticRefPtr<nsScreenManagerGonk> sScreenManagerGonk;
+
 /* static */ already_AddRefed<nsScreenManagerGonk>
 nsScreenManagerGonk::GetInstance()
 {
-    nsCOMPtr<nsIScreenManager> manager;
-    manager = do_GetService("@mozilla.org/gfx/screenmanager;1");
-    MOZ_ASSERT(manager);
-    return already_AddRefed<nsScreenManagerGonk>(
-        static_cast<nsScreenManagerGonk*>(manager.forget().take()));
+    MOZ_ASSERT(NS_IsMainThread());
+
+    // Avoid creating nsScreenManagerGonk from content process.
+    if (!XRE_IsParentProcess()) {
+        MOZ_CRASH("Non-chrome processes should not get here.");
+    }
+
+    // Avoid creating multiple nsScreenManagerGonk instance inside main process.
+    if (!sScreenManagerGonk) {
+      sScreenManagerGonk = new nsScreenManagerGonk();
+      ClearOnShutdown(&sScreenManagerGonk);
+    }
+
+    RefPtr<nsScreenManagerGonk> screenMgr = sScreenManagerGonk.get();
+    return screenMgr.forget();
 }
 
 /* static */ already_AddRefed< nsScreenGonk>
 nsScreenManagerGonk::GetPrimaryScreen()
 {
+    MOZ_ASSERT(NS_IsMainThread());
+
     RefPtr<nsScreenManagerGonk> manager = nsScreenManagerGonk::GetInstance();
     nsCOMPtr<nsIScreen> screen;
     manager->GetPrimaryScreen(getter_AddRefs(screen));
@@ -801,9 +819,16 @@ nsScreenManagerGonk::Initialize()
 void
 nsScreenManagerGonk::DisplayEnabled(bool aEnabled)
 {
+    MOZ_ASSERT(NS_IsMainThread());
+
 #if ANDROID_VERSION >= 19
+    /* Bug 1244044
+     * This function could be called before |mCompositorVsyncScheduler| is set.
+     * To avoid this issue, keep the value stored in |mDisplayEnabled|.
+     */
+    mDisplayEnabled = aEnabled;
     if (mCompositorVsyncScheduler) {
-        mCompositorVsyncScheduler->SetDisplay(aEnabled);
+        mCompositorVsyncScheduler->SetDisplay(mDisplayEnabled);
     }
 #endif
 
@@ -1048,6 +1073,8 @@ nsScreenManagerGonk::SetCompositorVsyncScheduler(mozilla::layers::CompositorVsyn
 
     // We assume on b2g that there is only 1 CompositorParent
     MOZ_ASSERT(mCompositorVsyncScheduler == nullptr);
+    MOZ_ASSERT(aObserver);
     mCompositorVsyncScheduler = aObserver;
+    mCompositorVsyncScheduler->SetDisplay(mDisplayEnabled);
 }
 #endif

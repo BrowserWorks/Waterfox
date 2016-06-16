@@ -59,7 +59,7 @@ add_task(function* test1() {
 
   yield db.put(record);
 
-  let notifyPromise = promiseObserverNotification('push-subscription-change',
+  let notifyPromise = promiseObserverNotification(PushServiceComponent.subscriptionChangeTopic,
                                                   _ => true);
 
   PushService.init({
@@ -67,8 +67,7 @@ add_task(function* test1() {
     db
   });
 
-  yield waitForPromise(notifyPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for notifications');
+  yield notifyPromise;
 
   let aRecord = yield db.getByKeyID(serverURL + '/subscriptionNoKey');
   ok(aRecord, 'The record should still be there');

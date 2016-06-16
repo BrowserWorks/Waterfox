@@ -1,16 +1,11 @@
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
-
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
-                                  "resource://gre/modules/AppConstants.jsm");
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 var {
   EventManager,
   ignoreEvent,
-  runSafe,
 } = ExtensionUtils;
 
 extensions.registerSchemaAPI("runtime", null, (extension, context) => {
@@ -47,7 +42,16 @@ extensions.registerSchemaAPI("runtime", null, (extension, context) => {
           [extensionId, message, options, responseCallback] = args;
         }
         let recipient = {extensionId: extensionId ? extensionId : extension.id};
+
+        if (!GlobalManager.extensionMap.has(recipient.extensionId)) {
+          return context.wrapPromise(Promise.reject({message: "Invalid extension ID"}),
+                                     responseCallback);
+        }
         return context.messenger.sendMessage(Services.cpmm, message, recipient, responseCallback);
+      },
+
+      get lastError() {
+        return context.lastError;
       },
 
       getManifest() {
@@ -60,22 +64,28 @@ extensions.registerSchemaAPI("runtime", null, (extension, context) => {
         return extension.baseURI.resolve(url);
       },
 
-      getPlatformInfo: function(callback) {
-        let os = AppConstants.platform;
-        if (os == "macosx") {
-          os = "mac";
+      getPlatformInfo: function() {
+        return Promise.resolve(ExtensionUtils.PlatformInfo);
+      },
+
+      setUninstallURL: function(url) {
+        if (url.length == 0) {
+          return Promise.resolve();
         }
 
-        let abi = Services.appinfo.XPCOMABI;
-        let [arch] = abi.split("-");
-        if (arch == "x86") {
-          arch = "x86-32";
-        } else if (arch == "x86_64") {
-          arch = "x86-64";
+        let uri;
+        try {
+          uri = NetUtil.newURI(url);
+        } catch (e) {
+          return Promise.reject({message: `Invalid URL: ${JSON.stringify(url)}`});
         }
 
-        let info = {os, arch};
-        runSafe(context, callback, info);
+        if (uri.scheme != "http" && uri.scheme != "https") {
+          return Promise.reject({message: "url must have the scheme http or https"});
+        }
+
+        extension.uninstallURL = url;
+        return Promise.resolve();
       },
     },
   };

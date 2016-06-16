@@ -278,7 +278,8 @@ struct JSStructuredCloneWriter {
         : out(cx), objs(out.context()),
           counts(out.context()), entries(out.context()),
           memory(out.context(), CloneMemory(out.context())), callbacks(cb),
-          closure(cbClosure), transferable(out.context(), tVal), transferableObjects(out.context())
+          closure(cbClosure), transferable(out.context(), tVal),
+          transferableObjects(out.context(), GCHashSet<JSObject*>(cx))
     {}
 
     ~JSStructuredCloneWriter();
@@ -349,12 +350,13 @@ struct JSStructuredCloneWriter {
     // Any value passed to JS_WriteStructuredClone.
     void* closure;
 
-    // List of transferable objects
+    // Set of transferable objects
     RootedValue transferable;
-    AutoObjectVector transferableObjects;
+    Rooted<GCHashSet<JSObject*>> transferableObjects;
 
     friend bool JS_WriteString(JSStructuredCloneWriter* w, HandleString str);
     friend bool JS_WriteTypedArray(JSStructuredCloneWriter* w, HandleValue v);
+    friend bool JS_ObjectNotWritten(JSStructuredCloneWriter* w, HandleObject obj);
 };
 
 JS_FRIEND_API(uint64_t)
@@ -765,10 +767,14 @@ JSStructuredCloneWriter::~JSStructuredCloneWriter()
 bool
 JSStructuredCloneWriter::parseTransferable()
 {
-    MOZ_ASSERT(transferableObjects.empty(), "parseTransferable called with stale data");
+    // NOTE: The transferables set is tested for non-emptiness at various
+    //       junctures in structured cloning, so this set must be initialized
+    //       by this method in all non-error cases.
+    MOZ_ASSERT(!transferableObjects.initialized(),
+               "parseTransferable called with stale data");
 
     if (transferable.isNull() || transferable.isUndefined())
-        return true;
+        return transferableObjects.init(0);
 
     if (!transferable.isObject())
         return reportErrorTransferable(JS_SCERR_TRANSFERABLE);
@@ -782,26 +788,36 @@ JSStructuredCloneWriter::parseTransferable()
         return reportErrorTransferable(JS_SCERR_TRANSFERABLE);
 
     uint32_t length;
-    if (!JS_GetArrayLength(cx, array, &length)) {
+    if (!JS_GetArrayLength(cx, array, &length))
         return false;
-    }
+
+    // Initialize the set for the provided array's length.
+    if (!transferableObjects.init(length))
+        return false;
+
+    if (length == 0)
+        return true;
 
     RootedValue v(context());
+    RootedObject tObj(context());
 
     for (uint32_t i = 0; i < length; ++i) {
+        if (!CheckForInterrupt(cx))
+            return false;
+
         if (!JS_GetElement(cx, array, i, &v))
             return false;
 
         if (!v.isObject())
             return reportErrorTransferable(JS_SCERR_TRANSFERABLE);
-        RootedObject tObj(context(), &v.toObject());
+        tObj = &v.toObject();
 
         // No duplicates allowed
-        if (std::find(transferableObjects.begin(), transferableObjects.end(), tObj) != transferableObjects.end()) {
+        auto p = transferableObjects.lookupForAdd(tObj);
+        if (p)
             return reportErrorTransferable(JS_SCERR_DUP_TRANSFERABLE);
-        }
 
-        if (!transferableObjects.append(tObj))
+        if (!transferableObjects.add(p, tObj))
             return false;
     }
 
@@ -1227,17 +1243,18 @@ JSStructuredCloneWriter::writeTransferMap()
     if (!out.writePair(SCTAG_TRANSFER_MAP_HEADER, (uint32_t)SCTAG_TM_UNREAD))
         return false;
 
-    if (!out.write(transferableObjects.length()))
+    if (!out.write(transferableObjects.count()))
         return false;
 
-    for (JS::AutoObjectVector::Range tr = transferableObjects.all(); !tr.empty(); tr.popFront()) {
-        JSObject* obj = tr.front();
+    RootedObject obj(context());
+    for (auto tr = transferableObjects.all(); !tr.empty(); tr.popFront()) {
+        obj = tr.front();
 
         if (!memory.put(obj, memory.count()))
             return false;
 
-        // Emit a placeholder pointer. We will steal the data and neuter the
-        // transferable later, in the case of ArrayBufferObject.
+        // Emit a placeholder pointer.  We defer stealing the data until later
+        // (and, if necessary, detaching this object if it's an ArrayBuffer).
         if (!out.writePair(SCTAG_TRANSFER_MAP_PENDING_ENTRY, JS::SCTAG_TMO_UNFILLED))
             return false;
         if (!out.writePtr(nullptr)) // Pointer to ArrayBuffer contents or to SharedArrayRawBuffer.
@@ -1261,11 +1278,12 @@ JSStructuredCloneWriter::transferOwnership()
     uint64_t* point = out.rawBuffer();
     MOZ_ASSERT(uint32_t(LittleEndian::readUint64(point) >> 32) == SCTAG_TRANSFER_MAP_HEADER);
     point++;
-    MOZ_ASSERT(LittleEndian::readUint64(point) == transferableObjects.length());
+    MOZ_ASSERT(LittleEndian::readUint64(point) == transferableObjects.count());
     point++;
 
-    for (JS::AutoObjectVector::Range tr = transferableObjects.all(); !tr.empty(); tr.popFront()) {
-        RootedObject obj(context(), tr.front());
+    RootedObject obj(context());
+    for (auto tr = transferableObjects.all(); !tr.empty(); tr.popFront()) {
+        obj = tr.front();
 
         uint32_t tag;
         JS::TransferableOwnership ownership;
@@ -1393,7 +1411,8 @@ JSStructuredCloneWriter::write(HandleValue v)
                 }
             }
         } else {
-            out.writePair(SCTAG_END_OF_KEYS, 0);
+            if (!out.writePair(SCTAG_END_OF_KEYS, 0))
+                return false;
             objs.popBack();
             counts.popBack();
         }
@@ -1745,7 +1764,7 @@ JSStructuredCloneReader::startRead(MutableHandleValue vp)
       }
 
       case SCTAG_BACK_REFERENCE_OBJECT: {
-        if (data >= allObjs.length()) {
+        if (data >= allObjs.length() || !allObjs[data].isObject()) {
             JS_ReportErrorNumber(context(), GetErrorMessage, nullptr,
                                  JSMSG_SC_BAD_SERIALIZED_DATA,
                                  "invalid back reference in input");
@@ -2403,4 +2422,12 @@ JS_WriteTypedArray(JSStructuredCloneWriter* w, HandleValue v)
     assertSameCompartment(w->context(), v);
     RootedObject obj(w->context(), &v.toObject());
     return w->writeTypedArray(obj);
+}
+
+JS_PUBLIC_API(bool)
+JS_ObjectNotWritten(JSStructuredCloneWriter* w, HandleObject obj)
+{
+    w->memory.remove(w->memory.lookup(obj));
+
+    return true;
 }

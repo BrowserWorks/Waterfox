@@ -1,6 +1,6 @@
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -33,6 +33,7 @@ function WebRequestEventManager(context, eventName) {
       }
 
       let data2 = {
+        requestId: data.requestId,
         url: data.url,
         method: data.method,
         type: data.type,
@@ -41,6 +42,10 @@ function WebRequestEventManager(context, eventName) {
         parentFrameId: ExtensionManagement.getParentFrameId(data.parentWindowId, data.windowId),
       };
 
+      if ("ip" in data) {
+        data2.ip = data.ip;
+      }
+
       // Fills in tabId typically.
       let result = {};
       extensions.emit("fill-browser-data", data.browser, data2, result);
@@ -48,7 +53,7 @@ function WebRequestEventManager(context, eventName) {
         return;
       }
 
-      let optional = ["requestHeaders", "responseHeaders", "statusCode", "redirectUrl"];
+      let optional = ["requestHeaders", "responseHeaders", "statusCode", "statusLine", "redirectUrl"];
       for (let opt of optional) {
         if (opt in data) {
           data2[opt] = data[opt];

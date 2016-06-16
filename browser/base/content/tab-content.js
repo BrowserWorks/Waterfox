@@ -68,15 +68,10 @@ addMessageListener("Browser:Reload", function(message) {
   }
 
   let reloadFlags = message.data.flags;
-  let handlingUserInput;
   try {
-    handlingUserInput = content.QueryInterface(Ci.nsIInterfaceRequestor)
-                               .getInterface(Ci.nsIDOMWindowUtils)
-                               .setHandlingUserInput(message.data.handlingUserInput);
-    webNav.reload(reloadFlags);
+    E10SUtils.wrapHandlingUserInput(content, message.data.handlingUserInput,
+                                    () => webNav.reload(reloadFlags));
   } catch (e) {
-  } finally {
-    handlingUserInput.destruct();
   }
 });
 
@@ -149,12 +144,6 @@ var AboutHomeListener = {
   },
 
   onPageLoad: function() {
-    let doc = content.document;
-    if (doc.documentElement.hasAttribute("hasBrowserHandlers")) {
-      return;
-    }
-
-    doc.documentElement.setAttribute("hasBrowserHandlers", "true");
     addMessageListener("AboutHome:Update", this);
     addEventListener("click", this, true);
     addEventListener("pagehide", this, true);
@@ -216,9 +205,6 @@ var AboutHomeListener = {
     removeMessageListener("AboutHome:Update", this);
     removeEventListener("click", this, true);
     removeEventListener("pagehide", this, true);
-    if (aEvent.target.documentElement) {
-      aEvent.target.documentElement.removeAttribute("hasBrowserHandlers");
-    }
   },
 };
 AboutHomeListener.init(this);
@@ -228,6 +214,8 @@ var AboutPrivateBrowsingListener = {
     chromeGlobal.addEventListener("AboutPrivateBrowsingOpenWindow", this,
                                   false, true);
     chromeGlobal.addEventListener("AboutPrivateBrowsingToggleTrackingProtection", this,
+                                  false, true);
+    chromeGlobal.addEventListener("AboutPrivateBrowsingDontShowIntroPanelAgain", this,
                                   false, true);
   },
 
@@ -245,6 +233,9 @@ var AboutPrivateBrowsingListener = {
         break;
       case "AboutPrivateBrowsingToggleTrackingProtection":
         sendAsyncMessage("AboutPrivateBrowsing:ToggleTrackingProtection");
+        break;
+      case "AboutPrivateBrowsingDontShowIntroPanelAgain":
+        sendAsyncMessage("AboutPrivateBrowsing:DontShowIntroPanelAgain");
         break;
     }
   },
@@ -627,7 +618,7 @@ var DOMFullscreenHandler = {
     switch(aMessage.name) {
       case "DOMFullscreen:Entered": {
         if (!this._windowUtils.handleFullscreenRequests() &&
-            !content.document.mozFullScreen) {
+            !content.document.fullscreenElement) {
           // If we don't actually have any pending fullscreen request
           // to handle, neither we have been in fullscreen, tell the
           // parent to just exit.
@@ -665,7 +656,7 @@ var DOMFullscreenHandler = {
       case "MozDOMFullscreen:Entered":
       case "MozDOMFullscreen:Exited": {
         addEventListener("MozAfterPaint", this);
-        if (!content || !content.document.mozFullScreen) {
+        if (!content || !content.document.fullscreenElement) {
           // If we receive any fullscreen change event, and find we are
           // actually not in fullscreen, also ask the parent to exit to
           // ensure that the parent always exits fullscreen when we do.

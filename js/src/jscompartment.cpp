@@ -17,6 +17,7 @@
 #include "jswrapper.h"
 
 #include "gc/Marking.h"
+#include "gc/Policy.h"
 #include "jit/JitCompartment.h"
 #include "jit/JitOptions.h"
 #include "js/Date.h"
@@ -63,7 +64,7 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     lastAnimationTime(0),
     regExps(runtime_),
     globalWriteBarriered(false),
-    neuteredTypedObjects(0),
+    detachedTypedObjects(0),
     objectMetadataState(ImmediateMetadata()),
     propertyTree(thisForCtor()),
     selfHostingScriptSource(nullptr),
@@ -77,7 +78,7 @@ JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options =
     debugScriptMap(nullptr),
     debugScopes(nullptr),
     enumerators(nullptr),
-    compartmentStats(nullptr),
+    compartmentStats_(nullptr),
     scheduledForDestruction(false),
     maybeAlive(true),
     jitCompartment_(nullptr),
@@ -672,7 +673,7 @@ JSCompartment::sweepInnerViews()
 void
 JSCompartment::sweepSavedStacks()
 {
-    savedStacks_.sweep(runtimeFromAnyThread());
+    savedStacks_.sweep();
 }
 
 void
@@ -885,7 +886,7 @@ JSCompartment::clearObjectMetadata()
 }
 
 void
-JSCompartment::setNewObjectMetadata(JSContext* cx, JSObject* obj)
+JSCompartment::setNewObjectMetadata(JSContext* cx, HandleObject obj)
 {
     assertSameCompartment(cx, this, obj);
 
@@ -1080,8 +1081,9 @@ JSCompartment::clearScriptCounts()
     // Clear all hasScriptCounts_ flags of JSScript, in order to release all
     // ScriptCounts entry of the current compartment.
     for (ScriptCountsMap::Range r = scriptCountsMap->all(); !r.empty(); r.popFront()) {
-        ScriptCounts* value = &r.front().value();
+        ScriptCounts* value = r.front().value();
         r.front().key()->takeOverScriptCountsMapEntry(value);
+        js_delete(value);
     }
 
     js_delete(scriptCountsMap);
@@ -1111,7 +1113,9 @@ JSCompartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                       size_t* crossCompartmentWrappersArg,
                                       size_t* regexpCompartment,
                                       size_t* savedStacksSet,
-                                      size_t* nonSyntacticLexicalScopesArg)
+                                      size_t* nonSyntacticLexicalScopesArg,
+                                      size_t* jitCompartment,
+                                      size_t* privateData)
 {
     *compartmentObject += mallocSizeOf(this);
     objectGroups.addSizeOfExcludingThis(mallocSizeOf, tiAllocationSiteTables,
@@ -1129,6 +1133,12 @@ JSCompartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
     *savedStacksSet += savedStacks_.sizeOfExcludingThis(mallocSizeOf);
     if (nonSyntacticLexicalScopes_)
         *nonSyntacticLexicalScopesArg += nonSyntacticLexicalScopes_->sizeOfIncludingThis(mallocSizeOf);
+    if (jitCompartment_)
+        *jitCompartment += jitCompartment_->sizeOfIncludingThis(mallocSizeOf);
+
+    auto callback = runtime_->sizeOfIncludingThisCompartmentCallback;
+    if (callback)
+        *privateData += callback(mallocSizeOf, this);
 }
 
 void
@@ -1183,13 +1193,26 @@ AutoSetNewObjectMetadata::~AutoSetNewObjectMetadata()
         return;
 
     if (!cx_->isExceptionPending() && cx_->compartment()->hasObjectPendingMetadata()) {
+        // This destructor often runs upon exit from a function that is
+        // returning an unrooted pointer to a Cell. The allocation metadata
+        // callback often allocates; if it causes a GC, then the Cell pointer
+        // being returned won't be traced or relocated.
+        //
+        // The only extant callbacks are those internal to SpiderMonkey that
+        // capture the JS stack. In fact, we're considering removing general
+        // callbacks altogther in bug 1236748. Since it's not running arbitrary
+        // code, it's adequate to simply suppress GC while we run the callback.
+        AutoSuppressGC autoSuppressGC(cx_);
+
         JSObject* obj = cx_->compartment()->objectMetadataState.as<PendingMetadata>();
+
         // Make sure to restore the previous state before setting the object's
         // metadata. SetNewObjectMetadata asserts that the state is not
         // PendingMetadata in order to ensure that metadata callbacks are called
         // in order.
         cx_->compartment()->objectMetadataState = prevState_;
-        SetNewObjectMetadata(cx_, obj);
+
+        obj = SetNewObjectMetadata(cx_, obj);
     } else {
         cx_->compartment()->objectMetadataState = prevState_;
     }

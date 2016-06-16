@@ -166,6 +166,10 @@ function loadAddonManager(id, name, version, platformVersion) {
   let uri = ns.Services.io.newFileURI(file);
   ns.Services.scriptloader.loadSubScript(uri.spec, gGlobalScope);
   createAppInfo(id, name, version, platformVersion);
+  // As we're not running in application, we need to setup the features directory
+  // used by system add-ons.
+  const distroDir = FileUtils.getDir("ProfD", ["sysfeatures", "app0"], true);
+  registerDirectory("XREAppFeat", distroDir);
   startupManager();
 }
 
@@ -282,11 +286,6 @@ function fakeGeneratePingId(func) {
 function fakeCachedClientId(uuid) {
   let module = Cu.import("resource://gre/modules/TelemetryController.jsm");
   module.Policy.getCachedClientID = () => uuid;
-}
-
-function fakeIsUnifiedOptin(isOptin) {
-  let module = Cu.import("resource://gre/modules/TelemetryController.jsm");
-  module.Policy.isUnifiedOptin = () => isOptin;
 }
 
 // Return a date that is |offset| ms in the future from |date|.

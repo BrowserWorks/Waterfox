@@ -151,6 +151,7 @@ SpeechTaskCallback::OnDidFinishSpeaking()
 {
   mTask->DispatchEnd(GetTimeDurationFromStart(), mCurrentIndex);
   // no longer needed
+  [mSpeechSynthesizer setDelegate:nil];
   mTask = nullptr;
 }
 
@@ -275,7 +276,7 @@ EnumVoicesRunnable::Run()
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NSRESULT;
 
-  nsAutoTArray<OSXVoice, 64> list;
+  AutoTArray<OSXVoice, 64> list;
 
   NSArray* voices = [NSSpeechSynthesizer availableVoices];
   NSString* defaultVoice = [NSSpeechSynthesizer defaultVoice];

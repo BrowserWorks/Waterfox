@@ -77,7 +77,7 @@ public:
 
   nsresult
   ProvideWindowCommon(TabChild* aTabOpener,
-                      nsIDOMWindow* aOpener,
+                      mozIDOMWindowProxy* aOpener,
                       bool aIframeMoz,
                       uint32_t aChromeFlags,
                       bool aCalledFromJS,
@@ -87,7 +87,7 @@ public:
                       const nsAString& aName,
                       const nsACString& aFeatures,
                       bool* aWindowIsNew,
-                      nsIDOMWindow** aReturn);
+                      mozIDOMWindowProxy** aReturn);
 
   bool Init(MessageLoop* aIOLoop,
             base::ProcessId aParentPid,
@@ -143,6 +143,11 @@ public:
   PGMPServiceChild*
   AllocPGMPServiceChild(mozilla::ipc::Transport* transport,
                         base::ProcessId otherProcess) override;
+
+  PAPZChild*
+  AllocPAPZChild(const TabId& aTabId) override;
+  bool
+  DeallocPAPZChild(PAPZChild* aActor) override;
 
   PCompositorChild*
   AllocPCompositorChild(mozilla::ipc::Transport* aTransport,
@@ -424,9 +429,9 @@ public:
   virtual bool RecvLoadProcessScript(const nsString& aURL) override;
 
   virtual bool RecvAsyncMessage(const nsString& aMsg,
-                                const ClonedMessageData& aData,
                                 InfallibleTArray<CpowEntry>&& aCpows,
-                                const IPC::Principal& aPrincipal) override;
+                                const IPC::Principal& aPrincipal,
+                                const ClonedMessageData& aData) override;
 
   virtual bool RecvGeolocationUpdate(const GeoPosition& somewhere) override;
 
@@ -605,7 +610,11 @@ public:
 
   virtual bool RecvGamepadUpdate(const GamepadChangeEvent& aGamepadEvent) override;
 
-  virtual bool RecvTestGraphicsDeviceReset(const uint32_t& aResetReason) override;
+  // Windows specific - set up audio session
+  virtual bool
+  RecvSetAudioSessionData(const nsID& aId,
+                          const nsString& aDisplayName,
+                          const nsString& aIconPath) override;
 
 private:
   virtual void ActorDestroy(ActorDestroyReason why) override;

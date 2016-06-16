@@ -19,7 +19,6 @@ EXTRA_JS_MODULES += [
     'LightweightThemeConsumer.jsm',
     'MediaPlayerApp.jsm',
     'Messaging.jsm',
-    'MulticastDNS.jsm',
     'NetErrorHelper.jsm',
     'Notifications.jsm',
     'OrderedBroadcast.jsm',
@@ -31,8 +30,6 @@ EXTRA_JS_MODULES += [
     'Snackbars.jsm',
     'SSLExceptions.jsm',
     'TabMirror.jsm',
-    'WebappManager.jsm',
-    'WebappManagerWorker.js',
 ]
 
 if not CONFIG['MOZ_B2GDROID']:

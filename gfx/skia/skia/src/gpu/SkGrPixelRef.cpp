@@ -25,7 +25,7 @@ SkROLockPixelsPixelRef::~SkROLockPixelsPixelRef() {}
 bool SkROLockPixelsPixelRef::onNewLockPixels(LockRec* rec) {
     fBitmap.reset();
 //    SkDebugf("---------- calling readpixels in support of lockpixels\n");
-    if (!this->onReadPixels(&fBitmap, nullptr)) {
+    if (!this->onReadPixels(&fBitmap, this->info().colorType(), nullptr)) {
         SkDebugf("SkROLockPixelsPixelRef::onLockPixels failed!\n");
         return false;
     }
@@ -51,7 +51,8 @@ bool SkROLockPixelsPixelRef::onLockPixelsAreWritable() const {
 ///////////////////////////////////////////////////////////////////////////////
 
 static SkGrPixelRef* copy_to_new_texture_pixelref(GrTexture* texture, SkColorType dstCT,
-                                                  SkColorProfileType dstPT, const SkIRect* subset) {
+                                                  SkAlphaType dstAT, SkColorProfileType dstPT,
+                                                  const SkIRect* subset) {
     if (nullptr == texture || kUnknown_SkColorType == dstCT) {
         return nullptr;
     }
@@ -75,7 +76,7 @@ static SkGrPixelRef* copy_to_new_texture_pixelref(GrTexture* texture, SkColorTyp
         srcRect = *subset;
     }
     desc.fFlags = kRenderTarget_GrSurfaceFlag;
-    desc.fConfig = SkImageInfo2GrPixelConfig(dstCT, kPremul_SkAlphaType, dstPT);
+    desc.fConfig = SkImageInfo2GrPixelConfig(dstCT, dstAT, dstPT);
 
     GrTexture* dst = context->textureProvider()->createTexture(desc, false, nullptr, 0);
     if (nullptr == dst) {
@@ -88,8 +89,7 @@ static SkGrPixelRef* copy_to_new_texture_pixelref(GrTexture* texture, SkColorTyp
     context->copySurface(dst->asRenderTarget(), texture, srcRect, SkIPoint::Make(0,0),
                          GrContext::kFlushWrites_PixelOp);
 
-    SkImageInfo info = SkImageInfo::Make(desc.fWidth, desc.fHeight, dstCT, kPremul_SkAlphaType,
-                                         dstPT);
+    SkImageInfo info = SkImageInfo::Make(desc.fWidth, desc.fHeight, dstCT, dstAT, dstPT);
     SkGrPixelRef* pixelRef = new SkGrPixelRef(info, dst);
     SkSafeUnref(dst);
     return pixelRef;
@@ -142,7 +142,8 @@ SkPixelRef* SkGrPixelRef::deepCopy(SkColorType dstCT, SkColorProfileType dstPT,
     // a GrTexture owned elsewhere (e.g., SkGpuDevice), and cannot live
     // independently of that texture.  Texture-backed pixel refs, on the other
     // hand, own their GrTextures, and are thus self-contained.
-    return copy_to_new_texture_pixelref(fSurface->asTexture(), dstCT, dstPT, subset);
+    return copy_to_new_texture_pixelref(fSurface->asTexture(), dstCT, this->info().alphaType(),
+                                        dstPT, subset);
 }
 
 static bool tryAllocBitmapPixels(SkBitmap* bitmap) {
@@ -155,8 +156,17 @@ static bool tryAllocBitmapPixels(SkBitmap* bitmap) {
     }
 }
 
-bool SkGrPixelRef::onReadPixels(SkBitmap* dst, const SkIRect* subset) {
+bool SkGrPixelRef::onReadPixels(SkBitmap* dst, SkColorType colorType, const SkIRect* subset) {
     if (nullptr == fSurface || fSurface->wasDestroyed()) {
+        return false;
+    }
+
+    GrPixelConfig config;
+    if (kRGBA_8888_SkColorType == colorType) {
+        config = kRGBA_8888_GrPixelConfig;
+    } else if (kBGRA_8888_SkColorType == colorType) {
+        config = kBGRA_8888_GrPixelConfig;
+    } else {
         return false;
     }
 
@@ -172,7 +182,9 @@ bool SkGrPixelRef::onReadPixels(SkBitmap* dst, const SkIRect* subset) {
         //Cache miss
 
         SkBitmap cachedBitmap;
-        cachedBitmap.setInfo(this->info().makeWH(bounds.width(), bounds.height()));
+        cachedBitmap.setInfo(SkImageInfo::Make(bounds.width(), bounds.height(), colorType,
+                                               this->info().alphaType(),
+                                               this->info().profileType()));
 
         // If we can't alloc the pixels, then fail
         if (!tryAllocBitmapPixels(&cachedBitmap)) {
@@ -183,8 +195,7 @@ bool SkGrPixelRef::onReadPixels(SkBitmap* dst, const SkIRect* subset) {
         void* buffer = cachedBitmap.getPixels();
         bool readPixelsOk = fSurface->readPixels(bounds.fLeft, bounds.fTop,
                                 bounds.width(), bounds.height(),
-                                kSkia8888_GrPixelConfig,
-                                buffer, cachedBitmap.rowBytes());
+                                config, buffer, cachedBitmap.rowBytes());
 
         if (!readPixelsOk) {
             return false;

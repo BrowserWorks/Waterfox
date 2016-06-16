@@ -99,6 +99,9 @@ ChromeProcessController::Destroy()
 nsIPresShell*
 ChromeProcessController::GetPresShell() const
 {
+  if (!mWidget) {
+    return nullptr;
+  }
   if (nsView* view = nsView::GetViewFor(mWidget)) {
     return view->GetPresShell();
   }
@@ -232,5 +235,5 @@ void
 ChromeProcessController::NotifyFlushComplete()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  APZCCallbackHelper::NotifyFlushComplete();
+  APZCCallbackHelper::NotifyFlushComplete(GetPresShell());
 }

@@ -39,8 +39,10 @@ const events = require("sdk/event/core");
 const ANIMATION_TYPES = {
   CSS_ANIMATION: "cssanimation",
   CSS_TRANSITION: "csstransition",
+  SCRIPT_ANIMATION: "scriptanimation",
   UNKNOWN: "unknown"
 };
+exports.ANIMATION_TYPES = ANIMATION_TYPES;
 
 /**
  * The AnimationPlayerActor provides information about a given animation: its
@@ -71,16 +73,12 @@ var AnimationPlayerActor = ActorClass({
     this.onAnimationMutation = this.onAnimationMutation.bind(this);
 
     this.walker = animationsActor.walker;
-    this.tabActor = animationsActor.tabActor;
     this.player = player;
     this.node = player.effect.target;
 
-    let win = this.node.ownerDocument.defaultView;
-    this.styles = win.getComputedStyle(this.node);
-
     // Listen to animation mutations on the node to alert the front when the
     // current animation changes.
-    this.observer = new win.MutationObserver(this.onAnimationMutation);
+    this.observer = new this.window.MutationObserver(this.onAnimationMutation);
     this.observer.observe(this.node, {animations: true});
   },
 
@@ -90,10 +88,13 @@ var AnimationPlayerActor = ActorClass({
     if (this.observer && !Cu.isDeadWrapper(this.observer)) {
       this.observer.disconnect();
     }
-    this.tabActor = this.player = this.node = this.styles = null;
-    this.observer = this.walker = null;
+    this.player = this.node = this.observer = this.walker = null;
 
     Actor.prototype.destroy.call(this);
+  },
+
+  get window() {
+    return this.node.ownerDocument.defaultView;
   },
 
   /**
@@ -119,34 +120,45 @@ var AnimationPlayerActor = ActorClass({
     return data;
   },
 
-  isAnimation: function(player=this.player) {
-    return player instanceof this.tabActor.window.CSSAnimation;
+  isCssAnimation: function(player = this.player) {
+    return player instanceof this.window.CSSAnimation;
   },
 
-  isTransition: function(player=this.player) {
-    return player instanceof this.tabActor.window.CSSTransition;
+  isCssTransition: function(player = this.player) {
+    return player instanceof this.window.CSSTransition;
+  },
+
+  isScriptAnimation: function(player = this.player) {
+    return player instanceof this.window.Animation && !(
+      player instanceof this.window.CSSAnimation ||
+      player instanceof this.window.CSSTransition
+    );
   },
 
   getType: function() {
-    if (this.isAnimation()) {
+    if (this.isCssAnimation()) {
       return ANIMATION_TYPES.CSS_ANIMATION;
-    } else if (this.isTransition()) {
+    } else if (this.isCssTransition()) {
       return ANIMATION_TYPES.CSS_TRANSITION;
+    } else if (this.isScriptAnimation()) {
+      return ANIMATION_TYPES.SCRIPT_ANIMATION;
     }
 
     return ANIMATION_TYPES.UNKNOWN;
   },
 
   /**
-   * Get the name associated with the player. This is used to match
-   * up the player with values in the computed animation-name or
-   * transition-property property.
+   * Get the name of this animation. This can be either the animation.id
+   * property if it was set, or the keyframe rule name or the transition
+   * property.
    * @return {String}
    */
   getName: function() {
-    if (this.isAnimation()) {
+    if (this.player.id) {
+      return this.player.id;
+    } else if (this.isCssAnimation()) {
       return this.player.animationName;
-    } else if (this.isTransition()) {
+    } else if (this.isCssTransition()) {
       return this.player.transitionProperty;
     }
 
@@ -370,6 +382,8 @@ var AnimationPlayerActor = ActorClass({
   })
 });
 
+exports.AnimationPlayerActor = AnimationPlayerActor;
+
 var AnimationPlayerFront = FrontClass(AnimationPlayerActor, {
   initialize: function(conn, form, detail, ctx) {
     Front.prototype.initialize.call(this, conn, form, detail, ctx);
@@ -547,6 +561,10 @@ var AnimationsActor = exports.AnimationsActor = ActorClass({
   /**
    * Retrieve the list of AnimationPlayerActor actors for currently running
    * animations on a node and its descendants.
+   * Note that calling this method a second time will destroy all previously
+   * retrieved AnimationPlayerActors. Indeed, the lifecycle of these actors
+   * is managed here on the server and tied to getAnimationPlayersForNode
+   * being called.
    * @param {NodeActor} nodeActor The NodeActor as defined in
    * /devtools/server/actors/inspector
    */
@@ -556,9 +574,12 @@ var AnimationsActor = exports.AnimationsActor = ActorClass({
       ...this.getAllAnimations(nodeActor.rawNode)
     ];
 
-    // No care is taken here to destroy the previously stored actors because it
-    // is assumed that the client is responsible for lifetimes of actors.
+    // Destroy previously stored actors
+    if (this.actors) {
+      this.actors.forEach(actor => actor.destroy());
+    }
     this.actors = [];
+
     for (let i = 0; i < animations.length; i++) {
       let actor = AnimationPlayerActor(this, animations[i]);
       this.actors.push(actor);
@@ -622,9 +643,9 @@ var AnimationsActor = exports.AnimationsActor = ActorClass({
         // a "removed" event for the one we already have.
         let index = this.actors.findIndex(a => {
           let isSameType = a.player.constructor === player.constructor;
-          let isSameName = (a.isAnimation() &&
+          let isSameName = (a.isCssAnimation() &&
                             a.player.animationName === player.animationName) ||
-                           (a.isTransition() &&
+                           (a.isCssTransition() &&
                             a.player.transitionProperty === player.transitionProperty);
           let isSameNode = a.player.effect.target === player.effect.target;
 

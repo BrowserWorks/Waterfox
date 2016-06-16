@@ -149,7 +149,7 @@ UseTileTexture(CompositableTextureHostRef& aTexture,
     // We possibly upload the entire texture contents here. This is a purposeful
     // decision, as sub-image upload can often be slow and/or unreliable, but
     // we may want to reevaluate this in the future.
-    // For !HasInternalBuffer() textures, this is likely a no-op.
+    // For !HasIntermediateBuffer() textures, this is likely a no-op.
     nsIntRegion region = aUpdateRect;
     aTexture->Updated(&region);
 #endif
@@ -367,7 +367,7 @@ TiledLayerBufferComposite::UseTiles(const SurfaceDescriptorTiles& aTiles,
                      aCompositor);
     }
 
-    if (tile.mTextureHost->HasInternalBuffer()) {
+    if (tile.mTextureHost->HasIntermediateBuffer()) {
       // Now that we did the texture upload (in UseTileTexture), we can release
       // the lock.
       tile.ReadUnlock();
@@ -510,11 +510,11 @@ TiledContentHost::RenderTile(TileHost& aTile,
 
   aEffectChain.mPrimaryEffect = effect;
 
-  nsIntRegionRectIterator it(aScreenRegion);
-  for (const IntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
-    Rect graphicsRect(rect->x, rect->y, rect->width, rect->height);
-    Rect textureRect(rect->x - aTextureOffset.x, rect->y - aTextureOffset.y,
-                     rect->width, rect->height);
+  for (auto iter = aScreenRegion.RectIter(); !iter.Done(); iter.Next()) {
+    const IntRect& rect = iter.Get();
+    Rect graphicsRect(rect.x, rect.y, rect.width, rect.height);
+    Rect textureRect(rect.x - aTextureOffset.x, rect.y - aTextureOffset.y,
+                     rect.width, rect.height);
 
     effect->mTextureCoords = Rect(textureRect.x / aTextureBounds.width,
                                   textureRect.y / aTextureBounds.height,
@@ -591,9 +591,9 @@ TiledContentHost::RenderLayerBuffer(TiledLayerBufferComposite& aLayerBuffer,
     backgroundRegion.ScaleRoundOut(resolution, resolution);
     EffectChain effect;
     effect.mPrimaryEffect = new EffectSolidColor(*aBackgroundColor);
-    nsIntRegionRectIterator it(backgroundRegion);
-    for (const IntRect* rect = it.Next(); rect != nullptr; rect = it.Next()) {
-      Rect graphicsRect(rect->x, rect->y, rect->width, rect->height);
+    for (auto iter = backgroundRegion.RectIter(); !iter.Done(); iter.Next()) {
+      const IntRect& rect = iter.Get();
+      Rect graphicsRect(rect.x, rect.y, rect.width, rect.height);
       mCompositor->DrawQuad(graphicsRect, aClipRect, effect, 1.0, aTransform);
     }
   }

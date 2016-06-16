@@ -4,10 +4,10 @@
 
 "use strict";
 
-loader.lazyRequireGetter(this, "Services");
-loader.lazyImporter(this, "gDevTools", "resource://devtools/client/framework/gDevTools.jsm");
 loader.lazyImporter(this, "Task", "resource://gre/modules/Task.jsm");
 
+var Services = require("Services");
+var {gDevTools} = require("devtools/client/framework/devtools");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 
 /**

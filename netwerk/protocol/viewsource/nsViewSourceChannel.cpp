@@ -32,6 +32,7 @@ NS_INTERFACE_MAP_BEGIN(nsViewSourceChannel)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsICacheInfoChannel, mCacheInfoChannel)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIApplicationCacheChannel, mApplicationCacheChannel)
     NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIUploadChannel, mUploadChannel)
+    NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIFormPOSTActionChannel, mPostChannel)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIRequest, nsIViewSourceChannel)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsIChannel, nsIViewSourceChannel)
     NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIViewSourceChannel)
@@ -88,6 +89,7 @@ nsViewSourceChannel::Init(nsIURI* uri)
     mCacheInfoChannel = do_QueryInterface(mChannel);
     mApplicationCacheChannel = do_QueryInterface(mChannel);
     mUploadChannel = do_QueryInterface(mChannel);
+    mPostChannel = do_QueryInterface(mChannel);
     
     return NS_OK;
 }
@@ -96,11 +98,7 @@ nsresult
 nsViewSourceChannel::InitSrcdoc(nsIURI* aURI,
                                 nsIURI* aBaseURI,
                                 const nsAString &aSrcdoc,
-                                nsINode *aLoadingNode,
-                                nsIPrincipal *aLoadingPrincipal,
-                                nsIPrincipal *aTriggeringPrincipal,
-                                nsSecurityFlags aSecurityFlags,
-                                nsContentPolicyType aContentPolicyType)
+                                nsILoadInfo* aLoadInfo)
 {
     nsresult rv;
 
@@ -116,11 +114,7 @@ nsViewSourceChannel::InitSrcdoc(nsIURI* aURI,
                                           inStreamURI,
                                           aSrcdoc,
                                           NS_LITERAL_CSTRING("text/html"),
-                                          aLoadingNode,
-                                          aLoadingPrincipal,
-                                          aTriggeringPrincipal,
-                                          aSecurityFlags,
-                                          aContentPolicyType,
+                                          aLoadInfo,
                                           true);
 
     NS_ENSURE_SUCCESS(rv, rv);

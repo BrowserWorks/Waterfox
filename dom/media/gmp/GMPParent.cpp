@@ -7,10 +7,6 @@
 #include "mozilla/Logging.h"
 #include "nsComponentManagerUtils.h"
 #include "nsComponentManagerUtils.h"
-#include "nsIInputStream.h"
-#include "nsILineInputStream.h"
-#include "nsNetUtil.h"
-#include "nsCharSeparatedTokenizer.h"
 #include "nsThreadUtils.h"
 #include "nsIRunnable.h"
 #include "nsIWritablePropertyBag2.h"
@@ -38,6 +34,15 @@ using CrashReporter::GetIDFromMinidump;
 #endif
 
 #include "mozilla/Telemetry.h"
+
+#ifdef XP_WIN
+#include "WMFDecoderModule.h"
+#endif
+
+#ifdef MOZ_WIDEVINE_EME
+#include "mozilla/dom/WidevineCDMManifestBinding.h"
+#include "widevine-adapter/WidevineAdapter.h"
+#endif
 
 namespace mozilla {
 
@@ -68,14 +73,13 @@ GMPParent::GMPParent()
   , mChildPid(0)
   , mHoldingSelfRef(false)
 {
-  LOGD("GMPParent ctor");
   mPluginId = GeckoChildProcessHost::GetUniqueID();
+  LOGD("GMPParent ctor id=%u", mPluginId);
 }
 
 GMPParent::~GMPParent()
 {
-  LOGD("GMPParent dtor");
-
+  LOGD("GMPParent dtor id=%u", mPluginId);
   MOZ_ASSERT(!mProcess);
 }
 
@@ -84,10 +88,24 @@ GMPParent::CloneFrom(const GMPParent* aOther)
 {
   MOZ_ASSERT(GMPThread() == NS_GetCurrentThread());
   MOZ_ASSERT(aOther->mDirectory && aOther->mService, "null plugin directory");
-  return Init(aOther->mService, aOther->mDirectory);
+
+  mService = aOther->mService;
+  mDirectory = aOther->mDirectory;
+  mName = aOther->mName;
+  mVersion = aOther->mVersion;
+  mDescription = aOther->mDescription;
+  mDisplayName = aOther->mDisplayName;
+#ifdef XP_WIN
+  mLibs = aOther->mLibs;
+#endif
+  for (const GMPCapability& cap : aOther->mCapabilities) {
+    mCapabilities.AppendElement(cap);
+  }
+  mAdapter = aOther->mAdapter;
+  return NS_OK;
 }
 
-nsresult
+RefPtr<GenericPromise>
 GMPParent::Init(GeckoMediaPluginServiceParent* aService, nsIFile* aPluginDir)
 {
   MOZ_ASSERT(aPluginDir);
@@ -102,12 +120,12 @@ GMPParent::Init(GeckoMediaPluginServiceParent* aService, nsIFile* aPluginDir)
   nsCOMPtr<nsIFile> parent;
   nsresult rv = aPluginDir->GetParent(getter_AddRefs(parent));
   if (NS_FAILED(rv)) {
-    return rv;
+    return GenericPromise::CreateAndReject(rv, __func__);
   }
   nsAutoString parentLeafName;
   rv = parent->GetLeafName(parentLeafName);
   if (NS_FAILED(rv)) {
-    return rv;
+    return GenericPromise::CreateAndReject(rv, __func__);
   }
   LOGD("%s: for %s", __FUNCTION__, NS_LossyConvertUTF16toASCII(parentLeafName).get());
 
@@ -167,8 +185,19 @@ GMPParent::LoadProcess()
     }
     LOGD("%s: Sent node id to child process", __FUNCTION__);
 
+#ifdef XP_WIN
+    if (!mLibs.IsEmpty()) {
+      bool ok = SendPreloadLibs(mLibs);
+      if (!ok) {
+        LOGD("%s: Failed to send preload-libs to child process", __FUNCTION__);
+        return NS_ERROR_FAILURE;
+      }
+      LOGD("%s: Sent preload-libs ('%s') to child process", __FUNCTION__, mLibs.get());
+    }
+#endif
+
     // Intr call to block initialization on plugin load.
-    ok = CallStartPlugin();
+    ok = CallStartPlugin(mAdapter);
     if (!ok) {
       LOGD("%s: Failed to send start to child process", __FUNCTION__);
       return NS_ERROR_FAILURE;
@@ -539,12 +568,29 @@ bool
 GMPParent::SupportsAPI(const nsCString& aAPI, const nsCString& aTag)
 {
   for (uint32_t i = 0; i < mCapabilities.Length(); i++) {
-    if (!mCapabilities[i]->mAPIName.Equals(aAPI)) {
+    if (!mCapabilities[i].mAPIName.Equals(aAPI)) {
       continue;
     }
-    nsTArray<nsCString>& tags = mCapabilities[i]->mAPITags;
+    nsTArray<nsCString>& tags = mCapabilities[i].mAPITags;
     for (uint32_t j = 0; j < tags.Length(); j++) {
       if (tags[j].Equals(aTag)) {
+#ifdef XP_WIN
+        // Clearkey on Windows advertises that it can decode in its GMP info
+        // file, but uses Windows Media Foundation to decode. That's not present
+        // on Windows XP, and on some Vista, Windows N, and KN variants without
+        // certain services packs.
+        if (tags[j].EqualsLiteral("org.w3.clearkey")) {
+          if (mCapabilities[i].mAPIName.EqualsLiteral(GMP_API_VIDEO_DECODER)) {
+            if (!WMFDecoderModule::HasH264()) {
+              continue;
+            }
+          } else if (mCapabilities[i].mAPIName.EqualsLiteral(GMP_API_AUDIO_DECODER)) {
+            if (!WMFDecoderModule::HasAAC()) {
+              continue;
+            }
+          }
+        }
+#endif
         return true;
       }
     }
@@ -735,30 +781,17 @@ GMPParent::DeallocPGMPTimerParent(PGMPTimerParent* aActor)
   return true;
 }
 
-nsresult
-ParseNextRecord(nsILineInputStream* aLineInputStream,
-                const nsCString& aPrefix,
-                nsCString& aResult,
-                bool& aMoreLines)
+bool
+ReadInfoField(GMPInfoFileParser& aParser, const nsCString& aKey, nsACString& aOutValue)
 {
-  nsAutoCString record;
-  nsresult rv = aLineInputStream->ReadLine(record, &aMoreLines);
-  if (NS_FAILED(rv)) {
-    return rv;
+  if (!aParser.Contains(aKey) || aParser.Get(aKey).IsEmpty()) {
+    return false;
   }
-
-  if (record.Length() <= aPrefix.Length() ||
-      !Substring(record, 0, aPrefix.Length()).Equals(aPrefix)) {
-    return NS_ERROR_FAILURE;
-  }
-
-  aResult = Substring(record, aPrefix.Length());
-  aResult.Trim("\b\t\r\n ");
-
-  return NS_OK;
+  aOutValue = aParser.Get(aKey);
+  return true;
 }
 
-nsresult
+RefPtr<GenericPromise>
 GMPParent::ReadGMPMetaData()
 {
   MOZ_ASSERT(mDirectory, "Plugin directory cannot be NULL!");
@@ -767,75 +800,52 @@ GMPParent::ReadGMPMetaData()
   nsCOMPtr<nsIFile> infoFile;
   nsresult rv = mDirectory->Clone(getter_AddRefs(infoFile));
   if (NS_FAILED(rv)) {
-    return rv;
+    return GenericPromise::CreateAndReject(rv, __func__);
   }
   infoFile->AppendRelativePath(mName + NS_LITERAL_STRING(".info"));
 
-  nsCOMPtr<nsIInputStream> inputStream;
-  rv = NS_NewLocalFileInputStream(getter_AddRefs(inputStream), infoFile);
+  if (FileExists(infoFile)) {
+    return ReadGMPInfoFile(infoFile);
+  }
+
+#ifdef MOZ_WIDEVINE_EME
+  // Maybe this is the Widevine adapted plugin?
+  nsCOMPtr<nsIFile> manifestFile;
+  rv = mDirectory->Clone(getter_AddRefs(manifestFile));
   if (NS_FAILED(rv)) {
-    return rv;
+    return GenericPromise::CreateAndReject(rv, __func__);
+  }
+  manifestFile->AppendRelativePath(NS_LITERAL_STRING("manifest.json"));
+  return ReadChromiumManifestFile(manifestFile);
+#else
+  return GenericPromise::CreateAndReject(rv, __func__);
+#endif
+}
+
+RefPtr<GenericPromise>
+GMPParent::ReadGMPInfoFile(nsIFile* aFile)
+{
+  GMPInfoFileParser parser;
+  if (!parser.Init(aFile)) {
+    return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
 
-  nsCOMPtr<nsILineInputStream> lineInputStream = do_QueryInterface(inputStream, &rv);
-  if (NS_FAILED(rv)) {
-    return rv;
+  nsAutoCString apis;
+  if (!ReadInfoField(parser, NS_LITERAL_CSTRING("name"), mDisplayName) ||
+      !ReadInfoField(parser, NS_LITERAL_CSTRING("description"), mDescription) ||
+      !ReadInfoField(parser, NS_LITERAL_CSTRING("version"), mVersion) ||
+      !ReadInfoField(parser, NS_LITERAL_CSTRING("apis"), apis)) {
+    return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
 
-  nsCString value;
-  bool moreLines = false;
+#ifdef XP_WIN
+  // "Libraries" field is optional.
+  ReadInfoField(parser, NS_LITERAL_CSTRING("libraries"), mLibs);
+#endif
 
-  // 'Name:' record
-  nsCString prefix = NS_LITERAL_CSTRING("Name:");
-  rv = ParseNextRecord(lineInputStream, prefix, value, moreLines);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  if (value.IsEmpty()) {
-    // Not OK for name to be empty. Must have one non-whitespace character.
-    return NS_ERROR_FAILURE;
-  }
-  mDisplayName = value;
-
-  // 'Description:' record
-  if (!moreLines) {
-    return NS_ERROR_FAILURE;
-  }
-  prefix = NS_LITERAL_CSTRING("Description:");
-  rv = ParseNextRecord(lineInputStream, prefix, value, moreLines);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  mDescription = value;
-
-  // 'Version:' record
-  if (!moreLines) {
-    return NS_ERROR_FAILURE;
-  }
-  prefix = NS_LITERAL_CSTRING("Version:");
-  rv = ParseNextRecord(lineInputStream, prefix, value, moreLines);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  mVersion = value;
-
-  // 'Capability:' record
-  if (!moreLines) {
-    return NS_ERROR_FAILURE;
-  }
-  prefix = NS_LITERAL_CSTRING("APIs:");
-  rv = ParseNextRecord(lineInputStream, prefix, value, moreLines);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-  nsCCharSeparatedTokenizer apiTokens(value, ',');
-  while (apiTokens.hasMoreTokens()) {
-    nsAutoCString api(apiTokens.nextToken());
-    api.StripWhitespace();
-    if (api.IsEmpty()) {
-      continue;
-    }
-
+  nsTArray<nsCString> apiTokens;
+  SplitAt(", ", apis, apiTokens);
+  for (nsCString api : apiTokens) {
     int32_t tagsStart = api.FindChar('[');
     if (tagsStart == 0) {
       // Not allowed to be the first character.
@@ -843,37 +853,36 @@ GMPParent::ReadGMPMetaData()
       continue;
     }
 
-    auto cap = new GMPCapability();
+    GMPCapability cap;
     if (tagsStart == -1) {
       // No tags.
-      cap->mAPIName.Assign(api);
+      cap.mAPIName.Assign(api);
     } else {
       auto tagsEnd = api.FindChar(']');
       if (tagsEnd == -1 || tagsEnd < tagsStart) {
         // Invalid syntax, skip whole capability.
-        delete cap;
         continue;
       }
 
-      cap->mAPIName.Assign(Substring(api, 0, tagsStart));
+      cap.mAPIName.Assign(Substring(api, 0, tagsStart));
 
       if ((tagsEnd - tagsStart) > 1) {
         const nsDependentCSubstring ts(Substring(api, tagsStart + 1, tagsEnd - tagsStart - 1));
-        nsCCharSeparatedTokenizer tagTokens(ts, ':');
-        while (tagTokens.hasMoreTokens()) {
-          const nsDependentCSubstring tag(tagTokens.nextToken());
-          cap->mAPITags.AppendElement(tag);
+        nsTArray<nsCString> tagTokens;
+        SplitAt(":", ts, tagTokens);
+        for (nsCString tag : tagTokens) {
+          cap.mAPITags.AppendElement(tag);
         }
       }
     }
 
     // We support the current GMPDecryptor version, and the previous.
     // We Adapt the previous to the current in the GMPContentChild.
-    if (cap->mAPIName.EqualsLiteral(GMP_API_DECRYPTOR_BACKWARDS_COMPAT)) {
-      cap->mAPIName.AssignLiteral(GMP_API_DECRYPTOR);
+    if (cap.mAPIName.EqualsLiteral(GMP_API_DECRYPTOR_BACKWARDS_COMPAT)) {
+      cap.mAPIName.AssignLiteral(GMP_API_DECRYPTOR);
     }
 
-    if (cap->mAPIName.EqualsLiteral(GMP_API_DECRYPTOR)) {
+    if (cap.mAPIName.EqualsLiteral(GMP_API_DECRYPTOR)) {
       mCanDecrypt = true;
 
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
@@ -881,35 +890,84 @@ GMPParent::ReadGMPMetaData()
         printf_stderr("GMPParent::ReadGMPMetaData: Plugin \"%s\" is an EME CDM"
                       " but this system can't sandbox it; not loading.\n",
                       mDisplayName.get());
-        delete cap;
-        return NS_ERROR_FAILURE;
+        return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
       }
 #endif
 #ifdef XP_WIN
       // Adobe GMP doesn't work without SSE2. Check the tags to see if
       // the decryptor is for the Adobe GMP, and refuse to load it if
       // SSE2 isn't supported.
-      for (const nsCString& tag : cap->mAPITags) {
-        if (!tag.EqualsLiteral("com.adobe.primetime")) {
-          continue;
-        }
-        if (!mozilla::supports_sse2()) {
-          return NS_ERROR_FAILURE;
-        }
-        break;
+      if (cap.mAPITags.Contains(NS_LITERAL_CSTRING("com.adobe.primetime")) &&
+          !mozilla::supports_sse2()) {
+        return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
       }
 #endif // XP_WIN
     }
 
-    mCapabilities.AppendElement(cap);
+    mCapabilities.AppendElement(Move(cap));
   }
 
   if (mCapabilities.IsEmpty()) {
-    return NS_ERROR_FAILURE;
+    return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
   }
 
-  return NS_OK;
+  return GenericPromise::CreateAndResolve(true, __func__);
 }
+
+#ifdef MOZ_WIDEVINE_EME
+RefPtr<GenericPromise>
+GMPParent::ReadChromiumManifestFile(nsIFile* aFile)
+{
+  nsAutoCString json;
+  if (!ReadIntoString(aFile, json, 5 * 1024)) {
+    return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
+  }
+
+  // DOM JSON parsing needs to run on the main thread.
+  return InvokeAsync(AbstractThread::MainThread(), this, __func__,
+    &GMPParent::ParseChromiumManifest, NS_ConvertUTF8toUTF16(json));
+}
+
+RefPtr<GenericPromise>
+GMPParent::ParseChromiumManifest(nsString aJSON)
+{
+  LOGD("%s: for '%s'", __FUNCTION__, NS_LossyConvertUTF16toASCII(aJSON).get());
+
+  MOZ_ASSERT(NS_IsMainThread());
+  mozilla::dom::WidevineCDMManifest m;
+  if (!m.Init(aJSON)) {
+    return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
+  }
+
+  nsresult ignored; // Note: ToInteger returns 0 on failure.
+  if (!WidevineAdapter::Supports(m.mX_cdm_module_versions.ToInteger(&ignored),
+                                 m.mX_cdm_interface_versions.ToInteger(&ignored),
+                                 m.mX_cdm_host_versions.ToInteger(&ignored))) {
+    return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
+  }
+
+  mDisplayName = NS_ConvertUTF16toUTF8(m.mName);
+  mDescription = NS_ConvertUTF16toUTF8(m.mDescription);
+  mVersion = NS_ConvertUTF16toUTF8(m.mVersion);
+
+  GMPCapability video(NS_LITERAL_CSTRING(GMP_API_VIDEO_DECODER));
+  video.mAPITags.AppendElement(NS_LITERAL_CSTRING("h264"));
+  video.mAPITags.AppendElement(NS_LITERAL_CSTRING("com.widevine.alpha"));
+  mCapabilities.AppendElement(Move(video));
+
+  GMPCapability decrypt(NS_LITERAL_CSTRING(GMP_API_DECRYPTOR));
+  decrypt.mAPITags.AppendElement(NS_LITERAL_CSTRING("com.widevine.alpha"));
+  mCapabilities.AppendElement(Move(decrypt));
+
+  MOZ_ASSERT(mName.EqualsLiteral("widevinecdm"));
+  mAdapter = NS_LITERAL_STRING("widevine");
+#ifdef XP_WIN
+  mLibs = NS_LITERAL_CSTRING("dxva2.dll");
+#endif
+
+  return GenericPromise::CreateAndResolve(true, __func__);
+}
+#endif
 
 bool
 GMPParent::CanBeSharedCrossNodeIds() const
@@ -926,16 +984,13 @@ GMPParent::CanBeSharedCrossNodeIds() const
 bool
 GMPParent::CanBeUsedFrom(const nsACString& aNodeId) const
 {
-  return !mAsyncShutdownInProgress &&
-         ((mNodeId.IsEmpty() && State() == GMPStateNotLoaded) ||
-          mNodeId == aNodeId);
+  return !mAsyncShutdownInProgress && mNodeId == aNodeId;
 }
 
 void
 GMPParent::SetNodeId(const nsACString& aNodeId)
 {
   MOZ_ASSERT(!aNodeId.IsEmpty());
-  MOZ_ASSERT(CanBeUsedFrom(aNodeId));
   mNodeId = aNodeId;
 }
 

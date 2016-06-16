@@ -94,7 +94,7 @@ class GetRunnable final : public nsRunnable
       } else {
         promise->MaybeResolve(JS::UndefinedHandleValue);
       }
-      mPromiseProxy->CleanUp(aCx);
+      mPromiseProxy->CleanUp();
       return true;
     }
   };
@@ -132,9 +132,7 @@ public:
                                        rv.StealNSResult());
     rv.SuppressException();
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
     return NS_OK;
   }
 };
@@ -174,7 +172,7 @@ class MatchAllRunnable final : public nsRunnable
       }
 
       promise->MaybeResolve(ret);
-      mPromiseProxy->CleanUp(aCx);
+      mPromiseProxy->CleanUp();
       return true;
     }
   };
@@ -212,9 +210,7 @@ public:
       new ResolvePromiseWorkerRunnable(mPromiseProxy->GetWorkerPrivate(),
                                        mPromiseProxy, result);
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
     return NS_OK;
   }
 };
@@ -250,7 +246,7 @@ public:
       promise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
     }
 
-    mPromiseProxy->CleanUp(aCx);
+    mPromiseProxy->CleanUp();
     return true;
   }
 };
@@ -292,9 +288,7 @@ public:
     RefPtr<ResolveClaimRunnable> r =
       new ResolveClaimRunnable(workerPrivate, mPromiseProxy, rv);
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    r->Dispatch(jsapi.cx());
+    r->Dispatch();
     return NS_OK;
   }
 };
@@ -332,7 +326,7 @@ public:
       promise->MaybeResolve(JS::NullHandleValue);
     }
 
-    mPromiseProxy->CleanUp(aCx);
+    mPromiseProxy->CleanUp();
     return true;
   }
 
@@ -351,7 +345,7 @@ public:
 
   WebProgressListener(PromiseWorkerProxy* aPromiseProxy,
                       ServiceWorkerPrivate* aServiceWorkerPrivate,
-                      nsPIDOMWindow* aWindow,
+                      nsPIDOMWindowOuter* aWindow,
                       nsIURI* aBaseURI)
   : mPromiseProxy(aPromiseProxy)
   , mServiceWorkerPrivate(aServiceWorkerPrivate)
@@ -405,10 +399,7 @@ public:
       new ResolveOpenWindowRunnable(mPromiseProxy,
                                     Move(clientInfo),
                                     NS_OK);
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    JSContext* cx = jsapi.cx();
-    r->Dispatch(cx);
+    r->Dispatch();
 
     return NS_OK;
   }
@@ -459,7 +450,7 @@ private:
 
   RefPtr<PromiseWorkerProxy> mPromiseProxy;
   RefPtr<ServiceWorkerPrivate> mServiceWorkerPrivate;
-  nsCOMPtr<nsPIDOMWindow> mWindow;
+  nsCOMPtr<nsPIDOMWindowOuter> mWindow;
   nsCOMPtr<nsIURI> mBaseURI;
 };
 
@@ -502,7 +493,7 @@ public:
       return NS_OK;
     }
 
-    nsCOMPtr<nsPIDOMWindow> window;
+    nsCOMPtr<nsPIDOMWindowOuter> window;
     nsresult rv = OpenWindow(getter_AddRefs(window));
     if (NS_SUCCEEDED(rv)) {
       MOZ_ASSERT(window);
@@ -553,16 +544,14 @@ public:
     RefPtr<ResolveOpenWindowRunnable> resolveRunnable =
       new ResolveOpenWindowRunnable(mPromiseProxy, nullptr, rv);
 
-    AutoJSAPI jsapi;
-    jsapi.Init();
-    NS_WARN_IF(!resolveRunnable->Dispatch(jsapi.cx()));
+    NS_WARN_IF(!resolveRunnable->Dispatch());
 
     return NS_OK;
   }
 
 private:
   nsresult
-  OpenWindow(nsPIDOMWindow** aWindow)
+  OpenWindow(nsPIDOMWindowOuter** aWindow)
   {
     WorkerPrivate* workerPrivate = mPromiseProxy->GetWorkerPrivate();
 
@@ -602,20 +591,20 @@ private:
       nsCString spec;
       uri->GetSpec(spec);
 
-      nsCOMPtr<nsIDOMWindow> newWindow;
+      nsCOMPtr<mozIDOMWindowProxy> newWindow;
       pwwatch->OpenWindow2(nullptr,
                            spec.get(),
                            nullptr,
                            nullptr,
                            false, false, true, nullptr, nullptr,
                            getter_AddRefs(newWindow));
-      nsCOMPtr<nsPIDOMWindow> pwindow = do_QueryInterface(newWindow);
+      nsCOMPtr<nsPIDOMWindowOuter> pwindow = nsPIDOMWindowOuter::From(newWindow);
       pwindow.forget(aWindow);
       return NS_OK;
     }
 
     // Find the most recent browser window and open a new tab in it.
-    nsCOMPtr<nsPIDOMWindow> browserWindow =
+    nsCOMPtr<nsPIDOMWindowOuter> browserWindow =
       nsContentUtils::GetMostRecentNonPBWindow();
     if (!browserWindow) {
       // It is possible to be running without a browser window on Mac OS, so
@@ -636,7 +625,7 @@ private:
       return NS_ERROR_FAILURE;
     }
 
-    nsCOMPtr<nsIDOMWindow> win;
+    nsCOMPtr<mozIDOMWindowProxy> win;
     rv = bwin->OpenURI(uri, nullptr,
                        nsIBrowserDOMWindow::OPEN_DEFAULTWINDOW,
                        nsIBrowserDOMWindow::OPEN_NEW,
@@ -646,8 +635,7 @@ private:
     }
     NS_ENSURE_STATE(win);
 
-    nsCOMPtr<nsPIDOMWindow> pWin = do_QueryInterface(win);
-    pWin = pWin->GetOuterWindow();
+    nsCOMPtr<nsPIDOMWindowOuter> pWin = nsPIDOMWindowOuter::From(win);
     pWin.forget(aWindow);
 
     return NS_OK;

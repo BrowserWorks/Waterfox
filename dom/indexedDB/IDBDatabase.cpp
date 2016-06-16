@@ -56,7 +56,6 @@
 
 namespace mozilla {
 namespace dom {
-namespace indexedDB {
 
 using namespace mozilla::dom::quota;
 using namespace mozilla::ipc;
@@ -256,9 +255,7 @@ IDBDatabase::Create(IDBOpenDBRequest* aRequest,
   db->SetScriptOwner(aRequest->GetScriptOwner());
 
   if (NS_IsMainThread()) {
-    if (nsPIDOMWindow* window = aFactory->GetParentObject()) {
-      MOZ_ASSERT(window->IsInnerWindow());
-
+    if (nsPIDOMWindowInner* window = aFactory->GetParentObject()) {
       uint64_t windowId = window->WindowID();
 
       RefPtr<Observer> observer = new Observer(db, windowId);
@@ -404,7 +401,7 @@ IDBDatabase::RefreshSpec(bool aMayDelete)
   }
 }
 
-nsPIDOMWindow*
+nsPIDOMWindowInner*
 IDBDatabase::GetParentObject() const
 {
   return mFactory->GetParentObject();
@@ -453,7 +450,7 @@ IDBDatabase::ObjectStoreNames() const
 already_AddRefed<nsIDocument>
 IDBDatabase::GetOwnerDocument() const
 {
-  if (nsPIDOMWindow* window = GetOwner()) {
+  if (nsPIDOMWindowInner* window = GetOwner()) {
     nsCOMPtr<nsIDocument> doc = window->GetExtantDoc();
     return doc.forget();
   }
@@ -669,7 +666,7 @@ IDBDatabase::Transaction(const StringOrStringSequence& aStoreNames,
     return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
   }
 
-  nsAutoTArray<nsString, 1> stackSequence;
+  AutoTArray<nsString, 1> stackSequence;
 
   if (aStoreNames.IsString()) {
     stackSequence.AppendElement(aStoreNames.GetAsString());
@@ -850,8 +847,8 @@ IDBDatabase::AbortTransactions(bool aShouldWarn)
 
   class MOZ_STACK_CLASS Helper final
   {
-    typedef nsAutoTArray<RefPtr<IDBTransaction>, 20> StrongTransactionArray;
-    typedef nsAutoTArray<IDBTransaction*, 20> WeakTransactionArray;
+    typedef AutoTArray<RefPtr<IDBTransaction>, 20> StrongTransactionArray;
+    typedef AutoTArray<IDBTransaction*, 20> WeakTransactionArray;
 
   public:
     static void
@@ -1486,6 +1483,5 @@ Observer::Observe(nsISupports* aSubject,
   return NS_OK;
 }
 
-} // namespace indexedDB
 } // namespace dom
 } // namespace mozilla

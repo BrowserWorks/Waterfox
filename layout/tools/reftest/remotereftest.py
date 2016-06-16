@@ -7,11 +7,10 @@ import os
 import time
 import tempfile
 import traceback
+import urllib2
 
-import devicemanager
-import droid
+import mozdevice
 import mozinfo
-import moznetwork
 from automation import Automation
 from remoteautomation import RemoteAutomation, fennecLogcatFilters
 
@@ -233,9 +232,6 @@ class RemoteReftest(RefTest):
         prefs["font.size.inflation.emPerLine"] = 0
         prefs["font.size.inflation.minTwips"] = 0
         prefs["reftest.remote"] = True
-        # Set a future policy version to avoid the telemetry prompt.
-        prefs["toolkit.telemetry.prompted"] = 999
-        prefs["toolkit.telemetry.notifiedOptOut"] = 999
         prefs["datareporting.policy.dataSubmissionPolicyBypassAcceptance"] = True
 
         # Point the url-classifier to the local testing server for fast failures
@@ -283,7 +279,7 @@ class RemoteReftest(RefTest):
         try:
             self._devicemanager.pushDir(profileDir, options.remoteProfile)
             self._devicemanager.chmodDir(options.remoteProfile)
-        except devicemanager.DMError:
+        except mozdevice.DMError:
             print "Automation Error: Failed to copy profiledir to device"
             raise
 
@@ -295,7 +291,7 @@ class RemoteReftest(RefTest):
         try:
             self._devicemanager.pushDir(profileDir, options.remoteProfile)
             self._devicemanager.chmodDir(options.remoteProfile)
-        except devicemanager.DMError:
+        except mozdevice.DMError:
             print "Automation Error: Failed to copy extra files to device"
             raise
 
@@ -314,7 +310,7 @@ class RemoteReftest(RefTest):
                 else:
                     print "  %s: %s" % (category, devinfo[category])
             print "Test root: %s" % self._devicemanager.deviceRoot
-        except devicemanager.DMError:
+        except mozdevice.DMError:
             print "WARNING: Error getting device information"
 
     def environment(self, **kwargs):
@@ -368,14 +364,14 @@ def runTests(options, parser):
     try:
         if (options.dm_trans == "adb"):
             if (options.deviceIP):
-                dm = droid.DroidADB(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
+                dm = mozdevice.DroidADB(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
             elif (options.deviceSerial):
-                dm = droid.DroidADB(None, None, deviceSerial=options.deviceSerial, deviceRoot=options.remoteTestRoot)
+                dm = mozdevice.DroidADB(None, None, deviceSerial=options.deviceSerial, deviceRoot=options.remoteTestRoot)
             else:
-                dm = droid.DroidADB(None, None, deviceRoot=options.remoteTestRoot)
+                dm = mozdevice.DroidADB(None, None, deviceRoot=options.remoteTestRoot)
         else:
-            dm = droid.DroidSUT(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
-    except devicemanager.DMError:
+            dm = mozdevice.DroidSUT(options.deviceIP, options.devicePort, deviceRoot=options.remoteTestRoot)
+    except mozdevice.DMError:
         print "Automation Error: exception while initializing devicemanager.  Most likely the device is not in a testable state."
         return 1
 

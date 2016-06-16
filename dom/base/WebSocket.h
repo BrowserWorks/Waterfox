@@ -56,7 +56,7 @@ public:
   virtual void DisconnectFromOwner() override;
 
   // nsWrapperCache
-  nsPIDOMWindow* GetParentObject() { return GetOwner(); }
+  nsPIDOMWindowInner* GetParentObject() { return GetOwner(); }
 
   virtual JSObject* WrapObject(JSContext* cx, JS::Handle<JSObject*> aGivenProto) override;
 
@@ -129,7 +129,7 @@ public: // WebIDL interface:
             ErrorResult& aRv);
 
 private: // constructor && distructor
-  explicit WebSocket(nsPIDOMWindow* aOwnerWindow);
+  explicit WebSocket(nsPIDOMWindowInner* aOwnerWindow);
   virtual ~WebSocket();
 
   void SetReadyState(uint16_t aReadyState);
@@ -137,9 +137,6 @@ private: // constructor && distructor
   // These methods actually do the dispatch for various events.
   nsresult CreateAndDispatchSimpleEvent(const nsAString& aName);
   nsresult CreateAndDispatchMessageEvent(const nsACString& aData,
-                                         bool aIsBinary);
-  nsresult CreateAndDispatchMessageEvent(JSContext* aCx,
-                                         const nsACString& aData,
                                          bool aIsBinary);
   nsresult CreateAndDispatchCloseEvent(bool aWasClean,
                                        uint16_t aCode,

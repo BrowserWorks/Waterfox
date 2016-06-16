@@ -7,6 +7,9 @@
 #include "mozilla/BasePrincipal.h"
 
 #include "nsDocShell.h"
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
 #include "nsIAddonPolicyService.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIObjectInputStream.h"
@@ -33,7 +36,7 @@ PrincipalOriginAttributes::InheritFromDocShellToDoc(const DocShellOriginAttribut
                                                     const nsIURI* aURI)
 {
   mAppId = aAttrs.mAppId;
-  mInBrowser = aAttrs.mInBrowser;
+  mInIsolatedMozBrowser = aAttrs.mInIsolatedMozBrowser;
 
   // addonId is computed from the principal URI and never propagated
   mUserContextId = aAttrs.mUserContextId;
@@ -48,7 +51,7 @@ void
 PrincipalOriginAttributes::InheritFromNecko(const NeckoOriginAttributes& aAttrs)
 {
   mAppId = aAttrs.mAppId;
-  mInBrowser = aAttrs.mInBrowser;
+  mInIsolatedMozBrowser = aAttrs.mInIsolatedMozBrowser;
 
   // addonId is computed from the principal URI and never propagated
   mUserContextId = aAttrs.mUserContextId;
@@ -59,7 +62,7 @@ void
 DocShellOriginAttributes::InheritFromDocToChildDocShell(const PrincipalOriginAttributes& aAttrs)
 {
   mAppId = aAttrs.mAppId;
-  mInBrowser = aAttrs.mInBrowser;
+  mInIsolatedMozBrowser = aAttrs.mInIsolatedMozBrowser;
 
   // addonId is computed from the principal URI and never propagated
   mUserContextId = aAttrs.mUserContextId;
@@ -74,7 +77,7 @@ void
 NeckoOriginAttributes::InheritFromDocToNecko(const PrincipalOriginAttributes& aAttrs)
 {
   mAppId = aAttrs.mAppId;
-  mInBrowser = aAttrs.mInBrowser;
+  mInIsolatedMozBrowser = aAttrs.mInIsolatedMozBrowser;
 
   // addonId is computed from the principal URI and never propagated
   mUserContextId = aAttrs.mUserContextId;
@@ -88,7 +91,7 @@ void
 NeckoOriginAttributes::InheritFromDocShellToNecko(const DocShellOriginAttributes& aAttrs)
 {
   mAppId = aAttrs.mAppId;
-  mInBrowser = aAttrs.mInBrowser;
+  mInIsolatedMozBrowser = aAttrs.mInIsolatedMozBrowser;
 
   // addonId is computed from the principal URI and never propagated
   mUserContextId = aAttrs.mUserContextId;
@@ -116,12 +119,18 @@ OriginAttributes::CreateSuffix(nsACString& aStr) const
     params->Set(NS_LITERAL_STRING("appId"), value);
   }
 
-  if (mInBrowser) {
+  if (mInIsolatedMozBrowser) {
     params->Set(NS_LITERAL_STRING("inBrowser"), NS_LITERAL_STRING("1"));
   }
 
   if (!mAddonId.IsEmpty()) {
-    MOZ_RELEASE_ASSERT(mAddonId.FindCharInSet(dom::quota::QuotaManager::kReplaceChars) == kNotFound);
+    if (mAddonId.FindCharInSet(dom::quota::QuotaManager::kReplaceChars) != kNotFound) {
+#ifdef MOZ_CRASHREPORTER
+      CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("Crash_AddonId"),
+                                         NS_ConvertUTF16toUTF8(mAddonId));
+#endif
+      MOZ_CRASH();
+    }
     params->Set(NS_LITERAL_STRING("addonId"), mAddonId);
   }
 
@@ -182,7 +191,7 @@ public:
         return false;
       }
 
-      mOriginAttributes->mInBrowser = true;
+      mOriginAttributes->mInIsolatedMozBrowser = true;
       return true;
     }
 
@@ -460,7 +469,7 @@ BasePrincipal::GetIsSystemPrincipal(bool* aResult)
 NS_IMETHODIMP
 BasePrincipal::GetJarPrefix(nsACString& aJarPrefix)
 {
-  mozilla::GetJarPrefix(mOriginAttributes.mAppId, mOriginAttributes.mInBrowser, aJarPrefix);
+  mozilla::GetJarPrefix(mOriginAttributes.mAppId, mOriginAttributes.mInIsolatedMozBrowser, aJarPrefix);
   return NS_OK;
 }
 
@@ -514,9 +523,9 @@ BasePrincipal::GetUserContextId(uint32_t* aUserContextId)
 }
 
 NS_IMETHODIMP
-BasePrincipal::GetIsInBrowserElement(bool* aIsInBrowserElement)
+BasePrincipal::GetIsInIsolatedMozBrowserElement(bool* aIsInIsolatedMozBrowserElement)
 {
-  *aIsInBrowserElement = IsInBrowserElement();
+  *aIsInIsolatedMozBrowserElement = IsInIsolatedMozBrowserElement();
   return NS_OK;
 }
 

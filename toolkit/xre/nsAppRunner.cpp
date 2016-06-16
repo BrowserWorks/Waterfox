@@ -90,7 +90,6 @@
 #include "nsIDocShell.h"
 #include "nsAppShellCID.h"
 #include "mozilla/scache/StartupCache.h"
-#include "nsIGfxInfo.h"
 #include "gfxPrefs.h"
 
 #include "base/histogram.h"
@@ -104,6 +103,7 @@
 #include <math.h>
 #include "cairo/cairo-features.h"
 #include "mozilla/WindowsVersion.h"
+#include "mozilla/widget/AudioSession.h"
 
 #ifndef PROCESS_DEP_ENABLE
 #define PROCESS_DEP_ENABLE 0x1
@@ -159,6 +159,7 @@
 #include "nsThreadUtils.h"
 #include <comdef.h>
 #include <wbemidl.h>
+#include "WinUtils.h"
 #endif
 
 #ifdef XP_MACOSX
@@ -226,7 +227,7 @@ int    gArgc;
 char **gArgv;
 
 static const char gToolkitVersion[] = NS_STRINGIFY(GRE_MILESTONE);
-static const char gToolkitBuildID[] = NS_STRINGIFY(GRE_BUILDID);
+static const char gToolkitBuildID[] = NS_STRINGIFY(MOZ_BUILDID);
 
 static nsIProfileLock* gProfileLock;
 
@@ -255,6 +256,12 @@ static char **gQtOnlyArgv;
 #include <fontconfig/fontconfig.h>
 #endif
 #include "BinaryPath.h"
+#ifndef MOZ_BUILDID
+// See comment in Makefile.in why we want to avoid including buildid.h.
+// Still include it when MOZ_BUILDID is not set, which can happen with some
+// build backends.
+#include "buildid.h"
+#endif
 
 #ifdef MOZ_LINKER
 extern "C" MFBT_API bool IsSignalHandlingBroken();
@@ -701,66 +708,17 @@ SetUpSandboxEnvironment()
   }
 }
 
-#if defined(NIGHTLY_BUILD)
-static void
-CleanUpOldSandboxEnvironment()
-{
-  // Temporary code to clean up the old low integrity temp directories.
-  // The removal of this is tracked by bug 1165818.
-  nsCOMPtr<nsIFile> lowIntegrityMozilla;
-  nsresult rv = NS_GetSpecialDirectory(NS_WIN_LOW_INTEGRITY_TEMP_BASE,
-                              getter_AddRefs(lowIntegrityMozilla));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  nsCOMPtr<nsISimpleEnumerator> iter;
-  rv = lowIntegrityMozilla->GetDirectoryEntries(getter_AddRefs(iter));
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return;
-  }
-
-  bool more;
-  nsCOMPtr<nsISupports> elem;
-  while (NS_SUCCEEDED(iter->HasMoreElements(&more)) && more) {
-    rv = iter->GetNext(getter_AddRefs(elem));
-    if (NS_FAILED(rv)) {
-      break;
-    }
-
-    nsCOMPtr<nsIFile> file = do_QueryInterface(elem);
-    if (!file) {
-      continue;
-    }
-
-    nsAutoString leafName;
-    rv = file->GetLeafName(leafName);
-    if (NS_FAILED(rv)) {
-      continue;
-    }
-
-    if (leafName.Find(NS_LITERAL_STRING("MozTemp-{")) == 0) {
-      file->Remove(/* aRecursive */ true);
-    }
-  }
-}
-#endif
-
 static void
 CleanUpSandboxEnvironment()
 {
 #if defined(XP_WIN)
-  // We can't have created a low integrity temp before Vista.
+  // We can't have created the temp directory before Vista.
   if (!IsVistaOrLater()) {
     return;
   }
 #endif
 
-#if defined(NIGHTLY_BUILD)
-  CleanUpOldSandboxEnvironment();
-#endif
-
-  // Get and remove the low integrity Mozilla temp directory.
+  // Get and remove the sandbox-writable temp directory.
   // This function already warns if the deletion fails.
   nsCOMPtr<nsIFile> tempDir = GetAndCleanTempDir();
 }
@@ -2193,7 +2151,7 @@ ShowProfileManager(nsIToolkitProfileService* aProfileSvc,
         (do_GetService(NS_APPSTARTUP_CONTRACTID));
       NS_ENSURE_TRUE(appStartup, NS_ERROR_FAILURE);
 
-      nsCOMPtr<nsIDOMWindow> newWindow;
+      nsCOMPtr<mozIDOMWindowProxy> newWindow;
       rv = windowWatcher->OpenWindow(nullptr,
                                      kProfileManagerURL,
                                      "_blank",
@@ -3365,6 +3323,15 @@ XREMain::XRE_mainInit(bool* aExitFlag)
                                        IsSignalHandlingBroken() ? NS_LITERAL_CSTRING("1")
                                                                 : NS_LITERAL_CSTRING("0"));
 #endif
+
+#ifdef XP_WIN
+    nsAutoString appInitDLLs;
+    if (widget::WinUtils::GetAppInitDLLs(appInitDLLs)) {
+      CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("AppInitDLLs"),
+                                         NS_ConvertUTF16toUTF8(appInitDLLs));
+    }
+#endif
+
     CrashReporter::SetRestartArgs(gArgc, gArgv);
 
     // annotate other data (user id etc)
@@ -4362,7 +4329,7 @@ XREMain::XRE_mainRun()
   }
 #endif /* MOZ_INSTRUMENT_EVENT_LOOP */
 
-#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
   SetUpSandboxEnvironment();
 #endif
 
@@ -4374,7 +4341,7 @@ XREMain::XRE_mainRun()
     }
   }
 
-#if defined(XP_WIN) && defined(MOZ_CONTENT_SANDBOX)
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
   CleanUpSandboxEnvironment();
 #endif
 
@@ -4491,6 +4458,10 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   }
 
   mScopedXPCOM = nullptr;
+
+#if defined(XP_WIN)
+  mozilla::widget::StopAudioSession();
+#endif
 
   // unlock the profile after ScopedXPCOMStartup object (xpcom) 
   // has gone out of scope.  see bug #386739 for more details
@@ -4681,27 +4652,29 @@ enum {
   kE10sDisabledByUser = 2,
   // kE10sDisabledInSafeMode = 3, was removed in bug 1172491.
   kE10sDisabledForAccessibility = 4,
-  kE10sDisabledForMacGfx = 5,
+  // kE10sDisabledForMacGfx = 5, was removed in bug 1068674.
   kE10sDisabledForBidi = 6,
   kE10sDisabledForAddons = 7,
   kE10sForceDisabled = 8,
+  kE10sDisabledForXPAcceleration = 9, // not used yet
+  kE10sDisabledForGTK320 = 10,
 };
 
-#ifdef XP_WIN
+#if defined(XP_WIN) || defined(XP_MACOSX)
 const char* kAccessibilityLastRunDatePref = "accessibility.lastLoadDate";
 const char* kAccessibilityLoadedLastSessionPref = "accessibility.loadedInLastSession";
-#endif // XP_WIN
-const char* kForceEnableE10sPref = "browser.tabs.remote.force-enable";
-const char* kForceDisableE10sPref = "browser.tabs.remote.force-disable";
 
-#ifdef XP_WIN
 static inline uint32_t
 PRTimeToSeconds(PRTime t_usec)
 {
   PRTime usec_per_sec = PR_USEC_PER_SEC;
   return uint32_t(t_usec /= usec_per_sec);
 }
-#endif // XP_WIN
+#endif // XP_WIN || XP_MACOSX
+
+const char* kForceEnableE10sPref = "browser.tabs.remote.force-enable";
+const char* kForceDisableE10sPref = "browser.tabs.remote.force-disable";
+
 
 uint32_t
 MultiprocessBlockPolicy() {
@@ -4728,7 +4701,7 @@ MultiprocessBlockPolicy() {
   }
 
   bool disabledForA11y = false;
-#ifdef XP_WIN
+#if defined(XP_WIN) || defined(XP_MACOSX)
   /**
    * Avoids enabling e10s if accessibility has recently loaded. Performs the
    * following checks:
@@ -4755,12 +4728,21 @@ MultiprocessBlockPolicy() {
       disabledForA11y = true;
     }
   }
-#endif // XP_WIN
+#endif // XP_WIN || XP_MACOSX
 
   if (disabledForA11y) {
     gMultiprocessBlockPolicy = kE10sDisabledForAccessibility;
     return gMultiprocessBlockPolicy;
   }
+
+#if defined(MOZ_WIDGET_GTK) && defined(RELEASE_BUILD)
+  // Bug 1266213 - Workaround for bug 1264454
+  // Disable for users of 3.20 or higher
+  if (gtk_check_version(3, 20, 0) == nullptr) {
+    gMultiprocessBlockPolicy = kE10sDisabledForGTK320;
+    return gMultiprocessBlockPolicy;
+  }
+#endif
 
   /**
    * Avoids enabling e10s for certain locales that require bidi selection,
@@ -4780,41 +4762,6 @@ MultiprocessBlockPolicy() {
   }
 
 
-#if defined(XP_MACOSX)
-  // If for any reason we suspect acceleration will be disabled, disable
-  // e10s auto start on mac.
-
-  // Check prefs
-  bool accelDisabled = gfxPrefs::GetSingleton().LayersAccelerationDisabled() &&
-                       !gfxPrefs::LayersAccelerationForceEnabled();
-
-  accelDisabled = accelDisabled || !nsCocoaFeatures::AccelerateByDefault();
-
-  // Check for blocked drivers
-  if (!accelDisabled) {
-    nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
-    if (gfxInfo) {
-      int32_t status;
-      if (NS_SUCCEEDED(gfxInfo->GetFeatureStatus(nsIGfxInfo::FEATURE_OPENGL_LAYERS, &status)) &&
-          status != nsIGfxInfo::FEATURE_STATUS_OK) {
-        accelDisabled = true;
-      }
-    }
-  }
-
-  // Check env flags
-  if (accelDisabled) {
-    const char *acceleratedEnv = PR_GetEnv("MOZ_ACCELERATED");
-    if (acceleratedEnv && (*acceleratedEnv != '0')) {
-      accelDisabled = false;
-    }
-  }
-
-  if (accelDisabled) {
-    gMultiprocessBlockPolicy = kE10sDisabledForMacGfx;
-    return gMultiprocessBlockPolicy;
-  }
-#endif // defined(XP_MACOSX)
 
   /*
    * None of the blocking policies matched, so e10s is allowed to run.
@@ -4832,6 +4779,7 @@ mozilla::BrowserTabsRemoteAutostart()
   }
   gBrowserTabsRemoteAutostartInitialized = true;
 
+
   bool optInPref = Preferences::GetBool("browser.tabs.remote.autostart", false);
   bool trialPref = Preferences::GetBool("browser.tabs.remote.autostart.2", false);
   bool prefEnabled = optInPref || trialPref;
@@ -4844,17 +4792,7 @@ mozilla::BrowserTabsRemoteAutostart()
     status = kE10sDisabledByUser;
   }
 
-#ifdef E10S_TESTING_ONLY
-  bool e10sAllowed = true;
-#else
-  // When running tests with 'layers.offmainthreadcomposition.testing.enabled', e10s must be
-  // allowed because these tests must be allowed to run remotely.
-  // We are also allowing e10s to be enabled on Beta (which doesn't have E10S_TESTING_ONLY defined.
-  bool e10sAllowed = !Preferences::GetDefaultCString("app.update.channel").EqualsLiteral("release") ||
-                     gfxPrefs::GetSingleton().LayersOffMainThreadCompositionTestingEnabled();
-#endif
-
-  if (e10sAllowed && prefEnabled) {
+  if (prefEnabled) {
     uint32_t blockPolicy = MultiprocessBlockPolicy();
     if (blockPolicy != 0) {
       status = blockPolicy;

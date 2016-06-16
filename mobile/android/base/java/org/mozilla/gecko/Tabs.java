@@ -21,7 +21,7 @@ import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.mozglue.ContextUtils.SafeIntent;
-import org.mozilla.gecko.preferences.GeckoPreferences;
+import org.mozilla.gecko.notifications.WhatsNewReceiver;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -37,7 +37,6 @@ import android.net.Uri;
 import android.os.Handler;
 import android.provider.Browser;
 import android.util.Log;
-import android.content.SharedPreferences;
 
 public class Tabs implements GeckoEventListener {
     private static final String LOGTAG = "GeckoTabs";
@@ -64,6 +63,8 @@ public class Tabs implements GeckoEventListener {
     public static final int LOADURL_DESKTOP      = 1 << 5;
     public static final int LOADURL_BACKGROUND   = 1 << 6;
     public static final int LOADURL_EXTERNAL     = 1 << 7;
+    /** Indicates the tab is the first shown after Firefox is hidden and restored. */
+    public static final int LOADURL_FIRST_AFTER_ACTIVITY_UNHIDDEN = 1 << 8;
 
     private static final long PERSIST_TABS_AFTER_MILLISECONDS = 1000 * 2;
 
@@ -819,6 +820,13 @@ public class Tabs implements GeckoEventListener {
     }
 
     public Tab loadUrlWithIntentExtras(final String url, final SafeIntent intent, final int flags) {
+        // We can't directly create a listener to tell when the user taps on the "What's new"
+        // notification, so we use this intent handling as a signal that they tapped the notification.
+        if (intent.getBooleanExtra(WhatsNewReceiver.EXTRA_WHATSNEW_NOTIFICATION, false)) {
+            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.NOTIFICATION,
+                    WhatsNewReceiver.EXTRA_WHATSNEW_NOTIFICATION);
+        }
+
         // Note: we don't get the URL from the intent so the calling
         // method has the opportunity to change the URL if applicable.
         return loadUrl(url, null, -1, intent, flags);
@@ -854,6 +862,7 @@ public class Tabs implements GeckoEventListener {
             boolean userEntered = (flags & LOADURL_USER_ENTERED) != 0;
             boolean desktopMode = (flags & LOADURL_DESKTOP) != 0;
             boolean external = (flags & LOADURL_EXTERNAL) != 0;
+            final boolean isFirstShownAfterActivityUnhidden = (flags & LOADURL_FIRST_AFTER_ACTIVITY_UNHIDDEN) != 0;
 
             args.put("url", url);
             args.put("engine", searchEngine);
@@ -914,6 +923,11 @@ public class Tabs implements GeckoEventListener {
                 tabToSelect = addTab(tabId, tabUrl, external, parentId, url, isPrivate, tabIndex);
                 tabToSelect.setDesktopMode(desktopMode);
                 tabToSelect.setApplicationId(applicationId);
+                if (isFirstShownAfterActivityUnhidden) {
+                    // We just opened Firefox so we want to show
+                    // the toolbar but not animate it to avoid jank.
+                    tabToSelect.setShouldShowToolbarWithoutAnimationOnFirstSelection(true);
+                }
             }
         } catch (Exception e) {
             Log.w(LOGTAG, "Error building JSON arguments for loadUrl.", e);

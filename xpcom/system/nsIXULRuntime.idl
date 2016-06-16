@@ -23,7 +23,7 @@ bool BrowserTabsRemoteAutostart();
  *                    stable/frozen, please contact Benjamin Smedberg.
  */
 
-[scriptable, uuid(979fe481-363f-456f-aae6-d2f5ee1b2a71)]
+[scriptable, uuid(a1b2e167-b748-42bf-ba85-996ec39062b9)]
 interface nsIXULRuntime : nsISupports
 {
   /**

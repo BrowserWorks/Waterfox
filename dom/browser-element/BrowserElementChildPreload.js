@@ -530,7 +530,7 @@ BrowserElementChild.prototype = {
 
   _recvEnteredFullscreen: function() {
     if (!this._windowUtils.handleFullscreenRequests() &&
-        !content.document.mozFullScreen) {
+        !content.document.fullscreenElement) {
       // If we don't actually have any pending fullscreen request
       // to handle, neither we have been in fullscreen, tell the
       // parent to just exit.
@@ -1887,6 +1887,7 @@ BrowserElementChild.prototype = {
           case Cr.NS_BINDING_ABORTED :
             // Ignoring NS_BINDING_ABORTED, which is set when loading page is
             // stopped.
+          case Cr.NS_ERROR_PARSED_DATA_CACHED:
             return;
 
           // TODO See nsDocShell::DisplayLoadError to see what extra
@@ -1914,7 +1915,7 @@ BrowserElementChild.prototype = {
             sendAsyncMsg('error', { type: 'cspBlocked' });
             return;
           case Cr.NS_ERROR_PHISHING_URI :
-            sendAsyncMsg('error', { type: 'phishingBlocked' });
+            sendAsyncMsg('error', { type: 'deceptiveBlocked' });
             return;
           case Cr.NS_ERROR_MALWARE_URI :
             sendAsyncMsg('error', { type: 'malwareBlocked' });

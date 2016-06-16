@@ -43,19 +43,17 @@ add_task(function* test_expiration_origin_threshold() {
   });
 
   // A visit one day ago should provide a quota of 8 messages.
-  yield addVisit({
+  yield PlacesTestUtils.addVisits({
     uri: 'https://example.com/login',
     title: 'Sign in to see your auctions',
-    visits: [{
-      visitDate: (Date.now() - 1 * 24 * 60 * 60 * 1000) * 1000,
-      transitionType: Ci.nsINavHistoryService.TRANSITION_LINK,
-    }],
+    visitDate: (Date.now() - 1 * 24 * 60 * 60 * 1000) * 1000,
+    transition: Ci.nsINavHistoryService.TRANSITION_LINK
   });
 
   let numMessages = 10;
 
   let updates = 0;
-  let notifyPromise = promiseObserverNotification('push-message', (subject, data) => {
+  let notifyPromise = promiseObserverNotification(PushServiceComponent.pushTopic, (subject, data) => {
     updates++;
     return updates == numMessages;
   });
@@ -105,11 +103,9 @@ add_task(function* test_expiration_origin_threshold() {
     },
   });
 
-  yield waitForPromise(notifyPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for notifications');
+  yield notifyPromise;
 
-  yield waitForPromise(updateQuotaPromise, DEFAULT_TIMEOUT,
-    'Timed out waiting for quota to be updated');
+  yield updateQuotaPromise;
 
   let expiredRecord = yield db.getByKeyID('f56645a9-1f32-4655-92ad-ddc37f6d54fb');
   notStrictEqual(expiredRecord.quota, 0, 'Expired record not updated');

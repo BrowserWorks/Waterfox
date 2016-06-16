@@ -7,19 +7,19 @@
 #ifndef mozilla_Hal_h
 #define mozilla_Hal_h
 
-#include "mozilla/hal_sandbox/PHal.h"
-#include "mozilla/HalTypes.h"
 #include "base/basictypes.h"
 #include "base/platform_thread.h"
-#include "mozilla/Observer.h"
-#include "mozilla/Types.h"
 #include "nsTArray.h"
-#include "mozilla/dom/MozPowerManagerBinding.h"
 #include "mozilla/dom/battery/Types.h"
+#include "mozilla/dom/MozPowerManagerBinding.h"
 #include "mozilla/dom/network/Types.h"
 #include "mozilla/dom/power/Types.h"
 #include "mozilla/dom/ScreenOrientation.h"
+#include "mozilla/hal_sandbox/PHal.h"
 #include "mozilla/HalScreenConfiguration.h"
+#include "mozilla/HalTypes.h"
+#include "mozilla/Observer.h"
+#include "mozilla/Types.h"
 
 /*
  * Hal.h contains the public Hal API.
@@ -31,7 +31,7 @@
  * functions here in the hal_impl and hal_sandbox namespaces.
  */
 
-class nsIDOMWindow;
+class nsPIDOMWindowInner;
 
 #ifndef MOZ_HAL_NAMESPACE
 # define MOZ_HAL_NAMESPACE hal
@@ -69,7 +69,7 @@ namespace MOZ_HAL_NAMESPACE {
  * The method with WindowIdentifier will be called automatically.
  */
 void Vibrate(const nsTArray<uint32_t>& pattern,
-             nsIDOMWindow* aWindow);
+             nsPIDOMWindowInner* aWindow);
 void Vibrate(const nsTArray<uint32_t>& pattern,
              const hal::WindowIdentifier &id);
 
@@ -85,7 +85,7 @@ void Vibrate(const nsTArray<uint32_t>& pattern,
  * world, pass an nsIDOMWindow*. The method with WindowIdentifier will be called
  * automatically.
  */
-void CancelVibrate(nsIDOMWindow* aWindow);
+void CancelVibrate(nsPIDOMWindowInner* aWindow);
 void CancelVibrate(const hal::WindowIdentifier &id);
 
 /**

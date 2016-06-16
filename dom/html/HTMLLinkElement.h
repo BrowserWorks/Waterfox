@@ -44,7 +44,6 @@ public:
   void LinkRemoved();
 
   void UpdateImport();
-  void UpdatePreconnect();
 
   // nsIDOMEventTarget
   virtual nsresult PreHandleEvent(EventChainPreVisitor& aVisitor) override;
@@ -119,7 +118,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::hreflang, aHreflang, aRv);
   }
-  nsDOMSettableTokenList* Sizes()
+  nsDOMTokenList* Sizes()
   {
     return GetTokenList(nsGkAtoms::sizes);
   }
@@ -173,8 +172,6 @@ protected:
   // nsGenericHTMLElement
   virtual void GetItemValueText(DOMString& text) override;
   virtual void SetItemValueText(const nsAString& text) override;
-
-  bool HasDNSPrefetchRel();
 
   RefPtr<nsDOMTokenList > mRelList;
 private:

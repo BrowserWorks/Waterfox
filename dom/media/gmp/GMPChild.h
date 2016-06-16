@@ -31,9 +31,6 @@ public:
             base::ProcessId aParentPid,
             MessageLoop* aIOLoop,
             IPC::Channel* aChannel);
-#ifdef XP_WIN
-  bool PreLoadLibraries(const nsAString& aPluginPath);
-#endif
   MessageLoop* GMPMessageLoop();
 
   // Main thread only.
@@ -44,7 +41,7 @@ public:
   void ShutdownComplete() override;
 
 #if defined(XP_MACOSX) && defined(MOZ_GMP_SANDBOX)
-  bool SetMacSandboxInfo();
+  bool SetMacSandboxInfo(MacSandboxPluginType aPluginType);
 #endif
 
 private:
@@ -56,7 +53,8 @@ private:
   bool GetUTF8LibPath(nsACString& aOutLibPath);
 
   bool RecvSetNodeId(const nsCString& aNodeId) override;
-  bool AnswerStartPlugin() override;
+  bool AnswerStartPlugin(const nsString& aAdapter) override;
+  bool RecvPreloadLibs(const nsCString& aLibs) override;
 
   PCrashReporterChild* AllocPCrashReporterChild(const NativeThreadId& aThread) override;
   bool DeallocPCrashReporterChild(PCrashReporterChild*) override;

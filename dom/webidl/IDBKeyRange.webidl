@@ -19,6 +19,10 @@ interface IDBKeyRange {
   readonly attribute boolean lowerOpen;
   [Constant]
   readonly attribute boolean upperOpen;
+  [Throws]
+  boolean includes(any key);
+
+
   [NewObject, Throws]
   static IDBKeyRange only (any value);
   [NewObject, Throws]
@@ -30,7 +34,7 @@ interface IDBKeyRange {
 };
 
 [Exposed=(Window,Worker),
- Func="mozilla::dom::indexedDB::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
+ Func="mozilla::dom::IndexedDatabaseManager::ExperimentalFeaturesEnabled"]
 interface IDBLocaleAwareKeyRange : IDBKeyRange {
   [NewObject, Throws]
   static IDBLocaleAwareKeyRange bound (any lower, any upper, optional boolean lowerOpen = false, optional boolean upperOpen = false);

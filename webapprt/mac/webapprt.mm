@@ -29,6 +29,7 @@
 #include "nsIFile.h"
 #include "nsStringGlue.h"
 #include "mozilla/AppData.h"
+#include "buildid.h"
 
 using namespace mozilla;
 
@@ -98,7 +99,7 @@ main(int argc, char **argv)
   NSString *alternateBinaryID = nil;
 
   //this is our version, to be compared with the version of the binary we are asked to use
-  NSString* myVersion = [NSString stringWithFormat:@"%s", NS_STRINGIFY(GRE_BUILDID)];
+  NSString* myVersion = [NSString stringWithFormat:@"%s", NS_STRINGIFY(MOZ_BUILDID)];
 
   NSLog(@"MY WEBAPPRT BUILDID: %@", myVersion);
 
@@ -380,7 +381,7 @@ NSString
   }
 
   NSLog(@"unable to find a valid webrt path");
-  @throw MakeException(@"This App requires that Firefox version 16 or above is installed.", @"Firefox 16+ has not been detected.");
+  @throw MakeException(@"This app requires a Firefox version between 16 and 47 to be installed.", @"No compatible version of Firefox has been detected.");
 
   return nil;
 }

@@ -86,14 +86,12 @@ class MacroAssemblerARM : public Assembler
     void convertUInt32ToDouble(Register src, FloatRegister dest);
     void convertDoubleToFloat32(FloatRegister src, FloatRegister dest,
                                 Condition c = Always);
-    void branchTruncateDouble(FloatRegister src, Register dest, Label* fail);
     void convertDoubleToInt32(FloatRegister src, Register dest, Label* fail,
                               bool negativeZeroCheck = true);
     void convertFloat32ToInt32(FloatRegister src, Register dest, Label* fail,
                                bool negativeZeroCheck = true);
 
     void convertFloat32ToDouble(FloatRegister src, FloatRegister dest);
-    void branchTruncateFloat32(FloatRegister src, Register dest, Label* fail);
     void convertInt32ToFloat32(Register src, FloatRegister dest);
     void convertInt32ToFloat32(const Address& src, FloatRegister dest);
 
@@ -123,19 +121,12 @@ class MacroAssemblerARM : public Assembler
     static void ma_mov_patch(ImmPtr imm, Register dest, Assembler::Condition c,
                              RelocStyle rs, Instruction* i);
 
-    // These should likely be wrapped up as a set of macros or something like
-    // that. I cannot think of a good reason to explicitly have all of this
-    // code.
-
     // ALU based ops
     // mov
-    void ma_mov(Register src, Register dest,
-                SBit s = LeaveCC, Condition c = Always);
+    void ma_mov(Register src, Register dest, SBit s = LeaveCC, Condition c = Always);
 
-    void ma_mov(Imm32 imm, Register dest,
-                SBit s = LeaveCC, Condition c = Always);
-    void ma_mov(ImmWord imm, Register dest,
-                SBit s = LeaveCC, Condition c = Always);
+    void ma_mov(Imm32 imm, Register dest, Condition c = Always);
+    void ma_mov(ImmWord imm, Register dest, Condition c = Always);
 
     void ma_mov(ImmGCPtr ptr, Register dest);
 
@@ -145,7 +136,7 @@ class MacroAssemblerARM : public Assembler
     void ma_asr(Imm32 shift, Register src, Register dst);
     void ma_ror(Imm32 shift, Register src, Register dst);
     void ma_rol(Imm32 shift, Register src, Register dst);
-    // Shifts (just a move with a shifting op2)
+
     void ma_lsl(Register shift, Register src, Register dst);
     void ma_lsr(Register shift, Register src, Register dst);
     void ma_asr(Register shift, Register src, Register dst);
@@ -153,12 +144,7 @@ class MacroAssemblerARM : public Assembler
     void ma_rol(Register shift, Register src, Register dst);
 
     // Move not (dest <- ~src)
-    void ma_mvn(Imm32 imm, Register dest,
-                SBit s = LeaveCC, Condition c = Always);
-
-
-    void ma_mvn(Register src1, Register dest,
-                SBit s = LeaveCC, Condition c = Always);
+    void ma_mvn(Register src1, Register dest, SBit s = LeaveCC, Condition c = Always);
 
     // Negate (dest <- -src) implemented as rsb dest, src, 0
     void ma_neg(Register src, Register dest,
@@ -176,8 +162,6 @@ class MacroAssemblerARM : public Assembler
 
     void ma_and(Imm32 imm, Register src1, Register dest,
                 SBit s = LeaveCC, Condition c = Always);
-
-
 
     // Bit clear (dest <- dest & ~imm) or (dest <- src1 & ~src2)
     void ma_bic(Imm32 imm, Register dest,
@@ -337,6 +321,7 @@ class MacroAssemblerARM : public Assembler
 
     // Branches when done from within arm-specific code.
     BufferOffset ma_b(Label* dest, Condition c = Always);
+    BufferOffset ma_b(wasm::JumpTarget target, Condition c = Always);
     void ma_b(void* target, Condition c = Always);
     void ma_bx(Register dest, Condition c = Always);
 
@@ -622,6 +607,9 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         ma_ldr(addr, scratch);
         ma_bx(scratch);
     }
+    void jump(wasm::JumpTarget target) {
+        as_b(target);
+    }
 
     void negl(Register reg) {
         ma_neg(reg, reg, SetCC);
@@ -696,21 +684,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     Condition testMagic(Condition cond, const BaseIndex& src);
     Condition testGCThing(Condition cond, const BaseIndex& src);
 
-    template <typename T>
-    void branchTestGCThing(Condition cond, const T& t, Label* label) {
-        Condition c = testGCThing(cond, t);
-        ma_b(label, c);
-    }
-    template <typename T>
-    void branchTestPrimitive(Condition cond, const T& t, Label* label) {
-        Condition c = testPrimitive(cond, t);
-        ma_b(label, c);
-    }
-
-    void branchTestValue(Condition cond, const ValueOperand& value, const Value& v, Label* label);
-    void branchTestValue(Condition cond, const Address& valaddr, const ValueOperand& value,
-                         Label* label);
-
     // Unboxing code.
     void unboxNonDouble(const ValueOperand& operand, Register dest);
     void unboxNonDouble(const Address& src, Register dest);
@@ -774,269 +747,12 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void int32ValueToFloat32(const ValueOperand& operand, FloatRegister dest);
     void loadConstantFloat32(float f, FloatRegister dest);
 
-    template<typename T>
-    void branchTestInt32(Condition cond, const T & t, Label* label) {
-        Condition c = testInt32(cond, t);
-        ma_b(label, c);
-    }
-    template<typename T>
-    void branchTestBoolean(Condition cond, const T & t, Label* label) {
-        Condition c = testBoolean(cond, t);
-        ma_b(label, c);
-    }
-    void branch32(Condition cond, Register lhs, Register rhs, Label* label) {
-        ma_cmp(lhs, rhs);
-        ma_b(label, cond);
-    }
-    void branch32(Condition cond, Register lhs, Imm32 imm, Label* label) {
-        ma_cmp(lhs, imm);
-        ma_b(label, cond);
-    }
-    void branch32(Condition cond, const Operand& lhs, Register rhs, Label* label) {
-        if (lhs.getTag() == Operand::OP2) {
-            branch32(cond, lhs.toReg(), rhs, label);
-        } else {
-            ScratchRegisterScope scratch(asMasm());
-            ma_ldr(lhs.toAddress(), scratch);
-            branch32(cond, scratch, rhs, label);
-        }
-    }
-    void branch32(Condition cond, const Operand& lhs, Imm32 rhs, Label* label) {
-        if (lhs.getTag() == Operand::OP2) {
-            branch32(cond, lhs.toReg(), rhs, label);
-        } else {
-            // branch32 will use ScratchRegister.
-            AutoRegisterScope scratch(asMasm(), secondScratchReg_);
-            ma_ldr(lhs.toAddress(), scratch);
-            branch32(cond, scratch, rhs, label);
-        }
-    }
-    void branch32(Condition cond, const Address& lhs, Register rhs, Label* label) {
-        ScratchRegisterScope scratch(asMasm());
-        load32(lhs, scratch);
-        branch32(cond, scratch, rhs, label);
-    }
-    void branch32(Condition cond, const Address& lhs, Imm32 rhs, Label* label) {
-        // branch32 will use ScratchRegister.
-        AutoRegisterScope scratch(asMasm(), secondScratchReg_);
-        load32(lhs, scratch);
-        branch32(cond, scratch, rhs, label);
-    }
-    void branch32(Condition cond, const BaseIndex& lhs, Imm32 rhs, Label* label) {
-        // branch32 will use ScratchRegister.
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        load32(lhs, scratch2);
-        branch32(cond, scratch2, rhs, label);
-    }
-    void branchPtr(Condition cond, const Address& lhs, Register rhs, Label* label) {
-        branch32(cond, lhs, rhs, label);
-    }
-
-    void branchPrivatePtr(Condition cond, const Address& lhs, ImmPtr ptr, Label* label) {
-        branchPtr(cond, lhs, ptr, label);
-    }
-
-    void branchPrivatePtr(Condition cond, const Address& lhs, Register ptr, Label* label) {
-        branchPtr(cond, lhs, ptr, label);
-    }
-
-    void branchPrivatePtr(Condition cond, Register lhs, ImmWord ptr, Label* label) {
-        branchPtr(cond, lhs, ptr, label);
-    }
-
-    template<typename T>
-    void branchTestDouble(Condition cond, const T & t, Label* label) {
-        Condition c = testDouble(cond, t);
-        ma_b(label, c);
-    }
-    template<typename T>
-    void branchTestNull(Condition cond, const T & t, Label* label) {
-        Condition c = testNull(cond, t);
-        ma_b(label, c);
-    }
-    template<typename T>
-    void branchTestObject(Condition cond, const T & t, Label* label) {
-        Condition c = testObject(cond, t);
-        ma_b(label, c);
-    }
-    template<typename T>
-    void branchTestString(Condition cond, const T & t, Label* label) {
-        Condition c = testString(cond, t);
-        ma_b(label, c);
-    }
-    template<typename T>
-    void branchTestSymbol(Condition cond, const T & t, Label* label) {
-        Condition c = testSymbol(cond, t);
-        ma_b(label, c);
-    }
-    template<typename T>
-    void branchTestUndefined(Condition cond, const T & t, Label* label) {
-        Condition c = testUndefined(cond, t);
-        ma_b(label, c);
-    }
-    template <typename T>
-    void branchTestNumber(Condition cond, const T& t, Label* label) {
-        cond = testNumber(cond, t);
-        ma_b(label, cond);
-    }
-    template <typename T>
-    void branchTestMagic(Condition cond, const T& t, Label* label) {
-        cond = testMagic(cond, t);
-        ma_b(label, cond);
-    }
-    void branchTestMagicValue(Condition cond, const ValueOperand& val, JSWhyMagic why,
-                              Label* label) {
-        MOZ_ASSERT(cond == Equal || cond == NotEqual);
-        branchTestValue(cond, val, MagicValue(why), label);
-    }
-    void branchTestInt32Truthy(bool truthy, const ValueOperand& operand, Label* label) {
-        Condition c = testInt32Truthy(truthy, operand);
-        ma_b(label, c);
-    }
-    void branchTestBooleanTruthy(bool truthy, const ValueOperand& operand, Label* label) {
-        Condition c = testBooleanTruthy(truthy, operand);
-        ma_b(label, c);
-    }
-    void branchTestDoubleTruthy(bool truthy, FloatRegister reg, Label* label) {
-        Condition c = testDoubleTruthy(truthy, reg);
-        ma_b(label, c);
-    }
-    void branchTestStringTruthy(bool truthy, const ValueOperand& value, Label* label) {
-        Condition c = testStringTruthy(truthy, value);
-        ma_b(label, c);
-    }
-    void branchTest32(Condition cond, Register lhs, Register rhs, Label* label) {
-        MOZ_ASSERT(cond == Zero || cond == NonZero || cond == Signed || cond == NotSigned);
-        // x86 likes test foo, foo rather than cmp foo, #0.
-        // Convert the former into the latter.
-        if (lhs == rhs && (cond == Zero || cond == NonZero))
-            ma_cmp(lhs, Imm32(0));
-        else
-            ma_tst(lhs, rhs);
-        ma_b(label, cond);
-    }
-    void branchTest32(Condition cond, Register lhs, Imm32 imm, Label* label) {
-        MOZ_ASSERT(cond == Zero || cond == NonZero || cond == Signed || cond == NotSigned);
-        ma_tst(lhs, imm);
-        ma_b(label, cond);
-    }
-    void branchTest32(Condition cond, const Address& address, Imm32 imm, Label* label) {
-        // branchTest32 will use ScratchRegister.
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        load32(address, scratch2);
-        branchTest32(cond, scratch2, imm, label);
-    }
-    void branchTest32(Condition cond, AbsoluteAddress address, Imm32 imm, Label* label) {
-        // branchTest32 will use ScratchRegister.
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        load32(address, scratch2);
-        branchTest32(cond, scratch2, imm, label);
-    }
-    void branchTestPtr(Condition cond, Register lhs, Register rhs, Label* label) {
-        branchTest32(cond, lhs, rhs, label);
-    }
-    void branchTestPtr(Condition cond, Register lhs, const Imm32 rhs, Label* label) {
-        branchTest32(cond, lhs, rhs, label);
-    }
-    void branchTestPtr(Condition cond, const Address& lhs, Imm32 imm, Label* label) {
-        branchTest32(cond, lhs, imm, label);
-    }
-    void branchPtr(Condition cond, Register lhs, Register rhs, Label* label) {
-        branch32(cond, lhs, rhs, label);
-    }
-    void branchPtr(Condition cond, Register lhs, ImmGCPtr ptr, Label* label) {
-        ScratchRegisterScope scratch(asMasm());
-        movePtr(ptr, scratch);
-        branchPtr(cond, lhs, scratch, label);
-    }
-    void branchPtr(Condition cond, Register lhs, ImmWord imm, Label* label) {
-        branch32(cond, lhs, Imm32(imm.value), label);
-    }
-    void branchPtr(Condition cond, Register lhs, ImmPtr imm, Label* label) {
-        branchPtr(cond, lhs, ImmWord(uintptr_t(imm.value)), label);
-    }
-    void branchPtr(Condition cond, Register lhs, wasm::SymbolicAddress imm, Label* label) {
-        ScratchRegisterScope scratch(asMasm());
-        movePtr(imm, scratch);
-        branchPtr(cond, lhs, scratch, label);
-    }
-    void branchPtr(Condition cond, Register lhs, Imm32 imm, Label* label) {
-        branch32(cond, lhs, imm, label);
-    }
-    void decBranchPtr(Condition cond, Register lhs, Imm32 imm, Label* label) {
-        ma_sub(imm, lhs, SetCC);
-        as_b(label, cond);
-    }
-    void branchTest64(Condition cond, Register64 lhs, Register64 rhs, Register temp, Label* label);
     void moveValue(const Value& val, Register type, Register data);
 
     CodeOffsetJump jumpWithPatch(RepatchLabel* label, Condition cond = Always,
                                  Label* documentation = nullptr);
     CodeOffsetJump backedgeJump(RepatchLabel* label, Label* documentation) {
         return jumpWithPatch(label, Always, documentation);
-    }
-    template <typename T>
-    CodeOffsetJump branchPtrWithPatch(Condition cond, Register reg, T ptr, RepatchLabel* label) {
-        ma_cmp(reg, ptr);
-        return jumpWithPatch(label, cond);
-    }
-    template <typename T>
-    CodeOffsetJump branchPtrWithPatch(Condition cond, Address addr, T ptr, RepatchLabel* label) {
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        ma_ldr(addr, scratch2);
-        ma_cmp(scratch2, ptr);
-        return jumpWithPatch(label, cond);
-    }
-    void branchPtr(Condition cond, Address addr, ImmGCPtr ptr, Label* label) {
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        ma_ldr(addr, scratch2);
-        ma_cmp(scratch2, ptr);
-        ma_b(label, cond);
-    }
-    void branchPtr(Condition cond, Address addr, ImmWord ptr, Label* label) {
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        ma_ldr(addr, scratch2);
-        ma_cmp(scratch2, ptr);
-        ma_b(label, cond);
-    }
-    void branchPtr(Condition cond, Address addr, ImmPtr ptr, Label* label) {
-        branchPtr(cond, addr, ImmWord(uintptr_t(ptr.value)), label);
-    }
-    void branchPtr(Condition cond, AbsoluteAddress addr, Register ptr, Label* label) {
-        ScratchRegisterScope scratch(asMasm());
-        loadPtr(addr, scratch);
-        ma_cmp(scratch, ptr);
-        ma_b(label, cond);
-    }
-    void branchPtr(Condition cond, AbsoluteAddress addr, ImmWord ptr, Label* label) {
-        ScratchRegisterScope scratch(asMasm());
-        loadPtr(addr, scratch);
-        ma_cmp(scratch, ptr);
-        ma_b(label, cond);
-    }
-    void branchPtr(Condition cond, wasm::SymbolicAddress addr, Register ptr, Label* label) {
-        ScratchRegisterScope scratch(asMasm());
-        loadPtr(addr, scratch);
-        ma_cmp(scratch, ptr);
-        ma_b(label, cond);
-    }
-    void branch32(Condition cond, AbsoluteAddress lhs, Imm32 rhs, Label* label) {
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        loadPtr(lhs, scratch2); // ma_cmp will use the scratch register.
-        ma_cmp(scratch2, rhs);
-        ma_b(label, cond);
-    }
-    void branch32(Condition cond, AbsoluteAddress lhs, Register rhs, Label* label) {
-        AutoRegisterScope scratch2(asMasm(), secondScratchReg_);
-        loadPtr(lhs, scratch2); // ma_cmp will use the scratch register.
-        ma_cmp(scratch2, rhs);
-        ma_b(label, cond);
-    }
-    void branch32(Condition cond, wasm::SymbolicAddress addr, Imm32 imm, Label* label) {
-        ScratchRegisterScope scratch(asMasm());
-        loadPtr(addr, scratch);
-        ma_cmp(scratch, imm);
-        ma_b(label, cond);
     }
 
     void loadUnboxedValue(Address address, MIRType type, AnyRegister dest) {
@@ -1166,13 +882,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     // Common interface.
     /////////////////////////////////////////////////////////////////
   public:
-    template <typename T> inline void branchAdd32(Condition cond, T src, Register dest, Label* label);
-    template <typename T>
-    void branchSub32(Condition cond, T src, Register dest, Label* label) {
-        ma_sub(src, dest, SetCC);
-        j(cond, label);
-    }
-
     void not32(Register reg);
 
     void move32(Imm32 imm, Register dest);
@@ -1183,10 +892,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void movePtr(ImmPtr imm, Register dest);
     void movePtr(wasm::SymbolicAddress imm, Register dest);
     void movePtr(ImmGCPtr imm, Register dest);
-    void move64(Register64 src, Register64 dest) {
-        move32(src.low, dest.low);
-        move32(src.high, dest.high);
-    }
 
     void load8SignExtend(const Address& address, Register dest);
     void load8SignExtend(const BaseIndex& src, Register dest);
@@ -1212,29 +917,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void loadPtr(const BaseIndex& src, Register dest);
     void loadPtr(AbsoluteAddress address, Register dest);
     void loadPtr(wasm::SymbolicAddress address, Register dest);
-
-    void branch64(Condition cond, const Address& lhs, Imm64 val, Label* label) {
-        MOZ_ASSERT(cond == Assembler::NotEqual,
-                   "other condition codes not supported");
-
-        branch32(cond, lhs, val.firstHalf(), label);
-        branch32(cond, Address(lhs.base, lhs.offset + sizeof(uint32_t)), val.secondHalf(), label);
-    }
-
-    void branch64(Condition cond, const Address& lhs, const Address& rhs, Register scratch,
-                  Label* label)
-    {
-        MOZ_ASSERT(cond == Assembler::NotEqual,
-                   "other condition codes not supported");
-        MOZ_ASSERT(lhs.base != scratch);
-        MOZ_ASSERT(rhs.base != scratch);
-
-        load32(rhs, scratch);
-        branch32(cond, lhs, scratch, label);
-
-        load32(Address(rhs.base, rhs.offset + sizeof(uint32_t)), scratch);
-        branch32(cond, Address(lhs.base, lhs.offset + sizeof(uint32_t)), scratch, label);
-    }
 
     void loadPrivate(const Address& address, Register dest);
 
@@ -1618,8 +1300,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
         // <0, then we want to clamp to 0, otherwise, we wish to clamp to 255
         ScratchRegisterScope scratch(asMasm());
         as_mov(scratch, asr(reg, 8), SetCC);
-        ma_mov(Imm32(0xff), reg, LeaveCC, NotEqual);
-        ma_mov(Imm32(0), reg, LeaveCC, Signed);
+        ma_mov(Imm32(0xff), reg, NotEqual);
+        ma_mov(Imm32(0), reg, Signed);
     }
 
     inline void incrementInt32Value(const Address& addr);
@@ -1654,12 +1336,8 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void simulatorStop(const char* msg);
 
     void compareDouble(FloatRegister lhs, FloatRegister rhs);
-    void branchDouble(DoubleCondition cond, FloatRegister lhs, FloatRegister rhs,
-                      Label* label);
 
     void compareFloat(FloatRegister lhs, FloatRegister rhs);
-    void branchFloat(DoubleCondition cond, FloatRegister lhs, FloatRegister rhs,
-                     Label* label);
 
     void checkStackAlignment();
 
@@ -1671,7 +1349,7 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     emitSet(Assembler::Condition cond, Register dest)
     {
         ma_mov(Imm32(0), dest);
-        ma_mov(Imm32(1), dest, LeaveCC, cond);
+        ma_mov(Imm32(1), dest, cond);
     }
 
     template <typename T1, typename T2>
@@ -1759,9 +1437,6 @@ class MacroAssemblerARMCompat : public MacroAssemblerARM
     void moveFloat32(FloatRegister src, FloatRegister dest) {
         as_vmov(VFPRegister(dest).singleOverlay(), VFPRegister(src).singleOverlay());
     }
-
-    void branchPtrInNurseryRange(Condition cond, Register ptr, Register temp, Label* label);
-    void branchValueIsNurseryObject(Condition cond, ValueOperand value, Register temp, Label* label);
 
     void loadWasmActivation(Register dest) {
         loadPtr(Address(GlobalReg, wasm::ActivationGlobalDataOffset - AsmJSGlobalRegBias), dest);

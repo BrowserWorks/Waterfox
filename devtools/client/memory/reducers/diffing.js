@@ -65,7 +65,7 @@ handlers[actions.TAKE_CENSUS_DIFF_START] = function (diffing, action) {
       report: null,
       inverted: action.inverted,
       filter: action.filter,
-      breakdown: action.breakdown,
+      display: action.display,
     }
   });
 };
@@ -81,10 +81,11 @@ handlers[actions.TAKE_CENSUS_DIFF_END] = function (diffing, action) {
     state: diffingState.TOOK_DIFF,
     census: {
       report: action.report,
+      parentMap: action.parentMap,
       expanded: new Set(),
       inverted: action.inverted,
       filter: action.filter,
-      breakdown: action.breakdown,
+      display: action.display,
     }
   });
 };

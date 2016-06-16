@@ -33,6 +33,12 @@
 #include "nsExceptionHandler.h"
 #endif
 
+#if defined(XP_WIN)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
@@ -48,10 +54,6 @@
 // following value as a fallback if for some reason the preference is
 // absent.
 #define FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS 60000
-#ifdef XP_WIN32
-#define FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS_WINXP 180000
-#include "mozilla/WindowsVersion.h"
-#endif
 
 // Additional number of milliseconds to wait until we decide to exit
 // forcefully.
@@ -131,7 +133,6 @@ RunWatchdog(void* arg)
   options = nullptr;
 
   const uint32_t timeToLive = crashAfterTicks;
-  const PRIntervalTime ticksDuration = PR_MillisecondsToInterval(1000);
   while (true) {
     //
     // We do not want to sleep for the entire duration,
@@ -143,7 +144,11 @@ RunWatchdog(void* arg)
     // we have lost at most one second, which is much
     // more reasonable.
     //
-    PR_Sleep(ticksDuration);
+#if defined(XP_WIN)
+    Sleep(1000 /* ms */);
+#else
+    usleep(1000000 /* usec */);
+#endif
 
     if (gHeartbeat++ < timeToLive) {
       continue;
@@ -362,23 +367,9 @@ nsTerminator::Start()
 void
 nsTerminator::StartWatchdog()
 {
-  int32_t crashAfterMS;
-#if defined(XP_WIN32)
-  if (IsWin7OrLater()) {
-    crashAfterMS =
-      Preferences::GetInt("toolkit.asyncshutdown.crash_timeout",
-                          FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS);
-  } else {
-    crashAfterMS =
-      Preferences::GetInt("toolkit.asyncshutdown.crash_timeout_winxp",
-                          FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS_WINXP);
-  }
-#else
-  crashAfterMS =
+  int32_t crashAfterMS =
     Preferences::GetInt("toolkit.asyncshutdown.crash_timeout",
                         FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS);
-#endif
-
   // Ignore negative values
   if (crashAfterMS <= 0) {
     crashAfterMS = FALLBACK_ASYNCSHUTDOWN_CRASH_AFTER_MS;

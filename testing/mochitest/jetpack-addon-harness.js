@@ -17,7 +17,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "AddonManager",
 
 // How long to wait for an add-on to uninstall before aborting
 const MAX_UNINSTALL_TIME = 10000;
-
 setTimeout(testInit, 0);
 
 var sdkpath = null;

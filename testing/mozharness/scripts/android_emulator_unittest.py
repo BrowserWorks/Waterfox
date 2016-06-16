@@ -22,7 +22,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozprocess import ProcessHandler
 
 from mozharness.base.log import FATAL
-from mozharness.base.script import BaseScript, PostScriptRun
+from mozharness.base.script import BaseScript
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
@@ -347,8 +347,8 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
     def _verify_emulator_and_restart_on_fail(self):
         emulator_ok = self._verify_emulator()
         self._dump_host_state()
-        self._screenshot("emulator-startup-screenshot-")
         if not emulator_ok:
+            self._screenshot("emulator-startup-screenshot-")
             self._kill_processes(self.config["emulator_process_name"])
             self._dump_emulator_log()
             self._restart_adbd()
@@ -698,10 +698,7 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             config=self.config,
             log_obj=self.log_obj,
             error_list=self.error_list)
-        return_code = self.run_command(cmd,
-                                       cwd=cwd,
-                                       env=env,
-                                       output_parser=parser)
+        self.run_command(cmd, cwd=cwd, env=env, output_parser=parser)
         tbpl_status, log_level = parser.evaluate_parser(0)
         parser.append_tinderboxprint_line(self.test_suite)
 

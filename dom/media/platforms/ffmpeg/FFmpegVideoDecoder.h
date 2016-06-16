@@ -71,8 +71,7 @@ private:
                                  AVFrame* aFrame);
 
   RefPtr<ImageContainer> mImageContainer;
-  nsIntSize mDisplay;
-  nsIntRect mImage;
+  VideoInfo mInfo;
 
   // Parser used for VP8 and VP9 decoding.
   AVCodecParserContext* mCodecParser;
@@ -123,7 +122,7 @@ private:
     }
 
   private:
-    nsAutoTArray<DurationElement, 16> mMap;
+    AutoTArray<DurationElement, 16> mMap;
   };
 
   DurationMap mDurationMap;

@@ -25,6 +25,7 @@ Zone * const Zone::NotOnList = reinterpret_cast<Zone*>(1);
 JS::Zone::Zone(JSRuntime* rt)
   : JS::shadow::Zone(rt, &rt->gc.marker),
     debuggers(nullptr),
+    suppressObjectMetadataCallback(false),
     arenas(rt),
     types(this),
     compartments(),
@@ -134,29 +135,6 @@ Zone::getOrCreateDebuggers(JSContext* cx)
 }
 
 void
-Zone::logPromotionsToTenured()
-{
-    auto* dbgs = getDebuggers();
-    if (MOZ_LIKELY(!dbgs))
-        return;
-
-    auto now = JS_GetCurrentEmbedderTime();
-    JSRuntime* rt = runtimeFromAnyThread();
-
-    for (auto** dbgp = dbgs->begin(); dbgp != dbgs->end(); dbgp++) {
-        if (!(*dbgp)->isEnabled() || !(*dbgp)->isTrackingTenurePromotions())
-            continue;
-
-        for (auto range = awaitingTenureLogging.all(); !range.empty(); range.popFront()) {
-            if ((*dbgp)->isDebuggeeUnbarriered(range.front()->compartment()))
-                (*dbgp)->logTenurePromotion(rt, *range.front(), now);
-        }
-    }
-
-    awaitingTenureLogging.clear();
-}
-
-void
 Zone::sweepBreakpoints(FreeOp* fop)
 {
     if (fop->runtime()->debuggerList.isEmpty())
@@ -222,7 +200,7 @@ Zone::discardJitCode(FreeOp* fop)
 
 #ifdef DEBUG
         /* Assert no baseline scripts are marked as active. */
-        for (ZoneCellIterUnderGC i(this, AllocKind::SCRIPT); !i.done(); i.next()) {
+        for (ZoneCellIter i(this, AllocKind::SCRIPT); !i.done(); i.next()) {
             JSScript* script = i.get<JSScript>();
             MOZ_ASSERT_IF(script->hasBaselineScript(), !script->baselineScript()->active());
         }
@@ -234,7 +212,7 @@ Zone::discardJitCode(FreeOp* fop)
         /* Only mark OSI points if code is being discarded. */
         jit::InvalidateAll(fop, this);
 
-        for (ZoneCellIterUnderGC i(this, AllocKind::SCRIPT); !i.done(); i.next()) {
+        for (ZoneCellIter i(this, AllocKind::SCRIPT); !i.done(); i.next()) {
             JSScript* script = i.get<JSScript>();
             jit::FinishInvalidation(fop, script);
 

@@ -7,6 +7,4 @@
 DIRS += [
     'loop',
     'pdfjs',
-    'shumway',
-#    'tabgroups',
 ]

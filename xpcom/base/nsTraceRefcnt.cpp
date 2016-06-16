@@ -470,14 +470,14 @@ DumpSerialNumbers(PLHashEntry* aHashEntry, int aIndex, void* aClosure)
   fprintf(outputFile, "%" PRIdPTR
           " @%p (%d references; %d from COMPtrs)\n",
           record->serialNumber,
-          NS_INT32_TO_PTR(aHashEntry->key),
+          aHashEntry->key,
           record->refCount,
           record->COMPtrCount);
 #else
   fprintf(outputFile, "%" PRIdPTR
           " @%p (%d references)\n",
           record->serialNumber,
-          NS_INT32_TO_PTR(aHashEntry->key),
+          aHashEntry->key,
           record->refCount);
 #endif
 #ifdef MOZ_STACKWALKING
@@ -706,6 +706,7 @@ InitLog(const char* aEnvVar, const char* aMsg, FILE** aResult)
       } else {
         fprintf(stdout, "### %s defined -- unable to log %s to %s\n",
                 aEnvVar, aMsg, fname.get());
+        MOZ_ASSERT(false, "Tried and failed to create an XPCOM log");
       }
       return stream != nullptr;
     }
@@ -1282,16 +1283,16 @@ NS_LogCOMPtrAddRef(void* aCOMPtr, nsISupports* aObject)
   if (!gTypesToLog || !gSerialNumbers) {
     return;
   }
-  intptr_t serialno = GetSerialNumber(object, false);
-  if (serialno == 0) {
-    return;
-  }
-
   if (!gInitialized) {
     InitTraceLog();
   }
   if (gLogging == FullLogging) {
     AutoTraceLogLock lock;
+
+    intptr_t serialno = GetSerialNumber(object, false);
+    if (serialno == 0) {
+      return;
+    }
 
     int32_t* count = GetCOMPtrCount(object);
     if (count) {
@@ -1323,16 +1324,16 @@ NS_LogCOMPtrRelease(void* aCOMPtr, nsISupports* aObject)
   if (!gTypesToLog || !gSerialNumbers) {
     return;
   }
-  intptr_t serialno = GetSerialNumber(object, false);
-  if (serialno == 0) {
-    return;
-  }
-
   if (!gInitialized) {
     InitTraceLog();
   }
   if (gLogging == FullLogging) {
     AutoTraceLogLock lock;
+
+    intptr_t serialno = GetSerialNumber(object, false);
+    if (serialno == 0) {
+      return;
+    }
 
     int32_t* count = GetCOMPtrCount(object);
     if (count) {

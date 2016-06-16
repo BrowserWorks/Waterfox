@@ -92,6 +92,9 @@
 #include "nsJSUtils.h"
 #include "mozilla/dom/URL.h"
 #include "nsIContentPolicy.h"
+#include "mozAutoDocUpdate.h"
+#include "mozilla/StyleSheetHandle.h"
+#include "mozilla/StyleSheetHandleInlines.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -1831,7 +1834,7 @@ XULDocument::RemoveElementFromRefMap(Element* aElement)
         if (!entry)
             return;
         if (entry->RemoveElement(aElement)) {
-            mRefMap.RawRemoveEntry(entry);
+            mRefMap.RemoveEntry(entry);
         }
     }
 }
@@ -2677,20 +2680,6 @@ XULDocument::LoadOverlayInternal(nsIURI* aURI, bool aIsDynamic,
     return NS_OK;
 }
 
-static PLDHashOperator
-FirePendingMergeNotification(nsIURI* aKey, nsCOMPtr<nsIObserver>& aObserver, void* aClosure)
-{
-    aObserver->Observe(aKey, "xul-overlay-merged", EmptyString().get());
-
-    typedef nsInterfaceHashtable<nsURIHashKey,nsIObserver> table;
-    table* observers = static_cast<table*>(aClosure);
-    if (observers) {
-      observers->Remove(aKey);
-    }
-
-    return PL_DHASH_REMOVE;
-}
-
 nsresult
 XULDocument::ResumeWalk()
 {
@@ -2981,10 +2970,14 @@ XULDocument::DoneWalking()
     // XXXldb This is where we should really be setting the chromehidden
     // attribute.
 
-    uint32_t count = mOverlaySheets.Length();
-    for (uint32_t i = 0; i < count; ++i) {
-        AddStyleSheet(mOverlaySheets[i]);
+    {
+        mozAutoDocUpdate updateBatch(this, UPDATE_STYLE, true);
+        uint32_t count = mOverlaySheets.Length();
+        for (uint32_t i = 0; i < count; ++i) {
+            AddStyleSheet(mOverlaySheets[i]);
+        }
     }
+
     mOverlaySheets.Clear();
 
     if (!mDocumentLoaded) {
@@ -3041,9 +3034,23 @@ XULDocument::DoneWalking()
 
         // Walk the set of pending load notifications and notify any observers.
         // See below for detail.
-        if (mPendingOverlayLoadNotifications)
-            mPendingOverlayLoadNotifications->Enumerate(
-                FirePendingMergeNotification, mOverlayLoadObservers.get());
+        if (mPendingOverlayLoadNotifications) {
+            nsInterfaceHashtable<nsURIHashKey,nsIObserver>* observers =
+                mOverlayLoadObservers.get();
+            for (auto iter = mPendingOverlayLoadNotifications->Iter();
+                 !iter.Done();
+                 iter.Next()) {
+                nsIURI* aKey = iter.Key();
+                iter.Data()->Observe(aKey, "xul-overlay-merged",
+                                     EmptyString().get());
+
+                if (observers) {
+                  observers->Remove(aKey);
+                }
+
+                iter.Remove();
+            }
+        }
     }
     else {
         if (mOverlayLoadObservers) {
@@ -3093,7 +3100,7 @@ XULDocument::DoneWalking()
 }
 
 NS_IMETHODIMP
-XULDocument::StyleSheetLoaded(CSSStyleSheet* aSheet,
+XULDocument::StyleSheetLoaded(StyleSheetHandle aSheet,
                               bool aWasAlternate,
                               nsresult aStatus)
 {
@@ -3722,11 +3729,11 @@ XULDocument::AddPrototypeSheets()
     for (int32_t i = 0; i < sheets.Count(); i++) {
         nsCOMPtr<nsIURI> uri = sheets[i];
 
-        RefPtr<CSSStyleSheet> incompleteSheet;
+        StyleSheetHandle::RefPtr incompleteSheet;
         rv = CSSLoader()->LoadSheet(uri,
                                     mCurrentPrototype->DocumentPrincipal(),
                                     EmptyCString(), this,
-                                    getter_AddRefs(incompleteSheet));
+                                    &incompleteSheet);
 
         // XXXldb We need to prevent bogus sheets from being held in the
         // prototype's list, but until then, don't propagate the failure
@@ -4469,7 +4476,7 @@ XULDocument::GetWindowRoot()
     return nullptr;
   }
 
-    nsCOMPtr<nsPIDOMWindow> piWin = mDocumentContainer->GetWindow();
+    nsCOMPtr<nsPIDOMWindowOuter> piWin = mDocumentContainer->GetWindow();
     return piWin ? piWin->GetTopWindowRoot() : nullptr;
 }
 

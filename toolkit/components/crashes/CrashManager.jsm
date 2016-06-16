@@ -612,12 +612,12 @@ this.CrashManager.prototype = Object.freeze({
       try {
         yield it.forEach((entry, index, it) => {
           if (entry.isDir) {
-            return;
+            return undefined;
           }
 
           let match = re.exec(entry.name);
           if (!match) {
-            return;
+            return undefined;
           }
 
           return OS.File.stat(entry.path).then((info) => {
@@ -832,7 +832,7 @@ CrashStore.prototype = Object.freeze({
 
           // If we have an OOM size, count the crash as an OOM in addition to
           // being a main process crash.
-          if (denormalized.metadata && 
+          if (denormalized.metadata &&
               denormalized.metadata.OOMAllocationSize) {
             let oomKey = key + "-oom";
             actualCounts.set(oomKey, (actualCounts.get(oomKey) || 0) + 1);

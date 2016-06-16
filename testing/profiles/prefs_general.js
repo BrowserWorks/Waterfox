@@ -14,7 +14,6 @@ user_pref("dom.forms.color", true); // on for testing
 user_pref("dom.max_script_run_time", 0); // no slow script dialogs
 user_pref("hangmonitor.timeout", 0); // no hang monitor
 user_pref("dom.max_chrome_script_run_time", 0);
-user_pref("dom.max_child_script_run_time", 0);
 user_pref("dom.ipc.reportProcessHangs", false); // process hang monitor
 user_pref("dom.popup_maximum", -1);
 user_pref("dom.send_after_paint_to_content", true);
@@ -50,9 +49,6 @@ user_pref("dom.w3c_touch_events.enabled", 1);
 user_pref("dom.undo_manager.enabled", true);
 user_pref("dom.webcomponents.enabled", true);
 user_pref("dom.htmlimports.enabled", true);
-// Set a future policy version to avoid the telemetry prompt.
-user_pref("toolkit.telemetry.prompted", 999);
-user_pref("toolkit.telemetry.notifiedOptOut", 999);
 // Existing tests assume there is no font size inflation.
 user_pref("font.size.inflation.emPerLine", 0);
 user_pref("font.size.inflation.minTwips", 0);
@@ -102,8 +98,6 @@ user_pref("extensions.hotfix.url", "http://%(server)s/extensions-dummy/hotfixURL
 user_pref("extensions.systemAddon.update.url", "http://%(server)s/dummy-system-addons.xml");
 // Turn off extension updates so they don't bother tests
 user_pref("extensions.update.enabled", false);
-// Bug 1235627 Turn off pocket add-on so it doesn't bother tests
-user_pref("extensions.pocket.enabled", false);
 // Make sure opening about:addons won't hit the network
 user_pref("extensions.webservice.discoverURL", "http://%(server)s/extensions-dummy/discoveryURL");
 // Make sure AddonRepository won't hit the network
@@ -149,14 +143,14 @@ user_pref("datareporting.policy.dataSubmissionPolicyBypassNotification", true);
 // Point Firefox Health Report at a local server. We don't care if it actually
 // works. It just can't hit the default production endpoint.
 user_pref("datareporting.healthreport.documentServerURI", "http://%(server)s/healthreport/");
-user_pref("datareporting.healthreport.about.reportUrl", "http://%(server)s/abouthealthreport/");
-user_pref("datareporting.healthreport.about.reportUrlUnified", "http://%(server)s/abouthealthreport/v4/");
+user_pref("datareporting.healthreport.about.reportUrl", "http://%(server)s/abouthealthreport/v4/");
 
 // Make sure CSS error reporting is enabled for tests
 user_pref("layout.css.report_errors", true);
 
 // Enable CSS Grid for testing
 user_pref("layout.css.grid.enabled", true);
+user_pref("layout.css.grid-template-subgrid-value.enabled", true);
 
 // Enable CSS 'contain' for testing
 user_pref("layout.css.contain.enabled", true);
@@ -234,9 +228,6 @@ user_pref('browser.contentHandlers.types.5.uri', 'http://test1.example.org/rss?u
 
 // We want to collect telemetry, but we don't want to send in the results.
 user_pref('toolkit.telemetry.server', 'https://%(server)s/telemetry-dummy/');
-// Our current tests expect the unified Telemetry feature to be opt-out,
-// which is not true while we hold back shipping it.
-user_pref('toolkit.telemetry.unifiedIsOptIn', false);
 
 // A couple of preferences with default values to test that telemetry preference
 // watching is working.
@@ -352,3 +343,4 @@ user_pref("dom.audiochannel.mutedByDefault", false);
 user_pref("webextensions.tests", true);
 user_pref("startup.homepage_welcome_url", "about:blank");
 user_pref("startup.homepage_welcome_url.additional", "");
+user_pref("browser.usedOnWindows10.introURL", "");

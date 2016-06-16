@@ -20,15 +20,14 @@ class ScriptedDirectProxyHandler : public BaseProxyHandler {
 
     /* Standard internal methods. */
     virtual bool getOwnPropertyDescriptor(JSContext* cx, HandleObject proxy, HandleId id,
-                                          MutableHandle<JSPropertyDescriptor> desc) const override;
+                                          MutableHandle<PropertyDescriptor> desc) const override;
     virtual bool defineProperty(JSContext* cx, HandleObject proxy, HandleId id,
-                                Handle<JSPropertyDescriptor> desc,
+                                Handle<PropertyDescriptor> desc,
                                 ObjectOpResult& result) const override;
     virtual bool ownPropertyKeys(JSContext* cx, HandleObject proxy,
                                  AutoIdVector& props) const override;
     virtual bool delete_(JSContext* cx, HandleObject proxy, HandleId id,
                          ObjectOpResult& result) const override;
-    virtual bool enumerate(JSContext* cx, HandleObject proxy, MutableHandleObject objp) const override;
 
     /* These two are standard internal methods but aren't implemented to spec yet. */
     virtual bool getPrototype(JSContext* cx, HandleObject proxy,

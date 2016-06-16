@@ -131,8 +131,9 @@ function createRootActor(aConnection)
                        {
                          tabList: new BrowserTabList(aConnection),
                          addonList: new BrowserAddonList(aConnection),
-                         workerList: new WorkerActorList({}),
-                         serviceWorkerRegistrationList: new ServiceWorkerRegistrationActorList(),
+                         workerList: new WorkerActorList(aConnection, {}),
+                         serviceWorkerRegistrationList:
+                           new ServiceWorkerRegistrationActorList(aConnection),
                          processList: new ProcessActorList(),
                          globalActorFactories: DebuggerServer.globalActorFactories,
                          onShutdown: sendShutdownEvent
@@ -1098,7 +1099,7 @@ TabActor.prototype = {
     }
 
     if (this._workerActorList === null) {
-      this._workerActorList = new WorkerActorList({
+      this._workerActorList = new WorkerActorList(this.conn, {
         type: Ci.nsIWorkerDebugger.TYPE_DEDICATED,
         window: this.window
       });
@@ -1397,6 +1398,16 @@ TabActor.prototype = {
     }
 
     return { type: "detached" };
+  },
+
+  /**
+   * Bring the tab's window to front.
+   */
+  onFocus: function() {
+    if (this.window) {
+      this.window.focus();
+    }
+    return {};
   },
 
   /**
@@ -1900,6 +1911,7 @@ TabActor.prototype = {
 TabActor.prototype.requestTypes = {
   "attach": TabActor.prototype.onAttach,
   "detach": TabActor.prototype.onDetach,
+  "focus": TabActor.prototype.onFocus,
   "reload": TabActor.prototype.onReload,
   "navigateTo": TabActor.prototype.onNavigateTo,
   "reconfigure": TabActor.prototype.onReconfigure,

@@ -8,15 +8,13 @@
 #ifndef nsTransitionManager_h_
 #define nsTransitionManager_h_
 
-#include "mozilla/Attributes.h"
 #include "mozilla/ContentEvents.h"
 #include "mozilla/EffectCompositor.h" // For EffectCompositor::CascadeLevel
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/dom/Animation.h"
-#include "mozilla/dom/KeyframeEffect.h"
+#include "mozilla/dom/KeyframeEffect.h" // For KeyframeEffectReadOnly
 #include "AnimationCommon.h"
 #include "nsCSSProps.h"
-#include "nsCSSPseudoElements.h"
 
 class nsIGlobalObject;
 class nsStyleContext;
@@ -24,6 +22,7 @@ class nsPresContext;
 class nsCSSPropertySet;
 
 namespace mozilla {
+enum class CSSPseudoElementType : uint8_t;
 struct StyleTransition;
 } // namespace mozilla
 
@@ -37,7 +36,7 @@ struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
 {
   ElementPropertyTransition(nsIDocument* aDocument,
                             dom::Element* aTarget,
-                            nsCSSPseudoElements::Type aPseudoType,
+                            CSSPseudoElementType aPseudoType,
                             const TimingParams &aTiming,
                             StyleAnimationValue aStartForReversingTest,
                             double aReversePortion)
@@ -53,12 +52,19 @@ struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
   }
 
   nsCSSProperty TransitionProperty() const {
-    MOZ_ASSERT(Properties().Length() == 1,
+    MOZ_ASSERT(mProperties.Length() == 1,
                "Transitions should have exactly one animation property. "
                "Perhaps we are using an un-initialized transition?");
-    return Properties()[0].mProperty;
+    return mProperties[0].mProperty;
   }
 
+  StyleAnimationValue ToValue() const {
+    MOZ_ASSERT(mProperties.Length() == 1,
+               "Transitions should have exactly one animation property");
+    MOZ_ASSERT(mProperties[0].mSegments.Length() == 1,
+               "Transitions should have one animation property segment ");
+    return mProperties[0].mSegments[0].mToValue;
+  }
   // This is the start value to be used for a check for whether a
   // transition is being reversed.  Normally the same as
   // mProperties[0].mSegments[0].mFromValue, except when this transition
@@ -216,7 +222,7 @@ struct TransitionEventInfo {
   TimeStamp mTimeStamp;
 
   TransitionEventInfo(dom::Element* aElement,
-                      nsCSSPseudoElements::Type aPseudoType,
+                      CSSPseudoElementType aPseudoType,
                       nsCSSProperty aProperty,
                       StickyTimeDuration aDuration,
                       const TimeStamp& aTimeStamp,
@@ -289,7 +295,7 @@ public:
    * new style.
    */
   void PruneCompletedTransitions(mozilla::dom::Element* aElement,
-                                 nsCSSPseudoElements::Type aPseudoType,
+                                 mozilla::CSSPseudoElementType aPseudoType,
                                  nsStyleContext* aNewStyleContext);
 
   void SetInAnimationOnlyStyleUpdate(bool aInAnimationOnlyUpdate) {

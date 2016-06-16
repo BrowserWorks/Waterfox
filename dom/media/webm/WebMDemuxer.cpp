@@ -18,7 +18,8 @@
 #include "nsAutoRef.h"
 #include "NesteggPacketHolder.h"
 #include "XiphExtradata.h"
-#include "prprf.h"
+#include "prprf.h"           // leaving it for PR_vsnprintf()
+#include "mozilla/Snprintf.h"
 
 #include <algorithm>
 #include <stdint.h>
@@ -117,7 +118,7 @@ static void webmdemux_log(nestegg* aContext,
 
   va_start(args, aFormat);
 
-  PR_snprintf(msg, sizeof(msg), "%p [Nestegg-%s] ", aContext, sevStr);
+  snprintf_literal(msg, "%p [Nestegg-%s] ", aContext, sevStr);
   PR_vsnprintf(msg+strlen(msg), sizeof(msg)-strlen(msg), aFormat, args);
   MOZ_LOG(gNesteggLog, LogLevel::Debug, (msg));
 
@@ -336,7 +337,8 @@ WebMDemuxer::ReadMetadata()
       mHasVideo = true;
 
       mInfo.mVideo.mDisplay = displaySize;
-      mInfo.mVideo.mImage = pictureRect;
+      mInfo.mVideo.mImage = frameSize;
+      mInfo.mVideo.SetImageRect(pictureRect);
 
       switch (params.stereo_mode) {
         case NESTEGG_VIDEO_MONO:
@@ -389,8 +391,8 @@ WebMDemuxer::ReadMetadata()
         return NS_ERROR_FAILURE;
       }
 
-      nsAutoTArray<const unsigned char*,4> headers;
-      nsAutoTArray<size_t,4> headerLens;
+      AutoTArray<const unsigned char*,4> headers;
+      AutoTArray<size_t,4> headerLens;
       for (uint32_t header = 0; header < nheaders; ++header) {
         unsigned char* data = 0;
         size_t length = 0;
@@ -785,6 +787,7 @@ WebMTrackDemuxer::WebMTrackDemuxer(WebMDemuxer* aParent,
                                    uint32_t aTrackNumber)
   : mParent(aParent)
   , mType(aType)
+  , mNeedKeyframe(true)
 {
   mInfo = mParent->GetTrackInfo(aType, aTrackNumber);
   MOZ_ASSERT(mInfo);
@@ -811,6 +814,7 @@ WebMTrackDemuxer::Seek(media::TimeUnit aTime)
   mSamples.Reset();
   mParent->SeekInternal(aTime);
   mParent->GetNextPacket(mType, &mSamples);
+  mNeedKeyframe = true;
 
   // Check what time we actually seeked to.
   if (mSamples.GetSize() > 0) {
@@ -846,6 +850,10 @@ WebMTrackDemuxer::GetSamples(int32_t aNumSamples)
     if (!sample) {
       break;
     }
+    if (mNeedKeyframe && !sample->mKeyframe) {
+      continue;
+    }
+    mNeedKeyframe = false;
     samples->mSamples.AppendElement(sample);
     aNumSamples--;
   }
@@ -922,6 +930,7 @@ WebMTrackDemuxer::Reset()
 {
   mSamples.Reset();
   media::TimeIntervals buffered = GetBuffered();
+  mNeedKeyframe = true;
   if (buffered.Length()) {
     WEBM_DEBUG("Seek to start point: %f", buffered.Start(0).ToSeconds());
     mParent->SeekInternal(buffered.Start(0));

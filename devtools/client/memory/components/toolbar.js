@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
+"use strict";
 
 const { assert } = require("devtools/shared/DevToolsUtils");
 const { DOM: dom, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
@@ -8,32 +9,30 @@ const { L10N } = require("../utils");
 const models = require("../models");
 const { viewState } = require("../constants");
 
-const Toolbar = module.exports = createClass({
+module.exports = createClass({
   displayName: "Toolbar",
   propTypes: {
-    breakdowns: PropTypes.arrayOf(PropTypes.shape({
+    censusDisplays: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string.isRequired,
       displayName: PropTypes.string.isRequired,
     })).isRequired,
     onTakeSnapshotClick: PropTypes.func.isRequired,
     onImportClick: PropTypes.func.isRequired,
     onClearSnapshotsClick: PropTypes.func.isRequired,
-    onBreakdownChange: PropTypes.func.isRequired,
+    onCensusDisplayChange: PropTypes.func.isRequired,
     onToggleRecordAllocationStacks: PropTypes.func.isRequired,
     allocations: models.allocations,
-    onToggleInverted: PropTypes.func.isRequired,
-    inverted: PropTypes.bool.isRequired,
     filterString: PropTypes.string,
     setFilterString: PropTypes.func.isRequired,
     diffing: models.diffingModel,
     onToggleDiffing: PropTypes.func.isRequired,
     view: PropTypes.string.isRequired,
     onViewChange: PropTypes.func.isRequired,
-    dominatorTreeBreakdowns: PropTypes.arrayOf(PropTypes.shape({
+    dominatorTreeDisplays: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string.isRequired,
       displayName: PropTypes.string.isRequired,
     })).isRequired,
-    onDominatorTreeBreakdownChange: PropTypes.func.isRequired,
+    onDominatorTreeDisplayChange: PropTypes.func.isRequired,
     snapshots: PropTypes.arrayOf(models.snapshot).isRequired,
   },
 
@@ -42,14 +41,12 @@ const Toolbar = module.exports = createClass({
       onTakeSnapshotClick,
       onImportClick,
       onClearSnapshotsClick,
-      onBreakdownChange,
-      breakdowns,
-      dominatorTreeBreakdowns,
-      onDominatorTreeBreakdownChange,
+      onCensusDisplayChange,
+      censusDisplays,
+      dominatorTreeDisplays,
+      onDominatorTreeDisplayChange,
       onToggleRecordAllocationStacks,
       allocations,
-      onToggleInverted,
-      inverted,
       filterString,
       setFilterString,
       snapshots,
@@ -67,33 +64,30 @@ const Toolbar = module.exports = createClass({
         },
 
         dom.label(
-          { className: "breakdown-by" },
-          L10N.getStr("toolbar.breakdownBy"),
+          {
+            className: "display-by",
+            title: L10N.getStr("toolbar.displayBy.tooltip"),
+          },
+          L10N.getStr("toolbar.displayBy"),
           dom.select(
             {
-              id: "select-breakdown",
-              className: "select-breakdown",
-              onChange: e => onBreakdownChange(e.target.value),
+              id: "select-display",
+              className: "select-display",
+              onChange: e => {
+                const newDisplay =
+                  censusDisplays.find(b => b.displayName === e.target.value);
+                onCensusDisplayChange(newDisplay);
+              },
             },
-            breakdowns.map(({ name, displayName }) => dom.option(
+            censusDisplays.map(({ tooltip, displayName }) => dom.option(
               {
-                key: name,
-                value: name
+                key: `display-${displayName}`,
+                value: displayName,
+                title: tooltip,
               },
               displayName
             ))
           )
-        ),
-
-        dom.label(
-          {},
-          dom.input({
-            id: "invert-tree-checkbox",
-            type: "checkbox",
-            checked: inverted,
-            onChange: onToggleInverted,
-          }),
-          L10N.getStr("checkbox.invertTree")
         ),
 
         dom.div({ id: "toolbar-spacer", className: "spacer" }),
@@ -103,8 +97,9 @@ const Toolbar = module.exports = createClass({
           type: "search",
           className: "devtools-searchinput",
           placeholder: L10N.getStr("filter.placeholder"),
+          title: L10N.getStr("filter.tooltip"),
           onChange: event => setFilterString(event.target.value),
-          value: !!filterString ? filterString : undefined,
+          value: filterString || undefined,
         })
       );
     } else {
@@ -116,17 +111,25 @@ const Toolbar = module.exports = createClass({
         },
 
         dom.label(
-          { className: "label-by" },
+          {
+            className: "label-by",
+            title: L10N.getStr("toolbar.labelBy.tooltip"),
+          },
           L10N.getStr("toolbar.labelBy"),
           dom.select(
             {
-              id: "select-dominator-tree-breakdown",
-              onChange: e => onDominatorTreeBreakdownChange(e.target.value),
+              id: "select-dominator-tree-display",
+              onChange: e => {
+                const newDisplay =
+                  dominatorTreeDisplays.find(b => b.displayName === e.target.value);
+                onDominatorTreeDisplayChange(newDisplay);
+              },
             },
-            dominatorTreeBreakdowns.map(({ name, displayName }) => dom.option(
+            dominatorTreeDisplays.map(({ tooltip, displayName }) => dom.option(
               {
-                key: name,
-                value: name
+                key: `dominator-tree-display-${displayName}`,
+                value: displayName,
+                title: tooltip,
               },
               displayName
             ))
@@ -138,7 +141,9 @@ const Toolbar = module.exports = createClass({
     let viewSelect;
     if (view !== viewState.DIFFING) {
       viewSelect = dom.label(
-        {},
+        {
+          title: L10N.getStr("toolbar.view.tooltip"),
+        },
         L10N.getStr("toolbar.view"),
         dom.select(
           {
@@ -146,10 +151,20 @@ const Toolbar = module.exports = createClass({
             onChange: e => onViewChange(e.target.value),
             defaultValue: viewState.CENSUS,
           },
-          dom.option({ value: viewState.CENSUS },
-                     L10N.getStr("toolbar.view.census")),
-          dom.option({ value: viewState.DOMINATOR_TREE },
-                     L10N.getStr("toolbar.view.dominators"))
+          dom.option(
+            {
+              value: viewState.CENSUS,
+              title: L10N.getStr("toolbar.view.census.tooltip"),
+            },
+            L10N.getStr("toolbar.view.census")
+          ),
+          dom.option(
+            {
+              value: viewState.DOMINATOR_TREE,
+              title: L10N.getStr("toolbar.view.dominators.tooltip"),
+            },
+            L10N.getStr("toolbar.view.dominators")
+          )
         )
       );
     }
@@ -179,8 +194,7 @@ const Toolbar = module.exports = createClass({
               disabled: snapshots.length < 2,
               onClick: onToggleDiffing,
               title: L10N.getStr("diff-snapshots.tooltip"),
-            },
-            L10N.getStr("diff-snapshots")
+            }
           ),
 
           dom.button(
@@ -196,15 +210,16 @@ const Toolbar = module.exports = createClass({
 
           dom.button({
             id: "clear-snapshots",
-            className: "devtools-toolbarbutton clear-snapshots devtools-button",
+            className: "clear-snapshots devtools-button",
             onClick: onClearSnapshotsClick,
-            title: L10N.getStr("clear-snapshots"),
-            "data-text-only": true,
-          }, L10N.getStr("clear-snapshots"))
+            title: L10N.getStr("clear-snapshots.tooltip")
+          })
         ),
 
         dom.label(
-          {},
+          {
+            title: L10N.getStr("checkbox.recordAllocationStacks.tooltip"),
+          },
           dom.input({
             id: "record-allocation-stacks-checkbox",
             type: "checkbox",

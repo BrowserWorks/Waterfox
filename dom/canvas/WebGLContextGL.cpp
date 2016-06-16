@@ -173,17 +173,13 @@ WebGLContext::BindRenderbuffer(GLenum target, WebGLRenderbuffer* wrb)
     if (wrb && wrb->IsDeleted())
         return;
 
-    MakeContextCurrent();
+    // Usually, we would now call into glBindRenderbuffer. However, since we have to
+    // potentially emulate packed-depth-stencil, there's not a specific renderbuffer that
+    // we know we should bind here.
+    // Instead, we do all renderbuffer binding lazily.
 
-    // Sometimes we emulate renderbuffers (depth-stencil emu), so there's not
-    // always a 1-1 mapping from `wrb` to GL name. Just have `wrb` handle it.
     if (wrb) {
-        wrb->BindRenderbuffer();
-#ifdef ANDROID
-        wrb->mIsRB = true;
-#endif
-    } else {
-        gl->fBindRenderbuffer(target, 0);
+        wrb->mHasBeenBound = true;
     }
 
     mBoundRenderbuffer = wrb;
@@ -839,25 +835,31 @@ WebGLContext::GetRenderbufferParameter(GLenum target, GLenum pname)
     MakeContextCurrent();
 
     switch (pname) {
-        case LOCAL_GL_RENDERBUFFER_SAMPLES:
-        case LOCAL_GL_RENDERBUFFER_WIDTH:
-        case LOCAL_GL_RENDERBUFFER_HEIGHT:
-        case LOCAL_GL_RENDERBUFFER_RED_SIZE:
-        case LOCAL_GL_RENDERBUFFER_GREEN_SIZE:
-        case LOCAL_GL_RENDERBUFFER_BLUE_SIZE:
-        case LOCAL_GL_RENDERBUFFER_ALPHA_SIZE:
-        case LOCAL_GL_RENDERBUFFER_DEPTH_SIZE:
-        case LOCAL_GL_RENDERBUFFER_STENCIL_SIZE:
-        case LOCAL_GL_RENDERBUFFER_INTERNAL_FORMAT:
-        {
-            // RB emulation means we have to ask the RB itself.
-            GLint i = mBoundRenderbuffer->GetRenderbufferParameter(target, pname);
-            return JS::Int32Value(i);
-        }
-        default:
-            ErrorInvalidEnumInfo("getRenderbufferParameter: parameter", pname);
+    case LOCAL_GL_RENDERBUFFER_SAMPLES:
+        if (!IsWebGL2())
+            break;
+        MOZ_FALLTHROUGH;
+
+    case LOCAL_GL_RENDERBUFFER_WIDTH:
+    case LOCAL_GL_RENDERBUFFER_HEIGHT:
+    case LOCAL_GL_RENDERBUFFER_RED_SIZE:
+    case LOCAL_GL_RENDERBUFFER_GREEN_SIZE:
+    case LOCAL_GL_RENDERBUFFER_BLUE_SIZE:
+    case LOCAL_GL_RENDERBUFFER_ALPHA_SIZE:
+    case LOCAL_GL_RENDERBUFFER_DEPTH_SIZE:
+    case LOCAL_GL_RENDERBUFFER_STENCIL_SIZE:
+    case LOCAL_GL_RENDERBUFFER_INTERNAL_FORMAT:
+    {
+        // RB emulation means we have to ask the RB itself.
+        GLint i = mBoundRenderbuffer->GetRenderbufferParameter(target, pname);
+        return JS::Int32Value(i);
     }
 
+    default:
+        break;
+    }
+
+    ErrorInvalidEnumInfo("getRenderbufferParameter: parameter", pname);
     return JS::NullValue();
 }
 
@@ -994,6 +996,10 @@ WebGLContext::Hint(GLenum target, GLenum mode)
 
     switch (target) {
     case LOCAL_GL_GENERATE_MIPMAP_HINT:
+        // Deprecated and removed in desktop GL Core profiles.
+        if (gl->IsCoreProfile())
+            return;
+
         isValid = true;
         break;
 
@@ -1058,16 +1064,7 @@ WebGLContext::IsRenderbuffer(WebGLRenderbuffer* rb)
     if (rb->IsDeleted())
         return false;
 
-#ifdef ANDROID
-    if (gl->WorkAroundDriverBugs() &&
-        gl->Renderer() == GLRenderer::AndroidEmulator)
-    {
-         return rb->mIsRB;
-    }
-#endif
-
-    MakeContextCurrent();
-    return gl->fIsRenderbuffer(rb->PrimaryGLName());
+    return rb->mHasBeenBound;
 }
 
 bool
@@ -1208,57 +1205,6 @@ WebGLContext::PixelStorei(GLenum pname, GLint param)
     }
 
     ErrorInvalidEnumInfo("pixelStorei: parameter", pname);
-}
-
-// `width` in pixels.
-// `stride` in bytes.
-static void
-SetFullAlpha(void* data, GLenum format, GLenum type, size_t width, size_t height,
-             size_t stride)
-{
-    if (format == LOCAL_GL_ALPHA && type == LOCAL_GL_UNSIGNED_BYTE) {
-        // Just memset the rows.
-        uint8_t* row = static_cast<uint8_t*>(data);
-        for (size_t j = 0; j < height; ++j) {
-            memset(row, 0xff, width);
-            row += stride;
-        }
-
-        return;
-    }
-
-    if (format == LOCAL_GL_RGBA && type == LOCAL_GL_UNSIGNED_BYTE) {
-        for (size_t j = 0; j < height; ++j) {
-            uint8_t* row = static_cast<uint8_t*>(data) + j*stride;
-
-            uint8_t* pAlpha = row + 3;
-            uint8_t* pAlphaEnd = pAlpha + 4*width;
-            while (pAlpha != pAlphaEnd) {
-                *pAlpha = 0xff;
-                pAlpha += 4;
-            }
-        }
-
-        return;
-    }
-
-    if (format == LOCAL_GL_RGBA && type == LOCAL_GL_FLOAT) {
-        for (size_t j = 0; j < height; ++j) {
-            uint8_t* rowBytes = static_cast<uint8_t*>(data) + j*stride;
-            float* row = reinterpret_cast<float*>(rowBytes);
-
-            float* pAlpha = row + 3;
-            float* pAlphaEnd = pAlpha + 4*width;
-            while (pAlpha != pAlphaEnd) {
-                *pAlpha = 1.0f;
-                pAlpha += 4;
-            }
-        }
-
-        return;
-    }
-
-    MOZ_CRASH("Unhandled case, how'd we get here?");
 }
 
 bool
@@ -1766,89 +1712,45 @@ WebGLContext::ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum
             row += rowStride.value();
         }
     }
-
-    // if we're reading alpha, we may need to do fixup.  Note that we don't allow
-    // GL_ALPHA to readpixels currently, but we had the code written for it already.
-    const bool formatHasAlpha = format == LOCAL_GL_ALPHA ||
-                                format == LOCAL_GL_RGBA;
-    if (!formatHasAlpha)
-        return;
-
-    bool needAlphaFilled;
-    if (mBoundReadFramebuffer) {
-        needAlphaFilled = !mBoundReadFramebuffer->ColorAttachment(0).HasAlpha();
-    } else {
-        needAlphaFilled = !mOptions.alpha;
-    }
-
-    if (!needAlphaFilled)
-        return;
-
-    SetFullAlpha(data, format, type, width, height, rowStride.value());
 }
 
 void
 WebGLContext::RenderbufferStorage_base(const char* funcName, GLenum target,
-                                       GLsizei samples,
-                                       GLenum internalFormat, GLsizei width,
-                                       GLsizei height)
+                                       GLsizei samples, GLenum internalFormat,
+                                       GLsizei width, GLsizei height)
 {
     if (IsContextLost())
         return;
-
-    if (!mBoundRenderbuffer) {
-        ErrorInvalidOperation("%s: Called on renderbuffer 0.", funcName);
-        return;
-    }
 
     if (target != LOCAL_GL_RENDERBUFFER) {
         ErrorInvalidEnumInfo("`target`", funcName, target);
         return;
     }
 
-    if (samples < 0 || samples > mGLMaxSamples) {
-        ErrorInvalidValue("%s: `samples` is out of the valid range.", funcName);
+    if (!mBoundRenderbuffer) {
+        ErrorInvalidOperation("%s: Called on renderbuffer 0.", funcName);
+        return;
+    }
+
+    if (samples < 0) {
+        ErrorInvalidValue("%s: `samples` must be >= 0.", funcName);
         return;
     }
 
     if (width < 0 || height < 0) {
-        ErrorInvalidValue("%s: Width and height must be >= 0.", funcName);
+        ErrorInvalidValue("%s: `width` and `height` must be >= 0.", funcName);
         return;
     }
 
-    if (uint32_t(width) > mImplMaxRenderbufferSize ||
-        uint32_t(height) > mImplMaxRenderbufferSize)
-    {
-        ErrorInvalidValue("%s: Width or height exceeds maximum renderbuffer"
-                          " size.", funcName);
-        return;
-    }
-
-    const auto usage = mFormatUsage->GetRBUsage(internalFormat);
-    if (!usage) {
-        ErrorInvalidEnumInfo("`internalFormat`", funcName, internalFormat);
-        return;
-    }
-
-    // Validation complete.
-
-    MakeContextCurrent();
-
-    GetAndFlushUnderlyingGLErrors();
-    mBoundRenderbuffer->RenderbufferStorage(samples, usage, width, height);
-    GLenum error = GetAndFlushUnderlyingGLErrors();
-    if (error) {
-        GenerateWarning("%s generated error %s", funcName,
-                        ErrorName(error));
-        return;
-    }
+    mBoundRenderbuffer->RenderbufferStorage(funcName, uint32_t(samples), internalFormat,
+                                            uint32_t(width), uint32_t(height));
 }
 
 void
 WebGLContext::RenderbufferStorage(GLenum target, GLenum internalFormat, GLsizei width, GLsizei height)
 {
-    RenderbufferStorage_base("renderbufferStorage", target, 0,
-                             internalFormat, width, height);
+    RenderbufferStorage_base("renderbufferStorage", target, 0, internalFormat, width,
+                             height);
 }
 
 void
@@ -2313,6 +2215,8 @@ WebGLContext::CreateRenderbuffer()
 {
     if (IsContextLost())
         return nullptr;
+
+    MakeContextCurrent();
     RefPtr<WebGLRenderbuffer> globj = new WebGLRenderbuffer(this);
     return globj.forget();
 }

@@ -414,7 +414,7 @@ CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot, MDefinition* mir,
         if (mir->isLambda()) {
             MConstant* constant = mir->toLambda()->functionOperand();
             uint32_t cstIndex;
-            masm.propagateOOM(graph.addConstantToPool(constant->value(), &cstIndex));
+            masm.propagateOOM(graph.addConstantToPool(constant->toJSValue(), &cstIndex));
             alloc = RValueAllocation::RecoverInstruction(index, cstIndex);
             break;
         }
@@ -440,7 +440,7 @@ CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot, MDefinition* mir,
         if (payload->isConstant()) {
             MConstant* constant = mir->toConstant();
             uint32_t index;
-            masm.propagateOOM(graph.addConstantToPool(constant->value(), &index));
+            masm.propagateOOM(graph.addConstantToPool(constant->toJSValue(), &index));
             alloc = RValueAllocation::ConstantPool(index);
             break;
         }
@@ -466,7 +466,7 @@ CodeGeneratorShared::encodeAllocation(LSnapshot* snapshot, MDefinition* mir,
         if (payload->isConstant()) {
             MConstant* constant = mir->toConstant();
             uint32_t index;
-            masm.propagateOOM(graph.addConstantToPool(constant->value(), &index));
+            masm.propagateOOM(graph.addConstantToPool(constant->toJSValue(), &index));
             alloc = RValueAllocation::ConstantPool(index);
             break;
         }
@@ -1361,10 +1361,10 @@ CodeGeneratorShared::callVM(const VMFunction& fun, LInstruction* ins, const Regi
     // fill the frame descriptor.
     if (dynStack) {
         masm.addPtr(Imm32(masm.framePushed()), *dynStack);
-        masm.makeFrameDescriptor(*dynStack, JitFrame_IonJS);
+        masm.makeFrameDescriptor(*dynStack, JitFrame_IonJS, ExitFrameLayout::Size());
         masm.Push(*dynStack); // descriptor
     } else {
-        masm.pushStaticFrameDescriptor(JitFrame_IonJS);
+        masm.pushStaticFrameDescriptor(JitFrame_IonJS, ExitFrameLayout::Size());
     }
 
     // Call the wrapper function.  The wrapper is in charge to unwind the stack
@@ -1501,11 +1501,11 @@ CodeGeneratorShared::emitAsmJSCall(LAsmJSCall* ins)
         masm.freeStack(mir->spIncrement());
 
     MOZ_ASSERT((sizeof(AsmJSFrame) + masm.framePushed()) % AsmJSStackAlignment == 0);
-
-#ifdef DEBUG
     static_assert(AsmJSStackAlignment >= ABIStackAlignment &&
                   AsmJSStackAlignment % ABIStackAlignment == 0,
                   "The asm.js stack alignment should subsume the ABI-required alignment");
+
+#ifdef DEBUG
     Label ok;
     masm.branchTestStackPtr(Assembler::Zero, Imm32(AsmJSStackAlignment - 1), &ok);
     masm.breakpoint();

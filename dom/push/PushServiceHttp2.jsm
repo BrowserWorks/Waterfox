@@ -466,7 +466,7 @@ this.PushServiceHttp2 = {
           listener: null,
           countUnableToConnect: 0,
           lastStartListening: 0,
-          waitingForAlarm: false
+          retryTimerID: 0,
         };
         this._listenForMsgs(result.subscriptionUri);
         return result;
@@ -554,9 +554,7 @@ this.PushServiceHttp2 = {
 
   _ackMsgRecv: function(aAckUri) {
     console.debug("ackMsgRecv()", aAckUri);
-    // We can't do anything about it if it fails,
-    // so we don't listen for response.
-    this._deleteResource(aAckUri);
+    return this._deleteResource(aAckUri);
   },
 
   init: function(aOptions, aMainPushService, aServerURL) {
@@ -586,28 +584,20 @@ this.PushServiceHttp2 = {
 
     if (retryAfter !== -1) {
       // This is a 5xx response.
-      // To respect RetryAfter header, setTimeout is used. setAlarm sets a
-      // cumulative alarm so it will not always respect RetryAfter header.
       this._conns[aSubscriptionUri].countUnableToConnect++;
-      setTimeout(_ => this._listenForMsgs(aSubscriptionUri), retryAfter);
+      this._conns[aSubscriptionUri].retryTimerID =
+        setTimeout(_ => this._listenForMsgs(aSubscriptionUri), retryAfter);
       return;
     }
 
-    // we set just one alarm because most probably all connection will go over
-    // a single TCP connection.
     retryAfter = prefs.get("http2.retryInterval") *
       Math.pow(2, this._conns[aSubscriptionUri].countUnableToConnect);
 
     retryAfter = retryAfter * (0.8 + Math.random() * 0.4); // add +/-20%.
 
     this._conns[aSubscriptionUri].countUnableToConnect++;
-
-    if (retryAfter === 0) {
-      setTimeout(_ => this._listenForMsgs(aSubscriptionUri), 0);
-    } else {
-      this._conns[aSubscriptionUri].waitingForAlarm = true;
-      this._mainPushService.setAlarm(retryAfter);
-    }
+    this._conns[aSubscriptionUri].retryTimerID =
+      setTimeout(_ => this._listenForMsgs(aSubscriptionUri), retryAfter);
 
     console.debug("retryAfterBackoff: Retry in", retryAfter);
   },
@@ -629,7 +619,11 @@ this.PushServiceHttp2 = {
         }
         this._conns[subscriptionUri].listener = null;
         this._conns[subscriptionUri].channel = null;
-        this._conns[subscriptionUri].waitingForAlarm = false;
+
+        if (this._conns[subscriptionUri].retryTimerID > 0) {
+          clearTimeout(this._conns[subscriptionUri].retryTimerID);
+        }
+
         if (deleteInfo) {
           delete this._conns[subscriptionUri];
         }
@@ -658,24 +652,10 @@ this.PushServiceHttp2 = {
       this._conns[record.subscriptionUri] = {channel: null,
                                              listener: null,
                                              countUnableToConnect: 0,
-                                             waitingForAlarm: false};
+                                             retryTimerID: 0};
     }
     if (!this._conns[record.subscriptionUri].conn) {
-      this._conns[record.subscriptionUri].waitingForAlarm = false;
       this._listenForMsgs(record.subscriptionUri);
-    }
-  },
-
-  // Start listening if subscriptions present.
-  _startConnectionsWaitingForAlarm: function() {
-    console.debug("startConnectionsWaitingForAlarm()");
-    for (let subscriptionUri in this._conns) {
-      if ((this._conns[subscriptionUri]) &&
-          !this._conns[subscriptionUri].conn &&
-          this._conns[subscriptionUri].waitingForAlarm) {
-        this._conns[subscriptionUri].waitingForAlarm = false;
-        this._listenForMsgs(subscriptionUri);
-      }
     }
   },
 
@@ -727,12 +707,15 @@ this.PushServiceHttp2 = {
       .then(record => this._subscribeResource(record)
         .then(recordNew => {
           if (this._mainPushService) {
-            this._mainPushService.updateRegistrationAndNotifyApp(aSubscriptionUri,
-                                                                 recordNew);
+            this._mainPushService
+                .updateRegistrationAndNotifyApp(aSubscriptionUri, recordNew)
+                .catch(Cu.reportError);
           }
         }, error => {
           if (this._mainPushService) {
-            this._mainPushService.dropRegistrationAndNotifyApp(aSubscriptionUri);
+            this._mainPushService
+                .dropRegistrationAndNotifyApp(aSubscriptionUri)
+                .catch(Cu.reportError);
           }
         })
       );
@@ -784,10 +767,6 @@ this.PushServiceHttp2 = {
       console.error("pushChannelOnStop: Error receiving message",
         err);
     });
-  },
-
-  onAlarmFired: function() {
-    this._startConnectionsWaitingForAlarm();
   },
 };
 

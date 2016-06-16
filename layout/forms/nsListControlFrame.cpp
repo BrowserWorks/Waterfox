@@ -265,8 +265,7 @@ static nscoord
 GetMaxOptionBSize(nsIFrame* aContainer, WritingMode aWM)
 {
   nscoord result = 0;
-  for (nsIFrame* option = aContainer->GetFirstPrincipalChild();
-       option; option = option->GetNextSibling()) {
+  for (nsIFrame* option : aContainer->PrincipalChildList()) {
     nscoord optionBSize;
     if (nsCOMPtr<nsIDOMHTMLOptGroupElement>
         (do_QueryInterface(option->GetContent()))) {
@@ -932,11 +931,13 @@ void
 nsListControlFrame::SetInitialChildList(ChildListID    aListID,
                                         nsFrameList&   aChildList)
 {
-  // First check to see if all the content has been added
-  mIsAllContentHere = mContent->IsDoneAddingChildren();
-  if (!mIsAllContentHere) {
-    mIsAllFramesHere    = false;
-    mHasBeenInitialized = false;
+  if (aListID == kPrincipalList) {
+    // First check to see if all the content has been added
+    mIsAllContentHere = mContent->IsDoneAddingChildren();
+    if (!mIsAllContentHere) {
+      mIsAllFramesHere    = false;
+      mHasBeenInitialized = false;
+    }
   }
   nsHTMLScrollFrame::SetInitialChildList(aListID, aChildList);
 
@@ -1642,7 +1643,7 @@ nsListControlFrame::MouseUp(nsIDOMEvent* aMouseEvent)
     // So we cheat here by either setting or unsetting the clcikCount in the native event
     // so the right thing happens for the onclick event
     WidgetMouseEvent* mouseEvent =
-      aMouseEvent->GetInternalNSEvent()->AsMouseEvent();
+      aMouseEvent->WidgetEventPtr()->AsMouseEvent();
 
     int32_t selectedIndex;
     if (NS_SUCCEEDED(GetIndexFromDOMEvent(aMouseEvent, selectedIndex))) {
@@ -2096,7 +2097,7 @@ nsListControlFrame::KeyDown(nsIDOMEvent* aKeyEvent)
   // XXXmats in onkeydown. That seems sub-optimal though.
 
   const WidgetKeyboardEvent* keyEvent =
-    aKeyEvent->GetInternalNSEvent()->AsKeyboardEvent();
+    aKeyEvent->WidgetEventPtr()->AsKeyboardEvent();
   MOZ_ASSERT(keyEvent,
     "DOM event must have WidgetKeyboardEvent for its internal event");
 
@@ -2249,7 +2250,7 @@ nsListControlFrame::KeyPress(nsIDOMEvent* aKeyEvent)
   AutoIncrementalSearchResetter incrementalSearchResetter;
 
   const WidgetKeyboardEvent* keyEvent =
-    aKeyEvent->GetInternalNSEvent()->AsKeyboardEvent();
+    aKeyEvent->WidgetEventPtr()->AsKeyboardEvent();
   MOZ_ASSERT(keyEvent,
     "DOM event must have WidgetKeyboardEvent for its internal event");
 

@@ -41,12 +41,7 @@ public:
 
   void ConfigurationChanged(const TrackInfo& aConfig) override;
 
-  const char* GetDescriptionName() const override
-  {
-    nsCString failureReason;
-    return IsHardwareAccelerated(failureReason)
-      ? "wmf hardware video decoder" : "wmf software video decoder";
-  }
+  const char* GetDescriptionName() const override;
 
 private:
 
@@ -71,6 +66,7 @@ private:
   // Video frame geometry.
   VideoInfo mVideoInfo;
   uint32_t mVideoStride;
+  nsIntSize mImageSize;
 
   RefPtr<layers::ImageContainer> mImageContainer;
   nsAutoPtr<DXVA2Manager> mDXVA2Manager;

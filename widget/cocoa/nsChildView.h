@@ -390,6 +390,10 @@ public:
   // pixels" and the Cocoa "points" coordinate system.
   CGFloat                 BackingScaleFactor() const;
 
+  mozilla::DesktopToLayoutDeviceScale GetDesktopToDeviceScale() final {
+    return mozilla::DesktopToLayoutDeviceScale(BackingScaleFactor());
+  }
+
   // Call if the window's backing scale factor changes - i.e., it is moved
   // between HiDPI and non-HiDPI screens
   void                    BackingScaleFactorChanged();
@@ -535,7 +539,9 @@ public:
     return nsCocoaUtils::DevPixelsToCocoaPoints(aRect, BackingScaleFactor());
   }
 
-  already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion) override;
+  already_AddRefed<mozilla::gfx::DrawTarget>
+    StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion,
+                               mozilla::layers::BufferMode* aBufferMode) override;
   void EndRemoteDrawing() override;
   void CleanupRemoteDrawing() override;
   bool InitCompositor(mozilla::layers::Compositor* aCompositor) override;

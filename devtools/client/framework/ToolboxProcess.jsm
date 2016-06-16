@@ -3,6 +3,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
 
 const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
@@ -10,7 +11,6 @@ const { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 const DBG_XUL = "chrome://devtools/content/framework/toolbox-process-window.xul";
 const CHROME_DEBUGGER_PROFILE_NAME = "chrome_debugger_profile";
 
-Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm")
 const { require, DevToolsLoader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 
@@ -21,6 +21,7 @@ XPCOMUtils.defineLazyGetter(this, "EventEmitter", function () {
   return require("devtools/shared/event-emitter");
 });
 const promise = require("promise");
+const Services = require("Services");
 
 this.EXPORTED_SYMBOLS = ["BrowserToolboxProcess"];
 
@@ -198,6 +199,8 @@ BrowserToolboxProcess.prototype = {
 
     if (this._options.addonID) {
       xulURI += "?addonID=" + this._options.addonID;
+    } else if (this._options.testScript) {
+      xulURI += "?testScript=" + encodeURIComponent(this._options.testScript);
     }
 
     dumpn("Running chrome debugging process.");

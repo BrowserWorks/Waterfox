@@ -1,5 +1,7 @@
+/* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
  * Make sure the root actor's live tab list implementation works as specified.
@@ -99,7 +101,7 @@ function removeTabA() {
   let deferred = promise.defer();
 
   once(gBrowser.tabContainer, "TabClose").then(aEvent => {
-    ok(!aEvent.detail, "This was a normal tab close");
+    ok(!aEvent.detail.adoptedBy, "This was a normal tab close");
 
     // Let the actor's TabClose handler finish first.
     executeSoon(deferred.resolve);
@@ -143,7 +145,7 @@ function removeTabC() {
   let deferred = promise.defer();
 
   once(gBrowser.tabContainer, "TabClose").then(aEvent => {
-    ok(aEvent.detail, "This was a tab closed by moving");
+    ok(aEvent.detail.adoptedBy, "This was a tab closed by moving");
 
     // Let the actor's TabClose handler finish first.
     executeSoon(deferred.resolve);
@@ -201,7 +203,7 @@ function removeTabB() {
   let deferred = promise.defer();
 
   once(gBrowser.tabContainer, "TabClose").then(aEvent => {
-    ok(!aEvent.detail, "This was a normal tab close");
+    ok(!aEvent.detail.adoptedBy, "This was a normal tab close");
 
     // Let the actor's TabClose handler finish first.
     executeSoon(deferred.resolve);

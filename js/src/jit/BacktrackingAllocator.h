@@ -269,8 +269,11 @@ class LiveRange : public TempObject
     }
 
   public:
-    static LiveRange* New(TempAllocator& alloc, uint32_t vreg,
-                          CodePosition from, CodePosition to) {
+    static LiveRange* FallibleNew(TempAllocator& alloc, uint32_t vreg,
+                                  CodePosition from, CodePosition to)
+    {
+        if (!alloc.ensureBallast())
+            return nullptr;
         return new(alloc) LiveRange(vreg, Range(from, to));
     }
 
@@ -417,7 +420,10 @@ class LiveBundle : public TempObject
     { }
 
   public:
-    static LiveBundle* New(TempAllocator& alloc, SpillSet* spill, LiveBundle* spillParent) {
+    static LiveBundle* FallibleNew(TempAllocator& alloc, SpillSet* spill, LiveBundle* spillParent)
+    {
+        if (!alloc.ensureBallast())
+            return nullptr;
         return new(alloc) LiveBundle(spill, spillParent);
     }
 
@@ -594,9 +600,6 @@ class BacktrackingAllocator : protected RegisterAllocator
     BitSet* liveIn;
     FixedList<VirtualRegister> vregs;
 
-    // Ranges where all registers must be spilled due to call instructions.
-    LiveBundle* callRanges;
-
     // Allocation state.
     StackSlotAllocator stackSlotAllocator;
 
@@ -635,6 +638,28 @@ class BacktrackingAllocator : protected RegisterAllocator
     // Ranges of code which are considered to be hot, for which good allocation
     // should be prioritized.
     LiveRangeSet hotcode;
+
+    struct CallRange : public TempObject, public InlineListNode<CallRange> {
+        LiveRange::Range range;
+
+        CallRange(CodePosition from, CodePosition to)
+          : range(from, to)
+        {}
+
+        // Comparator for use in splay tree.
+        static int compare(CallRange* v0, CallRange* v1) {
+            if (v0->range.to <= v1->range.from)
+                return -1;
+            if (v0->range.from >= v1->range.to)
+                return 1;
+            return 0;
+        }
+    };
+
+    // Ranges where all registers must be spilled due to call instructions.
+    typedef InlineList<CallRange> CallRangeList;
+    CallRangeList callRangesList;
+    SplayTree<CallRange*, CallRange> callRanges;
 
     // Information about an allocated stack slot.
     struct SpillSlot : public TempObject, public InlineForwardListNode<SpillSlot> {
@@ -748,7 +773,6 @@ class BacktrackingAllocator : protected RegisterAllocator
     }
 
     // Debugging methods.
-    void dumpFixedRanges();
     void dumpAllocations();
 
     struct PrintLiveRange;

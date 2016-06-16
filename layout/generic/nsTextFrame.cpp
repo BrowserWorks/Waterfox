@@ -64,6 +64,8 @@
 #include "nsIWordBreaker.h"
 #include "nsGenericDOMDataNode.h"
 #include "nsIFrameInlines.h"
+#include "mozilla/StyleSetHandle.h"
+#include "mozilla/StyleSetHandleInlines.h"
 
 #include <algorithm>
 #ifdef ACCESSIBILITY
@@ -184,14 +186,14 @@ TabWidthStore::ApplySpacing(gfxTextRun::PropertyProvider::Spacing *aSpacing,
   }
 }
 
-NS_DECLARE_FRAME_PROPERTY(TabWidthProperty, DeleteValue<TabWidthStore>)
+NS_DECLARE_FRAME_PROPERTY_DELETABLE(TabWidthProperty, TabWidthStore)
 
-NS_DECLARE_FRAME_PROPERTY(OffsetToFrameProperty, nullptr)
+NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(OffsetToFrameProperty, nsTextFrame)
 
 // text runs are destroyed by the text run cache
-NS_DECLARE_FRAME_PROPERTY(UninflatedTextRunProperty, nullptr)
+NS_DECLARE_FRAME_PROPERTY_WITHOUT_DTOR(UninflatedTextRunProperty, gfxTextRun)
 
-NS_DECLARE_FRAME_PROPERTY(FontSizeInflationProperty, nullptr)
+NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(FontSizeInflationProperty, float)
 
 class GlyphObserver : public gfxFont::GlyphChangeObserver {
 public:
@@ -208,8 +210,8 @@ private:
  * The only reason this list is in a property is to automatically destroy the
  * list when the frame is deleted, unregistering the observers.
  */
-NS_DECLARE_FRAME_PROPERTY(TextFrameGlyphObservers,
-                          DeleteValue<nsTArray<nsAutoPtr<GlyphObserver>>>);
+NS_DECLARE_FRAME_PROPERTY_DELETABLE(TextFrameGlyphObservers,
+                                    nsTArray<nsAutoPtr<GlyphObserver>>)
 
 static const nsFrameState TEXT_REFLOW_FLAGS =
    TEXT_FIRST_LETTER |
@@ -1018,10 +1020,10 @@ public:
   };
 
 private:
-  nsAutoTArray<MappedFlow,10>   mMappedFlows;
-  nsAutoTArray<nsTextFrame*,50> mLineBreakBeforeFrames;
-  nsAutoTArray<nsAutoPtr<BreakSink>,10> mBreakSinks;
-  nsAutoTArray<gfxTextRun*,5>   mTextRunsToDelete;
+  AutoTArray<MappedFlow,10>   mMappedFlows;
+  AutoTArray<nsTextFrame*,50> mLineBreakBeforeFrames;
+  AutoTArray<nsAutoPtr<BreakSink>,10> mBreakSinks;
+  AutoTArray<gfxTextRun*,5>   mTextRunsToDelete;
   nsLineBreaker                 mLineBreaker;
   gfxTextRun*                   mCurrentFramesAllSameTextRun;
   DrawTarget*                   mDrawTarget;
@@ -1145,7 +1147,7 @@ CanTextCrossFrameBoundary(nsIFrame* aFrame, nsIAtom* aType)
     }
   } else {
     if (continuesTextRun) {
-      result.mFrameToScan = aFrame->GetFirstPrincipalChild();
+      result.mFrameToScan = aFrame->PrincipalChildList().FirstChild();
       result.mOverflowFrameToScan =
         aFrame->GetChildList(nsIFrame::kOverflowList).FirstChild();
       NS_WARN_IF_FALSE(!result.mOverflowFrameToScan,
@@ -1500,7 +1502,7 @@ void BuildTextRunsScanner::FlushFrames(bool aFlushLineBreaks, bool aSuppressTrai
         mNextRunContextInfo |= nsTextFrameUtils::INCOMING_ARABICCHAR;
       }
     } else {
-      AutoFallibleTArray<uint8_t,BIG_TEXT_NODE_SIZE> buffer;
+      AutoTArray<uint8_t,BIG_TEXT_NODE_SIZE> buffer;
       uint32_t bufferSize = mMaxTextLength*(mDoubleByteText ? 2 : 1);
       if (bufferSize < mMaxTextLength || bufferSize == UINT32_MAX ||
           !buffer.AppendElements(bufferSize, fallible)) {
@@ -1923,7 +1925,7 @@ BuildTextRunsScanner::BuildTextRunForFrames(void* aTextBuffer)
     textFlags |= gfxTextRunFactory::TEXT_INCOMING_ARABICCHAR;
   }
 
-  nsAutoTArray<int32_t,50> textBreakPoints;
+  AutoTArray<int32_t,50> textBreakPoints;
   TextRunUserData dummyData;
   TextRunMappedFlow dummyMappedFlow;
 
@@ -2093,7 +2095,7 @@ BuildTextRunsScanner::BuildTextRunForFrames(void* aTextBuffer)
       if (mDoubleByteText) {
         // Need to expand the text. First transform it into a temporary buffer,
         // then expand.
-        AutoFallibleTArray<uint8_t,BIG_TEXT_NODE_SIZE> tempBuf;
+        AutoTArray<uint8_t,BIG_TEXT_NODE_SIZE> tempBuf;
         uint8_t* bufStart = tempBuf.AppendElements(contentLength, fallible);
         if (!bufStart) {
           DestroyUserData(userDataToDestroy);
@@ -2174,7 +2176,7 @@ BuildTextRunsScanner::BuildTextRunForFrames(void* aTextBuffer)
   NS_ASSERTION(nextBreakIndex == mLineBreakBeforeFrames.Length(),
                "Didn't find all the frames to break-before...");
   gfxSkipCharsIterator iter(skipChars);
-  nsAutoTArray<uint32_t,50> textBreakPointsAfterTransform;
+  AutoTArray<uint32_t,50> textBreakPointsAfterTransform;
   for (uint32_t i = 0; i < textBreakPoints.Length(); ++i) {
     nsTextFrameUtils::AppendLineBreakOffset(&textBreakPointsAfterTransform, 
             iter.ConvertOriginalToSkipped(textBreakPoints[i]));
@@ -2304,7 +2306,7 @@ BuildTextRunsScanner::BuildTextRunForFrames(void* aTextBuffer)
 bool
 BuildTextRunsScanner::SetupLineBreakerContext(gfxTextRun *aTextRun)
 {
-  AutoFallibleTArray<uint8_t,BIG_TEXT_NODE_SIZE> buffer;
+  AutoTArray<uint8_t,BIG_TEXT_NODE_SIZE> buffer;
   uint32_t bufferSize = mMaxTextLength*(mDoubleByteText ? 2 : 1);
   if (bufferSize < mMaxTextLength || bufferSize == UINT32_MAX) {
     return false;
@@ -2316,7 +2318,7 @@ BuildTextRunsScanner::SetupLineBreakerContext(gfxTextRun *aTextRun)
 
   gfxSkipChars skipChars;
 
-  nsAutoTArray<int32_t,50> textBreakPoints;
+  AutoTArray<int32_t,50> textBreakPoints;
   TextRunUserData dummyData;
   TextRunMappedFlow dummyMappedFlow;
 
@@ -2381,7 +2383,7 @@ BuildTextRunsScanner::SetupLineBreakerContext(gfxTextRun *aTextRun)
       if (mDoubleByteText) {
         // Need to expand the text. First transform it into a temporary buffer,
         // then expand.
-        AutoFallibleTArray<uint8_t,BIG_TEXT_NODE_SIZE> tempBuf;
+        AutoTArray<uint8_t,BIG_TEXT_NODE_SIZE> tempBuf;
         uint8_t* bufStart = tempBuf.AppendElements(contentLength, fallible);
         if (!bufStart) {
           DestroyUserData(userDataToDestroy);
@@ -3807,7 +3809,7 @@ nsTextPaintStyle::InitSelectionColorsAndShadow()
     RefPtr<nsStyleContext> sc = nullptr;
     sc = mPresContext->StyleSet()->
       ProbePseudoElementStyle(selectionElement,
-                              nsCSSPseudoElements::ePseudo_mozSelection,
+                              CSSPseudoElementType::mozSelection,
                               mFrame->StyleContext());
     // Use -moz-selection pseudo class.
     if (sc) {
@@ -4212,12 +4214,15 @@ nsContinuingTextFrame::Init(nsIContent*       aContent,
     FramePropertyTable *propTable = PresContext()->PropertyTable();
     // Get all the properties from the prev-in-flow first to take
     // advantage of the propTable's cache and simplify the assertion below
-    void* embeddingLevel = propTable->Get(aPrevInFlow, EmbeddingLevelProperty());
-    void* baseLevel = propTable->Get(aPrevInFlow, BaseLevelProperty());
-    void* paragraphDepth = propTable->Get(aPrevInFlow, ParagraphDepthProperty());
-    propTable->Set(this, EmbeddingLevelProperty(), embeddingLevel);
-    propTable->Set(this, BaseLevelProperty(), baseLevel);
-    propTable->Set(this, ParagraphDepthProperty(), paragraphDepth);
+    auto embeddingLevel =
+      propTable->Get(aPrevInFlow, nsBidi::EmbeddingLevelProperty());
+    auto baseLevel =
+      propTable->Get(aPrevInFlow, nsBidi::BaseLevelProperty());
+    auto paragraphDepth =
+      propTable->Get(aPrevInFlow, nsBidi::ParagraphDepthProperty());
+    propTable->Set(this, nsBidi::EmbeddingLevelProperty(), embeddingLevel);
+    propTable->Set(this, nsBidi::BaseLevelProperty(), baseLevel);
+    propTable->Set(this, nsBidi::ParagraphDepthProperty(), paragraphDepth);
 
     if (nextContinuation) {
       SetNextContinuation(nextContinuation);
@@ -4226,9 +4231,12 @@ nsContinuingTextFrame::Init(nsIContent*       aContent,
       while (nextContinuation &&
              nextContinuation->GetContentOffset() < mContentOffset) {
         NS_ASSERTION(
-          embeddingLevel == propTable->Get(nextContinuation, EmbeddingLevelProperty()) &&
-          baseLevel == propTable->Get(nextContinuation, BaseLevelProperty()) &&
-          paragraphDepth == propTable->Get(nextContinuation, ParagraphDepthProperty()),
+          embeddingLevel == propTable->Get(
+            nextContinuation, nsBidi::EmbeddingLevelProperty()) &&
+          baseLevel == propTable->Get(
+            nextContinuation, nsBidi::BaseLevelProperty()) &&
+          paragraphDepth == propTable->Get(
+            nextContinuation, nsBidi::ParagraphDepthProperty()),
           "stealing text from different type of BIDI continuation");
         nextContinuation->mContentOffset = mContentOffset;
         nextContinuation = static_cast<nsTextFrame*>(nextContinuation->GetNextContinuation());
@@ -4477,8 +4485,7 @@ nsTextFrame::InvalidateFrameWithRect(const nsRect& aRect, uint32_t aDisplayItemK
 gfxTextRun*
 nsTextFrame::GetUninflatedTextRun()
 {
-  return static_cast<gfxTextRun*>(
-           Properties().Get(UninflatedTextRunProperty()));
+  return Properties().Get(UninflatedTextRunProperty());
 }
 
 void
@@ -4652,10 +4659,12 @@ nsTextFrame::CharacterDataChanged(CharacterDataChangeInfo* aInfo)
 
 class nsDisplayText : public nsCharClipDisplayItem {
 public:
-  nsDisplayText(nsDisplayListBuilder* aBuilder, nsTextFrame* aFrame) :
+  nsDisplayText(nsDisplayListBuilder* aBuilder, nsTextFrame* aFrame,
+                Maybe<bool> aIsSelected) :
     nsCharClipDisplayItem(aBuilder, aFrame),
     mOpacity(1.0f),
     mDisableSubpixelAA(false) {
+    mIsFrameSelected = aIsSelected;
     MOZ_COUNT_CTOR(nsDisplayText);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -4829,18 +4838,22 @@ nsTextFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   
   DO_GLOBAL_REFLOW_COUNT_DSP("nsTextFrame");
 
+  Maybe<bool> isSelected;
   if (((GetStateBits() & TEXT_NO_RENDERED_GLYPHS) ||
        (NS_GET_A(StyleColor()->mColor) == 0 && !StyleText()->HasTextShadow())) &&
-      aBuilder->IsForPainting() && !IsSVGText() && !IsSelected()) {
-    TextDecorations textDecs;
-    GetTextDecorations(PresContext(), eResolvedColors, textDecs);
-    if (!textDecs.HasDecorationLines()) {
-      return;
+      aBuilder->IsForPainting() && !IsSVGText()) {
+    isSelected.emplace(IsSelected());
+    if (!isSelected) {
+      TextDecorations textDecs;
+      GetTextDecorations(PresContext(), eResolvedColors, textDecs);
+      if (!textDecs.HasDecorationLines()) {
+        return;
+      }
     }
   }
 
   aLists.Content()->AppendNewToTop(
-    new (aBuilder) nsDisplayText(aBuilder, this));
+    new (aBuilder) nsDisplayText(aBuilder, this, isSelected));
 }
 
 static nsIFrame*
@@ -4918,9 +4931,8 @@ static nscoord
 LazyGetLineBaselineOffset(nsIFrame* aChildFrame, nsBlockFrame* aBlockFrame)
 {
   bool offsetFound;
-  nscoord offset = NS_PTR_TO_INT32(
-    aChildFrame->Properties().Get(nsIFrame::LineBaselineOffset(), &offsetFound)
-    );
+  nscoord offset = aChildFrame->Properties().Get(
+    nsIFrame::LineBaselineOffset(), &offsetFound);
 
   if (!offsetFound) {
     for (nsBlockFrame::line_iterator line = aBlockFrame->begin_lines(),
@@ -4932,15 +4944,12 @@ LazyGetLineBaselineOffset(nsIFrame* aChildFrame, nsBlockFrame* aBlockFrame)
         for (nsIFrame* lineFrame = line->mFirstChild;
              n > 0; lineFrame = lineFrame->GetNextSibling(), --n) {
           offset = lineBaseline - lineFrame->GetNormalPosition().y;
-          lineFrame->Properties().Set(nsIFrame::LineBaselineOffset(),
-                                      NS_INT32_TO_PTR(offset));
+          lineFrame->Properties().Set(nsIFrame::LineBaselineOffset(), offset);
         }
       }
     }
-    return NS_PTR_TO_INT32(
-    aChildFrame->Properties().Get(nsIFrame::LineBaselineOffset(), &offsetFound)
-    );
-
+    return aChildFrame->Properties().Get(
+      nsIFrame::LineBaselineOffset(), &offsetFound);
   } else {
     return offset;
   }
@@ -5124,6 +5133,15 @@ GetInflationForTextDecorations(nsIFrame* aFrame, nscoord aInflationMinFontSize)
   }
   return nsLayoutUtils::FontSizeInflationInner(aFrame, aInflationMinFontSize);
 }
+
+struct EmphasisMarkInfo
+{
+  nsAutoPtr<gfxTextRun> textRun;
+  gfxFloat advance;
+  gfxFloat baselineOffset;
+};
+
+NS_DECLARE_FRAME_PROPERTY_DELETABLE(EmphasisMarkProperty, EmphasisMarkInfo)
 
 static gfxTextRun*
 GenerateTextRunForEmphasisMarks(nsTextFrame* aFrame, nsFontMetrics* aFontMetrics,
@@ -5930,7 +5948,7 @@ nsTextFrame::PaintTextWithSelectionColors(gfxContext* aCtx,
     nsTextFrame::DrawPathCallbacks* aCallbacks)
 {
   // Figure out which selections control the colors to use for each character.
-  AutoFallibleTArray<SelectionDetails*,BIG_TEXT_NODE_SIZE> prevailingSelectionsBuffer;
+  AutoTArray<SelectionDetails*,BIG_TEXT_NODE_SIZE> prevailingSelectionsBuffer;
   SelectionDetails** prevailingSelections =
     prevailingSelectionsBuffer.AppendElements(aContentLength, fallible);
   if (!prevailingSelections) {
@@ -6070,7 +6088,7 @@ nsTextFrame::PaintTextSelectionDecorations(gfxContext* aCtx,
     return;
 
   // Figure out which characters will be decorated for this selection.
-  AutoFallibleTArray<SelectionDetails*, BIG_TEXT_NODE_SIZE> selectedCharsBuffer;
+  AutoTArray<SelectionDetails*, BIG_TEXT_NODE_SIZE> selectedCharsBuffer;
   SelectionDetails** selectedChars =
     selectedCharsBuffer.AppendElements(aContentLength, fallible);
   if (!selectedChars) {
@@ -6209,8 +6227,7 @@ nsTextFrame::DrawEmphasisMarks(gfxContext* aContext, WritingMode aWM,
                                const nscolor* aDecorationOverrideColor,
                                PropertyProvider& aProvider)
 {
-  auto info = static_cast<const EmphasisMarkInfo*>(
-    Properties().Get(EmphasisMarkProperty()));
+  const auto info = Properties().Get(EmphasisMarkProperty());
   if (!info) {
     return;
   }
@@ -6481,9 +6498,12 @@ nsTextFrame::PaintText(nsRenderingContext* aRenderingContext, nsPoint aPt,
     return;
 
   PropertyProvider provider(this, iter, nsTextFrame::eInflated);
+  if (aItem.mIsFrameSelected.isNothing()) {
+    aItem.mIsFrameSelected.emplace(IsSelected());
+  }
   // Trim trailing whitespace, unless we're painting a selection highlight,
   // which should include trailing spaces if present (bug 1146754).
-  provider.InitializeForDisplay(!IsSelected());
+  provider.InitializeForDisplay(!aItem.mIsFrameSelected.value());
 
   gfxContext* ctx = aRenderingContext->ThebesContext();
   const bool reversed = mTextRun->IsInlineReversed();
@@ -6527,7 +6547,7 @@ nsTextFrame::PaintText(nsRenderingContext* aRenderingContext, nsPoint aPt,
   gfxRect dirtyRect(aDirtyRect.x, aDirtyRect.y,
                     aDirtyRect.width, aDirtyRect.height);
   // Fork off to the (slower) paint-with-selection path if necessary.
-  if (IsSelected()) {
+  if (aItem.mIsFrameSelected.value()) {
     MOZ_ASSERT(aOpacity == 1.0f, "We don't support opacity with selections!");
     gfxSkipCharsIterator tmp(provider.GetStart());
     int32_t contentOffset = tmp.ConvertSkippedToOriginal(startOffset);
@@ -7184,8 +7204,7 @@ nsTextFrame::GetChildFrameContainingOffset(int32_t   aContentOffset,
   int32_t offset = mContentOffset;
 
   // Try to look up the offset to frame property
-  nsTextFrame* cachedFrame = static_cast<nsTextFrame*>
-    (Properties().Get(OffsetToFrameProperty()));
+  nsTextFrame* cachedFrame = Properties().Get(OffsetToFrameProperty());
 
   if (cachedFrame) {
     f = cachedFrame;
@@ -7763,22 +7782,13 @@ FindStartAfterSkippingWhitespace(PropertyProvider* aProvider,
   return aIterator->GetSkippedOffset();
 }
 
-union VoidPtrOrFloat {
-  VoidPtrOrFloat() : p(nullptr) {}
-
-  void *p;
-  float f;
-};
-
 float
 nsTextFrame::GetFontSizeInflation() const
 {
   if (!HasFontSizeInflation()) {
     return 1.0f;
   }
-  VoidPtrOrFloat u;
-  u.p = Properties().Get(FontSizeInflationProperty());
-  return u.f;
+  return Properties().Get(FontSizeInflationProperty());
 }
 
 void
@@ -7793,9 +7803,7 @@ nsTextFrame::SetFontSizeInflation(float aInflation)
   }
 
   AddStateBits(TEXT_HAS_FONT_INFLATION);
-  VoidPtrOrFloat u;
-  u.f = aInflation;
-  Properties().Set(FontSizeInflationProperty(), u.p);
+  Properties().Set(FontSizeInflationProperty(), aInflation);
 }
 
 /* virtual */ 
@@ -7847,7 +7855,7 @@ nsTextFrame::AddInlineMinISizeForFlow(nsRenderingContext *aRenderingContext,
   uint32_t start =
     FindStartAfterSkippingWhitespace(&provider, aData, textStyle, &iter, flowEndInTextRun);
 
-  AutoFallibleTArray<bool,BIG_TEXT_NODE_SIZE> hyphBuffer;
+  AutoTArray<bool,BIG_TEXT_NODE_SIZE> hyphBuffer;
   bool *hyphBreakBefore = nullptr;
   if (hyphenating) {
     hyphBreakBefore = hyphBuffer.AppendElements(flowEndInTextRun - start,
@@ -9553,6 +9561,8 @@ nsTextFrame::UpdateOverflow()
   return FinishAndStoreOverflow(overflowAreas, GetSize());
 }
 
+NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(JustificationAssignmentProperty, int32_t)
+
 void
 nsTextFrame::AssignJustificationGaps(
     const mozilla::JustificationAssignment& aAssign)
@@ -9561,14 +9571,13 @@ nsTextFrame::AssignJustificationGaps(
   static_assert(sizeof(aAssign) == 1,
                 "The encoding might be broken if JustificationAssignment "
                 "is larger than 1 byte");
-  Properties().Set(JustificationAssignment(), NS_INT32_TO_PTR(encoded));
+  Properties().Set(JustificationAssignmentProperty(), encoded);
 }
 
 mozilla::JustificationAssignment
 nsTextFrame::GetJustificationAssignment() const
 {
-  int32_t encoded =
-    NS_PTR_TO_INT32(Properties().Get(JustificationAssignment()));
+  int32_t encoded = Properties().Get(JustificationAssignmentProperty());
   mozilla::JustificationAssignment result;
   result.mGapsAtStart = encoded >> 8;
   result.mGapsAtEnd = encoded & 0xFF;

@@ -311,7 +311,13 @@ TexUnpackImage::TexOrSubImage(bool isSubImage, bool needsRespec, const char* fun
         return; // Blitting was successful, so we're done!
     } while (false);
 
-    TexUnpackSurface surfBlob(mImage->GetAsSourceSurface(), mIsAlphaPremult);
+    RefPtr<SourceSurface> surface = mImage->GetAsSourceSurface();
+    if (!surface) {
+        *out_glError = LOCAL_GL_OUT_OF_MEMORY;
+        return;
+    }
+
+    TexUnpackSurface surfBlob(surface, mIsAlphaPremult);
 
     surfBlob.TexOrSubImage(isSubImage, needsRespec, funcName, tex, target, level, dui,
                            xOffset, yOffset, zOffset, out_glError);
@@ -756,7 +762,13 @@ TexUnpackSurface::TexOrSubImage(bool isSubImage, bool needsRespec, const char* f
     // call into GL, instead of trying to keep MakeCurrent-ed.
 
     RefPtr<gfx::DataSourceSurface> dataSurf = mSurf->GetDataSurface();
-    MOZ_ASSERT(dataSurf);
+
+    if (!dataSurf) {
+        // Since GetDataSurface didn't return error code, assume system
+        // is out of memory
+        *out_glError = LOCAL_GL_OUT_OF_MEMORY;
+        return;
+    }
 
     GLenum error;
     if (UploadDataSurface(isSubImage, webgl, target, level, dui, xOffset, yOffset,

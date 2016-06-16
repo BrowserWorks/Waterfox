@@ -61,6 +61,7 @@ MSG_DEF(MSG_PERMISSION_DENIED_TO_PASS_ARG, 1, JSEXN_TYPEERR, "Permission denied 
 MSG_DEF(MSG_MISSING_REQUIRED_DICTIONARY_MEMBER, 1, JSEXN_TYPEERR, "Missing required {0}.")
 MSG_DEF(MSG_INVALID_REQUEST_METHOD, 1, JSEXN_TYPEERR, "Invalid request method {0}.")
 MSG_DEF(MSG_INVALID_REQUEST_MODE, 1, JSEXN_TYPEERR, "Invalid request mode {0}.")
+MSG_DEF(MSG_INVALID_REFERRER_URL, 1, JSEXN_TYPEERR, "Invalid referrer URL {0}.")
 MSG_DEF(MSG_FETCH_BODY_CONSUMED_ERROR, 0, JSEXN_TYPEERR, "Body has already been consumed.")
 MSG_DEF(MSG_RESPONSE_INVALID_STATUSTEXT_ERROR, 0, JSEXN_TYPEERR, "Response statusText may not contain newline or carriage return.")
 MSG_DEF(MSG_FETCH_FAILED, 0, JSEXN_TYPEERR, "NetworkError when attempting to fetch resource.")
@@ -90,3 +91,4 @@ MSG_DEF(MSG_SW_INSTALL_ERROR, 2, JSEXN_TYPEERR, "ServiceWorker script at {0} for
 MSG_DEF(MSG_SW_SCRIPT_THREW, 2, JSEXN_TYPEERR, "ServiceWorker script at {0} for scope {1} threw an exception during script evaluation.")
 MSG_DEF(MSG_TYPEDARRAY_IS_SHARED, 1, JSEXN_TYPEERR, "{0} can't be a typed array on SharedArrayBuffer")
 MSG_DEF(MSG_CACHE_ADD_FAILED_RESPONSE, 3, JSEXN_TYPEERR, "Cache got {0} response with bad status {1} while trying to add request {2}")
+MSG_DEF(MSG_CACHE_STREAM_CLOSED, 0, JSEXN_TYPEERR, "Response body is a cache file stream that has already been closed.")

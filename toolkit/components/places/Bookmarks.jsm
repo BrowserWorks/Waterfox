@@ -82,6 +82,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
 const DB_URL_LENGTH_MAX = 65536;
 const DB_TITLE_LENGTH_MAX = 4096;
 
+const MATCH_BOUNDARY = Ci.mozIPlacesAutoComplete.MATCH_BOUNDARY;
+const BEHAVIOR_BOOKMARK = Ci.mozIPlacesAutoComplete.BEHAVIOR_BOOKMARK;
+
 var Bookmarks = Object.freeze({
   /**
    * Item's type constants.
@@ -369,13 +372,18 @@ var Bookmarks = Object.freeze({
    * @param guidOrInfo
    *        The globally unique identifier of the item to remove, or an
    *        object representing it, as defined above.
+   * @param {Object} [options={}]
+   *        Additional options that can be passed to the function.
+   *        Currently supports preventRemovalOfNonEmptyFolders which
+   *        will cause an exception to be thrown if attempting to remove
+   *        a folder that is not empty.
    *
    * @return {Promise} resolved when the removal is complete.
    * @resolves to an object representing the removed bookmark.
    * @rejects if the provided guid doesn't match any existing bookmark.
    * @throws if the arguments are invalid.
    */
-  remove(guidOrInfo) {
+  remove(guidOrInfo, options={}) {
     let info = guidOrInfo;
     if (!info)
       throw new Error("Input should be a valid object");
@@ -397,7 +405,7 @@ var Bookmarks = Object.freeze({
       if (!item)
         throw new Error("No bookmarks found for the provided GUID.");
 
-      item = yield removeBookmark(item);
+      item = yield removeBookmark(item, options);
 
       // Notify onItemRemoved to listeners.
       let observers = PlacesUtils.bookmarks.getObservers();
@@ -444,6 +452,83 @@ var Bookmarks = Object.freeze({
         }
       }.bind(this))
     );
+  },
+
+  /**
+   * Searches a list of bookmark-items by a search term, url or title.
+   *
+   * @param query
+   *        Either a string to use as search term, or an object
+   *        containing any of these keys: query, title or url with the
+   *        corresponding string to match as value.
+   *        The url property can be either a string or an nsIURI.
+   *
+   * @return {Promise} resolved when the search is complete.
+   * @resolves to an array of found bookmark-items.
+   * @rejects if an error happens while searching.
+   * @throws if the arguments are invalid.
+   *
+   * @note Any unknown property in the query object is ignored.
+   *       Known properties may be overwritten.
+   */
+  search(query) {
+    if (!query) {
+      throw new Error("Query object is required");
+    }
+    if (typeof query === "string") {
+      query = { query: query };
+    }
+    if (typeof query !== "object") {
+      throw new Error("Query must be an object or a string");
+    }
+    if (query.query && typeof query.query !== "string") {
+      throw new Error("Query option must be a string");
+    }
+    if (query.title && typeof query.title !== "string") {
+      throw new Error("Title option must be a string");
+    }
+
+    if (query.url) {
+      if (typeof query.url === "string" || (query.url instanceof URL)) {
+        query.url = new URL(query.url).href;
+      } else if (query.url instanceof Ci.nsIURI) {
+        query.url = query.url.spec;
+      } else {
+        throw new Error("Url option must be a string or a URL object");
+      }
+    }
+
+    return Task.spawn(function* () {
+      let results = yield queryBookmarks(query);
+
+      return results;
+    });
+  },
+
+  /**
+   * Returns a list of recently bookmarked items.
+   *
+   * @param {integer} numberOfItems
+   *        The maximum number of bookmark items to return.
+   *
+   * @return {Promise} resolved when the listing is complete.
+   * @resolves to an array of recent bookmark-items.
+   * @rejects if an error happens while querying.
+   */
+  getRecent(numberOfItems) {
+    if (numberOfItems === undefined) {
+      throw new Error("numberOfItems argument is required");
+    }
+    if (!typeof numberOfItems === 'number' || (numberOfItems % 1) !== 0) {
+      throw new Error("numberOfItems argument must be an integer");
+    }
+    if (numberOfItems <= 0) {
+      throw new Error("numberOfItems argument must be greater than zero");
+    }
+
+    return Task.spawn(function* () {
+      return yield fetchRecentBookmarks(numberOfItems);
+    });
   },
 
   /**
@@ -693,7 +778,7 @@ function updateBookmark(info, item, newParent) {
       if (info.hasOwnProperty("url")) {
         // Ensure a page exists in moz_places for this URL.
         yield db.executeCached(
-          `INSERT OR IGNORE INTO moz_places (url, rev_host, hidden, frecency, guid) 
+          `INSERT OR IGNORE INTO moz_places (url, rev_host, hidden, frecency, guid)
            VALUES (:url, :rev_host, 0, :frecency, GENERATE_GUID())
           `, { url: info.url ? info.url.href : null,
                rev_host: PlacesUtils.getReversedHost(info.url),
@@ -781,7 +866,7 @@ function insertBookmark(item, parent) {
       if (item.type == Bookmarks.TYPE_BOOKMARK) {
         // Ensure a page exists in moz_places for this URL.
         yield db.executeCached(
-          `INSERT OR IGNORE INTO moz_places (url, rev_host, hidden, frecency, guid) 
+          `INSERT OR IGNORE INTO moz_places (url, rev_host, hidden, frecency, guid)
            VALUES (:url, :rev_host, 0, :frecency, GENERATE_GUID())
           `, { url: item.url.href, rev_host: PlacesUtils.getReversedHost(item.url),
                frecency: item.url.protocol == "place:" ? 0 : -1 });
@@ -822,6 +907,56 @@ function insertBookmark(item, parent) {
     return item;
   }));
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Query implementation.
+
+function queryBookmarks(info) {
+  let queryParams = {tags_folder: PlacesUtils.tagsFolderId};
+  // we're searching for bookmarks, so exclude tags
+  let queryString = "WHERE p.parent <> :tags_folder";
+
+  if (info.title) {
+    queryString += " AND b.title = :title";
+    queryParams.title = info.title;
+  }
+
+  if (info.url) {
+    queryString += " AND h.url = :url";
+    queryParams.url = info.url;
+  }
+
+  if (info.query) {
+    queryString += " AND AUTOCOMPLETE_MATCH(:query, h.url, b.title, NULL, NULL, 1, 1, NULL, :matchBehavior, :searchBehavior) ";
+    queryParams.query = info.query;
+    queryParams.matchBehavior = MATCH_BOUNDARY;
+    queryParams.searchBehavior = BEHAVIOR_BOOKMARK;
+  }
+
+  return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: queryBookmarks",
+    Task.async(function*(db) {
+
+    // _id, _childCount, _grandParentId and _parentId fields
+    // are required to be in the result by the converting function
+    // hence setting them to NULL
+    let rows = yield db.executeCached(
+      `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
+              b.dateAdded, b.lastModified, b.type, b.title,
+              h.url AS url, b.parent, p.parent,
+              NULL AS _id,
+              NULL AS _childCount,
+              NULL AS _grandParentId,
+              NULL AS _parentId
+       FROM moz_bookmarks b
+       LEFT JOIN moz_bookmarks p ON p.id = b.parent
+       LEFT JOIN moz_places h ON h.id = b.fk
+       ${queryString}
+      `, queryParams);
+
+    return rowsToItemsArray(rows);
+  }));
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Fetch implementation.
@@ -894,6 +1029,26 @@ function fetchBookmarksByURL(info) {
   }));
 }
 
+function fetchRecentBookmarks(numberOfItems) {
+  return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: fetchRecentBookmarks",
+    Task.async(function*(db) {
+
+    let rows = yield db.executeCached(
+      `SELECT b.guid, IFNULL(p.guid, "") AS parentGuid, b.position AS 'index',
+              b.dateAdded, b.lastModified, b.type, b.title, h.url AS url,
+              NULL AS _id, NULL AS _parentId, NULL AS _childCount, NULL AS _grandParentId
+       FROM moz_bookmarks b
+       LEFT JOIN moz_bookmarks p ON p.id = b.parent
+       LEFT JOIN moz_places h ON h.id = b.fk
+       WHERE p.parent <> :tags_folder
+       ORDER BY b.dateAdded DESC, b.ROWID DESC
+       LIMIT :numberOfItems
+      `, { tags_folder: PlacesUtils.tagsFolderId, numberOfItems });
+
+    return rows.length ? rowsToItemsArray(rows) : [];
+  }));
+}
+
 function fetchBookmarksByParent(info) {
   return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: fetchBookmarksByParent",
     Task.async(function*(db) {
@@ -918,7 +1073,7 @@ function fetchBookmarksByParent(info) {
 ////////////////////////////////////////////////////////////////////////////////
 // Remove implementation.
 
-function removeBookmark(item) {
+function removeBookmark(item, options) {
   return PlacesUtils.withConnectionWrapper("Bookmarks.jsm: updateBookmark",
     Task.async(function*(db) {
 
@@ -926,8 +1081,12 @@ function removeBookmark(item) {
 
     yield db.executeTransaction(function* transaction() {
       // If it's a folder, remove its contents first.
-      if (item.type == Bookmarks.TYPE_FOLDER)
+      if (item.type == Bookmarks.TYPE_FOLDER) {
+        if (options.preventRemovalOfNonEmptyFolders && item._childCount > 0) {
+          throw new Error("Cannot remove a non-empty folder.");
+        }
         yield removeFoldersContents(db, [item.guid]);
+      }
 
       // Remove annotations first.  If it's a tag, we can avoid paying that cost.
       if (!isUntagging) {
@@ -969,7 +1128,7 @@ function reorderChildren(parent, orderedChildrenGuids) {
       // Select all of the direct children for the given parent.
       let children = yield fetchBookmarksByParent({ parentGuid: parent.guid });
       if (!children.length)
-        return;
+        return undefined;
 
       // Reorder the children array according to the specified order, provided
       // GUIDs come first, others are appended in somehow random order.
@@ -977,8 +1136,9 @@ function reorderChildren(parent, orderedChildrenGuids) {
         let i = orderedChildrenGuids.indexOf(a.guid);
         let j = orderedChildrenGuids.indexOf(b.guid);
         // This works provided fetchBookmarksByParent returns sorted children.
-        return (i == -1 && j == -1) ? 0 :
-                 (i != -1 && j != -1 && i < j) || (i != -1 && j == -1) ? -1 : 1;
+        if (i == -1 && j == -1)
+          return 0;
+        return (i != -1 && j != -1 && i < j) || (i != -1 && j == -1) ? -1 : 1;
        });
 
       // Update the bookmarks position now.  If any unknown guid have been

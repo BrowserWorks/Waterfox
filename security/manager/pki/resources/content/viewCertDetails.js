@@ -11,7 +11,7 @@ const nsIASN1Object = Components.interfaces.nsIASN1Object;
 const nsIASN1Sequence = Components.interfaces.nsIASN1Sequence;
 const nsIASN1PrintableItem = Components.interfaces.nsIASN1PrintableItem;
 const nsIASN1Tree = Components.interfaces.nsIASN1Tree;
-const nsASN1Tree = "@mozilla.org/security/nsASN1Tree;1"
+const nsASN1Tree = "@mozilla.org/security/nsASN1Tree;1";
 const nsIDialogParamBlock = Components.interfaces.nsIDialogParamBlock;
 
 var bundle;
@@ -23,33 +23,42 @@ function doPrompt(msg)
   prompts.alert(window, null, msg);
 }
 
-function AddCertChain(node, chain, idPrefix)
+/**
+ * Fills out the "Certificate Hierarchy" tree of the cert viewer "Details" tab.
+ *
+ * @param {tree} node
+ *        Parent tree node to append to.
+ * @param {nsIArray<nsIX509Cert>} chain
+ *        Chain where cert element n is issued by cert element n + 1.
+ */
+function AddCertChain(node, chain)
 {
-  var idfier = idPrefix+"chain_";
   var child = document.getElementById(node);
-  var numCerts = chain.length;
   var currCert;
   var displayVal;
-  var addTwistie;
-  for (var i=numCerts-1; i>=0; i--) {
+  for (let i = chain.length - 1; i >= 0; i--) {
     currCert = chain.queryElementAt(i, nsIX509Cert);
     if (currCert.commonName) {
       displayVal = currCert.commonName;
     } else {
       displayVal = currCert.windowTitle;
     }
-    if (0 == i) {
-      addTwistie = false;
-    } else {
-      addTwistie = true;
-    }
-    child = addChildrenToTree(child, displayVal, currCert.dbKey,addTwistie);
+    let addTwistie = i != 0;
+    child = addChildrenToTree(child, displayVal, currCert.dbKey, addTwistie);
   }
 }
 
-function AddUsage(usage,verifyInfoBox)
+/**
+ * Adds a "verified usage" of a cert to the "General" tab of the cert viewer.
+ *
+ * @param {String} usage
+ *        Verified usage to add.
+ * @param {Node} verifyInfoBox
+ *        Parent node to append to.
+ */
+function AddUsage(usage, verifyInfoBox)
 {
-  var text  = document.createElement("textbox");
+  let text = document.createElement("textbox");
   text.setAttribute("value", usage);
   text.setAttribute("style", "margin: 2px 5px");
   text.setAttribute("readonly", "true");
@@ -68,18 +77,10 @@ function setWindowName()
   var certDetails = bundle.getString('certDetails');
   if (myName != "") {
     document.title = certDetails + '"' + myName + '"'; // XXX l10n?
-    //  Get the token
-    //  XXX ignore this for now.  NSS will find the cert on a token
-    //      by "tokenname:certname", which is what we have.
-    //var tokenName = "";
-    //var pk11db = Components.classes[nsPK11TokenDB].getService(nsIPK11TokenDB);
-    //var token = pk11db.findTokenByName(tokenName);
-
-    //var cert = certdb.findCertByNickname(token, myName);
-    cert = certdb.findCertByNickname(null, myName);
+    cert = certdb.findCertByNickname(myName);
   } else {
     var params = window.arguments[0].QueryInterface(nsIDialogParamBlock);
-    var cert = params.objects.queryElementAt(0, nsIX509Cert);
+    cert = params.objects.queryElementAt(0, nsIX509Cert);
     document.title = certDetails + '"' + cert.windowTitle + '"'; // XXX l10n?
   }
 
@@ -88,33 +89,34 @@ function setWindowName()
   //
 
   //  The chain of trust
-  var chain = cert.getChain();
-  AddCertChain("treesetDump", chain, "dump_");
+  AddCertChain("treesetDump", cert.getChain());
   DisplayGeneralDataFromCert(cert);
   BuildPrettyPrint(cert);
   cert.requestUsagesArrayAsync(new listener());
 }
 
-function addChildrenToTree(parentTree,label,value,addTwistie)
+function addChildrenToTree(parentTree, label, value, addTwistie)
 {
-  var treeChild1 = document.createElement("treechildren");
-  var treeElement = addTreeItemToTreeChild(treeChild1,label,value,addTwistie);
+  let treeChild1 = document.createElement("treechildren");
+  let treeElement = addTreeItemToTreeChild(treeChild1, label, value,
+                                           addTwistie);
   parentTree.appendChild(treeChild1);
   return treeElement;
 }
 
-function addTreeItemToTreeChild(treeChild,label,value,addTwistie)
+function addTreeItemToTreeChild(treeChild, label, value, addTwistie)
 {
-  var treeElem1 = document.createElement("treeitem");
+  let treeElem1 = document.createElement("treeitem");
   if (addTwistie) {
-    treeElem1.setAttribute("container","true");
-    treeElem1.setAttribute("open","true");
+    treeElem1.setAttribute("container", "true");
+    treeElem1.setAttribute("open", "true");
   }
-  var treeRow = document.createElement("treerow");
-  var treeCell = document.createElement("treecell");
-  treeCell.setAttribute("label",label);
-  if (value)
-    treeCell.setAttribute("display",value);
+  let treeRow = document.createElement("treerow");
+  let treeCell = document.createElement("treecell");
+  treeCell.setAttribute("label", label);
+  if (value) {
+    treeCell.setAttribute("display", value);
+  }
   treeRow.appendChild(treeCell);
   treeElem1.appendChild(treeRow);
   treeChild.appendChild(treeElem1);
@@ -130,7 +132,7 @@ function displaySelected() {
     var value = asn1Tree.getDisplayData(items.currentIndex);
     certDumpVal.value = value;
   } else {
-    certDumpVal.value ="";
+    certDumpVal.value = "";
   }
 }
 
@@ -159,26 +161,29 @@ function listener() {
 listener.prototype.QueryInterface =
   function(iid) {
     if (iid.equals(Components.interfaces.nsISupports) ||
-        iid.equals(Components.interfaces.nsICertVerificationListener))
-        return this;
+        iid.equals(Components.interfaces.nsICertVerificationListener)) {
+      return this;
+    }
 
-    throw Components.results.NS_ERROR_NO_INTERFACE;
-  }
+    throw new Error(Components.results.NS_ERROR_NO_INTERFACE);
+  };
 
 listener.prototype.notify =
   function(cert, result) {
     DisplayVerificationData(cert, result);
-  }
+  };
 
 function DisplayVerificationData(cert, result)
 {
   document.getElementById("verify_pending").setAttribute("hidden", "true");
 
-  if (!result || !cert)
+  if (!result || !cert) {
     return; // no results could be produced
+  }
 
-  if (!(cert instanceof Components.interfaces.nsIX509Cert))
+  if (!(cert instanceof Components.interfaces.nsIX509Cert)) {
     return;
+  }
 
   //  Verification and usage
   var verifystr = "";
@@ -186,8 +191,9 @@ function DisplayVerificationData(cert, result)
   var o2 = {};
   var o3 = {};
 
-  if (!(result instanceof Components.interfaces.nsICertVerificationResult))
+  if (!(result instanceof Components.interfaces.nsICertVerificationResult)) {
     return;
+  }
 
   result.getUsagesArrayResult(o1, o2, o3);
 
@@ -213,43 +219,36 @@ function DisplayVerificationData(cert, result)
   } else { /* if (verifystate == cert.NOT_VERIFIED_UNKNOWN || == USAGE_NOT_ALLOWED) */
     verifystr = bundle.getString('certNotVerified_Unknown');
   }
-  var verified=document.getElementById('verified');
+  let verified = document.getElementById("verified");
   verified.textContent = verifystr;
   if (count > 0) {
     var verifyInfoBox = document.getElementById('verify_info_box');
-    for (var i=0; i<count; i++) {
-      AddUsage(usageList[i],verifyInfoBox);
+    for (let i = 0; i < count; i++) {
+      AddUsage(usageList[i], verifyInfoBox);
     }
   }
 }
 
+/**
+ * Displays information about a cert in the "General" tab of the cert viewer.
+ *
+ * @param {nsIX509Cert} cert
+ *        Cert to display information about.
+ */
 function DisplayGeneralDataFromCert(cert)
 {
-  //  Common Name
-  addAttributeFromCert('commonname', cert.commonName);
-  //  Organization
-  addAttributeFromCert('organization', cert.organization);
-  //  Organizational Unit
-  addAttributeFromCert('orgunit', cert.organizationalUnit);
-  //  Serial Number
-  addAttributeFromCert('serialnumber',cert.serialNumber);
-  // SHA-256 Fingerprint
-  addAttributeFromCert('sha256fingerprint', cert.sha256Fingerprint);
-  //  SHA1 Fingerprint
-  addAttributeFromCert('sha1fingerprint',cert.sha1Fingerprint);
-  // Validity start
-  addAttributeFromCert('validitystart', cert.validity.notBeforeLocalDay);
-  // Validity end
-  addAttributeFromCert('validityend', cert.validity.notAfterLocalDay);
+  addAttributeFromCert("commonname", cert.commonName);
+  addAttributeFromCert("organization", cert.organization);
+  addAttributeFromCert("orgunit", cert.organizationalUnit);
+  addAttributeFromCert("serialnumber", cert.serialNumber);
+  addAttributeFromCert("sha256fingerprint", cert.sha256Fingerprint);
+  addAttributeFromCert("sha1fingerprint", cert.sha1Fingerprint);
+  addAttributeFromCert("validitystart", cert.validity.notBeforeLocalDay);
+  addAttributeFromCert("validityend", cert.validity.notAfterLocalDay);
 
-  //Now to populate the fields that correspond to the issuer.
-  var issuerCommonname, issuerOrg, issuerOrgUnit;
-  issuerCommonname = cert.issuerCommonName;
-  issuerOrg = cert.issuerOrganization;
-  issuerOrgUnit = cert.issuerOrganizationUnit;
-  addAttributeFromCert('issuercommonname', issuerCommonname);
-  addAttributeFromCert('issuerorganization', issuerOrg);
-  addAttributeFromCert('issuerorgunit', issuerOrgUnit);
+  addAttributeFromCert("issuercommonname", cert.issuerCommonName);
+  addAttributeFromCert("issuerorganization", cert.issuerOrganization);
+  addAttributeFromCert("issuerorgunit", cert.issuerOrganizationUnit);
 }
 
 function updateCertDump()
@@ -265,7 +264,7 @@ function updateCertDump()
     var dbKey = item.firstChild.firstChild.getAttribute('display');
     //  Get the cert from the cert database
     var certdb = Components.classes[nsX509CertDB].getService(nsIX509CertDB);
-    var cert = certdb.findCertByDBKey(dbKey,null);
+    var cert = certdb.findCertByDBKey(dbKey);
     asn1Tree.loadASN1Structure(cert.ASN1Structure);
   }
   displaySelected();
@@ -290,7 +289,7 @@ function getCurrentCert()
     var item = tree.contentView.getItemAtIndex(realIndex);
     var dbKey = item.firstChild.firstChild.getAttribute('display');
     var certdb = Components.classes[nsX509CertDB].getService(nsIX509CertDB);
-    var cert = certdb.findCertByDBKey(dbKey,null);
+    var cert = certdb.findCertByDBKey(dbKey);
     return cert;
   }
   /* shouldn't really happen */

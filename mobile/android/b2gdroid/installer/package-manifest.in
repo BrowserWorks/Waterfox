@@ -185,7 +185,6 @@
 @BINPATH@/components/fastfind.xpt
 @BINPATH@/components/feeds.xpt
 @BINPATH@/components/find.xpt
-@BINPATH@/components/fuel.xpt
 @BINPATH@/components/gfx.xpt
 @BINPATH@/components/html5.xpt
 @BINPATH@/components/htmlparser.xpt
@@ -252,9 +251,8 @@
 @BINPATH@/components/toolkit_finalizationwitness.xpt
 @BINPATH@/components/toolkit_formautofill.xpt
 @BINPATH@/components/toolkit_osfile.xpt
-#ifdef NIGHTLY_BUILD
+@BINPATH@/components/toolkit_securityreporter.xpt
 @BINPATH@/components/toolkit_perfmonitoring.xpt
-#endif
 @BINPATH@/components/toolkit_xulstore.xpt
 @BINPATH@/components/toolkitprofile.xpt
 #ifdef MOZ_ENABLE_XREMOTE
@@ -318,8 +316,6 @@
 @BINPATH@/components/PermissionSettings.manifest
 @BINPATH@/components/PermissionPromptService.js
 @BINPATH@/components/PermissionPromptService.manifest
-@BINPATH@/components/fuelApplication.manifest
-@BINPATH@/components/fuelApplication.js
 @BINPATH@/components/WebContentConverter.js
 @BINPATH@/components/BrowserComponents.manifest
 @BINPATH@/components/nsBrowserContentHandler.js
@@ -469,6 +465,10 @@
 @BINPATH@/components/url-classifier.xpt
 #endif
 
+; Security Reports
+@BINPATH@/components/SecurityReporter.manifest
+@BINPATH@/components/SecurityReporter.js
+
 ; [Browser Chrome Files]
 @BINPATH@/chrome/browser@JAREXT@
 @BINPATH@/chrome/browser.manifest
@@ -529,20 +529,6 @@
 @BINPATH@/res/html/*
 @BINPATH@/res/language.properties
 @BINPATH@/res/entityTables/*
-#ifdef NIGHTLY_BUILD
-@BINPATH@/res/accessiblecaret.png
-@BINPATH@/res/accessiblecaret@1.5x.png
-@BINPATH@/res/accessiblecaret@2.25x.png
-@BINPATH@/res/accessiblecaret@2x.png
-@BINPATH@/res/accessiblecaret_tilt_left.png
-@BINPATH@/res/accessiblecaret_tilt_left@1.5x.png
-@BINPATH@/res/accessiblecaret_tilt_left@2.25x.png
-@BINPATH@/res/accessiblecaret_tilt_left@2x.png
-@BINPATH@/res/accessiblecaret_tilt_right.png
-@BINPATH@/res/accessiblecaret_tilt_right@1.5x.png
-@BINPATH@/res/accessiblecaret_tilt_right@2.25x.png
-@BINPATH@/res/accessiblecaret_tilt_right@2x.png
-#endif
 
 #ifndef MOZ_ANDROID_EXCLUDE_FONTS
 @BINPATH@/res/fonts/*
