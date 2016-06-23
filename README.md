@@ -17,7 +17,7 @@ Waterfox is released under the Mozilla Public License Version 2.0:
 
 	https://www.mozilla.org/MPL/2.0/
 	
-Waterfox binaries are kindly being redistributed free off charge by:
+Waterfox binaries are kindly being redistributed free of charge by:
 
  ![MaxCDN](https://raw.githubusercontent.com/MaxCDN/media/master/Screen/maxcdn-logo-full-rgb-300px.png)
 
