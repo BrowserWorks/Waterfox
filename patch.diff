@@ -1,125 +1,20 @@
-diff --git a/security/manager/ssl/nsNSSCallbacks.cpp b/security/manager/ssl/nsNSSCallbacks.cpp
-index a6270bc..9cc6115 100644
---- a/security/manager/ssl/nsNSSCallbacks.cpp
-+++ b/security/manager/ssl/nsNSSCallbacks.cpp
-@@ -8,6 +8,7 @@
- 
- #include "mozilla/Telemetry.h"
- #include "mozilla/TimeStamp.h"
-+#include "mozilla/unused.h"
- #include "nsContentUtils.h"
- #include "nsICertOverrideService.h"
- #include "nsIHttpChannelInternal.h"
-@@ -1279,25 +1280,17 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
-     status->SetServerCert(nssc, nsNSSCertificate::ev_status_unknown);
-   }
- 
--  nsCOMPtr<nsICertOverrideService> overrideService =
--      do_GetService(NS_CERTOVERRIDE_CONTRACTID);
--
--  if (overrideService) {
--    bool haveOverride;
--    uint32_t overrideBits = 0; // Unused.
--    bool isTemporaryOverride; // Unused.
--    const nsACString& hostString(infoObject->GetHostName());
--    const int32_t port(infoObject->GetPort());
--    nsCOMPtr<nsIX509Cert> cert;
--    status->GetServerCert(getter_AddRefs(cert));
--    nsresult nsrv = overrideService->HasMatchingOverride(hostString, port,
--                                                         cert,
--                                                         &overrideBits,
--                                                         &isTemporaryOverride,
--                                                         &haveOverride);
--    if (NS_SUCCEEDED(nsrv) && haveOverride) {
--      state |= nsIWebProgressListener::STATE_CERT_USER_OVERRIDDEN;
--    }
-+  bool domainMismatch;
-+  bool untrusted;
-+  bool notValidAtThisTime;
-+  // These all return NS_OK, so don't even bother checking the return values.
-+  Unused << status->GetIsDomainMismatch(&domainMismatch);
-+  Unused << status->GetIsUntrusted(&untrusted);
-+  Unused << status->GetIsNotValidAtThisTime(&notValidAtThisTime);
-+  // If we're here, the TLS handshake has succeeded. Thus if any of these
-+  // booleans are true, the user has added an override for a certificate error.
-+  if (domainMismatch || untrusted || notValidAtThisTime) {
-+    state |= nsIWebProgressListener::STATE_CERT_USER_OVERRIDDEN;
-   }
- 
-   infoObject->SetSecurityState(state);
-diff --git a/security/manager/ssl/tests/unit/test_js_cert_override_service.js b/security/manager/ssl/tests/unit/test_js_cert_override_service.js
-new file mode 100644
-index 0000000..d085f024
---- /dev/null
-+++ b/security/manager/ssl/tests/unit/test_js_cert_override_service.js
-@@ -0,0 +1,56 @@
-+/* -*- tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
-+/* Any copyright is dedicated to the Public Domain.
-+ * http://creativecommons.org/publicdomain/zero/1.0/ */
-+"use strict";
-+
-+// This test ensures that nsICertOverrideService can be implemented in JS.
-+// It does so by creating and registering a mock implementation that indicates
-+// a specific host ("expired.example.com") has a matching override (ERROR_TIME).
-+// Connections to that host should succeed.
-+
-+// Mock implementation of nsICertOverrideService
-+const gCertOverrideService = {
-+  rememberValidityOverride() {
-+    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-+  },
-+
-+  rememberTemporaryValidityOverrideUsingFingerprint() {
-+    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-+  },
-+
-+  hasMatchingOverride(hostname, port, cert, overrideBits, isTemporary) {
-+    Assert.equal(hostname, "expired.example.com",
-+                 "hasMatchingOverride: hostname should be expired.example.com");
-+    overrideBits.value = Ci.nsICertOverrideService.ERROR_TIME;
-+    isTemporary.value = false;
-+    return true;
-+  },
-+
-+  getValidityOverride() {
-+    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-+  },
-+
-+  clearValidityOverride() {
-+    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-+  },
-+
-+  isCertUsedForOverrides() {
-+    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-+  },
-+
-+  QueryInterface: XPCOMUtils.generateQI([Ci.nsICertOverrideService])
-+};
-+
-+function run_test() {
-+  do_get_profile();
-+  let certOverrideServiceCID =
-+    MockRegistrar.register("@mozilla.org/security/certoverride;1",
-+                           gCertOverrideService);
-+  do_register_cleanup(() => {
-+    MockRegistrar.unregister(certOverrideServiceCID);
-+  });
-+  add_tls_server_setup("BadCertServer", "bad_certs");
-+  add_connection_test("expired.example.com", PRErrorCodeSuccess);
-+  run_next_test();
-+}
-diff --git a/security/manager/ssl/tests/unit/xpcshell.ini b/security/manager/ssl/tests/unit/xpcshell.ini
-index 6bb6194..b930441 100644
---- a/security/manager/ssl/tests/unit/xpcshell.ini
-+++ b/security/manager/ssl/tests/unit/xpcshell.ini
-@@ -57,6 +57,8 @@ run-sequentially = hardcoded ports
- skip-if = toolkit == 'android' || toolkit == 'gonk'
- [test_hmac.js]
- [test_intermediate_basic_usage_constraints.js]
-+[test_js_cert_override_service.js]
-+run-sequentially = hardcoded ports
- [test_keysize.js]
- [test_keysize_ev.js]
- # OCSP requests in this test time out on slow B2G Emulator debug builds.
+diff --git a/toolkit/locales/l10n.mk b/toolkit/locales/l10n.mk
+index 2cd9961..5e8e0e76 100644
+--- a/toolkit/locales/l10n.mk
++++ b/toolkit/locales/l10n.mk
+@@ -191,12 +191,12 @@ ifndef WGET
+ 	$(error Wget not installed)
+ endif
+ 	$(NSINSTALL) -D $(ABS_DIST)/$(PKG_PATH)
+-	(cd $(ABS_DIST)/$(PKG_PATH) && $(WGET) --no-cache -nv -N  '$(EN_US_BINARY_URL)/$(PACKAGE)')
++	(cd $(ABS_DIST)/$(PKG_PATH) && $(WGET) --no-cache -nv --no-iri -N  '$(EN_US_BINARY_URL)/$(PACKAGE)')
+ 	@echo 'Downloaded $(EN_US_BINARY_URL)/$(PACKAGE) to $(ABS_DIST)/$(PKG_PATH)/$(PACKAGE)'
+ ifdef RETRIEVE_WINDOWS_INSTALLER
+ ifeq ($(OS_ARCH), WINNT)
+ 	$(NSINSTALL) -D $(ABS_DIST)/$(PKG_INST_PATH)
+-	(cd $(ABS_DIST)/$(PKG_INST_PATH) && $(WGET) --no-cache -nv -N '$(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe')
++	(cd $(ABS_DIST)/$(PKG_INST_PATH) && $(WGET) --no-cache -nv --no-iri -N '$(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe')
+ 	@echo 'Downloaded $(EN_US_BINARY_URL)/$(PKG_PATH)$(PKG_INST_BASENAME).exe to $(ABS_DIST)/$(PKG_INST_PATH)$(PKG_INST_BASENAME).exe'
+ endif
+ endif
 
