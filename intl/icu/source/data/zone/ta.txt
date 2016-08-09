@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ta.xml
 // *
 // ***************************************************************************
 ta{
-    Version{"2.1.23.16"}
+    Version{"2.1.19.55"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"அபிட்ஜான்"}
@@ -1575,13 +1575,13 @@ ta{
             ls{"இந்தோசீன நேரம்"}
         }
         "meta:Indonesia_Central"{
-            ls{"மத்திய இந்தோனேசியா நேரம்"}
+            ls{"மத்திய இந்தோனேஷிய நேரம்"}
         }
         "meta:Indonesia_Eastern"{
-            ls{"கிழக்கத்திய இந்தோனேசியா நேரம்"}
+            ls{"கிழக்கத்திய இந்தோனேஷிய நேரம்"}
         }
         "meta:Indonesia_Western"{
-            ls{"மேற்கத்திய இந்தோனேசியா நேரம்"}
+            ls{"மேற்கத்திய இந்தோனேஷியா நேரம்"}
         }
         "meta:Iran"{
             ld{"ஈரான் பகலொளி நேரம்"}

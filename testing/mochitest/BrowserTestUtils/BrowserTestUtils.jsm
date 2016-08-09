@@ -47,7 +47,10 @@ this.BrowserTestUtils = {
    * Loads a page in a new tab, executes a Task and closes the tab.
    *
    * @param options
-   *        An object with the following properties:
+   *        An object  or string.
+   *        If this is a string it is the url to open and will be opened in the
+   *        currently active browser window.
+   *        If an object it should have the following properties:
    *        {
    *          gBrowser:
    *            Reference to the "tabbrowser" element where the new tab should
@@ -65,9 +68,23 @@ this.BrowserTestUtils = {
    * @rejects Any exception from taskFn is propagated.
    */
   withNewTab: Task.async(function* (options, taskFn) {
+    if (typeof(options) == "string") {
+      options = {
+        gBrowser: Services.wm.getMostRecentWindow("navigator:browser").gBrowser,
+        url: options
+      }
+    }
     let tab = yield BrowserTestUtils.openNewForegroundTab(options.gBrowser, options.url);
+    let originalWindow = tab.ownerDocument.defaultView;
     let result = yield taskFn(tab.linkedBrowser);
-    options.gBrowser.removeTab(tab);
+    let finalWindow = tab.ownerDocument.defaultView;
+    if (originalWindow == finalWindow && !tab.closing && tab.linkedBrowser) {
+      yield BrowserTestUtils.removeTab(tab);
+    } else {
+      Services.console.logStringMessage(
+        "BrowserTestUtils.withNewTab: Tab was already closed before " +
+        "removeTab would have been called");
+    }
     return Promise.resolve(result);
   }),
 
@@ -467,6 +484,8 @@ this.BrowserTestUtils = {
    *        event is the expected one, or false if it should be ignored and
    *        listening should continue. If not specified, the first event with
    *        the specified name resolves the returned promise.
+   * @param {bool} wantsUntrusted [optional]
+   *        True to receive synthetic events dispatched by web content.
    *
    * @note Because this function is intended for testing, any error in checkFn
    *       will cause the returned promise to be rejected instead of waiting for
@@ -475,7 +494,7 @@ this.BrowserTestUtils = {
    * @returns {Promise}
    * @resolves The Event object.
    */
-  waitForEvent(subject, eventName, capture, checkFn) {
+  waitForEvent(subject, eventName, capture, checkFn, wantsUntrusted) {
     return new Promise((resolve, reject) => {
       subject.addEventListener(eventName, function listener(event) {
         try {
@@ -492,7 +511,7 @@ this.BrowserTestUtils = {
           }
           reject(ex);
         }
-      }, capture);
+      }, capture, wantsUntrusted);
     });
   },
 
@@ -509,6 +528,8 @@ this.BrowserTestUtils = {
    *        event is the expected one, or false if it should be ignored and
    *        listening should continue. If not specified, the first event with
    *        the specified name resolves the returned promise.
+   * @param {bool} wantsUntrusted [optional]
+   *        Whether to accept untrusted events
    *
    * @note Because this function is intended for testing, any error in checkFn
    *       will cause the returned promise to be rejected instead of waiting for
@@ -516,12 +537,15 @@ this.BrowserTestUtils = {
    *
    * @returns {Promise}
    */
-  waitForContentEvent(browser, eventName, capture, checkFn) {
-    let parameters = { eventName,
-                       capture,
-                       checkFnSource: checkFn ? checkFn.toSource() : null };
+  waitForContentEvent(browser, eventName, capture = false, checkFn, wantsUntrusted = false) {
+    let parameters = {
+      eventName,
+      capture,
+      checkFnSource: checkFn ? checkFn.toSource() : null,
+      wantsUntrusted,
+    };
     return ContentTask.spawn(browser, parameters,
-        function({ eventName, capture, checkFnSource }) {
+        function({ eventName, capture, checkFnSource, wantsUntrusted }) {
           let checkFn;
           if (checkFnSource) {
             checkFn = eval(`(() => (${checkFnSource}))()`);
@@ -538,9 +562,42 @@ this.BrowserTestUtils = {
               }
               removeEventListener(eventName, listener, capture);
               completion();
-            }, capture);
+            }, capture, wantsUntrusted);
           });
         });
+  },
+
+  /**
+   * Like browserLoaded, but waits for an error page to appear.
+   * This explicitly deals with cases where the browser is not currently remote and a
+   * remoteness switch will occur before the error page is loaded, which is tricky
+   * because error pages don't fire 'regular' load events that we can rely on.
+   *
+   * @param {xul:browser} browser
+   *        A xul:browser.
+   *
+   * @return {Promise}
+   * @resolves When an error page has been loaded in the browser.
+   */
+  waitForErrorPage(browser) {
+    let waitForLoad = () =>
+      this.waitForContentEvent(browser, "AboutNetErrorLoad", false, null, true);
+
+    let win = browser.ownerDocument.defaultView;
+    let tab = win.gBrowser.getTabForBrowser(browser);
+    if (!tab || browser.isRemoteBrowser || !win.gMultiProcessBrowser) {
+      return waitForLoad();
+    }
+
+    // We're going to switch remoteness when loading an error page. We need to be
+    // quite careful in order to make sure we're adding the listener in time to
+    // get this event:
+    return new Promise((resolve, reject) => {
+      tab.addEventListener("TabRemotenessChange", function onTRC() {
+        tab.removeEventListener("TabRemotenessChange", onTRC);
+        waitForLoad().then(resolve, reject);
+      });
+    });
   },
 
   /**
@@ -960,7 +1017,8 @@ this.BrowserTestUtils = {
    *
    * @param condition
    *        A condition function that must return true or false. If the
-   *        condition ever throws, this is also treated as a false.
+   *        condition ever throws, this is also treated as a false. The
+   *        function can be a generator.
    * @param interval
    *        The time interval to poll the condition function. Defaults
    *        to 100ms.
@@ -975,7 +1033,7 @@ this.BrowserTestUtils = {
   waitForCondition(condition, msg, interval=100, maxTries=50) {
     return new Promise((resolve, reject) => {
       let tries = 0;
-      let intervalID = setInterval(() => {
+      let intervalID = setInterval(Task.async(function* () {
         if (tries >= maxTries) {
           clearInterval(intervalID);
           msg += ` - timed out after ${maxTries} tries.`;
@@ -985,7 +1043,7 @@ this.BrowserTestUtils = {
 
         let conditionPassed = false;
         try {
-          conditionPassed = condition();
+          conditionPassed = yield condition();
         } catch(e) {
           msg += ` - threw exception: ${e}`;
           clearInterval(intervalID);
@@ -998,7 +1056,7 @@ this.BrowserTestUtils = {
           resolve();
         }
         tries++;
-      }, interval);
+      }), interval);
     });
   },
 
@@ -1030,6 +1088,26 @@ this.BrowserTestUtils = {
         // The originalTarget of the AlertActive on a notificationbox
         // will be the notification itself.
         resolve(event.originalTarget);
+      });
+    });
+  },
+
+  /**
+   * Returns a Promise that will resolve once MozAfterPaint
+   * has been fired in the content of a browser.
+   *
+   * @param browser (<xul:browser>)
+   *        The browser for which we're waiting for the MozAfterPaint
+   *        event to occur in.
+   * @returns Promise
+   */
+  contentPainted(browser) {
+    return ContentTask.spawn(browser, null, function*() {
+      return new Promise((resolve) => {
+        addEventListener("MozAfterPaint", function onPaint() {
+          removeEventListener("MozAfterPaint", onPaint);
+          resolve();
+        })
       });
     });
   },

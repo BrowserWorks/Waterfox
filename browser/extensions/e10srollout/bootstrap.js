@@ -9,9 +9,10 @@ Cu.import("resource://gre/modules/Preferences.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/UpdateUtils.jsm");
 
- // The amount of people to be part of e10s, in %
+ // The amount of people to be part of e10s
 const TEST_THRESHOLD = {
-  "beta"    : 50,
+  "beta"    : 0.5,  // 50%
+  "release" : 0.01, // 1%
 };
 
 const PREF_COHORT_SAMPLE       = "e10s.rollout.cohortSample";
@@ -78,20 +79,31 @@ function uninstall() {
 }
 
 function getUserSample() {
-  let existingVal = Preferences.get(PREF_COHORT_SAMPLE, undefined);
-  if (typeof(existingVal) == "number") {
-    return existingVal;
+  let prefValue = Preferences.get(PREF_COHORT_SAMPLE, undefined);
+  let value = 0.0;
+
+  if (typeof(prefValue) == "string") {
+    value = parseFloat(prefValue, 10);
+    return value;
   }
 
-  let val = Math.floor(Math.random() * 100);
-  Preferences.set(PREF_COHORT_SAMPLE, val);
-  return val;
+  if (typeof(prefValue) == "number") {
+    // convert old integer value
+    value = prefValue / 100;
+  } else {
+    value = Math.random();
+  }
+
+  Preferences.set(PREF_COHORT_SAMPLE, value.toString().substr(0, 8));
+  return value;
 }
 
 function setCohort(cohortName) {
   Preferences.set(PREF_COHORT_NAME, cohortName);
   try {
-    Services.appinfo.QueryInterface(Ci.nsICrashReporter).annotateCrashReport("E10SCohort", cohortName);
+    if (Ci.nsICrashReporter) {
+      Services.appinfo.QueryInterface(Ci.nsICrashReporter).annotateCrashReport("E10SCohort", cohortName);
+    }
   } catch (e) {}
 }
 

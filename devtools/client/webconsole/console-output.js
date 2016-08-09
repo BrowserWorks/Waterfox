@@ -1,5 +1,5 @@
 /* -*- indent-tabs-mode: nil; js-indent-level: 2 -*- */
-/* vim: set ft= javascript ts=2 et sw=2 tw=80: */
+/* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -93,6 +93,7 @@ const CONSOLE_API_LEVELS_TO_SEVERITIES = {
   warn: "warning",
   info: "info",
   log: "log",
+  clear: "log",
   trace: "log",
   table: "log",
   debug: "log",
@@ -1341,8 +1342,10 @@ Messages.Extended.prototype = Heritage.extend(Messages.Simple.prototype,
  *        The evaluation response packet received from the server.
  * @param string [errorMessage]
  *        Optional error message to display.
+ * @param string [errorDocLink]
+ * Optional error doc URL to link to.
  */
-Messages.JavaScriptEvalOutput = function(evalResponse, errorMessage)
+Messages.JavaScriptEvalOutput = function(evalResponse, errorMessage, errorDocLink)
 {
   let severity = "log", msg, quoteStrings = true;
 
@@ -1365,7 +1368,13 @@ Messages.JavaScriptEvalOutput = function(evalResponse, errorMessage)
     severity: severity,
     quoteStrings: quoteStrings,
   };
-  Messages.Extended.call(this, [msg], options);
+
+  let messages = [msg];
+  if (errorDocLink) {
+    messages.push(errorDocLink);
+  }
+
+  Messages.Extended.call(this, messages, options);
 };
 
 Messages.JavaScriptEvalOutput.prototype = Messages.Extended.prototype;
@@ -2779,7 +2788,7 @@ Widgets.ObjectRenderers.add({
 
   _onClick: function () {
     let location = this.objectActor.location;
-    if (location) {
+    if (location && IGNORED_SOURCE_URLS.indexOf(location.url) === -1) {
       this.output.openLocationInDebugger(location);
     }
     else {
@@ -3667,8 +3676,7 @@ Widgets.Stacktrace.prototype = Heritage.extend(Widgets.BaseWidget.prototype,
     }
 
     let location = this.output.owner.createLocationNode({url: frame.filename,
-                                                        line: frame.lineNumber},
-                                                        "jsdebugger");
+                                                        line: frame.lineNumber});
 
     // .devtools-monospace sets font-size to 80%, however .body already has
     // .devtools-monospace. If we keep it here, the location would be rendered

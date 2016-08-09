@@ -224,6 +224,7 @@ class nsMainThreadPtrHandle
 
 public:
   nsMainThreadPtrHandle() : mPtr(nullptr) {}
+  MOZ_IMPLICIT nsMainThreadPtrHandle(decltype(nullptr)) : mPtr(nullptr) {}
   explicit nsMainThreadPtrHandle(nsMainThreadPtrHolder<T>* aHolder)
     : mPtr(aHolder)
   {
@@ -272,6 +273,12 @@ public:
     }
     return *mPtr == *aOther.mPtr;
   }
+  bool operator!=(const nsMainThreadPtrHandle<T>& aOther) const
+  {
+    return !operator==(aOther);
+  }
+  bool operator==(decltype(nullptr)) const { return mPtr == nullptr; }
+  bool operator!=(decltype(nullptr)) const { return mPtr != nullptr; }
   bool operator!() const {
     return !mPtr || !*mPtr;
   }

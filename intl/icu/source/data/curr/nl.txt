@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/nl.xml
@@ -570,7 +570,7 @@ nl{
         }
         KYD{
             "KYD",
-            "Kaaimaneilandse dollar",
+            "Caymaneilandse dollar",
         }
         KZT{
             "KZT",
@@ -1859,8 +1859,8 @@ nl{
             other{"Koeweitse dinar"}
         }
         KYD{
-            one{"Kaaimaneilandse dollar"}
-            other{"Kaaimaneilandse dollar"}
+            one{"Caymaneilandse dollar"}
+            other{"Caymaneilandse dollar"}
         }
         KZT{
             one{"Kazachse tenge"}
@@ -2491,5 +2491,5 @@ nl{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.23.81"}
+    Version{"2.1.19.96"}
 }

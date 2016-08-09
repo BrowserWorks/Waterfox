@@ -16,7 +16,7 @@ using namespace mozilla::gl;
 
 CompositingRenderTargetOGL::~CompositingRenderTargetOGL()
 {
-  if (mGL->MakeCurrent()) {
+  if (mGL && mGL->MakeCurrent()) {
     mGL->fDeleteTextures(1, &mTextureHandle);
     mGL->fDeleteFramebuffers(1, &mFBO);
   }
@@ -81,7 +81,7 @@ already_AddRefed<DataSourceSurface>
 CompositingRenderTargetOGL::Dump(Compositor* aCompositor)
 {
   MOZ_ASSERT(mInitParams.mStatus == InitParams::INITIALIZED);
-  CompositorOGL* compositorOGL = static_cast<CompositorOGL*>(aCompositor);
+  CompositorOGL* compositorOGL = aCompositor->AsCompositorOGL();
   return ReadBackSurface(mGL, mTextureHandle, true, compositorOGL->GetFBOFormat());
 }
 #endif

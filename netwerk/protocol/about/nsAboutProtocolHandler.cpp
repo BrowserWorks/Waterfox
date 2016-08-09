@@ -4,6 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "base/basictypes.h"
+#include "mozilla/ArrayUtils.h"
 
 #include "nsAboutProtocolHandler.h"
 #include "nsIURI.h"
@@ -18,6 +19,7 @@
 #include "nsAutoPtr.h"
 #include "nsIWritablePropertyBag2.h"
 #include "nsIChannel.h"
+#include "nsIScriptError.h"
 
 static NS_DEFINE_CID(kSimpleURICID,     NS_SIMPLEURI_CID);
 static NS_DEFINE_CID(kNestedAboutURICID, NS_NESTEDABOUTURI_CID);
@@ -35,7 +37,7 @@ static bool IsSafeToLinkForUntrustedContent(nsIAboutModule *aModule, nsIURI *aUR
   nsresult rv = aModule->GetURIFlags(aURI, &flags);
   NS_ENSURE_SUCCESS(rv, false);
 
-  return (flags & nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT) && !(flags & nsIAboutModule::MAKE_UNLINKABLE);
+  return (flags & nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT) && (flags & nsIAboutModule::MAKE_LINKABLE);
 }
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -84,9 +86,9 @@ nsAboutProtocolHandler::GetFlagsForURI(nsIURI* aURI, uint32_t* aFlags)
     // This should never happen, so pass back the error:
     NS_ENSURE_SUCCESS(rv, rv);
 
-    // If marked as safe, and not marked unlinkable, pass 'safe' flags.
+    // If marked as safe, and marked linkable, pass 'safe' flags.
     if ((aboutModuleFlags & nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT) &&
-        !(aboutModuleFlags & nsIAboutModule::MAKE_UNLINKABLE)) {
+        (aboutModuleFlags & nsIAboutModule::MAKE_LINKABLE)) {
         *aFlags = URI_NORELATIVE | URI_NOAUTH | URI_LOADABLE_BY_ANYONE |
             URI_SAFE_TO_LOAD_IN_SECURE_CONTEXT;
     }
@@ -183,9 +185,23 @@ nsAboutProtocolHandler::NewChannel2(nsIURI* uri,
             // set the LoadInfo on the newly created channel yet, as
             // an interim solution we set the LoadInfo here if not
             // available on the channel. Bug 1087720
-            nsCOMPtr<nsILoadInfo> loadInfo;
-            (*result)->GetLoadInfo(getter_AddRefs(loadInfo));
-            if (!loadInfo) {
+            nsCOMPtr<nsILoadInfo> loadInfo = (*result)->GetLoadInfo();
+            if (aLoadInfo != loadInfo) {
+                if (loadInfo) {
+                    NS_ASSERTION(false,
+                        "nsIAboutModule->newChannel(aURI, aLoadInfo) needs to set LoadInfo");
+                    const char16_t* params[] = {
+                        MOZ_UTF16("nsIAboutModule->newChannel(aURI)"),
+                        MOZ_UTF16("nsIAboutModule->newChannel(aURI, aLoadInfo)")
+                    };
+                    nsContentUtils::ReportToConsole(
+                        nsIScriptError::warningFlag,
+                        NS_LITERAL_CSTRING("Security by Default"),
+                        nullptr, // aDocument
+                        nsContentUtils::eNECKO_PROPERTIES,
+                        "APIDeprecationWarning",
+                        params, mozilla::ArrayLength(params));
+                }
                 (*result)->SetLoadInfo(aLoadInfo);
             }
 

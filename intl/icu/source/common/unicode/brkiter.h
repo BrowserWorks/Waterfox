@@ -1,6 +1,6 @@
 /*
 ********************************************************************************
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -291,7 +291,7 @@ public:
     virtual int32_t next(int32_t n) = 0;
 
    /**
-     * For RuleBasedBreakIterators, return the status tag from the
+     * For RuleBasedBreakIterators, return the status tag from the 
      * break rule that determined the most recently
      * returned break position.
      * <p>
@@ -307,7 +307,7 @@ public:
     virtual int32_t getRuleStatus() const;
 
    /**
-    * For RuleBasedBreakIterators, get the status (tag) values from the break rule(s)
+    * For RuleBasedBreakIterators, get the status (tag) values from the break rule(s) 
     * that determined the most recently returned break position.
     * <p>
     * For break iterator types that do not support rule status,
@@ -623,11 +623,8 @@ protected:
     BreakIterator();
     /** @internal */
     BreakIterator (const BreakIterator &other) : UObject(other) {}
-#ifndef U_HIDE_INTERNAL_API
     /** @internal */
     BreakIterator (const Locale& valid, const Locale& actual);
-#endif  /* U_HIDE_INTERNAL_API */
-
 private:
 
     /** @internal */

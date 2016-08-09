@@ -85,11 +85,17 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "CacheStorage",
 // IMPORTANT: Do not change this list without review from a DOM peer!
+    "Crypto",
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "CustomEvent",
+// IMPORTANT: Do not change this list without review from a DOM peer!
     "DedicatedWorkerGlobalScope",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "DataStore", b2g: true },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "DataStoreCursor", b2g: true },
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "Directory",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "DOMCursor",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -163,15 +169,19 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Promise",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    { name: "PushManager", b2g: false, android: false },
+    { name: "PushManager", b2g: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    { name: "PushSubscription", b2g: false, android: false },
+    { name: "PushSubscription", b2g: false },
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    { name: "PushSubscriptionOptions", b2g: false },
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Request",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "Response",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     { name: "ServiceWorkerRegistration", b2g: false },
+// IMPORTANT: Do not change this list without review from a DOM peer!
+    "SubtleCrypto",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "TextDecoder",
 // IMPORTANT: Do not change this list without review from a DOM peer!
@@ -236,8 +246,9 @@ function createInterfaceMap(permissionMap, version, userAgent, isB2G) {
       } else {
         ok(!("pref" in entry), "Bogus pref annotation for " + entry.name);
         if ((entry.nightly === !isNightly) ||
+            (entry.nightlyAndroid === !(isAndroid && isNightly) && isAndroid) ||
             (entry.desktop === !isDesktop) ||
-            (entry.android === !isAndroid) ||
+            (entry.android === !isAndroid && !entry.nightlyAndroid) ||
             (entry.b2g === !isB2G) ||
             (entry.release === !isRelease) ||
             (entry.permission && !permissionMap[entry.permission]) ||

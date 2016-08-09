@@ -47,6 +47,7 @@ struct nsStyleSVGPaint;
 struct nsRect;
 
 namespace mozilla {
+struct SVGTextContextPaint;
 namespace dom {
 class Element;
 class UserSpaceMetrics;
@@ -179,9 +180,11 @@ class nsSVGUtils
 public:
   typedef mozilla::dom::Element Element;
   typedef mozilla::gfx::AntialiasMode AntialiasMode;
+  typedef mozilla::gfx::DrawTarget DrawTarget;
   typedef mozilla::gfx::FillRule FillRule;
   typedef mozilla::gfx::GeneralPattern GeneralPattern;
   typedef mozilla::gfx::Size Size;
+  typedef mozilla::SVGTextContextPaint SVGTextContextPaint;
 
   static void Init();
 
@@ -493,6 +496,13 @@ public:
   static nscolor GetFallbackOrPaintColor(nsStyleContext *aStyleContext,
                                          nsStyleSVGPaint nsStyleSVG::*aFillOrStroke);
 
+  static DrawMode
+  SetupContextPaint(const DrawTarget* aDrawTarget,
+                    const gfxMatrix& aContextMatrix,
+                    nsIFrame* aFrame,
+                    gfxTextContextPaint* aOuterContextPaint,
+                    SVGTextContextPaint* aThisContextPaint);
+
   static void
   MakeFillPatternFor(nsIFrame *aFrame,
                      gfxContext* aContext,
@@ -547,11 +557,9 @@ public:
    * Render a SVG glyph.
    * @param aElement the SVG glyph element to render
    * @param aContext the thebes aContext to draw to
-   * @param aDrawMode fill or stroke or both (see DrawMode)
    * @return true if rendering succeeded
    */
   static bool PaintSVGGlyph(Element* aElement, gfxContext* aContext,
-                            DrawMode aDrawMode,
                             gfxTextContextPaint* aContextPaint);
   /**
    * Get the extents of a SVG glyph.

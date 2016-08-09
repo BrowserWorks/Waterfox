@@ -180,15 +180,9 @@ class ReftestArgumentsParser(argparse.ArgumentParser):
                           "Valid values are `all', `needs-focus', or `non-needs-focus'. "
                           "Defaults to `all'.")
 
-        self.add_argument("--e10s",
-                          action="store_true",
-                          default=False,
-                          dest="e10s",
-                          help="enables content processes")
-
         self.add_argument("--disable-e10s",
                           action="store_false",
-                          default=False,
+                          default=True,
                           dest="e10s",
                           help="disables content processes")
 
@@ -278,19 +272,20 @@ class ReftestArgumentsParser(argparse.ArgumentParser):
 
         if options.reftestExtensionPath is None:
             if self.build_obj is not None:
-                options.reftestExtensionPath = os.path.join(self.build_obj.topobjdir, "_tests",
-                                                            "reftest", "reftest")
+                reftestExtensionPath = os.path.join(self.build_obj.topobjdir, "_tests",
+                                                    "reftest", "reftest")
             else:
-                options.reftestExtensionPath = os.path.join(here, "reftest")
+                reftestExtensionPath = os.path.join(here, "reftest")
+            options.reftestExtensionPath = os.path.normpath(reftestExtensionPath)
 
         if (options.specialPowersExtensionPath is None and
             options.suite in ["crashtest", "jstestbrowser"]):
             if self.build_obj is not None:
-                options.specialPowersExtensionPath = os.path.join(self.build_obj.topobjdir, "_tests",
-                                                                  "reftest", "specialpowers")
+                specialPowersExtensionPath = os.path.join(self.build_obj.topobjdir, "_tests",
+                                                          "reftest", "specialpowers")
             else:
-                options.specialPowersExtensionPath = os.path.join(
-                    here, "specialpowers")
+                specialPowersExtensionPath = os.path.join(here, "specialpowers")
+            options.specialPowersExtensionPath = os.path.normpath(specialPowersExtensionPath)
 
         options.leakThresholds = {
             "default": options.defaultLeakThreshold,
@@ -753,3 +748,8 @@ class RemoteArgumentsParser(ReftestArgumentsParser):
             if (width < 1366 or height < 1050):
                 self.error("ERROR: Invalid screen resolution %sx%s, please adjust to 1366x1050 or higher" % (
                     width, height))
+
+        # Disable e10s by default on Android because we don't run Android
+        # e10s jobs anywhere yet.
+        options.e10s = False
+        return options

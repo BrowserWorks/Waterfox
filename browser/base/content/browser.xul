@@ -140,7 +140,12 @@
     <panel type="autocomplete" id="PopupSearchAutoComplete" noautofocus="true" hidden="true"/>
 
     <!-- for url bar autocomplete -->
-    <panel type="autocomplete-richlistbox" id="PopupAutoCompleteRichResult" noautofocus="true" hidden="true">
+    <panel type="autocomplete-richlistbox"
+           id="PopupAutoCompleteRichResult"
+           noautofocus="true"
+           hidden="true"
+           flip="none"
+           level="parent">
 #ifdef NIGHTLY_BUILD
       <hbox id="urlbar-search-footer" flex="1" align="stretch" pack="end">
         <button id="urlbar-search-settings" label="&changeSearchSettings.button;"
@@ -169,7 +174,6 @@
 
     <panel id="editBookmarkPanel"
            type="arrow"
-           footertype="promobox"
            orient="vertical"
            ignorekeys="true"
            hidden="true"
@@ -220,16 +224,14 @@
            orient="vertical"
            role="alert">
      <vbox>
-      <hbox pack="end">
-        <toolbarbutton id="UITourTooltipClose" class="close-icon"
-                       tooltiptext="&uiTour.infoPanel.close;"/>
-      </hbox>
       <hbox id="UITourTooltipBody">
-        <vbox id="UITourTooltipIconContainer">
-          <image id="UITourTooltipIcon"/>
-        </vbox>
+        <image id="UITourTooltipIcon"/>
         <vbox flex="1">
-          <label id="UITourTooltipTitle" flex="1"/>
+          <hbox id="UITourTooltipTitleContainer">
+            <label id="UITourTooltipTitle" flex="1"/>
+            <toolbarbutton id="UITourTooltipClose" class="close-icon"
+                           tooltiptext="&uiTour.infoPanel.close;"/>
+          </hbox>
           <description id="UITourTooltipDescription" flex="1"/>
         </vbox>
       </hbox>
@@ -461,12 +463,25 @@
              onpopupshowing="UpdateDynamicShortcutTooltipText(this);"/>
 
     <menupopup id="SyncedTabsSidebarContext">
-      <menuitem label="&syncedTabs.context.openTab.label;"
-                accesskey="&syncedTabs.context.openTab.accesskey;"
-                id="syncedTabsOpenSelected"/>
+      <menuitem label="&syncedTabs.context.open.label;"
+                accesskey="&syncedTabs.context.open.accesskey;"
+                id="syncedTabsOpenSelected" where="current"/>
+      <menuitem label="&syncedTabs.context.openInNewTab.label;"
+                accesskey="&syncedTabs.context.openInNewTab.accesskey;"
+                id="syncedTabsOpenSelectedInTab" where="tab"/>
+      <menuitem label="&syncedTabs.context.openInNewWindow.label;"
+                accesskey="&syncedTabs.context.openInNewWindow.accesskey;"
+                id="syncedTabsOpenSelectedInWindow" where="window"/>
+      <menuitem label="&syncedTabs.context.openInNewPrivateWindow.label;"
+                accesskey="&syncedTabs.context.openInNewPrivateWindow.accesskey;"
+                id="syncedTabsOpenSelectedInPrivateWindow" where="window" private="true"/>
+      <menuseparator/>
       <menuitem label="&syncedTabs.context.bookmarkSingleTab.label;"
                 accesskey="&syncedTabs.context.bookmarkSingleTab.accesskey;"
                 id="syncedTabsBookmarkSelected"/>
+      <menuitem label="&syncedTabs.context.copy.label;"
+                accesskey="&syncedTabs.context.copy.accesskey;"
+                id="syncedTabsCopySelected"/>
       <menuseparator/>
       <menuitem label="&syncSyncNowItem.label;"
                 accesskey="&syncSyncNowItem.accesskey;"
@@ -676,7 +691,7 @@
             <textbox id="urlbar" flex="1"
                      placeholder="&urlbar.placeholder2;"
                      type="autocomplete"
-                     autocompletesearch="urlinline history"
+                     autocompletesearch="unifiedcomplete"
                      autocompletesearchparam="enable-actions"
                      autocompletepopup="PopupAutoCompleteRichResult"
                      completeselectedindex="true"
@@ -685,7 +700,7 @@
                      showcommentcolumn="true"
                      showimagecolumn="true"
                      enablehistory="true"
-                     maxrows="6"
+                     maxrows="10"
                      newlines="stripsurroundingwhitespace"
                      ontextentered="this.handleCommand(param);"
                      ontextreverted="return this.handleRevert();"
@@ -705,8 +720,6 @@
                        aria-label="&urlbar.loginFillNotificationAnchor.label;"/>
                 <image id="password-notification-icon" class="notification-anchor-icon" role="button"
                        aria-label="&urlbar.passwordNotificationAnchor.label;"/>
-                <image id="webapps-notification-icon" class="notification-anchor-icon" role="button"
-                       aria-label="&urlbar.webappsNotificationAnchor.label;"/>
                 <image id="plugins-notification-icon" class="notification-anchor-icon" role="button"
                        aria-label="&urlbar.pluginsNotificationAnchor.label;"/>
                 <image id="web-notifications-notification-icon" class="notification-anchor-icon" role="button"
@@ -857,7 +870,7 @@
             </menu>
             <menu id="BMB_unsortedBookmarks"
                   class="menu-iconic bookmark-item subviewbutton"
-                  label="&bookmarksMenuButton.unsorted.label;"
+                  label="&bookmarksMenuButton.other.label;"
                   container="true">
               <menupopup id="BMB_unsortedBookmarksPopup"
                          placespopup="true"
@@ -879,7 +892,8 @@
         <!-- This is a placeholder for the Downloads Indicator.  It is visible
              during the customization of the toolbar, in the palette, and before
              the Downloads Indicator overlay is loaded. -->
-        <toolbarbutton id="downloads-button" class="toolbarbutton-1 chromeclass-toolbar-additional"
+        <toolbarbutton id="downloads-button"
+                       class="toolbarbutton-1 chromeclass-toolbar-additional badged-button"
                        key="key_openDownloads"
                        oncommand="DownloadsIndicatorView.onCommand(event);"
                        ondrop="DownloadsIndicatorView.onDrop(event);"

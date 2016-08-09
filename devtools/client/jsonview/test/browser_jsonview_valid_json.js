@@ -10,13 +10,22 @@ const TEST_JSON_URL = URL_ROOT + "valid_json.json";
 add_task(function* () {
   info("Test valid JSON started");
 
-  let tab = yield addJsonViewTab(TEST_JSON_URL);
+  yield addJsonViewTab(TEST_JSON_URL);
 
-  let countBefore = yield getElementCount(".jsonPanelBox .domTable .memberRow");
-  ok(countBefore == 1, "There must be one row");
+  let countBefore = yield getElementCount(".jsonPanelBox .treeTable .treeRow");
+  ok(countBefore == 3, "There must be three rows");
 
-  yield expandJsonNode(".jsonPanelBox .domTable .memberLabel");
+  let objectCellCount = yield getElementCount(
+    ".jsonPanelBox .treeTable .objectCell");
+  ok(objectCellCount == 1, "There must be one object cell");
 
-  let countAfter = yield getElementCount(".jsonPanelBox .domTable .memberRow");
-  ok(countAfter == 3, "There must be three rows");
+  let objectCellText = yield getElementText(
+    ".jsonPanelBox .treeTable .objectCell");
+  ok(objectCellText == "", "The summary is hidden when object is expanded");
+
+  // Collapsed auto-expanded node.
+  yield clickJsonNode(".jsonPanelBox .treeTable .treeLabel");
+
+  let countAfter = yield getElementCount(".jsonPanelBox .treeTable .treeRow");
+  ok(countAfter == 1, "There must be one row");
 });

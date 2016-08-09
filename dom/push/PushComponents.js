@@ -16,6 +16,14 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 var isParent = Services.appinfo.processType === Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
 
+// The default Push service implementation.
+XPCOMUtils.defineLazyGetter(this, "PushService", function() {
+  const {PushService} = Cu.import("resource://gre/modules/PushService.jsm",
+                                  {});
+  PushService.init();
+  return PushService;
+});
+
 // Observer notification topics for system subscriptions. These are duplicated
 // and used in `PushNotifier.cpp`. They're exposed on `nsIPushService` instead
 // of `nsIPushNotifier` so that JS callers only need to import this service.
@@ -47,6 +55,7 @@ PushServiceBase.prototype = {
     Ci.nsISupportsWeakReference,
     Ci.nsIPushService,
     Ci.nsIPushQuotaManager,
+    Ci.nsIPushErrorReporter,
   ]),
 
   pushTopic: OBSERVER_TOPIC_PUSH,
@@ -74,6 +83,11 @@ PushServiceBase.prototype = {
       this._handleReady();
       return;
     }
+    if (topic === "android-push-service") {
+      // Load PushService immediately.
+      this._handleReady();
+      return;
+    }
   },
 
   _deliverSubscription(request, props) {
@@ -82,6 +96,12 @@ PushServiceBase.prototype = {
       return;
     }
     request.onPushSubscription(Cr.NS_OK, new PushSubscription(props));
+  },
+
+  _deliverSubscriptionError(request, error) {
+    let result = typeof error.result == "number" ?
+                 error.result : Cr.NS_ERROR_FAILURE;
+    request.onPushSubscription(result, null);
   },
 };
 
@@ -99,14 +119,6 @@ PushServiceParent.prototype = Object.create(PushServiceBase.prototype);
 XPCOMUtils.defineLazyServiceGetter(PushServiceParent.prototype, "_mm",
   "@mozilla.org/parentprocessmessagemanager;1", "nsIMessageBroadcaster");
 
-XPCOMUtils.defineLazyGetter(PushServiceParent.prototype, "_service",
-  function() {
-    const {PushService} = Cu.import("resource://gre/modules/PushService.jsm",
-                                    {});
-    PushService.init();
-    return PushService;
-});
-
 Object.assign(PushServiceParent.prototype, {
   _xpcom_factory: XPCOMUtils.generateSingletonFactory(PushServiceParent),
 
@@ -117,17 +129,23 @@ Object.assign(PushServiceParent.prototype, {
     "Push:Clear",
     "Push:NotificationForOriginShown",
     "Push:NotificationForOriginClosed",
+    "Push:ReportError",
   ],
 
   // nsIPushService methods
 
   subscribe(scope, principal, callback) {
-    return this._handleRequest("Push:Register", principal, {
+    this.subscribeWithKey(scope, principal, 0, null, callback);
+  },
+
+  subscribeWithKey(scope, principal, keyLen, key, callback) {
+    this._handleRequest("Push:Register", principal, {
       scope: scope,
+      appServerKey: key,
     }).then(result => {
       this._deliverSubscription(callback, result);
     }, error => {
-      callback.onPushSubscription(Cr.NS_ERROR_FAILURE, null);
+      this._deliverSubscriptionError(callback, error);
     }).catch(Cu.reportError);
   },
 
@@ -147,7 +165,7 @@ Object.assign(PushServiceParent.prototype, {
     }).then(result => {
       this._deliverSubscription(callback, result);
     }, error => {
-      callback.onPushSubscription(Cr.NS_ERROR_FAILURE, null);
+      this._deliverSubscriptionError(callback, error);
     }).catch(Cu.reportError);
   },
 
@@ -164,11 +182,17 @@ Object.assign(PushServiceParent.prototype, {
   // nsIPushQuotaManager methods
 
   notificationForOriginShown(origin) {
-    this._service.notificationForOriginShown(origin);
+    this.service.notificationForOriginShown(origin);
   },
 
   notificationForOriginClosed(origin) {
-    this._service.notificationForOriginClosed(origin);
+    this.service.notificationForOriginClosed(origin);
+  },
+
+  // nsIPushErrorReporter methods
+
+  reportDeliveryError(messageId, reason) {
+    this.service.reportDeliveryError(messageId, reason);
   },
 
   receiveMessage(message) {
@@ -187,6 +211,10 @@ Object.assign(PushServiceParent.prototype, {
     if (!target.assertPermission("push")) {
       return;
     }
+    if (name === "Push:ReportError") {
+      this.reportDeliveryError(data.messageId, data.reason);
+      return;
+    }
     let sender = target.QueryInterface(Ci.nsIMessageSender);
     return this._handleRequest(name, principal, data).then(result => {
       sender.sendAsyncMessage(this._getResponseName(name, "OK"), {
@@ -196,12 +224,13 @@ Object.assign(PushServiceParent.prototype, {
     }, error => {
       sender.sendAsyncMessage(this._getResponseName(name, "KO"), {
         requestID: data.requestID,
+        result: error.result,
       });
     }).catch(Cu.reportError);
   },
 
   _handleReady() {
-    this._service.init();
+    this.service.init();
   },
 
   _toPageRecord(principal, data) {
@@ -228,7 +257,7 @@ Object.assign(PushServiceParent.prototype, {
 
   _handleRequest(name, principal, data) {
     if (name == "Push:Clear") {
-      return this._service.clear(data);
+      return this.service.clear(data);
     }
 
     let pageRecord;
@@ -239,13 +268,13 @@ Object.assign(PushServiceParent.prototype, {
     }
 
     if (name === "Push:Register") {
-      return this._service.register(pageRecord);
+      return this.service.register(pageRecord);
     }
     if (name === "Push:Registration") {
-      return this._service.registration(pageRecord);
+      return this.service.registration(pageRecord);
     }
     if (name === "Push:Unregister") {
-      return this._service.unregister(pageRecord);
+      return this.service.unregister(pageRecord);
     }
 
     return Promise.reject(new Error("Invalid request: unknown name"));
@@ -259,12 +288,22 @@ Object.assign(PushServiceParent.prototype, {
   // Methods used for mocking in tests.
 
   replaceServiceBackend(options) {
-    this._service.changeTestServer(options.serverURI, options);
+    return this.service.changeTestServer(options.serverURI, options);
   },
 
   restoreServiceBackend() {
     var defaultServerURL = Services.prefs.getCharPref("dom.push.serverURL");
-    this._service.changeTestServer(defaultServerURL);
+    return this.service.changeTestServer(defaultServerURL);
+  },
+});
+
+// Used to replace the implementation with a mock.
+Object.defineProperty(PushServiceParent.prototype, "service", {
+  get() {
+    return this._service || PushService;
+  },
+  set(impl) {
+    this._service = impl;
   },
 });
 
@@ -303,9 +342,14 @@ Object.assign(PushServiceContent.prototype, {
   // nsIPushService methods
 
   subscribe(scope, principal, callback) {
+    this.subscribeWithKey(scope, principal, 0, null, callback);
+  },
+
+  subscribeWithKey(scope, principal, keyLen, key, callback) {
     let requestId = this._addRequest(callback);
     this._mm.sendAsyncMessage("Push:Register", {
       scope: scope,
+      appServerKey: key,
       requestID: requestId,
     }, null, principal);
   },
@@ -344,6 +388,15 @@ Object.assign(PushServiceContent.prototype, {
     this._mm.sendAsyncMessage("Push:NotificationForOriginClosed", origin);
   },
 
+  // nsIPushErrorReporter methods
+
+  reportDeliveryError(messageId, reason) {
+    this._mm.sendAsyncMessage("Push:ReportError", {
+      messageId: messageId,
+      reason: reason,
+    });
+  },
+
   _addRequest(data) {
     let id = ++this._requestId;
     this._requests.set(id, data);
@@ -375,7 +428,7 @@ Object.assign(PushServiceContent.prototype, {
 
       case "PushService:Register:KO":
       case "PushService:Registration:KO":
-        request.onPushSubscription(Cr.NS_ERROR_FAILURE, null);
+        this._deliverSubscriptionError(request, data);
         break;
 
       case "PushService:Unregister:OK":
@@ -457,11 +510,15 @@ PushSubscription.prototype = {
    * receive the key size and buffer as out parameters.
    */
   getKey(name, outKeyLen) {
-    if (name === "p256dh") {
-      return this._getRawKey(this._props.p256dhKey, outKeyLen);
-    }
-    if (name === "auth") {
-      return this._getRawKey(this._props.authenticationSecret, outKeyLen);
+    switch (name) {
+      case "p256dh":
+        return this._getRawKey(this._props.p256dhKey, outKeyLen);
+
+      case "auth":
+        return this._getRawKey(this._props.authenticationSecret, outKeyLen);
+
+      case "appServer":
+        return this._getRawKey(this._props.appServerKey, outKeyLen);
     }
     return null;
   },

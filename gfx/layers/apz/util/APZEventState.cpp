@@ -103,6 +103,7 @@ APZEventState::APZEventState(nsIWidget* aWidget,
   , mEndTouchIsClick(false)
   , mTouchEndCancelled(false)
   , mActiveAPZTransforms(0)
+  , mLastTouchIdentifier(0)
 {
   nsresult rv;
   mWidget = do_GetWeakReference(aWidget, &rv);
@@ -225,10 +226,10 @@ APZEventState::ProcessLongTap(const nsCOMPtr<nsIPresShell>& aPresShell,
   // is the most useless thing ever because nsDOMWindowUtils::SendMouseEvent
   // just converts them back to widget format, but that API has many callers,
   // including in JS code, so it's not trivial to change.
+  CSSPoint point = APZCCallbackHelper::ApplyCallbackTransform(aPoint, aGuid);
   bool eventHandled =
       APZCCallbackHelper::DispatchMouseEvent(aPresShell, NS_LITERAL_STRING("contextmenu"),
-                         APZCCallbackHelper::ApplyCallbackTransform(aPoint, aGuid),
-                         2, 1, WidgetModifiersToDOMModifiers(aModifiers), true,
+                         point, 2, 1, WidgetModifiersToDOMModifiers(aModifiers), true,
                          nsIDOMMouseEvent::MOZ_SOURCE_TOUCH);
 
   APZES_LOG("Contextmenu event handled: %d\n", eventHandled);
@@ -238,9 +239,7 @@ APZEventState::ProcessLongTap(const nsCOMPtr<nsIPresShell>& aPresShell,
     mActiveElementManager->ClearActivation();
   } else {
     // If no one handle context menu, fire MOZLONGTAP event
-    LayoutDevicePoint currentPoint =
-        APZCCallbackHelper::ApplyCallbackTransform(aPoint, aGuid)
-      * widget->GetDefaultScale();
+    LayoutDevicePoint currentPoint = point * widget->GetDefaultScale();
     int time = 0;
     nsEventStatus status =
         APZCCallbackHelper::DispatchSynthesizedMouseEvent(eMouseLongTap, time,
@@ -251,6 +250,17 @@ APZEventState::ProcessLongTap(const nsCOMPtr<nsIPresShell>& aPresShell,
   }
 
   mContentReceivedInputBlockCallback(aGuid, aInputBlockId, eventHandled);
+
+  if (eventHandled) {
+    // Also send a touchcancel to content, so that listeners that might be
+    // waiting for a touchend don't trigger.
+    WidgetTouchEvent cancelTouchEvent(true, eTouchCancel, widget.get());
+    cancelTouchEvent.mModifiers = WidgetModifiersToDOMModifiers(aModifiers);
+    LayoutDeviceIntPoint ldPoint = RoundedToInt(point * widget->GetDefaultScale());
+    cancelTouchEvent.mTouches.AppendElement(new mozilla::dom::Touch(mLastTouchIdentifier,
+        ldPoint, LayoutDeviceIntPoint(), 0, 0));
+    APZCCallbackHelper::DispatchWidgetEvent(cancelTouchEvent);
+  }
 }
 
 void
@@ -260,8 +270,9 @@ APZEventState::ProcessTouchEvent(const WidgetTouchEvent& aEvent,
                                  nsEventStatus aApzResponse,
                                  nsEventStatus aContentResponse)
 {
-  if (aEvent.mMessage == eTouchStart && aEvent.touches.Length() > 0) {
-    mActiveElementManager->SetTargetElement(aEvent.touches[0]->GetTarget());
+  if (aEvent.mMessage == eTouchStart && aEvent.mTouches.Length() > 0) {
+    mActiveElementManager->SetTargetElement(aEvent.mTouches[0]->GetTarget());
+    mLastTouchIdentifier = aEvent.mTouches[0]->Identifier();
   }
 
   bool isTouchPrevented = aContentResponse == nsEventStatus_eConsumeNoDefault;
@@ -322,13 +333,13 @@ APZEventState::ProcessTouchEvent(const WidgetTouchEvent& aEvent,
     WidgetTouchEvent cancelEvent(aEvent);
     cancelEvent.mMessage = eTouchCancel;
     cancelEvent.mFlags.mCancelable = false; // mMessage != eTouchCancel;
-    for (uint32_t i = 0; i < cancelEvent.touches.Length(); ++i) {
-      if (mozilla::dom::Touch* touch = cancelEvent.touches[i]) {
+    for (uint32_t i = 0; i < cancelEvent.mTouches.Length(); ++i) {
+      if (mozilla::dom::Touch* touch = cancelEvent.mTouches[i]) {
         touch->convertToPointer = true;
       }
     }
     nsEventStatus status;
-    cancelEvent.widget->DispatchEvent(&cancelEvent, status);
+    cancelEvent.mWidget->DispatchEvent(&cancelEvent, status);
   }
 }
 
@@ -339,8 +350,7 @@ APZEventState::ProcessWheelEvent(const WidgetWheelEvent& aEvent,
 {
   // If this event starts a swipe, indicate that it shouldn't result in a
   // scroll by setting defaultPrevented to true.
-  bool defaultPrevented =
-    aEvent.mFlags.mDefaultPrevented || aEvent.TriggersSwipe();
+  bool defaultPrevented = aEvent.DefaultPrevented() || aEvent.TriggersSwipe();
   mContentReceivedInputBlockCallback(aGuid, aInputBlockId, defaultPrevented);
 }
 

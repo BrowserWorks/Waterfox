@@ -1095,7 +1095,7 @@ nsDisplayTableItem::UpdateForFrameBackground(nsIFrame* aFrame)
   nsStyleContext *bgSC;
   if (!nsCSSRendering::FindBackground(aFrame, &bgSC))
     return;
-  if (!bgSC->StyleBackground()->HasFixedBackground())
+  if (!bgSC->StyleBackground()->HasFixedBackground(aFrame))
     return;
 
   mPartHasFixedBackground = true;
@@ -1242,7 +1242,7 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
     }
 
     // Paint the outset box-shadows for the table frames
-    bool hasBoxShadow = aFrame->StyleBorder()->mBoxShadow != nullptr;
+    bool hasBoxShadow = aFrame->StyleEffects()->mBoxShadow != nullptr;
     if (hasBoxShadow) {
       lists->BorderBackground()->AppendNewToTop(
         new (aBuilder) nsDisplayBoxShadowOuter(aBuilder, aFrame));

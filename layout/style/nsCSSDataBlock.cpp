@@ -14,7 +14,6 @@
 #include "CSSVariableImageTable.h"
 #include "mozilla/css/Declaration.h"
 #include "mozilla/css/ImageLoader.h"
-#include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/WritingModes.h"
 #include "nsIDocument.h"
@@ -39,50 +38,6 @@ MoveValue(nsCSSValue* aSource, nsCSSValue* aDest)
   memcpy(aDest, aSource, sizeof(nsCSSValue));
   new (aSource) nsCSSValue();
   return changed;
-}
-
-/**
- * This function maps "-webkit-box-orient" values to "flex-direction" values,
- * for a given writing-mode (taken from aRuleData).
- *
- * Specifically:
- *  - If aBoxOrientVal is an enumerated value (representing a physical axis),
- * then we'll map it to the appropriate logical "flex-direction" value, using
- * the writing mode.  The converted value will be emplace()'d into in the
- * outparam aConvertedValStorage, and we'll return a pointer to that value.
- *  - Otherwise (e.g. if we have "inherit" or "initial"), we won't do any
- * mapping, and we'll directly return the passed-in aBoxOrientVal.
- *
- * Either way, the idea is that our caller can treat the returned value as if
- * it were a value for "flex-direction".
- */
-static const nsCSSValue*
-ConvertBoxOrientToFlexDirection(const nsCSSValue* aBoxOrientVal,
-                                const nsRuleData* aRuleData,
-                                Maybe<nsCSSValue>& aConvertedValStorage)
-{
-  MOZ_ASSERT(aBoxOrientVal, "expecting a non-null value to convert");
-  MOZ_ASSERT(aConvertedValStorage.isNothing(),
-             "expecting outparam for converted-value to be initially empty");
-
-  if (aBoxOrientVal->GetUnit() != eCSSUnit_Enumerated) {
-    // We probably have "inherit" or "initial" -- just return that & have the
-    // caller directly use it as a "flex-direction" value.
-    return aBoxOrientVal;
-  }
-
-  // OK, we have an enumerated value -- "horizontal" or "vertical".
-
-  WritingMode wm(aRuleData->mStyleContext);
-  // In a horizontal writing-mode, "horizontal" maps to "row".
-  // In a vertical writing-mode, "horizontal" maps to "column".
-  bool isRow = wm.IsVertical() !=
-    (aBoxOrientVal->GetIntValue() == NS_STYLE_BOX_ORIENT_HORIZONTAL);
-
-  aConvertedValStorage.emplace(isRow ? NS_STYLE_FLEX_DIRECTION_ROW :
-                                       NS_STYLE_FLEX_DIRECTION_COLUMN,
-                               eCSSUnit_Enumerated);
-  return aConvertedValStorage.ptr();
 }
 
 static bool
@@ -170,31 +125,14 @@ ShouldStartImageLoads(nsRuleData *aRuleData, nsCSSProperty aProperty)
 }
 
 static void
-MapSinglePropertyInto(nsCSSProperty aSrcProp,
+MapSinglePropertyInto(nsCSSProperty aTargetProp,
                       const nsCSSValue* aSrcValue,
-                      nsCSSProperty aTargetProp,
                       nsCSSValue* aTargetValue,
                       nsRuleData* aRuleData)
 {
   MOZ_ASSERT(!nsCSSProps::PropHasFlags(aTargetProp, CSS_PROPERTY_LOGICAL),
              "Can't map into a logical property");
-  MOZ_ASSERT(aSrcProp == aTargetProp ||
-             nsCSSProps::PropHasFlags(aSrcProp, CSS_PROPERTY_LOGICAL),
-             "Source & target property must be the same, except when we're "
-             "doing a logical-to-physical property mapping");
   MOZ_ASSERT(aSrcValue->GetUnit() != eCSSUnit_Null, "oops");
-
-  // Handle logical properties that have custom value-mapping behavior:
-  Maybe<nsCSSValue> convertedVal; // storage for converted value, if needed
-  bool hasCustomValMapping =
-      nsCSSProps::PropHasFlags(aSrcProp,
-                               CSS_PROPERTY_LOGICAL_SINGLE_CUSTOM_VALMAPPING);
-  if (hasCustomValMapping) {
-    if (aSrcProp == eCSSProperty_webkit_box_orient) {
-      aSrcValue = ConvertBoxOrientToFlexDirection(aSrcValue, aRuleData,
-                                                  convertedVal);
-    }
-  }
 
   // Although aTargetValue is the nsCSSValue we are going to write into,
   // we also look at its value before writing into it.  This is done
@@ -234,20 +172,13 @@ MapSinglePropertyInto(nsCSSProperty aSrcProp,
 }
 
 /**
- * If aProperty is a logical property, returns the equivalent physical
+ * If aProperty is a logical property, converts it to the equivalent physical
  * property based on writing mode information obtained from aRuleData's
  * style context.
  */
-static inline nsCSSProperty
-EnsurePhysicalProperty(nsCSSProperty aProperty, nsRuleData* aRuleData)
+static inline void
+EnsurePhysicalProperty(nsCSSProperty& aProperty, nsRuleData* aRuleData)
 {
-  if (!nsCSSProps::PropHasFlags(aProperty, CSS_PROPERTY_LOGICAL)) {
-    return aProperty;
-  }
-
-  bool isSingleProperty =
-      nsCSSProps::PropHasFlags(aProperty,
-                               CSS_PROPERTY_LOGICAL_SINGLE_CUSTOM_VALMAPPING);
   bool isAxisProperty =
     nsCSSProps::PropHasFlags(aProperty, CSS_PROPERTY_LOGICAL_AXIS);
   bool isBlock =
@@ -255,9 +186,7 @@ EnsurePhysicalProperty(nsCSSProperty aProperty, nsRuleData* aRuleData)
 
   int index;
 
-  if (isSingleProperty) {
-    index = 0; // We always map to the same physical property.
-  } else if (isAxisProperty) {
+  if (isAxisProperty) {
     LogicalAxis logicalAxis = isBlock ? eLogicalAxisBlock : eLogicalAxisInline;
     uint8_t wm = aRuleData->mStyleContext->StyleVisibility()->mWritingMode;
     PhysicalAxis axis =
@@ -295,19 +224,43 @@ EnsurePhysicalProperty(nsCSSProperty aProperty, nsRuleData* aRuleData)
   }
 
   const nsCSSProperty* props = nsCSSProps::LogicalGroup(aProperty);
+  size_t len = isAxisProperty ? 2 : 4;
 #ifdef DEBUG
-  {
-    // Table-length is 1 for single prop, 2 for axis prop, 4 for block prop.
-    size_t len = isSingleProperty ? 1 : (isAxisProperty ? 2 : 4);
     for (size_t i = 0; i < len; i++) {
-      MOZ_ASSERT(props[i] != eCSSProperty_UNKNOWN,
-                 "unexpected logical group length");
-    }
-    MOZ_ASSERT(props[len] == eCSSProperty_UNKNOWN,
+    MOZ_ASSERT(props[i] != eCSSProperty_UNKNOWN,
                "unexpected logical group length");
   }
+  MOZ_ASSERT(props[len] == eCSSProperty_UNKNOWN,
+             "unexpected logical group length");
 #endif
-  return props[index];
+
+  for (size_t i = 0; i < len; i++) {
+    if (aRuleData->ValueFor(props[i])->GetUnit() == eCSSUnit_Null) {
+      // A declaration of one of the logical properties in this logical
+      // group (but maybe not aProperty) would be the winning
+      // declaration in the cascade.  This means that it's reasonably
+      // likely that this logical property could be the winning
+      // declaration in the cascade for some values of writing-mode,
+      // direction, and text-orientation.  (It doesn't mean that for
+      // sure, though.  For example, if this is a block-start logical
+      // property, and all but the bottom physical property were set.
+      // But the common case we want to hit here is logical declarations
+      // that are completely overridden by a shorthand.)
+      //
+      // If this logical property could be the winning declaration in
+      // the cascade for some values of writing-mode, direction, and
+      // text-orientation, then we have to fault the resulting style
+      // struct out of the rule tree.  We can't cache anything on the
+      // rule tree if it depends on data from the style context, since
+      // data cached in the rule tree could be used with a style context
+      // with a different value of the depended-upon data.
+      uint8_t wm = WritingMode(aRuleData->mStyleContext).GetBits();
+      aRuleData->mConditions.SetWritingModeDependency(wm);
+      break;
+    }
+  }
+
+  aProperty = props[index];
 }
 
 void
@@ -327,16 +280,10 @@ nsCSSCompressedDataBlock::MapRuleInfoInto(nsRuleData *aRuleData) const
     nsCSSProperty iProp = PropertyAtIndex(i);
     if (nsCachedStyleData::GetBitForSID(nsCSSProps::kSIDTable[iProp]) &
         aRuleData->mSIDs) {
-      nsCSSProperty physicalProp = EnsurePhysicalProperty(iProp,
-                                                          aRuleData);
-      if (physicalProp != iProp) {
-        // We can't cache anything on the rule tree if we use any data from
-        // the style context, since data cached in the rule tree could be
-        // used with a style context with a different value.
-        uint8_t wm = WritingMode(aRuleData->mStyleContext).GetBits();
-        aRuleData->mConditions.SetWritingModeDependency(wm);
+      if (nsCSSProps::PropHasFlags(iProp, CSS_PROPERTY_LOGICAL)) {
+        EnsurePhysicalProperty(iProp, aRuleData);
       }
-      nsCSSValue* target = aRuleData->ValueFor(physicalProp);
+      nsCSSValue* target = aRuleData->ValueFor(iProp);
       if (target->GetUnit() == eCSSUnit_Null) {
         const nsCSSValue *val = ValueAtIndex(i);
         // In order for variable resolution to have the right information
@@ -348,8 +295,7 @@ nsCSSCompressedDataBlock::MapRuleInfoInto(nsRuleData *aRuleData) const
         if (val->GetUnit() == eCSSUnit_TokenStream) {
           val->GetTokenStreamValue()->mLevel = aRuleData->mLevel;
         }
-        MapSinglePropertyInto(iProp, val, physicalProp, target,
-                              aRuleData);
+        MapSinglePropertyInto(iProp, val, target, aRuleData);
       }
     }
   }
@@ -791,10 +737,9 @@ nsCSSExpandedDataBlock::MapRuleInfoInto(nsCSSProperty aPropID,
   const nsCSSValue* src = PropertyAt(aPropID);
   MOZ_ASSERT(src->GetUnit() != eCSSUnit_Null);
 
-  nsCSSProperty physicalProp = EnsurePhysicalProperty(aPropID, aRuleData);
-  if (physicalProp != aPropID) {
-    uint8_t wm = WritingMode(aRuleData->mStyleContext).GetBits();
-    aRuleData->mConditions.SetWritingModeDependency(wm);
+  nsCSSProperty physicalProp = aPropID;
+  if (nsCSSProps::PropHasFlags(aPropID, CSS_PROPERTY_LOGICAL)) {
+    EnsurePhysicalProperty(physicalProp, aRuleData);
   }
 
   nsCSSValue* dest = aRuleData->ValueFor(physicalProp);
@@ -802,7 +747,7 @@ nsCSSExpandedDataBlock::MapRuleInfoInto(nsCSSProperty aPropID,
              dest->GetTokenStreamValue()->mPropertyID == aPropID);
 
   CSSVariableImageTable::ReplaceAll(aRuleData->mStyleContext, aPropID, [=] {
-    MapSinglePropertyInto(aPropID, src, physicalProp, dest, aRuleData);
+    MapSinglePropertyInto(physicalProp, src, dest, aRuleData);
   });
 }
 

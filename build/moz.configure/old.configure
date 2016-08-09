@@ -1,0 +1,465 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+@imports('codecs')
+@imports('sys')
+def encoded_open(path, mode):
+    encoding = 'mbcs' if sys.platform == 'win32' else 'utf-8'
+    return codecs.open(path, mode, encoding)
+
+
+option(env='AUTOCONF', nargs=1, help='Path to autoconf 2.13')
+
+@depends(mozconfig, 'AUTOCONF')
+@checking('for autoconf')
+@imports('re')
+def autoconf(mozconfig, autoconf):
+    mozconfig_autoconf = None
+    if mozconfig['path']:
+        make_extra = mozconfig['make_extra']
+        if make_extra:
+            for assignment in make_extra:
+                m = re.match('(?:export\s+)?AUTOCONF\s*:?=\s*(.+)$',
+                             assignment)
+                if m:
+                    mozconfig_autoconf = m.group(1)
+
+    autoconf = autoconf[0] if autoconf else None
+
+    for ac in (mozconfig_autoconf, autoconf, 'autoconf-2.13', 'autoconf2.13',
+               'autoconf213'):
+        if ac:
+            autoconf = find_program(ac)
+            if autoconf:
+                break
+    else:
+        fink = find_program('fink')
+        if fink:
+            autoconf = os.path.normpath(os.path.join(
+                fink, '..', '..', 'lib', 'autoconf2.13', 'bin', 'autoconf'))
+        else:
+            brew = find_program('brew')
+            if brew:
+                autoconf = os.path.normpath(os.path.join(
+                    brew, '..', '..', 'Cellar', 'autoconf213', '2.13', 'bin',
+                    'autoconf213'))
+
+    if not autoconf:
+        die('Could not find autoconf 2.13')
+
+    if not os.path.exists(autoconf):
+        die('Could not find autoconf 2.13 at %s', autoconf)
+
+    return autoconf
+
+set_config('AUTOCONF', autoconf)
+
+
+@depends('OLD_CONFIGURE', mozconfig, autoconf, check_build_environment, shell,
+         old_configure_assignments, build_project)
+@imports(_from='__builtin__', _import='open')
+@imports(_from='__builtin__', _import='print')
+@imports('glob')
+@imports('itertools')
+@imports('subprocess')
+# Import getmtime without overwriting the sandbox os.path.
+@imports(_from='os.path', _import='getmtime')
+@imports(_from='mozbuild.shellutil', _import='quote')
+def prepare_configure(old_configure, mozconfig, autoconf, build_env, shell,
+                      old_configure_assignments, build_project):
+    # os.path.abspath in the sandbox will ensure forward slashes on Windows,
+    # which is actually necessary because this path actually ends up literally
+    # as $0, and backslashes there breaks autoconf's detection of the source
+    # directory.
+    old_configure = os.path.abspath(old_configure[0])
+    if build_project == 'js':
+        old_configure_dir = os.path.dirname(old_configure)
+        if not old_configure_dir.endswith('/js/src'):
+            old_configure = os.path.join(old_configure_dir, 'js', 'src',
+                                         os.path.basename(old_configure))
+
+    refresh = True
+    if os.path.exists(old_configure):
+        mtime = getmtime(old_configure)
+        aclocal = os.path.join(build_env.topsrcdir, 'build', 'autoconf',
+                               '*.m4')
+        for input in itertools.chain(
+            (old_configure + '.in',
+             os.path.join(os.path.dirname(old_configure), 'aclocal.m4')),
+            glob.iglob(aclocal),
+        ):
+            if getmtime(input) > mtime:
+                break
+        else:
+            refresh = False
+
+    if refresh:
+        log.info('Refreshing %s with %s', old_configure, autoconf)
+        script = subprocess.check_output([
+            shell, autoconf,
+            '--localdir=%s' % os.path.dirname(old_configure),
+            old_configure + '.in'])
+
+        # Make old-configure append to config.log, where we put our own log.
+        # This could be done with a m4 macro, but it's way easier this way
+        script = script.replace('>./config.log', '>>./config.log')
+
+        with open(old_configure, 'wb') as fh:
+            fh.write(script)
+
+    cmd = [shell, old_configure]
+    with encoded_open('old-configure.vars', 'w') as out:
+        log.debug('Injecting the following to old-configure:')
+        def inject(command):
+            print(command, file=out)
+            log.debug('| %s', command)
+
+        if mozconfig['path']:
+            for key, value in mozconfig['env']['added'].items():
+                inject("export %s=%s" % (key, quote(value)))
+            for key, (old, value) in mozconfig['env']['modified'].items():
+                inject("export %s=%s" % (key, quote(value)))
+            for key, value in mozconfig['vars']['added'].items():
+                inject("%s=%s" % (key, quote(value)))
+            for key, (old, value) in mozconfig['vars']['modified'].items():
+                inject("%s=%s" % (key, quote(value)))
+            for t in ('env', 'vars'):
+                for key in mozconfig[t]['removed'].keys():
+                    inject("unset %s" % key)
+
+        # Autoconf is special, because it might be passed from
+        # mozconfig['make_extra'], which we don't pass automatically above.
+        inject('export AUTOCONF=%s' % quote(autoconf))
+
+        for assignment in old_configure_assignments:
+            inject(assignment)
+
+    return cmd
+
+
+@template
+def old_configure_options(*options):
+    for opt in options:
+        option(opt, nargs='*', help='Help missing for old configure options')
+
+    @depends('--help')
+    def all_options(help):
+        return list(options)
+
+    return depends(prepare_configure, extra_old_configure_args, all_options,
+                   *options)
+
+
+@old_configure_options(
+    '--cache-file',
+    '--enable-accessibility',
+    '--enable-address-sanitizer',
+    '--enable-alsa',
+    '--enable-android-omx',
+    '--enable-android-resource-constrained',
+    '--enable-approximate-location',
+    '--enable-b2g-bt',
+    '--enable-b2g-camera',
+    '--enable-b2g-ril',
+    '--enable-bundled-fonts',
+    '--enable-clang-plugin',
+    '--enable-content-sandbox',
+    '--enable-cookies',
+    '--enable-cpp-rtti',
+    '--enable-crashreporter',
+    '--enable-ctypes',
+    '--enable-dbm',
+    '--enable-dbus',
+    '--enable-debug',
+    '--enable-debug-js-modules',
+    '--enable-debug-symbols',
+    '--enable-directshow',
+    '--enable-dtrace',
+    '--enable-dump-painting',
+    '--enable-elf-hack',
+    '--enable-extensions',
+    '--enable-faststripe',
+    '--enable-feeds',
+    '--enable-gamepad',
+    '--enable-gc-trace',
+    '--enable-gconf',
+    '--enable-gczeal',
+    '--enable-gio',
+    '--enable-gnomeui',
+    '--enable-gold',
+    '--enable-gps-debug',
+    '--enable-hardware-aec-ns',
+    '--enable-icf',
+    '--enable-install-strip',
+    '--enable-ion',
+    '--enable-ios-target',
+    '--enable-ipdl-tests',
+    '--enable-jitspew',
+    '--enable-libjpeg-turbo',
+    '--enable-libproxy',
+    '--enable-llvm-hacks',
+    '--enable-logrefcnt',
+    '--enable-maintenance-service',
+    '--enable-media-navigator',
+    '--enable-memory-sanitizer',
+    '--enable-mobile-optimize',
+    '--enable-more-deterministic',
+    '--enable-mozril-geoloc',
+    '--enable-necko-protocols',
+    '--enable-necko-wifi',
+    '--enable-negotiateauth',
+    '--enable-nfc',
+    '--enable-nspr-build',
+    '--enable-official-branding',
+    '--enable-omx-plugin',
+    '--enable-oom-breakpoint',
+    '--enable-optimize',
+    '--enable-parental-controls',
+    '--enable-perf',
+    '--enable-permissions',
+    '--enable-pie',
+    '--enable-png-arm-neon-support',
+    '--enable-posix-nspr-emulation',
+    '--enable-pref-extensions',
+    '--enable-printing',
+    '--enable-pulseaudio',
+    '--enable-raw',
+    '--enable-readline',
+    '--enable-reflow-perf',
+    '--enable-release',
+    '--enable-require-all-d3dc-versions',
+    '--enable-rust',
+    '--enable-safe-browsing',
+    '--enable-sandbox',
+    '--enable-signmar',
+    '--enable-simulator',
+    '--enable-skia',
+    '--enable-skia-gpu',
+    '--enable-small-chunk-size',
+    '--enable-startup-notification',
+    '--enable-startupcache',
+    '--enable-stdcxx-compat',
+    '--enable-strip',
+    '--enable-synth-pico',
+    '--enable-synth-speechd',
+    '--enable-system-cairo',
+    '--enable-system-extension-dirs',
+    '--enable-system-ffi',
+    '--enable-system-hunspell',
+    '--enable-system-pixman',
+    '--enable-system-sqlite',
+    '--enable-tasktracer',
+    '--enable-tests',
+    '--enable-thread-sanitizer',
+    '--enable-trace-logging',
+    '--enable-tree-freetype',
+    '--enable-ui-locale',
+    '--enable-universalchardet',
+    '--enable-update-channel',
+    '--enable-update-packaging',
+    '--enable-updater',
+    '--enable-url-classifier',
+    '--enable-valgrind',
+    '--enable-verify-mar',
+    '--enable-warnings-as-errors',
+    '--enable-webapp-runtime',
+    '--enable-webrtc',
+    '--enable-websms-backend',
+    '--enable-webspeech',
+    '--enable-webspeechtestbackend',
+    '--enable-xul',
+    '--enable-zipwriter',
+    '--no-create',
+    '--prefix',
+    '--with-adjust-sdk-keyfile',
+    '--with-android-cxx-stl',
+    '--with-android-distribution-directory',
+    '--with-android-max-sdk',
+    '--with-android-min-sdk',
+    '--with-android-sdk',
+    '--with-android-version',
+    '--with-app-basename',
+    '--with-app-name',
+    '--with-arch',
+    '--with-bing-api-keyfile',
+    '--with-branding',
+    '--with-crashreporter-enable-percent',
+    '--with-cross-lib',
+    '--with-debug-label',
+    '--with-default-mozilla-five-home',
+    '--with-distribution-id',
+    '--with-doc-include-dirs',
+    '--with-doc-input-dirs',
+    '--with-doc-output-dir',
+    '--with-float-abi',
+    '--with-fpu',
+    '--with-google-api-keyfile',
+    '--with-google-oauth-api-keyfile',
+    '--with-intl-api',
+    '--with-ios-sdk',
+    '--with-java-bin-path',
+    '--with-jitreport-granularity',
+    '--with-linux-headers',
+    '--with-macbundlename-prefix',
+    '--with-macos-private-frameworks',
+    '--with-macos-sdk',
+    '--with-mozilla-api-keyfile',
+    '--with-nspr-cflags',
+    '--with-nspr-exec-prefix',
+    '--with-nspr-libs',
+    '--with-nspr-prefix',
+    '--with-nss-exec-prefix',
+    '--with-nss-prefix',
+    '--with-pthreads',
+    '--with-qemu-exe',
+    '--with-qtdir',
+    '--with-servo',
+    '--with-sixgill',
+    '--with-soft-float',
+    '--with-system-bz2',
+    '--with-system-icu',
+    '--with-system-jpeg',
+    '--with-system-libevent',
+    '--with-system-libvpx',
+    '--with-system-nspr',
+    '--with-system-nss',
+    '--with-system-png',
+    '--with-system-zlib',
+    '--with-thumb',
+    '--with-thumb-interwork',
+    '--with-unify-dist',
+    '--with-user-appdir',
+    '--with-windows-version',
+    '--x-includes',
+    '--x-libraries',
+
+    # Below are the configure flags used by comm-central.
+    '--enable-ldap',
+    '--enable-mapi',
+    '--enable-calendar',
+    '--enable-incomplete-external-linkage',
+)
+@imports(_from='__builtin__', _import='compile')
+@imports(_from='__builtin__', _import='open')
+@imports('logging')
+@imports('os')
+@imports('subprocess')
+@imports('sys')
+@imports(_from='mozbuild.shellutil', _import='quote')
+def old_configure(prepare_configure, extra_old_configure_args, all_options,
+                  *options):
+    cmd = prepare_configure
+
+    # old-configure only supports the options listed in @old_configure_options
+    # so we don't need to pass it every single option we've been passed. Only
+    # the ones that are not supported by python configure need to.
+    cmd += [
+        value.format(name)
+        for name, value in zip(all_options, options)
+        if value.origin != 'default'
+    ]
+
+    # We also pass it the options from js/moz.configure so that it can pass
+    # them down to js/src/configure. Note this list is empty when running
+    # js/src/configure, in which case we don't need to pass those options
+    # to old-configure since old-configure doesn't handle them anyways.
+    if extra_old_configure_args:
+        cmd += extra_old_configure_args
+
+    # For debugging purpose, in case it's not what we'd expect.
+    log.debug('Running %s', quote(*cmd))
+
+    # Our logging goes to config.log, the same file old.configure uses.
+    # We can't share the handle on the file, so close it. We assume nothing
+    # beyond this point is going to be interesting to log to config.log from
+    # our end, so we don't make the effort to recreate a logging.FileHandler.
+    logger = logging.getLogger('moz.configure')
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            handler.close()
+            logger.removeHandler(handler)
+
+    log_size = os.path.getsize('config.log')
+
+    ret = subprocess.call(cmd)
+    if ret:
+        with log.queue_debug():
+            with encoded_open('config.log', 'r') as fh:
+                fh.seek(log_size)
+                for line in fh:
+                    log.debug(line.rstrip())
+            log.error('old-configure failed')
+        sys.exit(ret)
+
+    raw_config = {}
+    with encoded_open('config.data', 'r') as fh:
+        code = compile(fh.read(), 'config.data', 'exec')
+        # Every variation of the exec() function I tried led to:
+        # SyntaxError: unqualified exec is not allowed in function 'main' it
+        # contains a nested function with free variables
+        exec code in raw_config
+
+    # Ensure all the flags known to old-configure appear in the
+    # @old_configure_options above.
+    all_options = set(all_options)
+    for flag in raw_config['flags']:
+        if flag not in all_options:
+            die('Missing option in `@old_configure_options` in %s: %s',
+                __file__, flag)
+
+    # If the code execution above fails, we want to keep the file around for
+    # debugging.
+    os.remove('config.data')
+    return raw_config
+
+
+# set_config is only available in the global namespace, not directly in
+# @depends functions, but we do need to enumerate the result of
+# old_configure, so we cheat.
+@imports('__sandbox__')
+def set_old_configure_config(name, value):
+    __sandbox__.set_config_impl(name, value)
+
+# Same as set_old_configure_config, but for set_define.
+@imports('__sandbox__')
+def set_old_configure_define(name, value):
+    __sandbox__.set_define_impl(name, value)
+
+
+@depends(old_configure)
+@imports('types')
+def post_old_configure(raw_config):
+    for k, v in raw_config['substs']:
+        set_old_configure_config(
+            k[1:-1], v[1:-1] if isinstance(v, types.StringTypes) else v)
+
+    for k, v in dict(raw_config['defines']).iteritems():
+        set_old_configure_define(k[1:-1], v[1:-1])
+
+    set_old_configure_config('non_global_defines',
+                             raw_config['non_global_defines'])
+
+
+# Assuming no other option is declared after this function, handle the
+# env options that were injected by mozconfig_options by creating dummy
+# Option instances and having the sandbox's CommandLineHelper handle
+# them. We only do so for options that haven't been declared so far,
+# which should be a proxy for the options that old-configure handles
+# and that we don't know anything about.
+@depends('--help')
+@imports('__sandbox__')
+@imports(_from='mozbuild.configure.options', _import='Option')
+def remaining_mozconfig_options(_):
+    helper = __sandbox__._helper
+    for arg in helper:
+        if helper._origins[arg] != 'mozconfig':
+            continue
+        name = arg.split('=', 1)[0]
+        if name.isupper() and name not in __sandbox__._options:
+            option = Option(env=name, nargs='*', help=name)
+            helper.handle(option)
+
+# Please do not add anything after remaining_mozconfig_options()

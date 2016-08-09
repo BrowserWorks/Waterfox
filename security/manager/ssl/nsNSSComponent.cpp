@@ -8,11 +8,15 @@
 
 #include "ExtendedValidation.h"
 #include "NSSCertDBTrustDomain.h"
+#include "ScopedNSSTypes.h"
 #include "SharedSSLState.h"
+#include "cert.h"
+#include "certdb.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/PublicSSL.h"
 #include "mozilla/Services.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/SyncRunnable.h"
 #include "mozilla/Telemetry.h"
 #include "nsAppDirectoryServiceDefs.h"
 #include "nsCRT.h"
@@ -30,6 +34,7 @@
 #include "nsITokenPasswordDialogs.h"
 #include "nsIWindowWatcher.h"
 #include "nsIXULRuntime.h"
+#include "nsNSSCertificateDB.h"
 #include "nsNSSHelper.h"
 #include "nsNSSShutDown.h"
 #include "nsServiceManagerUtils.h"
@@ -49,13 +54,20 @@
 #endif
 
 #ifdef XP_WIN
+#include "mozilla/WindowsVersion.h"
 #include "nsILocalFileWin.h"
+
+#include "windows.h" // this needs to be before the following includes
+#include "lmcons.h"
+#include "sddl.h"
+#include "wincrypt.h"
+#include "nsIWindowsRegKey.h"
 #endif
 
 using namespace mozilla;
 using namespace mozilla::psm;
 
-PRLogModuleInfo* gPIPNSSLog = nullptr;
+LazyLogModule gPIPNSSLog("pipnss");
 
 int nsNSSComponent::mInstanceCount = 0;
 
@@ -73,8 +85,30 @@ bool EnsureNSSInitializedChromeOrContent()
     return true;
   }
 
+  // If this is a content process and not the main thread (i.e. probably a
+  // worker) then forward this call to the main thread.
   if (!NS_IsMainThread()) {
-    return false;
+    static Atomic<bool> initialized(false);
+
+    // Cache the result to dispatch to the main thread only once per worker.
+    if (initialized) {
+      return true;
+    }
+
+    nsCOMPtr<nsIThread> mainThread;
+    nsresult rv = NS_GetMainThread(getter_AddRefs(mainThread));
+    if (NS_FAILED(rv)) {
+      return false;
+    }
+
+    // Forward to the main thread synchronously.
+    mozilla::SyncRunnable::DispatchToThread(mainThread,
+      new SyncRunnable(NS_NewRunnableFunction([]() {
+        initialized = EnsureNSSInitializedChromeOrContent();
+      }))
+    );
+
+    return initialized;
   }
 
   if (NSS_IsInitialized()) {
@@ -221,13 +255,10 @@ nsNSSComponent::nsNSSComponent()
 #endif
    mCertVerificationThread(nullptr)
 {
-  if (!gPIPNSSLog)
-    gPIPNSSLog = PR_NewLogModule("pipnss");
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("nsNSSComponent::ctor\n"));
 
   NS_ASSERTION( (0 == mInstanceCount), "nsNSSComponent is a singleton, but instantiated multiple times!");
   ++mInstanceCount;
-  mShutdownObjectList = nsNSSShutDownList::construct();
 }
 
 void
@@ -271,7 +302,7 @@ nsNSSComponent::~nsNSSComponent()
   SharedSSLState::GlobalCleanup();
   RememberCertErrorsTable::Cleanup();
   --mInstanceCount;
-  delete mShutdownObjectList;
+  nsNSSShutDownList::shutdown();
 
   // We are being freed, drop the haveLoaded flag to re-enable
   // potential nss initialization later.
@@ -395,6 +426,432 @@ nsNSSComponent::ShutdownSmartCardThreads()
   mThreadList = nullptr;
 }
 #endif // MOZ_NO_SMART_CARDS
+
+#ifdef XP_WIN
+static bool
+GetUserSid(nsAString& sidString)
+{
+  // UNLEN is the maximum user name length (see Lmcons.h). +1 for the null
+  // terminator.
+  WCHAR lpAccountName[UNLEN + 1];
+  DWORD lcAccountName = sizeof(lpAccountName) / sizeof(lpAccountName[0]);
+  BOOL success = GetUserName(lpAccountName, &lcAccountName);
+  if (!success) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("GetUserName failed"));
+    return false;
+  }
+  char sid_buffer[SECURITY_MAX_SID_SIZE];
+  SID* sid = reinterpret_cast<SID*>(sid_buffer);
+  DWORD cbSid = MOZ_ARRAY_LENGTH(sid_buffer);
+  SID_NAME_USE eUse;
+  // There doesn't appear to be a defined maximum length for the domain name
+  // here. To deal with this, we start with a reasonable buffer length and
+  // see if that works. If it fails and the error indicates insufficient length,
+  // we use the indicated required length and try again.
+  DWORD cchReferencedDomainName = 128;
+  auto ReferencedDomainName(MakeUnique<WCHAR[]>(cchReferencedDomainName));
+  success = LookupAccountName(nullptr, lpAccountName, sid, &cbSid,
+                              ReferencedDomainName.get(),
+                              &cchReferencedDomainName, &eUse);
+  if (!success && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("LookupAccountName failed"));
+    return false;
+  }
+  if (!success) {
+    ReferencedDomainName = MakeUnique<WCHAR[]>(cchReferencedDomainName);
+    success = LookupAccountName(nullptr, lpAccountName, sid, &cbSid,
+                                ReferencedDomainName.get(),
+                                &cchReferencedDomainName, &eUse);
+  }
+  if (!success) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("LookupAccountName failed"));
+    return false;
+  }
+  LPTSTR StringSid;
+  success = ConvertSidToStringSid(sid, &StringSid);
+  if (!success) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("ConvertSidToStringSid failed"));
+    return false;
+  }
+  sidString.Assign(StringSid);
+  LocalFree(StringSid);
+  return true;
+}
+
+// This is a specialized helper function to read the value of a registry key
+// that might not be present. If it is present, returns (via the output
+// parameter) its value. Otherwise, returns the given default value.
+// This function handles one level of nesting. That is, if the desired value
+// is actually in a direct child of the given registry key (where the child
+// and/or the value being sought may not actually be present), this function
+// will handle that. In the normal case, though, optionalChildName will be
+// null.
+static nsresult
+ReadRegKeyValueWithDefault(nsCOMPtr<nsIWindowsRegKey> regKey,
+                           uint32_t flags,
+                           wchar_t* optionalChildName,
+                           wchar_t* valueName,
+                           uint32_t defaultValue,
+                           uint32_t& valueOut)
+{
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("ReadRegKeyValueWithDefault"));
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+          ("attempting to read '%S%s%S' with default '%u'",
+           optionalChildName ? optionalChildName : L"",
+           optionalChildName ? "\\" : "", valueName, defaultValue));
+  if (optionalChildName) {
+    nsDependentString childNameString(optionalChildName);
+    bool hasChild;
+    nsresult rv = regKey->HasChild(childNameString, &hasChild);
+    if (NS_FAILED(rv)) {
+      MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+              ("failed to determine if child key is present"));
+      return rv;
+    }
+    if (!hasChild) {
+      valueOut = defaultValue;
+      return NS_OK;
+    }
+    nsCOMPtr<nsIWindowsRegKey> childRegKey;
+    rv = regKey->OpenChild(childNameString, flags,
+                           getter_AddRefs(childRegKey));
+    if (NS_FAILED(rv)) {
+      MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("couldn't open child key"));
+      return rv;
+    }
+    return ReadRegKeyValueWithDefault(childRegKey, flags, nullptr, valueName,
+                                      defaultValue, valueOut);
+  }
+  nsDependentString valueNameString(valueName);
+  bool hasValue;
+  nsresult rv = regKey->HasValue(valueNameString, &hasValue);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("failed to determine if value is present"));
+    return rv;
+  }
+  if (!hasValue) {
+    valueOut = defaultValue;
+    return NS_OK;
+  }
+  rv = regKey->ReadIntValue(valueNameString, &valueOut);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("failed to read value"));
+    return rv;
+  }
+  return NS_OK;
+}
+
+static nsresult
+AccountHasFamilySafetyEnabled(bool& enabled)
+{
+  enabled = false;
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("AccountHasFamilySafetyEnabled?"));
+  nsCOMPtr<nsIWindowsRegKey> parentalControlsKey(
+    do_CreateInstance("@mozilla.org/windows-registry-key;1"));
+  if (!parentalControlsKey) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("couldn't create nsIWindowsRegKey"));
+    return NS_ERROR_FAILURE;
+  }
+  uint32_t flags = nsIWindowsRegKey::ACCESS_READ | nsIWindowsRegKey::WOW64_64;
+  NS_NAMED_LITERAL_STRING(familySafetyPath,
+    "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Parental Controls");
+  nsresult rv = parentalControlsKey->Open(
+    nsIWindowsRegKey::ROOT_KEY_LOCAL_MACHINE, familySafetyPath, flags);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("couldn't open parentalControlsKey"));
+    return rv;
+  }
+  NS_NAMED_LITERAL_STRING(usersString, "Users");
+  bool hasUsers;
+  rv = parentalControlsKey->HasChild(usersString, &hasUsers);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("HasChild(Users) failed"));
+    return rv;
+  }
+  if (!hasUsers) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("Users subkey not present - Parental Controls not enabled"));
+    return NS_OK;
+  }
+  nsCOMPtr<nsIWindowsRegKey> usersKey;
+  rv = parentalControlsKey->OpenChild(usersString, flags,
+                                      getter_AddRefs(usersKey));
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("failed to open Users subkey"));
+    return rv;
+  }
+  nsAutoString sid;
+  if (!GetUserSid(sid)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("couldn't get sid"));
+    return NS_ERROR_FAILURE;
+  }
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("our sid is '%S'", sid.get()));
+  bool hasSid;
+  rv = usersKey->HasChild(sid, &hasSid);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("HasChild(sid) failed"));
+    return rv;
+  }
+  if (!hasSid) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("sid not present in Family Safety Users"));
+    return NS_OK;
+  }
+  nsCOMPtr<nsIWindowsRegKey> sidKey;
+  rv = usersKey->OpenChild(sid, flags, getter_AddRefs(sidKey));
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("couldn't open sid key"));
+    return rv;
+  }
+  // There are three keys we're interested in: "Parental Controls On",
+  // "Logging Required", and "Web\\Filter On". These keys will have value 0
+  // or 1, indicating a particular feature is disabled or enabled,
+  // respectively. So, if "Parental Controls On" is not 1, Family Safety is
+  // disabled and we don't care about anything else. If both "Logging
+  // Required" and "Web\\Filter On" are 0, the proxy will not be running,
+  // so for our purposes we can consider Family Safety disabled in that
+  // case.
+  // By default, "Logging Required" is 1 and "Web\\Filter On" is 0,
+  // reflecting the initial settings when Family Safety is enabled for an
+  // account for the first time, However, these sub-keys are not created
+  // unless they are switched away from the default value.
+  uint32_t parentalControlsOn;
+  rv = sidKey->ReadIntValue(NS_LITERAL_STRING("Parental Controls On"),
+                            &parentalControlsOn);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("couldn't read Parental Controls On"));
+    return rv;
+  }
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+          ("Parental Controls On: %u", parentalControlsOn));
+  if (parentalControlsOn != 1) {
+    return NS_OK;
+  }
+  uint32_t loggingRequired;
+  rv = ReadRegKeyValueWithDefault(sidKey, flags, nullptr, L"Logging Required",
+                                  1, loggingRequired);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("failed to read value of Logging Required"));
+    return rv;
+  }
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+          ("Logging Required: %u", loggingRequired));
+  uint32_t webFilterOn;
+  rv = ReadRegKeyValueWithDefault(sidKey, flags, L"Web", L"Filter On", 0,
+                                  webFilterOn);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("failed to read value of Web\\Filter On"));
+    return rv;
+  }
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("Web\\Filter On: %u", webFilterOn));
+  enabled = loggingRequired == 1 || webFilterOn == 1;
+  return NS_OK;
+}
+
+const char* kImportedFamilySafetyRootPref =
+  "security.family_safety.imported_root.db_key";
+
+static nsresult
+MaybeImportFamilySafetyRoot(PCCERT_CONTEXT certificate,
+                            bool& wasFamilySafetyRoot)
+{
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("MaybeImportFamilySafetyRoot"));
+  wasFamilySafetyRoot = false;
+
+  // It would be convenient to just use nsIX509CertDB here. However, since
+  // nsIX509CertDB depends on nsNSSComponent initialization, we can't use it.
+  // Instead, we can use NSS APIs directly (as long as we're called late enough
+  // in nsNSSComponent initialization such that those APIs are safe to use).
+
+  SECItem derCert = {
+    siBuffer,
+    certificate->pbCertEncoded,
+    certificate->cbCertEncoded
+  };
+  UniqueCERTCertificate nssCertificate(
+    CERT_NewTempCertificate(CERT_GetDefaultCertDB(), &derCert,
+                            nullptr, // nickname unnecessary
+                            false, // not permanent
+                            true)); // copy DER
+  if (!nssCertificate) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("couldn't decode certificate"));
+    return NS_ERROR_FAILURE;
+  }
+  // Looking for a certificate with the common name 'Microsoft Family Safety'
+  UniquePORTString subjectName(CERT_GetCommonName(&nssCertificate->subject));
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+          ("subject name is '%s'", subjectName.get()));
+  if (nsCRT::strcmp(subjectName.get(), "Microsoft Family Safety") == 0) {
+    wasFamilySafetyRoot = true;
+    CERTCertTrust trust = {
+      CERTDB_TRUSTED_CA | CERTDB_VALID_CA | CERTDB_USER,
+      0,
+      0
+    };
+    SECStatus srv = __CERT_AddTempCertToPerm(
+      nssCertificate.get(), "Microsoft Family Safety", &trust);
+    if (srv != SECSuccess) {
+      MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+              ("couldn't permanently add certificate"));
+      return NS_ERROR_FAILURE;
+    }
+    nsAutoCString dbKey;
+    nsresult rv = nsNSSCertificate::GetDbKey(nssCertificate, dbKey);
+    if (NS_FAILED(rv)) {
+      MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("GetDbKey failed"));
+      return rv;
+    }
+    Preferences::SetCString(kImportedFamilySafetyRootPref, dbKey);
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("added Family Safety root"));
+  }
+  return NS_OK;
+}
+
+// Because HCERTSTORE is just a typedef void*, we can't use any of the nice
+// scoped pointer templates.
+class ScopedCertStore final
+{
+public:
+  explicit ScopedCertStore(HCERTSTORE certstore) : certstore(certstore) {}
+
+  ~ScopedCertStore()
+  {
+    CertCloseStore(certstore, 0);
+  }
+
+  HCERTSTORE get()
+  {
+    return certstore;
+  }
+
+private:
+  ScopedCertStore(const ScopedCertStore&) = delete;
+  ScopedCertStore& operator=(const ScopedCertStore&) = delete;
+  HCERTSTORE certstore;
+};
+
+static const wchar_t* WindowsDefaultRootStoreName = L"ROOT";
+
+static nsresult
+LoadFamilySafetyRoot()
+{
+  ScopedCertStore certstore(
+    CertOpenSystemStore(0, WindowsDefaultRootStoreName));
+  if (!certstore.get()) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("couldn't get certstore '%S'", WindowsDefaultRootStoreName));
+    return NS_ERROR_FAILURE;
+  }
+  // Any resources held by the certificate are released by the next call to
+  // CertFindCertificateInStore.
+  PCCERT_CONTEXT certificate = nullptr;
+  while (certificate = CertFindCertificateInStore(certstore.get(),
+                                                  X509_ASN_ENCODING, 0,
+                                                  CERT_FIND_ANY, nullptr,
+                                                  certificate)) {
+    bool wasFamilySafetyRoot = false;
+    nsresult rv = MaybeImportFamilySafetyRoot(certificate,
+                                              wasFamilySafetyRoot);
+    if (NS_SUCCEEDED(rv) && wasFamilySafetyRoot) {
+      return NS_OK; // We're done (we're only expecting one root).
+    }
+  }
+  return NS_ERROR_FAILURE;
+}
+
+static void
+UnloadFamilySafetyRoot()
+{
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("UnloadFamilySafetyRoot"));
+  nsAdoptingCString dbKey = Preferences::GetCString(
+    kImportedFamilySafetyRootPref);
+  if (!dbKey || dbKey.IsEmpty()) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("Family Safety root wasn't previously imported"));
+    return;
+  }
+  UniqueCERTCertificate cert;
+  nsresult rv = nsNSSCertificateDB::FindCertByDBKey(dbKey, cert);
+  if (NS_FAILED(rv)) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("finding previously-imported Family Safety root failed"));
+    return;
+  }
+  if (!cert) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("previously-imported Family Safety root not found"));
+    return;
+  }
+  SECStatus srv = SEC_DeletePermCertificate(cert.get());
+  if (srv != SECSuccess) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("couldn't delete previously-imported Family Safety root"));
+    return;
+  }
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+          ("deleted previously-imported Family Safety root"));
+  Preferences::ClearUser(kImportedFamilySafetyRootPref);
+}
+
+#endif // XP_WIN
+
+// The supported values of this pref are:
+// 0: disable detecting Family Safety mode and importing the root
+// 1: only attempt to detect Family Safety mode (don't import the root)
+// 2: detect Family Safety mode and import the root
+const char* kFamilySafetyModePref = "security.family_safety.mode";
+
+// The telemetry gathered by this function is as follows:
+// 0-2: the value of the Family Safety mode pref
+// 3: detecting Family Safety mode failed
+// 4: Family Safety was not enabled
+// 5: Family Safety was enabled
+// 6: failed to import the Family Safety root
+// 7: successfully imported the root
+static void
+MaybeEnableFamilySafetyCompatibility()
+{
+#ifdef XP_WIN
+  UnloadFamilySafetyRoot();
+  if (!(IsWin8Point1OrLater() && !IsWin10OrLater())) {
+    return;
+  }
+  // Detect but don't import by default.
+  uint32_t familySafetyMode = Preferences::GetUint(kFamilySafetyModePref, 1);
+  if (familySafetyMode > 2) {
+    familySafetyMode = 0;
+  }
+  Telemetry::Accumulate(Telemetry::FAMILY_SAFETY, familySafetyMode);
+  if (familySafetyMode == 0) {
+    return;
+  }
+  bool familySafetyEnabled;
+  nsresult rv = AccountHasFamilySafetyEnabled(familySafetyEnabled);
+  if (NS_FAILED(rv)) {
+    Telemetry::Accumulate(Telemetry::FAMILY_SAFETY, 3);
+    return;
+  }
+  if (!familySafetyEnabled) {
+    Telemetry::Accumulate(Telemetry::FAMILY_SAFETY, 4);
+    return;
+  }
+  Telemetry::Accumulate(Telemetry::FAMILY_SAFETY, 5);
+  if (familySafetyMode == 2) {
+    rv = LoadFamilySafetyRoot();
+    if (NS_FAILED(rv)) {
+      Telemetry::Accumulate(Telemetry::FAMILY_SAFETY, 6);
+      MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+              ("failed to load Family Safety root"));
+    } else {
+      Telemetry::Accumulate(Telemetry::FAMILY_SAFETY, 7);
+    }
+  }
+#endif // XP_WIN
+}
 
 void
 nsNSSComponent::LoadLoadableRoots()
@@ -874,6 +1331,22 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
       break;
     default:
       sha1Mode = CertVerifier::SHA1Mode::Allowed;
+      break;
+  }
+
+  BRNameMatchingPolicy::Mode nameMatchingMode =
+    static_cast<BRNameMatchingPolicy::Mode>
+      (Preferences::GetInt("security.pki.name_matching_mode",
+                           static_cast<int32_t>(BRNameMatchingPolicy::Mode::DoNotEnforce)));
+  switch (nameMatchingMode) {
+    case BRNameMatchingPolicy::Mode::Enforce:
+    case BRNameMatchingPolicy::Mode::EnforceAfter23August2015:
+    case BRNameMatchingPolicy::Mode::EnforceAfter23August2016:
+    case BRNameMatchingPolicy::Mode::DoNotEnforce:
+      break;
+    default:
+      nameMatchingMode = BRNameMatchingPolicy::Mode::DoNotEnforce;
+      break;
   }
 
   CertVerifier::OcspDownloadConfig odc;
@@ -885,7 +1358,8 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
                                  lock);
   mDefaultCertVerifier = new SharedCertVerifier(odc, osc, ogc,
                                                 certShortLifetimeInDays,
-                                                pinningMode, sha1Mode);
+                                                pinningMode, sha1Mode,
+                                                nameMatchingMode);
 }
 
 // Enable the TLS versions given in the prefs, defaulting to TLS 1.0 (min) and
@@ -1065,6 +1539,8 @@ nsNSSComponent::InitializeNSS()
   InitCertVerifierLog();
   LoadLoadableRoots();
 
+  MaybeEnableFamilySafetyCompatibility();
+
   ConfigureTLSSessionIdentifiers();
 
   bool requireSafeNegotiation =
@@ -1105,8 +1581,6 @@ nsNSSComponent::InitializeNSS()
   // dynamic options from prefs
   setValidationOptions(true, lock);
 
-  mHttpForNSS.initTable();
-
 #ifndef MOZ_NO_SMART_CARDS
   LaunchSmartCardThreads();
 #endif
@@ -1132,7 +1606,6 @@ nsNSSComponent::InitializeNSS()
   if (PK11_IsFIPS()) {
     Telemetry::Accumulate(Telemetry::FIPS_ENABLED, true);
   }
-
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("NSS Initialization done\n"));
   return NS_OK;
 }
@@ -1163,7 +1636,7 @@ nsNSSComponent::ShutdownNSS()
     CleanupIdentityInfo();
 #endif
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("evaporating psm resources\n"));
-    mShutdownObjectList->evaporateAllNSSResources();
+    nsNSSShutDownList::evaporateAllNSSResources();
     EnsureNSSInitialized(nssShutdown);
     if (SECSuccess != ::NSS_Shutdown()) {
       MOZ_LOG(gPIPNSSLog, LogLevel::Error, ("NSS SHUTDOWN FAILURE\n"));
@@ -1183,12 +1656,6 @@ nsNSSComponent::Init()
   nsresult rv = NS_OK;
 
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("Beginning NSS initialization\n"));
-
-  if (!mShutdownObjectList)
-  {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("NSS init, out of memory in constructor\n"));
-    return NS_ERROR_OUT_OF_MEMORY;
-  }
 
   rv = InitializePIPNSSBundle();
   if (NS_FAILED(rv)) {
@@ -1325,9 +1792,21 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
                prefName.EqualsLiteral("security.ssl.enable_ocsp_stapling") ||
                prefName.EqualsLiteral("security.ssl.enable_ocsp_must_staple") ||
                prefName.EqualsLiteral("security.cert_pinning.enforcement_level") ||
-               prefName.EqualsLiteral("security.pki.sha1_enforcement_level")) {
+               prefName.EqualsLiteral("security.pki.sha1_enforcement_level") ||
+               prefName.EqualsLiteral("security.pki.name_matching_mode")) {
       MutexAutoLock lock(mutex);
       setValidationOptions(false, lock);
+#ifdef DEBUG
+    } else if (prefName.EqualsLiteral("security.test.built_in_root_hash")) {
+      MutexAutoLock lock(mutex);
+      mTestBuiltInRootHash = Preferences::GetString("security.test.built_in_root_hash");
+#endif // DEBUG
+    } else if (prefName.Equals(kFamilySafetyModePref)) {
+      MaybeEnableFamilySafetyCompatibility();
+    } else if (prefName.EqualsLiteral("security.content.signature.root_hash")) {
+      MutexAutoLock lock(mutex);
+      mContentSigningRootHash =
+        Preferences::GetString("security.content.signature.root_hash");
     } else {
       clearSessionCache = false;
     }
@@ -1397,7 +1876,7 @@ nsresult nsNSSComponent::LogoutAuthenticatedPK11()
 
   nsClientAuthRememberService::ClearAllRememberedDecisions();
 
-  return mShutdownObjectList->doPK11Logout();
+  return nsNSSShutDownList::doPK11Logout();
 }
 
 nsresult
@@ -1449,6 +1928,60 @@ nsNSSComponent::IsNSSInitialized(bool* initialized)
 {
   MutexAutoLock lock(mutex);
   *initialized = mNSSInitialized;
+  return NS_OK;
+}
+
+#ifdef DEBUG
+NS_IMETHODIMP
+nsNSSComponent::IsCertTestBuiltInRoot(CERTCertificate* cert, bool& result)
+{
+  MutexAutoLock lock(mutex);
+  MOZ_ASSERT(mNSSInitialized);
+
+  result = false;
+
+  if (mTestBuiltInRootHash.IsEmpty()) {
+    return NS_OK;
+  }
+
+  RefPtr<nsNSSCertificate> nsc = nsNSSCertificate::Create(cert);
+  if (!nsc) {
+    return NS_ERROR_FAILURE;
+  }
+  nsAutoString certHash;
+  nsresult rv = nsc->GetSha256Fingerprint(certHash);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  result = mTestBuiltInRootHash.Equals(certHash);
+  return NS_OK;
+}
+#endif // DEBUG
+
+NS_IMETHODIMP
+nsNSSComponent::IsCertContentSigningRoot(CERTCertificate* cert, bool& result)
+{
+  MutexAutoLock lock(mutex);
+  MOZ_ASSERT(mNSSInitialized);
+
+  result = false;
+
+  if (mContentSigningRootHash.IsEmpty()) {
+    return NS_OK;
+  }
+
+  RefPtr<nsNSSCertificate> nsc = nsNSSCertificate::Create(cert);
+  if (!nsc) {
+    return NS_ERROR_FAILURE;
+  }
+  nsAutoString certHash;
+  nsresult rv = nsc->GetSha256Fingerprint(certHash);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+
+  result = mContentSigningRootHash.Equals(certHash);
   return NS_OK;
 }
 
@@ -1604,6 +2137,13 @@ InitializeCipherSuite()
   SEC_PKCS12EnableCipher(PKCS12_DES_EDE3_168, 1);
   SEC_PKCS12SetPreferredCipher(PKCS12_DES_EDE3_168, 1);
   PORT_SetUCS2_ASCIIConversionFunction(pip_ucs2_ascii_conversion_fn);
+
+  // PSM enforces a minimum RSA key size of 1024 bits, which is overridable.
+  // NSS has its own minimum, which is not overridable (the default is 1023
+  // bits). This sets the NSS minimum to 512 bits so users can still connect to
+  // devices like wifi routers with woefully small keys (they would have to add
+  // an override to do so, but they already do for such devices).
+  NSS_OptionSet(NSS_RSA_MIN_KEY_SIZE, 512);
 
   // Observe preference change around cipher suite setting.
   return CipherSuiteChangeObserver::StartObserve();

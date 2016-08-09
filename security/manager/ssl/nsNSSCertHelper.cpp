@@ -6,20 +6,20 @@
 
 #include <algorithm>
 
+#include "ScopedNSSTypes.h"
 #include "mozilla/Snprintf.h"
 #include "mozilla/UniquePtr.h"
-#include "nsComponentManagerUtils.h"
 #include "nsCOMPtr.h"
+#include "nsComponentManagerUtils.h"
 #include "nsDateTimeFormatCID.h"
 #include "nsIDateTimeFormat.h"
 #include "nsNSSASN1Object.h"
-#include "nsNSSCertificate.h"
 #include "nsNSSCertTrust.h"
 #include "nsNSSCertValidity.h"
+#include "nsNSSCertificate.h"
 #include "nsNSSComponent.h"
 #include "nsServiceManagerUtils.h"
 #include "prerror.h"
-#include "ScopedNSSTypes.h"
 #include "secder.h"
 
 using namespace mozilla;
@@ -83,53 +83,47 @@ GetIntValue(SECItem *versionItem,
 }
 
 static nsresult
-ProcessVersion(SECItem         *versionItem,
-               nsINSSComponent *nssComponent,
-               nsIASN1PrintableItem **retItem)
+ProcessVersion(SECItem* versionItem, nsINSSComponent* nssComponent,
+               nsIASN1PrintableItem** retItem)
 {
-  nsresult rv;
   nsAutoString text;
-  nsCOMPtr<nsIASN1PrintableItem> printableItem = new nsNSSASN1PrintableItem();
- 
   nssComponent->GetPIPNSSBundleString("CertDumpVersion", text);
-  rv = printableItem->SetDisplayName(text);
-  if (NS_FAILED(rv))
+  nsCOMPtr<nsIASN1PrintableItem> printableItem = new nsNSSASN1PrintableItem();
+  nsresult rv = printableItem->SetDisplayName(text);
+  if (NS_FAILED(rv)) {
     return rv;
+  }
 
   // Now to figure out what version this certificate is.
-  unsigned long version;
-
+  unsigned int version;
   if (versionItem->data) {
-    rv = GetIntValue(versionItem, &version);
-    if (NS_FAILED(rv))
-      return rv;
+    // Filter out totally bogus version values/encodings.
+    if (versionItem->len != 1) {
+      return NS_ERROR_FAILURE;
+    }
+    version = *reinterpret_cast<const uint8_t*>(versionItem->data);
   } else {
-    // If there is no version present in the cert, then rfc2459
-    // says we default to v1 (0)
+    // If there is no version present in the cert, then RFC 5280 says we
+    // default to v1 (0).
     version = 0;
   }
 
-  switch (version){
-  case 0:
-    rv = nssComponent->GetPIPNSSBundleString("CertDumpVersion1", text);
-    break;
-  case 1:
-    rv = nssComponent->GetPIPNSSBundleString("CertDumpVersion2", text);
-    break;
-  case 2:
-    rv = nssComponent->GetPIPNSSBundleString("CertDumpVersion3", text);
-    break;
-  default:
-    NS_ERROR("Bad value for cert version");
-    rv = NS_ERROR_FAILURE;
-  }
-    
-  if (NS_FAILED(rv))
+  // A value of n actually corresponds to version n + 1
+  nsAutoString versionString;
+  versionString.AppendInt(version + 1);
+  const char16_t* params[1] = { versionString.get() };
+  rv = nssComponent->PIPBundleFormatStringFromName("CertDumpVersionValue",
+                                                   params,
+                                                   MOZ_ARRAY_LENGTH(params),
+                                                   text);
+  if (NS_FAILED(rv)) {
     return rv;
+  }
 
   rv = printableItem->SetDisplayValue(text);
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
     return rv;
+  }
 
   printableItem.forget(retItem);
   return NS_OK;
@@ -1637,11 +1631,9 @@ static nsresult
 ProcessTime(PRTime dispTime, const char16_t* displayName,
             nsIASN1Sequence* parentSequence)
 {
-  nsresult rv;
-  nsCOMPtr<nsIDateTimeFormat> dateFormatter =
-     do_CreateInstance(NS_DATETIMEFORMAT_CONTRACTID, &rv);
-  if (NS_FAILED(rv)) {
-    return rv;
+  nsCOMPtr<nsIDateTimeFormat> dateFormatter = nsIDateTimeFormat::Create();
+  if (!dateFormatter) {
+    return NS_ERROR_FAILURE;
   }
 
   nsString text;
@@ -2113,10 +2105,9 @@ GetCertFingerprintByOidTag(CERTCertificate* nsscert,
                                  nsscert->derCert.len);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  char *tmpstr = CERT_Hexify(const_cast<SECItem*>(&digest.get()), 1);
+  UniquePORTString tmpstr(CERT_Hexify(const_cast<SECItem*>(&digest.get()), 1));
   NS_ENSURE_TRUE(tmpstr, NS_ERROR_OUT_OF_MEMORY);
 
-  fp.Assign(tmpstr);
-  PORT_Free(tmpstr);
+  fp.Assign(tmpstr.get());
   return NS_OK;
 }

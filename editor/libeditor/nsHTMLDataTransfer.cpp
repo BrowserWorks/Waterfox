@@ -1658,9 +1658,6 @@ NS_IMETHODIMP nsHTMLEditor::PasteAsPlaintextQuotation(int32_t aSelectionType)
 NS_IMETHODIMP
 nsHTMLEditor::InsertTextWithQuotations(const nsAString &aStringToInsert)
 {
-  if (mWrapToWindow)
-    return InsertText(aStringToInsert);
-
   // The whole operation should be undoable in one transaction:
   BeginTransaction();
 
@@ -1761,9 +1758,6 @@ nsHTMLEditor::InsertAsPlaintextQuotation(const nsAString & aQuotedText,
                                          bool aAddCites,
                                          nsIDOMNode **aNodeInserted)
 {
-  if (mWrapToWindow)
-    return nsPlaintextEditor::InsertAsQuotation(aQuotedText, aNodeInserted);
-
   // get selection
   RefPtr<Selection> selection = GetSelection();
   NS_ENSURE_TRUE(selection, NS_ERROR_NULL_POINTER);
@@ -1782,7 +1776,7 @@ nsHTMLEditor::InsertAsPlaintextQuotation(const nsAString & aQuotedText,
     return NS_OK; // rules canceled the operation
   }
 
-  // Wrap the inserted quote in a <span> so it won't be wrapped:
+  // Wrap the inserted quote in a <span> so we can distinguish it.
   nsCOMPtr<Element> newNode =
     DeleteSelectionAndCreateElement(*nsGkAtoms::span);
 
@@ -1792,12 +1786,11 @@ nsHTMLEditor::InsertAsPlaintextQuotation(const nsAString & aQuotedText,
   // but we'll fall through and try to insert the text anyway.
   if (newNode) {
     // Add an attribute on the pre node so we'll know it's a quotation.
-    // Do this after the insertion, so that
     newNode->SetAttr(kNameSpaceID_None, nsGkAtoms::mozquote,
                      NS_LITERAL_STRING("true"), true);
-    // turn off wrapping on spans
+    // Allow wrapping on spans so long lines get wrapped to the screen.
     newNode->SetAttr(kNameSpaceID_None, nsGkAtoms::style,
-                     NS_LITERAL_STRING("white-space: pre;"), true);
+                     NS_LITERAL_STRING("white-space: pre-wrap;"), true);
 
     // and set the selection inside it:
     selection->Collapse(newNode, 0);

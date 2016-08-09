@@ -494,6 +494,18 @@ class TestRecursiveMakeBackend(BackendTester):
         self.assertIn('quux.png', m)
         self.assertIn('icons/foo.ico', m)
 
+    def test_sdk_files(self):
+        """Ensure SDK_FILES is handled properly."""
+        env = self._consume('sdk-files', RecursiveMakeBackend)
+
+        #SDK_FILES should appear in the dist_sdk install manifest.
+        m = InstallManifest(path=os.path.join(env.topobjdir,
+            '_build_manifests', 'install', 'dist_sdk'))
+        self.assertEqual(len(m), 3)
+        self.assertIn('bar.ico', m)
+        self.assertIn('quux.png', m)
+        self.assertIn('icons/foo.ico', m)
+
     def test_test_manifests_files_written(self):
         """Ensure test manifests get turned into files."""
         env = self._consume('test-manifests-written', RecursiveMakeBackend)
@@ -516,7 +528,7 @@ class TestRecursiveMakeBackend(BackendTester):
         self.assertTrue(os.path.exists(all_tests_path))
 
         with open(all_tests_path, 'rt') as fh:
-            o = json.load(fh)
+            o, _ = json.load(fh)
 
             self.assertIn('xpcshell.js', o)
             self.assertIn('dir1/test_bar.js', o)
@@ -527,13 +539,53 @@ class TestRecursiveMakeBackend(BackendTester):
         """Pattern matches in test manifests' support-files should be recorded."""
         env = self._consume('test-manifests-written', RecursiveMakeBackend)
         m = InstallManifest(path=mozpath.join(env.topobjdir,
-            '_build_manifests', 'install', '_tests'))
+            '_build_manifests', 'install', '_test_files'))
 
         # This is not the most robust test in the world, but it gets the job
         # done.
         entries = [e for e in m._dests.keys() if '**' in e]
         self.assertEqual(len(entries), 1)
         self.assertIn('support/**', entries[0])
+
+    def test_test_manifest_deffered_installs_written(self):
+        """Shared support files are written to their own data file by the backend."""
+        env = self._consume('test-manifest-shared-support', RecursiveMakeBackend)
+        all_tests_path = mozpath.join(env.topobjdir, 'all-tests.json')
+        self.assertTrue(os.path.exists(all_tests_path))
+        test_installs_path = mozpath.join(env.topobjdir, 'test-installs.json')
+
+        with open(test_installs_path, 'r') as fh:
+            test_installs = json.load(fh)
+
+        self.assertEqual(set(test_installs.keys()),
+                         set(['child/test_sub.js',
+                              'child/data/**',
+                              'child/another-file.sjs']))
+        for key in test_installs.keys():
+            self.assertIn(key, test_installs)
+
+        test_files_manifest = mozpath.join(env.topobjdir,
+                                           '_build_manifests',
+                                           'install',
+                                           '_test_files')
+
+        # First, read the generated for ini manifest contents.
+        m = InstallManifest(path=test_files_manifest)
+
+        # Then, synthesize one from the test-installs.json file. This should
+        # allow us to re-create a subset of the above.
+        synthesized_manifest = InstallManifest()
+        for item, installs in test_installs.items():
+            for install_info in installs:
+                if len(install_info) == 3:
+                    synthesized_manifest.add_pattern_symlink(*install_info)
+                if len(install_info) == 2:
+                    synthesized_manifest.add_symlink(*install_info)
+
+        self.assertEqual(len(synthesized_manifest), 3)
+        for item, info in synthesized_manifest._dests.items():
+            self.assertIn(item, m)
+            self.assertEqual(info, m._dests[item])
 
     def test_xpidl_generation(self):
         """Ensure xpidl files and directories are written out."""
@@ -757,7 +809,7 @@ class TestRecursiveMakeBackend(BackendTester):
         env = self._consume('test-manifests-duplicate-support-files',
             RecursiveMakeBackend)
 
-        p = os.path.join(env.topobjdir, '_build_manifests', 'install', '_tests')
+        p = os.path.join(env.topobjdir, '_build_manifests', 'install', '_test_files')
         m = InstallManifest(p)
         self.assertIn('testing/mochitest/tests/support-file.txt', m)
 
@@ -798,13 +850,11 @@ class TestRecursiveMakeBackend(BackendTester):
         """Ensure test suites honor package_tests=False."""
         env = self._consume('test-manifests-package-tests', RecursiveMakeBackend)
 
-        tests_dir = mozpath.join(env.topobjdir, '_tests')
-
         all_tests_path = mozpath.join(env.topobjdir, 'all-tests.json')
         self.assertTrue(os.path.exists(all_tests_path))
 
         with open(all_tests_path, 'rt') as fh:
-            o = json.load(fh)
+            o, _ = json.load(fh)
 
             self.assertIn('mochitest.js', o)
             self.assertIn('not_packaged.java', o)
@@ -812,7 +862,7 @@ class TestRecursiveMakeBackend(BackendTester):
         man_dir = mozpath.join(env.topobjdir, '_build_manifests', 'install')
         self.assertTrue(os.path.isdir(man_dir))
 
-        full = mozpath.join(man_dir, '_tests')
+        full = mozpath.join(man_dir, '_test_files')
         self.assertTrue(os.path.exists(full))
 
         m = InstallManifest(path=full)
@@ -858,6 +908,32 @@ class TestRecursiveMakeBackend(BackendTester):
             'IS_COMPONENT := 1\n',
             'DSO_SONAME := bar\n',
         ])
+
+        self.assertTrue(os.path.exists(mozpath.join(env.topobjdir, 'binaries.json')))
+        with open(mozpath.join(env.topobjdir, 'binaries.json'), 'rb') as fh:
+            binaries = json.load(fh)
+
+        self.assertEqual(binaries, {
+            'programs': [],
+            'shared_libraries': [
+                {
+                    'basename': 'foo',
+                    'import_name': 'foo',
+                    'install_target': 'dist/bin',
+                    'lib_name': 'foo',
+                    'relobjdir': 'foo',
+                    'soname': 'foo',
+                },
+                {
+                    'basename': 'bar',
+                    'import_name': 'bar',
+                    'install_target': 'dist/bin',
+                    'lib_name': 'bar',
+                    'relobjdir': 'bar',
+                    'soname': 'bar',
+                }
+            ],
+        })
 
 
 if __name__ == '__main__':

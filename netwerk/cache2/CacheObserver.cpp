@@ -13,6 +13,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/TimeStamp.h"
 #include "nsServiceManagerUtils.h"
+#include "mozilla/net/NeckoCommon.h"
 #include "prsystem.h"
 #include <time.h>
 #include <math.h>
@@ -51,7 +52,8 @@ int32_t CacheObserver::sMemoryCacheCapacity = kDefaultMemoryCacheCapacity;
 int32_t CacheObserver::sAutoMemoryCacheCapacity = -1;
 
 static uint32_t const kDefaultDiskCacheCapacity = 250 * 1024; // 250 MB
-uint32_t CacheObserver::sDiskCacheCapacity = kDefaultDiskCacheCapacity;
+Atomic<uint32_t,Relaxed> CacheObserver::sDiskCacheCapacity
+                                           (kDefaultDiskCacheCapacity);
 
 static uint32_t const kDefaultDiskFreeSpaceSoftLimit = 5 * 1024; // 5MB
 uint32_t CacheObserver::sDiskFreeSpaceSoftLimit = kDefaultDiskFreeSpaceSoftLimit;
@@ -92,8 +94,10 @@ bool CacheObserver::sCacheFSReported = kDefaultCacheFSReported;
 static bool kDefaultHashStatsReported = false;
 bool CacheObserver::sHashStatsReported = kDefaultHashStatsReported;
 
-static int32_t const kDefaultMaxShutdownIOLag = 2; // seconds
-int32_t CacheObserver::sMaxShutdownIOLag = kDefaultMaxShutdownIOLag;
+static uint32_t const kDefaultMaxShutdownIOLag = 2; // seconds
+Atomic<uint32_t, Relaxed> CacheObserver::sMaxShutdownIOLag(kDefaultMaxShutdownIOLag);
+
+Atomic<PRIntervalTime, Relaxed> CacheObserver::sShutdownDemandedTime(PR_INTERVAL_NO_TIMEOUT);
 
 NS_IMPL_ISUPPORTS(CacheObserver,
                   nsIObserver,
@@ -103,6 +107,10 @@ NS_IMPL_ISUPPORTS(CacheObserver,
 nsresult
 CacheObserver::Init()
 {
+  if (IsNeckoChild()) {
+    return NS_OK;
+  }
+
   if (sSelf) {
     return NS_OK;
   }
@@ -158,7 +166,7 @@ CacheObserver::AttachToPreferences()
   mozilla::Preferences::AddUintVarCache(
     &sMetadataMemoryLimit, "browser.cache.disk.metadata_memory_limit", kDefaultMetadataMemoryLimit);
 
-  mozilla::Preferences::AddUintVarCache(
+  mozilla::Preferences::AddAtomicUintVarCache(
     &sDiskCacheCapacity, "browser.cache.disk.capacity", kDefaultDiskCacheCapacity);
   mozilla::Preferences::AddBoolVarCache(
     &sSmartCacheSizeEnabled, "browser.cache.disk.smart_size.enabled", kDefaultSmartCacheSizeEnabled);
@@ -242,7 +250,7 @@ CacheObserver::AttachToPreferences()
   mozilla::Preferences::AddBoolVarCache(
     &sClearCacheOnShutdown, "privacy.clearOnShutdown.cache", kDefaultClearCacheOnShutdown);
 
-  mozilla::Preferences::AddIntVarCache(
+  mozilla::Preferences::AddAtomicUintVarCache(
     &sMaxShutdownIOLag, "browser.cache.max_shutdown_io_lag", kDefaultMaxShutdownIOLag);
 }
 
@@ -474,10 +482,25 @@ bool CacheObserver::EntryIsTooBig(int64_t aSize, bool aUsingDisk)
 }
 
 // static
-TimeDuration const& CacheObserver::MaxShutdownIOLag()
+bool CacheObserver::IsPastShutdownIOLag()
 {
-  static TimeDuration period = TimeDuration::FromSeconds(sMaxShutdownIOLag);
-  return period;
+#ifdef DEBUG
+  return false;
+#endif
+
+  if (sShutdownDemandedTime == PR_INTERVAL_NO_TIMEOUT ||
+      sMaxShutdownIOLag == UINT32_MAX) {
+    return false;
+  }
+
+  static const PRIntervalTime kMaxShutdownIOLag =
+    PR_SecondsToInterval(sMaxShutdownIOLag);
+
+  if ((PR_IntervalNow() - sShutdownDemandedTime) > kMaxShutdownIOLag) {
+    return true;
+  }
+
+  return false;
 }
 
 NS_IMETHODIMP
@@ -506,6 +529,10 @@ CacheObserver::Observe(nsISupports* aSubject,
   if (!strcmp(aTopic, "profile-change-net-teardown") ||
       !strcmp(aTopic, "profile-before-change") ||
       !strcmp(aTopic, "xpcom-shutdown")) {
+    if (sShutdownDemandedTime == PR_INTERVAL_NO_TIMEOUT) {
+      sShutdownDemandedTime = PR_IntervalNow();
+    }
+
     RefPtr<CacheStorageService> service = CacheStorageService::Self();
     if (service) {
       service->Shutdown();

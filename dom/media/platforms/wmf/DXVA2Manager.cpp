@@ -13,10 +13,13 @@
 #include "mozilla/layers/D3D11ShareHandleImage.h"
 #include "mozilla/layers/ImageBridgeChild.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/Telemetry.h"
+#include "MediaTelemetryConstants.h"
 #include "mfapi.h"
 #include "MFTDecoder.h"
 #include "DriverCrashGuard.h"
 #include "nsPrintfCString.h"
+#include "gfxCrashReporterUtils.h"
 
 const CLSID CLSID_VideoProcessorMFT =
 {
@@ -255,6 +258,8 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  ScopedGfxFeatureReporter reporter("DXVA2D3D9");
+
   gfx::D3D9VideoCrashGuard crashGuard;
   if (crashGuard.Crashed()) {
     NS_WARNING("DXVA2D3D9 crash detected");
@@ -415,6 +420,11 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
   mTextureClientAllocator = new D3D9RecycleAllocator(layers::ImageBridgeChild::GetSingleton(),
                                                      mDevice);
   mTextureClientAllocator->SetMaxPoolSize(5);
+
+  Telemetry::Accumulate(Telemetry::MEDIA_DECODER_BACKEND_USED,
+                        uint32_t(media::MediaDecoderBackend::WMFDXVA2D3D9));
+
+  reporter.SetSuccessful();
 
   return S_OK;
 }
@@ -601,6 +611,15 @@ D3D11DXVA2Manager::Init(nsACString& aFailureReason)
 {
   HRESULT hr;
 
+  ScopedGfxFeatureReporter reporter("DXVA2D3D11");
+
+  gfx::D3D11VideoCrashGuard crashGuard;
+  if (crashGuard.Crashed()) {
+    NS_WARNING("DXVA2D3D11 crash detected");
+    aFailureReason.AssignLiteral("DXVA2D3D11 crashes detected in the past");
+    return E_FAIL;
+  }
+
   mDevice = gfxWindowsPlatform::GetPlatform()->CreateD3D11DecoderDevice();
   if (!mDevice) {
     aFailureReason.AssignLiteral("Failed to create D3D11 device for decoder");
@@ -722,6 +741,11 @@ D3D11DXVA2Manager::Init(nsACString& aFailureReason)
   mTextureClientAllocator = new D3D11RecycleAllocator(layers::ImageBridgeChild::GetSingleton(),
                                                       mDevice);
   mTextureClientAllocator->SetMaxPoolSize(5);
+
+  Telemetry::Accumulate(Telemetry::MEDIA_DECODER_BACKEND_USED,
+                        uint32_t(media::MediaDecoderBackend::WMFDXVA2D3D11));
+
+  reporter.SetSuccessful();
 
   return S_OK;
 }

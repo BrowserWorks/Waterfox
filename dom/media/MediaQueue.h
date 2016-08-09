@@ -54,7 +54,6 @@ public:
     MOZ_ASSERT(aItem);
     NS_ADDREF(aItem);
     nsDeque::PushFront(aItem);
-    mPushEvent.Notify(RefPtr<T>(aItem));
   }
 
   inline already_AddRefed<T> PopFront() {
@@ -79,7 +78,7 @@ public:
   void Reset() {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
     while (GetSize() > 0) {
-      RefPtr<T> x = PopFront();
+      RefPtr<T> x = dont_AddRef(static_cast<T*>(nsDeque::PopFront()));
     }
     mEndOfStream = false;
   }

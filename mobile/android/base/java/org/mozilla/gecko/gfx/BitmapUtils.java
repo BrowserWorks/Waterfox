@@ -11,7 +11,6 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.util.GeckoJarReader;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -26,6 +25,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -34,6 +36,9 @@ import android.util.Base64;
 import android.util.Log;
 
 public final class BitmapUtils {
+    /* Default colors. */
+    private static final float[] DEFAULT_LAUNCHER_ICON_HSV = { 32.0f, 1.0f, 1.0f };
+
     private static final String LOGTAG = "GeckoBitmapUtils";
 
     private BitmapUtils() {}
@@ -148,7 +153,7 @@ public final class BitmapUtils {
          runOnBitmapFoundOnUiThread(loader, tab.getThumbnail());
          Tabs.registerOnTabsChangedListener(new Tabs.OnTabsChangedListener() {
                  @Override
-                 public void onTabChanged(Tab t, Tabs.TabEvents msg, Object data) {
+                 public void onTabChanged(Tab t, Tabs.TabEvents msg, String data) {
                      if (tab == t && msg == Tabs.TabEvents.THUMBNAIL) {
                          Tabs.unregisterOnTabsChangedListener(this);
                          runOnBitmapFoundOnUiThread(loader, t.getThumbnail());
@@ -218,7 +223,7 @@ public final class BitmapUtils {
 
         try {
             url = new URL(urlString);
-        } catch(MalformedURLException e) {
+        } catch (MalformedURLException e) {
             Log.w(LOGTAG, "decodeUrl: malformed URL " + urlString);
             return null;
         }
@@ -231,7 +236,7 @@ public final class BitmapUtils {
 
         try {
             stream = url.openStream();
-        } catch(IOException e) {
+        } catch (IOException e) {
             Log.w(LOGTAG, "decodeUrl: IOException downloading " + url);
             return null;
         }
@@ -245,7 +250,7 @@ public final class BitmapUtils {
 
         try {
             stream.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
             Log.w(LOGTAG, "decodeUrl: IOException closing stream " + url, e);
         }
 
@@ -272,7 +277,7 @@ public final class BitmapUtils {
 
     public static int getDominantColor(Bitmap source, boolean applyThreshold) {
       if (source == null)
-        return Color.argb(255,255,255,255);
+        return Color.argb(255, 255, 255, 255);
 
       // Keep track of how many times a hue in a given bin appears in the image.
       // Hue values range [0 .. 360), so dividing by 10, we get 36 bins.
@@ -325,12 +330,12 @@ public final class BitmapUtils {
 
       // maxBin may never get updated if the image holds only transparent and/or black/white pixels.
       if (maxBin < 0)
-        return Color.argb(255,255,255,255);
+        return Color.argb(255, 255, 255, 255);
 
       // Return a color with the average hue/saturation/value of the bin with the most colors.
-      hsv[0] = sumHue[maxBin]/colorBins[maxBin];
-      hsv[1] = sumSat[maxBin]/colorBins[maxBin];
-      hsv[2] = sumVal[maxBin]/colorBins[maxBin];
+      hsv[0] = sumHue[maxBin] / colorBins[maxBin];
+      hsv[1] = sumSat[maxBin] / colorBins[maxBin];
+      hsv[2] = sumVal[maxBin] / colorBins[maxBin];
       return Color.HSVToColor(hsv);
     }
 
@@ -400,7 +405,7 @@ public final class BitmapUtils {
 
             try {
                 return Integer.parseInt(resource);
-            } catch(NumberFormatException ex) {
+            } catch (NumberFormatException ex) {
                 // This isn't a resource id, try looking for a string
             }
 
@@ -417,7 +422,7 @@ public final class BitmapUtils {
                     icon = f.getInt(null);
                 } catch (final NoSuchFieldException e2) {
                     // This drawable doesn't seem to exist...
-                } catch(Exception e3) {
+                } catch (Exception e3) {
                     Log.i(LOGTAG, "Exception getting drawable", e3);
                 }
 
@@ -429,5 +434,57 @@ public final class BitmapUtils {
         }
         return icon;
     }
-}
 
+    public static Bitmap getLauncherIcon(Context context, Bitmap aSource, int size) {
+        final int kOffset = 6;
+        final int kRadius = 5;
+        int insetSize = aSource != null ? size * 2 / 3 : size;
+
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+
+        // draw a base color
+        Paint paint = new Paint();
+        if (aSource == null) {
+            // If we aren't drawing a favicon, just use an orange color.
+            paint.setColor(Color.HSVToColor(DEFAULT_LAUNCHER_ICON_HSV));
+            canvas.drawRoundRect(new RectF(kOffset, kOffset, size - kOffset, size - kOffset), kRadius, kRadius, paint);
+        } else if (aSource.getWidth() >= insetSize || aSource.getHeight() >= insetSize) {
+            // Otherwise, if the icon is large enough, just draw it.
+            Rect iconBounds = new Rect(0, 0, size, size);
+            canvas.drawBitmap(aSource, null, iconBounds, null);
+            return bitmap;
+        } else {
+            // otherwise use the dominant color from the icon + a layer of transparent white to lighten it somewhat
+            int color = BitmapUtils.getDominantColor(aSource);
+            paint.setColor(color);
+            canvas.drawRoundRect(new RectF(kOffset, kOffset, size - kOffset, size - kOffset), kRadius, kRadius, paint);
+            paint.setColor(Color.argb(100, 255, 255, 255));
+            canvas.drawRoundRect(new RectF(kOffset, kOffset, size - kOffset, size - kOffset), kRadius, kRadius, paint);
+        }
+
+        // draw the overlay
+        Bitmap overlay = BitmapUtils.decodeResource(context, R.drawable.home_bg);
+        canvas.drawBitmap(overlay, null, new Rect(0, 0, size, size), null);
+
+        // draw the favicon
+        if (aSource == null)
+            aSource = BitmapUtils.decodeResource(context, R.drawable.home_star);
+
+        // by default, we scale the icon to this size
+        int sWidth = insetSize / 2;
+        int sHeight = sWidth;
+
+        int halfSize = size / 2;
+        canvas.drawBitmap(aSource,
+                null,
+                new Rect(halfSize - sWidth,
+                        halfSize - sHeight,
+                        halfSize + sWidth,
+                        halfSize + sHeight),
+                null);
+
+        return bitmap;
+    }
+}

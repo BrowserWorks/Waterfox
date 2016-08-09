@@ -29,6 +29,8 @@ struct CubebDestroyPolicy
 
 class AudioStream;
 class FrameHistory;
+class AudioConfig;
+class AudioConverter;
 
 class AudioClock
 {
@@ -343,9 +345,6 @@ private:
   uint32_t mOutRate;
   uint32_t mChannels;
   uint32_t mOutChannels;
-#if defined(__ANDROID__)
-  dom::AudioChannel mAudioChannel;
-#endif
   AudioClock mAudioClock;
   soundtouch::SoundTouch* mTimeStretcher;
 
@@ -370,10 +369,12 @@ private:
 
   StreamState mState;
   bool mIsFirst;
-  // Get this value from the preferece, if true, we would downmix the stereo.
+  // Get this value from the preference, if true, we would downmix the stereo.
   bool mIsMonoAudioEnabled;
 
   DataSource& mDataSource;
+
+  UniquePtr<AudioConverter> mAudioConverter;
 };
 
 } // namespace mozilla

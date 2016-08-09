@@ -35,6 +35,7 @@
 #include "nsColor.h"
 #include "nsCSSPseudoClasses.h"
 #include "nsCSSPseudoElements.h"
+#include "nsCSSAnonBoxes.h"
 #include "nsNameSpaceManager.h"
 #include "nsXMLNameSpaceMap.h"
 #include "nsError.h"
@@ -694,6 +695,7 @@ protected:
   bool ParseSupportsCondition(bool& aConditionMet);
   bool ParseSupportsConditionNegation(bool& aConditionMet);
   bool ParseSupportsConditionInParens(bool& aConditionMet);
+  bool ParseSupportsMozBoolPrefName(bool& aConditionMet);
   bool ParseSupportsConditionInParensInsideParens(bool& aConditionMet);
   bool ParseSupportsConditionTerms(bool& aConditionMet);
   enum SupportsConditionTermOperator { eAnd, eOr };
@@ -1084,6 +1086,7 @@ protected:
   bool ParseScrollSnapPoints(nsCSSValue& aValue, nsCSSProperty aPropID);
   bool ParseScrollSnapDestination(nsCSSValue& aValue);
   bool ParseScrollSnapCoordinate(nsCSSValue& aValue);
+  bool ParseWebkitTextStroke();
 
   /**
    * Parses a variable value from a custom property declaration.
@@ -2135,7 +2138,10 @@ CSSParserImpl::ParseSourceSizeList(const nsAString& aBuffer,
       query->SetNegated();
     }
 
-    if (ParseNonNegativeVariant(value, VARIANT_LPCALC, nullptr) !=
+    // https://html.spec.whatwg.org/multipage/embedded-content.html#source-size-value
+    // Percentages are not allowed in a <source-size-value>, to avoid
+    // confusion about what it would be relative to.
+    if (ParseNonNegativeVariant(value, VARIANT_LCALC, nullptr) !=
         CSSParseResult::Ok) {
       hitError = true;
       break;
@@ -3405,7 +3411,7 @@ CSSParserImpl::ParseMediaQuery(eMediaQueryType aQueryType,
       }
       // case insensitive from CSS - must be lower cased
       nsContentUtils::ASCIIToLower(mToken.mIdent);
-      mediaType = do_GetAtom(mToken.mIdent);
+      mediaType = NS_Atomize(mToken.mIdent);
       if (!gotNotOrOnly && mediaType == nsGkAtoms::_not) {
         gotNotOrOnly = true;
         query->SetNegated();
@@ -3557,7 +3563,7 @@ CSSParserImpl::ParseMediaQueryExpression(nsMediaQuery* aQuery)
     expr->mRange = nsMediaExpression::eEqual;
   }
 
-  nsCOMPtr<nsIAtom> mediaFeatureAtom = do_GetAtom(featureString);
+  nsCOMPtr<nsIAtom> mediaFeatureAtom = NS_Atomize(featureString);
   const nsMediaFeature *feature = nsMediaFeatures::features;
   for (; feature->mName; ++feature) {
     // See if name matches & all requirement flags are satisfied:
@@ -3921,7 +3927,7 @@ CSSParserImpl::ProcessNameSpace(const nsString& aPrefix,
   nsCOMPtr<nsIAtom> prefix;
 
   if (!aPrefix.IsEmpty()) {
-    prefix = do_GetAtom(aPrefix);
+    prefix = NS_Atomize(aPrefix);
   }
 
   RefPtr<css::NameSpaceRule> rule = new css::NameSpaceRule(prefix, aURLSpec,
@@ -4526,6 +4532,7 @@ CSSParserImpl::ParseSupportsConditionNegation(bool& aConditionMet)
 
 // supports_condition_in_parens
 //   : '(' S* supports_condition_in_parens_inside_parens ')' S*
+//   | supports_condition_pref
 //   | general_enclosed
 //   ;
 bool
@@ -4539,6 +4546,12 @@ CSSParserImpl::ParseSupportsConditionInParens(bool& aConditionMet)
   if (mToken.mType == eCSSToken_URL) {
     aConditionMet = false;
     return true;
+  }
+
+  if (AgentRulesEnabled() &&
+      mToken.mType == eCSSToken_Function &&
+      mToken.mIdent.LowerCaseEqualsLiteral("-moz-bool-pref")) {
+    return ParseSupportsMozBoolPrefName(aConditionMet);
   }
 
   if (mToken.mType == eCSSToken_Function ||
@@ -4570,6 +4583,32 @@ CSSParserImpl::ParseSupportsConditionInParens(bool& aConditionMet)
     SkipUntil(')');
     aConditionMet = false;
     return true;
+  }
+
+  return true;
+}
+
+// supports_condition_pref
+//   : '-moz-bool-pref(' bool_pref_name ')'
+//   ;
+bool
+CSSParserImpl::ParseSupportsMozBoolPrefName(bool& aConditionMet)
+{
+  if (!GetToken(true)) {
+    return false;
+  }
+
+  if (mToken.mType != eCSSToken_String) {
+    SkipUntil(')');
+    return false;
+  }
+
+  aConditionMet = Preferences::GetBool(
+    NS_ConvertUTF16toUTF8(mToken.mIdent).get());
+
+  if (!ExpectSymbol(')', true)) {
+    SkipUntil(')');
+    return false;
   }
 
   return true;
@@ -5865,7 +5904,7 @@ CSSParserImpl::ParsePseudoSelector(int32_t&       aDataMask,
   buffer.Append(char16_t(':'));
   buffer.Append(mToken.mIdent);
   nsContentUtils::ASCIIToLower(buffer);
-  nsCOMPtr<nsIAtom> pseudo = do_GetAtom(buffer);
+  nsCOMPtr<nsIAtom> pseudo = NS_Atomize(buffer);
 
   // stash away some info about this pseudo so we only have to get it once.
   bool isTreePseudo = false;
@@ -5880,6 +5919,13 @@ CSSParserImpl::ParsePseudoSelector(int32_t&       aDataMask,
   if (pseudoElementType < CSSPseudoElementType::Count && !AgentRulesEnabled() &&
       nsCSSPseudoElements::PseudoElementIsUASheetOnly(pseudoElementType)) {
     // This pseudo-element is not exposed to content.
+    REPORT_UNEXPECTED_TOKEN(PEPseudoSelUnknown);
+    UngetToken();
+    return eSelectorParsingStatus_Error;
+  }
+
+  if (nsCSSAnonBoxes::IsNonElement(pseudo)) {
+    // Non-element anonymous boxes should not match any rule.
     REPORT_UNEXPECTED_TOKEN(PEPseudoSelUnknown);
     UngetToken();
     return eSelectorParsingStatus_Error;
@@ -6232,6 +6278,13 @@ CSSParserImpl::ParsePseudoClassWithNthPairArg(nsCSSSelector& aSelector,
     }
   }
 
+  // A helper function that checks if the token starts with literal string
+  // |aStr| using a case-insensitive match.
+  auto TokenBeginsWith = [this] (const nsLiteralString& aStr) {
+    return StringBeginsWith(mToken.mIdent, aStr,
+                            nsASCIICaseInsensitiveStringComparator());
+  };
+
   if (eCSSToken_Ident == mToken.mType || eCSSToken_Dimension == mToken.mType) {
     // The CSS tokenization doesn't handle :nth-child() containing - well:
     //   2n-1 is a dimension
@@ -6239,9 +6292,9 @@ CSSParserImpl::ParsePseudoClassWithNthPairArg(nsCSSSelector& aSelector,
     // The easiest way to deal with that is to push everything from the
     // minus on back onto the scanner's pushback buffer.
     uint32_t truncAt = 0;
-    if (StringBeginsWith(mToken.mIdent, NS_LITERAL_STRING("n-"))) {
+    if (TokenBeginsWith(NS_LITERAL_STRING("n-"))) {
       truncAt = 1;
-    } else if (StringBeginsWith(mToken.mIdent, NS_LITERAL_STRING("-n-")) && !hasSign[0]) {
+    } else if (TokenBeginsWith(NS_LITERAL_STRING("-n-")) && !hasSign[0]) {
       truncAt = 2;
     }
     if (truncAt != 0) {
@@ -6292,7 +6345,7 @@ CSSParserImpl::ParsePseudoClassWithNthPairArg(nsCSSSelector& aSelector,
       if (eCSSToken_Ident == mToken.mType && mToken.mIdent.LowerCaseEqualsLiteral("n")) {
         numbers[0] = intValue;
       }
-      else if (eCSSToken_Ident == mToken.mType && StringBeginsWith(mToken.mIdent, NS_LITERAL_STRING("n-"))) {
+      else if (eCSSToken_Ident == mToken.mType && TokenBeginsWith(NS_LITERAL_STRING("n-"))) {
         numbers[0] = intValue;
         mScanner->Backup(mToken.mIdent.Length() - 1);
       }
@@ -6924,31 +6977,63 @@ CSSParserImpl::LookupKeywordPrefixAware(nsAString& aKeywordStr,
   nsCSSKeyword keyword = nsCSSKeywords::LookupKeyword(aKeywordStr);
 
   if (aKeywordTable == nsCSSProps::kDisplayKTable) {
-    if (keyword == eCSSKeyword__webkit_box &&
-        (sWebkitPrefixedAliasesEnabled || ShouldUseUnprefixingService())) {
-      // Treat "display: -webkit-box" as "display: flex". In simple scenarios,
-      // they largely behave the same, as long as we alias the associated
-      // properties to modern flexbox equivalents as well.
-      if (mWebkitBoxUnprefixState == eHaveNotUnprefixed) {
-        mWebkitBoxUnprefixState = eHaveUnprefixed;
+    // NOTE: This code will be considerably simpler once we can do away with
+    // all Unprefixing Service code, in bug 1259348. But for the time being, we
+    // have to support two different strategies for handling -webkit-box here:
+    // (1) "Native support" (sWebkitPrefixedAliasesEnabled): we assume that
+    //     -webkit-box will parse correctly (via an entry in kDisplayKTable),
+    //     and we simply make a note that we've parsed it (so that we can we
+    //     can give later "-moz-box" styling special handling as noted below).
+    // (2) "Unprefixing Service support" (ShouldUseUnprefixingService): we
+    //     convert "-webkit-box" directly to modern "flex" (& do the same for
+    //     any later "-moz-box" styling).
+    //
+    // Note that sWebkitPrefixedAliasesEnabled and
+    // ShouldUseUnprefixingService() are mutually exlusive, because the latter
+    // explicitly defers to the former.
+    if ((keyword == eCSSKeyword__webkit_box ||
+         keyword == eCSSKeyword__webkit_inline_box)) {
+      const bool usingUnprefixingService = ShouldUseUnprefixingService();
+      if (sWebkitPrefixedAliasesEnabled || usingUnprefixingService) {
+        // Make a note that we're accepting some "-webkit-{inline-}box" styling,
+        // so we can give special treatment to subsequent "-moz-{inline}-box".
+        // (See special treatment below.)
+        if (mWebkitBoxUnprefixState == eHaveNotUnprefixed) {
+          mWebkitBoxUnprefixState = eHaveUnprefixed;
+        }
+        if (usingUnprefixingService) {
+          // When we're using the unprefixing service, we treat
+          // "display:-webkit-box" as if it were "display:flex"
+          // (and "-webkit-inline-box" as "inline-flex").
+          return (keyword == eCSSKeyword__webkit_box) ?
+            eCSSKeyword_flex : eCSSKeyword_inline_flex;
+        }
       }
-      return eCSSKeyword_flex;
     }
 
-    // If we've seen "display: -webkit-box" in an earlier declaration and we
-    // tried to unprefix it to emulate support for it, then we have to watch
-    // out for later "display: -moz-box" declarations; they're likely just a
-    // halfhearted attempt at compatibility, and they actually end up stomping
-    // on our emulation of the earlier -webkit-box display-value, via the CSS
-    // cascade. To prevent this problem, we also treat "display: -moz-box" as
-    // "display: flex" (but only if we unprefixed an earlier "-webkit-box").
+    // If we've seen "display: -webkit-box" (or "-webkit-inline-box") in an
+    // earlier declaration and we honored it, then we have to watch out for
+    // later "display: -moz-box" (and "-moz-inline-box") declarations; they're
+    // likely just a halfhearted attempt at compatibility, and they actually
+    // end up stomping on our emulation of the earlier -webkit-box
+    // display-value, via the CSS cascade. To prevent this problem, we treat
+    // "display: -moz-box" & "-moz-inline-box" as if they were simply a
+    // repetition of the webkit equivalent that we already parsed.
     if (mWebkitBoxUnprefixState == eHaveUnprefixed &&
-        keyword == eCSSKeyword__moz_box) {
+        (keyword == eCSSKeyword__moz_box ||
+         keyword == eCSSKeyword__moz_inline_box)) {
       MOZ_ASSERT(sWebkitPrefixedAliasesEnabled || ShouldUseUnprefixingService(),
                  "mDidUnprefixWebkitBoxInEarlierDecl should only be set if "
                  "we're supporting webkit-prefixed aliases, or if we're using "
                  "the css unprefixing service on this site");
-      return eCSSKeyword_flex;
+      if (sWebkitPrefixedAliasesEnabled) {
+        return (keyword == eCSSKeyword__moz_box) ?
+          eCSSKeyword__webkit_box : eCSSKeyword__webkit_inline_box;
+      }
+      // (If we get here, we're using the Unprefixing Service, which means
+      // we're unprefixing all the way to modern flexbox display values.)
+      return (keyword == eCSSKeyword__moz_box) ?
+        eCSSKeyword_flex : eCSSKeyword_inline_flex;
     }
   }
 
@@ -7571,6 +7656,14 @@ CSSParserImpl::ParseOneOrLargerVariant(nsCSSValue& aValue,
   return result;
 }
 
+static bool
+IsCSSTokenCalcFunction(const nsCSSToken& aToken)
+{
+  return aToken.mType == eCSSToken_Function &&
+         (aToken.mIdent.LowerCaseEqualsLiteral("calc") ||
+          aToken.mIdent.LowerCaseEqualsLiteral("-moz-calc"));
+}
+
 // Assigns to aValue iff it returns CSSParseResult::Ok.
 CSSParseResult
 CSSParserImpl::ParseVariant(nsCSSValue& aValue,
@@ -7874,11 +7967,11 @@ CSSParserImpl::ParseVariant(nsCSSValue& aValue,
     }
   }
   if ((aVariantMask & VARIANT_CALC) &&
-      (eCSSToken_Function == tk->mType) &&
-      (tk->mIdent.LowerCaseEqualsLiteral("calc") ||
-       tk->mIdent.LowerCaseEqualsLiteral("-moz-calc"))) {
-    // calc() currently allows only lengths and percents inside it.
-    if (!ParseCalc(aValue, aVariantMask & VARIANT_LP)) {
+      IsCSSTokenCalcFunction(*tk)) {
+    // calc() currently allows only lengths and percents and number inside it.
+    // And note that in current implementation, number cannot be mixed with
+    // length and percent.
+    if (!ParseCalc(aValue, aVariantMask & VARIANT_LPN)) {
       return CSSParseResult::Error;
     }
     return CSSParseResult::Ok;
@@ -8687,19 +8780,40 @@ CSSParserImpl::ParseGridTrackListWithFirstLineNames(nsCSSValue& aValue,
         SkipUntil(')');
         return false;
       }
-      if (startOfRepeat->mNext->mValue.GetUnit() == eCSSUnit_Pair) {
+      auto firstRepeat = startOfRepeat->mNext;
+      if (firstRepeat->mValue.GetUnit() == eCSSUnit_Pair) {
         if (haveRepeatAuto) {
           REPORT_UNEXPECTED(PEMoreThanOneGridRepeatAutoFillFitInTrackList);
           return false;
         }
         haveRepeatAuto = true;
+        // We're parsing an <auto-track-list>, which requires that all tracks
+        // are <fixed-size>, so we need to check the ones we've parsed already.
+        for (nsCSSValueList* list = firstLineNamesItem->mNext;
+             list != firstRepeat; list = list->mNext) {
+          if (list->mValue.GetUnit() == eCSSUnit_Function) {
+            nsCSSValue::Array* func = list->mValue.GetArrayValue();
+            NS_ASSERTION(func->Item(0).GetKeywordValue() == eCSSKeyword_minmax,
+                         "Expected minmax(), got another function name");
+            if (!func->Item(1).IsLengthPercentCalcUnit() &&
+                !func->Item(2).IsLengthPercentCalcUnit()) {
+              return false;
+            }
+          } else if (!list->mValue.IsLengthPercentCalcUnit()) {
+            return false;
+          }
+          list = list->mNext; // skip line names
+        }
       }
     } else {
       UngetToken();
 
-      // This was not a repeat() function. Try to parse <track-size>.
+      // Not a repeat() function; try to parse <track-size> | <fixed-size>.
       nsCSSValue trackSize;
-      CSSParseResult result = ParseGridTrackSize(trackSize);
+      GridTrackSizeFlags flags = haveRepeatAuto
+        ? GridTrackSizeFlags::eFixedTrackSize
+        : GridTrackSizeFlags::eDefaultTrackSize;
+      CSSParseResult result = ParseGridTrackSize(trackSize, flags);
       if (result == CSSParseResult::Error) {
         return false;
       }
@@ -10685,6 +10799,37 @@ CSSParserImpl::ParseWebkitGradient(nsCSSValue& aValue)
   return true;
 }
 
+bool
+CSSParserImpl::ParseWebkitTextStroke()
+{
+  static const nsCSSProperty kWebkitTextStrokeIDs[] = {
+    eCSSProperty__webkit_text_stroke_width,
+    eCSSProperty__webkit_text_stroke_color
+  };
+
+  const size_t numProps = MOZ_ARRAY_LENGTH(kWebkitTextStrokeIDs);
+  nsCSSValue values[numProps];
+
+  int32_t found = ParseChoice(values, kWebkitTextStrokeIDs, numProps);
+  if (found < 1) {
+    return false;
+  }
+
+  if (!(found & 1)) { // Provide default -webkit-text-stroke-width
+    values[0].SetFloatValue(0, eCSSUnit_Pixel);
+  }
+
+  if (!(found & 2)) { // Provide default -webkit-text-stroke-color
+    values[1].SetIntValue(NS_COLOR_CURRENTCOLOR, eCSSUnit_EnumColor);
+  }
+
+  for (size_t index = 0; index < numProps; ++index) {
+    AppendValue(kWebkitTextStrokeIDs[index], values[index]);
+  }
+
+  return true;
+}
+
   int32_t
 CSSParserImpl::ParseChoice(nsCSSValue aValues[],
                            const nsCSSProperty aPropIDs[], int32_t aNumIDs)
@@ -11458,6 +11603,8 @@ CSSParserImpl::ParsePropertyByFunction(nsCSSProperty aPropID)
   case eCSSProperty_mask_size:
     return ParseImageLayerSize(eCSSProperty_mask_size);
 #endif
+  case eCSSProperty__webkit_text_stroke:
+    return ParseWebkitTextStroke();
   case eCSSProperty_all:
     return ParseAll();
   default:
@@ -11962,13 +12109,16 @@ CSSParserImpl::ParseImageLayersItem(
         // The spec allows a second box value (for background-clip),
         // immediately following the first one (for background-origin).
 
-        // 'background-clip' and 'background-origin' use the same keyword table
-        MOZ_ASSERT(nsCSSProps::kKeywordTableTable[
-                     aTable[nsStyleImageLayers::origin]] ==
-                   nsCSSProps::kImageLayerOriginKTable);
-        MOZ_ASSERT(nsCSSProps::kKeywordTableTable[
-                     aTable[nsStyleImageLayers::clip]] ==
-                   nsCSSProps::kImageLayerOriginKTable);
+#ifdef DEBUG
+        for (size_t i = 0; nsCSSProps::kImageLayerOriginKTable[i].mValue != -1; i++) {
+          // For each keyword & value in kOriginKTable, ensure that
+          // kBackgroundKTable has a matching entry at the same position.
+          MOZ_ASSERT(nsCSSProps::kImageLayerOriginKTable[i].mKeyword ==
+                     nsCSSProps::kBackgroundClipKTable[i].mKeyword);
+          MOZ_ASSERT(nsCSSProps::kImageLayerOriginKTable[i].mValue ==
+                     nsCSSProps::kBackgroundClipKTable[i].mValue);
+        }
+#endif
         static_assert(NS_STYLE_IMAGELAYER_CLIP_BORDER ==
                       NS_STYLE_IMAGELAYER_ORIGIN_BORDER &&
                       NS_STYLE_IMAGELAYER_CLIP_PADDING ==
@@ -12963,7 +13113,6 @@ CSSParserImpl::ParseCalc(nsCSSValue &aValue, uint32_t aVariantMask)
   // for a token that is *either* a value of the property or a number.
   // This can be done without lookahead when we assume that the property
   // values cannot themselves be numbers.
-  NS_ASSERTION(!(aVariantMask & VARIANT_NUMBER), "unexpected variant mask");
   MOZ_ASSERT(aVariantMask != 0, "unexpected variant mask");
 
   bool oldUnitlessLengthQuirk = mUnitlessLengthQuirk;
@@ -13168,7 +13317,9 @@ CSSParserImpl::ParseCalcTerm(nsCSSValue& aValue, uint32_t& aVariantMask)
   if (!GetToken(true))
     return false;
   // Either an additive expression in parentheses...
-  if (mToken.IsSymbol('(')) {
+  if (mToken.IsSymbol('(') ||
+      // Treat nested calc() as plain parenthesis.
+      IsCSSTokenCalcFunction(mToken)) {
     if (!ParseCalcAdditiveExpression(aValue, aVariantMask) ||
         !ExpectSymbol(')', true)) {
       SkipUntil(')');
@@ -13561,10 +13712,10 @@ CSSParserImpl::ParseFont()
   // Get optional "/" line-height
   nsCSSValue  lineHeight;
   if (ExpectSymbol('/', true)) {
-    if (!ParseSingleTokenNonNegativeVariant(lineHeight,
-                                            VARIANT_NUMBER | VARIANT_LP |
-                                              VARIANT_NORMAL,
-                                            nullptr)) {
+    if (ParseNonNegativeVariant(lineHeight,
+                                VARIANT_NUMBER | VARIANT_LP |
+                                  VARIANT_NORMAL | VARIANT_CALC,
+                                nullptr) != CSSParseResult::Ok) {
       return false;
     }
   }
@@ -15051,6 +15202,9 @@ CSSParserImpl::ParseTextCombineUpright(nsCSSValue& aValue)
   // if 'digits', need to check for an explicit number [2, 3, 4]
   if (eCSSUnit_Enumerated == aValue.GetUnit() &&
       aValue.GetIntValue() == NS_STYLE_TEXT_COMBINE_UPRIGHT_DIGITS_2) {
+    if (!nsLayoutUtils::TextCombineUprightDigitsEnabled()) {
+      return false;
+    }
     if (!GetToken(true)) {
       return true;
     }
@@ -15736,10 +15890,10 @@ bool CSSParserImpl::ParseClipPath()
       return false;
     }
 
-    nsCSSValueList* cur = value.SetListValue();
-
     nsCSSValue referenceBox;
     bool hasBox = ParseEnum(referenceBox, nsCSSProps::kClipShapeSizingKTable);
+
+    const bool boxCameFirst = hasBox;
 
     nsCSSValue basicShape;
     bool basicShapeConsumedTokens = false;
@@ -15751,26 +15905,25 @@ bool CSSParserImpl::ParseClipPath()
       return false;
     }
 
-    // We need to preserve the specified order of arguments for inline style.
-    if (hasBox) {
-      cur->mValue = referenceBox;
-    }
-
-    if (hasShape) {
-      if (hasBox) {
-        cur->mNext = new nsCSSValueList;
-        cur = cur->mNext;
-      }
-      cur->mValue = basicShape;
-    }
-
     // Check if the second argument is a reference box if the first wasn't.
-    if (!hasBox &&
-        ParseEnum(referenceBox, nsCSSProps::kClipShapeSizingKTable)) {
-        cur->mNext = new nsCSSValueList;
-        cur = cur->mNext;
-        cur->mValue = referenceBox;
+    if (!hasBox) {
+      hasBox = ParseEnum(referenceBox, nsCSSProps::kClipShapeSizingKTable);
     }
+
+    RefPtr<nsCSSValue::Array> fullValue =
+      nsCSSValue::Array::Create((hasBox && hasShape) ? 2 : 1);
+
+    if (hasBox && hasShape) {
+      fullValue->Item(boxCameFirst ? 0 : 1) = referenceBox;
+      fullValue->Item(boxCameFirst ? 1 : 0) = basicShape;
+    } else if (hasBox) {
+      fullValue->Item(0) = referenceBox;
+    } else {
+      MOZ_ASSERT(hasShape, "should've bailed if we got neither box nor shape");
+      fullValue->Item(0) = basicShape;
+    }
+
+    value.SetArrayValue(fullValue, eCSSUnit_Array);
   }
 
   AppendValue(eCSSProperty_clip_path, value);
@@ -16503,7 +16656,7 @@ CSSParserImpl::GetNamespaceIdForPrefix(const nsString& aPrefix)
   int32_t nameSpaceID = kNameSpaceID_Unknown;
   if (mNameSpaceMap) {
     // user-specified identifiers are case-sensitive (bug 416106)
-    nsCOMPtr<nsIAtom> prefix = do_GetAtom(aPrefix);
+    nsCOMPtr<nsIAtom> prefix = NS_Atomize(aPrefix);
     nameSpaceID = mNameSpaceMap->FindNameSpaceID(prefix);
   }
   // else no declared namespaces

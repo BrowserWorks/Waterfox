@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1999-2016, International Business Machines
+*   Copyright (C) 1999-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -217,7 +217,7 @@ main(int argc, char* argv[]) {
     UBool didSomething = FALSE;
     
     /* preset then read command line options */
-    argc=u_parseArgs(argc, argv, UPRV_LENGTHOF(options), options);
+    argc=u_parseArgs(argc, argv, sizeof(options)/sizeof(options[0]), options);
 
     /* error handling, printing usage message */
     if(argc<0) {

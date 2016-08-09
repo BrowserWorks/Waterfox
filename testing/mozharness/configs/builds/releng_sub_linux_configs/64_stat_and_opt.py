@@ -1,6 +1,7 @@
 import os
 
 config = {
+    # note: overridden by MOZHARNESS_ACTIONS in TaskCluster tasks
     'default_actions': [
         'clobber',
         'clone-tools',
@@ -33,7 +34,6 @@ config = {
     'platform': 'linux64',
     'stage_platform': 'linux64-st-an',
     'publish_nightly_en_US_routes': False,
-    'use_platform_in_symbols_extra_buildid': True,
     'env': {
         'MOZBUILD_STATE_PATH': os.path.join(os.getcwd(), '.mozbuild'),
         'MOZ_AUTOMATION': '1',

@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/dom/Directory.h"
 #include "mozilla/dom/FileList.h"
 #include "mozilla/dom/FileListBinding.h"
 #include "mozilla/dom/File.h"
@@ -37,11 +38,48 @@ FileList::GetLength(uint32_t* aLength)
 }
 
 NS_IMETHODIMP
-FileList::Item(uint32_t aIndex, nsISupports** aFile)
+FileList::Item(uint32_t aIndex, nsISupports** aValue)
 {
   nsCOMPtr<nsIDOMBlob> file = Item(aIndex);
-  file.forget(aFile);
+  file.forget(aValue);
   return NS_OK;
+}
+
+File*
+FileList::Item(uint32_t aIndex) const
+{
+  if (aIndex >= mFiles.Length()) {
+    return nullptr;
+  }
+
+  return mFiles[aIndex];
+}
+
+File*
+FileList::IndexedGetter(uint32_t aIndex, bool& aFound) const
+{
+  aFound = aIndex < mFiles.Length();
+  return Item(aIndex);
+}
+
+void
+FileList::ToSequence(Sequence<RefPtr<File>>& aSequence,
+                     ErrorResult& aRv) const
+{
+  MOZ_ASSERT(aSequence.IsEmpty());
+  if (mFiles.IsEmpty()) {
+    return;
+  }
+
+  if (!aSequence.SetLength(mFiles.Length(),
+                           mozilla::fallible_t())) {
+    aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
+
+  for (uint32_t i = 0; i < mFiles.Length(); ++i) {
+    aSequence[i] = mFiles[i];
+  }
 }
 
 } // namespace dom

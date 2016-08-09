@@ -22,9 +22,11 @@ add_task(function* () {
   Services.prefs.setIntPref("devtools.hud.loglimit.console", 140);
   let scrollBoxElement = hud.ui.outputWrapper;
 
-  for (let i = 0; i < 150; i++) {
-    content.console.log("test message " + i);
-  }
+  ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+    for (let i = 0; i < 150; i++) {
+      content.console.log("test message " + i);
+    }
+  });
 
   yield waitForMessages({
     webconsole: hud,
@@ -53,7 +55,9 @@ add_task(function* () {
   oldScrollTop = scrollBoxElement.scrollTop;
 
   // add a message
-  content.console.log("hello world");
+  ContentTask.spawn(gBrowser.selectedBrowser, {}, function* () {
+    content.console.log("hello world");
+  });
 
   yield waitForMessages({
     webconsole: hud,

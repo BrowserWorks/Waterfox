@@ -947,7 +947,7 @@ nsDocumentViewer::LoadComplete(nsresult aStatus)
     event.mFlags.mBubbles = false;
     event.mFlags.mCancelable = false;
      // XXX Dispatching to |window|, but using |document| as the target.
-    event.target = mDocument;
+    event.mTarget = mDocument;
 
     // If the document presentation is being restored, we don't want to fire
     // onload to the document content since that would likely confuse scripts
@@ -1051,6 +1051,13 @@ nsDocumentViewer::LoadComplete(nsresult aStatus)
 }
 
 NS_IMETHODIMP
+nsDocumentViewer::GetLoadCompleted(bool *aOutLoadCompleted)
+{
+  *aOutLoadCompleted = mLoaded;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsDocumentViewer::PermitUnload(bool *aPermitUnload)
 {
   bool shouldPrompt = true;
@@ -1143,8 +1150,7 @@ nsDocumentViewer::PermitUnloadInternal(bool *aShouldPrompt,
   // the event being dispatched.
   if (!sIsBeforeUnloadDisabled && *aShouldPrompt && dialogsAreEnabled && mDocument &&
       (!sBeforeUnloadRequiresInteraction || mDocument->UserHasInteracted()) &&
-      (event->WidgetEventPtr()->mFlags.mDefaultPrevented ||
-       !text.IsEmpty())) {
+      (event->WidgetEventPtr()->DefaultPrevented() || !text.IsEmpty())) {
     // Ask the user if it's ok to unload the current page
 
     nsCOMPtr<nsIPrompt> prompt = do_GetInterface(docShell);
@@ -1306,7 +1312,7 @@ nsDocumentViewer::PageHide(bool aIsUnload)
     WidgetEvent event(true, eUnload);
     event.mFlags.mBubbles = false;
     // XXX Dispatching to |window|, but using |document| as the target.
-    event.target = mDocument;
+    event.mTarget = mDocument;
 
     // Never permit popups from the unload handler, no matter how we get
     // here.
@@ -2452,56 +2458,40 @@ nsDocumentViewer::DetachFromTopLevelWidget()
 nsView*
 nsDocumentViewer::FindContainerView()
 {
-  nsView* containerView = nullptr;
-
-  if (mContainer) {
-    nsCOMPtr<nsIDocShell> docShell(mContainer);
-    nsCOMPtr<nsPIDOMWindowOuter> pwin(docShell->GetWindow());
-    if (pwin) {
-      nsCOMPtr<Element> containerElement = pwin->GetFrameElementInternal();
-      if (!containerElement) {
-        return nullptr;
-      }
-      nsCOMPtr<nsIPresShell> parentPresShell;
-      nsCOMPtr<nsIDocShellTreeItem> parentDocShellItem;
-      docShell->GetParent(getter_AddRefs(parentDocShellItem));
-      if (parentDocShellItem) {
-        nsCOMPtr<nsIDocShell> parentDocShell = do_QueryInterface(parentDocShellItem);
-        parentPresShell = parentDocShell->GetPresShell();
-      }
-      if (!parentPresShell) {
-        nsCOMPtr<nsIDocument> parentDoc = containerElement->GetCurrentDoc();
-        if (parentDoc) {
-          parentPresShell = parentDoc->GetShell();
-        }
-      }
-      if (!parentPresShell) {
-        NS_WARNING("Subdocument container has no presshell");
-      } else {
-        nsIFrame* subdocFrame = parentPresShell->GetRealPrimaryFrameFor(containerElement);
-        if (subdocFrame) {
-          // subdocFrame might not be a subdocument frame; the frame
-          // constructor can treat a <frame> as an inline in some XBL
-          // cases. Treat that as display:none, the document is not
-          // displayed.
-          if (subdocFrame->GetType() == nsGkAtoms::subDocumentFrame) {
-            NS_ASSERTION(subdocFrame->GetView(), "Subdoc frames must have views");
-            nsView* innerView =
-              static_cast<nsSubDocumentFrame*>(subdocFrame)->EnsureInnerView();
-            containerView = innerView;
-          } else {
-            NS_WARN_IF_FALSE(!subdocFrame->GetType(),
-                             "Subdocument container has non-subdocument frame");
-          }
-        } else {
-          // XXX Silenced by default in bug 1175289
-          LAYOUT_WARNING("Subdocument container has no frame");
-        }
-      }
-    }
+  if (!mContainer) {
+    return nullptr;
   }
 
-  return containerView;
+  nsCOMPtr<nsIDocShell> docShell(mContainer);
+  nsCOMPtr<nsPIDOMWindowOuter> pwin(docShell->GetWindow());
+  if (!pwin) {
+    return nullptr;
+  }
+
+  nsCOMPtr<Element> containerElement = pwin->GetFrameElementInternal();
+  if (!containerElement) {
+    return nullptr;
+  }
+
+  nsIFrame* subdocFrame = nsLayoutUtils::GetRealPrimaryFrameFor(containerElement);
+  if (!subdocFrame) {
+    // XXX Silenced by default in bug 1175289
+    LAYOUT_WARNING("Subdocument container has no frame");
+    return nullptr;
+  }
+
+  // subdocFrame might not be a subdocument frame; the frame
+  // constructor can treat a <frame> as an inline in some XBL
+  // cases. Treat that as display:none, the document is not
+  // displayed.
+  if (subdocFrame->GetType() != nsGkAtoms::subDocumentFrame) {
+    NS_WARN_IF_FALSE(!subdocFrame->GetType(),
+                     "Subdocument container has non-subdocument frame");
+    return nullptr;
+  }
+
+  NS_ASSERTION(subdocFrame->GetView(), "Subdoc frames must have views");
+  return static_cast<nsSubDocumentFrame*>(subdocFrame)->EnsureInnerView();
 }
 
 nsresult
@@ -3695,9 +3685,6 @@ nsDocumentViewer::Print(nsIPrintSettings*       aPrintSettings,
   if (root && root->HasAttr(kNameSpaceID_None, nsGkAtoms::mozdisallowselectionprint)) {
     mPrintEngine->SetDisallowSelectionPrint(true);
   }
-  if (root && root->HasAttr(kNameSpaceID_None, nsGkAtoms::moznomarginboxes)) {
-    mPrintEngine->SetNoMarginBoxes(true);
-  }
   rv = mPrintEngine->Print(aPrintSettings, aWebProgressListener);
   if (NS_FAILED(rv)) {
     OnDonePrinting();
@@ -3769,10 +3756,6 @@ nsDocumentViewer::PrintPreview(nsIPrintSettings* aPrintSettings,
   if (root && root->HasAttr(kNameSpaceID_None, nsGkAtoms::mozdisallowselectionprint)) {
     PR_PL(("PrintPreview: found mozdisallowselectionprint"));
     mPrintEngine->SetDisallowSelectionPrint(true);
-  }
-  if (root && root->HasAttr(kNameSpaceID_None, nsGkAtoms::moznomarginboxes)) {
-    PR_PL(("PrintPreview: found moznomarginboxes"));
-    mPrintEngine->SetNoMarginBoxes(true);
   }
   rv = mPrintEngine->PrintPreview(aPrintSettings, aChildDOMWin, aWebProgressListener);
   mPrintPreviewZoomed = false;

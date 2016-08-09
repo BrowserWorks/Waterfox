@@ -213,6 +213,7 @@
     _(Substr)                       \
     _(BinarySharedStub)             \
     _(UnarySharedStub)              \
+    _(NullarySharedStub)            \
     _(Lambda)                       \
     _(LambdaArrow)                  \
     _(LambdaForSingleton)           \
@@ -265,7 +266,6 @@
     _(ArrayPopShiftT)               \
     _(ArrayPushV)                   \
     _(ArrayPushT)                   \
-    _(ArrayConcat)                  \
     _(ArraySlice)                   \
     _(ArrayJoin)                    \
     _(StoreElementHoleV)            \
@@ -315,6 +315,7 @@
     _(IteratorEnd)                  \
     _(ArrayLength)                  \
     _(SetArrayLength)               \
+    _(GetNextMapEntryForIterator)   \
     _(TypedArrayLength)             \
     _(TypedArrayElements)           \
     _(SetDisjointTypedElements)     \
@@ -344,15 +345,22 @@
     _(CallInstanceOf)               \
     _(InterruptCheck)               \
     _(AsmJSInterruptCheck)          \
+    _(AsmThrowUnreachable)          \
+    _(AsmReinterpret)               \
+    _(AsmReinterpretToI64)          \
+    _(AsmReinterpretFromI64)        \
     _(GetDOMProperty)               \
     _(GetDOMMemberV)                \
     _(GetDOMMemberT)                \
     _(SetDOMProperty)               \
     _(CallDOMNative)                \
     _(IsCallable)                   \
+    _(IsConstructor)                \
     _(IsObject)                     \
     _(IsObjectAndBranch)            \
     _(HasClass)                     \
+    _(AsmSelect)                    \
+    _(AsmSelectI64)                 \
     _(AsmJSLoadHeap)                \
     _(AsmJSStoreHeap)               \
     _(AsmJSLoadFuncPtr)             \

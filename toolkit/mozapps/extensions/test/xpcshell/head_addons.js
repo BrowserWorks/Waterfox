@@ -4,9 +4,8 @@
 
 var AM_Cc = Components.classes;
 var AM_Ci = Components.interfaces;
+var AM_Cu = Components.utils;
 
-const XULAPPINFO_CONTRACTID = "@mozilla.org/xre/app-info;1";
-const XULAPPINFO_CID = Components.ID("{c763b610-9d49-455a-bbd2-ede71682a1ac}");
 const CERTDB_CONTRACTID = "@mozilla.org/security/x509certdb;1";
 const CERTDB_CID = Components.ID("{fb0bbc5c-452e-4783-b32c-80124693d871}");
 
@@ -261,50 +260,17 @@ function isNightlyChannel() {
   return channel != "aurora" && channel != "beta" && channel != "release" && channel != "esr";
 }
 
-function createAppInfo(id, name, version, platformVersion) {
-  gAppInfo = {
-    // nsIXULAppInfo
-    vendor: "Mozilla",
-    name: name,
-    ID: id,
-    version: version,
-    appBuildID: "2007010101",
-    platformVersion: platformVersion ? platformVersion : "1.0",
-    platformBuildID: "2007010101",
-
-    // nsIXULRuntime
-    browserTabsRemoteAutostart: false,
-    inSafeMode: false,
-    logConsoleErrors: true,
-    OS: "XPCShell",
-    XPCOMABI: "noarch-spidermonkey",
-    invalidateCachesOnRestart: function invalidateCachesOnRestart() {
-      // Do nothing
+function createAppInfo(ID, name, version, platformVersion="1.0") {
+  let tmp = {};
+  AM_Cu.import("resource://testing-common/AppInfo.jsm", tmp);
+  tmp.updateAppInfo({
+    ID, name, version, platformVersion,
+    crashReporter: true,
+    extraProps: {
+      browserTabsRemoteAutostart: false,
     },
-
-    // nsICrashReporter
-    annotations: {},
-
-    annotateCrashReport: function(key, data) {
-      this.annotations[key] = data;
-    },
-
-    QueryInterface: XPCOMUtils.generateQI([AM_Ci.nsIXULAppInfo,
-                                           AM_Ci.nsIXULRuntime,
-                                           AM_Ci.nsICrashReporter,
-                                           AM_Ci.nsISupports])
-  };
-
-  var XULAppInfoFactory = {
-    createInstance: function (outer, iid) {
-      if (outer != null)
-        throw Components.results.NS_ERROR_NO_AGGREGATION;
-      return gAppInfo.QueryInterface(iid);
-    }
-  };
-  var registrar = Components.manager.QueryInterface(AM_Ci.nsIComponentRegistrar);
-  registrar.registerFactory(XULAPPINFO_CID, "XULAppInfo",
-                            XULAPPINFO_CONTRACTID, XULAppInfoFactory);
+  });
+  gAppInfo = tmp.getAppInfo();
 }
 
 function getManifestURIForBundle(file) {
@@ -1022,7 +988,7 @@ function createInstallRDF(aData) {
 
   ["id", "version", "type", "internalName", "updateURL", "updateKey",
    "optionsURL", "optionsType", "aboutURL", "iconURL", "icon64URL",
-   "skinnable", "bootstrap", "strictCompatibility", "multiprocessCompatible"].forEach(function(aProp) {
+   "skinnable", "bootstrap", "unpack", "strictCompatibility", "multiprocessCompatible"].forEach(function(aProp) {
     if (aProp in aData)
       rdf += "<em:" + aProp + ">" + escapeXML(aData[aProp]) + "</em:" + aProp + ">\n";
   });
@@ -1776,7 +1742,6 @@ function promiseInstallAllFiles(aFiles, aIgnoreIncompatible) {
   let deferred = Promise.defer();
   installAllFiles(aFiles, deferred.resolve, aIgnoreIncompatible);
   return deferred.promise;
-
 }
 
 if ("nsIWindowsRegKey" in AM_Ci) {
@@ -1907,6 +1872,8 @@ Services.prefs.setBoolPref("extensions.showMismatchUI", false);
 Services.prefs.setCharPref("extensions.update.url", "http://127.0.0.1/updateURL");
 Services.prefs.setCharPref("extensions.update.background.url", "http://127.0.0.1/updateBackgroundURL");
 Services.prefs.setCharPref("extensions.blocklist.url", "http://127.0.0.1/blocklistURL");
+Services.prefs.setCharPref("services.kinto.base",
+                           "http://localhost/dummy-kinto/v1");
 
 // By default ignore bundled add-ons
 Services.prefs.setBoolPref("extensions.installDistroAddons", false);

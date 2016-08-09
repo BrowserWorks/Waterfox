@@ -14,13 +14,16 @@ dictionary KeyframeAnimationOptions : KeyframeEffectOptions {
   DOMString id = "";
 };
 
+dictionary AnimationFilter {
+  boolean subtree = false;
+};
+
 [NoInterfaceObject]
 interface Animatable {
-  // Bug 1253507: Disabled in Firefox 47 branch
-  [ChromeOnly, Throws]
+  [Func="nsDocument::IsElementAnimateEnabled", Throws]
   Animation animate(object? frames,
                     optional (unrestricted double or KeyframeAnimationOptions)
                       options);
   [Func="nsDocument::IsWebAnimationsEnabled"]
-  sequence<Animation> getAnimations();
+  sequence<Animation> getAnimations(optional AnimationFilter filter);
 };

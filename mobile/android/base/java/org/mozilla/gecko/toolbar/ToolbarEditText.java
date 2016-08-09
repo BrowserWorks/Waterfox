@@ -92,6 +92,7 @@ public class ToolbarEditText extends CustomEditText
 
     @Override
     public void onAttachedToWindow() {
+        super.onAttachedToWindow();
         setOnKeyListener(new KeyListener());
         setOnKeyPreImeListener(new KeyPreImeListener());
         setOnSelectionChangedListener(new SelectionChangeListener());
@@ -368,6 +369,16 @@ public class ToolbarEditText extends CustomEditText
             // First add trailing text.
             text.append(result, textLength, resultLength);
 
+            // Restore selection/composing spans.
+            for (int i = 0; i < spans.length; i++) {
+                final int spanFlag = spanFlags[i];
+                if (spanFlag == 0) {
+                    // Skip if the span was ignored before.
+                    continue;
+                }
+                text.setSpan(spans[i], spanStarts[i], spanEnds[i], spanFlag);
+            }
+
             // Mark added text as autocomplete text.
             for (final Object span : mAutoCompleteSpans) {
                 text.setSpan(span, textLength, resultLength, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -381,16 +392,6 @@ public class ToolbarEditText extends CustomEditText
             // is not the case in practice, because EditText still makes sure the cursor is
             // still in view.
             bringPointIntoView(resultLength);
-
-            // Restore selection/composing spans.
-            for (int i = 0; i < spans.length; i++) {
-                final int spanFlag = spanFlags[i];
-                if (spanFlag == 0) {
-                    // Skip if the span was ignored before.
-                    continue;
-                }
-                text.setSpan(spans[i], spanStarts[i], spanEnds[i], spanFlag);
-            }
 
             endSettingAutocomplete();
         }
@@ -488,7 +489,7 @@ public class ToolbarEditText extends CustomEditText
             final Editable text = getText();
             final int start = text.getSpanStart(AUTOCOMPLETE_SPAN);
 
-            if (start < 0 || (start == selStart && start == selEnd)) {
+            if (mSettingAutoComplete || start < 0 || (start == selStart && start == selEnd)) {
                 // Do not commit autocomplete text if there is no autocomplete text
                 // or if selection is still at start of autocomplete text
                 return;

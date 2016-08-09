@@ -76,8 +76,21 @@ var Reader = {
         break;
       }
 
-      case "Reader:Removed": {
+      case "Reader:RemoveFromCache": {
         ReaderMode.removeArticleFromCache(aData).catch(e => Cu.reportError("Error removing article from cache: " + e));
+        break;
+      }
+
+      case "Reader:AddToCache": {
+        let tab = BrowserApp.getTabForId(aData);
+        if (!tab) {
+          throw new Error("No tab for tabID = " + aData + " when trying to save reader view article");
+        }
+
+        // If the article is coming from reader mode, we must have fetched it already.
+        this._getArticleData(tab.browser).then((article) => {
+          ReaderMode.storeArticleInCache(article);
+        }).catch(e => Cu.reportError("Error storing article in cache: " + e));
         break;
       }
     }
@@ -152,18 +165,6 @@ var Reader = {
         this.updatePageAction(tab);
         break;
       }
-      case "Reader:SetIntPref": {
-        if (message.data && message.data.name !== undefined) {
-          Services.prefs.setIntPref(message.data.name, message.data.value);
-        }
-        break;
-      }
-      case "Reader:SetCharPref": {
-        if (message.data && message.data.name !== undefined) {
-          Services.prefs.setCharPref(message.data.name, message.data.value);
-        }
-        break;
-      }
     }
   },
 
@@ -171,17 +172,11 @@ var Reader = {
     readerModeCallback: function(browser) {
       let url = browser.currentURI.spec;
       if (url.startsWith("about:reader")) {
-        let originalURL = ReaderMode.getOriginalUrl(url);
-        if (!originalURL) {
-          Cu.reportError("Error finding original URL for about:reader URL: " + url);
-        } else {
-          browser.loadURI(originalURL);
-        }
         Reader._buttonHistogram.add(Reader._buttonHistogramValues.TAP_EXIT);
       } else {
-        browser.messageManager.sendAsyncMessage("Reader:ParseDocument", { url: url });
         Reader._buttonHistogram.add(Reader._buttonHistogramValues.TAP_ENTER);
       }
+      browser.messageManager.sendAsyncMessage("Reader:ToggleReaderMode");
     },
   },
 
@@ -290,6 +285,23 @@ var Reader = {
       return null;
     });
   }),
+
+  _getArticleData: function(browser) {
+    return new Promise((resolve, reject) => {
+      if (browser == null) {
+        reject("_getArticleData needs valid browser");
+      }
+
+      let mm = browser.messageManager;
+      let listener = (message) => {
+        mm.removeMessageListener("Reader:StoredArticleData", listener);
+        resolve(message.data.article);
+      };
+      mm.addMessageListener("Reader:StoredArticleData", listener);
+      mm.sendAsyncMessage("Reader:GetStoredArticleData");
+    });
+  },
+
 
   /**
    * Migrates old indexedDB reader mode cache to new JSON cache.

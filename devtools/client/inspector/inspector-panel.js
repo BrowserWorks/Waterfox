@@ -348,6 +348,11 @@ InspectorPanel.prototype = {
 
     let defaultTab = Services.prefs.getCharPref("devtools.inspector.activeSidebar");
 
+    if (!Services.prefs.getBoolPref("devtools.fontinspector.enabled") &&
+       defaultTab == "fontinspector") {
+      defaultTab = "ruleview";
+    }
+
     this._setDefaultSidebar = (event, toolId) => {
       Services.prefs.setCharPref("devtools.inspector.activeSidebar", toolId);
     };
@@ -448,6 +453,25 @@ InspectorPanel.prototype = {
   },
 
   /**
+   * Can a new HTML element be inserted into the currently selected element?
+   * @return {Boolean}
+   */
+  canAddHTMLChild: function() {
+    let selection = this.selection;
+
+    // Don't allow to insert an element into these elements. This should only
+    // contain elements where walker.insertAdjacentHTML has no effect.
+    let invalidTagNames = ["html", "iframe"];
+
+    return selection.isHTMLNode() &&
+           selection.isElementNode() &&
+           !selection.isPseudoElementNode() &&
+           !selection.isAnonymousNode() &&
+           invalidTagNames.indexOf(
+            selection.nodeFront.nodeName.toLowerCase()) === -1;
+  },
+
+  /**
    * When a new node is selected.
    */
   onNewSelection: function(event, value, reason) {
@@ -458,6 +482,15 @@ InspectorPanel.prototype = {
     // Wait for all the known tools to finish updating and then let the
     // client know.
     let selection = this.selection.nodeFront;
+
+    // Update the state of the add button in the toolbar depending on the
+    // current selection.
+    let btn = this.panelDoc.querySelector("#inspector-element-add-button");
+    if (this.canAddHTMLChild()) {
+      btn.removeAttribute("disabled");
+    } else {
+      btn.setAttribute("disabled", "true");
+    }
 
     // On any new selection made by the user, store the unique css selector
     // of the selected node so it can be restored after reload of the same page
@@ -500,7 +533,7 @@ InspectorPanel.prototype = {
 
     if (!this._updateProgress) {
       // Start an update in progress.
-      var self = this;
+      let self = this;
       this._updateProgress = {
         node: this.selection.nodeFront,
         outstanding: new Set(),
@@ -508,7 +541,9 @@ InspectorPanel.prototype = {
           if (this !== self._updateProgress) {
             return;
           }
-          if (this.node !== self.selection.nodeFront) {
+          // Cancel update if there is no `selection` anymore.
+          // It can happen if the inspector panel is already destroyed.
+          if (!self.selection || (this.node !== self.selection.nodeFront)) {
             self.cancelUpdate();
             return;
           }
@@ -701,6 +736,14 @@ InspectorPanel.prototype = {
       deleteNode.removeAttribute("disabled");
     } else {
       deleteNode.setAttribute("disabled", "true");
+    }
+
+    // Disable add item if needed
+    let addNode = this.panelDoc.getElementById("node-menu-add");
+    if (this.canAddHTMLChild()) {
+      addNode.removeAttribute("disabled");
+    } else {
+      addNode.setAttribute("disabled", "true");
     }
 
     // Disable / enable "Copy Unique Selector", "Copy inner HTML",
@@ -1009,6 +1052,27 @@ InspectorPanel.prototype = {
       button.setAttribute("tooltiptext", strings.GetStringFromName("inspector.collapsePane"));
     }
   },
+
+  /**
+   * Create a new node as the last child of the current selection, expand the
+   * parent and select the new node.
+   */
+  addNode: Task.async(function* () {
+    if (!this.canAddHTMLChild()) {
+      return;
+    }
+
+    let html = "<div></div>";
+
+    // Insert the html and expect a childList markup mutation.
+    let onMutations = this.once("markupmutation");
+    let {nodes} = yield this.walker.insertAdjacentHTML(this.selection.nodeFront,
+                                                       "beforeEnd", html);
+    yield onMutations;
+
+    // Select the new node (this will auto-expand its parent).
+    this.selection.setNodeFront(nodes[0], "node-inserted");
+  }),
 
   /**
    * Toggle a pseudo class.

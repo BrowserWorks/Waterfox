@@ -26,16 +26,24 @@ from mozbuild.util import (
     HierarchicalStringList,
     KeyedDefaultDict,
     List,
+    ListWithAction,
     memoize,
     memoized_property,
     ReadOnlyKeyedDefaultDict,
     StrictOrderingOnAppendList,
+    StrictOrderingOnAppendListWithAction,
     StrictOrderingOnAppendListWithFlagsFactory,
     TypedList,
     TypedNamedTuple,
 )
 
-from ..testing import all_test_flavors
+from ..testing import (
+    all_test_flavors,
+    read_manifestparser_manifest,
+    read_reftest_manifest,
+    read_wpt_manifest,
+)
+
 import mozpack.path as mozpath
 from types import FunctionType
 
@@ -79,7 +87,7 @@ class Context(KeyedDefaultDict):
 
     config is the ConfigEnvironment for this context.
     """
-    def __init__(self, allowed_variables={}, config=None):
+    def __init__(self, allowed_variables={}, config=None, finder=None):
         self._allowed_variables = allowed_variables
         self.main_path = None
         self.current_path = None
@@ -88,6 +96,7 @@ class Context(KeyedDefaultDict):
         self._all_paths = []
         self.config = config
         self._sandbox = None
+        self._finder = finder
         KeyedDefaultDict.__init__(self, self._factory)
 
     def push_source(self, path):
@@ -572,13 +581,44 @@ def ContextDerivedTypedHierarchicalStringList(type):
 
     return _TypedListWithItems
 
+def OrderedListWithAction(action):
+    """Returns a class which behaves as a StrictOrderingOnAppendList, but
+    invokes the given callable with each input and a context as it is
+    read, storing a tuple including the result and the original item.
 
-BugzillaComponent = TypedNamedTuple('BugzillaComponent',
-                        [('product', unicode), ('component', unicode)])
+    This used to extend moz.build reading to make more data available in
+    filesystem-reading mode.
+    """
+    class _OrderedListWithAction(ContextDerivedValue,
+                                 StrictOrderingOnAppendListWithAction):
+        def __init__(self, context, *args):
+            def _action(item):
+                return item, action(context, item)
+            super(_OrderedListWithAction, self).__init__(action=_action, *args)
+
+    return _OrderedListWithAction
+
+def TypedListWithAction(typ, action):
+    """Returns a class which behaves as a TypedList with the provided type, but
+    invokes the given given callable with each input and a context as it is
+    read, storing a tuple including the result and the original item.
+
+    This used to extend moz.build reading to make more data available in
+    filesystem-reading mode.
+    """
+    class _TypedListWithAction(ContextDerivedValue, TypedList(typ), ListWithAction):
+        def __init__(self, context, *args):
+            def _action(item):
+                return item, action(context, item)
+            super(_TypedListWithAction, self).__init__(action=_action, *args)
+    return _TypedListWithAction
 
 WebPlatformTestManifest = TypedNamedTuple("WebPlatformTestManifest",
                                           [("manifest_path", unicode),
                                            ("test_root", unicode)])
+ManifestparserManifestList = OrderedListWithAction(read_manifestparser_manifest)
+ReftestManifestList = OrderedListWithAction(read_reftest_manifest)
+WptManifestList = TypedListWithAction(WebPlatformTestManifest, read_wpt_manifest)
 
 OrderedSourceList = ContextDerivedTypedList(SourcePath, StrictOrderingOnAppendList)
 OrderedTestFlavorList = TypedList(Enum(*all_test_flavors()),
@@ -587,6 +627,9 @@ OrderedStringList = TypedList(unicode, StrictOrderingOnAppendList)
 DependentTestsEntry = ContextDerivedTypedRecord(('files', OrderedSourceList),
                                                 ('tags', OrderedStringList),
                                                 ('flavors', OrderedTestFlavorList))
+BugzillaComponent = TypedNamedTuple('BugzillaComponent',
+                        [('product', unicode), ('component', unicode)])
+
 
 class Files(SubContext):
     """Metadata attached to files.
@@ -1044,10 +1087,17 @@ VARIABLES = {
         """Like ``FINAL_TARGET_FILES``, with preprocessing.
         """),
 
-    'TESTING_FILES': (ContextDerivedTypedHierarchicalStringList(Path), list,
-        """List of files to be installed in the _tests directory.
+    'OBJDIR_FILES': (ContextDerivedTypedHierarchicalStringList(Path), list,
+        """List of files to be installed anywhere in the objdir. Use sparingly.
 
-        This works similarly to FINAL_TARGET_FILES.
+        ``OBJDIR_FILES`` is similar to FINAL_TARGET_FILES, but it allows copying
+        anywhere in the object directory. This is intended for various one-off
+        cases, not for general use. If you wish to add entries to OBJDIR_FILES,
+        please consult a build peer.
+        """),
+
+    'OBJDIR_PP_FILES': (ContextDerivedTypedHierarchicalStringList(Path), list,
+        """Like ``OBJDIR_FILES``, with preprocessing. Use sparingly.
         """),
 
     'FINAL_LIBRARY': (unicode, unicode,
@@ -1233,6 +1283,20 @@ VARIABLES = {
 
            BRANDING_FILES += ['foo.png']
            BRANDING_FILES.images.subdir += ['bar.png']
+        """),
+
+    'SDK_FILES': (ContextDerivedTypedHierarchicalStringList(Path), list,
+        """List of files to be installed into the sdk directory.
+
+        ``SDK_FILES`` will copy (or symlink, if the platform supports it)
+        the contents of its files to the ``dist/sdk`` directory. Files that
+        are destined for a subdirectory can be specified by accessing a field.
+        For example, to export ``foo.py`` to the top-level directory and
+        ``bar.py`` to the directory ``subdir``, append to
+        ``SDK_FILES`` like so::
+
+           SDK_FILES += ['foo.py']
+           SDK_FILES.subdir += ['bar.py']
         """),
 
     'SDK_LIBRARY': (bool, bool,
@@ -1424,87 +1488,79 @@ VARIABLES = {
         """),
 
     # Test declaration.
-    'A11Y_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'A11Y_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining a11y tests.
         """),
 
-    'BROWSER_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'BROWSER_CHROME_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining browser chrome tests.
         """),
 
-    'JETPACK_PACKAGE_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'JETPACK_PACKAGE_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining jetpack package tests.
         """),
 
-    'JETPACK_ADDON_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'JETPACK_ADDON_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining jetpack addon tests.
         """),
 
-    'CRASHTEST_MANIFESTS': (StrictOrderingOnAppendList, list,
-        """List of manifest files defining crashtests.
-
-        These are commonly named crashtests.list.
-        """),
-
-    'ANDROID_INSTRUMENTATION_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'ANDROID_INSTRUMENTATION_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining Android instrumentation tests.
         """),
 
-    'MARIONETTE_LAYOUT_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'MARIONETTE_LAYOUT_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining marionette-layout tests.
         """),
 
-    'MARIONETTE_LOOP_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'MARIONETTE_LOOP_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining marionette-loop tests.
         """),
 
-    'MARIONETTE_UNIT_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'MARIONETTE_UNIT_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining marionette-unit tests.
         """),
 
-    'MARIONETTE_UPDATE_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'MARIONETTE_UPDATE_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining marionette-update tests.
         """),
 
-    'MARIONETTE_WEBAPI_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'MARIONETTE_WEBAPI_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining marionette-webapi tests.
         """),
 
-    'METRO_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'METRO_CHROME_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining metro browser chrome tests.
         """),
 
-    'MOCHITEST_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'MOCHITEST_CHROME_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining mochitest chrome tests.
         """),
 
-    'MOCHITEST_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'MOCHITEST_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining mochitest tests.
         """),
 
-    'MOCHITEST_WEBAPPRT_CONTENT_MANIFESTS': (StrictOrderingOnAppendList, list,
-        """List of manifest files defining webapprt mochitest content tests.
-        """),
-
-    'MOCHITEST_WEBAPPRT_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,
-        """List of manifest files defining webapprt mochitest chrome tests.
-        """),
-
-    'REFTEST_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'REFTEST_MANIFESTS': (ReftestManifestList, list,
         """List of manifest files defining reftests.
 
         These are commonly named reftest.list.
         """),
 
-    'WEB_PLATFORM_TESTS_MANIFESTS': (TypedList(WebPlatformTestManifest), list,
+    'CRASHTEST_MANIFESTS': (ReftestManifestList, list,
+        """List of manifest files defining crashtests.
+
+        These are commonly named crashtests.list.
+        """),
+
+    'WEB_PLATFORM_TESTS_MANIFESTS': (WptManifestList, list,
         """List of (manifest_path, test_path) defining web-platform-tests.
         """),
 
-    'WEBRTC_SIGNALLING_TEST_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'WEBRTC_SIGNALLING_TEST_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining WebRTC signalling tests.
         """),
 
-    'XPCSHELL_TESTS_MANIFESTS': (StrictOrderingOnAppendList, list,
+    'XPCSHELL_TESTS_MANIFESTS': (ManifestparserManifestList, list,
         """List of manifest files defining xpcshell tests.
         """),
 
@@ -1694,7 +1750,7 @@ VARIABLES = {
            This variable only has an effect on Windows.
         """),
 
-    'TEST_HARNESS_FILES': (HierarchicalStringList, list,
+    'TEST_HARNESS_FILES': (ContextDerivedTypedHierarchicalStringList(Path), list,
         """List of files to be installed for test harnesses.
 
         ``TEST_HARNESS_FILES`` can be used to install files to any directory
@@ -1717,6 +1773,17 @@ VARIABLES = {
     'NO_COMPONENTS_MANIFEST': (bool, bool,
         """Do not create a binary-component manifest entry for the
         corresponding XPCOMBinaryComponent.
+        """),
+
+    'USE_YASM': (bool, bool,
+        """Use the yasm assembler to assemble assembly files from SOURCES.
+
+        By default, the build will use the toolchain assembler, $(AS), to
+        assemble source files in assembly language (.s or .asm files). Setting
+        this value to ``True`` will cause it to use yasm instead.
+
+        If yasm is not available on this system, or does not support the
+        current target architecture, an error will be raised.
         """),
 }
 
@@ -2033,7 +2100,7 @@ SPECIAL_VARIABLES = {
         ``$(FINAL_TARGET)/modules``, after preprocessing.
         """),
 
-    'TESTING_JS_MODULES': (lambda context: context['TESTING_FILES'].modules, list,
+    'TESTING_JS_MODULES': (lambda context: context['TEST_HARNESS_FILES'].modules, list,
         """JavaScript modules to install in the test-only destination.
 
         Some JavaScript modules (JSMs) are test-only and not distributed

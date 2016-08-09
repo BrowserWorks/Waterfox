@@ -69,7 +69,6 @@ using namespace mozilla::dom;
 nsPlaintextEditor::nsPlaintextEditor()
 : nsEditor()
 , mRules(nullptr)
-, mWrapToWindow(false)
 , mWrapColumn(0)
 , mMaxTextLength(-1)
 , mInitTriggerCounter(0)
@@ -437,7 +436,7 @@ nsPlaintextEditor::TypedText(const nsAString& aString, ETypingAction aAction)
   }
 }
 
-already_AddRefed<Element>
+Element*
 nsPlaintextEditor::CreateBRImpl(nsCOMPtr<nsINode>* aInOutParent,
                                 int32_t* aInOutOffset,
                                 EDirection aSelect)
@@ -448,7 +447,7 @@ nsPlaintextEditor::CreateBRImpl(nsCOMPtr<nsINode>* aInOutParent,
   CreateBRImpl(address_of(parent), aInOutOffset, address_of(br), aSelect);
   *aInOutParent = do_QueryInterface(parent);
   nsCOMPtr<Element> ret(do_QueryInterface(br));
-  return ret.forget();
+  return ret;
 }
 
 nsresult
@@ -1045,27 +1044,17 @@ nsPlaintextEditor::SetWrapWidth(int32_t aWrapColumn)
   if (IsWrapHackEnabled() && aWrapColumn >= 0)
     styleValue.AppendLiteral("font-family: -moz-fixed; ");
 
-  // If "mail.compose.wrap_to_window_width" is set, and we're a mail editor,
-  // then remember our wrap width (for output purposes) but set the visual
-  // wrapping to window width.
-  // We may reset mWrapToWindow here, based on the pref's current value.
-  if (IsMailEditor())
-  {
-    mWrapToWindow =
-      Preferences::GetBool("mail.compose.wrap_to_window_width", mWrapToWindow);
-  }
-
   // and now we're ready to set the new whitespace/wrapping style.
-  if (aWrapColumn > 0 && !mWrapToWindow)        // Wrap to a fixed column
-  {
+  if (aWrapColumn > 0) {
+    // Wrap to a fixed column.
     styleValue.AppendLiteral("white-space: pre-wrap; width: ");
     styleValue.AppendInt(aWrapColumn);
     styleValue.AppendLiteral("ch;");
-  }
-  else if (mWrapToWindow || aWrapColumn == 0)
+  } else if (aWrapColumn == 0) {
     styleValue.AppendLiteral("white-space: pre-wrap;");
-  else
+  } else {
     styleValue.AppendLiteral("white-space: pre;");
+  }
 
   return rootElement->SetAttr(kNameSpaceID_None, nsGkAtoms::style, styleValue, true);
 }

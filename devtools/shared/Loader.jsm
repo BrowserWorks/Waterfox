@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-/* globals NetUtil, FileUtils, OS */
 
 "use strict";
 
@@ -13,10 +12,6 @@ var { Constructor: CC, classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
-
-XPCOMUtils.defineLazyModuleGetter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "FileUtils", "resource://gre/modules/FileUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
 
 var { Loader } = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
 var promise = Cu.import("resource://gre/modules/Promise.jsm", {}).Promise;
@@ -62,19 +57,47 @@ XPCOMUtils.defineLazyGetter(loaderModules, "xpcInspector", () => {
 XPCOMUtils.defineLazyGetter(loaderModules, "indexedDB", () => {
   // On xpcshell, we can't instantiate indexedDB without crashing
   try {
-    return Cu.Sandbox(this, {wantGlobalProperties:["indexedDB"]}).indexedDB;
+    let sandbox
+      = Cu.Sandbox(CC('@mozilla.org/systemprincipal;1', 'nsIPrincipal')(),
+                   {wantGlobalProperties: ["indexedDB"]});
+    return sandbox.indexedDB;
+
   } catch(e) {
     return {};
   }
 });
 
 XPCOMUtils.defineLazyGetter(loaderModules, "CSS", () => {
-  return Cu.Sandbox(this, {wantGlobalProperties: ["CSS"]}).CSS;
+  let sandbox
+    = Cu.Sandbox(CC('@mozilla.org/systemprincipal;1', 'nsIPrincipal')(),
+                 {wantGlobalProperties: ["CSS"]});
+  return sandbox.CSS;
 });
 
 XPCOMUtils.defineLazyGetter(loaderModules, "URL", () => {
-  return Cu.Sandbox(this, {wantGlobalProperties: ["URL"]}).URL;
+  let sandbox
+    = Cu.Sandbox(CC('@mozilla.org/systemprincipal;1', 'nsIPrincipal')(),
+                 {wantGlobalProperties: ["URL"]});
+  return sandbox.URL;
 });
+
+const loaderPaths = {
+  // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+  "": "resource://gre/modules/commonjs/",
+  // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+  "devtools": "resource://devtools",
+  // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+  "gcli": "resource://devtools/shared/gcli/source/lib/gcli",
+  // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+  "acorn": "resource://devtools/acorn",
+  // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+  "acorn/util/walk": "resource://devtools/acorn/walk.js",
+  // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+  "source-map": "resource://devtools/shared/sourcemap/source-map.js",
+  // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
+  // Allow access to xpcshell test items from the loader.
+  "xpcshell-test": "resource://test",
+};
 
 var sharedGlobalBlocklist = ["sdk/indexed-db"];
 
@@ -85,29 +108,31 @@ var sharedGlobalBlocklist = ["sdk/indexed-db"];
 function BuiltinProvider() {}
 BuiltinProvider.prototype = {
   load: function() {
+    // Copy generic paths and modules for this loader instance
+    let paths = {};
+    for (let path in loaderPaths) {
+      paths[path] = loaderPaths[path];
+    }
+    let modules = {};
+    for (let name in loaderModules) {
+      XPCOMUtils.defineLazyGetter(modules, name, (function (name) {
+        return loaderModules[name];
+      }).bind(null, name));
+    }
+    // When creating a Loader invisible to the Debugger, we have to ensure
+    // using only modules and not depend on any JSM. As everything that is
+    // not loaded with Loader isn't going to respect `invisibleToDebugger`.
+    // But we have to keep using Promise.jsm for other loader to prevent
+    // breaking unhandled promise rejection in tests.
+    if (this.invisibleToDebugger) {
+      paths["promise"] = "resource://gre/modules/Promise-backend.js";
+    } else {
+      modules["promise"] = promise;
+    }
     this.loader = new Loader.Loader({
       id: "fx-devtools",
-      modules: loaderModules,
-      paths: {
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        "": "resource://gre/modules/commonjs/",
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        "devtools": "resource://devtools",
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        "gcli": "resource://devtools/shared/gcli/source/lib/gcli",
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        "promise": "resource://gre/modules/Promise-backend.js",
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        "acorn": "resource://devtools/acorn",
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        "acorn/util/walk": "resource://devtools/acorn/walk.js",
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        "source-map": "resource://devtools/shared/sourcemap/source-map.js",
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-        // Allow access to xpcshell test items from the loader.
-        "xpcshell-test": "resource://test"
-        // ⚠ DISCUSSION ON DEV-DEVELOPER-TOOLS REQUIRED BEFORE MODIFYING ⚠
-      },
+      modules,
+      paths,
       globals: this.globals,
       invisibleToDebugger: this.invisibleToDebugger,
       sharedGlobal: true,
@@ -126,11 +151,9 @@ BuiltinProvider.prototype = {
 var gNextLoaderID = 0;
 
 /**
- * The main devtools API.
- * In addition to a few loader-related details, this object will also include all
- * exports from the main module.  The standard instance of this loader is
- * exported as |devtools| below, but if a fresh copy of the loader is needed,
- * then a new one can also be created.
+ * The main devtools API. The standard instance of this loader is exported as
+ * |devtools| below, but if a fresh copy of the loader is needed, then a new
+ * one can also be created.
  */
 this.DevToolsLoader = function DevToolsLoader() {
   this.require = this.require.bind(this);
@@ -138,7 +161,8 @@ this.DevToolsLoader = function DevToolsLoader() {
   this.lazyImporter = XPCOMUtils.defineLazyModuleGetter.bind(XPCOMUtils);
   this.lazyServiceGetter = XPCOMUtils.defineLazyServiceGetter.bind(XPCOMUtils);
   this.lazyRequireGetter = this.lazyRequireGetter.bind(this);
-  this.main = this.main.bind(this);
+
+  Services.obs.addObserver(this, "devtools-unload", false);
 };
 
 DevToolsLoader.prototype = {
@@ -210,46 +234,6 @@ DevToolsLoader.prototype = {
   },
 
   /**
-   * Add a URI to the loader.
-   * @param string id
-   *    The module id that can be used within the loader to refer to this module.
-   * @param string uri
-   *    The URI to load as a module.
-   * @returns The module's exports.
-   */
-  loadURI: function(id, uri) {
-    let module = Loader.Module(id, uri);
-    return Loader.load(this.provider.loader, module).exports;
-  },
-
-  /**
-   * Let the loader know the ID of the main module to load.
-   *
-   * The loader doesn't need a main module, but it's nice to have.  This
-   * will be called by the browser devtools to load the devtools/main module.
-   *
-   * When only using the server, there's no main module, and this method
-   * can be ignored.
-   */
-  main: function(id) {
-    // Ensure the main module isn't loaded twice, because it may have observable
-    // side-effects.
-    if (this._mainid) {
-      return;
-    }
-    this._mainid = id;
-    this._main = Loader.main(this.provider.loader, id);
-
-    // Mirror the main module's exports on this object.
-    Object.getOwnPropertyNames(this._main).forEach(key => {
-      XPCOMUtils.defineLazyGetter(this, key, () => this._main[key]);
-    });
-
-    var events = this.require("sdk/system/events");
-    events.emit("devtools-loaded", {});
-  },
-
-  /**
    * Override the provider used to load the tools.
    */
   setProvider: function(provider) {
@@ -258,8 +242,6 @@ DevToolsLoader.prototype = {
     }
 
     if (this._provider) {
-      var events = this.require("sdk/system/events");
-      events.emit("devtools-unloaded", {});
       delete this.require;
       this._provider.unload("newprovider");
     }
@@ -267,6 +249,7 @@ DevToolsLoader.prototype = {
 
     // Pass through internal loader settings specific to this loader instance
     this._provider.invisibleToDebugger = this.invisibleToDebugger;
+    // Changes here should be mirrored to devtools/.eslintrc.
     this._provider.globals = {
       isWorker: false,
       reportError: Cu.reportError,
@@ -278,8 +261,7 @@ DevToolsLoader.prototype = {
         lazyImporter: this.lazyImporter,
         lazyServiceGetter: this.lazyServiceGetter,
         lazyRequireGetter: this.lazyRequireGetter,
-        id: this.id,
-        main: this.main
+        id: this.id
       },
       // Make sure `define` function exists.  This allows defining some modules
       // in AMD format while retaining CommonJS compatibility through this hook.
@@ -315,19 +297,21 @@ DevToolsLoader.prototype = {
   },
 
   /**
-   * Reload the current provider.
+   * Handles "devtools-unload" event
+   *
+   * @param String data
+   *    reason passed to modules when unloaded
    */
-  reload: function() {
-    var events = this.require("sdk/system/events");
-    events.emit("startupcache-invalidate", {});
-    events.emit("devtools-unloaded", {});
+  observe: function(subject, topic, data) {
+    if (topic != "devtools-unload") {
+      return;
+    }
+    Services.obs.removeObserver(this, "devtools-unload");
 
-    this._provider.unload("reload");
-    delete this._provider;
-    let mainid = this._mainid;
-    delete this._mainid;
-    this._loadProvider();
-    this.main(mainid);
+    if (this._provider) {
+      this._provider.unload(data);
+      delete this._provider;
+    }
   },
 
   /**
@@ -346,3 +330,11 @@ DevToolsLoader.prototype = {
 this.devtools = this.loader = new DevToolsLoader();
 
 this.require = this.devtools.require.bind(this.devtools);
+
+// For compatibility reasons, expose these symbols on "devtools":
+Object.defineProperty(this.devtools, "Toolbox", {
+  get: () => this.require("devtools/client/framework/toolbox").Toolbox
+});
+Object.defineProperty(this.devtools, "TargetFactory", {
+  get: () => this.require("devtools/client/framework/target").TargetFactory
+});

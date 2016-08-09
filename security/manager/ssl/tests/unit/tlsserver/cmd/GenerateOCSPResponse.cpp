@@ -94,14 +94,14 @@ WriteResponse(const char* filename, const SECItem* item)
     return false;
   }
 
-  ScopedPRFileDesc outFile(PR_Open(filename,
+  UniquePRFileDesc outFile(PR_Open(filename,
                                    PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE,
                                    0644));
   if (!outFile) {
     PrintPRError("cannot open file for writing");
     return false;
   }
-  int32_t rv = PR_Write(outFile, item->data, item->len);
+  int32_t rv = PR_Write(outFile.get(), item->data, item->len);
   if (rv < 0 || (uint32_t) rv != item->len) {
     PrintPRError("File write failure");
     return false;
@@ -126,7 +126,7 @@ main(int argc, char* argv[])
     PR_fprintf(PR_STDERR, "Failed to initialize NSS\n");
     exit(EXIT_FAILURE);
   }
-  PLArenaPool* arena = PORT_NewArena(256 * argc);
+  UniquePLArenaPool arena(PORT_NewArena(256 * argc));
   if (!arena) {
     PrintPRError("PORT_NewArena failed");
     exit(EXIT_FAILURE);
@@ -145,7 +145,7 @@ main(int argc, char* argv[])
       exit(EXIT_FAILURE);
     }
 
-    ScopedCERTCertificate cert(PK11_FindCertFromNickname(certNick, nullptr));
+    UniqueCERTCertificate cert(PK11_FindCertFromNickname(certNick, nullptr));
     if (!cert) {
       PrintPRError("PK11_FindCertFromNickname failed");
       PR_fprintf(PR_STDERR, "Failed to find certificate with nick '%s'\n",

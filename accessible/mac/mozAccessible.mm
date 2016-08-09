@@ -678,11 +678,11 @@ ConvertToNSArray(nsTArray<ProxyAccessible*>& aArray)
 {
   NS_OBJC_BEGIN_TRY_ABORT_BLOCK_NIL;
 
-  AccessibleWrap* accWrap = [self getGeckoAccessible];
-  if (mChildren || (accWrap && !accWrap->AreChildrenCached()))
+  if (mChildren)
     return mChildren;
 
   // get the array of children.
+  AccessibleWrap* accWrap = [self getGeckoAccessible];
   if (accWrap) {
     AutoTArray<Accessible*, 10> childrenArray;
     accWrap->GetUnignoredChildren(&childrenArray);
@@ -811,7 +811,7 @@ ConvertToNSArray(nsTArray<ProxyAccessible*>& aArray)
   // Now, deal with widget roles
   nsIAtom* roleAtom = nullptr;
   if (accWrap && accWrap->HasARIARole()) {
-    nsRoleMapEntry* roleMap = accWrap->ARIARoleMap();
+    const nsRoleMapEntry* roleMap = accWrap->ARIARoleMap();
     roleAtom = *roleMap->roleAtom;
   }
   if (proxy)

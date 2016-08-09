@@ -17,6 +17,7 @@
  * Functions beginning with Servo_ are implemented in Servo and invoked from Gecko.
  */
 
+class nsIAtom;
 class nsINode;
 typedef nsINode RawGeckoNode;
 namespace mozilla { namespace dom { class Element; } }
@@ -25,6 +26,7 @@ typedef mozilla::dom::Element RawGeckoElement;
 class nsIDocument;
 typedef nsIDocument RawGeckoDocument;
 struct ServoNodeData;
+struct ServoComputedValues;
 struct RawServoStyleSheet;
 struct RawServoStyleSet;
 
@@ -64,7 +66,8 @@ void Servo_DropNodeData(ServoNodeData* data);
 // TODO: Make these return already_AddRefed and UniquePtr when the binding
 // generator is smart enough to handle them.
 RawServoStyleSheet* Servo_StylesheetFromUTF8Bytes(const uint8_t* bytes, uint32_t length);
-void Servo_ReleaseStylesheet(RawServoStyleSheet* sheet);
+void Servo_AddRefStyleSheet(RawServoStyleSheet* sheet);
+void Servo_ReleaseStyleSheet(RawServoStyleSheet* sheet);
 void Servo_AppendStyleSheet(RawServoStyleSheet* sheet, RawServoStyleSet* set);
 void Servo_PrependStyleSheet(RawServoStyleSheet* sheet, RawServoStyleSet* set);
 void Servo_RemoveStyleSheet(RawServoStyleSheet* sheet, RawServoStyleSet* set);
@@ -72,8 +75,24 @@ bool Servo_StyleSheetHasRules(RawServoStyleSheet* sheet);
 RawServoStyleSet* Servo_InitStyleSet();
 void Servo_DropStyleSet(RawServoStyleSet* set);
 
+// Computed style data.
+ServoComputedValues* Servo_GetComputedValues(RawGeckoElement* element);
+ServoComputedValues* Servo_GetComputedValuesForAnonymousBox(ServoComputedValues* parentStyleOrNull,
+                                                            nsIAtom* pseudoTag);
+void Servo_AddRefComputedValues(ServoComputedValues*);
+void Servo_ReleaseComputedValues(ServoComputedValues*);
+
 // Servo API.
 void Servo_RestyleDocument(RawGeckoDocument* doc, RawServoStyleSet* set);
+
+// Style-struct management.
+#define STYLE_STRUCT(name, checkdata_cb) \
+struct nsStyle##name; \
+void Gecko_Construct_nsStyle##name(nsStyle##name* ptr); \
+void Gecko_CopyConstruct_nsStyle##name(nsStyle##name* ptr, const nsStyle##name* other); \
+void Gecko_Destroy_nsStyle##name(nsStyle##name* ptr);
+#include "nsStyleStructList.h"
+#undef STYLE_STRUCT
 
 } // extern "C"
 

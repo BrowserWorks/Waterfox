@@ -11,6 +11,7 @@
 #include "gfxFT2FontBase.h"
 #include "gfxPlatformFontList.h"
 #include "mozilla/mozalloc.h"
+#include "nsClassHashtable.h"
 
 #include <fontconfig/fontconfig.h>
 #include "ft2build.h"
@@ -181,7 +182,10 @@ public:
     gfxFontconfigFont(cairo_scaled_font_t *aScaledFont,
                       gfxFontEntry *aFontEntry,
                       const gfxFontStyle *aFontStyle,
-                      bool aNeedsBold);
+                      bool aNeedsBold,
+                      bool aAutoHinting = false);
+
+    bool GetAutoHinting() const { return mAutoHinting; }
 
 #ifdef USE_SKIA
     virtual already_AddRefed<mozilla::gfx::GlyphRenderingOptions>
@@ -190,6 +194,9 @@ public:
 
 protected:
     virtual ~gfxFontconfigFont();
+
+private:
+    bool mAutoHinting;
 };
 
 class nsILanguageAtomService;
@@ -277,9 +284,8 @@ protected:
                     FcPattern*> mLocalNames;
 
     // caching generic/lang ==> font family list
-    nsBaseHashtable<nsCStringHashKey,
-                    nsAutoPtr<PrefFontList>,
-                    PrefFontList*> mGenericMappings;
+    nsClassHashtable<nsCStringHashKey,
+                     PrefFontList> mGenericMappings;
 
     // Caching family lookups as found by FindAndAddFamilies after resolving
     // substitutions. The gfxFontFamily objects cached here are owned by the

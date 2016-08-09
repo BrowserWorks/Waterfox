@@ -68,13 +68,13 @@ SyncedTabsDeckView.prototype = {
     let bundle = this._getBrowserBundle();
     let formatArgs = ["android", "ios"].map(os => {
       let link = this._doc.createElement("a");
-      link.textContent = bundle.getString(`appMenuRemoteTabs.mobilePromo.${os}`)
+      link.textContent = bundle.getString(`appMenuRemoteTabs.mobilePromo.${os}`);
       link.className = `${os}-link text-link`;
       link.setAttribute("href", "#");
       return link.outerHTML;
     });
     // Put it all together...
-    let contents = bundle.getFormattedString("appMenuRemoteTabs.mobilePromo", formatArgs);
+    let contents = bundle.getFormattedString("appMenuRemoteTabs.mobilePromo.text2", formatArgs);
     this.container.querySelector(".device-promo").innerHTML = contents;
   },
 
@@ -84,11 +84,16 @@ SyncedTabsDeckView.prototype = {
   },
 
   update(state) {
+    // Note that we may also want to update elements that are outside of the
+    // deck, so use the document to find the class names rather than our
+    // container.
     for (let panel of state.panels) {
       if (panel.selected) {
-        this.container.getElementsByClassName(panel.id).item(0).classList.add("selected");
+        Array.prototype.map.call(this._doc.getElementsByClassName(panel.id),
+                                 item => item.classList.add("selected"));
       } else {
-        this.container.getElementsByClassName(panel.id).item(0).classList.remove("selected");
+        Array.prototype.map.call(this._doc.getElementsByClassName(panel.id),
+                                 item => item.classList.remove("selected"));
       }
     }
   },

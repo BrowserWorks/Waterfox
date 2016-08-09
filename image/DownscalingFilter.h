@@ -23,6 +23,7 @@
 
 #include "mozilla/Maybe.h"
 #include "mozilla/SSE.h"
+#include "mozilla/mips.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/gfx/2D.h"
 #include "gfxPrefs.h"
@@ -71,7 +72,6 @@ template <typename Next>
 class DownscalingFilter final : public SurfaceFilter
 {
 public:
-  uint8_t* AdvanceRow() override { MOZ_CRASH(); return nullptr; }
   Maybe<SurfaceInvalidRect> TakeInvalidRect() override { return Nothing(); }
 
   template <typename... Rest>
@@ -82,6 +82,7 @@ public:
 
 protected:
   uint8_t* DoResetToFirstRow() override { MOZ_CRASH(); return nullptr; }
+  uint8_t* DoAdvanceRow() override { MOZ_CRASH(); return nullptr; }
 };
 
 #else
@@ -214,7 +215,19 @@ public:
     return invalidRect;
   }
 
-  uint8_t* AdvanceRow() override
+protected:
+  uint8_t* DoResetToFirstRow() override
+  {
+    mNext.ResetToFirstRow();
+
+    mInputRow = 0;
+    mOutputRow = 0;
+    mRowsInWindow = 0;
+
+    return GetRowPointer();
+  }
+
+  uint8_t* DoAdvanceRow() override
   {
     if (mInputRow >= mInputSize.height) {
       NS_WARNING("Advancing DownscalingFilter past the end of the input");
@@ -236,7 +249,7 @@ public:
     if (mInputRow == inputRowToRead) {
       skia::ConvolveHorizontally(mRowBuffer.get(), *mXFilter,
                                  mWindow[mRowsInWindow++], mHasAlpha,
-                                 supports_sse2());
+                                 supports_sse2() || supports_mmi());
     }
 
     MOZ_ASSERT(mOutputRow < mNext.InputSize().height,
@@ -257,18 +270,6 @@ public:
 
     return mInputRow < mInputSize.height ? GetRowPointer()
                                          : nullptr;
-  }
-
-protected:
-  uint8_t* DoResetToFirstRow() override
-  {
-    mNext.ResetToFirstRow();
-
-    mInputRow = 0;
-    mOutputRow = 0;
-    mRowsInWindow = 0;
-
-    return GetRowPointer();
   }
 
 private:
@@ -311,7 +312,7 @@ private:
       skia::ConvolveVertically(static_cast<const FilterValue*>(filterValues),
                                filterLength, mWindow.get(), mXFilter->num_values(),
                                reinterpret_cast<uint8_t*>(aRow), mHasAlpha,
-                               supports_sse2());
+                               supports_sse2() || supports_mmi());
       return Some(WriteState::NEED_MORE_DATA);
     });
 

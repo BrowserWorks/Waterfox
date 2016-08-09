@@ -224,9 +224,10 @@ function toLocalTimeISOString(date) {
  */
 function annotateCrashReport(sessionId) {
   try {
-    const cr = Cc["@mozilla.org/toolkit/crash-reporter;1"]
-            .getService(Ci.nsICrashReporter);
-    cr.setTelemetrySessionId(sessionId);
+    const cr = Cc["@mozilla.org/toolkit/crash-reporter;1"];
+    if (cr) {
+      cr.getService(Ci.nsICrashReporter).setTelemetrySessionId(sessionId);
+    }
   } catch (e) {
     // Ignore errors when crash reporting is disabled
   }
@@ -319,6 +320,12 @@ var TelemetryScheduler = {
     idleService.addIdleObserver(this, IDLE_TIMEOUT_SECONDS);
   },
 
+  _clearTimeout: function() {
+    if (this._schedulerTimer) {
+      Policy.clearSchedulerTickTimeout(this._schedulerTimer);
+    }
+  },
+
   /**
    * Reschedules the tick timer.
    */
@@ -329,9 +336,7 @@ var TelemetryScheduler = {
       return;
     }
 
-    if (this._schedulerTimer) {
-      Policy.clearSchedulerTickTimeout(this._schedulerTimer);
-    }
+    this._clearTimeout();
 
     const now = Policy.now();
     let timeout = SCHEDULER_TICK_INTERVAL_MS;
@@ -411,6 +416,7 @@ var TelemetryScheduler = {
         return this._onSchedulerTick();
         break;
     }
+    return undefined;
   },
 
   /**
@@ -419,6 +425,10 @@ var TelemetryScheduler = {
    *                   operation completes.
    */
   _onSchedulerTick: function() {
+    // This call might not be triggered from a timeout. In that case we don't want to
+    // leave any previously scheduled timeouts pending.
+    this._clearTimeout();
+
     if (this._shuttingDown) {
       this._log.warn("_onSchedulerTick - already shutdown.");
       return Promise.reject(new Error("Already shutdown."));
@@ -428,6 +438,7 @@ var TelemetryScheduler = {
     try {
       promise = this._schedulerTickLogic();
     } catch (e) {
+      Telemetry.getHistogramById("TELEMETRY_SCHEDULER_TICK_EXCEPTION").add(1);
       this._log.error("_onSchedulerTick - There was an exception", e);
     } finally {
       this._rescheduleTimeout();
@@ -447,8 +458,10 @@ var TelemetryScheduler = {
     let nowDate = Policy.now();
     let now = nowDate.getTime();
 
-    if (now - this._lastTickTime > 1.1 * SCHEDULER_TICK_INTERVAL_MS) {
-      this._log.trace("_schedulerTickLogic - First scheduler tick after sleep or startup.");
+    if ((now - this._lastTickTime) > (1.1 * SCHEDULER_TICK_INTERVAL_MS) &&
+        (this._lastTickTime != 0)) {
+      Telemetry.getHistogramById("TELEMETRY_SCHEDULER_WAKEUP").add(1);
+      this._log.trace("_schedulerTickLogic - First scheduler tick after sleep.");
     }
     this._lastTickTime = now;
 
@@ -456,6 +469,7 @@ var TelemetryScheduler = {
     const shouldSendDaily = this._isDailyPingDue(nowDate);
 
     if (shouldSendDaily) {
+      Telemetry.getHistogramById("TELEMETRY_SCHEDULER_SEND_DAILY").add(1);
       this._log.trace("_schedulerTickLogic - Daily ping due.");
       this._lastDailyPingTime = now;
       return Impl._sendDailyPing();
@@ -717,6 +731,7 @@ var Impl = {
   _childrenToHearFrom: null,
   // monotonically-increasing id for USS reports
   _nextTotalMemoryId: 1,
+  _testing: false,
 
 
   get _log() {
@@ -844,8 +859,6 @@ var Impl = {
    * Returns an object:
    * { range: [min, max], bucket_count: <number of buckets>,
    *   histogram_type: <histogram_type>, sum: <sum>,
-   *   sum_squares_lo: <sum_squares_lo>,
-   *   sum_squares_hi: <sum_squares_hi>,
    *   values: { bucket1: count1, bucket2: count2, ... } }
    */
   packHistogram: function packHistogram(hgram) {
@@ -858,11 +871,6 @@ var Impl = {
       values: {},
       sum: hgram.sum
     };
-
-    if (hgram.histogram_type != Telemetry.HISTOGRAM_EXPONENTIAL) {
-      retgram.sum_squares_lo = hgram.sum_squares_lo;
-      retgram.sum_squares_hi = hgram.sum_squares_hi;
-    }
 
     let first = true;
     let last = 0;
@@ -908,7 +916,12 @@ var Impl = {
     for (let name of registered) {
       for (let n of [name, "STARTUP_" + name]) {
         if (n in hls) {
-          ret[n] = this.packHistogram(hls[n]);
+          // Omit telemetry test histograms outside of tests.
+          if (n.startsWith('TELEMETRY_TEST_') && this._testing == false) {
+            this._log.trace("getHistograms - Skipping test histogram: " + n);
+          } else {
+            ret[n] = this.packHistogram(hls[n]);
+          }
         }
       }
     }
@@ -943,7 +956,11 @@ var Impl = {
     let ret = {};
 
     for (let id of registered) {
-      ret[id] = {};
+      // Omit telemetry test histograms outside of tests.
+      if (id.startsWith('TELEMETRY_TEST_') && this._testing == false) {
+        this._log.trace("getKeyedHistograms - Skipping test histogram: " + id);
+        continue;
+      }
       let keyed = Telemetry.getKeyedHistogramById(id);
       let snapshot = null;
       if (subsession) {
@@ -952,7 +969,15 @@ var Impl = {
       } else {
         snapshot = keyed.snapshot();
       }
-      for (let key of Object.keys(snapshot)) {
+
+      let keys = Object.keys(snapshot);
+      if (keys.length == 0) {
+        // Skip empty keyed histogram.
+        continue;
+      }
+
+      ret[id] = {};
+      for (let key of keys) {
         ret[id][key] = this.packHistogram(snapshot[key]);
       }
     }
@@ -1093,7 +1118,6 @@ var Impl = {
     b("MEMORY_HEAP_ALLOCATED", "heapAllocated");
     p("MEMORY_HEAP_OVERHEAD_FRACTION", "heapOverheadFraction");
     b("MEMORY_JS_GC_HEAP", "JSMainRuntimeGCHeap");
-    b("MEMORY_JS_MAIN_RUNTIME_TEMPORARY_PEAK", "JSMainRuntimeTemporaryPeak");
     c("MEMORY_JS_COMPARTMENTS_SYSTEM", "JSMainRuntimeCompartmentsSystem");
     c("MEMORY_JS_COMPARTMENTS_USER", "JSMainRuntimeCompartmentsUser");
     b("MEMORY_IMAGES_CONTENT_USED_UNCOMPRESSED", "imagesContentUsedUncompressed");
@@ -1294,23 +1318,29 @@ var Impl = {
   getSessionPayload: function getSessionPayload(reason, clearSubsession) {
     this._log.trace("getSessionPayload - reason: " + reason + ", clearSubsession: " + clearSubsession);
 
-    const isMobile = ["gonk", "android"].includes(AppConstants.platform);
-    const isSubsession = isMobile ? false : !this._isClassicReason(reason);
+    let payload;
+    try {
+      const isMobile = ["gonk", "android"].includes(AppConstants.platform);
+      const isSubsession = isMobile ? false : !this._isClassicReason(reason);
 
-    if (isMobile) {
-      clearSubsession = false;
-    }
+      if (isMobile) {
+        clearSubsession = false;
+      }
 
-    let measurements =
-      this.getSimpleMeasurements(reason == REASON_SAVED_SESSION, isSubsession, clearSubsession);
-    let info = !Utils.isContentProcess ? this.getMetadata(reason) : null;
-    let payload = this.assemblePayloadWithMeasurements(measurements, info, reason, clearSubsession);
-
-    if (!Utils.isContentProcess && clearSubsession) {
-      this.startNewSubsession();
-      // Persist session data to disk (don't wait until it completes).
-      let sessionData = this._getSessionDataObject();
-      TelemetryStorage.saveSessionData(sessionData);
+      let measurements =
+        this.getSimpleMeasurements(reason == REASON_SAVED_SESSION, isSubsession, clearSubsession);
+      let info = !Utils.isContentProcess ? this.getMetadata(reason) : null;
+      payload = this.assemblePayloadWithMeasurements(measurements, info, reason, clearSubsession);
+    } catch (ex) {
+      Telemetry.getHistogramById("TELEMETRY_ASSEMBLE_PAYLOAD_EXCEPTION").add(1);
+      throw ex;
+    } finally {
+      if (!Utils.isContentProcess && clearSubsession) {
+        this.startNewSubsession();
+        // Persist session data to disk (don't wait until it completes).
+        let sessionData = this._getSessionDataObject();
+        TelemetryStorage.saveSessionData(sessionData);
+      }
     }
 
     return payload;
@@ -1361,6 +1391,7 @@ var Impl = {
   setupChromeProcess: function setupChromeProcess(testing) {
     this._initStarted = true;
     this._log.trace("setupChromeProcess");
+    this._testing = testing;
 
     if (this._delayedInitTask) {
       this._log.error("setupChromeProcess - init task already running");
@@ -1473,6 +1504,7 @@ var Impl = {
    */
   setupContentProcess: function setupContentProcess(testing) {
     this._log.trace("setupContentProcess");
+    this._testing = testing;
 
     if (!Telemetry.canRecordBase) {
       this._log.trace("setupContentProcess - base recording is disabled, not initializing");
@@ -1878,6 +1910,7 @@ var Impl = {
       TelemetryController.addPendingPing(getPingType(payload), payload, options);
       break;
     }
+    return undefined;
   },
 
   /**

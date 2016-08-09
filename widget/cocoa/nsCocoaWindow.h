@@ -10,9 +10,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include "mozilla/RefPtr.h"
 #include "nsBaseWidget.h"
 #include "nsPIWidgetCocoa.h"
-#include "nsAutoPtr.h"
 #include "nsCocoaUtils.h"
 
 class nsCocoaWindow;
@@ -411,9 +411,6 @@ protected:
     nsCOMPtr<nsIWidget> widget = do_CreateInstance(kCPopUpCID);
     return widget.forget();
   }
-
-  virtual nsresult NotifyIMEInternal(
-                     const IMENotification& aIMENotification) override;
 
   nsIWidget*           mParent;         // if we're a popup, this is our parent [WEAK]
   nsIWidget*           mAncestorLink;   // link to traverse ancestors [WEAK]

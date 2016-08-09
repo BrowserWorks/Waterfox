@@ -146,7 +146,7 @@ nsAccUtils::SetLiveContainerAttributes(nsIPersistentProperties *aAttributes,
 
     // container-live, and container-live-role attributes
     if (live.IsEmpty()) {
-      nsRoleMapEntry* role = nullptr;
+      const nsRoleMapEntry* role = nullptr;
       if (ancestor->IsElement()) {
         role = aria::GetRoleMap(ancestor->AsElement());
       }
@@ -392,7 +392,7 @@ nsAccUtils::IsTextInterfaceSupportCorrect(Accessible* aAccessible)
   uint32_t childCount = aAccessible->ChildCount();
   for (uint32_t childIdx = 0; childIdx < childCount; childIdx++) {
     Accessible* child = aAccessible->GetChildAt(childIdx);
-    if (!IsEmbeddedObject(child)) {
+    if (child->IsText()) {
       foundText = true;
       break;
     }
@@ -405,8 +405,9 @@ nsAccUtils::IsTextInterfaceSupportCorrect(Accessible* aAccessible)
 uint32_t
 nsAccUtils::TextLength(Accessible* aAccessible)
 {
-  if (IsEmbeddedObject(aAccessible))
+  if (!aAccessible->IsText()) {
     return 1;
+  }
 
   TextLeafAccessible* textLeaf = aAccessible->AsTextLeaf();
   if (textLeaf)

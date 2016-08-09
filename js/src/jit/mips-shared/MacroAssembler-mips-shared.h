@@ -9,7 +9,11 @@
 
 #if defined(JS_CODEGEN_MIPS32)
 # include "jit/mips32/Assembler-mips32.h"
+#elif defined(JS_CODEGEN_MIPS64)
+# include "jit/mips64/Assembler-mips64.h"
 #endif
+
+#include "jit/AtomicOp.h"
 
 namespace js {
 namespace jit {
@@ -94,6 +98,8 @@ class MacroAssemblerMIPSShared : public Assembler
     void ma_xor(Register rd, Register rs);
     void ma_xor(Register rd, Imm32 imm);
     void ma_xor(Register rd, Register rs, Imm32 imm);
+
+    void ma_ctz(Register rd, Register rs);
 
     // load
     void ma_load(Register dest, const BaseIndex& src, LoadStoreSize size = SizeWord,

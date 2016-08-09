@@ -141,8 +141,10 @@ class StaticBlockScope : public NestedStaticScope
 
     /* Return the number of variables associated with this block. */
     uint32_t numVariables() const {
-        // TODO: propertyCount() is O(n), use O(1) lastProperty()->slot() instead
-        return propertyCount();
+        uint32_t num = 0;
+        if (!lastProperty()->isEmptyShape())
+            num = lastProperty()->slot() + 1 - RESERVED_SLOTS;
+        return num;
     }
 
   private:
@@ -816,6 +818,8 @@ class ModuleEnvironmentObject : public LexicalScopeBase
 {
     static const uint32_t MODULE_SLOT = 1;
 
+    static const ObjectOps objectOps_;
+
   public:
     static const Class class_;
 
@@ -961,6 +965,7 @@ class ClonedBlockObject : public NestedScopeObject
 
   public:
     static const unsigned RESERVED_SLOTS = 2;
+    static const ObjectOps objectOps_;
     static const Class class_;
 
   private:

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/bcp47/timezone.xml
@@ -252,7 +252,6 @@ timezoneTypes:table(nofallback){
             "America:Edmonton"{"caedm"}
             "America:Eirunepe"{"brern"}
             "America:El_Salvador"{"svsal"}
-            "America:Fort_Nelson"{"cafne"}
             "America:Fortaleza"{"brfor"}
             "America:Glace_Bay"{"caglb"}
             "America:Godthab"{"glgoh"}
@@ -375,7 +374,6 @@ timezoneTypes:table(nofallback){
             "Asia:Bahrain"{"bhbah"}
             "Asia:Baku"{"azbak"}
             "Asia:Bangkok"{"thbkk"}
-            "Asia:Barnaul"{"rubax"}
             "Asia:Beirut"{"lbbey"}
             "Asia:Bishkek"{"kgfru"}
             "Asia:Brunei"{"bnbwn"}
@@ -495,7 +493,6 @@ timezoneTypes:table(nofallback){
             "Etc:Unknown"{"unk"}
             "Europe:Amsterdam"{"nlams"}
             "Europe:Andorra"{"adalv"}
-            "Europe:Astrakhan"{"ruasf"}
             "Europe:Athens"{"grath"}
             "Europe:Belgrade"{"rsbeg"}
             "Europe:Berlin"{"deber"}
@@ -540,7 +537,6 @@ timezoneTypes:table(nofallback){
             "Europe:Stockholm"{"sesto"}
             "Europe:Tallinn"{"eetll"}
             "Europe:Tirane"{"altia"}
-            "Europe:Ulyanovsk"{"ruuly"}
             "Europe:Uzhgorod"{"uauzh"}
             "Europe:Vaduz"{"livdz"}
             "Europe:Vatican"{"vavat"}

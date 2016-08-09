@@ -1,4 +1,4 @@
-﻿* Copyright (C) 2004-2016, International Business Machines
+﻿* Copyright (C) 2004-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *
 *   file name:  changes.txt
@@ -42,35 +42,6 @@ we should assign Unicode script property value aliases for them
 soon after Unicode 8 is released, and add them in ICU 56.
 
 Khitan scripts will be encoded later.
-
----------------------------------------------------------------------------- ***
-
-Emoji properties added in ICU 57: http://bugs.icu-project.org/trac/ticket/11802
-
-Edit preparseucd.py to add & parse new properties.
-They share the UCD property namespace but are not listed in PropertyAliases.txt.
-
-Add emoji-data.txt to the input files, from http://www.unicode.org/Public/emoji/
-Initial data from emoji/2.0/
-
-ICU_ROOT=~/svn.icu/trunk
-ICU_SRC_DIR=$ICU_ROOT/src
-ICUDT=icudt56b
-export LD_LIBRARY_PATH=$ICU_ROOT/dbg/lib
-SRC_DATA_IN=$ICU_SRC_DIR/source/data/in
-UNIDATA=$ICU_SRC_DIR/source/data/unidata
-
-Add binary-property constants to uchar.h enum UProperty & UProperty.java.
-
-~/svn.icutools/trunk/src/unicode$ py/preparseucd.py ~/unidata/uni80/20151217 $ICU_SRC_DIR ~/svn.icutools/trunk/src
-(Needs to be run after uchar.h additions, so that the new properties can be picked up by genprops.)
-
-Data structure: uprops.h/.cpp, corepropsbuilder.cpp, UCharacterProperty.java
-
-make install, then icutools cmake & make, then
-~/svn.icutools/trunk/dbg/unicode/c$ make && genprops/genprops $ICU_SRC_DIR
-
-Generate Java data as usual, only update pnames.icu & uprops.icu.
 
 ---------------------------------------------------------------------------- ***
 

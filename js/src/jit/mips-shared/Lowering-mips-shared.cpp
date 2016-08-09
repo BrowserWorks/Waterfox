@@ -274,6 +274,27 @@ LIRGeneratorMIPSShared::visitAsmJSNeg(MAsmJSNeg* ins)
 }
 
 void
+LIRGeneratorMIPSShared::visitAsmSelect(MAsmSelect* ins)
+{
+    if (ins->type() == MIRType_Int64) {
+        auto* lir = new(alloc()) LAsmSelectI64(useInt64RegisterAtStart(ins->trueExpr()),
+                                               useInt64(ins->falseExpr()),
+                                               useRegister(ins->condExpr())
+                                              );
+
+        defineInt64ReuseInput(lir, ins, LAsmSelectI64::TrueExprIndex);
+        return;
+    }
+
+    auto* lir = new(alloc()) LAsmSelect(useRegisterAtStart(ins->trueExpr()),
+                                        use(ins->falseExpr()),
+                                        useRegister(ins->condExpr())
+                                       );
+
+    defineReuseInput(lir, ins, LAsmSelect::TrueExprIndex);
+}
+
+void
 LIRGeneratorMIPSShared::lowerUDiv(MDiv* div)
 {
     MDefinition* lhs = div->getOperand(0);
@@ -412,7 +433,6 @@ LIRGeneratorMIPSShared::visitCompareExchangeTypedArrayElement(MCompareExchangeTy
 {
     MOZ_ASSERT(ins->arrayType() != Scalar::Float32);
     MOZ_ASSERT(ins->arrayType() != Scalar::Float64);
-    MOZ_ASSERT(ins->offset() == 0);
 
     MOZ_ASSERT(ins->elements()->type() == MIRType_Elements);
     MOZ_ASSERT(ins->index()->type() == MIRType_Int32);
@@ -441,7 +461,6 @@ void
 LIRGeneratorMIPSShared::visitAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins)
 {
     MOZ_ASSERT(ins->arrayType() <= Scalar::Uint32);
-    MOZ_ASSERT(ins->offset() == 0);
 
     MOZ_ASSERT(ins->elements()->type() == MIRType_Elements);
     MOZ_ASSERT(ins->index()->type() == MIRType_Int32);
@@ -586,6 +605,12 @@ LIRGeneratorMIPSShared::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayEleme
 
 void
 LIRGeneratorMIPSShared::visitTruncateToInt64(MTruncateToInt64* ins)
+{
+    MOZ_CRASH("NY");
+}
+
+void
+LIRGeneratorMIPSShared::visitInt64ToFloatingPoint(MInt64ToFloatingPoint* ins)
 {
     MOZ_CRASH("NY");
 }

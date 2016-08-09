@@ -10,7 +10,6 @@
 #define jsgc_h
 
 #include "mozilla/Atomics.h"
-#include "mozilla/DebugOnly.h"
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/TypeTraits.h"
@@ -49,7 +48,9 @@ enum State {
     MARK,
     SWEEP,
     FINALIZE,
-    COMPACT
+    COMPACT,
+
+    NUM_STATES
 };
 
 /* Map from C++ type to alloc kind. JSObject does not have a 1:1 mapping, so must use Arena::thingSize. */
@@ -154,7 +155,7 @@ CanBeFinalizedInBackground(AllocKind kind, const Class* clasp)
      * the alloc kind; kind may already be a background finalize kind.
      */
     return (!IsBackgroundFinalized(kind) &&
-            (!clasp->finalize || (clasp->flags & JSCLASS_BACKGROUND_FINALIZE)));
+            (!clasp->hasFinalize() || (clasp->flags & JSCLASS_BACKGROUND_FINALIZE)));
 }
 
 /* Capacity for slotsToThingKind */
@@ -790,12 +791,6 @@ const size_t MAX_EMPTY_CHUNK_AGE = 4;
 
 } /* namespace gc */
 
-extern bool
-InitGC(JSRuntime* rt, uint32_t maxbytes);
-
-extern void
-FinishGC(JSRuntime* rt);
-
 class InterpreterFrame;
 
 extern void
@@ -923,6 +918,8 @@ class GCParallelTask
     // Amount of time this task took to execute.
     uint64_t duration_;
 
+    explicit GCParallelTask(const GCParallelTask&) = delete;
+
   protected:
     // A flag to signal a request for early completion of the off-thread task.
     mozilla::Atomic<bool> cancel_;
@@ -931,6 +928,11 @@ class GCParallelTask
 
   public:
     GCParallelTask() : state(NotStarted), duration_(0) {}
+    GCParallelTask(GCParallelTask&& other)
+      : state(other.state),
+        duration_(0),
+        cancel_(false)
+    {}
 
     // Derived classes must override this to ensure that join() gets called
     // before members get destructed.
@@ -1039,17 +1041,14 @@ class RelocationOverlay
     /* The low bit is set so this should never equal a normal pointer. */
     static const uintptr_t Relocated = uintptr_t(0xbad0bad1);
 
-    // Arrange the fields of the RelocationOverlay so that JSObject's group
-    // pointer is not overwritten during compacting.
-
-    /* A list entry to track all relocated things. */
-    RelocationOverlay* next_;
-
     /* Set to Relocated when moved. */
     uintptr_t magic_;
 
     /* The location |this| was moved to. */
     Cell* newLocation_;
+
+    /* A list entry to track all relocated things. */
+    RelocationOverlay* next_;
 
   public:
     static RelocationOverlay* fromCell(Cell* cell) {
@@ -1065,14 +1064,7 @@ class RelocationOverlay
         return newLocation_;
     }
 
-    void forwardTo(Cell* cell) {
-        MOZ_ASSERT(!isForwarded());
-        static_assert(offsetof(JSObject, group_) == offsetof(RelocationOverlay, next_),
-                      "next pointer and group should be at same location, "
-                      "so that group is not overwritten during compacting");
-        newLocation_ = cell;
-        magic_ = Relocated;
-    }
+    void forwardTo(Cell* cell);
 
     RelocationOverlay*& nextRef() {
         MOZ_ASSERT(isForwarded());
@@ -1089,7 +1081,19 @@ class RelocationOverlay
     }
 };
 
-/* Functions for checking and updating things that might be moved by compacting GC. */
+// Functions for checking and updating GC thing pointers that might have been
+// moved by compacting GC. Overloads are also provided that work with Values.
+//
+// IsForwarded    - check whether a pointer refers to an GC thing that has been
+//                  moved.
+//
+// Forwarded      - return a pointer to the new location of a GC thing given a
+//                  pointer to old location.
+//
+// MaybeForwarded - used before dereferencing a pointer that may refer to a
+//                  moved GC thing without updating it. For JSObjects this will
+//                  also update the object's shape pointer if it has been moved
+//                  to allow slots to be accessed.
 
 template <typename T>
 struct MightBeForwarded
@@ -1099,7 +1103,11 @@ struct MightBeForwarded
     static_assert(!mozilla::IsSame<Cell, T>::value && !mozilla::IsSame<TenuredCell, T>::value,
                   "T must not be Cell or TenuredCell");
 
-    static const bool value = mozilla::IsBaseOf<JSObject, T>::value;
+    static const bool value = mozilla::IsBaseOf<JSObject, T>::value ||
+                              mozilla::IsBaseOf<Shape, T>::value ||
+                              mozilla::IsBaseOf<JSString, T>::value ||
+                              mozilla::IsBaseOf<JSScript, T>::value ||
+                              mozilla::IsBaseOf<js::LazyScript, T>::value;
 };
 
 template <typename T>
@@ -1146,11 +1154,23 @@ Forwarded(const JS::Value& value)
     return DispatchTyped(ForwardedFunctor(), value);
 }
 
+inline void
+MakeAccessibleAfterMovingGC(void* anyp) {}
+
+inline void
+MakeAccessibleAfterMovingGC(JSObject* obj) {
+    if (obj->isNative())
+        obj->as<NativeObject>().updateShapeAfterMovingGC();
+}
+
 template <typename T>
 inline T
 MaybeForwarded(T t)
 {
-    return IsForwarded(t) ? Forwarded(t) : t;
+    if (IsForwarded(t))
+        t = Forwarded(t);
+    MakeAccessibleAfterMovingGC(t);
+    return t;
 }
 
 #ifdef JSGC_HASH_TABLE_CHECKS
@@ -1295,6 +1315,9 @@ struct MOZ_RAII AutoAssertNoNurseryAlloc
     explicit AutoAssertNoNurseryAlloc(JSRuntime* rt) {}
 #endif
 };
+
+const char*
+StateName(State state);
 
 } /* namespace gc */
 

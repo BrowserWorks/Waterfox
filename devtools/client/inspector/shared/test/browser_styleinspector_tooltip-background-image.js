@@ -25,7 +25,7 @@ const TEST_URI = `
   <div class="test-element">test element</div>
 `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
 
@@ -43,7 +43,7 @@ add_task(function*() {
 
   info("Switching over to the computed-view");
   let onComputedViewReady = inspector.once("computed-view-refreshed");
-  ({view} = yield openComputedView());
+  view = selectComputedView(inspector);
   yield onComputedViewReady;
 
   info("Testing that the background-image computed style has a tooltip too");

@@ -23,9 +23,6 @@ InitRegExpClass(JSContext* cx, HandleObject obj);
 // regular expression execution.
 enum RegExpStaticsUpdate { UpdateRegExpStatics, DontUpdateRegExpStatics };
 
-// Whether RegExp statics should be used to create a RegExp instance.
-enum RegExpStaticsUse { UseRegExpStatics, DontUseRegExpStatics };
-
 /*
  * Legacy behavior of ExecuteRegExp(), which is baked into the JSAPI.
  *
@@ -48,7 +45,7 @@ RegExpMatcher(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
 RegExpMatcherRaw(JSContext* cx, HandleObject regexp, HandleString input,
-                 uint32_t lastIndex, bool sticky,
+                 int32_t lastIndex, bool sticky,
                  MatchPairs* maybeMatches, MutableHandleValue output);
 
 extern bool
@@ -56,7 +53,7 @@ RegExpTester(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
 RegExpTesterRaw(JSContext* cx, HandleObject regexp, HandleString input,
-                uint32_t lastIndex, bool sticky, int32_t* endIndex);
+                int32_t lastIndex, bool sticky, int32_t* endIndex);
 
 /*
  * The following functions are for use by self-hosted code.
@@ -79,14 +76,14 @@ extern bool
 regexp_test_no_statics(JSContext* cx, unsigned argc, Value* vp);
 
 /*
- * Behaves like RegExp(string) or RegExp(string, string), but doesn't use
- * RegExp statics.
+ * Behaves like RegExp(string) or RegExp(string, string), for self-hosted JS.
+ * pattern and flags should be string, and should be called without |new|.
  *
  * Usage: re = regexp_construct(pattern)
  *        re = regexp_construct(pattern, flags)
  */
 extern bool
-regexp_construct_no_statics(JSContext* cx, unsigned argc, Value* vp);
+regexp_construct_self_hosting(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
 IsRegExp(JSContext* cx, HandleValue value, bool* result);

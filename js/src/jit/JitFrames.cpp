@@ -1901,8 +1901,11 @@ SnapshotIterator::maybeRead(const RValueAllocation& a, MaybeReadFallback& fallba
         return allocationValue(a);
 
     if (fallback.canRecoverResults()) {
+        // Code paths which are calling maybeRead are not always capable of
+        // returning an error code, as these code paths used to be infallible.
+        AutoEnterOOMUnsafeRegion oomUnsafe;
         if (!initInstructionResults(fallback))
-            MOZ_CRASH("Unable to recover allocations.");
+            oomUnsafe.crash("js::jit::SnapshotIterator::maybeRead");
 
         if (allocationReadable(a))
             return allocationValue(a);
@@ -2714,16 +2717,16 @@ JitFrameIterator::verifyReturnAddressUsingNativeToBytecodeMap()
     JitRuntime* jitrt = rt->jitRuntime();
 
     // Look up and print bytecode info for the native address.
-    JitcodeGlobalEntry entry;
-    if (!jitrt->getJitcodeGlobalTable()->lookup(returnAddressToFp_, &entry, rt))
+    const JitcodeGlobalEntry* entry = jitrt->getJitcodeGlobalTable()->lookup(returnAddressToFp_);
+    if (!entry)
         return true;
 
     JitSpew(JitSpew_Profiling, "Found nativeToBytecode entry for %p: %p - %p",
-            returnAddressToFp_, entry.nativeStartAddr(), entry.nativeEndAddr());
+            returnAddressToFp_, entry->nativeStartAddr(), entry->nativeEndAddr());
 
     JitcodeGlobalEntry::BytecodeLocationVector location;
     uint32_t depth = UINT32_MAX;
-    if (!entry.callStackAtAddr(rt, returnAddressToFp_, location, &depth))
+    if (!entry->callStackAtAddr(rt, returnAddressToFp_, location, &depth))
         return false;
     MOZ_ASSERT(depth > 0 && depth != UINT32_MAX);
     MOZ_ASSERT(location.length() == depth);
@@ -2868,25 +2871,25 @@ JitProfilingFrameIterator::tryInitWithTable(JitcodeGlobalTable* table, void* pc,
     if (!pc)
         return false;
 
-    JitcodeGlobalEntry entry;
-    if (!table->lookup(pc, &entry, rt))
+    const JitcodeGlobalEntry* entry = table->lookup(pc);
+    if (!entry)
         return false;
 
     JSScript* callee = frameScript();
 
-    MOZ_ASSERT(entry.isIon() || entry.isBaseline() || entry.isIonCache() || entry.isDummy());
+    MOZ_ASSERT(entry->isIon() || entry->isBaseline() || entry->isIonCache() || entry->isDummy());
 
     // Treat dummy lookups as an empty frame sequence.
-    if (entry.isDummy()) {
+    if (entry->isDummy()) {
         type_ = JitFrame_Entry;
         fp_ = nullptr;
         returnAddressToFp_ = nullptr;
         return true;
     }
 
-    if (entry.isIon()) {
+    if (entry->isIon()) {
         // If looked-up callee doesn't match frame callee, don't accept lastProfilingCallSite
-        if (entry.ionEntry().getScript(0) != callee)
+        if (entry->ionEntry().getScript(0) != callee)
             return false;
 
         type_ = JitFrame_IonJS;
@@ -2894,9 +2897,9 @@ JitProfilingFrameIterator::tryInitWithTable(JitcodeGlobalTable* table, void* pc,
         return true;
     }
 
-    if (entry.isBaseline()) {
+    if (entry->isBaseline()) {
         // If looked-up callee doesn't match frame callee, don't accept lastProfilingCallSite
-        if (forLastCallSite && entry.baselineEntry().script() != callee)
+        if (forLastCallSite && entry->baselineEntry().script() != callee)
             return false;
 
         type_ = JitFrame_BaselineJS;
@@ -2904,9 +2907,9 @@ JitProfilingFrameIterator::tryInitWithTable(JitcodeGlobalTable* table, void* pc,
         return true;
     }
 
-    if (entry.isIonCache()) {
-        JitcodeGlobalEntry ionEntry;
-        table->lookupInfallible(entry.ionCacheEntry().rejoinAddr(), &ionEntry, rt);
+    if (entry->isIonCache()) {
+        void* ptr = entry->ionCacheEntry().rejoinAddr();
+        const JitcodeGlobalEntry& ionEntry = table->lookupInfallible(ptr);
         MOZ_ASSERT(ionEntry.isIon());
 
         if (ionEntry.ionEntry().getScript(0) != callee)
@@ -2921,13 +2924,27 @@ JitProfilingFrameIterator::tryInitWithTable(JitcodeGlobalTable* table, void* pc,
 }
 
 void
-JitProfilingFrameIterator::fixBaselineDebugModeOSRReturnAddress()
+JitProfilingFrameIterator::fixBaselineReturnAddress()
 {
     MOZ_ASSERT(type_ == JitFrame_BaselineJS);
     BaselineFrame* bl = (BaselineFrame*)(fp_ - BaselineFrame::FramePointerOffset -
                                          BaselineFrame::Size());
-    if (BaselineDebugModeOSRInfo* info = bl->getDebugModeOSRInfo())
+
+    // Debug mode OSR for Baseline uses a "continuation fixer" and stashes the
+    // actual return address in an auxiliary structure.
+    if (BaselineDebugModeOSRInfo* info = bl->getDebugModeOSRInfo()) {
         returnAddressToFp_ = info->resumeAddr;
+        return;
+    }
+
+    // Resuming a generator via .throw() pushes a bogus return address onto
+    // the stack. We have the actual jsbytecode* stashed on the frame itself;
+    // translate that into the Baseline code address.
+    if (jsbytecode* override = bl->maybeOverridePc()) {
+        JSScript* script = bl->script();
+        returnAddressToFp_ = script->baselineScript()->nativeCodeForPC(script, override);
+        return;
+    }
 }
 
 void
@@ -2982,7 +2999,7 @@ JitProfilingFrameIterator::moveToNextFrame(CommonFrameLayout* frame)
         returnAddressToFp_ = frame->returnAddress();
         fp_ = GetPreviousRawFrame<uint8_t*>(frame);
         type_ = JitFrame_BaselineJS;
-        fixBaselineDebugModeOSRReturnAddress();
+        fixBaselineReturnAddress();
         return;
     }
 

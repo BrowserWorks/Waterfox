@@ -433,6 +433,8 @@ public:
   NS_IMETHOD_(void) SetInputContext(const InputContext& aContext,
                                     const InputContextAction& aAction) override;
   NS_IMETHOD_(InputContext) GetInputContext() override;
+  NS_IMETHOD_(TextEventDispatcherListener*)
+    GetNativeTextEventDispatcherListener() override;
   NS_IMETHOD        AttachNativeKeyEvent(mozilla::WidgetKeyboardEvent& aEvent) override;
   NS_IMETHOD_(bool) ExecuteNativeKeyBinding(
                       NativeKeyBindingsType aType,
@@ -602,9 +604,6 @@ protected:
 
   nsIWidget* GetWidgetForListenerEvents();
 
-  virtual nsresult NotifyIMEInternal(
-                     const IMENotification& aIMENotification) override;
-
   struct SwipeInfo {
     bool wantsSwipe;
     uint32_t allowedDirections;
@@ -651,10 +650,10 @@ protected:
   CGContextRef mTitlebarCGContext;
 
   // Compositor thread only
-  nsAutoPtr<RectTextureImage> mResizerImage;
-  nsAutoPtr<RectTextureImage> mCornerMaskImage;
-  nsAutoPtr<RectTextureImage> mTitlebarImage;
-  nsAutoPtr<RectTextureImage> mBasicCompositorImage;
+  mozilla::UniquePtr<RectTextureImage> mResizerImage;
+  mozilla::UniquePtr<RectTextureImage> mCornerMaskImage;
+  mozilla::UniquePtr<RectTextureImage> mTitlebarImage;
+  mozilla::UniquePtr<RectTextureImage> mBasicCompositorImage;
 
   // The area of mTitlebarCGContext that has changed and needs to be
   // uploaded to to mTitlebarImage. Main thread only.

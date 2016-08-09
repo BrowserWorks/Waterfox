@@ -14,14 +14,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:actionBarStyle">@style/GeckoActionBar</item>
-        <!-- TODO (bug 1220863): Once we extend AppCompatActivity, set actionBarStyle. -->
         <item name="android:alertDialogTheme">@style/GeckoAlertDialog</item>
-    </style>
-
-    <style name="GeckoPreferencesBase" parent="Gecko">
-        <item name="windowActionBar">true</item>
-        <item name="windowNoTitle">false</item>
     </style>
 
     <style name="GeckoAlertDialog" parent="@android:style/Theme.Material.Light.Dialog.Alert">
@@ -33,14 +26,9 @@
         <item name="android:titleTextStyle">@style/ActionBarTitleTextStyle</item>
     </style>
 
-    <style name="ActionBar.GeckoPreferences" parent="@android:style/Widget.Material.ActionBar.Solid">
-        <item name="android:titleTextStyle">@style/ActionBarTitleTextStyle</item>
-    </style>
-
     <style name="GeckoAppBase" parent="Gecko">
         <item name="android:actionButtonStyle">@style/GeckoActionBar.Button</item>
         <item name="android:listViewStyle">@style/Widget.ListView</item>
-        <item name="android:panelBackground">@drawable/menu_panel_bg</item>
         <item name="android:spinnerDropDownItemStyle">@style/Widget.DropDownItem.Spinner</item>
         <item name="android:spinnerItemStyle">@style/Widget.TextView.SpinnerItem</item>
         <item name="menuItemSwitcherLayoutStyle">@style/Widget.MenuItemSwitcherLayout</item>

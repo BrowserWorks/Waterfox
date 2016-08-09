@@ -425,8 +425,12 @@ private:
   already_AddRefed<CSSValue> DoGetHyphens();
   already_AddRefed<CSSValue> DoGetTabSize();
   already_AddRefed<CSSValue> DoGetTextSizeAdjust();
+  already_AddRefed<CSSValue> DoGetWebkitTextFillColor();
+  already_AddRefed<CSSValue> DoGetWebkitTextStrokeColor();
+  already_AddRefed<CSSValue> DoGetWebkitTextStrokeWidth();
 
   /* Visibility properties */
+  already_AddRefed<CSSValue> DoGetColorAdjust();
   already_AddRefed<CSSValue> DoGetOpacity();
   already_AddRefed<CSSValue> DoGetPointerEvents();
   already_AddRefed<CSSValue> DoGetVisibility();
@@ -719,4 +723,3 @@ NS_NewComputedDOMStyle(mozilla::dom::Element* aElement,
                          nsComputedDOMStyle::eAll);
 
 #endif /* nsComputedDOMStyle_h__ */
-

@@ -27,6 +27,8 @@ import java.util.Map;
 public class DBUtils {
     private static final String LOGTAG = "GeckoDBUtils";
 
+    public static final int SQLITE_MAX_VARIABLE_NUMBER = 999;
+
     public static final String qualifyColumn(String table, String column) {
         return table + "." + column;
     }
@@ -248,7 +250,7 @@ public class DBUtils {
     }
 
     public static Uri appendProfileWithDefault(final String profile, final Uri uri) {
-        if (TextUtils.isEmpty(profile)) {
+        if (profile == null) {
             return appendProfile(GeckoProfile.DEFAULT_PROFILE, uri);
         }
         return appendProfile(profile, uri);

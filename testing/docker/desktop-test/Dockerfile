@@ -1,4 +1,4 @@
-FROM          taskcluster/ubuntu1204-test-upd:0.1.8.20160218152601
+FROM          taskcluster/ubuntu1204-test-upd:0.1.9.20160329211700
 MAINTAINER    Jonas Finnemann Jensen <jopsen@gmail.com>
 
 # Add utilities and configuration
@@ -25,9 +25,10 @@ RUN usermod -a -G video worker
 RUN mkdir Documents; mkdir Pictures; mkdir Music; mkdir Videos; mkdir artifacts
 
 # install a new enough npm, plus tc-vcs and tc-npm-cache
-RUN npm install -g npm@^2.0.0
-RUN npm install -g taskcluster-vcs@2.3.12
-RUN npm install -g taskcluster-npm-cache@1.1.14
+RUN npm install -g npm@^2.0.0 \
+ && npm install -g taskcluster-vcs@2.3.12 \
+ && npm install -g taskcluster-npm-cache@1.1.14 \
+ && rm -rf ~/.npm
 ENV PATH $PATH:/home/worker/bin
 
 # Remove once running under 'worker' user.  This is necessary for pulseaudio to start

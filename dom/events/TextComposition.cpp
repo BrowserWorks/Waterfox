@@ -95,7 +95,7 @@ TextComposition::MaybeDispatchCompositionUpdate(
 {
   MOZ_RELEASE_ASSERT(!mTabParent);
 
-  if (!IsValidStateForComposition(aCompositionEvent->widget)) {
+  if (!IsValidStateForComposition(aCompositionEvent->mWidget)) {
     return false;
   }
 
@@ -103,7 +103,7 @@ TextComposition::MaybeDispatchCompositionUpdate(
     return true;
   }
   CloneAndDispatchAs(aCompositionEvent, eCompositionUpdate);
-  return IsValidStateForComposition(aCompositionEvent->widget);
+  return IsValidStateForComposition(aCompositionEvent->mWidget);
 }
 
 BaseEventFlags
@@ -115,13 +115,13 @@ TextComposition::CloneAndDispatchAs(
 {
   MOZ_RELEASE_ASSERT(!mTabParent);
 
-  MOZ_ASSERT(IsValidStateForComposition(aCompositionEvent->widget),
+  MOZ_ASSERT(IsValidStateForComposition(aCompositionEvent->mWidget),
              "Should be called only when it's safe to dispatch an event");
 
-  WidgetCompositionEvent compositionEvent(aCompositionEvent->mFlags.mIsTrusted,
-                                          aMessage, aCompositionEvent->widget);
-  compositionEvent.time = aCompositionEvent->time;
-  compositionEvent.timeStamp = aCompositionEvent->timeStamp;
+  WidgetCompositionEvent compositionEvent(aCompositionEvent->IsTrusted(),
+                                          aMessage, aCompositionEvent->mWidget);
+  compositionEvent.mTime = aCompositionEvent->mTime;
+  compositionEvent.mTimeStamp = aCompositionEvent->mTimeStamp;
   compositionEvent.mData = aCompositionEvent->mData;
   compositionEvent.mNativeIMEContext = aCompositionEvent->mNativeIMEContext;
   compositionEvent.mOriginalMessage = aCompositionEvent->mMessage;
@@ -159,7 +159,7 @@ TextComposition::OnCompositionEventDiscarded(
   // Note that this method is never called for synthesized events for emulating
   // commit or cancel composition.
 
-  MOZ_ASSERT(aCompositionEvent->mFlags.mIsTrusted,
+  MOZ_ASSERT(aCompositionEvent->IsTrusted(),
              "Shouldn't be called with untrusted event");
 
   if (mTabParent) {
@@ -243,7 +243,7 @@ TextComposition::DispatchCompositionEvent(
   // remote process.
   if (mTabParent) {
     Unused << mTabParent->SendCompositionEvent(*aCompositionEvent);
-    aCompositionEvent->mFlags.mPropagationStopped = true;
+    aCompositionEvent->StopPropagation();
     if (aCompositionEvent->CausesDOMTextEvent()) {
       mLastData = aCompositionEvent->mData;
       mLastRanges = aCompositionEvent->mRanges;
@@ -279,7 +279,7 @@ TextComposition::DispatchCompositionEvent(
     aCompositionEvent->mRanges = nullptr;
   }
 
-  if (!IsValidStateForComposition(aCompositionEvent->widget)) {
+  if (!IsValidStateForComposition(aCompositionEvent->mWidget)) {
     *aStatus = nsEventStatus_eConsumeNoDefault;
     return;
   }
@@ -377,7 +377,7 @@ TextComposition::DispatchCompositionEvent(
     *aStatus = nsEventStatus_eConsumeNoDefault;
   }
 
-  if (!IsValidStateForComposition(aCompositionEvent->widget)) {
+  if (!IsValidStateForComposition(aCompositionEvent->mWidget)) {
     return;
   }
 
@@ -411,7 +411,7 @@ TextComposition::HandleSelectionEvent(nsPresContext* aPresContext,
   // remote process.
   if (aTabParent) {
     Unused << aTabParent->SendSelectionEvent(*aSelectionEvent);
-    aSelectionEvent->mFlags.mPropagationStopped = true;
+    aSelectionEvent->StopPropagation();
     return;
   }
 

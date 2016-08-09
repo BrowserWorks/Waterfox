@@ -57,9 +57,6 @@
     <ClCompile Include="affixpatternparser.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
-    <ClCompile Include="dayperiodrules.cpp">
-      <Filter>formatting</Filter>
-    </ClCompile>
     <ClCompile Include="decimfmtimpl.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
@@ -210,6 +207,9 @@
     <ClCompile Include="japancal.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
+    <ClCompile Include="locdspnm.cpp">
+      <Filter>formatting</Filter>
+    </ClCompile>
     <ClCompile Include="measfmt.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
@@ -282,9 +282,6 @@
     <ClCompile Include="smpdtfst.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
-    <ClCompile Include="standardplural.cpp">
-      <Filter>formatting</Filter>
-    </ClCompile>
     <ClCompile Include="taiwncal.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
@@ -307,6 +304,9 @@
       <Filter>formatting</Filter>
     </ClCompile>
     <ClCompile Include="ucal.cpp">
+      <Filter>formatting</Filter>
+    </ClCompile>
+    <ClCompile Include="ucurr.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
     <ClCompile Include="udat.cpp">
@@ -694,9 +694,6 @@
     <ClInclude Include="dangical.h">
       <Filter>formatting</Filter>
     </ClInclude>
-    <ClInclude Include="dayperiodrules.h">
-      <Filter>formatting</Filter>
-    </ClInclude>
     <ClInclude Include="decContext.h">
       <Filter>formatting</Filter>
     </ClInclude>
@@ -790,10 +787,10 @@
     <ClInclude Include="smpdtfst.h">
       <Filter>formatting</Filter>
     </ClInclude>
-    <ClInclude Include="standardplural.h">
+    <ClInclude Include="taiwncal.h">
       <Filter>formatting</Filter>
     </ClInclude>
-    <ClInclude Include="taiwncal.h">
+    <ClInclude Include="ucurrimp.h">
       <Filter>formatting</Filter>
     </ClInclude>
     <ClInclude Include="umsg_imp.h">
@@ -1130,6 +1127,9 @@
     <CustomBuild Include="unicode\gregocal.h">
       <Filter>formatting</Filter>
     </CustomBuild>
+    <CustomBuild Include="unicode\locdspnm.h">
+      <Filter>formatting</Filter>
+    </CustomBuild>
     <CustomBuild Include="unicode\measfmt.h">
       <Filter>formatting</Filter>
     </CustomBuild>
@@ -1193,6 +1193,9 @@
     <CustomBuild Include="unicode\ucal.h">
       <Filter>formatting</Filter>
     </CustomBuild>
+    <CustomBuild Include="unicode\ucurr.h">
+      <Filter>formatting</Filter>
+    </CustomBuild>
     <CustomBuild Include="unicode\udat.h">
       <Filter>formatting</Filter>
     </CustomBuild>
@@ -1202,10 +1205,16 @@
     <CustomBuild Include="unicode\udatpg.h">
       <Filter>formatting</Filter>
     </CustomBuild>
+    <CustomBuild Include="unicode\udisplaycontext.h">
+      <Filter>formatting</Filter>
+    </CustomBuild>
     <CustomBuild Include="unicode\ugender.h">
       <Filter>formatting</Filter>
     </CustomBuild>
     <CustomBuild Include="unicode\ufieldpositer.h">
+      <Filter>formatting</Filter>
+    </CustomBuild>
+    <CustomBuild Include="unicode\uldnames.h">
       <Filter>formatting</Filter>
     </CustomBuild>
     <CustomBuild Include="unicode\ulocdata.h">
@@ -1221,9 +1230,6 @@
       <Filter>formatting</Filter>
     </CustomBuild>
     <CustomBuild Include="unicode\upluralrules.h">
-      <Filter>formatting</Filter>
-    </CustomBuild>
-    <CustomBuild Include="unicode\ureldatefmt.h">
       <Filter>formatting</Filter>
     </CustomBuild>
     <CustomBuild Include="unicode\utmscale.h">

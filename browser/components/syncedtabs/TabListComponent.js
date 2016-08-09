@@ -22,10 +22,11 @@ this.EXPORTED_SYMBOLS = [
  * to state changes so it can rerender.
  */
 
-function TabListComponent({window, store, View, SyncedTabs}) {
+function TabListComponent({window, store, View, SyncedTabs, clipboardHelper}) {
   this._window = window;
   this._store = store;
   this._View = View;
+  this._clipboardHelper = clipboardHelper;
   // used to trigger Sync from context menu
   this._SyncedTabs = SyncedTabs;
 }
@@ -45,6 +46,7 @@ TabListComponent.prototype = {
       onMoveSelectionUp: (...args) => this.onMoveSelectionUp(...args),
       onToggleBranch: (...args) => this.onToggleBranch(...args),
       onBookmarkTab: (...args) => this.onBookmarkTab(...args),
+      onCopyTabLocation: (...args) => this.onCopyTabLocation(...args),
       onSyncRefresh: (...args) => this.onSyncRefresh(...args),
       onFilter: (...args) => this.onFilter(...args),
       onClearFilter: (...args) => this.onClearFilter(...args),
@@ -79,11 +81,8 @@ TabListComponent.prototype = {
     this._store.blurInput();
   },
 
-  onSelectRow(position, id) {
+  onSelectRow(position) {
     this._store.selectRow(position[0], position[1]);
-    if (id) {
-      this._store.toggleBranch(id);
-    }
   },
 
   onMoveSelectionDown() {
@@ -104,8 +103,12 @@ TabListComponent.prototype = {
       .catch(Cu.reportError);
   },
 
-  onOpenTab(url, event) {
-    this._window.openUILink(url, event);
+  onOpenTab(url, where, params) {
+    this._window.openUILinkIn(url, where, params);
+  },
+
+  onCopyTabLocation(url) {
+    this._clipboardHelper.copyString(url);
   },
 
   onSyncRefresh() {

@@ -17,11 +17,14 @@
 #include "mozilla/dom/TabContext.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/File.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/RefPtr.h"
+#include "mozilla/Move.h"
 #include "nsCOMPtr.h"
 #include "nsIAuthPromptProvider.h"
 #include "nsIBrowserDOMWindow.h"
 #include "nsIDOMEventListener.h"
+#include "nsIKeyEventInPluginCallback.h"
 #include "nsISecureBrowserUI.h"
 #include "nsITabParent.h"
 #include "nsIWebBrowserPersistable.h"
@@ -77,11 +80,45 @@ namespace ipc {
 class StructuredCloneData;
 } // ipc namespace
 
+// This observer runs on the compositor thread, so we dispatch a runnable to the
+// main thread to actually dispatch the event.
+class LayerTreeUpdateObserver : public layers::CompositorUpdateObserver
+{
+public:
+  explicit LayerTreeUpdateObserver(TabParent* aTabParent)
+    : mTabParent(aTabParent)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+  }
+
+  virtual void ObserveUpdate(uint64_t aLayersId, bool aActive) override;
+
+  virtual void SwapTabParent(LayerTreeUpdateObserver* aOther) {
+    MOZ_ASSERT(NS_IsMainThread());
+    Swap(mTabParent, aOther->mTabParent);
+  }
+
+  void TabParentDestroyed() {
+    MOZ_ASSERT(NS_IsMainThread());
+    mTabParent = nullptr;
+  }
+
+  TabParent* GetTabParent() {
+    MOZ_ASSERT(NS_IsMainThread());
+    return mTabParent;
+  }
+
+private:
+  // NB: Should never be touched off the main thread!
+  TabParent* mTabParent;
+};
+
 class TabParent final : public PBrowserParent
                       , public nsIDOMEventListener
                       , public nsITabParent
                       , public nsIAuthPromptProvider
                       , public nsISecureBrowserUI
+                      , public nsIKeyEventInPluginCallback
                       , public nsSupportsWeakReference
                       , public TabContext
                       , public nsAPostRefreshObserver
@@ -159,6 +196,12 @@ public:
   virtual bool RecvMoveFocus(const bool& aForward,
                              const bool& aForDocumentNavigation) override;
 
+  virtual bool RecvSizeShellTo(const uint32_t& aFlags,
+                               const int32_t& aWidth,
+                               const int32_t& aHeight,
+                               const int32_t& aShellItemWidth,
+                               const int32_t& aShellItemHeight) override;
+
   virtual bool RecvEvent(const RemoteDOMEvent& aEvent) override;
 
   virtual bool RecvReplyKeyEvent(const WidgetKeyboardEvent& aEvent) override;
@@ -167,10 +210,13 @@ public:
   RecvDispatchAfterKeyboardEvent(const WidgetKeyboardEvent& aEvent) override;
 
   virtual bool RecvBrowserFrameOpenWindow(PBrowserParent* aOpener,
+                                          PRenderFrameParent* aRenderFrame,
                                           const nsString& aURL,
                                           const nsString& aName,
                                           const nsString& aFeatures,
-                                          bool* aOutWindowOpened) override;
+                                          bool* aOutWindowOpened,
+                                          TextureFactoryIdentifier* aTextureFactoryIdentifier,
+                                          uint64_t* aLayersId) override;
 
   virtual bool
   RecvSyncMessage(const nsString& aMessage,
@@ -252,6 +298,15 @@ public:
                                    const int32_t& aCause,
                                    const int32_t& aFocusChange) override;
 
+
+  // See nsIKeyEventInPluginCallback
+  virtual void HandledWindowedPluginKeyEvent(
+                 const NativeEventData& aKeyEventData,
+                 bool aIsConsumed) override;
+
+  virtual bool RecvOnWindowedPluginKeyEvent(
+                 const NativeEventData& aKeyEventData) override;
+
   virtual bool RecvRequestFocus(const bool& aCanRaise) override;
 
   virtual bool
@@ -278,7 +333,8 @@ public:
 
   virtual bool RecvShowTooltip(const uint32_t& aX,
                                const uint32_t& aY,
-                               const nsString& aTooltip) override;
+                               const nsString& aTooltip,
+                               const nsString& aDirection) override;
 
   virtual bool RecvHideTooltip() override;
 
@@ -393,13 +449,13 @@ public:
   virtual bool
   RecvSynthesizeNativeTouchPoint(const uint32_t& aPointerId,
                                  const TouchPointerState& aPointerState,
-                                 const ScreenIntPoint& aPointerScreenPoint,
+                                 const LayoutDeviceIntPoint& aPoint,
                                  const double& aPointerPressure,
                                  const uint32_t& aPointerOrientation,
                                  const uint64_t& aObserverId) override;
 
   virtual bool
-  RecvSynthesizeNativeTouchTap(const ScreenIntPoint& aPointerScreenPoint,
+  RecvSynthesizeNativeTouchTap(const LayoutDeviceIntPoint& aPoint,
                                const bool& aLongTap,
                                const uint64_t& aObserverId) override;
 
@@ -541,15 +597,13 @@ public:
 
   layout::RenderFrameParent* GetRenderFrame();
 
-  // Called by HttpChannelParent. The function may use a new process to
-  // reload the URI associated with the given channel.
-  void OnStartSignedPackageRequest(nsIChannel* aChannel,
-                                   const nsACString& aPackageId);
-
   void AudioChannelChangeNotification(nsPIDOMWindowOuter* aWindow,
                                       AudioChannel aAudioChannel,
                                       float aVolume,
                                       bool aMuted);
+  bool SetRenderFrame(PRenderFrameParent* aRFParent);
+  bool GetRenderFrameInfo(TextureFactoryIdentifier* aTextureFactoryIdentifier,
+                          uint64_t* aLayersId);
 
 protected:
   bool ReceiveMessage(const nsString& aMessage,
@@ -576,23 +630,17 @@ protected:
 
   virtual bool RecvRemotePaintIsReady() override;
 
-  virtual bool RecvGetRenderFrameInfo(PRenderFrameParent* aRenderFrame,
-                                      TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                      uint64_t* aLayersId) override;
-
   virtual bool RecvSetDimensions(const uint32_t& aFlags,
                                  const int32_t& aX, const int32_t& aY,
                                  const int32_t& aCx, const int32_t& aCy) override;
+
+  virtual bool RecvGetTabCount(uint32_t* aValue) override;
 
   virtual bool RecvAudioChannelActivityNotification(const uint32_t& aAudioChannel,
                                                     const bool& aActive) override;
 
   bool InitBrowserConfiguration(const nsCString& aURI,
                                 BrowserConfiguration& aConfiguration);
-
-  // Decide whether we have to use a new process to reload the URI associated
-  // with the given channel.
-  bool ShouldSwitchProcess(nsIChannel* aChannel, const nsACString& aSignedPkg);
 
   ContentCacheInParent mContentCache;
 
@@ -721,7 +769,9 @@ private:
 
   bool mHasContentOpener;
 
-  DebugOnly<int32_t> mActiveSupressDisplayportCount;
+#ifdef DEBUG
+  int32_t mActiveSupressDisplayportCount;
+#endif
 
   ShowInfo GetShowInfo();
 
@@ -734,6 +784,8 @@ private:
   static void AddTabParentToTable(uint64_t aLayersId, TabParent* aTabParent);
 
   static void RemoveTabParentFromTable(uint64_t aLayersId);
+
+  RefPtr<LayerTreeUpdateObserver> mLayerUpdateObserver;
 
 public:
   static TabParent* GetTabParentFromLayersId(uint64_t aLayersId);

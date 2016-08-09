@@ -65,13 +65,22 @@ ScaledFontWin::GetFontFileData(FontFileDataOutput aDataCallback, void *aBaton)
     // We cast here because for VS2015 char16_t != wchar_t, even though they are
     // both 16 bit.
     if (!sfntData->GetIndexForU16Name(
-          reinterpret_cast<char16_t*>(mLogFont.lfFaceName), &index)) {
+          reinterpret_cast<char16_t*>(mLogFont.lfFaceName), &index, LF_FACESIZE - 1)) {
       gfxWarning() << "Failed to get index for face name.";
+      gfxDevCrash(LogReason::GetFontFileDataFailed) <<
+        "Failed to get index for face name |" << mLogFont.lfFaceName << "|.";
       return false;
     }
   }
 
   aDataCallback(fontData.get(), tableSize, index, mSize, aBaton);
+  return true;
+}
+
+bool
+ScaledFontWin::GetFontDescriptor(FontDescriptorOutput aCb, void* aBaton)
+{
+  aCb(reinterpret_cast<uint8_t*>(&mLogFont), sizeof(mLogFont), mSize, aBaton);
   return true;
 }
 

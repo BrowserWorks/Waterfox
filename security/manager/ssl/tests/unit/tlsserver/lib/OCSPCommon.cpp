@@ -27,23 +27,29 @@ using namespace mozilla::pkix::test;
 using namespace mozilla::test;
 
 static TestKeyPair*
-CreateTestKeyPairFromCert(CERTCertificate& cert)
+CreateTestKeyPairFromCert(const UniqueCERTCertificate& cert)
 {
-  ScopedSECKEYPrivateKey privateKey(PK11_FindKeyByAnyCert(&cert, nullptr));
+  UniqueSECKEYPrivateKey privateKey(PK11_FindKeyByAnyCert(cert.get(), nullptr));
   if (!privateKey) {
     return nullptr;
   }
-  ScopedSECKEYPublicKey publicKey(CERT_ExtractPublicKey(&cert));
+  ScopedSECKEYPublicKey publicKey(CERT_ExtractPublicKey(cert.get()));
   if (!publicKey) {
     return nullptr;
   }
-  return CreateTestKeyPair(RSA_PKCS1(), *publicKey, privateKey.forget());
+  return CreateTestKeyPair(RSA_PKCS1(), *publicKey, privateKey.release());
 }
 
-SECItemArray *
-GetOCSPResponseForType(OCSPResponseType aORT, CERTCertificate *aCert,
-                       PLArenaPool *aArena, const char *aAdditionalCertName)
+SECItemArray*
+GetOCSPResponseForType(OCSPResponseType aORT, const UniqueCERTCertificate& aCert,
+                       const UniquePLArenaPool& aArena,
+                       const char* aAdditionalCertName)
 {
+  MOZ_ASSERT(aArena);
+  MOZ_ASSERT(aCert);
+  // Note: |aAdditionalCertName| may or may not need to be non-null depending
+  //       on the |aORT| value given.
+
   if (aORT == ORTNone) {
     if (gDebugLevel >= DEBUG_WARNINGS) {
       fprintf(stderr, "GetOCSPResponseForType called with type ORTNone, "
@@ -53,7 +59,7 @@ GetOCSPResponseForType(OCSPResponseType aORT, CERTCertificate *aCert,
   }
 
   if (aORT == ORTEmpty) {
-    SECItemArray* arr = SECITEM_AllocArray(aArena, nullptr, 1);
+    SECItemArray* arr = SECITEM_AllocArray(aArena.get(), nullptr, 1);
     arr->items[0].data = nullptr;
     arr->items[0].len = 0;
     return arr;
@@ -62,18 +68,18 @@ GetOCSPResponseForType(OCSPResponseType aORT, CERTCertificate *aCert,
   time_t now = time(nullptr);
   time_t oldNow = now - (8 * Time::ONE_DAY_IN_SECONDS);
 
-  mozilla::ScopedCERTCertificate cert(CERT_DupCertificate(aCert));
+  mozilla::UniqueCERTCertificate cert(CERT_DupCertificate(aCert.get()));
 
   if (aORT == ORTGoodOtherCert) {
-    cert = PK11_FindCertFromNickname(aAdditionalCertName, nullptr);
+    cert.reset(PK11_FindCertFromNickname(aAdditionalCertName, nullptr));
     if (!cert) {
       PrintPRError("PK11_FindCertFromNickname failed");
       return nullptr;
     }
   }
   // XXX CERT_FindCertIssuer uses the old, deprecated path-building logic
-  mozilla::ScopedCERTCertificate
-    issuerCert(CERT_FindCertIssuer(aCert, PR_Now(), certUsageSSLCA));
+  mozilla::UniqueCERTCertificate
+    issuerCert(CERT_FindCertIssuer(aCert.get(), PR_Now(), certUsageSSLCA));
   if (!issuerCert) {
     PrintPRError("CERT_FindCertIssuer failed");
     return nullptr;
@@ -95,11 +101,11 @@ GetOCSPResponseForType(OCSPResponseType aORT, CERTCertificate *aCert,
   CertID certID(issuer, issuerPublicKey, serialNumber);
   OCSPResponseContext context(certID, now);
 
-  mozilla::ScopedCERTCertificate signerCert;
+  mozilla::UniqueCERTCertificate signerCert;
   if (aORT == ORTGoodOtherCA || aORT == ORTDelegatedIncluded ||
       aORT == ORTDelegatedIncludedLast || aORT == ORTDelegatedMissing ||
       aORT == ORTDelegatedMissingMultiple) {
-    signerCert = PK11_FindCertFromNickname(aAdditionalCertName, nullptr);
+    signerCert.reset(PK11_FindCertFromNickname(aAdditionalCertName, nullptr));
     if (!signerCert) {
       PrintPRError("PK11_FindCertFromNickname failed");
       return nullptr;
@@ -186,9 +192,9 @@ GetOCSPResponseForType(OCSPResponseType aORT, CERTCertificate *aCert,
   }
 
   if (!signerCert) {
-    signerCert = CERT_DupCertificate(issuerCert.get());
+    signerCert.reset(CERT_DupCertificate(issuerCert.get()));
   }
-  context.signerKeyPair.reset(CreateTestKeyPairFromCert(*signerCert));
+  context.signerKeyPair.reset(CreateTestKeyPairFromCert(signerCert));
   if (!context.signerKeyPair) {
     PrintPRError("PK11_FindKeyByAnyCert failed");
     return nullptr;
@@ -206,5 +212,5 @@ GetOCSPResponseForType(OCSPResponseType aORT, CERTCertificate *aCert,
     static_cast<unsigned int>(response.length())
   };
   SECItemArray arr = { &item, 1 };
-  return SECITEM_DupArray(aArena, &arr);
+  return SECITEM_DupArray(aArena.get(), &arr);
 }

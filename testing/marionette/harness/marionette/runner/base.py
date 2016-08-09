@@ -412,10 +412,11 @@ class BaseMarionetteArguments(ArgumentParser):
         self.add_argument('--socket-timeout',
                         default=self.socket_timeout_default,
                         help='Set the global timeout for marionette socket operations.')
-        self.add_argument('--e10s',
-                        action='store_true',
-                        default=False,
-                        help='Enable e10s when running marionette tests.')
+        self.add_argument('--disable-e10s',
+                        action='store_false',
+                        dest='e10s',
+                        default=True,
+                        help='Disable e10s when running marionette tests.')
         self.add_argument('--tag',
                         action='append', dest='test_tags',
                         default=None,
@@ -520,6 +521,7 @@ class BaseMarionetteArguments(ArgumentParser):
         if args.e10s:
             args.prefs.update({
                 'browser.tabs.remote.autostart': True,
+                'browser.tabs.remote.force-enable': True,
                 'extensions.e10sBlocksEnabling': False
             })
 
@@ -547,7 +549,7 @@ class BaseMarionetteTestRunner(object):
                  adb_host=None, adb_port=None, prefs=None, test_tags=None,
                  socket_timeout=BaseMarionetteArguments.socket_timeout_default,
                  startup_timeout=None, addons=None, workspace=None,
-                 verbose=0, **kwargs):
+                 verbose=0, e10s=True, **kwargs):
         self.address = address
         self.emulator = emulator
         self.emulator_binary = emulator_binary
@@ -598,6 +600,7 @@ class BaseMarionetteTestRunner(object):
         # and default location for profile is TMP
         self.workspace_path = workspace or os.getcwd()
         self.verbose = verbose
+        self.e10s = e10s
 
         def gather_debug(test, status):
             rv = {}
@@ -617,6 +620,34 @@ class BaseMarionetteTestRunner(object):
 
         self.result_callbacks.append(gather_debug)
 
+        # testvars are set up in self.testvars property
+        self._testvars = None
+        self.testvars_paths = testvars
+
+        self.test_handlers = []
+
+        self.reset_test_stats()
+
+        self.logger.info('Using workspace for temporary data: '
+                         '"{}"'.format(self.workspace_path))
+
+        if self.emulator and not self.logdir:
+            self.logdir = os.path.join(self.workspace_path or '', 'logcat')
+
+        if not gecko_log:
+            self.gecko_log = os.path.join(self.workspace_path or '', 'gecko.log')
+        else:
+            self.gecko_log = gecko_log
+
+        self.results = []
+
+    @property
+    def testvars(self):
+        if self._testvars is not None:
+            return self._testvars
+
+        self._testvars = {}
+
         def update(d, u):
             """ Update a dictionary that may contain nested dictionaries. """
             for k, v in u.iteritems():
@@ -627,39 +658,26 @@ class BaseMarionetteTestRunner(object):
                     d[k] = u[k]
             return d
 
-        self.testvars = {}
-        if testvars is not None:
-            for path in list(testvars):
+        json_testvars = self._load_testvars()
+        for j in json_testvars:
+            self._testvars = update(self._testvars, j)
+        return self._testvars
+
+    def _load_testvars(self):
+        data = []
+        if self.testvars_paths is not None:
+            for path in list(self.testvars_paths):
+                path = os.path.abspath(os.path.expanduser(path))
                 if not os.path.exists(path):
                     raise IOError('--testvars file %s does not exist' % path)
                 try:
                     with open(path) as f:
-                        self.testvars = update(self.testvars,
-                                               json.loads(f.read()))
+                        data.append(json.loads(f.read()))
                 except ValueError as e:
                     raise Exception("JSON file (%s) is not properly "
                                     "formatted: %s" % (os.path.abspath(path),
                                                        e.message))
-
-        # set up test handlers
-        self.test_handlers = []
-
-        self.reset_test_stats()
-
-        self.logger.info('Using workspace for temporary data: '
-                         '"{}"'.format(self.workspace_path))
-
-        if self.emulator and not self.logdir:
-            self.logdir = os.path.join(self.workspace_path or '', 'logcat')
-        if self.logdir and not os.access(self.logdir, os.F_OK):
-                os.mkdir(self.logdir)
-
-        if not gecko_log:
-            self.gecko_log = os.path.join(self.workspace_path or '', 'gecko.log')
-        else:
-            self.gecko_log = gecko_log
-
-        self.results = []
+        return data
 
     @property
     def capabilities(self):
@@ -733,6 +751,9 @@ class BaseMarionetteTestRunner(object):
         self.failures = []
 
     def _build_kwargs(self):
+        if self.logdir and not os.access(self.logdir, os.F_OK):
+            os.mkdir(self.logdir)
+
         kwargs = {
             'device_serial': self.device_serial,
             'symbols_path': self.symbols_path,
@@ -901,6 +922,7 @@ setReq.onerror = function() {
                             " Invalid test names:\n  %s"
                             % '\n  '.join(invalid_tests))
 
+        self.logger.info("running with e10s: {}".format(self.e10s))
         version_info = mozversion.get_version(binary=self.bin,
                                               sources=self.sources,
                                               dm_type=os.environ.get('DM_TRANS', 'adb'),
@@ -977,6 +999,7 @@ setReq.onerror = function() {
         if self.shuffle:
             self.logger.info("Using seed where seed is:%d" % self.shuffle_seed)
 
+        self.logger.info('mode: {}'.format('e10s' if self.e10s else 'non-e10s'))
         self.logger.suite_end()
 
     def start_httpd(self, need_external_ip):
@@ -1027,7 +1050,6 @@ setReq.onerror = function() {
             filters = []
             if self.test_tags:
                 filters.append(tags(self.test_tags))
-            e10s = self.appinfo.get('browserTabsRemoteAutostart', False)
             json_path = update_mozinfo(filepath)
             self.logger.info("mozinfo updated with the following: {}".format(None))
             manifest_tests = manifest.active_tests(exists=False,
@@ -1035,7 +1057,7 @@ setReq.onerror = function() {
                                                    filters=filters,
                                                    device=self.device,
                                                    app=self.appName,
-                                                   e10s=e10s,
+                                                   e10s=self.e10s,
                                                    **mozinfo.info)
             if len(manifest_tests) == 0:
                 self.logger.error("no tests to run using specified "

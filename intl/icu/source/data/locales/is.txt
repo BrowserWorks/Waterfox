@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/is.xml
@@ -159,7 +159,7 @@ is{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.17"}
     calendar{
         generic{
             DateTimePatterns{
@@ -802,10 +802,7 @@ is{
         day-narrow{
             dn{"d."}
             relative{
-                "-1"{"í gær"}
                 "-2"{"í fyrradag"}
-                "0"{"í dag"}
-                "1"{"á morgun"}
                 "2"{"eftir tvo daga"}
             }
             relativeTime{
@@ -822,10 +819,7 @@ is{
         day-short{
             dn{"dagur"}
             relative{
-                "-1"{"í gær"}
                 "-2"{"í fyrradag"}
-                "0"{"í dag"}
-                "1"{"á morgun"}
                 "2"{"eftir tvo daga"}
             }
             relativeTime{

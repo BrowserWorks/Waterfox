@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ee.xml
@@ -81,7 +81,7 @@ ee{
             }
         }
     }
-    Version{"2.1.23.7"}
+    Version{"2.1.19.14"}
     calendar{
         generic{
             DateTimePatterns{
@@ -234,10 +234,6 @@ ee{
                 "ŋdi",
                 "ɣetrɔ",
             }
-            AmPmMarkersAbbr{
-                "ŋdi",
-                "ɣetrɔ",
-            }
             AmPmMarkersNarrow{
                 "ŋ",
                 "ɣ",
@@ -372,14 +368,6 @@ ee{
             }
             dayPeriod{
                 format{
-                    abbreviated{
-                        afternoon1{"ŋdɔ"}
-                        afternoon2{"ɣetrɔ"}
-                        evening1{"fiẽ"}
-                        morning1{"fɔŋli"}
-                        morning2{"ŋdi"}
-                        night1{"zã"}
-                    }
                     wide{
                         afternoon1{"ŋdɔ"}
                         afternoon2{"ɣetrɔ"}

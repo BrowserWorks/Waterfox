@@ -53,7 +53,7 @@
                   android:label="@string/moz_app_displayname"
                   android:taskAffinity="@ANDROID_PACKAGE_NAME@.BROWSER"
                   android:alwaysRetainTaskState="true"
-                  android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize|locale|layoutDirection"
+                  android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize|locale|layoutDirection|smallestScreenSize|screenLayout"
                   android:windowSoftInputMode="stateUnspecified|adjustResize"
                   android:launchMode="singleTask"
                   android:exported="true"
@@ -151,6 +151,14 @@
         <service android:name="org.mozilla.gecko.GeckoService" />
 
         <activity android:name="org.mozilla.gecko.trackingprotection.TrackingProtectionPrompt"
+                  android:launchMode="singleTop"
+                  android:theme="@style/OverlayActivity" />
+
+        <activity android:name="org.mozilla.gecko.promotion.SimpleHelperUI"
+                  android:launchMode="singleTop"
+                  android:theme="@style/OverlayActivity" />
+
+        <activity android:name="org.mozilla.gecko.promotion.HomeScreenPrompt"
                   android:launchMode="singleTop"
                   android:theme="@style/OverlayActivity" />
 
@@ -323,11 +331,6 @@
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.home"
                   android:exported="false"/>
 
-        <provider android:name="org.mozilla.gecko.db.ReadingListProvider"
-                  android:authorities="@ANDROID_PACKAGE_NAME@.db.readinglist"
-                  android:label="@string/reading_list_title"
-                  android:exported="false"/>
-
         <provider android:name="org.mozilla.gecko.db.SearchHistoryProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.searchhistory"
                   android:exported="false"/>
@@ -347,6 +350,29 @@
             android:exported="false"
             android:name="org.mozilla.gecko.dlc.DownloadContentService">
         </service>
+
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.feeds.FeedService">
+        </service>
+
+        <!-- DON'T EXPORT THIS, please! An attacker could delete arbitrary files. -->
+        <service
+            android:exported="false"
+            android:name="org.mozilla.gecko.cleanup.FileCleanupService">
+        </service>
+
+        <receiver
+            android:name="org.mozilla.gecko.feeds.FeedAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name="org.mozilla.gecko.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"></action>
+            </intent-filter>
+        </receiver>
 
         <service
           android:name="org.mozilla.gecko.telemetry.TelemetryUploadService"

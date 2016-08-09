@@ -36,6 +36,8 @@ interface Node : EventTarget {
 
   [Pure]
   readonly attribute Document? ownerDocument;
+  [Pure, Pref="dom.node.rootNode.enabled"]
+  readonly attribute Node rootNode;
   [Pure]
   readonly attribute Node? parentNode;
   [Pure]
@@ -70,6 +72,8 @@ interface Node : EventTarget {
   [Throws]
   Node cloneNode(optional boolean deep = false);
   [Pure]
+  boolean isSameNode(Node? node);
+  [Pure]
   boolean isEqualNode(Node? node);
 
   const unsigned short DOCUMENT_POSITION_DISCONNECTED = 0x01;
@@ -91,16 +95,6 @@ interface Node : EventTarget {
   boolean isDefaultNamespace(DOMString? namespace);
 
   // Mozilla-specific stuff
-  // These have been moved to Element in the spec.
-  // If we move namespaceURI, prefix and localName to Element they should return
-  // a non-nullable type.
-  [Constant]
-  readonly attribute DOMString? namespaceURI;
-  [Constant]
-  readonly attribute DOMString? prefix;
-  [Constant]
-  readonly attribute DOMString? localName;
-
   [Throws, Func="IsChromeOrXBL"]
   any setUserData(DOMString key, any data);
   [Throws, Func="IsChromeOrXBL"]

@@ -67,7 +67,6 @@ public class HomePager extends ViewPager {
     // specific list views at runtime.
     public static final String LIST_TAG_HISTORY = "history";
     public static final String LIST_TAG_BOOKMARKS = "bookmarks";
-    public static final String LIST_TAG_READING_LIST = "reading_list";
     public static final String LIST_TAG_TOP_SITES = "top_sites";
     public static final String LIST_TAG_RECENT_TABS = "recent_tabs";
     public static final String LIST_TAG_BROWSER_SEARCH = "browser_search";
@@ -76,7 +75,12 @@ public class HomePager extends ViewPager {
     public interface OnUrlOpenListener {
         public enum Flags {
             ALLOW_SWITCH_TO_TAB,
-            OPEN_WITH_INTENT
+            OPEN_WITH_INTENT,
+            /**
+             * Ensure that the raw URL is opened. If not set, then the reader view version of the page
+             * might be opened if the URL is stored as an offline reader-view bookmark.
+             */
+            NO_READER_VIEW
         }
 
         public void onUrlOpen(String url, EnumSet<Flags> flags);
@@ -529,7 +533,6 @@ public class HomePager extends ViewPager {
             Telemetry.stopUISession(mCurrentPanelSession, mCurrentPanelSessionSuffix);
             mCurrentPanelSession = null;
             mCurrentPanelSessionSuffix = null;
-            Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, Experiments.BOOKMARKS_HISTORY_MENU);
         }
     }
 }

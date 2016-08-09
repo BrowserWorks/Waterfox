@@ -177,11 +177,13 @@ Rule.prototype = {
    *        The property's value (not including priority).
    * @param {String} priority
    *        The property's priority (either "important" or an empty string).
+   * @param {Boolean} enabled
+   *        True if the property should be enabled.
    * @param {TextProperty} siblingProp
    *        Optional, property next to which the new property will be added.
    */
-  createProperty: function(name, value, priority, siblingProp) {
-    let prop = new TextProperty(this, name, value, priority);
+  createProperty: function(name, value, priority, enabled, siblingProp) {
+    let prop = new TextProperty(this, name, value, priority, enabled);
 
     let ind;
     if (siblingProp) {
@@ -434,6 +436,12 @@ Rule.prototype = {
     let props = parseDeclarations(this.style.authoredText, true);
     for (let prop of props) {
       let name = prop.name;
+      // If the authored text has an invalid property, it will show up
+      // as nameless.  Skip these as we don't currently have a good
+      // way to display them.
+      if (!name) {
+        continue;
+      }
       // In an inherited rule, we only show inherited properties.
       // However, we must keep all properties in order for rule
       // rewriting to work properly.  So, compute the "invisible"

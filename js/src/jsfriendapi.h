@@ -19,6 +19,7 @@
 #include "js/CallArgs.h"
 #include "js/CallNonGenericMethod.h"
 #include "js/Class.h"
+#include "js/Utility.h"
 
 #if JS_STACK_GROWTH_DIRECTION > 0
 # define JS_CHECK_STACK_SIZE(limit, sp) (MOZ_LIKELY((uintptr_t)(sp) < (limit)))
@@ -313,61 +314,37 @@ JS_DefineFunctionsWithHelp(JSContext* cx, JS::HandleObject obj, const JSFunction
 
 namespace js {
 
+extern JS_FRIEND_DATA(const js::ClassOps) ProxyClassOps;
+extern JS_FRIEND_DATA(const js::ClassExtension) ProxyClassExtension;
+extern JS_FRIEND_DATA(const js::ObjectOps) ProxyObjectOps;
+
 /*
  * Helper Macros for creating JSClasses that function as proxies.
  *
  * NB: The macro invocation must be surrounded by braces, so as to
  *     allow for potential JSClass extensions.
  */
-#define PROXY_MAKE_EXT(isWrappedNative, objectMoved)                    \
+#define PROXY_MAKE_EXT(objectMoved)                                     \
     {                                                                   \
-        isWrappedNative,                                                \
         js::proxy_WeakmapKeyDelegate,                                   \
         objectMoved                                                     \
     }
 
-#define PROXY_CLASS_WITH_EXT(name, flags, ext)                                          \
+#define PROXY_CLASS_WITH_EXT(name, flags, extPtr)                                       \
     {                                                                                   \
         name,                                                                           \
         js::Class::NON_NATIVE |                                                         \
             JSCLASS_IS_PROXY |                                                          \
-            JSCLASS_DELAY_METADATA_CALLBACK |                                           \
+            JSCLASS_DELAY_METADATA_BUILDER |                                            \
             flags,                                                                      \
-        nullptr,                 /* addProperty */                                      \
-        nullptr,                 /* delProperty */                                      \
-        nullptr,                 /* getProperty */                                      \
-        nullptr,                 /* setProperty */                                      \
-        nullptr,                 /* enumerate */                                        \
-        nullptr,                 /* resolve */                                          \
-        nullptr,                 /* mayResolve */                                       \
-        js::proxy_Finalize,      /* finalize    */                                      \
-        nullptr,                 /* call        */                                      \
-        js::proxy_HasInstance,   /* hasInstance */                                      \
-        nullptr,                 /* construct   */                                      \
-        js::proxy_Trace,         /* trace       */                                      \
+        &js::ProxyClassOps,                                                             \
         JS_NULL_CLASS_SPEC,                                                             \
-        ext,                                                                            \
-        {                                                                               \
-            js::proxy_LookupProperty,                                                   \
-            js::proxy_DefineProperty,                                                   \
-            js::proxy_HasProperty,                                                      \
-            js::proxy_GetProperty,                                                      \
-            js::proxy_SetProperty,                                                      \
-            js::proxy_GetOwnPropertyDescriptor,                                         \
-            js::proxy_DeleteProperty,                                                   \
-            js::proxy_Watch, js::proxy_Unwatch,                                         \
-            js::proxy_GetElements,                                                      \
-            nullptr,             /* enumerate       */                                  \
-            js::proxy_FunToString,                                                      \
-        }                                                                               \
+        extPtr,                                                                         \
+        &js::ProxyObjectOps                                                             \
     }
 
-#define PROXY_CLASS_DEF(name, flags)                                    \
-  PROXY_CLASS_WITH_EXT(name, flags,                                     \
-                       PROXY_MAKE_EXT(                                  \
-                         false,   /* isWrappedNative */                 \
-                         js::proxy_ObjectMoved                          \
-                       ))
+#define PROXY_CLASS_DEF(name, flags) \
+  PROXY_CLASS_WITH_EXT(name, flags, &js::ProxyClassExtension)
 
 /*
  * Proxy stubs, similar to JS_*Stub, for embedder proxy class definitions.
@@ -653,7 +630,7 @@ inline bool
 StandardClassIsDependent(JSProtoKey key)
 {
     const Class* clasp = ProtoKeyToClass(key);
-    return clasp && clasp->spec.defined() && clasp->spec.dependent();
+    return clasp && clasp->specDefined() && clasp->specDependent();
 }
 
 // Returns the key for the class inherited by a given standard class (that
@@ -672,7 +649,7 @@ ParentKeyForStandardClass(JSProtoKey key)
 
     // If we're dependent, return the key of the class we depend on.
     if (StandardClassIsDependent(key))
-        return ProtoKeyToClass(key)->spec.parentKey();
+        return ProtoKeyToClass(key)->specParentKey();
 
     // Otherwise, we inherit [Object].
     return JSProto_Object;
@@ -965,9 +942,6 @@ JS_FRIEND_API(bool)
 IsObjectInContextCompartment(JSObject* obj, const JSContext* cx);
 
 /*
- * NB: these flag bits are encoded into the bytecode stream in the immediate
- * operand of JSOP_ITER, so don't change them without advancing vm/Xdr.h's
- * XDR_BYTECODE_VERSION.
  * NB: keep these in sync with the copy in builtin/SelfHostingDefines.h.
  * The first three are omitted because they shouldn't be used in new code.
  */
@@ -1377,6 +1351,11 @@ class MOZ_STACK_CLASS AutoStableStringChars
   private:
     AutoStableStringChars(const AutoStableStringChars& other) = delete;
     void operator=(const AutoStableStringChars& other) = delete;
+
+    bool baseIsInline(JS::Handle<JSLinearString*> linearString);
+    bool copyLatin1Chars(JSContext*, JS::Handle<JSLinearString*> linearString);
+    bool copyTwoByteChars(JSContext*, JS::Handle<JSLinearString*> linearString);
+    bool copyAndInflateLatin1Chars(JSContext*, JS::Handle<JSLinearString*> linearString);
 };
 
 struct MOZ_STACK_CLASS JS_FRIEND_API(ErrorReport)
@@ -1384,7 +1363,41 @@ struct MOZ_STACK_CLASS JS_FRIEND_API(ErrorReport)
     explicit ErrorReport(JSContext* cx);
     ~ErrorReport();
 
-    bool init(JSContext* cx, JS::HandleValue exn);
+    enum SniffingBehavior {
+        WithSideEffects,
+        NoSideEffects
+    };
+
+    /**
+     * Generate a JSErrorReport from the provided thrown value.
+     *
+     * If the value is a (possibly wrapped) Error object, the JSErrorReport will
+     * be exactly initialized from the Error object's information, without
+     * observable side effects. (The Error object's JSErrorReport is reused, if
+     * it has one.)
+     *
+     * Otherwise various attempts are made to derive JSErrorReport information
+     * from |exn| and from the current execution state.  This process is
+     * *definitely* inconsistent with any standard, and particulars of the
+     * behavior implemented here generally shouldn't be relied upon.
+     *
+     * If the value of |sniffingBehavior| is |WithSideEffects|, some of these
+     * attempts *may* invoke user-configurable behavior when |exn| is an object:
+     * converting |exn| to a string, detecting and getting properties on |exn|,
+     * accessing |exn|'s prototype chain, and others are possible.  Users *must*
+     * tolerate |ErrorReport::init| potentially having arbitrary effects.  Any
+     * exceptions thrown by these operations will be caught and silently
+     * ignored, and "default" values will be substituted into the JSErrorReport.
+     *
+     * But if the value of |sniffingBehavior| is |NoSideEffects|, these attempts
+     * *will not* invoke any observable side effects.  The JSErrorReport will
+     * simply contain fewer, less precise details.
+     *
+     * Unlike some functions involved in error handling, this function adheres
+     * to the usual JSAPI return value error behavior.
+     */
+    bool init(JSContext* cx, JS::HandleValue exn,
+              SniffingBehavior sniffingBehavior);
 
     JSErrorReport* report()
     {
@@ -2673,8 +2686,23 @@ class MOZ_RAII JS_FRIEND_API(AutoCTypesActivityCallback) {
     }
 };
 
-typedef JSObject*
-(* ObjectMetadataCallback)(JSContext* cx, JS::HandleObject obj);
+// Abstract base class for objects that build allocation metadata for JavaScript
+// values.
+struct AllocationMetadataBuilder {
+    AllocationMetadataBuilder() { }
+
+    // Return a metadata object for the newly constructed object |obj|, or
+    // nullptr if there's no metadata to attach.
+    //
+    // Implementations should treat all errors as fatal; there is no way to
+    // report errors from this callback. In particular, the caller provides an
+    // oomUnsafe for overriding implementations to use.
+    virtual JSObject* build(JSContext* cx, JS::HandleObject obj,
+                            AutoEnterOOMUnsafeRegion& oomUnsafe) const
+    {
+        return nullptr;
+    }
+};
 
 /**
  * Specify a callback to invoke when creating each JS object in the current
@@ -2682,11 +2710,11 @@ typedef JSObject*
  * object.
  */
 JS_FRIEND_API(void)
-SetObjectMetadataCallback(JSContext* cx, ObjectMetadataCallback callback);
+SetAllocationMetadataBuilder(JSContext* cx, const AllocationMetadataBuilder *callback);
 
 /** Get the metadata associated with an object. */
 JS_FRIEND_API(JSObject*)
-GetObjectMetadata(JSObject* obj);
+GetAllocationMetadata(JSObject* obj);
 
 JS_FRIEND_API(bool)
 GetElementsWithAdder(JSContext* cx, JS::HandleObject obj, JS::HandleObject receiver,

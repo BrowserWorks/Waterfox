@@ -40,8 +40,8 @@ public:
   /**
    * Creates a clipped version of an existing image. Animation is unaffected.
    *
-   * @param aImage         The existing image.
-   * @param aClip          The rectangle to clip the image against.
+   * @param aImage           The existing image.
+   * @param aClip            The rectangle to clip the image against.
    */
   static already_AddRefed<Image> Clip(Image* aImage, nsIntRect aClip);
   static already_AddRefed<imgIContainer> Clip(imgIContainer* aImage,

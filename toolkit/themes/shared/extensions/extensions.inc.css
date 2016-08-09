@@ -130,9 +130,16 @@
 }
 
 .loading {
-  list-style-image: url("chrome://global/skin/icons/loading_16.png");
+  list-style-image: url("chrome://global/skin/icons/loading.png");
   padding-left: 20px;
   padding-right: 20px;
+}
+
+@media (min-resolution: 1.1dppx) {
+  .loading > image {
+    width: 16px;
+    list-style-image: url("chrome://global/skin/icons/loading@2x.png");
+  }
 }
 
 button.warning {
@@ -442,7 +449,7 @@ button.warning {
 }
 
 .name-container {
-  font-size: 150%;
+  font-size: 1.3rem;
   font-weight: bold;
   -moz-box-align: end;
   -moz-box-flex: 1;
@@ -455,6 +462,7 @@ button.warning {
 .description-container {
   -moz-margin-start: 6px;
   -moz-box-align: center;
+  font-size: 1.25rem;
 }
 
 .description {
@@ -657,7 +665,7 @@ button.warning {
 .detail-view-container {
   -moz-padding-end: 2em;
   padding-bottom: 2em;
-  font-size: 110%;
+  font-size: 1.25rem;
   color: #333;
 }
 
@@ -688,31 +696,38 @@ button.warning {
 }
 
 #detail-name-container {
-  font-size: 200%;
+  font-size: 2.5rem;
+  font-weight: normal;
 }
 
 #detail-screenshot-box {
   -moz-margin-end: 2em;
+  background-image: linear-gradient(rgba(255,255,255,.5), transparent);
+  background-color: white;
+  box-shadow: 0 1px 2px #666;
+  border-radius: 2px;
 }
 
 #detail-screenshot {
   max-width: 300px;
   max-height: 300px;
-  background-color: white;
-  box-shadow: 0 1px 2px #666;
 }
 
 #detail-screenshot[loading] {
-  background-image: url("chrome://global/skin/icons/loading_16.png"),
-                    linear-gradient(rgba(255, 255, 255, 0.5), transparent);
+  background-image: url("chrome://global/skin/icons/loading.png");
   background-position: 50% 50%;
   background-repeat: no-repeat;
-  border-radius: 2px;
+}
+
+@media (min-resolution: 1.1dppx) {
+  #detail-screenshot[loading] {
+    background-image: url("chrome://global/skin/icons/loading@2x.png");
+    background-size: 16px;
+  }
 }
 
 #detail-screenshot[loading="error"] {
-  background-image: url("chrome://global/skin/media/error.png"),
-                    linear-gradient(rgba(255, 255, 255, 0.5), transparent);
+  background-image: url("chrome://global/skin/media/error.png");
 }
 
 #detail-desc-container {
@@ -794,7 +809,6 @@ setting {
   border-top: 1px solid #c1c1c1;
   -moz-box-align: center;
   min-height: 35px;
-  font-size: 1.25rem;
   line-height: 20px;
   text-shadow: 0 1px 1px #fefffe;
 }
@@ -803,6 +817,7 @@ setting {
   margin-bottom: 1em;
 }
 
+.inline-options-browser,
 setting[first-row="true"] {
   margin-top: 2em;
 }

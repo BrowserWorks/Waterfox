@@ -14,9 +14,6 @@ pref("devtools.devedition.promo.url", "https://www.mozilla.org/firefox/developer
   pref("devtools.devedition.promo.enabled", false);
 #endif
 
-// Disable the error console
-pref("devtools.errorconsole.enabled", false);
-
 // DevTools development workflow
 pref("devtools.loader.hotreload", false);
 
@@ -108,7 +105,11 @@ pref("devtools.debugger.ui.variables-searchbox-visible", false);
 pref("devtools.memory.enabled", false);
 
 pref("devtools.memory.custom-census-displays", "{}");
-pref("devtools.memory.custom-dominator-tree-displays", "{}");
+pref("devtools.memory.custom-label-displays", "{}");
+pref("devtools.memory.custom-tree-map-displays", "{}");
+
+pref("devtools.memory.max-individuals", 1000);
+pref("devtools.memory.max-retaining-paths", 10);
 
 // Enable the Performance tools
 pref("devtools.performance.enabled", true);
@@ -211,6 +212,9 @@ pref("devtools.webaudioeditor.enabled", false);
 
 // Enable Scratchpad
 pref("devtools.scratchpad.enabled", false);
+
+// Make sure the DOM panel is hidden by default
+pref("devtools.dom.enabled", false);
 
 // Web Audio Editor Inspector Width should be a preference
 pref("devtools.webaudioeditor.inspectorWidth", 300);
@@ -319,7 +323,7 @@ pref("devtools.editor.enableCodeFolding", true);
 pref("devtools.editor.autocomplete", true);
 
 // Enable the Font Inspector
-pref("devtools.fontinspector.enabled", false);
+pref("devtools.fontinspector.enabled", true);
 
 // Pref to store the browser version at the time of a telemetry ping for an
 // opened developer tool. This allows us to ping telemetry just once per browser

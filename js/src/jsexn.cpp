@@ -65,77 +65,80 @@ static const JSFunctionSpec exception_methods[] = {
     JS_FS_END
 };
 
-#define IMPLEMENT_ERROR_SUBCLASS_EXTRA_FLAGS(name, extraClassSpecFlags)  \
+static const ClassOps ErrorObjectClassOps = {
+    nullptr,                 /* addProperty */
+    nullptr,                 /* delProperty */
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
+    nullptr,                 /* enumerate */
+    nullptr,                 /* resolve */
+    nullptr,                 /* mayResolve */
+    exn_finalize,
+    nullptr,                 /* call        */
+    nullptr,                 /* hasInstance */
+    nullptr,                 /* construct   */
+    nullptr,                 /* trace       */
+};
+
+#define IMPLEMENT_ERROR_CLASS(name, classSpecPtr) \
     { \
         js_Error_str, /* yes, really */ \
         JSCLASS_HAS_CACHED_PROTO(JSProto_##name) | \
         JSCLASS_HAS_RESERVED_SLOTS(ErrorObject::RESERVED_SLOTS), \
-        nullptr,                 /* addProperty */ \
-        nullptr,                 /* delProperty */ \
-        nullptr,                 /* getProperty */ \
-        nullptr,                 /* setProperty */ \
-        nullptr,                 /* enumerate */ \
-        nullptr,                 /* resolve */ \
-        nullptr,                 /* mayResolve */ \
-        exn_finalize, \
-        nullptr,                 /* call        */ \
-        nullptr,                 /* hasInstance */ \
-        nullptr,                 /* construct   */ \
-        nullptr,                 /* trace       */ \
-        { \
-            ErrorObject::createConstructor, \
-            ErrorObject::createProto, \
-            nullptr, \
-            nullptr, \
-            exception_methods, \
-            exception_properties, \
-            nullptr, \
-            JSProto_Error | extraClassSpecFlags \
-        } \
+        &ErrorObjectClassOps, \
+        classSpecPtr \
     }
 
-#define IMPLEMENT_ERROR_SUBCLASS(name) \
-    IMPLEMENT_ERROR_SUBCLASS_EXTRA_FLAGS(name, 0)
+const ClassSpec
+ErrorObject::errorClassSpec_ = {
+    ErrorObject::createConstructor,
+    ErrorObject::createProto,
+    nullptr,
+    nullptr,
+    exception_methods,
+    exception_properties,
+    nullptr,
+    0
+};
+
+const ClassSpec
+ErrorObject::subErrorClassSpec_ = {
+    ErrorObject::createConstructor,
+    ErrorObject::createProto,
+    nullptr,
+    nullptr,
+    exception_methods,
+    exception_properties,
+    nullptr,
+    JSProto_Error
+};
+
+const ClassSpec
+ErrorObject::debuggeeWouldRunClassSpec_ = {
+    ErrorObject::createConstructor,
+    ErrorObject::createProto,
+    nullptr,
+    nullptr,
+    exception_methods,
+    exception_properties,
+    nullptr,
+    JSProto_Error | ClassSpec::DontDefineConstructor
+};
 
 const Class
 ErrorObject::classes[JSEXN_LIMIT] = {
-    {
-        js_Error_str,
-        JSCLASS_HAS_CACHED_PROTO(JSProto_Error) |
-        JSCLASS_HAS_RESERVED_SLOTS(ErrorObject::RESERVED_SLOTS),
-        nullptr,                 /* addProperty */
-        nullptr,                 /* delProperty */
-        nullptr,                 /* getProperty */
-        nullptr,                 /* setProperty */
-        nullptr,                 /* enumerate */
-        nullptr,                 /* resolve */
-        nullptr,                 /* mayResolve */
-        exn_finalize,
-        nullptr,                 /* call        */
-        nullptr,                 /* hasInstance */
-        nullptr,                 /* construct   */
-        nullptr,                 /* trace       */
-        {
-            ErrorObject::createConstructor,
-            ErrorObject::createProto,
-            nullptr,
-            nullptr,
-            exception_methods,
-            exception_properties,
-            nullptr
-        }
-    },
-    IMPLEMENT_ERROR_SUBCLASS(InternalError),
-    IMPLEMENT_ERROR_SUBCLASS(EvalError),
-    IMPLEMENT_ERROR_SUBCLASS(RangeError),
-    IMPLEMENT_ERROR_SUBCLASS(ReferenceError),
-    IMPLEMENT_ERROR_SUBCLASS(SyntaxError),
-    IMPLEMENT_ERROR_SUBCLASS(TypeError),
-    IMPLEMENT_ERROR_SUBCLASS(URIError),
+    IMPLEMENT_ERROR_CLASS(Error,          &ErrorObject::errorClassSpec_),
+    IMPLEMENT_ERROR_CLASS(InternalError,  &ErrorObject::subErrorClassSpec_),
+    IMPLEMENT_ERROR_CLASS(EvalError,      &ErrorObject::subErrorClassSpec_),
+    IMPLEMENT_ERROR_CLASS(RangeError,     &ErrorObject::subErrorClassSpec_),
+    IMPLEMENT_ERROR_CLASS(ReferenceError, &ErrorObject::subErrorClassSpec_),
+    IMPLEMENT_ERROR_CLASS(SyntaxError,    &ErrorObject::subErrorClassSpec_),
+    IMPLEMENT_ERROR_CLASS(TypeError,      &ErrorObject::subErrorClassSpec_),
+    IMPLEMENT_ERROR_CLASS(URIError,       &ErrorObject::subErrorClassSpec_),
 
     // DebuggeeWouldRun is a subclass of Error but is accessible via the
     // Debugger constructor, not the global.
-    IMPLEMENT_ERROR_SUBCLASS_EXTRA_FLAGS(DebuggeeWouldRun, ClassSpec::DontDefineConstructor),
+    IMPLEMENT_ERROR_CLASS(DebuggeeWouldRun, &ErrorObject::debuggeeWouldRunClassSpec_)
 };
 
 JSErrorReport*
@@ -306,12 +309,9 @@ js::ErrorFromException(JSContext* cx, HandleObject objArg)
 }
 
 JS_PUBLIC_API(JSObject*)
-ExceptionStackOrNull(JSContext* cx, HandleObject objArg)
+ExceptionStackOrNull(HandleObject objArg)
 {
-    AssertHeapIsIdle(cx);
-    CHECK_REQUEST(cx);
-    assertSameCompartment(cx, objArg);
-    RootedObject obj(cx, CheckedUnwrap(objArg));
+    JSObject* obj = CheckedUnwrap(objArg);
     if (!obj || !obj->is<ErrorObject>()) {
       return nullptr;
     }
@@ -667,7 +667,7 @@ js::ReportUncaughtException(JSContext* cx)
     cx->clearPendingException();
 
     ErrorReport err(cx);
-    if (!err.init(cx, exn)) {
+    if (!err.init(cx, exn, js::ErrorReport::WithSideEffects)) {
         cx->clearPendingException();
         return false;
     }
@@ -771,15 +771,23 @@ ErrorReport::ReportAddonExceptionToTelementry(JSContext* cx)
 }
 
 bool
-ErrorReport::init(JSContext* cx, HandleValue exn)
+ErrorReport::init(JSContext* cx, HandleValue exn,
+                  SniffingBehavior sniffingBehavior)
 {
     MOZ_ASSERT(!cx->isExceptionPending());
+    MOZ_ASSERT(!reportp);
 
     if (exn.isObject()) {
         // Because ToString below could error and an exception object could become
         // unrooted, we must root our exception object, if any.
         exnObject = &exn.toObject();
         reportp = ErrorFromException(cx, exnObject);
+
+        if (!reportp && sniffingBehavior == NoSideEffects) {
+            JS_ReportErrorNumber(cx, GetErrorMessage, nullptr,
+                                 JSMSG_ERR_DURING_THROW);
+            return false;
+        }
 
         // Let's see if the exception is from add-on code, if so, it should be reported
         // to telementry.
@@ -790,10 +798,17 @@ ErrorReport::init(JSContext* cx, HandleValue exn)
     // Be careful not to invoke ToString if we've already successfully extracted
     // an error report, since the exception might be wrapped in a security
     // wrapper, and ToString-ing it might throw.
-    if (reportp)
+    if (reportp) {
         str = ErrorReportToString(cx, reportp);
-    else
+    } else if (exn.isSymbol()) {
+        RootedValue strVal(cx);
+        if (js::SymbolDescriptiveString(cx, exn.toSymbol(), &strVal))
+            str = strVal.toString();
+        else
+            str = nullptr;
+    } else {
         str = ToString<CanGC>(cx, exn);
+    }
 
     if (!str)
         cx->clearPendingException();
@@ -1052,5 +1067,10 @@ js::ValueToSourceForError(JSContext* cx, HandleValue val, JSAutoByteString& byte
         return bytes.encodeLatin1(cx, str);
     }
     sb.append(str);
-    return bytes.encodeLatin1(cx, sb.finishString());
+    str = sb.finishString();
+    if (!str) {
+        JS_ClearPendingException(cx);
+        return "<<error converting value to string>>";
+    }
+    return bytes.encodeLatin1(cx, str);
 }

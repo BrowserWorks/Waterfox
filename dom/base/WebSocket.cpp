@@ -21,6 +21,7 @@
 #include "mozilla/dom/WorkerPrivate.h"
 #include "mozilla/dom/WorkerRunnable.h"
 #include "mozilla/dom/WorkerScope.h"
+#include "nsGlobalWindow.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIDOMWindow.h"
 #include "nsIDocument.h"
@@ -252,7 +253,7 @@ NS_IMPL_ISUPPORTS(WebSocketImpl,
                   nsIRequest,
                   nsIEventTarget)
 
-class CallDispatchConnectionCloseEvents final : public nsCancelableRunnable
+class CallDispatchConnectionCloseEvents final : public CancelableRunnable
 {
 public:
   explicit CallDispatchConnectionCloseEvents(WebSocketImpl* aWebSocketImpl)
@@ -892,19 +893,17 @@ WebSocketImpl::GetInterface(const nsIID& aIID, void** aResult)
 
   if (aIID.Equals(NS_GET_IID(nsIAuthPrompt)) ||
       aIID.Equals(NS_GET_IID(nsIAuthPrompt2))) {
-    nsresult rv;
-    nsIScriptContext* sc = mWebSocket->GetContextForEventHandlers(&rv);
-    nsCOMPtr<nsIDocument> doc =
-      nsContentUtils::GetDocumentFromScriptContext(sc);
-    if (!doc) {
+    nsCOMPtr<nsPIDOMWindowInner> win = mWebSocket->GetWindowIfCurrent();
+    if (!win) {
       return NS_ERROR_NOT_AVAILABLE;
     }
 
+    nsresult rv;
     nsCOMPtr<nsIPromptFactory> wwatch =
       do_GetService(NS_WINDOWWATCHER_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsPIDOMWindowOuter> outerWindow = doc->GetWindow();
+    nsCOMPtr<nsPIDOMWindowOuter> outerWindow = win->GetOuterWindow();
     return wwatch->GetPrompt(outerWindow, aIID, aResult);
   }
 
@@ -1236,7 +1235,7 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
     }
 
     unsigned lineno, column;
-    JS::UniqueChars file;
+    JS::AutoFilename file;
     if (!JS::DescribeScriptedCaller(aGlobal.Context(), &file, &lineno,
                                     &column)) {
       NS_WARNING("Failed to get line number and filename in workers.");
@@ -1244,7 +1243,7 @@ WebSocket::Constructor(const GlobalObject& aGlobal,
 
     RefPtr<InitRunnable> runnable =
       new InitRunnable(webSocket->mImpl, aUrl, protocolArray,
-                       nsAutoCString(file.get()), lineno, column, aRv,
+                       nsDependentCString(file.get()), lineno, column, aRv,
                        &connectionFailed);
     runnable->Dispatch(aRv);
   }
@@ -1472,7 +1471,7 @@ WebSocketImpl::Init(JSContext* aCx,
     MOZ_ASSERT(aCx);
 
     unsigned lineno, column;
-    JS::UniqueChars file;
+    JS::AutoFilename file;
     if (JS::DescribeScriptedCaller(aCx, &file, &lineno, &column)) {
       mScriptFile = file.get();
       mScriptLine = lineno;
@@ -1493,16 +1492,6 @@ WebSocketImpl::Init(JSContext* aCx,
     return;
   }
 
-  nsIScriptContext* sc = nullptr;
-  {
-    nsresult rv;
-    sc = mWebSocket->GetContextForEventHandlers(&rv);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      aRv.Throw(rv);
-      return;
-    }
-  }
-
   nsCOMPtr<nsIURI> uri;
   {
     nsresult rv = NS_NewURI(getter_AddRefs(uri), mURI);
@@ -1516,7 +1505,15 @@ WebSocketImpl::Init(JSContext* aCx,
 
   // Check content policy.
   int16_t shouldLoad = nsIContentPolicy::ACCEPT;
-  nsCOMPtr<nsIDocument> originDoc = nsContentUtils::GetDocumentFromScriptContext(sc);
+  nsCOMPtr<nsIDocument> originDoc = mWebSocket->GetDocumentIfCurrent();
+  if (!originDoc) {
+    nsresult rv = mWebSocket->CheckInnerWindowCorrectness();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aRv.Throw(rv);
+      return;
+    }
+  }
+
   mOriginDocument = do_GetWeakReference(originDoc);
   aRv = NS_CheckContentLoadPolicy(nsIContentPolicy::TYPE_WEBSOCKET,
                                   uri,
@@ -1581,11 +1578,85 @@ WebSocketImpl::Init(JSContext* aCx,
       if (globalObject) {
         principal = globalObject->PrincipalOrNull();
       }
+
+      nsCOMPtr<nsPIDOMWindowInner> innerWindow;
+
+      while (true) {
+        bool isNullPrincipal = true;
+        if (principal) {
+          nsresult rv = principal->GetIsNullPrincipal(&isNullPrincipal);
+          if (NS_WARN_IF(NS_FAILED(rv))) {
+            aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+            return;
+          }
+        }
+
+        if (!isNullPrincipal) {
+          break;
+        }
+
+        if (!innerWindow) {
+          innerWindow = do_QueryInterface(globalObject);
+          if (NS_WARN_IF(!innerWindow)) {
+            aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+            return;
+          }
+        }
+
+        nsCOMPtr<nsPIDOMWindowOuter> parentWindow =
+          innerWindow->GetScriptableParent();
+        if (NS_WARN_IF(!parentWindow)) {
+          aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+          return;
+        }
+
+        nsCOMPtr<nsPIDOMWindowInner> currentInnerWindow =
+          parentWindow->GetCurrentInnerWindow();
+        if (NS_WARN_IF(!currentInnerWindow)) {
+          aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+          return;
+        }
+
+        // We are at the top. Let's see if we have an opener window.
+        if (innerWindow == currentInnerWindow) {
+          ErrorResult error;
+          parentWindow =
+            nsGlobalWindow::Cast(innerWindow)->GetOpenerWindow(error);
+          if (NS_WARN_IF(error.Failed())) {
+            error.SuppressException();
+            aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+            return;
+          }
+
+          if (!parentWindow) {
+            break;
+          }
+
+          currentInnerWindow = parentWindow->GetCurrentInnerWindow();
+          if (NS_WARN_IF(!currentInnerWindow)) {
+            aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+            return;
+          }
+
+          MOZ_ASSERT(currentInnerWindow != innerWindow);
+        }
+
+        innerWindow = currentInnerWindow;
+
+        nsCOMPtr<nsIDocument> document = innerWindow->GetExtantDoc();
+        if (NS_WARN_IF(!document)) {
+          aRv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+          return;
+        }
+
+        principal = document->NodePrincipal();
+      }
     }
 
     if (principal) {
       principal->GetURI(getter_AddRefs(originURI));
     }
+
     if (originURI) {
       bool originIsHttps = false;
       aRv = originURI->SchemeIs("https", &originIsHttps);
@@ -1811,7 +1882,6 @@ WebSocket::CreateAndDispatchMessageEvent(const nsACString& aData,
     }
   }
 
-  jsapi.TakeOwnershipOfErrorReporting();
   JSContext* cx = jsapi.cx();
 
   nsresult rv = CheckInnerWindowCorrectness();
@@ -2073,7 +2143,7 @@ public:
   {
   }
 
-  bool Notify(JSContext* aCx, Status aStatus) override
+  bool Notify(Status aStatus) override
   {
     MOZ_ASSERT(aStatus > workers::Running);
 
@@ -2557,8 +2627,6 @@ WebSocketImpl::CancelInternal()
     return NS_OK;
   }
 
-  ConsoleError();
-
   return CloseConnection(nsIWebSocketChannel::CLOSE_GOING_AWAY);
 }
 
@@ -2584,11 +2652,7 @@ WebSocketImpl::GetLoadGroup(nsILoadGroup** aLoadGroup)
   *aLoadGroup = nullptr;
 
   if (mIsMainThread) {
-    nsresult rv;
-    nsIScriptContext* sc = mWebSocket->GetContextForEventHandlers(&rv);
-    nsCOMPtr<nsIDocument> doc =
-      nsContentUtils::GetDocumentFromScriptContext(sc);
-
+    nsCOMPtr<nsIDocument> doc = mWebSocket->GetDocumentIfCurrent();
     if (doc) {
       *aLoadGroup = doc->GetDocumentLoadGroup().take();
     }

@@ -400,7 +400,7 @@ nsHTMLEditor::FindSelectionRoot(nsINode *aNode)
                   aNode->IsNodeOfType(nsINode::eCONTENT),
                   "aNode must be content or document node");
 
-  nsCOMPtr<nsIDocument> doc = aNode->GetCurrentDoc();
+  nsCOMPtr<nsIDocument> doc = aNode->GetUncomposedDoc();
   if (!doc) {
     return nullptr;
   }
@@ -1134,7 +1134,7 @@ nsHTMLEditor::TabInTable(bool inIsShift, bool* outHandled)
   return NS_OK;
 }
 
-already_AddRefed<Element>
+Element*
 nsHTMLEditor::CreateBR(nsINode* aNode, int32_t aOffset, EDirection aSelect)
 {
   nsCOMPtr<nsIDOMNode> parent = GetAsDOMNode(aNode);
@@ -1143,7 +1143,7 @@ nsHTMLEditor::CreateBR(nsINode* aNode, int32_t aOffset, EDirection aSelect)
   // We assume everything is fine if the br is not null, irrespective of retval
   CreateBRImpl(address_of(parent), &offset, address_of(outBRNode), aSelect);
   nsCOMPtr<Element> ret = do_QueryInterface(outBRNode);
-  return ret.forget();
+  return ret;
 }
 
 NS_IMETHODIMP nsHTMLEditor::CreateBR(nsIDOMNode *aNode, int32_t aOffset, nsCOMPtr<nsIDOMNode> *outBRNode, EDirection aSelect)
@@ -1967,7 +1967,7 @@ nsHTMLEditor::MakeOrChangeList(const nsAString& aListType, bool entireList, cons
       nsCOMPtr<nsIContent> parent = node;
       nsCOMPtr<nsIContent> topChild = node;
 
-      nsCOMPtr<nsIAtom> listAtom = do_GetAtom(aListType);
+      nsCOMPtr<nsIAtom> listAtom = NS_Atomize(aListType);
       while (!CanContainTag(*parent, *listAtom)) {
         topChild = parent;
         parent = parent->GetParent();
@@ -2099,7 +2099,7 @@ nsHTMLEditor::InsertBasicBlock(const nsAString& aBlockType)
       nsCOMPtr<nsIContent> parent = node;
       nsCOMPtr<nsIContent> topChild = node;
 
-      nsCOMPtr<nsIAtom> blockAtom = do_GetAtom(aBlockType);
+      nsCOMPtr<nsIAtom> blockAtom = NS_Atomize(aBlockType);
       while (!CanContainTag(*parent, *blockAtom)) {
         NS_ENSURE_TRUE(parent->GetParent(), NS_ERROR_FAILURE);
         topChild = parent;
@@ -2554,7 +2554,7 @@ nsHTMLEditor::CreateElementWithDefaults(const nsAString& aTagName)
 
   // New call to use instead to get proper HTML element, bug 39919
   nsCOMPtr<Element> newElement =
-    CreateHTMLContent(nsCOMPtr<nsIAtom>(do_GetAtom(realTagName)));
+    CreateHTMLContent(nsCOMPtr<nsIAtom>(NS_Atomize(realTagName)));
   if (!newElement) {
     return nullptr;
   }
@@ -2877,7 +2877,7 @@ nsHTMLEditor::AddOverrideStyleSheet(const nsAString& aURL)
   // (This checks if already exists)
   ps->AddOverrideStyleSheet(sheet);
 
-  ps->ReconstructStyleData();
+  ps->RestyleForCSSRuleChanges();
 
   // Save as the last-loaded sheet
   mLastOverrideStyleSheetURL = aURL;
@@ -2922,7 +2922,7 @@ nsHTMLEditor::RemoveOverrideStyleSheet(const nsAString &aURL)
   NS_ENSURE_TRUE(ps, NS_ERROR_NOT_INITIALIZED);
 
   ps->RemoveOverrideStyleSheet(sheet);
-  ps->ReconstructStyleData();
+  ps->RestyleForCSSRuleChanges();
 
   // Remove it from our internal list
   return rv;
@@ -4488,7 +4488,7 @@ nsHTMLEditor::RemoveAttributeOrEquivalent(nsIDOMElement* aElement,
   nsCOMPtr<dom::Element> element = do_QueryInterface(aElement);
   NS_ENSURE_TRUE(element, NS_OK);
 
-  nsCOMPtr<nsIAtom> attribute = do_GetAtom(aAttribute);
+  nsCOMPtr<nsIAtom> attribute = NS_Atomize(aAttribute);
   MOZ_ASSERT(attribute);
 
   nsresult res = NS_OK;
@@ -4773,7 +4773,8 @@ nsHTMLEditor::CopyLastEditableChildStyles(nsIDOMNode * aPreviousBlock, nsIDOMNod
     childElement = childElement->GetParentElement();
   }
   if (deepestStyle) {
-    *aOutBrNode = GetAsDOMNode(CreateBR(deepestStyle, 0).take());
+    nsCOMPtr<nsIDOMNode> retVal = GetAsDOMNode(CreateBR(deepestStyle, 0));
+    retVal.forget(aOutBrNode);
     NS_ENSURE_STATE(*aOutBrNode);
   }
   return NS_OK;
@@ -5199,7 +5200,7 @@ nsHTMLEditor::IsAcceptableInputEvent(nsIDOMEvent* aEvent)
     // Otherwise, check whether the event target is in this document or not.
     nsCOMPtr<nsIContent> targetContent = do_QueryInterface(target);
     NS_ENSURE_TRUE(targetContent, false);
-    return document == targetContent->GetCurrentDoc();
+    return document == targetContent->GetUncomposedDoc();
   }
 
   // This HTML editor is for contenteditable.  We need to check the validity of

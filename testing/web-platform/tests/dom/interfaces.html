@@ -180,6 +180,7 @@ interface Node : EventTarget {
   readonly attribute DOMString? baseURI;
 
   readonly attribute Document? ownerDocument;
+  readonly attribute Node rootNode;
   readonly attribute Node? parentNode;
   readonly attribute Element? parentElement;
   boolean hasChildNodes();
@@ -287,6 +288,7 @@ interface Element : Node {
 
   boolean hasAttributes();
   [SameObject] readonly attribute NamedNodeMap attributes;
+  sequence<DOMString> getAttributeNames();
   DOMString? getAttribute(DOMString name);
   DOMString? getAttributeNS(DOMString? namespace, DOMString localName);
   void setAttribute(DOMString name, DOMString value);
@@ -308,6 +310,9 @@ interface Element : Node {
   HTMLCollection getElementsByTagName(DOMString localName);
   HTMLCollection getElementsByTagNameNS(DOMString? namespace, DOMString localName);
   HTMLCollection getElementsByClassName(DOMString classNames);
+
+  Element? insertAdjacentElement(DOMString where, Element element); // historical
+  void insertAdjacentText(DOMString where, DOMString data); // historical
 };
 
 interface NamedNodeMap {
@@ -483,6 +488,7 @@ setup(function() {
   idlArray.add_objects({
     Event: ['document.createEvent("Event")', 'new Event("foo")'],
     CustomEvent: ['new CustomEvent("foo")'],
+    Document: ['new Document()'],
     XMLDocument: ['xmlDoc'],
     DOMImplementation: ['document.implementation'],
     DocumentFragment: ['document.createDocumentFragment()'],

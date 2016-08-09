@@ -52,6 +52,25 @@ template<class Impl>
 constexpr JNINativeMethod AlarmReceiver::Natives<Impl>::methods[];
 
 template<class Impl>
+class GeckoAppShell::Natives : public mozilla::jni::NativeImpl<GeckoAppShell, Impl>
+{
+public:
+    static constexpr JNINativeMethod methods[] = {
+
+        mozilla::jni::MakeNativeMethod<GeckoAppShell::NotifyObservers_t>(
+                mozilla::jni::NativeStub<GeckoAppShell::NotifyObservers_t, Impl>
+                ::template Wrap<&Impl::NotifyObservers>),
+
+        mozilla::jni::MakeNativeMethod<GeckoAppShell::SyncNotifyObservers_t>(
+                mozilla::jni::NativeStub<GeckoAppShell::SyncNotifyObservers_t, Impl>
+                ::template Wrap<&Impl::SyncNotifyObservers>)
+    };
+};
+
+template<class Impl>
+constexpr JNINativeMethod GeckoAppShell::Natives<Impl>::methods[];
+
+template<class Impl>
 class GeckoEditable::Natives : public mozilla::jni::NativeImpl<GeckoEditable, Impl>
 {
 public:
@@ -178,9 +197,25 @@ class GeckoThread::Natives : public mozilla::jni::NativeImpl<GeckoThread, Impl>
 public:
     static constexpr JNINativeMethod methods[] = {
 
+        mozilla::jni::MakeNativeMethod<GeckoThread::CreateServices_t>(
+                mozilla::jni::NativeStub<GeckoThread::CreateServices_t, Impl>
+                ::template Wrap<&Impl::CreateServices>),
+
+        mozilla::jni::MakeNativeMethod<GeckoThread::OnPause_t>(
+                mozilla::jni::NativeStub<GeckoThread::OnPause_t, Impl>
+                ::template Wrap<&Impl::OnPause>),
+
+        mozilla::jni::MakeNativeMethod<GeckoThread::OnResume_t>(
+                mozilla::jni::NativeStub<GeckoThread::OnResume_t, Impl>
+                ::template Wrap<&Impl::OnResume>),
+
         mozilla::jni::MakeNativeMethod<GeckoThread::SpeculativeConnect_t>(
                 mozilla::jni::NativeStub<GeckoThread::SpeculativeConnect_t, Impl>
-                ::template Wrap<&Impl::SpeculativeConnect>)
+                ::template Wrap<&Impl::SpeculativeConnect>),
+
+        mozilla::jni::MakeNativeMethod<GeckoThread::WaitOnGecko_t>(
+                mozilla::jni::NativeStub<GeckoThread::WaitOnGecko_t, Impl>
+                ::template Wrap<&Impl::WaitOnGecko>)
     };
 };
 
@@ -297,6 +332,14 @@ public:
         mozilla::jni::MakeNativeMethod<NativePanZoomController::HandleMotionEvent_t>(
                 mozilla::jni::NativeStub<NativePanZoomController::HandleMotionEvent_t, Impl>
                 ::template Wrap<&Impl::HandleMotionEvent>),
+
+        mozilla::jni::MakeNativeMethod<NativePanZoomController::HandleMotionEventVelocity_t>(
+                mozilla::jni::NativeStub<NativePanZoomController::HandleMotionEventVelocity_t, Impl>
+                ::template Wrap<&Impl::HandleMotionEventVelocity>),
+
+        mozilla::jni::MakeNativeMethod<NativePanZoomController::HandleMouseEvent_t>(
+                mozilla::jni::NativeStub<NativePanZoomController::HandleMouseEvent_t, Impl>
+                ::template Wrap<&Impl::HandleMouseEvent>),
 
         mozilla::jni::MakeNativeMethod<NativePanZoomController::HandleScrollEvent_t>(
                 mozilla::jni::NativeStub<NativePanZoomController::HandleScrollEvent_t, Impl>

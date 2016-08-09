@@ -113,17 +113,17 @@ HTTP(..) == variation-selector-unsupported-1.html variation-selector-unsupported
 == wordbreak-1.html wordbreak-1-ref.html
 == wordbreak-2.html wordbreak-2-ref.html
 == wordbreak-3.html wordbreak-3-ref.html
-skip-if((Android&&AndroidVersion!=15)||(B2G&&browserIsRemote)) == wordbreak-4a.html wordbreak-4a-ref.html
+skip-if((Android)||(B2G&&browserIsRemote)) == wordbreak-4a.html wordbreak-4a-ref.html
 == wordbreak-4b.html wordbreak-4b-ref.html
 == wordbreak-5.html wordbreak-5-ref.html
-== wordbreak-6.html wordbreak-6-ref.html
+fails-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu)) == wordbreak-6.html wordbreak-6-ref.html # Bug 1258239
 skip-if(B2G||Mulet) HTTP(..) == wordbreak-7a.html wordbreak-7a-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 fails HTTP(..) == wordbreak-7b.html wordbreak-7b-ref.html # bug 479829
 == wordbreak-8.html wordbreak-8-ref.html
 pref(gfx.font_rendering.graphite.enabled,true) HTTP(..) == wordbreak-9.html wordbreak-9-ref.html
 == wordwrap-01.html wordwrap-01-ref.html
 HTTP(..) == wordwrap-02.html wordwrap-02-ref.html
-fuzzy-if(gtkWidget,1,44) fuzzy-if(skiaContent,1,50) skip-if(B2G||Mulet) HTTP(..) == wordwrap-03.html wordwrap-03-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+fuzzy-if(gtkWidget,1,177) fuzzy-if(skiaContent,1,50) skip-if(B2G||Mulet) HTTP(..) == wordwrap-03.html wordwrap-03-ref.html # Initial mulet triage: parity with B2G/B2G Desktop # Fuzzy on Linux because the native textbox gradient is painted in a slightly different position depending on the invalid area.
 == wordwrap-04.html wordwrap-04-ref.html
 == wordwrap-05.html wordwrap-05-ref.html
 == wordwrap-06.html wordwrap-06-ref.html

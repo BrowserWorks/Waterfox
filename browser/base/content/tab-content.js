@@ -251,15 +251,20 @@ var AboutReaderListener = {
     addEventListener("DOMContentLoaded", this, false);
     addEventListener("pageshow", this, false);
     addEventListener("pagehide", this, false);
-    addMessageListener("Reader:ParseDocument", this);
+    addMessageListener("Reader:ToggleReaderMode", this);
     addMessageListener("Reader:PushState", this);
   },
 
   receiveMessage: function(message) {
     switch (message.name) {
-      case "Reader:ParseDocument":
-        this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
-        content.document.location = "about:reader?url=" + encodeURIComponent(message.data.url);
+      case "Reader:ToggleReaderMode":
+        let url = content.document.location.href;
+        if (!this.isAboutReader) {
+          this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
+          ReaderMode.enterReaderMode(docShell, content);
+        } else {
+          ReaderMode.leaveReaderMode(docShell, content);
+        }
         break;
 
       case "Reader:PushState":
@@ -502,24 +507,27 @@ var PageStyleHandler = {
 
       let URI;
       try {
-        URI = Services.io.newURI(currentStyleSheet.href, null, null);
+        if (!currentStyleSheet.ownerNode ||
+            // special-case style nodes, which have no href
+            currentStyleSheet.ownerNode.nodeName.toLowerCase() != "style") {
+          URI = Services.io.newURI(currentStyleSheet.href, null, null);
+        }
       } catch(e) {
         if (e.result != Cr.NS_ERROR_MALFORMED_URI) {
           throw e;
         }
+        continue;
       }
 
-      if (URI) {
-        // We won't send data URIs all of the way up to the parent, as these
-        // can be arbitrarily large.
-        let sentURI = URI.scheme == "data" ? null : URI.spec;
+      // We won't send data URIs all of the way up to the parent, as these
+      // can be arbitrarily large.
+      let sentURI = (!URI || URI.scheme == "data") ? null : URI.spec;
 
-        result.push({
-          title: currentStyleSheet.title,
-          disabled: currentStyleSheet.disabled,
-          href: sentURI,
-        });
-      }
+      result.push({
+        title: currentStyleSheet.title,
+        disabled: currentStyleSheet.disabled,
+        href: sentURI,
+      });
     }
 
     return result;
@@ -615,9 +623,11 @@ var DOMFullscreenHandler = {
   },
 
   receiveMessage: function(aMessage) {
+    let windowUtils = this._windowUtils;
     switch(aMessage.name) {
       case "DOMFullscreen:Entered": {
-        if (!this._windowUtils.handleFullscreenRequests() &&
+        this._lastTransactionId = windowUtils.lastTransactionId;
+        if (!windowUtils.handleFullscreenRequests() &&
             !content.document.fullscreenElement) {
           // If we don't actually have any pending fullscreen request
           // to handle, neither we have been in fullscreen, tell the
@@ -627,8 +637,13 @@ var DOMFullscreenHandler = {
         break;
       }
       case "DOMFullscreen:CleanUp": {
-        if (this._windowUtils) {
-          this._windowUtils.exitFullscreen();
+        // If we've exited fullscreen at this point, no need to record
+        // transaction id or call exit fullscreen. This is especially
+        // important for non-e10s, since in that case, it is possible
+        // that no more paint would be triggered after this point.
+        if (content.document.fullscreenElement && windowUtils) {
+          this._lastTransactionId = windowUtils.lastTransactionId;
+          windowUtils.exitFullscreen();
         }
         this._fullscreenDoc = null;
         break;
@@ -665,8 +680,15 @@ var DOMFullscreenHandler = {
         break;
       }
       case "MozAfterPaint": {
-        removeEventListener("MozAfterPaint", this);
-        sendAsyncMessage("DOMFullscreen:Painted");
+        // Only send Painted signal after we actually finish painting
+        // the transition for the fullscreen change.
+        // Note that this._lastTransactionId is not set when in non-e10s
+        // mode, so we need to check that explicitly.
+        if (!this._lastTransactionId ||
+            aEvent.transactionId > this._lastTransactionId) {
+          removeEventListener("MozAfterPaint", this);
+          sendAsyncMessage("DOMFullscreen:Painted");
+        }
         break;
       }
     }
@@ -848,8 +870,35 @@ var RefreshBlocker = {
 
 RefreshBlocker.init();
 
+var UserContextIdNotifier = {
+  init() {
+    addEventListener("DOMContentLoaded", this);
+  },
+
+  uninit() {
+    removeEventListener("DOMContentLoaded", this);
+  },
+
+  handleEvent(aEvent) {
+    // When the first content is loaded, we want to inform the tabbrowser about
+    // the userContextId in use in order to update the UI correctly.
+    // Just because we cannot change the userContextId from an active docShell,
+    // we don't need to check DOMContentLoaded again.
+    this.uninit();
+    let userContextId = content.document.nodePrincipal.originAttributes.userContextId;
+    sendAsyncMessage("Browser:FirstContentLoaded", { userContextId });
+  }
+};
+
+UserContextIdNotifier.init();
+
 ExtensionContent.init(this);
 addEventListener("unload", () => {
   ExtensionContent.uninit(this);
   RefreshBlocker.uninit();
+});
+
+addEventListener("MozAfterPaint", function onFirstPaint() {
+  removeEventListener("MozAfterPaint", onFirstPaint);
+  sendAsyncMessage("Browser:FirstPaint");
 });

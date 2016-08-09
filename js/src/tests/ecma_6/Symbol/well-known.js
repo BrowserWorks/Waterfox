@@ -2,9 +2,12 @@
  * http://creativecommons.org/licenses/publicdomain/ */
 
 var names = [
+    "isConcatSpreadable",
     "iterator",
     "match",
     "species",
+    "toPrimitive",
+    "unscopables"
 ];
 
 for (var name of names) {

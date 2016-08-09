@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include "nsWindow.h"
+
 #include "mozilla/DebugOnly.h"
 
 #include <fcntl.h>
@@ -20,6 +22,7 @@
 #include "android/log.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/RefPtr.h"
 #include "mozilla/Services.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -28,11 +31,9 @@
 #include "GLContextProvider.h"
 #include "GLContext.h"
 #include "GLContextEGL.h"
-#include "nsAutoPtr.h"
 #include "nsAppShell.h"
 #include "nsScreenManagerGonk.h"
 #include "nsTArray.h"
-#include "nsWindow.h"
 #include "nsIWidgetListener.h"
 #include "ClientLayerManager.h"
 #include "BasicLayers.h"
@@ -42,7 +43,7 @@
 #include "mozilla/gfx/Logging.h"
 #include "mozilla/layers/APZCTreeManager.h"
 #include "mozilla/layers/APZThreadUtils.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/TouchEvents.h"
 #include "HwcComposer2D.h"
 
@@ -84,7 +85,7 @@ nsWindow::nsWindow()
 nsWindow::~nsWindow()
 {
     if (mScreen->IsPrimaryScreen()) {
-        mComposer2D->SetCompositorParent(nullptr);
+        mComposer2D->SetCompositorBridgeParent(nullptr);
     }
 }
 
@@ -130,7 +131,7 @@ nsWindow::DoDraw(void)
 void
 nsWindow::ConfigureAPZControllerThread()
 {
-    APZThreadUtils::SetControllerThread(CompositorParent::CompositorLoop());
+    APZThreadUtils::SetControllerThread(CompositorBridgeParent::CompositorLoop());
 }
 
 /*static*/ nsEventStatus
@@ -143,7 +144,7 @@ nsWindow::DispatchKeyInput(WidgetKeyboardEvent& aEvent)
     gFocusedWindow->UserActivity();
 
     nsEventStatus status;
-    aEvent.widget = gFocusedWindow;
+    aEvent.mWidget = gFocusedWindow;
     gFocusedWindow->DispatchEvent(&aEvent, status);
     return status;
 }
@@ -255,7 +256,7 @@ private:
 nsresult
 nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                      TouchPointerState aPointerState,
-                                     ScreenIntPoint aPointerScreenPoint,
+                                     LayoutDeviceIntPoint aPoint,
                                      double aPointerPressure,
                                      uint32_t aPointerOrientation,
                                      nsIObserver* aObserver)
@@ -267,8 +268,11 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
     }
 
     if (!mSynthesizedTouchInput) {
-        mSynthesizedTouchInput = new MultiTouchInput();
+        mSynthesizedTouchInput = MakeUnique<MultiTouchInput>();
     }
+
+    ScreenIntPoint pointerScreenPoint = ViewAs<ScreenPixel>(aPoint,
+        PixelCastJustification::LayoutDeviceIsScreenForBounds);
 
     // We can't dispatch mSynthesizedTouchInput directly because (a) dispatching
     // it might inadvertently modify it and (b) in the case of touchend or
@@ -283,7 +287,7 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
         if (index >= 0) {
             // found an existing touch point, update it
             SingleTouchData& point = mSynthesizedTouchInput->mTouches[index];
-            point.mScreenPoint = aPointerScreenPoint;
+            point.mScreenPoint = pointerScreenPoint;
             point.mRotationAngle = (float)aPointerOrientation;
             point.mForce = (float)aPointerPressure;
             inputToDispatch.mType = MultiTouchInput::MULTITOUCH_MOVE;
@@ -291,7 +295,7 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
             // new touch point, add it
             mSynthesizedTouchInput->mTouches.AppendElement(SingleTouchData(
                 (int32_t)aPointerId,
-                aPointerScreenPoint,
+                pointerScreenPoint,
                 ScreenSize(0, 0),
                 (float)aPointerOrientation,
                 (float)aPointerPressure));
@@ -309,7 +313,7 @@ nsWindow::SynthesizeNativeTouchPoint(uint32_t aPointerId,
             : MultiTouchInput::MULTITOUCH_CANCEL);
         inputToDispatch.mTouches.AppendElement(SingleTouchData(
             (int32_t)aPointerId,
-            aPointerScreenPoint,
+            pointerScreenPoint,
             ScreenSize(0, 0),
             (float)aPointerOrientation,
             (float)aPointerPressure));
@@ -536,9 +540,14 @@ nsWindow::GetNativeData(uint32_t aDataType)
         return mScreen->GetNativeWindow();
     case NS_NATIVE_OPENGL_CONTEXT:
         return mScreen->GetGLContext().take();
-    case NS_RAW_NATIVE_IME_CONTEXT:
+    case NS_RAW_NATIVE_IME_CONTEXT: {
+        void* pseudoIMEContext = GetPseudoIMEContext();
+        if (pseudoIMEContext) {
+            return pseudoIMEContext;
+        }
         // There is only one IME context on Gonk.
         return NS_ONLY_ONE_NATIVE_IME_CONTEXT;
+    }
     }
 
     return nullptr;
@@ -687,10 +696,10 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
     }
 
     CreateCompositor();
-    if (mCompositorParent) {
-        mScreen->SetCompositorParent(mCompositorParent);
+    if (mCompositorBridgeParent) {
+        mScreen->SetCompositorBridgeParent(mCompositorBridgeParent);
         if (mScreen->IsPrimaryScreen()) {
-            mComposer2D->SetCompositorParent(mCompositorParent);
+            mComposer2D->SetCompositorBridgeParent(mCompositorBridgeParent);
         }
     }
     MOZ_ASSERT(mLayerManager);
@@ -700,20 +709,20 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
 void
 nsWindow::DestroyCompositor()
 {
-    if (mCompositorParent) {
-        mScreen->SetCompositorParent(nullptr);
+    if (mCompositorBridgeParent) {
+        mScreen->SetCompositorBridgeParent(nullptr);
         if (mScreen->IsPrimaryScreen()) {
-            // Unset CompositorParent
-            mComposer2D->SetCompositorParent(nullptr);
+            // Unset CompositorBridgeParent
+            mComposer2D->SetCompositorBridgeParent(nullptr);
         }
     }
     nsBaseWidget::DestroyCompositor();
 }
 
-CompositorParent*
-nsWindow::NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight)
+CompositorBridgeParent*
+nsWindow::NewCompositorBridgeParent(int aSurfaceWidth, int aSurfaceHeight)
 {
-    return new CompositorParent(this, true, aSurfaceWidth, aSurfaceHeight);
+    return new CompositorBridgeParent(this, true, aSurfaceWidth, aSurfaceHeight);
 }
 
 void

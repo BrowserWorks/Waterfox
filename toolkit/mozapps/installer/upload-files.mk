@@ -62,46 +62,31 @@ JSSHELL_BINS  = \
   js$(BIN_SUFFIX) \
   $(DLL_PREFIX)mozglue$(DLL_SUFFIX) \
   $(NULL)
-ifndef MOZ_NATIVE_NSPR
+
+ifndef MOZ_SYSTEM_NSPR
+  ifdef MOZ_FOLD_LIBS
+    JSSHELL_BINS += $(DLL_PREFIX)nss3$(DLL_SUFFIX)
+  else
+    JSSHELL_BINS += \
+      $(DLL_PREFIX)nspr4$(DLL_SUFFIX) \
+      $(DLL_PREFIX)plds4$(DLL_SUFFIX) \
+      $(DLL_PREFIX)plc4$(DLL_SUFFIX) \
+      $(NULL)
+  endif # MOZ_FOLD_LIBS
+endif # MOZ_SYSTEM_NSPR
+
 ifdef MSVC_C_RUNTIME_DLL
-JSSHELL_BINS += $(MSVC_C_RUNTIME_DLL)
+  JSSHELL_BINS += $(MSVC_C_RUNTIME_DLL)
 endif
 ifdef MSVC_CXX_RUNTIME_DLL
-JSSHELL_BINS += $(MSVC_CXX_RUNTIME_DLL)
+  JSSHELL_BINS += $(MSVC_CXX_RUNTIME_DLL)
 endif
-ifdef MOZ_FOLD_LIBS
-JSSHELL_BINS += $(DLL_PREFIX)nss3$(DLL_SUFFIX)
-else
-JSSHELL_BINS += \
-  $(DLL_PREFIX)nspr4$(DLL_SUFFIX) \
-  $(DLL_PREFIX)plds4$(DLL_SUFFIX) \
-  $(DLL_PREFIX)plc4$(DLL_SUFFIX) \
-  $(NULL)
-endif # MOZ_FOLD_LIBS
-endif # MOZ_NATIVE_NSPR
-ifdef MOZ_SHARED_ICU
-ifeq ($(OS_TARGET), WINNT)
-JSSHELL_BINS += \
-  icudt$(MOZ_ICU_DBG_SUFFIX)$(MOZ_ICU_VERSION).dll \
-  icuin$(MOZ_ICU_DBG_SUFFIX)$(MOZ_ICU_VERSION).dll \
-  icuuc$(MOZ_ICU_DBG_SUFFIX)$(MOZ_ICU_VERSION).dll \
-  $(NULL)
-else
-ifeq ($(OS_TARGET), Darwin)
-JSSHELL_BINS += \
-  libicudata.$(MOZ_ICU_VERSION).dylib \
-  libicui18n.$(MOZ_ICU_VERSION).dylib \
-  libicuuc.$(MOZ_ICU_VERSION).dylib \
-  $(NULL)
-else
-JSSHELL_BINS += \
-  libicudata.so.$(MOZ_ICU_VERSION) \
-  libicui18n.so.$(MOZ_ICU_VERSION) \
-  libicuuc.so.$(MOZ_ICU_VERSION) \
-  $(NULL)
-endif # Darwin
-endif # WINNT
-endif # MOZ_STATIC_JS
+
+ifdef WIN_UCRT_REDIST_DIR
+  JSSHELL_BINS += $(notdir $(wildcard $(DIST)/bin/api-ms-win-*.dll))
+  JSSHELL_BINS += ucrtbase.dll
+endif
+
 MAKE_JSSHELL  = $(call py_action,zip,-C $(DIST)/bin $(abspath $(PKG_JSSHELL)) $(JSSHELL_BINS))
 
 JARLOG_DIR = $(topobjdir)/jarlog/
@@ -397,16 +382,6 @@ ifndef MOZ_PKG_MANIFEST
   endif # MOZ_PKG_MANIFEST_P
 endif # MOZ_PKG_MANIFEST
 
-# For smooth transition of comm-central
-ifndef MOZ_PACKAGER_FORMAT
-  ifeq ($(MOZ_CHROME_FILE_FORMAT),flat)
-    ifdef MOZ_OMNIJAR
-      MOZ_PACKAGER_FORMAT := omni
-    else
-      MOZ_PACKAGER_FORMAT := flat
-    endif
-  endif
-endif
 ifndef MOZ_PACKAGER_FORMAT
   MOZ_PACKAGER_FORMAT = $(error MOZ_PACKAGER_FORMAT is not set)
 endif

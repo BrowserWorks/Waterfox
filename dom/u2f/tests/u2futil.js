@@ -98,47 +98,65 @@ function importPublicKey(keyBytes) {
   return crypto.subtle.importKey("jwk", jwk, {name: "ECDSA", namedCurve: "P-256"}, true, ["verify"])
 }
 
-function assembleSignedData(appId, presenceAndCounter, clientData) {
+function deriveAppAndChallengeParam(appId, clientData) {
   var appIdBuf = string2buffer(appId);
   return Promise.all([
     crypto.subtle.digest("SHA-256", appIdBuf),
     crypto.subtle.digest("SHA-256", clientData)
   ])
   .then(function(digests) {
-    var appParam = new Uint8Array(digests[0]);
-    var clientParam = new Uint8Array(digests[1]);
-
-    var signedData = new Uint8Array(32 + 1 + 4 + 32);
-    appParam.map((x, i) => signedData[0 + i] = x);
-    presenceAndCounter.map((x, i) => signedData[32 + i] = x);
-    clientParam.map((x, i) => signedData[37 + i] = x);
-    return signedData;
+    return {
+      appParam: new Uint8Array(digests[0]),
+      challengeParam: new Uint8Array(digests[1]),
+    };
   });
 }
 
-function verifySignature(key, data, derSig) {
-  if (derSig.byteLength < 70) {
-    console.log("bad sig: " + hexEncode(derSig))
-    throw "Invalid signature length: " + derSig.byteLength;
+function assembleSignedData(appParam, presenceAndCounter, challengeParam) {
+  var signedData = new Uint8Array(32 + 1 + 4 + 32);
+  appParam.map((x, i) => signedData[0 + i] = x);
+  presenceAndCounter.map((x, i) => signedData[32 + i] = x);
+  challengeParam.map((x, i) => signedData[37 + i] = x);
+  return signedData;
+}
+
+function assembleRegistrationSignedData(appParam, challengeParam, keyHandle, pubKey) {
+  var signedData = new Uint8Array(1 + 32 + 32 + keyHandle.length + 65);
+  signedData[0] = 0x00;
+  appParam.map((x, i) => signedData[1 + i] = x);
+  challengeParam.map((x, i) => signedData[33 + i] = x);
+  keyHandle.map((x, i) => signedData[65 + i] = x);
+  pubKey.map((x, i) => signedData[65 + keyHandle.length + i] = x);
+  return signedData;
+}
+
+function sanitizeSigArray(arr) {
+  // ECDSA signature fields into WebCrypto must be exactly 32 bytes long, so
+  // this method strips leading padding bytes, if added, and also appends
+  // padding zeros, if needed.
+  if (arr.length > 32) {
+    arr = arr.slice(arr.length - 32)
   }
+  var ret = new Uint8Array(32);
+  ret.set(arr, ret.length - arr.length);
+  return ret;
+}
 
-  // Poor man's ASN.1 decode
-  // R and S are always 32 bytes.  If ether has a DER
-  // length > 32, it's just zeros we can chop off.
-  var lenR = derSig[3];
-  var lenS = derSig[3 + lenR + 2];
-  var padR = lenR - 32;
-  var padS = lenS - 32;
-  var sig = new Uint8Array(64);
-  derSig.slice(4 + padR, 4 + lenR).map((x, i) => sig[i] = x);
-  derSig.slice(4 + lenR + 2 + padS, 4 + lenR + 2 + lenS).map(
-    (x, i) => sig[32 + i] = x
-  );
+function verifySignature(key, data, derSig) {
+  var sigAsn1 = org.pkijs.fromBER(derSig.buffer);
+  var sigR = new Uint8Array(sigAsn1.result.value_block.value[0].value_block.value_hex);
+  var sigS = new Uint8Array(sigAsn1.result.value_block.value[1].value_block.value_hex);
 
-  console.log("data: " + hexEncode(data));
-  console.log("der:  " + hexEncode(derSig));
-  console.log("raw:  " + hexEncode(sig));
+  // The resulting R and S values from the ASN.1 Sequence must be fit into 32
+  // bytes. Sometimes they have leading zeros, sometimes they're too short, it
+  // all depends on what lib generated the signature.
+  var R = sanitizeSigArray(sigR);
+  var S = sanitizeSigArray(sigS);
+
+  var sigData = new Uint8Array(R.length + S.length);
+  sigData.set(R);
+  sigData.set(S, R.length);
 
   var alg = {name: "ECDSA", hash: "SHA-256"};
-  return crypto.subtle.verify(alg, key, sig, data);
+  return crypto.subtle.verify(alg, key, sigData, data);
 }

@@ -1,0 +1,70 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Test for Directory API</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="filesystem_commons.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+
+<body>
+<input id="fileList" type="file"></input>
+<script type="application/javascript;version=1.7">
+
+var directory;
+
+function create_fileList(aPath) {
+  var url = SimpleTest.getTestFileURL("script_fileList.js");
+  var script = SpecialPowers.loadChromeScript(url);
+
+  function onOpened(message) {
+    var fileList = document.getElementById('fileList');
+    SpecialPowers.wrap(fileList).mozSetDirectory(message.dir);
+
+    fileList.getFilesAndDirectories().then(function(array) {
+      is(array.length, 1, "We want just 1 directory.");
+      ok(array[0] instanceof Directory, "We want just 1 directory.");
+
+      directory = array[0];
+      script.destroy();
+      next();
+    });
+  }
+
+  script.addMessageListener("dir.opened", onOpened);
+  script.sendAsyncMessage("dir.open", { path: aPath });
+}
+
+var tests = [
+  function() { setup_tests(next); },
+
+  function() { create_fileList('ProfD') },
+  function() { test_basic(directory, next); },
+  function() { test_getFilesAndDirectories(directory, true, next); },
+  function() { test_getFiles(directory, false, next); },
+  function() { test_getFiles(directory, true, next); },
+
+  function() { create_fileList('test') },
+  function() { test_getFiles_recursiveComparison(directory, next); },
+
+  function() { create_fileList('root'); },
+  function() { test_basic(directory, next); },
+  function() { test_getFilesAndDirectories(directory, false, next); },
+  function() { test_getFiles(directory, false, next); },
+];
+
+function next() {
+  if (!tests.length) {
+    SimpleTest.finish();
+    return;
+  }
+
+  var test = tests.shift();
+  test();
+}
+
+SimpleTest.waitForExplicitFinish();
+next();
+</script>
+</body>
+</html>

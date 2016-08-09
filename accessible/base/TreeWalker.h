@@ -50,13 +50,23 @@ public:
   ~TreeWalker();
 
   /**
-   * Return the next accessible.
+   * Clears the tree walker state and resets it to the given child within
+   * the anchor.
+   */
+  bool Seek(nsIContent* aChildNode);
+
+  /**
+   * Return the next/prev accessible.
    *
    * @note Returned accessible is bound to the document, if the accessible is
    *       rejected during tree creation then the caller should be unbind it
    *       from the document.
    */
-  Accessible* Next();
+  Accessible* Next(nsIContent* aStopNode = nullptr);
+  Accessible* Prev();
+
+  Accessible* Context() const { return mContext; }
+  DocAccessible* Document() const { return mDoc; }
 
 private:
   TreeWalker();
@@ -64,15 +74,29 @@ private:
   TreeWalker& operator =(const TreeWalker&);
 
   /**
-   * Create new state for the given node and push it on top of stack.
+   * Return an accessible for the given node if any.
+   */
+  Accessible* AccessibleFor(nsIContent* aNode, uint32_t aFlags,
+                            bool* aSkipSubtree);
+
+  /**
+   * Create new state for the given node and push it on top of stack / at bottom
+   * of stack.
    *
    * @note State stack is used to navigate up/down the DOM subtree during
    *        accessible children search.
    */
-  dom::AllChildrenIterator* PushState(nsIContent* aContent)
+  dom::AllChildrenIterator* PushState(nsIContent* aContent,
+                                      bool aStartAtBeginning)
   {
     return mStateStack.AppendElement(
-      dom::AllChildrenIterator(aContent, mChildFilter));
+      dom::AllChildrenIterator(aContent, mChildFilter, aStartAtBeginning));
+  }
+  dom::AllChildrenIterator* PrependState(nsIContent* aContent,
+                                         bool aStartAtBeginning)
+  {
+    return mStateStack.InsertElementAt(0,
+      dom::AllChildrenIterator(aContent, mChildFilter, aStartAtBeginning));
   }
 
   /**
@@ -89,6 +113,14 @@ private:
 
   int32_t mChildFilter;
   uint32_t mFlags;
+
+  enum Phase {
+    eAtStart,
+    eAtDOM,
+    eAtARIAOwns,
+    eAtEnd
+  };
+  Phase mPhase;
 };
 
 } // namespace a11y

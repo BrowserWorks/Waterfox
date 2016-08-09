@@ -113,7 +113,7 @@ public:
   {
     // We only need the document here to cause frame construction, so
     // we need the current doc, not the owner doc.
-    nsIDocument* doc = mBoundElement->GetCurrentDoc();
+    nsIDocument* doc = mBoundElement->GetUncomposedDoc();
     if (!doc)
       return;
 
@@ -318,7 +318,7 @@ nsXBLStreamListener::HandleEvent(nsIDOMEvent* aEvent)
     // ready.
     if (count > 0) {
       nsXBLBindingRequest* req = mBindingRequests.ElementAt(0);
-      nsIDocument* document = req->mBoundElement->GetCurrentDoc();
+      nsIDocument* document = req->mBoundElement->GetUncomposedDoc();
       if (document)
         document->FlushPendingNotifications(Flush_ContentAndNotify);
     }
@@ -536,7 +536,7 @@ nsXBLService::AttachGlobalKeyHandler(EventTarget* aTarget)
   nsCOMPtr<nsIContent> contentNode(do_QueryInterface(aTarget));
   if (contentNode) {
     // Only attach if we're really in a document
-    nsCOMPtr<nsIDocument> doc = contentNode->GetCurrentDoc();
+    nsCOMPtr<nsIDocument> doc = contentNode->GetUncomposedDoc();
     if (doc)
       piTarget = doc; // We're a XUL keyset. Attach to our document.
   }
@@ -556,22 +556,7 @@ nsXBLService::AttachGlobalKeyHandler(EventTarget* aTarget)
   RefPtr<nsXBLWindowKeyHandler> handler =
     NS_NewXBLWindowKeyHandler(elt, piTarget);
 
-  // listen to these events
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                  TrustedEventsAtSystemGroupBubble());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                  TrustedEventsAtSystemGroupBubble());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                  TrustedEventsAtSystemGroupBubble());
-
-  // The capturing listener is only used for XUL keysets to properly handle
-  // shortcut keys in a multi-process environment.
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                  TrustedEventsAtSystemGroupCapture());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                  TrustedEventsAtSystemGroupCapture());
-  manager->AddEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                  TrustedEventsAtSystemGroupCapture());
+  handler->InstallKeyboardEventListenersTo(manager);
 
   if (contentNode)
     return contentNode->SetProperty(nsGkAtoms::listener,
@@ -597,7 +582,7 @@ nsXBLService::DetachGlobalKeyHandler(EventTarget* aTarget)
     return NS_ERROR_FAILURE;
 
   // Only attach if we're really in a document
-  nsCOMPtr<nsIDocument> doc = contentNode->GetCurrentDoc();
+  nsCOMPtr<nsIDocument> doc = contentNode->GetUncomposedDoc();
   if (doc)
     piTarget = do_QueryInterface(doc);
 
@@ -611,19 +596,8 @@ nsXBLService::DetachGlobalKeyHandler(EventTarget* aTarget)
   if (!handler)
     return NS_ERROR_FAILURE;
 
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                     TrustedEventsAtSystemGroupBubble());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                     TrustedEventsAtSystemGroupBubble());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                     TrustedEventsAtSystemGroupBubble());
-
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keydown"),
-                                     TrustedEventsAtSystemGroupCapture());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keyup"),
-                                     TrustedEventsAtSystemGroupCapture());
-  manager->RemoveEventListenerByType(handler, NS_LITERAL_STRING("keypress"),
-                                     TrustedEventsAtSystemGroupCapture());
+  static_cast<nsXBLWindowKeyHandler*>(handler)->
+    RemoveKeyboardEventListenersFrom(manager);
 
   contentNode->DeleteProperty(nsGkAtoms::listener);
 

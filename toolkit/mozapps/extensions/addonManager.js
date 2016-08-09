@@ -24,6 +24,13 @@ const MSG_INSTALL_ENABLED  = "WebInstallerIsInstallEnabled";
 const MSG_INSTALL_ADDONS   = "WebInstallerInstallAddonsFromWebpage";
 const MSG_INSTALL_CALLBACK = "WebInstallerInstallCallback";
 
+const MSG_PROMISE_REQUEST  = "WebAPIPromiseRequest";
+const MSG_PROMISE_RESULT   = "WebAPIPromiseResult";
+const MSG_INSTALL_EVENT    = "WebAPIInstallEvent";
+const MSG_INSTALL_CLEANUP  = "WebAPICleanup";
+const MSG_ADDON_EVENT_REQ  = "WebAPIAddonEventRequest";
+const MSG_ADDON_EVENT      = "WebAPIAddonEvent";
+
 const CHILD_SCRIPT = "resource://gre/modules/addons/Content.js";
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -38,14 +45,20 @@ function amManager() {
   Cu.import("resource://gre/modules/AddonManager.jsm");
   /*globals AddonManagerPrivate*/
 
-  let globalMM = Cc["@mozilla.org/globalmessagemanager;1"]
-                 .getService(Ci.nsIMessageListenerManager);
+  let globalMM = Services.mm;
   globalMM.loadFrameScript(CHILD_SCRIPT, true);
   globalMM.addMessageListener(MSG_INSTALL_ADDONS, this);
 
-  gParentMM = Cc["@mozilla.org/parentprocessmessagemanager;1"]
-                 .getService(Ci.nsIMessageListenerManager);
+  gParentMM = Services.ppmm;
   gParentMM.addMessageListener(MSG_INSTALL_ENABLED, this);
+  gParentMM.addMessageListener(MSG_PROMISE_REQUEST, this);
+  gParentMM.addMessageListener(MSG_INSTALL_CLEANUP, this);
+  gParentMM.addMessageListener(MSG_ADDON_EVENT_REQ, this);
+
+  Services.obs.addObserver(this, "message-manager-close", false);
+  Services.obs.addObserver(this, "message-manager-disconnect", false);
+
+  AddonManager.webAPI.setEventHandler(this.sendEvent);
 
   // Needed so receiveMessage can be called directly by JS callers
   this.wrappedJSObject = this;
@@ -53,8 +66,16 @@ function amManager() {
 
 amManager.prototype = {
   observe: function(aSubject, aTopic, aData) {
-    if (aTopic == "addons-startup")
-      AddonManagerPrivate.startup();
+    switch (aTopic) {
+      case "addons-startup":
+        AddonManagerPrivate.startup();
+        break;
+
+      case "message-manager-close":
+      case "message-manager-disconnect":
+        AddonManager.webAPI.clearInstallsFrom(aSubject);
+        break;
+    }
   },
 
   /**
@@ -143,6 +164,8 @@ amManager.prototype = {
     AddonManagerPrivate.backgroundUpdateTimerHandler();
   },
 
+  addonListener: null,
+
   /**
    * messageManager callback function.
    *
@@ -174,7 +197,65 @@ amManager.prototype = {
           aMessage.target, payload.triggeringPrincipal, payload.uris,
           payload.hashes, payload.names, payload.icons, callback);
       }
+
+      case MSG_PROMISE_REQUEST: {
+        let resolve = (value) => {
+          aMessage.target.sendAsyncMessage(MSG_PROMISE_RESULT, {
+            callbackID: payload.callbackID,
+            resolve: value
+          });
+        }
+        let reject = (value) => {
+          aMessage.target.sendAsyncMessage(MSG_PROMISE_RESULT, {
+            callbackID: payload.callbackID,
+            reject: value
+          });
+        }
+
+        let API = AddonManager.webAPI;
+        if (payload.type in API) {
+          API[payload.type](aMessage.target, ...payload.args).then(resolve, reject);
+        }
+        else {
+          reject("Unknown Add-on API request.");
+        }
+        break;
+      }
+
+      case MSG_INSTALL_CLEANUP: {
+        AddonManager.webAPI.clearInstalls(payload.ids);
+        break;
+      }
+
+      case MSG_ADDON_EVENT_REQ: {
+        if (payload.enabled) {
+          if (!this.addonListener) {
+            let target = aMessage.target;
+            let handler = (event, id, needsRestart) => {
+              target.sendAsyncMessage(MSG_ADDON_EVENT, {event, id, needsRestart});
+            };
+            this.addonListener = {
+              onEnabling: (addon, needsRestart) => handler("onEnabling", addon.id, needsRestart),
+              onEnabled: (addon) => handler("onEnabled", addon.id, false),
+              onDisabling: (addon, needsRestart) => handler("onDisabling", addon.id, needsRestart),
+              onDisabled: (addon) => handler("onDisabled", addon.id, false),
+              onInstalling: (addon, needsRestart) => handler("onInstalling", addon.id, needsRestart),
+              onInstalled: (addon) => handler("onInstalled", addon.id, false),
+              onUninstalling: (addon, needsRestart) => handler("onUninstalling", addon.id, needsRestart),
+              onUninstalled: (addon) => handler("onUninstalled", addon.id, false),
+            };
+          }
+          AddonManager.addAddonListener(this.addonListener);
+        } else {
+          AddonManager.removeAddonListener(this.addonListener);
+        }
+      }
     }
+    return undefined;
+  },
+
+  sendEvent(target, data) {
+    target.sendAsyncMessage(MSG_INSTALL_EVENT, data);
   },
 
   classID: Components.ID("{4399533d-08d1-458c-a87a-235f74451cfa}"),

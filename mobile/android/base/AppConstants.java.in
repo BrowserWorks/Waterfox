@@ -63,16 +63,11 @@ public class AppConstants {
          * If our MAX_SDK_VERSION is lower than ICS, we must not be an ICS device.
          * Otherwise, we need a range check.
          */
-	public static final boolean preM = MAX_SDK_VERSION < 23 ||
-                (MIN_SDK_VERSION < 23 && Build.VERSION.SDK_INT < 23 && !Build.VERSION.RELEASE.equals("M"));
+        public static final boolean preMarshmallow = MAX_SDK_VERSION < 23 || (MIN_SDK_VERSION < 23 && Build.VERSION.SDK_INT < 23);
         public static final boolean preLollipop = MAX_SDK_VERSION < 21 || (MIN_SDK_VERSION < 21 && Build.VERSION.SDK_INT < 21);
         public static final boolean preJBMR2 = MAX_SDK_VERSION < 18 || (MIN_SDK_VERSION < 18 && Build.VERSION.SDK_INT < 18);
         public static final boolean preJBMR1 = MAX_SDK_VERSION < 17 || (MIN_SDK_VERSION < 17 && Build.VERSION.SDK_INT < 17);
         public static final boolean preJB = MAX_SDK_VERSION < 16 || (MIN_SDK_VERSION < 16 && Build.VERSION.SDK_INT < 16);
-        public static final boolean preICS = MAX_SDK_VERSION < 14 || (MIN_SDK_VERSION < 14 && Build.VERSION.SDK_INT < 14);
-        public static final boolean preHCMR2 = MAX_SDK_VERSION < 13 || (MIN_SDK_VERSION < 13 && Build.VERSION.SDK_INT < 13);
-        public static final boolean preHCMR1 = MAX_SDK_VERSION < 12 || (MIN_SDK_VERSION < 12 && Build.VERSION.SDK_INT < 12);
-        public static final boolean preHC = MAX_SDK_VERSION < 11 || (MIN_SDK_VERSION < 11 && Build.VERSION.SDK_INT < 11);
     }
 
     /**
@@ -349,4 +344,7 @@ public class AppConstants {
 //#else
     false;
 //#endif
+
+    // (bug 1266820) Temporarily disabled since no one is working on it.
+    public static final boolean SCREENSHOTS_IN_BOOKMARKS_ENABLED = false;
 }

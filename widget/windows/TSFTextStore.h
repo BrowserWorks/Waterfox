@@ -6,7 +6,7 @@
 #ifndef TSFTextStore_h_
 #define TSFTextStore_h_
 
-#include "nsAutoPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIWidget.h"
@@ -14,6 +14,7 @@
 #include "WinUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/TextEventDispatcher.h"
 #include "mozilla/TextRange.h"
 #include "mozilla/WindowsVersion.h"
 
@@ -118,7 +119,7 @@ public:
     if (!sEnabledTextStore) {
       return;
     }
-    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
     textStore->CommitCompositionInternal(aDiscard);
   }
 
@@ -135,7 +136,7 @@ public:
     if (!sEnabledTextStore) {
       return NS_OK;
     }
-    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
     return textStore->OnTextChangeInternal(aIMENotification);
   }
 
@@ -145,7 +146,7 @@ public:
     if (!sEnabledTextStore) {
       return NS_OK;
     }
-    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
     return textStore->OnSelectionChangeInternal(aIMENotification);
   }
 
@@ -155,7 +156,7 @@ public:
     if (!sEnabledTextStore) {
       return NS_OK;
     }
-    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
     return textStore->OnLayoutChangeInternal();
   }
 
@@ -165,7 +166,7 @@ public:
     if (!sEnabledTextStore) {
       return NS_OK;
     }
-    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
     return textStore->OnUpdateCompositionInternal();
   }
 
@@ -175,7 +176,7 @@ public:
     if (!sEnabledTextStore) {
       return NS_OK;
     }
-    RefPtr<TSFTextStore> textStore = sEnabledTextStore;
+    RefPtr<TSFTextStore> textStore(sEnabledTextStore);
     return textStore->OnMouseButtonEventInternal(aIMENotification);
   }
 
@@ -330,6 +331,8 @@ protected:
 
   // Holds the pointer to our current win32 widget
   RefPtr<nsWindowBase>       mWidget;
+  // mDispatcher is a helper class to dispatch composition events.
+  RefPtr<TextEventDispatcher> mDispatcher;
   // Document manager for the currently focused editor
   RefPtr<ITfDocumentMgr>     mDocumentMgr;
   // Edit cookie associated with the current editing context

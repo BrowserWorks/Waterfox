@@ -58,7 +58,7 @@ public:
   ProxyAccessible* NextSibling() const
   {
     size_t idx = IndexInParent();
-    return idx < Parent()->mChildren.Length() ? Parent()->mChildren[idx + 1]
+    return idx + 1 < Parent()->mChildren.Length() ? Parent()->mChildren[idx + 1]
     : nullptr;
   }
 
@@ -90,6 +90,17 @@ public:
    * Get the role of the accessible we're proxying.
    */
   role Role() const { return mRole; }
+
+  /**
+   * Return true if this is an embedded object.
+   */
+  bool IsEmbeddedObject() const
+  {
+    role role = Role();
+    return role != roles::TEXT_LEAF &&
+           role != roles::WHITESPACE &&
+           role != roles::STATICTEXT;
+  }
 
   /*
    * Return the states for the proxied accessible.
@@ -362,6 +373,12 @@ public:
 
   void Extents(bool aNeedsScreenCoords, int32_t* aX, int32_t* aY,
                int32_t* aWidth, int32_t* aHeight);
+
+  /**
+   * Return the id of the dom node this accessible represents.  Note this
+   * should probably only be used for testing.
+   */
+  void DOMNodeID(nsString& aID);
 
   /**
    * Allow the platform to store a pointers worth of data on us.

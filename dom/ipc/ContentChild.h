@@ -36,7 +36,7 @@ class URIParams;
 }// namespace ipc
 
 namespace layers {
-class PCompositorChild;
+class PCompositorBridgeChild;
 } // namespace layers
 
 namespace dom {
@@ -149,9 +149,9 @@ public:
   bool
   DeallocPAPZChild(PAPZChild* aActor) override;
 
-  PCompositorChild*
-  AllocPCompositorChild(mozilla::ipc::Transport* aTransport,
-                        base::ProcessId aOtherProcess) override;
+  PCompositorBridgeChild*
+  AllocPCompositorBridgeChild(mozilla::ipc::Transport* aTransport,
+                              base::ProcessId aOtherProcess) override;
 
   PSharedBufferManagerChild*
   AllocPSharedBufferManagerChild(mozilla::ipc::Transport* aTransport,
@@ -190,12 +190,6 @@ public:
 
   virtual bool
   DeallocPDeviceStorageRequestChild(PDeviceStorageRequestChild*) override;
-
-  virtual PFileSystemRequestChild*
-  AllocPFileSystemRequestChild(const FileSystemParams&) override;
-
-  virtual bool
-  DeallocPFileSystemRequestChild(PFileSystemRequestChild*) override;
 
   virtual PBlobChild*
   AllocPBlobChild(const BlobConstructorParams& aParams) override;
@@ -441,8 +435,6 @@ public:
 
   virtual bool RecvAddPermission(const IPC::Permission& permission) override;
 
-  virtual bool RecvScreenSizeChanged(const gfx::IntSize &size) override;
-
   virtual bool RecvFlushMemory(const nsString& reason) override;
 
   virtual bool RecvActivateA11y() override;
@@ -529,24 +521,27 @@ public:
                         const uint32_t& aAction) override;
 
   virtual bool RecvEndDragSession(const bool& aDoneDrag,
-                                  const bool& aUserCancelled) override;
+                                  const bool& aUserCancelled,
+                                  const mozilla::LayoutDeviceIntPoint& aEndDragPoint) override;
 
   virtual bool
   RecvPush(const nsCString& aScope,
-           const IPC::Principal& aPrincipal) override;
+           const IPC::Principal& aPrincipal,
+           const nsString& aMessageId) override;
 
   virtual bool
   RecvPushWithData(const nsCString& aScope,
                    const IPC::Principal& aPrincipal,
+                   const nsString& aMessageId,
                    InfallibleTArray<uint8_t>&& aData) override;
 
   virtual bool
   RecvPushSubscriptionChange(const nsCString& aScope,
                              const IPC::Principal& aPrincipal) override;
 
-#ifdef ANDROID
-  gfx::IntSize GetScreenSize() { return mScreenSize; }
-#endif
+  virtual bool
+  RecvPushError(const nsCString& aScope, const nsString& aMessage,
+                const uint32_t& aFlags) override;
 
   // Get the directory for IndexedDB files. We query the parent for this and
   // cache the value
@@ -617,15 +612,12 @@ public:
                           const nsString& aIconPath) override;
 
 private:
+  static void ForceKillTimerCallback(nsITimer* aTimer, void* aClosure);
+  void StartForceKillTimer();
+
   virtual void ActorDestroy(ActorDestroyReason why) override;
 
   virtual void ProcessingError(Result aCode, const char* aReason) override;
-
-  /**
-   * Exit *now*.  Do not shut down XPCOM, do not pass Go, do not run
-   * static destructors, do not collect $200.
-   */
-  MOZ_NORETURN void QuickExit();
 
   InfallibleTArray<nsAutoPtr<AlertObserver> > mAlertObservers;
   RefPtr<ConsoleListener> mConsoleListener;
@@ -645,10 +637,6 @@ private:
 
   AppInfo mAppInfo;
 
-#ifdef ANDROID
-  gfx::IntSize mScreenSize;
-#endif
-
   bool mIsForApp;
   bool mIsForBrowser;
   bool mCanOverrideProcessName;
@@ -658,6 +646,7 @@ private:
   static ContentChild* sSingleton;
 
   nsCOMPtr<nsIDomainPolicy> mPolicy;
+  nsCOMPtr<nsITimer> mForceKillTimer;
 
   DISALLOW_EVIL_CONSTRUCTORS(ContentChild);
 };

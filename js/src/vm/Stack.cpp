@@ -880,6 +880,21 @@ FrameIter::functionDisplayAtom() const
     MOZ_CRASH("Unexpected state");
 }
 
+ScriptSource*
+FrameIter::scriptSource() const
+{
+    switch (data_.state_) {
+      case DONE:
+      case WASM:
+        break;
+      case INTERP:
+      case JIT:
+        return script()->scriptSource();
+    }
+
+    MOZ_CRASH("Unexpected state");
+}
+
 const char*
 FrameIter::filename() const
 {
@@ -1386,7 +1401,7 @@ ActivationEntryMonitor::ActivationEntryMonitor(JSContext* cx, InterpreterFrame* 
         // be traced if we trigger GC here. Suppress GC to avoid this.
         gc::AutoSuppressGC suppressGC(cx);
         RootedValue stack(cx, asyncStack(cx));
-        RootedString asyncCause(cx, cx->runtime()->asyncCauseForNewActivations);
+        const char* asyncCause = cx->runtime()->asyncCauseForNewActivations;
         if (entryFrame->isFunctionFrame())
             entryMonitor_->Entry(cx, &entryFrame->callee(), stack, asyncCause);
         else
@@ -1402,7 +1417,7 @@ ActivationEntryMonitor::ActivationEntryMonitor(JSContext* cx, jit::CalleeToken e
         // a GC to discard the code we're about to enter, so we suppress GC.
         gc::AutoSuppressGC suppressGC(cx);
         RootedValue stack(cx, asyncStack(cx));
-        RootedString asyncCause(cx, cx->runtime()->asyncCauseForNewActivations);
+        const char* asyncCause = cx->runtime()->asyncCauseForNewActivations;
         if (jit::CalleeTokenIsFunction(entryToken))
             entryMonitor_->Entry(cx_, jit::CalleeTokenToFunction(entryToken), stack, asyncCause);
         else
@@ -1923,9 +1938,9 @@ JS::ProfilingFrameIterator::getPhysicalFrameAndEntry(jit::JitcodeGlobalEntry* en
     void* returnAddr = jitIter().returnAddressToFp();
     jit::JitcodeGlobalTable* table = rt_->jitRuntime()->getJitcodeGlobalTable();
     if (hasSampleBufferGen())
-        table->lookupForSampler(returnAddr, entry, rt_, sampleBufferGen_);
+        *entry = table->lookupForSamplerInfallible(returnAddr, rt_, sampleBufferGen_);
     else
-        table->lookupInfallible(returnAddr, entry, rt_);
+        *entry = table->lookupInfallible(returnAddr);
 
     MOZ_ASSERT(entry->isIon() || entry->isIonCache() || entry->isBaseline() || entry->isDummy());
 

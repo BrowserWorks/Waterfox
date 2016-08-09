@@ -428,9 +428,9 @@ static const char contentSandboxRules[] =
   "\n"
   "; bug 1237847\n"
   "    (allow file-read*\n"
-  "        (home-subpath appTempDir))\n"
+  "        (subpath appTempDir))\n"
   "    (allow file-write*\n"
-  "        (home-subpath appTempDir))\n"
+  "        (subpath appTempDir))\n"
   "  )\n"
   ")\n";
 

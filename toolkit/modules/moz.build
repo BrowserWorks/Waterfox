@@ -11,6 +11,7 @@ MOCHITEST_CHROME_MANIFESTS += ['tests/chrome/chrome.ini']
 
 TESTING_JS_MODULES += [
     'tests/PromiseTestUtils.jsm',
+    'tests/xpcshell/TestIntegration.jsm',
 ]
 
 SPHINX_TREES['toolkit_modules'] = 'docs'
@@ -23,9 +24,11 @@ EXTRA_JS_MODULES += [
     'addons/WebRequest.jsm',
     'addons/WebRequestCommon.jsm',
     'addons/WebRequestContent.js',
+    'AsyncPrefs.jsm',
     'Battery.jsm',
     'BinarySearch.jsm',
     'BrowserUtils.jsm',
+    'CanonicalJSON.jsm',
     'CertUtils.jsm',
     'CharsetMenu.jsm',
     'ClientID.jsm',
@@ -41,6 +44,7 @@ EXTRA_JS_MODULES += [
     'Http.jsm',
     'InlineSpellChecker.jsm',
     'InlineSpellCheckerContent.jsm',
+    'Integration.jsm',
     'LoadContextInfo.jsm',
     'Locale.jsm',
     'Log.jsm',
@@ -86,6 +90,7 @@ EXTRA_JS_MODULES += [
     'WindowDraggingUtils.jsm',
     'ZipUtils.jsm',
 ]
+EXTRA_JS_MODULES.third_party.jsesc += ['third_party/jsesc/jsesc.js']
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'cocoa'):
     DEFINES['CAN_DRAW_IN_TITLEBAR'] = 1
@@ -122,9 +127,9 @@ for var in ('ANDROID_PACKAGE_NAME',
             DEFINES[var] = CONFIG[var]
 
 for var in ('MOZ_TOOLKIT_SEARCH',
-            'MOZ_REQUIRE_SIGNING',
-            'MOZ_NATIVE_NSS',
-            'MOZ_UPDATER'):
+            'MOZ_SYSTEM_NSS',
+            'MOZ_UPDATER',
+            'MOZ_SWITCHBOARD'):
     if CONFIG[var]:
         DEFINES[var] = True
 

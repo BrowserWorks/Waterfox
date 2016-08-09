@@ -6,6 +6,7 @@
 *.pyo
 *.orig
 *.rej
+*.bak
 TAGS
 tags
 ID

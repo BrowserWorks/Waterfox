@@ -8,6 +8,7 @@
 #define mozilla_dom_FileList_h
 
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/UnionTypes.h"
 #include "nsCycleCollectionParticipant.h"
 #include "nsIDOMFileList.h"
 #include "nsWrapperCache.h"
@@ -41,7 +42,8 @@ public:
 
   bool Append(File* aFile)
   {
-    return mFiles.AppendElement(aFile);
+    MOZ_ASSERT(aFile);
+    return mFiles.AppendElement(aFile, fallible);
   }
 
   bool Remove(uint32_t aIndex)
@@ -76,29 +78,22 @@ public:
     return static_cast<FileList*>(aSupports);
   }
 
-  File* Item(uint32_t aIndex)
-  {
-    return mFiles.SafeElementAt(aIndex);
-  }
+  File* Item(uint32_t aIndex) const;
 
-  File* IndexedGetter(uint32_t aIndex, bool& aFound)
-  {
-    aFound = aIndex < mFiles.Length();
-    if (!aFound) {
-      return nullptr;
-    }
-    return mFiles.ElementAt(aIndex);
-  }
+  File* IndexedGetter(uint32_t aIndex, bool& aFound) const;
 
-  uint32_t Length()
+  uint32_t Length() const
   {
     return mFiles.Length();
   }
 
+  void ToSequence(Sequence<RefPtr<File>>& aSequence,
+                  ErrorResult& aRv) const;
+
 private:
   ~FileList() {}
 
-  nsTArray<RefPtr<File>> mFiles;
+  FallibleTArray<RefPtr<File>> mFiles;
   nsCOMPtr<nsISupports> mParent;
 };
 

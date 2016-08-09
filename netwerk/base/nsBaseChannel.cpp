@@ -84,8 +84,10 @@ nsBaseChannel::Redirect(nsIChannel *newChannel, uint32_t redirectFlags,
   // make a copy of the loadinfo, append to the redirectchain
   // and set it on the new channel
   if (mLoadInfo) {
+    nsSecurityFlags secFlags = mLoadInfo->GetSecurityFlags() ^
+                               nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
     nsCOMPtr<nsILoadInfo> newLoadInfo =
-      static_cast<mozilla::LoadInfo*>(mLoadInfo.get())->Clone();
+      static_cast<mozilla::LoadInfo*>(mLoadInfo.get())->CloneWithNewSecFlags(secFlags);
 
     nsCOMPtr<nsIPrincipal> uriPrincipal;
     nsIScriptSecurityManager *sm = nsContentUtils::GetSecurityManager();
@@ -646,6 +648,8 @@ nsBaseChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctxt)
   NS_ENSURE_TRUE(!mPump, NS_ERROR_IN_PROGRESS);
   NS_ENSURE_TRUE(!mWasOpened, NS_ERROR_ALREADY_OPENED);
   NS_ENSURE_ARG(listener);
+
+  NS_CompareLoadInfoAndLoadContext(this);
 
   // Ensure that this is an allowed port before proceeding.
   nsresult rv = NS_CheckPortSafety(mURI);

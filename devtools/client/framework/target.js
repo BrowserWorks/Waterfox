@@ -128,6 +128,9 @@ function TabTarget(tab) {
     this._setupListeners();
   } else {
     this._form = tab.form;
+    this._url = this._form.url;
+    this._title = this._form.title;
+
     this._client = tab.client;
     this._chrome = tab.chrome;
   }
@@ -331,18 +334,14 @@ TabTarget.prototype = {
   },
 
   get name() {
-    if (this._tab && this._tab.linkedBrowser.contentDocument) {
-      return this._tab.linkedBrowser.contentDocument.title;
-    }
     if (this.isAddon) {
       return this._form.name;
     }
-    return this._form.title;
+    return this._title;
   },
 
   get url() {
-    return this._tab ? this._tab.linkedBrowser.currentURI.spec :
-                       this._form.url;
+    return this._url;
   },
 
   get isRemote() {
@@ -397,6 +396,7 @@ TabTarget.prototype = {
         }
         this.activeTab = tabClient;
         this.threadActor = response.threadActor;
+
         attachConsole();
       });
     };
@@ -421,6 +421,9 @@ TabTarget.prototype = {
         .then(() => this._client.getTab({ tab: this.tab }))
         .then(response => {
           this._form = response.tab;
+          this._url = this._form.url;
+          this._title = this._form.title;
+
           attachTab();
         });
     } else if (this.isTabActor) {
@@ -480,6 +483,13 @@ TabTarget.prototype = {
       event.title = aPacket.title;
       event.nativeConsoleAPI = aPacket.nativeConsoleAPI;
       event.isFrameSwitching = aPacket.isFrameSwitching;
+
+      if (!aPacket.isFrameSwitching) {
+        // Update the title and url unless this is a frame switch.
+        this._url = aPacket.url;
+        this._title = aPacket.title;
+      }
+
       // Send any stored event payload (DOMWindow or nsIRequest) for backwards
       // compatibility with non-remotable tools.
       if (aPacket.state == "start") {
@@ -498,6 +508,10 @@ TabTarget.prototype = {
       this.emit("frame-update", aPacket);
     };
     this.client.addListener("frameUpdate", this._onFrameUpdate);
+
+    this._onSourceUpdated = (event, packet) => this.emit("source-updated", packet);
+    this.client.addListener("newSource", this._onSourceUpdated);
+    this.client.addListener("updatedSource", this._onSourceUpdated);
   },
 
   /**
@@ -508,6 +522,8 @@ TabTarget.prototype = {
     this.client.removeListener("tabNavigated", this._onTabNavigated);
     this.client.removeListener("tabDetached", this._onTabDetached);
     this.client.removeListener("frameUpdate", this._onFrameUpdate);
+    this.client.removeListener("newSource", this._onSourceUpdated);
+    this.client.removeListener("updatedSource", this._onSourceUpdated);
   },
 
   /**
@@ -602,6 +618,20 @@ TabTarget.prototype = {
   toString: function() {
     let id = this._tab ? this._tab : (this._form && this._form.actor);
     return `TabTarget:${id}`;
+  },
+
+  /**
+   * @see TabActor.prototype.onResolveLocation
+   */
+  resolveLocation(loc) {
+    let deferred = promise.defer();
+
+    this.client.request(Object.assign({
+      to: this._form.actor,
+      type: "resolveLocation",
+    }, loc), deferred.resolve);
+
+    return deferred.promise;
   },
 };
 

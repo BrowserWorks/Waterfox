@@ -13,6 +13,7 @@ const { EnvironmentActor } = require("devtools/server/actors/environment");
 const { ThreadActor } = require("devtools/server/actors/script");
 const { ObjectActor, LongStringActor, createValueGrip, stringIsLong } = require("devtools/server/actors/object");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
+const ErrorDocs = require("devtools/server/actors/errordocs");
 
 loader.lazyRequireGetter(this, "NetworkMonitor", "devtools/shared/webconsole/network-monitor", true);
 loader.lazyRequireGetter(this, "NetworkMonitorChild", "devtools/shared/webconsole/network-monitor", true);
@@ -873,7 +874,7 @@ WebConsoleActor.prototype =
     let evalResult = evalInfo.result;
     let helperResult = evalInfo.helperResult;
 
-    let result, errorMessage, errorGrip = null;
+    let result, errorDocURL, errorMessage, errorGrip = null;
     if (evalResult) {
       if ("return" in evalResult) {
         result = evalResult.return;
@@ -888,7 +889,13 @@ WebConsoleActor.prototype =
                                 error.unsafeDereference();
         errorMessage = unsafeDereference && unsafeDereference.toString
           ? unsafeDereference.toString()
-          : "" + error;
+          : String(error);
+
+          // It is possible that we won't have permission to unwrap an
+          // object and retrieve its errorMessageName.
+          try {
+            errorDocURL = ErrorDocs.GetURL(error && error.errorMessageName);
+          } catch (ex) {}
       }
     }
 
@@ -910,6 +917,7 @@ WebConsoleActor.prototype =
       timestamp: timestamp,
       exception: errorGrip,
       exceptionMessage: this._createStringGrip(errorMessage),
+      exceptionDocURL: errorDocURL,
       helperResult: helperResult,
     };
   },
@@ -1431,6 +1439,7 @@ WebConsoleActor.prototype =
 
     return {
       errorMessage: this._createStringGrip(aPageError.errorMessage),
+      errorMessageName: aPageError.errorMessageName,
       sourceName: aPageError.sourceName,
       lineText: lineText,
       lineNumber: aPageError.lineNumber,

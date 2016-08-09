@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/uk.xml
@@ -281,7 +281,7 @@ uk{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.94"}
     calendar{
         coptic{
             monthNames{
@@ -1210,10 +1210,7 @@ uk{
         day-narrow{
             dn{"д."}
             relative{
-                "-1"{"учора"}
                 "-2"{"позавчора"}
-                "0"{"сьогодні"}
-                "1"{"завтра"}
                 "2"{"післязавтра"}
             }
             relativeTime{
@@ -1234,10 +1231,7 @@ uk{
         day-short{
             dn{"д."}
             relative{
-                "-1"{"учора"}
                 "-2"{"позавчора"}
-                "0"{"сьогодні"}
-                "1"{"завтра"}
                 "2"{"післязавтра"}
             }
             relativeTime{

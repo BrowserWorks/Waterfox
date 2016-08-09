@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_PA.xml
@@ -8,7 +8,7 @@
 // ***************************************************************************
 es_PA{
     %%Parent{"es_419"}
-    Version{"2.1.22.17"}
+    Version{"2.1.19.14"}
     calendar{
         generic{
             DateTimePatterns{
@@ -89,17 +89,9 @@ es_PA{
             dayPeriod{
                 format{
                     abbreviated{
-                        evening1{"de la tarde"}
-                        morning1{"de la madrugada"}
-                        morning2{"de la mañana"}
-                        night1{"de la noche"}
                         noon{"mediodía"}
                     }
                     wide{
-                        evening1{"de la tarde"}
-                        morning1{"de la madrugada"}
-                        morning2{"de la mañana"}
-                        night1{"de la noche"}
                         noon{"mediodía"}
                     }
                 }
@@ -186,11 +178,7 @@ es_PA{
     fields{
         day{
             relative{
-                "-1"{"ayer"}
                 "-2"{"antier"}
-                "0"{"hoy"}
-                "1"{"mañana"}
-                "2"{"pasado mañana"}
             }
         }
     }

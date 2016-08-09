@@ -9,19 +9,24 @@
 const { utils: Cu } = Components;
 const { BrowserLoader } =
   Cu.import("resource://devtools/client/shared/browser-loader.js", {});
-const { require } =
-  BrowserLoader("resource://devtools/client/responsive.html/", this);
+const { require } = BrowserLoader({
+  baseURI: "resource://devtools/client/responsive.html/",
+  window: this
+});
+const { Task } = require("resource://gre/modules/Task.jsm");
 const Telemetry = require("devtools/client/shared/telemetry");
+const { loadSheet } = require("sdk/stylesheet/utils");
 
 const { createFactory, createElement } =
   require("devtools/client/shared/vendor/react");
 const ReactDOM = require("devtools/client/shared/vendor/react-dom");
 const { Provider } = require("devtools/client/shared/vendor/react-redux");
 
+const { initDevices } = require("./devices");
 const App = createFactory(require("./app"));
 const Store = require("./store");
 const { changeLocation } = require("./actions/location");
-const { addViewport } = require("./actions/viewports");
+const { addViewport, resizeViewport } = require("./actions/viewports");
 
 let bootstrap = {
 
@@ -29,15 +34,19 @@ let bootstrap = {
 
   store: null,
 
-  init() {
+  init: Task.async(function* () {
+    // Load a special UA stylesheet to reset certain styles such as dropdown
+    // lists.
+    loadSheet(window,
+              "resource://devtools/client/responsive.html/responsive-ua.css",
+              "agent");
     this.telemetry.toolOpened("responsive");
     let store = this.store = Store();
-    let app = App({
-      onExit: () => window.postMessage({type: "exit"}, "*"),
-    });
-    let provider = createElement(Provider, { store }, app);
+    yield initDevices(this.dispatch.bind(this));
+    let provider = createElement(Provider, { store }, App());
     ReactDOM.render(provider, document.querySelector("#root"));
-  },
+    window.postMessage({ type: "init" }, "*");
+  }),
 
   destroy() {
     this.store = null;
@@ -51,6 +60,12 @@ let bootstrap = {
    * to dispatch.  They can do so here.
    */
   dispatch(action) {
+    if (!this.store) {
+      // If actions are dispatched after store is destroyed, ignore them.  This
+      // can happen in tests that close the tool quickly while async tasks like
+      // initDevices() below are still pending.
+      return;
+    }
     this.store.dispatch(action);
   },
 
@@ -85,4 +100,33 @@ window.addInitialViewport = contentURI => {
   } catch (e) {
     console.error(e);
   }
+};
+
+/**
+ * Called by manager.js when tests want to check the viewport size.
+ */
+window.getViewportSize = () => {
+  let { width, height } = bootstrap.store.getState().viewports[0];
+  return { width, height };
+};
+
+/**
+ * Called by manager.js to set viewport size from GCLI.
+ */
+window.setViewportSize = (width, height) => {
+  try {
+    bootstrap.dispatch(resizeViewport(0, width, height));
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+/**
+ * Called by manager.js when tests want to use the viewport's message manager.
+ * It is packed into an object because this is the format most easily usable
+ * with ContentTask.spawn().
+ */
+window.getViewportMessageManager = () => {
+  let { messageManager } = document.querySelector("iframe.browser").frameLoader;
+  return { messageManager };
 };

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/bn.xml
@@ -217,7 +217,7 @@ bn{
         minimumGroupingDigits{"1"}
         native{"beng"}
     }
-    Version{"2.1.23.6"}
+    Version{"2.1.19.17"}
     calendar{
         generic{
             DateTimePatterns{
@@ -370,7 +370,7 @@ bn{
         }
         gregorian{
             AmPmMarkers{
-                "পূর্বাহ্ণ",
+                "AM",
                 "অপরাহ্ণ",
             }
             AmPmMarkersAbbr{
@@ -378,8 +378,8 @@ bn{
                 "PM",
             }
             AmPmMarkersNarrow{
-                "AM",
-                "PM",
+                "পূর্বাহ্ণ",
+                "অপরাহ্ণ",
             }
             DateTimePatterns{
                 "h:mm:ss a zzzz",
@@ -940,10 +940,7 @@ bn{
         day-narrow{
             dn{"দিন"}
             relative{
-                "-1"{"গতকাল"}
                 "-2"{"গত পরশু"}
-                "0"{"আজ"}
-                "1"{"আগামীকাল"}
                 "2"{"আগামী পরশু"}
             }
             relativeTime{
@@ -960,10 +957,7 @@ bn{
         day-short{
             dn{"দিন"}
             relative{
-                "-1"{"গতকাল"}
                 "-2"{"গত পরশু"}
-                "0"{"আজ"}
-                "1"{"আগামীকাল"}
                 "2"{"আগামী পরশু"}
             }
             relativeTime{

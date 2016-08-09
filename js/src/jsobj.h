@@ -127,9 +127,20 @@ class JSObject : public js::gc::Cell
     bool hasClass(const js::Class* c) const {
         return getClass() == c;
     }
-    const js::ObjectOps* getOps() const {
-        return &getClass()->ops;
-    }
+
+    js::LookupPropertyOp getOpsLookupProperty() const { return getClass()->getOpsLookupProperty(); }
+    js::DefinePropertyOp getOpsDefineProperty() const { return getClass()->getOpsDefineProperty(); }
+    js::HasPropertyOp    getOpsHasProperty()    const { return getClass()->getOpsHasProperty(); }
+    js::GetPropertyOp    getOpsGetProperty()    const { return getClass()->getOpsGetProperty(); }
+    js::SetPropertyOp    getOpsSetProperty()    const { return getClass()->getOpsSetProperty(); }
+    js::GetOwnPropertyOp getOpsGetOwnPropertyDescriptor()
+                                                const { return getClass()->getOpsGetOwnPropertyDescriptor(); }
+    js::DeletePropertyOp getOpsDeleteProperty() const { return getClass()->getOpsDeleteProperty(); }
+    js::WatchOp          getOpsWatch()          const { return getClass()->getOpsWatch(); }
+    js::UnwatchOp        getOpsUnwatch()        const { return getClass()->getOpsUnwatch(); }
+    js::GetElementsOp    getOpsGetElements()    const { return getClass()->getOpsGetElements(); }
+    JSNewEnumerateOp     getOpsEnumerate()      const { return getClass()->getOpsEnumerate(); }
+    JSFunToStringOp      getOpsFunToString()    const { return getClass()->getOpsFunToString(); }
 
     js::ObjectGroup* group() const {
         MOZ_ASSERT(!hasLazyGroup());
@@ -453,7 +464,7 @@ class JSObject : public js::gc::Cell
      * this will just be the global (the name "enclosing scope" still applies
      * in this situation because non-scope objects can be on the scope chain).
      */
-    inline JSObject* enclosingScope();
+    inline JSObject* enclosingScope() const;
 
     inline js::GlobalObject& global() const;
     inline bool isOwnGlobal() const;
@@ -490,15 +501,6 @@ class JSObject : public js::gc::Cell
     static bool reportReadOnly(JSContext* cx, jsid id, unsigned report = JSREPORT_ERROR);
     bool reportNotConfigurable(JSContext* cx, jsid id, unsigned report = JSREPORT_ERROR);
     bool reportNotExtensible(JSContext* cx, unsigned report = JSREPORT_ERROR);
-
-    /*
-     * Get the property with the given id, then call it as a function with the
-     * given arguments, providing this object as |this|. If the property isn't
-     * callable a TypeError will be thrown. On success the value returned by
-     * the call is stored in *vp.
-     */
-    bool callMethod(JSContext* cx, js::HandleId id, unsigned argc, js::Value* argv,
-                    js::MutableHandleValue vp);
 
     static bool nonNativeSetProperty(JSContext* cx, js::HandleObject obj, js::HandleId id,
                                      js::HandleValue v, js::HandleValue receiver,
@@ -1096,7 +1098,7 @@ GetInitialHeap(NewObjectKind newKind, const Class* clasp)
 {
     if (newKind != GenericObject)
         return gc::TenuredHeap;
-    if (clasp->finalize && !(clasp->flags & JSCLASS_SKIP_NURSERY_FINALIZE))
+    if (clasp->hasFinalize() && !(clasp->flags & JSCLASS_SKIP_NURSERY_FINALIZE))
         return gc::TenuredHeap;
     return gc::DefaultHeap;
 }
@@ -1219,6 +1221,9 @@ bool
 GetPropertyPure(ExclusiveContext* cx, JSObject* obj, jsid id, Value* vp);
 
 bool
+GetGetterPure(ExclusiveContext* cx, JSObject* obj, jsid id, JSFunction** fp);
+
+bool
 GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id,
                          MutableHandle<PropertyDescriptor> desc);
 
@@ -1226,18 +1231,10 @@ bool
 GetOwnPropertyDescriptor(JSContext* cx, HandleObject obj, HandleId id, MutableHandleValue vp);
 
 /*
- * ES6 draft rev 32 (2015 Feb 2) 6.2.4.4 FromPropertyDescriptor(Desc).
- *
- * If desc.object() is null, then vp is set to undefined.
- */
-extern bool
-FromPropertyDescriptor(JSContext* cx, Handle<PropertyDescriptor> desc, MutableHandleValue vp);
-
-/*
- * Like FromPropertyDescriptor, but ignore desc.object() and always set vp
+ * Like JS::FromPropertyDescriptor, but ignore desc.object() and always set vp
  * to an object on success.
  *
- * Use FromPropertyDescriptor for getOwnPropertyDescriptor, since desc.object()
+ * Use JS::FromPropertyDescriptor for getOwnPropertyDescriptor, since desc.object()
  * is used to indicate whether a result was found or not.  Use this instead for
  * defineProperty: it would be senseless to define a "missing" property.
  */
@@ -1333,6 +1330,9 @@ FreezeObject(JSContext* cx, HandleObject obj)
  */
 extern bool
 TestIntegrityLevel(JSContext* cx, HandleObject obj, IntegrityLevel level, bool* resultp);
+
+extern bool
+SpeciesConstructor(JSContext* cx, HandleObject obj, HandleValue defaultCtor, MutableHandleValue pctor);
 
 }  /* namespace js */
 

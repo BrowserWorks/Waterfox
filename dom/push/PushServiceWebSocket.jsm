@@ -21,7 +21,6 @@ const {PushDB} = Cu.import("resource://gre/modules/PushDB.jsm");
 const {PushRecord} = Cu.import("resource://gre/modules/PushRecord.jsm");
 const {
   PushCrypto,
-  base64UrlDecode,
   getCryptoParams,
 } = Cu.import("resource://gre/modules/PushCrypto.jsm");
 
@@ -45,6 +44,26 @@ const kPUSHWSDB_STORE_NAME = "pushapi";
 const kUDP_WAKEUP_WS_STATUS_CODE = 4774;  // WebSocket Close status code sent
                                           // by server to signal that it can
                                           // wake client up using UDP.
+
+// Maps ack statuses, unsubscribe reasons, and delivery error reasons to codes
+// included in request payloads.
+const kACK_STATUS_TO_CODE = {
+  [Ci.nsIPushErrorReporter.ACK_DELIVERED]: 100,
+  [Ci.nsIPushErrorReporter.ACK_DECRYPTION_ERROR]: 101,
+  [Ci.nsIPushErrorReporter.ACK_NOT_DELIVERED]: 102,
+};
+
+const kUNREGISTER_REASON_TO_CODE = {
+  [Ci.nsIPushErrorReporter.UNSUBSCRIBE_MANUAL]: 200,
+  [Ci.nsIPushErrorReporter.UNSUBSCRIBE_QUOTA_EXCEEDED]: 201,
+  [Ci.nsIPushErrorReporter.UNSUBSCRIBE_PERMISSION_REVOKED]: 202,
+};
+
+const kDELIVERY_REASON_TO_CODE = {
+  [Ci.nsIPushErrorReporter.DELIVERY_UNCAUGHT_EXCEPTION]: 301,
+  [Ci.nsIPushErrorReporter.DELIVERY_UNHANDLED_REJECTION]: 302,
+  [Ci.nsIPushErrorReporter.DELIVERY_INTERNAL_ERROR]: 303,
+};
 
 const prefs = new Preferences("dom.push.");
 
@@ -887,6 +906,7 @@ this.PushServiceWebSocket = {
         originAttributes: tmp.record.originAttributes,
         version: null,
         systemRecord: tmp.record.systemRecord,
+        appServerKey: tmp.record.appServerKey,
         ctime: Date.now(),
       });
       Services.telemetry.getHistogramById("PUSH_API_SUBSCRIBE_WS_TIME").add(Date.now() - tmp.ctime);
@@ -905,39 +925,41 @@ this.PushServiceWebSocket = {
         update);
       return;
     }
-    // Unconditionally ack the update. This is important because the Push
-    // server requires the client to ack all outstanding updates before
-    // resuming delivery. However, the server doesn't verify the encryption
-    // params, and can't ensure that an update is encrypted correctly because
-    // it doesn't have the private key. Thus, if we only acked valid updates,
-    // it would be possible for a single invalid one to block delivery of all
-    // subsequent updates. A nack would be more appropriate for this case, but
-    // the protocol doesn't currently support them.
-    this._sendAck(update.channelID, update.version);
     if (typeof update.data != "string") {
       promise = this._mainPushService.receivedPushMessage(
         update.channelID,
+        update.version,
         null,
         null,
         record => record
       );
     } else {
       let params = getCryptoParams(update.headers);
-      if (!params) {
-        console.warn("handleDataUpdate: Discarding invalid encrypted message",
-          update);
-        return;
+      if (params) {
+        let message = ChromeUtils.base64URLDecode(update.data, {
+          // The Push server may append padding.
+          padding: "ignore",
+        });
+        promise = this._mainPushService.receivedPushMessage(
+          update.channelID,
+          update.version,
+          message,
+          params,
+          record => record
+        );
+      } else {
+        promise = Promise.reject(new Error("Invalid crypto headers"));
       }
-      let message = base64UrlDecode(update.data);
-      promise = this._mainPushService.receivedPushMessage(
-        update.channelID,
-        message,
-        params,
-        record => record
-      );
     }
-    promise.catch(err => {
-      console.error("handleDataUpdate: Error delivering message", err);
+    promise.then(status => {
+      this._sendAck(update.channelID, update.version, status);
+    }, err => {
+      console.error("handleDataUpdate: Error delivering message", update, err);
+      this._sendAck(update.channelID, update.version,
+        Ci.nsIPushErrorReporter.ACK_DECRYPTION_ERROR);
+    }).catch(err => {
+      console.error("handleDataUpdate: Error acknowledging message", update,
+        err);
     });
   },
 
@@ -981,18 +1003,32 @@ this.PushServiceWebSocket = {
         // FIXME(nsm): this relies on app update notification being infallible!
         // eventually fix this
         this._receivedUpdate(update.channelID, version);
-        this._sendAck(update.channelID, version);
       }
     }
   },
 
-  // FIXME(nsm): batch acks for efficiency reasons.
-  _sendAck: function(channelID, version) {
+  reportDeliveryError(messageID, reason) {
+    console.debug("reportDeliveryError()");
+    let code = kDELIVERY_REASON_TO_CODE[reason];
+    if (!code) {
+      throw new Error('Invalid delivery error reason');
+    }
+    let data = {messageType: 'nack',
+                version: messageID,
+                code: code};
+    this._queueRequest(data);
+  },
+
+  _sendAck(channelID, version, status) {
     console.debug("sendAck()");
-    var data = {messageType: 'ack',
+    let code = kACK_STATUS_TO_CODE[status];
+    if (!code) {
+      throw new Error('Invalid ack status');
+    }
+    let data = {messageType: 'ack',
                 updates: [{channelID: channelID,
-                           version: version}]
-               };
+                           version: version,
+                           code: code}]};
     this._queueRequest(data);
   },
 
@@ -1003,40 +1039,55 @@ this.PushServiceWebSocket = {
     return uuidGenerator.generateUUID().toString().slice(1, -1);
   },
 
-  request: function(action, record) {
-    console.debug("request() ", action);
+  register(record) {
+    console.debug("register() ", record);
 
     // start the timer since we now have at least one request
     this._startRequestTimeoutTimer();
 
-    if (action == "register") {
-      let data = {channelID: this._generateID(),
-                  messageType: action};
+    let data = {channelID: this._generateID(),
+                messageType: "register"};
 
-      return new Promise((resolve, reject) => {
-        this._registerRequests.set(data.channelID, {
-          record: record,
-          resolve: resolve,
-          reject: reject,
-          ctime: Date.now(),
-        });
-        this._queueRequest(data);
-      }).then(record => {
-        if (!this._dataEnabled) {
-          return record;
-        }
-        return PushCrypto.generateKeys()
-          .then(([publicKey, privateKey]) => {
-            record.p256dhPublicKey = publicKey;
-            record.p256dhPrivateKey = privateKey;
-            record.authenticationSecret = PushCrypto.generateAuthenticationSecret();
-            return record;
-          });
+    if (record.appServerKey) {
+      data.key = ChromeUtils.base64URLEncode(record.appServerKey, {
+        // The Push server requires padding.
+        pad: true,
       });
     }
 
-    this._queueRequest({channelID: record.channelID,
-                        messageType: action});
+    return new Promise((resolve, reject) => {
+      this._registerRequests.set(data.channelID, {
+        record: record,
+        resolve: resolve,
+        reject: reject,
+        ctime: Date.now(),
+      });
+      this._queueRequest(data);
+    }).then(record => {
+      if (!this._dataEnabled) {
+        return record;
+      }
+      return PushCrypto.generateKeys()
+        .then(([publicKey, privateKey]) => {
+          record.p256dhPublicKey = publicKey;
+          record.p256dhPrivateKey = privateKey;
+          record.authenticationSecret = PushCrypto.generateAuthenticationSecret();
+          return record;
+        });
+    });
+  },
+
+  unregister(record, reason) {
+    console.debug("unregister() ", record, reason);
+
+    let code = kUNREGISTER_REASON_TO_CODE[reason];
+    if (!code) {
+      return Promise.reject(new Error('Invalid unregister reason'));
+    }
+    let data = {channelID: record.channelID,
+                messageType: "unregister",
+                code: code};
+    this._queueRequest(data);
     return Promise.resolve();
   },
 
@@ -1104,7 +1155,7 @@ this.PushServiceWebSocket = {
   _receivedUpdate: function(aChannelID, aLatestVersion) {
     console.debug("receivedUpdate: Updating", aChannelID, "->", aLatestVersion);
 
-    this._mainPushService.receivedPushMessage(aChannelID, null, null, record => {
+    this._mainPushService.receivedPushMessage(aChannelID, "", null, null, record => {
       if (record.version === null ||
           record.version < aLatestVersion) {
         console.debug("receivedUpdate: Version changed for", aChannelID,
@@ -1115,6 +1166,11 @@ this.PushServiceWebSocket = {
       console.debug("receivedUpdate: No significant version change for",
         aChannelID, aLatestVersion);
       return null;
+    }).then(status => {
+      this._sendAck(aChannelID, aLatestVersion, status);
+    }).catch(err => {
+      console.error("receivedUpdate: Error acknowledging message", aChannelID,
+        aLatestVersion, err);
     });
   },
 
@@ -1310,7 +1366,7 @@ this.PushServiceWebSocket = {
   },
 
   /**
-   * Called by UDP Server Socket. As soon as a ping is recieved via UDP,
+   * Called by UDP Server Socket. As soon as a ping is received via UDP,
    * reconnect the WebSocket and get the actual data.
    */
   onPacketReceived: function(aServ, aMessage) {

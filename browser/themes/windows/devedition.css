@@ -261,8 +261,7 @@
 }
 
 /* Disable dragging like in the default theme: */
-#main-window[tabsintitlebar] #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):-moz-lwtheme,
-#main-window[tabsintitlebar]:not([customizing]) #personal-bookmarks:-moz-lwtheme {
+#main-window[tabsintitlebar] #navigator-toolbox > toolbar:not(#toolbar-menubar):not(#TabsToolbar):-moz-lwtheme {
   -moz-window-dragging: no-drag;
 }
 
@@ -323,4 +322,10 @@
   :root[devtoolstheme="light"] #titlebar-close:hover {
     list-style-image: url(chrome://browser/skin/caption-buttons.svg#close-white);
   }
+}
+
+.ac-type-icon {
+  /* Left-align the type icon in awesomebar popup results with the icon in the
+     urlbar. */
+  -moz-margin-start: 13px;
 }

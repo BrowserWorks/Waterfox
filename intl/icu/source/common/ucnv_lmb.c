@@ -1,6 +1,6 @@
 /*  
 **********************************************************************
-*   Copyright (C) 2000-2016, International Business Machines
+*   Copyright (C) 2000-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  ucnv_lmb.cpp
@@ -793,16 +793,12 @@ LMBCSConversionWorker (
    {
    case 4:
       *pLMBCS++ = (ulmbcs_byte_t)(value >> 24);
-      U_FALLTHROUGH;
-   case 3:
+   case 3: /*fall through*/
       *pLMBCS++ = (ulmbcs_byte_t)(value >> 16);
-      U_FALLTHROUGH;
-   case 2:
+   case 2: /*fall through*/
       *pLMBCS++ = (ulmbcs_byte_t)(value >> 8);
-      U_FALLTHROUGH;
-   case 1:
+   case 1: /*fall through*/
       *pLMBCS++ = (ulmbcs_byte_t)value;
-      U_FALLTHROUGH;
    default:
       /* will never occur */
       break;

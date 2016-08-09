@@ -105,7 +105,7 @@ xul|groupbox {
   font-size: 1.25rem;
 }
 
-xul|groupbox xul|label,
+xul|groupbox xul|label:not(.menu-accel):not(.menu-text),
 xul|groupbox xul|description {
   /* !important needed to override toolkit !important rule */
   -moz-margin-start: 0 !important;
@@ -738,6 +738,10 @@ xul|treecols {
   border: none;
   border-bottom: 1px solid var(--in-content-border-color);
   padding: 0;
+}
+
+.autocomplete-tree > xul|treecols {
+  border-bottom: none !important;
 }
 
 xul|treecol:not([hideheader="true"]),

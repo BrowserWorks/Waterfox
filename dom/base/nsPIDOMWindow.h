@@ -630,6 +630,12 @@ protected:
   bool                   mMayHaveMouseEnterLeaveEventListener;
   bool                   mMayHavePointerEnterLeaveEventListener;
 
+  // Used to detect whether we have called FreeInnerObjects() (e.g. to ensure
+  // that a call to ResumeTimeouts() after FreeInnerObjects() does nothing).
+  // This member is only used by inner windows.
+  bool                   mInnerObjectsFreed;
+
+
   // This variable is used on both inner and outer windows (and they
   // should match).
   bool                   mIsModalContentWindow;
@@ -643,6 +649,7 @@ protected:
   // "active".  Only used on outer windows.
   bool                   mIsBackground;
 
+  bool                   mMediaSuspended;
   bool                   mAudioMuted;
   float                  mAudioVolume;
 
@@ -779,6 +786,13 @@ public:
     mMayHavePointerEnterLeaveEventListener = true;
   }
 
+  /**
+   * Check whether this has had inner objects freed.
+   */
+  bool InnerObjectsFreed() const
+  {
+    return mInnerObjectsFreed;
+  }
 
 protected:
   void CreatePerformanceObjectIfNeeded();
@@ -842,21 +856,17 @@ public:
   }
 
   // Audio API
+  bool GetMediaSuspended() const;
+  void SetMediaSuspended(bool aSuspended);
+
   bool GetAudioMuted() const;
   void SetAudioMuted(bool aMuted);
 
   float GetAudioVolume() const;
   nsresult SetAudioVolume(float aVolume);
 
-  void SetServiceWorkersTestingEnabled(bool aEnabled)
-  {
-    mServiceWorkersTestingEnabled = aEnabled;
-  }
-
-  bool GetServiceWorkersTestingEnabled()
-  {
-    return mServiceWorkersTestingEnabled;
-  }
+  void SetServiceWorkersTestingEnabled(bool aEnabled);
+  bool GetServiceWorkersTestingEnabled();
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsPIDOMWindowOuter, NS_PIDOMWINDOWOUTER_IID)

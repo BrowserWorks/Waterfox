@@ -645,6 +645,7 @@ public:
   virtual ~ScaledFont() {}
 
   typedef void (*FontFileDataOutput)(const uint8_t *aData, uint32_t aLength, uint32_t aIndex, Float aGlyphSize, void *aBaton);
+  typedef void (*FontDescriptorOutput)(const uint8_t *aData, uint32_t aLength, Float aFontSize, void *aBaton);
 
   virtual FontType GetType() const = 0;
 
@@ -663,6 +664,8 @@ public:
   virtual void CopyGlyphsToBuilder(const GlyphBuffer &aBuffer, PathBuilder *aBuilder, BackendType aBackendType, const Matrix *aTransformHint = nullptr) = 0;
 
   virtual bool GetFontFileData(FontFileDataOutput, void *) { return false; }
+
+  virtual bool GetFontDescriptor(FontDescriptorOutput, void *) { return false; }
 
   void AddUserData(UserDataKey *key, void *userData, void (*destroy)(void*)) {
     mUserData.Add(key, userData, destroy);
@@ -954,6 +957,15 @@ public:
                            SourceSurface *aMask,
                            Point aOffset,
                            const DrawOptions &aOptions = DrawOptions()) = 0;
+
+  /**
+   * Draw aSurface using the 3D transform aMatrix. The DrawTarget's transform
+   * and clip are applied after the 3D transform.
+   *
+   * If the transform fails (i.e. because aMatrix is singular), false is returned and nothing is drawn.
+   */
+  virtual bool Draw3DTransformedSurface(SourceSurface* aSurface,
+                                        const Matrix4x4& aMatrix);
 
   /**
    * Push a clip to the DrawTarget.
@@ -1255,7 +1267,7 @@ public:
     CreateRecordingDrawTarget(DrawEventRecorder *aRecorder, DrawTarget *aDT);
 
   static already_AddRefed<DrawTarget>
-    CreateDrawTargetForData(BackendType aBackend, unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat);
+    CreateDrawTargetForData(BackendType aBackend, unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat, bool aUninitialized = false);
 
   static already_AddRefed<ScaledFont>
     CreateScaledFontForNativeFont(const NativeFont &aNativeFont, Float aSize);

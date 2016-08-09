@@ -9,6 +9,7 @@ GeckoProgram('gdb-tests', linkage=None)
 UNIFIED_SOURCES += [
     'gdb-tests.cpp',
     'tests/test-asmjs.cpp',
+    'tests/test-ExecutableAllocator.cpp',
     'tests/test-GCCellPtr.cpp',
     'tests/test-Interpreter.cpp',
     'tests/test-jsid.cpp',
@@ -18,6 +19,7 @@ UNIFIED_SOURCES += [
     'tests/test-jsval.cpp',
     'tests/test-prettyprinters.cpp',
     'tests/test-Root.cpp',
+    'tests/test-unwind.cpp',
     'tests/typedef-printers.cpp',
 ]
 
@@ -32,4 +34,17 @@ USE_LIBS += [
     'static:js',
 ]
 
+if CONFIG['ENABLE_INTL_API'] and CONFIG['MOZ_ICU_DATA_ARCHIVE']:
+    # The ICU libraries linked into libmozjs will not include the ICU data,
+    # so link it directly.
+    USE_LIBS += ['icudata']
+
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
+
+# This is intended as a temporary workaround to enable VS2015.
+if CONFIG['_MSC_VER']:
+    CXXFLAGS += ['-wd4312']
+
+DEFINES['topsrcdir'] = '%s/js/src' % TOPSRCDIR
+FINAL_TARGET_PP_FILES += ['gdb-tests-gdb.py.in']
+OBJDIR_FILES.js.src.gdb += ['!/dist/bin/gdb-tests-gdb.py']

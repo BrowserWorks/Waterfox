@@ -94,7 +94,7 @@ function do_test() {
       "snow", "springgreen", "steelblue", "tan", "teal", "thistle", "tomato", "transparent", "turquoise",
       "violet", "wheat", "white", "whitesmoke", "yellow", "yellowgreen", "no-repeat", "repeat",
       "repeat-x", "repeat-y", "fixed", "scroll", "local", "center", "top", "bottom", "left", "right",
-      "border-box", "padding-box", "content-box", "border-box", "padding-box", "content-box", "contain",
+      "border-box", "padding-box", "content-box", "border-box", "padding-box", "content-box", "text", "contain",
       "cover", "rgb", "hsl", "rgba", "hsla", "none", "-moz-element", "-moz-image-rect", "url", "linear-gradient",
       "radial-gradient", "repeating-linear-gradient", "repeating-radial-gradient", "-moz-linear-gradient",
       "-moz-radial-gradient", "-moz-repeating-linear-gradient", "-moz-repeating-radial-gradient" ];
@@ -168,9 +168,12 @@ function do_test() {
       "table", "inline-table", "table-row-group", "table-header-group", "table-footer-group", "table-row",
       "table-column-group", "table-column", "table-cell", "table-caption", "-moz-box", "-moz-inline-box",
       "-moz-grid", "-moz-inline-grid", "-moz-grid-group", "-moz-grid-line", "-moz-stack", "-moz-inline-stack",
-      "-moz-deck", "-moz-popup", "-moz-groupbox", "flex", "inline-flex", "grid",
-      "inline-grid", "ruby", "ruby-base", "ruby-base-container", "ruby-text",
-      "ruby-text-container", "contents" ];
+      "-moz-deck", "-moz-popup", "-moz-groupbox",
+      "flex", "inline-flex", "-webkit-box", "-webkit-inline-box",
+      "-webkit-flex", "-webkit-inline-flex",
+      "grid", "inline-grid",
+      "ruby", "ruby-base", "ruby-base-container", "ruby-text", "ruby-text-container",
+      "contents" ];
   ok(testValues(values, expected), "property display's values.");
 
   // test property

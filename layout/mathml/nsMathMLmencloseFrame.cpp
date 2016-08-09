@@ -344,9 +344,8 @@ nsMathMLmencloseFrame::PlaceInternal(DrawTarget*          aDrawTarget,
   nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
 
   float fontSizeInflation = nsLayoutUtils::FontSizeInflationFor(this);
-  RefPtr<nsFontMetrics> fm;
-  nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
-                                        fontSizeInflation);
+  RefPtr<nsFontMetrics> fm =
+    nsLayoutUtils::GetFontMetricsForFrame(this, fontSizeInflation);
   GetRuleThickness(aDrawTarget, fm, mRuleThickness);
   if (mRuleThickness < onePixel) {
     mRuleThickness = onePixel;
@@ -780,8 +779,9 @@ void nsDisplayNotation::Paint(nsDisplayListBuilder* aBuilder,
                            presContext->AppUnitsPerDevPixel());
   rect.Deflate(strokeWidth / 2.f);
 
+  nsCSSProperty colorProp = mFrame->StyleContext()->GetTextFillColorProp();
   ColorPattern color(ToDeviceColor(
-                       mFrame->GetVisitedDependentColor(eCSSProperty_color)));
+                                 mFrame->GetVisitedDependentColor(colorProp)));
 
   StrokeOptions strokeOptions(strokeWidth);
 

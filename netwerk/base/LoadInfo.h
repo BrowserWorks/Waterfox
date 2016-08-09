@@ -54,14 +54,19 @@ public:
            nsSecurityFlags aSecurityFlags,
            nsContentPolicyType aContentPolicyType);
 
-  // Constructor used for TYPE_DOCUMENT loads with no reasonable loadingNode.
+  // Constructor used for TYPE_DOCUMENT loads which have no reasonable
+  // loadingNode or loadingPrincipal
   LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
-           nsIPrincipal* aLoadingPrincipal,
            nsIPrincipal* aTriggeringPrincipal,
            nsSecurityFlags aSecurityFlags);
 
   // create an exact copy of the loadinfo
   already_AddRefed<nsILoadInfo> Clone() const;
+  // hands off!!! don't use CloneWithNewSecFlags unless you know
+  // exactly what you are doing - it should only be used within
+  // nsBaseChannel::Redirect()
+  already_AddRefed<nsILoadInfo>
+  CloneWithNewSecFlags(nsSecurityFlags aSecurityFlags) const;
   // creates a copy of the loadinfo which is appropriate to use for a
   // separate request. I.e. not for a redirect or an inner channel, but
   // when a separate request is made with the same security properties.
@@ -80,6 +85,8 @@ private:
            nsContentPolicyType aContentPolicyType,
            LoadTainting aTainting,
            bool aUpgradeInsecureRequests,
+           bool aVerifySignedContent,
+           bool aEnforceSRI,
            uint64_t aInnerWindowID,
            uint64_t aOuterWindowID,
            uint64_t aParentOuterWindowID,
@@ -117,6 +124,8 @@ private:
   nsContentPolicyType              mInternalContentPolicyType;
   LoadTainting                     mTainting;
   bool                             mUpgradeInsecureRequests;
+  bool                             mVerifySignedContent;
+  bool                             mEnforceSRI;
   uint64_t                         mInnerWindowID;
   uint64_t                         mOuterWindowID;
   uint64_t                         mParentOuterWindowID;

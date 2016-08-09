@@ -534,12 +534,6 @@ RecyclingPlanarYCbCrImage::CopyData(const Data& aData)
   return true;
 }
 
-bool
-RecyclingPlanarYCbCrImage::SetData(const Data &aData)
-{
-  return CopyData(aData);
-}
-
 gfxImageFormat
 PlanarYCbCrImage::GetOffscreenFormat()
 {
@@ -549,7 +543,7 @@ PlanarYCbCrImage::GetOffscreenFormat()
 }
 
 bool
-PlanarYCbCrImage::SetDataNoCopy(const Data &aData)
+PlanarYCbCrImage::AdoptData(const Data &aData)
 {
   mData = aData;
   mSize = aData.mPicSize;
@@ -637,13 +631,6 @@ SourceSurfaceImage::GetTextureClient(CompositableClient *aClient)
     return nullptr;
   }
 
-
-// XXX windows' TextureClients do not hold ISurfaceAllocator,
-// recycler does not work on windows.
-#ifndef XP_WIN
-
-// XXX only gonk ensure when TextureClient is recycled,
-// TextureHost is not used by CompositableHost.
 #ifdef MOZ_WIDGET_GONK
   RefPtr<TextureClientRecycleAllocator> recycler =
     aClient->GetTextureClientRecycler();
@@ -654,8 +641,6 @@ SourceSurfaceImage::GetTextureClient(CompositableClient *aClient)
                                 BackendSelector::Content,
                                 aClient->GetTextureFlags());
   }
-#endif
-
 #endif
   if (!textureClient) {
     // gfx::BackendType::NONE means default to content backend

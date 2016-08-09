@@ -1088,14 +1088,19 @@ WebGLContext::LinkProgram(WebGLProgram* prog)
 
     prog->LinkProgram();
 
-    if (prog->IsLinked()) {
+    if (!prog->IsLinked()) {
+        // If we failed to link, but `prog == mCurrentProgram`, we are *not* supposed to
+        // null out mActiveProgramLinkInfo.
+        return;
+    }
+
+    if (prog == mCurrentProgram) {
         mActiveProgramLinkInfo = prog->LinkInfo();
 
         if (gl->WorkAroundDriverBugs() &&
             gl->Vendor() == gl::GLVendor::NVIDIA)
         {
-            if (mCurrentProgram == prog)
-                gl->fUseProgram(prog->mGLName);
+            gl->fUseProgram(prog->mGLName);
         }
     }
 }
@@ -1571,7 +1576,8 @@ WebGLContext::ReadPixels(GLint x, GLint y, GLsizei width, GLsizei height, GLenum
     const webgl::FormatUsageInfo* srcFormat;
     uint32_t srcWidth;
     uint32_t srcHeight;
-    if (!ValidateCurFBForRead("readPixels", &srcFormat, &srcWidth, &srcHeight))
+    GLenum srcMode;
+    if (!ValidateCurFBForRead("readPixels", &srcFormat, &srcWidth, &srcHeight, &srcMode))
         return;
 
     // Check the format and type params to assure they are an acceptable pair (as per spec)

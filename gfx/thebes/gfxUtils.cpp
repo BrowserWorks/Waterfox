@@ -446,11 +446,13 @@ CreateSamplingRestrictedDrawable(gfxDrawable* aDrawable,
 
     RefPtr<DrawTarget> target =
       gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(size, aFormat);
-    if (!target) {
+    if (!target || !target->IsValid()) {
       return nullptr;
     }
 
-    RefPtr<gfxContext> tmpCtx = new gfxContext(target);
+    RefPtr<gfxContext> tmpCtx = gfxContext::ForDrawTarget(target);
+    MOZ_ASSERT(tmpCtx); // already checked the target above
+
     tmpCtx->SetOp(OptimalFillOp());
     aDrawable->Draw(tmpCtx, needed - needed.TopLeft(), ExtendMode::REPEAT, Filter::LINEAR,
                     1.0, gfxMatrix::Translation(needed.TopLeft()));
@@ -550,7 +552,8 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
                         Rect aImageRect,
                         const Filter& aFilter,
                         const SurfaceFormat aFormat,
-                        gfxFloat aOpacity)
+                        gfxFloat aOpacity,
+                        ExtendMode aExtendMode)
 {
   gfxSize scaleFactor = aContext->CurrentMatrix().ScaleFactors(true);
   gfxMatrix scaleMatrix = gfxMatrix::Scaling(scaleFactor.width, scaleFactor.height);
@@ -592,14 +595,18 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
 
   RefPtr<DrawTarget> scaledDT =
     gfxPlatform::GetPlatform()->CreateOffscreenContentDrawTarget(scaledImageSize, aFormat);
-  if (!scaledDT) {
+  if (!scaledDT || !scaledDT->IsValid()) {
     return false;
   }
 
-  RefPtr<gfxContext> tmpCtx = new gfxContext(scaledDT);
+  RefPtr<gfxContext> tmpCtx = gfxContext::ForDrawTarget(scaledDT);
+  MOZ_ASSERT(tmpCtx); // already checked the target above
+
   scaledDT->SetTransform(ToMatrix(scaleMatrix));
   gfxRect gfxImageRect(aImageRect.x, aImageRect.y, aImageRect.width, aImageRect.height);
-  aDrawable->Draw(tmpCtx, gfxImageRect, ExtendMode::REPEAT, aFilter, 1.0, gfxMatrix());
+
+  // Since this is just the scaled image, we don't want to repeat anything yet.
+  aDrawable->Draw(tmpCtx, gfxImageRect, ExtendMode::CLAMP, aFilter, 1.0, gfxMatrix());
 
   RefPtr<SourceSurface> scaledImage = scaledDT->Snapshot();
 
@@ -615,7 +622,7 @@ PrescaleAndTileDrawable(gfxDrawable* aDrawable,
     DrawOptions drawOptions(aOpacity, aContext->CurrentOp(),
                             aContext->CurrentAntialiasMode());
 
-    SurfacePattern scaledImagePattern(scaledImage, ExtendMode::REPEAT,
+    SurfacePattern scaledImagePattern(scaledImage, aExtendMode,
                                       Matrix(), aFilter);
     destDrawTarget->FillRect(scaledNeededRect, scaledImagePattern, drawOptions);
   }
@@ -666,7 +673,7 @@ gfxUtils::DrawPixelSnapped(gfxContext*         aContext,
 #ifdef MOZ_WIDGET_COCOA
             if (PrescaleAndTileDrawable(aDrawable, aContext, aRegion,
                                         ToRect(imageRect), aFilter,
-                                        aFormat, aOpacity)) {
+                                        aFormat, aOpacity, extendMode)) {
               return;
             }
 #endif
@@ -1342,9 +1349,10 @@ gfxUtils::WriteAsPNG(nsIPresShell* aShell, const char* aFile)
   RefPtr<mozilla::gfx::DrawTarget> dt = gfxPlatform::GetPlatform()->
     CreateOffscreenContentDrawTarget(IntSize(width, height),
                                      SurfaceFormat::B8G8R8A8);
-  NS_ENSURE_TRUE(dt, /*void*/);
+  NS_ENSURE_TRUE(dt && dt->IsValid(), /*void*/);
 
-  RefPtr<gfxContext> context = new gfxContext(dt);
+  RefPtr<gfxContext> context = gfxContext::ForDrawTarget(dt);
+  MOZ_ASSERT(context); // already checked the draw target above
   aShell->RenderDocument(r, 0, NS_RGB(255, 255, 0), context);
   WriteAsPNG(dt.get(), aFile);
 }
@@ -1495,11 +1503,13 @@ public:
     GetFeatureStatusRunnable(dom::workers::WorkerPrivate* workerPrivate,
                              const nsCOMPtr<nsIGfxInfo>& gfxInfo,
                              int32_t feature,
+                             nsACString& failureId,
                              int32_t* status)
       : WorkerMainThreadRunnable(workerPrivate)
       , mGfxInfo(gfxInfo)
       , mFeature(feature)
       , mStatus(status)
+      , mFailureId(failureId)
       , mNSResult(NS_OK)
     {
     }
@@ -1507,7 +1517,7 @@ public:
     bool MainThreadRun() override
     {
       if (mGfxInfo) {
-        mNSResult = mGfxInfo->GetFeatureStatus(mFeature, mStatus);
+        mNSResult = mGfxInfo->GetFeatureStatus(mFeature, mFailureId, mStatus);
       }
       return true;
     }
@@ -1524,18 +1534,22 @@ private:
     nsCOMPtr<nsIGfxInfo> mGfxInfo;
     int32_t mFeature;
     int32_t* mStatus;
+    nsACString& mFailureId;
     nsresult mNSResult;
 };
 
 /* static */ nsresult
 gfxUtils::ThreadSafeGetFeatureStatus(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
-                                     int32_t feature, int32_t* status)
+                                     int32_t feature, nsACString& failureId,
+                                     int32_t* status)
 {
   if (!NS_IsMainThread()) {
     dom::workers::WorkerPrivate* workerPrivate =
       dom::workers::GetCurrentThreadWorkerPrivate();
+
     RefPtr<GetFeatureStatusRunnable> runnable =
-      new GetFeatureStatusRunnable(workerPrivate, gfxInfo, feature, status);
+      new GetFeatureStatusRunnable(workerPrivate, gfxInfo, feature, failureId,
+                                   status);
 
     ErrorResult rv;
     runnable->Dispatch(rv);
@@ -1549,12 +1563,13 @@ gfxUtils::ThreadSafeGetFeatureStatus(const nsCOMPtr<nsIGfxInfo>& gfxInfo,
     return runnable->GetNSResult();
   }
 
-  return gfxInfo->GetFeatureStatus(feature, status);
+  return gfxInfo->GetFeatureStatus(feature, failureId, status);
 }
 
 /* static */ bool
 gfxUtils::DumpDisplayList() {
-  return gfxPrefs::LayoutDumpDisplayList();
+  return gfxPrefs::LayoutDumpDisplayList() ||
+         (gfxPrefs::LayoutDumpDisplayListContent() && XRE_IsContentProcess());
 }
 
 FILE *gfxUtils::sDumpPaintFile = stderr;

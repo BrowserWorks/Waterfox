@@ -10,6 +10,8 @@
 #include "mozilla/AutoRestore.h"
 #include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/CryptoKey.h"
+#include "mozilla/dom/Directory.h"
+#include "mozilla/dom/DirectoryBinding.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/FileList.h"
 #include "mozilla/dom/FileListBinding.h"
@@ -394,10 +396,6 @@ StructuredCloneHolder::ReadFullySerializableObjects(JSContext* aCx,
   }
 
   if (aTag == SCTAG_DOM_WEBCRYPTO_KEY) {
-    if (!NS_IsMainThread()) {
-      return nullptr;
-    }
-
     nsIGlobalObject *global = xpc::NativeGlobal(JS::CurrentGlobalOrNull(aCx));
     if (!global) {
       return nullptr;
@@ -510,7 +508,6 @@ StructuredCloneHolder::WriteFullySerializableObjects(JSContext* aCx,
   {
     CryptoKey* key = nullptr;
     if (NS_SUCCEEDED(UNWRAP_OBJECT(CryptoKey, aObj, key))) {
-      MOZ_ASSERT(NS_IsMainThread());
       return JS_WriteUint32Pair(aWriter, SCTAG_DOM_WEBCRYPTO_KEY, 0) &&
              key->WriteStructuredClone(aWriter);
     }
@@ -588,7 +585,7 @@ EnsureBlobForBackgroundManager(BlobImpl* aBlobImpl,
       MOZ_ASSERT(NS_SUCCEEDED(blobImpl->GetMutable(&isMutable)));
       MOZ_ASSERT(!isMutable);
     } else {
-      MOZ_ALWAYS_TRUE(NS_SUCCEEDED(blobImpl->SetMutable(false)));
+      MOZ_ALWAYS_SUCCEEDS(blobImpl->SetMutable(false));
     }
 
     return blobImpl.forget();
@@ -638,7 +635,7 @@ EnsureBlobForBackgroundManager(BlobImpl* aBlobImpl,
       return nullptr;
     }
 
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(blobImpl->SetMutable(false)));
+    MOZ_ALWAYS_SUCCEEDS(blobImpl->SetMutable(false));
   }
 
   return blobImpl.forget();
@@ -662,7 +659,7 @@ ReadBlob(JSContext* aCx,
 
   MOZ_ASSERT(blobImpl);
 
-  // RefPtr<File> needs to go out of scope before toObjectOrNull() is
+  // RefPtr<File> needs to go out of scope before toObject() is
   // called because the static analysis thinks dereferencing XPCOM objects
   // can GC (because in some cases it can!), and a return statement with a
   // JSObject* type means that JSObject* is on the stack as a raw pointer
@@ -697,7 +694,7 @@ WriteBlob(JSStructuredCloneWriter* aWriter,
 
   MOZ_ASSERT(blobImpl);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(blobImpl->SetMutable(false)));
+  MOZ_ALWAYS_SUCCEEDS(blobImpl->SetMutable(false));
 
   // We store the position of the blobImpl in the array as index.
   if (JS_WriteUint32Pair(aWriter, SCTAG_DOM_BLOB,
@@ -707,6 +704,67 @@ WriteBlob(JSStructuredCloneWriter* aWriter,
   }
 
   return false;
+}
+
+// A directory is serialized as:
+// - pair of ints: SCTAG_DOM_DIRECTORY, path length
+// - path as string
+bool
+WriteDirectory(JSStructuredCloneWriter* aWriter,
+               Directory* aDirectory)
+{
+  MOZ_ASSERT(aWriter);
+  MOZ_ASSERT(aDirectory);
+
+  nsAutoString path;
+  aDirectory->GetFullRealPath(path);
+
+  size_t charSize = sizeof(nsString::char_type);
+  return JS_WriteUint32Pair(aWriter, SCTAG_DOM_DIRECTORY, path.Length()) &&
+         JS_WriteBytes(aWriter, path.get(), path.Length() * charSize);
+}
+
+JSObject*
+ReadDirectory(JSContext* aCx,
+              JSStructuredCloneReader* aReader,
+              uint32_t aPathLength,
+              StructuredCloneHolder* aHolder)
+{
+  MOZ_ASSERT(aCx);
+  MOZ_ASSERT(aReader);
+  MOZ_ASSERT(aHolder);
+
+  nsAutoString path;
+  path.SetLength(aPathLength);
+  size_t charSize = sizeof(nsString::char_type);
+  if (!JS_ReadBytes(aReader, (void*) path.BeginWriting(),
+                    aPathLength * charSize)) {
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIFile> file;
+  nsresult rv = NS_NewNativeLocalFile(NS_ConvertUTF16toUTF8(path), true,
+                                      getter_AddRefs(file));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return nullptr;
+  }
+
+  // RefPtr<Directory> needs to go out of scope before toObject() is
+  // called because the static analysis thinks dereferencing XPCOM objects
+  // can GC (because in some cases it can!), and a return statement with a
+  // JSObject* type means that JSObject* is on the stack as a raw pointer
+  // while destructors are running.
+  JS::Rooted<JS::Value> val(aCx);
+  {
+    RefPtr<Directory> directory =
+      Directory::Create(aHolder->ParentDuringRead(), file);
+
+    if (!ToJSValue(aCx, directory, &val)) {
+      return nullptr;
+    }
+  }
+
+  return &val.toObject();
 }
 
 // Read the WriteFileList for the format.
@@ -723,21 +781,20 @@ ReadFileList(JSContext* aCx,
   {
     RefPtr<FileList> fileList = new FileList(aHolder->ParentDuringRead());
 
-    uint32_t tag, offset;
-    // Offset is the index of the blobImpl from which we can find the blobImpl
-    // for this FileList.
-    if (!JS_ReadUint32Pair(aReader, &tag, &offset)) {
+    uint32_t zero, index;
+    // |index| is the index of the first blobImpl.
+    if (!JS_ReadUint32Pair(aReader, &zero, &index)) {
       return nullptr;
     }
 
-    MOZ_ASSERT(tag == 0);
+    MOZ_ASSERT(zero == 0);
 
-    // |aCount| is the number of BlobImpls to use from the |offset|.
+    // |aCount| is the number of BlobImpls to use from the |index|.
     for (uint32_t i = 0; i < aCount; ++i) {
-      uint32_t index = offset + i;
-      MOZ_ASSERT(index < aHolder->BlobImpls().Length());
+      uint32_t pos = index + i;
+      MOZ_ASSERT(pos < aHolder->BlobImpls().Length());
 
-      RefPtr<BlobImpl> blobImpl = aHolder->BlobImpls()[index];
+      RefPtr<BlobImpl> blobImpl = aHolder->BlobImpls()[pos];
       MOZ_ASSERT(blobImpl->IsFile());
 
       ErrorResult rv;
@@ -961,6 +1018,10 @@ StructuredCloneHolder::CustomReadHandler(JSContext* aCx,
     return ReadBlob(aCx, aIndex, this);
   }
 
+  if (aTag == SCTAG_DOM_DIRECTORY) {
+    return ReadDirectory(aCx, aReader, aIndex, this);
+  }
+
   if (aTag == SCTAG_DOM_FILELIST) {
     return ReadFileList(aCx, aReader, aIndex, this);
   }
@@ -998,6 +1059,14 @@ StructuredCloneHolder::CustomWriteHandler(JSContext* aCx,
     Blob* blob = nullptr;
     if (NS_SUCCEEDED(UNWRAP_OBJECT(Blob, aObj, blob))) {
       return WriteBlob(aWriter, blob, this);
+    }
+  }
+
+  // See if this is a Directory object.
+  {
+    Directory* directory = nullptr;
+    if (NS_SUCCEEDED(UNWRAP_OBJECT(Directory, aObj, directory))) {
+      return WriteDirectory(aWriter, directory);
     }
   }
 

@@ -75,9 +75,7 @@ public:
 
   using MetadataPromise =
     MozPromise<RefPtr<MetadataHolder>, ReadMetadataFailureReason, IsExclusive>;
-  using AudioDataPromise =
-    MozPromise<RefPtr<MediaData>, NotDecodedReason, IsExclusive>;
-  using VideoDataPromise =
+  using MediaDataPromise =
     MozPromise<RefPtr<MediaData>, NotDecodedReason, IsExclusive>;
   using SeekPromise = MozPromise<media::TimeUnit, nsresult, IsExclusive>;
 
@@ -87,6 +85,8 @@ public:
   // for multiple WaitForData consumers, feel free to flip the exclusivity here.
   using WaitForDataPromise =
     MozPromise<MediaData::Type, WaitForDataRejectValue, IsExclusive>;
+
+  using BufferedUpdatePromise = MozPromise<bool, bool, IsExclusive>;
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MediaDecoderReader)
 
@@ -101,10 +101,6 @@ public:
   // Release media resources they should be released in dormant state
   // The reader can be made usable again by calling ReadMetadata().
   virtual void ReleaseMediaResources() {}
-  // Breaks reference-counted cycles. Called during shutdown.
-  // WARNING: If you override this, you must call the base implementation
-  // in your override.
-  virtual void BreakCycles();
 
   // Destroys the decoding state. The reader cannot be made usable again.
   // This is different from ReleaseMediaResources() as it is irreversable,
@@ -137,7 +133,7 @@ public:
   // be resolved when it is complete. Don't hold the decoder
   // monitor while calling this, as the implementation may try to wait
   // on something that needs the monitor and deadlock.
-  virtual RefPtr<AudioDataPromise> RequestAudioData();
+  virtual RefPtr<MediaDataPromise> RequestAudioData();
 
   // Requests one video sample from the reader.
   //
@@ -145,13 +141,13 @@ public:
   // may try to wait on something that needs the monitor and deadlock.
   // If aSkipToKeyframe is true, the decode should skip ahead to the
   // the next keyframe at or after aTimeThreshold microseconds.
-  virtual RefPtr<VideoDataPromise>
+  virtual RefPtr<MediaDataPromise>
   RequestVideoData(bool aSkipToNextKeyframe, int64_t aTimeThreshold);
 
   // By default, the state machine polls the reader once per second when it's
   // in buffering mode. Some readers support a promise-based mechanism by which
   // they notify the state machine when the data arrives.
-  virtual bool IsWaitForDataSupported() { return false; }
+  virtual bool IsWaitForDataSupported() const { return false; }
 
   virtual RefPtr<WaitForDataPromise> WaitForData(MediaData::Type aType)
   {
@@ -211,7 +207,7 @@ public:
   // raw media data is arriving sequentially from a network channel. This
   // makes sense in the <video src="foo"> case, but not for more advanced use
   // cases like MSE.
-  virtual bool UseBufferingHeuristics() { return true; }
+  virtual bool UseBufferingHeuristics() const { return true; }
 
   // Returns the number of bytes of memory allocated by structures/frames in
   // the video queue.
@@ -230,6 +226,16 @@ public:
     NS_ENSURE_TRUE_VOID(!mShutdown);
     NotifyDataArrivedInternal();
     UpdateBuffered();
+  }
+
+  // Update the buffered ranges and upon doing so return a promise
+  // to indicate success. Overrides may need to do extra work to ensure
+  // buffered is up to date.
+  virtual RefPtr<BufferedUpdatePromise> UpdateBufferedWithPromise()
+  {
+    MOZ_ASSERT(OnTaskQueue());
+    UpdateBuffered();
+    return BufferedUpdatePromise::CreateAndResolve(true, __func__);
   }
 
   virtual MediaQueue<AudioData>& AudioQueue() { return mAudioQueue; }
@@ -298,7 +304,7 @@ protected:
   // called.
   virtual media::TimeIntervals GetBuffered();
 
-  RefPtr<VideoDataPromise> DecodeToFirstVideoData();
+  RefPtr<MediaDataPromise> DecodeToFirstVideoData();
 
   bool HaveStartTime()
   {
@@ -413,8 +419,8 @@ private:
 
   // Promises used only for the base-class (sync->async adapter) implementation
   // of Request{Audio,Video}Data.
-  MozPromiseHolder<AudioDataPromise> mBaseAudioPromise;
-  MozPromiseHolder<VideoDataPromise> mBaseVideoPromise;
+  MozPromiseHolder<MediaDataPromise> mBaseAudioPromise;
+  MozPromiseHolder<MediaDataPromise> mBaseVideoPromise;
 
   // Flags whether a the next audio/video sample comes after a "gap" or
   // "discontinuity" in the stream. For example after a seek.

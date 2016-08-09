@@ -21,6 +21,12 @@ interface nsIURI;
 
 typedef unsigned short CSPDirective;
 
+%{C++
+class nsCSPPolicy;
+%}
+
+[ptr] native CSPPolicyPtr(const nsCSPPolicy);
+
 [scriptable, builtinclass, uuid(b3c4c0ae-bd5e-4cad-87e0-8d210dbb3f9f)]
 interface nsIContentSecurityPolicy : nsISerializable
 {
@@ -52,12 +58,20 @@ interface nsIContentSecurityPolicy : nsISerializable
   const unsigned short WEB_MANIFEST_SRC_DIRECTIVE     = 16;
   const unsigned short UPGRADE_IF_INSECURE_DIRECTIVE  = 17;
   const unsigned short CHILD_SRC_DIRECTIVE            = 18;
+  const unsigned short BLOCK_ALL_MIXED_CONTENT        = 19;
 
   /**
    * Accessor method for a read-only string version of the policy at a given
    * index.
    */
   AString getPolicy(in unsigned long index);
+
+  /**
+   * Accessor method for a read-only pointer the policy object at a given
+   * index. Returns a null pointer if the index is larger than the current
+   * policy count.
+   */
+  [noscript,notxpcom,nostdcall] CSPPolicyPtr GetPolicy(in unsigned long index);
 
   /**
    * Returns the number of policies attached to this CSP instance.  Useful with
@@ -71,6 +85,15 @@ interface nsIContentSecurityPolicy : nsISerializable
    * including document (context) makes use of the directive.
    */
   readonly attribute bool upgradeInsecureRequests;
+
+  /**
+   * Returns whether this policy uses the directive block-all-mixed-content.
+   * Please note that block-all-mixed-content takes presedence in case the
+   * directive upgrade-insecure-requests is defined in the same policy and
+   * will therefore block all mixed content without even trying to perform
+   * an upgrade.
+   */
+  readonly attribute bool blockAllMixedContent;
 
   /**
    * Obtains the referrer policy (as integer) for this browsing context as

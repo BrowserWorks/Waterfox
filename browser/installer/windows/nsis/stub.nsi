@@ -366,11 +366,11 @@ Function .onInit
 !endif
 
   SetShellVarContext all ; Set SHCTX to HKLM
-  ${GetSingleInstallPath} "Software\WaterfoxProject\${BrandFullNameInternal}" $R9
+  ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
 
   ${If} "$R9" == "false"
     SetShellVarContext current ; Set SHCTX to HKCU
-    ${GetSingleInstallPath} "Software\WaterfoxProject\${BrandFullNameInternal}" $R9
+    ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
 
     ${If} ${RunningX64}
       ; In HKCU there is no WOW64 redirection, which means we may have gotten
@@ -402,7 +402,7 @@ Function .onInit
   StrCpy $InitialInstallDir "$INSTDIR"
 
   ClearErrors
-  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
                    "Write Test"
 
   ; Only display set as default when there is write access to HKLM and on Win7
@@ -412,7 +412,7 @@ Function .onInit
     StrCpy $CanSetAsDefault "false"
     StrCpy $CheckboxSetAsDefault "0"
   ${Else}
-    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
     StrCpy $CanSetAsDefault "true"
   ${EndIf}
 
@@ -627,12 +627,12 @@ Function SendPing
     ${EndIf}
 
     ClearErrors
-    WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" \
+    WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
                      "Write Test"
     ${If} ${Errors}
       StrCpy $R8 "0"
     ${Else}
-      DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
+      DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
       StrCpy $R8 "1"
     ${EndIf}
 
@@ -1056,13 +1056,13 @@ Function createOptions
   
   ; Only show the maintenance service checkbox if we have write access to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
                    "Write Test"
   ${If} ${Errors}
   ${OrIf} $0 != "true"
     StrCpy $CheckboxInstallMaintSvc "0"
   ${Else}
-    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
     ; Read the registry instead of using ServicesHelper::IsInstalled so the
     ; plugin isn't included in the stub installer to lessen its size.
     ClearErrors
@@ -1310,7 +1310,7 @@ Function createInstall
     StrCpy $ExistingBuildID "0"
   ${EndIf}
 
-  ${If} ${FileExists} "$LOCALAPPDATA\WaterfoxProject\Firefox"
+  ${If} ${FileExists} "$LOCALAPPDATA\Mozilla\Firefox"
     StrCpy $ExistingProfile "1"
   ${Else}
     StrCpy $ExistingProfile "0"

@@ -94,7 +94,9 @@ template <>
 bool
 ParseContext<FullParseHandler>::checkLocalsOverflow(TokenStream& ts)
 {
-    if (vars_.length() + bodyLevelLexicals_.length() >= LOCALNO_LIMIT) {
+    if (vars_.length() + bodyLevelLexicals_.length() >= LOCALNO_LIMIT ||
+        bodyLevelLexicals_.length() >= Bindings::BODY_LEVEL_LEXICAL_LIMIT)
+    {
         ts.reportError(JSMSG_TOO_MANY_LOCALS);
         return false;
     }
@@ -551,6 +553,9 @@ ParseContext<ParseHandler>::generateBindings(ExclusiveContext* cx, TokenStream& 
      * bindings to what will fit in a uint32_t.
      */
     if (UINT32_MAX - args_.length() <= vars_.length() + bodyLevelLexicals_.length())
+        return ts.reportError(JSMSG_TOO_MANY_LOCALS);
+
+    if (blockScopeDepth >= Bindings::BLOCK_SCOPED_LIMIT)
         return ts.reportError(JSMSG_TOO_MANY_LOCALS);
 
     // Fix up slots in non-global contexts. In global contexts all body-level
@@ -2328,8 +2333,9 @@ Parser<FullParseHandler>::bindBodyLevelFunctionName(HandlePropertyName funName,
         MOZ_ASSERT(!dn->isUsed());
         MOZ_ASSERT(dn->isDefn());
 
-        if (dn->kind() == Definition::CONSTANT || dn->kind() == Definition::LET)
-            return reportRedeclaration(nullptr, Definition::VAR, funName);
+        Definition::Kind kind = dn->kind();
+        if (kind == Definition::CONSTANT || kind == Definition::LET || kind == Definition::IMPORT)
+            return reportRedeclaration(nullptr, kind, funName);
 
         /*
          * Body-level function statements are effectively variable
@@ -2339,7 +2345,7 @@ Parser<FullParseHandler>::bindBodyLevelFunctionName(HandlePropertyName funName,
          * the function's binding (which is mutable), so turn any existing
          * declaration into a use.
          */
-        if (dn->kind() == Definition::ARG) {
+        if (kind == Definition::ARG) {
             // The exception to the above comment is when the function
             // has the same name as an argument. Then the argument node
             // remains a definition. But change the function node pn so
@@ -2748,7 +2754,10 @@ Parser<ParseHandler>::templateLiteral(YieldHandling yieldHandling)
     Node pn = noSubstitutionTemplate();
     if (!pn)
         return null();
+
     Node nodeList = handler.newList(PNK_TEMPLATE_STRING_LIST, pn);
+    if (!nodeList)
+        return null();
 
     TokenKind tt;
     do {
@@ -3209,6 +3218,8 @@ Parser<ParseHandler>::functionArgsAndBodyGeneric(InHandling inHandling,
         if (kind == Statement && !MatchOrInsertSemicolonAfterExpression(tokenStream))
             return false;
     }
+
+    handler.setEndPosition(body, pos().begin);
 
     return finishFunctionDefinition(pn, funbox, body);
 }
@@ -4014,7 +4025,7 @@ HasOuterLexicalBinding(ParseContext<ParseHandler>* pc, StmtInfoPC* stmt, HandleA
     while (stmt->enclosingScope) {
         stmt = LexicalLookup(pc, atom, stmt->enclosingScope);
         if (!stmt)
-            return false;
+            break;
         if (stmt->type == StmtType::BLOCK)
             return true;
     }
@@ -4123,7 +4134,8 @@ Parser<ParseHandler>::bindVar(BindData<ParseHandler>* data,
 
         // Synthesize a new 'var' binding if one does not exist.
         DefinitionNode last = pc->decls().lookupLast(name);
-        if (last && parser->handler.getDefinitionKind(last) != Definition::VAR) {
+        Definition::Kind lastKind = parser->handler.getDefinitionKind(last);
+        if (last && lastKind != Definition::VAR && lastKind != Definition::ARG) {
             parser->handler.setFlag(parser->handler.getDefinitionNode(last), PND_CLOSED);
 
             Node synthesizedVarName = parser->newName(name);
@@ -8945,11 +8957,7 @@ Parser<ParseHandler>::newRegExp()
     RegExpFlag flags = tokenStream.currentToken().regExpFlags();
 
     Rooted<RegExpObject*> reobj(context);
-    RegExpStatics* res = context->global()->getRegExpStatics(context);
-    if (!res)
-        return null();
-
-    reobj = RegExpObject::create(context, res, chars, length, flags, &tokenStream, alloc);
+    reobj = RegExpObject::create(context, chars, length, flags, &tokenStream, alloc);
     if (!reobj)
         return null();
 

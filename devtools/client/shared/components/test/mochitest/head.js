@@ -19,7 +19,10 @@ var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
 
 DevToolsUtils.testing = true;
-var { require: browserRequire } = BrowserLoader("resource://devtools/client/shared/", this);
+var { require: browserRequire } = BrowserLoader({
+  baseURI: "resource://devtools/client/shared/",
+  window: this
+});
 
 var EXAMPLE_URL = "http://example.com/browser/browser/devtools/shared/test/";
 
@@ -134,23 +137,33 @@ var TEST_TREE = {
 /**
  * Frame
  */
-function checkFrameString (component, file, line, column) {
-  let el = component.getDOMNode();
-  is(el.querySelector(".frame-link-filename").textContent, file);
-  is(+el.querySelector(".frame-link-line").textContent, +line);
-  if (column != null) {
-    is(+el.querySelector(".frame-link-column").textContent, +column);
-    is(el.querySelectorAll(".frame-link-colon").length, 2);
-  } else {
-    is(el.querySelector(".frame-link-column"), null,
-      "Should not render column when none specified");
-    is(el.querySelectorAll(".frame-link-colon").length, 1,
-      "Should only render one colon when no column specified");
-  }
-}
+function checkFrameString({ frame, file, line, column, source, shouldLink, tooltip }) {
+  let el = frame.getDOMNode();
+  let $ = selector => el.querySelector(selector);
 
-function checkFrameTooltips (component, mainTooltip, linkTooltip) {
-  let el = component.getDOMNode();
-  is(el.getAttribute("title"), mainTooltip);
-  is(el.querySelector("a.frame-link-filename").getAttribute("title"), linkTooltip);
+  let $source = $(".frame-link-source");
+  let $filename = $(".frame-link-filename");
+  let $line = $(".frame-link-line");
+  let $column = $(".frame-link-column");
+
+  is($filename.textContent, file, "Correct filename");
+  is(el.getAttribute("data-line"), line ? `${line}` : null, "Expected `data-line` found");
+  is(el.getAttribute("data-column"), column ? `${column}` : null, "Expected `data-column` found");
+  is($source.getAttribute("title"), tooltip, "Correct tooltip");
+  is($source.tagName, shouldLink ? "A" : "SPAN", "Correct linkable status");
+  if (shouldLink) {
+    is($source.getAttribute("href"), source, "Correct source");
+  }
+
+  if (line != null) {
+    is(+$line.textContent, +line);
+  } else {
+    ok(!$line, "Should not have an element for `line`");
+  }
+
+  if (column != null) {
+    is(+$column.textContent, +column);
+  } else {
+    ok(!$column, "Should not have an element for `column`");
+  }
 }

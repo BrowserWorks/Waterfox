@@ -83,6 +83,7 @@ struct ScratchRegisterScope : public AutoRegisterScope
 
 static MOZ_CONSTEXPR_VAR Register ReturnReg = rax;
 static MOZ_CONSTEXPR_VAR Register HeapReg = r15;
+static MOZ_CONSTEXPR_VAR Register64 ReturnReg64(rax);
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnFloat32Reg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Single);
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnDoubleReg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Double);
 static MOZ_CONSTEXPR_VAR FloatRegister ReturnSimd128Reg = FloatRegister(X86Encoding::xmm0, FloatRegisters::Simd128);
@@ -436,6 +437,22 @@ class Assembler : public AssemblerX86Shared
     }
     void movq(Register src, Register dest) {
         masm.movq_rr(src.encoding(), dest.encoding());
+    }
+
+    void cmovzq(const Operand& src, Register dest) {
+        switch (src.kind()) {
+          case Operand::REG:
+            masm.cmovzq_rr(src.reg(), dest.encoding());
+            break;
+          case Operand::MEM_REG_DISP:
+            masm.cmovzq_mr(src.disp(), src.base(), dest.encoding());
+            break;
+          case Operand::MEM_SCALE:
+            masm.cmovzq_mr(src.disp(), src.base(), src.index(), src.scale(), dest.encoding());
+            break;
+          default:
+            MOZ_CRASH("unexpected operand kind");
+        }
     }
 
     void xchgq(Register src, Register dest) {

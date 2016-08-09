@@ -24,11 +24,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #if HAVE_FAST_CLZ
-#if defined(_MSC_VER)
-#include <intrin.h>
-#elif defined(__INTEL_COMPILER)
-#include <immintrin.h>
-#endif
 #endif
 #include "config.h"
 

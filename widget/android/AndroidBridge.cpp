@@ -8,8 +8,8 @@
 #include <math.h>
 #include <GLES2/gl2.h>
 
-#include "mozilla/layers/CompositorChild.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeChild.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 
 #include "mozilla/Hal.h"
 #include "nsXULAppAPI.h"
@@ -51,6 +51,7 @@
 #include "mozilla/TimeStamp.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/dom/ContentChild.h"
+#include "nsIObserverService.h"
 
 using namespace mozilla;
 using namespace mozilla::gfx;
@@ -1578,10 +1579,12 @@ NS_IMPL_ISUPPORTS(nsAndroidBridge, nsIAndroidBridge)
 
 nsAndroidBridge::nsAndroidBridge()
 {
+  AddObservers();
 }
 
 nsAndroidBridge::~nsAndroidBridge()
 {
+  RemoveObservers();
 }
 
 NS_IMETHODIMP nsAndroidBridge::HandleGeckoMessage(JS::HandleValue val,
@@ -1633,6 +1636,45 @@ NS_IMETHODIMP nsAndroidBridge::IsContentDocumentDisplayed(bool *aRet)
 {
     *aRet = AndroidBridge::Bridge()->IsContentDocumentDisplayed();
     return NS_OK;
+}
+
+NS_IMETHODIMP
+nsAndroidBridge::Observe(nsISupports* aSubject, const char* aTopic,
+                         const char16_t* aData)
+{
+  if (!strcmp(aTopic, "xpcom-shutdown")) {
+    RemoveObservers();
+  } else if (!strcmp(aTopic, "audio-playback")) {
+    ALOG_BRIDGE("nsAndroidBridge::Observe, get audio-playback event.");
+    nsAutoString activeStr(aData);
+    if (activeStr.EqualsLiteral("active")) {
+      AudioFocusAgent::NotifyStartedPlaying();
+    } else {
+      AudioFocusAgent::NotifyStoppedPlaying();
+    }
+  }
+
+  return NS_OK;
+}
+
+void
+nsAndroidBridge::AddObservers()
+{
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->AddObserver(this, "xpcom-shutdown", false);
+    obs->AddObserver(this, "audio-playback", false);
+  }
+}
+
+void
+nsAndroidBridge::RemoveObservers()
+{
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (obs) {
+    obs->RemoveObserver(this, "xpcom-shutdown");
+    obs->RemoveObserver(this, "audio-playback");
+  }
 }
 
 uint32_t
@@ -1829,11 +1871,12 @@ AndroidBridge::CaptureZoomedView(mozIDOMWindowProxy *window, nsIntRect zoomedVie
     RefPtr < DrawTarget > dt = Factory::CreateDrawTargetForData(
         BackendType::CAIRO, data, IntSize(zoomedViewRect.width, zoomedViewRect.height), stride,
         format);
-    if (!dt) {
+    if (!dt || !dt->IsValid()) {
         ALOG_BRIDGE("Error creating DrawTarget");
         return NS_ERROR_FAILURE;
     }
-    RefPtr<gfxContext> context = new gfxContext(dt);
+    RefPtr<gfxContext> context = gfxContext::ForDrawTarget(dt);
+    MOZ_ASSERT(context); // already checked the draw target above
     context->SetMatrix(context->CurrentMatrix().Scale(zoomFactor, zoomFactor));
 
     rv = presShell->RenderDocument(r, renderDocFlags, bgColor, context);
@@ -1934,11 +1977,13 @@ nsresult AndroidBridge::CaptureThumbnail(mozIDOMWindowProxy *window, int32_t buf
                                          stride,
                                          is24bit ? SurfaceFormat::B8G8R8X8 :
                                                    SurfaceFormat::R5G6B5_UINT16);
-    if (!dt) {
+    if (!dt || !dt->IsValid()) {
         ALOG_BRIDGE("Error creating DrawTarget");
         return NS_ERROR_FAILURE;
     }
-    RefPtr<gfxContext> context = new gfxContext(dt);
+    RefPtr<gfxContext> context = gfxContext::ForDrawTarget(dt);
+    MOZ_ASSERT(context); // checked the draw target above
+
     context->SetMatrix(
       context->CurrentMatrix().Scale(scale * bufW / srcW,
                                      scale * bufH / srcH));

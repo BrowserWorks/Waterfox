@@ -351,6 +351,12 @@ MTest::New(TempAllocator& alloc, MDefinition* ins, MBasicBlock* ifTrue, MBasicBl
     return new(alloc) MTest(ins, ifTrue, ifFalse);
 }
 
+MTest*
+MTest::NewAsm(TempAllocator& alloc, MDefinition* ins, MBasicBlock* ifFalse)
+{
+    return new(alloc) MTest(ins, nullptr, ifFalse);
+}
+
 void
 MTest::cacheOperandMightEmulateUndefined(CompilerConstraintList* constraints)
 {
@@ -1387,8 +1393,12 @@ void
 MControlInstruction::printOpcode(GenericPrinter& out) const
 {
     MDefinition::printOpcode(out);
-    for (size_t j = 0; j < numSuccessors(); j++)
-        out.printf(" block%u", getSuccessor(j)->id());
+    for (size_t j = 0; j < numSuccessors(); j++) {
+        if (getSuccessor(j))
+            out.printf(" block%u", getSuccessor(j)->id());
+        else
+            out.printf(" (null-to-be-patched)");
+    }
 }
 
 void
@@ -1831,6 +1841,12 @@ MGoto::New(TempAllocator& alloc, MBasicBlock* target)
 {
     MOZ_ASSERT(target);
     return new(alloc) MGoto(target);
+}
+
+MGoto*
+MGoto::NewAsm(TempAllocator& alloc)
+{
+    return new(alloc) MGoto(nullptr);
 }
 
 void
@@ -2890,6 +2906,53 @@ MMinMax::foldsTo(TempAllocator& alloc)
     return this;
 }
 
+MDefinition*
+MPow::foldsTo(TempAllocator& alloc)
+{
+    if (!power()->isConstant() || !power()->toConstant()->isTypeRepresentableAsDouble())
+        return this;
+
+    double pow = power()->toConstant()->numberToDouble();
+    MIRType outputType = type();
+
+    // Math.pow(x, 0.5) is a sqrt with edge-case detection.
+    if (pow == 0.5)
+        return MPowHalf::New(alloc, input());
+
+    // Math.pow(x, -0.5) == 1 / Math.pow(x, 0.5), even for edge cases.
+    if (pow == -0.5) {
+        MPowHalf* half = MPowHalf::New(alloc, input());
+        block()->insertBefore(this, half);
+        MConstant* one = MConstant::New(alloc, DoubleValue(1.0));
+        block()->insertBefore(this, one);
+        return MDiv::New(alloc, one, half, MIRType_Double);
+    }
+
+    // Math.pow(x, 1) == x.
+    if (pow == 1.0)
+        return input();
+
+    // Math.pow(x, 2) == x*x.
+    if (pow == 2.0)
+        return MMul::New(alloc, input(), input(), outputType);
+
+    // Math.pow(x, 3) == x*x*x.
+    if (pow == 3.0) {
+        MMul* mul1 = MMul::New(alloc, input(), input(), outputType);
+        block()->insertBefore(this, mul1);
+        return MMul::New(alloc, input(), mul1, outputType);
+    }
+
+    // Math.pow(x, 4) == y*y, where y = x*x.
+    if (pow == 4.0) {
+        MMul* y = MMul::New(alloc, input(), input(), outputType);
+        block()->insertBefore(this, y);
+        return MMul::New(alloc, y, y, outputType);
+    }
+
+    return this;
+}
+
 bool
 MAbs::fallible() const
 {
@@ -3197,7 +3260,7 @@ MustBeUInt32(MDefinition* def, MDefinition** pwrapped)
     if (def->isUrsh()) {
         *pwrapped = def->toUrsh()->lhs();
         MDefinition* rhs = def->toUrsh()->rhs();
-        return !def->toUrsh()->bailoutsDisabled() &&
+        return def->toUrsh()->bailoutsDisabled() &&
                rhs->maybeConstantValue() &&
                rhs->maybeConstantValue()->isInt32(0);
     }
@@ -3207,6 +3270,7 @@ MustBeUInt32(MDefinition* def, MDefinition** pwrapped)
         return defConst->type() == MIRType_Int32 && defConst->toInt32() >= 0;
     }
 
+    *pwrapped = nullptr;  // silence GCC warning
     return false;
 }
 
@@ -4256,14 +4320,6 @@ MBeta::printOpcode(GenericPrinter& out) const
 }
 
 bool
-MNewObject::shouldUseVM() const
-{
-    if (JSObject* obj = templateObject())
-        return obj->is<PlainObject>() && obj->as<PlainObject>().hasDynamicSlots();
-    return true;
-}
-
-bool
 MCreateThisWithTemplate::canRecoverOnBailout() const
 {
     MOZ_ASSERT(templateObject()->is<PlainObject>() || templateObject()->is<UnboxedPlainObject>());
@@ -4474,12 +4530,13 @@ MArrayState::Copy(TempAllocator& alloc, MArrayState* state)
 }
 
 MNewArray::MNewArray(CompilerConstraintList* constraints, uint32_t length, MConstant* templateConst,
-                     gc::InitialHeap initialHeap, jsbytecode* pc)
+                     gc::InitialHeap initialHeap, jsbytecode* pc, bool vmCall)
   : MUnaryInstruction(templateConst),
     length_(length),
     initialHeap_(initialHeap),
     convertDoubleElements_(false),
-    pc_(pc)
+    pc_(pc),
+    vmCall_(vmCall)
 {
     setResultType(MIRType_Object);
     if (templateObject()) {
@@ -4489,25 +4546,6 @@ MNewArray::MNewArray(CompilerConstraintList* constraints, uint32_t length, MCons
                 convertDoubleElements_ = true;
         }
     }
-}
-
-bool
-MNewArray::shouldUseVM() const
-{
-    if (!templateObject())
-        return true;
-
-    if (templateObject()->is<UnboxedArrayObject>()) {
-        MOZ_ASSERT(templateObject()->as<UnboxedArrayObject>().capacity() >= length());
-        return !templateObject()->as<UnboxedArrayObject>().hasInlineElements();
-    }
-
-    MOZ_ASSERT(length() <= NativeObject::MAX_DENSE_ELEMENTS_COUNT);
-
-    size_t arraySlots =
-        gc::GetGCKindSlots(templateObject()->asTenured().getAllocKind()) - ObjectElements::VALUES_PER_HEADER;
-
-    return length() > arraySlots;
 }
 
 bool
@@ -4690,6 +4728,9 @@ MLoadSlot::foldsTo(TempAllocator& alloc)
     if (store->slots() != slots())
         return this;
 
+    if (store->slot() != slot())
+        return this;
+
     return foldsToStoredValue(alloc, store->value());
 }
 
@@ -4716,6 +4757,31 @@ MLoadElement::foldsTo(TempAllocator& alloc)
         return this;
 
     if (store->index() != index())
+        return this;
+
+    return foldsToStoredValue(alloc, store->value());
+}
+
+MDefinition*
+MLoadUnboxedObjectOrNull::foldsTo(TempAllocator& alloc)
+{
+    if (!dependency() || !dependency()->isStoreUnboxedObjectOrNull())
+        return this;
+
+    MStoreUnboxedObjectOrNull* store = dependency()->toStoreUnboxedObjectOrNull();
+    if (!store->block()->dominates(block()))
+        return this;
+
+    if (store->elements() != elements())
+        return this;
+
+    if (store->index() != index())
+        return this;
+
+    if (store->value()->type() == MIRType_ObjectOrNull)
+        return this;
+
+    if (store->offsetAdjustment() != offsetAdjustment())
         return this;
 
     return foldsToStoredValue(alloc, store->value());

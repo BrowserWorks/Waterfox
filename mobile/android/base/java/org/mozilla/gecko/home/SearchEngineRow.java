@@ -145,7 +145,7 @@ class SearchEngineRow extends AnimatedHeightLayout {
         mUserEnteredView.setOnClickListener(mClickListener);
 
         mUserEnteredTextView = (TextView) findViewById(R.id.suggestion_text);
-        mSearchHistorySuggestionIcon = DrawableUtil.tintDrawable(getContext(), R.drawable.icon_most_recent_empty, R.color.tabs_tray_icon_grey);
+        mSearchHistorySuggestionIcon = DrawableUtil.tintDrawableWithColorRes(getContext(), R.drawable.icon_most_recent_empty, R.color.tabs_tray_icon_grey);
 
         // Suggestion limits
         mMaxSavedSuggestions = getResources().getInteger(R.integer.max_saved_suggestions);
@@ -182,10 +182,10 @@ class SearchEngineRow extends AnimatedHeightLayout {
 
         int indexOfMatch = 0;
         int lastIndexOfMatch = 0;
-        while(indexOfMatch != -1) {
+        while (indexOfMatch != -1) {
             indexOfMatch = string.indexOf(pattern, lastIndexOfMatch);
             lastIndexOfMatch = indexOfMatch + patternLength;
-            if(indexOfMatch != -1) {
+            if (indexOfMatch != -1) {
                 mOccurrences.add(indexOfMatch);
             }
         }
@@ -267,7 +267,7 @@ class SearchEngineRow extends AnimatedHeightLayout {
         mEditSuggestionListener = listener;
     }
 
-    private void bindSuggestionView(String suggestion, boolean animate, int recycledSuggestionCount, Integer previousSuggestionChildIndex, boolean isUserSavedSearch, String telemetryTag){
+    private void bindSuggestionView(String suggestion, boolean animate, int recycledSuggestionCount, Integer previousSuggestionChildIndex, boolean isUserSavedSearch, String telemetryTag) {
         final View suggestionItem;
 
         // Reuse suggestion views from recycled view, if possible.

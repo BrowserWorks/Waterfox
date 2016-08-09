@@ -62,6 +62,7 @@ class HashMap
 
     struct MapHashPolicy : HashPolicy
     {
+        using Base = HashPolicy;
         typedef Key KeyType;
         static const Key& getKey(TableEntry& e) { return e.key(); }
         static void setKey(TableEntry& e, Key& k) { HashPolicy::rekey(e.mutableKey(), k); }
@@ -316,6 +317,7 @@ class HashSet
 {
     struct SetOps : HashPolicy
     {
+        using Base = HashPolicy;
         typedef T KeyType;
         static const KeyType& getKey(const T& t) { return t; }
         static void setKey(T& t, KeyType& k) { HashPolicy::rekey(t, k); }
@@ -675,6 +677,38 @@ struct CStringHasher
     }
 };
 
+// Fallible hashing interface.
+//
+// Most of the time generating a hash code is infallible so this class provides
+// default methods that always succeed.  Specialize this class for your own hash
+// policy to provide fallible hashing.
+//
+// This is used by MovableCellHasher to handle the fact that generating a unique
+// ID for cell pointer may fail due to OOM.
+template <typename HashPolicy>
+struct FallibleHashMethods
+{
+    // Return true if a hashcode is already available for its argument.  Once
+    // this returns true for a specific argument it must continue to do so.
+    template <typename Lookup> static bool hasHash(Lookup&& l) { return true; }
+
+    // Fallible method to ensure a hashcode exists for its argument and create
+    // one if not.  Returns false on error, e.g. out of memory.
+    template <typename Lookup> static bool ensureHash(Lookup&& l) { return true; }
+};
+
+template <typename HashPolicy, typename Lookup>
+static bool
+HasHash(Lookup&& l) {
+    return FallibleHashMethods<typename HashPolicy::Base>::hasHash(mozilla::Forward<Lookup>(l));
+}
+
+template <typename HashPolicy, typename Lookup>
+static bool
+EnsureHash(Lookup&& l) {
+    return FallibleHashMethods<typename HashPolicy::Base>::ensureHash(mozilla::Forward<Lookup>(l));
+}
+
 /*****************************************************************************/
 
 // Both HashMap and HashSet are implemented by a single HashTable that is even
@@ -839,14 +873,21 @@ class HashTable : private AllocPolicy
         {}
 
       public:
-        // Leaves Ptr uninitialized.
-        Ptr() {
+        Ptr()
+          : entry_(nullptr)
 #ifdef JS_DEBUG
-            entry_ = (Entry*)0xbad;
+          , table_(nullptr)
+          , generation(0)
 #endif
+        {}
+
+        bool isValid() const {
+            return !entry_;
         }
 
         bool found() const {
+            if (isValid())
+                return false;
 #ifdef JS_DEBUG
             MOZ_ASSERT(generation == table_->generation());
 #endif
@@ -871,6 +912,7 @@ class HashTable : private AllocPolicy
 
         T& operator*() const {
 #ifdef JS_DEBUG
+            MOZ_ASSERT(found());
             MOZ_ASSERT(generation == table_->generation());
 #endif
             return entry_->get();
@@ -878,6 +920,7 @@ class HashTable : private AllocPolicy
 
         T* operator->() const {
 #ifdef JS_DEBUG
+            MOZ_ASSERT(found());
             MOZ_ASSERT(generation == table_->generation());
 #endif
             return &entry_->get();
@@ -902,8 +945,7 @@ class HashTable : private AllocPolicy
         {}
 
       public:
-        // Leaves AddPtr uninitialized.
-        AddPtr() {}
+        AddPtr() : keyHash(0) {}
     };
 
     // A collection of hash table entries. The collection is enumerated by
@@ -1563,6 +1605,33 @@ class HashTable : private AllocPolicy
         // which approach is best.
     }
 
+    // Note: |l| may be a reference to a piece of |u|, so this function
+    // must take care not to use |l| after moving |u|.
+    //
+    // Prefer to use putNewInfallible; this function does not check
+    // invariants.
+    template <typename... Args>
+    void putNewInfallibleInternal(const Lookup& l, Args&&... args)
+    {
+        MOZ_ASSERT(table);
+
+        HashNumber keyHash = prepareHash(l);
+        Entry* entry = &findFreeEntry(keyHash);
+        MOZ_ASSERT(entry);
+
+        if (entry->isRemoved()) {
+            METER(stats.addOverRemoved++);
+            removedCount--;
+            keyHash |= sCollisionBit;
+        }
+
+        entry->setLive(keyHash, mozilla::Forward<Args>(args)...);
+        entryCount++;
+#ifdef JS_DEBUG
+        mutationCount++;
+#endif
+    }
+
   public:
     void clear()
     {
@@ -1642,12 +1711,16 @@ class HashTable : private AllocPolicy
     Ptr lookup(const Lookup& l) const
     {
         mozilla::ReentrancyGuard g(*this);
+        if (!HasHash<HashPolicy>(l))
+            return Ptr();
         HashNumber keyHash = prepareHash(l);
         return Ptr(lookup(l, keyHash, 0), *this);
     }
 
     Ptr readonlyThreadsafeLookup(const Lookup& l) const
     {
+        if (!HasHash<HashPolicy>(l))
+            return Ptr();
         HashNumber keyHash = prepareHash(l);
         return Ptr(lookup(l, keyHash, 0), *this);
     }
@@ -1655,6 +1728,8 @@ class HashTable : private AllocPolicy
     AddPtr lookupForAdd(const Lookup& l) const
     {
         mozilla::ReentrancyGuard g(*this);
+        if (!EnsureHash<HashPolicy>(l))
+            return AddPtr();
         HashNumber keyHash = prepareHash(l);
         Entry& entry = lookup(l, keyHash, sCollisionBit);
         AddPtr p(entry, *this, keyHash);
@@ -1668,6 +1743,10 @@ class HashTable : private AllocPolicy
         MOZ_ASSERT(table);
         MOZ_ASSERT(!p.found());
         MOZ_ASSERT(!(p.keyHash & sCollisionBit));
+
+        // Check for error from ensureHash() here.
+        if (p.isValid())
+            return false;
 
         // Changing an entry from removed to live does not affect whether we
         // are overloaded and can be handled separately.
@@ -1703,23 +1782,9 @@ class HashTable : private AllocPolicy
     template <typename... Args>
     void putNewInfallible(const Lookup& l, Args&&... args)
     {
-        MOZ_ASSERT(table);
-
-        HashNumber keyHash = prepareHash(l);
-        Entry* entry = &findFreeEntry(keyHash);
-        MOZ_ASSERT(entry);
-
-        if (entry->isRemoved()) {
-            METER(stats.addOverRemoved++);
-            removedCount--;
-            keyHash |= sCollisionBit;
-        }
-
-        entry->setLive(keyHash, mozilla::Forward<Args>(args)...);
-        entryCount++;
-#ifdef JS_DEBUG
-        mutationCount++;
-#endif
+        MOZ_ASSERT(!lookup(l).found());
+        mozilla::ReentrancyGuard g(*this);
+        putNewInfallibleInternal(l, mozilla::Forward<Args>(args)...);
     }
 
     // Note: |l| may be alias arguments in |args|, so this function must take
@@ -1728,6 +1793,9 @@ class HashTable : private AllocPolicy
     MOZ_WARN_UNUSED_RESULT bool putNew(const Lookup& l, Args&&... args)
     {
         if (!this->checkSimulatedOOM())
+            return false;
+
+        if (!EnsureHash<HashPolicy>(l))
             return false;
 
         if (checkOverloaded() == RehashFailed)
@@ -1742,6 +1810,10 @@ class HashTable : private AllocPolicy
     template <typename... Args>
     MOZ_WARN_UNUSED_RESULT bool relookupOrAdd(AddPtr& p, const Lookup& l, Args&&... args)
     {
+        // Check for error from ensureHash() here.
+        if (p.isValid())
+            return false;
+
 #ifdef JS_DEBUG
         p.generation = generation();
         p.mutationCount = mutationCount;
@@ -1771,7 +1843,7 @@ class HashTable : private AllocPolicy
         typename HashTableEntry<T>::NonConstT t(mozilla::Move(*p));
         HashPolicy::setKey(t, const_cast<Key&>(k));
         remove(*p.entry_);
-        putNewInfallible(l, mozilla::Move(t));
+        putNewInfallibleInternal(l, mozilla::Move(t));
     }
 
     void rekeyAndMaybeRehash(Ptr p, const Lookup& l, const Key& k)

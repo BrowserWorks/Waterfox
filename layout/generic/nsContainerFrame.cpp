@@ -372,22 +372,17 @@ nsContainerFrame::PeekOffsetCharacter(bool aForward, int32_t* aOffset,
 /////////////////////////////////////////////////////////////////////////////
 // Helper member functions
 
-static nsresult
+static void
 ReparentFrameViewTo(nsIFrame*       aFrame,
                     nsViewManager* aViewManager,
                     nsView*        aNewParentView,
                     nsView*        aOldParentView)
 {
-
-  // XXX What to do about placeholder views for "position: fixed" elements?
-  // They should be reparented too.
-
-  // Does aFrame have a view?
   if (aFrame->HasView()) {
 #ifdef MOZ_XUL
     if (aFrame->GetType() == nsGkAtoms::menuPopupFrame) {
       // This view must be parented by the root view, don't reparent it.
-      return NS_OK;
+      return;
     }
 #endif
     nsView* view = aFrame->GetView();
@@ -400,7 +395,7 @@ ReparentFrameViewTo(nsIFrame*       aFrame,
     // The view will remember the Z-order and other attributes that have been set on it.
     nsView* insertBefore = nsLayoutUtils::FindSiblingViewFor(aNewParentView, aFrame);
     aViewManager->InsertChild(aNewParentView, view, insertBefore, insertBefore != nullptr);
-  } else {
+  } else if (aFrame->GetStateBits() & NS_FRAME_HAS_CHILD_WITH_VIEW) {
     nsIFrame::ChildListIterator lists(aFrame);
     for (; !lists.IsDone(); lists.Next()) {
       // Iterate the child frames, and check each child frame to see if it has
@@ -412,8 +407,6 @@ ReparentFrameViewTo(nsIFrame*       aFrame,
       }
     }
   }
-
-  return NS_OK;
 }
 
 void
@@ -545,8 +538,8 @@ nsContainerFrame::ReparentFrameView(nsIFrame* aChildFrame,
   // anything
   if (oldParentView != newParentView) {
     // They're not so we need to reparent any child views
-    return ReparentFrameViewTo(aChildFrame, oldParentView->GetViewManager(), newParentView,
-                               oldParentView);
+    ReparentFrameViewTo(aChildFrame, oldParentView->GetViewManager(), newParentView,
+                        oldParentView);
   }
 
   return NS_OK;
@@ -704,8 +697,8 @@ nsContainerFrame::SyncWindowProperties(nsPresContext*       aPresContext,
   }
 
   nsBoxLayoutState aState(aPresContext, aRC);
-  nsSize minSize = rootFrame->GetMinSize(aState);
-  nsSize maxSize = rootFrame->GetMaxSize(aState);
+  nsSize minSize = rootFrame->GetXULMinSize(aState);
+  nsSize maxSize = rootFrame->GetXULMaxSize(aState);
 
   SetSizeConstraints(aPresContext, windowWidget, minSize, maxSize);
 #endif
@@ -867,7 +860,7 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
       styleBorder->GetComputedBorderWidth(startSide) +
       GetCoord(styleMargin->mMargin.Get(startSide), 0);
     if (MOZ_LIKELY(sliceBreak)) {
-      aData->currentLine += startPBM;
+      aData->mCurrentLine += startPBM;
     } else {
       clonePBM = startPBM;
     }
@@ -882,14 +875,14 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
     clonePBM += endPBM;
   }
 
-  const nsLineList_iterator* savedLine = aData->line;
+  const nsLineList_iterator* savedLine = aData->mLine;
   nsIFrame* const savedLineContainer = aData->LineContainer();
 
   nsContainerFrame *lastInFlow;
   for (nsContainerFrame *nif = this; nif;
        nif = static_cast<nsContainerFrame*>(nif->GetNextInFlow())) {
-    if (aData->currentLine == 0) {
-      aData->currentLine = clonePBM;
+    if (aData->mCurrentLine == 0) {
+      aData->mCurrentLine = clonePBM;
     }
     for (nsIFrame* kid : nif->mFrames) {
       if (aType == nsLayoutUtils::MIN_ISIZE)
@@ -902,13 +895,13 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
 
     // After we advance to our next-in-flow, the stored line and line container
     // may no longer be correct. Just forget them.
-    aData->line = nullptr;
+    aData->mLine = nullptr;
     aData->SetLineContainer(nullptr);
 
     lastInFlow = nif;
   }
 
-  aData->line = savedLine;
+  aData->mLine = savedLine;
   aData->SetLineContainer(savedLineContainer);
 
   // This goes at the end no matter how things are broken and how
@@ -919,7 +912,7 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
   // continuation, in which case that continuation should handle
   // the endSide border.
   if (MOZ_LIKELY(!lastInFlow->GetNextContinuation() && sliceBreak)) {
-    aData->currentLine += endPBM;
+    aData->mCurrentLine += endPBM;
   }
 }
 
@@ -1030,7 +1023,8 @@ nsContainerFrame::ReflowChild(nsIFrame*                aKidFrame,
 
   // If the child frame is complete, delete any next-in-flows,
   // but only if the NO_DELETE_NEXT_IN_FLOW flag isn't set.
-  if (NS_FRAME_IS_FULLY_COMPLETE(aStatus) &&
+  if (!NS_INLINE_IS_BREAK_BEFORE(aStatus) &&
+      NS_FRAME_IS_FULLY_COMPLETE(aStatus) &&
       !(aFlags & NS_FRAME_NO_DELETE_NEXT_IN_FLOW_CHILD)) {
     nsIFrame* kidNextInFlow = aKidFrame->GetNextInFlow();
     if (kidNextInFlow) {
@@ -1229,46 +1223,12 @@ nsContainerFrame::ReflowOverflowContainerChildren(nsPresContext*           aPres
                                                   const nsHTMLReflowState& aReflowState,
                                                   nsOverflowAreas&         aOverflowRects,
                                                   uint32_t                 aFlags,
-                                                  nsReflowStatus&          aStatus)
+                                                  nsReflowStatus&          aStatus,
+                                                  ChildFrameMerger         aMergeFunc)
 {
   NS_PRECONDITION(aPresContext, "null pointer");
 
-  nsFrameList* overflowContainers =
-               GetPropTableFrames(OverflowContainersProperty());
-
-  NS_ASSERTION(!(overflowContainers && GetPrevInFlow()
-                 && static_cast<nsContainerFrame*>(GetPrevInFlow())
-                      ->GetPropTableFrames(ExcessOverflowContainersProperty())),
-               "conflicting overflow containers lists");
-
-  if (!overflowContainers) {
-    // Drain excess from previnflow
-    nsContainerFrame* prev = (nsContainerFrame*) GetPrevInFlow();
-    if (prev) {
-      nsFrameList* excessFrames =
-        prev->RemovePropTableFrames(ExcessOverflowContainersProperty());
-      if (excessFrames) {
-        excessFrames->ApplySetParent(this);
-        nsContainerFrame::ReparentFrameViewList(*excessFrames, prev, this);
-        overflowContainers = excessFrames;
-        SetPropTableFrames(overflowContainers, OverflowContainersProperty());
-      }
-    }
-  }
-
-  // Our own excess overflow containers from a previous reflow can still be
-  // present if our next-in-flow hasn't been reflown yet.
-  nsFrameList* selfExcessOCFrames =
-    RemovePropTableFrames(ExcessOverflowContainersProperty());
-  if (selfExcessOCFrames) {
-    if (overflowContainers) {
-      overflowContainers->AppendFrames(nullptr, *selfExcessOCFrames);
-      selfExcessOCFrames->Delete(aPresContext->PresShell());
-    } else {
-      overflowContainers = selfExcessOCFrames;
-      SetPropTableFrames(overflowContainers, OverflowContainersProperty());
-    }
-  }
+  nsFrameList* overflowContainers = DrainExcessOverflowContainersList(aMergeFunc);
   if (!overflowContainers) {
     return; // nothing to reflow
   }
@@ -1684,6 +1644,49 @@ nsContainerFrame::DrainSelfOverflowList()
     return true;
   }
   return false;
+}
+
+nsFrameList*
+nsContainerFrame::DrainExcessOverflowContainersList(ChildFrameMerger aMergeFunc)
+{
+  nsFrameList* overflowContainers =
+    GetPropTableFrames(OverflowContainersProperty());
+
+  NS_ASSERTION(!(overflowContainers && GetPrevInFlow()
+                 && static_cast<nsContainerFrame*>(GetPrevInFlow())
+                      ->GetPropTableFrames(ExcessOverflowContainersProperty())),
+               "conflicting overflow containers lists");
+
+  if (!overflowContainers) {
+    // Drain excess from previnflow
+    nsContainerFrame* prev = (nsContainerFrame*) GetPrevInFlow();
+    if (prev) {
+      nsFrameList* excessFrames =
+        prev->RemovePropTableFrames(ExcessOverflowContainersProperty());
+      if (excessFrames) {
+        excessFrames->ApplySetParent(this);
+        nsContainerFrame::ReparentFrameViewList(*excessFrames, prev, this);
+        overflowContainers = excessFrames;
+        SetPropTableFrames(overflowContainers, OverflowContainersProperty());
+      }
+    }
+  }
+
+  // Our own excess overflow containers from a previous reflow can still be
+  // present if our next-in-flow hasn't been reflown yet.
+  nsFrameList* selfExcessOCFrames =
+    RemovePropTableFrames(ExcessOverflowContainersProperty());
+  if (selfExcessOCFrames) {
+    if (overflowContainers) {
+      aMergeFunc(*overflowContainers, *selfExcessOCFrames, this);
+      selfExcessOCFrames->Delete(PresContext()->PresShell());
+    } else {
+      overflowContainers = selfExcessOCFrames;
+      SetPropTableFrames(overflowContainers, OverflowContainersProperty());
+    }
+  }
+
+  return overflowContainers;
 }
 
 nsIFrame*

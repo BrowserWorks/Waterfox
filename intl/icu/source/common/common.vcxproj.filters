@@ -277,16 +277,10 @@
     <ClCompile Include="dtintrv.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
-    <ClCompile Include="locdspnm.cpp">
-      <Filter>formatting</Filter>
-    </ClCompile>
     <ClCompile Include="parsepos.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
-    <ClCompile Include="simpleformatter.cpp">
-      <Filter>formatting</Filter>
-    </ClCompile>
-    <ClCompile Include="ucurr.cpp">
+    <ClCompile Include="simplepatternformatter.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
     <ClCompile Include="ustrfmt.c">
@@ -349,10 +343,7 @@
     <ClCompile Include="uresbund.cpp">
       <Filter>locales &amp; resources</Filter>
     </ClCompile>
-    <ClCompile Include="uresdata.cpp">
-      <Filter>locales &amp; resources</Filter>
-    </ClCompile>
-    <ClCompile Include="resource.cpp">
+    <ClCompile Include="uresdata.c">
       <Filter>locales &amp; resources</Filter>
     </ClCompile>
     <ClCompile Include="caniter.cpp">
@@ -470,9 +461,6 @@
       <Filter>strings</Filter>
     </ClCompile>
     <ClCompile Include="cstring.c">
-      <Filter>strings</Filter>
-    </ClCompile>
-    <ClCompile Include="cstr.cpp">
       <Filter>strings</Filter>
     </ClCompile>
     <ClCompile Include="cwchar.c">
@@ -757,30 +745,15 @@
     <ClInclude Include="umapfile.h">
       <Filter>data &amp; memory</Filter>
     </ClInclude>
-    <CustomBuild Include="unicode\locdspnm.h">
+    <ClInclude Include="simplepatternformatter.h">
       <Filter>formatting</Filter>
-    </CustomBuild>
-    <CustomBuild Include="unicode\simpleformatter.h">
-      <Filter>formatting</Filter>
-    </CustomBuild>
+    </ClInclude>
     <ClInclude Include="ustrfmt.h">
       <Filter>formatting</Filter>
     </ClInclude>
     <ClInclude Include="util.h">
       <Filter>formatting</Filter>
     </ClInclude>
-    <CustomBuild Include="unicode\ucurr.h">
-      <Filter>formatting</Filter>
-    </CustomBuild>
-    <ClInclude Include="ucurrimp.h">
-      <Filter>formatting</Filter>
-    </ClInclude>
-    <CustomBuild Include="unicode\udisplaycontext.h">
-      <Filter>formatting</Filter>
-    </CustomBuild>
-    <CustomBuild Include="unicode\uldnames.h">
-      <Filter>formatting</Filter>
-    </CustomBuild>
     <ClInclude Include="punycode.h">
       <Filter>idna</Filter>
     </ClInclude>
@@ -794,9 +767,6 @@
       <Filter>locales &amp; resources</Filter>
     </ClInclude>
     <ClInclude Include="uresdata.h">
-      <Filter>locales &amp; resources</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
       <Filter>locales &amp; resources</Filter>
     </ClInclude>
     <ClInclude Include="uresimp.h">
@@ -857,9 +827,6 @@
       <Filter>strings</Filter>
     </ClInclude>
     <ClInclude Include="cstring.h">
-      <Filter>strings</Filter>
-    </ClInclude>
-    <ClInclude Include="cstr.h">
       <Filter>strings</Filter>
     </ClInclude>
     <ClInclude Include="cwchar.h">

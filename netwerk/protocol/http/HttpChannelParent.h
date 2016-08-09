@@ -21,7 +21,6 @@
 #include "nsIAuthPromptProvider.h"
 #include "mozilla/dom/ipc/IdType.h"
 #include "nsIDeprecationWarner.h"
-#include "nsIPackagedAppChannelListener.h"
 
 class nsICacheEntry;
 class nsIAssociatedContentSecurity;
@@ -54,7 +53,6 @@ class HttpChannelParent final : public nsIInterfaceRequestor
                               , public nsIAuthPromptProvider
                               , public nsIDeprecationWarner
                               , public DisconnectableParent
-                              , public nsIPackagedAppChannelListener
                               , public HttpChannelSecurityWarningReporter
 {
   virtual ~HttpChannelParent();
@@ -63,7 +61,6 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIREQUESTOBSERVER
   NS_DECL_NSISTREAMLISTENER
-  NS_DECL_NSIPACKAGEDAPPCHANNELLISTENER
   NS_DECL_NSIPARENTCHANNEL
   NS_DECL_NSIPARENTREDIRECTINGCHANNEL
   NS_DECL_NSIPROGRESSEVENTSINK
@@ -82,6 +79,8 @@ public:
   // ADivertableParentChannel functions.
   void DivertTo(nsIStreamListener *aListener) override;
   nsresult SuspendForDiversion() override;
+  nsresult SuspendMessageDiversion() override;
+  nsresult ResumeMessageDiversion() override;
 
   // Calls OnStartRequest for "DivertTo" listener, then notifies child channel
   // that it should divert OnDataAvailable and OnStopRequest calls to this
@@ -180,6 +179,10 @@ protected:
 
   nsresult ReportSecurityMessage(const nsAString& aMessageTag,
                                  const nsAString& aMessageCategory) override;
+
+  // Calls SendDeleteSelf and sets mIPCClosed to true because we should not
+  // send any more messages after that. Bug 1274886
+  bool DoSendDeleteSelf();
 
 private:
   void UpdateAndSerializeSecurityInfo(nsACString& aSerializedSecurityInfoOut);

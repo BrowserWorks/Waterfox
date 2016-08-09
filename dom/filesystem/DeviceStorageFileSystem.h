@@ -27,20 +27,37 @@ public:
 
   // Overrides FileSystemBase
 
+  virtual already_AddRefed<FileSystemBase>
+  Clone() override;
+
+  virtual bool
+  ShouldCreateDirectory() override { return true; }
+
   virtual void
   Shutdown() override;
 
-  virtual nsPIDOMWindowInner*
-  GetWindow() const override;
+  virtual nsISupports*
+  GetParentObject() const override;
 
   virtual void
-  GetRootName(nsAString& aRetval) const override;
+  GetDirectoryName(nsIFile* aFile, nsAString& aRetval,
+                   ErrorResult& aRv) const override;
 
   virtual bool
   IsSafeFile(nsIFile* aFile) const override;
 
   virtual bool
   IsSafeDirectory(Directory* aDir) const override;
+
+  virtual void
+  SerializeDOMPath(nsAString& aSerializedString) const override;
+
+  virtual bool
+  NeedToGoToMainThread() const override { return true; }
+
+  virtual nsresult
+  MainThreadWork() override;
+
 private:
   virtual
   ~DeviceStorageFileSystem();

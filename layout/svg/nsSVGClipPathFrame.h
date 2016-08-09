@@ -6,17 +6,16 @@
 #ifndef __NS_SVGCLIPPATHFRAME_H__
 #define __NS_SVGCLIPPATHFRAME_H__
 
-#include "mozilla/Attributes.h"
+#include "AutoReferenceLimiter.h"
 #include "gfxMatrix.h"
+#include "mozilla/Attributes.h"
 #include "nsSVGContainerFrame.h"
 #include "nsSVGUtils.h"
 
 class gfxContext;
 class nsISVGChildFrame;
 
-typedef nsSVGContainerFrame nsSVGClipPathFrameBase;
-
-class nsSVGClipPathFrame : public nsSVGClipPathFrameBase
+class nsSVGClipPathFrame : public nsSVGContainerFrame
 {
   friend nsIFrame*
   NS_NewSVGClipPathFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
@@ -26,8 +25,8 @@ class nsSVGClipPathFrame : public nsSVGClipPathFrameBase
 
 protected:
   explicit nsSVGClipPathFrame(nsStyleContext* aContext)
-    : nsSVGClipPathFrameBase(aContext)
-    , mInUse(false)
+    : nsSVGContainerFrame(aContext)
+    , mReferencing(mozilla::AutoReferenceLimiter::notReferencing)
   {
     AddStateBits(NS_FRAME_IS_NONDISPLAY);
   }
@@ -135,58 +134,6 @@ private:
   // nsSVGContainerFrame methods:
   virtual gfxMatrix GetCanvasTM() override;
 
-  /**
-   * SVG content may contain reference loops where an SVG effect (a clipPath,
-   * say) may reference itself (directly or indirectly via a reference chain).
-   * This helper class allows us to detect and break such reference loops when
-   * applying an effect so that we can safely do so without the reference loop
-   * causing us to recurse until we run out of stack space and crash.
-   * The helper automatically sets and clears the mInUse flag on the frame.
-   */
-  class MOZ_RAII AutoReferenceLoopDetector
-  {
-  public:
-    explicit AutoReferenceLoopDetector()
-       : mFrame(nullptr)
-#ifdef DEBUG
-       , mMarkAsInUseCalled(false)
-#endif
-    {}
-
-    ~AutoReferenceLoopDetector() {
-      MOZ_ASSERT(mMarkAsInUseCalled,
-                 "Instances of this class are useless if MarkAsInUse() is "
-                 "not called on them");
-      if (mFrame) {
-        mFrame->mInUse = false;
-      }
-    }
-
-    /**
-     * Returns true on success (no reference loop), else returns false on
-     * failure (aFrame is already in use; that is, there is a reference loop).
-     */
-    MOZ_WARN_UNUSED_RESULT bool MarkAsInUse(nsSVGClipPathFrame* aFrame) {
-#ifdef DEBUG
-      MOZ_ASSERT(!mMarkAsInUseCalled, "Must only be called once");
-      mMarkAsInUseCalled = true;
-#endif
-      if (aFrame->mInUse) {
-        // XXX This is an error in the document, not in Mozilla code, so stop
-        // using NS_WARNING and send a message to the console instead.
-        NS_WARNING("clipPath reference loop!");
-        return false;
-      }
-      aFrame->mInUse = true;
-      mFrame = aFrame;
-      return true;
-    }
-
-  private:
-    nsSVGClipPathFrame* mFrame;
-    DebugOnly<bool> mMarkAsInUseCalled;
-  };
-
   // Set, during a GetClipMask() call, to the transform that still needs to be
   // concatenated to the transform of the DrawTarget that was passed to
   // GetClipMask in order to establish the coordinate space that the clipPath
@@ -202,8 +149,9 @@ private:
   // may not even be called soon/any more.
   gfxMatrix mMatrixForChildren;
 
-  // Flag used by AutoReferenceLoopDetector to protect against reference loops:
-  bool mInUse;
+  // Flag used by AutoReferenceLimiter while we're processing an instance of
+  // this class to protect against (break) reference loops.
+  int16_t mReferencing;
 };
 
 #endif

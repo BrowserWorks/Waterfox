@@ -1,7 +1,7 @@
 <!--
 /*
 *******************************************************************************
-* Copyright (C) 2005-2016, International Business Machines Corporation and    *
+* Copyright (C) 2005-2015, International Business Machines Corporation and    *
 * others. All Rights Reserved.	                                         *
 *******************************************************************************
 */
@@ -51,8 +51,6 @@
 		<include locales="as_IN"/>
 		<include locales="asa"/>
 		<include locales="asa_TZ"/>
-		<include locales="ast"/>
-		<include locales="ast_ES"/>
 		<include locales="az"/>
 		<include locales="az_AZ"/>
 		<include locales="az_Cyrl"/>
@@ -723,8 +721,6 @@
 		<include locales="yo"/>
 		<include locales="yo_BJ"/>
 		<include locales="yo_NG"/>
-		<include locales="yue"/>
-		<include locales="yue_HK"/>
 		<include locales="zgh"/>
 		<include locales="zgh_MA"/>
 		<include locales="zh"/>

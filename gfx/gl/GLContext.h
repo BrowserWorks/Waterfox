@@ -138,6 +138,7 @@ enum class GLFeature {
     texture_half_float,
     texture_half_float_linear,
     texture_non_power_of_two,
+    texture_rg,
     texture_storage,
     texture_swizzle,
     transform_feedback2,
@@ -175,6 +176,7 @@ enum class GLRenderer {
     AdrenoTM205,
     AdrenoTM320,
     AdrenoTM420,
+    Mali400MP,
     SGX530,
     SGX540,
     Tegra,
@@ -285,8 +287,8 @@ public:
         }
 
         if (profile == ContextProfile::OpenGL) {
-            return profile == ContextProfile::OpenGLCore ||
-                   profile == ContextProfile::OpenGLCompatibility;
+            return mProfile == ContextProfile::OpenGLCore ||
+                   mProfile == ContextProfile::OpenGLCompatibility;
         }
 
         return profile == mProfile;
@@ -340,7 +342,6 @@ public:
     }
 
 protected:
-    bool mInitialized;
     bool mIsOffscreen;
     bool mContextLost;
 
@@ -358,8 +359,8 @@ protected:
     GLRenderer mRenderer;
 
     void SetProfileVersion(ContextProfile profile, uint32_t version) {
-        MOZ_ASSERT(!mInitialized, "SetProfileVersion can only be called before"
-                                  " initialization!");
+        MOZ_ASSERT(!mSymbols.fBindFramebuffer,
+                   "SetProfileVersion can only be called before initialization!");
         MOZ_ASSERT(profile != ContextProfile::Unknown &&
                    profile != ContextProfile::OpenGL,
                    "Invalid `profile` for SetProfileVersion");
@@ -427,6 +428,7 @@ public:
         ARB_texture_float,
         ARB_texture_non_power_of_two,
         ARB_texture_rectangle,
+        ARB_texture_rg,
         ARB_texture_storage,
         ARB_texture_swizzle,
         ARB_timer_query,
@@ -552,23 +554,16 @@ private:
 
 // -----------------------------------------------------------------------------
 // Robustness handling
-public:
-    bool HasRobustness() const {
-        return mHasRobustness;
-    }
-
+private:
     /**
      * The derived class is expected to provide information on whether or not it
      * supports robustness.
      */
     virtual bool SupportsRobustness() const = 0;
 
-private:
-    bool mHasRobustness;
-
+public:
 // -----------------------------------------------------------------------------
 // Error handling
-public:
     static const char* GLErrorToString(GLenum aError) {
         switch (aError) {
             case LOCAL_GL_INVALID_ENUM:
@@ -2219,8 +2214,6 @@ public:
     }
 
     GLenum fGetGraphicsResetStatus() {
-        MOZ_ASSERT(mHasRobustness);
-
         BEFORE_GL_CALL;
         ASSERT_SYMBOL_PRESENT(fGetGraphicsResetStatus);
         GLenum ret = mSymbols.fGetGraphicsResetStatus();
@@ -3506,8 +3499,17 @@ public:
     bool IsOffscreenSizeAllowed(const gfx::IntSize& aSize) const;
 
 protected:
-    bool InitWithPrefix(const char *prefix, bool trygl);
+    bool InitWithPrefix(const char* prefix, bool trygl);
 
+private:
+    bool InitWithPrefixImpl(const char* prefix, bool trygl);
+    void LoadMoreSymbols(const char* prefix, bool trygl);
+    bool LoadExtSymbols(const char* prefix, bool trygl, const SymLoadStruct* list,
+                        GLExtensions ext);
+    bool LoadFeatureSymbols(const char* prefix, bool trygl, const SymLoadStruct* list,
+                            GLFeature feature);
+
+protected:
     void InitExtensions();
 
     GLint mViewportRect[4];
@@ -3640,7 +3642,7 @@ void SplitByChar(const nsACString& str, const char delim,
 
 template<size_t N>
 bool
-MarkBitfieldByString(const nsACString& str, const char* (&markStrList)[N],
+MarkBitfieldByString(const nsACString& str, const char* const (&markStrList)[N],
                      std::bitset<N>* const out_markList)
 {
     for (size_t i = 0; i < N; i++) {
@@ -3655,7 +3657,7 @@ MarkBitfieldByString(const nsACString& str, const char* (&markStrList)[N],
 template<size_t N>
 void
 MarkBitfieldByStrings(const std::vector<nsCString>& strList,
-                      bool dumpStrings, const char* (&markStrList)[N],
+                      bool dumpStrings, const char* const (&markStrList)[N],
                       std::bitset<N>* const out_markList)
 {
     for (auto itr = strList.begin(); itr != strList.end(); ++itr) {

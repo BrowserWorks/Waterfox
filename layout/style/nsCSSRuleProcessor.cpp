@@ -185,7 +185,7 @@ struct RuleHashTagTableEntry : public RuleHashTableEntry {
 };
 
 static PLDHashNumber
-RuleHash_CIHashKey(PLDHashTable *table, const void *key)
+RuleHash_CIHashKey(const void *key)
 {
   nsIAtom *atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>(key));
 
@@ -232,29 +232,25 @@ CSMatchAtoms(const void* key, nsIAtom *entry_atom)
 }
 
 static bool
-RuleHash_ClassCIMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                           const void *key)
+RuleHash_ClassCIMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   return CIMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mClassList->mAtom);
 }
 
 static bool
-RuleHash_IdCIMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                        const void *key)
+RuleHash_IdCIMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   return CIMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mIDList->mAtom);
 }
 
 static bool
-RuleHash_ClassCSMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                           const void *key)
+RuleHash_ClassCSMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   return CSMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mClassList->mAtom);
 }
 
 static bool
-RuleHash_IdCSMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                        const void *key)
+RuleHash_IdCSMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   return CSMatchAtoms(key, SubjectSelectorForRuleHash(hdr)->mIDList->mAtom);
 }
@@ -287,8 +283,7 @@ RuleHash_MoveEntry(PLDHashTable *table, const PLDHashEntryHdr *from,
 }
 
 static bool
-RuleHash_TagTable_MatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                      const void *key)
+RuleHash_TagTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   nsIAtom *match_atom = const_cast<nsIAtom*>(static_cast<const nsIAtom*>(key));
   nsIAtom *entry_atom = static_cast<const RuleHashTagTableEntry*>(hdr)->mTag;
@@ -326,15 +321,13 @@ RuleHash_TagTable_MoveEntry(PLDHashTable *table, const PLDHashEntryHdr *from,
 }
 
 static PLDHashNumber
-RuleHash_NameSpaceTable_HashKey(PLDHashTable *table, const void *key)
+RuleHash_NameSpaceTable_HashKey(const void *key)
 {
   return NS_PTR_TO_INT32(key);
 }
 
 static bool
-RuleHash_NameSpaceTable_MatchEntry(PLDHashTable *table,
-                                   const PLDHashEntryHdr *hdr,
-                                   const void *key)
+RuleHash_NameSpaceTable_MatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const RuleHashTableEntry *entry =
     static_cast<const RuleHashTableEntry*>(hdr);
@@ -818,8 +811,7 @@ AtomSelector_MoveEntry(PLDHashTable *table, const PLDHashEntryHdr *from,
 }
 
 static bool
-AtomSelector_CIMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                          const void *key)
+AtomSelector_CIMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const AtomSelectorEntry *entry = static_cast<const AtomSelectorEntry*>(hdr);
   return CIMatchAtoms(key, entry->mAtom);
@@ -987,6 +979,17 @@ RuleCascadeData::AttributeListFor(nsIAtom* aAttribute)
 //
 
 nsCSSRuleProcessor::nsCSSRuleProcessor(const sheet_array_type& aSheets,
+                                       SheetType aSheetType,
+                                       Element* aScopeElement,
+                                       nsCSSRuleProcessor*
+                                         aPreviousCSSRuleProcessor,
+                                       bool aIsShared)
+  : nsCSSRuleProcessor(sheet_array_type(aSheets), aSheetType, aScopeElement,
+                       aPreviousCSSRuleProcessor, aIsShared)
+{
+}
+
+nsCSSRuleProcessor::nsCSSRuleProcessor(sheet_array_type&& aSheets,
                                        SheetType aSheetType,
                                        Element* aScopeElement,
                                        nsCSSRuleProcessor*
@@ -1172,17 +1175,11 @@ InitSystemMetrics()
     sSystemMetrics->AppendElement(nsGkAtoms::swipe_animation_enabled);
   }
 
-// On b2gdroid, make it so that we always have a physical home button from
-// gecko's point of view, event if it's just the Android home button remapped.
-#ifdef MOZ_B2GDROID
-  sSystemMetrics->AppendElement(nsGkAtoms::physical_home_button);
-#else
   rv = LookAndFeel::GetInt(LookAndFeel::eIntID_PhysicalHomeButton,
                            &metricResult);
   if (NS_SUCCEEDED(rv) && metricResult) {
     sSystemMetrics->AppendElement(nsGkAtoms::physical_home_button);
   }
-#endif
 
 #ifdef XP_WIN
   if (NS_SUCCEEDED(
@@ -2051,7 +2048,7 @@ static bool SelectorMatches(Element* aElement,
 
       case nsCSSPseudoClasses::ePseudoClass_mozSystemMetric:
         {
-          nsCOMPtr<nsIAtom> metric = do_GetAtom(pseudoClass->u.mString);
+          nsCOMPtr<nsIAtom> metric = NS_Atomize(pseudoClass->u.mString);
           if (!nsCSSRuleProcessor::HasSystemMetric(metric)) {
             return false;
           }
@@ -3222,7 +3219,7 @@ nsCSSRuleProcessor::ClearRuleCascades()
 
   // We rely on our caller (perhaps indirectly) to do something that
   // will rebuild style data and the user font set (either
-  // nsIPresShell::ReconstructStyleData or
+  // nsIPresShell::RestyleForCSSRuleChanges or
   // nsPresContext::RebuildAllStyleData).
   RuleCascadeData *data = mRuleCascades;
   mRuleCascades = nullptr;
@@ -3490,14 +3487,13 @@ struct RuleByWeightEntry : public PLDHashEntryHdr {
 };
 
 static PLDHashNumber
-HashIntKey(PLDHashTable *table, const void *key)
+HashIntKey(const void *key)
 {
   return PLDHashNumber(NS_PTR_TO_INT32(key));
 }
 
 static bool
-MatchWeightEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                 const void *key)
+MatchWeightEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const RuleByWeightEntry *entry = (const RuleByWeightEntry *)hdr;
   return entry->data.mWeight == NS_PTR_TO_INT32(key);
@@ -3995,7 +3991,7 @@ TreeMatchContext::InitAncestors(Element *aElement)
   mAncestorFilter.mFilter = new AncestorFilter::Filter();
 
   if (MOZ_LIKELY(aElement)) {
-    MOZ_ASSERT(aElement->GetCurrentDoc() ||
+    MOZ_ASSERT(aElement->GetUncomposedDoc() ||
                aElement->HasFlag(NODE_IS_IN_SHADOW_TREE),
                "aElement must be in the document or in shadow tree "
                "for the assumption that GetParentNode() is non-null "

@@ -48,13 +48,11 @@ using namespace mozilla::dom::workers;
 namespace mozilla {
 namespace dom {
 
-class PostMessageRunnable final : public nsICancelableRunnable
+class PostMessageRunnable final : public CancelableRunnable
 {
   friend class MessagePort;
 
 public:
-  NS_DECL_ISUPPORTS
-
   PostMessageRunnable(MessagePort* aPort, SharedMessagePortMessage* aData)
     : mPort(aPort)
     , mData(aData)
@@ -81,7 +79,7 @@ public:
     return rv;
   }
 
-  NS_IMETHOD
+  nsresult
   Cancel() override
   {
     mPort = nullptr;
@@ -165,8 +163,6 @@ private:
   RefPtr<SharedMessagePortMessage> mData;
 };
 
-NS_IMPL_ISUPPORTS(PostMessageRunnable, nsICancelableRunnable, nsIRunnable)
-
 NS_IMPL_CYCLE_COLLECTION_CLASS(MessagePort)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(MessagePort,
@@ -211,7 +207,7 @@ public:
     MOZ_COUNT_CTOR(MessagePortFeature);
   }
 
-  virtual bool Notify(JSContext* aCx, workers::Status aStatus) override
+  virtual bool Notify(workers::Status aStatus) override
   {
     if (aStatus > Running) {
       // We cannot process messages anymore because we cannot dispatch new
@@ -568,7 +564,7 @@ MessagePort::Dispatch()
 
   mPostMessageRunnable = new PostMessageRunnable(this, data);
 
-  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(NS_DispatchToCurrentThread(mPostMessageRunnable)));
+  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToCurrentThread(mPostMessageRunnable));
 }
 
 void

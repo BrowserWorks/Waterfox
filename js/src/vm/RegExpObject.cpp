@@ -175,7 +175,7 @@ RegExpObject::trace(JSTracer* trc, JSObject* obj)
     //      be a marking tracer.
     //   2. When a write barrier executes, IsMarkingTracer is true, but
     //      isHeapBusy() will be false.
-    if (trc->runtime()->isHeapBusy() &&
+    if (trc->runtime()->isHeapCollecting() &&
         trc->isMarkingTracer() &&
         !obj->asTenured().zone()->isPreservingCode())
     {
@@ -185,11 +185,7 @@ RegExpObject::trace(JSTracer* trc, JSObject* obj)
     }
 }
 
-const Class RegExpObject::class_ = {
-    js_RegExp_str,
-    JSCLASS_HAS_PRIVATE |
-    JSCLASS_HAS_RESERVED_SLOTS(RegExpObject::RESERVED_SLOTS) |
-    JSCLASS_HAS_CACHED_PROTO(JSProto_RegExp),
+static const ClassOps RegExpObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
     nullptr, /* getProperty */
@@ -202,40 +198,40 @@ const Class RegExpObject::class_ = {
     nullptr, /* hasInstance */
     nullptr, /* construct */
     RegExpObject::trace,
+};
 
-    // ClassSpec
-    {
-        GenericCreateConstructor<js::regexp_construct, 2, gc::AllocKind::FUNCTION>,
-        CreateRegExpPrototype,
-        nullptr,
-        js::regexp_static_props,
-        js::regexp_methods,
-        js::regexp_properties
-    }
+static const ClassSpec RegExpObjectClassSpec = {
+    GenericCreateConstructor<js::regexp_construct, 2, gc::AllocKind::FUNCTION>,
+    CreateRegExpPrototype,
+    nullptr,
+    js::regexp_static_props,
+    js::regexp_methods,
+    js::regexp_properties
+};
+
+const Class RegExpObject::class_ = {
+    js_RegExp_str,
+    JSCLASS_HAS_PRIVATE |
+    JSCLASS_HAS_RESERVED_SLOTS(RegExpObject::RESERVED_SLOTS) |
+    JSCLASS_HAS_CACHED_PROTO(JSProto_RegExp),
+    &RegExpObjectClassOps,
+    &RegExpObjectClassSpec
 };
 
 RegExpObject*
-RegExpObject::create(ExclusiveContext* cx, RegExpStatics* res, const char16_t* chars, size_t length,
-                     RegExpFlag flags, TokenStream* tokenStream, LifoAlloc& alloc)
-{
-    RegExpFlag staticsFlags = res->getFlags();
-    return createNoStatics(cx, chars, length, RegExpFlag(flags | staticsFlags), tokenStream, alloc);
-}
-
-RegExpObject*
-RegExpObject::createNoStatics(ExclusiveContext* cx, const char16_t* chars, size_t length, RegExpFlag flags,
-                              TokenStream* tokenStream, LifoAlloc& alloc)
+RegExpObject::create(ExclusiveContext* cx, const char16_t* chars, size_t length, RegExpFlag flags,
+                     TokenStream* tokenStream, LifoAlloc& alloc)
 {
     RootedAtom source(cx, AtomizeChars(cx, chars, length));
     if (!source)
         return nullptr;
 
-    return createNoStatics(cx, source, flags, tokenStream, alloc);
+    return create(cx, source, flags, tokenStream, alloc);
 }
 
 RegExpObject*
-RegExpObject::createNoStatics(ExclusiveContext* cx, HandleAtom source, RegExpFlag flags,
-                              TokenStream* tokenStream, LifoAlloc& alloc)
+RegExpObject::create(ExclusiveContext* cx, HandleAtom source, RegExpFlag flags,
+                     TokenStream* tokenStream, LifoAlloc& alloc)
 {
     Maybe<CompileOptions> dummyOptions;
     Maybe<TokenStream> dummyTokenStream;
@@ -506,13 +502,11 @@ RegExpShared::trace(JSTracer* trc)
     if (trc->isMarkingTracer())
         marked_ = true;
 
-    if (source)
-        TraceEdge(trc, &source, "RegExpShared source");
+    TraceNullableEdge(trc, &source, "RegExpShared source");
 
     for (size_t i = 0; i < ArrayLength(compilationArray); i++) {
         RegExpCompilation& compilation = compilationArray[i];
-        if (compilation.jitCode)
-            TraceEdge(trc, &compilation.jitCode, "RegExpShared code");
+        TraceNullableEdge(trc, &compilation.jitCode, "RegExpShared code");
     }
 }
 
@@ -928,27 +922,12 @@ js::CloneRegExpObject(JSContext* cx, JSObject* obj_)
 
     Rooted<JSAtom*> source(cx, regex->getSource());
 
-    // Check that the RegExpShared for |regex| is okay to reuse in the clone.
-    RegExpStatics* currentStatics = regex->getProto()->global().getRegExpStatics(cx);
-    if (!currentStatics)
+    RegExpGuard g(cx);
+    if (!regex->getShared(cx, &g))
         return nullptr;
 
-    RegExpFlag origFlags = regex->getFlags();
-    RegExpFlag staticsFlags = currentStatics->getFlags();
-    if ((origFlags & staticsFlags) != staticsFlags) {
-        // If |currentStatics| provides additional flags, we'll have to use a
-        // new |RegExpShared|.
-        clone->initAndZeroLastIndex(source, RegExpFlag(origFlags | staticsFlags), cx);
-    } else {
-        // Otherwise we can use |regexp|'s RegExpShared.  Initialize using its
-        // flags and associate it with the clone.
-        RegExpGuard g(cx);
-        if (!regex->getShared(cx, &g))
-            return nullptr;
-
-        clone->initAndZeroLastIndex(source, g->getFlags(), cx);
-        clone->setShared(*g.re());
-    }
+    clone->initAndZeroLastIndex(source, g->getFlags(), cx);
+    clone->setShared(*g.re());
 
     return clone;
 }
@@ -1049,8 +1028,8 @@ js::XDRScriptRegExpObject(XDRState<mode>* xdr, MutableHandle<RegExpObject*> objp
         return false;
     if (mode == XDR_DECODE) {
         RegExpFlag flags = RegExpFlag(flagsword);
-        RegExpObject* reobj = RegExpObject::createNoStatics(xdr->cx(), source, flags, nullptr,
-                                                            xdr->cx()->tempLifoAlloc());
+        RegExpObject* reobj = RegExpObject::create(xdr->cx(), source, flags, nullptr,
+                                                   xdr->cx()->tempLifoAlloc());
         if (!reobj)
             return false;
 
@@ -1071,7 +1050,7 @@ js::CloneScriptRegExpObject(JSContext* cx, RegExpObject& reobj)
     /* NB: Keep this in sync with XDRScriptRegExpObject. */
 
     RootedAtom source(cx, reobj.getSource());
-    return RegExpObject::createNoStatics(cx, source, reobj.getFlags(), nullptr, cx->tempLifoAlloc());
+    return RegExpObject::create(cx, source, reobj.getFlags(), nullptr, cx->tempLifoAlloc());
 }
 
 JS_FRIEND_API(bool)

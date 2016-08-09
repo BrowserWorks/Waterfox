@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ms.xml
@@ -172,7 +172,7 @@ ms{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.24.16"}
+    Version{"2.1.19.94"}
     calendar{
         buddhist{
             eras{
@@ -313,6 +313,7 @@ ms{
                 GyMMMd{"d MMM y G"}
                 H{"HH"}
                 Hm{"HH:mm"}
+                Hmm{"H:mm"}
                 Hms{"HH:mm:ss"}
                 M{"L"}
                 MEd{"E, d/M"}
@@ -332,7 +333,7 @@ ms{
                 yyyyMEd{"E, d/M/y G"}
                 yyyyMMM{"MMM y G"}
                 yyyyMMMEd{"E, d MMM y G"}
-                yyyyMMMM{"MMMM y G"}
+                yyyyMMMM{"G y MMMM"}
                 yyyyMMMd{"d MMM y G"}
                 yyyyMd{"d/M/y G"}
                 yyyyQQQ{"QQQ y G"}
@@ -478,6 +479,7 @@ ms{
                 GyMMMd{"G y MMM d"}
                 H{"HH"}
                 Hm{"HH:mm"}
+                Hmm{"H:mm"}
                 Hms{"HH:mm:ss"}
                 Hmsv{"HH:mm:ss v"}
                 Hmv{"HH:mm v"}
@@ -501,7 +503,7 @@ ms{
                 yMEd{"E, d/M/y"}
                 yMMM{"MMM y"}
                 yMMMEd{"E, d MMM y"}
-                yMMMM{"MMMM y"}
+                yMMMM{"y MMMM"}
                 yMMMd{"d MMM y"}
                 yMd{"d/M/y"}
                 yQQQ{"QQQ y"}

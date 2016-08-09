@@ -7,11 +7,10 @@
 #ifndef TraceLoggingGraph_h
 #define TraceLoggingGraph_h
 
-#include "mozilla/DebugOnly.h"
-
 #include "jslock.h"
 
 #include "js/TypeDecls.h"
+#include "threading/Mutex.h"
 #include "vm/TraceLoggingTypes.h"
 
 /*
@@ -78,16 +77,15 @@ class TraceLoggerGraphState
 #endif
 
   public:
-    PRLock* lock;
+    js::Mutex lock;
 
   public:
     TraceLoggerGraphState()
-      : numLoggers(0),
-        out(nullptr),
+      : numLoggers(0)
+      , out(nullptr)
 #ifdef DEBUG
-        initialized(false),
+      , initialized(false)
 #endif
-        lock(nullptr)
     {}
 
     bool init();
@@ -201,10 +199,12 @@ class TraceLoggerGraph
 
   public:
     TraceLoggerGraph()
-      : failed(false),
-        enabled(false),
-        nextTextId(0),
-        treeOffset(0)
+      : failed(false)
+      , enabled(false)
+#ifdef DEBUG
+      , nextTextId(0)
+#endif
+      , treeOffset(0)
     { }
     ~TraceLoggerGraph();
 
@@ -224,7 +224,9 @@ class TraceLoggerGraph
   private:
     bool failed;
     bool enabled;
-    mozilla::DebugOnly<uint32_t> nextTextId;
+#ifdef DEBUG
+    uint32_t nextTextId;
+#endif
 
     FILE* dictFile;
     FILE* treeFile;

@@ -219,7 +219,7 @@ extern const char XPC_XPCONNECT_CONTRACTID[];
 // wrappednative wrapper, holding the XPCWrappedNative in its private slot.
 static inline bool IS_WN_CLASS(const js::Class* clazz)
 {
-    return clazz->ext.isWrappedNative;
+    return clazz->isWrappedNative();
 }
 
 static inline bool IS_WN_REFLECTOR(JSObject* obj)
@@ -928,12 +928,9 @@ private:
 // These are the various JSClasses and callbacks whose use that required
 // visibility from more than one .cpp file.
 
-struct XPCWrappedNativeJSClass;
-extern const XPCWrappedNativeJSClass XPC_WN_NoHelper_JSClass;
-extern const js::Class XPC_WN_NoMods_WithCall_Proto_JSClass;
-extern const js::Class XPC_WN_NoMods_NoCall_Proto_JSClass;
-extern const js::Class XPC_WN_ModsAllowed_WithCall_Proto_JSClass;
-extern const js::Class XPC_WN_ModsAllowed_NoCall_Proto_JSClass;
+extern const js::Class XPC_WN_NoHelper_JSClass;
+extern const js::Class XPC_WN_NoMods_Proto_JSClass;
+extern const js::Class XPC_WN_ModsAllowed_Proto_JSClass;
 extern const js::Class XPC_WN_Tearoff_JSClass;
 #define XPC_WN_TEAROFF_RESERVED_SLOTS 1
 #define XPC_WN_TEAROFF_FLAT_OBJECT_SLOT 0
@@ -945,44 +942,13 @@ XPC_WN_CallMethod(JSContext* cx, unsigned argc, JS::Value* vp);
 extern bool
 XPC_WN_GetterSetter(JSContext* cx, unsigned argc, JS::Value* vp);
 
-// Macros to initialize Object or Function like XPC_WN classes
-#define XPC_WN_WithCall_ObjectOps                                             \
-    {                                                                         \
-        nullptr, /* lookupProperty */                                         \
-        nullptr, /* defineProperty */                                         \
-        nullptr, /* hasProperty */                                            \
-        nullptr, /* getProperty    */                                         \
-        nullptr, /* setProperty    */                                         \
-        nullptr, /* getOwnPropertyDescriptor */                               \
-        nullptr, /* deleteProperty */                                         \
-        nullptr, nullptr, /* watch/unwatch */                                 \
-        nullptr, /* getElements */                                            \
-        nullptr, /* enumerate */                                              \
-    }
-
-#define XPC_WN_NoCall_ObjectOps                                               \
-    {                                                                         \
-        nullptr, /* lookupProperty */                                         \
-        nullptr, /* defineProperty */                                         \
-        nullptr, /* hasProperty */                                            \
-        nullptr, /* getProperty    */                                         \
-        nullptr, /* setProperty    */                                         \
-        nullptr, /* getOwnPropertyDescriptor */                               \
-        nullptr, /* deleteProperty */                                         \
-        nullptr, nullptr, /* watch/unwatch */                                 \
-        nullptr, /* getElements */                                            \
-        nullptr, /* enumerate */                                              \
-    }
-
 // Maybe this macro should check for class->enumerate ==
 // XPC_WN_Shared_Proto_Enumerate or something rather than checking for
 // 4 classes?
 static inline bool IS_PROTO_CLASS(const js::Class* clazz)
 {
-    return clazz == &XPC_WN_NoMods_WithCall_Proto_JSClass ||
-           clazz == &XPC_WN_NoMods_NoCall_Proto_JSClass ||
-           clazz == &XPC_WN_ModsAllowed_WithCall_Proto_JSClass ||
-           clazz == &XPC_WN_ModsAllowed_NoCall_Proto_JSClass;
+    return clazz == &XPC_WN_NoMods_Proto_JSClass ||
+           clazz == &XPC_WN_ModsAllowed_Proto_JSClass;
 }
 
 typedef js::HashSet<size_t,
@@ -1347,7 +1313,7 @@ private:
     // creation of XPCNativeInterfaces which have more than 2^12 members.
     // If the width of this field changes, update GetMaxIndexInInterface.
     uint16_t mIndexInInterface : 12;
-};
+} JS_HAZ_NON_GC_POINTER; // Only stores a pinned string
 
 /***************************************************************************/
 // XPCNativeInterface represents a single idl declared interface. This is
@@ -1669,46 +1635,38 @@ public:
 // was a big problem when wrappers are reparented to different scopes (and
 // thus different protos (the DOM does this).
 
-// We maintain the invariant that every JSClass for which ext.isWrappedNative
-// is true is a contained in an instance of this struct, and can thus be cast
-// to it.
-//
-// XXXbz Do we still need this struct at all?
-struct XPCWrappedNativeJSClass
-{
-    js::Class base;
-};
-
 class XPCNativeScriptableShared
 {
 public:
-    const XPCNativeScriptableFlags& GetFlags() const {return mFlags;}
-    const JSClass*                  GetJSClass()
-        {return Jsvalify(&mJSClass.base);}
+    const XPCNativeScriptableFlags& GetFlags() const { return mFlags; }
 
-    XPCNativeScriptableShared(uint32_t aFlags, char* aName)
-        : mFlags(aFlags)
-        {memset(&mJSClass, 0, sizeof(mJSClass));
-         mJSClass.base.name = aName;  // take ownership
-         MOZ_COUNT_CTOR(XPCNativeScriptableShared);}
+    const JSClass* GetJSClass() { return Jsvalify(&mJSClass); }
 
-    ~XPCNativeScriptableShared()
-        {if (mJSClass.base.name)free((void*)mJSClass.base.name);
-         MOZ_COUNT_DTOR(XPCNativeScriptableShared);}
+    XPCNativeScriptableShared(uint32_t aFlags, char* aName, bool aPopulate);
 
-    char* TransferNameOwnership()
-        {char* name=(char*)mJSClass.base.name; mJSClass.base.name = nullptr;
-        return name;}
+    ~XPCNativeScriptableShared() {
+        free((void*)mJSClass.name);
+        free((void*)mJSClass.cOps);
+        MOZ_COUNT_DTOR(XPCNativeScriptableShared);
+    }
 
-    void PopulateJSClass();
+    char* TransferNameOwnership() {
+        char* name = (char*)mJSClass.name;
+        mJSClass.name = nullptr;
+        return name;
+    }
 
-    void Mark()       {mFlags.Mark();}
-    void Unmark()     {mFlags.Unmark();}
-    bool IsMarked() const {return mFlags.IsMarked();}
+    void Mark()   { mFlags.Mark(); }
+    void Unmark() { mFlags.Unmark(); }
+    bool IsMarked() const { return mFlags.IsMarked(); }
 
 private:
     XPCNativeScriptableFlags mFlags;
-    XPCWrappedNativeJSClass  mJSClass;
+
+    // This is an unusual js::Class instance: its name and cOps members are
+    // heap-allocated, unlike all other instances for which they are statically
+    // allocated. So we must free them in the destructor.
+    js::Class mJSClass;
 };
 
 /***************************************************************************/
@@ -2338,11 +2296,12 @@ public:
                                               const nsAString& aName,
                                               nsIVariant** aResult);
 
+private:
     static nsresult CheckForException(XPCCallContext & ccx,
+                                      mozilla::dom::AutoEntryScript& aes,
                                       const char * aPropertyName,
                                       const char * anInterfaceName,
                                       bool aForceReport);
-private:
     virtual ~nsXPCWrappedJSClass();
 
     nsXPCWrappedJSClass();   // not implemented
@@ -2983,6 +2942,7 @@ protected:
     InitializeOnMainThread();
 
     nsString mMessage;
+    nsString mMessageName;
     nsString mSourceName;
     uint32_t mLineNumber;
     nsString mSourceLine;
@@ -3399,7 +3359,8 @@ struct GlobalProperties {
 
     }
     bool Parse(JSContext* cx, JS::HandleObject obj);
-    bool Define(JSContext* cx, JS::HandleObject obj);
+    bool DefineInXPCComponents(JSContext* cx, JS::HandleObject obj);
+    bool DefineInSandbox(JSContext* cx, JS::HandleObject obj);
     bool CSS : 1;
     bool indexedDB : 1;
     bool XMLHttpRequest : 1;
@@ -3416,6 +3377,8 @@ struct GlobalProperties {
     bool fetch : 1;
     bool caches : 1;
     bool fileReader: 1;
+private:
+    bool Define(JSContext* cx, JS::HandleObject obj);
 };
 
 // Infallible.

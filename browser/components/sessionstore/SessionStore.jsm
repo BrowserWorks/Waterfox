@@ -775,10 +775,21 @@ var SessionStoreInternal = {
         let tabData = TabState.collect(tab);
 
         // wall-paper fix for bug 439675: make sure that the URL to be loaded
-        // is always visible in the address bar
+        // is always visible in the address bar if no other value is present
         let activePageData = tabData.entries[tabData.index - 1] || null;
         let uri = activePageData ? activePageData.url || null : null;
-        browser.userTypedValue = uri;
+        // NB: we won't set initial URIs (about:home, about:newtab, etc.) here
+        // because their load will not normally trigger a location bar clearing
+        // when they finish loading (to avoid race conditions where we then
+        // clear user input instead), so we shouldn't set them here either.
+        // They also don't fall under the issues in bug 439675 where user input
+        // needs to be preserved if the load doesn't succeed.
+        // We also don't do this for remoteness updates, where it should not
+        // be necessary.
+        if (!browser.userTypedValue && uri && !data.isRemotenessUpdate &&
+            !win.gInitialPages.includes(uri)) {
+          browser.userTypedValue = uri;
+        }
 
         // If the page has a title, set it.
         if (activePageData) {
@@ -812,13 +823,13 @@ var SessionStoreInternal = {
           // If a load not initiated by sessionstore was started in a
           // previously pending tab. Mark the tab as no longer pending.
           this.markTabAsRestoring(tab);
-        } else {
+        } else if (!data.isRemotenessUpdate) {
           // If the user was typing into the URL bar when we crashed, but hadn't hit
           // enter yet, then we just need to write that value to the URL bar without
-          // loading anything. This must happen after the load, since it will clear
+          // loading anything. This must happen after the load, as the load will clear
           // userTypedValue.
           let tabData = TabState.collect(tab);
-          if (tabData.userTypedValue && !tabData.userTypedClear) {
+          if (tabData.userTypedValue && !tabData.userTypedClear && !browser.userTypedValue) {
             browser.userTypedValue = tabData.userTypedValue;
             win.URLBarSetURI();
           }
@@ -839,7 +850,7 @@ var SessionStoreInternal = {
         SessionStoreInternal._resetLocalTabRestoringState(tab);
         SessionStoreInternal.restoreNextTab();
 
-        this._sendTabRestoredNotification(tab);
+        this._sendTabRestoredNotification(tab, data.isRemotenessUpdate);
         break;
       case "SessionStore:crashedTabRevived":
         // The browser was revived by navigating to a different page
@@ -1472,22 +1483,33 @@ var SessionStoreInternal = {
    * @return Promise
    */
   flushAllWindowsAsync: Task.async(function*(progress={}) {
-    let windowPromises = [];
+    let windowPromises = new Map();
     // We collect flush promises and close each window immediately so that
     // the user can't start changing any window state while we're waiting
     // for the flushes to finish.
     this._forEachBrowserWindow((win) => {
-      windowPromises.push(TabStateFlusher.flushWindow(win));
-      win.close();
+      windowPromises.set(win, TabStateFlusher.flushWindow(win));
+
+      // We have to wait for these messages to come up from
+      // each window and each browser. In the meantime, hide
+      // the windows to improve perceived shutdown speed.
+      let baseWin = win.QueryInterface(Ci.nsIInterfaceRequestor)
+                       .getInterface(Ci.nsIDocShell)
+                       .QueryInterface(Ci.nsIDocShellTreeItem)
+                       .treeOwner
+                       .QueryInterface(Ci.nsIBaseWindow);
+      baseWin.visibility = false;
     });
 
-    progress.total = windowPromises.length;
+    progress.total = windowPromises.size;
+    progress.current = 0;
 
     // We'll iterate through the Promise array, yielding each one, so as to
     // provide useful progress information to AsyncShutdown.
-    for (let i = 0; i < windowPromises.length; ++i) {
-      progress.current = i;
-      yield windowPromises[i];
+    for (let [win, promise] of windowPromises) {
+      yield promise;
+      this._collectWindowData(win);
+      progress.current++;
     };
 
     // We must cache this because _getMostRecentBrowserWindow will always
@@ -2527,7 +2549,6 @@ var SessionStoreInternal = {
         tabState.index = historyIndex + 1;
         tabState.index = Math.max(1, Math.min(tabState.index, tabState.entries.length));
       } else {
-        tabState.userTypedValue = null;
         options.loadArguments = recentLoadArguments;
       }
 
@@ -3293,6 +3314,9 @@ var SessionStoreInternal = {
    *        the tab to restore
    * @param aLoadArguments
    *        optional load arguments used for loadURI()
+   * @param aRemotenessSwitch
+   *        true if we're restoring a tab's content because we flipped
+   *        its remoteness (out-of-process) state.
    */
   restoreTabContent: function (aTab, aLoadArguments = null) {
     if (aTab.hasAttribute("customizemode")) {
@@ -3316,7 +3340,8 @@ var SessionStoreInternal = {
     // flip the remoteness of any browser that is not being displayed.
     this.markTabAsRestoring(aTab);
 
-    if (tabbrowser.updateBrowserRemotenessByURL(browser, uri)) {
+    let isRemotenessUpdate = tabbrowser.updateBrowserRemotenessByURL(browser, uri);
+    if (isRemotenessUpdate) {
       // We updated the remoteness, so we need to send the history down again.
       //
       // Start a new epoch to discard all frame script messages relating to a
@@ -3327,7 +3352,8 @@ var SessionStoreInternal = {
       browser.messageManager.sendAsyncMessage("SessionStore:restoreHistory", {
         tabData: tabData,
         epoch: epoch,
-        loadArguments: aLoadArguments
+        loadArguments: aLoadArguments,
+        isRemotenessUpdate,
       });
 
     }
@@ -3339,7 +3365,7 @@ var SessionStoreInternal = {
     }
 
     browser.messageManager.sendAsyncMessage("SessionStore:restoreTabContent",
-      {loadArguments: aLoadArguments});
+      {loadArguments: aLoadArguments, isRemotenessUpdate});
   },
 
   /**
@@ -3453,23 +3479,31 @@ var SessionStoreInternal = {
     if (screen) {
       let screenLeft = {}, screenTop = {}, screenWidth = {}, screenHeight = {};
       screen.GetAvailRectDisplayPix(screenLeft, screenTop, screenWidth, screenHeight);
+      // screenX/Y are based on the origin of the screen's desktop-pixel coordinate space
+      let screenLeftCss = screenLeft.value;
+      let screenTopCss = screenTop.value;
+      // convert screen's device pixel dimensions to CSS px dimensions
+      screen.GetAvailRect(screenLeft, screenTop, screenWidth, screenHeight);
+      let cssToDevScale = screen.defaultCSSScaleFactor;
+      let screenWidthCss = screenWidth.value / cssToDevScale;
+      let screenHeightCss = screenHeight.value / cssToDevScale;
       // constrain the dimensions to the actual space available
-      if (aWidth > screenWidth.value) {
-        aWidth = screenWidth.value;
+      if (aWidth > screenWidthCss) {
+        aWidth = screenWidthCss;
       }
-      if (aHeight > screenHeight.value) {
-        aHeight = screenHeight.value;
+      if (aHeight > screenHeightCss) {
+        aHeight = screenHeightCss;
       }
       // and then pull the window within the screen's bounds
-      if (aLeft < screenLeft.value) {
-        aLeft = screenLeft.value;
-      } else if (aLeft + aWidth > screenLeft.value + screenWidth.value) {
-        aLeft = screenLeft.value + screenWidth.value - aWidth;
+      if (aLeft < screenLeftCss) {
+        aLeft = screenLeftCss;
+      } else if (aLeft + aWidth > screenLeftCss + screenWidthCss) {
+        aLeft = screenLeftCss + screenWidthCss - aWidth;
       }
-      if (aTop < screenTop.value) {
-        aTop = screenTop.value;
-      } else if (aTop + aHeight > screenTop.value + screenHeight.value) {
-        aTop = screenTop.value + screenHeight.value - aHeight;
+      if (aTop < screenTopCss) {
+        aTop = screenTopCss;
+      } else if (aTop + aHeight > screenTopCss + screenHeightCss) {
+        aTop = screenTopCss + screenHeightCss - aHeight;
       }
     }
 
@@ -3976,11 +4010,17 @@ var SessionStoreInternal = {
 
   /**
    * Dispatch the SSTabRestored event for the given tab.
-   * @param aTab the which has been restored
+   * @param aTab
+   *        The tab which has been restored
+   * @param aIsRemotenessUpdate
+   *        True if this tab was restored due to flip from running from
+   *        out-of-main-process to in-main-process or vice-versa.
    */
-  _sendTabRestoredNotification: function ssi_sendTabRestoredNotification(aTab) {
-    let event = aTab.ownerDocument.createEvent("Events");
-    event.initEvent("SSTabRestored", true, false);
+  _sendTabRestoredNotification(aTab, aIsRemotenessUpdate) {
+    let event = aTab.ownerDocument.createEvent("CustomEvent");
+    event.initCustomEvent("SSTabRestored", true, false, {
+      isRemotenessUpdate: aIsRemotenessUpdate,
+    });
     aTab.dispatchEvent(event);
   },
 

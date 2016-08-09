@@ -277,44 +277,34 @@ RTCStatsReport.prototype = {
   contractID: PC_STATS_CONTRACT,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports]),
 
-  // TODO: Change to use webidl getters once available (Bug 952122)
+  setInternal: function(aKey, aObj) {
+    return this.__DOM_IMPL__.__set(aKey, aObj);
+  },
+
+  // TODO: Remove legacy API eventually
   //
-  // Since webidl getters are not available, we make the stats available as
+  // Since maplike is recent, we still also make the stats available as legacy
   // enumerable read-only properties directly on our content-facing object.
   // Must be called after our webidl sandwich is made.
 
-  makeStatsPublic: function() {
-    let props = {};
-    this.forEach(function(stat) {
-        props[stat.id] = { enumerable: true, configurable: false,
-                           writable: false, value: stat };
-      });
-    Object.defineProperties(this.__DOM_IMPL__.wrappedJSObject, props);
-  },
+  makeStatsPublic: function(warnNullable) {
+    let legacyProps = {};
+    for (let key in this._report) {
+      let value = Cu.cloneInto(this._report[key], this._win);
+      this.setInternal(key, value);
 
-  forEach: function(cb, thisArg) {
-    for (var key in this._report) {
-      cb.call(thisArg || this._report, this.get(key), key, this._report);
+      legacyProps[key] = {
+        enumerable: true, configurable: false,
+        get: Cu.exportFunction(function() {
+          if (warnNullable.warn) {
+            warnNullable.warn();
+            warnNullable.warn = null;
+          }
+          return value;
+        }, this.__DOM_IMPL__.wrappedJSObject)
+      };
     }
-  },
-
-  get: function(key) {
-    function publifyReadonly(win, obj) {
-      let props = {};
-      for (let k in obj) {
-        props[k] = {enumerable:true, configurable:false, writable:false, value:obj[k]};
-      }
-      let pubobj = Cu.createObjectIn(win);
-      Object.defineProperties(pubobj, props);
-      return pubobj;
-    }
-
-    // Return a content object rather than a wrapped chrome one.
-    return publifyReadonly(this._win, this._report[key]);
-  },
-
-  has: function(key) {
-    return this._report[key] !== undefined;
+    Object.defineProperties(this.__DOM_IMPL__.wrappedJSObject, legacyProps);
   },
 
   get mozPcid() { return this._pcid; }
@@ -366,6 +356,8 @@ RTCPeerConnection.prototype = {
         Services.prefs.getBoolPref("media.peerconnection.ice.relay_only")) {
       rtcConfig.iceTransportPolicy = "relay";
     }
+    this._config = Object.assign({}, rtcConfig);
+
     if (!rtcConfig.iceServers ||
         !Services.prefs.getBoolPref("media.peerconnection.use_document_iceservers")) {
       try {
@@ -373,15 +365,14 @@ RTCPeerConnection.prototype = {
            JSON.parse(Services.prefs.getCharPref("media.peerconnection.default_iceservers") || "[]");
       } catch (e) {
         this.logWarning(
-            "Ignoring invalid media.peerconnection.default_iceservers in about:config",
-             null, 0);
+            "Ignoring invalid media.peerconnection.default_iceservers in about:config");
         rtcConfig.iceServers = [];
       }
       try {
         this._mustValidateRTCConfiguration(rtcConfig,
             "Ignoring invalid media.peerconnection.default_iceservers in about:config");
       } catch (e) {
-        this.logWarning(e.message, null, 0);
+        this.logWarning(e.message);
         rtcConfig.iceServers = [];
       }
     } else {
@@ -433,6 +424,11 @@ RTCPeerConnection.prototype = {
     this._isLoop = location.startsWith("about:loop") ||
                    location.startsWith("https://hello.firefox.com/");
 
+    // Warn just once per PeerConnection about deprecated getStats usage.
+    this._warnDeprecatedStatsAccessNullable = { warn: () =>
+      this.logWarning("non-maplike pc.getStats access is deprecated! " +
+                      "See http://w3c.github.io/webrtc-pc/#example for usage.") };
+
     // Add a reference to the PeerConnection to global list (before init).
     _globalPCList.addPC(this);
 
@@ -450,6 +446,10 @@ RTCPeerConnection.prototype = {
           "InvalidStateError");
     }
     return this._pc;
+  },
+
+  getConfiguration: function() {
+    return this._config;
   },
 
   _initCertificate: function(certificates) {
@@ -556,7 +556,7 @@ RTCPeerConnection.prototype = {
       } else if (!server.urls && server.url) {
         // TODO: Remove support for legacy iceServer.url eventually (Bug 1116766)
         server.urls = [server.url];
-        this.logWarning("RTCIceServer.url is deprecated! Use urls instead.", null, 0);
+        this.logWarning("RTCIceServer.url is deprecated! Use urls instead.");
       }
     });
 
@@ -590,8 +590,7 @@ RTCPeerConnection.prototype = {
             this.logWarning("RTCConfiguration TURN credentialType \""+
                             server.credentialType +
                             "\" is not yet implemented. Treating as password."+
-                            " https://bugzil.la/1247616",
-                            null, 0);
+                            " https://bugzil.la/1247616");
           }
         }
         else if (!(url.scheme in { stun:1, stuns:1 })) {
@@ -599,7 +598,7 @@ RTCPeerConnection.prototype = {
                                            "SyntaxError");
         }
         if (url.scheme in { stuns:1, turns:1 }) {
-          this.logWarning(url.scheme.toUpperCase() + " is not yet supported.", null, 0);
+          this.logWarning(url.scheme.toUpperCase() + " is not yet supported.");
         }
       });
     });
@@ -618,8 +617,8 @@ RTCPeerConnection.prototype = {
 
   dispatchEvent: function(event) {
     // PC can close while events are firing if there is an async dispatch
-    // in c++ land
-    if (!this._closed) {
+    // in c++ land. But let through "closed" signaling and ice connection events.
+    if (!this._closed || this._inClose) {
       this.__DOM_IMPL__.dispatchEvent(event);
     }
   },
@@ -636,17 +635,22 @@ RTCPeerConnection.prototype = {
     } catch(e) {
       // If onerror itself throws, service it.
       try {
-        this.logError(e.message, e.fileName, e.lineNumber);
+        this.logMsg(e.message, e.fileName, e.lineNumber, Ci.nsIScriptError.errorFlag);
       } catch(e) {}
     }
   },
 
-  logError: function(msg, file, line) {
-    this.logMsg(msg, file, line, Ci.nsIScriptError.errorFlag);
+  logError: function(msg) {
+    this.logStackMsg(msg, Ci.nsIScriptError.errorFlag);
   },
 
-  logWarning: function(msg, file, line) {
-    this.logMsg(msg, file, line, Ci.nsIScriptError.warningFlag);
+  logWarning: function(msg) {
+    this.logStackMsg(msg, Ci.nsIScriptError.warningFlag);
+  },
+
+  logStackMsg: function(msg, flag) {
+    let err = this._win.Error();
+    this.logMsg(msg, err.fileName, err.lineNumber, flag);
   },
 
   logMsg: function(msg, file, line, flag) {
@@ -680,8 +684,7 @@ RTCPeerConnection.prototype = {
                           {
                             get:function()  { return this.getEH(name); },
                             set:function(h) {
-                              this.logWarning(name + " is deprecated! " + msg,
-                                              null, 0);
+                              this.logWarning(name + " is deprecated! " + msg);
                               return this.setEH(name, h);
                             }
                           });
@@ -747,8 +750,7 @@ RTCPeerConnection.prototype = {
       if (options && convertLegacyOptions(options)) {
         this.logError(
           "Mandatory/optional in createOffer options no longer works! Use " +
-            JSON.stringify(options) + " instead (note the case difference)!",
-          null, 0);
+            JSON.stringify(options) + " instead (note the case difference)!");
         options = {};
       }
 
@@ -1132,11 +1134,13 @@ RTCPeerConnection.prototype = {
     if (this._closed) {
       return;
     }
+    this._closed = true;
+    this._inClose = true;
     this.changeIceConnectionState("closed");
     this._localIdp.close();
     this._remoteIdp.close();
     this._impl.close();
-    this._closed = true;
+    this._inClose = false;
   },
 
   getLocalStreams: function() {
@@ -1235,21 +1239,21 @@ RTCPeerConnection.prototype = {
     }
     if (dict.maxRetransmitNum != undefined) {
       dict.maxRetransmits = dict.maxRetransmitNum;
-      this.logWarning("Deprecated RTCDataChannelInit dictionary entry maxRetransmitNum used!", null, 0);
+      this.logWarning("Deprecated RTCDataChannelInit dictionary entry maxRetransmitNum used!");
     }
     if (dict.outOfOrderAllowed != undefined) {
       dict.ordered = !dict.outOfOrderAllowed; // the meaning is swapped with
                                               // the name change
-      this.logWarning("Deprecated RTCDataChannelInit dictionary entry outOfOrderAllowed used!", null, 0);
+      this.logWarning("Deprecated RTCDataChannelInit dictionary entry outOfOrderAllowed used!");
     }
 
     if (dict.preset != undefined) {
       dict.negotiated = dict.preset;
-      this.logWarning("Deprecated RTCDataChannelInit dictionary entry preset used!", null, 0);
+      this.logWarning("Deprecated RTCDataChannelInit dictionary entry preset used!");
     }
     if (dict.stream != undefined) {
       dict.id = dict.stream;
-      this.logWarning("Deprecated RTCDataChannelInit dictionary entry stream used!", null, 0);
+      this.logWarning("Deprecated RTCDataChannelInit dictionary entry stream used!");
     }
 
     if (dict.maxRetransmitTime !== null && dict.maxRetransmits !== null) {
@@ -1439,7 +1443,7 @@ PeerConnectionObserver.prototype = {
     }
 
     if (iceConnectionState === 'failed') {
-      pc.logError("ICE failed, see about:webrtc for more details", null, 0);
+      pc.logError("ICE failed, see about:webrtc for more details");
     }
 
     pc.changeIceConnectionState(iceConnectionState);
@@ -1491,7 +1495,7 @@ PeerConnectionObserver.prototype = {
         break;
 
       default:
-        this._dompc.logWarning("Unhandled state type: " + state, null, 0);
+        this._dompc.logWarning("Unhandled state type: " + state);
         break;
     }
   },
@@ -1500,7 +1504,7 @@ PeerConnectionObserver.prototype = {
     let pc = this._dompc;
     let chromeobj = new RTCStatsReport(pc._win, dict);
     let webidlobj = pc._win.RTCStatsReport._create(pc._win, chromeobj);
-    chromeobj.makeStatsPublic();
+    chromeobj.makeStatsPublic(pc._warnDeprecatedStatsAccessNullable);
     pc._onGetStatsSuccess(webidlobj);
   },
 

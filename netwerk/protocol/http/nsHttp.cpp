@@ -62,7 +62,7 @@ NewHeapAtom(const char *value) {
 
 // Hash string ignore case, based on PL_HashString
 static PLDHashNumber
-StringHash(PLDHashTable *table, const void *key)
+StringHash(const void *key)
 {
     PLDHashNumber h = 0;
     for (const char *s = reinterpret_cast<const char*>(key); *s; ++s)
@@ -71,8 +71,7 @@ StringHash(PLDHashTable *table, const void *key)
 }
 
 static bool
-StringCompare(PLDHashTable *table, const PLDHashEntryHdr *entry,
-              const void *testKey)
+StringCompare(const PLDHashEntryHdr *entry, const void *testKey)
 {
     const void *entryKey =
             reinterpret_cast<const PLDHashEntryStub *>(entry)->key;

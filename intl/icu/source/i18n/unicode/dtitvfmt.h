@@ -1,5 +1,5 @@
 /********************************************************************************
-* Copyright (C) 2008-2016, International Business Machines Corporation and
+* Copyright (C) 2008-2013,2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -504,13 +504,7 @@ public:
 
 
     /**
-     * Gets the date formatter. The DateIntervalFormat instance continues to own
-     * the returned DateFormatter object, and will use and possibly modify it
-     * during format operations. In a multi-threaded environment, the returned
-     * DateFormat can only be used if it is certain that no other threads are
-     * concurrently using this DateIntervalFormatter, even for nominally const
-     * functions.
-     *
+     * Gets the date formatter
      * @return the date formatter associated with this date interval formatter.
      * @stable ICU 4.0
      */
@@ -615,7 +609,7 @@ private:
 
     /**
      * default constructor
-     * @internal (private)
+     * @internal ICU 4.0
      */
     DateIntervalFormat();
 
@@ -691,8 +685,6 @@ private:
      * The full pattern used in this fall-back format is the
      * full pattern of the date formatter.
      *
-     * gFormatterMutex must already be locked when calling this function.
-     *
      * @param fromCalendar      calendar set to the from date in date interval
      *                          to be formatted into date interval string
      * @param toCalendar        calendar set to the to date in date interval
@@ -705,7 +697,6 @@ private:
      *                          On output: the offsets of the alignment field.
      * @param status            output param set to success/failure code on exit
      * @return                  Reference to 'appendTo' parameter.
-     * @internal (private)
      */
     UnicodeString& fallbackFormat(Calendar& fromCalendar,
                                   Calendar& toCalendar,
@@ -960,37 +951,6 @@ private:
                         const UnicodeString* firstPart,
                         const UnicodeString* secondPart,
                         UBool laterDateFirst);
-
-    /**
-     * Format 2 Calendars to produce a string.
-     * Implementation of the similar public format function.
-     * Must be called with gFormatterMutex already locked.
-     *
-     * Note: "fromCalendar" and "toCalendar" are not const,
-     * since calendar is not const in  SimpleDateFormat::format(Calendar&),
-     *
-     * @param fromCalendar      calendar set to the from date in date interval
-     *                          to be formatted into date interval string
-     * @param toCalendar        calendar set to the to date in date interval
-     *                          to be formatted into date interval string
-     * @param appendTo          Output parameter to receive result.
-     *                          Result is appended to existing contents.
-     * @param fieldPosition     On input: an alignment field, if desired.
-     *                          On output: the offsets of the alignment field.
-     *                          There may be multiple instances of a given field type
-     *                          in an interval format; in this case the fieldPosition
-     *                          offsets refer to the first instance.
-     * @param status            Output param filled with success/failure status.
-     *                          Caller needs to make sure it is SUCCESS
-     *                          at the function entrance
-     * @return                  Reference to 'appendTo' parameter.
-     * @internal (private)
-     */
-    UnicodeString& formatImpl(Calendar& fromCalendar,
-                              Calendar& toCalendar,
-                              UnicodeString& appendTo,
-                              FieldPosition& fieldPosition,
-                              UErrorCode& status) const ;
 
 
     // from calendar field to pattern letter

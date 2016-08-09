@@ -556,7 +556,7 @@ JSVAL_IS_BOOLEAN_IMPL(jsval_layout l)
 static inline bool
 JSVAL_TO_BOOLEAN_IMPL(jsval_layout l)
 {
-    return l.s.payload.boo;
+    return bool(l.s.payload.boo);
 }
 
 static inline jsval_layout
@@ -564,7 +564,7 @@ BOOLEAN_TO_JSVAL_IMPL(bool b)
 {
     jsval_layout l;
     l.s.tag = JSVAL_TAG_BOOLEAN;
-    l.s.payload.boo = b;
+    l.s.payload.boo = uint32_t(b);
     return l;
 }
 
@@ -1395,7 +1395,7 @@ class Value
     friend jsval_layout (::JSVAL_TO_IMPL)(Value);
     friend Value JS_VALUE_CONSTEXPR (::IMPL_TO_JSVAL)(jsval_layout l);
     friend Value JS_VALUE_CONSTEXPR (JS::UndefinedValue)();
-};
+} JS_HAZ_GC_POINTER;
 
 inline bool
 IsOptimizedPlaceholderMagicValue(const Value& v)

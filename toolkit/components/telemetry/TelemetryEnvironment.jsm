@@ -150,7 +150,7 @@ const DEFAULT_ENVIRONMENT_PREFS = new Map([
   ["layers.componentalpha.enabled", {what: RECORD_PREF_VALUE}],
   ["layers.d3d11.disable-warp", {what: RECORD_PREF_VALUE}],
   ["layers.d3d11.force-warp", {what: RECORD_PREF_VALUE}],
-  ["layers.offmainthreadcomposition.enabled", {what: RECORD_PREF_VALUE}],
+  ["layers.offmainthreadcomposition.force-disabled", {what: RECORD_PREF_VALUE}],
   ["layers.prefer-d3d9", {what: RECORD_PREF_VALUE}],
   ["layers.prefer-opengl", {what: RECORD_PREF_VALUE}],
   ["layout.css.devPixelsPerPx", {what: RECORD_PREF_VALUE}],
@@ -269,7 +269,7 @@ function getGfxField(aPropertyName, aDefault) {
   try {
     // Accessing the field may throw if |aPropertyName| does not exist.
     let gfxProp = gfxInfo[aPropertyName];
-    if (gfxProp !== "") {
+    if (gfxProp !== undefined && gfxProp !== "") {
       return gfxProp;
     }
   } catch (e) {}
@@ -512,7 +512,8 @@ EnvironmentAddonBuilder.prototype = {
     };
 
     let result = {
-      changed: !ObjectUtils.deepEqual(addons, this._environment._currentEnvironment.addons),
+      changed: !this._environment._currentEnvironment.addons ||
+               !ObjectUtils.deepEqual(addons, this._environment._currentEnvironment.addons),
     };
 
     if (result.changed) {
@@ -1336,7 +1337,7 @@ EnvironmentCache.prototype = {
     this._log.trace("_getGFXData - Two display adapters detected.");
 
     gfxData.adapters.push(getGfxAdapter("2"));
-    gfxData.adapters[1].GPUActive = getGfxField("isGPU2Active ", null);
+    gfxData.adapters[1].GPUActive = getGfxField("isGPU2Active", null);
 
     return gfxData;
   },

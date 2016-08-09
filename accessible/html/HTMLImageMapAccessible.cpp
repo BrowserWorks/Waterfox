@@ -30,6 +30,8 @@ HTMLImageMapAccessible::
   ImageAccessibleWrap(aContent, aDoc)
 {
   mType = eImageMapType;
+
+  UpdateChildAreas(false);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -85,9 +87,7 @@ HTMLImageMapAccessible::UpdateChildAreas(bool aDoFireEvents)
   if (!imageMapObj)
     return;
 
-  bool treeChanged = false;
-  AutoTreeMutation mut(this);
-  RefPtr<AccReorderEvent> reorderEvent = new AccReorderEvent(this);
+  TreeMutation mt(this, TreeMutation::kNoEvents & !aDoFireEvents);
 
   // Remove areas that are not a valid part of the image map anymore.
   for (int32_t childIdx = mChildren.Length() - 1; childIdx >= 0; childIdx--) {
@@ -95,14 +95,8 @@ HTMLImageMapAccessible::UpdateChildAreas(bool aDoFireEvents)
     if (area->GetContent()->GetPrimaryFrame())
       continue;
 
-    if (aDoFireEvents) {
-      RefPtr<AccHideEvent> event = new AccHideEvent(area, area->GetContent());
-      mDoc->FireDelayedEvent(event);
-      reorderEvent->AddSubMutationEvent(event);
-    }
-
+    mt.BeforeRemoval(area);
     RemoveChild(area);
-    treeChanged = true;
   }
 
   // Insert new areas into the tree.
@@ -119,22 +113,11 @@ HTMLImageMapAccessible::UpdateChildAreas(bool aDoFireEvents)
         break;
       }
 
-      if (aDoFireEvents) {
-        RefPtr<AccShowEvent> event = new AccShowEvent(area);
-        mDoc->FireDelayedEvent(event);
-        reorderEvent->AddSubMutationEvent(event);
-      }
-
-      treeChanged = true;
+      mt.AfterInsertion(area);
     }
   }
 
-  // Fire reorder event if needed.
-  if (treeChanged && aDoFireEvents)
-    mDoc->FireDelayedEvent(reorderEvent);
-
-  if (!treeChanged)
-    mut.mInvalidationRequired = false;
+  mt.Done();
 }
 
 Accessible*
@@ -149,16 +132,6 @@ HTMLImageMapAccessible::GetChildAccessibleFor(const nsINode* aNode) const
 
   return nullptr;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// HTMLImageMapAccessible: Accessible protected
-
-void
-HTMLImageMapAccessible::CacheChildren()
-{
-  UpdateChildAreas(false);
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // HTMLAreaAccessible
@@ -229,15 +202,6 @@ uint32_t
 HTMLAreaAccessible::EndOffset()
 {
   return IndexInParent() + 1;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// HTMLAreaAccessible: Accessible protected
-
-void
-HTMLAreaAccessible::CacheChildren()
-{
-  // No children for aria accessible.
 }
 
 nsRect

@@ -10,7 +10,6 @@
 #include "jsfriendapi.h"
 
 #include "gc/Barrier.h"
-#include "js/GCHashTable.h"
 
 namespace js {
 
@@ -51,10 +50,16 @@ namespace js {
 //     this point.
 
 // Trace through an edge in the live object graph on behalf of tracing. The
-// effect of tracing the edge depends on the JSTracer being used.
+// effect of tracing the edge depends on the JSTracer being used. For pointer
+// types, |*thingp| must not be null.
 template <typename T>
 void
 TraceEdge(JSTracer* trc, WriteBarrieredBase<T>* thingp, const char* name);
+
+// Trace through an edge in the live object graph on behalf of tracing.
+template <typename T>
+void
+TraceNullableEdge(JSTracer* trc, WriteBarrieredBase<T>* thingp, const char* name);
 
 // Trace through a "root" edge. These edges are the initial edges in the object
 // graph traversal. Root edges are asserted to only be traversed in the initial

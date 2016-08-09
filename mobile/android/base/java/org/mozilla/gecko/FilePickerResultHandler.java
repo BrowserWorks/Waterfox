@@ -91,22 +91,21 @@ class FilePickerResultHandler implements ActivityResultHandler {
 
         final FragmentActivity fa = (FragmentActivity) GeckoAppShell.getGeckoInterface().getActivity();
         final LoaderManager lm = fa.getSupportLoaderManager();
-        // Finally, Video pickers and some file pickers may return a content provider.
-        Cursor cursor = null;
-        try {
-            // Try a query to make sure the expected columns exist
-            final ContentResolver cr = fa.getContentResolver();
-            cursor = cr.query(uri, new String[] { MediaStore.Video.Media.DATA }, null, null, null);
 
-            int index = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
-            if (index >= 0) {
-                lm.initLoader(intent.hashCode(), null, new VideoLoaderCallbacks(uri));
-                return;
-            }
-        } catch(Exception ex) {
-            // We'll try a different loader below
-        } finally {
-            if (cursor != null) {
+        // Finally, Video pickers and some file pickers may return a content provider.
+        final ContentResolver cr = fa.getContentResolver();
+        final Cursor cursor = cr.query(uri, new String[] { MediaStore.Video.Media.DATA }, null, null, null);
+        if (cursor != null) {
+            try {
+                // Try a query to make sure the expected columns exist
+                int index = cursor.getColumnIndex(MediaStore.Video.Media.DATA);
+                if (index >= 0) {
+                    lm.initLoader(intent.hashCode(), null, new VideoLoaderCallbacks(uri));
+                    return;
+                }
+            } catch (Exception ex) {
+                // We'll try a different loader below
+            } finally {
                 cursor.close();
             }
         }
@@ -215,11 +214,12 @@ class FilePickerResultHandler implements ActivityResultHandler {
                 }
 
                 // Now write the data to the temp file
+                FileOutputStream fos = null;
                 try {
                     cacheDir.mkdir();
 
                     File file = File.createTempFile(fileName, fileExt, cacheDir);
-                    FileOutputStream fos = new FileOutputStream(file);
+                    fos = new FileOutputStream(file);
                     InputStream is = cr.openInputStream(uri);
                     byte[] buf = new byte[4096];
                     int len = is.read(buf);
@@ -235,8 +235,14 @@ class FilePickerResultHandler implements ActivityResultHandler {
                     if (tabId > -1 && !TextUtils.isEmpty(tempFile)) {
                         Tabs.registerOnTabsChangedListener(this);
                     }
-                } catch(IOException ex) {
+                } catch (IOException ex) {
                     Log.i(LOGTAG, "Error writing file", ex);
+                } finally {
+                    if (fos != null) {
+                        try {
+                            fos.close();
+                        } catch (IOException e) { /* not much to do here */ }
+                    }
                 }
             } else {
                 sendResult("");
@@ -250,7 +256,7 @@ class FilePickerResultHandler implements ActivityResultHandler {
         // This cleans up our temp file. If it doesn't run, we just hope that Android
         // will eventually does the cleanup for us.
         @Override
-        public void onTabChanged(Tab tab, Tabs.TabEvents msg, Object data) {
+        public void onTabChanged(Tab tab, Tabs.TabEvents msg, String data) {
             if ((tab == null) || (tab.getId() != tabId)) {
                 return;
             }

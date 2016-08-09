@@ -250,7 +250,7 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
                                        const CameraConfiguration& aInitialConfig,
                                        Promise* aPromise,
                                        nsPIDOMWindowInner* aWindow)
-  : DOMMediaStream()
+  : DOMMediaStream(aWindow, nullptr)
   , mCameraControl(nullptr)
   , mAudioChannelAgent(nullptr)
   , mGetCameraPromise(aPromise)
@@ -262,6 +262,7 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
 {
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, this);
   mInput = new CameraPreviewMediaStream(this);
+  mOwnedStream = mInput;
 
   BindToOwner(aWindow);
 
@@ -330,11 +331,6 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
   // to avoid initializing the Owned and Playback streams. This is OK since
   // we are not user/DOM facing anyway.
   CreateAndAddPlaybackStreamListener(mInput);
-
-  MOZ_ASSERT(mWindow, "Shouldn't be created with a null window!");
-  if (mWindow->GetExtantDoc()) {
-    CombineWithPrincipal(mWindow->GetExtantDoc()->NodePrincipal());
-  }
 
   // Register a listener for camera events.
   mListener = new DOMCameraControlListener(this, mInput);
@@ -526,10 +522,17 @@ nsDOMCameraControl::GetCameraStream() const
 
 void
 nsDOMCameraControl::TrackCreated(TrackID aTrackID) {
+  MOZ_ASSERT(NS_IsMainThread());
+  MOZ_RELEASE_ASSERT(mWindow, "Shouldn't have been created with a null window!");
+  nsIPrincipal* principal = mWindow->GetExtantDoc()
+                          ? mWindow->GetExtantDoc()->NodePrincipal()
+                          : nullptr;
+
   // This track is not connected through a port.
   MediaInputPort* inputPort = nullptr;
   dom::VideoStreamTrack* track =
-    new dom::VideoStreamTrack(this, aTrackID, nsString());
+    new dom::VideoStreamTrack(this, aTrackID, aTrackID,
+                              new BasicUnstoppableTrackSource(principal));
   RefPtr<TrackPort> port =
     new TrackPort(inputPort, track,
                   TrackPort::InputPortOwnership::OWNED);

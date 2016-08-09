@@ -8,7 +8,6 @@
 #define gc_Zone_h
 
 #include "mozilla/Atomics.h"
-#include "mozilla/DebugOnly.h"
 #include "mozilla/MemoryReporting.h"
 
 #include "jscntxt.h"
@@ -288,7 +287,7 @@ struct Zone : public JS::shadow::Zone,
      *   is silly
      * And so on.
      */
-    bool suppressObjectMetadataCallback;
+    bool suppressAllocationMetadataBuilder;
 
     js::gc::ArenaLists arenas;
 
@@ -310,6 +309,12 @@ struct Zone : public JS::shadow::Zone,
     using WeakEdges = js::Vector<js::gc::TenuredCell**, 0, js::SystemAllocPolicy>;
     WeakEdges gcWeakRefs;
 
+    // List of non-ephemeron weak containers to sweep during beginSweepingZoneGroup.
+    mozilla::LinkedList<WeakCache<void*>> weakCaches_;
+    void registerWeakCache(WeakCache<void*>* cachep) {
+        weakCaches_.insertBack(cachep);
+    }
+
     /*
      * Mapping from not yet marked keys to a vector of all values that the key
      * maps to in any live weak map.
@@ -321,6 +326,15 @@ struct Zone : public JS::shadow::Zone,
     // This is used during GC while calculating zone groups to record edges that
     // can't be determined by examining this zone by itself.
     ZoneSet gcZoneGroupEdges;
+
+    // Keep track of all TypeDescr and related objects in this compartment.
+    // This is used by the GC to trace them all first when compacting, since the
+    // TypedObject trace hook may access these objects.
+    using TypeDescrObjectSet = js::GCHashSet<js::RelocatablePtrObject,
+                                             js::MovableCellHasher<js::RelocatablePtrObject>,
+                                             js::SystemAllocPolicy>;
+    JS::WeakCache<TypeDescrObjectSet> typeDescrObjects;
+
 
     // Malloc counter to measure memory pressure for GC scheduling. It runs from
     // gcMaxMallocBytes down to zero. This counter should be used only when it's
@@ -357,14 +371,20 @@ struct Zone : public JS::shadow::Zone,
     // True when there are active frames.
     bool active;
 
-    mozilla::DebugOnly<unsigned> gcLastZoneGroupIndex;
+#ifdef DEBUG
+    unsigned gcLastZoneGroupIndex;
+#endif
+
+    static js::HashNumber UniqueIdToHash(uint64_t uid) {
+        return js::HashNumber(uid >> 32) ^ js::HashNumber(uid & 0xFFFFFFFF);
+    }
 
     // Creates a HashNumber based on getUniqueId. Returns false on OOM.
     MOZ_WARN_UNUSED_RESULT bool getHashCode(js::gc::Cell* cell, js::HashNumber* hashp) {
         uint64_t uid;
         if (!getUniqueId(cell, &uid))
             return false;
-        *hashp = js::HashNumber(uid >> 32) ^ js::HashNumber(uid & 0xFFFFFFFF);
+        *hashp = UniqueIdToHash(uid);
         return true;
     }
 
@@ -389,10 +409,24 @@ struct Zone : public JS::shadow::Zone,
         // If the cell was in the nursery, hopefully unlikely, then we need to
         // tell the nursery about it so that it can sweep the uid if the thing
         // does not get tenured.
-        js::AutoEnterOOMUnsafeRegion oomUnsafe;
-        if (!runtimeFromAnyThread()->gc.nursery.addedUniqueIdToCell(cell))
-            oomUnsafe.crash("failed to allocate tracking data for a nursery uid");
+        if (!runtimeFromAnyThread()->gc.nursery.addedUniqueIdToCell(cell)) {
+            uniqueIds_.remove(cell);
+            return false;
+        }
+
         return true;
+    }
+
+    js::HashNumber getHashCodeInfallible(js::gc::Cell* cell) {
+        return UniqueIdToHash(getUniqueIdInfallible(cell));
+    }
+
+    uint64_t getUniqueIdInfallible(js::gc::Cell* cell) {
+        uint64_t uid;
+        js::AutoEnterOOMUnsafeRegion oomUnsafe;
+        if (!getUniqueId(cell, &uid))
+            oomUnsafe.crash("failed to allocate uid");
+        return uid;
     }
 
     // Return true if this cell has a UID associated with it.
@@ -417,9 +451,16 @@ struct Zone : public JS::shadow::Zone,
         uniqueIds_.remove(cell);
     }
 
-    // Off-thread parsing should not result in any UIDs being created.
-    void assertNoUniqueIdsInZone() const {
-        MOZ_ASSERT(uniqueIds_.count() == 0);
+    // When finished parsing off-thread, transfer any UIDs we created in the
+    // off-thread zone into the target zone.
+    void adoptUniqueIds(JS::Zone* source) {
+        js::AutoEnterOOMUnsafeRegion oomUnsafe;
+        for (js::gc::UniqueIdMap::Enum e(source->uniqueIds_); !e.empty(); e.popFront()) {
+            MOZ_ASSERT(!uniqueIds_.has(e.front().key()));
+            if (!uniqueIds_.put(e.front().key(), e.front().value()))
+                oomUnsafe.crash("failed to transfer unique ids from off-main-thread");
+        }
+        source->uniqueIds_.clear();
     }
 
 #ifdef JSGC_HASH_TABLE_CHECKS

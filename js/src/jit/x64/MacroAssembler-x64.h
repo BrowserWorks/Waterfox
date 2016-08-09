@@ -144,6 +144,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     void storeValue(ValueOperand val, BaseIndex dest) {
         storeValue(val, Operand(dest));
     }
+    void storeValue(const Address& src, const Address& dest, Register temp) {
+        loadPtr(src, temp);
+        storePtr(temp, dest);
+    }
     void loadValue(Operand src, ValueOperand val) {
         movq(src, val.valueReg());
     }
@@ -937,11 +941,6 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         MOZ_ASSERT(nextInsn <= globalData);
         uint8_t* target = globalData + globalDataOffset;
         ((int32_t*)nextInsn)[-1] = target - nextInsn;
-    }
-    void memIntToValue(Address Source, Address Dest) {
-        ScratchRegisterScope scratch(asMasm());
-        load32(Source, scratch);
-        storeValue(JSVAL_TYPE_INT32, scratch, Dest);
     }
 
     // Instrumentation for entering and leaving the profiler.

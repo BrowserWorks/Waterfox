@@ -97,10 +97,10 @@ namespace
     NS_IMETHOD Run()
     {
       InternalSMILTimeEvent event(true, mMsg);
-      event.detail = mDetail;
+      event.mDetail = mDetail;
 
       nsPresContext* context = nullptr;
-      nsIDocument* doc = mTarget->GetCurrentDoc();
+      nsIDocument* doc = mTarget->GetUncomposedDoc();
       if (doc) {
         nsCOMPtr<nsIPresShell> shell = doc->GetShell();
         if (shell) {

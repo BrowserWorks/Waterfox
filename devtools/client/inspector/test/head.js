@@ -138,6 +138,20 @@ var selectNode = Task.async(function*(selector, inspector, reason="test") {
 });
 
 /**
+ * Set the inspector's current selection to null so that no node is selected
+ *
+ * @param {InspectorPanel} inspector
+ *        The instance of InspectorPanel currently loaded in the toolbox
+ * @return a promise that resolves when the inspector is updated
+ */
+function clearCurrentNodeSelection(inspector) {
+  info("Clearing the current selection");
+  let updated = inspector.once("inspector-updated");
+  inspector.selection.setNodeFront(null);
+  return updated;
+}
+
+/**
  * Open the inspector in a tab with given URL.
  * @param {string} url  The URL to open.
  * @param {String} hostType Optional hostType, as defined in Toolbox.HostType
@@ -210,12 +224,13 @@ var clickOnInspectMenuItem = Task.async(function*(testActor, selector) {
 /**
  * Open the toolbox, with the inspector tool visible, and the one of the sidebar
  * tabs selected.
- * @param {String} id The ID of the sidebar tab to be opened
- * @param {String} hostType Optional hostType, as defined in Toolbox.HostType
+ *
+ * @param {String} id
+ *        The ID of the sidebar tab to be opened
  * @return a promise that resolves when the inspector is ready and the tab is
  * visible and ready
  */
-var openInspectorSidebarTab = Task.async(function*(id, hostType) {
+var openInspectorSidebarTab = Task.async(function* (id) {
   let {toolbox, inspector, testActor} = yield openInspector();
 
   info("Selecting the " + id + " sidebar");
@@ -227,6 +242,66 @@ var openInspectorSidebarTab = Task.async(function*(id, hostType) {
     testActor
   };
 });
+
+/**
+ * Open the toolbox, with the inspector tool visible, and the rule-view
+ * sidebar tab selected.
+ *
+ * @return a promise that resolves when the inspector is ready and the rule view
+ * is visible and ready
+ */
+function openRuleView() {
+  return openInspectorSidebarTab("ruleview").then(data => {
+    return {
+      toolbox: data.toolbox,
+      inspector: data.inspector,
+      testActor: data.testActor,
+      view: data.inspector.ruleview.view
+    };
+  });
+}
+
+/**
+ * Open the toolbox, with the inspector tool visible, and the computed-view
+ * sidebar tab selected.
+ *
+ * @return a promise that resolves when the inspector is ready and the computed
+ * view is visible and ready
+ */
+function openComputedView() {
+  return openInspectorSidebarTab("computedview").then(data => {
+    return {
+      toolbox: data.toolbox,
+      inspector: data.inspector,
+      testActor: data.testActor,
+      view: data.inspector.computedview.view
+    };
+  });
+}
+
+/**
+ * Select the rule view sidebar tab on an already opened inspector panel.
+ *
+ * @param {InspectorPanel} inspector
+ *        The opened inspector panel
+ * @return {CssRuleView} the rule view
+ */
+function selectRuleView(inspector) {
+  inspector.sidebar.select("ruleview");
+  return inspector.ruleview.view;
+}
+
+/**
+ * Select the computed view sidebar tab on an already opened inspector panel.
+ *
+ * @param {InspectorPanel} inspector
+ *        The opened inspector panel
+ * @return {CssComputedView} the computed view
+ */
+function selectComputedView(inspector) {
+  inspector.sidebar.select("computedview");
+  return inspector.computedview.view;
+}
 
 /**
  * Get the NodeFront for a node that matches a given css selector, via the
@@ -475,14 +550,36 @@ const getHighlighterHelperFor = (type) => Task.async(
 
     let prefix = "";
 
+    // Internals for mouse events
+    let prevX, prevY;
+
+    // Highlighted node
+    let  highlightedNode = null;
+
     return {
       set prefix(value) {
         prefix = value;
       },
+      get highlightedNode() {
+        if (!highlightedNode) {
+          return null;
+        }
+
+        return {
+          getComputedStyle: function*(options = {}) {
+            return yield inspector.pageStyle.getComputed(
+              highlightedNode, options);
+          }
+        };
+      },
 
       show: function*(selector = ":root") {
-        let node = yield getNodeFront(selector, inspector);
-        yield highlighter.show(node);
+        highlightedNode = yield getNodeFront(selector, inspector);
+        return yield highlighter.show(highlightedNode);
+      },
+
+      hide: function*() {
+        yield highlighter.hide();
       },
 
       isElementHidden: function*(id) {
@@ -501,10 +598,35 @@ const getHighlighterHelperFor = (type) => Task.async(
       },
 
       synthesizeMouse: function*(options) {
+        options = Object.assign({selector: ":root"}, options);
         yield testActor.synthesizeMouse(options);
       },
 
+      // This object will synthesize any "mouse" prefixed event to the
+      // `testActor`, using the name of method called as suffix for the
+      // event's name.
+      // If no x, y coords are given, the previous ones are used.
+      //
+      // For example:
+      //   mouse.down(10, 20); // synthesize "mousedown" at 10,20
+      //   mouse.move(20, 30); // synthesize "mousemove" at 20,30
+      //   mouse.up();         // synthesize "mouseup" at 20,30
+      mouse: new Proxy({}, {
+        get: (target, name) =>
+          function*(x = prevX, y = prevY) {
+            prevX = x;
+            prevY = y;
+            yield testActor.synthesizeMouse({
+              selector: ":root", x, y, options: {type: "mouse" + name}});
+          }
+      }),
+
+      reflow: function*() {
+        yield testActor.reflow();
+      },
+
       finalize: function*() {
+        highlightedNode = null;
         yield highlighter.finalize();
       }
     };
@@ -607,4 +729,51 @@ function waitForClipboard(setup, expected) {
   let def = promise.defer();
   SimpleTest.waitForClipboard(expected, setup, def.resolve, def.reject);
   return def.promise;
+}
+
+/**
+ * Checks if document's active element is within the given element.
+ * @param  {HTMLDocument}  doc document with active element in question
+ * @param  {DOMNode}       container element tested on focus containment
+ * @return {Boolean}
+ */
+function containsFocus(doc, container) {
+  let elm = doc.activeElement;
+  while (elm) {
+    if (elm === container) {
+      return true;
+    }
+    elm = elm.parentNode;
+  }
+  return false;
+}
+
+/**
+ * Listen for a new tab to open and return a promise that resolves when one
+ * does and completes the load event.
+ *
+ * @return a promise that resolves to the tab object
+ */
+var waitForTab = Task.async(function*() {
+  info("Waiting for a tab to open");
+  yield once(gBrowser.tabContainer, "TabOpen");
+  let tab = gBrowser.selectedTab;
+  let browser = tab.linkedBrowser;
+  yield once(browser, "load", true);
+  info("The tab load completed");
+  return tab;
+});
+
+/**
+ * Simulate the key input for the given input in the window.
+ *
+ * @param {String} input
+ *        The string value to input
+ * @param {Window} win
+ *        The window containing the panel
+ */
+function synthesizeKeys(input, win) {
+  for (let key of input.split("")) {
+    EventUtils.synthesizeKey(key, {}, win);
+  }
 }

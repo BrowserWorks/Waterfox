@@ -1,7 +1,8 @@
 [
 {
-"size": 80458572,
-"digest": "e5101f9dee1e462f6cbd3897ea57eede41d23981825c7b20d91d23ab461875d54d3dfc24999aa58a31e8b01f49fb3140e05ffe5af2957ef1d1afb89fd0dfe1ad",
+"version": "gcc 4.8.5 + PR64905",
+"size": 80160264,
+"digest": "c1a9dc9da289b8528874d16300b9d13a997cec99195bb0bc46ff665216d8535d6d6cb5af6b4b1f2749af6815dab12e703fdb3849014e5c23a70eff351a0baf4e",
 "algorithm": "sha512", 
 "filename": "gcc.tar.xz",
 "unpack": true
@@ -15,8 +16,9 @@
 "unpack": true
 },
 {
-"size": 80164520,
-"digest": "26fd5301aaf6174a0e4f2ac3a8d19f39573f78a051aa78e876c065d60421b2b62207c11fbf1f20f92ba61acc4b9ce58d05409bf5af886943891b04c3d22f5e04",
+"version": "rustc 1.8.0 (db2939409 2016-04-11)",
+"size": 123218320,
+"digest": "7afcd7b39c4d5277db6b28951602aff4c698102ba45d3d811b353ca7446074beceebf03a2a529e323af19d73db4acbe96ec2bdad44def2e218ed36f55e82cab2",
 "algorithm": "sha512",
 "filename": "rustc.tar.xz",
 "unpack": true

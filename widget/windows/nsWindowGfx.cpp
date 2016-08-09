@@ -24,6 +24,7 @@ using mozilla::plugins::PluginInstanceParent;
 #include "nsWindowGfx.h"
 #include "nsAppRunner.h"
 #include <windows.h>
+#include "gfxEnv.h"
 #include "gfxImageSurface.h"
 #include "gfxUtils.h"
 #include "gfxWindowsSurface.h"
@@ -42,8 +43,8 @@ using mozilla::plugins::PluginInstanceParent;
 #include "nsDebug.h"
 #include "nsIXULRuntime.h"
 
-#include "mozilla/layers/CompositorParent.h"
-#include "mozilla/layers/CompositorChild.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/layers/CompositorBridgeChild.h"
 #include "ClientLayerManager.h"
 
 #include "nsUXThemeData.h"
@@ -170,7 +171,7 @@ nsIWidgetListener* nsWindow::GetPaintListener()
 void nsWindow::ForcePresent()
 {
   if (mResizeState != RESIZING) {
-    if (CompositorChild* remoteRenderer = GetRemoteRenderer()) {
+    if (CompositorBridgeChild* remoteRenderer = GetRemoteRenderer()) {
       remoteRenderer->SendForcePresent();
     }
   }
@@ -232,12 +233,12 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
 
   ClientLayerManager *clientLayerManager = GetLayerManager()->AsClientLayerManager();
 
-  if (clientLayerManager && mCompositorParent &&
+  if (clientLayerManager && mCompositorBridgeParent &&
       !mBounds.IsEqualEdges(mLastPaintBounds))
   {
     // Do an early async composite so that we at least have something on the
     // screen in the right place, even if the content is out of date.
-    mCompositorParent->ScheduleRenderOnCompositorThread();
+    mCompositorBridgeParent->ScheduleRenderOnCompositorThread();
   }
   mLastPaintBounds = mBounds;
 
@@ -283,7 +284,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
 #endif
   nsIntRegion region = GetRegionToPaint(forceRepaint, ps, hDC);
 
-  if (clientLayerManager && mCompositorParent) {
+  if (clientLayerManager && mCompositorBridgeParent) {
     // We need to paint to the screen even if nothing changed, since if we
     // don't have a compositing window manager, our pixels could be stale.
     clientLayerManager->SetNeedsComposite(true);
@@ -302,8 +303,8 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
     return false;
   }
 
-  if (clientLayerManager && mCompositorParent && clientLayerManager->NeedsComposite()) {
-    mCompositorParent->ScheduleRenderOnCompositorThread();
+  if (clientLayerManager && mCompositorBridgeParent && clientLayerManager->NeedsComposite()) {
+    mCompositorBridgeParent->ScheduleRenderOnCompositorThread();
     clientLayerManager->SetNeedsComposite(false);
   }
 
@@ -317,7 +318,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
     debug_DumpPaintEvent(stdout,
                          this,
                          region,
-                         nsAutoCString("noname"),
+                         "noname",
                          (int32_t) mWnd);
 #endif // WIDGET_DEBUG_OUTPUT
 
@@ -385,7 +386,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
             gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(targetSurface,
                                                                    IntSize(paintRect.right - paintRect.left,
                                                                    paintRect.bottom - paintRect.top));
-          if (!dt) {
+          if (!dt || !dt->IsValid()) {
             gfxWarning() << "nsWindow::OnPaint failed in CreateDrawTargetForSurface";
             return false;
           }
@@ -414,7 +415,8 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
 #endif
           }
 
-          RefPtr<gfxContext> thebesContext = new gfxContext(dt);
+          RefPtr<gfxContext> thebesContext = gfxContext::ForDrawTarget(dt);
+          MOZ_ASSERT(thebesContext); // already checked draw target above
 
           {
             AutoLayerManagerSetup
@@ -530,7 +532,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
         {
           result = listener->PaintWindow(
             this, LayoutDeviceIntRegion::FromUnknownRegion(region));
-          if (gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled()) {
+          if (!gfxEnv::DisableForcePresent() && gfxWindowsPlatform::GetPlatform()->DwmCompositionEnabled()) {
             nsCOMPtr<nsIRunnable> event =
               NS_NewRunnableMethod(this, &nsWindow::ForcePresent);
             NS_DispatchToMainThread(event);

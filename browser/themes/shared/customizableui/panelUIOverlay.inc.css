@@ -106,23 +106,37 @@
   border: none;
 }
 
+#PanelUI-menu-button[badge-status="download-success"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
+  display: none;
+}
+
 #PanelUI-menu-button[badge-status="update-succeeded"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
   background: #74BF43 url(chrome://browser/skin/update-badge.svg) no-repeat center;
   height: 13px;
 }
 
+#PanelUI-menu-button[badge-status="download-severe"] > .toolbarbutton-badge-stack > .toolbarbutton-badge,
 #PanelUI-menu-button[badge-status="update-failed"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
   background: #D90000 url(chrome://browser/skin/update-badge-failed.svg) no-repeat center;
   height: 13px;
 }
 
+#PanelUI-menu-button[badge-status="download-warning"] > .toolbarbutton-badge-stack > .toolbarbutton-badge,
 #PanelUI-menu-button[badge-status="fxa-needs-authentication"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
-  background: transparent url(chrome://browser/skin/warning.svg) no-repeat center;
   height: 13px;
   box-shadow: none;
   filter: drop-shadow(0 1px 0 hsla(206, 50%, 10%, .15));
 }
 
+#PanelUI-menu-button[badge-status="download-warning"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
+  background: #FFBF00 url(chrome://browser/skin/update-badge-failed.svg) no-repeat center;
+}
+
+#PanelUI-menu-button[badge-status="fxa-needs-authentication"] > .toolbarbutton-badge-stack > .toolbarbutton-badge {
+  background: transparent url(chrome://browser/skin/warning.svg) no-repeat center;
+}
+
+#PanelUI-menu-button[badge-status="download-warning"] > .toolbarbutton-badge-stack > .toolbarbutton-badge:-moz-window-inactive,
 #PanelUI-menu-button[badge-status="fxa-needs-authentication"] > .toolbarbutton-badge-stack > .toolbarbutton-badge:-moz-window-inactive {
   filter: none;
 }
@@ -253,6 +267,14 @@ panelmultiview[nosubviews=true] > .panel-viewcontainer > .panel-viewstack > .pan
 /* Give WebExtension stand-alone panels extra width for Chrome compatibility */
 .cui-widget-panel[viewId^=PanelUI-webext-] .panel-mainview {
   max-width: 800px;
+}
+
+.cui-widget-panel[viewId^=PanelUI-webext-] > .panel-arrowcontainer > .panel-arrowcontent {
+  padding: 0;
+}
+
+.cui-widget-panelview[id^=PanelUI-webext-] {
+  border-radius: 3.5px;
 }
 
 panelview:not([mainview]) .toolbarbutton-text,
@@ -667,8 +689,16 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
   list-style-image: url(chrome://browser/skin/sync-horizontalbar.png);
 }
 
+#PanelUI-remotetabs {
+  --panel-ui-sync-illustration-height: 157.5px;
+}
+
+.PanelUI-remotetabs-instruction-title,
 .PanelUI-remotetabs-instruction-label,
 #PanelUI-remotetabs-mobile-promo {
+  /* If you change the margin here, the min-height of the synced tabs panel
+    (e.g. #PanelUI-remotetabs[mainview] #PanelUI-remotetabs-setupsync, etc) may
+    need adjusting (see bug 1248506) */
   margin: 15px;
   text-align: center;
   text-shadow: none;
@@ -676,9 +706,16 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
   color: GrayText;
 }
 
+.PanelUI-remotetabs-instruction-title {
+  font-size: 1.3em;
+}
+
 /* The boxes with "instructions" get extra top and bottom padding for space
    around the illustration and buttons */
 .PanelUI-remotetabs-instruction-box {
+  /* If you change the padding here, the min-height of the synced tabs panel
+    (e.g. #PanelUI-remotetabs[mainview] #PanelUI-remotetabs-setupsync, etc) may
+    need adjusting (see bug 1248506) */
   padding-bottom: 30px;
   padding-top: 15px;
 }
@@ -690,6 +727,9 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
      is used for buttons in the toolbox overrides. See bug 1238531 for details */
   color: white !important;
   border-radius: 2px;
+  /* If you change the margin or padding below, the min-height of the synced tabs
+     panel (e.g. #PanelUI-remotetabs[mainview] #PanelUI-remotetabs-setupsync,
+     etc) may need adjusting (see bug 1248506) */
   margin-top: 10px;
   margin-bottom: 10px;
   padding: 8px;
@@ -713,7 +753,7 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
 }
 
 .fxaSyncIllustration {
-  width: 180px;
+  height: var(--panel-ui-sync-illustration-height);
   list-style-image: url(chrome://browser/skin/fxa/sync-illustration.svg);
 }
 
@@ -734,7 +774,12 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
 #PanelUI-remotetabs[mainview] #PanelUI-remotetabs-reauthsync,
 #PanelUI-remotetabs[mainview] #PanelUI-remotetabs-nodevicespane,
 #PanelUI-remotetabs[mainview] #PanelUI-remotetabs-tabsdisabledpane {
-  min-height: 33em;
+  min-height: calc(var(--panel-ui-sync-illustration-height) +
+                   20px + /* margin of .PanelUI-remotetabs-prefs-button */
+                   16px + /* padding of .PanelUI-remotetabs-prefs-button */
+                   30px + /* margin of .PanelUI-remotetabs-instruction-label */
+                   30px + 15px + /* padding of .PanelUI-remotetabs-instruction-box */
+                   11em);
 }
 
 #PanelUI-remotetabs-tabslist > label[itemtype="client"] {
@@ -747,6 +792,10 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
 #PanelUI-remotetabs-deck:not([selectedIndex="2"]) > #PanelUI-remotetabs-fetching,
 #PanelUI-remotetabs-deck:not([selectedIndex="3"]) > #PanelUI-remotetabs-nodevicespane {
   visibility: collapse;
+}
+
+#PanelUI-remotetabs-main[devices-status="single"] > #PanelUI-remotetabs-buttons {
+  display: none;
 }
 
 #PanelUI-fxa-icon[syncstatus="active"] {
@@ -817,7 +866,7 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
 }
 
 #PanelUI-footer-fxa[fxaprofileimage="enabled"] > #PanelUI-fxa-status > #PanelUI-fxa-avatar {
-  list-style-image: url(chrome://browser/skin/fxa/default-avatar.png)
+  list-style-image: url(chrome://browser/skin/fxa/default-avatar.svg);
 }
 
 #PanelUI-customize:hover,
@@ -1022,7 +1071,8 @@ panelview .toolbarbutton-1,
 }
 
 panelview .toolbarbutton-1,
-.widget-overflow-list .toolbarbutton-1 {
+.widget-overflow-list .toolbarbutton-1:not(:first-child),
+.widget-overflow-list .toolbaritem-combined-buttons:not(:first-child) {
   margin-top: 6px;
 }
 
@@ -1118,7 +1168,8 @@ menuitem.panel-subview-footer@menuStateActive@,
 .cui-widget-panelview menuseparator {
   -moz-appearance: none;
   min-height: 0;
-  border-top: 1px solid hsla(210,4%,10%,.15);
+  border-top: 1px solid var(--panel-separator-color);
+  border-bottom: none;
   margin: 6px 0;
   padding: 0;
 }
@@ -1311,7 +1362,7 @@ toolbarpaletteitem[haswideitem][place="panel"] + toolbarpaletteitem[haswideitem]
   margin: .5em 0;
   width: 1px;
   height: auto;
-  background: hsla(210,4%,10%,.15);
+  background: var(--panel-separator-color);
   transition-property: margin;
   transition-duration: 10ms;
   transition-timing-function: ease;
@@ -1608,10 +1659,6 @@ menuitem[checked="true"].subviewbutton > .menu-iconic-left {
 
   #PanelUI-update-status {
     list-style-image: url(chrome://branding/content/icon32.png);
-  }
-
-  #PanelUI-footer-fxa[fxaprofileimage="enabled"] > #PanelUI-fxa-status > #PanelUI-fxa-avatar {
-    list-style-image: url(chrome://browser/skin/fxa/default-avatar@2x.png)
   }
 
   #PanelUI-fxa-label,

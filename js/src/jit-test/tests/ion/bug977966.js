@@ -1,5 +1,4 @@
-setJitCompilerOption("baseline.warmup.trigger", 10);
-setJitCompilerOption("ion.warmup.trigger", 20);
+// |jit-test| --ion-eager
 
 function join_check() {
     var lengthWasCalled = false;

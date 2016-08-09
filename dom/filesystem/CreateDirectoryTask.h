@@ -14,21 +14,19 @@
 namespace mozilla {
 namespace dom {
 
+class FileSystemCreateDirectoryParams;
 class Promise;
 
-class CreateDirectoryTask final
-  : public FileSystemTaskBase
+class CreateDirectoryTaskChild final : public FileSystemTaskChildBase
 {
 public:
-  CreateDirectoryTask(FileSystemBase* aFileSystem,
-                      const nsAString& aPath,
-                      ErrorResult& aRv);
-  CreateDirectoryTask(FileSystemBase* aFileSystem,
-                      const FileSystemCreateDirectoryParams& aParam,
-                      FileSystemRequestParent* aParent);
+  static already_AddRefed<CreateDirectoryTaskChild>
+  Create(FileSystemBase* aFileSystem,
+         nsIFile* aTargetPath,
+         ErrorResult& aRv);
 
   virtual
-  ~CreateDirectoryTask();
+  ~CreateDirectoryTaskChild();
 
   already_AddRefed<Promise>
   GetPromise();
@@ -36,25 +34,52 @@ public:
   virtual void
   GetPermissionAccessType(nsCString& aAccess) const override;
 
-protected:
-  virtual FileSystemParams
-  GetRequestParams(const nsString& aFileSystem) const override;
-
-  virtual FileSystemResponseValue
-  GetSuccessRequestResult() const override;
-
-  virtual void
-  SetSuccessRequestResult(const FileSystemResponseValue& aValue) override;
-
-  virtual nsresult
-  Work() override;
-
   virtual void
   HandlerCallback() override;
 
+protected:
+  virtual FileSystemParams
+  GetRequestParams(const nsString& aSerializedDOMPath,
+                   ErrorResult& aRv) const override;
+
+  virtual void
+  SetSuccessRequestResult(const FileSystemResponseValue& aValue,
+                          ErrorResult& aRv) override;
+
+
 private:
+  CreateDirectoryTaskChild(FileSystemBase* aFileSystem,
+                           nsIFile* aTargetPath);
+
   RefPtr<Promise> mPromise;
-  nsString mTargetRealPath;
+  nsCOMPtr<nsIFile> mTargetPath;
+};
+
+class CreateDirectoryTaskParent final : public FileSystemTaskParentBase
+{
+public:
+  static already_AddRefed<CreateDirectoryTaskParent>
+  Create(FileSystemBase* aFileSystem,
+         const FileSystemCreateDirectoryParams& aParam,
+         FileSystemRequestParent* aParent,
+         ErrorResult& aRv);
+
+  virtual void
+  GetPermissionAccessType(nsCString& aAccess) const override;
+
+protected:
+  virtual nsresult
+  IOWork() override;
+
+  virtual FileSystemResponseValue
+  GetSuccessRequestResult(ErrorResult& aRv) const override;
+
+private:
+  CreateDirectoryTaskParent(FileSystemBase* aFileSystem,
+                            const FileSystemCreateDirectoryParams& aParam,
+                            FileSystemRequestParent* aParent);
+
+  nsCOMPtr<nsIFile> mTargetPath;
 };
 
 } // namespace dom

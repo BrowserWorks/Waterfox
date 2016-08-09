@@ -35,7 +35,6 @@
 #include "nsTArray.h"
 #include "prsystem.h"
 #include "ShutdownTracker.h"
-#include "SVGImageContext.h"
 
 using std::max;
 using std::min;
@@ -181,7 +180,7 @@ public:
 
   bool IsDecoded() const
   {
-    return !IsPlaceholder() && mSurface->IsImageComplete();
+    return !IsPlaceholder() && mSurface->IsFinished();
   }
 
   // A helper type used by SurfaceCacheImpl::CollectSizeOfSurfaces.

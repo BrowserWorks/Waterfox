@@ -109,7 +109,7 @@ function RegExpBuiltinExec(R, S, forTest) {
 
     // Step 1-2 (skipped).
 
-    // Steps 4-5.
+    // Step 4-5.
     var lastIndex = ToLength(R.lastIndex);
 
     // Steps 6-7.
@@ -122,7 +122,7 @@ function RegExpBuiltinExec(R, S, forTest) {
     if (!global && !sticky) {
         lastIndex = 0;
     } else {
-        if (lastIndex < 0 || lastIndex > S.length) {
+        if (lastIndex > S.length) {
             // Steps 15.a.i-ii, 15.c.i.1-2.
             R.lastIndex = 0;
             return forTest ? false : null;

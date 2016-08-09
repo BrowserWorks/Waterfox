@@ -217,16 +217,19 @@ class ShapeTable {
         return mallocSizeOf(this) + mallocSizeOf(entries_);
     }
 
-    /*
-     * NB: init and change are fallible but do not report OOM, so callers can
-     * cope or ignore. They do however use the context's calloc method in
-     * order to update the malloc counter on success.
-     */
+    // init() is fallible and reports OOM to the context.
     bool init(ExclusiveContext* cx, Shape* lastProp);
-    bool change(int log2Delta, ExclusiveContext* cx);
+
+    // change() is fallible but does not report OOM.
+    bool change(ExclusiveContext* cx, int log2Delta);
 
     template<MaybeAdding Adding>
     Entry& search(jsid id);
+
+    void trace(JSTracer* trc);
+#ifdef JSGC_HASH_TABLE_CHECKS
+    void checkAfterMovingGC();
+#endif
 
   private:
     Entry& getEntry(uint32_t i) const {
@@ -449,6 +452,7 @@ class BaseShape : public gc::TenuredCell
     static const JS::TraceKind TraceKind = JS::TraceKind::BaseShape;
 
     void traceChildren(JSTracer* trc);
+    void traceChildrenSkipShapeTable(JSTracer* trc);
 
     void fixupAfterMovingGC() {}
 
@@ -459,6 +463,8 @@ class BaseShape : public gc::TenuredCell
                       "Things inheriting from gc::Cell must have a size that's "
                       "a multiple of gc::CellSize");
     }
+
+    void traceShapeTable(JSTracer* trc);
 };
 
 class UnownedBaseShape : public BaseShape {};
@@ -535,6 +541,7 @@ class Shape : public gc::TenuredCell
     friend struct StackBaseShape;
     friend struct StackShape;
     friend struct JS::ubi::Concrete<Shape>;
+    friend class js::gc::RelocationOverlay;
 
   protected:
     HeapPtrBaseShape    base_;
@@ -1079,31 +1086,29 @@ struct InitialShapeEntry
      * certain classes (e.g. String, RegExp) which may add certain baked-in
      * properties.
      */
-    ReadBarrieredShape shape;
+    ReadBarriered<Shape*> shape;
 
     /*
      * Matching prototype for the entry. The shape of an object determines its
      * prototype, but the prototype cannot be determined from the shape itself.
      */
-    TaggedProto proto;
+    ReadBarriered<TaggedProto> proto;
 
     /* State used to determine a match on an initial shape. */
     struct Lookup {
         const Class* clasp;
-        TaggedProto hashProto;
-        TaggedProto matchProto;
+        TaggedProto proto;
         uint32_t nfixed;
         uint32_t baseFlags;
 
         Lookup(const Class* clasp, TaggedProto proto, uint32_t nfixed, uint32_t baseFlags)
-          : clasp(clasp),
-            hashProto(proto), matchProto(proto),
-            nfixed(nfixed), baseFlags(baseFlags)
+          : clasp(clasp), proto(proto), nfixed(nfixed), baseFlags(baseFlags)
         {}
     };
 
     inline InitialShapeEntry();
-    inline InitialShapeEntry(const ReadBarrieredShape& shape, TaggedProto proto);
+    inline InitialShapeEntry(const ReadBarriered<Shape*>& shape,
+                             const ReadBarriered<TaggedProto>& proto);
 
     inline Lookup getLookup() const;
 

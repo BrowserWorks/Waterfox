@@ -17,6 +17,7 @@
 #include "gc/Statistics.h"
 #include "gc/StoreBuffer.h"
 #include "gc/Tracer.h"
+#include "js/GCAnnotations.h"
 
 namespace js {
 
@@ -147,6 +148,11 @@ class GCSchedulingTunables
     bool dynamicMarkSliceEnabled_;
 
     /*
+     * Controls whether painting can trigger IGC slices.
+     */
+    bool refreshFrameSlicesEnabled_;
+
+    /*
      * Controls the number of empty chunks reserved for future allocation.
      */
     uint32_t minEmptyChunkCount_;
@@ -166,6 +172,7 @@ class GCSchedulingTunables
         highFrequencyHeapGrowthMin_(1.5),
         lowFrequencyHeapGrowth_(1.5),
         dynamicMarkSliceEnabled_(false),
+        refreshFrameSlicesEnabled_(true),
         minEmptyChunkCount_(1),
         maxEmptyChunkCount_(30)
     {}
@@ -182,6 +189,7 @@ class GCSchedulingTunables
     double highFrequencyHeapGrowthMin() const { return highFrequencyHeapGrowthMin_; }
     double lowFrequencyHeapGrowth() const { return lowFrequencyHeapGrowth_; }
     bool isDynamicMarkSliceEnabled() const { return dynamicMarkSliceEnabled_; }
+    bool areRefreshFrameSlicesEnabled() const { return refreshFrameSlicesEnabled_; }
     unsigned minEmptyChunkCount(const AutoLockGC&) const { return minEmptyChunkCount_; }
     unsigned maxEmptyChunkCount() const { return maxEmptyChunkCount_; }
 
@@ -650,7 +658,8 @@ class GCRuntime
 
     uint64_t nextCellUniqueId() {
         MOZ_ASSERT(nextCellUniqueId_ > 0);
-        return nextCellUniqueId_++;
+        uint64_t uid = ++nextCellUniqueId_;
+        return uid;
     }
 
   public:
@@ -672,7 +681,7 @@ class GCRuntime
     bool onBackgroundThread() { return helperState.onBackgroundThread(); }
 
     bool currentThreadOwnsGCLock() {
-        return lockOwner.value == PR_GetCurrentThread();
+        return lockOwner == PR_GetCurrentThread();
     }
 
 #endif // DEBUG
@@ -684,15 +693,15 @@ class GCRuntime
     void lockGC() {
         PR_Lock(lock);
 #ifdef DEBUG
-        MOZ_ASSERT(!lockOwner.value);
-        lockOwner.value = PR_GetCurrentThread();
+        MOZ_ASSERT(!lockOwner);
+        lockOwner = PR_GetCurrentThread();
 #endif
     }
 
     void unlockGC() {
 #ifdef DEBUG
-        MOZ_ASSERT(lockOwner.value == PR_GetCurrentThread());
-        lockOwner.value = nullptr;
+        MOZ_ASSERT(lockOwner == PR_GetCurrentThread());
+        lockOwner = nullptr;
 #endif
         PR_Unlock(lock);
     }
@@ -725,7 +734,7 @@ class GCRuntime
         MOZ_ASSERT(disableStrictProxyCheckingCount > 0);
         --disableStrictProxyCheckingCount;
     }
-#endif
+#endif // DEBUG
 
     void setAlwaysPreserveCode() { alwaysPreserveCode = true; }
 
@@ -839,9 +848,10 @@ class GCRuntime
     bool isVerifyPreBarriersEnabled() const { return false; }
 #endif
 
-    // Free certain LifoAlloc blocks from the background sweep thread.
+    // Free certain LifoAlloc blocks when it is safe to do so.
     void freeUnusedLifoBlocksAfterSweeping(LifoAlloc* lifo);
     void freeAllLifoBlocksAfterSweeping(LifoAlloc* lifo);
+    void freeAllLifoBlocksAfterMinorGC(LifoAlloc* lifo);
 
     // Public here for ReleaseArenaLists and FinalizeTypedArenas.
     void releaseArena(Arena* arena, const AutoLockGC& lock);
@@ -869,7 +879,7 @@ class GCRuntime
         Finished
     };
 
-    void minorGCImpl(JS::gcreason::Reason reason, Nursery::ObjectGroupList* pretenureGroups);
+    void minorGCImpl(JS::gcreason::Reason reason, Nursery::ObjectGroupList* pretenureGroups) JS_HAZ_GC_CALL;
 
     // For ArenaLists::allocateFromArena()
     friend class ArenaLists;
@@ -915,7 +925,7 @@ class GCRuntime
     bool checkIfGCAllowedInCurrentState(JS::gcreason::Reason reason);
 
     gcstats::ZoneGCStats scanZonesBeforeGC();
-    void collect(bool nonincrementalByAPI, SliceBudget budget, JS::gcreason::Reason reason);
+    void collect(bool nonincrementalByAPI, SliceBudget budget, JS::gcreason::Reason reason) JS_HAZ_GC_CALL;
     bool gcCycle(bool nonincrementalByAPI, SliceBudget& budget, JS::gcreason::Reason reason);
     void incrementalCollectSlice(SliceBudget& budget, JS::gcreason::Reason reason);
 
@@ -960,8 +970,8 @@ class GCRuntime
     void sweepZoneAfterCompacting(Zone* zone);
     bool relocateArenas(Zone* zone, JS::gcreason::Reason reason, Arena*& relocatedListOut,
                         SliceBudget& sliceBudget);
-    void updateAllCellPointersParallel(MovingTracer* trc, Zone* zone);
-    void updateAllCellPointersSerial(MovingTracer* trc, Zone* zone);
+    void updateTypeDescrObjects(MovingTracer* trc, Zone* zone);
+    void updateAllCellPointers(MovingTracer* trc, Zone* zone);
     void updatePointersToRelocatedCells(Zone* zone);
     void protectAndHoldArenas(Arena* arenaList);
     void unprotectHeldRelocatedArenas();
@@ -1030,7 +1040,7 @@ class GCRuntime
     size_t maxMallocBytes;
 
     // An incrementing id used to assign unique ids to cells that require one.
-    uint64_t nextCellUniqueId_;
+    mozilla::Atomic<uint64_t, mozilla::ReleaseAcquire> nextCellUniqueId_;
 
     /*
      * Number of the committed arenas in all GC chunks including empty chunks.
@@ -1116,13 +1126,15 @@ class GCRuntime
     /* The initial GC reason, taken from the first slice. */
     JS::gcreason::Reason initialReason;
 
+#ifdef DEBUG
     /*
      * If this is 0, all cross-compartment proxies must be registered in the
      * wrapper map. This checking must be disabled temporarily while creating
      * new wrappers. When non-zero, this records the recursion depth of wrapper
      * creation.
      */
-    mozilla::DebugOnly<uintptr_t> disableStrictProxyCheckingCount;
+    uintptr_t disableStrictProxyCheckingCount;
+#endif
 
     /*
      * The current incremental GC phase. This is also used internally in
@@ -1147,9 +1159,15 @@ class GCRuntime
 
     /*
      * Free LIFO blocks are transferred to this allocator before being freed on
-     * the background GC thread.
+     * the background GC thread after sweeping.
      */
-    LifoAlloc freeLifoAlloc;
+    LifoAlloc blocksToFreeAfterSweeping;
+
+    /*
+     * Free LIFO blocks are transferred to this allocator before being freed
+     * after minor GC.
+     */
+    LifoAlloc blocksToFreeAfterMinorGC;
 
     /* Index of current zone group (for stats). */
     unsigned zoneGroupIndex;
@@ -1321,7 +1339,9 @@ class GCRuntime
 
     /* Synchronize GC heap access between main thread and GCHelperState. */
     PRLock* lock;
-    mozilla::DebugOnly<mozilla::Atomic<PRThread*>> lockOwner;
+#ifdef DEBUG
+    mozilla::Atomic<PRThread*> lockOwner;
+#endif
 
     BackgroundAllocTask allocTask;
     GCHelperState helperState;

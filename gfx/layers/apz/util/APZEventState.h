@@ -28,7 +28,7 @@ namespace layers {
 
 class ActiveElementManager;
 
-typedef Function<void(const ScrollableLayerGuid&,
+typedef function<void(const ScrollableLayerGuid&,
                       uint64_t /* input block id */,
                       bool /* prevent default */)>
         ContentReceivedInputBlockCallback;
@@ -84,6 +84,7 @@ private:
   bool mEndTouchIsClick;
   bool mTouchEndCancelled;
   int mActiveAPZTransforms;
+  int32_t mLastTouchIdentifier;
 };
 
 } // namespace layers

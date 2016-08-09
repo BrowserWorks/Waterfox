@@ -53,7 +53,7 @@ function makeRemoteTabMatch(url, deviceName, extra = {}) {
   return {
     uri: makeActionURI("remotetab", {url, deviceName}),
     title: extra.title || url,
-    style: [ "action" ],
+    style: [ "action", "remotetab" ],
     icon: extra.icon,
   }
 }
@@ -142,7 +142,7 @@ add_task(function* test_noShowIcons() {
                makeRemoteTabMatch("http://example.com/", "My Phone",
                                   { title: "An Example",
                                     // expecting the default favicon due to that pref.
-                                    icon: PlacesUtils.favicons.defaultFavicon.spec,
+                                    icon: "",
                                   }),
              ],
   });

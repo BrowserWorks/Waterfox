@@ -250,6 +250,9 @@ RegisterVoicesRunnable::Run()
       registry->SetDefaultVoice(voice.mUri, true);
     }
   }
+
+  registry->NotifyVoicesChanged();
+
   return NS_OK;
 }
 
@@ -418,9 +421,6 @@ NS_IMETHODIMP
 OSXSpeechSynthesizerService::Observe(nsISupports* aSubject, const char* aTopic,
                                      const char16_t* aData)
 {
-  if (!strcmp(aTopic, "profile-after-change")) {
-    Init();
-  }
   return NS_OK;
 }
 
@@ -433,7 +433,11 @@ OSXSpeechSynthesizerService::GetInstance()
   }
 
   if (!sSingleton) {
-    sSingleton = new OSXSpeechSynthesizerService();
+    RefPtr<OSXSpeechSynthesizerService> speechService =
+      new OSXSpeechSynthesizerService();
+    if (speechService->Init()) {
+      sSingleton = speechService;
+    }
   }
   return sSingleton;
 }

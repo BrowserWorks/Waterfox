@@ -10,18 +10,39 @@
 
 createEnum([
 
-  // The location of the page has changed.  This may be triggered by the user
-  // directly entering a new URL, navigating with links, etc.
-  "CHANGE_LOCATION",
+  // Add a new device.
+  "ADD_DEVICE",
+
+  // Add a new device type.
+  "ADD_DEVICE_TYPE",
 
   // Add an additional viewport to display the document.
   "ADD_VIEWPORT",
+
+  // Change the device displayed in the viewport.
+  "CHANGE_DEVICE",
+
+  // The location of the page has changed.  This may be triggered by the user
+  // directly entering a new URL, navigating with links, etc.
+  "CHANGE_LOCATION",
 
   // Resize the viewport.
   "RESIZE_VIEWPORT",
 
   // Rotate the viewport.
   "ROTATE_VIEWPORT",
+
+  // Take a screenshot of the viewport.
+  "TAKE_SCREENSHOT_START",
+
+  // Indicates when the screenshot action ends.
+  "TAKE_SCREENSHOT_END",
+
+  // Update the device display state in the device selector.
+  "UPDATE_DEVICE_DISPLAYED",
+
+  // Update the device modal open state.
+  "UPDATE_DEVICE_MODAL_OPEN",
 
 ], module.exports);
 

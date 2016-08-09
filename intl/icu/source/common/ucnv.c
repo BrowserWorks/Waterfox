@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1998-2016, International Business Machines
+*   Copyright (C) 1998-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -1817,7 +1817,7 @@ ucnv_toUChars(UConverter *cnv,
         {
             UChar buffer[1024];
 
-            destLimit=buffer+UPRV_LENGTHOF(buffer);
+            destLimit=buffer+sizeof(buffer)/U_SIZEOF_UCHAR;
             do {
                 dest=buffer;
                 *pErrorCode=U_ZERO_ERROR;
@@ -2646,7 +2646,7 @@ static const UAmbiguousConverter *ucnv_getAmbiguous(const UConverter *cnv)
         return NULL;
     }
 
-    for(i=0; i<UPRV_LENGTHOF(ambiguousConverters); ++i)
+    for(i=0; i<(int32_t)(sizeof(ambiguousConverters)/sizeof(UAmbiguousConverter)); ++i)
     {
         if(0==uprv_strcmp(name, ambiguousConverters[i].name))
         {

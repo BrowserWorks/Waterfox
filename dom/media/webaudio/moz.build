@@ -15,8 +15,6 @@ MOCHITEST_MANIFESTS += [
     'test/mochitest.ini',
 ]
 
-MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
-
 TEST_HARNESS_FILES.testing.mochitest.tests.dom.media.webaudio.test.blink += [
     'test/blink/audio-testing.js',
     'test/blink/convolution-testing.js',
@@ -115,6 +113,13 @@ if CONFIG['CPU_ARCH'] == 'arm' and CONFIG['BUILD_ARM_NEON']:
     LOCAL_INCLUDES += [
         '/media/openmax_dl/dl/api/'
     ]
+
+# Are we targeting x86 or x64?  If so, build SSE2 files.
+if CONFIG['INTEL_ARCHITECTURE']:
+    SOURCES += ['AudioNodeEngineSSE2.cpp']
+    DEFINES['USE_SSE2'] = True
+    SOURCES['AudioNodeEngineSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
+
 
 include('/ipc/chromium/chromium-config.mozbuild')
 

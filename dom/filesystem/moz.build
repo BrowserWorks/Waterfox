@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+TEST_DIRS += ['tests']
+
 EXPORTS.mozilla.dom += [
     'DeviceStorageFileSystem.h',
     'Directory.h',
@@ -26,6 +28,7 @@ UNIFIED_SOURCES += [
     'FileSystemUtils.cpp',
     'GetDirectoryListingTask.cpp',
     'GetFileOrDirectoryTask.cpp',
+    'GetFilesTask.cpp',
     'OSFileSystem.cpp',
     'RemoveTask.cpp',
 ]
@@ -33,6 +36,7 @@ UNIFIED_SOURCES += [
 FINAL_LIBRARY = 'xul'
 
 IPDL_SOURCES += [
+    'PFileSystemParams.ipdlh',
     'PFileSystemRequest.ipdl',
 ]
 

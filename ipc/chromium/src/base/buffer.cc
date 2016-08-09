@@ -80,7 +80,7 @@ void
 Buffer::assign(const char* bytes, size_t length)
 {
   if (bytes >= mBuffer && bytes < mBuffer + mReserved) {
-    MOZ_RELEASE_ASSERT(length <= mSize);
+    MOZ_RELEASE_ASSERT(bytes + length <= mBuffer + mSize);
     memmove(mBuffer, bytes, length);
     mSize = length;
     try_realloc(length);
@@ -95,7 +95,7 @@ void
 Buffer::erase(size_t start, size_t count)
 {
   mSize -= count;
-  memmove(mBuffer + start, mBuffer + start + count, mSize);
+  memmove(mBuffer + start, mBuffer + start + count, mSize - start);
   try_realloc(mSize);
 }
 
@@ -116,7 +116,9 @@ Buffer::trade_bytes(size_t count)
   mSize = mReserved = mSize - count;
   mBuffer = mReserved ? (char*)malloc(mReserved) : nullptr;
   MOZ_RELEASE_ASSERT(!mReserved || mBuffer);
-  memcpy(mBuffer, result + count, mSize);
+  if (mSize) {
+    memcpy(mBuffer, result + count, mSize);
+  }
 
   // Try to resize the buffer down, but ignore failure. This can cause extra
   // copies, but so be it.

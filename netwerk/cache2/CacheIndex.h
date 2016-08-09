@@ -694,6 +694,10 @@ public:
   // READY or WRITING and mIndexNeedsUpdate as well as mShuttingDown is false.
   static nsresult IsUpToDate(bool *_retval);
 
+  // Called from CacheStorageService::Clear() and CacheFileContextEvictor::EvictEntries(),
+  // sets a flag that blocks notification to AsyncGetDiskConsumption.
+  static void OnAsyncEviction(bool aEvicting);
+
   // Memory reporting
   static size_t SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
   static size_t SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf);
@@ -908,6 +912,7 @@ private:
 
   static char const * StateString(EState aState);
   void ChangeState(EState aNewState);
+  void NotifyAsyncGetDiskConsumptionCallbacks();
 
   // Allocates and releases buffer used for reading and writing index.
   void AllocBuffer();
@@ -986,6 +991,10 @@ private:
   uint32_t                  mRWBufPos;
   RefPtr<CacheHash>         mRWHash;
 
+  // True if read or write operation is pending. It is used to ensure that
+  // mRWBuf is not freed until OnDataRead or OnDataWritten is called.
+  bool                      mRWPending;
+
   // Reading of journal succeeded if true.
   bool                      mJournalReadSuccessfully;
 
@@ -1027,6 +1036,11 @@ private:
   bool                          mFrecencyArraySorted;
 
   nsTArray<CacheIndexIterator *> mIterators;
+
+  // This flag is true iff we are between CacheStorageService:Clear() and processing
+  // all contexts to be evicted.  It will make UI to show "calculating" instead of
+  // any intermediate cache size.
+  bool mAsyncGetDiskConsumptionBlocked;
 
   class DiskConsumptionObserver : public nsRunnable
   {

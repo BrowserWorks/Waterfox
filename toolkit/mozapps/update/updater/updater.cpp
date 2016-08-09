@@ -3249,7 +3249,24 @@ int NS_main(int argc, NS_tchar **argv)
                    sizeof(gCallbackBackupPath)/sizeof(gCallbackBackupPath[0]),
                    NS_T("%s" CALLBACK_BACKUP_EXT), argv[callbackIndex]);
       NS_tremove(gCallbackBackupPath);
-      CopyFileW(argv[callbackIndex], gCallbackBackupPath, false);
+      if(!CopyFileW(argv[callbackIndex], gCallbackBackupPath, true)) {
+        DWORD copyFileError = GetLastError();
+        LOG(("NS_main: failed to copy callback file " LOG_S
+             " into place at " LOG_S, argv[callbackIndex], gCallbackBackupPath));
+        LogFinish();
+        if (copyFileError == ERROR_ACCESS_DENIED) {
+          WriteStatusFile(WRITE_ERROR_ACCESS_DENIED);
+        } else {
+          WriteStatusFile(WRITE_ERROR_CALLBACK_APP);
+        }
+
+        EXIT_WHEN_ELEVATED(elevatedLockFilePath, updateLockFileHandle, 1);
+        LaunchCallbackApp(argv[callbackIndex],
+                          argc - callbackIndex,
+                          argv + callbackIndex,
+                          sUsingService);
+        return 1;
+      }
 
       // Since the process may be signaled as exited by WaitForSingleObject before
       // the release of the executable image try to lock the main executable file
@@ -3855,6 +3872,7 @@ GetManifestContents(const NS_tchar *manifest)
     size_t c = fread(rb, 1, count, mfile);
     if (c != count) {
       LOG(("GetManifestContents: error reading manifest file: " LOG_S, manifest));
+      free(mbuf);
       return nullptr;
     }
 
@@ -3868,8 +3886,10 @@ GetManifestContents(const NS_tchar *manifest)
   return rb;
 #else
   NS_tchar *wrb = (NS_tchar *) malloc((ms.st_size + 1) * sizeof(NS_tchar));
-  if (!wrb)
+  if (!wrb) {
+    free(mbuf);
     return nullptr;
+  }
 
   if (!MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, rb, -1, wrb,
                            ms.st_size + 1)) {

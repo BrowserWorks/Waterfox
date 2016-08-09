@@ -14,11 +14,12 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Move.h"
 #include "mozilla/SizePrintfMacros.h"
+#include "mozilla/Snprintf.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/Logging.h"
 #include "nsDebug.h"
 #include "nsISupportsImpl.h"
 #include "nsContentUtils.h"
-#include "mozilla/Snprintf.h"
 
 // Undo the damage done by mozzconf.h
 #undef compress
@@ -521,6 +522,11 @@ MessageChannel::~MessageChannel()
     IPC_ASSERT(mCxxStackFrames.empty(), "mismatched CxxStackFrame ctor/dtors");
 #ifdef OS_WIN
     BOOL ok = CloseHandle(mEvent);
+    if (!ok) {
+        gfxDevCrash(mozilla::gfx::LogReason::MessageChannelCloseFailure) <<
+            "MessageChannel failed to close. GetLastError: " <<
+            GetLastError();
+    }
     MOZ_RELEASE_ASSERT(ok);
 #endif
     Clear();
@@ -983,12 +989,23 @@ MessageChannel::OnMessageReceivedFromLink(Message&& aMsg)
 }
 
 void
+MessageChannel::PeekMessages(mozilla::function<bool(const Message& aMsg)> aInvoke)
+{
+    MonitorAutoLock lock(*mMonitor);
+
+    for (MessageQueue::iterator it = mPending.begin(); it != mPending.end(); it++) {
+        Message &msg = *it;
+        if (!aInvoke(msg)) {
+            break;
+        }
+    }
+}
+
+void
 MessageChannel::ProcessPendingRequests(AutoEnterTransaction& aTransaction)
 {
-    int32_t seqno = aTransaction.SequenceNumber();
-    int32_t transaction = aTransaction.TransactionID();
-
-    IPC_LOG("ProcessPendingRequests for seqno=%d, xid=%d", seqno, transaction);
+    IPC_LOG("ProcessPendingRequests for seqno=%d, xid=%d",
+            aTransaction.SequenceNumber(), aTransaction.TransactionID());
 
     // Loop until there aren't any more priority messages to process.
     for (;;) {
@@ -1268,7 +1285,7 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
     msg->set_seqno(NextSeqno());
     msg->set_interrupt_remote_stack_depth_guess(mRemoteStackDepthGuess);
     msg->set_interrupt_local_stack_depth(1 + InterruptStackDepth());
-    mInterruptStack.push(*msg);
+    mInterruptStack.push(MessageInfo(*msg));
     mLink->SendMessage(msg.forget());
 
     while (true) {
@@ -1353,7 +1370,7 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
             // If this is not a reply the call we've initiated, add it to our
             // out-of-turn replies and keep polling for events.
             {
-                const Message &outcall = mInterruptStack.top();
+                const MessageInfo &outcall = mInterruptStack.top();
 
                 // Note, In the parent, sequence numbers increase from 0, and
                 // in the child, they decrease from 0.
@@ -1655,9 +1672,11 @@ MessageChannel::DispatchInterruptMessage(const Message& aMsg, size_t stackDepth)
         // processing of the other side's in-call.
         bool defer;
         const char* winner;
-        const Message& parentMsg = (mSide == ChildSide) ? aMsg : mInterruptStack.top();
-        const Message& childMsg = (mSide == ChildSide) ? mInterruptStack.top() : aMsg;
-        switch (mListener->MediateInterruptRace(parentMsg, childMsg))
+        const MessageInfo parentMsgInfo =
+          (mSide == ChildSide) ? MessageInfo(aMsg) : mInterruptStack.top();
+        const MessageInfo childMsgInfo =
+          (mSide == ChildSide) ? mInterruptStack.top() : MessageInfo(aMsg);
+        switch (mListener->MediateInterruptRace(parentMsgInfo, childMsgInfo))
         {
           case RIPChildWins:
             winner = "child";
@@ -1735,7 +1754,7 @@ MessageChannel::MaybeUndeferIncall()
                "fatal logic error");
 
     // maybe time to process this message
-    Message call = mDeferred.top();
+    Message call(Move(mDeferred.top()));
     mDeferred.pop();
 
     // fix up fudge factor we added to account for race
@@ -1743,7 +1762,7 @@ MessageChannel::MaybeUndeferIncall()
     --mRemoteStackDepthGuess;
 
     MOZ_RELEASE_ASSERT(call.priority() == IPC::Message::PRIORITY_NORMAL);
-    mPending.push_back(call);
+    mPending.push_back(Move(call));
 }
 
 void

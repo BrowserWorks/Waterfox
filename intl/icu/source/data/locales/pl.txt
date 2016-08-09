@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pl.xml
@@ -281,7 +281,7 @@ pl{
         minimumGroupingDigits{"2"}
         native{"latn"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.14"}
     calendar{
         buddhist{
             eras{
@@ -752,13 +752,13 @@ pl{
                         "S",
                     }
                     short{
-                        "nie",
-                        "pon",
-                        "wto",
-                        "śro",
-                        "czw",
-                        "pią",
-                        "sob",
+                        "niedz.",
+                        "pon.",
+                        "wt.",
+                        "śr.",
+                        "czw.",
+                        "pt.",
+                        "sob.",
                     }
                     wide{
                         "niedziela",
@@ -790,13 +790,13 @@ pl{
                         "S",
                     }
                     short{
-                        "nie",
-                        "pon",
-                        "wto",
-                        "śro",
-                        "czw",
-                        "pią",
-                        "sob",
+                        "niedz.",
+                        "pon.",
+                        "wt.",
+                        "śr.",
+                        "czw.",
+                        "pt.",
+                        "sob.",
                     }
                     wide{
                         "niedziela",

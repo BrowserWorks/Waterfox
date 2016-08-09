@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/os_RU.xml
@@ -8,14 +8,10 @@
 // ***************************************************************************
 os_RU{
     Currencies{
-        GEL{
-            "GEL",
-            "Лар",
-        }
         RUB{
             "₽",
             "Сом",
         }
     }
-    Version{"2.1.21.47"}
+    Version{"2.1.19.14"}
 }

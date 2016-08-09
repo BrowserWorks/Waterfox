@@ -78,6 +78,89 @@ kAxisOrientationToSidesMap[eNumAxisOrientationTypes][eNumAxisEdges] = {
 
 // Helper structs / classes / methods
 // ==================================
+// Returns true iff the given nsStyleDisplay has display:-webkit-{inline-}-box.
+static inline bool
+IsDisplayValueLegacyBox(const nsStyleDisplay* aStyleDisp)
+{
+  return aStyleDisp->mDisplay == NS_STYLE_DISPLAY_WEBKIT_BOX ||
+    aStyleDisp->mDisplay == NS_STYLE_DISPLAY_WEBKIT_INLINE_BOX;
+}
+
+// Helper to check whether our nsFlexContainerFrame is emulating a legacy
+// -webkit-{inline-}box, in which case we should use legacy CSS properties
+// instead of the modern ones. The params are are the nsStyleDisplay and the
+// nsStyleContext associated with the nsFlexContainerFrame itself.
+static inline bool
+IsLegacyBox(const nsStyleDisplay* aStyleDisp,
+            nsStyleContext* aStyleContext)
+{
+  // Trivial case: just check "display" directly.
+  if (IsDisplayValueLegacyBox(aStyleDisp)) {
+    return true;
+  }
+
+  // If this frame is for a scrollable element, then it will actually have
+  // "display:block", and its *parent* will have the real flex-flavored display
+  // value. So in that case, check the parent to find out if we're legacy.
+  if (aStyleDisp->mDisplay == NS_STYLE_DISPLAY_BLOCK) {
+    nsStyleContext* parentStyleContext = aStyleContext->GetParent();
+    NS_ASSERTION(parentStyleContext &&
+                 aStyleContext->GetPseudo() == nsCSSAnonBoxes::scrolledContent,
+                 "The only way a nsFlexContainerFrame can have 'display:block' "
+                 "should be if it's the inner part of a scrollable element");
+    if (IsDisplayValueLegacyBox(parentStyleContext->StyleDisplay())) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Returns the "align-items" value that's equivalent to the legacy "box-align"
+// value in the given style struct.
+static uint8_t
+ConvertLegacyStyleToAlignItems(const nsStyleXUL* aStyleXUL)
+{
+  // -[moz|webkit]-box-align corresponds to modern "align-items"
+  switch (aStyleXUL->mBoxAlign) {
+    case NS_STYLE_BOX_ALIGN_STRETCH:
+      return NS_STYLE_ALIGN_STRETCH;
+    case NS_STYLE_BOX_ALIGN_START:
+      return NS_STYLE_ALIGN_FLEX_START;
+    case NS_STYLE_BOX_ALIGN_CENTER:
+      return NS_STYLE_ALIGN_CENTER;
+    case NS_STYLE_BOX_ALIGN_BASELINE:
+      return NS_STYLE_ALIGN_BASELINE;
+    case NS_STYLE_BOX_ALIGN_END:
+      return NS_STYLE_ALIGN_FLEX_END;
+  }
+
+  MOZ_ASSERT_UNREACHABLE("Unrecognized mBoxAlign enum value");
+  // Fall back to default value of "align-items" property:
+  return NS_STYLE_ALIGN_STRETCH;
+}
+
+// Returns the "justify-content" value that's equivalent to the legacy
+// "box-pack" value in the given style struct.
+static uint8_t
+ConvertLegacyStyleToJustifyContent(const nsStyleXUL* aStyleXUL)
+{
+  // -[moz|webkit]-box-pack corresponds to modern "justify-content"
+  switch (aStyleXUL->mBoxPack) {
+    case NS_STYLE_BOX_PACK_START:
+      return NS_STYLE_ALIGN_FLEX_START;
+    case NS_STYLE_BOX_PACK_CENTER:
+      return NS_STYLE_ALIGN_CENTER;
+    case NS_STYLE_BOX_PACK_END:
+      return NS_STYLE_ALIGN_FLEX_END;
+    case NS_STYLE_BOX_PACK_JUSTIFY:
+      return NS_STYLE_ALIGN_SPACE_BETWEEN;
+  }
+
+  MOZ_ASSERT_UNREACHABLE("Unrecognized mBoxPack enum value");
+  // Fall back to default value of "justify-content" property:
+  return NS_STYLE_ALIGN_FLEX_START;
+}
 
 // Indicates whether advancing along the given axis is equivalent to
 // increasing our X or Y position (as opposed to decreasing it).
@@ -156,7 +239,7 @@ PhysicalCoordFromFlexRelativeCoord(nscoord aFlexRelativeCoord,
 // Encapsulates our flex container's main & cross axes.
 class MOZ_STACK_CLASS nsFlexContainerFrame::FlexboxAxisTracker {
 public:
-  FlexboxAxisTracker(const nsStylePosition* aStylePosition,
+  FlexboxAxisTracker(const nsFlexContainerFrame* aFlexContainer,
                      const WritingMode& aWM);
 
   // Accessors:
@@ -286,6 +369,15 @@ private:
   // (unnecessary) copying.
   FlexboxAxisTracker(const FlexboxAxisTracker&) = delete;
   FlexboxAxisTracker& operator=(const FlexboxAxisTracker&) = delete;
+
+  // Helpers for constructor which determine the orientation of our axes, based
+  // on legacy box properties (-webkit-box-orient, -webkit-box-direction) or
+  // modern flexbox properties (flex-direction, flex-wrap) depending on whether
+  // the flex container is a "legacy box" (as determined by IsLegacyBox).
+  void InitAxesFromLegacyProps(const nsFlexContainerFrame* aFlexContainer,
+                               const WritingMode& aWM);
+  void InitAxesFromModernProps(const nsFlexContainerFrame* aFlexContainer,
+                               const WritingMode& aWM);
 
   // XXXdholbert [BEGIN DEPRECATED]
   AxisOrientationType mMainAxis;
@@ -461,6 +553,9 @@ public:
     }
     return mFlexShrink * mFlexBaseSize;
   }
+
+  const nsSize& IntrinsicRatio() const { return mIntrinsicRatio; }
+  bool HasIntrinsicRatio() const { return mIntrinsicRatio != nsSize(); }
 
   // Getters for margin:
   // ===================
@@ -642,6 +737,10 @@ public:
 
   uint32_t GetNumAutoMarginsInAxis(AxisOrientationType aAxis) const;
 
+  // Once the main size has been resolved, should we bother doing layout to
+  // establish the cross size?
+  bool CanMainSizeInfluenceCrossSize(const FlexboxAxisTracker& aAxisTracker) const;
+
 protected:
   // Helper called by the constructor, to set mNeedsMinSizeAutoResolution:
   void CheckForMinSizeAuto(const nsHTMLReflowState& aFlexItemReflowState,
@@ -653,6 +752,8 @@ protected:
   // Values that we already know in constructor: (and are hence mostly 'const')
   const float mFlexGrow;
   const float mFlexShrink;
+
+  const nsSize mIntrinsicRatio;
 
   const nsMargin mBorderPadding;
   nsMargin mMargin; // non-const because we need to resolve auto margins
@@ -879,6 +980,29 @@ BuildStrutInfoFromCollapsedItems(const FlexLine* aFirstLine,
   }
 }
 
+// Convenience function to get either the "order" or the "box-ordinal-group"
+// property-value for a flex item (depending on whether the container is a
+// modern flex container or a legacy box).
+static int32_t
+GetOrderOrBoxOrdinalGroup(nsIFrame* aFlexItem, bool aIsLegacyBox)
+{
+  if (aIsLegacyBox) {
+    // We'll be using mBoxOrdinal, which has type uint32_t. However, the modern
+    // 'order' property (whose functionality we're co-opting) has type int32_t.
+    // So: if we happen to have a uint32_t value that's greater than INT32_MAX,
+    // we clamp it rather than letting it overflow. Chances are, this is just
+    // an author using BIG_VALUE anyway, so the clamped value should be fine.
+    // (particularly since sufficiently-huge values are busted in Chrome/WebKit
+    // per https://bugs.chromium.org/p/chromium/issues/detail?id=599645 )
+    uint32_t clampedBoxOrdinal = std::min(aFlexItem->StyleXUL()->mBoxOrdinal,
+                                          static_cast<uint32_t>(INT32_MAX));
+    return static_cast<int32_t>(clampedBoxOrdinal);
+  }
+
+  // Normal case: just use modern 'order' property.
+  return aFlexItem->StylePosition()->mOrder;
+}
+
 // Helper-function to find the first non-anonymous-box descendent of aFrame.
 static nsIFrame*
 GetFirstNonAnonBoxDescendant(nsIFrame* aFrame)
@@ -889,7 +1013,7 @@ GetFirstNonAnonBoxDescendant(nsIFrame* aFrame)
     // If aFrame isn't an anonymous container, then it'll do.
     if (!pseudoTag ||                                 // No pseudotag.
         !nsCSSAnonBoxes::IsAnonBox(pseudoTag) ||      // Pseudotag isn't anon.
-        pseudoTag == nsCSSAnonBoxes::mozNonElement) { // Text, not a container.
+        nsCSSAnonBoxes::IsNonElement(pseudoTag)) {    // Text, not a container.
       break;
     }
 
@@ -943,6 +1067,11 @@ IsOrderLEQWithDOMFallback(nsIFrame* aFrame1,
 {
   MOZ_ASSERT(aFrame1->IsFlexItem() && aFrame2->IsFlexItem(),
              "this method only intended for comparing flex items");
+  MOZ_ASSERT(aFrame1->GetParent() == aFrame2->GetParent(),
+             "this method only intended for comparing siblings");
+  nsStyleContext* parentFrameSC = aFrame1->GetParent()->StyleContext();
+  bool isInLegacyBox = IsLegacyBox(parentFrameSC->StyleDisplay(),
+                                   parentFrameSC);
 
   if (aFrame1 == aFrame2) {
     // Anything is trivially LEQ itself, so we return "true" here... but it's
@@ -956,8 +1085,8 @@ IsOrderLEQWithDOMFallback(nsIFrame* aFrame1,
     nsIFrame* aRealFrame1 = nsPlaceholderFrame::GetRealFrameFor(aFrame1);
     nsIFrame* aRealFrame2 = nsPlaceholderFrame::GetRealFrameFor(aFrame2);
 
-    int32_t order1 = aRealFrame1->StylePosition()->mOrder;
-    int32_t order2 = aRealFrame2->StylePosition()->mOrder;
+    int32_t order1 = GetOrderOrBoxOrdinalGroup(aRealFrame1, isInLegacyBox);
+    int32_t order2 = GetOrderOrBoxOrdinalGroup(aRealFrame2, isInLegacyBox);
 
     if (order1 != order2) {
       return order1 < order2;
@@ -1024,13 +1153,18 @@ IsOrderLEQ(nsIFrame* aFrame1,
 {
   MOZ_ASSERT(aFrame1->IsFlexItem() && aFrame2->IsFlexItem(),
              "this method only intended for comparing flex items");
+  MOZ_ASSERT(aFrame1->GetParent() == aFrame2->GetParent(),
+             "this method only intended for comparing siblings");
+  nsStyleContext* parentFrameSC = aFrame1->GetParent()->StyleContext();
+  bool isInLegacyBox = IsLegacyBox(parentFrameSC->StyleDisplay(),
+                                   parentFrameSC);
 
   // If we've got a placeholder frame, use its out-of-flow frame's 'order' val.
   nsIFrame* aRealFrame1 = nsPlaceholderFrame::GetRealFrameFor(aFrame1);
   nsIFrame* aRealFrame2 = nsPlaceholderFrame::GetRealFrameFor(aFrame2);
 
-  int32_t order1 = aRealFrame1->StylePosition()->mOrder;
-  int32_t order2 = aRealFrame2->StylePosition()->mOrder;
+  int32_t order1 = GetOrderOrBoxOrdinalGroup(aRealFrame1, isInLegacyBox);
+  int32_t order2 = GetOrderOrBoxOrdinalGroup(aRealFrame2, isInLegacyBox);
 
   return order1 <= order2;
 }
@@ -1038,7 +1172,7 @@ IsOrderLEQ(nsIFrame* aFrame1,
 bool
 nsFlexContainerFrame::IsHorizontal()
 {
-  const FlexboxAxisTracker axisTracker(StylePosition(), GetWritingMode());
+  const FlexboxAxisTracker axisTracker(this, GetWritingMode());
   return axisTracker.IsMainAxisHorizontal();
 }
 
@@ -1058,9 +1192,15 @@ nsFlexContainerFrame::GenerateFlexItemForChild(
 
   // FLEX GROW & SHRINK WEIGHTS
   // --------------------------
-  const nsStylePosition* stylePos = aChildFrame->StylePosition();
-  float flexGrow   = stylePos->mFlexGrow;
-  float flexShrink = stylePos->mFlexShrink;
+  float flexGrow, flexShrink;
+  if (IsLegacyBox(aParentReflowState.mStyleDisplay, mStyleContext)) {
+    flexGrow = flexShrink = aChildFrame->StyleXUL()->mBoxFlex;
+  } else {
+    const nsStylePosition* stylePos = aChildFrame->StylePosition();
+    flexGrow   = stylePos->mFlexGrow;
+    flexShrink = stylePos->mFlexShrink;
+  }
+
   WritingMode childWM = childRS.GetWritingMode();
 
   // MAIN SIZES (flex base size, min/max size)
@@ -1258,7 +1398,6 @@ MainSizeFromAspectRatio(nscoord aCrossSize,
 static nscoord
 PartiallyResolveAutoMinSize(const FlexItem& aFlexItem,
                             const nsHTMLReflowState& aItemReflowState,
-                            const nsSize& aIntrinsicRatio,
                             const FlexboxAxisTracker& aAxisTracker)
 {
   MOZ_ASSERT(aFlexItem.NeedsMinSizeAutoResolution(),
@@ -1295,7 +1434,7 @@ PartiallyResolveAutoMinSize(const FlexItem& aFlexItem,
   // * if the item has an intrinsic aspect ratio, the width (height) calculated
   //   from the aspect ratio and any definite size constraints in the opposite
   //   dimension.
-  if (aAxisTracker.GetCrossComponent(aIntrinsicRatio) != 0) {
+  if (aAxisTracker.GetCrossComponent(aFlexItem.IntrinsicRatio()) != 0) {
     // We have a usable aspect ratio. (not going to divide by 0)
     const bool useMinSizeIfCrossSizeIsIndefinite = true;
     nscoord crossSizeToUseWithRatio =
@@ -1304,7 +1443,7 @@ PartiallyResolveAutoMinSize(const FlexItem& aFlexItem,
                               aAxisTracker);
     nscoord minMainSizeFromRatio =
       MainSizeFromAspectRatio(crossSizeToUseWithRatio,
-                              aIntrinsicRatio, aAxisTracker);
+                              aFlexItem.IntrinsicRatio(), aAxisTracker);
     minMainSize = std::min(minMainSize, minMainSizeFromRatio);
   }
 
@@ -1318,7 +1457,6 @@ PartiallyResolveAutoMinSize(const FlexItem& aFlexItem,
 static bool
 ResolveAutoFlexBasisFromRatio(FlexItem& aFlexItem,
                               const nsHTMLReflowState& aItemReflowState,
-                              const nsSize& aIntrinsicRatio,
                               const FlexboxAxisTracker& aAxisTracker)
 {
   MOZ_ASSERT(NS_AUTOHEIGHT == aFlexItem.GetFlexBaseSize(),
@@ -1329,7 +1467,7 @@ ResolveAutoFlexBasisFromRatio(FlexItem& aFlexItem,
   //  - a definite cross size
   // then the flex base size is calculated from its inner cross size and the
   // flex item’s intrinsic aspect ratio.
-  if (aAxisTracker.GetCrossComponent(aIntrinsicRatio) != 0) {
+  if (aAxisTracker.GetCrossComponent(aFlexItem.IntrinsicRatio()) != 0) {
     // We have a usable aspect ratio. (not going to divide by 0)
     const bool useMinSizeIfCrossSizeIsIndefinite = false;
     nscoord crossSizeToUseWithRatio =
@@ -1340,7 +1478,7 @@ ResolveAutoFlexBasisFromRatio(FlexItem& aFlexItem,
       // We have a definite cross-size
       nscoord mainSizeFromRatio =
         MainSizeFromAspectRatio(crossSizeToUseWithRatio,
-                                aIntrinsicRatio, aAxisTracker);
+                                aFlexItem.IntrinsicRatio(), aAxisTracker);
       aFlexItem.SetFlexBaseSizeAndMainSize(mainSizeFromRatio);
       return true;
     }
@@ -1398,19 +1536,15 @@ nsFlexContainerFrame::
     }
   }
 
-  // We'll need the intrinsic ratio (if there is one), regardless of whether
-  // we're resolving min-[width|height]:auto or flex-basis:auto.
-  const nsSize ratio = aFlexItem.Frame()->GetIntrinsicRatio();
-
   nscoord resolvedMinSize; // (only set/used if isMainMinSizeAuto==true)
   bool minSizeNeedsToMeasureContent = false; // assume the best
   if (isMainMinSizeAuto) {
     // Resolve the min-size, except for considering the min-content size.
     // (We'll consider that later, if we need to.)
     resolvedMinSize = PartiallyResolveAutoMinSize(aFlexItem, aItemReflowState,
-                                                  ratio, aAxisTracker);
+                                                  aAxisTracker);
     if (resolvedMinSize > 0 &&
-        aAxisTracker.GetCrossComponent(ratio) == 0) {
+        aAxisTracker.GetCrossComponent(aFlexItem.IntrinsicRatio()) == 0) {
       // We don't have a usable aspect ratio, so we need to consider our
       // min-content size as another candidate min-size, which we'll have to
       // min() with the current resolvedMinSize.
@@ -1423,7 +1557,7 @@ nsFlexContainerFrame::
   bool flexBasisNeedsToMeasureContent = false; // assume the best
   if (isMainSizeAuto) {
     if (!ResolveAutoFlexBasisFromRatio(aFlexItem, aItemReflowState,
-                                       ratio, aAxisTracker)) {
+                                       aAxisTracker)) {
       flexBasisNeedsToMeasureContent = true;
     }
   }
@@ -1543,6 +1677,7 @@ FlexItem::FlexItem(nsHTMLReflowState& aFlexItemReflowState,
   : mFrame(aFlexItemReflowState.frame),
     mFlexGrow(aFlexGrow),
     mFlexShrink(aFlexShrink),
+    mIntrinsicRatio(mFrame->GetIntrinsicRatio()),
     mBorderPadding(aFlexItemReflowState.ComputedPhysicalBorderPadding()),
     mMargin(aFlexItemReflowState.ComputedPhysicalMargin()),
     mMainMinSize(aMainMinSize),
@@ -1570,14 +1705,28 @@ FlexItem::FlexItem(nsHTMLReflowState& aFlexItemReflowState,
   MOZ_ASSERT(!(mFrame->GetStateBits() & NS_FRAME_OUT_OF_FLOW),
              "out-of-flow frames should not be treated as flex items");
 
-  mAlignSelf = aFlexItemReflowState.mStylePosition->ComputedAlignSelf(
-                 mFrame->StyleContext()->GetParent());
-  if (MOZ_LIKELY(mAlignSelf == NS_STYLE_ALIGN_NORMAL)) {
-    mAlignSelf = NS_STYLE_ALIGN_STRETCH;
-  }
+  const nsHTMLReflowState* containerRS = aFlexItemReflowState.parentReflowState;
+  if (IsLegacyBox(containerRS->mStyleDisplay,
+                  containerRS->frame->StyleContext())) {
+    // For -webkit-box/-webkit-inline-box, we need to:
+    // (1) Use "-webkit-box-align" instead of "align-items" to determine the
+    //     container's cross-axis alignment behavior.
+    // (2) Suppress the ability for flex items to override that with their own
+    //     cross-axis alignment. (The legacy box model doesn't support this.)
+    // So, each FlexItem simply copies the container's converted "align-items"
+    // value and disregards their own "align-self" property.
+    const nsStyleXUL* containerStyleXUL = containerRS->frame->StyleXUL();
+    mAlignSelf = ConvertLegacyStyleToAlignItems(containerStyleXUL);
+  } else {
+    mAlignSelf = aFlexItemReflowState.mStylePosition->ComputedAlignSelf(
+                   mFrame->StyleContext()->GetParent());
+    if (MOZ_LIKELY(mAlignSelf == NS_STYLE_ALIGN_NORMAL)) {
+      mAlignSelf = NS_STYLE_ALIGN_STRETCH;
+    }
 
-  // XXX strip off the <overflow-position> bit until we implement that
-  mAlignSelf &= ~NS_STYLE_ALIGN_FLAG_BITS;
+    // XXX strip off the <overflow-position> bit until we implement that
+    mAlignSelf &= ~NS_STYLE_ALIGN_FLAG_BITS;
+  }
 
   SetFlexBaseSizeAndMainSize(aFlexBaseSize);
   CheckForMinSizeAuto(aFlexItemReflowState, aAxisTracker);
@@ -1621,6 +1770,7 @@ FlexItem::FlexItem(nsIFrame* aChildFrame, nscoord aCrossSize,
   : mFrame(aChildFrame),
     mFlexGrow(0.0f),
     mFlexShrink(0.0f),
+    mIntrinsicRatio(),
     // mBorderPadding uses default constructor,
     // mMargin uses default constructor,
     mFlexBaseSize(0),
@@ -1731,6 +1881,45 @@ FlexItem::GetNumAutoMarginsInAxis(AxisOrientationType aAxis) const
              "should only have examined 2 margins");
 
   return numAutoMargins;
+}
+
+bool
+FlexItem::CanMainSizeInfluenceCrossSize(
+  const FlexboxAxisTracker& aAxisTracker) const
+{
+  if (mIsStretched) {
+    // We've already had our cross-size stretched for "align-self:stretch").
+    // The container is imposing its cross size on us.
+    return false;
+  }
+
+  if (mIsStrut) {
+    // Struts (for visibility:collapse items) have a predetermined size;
+    // no need to measure anything.
+    return false;
+  }
+
+  if (HasIntrinsicRatio()) {
+    // For flex items that have an intrinsic ratio (and maintain it, i.e. are
+    // not stretched, which we already checked above): changes to main-size
+    // *do* influence the cross size.
+    return true;
+  }
+
+  if (aAxisTracker.IsCrossAxisHorizontal()) {
+    // If the cross axis is horizontal, then changes to the item's main size
+    // (height) can't influence its cross size (width), if the item is a block
+    // with a horizontal writing-mode.
+    // XXXdholbert This doesn't account for vertical writing-modes, items with
+    // aspect ratios, items that are multicol elements, & items that are
+    // multi-line vertical flex containers. In all of those cases, a change to
+    // the height could influence the width.
+    return false;
+  }
+
+  // Default assumption, if we haven't proven otherwise: the resolved main size
+  // *can* change the cross size.
+  return true;
 }
 
 // Keeps track of our position along a particular axis (where a '0' position
@@ -1894,7 +2083,7 @@ public:
 
 NS_QUERYFRAME_HEAD(nsFlexContainerFrame)
   NS_QUERYFRAME_ENTRY(nsFlexContainerFrame)
-NS_QUERYFRAME_TAIL_INHERITING(nsFlexContainerFrameSuper)
+NS_QUERYFRAME_TAIL_INHERITING(nsContainerFrame)
 
 NS_IMPL_FRAMEARENA_HELPERS(nsFlexContainerFrame)
 
@@ -1985,54 +2174,6 @@ nsFlexContainerFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                              GetDisplayFlagsForFlexItem(childFrame));
   }
 }
-
-#ifdef DEBUG
-// helper for the debugging method below
-bool
-FrameWantsToBeInAnonymousFlexItem(nsIFrame* aFrame)
-{
-  // Note: This needs to match the logic in
-  // nsCSSFrameConstructor::FrameConstructionItem::NeedsAnonFlexOrGridItem()
-  return (aFrame->IsFrameOfType(nsIFrame::eLineParticipant) ||
-          nsGkAtoms::placeholderFrame == aFrame->GetType());
-}
-
-// Debugging method, to let us assert that our anonymous flex items are
-// set up correctly -- in particular, we assert:
-//  (1) we don't have any inline non-replaced children
-//  (2) we don't have any consecutive anonymous flex items
-//  (3) we don't have any empty anonymous flex items
-//
-// XXXdholbert This matches what nsCSSFrameConstructor currently does, and what
-// the spec used to say.  However, the spec has now changed regarding what
-// types of content get wrapped in an anonymous flexbox item.  The patch that
-// implements those changes (in nsCSSFrameConstructor) will need to change
-// this method as well.
-void
-nsFlexContainerFrame::SanityCheckAnonymousFlexItems() const
-{
-  bool prevChildWasAnonFlexItem = false;
-  for (nsIFrame* child : mFrames) {
-    MOZ_ASSERT(!FrameWantsToBeInAnonymousFlexItem(child),
-               "frame wants to be inside an anonymous flex item, "
-               "but it isn't");
-    if (child->StyleContext()->GetPseudo() ==
-        nsCSSAnonBoxes::anonymousFlexItem) {
-      MOZ_ASSERT(!prevChildWasAnonFlexItem ||
-                 HasAnyStateBits(NS_STATE_FLEX_CHILDREN_REORDERED),
-                 "two anon flex items in a row (shouldn't happen, unless our "
-                 "children have been reordered with the 'order' property)");
-
-      nsIFrame* firstWrappedChild = child->PrincipalChildList().FirstChild();
-      MOZ_ASSERT(firstWrappedChild,
-                 "anonymous flex item is empty (shouldn't happen)");
-      prevChildWasAnonFlexItem = true;
-    } else {
-      prevChildWasAnonFlexItem = false;
-    }
-  }
-}
-#endif // DEBUG
 
 void
 FlexLine::FreezeItemsEarly(bool aIsUsingFlexGrow)
@@ -3060,12 +3201,94 @@ BlockDirToAxisOrientation(WritingMode::BlockDir aBlockDir)
   return eAxis_TB; // in case of unforseen error, assume English TTB block-flow
 }
 
-FlexboxAxisTracker::FlexboxAxisTracker(const nsStylePosition* aStylePosition,
-                                       const WritingMode& aWM)
+FlexboxAxisTracker::FlexboxAxisTracker(
+  const nsFlexContainerFrame* aFlexContainer,
+  const WritingMode& aWM)
   : mWM(aWM),
     mAreAxesInternallyReversed(false)
 {
-  uint32_t flexDirection = aStylePosition->mFlexDirection;
+  if (IsLegacyBox(aFlexContainer->StyleDisplay(),
+                  aFlexContainer->StyleContext())) {
+    InitAxesFromLegacyProps(aFlexContainer, aWM);
+  } else {
+    InitAxesFromModernProps(aFlexContainer, aWM);
+  }
+
+  // Master switch to enable/disable bug 983427's code for reversing our axes
+  // and reversing some logic, to avoid reflowing children in bottom-to-top
+  // order. (This switch can be removed eventually, but for now, it allows
+  // this special-case code path to be compared against the normal code path.)
+  static bool sPreventBottomToTopChildOrdering = true;
+
+  if (sPreventBottomToTopChildOrdering) {
+    // If either axis is bottom-to-top, we flip both axes (and set a flag
+    // so that we can flip some logic to make the reversal transparent).
+    if (eAxis_BT == mMainAxis || eAxis_BT == mCrossAxis) {
+      mMainAxis = GetReverseAxis(mMainAxis);
+      mCrossAxis = GetReverseAxis(mCrossAxis);
+      mAreAxesInternallyReversed = true;
+      mIsMainAxisReversed = !mIsMainAxisReversed;
+      mIsCrossAxisReversed = !mIsCrossAxisReversed;
+    }
+  }
+}
+
+void
+FlexboxAxisTracker::InitAxesFromLegacyProps(
+  const nsFlexContainerFrame* aFlexContainer,
+  const WritingMode& aWM)
+{
+  const nsStyleXUL* styleXUL = aFlexContainer->StyleXUL();
+
+  const bool boxOrientIsVertical = (styleXUL->mBoxOrient ==
+                                    NS_STYLE_BOX_ORIENT_VERTICAL);
+  const bool wmIsVertical = aWM.IsVertical();
+
+  // If box-orient agrees with our writing-mode, then we're "row-oriented"
+  // (i.e. the flexbox main axis is the same as our writing mode's inline
+  // direction).  Otherwise, we're column-oriented (i.e. the flexbox's main
+  // axis is perpendicular to the writing-mode's inline direction).
+  mIsRowOriented = (boxOrientIsVertical == wmIsVertical);
+
+  // XXXdholbert BEGIN CODE TO SET DEPRECATED MEMBER-VARS
+  if (boxOrientIsVertical) {
+    mMainAxis = eAxis_TB;
+    mCrossAxis = eAxis_LR;
+  } else {
+    mMainAxis = eAxis_LR;
+    mCrossAxis = eAxis_TB;
+  }
+  // "direction: rtl" reverses the writing-mode's inline axis.
+  // So, we need to reverse the corresponding flex axis to match.
+  // (Note this we don't toggle "mIsMainAxisReversed" for this condition,
+  // because the main axis will still match aWM's inline direction.)
+  if (!aWM.IsBidiLTR()) {
+    AxisOrientationType& axisToFlip = mIsRowOriented ? mMainAxis : mCrossAxis;
+    axisToFlip = GetReverseAxis(axisToFlip);
+  }
+  // XXXdholbert END CODE TO SET DEPRECATED MEMBER-VARS
+
+  // Legacy flexbox can use "-webkit-box-direction: reverse" to reverse the
+  // main axis (so it runs in the reverse direction of the inline axis):
+  if (styleXUL->mBoxDirection == NS_STYLE_BOX_DIRECTION_REVERSE) {
+    mMainAxis = GetReverseAxis(mMainAxis);
+    mIsMainAxisReversed = true;
+  } else {
+    mIsMainAxisReversed = false;
+  }
+
+  // Legacy flexbox does not support reversing the cross axis -- it has no
+  // equivalent of modern flexbox's "flex-wrap: wrap-reverse".
+  mIsCrossAxisReversed = false;
+}
+
+void
+FlexboxAxisTracker::InitAxesFromModernProps(
+  const nsFlexContainerFrame* aFlexContainer,
+  const WritingMode& aWM)
+{
+  const nsStylePosition* stylePos = aFlexContainer->StylePosition();
+  uint32_t flexDirection = stylePos->mFlexDirection;
 
   // Inline dimension ("start-to-end"):
   // (NOTE: I'm intentionally not calling these "inlineAxis"/"blockAxis", since
@@ -3113,29 +3336,11 @@ FlexboxAxisTracker::FlexboxAxisTracker(const nsStylePosition* aStylePosition,
   }
 
   // "flex-wrap: wrap-reverse" reverses our cross axis.
-  if (aStylePosition->mFlexWrap == NS_STYLE_FLEX_WRAP_WRAP_REVERSE) {
+  if (stylePos->mFlexWrap == NS_STYLE_FLEX_WRAP_WRAP_REVERSE) {
     mCrossAxis = GetReverseAxis(mCrossAxis);
     mIsCrossAxisReversed = true;
   } else {
     mIsCrossAxisReversed = false;
-  }
-
-  // Master switch to enable/disable bug 983427's code for reversing our axes
-  // and reversing some logic, to avoid reflowing children in bottom-to-top
-  // order. (This switch can be removed eventually, but for now, it allows
-  // this special-case code path to be compared against the normal code path.)
-  static bool sPreventBottomToTopChildOrdering = true;
-
-  if (sPreventBottomToTopChildOrdering) {
-    // If either axis is bottom-to-top, we flip both axes (and set a flag
-    // so that we can flip some logic to make the reversal transparent).
-    if (eAxis_BT == mMainAxis || eAxis_BT == mCrossAxis) {
-      mMainAxis = GetReverseAxis(mMainAxis);
-      mCrossAxis = GetReverseAxis(mCrossAxis);
-      mAreAxesInternallyReversed = true;
-      mIsMainAxisReversed = !mIsMainAxisReversed;
-      mIsCrossAxisReversed = !mIsCrossAxisReversed;
-    }
   }
 }
 
@@ -3491,16 +3696,17 @@ nsFlexContainerFrame::SizeItemInCrossAxis(
   FlexItem& aItem)
 {
   if (aAxisTracker.IsCrossAxisHorizontal()) {
-    // XXXdholbert NOTE: For now, we should never hit this case, due to a
-    // !aAxisTracker.IsCrossAxisHorizontal() check that guards this
-    // call in the caller. BUT, when we add support for vertical writing-modes,
-    // (in bug 1079155 or a dependency), we'll relax that check, and we'll need
-    // to be able to measure the baseline & width (given our resolved height)
+    MOZ_ASSERT(aItem.HasIntrinsicRatio(),
+               "For now, caller's CanMainSizeInfluenceCrossSize check should "
+               "only allow us to get here for items with intrinsic ratio");
+    // XXXdholbert When we finish support for vertical writing-modes,
+    // (in bug 1079155 or a dependency), we'll relax the horizontal check in
+    // CanMainSizeInfluenceCrossSize, and this function will need to be able
+    // to measure the baseline & width (given our resolved height)
     // of vertical-writing-mode flex items here.
-    MOZ_ASSERT_UNREACHABLE("Caller should use tentative cross size instead "
-                           "of calling SizeItemInCrossAxis");
-    // (But if we do happen to get here, just trust the passed-in reflow state
-    // for our cross size [width].)
+    // For now, we only expect to get here for items with an intrinsic aspect
+    // ratio; and for those items, we can just read the size off of the reflow
+    // state, without performing reflow.
     aItem.SetCrossSize(aChildReflowState.ComputedWidth());
     return;
   }
@@ -3630,10 +3836,6 @@ nsFlexContainerFrame::Reflow(nsPresContext*           aPresContext,
     AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
   }
 
-#ifdef DEBUG
-  SanityCheckAnonymousFlexItems();
-#endif // DEBUG
-
   // If we've never reordered our children, then we can trust that they're
   // already in DOM-order, and we only need to consider their "order" property
   // when checking them for sortedness & sorting them.
@@ -3652,8 +3854,7 @@ nsFlexContainerFrame::Reflow(nsPresContext*           aPresContext,
     SortChildrenIfNeeded<IsOrderLEQWithDOMFallback>();
   }
 
-  const FlexboxAxisTracker axisTracker(aReflowState.mStylePosition,
-                                       aReflowState.GetWritingMode());
+  const FlexboxAxisTracker axisTracker(this, aReflowState.GetWritingMode());
 
   // If we're being fragmented into a constrained BSize, then subtract off
   // borderpadding BStart from that constrained BSize, to get the available
@@ -3712,6 +3913,40 @@ private:
   MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
+// Class to let us temporarily provide an override value for the the main-size
+// CSS property ('width' or 'height') on a flex item, for use in
+// nsLayoutUtils::ComputeSizeWithIntrinsicDimensions.
+// (We could use this overridden size more broadly, too, but it's probably
+// better to avoid property-table accesses.  So, where possible, we communicate
+// the resolved main-size to the child via modifying its reflow state directly,
+// instead of using this class.)
+class MOZ_RAII AutoFlexItemMainSizeOverride final
+{
+public:
+  explicit AutoFlexItemMainSizeOverride(FlexItem& aItem
+                                        MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
+    : mItemProps(aItem.Frame()->Properties())
+  {
+    MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+
+    MOZ_ASSERT(!mItemProps.Has(nsIFrame::FlexItemMainSizeOverride()),
+               "FlexItemMainSizeOverride prop shouldn't be set already; "
+               "it should only be set temporarily (& not recursively)");
+    NS_ASSERTION(aItem.HasIntrinsicRatio(),
+                 "This should only be needed for items with an aspect ratio");
+
+    mItemProps.Set(nsIFrame::FlexItemMainSizeOverride(), aItem.GetMainSize());
+  }
+
+  ~AutoFlexItemMainSizeOverride() {
+    mItemProps.Remove(nsIFrame::FlexItemMainSizeOverride());
+  }
+
+private:
+  const FrameProperties mItemProps;
+  MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+};
+
 void
 nsFlexContainerFrame::DoFlexLayout(nsPresContext*           aPresContext,
                                    nsHTMLReflowMetrics&     aDesiredSize,
@@ -3747,41 +3982,35 @@ nsFlexContainerFrame::DoFlexLayout(nsPresContext*           aPresContext,
   nscoord sumLineCrossSizes = 0;
   for (FlexLine* line = lines.getFirst(); line; line = line->getNext()) {
     for (FlexItem* item = line->GetFirstItem(); item; item = item->getNext()) {
-      // Note that we may already have the correct cross size. (We guess at it
-      // in GenerateFlexItemForChild(), and we also may resolve it early for
-      // stretched flex items.)
-      //
-      // We can skip measuring an item's cross size here in a few scenarios:
-      // (A) If the flex item has already been stretched, then we're imposing
-      //     the container's cross size on it; no need to measure.
-      // (B) If the flex item is a "strut", then it's just a placeholder with a
-      //     predetermined cross size; no need to measure.
-      // (C) If the item's main-size can't affect its cross-size, then the
-      //     item's tentative cross size (which we got from the reflow state in
-      //     GenerateFlexItemForChild()) is correct. So, no need to re-measure.
-      //     (For now, this is equivalent to checking if the cross-axis is
-      //     horizontal, because until we enable vertical writing-modes, an
-      //     element's computed width can't be influenced by its computed
-      //     height.)
-      if (!item->IsStretched() && // !A
-          !item->IsStrut() &&     // !B
-          !aAxisTracker.IsCrossAxisHorizontal()) { // !C
+      // The item may already have the correct cross-size; only recalculate
+      // if the item's main size resolution (flexing) could have influenced it:
+      if (item->CanMainSizeInfluenceCrossSize(aAxisTracker)) {
+        Maybe<AutoFlexItemMainSizeOverride> sizeOverride;
+        if (item->HasIntrinsicRatio()) {
+          // For flex items with an aspect ratio, we have to impose an override
+          // for the main-size property *before* we even instantiate the reflow
+          // state, in order for aspect ratio calculations to produce the right
+          // cross size in the reflow state. (For other flex items, it's OK
+          // (and cheaper) to impose our main size *after* the reflow state has
+          // been constructed, since the main size shouldn't influence anything
+          // about cross-size measurement until we actually reflow the child.)
+          sizeOverride.emplace(*item);
+        }
+
         WritingMode wm = item->Frame()->GetWritingMode();
         LogicalSize availSize = aReflowState.ComputedSize(wm);
         availSize.BSize(wm) = NS_UNCONSTRAINEDSIZE;
         nsHTMLReflowState childReflowState(aPresContext, aReflowState,
                                            item->Frame(), availSize);
-        // Override computed main-size
-        if (aAxisTracker.IsMainAxisHorizontal()) {
-          childReflowState.SetComputedWidth(item->GetMainSize());
-        } else {
-          // XXXdholbert NOTE: For now, we'll never hit this case, due to the
-          // !aAxisTracker.IsCrossAxisHorizontal() check above. But
-          // when we add support for vertical writing modes, we'll relax that
-          // check and be able to hit this code.
-          childReflowState.SetComputedHeight(item->GetMainSize());
+        if (!sizeOverride) {
+          // Directly override the computed main-size, by tweaking reflow state:
+          if (aAxisTracker.IsMainAxisHorizontal()) {
+            childReflowState.SetComputedWidth(item->GetMainSize());
+          } else {
+            childReflowState.SetComputedHeight(item->GetMainSize());
+          }
         }
-        
+
         SizeItemInCrossAxis(aPresContext, aAxisTracker,
                             childReflowState, *item);
       }
@@ -3835,11 +4064,14 @@ nsFlexContainerFrame::DoFlexLayout(nsPresContext*           aPresContext,
     }
   }
 
-  for (FlexLine* line = lines.getFirst(); line; line = line->getNext()) {
+  const auto justifyContent = IsLegacyBox(aReflowState.mStyleDisplay,
+                                          mStyleContext) ?
+    ConvertLegacyStyleToJustifyContent(StyleXUL()) :
+    aReflowState.mStylePosition->ComputedJustifyContent();
 
+  for (FlexLine* line = lines.getFirst(); line; line = line->getNext()) {
     // Main-Axis Alignment - Flexbox spec section 9.5
     // ==============================================
-    auto justifyContent = aReflowState.mStylePosition->ComputedJustifyContent();
     line->PositionItemsInMainAxis(justifyContent,
                                   aContentBoxMainSize,
                                   aAxisTracker);
@@ -4046,6 +4278,7 @@ nsFlexContainerFrame::MoveFlexItemToFinalPosition(
                                               logicalOffsets, &aFramePos,
                                               aContainerSize);
   aItem.Frame()->SetPosition(outerWM, aFramePos, aContainerSize);
+  PositionFrameView(aItem.Frame());
   PositionChildViews(aItem.Frame());
 }
 
@@ -4078,19 +4311,28 @@ nsFlexContainerFrame::ReflowFlexItem(nsPresContext* aPresContext,
     didOverrideComputedHeight = true;
   }
 
-  // Override reflow state's computed cross-size, for stretched items.
-  if (aItem.IsStretched()) {
-    MOZ_ASSERT(aItem.GetAlignSelf() == NS_STYLE_ALIGN_STRETCH,
-               "stretched item w/o 'align-self: stretch'?");
+  // Override reflow state's computed cross-size if either:
+  // - the item was stretched (in which case we're imposing a cross size)
+  // ...or...
+  // - the item it has an aspect ratio (in which case the cross-size that's
+  // currently in the reflow state is based on arithmetic involving a stale
+  // main-size value that we just stomped on above). (Note that we could handle
+  // this case using an AutoFlexItemMainSizeOverride, as we do elsewhere; but
+  // given that we *already know* the correct cross size to use here, it's
+  // cheaper to just directly set it instead of setting a frame property.)
+  if (aItem.IsStretched() ||
+      aItem.HasIntrinsicRatio()) {
     if (aAxisTracker.IsCrossAxisHorizontal()) {
       childReflowState.SetComputedWidth(aItem.GetCrossSize());
       didOverrideComputedWidth = true;
     } else {
-      // If this item's height is stretched, it's a relative height.
-      aItem.Frame()->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
       childReflowState.SetComputedHeight(aItem.GetCrossSize());
       didOverrideComputedHeight = true;
     }
+  }
+  if (aItem.IsStretched() && !aAxisTracker.IsCrossAxisHorizontal()) {
+    // If this item's height is stretched, it's a relative height.
+    aItem.Frame()->AddStateBits(NS_FRAME_CONTAINS_RELATIVE_BSIZE);
   }
 
   // XXXdholbert Might need to actually set the correct margins in the
@@ -4154,7 +4396,7 @@ nsFlexContainerFrame::GetMinISize(nsRenderingContext* aRenderingContext)
   DISPLAY_MIN_WIDTH(this, minWidth);
 
   const nsStylePosition* stylePos = StylePosition();
-  const FlexboxAxisTracker axisTracker(stylePos, GetWritingMode());
+  const FlexboxAxisTracker axisTracker(this, GetWritingMode());
 
   for (nsIFrame* childFrame : mFrames) {
     nscoord childMinWidth =
@@ -4185,7 +4427,7 @@ nsFlexContainerFrame::GetPrefISize(nsRenderingContext* aRenderingContext)
   // Whenever anything happens that might change it, set it to
   // NS_INTRINSIC_WIDTH_UNKNOWN (like nsBlockFrame::MarkIntrinsicISizesDirty
   // does)
-  const FlexboxAxisTracker axisTracker(StylePosition(), GetWritingMode());
+  const FlexboxAxisTracker axisTracker(this, GetWritingMode());
 
   for (nsIFrame* childFrame : mFrames) {
     nscoord childPrefWidth =

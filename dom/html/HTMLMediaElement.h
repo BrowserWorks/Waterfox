@@ -12,7 +12,6 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsIObserver.h"
 #include "mozilla/CORSMode.h"
-#include "DOMMediaStream.h"
 #include "DecoderTraits.h"
 #include "nsIAudioChannelAgent.h"
 #include "mozilla/Attributes.h"
@@ -24,6 +23,7 @@
 #endif
 #include "mozilla/StateWatching.h"
 #include "nsGkAtoms.h"
+#include "PrincipalChangeObserver.h"
 
 // X.h on Linux #defines CurrentTime as 0L, so we have to #undef it here.
 #ifdef CurrentTime
@@ -39,6 +39,8 @@ typedef uint16_t nsMediaNetworkState;
 typedef uint16_t nsMediaReadyState;
 
 namespace mozilla {
+class DecoderDoctorDiagnostics;
+class DOMMediaStream;
 class ErrorResult;
 class MediaResource;
 class MediaDecoder;
@@ -76,7 +78,8 @@ class HTMLMediaElement : public nsGenericHTMLElement,
                          public nsIDOMHTMLMediaElement,
                          public nsIObserver,
                          public MediaDecoderOwner,
-                         public nsIAudioChannelAgentCallback
+                         public nsIAudioChannelAgentCallback,
+                         public PrincipalChangeObserver<DOMMediaStream>
 {
   friend AutoNotifyAudioChannelAgent;
 
@@ -223,8 +226,18 @@ public:
 
   // Called by the media decoder and the video frame to get the
   // ImageContainer containing the video data.
-  B2G_ACL_EXPORT virtual VideoFrameContainer* GetVideoFrameContainer() final override;
+  virtual VideoFrameContainer* GetVideoFrameContainer() final override;
   layers::ImageContainer* GetImageContainer();
+
+  // From PrincipalChangeObserver<DOMMediaStream>.
+  void PrincipalChanged(DOMMediaStream* aStream) override;
+
+  void UpdateSrcStreamVideoPrincipal(const PrincipalHandle& aPrincipalHandle);
+
+  // Called after the MediaStream we're playing rendered a frame to aContainer
+  // with a different principalHandle than the previous frame.
+  void PrincipalHandleChangedForVideoFrameContainer(VideoFrameContainer* aContainer,
+                                                    const PrincipalHandle& aNewPrincipalHandle);
 
   // Dispatch events
   virtual nsresult DispatchAsyncEvent(const nsAString& aName) final override;
@@ -264,8 +277,41 @@ public:
   // Returns null if nothing is playing.
   already_AddRefed<nsIPrincipal> GetCurrentPrincipal();
 
+  // Principal of the currently playing video resource. Anything accessing the
+  // image container of this element must have a principal that subsumes this
+  // principal. If there are no live video tracks but content has been rendered
+  // to the image container, we return the last video principal we had. Should
+  // the image container be empty with no live video tracks, we return nullptr.
+  already_AddRefed<nsIPrincipal> GetCurrentVideoPrincipal();
+
   // called to notify that the principal of the decoder's media resource has changed.
-  virtual void NotifyDecoderPrincipalChanged() final override;
+  void NotifyDecoderPrincipalChanged() final override;
+
+  // An interface for observing principal changes on the media elements
+  // MediaDecoder. This will also be notified if the active CORSMode changes.
+  class DecoderPrincipalChangeObserver
+  {
+  public:
+    virtual void NotifyDecoderPrincipalChanged() = 0;
+  };
+
+  /**
+   * Add a DecoderPrincipalChangeObserver to this media element.
+   *
+   * Ownership of the DecoderPrincipalChangeObserver remains with the caller,
+   * and it's the caller's responsibility to remove the observer before it dies.
+   */
+  void AddDecoderPrincipalChangeObserver(DecoderPrincipalChangeObserver* aObserver);
+
+  /**
+   * Remove an added DecoderPrincipalChangeObserver from this media element.
+   *
+   * Returns true if it was successfully removed.
+   */
+  bool RemoveDecoderPrincipalChangeObserver(DecoderPrincipalChangeObserver* aObserver);
+
+  class CaptureStreamTrackSource;
+  class CaptureStreamTrackSourceGetter;
 
   // Update the visual size of the media. Called from the decoder on the
   // main thread when/if the size changes.
@@ -276,7 +322,8 @@ public:
 
   // Returns the CanPlayStatus indicating if we can handle the
   // full MIME type including the optional codecs parameter.
-  static CanPlayStatus GetCanPlay(const nsAString& aType);
+  static CanPlayStatus GetCanPlay(const nsAString& aType,
+                                  DecoderDoctorDiagnostics* aDiagnostics);
 
   /**
    * Called when a child source element is added to this media element. This
@@ -562,6 +609,8 @@ public:
   // Returns a string describing the state of the media player internal
   // data. Used for debugging purposes.
   void GetMozDebugReaderData(nsAString& aString);
+
+  void MozDumpDebugInfo();
 
   already_AddRefed<DOMMediaStream> GetSrcObject() const;
   void SetSrcObject(DOMMediaStream& aValue);
@@ -1111,6 +1160,10 @@ protected:
   // At most one of mDecoder and mSrcStream can be non-null.
   RefPtr<MediaDecoder> mDecoder;
 
+  // Observers listening to changes to the mDecoder principal.
+  // Used by streams captured from this element.
+  nsTArray<DecoderPrincipalChangeObserver*> mDecoderPrincipalChangeObservers;
+
   // State-watching manager.
   WatchManager<HTMLMediaElement> mWatchManager;
 
@@ -1458,7 +1511,11 @@ protected:
 
   RefPtr<VideoTrackList> mVideoTrackList;
 
-  RefPtr<MediaStreamTrackListener> mMediaStreamTrackListener;
+  nsAutoPtr<MediaStreamTrackListener> mMediaStreamTrackListener;
+
+  // The principal guarding mVideoFrameContainer access when playing a
+  // MediaStream.
+  nsCOMPtr<nsIPrincipal> mSrcStreamVideoPrincipal;
 
   enum ElementInTreeState {
     // The MediaElement is not in the DOM tree now.

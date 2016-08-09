@@ -1,4 +1,4 @@
-var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
+const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
 Cu.import("resource://gre/modules/FormHistory.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
@@ -80,6 +80,23 @@ var ParentUtils = {
     });
   },
 
+  checkSelectedIndex(expectedIndex) {
+    ContentTaskUtils.waitForCondition(() => {
+      return gAutocompletePopup.popupOpen &&
+             gAutocompletePopup.selectedIndex === expectedIndex;
+    }).then(() => {
+      sendAsyncMessage("gotSelectedIndex");
+    });
+  },
+
+  getPopupState() {
+    sendAsyncMessage("gotPopupState", {
+      open: gAutocompletePopup.popupOpen,
+      selectedIndex: gAutocompletePopup.selectedIndex,
+      direction: gAutocompletePopup.style.direction,
+    });
+  },
+
   observe(subject, topic, data) {
     assert.ok(topic === "satchel-storage-changed");
     sendAsyncMessage("satchel-storage-changed", { subject: null, topic, data });
@@ -106,6 +123,14 @@ addMessageListener("countEntries", ({ name, value }) => {
 
 addMessageListener("waitForMenuChange", ({ expectedCount, expectedFirstValue }) => {
   ParentUtils.checkRowCount(expectedCount, expectedFirstValue);
+});
+
+addMessageListener("waitForSelectedIndex", ({ expectedIndex }) => {
+  ParentUtils.checkSelectedIndex(expectedIndex);
+});
+
+addMessageListener("getPopupState", () => {
+  ParentUtils.getPopupState();
 });
 
 addMessageListener("addObserver", () => {

@@ -7,25 +7,25 @@
 #ifndef __GFXMESSAGEUTILS_H__
 #define __GFXMESSAGEUTILS_H__
 
+#include "FilterSupport.h"
+#include "FrameMetrics.h"
+#include "ImageTypes.h"
+#include "RegionBuilder.h"
 #include "base/process_util.h"
 #include "chrome/common/ipc_message_utils.h"
-#include "ipc/IPCMessageUtils.h"
-
-#include <stdint.h>
-
-#include "mozilla/gfx/Matrix.h"
 #include "gfxPoint.h"
 #include "gfxRect.h"
+#include "gfxTypes.h"
+#include "ipc/IPCMessageUtils.h"
+#include "mozilla/gfx/Matrix.h"
+#include "mozilla/layers/AsyncDragMetrics.h"
+#include "mozilla/layers/CompositorTypes.h"
+#include "mozilla/layers/GeckoContentController.h"
+#include "mozilla/layers/LayersTypes.h"
 #include "nsRect.h"
 #include "nsRegion.h"
-#include "gfxTypes.h"
-#include "mozilla/layers/AsyncDragMetrics.h"
-#include "mozilla/layers/LayersTypes.h"
-#include "mozilla/layers/CompositorTypes.h"
-#include "ImageTypes.h"
-#include "FrameMetrics.h"
-#include "FilterSupport.h"
-#include "mozilla/layers/GeckoContentController.h"
+
+#include <stdint.h>
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4800 )
@@ -367,6 +367,7 @@ struct RegionParamTraits
 
   static void Write(Message* msg, const paramType& param)
   {
+
     for (auto iter = param.RectIter(); !iter.Done(); iter.Next()) {
       const Rect& r = iter.Get();
       MOZ_RELEASE_ASSERT(!r.IsEmpty());
@@ -379,12 +380,16 @@ struct RegionParamTraits
 
   static bool Read(const Message* msg, void** iter, paramType* result)
   {
+    RegionBuilder<Region> builder;
     Rect rect;
     while (ReadParam(msg, iter, &rect)) {
-      if (rect.IsEmpty())
+      if (rect.IsEmpty()) {
+        *result = builder.ToRegion();
         return true;
-      result->Or(*result, rect);
+      }
+      builder.Or(rect);
     }
+
     return false;
   }
 };
@@ -669,6 +674,14 @@ struct ParamTraits<nsRegion>
   : RegionParamTraits<nsRegion, nsRect, nsRegion::RectIterator>
 {};
 
+template<>
+struct ParamTraits<mozilla::layers::FrameMetrics::ScrollOffsetUpdateType>
+  : public ContiguousEnumSerializer<
+             mozilla::layers::FrameMetrics::ScrollOffsetUpdateType,
+             mozilla::layers::FrameMetrics::ScrollOffsetUpdateType::eNone,
+             mozilla::layers::FrameMetrics::ScrollOffsetUpdateType::eSentinel>
+{};
+
 template <>
 struct ParamTraits<mozilla::layers::FrameMetrics>
 {
@@ -699,15 +712,16 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
     WriteParam(aMsg, aParam.mLineScrollAmount);
     WriteParam(aMsg, aParam.mPageScrollAmount);
     WriteParam(aMsg, aParam.mPaintRequestTime);
+    WriteParam(aMsg, aParam.mScrollUpdateType);
     WriteParam(aMsg, aParam.mIsRootContent);
     WriteParam(aMsg, aParam.mHasScrollgrab);
-    WriteParam(aMsg, aParam.mUpdateScrollOffset);
     WriteParam(aMsg, aParam.mDoSmoothScroll);
     WriteParam(aMsg, aParam.mUseDisplayPortMargins);
     WriteParam(aMsg, aParam.mAllowVerticalScrollWithWheel);
     WriteParam(aMsg, aParam.mIsLayersIdRoot);
     WriteParam(aMsg, aParam.mUsesContainerScrolling);
     WriteParam(aMsg, aParam.mIsScrollInfoLayer);
+    WriteParam(aMsg, aParam.mForceDisableApz);
   }
 
   static bool ReadContentDescription(const Message* aMsg, void** aIter, paramType* aResult)
@@ -759,15 +773,16 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
             ReadParam(aMsg, aIter, &aResult->mLineScrollAmount) &&
             ReadParam(aMsg, aIter, &aResult->mPageScrollAmount) &&
             ReadParam(aMsg, aIter, &aResult->mPaintRequestTime) &&
+            ReadParam(aMsg, aIter, &aResult->mScrollUpdateType) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsRootContent) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetHasScrollgrab) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetUpdateScrollOffset) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetDoSmoothScroll) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetUseDisplayPortMargins) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetAllowVerticalScrollWithWheel) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsLayersIdRoot) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetUsesContainerScrolling) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsScrollInfoLayer));
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsScrollInfoLayer) &&
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetForceDisableApz));
   }
 };
 

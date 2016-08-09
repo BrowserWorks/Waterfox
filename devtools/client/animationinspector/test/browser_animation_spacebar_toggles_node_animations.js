@@ -10,8 +10,8 @@
 // There are animations in the test page and since, by default, the <body> node
 // is selected, animations will be displayed in the timeline, so the timeline
 // play/resume button will be displayed
-add_task(function*() {
-  yield addTab(TEST_URL_ROOT + "doc_simple_animation.html");
+add_task(function* () {
+  yield addTab(URL_ROOT + "doc_simple_animation.html");
   let {panel, window} = yield openAnimationInspector();
   let {playTimelineButtonEl} = panel;
 

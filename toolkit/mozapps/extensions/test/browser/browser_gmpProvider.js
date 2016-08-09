@@ -71,7 +71,7 @@ function getInstallItem() {
 }
 
 function openDetailsView(aId) {
-  let view = gManagerWindow.document.getElementById("view-port").selectedPanel
+  let view = get_current_view(gManagerWindow);
   Assert.equal(view.id, "list-view", "Should be in the list view to use this function");
 
   let item = get_addon_element(gManagerWindow, aId);
@@ -380,8 +380,7 @@ add_task(function* testEmeSupport() {
     let doc = gManagerWindow.document;
     let item = get_addon_element(gManagerWindow, addon.id);
     if (addon.id == GMPScope.EME_ADOBE_ID) {
-      if (Services.appinfo.OS == "WINNT" &&
-          Services.sysinfo.getPropertyAsInt32("version") >= 6) {
+      if (Services.appinfo.OS == "WINNT") {
         Assert.ok(item, "Adobe EME supported, found add-on element.");
       } else {
         Assert.ok(!item,

@@ -206,7 +206,10 @@ class AndroidXPCShellRunner(MozbuildObject):
                     print ("using APK: %s" % kwargs["localAPK"])
                     break
             else:
-                raise Exception("You must specify an APK")
+                raise Exception("APK not found in objdir. You must specify an APK.")
+
+        if not kwargs["sequential"]:
+            kwargs["sequential"] = True
 
         options = argparse.Namespace(**kwargs)
         xpcshell = remotexpcshelltests.XPCShellRemote(dm, options, log)
@@ -344,13 +347,14 @@ class MachCommands(MachCommandBase):
             m.tests.extend(test_objects)
             params['manifest'] = m
 
+        driver = self._spawn(BuildDriver)
+        driver.install_tests(test_objects)
+
         # We should probably have a utility function to ensure the tree is
         # ready to run tests. Until then, we just create the state dir (in
         # case the tree wasn't built with mach).
         self._ensure_state_subdir_exists('.')
 
-        driver = self._spawn(BuildDriver)
-        driver.install_tests(remove=False)
 
         params['log'] = structured.commandline.setup_logging("XPCShellTests",
                                                              params,

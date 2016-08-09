@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2013, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -638,7 +638,7 @@ uloc_getDisplayName(const char *locale,
                             break;
                         case 3:
                             kenum = uloc_openKeywords(locale, pErrorCode);
-                            U_FALLTHROUGH;
+                            /* fall through */
                         default: {
                             const char* kw=uenum_next(kenum, &len, pErrorCode);
                             if (kw == NULL) {

@@ -29,8 +29,16 @@ include $(MOZILLA_DIR)/config/makefiles/makeutils.mk
 
 ifdef REBUILD_CHECK
 REPORT_BUILD = $(info $(shell $(PYTHON) $(MOZILLA_DIR)/config/rebuild_check.py $@ $^))
+REPORT_BUILD_VERBOSE = $(REPORT_BUILD)
 else
 REPORT_BUILD = $(info $(notdir $@))
+
+ifdef BUILD_VERBOSE_LOG
+REPORT_BUILD_VERBOSE = $(REPORT_BUILD)
+else
+REPORT_BUILD_VERBOSE =
+endif
+
 endif
 
 EXEC			= exec
@@ -207,12 +215,6 @@ MOZ_PROGRAM_LDFLAGS += -Wl,-rpath -Wl,@executable_path/Frameworks
 endif
 endif
 
-ifeq ($(SOLARIS_SUNPRO_CXX),1)
-ifeq (86,$(findstring 86,$(OS_TEST)))
-OS_LDFLAGS += -M $(MOZILLA_DIR)/config/solaris_ia32.map
-endif # x86
-endif # Solaris Sun Studio C++
-
 ifeq ($(HOST_OS_ARCH),WINNT)
 HOST_PDBFILE=$(basename $(@F)).pdb
 HOST_PDB_FLAG ?= -Fd$(HOST_PDBFILE)
@@ -236,10 +238,12 @@ SOBJS = $(notdir $(SSRCS:.S=.$(OBJ_SUFFIX)))
 CPPOBJS = $(notdir $(addsuffix .$(OBJ_SUFFIX),$(basename $(CPPSRCS))))
 CMOBJS = $(notdir $(CMSRCS:.m=.$(OBJ_SUFFIX)))
 CMMOBJS = $(notdir $(CMMSRCS:.mm=.$(OBJ_SUFFIX)))
-ASOBJS = $(notdir $(ASFILES:.$(ASM_SUFFIX)=.$(OBJ_SUFFIX)))
-RSOBJS = $(addprefix lib,$(notdir $(RSSRCS:.rs=.$(LIB_SUFFIX))))
+# ASFILES can have different extensions (.s, .asm)
+ASOBJS = $(notdir $(addsuffix .$(OBJ_SUFFIX),$(basename $(ASFILES))))
+RSOBJS = $(addprefix lib,$(notdir $(RSSRCS:.rs=.rlib)))
+RS_STATICLIB_CRATE_OBJ = $(addprefix lib,$(notdir $(RS_STATICLIB_CRATE_SRC:.rs=.$(LIB_SUFFIX))))
 ifndef OBJS
-_OBJS = $(COBJS) $(SOBJS) $(CPPOBJS) $(CMOBJS) $(CMMOBJS) $(ASOBJS) $(RSOBJS)
+_OBJS = $(COBJS) $(SOBJS) $(CPPOBJS) $(CMOBJS) $(CMMOBJS) $(ASOBJS) $(RSOBJS) $(RS_STATICLIB_CRATE_OBJ)
 OBJS = $(strip $(_OBJS))
 endif
 
@@ -262,7 +266,6 @@ SIMPLE_PROGRAMS :=
 HOST_LIBRARY :=
 HOST_PROGRAM :=
 HOST_SIMPLE_PROGRAMS :=
-SDK_BINARY := $(filter %.py,$(SDK_BINARY))
 SDK_LIBRARY :=
 endif
 
@@ -293,25 +296,6 @@ ifdef HOST_SIMPLE_PROGRAMS
 GARBAGE			+= $(HOST_SIMPLE_PROGRAMS:%=%.$(OBJ_SUFFIX))
 endif
 
-#
-# the Solaris WorkShop template repository cache.  it occasionally can get
-# out of sync, so targets like clobber should kill it.
-#
-ifeq ($(SOLARIS_SUNPRO_CXX),1)
-GARBAGE_DIRS += SunWS_cache
-endif
-
-ifdef MOZ_UPDATE_XTERM
-# Its good not to have a newline at the end of the titlebar string because it
-# makes the make -s output easier to read.  Echo -n does not work on all
-# platforms, but we can trick printf into doing it.
-ifeq (.,$(relativesrcdir))
-UPDATE_TITLE = printf '\033]0;%s in %s\007' $(1) $(2) ;
-else
-UPDATE_TITLE = printf '\033]0;%s in %s\007' $(1) $(relativesrcdir)/$(2) ;
-endif
-endif
-
 ifdef MACH
 ifndef NO_BUILDSTATUS_MESSAGES
 define BUILDSTATUS
@@ -322,7 +306,6 @@ endif
 endif
 
 define SUBMAKE # $(call SUBMAKE,target,directory,static)
-+@$(UPDATE_TITLE)
 +@$(MAKE) $(if $(2),-C $(2)) $(1)
 
 endef # The extra line is important here! don't delete it
@@ -864,25 +847,6 @@ ifdef ENABLE_STRIP
 	$(STRIP) $(STRIP_FLAGS) $@
 endif
 
-ifeq ($(SOLARIS_SUNPRO_CC),1)
-_MDDEPFILE = $(MDDEPDIR)/$(@F).pp
-
-define MAKE_DEPS_AUTO_CC
-if test -d $(@D); then \
-	echo 'Building deps for $< using Sun Studio cc'; \
-	$(CC) $(COMPILE_CFLAGS) -xM  $< >$(_MDDEPFILE) ; \
-	$(PYTHON) $(MOZILLA_DIR)/build/unix/add_phony_targets.py $(_MDDEPFILE) ; \
-fi
-endef
-define MAKE_DEPS_AUTO_CXX
-if test -d $(@D); then \
-	echo 'Building deps for $< using Sun Studio CC'; \
-	$(CXX) $(COMPILE_CXXFLAGS) -xM $< >$(_MDDEPFILE) ; \
-	$(PYTHON) $(MOZILLA_DIR)/build/unix/add_phony_targets.py $(_MDDEPFILE) ; \
-fi
-endef
-endif # Sun Studio on Solaris
-
 # The object file is in the current directory, and the source file can be any
 # relative path. This macro adds the dependency obj: src for each source file.
 # This dependency must be first for the $< flag to work correctly, and the
@@ -896,55 +860,57 @@ $(foreach f,$(HOST_CSRCS) $(HOST_CPPSRCS) $(HOST_CMSRCS) $(HOST_CMMSRCS),$(eval 
 
 # The Rust compiler only outputs library objects, and so we need different
 # mangling to generate dependency rules for it.
-mk_libname = $(basename lib$(notdir $1)).$(LIB_SUFFIX)
+mk_libname = $(basename lib$(notdir $1)).rlib
 src_libdep = $(call mk_libname,$1): $1 $$(call mkdir_deps,$$(MDDEPDIR))
+mk_global_crate_libname = $(basename lib$(notdir $1)).$(LIB_SUFFIX)
+crate_src_libdep = $(call mk_global_crate_libname,$1): $1 $$(call mkdir_deps,$$(MDDEPDIR))
 $(foreach f,$(RSSRCS),$(eval $(call src_libdep,$(f))))
+$(foreach f,$(RS_STATICLIB_CRATE_SRC),$(eval $(call crate_src_libdep,$(f))))
 
 $(OBJS) $(HOST_OBJS) $(PROGOBJS) $(HOST_PROGOBJS): $(GLOBAL_DEPS)
 
 # Rules for building native targets must come first because of the host_ prefix
 $(HOST_COBJS):
-	$(REPORT_BUILD)
-	$(ELOG) $(HOST_CC) $(HOST_OUTOPTION)$@ -c $(HOST_CFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
+	$(REPORT_BUILD_VERBOSE)
+	$(ELOG) $(HOST_CC) $(HOST_OUTOPTION)$@ -c $(HOST_CPPFLAGS) $(HOST_CFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
 
 $(HOST_CPPOBJS):
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(call BUILDSTATUS,OBJECT_FILE $@)
-	$(ELOG) $(HOST_CXX) $(HOST_OUTOPTION)$@ -c $(HOST_CXXFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
+	$(ELOG) $(HOST_CXX) $(HOST_OUTOPTION)$@ -c $(HOST_CPPFLAGS) $(HOST_CXXFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
 
 $(HOST_CMOBJS):
-	$(REPORT_BUILD)
-	$(ELOG) $(HOST_CC) $(HOST_OUTOPTION)$@ -c $(HOST_CFLAGS) $(HOST_CMFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
+	$(REPORT_BUILD_VERBOSE)
+	$(ELOG) $(HOST_CC) $(HOST_OUTOPTION)$@ -c $(HOST_CPPFLAGS) $(HOST_CFLAGS) $(HOST_CMFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
 
 $(HOST_CMMOBJS):
-	$(REPORT_BUILD)
-	$(ELOG) $(HOST_CXX) $(HOST_OUTOPTION)$@ -c $(HOST_CXXFLAGS) $(HOST_CMMFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
+	$(REPORT_BUILD_VERBOSE)
+	$(ELOG) $(HOST_CXX) $(HOST_OUTOPTION)$@ -c $(HOST_CPPFLAGS) $(HOST_CXXFLAGS) $(HOST_CMMFLAGS) $(INCLUDES) $(NSPR_CFLAGS) $(_VPATH_SRCS)
 
 $(COBJS):
-	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO_CC)
+	$(REPORT_BUILD_VERBOSE)
 	$(ELOG) $(CC) $(OUTOPTION)$@ -c $(COMPILE_CFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 # DEFINES and ACDEFINES are needed here to enable conditional compilation of Q_OBJECTs:
 # 'moc' only knows about #defines it gets on the command line (-D...), not in
 # included headers like mozilla-config.h
 $(filter moc_%.cpp,$(CPPSRCS)): moc_%.cpp: %.h
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(ELOG) $(MOC) $(DEFINES) $(ACDEFINES) $< $(OUTOPTION)$@
 
 $(filter moc_%.cc,$(CPPSRCS)): moc_%.cc: %.cc
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(ELOG) $(MOC) $(DEFINES) $(ACDEFINES) $(_VPATH_SRCS:.cc=.h) $(OUTOPTION)$@
 
 $(filter qrc_%.cpp,$(CPPSRCS)): qrc_%.cpp: %.qrc
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(ELOG) $(RCC) -name $* $< $(OUTOPTION)$@
 
 ifdef ASFILES
 # The AS_DASH_C_FLAG is needed cause not all assemblers (Solaris) accept
 # a '-c' flag.
 $(ASOBJS):
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(AS) $(ASOUTOPTION)$@ $(ASFLAGS) $($(notdir $<)_FLAGS) $(AS_DASH_C_FLAG) $(_VPATH_SRCS)
 endif
 
@@ -953,7 +919,11 @@ ifdef MOZ_RUST
 # in the target's LIBS.
 $(RSOBJS):
 	$(REPORT_BUILD)
-	$(RUSTC) $(RUSTFLAGS) --crate-type staticlib --emit dep-info=$(MDDEPDIR)/$(call mk_libname,$<).pp,link=$(call mk_libname,$<) $(_VPATH_SRCS)
+	$(RUSTC) $(RUSTFLAGS) --crate-type rlib --emit dep-info=$(MDDEPDIR)/$(call mk_libname,$<).pp,link=$(call mk_libname,$<) $(_VPATH_SRCS)
+
+$(RS_STATICLIB_CRATE_OBJ):
+	$(REPORT_BUILD)
+	$(RUSTC) $(RUSTFLAGS) --crate-type staticlib $(RLIB_EXTERN_CRATE_OPTIONS) --emit dep-info=$(MDDEPDIR)/$(call mk_global_crate_libname,$(RS_STATICLIB_CRATE_SRC)).pp,link=$@ $(RS_STATICLIB_CRATE_SRC)
 endif
 
 $(SOBJS):
@@ -961,35 +931,32 @@ $(SOBJS):
 	$(AS) -o $@ $(ASFLAGS) $($(notdir $<)_FLAGS) $(LOCAL_INCLUDES) $(TARGET_LOCAL_INCLUDES) -c $<
 
 $(CPPOBJS):
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(call BUILDSTATUS,OBJECT_FILE $@)
-	@$(MAKE_DEPS_AUTO_CXX)
 	$(ELOG) $(CCC) $(OUTOPTION)$@ -c $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(CMMOBJS):
-	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO_CXX)
+	$(REPORT_BUILD_VERBOSE)
 	$(ELOG) $(CCC) -o $@ -c $(COMPILE_CXXFLAGS) $(COMPILE_CMMFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(CMOBJS):
-	$(REPORT_BUILD)
-	@$(MAKE_DEPS_AUTO_CC)
+	$(REPORT_BUILD_VERBOSE)
 	$(ELOG) $(CC) -o $@ -c $(COMPILE_CFLAGS) $(COMPILE_CMFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(filter %.s,$(CPPSRCS:%.cpp=%.s)): %.s: %.cpp $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(CCC) -S $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(filter %.s,$(CPPSRCS:%.cc=%.s)): %.s: %.cc $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(CCC) -S $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(filter %.s,$(CPPSRCS:%.cxx=%.s)): %.s: %.cpp $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(CCC) -S $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(filter %.s,$(CSRCS:%.c=%.s)): %.s: %.c $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(CC) -S $(COMPILE_CFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 ifneq (,$(filter %.i,$(MAKECMDGOALS)))
@@ -1016,27 +983,27 @@ VPATH += $(addprefix $(srcdir)/,$(sort $(dir $(CPPSRCS) $(CSRCS) $(CMMSRCS))))
 .PHONY: $(_PREPROCESSED_CPP_FILES) $(_PREPROCESSED_CC_FILES) $(_PREPROCESSED_CXX_FILES) $(_PREPROCESSED_C_FILES) $(_PREPROCESSED_CMM_FILES)
 
 $(_PREPROCESSED_CPP_FILES): %.i: %.cpp $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
 	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(_PREPROCESSED_CC_FILES): %.i: %.cc $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
 	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(_PREPROCESSED_CXX_FILES): %.i: %.cxx $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
 	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(_PREPROCESSED_C_FILES): %.i: %.c $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
 	$(CC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
 $(_PREPROCESSED_CMM_FILES): %.i: %.mm $(call mkdir_deps,$(MDDEPDIR))
-	$(REPORT_BUILD)
+	$(REPORT_BUILD_VERBOSE)
 	$(addprefix $(MKDIR) -p ,$(filter-out .,$(@D)))
 	$(CCC) -C $(PREPROCESS_OPTION)$@ $(COMPILE_CXXFLAGS) $(COMPILE_CMMFLAGS) $($(notdir $<)_FLAGS) $(TARGET_LOCAL_INCLUDES) $(_VPATH_SRCS)
 
@@ -1169,18 +1136,6 @@ SDK_LIBRARY_TARGET := target
 INSTALL_TARGETS += SDK_LIBRARY
 endif
 endif # SDK_LIBRARY
-
-# SDK_BINARY is still used in various makefiles for non-products of the
-# compilation, so we need to keep that running on the libs tier.
-ifneq (,$(strip $(SDK_BINARY)))
-ifndef NO_DIST_INSTALL
-SDK_BINARY_FILES := $(SDK_BINARY)
-SDK_BINARY_DEST := $(SDK_BIN_DIR)
-# SDK_BINARY_TARGET is set in xpcom/idl-parser/Makefile.in
-SDK_BINARY_TARGET ?= libs target
-INSTALL_TARGETS += SDK_BINARY
-endif
-endif # SDK_BINARY
 
 ################################################################################
 # CHROME PACKAGING
@@ -1550,9 +1505,6 @@ libs export::
 	$(CHECK_FROZEN_VARIABLES)
 
 PURGECACHES_DIRS ?= $(DIST)/bin
-ifdef MOZ_WEBAPP_RUNTIME
-PURGECACHES_DIRS += $(DIST)/bin/webapprt
-endif
 
 PURGECACHES_FILES = $(addsuffix /.purgecaches,$(PURGECACHES_DIRS))
 

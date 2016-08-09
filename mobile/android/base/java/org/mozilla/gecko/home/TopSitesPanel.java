@@ -9,6 +9,7 @@ import static org.mozilla.gecko.db.URLMetadataTable.TILE_COLOR_COLUMN;
 import static org.mozilla.gecko.db.URLMetadataTable.TILE_IMAGE_URL_COLUMN;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -16,9 +17,6 @@ import java.util.Map;
 
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.Restrictions;
-import org.mozilla.gecko.Tab;
-import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.db.BrowserContract.Thumbnails;
@@ -33,6 +31,7 @@ import org.mozilla.gecko.home.PinSiteDialog.OnSiteSelectedListener;
 import org.mozilla.gecko.home.TopSitesGridView.OnEditPinnedSiteListener;
 import org.mozilla.gecko.home.TopSitesGridView.TopSitesGridContextMenuInfo;
 import org.mozilla.gecko.restrictions.Restrictable;
+import org.mozilla.gecko.restrictions.Restrictions;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -223,7 +222,7 @@ public class TopSitesPanel extends HomeFragment {
 
                         Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, method, extra);
 
-                        mUrlOpenListener.onUrlOpen(url, EnumSet.noneOf(OnUrlOpenListener.Flags.class));
+                        mUrlOpenListener.onUrlOpen(url, EnumSet.of(OnUrlOpenListener.Flags.NO_READER_VIEW));
                     }
                 } else {
                     if (mEditPinnedSiteListener != null) {
@@ -357,10 +356,6 @@ public class TopSitesPanel extends HomeFragment {
         if (!Restrictions.isAllowed(context, Restrictable.PRIVATE_BROWSING)) {
             menu.findItem(R.id.home_open_private_tab).setVisible(false);
         }
-
-        // We only show these menu items on the reading list panel:
-        menu.findItem(R.id.mark_read).setVisible(false);
-        menu.findItem(R.id.mark_unread).setVisible(false);
     }
 
     @Override
@@ -792,16 +787,18 @@ public class TopSitesPanel extends HomeFragment {
     /**
      * An AsyncTaskLoader to load the thumbnails from a cursor.
      */
-    @SuppressWarnings("serial")
     static class ThumbnailsLoader extends AsyncTaskLoader<Map<String, ThumbnailInfo>> {
         private final BrowserDB mDB;
         private Map<String, ThumbnailInfo> mThumbnailInfos;
         private final ArrayList<String> mUrls;
 
-        private static final ArrayList<String> COLUMNS = new ArrayList<String>() {{
-            add(TILE_IMAGE_URL_COLUMN);
-            add(TILE_COLOR_COLUMN);
-        }};
+        private static final List<String> COLUMNS;
+        static {
+            final ArrayList<String> tempColumns = new ArrayList<>(2);
+            tempColumns.add(TILE_IMAGE_URL_COLUMN);
+            tempColumns.add(TILE_COLOR_COLUMN);
+            COLUMNS = Collections.unmodifiableList(tempColumns);
+        }
 
         public ThumbnailsLoader(Context context, ArrayList<String> urls) {
             super(context);
@@ -816,21 +813,31 @@ public class TopSitesPanel extends HomeFragment {
                 return thumbnails;
             }
 
+            // We need to query metadata based on the URL without any refs, hence we create a new
+            // mapping and list of these URLs (we need to preserve the original URL for display purposes)
+            final Map<String, String> queryURLs = new HashMap<>();
+            for (final String pageURL : mUrls) {
+                queryURLs.put(pageURL, StringUtils.stripRef(pageURL));
+            }
+
             // Query the DB for tile images.
             final ContentResolver cr = getContext().getContentResolver();
-            final Map<String, Map<String, Object>> metadata = mDB.getURLMetadata().getForURLs(cr, mUrls, COLUMNS);
+            // Use the stripped URLs for querying the DB
+            final Map<String, Map<String, Object>> metadata = mDB.getURLMetadata().getForURLs(cr, queryURLs.values(), COLUMNS);
 
             // Keep a list of urls that don't have tiles images. We'll use thumbnails for them instead.
             final List<String> thumbnailUrls = new ArrayList<String>();
-            for (String url : mUrls) {
-                ThumbnailInfo info = ThumbnailInfo.fromMetadata(metadata.get(url));
+            for (final String pageURL : mUrls) {
+                final String queryURL = queryURLs.get(pageURL);
+
+                ThumbnailInfo info = ThumbnailInfo.fromMetadata(metadata.get(queryURL));
                 if (info == null) {
                     // If we didn't find metadata, we'll look for a thumbnail for this url.
-                    thumbnailUrls.add(url);
+                    thumbnailUrls.add(pageURL);
                     continue;
                 }
 
-                thumbnails.put(url, info);
+                thumbnails.put(pageURL, info);
             }
 
             if (thumbnailUrls.size() == 0) {

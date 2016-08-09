@@ -24,6 +24,7 @@
           <hbox id="PanelUI-fxa-status"
                 defaultlabel="&fxaSignIn.label;"
                 signedinTooltiptext="&fxaSignedIn.tooltip;"
+                tooltiptext="&fxaSignedIn.tooltip;"
                 errorlabel="&fxaSignInError.label;"
                 unverifiedlabel="&fxaUnverified.label;"
                 onclick="if (event.which == 1) gFxAccounts.onMenuPanelCommand();">
@@ -107,16 +108,18 @@
         <!-- this widget has 3 boxes in the body, but only 1 is ever visible -->
         <!-- When Sync is ready to sync -->
         <vbox id="PanelUI-remotetabs-main" observes="sync-syncnow-state">
-          <toolbarbutton id="PanelUI-remotetabs-view-sidebar"
-                         class="subviewbutton"
-                         observes="viewTabsSidebar"
-                         label="&appMenuRemoteTabs.sidebar.label;"/>
-          <toolbarbutton id="PanelUI-remotetabs-syncnow"
-                         observes="sync-status"
-                         class="subviewbutton"
-                         oncommand="gSyncUI.doSync();"
-                         closemenu="none"/>
-          <menuseparator id="PanelUI-remotetabs-separator"/>
+          <vbox id="PanelUI-remotetabs-buttons">
+            <toolbarbutton id="PanelUI-remotetabs-view-sidebar"
+                           class="subviewbutton"
+                           observes="viewTabsSidebar"
+                           label="&appMenuRemoteTabs.sidebar.label;"/>
+            <toolbarbutton id="PanelUI-remotetabs-syncnow"
+                           observes="sync-status"
+                           class="subviewbutton"
+                           oncommand="gSyncUI.doSync();"
+                           closemenu="none"/>
+            <menuseparator id="PanelUI-remotetabs-separator"/>
+          </vbox>
           <deck id="PanelUI-remotetabs-deck">
             <!-- Sync is ready to Sync and the "tabs" engine is enabled -->
             <vbox id="PanelUI-remotetabs-tabspane">
@@ -140,7 +143,7 @@
             </hbox>
             <!-- Sync is ready to Sync but we are still fetching the tabs to show -->
             <vbox id="PanelUI-remotetabs-fetching">
-              <label>&appMenuRemoteTabs.fetching.label;</label>
+              <!-- Show intentionally blank panel, see bug 1239845 -->
             </vbox>
             <!-- Sync has only 1 (ie, this) device connected -->
             <hbox id="PanelUI-remotetabs-nodevicespane" pack="center" flex="1">
@@ -148,9 +151,10 @@
                 <hbox pack="center">
                   <image class="fxaSyncIllustration" alt=""/>
                 </hbox>
-                <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.noclients.label;</label>
+                <label class="PanelUI-remotetabs-instruction-title">&appMenuRemoteTabs.noclients.title;</label>
+                <label class="PanelUI-remotetabs-instruction-label">&appMenuRemoteTabs.noclients.subtitle;</label>
                 <!-- The inner HTML for PanelUI-remotetabs-mobile-promo is built at runtime -->
-                <label id="PanelUI-remotetabs-mobile-promo"/>
+                <label id="PanelUI-remotetabs-mobile-promo" fxAccountsBrand="&syncBrand.fxAccount.label;"/>
               </vbox>
             </hbox>
           </deck>
@@ -215,7 +219,7 @@
                        class="subviewbutton cui-withicon"
                        oncommand="PlacesCommandHook.showPlacesOrganizer('BookmarksToolbar'); PanelUI.hide();"/>
         <toolbarbutton id="panelMenu_unsortedBookmarks"
-                       label="&unsortedBookmarksCmd.label;"
+                       label="&otherBookmarksCmd.label;"
                        class="subviewbutton cui-withicon"
                        oncommand="PlacesCommandHook.showPlacesOrganizer('UnfiledBookmarks'); PanelUI.hide();"/>
         <toolbarseparator class="small-separator"/>

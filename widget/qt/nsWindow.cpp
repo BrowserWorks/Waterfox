@@ -57,7 +57,6 @@
 #include "imgIContainer.h"
 #include "nsGfxCIID.h"
 #include "nsIInterfaceRequestorUtils.h"
-#include "nsAutoPtr.h"
 
 #include "gfxQtPlatform.h"
 
@@ -660,10 +659,15 @@ nsWindow::GetNativeData(uint32_t aDataType)
     case NS_NATIVE_SHELLWIDGET: {
         break;
     }
-    case NS_RAW_NATIVE_IME_CONTEXT:
+    case NS_RAW_NATIVE_IME_CONTEXT: {
+        void* pseudoIMEContext = GetPseudoIMEContext();
+        if (pseudoIMEContext) {
+            return pseudoIMEContext;
+        }
         // Our qt widget looks like using only one context per process.
         // However, it's better to set the context's pointer.
         return qApp->inputMethod();
+    }
     default:
         NS_WARNING("nsWindow::GetNativeData called with bad value");
         return nullptr;
@@ -676,8 +680,8 @@ NS_IMETHODIMP
 nsWindow::DispatchEvent(WidgetGUIEvent* aEvent, nsEventStatus& aStatus)
 {
 #ifdef DEBUG
-    debug_DumpEvent(stdout, aEvent->widget, aEvent,
-                    nsAutoCString("something"), 0);
+    debug_DumpEvent(stdout, aEvent->mWidget, aEvent,
+                    "something", 0);
 #endif
 
     aStatus = nsEventStatus_eIgnore;
@@ -954,8 +958,8 @@ static void
 InitMouseEvent(WidgetMouseEvent& aMouseEvent, QMouseEvent* aEvent,
                int aClickCount)
 {
-    aMouseEvent.refPoint.x = nscoord(aEvent->pos().x());
-    aMouseEvent.refPoint.y = nscoord(aEvent->pos().y());
+    aMouseEvent.mRefPoint.x = nscoord(aEvent->pos().x());
+    aMouseEvent.mRefPoint.y = nscoord(aEvent->pos().y());
 
     aMouseEvent.InitBasicModifiers(aEvent->modifiers() & Qt::ControlModifier,
                                    aEvent->modifiers() & Qt::AltModifier,
@@ -1116,10 +1120,10 @@ InitKeyEvent(WidgetKeyboardEvent& aEvent, QKeyEvent* aQEvent)
     aEvent.mIsRepeat =
         (aEvent.mMessage == eKeyDown || aEvent.mMessage == eKeyPress) &&
         aQEvent->isAutoRepeat();
-    aEvent.time = 0;
+    aEvent.mTime = 0;
 
     if (sAltGrModifier) {
-        aEvent.modifiers |= (MODIFIER_CONTROL | MODIFIER_ALT);
+        aEvent.mModifiers |= (MODIFIER_CONTROL | MODIFIER_ALT);
     }
 
     if (aQEvent->text().length() && aQEvent->text()[0].isPrint()) {
@@ -1276,7 +1280,7 @@ nsWindow::wheelEvent(QWheelEvent* aEvent)
 {
     // check to see if we should rollup
     WidgetWheelEvent wheelEvent(true, eWheel, this);
-    wheelEvent.deltaMode = nsIDOMWheelEvent::DOM_DELTA_LINE;
+    wheelEvent.mDeltaMode = nsIDOMWheelEvent::DOM_DELTA_LINE;
 
     // negative values for aEvent->delta indicate downward scrolling;
     // this is opposite Gecko usage.
@@ -1287,24 +1291,24 @@ nsWindow::wheelEvent(QWheelEvent* aEvent)
 
     switch (aEvent->orientation()) {
     case Qt::Vertical:
-        wheelEvent.deltaY = wheelEvent.lineOrPageDeltaY = delta;
+        wheelEvent.mDeltaY = wheelEvent.mLineOrPageDeltaY = delta;
         break;
     case Qt::Horizontal:
-        wheelEvent.deltaX = wheelEvent.lineOrPageDeltaX = delta;
+        wheelEvent.mDeltaX = wheelEvent.mLineOrPageDeltaX = delta;
         break;
     default:
         Q_ASSERT(0);
         break;
     }
 
-    wheelEvent.refPoint.x = nscoord(aEvent->pos().x());
-    wheelEvent.refPoint.y = nscoord(aEvent->pos().y());
+    wheelEvent.mRefPoint.x = nscoord(aEvent->pos().x());
+    wheelEvent.mRefPoint.y = nscoord(aEvent->pos().y());
 
     wheelEvent.InitBasicModifiers(aEvent->modifiers() & Qt::ControlModifier,
                                   aEvent->modifiers() & Qt::AltModifier,
                                   aEvent->modifiers() & Qt::ShiftModifier,
                                   aEvent->modifiers() & Qt::MetaModifier);
-    wheelEvent.time = 0;
+    wheelEvent.mTime = 0;
 
     return DispatchEvent(&wheelEvent);
 }
@@ -1980,8 +1984,8 @@ nsWindow::ProcessMotionEvent()
     if (mMoveEvent.needDispatch) {
         WidgetMouseEvent event(true, eMouseMove, this, WidgetMouseEvent::eReal);
 
-        event.refPoint.x = nscoord(mMoveEvent.pos.x());
-        event.refPoint.y = nscoord(mMoveEvent.pos.y());
+        event.mRefPoint.x = nscoord(mMoveEvent.pos.x());
+        event.mRefPoint.y = nscoord(mMoveEvent.pos.y());
 
         event.InitBasicModifiers(mMoveEvent.modifiers & Qt::ControlModifier,
                                  mMoveEvent.modifiers & Qt::AltModifier,

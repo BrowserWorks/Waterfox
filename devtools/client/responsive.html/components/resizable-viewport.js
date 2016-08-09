@@ -18,15 +18,20 @@ const VIEWPORT_MIN_WIDTH = Constants.MIN_VIEWPORT_DIMENSION;
 const VIEWPORT_MIN_HEIGHT = Constants.MIN_VIEWPORT_DIMENSION;
 
 module.exports = createClass({
-
-  displayName: "ResizableViewport",
-
   propTypes: {
+    devices: PropTypes.shape(Types.devices).isRequired,
     location: Types.location.isRequired,
+    screenshot: PropTypes.shape(Types.screenshot).isRequired,
     viewport: PropTypes.shape(Types.viewport).isRequired,
+    onBrowserMounted: PropTypes.func.isRequired,
+    onChangeViewportDevice: PropTypes.func.isRequired,
+    onContentResize: PropTypes.func.isRequired,
     onResizeViewport: PropTypes.func.isRequired,
     onRotateViewport: PropTypes.func.isRequired,
+    onUpdateDeviceModalOpen: PropTypes.func.isRequired,
   },
+
+  displayName: "ResizableViewport",
 
   getInitialState() {
     return {
@@ -70,8 +75,10 @@ module.exports = createClass({
     }
 
     let { lastClientX, lastClientY, ignoreX, ignoreY } = this.state;
-    let deltaX = clientX - lastClientX;
-    let deltaY = clientY - lastClientY;
+    // we are resizing a centered viewport, so dragging a mouse resizes
+    // twice as much - also on opposite side.
+    let deltaX = 2 * (clientX - lastClientX);
+    let deltaY = 2 * (clientY - lastClientY);
 
     if (ignoreX) {
       deltaX = 0;
@@ -97,6 +104,8 @@ module.exports = createClass({
 
     // Update the viewport store with the new width and height.
     this.props.onResizeViewport(width, height);
+    // Change the device selector back to an unselected device
+    this.props.onChangeViewportDevice("");
 
     this.setState({
       lastClientX,
@@ -106,26 +115,56 @@ module.exports = createClass({
 
   render() {
     let {
+      devices,
       location,
+      screenshot,
       viewport,
+      onBrowserMounted,
+      onChangeViewportDevice,
+      onContentResize,
+      onResizeViewport,
       onRotateViewport,
+      onUpdateDeviceModalOpen,
     } = this.props;
+
+    let resizeHandleClass = "viewport-resize-handle";
+    if (screenshot.isCapturing) {
+      resizeHandleClass += " hidden";
+    }
+
+    let contentClass = "viewport-content";
+    if (this.state.isResizing) {
+      contentClass += " resizing";
+    }
 
     return dom.div(
       {
         className: "resizable-viewport",
       },
       ViewportToolbar({
+        devices,
+        selectedDevice: viewport.device,
+        onChangeViewportDevice,
+        onResizeViewport,
         onRotateViewport,
+        onUpdateDeviceModalOpen,
       }),
-      Browser({
-        location,
-        width: viewport.width,
-        height: viewport.height,
-        isResizing: this.state.isResizing
-      }),
+      dom.div(
+        {
+          className: contentClass,
+          style: {
+            width: viewport.width + "px",
+            height: viewport.height + "px",
+          },
+        },
+        Browser({
+          location,
+          onBrowserMounted,
+          onContentResize,
+        })
+      ),
       dom.div({
-        className: "viewport-resize-handle",
+        className: resizeHandleClass,
         onMouseDown: this.onResizeStart,
       }),
       dom.div({

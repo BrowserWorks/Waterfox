@@ -1,6 +1,6 @@
 /*  
 **********************************************************************
-*   Copyright (C) 2002-2016, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  uconfig.h
@@ -286,7 +286,7 @@
  * This is not possible on EBCDIC platforms
  * because they need ibm-37 or ibm-1047 default converters.
  *
- * @stable ICU 55
+ * @draft ICU 55
  */
 #ifndef UCONFIG_ONLY_HTML_CONVERSION
 #   define UCONFIG_ONLY_HTML_CONVERSION 0

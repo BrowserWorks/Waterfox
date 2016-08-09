@@ -7,15 +7,12 @@ package org.mozilla.gecko.tabqueue;
 
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.util.ThreadUtils;
 
-import android.annotation.TargetApi;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -23,8 +20,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.PixelFormat;
-import android.os.Build;
-import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.TextUtils;
@@ -68,7 +63,7 @@ public class TabQueueHelper {
      * @return true if the specified context can draw on top of other apps, false otherwise.
      */
     public static boolean canDrawOverlays(Context context) {
-        if (AppConstants.Versions.preM) {
+        if (AppConstants.Versions.preMarshmallow) {
             return true; // We got the permission at install time.
         }
 
@@ -182,7 +177,7 @@ public class TabQueueHelper {
             } catch (JSONException e) {
                 url = "";
             }
-            if(!TextUtils.isEmpty(url) && !urlToRemove.equals(url)) {
+            if (!TextUtils.isEmpty(url) && !urlToRemove.equals(url)) {
                 newArray.put(url);
             }
         }
@@ -294,7 +289,7 @@ public class TabQueueHelper {
             try {
                 data.put("urls", jsonArray);
                 data.put("shouldNotifyTabsOpenedToJava", shouldPerformJavaScriptCallback);
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Tabs:OpenMultiple", data.toString()));
+                GeckoAppShell.notifyObservers("Tabs:OpenMultiple", data.toString());
             } catch (JSONException e) {
                 // Don't exit early as we perform cleanup at the end of this function.
                 Log.e(LOGTAG, "Error sending tab queue data", e);

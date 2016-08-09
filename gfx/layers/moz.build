@@ -155,9 +155,9 @@ EXPORTS.mozilla.layers += [
     'ipc/AsyncTransactionTracker.h',
     'ipc/CompositableForwarder.h',
     'ipc/CompositableTransactionParent.h',
-    'ipc/CompositorChild.h',
+    'ipc/CompositorBridgeChild.h',
+    'ipc/CompositorBridgeParent.h',
     'ipc/CompositorLRU.h',
-    'ipc/CompositorParent.h',
     'ipc/FenceUtils.h',
     'ipc/GonkNativeHandle.h',
     'ipc/GonkNativeHandleUtils.h',
@@ -254,11 +254,17 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
         'ipc/ShadowLayerUtilsGralloc.cpp',
     ]
 
+if CONFIG['MOZ_ANDROID_APZ']:
+    UNIFIED_SOURCES += [
+        'apz/src/AndroidAPZ.cpp',
+    ]
+
 UNIFIED_SOURCES += [
     'apz/src/APZCTreeManager.cpp',
     'apz/src/AsyncPanZoomController.cpp',
     'apz/src/Axis.cpp',
     'apz/src/CheckerboardEvent.cpp',
+    'apz/src/DragTracker.cpp',
     'apz/src/GestureEventListener.cpp',
     'apz/src/HitTestingTreeNode.cpp',
     'apz/src/InputBlockState.cpp',
@@ -334,9 +340,9 @@ UNIFIED_SOURCES += [
     'ipc/AsyncTransactionTracker.cpp',
     'ipc/CompositableTransactionParent.cpp',
     'ipc/CompositorBench.cpp',
-    'ipc/CompositorChild.cpp',
+    'ipc/CompositorBridgeChild.cpp',
+    'ipc/CompositorBridgeParent.cpp',
     'ipc/CompositorLRU.cpp',
-    'ipc/CompositorParent.cpp',
     'ipc/FenceUtils.cpp',
     'ipc/ImageBridgeChild.cpp',
     'ipc/ImageBridgeParent.cpp',
@@ -403,7 +409,7 @@ IPDL_SOURCES = [
     'ipc/LayersSurfaces.ipdlh',
     'ipc/PAPZ.ipdl',
     'ipc/PCompositable.ipdl',
-    'ipc/PCompositor.ipdl',
+    'ipc/PCompositorBridge.ipdl',
     'ipc/PImageBridge.ipdl',
     'ipc/PImageContainer.ipdl',
     'ipc/PLayer.ipdl',

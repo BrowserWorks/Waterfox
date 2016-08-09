@@ -60,7 +60,6 @@
 
     <dimen name="firstrun_content_width">300dp</dimen>
     <dimen name="firstrun_min_height">180dp</dimen>
-    <dimen name="firstrun_brand_size">48dp</dimen>
     <dimen name="firstrun_background_height">180dp</dimen>
 
     <dimen name="overlay_prompt_content_width">260dp</dimen>
@@ -79,6 +78,10 @@
     <dimen name="site_security_unknown_inset_top">1dp</dimen>
     <dimen name="site_security_unknown_inset_bottom">-1dp</dimen>
 
+    <dimen name="home_folder_title_oneline_textsize">16sp</dimen>
+    <dimen name="home_folder_title_twoline_textsize">14sp</dimen>
+    <dimen name="home_twolinepagerow_title_textsize">16sp</dimen>
+
     <dimen name="page_row_edge_padding">16dp</dimen>
 
     <!-- Regular page row on about:home -->
@@ -87,10 +90,7 @@
     <!-- Group/heading page row on about:home -->
     <dimen name="page_group_height">56dp</dimen>
     <dimen name="home_header_item_height">56dp</dimen>
-
-    <!-- Reading list row on about:home -->
-    <dimen name="reading_list_row_height">128dp</dimen>
-    <dimen name="reading_list_row_padding_right">10dp</dimen>
+    <dimen name="page_row_divider_height">1dp</dimen>
 
     <!-- Remote Tabs static view top padding. Less in landscape on phones. -->
     <dimen name="home_remote_tabs_top_padding">48dp</dimen>
@@ -105,7 +105,6 @@
     <dimen name="doorhanger_input_width">250dp</dimen>
     <dimen name="doorhanger_offsetX">12dp</dimen>
     <dimen name="doorhanger_offsetY">67dp</dimen>
-    <dimen name="doorhanger_GB_offsetY">7dp</dimen>
     <dimen name="doorhanger_drawable_padding">5dp</dimen>
     <dimen name="doorhanger_subsection_padding">8dp</dimen>
     <dimen name="doorhanger_section_padding_small">10dp</dimen>
@@ -125,7 +124,6 @@
          http://androidxref.com/4.2.2_r1/xref/frameworks/base/core/res/res/values/themes.xml#123 -->
     <dimen name="menu_item_row_height">64dip</dimen>
     <dimen name="menu_item_row_width">240dp</dimen>
-    <dimen name="menu_popup_offset">12dp</dimen>
     <dimen name="menu_popup_width">256dp</dimen>
     <dimen name="nav_button_border_width">1dp</dimen>
     <dimen name="prompt_service_group_padding_size">32dp</dimen>
@@ -154,10 +152,6 @@
     <dimen name="tab_panel_grid_padding_top">19dp</dimen>
 
     <dimen name="tab_highlight_stroke_width">4dp</dimen>
-    <dimen name="tab_title_height">22dp</dimen>
-    <dimen name="tab_vertical_padding">6dp</dimen>
-    <dimen name="tab_thumbnail_padding">4dp</dimen>
-    <dimen name="tab_thumbnail_margin">6dp</dimen>
 
     <!-- PageActionButtons dimensions -->
     <dimen name="page_action_button_width">32dp</dimen>
@@ -210,12 +204,11 @@
     <dimen name="find_in_page_text_padding_right">10dip</dimen>
     <dimen name="find_in_page_status_margin_right">10dip</dimen>
     <dimen name="find_in_page_control_margin_top">2dip</dimen>
-
-    <!-- The share icon asset has no padding while the other action bar items do
-         so we dynamically add padding to compensate. To be removed in bug 1122752. -->
-    <dimen name="ab_share_padding">12dp</dimen>
-
     <dimen name="progress_bar_scroll_offset">1.5dp</dimen>
+
+    <!-- Matches the built-in divider height. fwiw, in the framework
+         I suspect this is a drawable rather than a dimen.  -->
+    <dimen name="action_bar_divider_height">2dp</dimen>
 
     <!-- http://blog.danlew.net/2015/01/06/handling-android-resources-with-non-standard-formats/ -->
     <item name="match_parent" type="dimen">-1</item>
@@ -223,7 +216,4 @@
 
     <item name="tab_strip_content_start" type="dimen">12dp</item>
     <item name="firstrun_tab_strip_content_start" type="dimen">15dp</item>
-
-    <item name="split_plane_left_pane_weight" format="float" type="dimen">0.32</item>
-    <item name="split_plane_right_pane_weight" format="float" type="dimen">0.68</item>
 </resources>

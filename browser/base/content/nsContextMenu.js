@@ -472,7 +472,7 @@ nsContextMenu.prototype = {
     this.showItem("context-media-unmute", onMedia && this.target.muted);
     this.showItem("context-media-playbackrate", onMedia);
     this.showItem("context-media-showcontrols", onMedia && !this.target.controls);
-    this.showItem("context-media-hidecontrols", onMedia && this.target.controls);
+    this.showItem("context-media-hidecontrols", this.target.controls && (this.onVideo || (this.onAudio && !this.inSyntheticDoc)));
     this.showItem("context-video-fullscreen", this.onVideo && this.target.ownerDocument.fullscreenElement == null);
     var statsShowing = this.onVideo && this.target.mozMediaStatisticsShowing;
     this.showItem("context-video-showstats", this.onVideo && this.target.controls && !statsShowing);
@@ -980,12 +980,12 @@ nsContextMenu.prototype = {
     urlSecurityCheck(this.linkURL, this.principal);
     let referrerURI = gContextMenuContentData.documentURIObject;
 
-    // if the mixedContentChannel is present and the referring URI passes
+    // if its parent allows mixed content and the referring URI passes
     // a same origin check with the target URI, we can preserve the users
     // decision of disabling MCB on a page for it's child tabs.
     let persistAllowMixedContentInChildTab = false;
 
-    if (this.browser.docShell && this.browser.docShell.mixedContentChannel) {
+    if (gContextMenuContentData.parentAllowsMixedContent) {
       const sm = Services.scriptSecurityManager;
       try {
         let targetURI = this.linkURI;

@@ -21,6 +21,7 @@
 #include "pk11pub.h"
 #include "pkix/pkix.h"
 #include "pkix/pkixnss.h"
+#include "pkix/Result.h"
 #include "prerror.h"
 #include "prmem.h"
 #include "prprf.h"
@@ -33,7 +34,7 @@
 using namespace mozilla;
 using namespace mozilla::pkix;
 
-extern PRLogModuleInfo* gCertVerifierLog;
+extern LazyLogModule gCertVerifierLog;
 
 static const uint64_t ServerFailureDelaySeconds = 5 * 60;
 
@@ -178,7 +179,7 @@ NSSCertDBTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   // performance problem because NSS will just find the existing
   // CERTCertificate in its in-memory cache and return it.
   SECItem candidateCertDERSECItem = UnsafeMapInputToSECItem(candidateCertDER);
-  ScopedCERTCertificate candidateCert(
+  UniqueCERTCertificate candidateCert(
     CERT_NewTempCertificate(CERT_GetDefaultCertDB(), &candidateCertDERSECItem,
                             nullptr, false, true));
   if (!candidateCert) {
@@ -284,19 +285,24 @@ OCSPFetchingTypeToTimeoutTime(NSSCertDBTrustDomain::OCSPFetching ocspFetching)
 }
 
 // Copied and modified from CERT_GetOCSPAuthorityInfoAccessLocation and
-// CERT_GetGeneralNameByType. Returns SECFailure on error, SECSuccess
-// with url == nullptr when an OCSP URI was not found, and SECSuccess with
+// CERT_GetGeneralNameByType. Returns a non-Result::Success result on error,
+// Success with url == nullptr when an OCSP URI was not found, and Success with
 // url != nullptr when an OCSP URI was found. The output url will be owned
 // by the arena.
 static Result
-GetOCSPAuthorityInfoAccessLocation(PLArenaPool* arena,
+GetOCSPAuthorityInfoAccessLocation(const UniquePLArenaPool& arena,
                                    Input aiaExtension,
                                    /*out*/ char const*& url)
 {
+  MOZ_ASSERT(arena.get());
+  if (!arena.get()) {
+    return Result::FATAL_ERROR_INVALID_ARGS;
+  }
+
   url = nullptr;
   SECItem aiaExtensionSECItem = UnsafeMapInputToSECItem(aiaExtension);
   CERTAuthInfoAccess** aia =
-    CERT_DecodeAuthInfoAccessExtension(arena, &aiaExtensionSECItem);
+    CERT_DecodeAuthInfoAccessExtension(arena.get(), &aiaExtensionSECItem);
   if (!aia) {
     return Result::ERROR_CERT_BAD_ACCESS_LOCATION;
   }
@@ -317,8 +323,8 @@ GetOCSPAuthorityInfoAccessLocation(PLArenaPool* arena,
             return Result::ERROR_CERT_BAD_ACCESS_LOCATION;
           }
           // Copy the non-null-terminated SECItem into a null-terminated string.
-          char* nullTerminatedURL(static_cast<char*>(
-                                    PORT_ArenaAlloc(arena, location.len + 1)));
+          char* nullTerminatedURL(
+            static_cast<char*>(PORT_ArenaAlloc(arena.get(), location.len + 1)));
           if (!nullTerminatedURL) {
             return Result::FATAL_ERROR_NO_MEMORY;
           }
@@ -495,7 +501,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
     return Result::ERROR_OCSP_UNKNOWN_CERT;
   }
 
-  ScopedPLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
+  UniquePLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
   if (!arena) {
     return Result::FATAL_ERROR_NO_MEMORY;
   }
@@ -504,7 +510,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
   const char* url = nullptr; // owned by the arena
 
   if (aiaExtension) {
-    rv = GetOCSPAuthorityInfoAccessLocation(arena.get(), *aiaExtension, url);
+    rv = GetOCSPAuthorityInfoAccessLocation(arena, *aiaExtension, url);
     if (rv != Success) {
       return rv;
     }
@@ -549,12 +555,15 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
       static_cast<unsigned int>(ocspRequestLength)
     };
     // Owned by arena
-    const SECItem* responseSECItem =
-      DoOCSPRequest(arena.get(), url, &ocspRequestItem,
+    SECItem* responseSECItem = nullptr;
+    Result tempRV =
+      DoOCSPRequest(arena, url, &ocspRequestItem,
                     OCSPFetchingTypeToTimeoutTime(mOCSPFetching),
-                    mOCSPGetConfig == CertVerifier::ocspGetEnabled);
-    if (!responseSECItem) {
-      rv = MapPRErrorCodeToResult(PR_GetError());
+                    mOCSPGetConfig == CertVerifier::ocspGetEnabled,
+                    responseSECItem);
+    MOZ_ASSERT((tempRV != Success) || responseSECItem);
+    if (tempRV != Success) {
+      rv = tempRV;
     } else if (response.Init(responseSECItem->data, responseSECItem->len)
                  != Success) {
       rv = Result::ERROR_OCSP_MALFORMED_RESPONSE; // too big
@@ -780,9 +789,9 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
   }
 
   bool isBuiltInRoot = false;
-  srv = IsCertBuiltInRoot(root, isBuiltInRoot);
-  if (srv != SECSuccess) {
-    return MapPRErrorCodeToResult(PR_GetError());
+  Result rv = IsCertBuiltInRoot(root, isBuiltInRoot);
+  if (rv != Success) {
+    return rv;
   }
   bool skipPinningChecksBecauseOfMITMMode =
     (!isBuiltInRoot && mPinningMode == CertVerifier::pinningAllowUserCAMITM);
@@ -998,10 +1007,9 @@ LoadLoadableRoots(/*optional*/ const char* dir, const char* modNameUTF8)
     return SECFailure;
   }
 
-  UniquePtr<char, void(&)(void*)>
-    escaped_fullLibraryPath(nss_addEscape(fullLibraryPath.get(), '\"'),
-                            PORT_Free);
-  if (!escaped_fullLibraryPath) {
+  UniquePORTString escapedFullLibraryPath(nss_addEscape(fullLibraryPath.get(),
+                                                        '\"'));
+  if (!escapedFullLibraryPath) {
     return SECFailure;
   }
 
@@ -1011,7 +1019,7 @@ LoadLoadableRoots(/*optional*/ const char* dir, const char* modNameUTF8)
 
   UniquePtr<char, void(&)(char*)>
     pkcs11ModuleSpec(PR_smprintf("name=\"%s\" library=\"%s\"", modNameUTF8,
-                                 escaped_fullLibraryPath.get()),
+                                 escapedFullLibraryPath.get()),
                      PR_smprintf_free);
   if (!pkcs11ModuleSpec) {
     return SECFailure;

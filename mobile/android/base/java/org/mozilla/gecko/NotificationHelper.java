@@ -148,7 +148,7 @@ public final class NotificationHelper implements GeckoEventListener {
             }
 
             Log.i(LOGTAG, "Send " + args.toString());
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Notification:Event", args.toString()));
+            GeckoAppShell.notifyObservers("Notification:Event", args.toString());
         } catch (JSONException e) {
             Log.e(LOGTAG, "Error building JSON notification arguments.", e);
         }
@@ -208,7 +208,7 @@ public final class NotificationHelper implements GeckoEventListener {
         try {
             // Action name must be in query uri, otherwise buttons pending intents
             // would be collapsed.
-            if(action.has(ACTION_ID_ATTR)) {
+            if (action.has(ACTION_ID_ATTR)) {
                 builder.appendQueryParameter(ACTION_ID_ATTR, action.getString(ACTION_ID_ATTR));
             } else {
                 Log.i(LOGTAG, "button event with no name");
@@ -336,7 +336,7 @@ public final class NotificationHelper implements GeckoEventListener {
             args.put(COOKIE_ATTR, cookie);
             args.put(EVENT_TYPE_ATTR, CLOSED_EVENT);
             Log.i(LOGTAG, "Send " + args.toString());
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Notification:Event", args.toString()));
+            GeckoAppShell.notifyObservers("Notification:Event", args.toString());
         } catch (JSONException ex) {
             Log.e(LOGTAG, "sendNotificationWasClosed: error building JSON notification arguments.", ex);
         }
@@ -361,7 +361,7 @@ public final class NotificationHelper implements GeckoEventListener {
             JSONObject obj;
             try {
                 obj = new JSONObject(json);
-            } catch(JSONException ex) {
+            } catch (JSONException ex) {
                 obj = new JSONObject();
             }
 

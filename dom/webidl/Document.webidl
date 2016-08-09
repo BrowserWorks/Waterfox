@@ -226,20 +226,19 @@ partial interface Document {
   // versions hve it uppercase.
   [Func="nsDocument::IsUnprefixedFullscreenEnabled"]
   readonly attribute boolean fullscreenEnabled;
-  [BinaryName="fullscreenEnabled", Deprecated="PrefixedFullscreenAPI"]
+  [BinaryName="fullscreenEnabled"]
   readonly attribute boolean mozFullScreenEnabled;
   [Func="nsDocument::IsUnprefixedFullscreenEnabled"]
   readonly attribute Element? fullscreenElement;
-  [BinaryName="fullscreenElement", Deprecated="PrefixedFullscreenAPI"]
+  [BinaryName="fullscreenElement"]
   readonly attribute Element? mozFullScreenElement;
 
   [Func="nsDocument::IsUnprefixedFullscreenEnabled"]
   void exitFullscreen();
-  [BinaryName="exitFullscreen", Deprecated="PrefixedFullscreenAPI"]
+  [BinaryName="exitFullscreen"]
   void mozCancelFullScreen();
 
   // Gecko-specific fullscreen bits
-  [Deprecated="PrefixedFullscreenAPI"]
   readonly attribute boolean mozFullScreen;
 };
 
@@ -289,7 +288,6 @@ partial interface Document {
     sequence<Element> elementsFromPoint (float x, float y);
     CaretPosition? caretPositionFromPoint (float x, float y);
 
-    [Pref="dom.document.scrollingElement.enabled"]
     readonly attribute Element? scrollingElement;
 };
 
@@ -416,6 +414,12 @@ partial interface Document {
 // the user has interacted with the document or not.
 partial interface Document {
   [ChromeOnly] readonly attribute boolean userHasInteracted;
+};
+
+// Extension to give chrome and XBL JS the ability to determine whether
+// the document is sandboxed without permission to run scripts.
+partial interface Document {
+  [Func="IsChromeOrXBL"] readonly attribute boolean hasScriptsBlockedBySandbox;
 };
 
 Document implements XPathEvaluator;

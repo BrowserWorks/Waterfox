@@ -57,6 +57,8 @@ static char *RCSSTRING __UNUSED__="$Id: ice_ctx.c,v 1.2 2008/04/28 17:59:01 ekr 
 #include "util.h"
 #include "nr_socket_local.h"
 
+#define ICE_UFRAG_LEN 8
+#define ICE_PWD_LEN 32
 
 int LOG_ICE = 0;
 
@@ -108,7 +110,6 @@ int nr_ice_fetch_stun_servers(int ct, nr_ice_stun_server **out)
       if(r=nr_ip4_port_to_transport_addr(ntohl(addr_int), port, IPPROTO_UDP,
         &servers[i].u.addr))
         ABORT(r);
-      servers[i].index=i;
       servers[i].type = NR_ICE_STUN_SERVER_TYPE_ADDR;
       RFREE(addr);
       addr=0;
@@ -299,8 +300,6 @@ int nr_ice_fetch_turn_servers(int ct, nr_ice_turn_server **out)
         data.data=0;
       }
 
-      servers[i].turn_server.index=i;
-
       RFREE(addr);
       addr=0;
     }
@@ -319,9 +318,30 @@ int nr_ice_fetch_turn_servers(int ct, nr_ice_turn_server **out)
 #define MAXADDRS 100 /* Ridiculously high */
 int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp)
   {
+    int r,_status;
+    char *ufrag = 0;
+    char *pwd = 0;
+
+    if (r=nr_ice_get_new_ice_ufrag(&ufrag))
+      ABORT(r);
+    if (r=nr_ice_get_new_ice_pwd(&pwd))
+      ABORT(r);
+
+    if (r=nr_ice_ctx_create_with_credentials(label, flags, ufrag, pwd, ctxp))
+      ABORT(r);
+
+    _status=0;
+  abort:
+    RFREE(ufrag);
+    RFREE(pwd);
+
+    return(_status);
+  }
+
+int nr_ice_ctx_create_with_credentials(char *label, UINT4 flags, char *ufrag, char *pwd, nr_ice_ctx **ctxp)
+  {
     nr_ice_ctx *ctx=0;
     int r,_status;
-    char buf[100];
 
     if(r=r_log_register("ice", &LOG_ICE))
       ABORT(r);
@@ -334,19 +354,15 @@ int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp)
     if(!(ctx->label=r_strdup(label)))
       ABORT(R_NO_MEMORY);
 
-    if(r=nr_ice_random_string(buf,8))
+    if(!(ctx->ufrag=r_strdup(ufrag)))
       ABORT(r);
-    if(!(ctx->ufrag=r_strdup(buf)))
-      ABORT(r);
-    if(r=nr_ice_random_string(buf,32))
-      ABORT(r);
-    if(!(ctx->pwd=r_strdup(buf)))
+    if(!(ctx->pwd=r_strdup(pwd)))
       ABORT(r);
 
     /* Get the STUN servers */
     if(r=NR_reg_get_child_count(NR_ICE_REG_STUN_SRV_PRFX,
       (unsigned int *)&ctx->stun_server_ct)||ctx->stun_server_ct==0) {
-      r_log(LOG_ICE,LOG_WARNING,"ICE(%s): No STUN servers specified", ctx->label);
+      r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): No STUN servers specified in nICEr registry", ctx->label);
       ctx->stun_server_ct=0;
     }
 
@@ -368,7 +384,7 @@ int nr_ice_ctx_create(char *label, UINT4 flags, nr_ice_ctx **ctxp)
     /* Get the TURN servers */
     if(r=NR_reg_get_child_count(NR_ICE_REG_TURN_SRV_PRFX,
       (unsigned int *)&ctx->turn_server_ct)||ctx->turn_server_ct==0) {
-      r_log(LOG_ICE,LOG_NOTICE,"ICE(%s): No TURN servers specified", ctx->label);
+      r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): No TURN servers specified in nICEr registry", ctx->label);
       ctx->turn_server_ct=0;
     }
 #else
@@ -955,3 +971,42 @@ int nr_ice_ctx_hide_candidate(nr_ice_ctx *ctx, nr_ice_candidate *cand)
 
     return 0;
   }
+
+int nr_ice_get_new_ice_ufrag(char** ufrag)
+  {
+    int r,_status;
+    char buf[ICE_UFRAG_LEN+1];
+
+    if(r=nr_ice_random_string(buf,ICE_UFRAG_LEN))
+      ABORT(r);
+    if(!(*ufrag=r_strdup(buf)))
+      ABORT(r);
+
+    _status=0;
+  abort:
+    if(_status) {
+      RFREE(*ufrag);
+      *ufrag = 0;
+    }
+    return(_status);
+  }
+
+int nr_ice_get_new_ice_pwd(char** pwd)
+  {
+    int r,_status;
+    char buf[ICE_PWD_LEN+1];
+
+    if(r=nr_ice_random_string(buf,ICE_PWD_LEN))
+      ABORT(r);
+    if(!(*pwd=r_strdup(buf)))
+      ABORT(r);
+
+    _status=0;
+  abort:
+    if(_status) {
+      RFREE(*pwd);
+      *pwd = 0;
+    }
+    return(_status);
+  }
+

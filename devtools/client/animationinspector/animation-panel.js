@@ -22,7 +22,7 @@ var AnimationsPanel = {
   UI_UPDATED_EVENT: "ui-updated",
   PANEL_INITIALIZED: "panel-initialized",
 
-  initialize: Task.async(function*() {
+  initialize: Task.async(function* () {
     if (AnimationsController.destroyed) {
       console.warn("Could not initialize the animation-panel, controller " +
                    "was destroyed");
@@ -62,7 +62,8 @@ var AnimationsPanel = {
     let hUtils = gToolbox.highlighterUtils;
     this.togglePicker = hUtils.togglePicker.bind(hUtils);
 
-    this.animationsTimelineComponent = new AnimationsTimeline(gInspector);
+    this.animationsTimelineComponent = new AnimationsTimeline(gInspector,
+      AnimationsController.traits);
     this.animationsTimelineComponent.init(this.playersEl);
 
     if (AnimationsController.traits.hasSetPlaybackRate) {
@@ -78,7 +79,7 @@ var AnimationsPanel = {
     this.emit(this.PANEL_INITIALIZED);
   }),
 
-  destroy: Task.async(function*() {
+  destroy: Task.async(function* () {
     if (!this.initialized) {
       return;
     }
@@ -183,6 +184,8 @@ var AnimationsPanel = {
     } else {
       document.body.setAttribute("empty", "true");
       document.body.removeAttribute("timeline");
+      $("#error-type").textContent =
+        L10N.getStr("panel.invalidElementSelected");
     }
   },
 
@@ -202,7 +205,7 @@ var AnimationsPanel = {
    * Toggle (pause/play) all animations in the current target
    * and update the UI the toggleAll button.
    */
-  toggleAll: Task.async(function*() {
+  toggleAll: Task.async(function* () {
     this.toggleAllButtonEl.classList.toggle("paused");
     yield AnimationsController.toggleAll();
   }),
@@ -277,7 +280,9 @@ var AnimationsPanel = {
       this.setCurrentTimeAllPromise =
         AnimationsController.setCurrentTimeAll(time, true)
                             .catch(error => console.error(error))
-                            .then(() => this.setCurrentTimeAllPromise = null);
+                            .then(() => {
+                              this.setCurrentTimeAllPromise = null;
+                            });
     }
 
     this.displayTimelineCurrentTime();
@@ -293,7 +298,7 @@ var AnimationsPanel = {
    * useful after the playState or currentTime has been changed and in case the
    * animations aren't auto-refreshing), and then refresh the UI.
    */
-  refreshAnimationsStateAndUI: Task.async(function*() {
+  refreshAnimationsStateAndUI: Task.async(function* () {
     for (let player of AnimationsController.animationPlayers) {
       yield player.refreshState();
     }
@@ -304,7 +309,7 @@ var AnimationsPanel = {
    * Refresh the list of animations UI. This will empty the panel and re-render
    * the various components again.
    */
-  refreshAnimationsUI: Task.async(function*() {
+  refreshAnimationsUI: Task.async(function* () {
     // Empty the whole panel first.
     this.togglePlayers(true);
 

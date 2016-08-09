@@ -232,17 +232,6 @@ interface CanvasRenderingContext2D {
                            optional unsigned long flags = 0);
 
   /**
-   * Render the root widget of a window into the canvas. Unlike drawWindow,
-   * this uses the operating system to snapshot the widget on-screen, rather
-   * than reading from our own compositor.
-   *
-   * Currently, this is only supported on Windows, and only on widgets that
-   * use OMTC, and only from within the chrome process.
-   */
-  [Throws, ChromeOnly]
-  void drawWidgetAsOnScreen(Window window);
-
-  /**
    * This causes a context that is currently using a hardware-accelerated
    * backend to fallback to a software one. All state should be preserved.
    */
@@ -298,7 +287,9 @@ interface CanvasPathMethods {
 
   [Throws, LenientFloat]
   void arc(double x, double y, double radius, double startAngle, double endAngle, optional boolean anticlockwise = false); 
-// NOT IMPLEMENTED  [LenientFloat] void ellipse(double x, double y, double radiusX, double radiusY, double rotation, double startAngle, double endAngle, boolean anticlockwise);
+
+  [Throws, LenientFloat]
+  void ellipse(double x, double y, double radiusX, double radiusY, double rotation, double startAngle, double endAngle, optional boolean anticlockwise = false);
 };
 
 interface CanvasGradient {

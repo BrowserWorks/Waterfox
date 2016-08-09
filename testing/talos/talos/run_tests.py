@@ -108,6 +108,10 @@ def run_tests(config, browser_config):
     if browser_config['develop']:
         browser_config['extra_args'] = '--no-remote'
 
+    # with addon signing for production talos, we want to develop without it
+    if browser_config['develop'] or browser_config['branch_name'] == 'Try':
+        browser_config['preferences']['xpinstall.signatures.required'] = False
+
     # set defaults
     testdate = config.get('testdate', '')
 
@@ -161,11 +165,11 @@ def run_tests(config, browser_config):
         results_urls = dict(
             # another hack; datazilla stands for Perfherder
             # and do not require url, but a non empty dict is required...
-            datazilla_urls=['local.json'],
+            output_urls=['local.json'],
         )
     else:
         # local mode, output to files
-        results_urls = dict(datazilla_urls=[os.path.abspath('local.json')])
+        results_urls = dict(output_urls=[os.path.abspath('local.json')])
     talos_results.check_output_formats(results_urls)
 
     httpd = setup_webserver(browser_config['webserver'])
@@ -210,9 +214,8 @@ def run_tests(config, browser_config):
     if results_urls:
         talos_results.output(results_urls)
         if browser_config['develop']:
-            print
-            print ("Thanks for running Talos locally. Results are in"
-                   " %s and %s" % (results_urls['datazilla_urls']))
+            print ("Thanks for running Talos locally. Results are in %s"
+                   % (results_urls['output_urls']))
 
     # we will stop running tests on a failed test, or we will return 0 for
     # green

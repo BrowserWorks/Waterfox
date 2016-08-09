@@ -36,6 +36,9 @@ class TreeMetadata(object):
     """Base class for all data being captured."""
     __slots__ = ()
 
+    def to_dict(self):
+        return {k.lower(): getattr(self, k) for k in self.DICT_ATTRS}
+
 
 class ContextDerived(TreeMetadata):
     """Build object derived from a single Context instance.
@@ -203,22 +206,6 @@ class Defines(BaseDefines):
 class HostDefines(BaseDefines):
     pass
 
-class TestHarnessFiles(ContextDerived):
-    """Sandbox container object for TEST_HARNESS_FILES,
-    which is a HierarchicalStringList.
-
-    We need an object derived from ContextDerived for use in the backend, so
-    this object fills that role. It just has a reference to the underlying
-    HierarchicalStringList, which is created when parsing TEST_HARNESS_FILES.
-    """
-    __slots__ = ('srcdir_files', 'srcdir_pattern_files', 'objdir_files')
-
-    def __init__(self, context, srcdir_files, srcdir_pattern_files, objdir_files):
-        ContextDerived.__init__(self, context)
-        self.srcdir_files = srcdir_files
-        self.srcdir_pattern_files = srcdir_pattern_files
-        self.objdir_files = objdir_files
-
 class IPDLFile(ContextDerived):
     """Describes an individual .ipdl source file."""
 
@@ -373,6 +360,13 @@ class BaseProgram(Linkable):
     """
     __slots__ = ('program')
 
+    DICT_ATTRS = {
+        'install_target',
+        'KIND',
+        'program',
+        'relobjdir',
+    }
+
     def __init__(self, context, program, is_unit_test=False):
         Linkable.__init__(self, context)
 
@@ -381,6 +375,9 @@ class BaseProgram(Linkable):
             program += bin_suffix
         self.program = program
         self.is_unit_test = is_unit_test
+
+    def __repr__(self):
+        return '<%s: %s/%s>' % (type(self).__name__, self.relobjdir, self.program)
 
 
 class Program(BaseProgram):
@@ -431,6 +428,9 @@ class BaseLibrary(Linkable):
 
         self.refs = []
 
+    def __repr__(self):
+        return '<%s: %s/%s>' % (type(self).__name__, self.relobjdir, self.lib_name)
+
 
 class Library(BaseLibrary):
     """Context derived container object for a library"""
@@ -443,6 +443,16 @@ class Library(BaseLibrary):
         BaseLibrary.__init__(self, context, real_name or basename)
         self.basename = basename
         self.is_sdk = is_sdk
+
+
+class RustRlibLibrary(Library):
+    """Context derived container object for a Rust rlib"""
+
+    def __init__(self, context, basename, crate_name, rlib_filename, link_into):
+        Library.__init__(self, context, basename)
+        self.crate_name = crate_name
+        self.rlib_filename = rlib_filename
+        self.link_into = link_into
 
 
 class StaticLibrary(Library):
@@ -466,6 +476,15 @@ class SharedLibrary(Library):
         'variant',
         'symbols_file',
     )
+
+    DICT_ATTRS = {
+        'basename',
+        'import_name',
+        'install_target',
+        'lib_name',
+        'relobjdir',
+        'soname',
+    }
 
     FRAMEWORK = 1
     COMPONENT = 2
@@ -552,6 +571,10 @@ class TestManifest(ContextDerived):
         # Set of files provided by an external mechanism.
         'external_installs',
 
+        # Set of files required by multiple test directories, whose installation
+        # will be resolved when running tests.
+        'deferred_installs',
+
         # The full path of this manifest file.
         'path',
 
@@ -573,6 +596,11 @@ class TestManifest(ContextDerived):
         # If this manifest is a duplicate of another one, this is the
         # manifestparser.TestManifest of the other one.
         'dupe_manifest',
+
+        # The support files appearing in the DEFAULT section of this
+        # manifest. This enables a space optimization in all-tests.json,
+        # see the comment in mozbuild/backend/common.py.
+        'default_support_files',
     )
 
     def __init__(self, context, path, manifest, flavor=None,
@@ -593,6 +621,8 @@ class TestManifest(ContextDerived):
         self.pattern_installs = []
         self.tests = []
         self.external_installs = set()
+        self.deferred_installs = set()
+        self.default_support_files = None
 
 
 class LocalInclude(ContextDerived):
@@ -814,7 +844,40 @@ class FinalTargetPreprocessedFiles(ContextDerived):
         self.files = files
 
 
-class TestingFiles(FinalTargetFiles):
+class ObjdirFiles(ContextDerived):
+    """Sandbox container object for OBJDIR_FILES, which is a
+    HierarchicalStringList.
+    """
+    __slots__ = ('files')
+
+    def __init__(self, sandbox, files):
+        ContextDerived.__init__(self, sandbox)
+        self.files = files
+
+    @property
+    def install_target(self):
+        return ''
+
+
+class ObjdirPreprocessedFiles(ContextDerived):
+    """Sandbox container object for OBJDIR_PP_FILES, which is a
+    HierarchicalStringList.
+    """
+    __slots__ = ('files')
+
+    def __init__(self, sandbox, files):
+        ContextDerived.__init__(self, sandbox)
+        self.files = files
+
+    @property
+    def install_target(self):
+        return ''
+
+
+class TestHarnessFiles(FinalTargetFiles):
+    """Sandbox container object for TEST_HARNESS_FILES,
+    which is a HierarchicalStringList.
+    """
     @property
     def install_target(self):
         return '_tests'
@@ -846,22 +909,35 @@ class BrandingFiles(FinalTargetFiles):
         return 'dist/branding'
 
 
+class SdkFiles(FinalTargetFiles):
+    """Sandbox container object for SDK_FILES, which is a
+    HierarchicalStringList.
+
+    We need an object derived from ContextDerived for use in the backend, so
+    this object fills that role. It just has a reference to the underlying
+    HierarchicalStringList, which is created when parsing SDK_FILES.
+    """
+    @property
+    def install_target(self):
+        return 'dist/sdk'
+
+
 class GeneratedFile(ContextDerived):
     """Represents a generated file."""
 
     __slots__ = (
         'script',
         'method',
-        'output',
+        'outputs',
         'inputs',
         'flags',
     )
 
-    def __init__(self, context, script, method, output, inputs, flags=()):
+    def __init__(self, context, script, method, outputs, inputs, flags=()):
         ContextDerived.__init__(self, context)
         self.script = script
         self.method = method
-        self.output = output
+        self.outputs = outputs if isinstance(outputs, tuple) else (outputs,)
         self.inputs = inputs
         self.flags = flags
 

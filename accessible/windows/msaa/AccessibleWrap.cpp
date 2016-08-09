@@ -493,7 +493,7 @@ AccessibleWrap::get_accRole(
     nsAutoString roleString;
     if (msaaRole != ROLE_SYSTEM_CLIENT &&
         !content->GetAttr(kNameSpaceID_None, nsGkAtoms::role, roleString)) {
-      nsIDocument * document = content->GetCurrentDoc();
+      nsIDocument * document = content->GetUncomposedDoc();
       if (!document)
         return E_FAIL;
 
@@ -1525,7 +1525,7 @@ AccessibleWrap::GetXPAccessibleFor(const VARIANT& aVarChild)
   // First handle the case that both this accessible and the id'd one are in
   // this process.
   if (!IsProxy()) {
-    void* uniqueID = reinterpret_cast<void*>(-aVarChild.lVal);
+    void* uniqueID = reinterpret_cast<void*>(intptr_t(-aVarChild.lVal));
 
     DocAccessible* document = Document();
     Accessible* child =

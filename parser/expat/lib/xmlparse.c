@@ -26,7 +26,9 @@
 #define XmlGetInternalEncoding XmlGetUtf16InternalEncoding
 #define XmlGetInternalEncodingNS XmlGetUtf16InternalEncodingNS
 #define XmlEncode XmlUtf16Encode
-#define MUST_CONVERT(enc, s) (!(enc)->isUtf16 || (((unsigned long)s) & 1))
+
+/* Using pointer subtraction to convert to integer type. */
+#define MUST_CONVERT(enc, s) (!(enc)->isUtf16 || (((char *)(s) - (char *)NULL) & 1))
 typedef unsigned short ICHAR;
 #else
 #define XML_ENCODE_MAX XML_UTF8_ENCODE_MAX
@@ -6284,6 +6286,9 @@ poolGrow(STRING_POOL *pool)
   }
   if (pool->blocks && pool->start == pool->blocks->s) {
     int blockSize = (int)(pool->end - pool->start)*2;
+    if (blockSize < 0)
+      return XML_FALSE;
+
     pool->blocks = (BLOCK *)
       pool->mem->realloc_fcn(pool->blocks,
                              (offsetof(BLOCK, s)
@@ -6298,10 +6303,17 @@ poolGrow(STRING_POOL *pool)
   else {
     BLOCK *tem;
     int blockSize = (int)(pool->end - pool->start);
+    if (blockSize < 0)
+      return XML_FALSE;
+
     if (blockSize < INIT_BLOCK_SIZE)
       blockSize = INIT_BLOCK_SIZE;
     else
       blockSize *= 2;
+
+    if (blockSize < 0)
+      return XML_FALSE;
+
     tem = (BLOCK *)pool->mem->malloc_fcn(offsetof(BLOCK, s)
                                         + blockSize * sizeof(XML_Char));
     if (!tem)

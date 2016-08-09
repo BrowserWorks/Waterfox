@@ -193,7 +193,7 @@ class CompositorOGL final : public Compositor
 
   std::map<ShaderConfigOGL, ShaderProgramOGL*> mPrograms;
 public:
-  explicit CompositorOGL(CompositorParent* aParent,
+  explicit CompositorOGL(CompositorBridgeParent* aParent,
                          nsIWidget *aWidget, int aSurfaceWidth = -1, int aSurfaceHeight = -1,
                          bool aUseExternalSurfaceSize = false);
 
@@ -209,6 +209,8 @@ public:
   virtual bool Initialize() override;
 
   virtual void Destroy() override;
+
+  virtual void DetachWidget() override { mWidget = nullptr; }
 
   virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override
   {
@@ -404,7 +406,7 @@ private:
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
                           const gfx::Rect *aClipRectIn,
                           const gfx::Rect& aRenderBounds,
-                          bool aOpaque,
+                          const nsIntRegion& aOpaqueRegion,
                           gfx::Rect *aClipRectOut = nullptr,
                           gfx::Rect *aRenderBoundsOut = nullptr) override;
 

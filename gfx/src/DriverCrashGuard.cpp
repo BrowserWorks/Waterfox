@@ -298,7 +298,8 @@ DriverCrashGuard::FeatureEnabled(int aFeature, bool aDefault)
     return aDefault;
   }
   int32_t status;
-  if (!NS_SUCCEEDED(mGfxInfo->GetFeatureStatus(aFeature, &status))) {
+  nsCString discardFailureId;
+  if (!NS_SUCCEEDED(mGfxInfo->GetFeatureStatus(aFeature, discardFailureId, &status))) {
     return false;
   }
   return status == nsIGfxInfo::FEATURE_STATUS_OK;
@@ -475,6 +476,30 @@ void
 D3D9VideoCrashGuard::LogFeatureDisabled()
 {
   gfxCriticalNote << "DXVA2D3D9 video decoding is disabled due to a previous crash.";
+}
+
+D3D11VideoCrashGuard::D3D11VideoCrashGuard(dom::ContentParent* aContentParent)
+ : DriverCrashGuard(CrashGuardType::D3D11Video, aContentParent)
+{
+}
+
+bool
+D3D11VideoCrashGuard::UpdateEnvironment()
+{
+  // We don't care about any extra preferences here.
+  return false;
+}
+
+void
+D3D11VideoCrashGuard::LogCrashRecovery()
+{
+  gfxCriticalNote << "DXVA2D3D11 just crashed; hardware video will be disabled.";
+}
+
+void
+D3D11VideoCrashGuard::LogFeatureDisabled()
+{
+  gfxCriticalNote << "DXVA2D3D11 video decoding is disabled due to a previous crash.";
 }
 
 GLContextCrashGuard::GLContextCrashGuard(dom::ContentParent* aContentParent)

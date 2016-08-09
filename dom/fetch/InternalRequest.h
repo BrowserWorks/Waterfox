@@ -117,6 +117,7 @@ public:
   InternalRequest(const nsACString& aURL,
                   const nsACString& aMethod,
                   already_AddRefed<InternalHeaders> aHeaders,
+                  RequestCache aCacheMode,
                   RequestMode aMode,
                   RequestRedirect aRequestRedirect,
                   RequestCredentials aRequestCredentials,
@@ -132,7 +133,7 @@ public:
     , mMode(aMode)
     , mCredentialsMode(aRequestCredentials)
     , mResponseTainting(LoadTainting::Basic)
-    , mCacheMode(RequestCache::Default)
+    , mCacheMode(aCacheMode)
     , mRedirectMode(aRequestRedirect)
     , mAuthenticationFlag(false)
     , mForceOriginHeader(false)
@@ -334,6 +335,9 @@ public:
   void
   SetContentPolicyType(nsContentPolicyType aContentPolicyType);
 
+  void
+  OverrideContentPolicyType(nsContentPolicyType aContentPolicyType);
+
   RequestContext
   Context() const
   {
@@ -424,6 +428,15 @@ public:
   bool
   IsClientRequest() const;
 
+  void
+  MaybeSkipCacheIfPerformingRevalidation();
+
+  bool
+  IsContentPolicyTypeOverridden() const
+  {
+    return mContentPolicyTypeOverridden;
+  }
+
   static RequestMode
   MapChannelToRequestMode(nsIChannel* aChannel);
 
@@ -477,6 +490,10 @@ private:
   // use it to check if Service Workers are simply fetching intercepted Request
   // objects without modifying them.
   bool mCreatedByFetchEvent = false;
+  // This is only set when Request.overrideContentPolicyType() has been set.
+  // It is illegal to pass such a Request object to a fetch() method unless
+  // if the caller has chrome privileges.
+  bool mContentPolicyTypeOverridden = false;
 };
 
 } // namespace dom

@@ -36,7 +36,8 @@ class CompositableParent;
 class ShadowLayersManager;
 
 class LayerTransactionParent final : public PLayerTransactionParent,
-                                     public CompositableParentManager
+                                     public CompositableParentManager,
+                                     public ShmemAllocator
 {
   typedef mozilla::layout::RenderFrameParent RenderFrameParent;
   typedef InfallibleTArray<Edit> EditArray;
@@ -61,7 +62,8 @@ public:
   uint64_t GetId() const { return mId; }
   Layer* GetRoot() const { return mRoot; }
 
-  // ISurfaceAllocator
+  virtual ShmemAllocator* AsShmemAllocator() override { return this; }
+
   virtual bool AllocShmem(size_t aSize,
                           ipc::SharedMemory::SharedMemoryType aType,
                           ipc::Shmem* aShmem) override;
@@ -78,8 +80,7 @@ public:
   void SetPendingTransactionId(uint64_t aId) { mPendingTransaction = aId; }
 
   // CompositableParentManager
-  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture,
-                                        CompositableHost* aCompositableHost) override;
+  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture) override;
 
   virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) override;
 
@@ -182,8 +183,8 @@ protected:
     mIPCOpen = false;
     RELEASE_MANUALLY(this);
   }
-  friend class CompositorParent;
-  friend class CrossProcessCompositorParent;
+  friend class CompositorBridgeParent;
+  friend class CrossProcessCompositorBridgeParent;
   friend class layout::RenderFrameParent;
 
 private:

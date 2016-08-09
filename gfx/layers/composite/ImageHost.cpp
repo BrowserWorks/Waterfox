@@ -330,17 +330,13 @@ ImageHost::Composite(LayerComposite* aLayer,
   }
 
   TimedImage* img = &mImages[imageIndex];
-  SetCurrentTextureHost(img->mTextureHost);
+  img->mTextureHost->SetCompositor(GetCompositor());
   // If this TextureHost will be recycled, then make sure we hold a reference to
   // it until we're sure that the compositor has finished reading from it.
   if (img->mTextureHost->GetFlags() & TextureFlags::RECYCLE) {
     aLayer->GetLayerManager()->HoldTextureUntilNextComposite(img->mTextureHost);
   }
-  // Make sure the front buffer has a compositor
-  mCurrentTextureHost->SetCompositor(GetCompositor());
-  if (mCurrentTextureSource) {
-    mCurrentTextureSource->SetCompositor(GetCompositor());
-  }
+  SetCurrentTextureHost(img->mTextureHost);
 
   {
     AutoLockCompositableHost autoLock(this);
@@ -584,6 +580,27 @@ ImageHost::GetImageSize() const
     return IntSize(img->mPictureRect.width, img->mPictureRect.height);
   }
   return IntSize();
+}
+
+bool
+ImageHost::IsOpaque()
+{
+  const TimedImage* img = ChooseImage();
+  if (!img) {
+    return false;
+  }
+
+  if (img->mPictureRect.width == 0 ||
+      img->mPictureRect.height == 0 ||
+      !img->mTextureHost) {
+    return false;
+  }
+
+  gfx::SurfaceFormat format = img->mTextureHost->GetFormat();
+  if (gfx::IsOpaque(format)) {
+    return true;
+  }
+  return false;
 }
 
 already_AddRefed<TexturedEffect>

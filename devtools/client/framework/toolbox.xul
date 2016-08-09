@@ -23,6 +23,8 @@
           src="chrome://global/content/viewSourceUtils.js"/>
 
   <script type="application/javascript" src="chrome://global/content/globalOverlay.js"/>
+  <script type="application/javascript;version=1.8"
+          src="chrome://devtools/content/framework/toolbox-init.js"/>
 
   <commandset id="editMenuCommands"/>
   <keyset id="editMenuKeys"/>
@@ -140,7 +142,7 @@
            height set to a small value without flexing to fill up extra
            space. There must be a flex on both to ensure that the console
            panel itself is sized properly -->
-      <deck id="toolbox-deck" flex="1000" minheight="75" />
+      <box id="toolbox-deck" flex="1000" minheight="75" />
       <splitter id="toolbox-console-splitter" class="devtools-horizontal-splitter" hidden="true" />
       <box minheight="75" flex="1" id="toolbox-panel-webconsole" collapsed="true" />
     </vbox>

@@ -3,11 +3,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
-
+var Cu = Components.utils;
 const loaders = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js", {});
 const { devtools } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const { joinURI } = devtools.require("devtools/shared/path");
+const { assert } = devtools.require("devtools/shared/DevToolsUtils");
 const Services = devtools.require("Services");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
@@ -39,16 +39,21 @@ function clearCache() {
  * and React components live that should be evaluated in a browser environment.
  *
  * @param string baseURI
- *        Base path to load modules from.
+ *        Base path to load modules from. If null or undefined, only
+ *        the shared vendor/components modules are loaded with the browser
+ *        loader.
  * @param Object window
  *        The window instance to evaluate modules within
+ * @param Boolean useOnlyShared
+ *        If true, ignores `baseURI` and only loads the shared
+ *        BROWSER_BASED_DIRS via BrowserLoader.
  * @return Object
  *         An object with two properties:
  *         - loader: the Loader instance
  *         - require: a function to require modules with
  */
-function BrowserLoader(baseURI, window) {
-  const browserLoaderBuilder = new BrowserLoaderBuilder(baseURI, window);
+function BrowserLoader(options) {
+  const browserLoaderBuilder = new BrowserLoaderBuilder(options);
   return {
     loader: browserLoaderBuilder.loader,
     require: browserLoaderBuilder.require
@@ -63,17 +68,22 @@ function BrowserLoader(baseURI, window) {
  *        Base path to load modules from.
  * @param Object window
  *        The window instance to evaluate modules within
+ * @param Boolean useOnlyShared
+ *        If true, ignores `baseURI` and only loads the shared
+ *        BROWSER_BASED_DIRS via BrowserLoader.
  */
-function BrowserLoaderBuilder(baseURI, window) {
+function BrowserLoaderBuilder({ baseURI, window, useOnlyShared }) {
+  assert(!!baseURI !== !!useOnlyShared,
+    "Cannot use both `baseURI` and `useOnlyShared`.");
+
   const loaderOptions = devtools.require("@loader/options");
   const dynamicPaths = {};
   const componentProxies = new Map();
-  const hotReloadEnabled = Services.prefs.getBoolPref("devtools.loader.hotreload");
 
-  if(AppConstants.DEBUG || AppConstants.DEBUG_JS_MODULES) {
+  if (AppConstants.DEBUG || AppConstants.DEBUG_JS_MODULES) {
     dynamicPaths["devtools/client/shared/vendor/react"] =
       "resource://devtools/client/shared/vendor/react-dev";
-  };
+  }
 
   const opts = {
     id: "browser-loader",
@@ -87,7 +97,7 @@ function BrowserLoaderBuilder(baseURI, window) {
         return uri.startsWith(dir);
       }).length > 0;
 
-      if (!uri.startsWith(baseURI) && !isBrowserDir) {
+      if ((useOnlyShared || !uri.startsWith(baseURI)) && !isBrowserDir) {
         return devtools.require(uri);
       }
 
@@ -123,7 +133,7 @@ function BrowserLoaderBuilder(baseURI, window) {
     }
   };
 
-  if(hotReloadEnabled) {
+  if (Services.prefs.getBoolPref("devtools.loader.hotreload")) {
     opts.loadModuleHook = (module, require) => {
       const { uri, exports } = module;
 
@@ -147,24 +157,19 @@ function BrowserLoaderBuilder(baseURI, window) {
       }
       return exports;
     }
+    const watcher = devtools.require("devtools/client/shared/devtools-file-watcher");
+    let onFileChanged = (_, relativePath, path) => {
+      this.hotReloadFile(componentProxies, "resource://devtools/" + relativePath);
+    };
+    watcher.on("file-changed", onFileChanged);
+    window.addEventListener("unload", () => {
+      watcher.off("file-changed", onFileChanged);
+    });
   }
 
   const mainModule = loaders.Module(baseURI, joinURI(baseURI, "main.js"));
   this.loader = loaders.Loader(opts);
   this.require = loaders.Require(this.loader, mainModule);
-
-  if (hotReloadEnabled) {
-    const watcher = devtools.require("devtools/client/shared/file-watcher");
-    const onFileChanged = (_, relativePath) => {
-      this.hotReloadFile(window, componentProxies,
-                         "resource://devtools/" + relativePath);
-    };
-    watcher.on("file-changed", onFileChanged);
-
-    window.addEventListener("unload", () => {
-      watcher.off("file-changed", onFileChanged);
-    });
-  }
 }
 
 BrowserLoaderBuilder.prototype = {
@@ -190,7 +195,7 @@ BrowserLoaderBuilder.prototype = {
     });
   },
 
-  hotReloadFile: function(window, componentProxies, fileURI) {
+  hotReloadFile: function(componentProxies, fileURI) {
     if (fileURI.match(/\.js$/)) {
       // Test for React proxy components
       const proxy = componentProxies.get(fileURI);

@@ -1815,22 +1815,7 @@ NS_IMETHODIMP nsXULWindow::SizeShellTo(nsIDocShellTreeItem* aShellItem,
   int32_t height = 0;
   shellAsWin->GetSize(&width, &height);
 
-  int32_t widthDelta = aCX - width;
-  int32_t heightDelta = aCY - height;
-
-  if (widthDelta || heightDelta) {
-    int32_t winCX = 0;
-    int32_t winCY = 0;
-
-    GetSize(&winCX, &winCY);
-    // There's no point in trying to make the window smaller than the
-    // desired docshell size --- that's not likely to work. This whole
-    // function assumes that the outer docshell is adding some constant
-    // "border" chrome to aShellItem.
-    winCX = std::max(winCX + widthDelta, aCX);
-    winCY = std::max(winCY + heightDelta, aCY);
-    SetSize(winCX, winCY, true);
-  }
+  SizeShellToWithLimit(aCX, aCY, width, height);
 
   return NS_OK;
 }
@@ -2104,16 +2089,7 @@ void nsXULWindow::SetContentScrollbarVisibility(bool aVisible)
     return;
   }
 
-  MOZ_ASSERT(contentWin->IsOuterWindow());
-  if (nsPIDOMWindowInner* innerWindow = contentWin->GetCurrentInnerWindow()) {
-    mozilla::ErrorResult rv;
-
-    RefPtr<nsGlobalWindow> window = static_cast<nsGlobalWindow*>(reinterpret_cast<nsPIDOMWindow<nsISupports>*>(innerWindow));
-    RefPtr<mozilla::dom::BarProp> scrollbars = window->GetScrollbars(rv);
-    if (scrollbars) {
-      scrollbars->SetVisible(aVisible, rv);
-    }
-  }
+  nsContentUtils::SetScrollbarsVisibility(contentWin->GetDocShell(), aVisible);
 }
 
 bool nsXULWindow::GetContentScrollbarVisibility()
@@ -2203,6 +2179,27 @@ NS_IMETHODIMP nsXULWindow::SetXULBrowserWindow(nsIXULBrowserWindow * aXULBrowser
 {
   mXULBrowserWindow = aXULBrowserWindow;
   return NS_OK;
+}
+
+void nsXULWindow::SizeShellToWithLimit(int32_t aCX, int32_t aCY,
+                                       int32_t shellItemCx, int32_t shellItemCy)
+{
+  int32_t widthDelta = aCX - shellItemCx;
+  int32_t heightDelta = aCY - shellItemCy;
+
+  if (widthDelta || heightDelta) {
+    int32_t winCX = 0;
+    int32_t winCY = 0;
+
+    GetSize(&winCX, &winCY);
+    // There's no point in trying to make the window smaller than the
+    // desired docshell size --- that's not likely to work. This whole
+    // function assumes that the outer docshell is adding some constant
+    // "border" chrome to aShellItem.
+    winCX = std::max(winCX + widthDelta, aCX);
+    winCY = std::max(winCY + heightDelta, aCY);
+    SetSize(winCX, winCY, true);
+  }
 }
 
 //*****************************************************************************

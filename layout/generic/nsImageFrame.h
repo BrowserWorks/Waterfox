@@ -58,11 +58,13 @@ private:
   nsImageFrame *mFrame;
 };
 
-typedef nsAtomicContainerFrame ImageFrameSuper;
-
-class nsImageFrame : public ImageFrameSuper,
-                     public nsIReflowCallback {
+class nsImageFrame : public nsAtomicContainerFrame
+                   , public nsIReflowCallback {
 public:
+  template <typename T> using Maybe = mozilla::Maybe<T>;
+  using Nothing = mozilla::Nothing;
+  using Visibility = mozilla::Visibility;
+
   typedef mozilla::image::DrawResult DrawResult;
   typedef mozilla::layers::ImageContainer ImageContainer;
   typedef mozilla::layers::ImageLayer ImageLayer;
@@ -104,6 +106,9 @@ public:
                                     nsIAtom* aAttribute,
                                     int32_t aModType) override;
 
+  void OnVisibilityChange(Visibility aNewVisibility,
+                          Maybe<OnNonvisible> aNonvisibleAction = Nothing()) override;
+
 #ifdef ACCESSIBILITY
   virtual mozilla::a11y::AccType AccessibleType() override;
 #endif
@@ -112,7 +117,7 @@ public:
 
   virtual bool IsFrameOfType(uint32_t aFlags) const override
   {
-    return ImageFrameSuper::IsFrameOfType(aFlags &
+    return nsAtomicContainerFrame::IsFrameOfType(aFlags &
       ~(nsIFrame::eReplaced | nsIFrame::eReplacedSizing));
   }
 
@@ -425,21 +430,13 @@ public:
   virtual void Paint(nsDisplayListBuilder* aBuilder,
                      nsRenderingContext* aCtx) override;
 
-  virtual bool CanOptimizeToImageLayer(LayerManager* aManager,
-                                       nsDisplayListBuilder* aBuilder) override;
-
-  /**
-   * Returns an ImageContainer for this image if the image type
-   * supports it (TYPE_RASTER only).
-   */
-  virtual already_AddRefed<ImageContainer> GetContainer(LayerManager* aManager,
-                                                        nsDisplayListBuilder* aBuilder) override;
+  virtual already_AddRefed<imgIContainer> GetImage() override;
 
   /**
    * @return The dest rect we'll use when drawing this image, in app units.
    *         Not necessarily contained in this item's bounds.
    */
-  nsRect GetDestRect(bool* aSnap = nullptr);
+  virtual nsRect GetDestRect() override;
 
   virtual LayerState GetLayerState(nsDisplayListBuilder* aBuilder,
                                    LayerManager* aManager,
@@ -464,13 +461,6 @@ public:
   virtual already_AddRefed<Layer> BuildLayer(nsDisplayListBuilder* aBuilder,
                                              LayerManager* aManager,
                                              const ContainerLayerParameters& aContainerParameters) override;
-
-  /**
-   * Configure an ImageLayer for this display item.
-   * Set the required filter and scaling transform.
-   */
-  virtual void ConfigureLayer(ImageLayer* aLayer,
-                              const ContainerLayerParameters& aParameters) override;
 
   NS_DISPLAY_DECL_NAME("Image", TYPE_IMAGE)
 private:

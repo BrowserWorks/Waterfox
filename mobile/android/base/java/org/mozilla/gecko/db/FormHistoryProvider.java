@@ -126,7 +126,7 @@ public class FormHistoryProvider extends SQLiteBridgeContentProvider {
 
     @Override
     public void initGecko() {
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("FormHistory:Init", null));
+        GeckoAppShell.notifyObservers("FormHistory:Init", null);
     }
 
     @Override
@@ -151,7 +151,7 @@ public class FormHistoryProvider extends SQLiteBridgeContentProvider {
     public void onPostQuery(Cursor cursor, Uri uri, SQLiteBridge db) { }
 
     @Override
-    protected String getDBName(){
+    protected String getDBName() {
         return DB_FILENAME;
     }
 
@@ -161,7 +161,7 @@ public class FormHistoryProvider extends SQLiteBridgeContentProvider {
     }
 
     @Override
-    protected int getDBVersion(){
+    protected int getDBVersion() {
         return DB_VERSION;
     }
 }

@@ -13,6 +13,7 @@ Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
+Cu.import("resource://gre/modules/AsyncPrefs.jsm");
 Cu.import("resource://gre/modules/DelayedInit.jsm");
 
 if (AppConstants.ACCESSIBILITY) {
@@ -152,15 +153,15 @@ var lazilyLoadedObserverScripts = [
   ["Feedback", ["Feedback:Show"], "chrome://browser/content/Feedback.js"],
   ["SelectionHandler", ["TextSelection:Get"], "chrome://browser/content/SelectionHandler.js"],
   ["EmbedRT", ["GeckoView:ImportScript"], "chrome://browser/content/EmbedRT.js"],
-  ["Reader", ["Reader:FetchContent", "Reader:Removed"], "chrome://browser/content/Reader.js"],
+  ["Reader", ["Reader:FetchContent", "Reader:AddToCache", "Reader:RemoveFromCache"], "chrome://browser/content/Reader.js"],
   ["PrintHelper", ["Print:PDF"], "chrome://browser/content/PrintHelper.js"],
 ];
-if (AppConstants.NIGHTLY_BUILD) {
-  lazilyLoadedObserverScripts.push(
-    ["ActionBarHandler", ["TextSelection:Get", "TextSelection:Action", "TextSelection:End"],
-      "chrome://browser/content/ActionBarHandler.js"]
-  );
-}
+
+lazilyLoadedObserverScripts.push(
+["ActionBarHandler", ["TextSelection:Get", "TextSelection:Action", "TextSelection:End"],
+  "chrome://browser/content/ActionBarHandler.js"]
+);
+
 if (AppConstants.MOZ_WEBRTC) {
   lazilyLoadedObserverScripts.push(
     ["WebrtcUI", ["getUserMedia:request",
@@ -188,6 +189,8 @@ lazilyLoadedObserverScripts.forEach(function (aScript) {
 // Lazily-loaded browser scripts that use message listeners.
 [
   ["Reader", [
+    ["Reader:AddToCache", false],
+    ["Reader:RemoveFromCache", false],
     ["Reader:ArticleGet", false],
     ["Reader:DropdownClosed", true], // 'true' allows us to survive mid-air cycle-collection.
     ["Reader:DropdownOpened", false],
@@ -195,8 +198,6 @@ lazilyLoadedObserverScripts.forEach(function (aScript) {
     ["Reader:ToolbarHidden", false],
     ["Reader:SystemUIVisibility", false],
     ["Reader:UpdateReaderButton", false],
-    ["Reader:SetIntPref", false],
-    ["Reader:SetCharPref", false],
   ], "chrome://browser/content/Reader.js"],
 ].forEach(aScript => {
   let [name, messages, script] = aScript;
@@ -260,65 +261,6 @@ if (AppConstants.MOZ_WEBRTC) {
   XPCOMUtils.defineLazyServiceGetter(this, "MediaManagerService",
     "@mozilla.org/mediaManagerService;1", "nsIMediaManagerService");
 }
-
-XPCOMUtils.defineLazyModuleGetter(
-  this,
-  "DOMApplicationRegistry",
-  "resource://gre/modules/Webapps.jsm",
-  null,
-  function() {
-    XPCOMUtils.defineLazyServiceGetter(this, "ppmm",
-                                   "@mozilla.org/parentprocessmessagemanager;1",
-                                   "nsIMessageBroadcaster");
-
-    // Keep the messages in sync with the initialization in Webapps.jsm (bug 1171013).
-    this.messages = ["Webapps:Install",
-                     "Webapps:Uninstall",
-                     "Webapps:GetSelf",
-                     "Webapps:CheckInstalled",
-                     "Webapps:GetInstalled",
-                     "Webapps:GetNotInstalled",
-                     "Webapps:Launch",
-                     "Webapps:LocationChange",
-                     "Webapps:InstallPackage",
-                     "Webapps:GetList",
-                     "Webapps:RegisterForMessages",
-                     "Webapps:UnregisterForMessages",
-                     "Webapps:CancelDownload",
-                     "Webapps:CheckForUpdate",
-                     "Webapps:Download",
-                     "Webapps:ApplyDownload",
-                     "Webapps:Install:Return:Ack",
-                     "Webapps:AddReceipt",
-                     "Webapps:RemoveReceipt",
-                     "Webapps:ReplaceReceipt",
-                     "Webapps:RegisterBEP",
-                     "Webapps:Export",
-                     "Webapps:Import",
-                     "Webapps:GetIcon",
-                     "Webapps:ExtractManifest",
-                     "Webapps:SetEnabled",
-                     "child-process-shutdown"];
-
-    this.messages.forEach(msgName => {
-      this.ppmm.addMessageListener(msgName, this);
-    });
-  },
-  function() {
-    this.messages.forEach(msgName => {
-      this.ppmm.removeMessageListener(msgName, this);
-    });
-  },
-  {
-    receiveMessage: function() {
-      // This is called only once when we receive a message for the first time.
-      // With this, we trigger the import of Webapps.jsm and forward the message
-      // to the real registry.
-      return DOMApplicationRegistry.receiveMessage.apply(
-          DOMApplicationRegistry, arguments);
-    }
-  }
-);
 
 XPCOMUtils.defineLazyModuleGetter(this, "Log",
   "resource://gre/modules/AndroidLog.jsm", "AndroidLog");
@@ -607,11 +549,9 @@ var BrowserApp = {
     }, false);
 
     // Pass caret StateChanged events to ActionBarHandler.
-    if (AppConstants.NIGHTLY_BUILD) {
-      window.addEventListener("mozcaretstatechanged", e => {
-        ActionBarHandler.caretStateChangedHandler(e);
-      }, /* useCapture = */ true, /* wantsUntrusted = */ false);
-    }
+    window.addEventListener("mozcaretstatechanged", e => {
+      ActionBarHandler.caretStateChangedHandler(e);
+    }, /* useCapture = */ true, /* wantsUntrusted = */ false);
   },
 
   get _startupStatus() {
@@ -697,20 +637,6 @@ var BrowserApp = {
           });
         });
     }
-
-    NativeWindow.contextmenus.add(stringGetter("contextmenu.addToReadingList"),
-      NativeWindow.contextmenus.linkOpenableContext,
-      function(aTarget) {
-        UITelemetry.addEvent("action.1", "contextmenu", null, "web_reading_list");
-        UITelemetry.addEvent("save.1", "contextmenu", null, "reading_list");
-
-        let url = NativeWindow.contextmenus._getLinkURL(aTarget);
-        Messaging.sendRequestForResult({
-            type: "Reader:AddToList",
-            title: truncate(url, MAX_TITLE_LENGTH),
-            url: truncate(url, MAX_URI_LENGTH),
-        }).catch(Cu.reportError);
-      });
 
     NativeWindow.contextmenus.add(stringGetter("contextmenu.copyLink"),
       NativeWindow.contextmenus.linkCopyableContext,
@@ -898,6 +824,18 @@ var BrowserApp = {
       function(aTarget) {
         UITelemetry.addEvent("action.1", "contextmenu", null, "web_unmute");
         aTarget.muted = false;
+      });
+
+    NativeWindow.contextmenus.add(stringGetter("contextmenu.viewImage"),
+      NativeWindow.contextmenus.imageLocationCopyableContext,
+      function(aTarget) {
+        let url = aTarget.src;
+        ContentAreaUtils.urlSecurityCheck(url, aTarget.ownerDocument.nodePrincipal,
+                                          Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
+
+        UITelemetry.addEvent("action.1", "contextmenu", null, "web_view_image");
+        UITelemetry.addEvent("loadurl.1", "contextmenu", null);
+        BrowserApp.selectedBrowser.loadURI(url);
       });
 
     NativeWindow.contextmenus.add(stringGetter("contextmenu.copyImageLocation"),
@@ -1116,7 +1054,6 @@ var BrowserApp = {
   },
 
   contentDocumentChanged: function() {
-    dump("GeckoBug1151102: Setting first-paint flag on DWU");
     window.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils).isFirstPaint = true;
     Services.androidBridge.contentDocumentChanged();
   },
@@ -1526,8 +1463,10 @@ var BrowserApp = {
       focused = doc.activeElement;
     }
 
-    if (focused instanceof HTMLInputElement && focused.mozIsTextField(false))
+    if (focused instanceof HTMLInputElement &&
+        (focused.mozIsTextField(false) || focused.type === "number")) {
       return focused;
+    }
 
     if (aOnlyInputElements)
       return null;
@@ -2664,6 +2603,12 @@ var NativeWindow = {
         return;
       }
 
+      // If the event was already defaultPrevented by somebody (web content, or
+      // some other part of gecko), then don't do anything with it.
+      if (event.defaultPrevented) {
+        return;
+      }
+
       // Use the highlighted element for the context menu target. When accessibility is
       // enabled, elements may not be highlighted so use the event target instead.
       this._target = BrowserEventHandler._highlightElement || event.target;
@@ -3384,6 +3329,7 @@ function Tab(aURL, aParams) {
   this.desktopMode = false;
   this.originalURI = null;
   this.hasTouchListener = false;
+  this.playingAudio = false;
 
   this.create(aURL, aParams);
 }
@@ -3539,6 +3485,7 @@ Tab.prototype = {
     this.browser.addEventListener("MozScrolledAreaChanged", this, true);
     this.browser.addEventListener("pageshow", this, true);
     this.browser.addEventListener("MozApplicationManifest", this, true);
+    this.browser.addEventListener("TabPreZombify", this, true);
 
     // Note that the XBL binding is untrusted
     this.browser.addEventListener("PluginBindingAttached", this, true, true);
@@ -3651,6 +3598,7 @@ Tab.prototype = {
     this.browser.removeEventListener("MozScrolledAreaChanged", this, true);
     this.browser.removeEventListener("pageshow", this, true);
     this.browser.removeEventListener("MozApplicationManifest", this, true);
+    this.browser.removeEventListener("TabPreZombify", this, true);
 
     this.browser.removeEventListener("PluginBindingAttached", this, true, true);
     this.browser.removeEventListener("VideoBindingAttached", this, true, true);
@@ -3880,7 +3828,7 @@ Tab.prototype = {
   addMetadata: function(type, value, quality = 1) {
     if (!this.metatags) {
       this.metatags = {
-        url: this.browser.currentURI.spec
+        url: this.browser.currentURI.specIgnoringRef
       };
     }
 
@@ -4042,12 +3990,21 @@ Tab.prototype = {
 
         let docURI = target.documentURI;
         let errorType = "";
-        if (docURI.startsWith("about:certerror"))
+        if (docURI.startsWith("about:certerror")) {
           errorType = "certerror";
-        else if (docURI.startsWith("about:blocked"))
-          errorType = "blocked"
-        else if (docURI.startsWith("about:neterror"))
+        }
+        else if (docURI.startsWith("about:blocked")) {
+          errorType = "blocked";
+        }
+        else if (docURI.startsWith("about:neterror")) {
+          let error = docURI.search(/e\=/);
+          let duffUrl = docURI.search(/\&u\=/);
+          let errorExtra = decodeURIComponent(docURI.slice(error + 2, duffUrl));
+          // Here is a list of errorExtra types (et_*)
+          // http://mxr.mozilla.org/mozilla-central/source/mobile/android/chrome/content/netError.xhtml#287
+          UITelemetry.addEvent("neterror.1", "content", null, errorExtra);
           errorType = "neterror";
+        }
 
         // Attach a listener to watch for "click" events bubbling up from error
         // pages and other similar page. This lets us fix bugs like 401575 which
@@ -4164,6 +4121,13 @@ Tab.prototype = {
         break;
       }
 
+      case "TabPreZombify": {
+        if (!this.playingAudio) {
+          return;
+        }
+        // Fall through to the DOMAudioPlayback events, so the
+        // audio playback indicator gets reset upon zombification.
+      }
       case "DOMAudioPlaybackStarted":
       case "DOMAudioPlaybackStopped": {
         if (!Services.prefs.getBoolPref("browser.tabs.showAudioPlayingIcon") ||
@@ -4176,10 +4140,12 @@ Tab.prototype = {
           return;
         }
 
+        this.playingAudio = aEvent.type === "DOMAudioPlaybackStarted";
+
         Messaging.sendRequest({
           type: "Tab:AudioPlayingChange",
           tabID: this.id,
-          isAudioPlaying: aEvent.type === "DOMAudioPlaybackStarted"
+          isAudioPlaying: this.playingAudio
         });
         return;
       }
@@ -5160,13 +5126,13 @@ var ErrorPageEventHandler = {
           // can use the right strings/links
           let bucketName = "";
           let sendTelemetry = false;
-          if (errorDoc.documentURI.contains("e=malwareBlocked")) {
+          if (errorDoc.documentURI.includes("e=malwareBlocked")) {
             sendTelemetry = true;
             bucketName = "WARNING_MALWARE_PAGE_";
-          } else if (errorDoc.documentURI.contains("e=deceptiveBlocked")) {
+          } else if (errorDoc.documentURI.includes("e=deceptiveBlocked")) {
             sendTelemetry = true;
             bucketName = "WARNING_PHISHING_PAGE_";
-          } else if (errorDoc.documentURI.contains("e=unwantedBlocked")) {
+          } else if (errorDoc.documentURI.includes("e=unwantedBlocked")) {
             sendTelemetry = true;
             bucketName = "WARNING_UNWANTED_PAGE_";
           }
@@ -6747,7 +6713,7 @@ var SearchEngines = {
     }
 
     // prompt user for name of search engine
-    let promptTitle = Strings.browser.GetStringFromName("contextmenu.addSearchEngine2");
+    let promptTitle = Strings.browser.GetStringFromName("contextmenu.addSearchEngine3");
     let title = { value: (aElement.ownerDocument.title || docURI.host) };
     if (!Services.prompt.prompt(null, promptTitle, null, title, null, {}))
       return;
@@ -6862,6 +6828,21 @@ var Experiments = {
           }
         }
       }
+    });
+  },
+
+  setOverride(name, isEnabled) {
+    Messaging.sendRequest({
+      type: "Experiments:SetOverride",
+      name: name,
+      isEnabled: isEnabled
+    });
+  },
+
+  clearOverride(name) {
+    Messaging.sendRequest({
+      type: "Experiments:ClearOverride",
+      name: name
     });
   }
 };
@@ -7324,8 +7305,11 @@ var Tabs = {
     let lruTab = null;
     // Find the least recently used non-zombie tab.
     for (let i = 0; i < tabs.length; i++) {
-      if (tabs[i] == selected || tabs[i].browser.__SS_restore) {
-        // This tab is selected or already a zombie, skip it.
+      if (tabs[i] == selected ||
+          tabs[i].browser.__SS_restore ||
+          tabs[i].playingAudio) {
+        // This tab is selected, is already a zombie, or is currently playing
+        // audio, skip it.
         continue;
       }
       if (lruTab == null || tabs[i].lastTouchedAt < lruTab.lastTouchedAt) {

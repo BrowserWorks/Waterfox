@@ -2014,6 +2014,19 @@ PluginModuleParent::UpdateScrollState(NPP aInstance, bool aIsScrolling)
 }
 #endif
 
+nsresult
+PluginModuleParent::HandledWindowedPluginKeyEvent(
+                        NPP aInstance,
+                        const NativeEventData& aNativeKeyData,
+                        bool aIsConsumed)
+{
+    PluginInstanceParent* parent = PluginInstanceParent::Cast(aInstance);
+    if (NS_WARN_IF(!parent)) {
+        return NS_ERROR_FAILURE;
+    }
+    return parent->HandledWindowedPluginKeyEvent(aNativeKeyData, aIsConsumed);
+}
+
 void
 PluginModuleParent::OnInitFailure()
 {
@@ -2680,8 +2693,12 @@ PluginModuleParent::NPP_NewInternal(NPMIMEType pluginType, NPP instance,
     if (mIsFlashPlugin) {
         parentInstance->InitMetadata(strPluginType, srcAttribute);
 #ifdef XP_WIN
-        // Force windowless mode (bug 1201904) when sandbox level >= 2
+        // Force windowless mode (bug 1201904) when sandbox level >= 2 or Win64
+#ifdef _WIN64
+        {
+#else
         if (mSandboxLevel >= 2) {
+#endif
            NS_NAMED_LITERAL_CSTRING(wmodeAttributeName, "wmode");
            NS_NAMED_LITERAL_CSTRING(opaqueAttributeValue, "opaque");
            auto wmodeAttributeIndex =

@@ -1,4 +1,4 @@
-skip-if(B2G||Mulet) == out-of-bounds-selectedindex.html out-of-bounds-selectedindex-ref.html # test for bug 471741 # Initial mulet triage: parity with B2G/B2G Desktop
+fuzzy-if(Android,2,2) skip-if(B2G||Mulet) == out-of-bounds-selectedindex.html out-of-bounds-selectedindex-ref.html # test for bug 471741 # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) == multiple.html multiple-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 == boguskids.html boguskids-ref.html
 == dynamic-boguskids.html boguskids-ref.html
@@ -6,3 +6,6 @@ skip-if(B2G||Mulet) == multiple.html multiple-ref.html # Initial mulet triage: p
 fuzzy(1,4) == padding-button-placement.html padding-button-placement-ref.html
 HTTP(../..) == vertical-centering.html vertical-centering-ref.html
 == 997709-2.html 997709-2-ref.html
+needs-focus == focusring-1.html focusring-1-ref.html
+needs-focus == focusring-2.html focusring-2-ref.html
+needs-focus == focusring-3.html focusring-3-ref.html

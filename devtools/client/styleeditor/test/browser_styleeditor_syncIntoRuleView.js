@@ -6,9 +6,6 @@
 // Test that changes in the style editor are synchronized into the
 // style inspector.
 
-/* import-globals-from ../../inspector/shared/test/head.js */
-Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/client/inspector/shared/test/head.js", this);
-
 const TEST_URI = `
   <style type='text/css'>
     div { background-color: seagreen; }
@@ -18,7 +15,7 @@ const TEST_URI = `
 
 const TESTCASE_CSS_SOURCE = "#testid { color: chartreuse; }";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
 
   let {inspector, view} = yield openRuleView();

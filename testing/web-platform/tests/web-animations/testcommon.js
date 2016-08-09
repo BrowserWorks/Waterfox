@@ -9,29 +9,7 @@ policies and contribution forms [3].
  */
 
 "use strict";
-
-var ANIMATION_END_TIME = 1000;
-var ANIMATION_TOP_DEFAULT = 300;
-var ANIMATION_TOP_0 = 10;
-var ANIMATION_TOP_0_5 = 100;
-var ANIMATION_TOP_1 = 200;
-
-var KEYFRAMES = [ {
-  top : ANIMATION_TOP_0 + 'px',
-  offset : 0
-}, {
-  top : ANIMATION_TOP_0_5 + 'px',
-  offset : 1 / 2
-}, {
-  top : ANIMATION_TOP_1 + 'px',
-  offset : 1
-} ];
-
-// creates new animation for given target
-function newAnimation(animationTarget) {
-  animationTarget.style.top = ANIMATION_TOP_DEFAULT + 'px';
-  return new Animation(animationTarget, KEYFRAMES, ANIMATION_END_TIME);
-}
+var MS_PER_SEC = 1000;
 
 // creates div element, appends it to the document body and
 // removes the created element during test cleanup
@@ -42,19 +20,53 @@ function createDiv(test, doc) {
   var div = doc.createElement('div');
   doc.body.appendChild(div);
   test.add_cleanup(function() {
-    removeElement(div);
+    div.remove();
   });
   return div;
 }
 
-// Removes element
-function removeElement(element) {
-  element.parentNode.removeChild(element);
+// Creates a style element with the specified rules, appends it to the document
+// head and removes the created element during test cleanup.
+// |rules| is an object. For example:
+// { '@keyframes anim': '' ,
+//   '.className': 'animation: anim 100s;' };
+// or
+// { '.className1::before': 'content: ""; width: 0px; transition: all 10s;',
+//   '.className2::before': 'width: 100px;' };
+// The object property name could be a keyframes name, or a selector.
+// The object property value is declarations which are property:value pairs
+// split by a space.
+function createStyle(test, rules, doc) {
+  if (!doc) {
+    doc = document;
+  }
+  var extraStyle = doc.createElement('style');
+  doc.head.appendChild(extraStyle);
+  if (rules) {
+    var sheet = extraStyle.sheet;
+    for (var selector in rules) {
+      sheet.insertRule(selector + '{' + rules[selector] + '}',
+                       sheet.cssRules.length);
+    }
+  }
+  test.add_cleanup(function() {
+    extraStyle.remove();
+  });
 }
 
-// Returns the type name of given object
-function type(object) {
-  return Object.prototype.toString.call(object).slice(8, -1);
+// Create a pseudo element
+function createPseudo(test, type) {
+  createStyle(test, { '@keyframes anim': '',
+                      ['.pseudo::' + type]: 'animation: anim 10s;' });
+  var div = createDiv(test);
+  div.classList.add('pseudo');
+  var anims = document.getAnimations();
+  assert_true(anims.length >= 1);
+  var anim = anims[anims.length - 1];
+  assert_equals(anim.effect.target.parentElement, div);
+  assert_equals(anim.effect.target.type, '::' + type);
+  anim.cancel();
+  return anim.effect.target;
 }
 
 // Convert px unit value to a Number
@@ -113,3 +125,15 @@ function stepStart(nsteps) {
   }
 }
 
+function waitForAnimationFrames(frameCount) {
+  return new Promise(function(resolve, reject) {
+    function handleFrame() {
+      if (--frameCount <= 0) {
+        resolve();
+      } else {
+        window.requestAnimationFrame(handleFrame); // wait another frame
+      }
+    }
+    window.requestAnimationFrame(handleFrame);
+  });
+}

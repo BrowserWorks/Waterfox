@@ -78,6 +78,8 @@ function testDebuggerStatement([aGrip, aResponse]) {
 
   // Reach around the debugging protocol and execute the debugger statement.
   callInTab(gTab, "runDebuggerStatement");
+
+  return deferred.promise;
 }
 
 function closeConnection() {

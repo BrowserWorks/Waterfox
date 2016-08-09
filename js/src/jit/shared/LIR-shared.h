@@ -891,7 +891,7 @@ class LNewArray : public LInstructionHelper<1, 0, 1>
     }
 
     const char* extraName() const {
-        return mir()->shouldUseVM() ? "VMCall" : nullptr;
+        return mir()->isVMCall() ? "VMCall" : nullptr;
     }
 
     const LDefinition* temp() {
@@ -953,7 +953,7 @@ class LNewObject : public LInstructionHelper<1, 0, 1>
     }
 
     const char* extraName() const {
-        return mir()->shouldUseVM() ? "VMCall" : nullptr;
+        return mir()->isVMCall() ? "VMCall" : nullptr;
     }
 
     const LDefinition* temp() {
@@ -1244,6 +1244,56 @@ class LAsmJSInterruptCheck : public LInstructionHelper<0, 0, 0>
 
     bool isCall() const {
         return true;
+    }
+};
+
+class LAsmThrowUnreachable : public LInstructionHelper<0, 0, 0>
+{
+  public:
+    LIR_HEADER(AsmThrowUnreachable);
+
+    LAsmThrowUnreachable()
+    { }
+};
+
+template<size_t Defs, size_t Ops>
+class LAsmReinterpretBase : public LInstructionHelper<Defs, Ops, 0>
+{
+    typedef LInstructionHelper<Defs, Ops, 0> Base;
+
+  public:
+    const LAllocation* input() {
+        return Base::getOperand(0);
+    }
+    MAsmReinterpret* mir() const {
+        return Base::mir_->toAsmReinterpret();
+    }
+};
+
+class LAsmReinterpret : public LAsmReinterpretBase<1, 1>
+{
+  public:
+    LIR_HEADER(AsmReinterpret);
+    explicit LAsmReinterpret(const LAllocation& input) {
+        setOperand(0, input);
+    }
+};
+
+class LAsmReinterpretFromI64 : public LAsmReinterpretBase<1, INT64_PIECES>
+{
+  public:
+    LIR_HEADER(AsmReinterpretFromI64);
+    explicit LAsmReinterpretFromI64(const LInt64Allocation& input) {
+        setInt64Operand(0, input);
+    }
+};
+
+class LAsmReinterpretToI64 : public LAsmReinterpretBase<INT64_PIECES, 1>
+{
+  public:
+    LIR_HEADER(AsmReinterpretToI64);
+    explicit LAsmReinterpretToI64(const LAllocation& input) {
+        setOperand(0, input);
     }
 };
 
@@ -4296,6 +4346,7 @@ class LRegExpTester : public LCallInstructionHelper<1, 4, 0>
 {
   public:
     LIR_HEADER(RegExpTester)
+    //tODO
 
     LRegExpTester(const LAllocation& regexp, const LAllocation& string,
                   const LAllocation& lastIndex, const LAllocation& sticky)
@@ -4411,6 +4462,16 @@ class LUnarySharedStub : public LCallInstructionHelper<BOX_PIECES, BOX_PIECES, 0
     }
 
     static const size_t Input = 0;
+};
+
+class LNullarySharedStub : public LCallInstructionHelper<BOX_PIECES, 0, 0>
+{
+  public:
+    LIR_HEADER(NullarySharedStub)
+
+    const MNullarySharedStub* mir() const {
+        return mir_->toNullarySharedStub();
+    }
 };
 
 class LLambdaForSingleton : public LCallInstructionHelper<1, 1, 0>
@@ -4718,6 +4779,39 @@ class LSetArrayLength : public LInstructionHelper<0, 2, 0>
     }
     const LAllocation* index() {
         return getOperand(1);
+    }
+};
+
+class LGetNextMapEntryForIterator : public LInstructionHelper<1, 2, 3>
+{
+  public:
+    LIR_HEADER(GetNextMapEntryForIterator)
+
+    explicit LGetNextMapEntryForIterator(const LAllocation& iter, const LAllocation& result,
+                                         const LDefinition& temp0, const LDefinition& temp1,
+                                         const LDefinition& temp2)
+    {
+        setOperand(0, iter);
+        setOperand(1, result);
+        setTemp(0, temp0);
+        setTemp(1, temp1);
+        setTemp(2, temp2);
+    }
+
+    const LAllocation* iter() {
+        return getOperand(0);
+    }
+    const LAllocation* result() {
+        return getOperand(1);
+    }
+    const LDefinition* temp0() {
+        return getTemp(0);
+    }
+    const LDefinition* temp1() {
+        return getTemp(1);
+    }
+    const LDefinition* temp2() {
+        return getTemp(2);
     }
 };
 
@@ -5365,35 +5459,6 @@ class LArrayPushT : public LInstructionHelper<1, 2, 1>
     }
     const LDefinition* temp() {
         return getTemp(0);
-    }
-};
-
-class LArrayConcat : public LCallInstructionHelper<1, 2, 2>
-{
-  public:
-    LIR_HEADER(ArrayConcat)
-
-    LArrayConcat(const LAllocation& lhs, const LAllocation& rhs,
-                 const LDefinition& temp1, const LDefinition& temp2) {
-        setOperand(0, lhs);
-        setOperand(1, rhs);
-        setTemp(0, temp1);
-        setTemp(1, temp2);
-    }
-    const MArrayConcat* mir() const {
-        return mir_->toArrayConcat();
-    }
-    const LAllocation* lhs() {
-        return getOperand(0);
-    }
-    const LAllocation* rhs() {
-        return getOperand(1);
-    }
-    const LDefinition* temp1() {
-        return getTemp(0);
-    }
-    const LDefinition* temp2() {
-        return getTemp(1);
     }
 };
 
@@ -7161,6 +7226,22 @@ class LIsCallable : public LInstructionHelper<1, 1, 0>
     }
 };
 
+class LIsConstructor : public LInstructionHelper<1, 1, 0>
+{
+  public:
+    LIR_HEADER(IsConstructor);
+    explicit LIsConstructor(const LAllocation& object) {
+        setOperand(0, object);
+    }
+
+    const LAllocation* object() {
+        return getOperand(0);
+    }
+    MIsConstructor* mir() const {
+        return mir_->toIsConstructor();
+    }
+};
+
 class LIsObject : public LInstructionHelper<1, BOX_PIECES, 0>
 {
   public:
@@ -7210,6 +7291,57 @@ class LHasClass : public LInstructionHelper<1, 1, 0>
     }
     MHasClass* mir() const {
         return mir_->toHasClass();
+    }
+};
+
+template<size_t Defs, size_t Ops>
+class LAsmSelectBase : public LInstructionHelper<Defs, Ops, 0>
+{
+    typedef LInstructionHelper<Defs, Ops, 0> Base;
+  public:
+    static const size_t TrueExprIndex = 0;
+
+    const LAllocation* trueExpr() {
+        static_assert(TrueExprIndex == 0, "trueExprIndex kept in sync");
+        return Base::getOperand(0);
+    }
+    const LAllocation* falseExpr() {
+        return Base::getOperand(1);
+    }
+    const LAllocation* condExpr() {
+        return Base::getOperand(2);
+    }
+
+    MAsmSelect* mir() const {
+        return Base::mir_->toAsmSelect();
+    }
+};
+
+class LAsmSelect : public LAsmSelectBase<1, 3>
+{
+  public:
+    LIR_HEADER(AsmSelect);
+
+    LAsmSelect(const LAllocation& trueExpr, const LAllocation& falseExpr, const LAllocation& cond) {
+        static_assert(TrueExprIndex == 0, "trueExprIndex kept in sync");
+        setOperand(0, trueExpr);
+        setOperand(1, falseExpr);
+        setOperand(2, cond);
+    }
+};
+
+class LAsmSelectI64 : public LAsmSelectBase<INT64_PIECES, 2 * INT64_PIECES + 1>
+{
+  public:
+    LIR_HEADER(AsmSelectI64);
+
+    LAsmSelectI64(const LInt64Allocation& trueExpr, const LInt64Allocation& falseExpr,
+                  const LAllocation& cond)
+    {
+        static_assert(TrueExprIndex == 0, "trueExprIndex kept in sync");
+        setInt64Operand(0, trueExpr);
+        setInt64Operand(1, falseExpr);
+        setOperand(2, cond);
     }
 };
 
@@ -7828,10 +7960,6 @@ class LMemoryBarrier : public LInstructionHelper<0, 0, 0>
 
     MemoryBarrierBits type() const {
         return type_;
-    }
-
-    const MMemoryBarrier* mir() const {
-        return mir_->toMemoryBarrier();
     }
 };
 

@@ -65,8 +65,6 @@ SocialUI = {
     mm.loadFrameScript("chrome://browser/content/social-content.js", true);
 
     Services.obs.addObserver(this, "social:ambient-notification-changed", false);
-    Services.obs.addObserver(this, "social:profile-changed", false);
-    Services.obs.addObserver(this, "social:frameworker-error", false);
     Services.obs.addObserver(this, "social:providers-changed", false);
     Services.obs.addObserver(this, "social:provider-reload", false);
     Services.obs.addObserver(this, "social:provider-enabled", false);
@@ -76,6 +74,7 @@ SocialUI = {
 
     CustomizableUI.addListener(this);
     SocialActivationListener.init();
+    messageManager.addMessageListener("Social:Notification", this);
 
     // menupopups that list social providers. we only populate them when shown,
     // and if it has not been done already.
@@ -100,8 +99,6 @@ SocialUI = {
     SocialSidebar.saveWindowState();
 
     Services.obs.removeObserver(this, "social:ambient-notification-changed");
-    Services.obs.removeObserver(this, "social:profile-changed");
-    Services.obs.removeObserver(this, "social:frameworker-error");
     Services.obs.removeObserver(this, "social:providers-changed");
     Services.obs.removeObserver(this, "social:provider-reload");
     Services.obs.removeObserver(this, "social:provider-enabled");
@@ -110,11 +107,21 @@ SocialUI = {
     Services.prefs.removeObserver("social.toast-notifications.enabled", this);
     CustomizableUI.removeListener(this);
     SocialActivationListener.uninit();
+    messageManager.removeMessageListener("Social:Notification", this);
 
     document.getElementById("viewSidebarMenu").removeEventListener("popupshowing", SocialSidebar.populateSidebarMenu, true);
     document.getElementById("social-statusarea-popup").removeEventListener("popupshowing", SocialSidebar.populateSidebarMenu, true);
 
     this._initialized = false;
+  },
+
+  receiveMessage: function(aMessage) {
+    if (aMessage.name == "Social:Notification") {
+      let provider = Social._getProviderFromOrigin(aMessage.data.origin);
+      if (provider) {
+        provider.setAmbientNotification(aMessage.data.detail);
+      }
+    }
   },
 
   observe: function SocialUI_observe(subject, topic, data) {
@@ -148,17 +155,6 @@ SocialUI = {
       // Provider-specific notifications
       case "social:ambient-notification-changed":
         SocialStatus.updateButton(data);
-        break;
-      case "social:profile-changed":
-        // make sure anything that happens here only affects the provider for
-        // which the profile is changing, and that anything we call actually
-        // needs to change based on profile data.
-        SocialStatus.updateButton(data);
-        break;
-      case "social:frameworker-error":
-        if (this.enabled && SocialSidebar.provider && SocialSidebar.provider.origin == data) {
-          SocialSidebar.loadFrameworkerFailure();
-        }
         break;
       case "nsPref:changed":
         if (data == "social.toast-notifications.enabled") {
@@ -218,17 +214,12 @@ SocialUI = {
 
   get enabled() {
     // Returns whether social is enabled *for this window*.
-    if (this._chromeless || PrivateBrowsingUtils.isWindowPrivate(window))
+    if (this._chromeless)
       return false;
     return Social.providers.length > 0;
   },
 
   canShareOrMarkPage: function(aURI) {
-    // Bug 898706 we do not enable social in private sessions since frameworker
-    // would be shared between private and non-private windows
-    if (PrivateBrowsingUtils.isWindowPrivate(window))
-      return false;
-
     return (aURI && (aURI.schemeIs('http') || aURI.schemeIs('https')));
   },
 
@@ -287,10 +278,6 @@ SocialActivationListener = {
       options = { bypassContentCheck: true, bypassInstallPanel: true };
     }
 
-    // If we are in PB mode, we silently do nothing (bug 829404 exists to
-    // do something sensible here...)
-    if (PrivateBrowsingUtils.isWindowPrivate(window))
-      return;
     Social.installProvider(data, function(manifest) {
       Social.activateFromOrigin(manifest.origin, function(provider) {
         if (provider.sidebarURL) {
@@ -361,15 +348,19 @@ SocialFlyout = {
     iframe.setAttribute("flex", "1");
     iframe.setAttribute("message", "true");
     iframe.setAttribute("messagemanagergroup", "social");
+    iframe.setAttribute("disablehistory", "true");
     iframe.setAttribute("tooltip", "aHTMLTooltip");
     iframe.setAttribute("context", "contentAreaContextMenu");
     iframe.setAttribute("origin", SocialSidebar.provider.origin);
     panel.appendChild(iframe);
-    // the xbl bindings for the iframe probably don't exist yet, so we can't
-    // access iframe.messageManager directly - but can get at it with this dance.
-    let mm = iframe.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
-    mm.sendAsyncMessage("Social:SetErrorURL",
+    this.messageManager.sendAsyncMessage("Social:SetErrorURL",
                         { template: "about:socialerror?mode=compactInfo&origin=%{origin}" });
+  },
+
+  get messageManager() {
+    // The xbl bindings for the iframe may not exist yet, so we can't
+    // access iframe.messageManager directly - but can get at it with this dance.
+    return this.iframe.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
   },
 
   unload: function() {
@@ -388,18 +379,17 @@ SocialFlyout = {
     iframe.docShellIsActive = true;
     if (iframe.contentDocument.readyState == "complete") {
       this._dynamicResizer.start(panel, iframe);
-      this.dispatchPanelEvent("socialFrameShow");
     } else {
       // first time load, wait for load and dispatch after load
-      iframe.addEventListener("load", function panelBrowserOnload(e) {
-        iframe.removeEventListener("load", panelBrowserOnload, true);
+      let mm = this.messageManager;
+      mm.addMessageListener("DOMContentLoaded", function panelBrowserOnload(e) {
+        mm.removeMessageListener("DOMContentLoaded", panelBrowserOnload);
         setTimeout(function() {
           if (SocialFlyout._dynamicResizer) { // may go null if hidden quickly
             SocialFlyout._dynamicResizer.start(panel, iframe);
-            SocialFlyout.dispatchPanelEvent("socialFrameShow");
           }
         }, 0);
-      }, true);
+      });
     }
   },
 
@@ -407,7 +397,6 @@ SocialFlyout = {
     this._dynamicResizer.stop();
     this._dynamicResizer = null;
     this.iframe.docShellIsActive = false;
-    this.dispatchPanelEvent("socialFrameHide");
   },
 
   load: function(aURL, cb) {
@@ -420,10 +409,11 @@ SocialFlyout = {
     // want to go right to the callback
     let src = iframe.contentDocument && iframe.contentDocument.documentURIObject;
     if (!src || !src.equalsExceptRef(Services.io.newURI(aURL, null, null))) {
-      iframe.addEventListener("load", function documentLoaded() {
-        iframe.removeEventListener("load", documentLoaded, true);
+      let mm = this.messageManager;
+      mm.addMessageListener("DOMContentLoaded", function documentLoaded(e) {
+        mm.removeMessageListener("DOMContentLoaded", documentLoaded);
         cb();
-      }, true);
+      });
       iframe.setAttribute("src", aURL);
     } else {
       // we still need to set the src to trigger the contents hashchange event
@@ -489,6 +479,10 @@ SocialShare = {
 
   uninit: function () {
     if (this.iframe) {
+      let mm = this.messageManager;
+      mm.removeMessageListener("PageVisibility:Show", this);
+      mm.removeMessageListener("PageVisibility:Hide", this);
+      this.iframe.removeEventListener("load", this);
       this.iframe.remove();
     }
   },
@@ -509,11 +503,49 @@ SocialShare = {
     iframe.setAttribute("message", "true");
     iframe.setAttribute("messagemanagergroup", "social");
     panel.lastChild.appendChild(iframe);
-    let mm = iframe.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
+    let mm = this.messageManager;
+    mm.addMessageListener("PageVisibility:Show", this);
+    mm.addMessageListener("PageVisibility:Hide", this);
     mm.sendAsyncMessage("Social:SetErrorURL",
                         { template: "about:socialerror?mode=compactInfo&origin=%{origin}&url=%{url}" });
+    iframe.addEventListener("load", this, true);
 
     this.populateProviderMenu();
+  },
+
+  get messageManager() {
+    // The xbl bindings for the iframe may not exist yet, so we can't
+    // access iframe.messageManager directly - but can get at it with this dance.
+    return this.iframe.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
+  },
+
+  receiveMessage: function(aMessage) {
+    let iframe = this.iframe;
+    switch(aMessage.name) {
+      case "PageVisibility:Show":
+        SocialShare._dynamicResizer.start(iframe.parentNode, iframe);
+        break;
+      case "PageVisibility:Hide":
+        SocialShare._dynamicResizer.stop();
+        break;
+    }
+  },
+
+  handleEvent: function(event) {
+    switch (event.type) {
+      case "load": {
+        let iframe = this.iframe;
+        iframe.parentNode.removeAttribute("loading");
+        // to support standard share endpoints mimick window.open by setting
+        // window.opener, some share endpoints rely on w.opener to know they
+        // should close the window when done.
+        iframe.contentWindow.opener = iframe.contentWindow;
+        this.messageManager.sendAsyncMessage("Social:HookWindowCloseForPanelClose");
+        this.messageManager.sendAsyncMessage("Social:DisableDialogs", {});
+        if (this.currentShare)
+          SocialShare.messageManager.sendAsyncMessage("Social:OpenGraphData", this.currentShare);
+      }
+    }
   },
 
   getSelectedProvider: function() {
@@ -589,17 +621,14 @@ SocialShare = {
   onHidden: function() {
     (this._currentAnchor || this.anchor).removeAttribute("open");
     this._currentAnchor = null;
+    this.iframe.docShellIsActive = false;
     this.iframe.removeEventListener("click", this._onclick, true);
     this.iframe.setAttribute("src", "data:text/plain;charset=utf8,");
     // make sure that the frame is unloaded after it is hidden
-    this.iframe.docShell.createAboutBlankContentViewer(null);
+    this.messageManager.sendAsyncMessage("Social:ClearFrame");
     this.currentShare = null;
     // share panel use is over, purge any history
-    if (this.iframe.sessionHistory) {
-      let purge = this.iframe.sessionHistory.count;
-      if (purge > 0)
-        this.iframe.sessionHistory.PurgeHistory(purge);
-    }
+    this.iframe.purgeSessionHistory();
   },
 
   sharePage: function(providerOrigin, graphData, target, anchor) {
@@ -684,35 +713,13 @@ SocialShare = {
     if (endpointMatch) {
       this._dynamicResizer.start(iframe.parentNode, iframe, size);
       iframe.docShellIsActive = true;
-      let evt = iframe.contentDocument.createEvent("CustomEvent");
-      evt.initCustomEvent("OpenGraphData", true, true, JSON.stringify(pageData));
-      iframe.contentDocument.documentElement.dispatchEvent(evt);
+      SocialShare.messageManager.sendAsyncMessage("Social:OpenGraphData", this.currentShare);
     } else {
       iframe.parentNode.setAttribute("loading", "true");
-      // first time load, wait for load and dispatch after load
-      iframe.addEventListener("load", function panelBrowserOnload(e) {
-        iframe.removeEventListener("load", panelBrowserOnload, true);
-        iframe.docShellIsActive = true;
-        iframe.parentNode.removeAttribute("loading");
-        // to support standard share endpoints mimick window.open by setting
-        // window.opener, some share endpoints rely on w.opener to know they
-        // should close the window when done.
-        iframe.contentWindow.opener = iframe.contentWindow;
-
-        SocialShare._dynamicResizer.start(iframe.parentNode, iframe, size);
-
-        let evt = iframe.contentDocument.createEvent("CustomEvent");
-        evt.initCustomEvent("OpenGraphData", true, true, JSON.stringify(pageData));
-        iframe.contentDocument.documentElement.dispatchEvent(evt);
-      }, true);
     }
     // if the user switched between share providers we do not want that history
     // available.
-    if (iframe.sessionHistory) {
-      let purge = iframe.sessionHistory.count;
-      if (purge > 0)
-        iframe.sessionHistory.PurgeHistory(purge);
-    }
+    iframe.purgeSessionHistory();
 
     // always ensure that origin belongs to the endpoint
     let uri = Services.io.newURI(shareEndpoint, null, null);
@@ -728,22 +735,7 @@ SocialShare = {
       return;
     iframe.removeAttribute("origin");
     iframe.parentNode.setAttribute("loading", "true");
-    iframe.addEventListener("DOMContentLoaded", function _dcl(e) {
-      iframe.removeEventListener("DOMContentLoaded", _dcl, true);
-      iframe.parentNode.removeAttribute("loading");
-    }, true);
 
-    iframe.addEventListener("load", function panelBrowserOnload(e) {
-      iframe.removeEventListener("load", panelBrowserOnload, true);
-
-      hookWindowCloseForPanelClose(iframe.contentWindow);
-      SocialShare._dynamicResizer.start(iframe.parentNode, iframe);
-
-      iframe.addEventListener("unload", function panelBrowserOnload(e) {
-        iframe.removeEventListener("unload", panelBrowserOnload, true);
-        SocialShare._dynamicResizer.stop();
-      }, true);
-    }, true);
     iframe.setAttribute("src", "about:providerdirectory");
     this._openPanel(anchor);
   },
@@ -758,6 +750,10 @@ SocialShare = {
 
 SocialSidebar = {
   _openStartTime: 0,
+
+  get browser() {
+    return document.getElementById("social-sidebar-browser");
+  },
 
   // Whether the sidebar can be shown for this window.
   get canShow() {
@@ -815,7 +811,7 @@ SocialSidebar = {
     }
     if (data) {
       data = JSON.parse(data);
-      document.getElementById("social-sidebar-browser").setAttribute("origin", data.origin);
+      this.browser.setAttribute("origin", data.origin);
       if (!data.hidden)
         this.show(data.origin);
     } else if (Services.prefs.prefHasUserValue("social.sidebar.provider")) {
@@ -826,7 +822,7 @@ SocialSidebar = {
 
   saveWindowState: function() {
     let broadcaster = document.getElementById("socialSidebarBroadcaster");
-    let sidebarOrigin = document.getElementById("social-sidebar-browser").getAttribute("origin");
+    let sidebarOrigin = this.browser.getAttribute("origin");
     let data = {
       "hidden": broadcaster.hidden,
       "origin": sidebarOrigin
@@ -857,9 +853,6 @@ SocialSidebar = {
     if (aEnabled == sbrowser.docShellIsActive)
       return;
     sbrowser.docShellIsActive = aEnabled;
-    let evt = sbrowser.contentDocument.createEvent("CustomEvent");
-    evt.initCustomEvent(aEnabled ? "socialFrameShow" : "socialFrameHide", true, true, {});
-    sbrowser.contentDocument.documentElement.dispatchEvent(evt);
   },
 
   updateToggleNotifications: function() {
@@ -887,10 +880,10 @@ SocialSidebar = {
     broadcaster.hidden = hideSidebar;
     command.setAttribute("checked", !hideSidebar);
 
-    let sbrowser = document.getElementById("social-sidebar-browser");
+    let sbrowser = this.browser;
 
     if (hideSidebar) {
-      sbrowser.removeEventListener("load", SocialSidebar._loadListener, true);
+      sbrowser.messageManager.removeMessageListener("DOMContentLoaded", SocialSidebar._loadListener);
       this.setSidebarVisibilityState(false);
       // If we've been disabled, unload the sidebar content immediately;
       // if the sidebar was just toggled to invisible, wait a timeout
@@ -908,19 +901,18 @@ SocialSidebar = {
 
       // Make sure the right sidebar URL is loaded
       if (sbrowser.getAttribute("src") != this.provider.sidebarURL) {
-        // we check readyState right after setting src, we need a new content
-        // viewer to ensure we are checking against the correct document.
-        sbrowser.docShell.createAboutBlankContentViewer(null);
         sbrowser.setAttribute("src", this.provider.sidebarURL);
         PopupNotifications.locationChange(sbrowser);
-      }
-
-      // if the document has not loaded, delay until it is
-      if (sbrowser.contentDocument.readyState != "complete") {
         document.getElementById("social-sidebar-button").setAttribute("loading", "true");
-        sbrowser.addEventListener("load", SocialSidebar._loadListener, true);
+        sbrowser.messageManager.addMessageListener("DOMContentLoaded", SocialSidebar._loadListener);
       } else {
-        this.setSidebarVisibilityState(true);
+        // if the document has not loaded, delay until it is
+        if (sbrowser.contentDocument.readyState != "complete") {
+          document.getElementById("social-sidebar-button").setAttribute("loading", "true");
+          sbrowser.messageManager.addMessageListener("DOMContentLoaded", SocialSidebar._loadListener);
+        } else {
+          this.setSidebarVisibilityState(true);
+        }
       }
     }
     this._updateCheckedMenuItems(this.opened && this.provider ? this.provider.origin : null);
@@ -931,15 +923,15 @@ SocialSidebar = {
   },
 
   _loadListener: function SocialSidebar_loadListener() {
-    let sbrowser = document.getElementById("social-sidebar-browser");
-    sbrowser.removeEventListener("load", SocialSidebar._loadListener, true);
+    let sbrowser = SocialSidebar.browser;
+    sbrowser.messageManager.removeMessageListener("DOMContentLoaded", SocialSidebar._loadListener);
     document.getElementById("social-sidebar-button").removeAttribute("loading");
     SocialSidebar.setSidebarVisibilityState(true);
     sbrowser.addEventListener("click", SocialSidebar._onclick, true);
   },
 
   unloadSidebar: function SocialSidebar_unloadSidebar() {
-    let sbrowser = document.getElementById("social-sidebar-browser");
+    let sbrowser = SocialSidebar.browser;
     if (!sbrowser.hasAttribute("origin"))
       return;
 
@@ -950,21 +942,11 @@ SocialSidebar = {
     // We need to explicitly create a new content viewer because the old one
     // doesn't get destroyed until about:blank has loaded (which does not happen
     // as long as the element is hidden).
-    sbrowser.docShell.createAboutBlankContentViewer(null);
+    sbrowser.messageManager.sendAsyncMessage("Social:ClearFrame");
     SocialFlyout.unload();
   },
 
   _unloadTimeoutId: 0,
-
-  loadFrameworkerFailure: function() {
-    if (this.provider && this.provider.errorState == "frameworker-error") {
-      // we have to explicitly load this error page since it is not being
-      // handled via the normal error page paths.
-      let sbrowser = document.getElementById("social-sidebar-browser");
-      sbrowser.setAttribute("src", "about:socialerror?mode=workerFailure&origin=" +
-                            encodeURIComponent(this.provider.origin));
-    }
-  },
 
   _provider: null,
   ensureProvider: function() {
@@ -972,8 +954,7 @@ SocialSidebar = {
       return;
     // origin for sidebar is persisted, so get the previously selected sidebar
     // first, otherwise fallback to the first provider in the list
-    let sbrowser = document.getElementById("social-sidebar-browser");
-    let origin = sbrowser.getAttribute("origin");
+    let origin = this.browser.getAttribute("origin");
     let providers = Social.providers.filter(p => p.sidebarURL);
     let provider;
     if (origin)
@@ -1247,8 +1228,8 @@ SocialStatus = {
       let iconNames = Object.keys(icons);
       let notif = icons[iconNames[0]];
 
-      // The image and tooltip need to be updated for both
-      // ambient notification and profile changes.
+      // The image and tooltip need to be updated for
+      // ambient notification changes.
       let iconURL = provider.icon32URL || provider.iconURL;
       let tooltiptext;
       if (!notif || !widget.areaType) {

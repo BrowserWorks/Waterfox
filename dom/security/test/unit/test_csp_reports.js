@@ -33,6 +33,14 @@ function makeReportHandler(testpath, message, expectedJSON) {
       return;
     }
 
+    // check content-type of report is "application/csp-report"
+    var contentType = request.hasHeader("Content-Type")
+                    ? request.getHeader("Content-Type") : undefined;
+    if (contentType !== "application/csp-report") {
+      do_throw("violation report should have the 'application/csp-report' " +
+               "content-type, when in fact it is " + contentType.toString())
+    }
+
     // obtain violation report
     var reportObj = JSON.parse(
           NetUtil.readInputStreamToString(
@@ -204,4 +212,13 @@ function run_test() {
                      NetUtil.newURI(selfSpec + "#bar"),
                      null, null, null, null);
       });
+
+  // test scheme of ftp:
+  makeTest(8, {"blocked-uri": "ftp://blocked.test"}, false,
+    function(csp) {
+      // shouldLoad creates and sends out the report here.
+      csp.shouldLoad(Ci.nsIContentPolicy.TYPE_SCRIPT,
+                    NetUtil.newURI("ftp://blocked.test/profile.png"),
+                    null, null, null, null);
+    });
 }

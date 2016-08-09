@@ -70,8 +70,6 @@
 
 using namespace mozilla;
 
-PRLogModuleInfo *gWidgetLog = nullptr;
-
 nsIGeolocationUpdate *gLocationCallback = nullptr;
 nsAutoPtr<mozilla::AndroidGeckoEvent> gLastSizeChange;
 
@@ -156,10 +154,26 @@ ResolveURI(const nsCString& uriStr)
 
 } // namespace
 
-class GeckoThreadNatives final
-    : public widget::GeckoThread::Natives<GeckoThreadNatives>
+
+class GeckoThreadSupport final
+    : public widget::GeckoThread::Natives<GeckoThreadSupport>
+    , public UsesGeckoThreadProxy
 {
+    static uint32_t sPauseCount;
+
 public:
+    template<typename Functor>
+    static void OnNativeCall(Functor&& aCall)
+    {
+        if (aCall.IsTarget(&SpeculativeConnect) ||
+            aCall.IsTarget(&WaitOnGecko)) {
+
+            aCall();
+            return;
+        }
+        return UsesGeckoThreadProxy::OnNativeCall(aCall);
+    }
+
     static void SpeculativeConnect(jni::String::Param uriStr)
     {
         if (!NS_IsMainThread()) {
@@ -182,6 +196,124 @@ public:
         }
         specConn->SpeculativeConnect(uri, nullptr);
     }
+
+    static void WaitOnGecko()
+    {
+        struct NoOpEvent : nsAppShell::Event {
+            void Run() override {}
+        };
+        nsAppShell::SyncRunEvent(NoOpEvent());
+    }
+
+    static void OnPause()
+    {
+        MOZ_ASSERT(NS_IsMainThread());
+
+        if ((++sPauseCount) > 1) {
+            // Already paused.
+            return;
+        }
+
+        nsCOMPtr<nsIObserverService> obsServ =
+            mozilla::services::GetObserverService();
+        obsServ->NotifyObservers(nullptr, "application-background", nullptr);
+
+        NS_NAMED_LITERAL_STRING(minimize, "heap-minimize");
+        obsServ->NotifyObservers(nullptr, "memory-pressure", minimize.get());
+
+        // If we are OOM killed with the disk cache enabled, the entire
+        // cache will be cleared (bug 105843), so shut down the cache here
+        // and re-init on foregrounding
+        if (nsCacheService::GlobalInstance()) {
+            nsCacheService::GlobalInstance()->Shutdown();
+        }
+
+        // We really want to send a notification like profile-before-change,
+        // but profile-before-change ends up shutting some things down instead
+        // of flushing data
+        nsIPrefService* prefs = Preferences::GetService();
+        if (prefs) {
+            // reset the crash loop state
+            nsCOMPtr<nsIPrefBranch> prefBranch;
+            prefs->GetBranch("browser.sessionstore.", getter_AddRefs(prefBranch));
+            if (prefBranch)
+                prefBranch->SetIntPref("recent_crashes", 0);
+
+            prefs->SavePrefFile(nullptr);
+        }
+    }
+
+    static void OnResume()
+    {
+        MOZ_ASSERT(NS_IsMainThread());
+
+        if (!sPauseCount || (--sPauseCount) > 0) {
+            // Still paused.
+            return;
+        }
+
+        // If we are OOM killed with the disk cache enabled, the entire
+        // cache will be cleared (bug 105843), so shut down cache on backgrounding
+        // and re-init here
+        if (nsCacheService::GlobalInstance()) {
+            nsCacheService::GlobalInstance()->Init();
+        }
+
+        // We didn't return from one of our own activities, so restore
+        // to foreground status
+        nsCOMPtr<nsIObserverService> obsServ =
+            mozilla::services::GetObserverService();
+        obsServ->NotifyObservers(nullptr, "application-foreground", nullptr);
+    }
+
+    static void CreateServices(jni::String::Param aCategory)
+    {
+        nsCString category(aCategory->ToCString());
+
+        NS_CreateServicesFromCategory(
+                category.get(), /* aOrigin */ nullptr, category.get());
+    }
+};
+
+uint32_t GeckoThreadSupport::sPauseCount;
+
+
+class GeckoAppShellSupport final
+    : public widget::GeckoAppShell::Natives<GeckoAppShellSupport>
+    , public UsesGeckoThreadProxy
+{
+public:
+    template<typename Functor>
+    static void OnNativeCall(Functor&& aCall)
+    {
+        if (aCall.IsTarget(&SyncNotifyObservers)) {
+            aCall();
+            return;
+        }
+        return UsesGeckoThreadProxy::OnNativeCall(aCall);
+    }
+
+    static void SyncNotifyObservers(jni::String::Param aTopic,
+                                    jni::String::Param aData)
+    {
+        MOZ_RELEASE_ASSERT(NS_IsMainThread());
+        NotifyObservers(aTopic, aData);
+    }
+
+    static void NotifyObservers(jni::String::Param aTopic,
+                                jni::String::Param aData)
+    {
+        MOZ_ASSERT(NS_IsMainThread());
+        MOZ_ASSERT(aTopic);
+
+        nsCOMPtr<nsIObserverService> obsServ = services::GetObserverService();
+        if (!obsServ) {
+            return;
+        }
+
+        obsServ->NotifyObservers(nullptr, aTopic->ToCString().get(),
+                                 aData ? aData->ToString().get() : nullptr);
+    }
 };
 
 nsAppShell::nsAppShell()
@@ -201,7 +333,8 @@ nsAppShell::nsAppShell()
     if (jni::IsAvailable()) {
         // Initialize JNI and Set the corresponding state in GeckoThread.
         AndroidBridge::ConstructBridge();
-        GeckoThreadNatives::Init();
+        GeckoAppShellSupport::Init();
+        GeckoThreadSupport::Init();
         mozilla::ANRReporter::Init();
         mozilla::PrefsHelper::Init();
         nsWindow::InitNatives();
@@ -256,9 +389,6 @@ static const char* kObservedPrefs[] = {
 nsresult
 nsAppShell::Init()
 {
-    if (!gWidgetLog)
-        gWidgetLog = PR_NewLogModule("Widget");
-
     nsresult rv = nsBaseAppShell::Init();
     nsCOMPtr<nsIObserverService> obsServ =
         mozilla::services::GetObserverService();
@@ -536,7 +666,7 @@ nsAppShell::LegacyGeckoEvent::Run()
         }
 
         const hal::SensorAccuracyType &accuracy = (hal::SensorAccuracyType) curEvent->MetaState();
-        hal::SensorData sdata(type, PR_Now(), values, accuracy);
+        hal::SensorData sdata(type, curEvent->Time(), values, accuracy);
         hal::NotifySensorChange(sdata);
       }
       break;
@@ -550,53 +680,6 @@ nsAppShell::LegacyGeckoEvent::Run()
             gLocationCallback->Update(curEvent->GeoPosition());
         else
             NS_WARNING("Received location event without geoposition!");
-        break;
-    }
-
-    case AndroidGeckoEvent::APP_BACKGROUNDING: {
-        nsCOMPtr<nsIObserverService> obsServ =
-            mozilla::services::GetObserverService();
-        obsServ->NotifyObservers(nullptr, "application-background", nullptr);
-
-        NS_NAMED_LITERAL_STRING(minimize, "heap-minimize");
-        obsServ->NotifyObservers(nullptr, "memory-pressure", minimize.get());
-
-        // If we are OOM killed with the disk cache enabled, the entire
-        // cache will be cleared (bug 105843), so shut down the cache here
-        // and re-init on foregrounding
-        if (nsCacheService::GlobalInstance()) {
-            nsCacheService::GlobalInstance()->Shutdown();
-        }
-
-        // We really want to send a notification like profile-before-change,
-        // but profile-before-change ends up shutting some things down instead
-        // of flushing data
-        nsIPrefService* prefs = Preferences::GetService();
-        if (prefs) {
-            // reset the crash loop state
-            nsCOMPtr<nsIPrefBranch> prefBranch;
-            prefs->GetBranch("browser.sessionstore.", getter_AddRefs(prefBranch));
-            if (prefBranch)
-                prefBranch->SetIntPref("recent_crashes", 0);
-
-            prefs->SavePrefFile(nullptr);
-        }
-        break;
-    }
-
-    case AndroidGeckoEvent::APP_FOREGROUNDING: {
-        // If we are OOM killed with the disk cache enabled, the entire
-        // cache will be cleared (bug 105843), so shut down cache on backgrounding
-        // and re-init here
-        if (nsCacheService::GlobalInstance()) {
-            nsCacheService::GlobalInstance()->Init();
-        }
-
-        // We didn't return from one of our own activities, so restore
-        // to foreground status
-        nsCOMPtr<nsIObserverService> obsServ =
-            mozilla::services::GetObserverService();
-        obsServ->NotifyObservers(nullptr, "application-foreground", nullptr);
         break;
     }
 
@@ -639,8 +722,7 @@ nsAppShell::LegacyGeckoEvent::Run()
         break;
     }
 
-    case AndroidGeckoEvent::VIEWPORT:
-    case AndroidGeckoEvent::BROADCAST: {
+    case AndroidGeckoEvent::VIEWPORT: {
         if (curEvent->Characters().Length() == 0)
             break;
 
@@ -648,9 +730,8 @@ nsAppShell::LegacyGeckoEvent::Run()
             mozilla::services::GetObserverService();
 
         const NS_ConvertUTF16toUTF8 topic(curEvent->Characters());
-        const nsPromiseFlatString& data = PromiseFlatString(curEvent->CharactersExtra());
 
-        obsServ->NotifyObservers(nullptr, topic.get(), data.get());
+        obsServ->NotifyObservers(nullptr, topic.get(), curEvent->CharactersExtra().get());
         break;
     }
 
@@ -666,8 +747,8 @@ nsAppShell::LegacyGeckoEvent::Run()
             break;
 
         obs->StopSession(
-                nsString(curEvent->Characters()).get(),
-                nsString(curEvent->CharactersExtra()).get(),
+                curEvent->Characters().get(),
+                curEvent->CharactersExtra().get(),
                 curEvent->Time()
                 );
         break;
@@ -685,7 +766,7 @@ nsAppShell::LegacyGeckoEvent::Run()
             break;
 
         obs->StartSession(
-                nsString(curEvent->Characters()).get(),
+                curEvent->Characters().get(),
                 curEvent->Time()
                 );
         break;
@@ -703,10 +784,10 @@ nsAppShell::LegacyGeckoEvent::Run()
             break;
 
         obs->AddEvent(
-                nsString(curEvent->Data()).get(),
-                nsString(curEvent->Characters()).get(),
+                curEvent->Data().get(),
+                curEvent->Characters().get(),
                 curEvent->Time(),
-                nsString(curEvent->CharactersExtra()).get()
+                curEvent->CharactersExtra().get()
                 );
         break;
     }
@@ -747,7 +828,7 @@ nsAppShell::LegacyGeckoEvent::Run()
         nsCOMPtr<nsIURI> visitedURI;
         if (history &&
             NS_SUCCEEDED(NS_NewURI(getter_AddRefs(visitedURI),
-                                   nsString(curEvent->Characters())))) {
+                                   curEvent->Characters()))) {
             history->NotifyVisited(visitedURI);
         }
 #endif
@@ -758,6 +839,12 @@ nsAppShell::LegacyGeckoEvent::Run()
         hal::NotifyNetworkChange(hal::NetworkInformation(curEvent->ConnectionType(),
                                                          curEvent->IsWifi(),
                                                          curEvent->DHCPGateway()));
+        nsCOMPtr<nsIObserverService> os = mozilla::services::GetObserverService();
+        if (os) {
+            os->NotifyObservers(nullptr,
+                                NS_NETWORK_LINK_TYPE_TOPIC,
+                                nsString(curEvent->Characters()).get());
+        }
         break;
     }
 
@@ -796,7 +883,7 @@ nsAppShell::LegacyGeckoEvent::Run()
 
         if (observer) {
             observer->Observe(nullptr, NS_ConvertUTF16toUTF8(curEvent->CharactersExtra()).get(),
-                              nsString(curEvent->Data()).get());
+                              curEvent->Data().get());
         } else {
             ALOG("Call_Observer event: Observer was not found!");
         }
@@ -830,7 +917,7 @@ nsAppShell::LegacyGeckoEvent::Run()
         if (os) {
             os->NotifyObservers(nullptr,
                                 NS_NETWORK_LINK_TOPIC,
-                                nsString(curEvent->Characters()).get());
+                                curEvent->Characters().get());
         }
         break;
     }
@@ -888,10 +975,6 @@ nsAppShell::LegacyGeckoEvent::Run()
     default:
         nsWindow::OnGlobalAndroidEvent(curEvent.get());
         break;
-    }
-
-    if (curEvent->AckNeeded()) {
-        widget::GeckoAppShell::AcknowledgeEvent();
     }
 
     EVLOG("nsAppShell: -- done event %p %d", (void*)curEvent.get(), curEvent->Type());

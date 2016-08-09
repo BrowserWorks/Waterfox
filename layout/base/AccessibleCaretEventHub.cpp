@@ -401,6 +401,10 @@ AccessibleCaretEventHub::~AccessibleCaretEventHub()
 void
 AccessibleCaretEventHub::Init()
 {
+  if (mInitialized && mManager) {
+    mManager->OnFrameReconstruction();
+  }
+
   if (mInitialized || !mPresShell || !mPresShell->GetCanvasFrame() ||
       !mPresShell->GetCanvasFrame()->GetCustomContentContainer()) {
     return;
@@ -545,7 +549,7 @@ AccessibleCaretEventHub::HandleMouseEvent(WidgetMouseEvent* aEvent)
 nsEventStatus
 AccessibleCaretEventHub::HandleTouchEvent(WidgetTouchEvent* aEvent)
 {
-  if (aEvent->touches.IsEmpty()) {
+  if (aEvent->mTouches.IsEmpty()) {
     AC_LOG("%s: Receive a touch event without any touch data!", __FUNCTION__);
     return nsEventStatus_eIgnore;
   }
@@ -553,7 +557,7 @@ AccessibleCaretEventHub::HandleTouchEvent(WidgetTouchEvent* aEvent)
   nsEventStatus rv = nsEventStatus_eIgnore;
 
   int32_t id =
-    (mActiveTouchId == kInvalidTouchId ? aEvent->touches[0]->Identifier()
+    (mActiveTouchId == kInvalidTouchId ? aEvent->mTouches[0]->Identifier()
                                        : mActiveTouchId);
   nsPoint point = GetTouchEventPosition(aEvent, id);
 
@@ -781,7 +785,7 @@ nsPoint
 AccessibleCaretEventHub::GetTouchEventPosition(WidgetTouchEvent* aEvent,
                                                int32_t aIdentifier) const
 {
-  for (dom::Touch* touch : aEvent->touches) {
+  for (dom::Touch* touch : aEvent->mTouches) {
     if (touch->Identifier() == aIdentifier) {
       LayoutDeviceIntPoint touchIntPoint = touch->mRefPoint;
 
@@ -797,7 +801,7 @@ AccessibleCaretEventHub::GetTouchEventPosition(WidgetTouchEvent* aEvent,
 nsPoint
 AccessibleCaretEventHub::GetMouseEventPosition(WidgetMouseEvent* aEvent) const
 {
-  LayoutDeviceIntPoint mouseIntPoint = aEvent->AsGUIEvent()->refPoint;
+  LayoutDeviceIntPoint mouseIntPoint = aEvent->AsGUIEvent()->mRefPoint;
 
   // Get event coordinate relative to root frame.
   nsIFrame* rootFrame = mPresShell->GetRootFrame();

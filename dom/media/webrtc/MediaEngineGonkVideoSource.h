@@ -65,7 +65,8 @@ public:
                     const nsString& aDeviceId,
                     const nsACString& aOrigin) override;
   nsresult Deallocate() override;
-  nsresult Start(SourceMediaStream* aStream, TrackID aID) override;
+  nsresult Start(SourceMediaStream* aStream, TrackID aID,
+                 const PrincipalHandle& aPrincipalHandle) override;
   nsresult Stop(SourceMediaStream* aSource, TrackID aID) override;
   nsresult Restart(const dom::MediaTrackConstraints& aConstraints,
                    const MediaEnginePrefs &aPrefs,
@@ -73,7 +74,8 @@ public:
   void NotifyPull(MediaStreamGraph* aGraph,
                   SourceMediaStream* aSource,
                   TrackID aId,
-                  StreamTime aDesiredTime) override;
+                  StreamTime aDesiredTime,
+                  const PrincipalHandle& aPrincipalHandle) override;
   dom::MediaSourceEnum GetMediaSource() const override {
     return dom::MediaSourceEnum::Camera;
   }
@@ -92,7 +94,7 @@ public:
   void RotateImage(layers::Image* aImage, uint32_t aWidth, uint32_t aHeight);
   void Notify(const mozilla::hal::ScreenConfiguration& aConfiguration);
 
-  nsresult TakePhoto(PhotoCallback* aCallback) override;
+  nsresult TakePhoto(MediaEnginePhotoCallback* aCallback) override;
 
   // It sets the correct photo orientation via camera parameter according to
   // current screen orientation.
@@ -125,7 +127,7 @@ protected:
   android::sp<android::GonkCameraSource> mCameraSource;
 
   // These are protected by mMonitor in parent class
-  nsTArray<RefPtr<PhotoCallback>> mPhotoCallbacks;
+  nsTArray<RefPtr<MediaEnginePhotoCallback>> mPhotoCallbacks;
   int mRotation;
   int mCameraAngle; // See dom/base/ScreenOrientation.h
   bool mBackCamera;

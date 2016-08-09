@@ -8,13 +8,13 @@
 #include <audiopolicy.h>
 #include <mmdeviceapi.h>
 
+#include "mozilla/RefPtr.h"
 #include "nsIStringBundle.h"
 #include "nsIUUIDGenerator.h"
 #include "nsIXULAppInfo.h"
 
 //#include "AudioSession.h"
 #include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "nsThreadUtils.h"
@@ -296,10 +296,11 @@ AudioSession::Start()
 void
 AudioSession::StopInternal()
 {
-  if (mAudioSessionControl) {
+  if (mAudioSessionControl &&
+      (mState == STARTED || mState == STOPPED)) {
     mAudioSessionControl->UnregisterAudioSessionNotification(this);
-    mAudioSessionControl = nullptr;
   }
+  mAudioSessionControl = nullptr;
 }
 
 nsresult

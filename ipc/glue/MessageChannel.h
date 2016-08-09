@@ -11,6 +11,7 @@
 #include "base/basictypes.h"
 #include "base/message_loop.h"
 
+#include "mozilla/Function.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Vector.h"
@@ -73,6 +74,7 @@ class MessageChannel : HasResultCodes
     static const int32_t kNoTimeout;
 
     typedef IPC::Message Message;
+    typedef IPC::MessageInfo MessageInfo;
     typedef mozilla::ipc::Transport Transport;
 
     explicit MessageChannel(MessageListener *aListener);
@@ -108,6 +110,11 @@ class MessageChannel : HasResultCodes
     {
         mAbortOnError = abort;
     }
+
+    // Call aInvoke for each pending message until it returns false.
+    // XXX: You must get permission from an IPC peer to use this function
+    //      since it requires custom deserialization and re-orders events.
+    void PeekMessages(mozilla::function<bool(const Message& aMsg)> aInvoke);
 
     // Misc. behavioral traits consumers can request for this channel
     enum ChannelFlags {
@@ -633,7 +640,7 @@ class MessageChannel : HasResultCodes
     // Each stack refers to a different protocol and the stacks are mutually
     // exclusive: multiple outcalls of the same kind cannot be initiated while
     // another is active.
-    std::stack<Message> mInterruptStack;
+    std::stack<MessageInfo> mInterruptStack;
 
     // This is what we think the Interrupt stack depth is on the "other side" of this
     // Interrupt channel.  We maintain this variable so that we can detect racy Interrupt

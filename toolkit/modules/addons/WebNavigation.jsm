@@ -14,10 +14,7 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
 // TODO:
-// Transition types and qualifiers
-// onReferenceFragmentUpdated also triggers for pushState
-// getFrames, getAllFrames
-// onCreatedNavigationTarget, onHistoryStateUpdated
+// onCreatedNavigationTarget
 
 var Manager = {
   listeners: new Map(),
@@ -25,13 +22,15 @@ var Manager = {
   init() {
     Services.mm.addMessageListener("Extension:DOMContentLoaded", this);
     Services.mm.addMessageListener("Extension:StateChange", this);
-    Services.mm.addMessageListener("Extension:LocationChange", this);
+    Services.mm.addMessageListener("Extension:DocumentChange", this);
+    Services.mm.addMessageListener("Extension:HistoryChange", this);
     Services.mm.loadFrameScript("resource://gre/modules/WebNavigationContent.js", true);
   },
 
   uninit() {
     Services.mm.removeMessageListener("Extension:StateChange", this);
-    Services.mm.removeMessageListener("Extension:LocationChange", this);
+    Services.mm.removeMessageListener("Extension:DocumentChange", this);
+    Services.mm.removeMessageListener("Extension:HistoryChange", this);
     Services.mm.removeMessageListener("Extension:DOMContentLoaded", this);
     Services.mm.removeDelayedFrameScript("resource://gre/modules/WebNavigationContent.js");
     Services.mm.broadcastAsyncMessage("Extension:DisableWebNavigation");
@@ -70,8 +69,12 @@ var Manager = {
         this.onStateChange(target, data);
         break;
 
-      case "Extension:LocationChange":
-        this.onLocationChange(target, data);
+      case "Extension:DocumentChange":
+        this.onDocumentChange(target, data);
+        break;
+
+      case "Extension:HistoryChange":
+        this.onHistoryChange(target, data);
         break;
 
       case "Extension:DOMContentLoaded":
@@ -97,15 +100,27 @@ var Manager = {
     }
   },
 
-  onLocationChange(browser, data) {
-    let url = data.location;
+  onDocumentChange(browser, data) {
+    let extra = {
+      url: data.location,
+      // Transition data which is coming from the content process.
+      frameTransitionData: data.frameTransitionData,
+    };
+
+    this.fire("onCommitted", browser, data, extra);
+  },
+
+  onHistoryChange(browser, data) {
+    let extra = {
+      url: data.location,
+      // Transition data which is coming from the content process.
+      frameTransitionData: data.frameTransitionData,
+    };
 
     if (data.isReferenceFragmentUpdated) {
-      this.fire("onReferenceFragmentUpdated", browser, data, {url});
+      this.fire("onReferenceFragmentUpdated", browser, data, extra);
     } else if (data.isHistoryStateUpdated) {
-      this.fire("onHistoryStateUpdated", browser, data, {url});
-    } else {
-      this.fire("onCommitted", browser, data, {url});
+      this.fire("onHistoryStateUpdated", browser, data, extra);
     }
   },
 

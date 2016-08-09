@@ -295,12 +295,16 @@ Declaration::GetImageLayerValue(
 
     if (clip->mValue.GetIntValue() != NS_STYLE_IMAGELAYER_CLIP_BORDER ||
         origin->mValue.GetIntValue() != NS_STYLE_IMAGELAYER_ORIGIN_PADDING) {
-      MOZ_ASSERT(nsCSSProps::kKeywordTableTable[
-                   aTable[nsStyleImageLayers::origin]] ==
-                 nsCSSProps::kImageLayerOriginKTable);
-      MOZ_ASSERT(nsCSSProps::kKeywordTableTable[
-                   aTable[nsStyleImageLayers::clip]] ==
-                 nsCSSProps::kImageLayerOriginKTable);
+#ifdef DEBUG
+      for (size_t i = 0; nsCSSProps::kImageLayerOriginKTable[i].mValue != -1; i++) {
+        // For each keyword & value in kOriginKTable, ensure that
+        // kBackgroundKTable has a matching entry at the same position.
+        MOZ_ASSERT(nsCSSProps::kImageLayerOriginKTable[i].mKeyword ==
+                   nsCSSProps::kBackgroundClipKTable[i].mKeyword);
+        MOZ_ASSERT(nsCSSProps::kImageLayerOriginKTable[i].mValue ==
+                   nsCSSProps::kBackgroundClipKTable[i].mValue);
+      }
+#endif
       static_assert(NS_STYLE_IMAGELAYER_CLIP_BORDER ==
                     NS_STYLE_IMAGELAYER_ORIGIN_BORDER &&
                     NS_STYLE_IMAGELAYER_CLIP_PADDING ==
@@ -1305,6 +1309,28 @@ Declaration::GetValue(nsCSSProperty aProperty, nsAString& aValue,
       }
       // If scroll-snap-type-x and scroll-snap-type-y are not equal,
       // we don't have a shorthand that can express. Bail.
+      break;
+    }
+    case eCSSProperty__webkit_text_stroke: {
+      const nsCSSValue* strokeWidth =
+        data->ValueFor(eCSSProperty__webkit_text_stroke_width);
+      const nsCSSValue* strokeColor =
+        data->ValueFor(eCSSProperty__webkit_text_stroke_color);
+      bool isDefaultColor = strokeColor->GetUnit() == eCSSUnit_EnumColor &&
+        strokeColor->GetIntValue() == NS_COLOR_CURRENTCOLOR;
+
+      if (strokeWidth->GetUnit() != eCSSUnit_Integer ||
+          strokeWidth->GetIntValue() != 0 || isDefaultColor) {
+        AppendValueToString(eCSSProperty__webkit_text_stroke_width,
+                            aValue, aSerialization);
+        if (!isDefaultColor) {
+          aValue.Append(char16_t(' '));
+        }
+      }
+      if (!isDefaultColor) {
+        AppendValueToString(eCSSProperty__webkit_text_stroke_color,
+                            aValue, aSerialization);
+      }
       break;
     }
     case eCSSProperty_all:

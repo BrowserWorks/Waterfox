@@ -4,7 +4,6 @@
 
 package org.mozilla.gecko.menu;
 
-import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.widget.GeckoActionProvider;
 
@@ -18,8 +17,7 @@ import android.view.SubMenu;
 import android.view.View;
 
 public class GeckoMenuItem implements MenuItem {
-    private static final int SECONDARY_ACTION_BAR_HISTORY_SIZE = 0;
-    private static final int QUICK_SHARE_ACTION_BAR_HISTORY_SIZE = 3;
+    private static final int SHARE_BAR_HISTORY_SIZE = 2;
 
     // These values mirror MenuItem values that are only available on API >= 11.
     public static final int SHOW_AS_ACTION_NEVER = 0;
@@ -117,10 +115,6 @@ public class GeckoMenuItem implements MenuItem {
     }
 
     public boolean hasActionProvider() {
-        if (Versions.preICS) {
-            return false;
-        }
-
         return (mActionProvider != null);
     }
 
@@ -140,13 +134,8 @@ public class GeckoMenuItem implements MenuItem {
     @Override
     public View getActionView() {
         if (mActionProvider != null) {
-            if (getActionEnum() == MenuItem.SHOW_AS_ACTION_IF_ROOM) {
-                return mActionProvider.onCreateActionView(SECONDARY_ACTION_BAR_HISTORY_SIZE,
-                        GeckoActionProvider.ActionViewType.DEFAULT);
-            } else {
-                return mActionProvider.onCreateActionView(QUICK_SHARE_ACTION_BAR_HISTORY_SIZE,
-                        GeckoActionProvider.ActionViewType.QUICK_SHARE_ICON);
-            }
+            return mActionProvider.onCreateActionView(SHARE_BAR_HISTORY_SIZE,
+                    GeckoActionProvider.ActionViewType.DEFAULT);
         }
 
         return mActionView;

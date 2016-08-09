@@ -18,6 +18,7 @@
 #include "nsISupportsImpl.h"
 #include "nsISupportsUtils.h"
 #include "nsContentUtils.h"
+#include "nsDocShell.h"
 #include "nsGlobalWindow.h"
 
 using namespace mozilla::dom;
@@ -46,6 +47,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mInternalContentPolicyType(aContentPolicyType)
   , mTainting(LoadTainting::Basic)
   , mUpgradeInsecureRequests(false)
+  , mVerifySignedContent(false)
+  , mEnforceSRI(false)
   , mInnerWindowID(0)
   , mOuterWindowID(0)
   , mParentOuterWindowID(0)
@@ -57,6 +60,19 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
 {
   MOZ_ASSERT(mLoadingPrincipal);
   MOZ_ASSERT(mTriggeringPrincipal);
+
+#ifdef DEBUG
+  // TYPE_DOCUMENT loads initiated by javascript tests will go through
+  // nsIOService and use the wrong constructor.  Don't enforce the
+  // !TYPE_DOCUMENT check in those cases
+  bool skipContentTypeCheck = false;
+  skipContentTypeCheck = Preferences::GetBool("network.loadinfo.skip_type_assertion");
+#endif
+
+  // This constructor shouldn't be used for TYPE_DOCUMENT loads that don't
+  // have a loadingPrincipal
+  MOZ_ASSERT(skipContentTypeCheck ||
+             mInternalContentPolicyType != nsIContentPolicy::TYPE_DOCUMENT);
 
   // TODO(bug 1259873): Above, we initialize mIsThirdPartyContext to false meaning
   // that consumers of LoadInfo that don't pass a context or pass a context from
@@ -118,21 +134,49 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
       aLoadingContext->OwnerDoc()->GetUpgradeInsecureRequests(false) ||
       (nsContentUtils::IsPreloadType(mInternalContentPolicyType) &&
        aLoadingContext->OwnerDoc()->GetUpgradeInsecureRequests(true));
+
+    // if owner doc has content signature, we enforce SRI
+    nsCOMPtr<nsIChannel> channel = aLoadingContext->OwnerDoc()->GetChannel();
+    if (channel) {
+      nsCOMPtr<nsILoadInfo> loadInfo = channel->GetLoadInfo();
+      if (loadInfo) {
+        loadInfo->GetVerifySignedContent(&mEnforceSRI);
+      }
+    }
+  }
+
+  if (!(mSecurityFlags & nsILoadInfo::SEC_FORCE_PRIVATE_BROWSING)) {
+    if (aLoadingContext) {
+      nsCOMPtr<nsILoadContext> loadContext =
+        aLoadingContext->OwnerDoc()->GetLoadContext();
+      if (loadContext) {
+        bool usePrivateBrowsing;
+        nsresult rv = loadContext->GetUsePrivateBrowsing(&usePrivateBrowsing);
+        if (NS_SUCCEEDED(rv) && usePrivateBrowsing) {
+          mSecurityFlags |= nsILoadInfo::SEC_FORCE_PRIVATE_BROWSING;
+        }
+      }
+    }
   }
 
   InheritOriginAttributes(mLoadingPrincipal, mOriginAttributes);
 }
 
+/* Constructor takes an outer window, but no loadingNode or loadingPrincipal.
+ * This constructor should only be used for TYPE_DOCUMENT loads, since they
+ * have a null loadingNode and loadingPrincipal.
+*/
 LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
-                   nsIPrincipal* aLoadingPrincipal,
                    nsIPrincipal* aTriggeringPrincipal,
                    nsSecurityFlags aSecurityFlags)
-  : mLoadingPrincipal(aLoadingPrincipal)
+  : mLoadingPrincipal(nullptr)
   , mTriggeringPrincipal(aTriggeringPrincipal)
   , mSecurityFlags(aSecurityFlags)
   , mInternalContentPolicyType(nsIContentPolicy::TYPE_DOCUMENT)
   , mTainting(LoadTainting::Basic)
   , mUpgradeInsecureRequests(false)
+  , mVerifySignedContent(false)
+  , mEnforceSRI(false)
   , mInnerWindowID(0)
   , mOuterWindowID(0)
   , mParentOuterWindowID(0)
@@ -145,6 +189,7 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
   // Top-level loads are never third-party
   // Grab the information we can out of the window.
   MOZ_ASSERT(aOuterWindow);
+  MOZ_ASSERT(mTriggeringPrincipal);
 
   // if the load is sandboxed, we can not also inherit the principal
   if (mSecurityFlags & nsILoadInfo::SEC_SANDBOXED) {
@@ -159,7 +204,12 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
   nsCOMPtr<nsPIDOMWindowOuter> parent = aOuterWindow->GetScriptableParent();
   mParentOuterWindowID = parent ? parent->WindowID() : 0;
 
-  InheritOriginAttributes(mLoadingPrincipal, mOriginAttributes);
+  // get the docshell from the outerwindow, and then get the originattributes
+  nsCOMPtr<nsIDocShell> docShell = aOuterWindow->GetDocShell();
+  MOZ_ASSERT(docShell);
+  const DocShellOriginAttributes attrs =
+    nsDocShell::Cast(docShell)->GetOriginAttributes();
+  mOriginAttributes.InheritFromDocShellToNecko(attrs);
 }
 
 LoadInfo::LoadInfo(const LoadInfo& rhs)
@@ -170,6 +220,8 @@ LoadInfo::LoadInfo(const LoadInfo& rhs)
   , mInternalContentPolicyType(rhs.mInternalContentPolicyType)
   , mTainting(rhs.mTainting)
   , mUpgradeInsecureRequests(rhs.mUpgradeInsecureRequests)
+  , mVerifySignedContent(rhs.mVerifySignedContent)
+  , mEnforceSRI(rhs.mEnforceSRI)
   , mInnerWindowID(rhs.mInnerWindowID)
   , mOuterWindowID(rhs.mOuterWindowID)
   , mParentOuterWindowID(rhs.mParentOuterWindowID)
@@ -192,6 +244,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
                    nsContentPolicyType aContentPolicyType,
                    LoadTainting aTainting,
                    bool aUpgradeInsecureRequests,
+                   bool aVerifySignedContent,
+                   bool aEnforceSRI,
                    uint64_t aInnerWindowID,
                    uint64_t aOuterWindowID,
                    uint64_t aParentOuterWindowID,
@@ -210,6 +264,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mInternalContentPolicyType(aContentPolicyType)
   , mTainting(aTainting)
   , mUpgradeInsecureRequests(aUpgradeInsecureRequests)
+  , mVerifySignedContent(aVerifySignedContent)
+  , mEnforceSRI(aEnforceSRI)
   , mInnerWindowID(aInnerWindowID)
   , mOuterWindowID(aOuterWindowID)
   , mParentOuterWindowID(aParentOuterWindowID)
@@ -221,7 +277,8 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   , mForcePreflight(aForcePreflight)
   , mIsPreflight(aIsPreflight)
 {
-  MOZ_ASSERT(mLoadingPrincipal);
+  // Only top level TYPE_DOCUMENT loads can have a null loadingPrincipal
+  MOZ_ASSERT(mLoadingPrincipal || aContentPolicyType == nsIContentPolicy::TYPE_DOCUMENT);
   MOZ_ASSERT(mTriggeringPrincipal);
 
   mRedirectChainIncludingInternalRedirects.SwapElements(
@@ -263,6 +320,14 @@ LoadInfo::Clone() const
 }
 
 already_AddRefed<nsILoadInfo>
+LoadInfo::CloneWithNewSecFlags(nsSecurityFlags aSecurityFlags) const
+{
+  RefPtr<LoadInfo> copy(new LoadInfo(*this));
+  copy->mSecurityFlags = aSecurityFlags;
+  return copy.forget();
+}
+
+already_AddRefed<nsILoadInfo>
 LoadInfo::CloneForNewRequest() const
 {
   RefPtr<LoadInfo> copy(new LoadInfo(*this));
@@ -276,7 +341,7 @@ LoadInfo::CloneForNewRequest() const
 NS_IMETHODIMP
 LoadInfo::GetLoadingPrincipal(nsIPrincipal** aLoadingPrincipal)
 {
-  NS_ADDREF(*aLoadingPrincipal = mLoadingPrincipal);
+  NS_IF_ADDREF(*aLoadingPrincipal = mLoadingPrincipal);
   return NS_OK;
 }
 
@@ -413,6 +478,14 @@ LoadInfo::GetDontFollowRedirects(bool* aResult)
 }
 
 NS_IMETHODIMP
+LoadInfo::GetUsePrivateBrowsing(bool* aUsePrivateBrowsing)
+{
+  *aUsePrivateBrowsing = (mSecurityFlags &
+                          nsILoadInfo::SEC_FORCE_PRIVATE_BROWSING);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 LoadInfo::GetExternalContentPolicyType(nsContentPolicyType* aResult)
 {
   *aResult = nsContentUtils::InternalContentPolicyTypeToExternal(mInternalContentPolicyType);
@@ -429,6 +502,36 @@ NS_IMETHODIMP
 LoadInfo::GetUpgradeInsecureRequests(bool* aResult)
 {
   *aResult = mUpgradeInsecureRequests;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::SetVerifySignedContent(bool aVerifySignedContent)
+{
+  MOZ_ASSERT(mInternalContentPolicyType == nsIContentPolicy::TYPE_DOCUMENT,
+            "can only verify content for TYPE_DOCUMENT");
+  mVerifySignedContent = aVerifySignedContent;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetVerifySignedContent(bool* aResult)
+{
+  *aResult = mVerifySignedContent;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::SetEnforceSRI(bool aEnforceSRI)
+{
+  mEnforceSRI = aEnforceSRI;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+LoadInfo::GetEnforceSRI(bool* aResult)
+{
+  *aResult = mEnforceSRI;
   return NS_OK;
 }
 

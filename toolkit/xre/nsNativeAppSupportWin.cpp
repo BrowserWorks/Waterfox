@@ -459,7 +459,7 @@ NS_CreateNativeAppSupport( nsINativeAppSupport **aResult ) {
 }
 
 // Constants
-#define MOZ_DDE_APPLICATION    "WaterfoxProject"
+#define MOZ_DDE_APPLICATION    "Mozilla"
 #define MOZ_MUTEX_NAMESPACE    L"Local\\"
 #define MOZ_STARTUP_MUTEX_NAME L"StartupMutex"
 #define MOZ_DDE_START_TIMEOUT 30000
@@ -506,7 +506,7 @@ struct MessageWindow {
             ::_snwprintf(classNameBuffer,
                          128,   // size of classNameBuffer in PRUnichars
                          L"%s%s",
-                         NS_ConvertUTF8toUTF16(gAppData->remotingName).get(),
+                         static_cast<const wchar_t*>(NS_ConvertUTF8toUTF16(gAppData->remotingName).get()),
                          L"MessageWindow" );
             mClassName = classNameBuffer;
         }
@@ -669,7 +669,7 @@ nsNativeAppSupportWin::Start( bool *aResult ) {
     ::_snwprintf(reinterpret_cast<wchar_t*>(mMutexName),
                  sizeof mMutexName / sizeof(char16_t), L"%s%s%s",
                  MOZ_MUTEX_NAMESPACE,
-                 NS_ConvertUTF8toUTF16(gAppData->name).get(),
+                 static_cast<const wchar_t*>(NS_ConvertUTF8toUTF16(gAppData->name).get()),
                  MOZ_STARTUP_MUTEX_NAME );
     Win32Mutex startupLock = Win32Mutex( mMutexName );
 

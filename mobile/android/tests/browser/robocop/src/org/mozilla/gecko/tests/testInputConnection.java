@@ -15,10 +15,9 @@ import static org.mozilla.gecko.tests.helpers.WaitHelper.waitFor;
 
 import org.mozilla.gecko.tests.components.GeckoViewComponent.InputConnectionTest;
 import org.mozilla.gecko.tests.helpers.GeckoHelper;
-import org.mozilla.gecko.tests.helpers.JavascriptBridge;
 import org.mozilla.gecko.tests.helpers.NavigationHelper;
 
-import com.jayway.android.robotium.solo.Condition;
+import com.robotium.solo.Condition;
 
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
@@ -27,23 +26,9 @@ import android.view.inputmethod.InputConnection;
 /**
  * Tests the proper operation of GeckoInputConnection
  */
-public class testInputConnection extends UITest {
+public class testInputConnection extends JavascriptBridgeTest {
 
     private static final String INITIAL_TEXT = "foo";
-
-    private JavascriptBridge js;
-
-    @Override // UITest
-    public void setUp() throws Exception {
-        super.setUp();
-        js = new JavascriptBridge(this);
-    }
-
-    @Override // UITest
-    public void tearDown() throws Exception {
-        js.disconnect();
-        super.tearDown();
-    }
 
     public void testInputConnection() throws InterruptedException {
         GeckoHelper.blockForReady();
@@ -53,25 +38,53 @@ public class testInputConnection extends UITest {
         mToolbar.assertTitle(url);
 
         // First run tests inside the normal input field.
-        js.syncCall("focus_input", INITIAL_TEXT);
+        getJS().syncCall("focus_input", INITIAL_TEXT);
+        mGeckoView.mTextInput
+            .waitForInputConnection()
+            .testInputConnection(new BasicInputConnectionTest());
+
+        // Then switch focus to the text area and rerun tests.
+        getJS().syncCall("focus_text_area", INITIAL_TEXT);
+        mGeckoView.mTextInput
+            .waitForInputConnection()
+            .testInputConnection(new BasicInputConnectionTest());
+
+        // Then switch focus to the content editable and rerun tests.
+        getJS().syncCall("focus_content_editable", INITIAL_TEXT);
+        mGeckoView.mTextInput
+            .waitForInputConnection()
+            .testInputConnection(new BasicInputConnectionTest());
+
+        // Then switch focus to the design mode document and rerun tests.
+        getJS().syncCall("focus_design_mode", INITIAL_TEXT);
         mGeckoView.mTextInput
             .waitForInputConnection()
             .testInputConnection(new BasicInputConnectionTest());
 
         // Then switch focus to the resetting input field, and run tests there.
-        js.syncCall("focus_resetting_input", "");
+        getJS().syncCall("focus_resetting_input", "");
         mGeckoView.mTextInput
             .waitForInputConnection()
             .testInputConnection(new ResettingInputConnectionTest());
 
-        js.syncCall("finish_test");
+        // Then switch focus to the hiding input field, and run tests there.
+        getJS().syncCall("focus_hiding_input", "");
+        mGeckoView.mTextInput
+            .waitForInputConnection()
+            .testInputConnection(new HidingInputConnectionTest());
+
+        getJS().syncCall("finish_test");
     }
 
     private class BasicInputConnectionTest extends InputConnectionTest {
         @Override
-        public void test(InputConnection ic, EditorInfo info) {
-            // Test initial text provided by the hash in the test page URL
-            assertText("Initial text matches URL hash", ic, INITIAL_TEXT);
+        public void test(final InputConnection ic, EditorInfo info) {
+            waitFor("focus change", new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return INITIAL_TEXT.equals(getText(ic));
+                }
+            });
 
             // Test setSelection
             ic.setSelection(0, 3);
@@ -182,7 +195,7 @@ public class testInputConnection extends UITest {
             // Bug 1051556, exception due to committing text changes during flushing.
             ic.setComposingText("bad", 1);
             assertTextAndSelectionAt("Can set the composing text", ic, "bad", 3);
-            js.asyncCall("test_reflush_changes");
+            getJS().asyncCall("test_reflush_changes");
             // Wait for text change notifications to come in.
             processGeckoEvents(ic);
             assertTextAndSelectionAt("Can re-flush text changes", ic, "good", 4);
@@ -197,7 +210,7 @@ public class testInputConnection extends UITest {
             // Bug 1241558 - wrong selection due to ignoring selection notification.
             ic.setComposingText("foobar", 1);
             assertTextAndSelectionAt("Can set the composing text", ic, "foobar", 6);
-            js.asyncCall("test_set_selection");
+            getJS().asyncCall("test_set_selection");
             // Wait for text change notifications to come in.
             processGeckoEvents(ic);
             assertTextAndSelectionAt("Can select after committing", ic, "foobar", 3);
@@ -267,6 +280,40 @@ public class testInputConnection extends UITest {
 
             ic.deleteSurroundingText(3, 0);
             assertTextAndSelectionAt("Can clear text", ic, "", 0);
+
+            // Make sure we don't leave behind stale events for the following test.
+            processGeckoEvents(ic);
+            processInputConnectionEvents();
+        }
+    }
+
+    /**
+     * HidingInputConnectionTest performs tests on the hiding input in
+     * robocop_input.html. Any test that uses the normal input should be put in
+     * BasicInputConnectionTest.
+     */
+    private class HidingInputConnectionTest extends InputConnectionTest {
+        @Override
+        public void test(final InputConnection ic, EditorInfo info) {
+            waitFor("focus change", new Condition() {
+                @Override
+                public boolean isSatisfied() {
+                    return "".equals(getText(ic));
+                }
+            });
+
+            // Bug 1254629, crash when hiding input during input.
+            ic.commitText("foo", 1);
+            assertTextAndSelectionAt("Can commit text (hiding)", ic, "foo", 3);
+
+            ic.commitText("!", 1);
+            // The '!' key causes the input to hide in robocop_input.html,
+            // and there won't be a text/selection update as a result.
+            assertTextAndSelectionAt("Can handle hiding input", ic, "foo", 3);
+
+            // Make sure we don't leave behind stale events for the following test.
+            processGeckoEvents(ic);
+            processInputConnectionEvents();
         }
     }
 }

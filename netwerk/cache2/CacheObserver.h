@@ -71,7 +71,10 @@ class CacheObserver : public nsIObserver
 
   static bool EntryIsTooBig(int64_t aSize, bool aUsingDisk);
 
-  static TimeDuration const& MaxShutdownIOLag();
+  static bool IsPastShutdownIOLag();
+
+  static bool ShuttingDown()
+    { return sShutdownDemandedTime != PR_INTERVAL_NO_TIMEOUT; }
 
 private:
   static CacheObserver* sSelf;
@@ -87,7 +90,7 @@ private:
   static uint32_t sMetadataMemoryLimit;
   static int32_t sMemoryCacheCapacity;
   static int32_t sAutoMemoryCacheCapacity;
-  static uint32_t sDiskCacheCapacity;
+  static Atomic<uint32_t, Relaxed> sDiskCacheCapacity;
   static uint32_t sDiskFreeSpaceSoftLimit;
   static uint32_t sDiskFreeSpaceHardLimit;
   static bool sSmartCacheSizeEnabled;
@@ -103,7 +106,8 @@ private:
   static bool sClearCacheOnShutdown;
   static bool sCacheFSReported;
   static bool sHashStatsReported;
-  static int32_t sMaxShutdownIOLag;
+  static Atomic<uint32_t, Relaxed> sMaxShutdownIOLag;
+  static Atomic<PRIntervalTime, Relaxed> sShutdownDemandedTime;
 
   // Non static properties, accessible via sSelf
   nsCOMPtr<nsIFile> mCacheParentDirectoryOverride;

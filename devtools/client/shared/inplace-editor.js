@@ -40,6 +40,23 @@ const FOCUS_BACKWARD = Ci.nsIFocusManager.MOVEFOCUS_BACKWARD;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://devtools/shared/event-emitter.js");
+const { findMostRelevantCssPropertyIndex } = require("./suggestion-picker");
+
+/**
+ * Helper to check if the provided key matches one of the expected keys.
+ * Keys will be prefixed with DOM_VK_ and should match a key in nsIDOMKeyEvent.
+ *
+ * @param {String} key
+ *        the key to check (can be a keyCode).
+ * @param {...String} keys
+ *        list of possible keys allowed.
+ * @return {Boolean} true if the key matches one of the keys.
+ */
+function isKeyIn(key, ...keys) {
+  return keys.some(expectedKey => {
+    return key === Ci.nsIDOMKeyEvent["DOM_VK_" + expectedKey];
+  });
+}
 
 /**
  * Mark a span editable.  |editableField| will listen for the span to
@@ -90,6 +107,10 @@ Cu.import("resource://devtools/shared/event-emitter.js");
  *      defaults to "click"
  *    {Boolean} multiline: Should the editor be a multiline textarea?
  *      defaults to false
+ *    {Function or Number} maxWidth:
+ *       Should the editor wrap to remain below the provided max width. Only
+ *       available if multiline is true. If a function is provided, it will be
+ *       called when replacing the element by the inplace input.
  *    {Boolean} trimOutput: Should the returned string be trimmed?
  *      defaults to true
  *    {Boolean} preserveTextStyles: If true, do not copy text-related styles
@@ -137,8 +158,7 @@ function editableItem(options, callback) {
   // If focused by means other than a click, start editing by
   // pressing enter or space.
   element.addEventListener("keypress", function(evt) {
-    if (evt.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_RETURN ||
-        evt.charCode === Ci.nsIDOMKeyEvent.DOM_VK_SPACE) {
+    if (isKeyIn(evt.keyCode, "RETURN") || isKeyIn(evt.charCode, "SPACE")) {
       callback(element);
     }
   }, true);
@@ -198,6 +218,11 @@ function InplaceEditor(options, event) {
   this.destroy = options.destroy;
   this.initial = options.initial ? options.initial : this.elt.textContent;
   this.multiline = options.multiline || false;
+  this.maxWidth = options.maxWidth;
+  if (typeof this.maxWidth == "function") {
+    this.maxWidth = this.maxWidth();
+  }
+
   this.trimOutput = options.trimOutput === undefined
                     ? true
                     : !!options.trimOutput;
@@ -217,9 +242,16 @@ function InplaceEditor(options, event) {
   this._onKeyup = this._onKeyup.bind(this);
 
   this._createInput();
-  this._autosize();
-  this.inputCharWidth = this._getInputCharWidth();
 
+  // Hide the provided element and add our editor.
+  this.originalDisplay = this.elt.style.display;
+  this.elt.style.display = "none";
+  this.elt.parentNode.insertBefore(this.input, this.elt);
+
+  // After inserting the input to have all CSS styles applied, start autosizing.
+  this._autosize();
+
+  this.inputCharDimensions = this._getInputCharDimensions();
   // Pull out character codes for advanceChars, listing the
   // characters that should trigger a blur.
   if (typeof options.advanceChars === "function") {
@@ -230,13 +262,8 @@ function InplaceEditor(options, event) {
     for (let i = 0; i < advanceChars.length; i++) {
       advanceCharcodes[advanceChars.charCodeAt(i)] = true;
     }
-    this._advanceChars = aCharCode => aCharCode in advanceCharcodes;
+    this._advanceChars = charCode => charCode in advanceCharcodes;
   }
-
-  // Hide the provided element and add our editor.
-  this.originalDisplay = this.elt.style.display;
-  this.elt.style.display = "none";
-  this.elt.parentNode.insertBefore(this.input, this.elt);
 
   this.input.focus();
 
@@ -245,7 +272,7 @@ function InplaceEditor(options, event) {
   }
 
   if (this.contentType == CONTENT_TYPES.CSS_VALUE && this.input.value == "") {
-    this._maybeSuggestCompletion(true);
+    this._maybeSuggestCompletion(false);
   }
 
   this.input.addEventListener("blur", this._onBlur, false);
@@ -285,6 +312,13 @@ InplaceEditor.prototype = {
     this.input =
       this.doc.createElementNS(HTML_NS, this.multiline ? "textarea" : "input");
     this.input.inplaceEditor = this;
+
+    if (this.multiline) {
+      // Hide the textarea resize handle.
+      this.input.style.resize = "none";
+      this.input.style.overflow = "hidden";
+    }
+
     this.input.classList.add("styleinspector-propertyeditor");
     this.input.value = this.initial;
     if (!this.preserveTextStyles) {
@@ -305,9 +339,11 @@ InplaceEditor.prototype = {
     this.input.removeEventListener("keypress", this._onKeyPress, false);
     this.input.removeEventListener("keyup", this._onKeyup, false);
     this.input.removeEventListener("input", this._onInput, false);
-    this.input.removeEventListener("dblclick", this._stopEventPropagation, false);
+    this.input.removeEventListener("dblclick", this._stopEventPropagation,
+      false);
     this.input.removeEventListener("click", this._stopEventPropagation, false);
-    this.input.removeEventListener("mousedown", this._stopEventPropagation, false);
+    this.input.removeEventListener("mousedown", this._stopEventPropagation,
+      false);
 
     this._stopAutosize();
 
@@ -349,7 +385,19 @@ InplaceEditor.prototype = {
     style.position = "absolute";
     style.top = "0";
     style.left = "0";
-    copyTextStyles(this.input, this._measurement);
+
+    if (this.multiline) {
+      style.whiteSpace = "pre-wrap";
+      style.wordWrap = "break-word";
+      if (this.maxWidth) {
+        style.maxWidth = this.maxWidth + "px";
+        // Use position fixed to measure dimensions without any influence from
+        // the container of the editor.
+        style.position = "fixed";
+      }
+    }
+
+    copyAllStyles(this.input, this._measurement);
     this._updateSize();
   },
 
@@ -371,36 +419,49 @@ InplaceEditor.prototype = {
     // Replace spaces with non-breaking spaces.  Otherwise setting
     // the span's textContent will collapse spaces and the measurement
     // will be wrong.
-    this._measurement.textContent = this.input.value.replace(/ /g, "\u00a0");
+    let content = this.input.value;
+    let unbreakableSpace = "\u00a0";
 
-    let width = this._measurement.offsetWidth;
+    // Make sure the content is not empty.
+    if (content === "") {
+      content = unbreakableSpace;
+    }
+
+    // If content ends with a new line, add a blank space to force the autosize
+    // element to adapt its height.
+    if (content.lastIndexOf("\n") === content.length - 1) {
+      content = content + unbreakableSpace;
+    }
+
+    if (!this.multiline) {
+      content = content.replace(/ /g, unbreakableSpace);
+    }
+
+    this._measurement.textContent = content;
+
+    // Do not use offsetWidth: it will round floating width values.
+    let width = this._measurement.getBoundingClientRect().width + 2;
     if (this.multiline) {
-      // Make sure there's some content in the current line.  This is a hack to
-      // account for the fact that after adding a newline the <pre> doesn't grow
-      // unless there's text content on the line.
-      width += 15;
-      this.input.style.height = this._measurement.offsetHeight + "px";
+      if (this.maxWidth) {
+        width = Math.min(this.maxWidth, width);
+      }
+      let height = this._measurement.getBoundingClientRect().height;
+      this.input.style.height = height + "px";
     }
-
-    if (width === 0) {
-      // If the editor is empty use a width corresponding to 1 character.
-      this.input.style.width = "1ch";
-    } else {
-      // Add 2 pixels to ensure the caret will be visible
-      width = width + 2;
-      this.input.style.width = width + "px";
-    }
+    this.input.style.width = width + "px";
   },
 
   /**
-   * Get the width of a single character in the input to properly position the
-   * autocompletion popup.
+   * Get the width and height of a single character in the input to properly
+   * position the autocompletion popup.
    */
-  _getInputCharWidth: function() {
-    // Just make the text content to be 'x' to get the width of any character in
-    // a monospace font.
+  _getInputCharDimensions: function() {
+    // Just make the text content to be 'x' to get the width and height of any
+    // character in a monospace font.
     this._measurement.textContent = "x";
-    return this._measurement.offsetWidth;
+    let width = this._measurement.clientWidth;
+    let height = this._measurement.clientHeight;
+    return { width, height };
   },
 
    /**
@@ -480,13 +541,15 @@ InplaceEditor.prototype = {
       if (type === "rgb" || type === "hsl") {
         info = {};
         let part = value.substring(range.start, selStart).split(",").length - 1;
-        if (part === 3) { // alpha
+        if (part === 3) {
+          // alpha
           info.minValue = 0;
           info.maxValue = 1;
         } else if (type === "rgb") {
           info.minValue = 0;
           info.maxValue = 255;
-        } else if (part !== 0) { // hsl percentage
+        } else if (part !== 0) {
+          // hsl percentage
           info.minValue = 0;
           info.maxValue = 100;
 
@@ -551,7 +614,7 @@ InplaceEditor.prototype = {
    * @return {Object} object with properties 'value', 'start', 'end', and
    *         'type'.
    */
-   _parseCSSValue: function(value, offset) {
+  _parseCSSValue: function(value, offset) {
     const reSplitCSS = /(url\("?[^"\)]+"?\)?)|(rgba?\([^)]*\)?)|(hsla?\([^)]*\)?)|(#[\dA-Fa-f]+)|(-?\d*\.?\d+(%|[a-z]{1,4})?)|"([^"]*)"?|'([^']*)'?|([^,\s\/!\(\)]+)|(!(.*)?)/;
     let start = 0;
     let m;
@@ -620,8 +683,10 @@ InplaceEditor.prototype = {
       // Parse periods as belonging to the number only if we are in a known
       // number context. (This makes incrementing the 1 in 'image1.gif' work.)
       let pattern = "[" + (info ? "0-9." : "0-9") + "]*";
-      let before = new RegExp(pattern + "$").exec(value.substr(0, offset))[0].length;
-      let after = new RegExp("^" + pattern).exec(value.substr(offset))[0].length;
+      let before = new RegExp(pattern + "$")
+        .exec(value.substr(0, offset))[0].length;
+      let after = new RegExp("^" + pattern)
+        .exec(value.substr(offset))[0].length;
 
       start = offset - before;
       end = offset + after;
@@ -918,36 +983,20 @@ InplaceEditor.prototype = {
   _onKeyPress: function(event) {
     let prevent = false;
 
-    const largeIncrement = 100;
-    const mediumIncrement = 10;
-    const smallIncrement = 0.1;
+    let key = event.keyCode;
+    let input = this.input;
+
+    let multilineNavigation = !this._isSingleLine() &&
+      isKeyIn(key, "UP", "DOWN", "LEFT", "RIGHT");
+    let isPlainText = this.contentType == CONTENT_TYPES.PLAIN_TEXT;
+    let isPopupOpen = this.popup && this.popup.isOpen;
 
     let increment = 0;
-
-    if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_UP ||
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_UP) {
-      increment = 1;
-    } else if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_DOWN ||
-               event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_DOWN) {
-      increment = -1;
+    if (!isPlainText && !multilineNavigation) {
+      increment = this._getIncrement(event);
     }
 
-    if (event.shiftKey && !event.altKey) {
-      if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_UP ||
-          event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_DOWN) {
-        increment *= largeIncrement;
-      } else {
-        increment *= mediumIncrement;
-      }
-    } else if (event.altKey && !event.shiftKey) {
-      increment *= smallIncrement;
-    }
-
-    // Use default cursor movement rather than providing auto-suggestions.
-    if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_HOME ||
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_END ||
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_UP ||
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_PAGE_DOWN) {
+    if (isKeyIn(key, "HOME", "END", "PAGE_UP", "PAGE_DOWN")) {
       this._preventSuggestions = true;
     }
 
@@ -956,48 +1005,40 @@ InplaceEditor.prototype = {
       this._updateSize();
       prevent = true;
       cycling = true;
-    } else if (increment && this.popup && this.popup.isOpen) {
-      cycling = true;
+    }
+
+    if (isPopupOpen && isKeyIn(key, "UP", "DOWN", "PAGE_UP", "PAGE_DOWN")) {
       prevent = true;
-      this._cycleCSSSuggestion(increment > 0);
+      cycling = true;
+      this._cycleCSSSuggestion(isKeyIn(key, "UP", "PAGE_UP"));
       this._doValidation();
     }
 
-    if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_BACK_SPACE ||
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_DELETE ||
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_LEFT ||
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_RIGHT) {
-      if (this.popup && this.popup.isOpen) {
+    if (isKeyIn(key, "BACK_SPACE", "DELETE", "LEFT", "RIGHT")) {
+      if (isPopupOpen) {
         this.popup.hidePopup();
       }
-    } else if (!cycling && !event.metaKey && !event.altKey && !event.ctrlKey) {
-      this._maybeSuggestCompletion();
+    } else if (!cycling && !multilineNavigation &&
+      !event.metaKey && !event.altKey && !event.ctrlKey) {
+      this._maybeSuggestCompletion(true);
     }
 
-    if (this.multiline &&
-        event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_RETURN &&
-        event.shiftKey) {
+    if (this.multiline && event.shiftKey && isKeyIn(key, "RETURN")) {
       prevent = false;
-    } else if (this._advanceChars(event.charCode, this.input.value,
-                                  this.input.selectionStart) ||
-               event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_RETURN ||
-               event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_TAB) {
+    } else if (
+      this._advanceChars(event.charCode, input.value, input.selectionStart) ||
+      isKeyIn(key, "RETURN", "TAB")) {
       prevent = true;
 
-      let direction = FOCUS_FORWARD;
-      if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_TAB &&
-          event.shiftKey) {
-        if (this.stopOnShiftTab) {
-          direction = null;
-        } else {
-          direction = FOCUS_BACKWARD;
-        }
-      }
-      if ((this.stopOnReturn &&
-           event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_RETURN) ||
-          (this.stopOnTab && event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_TAB &&
-           !event.shiftKey)) {
+      let direction;
+      if ((this.stopOnReturn && isKeyIn(key, "RETURN")) ||
+          (this.stopOnTab && !event.shiftKey && isKeyIn(key, "TAB")) ||
+          (this.stopOnShiftTab && event.shiftKey && isKeyIn(key, "TAB"))) {
         direction = null;
+      } else if (event.shiftKey && isKeyIn(key, "TAB")) {
+        direction = FOCUS_BACKWARD;
+      } else {
+        direction = FOCUS_FORWARD;
       }
 
       // Now we don't want to suggest anything as we are moving out.
@@ -1009,10 +1050,7 @@ InplaceEditor.prototype = {
         this._preventSuggestions = false;
       }
 
-      let input = this.input;
-
-      if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_TAB &&
-          this.contentType == CONTENT_TYPES.CSS_MIXED) {
+      if (isKeyIn(key, "TAB") && this.contentType == CONTENT_TYPES.CSS_MIXED) {
         if (this.popup && input.selectionStart < input.selectionEnd) {
           event.preventDefault();
           input.setSelectionRange(input.selectionEnd, input.selectionEnd);
@@ -1047,7 +1085,7 @@ InplaceEditor.prototype = {
       }
 
       this._clear();
-    } else if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE) {
+    } else if (isKeyIn(key, "ESCAPE")) {
       // Cancel and blur ourselves.
       // Now we don't want to suggest anything as we are moving out.
       this._preventSuggestions = true;
@@ -1060,16 +1098,46 @@ InplaceEditor.prototype = {
       this._apply();
       this._clear();
       event.stopPropagation();
-    } else if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_SPACE) {
+    } else if (isKeyIn(key, "SPACE")) {
       // No need for leading spaces here.  This is particularly
       // noticable when adding a property: it's very natural to type
       // <name>: (which advances to the next property) then spacebar.
-      prevent = !this.input.value;
+      prevent = !input.value;
     }
 
     if (prevent) {
       event.preventDefault();
     }
+  },
+
+  /**
+   * Get the increment/decrement step to use for the provided key event.
+   */
+  _getIncrement: function(event) {
+    const largeIncrement = 100;
+    const mediumIncrement = 10;
+    const smallIncrement = 0.1;
+
+    let increment = 0;
+    let key = event.keyCode;
+
+    if (isKeyIn(key, "UP", "PAGE_UP")) {
+      increment = 1;
+    } else if (isKeyIn(key, "DOWN", "PAGE_DOWN")) {
+      increment = -1;
+    }
+
+    if (event.shiftKey && !event.altKey) {
+      if (isKeyIn(key, "PAGE_UP", "PAGE_DOWN")) {
+        increment *= largeIncrement;
+      } else {
+        increment *= mediumIncrement;
+      }
+    } else if (event.altKey && !event.shiftKey) {
+      increment *= smallIncrement;
+    }
+
+    return increment;
   },
 
   /**
@@ -1116,15 +1184,16 @@ InplaceEditor.prototype = {
   /**
    * Handles displaying suggestions based on the current input.
    *
-   * @param {Boolean} noAutoInsert
-   *        true if you don't want to automatically insert the first suggestion
+   * @param {Boolean} autoInsert
+   *        Pass true to automatically insert the most relevant suggestion.
    */
-  _maybeSuggestCompletion: function(noAutoInsert) {
+  _maybeSuggestCompletion: function(autoInsert) {
     // Input can be null in cases when you intantaneously switch out of it.
     if (!this.input) {
       return;
     }
     let preTimeoutQuery = this.input.value;
+
     // Since we are calling this method from a keypress event handler, the
     // |input.value| does not include currently typed character. Thus we perform
     // this method async.
@@ -1180,10 +1249,20 @@ InplaceEditor.prototype = {
         }
       } else if (this.contentType == CONTENT_TYPES.CSS_MIXED &&
                  /^\s*style\s*=/.test(query)) {
+        // Check if the style attribute is closed before the selection.
+        let styleValue = query.replace(/^\s*style\s*=\s*/, "");
+        // Look for a quote matching the opening quote (single or double).
+        if (/^("[^"]*"|'[^']*')/.test(styleValue)) {
+          // This emit is mainly to make the test flow simpler.
+          this.emit("after-suggest", "nothing to autocomplete");
+          return;
+        }
+
         // Detecting if cursor is at property or value;
         let match = query.match(/([:;"'=]?)\s*([^"';:=]+)?$/);
         if (match && match.length >= 2) {
-          if (match[1] == ":") { // We are in CSS value completion
+          if (match[1] == ":") {
+            // We are in CSS value completion
             let propertyName =
               query.match(/[;"'=]\s*([^"';:= ]+)\s*:\s*[^"';:=]*$/)[1];
             list =
@@ -1199,7 +1278,8 @@ InplaceEditor.prototype = {
               // Don't suggest '!important' without any manually typed character
               list.splice(0, 1);
             }
-          } else if (match[1]) { // We are in CSS property name completion
+          } else if (match[1]) {
+            // We are in CSS property name completion
             list = CSSPropertyList;
             startCheckQuery = match[2];
           }
@@ -1210,24 +1290,13 @@ InplaceEditor.prototype = {
           }
         }
       }
-      if (!noAutoInsert) {
-        list.some(item => {
-          if (startCheckQuery != null && item.startsWith(startCheckQuery)) {
-            input.value = query + item.slice(startCheckQuery.length) +
-                          input.value.slice(query.length);
-            input.setSelectionRange(query.length, query.length + item.length -
-                                                  startCheckQuery.length);
-            this._updateSize();
-            return true;
-          }
-        });
-      }
 
       if (!this.popup) {
         // This emit is mainly to make the test flow simpler.
         this.emit("after-suggest", "no popup");
         return;
       }
+
       let finalList = [];
       let length = list.length;
       for (let i = 0, count = 0; i < length && count < MAX_POPUP_ENTRIES; i++) {
@@ -1247,15 +1316,33 @@ InplaceEditor.prototype = {
         }
       }
 
+      // Pick the best first suggestion from the provided list of suggestions.
+      let cssValues = finalList.map(item => item.label);
+      let mostRelevantIndex = findMostRelevantCssPropertyIndex(cssValues);
+
+      // Insert the most relevant item from the final list as the input value.
+      if (autoInsert && finalList[mostRelevantIndex]) {
+        let item = finalList[mostRelevantIndex].label;
+        input.value = query + item.slice(startCheckQuery.length) +
+                      input.value.slice(query.length);
+        input.setSelectionRange(query.length, query.length + item.length -
+                                              startCheckQuery.length);
+        this._updateSize();
+      }
+
+      // Display the list of suggestions if there are more than one.
       if (finalList.length > 1) {
-        // Calculate the offset for the popup to be opened.
-        let x = (this.input.selectionStart - startCheckQuery.length) *
-                this.inputCharWidth;
+        // Calculate the popup horizontal offset.
+        let indent = this.input.selectionStart - query.length;
+        let offset = indent * this.inputCharDimensions.width;
+        offset = this._isSingleLine() ? offset : 0;
+
+        // Select the most relevantItem if autoInsert is allowed
+        let selectedIndex = autoInsert ? mostRelevantIndex : -1;
+
+        // Open the suggestions popup.
         this.popup.setItems(finalList);
-        this.popup.openPopup(this.input, x);
-        if (noAutoInsert) {
-          this.popup.selectedIndex = -1;
-        }
+        this.popup.openPopup(this.input, offset, 0, selectedIndex);
       } else {
         this.popup.hidePopup();
       }
@@ -1263,7 +1350,17 @@ InplaceEditor.prototype = {
       this.emit("after-suggest");
       this._doValidation();
     }, 0);
-  }
+  },
+
+  /**
+   * Check if the current input is displaying more than one line of text.
+   *
+   * @return {Boolean} true if the input has a single line of text
+   */
+  _isSingleLine: function() {
+    let inputRect = this.input.getBoundingClientRect();
+    return inputRect.height < 2 * this.inputCharDimensions.height;
+  },
 };
 
 /**
@@ -1272,10 +1369,65 @@ InplaceEditor.prototype = {
 function copyTextStyles(from, to) {
   let win = from.ownerDocument.defaultView;
   let style = win.getComputedStyle(from);
-  to.style.fontFamily = style.getPropertyCSSValue("font-family").cssText;
-  to.style.fontSize = style.getPropertyCSSValue("font-size").cssText;
-  to.style.fontWeight = style.getPropertyCSSValue("font-weight").cssText;
-  to.style.fontStyle = style.getPropertyCSSValue("font-style").cssText;
+  let getCssText = name => style.getPropertyCSSValue(name).cssText;
+
+  to.style.fontFamily = getCssText("font-family");
+  to.style.fontSize = getCssText("font-size");
+  to.style.fontWeight = getCssText("font-weight");
+  to.style.fontStyle = getCssText("font-style");
+}
+
+/**
+ * Copy all styles which could have an impact on the element size.
+ */
+function copyAllStyles(from, to) {
+  let win = from.ownerDocument.defaultView;
+  let style = win.getComputedStyle(from);
+  let getCssText = name => style.getPropertyCSSValue(name).cssText;
+
+  copyTextStyles(from, to);
+  to.style.lineHeight = getCssText("line-height");
+
+  // If box-sizing is set to border-box, box model styles also need to be
+  // copied.
+  let boxSizing = getCssText("box-sizing");
+  if (boxSizing === "border-box") {
+    to.style.boxSizing = boxSizing;
+    copyBoxModelStyles(from, to);
+  }
+}
+
+/**
+ * Copy box model styles that can impact width and height measurements when box-
+ * sizing is set to "border-box" instead of "content-box".
+ *
+ * @param {DOMNode} from
+ *        the element from which styles are copied
+ * @param {DOMNode} to
+ *        the element on which copied styles are applied
+ */
+function copyBoxModelStyles(from, to) {
+  let win = from.ownerDocument.defaultView;
+  let style = win.getComputedStyle(from);
+  let getCssText = name => style.getPropertyCSSValue(name).cssText;
+
+  // Copy all paddings.
+  to.style.paddingTop = getCssText("padding-top");
+  to.style.paddingRight = getCssText("padding-right");
+  to.style.paddingBottom = getCssText("padding-bottom");
+  to.style.paddingLeft = getCssText("padding-left");
+
+  // Copy border styles.
+  to.style.borderTopStyle = getCssText("border-top-style");
+  to.style.borderRightStyle = getCssText("border-right-style");
+  to.style.borderBottomStyle = getCssText("border-bottom-style");
+  to.style.borderLeftStyle = getCssText("border-left-style");
+
+  // Copy border widths.
+  to.style.borderTopWidth = getCssText("border-top-width");
+  to.style.borderRightWidth = getCssText("border-right-width");
+  to.style.borderBottomWidth = getCssText("border-bottom-width");
+  to.style.borderLeftWidth = getCssText("border-left-width");
 }
 
 /**

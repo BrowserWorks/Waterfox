@@ -14,6 +14,7 @@ var {OutputParser} = require("devtools/client/shared/output-parser");
 const COLOR_CLASS = "color-class";
 const URL_CLASS = "url-class";
 const CUBIC_BEZIER_CLASS = "bezier-class";
+const ANGLE_CLASS = "angle-class";
 
 const TEST_DATA = [
   {
@@ -144,7 +145,9 @@ const TEST_DATA = [
   },
   {
     name: "background",
-    value: "linear-gradient(to right, rgba(183,222,237,1) 0%, rgba(33,180,226,1) 30%, rgba(31,170,217,.5) 44%, #F06 75%, red 100%)",
+    value: "linear-gradient(to right, rgba(183,222,237,1) 0%, " +
+           "rgba(33,180,226,1) 30%, rgba(31,170,217,.5) 44%, " +
+           "#F06 75%, red 100%)",
     test: fragment => {
       is(countAll(fragment), 10);
       let allSwatches = fragment.querySelectorAll("." + COLOR_CLASS);
@@ -158,13 +161,17 @@ const TEST_DATA = [
   },
   {
     name: "background",
-    value: "-moz-radial-gradient(center 45deg, circle closest-side, orange 0%, red 100%)",
+    value: "-moz-radial-gradient(center 45deg, circle closest-side, " +
+           "orange 0%, red 100%)",
     test: fragment => {
-      is(countAll(fragment), 4);
-      let allSwatches = fragment.querySelectorAll("." + COLOR_CLASS);
-      is(allSwatches.length, 2);
-      is(allSwatches[0].textContent, "orange");
-      is(allSwatches[1].textContent, "red");
+      is(countAll(fragment), 6);
+      let colorSwatches = fragment.querySelectorAll("." + COLOR_CLASS);
+      is(colorSwatches.length, 2);
+      is(colorSwatches[0].textContent, "orange");
+      is(colorSwatches[1].textContent, "red");
+      let angleSwatches = fragment.querySelectorAll("." + ANGLE_CLASS);
+      is(angleSwatches.length, 1);
+      is(angleSwatches[0].textContent, "45deg");
     }
   },
   {
@@ -203,10 +210,12 @@ const TEST_DATA = [
   },
   {
     name: "background-image",
-    value: "url(../../../look/at/this/folder/structure/../../red.blue.green.svg   )",
+    value: "url(../../../look/at/this/folder/structure/../" +
+           "../red.blue.green.svg   )",
     test: fragment => {
       is(countAll(fragment), 1);
-      is(getUrl(fragment), "../../../look/at/this/folder/structure/../../red.blue.green.svg");
+      is(getUrl(fragment), "../../../look/at/this/folder/structure/../" +
+                           "../red.blue.green.svg");
     }
   },
   {
@@ -286,7 +295,7 @@ const TEST_DATA = [
   }
 ];
 
-add_task(function*() {
+add_task(function* () {
   let parser = new OutputParser(document);
   for (let i = 0; i < TEST_DATA.length; i++) {
     let data = TEST_DATA[i];
@@ -296,6 +305,7 @@ add_task(function*() {
       colorClass: COLOR_CLASS,
       urlClass: URL_CLASS,
       bezierClass: CUBIC_BEZIER_CLASS,
+      angleClass: ANGLE_CLASS,
       defaultColorType: false
     }));
   }

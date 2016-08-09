@@ -30,6 +30,12 @@ class nsIPrincipal;
 class nsScriptNameSpaceManager;
 class nsIMemoryReporterCallback;
 
+namespace mozilla {
+namespace dom {
+class Exception;
+}
+}
+
 typedef void (* xpcGCCallback)(JSGCStatus status);
 
 namespace xpc {
@@ -473,13 +479,6 @@ AddonWindowOrNull(JSObject* aObj);
 nsGlobalWindow*
 CurrentWindowOrNull(JSContext* cx);
 
-// Error reporter used when there is no associated DOM window on to which to
-// report errors and warnings.
-//
-// Note - This is temporarily implemented in nsJSEnvironment.cpp.
-void
-SystemErrorReporter(JSContext* cx, const char* message, JSErrorReport* rep);
-
 void
 SimulateActivityCallback(bool aActive);
 
@@ -510,7 +509,14 @@ class ErrorReport {
 
     void Init(JSErrorReport* aReport, const char* aFallbackMessage,
               bool aIsChrome, uint64_t aWindowID);
+    void Init(JSContext* aCx, mozilla::dom::Exception* aException,
+              bool aIsChrome, uint64_t aWindowID);
+    // Log the error report to the console.  Which console will depend on the
+    // window id it was initialized with.
     void LogToConsole();
+    // Log to console, using the given stack object (which should be a stack of
+    // the sort that JS::CaptureCurrentStack produces).  aStack is allowed to be
+    // null.
     void LogToConsoleWithStack(JS::HandleObject aStack);
 
     // Produce an error event message string from the given JSErrorReport.  Note
@@ -522,6 +528,7 @@ class ErrorReport {
   public:
 
     nsCString mCategory;
+    nsString mErrorMsgName;
     nsString mErrorMsg;
     nsString mFileName;
     nsString mSourceLine;
@@ -538,6 +545,21 @@ class ErrorReport {
 void
 DispatchScriptErrorEvent(nsPIDOMWindowInner* win, JSRuntime* rt, xpc::ErrorReport* xpcReport,
                          JS::Handle<JS::Value> exception);
+
+// Get a stack of the sort that can be passed to
+// xpc::ErrorReport::LogToConsoleWithStack from the given exception value.  Can
+// return null if the exception value doesn't have an associated stack.  The
+// returned stack, if any, may also not be in the same compartment as
+// exceptionValue.
+//
+// The "win" argument passed in here should be the same as the window whose
+// WindowID() is used to initialize the xpc::ErrorReport.  This may be null, of
+// course.  If it's not null, this function may return a null stack object if
+// the window is far enough gone, because in those cases we don't want to have
+// the stack in the console message keeping the window alive.
+JSObject*
+FindExceptionStackForConsoleReport(nsPIDOMWindowInner* win,
+                                   JS::HandleValue exceptionValue);
 
 // Return a name for the compartment.
 // This function makes reasonable efforts to make this name both mostly human-readable

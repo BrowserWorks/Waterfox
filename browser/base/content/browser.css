@@ -7,6 +7,7 @@
 @namespace svg url("http://www.w3.org/2000/svg");
 
 :root {
+  --identity-popup-expander-width: 38px;
   --panelui-subview-transition-duration: 150ms;
 }
 
@@ -242,6 +243,10 @@ toolbar[customizing] > .overflow-button {
   -moz-appearance: -moz-window-button-box;
 }
 
+#personal-bookmarks {
+  -moz-window-dragging: inherit;
+}
+
 %ifdef XP_MACOSX
 #titlebar-fullscreen-button {
   -moz-appearance: -moz-mac-fullscreen-button;
@@ -295,8 +300,8 @@ toolbar[customizing] > .overflow-button {
 }
 
 #main-window[tabsintitlebar] #TabsToolbar,
-#main-window[tabsintitlebar] #toolbar-menubar:not([autohide=true]),
-#main-window[tabsintitlebar] #navigator-toolbox > toolbar:not(#toolbar-menubar):-moz-lwtheme {
+#main-window[tabsintitlebar] #toolbar-menubar,
+#main-window[tabsintitlebar] #navigator-toolbox > toolbar:-moz-lwtheme {
   -moz-window-dragging: drag;
 }
 %endif
@@ -337,6 +342,14 @@ toolbarpaletteitem[removable="false"] {
   cursor: default;
 }
 
+%ifndef XP_MACOSX
+toolbarpaletteitem[place="palette"],
+toolbarpaletteitem[place="panel"],
+toolbarpaletteitem[place="toolbar"] {
+  -moz-user-focus: normal;
+}
+%endif
+
 #bookmarks-toolbar-placeholder,
 toolbarpaletteitem > #personal-bookmarks > #PlacesToolbar,
 #personal-bookmarks[cui-areatype="menu-panel"] > #PlacesToolbar,
@@ -359,16 +372,6 @@ toolbarpaletteitem > #personal-bookmarks > #bookmarks-toolbar-placeholder,
 toolbar:not(#TabsToolbar) > #wrapper-personal-bookmarks,
 toolbar:not(#TabsToolbar) > #personal-bookmarks {
   -moz-box-flex: 1;
-}
-
-/* Ensure that empty parts of the bookmarks container can be dragged on OSX, and on other OSes
- * only when a lwtheme is in use. */
-%ifdef XP_MACOSX
-#main-window[tabsintitlebar]:not([customizing]) #personal-bookmarks {
-%else
-#main-window[tabsintitlebar]:not([customizing]) #personal-bookmarks:-moz-lwtheme {
-%endif
-  -moz-window-dragging: drag;
 }
 
 #zoom-controls[cui-areatype="toolbar"]:not([overflowedItem=true]) > #zoom-reset-button > .toolbarbutton-text {
@@ -447,24 +450,28 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
   -moz-binding: url(chrome://browser/content/urlbarBindings.xml#urlbar);
 }
 
-.ac-url-text:-moz-locale-dir(rtl),
-.ac-title:-moz-locale-dir(rtl) > description {
+/* Always show URLs LTR. */
+.ac-url-text:-moz-locale-dir(rtl) {
   direction: ltr !important;
 }
 
-/* For results that are actions, their description text is shown instead of
-   the URL - this needs to follow the locale's direction, unlike URLs. */
-panel:not([noactions]) > richlistbox > richlistitem.overridable-action:-moz-locale-dir(rtl) > .ac-url-box {
-  direction: rtl;
+/* For non-action items, hide the action text; for action items, hide the URL
+   text. */
+.ac-url[actiontype],
+.ac-action:not([actiontype]) {
+  display: none;
 }
 
-panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box > .ac-url > .ac-action-text,
-panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box > .ac-action-icon {
-  visibility: collapse;
+/* For action items in a noactions popup, show the URL text and hide the action
+   text and type icon. */
+#PopupAutoCompleteRichResult[noactions] > richlistbox > richlistitem.overridable-action > .ac-url {
+  display: -moz-box;
 }
-
-panel[noactions] > richlistbox > richlistitem.overridable-action > .ac-url-box > .ac-url > .ac-url-text {
-  visibility: visible;
+#PopupAutoCompleteRichResult[noactions] > richlistbox > richlistitem.overridable-action > .ac-action {
+  display: none;
+}
+#PopupAutoCompleteRichResult[noactions] > richlistbox > richlistitem.overridable-action > .ac-type-icon {
+  list-style-image: none;
 }
 
 #urlbar:not([actiontype="switchtab"]) > #urlbar-display-box {
@@ -610,14 +617,6 @@ toolbarbutton.bookmark-item {
   width: auto;
 }
 
-/* The star doesn't make sense as text */
-toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
-  display: -moz-box !important;
-}
-toolbar[mode="text"] #bookmarks-menu-button > .toolbarbutton-menubutton-button > .toolbarbutton-text {
-  display: none;
-}
-
 menupopup[emptyplacesresult="true"] > .hide-if-empty-places-result {
   display: none;
 }
@@ -691,6 +690,9 @@ html|*#fullscreen-warning[onscreen] {
 html|*#fullscreen-warning[ontop] {
   /* Use -10px to hide the border and border-radius on the top */
   transform: translate(-50%, -10px);
+}
+#main-window[OSXLionFullscreen] html|*#fullscreen-warning[ontop] {
+  transform: translate(-50%, 80px);
 }
 
 html|*#fullscreen-domain-text,
@@ -839,10 +841,6 @@ statuspanel[inactive][previoustype=overLink] {
   -moz-box-align: end;
 }
 
-.panel-inner-arrowcontentfooter[footertype="promobox"] {
-  -moz-binding: url("chrome://browser/content/urlbarBindings.xml#promobox");
-}
-
 /* gcli */
 
 html|*#gcli-tooltip-frame,
@@ -986,16 +984,16 @@ chatbar[customSize] > .chatbar-innerbox {
 /* Bug 924050: If we've loaded the indicator, for now we hide it in the menu panel,
    and just show the icon. This is a hack to side-step very weird layout bugs that
    seem to be caused by the indicator stack interacting with the menu panel. */
-#downloads-button[indicator]:not([cui-areatype="menu-panel"]) > image.toolbarbutton-icon,
+#downloads-button[indicator]:not([cui-areatype="menu-panel"]) > .toolbarbutton-badge-stack > image.toolbarbutton-icon,
 #downloads-button[indicator][cui-areatype="menu-panel"] > #downloads-indicator-anchor {
   display: none;
 }
 
-toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > image.toolbarbutton-icon {
+toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > .toolbarbutton-badge-stack > image.toolbarbutton-icon {
   display: -moz-box;
 }
 
-toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > stack.toolbarbutton-icon {
+toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-indicator-anchor {
   display: none;
 }
 
@@ -1004,24 +1002,6 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > stack.toolb
                                                    #downloads-indicator-progress-area
 {
   visibility: hidden;
-}
-
-/* Hacks for toolbar full and text modes, until bug 573329 removes them */
-
-toolbar[mode="text"] > #downloads-button {
-  display: -moz-box;
-  -moz-box-orient: vertical;
-  -moz-box-pack: center;
-}
-
-toolbar[mode="text"] > #downloads-button > .toolbarbutton-text {
-  -moz-box-ordinal-group: 1;
-}
-
-toolbar[mode="text"] > #downloads-button > .toolbarbutton-icon {
-  display: -moz-box;
-  -moz-box-ordinal-group: 2;
-  visibility: collapse;
 }
 
 /* hide chat chrome when chat is fullscreen */

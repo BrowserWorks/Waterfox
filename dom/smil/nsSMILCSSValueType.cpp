@@ -322,7 +322,7 @@ nsSMILCSSValueType::Interpolate(const nsSMILValue& aStartVal,
 static nsPresContext*
 GetPresContextForElement(Element* aElem)
 {
-  nsIDocument* doc = aElem->GetCurrentDoc();
+  nsIDocument* doc = aElem->GetUncomposedDoc();
   if (!doc) {
     // This can happen if we process certain types of restyles mid-sample
     // and remove anonymous animated content from the document as a result.
@@ -359,13 +359,15 @@ ValueFromStringHelper(nsCSSProperty aPropID,
       subStringBegin = (uint32_t)absValuePos; // Start parsing after '-' sign
     }
   }
+  RefPtr<nsStyleContext> styleContext =
+    nsComputedDOMStyle::GetStyleContextForElement(aTargetElement, nullptr,
+                                                  aPresContext->PresShell());
+  if (!styleContext) {
+    return false;
+  }
   nsDependentSubstring subString(aString, subStringBegin);
-  if (!StyleAnimationValue::ComputeValue(aPropID,
-                                         aTargetElement,
-                                         CSSPseudoElementType::NotPseudo,
-                                         subString,
-                                         true,
-                                         aStyleAnimValue,
+  if (!StyleAnimationValue::ComputeValue(aPropID, aTargetElement, styleContext,
+                                         subString, true, aStyleAnimValue,
                                          aIsContextSensitive)) {
     return false;
   }
@@ -398,7 +400,7 @@ nsSMILCSSValueType::ValueFromString(nsCSSProperty aPropID,
     return;
   }
 
-  nsIDocument* doc = aTargetElement->GetCurrentDoc();
+  nsIDocument* doc = aTargetElement->GetUncomposedDoc();
   if (doc && !nsStyleUtil::CSPAllowsInlineStyle(nullptr,
                                                 doc->NodePrincipal(),
                                                 doc->GetDocumentURI(),
@@ -425,4 +427,20 @@ nsSMILCSSValueType::ValueToString(const nsSMILValue& aValue,
   return !wrapper ||
     StyleAnimationValue::UncomputeValue(wrapper->mPropID,
                                         wrapper->mCSSValue, aString);
+}
+
+// static
+nsCSSProperty
+nsSMILCSSValueType::PropertyFromValue(const nsSMILValue& aValue)
+{
+  if (aValue.mType != &nsSMILCSSValueType::sSingleton) {
+    return eCSSProperty_UNKNOWN;
+  }
+
+  const ValueWrapper* wrapper = ExtractValueWrapper(aValue);
+  if (!wrapper) {
+    return eCSSProperty_UNKNOWN;
+  }
+
+  return wrapper->mPropID;
 }

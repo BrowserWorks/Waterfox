@@ -8,11 +8,11 @@
 #include <math.h>                       // for fabsf, pow, powf
 #include <algorithm>                    // for max
 #include "AsyncPanZoomController.h"     // for AsyncPanZoomController
-#include "mozilla/dom/KeyframeEffect.h" // for ComputedTimingFunction
 #include "mozilla/layers/APZCTreeManager.h" // for APZCTreeManager
 #include "mozilla/layers/APZThreadUtils.h" // for AssertOnControllerThread
 #include "FrameMetrics.h"               // for FrameMetrics
 #include "mozilla/Attributes.h"         // for final
+#include "mozilla/ComputedTimingFunction.h" // for ComputedTimingFunction
 #include "mozilla/Preferences.h"        // for Preferences
 #include "mozilla/gfx/Rect.h"           // for RoundedIn
 #include "mozilla/mozalloc.h"           // for operator new
@@ -89,6 +89,21 @@ void Axis::UpdateWithTouchAtDevicePoint(ParentLayerCoord aPos, ParentLayerCoord 
   }
 
   float newVelocity = mAxisLocked ? 0.0f : (float)(mVelocitySamplePos - aPos + aAdditionalDelta) / (float)(aTimestampMs - mVelocitySampleTimeMs);
+
+  newVelocity = ApplyFlingCurveToVelocity(newVelocity);
+
+  AXIS_LOG("%p|%s updating velocity to %f with touch\n",
+    mAsyncPanZoomController, Name(), newVelocity);
+  mVelocity = newVelocity;
+  mPos = aPos;
+  mVelocitySampleTimeMs = aTimestampMs;
+  mVelocitySamplePos = aPos;
+
+  AddVelocityToQueue(aTimestampMs, mVelocity);
+}
+
+float Axis::ApplyFlingCurveToVelocity(float aVelocity) const {
+  float newVelocity = aVelocity;
   if (gfxPrefs::APZMaxVelocity() > 0.0f) {
     bool velocityIsNegative = (newVelocity < 0);
     newVelocity = fabs(newVelocity);
@@ -102,7 +117,9 @@ void Axis::UpdateWithTouchAtDevicePoint(ParentLayerCoord aPos, ParentLayerCoord 
         // here, 0 < curveThreshold < newVelocity <= maxVelocity, so we apply the curve
         float scale = maxVelocity - curveThreshold;
         float funcInput = (newVelocity - curveThreshold) / scale;
-        float funcOutput = gVelocityCurveFunction->GetValue(funcInput);
+        float funcOutput =
+          gVelocityCurveFunction->GetValue(funcInput,
+            ComputedTimingFunction::BeforeFlag::Unset);
         float curvedVelocity = (funcOutput * scale) + curveThreshold;
         AXIS_LOG("%p|%s curving up velocity from %f to %f\n",
           mAsyncPanZoomController, Name(), newVelocity, curvedVelocity);
@@ -115,18 +132,24 @@ void Axis::UpdateWithTouchAtDevicePoint(ParentLayerCoord aPos, ParentLayerCoord 
     }
   }
 
-  AXIS_LOG("%p|%s updating velocity to %f with touch\n",
-    mAsyncPanZoomController, Name(), newVelocity);
-  mVelocity = newVelocity;
-  mPos = aPos;
-  mVelocitySampleTimeMs = aTimestampMs;
-  mVelocitySamplePos = aPos;
+  return newVelocity;
+}
 
-  // Limit queue size pased on pref
-  mVelocityQueue.AppendElement(std::make_pair(aTimestampMs, mVelocity));
+void Axis::AddVelocityToQueue(uint32_t aTimestampMs, float aVelocity) {
+  mVelocityQueue.AppendElement(std::make_pair(aTimestampMs, aVelocity));
   if (mVelocityQueue.Length() > gfxPrefs::APZMaxVelocityQueueSize()) {
     mVelocityQueue.RemoveElementAt(0);
   }
+}
+
+void Axis::HandleTouchVelocity(uint32_t aTimestampMs, float aSpeed) {
+  // mVelocityQueue is controller-thread only
+  APZThreadUtils::AssertOnControllerThread();
+
+  mVelocity = ApplyFlingCurveToVelocity(aSpeed);
+  mVelocitySampleTimeMs = aTimestampMs;
+
+  AddVelocityToQueue(aTimestampMs, mVelocity);
 }
 
 void Axis::StartTouch(ParentLayerCoord aPos, uint32_t aTimestampMs) {
@@ -436,7 +459,7 @@ bool Axis::CanScroll(ParentLayerCoord aDelta) const
     return false;
   }
 
-  return DisplacementWillOverscrollAmount(aDelta) != aDelta;
+  return fabs(DisplacementWillOverscrollAmount(aDelta) - aDelta) > COORDINATE_EPSILON;
 }
 
 CSSCoord Axis::ClampOriginToScrollableRect(CSSCoord aOrigin) const
@@ -450,7 +473,7 @@ CSSCoord Axis::ClampOriginToScrollableRect(CSSCoord aOrigin) const
   } else if (origin + GetCompositionLength() > GetPageEnd()) {
     result = GetPageEnd() - GetCompositionLength();
   } else {
-    result = origin;
+    return aOrigin;
   }
 
   return result / zoom;
@@ -545,6 +568,10 @@ ParentLayerCoord Axis::GetCompositionEnd() const {
 
 ParentLayerCoord Axis::GetPageEnd() const {
   return GetPageStart() + GetPageLength();
+}
+
+ParentLayerCoord Axis::GetScrollRangeEnd() const {
+  return GetPageEnd() - GetCompositionLength();
 }
 
 ParentLayerCoord Axis::GetOrigin() const {

@@ -51,8 +51,6 @@ browser.jar:
   skin/classic/browser/pageInfo-XP.png
   skin/classic/browser/pointerLock-16.png
   skin/classic/browser/pointerLock-64.png
-  skin/classic/browser/Privacy-16.png
-  skin/classic/browser/Privacy-16-XP.png
   skin/classic/browser/privatebrowsing-mask-tabstrip.png
   skin/classic/browser/privatebrowsing-mask-tabstrip-XPVista7.png
   skin/classic/browser/privatebrowsing-mask-titlebar.png
@@ -171,8 +169,6 @@ browser.jar:
   skin/classic/browser/tabbrowser/newtab-inverted-XPVista7.svg (tabbrowser/newtab-inverted-XPVista7.svg)
   skin/classic/browser/tabbrowser/connecting.png               (tabbrowser/connecting.png)
   skin/classic/browser/tabbrowser/connecting@2x.png            (tabbrowser/connecting@2x.png)
-  skin/classic/browser/tabbrowser/loading.png                  (tabbrowser/loading.png)
-  skin/classic/browser/tabbrowser/loading@2x.png               (tabbrowser/loading@2x.png)
   skin/classic/browser/tabbrowser/tab-active-middle.png        (tabbrowser/tab-active-middle.png)
   skin/classic/browser/tabbrowser/tab-active-middle@2x.png     (tabbrowser/tab-active-middle@2x.png)
   skin/classic/browser/tabbrowser/tab-arrow-left.svg           (tabbrowser/tab-arrow-left.svg)
@@ -201,10 +197,6 @@ browser.jar:
   skin/classic/browser/tabbrowser/tab-stroke-start.png         (tabbrowser/tab-stroke-start.png)
   skin/classic/browser/tabbrowser/tab-stroke-start@2x.png      (tabbrowser/tab-stroke-start@2x.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png         (tabbrowser/tabDragIndicator.png)
-  skin/classic/browser/usercontext/personal.svg               (../shared/usercontext/personal.svg)
-  skin/classic/browser/usercontext/work.svg                   (../shared/usercontext/work.svg)
-  skin/classic/browser/usercontext/banking.svg                (../shared/usercontext/banking.svg)
-  skin/classic/browser/usercontext/shopping.svg               (../shared/usercontext/shopping.svg)
   skin/classic/browser/sync-16.png
   skin/classic/browser/sync-32.png
   skin/classic/browser/sync-128.png
@@ -250,7 +242,6 @@ browser.jar:
 % override chrome://browser/skin/menu-back.png                        chrome://browser/skin/menu-back-XP.png                            os=WINNT osversion<6
 % override chrome://browser/skin/menu-forward.png                     chrome://browser/skin/menu-forward-XP.png                         os=WINNT osversion<6
 % override chrome://browser/skin/pageInfo.png                         chrome://browser/skin/pageInfo-XP.png                             os=WINNT osversion<6
-% override chrome://browser/skin/Privacy-16.png                       chrome://browser/skin/Privacy-16-XP.png                           os=WINNT osversion<6
 % override chrome://browser/skin/downloads/buttons.png                chrome://browser/skin/downloads/buttons-XP.png                    os=WINNT osversion<6
 % override chrome://browser/skin/feeds/feedIcon.png                   chrome://browser/skin/feeds/feedIcon-XP.png                       os=WINNT osversion<6
 % override chrome://browser/skin/feeds/feedIcon16.png                 chrome://browser/skin/feeds/feedIcon16-XP.png                     os=WINNT osversion<6

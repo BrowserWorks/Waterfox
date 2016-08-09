@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2003-2016, International Business Machines
+*   Copyright (C) 2003-2012, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -153,7 +153,7 @@ main(int argc, char* argv[]) {
     options[BUNDLE_NAME].value = DATA_NAME;
     options[NORMALIZE].value = "";
 
-    argc=u_parseArgs(argc, argv, UPRV_LENGTHOF(options), options);
+    argc=u_parseArgs(argc, argv, sizeof(options)/sizeof(options[0]), options);
 
     /* error handling, printing usage message */
     if(argc<0) {

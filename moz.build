@@ -51,20 +51,21 @@ if not CONFIG['JS_STANDALONE']:
     ]
 
 DIRS += [
+    'config/external/fdlibm',
+    'config/external/nspr',
     'config/external/zlib',
     'memory',
     'mfbt',
     'mozglue',
 ]
 
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android' and int(CONFIG['MOZ_ANDROID_MIN_SDK_VERSION']) < 11:
-    DIRS += ['other-licenses/android']
-
 if not CONFIG['JS_STANDALONE']:
     DIRS += ['xpcom/xpidl']
 
+if CONFIG['USE_ICU']:
+    DIRS += ['config/external/icu']
+
 if CONFIG['COMPILE_ENVIRONMENT']:
-    DIRS += ['config/external/nspr']
 
     if not CONFIG['JS_STANDALONE']:
         DIRS += [
@@ -74,9 +75,10 @@ if CONFIG['COMPILE_ENVIRONMENT']:
 
     if CONFIG['BUILD_CTYPES']:
         DIRS += ['config/external/ffi']
-    if CONFIG['USE_ICU']:
-        DIRS += ['config/external/icu']
+
     DIRS += ['js/src']
+else:
+    TEST_DIRS += ['js/src/tests']
 
 if not CONFIG['JS_STANDALONE'] and CONFIG['MOZ_BUILD_APP']:
     # Bring in the configuration for the configured application.

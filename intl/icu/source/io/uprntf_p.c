@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1998-2016, International Business Machines
+*   Copyright (C) 1998-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -143,7 +143,7 @@ u_printf_set_sign(UNumberFormat        *format,
             symbolLen = unum_getSymbol(format,
                 UNUM_PLUS_SIGN_SYMBOL,
                 plusSymbol,
-                UPRV_LENGTHOF(plusSymbol),
+                sizeof(plusSymbol)/sizeof(*plusSymbol),
                 status);
             unum_setTextAttribute(format,
                 UNUM_POSITIVE_PREFIX,
@@ -215,7 +215,7 @@ u_printf_string_handler(const u_printf_stream_handler  *handler,
         }
         else {
             s = ufmt_defaultCPToUnicode(arg, argSize, buffer,
-                    UPRV_LENGTHOF(buffer));
+                    sizeof(buffer)/sizeof(UChar));
         }
     }
     else {
@@ -251,7 +251,7 @@ u_printf_char_handler(const u_printf_stream_handler  *handler,
     unsigned char arg = (unsigned char)(args[0].int64Value);
 
     /* convert from default codepage to Unicode */
-    ufmt_defaultCPToUnicode((const char *)&arg, 2, s, UPRV_LENGTHOF(s));
+    ufmt_defaultCPToUnicode((const char *)&arg, 2, s, sizeof(s)/sizeof(UChar));
 
     /* Remember that this may be an MBCS character */
     if (arg != 0) {
@@ -1508,7 +1508,6 @@ u_printf_parse(const u_printf_stream_handler *streamHandler,
                     /* set the spec's width to the # of chars written */
                     info->fWidth = *written;
                     /* fall through to set the pointer */
-                    U_FALLTHROUGH;
                 case ufmt_string:
                 case ufmt_ustring:
                 case ufmt_pointer:
@@ -1536,7 +1535,6 @@ u_printf_parse(const u_printf_stream_handler *streamHandler,
                     /* set the spec's width to the # of chars written */
                     info->fWidth = *written;
                     /* fall through to set the pointer */
-                    U_FALLTHROUGH;
                 case ufmt_string:
                 case ufmt_ustring:
                 case ufmt_pointer:

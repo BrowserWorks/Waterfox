@@ -184,12 +184,12 @@ StyleSheetEditor.prototype = {
 
     if (this._isNew) {
       let index = this.styleSheet.styleSheetIndex + 1;
-      return _("newStyleSheet", index);
+      return getString("newStyleSheet", index);
     }
 
     if (!this.styleSheet.href) {
       let index = this.styleSheet.styleSheetIndex + 1;
-      return _("inlineStyleSheet", index);
+      return getString("inlineStyleSheet", index);
     }
 
     if (!this._friendlyName) {
@@ -222,6 +222,9 @@ StyleSheetEditor.prototype = {
     }
 
     let relatedSheet = this.styleSheet.relatedStyleSheet;
+    if (!relatedSheet || !relatedSheet.href) {
+      return;
+    }
 
     let path;
     let href = removeQuery(relatedSheet.href);
@@ -579,7 +582,7 @@ StyleSheetEditor.prototype = {
    * @param {Number} x
    * @param {Number} y
    */
-  _highlightSelectorAt: Task.async(function*(x, y) {
+  _highlightSelectorAt: Task.async(function* (x, y) {
     let pos = this.sourceEditor.getPositionFromCoords({left: x, top: y});
     let info = this.sourceEditor.getInfoAt(pos);
     if (!info || info.state !== "selector") {
@@ -747,12 +750,13 @@ StyleSheetEditor.prototype = {
     */
   _getKeyBindings: function() {
     let bindings = {};
+    let keybind = Editor.accel(getString("saveStyleSheet.commandkey"));
 
-    bindings[Editor.accel(_("saveStyleSheet.commandkey"))] = () => {
+    bindings[keybind] = () => {
       this.saveToFile(this.savedFile);
     };
 
-    bindings["Shift-" + Editor.accel(_("saveStyleSheet.commandkey"))] = () => {
+    bindings["Shift-" + keybind] = () => {
       this.saveToFile();
     };
 

@@ -1,6 +1,6 @@
 /*  
 **********************************************************************
-*   Copyright (C) 2002-2016, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  ucnv_u8.c
@@ -680,8 +680,7 @@ static UChar32 ucnv_getNextUChar_UTF8(UConverterToUnicodeArgs *args,
             break;
         }
         ++source;
-        U_FALLTHROUGH;
-    case 5:
+    case 5: /*fall through*/
         ch += (myByte = *source);
         ch <<= 6;
         if (!U8_IS_TRAIL(myByte))
@@ -690,8 +689,7 @@ static UChar32 ucnv_getNextUChar_UTF8(UConverterToUnicodeArgs *args,
             break;
         }
         ++source;
-        U_FALLTHROUGH;
-    case 4:
+    case 4: /*fall through*/
         ch += (myByte = *source);
         ch <<= 6;
         if (!U8_IS_TRAIL(myByte))
@@ -700,8 +698,7 @@ static UChar32 ucnv_getNextUChar_UTF8(UConverterToUnicodeArgs *args,
             break;
         }
         ++source;
-        U_FALLTHROUGH;
-    case 3:
+    case 3: /*fall through*/
         ch += (myByte = *source);
         ch <<= 6;
         if (!U8_IS_TRAIL(myByte))
@@ -710,8 +707,7 @@ static UChar32 ucnv_getNextUChar_UTF8(UConverterToUnicodeArgs *args,
             break;
         }
         ++source;
-        U_FALLTHROUGH;
-    case 2:
+    case 2: /*fall through*/
         ch += (myByte = *source);
         if (!U8_IS_TRAIL(myByte))
         {

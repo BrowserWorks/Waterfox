@@ -26,9 +26,6 @@
 #include "nsServiceManagerUtils.h"
 #include <algorithm>
 
-// DateTime Includes
-#include "nsDateTimeFormatCID.h"
-
 #define OFFSET_NOT_SET -1
 
 // Print Options
@@ -314,7 +311,7 @@ nsSimplePageSequenceFrame::Reflow(nsPresContext*          aPresContext,
 
   // Create current Date/Time String
   if (!mDateFormatter) {
-    mDateFormatter = do_CreateInstance(NS_DATETIMEFORMAT_CONTRACTID);
+    mDateFormatter = nsIDateTimeFormat::Create();
   }
   if (!mDateFormatter) {
     return;
@@ -778,6 +775,7 @@ nsSimplePageSequenceFrame::PrintNextPage()
       nsRegion drawingRegion(drawingRect);
       nsLayoutUtils::PaintFrame(&renderingContext, currentPage,
                                 drawingRegion, NS_RGBA(0,0,0,0),
+                                nsDisplayListBuilderMode::PAINTING,
                                 nsLayoutUtils::PAINT_SYNC_DECODE_IMAGES);
 
       if (mSelectionHeight >= 0 && selectionY < mSelectionHeight) {

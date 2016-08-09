@@ -18,7 +18,8 @@
 #include "jit/RegisterSets.h"
 #include "vm/HelperThreads.h"
 
-#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64)
+#if defined(JS_CODEGEN_ARM) || defined(JS_CODEGEN_ARM64) || \
+    defined(JS_CODEGEN_MIPS32) || defined(JS_CODEGEN_MIPS64)
 // Push return addresses callee-side.
 # define JS_USE_LINK_REGISTER
 #endif
@@ -556,7 +557,7 @@ class CodeLocationJump
         raw_ = nullptr;
         setUninitialized();
 #ifdef JS_SMALL_BRANCH
-        jumpTableEntry_ = (uint8_t*) 0xdeadab1e;
+        jumpTableEntry_ = (uint8_t*) uintptr_t(0xdeadab1e);
 #endif
     }
     CodeLocationJump(JitCode* code, CodeOffsetJump base) {

@@ -23,6 +23,35 @@ addMessageListener("Extension:DisableWebNavigation", () => {
   removeEventListener("DOMContentLoaded", loadListener);
 });
 
+var FormSubmitListener = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver,
+                                          Ci.nsIFormSubmitObserver,
+                                          Ci.nsISupportsWeakReference]),
+  init() {
+    this.formSubmitWindows = new WeakSet();
+    Services.obs.addObserver(FormSubmitListener, "earlyformsubmit", false);
+  },
+
+  uninit() {
+    Services.obs.removeObserver(FormSubmitListener, "earlyformsubmit", false);
+    this.formSubmitWindows = new WeakSet();
+  },
+
+  notify: function(form, window, actionURI) {
+    try {
+      this.formSubmitWindows.add(window);
+    } catch (e) {
+      Cu.reportError("Error in FormSubmitListener.notify");
+    }
+  },
+
+  hasAndForget: function(window) {
+    let has = this.formSubmitWindows.has(window);
+    this.formSubmitWindows.delete(window);
+    return has;
+  },
+};
+
 var WebProgressListener = {
   init: function() {
     // This WeakMap (DOMWindow -> nsIURI) keeps track of the pathname and hash
@@ -38,9 +67,13 @@ var WebProgressListener = {
       this.previousURIMap.set(win, currentURI);
     }
 
+    // This WeakSet of DOMWindows keeps track of the attempted refresh.
+    this.refreshAttemptedDOMWindows = new WeakSet();
+
     let webProgress = docShell.QueryInterface(Ci.nsIInterfaceRequestor)
                               .getInterface(Ci.nsIWebProgress);
     webProgress.addProgressListener(this, Ci.nsIWebProgress.NOTIFY_STATE_WINDOW |
+                                          Ci.nsIWebProgress.NOTIFY_REFRESH |
                                           Ci.nsIWebProgress.NOTIFY_LOCATION);
   },
 
@@ -53,30 +86,47 @@ var WebProgressListener = {
     webProgress.removeProgressListener(this);
   },
 
+  onRefreshAttempted: function onRefreshAttempted(webProgress, URI, delay, sameURI) {
+    this.refreshAttemptedDOMWindows.add(webProgress.DOMWindow);
+
+    // If this function doesn't return true, the attempted refresh will be blocked.
+    return true;
+  },
+
   onStateChange: function onStateChange(webProgress, request, stateFlags, status) {
-    let data = {
-      requestURL: request.QueryInterface(Ci.nsIChannel).URI.spec,
-      windowId: webProgress.DOMWindowID,
-      parentWindowId: WebNavigationFrames.getParentWindowId(webProgress.DOMWindow),
-      status,
-      stateFlags,
-    };
+    let {originalURI, URI: locationURI} = request.QueryInterface(Ci.nsIChannel);
 
-    sendAsyncMessage("Extension:StateChange", data);
+    // Prevents "about", "chrome", "resource" and "moz-extension" URI schemes to be
+    // reported with the resolved "file" or "jar" URIs. (see Bug 1246125 for rationale)
+    if (locationURI.schemeIs("file") || locationURI.schemeIs("jar")) {
+      let shouldUseOriginalURI = originalURI.schemeIs("about") ||
+                                 originalURI.schemeIs("chrome") ||
+                                 originalURI.schemeIs("resource") ||
+                                 originalURI.schemeIs("moz-extension");
 
-    if (webProgress.DOMWindow.top != webProgress.DOMWindow) {
-      let webNav = webProgress.QueryInterface(Ci.nsIWebNavigation);
-      if (!webNav.canGoBack) {
-        // For some reason we don't fire onLocationChange for the
-        // initial navigation of a sub-frame. So we need to simulate
-        // it here.
-        this.onLocationChange(webProgress, request, request.QueryInterface(Ci.nsIChannel).URI, 0);
-      }
+      locationURI = shouldUseOriginalURI ? originalURI : locationURI;
+    }
+
+    this.sendStateChange({webProgress, locationURI, stateFlags, status});
+
+    // Based on the docs of the webNavigation.onCommitted event, it should be raised when:
+    // "The document  might still be downloading, but at least part of
+    // the document has been received"
+    // and for some reason we don't fire onLocationChange for the
+    // initial navigation of a sub-frame.
+    // For the above two reasons, when the navigation event is related to
+    // a sub-frame we process the document change here and
+    // then send an "Extension:DocumentChange" message to the main process,
+    // where it will be turned into a webNavigation.onCommitted event.
+    // (see Bug 1264936 and Bug 125662 for rationale)
+    if ((webProgress.DOMWindow.top != webProgress.DOMWindow) &&
+        (stateFlags & Ci.nsIWebProgressListener.STATE_IS_DOCUMENT)) {
+      this.sendDocumentChange({webProgress, locationURI, request});
     }
   },
 
   onLocationChange: function onLocationChange(webProgress, request, locationURI, flags) {
-    let {DOMWindow, loadType} = webProgress;
+    let {DOMWindow} = webProgress;
 
     // Get the previous URI loaded in the DOMWindow.
     let previousURI = this.previousURIMap.get(DOMWindow);
@@ -85,53 +135,138 @@ var WebProgressListener = {
     this.previousURIMap.set(DOMWindow, locationURI);
 
     let isSameDocument = (flags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT);
-    let isHistoryStateUpdated = false;
-    let isReferenceFragmentUpdated = false;
 
+    // When a frame navigation doesn't change the current loaded document
+    // (which can be due to history.pushState/replaceState or to a changed hash in the url),
+    // it is reported only to the onLocationChange, for this reason
+    // we process the history change here and then we are going to send
+    // an "Extension:HistoryChange" to the main process, where it will be turned
+    // into a webNavigation.onHistoryStateUpdated/onReferenceFragmentUpdated event.
     if (isSameDocument) {
-      let pathChanged = !(previousURI && locationURI.equalsExceptRef(previousURI));
-      let hashChanged = !(previousURI && previousURI.ref == locationURI.ref);
-
-      // When the location changes but the document is the same:
-      // - path not changed and hash changed -> |onReferenceFragmentUpdated|
-      //   (even if it changed using |history.pushState|)
-      // - path not changed and hash not changed -> |onHistoryStateUpdated|
-      //   (only if it changes using |history.pushState|)
-      // - path changed -> |onHistoryStateUpdated|
-
-      if (!pathChanged && hashChanged) {
-        isReferenceFragmentUpdated = true;
-      } else if (loadType & Ci.nsIDocShell.LOAD_CMD_PUSHSTATE) {
-        isHistoryStateUpdated = true;
-      } else if (loadType & Ci.nsIDocShell.LOAD_CMD_HISTORY) {
-        isHistoryStateUpdated = true;
-      }
+      this.sendHistoryChange({webProgress, previousURI, locationURI, request});
+    } else if (webProgress.DOMWindow.top == webProgress.DOMWindow) {
+      // We have to catch the document changes from top level frames here,
+      // where we can detect the "server redirect" transition.
+      // (see Bug 1264936 and Bug 125662 for rationale)
+      this.sendDocumentChange({webProgress, locationURI, request});
     }
+  },
+
+  sendStateChange({webProgress, locationURI, stateFlags, status}) {
+    let data = {
+      requestURL: locationURI.spec,
+      windowId: webProgress.DOMWindowID,
+      parentWindowId: WebNavigationFrames.getParentWindowId(webProgress.DOMWindow),
+      status,
+      stateFlags,
+    };
+
+    sendAsyncMessage("Extension:StateChange", data);
+  },
+
+  sendDocumentChange({webProgress, locationURI, request}) {
+    let {loadType, DOMWindow} = webProgress;
+    let frameTransitionData = this.getFrameTransitionData({loadType, request, DOMWindow});
 
     let data = {
-      isHistoryStateUpdated, isReferenceFragmentUpdated,
+      frameTransitionData,
       location: locationURI ? locationURI.spec : "",
       windowId: webProgress.DOMWindowID,
       parentWindowId: WebNavigationFrames.getParentWindowId(webProgress.DOMWindow),
     };
 
-    sendAsyncMessage("Extension:LocationChange", data);
+    sendAsyncMessage("Extension:DocumentChange", data);
   },
 
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
+  sendHistoryChange({webProgress, previousURI, locationURI, request}) {
+    let {loadType, DOMWindow} = webProgress;
+
+    let isHistoryStateUpdated = false;
+    let isReferenceFragmentUpdated = false;
+
+    let pathChanged = !(previousURI && locationURI.equalsExceptRef(previousURI));
+    let hashChanged = !(previousURI && previousURI.ref == locationURI.ref);
+
+    // When the location changes but the document is the same:
+    // - path not changed and hash changed -> |onReferenceFragmentUpdated|
+    //   (even if it changed using |history.pushState|)
+    // - path not changed and hash not changed -> |onHistoryStateUpdated|
+    //   (only if it changes using |history.pushState|)
+    // - path changed -> |onHistoryStateUpdated|
+
+    if (!pathChanged && hashChanged) {
+      isReferenceFragmentUpdated = true;
+    } else if (loadType & Ci.nsIDocShell.LOAD_CMD_PUSHSTATE) {
+      isHistoryStateUpdated = true;
+    } else if (loadType & Ci.nsIDocShell.LOAD_CMD_HISTORY) {
+      isHistoryStateUpdated = true;
+    }
+
+    if (isHistoryStateUpdated || isReferenceFragmentUpdated) {
+      let frameTransitionData = this.getFrameTransitionData({loadType, request, DOMWindow});
+
+      let data = {
+        frameTransitionData,
+        isHistoryStateUpdated, isReferenceFragmentUpdated,
+        location: locationURI ? locationURI.spec : "",
+        windowId: webProgress.DOMWindowID,
+        parentWindowId: WebNavigationFrames.getParentWindowId(webProgress.DOMWindow),
+      };
+
+      sendAsyncMessage("Extension:HistoryChange", data);
+    }
+  },
+
+  getFrameTransitionData({loadType, request, DOMWindow}) {
+    let frameTransitionData = {};
+
+    if (loadType & Ci.nsIDocShell.LOAD_CMD_HISTORY) {
+      frameTransitionData.forward_back = true;
+    }
+
+    if (loadType & Ci.nsIDocShell.LOAD_CMD_RELOAD) {
+      frameTransitionData.reload = true;
+    }
+
+    if (request instanceof Ci.nsIChannel) {
+      if (request.loadInfo.redirectChain.length) {
+        frameTransitionData.server_redirect = true;
+      }
+    }
+
+    if (FormSubmitListener.hasAndForget(DOMWindow)) {
+      frameTransitionData.form_submit = true;
+    }
+
+    if (this.refreshAttemptedDOMWindows.has(DOMWindow)) {
+      this.refreshAttemptedDOMWindows.delete(DOMWindow);
+      frameTransitionData.client_redirect = true;
+    }
+
+    return frameTransitionData;
+  },
+
+  QueryInterface: XPCOMUtils.generateQI([
+    Ci.nsIWebProgressListener,
+    Ci.nsIWebProgressListener2,
+    Ci.nsISupportsWeakReference,
+  ]),
 };
 
 var disabled = false;
 WebProgressListener.init();
+FormSubmitListener.init();
 addEventListener("unload", () => {
   if (!disabled) {
     disabled = true;
     WebProgressListener.uninit();
+    FormSubmitListener.uninit();
   }
 });
 addMessageListener("Extension:DisableWebNavigation", () => {
   if (!disabled) {
     disabled = true;
     WebProgressListener.uninit();
+    FormSubmitListener.uninit();
   }
 });

@@ -17,7 +17,7 @@
 #include "nsXPCOMCIDInternal.h"
 
 #include "mozilla/layers/ImageBridgeChild.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/AsyncTransactionTracker.h"
 #include "mozilla/layers/SharedBufferManagerChild.h"
 
@@ -158,6 +158,10 @@ extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 #include "js/Initialization.h"
 
 #include "gfxPlatform.h"
+
+#if EXPOSE_INTL_API
+#include "unicode/putil.h"
+#endif
 
 using namespace mozilla;
 using base::AtExitManager;
@@ -523,7 +527,7 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
 
   MessageLoop* messageLoop = MessageLoop::current();
   if (!messageLoop) {
-    sMessageLoop = new MessageLoopForUI(MessageLoop::TYPE_MOZILLA_UI);
+    sMessageLoop = new MessageLoopForUI(MessageLoop::TYPE_MOZILLA_PARENT);
     sMessageLoop->set_thread_name("Gecko");
     // Set experimental values for main thread hangs:
     // 128ms for transient hangs and 8192ms for permanent hangs
@@ -688,9 +692,21 @@ NS_InitXPCOM2(nsIServiceManager** aResult,
   nestegg_set_halloc_func(NesteggReporter::CountingFreeingRealloc);
 #endif
 
+#if EXPOSE_INTL_API && defined(MOZ_ICU_DATA_ARCHIVE)
+  nsCOMPtr<nsIFile> greDir;
+  nsDirectoryService::gService->Get(NS_GRE_DIR,
+                                    NS_GET_IID(nsIFile),
+                                    getter_AddRefs(greDir));
+  MOZ_ASSERT(greDir);
+  nsAutoCString nativeGREPath;
+  greDir->GetNativePath(nativeGREPath);
+  u_setDataDirectory(nativeGREPath.get());
+#endif
+
   // Initialize the JS engine.
-  if (!JS_Init()) {
-    NS_RUNTIMEABORT("JS_Init failed");
+  const char* jsInitFailureReason = JS_InitWithFailureDiagnostic();
+  if (jsInitFailureReason) {
+    NS_RUNTIMEABORT(jsInitFailureReason);
   }
 
   rv = nsComponentManagerImpl::gComponentManager->Init();

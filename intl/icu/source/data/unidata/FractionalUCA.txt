@@ -1,4 +1,4 @@
-﻿# Fractional UCA Table, generated from the UCA DUCET
+# Fractional UCA Table, generated from the UCA DUCET
 # 2015-05-14 [MS]
 # VERSION: UCA=8.0.0, UCD=8.0.0
 # For a description of the format and usage, see

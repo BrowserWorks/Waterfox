@@ -36,8 +36,8 @@ html, body, #app, #memory-tool {
    * If --heap-tree-row-height changes, be sure to change HEAP_TREE_ROW_HEIGHT
    * in `devtools/client/memory/components/heap.js`.
    */
-  --heap-tree-row-height: 14px;
-  --heap-tree-header-height: 17px;
+  --heap-tree-row-height: 18px;
+  --heap-tree-header-height: 18px;
 }
 
 /**
@@ -91,6 +91,10 @@ html, body, #app, #memory-tool {
   margin-inline-end: 5px;
 }
 
+.devtools-toolbar > .toolbar-group > label.label-by > span {
+  margin-inline-end: 5px;
+}
+
 .devtools-toolbar > label {
   margin-inline-end: 5px;
 }
@@ -100,7 +104,7 @@ html, body, #app, #memory-tool {
 }
 
 #take-snapshot::before {
-  background-image: url(images/command-screenshot.png);
+  background-image: url(images/command-screenshot.svg);
 }
 
 #clear-snapshots::before {
@@ -111,23 +115,16 @@ html, body, #app, #memory-tool {
   background-image: url(chrome://devtools/skin/images/diff.svg);
 }
 
-@media (min-resolution: 1.1dppx) {
-  #take-snapshot::before {
-    background-image: url(images/command-screenshot@2x.png);
-  }
+#record-allocation-stacks-label,
+#pop-view-button-label {
+  border-inline-end: 1px solid var(--theme-splitter-color);
+  padding-inline-end: 5px;
 }
 
-/**
- * Due to toolbar styles of `.devtools-toolbarbutton:not([label])` which overrides
- * .devtools-toolbarbutton's min-width of 78px, reset the min-width.
- */
 #import-snapshot,
 #clear-snapshots {
   -moz-box-align: center;
   flex-grow: 1;
-  padding: 1px;
-  margin: 2px 1px;
-  min-width: unset;
 }
 
 .spacer {
@@ -200,9 +197,30 @@ html, body, #app, #memory-tool {
   font-size: 90%;
 }
 
+.snapshot-list-item .snapshot-title {
+  display: flex;
+  justify-content: space-between;
+}
+
 .snapshot-list-item .save {
   text-decoration: underline;
   cursor: pointer;
+}
+
+.snapshot-list-item .delete {
+  cursor: pointer;
+  position: relative;
+  min-height: 1em;
+  min-width: 1.3em;
+}
+
+.theme-light .snapshot-list-item.selected .delete {
+  filter: invert(100%);
+}
+
+.snapshot-list-item .delete::before {
+  background-image: url("chrome://devtools/skin/images/close.svg");
+  background-position: 0.2em 0;
 }
 
 .snapshot-list-item > .snapshot-title {
@@ -261,7 +279,7 @@ html, body, #app, #memory-tool {
    * is the sidebar. @see #memory-tool-container.
    */
   flex: 1;
-  background-color: var(--theme-toolbar-background);
+  background-color: var(--theme-body-background);
 
   /**
    * By default, flex items have min-width: auto;
@@ -294,6 +312,7 @@ html, body, #app, #memory-tool {
 
 #heap-view > .heap-view-panel > .snapshot-status,
 #heap-view > .heap-view-panel > .take-snapshot,
+#heap-view .empty,
 #shortest-paths-select-node-msg {
   margin: auto;
   margin-top: 65px;
@@ -409,6 +428,7 @@ html, body, #app, #memory-tool {
   color: var(--theme-selection-background);
 }
 
+.heap-tree-item-individuals,
 .heap-tree-item-bytes,
 .heap-tree-item-count,
 .heap-tree-item-total-bytes,
@@ -465,7 +485,6 @@ html, body, #app, #memory-tool {
 .heap-tree-percent,
 .heap-tree-item-name {
   white-space: nowrap;
-  overflow: hidden;
 }
 
 .heap-tree-number {
@@ -494,6 +513,37 @@ html, body, #app, #memory-tool {
 .heap-tree-item.focused .heap-tree-number,
 .heap-tree-item.focused .heap-tree-percent {
   color: inherit;
+}
+
+.heap-tree-item-individuals {
+  width: 38px;
+  min-width: 20px;
+  overflow: hidden;
+  margin: 0;
+}
+
+.heap-tree-item-individuals > button {
+  height: 10px;
+  width: 32px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+/* Override Firebug styles for toolbar buttons to fix entire row height. */
+.theme-firebug .heap-tree-item-individuals > button {
+  margin: 0 auto;
+  min-height: inherit;
+}
+
+/**
+ * Tree map
+ */
+
+.tree-map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
 /**
@@ -529,6 +579,10 @@ html, body, #app, #memory-tool {
   opacity: .5;
   margin-left: .5em;
   margin-right: .5em;
+}
+
+.heap-tree-item-address {
+  font-family: monospace;
 }
 
 .no-allocation-stacks {

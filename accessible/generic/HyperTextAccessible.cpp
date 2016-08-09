@@ -1314,7 +1314,8 @@ HyperTextAccessible::GetEditor() const
   }
 
   nsCOMPtr<nsIDocShell> docShell = nsCoreUtils::GetDocShellFor(mContent);
-  nsCOMPtr<nsIEditingSession> editingSession(do_GetInterface(docShell));
+  nsCOMPtr<nsIEditingSession> editingSession;
+  docShell->GetEditingSession(getter_AddRefs(editingSession));
   if (!editingSession)
     return nullptr; // No editing session interface
 
@@ -1888,11 +1889,10 @@ HyperTextAccessible::NativeName(nsString& aName)
 }
 
 void
-HyperTextAccessible::InvalidateChildren()
+HyperTextAccessible::Shutdown()
 {
   mOffsets.Clear();
-
-  AccessibleWrap::InvalidateChildren();
+  AccessibleWrap::Shutdown();
 }
 
 bool
@@ -1904,6 +1904,16 @@ HyperTextAccessible::RemoveChild(Accessible* aAccessible)
     mOffsets.RemoveElementsAt(childIndex, count);
 
   return Accessible::RemoveChild(aAccessible);
+}
+
+bool
+HyperTextAccessible::InsertChildAt(uint32_t aIndex, Accessible* aChild)
+{
+  int32_t count = mOffsets.Length() - aIndex;
+  if (count > 0 ) {
+    mOffsets.RemoveElementsAt(aIndex, count);
+  }
+  return Accessible::InsertChildAt(aIndex, aChild);
 }
 
 Relation

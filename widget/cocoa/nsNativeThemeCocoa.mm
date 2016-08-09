@@ -7,6 +7,7 @@
 
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Helpers.h"
+#include "nsChildView.h"
 #include "nsDeviceContext.h"
 #include "nsLayoutUtils.h"
 #include "nsObjCExceptions.h"
@@ -955,7 +956,7 @@ static float VerticalAlignFactor(nsIFrame *aFrame)
   if (!aFrame)
     return 0.5f; // default: center
 
-  const nsStyleCoord& va = aFrame->StyleTextReset()->mVerticalAlign;
+  const nsStyleCoord& va = aFrame->StyleDisplay()->mVerticalAlign;
   uint8_t intval = (va.GetUnit() == eStyleUnit_Enumerated)
                      ? va.GetIntValue()
                      : NS_STYLE_VERTICAL_ALIGN_MIDDLE;
@@ -3587,7 +3588,8 @@ nsNativeThemeCocoa::GetMinimumWidgetSize(nsPresContext* aPresContext,
 
 NS_IMETHODIMP
 nsNativeThemeCocoa::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
-                                     nsIAtom* aAttribute, bool* aShouldRepaint)
+                                       nsIAtom* aAttribute, bool* aShouldRepaint,
+                                       const nsAttrValue* aOldValue)
 {
   // Some widget types just never change state.
   switch (aWidgetType) {

@@ -67,8 +67,9 @@ def create_parser(mach_interface=False):
             help="List of tests to run, separated by ':' (ex. damp:cart)")
     add_arg('--suite',
             help="Suite to use (instead of --activeTests)")
-    add_arg('--e10s', action='store_true',
-            help="enable e10s")
+    add_arg('--disable-e10s', dest='e10s',
+            action='store_false', default=True,
+            help="disable e10s")
     add_arg('--noChrome', action='store_true',
             help="do not run tests as chrome")
     add_arg('--rss', action='store_true',
@@ -134,6 +135,10 @@ def create_parser(mach_interface=False):
             help='Specify the url for the repository we are testing. '
                  'This will use the value found in application.ini if'
                  ' it is not specified.')
+    add_arg('--framework',
+            help='Will post to the specified framework for Perfherder. '
+                 'Default "talos".  Used primarily for experiments on '
+                 'new platforms')
     add_arg('--print-tests', action=_ListTests,
             help="print available tests")
     add_arg('--print-suites', action=_ListSuite,

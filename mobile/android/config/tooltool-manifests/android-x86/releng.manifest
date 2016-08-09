@@ -1,5 +1,6 @@
 [
 {
+"version": "Android NDK r10e",
 "size": 357533004,
 "visibility": "internal",
 "digest": "9b24b6db45ca4f6418d18119e3d2dd48e2a352e977ebf4fd0b2a8c4103fd0735eacb0f7360ff3a2eda6777fdd1029325ca23b8a4c34542b3b1fa487ff633647c",
@@ -8,6 +9,13 @@
 "unpack": true
 },
 {
+"versions": [
+  "Android SDK 6.0 / API 23",
+  "Android tools r24.4",
+  "Android build tools 23.0.1",
+  "Android Support Repository (Support Library 23.0.1)",
+  "Google Support Repository (Google Play Services 8.1.0)"
+],
 "size": 535625068,
 "visibility": "internal", 
 "digest": "0627515046a23c1d109e2782865b1b3b546c1d552955e4156317f76cbb195eb630aa25feea3f4edd1c685f129da0c2a5169d4d6349c1c31d8a95158a4569a478",
@@ -30,10 +38,27 @@
 "unpack": true
 },
 {
-"size": 80458572,
-"digest": "e5101f9dee1e462f6cbd3897ea57eede41d23981825c7b20d91d23ab461875d54d3dfc24999aa58a31e8b01f49fb3140e05ffe5af2957ef1d1afb89fd0dfe1ad",
+"version": "gcc 4.8.5 + PR64905",
+"size": 80160264,
+"digest": "c1a9dc9da289b8528874d16300b9d13a997cec99195bb0bc46ff665216d8535d6d6cb5af6b4b1f2749af6815dab12e703fdb3849014e5c23a70eff351a0baf4e",
 "algorithm": "sha512",
 "filename": "gcc.tar.xz",
 "unpack": true
+},
+{
+"algorithm": "sha512",
+"visibility": "public",
+"filename": "jcentral.tar.xz",
+"unpack": true,
+"digest": "3fd467642a9067a1adfde7e3461b1366912b306607677b213d9f19201c23aab5f7f6361ebea7652bed1565215ed4524b51f5ced83ea68bb51ba2abca09b66148",
+"size": 41591712
+},
+{
+"algorithm": "sha512",
+"visibility": "public",
+"filename": "gradle.tar.xz",
+"unpack": true,
+"digest": "9011a0a322b55c6f55ca7aa83298886f3f57e2a91a33a079fcdae5af746f9cf1528f36942138cff5a00154757d9acba2f1a4332d0f92da18e454b3c0c1788d20",
+"size": 50805888
 }
 ]

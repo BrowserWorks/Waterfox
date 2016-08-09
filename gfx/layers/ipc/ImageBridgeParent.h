@@ -14,7 +14,7 @@
 #include "mozilla/Attributes.h"         // for override
 #include "mozilla/ipc/ProtocolUtils.h"
 #include "mozilla/ipc/SharedMemory.h"   // for SharedMemory, etc
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/PImageBridgeParent.h"
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsISupportsImpl.h"
@@ -29,6 +29,7 @@ class Thread;
 namespace mozilla {
 namespace ipc {
 class Shmem;
+class GeckoChildProcessHost;
 } // namespace ipc
 
 namespace layers {
@@ -39,7 +40,8 @@ namespace layers {
  * interesting stuff is in ImageContainerParent.
  */
 class ImageBridgeParent final : public PImageBridgeParent,
-                                public CompositableParentManager
+                                public CompositableParentManager,
+                                public ShmemAllocator
 {
 public:
   typedef InfallibleTArray<CompositableOperation> EditArray;
@@ -50,14 +52,15 @@ public:
   ImageBridgeParent(MessageLoop* aLoop, Transport* aTransport, ProcessId aChildProcessId);
   ~ImageBridgeParent();
 
+  virtual ShmemAllocator* AsShmemAllocator() override { return this; }
+
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
   static PImageBridgeParent*
-  Create(Transport* aTransport, ProcessId aChildProcessId);
+  Create(Transport* aTransport, ProcessId aChildProcessId, ipc::GeckoChildProcessHost* aProcessHost);
 
   // CompositableParentManager
-  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture,
-                                        CompositableHost* aCompositableHost) override;
+  virtual void SendFenceHandleIfPresent(PTextureParent* aTexture) override;
 
   virtual void SendAsyncMessage(const InfallibleTArray<AsyncParentMessageData>& aMessage) override;
 
@@ -71,8 +74,6 @@ public:
   virtual bool RecvUpdate(EditArray&& aEdits, OpDestroyArray&& aToDestroy,
                           EditReplyArray* aReply) override;
   virtual bool RecvUpdateNoSwap(EditArray&& aEdits, OpDestroyArray&& aToDestroy) override;
-
-  virtual bool IsAsync() const override { return true; }
 
   PCompositableParent* AllocPCompositableParent(const TextureInfo& aInfo,
                                                 PImageContainerParent* aImageContainer,
@@ -93,14 +94,11 @@ public:
   RecvChildAsyncMessages(InfallibleTArray<AsyncChildMessageData>&& aMessages) override;
 
   // Shutdown step 1
-  virtual bool RecvWillStop() override;
-  // Shutdown step 2
-  virtual bool RecvStop() override;
+  virtual bool RecvWillClose() override;
 
-  virtual MessageLoop* GetMessageLoop() const override;
+  MessageLoop* GetMessageLoop() const { return mMessageLoop; }
 
-
-  // ISurfaceAllocator
+  // ShmemAllocator
 
   virtual bool AllocShmem(size_t aSize,
                           ipc::SharedMemory::SharedMemoryType aType,
@@ -121,14 +119,12 @@ public:
 
   void AppendDeliverFenceMessage(uint64_t aDestHolderId,
                                  uint64_t aTransactionId,
-                                 PTextureParent* aTexture,
-                                 CompositableHost* aCompositableHost);
+                                 PTextureParent* aTexture);
 
   static void AppendDeliverFenceMessage(base::ProcessId aChildProcessId,
                                         uint64_t aDestHolderId,
                                         uint64_t aTransactionId,
-                                        PTextureParent* aTexture,
-                                        CompositableHost* aCompositableHost);
+                                        PTextureParent* aTexture);
 
   using CompositableParentManager::SendPendingAsyncMessages;
   static void SendPendingAsyncMessages(base::ProcessId aChildProcessId);
@@ -143,6 +139,10 @@ public:
                 base::ProcessHandle aPeerProcess,
                 mozilla::ipc::ProtocolCloneContext* aCtx) override;
 
+  virtual bool UsesImageBridge() const override { return true; }
+
+  virtual bool IPCOpen() const override { return !mClosed; }
+
 protected:
   void OnChannelConnected(int32_t pid) override;
 
@@ -155,7 +155,9 @@ private:
   RefPtr<ImageBridgeParent> mSelfRef;
 
   bool mSetChildThreadPriority;
-  bool mStopped;
+  bool mClosed;
+
+  ipc::GeckoChildProcessHost* mSubprocess;
 
   /**
    * Map of all living ImageBridgeParent instances

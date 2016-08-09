@@ -17,6 +17,7 @@ import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
 import org.mozilla.gecko.Tab;
+import org.mozilla.gecko.feeds.subscriptions.FeedSubscription;
 
 import android.content.ContentProviderOperation;
 import android.content.ContentResolver;
@@ -25,67 +26,6 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
-
-class StubReadingListAccessor implements ReadingListAccessor {
-    @Override
-    public Cursor getReadingList(ContentResolver cr) {
-        return null;
-    }
-
-    @Override
-    public int getCount(ContentResolver cr) {
-        return 0;
-    }
-
-    @Override
-    public Cursor getReadingListUnfetched(ContentResolver cr) {
-        return null;
-    }
-
-    @Override
-    public boolean isReadingListItem(ContentResolver cr, String uri) {
-        return false;
-    }
-
-    @Override
-    public long addReadingListItem(ContentResolver cr, ContentValues values) {
-        return 0L;
-    }
-
-    @Override
-    public long addBasicReadingListItem(ContentResolver cr, String url, String title) {
-        return 0L;
-    }
-
-    @Override
-    public void updateReadingListItem(ContentResolver cr, ContentValues values) {
-    }
-
-    @Override
-    public void removeReadingListItemWithURL(ContentResolver cr, String uri) {
-    }
-
-    @Override
-    public void registerContentObserver(Context context, ContentObserver observer) {
-    }
-
-    @Override
-    public void markAsRead(ContentResolver cr, long itemID) {
-    }
-
-    @Override
-    public void markAsUnread(ContentResolver cr, long itemID) {
-    }
-
-    @Override
-    public void updateContent(ContentResolver cr, long itemID, String resolvedTitle, String resolvedURL, String excerpt) {
-    }
-
-    @Override
-    public void deleteItem(ContentResolver cr, long itemID) {
-
-    }
-}
 
 class StubSearches implements Searches {
     public StubSearches() {
@@ -104,12 +44,12 @@ class StubURLMetadata implements URLMetadata {
     }
 
     public Map<String, Map<String, Object>> getForURLs(final ContentResolver cr,
-                                                       final List<String> urls,
+                                                       final Collection<String> urls,
                                                        final List<String> columns) {
         return new HashMap<String, Map<String, Object>>();
     }
 
-    public void save(final ContentResolver cr, final String url, final Map<String, Object> data) {
+    public void save(final ContentResolver cr, final Map<String, Object> data) {
     }
 }
 
@@ -153,6 +93,59 @@ class StubTabsAccessor implements TabsAccessor {
 class StubUrlAnnotations implements UrlAnnotations {
     @Override
     public void insertAnnotation(ContentResolver cr, String url, String key, String value) {}
+
+    @Override
+    public Cursor getScreenshots(ContentResolver cr) { return null; }
+
+    @Override
+    public void insertScreenshot(ContentResolver cr, String pageUrl, final String screenshotLocation) {}
+
+    @Override
+    public Cursor getFeedSubscriptions(ContentResolver cr) { return null; }
+
+    @Override
+    public Cursor getWebsitesWithFeedUrl(ContentResolver cr) { return null; }
+
+    @Override
+    public void deleteFeedUrl(ContentResolver cr, String websiteUrl) {}
+
+    @Override
+    public boolean hasWebsiteForFeedUrl(ContentResolver cr, String feedUrl) { return false; }
+
+    @Override
+    public void deleteFeedSubscription(ContentResolver cr, FeedSubscription subscription) {}
+
+    @Override
+    public void updateFeedSubscription(ContentResolver cr, FeedSubscription subscription) {}
+
+    @Override
+    public boolean hasFeedSubscription(ContentResolver cr, String feedUrl) { return false; }
+
+    @Override
+    public void insertFeedSubscription(ContentResolver cr, FeedSubscription subscription) {}
+
+    @Override
+    public boolean hasFeedUrlForWebsite(ContentResolver cr, String websiteUrl) { return false; }
+
+    @Override
+    public void insertFeedUrl(ContentResolver cr, String originUrl, String feedUrl) {}
+
+    @Override
+    public void insertReaderViewUrl(ContentResolver cr, String pageURL) {}
+
+    @Override
+    public void deleteReaderViewUrl(ContentResolver cr, String pageURL) {}
+
+    @Override
+    public boolean hasAcceptedOrDeclinedHomeScreenShortcut(ContentResolver cr, String url) { return false; }
+
+    @Override
+    public void insertHomeScreenShortcut(ContentResolver cr, String url, boolean hasCreatedShortCut) {}
+
+    @Override
+    public int getAnnotationCount(ContentResolver cr, BrowserContract.UrlAnnotations.Key key) {
+        return 0;
+    }
 }
 
 /*
@@ -163,7 +156,6 @@ public class StubBrowserDB implements BrowserDB {
     private final StubSearches searches = new StubSearches();
     private final StubTabsAccessor tabsAccessor = new StubTabsAccessor();
     private final StubURLMetadata urlMetadata = new StubURLMetadata();
-    private final StubReadingListAccessor readingListAccessor = new StubReadingListAccessor();
     private final StubUrlAnnotations urlAnnotations = new StubUrlAnnotations();
     private SuggestedSites suggestedSites = null;
 
@@ -180,11 +172,6 @@ public class StubBrowserDB implements BrowserDB {
     @Override
     public URLMetadata getURLMetadata() {
         return urlMetadata;
-    }
-
-    @Override
-    public ReadingListAccessor getReadingListAccessor() {
-        return readingListAccessor;
     }
 
     @Override
@@ -233,6 +220,11 @@ public class StubBrowserDB implements BrowserDB {
     }
 
     @Override
+    public Cursor getHistoryForURL(ContentResolver cr, String uri) {
+        return null;
+    }
+
+    @Override
     public Cursor getRecentHistoryBetweenTime(ContentResolver cr, int limit, long time, long end) {
         return null;
     }
@@ -255,20 +247,10 @@ public class StubBrowserDB implements BrowserDB {
         return null;
     }
 
-    public Cursor getReadingList(ContentResolver cr) {
-        return null;
-    }
-
-    public Cursor getReadingListUnfetched(ContentResolver cr) {
-        return null;
-    }
+    public int getBookmarkCountForFolder(ContentResolver cr, long folderId) { return 0; }
 
     @RobocopTarget
     public boolean isBookmark(ContentResolver cr, String uri) {
-        return false;
-    }
-
-    public boolean isReadingListItem(ContentResolver cr, String uri) {
         return false;
     }
 
@@ -286,15 +268,6 @@ public class StubBrowserDB implements BrowserDB {
 
     @RobocopTarget
     public void removeBookmarksWithURL(ContentResolver cr, String uri) {
-    }
-
-    public void addReadingListItem(ContentResolver cr, ContentValues values) {
-    }
-
-    public void updateReadingListItem(ContentResolver cr, ContentValues values) {
-    }
-
-    public void removeReadingListItemWithURL(ContentResolver cr, String uri) {
     }
 
     public void registerBookmarkObserver(ContentResolver cr, ContentObserver observer) {
@@ -366,6 +339,16 @@ public class StubBrowserDB implements BrowserDB {
     @RobocopTarget
     public Cursor getBookmarkForUrl(ContentResolver cr, String url) {
         return null;
+    }
+
+    @Override
+    public Cursor getBookmarksForPartialUrl(ContentResolver cr, String partialUrl) {
+        return null;
+    }
+
+    @Override
+    public boolean hasBookmarkWithGuid(ContentResolver cr, String guid) {
+        return false;
     }
 
     public void setSuggestedSites(SuggestedSites suggestedSites) {

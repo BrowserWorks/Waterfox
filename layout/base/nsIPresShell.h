@@ -49,6 +49,10 @@
 #include "nsMargin.h"
 #include "nsFrameState.h"
 
+#ifdef MOZ_B2G
+#include "nsIHardwareKeyHandler.h"
+#endif
+
 class nsDocShell;
 class nsIDocument;
 class nsIFrame;
@@ -138,10 +142,10 @@ typedef struct CapturingContentInfo {
   mozilla::StaticRefPtr<nsIContent> mContent;
 } CapturingContentInfo;
 
-// f17842ee-f1f0-4193-814f-70d706b67060
+// a75573d6-34c8-4485-8fb7-edcb6fc70e12
 #define NS_IPRESSHELL_IID \
-{ 0xf17842ee, 0xf1f0, 0x4193, \
-  { 0x81, 0x4f, 0x70, 0xd7, 0x06, 0xb6, 0x70, 0x60 } }
+{ 0xa75573d6, 0x34c8, 0x4485, \
+  { 0x8f, 0xb7, 0xed, 0xcb, 0x6f, 0xc7, 0x0e, 0x12 } }
 
 // debug VerifyReflow flags
 #define VERIFY_REFLOW_ON                    0x01
@@ -354,22 +358,25 @@ public:
   bool GetAuthorStyleDisabled() const;
 
   /*
-   * Called when stylesheets are added/removed/enabled/disabled to rebuild
-   * all style data for a given pres shell without necessarily reconstructing
-   * all of the frames.  This will not reconstruct style synchronously; if
-   * you need to do that, call FlushPendingNotifications to flush out style
-   * reresolves.
+   * Called when stylesheets are added/removed/enabled/disabled to
+   * recompute style and clear other cached data as needed.  This will
+   * not reconstruct style synchronously; if you need to do that, call
+   * FlushPendingNotifications to flush out style reresolves.
+   *
+   * This handles the the addition and removal of the various types of
+   * style rules that can be in CSS style sheets, such as @font-face
+   * rules and @counter-style rules.
+   *
+   * It requires that StyleSheetAdded, StyleSheetRemoved,
+   * StyleSheetApplicableStateChanged, StyleRuleAdded, StyleRuleRemoved,
+   * or StyleRuleChanged has been called on the style sheets that have
+   * changed.
+   *
    * // XXXbz why do we have this on the interface anyway?  The only consumer
    * is calling AddOverrideStyleSheet/RemoveOverrideStyleSheet, and I think
    * those should just handle reconstructing style data...
    */
-  virtual void ReconstructStyleDataExternal();
-  void ReconstructStyleDataInternal();
-#ifdef MOZILLA_INTERNAL_API
-  void ReconstructStyleData() { ReconstructStyleDataInternal(); }
-#else
-  void ReconstructStyleData() { ReconstructStyleDataExternal(); }
-#endif
+  void RestyleForCSSRuleChanges();
 
   /**
    * Update the style set somehow to take into account changed prefs which
@@ -490,15 +497,6 @@ public:
   * Returns nullptr if is XUL document.
   */
   virtual nsCanvasFrame* GetCanvasFrame() const = 0;
-
-  /**
-   * Gets the real primary frame associated with the content object.
-   *
-   * In the case of absolutely positioned elements and floated elements,
-   * the real primary frame is the frame that is out of the flow and not the
-   * placeholder frame.
-   */
-  virtual nsIFrame* GetRealPrimaryFrameFor(nsIContent* aContent) const = 0;
 
   /**
    * Gets the placeholder frame associated with the specified frame. This is
@@ -878,6 +876,12 @@ public:
   virtual void DispatchAfterKeyboardEvent(nsINode* aTarget,
                                           const mozilla::WidgetKeyboardEvent& aEvent,
                                           bool aEmbeddedCancelled) = 0;
+
+  /**
+   * Return whether or not the event is valid to be dispatched
+   */
+  virtual bool CanDispatchEvent(
+      const mozilla::WidgetGUIEvent* aEvent = nullptr) const = 0;
 
   /**
     * Gets the current target event frame from the PresShell
@@ -1564,23 +1568,38 @@ public:
   void InvalidatePresShellIfHidden();
   void CancelInvalidatePresShellIfHidden();
 
-  // Schedule an update of the list of visible images.
-  virtual void ScheduleImageVisibilityUpdate() = 0;
 
-  // Clears the current list of visible images on this presshell and replaces it
-  // with images that are in the display list aList.
-  virtual void RebuildImageVisibilityDisplayList(const nsDisplayList& aList) = 0;
-  virtual void RebuildImageVisibility(nsRect* aRect = nullptr,
-                                      bool aRemoveOnly = false) = 0;
+  //////////////////////////////////////////////////////////////////////////////
+  // Approximate frame visibility tracking public API.
+  //////////////////////////////////////////////////////////////////////////////
 
-  // Ensures the image is in the list of visible images.
-  virtual void EnsureImageInVisibleList(nsIImageLoadingContent* aImage) = 0;
+  /// Schedule an update of the list of approximately visible frames "soon".
+  /// This lets the refresh driver know that we want a visibility update in the
+  /// near future. The refresh driver applies its own heuristics and throttling
+  /// to decide when to actually perform the visibility update.
+  virtual void ScheduleApproximateFrameVisibilityUpdateSoon() = 0;
 
-  // Removes the image from the list of visible images if it is present there.
-  virtual void RemoveImageFromVisibleList(nsIImageLoadingContent* aImage) = 0;
+  /// Schedule an update of the list of approximately visible frames "now". The
+  /// update runs asynchronously, but it will be posted to the event loop
+  /// immediately. Prefer the "soon" variation of this method when possible, as
+  /// this variation ignores the refresh driver's heuristics.
+  virtual void ScheduleApproximateFrameVisibilityUpdateNow() = 0;
 
-  // Whether we should assume all images are visible.
-  virtual bool AssumeAllImagesVisible() = 0;
+  /// Clears the current list of approximately visible frames on this pres shell
+  /// and replaces it with frames that are in the display list @aList.
+  virtual void RebuildApproximateFrameVisibilityDisplayList(const nsDisplayList& aList) = 0;
+  virtual void RebuildApproximateFrameVisibility(nsRect* aRect = nullptr,
+                                                 bool aRemoveOnly = false) = 0;
+
+  /// Ensures @aFrame is in the list of approximately visible frames.
+  virtual void EnsureFrameInApproximatelyVisibleList(nsIFrame* aFrame) = 0;
+
+  /// Removes @aFrame from the list of approximately visible frames if present.
+  virtual void RemoveFrameFromApproximatelyVisibleList(nsIFrame* aFrame) = 0;
+
+  /// Whether we should assume all frames are visible.
+  virtual bool AssumeAllFramesVisible() = 0;
+
 
   /**
    * Returns whether the document's style set's rule processor for the
@@ -1713,6 +1732,11 @@ protected:
   // posted messages are processed before other messages when the modal
   // moving/sizing loop is running, see bug 491700 for details.
   nsCOMPtr<nsITimer>        mReflowContinueTimer;
+
+#ifdef MOZ_B2G
+  // Forward hardware key events to the input-method-app
+  nsCOMPtr<nsIHardwareKeyHandler> mHardwareKeyHandler;
+#endif // MOZ_B2G
 
 #ifdef DEBUG
   nsIFrame*                 mDrawEventTargetFrame;

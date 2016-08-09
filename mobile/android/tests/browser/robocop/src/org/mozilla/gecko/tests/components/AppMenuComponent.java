@@ -26,9 +26,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.RelativeLayout;
 
-import com.jayway.android.robotium.solo.Condition;
-import com.jayway.android.robotium.solo.RobotiumUtils;
-import com.jayway.android.robotium.solo.Solo;
+import com.robotium.solo.Condition;
+import com.robotium.solo.RobotiumUtils;
+import com.robotium.solo.Solo;
 
 /**
  * A class representing any interactions that take place on the app menu.
@@ -83,7 +83,11 @@ public class AppMenuComponent extends BaseComponent {
         super(testContext);
     }
 
-    private void assertMenuIsNotOpen() {
+    public void assertMenuIsOpen() {
+        fAssertTrue("Menu is open", isMenuOpen());
+    }
+
+    public void assertMenuIsNotOpen() {
         fAssertFalse("Menu is not open", isMenuOpen());
     }
 
@@ -216,9 +220,9 @@ public class AppMenuComponent extends BaseComponent {
     private void openAppMenu() {
         assertMenuIsNotOpen();
 
-        // This is a hack needed for tablets & GB where the OverflowMenuButton is always in the GONE state,
+        // This is a hack needed for tablets where the OverflowMenuButton is always in the GONE state,
         // so we press the menu key instead.
-        if (DeviceHelper.isTablet() || AppConstants.Versions.preHC) {
+        if (DeviceHelper.isTablet()) {
             mSolo.sendKey(Solo.MENU);
         } else {
             pressOverflowMenuButton();
@@ -271,11 +275,20 @@ public class AppMenuComponent extends BaseComponent {
         return (menuItemView != null) && (menuItemView.getVisibility() == View.VISIBLE);
     }
 
-    private void waitForMenuOpen() {
+    public void waitForMenuOpen() {
         WaitHelper.waitFor("menu to open", new Condition() {
             @Override
             public boolean isSatisfied() {
                 return isMenuOpen();
+            }
+        });
+    }
+
+    public void waitForMenuClose() {
+        WaitHelper.waitFor("menu to close", new Condition() {
+            @Override
+            public boolean isSatisfied() {
+                return !isMenuOpen();
             }
         });
     }

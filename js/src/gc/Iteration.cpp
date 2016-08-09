@@ -94,7 +94,10 @@ void
 js::IterateScripts(JSRuntime* rt, JSCompartment* compartment,
                    void* data, IterateScriptCallback scriptCallback)
 {
+    MOZ_ASSERT(!rt->mainThread.suppressGC);
     rt->gc.evictNursery();
+    MOZ_ASSERT(rt->gc.nursery.isEmpty());
+
     AutoPrepareForTracing prep(rt, SkipAtoms);
 
     if (compartment) {
@@ -130,8 +133,6 @@ JS_PUBLIC_API(void)
 JS_IterateCompartments(JSRuntime* rt, void* data,
                        JSIterateCompartmentCallback compartmentCallback)
 {
-    MOZ_ASSERT(!rt->isHeapBusy());
-
     AutoTraceSession session(rt);
 
     for (CompartmentsIter c(rt, WithAtoms); !c.done(); c.next())

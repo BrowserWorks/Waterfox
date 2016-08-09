@@ -43,7 +43,6 @@ public interface BrowserDB {
     public abstract Searches getSearches();
     public abstract TabsAccessor getTabsAccessor();
     public abstract URLMetadata getURLMetadata();
-    public abstract ReadingListAccessor getReadingListAccessor();
     @RobocopTarget UrlAnnotations getUrlAnnotations();
 
     /**
@@ -94,6 +93,8 @@ public interface BrowserDB {
      */
     public abstract Cursor getRecentHistory(ContentResolver cr, int limit);
 
+    public abstract Cursor getHistoryForURL(ContentResolver cr, String uri);
+
     public abstract Cursor getRecentHistoryBetweenTime(ContentResolver cr, int historyLimit, long start, long end);
 
     public abstract long getPrePathLastVisitedTimeMilliseconds(ContentResolver cr, String prePath);
@@ -110,14 +111,18 @@ public interface BrowserDB {
     public abstract boolean isBookmark(ContentResolver cr, String uri);
     public abstract boolean addBookmark(ContentResolver cr, String title, String uri);
     public abstract Cursor getBookmarkForUrl(ContentResolver cr, String url);
+    public abstract Cursor getBookmarksForPartialUrl(ContentResolver cr, String partialUrl);
     public abstract void removeBookmarksWithURL(ContentResolver cr, String uri);
     public abstract void registerBookmarkObserver(ContentResolver cr, ContentObserver observer);
     public abstract void updateBookmark(ContentResolver cr, int id, String uri, String title, String keyword);
+    public abstract boolean hasBookmarkWithGuid(ContentResolver cr, String guid);
 
     /**
      * Can return <code>null</code>.
      */
     public abstract Cursor getBookmarksInFolder(ContentResolver cr, long folderId);
+
+    public abstract int getBookmarkCountForFolder(ContentResolver cr, long folderId);
 
     /**
      * Get the favicon from the database, if any, associated with the given favicon URL. (That is,

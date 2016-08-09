@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ja.xml
@@ -231,7 +231,7 @@ ja{
         native{"latn"}
         traditional{"jpan"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.89"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -2782,10 +2782,7 @@ ja{
         day-narrow{
             dn{"日"}
             relative{
-                "-1"{"昨日"}
                 "-2"{"一昨日"}
-                "0"{"今日"}
-                "1"{"明日"}
                 "2"{"明後日"}
             }
             relativeTime{
@@ -2800,10 +2797,7 @@ ja{
         day-short{
             dn{"日"}
             relative{
-                "-1"{"昨日"}
                 "-2"{"一昨日"}
-                "0"{"今日"}
-                "1"{"明日"}
                 "2"{"明後日"}
             }
             relativeTime{

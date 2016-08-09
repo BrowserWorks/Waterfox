@@ -14,14 +14,13 @@
  */
 
 interface Element : Node {
-/*
-  We haven't moved these from Node to Element like the spec wants.
-
-  [Throws]
+  [Constant]
   readonly attribute DOMString? namespaceURI;
+  [Constant]
   readonly attribute DOMString? prefix;
+  [Constant]
   readonly attribute DOMString localName;
-*/
+
   // Not [Constant] because it depends on which document we're in
   [Pure]
   readonly attribute DOMString tagName;
@@ -70,6 +69,12 @@ interface Element : Node {
   HTMLCollection getElementsByTagNameNS(DOMString? namespace, DOMString localName);
   [Pure]
   HTMLCollection getElementsByClassName(DOMString classNames);
+
+  [Throws, Pure]
+  Element? insertAdjacentElement(DOMString where, Element element); // historical
+
+  [Throws]
+  void insertAdjacentText(DOMString where, DOMString data); // historical
 
   /**
    * The ratio of font-size-inflated text font size to computed font
@@ -256,6 +261,6 @@ partial interface Element {
    */
   [Throws, UnsafeInPrerendering, Func="nsDocument::IsUnprefixedFullscreenEnabled"]
   void requestFullscreen(optional any options);
-  [Throws, UnsafeInPrerendering, BinaryName="requestFullscreen", Deprecated="PrefixedFullscreenAPI"]
+  [Throws, UnsafeInPrerendering, BinaryName="requestFullscreen"]
   void mozRequestFullScreen(optional any options);
 };

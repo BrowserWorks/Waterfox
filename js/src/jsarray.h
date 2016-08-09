@@ -34,9 +34,6 @@ IdIsIndex(jsid id, uint32_t* indexp)
     return js::StringIsArrayIndex(JSID_TO_ATOM(id), indexp);
 }
 
-extern JSObject*
-InitArrayClass(JSContext* cx, js::HandleObject obj);
-
 // The methods below only create dense boxed arrays.
 
 /* Create a dense array with no capacity allocated, length set to 0. */
@@ -170,13 +167,6 @@ extern bool
 array_splice_impl(JSContext* cx, unsigned argc, js::Value* vp, bool pop);
 
 extern bool
-array_concat(JSContext* cx, unsigned argc, js::Value* vp);
-
-extern bool
-array_concat_dense(JSContext* cx, HandleObject arr1, HandleObject arr2,
-                   HandleObject result);
-
-extern bool
 array_join(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern void
@@ -193,6 +183,12 @@ array_slice(JSContext* cx, unsigned argc, js::Value* vp);
 
 extern JSObject*
 array_slice_dense(JSContext* cx, HandleObject obj, int32_t begin, int32_t end, HandleObject result);
+
+extern bool
+array_reverse(JSContext* cx, unsigned argc, js::Value* vp);
+
+extern bool
+array_splice(JSContext* cx, unsigned argc, js::Value* vp);
 
 /*
  * Append the given (non-hole) value to the end of an array.  The array must be
@@ -219,6 +215,9 @@ ArrayConstructor(JSContext* cx, unsigned argc, Value* vp);
 // Like Array constructor, but doesn't perform GetPrototypeFromConstructor.
 extern bool
 array_construct(JSContext* cx, unsigned argc, Value* vp);
+
+extern bool
+IsWrappedArrayConstructor(JSContext* cx, const Value& v, bool* result);
 
 } /* namespace js */
 

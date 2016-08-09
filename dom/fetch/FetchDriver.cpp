@@ -50,8 +50,10 @@ FetchDriver::FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
   : mPrincipal(aPrincipal)
   , mLoadGroup(aLoadGroup)
   , mRequest(aRequest)
+#ifdef DEBUG
   , mResponseAvailableCalled(false)
   , mFetchCalled(false)
+#endif
 {
 }
 
@@ -66,8 +68,10 @@ nsresult
 FetchDriver::Fetch(FetchDriverObserver* aObserver)
 {
   workers::AssertIsOnMainThread();
+#ifdef DEBUG
   MOZ_ASSERT(!mFetchCalled);
   mFetchCalled = true;
+#endif
 
   mObserver = aObserver;
 
@@ -241,12 +245,6 @@ FetchDriver::HttpFetch()
 #endif
   chan->SetNotificationCallbacks(this);
 
-  // FIXME(nsm): Bug 1120715.
-  // Step 3.4 "If request's cache mode is default and request's header list
-  // contains a header named `If-Modified-Since`, `If-None-Match`,
-  // `If-Unmodified-Since`, `If-Match`, or `If-Range`, set request's cache mode
-  // to no-store."
-
   // Step 3.5 begins "HTTP network or cache fetch".
   // HTTP network or cache fetch
   // ---------------------------
@@ -328,11 +326,11 @@ FetchDriver::HttpFetch()
     // dom/workers/ServiceWorkerManager.cpp
     internalChan->SetCorsMode(static_cast<uint32_t>(mRequest->Mode()));
     internalChan->SetRedirectMode(static_cast<uint32_t>(mRequest->GetRedirectMode()));
+    mRequest->MaybeSkipCacheIfPerformingRevalidation();
+    internalChan->SetFetchCacheMode(static_cast<uint32_t>(mRequest->GetCacheMode()));
   }
 
   // Step 5. Proxy authentication will be handled by Necko.
-  // FIXME(nsm): Bug 1120715.
-  // Step 7-10. "If request's cache mode is neither no-store nor reload..."
 
   // Continue setting up 'HTTPRequest'. Content-Type and body data.
   nsCOMPtr<nsIUploadChannel2> uploadChan = do_QueryInterface(chan);
@@ -412,7 +410,9 @@ FetchDriver::BeginAndGetFilteredResponse(InternalResponse* aResponse,
   MOZ_ASSERT(filteredResponse);
   MOZ_ASSERT(mObserver);
   mObserver->OnResponseAvailable(filteredResponse);
+#ifdef DEBUG
   mResponseAvailableCalled = true;
+#endif
   return filteredResponse.forget();
 }
 
@@ -423,7 +423,9 @@ FetchDriver::FailWithNetworkError()
   RefPtr<InternalResponse> error = InternalResponse::NetworkError();
   if (mObserver) {
     mObserver->OnResponseAvailable(error);
+#ifdef DEBUG
     mResponseAvailableCalled = true;
+#endif
     mObserver->OnResponseEnd();
     mObserver = nullptr;
   }
@@ -473,7 +475,7 @@ FetchDriver::OnStartRequest(nsIRequest* aRequest,
 
   nsresult rv;
   aRequest->GetStatus(&rv);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
+  if (NS_FAILED(rv)) {
     FailWithNetworkError();
     return rv;
   }

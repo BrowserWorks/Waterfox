@@ -11,22 +11,33 @@ const Types = require("../types");
 const Viewport = createFactory(require("./viewport"));
 
 module.exports = createClass({
+  propTypes: {
+    devices: PropTypes.shape(Types.devices).isRequired,
+    location: Types.location.isRequired,
+    screenshot: PropTypes.shape(Types.screenshot).isRequired,
+    viewports: PropTypes.arrayOf(PropTypes.shape(Types.viewport)).isRequired,
+    onBrowserMounted: PropTypes.func.isRequired,
+    onChangeViewportDevice: PropTypes.func.isRequired,
+    onContentResize: PropTypes.func.isRequired,
+    onResizeViewport: PropTypes.func.isRequired,
+    onRotateViewport: PropTypes.func.isRequired,
+    onUpdateDeviceModalOpen: PropTypes.func.isRequired,
+  },
 
   displayName: "Viewports",
 
-  propTypes: {
-    location: Types.location.isRequired,
-    viewports: PropTypes.arrayOf(PropTypes.shape(Types.viewport)).isRequired,
-    onResizeViewport: PropTypes.func.isRequired,
-    onRotateViewport: PropTypes.func.isRequired,
-  },
-
   render() {
     let {
+      devices,
       location,
+      screenshot,
       viewports,
+      onBrowserMounted,
+      onChangeViewportDevice,
+      onContentResize,
       onResizeViewport,
       onRotateViewport,
+      onUpdateDeviceModalOpen,
     } = this.props;
 
     return dom.div(
@@ -36,11 +47,16 @@ module.exports = createClass({
       viewports.map(viewport => {
         return Viewport({
           key: viewport.id,
+          devices,
           location,
+          screenshot,
           viewport,
-          onResizeViewport: (width, height) =>
-            onResizeViewport(viewport.id, width, height),
-          onRotateViewport: () => onRotateViewport(viewport.id),
+          onBrowserMounted,
+          onChangeViewportDevice,
+          onContentResize,
+          onResizeViewport,
+          onRotateViewport,
+          onUpdateDeviceModalOpen,
         });
       })
     );

@@ -23,6 +23,7 @@ loader.lazyGetter(this, "PerformancePanel", () => require("devtools/client/perfo
 loader.lazyGetter(this, "NetMonitorPanel", () => require("devtools/client/netmonitor/panel").NetMonitorPanel);
 loader.lazyGetter(this, "StoragePanel", () => require("devtools/client/storage/panel").StoragePanel);
 loader.lazyGetter(this, "ScratchpadPanel", () => require("devtools/client/scratchpad/scratchpad-panel").ScratchpadPanel);
+loader.lazyGetter(this, "DomPanel", () => require("devtools/client/dom/dom-panel").DomPanel);
 
 // Strings
 const toolboxProps = "chrome://devtools/locale/toolbox.properties";
@@ -38,6 +39,7 @@ const netMonitorProps = "chrome://devtools/locale/netmonitor.properties";
 const storageProps = "chrome://devtools/locale/storage.properties";
 const scratchpadProps = "chrome://devtools/locale/scratchpad.properties";
 const memoryProps = "chrome://devtools/locale/memory.properties";
+const domProps = "chrome://devtools/locale/dom.properties";
 
 loader.lazyGetter(this, "toolboxStrings", () => Services.strings.createBundle(toolboxProps));
 loader.lazyGetter(this, "performanceStrings", () => Services.strings.createBundle(performanceProps));
@@ -52,6 +54,7 @@ loader.lazyGetter(this, "netMonitorStrings", () => Services.strings.createBundle
 loader.lazyGetter(this, "storageStrings", () => Services.strings.createBundle(storageProps));
 loader.lazyGetter(this, "scratchpadStrings", () => Services.strings.createBundle(scratchpadProps));
 loader.lazyGetter(this, "memoryStrings", () => Services.strings.createBundle(memoryProps));
+loader.lazyGetter(this, "domStrings", () => Services.strings.createBundle(domProps));
 
 var Tools = {};
 exports.Tools = Tools;
@@ -60,7 +63,7 @@ exports.Tools = Tools;
 Tools.options = {
   id: "options",
   ordinal: 0,
-  url: "chrome://devtools/content/framework/toolbox-options.xul",
+  url: "chrome://devtools/content/framework/toolbox-options.xhtml",
   icon: "chrome://devtools/skin/images/tool-options.svg",
   invertIconForLightTheme: true,
   bgTheme: "theme-body",
@@ -141,6 +144,7 @@ Tools.webConsole = {
     }
 
     panel.focusInput();
+    return undefined;
   },
 
   isTargetSupported: function() {
@@ -396,6 +400,33 @@ Tools.scratchpad = {
   }
 };
 
+Tools.dom = {
+  id: "dom",
+  accesskey: l10n("dom.accesskey", domStrings),
+  key: l10n("dom.commandkey", domStrings),
+  ordinal: 13,
+  modifiers: osString == "Darwin" ? "accel,alt" : "accel,shift",
+  visibilityswitch: "devtools.dom.enabled",
+  icon: "chrome://devtools/skin/images/tool-dom.svg",
+  invertIconForLightTheme: true,
+  url: "chrome://devtools/content/dom/dom.html",
+  label: l10n("dom.label", domStrings),
+  panelLabel: l10n("dom.panelLabel", domStrings),
+  get tooltip() {
+    return l10n("dom.tooltip", domStrings,
+    (osString == "Darwin" ? "Cmd+Opt+" : "Ctrl+Shift+") + this.key);
+  },
+  inMenu: true,
+
+  isTargetSupported: function(target) {
+    return target.getTrait("webConsoleCommands");
+  },
+
+  build: function(iframeWindow, toolbox) {
+    return new DomPanel(iframeWindow, toolbox);
+  }
+};
+
 var defaultTools = [
   Tools.options,
   Tools.webConsole,
@@ -410,13 +441,14 @@ var defaultTools = [
   Tools.storage,
   Tools.scratchpad,
   Tools.memory,
+  Tools.dom,
 ];
 
 exports.defaultTools = defaultTools;
 
 Tools.darkTheme = {
   id: "dark",
-  label: l10n("options.darkTheme.label", toolboxStrings),
+  label: l10n("options.darkTheme.label2", toolboxStrings),
   ordinal: 1,
   stylesheets: ["chrome://devtools/skin/dark-theme.css"],
   classList: ["theme-dark"],
@@ -424,15 +456,24 @@ Tools.darkTheme = {
 
 Tools.lightTheme = {
   id: "light",
-  label: l10n("options.lightTheme.label", toolboxStrings),
+  label: l10n("options.lightTheme.label2", toolboxStrings),
   ordinal: 2,
   stylesheets: ["chrome://devtools/skin/light-theme.css"],
   classList: ["theme-light"],
 };
 
+Tools.firebugTheme = {
+  id: "firebug",
+  label: l10n("options.firebugTheme.label2", toolboxStrings),
+  ordinal: 3,
+  stylesheets: ["chrome://devtools/skin/firebug-theme.css"],
+  classList: ["theme-light", "theme-firebug"],
+};
+
 exports.defaultThemes = [
   Tools.darkTheme,
   Tools.lightTheme,
+  Tools.firebugTheme,
 ];
 
 /**

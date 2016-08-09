@@ -188,13 +188,17 @@ function checkEntries(anEntryList) {
     "http://mochi.test:8888/tests/image/test/mochitest/blue.png" : "img",
     "http://mochi.test:8888/tests/image/test/mochitest/red.png" : "object",
     "http://mochi.test:8888/tests/image/test/mochitest/big.png" : "embed",
-    "http://mochi.test:8888/tests/dom/tests/mochitest/general/resource_timing_iframe.html" : "subdocument"};
+    "http://mochi.test:8888/tests/dom/tests/mochitest/general/resource_timing_iframe.html" : "iframe"};
 
   for (resourceName in allResources) {
     // Check that we have a resource with the specific name.
     namedEntries = window.performance.getEntriesByName(resourceName);
     ok (!!namedEntries && (namedEntries.length == 1),
       "An entry with the name '" + resourceName + "' should be available");
+
+    if (!namedEntries.length) {
+      continue;
+    }
 
     // Double check for the entry name.
     is (namedEntries[0].name, resourceName, "The resource name is invalid");

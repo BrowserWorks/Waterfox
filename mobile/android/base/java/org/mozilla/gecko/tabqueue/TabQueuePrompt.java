@@ -9,6 +9,7 @@ import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
+import org.mozilla.gecko.TelemetryContract;
 
 import android.annotation.TargetApi;
 import android.content.Intent;
@@ -22,11 +23,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorListenerAdapter;
-import com.nineoldandroids.animation.AnimatorSet;
-import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.view.ViewHelper;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 
 public class TabQueuePrompt extends Locales.LocaleAwareActivity {
     public static final String LOGTAG = "Gecko" + TabQueuePrompt.class.getSimpleName();
@@ -50,20 +50,18 @@ public class TabQueuePrompt extends Locales.LocaleAwareActivity {
     private void showTabQueueEnablePrompt() {
         setContentView(R.layout.tab_queue_prompt);
 
-        final int numberOfTimesTabQueuePromptSeen = GeckoSharedPrefs.forApp(this).getInt(TabQueueHelper.PREF_TAB_QUEUE_TIMES_PROMPT_SHOWN, 0);
-
         final View okButton = findViewById(R.id.ok_button);
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onConfirmButtonPressed();
-                Telemetry.addToHistogram("FENNEC_TABQUEUE_PROMPT_ENABLE_YES", numberOfTimesTabQueuePromptSeen);
+                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, "tabqueue_prompt_yes");
             }
         });
         findViewById(R.id.cancel_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Telemetry.addToHistogram("FENNEC_TABQUEUE_PROMPT_ENABLE_NO", numberOfTimesTabQueuePromptSeen);
+                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, "tabqueue_prompt_no");
                 setResult(TabQueueHelper.TAB_QUEUE_NO);
                 finish();
             }
@@ -95,8 +93,8 @@ public class TabQueuePrompt extends Locales.LocaleAwareActivity {
         buttonContainer = findViewById(R.id.button_container);
         enabledConfirmation = findViewById(R.id.enabled_confirmation);
 
-        ViewHelper.setTranslationY(containerView, 500);
-        ViewHelper.setAlpha(containerView, 0);
+        containerView.setTranslationY(500);
+        containerView.setAlpha(0);
 
         final Animator translateAnimator = ObjectAnimator.ofFloat(containerView, "translationY", 0);
         translateAnimator.setDuration(400);
@@ -122,7 +120,7 @@ public class TabQueuePrompt extends Locales.LocaleAwareActivity {
 
     private void onConfirmButtonPressed() {
         enabledConfirmation.setVisibility(View.VISIBLE);
-        ViewHelper.setAlpha(enabledConfirmation, 0);
+        enabledConfirmation.setAlpha(0);
 
         final Animator buttonsAlphaAnimator = ObjectAnimator.ofFloat(buttonContainer, "alpha", 0);
         buttonsAlphaAnimator.setDuration(300);
@@ -169,8 +167,7 @@ public class TabQueuePrompt extends Locales.LocaleAwareActivity {
 
         if (TabQueueHelper.canDrawOverlays(this)) {
             // User granted the permission in Android's settings.
-            final int numberOfTimesTabQueuePromptSeen = GeckoSharedPrefs.forApp(this).getInt(TabQueueHelper.PREF_TAB_QUEUE_TIMES_PROMPT_SHOWN, 0);
-            Telemetry.addToHistogram("FENNEC_TABQUEUE_PROMPT_ENABLE_YES", numberOfTimesTabQueuePromptSeen);
+            Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, "tabqueue_prompt_yes");
 
             setResult(TabQueueHelper.TAB_QUEUE_YES);
             finish();

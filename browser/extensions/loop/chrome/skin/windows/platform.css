@@ -23,4 +23,15 @@
       list-style-image: url(chrome://loop/skin/toolbar-lunaSilver@2x.png)
     }
   }
+
+  #loop-button[state="slideshow"] {
+    background: none;
+  }
+
+  #loop-button[state="slideshow"] > .toolbarbutton-badge-stack {
+    background: var(--toolbarbutton-hover-background) !important;
+    background-clip: padding-box !important;
+    border-color: var(--toolbarbutton-hover-bordercolor) !important;
+    box-shadow: var(--toolbarbutton-hover-boxshadow) !important;
+  }
 }

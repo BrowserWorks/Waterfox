@@ -197,7 +197,8 @@ TextInputProcessor::BeginInputTransactionInternal(
   }
 
   if (aForTests) {
-    rv = dispatcher->BeginInputTransactionForTests(this);
+    bool isAPZAware = gfxPrefs::TestEventsAsyncEnabled();
+    rv = dispatcher->BeginTestInputTransaction(this, isAPZAware);
   } else {
     rv = dispatcher->BeginInputTransaction(this);
   }
@@ -253,8 +254,9 @@ TextInputProcessor::IsValidEventTypeForComposition(
     return true;
   }
   if (aKeyboardEvent.mMessage == eUnidentifiedEvent &&
-      aKeyboardEvent.userType &&
-      nsDependentAtomString(aKeyboardEvent.userType).EqualsLiteral("on")) {
+      aKeyboardEvent.mSpecifiedEventType &&
+      nsDependentAtomString(
+        aKeyboardEvent.mSpecifiedEventType).EqualsLiteral("on")) {
     return true;
   }
   return false;
@@ -631,8 +633,11 @@ TextInputProcessor::NotifyIME(TextEventDispatcher* aTextEventDispatcher,
                               const IMENotification& aNotification)
 {
   // If This is called while this is being initialized, ignore the call.
+  // In such case, this method should return NS_ERROR_NOT_IMPLEMENTED because
+  // we can say, TextInputProcessor doesn't implement any handlers of the
+  // requests and notifications.
   if (!mDispatcher) {
-    return NS_ERROR_NOT_AVAILABLE;
+    return NS_ERROR_NOT_IMPLEMENTED;
   }
   MOZ_ASSERT(aTextEventDispatcher == mDispatcher,
              "Wrong TextEventDispatcher notifies this");
@@ -701,6 +706,17 @@ TextInputProcessor::OnRemovedFrom(TextEventDispatcher* aTextEventDispatcher)
   UnlinkFromTextEventDispatcher();
 }
 
+NS_IMETHODIMP_(void)
+TextInputProcessor::WillDispatchKeyboardEvent(
+                      TextEventDispatcher* aTextEventDispatcher,
+                      WidgetKeyboardEvent& aKeyboardEvent,
+                      uint32_t aIndexOfKeypress,
+                      void* aData)
+{
+  // TextInputProcessor doesn't set alternative char code nor modify charCode
+  // even when Ctrl key is pressed.
+}
+
 nsresult
 TextInputProcessor::PrepareKeyboardEventToDispatch(
                       WidgetKeyboardEvent& aKeyboardEvent,
@@ -751,6 +767,8 @@ TextInputProcessor::PrepareKeyboardEventToDispatch(
         aKeyboardEvent.mKeyNameIndex);
   }
 
+  aKeyboardEvent.mIsSynthesizedByTIP = (mForTests)? false : true;
+
   return NS_OK;
 }
 
@@ -774,23 +792,6 @@ TextInputProcessor::Keydown(nsIDOMKeyEvent* aDOMKeyEvent,
     return NS_ERROR_INVALID_ARG;
   }
   return KeydownInternal(*originalKeyEvent, aKeyFlags, true, *aConsumedFlags);
-}
-
-TextEventDispatcher::DispatchTo
-TextInputProcessor::GetDispatchTo() const
-{
-  // Support asynchronous tests.
-  if (mForTests) {
-    return gfxPrefs::TestEventsAsyncEnabled() ?
-             TextEventDispatcher::eDispatchToParentProcess :
-             TextEventDispatcher::eDispatchToCurrentProcess;
-  }
-
-  // Otherwise, TextInputProcessor supports only keyboard apps on B2G.
-  // Keyboard apps on B2G doesn't want to dispatch keyboard events to
-  // chrome process. Therefore, this should dispatch key events only in
-  // the current process.
-  return TextEventDispatcher::eDispatchToCurrentProcess;
 }
 
 nsresult
@@ -828,7 +829,7 @@ TextInputProcessor::KeydownInternal(const WidgetKeyboardEvent& aKeyboardEvent,
   } else if (NS_WARN_IF(aKeyFlags & KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT)) {
     return NS_ERROR_INVALID_ARG;
   }
-  keyEvent.modifiers = GetActiveModifiers();
+  keyEvent.mModifiers = GetActiveModifiers();
 
   RefPtr<TextEventDispatcher> kungfuDeathGrip(mDispatcher);
   rv = IsValidStateForComposition();
@@ -838,8 +839,7 @@ TextInputProcessor::KeydownInternal(const WidgetKeyboardEvent& aKeyboardEvent,
 
   nsEventStatus status = aConsumedFlags ? nsEventStatus_eConsumeNoDefault :
                                           nsEventStatus_eIgnore;
-  if (!mDispatcher->DispatchKeyboardEvent(eKeyDown, keyEvent, status,
-                                          GetDispatchTo())) {
+  if (!mDispatcher->DispatchKeyboardEvent(eKeyDown, keyEvent, status)) {
     // If keydown event isn't dispatched, we don't need to dispatch keypress
     // events.
     return NS_OK;
@@ -850,8 +850,7 @@ TextInputProcessor::KeydownInternal(const WidgetKeyboardEvent& aKeyboardEvent,
                                                   KEYEVENT_NOT_CONSUMED;
 
   if (aAllowToDispatchKeypress &&
-      mDispatcher->MaybeDispatchKeypressEvents(keyEvent, status, 
-                                               GetDispatchTo())) {
+      mDispatcher->MaybeDispatchKeypressEvents(keyEvent, status)) {
     aConsumedFlags |=
       (status == nsEventStatus_eConsumeNoDefault) ? KEYPRESS_IS_CONSUMED :
                                                     KEYEVENT_NOT_CONSUMED;
@@ -910,7 +909,7 @@ TextInputProcessor::KeyupInternal(const WidgetKeyboardEvent& aKeyboardEvent,
   } else if (NS_WARN_IF(aKeyFlags & KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT)) {
     return NS_ERROR_INVALID_ARG;
   }
-  keyEvent.modifiers = GetActiveModifiers();
+  keyEvent.mModifiers = GetActiveModifiers();
 
   RefPtr<TextEventDispatcher> kungfuDeathGrip(mDispatcher);
   rv = IsValidStateForComposition();
@@ -920,7 +919,7 @@ TextInputProcessor::KeyupInternal(const WidgetKeyboardEvent& aKeyboardEvent,
 
   nsEventStatus status = aDoDefault ? nsEventStatus_eIgnore :
                                       nsEventStatus_eConsumeNoDefault;
-  mDispatcher->DispatchKeyboardEvent(eKeyUp, keyEvent, status, GetDispatchTo());
+  mDispatcher->DispatchKeyboardEvent(eKeyUp, keyEvent, status);
   aDoDefault = (status != nsEventStatus_eConsumeNoDefault);
   return NS_OK;
 }

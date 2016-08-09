@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ml.xml
@@ -227,7 +227,7 @@ ml{
         }
         native{"mlym"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.77"}
     calendar{
         generic{
             DateTimePatterns{
@@ -974,10 +974,7 @@ ml{
         day-narrow{
             dn{"ദിവസം"}
             relative{
-                "-1"{"ഇന്നലെ"}
                 "-2"{"മിനിഞ്ഞാന്ന്"}
-                "0"{"ഇന്ന്"}
-                "1"{"നാളെ"}
                 "2"{"മറ്റന്നാൾ"}
             }
             relativeTime{
@@ -994,10 +991,7 @@ ml{
         day-short{
             dn{"ദിവസം"}
             relative{
-                "-1"{"ഇന്നലെ"}
                 "-2"{"മിനിഞ്ഞാന്ന്"}
-                "0"{"ഇന്ന്"}
-                "1"{"നാളെ"}
                 "2"{"മറ്റന്നാൾ"}
             }
             relativeTime{

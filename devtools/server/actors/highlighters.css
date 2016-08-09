@@ -14,7 +14,7 @@
 */
 
 :-moz-native-anonymous .highlighter-container {
-  position: absolute;
+  position: fixed;
   width: 100%;
   height: 100%;
   /* The container for all highlighters doesn't react to pointer-events by
@@ -27,6 +27,10 @@
 
 :-moz-native-anonymous .highlighter-container [hidden] {
   display: none;
+}
+
+:-moz-native-anonymous .highlighter-container [dragging] {
+  cursor: grabbing;
 }
 
 /* Box model highlighter */
@@ -207,6 +211,7 @@
   /* The geometry editor can be interacted with, so it needs to react to
      pointer events */
   pointer-events: auto;
+  -moz-user-select: none;
 }
 
 :-moz-native-anonymous .geometry-editor-offset-parent {
@@ -226,6 +231,35 @@
 :-moz-native-anonymous .geometry-editor-arrow {
   stroke: #08c;
   shape-rendering: crispEdges;
+}
+
+:-moz-native-anonymous .geometry-editor-root circle {
+  stroke: #08c;
+  fill: #87ceeb;
+}
+
+:-moz-native-anonymous .geometry-editor-handler-top,
+:-moz-native-anonymous .geometry-editor-handler-bottom {
+  cursor: ns-resize;
+}
+
+:-moz-native-anonymous .geometry-editor-handler-right,
+:-moz-native-anonymous .geometry-editor-handler-left {
+  cursor: ew-resize;
+}
+
+:-moz-native-anonymous [dragging] .geometry-editor-handler-top,
+:-moz-native-anonymous [dragging] .geometry-editor-handler-right,
+:-moz-native-anonymous [dragging] .geometry-editor-handler-bottom,
+:-moz-native-anonymous [dragging] .geometry-editor-handler-left {
+  cursor: grabbing;
+}
+
+:-moz-native-anonymous .geometry-editor-handler-top.dragging,
+:-moz-native-anonymous .geometry-editor-handler-right.dragging,
+:-moz-native-anonymous .geometry-editor-handler-bottom.dragging,
+:-moz-native-anonymous .geometry-editor-handler-left.dragging {
+  fill: #08c;
 }
 
 :-moz-native-anonymous .geometry-editor-label-bubble {

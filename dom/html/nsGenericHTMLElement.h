@@ -981,14 +981,14 @@ protected:
    */
   void AddToNameTable(nsIAtom* aName) {
     NS_ASSERTION(HasName(), "Node doesn't have name?");
-    nsIDocument* doc = GetCurrentDoc();
+    nsIDocument* doc = GetUncomposedDoc();
     if (doc && !IsInAnonymousSubtree()) {
       doc->AddToNameTable(this, aName);
     }
   }
   void RemoveFromNameTable() {
     if (HasName()) {
-      nsIDocument* doc = GetCurrentDoc();
+      nsIDocument* doc = GetUncomposedDoc();
       if (doc) {
         doc->RemoveFromNameTable(this, GetParsedAttr(nsGkAtoms::name)->
                                          GetAtomValue());
@@ -1026,6 +1026,13 @@ protected:
                                    bool* aDefer) override;
 
   virtual const nsAttrName* InternalGetExistingAttrNameFromQName(const nsAString& aStr) const override;
+
+  /**
+   * Dispatch a simulated mouse click by keyboard to the given element.
+   */
+  nsresult DispatchSimulatedClick(nsGenericHTMLElement* aElement,
+                                  bool aIsTrusted,
+                                  nsPresContext* aPresContext);
 
   /**
    * Create a URI for the given aURISpec string.
@@ -1387,7 +1394,7 @@ protected:
    * with the id in @form. Otherwise, it *must* be null.
    *
    * @note Callers of UpdateFormOwner have to be sure the element is in a
-   * document (GetCurrentDoc() != nullptr).
+   * document (GetUncomposedDoc() != nullptr).
    */
   void UpdateFormOwner(bool aBindToTree, Element* aFormIdElement);
 
@@ -1765,7 +1772,6 @@ NS_DECLARE_NS_NEW_HTML_ELEMENT(Data)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(DataList)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Details)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Div)
-NS_DECLARE_NS_NEW_HTML_ELEMENT(ExtApp)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(FieldSet)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Font)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Form)

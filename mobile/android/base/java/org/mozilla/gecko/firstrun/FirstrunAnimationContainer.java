@@ -11,9 +11,9 @@ import android.util.AttributeSet;
 
 import android.view.View;
 import android.widget.LinearLayout;
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.AnimatorListenerAdapter;
-import com.nineoldandroids.animation.ObjectAnimator;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
@@ -64,8 +64,6 @@ public class FirstrunAnimationContainer extends LinearLayout {
         animateHide();
 
         // Stop all versions of firstrun A/B sessions.
-        Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING2_A);
-        Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING2_B);
         Telemetry.stopUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING2_C);
     }
 

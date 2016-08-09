@@ -20,6 +20,8 @@ TextLeafAccessible::
   LinkableAccessible(aContent, aDoc)
 {
   mType = eTextLeafType;
+  mGenericTypes |= eText;
+  mStateFlags |= eNoKidsFromDOM;
 }
 
 TextLeafAccessible::~TextLeafAccessible()
@@ -49,10 +51,4 @@ TextLeafAccessible::Name(nsString& aName)
   // Text node, ARIA can't be used.
   aName = mText;
   return eNameOK;
-}
-
-void
-TextLeafAccessible::CacheChildren()
-{
-  // No children for text accessible.
 }

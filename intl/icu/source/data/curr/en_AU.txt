@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en_AU.xml
@@ -132,6 +132,7 @@ en_AU{
         CUP{"₱"}
         EGP{"£"}
         ISK{"Kr"}
+        LBP{"ل.ل"}
         PYG{"Gs"}
         SEK{"Kr"}
         UYU{"$U"}
@@ -147,7 +148,6 @@ en_AU{
         }
         BAM{
             one{"Bosnia-Herzegovina convertible marka"}
-            other{"Bosnia-Herzegovina convertible marka"}
         }
         BBD{
             one{"Barbados dollar"}
@@ -166,7 +166,6 @@ en_AU{
             other{"euro"}
         }
         GEL{
-            one{"Georgian lari"}
             other{"Georgian lari"}
         }
         ILS{
@@ -174,19 +173,15 @@ en_AU{
             other{"Israeli sheckles"}
         }
         KZT{
-            one{"Kazakhstani tenge"}
             other{"Kazakhstani tenge"}
         }
         LAK{
-            one{"Laotian kip"}
             other{"Laotian kip"}
         }
         MKD{
-            one{"Macedonian denar"}
             other{"Macedonian denar"}
         }
         PGK{
-            one{"Papua New Guinean kina"}
             other{"Papua New Guinean kinas"}
         }
         QAR{
@@ -198,21 +193,17 @@ en_AU{
             other{"Suriname dollars"}
         }
         TRY{
-            one{"Turkish lira"}
             other{"Turkish lire"}
         }
         UZS{
-            one{"Uzbekistani som"}
             other{"Uzbekistani soms"}
         }
         VND{
-            one{"Vietnamese dong"}
             other{"Vietnamese dongs"}
         }
         WST{
-            one{"Samoan tala"}
             other{"Samoan talas"}
         }
     }
-    Version{"2.1.24.13"}
+    Version{"2.1.20.4"}
 }

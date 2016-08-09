@@ -29,6 +29,7 @@ loader.lazyGetter(this, "toolboxStrings", function () {
 loader.lazyRequireGetter(this, "gcliInit", "devtools/shared/gcli/commands/index");
 loader.lazyRequireGetter(this, "util", "gcli/util/util");
 loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/shared/webconsole/utils", true);
+loader.lazyRequireGetter(this, "gDevToolsBrowser", "devtools/client/framework/devtools-browser", true);
 
 /**
  * A collection of utilities to help working with commands
@@ -301,7 +302,8 @@ DeveloperToolbar.prototype.createToolbar = function() {
   close.setAttribute("id", "developer-toolbar-closebutton");
   close.setAttribute("class", "close-icon");
   close.setAttribute("oncommand", "DeveloperToolbar.hide();");
-  close.setAttribute("tooltiptext", "developerToolbarCloseButton.tooltiptext");
+  let closeTooltip = toolboxStrings.GetStringFromName("toolbar.closeButton.tooltip");
+  close.setAttribute("tooltiptext", closeTooltip);
 
   let stack = this._doc.createElement("stack");
   stack.setAttribute("flex", "1");
@@ -318,8 +320,14 @@ DeveloperToolbar.prototype.createToolbar = function() {
   let toolboxBtn = this._doc.createElement("toolbarbutton");
   toolboxBtn.setAttribute("id", "developer-toolbar-toolbox-button");
   toolboxBtn.setAttribute("class", "developer-toolbar-button");
-  toolboxBtn.setAttribute("observes", "devtoolsMenuBroadcaster_DevToolbox");
-  toolboxBtn.setAttribute("tooltiptext", "devToolbarToolsButton.tooltip");
+  let toolboxTooltip = toolboxStrings.GetStringFromName("toolbar.toolsButton.tooltip");
+  toolboxBtn.setAttribute("tooltiptext", toolboxTooltip);
+  toolboxBtn.addEventListener("command", function (event) {
+    let window = event.target.ownerDocument.defaultView;
+    gDevToolsBrowser.toggleToolboxCommand(window.gBrowser);
+  });
+  this._errorCounterButton = toolboxBtn;
+  this._errorCounterButton._defaultTooltipText = toolboxTooltip;
 
   // On Mac, the close button is on the left,
   // while it is on the right on every other platforms.
@@ -342,9 +350,6 @@ DeveloperToolbar.prototype.createToolbar = function() {
     if (statusBar)
       statusBar.parentNode.insertBefore(this._element, statusBar);
   }
-  this._errorCounterButton = toolboxBtn
-  this._errorCounterButton._defaultTooltipText =
-      this._errorCounterButton.getAttribute("tooltiptext");
 };
 
 /**
@@ -432,7 +437,7 @@ DeveloperToolbar.prototype.show = function(focus) {
     return promise.all(panelPromises).then(panels => {
       [ this.tooltipPanel, this.outputPanel ] = panels;
 
-      this._doc.getElementById("Tools:DevToolbar").setAttribute("checked", "true");
+      this._doc.getElementById("menu_devToolbar").setAttribute("checked", "true");
 
       this.target = TargetFactory.forTab(this._chromeWindow.gBrowser.selectedTab);
       const options = {
@@ -493,10 +498,6 @@ DeveloperToolbar.prototype.show = function(focus) {
           tabbrowser.addEventListener("beforeunload", this, true);
 
           this._initErrorsCount(tabbrowser.selectedTab);
-          this._devtoolsUnloaded = this._devtoolsUnloaded.bind(this);
-          this._devtoolsLoaded = this._devtoolsLoaded.bind(this);
-          Services.obs.addObserver(this._devtoolsUnloaded, "devtools-unloaded", false);
-          Services.obs.addObserver(this._devtoolsLoaded, "devtools-loaded", false);
 
           this._element.hidden = false;
 
@@ -504,6 +505,10 @@ DeveloperToolbar.prototype.show = function(focus) {
             // If the toolbar was just inserted, the <textbox> may still have
             // its binding in process of being applied and not be focusable yet
             let waitForBinding = () => {
+              // Bail out if the toolbar has been destroyed in the meantime
+              if (!this._input) {
+                return;
+              }
               // mInputField is a xbl field of <xul:textbox>
               if (typeof this._input.mInputField != "undefined") {
                 this._input.focus();
@@ -520,7 +525,8 @@ DeveloperToolbar.prototype.show = function(focus) {
           if (!DeveloperToolbar.introShownThisSession) {
             let intro = require("gcli/ui/intro");
             intro.maybeShowIntro(this.requisition.commandOutputManager,
-                                 this.requisition.conversionContext);
+                                 this.requisition.conversionContext,
+                                 this.outputPanel);
             DeveloperToolbar.introShownThisSession = true;
           }
 
@@ -550,7 +556,7 @@ DeveloperToolbar.prototype.hide = function() {
 
     Services.prefs.setBoolPref("devtools.toolbar.visible", false);
 
-    this._doc.getElementById("Tools:DevToolbar").setAttribute("checked", "false");
+    this._doc.getElementById("menu_devToolbar").setAttribute("checked", "false");
     this.destroy();
 
     this._telemetry.toolClosed("developertoolbar");
@@ -560,24 +566,6 @@ DeveloperToolbar.prototype.hide = function() {
   });
 
   return this._hidePromise;
-};
-
-/**
- * The devtools-unloaded event handler.
- * @private
- */
-DeveloperToolbar.prototype._devtoolsUnloaded = function() {
-  let tabbrowser = this._chromeWindow.gBrowser;
-  Array.prototype.forEach.call(tabbrowser.tabs, this._stopErrorsCount, this);
-};
-
-/**
- * The devtools-loaded event handler.
- * @private
- */
-DeveloperToolbar.prototype._devtoolsLoaded = function() {
-  let tabbrowser = this._chromeWindow.gBrowser;
-  this._initErrorsCount(tabbrowser.selectedTab);
 };
 
 /**
@@ -648,8 +636,6 @@ DeveloperToolbar.prototype.destroy = function() {
   tabbrowser.removeEventListener("load", this, true);
   tabbrowser.removeEventListener("beforeunload", this, true);
 
-  Services.obs.removeObserver(this._devtoolsUnloaded, "devtools-unloaded");
-  Services.obs.removeObserver(this._devtoolsLoaded, "devtools-loaded");
   Array.prototype.forEach.call(tabbrowser.tabs, this._stopErrorsCount, this);
 
   this.focusManager.removeMonitoredElement(this.outputPanel._frame);

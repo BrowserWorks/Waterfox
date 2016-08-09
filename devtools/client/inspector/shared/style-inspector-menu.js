@@ -276,8 +276,7 @@ StyleInspectorMenu.prototype = {
     let selection = this.styleWindow.getSelection();
 
     let node = this._getClickedNode();
-    if (node.nodeName == "input") {
-       // input type="text"
+    if (node.nodeName == "input" || node.nodeName == "textarea") {
       let { selectionStart, selectionEnd } = node;
       hasTextSelected = isFinite(selectionStart) && isFinite(selectionEnd)
         && selectionStart !== selectionEnd;
@@ -401,7 +400,7 @@ StyleInspectorMenu.prototype = {
    * Retrieve the image data for the selected image url and copy it to the
    * clipboard
    */
-  _onCopyImageDataUrl: Task.async(function*() {
+  _onCopyImageDataUrl: Task.async(function* () {
     if (!this._clickedNodeInfo) {
       return;
     }

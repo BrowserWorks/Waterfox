@@ -1368,6 +1368,14 @@ var gCSSProperties = {
     alias_for: "box-sizing",
     subproperties: [ "box-sizing" ],
   },
+  "color-adjust": {
+    domProp: "colorAdjust",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "economy" ],
+    other_values: [ "exact" ],
+    invalid_values: []
+  },
   "-moz-columns": {
     domProp: "MozColumns",
     inherited: false,
@@ -2221,6 +2229,10 @@ var gCSSProperties = {
       /* error inside functions */
       "-moz-image-rect(url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKElEQVR42u3NQQ0AAAgEoNP+nTWFDzcoQE1udQQCgUAgEAgEAsGTYAGjxAE/G/Q2tQAAAABJRU5ErkJggg==), rubbish, 50%, 30%, 0) transparent",
       "-moz-element(#a rubbish) black",
+      "text",
+      "text border-box",
+      "content-box text text",
+      "padding-box text url(404.png) text",
     ]
   },
   "background-attachment": {
@@ -2797,8 +2809,19 @@ var gCSSProperties = {
       "caption", "icon", "menu", "message-box", "small-caption", "status-bar",
       // Gecko-specific system fonts
       "-moz-window", "-moz-document", "-moz-desktop", "-moz-info", "-moz-dialog", "-moz-button", "-moz-pull-down-menu", "-moz-list", "-moz-field", "-moz-workspace",
+      // line-height with calc()
+      "condensed bold italic small-caps 24px/calc(2px) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(50%) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(3*25px) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(25px*3) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(3*25px + 50%) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(1 + 2*3/4) Times New Roman, serif",
     ],
-    invalid_values: [ "9 fantasy", "-2px fantasy" ]
+    invalid_values: [ "9 fantasy", "-2px fantasy",
+      // line-height with calc()
+      "condensed bold italic small-caps 24px/calc(1 + 2px) Times New Roman, serif",
+      "condensed bold italic small-caps 24px/calc(100% + 0.1) Times New Roman, serif",
+    ]
   },
   "font-family": {
     domProp: "fontFamily",
@@ -3060,8 +3083,8 @@ var gCSSProperties = {
      */
     prerequisites: { "font-size": "19px", "font-size-adjust": "none", "font-family": "serif", "font-weight": "normal", "font-style": "normal", "height": "18px", "display": "block"},
     initial_values: [ "normal" ],
-    other_values: [ "1.0", "1", "1em", "47px", "-moz-block-height" ],
-    invalid_values: []
+    other_values: [ "1.0", "1", "1em", "47px", "-moz-block-height", "calc(2px)", "calc(50%)", "calc(3*25px)", "calc(25px*3)", "calc(3*25px + 50%)", "calc(1 + 2*3/4)" ],
+    invalid_values: [ "calc(1 + 2px)", "calc(100% + 0.1)" ]
   },
   "list-style": {
     domProp: "listStyle",
@@ -3537,7 +3560,7 @@ var gCSSProperties = {
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "static" ],
-    other_values: [ "relative", "absolute", "fixed" ],
+    other_values: [ "relative", "absolute", "fixed", "sticky" ],
     invalid_values: []
   },
   "quotes": {
@@ -4852,25 +4875,6 @@ function logical_box_prop_get_computed(cs, property)
   return cs.getPropertyValue(property);
 }
 
-// Helper to get computed style of "-webkit-box-orient" from "flex-direction"
-// and the "writing-mode".
-function webkit_orient_get_computed(cs, property)
-{
-  var writingMode = cs.getPropertyValue("writing-mode") || "horizontal-tb";
-
-  var mapping; // map from flex-direction values to -webkit-box-orient values.
-  if (writingMode == "horizontal-tb") {
-    // Horizontal writing-mode
-    mapping = { "row" : "horizontal", "column" : "vertical"};
-  } else {
-    // Vertical writing-mode
-    mapping = { "row" : "vertical",   "column" : "horizontal"};
-  }
-
-  var flexDirection = cs.getPropertyValue("flex-direction");
-  return mapping[flexDirection];
-}
-
 // Get the computed value for a property.  For shorthands, return the
 // computed values of all the subproperties, delimited by " ; ".
 function get_computed_value(cs, property)
@@ -5422,11 +5426,15 @@ if (IsCSSPropertyPrefEnabled("layout.css.text-combine-upright.enabled")) {
     inherited: true,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "none" ],
-    other_values: [ "all", "digits", "digits 2", "digits 3", "digits 4", "digits     3" ],
+    other_values: [ "all" ],
     invalid_values: [ "auto", "all 2", "none all", "digits -3", "digits 0",
                       "digits 12", "none 3", "digits 3.1415", "digits3", "digits 1",
                       "digits 3 all", "digits foo", "digits all", "digits 3.0" ]
   };
+  if (IsCSSPropertyPrefEnabled("layout.css.text-combine-upright-digits.enabled")) {
+    gCSSProperties["text-combine-upright"].other_values.push(
+      "digits", "digits 2", "digits 3", "digits 4", "digits     3");
+  }
 }
 
 if (IsCSSPropertyPrefEnabled("layout.css.masking.enabled")) {
@@ -5981,15 +5989,14 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "[a] 2.5fr [z] Repeat(4, 20px auto) [d]",
       "repeat(auto-fill, 0)",
       "[a] repeat( Auto-fill,1%)",
-      "[a] repeat(Auto-fit, 0)",
-      "repeat(Auto-fit,[] 1%)",
-      "repeat(auto-fit, [a] 1em) auto",
+      "minmax(auto,0) [a] repeat(Auto-fit, 0) minmax(0,auto)",
+      "minmax(calc(1% + 1px),auto) repeat(Auto-fit,[] 1%) minmax(auto,1%)",
       "[a] repeat( auto-fit,[a b] minmax(0,0) )",
       "[a] 40px repeat(auto-fit,[a b] minmax(1px, 0) [])",
-      "[a] auto [b] repeat(auto-fit,[a b] minmax(1mm, 1%) [c]) [c] auto",
+      "[a] calc(1%) [b] repeat(auto-fit,[a b] minmax(1mm, 1%) [c]) [c]",
       "repeat(auto-fill,minmax(1%,auto))",
-      "repeat(auto-fill,minmax(1em,min-content))",
-      "repeat(auto-fill,minmax(1fr,1em))",
+      "repeat(auto-fill,minmax(1em,min-content)) minmax(min-content,0)",
+      "repeat(auto-fill,minmax(1fr,1em)) [a] minmax(0, max-content)",
       "repeat(auto-fill,minmax(max-content,1mm))",
     ],
     invalid_values: [
@@ -6044,6 +6051,10 @@ if (IsCSSPropertyPrefEnabled("layout.css.grid.enabled")) {
       "repeat(auto-fit,minmax(auto,auto))",
       "repeat(auto-fit,minmax(min-content,1fr))",
       "repeat(auto-fit,minmax(1fr,auto))",
+      "repeat(auto-fill, 10px) auto",
+      "auto repeat(auto-fit, 10px)",
+      "minmax(min-content,max-content) repeat(auto-fit, 0)",
+      "10px [a] 10px [b a] 1fr [b] repeat(auto-fill, 0)",
     ],
     unbalanced_values: [
       "(foo] 40px",
@@ -6523,10 +6534,6 @@ if (IsCSSPropertyPrefEnabled("layout.css.osx-font-smoothing.enabled")) {
     other_values: [ "grayscale" ],
     invalid_values: [ "none", "subpixel-antialiased", "antialiased" ]
   };
-}
-
-if (IsCSSPropertyPrefEnabled("layout.css.sticky.enabled")) {
-  gCSSProperties["position"].other_values.push("sticky");
 }
 
 if (IsCSSPropertyPrefEnabled("layout.css.mix-blend-mode.enabled")) {
@@ -7024,6 +7031,42 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
     alias_for: "filter",
     subproperties: [ "filter" ],
   };
+  gCSSProperties["-webkit-text-fill-color"] = {
+    domProp: "webkitTextFillColor",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    prerequisites: { "color": "black" },
+    initial_values: [ "currentColor", "black", "#000", "#000000", "rgb(0,0,0)" ],
+    other_values: [ "red", "rgba(255,255,255,0.5)", "transparent" ],
+    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000", "ff00ff", "rgb(255,xxx,255)" ]
+  };
+  gCSSProperties["-webkit-text-stroke"] = {
+    domProp: "webkitTextStroke",
+    inherited: true,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    prerequisites: { "color": "black" },
+    subproperties: [ "-webkit-text-stroke-width", "-webkit-text-stroke-color" ],
+    initial_values: [ "0 currentColor", "currentColor 0px", "0", "currentColor", "0px black" ],
+    other_values: [ "thin black", "#f00 medium", "thick rgba(0,0,255,0.5)", "calc(4px - 8px) green", "2px", "green 0", "currentColor 4em", "currentColor calc(5px - 1px)" ],
+    invalid_values: [ "-3px black", "calc(50%+ 2px) #000", "30% #f00" ]
+  };
+  gCSSProperties["-webkit-text-stroke-color"] = {
+    domProp: "webkitTextStrokeColor",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    prerequisites: { "color": "black" },
+    initial_values: [ "currentColor", "black", "#000", "#000000", "rgb(0,0,0)" ],
+    other_values: [ "red", "rgba(255,255,255,0.5)", "transparent" ],
+    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000", "ff00ff", "rgb(255,xxx,255)" ]
+  };
+  gCSSProperties["-webkit-text-stroke-width"] = {
+    domProp: "webkitTextStrokeWidth",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "0", "0px", "0em", "0ex", "calc(0pt)", "calc(4px - 8px)" ],
+    other_values: [ "thin", "medium", "thick", "17px", "0.2em", "calc(3*25px + 5em)", "calc(5px - 1px)" ],
+    invalid_values: [ "5%", "1px calc(nonsense)", "1px red", "-0.1px", "-3px", "30%" ]
+  },
   gCSSProperties["-webkit-text-size-adjust"] = {
     domProp: "webkitTextSizeAdjust",
     inherited: true,
@@ -7189,44 +7232,127 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
     domProp: "webkitBoxFlex",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "flex-grow",
-    subproperties: [ "flex-grow" ],
+    alias_for: "-moz-box-flex",
+    subproperties: [ "-moz-box-flex" ],
   };
   gCSSProperties["-webkit-box-ordinal-group"] = {
     domProp: "webkitBoxOrdinalGroup",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "order",
-    subproperties: [ "order" ],
+    alias_for: "-moz-box-ordinal-group",
+    subproperties: [ "-moz-box-ordinal-group" ],
   };
-  /* This one is not an alias - it's implemented as a logical property: */
   gCSSProperties["-webkit-box-orient"] = {
     domProp: "webkitBoxOrient",
     inherited: false,
-    type: CSS_TYPE_LONGHAND,
-    logical: true,
-    get_computed: webkit_orient_get_computed,
-    initial_values: [ "horizontal" ],
-    other_values: [ "vertical" ],
-    invalid_values: [
-      "0", "0px", "auto",
-      /* Flex-direction values: */
-      "row", "column", "row-reverse", "column-reverse",
-    ],
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "-moz-box-orient",
+    subproperties: [ "-moz-box-orient" ],
+  };
+  gCSSProperties["-webkit-box-direction"] = {
+    domProp: "webkitBoxDirection",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "-moz-box-direction",
+    subproperties: [ "-moz-box-direction" ],
   };
   gCSSProperties["-webkit-box-align"] = {
     domProp: "webkitBoxAlign",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    alias_for: "align-items",
-    subproperties: [ "align-items" ],
+    alias_for: "-moz-box-align",
+    subproperties: [ "-moz-box-align" ],
   };
   gCSSProperties["-webkit-box-pack"] = {
     domProp: "webkitBoxPack",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "-moz-box-pack",
+    subproperties: [ "-moz-box-pack" ],
+  };
+  gCSSProperties["-webkit-flex-direction"] = {
+    domProp: "webkitFlexDirection",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-direction",
+    subproperties: [ "flex-direction" ],
+  };
+  gCSSProperties["-webkit-flex-wrap"] = {
+    domProp: "webkitFlexWrap",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-wrap",
+    subproperties: [ "flex-wrap" ],
+  };
+  gCSSProperties["-webkit-flex-flow"] = {
+    domProp: "webkitFlexFlow",
+    inherited: false,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    alias_for: "flex-flow",
+    subproperties: [ "flex-direction", "flex-wrap" ],
+  };
+  gCSSProperties["-webkit-order"] = {
+    domProp: "webkitOrder",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "order",
+    subproperties: [ "order" ],
+  };
+  gCSSProperties["-webkit-flex"] = {
+    domProp: "webkitFlex",
+    inherited: false,
+    type: CSS_TYPE_TRUE_SHORTHAND,
+    alias_for: "flex",
+    subproperties: [ "flex-grow", "flex-shrink", "flex-basis" ],
+  };
+  gCSSProperties["-webkit-flex-grow"] = {
+    domProp: "webkitFlexGrow",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-grow",
+    subproperties: [ "flex-grow" ],
+  };
+  gCSSProperties["-webkit-flex-shrink"] = {
+    domProp: "webkitFlexShrink",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-shrink",
+    subproperties: [ "flex-shrink" ],
+  };
+  gCSSProperties["-webkit-flex-basis"] = {
+    domProp: "webkitFlexBasis",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "flex-basis",
+    subproperties: [ "flex-basis" ],
+  };
+  gCSSProperties["-webkit-justify-content"] = {
+    domProp: "webkitJustifyContent",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
     alias_for: "justify-content",
     subproperties: [ "justify-content" ],
+  };
+  gCSSProperties["-webkit-align-items"] = {
+    domProp: "webkitAlignItems",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "align-items",
+    subproperties: [ "align-items" ],
+  };
+  gCSSProperties["-webkit-align-self"] = {
+    domProp: "webkitAlignSelf",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "align-self",
+    subproperties: [ "align-self" ],
+  };
+  gCSSProperties["-webkit-align-content"] = {
+    domProp: "webkitAlignContent",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "align-content",
+    subproperties: [ "align-content" ],
   };
   gCSSProperties["-webkit-user-select"] = {
     domProp: "webkitUserSelect",
@@ -7384,6 +7510,30 @@ if (IsCSSPropertyPrefEnabled("layout.css.text-emphasis.enabled")) {
     invalid_values: [ "rubbish", "dot rubbish", "rubbish dot", "open rubbish", "rubbish open", "open filled", "dot circle",
                       "open '#'", "'#' filled", "dot '#'", "'#' circle", "1", "1 open", "open 1" ]
   };
+}
+
+if (IsCSSPropertyPrefEnabled("layout.css.background-clip-text.enabled")) {
+  gCSSProperties["background-clip"].other_values.push(
+    "text",
+    "content-box, text",
+    "text, border-box",
+    "text, text"
+  );
+  gCSSProperties["background"].other_values.push(
+    "url(404.png) green padding-box text",
+    "content-box text url(404.png) blue"
+  );
+} else {
+  gCSSProperties["background-clip"].invalid_values.push(
+    "text",
+    "content-box, text",
+    "text, border-box",
+    "text, text"
+  );
+  gCSSProperties["background"].invalid_values.push(
+    "url(404.png) green padding-box text",
+    "content-box text url(404.png) blue"
+  );
 }
 
 // Copy aliased properties' fields from their alias targets.

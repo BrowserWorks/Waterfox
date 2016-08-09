@@ -55,8 +55,8 @@ parent:
    * event.
    */
   async Event(uint64_t aID, uint32_t type);
-  async ShowEvent(ShowEventData data);
-  async HideEvent(uint64_t aRootID);
+  async ShowEvent(ShowEventData data, bool aFromuser);
+  async HideEvent(uint64_t aRootID, bool aFromUser);
   async StateChangeEvent(uint64_t aID, uint64_t aState, bool aEnabled);
   async CaretMoveEvent(uint64_t aID, int32_t aOffset);
   async TextChangeEvent(uint64_t aID, nsString aStr, int32_t aStart, uint32_t aLen,
@@ -237,11 +237,6 @@ child:
   prio(high) sync Step(uint64_t aID) returns(double aStep);
 
   async TakeFocus(uint64_t aID);
-  prio(high) sync EmbeddedChildCount(uint64_t aID) returns(uint32_t aCount);
-  prio(high) sync IndexOfEmbeddedChild(uint64_t aID, uint64_t aChildID)
-    returns(uint32_t childIdx);
-  prio(high) sync EmbeddedChildAt(uint64_t aID, uint32_t aChildIdx)
-    returns(uint64_t aChild);
   prio(high) sync FocusedChild(uint64_t aID)
     returns(uint64_t aChild, bool aOk);
 
@@ -257,6 +252,7 @@ child:
 
   prio(high) sync Extents(uint64_t aID, bool aNeedsScreenCoords)
     returns(int32_t aX, int32_t aY, int32_t aWidth, int32_t aHeight);
+  prio(high) sync DOMNodeID(uint64_t aID) returns(nsString aDOMNodeID);
 };
 
 }

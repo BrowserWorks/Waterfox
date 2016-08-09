@@ -6,10 +6,35 @@
 
 .theme-dark {
   --even-animation-timeline-background-color: rgba(255,255,255,0.03);
+  --command-pick-image: url(chrome://devtools/skin/images/command-pick.svg);
+  --pause-image: url(chrome://devtools/skin/images/debugger-pause.png);
+  --pause-image-2x: url(chrome://devtools/skin/images/debugger-pause@2x.png);
+  --rewind-image: url(chrome://devtools/skin/images/rewind.png);
+  --rewind-image-2x: url(chrome://devtools/skin/images/rewind@2x.png);
+  --play-image: url(chrome://devtools/skin/images/debugger-play.png);
+  --play-image-2x: url(chrome://devtools/skin/images/debugger-play@2x.png);
 }
 
 .theme-light {
   --even-animation-timeline-background-color: rgba(128,128,128,0.03);
+  --command-pick-image: url(chrome://devtools/skin/images/command-pick.svg);
+  --pause-image: url(chrome://devtools/skin/images/debugger-pause.png);
+  --pause-image-2x: url(chrome://devtools/skin/images/debugger-pause@2x.png);
+  --rewind-image: url(chrome://devtools/skin/images/rewind.png);
+  --rewind-image-2x: url(chrome://devtools/skin/images/rewind@2x.png);
+  --play-image: url(chrome://devtools/skin/images/debugger-play.png);
+  --play-image-2x: url(chrome://devtools/skin/images/debugger-play@2x.png);
+}
+
+.theme-firebug {
+  --even-animation-timeline-background-color: rgba(128,128,128,0.03);
+  --command-pick-image: url(chrome://devtools/skin/images/firebug/command-pick.svg);
+  --pause-image: url(chrome://devtools/skin/images/firebug/pause.svg);
+  --pause-image-2x: url(chrome://devtools/skin/images/firebug/pause.svg);
+  --rewind-image: url(chrome://devtools/skin/images/firebug/rewind.svg);
+  --rewind-image-2x: url(chrome://devtools/skin/images/firebug/rewind.svg);
+  --play-image: url(chrome://devtools/skin/images/firebug/play.svg);
+  --play-image-2x: url(chrome://devtools/skin/images/firebug/play.svg);
 }
 
 :root {
@@ -133,46 +158,48 @@ body {
   border-style: solid;
 }
 
+#global-toolbar .devtools-button,
+#timeline-toolbar .devtools-button {
+  margin: 0;
+  padding: 0;
+}
+
 #timeline-toolbar .devtools-button,
 #timeline-toolbar .label {
   border-width: 0 1px 0 0;
 }
 
 #element-picker::before {
-  background-image: url("chrome://devtools/skin/images/command-pick.png");
+  background-image: var(--command-pick-image);
 }
 
 .pause-button::before {
-  background-image: url("images/debugger-pause.png");
+  background-image: var(--pause-image);
 }
 
 #rewind-timeline::before {
-  background-image: url("images/rewind.png");
+  background-image: var(--rewind-image);
 }
 
 .pause-button.paused::before {
-  background-image: url("images/debugger-play.png");
+  background-image: var(--play-image);
 }
 
 @media (min-resolution: 1.1dppx) {
-  #element-picker::before {
-    background-image: url("chrome://devtools/skin/images/command-pick@2x.png");
-  }
-
   .pause-button::before {
-    background-image: url("images/debugger-pause@2x.png");
+    background-image: var(--pause-image-2x);
   }
 
   .pause-button.paused::before {
-    background-image: url("images/debugger-play@2x.png");
+    background-image: var(--play-image-2x);
   }
 
   #rewind-timeline::before {
-    background-image: url("images/rewind@2x.png");
+    background-image: var(--rewind-image-2x);
   }
 }
 
-#timeline-rate select {
+#timeline-rate select.devtools-button {
   -moz-appearance: none;
   text-align: center;
   font-family: inherit;
@@ -227,7 +254,7 @@ body {
 }
 
 .animation-timeline .scrubber-wrapper {
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   height: 100%;
 }
@@ -330,23 +357,17 @@ body {
      borders between each iteration. These borders must have the same color as
      the border of this element */
   background-image:
-    linear-gradient(to right,
+    linear-gradient(to left,
                     var(--timeline-border-color) 0,
                     var(--timeline-border-color) 1px,
                     transparent 1px,
                     transparent 2px);
-  background-repeat: repeat-x;
-  background-position: -1px 0;
   border: 1px solid var(--timeline-border-color);
   /* Border-right is already handled by the gradient */
   border-width: 1px 0 1px 1px;
 
   /* The background color is set independently */
   background-color: var(--timeline-background-color);
-}
-
-.animation-timeline .animation .iterations.infinite {
-  border-right-width: 0;
 }
 
 .animation-timeline .animation .iterations.infinite::before,
@@ -376,6 +397,7 @@ body {
   padding: 0 2px;
   box-sizing: border-box;
   --fast-track-icon-width: 12px;
+  z-index: 1;
 }
 
 .animation-timeline .animation .name div {
@@ -398,20 +420,23 @@ body {
   right: 0;
   height: 100%;
   width: var(--fast-track-icon-width);
+  z-index: 1;
 
   background-image: url("images/animation-fast-track.svg");
   background-repeat: no-repeat;
   background-position: center;
 }
 
-.animation-timeline .animation .delay {
+.animation-timeline .animation .delay,
+.animation-timeline .animation .end-delay {
   position: absolute;
   height: 100%;
-
   border: 1px solid var(--timeline-border-color);
   box-sizing: border-box;
-  border-width: 1px 0 1px 1px;
+}
 
+.animation-timeline .animation .delay {
+  border-width: 1px 0 1px 1px;
   background-image: repeating-linear-gradient(45deg,
                                               transparent,
                                               transparent 1px,
@@ -420,7 +445,18 @@ body {
   background-color: var(--timeline-border-color);
 }
 
-.animation-timeline .animation .delay.negative {
+.animation-timeline .animation .end-delay {
+  border-width: 1px 1px 1px 0;
+  background-image: repeating-linear-gradient(
+                      -45deg,
+                      transparent,
+                      transparent 3px,
+                      var(--timeline-border-color) 3px,
+                      var(--timeline-border-color) 4px);
+}
+
+.animation-timeline .animation .delay.negative,
+.animation-timeline .animation .end-delay.negative {
   /* Negative delays are displayed on top of the animation, so they need a
      right border. Whereas normal delays are displayed just before the
      animation, so there's already the animation's left border that serves as

@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -1614,7 +1614,7 @@ uloc_openKeywords(const char* localeID,
 #define OPTION_SET(options, mask) ((options & mask) != 0)
 
 static const char i_default[] = {'i', '-', 'd', 'e', 'f', 'a', 'u', 'l', 't'};
-#define I_DEFAULT_LENGTH UPRV_LENGTHOF(i_default)
+#define I_DEFAULT_LENGTH (sizeof i_default / sizeof i_default[0])
 
 /**
  * Canonicalize the given localeID, to level 1 or to level 2,
@@ -1804,7 +1804,7 @@ _canonicalize(const char* localeID,
 
         /* Handle generic variants first */
         if (variant) {
-            for (j=0; j<UPRV_LENGTHOF(VARIANT_MAP); j++) {
+            for (j=0; j<(int32_t)(sizeof(VARIANT_MAP)/sizeof(VARIANT_MAP[0])); j++) {
                 const char* variantToCompare = VARIANT_MAP[j].variant;
                 int32_t n = (int32_t)uprv_strlen(variantToCompare);
                 int32_t variantLen = _deleteVariant(variant, uprv_min(variantSize, (nameCapacity-len)), variantToCompare, n);
@@ -1824,7 +1824,7 @@ _canonicalize(const char* localeID,
         }
 
         /* Look up the ID in the canonicalization map */
-        for (j=0; j<UPRV_LENGTHOF(CANONICALIZE_MAP); j++) {
+        for (j=0; j<(int32_t)(sizeof(CANONICALIZE_MAP)/sizeof(CANONICALIZE_MAP[0])); j++) {
             const char* id = CANONICALIZE_MAP[j].id;
             int32_t n = (int32_t)uprv_strlen(id);
             if (len == n && uprv_strncmp(name, id, n) == 0) {
@@ -2124,21 +2124,21 @@ uloc_getLCID(const char* localeID)
         char tmpLocaleID[ULOC_FULLNAME_CAPACITY];
 
         len = uloc_getKeywordValue(localeID, "collation", collVal,
-            UPRV_LENGTHOF(collVal) - 1, &status);
+            sizeof(collVal)/sizeof(collVal[0]) - 1, &status);
 
         if (U_SUCCESS(status) && len > 0) {
             collVal[len] = 0;
 
             len = uloc_getBaseName(localeID, tmpLocaleID,
-                UPRV_LENGTHOF(tmpLocaleID) - 1, &status);
+                sizeof(tmpLocaleID)/sizeof(tmpLocaleID[0]) - 1, &status);
 
-            if (U_SUCCESS(status) && len > 0) {
+            if (U_SUCCESS(status)) {
                 tmpLocaleID[len] = 0;
 
                 len = uloc_setKeywordValue("collation", collVal, tmpLocaleID,
-                    UPRV_LENGTHOF(tmpLocaleID) - len - 1, &status);
+                    sizeof(tmpLocaleID)/sizeof(tmpLocaleID[0]) - len - 1, &status);
 
-                if (U_SUCCESS(status) && len > 0) {
+                if (U_SUCCESS(status)) {
                     tmpLocaleID[len] = 0;
                     return uprv_convertToLCID(langID, tmpLocaleID, &status);
                 }
@@ -2304,7 +2304,7 @@ uloc_acceptLanguageFromHTTP(char *result, int32_t resultAvailable, UAcceptResult
     char *tempstr; /* Use for null pointer check */
 
     j = smallBuffer;
-    jSize = UPRV_LENGTHOF(smallBuffer);
+    jSize = sizeof(smallBuffer)/sizeof(smallBuffer[0]);
     if(U_FAILURE(*status)) {
         return -1;
     }
@@ -2349,7 +2349,7 @@ uloc_acceptLanguageFromHTTP(char *result, int32_t resultAvailable, UAcceptResult
             return -1;
         }
         j[n].locale = tempstr;
-        uloc_canonicalize(j[n].locale,tmp,UPRV_LENGTHOF(tmp),status);
+        uloc_canonicalize(j[n].locale,tmp,sizeof(tmp)/sizeof(tmp[0]),status);
         if(strcmp(j[n].locale,tmp)) {
             uprv_free(j[n].locale);
             j[n].locale=uprv_strdup(tmp);
@@ -2475,7 +2475,7 @@ uloc_acceptLanguage(char *result, int32_t resultAvailable,
         }
         uenum_reset(availableLocales, status);    
         /* save off parent info */
-        if(uloc_getParent(acceptList[i], tmp, UPRV_LENGTHOF(tmp), status)!=0) {
+        if(uloc_getParent(acceptList[i], tmp, sizeof(tmp)/sizeof(tmp[0]), status)!=0) {
             fallbackList[i] = uprv_strdup(tmp);
         } else {
             fallbackList[i]=0;
@@ -2512,7 +2512,7 @@ uloc_acceptLanguage(char *result, int32_t resultAvailable,
                 }
                 uenum_reset(availableLocales, status);    
 
-                if(uloc_getParent(fallbackList[i], tmp, UPRV_LENGTHOF(tmp), status)!=0) {
+                if(uloc_getParent(fallbackList[i], tmp, sizeof(tmp)/sizeof(tmp[0]), status)!=0) {
                     uprv_free(fallbackList[i]);
                     fallbackList[i] = uprv_strdup(tmp);
                 } else {

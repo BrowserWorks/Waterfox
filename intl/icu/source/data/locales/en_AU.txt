@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en_AU.xml
@@ -15,7 +15,7 @@ en_AU{
             }
         }
     }
-    Version{"2.1.24.13"}
+    Version{"2.1.20.4"}
     calendar{
         generic{
             availableFormats{
@@ -32,7 +32,7 @@ en_AU{
                     d{"E, d MMM – E, d MMM"}
                 }
                 yMMMEd{
-                    d{"E, d MMM – E, d MMM y G"}
+                    d{"E, d MMM – E, dMMM, y G"}
                 }
             }
         }
@@ -55,8 +55,8 @@ en_AU{
                 "h:mm:ss a",
                 "h:mm a",
                 "EEEE, d MMMM y",
-                "d MMMM y",
-                "d MMM y",
+                "dMMMM,y",
+                "dMMM,y",
                 "d/M/yy",
                 "{1}, {0}",
                 "{1} 'at' {0}",
@@ -66,6 +66,7 @@ en_AU{
             }
             availableFormats{
                 M{"LL"}
+                yMMMEd{"E, d MMM,y"}
             }
             dayNames{
                 format{
@@ -108,7 +109,6 @@ en_AU{
                         midnight{"midnight"}
                         morning1{"morning"}
                         night1{"night"}
-                        noon{"midday"}
                     }
                     narrow{
                         afternoon1{"afternoon"}
@@ -163,6 +163,20 @@ en_AU{
                     }
                 }
                 stand-alone{
+                    abbreviated{
+                        "Jan.",
+                        "Feb.",
+                        "Mar.",
+                        "Apr.",
+                        "May",
+                        "Jun.",
+                        "Jul.",
+                        "Aug.",
+                        "Sep.",
+                        "Oct.",
+                        "Nov.",
+                        "Dec.",
+                    }
                     narrow{
                         "Jan.",
                         "Feb.",
@@ -188,16 +202,56 @@ en_AU{
         }
     }
     fields{
+        day-narrow{
+            relativeTime{
+                past{
+                    other{"{0} days ago"}
+                }
+            }
+        }
         dayperiod{
             dn{"am/pm"}
+        }
+        hour-narrow{
+            dn{"h"}
+            relativeTime{
+                future{
+                    other{"in {0} hr."}
+                }
+                past{
+                    other{"{0} hr. ago"}
+                }
+            }
         }
         hour-short{
             dn{"h"}
         }
-    }
-    listPattern{
-        standard{
-            end{"{0} and {1}"}
+        month-narrow{
+            relativeTime{
+                future{
+                    other{"in {0} mo."}
+                }
+                past{
+                    other{"{0} mo. ago"}
+                }
+            }
+        }
+        quarter-narrow{
+            relativeTime{
+                future{
+                    other{"in {0} qtrs."}
+                }
+            }
+        }
+        year-narrow{
+            relativeTime{
+                future{
+                    other{"in {0} yr."}
+                }
+                past{
+                    other{"{0} yr. ago"}
+                }
+            }
         }
     }
 }

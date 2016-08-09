@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pt_PT.xml
@@ -147,7 +147,7 @@ pt_PT{
         }
         minimumGroupingDigits{"2"}
     }
-    Version{"2.1.24.13"}
+    Version{"2.1.19.79"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -348,12 +348,21 @@ pt_PT{
             }
             dayPeriod{
                 format{
+                    abbreviated{
+                        noon{"meio-dia"}
+                    }
                     narrow{
                         afternoon1{"tarde"}
                         evening1{"noite"}
                         midnight{"meia-noite"}
                         morning1{"manhã"}
                         night1{"madrugada"}
+                        noon{"meio-dia"}
+                    }
+                    wide{
+                        afternoon1{"da tarde"}
+                        evening1{"da noite"}
+                        morning1{"da manhã"}
                         noon{"meio-dia"}
                     }
                 }
@@ -363,7 +372,9 @@ pt_PT{
                         pm{"p.m."}
                     }
                     narrow{
+                        afternoon1{"tarde"}
                         am{"a.m."}
+                        morning1{"manhã"}
                         pm{"p.m."}
                     }
                     wide{
@@ -705,8 +716,6 @@ pt_PT{
         }
         thu-narrow{
             relative{
-                "-1"{"qui. passada"}
-                "0"{"esta qui."}
                 "1"{"próxima qui."}
             }
         }

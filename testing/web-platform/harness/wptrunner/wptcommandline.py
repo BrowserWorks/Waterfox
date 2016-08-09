@@ -10,6 +10,7 @@ from collections import OrderedDict
 from distutils.spawn import find_executable
 
 import config
+import wpttest
 
 
 def abs_path(path):
@@ -24,6 +25,7 @@ def url_or_path(path):
         return path
     else:
         return abs_path(path)
+
 
 def require_arg(kwargs, name, value_func=None):
     if value_func is None:
@@ -58,6 +60,9 @@ def create_parser(product_choices=None):
 
     parser.add_argument("--binary", action="store",
                         type=abs_path, help="Binary to run tests against")
+    parser.add_argument('--binary-arg',
+                        default=[], action="append", dest="binary_args",
+                        help="Extra argument for the binary (servo)")
     parser.add_argument("--webdriver-binary", action="store", metavar="BINARY",
                         type=abs_path, help="WebDriver server binary to use")
     parser.add_argument("--processes", action="store", type=int, default=None,
@@ -72,6 +77,8 @@ def create_parser(product_choices=None):
                         help="Multiplier relative to standard test timeout to use")
     parser.add_argument("--repeat", action="store", type=int, default=1,
                         help="Number of times to run the tests")
+    parser.add_argument("--repeat-until-unexpected", action="store_true", default=None,
+                        help="Run tests in a loop until one returns an unexpected result")
 
     parser.add_argument("--no-capture-stdio", action="store_true", default=False,
                         help="Don't capture stdio and write to logging")
@@ -96,8 +103,8 @@ def create_parser(product_choices=None):
 
     test_selection_group = parser.add_argument_group("Test Selection")
     test_selection_group.add_argument("--test-types", action="store",
-                                      nargs="*", default=["testharness", "reftest"],
-                                      choices=["testharness", "reftest"],
+                                      nargs="*", default=wpttest.enabled_tests,
+                                      choices=wpttest.enabled_tests,
                                       help="Test types to run")
     test_selection_group.add_argument("--include", action="append",
                                       help="URL prefix to include")
@@ -154,8 +161,8 @@ def create_parser(product_choices=None):
     gecko_group = parser.add_argument_group("Gecko-specific")
     gecko_group.add_argument("--prefs-root", dest="prefs_root", action="store", type=abs_path,
                              help="Path to the folder containing browser prefs")
-    gecko_group.add_argument("--e10s", dest="gecko_e10s", action="store_true",
-                             help="Run tests with electrolysis preferences")
+    gecko_group.add_argument("--disable-e10s", dest="gecko_e10s", action="store_false", default=True,
+                             help="Run tests without electrolysis preferences")
 
     b2g_group = parser.add_argument_group("B2G-specific")
     b2g_group.add_argument("--b2g-no-backup", action="store_true", default=False,
@@ -338,11 +345,13 @@ def check_args(kwargs):
 
     return kwargs
 
+
 def check_args_update(kwargs):
     set_from_config(kwargs)
 
     if kwargs["product"] is None:
         kwargs["product"] = "firefox"
+
 
 def create_parser_update(product_choices=None):
     from mozlog.structured import commandline

@@ -7,7 +7,7 @@
 
 #include "CompositableTransactionParent.h"
 #include "CompositableHost.h"           // for CompositableParent, etc
-#include "CompositorParent.h"           // for CompositorParent
+#include "CompositorBridgeParent.h"     // for CompositorBridgeParent
 #include "GLContext.h"                  // for GLContext
 #include "Layers.h"                     // for Layer
 #include "RenderTrace.h"                // for RenderTraceInvalidateEnd, etc
@@ -53,7 +53,7 @@ ScheduleComposition(CompositableHost* aCompositable)
   if (!id) {
     return false;
   }
-  CompositorParent* cp = CompositorParent::GetCompositor(id);
+  CompositorBridgeParent* cp = CompositorBridgeParent::GetCompositor(id);
   if (!cp) {
     return false;
   }
@@ -126,12 +126,13 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
     }
     case CompositableOperationDetail::TOpRemoveTexture: {
       const OpRemoveTexture& op = aEdit.detail().get_OpRemoveTexture();
+
       RefPtr<TextureHost> tex = TextureHost::AsTextureHost(op.textureParent());
 
       MOZ_ASSERT(tex.get());
       compositable->RemoveTextureHost(tex);
       // send FenceHandle if present.
-      SendFenceHandleIfPresent(op.textureParent(), compositable);
+      SendFenceHandleIfPresent(op.textureParent());
       break;
     }
     case CompositableOperationDetail::TOpRemoveTextureAsync: {
@@ -141,14 +142,13 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       MOZ_ASSERT(tex.get());
       compositable->RemoveTextureHost(tex);
 
-      if (!IsAsync() && ImageBridgeParent::GetInstance(GetChildProcessId())) {
+      if (!UsesImageBridge() && ImageBridgeParent::GetInstance(GetChildProcessId())) {
         // send FenceHandle if present via ImageBridge.
         ImageBridgeParent::AppendDeliverFenceMessage(
                              GetChildProcessId(),
                              op.holderId(),
                              op.transactionId(),
-                             op.textureParent(),
-                             compositable);
+                             op.textureParent());
 
         // If the message is recievied via PLayerTransaction,
         // Send message back via PImageBridge.
@@ -158,7 +158,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
                                                   op.transactionId()));
       } else {
         // send FenceHandle if present.
-        SendFenceHandleIfPresent(op.textureParent(), compositable);
+        SendFenceHandleIfPresent(op.textureParent());
 
         ReplyRemoveTexture(OpReplyRemoveTexture(op.holderId(),
                                                 op.transactionId()));
@@ -193,7 +193,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
         compositable->UseTextureHost(textures);
       }
 
-      if (IsAsync() && compositable->GetLayer()) {
+      if (UsesImageBridge() && compositable->GetLayer()) {
         ScheduleComposition(compositable);
       }
       break;
@@ -206,7 +206,7 @@ CompositableParentManager::ReceiveCompositableUpdate(const CompositableOperation
       MOZ_ASSERT(texOnBlack && texOnWhite);
       compositable->UseComponentAlphaTextures(texOnBlack, texOnWhite);
 
-      if (IsAsync()) {
+      if (UsesImageBridge()) {
         ScheduleComposition(compositable);
       }
       break;

@@ -17,10 +17,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import com.keepsafe.switchboard.SwitchBoard;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.util.Experiments;
 
 import java.util.Locale;
@@ -38,13 +40,23 @@ public class WhatsNewReceiver extends BroadcastReceiver {
         }
 
         final String dataString = intent.getDataString();
-        if (TextUtils.isEmpty(dataString) || !dataString.contains(AppConstants.ANDROID_PACKAGE_NAME)){
+        if (TextUtils.isEmpty(dataString) || !dataString.contains(AppConstants.ANDROID_PACKAGE_NAME)) {
             return;
         }
 
-        if (SwitchBoard.isInExperiment(context, Experiments.WHATSNEW_NOTIFICATION)) {
-            showWhatsNewNotification(context);
+        if (!SwitchBoard.isInExperiment(context, Experiments.WHATSNEW_NOTIFICATION)) {
+            return;
         }
+
+        if (!isPreferenceEnabled(context)) {
+            return;
+        }
+
+        showWhatsNewNotification(context);
+    }
+
+    private boolean isPreferenceEnabled(Context context) {
+        return GeckoSharedPrefs.forApp(context).getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_WHATS_NEW, true);
     }
 
     private void showWhatsNewNotification(Context context) {

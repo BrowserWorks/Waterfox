@@ -49,6 +49,13 @@ public:
    */
   void UpdateWithTouchAtDevicePoint(ParentLayerCoord aPos, ParentLayerCoord aAdditionalDelta, uint32_t aTimestampMs);
 
+protected:
+  float ApplyFlingCurveToVelocity(float aVelocity) const;
+  void AddVelocityToQueue(uint32_t aTimestampMs, float aVelocity);
+
+public:
+  void HandleTouchVelocity(uint32_t aTimestampMs, float aSpeed);
+
   /**
    * Notify this Axis that a touch has begun, i.e. the user has put their finger
    * on the screen but has not yet tried to pan.
@@ -237,6 +244,7 @@ public:
   ParentLayerCoord GetPageLength() const;
   ParentLayerCoord GetCompositionEnd() const;
   ParentLayerCoord GetPageEnd() const;
+  ParentLayerCoord GetScrollRangeEnd() const;
 
   ParentLayerCoord GetPos() const { return mPos; }
 

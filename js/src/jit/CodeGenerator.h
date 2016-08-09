@@ -45,6 +45,7 @@ class OutOfLineUpdateCache;
 class OutOfLineCallPostWriteBarrier;
 class OutOfLineCallPostWriteElementBarrier;
 class OutOfLineIsCallable;
+class OutOfLineIsConstructor;
 class OutOfLineRegExpMatcher;
 class OutOfLineRegExpTester;
 class OutOfLineLambdaArrow;
@@ -117,6 +118,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     void emitSharedStub(ICStub::Kind kind, LInstruction* lir);
     void visitBinarySharedStub(LBinarySharedStub* lir);
     void visitUnarySharedStub(LUnarySharedStub* lir);
+    void visitNullarySharedStub(LNullarySharedStub* lir);
     void visitLambda(LLambda* lir);
     void visitOutOfLineLambdaArrow(OutOfLineLambdaArrow* ool);
     void visitLambdaArrow(LLambdaArrow* lir);
@@ -139,6 +141,8 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitTypeBarrierV(LTypeBarrierV* lir);
     void visitTypeBarrierO(LTypeBarrierO* lir);
     void visitMonitorTypes(LMonitorTypes* lir);
+    void emitPostWriteBarrier(const LAllocation* obj);
+    void emitPostWriteBarrier(Register objreg);
     template <class LPostBarrierType>
     void visitPostWriteBarrierCommonO(LPostBarrierType* lir, OutOfLineCode* ool);
     template <class LPostBarrierType>
@@ -207,6 +211,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitComputeThis(LComputeThis* lir);
     void visitArrayLength(LArrayLength* lir);
     void visitSetArrayLength(LSetArrayLength* lir);
+    void visitGetNextMapEntryForIterator(LGetNextMapEntryForIterator* lir);
     void visitTypedArrayLength(LTypedArrayLength* lir);
     void visitTypedArrayElements(LTypedArrayElements* lir);
     void visitSetDisjointTypedElements(LSetDisjointTypedElements* lir);
@@ -294,7 +299,6 @@ class CodeGenerator : public CodeGeneratorSpecific
                        ConstantOrRegister value, Register elementsTemp, Register length);
     void visitArrayPushV(LArrayPushV* lir);
     void visitArrayPushT(LArrayPushT* lir);
-    void visitArrayConcat(LArrayConcat* lir);
     void visitArraySlice(LArraySlice* lir);
     void visitArrayJoin(LArrayJoin* lir);
     void visitLoadUnboxedScalar(LLoadUnboxedScalar* lir);
@@ -341,6 +345,8 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitCallBindVar(LCallBindVar* lir);
     void visitIsCallable(LIsCallable* lir);
     void visitOutOfLineIsCallable(OutOfLineIsCallable* ool);
+    void visitIsConstructor(LIsConstructor* lir);
+    void visitOutOfLineIsConstructor(OutOfLineIsConstructor* ool);
     void visitIsObject(LIsObject* lir);
     void visitIsObjectAndBranch(LIsObjectAndBranch* lir);
     void visitHasClass(LHasClass* lir);
@@ -395,6 +401,7 @@ class CodeGenerator : public CodeGeneratorSpecific
     void visitInterruptCheck(LInterruptCheck* lir);
     void visitOutOfLineInterruptCheckImplicit(OutOfLineInterruptCheckImplicit* ins);
     void visitAsmJSInterruptCheck(LAsmJSInterruptCheck* lir);
+    void visitAsmThrowUnreachable(LAsmThrowUnreachable* lir);
     void visitRecompileCheck(LRecompileCheck* ins);
 
     void visitRandom(LRandom* ins);

@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1998-2016, International Business Machines
+*   Copyright (C) 1998-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -22,8 +22,8 @@
 #define UNISTR_H
 
 /**
- * \file
- * \brief C++ API: Unicode String
+ * \file 
+ * \brief C++ API: Unicode String 
  */
 
 #include "unicode/utypes.h"
@@ -172,7 +172,7 @@ class UnicodeStringAppendable;  // unicode/appendable.h
 # endif
 #endif
 
-/* Cannot make the following #ifndef U_HIDE_DRAFT_API,
+/* Cannot make the following #ifndef U_HIDE_INTERNAL_API,
    it is used to construct other non-internal constants */
 /**
  * \def UNISTR_OBJECT_SIZE
@@ -234,7 +234,7 @@ class UnicodeStringAppendable;  // unicode/appendable.h
  * <p>In ICU, a Unicode string consists of 16-bit Unicode <em>code units</em>.
  * A Unicode character may be stored with either one code unit
  * (the most common case) or with a matched pair of special code units
- * ("surrogates"). The data type for code units is UChar.
+ * ("surrogates"). The data type for code units is UChar. 
  * For single-character handling, a Unicode character code <em>point</em> is a value
  * in the range 0..0x10ffff. ICU uses the UChar32 type for code points.</p>
  *
@@ -1529,7 +1529,7 @@ public:
               UnicodeString& target) const;
 
   /**
-   * Copy the characters in the range
+   * Copy the characters in the range 
    * [<tt>start</TT>, <tt>start + startLength</TT>) into an array of characters.
    * All characters must be invariant (see utypes.h).
    * Use US_INV as the last, signature-distinguishing parameter.
@@ -1934,7 +1934,6 @@ public:
    * @draft ICU 56
    */
   void swap(UnicodeString &other) U_NOEXCEPT;
-#endif  /* U_HIDE_DRAFT_API */
 
   /**
    * Non-member UnicodeString swap function.
@@ -1946,6 +1945,7 @@ public:
   swap(UnicodeString &s1, UnicodeString &s2) U_NOEXCEPT {
     s1.swap(s2);
   }
+#endif  /* U_HIDE_DRAFT_API */
 
   /**
    * Assignment operator.  Replace the characters in this UnicodeString

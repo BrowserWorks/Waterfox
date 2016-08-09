@@ -50,7 +50,7 @@ define(function(require, exports, module) {
 
   function cropString(text, limit, alternativeText) {
     if (!alternativeText) {
-      alternativeText = "...";
+      alternativeText = "\u2026";
     }
 
     // Make sure it's a string.
@@ -96,6 +96,9 @@ define(function(require, exports, module) {
   exports.StringRep = {
     rep: StringRep,
     supportsObject: supportsObject,
-    isCropped: isCropped
   };
+
+  exports.isCropped = isCropped;
+  exports.cropString = cropString;
+  exports.cropMultipleLines = cropMultipleLines;
 });

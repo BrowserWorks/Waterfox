@@ -39,11 +39,10 @@
 @BINPATH@/@DLL_PREFIX@nspr4@DLL_SUFFIX@
 #endif
 @BINPATH@/@DLL_PREFIX@lgpllibs@DLL_SUFFIX@
+#ifdef MOZ_OMX_PLUGIN
 @BINPATH@/@DLL_PREFIX@omxplugin@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@omxplugingb@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@omxplugingb235@DLL_SUFFIX@
-@BINPATH@/@DLL_PREFIX@omxpluginhc@DLL_SUFFIX@
 @BINPATH@/@DLL_PREFIX@omxpluginkk@DLL_SUFFIX@
+#endif
 @BINPATH@/@DLL_PREFIX@xul@DLL_SUFFIX@
 
 @BINPATH@/@DLL_PREFIX@nssckbi@DLL_SUFFIX@
@@ -108,7 +107,6 @@
 @BINPATH@/components/content_webrtc.xpt
 @BINPATH@/components/content_xslt.xpt
 @BINPATH@/components/cookie.xpt
-@BINPATH@/components/devtools_security.xpt
 @BINPATH@/components/directory.xpt
 @BINPATH@/components/docshell.xpt
 @BINPATH@/components/dom.xpt
@@ -129,6 +127,9 @@
 @BINPATH@/components/dom_offline.xpt
 @BINPATH@/components/dom_json.xpt
 @BINPATH@/components/dom_power.xpt
+#ifdef MOZ_ANDROID_GCM
+@BINPATH@/components/dom_push.xpt
+#endif
 @BINPATH@/components/dom_quota.xpt
 @BINPATH@/components/dom_range.xpt
 @BINPATH@/components/dom_security.xpt
@@ -274,6 +275,11 @@
 @BINPATH@/components/PhoneNumberService.manifest
 @BINPATH@/components/NotificationStorage.js
 @BINPATH@/components/NotificationStorage.manifest
+#ifdef MOZ_ANDROID_GCM
+@BINPATH@/components/Push.js
+@BINPATH@/components/Push.manifest
+@BINPATH@/components/PushComponents.js
+#endif
 @BINPATH@/components/SettingsManager.js
 @BINPATH@/components/SettingsManager.manifest
 @BINPATH@/components/BrowserElementParent.manifest
@@ -299,9 +305,13 @@
 @BINPATH@/components/nsLoginManagerPrompter.js
 @BINPATH@/components/storage-mozStorage.js
 @BINPATH@/components/crypto-SDR.js
+@BINPATH@/components/TooltipTextProvider.js
+@BINPATH@/components/TooltipTextProvider.manifest
 @BINPATH@/components/NetworkGeolocationProvider.manifest
 @BINPATH@/components/NetworkGeolocationProvider.js
 @BINPATH@/components/extensions.manifest
+@BINPATH@/components/utils.manifest
+@BINPATH@/components/simpleServices.js
 @BINPATH@/components/addonManager.js
 @BINPATH@/components/amContentHandler.js
 @BINPATH@/components/amInstallTrigger.js
@@ -408,6 +418,8 @@
 @BINPATH@/components/TCPPresentationServer.js
 @BINPATH@/components/PresentationNetworkHelper.js
 @BINPATH@/components/PresentationNetworkHelper.manifest
+@BINPATH@/components/PresentationDataChannelSessionTransport.js
+@BINPATH@/components/PresentationDataChannelSessionTransport.manifest
 
 @BINPATH@/components/PACGenerator.js
 @BINPATH@/components/PACGenerator.manifest

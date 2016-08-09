@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/bs_Cyrl.xml
@@ -165,7 +165,7 @@ bs_Cyrl{
             }
         }
     }
-    Version{"2.1.23.7"}
+    Version{"2.1.19.90"}
     calendar{
         buddhist{
             eras{
@@ -360,10 +360,6 @@ bs_Cyrl{
         }
         gregorian{
             AmPmMarkers{
-                "пре подне",
-                "поподне",
-            }
-            AmPmMarkersAbbr{
                 "пре подне",
                 "поподне",
             }

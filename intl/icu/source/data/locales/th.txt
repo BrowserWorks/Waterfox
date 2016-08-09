@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/th.xml
@@ -139,7 +139,7 @@ th{
         minimumGroupingDigits{"1"}
         native{"thai"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.77"}
     calendar{
         buddhist{
             DateTimePatterns{
@@ -2444,10 +2444,7 @@ th{
         day-narrow{
             dn{"วัน"}
             relative{
-                "-1"{"เมื่อวาน"}
                 "-2"{"เมื่อวานซืน"}
-                "0"{"วันนี้"}
-                "1"{"พรุ่งนี้"}
                 "2"{"มะรืนนี้"}
             }
             relativeTime{
@@ -2462,10 +2459,7 @@ th{
         day-short{
             dn{"วัน"}
             relative{
-                "-1"{"เมื่อวาน"}
                 "-2"{"เมื่อวานซืน"}
-                "0"{"วันนี้"}
-                "1"{"พรุ่งนี้"}
                 "2"{"มะรืนนี้"}
             }
             relativeTime{

@@ -50,7 +50,7 @@ NS_IMPL_FRAMEARENA_HELPERS(nsSVGPathGeometryFrame)
 NS_QUERYFRAME_HEAD(nsSVGPathGeometryFrame)
   NS_QUERYFRAME_ENTRY(nsISVGChildFrame)
   NS_QUERYFRAME_ENTRY(nsSVGPathGeometryFrame)
-NS_QUERYFRAME_TAIL_INHERITING(nsSVGPathGeometryFrameBase)
+NS_QUERYFRAME_TAIL_INHERITING(nsFrame)
 
 //----------------------------------------------------------------------
 // Display list item:
@@ -123,7 +123,7 @@ nsSVGPathGeometryFrame::Init(nsIContent*       aContent,
                              nsIFrame*         aPrevInFlow)
 {
   AddStateBits(aParent->GetStateBits() & NS_STATE_SVG_CLIPPATH_CHILD);
-  nsSVGPathGeometryFrameBase::Init(aContent, aParent, aPrevInFlow);
+  nsFrame::Init(aContent, aParent, aPrevInFlow);
 }
 
 nsresult
@@ -150,12 +150,12 @@ nsSVGPathGeometryFrame::AttributeChanged(int32_t         aNameSpaceID,
 /* virtual */ void
 nsSVGPathGeometryFrame::DidSetStyleContext(nsStyleContext* aOldStyleContext)
 {
-  nsSVGPathGeometryFrameBase::DidSetStyleContext(aOldStyleContext);
+  nsFrame::DidSetStyleContext(aOldStyleContext);
 
   if (aOldStyleContext) {
-    auto oldStyleDisplay = aOldStyleContext->PeekStyleDisplay();
-    if (oldStyleDisplay &&
-        StyleDisplay()->mOpacity != oldStyleDisplay->mOpacity &&
+    auto oldStyleEffects = aOldStyleContext->PeekStyleEffects();
+    if (oldStyleEffects &&
+        StyleEffects()->mOpacity != oldStyleEffects->mOpacity &&
         nsSVGUtils::CanOptimizeOpacity(this)) {
       // nsIFrame::BuildDisplayListForStackingContext() is not going to create an
       // nsDisplayOpacity display list item, so DLBI won't invalidate for us.

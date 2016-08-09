@@ -61,7 +61,7 @@ const TreeNode = createFactory(createClass({
       expanded: this.props.expanded,
       visible: this.props.hasChildren,
       onExpand: this.props.onExpand,
-      onCollapse: this.props.onCollapse
+      onCollapse: this.props.onCollapse,
     });
 
     let isOddRow = this.props.index % 2;
@@ -115,14 +115,17 @@ const TreeNode = createFactory(createClass({
  */
 function oncePerAnimationFrame(fn) {
   let animationId = null;
+  let argsToPass = null;
   return function (...args) {
+    argsToPass = args;
     if (animationId !== null) {
       return;
     }
 
     animationId = requestAnimationFrame(() => {
+      fn.call(this, ...argsToPass);
       animationId = null;
-      fn.call(this, ...args);
+      argsToPass = null;
     });
   };
 }
@@ -218,22 +221,28 @@ const Tree = module.exports = createClass({
       this.props.onExpand(item);
       this.state.seen.add(item);
 
-      for (let child of this.props.getChildren(item)) {
-        autoExpand(child, currentDepth + 1);
+      const children = this.props.getChildren(item);
+      const length = children.length;
+      for (let i = 0; i < length; i++) {
+        autoExpand(children[i], currentDepth + 1);
       }
     };
 
-    for (let root of this.props.getRoots()) {
-      autoExpand(root, 0);
+    const roots = this.props.getRoots();
+    const length = roots.length;
+    for (let i = 0; i < length; i++) {
+      autoExpand(roots[i], 0);
     }
   },
 
   render() {
     const traversal = this._dfsFromRoots();
 
-    // Remove 1 from `begin` and add 2 to `end` so that the top and bottom of
-    // the page are filled with the previous and next items respectively,
-    // rather than whitespace if the item is not in full view.
+    // Remove `NUMBER_OF_OFFSCREEN_ITEMS` from `begin` and add `2 *
+    // NUMBER_OF_OFFSCREEN_ITEMS` to `end` so that the top and bottom of the
+    // page are filled with the `NUMBER_OF_OFFSCREEN_ITEMS` previous and next
+    // items respectively, rather than whitespace if the item is not in full
+    // view.
     const begin = Math.max(((this.state.scroll / this.props.itemHeight) | 0) - NUMBER_OF_OFFSCREEN_ITEMS, 0);
     const end = begin + (2 * NUMBER_OF_OFFSCREEN_ITEMS) + ((this.state.height / this.props.itemHeight) | 0);
     const toRender = traversal.slice(begin, end);
@@ -262,7 +271,7 @@ const Tree = module.exports = createClass({
         hasChildren: !!this.props.getChildren(item).length,
         onExpand: this._onExpand,
         onCollapse: this._onCollapse,
-        onFocus: () => this._focus(item)
+        onFocus: () => this._focus(begin + i, item),
       }));
     }
 
@@ -280,6 +289,8 @@ const Tree = module.exports = createClass({
         className: "tree",
         ref: "tree",
         onKeyDown: this._onKeyDown,
+        onKeyPress: this._preventArrowKeyScrolling,
+        onKeyUp: this._preventArrowKeyScrolling,
         onScroll: this._onScroll,
         style: {
           padding: 0,
@@ -288,6 +299,25 @@ const Tree = module.exports = createClass({
       },
       nodes
     );
+  },
+
+  _preventArrowKeyScrolling(e) {
+    switch (e.key) {
+      case "ArrowUp":
+      case "ArrowDown":
+      case "ArrowLeft":
+      case "ArrowRight":
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.nativeEvent) {
+          if (e.nativeEvent.preventDefault) {
+            e.nativeEvent.preventDefault();
+          }
+          if (e.nativeEvent.stopPropagation) {
+            e.nativeEvent.stopPropagation();
+          }
+        }
+    }
   },
 
   /**
@@ -315,8 +345,10 @@ const Tree = module.exports = createClass({
       return traversal;
     }
 
-    for (let child of this.props.getChildren(item)) {
-      this._dfs(child, maxDepth, traversal, nextDepth);
+    const children = this.props.getChildren(item);
+    const length = children.length;
+    for (let i = 0; i < length; i++) {
+      this._dfs(children[i], maxDepth, traversal, nextDepth);
     }
 
     return traversal;
@@ -328,8 +360,10 @@ const Tree = module.exports = createClass({
   _dfsFromRoots(maxDepth = Infinity) {
     const traversal = [];
 
-    for (let root of this.props.getRoots()) {
-      this._dfs(root, maxDepth, traversal);
+    const roots = this.props.getRoots();
+    const length = roots.length;
+    for (let i = 0; i < length; i++) {
+      this._dfs(roots[i], maxDepth, traversal);
     }
 
     return traversal;
@@ -346,8 +380,10 @@ const Tree = module.exports = createClass({
       this.props.onExpand(item);
 
       if (expandAllChildren) {
-        for (let { item: child } of this._dfs(item)) {
-          this.props.onExpand(child);
+        const children = this._dfs(item);
+        const length = children.length;
+        for (let i = 0; i < length; i++) {
+          this.props.onExpand(children[i].item);
         }
       }
     }
@@ -367,9 +403,31 @@ const Tree = module.exports = createClass({
   /**
    * Sets the passed in item to be the focused item.
    *
-   * @param {Object} item
+   * @param {Number} index
+   *        The index of the item in a full DFS traversal (ignoring collapsed
+   *        nodes). Ignored if `item` is undefined.
+   *
+   * @param {Object|undefined} item
+   *        The item to be focused, or undefined to focus no item.
    */
-  _focus: function (item) {
+  _focus(index, item) {
+    if (item !== undefined) {
+      const itemStartPosition = index * this.props.itemHeight;
+      const itemEndPosition = (index + 1) * this.props.itemHeight;
+
+      // Note that if the height of the viewport (this.state.height) is less than
+      // `this.props.itemHeight`, we could accidentally try and scroll both up and
+      // down in a futile attempt to make both the item's start and end positions
+      // visible. Instead, give priority to the start of the item by checking its
+      // position first, and then using an "else if", rather than a separate "if",
+      // for the end position.
+      if (this.state.scroll > itemStartPosition) {
+        this.refs.tree.scrollTo(0, itemStartPosition);
+      } else if ((this.state.scroll + this.state.height) < itemEndPosition) {
+        this.refs.tree.scrollTo(0, itemEndPosition - this.state.height);
+      }
+    }
+
     if (this.props.onFocus) {
       this.props.onFocus(item);
     }
@@ -378,8 +436,8 @@ const Tree = module.exports = createClass({
   /**
    * Sets the state to have no focused item.
    */
-  _onBlur: function () {
-    this._focus(undefined);
+  _onBlur() {
+    this._focus(0, undefined);
   },
 
   /**
@@ -410,20 +468,16 @@ const Tree = module.exports = createClass({
       return;
     }
 
-    // Prevent scrolling when pressing navigation keys. Guard against mocked
-    // events received when testing.
-    if (e.nativeEvent && e.nativeEvent.preventDefault) {
-      ViewHelpers.preventScrolling(e.nativeEvent);
-    }
+    this._preventArrowKeyScrolling(e);
 
     switch (e.key) {
       case "ArrowUp":
         this._focusPrevNode();
-        return false;
+        return;
 
       case "ArrowDown":
         this._focusNextNode();
-        return false;
+        return;
 
       case "ArrowLeft":
         if (this.props.isExpanded(this.props.focused)
@@ -432,7 +486,7 @@ const Tree = module.exports = createClass({
         } else {
           this._focusParentNode();
         }
-        return false;
+        return;
 
       case "ArrowRight":
         if (!this.props.isExpanded(this.props.focused)) {
@@ -440,8 +494,8 @@ const Tree = module.exports = createClass({
         } else {
           this._focusNextNode();
         }
-        return false;
-      }
+        return;
+    }
   },
 
   /**
@@ -453,18 +507,24 @@ const Tree = module.exports = createClass({
     // doesn't exist, we're at the first node already.
 
     let prev;
-    for (let { item } of this._dfsFromRoots()) {
+    let prevIndex;
+
+    const traversal = this._dfsFromRoots();
+    const length = traversal.length;
+    for (let i = 0; i < length; i++) {
+      const item = traversal[i].item;
       if (item === this.props.focused) {
         break;
       }
       prev = item;
+      prevIndex = i;
     }
 
     if (prev === undefined) {
       return;
     }
 
-    this._focus(prev);
+    this._focus(prevIndex, prev);
   }),
 
   /**
@@ -477,17 +537,18 @@ const Tree = module.exports = createClass({
     // doesn't exist, we're at the last node already.
 
     const traversal = this._dfsFromRoots();
-
+    const length = traversal.length;
     let i = 0;
-    for (let { item } of traversal) {
-      if (item === this.props.focused) {
+
+    while (i < length) {
+      if (traversal[i].item === this.props.focused) {
         break;
       }
       i++;
     }
 
     if (i + 1 < traversal.length) {
-      this._focus(traversal[i + 1].item);
+      this._focus(i + 1, traversal[i + 1].item);
     }
   }),
 
@@ -497,8 +558,19 @@ const Tree = module.exports = createClass({
    */
   _focusParentNode: oncePerAnimationFrame(function () {
     const parent = this.props.getParent(this.props.focused);
-    if (parent) {
-      this._focus(parent);
+    if (!parent) {
+      return;
     }
+
+    const traversal = this._dfsFromRoots();
+    const length = traversal.length;
+    let parentIndex = 0;
+    for (; parentIndex < length; parentIndex++) {
+      if (traversal[parentIndex].item === parent) {
+        break;
+      }
+    }
+
+    this._focus(parentIndex, parent);
   }),
 });

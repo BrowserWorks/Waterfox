@@ -47,7 +47,6 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/File.h"
 #include "mozilla/dom/ExternalHelperAppParent.h"
-#include "mozilla/dom/FileSystemRequestParent.h"
 #include "mozilla/dom/GeolocationBinding.h"
 #ifdef MOZ_EME
 #include "mozilla/dom/MediaKeySystemAccess.h"
@@ -85,9 +84,10 @@
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/layers/PAPZParent.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/ImageBridgeParent.h"
 #include "mozilla/layers/SharedBufferManagerParent.h"
+#include "mozilla/layout/RenderFrameParent.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/media/MediaParent.h"
 #include "mozilla/Move.h"
@@ -139,6 +139,7 @@
 #include "nsIMemoryReporter.h"
 #include "nsIMozBrowserFrame.h"
 #include "nsIMutable.h"
+#include "nsINSSU2FToken.h"
 #include "nsIObserverService.h"
 #include "nsIPresShell.h"
 #include "nsIRemoteWindowContext.h"
@@ -303,6 +304,7 @@ using namespace mozilla::gmp;
 using namespace mozilla::hal;
 using namespace mozilla::ipc;
 using namespace mozilla::layers;
+using namespace mozilla::layout;
 using namespace mozilla::net;
 using namespace mozilla::jsipc;
 using namespace mozilla::psm;
@@ -1190,7 +1192,6 @@ ContentParent::CreateBrowserOrApp(const TabContext& aContext,
       RefPtr<TabParent> tp(new TabParent(constructorSender, tabId,
                                          aContext, chromeFlags));
       tp->SetInitedByParent();
-      tp->SetOwnerElement(aFrameElement);
 
       PBrowserParent* browser =
       constructorSender->SendPBrowserConstructor(
@@ -1201,7 +1202,12 @@ ContentParent::CreateBrowserOrApp(const TabContext& aContext,
         constructorSender->ChildID(),
         constructorSender->IsForApp(),
         constructorSender->IsForBrowser());
-      return TabParent::GetFrom(browser);
+
+      if (browser) {
+        RefPtr<TabParent> constructedTabParent = TabParent::GetFrom(browser);
+        constructedTabParent->SetOwnerElement(aFrameElement);
+        return constructedTabParent;
+      }
     }
     return nullptr;
   }
@@ -1299,7 +1305,6 @@ ContentParent::CreateBrowserOrApp(const TabContext& aContext,
 
   RefPtr<TabParent> tp = new TabParent(parent, tabId, aContext, chromeFlags);
   tp->SetInitedByParent();
-  tp->SetOwnerElement(aFrameElement);
   PBrowserParent* browser = parent->SendPBrowserConstructor(
     // DeallocPBrowserParent() releases this ref.
     RefPtr<TabParent>(tp).forget().take(),
@@ -1309,6 +1314,11 @@ ContentParent::CreateBrowserOrApp(const TabContext& aContext,
     parent->ChildID(),
     parent->IsForApp(),
     parent->IsForBrowser());
+
+  if (browser) {
+    RefPtr<TabParent> constructedTabParent = TabParent::GetFrom(browser);
+    constructedTabParent->SetOwnerElement(aFrameElement);
+  }
 
   if (isInContentProcess) {
     // Just return directly without the following check in content process.
@@ -1921,7 +1931,7 @@ ContentParent::AllocateLayerTreeId(ContentParent* aContent,
                                    TabParent* aTopLevel, const TabId& aTabId,
                                    uint64_t* aId)
 {
-  *aId = CompositorParent::AllocateLayerTreeId();
+  *aId = CompositorBridgeParent::AllocateLayerTreeId();
 
   if (!gfxPlatform::AsyncPanZoomEnabled()) {
     return true;
@@ -1931,7 +1941,7 @@ ContentParent::AllocateLayerTreeId(ContentParent* aContent,
     return false;
   }
 
-  return CompositorParent::UpdateRemoteContentController(*aId, aContent,
+  return CompositorBridgeParent::UpdateRemoteContentController(*aId, aContent,
                                                          aTabId, aTopLevel);
 }
 
@@ -1979,7 +1989,7 @@ ContentParent::RecvDeallocateLayerTreeId(const uint64_t& aId)
   auto iter = NestedBrowserLayerIds().find(this);
   if (iter != NestedBrowserLayerIds().end() &&
     iter->second.find(aId) != iter->second.end()) {
-    CompositorParent::DeallocateLayerTreeId(aId);
+    CompositorBridgeParent::DeallocateLayerTreeId(aId);
   } else {
     // You can't deallocate layer tree ids that you didn't allocate
     KillHard("DeallocateLayerTreeId");
@@ -1988,14 +1998,6 @@ ContentParent::RecvDeallocateLayerTreeId(const uint64_t& aId)
 }
 
 namespace {
-
-void
-DelayedDeleteSubprocess(GeckoChildProcessHost* aSubprocess)
-{
-  XRE_GetIOMessageLoop()
-    ->PostTask(FROM_HERE,
-           new DeleteTask<GeckoChildProcessHost>(aSubprocess));
-}
 
 // This runnable only exists to delegate ownership of the
 // ContentParent to this runnable, until it's deleted by the event
@@ -2128,10 +2130,10 @@ ContentParent::ActorDestroy(ActorDestroyReason why)
   }
   mIdleListeners.Clear();
 
-  MessageLoop::current()->
-    PostTask(FROM_HERE,
-             NewRunnableFunction(DelayedDeleteSubprocess, mSubprocess));
-  mSubprocess = nullptr;
+  if (mSubprocess) {
+    mSubprocess->DissociateActor();
+    mSubprocess = nullptr;
+  }
 
   // IPDL rules require actors to live on past ActorDestroy, but it
   // may be that the kungFuDeathGrip above is the last reference to
@@ -2543,16 +2545,16 @@ ContentParent::InitInternal(ProcessPriority aInitialPriority,
 
   if (aSetupOffMainThreadCompositing) {
     // NB: internally, this will send an IPC message to the child
-    // process to get it to create the CompositorChild.  This
+    // process to get it to create the CompositorBridgeChild.  This
     // message goes through the regular IPC queue for this
     // channel, so delivery will happen-before any other messages
-    // we send.  The CompositorChild must be created before any
+    // we send.  The CompositorBridgeChild must be created before any
     // PBrowsers are created, because they rely on the Compositor
     // already being around.  (Creation is async, so can't happen
     // on demand.)
-    bool useOffMainThreadCompositing = !!CompositorParent::CompositorLoop();
+    bool useOffMainThreadCompositing = !!CompositorBridgeParent::CompositorLoop();
     if (useOffMainThreadCompositing) {
-      DebugOnly<bool> opened = PCompositor::Open(this);
+      DebugOnly<bool> opened = PCompositorBridge::Open(this);
       MOZ_ASSERT(opened);
 
       opened = PImageBridge::Open(this);
@@ -3128,6 +3130,27 @@ ContentParent::Observe(nsISupports* aSubject,
     NS_ASSERTION(!mSubprocess, "Close should have nulled mSubprocess");
   }
 
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  // Need to do this before the mIsAlive check to avoid missing profiles.
+  if (!strcmp(aTopic, "profiler-subprocess-gather")) {
+    if (mGatherer) {
+      mGatherer->WillGatherOOPProfile();
+      if (mIsAlive && mSubprocess) {
+        Unused << SendGatherProfile();
+      }
+    }
+  }
+  else if (!strcmp(aTopic, "profiler-subprocess")) {
+    nsCOMPtr<nsIProfileSaveEvent> pse = do_QueryInterface(aSubject);
+    if (pse) {
+      if (!mProfile.IsEmpty()) {
+        pse->AddSubProfile(mProfile.get());
+        mProfile.Truncate();
+      }
+    }
+  }
+#endif
+
   if (!mIsAlive || !mSubprocess)
     return NS_OK;
 
@@ -3289,21 +3312,6 @@ ContentParent::Observe(nsISupports* aSubject,
   else if (!strcmp(aTopic, "profiler-resumed")) {
     Unused << SendPauseProfiler(false);
   }
-  else if (!strcmp(aTopic, "profiler-subprocess-gather")) {
-    if (mGatherer) {
-      mGatherer->WillGatherOOPProfile();
-      Unused << SendGatherProfile();
-    }
-  }
-  else if (!strcmp(aTopic, "profiler-subprocess")) {
-    nsCOMPtr<nsIProfileSaveEvent> pse = do_QueryInterface(aSubject);
-    if (pse) {
-      if (!mProfile.IsEmpty()) {
-        pse->AddSubProfile(mProfile.get());
-        mProfile.Truncate();
-      }
-    }
-  }
 #endif
   else if (!strcmp(aTopic, "gmp-changed")) {
     Unused << SendNotifyGMPsChanged();
@@ -3333,11 +3341,11 @@ ContentParent::DeallocPAPZParent(PAPZParent* aActor)
   return true;
 }
 
-PCompositorParent*
-ContentParent::AllocPCompositorParent(mozilla::ipc::Transport* aTransport,
-                                      base::ProcessId aOtherProcess)
+PCompositorBridgeParent*
+ContentParent::AllocPCompositorBridgeParent(mozilla::ipc::Transport* aTransport,
+                                            base::ProcessId aOtherProcess)
 {
-  return CompositorParent::Create(aTransport, aOtherProcess);
+  return CompositorBridgeParent::Create(aTransport, aOtherProcess, mSubprocess);
 }
 
 gfx::PVRManagerParent*
@@ -3351,7 +3359,7 @@ PImageBridgeParent*
 ContentParent::AllocPImageBridgeParent(mozilla::ipc::Transport* aTransport,
                                        base::ProcessId aOtherProcess)
 {
-  return ImageBridgeParent::Create(aTransport, aOtherProcess);
+  return ImageBridgeParent::Create(aTransport, aOtherProcess, mSubprocess);
 }
 
 PBackgroundParent*
@@ -3501,24 +3509,6 @@ bool
 ContentParent::DeallocPDeviceStorageRequestParent(PDeviceStorageRequestParent* doomed)
 {
   DeviceStorageRequestParent *parent = static_cast<DeviceStorageRequestParent*>(doomed);
-  NS_RELEASE(parent);
-  return true;
-}
-
-PFileSystemRequestParent*
-ContentParent::AllocPFileSystemRequestParent(const FileSystemParams& aParams)
-{
-  RefPtr<FileSystemRequestParent> result = new FileSystemRequestParent();
-  if (!result->Dispatch(this, aParams)) {
-    return nullptr;
-  }
-  return result.forget().take();
-}
-
-bool
-ContentParent::DeallocPFileSystemRequestParent(PFileSystemRequestParent* doomed)
-{
-  FileSystemRequestParent* parent = static_cast<FileSystemRequestParent*>(doomed);
   NS_RELEASE(parent);
   return true;
 }
@@ -4249,22 +4239,88 @@ ContentParent::RecvSetURITitle(const URIParams& uri,
 }
 
 bool
-ContentParent::RecvGetRandomValues(const uint32_t& length,
-                                   InfallibleTArray<uint8_t>* randomValues)
+ContentParent::RecvNSSU2FTokenIsCompatibleVersion(const nsString& aVersion,
+                                                  bool* aIsCompatible)
 {
-  uint8_t* buf = Crypto::GetRandomValues(length);
-  if (!buf) {
-    return true;
+  MOZ_ASSERT(aIsCompatible);
+
+  nsCOMPtr<nsINSSU2FToken> nssToken(do_GetService(NS_NSSU2FTOKEN_CONTRACTID));
+  if (NS_WARN_IF(!nssToken)) {
+    return false;
   }
 
-  randomValues->SetCapacity(length);
-  randomValues->SetLength(length);
+  nsresult rv = nssToken->IsCompatibleVersion(aVersion, aIsCompatible);
+  return NS_SUCCEEDED(rv);
+}
 
-  memcpy(randomValues->Elements(), buf, length);
+bool
+ContentParent::RecvNSSU2FTokenIsRegistered(nsTArray<uint8_t>&& aKeyHandle,
+                                           bool* aIsValidKeyHandle)
+{
+  MOZ_ASSERT(aIsValidKeyHandle);
 
-  free(buf);
+  nsCOMPtr<nsINSSU2FToken> nssToken(do_GetService(NS_NSSU2FTOKEN_CONTRACTID));
+  if (NS_WARN_IF(!nssToken)) {
+    return false;
+  }
 
-  return true;
+  nsresult rv = nssToken->IsRegistered(aKeyHandle.Elements(), aKeyHandle.Length(),
+                                       aIsValidKeyHandle);
+  return  NS_SUCCEEDED(rv);
+}
+
+bool
+ContentParent::RecvNSSU2FTokenRegister(nsTArray<uint8_t>&& aApplication,
+                                       nsTArray<uint8_t>&& aChallenge,
+                                       nsTArray<uint8_t>* aRegistration)
+{
+  MOZ_ASSERT(aRegistration);
+
+  nsCOMPtr<nsINSSU2FToken> nssToken(do_GetService(NS_NSSU2FTOKEN_CONTRACTID));
+  if (NS_WARN_IF(!nssToken)) {
+    return false;
+  }
+  uint8_t* buffer;
+  uint32_t bufferlen;
+  nsresult rv = nssToken->Register(aApplication.Elements(), aApplication.Length(),
+                                   aChallenge.Elements(), aChallenge.Length(),
+                                   &buffer, &bufferlen);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+
+  MOZ_ASSERT(buffer);
+  aRegistration->ReplaceElementsAt(0, aRegistration->Length(), buffer, bufferlen);
+  free(buffer);
+  return NS_SUCCEEDED(rv);
+}
+
+bool
+ContentParent::RecvNSSU2FTokenSign(nsTArray<uint8_t>&& aApplication,
+                                   nsTArray<uint8_t>&& aChallenge,
+                                   nsTArray<uint8_t>&& aKeyHandle,
+                                   nsTArray<uint8_t>* aSignature)
+{
+  MOZ_ASSERT(aSignature);
+
+  nsCOMPtr<nsINSSU2FToken> nssToken(do_GetService(NS_NSSU2FTOKEN_CONTRACTID));
+  if (NS_WARN_IF(!nssToken)) {
+    return false;
+  }
+  uint8_t* buffer;
+  uint32_t bufferlen;
+  nsresult rv = nssToken->Sign(aApplication.Elements(), aApplication.Length(),
+                               aChallenge.Elements(), aChallenge.Length(),
+                               aKeyHandle.Elements(), aKeyHandle.Length(),
+                               &buffer, &bufferlen);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return false;
+  }
+
+  MOZ_ASSERT(buffer);
+  aSignature->ReplaceElementsAt(0, aSignature->Length(), buffer, bufferlen);
+  free(buffer);
+  return NS_SUCCEEDED(rv);
 }
 
 bool
@@ -4906,6 +4962,7 @@ ContentParent::RecvRecordingDeviceEvents(const nsString& aRecordingStatus,
 bool
 ContentParent::RecvGetGraphicsFeatureStatus(const int32_t& aFeature,
                                             int32_t* aStatus,
+                                            nsCString* aFailureId,
                                             bool* aSuccess)
 {
   nsCOMPtr<nsIGfxInfo> gfxInfo = services::GetGfxInfo();
@@ -4914,7 +4971,7 @@ ContentParent::RecvGetGraphicsFeatureStatus(const int32_t& aFeature,
     return true;
   }
 
-  *aSuccess = NS_SUCCEEDED(gfxInfo->GetFeatureStatus(aFeature, aStatus));
+  *aSuccess = NS_SUCCEEDED(gfxInfo->GetFeatureStatus(aFeature, *aFailureId, aStatus));
   return true;
 }
 
@@ -5323,6 +5380,7 @@ ContentParent::DeallocPWebBrowserPersistDocumentParent(PWebBrowserPersistDocumen
 bool
 ContentParent::RecvCreateWindow(PBrowserParent* aThisTab,
                                 PBrowserParent* aNewTab,
+                                PRenderFrameParent* aRenderFrame,
                                 const uint32_t& aChromeFlags,
                                 const bool& aCalledFromJS,
                                 const bool& aPositionSpecified,
@@ -5332,10 +5390,13 @@ ContentParent::RecvCreateWindow(PBrowserParent* aThisTab,
                                 const nsCString& aFeatures,
                                 const nsCString& aBaseURI,
                                 const DocShellOriginAttributes& aOpenerOriginAttributes,
+                                const float& aFullZoom,
                                 nsresult* aResult,
                                 bool* aWindowIsNew,
                                 InfallibleTArray<FrameScriptInfo>* aFrameScripts,
-                                nsCString* aURLToLoad)
+                                nsCString* aURLToLoad,
+                                TextureFactoryIdentifier* aTextureFactoryIdentifier,
+                                uint64_t* aLayersId)
 {
   // We always expect to open a new window here. If we don't, it's an error.
   *aWindowIsNew = true;
@@ -5447,6 +5508,13 @@ ContentParent::RecvCreateWindow(PBrowserParent* aThisTab,
     }
 
     newTab->SwapFrameScriptsFrom(*aFrameScripts);
+
+    RenderFrameParent* rfp = static_cast<RenderFrameParent*>(aRenderFrame);
+    if (!newTab->SetRenderFrame(rfp) ||
+        !newTab->GetRenderFrameInfo(aTextureFactoryIdentifier, aLayersId)) {
+      *aResult = NS_ERROR_FAILURE;
+    }
+
     return true;
   }
 
@@ -5484,12 +5552,15 @@ ContentParent::RecvCreateWindow(PBrowserParent* aThisTab,
   // nsString (since primitives are not nullable). If we detect the voided
   // nsString, we know that we need to send OpenWindow2 a nullptr for the URI.
   const char* uri = aURI.IsVoid() ? nullptr : finalURIString.get();
-  const char* name = aName.IsVoid() ? nullptr : NS_ConvertUTF16toUTF8(aName).get();
   const char* features = aFeatures.IsVoid() ? nullptr : aFeatures.get();
 
-  *aResult = pwwatch->OpenWindow2(parent, uri, name, features, aCalledFromJS,
+  *aResult = pwwatch->OpenWindow2(parent, uri,
+                                  aName.IsVoid() ?
+                                    nullptr :
+                                    NS_ConvertUTF16toUTF8(aName).get(),
+                                  features, aCalledFromJS,
                                   false, false, thisTabParent, nullptr,
-                                  getter_AddRefs(window));
+                                  aFullZoom, 1, getter_AddRefs(window));
 
   if (NS_WARN_IF(!window)) {
     return true;
@@ -5526,6 +5597,13 @@ ContentParent::RecvCreateWindow(PBrowserParent* aThisTab,
   MOZ_ASSERT(TabParent::GetFrom(newRemoteTab) == newTab);
 
   newTab->SwapFrameScriptsFrom(*aFrameScripts);
+
+  RenderFrameParent* rfp = static_cast<RenderFrameParent*>(aRenderFrame);
+  if (!newTab->SetRenderFrame(rfp) ||
+      !newTab->GetRenderFrameInfo(aTextureFactoryIdentifier, aLayersId)) {
+    *aResult = NS_ERROR_FAILURE;
+  }
+
   return true;
 }
 
@@ -5660,14 +5738,17 @@ ContentParent::RecvBeginDriverCrashGuard(const uint32_t& aGuardType, bool* aOutC
   case gfx::CrashGuardType::GLContext:
     guard = MakeUnique<gfx::GLContextCrashGuard>(this);
     break;
+  case gfx::CrashGuardType::D3D11Video:
+    guard = MakeUnique<gfx::D3D11VideoCrashGuard>(this);
+    break;
   default:
     MOZ_ASSERT_UNREACHABLE("unknown crash guard type");
     return false;
   }
 
   if (guard->Crashed()) {
-  *aOutCrashed = true;
-  return true;
+    *aOutCrashed = true;
+    return true;
   }
 
   *aOutCrashed = false;

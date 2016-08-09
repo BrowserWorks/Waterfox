@@ -26,7 +26,6 @@ SharedObject::addRef(UBool fromWithinCache) const {
         // cache global mutex is locked. In this way, we can be rest assured
         // that data races can't happen if the cache performs some task if
         // the hardRefCount is zero while the global cache mutex is locked.
-        (void)fromWithinCache;   // Suppress unused variable warning in non-debug builds.
         U_ASSERT(fromWithinCache);
         cachePtr->incrementItemsInUse();
     }

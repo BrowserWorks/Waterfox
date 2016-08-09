@@ -18,12 +18,22 @@ var gContent = content;
 
 // social frames are always treated as app tabs
 docShell.isAppTab = true;
+var gHookedWindowCloseForPanelClose = false;
 
 var gDOMContentLoaded = false;
-addEventListener("DOMContentLoaded", function() {
-  gDOMContentLoaded = true;
-  sendAsyncMessage("DOMContentLoaded");
+addEventListener("DOMContentLoaded", function(event) {
+  if (event.target == content.document) {
+    gDOMContentLoaded = true;
+    sendAsyncMessage("DOMContentLoaded");
+  }
 });
+addEventListener("unload", function(event) {
+  if (event.target == content.document) {
+    gDOMContentLoaded = false;
+    gHookedWindowCloseForPanelClose = false;
+  }
+}, true);
+
 var gDOMTitleChangedByUs = false;
 addEventListener("DOMTitleChanged", function(e) {
   if (!gDOMTitleChangedByUs) {
@@ -33,11 +43,28 @@ addEventListener("DOMTitleChanged", function(e) {
   }
   gDOMTitleChangedByUs = false;
 });
-var gHookedWindowCloseForPanelClose = false;
+
+addEventListener("Social:Notification", function(event) {
+  let frame = docShell.chromeEventHandler;
+  let origin = frame.getAttribute("origin");
+  sendAsyncMessage("Social:Notification", {
+    "origin": origin,
+    "detail": JSON.parse(event.detail)
+  });
+});
+
+addMessageListener("Social:OpenGraphData", (message) => {
+  let ev = new content.CustomEvent("OpenGraphData", { detail: JSON.stringify(message.data) });
+  content.dispatchEvent(ev);
+});
+
+addMessageListener("Social:ClearFrame", (message) => {
+  docShell.createAboutBlankContentViewer(null);
+});
 
 // Error handling class used to listen for network errors in the social frames
 // and replace them with a social-specific error page
-SocialErrorListener = {
+const SocialErrorListener = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIDOMEventListener,
                                          Ci.nsIWebProgressListener,
                                          Ci.nsISupportsWeakReference,
@@ -56,6 +83,7 @@ SocialErrorListener = {
     addMessageListener("Social:ListenForEvents", this);
     addMessageListener("Social:SetDocumentTitle", this);
     addMessageListener("Social:SetErrorURL", this);
+    addMessageListener("Social:DisableDialogs", this);
     addMessageListener("Social:WaitForDocumentVisible", this);
     addMessageListener("WaitForDOMContentLoaded", this);
     let webProgress = docShell.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
@@ -166,6 +194,11 @@ SocialErrorListener = {
           sendAsyncMessage("Social:DocumentVisible");
         });
         break;
+      case "Social:DisableDialogs":
+        let windowUtils = content.QueryInterface(Ci.nsIInterfaceRequestor).
+                          getInterface(Ci.nsIDOMWindowUtils);
+        windowUtils.disableDialogs();
+        break;
       case "WaitForDOMContentLoaded":
         if (gDOMContentLoaded) {
           sendAsyncMessage("DOMContentLoaded");
@@ -209,6 +242,8 @@ SocialErrorListener = {
 
   onStateChange(aWebProgress, aRequest, aState, aStatus) {
     let failure = false;
+    if ((aState & Ci.nsIWebProgressListener.STATE_IS_REQUEST))
+      return;
     if ((aState & Ci.nsIWebProgressListener.STATE_STOP)) {
       if (aRequest instanceof Ci.nsIHttpChannel) {
         try {

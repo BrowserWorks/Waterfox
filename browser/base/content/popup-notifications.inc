@@ -2,7 +2,6 @@
 
     <panel id="notification-popup"
            type="arrow"
-           footertype="promobox"
            position="after_start"
            hidden="true"
            orient="vertical"
@@ -37,10 +36,6 @@
           <menupopup id="webRTC-selectMicrophone-menupopup"/>
         </menulist>
       </popupnotificationcontent>
-    </popupnotification>
-
-    <popupnotification id="webapps-install-progress-notification" hidden="true">
-      <popupnotificationcontent id="webapps-install-progress-content" orient="vertical" align="start"/>
     </popupnotification>
 
     <popupnotification id="servicesInstall-notification" hidden="true">

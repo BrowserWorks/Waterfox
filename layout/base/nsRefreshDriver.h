@@ -238,6 +238,12 @@ public:
   void CancelPendingEvents(nsIDocument* aDocument);
 
   /**
+   * Schedule a frame visibility update "soon", subject to the heuristics and
+   * throttling we apply to visibility updates.
+   */
+  void ScheduleFrameVisibilityUpdate() { mNeedToRecomputeVisibility = true; }
+
+  /**
    * Tell the refresh driver that it is done driving refreshes and
    * should stop its timer and forget about its pres context.  This may
    * be called from within a refresh.
@@ -313,7 +319,8 @@ public:
   static bool GetJankLevels(mozilla::Vector<uint64_t>& aJank);
 
   // mozilla::layers::TransactionIdAllocator
-  virtual uint64_t GetTransactionId() override;
+  uint64_t GetTransactionId() override;
+  uint64_t LastTransactionId() const override;
   void NotifyTransactionCompleted(uint64_t aTransactionId) override;
   void RevokeTransactionId(uint64_t aTransactionId) override;
   mozilla::TimeStamp GetTransactionStart() override;
@@ -392,10 +399,10 @@ private:
   // non-visible) documents registered with a non-throttled refresh driver.
   const mozilla::TimeDuration mThrottledFrameRequestInterval;
 
-  // How long we wait, at a minimum, before recomputing image visibility
-  // information. This is a minimum because, regardless of this interval, we
-  // only recompute visibility when we've seen a layout or style flush since the
-  // last time we did it.
+  // How long we wait, at a minimum, before recomputing approximate frame
+  // visibility information. This is a minimum because, regardless of this
+  // interval, we only recompute visibility when we've seen a layout or style
+  // flush since the last time we did it.
   const mozilla::TimeDuration mMinRecomputeVisibilityInterval;
 
   bool mThrottled;

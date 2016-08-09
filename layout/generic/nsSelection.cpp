@@ -1744,7 +1744,7 @@ printf(" * TakeFocus - moving into new cell\n");
 
         // XXXX We need to REALLY get the current key shift state
         //  (we'd need to add event listener -- let's not bother for now)
-        event.modifiers &= ~MODIFIER_SHIFT; //aContinueSelection;
+        event.mModifiers &= ~MODIFIER_SHIFT; //aContinueSelection;
         if (parent)
         {
           mCellParent = cellparent;
@@ -2126,7 +2126,17 @@ nsFrameSelection::PhysicalMove(int16_t aDirection, int16_t aAmount,
   if (NS_SUCCEEDED(sel->GetPrimaryFrameForFocusNode(&frame, &offsetused,
                                                     true))) {
     if (frame) {
-      wm = frame->GetWritingMode();
+      if (!frame->StyleContext()->IsTextCombined()) {
+        wm = frame->GetWritingMode();
+      } else {
+        // Using different direction for horizontal-in-vertical would
+        // make it hard to navigate via keyboard. Inherit the moving
+        // direction from its parent.
+        MOZ_ASSERT(frame->GetType() == nsGkAtoms::textFrame);
+        wm = frame->GetParent()->GetWritingMode();
+        MOZ_ASSERT(wm.IsVertical(), "Text combined "
+                   "can only appear in vertical text");
+      }
     }
   }
 
@@ -4935,6 +4945,23 @@ Selection::Collapse(nsINode& aParentNode, uint32_t aOffset, ErrorResult& aRv)
 
   // Turn off signal for table selection
   mFrameSelection->ClearTableCellSelection();
+
+  // Hack to display the caret on the right line (bug 1237236).
+  if (mFrameSelection->GetHint() != CARET_ASSOCIATE_AFTER &&
+      aParentNode.IsContent()) {
+    int32_t frameOffset;
+    nsTextFrame* f =
+      do_QueryFrame(nsCaret::GetFrameAndOffset(this, &aParentNode,
+                                               aOffset, &frameOffset));
+    if (f && f->IsAtEndOfLine() && f->HasSignificantTerminalNewline()) {
+      if ((aParentNode.AsContent() == f->GetContent() &&
+           f->GetContentEnd() == int32_t(aOffset)) ||
+          (&aParentNode == f->GetContent()->GetParentNode() &&
+           aParentNode.IndexOf(f->GetContent()) + 1 == int32_t(aOffset))) {
+        mFrameSelection->SetHint(CARET_ASSOCIATE_AFTER);
+      }
+    }
+  }
 
   RefPtr<nsRange> range = new nsRange(&aParentNode);
   result = range->SetEnd(&aParentNode, aOffset);

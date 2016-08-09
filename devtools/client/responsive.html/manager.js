@@ -4,8 +4,10 @@
 
 "use strict";
 
+const { Ci, Cr } = require("chrome");
 const promise = require("promise");
 const { Task } = require("resource://gre/modules/Task.jsm");
+const { XPCOMUtils } = require("resource://gre/modules/XPCOMUtils.jsm");
 const EventEmitter = require("devtools/shared/event-emitter");
 
 const TOOL_URL = "chrome://devtools/content/responsive.html/index.xhtml";
@@ -49,7 +51,7 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
    *         Resolved to the ResponsiveUI instance for this tab when opening is
    *         complete.
    */
-  openIfNeeded: Task.async(function*(window, tab) {
+  openIfNeeded: Task.async(function* (window, tab) {
     if (!this.isActiveForTab(tab)) {
       let ui = new ResponsiveUI(window, tab);
       this.activeTabs.set(tab, ui);
@@ -69,14 +71,14 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
    * @return Promise
    *         Resolved (with no value) when closing is complete.
    */
-  closeIfNeeded(window, tab) {
+  closeIfNeeded: Task.async(function* (window, tab) {
     if (this.isActiveForTab(tab)) {
-      this.activeTabs.get(tab).destroy();
+      yield this.activeTabs.get(tab).destroy();
       this.activeTabs.delete(tab);
       this.emit("off", { tab });
     }
     return promise.resolve();
-  },
+  }),
 
   /**
    * Returns true if responsive UI is active for a given tab.
@@ -118,8 +120,7 @@ const ResponsiveUIManager = exports.ResponsiveUIManager = {
     switch (command) {
       case "resize to":
         completed = this.openIfNeeded(window, tab);
-        // TODO: Probably the wrong API
-        this.activeTabs.get(tab).setSize(args.width, args.height);
+        this.activeTabs.get(tab).setViewportSize(args.width, args.height);
         break;
       case "resize on":
         completed = this.openIfNeeded(window, tab);
@@ -190,24 +191,29 @@ ResponsiveUI.prototype = {
    * state.  Platform discussions are in progress to make this happen.  See
    * bug 1238160 about <iframe mozbrowser> for more details.
    */
-  init: Task.async(function*() {
+  init: Task.async(function* () {
     let tabBrowser = this.tab.linkedBrowser;
     let contentURI = tabBrowser.documentURI.spec;
     tabBrowser.loadURI(TOOL_URL);
     yield tabLoaded(this.tab);
     let toolWindow = this.toolWindow = tabBrowser.contentWindow;
-    toolWindow.addInitialViewport(contentURI);
     toolWindow.addEventListener("message", this);
+    yield waitForMessage(toolWindow, "init");
+    toolWindow.addInitialViewport(contentURI);
+    yield waitForMessage(toolWindow, "browser-mounted");
   }),
 
-  destroy() {
+  destroy: Task.async(function* () {
     let tabBrowser = this.tab.linkedBrowser;
-    tabBrowser.goBack();
-    this.window = null;
+    let browserWindow = this.browserWindow;
+    this.browserWindow = null;
     this.tab = null;
     this.inited = null;
     this.toolWindow = null;
-  },
+    let loaded = waitForDocLoadComplete(browserWindow.gBrowser);
+    tabBrowser.goBack();
+    yield loaded;
+  }),
 
   handleEvent(event) {
     let { tab, window } = this;
@@ -218,13 +224,51 @@ ResponsiveUI.prototype = {
     }
 
     switch (event.data.type) {
+      case "content-resize":
+        let { width, height } = event.data;
+        this.emit("content-resize", {
+          width,
+          height,
+        });
+        break;
       case "exit":
         toolWindow.removeEventListener(event.type, this);
         ResponsiveUIManager.closeIfNeeded(window, tab);
         break;
     }
   },
+
+  getViewportSize() {
+    return this.toolWindow.getViewportSize();
+  },
+
+  setViewportSize: Task.async(function* (width, height) {
+    yield this.inited;
+    this.toolWindow.setViewportSize(width, height);
+  }),
+
+  getViewportMessageManager() {
+    return this.toolWindow.getViewportMessageManager();
+  },
+
 };
+
+EventEmitter.decorate(ResponsiveUI.prototype);
+
+function waitForMessage(win, type) {
+  let deferred = promise.defer();
+
+  let onMessage = event => {
+    if (event.data.type !== type) {
+      return;
+    }
+    win.removeEventListener("message", onMessage);
+    deferred.resolve();
+  };
+  win.addEventListener("message", onMessage);
+
+  return deferred.promise;
+}
 
 function tabLoaded(tab) {
   let deferred = promise.defer();
@@ -239,5 +283,29 @@ function tabLoaded(tab) {
   }
 
   tab.linkedBrowser.addEventListener("load", handle, true);
+  return deferred.promise;
+}
+
+/**
+ * Waits for the next load to complete in the current browser.
+ */
+function waitForDocLoadComplete(gBrowser) {
+  let deferred = promise.defer();
+  let progressListener = {
+    onStateChange: function(webProgress, req, flags, status) {
+      let docStop = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
+                    Ci.nsIWebProgressListener.STATE_STOP;
+
+      // When a load needs to be retargetted to a new process it is cancelled
+      // with NS_BINDING_ABORTED so ignore that case
+      if ((flags & docStop) == docStop && status != Cr.NS_BINDING_ABORTED) {
+        gBrowser.removeProgressListener(progressListener);
+        deferred.resolve();
+      }
+    },
+    QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
+                                           Ci.nsISupportsWeakReference])
+  };
+  gBrowser.addProgressListener(progressListener);
   return deferred.promise;
 }

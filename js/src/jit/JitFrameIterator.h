@@ -277,7 +277,7 @@ class JitProfilingFrameIterator
     bool tryInitWithPC(void* pc);
     bool tryInitWithTable(JitcodeGlobalTable* table, void* pc, JSRuntime* rt,
                           bool forLastCallSite);
-    void fixBaselineDebugModeOSRReturnAddress();
+    void fixBaselineReturnAddress();
 
     void moveToNextFrame(CommonFrameLayout* frame);
 
@@ -709,7 +709,7 @@ class InlineFrameIterator
 
         // Read return value.
         if (rval)
-            *rval = s.read();
+            *rval = s.maybeRead(fallback);
         else
             s.skip();
 

@@ -67,8 +67,8 @@ public:
     nsHttpHandler();
 
     nsresult Init();
-    nsresult AddStandardRequestHeaders(nsHttpHeaderArray *, bool isSecure);
-    nsresult AddConnectionHeader(nsHttpHeaderArray *,
+    nsresult AddStandardRequestHeaders(nsHttpRequestHead *, bool isSecure);
+    nsresult AddConnectionHeader(nsHttpRequestHead *,
                                  uint32_t capabilities);
     bool     IsAcceptableEncoding(const char *encoding, bool isSecure);
 
@@ -336,6 +336,13 @@ public:
     SpdyInformation *SpdyInfo() { return &mSpdyInfo; }
     bool IsH2MandatorySuiteEnabled() { return mH2MandatorySuiteEnabled; }
 
+    // Returns true if content-signature test pref is set such that they are
+    // NOT enforced on remote newtabs.
+    bool NewTabContentSignaturesDisabled()
+    {
+      return mNewTabContentSignaturesDisabled;
+    }
+
     // returns true in between Init and Shutdown states
     bool Active() { return mHandlerActive; }
 
@@ -561,6 +568,9 @@ private:
     FrameCheckLevel mEnforceH1Framing;
 
     nsCOMPtr<nsISchedulingContextService> mSchedulingContextService;
+
+    // True if remote newtab content-signature disabled because of the channel.
+    bool mNewTabContentSignaturesDisabled;
 
 private:
     // For Rate Pacing Certain Network Events. Only assign this pointer on

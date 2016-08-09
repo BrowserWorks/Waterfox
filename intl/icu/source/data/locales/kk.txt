@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/kk.xml
@@ -214,7 +214,7 @@ kk{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.17"}
     calendar{
         generic{
             DateTimePatterns{
@@ -801,8 +801,8 @@ kk{
         }
     }
     delimiters{
-        alternateQuotationEnd{"”"}
-        alternateQuotationStart{"“"}
+        alternateQuotationEnd{"\u0022"}
+        alternateQuotationStart{"\u0022"}
         quotationEnd{"»"}
         quotationStart{"«"}
     }
@@ -829,13 +829,6 @@ kk{
         }
         day-narrow{
             dn{"күн"}
-            relative{
-                "-1"{"кеше"}
-                "-2"{"алдыңғы күні"}
-                "0"{"бүгін"}
-                "1"{"ертең"}
-                "2"{"бүрсігүні"}
-            }
             relativeTime{
                 future{
                     one{"{0} күннен кейін"}
@@ -850,11 +843,7 @@ kk{
         day-short{
             dn{"күн"}
             relative{
-                "-1"{"кеше"}
                 "-2"{"алдыңғы күні"}
-                "0"{"бүгін"}
-                "1"{"ертең"}
-                "2"{"бүрсігүні"}
             }
             relativeTime{
                 future{

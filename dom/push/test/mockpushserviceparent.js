@@ -48,7 +48,7 @@ MockWebSocketParent.prototype = {
   },
 
   sendMsg(msg) {
-    sendAsyncMessage("client-msg", msg);
+    sendAsyncMessage("socket-client-msg", msg);
   },
 
   close() {
@@ -81,31 +81,105 @@ var pushService = Cc["@mozilla.org/push/Service;1"].
                   getService(Ci.nsIPushService).
                   wrappedJSObject;
 
-var mockWebSocket;
+var mockSocket;
+var serverMsgs = [];
 
-addMessageListener("setup", function () {
-  mockWebSocket = new Promise((resolve, reject) => {
-    pushService.replaceServiceBackend({
-      serverURI: "wss://push.example.org/",
-      networkInfo: new MockNetworkInfo(),
-      makeWebSocket(uri) {
-        var socket = new MockWebSocketParent(uri);
-        resolve(socket);
-        return socket;
+addMessageListener("socket-setup", function () {
+  pushService.replaceServiceBackend({
+    serverURI: "wss://push.example.org/",
+    networkInfo: new MockNetworkInfo(),
+    makeWebSocket(uri) {
+      mockSocket = new MockWebSocketParent(uri);
+      while (serverMsgs.length > 0) {
+        let msg = serverMsgs.shift();
+        mockSocket.serverSendMsg(msg);
       }
+      return mockSocket;
+    }
+  });
+});
+
+addMessageListener("socket-teardown", function (msg) {
+  pushService.restoreServiceBackend().then(_ => {
+    serverMsgs.length = 0;
+    if (mockSocket) {
+      mockSocket.close();
+      mockSocket = null;
+    }
+    sendAsyncMessage("socket-server-teardown");
+  }).catch(error => {
+    Cu.reportError(`Error restoring service backend: ${error}`);
+  })
+});
+
+addMessageListener("socket-server-msg", function (msg) {
+  if (mockSocket) {
+    mockSocket.serverSendMsg(msg);
+  } else {
+    serverMsgs.push(msg);
+  }
+});
+
+var MockService = {
+  requestID: 1,
+  resolvers: new Map(),
+
+  sendRequest(name, params) {
+    return new Promise((resolve, reject) => {
+      let id = this.requestID++;
+      this.resolvers.set(id, { resolve, reject });
+      sendAsyncMessage("service-request", {
+        name: name,
+        id: id,
+        params: params,
+      });
     });
-  });
+  },
+
+  handleResponse(response) {
+    if (!this.resolvers.has(response.id)) {
+      Cu.reportError(`Unexpected response for request ${response.id}`);
+      return;
+    }
+    let resolver = this.resolvers.get(response.id);
+    this.resolvers.delete(response.id);
+    if (response.error) {
+      resolver.reject(response.error);
+    } else {
+      resolver.resolve(response.result);
+    }
+  },
+
+  init() {},
+
+  register(pageRecord) {
+    return this.sendRequest("register", pageRecord);
+  },
+
+  registration(pageRecord) {
+    return this.sendRequest("registration", pageRecord);
+  },
+
+  unregister(pageRecord) {
+    return this.sendRequest("unregister", pageRecord);
+  },
+
+  reportDeliveryError(messageId, reason) {
+    sendAsyncMessage("service-delivery-error", {
+      messageId: messageId,
+      reason: reason,
+    });
+  },
+};
+
+addMessageListener("service-replace", function () {
+  pushService.service = MockService;
 });
 
-addMessageListener("teardown", function () {
-  mockWebSocket.then(socket => {
-    socket.close();
-    pushService.restoreServiceBackend();
-  });
+addMessageListener("service-restore", function () {
+  pushService.service = null;
 });
 
-addMessageListener("server-msg", function (msg) {
-  mockWebSocket.then(socket => {
-    socket.serverSendMsg(msg);
-  });
+addMessageListener("service-response", function (response) {
+  MockService.handleResponse(response);
 });

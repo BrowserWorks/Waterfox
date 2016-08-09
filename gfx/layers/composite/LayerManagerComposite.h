@@ -188,8 +188,7 @@ public:
   {
   public:
     AutoAddMaskEffect(Layer* aMaskLayer,
-                      EffectChain& aEffect,
-                      bool aIs3D = false);
+                      EffectChain& aEffect);
     ~AutoAddMaskEffect();
 
     bool Failed() const { return mFailed; }
@@ -220,12 +219,37 @@ public:
     mInvalidRegion.Or(mInvalidRegion, aRegion);
   }
 
+  void ClearApproximatelyVisibleRegions(uint64_t aLayersId,
+                                        const Maybe<uint32_t>& aPresShellId)
+  {
+    for (auto iter = mVisibleRegions.Iter(); !iter.Done(); iter.Next()) {
+      if (iter.Key().mLayersId == aLayersId &&
+          (!aPresShellId || iter.Key().mPresShellId == *aPresShellId)) {
+        iter.Remove();
+      }
+    }
+  }
+
+  void UpdateApproximatelyVisibleRegion(const ScrollableLayerGuid& aGuid,
+                                        const CSSIntRegion& aRegion)
+  {
+    CSSIntRegion* regionForScrollFrame = mVisibleRegions.LookupOrAdd(aGuid);
+    MOZ_ASSERT(regionForScrollFrame);
+
+    *regionForScrollFrame = aRegion;
+  }
+
+  CSSIntRegion* GetApproximatelyVisibleRegion(const ScrollableLayerGuid& aGuid)
+  {
+    return mVisibleRegions.Get(aGuid);
+  }
+
   Compositor* GetCompositor() const
   {
     return mCompositor;
   }
 
-  // Called by CompositorParent when a new compositor has been created due
+  // Called by CompositorBridgeParent when a new compositor has been created due
   // to a device reset. The layer manager must clear any cached resources
   // attached to the old compositor, and make a best effort at ignoring
   // layer or texture updates against the old compositor.
@@ -319,7 +343,7 @@ private:
   /**
    * Render the current layer tree to the active target.
    */
-  void Render(const nsIntRegion& aInvalidRegion);
+  void Render(const nsIntRegion& aInvalidRegion, const nsIntRegion& aOpaqueRegion);
 #if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
   void RenderToPresentationSurface();
 #endif
@@ -362,6 +386,11 @@ private:
   gfx::IntRect mTargetBounds;
 
   nsIntRegion mInvalidRegion;
+
+  typedef nsClassHashtable<nsGenericHashKey<ScrollableLayerGuid>,
+                           CSSIntRegion> VisibleRegions;
+  VisibleRegions mVisibleRegions;
+
   UniquePtr<FPSState> mFPS;
 
   bool mInTransaction;
@@ -505,7 +534,7 @@ public:
    * While progressive drawing is in progress this region will be
    * a subset of the shadow visible region.
    */
-  nsIntRegion GetFullyRenderedRegion();
+  virtual nsIntRegion GetFullyRenderedRegion();
 
 protected:
   gfx::Matrix4x4 mShadowTransform;
@@ -559,16 +588,11 @@ RenderWithAllMasks(Layer* aLayer, Compositor* aCompositor,
     // no mask layers at all
   }
 
-  bool firstMaskIs3D = false;
-  if (ContainerLayer* container = aLayer->AsContainerLayer()) {
-    firstMaskIs3D = !container->GetTransform().CanDraw2D();
-  }
-
   if (maskLayerCount <= 1) {
     // This is the common case. Render in one pass and return.
     EffectChain effectChain(aLayer);
     LayerManagerComposite::AutoAddMaskEffect
-      autoMaskEffect(firstMask, effectChain, firstMaskIs3D);
+      autoMaskEffect(firstMask, effectChain);
     aLayer->AsLayerComposite()->AddBlendModeEffect(effectChain);
     aRenderCallback(effectChain, gfx::Rect(aClipRect));
     return;
@@ -607,7 +631,7 @@ RenderWithAllMasks(Layer* aLayer, Compositor* aCompositor,
   {
     EffectChain firstEffectChain(aLayer);
     LayerManagerComposite::AutoAddMaskEffect
-      firstMaskEffect(firstMask, firstEffectChain, firstMaskIs3D);
+      firstMaskEffect(firstMask, firstEffectChain);
     aRenderCallback(firstEffectChain, gfx::Rect(aClipRect - surfaceRect.TopLeft()));
     // firstTarget now contains the transformed source with the first mask and
     // opacity already applied.

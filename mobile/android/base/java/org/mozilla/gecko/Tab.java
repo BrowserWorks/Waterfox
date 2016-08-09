@@ -24,6 +24,8 @@ import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.favicons.RemoteFavicon;
 import org.mozilla.gecko.gfx.BitmapUtils;
 import org.mozilla.gecko.gfx.Layer;
+import org.mozilla.gecko.reader.ReaderModeUtils;
+import org.mozilla.gecko.reader.ReadingListHelper;
 import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.util.ThreadUtils;
 
@@ -63,7 +65,6 @@ public class Tab {
     private final int mParentId;
     private final boolean mExternal;
     private boolean mBookmark;
-    private boolean mIsInReadingList;
     private int mFaviconLoadId;
     private String mContentType;
     private boolean mHasTouchListeners;
@@ -137,7 +138,6 @@ public class Tab {
         mBackgroundColor = DEFAULT_BACKGROUND_COLOR;
 
         updateBookmark();
-        updateReadingList();
     }
 
     private ContentResolver getContentResolver() {
@@ -293,10 +293,6 @@ public class Tab {
         return mBookmark;
     }
 
-    public boolean isInReadingList() {
-        return mIsInReadingList;
-    }
-
     public boolean isExternal() {
         return mExternal;
     }
@@ -338,7 +334,7 @@ public class Tab {
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                urlMetadata.save(cr, mUrl, data);
+                urlMetadata.save(cr, data);
             }
         });
     }
@@ -528,90 +524,54 @@ public class Tab {
                 if (url == null) {
                     return;
                 }
+                final String pageUrl = ReaderModeUtils.stripAboutReaderUrl(url);
 
-                mBookmark = mDB.isBookmark(getContentResolver(), url);
-                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.MENU_UPDATED);
-            }
-        });
-    }
-
-    void updateReadingList() {
-        if (getURL() == null) {
-            return;
-        }
-
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                final String url = getURL();
-                if (url == null) {
-                    return;
-                }
-
-                mIsInReadingList = mDB.getReadingListAccessor().isReadingListItem(getContentResolver(), url);
+                mBookmark = mDB.isBookmark(getContentResolver(), pageUrl);
                 Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.MENU_UPDATED);
             }
         });
     }
 
     public void addBookmark() {
+        final String url = getURL();
+        if (url == null) {
+            return;
+        }
+
+        final String pageUrl = ReaderModeUtils.stripAboutReaderUrl(getURL());
+
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                String url = getURL();
-                if (url == null)
-                    return;
-
-                mDB.addBookmark(getContentResolver(), mTitle, url);
+                mDB.addBookmark(getContentResolver(), mTitle, pageUrl);
                 Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.BOOKMARK_ADDED);
             }
         });
+
+        if (AboutPages.isAboutReader(url)) {
+            ReadingListHelper.cacheReaderItem(pageUrl, mId, mAppContext);
+        }
     }
 
     public void removeBookmark() {
+        final String url = getURL();
+        if (url == null) {
+            return;
+        }
+
+        final String pageUrl = ReaderModeUtils.stripAboutReaderUrl(getURL());
+
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
             public void run() {
-                String url = getURL();
-                if (url == null)
-                    return;
-
-                mDB.removeBookmarksWithURL(getContentResolver(), url);
+                mDB.removeBookmarksWithURL(getContentResolver(), pageUrl);
                 Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.BOOKMARK_REMOVED);
             }
         });
-    }
 
-    public void addToReadingList() {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                String url = getURL();
-                if (url == null) {
-                    return;
-                }
-
-                mDB.getReadingListAccessor().addBasicReadingListItem(getContentResolver(), url, mTitle);
-                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.READING_LIST_ADDED);
-            }
-        });
-    }
-
-    public void removeFromReadingList() {
-        ThreadUtils.postToBackgroundThread(new Runnable() {
-            @Override
-            public void run() {
-                String url = getURL();
-                if (url == null) {
-                    return;
-                }
-                if (AboutPages.isAboutReader(url)) {
-                    url = ReaderModeUtils.getUrlFromAboutReader(url);
-                }
-                mDB.getReadingListAccessor().removeReadingListItemWithURL(getContentResolver(), url);
-                Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.READING_LIST_REMOVED);
-            }
-        });
+        // We need to ensure we remove readercached items here - we could have switched out of readermode
+        // before unbookmarking, so we don't necessarily have an about:reader URL here.
+        ReadingListHelper.removeCachedReaderItem(pageUrl, mAppContext);
     }
 
     public boolean isEnteringReaderMode() {
@@ -619,8 +579,7 @@ public class Tab {
     }
 
     public void doReload(boolean bypassCache) {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Reload", "{\"bypassCache\":" + String.valueOf(bypassCache) + "}");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Reload", "{\"bypassCache\":" + String.valueOf(bypassCache) + "}");
     }
 
     // Our version of nsSHistory::GetCanGoBack
@@ -632,14 +591,12 @@ public class Tab {
         if (!canDoBack())
             return false;
 
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Back", "");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Back", "");
         return true;
     }
 
     public void doStop() {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Stop", "");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Stop", "");
     }
 
     // Our version of nsSHistory::GetCanGoForward
@@ -651,8 +608,7 @@ public class Tab {
         if (!canDoForward())
             return false;
 
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Forward", "");
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Session:Forward", "");
         return true;
     }
 
@@ -669,7 +625,6 @@ public class Tab {
         if (!TextUtils.equals(oldUrl, uri)) {
             updateURL(uri);
             updateBookmark();
-            updateReadingList();
             if (!sameDocument) {
                 // We can unconditionally clear the favicon and title here: we
                 // already filtered both cases in which this was a (pseudo-)
@@ -809,25 +764,25 @@ public class Tab {
     }
 
     public void addPluginLayer(Object surfaceOrView, Layer layer) {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             mPluginLayers.put(surfaceOrView, layer);
         }
     }
 
     public Layer getPluginLayer(Object surfaceOrView) {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             return mPluginLayers.get(surfaceOrView);
         }
     }
 
     public Collection<Layer> getPluginLayers() {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             return new ArrayList<Layer>(mPluginLayers.values());
         }
     }
 
     public Layer removePluginLayer(Object surfaceOrView) {
-        synchronized(mPluginLayers) {
+        synchronized (mPluginLayers) {
             return mPluginLayers.remove(surfaceOrView);
         }
     }

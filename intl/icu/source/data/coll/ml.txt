@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/ml.xml
@@ -23,7 +23,7 @@ ml{
                 "&മ്<<ം"
                 "&ന്<<<ൻ്"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

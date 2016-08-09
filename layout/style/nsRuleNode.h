@@ -456,12 +456,10 @@ private:
   };
 
   static PLDHashNumber
-  ChildrenHashHashKey(PLDHashTable *aTable, const void *aKey);
+  ChildrenHashHashKey(const void *aKey);
 
   static bool
-  ChildrenHashMatchEntry(PLDHashTable *aTable,
-                         const PLDHashEntryHdr *aHdr,
-                         const void *aKey);
+  ChildrenHashMatchEntry(const PLDHashEntryHdr *aHdr, const void *aKey);
 
   static const PLDHashTableOps ChildrenHashOps;
 
@@ -685,13 +683,6 @@ protected:
                        const mozilla::RuleNodeCacheConditions aConditions);
 
   const void*
-    ComputeQuotesData(void* aStartStruct,
-                      const nsRuleData* aRuleData,
-                      nsStyleContext* aContext, nsRuleNode* aHighestNode,
-                      RuleDetail aRuleDetail,
-                      const mozilla::RuleNodeCacheConditions aConditions);
-
-  const void*
     ComputeTextData(void* aStartStruct,
                     const nsRuleData* aRuleData,
                     nsStyleContext* aContext, nsRuleNode* aHighestNode,
@@ -754,6 +745,13 @@ protected:
                          nsStyleContext* aContext, nsRuleNode* aHighestNode,
                          RuleDetail aRuleDetail,
                          const mozilla::RuleNodeCacheConditions aConditions);
+
+  const void*
+    ComputeEffectsData(void* aStartStruct,
+                       const nsRuleData* aRuleData,
+                       nsStyleContext* aContext, nsRuleNode* aHighestNode,
+                       RuleDetail aRuleDetail,
+                       const mozilla::RuleNodeCacheConditions aConditions);
 
   // helpers for |ComputeFontData| that need access to |mNoneBits|:
   static void SetFontSize(nsPresContext* aPresContext,

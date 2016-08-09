@@ -21,6 +21,7 @@
 #include "AccessCheck.h"
 
 #include "mozilla/dom/BindingUtils.h"
+#include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/Exceptions.h"
 #include "mozilla/dom/Promise.h"
 
@@ -30,6 +31,8 @@
 #include "nsIObjectInputStream.h"
 #include "nsIObjectOutputStream.h"
 #include "nsScriptSecurityManager.h"
+
+#include "jsfriendapi.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -178,7 +181,6 @@ xpc::ErrorReport::Init(JSErrorReport* aReport, const char* aFallbackMessage,
     mWindowID = aWindowID;
 
     ErrorReportToMessageString(aReport, mErrorMsg);
-
     if (mErrorMsg.IsEmpty() && aFallbackMessage) {
         mErrorMsg.AssignWithConversion(aFallbackMessage);
     }
@@ -190,6 +192,13 @@ xpc::ErrorReport::Init(JSErrorReport* aReport, const char* aFallbackMessage,
     }
 
     mSourceLine.Assign(aReport->linebuf(), aReport->linebufLength());
+    const JSErrorFormatString* efs = js::GetErrorMessage(nullptr, aReport->errorNumber);
+
+    if (efs == nullptr) {
+        mErrorMsgName.AssignASCII("");
+    } else {
+        mErrorMsgName.AssignASCII(efs->name);
+    }
 
     mLineNumber = aReport->lineno;
     mColumn = aReport->column;
@@ -197,7 +206,27 @@ xpc::ErrorReport::Init(JSErrorReport* aReport, const char* aFallbackMessage,
     mIsMuted = aReport->isMuted;
 }
 
-static PRLogModuleInfo* gJSDiagnostics;
+void
+xpc::ErrorReport::Init(JSContext* aCx, mozilla::dom::Exception* aException,
+                       bool aIsChrome, uint64_t aWindowID)
+{
+    mCategory = aIsChrome ? NS_LITERAL_CSTRING("chrome javascript")
+                          : NS_LITERAL_CSTRING("content javascript");
+    mWindowID = aWindowID;
+
+    aException->GetErrorMessage(mErrorMsg);
+
+    aException->GetFilename(aCx, mFileName);
+    if (mFileName.IsEmpty()) {
+      mFileName.SetIsVoid(true);
+    }
+    aException->GetLineNumber(aCx, &mLineNumber);
+    aException->GetColumnNumber(&mColumn);
+
+    mFlags = JSREPORT_EXCEPTION;
+}
+
+static LazyLogModule gJSDiagnostics("JSDiagnostics");
 
 void
 xpc::ErrorReport::LogToConsole()
@@ -227,15 +256,10 @@ xpc::ErrorReport::LogToConsoleWithStack(JS::HandleObject aStack)
         fflush(stderr);
     }
 
-    // Log to the PR Log Module.
-    if (!gJSDiagnostics)
-        gJSDiagnostics = PR_NewLogModule("JSDiagnostics");
-    if (gJSDiagnostics) {
-        MOZ_LOG(gJSDiagnostics,
-                JSREPORT_IS_WARNING(mFlags) ? LogLevel::Warning : LogLevel::Error,
-                ("file %s, line %u\n%s", NS_LossyConvertUTF16toASCII(mFileName).get(),
-                 mLineNumber, NS_LossyConvertUTF16toASCII(mErrorMsg).get()));
-    }
+    MOZ_LOG(gJSDiagnostics,
+            JSREPORT_IS_WARNING(mFlags) ? LogLevel::Warning : LogLevel::Error,
+            ("file %s, line %u\n%s", NS_LossyConvertUTF16toASCII(mFileName).get(),
+             mLineNumber, NS_LossyConvertUTF16toASCII(mErrorMsg).get()));
 
     // Log to the console. We do this last so that we can simply return if
     // there's no console service without affecting the other reporting
@@ -253,6 +277,7 @@ xpc::ErrorReport::LogToConsoleWithStack(JS::HandleObject aStack)
     } else {
       errorObject = new nsScriptError();
     }
+    errorObject->SetErrorMessageName(mErrorMsgName);
     NS_ENSURE_TRUE_VOID(consoleService && errorObject);
 
     nsresult rv = errorObject->InitWithWindowID(mErrorMsg, mFileName, mSourceLine,
@@ -377,19 +402,22 @@ CreateGlobalObject(JSContext* cx, const JSClass* clasp, nsIPrincipal* principal,
     // of |global|.
     (void) new XPCWrappedNativeScope(cx, global);
 
+    if (clasp->flags & JSCLASS_DOM_GLOBAL) {
 #ifdef DEBUG
-    // Verify that the right trace hook is called. Note that this doesn't
-    // work right for wrapped globals, since the tracing situation there is
-    // more complicated. Manual inspection shows that they do the right thing.
-    if (!((const js::Class*)clasp)->ext.isWrappedNative)
-    {
-        VerifyTraceProtoAndIfaceCacheCalledTracer trc(JS_GetRuntime(cx));
-        TraceChildren(&trc, GCCellPtr(global.get()));
-        MOZ_ASSERT(trc.ok, "Trace hook on global needs to call TraceXPCGlobal for XPConnect compartments.");
-    }
+        // Verify that the right trace hook is called. Note that this doesn't
+        // work right for wrapped globals, since the tracing situation there is
+        // more complicated. Manual inspection shows that they do the right
+        // thing.  Also note that we only check this for JSCLASS_DOM_GLOBAL
+        // classes because xpc::TraceXPCGlobal won't call
+        // TraceProtoAndIfaceCache unless that flag is set.
+        if (!((const js::Class*)clasp)->isWrappedNative())
+        {
+            VerifyTraceProtoAndIfaceCacheCalledTracer trc(JS_GetRuntime(cx));
+            TraceChildren(&trc, GCCellPtr(global.get()));
+            MOZ_ASSERT(trc.ok, "Trace hook on global needs to call TraceXPCGlobal for XPConnect compartments.");
+        }
 #endif
 
-    if (clasp->flags & JSCLASS_DOM_GLOBAL) {
         const char* className = clasp->name;
         AllocateProtoAndIfaceCache(global,
                                    (strcmp(className, "Window") == 0 ||

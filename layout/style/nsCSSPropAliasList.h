@@ -323,22 +323,85 @@ CSS_PROP_ALIAS(-webkit-box-sizing,
                WebkitBoxSizing,
                WEBKIT_PREFIX_PREF)
 
-// Alias old flexbox properties to modern flexbox pseudo-equivalents:
+// Alias -webkit-box properties to their -moz-box equivalents.
+// (NOTE: Even though they're aliases, in practice these -webkit properties
+// will behave a bit differently from their -moz versions, if they're
+// accompanied by "display:-webkit-box", because we generate a different frame
+// for those two display values.)
 CSS_PROP_ALIAS(-webkit-box-flex,
-               flex_grow,
+               box_flex,
                WebkitBoxFlex,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-ordinal-group,
-               order,
+               box_ordinal_group,
                WebkitBoxOrdinalGroup,
                WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-box-orient,
+               box_orient,
+               WebkitBoxOrient,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-box-direction,
+               box_direction,
+               WebkitBoxDirection,
+               WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-align,
-               align_items,
+               box_align,
                WebkitBoxAlign,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-box-pack,
-               justify_content,
+               box_pack,
                WebkitBoxPack,
+               WEBKIT_PREFIX_PREF)
+
+// Alias -webkit-flex related properties to their unprefixed equivalents:
+// (Matching ordering at https://drafts.csswg.org/css-flexbox-1/#property-index )
+CSS_PROP_ALIAS(-webkit-flex-direction,
+               flex_direction,
+               WebkitFlexDirection,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-wrap,
+               flex_wrap,
+               WebkitFlexWrap,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-flow,
+               flex_flow,
+               WebkitFlexFlow,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-order,
+               order,
+               WebkitOrder,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex,
+               flex,
+               WebkitFlex,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-grow,
+               flex_grow,
+               WebkitFlexGrow,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-shrink,
+               flex_shrink,
+               WebkitFlexShrink,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-flex-basis,
+               flex_basis,
+               WebkitFlexBasis,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-justify-content,
+               justify_content,
+               WebkitJustifyContent,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-align-items,
+               align_items,
+               WebkitAlignItems,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-align-self,
+               align_self,
+               WebkitAlignSelf,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-align-content,
+               align_content,
+               WebkitAlignContent,
                WEBKIT_PREFIX_PREF)
 
 CSS_PROP_ALIAS(-webkit-user-select,

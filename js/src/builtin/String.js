@@ -4,6 +4,55 @@
 
 /*global intl_Collator: false, */
 
+/**
+ * A helper function implementing the logic for both String.prototype.padStart
+ * and String.prototype.padEnd as described in ES7 Draft March 29, 2016
+ */
+function String_pad(maxLength, fillString, padEnd=false) {
+
+    // Steps 1-2.
+    RequireObjectCoercible(this);
+    let str = ToString(this);
+
+    // Steps 3-4.
+    let intMaxLength = ToLength(maxLength);
+    let strLen = str.length;
+
+    // Step 5.
+    if (intMaxLength <= strLen)
+        return str;
+
+    // Steps 6-7.
+    let filler = fillString === undefined ? " " : ToString(fillString);
+
+    // Step 8.
+    if (filler === "")
+        return str;
+
+    // Step 9.
+    let fillLen = intMaxLength - strLen;
+
+    // Step 10.
+    let truncatedStringFiller = callFunction(String_repeat, filler,
+                                             fillLen / filler.length);
+
+    truncatedStringFiller += callFunction(String_substr, filler, 0,
+                                          fillLen % filler.length);
+
+    // Step 11.
+    if (padEnd === true)
+        return str + truncatedStringFiller;
+    return truncatedStringFiller + str;
+}
+
+function String_pad_start(maxLength, fillString=" ") {
+    return callFunction(String_pad, this, maxLength, fillString, false);
+}
+
+function String_pad_end(maxLength, fillString=" ") {
+    return callFunction(String_pad, this, maxLength, fillString, true);
+}
+
 /* ES6 Draft Oct 14, 2014 21.1.3.19 */
 function String_substring(start, end) {
     // Steps 1-3.
@@ -369,7 +418,11 @@ function String_static_localeCompare(str1, str2) {
         ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, "String.localeCompare");
     var locales = arguments.length > 2 ? arguments[2] : undefined;
     var options = arguments.length > 3 ? arguments[3] : undefined;
+#if EXPOSE_INTL_API
     return callFunction(String_localeCompare, str1, str2, locales, options);
+#else
+    return callFunction(std_String_localeCompare, str1, str2, locales, options);
+#endif
 }
 
 // ES6 draft 2014-04-27 B.2.3.3
@@ -470,4 +523,135 @@ function String_link(url) {
     RequireObjectCoercible(this);
     var S = ToString(this);
     return '<a href="' + EscapeAttributeValue(url) + '">' + S + "</a>";
+}
+
+function String_static_match(string, regexp) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.match');
+    return callFunction(std_String_match, string, regexp);
+}
+
+function String_static_replace(string, find, replacement) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.replace');
+    return callFunction(std_String_replace, string, find, replacement);
+}
+
+function String_static_search(string, regexp) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.search');
+    return callFunction(std_String_search, string, regexp);
+}
+
+function String_static_split(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.split');
+    var seperator = arguments.length > 1 ? arguments[1] : undefined;
+    var limit = arguments.length > 2 ? arguments[2] : undefined;
+    return callFunction(std_String_split, string, seperator, limit);
+}
+
+function String_static_toLowerCase(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.toLowerCase');
+    return callFunction(std_String_toLowerCase, string);
+}
+
+function String_static_toUpperCase(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.toUpperCase');
+    return callFunction(std_String_toUpperCase, string);
+}
+
+function String_static_charAt(string, pos) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.charAt');
+    return callFunction(std_String_charAt, string, pos);
+}
+
+function String_static_charCodeAt(string, pos) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.charCodeAt');
+    return callFunction(std_String_charCodeAt, string, pos);
+}
+
+function String_static_includes(string, searchString) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.includes');
+    var position = arguments.length > 2 ? arguments[2] : undefined;
+    return callFunction(std_String_includes, string, searchString, position);
+}
+
+function String_static_indexOf(string, searchString) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.indexOf');
+    var position = arguments.length > 2 ? arguments[2] : undefined;
+    return callFunction(std_String_indexOf, string, searchString, position);
+}
+
+function String_static_lastIndexOf(string, searchString) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.lastIndexOf');
+    var position = arguments.length > 2 ? arguments[2] : undefined;
+    return callFunction(std_String_lastIndexOf, string, searchString, position);
+}
+
+function String_static_startsWith(string, searchString) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.startsWith');
+    var position = arguments.length > 2 ? arguments[2] : undefined;
+    return callFunction(std_String_startsWith, string, searchString, position);
+}
+
+function String_static_endsWith(string, searchString) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.endsWith');
+    var endPosition = arguments.length > 2 ? arguments[2] : undefined;
+    return callFunction(std_String_endsWith, string, searchString, endPosition);
+}
+
+function String_static_trim(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.trim');
+    return callFunction(std_String_trim, string);
+}
+
+function String_static_trimLeft(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.trimLeft');
+    return callFunction(std_String_trimLeft, string);
+}
+
+function String_static_trimRight(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.trimRight');
+    return callFunction(std_String_trimRight, string);
+}
+
+function String_static_toLocaleLowerCase(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.toLocaleLowerCase');
+    return callFunction(std_String_toLocaleLowerCase, string);
+}
+
+function String_static_toLocaleUpperCase(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.toLocaleUpperCase');
+    return callFunction(std_String_toLocaleUpperCase, string);
+}
+
+#if EXPOSE_INTL_API
+function String_static_normalize(string) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.normalize');
+    var form = arguments.length > 1 ? arguments[1] : undefined;
+    return callFunction(std_String_normalize, string, form);
+}
+#endif
+
+function String_static_concat(string, arg1) {
+    if (arguments.length < 1)
+        ThrowTypeError(JSMSG_MISSING_FUN_ARG, 0, 'String.concat');
+    var args = callFunction(std_Array_slice, arguments, 1);
+    return callFunction(std_Function_apply, std_String_concat, string, args);
 }

@@ -30,6 +30,7 @@ XPIDL_SOURCES += [
     'nsICaptivePortalService.idl',
     'nsIChannel.idl',
     'nsIChannelEventSink.idl',
+    'nsIChannelWithDivertableParentListener.idl',
     'nsIChildChannel.idl',
     'nsIClassOfService.idl',
     'nsIContentSniffer.idl',
@@ -71,7 +72,6 @@ XPIDL_SOURCES += [
     'nsINSSErrorsService.idl',
     'nsINullChannel.idl',
     'nsIPACGenerator.idl',
-    'nsIPackagedAppChannelListener.idl',
     'nsIPackagedAppService.idl',
     'nsIPackagedAppUtils.idl',
     'nsIPackagedAppVerifier.idl',
@@ -108,6 +108,7 @@ XPIDL_SOURCES += [
     'nsISerializationHelper.idl',
     'nsIServerSocket.idl',
     'nsISimpleStreamListener.idl',
+    'nsISocketFilter.idl',
     'nsISocketTransport.idl',
     'nsISocketTransportService.idl',
     'nsISpeculativeConnect.idl',
@@ -127,7 +128,6 @@ XPIDL_SOURCES += [
     'nsITraceableChannel.idl',
     'nsITransport.idl',
     'nsIUDPSocket.idl',
-    'nsIUDPSocketFilter.idl',
     'nsIUnicharStreamLoader.idl',
     'nsIUploadChannel.idl',
     'nsIUploadChannel2.idl',
@@ -181,6 +181,7 @@ EXPORTS.mozilla.net += [
     'DashboardTypes.h',
     'MemoryDownloader.h',
     'OfflineObserver.h',
+    'Predictor.h',
     'ReferrerPolicy.h',
 ]
 
@@ -294,6 +295,7 @@ include('/ipc/chromium/chromium-config.mozbuild')
 FINAL_LIBRARY = 'xul'
 
 LOCAL_INCLUDES += [
+    '/docshell/base',
     '/dom/base',
     '/netwerk/protocol/http'
 ]

@@ -19,7 +19,6 @@ DIRS += [
     'pluginproblem',
     'profile',
     'themes',
-    'webapps',
 ]
 
 if CONFIG['MOZ_UPDATER'] and CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
@@ -51,6 +50,10 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
 
 if CONFIG['MOZ_CRASHREPORTER']:
     DIRS += ['crashreporter']
+
+TEST_HARNESS_FILES.testing.mochitest.browser.toolkit.crashreporter.test.browser += [
+    'crashreporter/test/browser/crashreport.sjs',
+]
 
 with Files('mozapps/installer/windows/*'):
     BUG_COMPONENT = ('Toolkit', 'NSIS Installer')

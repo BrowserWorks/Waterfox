@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/gl.xml
@@ -31,8 +31,8 @@ gl{
                 range{"{0}–{1}"}
             }
             patterns{
-                accountingFormat{"#,##0.00 ¤"}
-                currencyFormat{"#,##0.00 ¤"}
+                accountingFormat{"¤#,##0.00;(¤#,##0.00)"}
+                currencyFormat{"¤#,##0.00"}
                 decimalFormat{"#,##0.###"}
                 percentFormat{"#,##0%"}
                 scientificFormat{"#E0"}
@@ -159,7 +159,7 @@ gl{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.23.76"}
+    Version{"2.1.19.94"}
     calendar{
         generic{
             DateTimePatterns{

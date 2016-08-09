@@ -18,6 +18,60 @@ var {
   runSafe,
 } = ExtensionUtils;
 
+const defaultTransitionTypes = {
+  topFrame: "link",
+  subFrame: "auto_subframe",
+};
+
+const frameTransitions = {
+  anyFrame: {
+    qualifiers: ["server_redirect", "client_redirect", "forward_back"],
+  },
+  topFrame: {
+    types: ["reload", "form_submit"],
+  },
+};
+
+function isTopLevelFrame({frameId, parentFrameId}) {
+  return frameId == 0 && parentFrameId == -1;
+}
+
+function fillTransitionProperties(eventName, src, dst) {
+  if (eventName == "onCommitted" || eventName == "onHistoryStateUpdated") {
+    let frameTransitionData = src.frameTransitionData || {};
+
+    let transitionType, transitionQualifiers = [];
+
+    // Fill transition properties for any frame.
+    for (let qualifier of frameTransitions.anyFrame.qualifiers) {
+      if (frameTransitionData[qualifier]) {
+        transitionQualifiers.push(qualifier);
+      }
+    }
+
+    if (isTopLevelFrame(dst)) {
+      for (let type of frameTransitions.topFrame.types) {
+        if (frameTransitionData[type]) {
+          transitionType = type;
+        }
+      }
+
+      // If transitionType is not defined, defaults it to "link".
+      if (!transitionType) {
+        transitionType = defaultTransitionTypes.topFrame;
+      }
+    } else {
+      // If it is sub-frame, transitionType defaults it to "auto_subframe",
+      // "manual_subframe" is set only in case of a recent user interaction.
+      transitionType = defaultTransitionTypes.subFrame;
+    }
+
+    // Fill the transition properties in the webNavigation event object.
+    dst.transitionType = transitionType;
+    dst.transitionQualifiers = transitionQualifiers;
+  }
+}
+
 // Similar to WebRequestEventManager but for WebNavigation.
 function WebNavigationEventManager(context, eventName) {
   let name = `webNavigation.${eventName}`;
@@ -45,6 +99,8 @@ function WebNavigationEventManager(context, eventName) {
       if (result.cancel) {
         return;
       }
+
+      fillTransitionProperties(eventName, data, data2);
 
       runSafe(context, callback, data2);
     };
@@ -90,7 +146,7 @@ extensions.registerSchemaAPI("webNavigation", "webNavigation", (extension, conte
         let {innerWindowID, messageManager} = tab.linkedBrowser;
         let recipient = {innerWindowID};
 
-        return context.sendMessage(messageManager, "WebNavigation:GetAllFrames", {}, recipient)
+        return context.sendMessage(messageManager, "WebNavigation:GetAllFrames", {}, {recipient})
                       .then((results) => results.map(convertGetFrameResult.bind(null, details.tabId)));
       },
       getFrame(details) {
@@ -104,7 +160,7 @@ extensions.registerSchemaAPI("webNavigation", "webNavigation", (extension, conte
         };
 
         let mm = tab.linkedBrowser.messageManager;
-        return context.sendMessage(mm, "WebNavigation:GetFrame", {options: details}, recipient)
+        return context.sendMessage(mm, "WebNavigation:GetFrame", {options: details}, {recipient})
                       .then((result) => {
                         return result ?
                           convertGetFrameResult(details.tabId, result) :

@@ -8,6 +8,7 @@
 
 #include <stdint.h>                     // for uint32_t, uint64_t
 #include "Units.h"                      // for CSSRect, CSSPixel, etc
+#include "mozilla/HashFunctions.h"      // for HashGeneric
 #include "mozilla/Maybe.h"
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
 #include "mozilla/gfx/Rect.h"           // for RoundedIn
@@ -26,6 +27,15 @@ namespace mozilla {
 namespace layers {
 
 /**
+ * Helper struct to hold a couple of fields that can be updated as part of
+ * an empty transaction.
+ */
+struct ScrollUpdateInfo {
+  uint32_t mScrollGeneration;
+  CSSPoint mScrollOffset;
+};
+
+/**
  * The viewport and displayport metrics for the painted frame at the
  * time of a layer-tree transaction.  These metrics are especially
  * useful for shadow layers, because the metrics values are updated
@@ -39,6 +49,16 @@ public:
   static const ViewID NULL_SCROLL_ID;   // This container layer does not scroll.
   static const ViewID START_SCROLL_ID = 2;  // This is the ID that scrolling subframes
                                         // will begin at.
+
+  enum ScrollOffsetUpdateType : uint8_t {
+    eNone,          // The default; the scroll offset was not updated
+    eMainThread,    // The scroll offset was updated by the main thread.
+    ePending,       // The scroll offset was updated on the main thread, but not
+                    // painted, so the layer texture data is still at the old
+                    // offset.
+
+    eSentinel       // For IPC use only
+  };
 
   FrameMetrics()
     : mScrollId(NULL_SCROLL_ID)
@@ -64,15 +84,16 @@ public:
     , mLineScrollAmount(0, 0)
     , mPageScrollAmount(0, 0)
     , mPaintRequestTime()
+    , mScrollUpdateType(eNone)
     , mIsRootContent(false)
     , mHasScrollgrab(false)
-    , mUpdateScrollOffset(false)
     , mDoSmoothScroll(false)
     , mUseDisplayPortMargins(false)
     , mAllowVerticalScrollWithWheel(false)
     , mIsLayersIdRoot(false)
     , mUsesContainerScrolling(false)
     , mIsScrollInfoLayer(false)
+    , mForceDisableApz(false)
   {
   }
 
@@ -104,15 +125,16 @@ public:
            mLineScrollAmount == aOther.mLineScrollAmount &&
            mPageScrollAmount == aOther.mPageScrollAmount &&
            mPaintRequestTime == aOther.mPaintRequestTime &&
+           mScrollUpdateType == aOther.mScrollUpdateType &&
            mIsRootContent == aOther.mIsRootContent &&
            mHasScrollgrab == aOther.mHasScrollgrab &&
-           mUpdateScrollOffset == aOther.mUpdateScrollOffset &&
            mDoSmoothScroll == aOther.mDoSmoothScroll &&
            mUseDisplayPortMargins == aOther.mUseDisplayPortMargins &&
            mAllowVerticalScrollWithWheel == aOther.mAllowVerticalScrollWithWheel &&
            mIsLayersIdRoot == aOther.mIsLayersIdRoot &&
            mUsesContainerScrolling == aOther.mUsesContainerScrolling &&
-           mIsScrollInfoLayer == aOther.mIsScrollInfoLayer;
+           mIsScrollInfoLayer == aOther.mIsScrollInfoLayer &&
+           mForceDisableApz == aOther.mForceDisableApz;
   }
 
   bool operator!=(const FrameMetrics& aOther) const
@@ -177,11 +199,17 @@ public:
 
   CSSSize CalculateCompositedSizeInCssPixels() const
   {
+    if (GetZoom() == CSSToParentLayerScale2D(0, 0)) {
+      return CSSSize();  // avoid division by zero
+    }
     return mCompositionBounds.Size() / GetZoom();
   }
 
   CSSRect CalculateCompositedRectInCssPixels() const
   {
+    if (GetZoom() == CSSToParentLayerScale2D(0, 0)) {
+      return CSSRect();  // avoid division by zero
+    }
     return mCompositionBounds / GetZoom();
   }
 
@@ -229,6 +257,13 @@ public:
     mSmoothScrollOffset = aOther.mSmoothScrollOffset;
     mScrollGeneration = aOther.mScrollGeneration;
     mDoSmoothScroll = aOther.mDoSmoothScroll;
+  }
+
+  void UpdatePendingScrollInfo(const ScrollUpdateInfo& aInfo)
+  {
+    mScrollOffset = aInfo.mScrollOffset;
+    mScrollGeneration = aInfo.mScrollGeneration;
+    mScrollUpdateType = ePending;
   }
 
   // Make a copy of this FrameMetrics object which does not have any pointers
@@ -354,7 +389,7 @@ public:
 
   void SetScrollOffsetUpdated(uint32_t aScrollGeneration)
   {
-    mUpdateScrollOffset = true;
+    mScrollUpdateType = eMainThread;
     mScrollGeneration = aScrollGeneration;
   }
 
@@ -364,9 +399,14 @@ public:
     mScrollGeneration = aScrollGeneration;
   }
 
+  ScrollOffsetUpdateType GetScrollUpdateType() const
+  {
+    return mScrollUpdateType;
+  }
+
   bool GetScrollOffsetUpdated() const
   {
-    return mUpdateScrollOffset;
+    return mScrollUpdateType != eNone;
   }
 
   bool GetDoSmoothScroll() const
@@ -547,6 +587,13 @@ public:
     return mIsScrollInfoLayer;
   }
 
+  void SetForceDisableApz(bool aForceDisable) {
+    mForceDisableApz = aForceDisable;
+  }
+  bool IsApzForceDisabled() const {
+    return mForceDisableApz;
+  }
+
 private:
   // A unique ID assigned to each scrollable frame.
   ViewID mScrollId;
@@ -703,15 +750,15 @@ private:
   // The time at which the APZC last requested a repaint for this scrollframe.
   TimeStamp mPaintRequestTime;
 
+  // Whether mScrollOffset was updated by something other than the APZ code, and
+  // if the APZC receiving this metrics should update its local copy.
+  ScrollOffsetUpdateType mScrollUpdateType;
+
   // Whether or not this is the root scroll frame for the root content document.
   bool mIsRootContent:1;
 
   // Whether or not this frame is for an element marked 'scrollgrab'.
   bool mHasScrollgrab:1;
-
-  // Whether mScrollOffset was updated by something other than the APZ code, and
-  // if the APZC receiving this metrics should update its local copy.
-  bool mUpdateScrollOffset:1;
 
   // When mDoSmoothScroll, the scroll offset should be animated to
   // smoothly transition to mScrollOffset rather than be updated instantly.
@@ -735,6 +782,10 @@ private:
   // Whether or not this frame has a "scroll info layer" to capture events.
   bool mIsScrollInfoLayer:1;
 
+  // Whether or not the compositor should actually do APZ-scrolling on this
+  // scrollframe.
+  bool mForceDisableApz:1;
+
   // WARNING!!!!
   //
   // When adding new fields to FrameMetrics, the following places should be
@@ -747,9 +798,6 @@ private:
 
 
   // Private helpers for IPC purposes
-  void SetUpdateScrollOffset(bool aValue) {
-    mUpdateScrollOffset = aValue;
-  }
   void SetDoSmoothScroll(bool aValue) {
     mDoSmoothScroll = aValue;
   }
@@ -945,6 +993,11 @@ struct ScrollableLayerGuid {
       }
     }
     return false;
+  }
+
+  uint32_t Hash() const
+  {
+    return HashGeneric(mLayersId, mPresShellId, mScrollId);
   }
 };
 

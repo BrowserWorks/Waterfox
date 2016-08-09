@@ -11,7 +11,6 @@
 #include "GLUploadHelpers.h"
 #include "GLReadTexImageHelper.h"
 #include "gfx2DGlue.h"                  // for ContentForFormat, etc
-#include "gfxReusableSurfaceWrapper.h"  // for gfxReusableSurfaceWrapper
 #include "mozilla/gfx/2D.h"             // for DataSourceSurface
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
 #include "mozilla/gfx/Logging.h"        // for gfxCriticalError
@@ -139,7 +138,7 @@ TextureImageTextureSourceOGL::Update(gfx::DataSourceSurface* aSurface,
 {
   GLContext *gl = mCompositor->gl();
   MOZ_ASSERT(gl);
-  if (!gl) {
+  if (!gl || !gl->MakeCurrent()) {
     NS_WARNING("trying to update TextureImageTextureSourceOGL without a GLContext");
     return false;
   }
@@ -235,9 +234,7 @@ CompositorOGL* AssertGLCompositor(Compositor* aCompositor)
 {
   CompositorOGL* compositor = aCompositor ? aCompositor->AsCompositorOGL()
                                           : nullptr;
-  if (!compositor) {
-    gfxCriticalNote << "[GL] attempt to set an incompatible compositor.";
-  }
+  MOZ_ASSERT(!!compositor);
   return compositor;
 }
 
@@ -330,8 +327,9 @@ GLTextureSource::DeallocateDeviceData()
 void
 GLTextureSource::DeleteTextureHandle()
 {
-  if (mTextureHandle != 0 && gl() && gl()->MakeCurrent()) {
-    gl()->fDeleteTextures(1, &mTextureHandle);
+  GLContext* gl = this->gl();
+  if (mTextureHandle != 0 && gl && gl->MakeCurrent()) {
+    gl->fDeleteTextures(1, &mTextureHandle);
   }
   mTextureHandle = 0;
 }
@@ -339,14 +337,14 @@ GLTextureSource::DeleteTextureHandle()
 void
 GLTextureSource::BindTexture(GLenum aTextureUnit, gfx::Filter aFilter)
 {
-  MOZ_ASSERT(gl());
   MOZ_ASSERT(mTextureHandle != 0);
-  if (!gl()) {
+  GLContext* gl = this->gl();
+  if (!gl || !gl->MakeCurrent()) {
     return;
   }
-  gl()->fActiveTexture(aTextureUnit);
-  gl()->fBindTexture(mTextureTarget, mTextureHandle);
-  ApplyFilterToBoundTexture(gl(), aFilter, mTextureTarget);
+  gl->fActiveTexture(aTextureUnit);
+  gl->fBindTexture(mTextureTarget, mTextureHandle);
+  ApplyFilterToBoundTexture(gl, aFilter, mTextureTarget);
 }
 
 void
@@ -358,10 +356,8 @@ GLTextureSource::SetCompositor(Compositor* aCompositor)
   }
 
   if (mCompositor && mCompositor != glCompositor) {
-    gfxCriticalNote << "GLTextureSource does not support changing compositors";
-    return;
+    gfxCriticalError() << "GLTextureSource does not support changing compositors";
   }
-
   mCompositor = glCompositor;
 
   if (mNextSibling) {
@@ -406,20 +402,21 @@ void
 SurfaceTextureSource::BindTexture(GLenum aTextureUnit, gfx::Filter aFilter)
 {
   MOZ_ASSERT(mSurfTex);
-  if (!gl()) {
+  GLContext* gl = this->gl();
+  if (!gl || !gl->MakeCurrent()) {
     NS_WARNING("Trying to bind a texture without a GLContext");
     return;
   }
 
-  gl()->fActiveTexture(aTextureUnit);
+  gl->fActiveTexture(aTextureUnit);
 
   // SurfaceTexture spams us if there are any existing GL errors, so
   // we'll clear them here in order to avoid that.
-  gl()->FlushErrors();
+  gl->FlushErrors();
 
   mSurfTex->UpdateTexImage();
 
-  ApplyFilterToBoundTexture(gl(), aFilter, mTextureTarget);
+  ApplyFilterToBoundTexture(gl, aFilter, mTextureTarget);
 }
 
 void
@@ -492,7 +489,8 @@ bool
 SurfaceTextureHost::Lock()
 {
   MOZ_ASSERT(mSurfTex);
-  if (!mCompositor) {
+  GLContext* gl = this->gl();
+  if (!gl || !gl->MakeCurrent()) {
     return false;
   }
 
@@ -508,7 +506,7 @@ SurfaceTextureHost::Lock()
                                               mSize);
   }
 
-  return NS_SUCCEEDED(mSurfTex->Attach(gl()));
+  return NS_SUCCEEDED(mSurfTex->Attach(gl));
 }
 
 void
@@ -535,8 +533,7 @@ SurfaceTextureHost::SetCompositor(Compositor* aCompositor)
 gfx::SurfaceFormat
 SurfaceTextureHost::GetFormat() const
 {
-  MOZ_ASSERT(mTextureSource);
-  return mTextureSource->GetFormat();
+  return mTextureSource ? mTextureSource->GetFormat() : gfx::SurfaceFormat::UNKNOWN;
 }
 
 void
@@ -574,22 +571,23 @@ EGLImageTextureSource::EGLImageTextureSource(CompositorOGL* aCompositor,
 void
 EGLImageTextureSource::BindTexture(GLenum aTextureUnit, gfx::Filter aFilter)
 {
-  if (!gl()) {
+  GLContext* gl = this->gl();
+  if (!gl || !gl->MakeCurrent()) {
     NS_WARNING("Trying to bind a texture without a GLContext");
     return;
   }
 
-  MOZ_ASSERT(DoesEGLContextSupportSharingWithEGLImage(gl()),
+  MOZ_ASSERT(DoesEGLContextSupportSharingWithEGLImage(gl),
              "EGLImage not supported or disabled in runtime");
 
   GLuint tex = mCompositor->GetTemporaryTexture(mTextureTarget, aTextureUnit);
 
-  gl()->fActiveTexture(aTextureUnit);
-  gl()->fBindTexture(mTextureTarget, tex);
+  gl->fActiveTexture(aTextureUnit);
+  gl->fBindTexture(mTextureTarget, tex);
 
-  gl()->fEGLImageTargetTexture2D(mTextureTarget, mImage);
+  gl->fEGLImageTargetTexture2D(mTextureTarget, mImage);
 
-  ApplyFilterToBoundTexture(gl(), aFilter, mTextureTarget);
+  ApplyFilterToBoundTexture(gl, aFilter, mTextureTarget);
 }
 
 void
@@ -644,7 +642,8 @@ EGLImageTextureHost::gl() const
 bool
 EGLImageTextureHost::Lock()
 {
-  if (!mCompositor) {
+  GLContext* gl = this->gl();
+  if (!gl || !gl->MakeCurrent()) {
     return false;
   }
 
@@ -701,7 +700,7 @@ gfx::SurfaceFormat
 EGLImageTextureHost::GetFormat() const
 {
   MOZ_ASSERT(mTextureSource);
-  return mTextureSource->GetFormat();
+  return mTextureSource ? mTextureSource->GetFormat() : gfx::SurfaceFormat::UNKNOWN;
 }
 
 //
@@ -733,14 +732,17 @@ GLTextureHost::gl() const
 bool
 GLTextureHost::Lock()
 {
-  if (!mCompositor) {
+  GLContext* gl = this->gl();
+  if (!gl || !gl->MakeCurrent()) {
     return false;
   }
 
   if (mSync) {
-    gl()->MakeCurrent();
-    gl()->fWaitSync(mSync, 0, LOCAL_GL_TIMEOUT_IGNORED);
-    gl()->fDeleteSync(mSync);
+    if (!gl->MakeCurrent()) {
+      return false;
+    }
+    gl->fWaitSync(mSync, 0, LOCAL_GL_TIMEOUT_IGNORED);
+    gl->fDeleteSync(mSync);
     mSync = 0;
   }
 
@@ -776,7 +778,7 @@ gfx::SurfaceFormat
 GLTextureHost::GetFormat() const
 {
   MOZ_ASSERT(mTextureSource);
-  return mTextureSource->GetFormat();
+  return mTextureSource ? mTextureSource->GetFormat() : gfx::SurfaceFormat::UNKNOWN;
 }
 
 } // namespace layers

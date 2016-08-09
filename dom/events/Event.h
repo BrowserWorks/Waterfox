@@ -187,7 +187,17 @@ public:
 
   bool DefaultPrevented() const
   {
-    return mEvent->mFlags.mDefaultPrevented;
+    return mEvent->DefaultPrevented();
+  }
+
+  bool DefaultPreventedByChrome() const
+  {
+    return mEvent->mFlags.mDefaultPreventedByChrome;
+  }
+
+  bool DefaultPreventedByContent() const
+  {
+    return mEvent->mFlags.mDefaultPreventedByContent;
   }
 
   bool MultipleActionsPrevented() const
@@ -197,7 +207,7 @@ public:
 
   bool IsTrusted() const
   {
-    return mEvent->mFlags.mIsTrusted;
+    return mEvent->IsTrusted();
   }
 
   bool IsSynthesized() const
@@ -293,7 +303,7 @@ public:
     MOZ_ASSERT(aOverridingMessage != eUnidentifiedEvent,
                "Only use this class with a valid overriding EventMessage");
     MOZ_ASSERT(mOrigMessage != eUnidentifiedEvent &&
-               mEvent->mEvent->typeString.IsEmpty(),
+               mEvent->mEvent->mSpecifiedEventTypeString.IsEmpty(),
                "Only use this class on events whose overridden type is "
                "known (so we can restore it properly)");
 

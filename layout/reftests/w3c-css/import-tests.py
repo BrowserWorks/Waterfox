@@ -7,6 +7,8 @@ from optparse import OptionParser
 from subprocess import Popen, PIPE
 import xml.dom.minidom
 import html5lib
+import filecmp
+import fnmatch
 import shutil
 import sys
 import re
@@ -29,10 +31,9 @@ import re
 # But for now, let's just import a few sets of tests.
 
 gSubtrees = [
-    os.path.join("approved", "css3-namespace", "src"),
-    #os.path.join("approved", "css3-multicol", "src"),
-    os.path.join("contributors", "opera", "submitted", "css3-conditional"),
-    #os.path.join("contributors", "opera", "submitted", "multicol")
+    os.path.join("css-namespaces-3"),
+    os.path.join("css-conditional-3"),
+    os.path.join("css-values-3"),
 ]
 
 gPrefixedProperties = [
@@ -58,7 +59,7 @@ gDefaultPreferences = {
 }
 
 gLog = None
-gFailList = {}
+gFailList = []
 gDestPath = None
 gSrcPath = None
 support_dirs_mapped = set()
@@ -70,6 +71,9 @@ gOptions = None
 gArgs = None
 gTestfiles = []
 gTestFlags = {}
+
+def to_unix_path_sep(path):
+    return path.replace('\\', '/')
 
 def log_output_of(subprocess):
     global gLog
@@ -102,12 +106,12 @@ def remove_existing_dirs():
 
 def populate_test_files():
     global gSubtrees, gTestfiles
+    excludeDirs = ["support", "reftest", "reference", "reports", "tools"]
     for subtree in gSubtrees:
         for dirpath, dirnames, filenames in os.walk(subtree, topdown=True):
-            if "support" in dirnames:
-               dirnames.remove("support")
-            if "reftest" in dirnames:
-               dirnames.remove("reftest")
+            for exclDir in excludeDirs:
+                if exclDir in dirnames:
+                    dirnames.remove(exclDir)
             for f in filenames:
                 if f == "README" or \
                    f.find("-ref.") != -1:
@@ -121,12 +125,16 @@ def copy_file(test, srcfile, destname, isSupportFile=False):
     if not srcfile.startswith(gSrcPath):
         raise StandardError("Filename " + srcfile + " does not start with " + gSrcPath)
     logname = srcfile[len(gSrcPath):]
-    gLog.write("Importing " + logname + " to " + destname + "\n")
+    gLog.write("Importing " + to_unix_path_sep(logname) +
+               " to " + to_unix_path_sep(destname) + "\n")
     destfile = os.path.join(gDestPath, destname)
     destdir = os.path.dirname(destfile)
     if not os.path.exists(destdir):
         os.makedirs(destdir)
     if os.path.exists(destfile):
+        if filecmp.cmp(srcfile, destfile):
+            print "Warning: duplicate file {}".format(destname)
+            return
         raise StandardError("file " + destfile + " already exists")
     copy_and_prefix(test, srcfile, destfile, gPrefixedProperties, isSupportFile)
 
@@ -156,7 +164,7 @@ def map_file(fn, spec):
 
 def load_flags_for(fn, spec):
     global gTestFlags
-    document = get_document_for(fn, spec)
+    document = get_document_for(fn)
     destname = os.path.join(spec, os.path.basename(fn))
     gTestFlags[destname] = []
 
@@ -165,11 +173,14 @@ def load_flags_for(fn, spec):
         if name == "flags":
             gTestFlags[destname] = meta.getAttribute("content").split()
 
-def get_document_for(fn, spec):
+def is_html(fn):
+    return fn.endswith(".htm") or fn.endswith(".html")
+
+def get_document_for(fn):
     document = None # an xml.dom.minidom document
-    if fn.endswith(".htm") or fn.endswith(".html"):
+    if is_html(fn):
         # An HTML file
-        f = open(fn, "r")
+        f = open(fn, "rb")
         parser = html5lib.HTMLParser(tree=html5lib.treebuilders.getTreeBuilder("dom"))
         document = parser.parse(f)
         f.close()
@@ -179,19 +190,11 @@ def get_document_for(fn, spec):
     return document
 
 def add_test_items(fn, spec):
-    document = get_document_for(fn, spec)
+    document = get_document_for(fn)
     refs = []
     notrefs = []
     for link in document.getElementsByTagName("link"):
         rel = link.getAttribute("rel")
-        if rel == "help" and spec == None:
-            specurl = link.getAttribute("href")
-            startidx = specurl.find("/TR/")
-            if startidx != -1:
-                startidx = startidx + 4
-                endidx = specurl.find("/", startidx)
-                if endidx != -1:
-                    spec = str(specurl[startidx:endidx])
         if rel == "match":
             arr = refs
         elif rel == "mismatch":
@@ -202,7 +205,12 @@ def add_test_items(fn, spec):
     if len(refs) > 1:
         raise StandardError("Need to add code to specify which reference we want to match.")
     if spec is None:
-        raise StandardError("Could not associate test with specification")
+        for subtree in gSubtrees:
+            if fn.startswith(subtree):
+                spec = os.path.basename(subtree)
+                break
+        else:
+            raise StandardError("Could not associate test " + fn + " with specification")
     for ref in refs:
         tests.append(["==", map_file(fn, spec), map_file(ref, spec)])
     for notref in notrefs:
@@ -213,10 +221,23 @@ def add_test_items(fn, spec):
     for notref in notrefs:
         add_test_items(notref, spec=spec)
 
+AHEM_DECL_CONTENT = """@font-face {
+  font-family: Ahem;
+  src: url("../../../fonts/Ahem.ttf");
+}"""
+AHEM_DECL_HTML = """<style type="text/css">
+""" + AHEM_DECL_CONTENT + """
+</style>
+"""
+AHEM_DECL_XML = """<style type="text/css"><![CDATA[
+""" + AHEM_DECL_CONTENT + """
+]]></style>
+"""
+
 def copy_and_prefix(test, aSourceFileName, aDestFileName, aProps, isSupportFile=False):
     global gTestFlags
-    newFile = open(aDestFileName, 'w')
-    unPrefixedFile = open(aSourceFileName)
+    newFile = open(aDestFileName, 'wb')
+    unPrefixedFile = open(aSourceFileName, 'rb')
     testName = aDestFileName[len(gDestPath)+1:]
     ahemFontAdded = False
     for line in unPrefixedFile:
@@ -226,10 +247,7 @@ def copy_and_prefix(test, aSourceFileName, aDestFileName, aProps, isSupportFile=
         if not isSupportFile and not ahemFontAdded and 'ahem' in gTestFlags[test] and re.search(searchRegex, line):
             # First put our ahem font declation before the first <style>
             # element
-            ahemFontDecl = "<style type=\"text/css\"><![CDATA[\n@font-face "\
-                           "{\n  font-family: Ahem;\n  src: url("\
-                           "\"../../../fonts/Ahem.ttf\");\n}\n]]></style>\n"
-            newFile.write(ahemFontDecl)
+            newFile.write(AHEM_DECL_HTML if is_html(aDestFileName) else AHEM_DECL_XML)
             ahemFontAdded = True
 
         for rule in aProps:
@@ -270,16 +288,20 @@ def setup_log():
     global gLog
     # Since we're going to commit the tests, we should also commit
     # information about where they came from.
-    gLog = open(os.path.join(gDestPath, "import.log"), "w")
+    gLog = open(os.path.join(gDestPath, "import.log"), "wb")
 
 def read_fail_list():
     global gFailList
     dirname = os.path.realpath(__file__).split(os.path.sep)
     dirname = os.path.sep.join(dirname[:len(dirname)-1])
-    failListFile = open(os.path.join(dirname, "failures.list"), "r")
-    gFailList = [x for x in [x.lstrip().rstrip() for x in failListFile] if bool(x)
-                 and not x.startswith("#")]
-    failListFile.close()
+    with open(os.path.join(dirname, "failures.list"), "rb") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            items = line.split()
+            pat = re.compile(fnmatch.translate(items.pop()))
+            gFailList.append((pat, items))
 
 def main():
     global gDestPath, gLog, gTestfiles, gTestFlags, gFailList
@@ -294,7 +316,7 @@ def main():
     for t in gTestfiles:
         add_test_items(t, spec=None)
 
-    listfile = open(os.path.join(gDestPath, "reftest.list"), "w")
+    listfile = open(os.path.join(gDestPath, "reftest.list"), "wb")
     listfile.write("# THIS FILE IS AUTOGENERATED BY {0}\n# DO NOT EDIT!\n".format(os.path.basename(__file__)))
     lastDefaultPreferences = None
     for test in tests:
@@ -305,14 +327,24 @@ def main():
             else:
                 listfile.write("\ndefault-preferences {0}\n\n".format(defaultPreferences))
             lastDefaultPreferences = defaultPreferences
-        key = 0
+        key = 1
         while not test[key] in gTestFlags.keys() and key < len(test):
             key = key + 1
+        testType = test[key - 1]
+        testFlags = gTestFlags[test[key]]
+        # Replace the Windows separators if any. Our internal strings
+        # all use the system separator, however the failure/skip lists
+        # and reftest.list always use '/' so we fix the paths here.
+        test[key] = to_unix_path_sep(test[key])
+        test[key + 1] = to_unix_path_sep(test[key + 1])
         testKey = test[key]
-        if 'ahem' in gTestFlags[testKey]:
+        if 'ahem' in testFlags:
             test = ["HTTP(../../..)"] + test
-        if testKey in gFailList:
-            test = ["fails"] + test
+        fail = []
+        for pattern, failureType in gFailList:
+            if pattern.match(testKey):
+                fail = failureType
+        test = fail + test
         listfile.write(" ".join(test) + "\n")
     listfile.close()
 

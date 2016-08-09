@@ -20,8 +20,6 @@
 #include "nsRect.h"                     // for IntRect
 #include "mozilla/layers/TiledContentClient.h"
 
-class gfxReusableSurfaceWrapper;
-
 namespace mozilla {
 using namespace gfx;
 namespace layers {
@@ -35,12 +33,6 @@ TiledLayerBufferComposite::TiledLayerBufferComposite()
 TiledLayerBufferComposite::~TiledLayerBufferComposite()
 {
   Clear();
-}
-
-/* static */ void
-TiledLayerBufferComposite::RecycleCallback(TextureHost* textureHost, void* aClosure)
-{
-  textureHost->CompositorRecycle();
 }
 
 void

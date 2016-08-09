@@ -83,7 +83,7 @@ CompositorOGL::BindBackdrop(ShaderProgramOGL* aProgram, GLuint aBackdrop, GLenum
   aProgram->SetBackdropTextureUnit(aTexUnit - LOCAL_GL_TEXTURE0);
 }
 
-CompositorOGL::CompositorOGL(CompositorParent* aParent,
+CompositorOGL::CompositorOGL(CompositorBridgeParent* aParent,
                              nsIWidget *aWidget, int aSurfaceWidth,
                              int aSurfaceHeight, bool aUseExternalSurfaceSize)
   : Compositor(aParent)
@@ -631,7 +631,7 @@ void
 CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
                           const Rect *aClipRectIn,
                           const Rect& aRenderBounds,
-                          bool aOpaque,
+                          const nsIntRegion& aOpaqueRegion,
                           Rect *aClipRectOut,
                           Rect *aRenderBoundsOut)
 {
@@ -881,8 +881,7 @@ CompositorOGL::GetShaderConfigFor(Effect *aEffect,
   }
   }
   config.SetColorMatrix(aColorMatrix);
-  config.SetMask2D(aMask == MaskType::Mask2d);
-  config.SetMask3D(aMask == MaskType::Mask3d);
+  config.SetMask(aMask == MaskType::Mask);
   config.SetDEAA(aDEAAEnabled);
   config.SetCompositionOp(aOp);
   return config;
@@ -1008,6 +1007,8 @@ CompositorOGL::DrawQuad(const Rect& aRect,
     return;
   }
 
+  MakeCurrent();
+
   IntPoint offset = mCurrentRenderTarget->GetOrigin();
   IntSize size = mCurrentRenderTarget->GetSize();
 
@@ -1072,9 +1073,7 @@ CompositorOGL::DrawQuad(const Rect& aRect,
     maskQuadTransform._41 = float(-bounds.x)/bounds.width;
     maskQuadTransform._42 = float(-bounds.y)/bounds.height;
 
-    maskType = effectMask->mIs3D
-                 ? MaskType::Mask3d
-                 : MaskType::Mask2d;
+    maskType = MaskType::Mask;
   } else {
     maskType = MaskType::MaskNone;
   }
@@ -1243,23 +1242,12 @@ CompositorOGL::DrawQuad(const Rect& aRect,
       didSetBlendMode = SetBlendMode(gl(), blendMode, texturedEffect->mPremultiplied);
 
       gfx::Filter filter = texturedEffect->mFilter;
-      Matrix4x4 textureTransform = source->AsSourceOGL()->GetTextureTransform();
 
-#ifdef MOZ_WIDGET_ANDROID
-      gfx::Matrix textureTransform2D;
-      if (filter != gfx::Filter::POINT &&
-          aTransform.Is2DIntegerTranslation() &&
-          textureTransform.Is2D(&textureTransform2D) &&
-          textureTransform2D.HasOnlyIntegerTranslation()) {
-        // On Android we encounter small resampling errors in what should be
-        // pixel-aligned compositing operations. This works around them. This
-        // code should not be needed!
-        filter = gfx::Filter::POINT;
-      }
-#endif
       source->AsSourceOGL()->BindTexture(LOCAL_GL_TEXTURE0, filter);
 
       program->SetTextureUnit(0);
+
+      Matrix4x4 textureTransform = source->AsSourceOGL()->GetTextureTransform();
       program->SetTextureTransform(textureTransform);
 
       if (maskType != MaskType::MaskNone) {

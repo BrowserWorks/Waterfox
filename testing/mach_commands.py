@@ -20,6 +20,7 @@ from mach.decorators import (
 
 from mozbuild.base import MachCommandBase
 from mozbuild.base import MachCommandConditions as conditions
+import mozpack.path as mozpath
 from argparse import ArgumentParser
 
 UNKNOWN_TEST = '''
@@ -96,6 +97,10 @@ TEST_SUITES = {
         'mach_command': 'luciddream',
         'kwargs': {'test_paths': None},
     },
+    'python': {
+        'mach_command': 'python-test',
+        'kwargs': {'tests': None},
+    },
     'reftest': {
         'aliases': ('RR', 'rr', 'Rr'),
         'mach_command': 'reftest',
@@ -146,6 +151,10 @@ TEST_FLAVORS = {
         'mach_command': 'mochitest',
         'kwargs': {'flavor': 'mochitest', 'test_paths': []},
     },
+    'python': {
+        'mach_command': 'python-test',
+        'kwargs': {},
+    },
     'reftest': {
         'mach_command': 'reftest',
         'kwargs': {'tests': []}
@@ -154,10 +163,6 @@ TEST_FLAVORS = {
     'web-platform-tests': {
         'mach_command': 'web-platform-tests',
         'kwargs': {'include': []}
-    },
-    'webapprt-chrome': {
-        'mach_command': 'mochitest',
-        'kwargs': {'flavor': 'webapprt-chrome', 'test_paths': []},
     },
     'xpcshell': {
         'mach_command': 'xpcshell-test',
@@ -536,7 +541,7 @@ class PushToTry(MachCommandBase):
 
         paths = []
         for p in kwargs["paths"]:
-            p = os.path.normpath(os.path.abspath(p))
+            p = mozpath.normpath(os.path.abspath(p))
             if not (os.path.isdir(p) and p.startswith(self.topsrcdir)):
                 print('Specified path "%s" is not a directory under the srcdir,'
                       ' unable to specify tests outside of the srcdir' % p)
@@ -607,7 +612,6 @@ class PushToTry(MachCommandBase):
         """
 
         from mozbuild.testing import TestResolver
-        from mozbuild.controller.building import BuildDriver
         from autotry import AutoTry
 
         print("mach try is under development, please file bugs blocking 1149670.")
@@ -640,9 +644,6 @@ class PushToTry(MachCommandBase):
         builds, platforms, tests, talos, paths, tags, extra = self.validate_args(**kwargs)
 
         if paths or tags:
-            driver = self._spawn(BuildDriver)
-            driver.install_tests(remove=False)
-
             paths = [os.path.relpath(os.path.normpath(os.path.abspath(item)), self.topsrcdir)
                      for item in paths]
             paths_by_flavor = at.paths_by_flavor(paths=paths, tags=tags)
@@ -713,11 +714,11 @@ def get_parser(argv=None):
                              'chunkByDir directories.',
                         default=None)
 
-    parser.add_argument('--e10s',
-                        action='store_true',
+    parser.add_argument('--disable-e10s',
+                        action='store_false',
                         dest='e10s',
-                        help='Find test on chunk with electrolysis preferences enabled.',
-                        default=False)
+                        help='Find test on chunk with electrolysis preferences disabled.',
+                        default=True)
 
     parser.add_argument('-p', '--platform',
                         choices=['linux', 'linux64', 'mac', 'macosx64', 'win32', 'win64'],

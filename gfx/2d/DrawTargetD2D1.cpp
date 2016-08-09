@@ -1201,9 +1201,15 @@ DrawTargetD2D1::PrepareForDrawing(CompositionOp aOp, const Pattern &aPattern)
     return;
   }
 
-  mDC->CreateCommandList(getter_AddRefs(mCommandList));
+  HRESULT result = mDC->CreateCommandList(getter_AddRefs(mCommandList));
   mDC->SetTarget(mCommandList);
   mUsedCommandListsSincePurge++;
+
+  // This is where we should have a valid command list.  If we don't, something is
+  // wrong, and it's likely an OOM.
+  if (!mCommandList) {
+    gfxDevCrash(LogReason::InvalidCommandList) << "Invalid D2D1.1 command list on creation " << mUsedCommandListsSincePurge << ", " << gfx::hexa(result);
+  }
 
   D2D1_RECT_F rect;
   bool isAligned;
@@ -1236,6 +1242,10 @@ DrawTargetD2D1::FinalizeDrawing(CompositionOp aOp, const Pattern &aPattern)
   }
 
   mDC->SetTarget(CurrentTarget());
+  if (!mCommandList) {
+    gfxDevCrash(LogReason::InvalidCommandList) << "Invalid D21.1 command list on finalize";
+    return;
+  }
   mCommandList->Close();
 
   RefPtr<ID2D1CommandList> source = mCommandList;
@@ -1658,7 +1668,7 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
         RefPtr<ID2D1Image> oldTarget;
         RefPtr<ID2D1Bitmap1> tmpBitmap;
         mDC->CreateBitmap(D2D1::SizeU(pat->mSurface->GetSize().width, pat->mSurface->GetSize().height), nullptr, 0,
-                          &D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET, D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+                          D2D1::BitmapProperties1(D2D1_BITMAP_OPTIONS_TARGET, D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
                           getter_AddRefs(tmpBitmap));
         mDC->GetTarget(getter_AddRefs(oldTarget));
         mDC->SetTarget(tmpBitmap);

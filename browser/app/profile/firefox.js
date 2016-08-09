@@ -46,7 +46,7 @@ pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/%LOCAL
 pref("extensions.getAddons.getWithPerformance.url", "https://services.addons.mozilla.org/%LOCALE%/firefox/api/%API_VERSION%/search/guid:%IDS%?src=firefox&appOS=%OS%&appVersion=%VERSION%&tMain=%TIME_MAIN%&tFirstPaint=%TIME_FIRST_PAINT%&tSessionRestored=%TIME_SESSION_RESTORED%");
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.search.url", "https://services.addons.mozilla.org/%LOCALE%/firefox/api/%API_VERSION%/search/%TERMS%/all/%MAX_RESULTS%/%OS%/%VERSION%/%COMPATIBILITY_MODE%?src=firefox");
-pref("extensions.webservice.discoverURL", "https://services.addons.mozilla.org/%LOCALE%/firefox/discovery/pane/%VERSION%/%OS%/%COMPATIBILITY_MODE%");
+pref("extensions.webservice.discoverURL", "https://discovery.addons.mozilla.org/%LOCALE%/firefox/discovery/pane/%VERSION%/%OS%/%COMPATIBILITY_MODE%");
 pref("extensions.getAddons.recommended.url", "https://services.addons.mozilla.org/%LOCALE%/%APP%/api/%API_VERSION%/list/recommended/all/%MAX_RESULTS%/%OS%/%VERSION%?src=firefox");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
 
@@ -64,13 +64,27 @@ pref("extensions.blocklist.itemURL", "https://blocklist.addons.mozilla.org/%LOCA
 
 // Kinto blocklist preferences
 pref("services.kinto.base", "https://firefox.settings.services.mozilla.com/v1");
+pref("services.kinto.changes.path", "/buckets/monitor/collections/changes/records");
 pref("services.kinto.bucket", "blocklists");
 pref("services.kinto.onecrl.collection", "certificates");
 pref("services.kinto.onecrl.checked", 0);
+pref("services.kinto.addons.collection", "addons");
+pref("services.kinto.addons.checked", 0);
+pref("services.kinto.plugins.collection", "plugins");
+pref("services.kinto.plugins.checked", 0);
+pref("services.kinto.gfx.collection", "gfx");
+pref("services.kinto.gfx.checked", 0);
+
+// for now, let's keep kinto update out of the release channel
+#ifdef RELEASE_BUILD
+pref("services.kinto.update_enabled", false);
+#else
+pref("services.kinto.update_enabled", true);
+#endif
 
 pref("extensions.update.autoUpdateDefault", true);
 
-pref("extensions.hotfix.id", "");
+pref("extensions.hotfix.id", "firefox-hotfix@mozilla.org");
 pref("extensions.hotfix.cert.checkAttributes", true);
 pref("extensions.hotfix.certs.1.sha1Fingerprint", "91:53:98:0C:C1:86:DF:47:8F:35:22:9E:11:C9:A7:31:04:49:A1:AA");
 pref("extensions.hotfix.certs.2.sha1Fingerprint", "39:E7:2B:7A:5B:CF:37:78:F9:5D:4A:E0:53:2D:2F:3D:68:53:C5:60");
@@ -81,6 +95,10 @@ pref("extensions.systemAddon.update.url", "https://aus5.mozilla.org/update/3/Sys
 // Disable add-ons that are not installed by the user in all scopes by default.
 // See the SCOPE constants in AddonManager.jsm for values to use here.
 pref("extensions.autoDisableScopes", 15);
+
+// Add-on content security policies.
+pref("extensions.webextensions.base-content-security-policy", "script-src 'self' https://* moz-extension: blob: filesystem: 'unsafe-eval' 'unsafe-inline'; object-src 'self' https://* moz-extension: blob: filesystem:;");
+pref("extensions.webextensions.default-content-security-policy", "script-src 'self'; object-src 'self';");
 
 // Require signed add-ons by default
 pref("xpinstall.signatures.required", false);
@@ -222,7 +240,7 @@ pref("browser.uitour.readerViewTrigger", "^https:\\/\\/www\\.mozilla\\.org\\/[^\
 pref("browser.uitour.surveyDuration", 7200);
 
 pref("browser.customizemode.tip0.shown", false);
-pref("browser.customizemode.tip0.learnMoreUrl", "");
+pref("browser.customizemode.tip0.learnMoreUrl", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/customize");
 
 pref("keyword.enabled", true);
 pref("browser.fixup.domainwhitelist.localhost", true);
@@ -286,8 +304,6 @@ pref("browser.urlbar.doubleClickSelectsAll", false);
 pref("browser.urlbar.autoFill", true);
 pref("browser.urlbar.autoFill.typed", true);
 
-pref("browser.urlbar.unifiedcomplete", true);
-
 // 0: Match anywhere (e.g., middle of words)
 // 1: Match on word boundaries and then try matching anywhere
 // 2: Match only on word boundaries (e.g., after / or .)
@@ -296,7 +312,7 @@ pref("browser.urlbar.matchBehavior", 1);
 pref("browser.urlbar.filter.javascript", true);
 
 // the maximum number of results to show in autocomplete when doing richResults
-pref("browser.urlbar.maxRichResults", 12);
+pref("browser.urlbar.maxRichResults", 10);
 // The amount of time (ms) to wait after the user has stopped typing
 // before starting to perform autocomplete.  50 is the default set in
 // autocomplete.xml.
@@ -321,6 +337,10 @@ pref("browser.urlbar.suggest.bookmark",             true);
 pref("browser.urlbar.suggest.openpage",             true);
 pref("browser.urlbar.suggest.searches",             false);
 pref("browser.urlbar.userMadeSearchSuggestionsChoice", false);
+// 4 here means the suggestion notification will be automatically
+// hidden the 4th day, so it will actually be shown on 3 different days.
+pref("browser.urlbar.daysBeforeHidingSuggestionsPrompt", 4);
+pref("browser.urlbar.lastSuggestionsPromptDate", 20160601);
 
 // Limit the number of characters sent to the current search engine to fetch
 // suggestions.
@@ -643,10 +663,10 @@ pref("accessibility.typeaheadfind.flashBar", 1);
 // Tracks when accessibility is loaded into the previous session.
 pref("accessibility.loadedInLastSession", false);
 
-pref("plugins.update.url", "");
+pref("plugins.update.url", "https://www.mozilla.org/%LOCALE%/plugincheck/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=plugincheck-update");
 pref("plugins.update.notifyUser", false);
 
-pref("plugins.click_to_play", false);
+pref("plugins.click_to_play", true);
 pref("plugins.testmode", false);
 
 pref("plugin.default.state", 1);
@@ -656,7 +676,7 @@ pref("plugin.defaultXpi.state", 2);
 
 // Flash is enabled by default, and Java is click-to-activate by default on
 // all channels.
-pref("plugin.state.flash", 1);
+pref("plugin.state.flash", 2);
 pref("plugin.state.java", 1);
 
 #ifdef XP_MACOSX
@@ -780,8 +800,8 @@ pref("browser.safebrowsing.downloads.remote.timeout_ms", 10000);
 pref("browser.safebrowsing.downloads.remote.url", "https://sb-ssl.google.com/safebrowsing/clientreport/download?key=%GOOGLE_API_KEY%");
 pref("browser.safebrowsing.downloads.remote.block_dangerous",            true);
 pref("browser.safebrowsing.downloads.remote.block_dangerous_host",       true);
-pref("browser.safebrowsing.downloads.remote.block_potentially_unwanted", false);
-pref("browser.safebrowsing.downloads.remote.block_uncommon",             false);
+pref("browser.safebrowsing.downloads.remote.block_potentially_unwanted", true);
+pref("browser.safebrowsing.downloads.remote.block_uncommon",             true);
 pref("browser.safebrowsing.debug", false);
 
 pref("browser.safebrowsing.provider.google.lists", "goog-badbinurl-shavar,goog-downloadwhite-digest256,goog-phish-shavar,goog-malware-shavar,goog-unwanted-shavar");
@@ -946,7 +966,7 @@ pref("toolkit.crashreporter.infoURL",
      "");
 
 // base URL for web-based support pages
-pref("app.support.baseURL", "about:blank#");
+pref("app.support.baseURL", "about:blank");
 
 // a11y conflicts with e10s support page
 pref("app.support.e10sAccessibilityUrl", "");
@@ -1003,7 +1023,7 @@ pref("security.sandbox.windows.log", false);
 pref("dom.ipc.plugins.sandbox-level.default", 0);
 #if defined(_AMD64_)
 // The lines in PluginModuleParent.cpp should be changed in line with this.
-pref("dom.ipc.plugins.sandbox-level.flash", 0);
+pref("dom.ipc.plugins.sandbox-level.flash", 2);
 #else
 pref("dom.ipc.plugins.sandbox-level.flash", 0);
 #endif
@@ -1179,7 +1199,7 @@ pref("browser.newtabpage.introShown", false);
 pref("browser.newtabpage.enabled", true);
 
 // Toggles the enhanced content of 'about:newtab'. Shows sponsored tiles.
-sticky_pref("browser.newtabpage.enhanced", false);
+sticky_pref("browser.newtabpage.enhanced", true);
 
 // number of rows of newtab grid
 pref("browser.newtabpage.rows", 3);
@@ -1196,8 +1216,17 @@ pref("browser.newtabpage.directory.ping", "");
 // activates the remote-hosted newtab page
 pref("browser.newtabpage.remote", false);
 
+// remote newtab version targeted
+pref("browser.newtabpage.remote.version", "1");
+
 // Toggles endpoints allowed for remote newtab communications
 pref("browser.newtabpage.remote.mode", "production");
+
+// content-signature tests for remote newtab
+pref("browser.newtabpage.remote.content-signing-test", false);
+
+// verification keys for remote-hosted newtab page
+pref("browser.newtabpage.remote.keys", "");
 
 // Enable the DOM fullscreen API.
 pref("full-screen-api.enabled", true);
@@ -1244,11 +1273,6 @@ pref("security.insecure_password.ui.enabled", false);
 
 // 1 = allow MITM for certificate pinning checks.
 pref("security.cert_pinning.enforcement_level", 1);
-
-// NB: Changes to this pref affect CERT_CHAIN_SHA1_POLICY_STATUS telemetry.
-// See the comment in CertVerifier.cpp.
-// 0 = allow SHA-1
-pref("security.pki.sha1_enforcement_level", 0);
 
 // Required blocklist freshness for OneCRL OCSP bypass
 // (default is 1.25x extensions.blocklist.interval, or 30 hours)
@@ -1318,8 +1342,8 @@ pref("identity.sync.tokenserver.uri", "https://token.services.mozilla.com/1.0/sy
 
 // URLs for promo links to mobile browsers. Note that consumers are expected to
 // append a value for utm_campaign.
-pref("identity.mobilepromo.android", "");
-pref("identity.mobilepromo.ios", "");
+pref("identity.mobilepromo.android", "https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
+pref("identity.mobilepromo.ios", "https://www.mozilla.org/firefox/ios/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
 
 // Migrate any existing Firefox Account data from the default profile to the
 // Developer Edition profile.
@@ -1388,7 +1412,7 @@ pref("experiments.manifest.uri", "");
 pref("experiments.supported", false);
 
 // Enable GMP support in the addon manager.
-pref("media.gmp-provider.enabled", false);
+pref("media.gmp-provider.enabled", true);
 
 #ifdef NIGHTLY_BUILD
 pref("privacy.trackingprotection.ui.enabled", true);
@@ -1461,7 +1485,6 @@ pref("view_source.tab", true);
 
 pref("dom.serviceWorkers.enabled", true);
 pref("dom.serviceWorkers.openWindow.enabled", true);
-pref("dom.webnotifications.serviceworker.enabled", true);
 
 // Enable Push API.
 pref("dom.push.enabled", true);
@@ -1481,5 +1504,3 @@ pref("browser.laterrun.enabled", false);
 
 // Enable browser frames for use on desktop.  Only exposed to chrome callers.
 pref("dom.mozBrowserFramesEnabled", true);
-
-pref("extensions.pocket.enabled", false);

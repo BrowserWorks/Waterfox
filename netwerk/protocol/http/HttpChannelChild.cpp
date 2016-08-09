@@ -451,7 +451,7 @@ HttpChannelChild::OnStartRequest(const nsresult& channelStatus,
   mCacheKey = container;
 
   // replace our request headers with what actually got sent in the parent
-  mRequestHead.Headers() = requestHeaders;
+  mRequestHead.SetHeaders(requestHeaders);
 
   // Note: this is where we would notify "http-on-examine-response" observers.
   // We have deliberately disabled this for child processes (see bug 806753)
@@ -942,7 +942,10 @@ HttpChannelChild::DoOnStopRequest(nsIRequest* aRequest, nsresult aChannelStatus,
     nsChannelClassifier::SetBlockedTrackingContent(this);
   }
 
+  MOZ_ASSERT(!mOnStopRequestCalled,
+             "We should not call OnStopRequest twice");
   mListener->OnStopRequest(aRequest, aContext, mStatus);
+  mOnStopRequestCalled = true;
 
   mListener = 0;
   mListenerContext = 0;
@@ -1738,9 +1741,9 @@ HttpChannelChild::AsyncOpen(nsIStreamListener *listener, nsISupports *aContext)
   if (NS_FAILED(rv))
     return rv;
 
-  const char *cookieHeader = mRequestHead.PeekHeader(nsHttp::Cookie);
-  if (cookieHeader) {
-    mUserSetCookieHeader = cookieHeader;
+  nsAutoCString cookie;
+  if (NS_SUCCEEDED(mRequestHead.GetHeader(nsHttp::Cookie, cookie))) {
+    mUserSetCookieHeader = cookie;
   }
 
   AddCookiesToRequest();
@@ -1854,7 +1857,7 @@ HttpChannelChild::ContinueAsyncOpen()
   SerializeURI(mAPIRedirectToURI, openArgs.apiRedirectTo());
   openArgs.loadFlags() = mLoadFlags;
   openArgs.requestHeaders() = mClientSetRequestHeaders;
-  openArgs.requestMethod() = mRequestHead.Method();
+  mRequestHead.Method(openArgs.requestMethod());
 
   nsTArray<mozilla::ipc::FileDescriptor> fds;
   SerializeInputStream(mUploadStream, openArgs.uploadStream(), fds);
@@ -2503,7 +2506,9 @@ HttpChannelChild::ResetInterception()
 
   // Continue with the original cross-process request
   nsresult rv = ContinueAsyncOpen();
-  NS_ENSURE_SUCCESS_VOID(rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    AsyncAbort(rv);
+  }
 }
 
 NS_IMETHODIMP
@@ -2534,7 +2539,9 @@ HttpChannelChild::OverrideWithSynthesizedResponse(nsAutoPtr<nsHttpResponseHead>&
     mShouldInterceptSubsequentRedirect = true;
     // Continue with the original cross-process request
     nsresult rv = ContinueAsyncOpen();
-    NS_ENSURE_SUCCESS_VOID(rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      AsyncAbort(rv);
+    }
     return;
   }
 
@@ -2630,7 +2637,7 @@ HttpChannelChild::ShouldInterceptURI(nsIURI* aURI,
 
   nsCOMPtr<nsIURI> upgradedURI;
   if (aShouldUpgrade) {
-    rv = GetSecureUpgradedURI(aURI, getter_AddRefs(upgradedURI));
+    rv = NS_GetSecureUpgradedURI(aURI, getter_AddRefs(upgradedURI));
     NS_ENSURE_SUCCESS(rv, false);
   }
 

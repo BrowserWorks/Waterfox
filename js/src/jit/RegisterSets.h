@@ -122,7 +122,9 @@ class ValueOperand
     Register payloadReg() const {
         return payload_;
     }
-
+    bool aliases(Register reg) const {
+        return type_ == reg || payload_ == reg;
+    }
     Register scratchReg() const {
         return payloadReg();
     }
@@ -144,7 +146,9 @@ class ValueOperand
     Register valueReg() const {
         return value_;
     }
-
+    bool aliases(Register reg) const {
+        return value_ == reg;
+    }
     Register scratchReg() const {
         return valueReg();
     }
@@ -156,7 +160,7 @@ class ValueOperand
     }
 #endif
 
-    ValueOperand() {}
+    ValueOperand() = default;
 };
 
 // Registers to hold either either a typed or untyped value.
@@ -805,6 +809,14 @@ class SpecializedRegSet : public Accessors
 #endif
     }
 
+    bool aliases(ValueOperand v) const {
+#ifdef JS_NUNBOX32
+        return has(v.typeReg()) || has(v.payloadReg());
+#else
+        return has(v.valueReg());
+#endif
+    }
+
     RegType takeAnyExcluding(RegType preclude) {
         RegType reg = getAnyExcluding(preclude);
         take(reg);
@@ -1274,6 +1286,13 @@ class ABIArg
     Register gpr() const {
         MOZ_ASSERT(kind() == GPR);
         return Register::FromCode(u.gpr_);
+    }
+    Register64 gpr64() const {
+#ifdef JS_PUNBOX64
+        return Register64(gpr());
+#else
+        MOZ_CRASH("NYI");
+#endif
     }
     Register evenGpr() const {
         MOZ_ASSERT(isGeneralRegPair());

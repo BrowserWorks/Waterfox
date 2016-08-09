@@ -64,7 +64,7 @@ nsGenericDOMDataNode::nsGenericDOMDataNode(already_AddRefed<mozilla::dom::NodeIn
 
 nsGenericDOMDataNode::~nsGenericDOMDataNode()
 {
-  NS_PRECONDITION(!IsInDoc(),
+  NS_PRECONDITION(!IsInUncomposedDoc(),
                   "Please remove this from the document properly");
   if (GetParent()) {
     NS_RELEASE(mParent);
@@ -371,7 +371,10 @@ nsGenericDOMDataNode::SetTextInternal(uint32_t aOffset, uint32_t aCount,
   }
 
   if (dirAffectsAncestor) {
-    TextNodeChangedDirection(this, oldDir, aNotify);
+    // dirAffectsAncestor being true implies that we have a text node, see
+    // above.
+    MOZ_ASSERT(NodeType() == nsIDOMNode::TEXT_NODE);
+    TextNodeChangedDirection(static_cast<nsTextNode*>(this), oldDir, aNotify);
   }
 
   // Notify observers
@@ -392,7 +395,7 @@ nsGenericDOMDataNode::SetTextInternal(uint32_t aOffset, uint32_t aCount,
       if (aLength > 0) {
         nsAutoString val;
         mText.AppendTo(val);
-        mutation.mNewAttrValue = do_GetAtom(val);
+        mutation.mNewAttrValue = NS_Atomize(val);
       }
 
       mozAutoSubtreeModified subtree(OwnerDoc(), this);
@@ -467,7 +470,7 @@ nsGenericDOMDataNode::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                   "Must have the same owner document");
   NS_PRECONDITION(!aParent || aDocument == aParent->GetUncomposedDoc(),
                   "aDocument must be current doc of aParent");
-  NS_PRECONDITION(!GetUncomposedDoc() && !IsInDoc(),
+  NS_PRECONDITION(!GetUncomposedDoc() && !IsInUncomposedDoc(),
                   "Already have a document.  Unbind first!");
   // Note that as we recurse into the kids, they'll have a non-null parent.  So
   // only assert if our parent is _changing_ while we have a parent.
@@ -793,14 +796,6 @@ nsGenericDOMDataNode::SaveSubtreeState()
 {
 }
 
-void
-nsGenericDOMDataNode::DestroyContent()
-{
-  // XXX We really should let cycle collection do this, but that currently still
-  //     leaks (see https://bugzilla.mozilla.org/show_bug.cgi?id=406684).
-  ReleaseWrapper(this);
-}
-
 #ifdef DEBUG
 void
 nsGenericDOMDataNode::List(FILE* out, int32_t aIndent) const
@@ -1097,7 +1092,7 @@ nsGenericDOMDataNode::GetCurrentValueAtom()
 {
   nsAutoString val;
   GetData(val);
-  return NS_NewAtom(val);
+  return NS_Atomize(val);
 }
 
 NS_IMETHODIMP

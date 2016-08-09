@@ -97,7 +97,7 @@
       function initPage()
       {
         var err = getErrorCode();
-        
+
         // if it's an unknown error or there's no title or description
         // defined, get the generic message
         var errTitle = document.getElementById("et_" + err);
@@ -141,7 +141,7 @@
 
           // Also, if they specified a CSS class, they must supply their own
           // favicon.  In order to trigger the browser to repaint though, we
-          // need to remove/add the link element. 
+          // need to remove/add the link element.
           var favicon = document.getElementById("favicon");
           var faviconParent = favicon.parentNode;
           faviconParent.removeChild(favicon);
@@ -177,14 +177,25 @@
           var secOverride = document.getElementById("securityOverrideDiv");
           secOverride.parentNode.removeChild(secOverride);
         }
+
+        if (err == "inadequateSecurityError") {
+          // Remove the "Try again" button for HTTP/2 inadequate security as it
+          // is useless.
+          document.getElementById("errorTryAgain").style.display = "none";
+
+          var container = document.getElementById("errorLongDesc");
+          for (var span of container.querySelectorAll("span.hostname")) {
+            span.textContent = document.location.hostname;
+          }
+        }
       }
-      
+
       function showSecuritySection() {
         // Swap link out, content in
         document.getElementById('securityOverrideContent').style.display = '';
         document.getElementById('securityOverrideLink').style.display = 'none';
       }
-      
+
       /* In the case of SSL error pages about domain mismatch, see if
          we can hyperlink the user to the correct site.  We don't want
          to do this generically since it allows MitM attacks to redirect
@@ -196,29 +207,29 @@
         var sd = document.getElementById("errorShortDescText");
         if (sd) {
           var desc = getDescription();
-          
+
           // sanitize description text - see bug 441169
-          
+
           // First, find the index of the <a> tag we care about, being careful not to
           // use an over-greedy regex
           var re = /<a id="cert_domain_link" title="([^"]+)">/;
           var result = re.exec(desc);
           if(!result)
             return;
-          
+
           // Remove sd's existing children
           sd.textContent = "";
 
           // Everything up to the link should be text content
           sd.appendChild(document.createTextNode(desc.slice(0, result.index)));
-          
+
           // Now create the link itself
           var anchorEl = document.createElement("a");
           anchorEl.setAttribute("id", "cert_domain_link");
           anchorEl.setAttribute("title", result[1]);
           anchorEl.appendChild(document.createTextNode(result[1]));
           sd.appendChild(anchorEl);
-          
+
           // Finally, append text for anything after the closing </a>
           sd.appendChild(document.createTextNode(desc.slice(desc.indexOf("</a>") + "</a>".length)));
         }
@@ -226,7 +237,7 @@
         var link = document.getElementById('cert_domain_link');
         if (!link)
           return;
-        
+
         var okHost = link.getAttribute("title");
         var thisHost = document.location.hostname;
         var proto = document.location.protocol;
@@ -236,7 +247,7 @@
         // get anyone anywhere useful. bug 432491
         okHost = okHost.replace(/^\*\./, "www.");
 
-        /* case #1: 
+        /* case #1:
          * example.com uses an invalid security certificate.
          *
          * The certificate is only valid for www.example.com
@@ -260,7 +271,7 @@
         if (endsWith(thisHost, "." + okHost))
           link.href = proto + okHost;
       }
-      
+
       function endsWith(haystack, needle) {
         return haystack.slice(-needle.length) == needle;
       }
@@ -276,6 +287,7 @@
         <h1 id="et_generic">&generic.title;</h1>
         <h1 id="et_dnsNotFound">&dnsNotFound.title;</h1>
         <h1 id="et_fileNotFound">&fileNotFound.title;</h1>
+        <h1 id="et_fileAccessDenied">&fileAccessDenied.title;</h1>
         <h1 id="et_malformedURI">&malformedURI.title;</h1>
         <h1 id="et_unknownProtocolFound">&unknownProtocolFound.title;</h1>
         <h1 id="et_connectionFailure">&connectionFailure.title;</h1>
@@ -296,11 +308,13 @@
         <h1 id="et_cspBlocked">&cspBlocked.title;</h1>
         <h1 id="et_remoteXUL">&remoteXUL.title;</h1>
         <h1 id="et_corruptedContentError">&corruptedContentError.title;</h1>
+        <h1 id="et_inadequateSecurityError">&inadequateSecurityError.title;</h1>
       </div>
       <div id="errorDescriptionsContainer">
         <div id="ed_generic">&generic.longDesc;</div>
         <div id="ed_dnsNotFound">&dnsNotFound.longDesc;</div>
         <div id="ed_fileNotFound">&fileNotFound.longDesc;</div>
+        <div id="ed_fileAccessDenied">&fileAccessDenied.longDesc;</div>
         <div id="ed_malformedURI">&malformedURI.longDesc;</div>
         <div id="ed_unknownProtocolFound">&unknownProtocolFound.longDesc;</div>
         <div id="ed_connectionFailure">&connectionFailure.longDesc;</div>
@@ -321,20 +335,21 @@
         <div id="ed_cspBlocked">&cspBlocked.longDesc;</div>
         <div id="ed_remoteXUL">&remoteXUL.longDesc;</div>
         <div id="ed_corruptedContentError">&corruptedContentError.longDesc;</div>
+        <div id="ed_inadequateSecurityError">&inadequateSecurityError.longDesc;</div>
       </div>
     </div>
 
     <!-- PAGE CONTAINER (for styling purposes only) -->
     <div id="errorPageContainer">
-    
+
       <!-- Error Title -->
       <div id="errorTitle">
         <h1 id="errorTitleText" />
       </div>
-      
+
       <!-- LONG CONTENT (the section most likely to require scrolling) -->
       <div id="errorLongContent">
-      
+
         <!-- Short Description -->
         <div id="errorShortDesc">
           <p id="errorShortDescText" />

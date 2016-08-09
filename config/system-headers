@@ -575,7 +575,7 @@ JavaVM/jni.h
 JManager.h
 JNIEnvTests.h
 jni.h
-#if MOZ_NATIVE_JPEG==1
+#if MOZ_SYSTEM_JPEG==1
 jpeglib.h
 #endif
 JVMManagerTests.h
@@ -1264,10 +1264,10 @@ soundtouch/SoundTouchFactory.h
 #if MOZ_LIBAV_FFT==1
 libavcodec/avfft.h
 #endif
-#if MOZ_NATIVE_PNG==1
+#if MOZ_SYSTEM_PNG==1
 png.h
 #endif
-#if MOZ_NATIVE_ZLIB==1
+#if MOZ_SYSTEM_ZLIB==1
 zlib.h
 #endif
 #ifdef MOZ_ENABLE_STARTUP_NOTIFICATION
@@ -1278,16 +1278,16 @@ libsn/sn-launcher.h
 libsn/sn-monitor.h
 libsn/sn-util.h
 #endif
-#if MOZ_NATIVE_HUNSPELL==1
+#if MOZ_SYSTEM_HUNSPELL==1
 hunspell.hxx
 #endif
-#if MOZ_NATIVE_BZ2==1
+#if MOZ_SYSTEM_BZ2==1
 bzlib.h
 #endif
 #ifdef MOZ_ENABLE_GIO
 gio/gio.h
 #endif
-#if MOZ_NATIVE_LIBEVENT==1
+#if MOZ_SYSTEM_LIBEVENT==1
 event.h
 #else
 sys/event.h
@@ -1306,7 +1306,7 @@ QtSparql/qsparqlresult.h
 #if MOZ_TREE_PIXMAN!=1
 pixman.h
 #endif
-#if MOZ_NATIVE_LIBVPX==1
+#if MOZ_SYSTEM_LIBVPX==1
 vpx/svc_context.h
 vpx/vpx_codec.h
 vpx/vpx_decoder.h
@@ -1327,7 +1327,7 @@ kvm.h
 spawn.h
 err.h
 xlocale.h
-#ifdef MOZ_SHARED_ICU
+#ifdef MOZ_SYSTEM_ICU
 unicode/locid.h
 unicode/numsys.h
 unicode/timezone.h

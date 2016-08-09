@@ -20,8 +20,6 @@
 #include "cairo-win32.h"
 #endif
 
-#include "nsDebug.h"
-
 namespace mozilla {
 namespace gfx {
 
@@ -172,7 +170,7 @@ ScaledFontDWrite::GetFontDataFromSystemFonts(IDWriteFactory* aFactory)
   hr = mFont->GetFontFamily(getter_AddRefs(mFontFamily));
   if (FAILED(hr)) {
     gfxCriticalNote << "Failed to get font family from font face. Code: " << hexa(hr);
-    return false;
+    return DefaultToArialFont(systemFonts);
   }
 
   return true;

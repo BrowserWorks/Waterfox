@@ -200,9 +200,15 @@ function loadView(aViewId) {
 }
 
 function isCorrectlySigned(aAddon) {
-  // temporary add-ons do not require signing
+  // Temporary add-ons do not require signing.
   if (aAddon.scope == AddonManager.SCOPE_TEMPORARY)
       return true;
+  // On UNIX platforms except OSX, an additional location for system add-ons
+  // exists in /usr/{lib,share}/mozilla/extensions. Add-ons installed there
+  // do not require signing either.
+  if (aAddon.scope == AddonManager.SCOPE_SYSTEM &&
+      Services.appinfo.OS != "Darwin")
+    return true;
   if (aAddon.signedState <= AddonManager.SIGNEDSTATE_MISSING)
     return false;
   return true;
@@ -625,6 +631,8 @@ var gViewController = {
 
   initialize: function() {
     this.viewPort = document.getElementById("view-port");
+    this.headeredViews = document.getElementById("headered-views");
+    this.headeredViewsDeck = document.getElementById("headered-views-content");
 
     this.viewObjects["search"] = gSearchView;
     this.viewObjects["discover"] = gDiscoverView;
@@ -745,6 +753,24 @@ var gViewController = {
     notifyInitialized();
   },
 
+  get displayedView() {
+    if (this.viewPort.selectedPanel == this.headeredViews) {
+      return this.headeredViewsDeck.selectedPanel;
+    } else {
+      return this.viewPort.selectedPanel;
+    }
+  },
+
+  set displayedView(view) {
+    let node = view.node;
+    if (node.parentNode == this.headeredViewsDeck) {
+      this.headeredViewsDeck.selectedPanel = node;
+      this.viewPort.selectedPanel = this.headeredViews;
+    } else {
+      this.viewPort.selectedPanel = node;
+    }
+  },
+
   loadViewInternal: function(aViewId, aPreviousView, aState) {
     var view = this.parseViewId(aViewId);
 
@@ -760,7 +786,7 @@ var gViewController = {
         let canHide = this.currentViewObj.hide();
         if (canHide === false)
           return;
-        this.viewPort.selectedPanel.removeAttribute("loading");
+        this.displayedView.removeAttribute("loading");
       } catch (e) {
         // this shouldn't be fatal
         Cu.reportError(e);
@@ -772,8 +798,8 @@ var gViewController = {
     this.currentViewId = aViewId;
     this.currentViewObj = viewObj;
 
-    this.viewPort.selectedPanel = this.currentViewObj.node;
-    this.viewPort.selectedPanel.setAttribute("loading", "true");
+    this.displayedView = this.currentViewObj;
+    this.currentViewObj.node.setAttribute("loading", "true");
     this.currentViewObj.node.focus();
 
     if (aViewId == aPreviousView)
@@ -789,7 +815,7 @@ var gViewController = {
   },
 
   notifyViewChanged: function() {
-    this.viewPort.selectedPanel.removeAttribute("loading");
+    this.displayedView.removeAttribute("loading");
 
     if (this.viewChangeCallback) {
       this.viewChangeCallback();
@@ -1075,7 +1101,8 @@ var gViewController = {
           return false;
         }
         if (gViewController.currentViewObj == gDetailView &&
-            aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE) {
+            (aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE ||
+             aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE_BROWSER)) {
           return false;
         }
         if (aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE_INFO)
@@ -1083,7 +1110,7 @@ var gViewController = {
         return true;
       },
       doCommand: function(aAddon) {
-        if (aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE) {
+        if (hasInlineOptions(aAddon)) {
           gViewController.commands.cmd_showItemDetails.doCommand(aAddon, true);
           return;
         }
@@ -1455,6 +1482,7 @@ var gViewController = {
 
 function hasInlineOptions(aAddon) {
   return (aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE ||
+          aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE_BROWSER ||
           aAddon.optionsType == AddonManager.OPTIONS_TYPE_INLINE_INFO);
 }
 
@@ -2046,6 +2074,7 @@ var gDiscoverView = {
   _error: null,
   homepageURL: null,
   _loadListeners: [],
+  hideHeader: true,
 
   initialize: function() {
     this.enabled = isDiscoverEnabled();
@@ -2247,7 +2276,7 @@ var gDiscoverView = {
                         Ci.nsIWebProgressListener.STATE_IS_REQUEST |
                         Ci.nsIWebProgressListener.STATE_TRANSFERRING;
     // Once transferring begins show the content
-    if (aStateFlags & transferStart)
+    if ((aStateFlags & transferStart) === transferStart)
       this.node.selectedPanel = this._browser;
 
     // Only care about the network events
@@ -3307,6 +3336,34 @@ var gDetailView = {
       return;
     }
 
+    // We can't use a promise for this, since some code (especially in tests)
+    // relies on us finishing before the ViewChanged event bubbles up to its
+    // listeners, and promises resolve asynchronously.
+    let whenViewLoaded = callback => {
+      if (gViewController.displayedView.hasAttribute("loading")) {
+        gDetailView.node.addEventListener("ViewChanged", function viewChangedEventListener() {
+          gDetailView.node.removeEventListener("ViewChanged", viewChangedEventListener);
+          callback();
+        });
+      } else {
+        callback();
+      }
+    };
+
+    let finish = (firstSetting) => {
+      // Ensure the page has loaded and force the XBL bindings to be synchronously applied,
+      // then notify observers.
+      whenViewLoaded(() => {
+        if (firstSetting)
+          firstSetting.clientTop;
+        Services.obs.notifyObservers(document,
+                                     AddonManager.OPTIONS_NOTIFICATION_DISPLAYED,
+                                     this._addon.id);
+        if (aScrollToPreferences)
+          gDetailView.scrollToPreferencesRows();
+      });
+    }
+
     // This function removes and returns the text content of aNode without
     // removing any child elements. Removing the text nodes ensures any XBL
     // bindings apply properly.
@@ -3326,71 +3383,69 @@ var gDetailView = {
     var rows = document.getElementById("detail-downloads").parentNode;
 
     try {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", this._addon.optionsURL, true);
-      xhr.responseType = "xml";
-      xhr.onload = (function() {
-        var xml = xhr.responseXML;
-        var settings = xml.querySelectorAll(":root > setting");
+      if (this._addon.optionsType == AddonManager.OPTIONS_TYPE_INLINE_BROWSER) {
+        whenViewLoaded(() => {
+          this.createOptionsBrowser(rows).then(browser => {
+            // Make sure the browser is unloaded as soon as we change views,
+            // rather than waiting for the next detail view to load.
+            document.addEventListener("ViewChanged", function viewChangedEventListener() {
+              document.removeEventListener("ViewChanged", viewChangedEventListener);
+              browser.remove();
+            });
 
-        var firstSetting = null;
-        for (var setting of settings) {
+            finish(browser);
+          });
+        });
 
-          var desc = stripTextNodes(setting).trim();
-          if (!setting.hasAttribute("desc"))
-            setting.setAttribute("desc", desc);
-
-          var type = setting.getAttribute("type");
-          if (type == "file" || type == "directory")
-            setting.setAttribute("fullpath", "true");
-
-          setting = document.importNode(setting, true);
-          var style = setting.getAttribute("style");
-          if (style) {
-            setting.removeAttribute("style");
-            setting.setAttribute("style", style);
-          }
-
-          rows.appendChild(setting);
-          var visible = window.getComputedStyle(setting, null).getPropertyValue("display") != "none";
-          if (!firstSetting && visible) {
-            setting.setAttribute("first-row", true);
-            firstSetting = setting;
-          }
-        }
-
-        // Ensure the page has loaded and force the XBL bindings to be synchronously applied,
-        // then notify observers.
-        if (gViewController.viewPort.selectedPanel.hasAttribute("loading")) {
-          gDetailView.node.addEventListener("ViewChanged", function viewChangedEventListener() {
-            gDetailView.node.removeEventListener("ViewChanged", viewChangedEventListener, false);
-            if (firstSetting)
-              firstSetting.clientTop;
-            Services.obs.notifyObservers(document,
-                                         AddonManager.OPTIONS_NOTIFICATION_DISPLAYED,
-                                         gDetailView._addon.id);
-            if (aScrollToPreferences)
-              gDetailView.scrollToPreferencesRows();
-          }, false);
-        } else {
-          if (firstSetting)
-            firstSetting.clientTop;
-          Services.obs.notifyObservers(document,
-                                       AddonManager.OPTIONS_NOTIFICATION_DISPLAYED,
-                                       this._addon.id);
-          if (aScrollToPreferences)
-            gDetailView.scrollToPreferencesRows();
-        }
         if (aCallback)
           aCallback();
-      }).bind(this);
-      xhr.onerror = function(aEvent) {
-        Cu.reportError("Error " + aEvent.target.status +
-                       " occurred while receiving " + this._addon.optionsURL);
-        if (aCallback)
-          aCallback();
-      };
-      xhr.send();
+      } else {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", this._addon.optionsURL, true);
+        xhr.responseType = "xml";
+        xhr.onload = (function() {
+          var xml = xhr.responseXML;
+          var settings = xml.querySelectorAll(":root > setting");
+
+          var firstSetting = null;
+          for (var setting of settings) {
+
+            var desc = stripTextNodes(setting).trim();
+            if (!setting.hasAttribute("desc"))
+              setting.setAttribute("desc", desc);
+
+            var type = setting.getAttribute("type");
+            if (type == "file" || type == "directory")
+              setting.setAttribute("fullpath", "true");
+
+            setting = document.importNode(setting, true);
+            var style = setting.getAttribute("style");
+            if (style) {
+              setting.removeAttribute("style");
+              setting.setAttribute("style", style);
+            }
+
+            rows.appendChild(setting);
+            var visible = window.getComputedStyle(setting, null).getPropertyValue("display") != "none";
+            if (!firstSetting && visible) {
+              setting.setAttribute("first-row", true);
+              firstSetting = setting;
+            }
+          }
+
+          finish(firstSetting);
+
+          if (aCallback)
+            aCallback();
+        }).bind(this);
+        xhr.onerror = function(aEvent) {
+          Cu.reportError("Error " + aEvent.target.status +
+                         " occurred while receiving " + this._addon.optionsURL);
+          if (aCallback)
+            aCallback();
+        };
+        xhr.send();
+      }
     } catch(e) {
       Cu.reportError(e);
       if (aCallback)
@@ -3411,6 +3466,79 @@ var gDetailView = {
 
       detailViewBoxObject.scrollTo(0, top);
     }
+  },
+
+  createOptionsBrowser: function(parentNode) {
+    let browser = document.createElement("browser");
+    browser.setAttribute("type", "content");
+    browser.setAttribute("disableglobalhistory", "true");
+    browser.setAttribute("class", "inline-options-browser");
+
+    // Resize at most 10 times per second.
+    const TIMEOUT = 100;
+    let timeout;
+
+    function resizeBrowser() {
+      if (timeout == null) {
+        _resizeBrowser();
+        timeout = setTimeout(_resizeBrowser, TIMEOUT);
+      }
+    }
+
+    function _resizeBrowser() {
+      timeout = null;
+
+      let doc = browser.contentDocument;
+      let body = doc.body || doc.documentElement;
+
+      let docHeight = doc.documentElement.getBoundingClientRect().height;
+
+      let height = Math.ceil(body.scrollHeight +
+                             // Compensate for any offsets between the scroll
+                             // area of the body and the outer height of the
+                             // document.
+                             docHeight - body.clientHeight);
+
+      // Note: This will trigger another MozScrolledAreaChanged event
+      // if it's different from the previous height.
+      browser.style.height = `${height}px`;
+    }
+
+    return new Promise((resolve, reject) => {
+      let onload = () => {
+        browser.removeEventListener("load", onload, true);
+
+        browser.addEventListener("error", reject);
+        browser.addEventListener("load", event => {
+          // We only get load events targetted at one of these elements.
+          // If we're running in a tab, it's the <browser>. If we're
+          // running in a dialog, it's the content document.
+          if (event.target != browser && event.target != browser.contentDocument)
+            return;
+
+          resolve(browser);
+
+          browser.contentWindow.addEventListener("MozScrolledAreaChanged", event => {
+            resizeBrowser();
+          }, true);
+
+          new browser.contentWindow.MutationObserver(resizeBrowser).observe(
+            browser.contentDocument.documentElement, {
+              attributes: true,
+              characterData: true,
+              childList: true,
+              subtree: true,
+            });
+
+          resizeBrowser();
+        }, true);
+
+        browser.setAttribute("src", this._addon.optionsURL);
+      };
+      browser.addEventListener("load", onload, true);
+
+      parentNode.appendChild(browser);
+    });
   },
 
   getSelectedAddon: function() {

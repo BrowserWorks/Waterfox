@@ -67,7 +67,8 @@ void
 MediaEngineGonkVideoSource::NotifyPull(MediaStreamGraph* aGraph,
                                        SourceMediaStream* aSource,
                                        TrackID aID,
-                                       StreamTime aDesiredTime)
+                                       StreamTime aDesiredTime,
+                                       const PrincipalHandle& aPrincipalHandle)
 {
   VideoSegment segment;
 
@@ -95,7 +96,7 @@ MediaEngineGonkVideoSource::NotifyPull(MediaStreamGraph* aGraph,
   if (delta > 0) {
     // nullptr images are allowed
     IntSize size(image ? mWidth : 0, image ? mHeight : 0);
-    segment.AppendFrame(image.forget(), delta, size);
+    segment.AppendFrame(image.forget(), delta, size, aPrincipalHandle);
     // This can fail if either a) we haven't added the track yet, or b)
     // we've removed or finished the track.
     aSource->AppendToTrack(aID, &(segment));
@@ -202,7 +203,8 @@ MediaEngineGonkVideoSource::Deallocate()
 }
 
 nsresult
-MediaEngineGonkVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
+MediaEngineGonkVideoSource::Start(SourceMediaStream* aStream, TrackID aID,
+                                  const PrincipalHandle& aPrincipalHandle)
 {
   LOG((__FUNCTION__));
   if (!mInitDone || !aStream) {
@@ -560,10 +562,11 @@ MediaEngineGonkVideoSource::OnUserError(UserContext aContext, nsresult aError)
     mCallbackMonitor.Notify();
   }
 
-  // A main thread runnable to send error code to all queued PhotoCallbacks.
+  // A main thread runnable to send error code to all queued
+  // MediaEnginePhotoCallbacks.
   class TakePhotoError : public nsRunnable {
   public:
-    TakePhotoError(nsTArray<RefPtr<PhotoCallback>>& aCallbacks,
+    TakePhotoError(nsTArray<RefPtr<MediaEnginePhotoCallback>>& aCallbacks,
                    nsresult aRv)
       : mRv(aRv)
     {
@@ -576,13 +579,13 @@ MediaEngineGonkVideoSource::OnUserError(UserContext aContext, nsresult aError)
       for (uint8_t i = 0; i < callbackNumbers; i++) {
         mCallbacks[i]->PhotoError(mRv);
       }
-      // PhotoCallback needs to dereference on main thread.
+      // MediaEnginePhotoCallback needs to dereference on main thread.
       mCallbacks.Clear();
       return NS_OK;
     }
 
   protected:
-    nsTArray<RefPtr<PhotoCallback>> mCallbacks;
+    nsTArray<RefPtr<MediaEnginePhotoCallback>> mCallbacks;
     nsresult mRv;
   };
 
@@ -602,10 +605,10 @@ MediaEngineGonkVideoSource::OnTakePictureComplete(const uint8_t* aData, uint32_t
   mCameraControl->StartPreview();
 
   // Create a main thread runnable to generate a blob and call all current queued
-  // PhotoCallbacks.
+  // MediaEnginePhotoCallbacks.
   class GenerateBlobRunnable : public nsRunnable {
   public:
-    GenerateBlobRunnable(nsTArray<RefPtr<PhotoCallback>>& aCallbacks,
+    GenerateBlobRunnable(nsTArray<RefPtr<MediaEnginePhotoCallback>>& aCallbacks,
                          const uint8_t* aData,
                          uint32_t aLength,
                          const nsAString& aMimeType)
@@ -626,12 +629,12 @@ MediaEngineGonkVideoSource::OnTakePictureComplete(const uint8_t* aData, uint32_t
         RefPtr<dom::Blob> tempBlob = blob;
         mCallbacks[i]->PhotoComplete(tempBlob.forget());
       }
-      // PhotoCallback needs to dereference on main thread.
+      // MediaEnginePhotoCallback needs to dereference on main thread.
       mCallbacks.Clear();
       return NS_OK;
     }
 
-    nsTArray<RefPtr<PhotoCallback>> mCallbacks;
+    nsTArray<RefPtr<MediaEnginePhotoCallback>> mCallbacks;
     uint8_t* mPhotoData;
     nsString mMimeType;
     uint32_t mPhotoDataLength;
@@ -639,7 +642,7 @@ MediaEngineGonkVideoSource::OnTakePictureComplete(const uint8_t* aData, uint32_t
 
   // All elements in mPhotoCallbacks will be swapped in GenerateBlobRunnable
   // constructor. This captured image will be sent to all the queued
-  // PhotoCallbacks in this runnable.
+  // MediaEnginePhotoCallbacks in this runnable.
   MonitorAutoLock lock(mMonitor);
   if (mPhotoCallbacks.Length()) {
     NS_DispatchToMainThread(
@@ -648,7 +651,7 @@ MediaEngineGonkVideoSource::OnTakePictureComplete(const uint8_t* aData, uint32_t
 }
 
 nsresult
-MediaEngineGonkVideoSource::TakePhoto(PhotoCallback* aCallback)
+MediaEngineGonkVideoSource::TakePhoto(MediaEnginePhotoCallback* aCallback)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -786,7 +789,7 @@ MediaEngineGonkVideoSource::RotateImage(layers::Image* aImage, uint32_t aWidth, 
                           libyuv::FOURCC_NV21);
     destBuffer->unlock();
 
-    image->AsGrallocImage()->SetData(textureClient, gfx::IntSize(dstWidth, dstHeight));
+    image->AsGrallocImage()->AdoptData(textureClient, gfx::IntSize(dstWidth, dstHeight));
   } else {
     // Handle out of gralloc case.
     image = mImageContainer->CreatePlanarYCbCrImage();
@@ -818,7 +821,7 @@ MediaEngineGonkVideoSource::RotateImage(layers::Image* aImage, uint32_t aWidth, 
     data.mPicSize = IntSize(dstWidth, dstHeight);
     data.mStereoMode = StereoMode::MONO;
 
-    image->AsPlanarYCbCrImage()->SetDataNoCopy(data);
+    image->AsPlanarYCbCrImage()->AdoptData(data);
   }
   graphicBuffer->unlock();
 
@@ -882,7 +885,7 @@ MediaEngineGonkVideoSource::OnNewMediaBufferFrame(MediaBuffer* aBuffer)
         // Unfortunately, clock in gonk camera looks like is a different one
         // comparing to MSG. As result, it causes time inaccurate. (frames be
         // queued in MSG longer and longer as time going by in device like Frame)
-        AppendToTrack(mSources[i], mImage, mTrackID, 1);
+        AppendToTrack(mSources[i], mImage, mTrackID, 1, mPrincipalHandles[i]);
       }
     }
     if (mImage->AsGrallocImage()) {

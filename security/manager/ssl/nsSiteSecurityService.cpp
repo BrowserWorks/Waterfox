@@ -41,16 +41,9 @@
 using namespace mozilla;
 using namespace mozilla::psm;
 
-static PRLogModuleInfo *
-GetSSSLog()
-{
-  static PRLogModuleInfo *gSSSLog;
-  if (!gSSSLog)
-    gSSSLog = PR_NewLogModule("nsSSService");
-  return gSSSLog;
-}
+static LazyLogModule gSSSLog("nsSSService");
 
-#define SSSLOG(args) MOZ_LOG(GetSSSLog(), mozilla::LogLevel::Debug, args)
+#define SSSLOG(args) MOZ_LOG(gSSSLog, mozilla::LogLevel::Debug, args)
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -702,19 +695,27 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
   rv = aSSLStatus->GetServerCert(getter_AddRefs(cert));
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(cert, NS_ERROR_FAILURE);
-  ScopedCERTCertificate nssCert(cert->GetCert());
+  UniqueCERTCertificate nssCert(cert->GetCert());
   NS_ENSURE_TRUE(nssCert, NS_ERROR_FAILURE);
 
   mozilla::pkix::Time now(mozilla::pkix::Now());
   ScopedCERTCertList certList;
   RefPtr<SharedCertVerifier> certVerifier(GetDefaultCertVerifier());
   NS_ENSURE_TRUE(certVerifier, NS_ERROR_UNEXPECTED);
+  // We don't want this verification to cause any network traffic that would
+  // block execution. Also, since we don't have access to the original stapled
+  // OCSP response, we can't enforce this aspect of the TLS Feature extension.
+  // This is ok, because it will have been enforced when we originally connected
+  // to the site (or it's disabled, in which case we wouldn't want to enforce it
+  // anyway).
+  CertVerifier::Flags flags = CertVerifier::FLAG_LOCAL_ONLY |
+                              CertVerifier::FLAG_TLS_IGNORE_STATUS_REQUEST;
   if (certVerifier->VerifySSLServerCert(nssCert, nullptr, // stapled ocsp
                                         now, nullptr, // pinarg
                                         host.get(), // hostname
                                         certList,
                                         false, // don't store intermediates
-                                        CertVerifier::FLAG_LOCAL_ONLY)
+                                        flags)
       != SECSuccess) {
     return NS_ERROR_FAILURE;
   }
@@ -724,8 +725,8 @@ nsSiteSecurityService::ProcessPKPHeader(nsIURI* aSourceURI,
     return NS_ERROR_FAILURE;
   }
   bool isBuiltIn = false;
-  SECStatus srv = IsCertBuiltInRoot(rootNode->cert, isBuiltIn);
-  if (srv != SECSuccess) {
+  mozilla::pkix::Result result = IsCertBuiltInRoot(rootNode->cert, isBuiltIn);
+  if (result != mozilla::pkix::Success) {
     return NS_ERROR_FAILURE;
   }
 
@@ -906,7 +907,7 @@ int STSPreloadCompare(const void *key, const void *entry)
 {
   const char *keyStr = (const char *)key;
   const nsSTSPreload *preloadEntry = (const nsSTSPreload *)entry;
-  return strcmp(keyStr, preloadEntry->mHost);
+  return strcmp(keyStr, &kSTSHostTable[preloadEntry->mHostIndex]);
 }
 
 // Returns the preload list entry for the given host, if it exists.

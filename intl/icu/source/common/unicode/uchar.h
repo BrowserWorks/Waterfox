@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -397,38 +397,8 @@ typedef enum UProperty {
     UCHAR_CHANGES_WHEN_CASEMAPPED=55,
     /** Binary property Changes_When_NFKC_Casefolded. @stable ICU 4.4 */
     UCHAR_CHANGES_WHEN_NFKC_CASEFOLDED=56,
-#ifndef U_HIDE_DRAFT_API
-    /**
-     * Binary property Emoji.
-     * See http://www.unicode.org/reports/tr51/#Emoji_Properties
-     *
-     * @draft ICU 57
-     */
-    UCHAR_EMOJI=57,
-    /**
-     * Binary property Emoji_Presentation.
-     * See http://www.unicode.org/reports/tr51/#Emoji_Properties
-     *
-     * @draft ICU 57
-     */
-    UCHAR_EMOJI_PRESENTATION=58,
-    /**
-     * Binary property Emoji_Modifier.
-     * See http://www.unicode.org/reports/tr51/#Emoji_Properties
-     *
-     * @draft ICU 57
-     */
-    UCHAR_EMOJI_MODIFIER=59,
-    /**
-     * Binary property Emoji_Modifier_Base.
-     * See http://www.unicode.org/reports/tr51/#Emoji_Properties
-     *
-     * @draft ICU 57
-     */
-    UCHAR_EMOJI_MODIFIER_BASE=60,
-#endif /* U_HIDE_DRAFT_API */
     /** One more than the last constant for binary Unicode properties. @stable ICU 2.1 */
-    UCHAR_BINARY_LIMIT=61,
+    UCHAR_BINARY_LIMIT=57,
 
     /** Enumerated property Bidi_Class.
         Same as u_charDirection, returns UCharDirection values. @stable ICU 2.2 */
@@ -1213,7 +1183,7 @@ enum UBlockCode {
      * Unicode 4.0.1 renames the "Cyrillic Supplementary" block to "Cyrillic Supplement".
      * @stable ICU 2.2
      */
-    UBLOCK_CYRILLIC_SUPPLEMENTARY = UBLOCK_CYRILLIC_SUPPLEMENT,
+    UBLOCK_CYRILLIC_SUPPLEMENTARY = UBLOCK_CYRILLIC_SUPPLEMENT, 
     /** @stable ICU 2.2 */
     UBLOCK_TAGALOG = 98, /*[1700]*/
     /** @stable ICU 2.2 */
@@ -1619,7 +1589,7 @@ typedef enum UEastAsianWidth {
 typedef enum UCharNameChoice {
     /** Unicode character name (Name property). @stable ICU 2.0 */
     U_UNICODE_CHAR_NAME,
-#ifndef U_HIDE_DEPRECATED_API
+#ifndef U_HIDE_DEPRECATED_API 
     /**
      * The Unicode_1_Name property value which is of little practical value.
      * Beginning with ICU 49, ICU APIs return an empty string for this name choice.
@@ -2869,7 +2839,7 @@ u_charName(UChar32 code, UCharNameChoice nameChoice,
            char *buffer, int32_t bufferLength,
            UErrorCode *pErrorCode);
 
-#ifndef U_HIDE_DEPRECATED_API
+#ifndef U_HIDE_DEPRECATED_API 
 /**
  * Returns an empty string.
  * Used to return the ISO 10646 comment for a character.

@@ -29,6 +29,7 @@
 #include "nsIInterfaceRequestor.h"
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsILoadContext.h"
+#include "nsITextControlFrame.h"
 #include "nsUnicharUtils.h"
 #include "nsContentList.h"
 #include "nsCSSPseudoElements.h"
@@ -199,7 +200,9 @@
 #include "imgRequestProxy.h"
 #include "nsWrapperCacheInlines.h"
 #include "nsSandboxFlags.h"
+#include "nsIAddonPolicyService.h"
 #include "nsIAppsService.h"
+#include "mozilla/dom/AnimatableBinding.h"
 #include "mozilla/dom/AnonymousContent.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DocumentFragment.h"
@@ -253,9 +256,7 @@
 
 #include "nsISpeculativeConnect.h"
 
-#ifdef MOZ_MEDIA_NAVIGATOR
 #include "mozilla/MediaManager.h"
-#endif // MOZ_MEDIA_NAVIGATOR
 #ifdef MOZ_WEBRTC
 #include "IPeerConnection.h"
 #endif // MOZ_WEBRTC
@@ -1429,6 +1430,8 @@ nsIDocument::nsIDocument()
   : nsINode(nullNodeInfo),
     mReferrerPolicySet(false),
     mReferrerPolicy(mozilla::net::RP_Default),
+    mBlockAllMixedContent(false),
+    mBlockAllMixedContentPreloads(false),
     mUpgradeInsecureRequests(false),
     mUpgradeInsecurePreloads(false),
     mCharacterSet(NS_LITERAL_CSTRING("ISO-8859-1")),
@@ -1456,7 +1459,7 @@ nsIDocument::nsIDocument()
 {
   SetInDocument();
 
-  PR_INIT_CLIST(&mDOMMediaQueryLists);  
+  PR_INIT_CLIST(&mDOMMediaQueryLists);
 }
 
 // NOTE! nsDocument::operator new() zeroes out all members, so don't
@@ -1582,6 +1585,17 @@ nsDocument::~nsDocument()
       } else {
         /* no mixed object subrequests loaded on page*/
         Accumulate(Telemetry::MIXED_CONTENT_OBJECT_SUBREQUEST, 0);
+      }
+
+      // record CSP telemetry on this document
+      if (mHasCSP) {
+        Accumulate(Telemetry::CSP_DOCUMENTS_COUNT, 1);
+      }
+      if (mHasUnsafeInlineCSP) {
+        Accumulate(Telemetry::CSP_UNSAFE_INLINE_DOCUMENTS_COUNT, 1);
+      }
+      if (mHasUnsafeEvalCSP) {
+        Accumulate(Telemetry::CSP_UNSAFE_EVAL_DOCUMENTS_COUNT, 1);
       }
     }
   }
@@ -2582,13 +2596,18 @@ nsDocument::StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
     nsCOMPtr<nsIDocShellTreeItem> sameTypeParent;
     treeItem->GetSameTypeParent(getter_AddRefs(sameTypeParent));
     if (sameTypeParent) {
-      mUpgradeInsecureRequests =
-        sameTypeParent->GetDocument()->GetUpgradeInsecureRequests(false);
+      nsIDocument* doc = sameTypeParent->GetDocument();
+      mBlockAllMixedContent = doc->GetBlockAllMixedContent(false);
+      // if the parent document makes use of block-all-mixed-content
+      // then subdocument preloads should always be blocked.
+      mBlockAllMixedContentPreloads =
+        mBlockAllMixedContent || doc->GetBlockAllMixedContent(true);
+
+      mUpgradeInsecureRequests = doc->GetUpgradeInsecureRequests(false);
       // if the parent document makes use of upgrade-insecure-requests
       // then subdocument preloads should always be upgraded.
       mUpgradeInsecurePreloads =
-        mUpgradeInsecureRequests ||
-        sameTypeParent->GetDocument()->GetUpgradeInsecureRequests(true);
+        mUpgradeInsecureRequests || doc->GetUpgradeInsecureRequests(true);
     }
   }
 
@@ -2687,6 +2706,16 @@ nsDocument::ApplySettingsFromCSP(bool aSpeculative)
         mReferrerPolicy = static_cast<ReferrerPolicy>(referrerPolicy);
         mReferrerPolicySet = true;
       }
+ 
+      // Set up 'block-all-mixed-content' if not already inherited
+      // from the parent context or set by any other CSP.
+      if (!mBlockAllMixedContent) {
+        rv = csp->GetBlockAllMixedContent(&mBlockAllMixedContent);
+        NS_ENSURE_SUCCESS_VOID(rv);
+      }
+      if (!mBlockAllMixedContentPreloads) {
+        mBlockAllMixedContentPreloads = mBlockAllMixedContent;
+     }
 
       // Set up 'upgrade-insecure-requests' if not already inherited
       // from the parent context or set by any other CSP.
@@ -2702,12 +2731,17 @@ nsDocument::ApplySettingsFromCSP(bool aSpeculative)
   }
 
   // 2) apply settings from speculative csp
-  if (!mUpgradeInsecurePreloads) {
-    nsCOMPtr<nsIContentSecurityPolicy> preloadCsp;
-    rv = NodePrincipal()->GetPreloadCsp(getter_AddRefs(preloadCsp));
-    NS_ENSURE_SUCCESS_VOID(rv);
-    if (preloadCsp) {
-      preloadCsp->GetUpgradeInsecureRequests(&mUpgradeInsecurePreloads);
+  nsCOMPtr<nsIContentSecurityPolicy> preloadCsp;
+  rv = NodePrincipal()->GetPreloadCsp(getter_AddRefs(preloadCsp));
+  NS_ENSURE_SUCCESS_VOID(rv);
+  if (preloadCsp) {
+    if (!mBlockAllMixedContentPreloads) {
+      rv = preloadCsp->GetBlockAllMixedContent(&mBlockAllMixedContentPreloads);
+      NS_ENSURE_SUCCESS_VOID(rv);
+    }
+    if (!mUpgradeInsecurePreloads) {
+      rv = preloadCsp->GetUpgradeInsecureRequests(&mUpgradeInsecurePreloads);
+      NS_ENSURE_SUCCESS_VOID(rv);
     }
   }
 }
@@ -2771,12 +2805,18 @@ nsDocument::InitCSP(nsIChannel* aChannel)
     }
   }
 
- // Check if this is part of the Loop/Hello service
- bool applyLoopCSP = IsLoopDocument(aChannel);
+  // Check if this is a document from a WebExtension.
+  nsString addonId;
+  principal->GetAddonId(addonId);
+  bool applyAddonCSP = !addonId.IsEmpty();
+
+  // Check if this is part of the Loop/Hello service
+  bool applyLoopCSP = IsLoopDocument(aChannel);
 
   // If there's no CSP to apply, go ahead and return early
   if (!applyAppDefaultCSP &&
       !applyAppManifestCSP &&
+      !applyAddonCSP &&
       !applyLoopCSP &&
       cspHeaderValue.IsEmpty() &&
       cspROHeaderValue.IsEmpty()) {
@@ -2832,6 +2872,22 @@ nsDocument::InitCSP(nsIChannel* aChannel)
   // ----- if the doc is an app and specifies a CSP in its manifest, apply it.
   if (applyAppManifestCSP) {
     csp->AppendPolicy(appManifestCSP, false, false);
+  }
+
+  // ----- if the doc is an addon, apply its CSP.
+  if (applyAddonCSP) {
+    nsCOMPtr<nsIAddonPolicyService> aps = do_GetService("@mozilla.org/addons/policy-service;1");
+
+    nsAutoString addonCSP;
+    rv = aps->GetBaseCSP(addonCSP);
+    if (NS_SUCCEEDED(rv)) {
+      csp->AppendPolicy(addonCSP, false, false);
+    }
+
+    rv = aps->GetAddonCSP(addonId, addonCSP);
+    if (NS_SUCCEEDED(rv)) {
+      csp->AppendPolicy(addonCSP, false, false);
+    }
   }
 
   // ----- if the doc is part of Loop, apply the loop CSP
@@ -3135,6 +3191,16 @@ nsDocument::GetUndoManager()
 }
 
 bool
+nsDocument::IsElementAnimateEnabled(JSContext* /*unused*/, JSObject* /*unused*/)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  return nsContentUtils::IsCallerChrome() ||
+         Preferences::GetBool("dom.animations-api.core.enabled") ||
+         Preferences::GetBool("dom.animations-api.element-animate.enabled");
+}
+
+bool
 nsDocument::IsWebAnimationsEnabled(JSContext* /*unused*/, JSObject* /*unused*/)
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -3156,26 +3222,13 @@ nsDocument::Timeline()
 void
 nsDocument::GetAnimations(nsTArray<RefPtr<Animation>>& aAnimations)
 {
-  FlushPendingNotifications(Flush_Style);
-
-  for (nsIContent* node = nsINode::GetFirstChild();
-       node;
-       node = node->GetNextNode(this)) {
-    if (!node->IsElement()) {
-      continue;
-    }
-
-    Element* element = node->AsElement();
-    Element::GetAnimationsUnsorted(element, CSSPseudoElementType::NotPseudo,
-                                   aAnimations);
-    Element::GetAnimationsUnsorted(element, CSSPseudoElementType::before,
-                                   aAnimations);
-    Element::GetAnimationsUnsorted(element, CSSPseudoElementType::after,
-                                   aAnimations);
+  Element* root = GetRootElement();
+  if (!root) {
+    return;
   }
-
-  // Sort animations by priority
-  aAnimations.Sort(AnimationPtrComparator<RefPtr<Animation>>());
+  AnimationFilter filter;
+  filter.mSubtree = true;
+  root->GetAnimations(filter, aAnimations);
 }
 
 /* Return true if the document is in the focused top-level window, and is an
@@ -5527,7 +5580,7 @@ nsDocument::SetupCustomElement(Element* aElement,
 
   nsCOMPtr<nsIAtom> tagAtom = aElement->NodeInfo()->NameAtom();
   nsCOMPtr<nsIAtom> typeAtom = aTypeExtension ?
-    do_GetAtom(*aTypeExtension) : tagAtom;
+    NS_Atomize(*aTypeExtension) : tagAtom;
 
   if (aTypeExtension && !aElement->HasAttr(kNameSpaceID_None, nsGkAtoms::is)) {
     // Custom element setup in the parser happens after the "is"
@@ -5854,7 +5907,7 @@ nsDocument::CustomElementConstructor(JSContext* aCx, unsigned aArgc, JS::Value* 
     return true;
   }
 
-  nsCOMPtr<nsIAtom> typeAtom(do_GetAtom(elemName));
+  nsCOMPtr<nsIAtom> typeAtom(NS_Atomize(elemName));
   CustomElementHashKey key(kNameSpaceID_Unknown, typeAtom);
   CustomElementDefinition* definition;
   if (!document->mRegistry ||
@@ -6148,7 +6201,7 @@ nsDocument::RegisterElement(JSContext* aCx, const nsAString& aType,
     lcName.Assign(aOptions.mExtends);
   }
 
-  nsCOMPtr<nsIAtom> typeAtom(do_GetAtom(lcType));
+  nsCOMPtr<nsIAtom> typeAtom(NS_Atomize(lcType));
   if (!nsContentUtils::IsCustomElementName(typeAtom)) {
     rv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
     return;
@@ -6269,7 +6322,7 @@ nsDocument::RegisterElement(JSContext* aCx, const nsAString& aType,
     if (!lcName.IsEmpty()) {
       // Let BASE be the element interface for NAME and NAMESPACE.
       bool known = false;
-      nameAtom = do_GetAtom(lcName);
+      nameAtom = NS_Atomize(lcName);
       if (namespaceID == kNameSpaceID_XHTML) {
         nsIParserService* ps = nsContentUtils::GetParserService();
         if (!ps) {
@@ -6886,7 +6939,7 @@ nsIDocument::GetAnonymousElementByAttribute(Element& aElement,
                                             const nsAString& aAttrName,
                                             const nsAString& aAttrValue)
 {
-  nsCOMPtr<nsIAtom> attribute = do_GetAtom(aAttrName);
+  nsCOMPtr<nsIAtom> attribute = NS_Atomize(aAttrName);
 
   return GetAnonymousElementByAttribute(&aElement, attribute, aAttrValue);
 }
@@ -7811,7 +7864,7 @@ nsIDocument::AdoptNode(nsINode& aAdoptedNode, ErrorResult& rv)
         MOZ_ASSERT(idx >= 0);
         parent->RemoveChildAt(idx, true);
       } else {
-        MOZ_ASSERT(!adoptedNode->IsInDoc());
+        MOZ_ASSERT(!adoptedNode->IsInUncomposedDoc());
 
         // If we're adopting a node that's not in a document, it might still
         // have a binding applied. Remove the binding from the element now
@@ -8379,7 +8432,7 @@ nsDocument::IsScriptEnabled()
 {
   // If this document is sandboxed without 'allow-scripts'
   // script is not enabled
-  if (mSandboxFlags & SANDBOXED_SCRIPTS) {
+  if (HasScriptsBlockedBySandbox()) {
     return false;
   }
 
@@ -8635,7 +8688,7 @@ nsDocument::RetrieveRelevantHeaders(nsIChannel *aChannel)
       rv =
         httpChannel->GetResponseHeader(nsDependentCString(*name), headerVal);
       if (NS_SUCCEEDED(rv) && !headerVal.IsEmpty()) {
-        nsCOMPtr<nsIAtom> key = do_GetAtom(*name);
+        nsCOMPtr<nsIAtom> key = NS_Atomize(*name);
         SetHeaderData(key, NS_ConvertASCIItoUTF16(headerVal));
       }
       ++name;
@@ -8856,13 +8909,11 @@ nsDocument::CanSavePresentation(nsIRequest *aNewRequest)
     }
   }
 
-#ifdef MOZ_MEDIA_NAVIGATOR
   // Check if we have active GetUserMedia use
   if (MediaManager::Exists() && win &&
       MediaManager::Get()->IsWindowStillActive(win->WindowID())) {
     return false;
   }
-#endif // MOZ_MEDIA_NAVIGATOR
 
 #ifdef MOZ_WEBRTC
   // Check if we have active PeerConnections
@@ -8946,10 +8997,6 @@ nsDocument::Destroy()
   mExternalResourceMap.Shutdown();
 
   mRegistry = nullptr;
-
-  // XXX We really should let cycle collection do this, but that currently still
-  //     leaks (see https://bugzilla.mozilla.org/show_bug.cgi?id=406684).
-  ReleaseWrapper(static_cast<nsINode*>(this));
 }
 
 void
@@ -9834,6 +9881,7 @@ nsDocument::MaybePreLoadImage(nsIURI* uri, const nsAString &aCrossOriginAttr,
   RefPtr<imgRequestProxy> request;
   nsresult rv =
     nsContentUtils::LoadImage(uri,
+                              static_cast<nsINode*>(this),
                               this,
                               NodePrincipal(),
                               mDocumentURI, // uri of document used as referrer
@@ -10837,10 +10885,8 @@ nsIDocument::CaretPositionFromPoint(float aX, float aY)
     nsIContent* nonanon = node->FindFirstNonChromeOnlyAccessContent();
     nsCOMPtr<nsIDOMHTMLInputElement> input = do_QueryInterface(nonanon);
     nsCOMPtr<nsIDOMHTMLTextAreaElement> textArea = do_QueryInterface(nonanon);
-    bool isText;
-    if (textArea || (input &&
-                     NS_SUCCEEDED(input->MozIsTextField(false, &isText)) &&
-                     isText)) {
+    nsITextControlFrame* textFrame = do_QueryFrame(nonanon->GetPrimaryFrame());
+    if (!!textFrame) {
       // If the anonymous content node has a child, then we need to make sure
       // that we get the appropriate child, as otherwise the offset may not be
       // correct when we construct a range for it.
@@ -11554,7 +11600,7 @@ nsDocument::FullScreenStackPop()
   // no longer in this document.
   while (!mFullScreenStack.IsEmpty()) {
     Element* element = FullScreenStackTop();
-    if (!element || !element->IsInDoc() || element->OwnerDoc() != this) {
+    if (!element || !element->IsInUncomposedDoc() || element->OwnerDoc() != this) {
       NS_ASSERTION(!element->IsFullScreenAncestor(),
                    "Should have already removed full-screen styles");
       uint32_t last = mFullScreenStack.Length() - 1;
@@ -11577,7 +11623,7 @@ nsDocument::FullScreenStackTop()
   uint32_t last = mFullScreenStack.Length() - 1;
   nsCOMPtr<Element> element(do_QueryReferent(mFullScreenStack[last]));
   NS_ASSERTION(element, "Should have full-screen element!");
-  NS_ASSERTION(element->IsInDoc(), "Full-screen element should be in doc");
+  NS_ASSERTION(element->IsInUncomposedDoc(), "Full-screen element should be in doc");
   NS_ASSERTION(element->OwnerDoc() == this, "Full-screen element should be in this doc");
   return element;
 }
@@ -11721,7 +11767,7 @@ nsDocument::FullscreenElementReadyCheck(Element* aElement,
   if (!aElement || aElement == GetFullscreenElement()) {
     return false;
   }
-  if (!aElement->IsInDoc()) {
+  if (!aElement->IsInUncomposedDoc()) {
     DispatchFullscreenError("FullscreenDeniedNotInDocument");
     return false;
   }
@@ -12452,7 +12498,7 @@ nsDocument::Observe(nsISupports *aSubject,
       if (ifptr) {
 #ifdef DEBUG
         nsCOMPtr<nsISupports> value;
-        MOZ_ALWAYS_TRUE(NS_SUCCEEDED(ifptr->GetData(getter_AddRefs(value))));
+        MOZ_ALWAYS_SUCCEEDS(ifptr->GetData(getter_AddRefs(value)));
         MOZ_ASSERT(!value);
 #endif
         ifptr->SetData(static_cast<nsIDocument*>(this));
@@ -12546,7 +12592,7 @@ nsDocument::ShouldLockPointer(Element* aElement, Element* aCurrentLock,
     return false;
   }
 
-  if (!aElement->IsInDoc()) {
+  if (!aElement->IsInUncomposedDoc()) {
     NS_WARNING("ShouldLockPointer(): Element without Document");
     return false;
   }
@@ -13122,6 +13168,12 @@ nsIDocument::SetPageUseCounter(UseCounter aUseCounter)
   contentParent->SetChildDocumentUseCounter(aUseCounter);
 }
 
+bool
+nsIDocument::HasScriptsBlockedBySandbox()
+{
+  return mSandboxFlags & SANDBOXED_SCRIPTS;
+}
+
 static bool
 MightBeAboutOrChromeScheme(nsIURI* aURI)
 {
@@ -13192,7 +13244,7 @@ nsDocument::ReportUseCounters()
     for (int32_t c = 0;
          c < eUseCounter_Count; ++c) {
       UseCounter uc = static_cast<UseCounter>(c);
-      
+
       Telemetry::ID id =
         static_cast<Telemetry::ID>(Telemetry::HistogramFirstUseCounter + uc * 2);
       bool value = GetUseCounter(uc);

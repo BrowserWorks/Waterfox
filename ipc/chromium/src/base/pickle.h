@@ -98,7 +98,6 @@ class Pickle {
   MOZ_WARN_UNUSED_RESULT bool ReadUnsignedChar(void** iter, unsigned char* result) const;
   MOZ_WARN_UNUSED_RESULT bool ReadString(void** iter, std::string* result) const;
   MOZ_WARN_UNUSED_RESULT bool ReadWString(void** iter, std::wstring* result) const;
-  MOZ_WARN_UNUSED_RESULT bool ReadString16(void** iter, string16* result) const;
   MOZ_WARN_UNUSED_RESULT bool ReadData(void** iter, const char** data, int* length) const;
   MOZ_WARN_UNUSED_RESULT bool ReadBytes(void** iter, const char** data, int length,
 					uint32_t alignment = sizeof(memberAlignmentType)) const;
@@ -163,7 +162,6 @@ class Pickle {
   }
   bool WriteString(const std::string& value);
   bool WriteWString(const std::wstring& value);
-  bool WriteString16(const string16& value);
   bool WriteData(const char* data, int length);
   bool WriteBytes(const void* data, int data_len,
                   uint32_t alignment = sizeof(memberAlignmentType));

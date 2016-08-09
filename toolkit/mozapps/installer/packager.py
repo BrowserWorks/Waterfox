@@ -38,6 +38,7 @@ SIGN_LIBS = [
     'softokn3',
     'nssdbm3',
     'freebl3',
+    'freeblpriv3',
     'freebl_32fpu_3',
     'freebl_32int_3',
     'freebl_32int64_3',
@@ -367,7 +368,7 @@ def main():
 
     # shlibsign libraries
     if launcher.can_launch():
-        if not mozinfo.isMac:
+        if not mozinfo.isMac and buildconfig.substs.get('COMPILE_ENVIRONMENT'):
             for lib in SIGN_LIBS:
                 libbase = mozpath.join(respath, '%s%s') \
                     % (buildconfig.substs['DLL_PREFIX'], lib)

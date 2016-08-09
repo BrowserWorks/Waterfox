@@ -24,6 +24,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContentLinkHandler",
   "resource:///modules/ContentLinkHandler.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerContent",
   "resource://gre/modules/LoginManagerContent.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "FormLikeFactory",
+  "resource://gre/modules/LoginManagerContent.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "InsecurePasswordUtils",
   "resource://gre/modules/InsecurePasswordUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PluginContent",
@@ -61,10 +63,13 @@ addMessageListener("RemoteLogins:fillForm", function(message) {
 });
 addEventListener("DOMFormHasPassword", function(event) {
   LoginManagerContent.onDOMFormHasPassword(event, content);
-  InsecurePasswordUtils.checkForInsecurePasswords(event.target);
+  let formLike = FormLikeFactory.createFromForm(event.target);
+  InsecurePasswordUtils.checkForInsecurePasswords(formLike);
 });
 addEventListener("DOMInputPasswordAdded", function(event) {
   LoginManagerContent.onDOMInputPasswordAdded(event, content);
+  let formLike = FormLikeFactory.createFromField(event.target);
+  InsecurePasswordUtils.checkForInsecurePasswords(formLike);
 });
 addEventListener("pageshow", function(event) {
   LoginManagerContent.onPageShow(event, content);
@@ -113,6 +118,9 @@ var handleContentContextMenu = function (event) {
                                           .getInterface(Ci.nsIDOMWindowUtils)
                                           .outerWindowID;
   let loginFillInfo = LoginManagerContent.getFieldContext(event.target);
+
+  // The same-origin check will be done in nsContextMenu.openLinkInTab.
+  let parentAllowsMixedContent = !!docShell.mixedContentChannel;
 
   // get referrer attribute from clicked link and parse it
   // if per element referrer is enabled, the element referrer overrules
@@ -175,7 +183,7 @@ var handleContentContextMenu = function (event) {
                      principal, docLocation, charSet, baseURI, referrer,
                      referrerPolicy, contentType, contentDisposition,
                      frameOuterWindowID, selectionInfo, disableSetDesktopBg,
-                     loginFillInfo, },
+                     loginFillInfo, parentAllowsMixedContent },
                    { event, popupNode: event.target });
   }
   else {
@@ -198,6 +206,7 @@ var handleContentContextMenu = function (event) {
       selectionInfo: selectionInfo,
       disableSetDesktopBackground: disableSetDesktopBg,
       loginFillInfo,
+      parentAllowsMixedContent,
     };
   }
 }
@@ -212,98 +221,13 @@ const TLS_ERROR_REPORT_TELEMETRY_EXPANDED = 1;
 const TLS_ERROR_REPORT_TELEMETRY_SUCCESS  = 6;
 const TLS_ERROR_REPORT_TELEMETRY_FAILURE  = 7;
 
-var AboutCertErrorListener = {
-  init(chromeGlobal) {
-    addMessageListener("AboutCertErrorDetails", this);
-    chromeGlobal.addEventListener("AboutCertErrorLoad", this, false, true);
-    chromeGlobal.addEventListener("AboutCertErrorSetAutomatic", this, false, true);
-  },
+const SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
 
-  get isAboutCertError() {
-    return content.document.documentURI.startsWith("about:certerror");
-  },
+const SEC_ERROR_UNKNOWN_ISSUER = SEC_ERROR_BASE + 13;
 
-  handleEvent(event) {
-    if (!this.isAboutCertError) {
-      return;
-    }
-
-    switch (event.type) {
-      case "AboutCertErrorLoad":
-        this.onLoad(event);
-        break;
-      case "AboutCertErrorSetAutomatic":
-        this.onSetAutomatic(event);
-        break;
-    }
-  },
-
-  receiveMessage(msg) {
-    if (!this.isAboutCertError) {
-      return;
-    }
-
-    switch (msg.name) {
-      case "AboutCertErrorDetails":
-        this.onDetails(msg);
-        break;
-    }
-  },
-
-  onLoad(event) {
-    let originalTarget = event.originalTarget;
-    let ownerDoc = originalTarget.ownerDocument;
-    ClickEventHandler.onAboutCertError(originalTarget, ownerDoc);
-
-    // Set up the TLS Error Reporting UI - reports are sent automatically
-    // (from nsHttpChannel::OnStopRequest) if the user has previously enabled
-    // automatic sending of reports. The UI ensures that a report is sent
-    // for the certificate error currently displayed if the user enables it
-    // here.
-    let automatic = Services.prefs.getBoolPref("security.ssl.errorReporting.automatic");
-    content.dispatchEvent(new content.CustomEvent("AboutCertErrorOptions", {
-      detail: JSON.stringify({
-        enabled: Services.prefs.getBoolPref("security.ssl.errorReporting.enabled"),
-        automatic,
-      })
-    }));
-  },
-
-  onDetails(msg) {
-    let div = content.document.getElementById("certificateErrorText");
-    div.textContent = msg.data.info;
-  },
-
-  onSetAutomatic(event) {
-    sendAsyncMessage("Browser:SetSSLErrorReportAuto", {
-      automatic: event.detail
-    });
-
-    // if we're enabling reports, send a report for this failure
-    if (event.detail) {
-      let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
-          .getService(Ci.nsISerializationHelper);
-
-      let serializable =  docShell.failedChannel.securityInfo
-          .QueryInterface(Ci.nsITransportSecurityInfo)
-          .QueryInterface(Ci.nsISerializable);
-
-      let serializedSecurityInfo = serhelper.serializeToString(serializable);
-
-      let {host, port} = content.document.mozDocumentURIIfNotForErrorPages;
-      sendAsyncMessage("Browser:SendSSLErrorReport", {
-        uri: { host, port },
-        securityInfo: serializedSecurityInfo
-      });
-    }
-  },
-};
-
-AboutCertErrorListener.init(this);
-
-
-var AboutNetErrorListener = {
+var AboutNetAndCertErrorListener = {
   init: function(chromeGlobal) {
+    addMessageListener("CertErrorDetails", this);
     chromeGlobal.addEventListener('AboutNetErrorLoad', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorOverride', this, false, true);
@@ -313,8 +237,36 @@ var AboutNetErrorListener = {
     return content.document.documentURI.startsWith("about:neterror");
   },
 
+  get isAboutCertError() {
+    return content.document.documentURI.startsWith("about:certerror");
+  },
+
+  receiveMessage: function(msg) {
+    if (!this.isAboutCertError) {
+      return;
+    }
+
+    switch (msg.name) {
+      case "CertErrorDetails":
+        this.onCertErrorDetails(msg);
+        break;
+    }
+  },
+
+  onCertErrorDetails(msg) {
+    let div = content.document.getElementById("certificateErrorText");
+    div.textContent = msg.data.info;
+
+    switch (msg.data.code) {
+      case SEC_ERROR_UNKNOWN_ISSUER:
+        let learnMoreLink = content.document.getElementById("learnMoreLink");
+        learnMoreLink.href = "https://support.mozilla.org/kb/troubleshoot-SEC_ERROR_UNKNOWN_ISSUER";
+        break;
+    }
+  },
+
   handleEvent: function(aEvent) {
-    if (!this.isAboutNetError) {
+    if (!this.isAboutNetError && !this.isAboutCertError) {
       return;
     }
 
@@ -332,6 +284,12 @@ var AboutNetErrorListener = {
   },
 
   onPageLoad: function(evt) {
+    if (this.isAboutCertError) {
+      let originalTarget = evt.originalTarget;
+      let ownerDoc = originalTarget.ownerDocument;
+      ClickEventHandler.onCertError(originalTarget, ownerDoc);
+    }
+
     let automatic = Services.prefs.getBoolPref("security.ssl.errorReporting.automatic");
     content.dispatchEvent(new content.CustomEvent("AboutNetErrorOptions", {
       detail: JSON.stringify({
@@ -375,7 +333,7 @@ var AboutNetErrorListener = {
   }
 }
 
-AboutNetErrorListener.init(this);
+AboutNetAndCertErrorListener.init(this);
 
 
 var ClickEventHandler = {
@@ -398,7 +356,7 @@ var ClickEventHandler = {
 
     // Handle click events from about pages
     if (ownerDoc.documentURI.startsWith("about:certerror")) {
-      this.onAboutCertError(originalTarget, ownerDoc);
+      this.onCertError(originalTarget, ownerDoc);
       return;
     } else if (ownerDoc.documentURI.startsWith("about:blocked")) {
       this.onAboutBlocked(originalTarget, ownerDoc);
@@ -448,6 +406,22 @@ var ClickEventHandler = {
       }
       json.noReferrer = BrowserUtils.linkHasNoReferrer(node)
 
+      // Check if the link needs to be opened with mixed content allowed.
+      // Only when the owner doc has |mixedContentChannel| and the same origin
+      // should we allow mixed content.
+      json.allowMixedContent = false;
+      let docshell = ownerDoc.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
+                             .getInterface(Ci.nsIWebNavigation)
+                             .QueryInterface(Ci.nsIDocShell);
+      if (docShell.mixedContentChannel) {
+        const sm = Services.scriptSecurityManager;
+        try {
+          let targetURI = BrowserUtils.makeURI(href);
+          sm.checkSameOriginURI(docshell.mixedContentChannel.URI, targetURI, false);
+          json.allowMixedContent = true;
+        } catch (e) {}
+      }
+
       sendAsyncMessage("Content:Click", json);
       return;
     }
@@ -458,7 +432,7 @@ var ClickEventHandler = {
     }
   },
 
-  onAboutCertError: function (targetElement, ownerDoc) {
+  onCertError: function (targetElement, ownerDoc) {
     let docshell = ownerDoc.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
                                        .getInterface(Ci.nsIWebNavigation)
                                        .QueryInterface(Ci.nsIDocShell);
@@ -599,6 +573,13 @@ addMessageListener("webrtc:StartBrowserSharing", () => {
 addEventListener("pageshow", function(event) {
   if (event.target == content.document) {
     sendAsyncMessage("PageVisibility:Show", {
+      persisted: event.persisted,
+    });
+  }
+});
+addEventListener("pagehide", function(event) {
+  if (event.target == content.document) {
+    sendAsyncMessage("PageVisibility:Hide", {
       persisted: event.persisted,
     });
   }

@@ -90,6 +90,8 @@ exports.ONLOGOUT_NOTIFICATION = "fxaccounts:onlogout";
 // Internal to services/fxaccounts only
 exports.ON_FXA_UPDATE_NOTIFICATION = "fxaccounts:update";
 
+exports.FXA_PUSH_SCOPE_ACCOUNT_UPDATE = "chrome://fxa-device-update";
+
 exports.ON_PROFILE_CHANGE_NOTIFICATION = "fxaccounts:profilechange";
 
 // UI Requests.
@@ -227,7 +229,7 @@ exports.ERROR_MSG_METHOD_NOT_ALLOWED         = "METHOD_NOT_ALLOWED";
 // See bug 1013064 comments 23-25 for why the sessionToken is "safe"
 exports.FXA_PWDMGR_PLAINTEXT_FIELDS = new Set(
   ["email", "verified", "authAt", "sessionToken", "uid", "oauthTokens", "profile",
-  "deviceId", "isDeviceStale"]);
+  "deviceId", "deviceRegistrationVersion"]);
 
 // Fields we store in secure storage if it exists.
 exports.FXA_PWDMGR_SECURE_FIELDS = new Set(
@@ -236,6 +238,11 @@ exports.FXA_PWDMGR_SECURE_FIELDS = new Set(
 // Fields we keep in memory and don't persist anywhere.
 exports.FXA_PWDMGR_MEMORY_FIELDS = new Set(
   ["cert", "keyPair"]);
+
+// A whitelist of fields that remain in storage when the user needs to
+// reauthenticate. All other fields will be removed.
+exports.FXA_PWDMGR_REAUTH_WHITELIST = new Set(
+  ["email", "uid", "profile", "deviceId", "deviceRegistrationVersion", "verified"]);
 
 // The pseudo-host we use in the login manager
 exports.FXA_PWDMGR_HOST = "chrome://FirefoxAccounts";

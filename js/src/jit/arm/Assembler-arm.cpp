@@ -638,6 +638,8 @@ Assembler::asmMergeWith(Assembler& other)
 {
     flush();
     other.flush();
+    if (other.oom())
+        return false;
     if (!AssemblerShared::asmMergeWith(size(), other))
         return false;
     return m_buffer.appendBuffer(other.m_buffer);
@@ -2769,6 +2771,13 @@ Assembler::bind(Label* label, BufferOffset boff)
 #ifdef JS_DISASM_ARM
     spewLabel(label);
 #endif
+    if (oom()) {
+        // Ensure we always bind the label. This matches what we do on
+        // x86/x64 and silences the assert in ~Label.
+        label->bind(0);
+        return;
+    }
+
     if (label->used()) {
         bool more;
         // If our caller didn't give us an explicit target to bind to then we
@@ -2776,13 +2785,6 @@ Assembler::bind(Label* label, BufferOffset boff)
         BufferOffset dest = boff.assigned() ? boff : nextOffset();
         BufferOffset b(label);
         do {
-            // Even a 0 offset may be invalid if we're out of memory.
-            if (oom()) {
-                // Ensure we always bind the label. This matches what we do on
-                // x86/x64 and silences the assert in ~Label.
-                label->bind(0);
-                return;
-            }
             BufferOffset next;
             more = nextLink(b, &next);
             Instruction branch = *editSrc(b);
@@ -2797,6 +2799,7 @@ Assembler::bind(Label* label, BufferOffset boff)
         } while (more);
     }
     label->bind(nextOffset().getOffset());
+    MOZ_ASSERT(!oom());
 }
 
 void

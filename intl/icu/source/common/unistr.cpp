@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 1999-2016, International Business Machines Corporation and
+* Copyright (C) 1999-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 ******************************************************************************
 *
@@ -521,7 +521,6 @@ UnicodeString::copyFrom(const UnicodeString &src, UBool fastCopy) {
     }
     // else if(!fastCopy) fall through to case kWritableAlias
     // -> allocate a new buffer and copy the contents
-    U_FALLTHROUGH;
   case kWritableAlias: {
     // src is a writable alias; we make a copy of that instead
     int32_t srcLength = src.length();
@@ -531,7 +530,6 @@ UnicodeString::copyFrom(const UnicodeString &src, UBool fastCopy) {
       break;
     }
     // if there is not enough memory, then fall through to setting to bogus
-    U_FALLTHROUGH;
   }
   default:
     // if src is bogus, set ourselves to bogus

@@ -8,6 +8,7 @@ package org.mozilla.gecko.db;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.mozilla.gecko.AboutPages;
@@ -18,6 +19,7 @@ import org.mozilla.gecko.db.BrowserContract.Combined;
 import org.mozilla.gecko.db.BrowserContract.FaviconColumns;
 import org.mozilla.gecko.db.BrowserContract.Favicons;
 import org.mozilla.gecko.db.BrowserContract.History;
+import org.mozilla.gecko.db.BrowserContract.Visits;
 import org.mozilla.gecko.db.BrowserContract.Schema;
 import org.mozilla.gecko.db.BrowserContract.Tabs;
 import org.mozilla.gecko.db.BrowserContract.Thumbnails;
@@ -63,6 +65,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
     static final String TABLE_BOOKMARKS = Bookmarks.TABLE_NAME;
     static final String TABLE_HISTORY = History.TABLE_NAME;
+    static final String TABLE_VISITS = Visits.TABLE_NAME;
     static final String TABLE_FAVICONS = Favicons.TABLE_NAME;
     static final String TABLE_THUMBNAILS = Thumbnails.TABLE_NAME;
     static final String TABLE_TABS = Tabs.TABLE_NAME;
@@ -70,6 +73,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
     static final String VIEW_COMBINED = Combined.VIEW_NAME;
     static final String VIEW_BOOKMARKS_WITH_FAVICONS = Bookmarks.VIEW_WITH_FAVICONS;
+    static final String VIEW_BOOKMARKS_WITH_ANNOTATIONS = Bookmarks.VIEW_WITH_ANNOTATIONS;
     static final String VIEW_HISTORY_WITH_FAVICONS = History.VIEW_WITH_FAVICONS;
     static final String VIEW_COMBINED_WITH_FAVICONS = Combined.VIEW_WITH_FAVICONS;
 
@@ -109,11 +113,14 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
     static final int TOPSITES = 1000;
 
+    static final int VISITS = 1100;
+
     static final String DEFAULT_BOOKMARKS_SORT_ORDER = Bookmarks.TYPE
             + " ASC, " + Bookmarks.POSITION + " ASC, " + Bookmarks._ID
             + " ASC";
 
     static final String DEFAULT_HISTORY_SORT_ORDER = History.DATE_LAST_VISITED + " DESC";
+    static final String DEFAULT_VISITS_SORT_ORDER = Visits.DATE_VISITED + " DESC";
 
     static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
@@ -124,6 +131,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
     static final Map<String, String> FAVICONS_PROJECTION_MAP;
     static final Map<String, String> THUMBNAILS_PROJECTION_MAP;
     static final Map<String, String> URL_ANNOTATIONS_PROJECTION_MAP;
+    static final Map<String, String> VISIT_PROJECTION_MAP;
     static final Table[] sTables;
 
     static {
@@ -179,6 +187,17 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
         map.put(History.GUID, History.GUID);
         map.put(History.IS_DELETED, History.IS_DELETED);
         HISTORY_PROJECTION_MAP = Collections.unmodifiableMap(map);
+
+        // Visits
+        URI_MATCHER.addURI(BrowserContract.AUTHORITY, "visits", VISITS);
+
+        map = new HashMap<String, String>();
+        map.put(Visits._ID, Visits._ID);
+        map.put(Visits.HISTORY_GUID, Visits.HISTORY_GUID);
+        map.put(Visits.VISIT_TYPE, Visits.VISIT_TYPE);
+        map.put(Visits.DATE_VISITED, Visits.DATE_VISITED);
+        map.put(Visits.IS_LOCAL, Visits.IS_LOCAL);
+        VISIT_PROJECTION_MAP = Collections.unmodifiableMap(map);
 
         // Favicons
         URI_MATCHER.addURI(BrowserContract.AUTHORITY, "favicons", FAVICONS);
@@ -309,7 +328,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
         final String sql;
         if (keepAfter > 0) {
             sql = "DELETE FROM " + TABLE_HISTORY + " " +
-                  "WHERE MAX(" + History.DATE_LAST_VISITED + ", " + History.DATE_MODIFIED +") < " + keepAfter + " " +
+                  "WHERE MAX(" + History.DATE_LAST_VISITED + ", " + History.DATE_MODIFIED + ") < " + keepAfter + " " +
                   " AND " + History._ID + " IN ( SELECT " +
                     History._ID + " FROM " + TABLE_HISTORY + " " +
                     "ORDER BY " + sortOrder + " LIMIT " + toRemove +
@@ -422,10 +441,26 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
             case HISTORY: {
                 trace("Deleting history: " + uri);
                 beginWrite(db);
+                /**
+                 * Deletes from Sync are actual DELETE statements, which will cascade delete relevant visits.
+                 * Fennec's deletes mark records as deleted and wipe out all information (except for GUID).
+                 * Eventually, Fennec will purge history records that were marked as deleted for longer than some
+                 * period of time (e.g. 20 days).
+                 * See {@link SharedBrowserDatabaseProvider#cleanUpSomeDeletedRecords(Uri, String)}.
+                 */
+                if (!isCallerSync(uri)) {
+                    deleteVisitsForHistory(uri, selection, selectionArgs);
+                }
                 deleted = deleteHistory(uri, selection, selectionArgs);
                 deleteUnusedImages(uri);
                 break;
             }
+
+            case VISITS:
+                trace("Deleting visits: " + uri);
+                beginWrite(db);
+                deleted = deleteVisits(uri, selection, selectionArgs);
+                break;
 
             case HISTORY_OLD: {
                 String priority = uri.getQueryParameter(BrowserContract.PARAM_EXPIRE_PRIORITY);
@@ -470,6 +505,11 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
                 break;
             }
 
+            case URL_ANNOTATIONS:
+                trace("Delete on URL_ANNOTATIONS: " + uri);
+                deleteUrlAnnotation(uri, selection, selectionArgs);
+                break;
+
             default: {
                 Table table = findTableFor(match);
                 if (table == null) {
@@ -503,6 +543,12 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
             case HISTORY: {
                 trace("Insert on HISTORY: " + uri);
                 id = insertHistory(uri, values);
+                break;
+            }
+
+            case VISITS: {
+                trace("Insert on VISITS: " + uri);
+                id = insertVisit(uri, values);
                 break;
             }
 
@@ -611,6 +657,9 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
                 } else {
                     updated = updateHistory(uri, values, selection, selectionArgs);
                 }
+                if (shouldIncrementVisits(uri)) {
+                    insertVisitForHistory(uri, values, selection, selectionArgs);
+                }
                 break;
             }
 
@@ -651,6 +700,10 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
                 }
                 break;
             }
+
+            case URL_ANNOTATIONS:
+                updateUrlAnnotation(uri, values, selection, selectionArgs);
+                break;
 
             default: {
                 Table table = findTableFor(match);
@@ -788,6 +841,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
                                                                     suggestedSitesCursor.getString(titleColumnIndex)
                                                             });
         }
+        suggestedSitesCursor.close();
 
         boolean hasPreparedBlankTiles = false;
 
@@ -991,10 +1045,15 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
                 qb.setProjectionMap(BOOKMARKS_PROJECTION_MAP);
 
-                if (hasFaviconsInProjection(projection))
+                if (hasFaviconsInProjection(projection)) {
                     qb.setTables(VIEW_BOOKMARKS_WITH_FAVICONS);
-                else
+                } else if (selection != null && selection.contains(Bookmarks.ANNOTATION_KEY)) {
+                    qb.setTables(VIEW_BOOKMARKS_WITH_ANNOTATIONS);
+
+                    groupBy = uri.getQueryParameter(BrowserContract.PARAM_GROUP_BY);
+                } else {
                     qb.setTables(TABLE_BOOKMARKS);
+                }
 
                 break;
             }
@@ -1022,6 +1081,16 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
                 break;
             }
+
+            case VISITS:
+                debug("Query is on visits: " + uri);
+                qb.setProjectionMap(VISIT_PROJECTION_MAP);
+                qb.setTables(TABLE_VISITS);
+
+                if (TextUtils.isEmpty(sortOrder)) {
+                    sortOrder = DEFAULT_VISITS_SORT_ORDER;
+                }
+                break;
 
             case FAVICON_ID:
                 selection = DBUtils.concatenateWhere(selection, Favicons._ID + " = ?");
@@ -1276,7 +1345,7 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
         // Compute matching IDs.
         final Cursor cursor = db.query(TABLE_BOOKMARKS, bookmarksProjection,
-                                       selection, selectionArgs, null, null, null);
+                selection, selectionArgs, null, null, null);
 
         // Now that we're done reading, open a transaction.
         final String inClause;
@@ -1348,30 +1417,83 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
 
         trace("Updating history meta data and incrementing visits");
 
-        // We might be altering the ContentValues, so let's use a copy.
-        final ContentValues valuesForUpdate = new ContentValues(values);
-
         // Update data and increment visits by 1.
-        long incVisits = 1;
-        if (valuesForUpdate.containsKey(History.VISITS)) {
-            // Use a given visit count, if found.
-            Long additional = valuesForUpdate.getAsLong(History.VISITS);
-            if (additional != null) {
-                incVisits = additional;
-            }
-            // Remove the visits from this set of values so we can pass the visits
-            // as an expression.
-            valuesForUpdate.remove(History.VISITS);
-        }
+        final long incVisits = 1;
 
         // Create a separate set of values that will be updated as an expression.
         final ContentValues visits = new ContentValues();
         visits.put(History.VISITS, History.VISITS + " + " + incVisits);
 
-        final ContentValues[] valuesAndVisits = { valuesForUpdate,  visits };
+        final ContentValues[] valuesAndVisits = { values,  visits };
         final UpdateOperation[] ops = { UpdateOperation.ASSIGN, UpdateOperation.EXPRESSION };
 
         return DBUtils.updateArrays(db, TABLE_HISTORY, valuesAndVisits, ops, selection, selectionArgs);
+    }
+
+    private long insertVisitForHistory(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        trace("Inserting visit for history on URI: " + uri);
+
+        final SQLiteDatabase db = getReadableDatabase(uri);
+
+        final Cursor cursor = db.query(
+                History.TABLE_NAME, new String[] {History.GUID}, selection, selectionArgs,
+                null, null, null);
+        if (cursor == null) {
+            Log.e(LOGTAG, "Null cursor while trying to insert visit for history URI: " + uri);
+            return 0;
+        }
+        final ContentValues[] visitValues;
+        try {
+            visitValues = new ContentValues[cursor.getCount()];
+
+            if (!cursor.moveToFirst()) {
+                Log.e(LOGTAG, "No history records found while inserting visit(s) for history URI: " + uri);
+                return 0;
+            }
+
+            // Sync works in microseconds, so we store visit timestamps in microseconds as well.
+            // History timestamps are in milliseconds.
+            // This is the conversion point for locally generated visits.
+            final long visitDate;
+            if (values.containsKey(History.DATE_LAST_VISITED)) {
+                visitDate = values.getAsLong(History.DATE_LAST_VISITED) * 1000;
+            } else {
+                visitDate = System.currentTimeMillis() * 1000;
+            }
+
+            final int guidColumn = cursor.getColumnIndexOrThrow(History.GUID);
+            while (!cursor.isAfterLast()) {
+                final ContentValues visit = new ContentValues();
+                visit.put(Visits.HISTORY_GUID, cursor.getString(guidColumn));
+                visit.put(Visits.DATE_VISITED, visitDate);
+                visitValues[cursor.getPosition()] = visit;
+                cursor.moveToNext();
+            }
+        } finally {
+            cursor.close();
+        }
+
+        if (visitValues.length == 1) {
+            return insertVisit(Visits.CONTENT_URI, visitValues[0]);
+        } else {
+            return bulkInsert(Visits.CONTENT_URI, visitValues);
+        }
+    }
+
+    private long insertVisit(Uri uri, ContentValues values) {
+        final SQLiteDatabase db = getWritableDatabase(uri);
+
+        debug("Inserting history in database with URL: " + uri);
+        beginWrite(db);
+
+        // We ignore insert conflicts here to simplify inserting visits records coming in from Sync.
+        // Visits table has a unique index on (history_guid,date), so a conflict might arise when we're
+        // trying to insert history record visits coming in from sync which are already present locally
+        // as a result of previous sync operations.
+        // An alternative to doing this is to filter out already present records when we're doing history inserts
+        // from Sync, which is a costly operation to do en masse.
+        return db.insertWithOnConflict(
+                TABLE_VISITS, null, values, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     private void updateFaviconIdsForUrl(SQLiteDatabase db, String pageUrl, Long faviconId) {
@@ -1519,6 +1641,20 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
         return db.insertOrThrow(TABLE_URL_ANNOTATIONS, null, values);
     }
 
+    private void deleteUrlAnnotation(final Uri uri, final String selection, final String[] selectionArgs) {
+        trace("Deleting url annotation for URI: " + uri);
+
+        final SQLiteDatabase db = getWritableDatabase(uri);
+        db.delete(TABLE_URL_ANNOTATIONS, selection, selectionArgs);
+    }
+
+    private void updateUrlAnnotation(final Uri uri, final ContentValues values, final String selection, final String[] selectionArgs) {
+        trace("Updating url annotation for URI: " + uri);
+
+        final SQLiteDatabase db = getWritableDatabase(uri);
+        db.update(TABLE_URL_ANNOTATIONS, values, selection, selectionArgs);
+    }
+
     private int updateOrInsertThumbnail(Uri uri, ContentValues values, String selection,
             String[] selectionArgs) {
         return updateThumbnail(uri, values, selection, selectionArgs,
@@ -1593,6 +1729,61 @@ public class BrowserProvider extends SharedBrowserDatabaseProvider {
             Log.e(LOGTAG, "Unable to clean up deleted history records: ", e);
         }
         return updated;
+    }
+
+    private int deleteVisitsForHistory(Uri uri, String selection, String[] selectionArgs) {
+        final SQLiteDatabase db = getWritableDatabase(uri);
+
+        final Cursor cursor = db.query(
+                History.TABLE_NAME, new String[] {History.GUID}, selection, selectionArgs,
+                null, null, null);
+        if (cursor == null) {
+            Log.e(LOGTAG, "Null cursor while trying to delete visits for history URI: " + uri);
+            return 0;
+        }
+
+        ArrayList<String> historyGUIDs = new ArrayList<>();
+        try {
+            if (!cursor.moveToFirst()) {
+                trace("No history items for which to remove visits matched for URI: " + uri);
+                return 0;
+            }
+            final int historyColumn = cursor.getColumnIndexOrThrow(History.GUID);
+            while (!cursor.isAfterLast()) {
+                historyGUIDs.add(cursor.getString(historyColumn));
+                cursor.moveToNext();
+            }
+        } finally {
+            cursor.close();
+        }
+
+        // Due to SQLite's maximum variable limitation, we need to chunk our delete statements.
+        // For example, if there were 1200 GUIDs, this will perform 2 delete statements.
+        int deleted = 0;
+        for (int chunk = 0; chunk <= historyGUIDs.size() / DBUtils.SQLITE_MAX_VARIABLE_NUMBER; chunk++) {
+            final int chunkStart = chunk * DBUtils.SQLITE_MAX_VARIABLE_NUMBER;
+            int chunkEnd = (chunk + 1) * DBUtils.SQLITE_MAX_VARIABLE_NUMBER;
+            if (chunkEnd > historyGUIDs.size()) {
+                chunkEnd = historyGUIDs.size();
+            }
+            final List<String> chunkGUIDs = historyGUIDs.subList(chunkStart, chunkEnd);
+            deleted += db.delete(
+                    Visits.TABLE_NAME,
+                    DBUtils.computeSQLInClause(chunkGUIDs.size(), Visits.HISTORY_GUID),
+                    chunkGUIDs.toArray(new String[chunkGUIDs.size()])
+            );
+        }
+
+        return deleted;
+    }
+
+    private int deleteVisits(Uri uri, String selection, String[] selectionArgs) {
+        debug("Deleting visits for URI: " + uri);
+
+        final SQLiteDatabase db = getWritableDatabase(uri);
+
+        beginWrite(db);
+        return db.delete(TABLE_VISITS, selection, selectionArgs);
     }
 
     private int deleteBookmarks(Uri uri, String selection, String[] selectionArgs) {

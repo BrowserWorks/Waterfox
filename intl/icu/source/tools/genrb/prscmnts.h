@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1998-2016, International Business Machines
+*   Copyright (C) 1998-2003, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -18,8 +18,6 @@
 
 #ifndef PRSCMNTS_H
 #define PRSCMNTS_H 1
-
-#include "unicode/utypes.h"
 
 #if UCONFIG_NO_REGULAR_EXPRESSIONS==0 /* donot compile when no RegularExpressions are available */
 

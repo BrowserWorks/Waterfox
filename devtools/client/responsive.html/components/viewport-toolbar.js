@@ -4,28 +4,49 @@
 
 "use strict";
 
-const { DOM: dom, createClass, PropTypes } =
+const { DOM: dom, createClass, createFactory, PropTypes, addons } =
   require("devtools/client/shared/vendor/react");
 
+const Types = require("../types");
+const DeviceSelector = createFactory(require("./device-selector"));
+
 module.exports = createClass({
+  propTypes: {
+    devices: PropTypes.shape(Types.devices).isRequired,
+    selectedDevice: PropTypes.string.isRequired,
+    onChangeViewportDevice: PropTypes.func.isRequired,
+    onResizeViewport: PropTypes.func.isRequired,
+    onRotateViewport: PropTypes.func.isRequired,
+    onUpdateDeviceModalOpen: PropTypes.func.isRequired,
+  },
 
   displayName: "ViewportToolbar",
 
-  propTypes: {
-    onRotateViewport: PropTypes.func.isRequired,
-  },
+  mixins: [ addons.PureRenderMixin ],
 
   render() {
     let {
+      devices,
+      selectedDevice,
+      onChangeViewportDevice,
+      onResizeViewport,
       onRotateViewport,
+      onUpdateDeviceModalOpen,
     } = this.props;
 
     return dom.div(
       {
-        className: "viewport-toolbar",
+        className: "viewport-toolbar container",
       },
+      DeviceSelector({
+        devices,
+        selectedDevice,
+        onChangeViewportDevice,
+        onResizeViewport,
+        onUpdateDeviceModalOpen,
+      }),
       dom.button({
-        className: "viewport-rotate-button toolbar-button",
+        className: "viewport-rotate-button toolbar-button devtools-button",
         onClick: onRotateViewport,
       })
     );

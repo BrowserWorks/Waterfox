@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+#include "nsTArray.h"
+
 /**
  * XXX Following enums should be in BasicEvents.h.  However, currently, it's
  *     impossible to use foward delearation for enum.
@@ -135,8 +137,16 @@ namespace mozilla {
 struct BaseEventFlags;
 struct EventFlags;
 
+class WidgetEventTime;
+
+class NativeEventData;
+
 // TextEvents.h
 struct AlternativeCharCode;
+struct ShortcutKeyCandidate;
+
+typedef nsTArray<ShortcutKeyCandidate> ShortcutKeyCandidateArray;
+typedef AutoTArray<ShortcutKeyCandidate, 10> AutoShortcutKeyCandidateArray;
 
 // TextRange.h
 struct TextRangeStyle;

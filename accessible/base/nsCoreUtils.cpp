@@ -78,7 +78,7 @@ nsCoreUtils::DispatchClickEvent(nsITreeBoxObject *aTreeBoxObj,
     return;
 
   nsCOMPtr<nsIContent> tcContent(do_QueryInterface(tcElm));
-  nsIDocument *document = tcContent->GetCurrentDoc();
+  nsIDocument *document = tcContent->GetUncomposedDoc();
   if (!document)
     return;
 
@@ -113,7 +113,7 @@ nsCoreUtils::DispatchClickEvent(nsITreeBoxObject *aTreeBoxObj,
 
   nsPoint offset;
   nsIWidget *rootWidget =
-    rootFrame->GetViewExternal()->GetNearestWidget(&offset);
+    rootFrame->GetView()->GetNearestWidget(&offset);
 
   RefPtr<nsPresContext> presContext = presShell->GetPresContext();
 
@@ -138,11 +138,11 @@ nsCoreUtils::DispatchMouseEvent(EventMessage aMessage, int32_t aX, int32_t aY,
   WidgetMouseEvent event(true, aMessage, aRootWidget,
                          WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
 
-  event.refPoint = LayoutDeviceIntPoint(aX, aY);
+  event.mRefPoint = LayoutDeviceIntPoint(aX, aY);
 
   event.clickCount = 1;
   event.button = WidgetMouseEvent::eLeftButton;
-  event.time = PR_IntervalNow();
+  event.mTime = PR_IntervalNow();
   event.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_UNKNOWN;
 
   nsEventStatus status = nsEventStatus_eIgnore;
@@ -159,13 +159,13 @@ nsCoreUtils::DispatchTouchEvent(EventMessage aMessage, int32_t aX, int32_t aY,
 
   WidgetTouchEvent event(true, aMessage, aRootWidget);
 
-  event.time = PR_IntervalNow();
+  event.mTime = PR_IntervalNow();
 
   // XXX: Touch has an identifier of -1 to hint that it is synthesized.
   RefPtr<dom::Touch> t = new dom::Touch(-1, LayoutDeviceIntPoint(aX, aY),
                                         LayoutDeviceIntPoint(1, 1), 0.0f, 1.0f);
   t->SetTarget(aContent);
-  event.touches.AppendElement(t);
+  event.mTouches.AppendElement(t);
   nsEventStatus status = nsEventStatus_eIgnore;
   aPresShell->HandleEventWithTarget(&event, aFrame, aContent, &status);
 }

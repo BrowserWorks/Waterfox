@@ -250,7 +250,7 @@ Section "-InstallStartCleanup"
   ${EndIf}
 
   ; setup the application model id registration value
-  ${InitHashAppModelId} "$INSTDIR" "Software\WaterfoxProject\${AppName}\TaskBarIDs"
+  ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
 
   ; Remove the updates directory for Vista and above
   ${CleanUpdateDirectories} "Mozilla\Firefox" "Mozilla\updates"
@@ -334,25 +334,25 @@ Section "-Application" APP_IDX
 
   ${LogHeader} "Adding Registry Entries"
   SetShellVarContext current  ; Set SHCTX to HKCU
-  ${RegCleanMain} "Software\WaterfoxProject"
+  ${RegCleanMain} "Software\Mozilla"
   ${RegCleanUninstall}
   ${UpdateProtocolHandlers}
 
   ClearErrors
-  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     StrCpy $TmpVal "HKCU" ; used primarily for logging
   ${Else}
     SetShellVarContext all  ; Set SHCTX to HKLM
-    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
     StrCpy $TmpVal "HKLM" ; used primarily for logging
-    ${RegCleanMain} "Software\WaterfoxProject"
+    ${RegCleanMain} "Software\Mozilla"
     ${RegCleanUninstall}
     ${UpdateProtocolHandlers}
 
-    ReadRegStr $0 HKLM "Software\mozilla.org\WaterfoxProject" "CurrentVersion"
+    ReadRegStr $0 HKLM "Software\mozilla.org\Mozilla" "CurrentVersion"
     ${If} "$0" != "${GREVersion}"
-      WriteRegStr HKLM "Software\mozilla.org\WaterfoxProject" "CurrentVersion" "${GREVersion}"
+      WriteRegStr HKLM "Software\mozilla.org\Mozilla" "CurrentVersion" "${GREVersion}"
     ${EndIf}
   ${EndIf}
 
@@ -945,13 +945,13 @@ Function preComponents
 
   ; Only show the maintenance service page if we have write access to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\WaterfoxProject" \
+  WriteRegStr HKLM "Software\Mozilla" \
               "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     ClearErrors
     Abort
   ${Else}
-    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
   ${EndIf}
 
   StrCpy $PageName "Components"
@@ -1017,9 +1017,9 @@ Function preSummary
 
   ; Check if it is possible to write to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
   ${Unless} ${Errors}
-    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
     ; Check if Firefox is the http handler for this user.
     SetShellVarContext current ; Set SHCTX to the current user
     ${IsHandlerForInstallDir} "http" $R9

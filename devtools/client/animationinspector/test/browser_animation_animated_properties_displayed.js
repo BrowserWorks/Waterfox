@@ -21,8 +21,8 @@ const EXPECTED_PROPERTIES = [
   "width"
 ].sort();
 
-add_task(function*() {
-  yield addTab(TEST_URL_ROOT + "doc_keyframes.html");
+add_task(function* () {
+  yield addTab(URL_ROOT + "doc_keyframes.html");
   let {panel} = yield openAnimationInspector();
   let timeline = panel.animationsTimelineComponent;
   let propertiesList = timeline.rootWrapperEl
@@ -39,7 +39,7 @@ add_task(function*() {
   ok(propertiesList.querySelectorAll(".property").length,
      "The list of properties panel actually contains properties");
   ok(hasExpectedProperties(propertiesList),
-     "The list of proeprties panel contains the right properties");
+     "The list of properties panel contains the right properties");
 
   info("Click to unselect the animation");
   yield clickOnAnimation(panel, 0, true);

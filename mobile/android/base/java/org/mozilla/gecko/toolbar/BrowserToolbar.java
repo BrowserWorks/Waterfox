@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import android.support.v4.content.ContextCompat;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.GeckoAppShell;
@@ -17,6 +18,7 @@ import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.TouchEventInterceptor;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.PropertyAnimator.PropertyAnimationListener;
 import org.mozilla.gecko.animation.ViewHelper;
@@ -29,7 +31,6 @@ import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.OnStopListener;
 import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.OnTitleChangeListener;
 import org.mozilla.gecko.toolbar.ToolbarDisplayLayout.UpdateFlags;
 import org.mozilla.gecko.util.Clipboard;
-import org.mozilla.gecko.util.ColorUtils;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.MenuUtils;
 import org.mozilla.gecko.widget.themed.ThemedFrameLayout;
@@ -128,6 +129,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
     private OnFocusChangeListener focusChangeListener;
     private OnStartEditingListener startEditingListener;
     private OnStopEditingListener stopEditingListener;
+    private TouchEventInterceptor mTouchEventInterceptor;
 
     protected final BrowserApp activity;
 
@@ -162,8 +164,6 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         final BrowserToolbar toolbar;
         if (HardwareUtils.isTablet()) {
             toolbar = new BrowserToolbarTablet(context, attrs);
-        } else if (Versions.preHC) {
-            toolbar = new BrowserToolbarPreHC(context, attrs);
         } else {
             toolbar = new BrowserToolbarPhone(context, attrs);
         }
@@ -202,8 +202,8 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         shadowSize = res.getDimensionPixelSize(R.dimen.browser_toolbar_shadow_size);
 
         shadowPaint = new Paint();
-        shadowColor = ColorUtils.getColor(context, R.color.url_bar_shadow);
-        shadowPrivateColor = ColorUtils.getColor(context, R.color.url_bar_shadow_private);
+        shadowColor = ContextCompat.getColor(context, R.color.url_bar_shadow);
+        shadowPrivateColor = ContextCompat.getColor(context, R.color.url_bar_shadow_private);
         shadowPaint.setColor(shadowColor);
         shadowPaint.setStrokeWidth(0.0f);
 
@@ -403,7 +403,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
     }
 
     @Override
-    public void onTabChanged(@NonNull Tab tab, Tabs.TabEvents msg, Object data) {
+    public void onTabChanged(@NonNull Tab tab, Tabs.TabEvents msg, String data) {
         Log.d(LOGTAG, "onTabChanged: " + msg);
         final Tabs tabs = Tabs.getInstance();
 
@@ -723,11 +723,15 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
             urlEditLayout.prepareShowAnimation(animator);
         }
 
+        // If this view is GONE, we trigger a measure pass when setting the view to
+        // VISIBLE. Since this will occur during the toolbar open animation, it causes jank.
+        final int hiddenViewVisibility = View.INVISIBLE;
+
         if (animator == null) {
             final View viewToShow = (showEditLayout ? urlEditLayout : urlDisplayLayout);
             final View viewToHide = (showEditLayout ? urlDisplayLayout : urlEditLayout);
 
-            viewToHide.setVisibility(View.GONE);
+            viewToHide.setVisibility(hiddenViewVisibility);
             viewToShow.setVisibility(View.VISIBLE);
             return;
         }
@@ -736,7 +740,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
             @Override
             public void onPropertyAnimationStart() {
                 if (!showEditLayout) {
-                    urlEditLayout.setVisibility(View.GONE);
+                    urlEditLayout.setVisibility(hiddenViewVisibility);
                     urlDisplayLayout.setVisibility(View.VISIBLE);
                 }
             }
@@ -744,7 +748,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
             @Override
             public void onPropertyAnimationEnd() {
                 if (showEditLayout) {
-                    urlDisplayLayout.setVisibility(View.GONE);
+                    urlDisplayLayout.setVisibility(hiddenViewVisibility);
                     urlEditLayout.setVisibility(View.VISIBLE);
                 }
             }
@@ -895,6 +899,18 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
         setBackgroundDrawable(stateList);
     }
 
+    public void setTouchEventInterceptor(TouchEventInterceptor interceptor) {
+        mTouchEventInterceptor = interceptor;
+    }
+
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        if (mTouchEventInterceptor != null && mTouchEventInterceptor.onInterceptTouchEvent(this, event)) {
+            return true;
+        }
+        return super.onInterceptTouchEvent(event);
+    }
+
     @Override
     public void onLightweightThemeReset() {
         setBackgroundResource(R.drawable.url_bar_bg);
@@ -902,7 +918,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
 
     public static LightweightThemeDrawable getLightweightThemeDrawable(final View view,
             final LightweightTheme theme, final int colorResID) {
-        final int color = ColorUtils.getColor(view.getContext(), colorResID);
+        final int color = ContextCompat.getColor(view.getContext(), colorResID);
 
         final LightweightThemeDrawable drawable = theme.getColorDrawable(view, color);
         if (drawable != null) {

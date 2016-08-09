@@ -31,7 +31,6 @@ CSRCS = \
 	sslerrstrs.c \
 	sslinit.c \
 	ssl3ext.c \
-	sslgathr.c \
 	sslmutex.c \
 	sslnonce.c \
 	sslreveal.c \
@@ -46,6 +45,7 @@ CSRCS = \
 	ssl3ecc.c \
         tls13con.c \
         tls13hkdf.c \
+        sslcert.c \
 	$(NULL)
 
 LIBRARY_NAME = ssl

@@ -49,7 +49,6 @@ browser.jar:
   skin/classic/browser/pointerLock-16@2x.png
   skin/classic/browser/pointerLock-64.png
   skin/classic/browser/pointerLock-64@2x.png
-  skin/classic/browser/Privacy-16.png
   skin/classic/browser/privatebrowsing-mask.png
   skin/classic/browser/privatebrowsing-mask@2x.png
   skin/classic/browser/privatebrowsing-mask-short.png
@@ -163,8 +162,6 @@ browser.jar:
   skin/classic/browser/tabbrowser/newtab-inverted@2x.png                 (tabbrowser/newtab-inverted@2x.png)
   skin/classic/browser/tabbrowser/connecting.png                         (tabbrowser/connecting.png)
   skin/classic/browser/tabbrowser/connecting@2x.png                      (tabbrowser/connecting@2x.png)
-  skin/classic/browser/tabbrowser/loading.png                            (tabbrowser/loading.png)
-  skin/classic/browser/tabbrowser/loading@2x.png                         (tabbrowser/loading@2x.png)
   skin/classic/browser/tabbrowser/tab-active-middle.png                  (tabbrowser/tab-active-middle.png)
   skin/classic/browser/tabbrowser/tab-active-middle@2x.png               (tabbrowser/tab-active-middle@2x.png)
   skin/classic/browser/tabbrowser/tab-arrow-left.png                     (tabbrowser/tab-arrow-left.png)
@@ -193,10 +190,6 @@ browser.jar:
   skin/classic/browser/tabbrowser/tab-stroke-start@2x.png                (tabbrowser/tab-stroke-start@2x.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png                   (tabbrowser/tabDragIndicator.png)
   skin/classic/browser/tabbrowser/tabDragIndicator@2x.png                (tabbrowser/tabDragIndicator@2x.png)
-  skin/classic/browser/usercontext/personal.svg             (../shared/usercontext/personal.svg)
-  skin/classic/browser/usercontext/work.svg                 (../shared/usercontext/work.svg)
-  skin/classic/browser/usercontext/banking.svg              (../shared/usercontext/banking.svg)
-  skin/classic/browser/usercontext/shopping.svg             (../shared/usercontext/shopping.svg)
   skin/classic/browser/sync-16.png
   skin/classic/browser/sync-32.png
   skin/classic/browser/sync-bg.png
@@ -239,6 +232,14 @@ browser.jar:
   skin/classic/browser/yosemite/reload-stop-go@2x.png                  (reload-stop-go-yosemite@2x.png)
   skin/classic/browser/yosemite/sync-horizontalbar.png                 (sync-horizontalbar-yosemite.png)
   skin/classic/browser/yosemite/sync-horizontalbar@2x.png              (sync-horizontalbar-yosemite@2x.png)
+  skin/classic/browser/yosemite/tab-selected-end-inactive.svg          (tabbrowser/tab-selected-end-yosemite-inactive.svg)
+  skin/classic/browser/yosemite/tab-selected-start-inactive.svg        (tabbrowser/tab-selected-start-yosemite-inactive.svg)
+  skin/classic/browser/yosemite/tab-active-middle-inactive.png         (tabbrowser/tab-active-middle-yosemite-inactive.png)
+  skin/classic/browser/yosemite/tab-active-middle-inactive@2x.png      (tabbrowser/tab-active-middle-yosemite-inactive@2x.png)
+  skin/classic/browser/yosemite/tab-stroke-end-inactive.png            (tabbrowser/tab-stroke-end-yosemite-inactive.png)
+  skin/classic/browser/yosemite/tab-stroke-end-inactive@2x.png         (tabbrowser/tab-stroke-end-yosemite-inactive@2x.png)
+  skin/classic/browser/yosemite/tab-stroke-start-inactive.png          (tabbrowser/tab-stroke-start-yosemite-inactive.png)
+  skin/classic/browser/yosemite/tab-stroke-start-inactive@2x.png       (tabbrowser/tab-stroke-start-yosemite-inactive@2x.png)
 #ifdef E10S_TESTING_ONLY
   skin/classic/browser/e10s-64@2x.png (../shared/e10s-64@2x.png)
 #endif
@@ -267,5 +268,5 @@ browser.jar:
 % override chrome://browser/skin/preferences/checkbox@2x.png               chrome://browser/skin/yosemite/preferences/checkbox@2x.png              os=Darwin osversion>=10.10
 % override chrome://browser/skin/reload-stop-go.png                        chrome://browser/skin/yosemite/reload-stop-go.png                       os=Darwin osversion>=10.10
 % override chrome://browser/skin/reload-stop-go@2x.png                     chrome://browser/skin/yosemite/reload-stop-go@2x.png                    os=Darwin osversion>=10.10
-% override chrome://browser/skin/sync-horizontalbar.png                    chrome://browser/skin/yosemite/sync-horizontalbar.png                   os=Darwin osversion>=10.10
-% override chrome://browser/skin/sync-horizontalbar@2x.png                 chrome://browser/skin/yosemite/sync-horizontalbar@2x.png                os=Darwin osversion>=10.10
+% override chrome://browser/skin/sync-horizontalbar.png                    chrome://browser/skin/yosemite/sync-horizontalbar.png               os=Darwin osversion>=10.10
+% override chrome://browser/skin/sync-horizontalbar@2x.png                 chrome://browser/skin/yosemite/sync-horizontalbar@2x.png            os=Darwin osversion>=10.10

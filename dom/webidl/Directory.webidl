@@ -15,11 +15,12 @@
  * http://w3c.github.io/filesystem-api/#idl-def-Directory
  * https://microsoftedge.github.io/directory-upload/proposal.html#directory-interface
  */
-[Exposed=Window]
+[Exposed=(Window,Worker)]
 interface Directory {
   /*
    * The leaf name of the directory.
    */
+  [Throws]
   readonly attribute DOMString name;
 
   /*
@@ -38,7 +39,7 @@ interface Directory {
    * @return If succeeds, the promise is resolved with the new created
    * File object. Otherwise, rejected with a DOM error.
    */
-  [Pref="device.storage.enabled", NewObject]
+  [Func="mozilla::dom::Directory::DeviceStorageEnabled", NewObject]
   Promise<File> createFile(DOMString path, optional CreateFileOptions options);
 
   /*
@@ -50,7 +51,7 @@ interface Directory {
    * @return If succeeds, the promise is resolved with the new created
    * Directory object. Otherwise, rejected with a DOM error.
    */
-  [Pref="device.storage.enabled", NewObject]
+  [Func="mozilla::dom::Directory::DeviceStorageEnabled", NewObject]
   Promise<Directory> createDirectory(DOMString path);
 
   /*
@@ -61,7 +62,7 @@ interface Directory {
    * with a File or Directory object, depending on the entry's type. Otherwise,
    * rejected with a DOM error.
    */
-  [Pref="device.storage.enabled", NewObject]
+  [Func="mozilla::dom::Directory::DeviceStorageEnabled", NewObject]
   Promise<(File or Directory)> get(DOMString path);
 
   /*
@@ -75,7 +76,7 @@ interface Directory {
    * exist, the promise is resolved with boolean false. If the target did exist
    * and was successfully deleted, the promise is resolved with boolean true.
    */
-  [Pref="device.storage.enabled", NewObject]
+  [Func="mozilla::dom::Directory::DeviceStorageEnabled", NewObject]
   Promise<boolean> remove((DOMString or File or Directory) path);
 
   /*
@@ -89,11 +90,11 @@ interface Directory {
    * resolved with boolean false. If the target did exist and was successfully
    * deleted, the promise is resolved with boolean true.
    */
-  [Pref="device.storage.enabled", NewObject]
+  [Func="mozilla::dom::Directory::DeviceStorageEnabled", NewObject]
   Promise<boolean> removeDeep((DOMString or File or Directory) path);
 };
 
-[Exposed=Window]
+[Exposed=(Window,Worker)]
 partial interface Directory {
   // Already defined in the main interface declaration:
   //readonly attribute DOMString name;
@@ -105,12 +106,17 @@ partial interface Directory {
    * to obtain this Directory.  Full filesystem paths are not exposed to
    * unprivilaged content.
    */
+  [Throws]
   readonly attribute DOMString path;
 
   /*
    * Getter for the immediate children of this directory.
    */
+  [Throws]
   Promise<sequence<(File or Directory)>> getFilesAndDirectories();
+
+  [Throws]
+  Promise<sequence<File>> getFiles(optional boolean recursiveFlag = false);
 };
 
 enum CreateIfExistsMode { "replace", "fail" };

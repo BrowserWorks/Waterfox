@@ -431,6 +431,7 @@ class IonBuilder
     bool getPropTryArgumentsLength(bool* emitted, MDefinition* obj);
     bool getPropTryArgumentsCallee(bool* emitted, MDefinition* obj, PropertyName* name);
     bool getPropTryConstant(bool* emitted, MDefinition* obj, jsid id, TemporaryTypeSet* types);
+    bool getPropTryNotDefined(bool* emitted, MDefinition* obj, jsid id, TemporaryTypeSet* types);
     bool getPropTryDefiniteSlot(bool* emitted, MDefinition* obj, PropertyName* name,
                                 BarrierKind barrier, TemporaryTypeSet* types);
     bool getPropTryModuleNamespace(bool* emitted, MDefinition* obj, PropertyName* name,
@@ -502,12 +503,25 @@ class IonBuilder
     // jsop_bitnot helpers.
     bool bitnotTrySpecialized(bool* emitted, MDefinition* input);
 
+    // jsop_pow helpers.
+    bool powTrySpecialized(bool* emitted, MDefinition* base, MDefinition* power, MIRType outputType);
+
     // jsop_compare helpers.
     bool compareTrySpecialized(bool* emitted, JSOp op, MDefinition* left, MDefinition* right);
     bool compareTryBitwise(bool* emitted, JSOp op, MDefinition* left, MDefinition* right);
     bool compareTrySpecializedOnBaselineInspector(bool* emitted, JSOp op, MDefinition* left,
                                                   MDefinition* right);
     bool compareTrySharedStub(bool* emitted, JSOp op, MDefinition* left, MDefinition* right);
+
+    // jsop_newarray helpers.
+    bool newArrayTrySharedStub(bool* emitted);
+    bool newArrayTryTemplateObject(bool* emitted, JSObject* templateObject, uint32_t length);
+    bool newArrayTryVM(bool* emitted, JSObject* templateObject, uint32_t length);
+
+    // jsop_newobject helpers.
+    bool newObjectTrySharedStub(bool* emitted);
+    bool newObjectTryTemplateObject(bool* emitted, JSObject* templateObject);
+    bool newObjectTryVM(bool* emitted, JSObject* templateObject);
 
     // jsop_in helpers.
     bool inTryDense(bool* emitted, MDefinition* obj, MDefinition* id);
@@ -623,6 +637,8 @@ class IonBuilder
 
     enum BoundsChecking { DoBoundsCheck, SkipBoundsCheck };
 
+    MInstruction* addArrayBufferByteLength(MDefinition* obj);
+
     // Add instructions to compute a typed array's length and data.  Also
     // optionally convert |*index| into a bounds-checked definition, if
     // requested.
@@ -717,6 +733,7 @@ class IonBuilder
     bool jsop_delprop(PropertyName* name);
     bool jsop_delelem();
     bool jsop_newarray(uint32_t length);
+    bool jsop_newarray(JSObject* templateObject, uint32_t length);
     bool jsop_newarray_copyonwrite();
     bool jsop_newobject();
     bool jsop_initelem();
@@ -786,7 +803,6 @@ class IonBuilder
     InliningStatus inlineArrayIsArray(CallInfo& callInfo);
     InliningStatus inlineArrayPopShift(CallInfo& callInfo, MArrayPopShift::Mode mode);
     InliningStatus inlineArrayPush(CallInfo& callInfo);
-    InliningStatus inlineArrayConcat(CallInfo& callInfo);
     InliningStatus inlineArraySlice(CallInfo& callInfo);
     InliningStatus inlineArrayJoin(CallInfo& callInfo);
     InliningStatus inlineArraySplice(CallInfo& callInfo);
@@ -802,7 +818,6 @@ class IonBuilder
     InliningStatus inlineMathHypot(CallInfo& callInfo);
     InliningStatus inlineMathMinMax(CallInfo& callInfo, bool max);
     InliningStatus inlineMathPow(CallInfo& callInfo);
-    InliningStatus inlineMathPowHelper(MDefinition* lhs, MDefinition* rhs, MIRType outputType);
     InliningStatus inlineMathRandom(CallInfo& callInfo);
     InliningStatus inlineMathImul(CallInfo& callInfo);
     InliningStatus inlineMathFRound(CallInfo& callInfo);
@@ -832,7 +847,6 @@ class IonBuilder
     InliningStatus inlineAtomicsExchange(CallInfo& callInfo);
     InliningStatus inlineAtomicsLoad(CallInfo& callInfo);
     InliningStatus inlineAtomicsStore(CallInfo& callInfo);
-    InliningStatus inlineAtomicsFence(CallInfo& callInfo);
     InliningStatus inlineAtomicsBinop(CallInfo& callInfo, InlinableNative target);
     InliningStatus inlineAtomicsIsLockFree(CallInfo& callInfo);
 
@@ -840,6 +854,13 @@ class IonBuilder
     InliningStatus inlineUnsafeSetReservedSlot(CallInfo& callInfo);
     InliningStatus inlineUnsafeGetReservedSlot(CallInfo& callInfo,
                                                MIRType knownValueType);
+
+    // Map intrinsics.
+    InliningStatus inlineGetNextMapEntryForIterator(CallInfo& callInfo);
+
+    // ArrayBuffer intrinsics.
+    InliningStatus inlineArrayBufferByteLength(CallInfo& callInfo);
+    InliningStatus inlinePossiblyWrappedArrayBufferByteLength(CallInfo& callInfo);
 
     // TypedArray intrinsics.
     enum WrappingBehavior { AllowWrappedTypedArrays, RejectWrappedTypedArrays };
@@ -899,8 +920,10 @@ class IonBuilder
 
     // Utility intrinsics.
     InliningStatus inlineIsCallable(CallInfo& callInfo);
+    InliningStatus inlineIsConstructor(CallInfo& callInfo);
     InliningStatus inlineIsObject(CallInfo& callInfo);
     InliningStatus inlineToObject(CallInfo& callInfo);
+    InliningStatus inlineIsWrappedArrayConstructor(CallInfo& callInfo);
     InliningStatus inlineToInteger(CallInfo& callInfo);
     InliningStatus inlineToString(CallInfo& callInfo);
     InliningStatus inlineDump(CallInfo& callInfo);
@@ -988,6 +1011,8 @@ class IonBuilder
 
     JSObject* testSingletonProperty(JSObject* obj, jsid id);
     JSObject* testSingletonPropertyTypes(MDefinition* obj, jsid id);
+
+    bool testNotDefinedProperty(MDefinition* obj, jsid id);
 
     uint32_t getDefiniteSlot(TemporaryTypeSet* types, PropertyName* name, uint32_t* pnfixed);
     MDefinition* convertUnboxedObjects(MDefinition* obj);

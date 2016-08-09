@@ -54,16 +54,16 @@ var ContentPrefServiceParent = {
       // observers for the same name.
       if (!observer) {
         observer = {
-          onContentPrefSet: function(group, name, value) {
+          onContentPrefSet: function(group, name, value, isPrivate) {
             msg.target.sendAsyncMessage("ContentPrefs:NotifyObservers",
                                         { name: name, callback: "onContentPrefSet",
-                                          args: [ group, name, value ] });
+                                          args: [ group, name, value, isPrivate ] });
           },
 
-          onContentPrefRemoved: function(group, name) {
+          onContentPrefRemoved: function(group, name, isPrivate) {
             msg.target.sendAsyncMessage("ContentPrefs:NotifyObservers",
                                         { name: name, callback: "onContentPrefRemoved",
-                                          args: [ group, name ] });
+                                          args: [ group, name, isPrivate ] });
           },
 
           // The names we're using this observer object for, used to keep track
@@ -102,7 +102,12 @@ var ContentPrefServiceParent = {
       handleResult: function(pref) {
         msg.target.sendAsyncMessage("ContentPrefs:HandleResult",
                                     { requestId: requestId,
-                                      contentPref: pref });
+                                      contentPref: {
+                                        domain: pref.domain,
+                                        name: pref.name,
+                                        value: pref.value
+                                      }
+                                    });
       },
 
       handleError: function(error) {
@@ -110,7 +115,6 @@ var ContentPrefServiceParent = {
                                     { requestId: requestId,
                                       error: error });
       },
-
       handleCompletion: function(reason) {
         msg.target.sendAsyncMessage("ContentPrefs:HandleCompletion",
                                     { requestId: requestId,

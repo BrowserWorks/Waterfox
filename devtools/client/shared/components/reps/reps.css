@@ -3,12 +3,37 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+.theme-dark,
+.theme-light {
+  --number-color: var(--theme-highlight-green);
+  --string-color: var(--theme-highlight-orange);
+  --null-color: var(--theme-comment);
+  --object-color: var(--theme-body-color);
+  --caption-color: var(--theme-highlight-blue);
+  --location-color: var(--theme-content-color1);
+  --source-link-color: var(--theme-highlight-blue);
+  --node-color: var(--theme-highlight-bluegrey);
+  --reference-color: var(--theme-highlight-purple);
+}
+
+.theme-firebug {
+  --number-color: #000088;
+  --string-color: #FF0000;
+  --null-color: #787878;
+  --object-color: DarkGreen;
+  --caption-color: #444444;
+  --location-color: #555555;
+  --source-link-color: blue;
+  --node-color: rgb(0, 0, 136);
+  --reference-color: rgb(102, 102, 255);
+}
+
+/******************************************************************************/
+
 .objectLink:hover {
   cursor: pointer;
   text-decoration: underline;
 }
-
-/******************************************************************************/
 
 .inline {
   display: inline;
@@ -16,22 +41,9 @@
 }
 
 .objectBox-object {
-  font-family: Lucida Grande, sans-serif;
   font-weight: bold;
-  color: DarkGreen;
+  color: var(--object-color);
   white-space: pre-wrap;
-}
-
-.objectBox-string,
-.objectBox-text,
-.objectBox-number,
-.objectLink-element,
-.objectLink-textNode,
-.objectLink-function,
-.objectBox-stackTrace,
-.objectLink-profile,
-.objectBox-table {
-  font-family: monospace;
 }
 
 .objectBox-string,
@@ -46,17 +58,22 @@
 .objectLink-element,
 .objectLink-textNode,
 .objectBox-array > .length {
-  color: #000088;
+  color: var(--number-color);
 }
 
 .objectBox-string {
-  color: #FF0000;
+  color: var(--string-color);
 }
 
 .objectLink-function,
 .objectBox-stackTrace,
 .objectLink-profile {
-  color: DarkGreen;
+  color: var(--object-color);
+}
+
+.objectLink-Location {
+  font-style: italic;
+  color: var(--location-color);
 }
 
 .objectBox-null,
@@ -64,14 +81,7 @@
 .objectBox-hint,
 .logRowHint {
   font-style: italic;
-  color: #787878;
-}
-
-.objectBox-scope {
-  color: #707070;
-}
-.objectBox-optimizedAway {
-  color: #909090;
+  color: var(--null-color);
 }
 
 .objectLink-sourceLink {
@@ -79,14 +89,8 @@
   right: 4px;
   top: 2px;
   padding-left: 8px;
-  font-family: Lucida Grande, sans-serif;
   font-weight: bold;
-  color: #0000FF;
-}
-
-.objectLink-sourceLink > .systemLink {
-  float: right;
-  color: #FF0000;
+  color: var(--source-link-color);
 }
 
 /******************************************************************************/
@@ -96,9 +100,8 @@
 .objectLink-regexp,
 .objectLink-object,
 .objectLink-Date {
-  font-family: Lucida Grande, sans-serif;
   font-weight: bold;
-  color: DarkGreen;
+  color: var(--object-color);
   white-space: pre-wrap;
 }
 
@@ -111,7 +114,7 @@
 .objectLink-NamedNodeMap .arrayRightBracket,
 .objectLink-Attr .attrEqual,
 .objectLink-Attr .attrTitle {
-  color: rgb(0, 0, 136)
+  color: var(--node-color);
 }
 
 .objectLink-object .nodeName {
@@ -119,16 +122,6 @@
 }
 
 /******************************************************************************/
-
-.objectLeftBrace,
-.objectRightBrace,
-.objectEqual,
-.objectComma,
-.arrayLeftBracket,
-.arrayRightBracket,
-.arrayComma {
-  font-family: monospace;
-}
 
 .objectLeftBrace,
 .objectRightBrace,
@@ -152,68 +145,37 @@
 /* Cycle reference*/
 
 .objectLink-Reference {
-  font-family: monospace;
   font-weight: bold;
-  color: rgb(102, 102, 255);
+  color: var(--reference-color);
 }
 
 .objectBox-array > .objectTitle {
   font-weight: bold;
-  color: DarkGreen;
+  color: var(--object-color);
 }
-
-/******************************************************************************/
 
 .caption {
-  font-family: Lucida Grande, Tahoma, sans-serif;
   font-weight: bold;
-  color:  #444444;
+  color:  var(--caption-color);
 }
 
 /******************************************************************************/
-/* Light Theme & Dark Theme */
-
-.theme-dark .domLabel,
-.theme-light .domLabel {
-  color: var(--theme-highlight-blue);
-}
-
-.theme-dark .objectBox-array .length,
-.theme-light .objectBox-array .length,
-.theme-dark .objectBox-number,
-.theme-light .objectBox-number {
-  color: var(--theme-highlight-green);
-}
-
-.theme-dark .objectBox-string,
-.theme-light .objectBox-string {
-  color: var(--theme-highlight-orange);
-}
+/* Themes */
 
 .theme-dark .objectBox-null,
 .theme-dark .objectBox-undefined,
 .theme-light .objectBox-null,
 .theme-light .objectBox-undefined {
   font-style: normal;
-  color: var(--theme-comment);
-}
-
-.theme-dark .objectBox-array,
-.theme-light .objectBox-array {
-  color: var(--theme-body-color);
 }
 
 .theme-dark .objectBox-object,
 .theme-light .objectBox-object {
-  font-family: Lucida Grande, sans-serif;
   font-weight: normal;
-  color: var(--theme-highlight-blue);
   white-space: pre-wrap;
 }
 
 .theme-dark .caption,
 .theme-light .caption {
-  font-family: Lucida Grande, Tahoma, sans-serif;
   font-weight: normal;
-  color: var(--theme-highlight-blue);
 }

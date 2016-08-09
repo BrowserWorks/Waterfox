@@ -7,6 +7,7 @@
 #ifndef dom_plugins_PluginInstanceChild_h
 #define dom_plugins_PluginInstanceChild_h 1
 
+#include "mozilla/EventForwards.h"
 #include "mozilla/plugins/PPluginInstanceChild.h"
 #include "mozilla/plugins/PluginScriptableObjectChild.h"
 #include "mozilla/plugins/StreamNotifyChild.h"
@@ -89,6 +90,8 @@ protected:
     AnswerNPP_SetValue_NPNVprivateModeBool(const bool& value, NPError* result) override;
     virtual bool
     AnswerNPP_SetValue_NPNVmuteAudioBool(const bool& value, NPError* result) override;
+    virtual bool
+    AnswerNPP_SetValue_NPNVCSSZoomFactor(const double& value, NPError* result) override;
 
     virtual bool
     AnswerNPP_HandleEvent(const NPRemoteEvent& event, int16_t* handled) override;
@@ -270,6 +273,11 @@ public:
     void NPN_SetCurrentAsyncSurface(NPAsyncSurface *surface, NPRect *changed);
 
     void DoAsyncRedraw();
+
+    virtual bool RecvHandledWindowedPluginKeyEvent(
+                   const NativeEventData& aKeyEventData,
+                   const bool& aIsConsumed) override;
+
 private:
     friend class PluginModuleChild;
 
@@ -392,7 +400,9 @@ private:
         bool                 mWindowed;
     };
 
-#endif
+    bool ShouldPostKeyMessage(UINT message, WPARAM wParam, LPARAM lParam);
+    bool MaybePostKeyMessage(UINT message, WPARAM wParam, LPARAM lParam);
+#endif // #if defined(OS_WIN)
     const NPPluginFuncs* mPluginIface;
     nsCString                   mMimeType;
     uint16_t                    mMode;
@@ -403,6 +413,9 @@ private:
 #if defined(XP_DARWIN)
     double mContentsScaleFactor;
 #endif
+    double mCSSZoomFactor;
+    uint32_t mPostingKeyEvents;
+    uint32_t mPostingKeyEventsOutdated;
     int16_t               mDrawingModel;
 
     NPAsyncSurface* mCurrentDirectSurface;
@@ -657,6 +670,18 @@ private:
 
     // Has this instance been destroyed, either by ActorDestroy or NPP_Destroy?
     bool mDestroyed;
+
+#ifdef XP_WIN
+    // WM_*CHAR messages are never consumed by chrome process's widget.
+    // So, if preceding keydown or keyup event is consumed by reserved
+    // shortcut key in the chrome process, we shouldn't send the following
+    // WM_*CHAR messages to the plugin.
+    bool mLastKeyEventConsumed;
+#endif // #ifdef XP_WIN
+
+    // While IME in the process has composition, this is set to true.
+    // Otherwise, false.
+    static bool sIsIMEComposing;
 
     // A counter is incremented by AutoStackHelper to indicate that there is an
     // active plugin call which should be preventing shutdown.

@@ -15,8 +15,9 @@
     "global": true,
     "Extension": true,
     "ExtensionManagement": true,
-    "ExtensionPage": true,
+    "ExtensionContext": true,
     "GlobalManager": true,
+    "openOptionsPage": true,
     "runSafe": true,
     "runSafeSync": true,
     "runSafeSyncWithoutClone": true,
@@ -69,7 +70,7 @@
     "consistent-return": 0,
 
     // Require braces around blocks that start a new line
-    "curly": [2, "multi-line"],
+    "curly": [2, "all"],
 
     // Always require a trailing EOL
     "eol-last": 2,
@@ -82,6 +83,9 @@
 
     // Space after colon not before in property declarations
     "key-spacing": [2, {"beforeColon": false, "afterColon": true, "mode": "minimum"}],
+
+    // Require spaces before and after finally, catch, etc.
+    "keyword-spacing": 2,
 
     // Unix linebreaks
     "linebreak-style": [2, "unix"],
@@ -100,9 +104,6 @@
 
     // No duplicate cases in switch statements
     "no-duplicate-case": 2,
-
-    // No labels
-    // "no-labels": 2,
 
     // If an if block ends with a return no need for an else block
     // "no-else-return": 2,
@@ -206,14 +207,8 @@
     // Never use spaces before function parentheses
     "space-before-function-paren": [2, {"anonymous": "never", "named": "never"}],
 
-    // Require spaces before finally, catch, etc.
-    "space-before-keywords": [2, "always"],
-
     // Require spaces around operators, except for a|0.
     "space-infix-ops": [2, {"int32Hint": true}],
-
-    // Require spaces after return, throw and case
-    "space-return-throw-case": 2,
 
     // ++ and -- should not need spacing
     "space-unary-ops": [1, {"nonwords": false}],
@@ -230,7 +225,7 @@
 
     // Allow trailing commas for easy list extension.  Having them does not
     // impair readability, but also not required either.
-    "comma-dangle": [1, "always-multiline"],
+    "comma-dangle": [2, "always-multiline"],
 
     // Warn about cyclomatic complexity in functions.
     "complexity": 1,
@@ -244,7 +239,7 @@
     "default-case": 0,
 
     // Enforce dots on the next line with property name.
-    "dot-location": [1, "property"],
+    "dot-location": [2, "property"],
 
     // Encourage the use of dot notation whenever possible.
     "dot-notation": 2,
@@ -320,9 +315,6 @@
     // Allow division operators explicitly at beginning of regular expression.
     "no-div-regex": 0,
 
-    // Disallow use of labels for anything other then loops and switches.
-    "no-empty-label": 2,
-
     // Disallow use of eval(). We have other APIs to evaluate code in content.
     "no-eval": 2,
 
@@ -343,6 +335,9 @@
 
     // Allow comments inline after code.
     "no-inline-comments": 0,
+
+    // Disallow use of labels for anything other then loops and switches.
+    "no-labels": [2, { "allowLoop": true }],
 
     // Disallow use of multiline strings (use template strings instead).
     "no-multi-str": 1,
@@ -433,7 +428,7 @@
     "quote-props": 0,
 
     // Double quotes should be used.
-    "quotes": [1, "double", "avoid-escape"],
+    "quotes": [1, "double", {"avoidEscape": true, "allowTemplateLiterals": true}],
 
     // Require use of the second argument for parseInt().
     "radix": 2,
@@ -444,9 +439,6 @@
     // Don't require to sort variables within the same declaration block.
     // Anyway, one-var is disabled.
     "sort-vars": 0,
-
-    // Require a space after keywords.
-    "space-after-keywords": [1, "always"],
 
     // Require a space immediately following the // in a line comment.
     "spaced-comment": [2, "always"],

@@ -325,6 +325,7 @@ Finder.prototype = {
     delete result._framesToCount;
 
     this._notifyMatchesCount(result);
+    return undefined;
   },
 
   /**
@@ -529,6 +530,10 @@ Finder.prototype = {
           }
         }
       }
+    }
+
+    if (!selection.rangeCount || selection.isCollapsed) {
+      return null;
     }
 
     let utils = topWin.QueryInterface(Ci.nsIInterfaceRequestor)

@@ -182,10 +182,8 @@ js::Debug_CheckSelfHosted(JSContext* cx, HandleValue fun)
     MOZ_CRASH("self-hosted checks should only be done in Debug builds");
 #endif
 
-    MOZ_ASSERT(fun.isObject());
-
-    MOZ_ASSERT(fun.toObject().is<JSFunction>());
-    MOZ_ASSERT(fun.toObject().as<JSFunction>().isSelfHostedOrIntrinsic());
+    RootedObject funObj(cx, UncheckedUnwrap(&fun.toObject()));
+    MOZ_ASSERT(funObj->as<JSFunction>().isSelfHostedOrIntrinsic());
 
     // This is purely to police self-hosted code. There is no actual operation.
     return true;
@@ -443,9 +441,13 @@ struct AutoGCIfRequested
  * under argc arguments on cx's stack, and call the function.  Push missing
  * required arguments, allocate declared local variables, and pop everything
  * when done.  Then push the return value.
+ *
+ * Note: This function DOES NOT call GetThisValue to munge |args.thisv()| if
+ *       necessary.  The caller (usually the interpreter) must have performed
+ *       this step already!
  */
 bool
-js::Invoke(JSContext* cx, const CallArgs& args, MaybeConstruct construct)
+js::InternalCallOrConstruct(JSContext* cx, const CallArgs& args, MaybeConstruct construct)
 {
     MOZ_ASSERT(args.length() <= ARGS_LENGTH_MAX);
     MOZ_ASSERT(!cx->zone()->types.activeAnalysis);
@@ -499,24 +501,17 @@ js::Invoke(JSContext* cx, const CallArgs& args, MaybeConstruct construct)
     return ok;
 }
 
-bool
-js::Invoke(JSContext* cx, const Value& thisv, const Value& fval, unsigned argc, const Value* argv,
-           MutableHandleValue rval)
+static bool
+InternalCall(JSContext* cx, const AnyInvokeArgs& args)
 {
-    InvokeArgs args(cx);
-    if (!args.init(argc))
-        return false;
-
-    args.setCallee(fval);
-    args.setThis(thisv);
-    PodCopy(args.array(), argv, argc);
+    MOZ_ASSERT(args.array() + args.length() == args.end(),
+               "must pass calling arguments to a calling attempt");
 
     if (args.thisv().isObject()) {
-        /*
-         * We must call the thisValue hook in case we are not called from the
-         * interpreter, where a prior bytecode has computed an appropriate
-         * |this| already.  But don't do that if fval is a DOM function.
-         */
+        // We must call the thisValue hook in case we are not called from the
+        // interpreter, where a prior bytecode has computed an appropriate
+        // |this| already.  But don't do that if fval is a DOM function.
+        HandleValue fval = args.calleev();
         if (!fval.isObject() || !fval.toObject().is<JSFunction>() ||
             !fval.toObject().as<JSFunction>().isNative() ||
             !fval.toObject().as<JSFunction>().jitInfo() ||
@@ -527,7 +522,26 @@ js::Invoke(JSContext* cx, const Value& thisv, const Value& fval, unsigned argc, 
         }
     }
 
-    if (!Invoke(cx, args))
+    return InternalCallOrConstruct(cx, args, NO_CONSTRUCT);
+}
+
+bool
+js::CallFromStack(JSContext* cx, const CallArgs& args)
+{
+    return InternalCall(cx, static_cast<const AnyInvokeArgs&>(args));
+}
+
+// ES7 rev 0c1bd3004329336774cbc90de727cd0cf5f11e93 7.3.12 Call.
+bool
+js::Call(JSContext* cx, HandleValue fval, HandleValue thisv, const AnyInvokeArgs& args,
+         MutableHandleValue rval)
+{
+    // Explicitly qualify these methods to bypass AnyInvokeArgs's deliberate
+    // shadowing.
+    args.CallArgs::setCallee(fval);
+    args.CallArgs::setThis(thisv);
+
+    if (!InternalCall(cx, args))
         return false;
 
     rval.set(args.rval());
@@ -535,16 +549,16 @@ js::Invoke(JSContext* cx, const Value& thisv, const Value& fval, unsigned argc, 
 }
 
 static bool
-InternalConstruct(JSContext* cx, const CallArgs& args)
+InternalConstruct(JSContext* cx, const AnyConstructArgs& args)
 {
     MOZ_ASSERT(args.array() + args.length() + 1 == args.end(),
                "must pass constructing arguments to a construction attempt");
-    MOZ_ASSERT(!JSFunction::class_.construct);
+    MOZ_ASSERT(!JSFunction::class_.getConstruct());
 
     // Callers are responsible for enforcing these preconditions.
     MOZ_ASSERT(IsConstructor(args.calleev()),
                "trying to construct a value that isn't a constructor");
-    MOZ_ASSERT(IsConstructor(args.newTarget()),
+    MOZ_ASSERT(IsConstructor(args.CallArgs::newTarget()),
                "provided new.target value must be a constructor");
 
     JSObject& callee = args.callee();
@@ -554,10 +568,10 @@ InternalConstruct(JSContext* cx, const CallArgs& args)
         if (fun->isNative())
             return CallJSNativeConstructor(cx, fun->native(), args);
 
-        if (!Invoke(cx, args, CONSTRUCT))
+        if (!InternalCallOrConstruct(cx, args, CONSTRUCT))
             return false;
 
-        MOZ_ASSERT(args.rval().isObject());
+        MOZ_ASSERT(args.CallArgs::rval().isObject());
         return true;
     }
 
@@ -584,69 +598,75 @@ StackCheckIsConstructorCalleeNewTarget(JSContext* cx, HandleValue callee, Handle
     return true;
 }
 
-static bool
-ConstructFromStack(JSContext* cx, const CallArgs& args)
+bool
+js::ConstructFromStack(JSContext* cx, const CallArgs& args)
 {
     if (!StackCheckIsConstructorCalleeNewTarget(cx, args.calleev(), args.newTarget()))
         return false;
 
     args.setThis(MagicValue(JS_IS_CONSTRUCTING));
-    return InternalConstruct(cx, args);
+    return InternalConstruct(cx, static_cast<const AnyConstructArgs&>(args));
 }
 
 bool
-js::Construct(JSContext* cx, HandleValue fval, const ConstructArgs& args, HandleValue newTarget,
+js::Construct(JSContext* cx, HandleValue fval, const AnyConstructArgs& args, HandleValue newTarget,
               MutableHandleObject objp)
 {
-    args.setCallee(fval);
-    args.setThis(MagicValue(JS_IS_CONSTRUCTING));
-    args.newTarget().set(newTarget);
+    // Explicitly qualify to bypass AnyConstructArgs's deliberate shadowing.
+    args.CallArgs::setCallee(fval);
+    args.CallArgs::setThis(MagicValue(JS_IS_CONSTRUCTING));
+    args.CallArgs::newTarget().set(newTarget);
+
     if (!InternalConstruct(cx, args))
         return false;
 
-    MOZ_ASSERT(args.rval().isObject());
-    objp.set(&args.rval().toObject());
+    MOZ_ASSERT(args.CallArgs::rval().isObject());
+    objp.set(&args.CallArgs::rval().toObject());
     return true;
 }
 
 bool
 js::InternalConstructWithProvidedThis(JSContext* cx, HandleValue fval, HandleValue thisv,
-                                      const ConstructArgs& args, HandleValue newTarget,
+                                      const AnyConstructArgs& args, HandleValue newTarget,
                                       MutableHandleValue rval)
 {
-    args.setCallee(fval);
+    args.CallArgs::setCallee(fval);
 
     MOZ_ASSERT(thisv.isObject());
-    args.setThis(thisv);
+    args.CallArgs::setThis(thisv);
 
-    args.newTarget().set(newTarget);
+    args.CallArgs::newTarget().set(newTarget);
 
     if (!InternalConstruct(cx, args))
         return false;
 
-    rval.set(args.rval());
+    rval.set(args.CallArgs::rval());
     return true;
 }
 
 bool
-js::InvokeGetter(JSContext* cx, const Value& thisv, Value fval, MutableHandleValue rval)
+js::CallGetter(JSContext* cx, HandleValue thisv, HandleValue getter, MutableHandleValue rval)
 {
-    /*
-     * Invoke could result in another try to get or set the same id again, see
-     * bug 355497.
-     */
+    // Invoke could result in another try to get or set the same id again, see
+    // bug 355497.
     JS_CHECK_RECURSION(cx, return false);
 
-    return Invoke(cx, thisv, fval, 0, nullptr, rval);
+    FixedInvokeArgs<0> args(cx);
+
+    return Call(cx, getter, thisv, args, rval);
 }
 
 bool
-js::InvokeSetter(JSContext* cx, const Value& thisv, Value fval, HandleValue v)
+js::CallSetter(JSContext* cx, HandleValue thisv, HandleValue setter, HandleValue v)
 {
     JS_CHECK_RECURSION(cx, return false);
 
+    FixedInvokeArgs<1> args(cx);
+
+    args[0].set(v);
+
     RootedValue ignored(cx);
-    return Invoke(cx, thisv, fval, 1, v.address(), &ignored);
+    return Call(cx, setter, thisv, args, &ignored);
 }
 
 bool
@@ -722,8 +742,8 @@ js::HasInstance(JSContext* cx, HandleObject obj, HandleValue v, bool* bp)
 {
     const Class* clasp = obj->getClass();
     RootedValue local(cx, v);
-    if (clasp->hasInstance)
-        return clasp->hasInstance(cx, obj, &local, bp);
+    if (JSHasInstanceOp hasInstance = clasp->getHasInstance())
+        return hasInstance(cx, obj, &local, bp);
 
     RootedValue val(cx, ObjectValue(*obj));
     ReportValueError(cx, JSMSG_BAD_INSTANCEOF_RHS,
@@ -2720,14 +2740,16 @@ CASE(JSOP_STRICTEVAL)
 {
     static_assert(JSOP_EVAL_LENGTH == JSOP_STRICTEVAL_LENGTH,
                   "eval and stricteval must be the same size");
+
     CallArgs args = CallArgsFromSp(GET_ARGC(REGS.pc), REGS.sp);
     if (REGS.fp()->scopeChain()->global().valueIsEval(args.calleev())) {
-        if (!DirectEval(cx, args))
+        if (!DirectEval(cx, args.get(0), args.rval()))
             goto error;
     } else {
-        if (!Invoke(cx, args))
+        if (!CallFromStack(cx, args))
             goto error;
     }
+
     REGS.sp = args.spAfterCall();
     TypeScript::Monitor(cx, script, REGS.pc, REGS.sp[-1]);
 }
@@ -2806,7 +2828,7 @@ CASE(JSOP_FUNCALL)
                 ReportValueError(cx, JSMSG_NOT_ITERABLE, -1, args.thisv(), nullptr);
                 goto error;
             }
-            if (!Invoke(cx, args))
+            if (!CallFromStack(cx, args))
                 goto error;
         }
         Value* newsp = args.spAfterCall();
@@ -4586,9 +4608,14 @@ js::SpreadCallOperation(JSContext* cx, HandleScript script, jsbytecode* pc, Hand
                                    constructing ? CONSTRUCT : NO_CONSTRUCT);
     }
 
+#ifdef DEBUG
     // The object must be an array with dense elements and no holes. Baseline's
     // optimized spread call stubs rely on this.
-    MOZ_ASSERT(IsPackedArray(aobj));
+    MOZ_ASSERT(!aobj->isIndexed());
+    MOZ_ASSERT(aobj->getDenseInitializedLength() == aobj->length());
+    for (size_t i = 0; i < aobj->length(); i++)
+        MOZ_ASSERT(!aobj->getDenseElement(i).isMagic(JS_ELEMENTS_HOLE));
+#endif
 
     if (constructing) {
         if (!StackCheckIsConstructorCalleeNewTarget(cx, callee, newTarget))
@@ -4607,36 +4634,26 @@ js::SpreadCallOperation(JSContext* cx, HandleScript script, jsbytecode* pc, Hand
         res.setObject(*obj);
     } else {
         InvokeArgs args(cx);
-
         if (!args.init(length))
             return false;
-
-        args.setCallee(callee);
-        args.setThis(thisv);
 
         if (!GetElements(cx, aobj, length, args.array()))
             return false;
 
-        switch (op) {
-          case JSOP_SPREADCALL:
-            if (!Invoke(cx, args))
+        if ((op == JSOP_SPREADEVAL || op == JSOP_STRICTSPREADEVAL) &&
+            cx->global()->valueIsEval(callee))
+        {
+            if (!DirectEval(cx, args.get(0), res))
                 return false;
-            break;
-          case JSOP_SPREADEVAL:
-          case JSOP_STRICTSPREADEVAL:
-            if (cx->global()->valueIsEval(args.calleev())) {
-                if (!DirectEval(cx, args))
-                    return false;
-            } else {
-                if (!Invoke(cx, args))
-                    return false;
-            }
-            break;
-          default:
-            MOZ_CRASH("bad spread opcode");
-        }
+        } else {
+            MOZ_ASSERT(op == JSOP_SPREADCALL ||
+                       op == JSOP_SPREADEVAL ||
+                       op == JSOP_STRICTSPREADEVAL,
+                       "bad spread opcode");
 
-        res.set(args.rval());
+            if (!Call(cx, callee, thisv, args, res))
+                return false;
+        }
     }
 
     TypeScript::Monitor(cx, script, pc, res);

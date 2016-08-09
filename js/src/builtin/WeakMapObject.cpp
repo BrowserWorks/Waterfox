@@ -111,8 +111,8 @@ js::WeakMap_delete(JSContext* cx, unsigned argc, Value* vp)
 static bool
 TryPreserveReflector(JSContext* cx, HandleObject obj)
 {
-    if (obj->getClass()->ext.isWrappedNative ||
-        (obj->getClass()->flags & JSCLASS_IS_DOMJSCLASS) ||
+    if (obj->getClass()->isWrappedNative() ||
+        obj->getClass()->isDOMClass() ||
         (obj->is<ProxyObject>() &&
          obj->as<ProxyObject>().handler()->family() == GetDOMProxyHandlerFamily()))
     {
@@ -147,7 +147,7 @@ SetWeakMapEntryInternal(JSContext* cx, Handle<WeakMapObject*> mapObj,
     if (!TryPreserveReflector(cx, key))
         return false;
 
-    if (JSWeakmapKeyDelegateOp op = key->getClass()->ext.weakmapKeyDelegateOp) {
+    if (JSWeakmapKeyDelegateOp op = key->getClass()->extWeakmapKeyDelegateOp()) {
         RootedObject delegate(cx, op(key));
         if (delegate && !TryPreserveReflector(cx, delegate))
             return false;
@@ -310,7 +310,7 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
 
         bool isOriginalAdder = IsNativeFunction(adderVal, WeakMap_set);
         RootedValue mapVal(cx, ObjectValue(*obj));
-        FastInvokeGuard fig(cx, adderVal);
+        FastCallGuard fig(cx, adderVal);
         InvokeArgs& args2 = fig.args();
 
         // Steps 7d-e.
@@ -323,6 +323,7 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
         RootedValue keyVal(cx);
         RootedObject keyObject(cx);
         RootedValue val(cx);
+        RootedValue dummy(cx);
         while (true) {
             // Steps 12a-e.
             bool done;
@@ -368,12 +369,10 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
                 if (!args2.init(2))
                     return false;
 
-                args2.setCallee(adderVal);
-                args2.setThis(mapVal);
                 args2[0].set(keyVal);
                 args2[1].set(val);
 
-                if (!fig.invoke(cx))
+                if (!fig.call(cx, adderVal, mapVal, &dummy))
                     return false;
             }
         }
@@ -383,10 +382,7 @@ WeakMap_construct(JSContext* cx, unsigned argc, Value* vp)
     return true;
 }
 
-const Class WeakMapObject::class_ = {
-    "WeakMap",
-    JSCLASS_HAS_PRIVATE |
-    JSCLASS_HAS_CACHED_PROTO(JSProto_WeakMap),
+static const ClassOps WeakMapObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
     nullptr, /* getProperty */
@@ -399,6 +395,13 @@ const Class WeakMapObject::class_ = {
     nullptr, /* hasInstance */
     nullptr, /* construct */
     WeakMap_mark
+};
+
+const Class WeakMapObject::class_ = {
+    "WeakMap",
+    JSCLASS_HAS_PRIVATE |
+    JSCLASS_HAS_CACHED_PROTO(JSProto_WeakMap),
+    &WeakMapObjectClassOps
 };
 
 static const JSFunctionSpec weak_map_methods[] = {

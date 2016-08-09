@@ -17,13 +17,14 @@ using namespace mozilla::media;
 
 namespace mozilla {
 
-LogModule*
-GetDirectShowLog() {
-  static LazyLogModule log("DirectShowDecoder");
-  return log;
-}
+// Windows XP's MP3 decoder filter. This is available on XP only, on Vista
+// and later we can use the DMO Wrapper filter and MP3 decoder DMO.
+const GUID DirectShowReader::CLSID_MPEG_LAYER_3_DECODER_FILTER =
+{ 0x38BE3000, 0xDBF4, 0x11D0, {0x86, 0x0E, 0x00, 0xA0, 0x24, 0xCF, 0xEF, 0x6D} };
 
-#define LOG(...) MOZ_LOG(GetDirectShowLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+
+static LazyLogModule gDirectShowLog("DirectShowDecoder");
+#define LOG(...) MOZ_LOG(gDirectShowLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 DirectShowReader::DirectShowReader(AbstractMediaDecoder* aDecoder)
   : MediaDecoderReader(aDecoder),
@@ -33,8 +34,7 @@ DirectShowReader::DirectShowReader(AbstractMediaDecoder* aDecoder)
 #endif
     mNumChannels(0),
     mAudioRate(0),
-    mBytesPerSample(0),
-    mDuration(0)
+    mBytesPerSample(0)
 {
   MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
   MOZ_COUNT_CTOR(DirectShowReader);
@@ -78,11 +78,6 @@ ParseMP3Headers(MP3FrameParser *aParser, MediaResource *aResource)
 
   return aParser->IsMP3() ? NS_OK : NS_ERROR_FAILURE;
 }
-
-// Windows XP's MP3 decoder filter. This is available on XP only, on Vista
-// and later we can use the DMO Wrapper filter and MP3 decoder DMO.
-static const GUID CLSID_MPEG_LAYER_3_DECODER_FILTER =
-{ 0x38BE3000, 0xDBF4, 0x11D0, {0x86, 0x0E, 0x00, 0xA0, 0x24, 0xCF, 0xEF, 0x6D} };
 
 nsresult
 DirectShowReader::ReadMetadata(MediaInfo* aInfo,
@@ -360,45 +355,6 @@ DirectShowReader::SeekInternal(int64_t aTargetUs)
   NS_ENSURE_TRUE(SUCCEEDED(hr), NS_ERROR_FAILURE);
 
   return NS_OK;
-}
-
-void
-DirectShowReader::NotifyDataArrivedInternal()
-{
-  MOZ_ASSERT(OnTaskQueue());
-  if (!mMP3FrameParser.NeedsData()) {
-    return;
-  }
-
-  AutoPinned<MediaResource> resource(mDecoder->GetResource());
-  MediaByteRangeSet byteRanges;
-  nsresult rv = resource->GetCachedRanges(byteRanges);
-
-  if (NS_FAILED(rv)) {
-    return;
-  }
-
-  if (byteRanges == mLastCachedRanges) {
-    return;
-  }
-  MediaByteRangeSet intervals = byteRanges - mLastCachedRanges;
-  mLastCachedRanges = byteRanges;
-
-  for (const auto& interval : intervals) {
-    RefPtr<MediaByteBuffer> bytes =
-      resource->MediaReadAt(interval.mStart, interval.Length());
-    NS_ENSURE_TRUE_VOID(bytes);
-    mMP3FrameParser.Parse(bytes->Elements(), interval.Length(), interval.mStart);
-    if (!mMP3FrameParser.IsMP3()) {
-      return;
-    }
-  }
-  int64_t duration = mMP3FrameParser.GetDuration();
-  if (duration != mDuration) {
-    MOZ_ASSERT(mDecoder);
-    mDuration = duration;
-    mDecoder->DispatchUpdateEstimatedMediaDuration(mDuration);
-  }
 }
 
 } // namespace mozilla

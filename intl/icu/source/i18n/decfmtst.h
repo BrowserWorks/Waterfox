@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2016, International Business Machines Corporation and
-* others. All Rights Reserved.
+* Copyright (C) 2009-2013, International Business Machines Corporation and    *
+* others. All Rights Reserved.                                                *
 *******************************************************************************
 *
 * This file contains declarations for the class DecimalFormatStaticSets
@@ -16,9 +16,7 @@
 
 #include "unicode/utypes.h"
 
-#if !UCONFIG_NO_FORMATTING
-
-#include "unicode/uobject.h"
+ #if !UCONFIG_NO_FORMATTING
 
 U_NAMESPACE_BEGIN
 

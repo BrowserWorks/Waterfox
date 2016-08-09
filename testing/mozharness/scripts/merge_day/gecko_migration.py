@@ -370,6 +370,12 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
             staging beta user repo migrations.
             """
         dirs = self.query_abs_dirs()
+        # Reset display_version.txt
+        for f in self.config["copy_files"]:
+            self.copyfile(
+                os.path.join(dirs['abs_to_dir'], f["src"]),
+                os.path.join(dirs['abs_to_dir'], f["dst"]))
+
         self.apply_replacements()
         if self.config.get("remove_locales"):
             self.remove_locales(
@@ -514,7 +520,7 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
            very quickly).
         2) Arbitrary builders ("post_merge_builders"). These are additional
            builders to trigger that aren't part of the nightly builder set.
-           For example: hg bundle generation builders.
+           Previous example: hg bundle generation builders.
         """
         dirs = self.query_abs_dirs()
         branch = self.config["to_repo_url"].rstrip("/").split("/")[-1]

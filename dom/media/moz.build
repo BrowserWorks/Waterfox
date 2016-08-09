@@ -65,12 +65,9 @@ TEST_DIRS += [
     'gtest',
 ]
 
-MOCHITEST_CHROME_MANIFESTS += ['test/chrome.ini']
-
 MOCHITEST_MANIFESTS += [
     'test/mochitest.ini',
     'tests/mochitest/identity/mochitest.ini',
-    'tests/mochitest/ipc/mochitest.ini',
 ]
 
 if CONFIG['MOZ_WEBRTC']:
@@ -92,6 +89,7 @@ EXPORTS += [
     'AudioBufferUtils.h',
     'AudioChannelFormat.h',
     'AudioCompactor.h',
+    'AudioConverter.h',
     'AudioMixer.h',
     'AudioPacketizer.h',
     'AudioSampleFormat.h',
@@ -100,6 +98,7 @@ EXPORTS += [
     'Benchmark.h',
     'BufferMediaResource.h',
     'CubebUtils.h',
+    'DecoderDoctorDiagnostics.h',
     'DecoderTraits.h',
     'DOMMediaStream.h',
     'EncodedBufferCache.h',
@@ -133,9 +132,12 @@ EXPORTS += [
     'MP3Demuxer.h',
     'MP3FrameParser.h',
     'nsIDocumentActivity.h',
+    'PrincipalChangeObserver.h',
     'QueueObject.h',
     'RtspMediaResource.h',
+    'SeekJob.h',
     'SeekTarget.h',
+    'SeekTask.h',
     'SelfRef.h',
     'SharedBuffer.h',
     'StreamBuffer.h',
@@ -198,6 +200,7 @@ UNIFIED_SOURCES += [
     'AudioCaptureStream.cpp',
     'AudioChannelFormat.cpp',
     'AudioCompactor.cpp',
+    'AudioConverter.cpp',
     'AudioSegment.cpp',
     'AudioStream.cpp',
     'AudioStreamTrack.cpp',
@@ -206,6 +209,7 @@ UNIFIED_SOURCES += [
     'Benchmark.cpp',
     'CanvasCaptureMediaStream.cpp',
     'CubebUtils.cpp',
+    'DecoderDoctorDiagnostics.cpp',
     'DOMMediaStream.cpp',
     'EncodedBufferCache.cpp',
     'FileBlockCache.cpp',
@@ -217,10 +221,12 @@ UNIFIED_SOURCES += [
     'MediaData.cpp',
     'MediaDecoder.cpp',
     'MediaDecoderReader.cpp',
+    'MediaDecoderReaderWrapper.cpp',
     'MediaDecoderStateMachine.cpp',
     'MediaDeviceInfo.cpp',
     'MediaDevices.cpp',
     'MediaFormatReader.cpp',
+    'MediaInfo.cpp',
     'MediaManager.cpp',
     'MediaRecorder.cpp',
     'MediaResource.cpp',
@@ -236,6 +242,8 @@ UNIFIED_SOURCES += [
     'MP3FrameParser.cpp',
     'QueueObject.cpp',
     'RtspMediaResource.cpp',
+    'SeekJob.cpp',
+    'SeekTask.cpp',
     'StreamBuffer.cpp',
     'TextTrack.cpp',
     'TextTrackCue.cpp',
@@ -326,5 +334,10 @@ include('/ipc/chromium/chromium-config.mozbuild')
 #    defined, which complains about an important MOZ_EXPORT for android::AString
 if CONFIG['GNU_CC']:
   CXXFLAGS += ['-Wno-error=attributes']
+
+if CONFIG['_MSC_VER']:
+    # This is intended as a temporary workaround to unblock compilation
+    # on VS2015 in warnings as errors mode.
+    CXXFLAGS += ['-wd4312']
 
 FINAL_LIBRARY = 'xul'

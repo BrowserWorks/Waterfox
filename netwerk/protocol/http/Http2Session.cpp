@@ -153,6 +153,8 @@ Http2Session::Shutdown()
       CloseStream(stream, NS_ERROR_NET_RESET);  // can be restarted
     } else if (stream->RecvdData()) {
       CloseStream(stream, NS_ERROR_NET_PARTIAL_TRANSFER);
+    } else if (mGoAwayReason == INADEQUATE_SECURITY) {
+      CloseStream(stream, NS_ERROR_NET_INADEQUATE_SECURITY);
     } else {
       CloseStream(stream, NS_ERROR_ABORT);
     }
@@ -1598,6 +1600,10 @@ Http2Session::RecvPushPromise(Http2Session *self)
       RETURN_SESSION_ERROR(self, PROTOCOL_ERROR);
     }
     self->GenerateRstStream(REFUSED_STREAM_ERROR, promisedID);
+  } else if (!(associatedID & 1)) {
+    LOG3(("Http2Session::RecvPushPromise %p assocated=0x%X on pushed (even) stream not allowed\n",
+          self, associatedID));
+    self->GenerateRstStream(PROTOCOL_ERROR, promisedID);
   } else if (!associatedStream) {
     LOG3(("Http2Session::RecvPushPromise %p lookup associated ID failed.\n", self));
     self->GenerateRstStream(PROTOCOL_ERROR, promisedID);
@@ -2132,7 +2138,7 @@ Http2Session::RecvAltSvc(Http2Session *self)
       return NS_OK;
     }
 
-    origin.Assign(self->mInputFrameDataStream->Transaction()->RequestHead()->Origin());
+    self->mInputFrameDataStream->Transaction()->RequestHead()->Origin(origin);
   } else if (!self->mInputFrameID) {
     // ID 0 streams must supply their own origin
     if (origin.IsEmpty()) {
@@ -2276,8 +2282,14 @@ Http2Session::ReadSegmentsAgain(nsAHttpSegmentReader *reader,
              "Inconsistent Write Function Callback");
 
   nsresult rv = ConfirmTLSProfile();
-  if (NS_FAILED(rv))
+  if (NS_FAILED(rv)) {
+    if (mGoAwayReason == INADEQUATE_SECURITY) {
+      LOG3(("Http2Session::ReadSegments %p returning INADEQUATE_SECURITY %x",
+            this, NS_ERROR_NET_INADEQUATE_SECURITY));
+      rv = NS_ERROR_NET_INADEQUATE_SECURITY;
+    }
     return rv;
+  }
 
   if (reader)
     mSegmentReader = reader;
@@ -3567,8 +3579,13 @@ Http2Session::TransactionHasDataToWrite(nsAHttpTransaction *caller)
   LOG3(("Http2Session::TransactionHasDataToWrite %p ID is 0x%X\n",
         this, stream->StreamID()));
 
-  mReadyForWrite.Push(stream);
-  SetWriteCallbacks();
+  if (!mClosed) {
+    mReadyForWrite.Push(stream);
+    SetWriteCallbacks();
+  } else {
+    LOG3(("Http2Session::TransactionHasDataToWrite %p closed so not setting Ready4Write\n",
+          this));
+  }
 
   // NSPR poll will not poll the network if there are non system PR_FileDesc's
   // that are ready - so we can get into a deadlock waiting for the system IO
@@ -3621,7 +3638,7 @@ Http2Session::TakeTransport(nsISocketTransport **,
   return NS_ERROR_UNEXPECTED;
 }
 
-nsHttpConnection *
+already_AddRefed<nsHttpConnection>
 Http2Session::TakeHttpConnection()
 {
   MOZ_ASSERT(false, "TakeHttpConnection of Http2Session");

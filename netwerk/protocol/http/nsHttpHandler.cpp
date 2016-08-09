@@ -56,8 +56,10 @@
 #include "nsIOService.h"
 
 #include "mozilla/net/NeckoChild.h"
+#include "mozilla/net/NeckoParent.h"
 #include "mozilla/ipc/URIUtils.h"
 #include "mozilla/Telemetry.h"
+#include "mozilla/unused.h"
 
 #if defined(XP_UNIX)
 #include <sys/utsname.h>
@@ -90,6 +92,7 @@
 #define ALLOW_EXPERIMENTS        "network.allow-experiments"
 #define SAFE_HINT_HEADER_VALUE   "safeHint.enabled"
 #define SECURITY_PREFIX          "security."
+#define NEW_TAB_REMOTE_MODE           "browser.newtabpage.remote.mode"
 
 #define UA_PREF(_pref) UA_PREF_PREFIX _pref
 #define HTTP_PREF(_pref) HTTP_PREF_PREFIX _pref
@@ -304,6 +307,7 @@ nsHttpHandler::Init()
         prefBranch->AddObserver(HTTP_PREF("tcp_keepalive.long_lived_connections"), this, true);
         prefBranch->AddObserver(SAFE_HINT_HEADER_VALUE, this, true);
         prefBranch->AddObserver(SECURITY_PREFIX, this, true);
+        prefBranch->AddObserver(NEW_TAB_REMOTE_MODE, this, true);
         PrefsChanged(prefBranch, nullptr);
     }
 
@@ -445,7 +449,7 @@ nsHttpHandler::InitConnectionMgr()
 }
 
 nsresult
-nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request, bool isSecure)
+nsHttpHandler::AddStandardRequestHeaders(nsHttpRequestHead *request, bool isSecure)
 {
     nsresult rv;
 
@@ -498,7 +502,7 @@ nsHttpHandler::AddStandardRequestHeaders(nsHttpHeaderArray *request, bool isSecu
 }
 
 nsresult
-nsHttpHandler::AddConnectionHeader(nsHttpHeaderArray *request,
+nsHttpHandler::AddConnectionHeader(nsHttpRequestHead *request,
                                    uint32_t caps)
 {
     // RFC2616 section 19.6.2 states that the "Connection: keep-alive"
@@ -1675,6 +1679,19 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
         }
     }
 
+    // remote content-signature testing option
+    if (PREF_CHANGED(NEW_TAB_REMOTE_MODE)) {
+        nsAutoCString channel;
+        prefs->GetCharPref(NEW_TAB_REMOTE_MODE, getter_Copies(channel));
+        if (channel.EqualsLiteral("test") ||
+            channel.EqualsLiteral("test2") ||
+            channel.EqualsLiteral("dev")) {
+            mNewTabContentSignaturesDisabled = true;
+        } else {
+            mNewTabContentSignaturesDisabled = false;
+        }
+    }
+
     // Enable HTTP response timeout if TCP Keepalives are disabled.
     mResponseTimeoutEnabled = !mTCPKeepaliveShortLivedEnabled &&
                               !mTCPKeepaliveLongLivedEnabled;
@@ -2197,6 +2214,9 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
         obsService->NotifyObservers(nullptr,
                                     "speculative-connect-request",
                                     NS_ConvertUTF8toUTF16(spec).get());
+        if (!IsNeckoChild() && gNeckoParent) {
+            Unused << gNeckoParent->SendSpeculativeConnectRequest(spec);
+        }
     }
 
     nsISiteSecurityService* sss = gHttpHandler->GetSSService();
@@ -2211,9 +2231,11 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     nsCOMPtr<nsIURI> clone;
     if (NS_SUCCEEDED(sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS,
                                       aURI, flags, &isStsHost)) && isStsHost) {
-        if (NS_SUCCEEDED(aURI->Clone(getter_AddRefs(clone)))) {
-            clone->SetScheme(NS_LITERAL_CSTRING("https"));
+        if (NS_SUCCEEDED(NS_GetSecureUpgradedURI(aURI,
+                                                 getter_AddRefs(clone)))) {
             aURI = clone.get();
+            // (NOTE: We better make sure |clone| stays alive until the end
+            // of the function now, since our aURI arg now points to it!)
         }
     }
 

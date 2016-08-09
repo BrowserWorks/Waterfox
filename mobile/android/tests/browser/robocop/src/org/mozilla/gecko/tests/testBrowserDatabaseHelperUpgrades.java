@@ -6,6 +6,7 @@ package org.mozilla.gecko.tests;
 
 import static org.mozilla.gecko.tests.helpers.AssertionHelper.*;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import org.mozilla.gecko.db.BrowserDatabaseHelper;
@@ -46,6 +47,11 @@ import java.util.ArrayList;
  *   * Note: when the application starts for testing, it may need to upgrade the database from your existing version. If
  * this fails, the application will crash and the test may fail to start.
  *
+ * IMPORTANT:
+ * Test DBs must be created on the oldest version of Android that is currently supported. SQLite
+ * is not forwards compatible. E.g. uploading a DB created on a 6.0 device will cause failures
+ * when robocop tests running on 4.3 are unable to load it.
+ *
  * Implementation inspired by:
  *   http://riggaroo.co.za/automated-testing-sqlite-database-upgrades-android/
  */
@@ -78,10 +84,24 @@ public class testBrowserDatabaseHelperUpgrades extends UITest {
         for (int i = TEST_FROM_VERSION; i < BrowserDatabaseHelper.DATABASE_VERSION; ++i) {
             Log.d(LOGTAG, "Testing upgrade from version: " + i);
             final String tempDbPath = copyDatabase(i);
+
+            final SQLiteDatabase db = SQLiteDatabase.openDatabase(tempDbPath, null, 0);
+            try {
+                fAssertEquals("Input DB isn't the expected version",
+                              i, db.getVersion());
+            } finally {
+                db.close();
+            }
+
             final BrowserDatabaseHelper dbHelperToUpgrade = new BrowserDatabaseHelper(getActivity(), tempDbPath);
             // Ideally, we'd test upgrading version i to version i + 1 but this method does not permit that. Alas!
-            fAssertEquals("DB helper should upgrade to latest version",
-                    BrowserDatabaseHelper.DATABASE_VERSION, dbHelperToUpgrade.getWritableDatabase().getVersion());
+            final SQLiteDatabase upgradedDb = dbHelperToUpgrade.getWritableDatabase();
+            try {
+                fAssertEquals("DB helper should upgrade to latest version",
+                              BrowserDatabaseHelper.DATABASE_VERSION, upgradedDb.getVersion());
+            } finally {
+                upgradedDb.close();
+            }
         }
     }
 

@@ -37,7 +37,7 @@
 
 using namespace mozilla::pkix;
 
-extern PRLogModuleInfo* gPIPNSSLog;
+extern mozilla::LazyLogModule gPIPNSSLog;
 
 static const unsigned int DEFAULT_MIN_RSA_BITS = 2048;
 static char kDevImportedDER[] =
@@ -165,8 +165,8 @@ AppTrustDomain::SetTrustedRoot(AppTrustedRoot trustedRoot)
       return SECFailure;
   }
 
-  mTrustedRoot = CERT_NewTempCertificate(CERT_GetDefaultCertDB(),
-                                         &trustedDER, nullptr, false, true);
+  mTrustedRoot.reset(CERT_NewTempCertificate(CERT_GetDefaultCertDB(),
+                                             &trustedDER, nullptr, false, true));
   if (!mTrustedRoot) {
     return SECFailure;
   }
@@ -244,7 +244,7 @@ AppTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   // expose it in any other easy-to-use fashion.
   SECItem candidateCertDERSECItem =
     UnsafeMapInputToSECItem(candidateCertDER);
-  ScopedCERTCertificate candidateCert(
+  UniqueCERTCertificate candidateCert(
     CERT_NewTempCertificate(CERT_GetDefaultCertDB(), &candidateCertDERSECItem,
                             nullptr, false, true));
   if (!candidateCert) {

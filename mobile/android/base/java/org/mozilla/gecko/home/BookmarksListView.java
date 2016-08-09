@@ -11,6 +11,7 @@ import android.util.Log;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
+import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 
@@ -28,7 +29,7 @@ import org.mozilla.gecko.util.NetworkUtils;
  * A ListView of bookmarks.
  */
 public class BookmarksListView extends HomeListView
-                               implements AdapterView.OnItemClickListener{
+                               implements AdapterView.OnItemClickListener {
     public static final String LOGTAG = "GeckoBookmarksListView";
 
     public BookmarksListView(Context context) {
@@ -84,6 +85,14 @@ public class BookmarksListView extends HomeListView
 
         cursor.moveToPosition(position);
 
+        if (adapter.getOpenFolderType() == BookmarksListAdapter.FolderType.SCREENSHOTS) {
+            Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.LIST_ITEM, "bookmarks-screenshot");
+
+            final String fileUrl = "file://" + cursor.getString(cursor.getColumnIndex(BrowserContract.UrlAnnotations.VALUE));
+            getOnUrlOpenListener().onUrlOpen(fileUrl, EnumSet.of(OnUrlOpenListener.Flags.ALLOW_SWITCH_TO_TAB));
+            return;
+        }
+
         int type = cursor.getInt(cursor.getColumnIndexOrThrow(Bookmarks.TYPE));
         if (type == Bookmarks.TYPE_FOLDER) {
             // If we're clicking on a folder, update adapter to move to that folder
@@ -109,6 +118,11 @@ public class BookmarksListView extends HomeListView
         final BookmarksListAdapter adapter = getBookmarksListAdapter();
         if (adapter.isShowingChildFolder()) {
             position--;
+        }
+
+        // Temporarily prevent crashes until we figure out what we actually want to do here (bug 1252316).
+        if (adapter.getOpenFolderType() == BookmarksListAdapter.FolderType.SCREENSHOTS) {
+            return false;
         }
 
         return super.onItemLongClick(parent, view, position, id);

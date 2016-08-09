@@ -74,14 +74,14 @@ public:
                                         int32_t aIdentifier) const override
   {
     // Return the device point directly.
-    LayoutDeviceIntPoint touchIntPoint = aEvent->touches[0]->mRefPoint;
+    LayoutDeviceIntPoint touchIntPoint = aEvent->mTouches[0]->mRefPoint;
     return nsPoint(touchIntPoint.x, touchIntPoint.y);
   }
 
   virtual nsPoint GetMouseEventPosition(WidgetMouseEvent* aEvent) const override
   {
     // Return the device point directly.
-    LayoutDeviceIntPoint mouseIntPoint = aEvent->AsGUIEvent()->refPoint;
+    LayoutDeviceIntPoint mouseIntPoint = aEvent->AsGUIEvent()->mRefPoint;
     return nsPoint(mouseIntPoint.x, mouseIntPoint.y);
   }
 
@@ -125,7 +125,7 @@ public:
                                               WidgetMouseEvent::eReal);
 
     event->button = WidgetMouseEvent::eLeftButton;
-    event->refPoint = LayoutDeviceIntPoint(aX, aY);
+    event->mRefPoint = LayoutDeviceIntPoint(aX, aY);
 
     return Move(event);
   }
@@ -163,7 +163,7 @@ public:
 
     RefPtr<dom::Touch> touch(
       new dom::Touch(identifier, point, radius, rotationAngle, force));
-    event->touches.AppendElement(touch);
+    event->mTouches.AppendElement(touch);
 
     return Move(event);
   }

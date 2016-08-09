@@ -81,6 +81,7 @@ user_pref("toolkit.telemetry.unified", false);
 // Likewise for safebrowsing.
 user_pref("browser.safebrowsing.enabled", false);
 user_pref("browser.safebrowsing.malware.enabled", false);
+user_pref("browser.safebrowsing.forbiddenURIs.enabled", false);
 user_pref("browser.safebrowsing.blockedURIs.enabled", false);
 // Likewise for tracking protection.
 user_pref("privacy.trackingprotection.enabled", false);
@@ -110,5 +111,9 @@ user_pref("browser.tabs.remote.autostart.2", false);
 user_pref("startup.homepage_welcome_url", "");
 user_pref("startup.homepage_welcome_url.additional", "");
 user_pref("startup.homepage_override_url", "");
+user_pref("browser.usedOnWindows10.introURL", "");
 
 user_pref("media.gmp-manager.url.override", "http://localhost/dummy-gmp-manager.xml");
+
+// A fake bool pref for "@supports -moz-bool-pref" sanify test.
+user_pref("testing.supports.moz-bool-pref", true);

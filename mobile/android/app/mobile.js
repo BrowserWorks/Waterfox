@@ -139,6 +139,7 @@ pref("browser.sessionstore.max_tabs_undo", 5);
 pref("browser.sessionstore.max_resumed_crashes", 1);
 pref("browser.sessionstore.recent_crashes", 0);
 pref("browser.sessionstore.privacy_level", 0); // saving data: 0 = all, 1 = unencrypted sites, 2 = never
+pref("browser.sessionstore.debug_logging", false);
 
 /* these should help performance */
 pref("mozilla.widget.force-24bpp", true);
@@ -190,7 +191,6 @@ pref("dom.forms.number", true);
 pref("xpinstall.whitelist.directRequest", false);
 pref("xpinstall.whitelist.fileRequest", false);
 pref("xpinstall.whitelist.add", "https://addons.mozilla.org");
-pref("xpinstall.whitelist.add.180", "https://marketplace.firefox.com");
 
 pref("xpinstall.signatures.required", true);
 
@@ -241,12 +241,31 @@ pref("extensions.blocklist.detailsURL", "https://www.mozilla.com/%LOCALE%/blockl
 
 // Kinto blocklist preferences
 pref("services.kinto.base", "https://firefox.settings.services.mozilla.com/v1");
+pref("services.kinto.changes.path", "/buckets/monitor/collections/changes/records");
 pref("services.kinto.bucket", "blocklists");
 pref("services.kinto.onecrl.collection", "certificates");
 pref("services.kinto.onecrl.checked", 0);
+pref("services.kinto.addons.collection", "addons");
+pref("services.kinto.addons.checked", 0);
+pref("services.kinto.plugins.collection", "plugins");
+pref("services.kinto.plugins.checked", 0);
+pref("services.kinto.gfx.collection", "gfx");
+pref("services.kinto.gfx.checked", 0);
+
+// for now, let's keep kinto update out of the release channel (pending
+// collection signatures)
+#ifdef RELEASE_BUILD
+pref("services.kinto.update_enabled", false);
+#else
+pref("services.kinto.update_enabled", true);
+#endif
 
 /* Don't let XPIProvider install distribution add-ons; we do our own thing on mobile. */
 pref("extensions.installDistroAddons", false);
+
+// Add-on content security policies.
+pref("extensions.webextensions.base-content-security-policy", "script-src 'self' https://* moz-extension: blob: filesystem: 'unsafe-eval' 'unsafe-inline'; object-src 'self' https://* moz-extension: blob: filesystem:;");
+pref("extensions.webextensions.default-content-security-policy", "script-src 'self'; object-src 'self';");
 
 /* block popups by default, and notify the user about blocked popups */
 pref("dom.disable_open_during_load", true);
@@ -418,8 +437,6 @@ pref("javascript.options.mem.high_water_mark", 32);
 pref("dom.max_chrome_script_run_time", 0); // disable slow script dialog for chrome
 pref("dom.max_script_run_time", 20);
 
-// JS error console
-pref("devtools.errorconsole.enabled", false);
 // Absolute path to the devtools unix domain socket file used
 // to communicate with a usb cable via adb forward.
 pref("devtools.debugger.unix-domain-socket", "/data/data/@ANDROID_PACKAGE_NAME@/firefox-debugger-socket");
@@ -480,24 +497,21 @@ pref("plugin.default.state", 1);
 // product URLs
 // The breakpad report server to link to in about:crashes
 pref("breakpad.reportURL", "https://crash-stats.mozilla.com/report/index/");
-pref("app.support.baseURL", "http://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/");
-
-// Used to submit data to input from about:feedback
-pref("app.feedback.postURL", "https://input.mozilla.org/api/v1/feedback/");
+pref("app.support.baseURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/");
 
 // URL for feedback page
 // This should be kept in sync with the "feedback_link" string defined in strings.xml.in
 pref("app.feedbackURL", "https://input.mozilla.org/feedback/android/%VERSION%/%CHANNEL%/?utm_source=feedback-prompt");
 
 pref("app.privacyURL", "https://www.mozilla.org/privacy/firefox/");
-pref("app.creditsURL", "http://www.mozilla.org/credits/");
-pref("app.channelURL", "http://www.mozilla.org/%LOCALE%/firefox/channel/");
+pref("app.creditsURL", "https://www.mozilla.org/credits/");
+pref("app.channelURL", "https://www.mozilla.org/%LOCALE%/firefox/channel/");
 #if MOZ_UPDATE_CHANNEL == aurora
-pref("app.releaseNotesURL", "http://www.mozilla.com/%LOCALE%/mobile/%VERSION%/auroranotes/");
+pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%/auroranotes/");
 #elif MOZ_UPDATE_CHANNEL == beta
-pref("app.releaseNotesURL", "http://www.mozilla.com/%LOCALE%/mobile/%VERSION%beta/releasenotes/");
+pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%beta/releasenotes/");
 #else
-pref("app.releaseNotesURL", "http://www.mozilla.com/%LOCALE%/mobile/%VERSION%/releasenotes/");
+pref("app.releaseNotesURL", "https://www.mozilla.com/%LOCALE%/mobile/%VERSION%/releasenotes/");
 #endif
 
 pref("app.faqURL", "https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/faq");
@@ -512,11 +526,6 @@ pref("security.mixed_content.block_active_content", true);
 
 // Enable pinning
 pref("security.cert_pinning.enforcement_level", 1);
-
-// NB: Changes to this pref affect CERT_CHAIN_SHA1_POLICY_STATUS telemetry.
-// See the comment in CertVerifier.cpp.
-// Allow SHA-1 certificates
-pref("security.pki.sha1_enforcement_level", 0);
 
 // Required blocklist freshness for OneCRL OCSP bypass
 // (default is 1.25x extensions.blocklist.interval, or 30 hours)
@@ -580,7 +589,6 @@ pref("ui.dragThresholdX", 25);
 pref("ui.dragThresholdY", 25);
 
 pref("layers.acceleration.disabled", false);
-pref("layers.offmainthreadcomposition.enabled", true);
 pref("layers.async-video.enabled", true);
 
 #ifdef MOZ_ANDROID_APZ
@@ -596,8 +604,9 @@ pref("apz.fling_curve_function_y1", "0.46");
 pref("apz.fling_curve_function_x2", "0.05");
 pref("apz.fling_curve_function_y2", "1.00");
 pref("apz.fling_curve_threshold_inches_per_ms", "0.01");
+// apz.fling_friction and apz.fling_stopped_threshold are currently ignored by Fennec.
 pref("apz.fling_friction", "0.004");
-pref("apz.fling_stopped_threshold", "0.1");
+pref("apz.fling_stopped_threshold", "0.0");
 pref("apz.max_velocity_inches_per_ms", "0.07");
 pref("apz.fling_accel_interval_ms", 750);
 pref("apz.overscroll.enabled", true);
@@ -798,8 +807,8 @@ pref("app.orientation.default", "");
 // back to the system.
 pref("memory.free_dirty_pages", true);
 
-pref("layout.imagevisibility.numscrollportwidths", 1);
-pref("layout.imagevisibility.numscrollportheights", 1);
+pref("layout.framevisibility.numscrollportwidths", 1);
+pref("layout.framevisibility.numscrollportheights", 1);
 
 pref("layers.enable-tiles", true);
 
@@ -904,19 +913,12 @@ pref("reader.toolbar.vertical", false);
 pref("toolkit.telemetry.unified", false);
 
 // Unified AccessibleCarets (touch-caret and selection-carets).
-#ifdef NIGHTLY_BUILD
 pref("layout.accessiblecaret.enabled", true);
-#else
-pref("layout.accessiblecaret.enabled", false);
-#endif
 
 // AccessibleCaret CSS for the Android L style assets.
 pref("layout.accessiblecaret.width", "22.0");
 pref("layout.accessiblecaret.height", "22.0");
 pref("layout.accessiblecaret.margin-left", "-11.5");
-
-// Android hides the selection bars at the two ends of the selection highlight.
-pref("layout.accessiblecaret.bar.enabled", false);
 
 // Android needs to show the caret when long tapping on an empty content.
 pref("layout.accessiblecaret.caret_shown_when_long_tapping_on_empty_content", true);
@@ -927,11 +929,6 @@ pref("layout.accessiblecaret.timeout_ms", 0);
 // Android generates long tap (mouse) events.
 pref("layout.accessiblecaret.use_long_tap_injector", false);
 
-// AccessibleCarets behaviour is extended to support Android specific
-// requirements to hide carets while maintaining ActionBar visiblity during page
-// scroll.
-pref("layout.accessiblecaret.extendedvisibility", true);
-
 // Androids carets are always tilt to match the text selection guideline.
 pref("layout.accessiblecaret.always_tilt", true);
 
@@ -941,6 +938,10 @@ pref("layout.accessiblecaret.allow_script_change_updates", true);
 
 // Optionally provide haptic feedback on longPress selection events.
 pref("layout.accessiblecaret.hapticfeedback", true);
+
+// Initial text selection on long-press is enhanced to provide
+// a smarter phone-number selection for direct-dial ActionBar action.
+pref("layout.accessiblecaret.extend_selection_for_phone_number", true);
 
 // Disable sending console to logcat on release builds.
 #ifdef RELEASE_BUILD
@@ -960,6 +961,17 @@ pref("dom.vr.enabled", true);
 pref("browser.tabs.showAudioPlayingIcon", true);
 
 pref("dom.serviceWorkers.enabled", true);
+pref("dom.serviceWorkers.interception.enabled", true);
+pref("dom.serviceWorkers.openWindow.enabled", true);
+
+pref("dom.push.debug", false);
+// The upstream autopush endpoint must have the Google API key corresponding to
+// the App's sender ID; we bake this assumption directly into the URL.
+pref("dom.push.serverURL", "https://updates.push.services.mozilla.com/v1/gcm/@MOZ_ANDROID_GCM_SENDERID@");
+
+#ifdef MOZ_ANDROID_GCM
+pref("dom.push.enabled", true);
+#endif
 
 // The remote content URL where FxAccountsWebChannel messages originate.  Must use HTTPS.
 pref("identity.fxaccounts.remote.webchannel.uri", "https://accounts.firefox.com");
@@ -976,3 +988,7 @@ pref("identity.sync.tokenserver.uri", "https://token.services.mozilla.com/1.0/sy
 // Enable Presentation API
 pref("dom.presentation.enabled", true);
 pref("dom.presentation.discovery.enabled", true);
+
+// TODO : remove it after landing bug1242874 because now it's the only way to
+// suspend the MediaElement.
+pref("media.useAudioChannelAPI", true);

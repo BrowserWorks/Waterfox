@@ -6,7 +6,10 @@
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 var BrowserLoaderModule = {};
 Cu.import("resource://devtools/client/shared/browser-loader.js", BrowserLoaderModule);
-var { loader, require } = BrowserLoaderModule.BrowserLoader("resource://devtools/client/performance/", this);
+var { loader, require } = BrowserLoaderModule.BrowserLoader({
+  baseURI: "resource://devtools/client/performance/",
+  window: this
+});
 var { Task } = require("resource://gre/modules/Task.jsm");
 var { Heritage, ViewHelpers, WidgetMethods } = require("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
 var { gDevTools } = require("devtools/client/framework/devtools");
@@ -38,7 +41,7 @@ var { OptimizationsGraph, GraphsController } = require("devtools/client/performa
 var { WaterfallHeader } = require("devtools/client/performance/modules/widgets/waterfall-ticks");
 var { MarkerView } = require("devtools/client/performance/modules/widgets/marker-view");
 var { MarkerDetails } = require("devtools/client/performance/modules/widgets/marker-details");
-var MarkerUtils = require("devtools/client/performance/modules/logic/marker-utils");
+var { MarkerBlueprintUtils } = require("devtools/client/performance/modules/marker-blueprint-utils");
 var WaterfallUtils = require("devtools/client/performance/modules/logic/waterfall-utils");
 var FrameUtils = require("devtools/client/performance/modules/logic/frame-utils");
 var { CallView } = require("devtools/client/performance/modules/widgets/tree-view");

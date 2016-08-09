@@ -310,8 +310,9 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
     dt = destDT->CreateSimilarDrawTarget(IntSize(ceil(destRect.width),
                                                  ceil(destRect.height)),
                                          SurfaceFormat::B8G8R8A8);
-    if (dt) {
-      RefPtr<gfxContext> ctx = new gfxContext(dt);
+    if (dt && dt->IsValid()) {
+      RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(dt);
+      MOZ_ASSERT(ctx); // already checked draw target above
       ctx->SetMatrix(ctx->CurrentMatrix().Translate(-destRect.x, -destRect.y));
       nsRenderingContext context(ctx);
       PaintInternal(aBuilder, &context, bgClipRect, &bgClipRect);
@@ -324,6 +325,42 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
 #endif
   PaintInternal(aBuilder, aCtx, mVisibleRect, &bgClipRect);
 }
+
+bool
+nsDisplayCanvasBackgroundImage::IsSingleFixedPositionImage(nsDisplayListBuilder* aBuilder,
+                                                           const nsRect& aClipRect,
+                                                           gfxRect* aDestRect)
+{
+  if (!mBackgroundStyle)
+    return false;
+
+  if (mBackgroundStyle->mImage.mLayers.Length() != 1)
+    return false;
+
+
+  nsPresContext* presContext = mFrame->PresContext();
+  uint32_t flags = aBuilder->GetBackgroundPaintFlags();
+  nsRect borderArea = nsRect(ToReferenceFrame(), mFrame->GetSize());
+  const nsStyleImageLayers::Layer &layer = mBackgroundStyle->mImage.mLayers[mLayer];
+
+  if (layer.mAttachment != NS_STYLE_IMAGELAYER_ATTACHMENT_FIXED)
+    return false;
+
+   nsBackgroundLayerState state =
+     nsCSSRendering::PrepareImageLayer(presContext, mFrame, flags,
+                                       borderArea, aClipRect, layer);
+
+
+  // We only care about images here, not gradients.
+  if (!mIsRasterImage)
+    return false;
+
+  int32_t appUnitsPerDevPixel = presContext->AppUnitsPerDevPixel();
+  *aDestRect = nsLayoutUtils::RectToGfxRect(state.mFillArea, appUnitsPerDevPixel);
+
+  return true;
+}
+
 
 void
 nsDisplayCanvasThemedBackground::Paint(nsDisplayListBuilder* aBuilder,

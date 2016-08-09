@@ -7,6 +7,7 @@
 // Test that the buttons are updated dynamically if the preference changes.
 
 const ADDON_ID = "test-devtools@mozilla.org";
+const ADDON_NAME = "test-devtools";
 
 add_task(function* () {
   info("Turn off addon debugging.");
@@ -19,9 +20,11 @@ add_task(function* () {
   });
 
   let { tab, document } = yield openAboutDebugging("addons");
+  yield waitForInitialAddonList(document);
 
   info("Install a test addon.");
-  yield installAddon(document, "addons/unpacked/install.rdf", "test-devtools");
+  yield installAddon(document, "addons/unpacked/install.rdf", ADDON_NAME,
+                     "test-devtools");
 
   let addonDebugCheckbox = document.querySelector("#enable-addon-debugging");
   ok(!addonDebugCheckbox.checked, "Addons debugging should be disabled.");
@@ -53,7 +56,7 @@ add_task(function* () {
   ok(debugButtons.every(b => b.disabled), "Debug buttons should be disabled");
 
   info("Uninstall addon installed earlier.");
-  yield uninstallAddon(ADDON_ID);
+  yield uninstallAddon(document, ADDON_ID, ADDON_NAME);
 
   yield closeAboutDebugging(tab);
 });

@@ -6,6 +6,7 @@
 #ifndef GFX_LAYERS_H
 #define GFX_LAYERS_H
 
+#include <map>
 #include <stdint.h>                     // for uint32_t, uint64_t, uint8_t
 #include <stdio.h>                      // for FILE
 #include <sys/types.h>                  // for int32_t, int64_t
@@ -27,6 +28,7 @@
 #include "mozilla/gfx/BaseMargin.h"     // for BaseMargin
 #include "mozilla/gfx/BasePoint.h"      // for BasePoint
 #include "mozilla/gfx/Point.h"          // for IntSize
+#include "mozilla/gfx/TiledRegion.h"    // for TiledIntRegion
 #include "mozilla/gfx/Types.h"          // for SurfaceFormat
 #include "mozilla/gfx/UserData.h"       // for UserData, etc
 #include "mozilla/layers/LayersTypes.h"
@@ -168,6 +170,7 @@ public:
     , mSnapEffectiveTransforms(true)
     , mId(0)
     , mInTransaction(false)
+    , mPaintedPixelCount(0)
   {}
 
   /**
@@ -564,12 +567,13 @@ public:
    * Dump information about this layer manager and its managed tree to
    * aStream.
    */
-  void Dump(std::stringstream& aStream, const char* aPrefix="", bool aDumpHtml=false);
+  void Dump(std::stringstream& aStream, const char* aPrefix="",
+            bool aDumpHtml=false, bool aSorted=false);
   /**
    * Dump information about just this layer manager itself to aStream
    */
-  void DumpSelf(std::stringstream& aStream, const char* aPrefix="");
-  void Dump();
+  void DumpSelf(std::stringstream& aStream, const char* aPrefix="", bool aSorted=false);
+  void Dump(bool aSorted=false);
 
   /**
    * Dump information about this layer manager and its managed tree to
@@ -652,6 +656,16 @@ public:
 
   static void LayerUserDataDestroy(void* data);
 
+  void AddPaintedPixelCount(int32_t aCount) {
+    mPaintedPixelCount += aCount;
+  }
+
+  uint32_t GetAndClearPaintedPixelCount() {
+    uint32_t count = mPaintedPixelCount;
+    mPaintedPixelCount = 0;
+    return count;
+  }
+
 protected:
   RefPtr<Layer> mRoot;
   gfx::UserData mUserData;
@@ -676,6 +690,8 @@ protected:
   // The time when painting most recently finished. This is recorded so that
   // we can time any play-pending animations from this point.
   TimeStamp mAnimationReadyTime;
+  // The count of pixels that were painted in the current transaction.
+  uint32_t mPaintedPixelCount;
 private:
   struct FramesTimingRecording
   {
@@ -697,6 +713,19 @@ private:
   FramesTimingRecording mRecording;
 
   TimeStamp mTabSwitchStart;
+
+public:
+  /*
+   * Methods to store/get/clear a "pending scroll info update" object on a
+   * per-scrollid basis. This is used for empty transactions that push over
+   * scroll position updates to the APZ code.
+   */
+  void SetPendingScrollUpdateForNextTransaction(FrameMetrics::ViewID aScrollId,
+                                                const ScrollUpdateInfo& aUpdateInfo);
+  Maybe<ScrollUpdateInfo> GetPendingScrollInfoUpdate(FrameMetrics::ViewID aScrollId);
+  void ClearPendingScrollInfoUpdate();
+private:
+  std::map<FrameMetrics::ViewID,ScrollUpdateInfo> mPendingScrollUpdates;
 };
 
 typedef InfallibleTArray<Animation> AnimationArray;
@@ -856,6 +885,7 @@ public:
    */
   void SetScrollMetadata(const ScrollMetadata& aScrollMetadata)
   {
+    Manager()->ClearPendingScrollInfoUpdate();
     if (mScrollMetadata.Length() != 1 || mScrollMetadata[0] != aScrollMetadata) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
       mScrollMetadata.ReplaceElementsAt(0, mScrollMetadata.Length(), aScrollMetadata);
@@ -883,6 +913,7 @@ public:
    */
   void SetScrollMetadata(const nsTArray<ScrollMetadata>& aMetadataArray)
   {
+    Manager()->ClearPendingScrollInfoUpdate();
     if (mScrollMetadata != aMetadataArray) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FrameMetrics", this));
       mScrollMetadata = aMetadataArray;
@@ -1501,6 +1532,12 @@ public:
   }
 
   /**
+   * Return true if current layer content is opaque.
+   * It does not guarantee that layer content is always opaque.
+   */
+  virtual bool IsOpaque() { return GetContentFlags() & CONTENT_OPAQUE; }
+
+  /**
    * Returns the product of the opacities of this layer and all ancestors up
    * to and excluding the nearest ancestor that has UseIntermediateSurface() set.
    */
@@ -1588,7 +1625,8 @@ public:
    * Dump information about this layer manager and its managed tree to
    * aStream.
    */
-  void Dump(std::stringstream& aStream, const char* aPrefix="", bool aDumpHtml=false);
+  void Dump(std::stringstream& aStream, const char* aPrefix="",
+            bool aDumpHtml=false, bool aSorted=false);
   /**
    * Dump information about just this layer manager itself to aStream.
    */
@@ -1638,20 +1676,24 @@ public:
    * Returns the current area of the layer (in layer-space coordinates)
    * marked as needed to be recomposited.
    */
-  const nsIntRegion& GetInvalidRegion() { return mInvalidRegion; }
+  const gfx::TiledIntRegion& GetInvalidRegion() { return mInvalidRegion; }
   void AddInvalidRegion(const nsIntRegion& aRegion) {
-    mInvalidRegion.Or(mInvalidRegion, aRegion);
+    mInvalidRegion.Add(aRegion);
   }
 
   /**
    * Mark the entirety of the layer's visible region as being invalid.
    */
-  void SetInvalidRectToVisibleRegion() { mInvalidRegion = GetVisibleRegion().ToUnknownRegion(); }
+  void SetInvalidRectToVisibleRegion()
+  {
+    mInvalidRegion.SetEmpty();
+    mInvalidRegion.Add(GetVisibleRegion().ToUnknownRegion());
+  }
 
   /**
    * Adds to the current invalid rect.
    */
-  void AddInvalidRect(const gfx::IntRect& aRect) { mInvalidRegion.Or(mInvalidRegion, aRect); }
+  void AddInvalidRect(const gfx::IntRect& aRect) { mInvalidRegion.Add(aRect); }
 
   /**
    * Clear the invalid rect, marking the layer as being identical to what is currently
@@ -1809,7 +1851,7 @@ protected:
   bool mForceIsolatedGroup;
   Maybe<ParentLayerIntRect> mClipRect;
   gfx::IntRect mTileSourceRect;
-  nsIntRegion mInvalidRegion;
+  gfx::TiledIntRegion mInvalidRegion;
   nsTArray<RefPtr<AsyncPanZoomController> > mApzcs;
   uint32_t mContentFlags;
   bool mUseTileSourceRect;
@@ -1835,7 +1877,9 @@ protected:
   // CSS pixels of the scrollframe's space).
   float mScrollbarThumbRatio;
   bool mIsScrollbarContainer;
-  DebugOnly<uint32_t> mDebugColorIndex;
+#ifdef DEBUG
+  uint32_t mDebugColorIndex;
+#endif
   // If this layer is used for OMTA, then this counter is used to ensure we
   // stay in sync with the animation manager
   uint64_t mAnimationGeneration;

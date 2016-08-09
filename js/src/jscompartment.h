@@ -7,6 +7,7 @@
 #ifndef jscompartment_h
 #define jscompartment_h
 
+#include "mozilla/LinkedList.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Variant.h"
@@ -29,6 +30,10 @@ class JitCompartment;
 namespace gc {
 template<class Node> class ComponentFinder;
 } // namespace gc
+
+namespace wasm {
+class Module;
+} // namespace wasm
 
 struct NativeIterator;
 class ClonedBlockObject;
@@ -58,6 +63,10 @@ class DtoaCache {
         this->d = d;
         this->s = s;
     }
+
+#ifdef JSGC_HASH_TABLE_CHECKS
+    void checkCacheAfterMovingGC() { MOZ_ASSERT(!s || !IsForwarded(s)); }
+#endif
 };
 
 struct CrossCompartmentKey
@@ -68,7 +77,9 @@ struct CrossCompartmentKey
         DebuggerScript,
         DebuggerSource,
         DebuggerObject,
-        DebuggerEnvironment
+        DebuggerEnvironment,
+        DebuggerWasmScript,
+        DebuggerWasmSource
     };
 
     Kind kind;
@@ -131,11 +142,11 @@ using WrapperMap = GCRekeyableHashMap<CrossCompartmentKey, ReadBarrieredValue,
                                       WrapperHasher, SystemAllocPolicy>;
 
 // We must ensure that all newly allocated JSObjects get their metadata
-// set. However, metadata callbacks may require the new object be in a sane
+// set. However, metadata builders may require the new object be in a sane
 // state (eg, have its reserved slots initialized so they can get the
 // sizeOfExcludingThis of the object). Therefore, for objects of certain
-// JSClasses (those marked with JSCLASS_DELAY_METADATA_CALLBACK), it is not safe
-// for the allocation paths to call the object metadata callback
+// JSClasses (those marked with JSCLASS_DELAY_METADATA_BUILDER), it is not safe
+// for the allocation paths to call the object metadata builder
 // immediately. Instead, the JSClass-specific "constructor" C++ function up the
 // stack makes a promise that it will ensure that the new object has its
 // metadata set after the object is initialized.
@@ -149,7 +160,7 @@ using WrapperMap = GCRekeyableHashMap<CrossCompartmentKey, ReadBarrieredValue,
 // * DelayMetadata: Allocators should *not* set new object metadata, it will be
 //                  handled after reserved slots are initialized by custom code
 //                  for the object's JSClass. The newly allocated object's
-//                  JSClass *must* have the JSCLASS_DELAY_METADATA_CALLBACK flag
+//                  JSClass *must* have the JSCLASS_DELAY_METADATA_BUILDER flag
 //                  set.
 //
 // * PendingMetadata: This object has been allocated and is still pending its
@@ -289,7 +300,6 @@ struct JSCompartment
     bool                         marked;
     bool                         warnedAboutFlagsArgument;
     bool                         warnedAboutExprClosure;
-    bool                         warnedAboutRegExpMultiline;
 
 #ifdef DEBUG
     bool                         firedOnNewGlobalObject;
@@ -357,7 +367,7 @@ struct JSCompartment
     void*                        data;
 
   private:
-    js::ObjectMetadataCallback   objectMetadataCallback;
+    const js::AllocationMetadataBuilder *allocationMetadataBuilder;
 
     js::SavedStacks              savedStacks_;
 
@@ -428,12 +438,10 @@ struct JSCompartment
     js::PropertyTree             propertyTree;
 
     /* Set of all unowned base shapes in the compartment. */
-    js::BaseShapeSet             baseShapes;
-    void sweepBaseShapeTable();
+    JS::WeakCache<js::BaseShapeSet> baseShapes;
 
     /* Set of initial shapes in the compartment. */
-    js::InitialShapeSet          initialShapes;
-    void sweepInitialShapeTable();
+    JS::WeakCache<js::InitialShapeSet> initialShapes;
 
     // Object group tables and other state in the compartment.
     js::ObjectGroupCompartment   objectGroups;
@@ -442,6 +450,7 @@ struct JSCompartment
     void checkInitialShapesTableAfterMovingGC();
     void checkWrapperMapAfterMovingGC();
     void checkBaseShapeTableAfterMovingGC();
+    void checkScriptMapsAfterMovingGC();
 #endif
 
     /*
@@ -464,6 +473,11 @@ struct JSCompartment
 
     // All unboxed layouts in the compartment.
     mozilla::LinkedList<js::UnboxedLayout> unboxedLayouts;
+
+    // All wasm modules in the compartment. Weakly held.
+    //
+    // The caller needs to call wasm::Module::readBarrier() manually!
+    mozilla::LinkedList<js::wasm::Module> wasmModuleWeakList;
 
   private:
     // All non-syntactic lexical scopes in the compartment. These are kept in
@@ -589,17 +603,20 @@ struct JSCompartment
     void fixupInitialShapeTable();
     void fixupAfterMovingGC();
     void fixupGlobal();
+    void fixupScriptMapsAfterMovingGC();
 
-    bool hasObjectMetadataCallback() const { return objectMetadataCallback; }
-    js::ObjectMetadataCallback getObjectMetadataCallback() const { return objectMetadataCallback; }
-    void setObjectMetadataCallback(js::ObjectMetadataCallback callback);
-    void forgetObjectMetadataCallback() {
-        objectMetadataCallback = nullptr;
+    bool hasAllocationMetadataBuilder() const { return allocationMetadataBuilder; }
+    const js::AllocationMetadataBuilder* getAllocationMetadataBuilder() const {
+        return allocationMetadataBuilder;
+    }
+    void setAllocationMetadataBuilder(const js::AllocationMetadataBuilder* builder);
+    void forgetAllocationMetadataBuilder() {
+        allocationMetadataBuilder = nullptr;
     }
     void setNewObjectMetadata(JSContext* cx, JS::HandleObject obj);
     void clearObjectMetadata();
-    const void* addressOfMetadataCallback() const {
-        return &objectMetadataCallback;
+    const void* addressOfMetadataBuilder() const {
+        return &allocationMetadataBuilder;
     }
 
     js::SavedStacks& savedStacks() { return savedStacks_; }
@@ -968,24 +985,24 @@ class MOZ_RAII AutoWrapperRooter : private JS::AutoGCRooter {
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 };
 
-class MOZ_RAII AutoSuppressObjectMetadataCallback {
+class MOZ_RAII AutoSuppressAllocationMetadataBuilder {
     JS::Zone* zone;
     bool saved;
 
   public:
-    explicit AutoSuppressObjectMetadataCallback(ExclusiveContext* cx)
-      : AutoSuppressObjectMetadataCallback(cx->compartment()->zone())
+    explicit AutoSuppressAllocationMetadataBuilder(ExclusiveContext* cx)
+      : AutoSuppressAllocationMetadataBuilder(cx->compartment()->zone())
     { }
 
-    explicit AutoSuppressObjectMetadataCallback(JS::Zone* zone)
+    explicit AutoSuppressAllocationMetadataBuilder(JS::Zone* zone)
       : zone(zone),
-        saved(zone->suppressObjectMetadataCallback)
+        saved(zone->suppressAllocationMetadataBuilder)
     {
-        zone->suppressObjectMetadataCallback = true;
+        zone->suppressAllocationMetadataBuilder = true;
     }
 
-    ~AutoSuppressObjectMetadataCallback() {
-        zone->suppressObjectMetadataCallback = saved;
+    ~AutoSuppressAllocationMetadataBuilder() {
+        zone->suppressAllocationMetadataBuilder = saved;
     }
 };
 

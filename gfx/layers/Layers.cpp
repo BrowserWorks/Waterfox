@@ -250,7 +250,9 @@ Layer::Layer(LayerManager* aManager, void* aImplData) :
   mScrollbarDirection(ScrollDirection::NONE),
   mScrollbarThumbRatio(0.0f),
   mIsScrollbarContainer(false),
+#ifdef DEBUG
   mDebugColorIndex(0),
+#endif
   mAnimationGeneration(0)
 {
   MOZ_COUNT_CTOR(Layer);
@@ -565,12 +567,17 @@ Layer::ApplyPendingUpdatesToSubtree()
   for (Layer* child = GetFirstChild(); child; child = child->GetNextSibling()) {
     child->ApplyPendingUpdatesToSubtree();
   }
+  if (!GetParent()) {
+    // Once we're done recursing through the whole tree, clear the pending
+    // updates from the manager.
+    Manager()->ClearPendingScrollInfoUpdate();
+  }
 }
 
 bool
 Layer::IsOpaqueForVisibility()
 {
-  return GetLocalOpacity() == 1.0f &&
+  return GetEffectiveOpacity() == 1.0f &&
          GetEffectiveMixBlendMode() == CompositionOp::OP_OVER;
 }
 
@@ -943,6 +950,15 @@ Layer::ApplyPendingUpdatesForThisTransaction()
     mPendingAnimations->SwapElements(mAnimations);
     mPendingAnimations = nullptr;
     Mutated();
+  }
+
+  for (size_t i = 0; i < mScrollMetadata.Length(); i++) {
+    FrameMetrics& fm = mScrollMetadata[i].GetMetrics();
+    Maybe<ScrollUpdateInfo> update = Manager()->GetPendingScrollInfoUpdate(fm.GetScrollId());
+    if (update) {
+      fm.UpdatePendingScrollInfo(update.value());
+      Mutated();
+    }
   }
 }
 
@@ -1391,10 +1407,17 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
     useIntermediateSurface = true;
 #endif
   } else {
+    /* Don't use an intermediate surface for opacity when it's within a 3d
+     * context, since we'd rather keep the 3d effects. This matches the
+     * WebKit/blink behaviour, but is changing in the latest spec.
+     */
     float opacity = GetEffectiveOpacity();
     CompositionOp blendMode = GetEffectiveMixBlendMode();
-    if (((opacity != 1.0f || blendMode != CompositionOp::OP_OVER) && (HasMultipleChildren() || Creates3DContextWithExtendingChildren())) ||
-        (!idealTransform.Is2D() && Creates3DContextWithExtendingChildren())) {
+    if ((HasMultipleChildren() || Creates3DContextWithExtendingChildren()) &&
+        ((opacity != 1.0f && !Extend3DContext()) ||
+         (blendMode != CompositionOp::OP_OVER))) {
+      useIntermediateSurface = true;
+    } else if (!idealTransform.Is2D() && Creates3DContextWithExtendingChildren()) {
       useIntermediateSurface = true;
     } else {
       useIntermediateSurface = false;
@@ -1463,11 +1486,7 @@ ContainerLayer::DefaultComputeEffectiveTransforms(const Matrix4x4& aTransformToS
     ComputeEffectiveTransformsForChildren(idealTransform);
   }
 
-  if (idealTransform.CanDraw2D()) {
-    ComputeEffectiveTransformForMaskLayers(aTransformToSurface);
-  } else {
-    ComputeEffectiveTransformForMaskLayers(Matrix4x4());
-  }
+  ComputeEffectiveTransformForMaskLayers(aTransformToSurface);
 }
 
 void
@@ -1707,7 +1726,8 @@ void WriteSnapshotToDumpFile(Compositor* aCompositor, DrawTarget* aTarget)
 #endif
 
 void
-Layer::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHtml)
+Layer::Dump(std::stringstream& aStream, const char* aPrefix,
+            bool aDumpHtml, bool aSorted)
 {
 #ifdef MOZ_DUMP_PAINTING
   bool dumpCompositorTexture = gfxEnv::DumpCompositorTextures() && AsLayerComposite() &&
@@ -1774,13 +1794,25 @@ Layer::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHtml)
   }
 #endif
 
-  if (Layer* kid = GetFirstChild()) {
+  if (ContainerLayer* container = AsContainerLayer()) {
+    AutoTArray<Layer*, 12> children;
+    if (aSorted) {
+      container->SortChildrenBy3DZOrder(children);
+    } else {
+      for (Layer* l = container->GetFirstChild(); l; l = l->GetNextSibling()) {
+        children.AppendElement(l);
+      }
+    }
     nsAutoCString pfx(aPrefix);
     pfx += "  ";
     if (aDumpHtml) {
       aStream << "<ul>";
     }
-    kid->Dump(aStream, pfx.get(), aDumpHtml);
+
+    for (Layer* child : children) {
+      child->Dump(aStream, pfx.get(), aDumpHtml, aSorted);
+    }
+
     if (aDumpHtml) {
       aStream << "</ul>";
     }
@@ -1789,8 +1821,6 @@ Layer::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHtml)
   if (aDumpHtml) {
     aStream << "</li>";
   }
-  if (Layer* next = GetNextSibling())
-    next->Dump(aStream, aPrefix, aDumpHtml);
 }
 
 void
@@ -1915,7 +1945,7 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   if (1.0 != mOpacity) {
     aStream << nsPrintfCString(" [opacity=%g]", mOpacity).get();
   }
-  if (GetContentFlags() & CONTENT_OPAQUE) {
+  if (IsOpaque()) {
     aStream << " [opaqueContent]";
   }
   if (GetContentFlags() & CONTENT_COMPONENT_ALPHA) {
@@ -1923,6 +1953,18 @@ Layer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   }
   if (GetContentFlags() & CONTENT_BACKFACE_HIDDEN) {
     aStream << " [backfaceHidden]";
+  }
+  if (Extend3DContext()) {
+    aStream << " [extend3DContext]";
+  }
+  if (Combines3DTransformWithAncestors()) {
+    aStream << " [combines3DTransformWithAncestors]";
+  }
+  if (Is3DContextLeaf()) {
+    aStream << " [is3DContextLeaf]";
+  }
+  if (IsScrollbarContainer()) {
+    aStream << " [scrollbar]";
   }
   if (GetScrollbarDirection() == VERTICAL) {
     aStream << nsPrintfCString(" [vscrollbar=%lld]", GetScrollbarTargetContainerId()).get();
@@ -2314,14 +2356,15 @@ ReadbackLayer::DumpPacket(layerscope::LayersPacket* aPacket, const void* aParent
 // LayerManager
 
 void
-LayerManager::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHtml)
+LayerManager::Dump(std::stringstream& aStream, const char* aPrefix,
+                   bool aDumpHtml, bool aSorted)
 {
 #ifdef MOZ_DUMP_PAINTING
   if (aDumpHtml) {
     aStream << "<ul><li>";
   }
 #endif
-  DumpSelf(aStream, aPrefix);
+  DumpSelf(aStream, aPrefix, aSorted);
 
   nsAutoCString pfx(aPrefix);
   pfx += "  ";
@@ -2344,17 +2387,18 @@ LayerManager::Dump(std::stringstream& aStream, const char* aPrefix, bool aDumpHt
 }
 
 void
-LayerManager::DumpSelf(std::stringstream& aStream, const char* aPrefix)
+LayerManager::DumpSelf(std::stringstream& aStream, const char* aPrefix, bool aSorted)
 {
   PrintInfo(aStream, aPrefix);
+  aStream << " --- in " << (aSorted ? "3D-sorted rendering order" : "content order");
   aStream << "\n";
 }
 
 void
-LayerManager::Dump()
+LayerManager::Dump(bool aSorted)
 {
   std::stringstream ss;
-  Dump(ss);
+  Dump(ss, "", false, aSorted);
   print_stderr(ss);
 }
 
@@ -2417,6 +2461,29 @@ LayerManager::DumpPacket(layerscope::LayersPacket* aPacket)
 LayerManager::IsLogEnabled()
 {
   return MOZ_LOG_TEST(GetLog(), LogLevel::Debug);
+}
+
+void
+LayerManager::SetPendingScrollUpdateForNextTransaction(FrameMetrics::ViewID aScrollId,
+                                                       const ScrollUpdateInfo& aUpdateInfo)
+{
+  mPendingScrollUpdates[aScrollId] = aUpdateInfo;
+}
+
+Maybe<ScrollUpdateInfo>
+LayerManager::GetPendingScrollInfoUpdate(FrameMetrics::ViewID aScrollId)
+{
+  auto it = mPendingScrollUpdates.find(aScrollId);
+  if (it != mPendingScrollUpdates.end()) {
+    return Some(it->second);
+  }
+  return Nothing();
+}
+
+void
+LayerManager::ClearPendingScrollInfoUpdate()
+{
+  mPendingScrollUpdates.clear();
 }
 
 void

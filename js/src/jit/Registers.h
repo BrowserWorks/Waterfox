@@ -46,6 +46,10 @@ struct Register {
         Register r = { Encoding(code) };
         return r;
     }
+    static Register Invalid() {
+        Register r = { Encoding(Codes::Invalid) };
+        return r;
+    }
     MOZ_CONSTEXPR Code code() const {
         return Code(reg_);
     }
@@ -109,6 +113,10 @@ struct Register64
       : reg(r)
     {}
 #else
+    explicit Register64(Register r)
+      : high(Register::Invalid()), low(Register::Invalid())
+    {}
+
     MOZ_CONSTEXPR Register64(Register h, Register l)
       : high(h), low(l)
     {}
@@ -146,9 +154,9 @@ class MachineState
   public:
     MachineState() {
 #ifndef JS_CODEGEN_NONE
-        for (unsigned i = 0; i < Registers::Total; i++)
+        for (uintptr_t i = 0; i < Registers::Total; i++)
             regs_[i] = reinterpret_cast<Registers::RegisterContent*>(i + 0x100);
-        for (unsigned i = 0; i < FloatRegisters::Total; i++)
+        for (uintptr_t i = 0; i < FloatRegisters::Total; i++)
             fpregs_[i] = reinterpret_cast<FloatRegisters::RegisterContent*>(i + 0x200);
 #endif
     }

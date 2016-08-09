@@ -1,0 +1,40 @@
+1470395044764	Marionette	INFO	Listening on port 2828
+1470395046945	Marionette	INFO	startBrowser 9dda96f0-4193-49be-aaad-dfe7f0156463
+1470395046963	Marionette	INFO	sendAsync 9dda96f0-4193-49be-aaad-dfe7f0156463
+*************************
+A coding exception was thrown in a Promise resolution callback.
+See https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise
+
+Full message: TypeError: frameLoader.tabParent is null
+Full stack: set_docShellIsActive@chrome://global/content/bindings/remote-browser.xml:246:13
+updateBrowserRemoteness@chrome://browser/content/tabbrowser.xml:1600:1
+updateBrowserRemotenessByURL@chrome://browser/content/tabbrowser.xml:1665:22
+SessionStoreInternal.restoreTabContent@resource:///modules/sessionstore/SessionStore.jsm:3343:30
+restoreTab@resource:///modules/sessionstore/SessionStore.jsm:3300:7
+navigateAndRestore/<@resource:///modules/sessionstore/SessionStore.jsm:2561:7
+Handler.prototype.process@resource://gre/modules/Promise.jsm -> resource://gre/modules/Promise-backend.js:937:23
+this.PromiseWalker.walkerLoop@resource://gre/modules/Promise.jsm -> resource://gre/modules/Promise-backend.js:816:7
+this.PromiseWalker.scheduleWalkerLoop/<@resource://gre/modules/Promise.jsm -> resource://gre/modules/Promise-backend.js:750:11
+
+*************************
+1470395047713	Marionette	INFO	startBrowser ca73d5c2-6e71-42c5-a154-d046771dd6d0
+1470395262171	Marionette	INFO	Listening on port 2828
+1470395263087	Marionette	INFO	startBrowser 576c065e-6e82-4833-a2a2-0ba1eb1829a0
+1470395263098	Marionette	INFO	sendAsync 576c065e-6e82-4833-a2a2-0ba1eb1829a0
+*************************
+A coding exception was thrown in a Promise resolution callback.
+See https://developer.mozilla.org/Mozilla/JavaScript_code_modules/Promise.jsm/Promise
+
+Full message: TypeError: frameLoader.tabParent is null
+Full stack: set_docShellIsActive@chrome://global/content/bindings/remote-browser.xml:246:13
+updateBrowserRemoteness@chrome://browser/content/tabbrowser.xml:1600:1
+updateBrowserRemotenessByURL@chrome://browser/content/tabbrowser.xml:1665:22
+SessionStoreInternal.restoreTabContent@resource:///modules/sessionstore/SessionStore.jsm:3343:30
+restoreTab@resource:///modules/sessionstore/SessionStore.jsm:3300:7
+navigateAndRestore/<@resource:///modules/sessionstore/SessionStore.jsm:2561:7
+Handler.prototype.process@resource://gre/modules/Promise.jsm -> resource://gre/modules/Promise-backend.js:937:23
+this.PromiseWalker.walkerLoop@resource://gre/modules/Promise.jsm -> resource://gre/modules/Promise-backend.js:816:7
+this.PromiseWalker.scheduleWalkerLoop/<@resource://gre/modules/Promise.jsm -> resource://gre/modules/Promise-backend.js:750:11
+
+*************************
+1470395263238	Marionette	INFO	sendAsync 576c065e-6e82-4833-a2a2-0ba1eb1829a0

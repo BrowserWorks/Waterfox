@@ -124,9 +124,9 @@ public:
 
   void ManageReflowCallback(const nsRect& aRect, nscoord aHorzWidth);
 
-  virtual nsSize GetMinSize(nsBoxLayoutState& aBoxLayoutState) override;
-  virtual void SetBounds(nsBoxLayoutState& aBoxLayoutState, const nsRect& aRect,
-                         bool aRemoveOverflowArea = false) override;
+  virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) override;
+  virtual void SetXULBounds(nsBoxLayoutState& aBoxLayoutState, const nsRect& aRect,
+                            bool aRemoveOverflowArea = false) override;
 
   // nsIReflowCallback
   virtual bool ReflowFinished() override;
@@ -159,6 +159,9 @@ public:
   virtual void ScrollbarActivityStopped() const override;
   virtual bool IsScrollbarOnRight() const override {
     return (StyleVisibility()->mDirection == NS_STYLE_DIRECTION_LTR);
+  }
+  virtual bool ShouldSuppressScrollbarRepaints() const override {
+    return false;
   }
 
   // Overridden from nsIFrame to cache our pres context.
@@ -259,13 +262,13 @@ protected:
                         nscoord&             aCurrX);
 
   // This method paints the text string inside a particular cell of the tree.
-  void PaintText(int32_t              aRowIndex, 
-                 nsTreeColumn*        aColumn,
-                 const nsRect&        aTextRect,
-                 nsPresContext*      aPresContext,
-                 nsRenderingContext& aRenderingContext,
-                 const nsRect&        aDirtyRect,
-                 nscoord&             aCurrX);
+  DrawResult PaintText(int32_t             aRowIndex,
+                       nsTreeColumn*       aColumn,
+                       const nsRect&       aTextRect,
+                       nsPresContext*      aPresContext,
+                       nsRenderingContext& aRenderingContext,
+                       const nsRect&       aDirtyRect,
+                       nscoord&            aCurrX);
 
   // This method paints the checkbox inside a particular cell of the tree.
   DrawResult PaintCheckbox(int32_t              aRowIndex, 

@@ -220,7 +220,7 @@ public class Distribution {
             public void run() {
                 boolean distributionSet = distribution.doInit();
                 if (distributionSet) {
-                    GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Distribution:Set", ""));
+                    GeckoAppShell.notifyObservers("Distribution:Set", "");
                 }
             }
         });
@@ -320,7 +320,7 @@ public class Distribution {
         runLateReadyQueue();
 
         // Make sure that changes to search defaults are applied immediately.
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Distribution:Changed", ""));
+        GeckoAppShell.notifyObservers("Distribution:Changed", "");
     }
 
     /**
@@ -595,7 +595,7 @@ public class Distribution {
         } else {
             value = status / 100;
         }
-        
+
         Telemetry.addToHistogram(HISTOGRAM_CODE_CATEGORY, value);
 
         if (status != 200) {
@@ -925,7 +925,10 @@ public class Distribution {
             }
         }
 
-        return new String[] { baseDirectory };
+        return new String[] {
+                baseDirectory + "/default",
+                baseDirectory
+        };
     }
 
     /**

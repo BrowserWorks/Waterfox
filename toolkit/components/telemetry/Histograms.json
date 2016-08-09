@@ -98,6 +98,14 @@
     "n_values": 21,
     "description": "Maximum number of concurrent threads reached during a given download session"
   },
+  "BATTERY_STATUS_COUNT": {
+    "alert_emails": ["cpeterson@mozilla.com"],
+    "bug_numbers": [1259335],
+    "expires_in_version": "52",
+    "kind": "enumerated",
+    "n_values": 10,
+    "description": "Number of pages that use the Battery Status API: 0=navigator.battery, 1=navigator.getBattery()"
+  },
   "BLOCKLIST_SYNC_FILE_LOAD": {
     "alert_emails": ["rvitillo@mozilla.com"],
     "expires_in_version": "35",
@@ -152,6 +160,15 @@
     "description": "Time from vsync to finishing a composite in milliseconds.",
     "kind": "exponential",
     "high": 1000,
+    "n_buckets": 50
+  },
+  "CONTENT_RESPONSE_DURATION" : {
+    "alert_emails": ["kgupta@mozilla.com"],
+    "bug_numbers": [1261373],
+    "expires_in_version": "55",
+    "description": "Main thread response times for APZ notifications about input events (ms)",
+    "kind" : "exponential",
+    "high": 60000,
     "n_buckets": 50
   },
   "CYCLE_COLLECTOR": {
@@ -298,6 +315,14 @@
     "kind": "enumerated",
     "n_values": 10,
     "description": "GPU Device Reset Reason (ok, hung, removed, reset, internal error, invalid call, out of memory)"
+  },
+  "FAMILY_SAFETY": {
+    "alert_emails": ["seceng@mozilla.org"],
+    "expires_in_version": "55",
+    "kind": "enumerated",
+    "n_values": 16,
+    "bug_numbers": [1239166],
+    "description": "Status of Family Safety detection and remediation. See nsNSSComponent.cpp."
   },
   "FETCH_IS_MAINTHREAD": {
     "expires_in_version": "50",
@@ -546,6 +571,20 @@
     "kind": "boolean",
     "description": "Geolocation on OS X is either MLS or CoreLocation"
   },
+  "GEOLOCATION_GETCURRENTPOSITION_VISIBLE": {
+    "alert_emails": ["michelangelo@mozilla.com"],
+    "expires_in_version": "55",
+    "kind": "boolean",
+    "bug_numbers": [1255198],
+    "description": "This metric is recorded every time a navigator.geolocation.getCurrentPosition() request gets allowed/fulfilled. A false value is recorded if the owner is not visible according to document.isVisible."
+  },
+  "GEOLOCATION_WATCHPOSITION_VISIBLE": {
+    "alert_emails": ["michelangelo@mozilla.com"],
+    "expires_in_version": "55",
+    "kind": "boolean",
+    "bug_numbers": [1255198],
+    "description": "This metric is recorded every time a navigator.geolocation.watchPosition() request gets allowed/fulfilled. A false value is recorded if the owner is not visible according to document.isVisible."
+  },
   "JS_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT": {
     "alert_emails": ["jdemooij@mozilla.com"],
     "expires_in_version": "never",
@@ -636,15 +675,6 @@
     "high": 1000,
     "n_buckets": 50,
     "description": "Total JavaScript compartments used for web pages"
-  },
-  "MEMORY_JS_MAIN_RUNTIME_TEMPORARY_PEAK": {
-    "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "low": 1024,
-    "high": 16777216,
-    "n_buckets": 200,
-    "description": "Peak memory used by the main JSRuntime to store transient data (KB)"
   },
   "MEMORY_JS_GC_HEAP": {
     "alert_emails": ["memshrink-telemetry-alerts@mozilla.com"],
@@ -1025,6 +1055,20 @@
     "high": 50000000,
     "n_buckets": 50,
     "description": "PNG image decode speed (Kbytes/sec)"
+  },
+  "IMAGE_OPTIMIZE_TO_SINGLE_COLOR_USED": {
+    "expires_in_version": "54",
+    "kind": "boolean",
+    "description": "Records true each time a decoded image is optimized to a single color.",
+    "alert_emails": ["seth@mozilla.com"],
+    "bug_numbers": [1281680]
+  },
+  "IMAGE_OPTIMIZE_TO_565_USED": {
+    "expires_in_version": "54",
+    "kind": "boolean",
+    "description": "Records true each time a decoded image is optimized to R5G6B5 format.",
+    "alert_emails": ["seth@mozilla.com"],
+    "bug_numbers": [1281680]
   },
   "CANVAS_2D_USED": {
     "expires_in_version": "never",
@@ -2429,6 +2473,33 @@
     "n_buckets": 50,
     "description": "How many actual predictions (preresolves, preconnects, ...) happen"
   },
+  "PREDICTOR_TOTAL_PREFETCHES": {
+    "expires_in_version": "never",
+    "alert_emails": [],
+    "bug_numbers": [1016628],
+    "kind": "exponential",
+    "high": 1000000,
+    "n_buckets": 50,
+    "description": "How many actual prefetches happen"
+  },
+  "PREDICTOR_TOTAL_PREFETCHES_USED": {
+    "expires_in_version": "never",
+    "alert_emails": [],
+    "bug_numbers": [1016628],
+    "kind": "exponential",
+    "high": 1000000,
+    "n_buckets": 50,
+    "description": "How many prefetches are actually used by a channel"
+  },
+  "PREDICTOR_PREFETCH_TIME": {
+    "expires_in_version": "never",
+    "alert_emails": [],
+    "bug_numbers": [1016628],
+    "kind": "exponential",
+    "high": 3000,
+    "n_buckets": 10,
+    "description": "How long it takes from OnStartRequest to OnStopRequest for a prefetch"
+  },
   "PREDICTOR_TOTAL_PRECONNECTS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -2626,6 +2697,51 @@
     "n_buckets": 1000,
     "description": "Time spent blocked in PR_Connect when the offline state has changed in the last 60s (ms)."
   },
+  "PRCONNECT_FAIL_BLOCKING_TIME_NORMAL": {
+    "bug_numbers": [1257809],
+    "alert_emails": ["ddamjanovic@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 60000,
+    "n_buckets": 100,
+    "description": "Time spent blocked in a failed PR_Connect when we are not shutting down and there has been niether a network nor an offline state change in the last 60s (ms)."
+  },
+  "PRCONNECT_FAIL_BLOCKING_TIME_SHUTDOWN": {
+    "bug_numbers": [1257809],
+    "alert_emails": ["ddamjanovic@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 60000,
+    "n_buckets": 100,
+    "description": "Time spent blocked in a failed PR_Connect during a shutdown (ms)."
+  },
+  "PRCONNECT_FAIL_BLOCKING_TIME_CONNECTIVITY_CHANGE": {
+    "bug_numbers": [1257809],
+    "alert_emails": ["ddamjanovic@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 60000,
+    "n_buckets": 100,
+    "description": "Time spent blocked in a failed PR_Connect when there has been the connectiviy change in the last 60s (ms)."
+  },
+  "PRCONNECT_FAIL_BLOCKING_TIME_LINK_CHANGE": {
+    "bug_numbers": [1257809],
+    "alert_emails": ["ddamjanovic@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 60000,
+    "n_buckets": 100,
+    "description": "Time spent blocked in a failed PR_Connect when there has been a link change in the last 60s (ms)."
+  },
+  "PRCONNECT_FAIL_BLOCKING_TIME_OFFLINE": {
+    "bug_numbers": [1257809],
+    "alert_emails": ["ddamjanovic@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 60000,
+    "n_buckets": 100,
+    "description": "Time spent blocked in a failed PR_Connect when the offline state has changed in the last 60s (ms)."
+  },
   "PRCONNECTCONTINUE_BLOCKING_TIME_NORMAL": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -2757,6 +2873,30 @@
     "kind": "boolean",
     "description": "session used autodialer"
   },
+  "NETWORK_SESSION_AT_256FD": {
+    "expires_in_version": "49",
+    "kind": "boolean",
+    "description": "session exceeded old 256 limit",
+    "bug_numbers": [1260218],
+    "alert_emails": ["necko@mozilla.com"]
+  },
+  "NETWORK_SESSION_AT_900FD": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "session reached 900 fd limit sockets",
+    "bug_numbers": [1260218],
+    "alert_emails": ["necko@mozilla.com"]
+  },
+  "NETWORK_PROBE_MAXCOUNT": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "low": 50,
+    "high": 1000,
+    "n_buckets": 10,
+    "description": "Result of nsSocketTransportService::ProbeMaxCount()",
+    "bug_numbers": [1260218],
+    "alert_emails": ["necko@mozilla.com"]
+  },
   "FIND_PLUGINS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
     "expires_in_version": "never",
@@ -2804,13 +2944,6 @@
     "high": 5000,
     "n_buckets": 20,
     "description": "Time spent loading plugin DLL and obtaining metadata (ms)"
-  },
-  "PLUGIN_STARTUP_MS": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": 5000,
-    "n_buckets": 20,
-    "description": "Time spent starting up plugins (ms)"
   },
   "PLUGIN_SHUTDOWN_MS": {
     "expires_in_version": "never",
@@ -3321,6 +3454,34 @@
     "n_values": 16,
     "bug_numbers": [1150921],
     "description": "Server HTTP status code from remote SafeBrowsing gethash lookups. (0=1xx, 1=200, 2=2xx, 3=204, 4=3xx, 5=400, 6=4xx, 7=403, 8=404, 9=408, 10=413, 11=5xx, 12=502|504|511, 13=503, 14=505, 15=Other)"
+  },
+  "URLCLASSIFIER_COMPLETE_TIMEOUT": {
+    "alert_emails": ["gcp@mozilla.com", "francois@mozilla.com"],
+    "expires_in_version": "52",
+    "kind": "boolean",
+    "bug_numbers": [1172688],
+    "description": "This metric is recorded every time a gethash lookup is performed, `true` is recorded if the lookup times out."
+  },
+  "CSP_DOCUMENTS_COUNT": {
+    "alert_emails": ["seceng@mozilla.com"],
+    "bug_numbers": [1252829],
+    "expires_in_version": "55",
+    "kind": "count",
+    "description": "Number of unique pages that contain a CSP"
+  },
+  "CSP_UNSAFE_INLINE_DOCUMENTS_COUNT": {
+    "alert_emails": ["seceng@mozilla.com"],
+    "bug_numbers": [1252829],
+    "expires_in_version": "55",
+    "kind": "count",
+    "description": "Number of unique pages that contain an unsafe-inline CSP directive"
+  },
+  "CSP_UNSAFE_EVAL_DOCUMENTS_COUNT": {
+    "alert_emails": ["seceng@mozilla.com"],
+    "bug_numbers": [1252829],
+    "expires_in_version": "55",
+    "kind": "count",
+    "description": "Number of unique pages that contain an unsafe-eval CSP directive"
   },
   "PLACES_PAGES_COUNT": {
     "expires_in_version": "never",
@@ -4235,6 +4396,31 @@
     "releaseChannelCollection": "opt-out",
     "description": "Whether the homepage was imported during browser migration. Only available on release builds during firstrun."
   },
+  "FX_STARTUP_MIGRATION_BROWSER_COUNT": {
+    "bug_numbers": [1275114],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "53",
+    "kind": "enumerated",
+    "n_values": 15,
+    "releaseChannelCollection": "opt-out",
+    "description": "Number of browsers from which the user could migrate on initial profile migration. Only available on release builds during firstrun."
+  },
+  "FX_STARTUP_MIGRATION_EXISTING_DEFAULT_BROWSER": {
+    "bug_numbers": [1275114],
+    "alert_emails": ["gijs@mozilla.com"],
+    "expires_in_version": "53",
+    "kind": "enumerated",
+    "n_values": 15,
+    "releaseChannelCollection": "opt-out",
+    "description": "The browser that was the default on the initial profile migration. The values correspond to the internal browser ID (see MigrationUtils.jsm)"
+  },
+  "FX_STARTUP_EXTERNAL_CONTENT_HANDLER": {
+    "bug_numbers": [1276027],
+    "alert_emails": ["jaws@mozilla.com"],
+    "expires_in_version": "53",
+    "kind": "count",
+    "description": "Count how often the browser is opened as an external app handler. This is generally used when the browser is set as the default browser."
+  },
   "INPUT_EVENT_RESPONSE_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
     "bug_numbers": [1235908],
@@ -5019,6 +5205,34 @@
     "kind": "flag",
     "description": "Set if Telemetry failed to save the session data to disk."
   },
+  "TELEMETRY_ASSEMBLE_PAYLOAD_EXCEPTION": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "bug_numbers": [1250640],
+    "expires_in_version": "53",
+    "kind": "count",
+    "description": "Count of exceptions in TelemetrySession.getSessionPayload()."
+  },
+  "TELEMETRY_SCHEDULER_TICK_EXCEPTION": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "bug_numbers": [1250640],
+    "expires_in_version": "53",
+    "kind": "count",
+    "description": "Count of exceptions during executing the TelemetrySession scheduler tick logic."
+  },
+  "TELEMETRY_SCHEDULER_WAKEUP": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "bug_numbers": [1250640],
+    "expires_in_version": "53",
+    "kind": "count",
+    "description": "Count of TelemetrySession scheduler ticks that were delayed long enough to suspect sleep."
+  },
+  "TELEMETRY_SCHEDULER_SEND_DAILY": {
+    "alert_emails": ["telemetry-client-dev@mozilla.com"],
+    "bug_numbers": [1250640],
+    "expires_in_version": "53",
+    "kind": "count",
+    "description": "Count of TelemetrySession triggering a daily ping."
+  },
   "TELEMETRY_TEST_FLAG": {
     "expires_in_version": "never",
     "kind": "flag",
@@ -5320,6 +5534,22 @@
     "kind": "boolean",
     "description": "search service has been initialized synchronously"
   },
+  "SEARCH_SERVICE_HAS_UPDATES": {
+    "alert_emails": ["florian@mozilla.com"],
+    "expires_in_version": "50",
+    "kind": "boolean",
+    "bug_numbers": [1259510],
+    "description": "Recorded once per session near startup: records true/false whether the search service has engines with update URLs.",
+    "releaseChannelCollection": "opt-out"
+  },
+  "SEARCH_SERVICE_HAS_ICON_UPDATES": {
+    "alert_emails": ["florian@mozilla.com"],
+    "expires_in_version": "50",
+    "kind": "boolean",
+    "bug_numbers": [1259510],
+    "description": "Recorded once per session near startup: records true/false whether the search service has engines with icon update URLs.",
+    "releaseChannelCollection": "opt-out"
+  },
   "SEARCH_SERVICE_BUILD_CACHE_MS": {
     "expires_in_version": "40",
     "kind": "exponential",
@@ -5557,11 +5787,12 @@
     "kind": "enumerated",
     "keyed": true,
     "n_values": 40,
-    "description": "Usage of popup notifications, keyed by ID (0 = Offered, 1..4 = Action, 5 = Click outside, 6 = Leave page, 7 = Use 'X', 8 = Not now, 10 = Open submenu, 11 = Learn more. Add 20 if happened after reopen.)"
+    "description": "(Bug 1207089) Usage of popup notifications, keyed by ID (0 = Offered, 1..4 = Action, 5 = Click outside, 6 = Leave page, 7 = Use 'X', 8 = Not now, 10 = Open submenu, 11 = Learn more. Add 20 if happened after reopen.)"
   },
   "POPUP_NOTIFICATION_MAIN_ACTION_MS": {
     "alert_emails": ["firefox-dev@mozilla.org"],
-    "expires_in_version": "48",
+    "bug_numbers": [1207089],
+    "expires_in_version": "52",
     "kind": "exponential",
     "keyed": true,
     "low": 100,
@@ -5571,7 +5802,8 @@
   },
   "POPUP_NOTIFICATION_DISMISSAL_MS": {
     "alert_emails": ["firefox-dev@mozilla.org"],
-    "expires_in_version": "48",
+    "bug_numbers": [1207089],
+    "expires_in_version": "52",
     "kind": "exponential",
     "keyed": true,
     "low": 200,
@@ -7701,6 +7933,14 @@
     "n_buckets": 20,
     "description": "The amount of time spent in a specific performance tool view, keyed by view name (waterfall, js-calltree, js-flamegraph, etc)."
   },
+  "DEVTOOLS_JAVASCRIPT_ERROR_DISPLAYED": {
+    "alert_emails": ["mphillips@mozilla.com"],
+    "bug_numbers": [1255133],
+    "expires_in_version": "55",
+    "kind": "boolean",
+    "keyed": true,
+    "description": "Measures whether a particular JavaScript error has been displayed in the webconsole."
+  },
   "VIEW_SOURCE_IN_BROWSER_OPENED_BOOLEAN": {
     "alert_emails": ["mozilla-dev-developer-tools@lists.mozilla.org", "jryans@mozilla.com"],
     "expires_in_version": "53",
@@ -7775,7 +8015,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 4,
-    "description": "Accumulates type of content (mixed, mixed passive, unmixed) per page load"
+    "description": "Accumulates type of content per page load (0=no mixed or non-secure page, 1=mixed passive, 2=mixed active, 3=mixed passive and mixed active)"
   },
   "MIXED_CONTENT_UNBLOCK_COUNTER": {
     "expires_in_version": "never",
@@ -8567,7 +8807,7 @@
     "n_values": 12,
     "releaseChannelCollection": "opt-out",
     "bug_numbers": [1241294],
-    "description": "Why e10s is enabled or disabled (0=ENABLED_BY_USER, 1=ENABLED_BY_DEFAULT, 2=DISABLED_BY_USER, 3=DISABLED_IN_SAFE_MODE, 4=DISABLED_FOR_ACCESSIBILITY, 5=DISABLED_FOR_MAC_GFX, 6=DISABLED_FOR_BIDI, 7=DISABLED_FOR_ADDONS)"
+    "description": "Why e10s is enabled or disabled (0=ENABLED_BY_USER, 1=ENABLED_BY_DEFAULT, 2=DISABLED_BY_USER, 3=DISABLED_IN_SAFE_MODE, 4=DISABLED_FOR_ACCESSIBILITY, 5=DISABLED_FOR_MAC_GFX, 6=DISABLED_FOR_BIDI, 7=DISABLED_FOR_ADDONS, 8=FORCE_DISABLED, 9=DISABLED_FOR_XPLAYERS, 10=DISABLED_FOR_OS_VERSION)"
   },
   "E10S_WINDOW": {
     "expires_in_version": "never",
@@ -8586,7 +8826,7 @@
   },
   "E10S_ADDONS_BLOCKER_RAN": {
     "alert_emails": ["firefox-dev@mozilla.org"],
-    "expires_in_version": "48",
+    "expires_in_version": "49",
     "kind": "flag",
     "releaseChannelCollection": "opt-out",
     "bug_numbers": [1248796],
@@ -8594,7 +8834,7 @@
   },
   "BLOCKED_ON_PLUGIN_MODULE_INIT_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "50",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": 10000,
     "n_buckets": 20,
@@ -8603,7 +8843,7 @@
   },
   "BLOCKED_ON_PLUGIN_INSTANCE_INIT_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "50",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": 10000,
     "n_buckets": 20,
@@ -8612,7 +8852,7 @@
   },
   "BLOCKED_ON_PLUGIN_STREAM_INIT_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "50",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": 10000,
     "n_buckets": 20,
@@ -8630,7 +8870,7 @@
   },
   "BLOCKED_ON_PLUGIN_INSTANCE_DESTROY_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "50",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": 10000,
     "n_buckets": 20,
@@ -9281,23 +9521,6 @@
     "high": 50,
     "n_buckets": 10,
     "description": "The number of tabs queued when opened."
-  },
-  "FENNEC_TABQUEUE_PROMPT_ENABLE_YES" : {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 3,
-    "description": "The number of times the tab queue prompt was seen before the user selected YES."
-  },
-  "FENNEC_TABQUEUE_PROMPT_ENABLE_NO" : {
-    "expires_in_version": "never",
-    "kind": "enumerated",
-    "n_values": 3,
-    "description": "The number of times the tab queue prompt was seen before the user selected NO."
-  },
-  "FENNEC_TABQUEUE_ENABLED": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Has the tab queue functionality been enabled."
   },
   "FENNEC_CUSTOM_HOMEPAGE": {
     "expires_in_version": "50",
@@ -9981,23 +10204,6 @@
     "releaseChannelCollection": "opt-out",
     "description": "If the user is signed in to a Firefox Account on this device. Recorded once per session just after startup as Sync is initialized."
   },
-  "FXA_SECURE_CREDENTIALS_SAVE_WITH_MP_LOCKED": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "bug_numbers": [1236383],
-    "expires_in_version": "49",
-    "kind": "count",
-    "releaseChannelCollection": "opt-out",
-    "description": "The number of times FxA had credentials to save in the login manager but the master-password was locked, implying they may lose those credentials after a restart."
-  },
-  "FXA_HAWK_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "bug_numbers": [1236383],
-    "expires_in_version": "49",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "FxA error responses caused by invalid Hawk credentials. Keyed on the FxA auth server endpoint."
-  },
   "WEAVE_DEVICE_COUNT_DESKTOP": {
     "alert_emails": ["fx-team@mozilla.com"],
     "bug_numbers": [1232050],
@@ -10016,24 +10222,6 @@
     "releaseChannelCollection": "opt-out",
     "description": "Number of mobile devices associated with this Sync account. Recorded each time Sync successfully completes the 'clients' engine."
   },
-  "WEAVE_ENGINE_APPLY_NEW_FAILURES": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "bug_numbers": [1236383],
-    "expires_in_version": "49",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "Number of records that a Sync engine failed to apply. Keyed on the engine name."
-  },
-  "WEAVE_ENGINE_APPLY_FAILURES": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "bug_numbers": [1236383],
-    "expires_in_version": "49",
-    "kind": "count",
-    "keyed": true,
-    "releaseChannelCollection": "opt-out",
-    "description": "Failures encountered applying incoming records. Keyed on the engine name."
-  },
   "WEAVE_ENGINE_SYNC_ERRORS": {
     "alert_emails": ["fx-team@mozilla.com"],
     "bug_numbers": [1236383],
@@ -10042,22 +10230,6 @@
     "keyed": true,
     "releaseChannelCollection": "opt-out",
     "description": "Exceptions thrown by a Sync engine. Keyed on the engine name."
-  },
-  "WEAVE_HAS_NO_KEYS_WHEN_UNLOCKED": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "bug_numbers": [1236383],
-    "expires_in_version": "49",
-    "kind": "count",
-    "releaseChannelCollection": "opt-out",
-    "description": "Records how often Sync doesn't have the necessary keys when the master-password is unlocked."
-  },
-  "WEAVE_FXA_KEY_FETCH_AUTH_ERRORS": {
-    "alert_emails": ["fx-team@mozilla.com"],
-    "bug_numbers": [1236383],
-    "expires_in_version": "49",
-    "kind": "count",
-    "releaseChannelCollection": "opt-out",
-    "description": "Authentication errors encountered fetching Sync keys."
   },
   "CONTENT_DOCUMENTS_DESTROYED": {
     "expires_in_version": "never",
@@ -10209,10 +10381,11 @@
   },
   "PLUGIN_ACTIVATION_COUNT": {
     "alert_emails": ["cpeterson@mozilla.com"],
-    "expires_in_version": "48",
+    "expires_in_version": "53",
     "kind": "count",
     "keyed": true,
     "releaseChannelCollection": "opt-out",
+    "bug_numbers": [722110,1260065],
     "description": "Counts number of times a certain plugin has been activated."
   },
   "SCROLL_LINKED_EFFECT_FOUND": {
@@ -10374,16 +10547,18 @@
   },
   "YOUTUBE_REWRITABLE_EMBED_SEEN": {
     "alert_emails": ["cpeterson@mozilla.com"],
-    "expires_in_version": "48",
+    "expires_in_version": "53",
     "kind": "flag",
     "bug_numbers": [1229971],
+    "releaseChannelCollection": "opt-out",
     "description": "Flag activated whenever a rewritable youtube flash embed is seen during a session."
   },
   "YOUTUBE_NONREWRITABLE_EMBED_SEEN": {
     "alert_emails": ["cpeterson@mozilla.com"],
-    "expires_in_version": "48",
+    "expires_in_version": "53",
     "kind": "flag",
     "bug_numbers": [1237401],
+    "releaseChannelCollection": "opt-out",
     "description": "Flag activated whenever a non-rewritable (enablejsapi=1) youtube flash embed is seen during a session."
   },
   "PLUGIN_DRAWING_MODEL": {
@@ -10442,6 +10617,14 @@
     "kind": "count",
     "description": "Remote JAR protocol usage"
   },
+  "MEDIA_DECODER_BACKEND_USED": {
+    "alert_emails": ["danderson@mozilla.com"],
+    "bug_numbers": [1259695],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "description": "Media decoder backend (0=WMF Software, 1=DXVA2D3D9, 2=DXVA2D3D11)"
+  },
   "PLUGIN_BLOCKED_FOR_STABILITY": {
     "alert_emails": ["cpeterson@mozilla.com"],
     "expires_in_version": "52",
@@ -10455,13 +10638,6 @@
     "kind": "count",
     "bug_numbers": [1237198],
     "description": "Count tiny plugin content"
-  },
-  "SANDBOX_BROKER_INITIALIZED": {
-    "alert_emails": ["bowen@mozilla.com"],
-    "bug_numbers": [1256992],
-    "expires_in_version": "55",
-    "kind": "boolean",
-    "description": "Result of call to SandboxBroker::Initialize"
   },
   "IPC_MESSAGE_SIZE": {
     "alert_emails": ["wmccloskey@mozilla.com"],
@@ -10483,15 +10659,23 @@
     "keyed": true,
     "description": "Measures the size of IPC messages by message name"
   },
-  "MESSAGE_MANAGER_MESSAGE_SIZE": {
-    "alert_emails": ["wmccloskey@mozilla.com"],
+  "MESSAGE_MANAGER_MESSAGE_SIZE2": {
+    "alert_emails": ["wmccloskey@mozilla.com","amccreight@mozilla.com"],
     "bug_numbers": [1260908],
     "expires_in_version": "55",
     "kind": "exponential",
+    "low": 8192,
     "high": 8000000,
     "n_buckets": 50,
     "keyed": true,
-    "description": "Measures the size of message manager messages by message name"
+    "description": "Each key is the message name, with digits removed, from an async message manager message that was larger than 8192 bytes, recorded in the sending process at the time of sending."
+  },
+  "SANDBOX_BROKER_INITIALIZED": {
+    "alert_emails": ["bowen@mozilla.com"],
+    "bug_numbers": [1256992],
+    "expires_in_version": "55",
+    "kind": "boolean",
+    "description": "Result of call to SandboxBroker::Initialize"
   },
   "SUBPROCESS_KILL_HARD": {
     "alert_emails": ["wmccloskey@mozilla.com"],

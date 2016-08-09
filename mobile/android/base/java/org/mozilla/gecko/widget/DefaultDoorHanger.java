@@ -5,6 +5,7 @@
 
 package org.mozilla.gecko.widget;
 
+import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
@@ -14,7 +15,6 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.prompts.PromptInput;
-import org.mozilla.gecko.util.ColorUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +28,7 @@ import android.widget.CheckBox;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class DefaultDoorHanger extends DoorHanger {
     private static final String LOGTAG = "GeckoDefaultDoorHanger";
@@ -44,7 +45,7 @@ public class DefaultDoorHanger extends DoorHanger {
         mMessage = (TextView) findViewById(R.id.doorhanger_message);
 
         if (sSpinnerTextColor == -1) {
-            sSpinnerTextColor = ColorUtils.getColor(context, R.color.text_color_primary_disable_only);
+            sSpinnerTextColor = ContextCompat.getColor(context, R.color.text_color_primary_disable_only);
         }
 
         switch (mType) {
@@ -116,7 +117,7 @@ public class DefaultDoorHanger extends DoorHanger {
                     styleInput(input, v);
                     v.setPadding(0, 0, 0, padding);
                     group.addView(v);
-                } catch(JSONException ex) { }
+                } catch (JSONException ex) { }
             }
         }
 
@@ -133,7 +134,7 @@ public class DefaultDoorHanger extends DoorHanger {
         return new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String expandedExtra = mType.toString().toLowerCase() + "-" + telemetryExtra;
+                final String expandedExtra = mType.toString().toLowerCase(Locale.US) + "-" + telemetryExtra;
                 Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.DOORHANGER, expandedExtra);
 
                 final JSONObject response = new JSONObject();

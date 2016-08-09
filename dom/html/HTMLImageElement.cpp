@@ -488,7 +488,7 @@ HTMLImageElement::IsHTMLFocusable(bool aWithMouse,
 {
   int32_t tabIndex = TabIndex();
 
-  if (IsInDoc()) {
+  if (IsInUncomposedDoc()) {
     nsAutoString usemap;
     GetUseMap(usemap);
     // XXXbz which document should this be using?  sXBL/XBL2 issue!  I
@@ -1157,8 +1157,16 @@ HTMLImageElement::UpdateResponsiveSource()
 /*static */ bool
 HTMLImageElement::SupportedPictureSourceType(const nsAString& aType)
 {
+  nsAutoString type;
+  nsAutoString params;
+
+  nsContentUtils::SplitMimeType(aType, type, params);
+  if (type.IsEmpty()) {
+    return true;
+  }
+
   return
-    imgLoader::SupportImageWithMimeType(NS_ConvertUTF16toUTF8(aType).get(),
+    imgLoader::SupportImageWithMimeType(NS_ConvertUTF16toUTF8(type).get(),
                                         AcceptedMimeTypes::IMAGES_AND_DOCUMENTS);
 }
 

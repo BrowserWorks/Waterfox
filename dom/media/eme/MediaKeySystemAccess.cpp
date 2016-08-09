@@ -33,6 +33,7 @@
 #include "nsXULAppAPI.h"
 #include "gmp-audio-decode.h"
 #include "gmp-video-decode.h"
+#include "DecoderDoctorDiagnostics.h"
 
 namespace mozilla {
 namespace dom {
@@ -327,7 +328,8 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
 
 static bool
 GMPDecryptsAndDecodesAAC(mozIGeckoMediaPluginService* aGMPS,
-                         const nsAString& aKeySystem)
+                         const nsAString& aKeySystem,
+                         DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPS,
                         NS_ConvertUTF16toUTF8(aKeySystem),
@@ -340,7 +342,8 @@ GMPDecryptsAndDecodesAAC(mozIGeckoMediaPluginService* aGMPS,
 
 static bool
 GMPDecryptsAndDecodesH264(mozIGeckoMediaPluginService* aGMPS,
-                          const nsAString& aKeySystem)
+                          const nsAString& aKeySystem,
+                          DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPS,
                         NS_ConvertUTF16toUTF8(aKeySystem),
@@ -357,7 +360,8 @@ GMPDecryptsAndDecodesH264(mozIGeckoMediaPluginService* aGMPS,
 static bool
 GMPDecryptsAndGeckoDecodesH264(mozIGeckoMediaPluginService* aGMPService,
                                const nsAString& aKeySystem,
-                               const nsAString& aContentType)
+                               const nsAString& aContentType,
+                               DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPService,
                         NS_ConvertUTF16toUTF8(aKeySystem),
@@ -367,58 +371,72 @@ GMPDecryptsAndGeckoDecodesH264(mozIGeckoMediaPluginService* aGMPService,
                      NS_ConvertUTF16toUTF8(aKeySystem),
                      NS_LITERAL_CSTRING(GMP_API_VIDEO_DECODER),
                      NS_LITERAL_CSTRING("h264")) &&
-         MP4Decoder::CanHandleMediaType(aContentType);
+         MP4Decoder::CanHandleMediaType(aContentType, aDiagnostics);
 }
 
 static bool
 GMPDecryptsAndGeckoDecodesAAC(mozIGeckoMediaPluginService* aGMPService,
                               const nsAString& aKeySystem,
-                              const nsAString& aContentType)
+                              const nsAString& aContentType,
+                              DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(HaveGMPFor(aGMPService,
                         NS_ConvertUTF16toUTF8(aKeySystem),
                         NS_LITERAL_CSTRING(GMP_API_DECRYPTOR)));
   MOZ_ASSERT(IsAACContentType(aContentType));
 
-  return !HaveGMPFor(aGMPService,
-                     NS_ConvertUTF16toUTF8(aKeySystem),
-                     NS_LITERAL_CSTRING(GMP_API_AUDIO_DECODER),
-                     NS_LITERAL_CSTRING("aac")) &&
+  if (HaveGMPFor(aGMPService,
+    NS_ConvertUTF16toUTF8(aKeySystem),
+    NS_LITERAL_CSTRING(GMP_API_AUDIO_DECODER),
+    NS_LITERAL_CSTRING("aac"))) {
+    // We do have a GMP for AAC -> Gecko itself does *not* decode AAC.
+    return false;
+  }
 #if defined(MOZ_WIDEVINE_EME) && defined(XP_WIN)
-         // Widevine CDM doesn't include an AAC decoder. So if WMF can't
-         // decode AAC, and a codec wasn't specified, be conservative
-         // and reject the MediaKeys request, since our policy is to prevent
-         //  the Adobe GMP's unencrypted AAC decoding path being used to
-         // decode content decrypted by the Widevine CDM.
-        (!aKeySystem.EqualsLiteral("com.widevine.alpha") || WMFDecoderModule::HasAAC()) &&
+  // Widevine CDM doesn't include an AAC decoder. So if WMF can't
+  // decode AAC, and a codec wasn't specified, be conservative
+  // and reject the MediaKeys request, since our policy is to prevent
+  //  the Adobe GMP's unencrypted AAC decoding path being used to
+  // decode content decrypted by the Widevine CDM.
+  if (aKeySystem.EqualsLiteral("com.widevine.alpha") &&
+      !WMFDecoderModule::HasAAC()) {
+    if (aDiagnostics) {
+      aDiagnostics->SetKeySystemIssue(
+        DecoderDoctorDiagnostics::eWidevineWithNoWMF);
+    }
+    return false;
+  }
 #endif
-    MP4Decoder::CanHandleMediaType(aContentType);
+  return MP4Decoder::CanHandleMediaType(aContentType, aDiagnostics);
 }
 
 static bool
 IsSupportedAudio(mozIGeckoMediaPluginService* aGMPService,
                  const nsAString& aKeySystem,
-                 const nsAString& aAudioType)
+                 const nsAString& aAudioType,
+                 DecoderDoctorDiagnostics* aDiagnostics)
 {
   return IsAACContentType(aAudioType) &&
-         (GMPDecryptsAndDecodesAAC(aGMPService, aKeySystem) ||
-          GMPDecryptsAndGeckoDecodesAAC(aGMPService, aKeySystem, aAudioType));
+         (GMPDecryptsAndDecodesAAC(aGMPService, aKeySystem, aDiagnostics) ||
+          GMPDecryptsAndGeckoDecodesAAC(aGMPService, aKeySystem, aAudioType, aDiagnostics));
 }
 
 static bool
 IsSupportedVideo(mozIGeckoMediaPluginService* aGMPService,
                  const nsAString& aKeySystem,
-                 const nsAString& aVideoType)
+                 const nsAString& aVideoType,
+                 DecoderDoctorDiagnostics* aDiagnostics)
 {
   return IsH264ContentType(aVideoType) &&
-         (GMPDecryptsAndDecodesH264(aGMPService, aKeySystem) ||
-          GMPDecryptsAndGeckoDecodesH264(aGMPService, aKeySystem, aVideoType));
+         (GMPDecryptsAndDecodesH264(aGMPService, aKeySystem, aDiagnostics) ||
+          GMPDecryptsAndGeckoDecodesH264(aGMPService, aKeySystem, aVideoType, aDiagnostics));
 }
 
 static bool
 IsSupported(mozIGeckoMediaPluginService* aGMPService,
             const nsAString& aKeySystem,
-            const MediaKeySystemConfiguration& aConfig)
+            const MediaKeySystemConfiguration& aConfig,
+            DecoderDoctorDiagnostics* aDiagnostics)
 {
   if (aConfig.mInitDataType.IsEmpty() &&
       aConfig.mAudioType.IsEmpty() &&
@@ -433,11 +451,11 @@ IsSupported(mozIGeckoMediaPluginService* aGMPService,
     return false;
   }
   if (!aConfig.mAudioType.IsEmpty() &&
-      !IsSupportedAudio(aGMPService, aKeySystem, aConfig.mAudioType)) {
+      !IsSupportedAudio(aGMPService, aKeySystem, aConfig.mAudioType, aDiagnostics)) {
     return false;
   }
   if (!aConfig.mVideoType.IsEmpty() &&
-      !IsSupportedVideo(aGMPService, aKeySystem, aConfig.mVideoType)) {
+      !IsSupportedVideo(aGMPService, aKeySystem, aConfig.mVideoType, aDiagnostics)) {
     return false;
   }
 
@@ -462,7 +480,8 @@ static bool
 GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
                    const nsAString& aKeySystem,
                    const MediaKeySystemConfiguration& aCandidate,
-                   MediaKeySystemConfiguration& aOutConfig)
+                   MediaKeySystemConfiguration& aOutConfig,
+                   DecoderDoctorDiagnostics* aDiagnostics)
 {
   MediaKeySystemConfiguration config;
   config.mLabel = aCandidate.mLabel;
@@ -482,7 +501,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
   if (aCandidate.mAudioCapabilities.WasPassed()) {
     nsTArray<MediaKeySystemMediaCapability> caps;
     for (const MediaKeySystemMediaCapability& cap : aCandidate.mAudioCapabilities.Value()) {
-      if (IsSupportedAudio(aGMPService, aKeySystem, cap.mContentType)) {
+      if (IsSupportedAudio(aGMPService, aKeySystem, cap.mContentType, aDiagnostics)) {
         caps.AppendElement(cap);
       }
     }
@@ -495,7 +514,7 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
   if (aCandidate.mVideoCapabilities.WasPassed()) {
     nsTArray<MediaKeySystemMediaCapability> caps;
     for (const MediaKeySystemMediaCapability& cap : aCandidate.mVideoCapabilities.Value()) {
-      if (IsSupportedVideo(aGMPService, aKeySystem, cap.mContentType)) {
+      if (IsSupportedVideo(aGMPService, aKeySystem, cap.mContentType, aDiagnostics)) {
         caps.AppendElement(cap);
       }
     }
@@ -513,6 +532,10 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
       (!aCandidate.mAudioCapabilities.WasPassed() ||
        !aCandidate.mVideoCapabilities.WasPassed()) &&
      !WMFDecoderModule::HasAAC()) {
+    if (aDiagnostics) {
+      aDiagnostics->SetKeySystemIssue(
+        DecoderDoctorDiagnostics::eWidevineWithNoWMF);
+    }
     return false;
   }
 #endif
@@ -527,7 +550,8 @@ GetSupportedConfig(mozIGeckoMediaPluginService* aGMPService,
 /* static */
 bool
 MediaKeySystemAccess::IsSupported(const nsAString& aKeySystem,
-                                  const Sequence<MediaKeySystemConfiguration>& aConfigs)
+                                  const Sequence<MediaKeySystemConfiguration>& aConfigs,
+                                  DecoderDoctorDiagnostics* aDiagnostics)
 {
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
@@ -542,7 +566,7 @@ MediaKeySystemAccess::IsSupported(const nsAString& aKeySystem,
   }
 
   for (const MediaKeySystemConfiguration& config : aConfigs) {
-    if (mozilla::dom::IsSupported(mps, aKeySystem, config)) {
+    if (mozilla::dom::IsSupported(mps, aKeySystem, config, aDiagnostics)) {
       return true;
     }
   }
@@ -553,7 +577,8 @@ MediaKeySystemAccess::IsSupported(const nsAString& aKeySystem,
 bool
 MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
                                          const Sequence<MediaKeySystemConfiguration>& aConfigs,
-                                         MediaKeySystemConfiguration& aOutConfig)
+                                         MediaKeySystemConfiguration& aOutConfig,
+                                         DecoderDoctorDiagnostics* aDiagnostics)
 {
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
@@ -568,7 +593,8 @@ MediaKeySystemAccess::GetSupportedConfig(const nsAString& aKeySystem,
   }
 
   for (const MediaKeySystemConfiguration& config : aConfigs) {
-    if (mozilla::dom::GetSupportedConfig(mps, aKeySystem, config, aOutConfig)) {
+    if (mozilla::dom::GetSupportedConfig(
+          mps, aKeySystem, config, aOutConfig, aDiagnostics)) {
       return true;
     }
   }
@@ -583,12 +609,6 @@ MediaKeySystemAccess::NotifyObservers(nsPIDOMWindowInner* aWindow,
                                       const nsAString& aKeySystem,
                                       MediaKeySystemStatus aStatus)
 {
-  if (aStatus == MediaKeySystemStatus::Cdm_not_supported) {
-    // Ignore, since there's nothing the user can do to rectify this, and we
-    // don't want the prompt to confuse them.
-    // TODO: Remove places that call with this entirely.
-    return;
-  }
   RequestMediaKeySystemAccessNotification data;
   data.mKeySystem = aKeySystem;
   data.mStatus = aStatus;

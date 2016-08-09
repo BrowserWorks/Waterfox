@@ -13,6 +13,8 @@
 #include "nsINode.h"
 #include "nsNameSpaceManager.h"
 #include "nsString.h"
+#include "nsStyleStruct.h"
+#include "StyleStructContext.h"
 
 #include "mozilla/EventStates.h"
 #include "mozilla/dom/Element.h"
@@ -149,6 +151,31 @@ Gecko_SetNodeData(RawGeckoNode* aNode, ServoNodeData* aData)
   aNode->SetServoNodeData(aData);
 }
 
+#define STYLE_STRUCT(name, checkdata_cb)                                      \
+                                                                              \
+void                                                                          \
+Gecko_Construct_nsStyle##name(nsStyle##name* ptr)                             \
+{                                                                             \
+  new (ptr) nsStyle##name(StyleStructContext::ServoContext());                \
+}                                                                             \
+                                                                              \
+void                                                                          \
+Gecko_CopyConstruct_nsStyle##name(nsStyle##name* ptr,                         \
+                                  const nsStyle##name* other)                 \
+{                                                                             \
+  new (ptr) nsStyle##name(*other);                                            \
+}                                                                             \
+                                                                              \
+void                                                                          \
+Gecko_Destroy_nsStyle##name(nsStyle##name* ptr)                               \
+{                                                                             \
+  ptr->~nsStyle##name();                                                      \
+}
+
+#include "nsStyleStructList.h"
+
+#undef STYLE_STRUCT
+
 #ifndef MOZ_STYLO
 void
 Servo_DropNodeData(ServoNodeData* data)
@@ -165,7 +192,14 @@ Servo_StylesheetFromUTF8Bytes(const uint8_t* bytes, uint32_t length)
 }
 
 void
-Servo_ReleaseStylesheet(RawServoStyleSheet* sheet)
+Servo_AddRefStyleSheet(RawServoStyleSheet* sheet)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_AddRefStylesheet in a "
+            "non-MOZ_STYLO build");
+}
+
+void
+Servo_ReleaseStyleSheet(RawServoStyleSheet* sheet)
 {
   MOZ_CRASH("stylo: shouldn't be calling Servo_ReleaseStylesheet in a "
             "non-MOZ_STYLO build");
@@ -208,6 +242,35 @@ void
 Servo_DropStyleSet(RawServoStyleSet* set)
 {
   MOZ_CRASH("stylo: shouldn't be calling Servo_DropStyleSet in a "
+            "non-MOZ_STYLO build");
+}
+
+ServoComputedValues*
+Servo_GetComputedValues(RawGeckoElement* element)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_GetComputedValues in a "
+            "non-MOZ_STYLO build");
+}
+
+ServoComputedValues*
+Servo_GetComputedValuesForAnonymousBox(ServoComputedValues* parentStyleOrNull,
+                                       nsIAtom* pseudoTag)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_GetComputedValuesForAnonymousBox in a "
+            "non-MOZ_STYLO build");
+}
+
+void
+Servo_AddRefComputedValues(ServoComputedValues*)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_AddRefComputedValues in a "
+            "non-MOZ_STYLO build");
+}
+
+void
+Servo_ReleaseComputedValues(ServoComputedValues*)
+{
+  MOZ_CRASH("stylo: shouldn't be calling Servo_ReleaseComputedValues in a "
             "non-MOZ_STYLO build");
 }
 

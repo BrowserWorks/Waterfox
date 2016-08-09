@@ -10,14 +10,24 @@ builds:
     platforms:
       - Linux
     types:
+      opt:
+        task: tasks/builds/opt_linux32.yml
       debug:
         task: tasks/builds/dbg_linux32.yml
   linux64:
     platforms:
       - Linux64
     types:
+      opt:
+        task: tasks/builds/opt_linux64.yml
       debug:
         task: tasks/builds/dbg_linux64.yml
+  linux64-artifact:
+    platforms:
+      - Linux64
+    types:
+      opt:
+        task: tasks/builds/opt_linux64_artifact.yml
   linux64-st-an:
     platforms:
       - Linux64 Static Analysis
@@ -28,6 +38,8 @@ builds:
     platforms:
       - MacOSX64
     types:
+      opt:
+        task: tasks/builds/opt_macosx64.yml
       debug:
         task: tasks/builds/dbg_macosx64.yml
   macosx64-st-an:
@@ -36,20 +48,30 @@ builds:
     types:
       opt:
         task: tasks/builds/opt_macosx64_st-an.yml
+  android-api-15-frontend:
+    platforms:
+      - Android
+    types:
+      opt:
+        task: tasks/builds/android_api_15_frontend.yml
 
 tests:
   cppunit:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_cppunit.yml
+        task: tasks/tests/fx_linux64_cppunit_dbg.yml
   crashtest:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_crashtest.yml
+        task: tasks/tests/fx_linux64_crashtest_dbg.yml
   crashtest-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_crashtest_e10s.yml
+        task: tasks/tests/fx_linux64_crashtest_e10s_dbg.yml
+  external-media-tests:
+    allowed_build_tasks:
+      tasks/builds/dbg_linux64.yml:
+        task: tasks/tests/fx_linux64_external_media_tests.yml
   firefox-ui-functional:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
@@ -61,91 +83,111 @@ tests:
   gtest:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_gtest.yml
+        task: tasks/tests/fx_linux64_gtest_dbg.yml
   jittests:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_jittests.yml
+        task: tasks/tests/fx_linux64_jittests_dbg.yml
   jsreftest:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_jsreftest.yml
+        task: tasks/tests/fx_linux64_jsreftest_dbg.yml
   jsreftest-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_jsreftest_e10s.yml
+        task: tasks/tests/fx_linux64_jsreftest_e10s_dbg.yml
   marionette:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_marionette.yml
+        task: tasks/tests/fx_linux64_marionette_dbg.yml
   marionette-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_marionette_e10s.yml
+        task: tasks/tests/fx_linux64_marionette_e10s_dbg.yml
   mochitest:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_plain.yml
+        task: tasks/tests/fx_linux64_mochitest_plain_dbg.yml
   mochitest-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_plain_e10s.yml
+        task: tasks/tests/fx_linux64_mochitest_plain_e10s_dbg.yml
   mochitest-a11y:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_a11y.yml
+        task: tasks/tests/fx_linux64_mochitest_a11y_dbg.yml
   mochitest-browser-chrome:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_bc.yml
+        task: tasks/tests/fx_linux64_mochitest_bc_dbg.yml
   mochitest-browser-chrome-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_bc_e10s.yml
+        task: tasks/tests/fx_linux64_mochitest_bc_e10s_dbg.yml
   mochitest-chrome:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_chrome.yml
+        task: tasks/tests/fx_linux64_mochitest_chrome_dbg.yml
   mochitest-devtools-chrome:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_dt.yml
+        task: tasks/tests/fx_linux64_mochitest_dt_dbg.yml
   mochitest-jetpack:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_jetpack.yml
+        task: tasks/tests/fx_linux64_mochitest_jetpack_dbg.yml
+  mochitest-media:
+    allowed_build_tasks:
+      tasks/builds/dbg_linux64.yml:
+        task: tasks/tests/fx_linux64_mochitest_media_dbg.yml
+  mochitest-media-e10s:
+    allowed_build_tasks:
+      tasks/builds/dbg_linux64.yml:
+        task: tasks/tests/fx_linux64_mochitest_media_e10s_dbg.yml
   mochitest-webgl:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_mochitest_gl.yml
+        task: tasks/tests/fx_linux64_mochitest_gl_dbg.yml
+  mochitest-webgl-e10s:
+    allowed_build_tasks:
+      tasks/builds/dbg_linux64.yml:
+        task: tasks/tests/fx_linux64_mochitest_gl_e10s_dbg.yml
   reftest:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_reftest.yml
+        task: tasks/tests/fx_linux64_reftest_dbg.yml
   reftest-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_reftest_e10s.yml
+        task: tasks/tests/fx_linux64_reftest_e10s_dbg.yml
+  reftest-no-accel:
+    allowed_build_tasks:
+      tasks/builds/dbg_linux64.yml:
+        task: tasks/tests/fx_linux64_reftest_not_accelerated_dbg.yml
+  reftest-no-accel-e10s:
+    allowed_build_tasks:
+      tasks/builds/dbg_linux64.yml:
+        task: tasks/tests/fx_linux64_reftest_not_accelerated_e10s_dbg.yml
   web-platform-tests:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_web_platform_tests.yml
+        task: tasks/tests/fx_linux64_web_platform_tests_dbg.yml
   web-platform-tests-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_web_platform_tests_e10s.yml
+        task: tasks/tests/fx_linux64_web_platform_tests_e10s_dbg.yml
   web-platform-tests-reftests:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_web_platform_tests_reftests.yml
+        task: tasks/tests/fx_linux64_web_platform_tests_reftests_dbg.yml
   web-platform-tests-reftests-e10s:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_web_platform_tests_reftests_e10s.yml
+        task: tasks/tests/fx_linux64_web_platform_tests_reftests_e10s_dbg.yml
   xpcshell:
     allowed_build_tasks:
       tasks/builds/dbg_linux64.yml:
-        task: tasks/tests/fx_linux64_xpcshell.yml
+        task: tasks/tests/fx_linux64_xpcshell_dbg.yml
 
 # Miscellaneous tasks.
 tasks:
@@ -167,3 +209,58 @@ tasks:
         - 'testing/eslint-plugin-mozilla/**'
         # Other misc lint related files.
         - 'tools/lint/**'
+  android-api-15-gradle-dependencies:
+    task: tasks/builds/android_api_15_gradle_dependencies.yml
+    root: true
+    when:
+      file_patterns:
+        - 'mobile/android/config/**'
+        - 'testing/docker/android-gradle-build/**'
+        - 'testing/mozharness/configs/builds/releng_sub_android_configs/*gradle_dependencies.py'
+        - '**/*.gradle'
+  android-checkstyle:
+    task: tasks/builds/android_checkstyle.yml
+    root: true
+    when:
+      file_patterns:
+        - 'mobile/android/**/checkstyle.xml'
+        - 'mobile/android/**/*.gradle'
+        - 'mobile/android/**/*.java'
+  android-lint:
+    task: tasks/builds/android_lint.yml
+    root: true
+    when:
+      file_patterns:
+        - 'mobile/android/**/*.java'
+        - 'mobile/android/**/*.jpeg'
+        - 'mobile/android/**/*.jpg'
+        - 'mobile/android/**/*.png'
+        - 'mobile/android/**/*.svg'
+        - 'mobile/android/**/*.xml' # Manifest & android resources
+        - 'mobile/android/**/build.gradle'
+  mozharness:
+    task: tasks/tests/mozharness-gecko.yml
+    root: true
+    when:
+      file_patterns:
+        - 'testing/mozharness/**'
+  marionette-harness:
+    task: tasks/tests/harness_marionette.yml
+    root: true
+    when:
+        file_patterns:
+          - 'testing/marionette/harness/**'
+  linux64-gcc:
+    task: tasks/builds/linux64_gcc.yml
+    root: true
+    when:
+        file_patterns:
+          - 'build/unix/build-gcc/**'
+          - 'testing/taskcluster/scripts/misc/build-gcc-linux.sh'
+  linux64-clang:
+    task: tasks/builds/linux64_clang.yml
+    root: true
+    when:
+        file_patterns:
+          - 'build/build-clang/**'
+          - 'testing/taskcluster/scripts/misc/build-clang-linux.sh'

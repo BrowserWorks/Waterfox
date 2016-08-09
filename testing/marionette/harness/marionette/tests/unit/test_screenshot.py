@@ -3,8 +3,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import base64
+import hashlib
 import imghdr
 import struct
+import time
 import urllib
 
 from unittest import skip
@@ -91,6 +93,10 @@ class Chrome(ScreenCaptureTestCase):
             'chrome');
             """)
         self.marionette.switch_to_window("foo")
+        # there can be a race between opening and registering the window
+        # and switching to it. Waiting a tiny amount of time is enough not to
+        # break anything.
+        time.sleep(0.002)
         ss = self.marionette.screenshot()
         size = self.get_image_dimensions(ss)
         self.assert_png(ss)
@@ -191,3 +197,10 @@ class Content(ScreenCaptureTestCase):
     def test_unknown_format(self):
         with self.assertRaises(ValueError):
             self.marionette.screenshot(format="cheese")
+
+    def test_hash_format(self):
+        self.marionette.navigate(box)
+        el = self.marionette.find_element(By.TAG_NAME, "div")
+        content = self.marionette.screenshot(element=el, format="hash")
+        hash = hashlib.sha256(ELEMENT).hexdigest()
+        self.assertEqual(content, hash)

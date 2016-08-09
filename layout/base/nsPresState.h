@@ -33,7 +33,7 @@ public:
     mScrollState = aState;
   }
 
-  nsPoint GetScrollState() const
+  nsPoint GetScrollPosition() const
   {
     return mScrollState;
   }
@@ -104,6 +104,7 @@ public:
 protected:
   nsCOMPtr<nsISupports> mContentData;
   nsPoint mScrollState;
+  bool mRestoringHistoryScrollPosition;
   float mResolution;
   bool mScaleToResolution;
   bool mDisabledSet;

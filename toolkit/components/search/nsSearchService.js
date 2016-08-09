@@ -101,8 +101,6 @@ const CACHE_VERSION = 1;
 
 const CACHE_FILENAME = "search.json.mozlz4";
 
-const ICON_DATAURL_PREFIX = "data:image/x-icon;base64,";
-
 const NEW_LINES = /(\r\n|\r|\n)/;
 
 // Set an arbitrary cap on the maximum icon size. Without this, large icons can
@@ -1739,6 +1737,11 @@ Engine.prototype = {
    *        String with the icon's URI.
    */
   _addIconToMap: function SRCH_ENG_addIconToMap(aWidth, aHeight, aURISpec) {
+    if (aWidth == 16 && aHeight == 16) {
+      // The 16x16 icon is stored in _iconURL, we don't need to store it twice.
+      return;
+    }
+
     // Use an object instead of a Map() because it needs to be serializable.
     this._iconMapObj = this._iconMapObj || {};
     let key = this._getIconKey(aWidth, aHeight);
@@ -1788,7 +1791,6 @@ Engine.prototype = {
       case "http":
       case "https":
       case "ftp":
-        // No use downloading the icon if the engine file is read-only
         LOG("_setIcon: Downloading icon: \"" + uri.spec +
             "\" for engine: \"" + this.name + "\"");
         var chan = NetUtil.newChannel({
@@ -1807,8 +1809,12 @@ Engine.prototype = {
             return;
           }
 
-          var str = btoa(String.fromCharCode.apply(null, aByteArray));
-          let dataURL = ICON_DATAURL_PREFIX + str;
+          let type = chan.contentType;
+          if (!type.startsWith("image/"))
+            type = "image/x-icon";
+          let dataURL = "data:" + type + ";base64," +
+            btoa(String.fromCharCode.apply(null, aByteArray));
+
           aEngine._iconURI = makeURI(dataURL);
 
           if (aWidth && aHeight) {
@@ -1817,7 +1823,7 @@ Engine.prototype = {
 
           notifyAction(aEngine, SEARCH_ENGINE_CHANGED);
           aEngine._hasPreferredIcon = aIsPreferred;
-        }
+        };
 
         // If we're currently acting as an "update engine", then the callback
         // should set the icon on the engine we're updating and not us, since
@@ -2510,6 +2516,9 @@ Engine.prototype = {
    *        Height of the requested icon.
    */
   getIconURLBySize: function SRCH_ENG_getIconURLBySize(aWidth, aHeight) {
+    if (aWidth == 16 && aHeight == 16)
+      return this._iconURL;
+
     if (!this._iconMapObj)
       return null;
 
@@ -2528,6 +2537,8 @@ Engine.prototype = {
    */
   getIcons: function SRCH_ENG_getIcons() {
     let result = [];
+    if (this._iconURL)
+      result.push({width: 16, height: 16, url: this._iconURL});
 
     if (!this._iconMapObj)
       return result;
@@ -2727,6 +2738,7 @@ SearchService.prototype = {
 
     Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "init-complete");
     Services.telemetry.getHistogramById("SEARCH_SERVICE_INIT_SYNC").add(true);
+    this._recordEnginesWithUpdate();
 
     LOG("_syncInit end");
   },
@@ -2769,6 +2781,7 @@ SearchService.prototype = {
       this._initObservers.resolve(this._initRV);
       Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "init-complete");
       Services.telemetry.getHistogramById("SEARCH_SERVICE_INIT_SYNC").add(false);
+      this._recordEnginesWithUpdate();
 
       LOG("_asyncInit: Completed _asyncInit");
     }.bind(this));
@@ -3140,6 +3153,7 @@ SearchService.prototype = {
         // Typically we'll re-init as a result of a pref observer,
         // so signal to 'callers' that we're done.
         Services.obs.notifyObservers(null, SEARCH_SERVICE_TOPIC, "init-complete");
+        this._recordEnginesWithUpdate();
         gInitialized = true;
       } catch (err) {
         LOG("Reinit failed: " + err);
@@ -4139,6 +4153,17 @@ SearchService.prototype = {
     if (!newCurrentEngine)
       FAIL("Can't find engine in store!", Cr.NS_ERROR_UNEXPECTED);
 
+    if (!newCurrentEngine._isDefault && newCurrentEngine._loadPath) {
+      // If a non default engine is being set as the current engine, ensure
+      // its loadPath has a verification hash.
+      let loadPathHash = getVerificationHash(newCurrentEngine._loadPath);
+      let currentHash = newCurrentEngine.getAttr("loadPathHash");
+      if (!currentHash || currentHash != loadPathHash) {
+        newCurrentEngine.setAttr("loadPathHash", loadPathHash);
+        notifyAction(newCurrentEngine, SEARCH_ENGINE_CHANGED);
+      }
+    }
+
     if (newCurrentEngine == this._currentEngine)
       return;
 
@@ -4182,6 +4207,20 @@ SearchService.prototype = {
 
       result.loadPath = engine._loadPath;
 
+      let origin;
+      if (engine._isDefault)
+        origin = "default";
+      else {
+        let currentHash = engine.getAttr("loadPathHash");
+        if (!currentHash)
+          origin = "unverified";
+        else {
+          let loadPathHash = getVerificationHash(engine._loadPath);
+          origin = currentHash == loadPathHash ? "verified" : "invalid";
+        }
+      }
+      result.origin = origin;
+
       // For privacy, we only collect the submission URL for default engines...
       let sendSubmissionURL = engine._isDefault;
 
@@ -4222,6 +4261,23 @@ SearchService.prototype = {
     }
 
     return result;
+  },
+
+  _recordEnginesWithUpdate: function() {
+    let hasUpdates = false;
+    let hasIconUpdates = false;
+    for (let name in this._engines) {
+      let engine = this._engines[name];
+      if (engine._hasUpdates) {
+        hasUpdates = true;
+        if (engine._iconUpdateURL) {
+          hasIconUpdates = true;
+          break;
+        }
+      }
+    }
+    Services.telemetry.getHistogramById("SEARCH_SERVICE_HAS_UPDATES").add(hasUpdates);
+    Services.telemetry.getHistogramById("SEARCH_SERVICE_HAS_ICON_UPDATES").add(hasIconUpdates);
   },
 
   /**

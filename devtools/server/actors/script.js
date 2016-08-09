@@ -15,6 +15,7 @@ const { FrameActor } = require("devtools/server/actors/frame");
 const { ObjectActor, createValueGrip, longStringGrip } = require("devtools/server/actors/object");
 const { SourceActor, getSourceURL } = require("devtools/server/actors/source");
 const { DebuggerServer } = require("devtools/server/main");
+const { ActorClass } = require("devtools/server/protocol");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const { assert, dumpn, update, fetch } = DevToolsUtils;
 const promise = require("promise");
@@ -22,6 +23,7 @@ const PromiseDebugging = require("PromiseDebugging");
 const xpcInspector = require("xpcInspector");
 const ScriptStore = require("./utils/ScriptStore");
 const { DevToolsWorker } = require("devtools/shared/worker/worker");
+const object = require("sdk/util/object");
 
 const { defer, resolve, reject, all } = promise;
 
@@ -407,54 +409,53 @@ EventLoop.prototype = {
  *        An optional (for content debugging only) reference to the content
  *        window.
  */
-function ThreadActor(aParent, aGlobal)
-{
-  this._state = "detached";
-  this._frameActors = [];
-  this._parent = aParent;
-  this._dbg = null;
-  this._gripDepth = 0;
-  this._threadLifetimePool = null;
-  this._tabClosed = false;
-  this._scripts = null;
-  this._pauseOnDOMEvents = null;
+const ThreadActor = ActorClass({
+  typeName: "context",
 
-  this._options = {
-    useSourceMaps: false,
-    autoBlackBox: false
-  };
+  initialize: function (aParent, aGlobal) {
+    this._state = "detached";
+    this._frameActors = [];
+    this._parent = aParent;
+    this._dbg = null;
+    this._gripDepth = 0;
+    this._threadLifetimePool = null;
+    this._tabClosed = false;
+    this._scripts = null;
+    this._pauseOnDOMEvents = null;
 
-  this.breakpointActorMap = new BreakpointActorMap();
-  this.sourceActorStore = new SourceActorStore();
+    this._options = {
+      useSourceMaps: false,
+      autoBlackBox: false
+    };
 
-  this._debuggerSourcesSeen = null;
+    this.breakpointActorMap = new BreakpointActorMap();
+    this.sourceActorStore = new SourceActorStore();
 
-  // A map of actorID -> actor for breakpoints created and managed by the
-  // server.
-  this._hiddenBreakpoints = new Map();
+    this._debuggerSourcesSeen = null;
 
-  this.global = aGlobal;
+    // A map of actorID -> actor for breakpoints created and managed by the
+    // server.
+    this._hiddenBreakpoints = new Map();
 
-  this._allEventsListener = this._allEventsListener.bind(this);
-  this.onNewGlobal = this.onNewGlobal.bind(this);
-  this.onNewSource = this.onNewSource.bind(this);
-  this.uncaughtExceptionHook = this.uncaughtExceptionHook.bind(this);
-  this.onDebuggerStatement = this.onDebuggerStatement.bind(this);
-  this.onNewScript = this.onNewScript.bind(this);
-  this.objectGrip = this.objectGrip.bind(this);
-  this.pauseObjectGrip = this.pauseObjectGrip.bind(this);
-  this._onWindowReady = this._onWindowReady.bind(this);
-  events.on(this._parent, "window-ready", this._onWindowReady);
-  // Set a wrappedJSObject property so |this| can be sent via the observer svc
-  // for the xpcshell harness.
-  this.wrappedJSObject = this;
-}
+    this.global = aGlobal;
 
-ThreadActor.prototype = {
+    this._allEventsListener = this._allEventsListener.bind(this);
+    this.onNewGlobal = this.onNewGlobal.bind(this);
+    this.onSourceEvent = this.onSourceEvent.bind(this);
+    this.uncaughtExceptionHook = this.uncaughtExceptionHook.bind(this);
+    this.onDebuggerStatement = this.onDebuggerStatement.bind(this);
+    this.onNewScript = this.onNewScript.bind(this);
+    this.objectGrip = this.objectGrip.bind(this);
+    this.pauseObjectGrip = this.pauseObjectGrip.bind(this);
+    this._onWindowReady = this._onWindowReady.bind(this);
+    events.on(this._parent, "window-ready", this._onWindowReady);
+    // Set a wrappedJSObject property so |this| can be sent via the observer svc
+    // for the xpcshell harness.
+    this.wrappedJSObject = this;
+  },
+
   // Used by the ObjectActor to keep track of the depth of grip() calls.
   _gripDepth: null,
-
-  actorPrefix: "context",
 
   get dbg() {
     if (!this._dbg) {
@@ -583,6 +584,8 @@ ThreadActor.prototype = {
     this._sourceActorStore = null;
 
     events.off(this._parent, "window-ready", this._onWindowReady);
+    this.sources.off("newSource", this.onSourceEvent);
+    this.sources.off("updatedSource", this.onSourceEvent);
     this.clearDebuggees();
     this.conn.removeActorPool(this._threadLifetimePool);
     this._threadLifetimePool = null;
@@ -619,13 +622,12 @@ ThreadActor.prototype = {
     }
 
     this._state = "attached";
-    this._debuggerSourcesSeen = new Set();
+    this._debuggerSourcesSeen = new WeakSet();
 
-    update(this._options, aRequest.options || {});
+    Object.assign(this._options, aRequest.options || {});
     this.sources.setOptions(this._options);
-    this.sources.on('newSource', (name, source) => {
-      this.onNewSource(source);
-    });
+    this.sources.on("newSource", this.onSourceEvent);
+    this.sources.on("updatedSource", this.onSourceEvent);
 
     // Initialize an event loop stack. This can't be done in the constructor,
     // because this.conn is not yet initialized by the actor pool at that time.
@@ -685,7 +687,7 @@ ThreadActor.prototype = {
       this.dbg.allowUnobservedAsmJS = !options.observeAsmJS;
     }
 
-    update(this._options, options);
+    Object.assign(this._options, options);
 
     // Update the global source store
     this.sources.setOptions(options);
@@ -1898,12 +1900,29 @@ ThreadActor.prototype = {
     this._addSource(aScript.source);
   },
 
-  onNewSource: function (aSource) {
+  /**
+   * A function called when there's a new or updated source from a thread actor's
+   * sources. Emits `newSource` and `updatedSource` on the tab actor.
+   *
+   * @param {String} name
+   * @param {SourceActor} source
+   */
+  onSourceEvent: function (name, source) {
     this.conn.send({
-      from: this.actorID,
-      type: "newSource",
-      source: aSource.form()
+      from: this._parent.actorID,
+      type: name,
+      source: source.form()
     });
+
+    // For compatibility and debugger still using `newSource` on the thread client,
+    // still emit this event here. Clean up in bug 1247084
+    if (name === "newSource") {
+      this.conn.send({
+        from: this.actorID,
+        type: name,
+        source: source.form()
+      });
+    }
   },
 
   /**
@@ -1938,49 +1957,72 @@ ThreadActor.prototype = {
     this.scripts.addScripts(this.dbg.findScripts({ source: aSource }));
 
     let sourceActor = this.sources.createNonSourceMappedActor(aSource);
-
-    // Set any stored breakpoints.
     let bpActors = [...this.breakpointActorMap.findActors()];
-    let promises = [];
 
-    // Go ahead and establish the source actors for this script, which
-    // fetches sourcemaps if available and sends onNewSource
-    // notifications.
-    let sourceActorsCreated = this.sources.createSourceActors(aSource);
+    if (this._options.useSourceMaps) {
+      let promises = [];
 
-    if (bpActors.length) {
-      // We need to use unsafeSynchronize here because if the page is being reloaded,
-      // this call will replace the previous set of source actors for this source
-      // with a new one. If the source actors have not been replaced by the time
-      // we try to reset the breakpoints below, their location objects will still
-      // point to the old set of source actors, which point to different
-      // scripts.
-      this.unsafeSynchronize(sourceActorsCreated);
-    }
+      // Go ahead and establish the source actors for this script, which
+      // fetches sourcemaps if available and sends onNewSource
+      // notifications.
+      let sourceActorsCreated = this.sources._createSourceMappedActors(aSource);
 
-    for (let _actor of bpActors) {
-      // XXX bug 1142115: We do async work in here, so we need to create a fresh
-      // binding because for/of does not yet do that in SpiderMonkey.
-      let actor = _actor;
-
-      if (actor.isPending) {
-        promises.push(actor.originalLocation.originalSourceActor._setBreakpoint(actor));
-      } else {
-        promises.push(this.sources.getAllGeneratedLocations(actor.originalLocation)
-                                  .then((generatedLocations) => {
-          if (generatedLocations.length > 0 &&
-              generatedLocations[0].generatedSourceActor.actorID === sourceActor.actorID) {
-            sourceActor._setBreakpointAtAllGeneratedLocations(
-              actor,
-              generatedLocations
-            );
-          }
-        }));
+      if (bpActors.length) {
+        // We need to use unsafeSynchronize here because if the page is being reloaded,
+        // this call will replace the previous set of source actors for this source
+        // with a new one. If the source actors have not been replaced by the time
+        // we try to reset the breakpoints below, their location objects will still
+        // point to the old set of source actors, which point to different
+        // scripts.
+        this.unsafeSynchronize(sourceActorsCreated);
       }
-    }
 
-    if (promises.length > 0) {
-      this.unsafeSynchronize(promise.all(promises));
+      for (let _actor of bpActors) {
+        // XXX bug 1142115: We do async work in here, so we need to create a fresh
+        // binding because for/of does not yet do that in SpiderMonkey.
+        let actor = _actor;
+
+        if (actor.isPending) {
+          promises.push(actor.originalLocation.originalSourceActor._setBreakpoint(actor));
+        } else {
+          promises.push(this.sources.getAllGeneratedLocations(actor.originalLocation)
+                                    .then((generatedLocations) => {
+            if (generatedLocations.length > 0 &&
+                generatedLocations[0].generatedSourceActor.actorID === sourceActor.actorID) {
+              sourceActor._setBreakpointAtAllGeneratedLocations(
+                actor,
+                generatedLocations
+              );
+            }
+          }));
+        }
+      }
+
+      if (promises.length > 0) {
+        this.unsafeSynchronize(promise.all(promises));
+      }
+    } else {
+      // Bug 1225160: If addSource is called in response to a new script
+      // notification, and this notification was triggered by loading a JSM from
+      // chrome code, calling unsafeSynchronize could cause a debuggee timer to
+      // fire. If this causes the JSM to be loaded a second time, the browser
+      // will crash, because loading JSMS is not reentrant, and the first load
+      // has not completed yet.
+      //
+      // The root of the problem is that unsafeSynchronize can cause debuggee
+      // code to run. Unfortunately, fixing that is prohibitively difficult. The
+      // best we can do at the moment is disable source maps for the browser
+      // debugger, and carefully avoid the use of unsafeSynchronize in this
+      // function when source maps are disabled.
+      for (let actor of bpActors) {
+        if (actor.isPending) {
+          actor.originalLocation.originalSourceActor._setBreakpoint(actor);
+        } else {
+          actor.originalLocation.originalSourceActor._setBreakpointAtGeneratedLocation(
+            actor, GeneratedLocation.fromOriginalLocation(actor.originalLocation)
+          );
+        }
+      }
     }
 
     this._debuggerSourcesSeen.add(aSource);
@@ -2014,9 +2056,9 @@ ThreadActor.prototype = {
     return { from: this.actorID,
              actors: result };
   }
-};
+});
 
-ThreadActor.prototype.requestTypes = {
+ThreadActor.prototype.requestTypes = object.merge(ThreadActor.prototype.requestTypes, {
   "attach": ThreadActor.prototype.onAttach,
   "detach": ThreadActor.prototype.onDetach,
   "reconfigure": ThreadActor.prototype.onReconfigure,
@@ -2029,7 +2071,7 @@ ThreadActor.prototype.requestTypes = {
   "sources": ThreadActor.prototype.onSources,
   "threadGrips": ThreadActor.prototype.onThreadGrips,
   "prototypesAndProperties": ThreadActor.prototype.onPrototypesAndProperties
-};
+});
 
 exports.ThreadActor = ThreadActor;
 
@@ -2116,9 +2158,9 @@ function PauseScopedObjectActor(obj, hooks) {
 
 PauseScopedObjectActor.prototype = Object.create(PauseScopedActor.prototype);
 
-update(PauseScopedObjectActor.prototype, ObjectActor.prototype);
+Object.assign(PauseScopedObjectActor.prototype, ObjectActor.prototype);
 
-update(PauseScopedObjectActor.prototype, {
+Object.assign(PauseScopedObjectActor.prototype, {
   constructor: PauseScopedObjectActor,
   actorPrefix: "pausedobj",
 
@@ -2167,7 +2209,7 @@ update(PauseScopedObjectActor.prototype, {
   }),
 });
 
-update(PauseScopedObjectActor.prototype.requestTypes, {
+Object.assign(PauseScopedObjectActor.prototype.requestTypes, {
   "threadGrip": PauseScopedObjectActor.prototype.onThreadGrip,
 });
 
@@ -2236,12 +2278,12 @@ function hackDebugger(Debugger) {
  */
 function ChromeDebuggerActor(aConnection, aParent)
 {
-  ThreadActor.call(this, aParent);
+  ThreadActor.prototype.initialize.call(this, aParent);
 }
 
 ChromeDebuggerActor.prototype = Object.create(ThreadActor.prototype);
 
-update(ChromeDebuggerActor.prototype, {
+Object.assign(ChromeDebuggerActor.prototype, {
   constructor: ChromeDebuggerActor,
 
   // A constant prefix that will be used to form the actor ID by the server.
@@ -2264,12 +2306,12 @@ exports.ChromeDebuggerActor = ChromeDebuggerActor;
  *        properties.
  */
 function AddonThreadActor(aConnect, aParent) {
-  ThreadActor.call(this, aParent);
+  ThreadActor.prototype.initialize.call(this, aParent);
 }
 
 AddonThreadActor.prototype = Object.create(ThreadActor.prototype);
 
-update(AddonThreadActor.prototype, {
+Object.assign(AddonThreadActor.prototype, {
   constructor: AddonThreadActor,
 
   // A constant prefix that will be used to form the actor ID by the server.

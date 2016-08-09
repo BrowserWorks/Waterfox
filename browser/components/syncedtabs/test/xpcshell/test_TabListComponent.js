@@ -67,6 +67,9 @@ add_task(function* testInitUninit() {
 
 add_task(function* testActions() {
   let store = new SyncedTabsListStore();
+  let clipboardHelperMock = {
+    copyString() {},
+  };
   let windowMock = {
     top: {
       PlacesCommandHook: {
@@ -74,10 +77,11 @@ add_task(function* testActions() {
       },
       PlacesUtils: { bookmarksMenuFolderId: "id" }
     },
-    openUILink() {}
+    openUILinkIn() {}
   };
   let component = new TabListComponent({
-    window: windowMock, store, View: null, SyncedTabs});
+    window: windowMock, store, View: null, SyncedTabs,
+    clipboardHelper: clipboardHelperMock});
 
   sinon.stub(store, "getData");
   component.onFilter("query");
@@ -96,10 +100,8 @@ add_task(function* testActions() {
   Assert.ok(store.blurInput.called);
 
   sinon.stub(store, "selectRow");
-  sinon.stub(store, "toggleBranch");
-  component.onSelectRow([-1, -1], "foo-id");
+  component.onSelectRow([-1, -1]);
   Assert.ok(store.selectRow.calledWith(-1, -1));
-  Assert.ok(store.toggleBranch.calledWith("foo-id"));
 
   sinon.stub(store, "moveSelectionDown");
   component.onMoveSelectionDown();
@@ -109,17 +111,22 @@ add_task(function* testActions() {
   component.onMoveSelectionUp();
   Assert.ok(store.moveSelectionUp.called);
 
+  sinon.stub(store, "toggleBranch");
   component.onToggleBranch("foo-id");
-  Assert.ok(store.toggleBranch.secondCall.calledWith("foo-id"));
+  Assert.ok(store.toggleBranch.calledWith("foo-id"));
 
   sinon.spy(windowMock.top.PlacesCommandHook, "bookmarkLink");
   component.onBookmarkTab("uri", "title");
   Assert.equal(windowMock.top.PlacesCommandHook.bookmarkLink.args[0][1], "uri");
   Assert.equal(windowMock.top.PlacesCommandHook.bookmarkLink.args[0][2], "title");
 
-  sinon.spy(windowMock, "openUILink");
-  component.onOpenTab("uri", "event");
-  Assert.ok(windowMock.openUILink.calledWith("uri", "event"));
+  sinon.spy(windowMock, "openUILinkIn");
+  component.onOpenTab("uri", "where", "params");
+  Assert.ok(windowMock.openUILinkIn.calledWith("uri", "where", "params"));
+
+  sinon.spy(clipboardHelperMock, "copyString");
+  component.onCopyTabLocation("uri");
+  Assert.ok(clipboardHelperMock.copyString.calledWith("uri"));
 
   sinon.stub(SyncedTabs, "syncTabs");
   component.onSyncRefresh();

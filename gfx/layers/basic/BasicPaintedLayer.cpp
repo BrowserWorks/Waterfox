@@ -78,19 +78,25 @@ BasicPaintedLayer::PaintThebes(gfxContext* aContext,
       bool needsGroup = opacity != 1.0 ||
                         effectiveOperator != CompositionOp::OP_OVER ||
                         aMaskLayer;
-      RefPtr<gfxContext> groupContext;
+      RefPtr<gfxContext> context = nullptr;
       BasicLayerManager::PushedGroup group;
+      bool availableGroup = false;
+
       if (needsGroup) {
-        group =
-          BasicManager()->PushGroupForLayer(aContext, this, toDraw);
-        groupContext = group.mGroupTarget;
+        availableGroup =
+            BasicManager()->PushGroupForLayer(aContext, this, toDraw, group);
+        if (availableGroup) {
+          context = group.mGroupTarget;
+        }
       } else {
-        groupContext = aContext;
+        context = aContext;
       }
-      SetAntialiasingFlags(this, groupContext->GetDrawTarget());
-      aCallback(this, groupContext, toDraw, toDraw,
-                DrawRegionClip::NONE, nsIntRegion(), aCallbackData);
-      if (needsGroup) {
+      if (context) {
+        SetAntialiasingFlags(this, context->GetDrawTarget());
+        aCallback(this, context, toDraw, toDraw, DrawRegionClip::NONE,
+                  nsIntRegion(), aCallbackData);
+      }
+      if (needsGroup && availableGroup) {
         BasicManager()->PopGroupForLayer(group);
       }
 
@@ -174,7 +180,9 @@ BasicPaintedLayer::Validate(LayerManager::DrawPaintedLayerCallback aCallback,
 
     RenderTraceInvalidateStart(this, "FFFF00", state.mRegionToDraw.GetBounds());
 
-    RefPtr<gfxContext> ctx = gfxContext::ContextForDrawTarget(target);
+    RefPtr<gfxContext> ctx = gfxContext::ForDrawTargetWithTransform(target);
+    MOZ_ASSERT(ctx); // already checked the target above
+
     PaintBuffer(ctx,
                 state.mRegionToDraw, state.mRegionToDraw, state.mRegionToInvalidate,
                 state.mDidSelfCopy,

@@ -7,33 +7,36 @@ package org.mozilla.gecko;
 
 import android.Manifest;
 import android.app.DownloadManager;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Environment;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import org.json.JSONArray;
 import org.mozilla.gecko.adjust.AdjustHelperInterface;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.AppConstants.Versions;
-import org.mozilla.gecko.DynamicToolbar.PinReason;
 import org.mozilla.gecko.DynamicToolbar.VisibilityTransition;
-import org.mozilla.gecko.GeckoProfileDirectories.NoMozillaDirectoryException;
 import org.mozilla.gecko.Tabs.TabEvents;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
+import org.mozilla.gecko.cleanup.FileCleanupController;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.db.BrowserContract.Combined;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.SuggestedSites;
 import org.mozilla.gecko.distribution.Distribution;
-import org.mozilla.gecko.distribution.Distribution.DistributionDescriptor;
 import org.mozilla.gecko.distribution.DistributionStoreCallback;
+import org.mozilla.gecko.distribution.PartnerBrowserCustomizationsClient;
 import org.mozilla.gecko.dlc.DownloadContentService;
 import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
 import org.mozilla.gecko.favicons.decoders.IconDirectoryEntry;
+import org.mozilla.gecko.feeds.ContentNotificationsDelegate;
+import org.mozilla.gecko.feeds.FeedService;
+import org.mozilla.gecko.feeds.action.CheckForUpdatesAction;
 import org.mozilla.gecko.firstrun.FirstrunAnimationContainer;
 import org.mozilla.gecko.gfx.DynamicToolbarAnimator;
+import org.mozilla.gecko.gfx.DynamicToolbarAnimator.PinReason;
 import org.mozilla.gecko.gfx.ImmutableViewportMetrics;
 import org.mozilla.gecko.gfx.LayerView;
 import org.mozilla.gecko.home.BrowserSearch;
@@ -47,6 +50,7 @@ import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 import org.mozilla.gecko.home.HomePanelsManager;
 import org.mozilla.gecko.home.SearchEngine;
 import org.mozilla.gecko.javaaddons.JavaAddonManager;
+import org.mozilla.gecko.media.AudioFocusAgent;
 import org.mozilla.gecko.menu.GeckoMenu;
 import org.mozilla.gecko.menu.GeckoMenuItem;
 import org.mozilla.gecko.mozglue.ContextUtils;
@@ -55,10 +59,16 @@ import org.mozilla.gecko.overlays.ui.ShareDialog;
 import org.mozilla.gecko.permissions.Permissions;
 import org.mozilla.gecko.preferences.ClearOnShutdownPref;
 import org.mozilla.gecko.preferences.GeckoPreferences;
+import org.mozilla.gecko.promotion.AddToHomeScreenPromotion;
+import org.mozilla.gecko.promotion.SimpleHelperUI;
 import org.mozilla.gecko.prompts.Prompt;
 import org.mozilla.gecko.prompts.PromptListItem;
+import org.mozilla.gecko.reader.SavedReaderViewHelper;
+import org.mozilla.gecko.reader.ReaderModeUtils;
+import org.mozilla.gecko.reader.ReadingListHelper;
 import org.mozilla.gecko.restrictions.Restrictable;
 import org.mozilla.gecko.restrictions.RestrictedProfileConfiguration;
+import org.mozilla.gecko.restrictions.Restrictions;
 import org.mozilla.gecko.search.SearchEngineManager;
 import org.mozilla.gecko.sync.repositories.android.FennecTabsRepository;
 import org.mozilla.gecko.tabqueue.TabQueueHelper;
@@ -78,6 +88,7 @@ import org.mozilla.gecko.trackingprotection.TrackingProtectionPrompt;
 import org.mozilla.gecko.updater.UpdateServiceHelper;
 import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.Clipboard;
+import org.mozilla.gecko.util.DrawableUtil;
 import org.mozilla.gecko.util.EventCallback;
 import org.mozilla.gecko.util.Experiments;
 import org.mozilla.gecko.util.FloatUtils;
@@ -90,9 +101,8 @@ import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.util.PrefUtils;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
-import org.mozilla.gecko.util.UIAsyncTask;
 import org.mozilla.gecko.widget.AnchoredPopup;
-import org.mozilla.gecko.widget.ButtonToast;
+
 import org.mozilla.gecko.widget.GeckoActionProvider;
 
 import android.app.Activity;
@@ -108,7 +118,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -124,6 +133,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -150,8 +160,8 @@ import android.widget.RelativeLayout;
 import android.widget.ViewFlipper;
 import com.keepsafe.switchboard.AsyncConfigLoader;
 import com.keepsafe.switchboard.SwitchBoard;
-import com.nineoldandroids.animation.Animator;
-import com.nineoldandroids.animation.ObjectAnimator;
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -181,7 +191,6 @@ public class BrowserApp extends GeckoApp
                                    BrowserSearch.OnEditSuggestionListener,
                                    OnUrlOpenListener,
                                    OnUrlOpenInBackgroundListener,
-                                   ReadingListHelper.OnReadingListEventListener,
                                    AnchoredPopup.OnVisibilityChangeListener,
                                    ActionModeCompat.Presenter,
                                    LayoutInflater.Factory {
@@ -192,7 +201,6 @@ public class BrowserApp extends GeckoApp
     public static final String GUEST_BROWSING_ARG = "--guest";
 
     // Intent String extras used to specify custom Switchboard configurations.
-    private static final String INTENT_KEY_SWITCHBOARD_UUID = "switchboard-uuid";
     private static final String INTENT_KEY_SWITCHBOARD_HOST = "switchboard-host";
 
     private static final String DEFAULT_SWITCHBOARD_HOST = "switchboard.services.mozilla.com";
@@ -204,6 +212,11 @@ public class BrowserApp extends GeckoApp
     // Request ID for startActivityForResult.
     private static final int ACTIVITY_REQUEST_PREFERENCES = 1001;
     private static final int ACTIVITY_REQUEST_TAB_QUEUE = 2001;
+    private static final int ACTIVITY_REQUEST_FIRST_READERVIEW_BOOKMARK = 3001;
+    private static final int ACTIVITY_RESULT_FIRST_READERVIEW_BOOKMARKS_GOTO_BOOKMARKS = 3002;
+    private static final int ACTIVITY_RESULT_FIRST_READERVIEW_BOOKMARKS_IGNORE = 3003;
+
+    public static final String ACTION_VIEW_MULTIPLE = AppConstants.ANDROID_PACKAGE_NAME + ".action.VIEW_MULTIPLE";
 
     @RobocopTarget
     public static final String EXTRA_SKIP_STARTPANE = "skipstartpane";
@@ -227,10 +240,13 @@ public class BrowserApp extends GeckoApp
     private ActionModeCompat mActionMode;
     private TabHistoryController tabHistoryController;
     private ZoomedView mZoomedView;
+    private AddToHomeScreenPromotion mAddToHomeScreenPromotion;
 
     private static final int GECKO_TOOLS_MENU = -1;
     private static final int ADDON_MENU_OFFSET = 1000;
     public static final String TAB_HISTORY_FRAGMENT_TAG = "tabHistoryFragment";
+
+    private ContentNotificationsDelegate contentNotificationsDelegate = new ContentNotificationsDelegate();
 
     private static class MenuItemInfo {
         public int id;
@@ -294,6 +310,8 @@ public class BrowserApp extends GeckoApp
     @NonNull
     private SearchEngineManager searchEngineManager; // Contains reference to Context - DO NOT LEAK!
 
+    private boolean mHasResumed;
+
     @Override
     public View onCreateView(final String name, final Context context, final AttributeSet attrs) {
         final View view;
@@ -308,7 +326,7 @@ public class BrowserApp extends GeckoApp
     }
 
     @Override
-    public void onTabChanged(Tab tab, Tabs.TabEvents msg, Object data) {
+    public void onTabChanged(Tab tab, TabEvents msg, String data) {
         if (tab == null) {
             // Only RESTORED is allowed a null tab: it's the only event that
             // isn't tied to a specific tab.
@@ -319,7 +337,7 @@ public class BrowserApp extends GeckoApp
         }
 
         Log.d(LOGTAG, "BrowserApp.onTabChanged: " + tab.getId() + ": " + msg);
-        switch(msg) {
+        switch (msg) {
             case SELECTED:
                 if (Tabs.getInstance().isSelectedTab(tab) && mDynamicToolbar.isEnabled()) {
                     final VisibilityTransition transition = (tab.getShouldShowToolbarWithoutAnimationOnFirstSelection()) ?
@@ -360,16 +378,37 @@ public class BrowserApp extends GeckoApp
                 tab.loadFavicon();
                 break;
             case BOOKMARK_ADDED:
-                showBookmarkAddedSnackbar();
+                // We always show the special offline snackbar whenever we bookmark a reader page.
+                // It's possible that the page is already stored offline, however this is highly
+                // unlikely, and even so it is probably nicer to show the same offline notification
+                // every time we bookmark an about:reader page.
+                if (!AboutPages.isAboutReader(tab.getURL())) {
+                    showBookmarkAddedSnackbar();
+                } else {
+                    final SharedPreferences prefs = GeckoSharedPrefs.forProfile(this);
+
+                    final boolean hasFirstReaderViewPromptBeenShownBefore = prefs.getBoolean(SimpleHelperUI.PREF_FIRST_RVBP_SHOWN, false);
+
+                    if (hasFirstReaderViewPromptBeenShownBefore) {
+                        showReaderModeBookmarkAddedSnackbar();
+                    } else {
+                        SimpleHelperUI.show(this,
+                                SimpleHelperUI.FIRST_RVBP_SHOWN_TELEMETRYEXTRA,
+                                ACTIVITY_REQUEST_FIRST_READERVIEW_BOOKMARK,
+                                R.string.helper_first_offline_bookmark_title, R.string.helper_first_offline_bookmark_message,
+                                R.drawable.helper_first_readerview_bookmark, R.string.helper_first_offline_bookmark_button,
+                                ACTIVITY_RESULT_FIRST_READERVIEW_BOOKMARKS_GOTO_BOOKMARKS,
+                                ACTIVITY_RESULT_FIRST_READERVIEW_BOOKMARKS_IGNORE);
+
+                        GeckoSharedPrefs.forProfile(this)
+                                .edit()
+                                .putBoolean(SimpleHelperUI.PREF_FIRST_RVBP_SHOWN, true)
+                                .apply();
+                    }
+                }
                 break;
             case BOOKMARK_REMOVED:
                 showBookmarkRemovedSnackbar();
-                break;
-            case READING_LIST_ADDED:
-                onAddedToReadingList(tab.getURL());
-                break;
-            case READING_LIST_REMOVED:
-                onRemovedFromReadingList(tab.getURL());
                 break;
 
             case UNSELECTED:
@@ -445,40 +484,28 @@ public class BrowserApp extends GeckoApp
                 callback);
     }
 
-    private void showBookmarkRemovedSnackbar() {
-        SnackbarHelper.showSnackbar(this, getResources().getString(R.string.bookmark_removed), Snackbar.LENGTH_LONG);
-    }
+    private void showReaderModeBookmarkAddedSnackbar() {
+        final Drawable iconDownloaded = DrawableUtil.tintDrawable(getContext(), R.drawable.status_icon_readercache, Color.WHITE);
 
-    private void showSwitchToReadingListSnackbar(String message) {
         final SnackbarHelper.SnackbarCallback callback = new SnackbarHelper.SnackbarCallback() {
             @Override
             public void onClick(View v) {
-                Telemetry.sendUIEvent(TelemetryContract.Event.SHOW, TelemetryContract.Method.TOAST, "reading_list");
-
-                final String aboutPageUrl = AboutPages.getURLForBuiltinPanelType(PanelType.READING_LIST);
-                Tabs.getInstance().loadUrlInTab(aboutPageUrl);
+                openUrlAndStopEditing("about:home?panel=" + HomeConfig.getIdForBuiltinPanelType(PanelType.BOOKMARKS));
             }
         };
 
-        SnackbarHelper.showSnackbarWithAction(this,
-                message,
+        SnackbarHelper.showSnackbarWithActionAndColors(this,
+                getResources().getString(R.string.reader_saved_offline),
                 Snackbar.LENGTH_LONG,
-                getResources().getString(R.string.switch_button_message),
-                callback);
+                getResources().getString(R.string.reader_switch_to_bookmarks),
+                callback,
+                iconDownloaded,
+                ContextCompat.getColor(this, R.color.link_blue),
+                Color.WHITE);
     }
 
-    public void onAddedToReadingList(String url) {
-        showSwitchToReadingListSnackbar(getResources().getString(R.string.reading_list_added));
-    }
-
-    public void onAlreadyInReadingList(String url) {
-        showSwitchToReadingListSnackbar(getResources().getString(R.string.reading_list_duplicate));
-    }
-
-    public void onRemovedFromReadingList(String url) {
-        SnackbarHelper.showSnackbar(this,
-                getResources().getString(R.string.reading_list_removed),
-                Snackbar.LENGTH_LONG);
+    private void showBookmarkRemovedSnackbar() {
+        SnackbarHelper.showSnackbar(this, getResources().getString(R.string.bookmark_removed), Snackbar.LENGTH_LONG);
     }
 
     @Override
@@ -616,6 +643,20 @@ public class BrowserApp extends GeckoApp
         mActionBar = (ActionModeCompatView) findViewById(R.id.actionbar);
 
         mBrowserToolbar = (BrowserToolbar) findViewById(R.id.browser_toolbar);
+        mBrowserToolbar.setTouchEventInterceptor(new TouchEventInterceptor() {
+            @Override
+            public boolean onInterceptTouchEvent(View view, MotionEvent event) {
+                // Manually dismiss text selection bar if it's not overlaying the toolbar.
+                mTextSelection.dismiss();
+                return false;
+            }
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return false;
+            }
+        });
+
         mProgressView = (ToolbarProgressView) findViewById(R.id.progress);
         mBrowserToolbar.setProgressBar(mProgressView);
 
@@ -642,6 +683,12 @@ public class BrowserApp extends GeckoApp
             mBrowserToolbar.setTitle(intent.getDataString());
 
             showTabQueuePromptIfApplicable(intent);
+        } else if (ACTION_VIEW_MULTIPLE.equals(action) && savedInstanceState == null) {
+            // We only want to handle this intent if savedInstanceState is null. In the case where
+            // savedInstanceState is not null this activity is being re-created and we already
+            // opened tabs for the URLs the last time. Our session store will take care of restoring
+            // them.
+            openMultipleTabsFromIntent(intent);
         } else if (GuestSession.NOTIFICATION_INTENT.equals(action)) {
             GuestSession.handleIntent(this, intent);
         } else if (TabQueueHelper.LOAD_URLS_ACTION.equals(action)) {
@@ -700,10 +747,10 @@ public class BrowserApp extends GeckoApp
             "CharEncoding:State",
             "Download:AndroidDownloadManager",
             "Experiments:GetActive",
+            "Experiments:SetOverride",
+            "Experiments:ClearOverride",
             "Favicon:CacheLoad",
-            "Feedback:LastUrl",
             "Feedback:MaybeLater",
-            "Feedback:OpenPlayStore",
             "Menu:Add",
             "Menu:Remove",
             "Sanitize:ClearHistory",
@@ -727,7 +774,7 @@ public class BrowserApp extends GeckoApp
         JavaAddonManager.getInstance().init(appContext);
         mSharedPreferencesHelper = new SharedPreferencesHelper(appContext);
         mOrderedBroadcastHelper = new OrderedBroadcastHelper(appContext);
-        mReadingListHelper = new ReadingListHelper(appContext, getProfile(), this);
+        mReadingListHelper = new ReadingListHelper(appContext, getProfile());
         mAccountsHelper = new AccountsHelper(appContext, getProfile());
 
         final AdjustHelperInterface adjustHelper = AdjustConstants.getAdjustHelper();
@@ -770,9 +817,24 @@ public class BrowserApp extends GeckoApp
         // Watch for screenshots while browser is in foreground.
         mScreenshotObserver.setListener(getContext(), new ScreenshotObserver.OnScreenshotListener() {
             @Override
-            public void onScreenshotTaken(String data, String title) {
+            public void onScreenshotTaken(final String screenshotPath, final String title) {
                 // Treat screenshots as a sharing method.
                 Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.BUTTON, "screenshot");
+
+                if (!AppConstants.SCREENSHOTS_IN_BOOKMARKS_ENABLED) {
+                    return;
+                }
+
+                final Tab selectedTab = Tabs.getInstance().getSelectedTab();
+                if (selectedTab == null) {
+                    Log.w(LOGTAG, "Selected tab is null: could not page info to store screenshot.");
+                    return;
+                }
+
+                getProfile().getDB().getUrlAnnotations().insertScreenshot(
+                        getContentResolver(), selectedTab.getURL(), screenshotPath);
+                SnackbarHelper.showSnackbar(BrowserApp.this,
+                        getResources().getString(R.string.screenshot_added_to_bookmarks), Snackbar.LENGTH_SHORT);
             }
         });
 
@@ -794,6 +856,11 @@ public class BrowserApp extends GeckoApp
                        })
                       .run();
         }
+
+        mAddToHomeScreenPromotion = new AddToHomeScreenPromotion(this);
+        AudioFocusAgent.getInstance().attachToContext(this);
+
+        contentNotificationsDelegate.onCreate(this, savedInstanceState);
     }
 
     /**
@@ -808,27 +875,19 @@ public class BrowserApp extends GeckoApp
         final String hostExtra = ContextUtils.getStringExtra(intent, INTENT_KEY_SWITCHBOARD_HOST);
         final String host = TextUtils.isEmpty(hostExtra) ? DEFAULT_SWITCHBOARD_HOST : hostExtra;
 
-        final String configServerUpdateUrl;
-        final String configServerUrl;
+        final String serverUrl;
         try {
-            configServerUpdateUrl = new URL("https", host, "urls").toString();
-            configServerUrl = new URL("https", host, "v1").toString();
+            serverUrl = new URL("https", host, "v2").toString();
         } catch (MalformedURLException e) {
             Log.e(LOGTAG, "Error creating Switchboard server URL", e);
             return;
         }
 
-        SwitchBoard.initDefaultServerUrls(configServerUpdateUrl, configServerUrl, true);
-
-        final String switchboardUUID = ContextUtils.getStringExtra(intent, INTENT_KEY_SWITCHBOARD_UUID);
-        SwitchBoard.setUUIDFromExtra(switchboardUUID);
-
-        // Looks at the server if there are changes in the server URL that should be used in the future
-        new AsyncConfigLoader(this, AsyncConfigLoader.UPDATE_SERVER, switchboardUUID).execute();
-
-        // Loads the actual config. This can be done on app start or on app onResume() depending
-        // how often you want to update the config.
-        new AsyncConfigLoader(this, AsyncConfigLoader.CONFIG_SERVER, switchboardUUID).execute();
+        // Loads the Switchboard config from the specified server URL. Eventually, we
+        // should use the endpoint returned by the server URL, to support migrating
+        // to a new endpoint. However, if we want to do that, we'll need to find a different
+        // solution for dynamically changing the server URL from the intent.
+        new AsyncConfigLoader(this, serverUrl).execute();
     }
 
     private void showUpdaterPermissionSnackbar() {
@@ -931,7 +990,7 @@ public class BrowserApp extends GeckoApp
         if (AppConstants.MOZ_MEDIA_PLAYER) {
             try {
                 return Class.forName("org.mozilla.gecko.MediaPlayerManager");
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 // Ignore failures
                 Log.e(LOGTAG, "No native casting support", ex);
             }
@@ -942,6 +1001,10 @@ public class BrowserApp extends GeckoApp
 
     @Override
     public void onBackPressed() {
+        if (mTextSelection.dismiss()) {
+            return;
+        }
+
         if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
             super.onBackPressed();
             return;
@@ -965,11 +1028,9 @@ public class BrowserApp extends GeckoApp
 
     @Override
     public void onAttachedToWindow() {
-        // Gingerbread 2.3 doesn't handle starting alphas correctly, so disable doorhanger overlays for that, and perf.
-        if (!Versions.preHC){
-            mDoorhangerOverlay = findViewById(R.id.doorhanger_overlay);
-            mDoorhangerOverlay.setVisibility(View.VISIBLE);
-        }
+        mDoorhangerOverlay = findViewById(R.id.doorhanger_overlay);
+        mDoorhangerOverlay.setVisibility(View.VISIBLE);
+
         // We can't show the first run experience until Gecko has finished initialization (bug 1077583).
         checkFirstrun(this, new SafeIntent(getIntent()));
     }
@@ -997,7 +1058,7 @@ public class BrowserApp extends GeckoApp
         Telemetry.addToHistogram("FENNEC_TABQUEUE_QUEUESIZE", queuedTabCount);
         Telemetry.sendUIEvent(TelemetryContract.Event.LOAD_URL, TelemetryContract.Method.INTENT, "tabqueue-delayed");
 
-        TabQueueHelper.openQueuedUrls(BrowserApp.this, mProfile, TabQueueHelper.FILE_NAME, false);
+        TabQueueHelper.openQueuedUrls(BrowserApp.this, getProfile(), TabQueueHelper.FILE_NAME, false);
 
         // If there's more than one tab then also show the tabs panel.
         if (queuedTabCount > 1) {
@@ -1007,6 +1068,13 @@ public class BrowserApp extends GeckoApp
                     showNormalTabs();
                 }
             });
+        }
+    }
+
+    private void openMultipleTabsFromIntent(final Intent intent) {
+        final List<String> urls = intent.getStringArrayListExtra("urls");
+        if (urls != null) {
+            openUrls(urls);
         }
     }
 
@@ -1020,23 +1088,17 @@ public class BrowserApp extends GeckoApp
         // Needed for Adjust to get accurate session measurements
         AdjustConstants.getAdjustHelper().onResume();
 
-        final String args = ContextUtils.getStringExtra(getIntent(), "args");
-        // If an external intent tries to start Fennec in guest mode, and it's not already
-        // in guest mode, this will change modes before opening the url.
-        // NOTE: OnResume is called twice sometimes when showing on the lock screen.
-        final boolean enableGuestSession = GuestSession.shouldUse(this, args);
-        final boolean inGuestSession = GeckoProfile.get(this).inGuestMode();
-        if (enableGuestSession != inGuestSession) {
-            doRestart(getIntent());
-            return;
+        if (!mHasResumed) {
+            EventDispatcher.getInstance().unregisterGeckoThreadListener((GeckoEventListener) this,
+                    "Prompt:ShowTop");
+            mHasResumed = true;
         }
-
-        EventDispatcher.getInstance().unregisterGeckoThreadListener((GeckoEventListener) this,
-            "Prompt:ShowTop");
 
         processTabQueue();
 
         mScreenshotObserver.start();
+
+        mAddToHomeScreenPromotion.resume();
     }
 
     @Override
@@ -1049,11 +1111,16 @@ public class BrowserApp extends GeckoApp
         // Needed for Adjust to get accurate session measurements
         AdjustConstants.getAdjustHelper().onPause();
 
-        // Register for Prompt:ShowTop so we can foreground this activity even if it's hidden.
-        EventDispatcher.getInstance().registerGeckoThreadListener((GeckoEventListener) this,
+        if (mHasResumed) {
+            // Register for Prompt:ShowTop so we can foreground this activity even if it's hidden.
+            EventDispatcher.getInstance().registerGeckoThreadListener((GeckoEventListener) this,
                 "Prompt:ShowTop");
+            mHasResumed = false;
+        }
 
         mScreenshotObserver.stop();
+
+        mAddToHomeScreenPromotion.pause();
     }
 
     @Override
@@ -1085,6 +1152,11 @@ public class BrowserApp extends GeckoApp
                     // have been shown.
                     GuestSession.hideNotification(BrowserApp.this);
                 }
+
+                // It'd be better to launch this once, in onCreate, but there's ambiguity for when the
+                // profile is created so we run here instead. Don't worry, call start short-circuits pretty fast.
+                final SharedPreferences sharedPrefs = GeckoSharedPrefs.forProfileName(BrowserApp.this, profile.getName());
+                FileCleanupController.startIfReady(BrowserApp.this, sharedPrefs, profile.getDir().getAbsolutePath());
             }
         });
 
@@ -1112,20 +1184,6 @@ public class BrowserApp extends GeckoApp
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        // If Home Page is visible, the layerView surface has to be visible
-        // to avoid a surface issue in Gingerbread phones.
-        // We need to do this on the next iteration.
-        // See bugs: 1058027 and 1003123
-        if (mInitialized && hasFocus &&
-            Versions.preHC && isHomePagerVisible() &&
-            mLayerView.getVisibility() != View.VISIBLE){
-            ThreadUtils.postToUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mLayerView.showSurface();
-                }
-            });
-        }
 
         // Sending a message to the toolbar when the browser window gains focus
         // This is needed for qr code input
@@ -1226,7 +1284,7 @@ public class BrowserApp extends GeckoApp
                 int itemId = -1;
                 try {
                   itemId = new JSONObject(result).getInt("button");
-                } catch(JSONException ex) {
+                } catch (JSONException ex) {
                     Log.e(LOGTAG, "Exception reading bookmark prompt result", ex);
                 }
 
@@ -1340,10 +1398,7 @@ public class BrowserApp extends GeckoApp
                 } catch (JSONException e) {
                     Log.e(LOGTAG, "error building json arguments", e);
                 }
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Feeds:Subscribe", args.toString()));
-                if (Versions.preHC) {
-                    Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.CONTEXT_MENU, "subscribe");
-                }
+                GeckoAppShell.notifyObservers("Feeds:Subscribe", args.toString());
             }
             return true;
         }
@@ -1359,11 +1414,7 @@ public class BrowserApp extends GeckoApp
                     Log.e(LOGTAG, "error building json arguments", e);
                     return true;
                 }
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("SearchEngines:Add", args.toString()));
-
-                if (Versions.preHC) {
-                    Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.CONTEXT_MENU, "add_search_engine");
-                }
+                GeckoAppShell.notifyObservers("SearchEngines:Add", args.toString());
             }
             return true;
         }
@@ -1410,6 +1461,7 @@ public class BrowserApp extends GeckoApp
 
     @Override
     public void setAccessibilityEnabled(boolean enabled) {
+        super.setAccessibilityEnabled(enabled);
         mDynamicToolbar.setAccessibilityEnabled(enabled);
     }
 
@@ -1474,10 +1526,10 @@ public class BrowserApp extends GeckoApp
             "CharEncoding:State",
             "Download:AndroidDownloadManager",
             "Experiments:GetActive",
+            "Experiments:SetOverride",
+            "Experiments:ClearOverride",
             "Favicon:CacheLoad",
-            "Feedback:LastUrl",
             "Feedback:MaybeLater",
-            "Feedback:OpenPlayStore",
             "Menu:Add",
             "Menu:Remove",
             "Sanitize:ClearHistory",
@@ -1523,10 +1575,6 @@ public class BrowserApp extends GeckoApp
     public void onDoorHangerShow() {
         mDynamicToolbar.setVisible(true, VisibilityTransition.ANIMATE);
 
-        if (Versions.preHC) {
-            return;
-        }
-
         final Animator alphaAnimator = ObjectAnimator.ofFloat(mDoorhangerOverlay, "alpha", 1);
         alphaAnimator.setDuration(250);
 
@@ -1535,10 +1583,6 @@ public class BrowserApp extends GeckoApp
 
     @Override
     public void onDoorHangerHide() {
-        if (Versions.preHC) {
-            return;
-        }
-
         final Animator alphaAnimator = ObjectAnimator.ofFloat(mDoorhangerOverlay, "alpha", 0);
         alphaAnimator.setDuration(200);
 
@@ -1720,8 +1764,7 @@ public class BrowserApp extends GeckoApp
                     new AlertDialog.OnClickListener() {
                 @Override
                 public void onClick(final DialogInterface dialog, final int which) {
-                    GeckoAppShell.sendEventToGecko(
-                        GeckoEvent.createBroadcastEvent("CharEncoding:Set", codeArray[which]));
+                    GeckoAppShell.notifyObservers("CharEncoding:Set", codeArray[which]);
                     dialog.dismiss();
                 }
             });
@@ -1756,21 +1799,15 @@ public class BrowserApp extends GeckoApp
             final List<String> experiments = SwitchBoard.getActiveExperiments(this);
             final JSONArray json = new JSONArray(experiments);
             callback.sendSuccess(json.toString());
+        } else if ("Experiments:SetOverride".equals(event)) {
+            Experiments.setOverride(getContext(), message.getString("name"), message.getBoolean("isEnabled"));
+        } else if ("Experiments:ClearOverride".equals(event)) {
+            Experiments.clearOverride(getContext(), message.getString("name"));
         } else if ("Favicon:CacheLoad".equals(event)) {
             final String url = message.getString("url");
             getFaviconFromCache(callback, url);
-
-        } else if ("Feedback:LastUrl".equals(event)) {
-            getLastUrl(callback);
-
         } else if ("Feedback:MaybeLater".equals(event)) {
             resetFeedbackLaunchCount();
-
-        } else if ("Feedback:OpenPlayStore".equals(event)) {
-            final Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse("market://details?id=" + getPackageName()));
-            startActivity(intent);
-
         } else if ("Menu:Add".equals(event)) {
             final MenuItemInfo info = new MenuItemInfo();
             info.label = message.getString("name");
@@ -1821,9 +1858,7 @@ public class BrowserApp extends GeckoApp
             final ContentResolver cr = getContentResolver();
             Telemetry.addToHistogram("PLACES_PAGES_COUNT", db.getCount(cr, "history"));
             Telemetry.addToHistogram("FENNEC_BOOKMARKS_COUNT", db.getCount(cr, "bookmarks"));
-            Telemetry.addToHistogram("FENNEC_READING_LIST_COUNT", db.getReadingListAccessor().getCount(cr));
             Telemetry.addToHistogram("BROWSER_IS_USER_DEFAULT", (isDefaultBrowser(Intent.ACTION_VIEW) ? 1 : 0));
-            Telemetry.addToHistogram("FENNEC_TABQUEUE_ENABLED", (TabQueueHelper.isTabQueueEnabled(BrowserApp.this) ? 1 : 0));
             Telemetry.addToHistogram("FENNEC_CUSTOM_HOMEPAGE", (TextUtils.isEmpty(getHomepage()) ? 0 : 1));
             final SharedPreferences prefs = GeckoSharedPrefs.forProfile(getContext());
             final boolean hasCustomHomepanels = prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY) || prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY_OLD);
@@ -2011,8 +2046,13 @@ public class BrowserApp extends GeckoApp
                 }
 
                 if (AppConstants.MOZ_ANDROID_DOWNLOAD_CONTENT_SERVICE) {
+                    // TODO: Better scheduling of sync action (Bug 1257492)
+                    DownloadContentService.startSync(this);
+
                     DownloadContentService.startVerification(this);
                 }
+
+                FeedService.setup(this);
 
                 super.handleMessage(event, message);
             } else if (event.equals("Gecko:Ready")) {
@@ -2163,8 +2203,42 @@ public class BrowserApp extends GeckoApp
 
     @Override
     public String getHomepage() {
-        final SharedPreferences prefs = GeckoSharedPrefs.forProfile(getContext());
-        return prefs.getString(GeckoPreferences.PREFS_HOMEPAGE, null);
+        final SharedPreferences preferences = GeckoSharedPrefs.forProfile(this);
+        final String homepagePreference = preferences.getString(GeckoPreferences.PREFS_HOMEPAGE, null);
+
+        final boolean readFromPartnerProvider = preferences.getBoolean(
+                GeckoPreferences.PREFS_READ_PARTNER_CUSTOMIZATIONS_PROVIDER, false);
+
+        if (!readFromPartnerProvider) {
+            // Just return homepage as set by the user (or null).
+            return homepagePreference;
+        }
+
+
+        final String homepagePrevious = preferences.getString(GeckoPreferences.PREFS_HOMEPAGE_PARTNER_COPY, null);
+        if (homepagePrevious != null && !homepagePrevious.equals(homepagePreference)) {
+            // We have read the homepage once and the user has changed it since then. Just use the
+            // value the user has set.
+            return homepagePreference;
+        }
+
+        // This is the first time we read the partner provider or the value has not been altered by the user
+        final String homepagePartner = PartnerBrowserCustomizationsClient.getHomepage(this);
+
+        if (homepagePartner == null) {
+            // We didn't get anything from the provider. Let's just use what we have locally.
+            return homepagePreference;
+        }
+
+        if (!homepagePartner.equals(homepagePrevious)) {
+            // We have a new value. Update the preferences.
+            preferences.edit()
+                    .putString(GeckoPreferences.PREFS_HOMEPAGE, homepagePartner)
+                    .putString(GeckoPreferences.PREFS_HOMEPAGE_PARTNER_COPY, homepagePartner)
+                    .apply();
+        }
+
+        return homepagePartner;
     }
 
     @Override
@@ -2394,7 +2468,8 @@ public class BrowserApp extends GeckoApp
 
         mBrowserToolbar.startEditing(url, animator);
 
-        final boolean isUserSearchTerm = !TextUtils.isEmpty(selectedTab.getUserRequested());
+        final boolean isUserSearchTerm = selectedTab != null &&
+                !TextUtils.isEmpty(selectedTab.getUserRequested());
         if (isUserSearchTerm && SwitchBoard.isInExperiment(getContext(), Experiments.SEARCH_TERM)) {
             showBrowserSearchAfterAnimation(animator);
         } else {
@@ -2652,6 +2727,14 @@ public class BrowserApp extends GeckoApp
 
             case ACTIVITY_REQUEST_TAB_QUEUE:
                 TabQueueHelper.processTabQueuePromptResponse(resultCode, this);
+                break;
+
+            case ACTIVITY_REQUEST_FIRST_READERVIEW_BOOKMARK:
+                if (resultCode == ACTIVITY_RESULT_FIRST_READERVIEW_BOOKMARKS_GOTO_BOOKMARKS) {
+                    openUrlAndStopEditing("about:home?panel=" + HomeConfig.getIdForBuiltinPanelType(PanelType.BOOKMARKS));
+                } else if (resultCode == ACTIVITY_RESULT_FIRST_READERVIEW_BOOKMARKS_IGNORE) {
+                    showReaderModeBookmarkAddedSnackbar();
+                }
                 break;
 
             default:
@@ -2918,12 +3001,7 @@ public class BrowserApp extends GeckoApp
                 SnackbarHelper.dismissCurrentSnackbar();
             }
 
-            // Only try to hide the button toast if it's already inflated and if we are starting a tap action.
-            // By only hiding a toast at the start of a tap action, a button toast opened in response to a tap
-            // action is not immediately hidden as the tap action continues.
-            if (event.getActionMasked() == MotionEvent.ACTION_DOWN && mToast != null) {
-                mToast.hide(false, ButtonToast.ReasonHidden.TOUCH_OUTSIDE);
-            }
+
 
             // We need to account for scroll state for the touched view otherwise
             // tapping on an "empty" part of the view will still be considered a
@@ -3026,7 +3104,7 @@ public class BrowserApp extends GeckoApp
         item.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Menu:Clicked", Integer.toString(info.id - ADDON_MENU_OFFSET)));
+                GeckoAppShell.notifyObservers("Menu:Clicked", Integer.toString(info.id - ADDON_MENU_OFFSET));
                 return true;
             }
         });
@@ -3128,12 +3206,10 @@ public class BrowserApp extends GeckoApp
         // Action providers are available only ICS+.
         if (Versions.feature14Plus) {
             GeckoMenuItem share = (GeckoMenuItem) mMenu.findItem(R.id.share);
-            final GeckoMenuItem quickShare = (GeckoMenuItem) mMenu.findItem(R.id.quickshare);
 
             GeckoActionProvider provider = GeckoActionProvider.getForType(GeckoActionProvider.DEFAULT_MIME_TYPE, this);
 
             share.setActionProvider(provider);
-            quickShare.setActionProvider(provider);
         }
 
         return true;
@@ -3227,11 +3303,9 @@ public class BrowserApp extends GeckoApp
         Tab tab = Tabs.getInstance().getSelectedTab();
         // Unlike other menu items, the bookmark star is not tinted. See {@link ThemedImageButton#setTintedDrawable}.
         final MenuItem bookmark = aMenu.findItem(R.id.bookmark);
-        final MenuItem reader = aMenu.findItem(R.id.reading_list);
         final MenuItem back = aMenu.findItem(R.id.back);
         final MenuItem forward = aMenu.findItem(R.id.forward);
         final MenuItem share = aMenu.findItem(R.id.share);
-        final MenuItem quickShare = aMenu.findItem(R.id.quickshare);
         final MenuItem bookmarksList = aMenu.findItem(R.id.bookmarks_list);
         final MenuItem historyList = aMenu.findItem(R.id.history_list);
         final MenuItem saveAsPDF = aMenu.findItem(R.id.save_as_pdf);
@@ -3246,20 +3320,19 @@ public class BrowserApp extends GeckoApp
         // or if the user has explicitly enabled the clear on shutdown pref.
         // (We check the pref last to save the pref read.)
         // In ICS+, it's easy to kill an app through the task switcher.
-        final boolean visible = Versions.preICS ||
-                                HardwareUtils.isTelevision() ||
+        final boolean visible = HardwareUtils.isTelevision() ||
                                 !PrefUtils.getStringSet(GeckoSharedPrefs.forProfile(this),
                                                         ClearOnShutdownPref.PREF,
                                                         new HashSet<String>()).isEmpty();
         aMenu.findItem(R.id.quit).setVisible(visible);
 
+        // If tab data is unavailable we disable most of the context menu and related items and
+        // return early.
         if (tab == null || tab.getURL() == null) {
             bookmark.setEnabled(false);
-            reader.setEnabled(false);
             back.setEnabled(false);
             forward.setEnabled(false);
             share.setEnabled(false);
-            quickShare.setEnabled(false);
             saveAsPDF.setEnabled(false);
             print.setEnabled(false);
             findInPage.setEnabled(false);
@@ -3277,26 +3350,22 @@ public class BrowserApp extends GeckoApp
             return true;
         }
 
+        // If tab data IS available we need to manually enable items as necessary. They may have
+        // been disabled if returning early above, hence every item must be toggled, even if it's
+        // always expected to be enabled (e.g. the bookmark star is always enabled, except when
+        // we don't have tab data).
+
         final boolean inGuestMode = GeckoProfile.get(this).inGuestMode();
 
-        final boolean isAboutReader = AboutPages.isAboutReader(tab.getURL());
-        bookmark.setEnabled(!isAboutReader);
+        bookmark.setEnabled(true); // Might have been disabled above, ensure it's reenabled
         bookmark.setVisible(!inGuestMode);
         bookmark.setCheckable(true);
         bookmark.setChecked(tab.isBookmark());
         bookmark.setTitle(resolveBookmarkTitleID(tab.isBookmark()));
 
-        reader.setEnabled(isAboutReader || !AboutPages.isAboutPage(tab.getURL()));
-        reader.setVisible(!inGuestMode);
-        reader.setCheckable(true);
-        final boolean isPageInReadingList = tab.isInReadingList();
-        reader.setChecked(isPageInReadingList);
-        reader.setTitle(resolveReadingListTitleID(isPageInReadingList));
-
         if (Versions.feature11Plus) {
             // We don't use icons on GB builds so not resolving icons might conserve resources.
             bookmark.setIcon(resolveBookmarkIconID(tab.isBookmark()));
-            reader.setIcon(resolveReadingListIconID(isPageInReadingList));
         }
 
         back.setEnabled(tab.canDoBack());
@@ -3363,9 +3432,6 @@ public class BrowserApp extends GeckoApp
 
         // Action providers are available only ICS+.
         if (Versions.feature14Plus) {
-            quickShare.setVisible(shareVisible);
-            quickShare.setEnabled(shareEnabled);
-
             // This provider also applies to the quick share menu item.
             final GeckoActionProvider provider = ((GeckoMenuItem) share).getGeckoActionProvider();
             if (provider != null) {
@@ -3435,7 +3501,7 @@ public class BrowserApp extends GeckoApp
 
         charEncoding.setVisible(GeckoPreferences.getCharEncodingState());
 
-        if (mProfile.inGuestMode()) {
+        if (getProfile().inGuestMode()) {
             exitGuestMode.setVisible(true);
         } else {
             enterGuestMode.setVisible(true);
@@ -3449,16 +3515,11 @@ public class BrowserApp extends GeckoApp
             MenuUtils.safeSetVisible(aMenu, R.id.addons, false);
         }
 
-        if (!SwitchBoard.isInExperiment(this, Experiments.BOOKMARKS_HISTORY_MENU)) {
-            bookmarksList.setVisible(false);
-            historyList.setVisible(false);
-        } else {
-            // Hide panel menu items if the panels themselves are hidden.
-            // If we don't know whether the panels are hidden, just show the menu items.
-            final SharedPreferences prefs = GeckoSharedPrefs.forProfile(getContext());
-            bookmarksList.setVisible(prefs.getBoolean(HomeConfig.PREF_KEY_BOOKMARKS_PANEL_ENABLED, true));
-            historyList.setVisible(prefs.getBoolean(HomeConfig.PREF_KEY_HISTORY_PANEL_ENABLED, true));
-        }
+        // Hide panel menu items if the panels themselves are hidden.
+        // If we don't know whether the panels are hidden, just show the menu items.
+        final SharedPreferences prefs = GeckoSharedPrefs.forProfile(getContext());
+        bookmarksList.setVisible(prefs.getBoolean(HomeConfig.PREF_KEY_BOOKMARKS_PANEL_ENABLED, true));
+        historyList.setVisible(prefs.getBoolean(HomeConfig.PREF_KEY_HISTORY_PANEL_ENABLED, true));
 
         return true;
     }
@@ -3473,14 +3534,6 @@ public class BrowserApp extends GeckoApp
 
     private int resolveBookmarkTitleID(final boolean isBookmark) {
         return (isBookmark ? R.string.bookmark_remove : R.string.bookmark);
-    }
-
-    private int resolveReadingListIconID(final boolean isInReadingList) {
-        return (isInReadingList ? R.drawable.ic_menu_reader_remove : R.drawable.ic_menu_reader_add);
-    }
-
-    private int resolveReadingListTitleID(final boolean isInReadingList) {
-        return (isInReadingList ? R.string.reading_list_remove : R.string.overlay_share_reading_list_btn_label);
     }
 
     @Override
@@ -3504,8 +3557,15 @@ public class BrowserApp extends GeckoApp
         if (itemId == R.id.bookmark) {
             tab = Tabs.getInstance().getSelectedTab();
             if (tab != null) {
+                final String extra;
+                if (AboutPages.isAboutReader(tab.getURL())) {
+                    extra = "bookmark_reader";
+                } else {
+                    extra = "bookmark";
+                }
+
                 if (item.isChecked()) {
-                    Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.MENU, "bookmark");
+                    Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.MENU, extra);
                     tab.removeBookmark();
                     item.setTitle(resolveBookmarkTitleID(false));
                     if (Versions.feature11Plus) {
@@ -3513,36 +3573,12 @@ public class BrowserApp extends GeckoApp
                         item.setIcon(resolveBookmarkIconID(false));
                     }
                 } else {
-                    Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, "bookmark");
+                    Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, extra);
                     tab.addBookmark();
                     item.setTitle(resolveBookmarkTitleID(true));
                     if (Versions.feature11Plus) {
                         // We don't use icons on GB builds so not resolving icons might conserve resources.
                         item.setIcon(resolveBookmarkIconID(true));
-                    }
-                }
-            }
-            return true;
-        }
-
-        if (itemId == R.id.reading_list) {
-            tab = Tabs.getInstance().getSelectedTab();
-            if (tab != null) {
-                if (item.isChecked()) {
-                    Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.MENU, "reading_list");
-                    tab.removeFromReadingList();
-                    item.setTitle(resolveReadingListTitleID(false));
-                    if (Versions.feature11Plus) {
-                        // We don't use icons on GB builds so not resolving icons might conserve resources.
-                        item.setIcon(resolveReadingListIconID(false));
-                    }
-                } else {
-                    Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, "reading_list");
-                    tab.addToReadingList();
-                    item.setTitle(resolveReadingListTitleID(true));
-                    if (Versions.feature11Plus) {
-                        // We don't use icons on GB builds so not resolving icons might conserve resources.
-                        item.setIcon(resolveReadingListIconID(true));
                     }
                 }
             }
@@ -3561,7 +3597,7 @@ public class BrowserApp extends GeckoApp
                     // Context: Sharing via chrome list (no explicit session is active)
                     Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.LIST, "menu");
 
-                    GeckoAppShell.openUriExternal(url, "text/plain", "", "", Intent.ACTION_SEND, tab.getDisplayTitle(), false);
+                    IntentHelper.openUriExternal(url, "text/plain", "", "", Intent.ACTION_SEND, tab.getDisplayTitle(), false);
                 }
             }
             return true;
@@ -3591,20 +3627,18 @@ public class BrowserApp extends GeckoApp
         if (itemId == R.id.bookmarks_list) {
             final String url = AboutPages.getURLForBuiltinPanelType(PanelType.BOOKMARKS);
             Tabs.getInstance().loadUrl(url);
-            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, Experiments.BOOKMARKS_HISTORY_MENU);
             return true;
         }
 
         if (itemId == R.id.history_list) {
-            final String url = AboutPages.getURLForBuiltinPanelType(PanelType.HISTORY);
+            final String url = AboutPages.getURLForBuiltinPanelType(PanelType.COMBINED_HISTORY);
             Tabs.getInstance().loadUrl(url);
-            Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, Experiments.BOOKMARKS_HISTORY_MENU);
             return true;
         }
 
         if (itemId == R.id.save_as_pdf) {
             Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, "pdf");
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("SaveAs:PDF", null));
+            GeckoAppShell.notifyObservers("SaveAs:PDF", null);
             return true;
         }
 
@@ -3649,7 +3683,7 @@ public class BrowserApp extends GeckoApp
         }
 
         if (itemId == R.id.char_encoding) {
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("CharEncoding:Get", null));
+            GeckoAppShell.notifyObservers("CharEncoding:Get", null);
             return true;
         }
 
@@ -3669,7 +3703,7 @@ public class BrowserApp extends GeckoApp
             } catch (JSONException e) {
                 Log.e(LOGTAG, "error building json arguments", e);
             }
-            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("DesktopMode:Change", args.toString()));
+            GeckoAppShell.notifyObservers("DesktopMode:Change", args.toString());
             return true;
         }
 
@@ -3737,7 +3771,7 @@ public class BrowserApp extends GeckoApp
 
                         doRestart(args);
                     }
-                } catch(JSONException ex) {
+                } catch (JSONException ex) {
                     Log.e(LOGTAG, "Exception reading guest mode prompt result", ex);
                 }
             }
@@ -3793,6 +3827,7 @@ public class BrowserApp extends GeckoApp
         final boolean isViewAction = Intent.ACTION_VIEW.equals(action);
         final boolean isBookmarkAction = GeckoApp.ACTION_HOMESCREEN_SHORTCUT.equals(action);
         final boolean isTabQueueAction = TabQueueHelper.LOAD_URLS_ACTION.equals(action);
+        final boolean isViewMultipleAction = ACTION_VIEW_MULTIPLE.equals(action);
 
         if (mInitialized && (isViewAction || isBookmarkAction)) {
             // Dismiss editing mode if the user is loading a URL from an external app.
@@ -3833,6 +3868,13 @@ public class BrowserApp extends GeckoApp
             });
         }
 
+        // Custom intent action for opening multiple URLs at once
+        if (isViewMultipleAction) {
+            openMultipleTabsFromIntent(intent);
+        }
+
+        contentNotificationsDelegate.onNewIntent(this, intent);
+
         if (!mInitialized || !Intent.ACTION_MAIN.equals(action)) {
             return;
         }
@@ -3852,11 +3894,27 @@ public class BrowserApp extends GeckoApp
 
                 // If we've reached our magic number, show the feedback page.
                 if (launchCount == FEEDBACK_LAUNCH_COUNT) {
-                    GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Feedback:Show", null));
+                    GeckoAppShell.notifyObservers("Feedback:Show", null);
                 }
             }
         } finally {
             StrictMode.setThreadPolicy(savedPolicy);
+        }
+    }
+
+    public void openUrls(List<String> urls) {
+        try {
+            JSONArray array = new JSONArray();
+            for (String url : urls) {
+                array.put(url);
+            }
+
+            JSONObject object = new JSONObject();
+            object.put("urls", array);
+
+            GeckoAppShell.notifyObservers("Tabs:OpenMultiple", object.toString());
+        } catch (JSONException e) {
+            Log.e(LOGTAG, "Unable to create JSON for opening multiple URLs");
         }
     }
 
@@ -3888,33 +3946,6 @@ public class BrowserApp extends GeckoApp
         settings.edit().putInt(getPackageName() + ".feedback_launch_count", 0).apply();
     }
 
-    private void getLastUrl(final EventCallback callback) {
-        final BrowserDB db = getProfile().getDB();
-        (new UIAsyncTask.WithoutParams<String>(ThreadUtils.getBackgroundHandler()) {
-            @Override
-            public synchronized String doInBackground() {
-                // Get the most recent URL stored in browser history.
-                final Cursor c = db.getRecentHistory(getContentResolver(), 1);
-                if (c == null) {
-                    return "";
-                }
-                try {
-                    if (c.moveToFirst()) {
-                        return c.getString(c.getColumnIndexOrThrow(Combined.URL));
-                    }
-                    return "";
-                } finally {
-                    c.close();
-                }
-            }
-
-            @Override
-            public void onPostExecute(String url) {
-                callback.sendSuccess(url);
-            }
-        }).execute();
-    }
-
     // HomePager.OnUrlOpenListener
     @Override
     public void onUrlOpen(String url, EnumSet<OnUrlOpenListener.Flags> flags) {
@@ -3922,9 +3953,22 @@ public class BrowserApp extends GeckoApp
             Intent intent = new Intent(Intent.ACTION_VIEW);
             intent.setData(Uri.parse(url));
             startActivity(intent);
-        } else if (!maybeSwitchToTab(url, flags)) {
-            openUrlAndStopEditing(url);
-            clearSelectedTabApplicationId();
+        } else {
+            // By default this listener is used for lists where the offline reader-view icon
+            // is shown - hence we need to redirect to the reader-view page by default.
+            // However there are some cases where we might not want to use this, e.g.
+            // for topsites where we do not indicate that a page is an offline reader-view bookmark too.
+            final String pageURL;
+            if (!flags.contains(OnUrlOpenListener.Flags.NO_READER_VIEW)) {
+                pageURL = SavedReaderViewHelper.getReaderURLIfCached(getContext(), url);
+            } else {
+                pageURL = url;
+            }
+
+            if (!maybeSwitchToTab(pageURL, flags)) {
+                openUrlAndStopEditing(pageURL);
+                clearSelectedTabApplicationId();
+            }
         }
     }
 
@@ -3938,6 +3982,10 @@ public class BrowserApp extends GeckoApp
             throw new IllegalArgumentException("flags must not be null");
         }
 
+        // We only use onUrlOpenInBackgroundListener for the homepanel context menus, hence
+        // we should always be checking whether we want the readermode version
+        final String pageURL = SavedReaderViewHelper.getReaderURLIfCached(getContext(), url);
+
         final boolean isPrivate = flags.contains(OnUrlOpenInBackgroundListener.Flags.PRIVATE);
 
         int loadFlags = Tabs.LOADURL_NEW_TAB | Tabs.LOADURL_BACKGROUND;
@@ -3945,7 +3993,7 @@ public class BrowserApp extends GeckoApp
             loadFlags |= Tabs.LOADURL_PRIVATE;
         }
 
-        final Tab newTab = Tabs.getInstance().loadUrl(url, loadFlags);
+        final Tab newTab = Tabs.getInstance().loadUrl(pageURL, loadFlags);
 
         // We switch to the desired tab by unique ID, which closes any window
         // for a race between opening the tab and closing it, and switching to
@@ -3992,11 +4040,6 @@ public class BrowserApp extends GeckoApp
     @Override
     public int getLayout() { return R.layout.gecko_app; }
 
-    @Override
-    protected String getDefaultProfileName() throws NoMozillaDirectoryException {
-        return GeckoProfile.getDefaultProfileName(this);
-    }
-
     // For use from tests only.
     @RobocopTarget
     public ReadingListHelper getReadingListHelper() {
@@ -4042,12 +4085,9 @@ public class BrowserApp extends GeckoApp
             // If the toolbar is dynamic and not currently showing, just slide it in
             if (mDynamicToolbar.isEnabled() && toolbar.getToolbarTranslation() != 0) {
                 mDynamicToolbar.setTemporarilyVisible(true, VisibilityTransition.ANIMATE);
-            } else {
-                // Otherwise, we animate the actionbar itself
-                mActionBar.animateIn();
             }
-
             mDynamicToolbar.setPinned(true, PinReason.ACTION_MODE);
+
         } else {
             // Otherwise, we're already showing an action mode. Just finish it and show the new one
             mActionMode.finish();

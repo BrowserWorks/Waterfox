@@ -20,10 +20,10 @@
 #include "mozilla/WeakPtr.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/Promise.h"
-#include "mozilla/dom/ServiceWorkerBinding.h" // For ServiceWorkerState
 #include "mozilla/dom/ServiceWorkerCommon.h"
 #include "mozilla/dom/ServiceWorkerRegistrar.h"
 #include "mozilla/dom/ServiceWorkerRegistrarTypes.h"
+#include "mozilla/dom/workers/ServiceWorkerRegistrationInfo.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "nsClassHashtable.h"
 #include "nsDataHashtable.h"
@@ -44,131 +44,11 @@ class ServiceWorkerRegistrationListener;
 
 namespace workers {
 
-class ServiceWorker;
 class ServiceWorkerClientInfo;
 class ServiceWorkerInfo;
-class ServiceWorkerJob;
 class ServiceWorkerJobQueue;
 class ServiceWorkerManagerChild;
 class ServiceWorkerPrivate;
-
-class ServiceWorkerRegistrationInfo final
-  : public nsIServiceWorkerRegistrationInfo
-{
-  uint32_t mControlledDocumentsCounter;
-
-  enum
-  {
-    NoUpdate,
-    NeedTimeCheckAndUpdate,
-    NeedUpdate
-  } mUpdateState;
-
-  uint64_t mLastUpdateCheckTime;
-
-  virtual ~ServiceWorkerRegistrationInfo();
-
-public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSISERVICEWORKERREGISTRATIONINFO
-
-  nsCString mScope;
-
-  nsCOMPtr<nsIPrincipal> mPrincipal;
-
-  RefPtr<ServiceWorkerInfo> mActiveWorker;
-  RefPtr<ServiceWorkerInfo> mWaitingWorker;
-  RefPtr<ServiceWorkerInfo> mInstallingWorker;
-
-  nsTArray<nsCOMPtr<nsIServiceWorkerRegistrationInfoListener>> mListeners;
-
-  // According to the spec, Soft Update shouldn't queue an update job
-  // if the registration queue is not empty. Because our job queue
-  // works slightly different, we use a flag to determine if the registration
-  // is already updating.
-  bool mUpdating;
-
-  // When unregister() is called on a registration, it is not immediately
-  // removed since documents may be controlled. It is marked as
-  // pendingUninstall and when all controlling documents go away, removed.
-  bool mPendingUninstall;
-
-  ServiceWorkerRegistrationInfo(const nsACString& aScope,
-                                nsIPrincipal* aPrincipal);
-
-  already_AddRefed<ServiceWorkerInfo>
-  Newest() const
-  {
-    RefPtr<ServiceWorkerInfo> newest;
-    if (mInstallingWorker) {
-      newest = mInstallingWorker;
-    } else if (mWaitingWorker) {
-      newest = mWaitingWorker;
-    } else {
-      newest = mActiveWorker;
-    }
-
-    return newest.forget();
-  }
-
-  already_AddRefed<ServiceWorkerInfo>
-  GetServiceWorkerInfoById(uint64_t aId);
-
-  void
-  StartControllingADocument()
-  {
-    ++mControlledDocumentsCounter;
-  }
-
-  void
-  StopControllingADocument()
-  {
-    MOZ_ASSERT(mControlledDocumentsCounter);
-    --mControlledDocumentsCounter;
-  }
-
-  bool
-  IsControllingDocuments() const
-  {
-    return mActiveWorker && mControlledDocumentsCounter;
-  }
-
-  void
-  Clear();
-
-  void
-  PurgeActiveWorker();
-
-  void
-  TryToActivateAsync();
-
-  void
-  TryToActivate();
-
-  void
-  Activate();
-
-  void
-  FinishActivate(bool aSuccess);
-
-  void
-  RefreshLastUpdateCheckTime();
-
-  bool
-  IsLastUpdateCheckTimeOverOneDay() const;
-
-  void
-  NotifyListenersOnChange();
-
-  void
-  MaybeScheduleTimeCheckAndUpdate();
-
-  void
-  MaybeScheduleUpdate();
-
-  bool
-  CheckAndClearIfUpdateNeeded();
-};
 
 class ServiceWorkerUpdateFinishCallback
 {
@@ -184,126 +64,6 @@ public:
 
   virtual
   void UpdateFailed(ErrorResult& aStatus) = 0;
-};
-
-/*
- * Wherever the spec treats a worker instance and a description of said worker
- * as the same thing; i.e. "Resolve foo with
- * _GetNewestWorker(serviceWorkerRegistration)", we represent the description
- * by this class and spawn a ServiceWorker in the right global when required.
- */
-class ServiceWorkerInfo final : public nsIServiceWorkerInfo
-{
-private:
-  nsCOMPtr<nsIPrincipal> mPrincipal;
-  const nsCString mScope;
-  const nsCString mScriptSpec;
-  const nsString mCacheName;
-  ServiceWorkerState mState;
-
-  // This id is shared with WorkerPrivate to match requests issued by service
-  // workers to their corresponding serviceWorkerInfo.
-  uint64_t mServiceWorkerID;
-
-  // We hold rawptrs since the ServiceWorker constructor and destructor ensure
-  // addition and removal.
-  // There is a high chance of there being at least one ServiceWorker
-  // associated with this all the time.
-  AutoTArray<ServiceWorker*, 1> mInstances;
-
-  RefPtr<ServiceWorkerPrivate> mServiceWorkerPrivate;
-  bool mSkipWaitingFlag;
-
-  ~ServiceWorkerInfo();
-
-  // Generates a unique id for the service worker, with zero being treated as
-  // invalid.
-  uint64_t
-  GetNextID() const;
-
-public:
-  NS_DECL_ISUPPORTS
-  NS_DECL_NSISERVICEWORKERINFO
-
-  class ServiceWorkerPrivate*
-  WorkerPrivate() const
-  {
-    MOZ_ASSERT(mServiceWorkerPrivate);
-    return mServiceWorkerPrivate;
-  }
-
-  nsIPrincipal*
-  GetPrincipal() const
-  {
-    return mPrincipal;
-  }
-
-  const nsCString&
-  ScriptSpec() const
-  {
-    return mScriptSpec;
-  }
-
-  const nsCString&
-  Scope() const
-  {
-    return mScope;
-  }
-
-  bool SkipWaitingFlag() const
-  {
-    AssertIsOnMainThread();
-    return mSkipWaitingFlag;
-  }
-
-  void SetSkipWaitingFlag()
-  {
-    AssertIsOnMainThread();
-    mSkipWaitingFlag = true;
-  }
-
-  ServiceWorkerInfo(nsIPrincipal* aPrincipal,
-                    const nsACString& aScope,
-                    const nsACString& aScriptSpec,
-                    const nsAString& aCacheName);
-
-  ServiceWorkerState
-  State() const
-  {
-    return mState;
-  }
-
-  const nsString&
-  CacheName() const
-  {
-    return mCacheName;
-  }
-
-  uint64_t
-  ID() const
-  {
-    return mServiceWorkerID;
-  }
-
-  void
-  UpdateState(ServiceWorkerState aState);
-
-  // Only used to set initial state when loading from disk!
-  void
-  SetActivateStateUncheckedWithoutEvent(ServiceWorkerState aState)
-  {
-    AssertIsOnMainThread();
-    mState = aState;
-  }
-
-  void
-  AppendWorker(ServiceWorker* aWorker);
-
-  void
-  RemoveWorker(ServiceWorker* aWorker);
-
-  already_AddRefed<ServiceWorker>
-  GetOrCreateInstance(nsPIDOMWindowInner* aWindow);
 };
 
 #define NS_SERVICEWORKERMANAGER_IMPL_IID                 \
@@ -327,13 +87,10 @@ class ServiceWorkerManager final
   friend class GetReadyPromiseRunnable;
   friend class GetRegistrationsRunnable;
   friend class GetRegistrationRunnable;
-  friend class ServiceWorkerJobQueue;
-  friend class ServiceWorkerInstallJob;
-  friend class ServiceWorkerRegisterJob;
-  friend class ServiceWorkerJobBase;
-  friend class ServiceWorkerScriptJobBase;
+  friend class ServiceWorkerJob;
   friend class ServiceWorkerRegistrationInfo;
   friend class ServiceWorkerUnregisterJob;
+  friend class ServiceWorkerUpdateJob;
   friend class UpdateTimerCallback;
 
 public:
@@ -348,9 +105,6 @@ public:
   nsTObserverArray<ServiceWorkerRegistrationListener*> mServiceWorkerRegistrationListeners;
 
   nsRefPtrHashtable<nsISupportsHashKey, ServiceWorkerRegistrationInfo> mControlledDocuments;
-
-  // Set of all documents that may be controlled by a service worker.
-  nsTHashtable<nsISupportsHashKey> mAllDocuments;
 
   // Track all documents that have attempted to register a service worker for a
   // given scope.
@@ -370,7 +124,7 @@ public:
   nsClassHashtable<nsCStringHashKey, InterceptionList> mNavigationInterceptions;
 
   bool
-  IsAvailable(const PrincipalOriginAttributes& aOriginAttributes, nsIURI* aURI);
+  IsAvailable(nsIPrincipal* aPrincipal, nsIURI* aURI);
 
   bool
   IsControlled(nsIDocument* aDocument, ErrorResult& aRv);
@@ -499,7 +253,8 @@ public:
   nsresult
   SendPushEvent(const nsACString& aOriginAttributes,
                 const nsACString& aScope,
-                Maybe<nsTArray<uint8_t>> aData);
+                const nsAString& aMessageId,
+                const Maybe<nsTArray<uint8_t>>& aData);
 
   nsresult
   NotifyUnregister(nsIPrincipal* aPrincipal, const nsAString& aScope);
@@ -511,7 +266,7 @@ private:
   void
   Init();
 
-  ServiceWorkerJobQueue*
+  already_AddRefed<ServiceWorkerJobQueue>
   GetOrCreateJobQueue(const nsACString& aOriginSuffix,
                       const nsACString& aScope);
 
@@ -570,10 +325,6 @@ private:
   GetServiceWorkerRegistrationInfo(nsIPrincipal* aPrincipal, nsIURI* aURI);
 
   already_AddRefed<ServiceWorkerRegistrationInfo>
-  GetServiceWorkerRegistrationInfo(const PrincipalOriginAttributes& aOriginAttributes,
-                                   nsIURI* aURI);
-
-  already_AddRefed<ServiceWorkerRegistrationInfo>
   GetServiceWorkerRegistrationInfo(const nsACString& aScopeKey,
                                    nsIURI* aURI);
 
@@ -630,8 +381,6 @@ private:
   };
 
   void AppendPendingOperation(nsIRunnable* aRunnable);
-  void AppendPendingOperation(ServiceWorkerJobQueue* aQueue,
-                              ServiceWorkerJob* aJob);
 
   bool HasBackgroundActor() const
   {
@@ -649,8 +398,7 @@ private:
 
   RefPtr<ServiceWorkerManagerChild> mActor;
 
-  struct PendingOperation;
-  nsTArray<PendingOperation> mPendingOperations;
+  nsTArray<nsCOMPtr<nsIRunnable>> mPendingOperations;
 
   bool mShuttingDown;
 
@@ -680,6 +428,9 @@ private:
 
   void
   UpdateTimerFired(nsIPrincipal* aPrincipal, const nsACString& aScope);
+
+  void
+  MaybeSendUnregister(nsIPrincipal* aPrincipal, const nsACString& aScope);
 };
 
 } // namespace workers

@@ -20,6 +20,8 @@
 class nsWindowBase : public nsBaseWidget
 {
 public:
+  typedef mozilla::WidgetEventTime WidgetEventTime;
+
   /*
    * Return the HWND or null for this widget.
    */
@@ -44,6 +46,12 @@ public:
    */
   virtual void InitEvent(mozilla::WidgetGUIEvent& aEvent,
                          LayoutDeviceIntPoint* aPoint = nullptr) = 0;
+
+  /*
+   * Returns WidgetEventTime instance which is initialized with current message
+   * time.
+   */
+  virtual WidgetEventTime CurrentMessageWidgetEventTime() const = 0;
 
   /*
    * Dispatch a gecko event for this widget.
@@ -82,7 +90,7 @@ public:
    */
   virtual nsresult SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                               TouchPointerState aPointerState,
-                                              ScreenIntPoint aPointerScreenPoint,
+                                              LayoutDeviceIntPoint aPoint,
                                               double aPointerPressure,
                                               uint32_t aPointerOrientation,
                                               nsIObserver* aObserver) override;
@@ -100,21 +108,21 @@ protected:
   void ChangedDPI();
 
   static bool InitTouchInjection();
-  bool InjectTouchPoint(uint32_t aId, ScreenIntPoint& aPointerScreenPoint,
+  bool InjectTouchPoint(uint32_t aId, LayoutDeviceIntPoint& aPoint,
                         POINTER_FLAGS aFlags, uint32_t aPressure = 1024,
                         uint32_t aOrientation = 90);
 
   class PointerInfo
   {
   public:
-    PointerInfo(int32_t aPointerId, ScreenIntPoint& aPoint) :
+    PointerInfo(int32_t aPointerId, LayoutDeviceIntPoint& aPoint) :
       mPointerId(aPointerId),
       mPosition(aPoint)
     {
     }
 
     int32_t mPointerId;
-    ScreenIntPoint mPosition;
+    LayoutDeviceIntPoint mPosition;
   };
 
   nsClassHashtable<nsUint32HashKey, PointerInfo> mActivePointers;

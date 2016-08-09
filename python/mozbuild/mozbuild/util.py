@@ -5,7 +5,7 @@
 # This file contains miscellaneous utility functions that don't belong anywhere
 # in particular.
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals, print_function
 
 import argparse
 import collections
@@ -42,6 +42,22 @@ if sys.platform == 'win32':
     _FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x2000
 
 
+def exec_(object, globals=None, locals=None):
+    """Wrapper around the exec statement to avoid bogus errors like:
+
+    SyntaxError: unqualified exec is not allowed in function ...
+    it is a nested function.
+
+    or
+
+    SyntaxError: unqualified exec is not allowed in function ...
+    it contains a nested function with free variable
+
+    which happen with older versions of python 2.7.
+    """
+    exec(object, globals, locals)
+
+
 def hash_file(path, hasher=None):
     """Hashes a file specified by the path given and returns the hex digest."""
 
@@ -70,6 +86,25 @@ class EmptyValue(unicode):
     """
     def __init__(self):
         super(EmptyValue, self).__init__()
+
+
+class ReadOnlyNamespace(object):
+    """A class for objects with immutable attributes set at initialization."""
+    def __init__(self, **kwargs):
+        for k, v in kwargs.iteritems():
+            super(ReadOnlyNamespace, self).__setattr__(k, v)
+
+    def __delattr__(self, key):
+        raise Exception('Object does not support deletion.')
+
+    def __setattr__(self, key, value):
+        raise Exception('Object does not support assignment.')
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __eq__(self, other):
+        return self is other or self.__dict__ == other.__dict__
 
 
 class ReadOnlyDict(dict):
@@ -316,11 +351,14 @@ def resolve_target_to_make(topobjdir, target):
 
 
 class ListMixin(object):
-    def __init__(self, iterable=[]):
+    def __init__(self, iterable=None, **kwargs):
+        if iterable is None:
+            iterable = []
         if not isinstance(iterable, list):
             raise ValueError('List can only be created from other list instances.')
 
-        return super(ListMixin, self).__init__(iterable)
+        self._kwargs = kwargs
+        return super(ListMixin, self).__init__(iterable, **kwargs)
 
     def extend(self, l):
         if not isinstance(l, list):
@@ -341,7 +379,7 @@ class ListMixin(object):
         if not isinstance(other, list):
             raise ValueError('Only lists can be appended to lists.')
 
-        new_list = self.__class__(self)
+        new_list = self.__class__(self, **self._kwargs)
         new_list.extend(other)
         return new_list
 
@@ -394,15 +432,22 @@ class StrictOrderingOnAppendListMixin(object):
         if isinstance(l, StrictOrderingOnAppendList):
             return
 
-        srtd = sorted(l, key=lambda x: x.lower())
+        def _first_element(e):
+            # If the list entry is a tuple, we sort based on the first element
+            # in the tuple.
+            return e[0] if isinstance(e, tuple) else e
+        srtd = sorted(l, key=lambda x: _first_element(x).lower())
 
         if srtd != l:
             raise UnsortedError(srtd, l)
 
-    def __init__(self, iterable=[]):
+    def __init__(self, iterable=None, **kwargs):
+        if iterable is None:
+            iterable = []
+
         StrictOrderingOnAppendListMixin.ensure_sorted(iterable)
 
-        super(StrictOrderingOnAppendListMixin, self).__init__(iterable)
+        super(StrictOrderingOnAppendListMixin, self).__init__(iterable, **kwargs)
 
     def extend(self, l):
         StrictOrderingOnAppendListMixin.ensure_sorted(l)
@@ -434,6 +479,48 @@ class StrictOrderingOnAppendList(ListMixin, StrictOrderingOnAppendListMixin,
     elements be ordered. This enforces cleaner style in moz.build files.
     """
 
+class ListWithActionMixin(object):
+    """Mixin to create lists with pre-processing. See ListWithAction."""
+    def __init__(self, iterable=None, action=None):
+        if iterable is None:
+            iterable = []
+        if not callable(action):
+            raise ValueError('A callabe action is required to construct '
+                             'a ListWithAction')
+
+        self._action = action
+        iterable = [self._action(i) for i in iterable]
+        super(ListWithActionMixin, self).__init__(iterable)
+
+    def extend(self, l):
+        l = [self._action(i) for i in l]
+        return super(ListWithActionMixin, self).extend(l)
+
+    def __setslice__(self, i, j, sequence):
+        sequence = [self._action(item) for item in sequence]
+        return super(ListWithActionMixin, self).__setslice__(i, j, sequence)
+
+    def __iadd__(self, other):
+        other = [self._action(i) for i in other]
+        return super(ListWithActionMixin, self).__iadd__(other)
+
+class StrictOrderingOnAppendListWithAction(StrictOrderingOnAppendListMixin,
+    ListMixin, ListWithActionMixin, list):
+    """An ordered list that accepts a callable to be applied to each item.
+
+    A callable (action) passed to the constructor is run on each item of input.
+    The result of running the callable on each item will be stored in place of
+    the original input, but the original item must be used to enforce sortedness.
+    Note that the order of superclasses is therefore significant.
+    """
+
+class ListWithAction(ListMixin, ListWithActionMixin, list):
+    """A list that accepts a callable to be applied to each item.
+
+    A callable (action) may optionally be passed to the constructor to run on
+    each item of input. The result of calling the callable on each item will be
+    stored in place of the original input.
+    """
 
 class MozbuildDeletionError(Exception):
     pass
@@ -510,7 +597,9 @@ def StrictOrderingOnAppendListWithFlagsFactory(flags):
         foo['b'].bar = 'bar'
     """
     class StrictOrderingOnAppendListWithFlagsSpecialization(StrictOrderingOnAppendListWithFlags):
-        def __init__(self, iterable=[]):
+        def __init__(self, iterable=None):
+            if iterable is None:
+                iterable = []
             StrictOrderingOnAppendListWithFlags.__init__(self, iterable)
             self._flags_type = FlagsFactory(flags)
             self._flags = dict()
@@ -908,10 +997,12 @@ class TypedListMixin(object):
 
         return [self.normalize(e) for e in l]
 
-    def __init__(self, iterable=[]):
+    def __init__(self, iterable=None, **kwargs):
+        if iterable is None:
+            iterable = []
         iterable = self._ensure_type(iterable)
 
-        super(TypedListMixin, self).__init__(iterable)
+        super(TypedListMixin, self).__init__(iterable, **kwargs)
 
     def extend(self, l):
         l = self._ensure_type(l)
@@ -1046,3 +1137,38 @@ class DefinesAction(argparse.Action):
                 value = int(value)
         defines[name] = value
         setattr(namespace, self.dest, defines)
+
+
+class EnumStringComparisonError(Exception):
+    pass
+
+
+class EnumString(unicode):
+    '''A string type that only can have a limited set of values, similarly to
+    an Enum, and can only be compared against that set of values.
+
+    The class is meant to be subclassed, where the subclass defines
+    POSSIBLE_VALUES. The `subclass` method is a helper to create such
+    subclasses.
+    '''
+    POSSIBLE_VALUES = ()
+    def __init__(self, value):
+        if value not in self.POSSIBLE_VALUES:
+            raise ValueError("'%s' is not a valid value for %s"
+                             % (value, self.__class__.__name__))
+
+    def __eq__(self, other):
+        if other not in self.POSSIBLE_VALUES:
+            raise EnumStringComparisonError(
+                'Can only compare with %s'
+                % ', '.join("'%s'" % v for v in self.POSSIBLE_VALUES))
+        return super(EnumString, self).__eq__(other)
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    @staticmethod
+    def subclass(*possible_values):
+        class EnumStringSubclass(EnumString):
+            POSSIBLE_VALUES = possible_values
+        return EnumStringSubclass

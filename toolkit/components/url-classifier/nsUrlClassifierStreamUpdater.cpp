@@ -25,10 +25,13 @@
 
 static const char* gQuitApplicationMessage = "quit-application";
 
+// Limit the list file size to 32mb
+const uint32_t MAX_FILE_SIZE = (32 * 1024 * 1024);
+
 #undef LOG
 
 // NSPR_LOG_MODULES=UrlClassifierStreamUpdater:5
-static const PRLogModuleInfo *gUrlClassifierStreamUpdaterLog = nullptr;
+static mozilla::LazyLogModule gUrlClassifierStreamUpdaterLog("UrlClassifierStreamUpdater");
 #define LOG(args) MOZ_LOG(gUrlClassifierStreamUpdaterLog, mozilla::LogLevel::Debug, args)
 
 // This class does absolutely nothing, except pass requests onto the DBService.
@@ -41,8 +44,6 @@ nsUrlClassifierStreamUpdater::nsUrlClassifierStreamUpdater()
   : mIsUpdating(false), mInitialized(false), mDownloadError(false),
     mBeganStream(false), mChannel(nullptr)
 {
-  if (!gUrlClassifierStreamUpdaterLog)
-    gUrlClassifierStreamUpdaterLog = PR_NewLogModule("UrlClassifierStreamUpdater");
   LOG(("nsUrlClassifierStreamUpdater init [this=%p]", this));
 }
 
@@ -645,6 +646,11 @@ nsUrlClassifierStreamUpdater::OnDataAvailable(nsIRequest *request,
     return NS_ERROR_NOT_INITIALIZED;
 
   LOG(("OnDataAvailable (%d bytes)", aLength));
+
+  if (aSourceOffset > MAX_FILE_SIZE) {
+    LOG(("OnDataAvailable::Abort because exceeded the maximum file size(%lld)", aSourceOffset));
+    return NS_ERROR_FILE_TOO_BIG;
+  }
 
   nsresult rv;
 

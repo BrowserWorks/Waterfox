@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2000-2016, International Business Machines
+*   Copyright (C) 2000-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  ucnv2022.cpp
@@ -971,9 +971,9 @@ DONE:
                         *err = U_UNSUPPORTED_ESCAPE_SEQUENCE;
                         break;
                     }
-                    U_FALLTHROUGH;
+                    /*fall through*/
                 case GB2312_1:
-                    U_FALLTHROUGH;
+                    /*fall through*/
                 case CNS_11643_1:
                     myData2022->toU2022State.cs[1]=(int8_t)tempState;
                     break;
@@ -2160,6 +2160,7 @@ escape:
             /* ISO-2022-JP does not use single-byte (C1) SS2 and SS3 */
 
             case CR:
+                /*falls through*/
             case LF:
                 /* automatically reset to single-byte mode */
                 if((StateEnum)pToU2022State->cs[0] != ASCII && (StateEnum)pToU2022State->cs[0] != JISX201) {
@@ -2167,7 +2168,7 @@ escape:
                 }
                 pToU2022State->cs[2] = 0;
                 pToU2022State->g = 0;
-                U_FALLTHROUGH;
+                /* falls through */
             default:
                 /* convert one or two bytes */
                 myData->isEmptySegment = FALSE;
@@ -3342,9 +3343,10 @@ escape:
             /* ISO-2022-CN does not use single-byte (C1) SS2 and SS3 */
 
             case CR:
+                /*falls through*/
             case LF:
                 uprv_memset(pToU2022State, 0, sizeof(ISO2022State));
-                U_FALLTHROUGH;
+                /* falls through */
             default:
                 /* convert one or two bytes */
                 myData->isEmptySegment = FALSE;
@@ -3891,7 +3893,7 @@ static const UConverterStaticData _ISO2022KRStaticData={
     UCNV_IBM,
     UCNV_ISO_2022,
     1,
-    8, /* max 8 bytes per UChar */
+    3, /* max 3 bytes per UChar: SO+DBCS */
     { 0x1a, 0, 0, 0 },
     1,
     FALSE,

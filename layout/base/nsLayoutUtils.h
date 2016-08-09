@@ -41,6 +41,7 @@ class nsIScrollableFrame;
 class nsIDOMEvent;
 class nsRegion;
 class nsDisplayListBuilder;
+enum class nsDisplayListBuilderMode : uint8_t;
 class nsDisplayItem;
 class nsFontMetrics;
 class nsFontFaceList;
@@ -186,6 +187,16 @@ public:
    */
   static bool HasDisplayPort(nsIContent* aContent);
 
+
+  /**
+   * Go through the IPC Channel and update displayport margins for content
+   * elements based on UpdateFrame messages. The messages are left in the
+   * queue and will be fully processed when dequeued. The aim is to paint
+   * the most up-to-date displayport without waiting for these message to
+   * go through the message queue.
+   */
+  static void UpdateDisplayPortMarginsFromPendingMessages();
+
   /**
    * @return the display port for the given element which should be used for
    * visibility testing purposes.
@@ -242,6 +253,12 @@ public:
    * Check whether the given element has a critical display port.
    */
   static bool HasCriticalDisplayPort(nsIContent* aContent);
+
+  /**
+   * If low-precision painting is turned on, delegates to GetCriticalDisplayPort.
+   * Otherwise, delegates to GetDisplayPort.
+   */
+  static bool GetHighResolutionDisplayPort(nsIContent* aContent, nsRect* aResult);
 
   /**
    * Remove the displayport for the given element.
@@ -346,6 +363,15 @@ public:
    * This is aContent->GetPrimaryFrame() except for tableOuter frames.
    */
   static nsIFrame* GetStyleFrame(const nsIContent* aContent);
+
+  /**
+   * Gets the real primary frame associated with the content object.
+   *
+   * In the case of absolutely positioned elements and floated elements,
+   * the real primary frame is the frame that is out of the flow and not the
+   * placeholder frame.
+   */
+  static nsIFrame* GetRealPrimaryFrameFor(const nsIContent* aContent);
 
   /**
    * IsGeneratedContentFor returns true if aFrame is the outermost
@@ -810,11 +836,23 @@ public:
    * aAncestor. Computes the bounding-box of the true quadrilateral.
    * Pass non-null aPreservesAxisAlignedRectangles and it will be set to true if
    * we only need to use a 2d transform that PreservesAxisAlignedRectangles().
+   *
+   * |aMatrixCache| allows for optimizations in recomputing the same matrix over
+   * and over. The argument can be one of the following values:
+   * nullptr (the default) - No optimization; the transform matrix is computed on
+   *   every call to this function.
+   * non-null pointer to an empty Maybe<Matrix4x4> - Upon return, the Maybe is
+   *   filled with the transform matrix that was computed. This can then be passed
+   *   in to subsequent calls with the same source and destination frames to avoid
+   *   recomputing the matrix.
+   * non-null pointer to a non-empty Matrix4x4 - The provided matrix will be used
+   *   as the transform matrix and applied to the rect.
    */
   static nsRect TransformFrameRectToAncestor(nsIFrame* aFrame,
                                              const nsRect& aRect,
                                              const nsIFrame* aAncestor,
-                                             bool* aPreservesAxisAlignedRectangles = nullptr);
+                                             bool* aPreservesAxisAlignedRectangles = nullptr,
+                                             mozilla::Maybe<Matrix4x4>* aMatrixCache = nullptr);
 
 
   /**
@@ -890,13 +928,6 @@ public:
    */
   static bool ContainsPoint(const nsRect& aRect, const nsPoint& aPoint,
                             nscoord aInflateSize);
-
-  /**
-   * Check whether aRect is visible in the boundary of the scroll frames
-   * boundary.
-   */
-  static bool IsRectVisibleInScrollFrames(nsIFrame* aFrame,
-                                          const nsRect& aRect);
 
   /**
    * Clamp aRect relative to aFrame to the scroll frames boundary searching from
@@ -1028,6 +1059,7 @@ public:
    * of aFrame.
    * @param aBackstop paint the dirty area with this color before drawing
    * the actual content; pass NS_RGBA(0,0,0,0) to draw no background.
+   * @param aBuilderMode Passed through to the display-list builder.
    * @param aFlags if PAINT_IN_TRANSFORM is set, then we assume
    * this is inside a transform or SVG foreignObject. If
    * PAINT_SYNC_DECODE_IMAGES is set, we force synchronous decode on all
@@ -1063,7 +1095,9 @@ public:
    */
   static nsresult PaintFrame(nsRenderingContext* aRenderingContext, nsIFrame* aFrame,
                              const nsRegion& aDirtyRegion, nscolor aBackstop,
-                             uint32_t aFlags = 0);
+                             nsDisplayListBuilderMode aBuilderMode,
+                             uint32_t aFlags = 0
+                             );
 
   /**
    * Uses a binary search for find where the cursor falls in the line of text
@@ -1220,40 +1254,37 @@ public:
   /**
    * Get the font metrics corresponding to the frame's style data.
    * @param aFrame the frame
-   * @param aFontMetrics the font metrics result
    * @param aSizeInflation number to multiply font size by
-   * @return success or failure code
    */
-  static nsresult GetFontMetricsForFrame(const nsIFrame* aFrame,
-                                         nsFontMetrics** aFontMetrics,
-                                         float aSizeInflation = 1.0f);
+  static already_AddRefed<nsFontMetrics> GetFontMetricsForFrame(
+    const nsIFrame* aFrame, float aSizeInflation);
+
+  static already_AddRefed<nsFontMetrics>
+    GetInflatedFontMetricsForFrame(const nsIFrame* aFrame)
+  {
+    return GetFontMetricsForFrame(aFrame, FontSizeInflationFor(aFrame));
+  }
 
   /**
    * Get the font metrics corresponding to the given style data.
    * @param aStyleContext the style data
-   * @param aFontMetrics the font metrics result
    * @param aSizeInflation number to multiply font size by
-   * @return success or failure code
    */
-  static nsresult GetFontMetricsForStyleContext(nsStyleContext* aStyleContext,
-                                                nsFontMetrics** aFontMetrics,
-                                                float aSizeInflation = 1.0f);
+  static already_AddRefed<nsFontMetrics> GetFontMetricsForStyleContext(
+      nsStyleContext* aStyleContext, float aSizeInflation = 1.0f,
+      uint8_t aVariantWidth = NS_FONT_VARIANT_WIDTH_NORMAL);
 
   /**
    * Get the font metrics of emphasis marks corresponding to the given
    * style data. The result is same as GetFontMetricsForStyleContext
    * except that the font size is scaled down to 50%.
    * @param aStyleContext the style data
-   * @param aFontMetrics the font metrics result
    * @param aInflation number to multiple font size by
-   * @return success or failure code
    */
-  static nsresult GetFontMetricsOfEmphasisMarks(nsStyleContext* aStyleContext,
-                                                nsFontMetrics** aFontMetrics,
-                                                float aInflation)
+  static already_AddRefed<nsFontMetrics> GetFontMetricsOfEmphasisMarks(
+      nsStyleContext* aStyleContext, float aInflation)
   {
-    return GetFontMetricsForStyleContext(aStyleContext, aFontMetrics,
-                                         aInflation * 0.5f);
+    return GetFontMetricsForStyleContext(aStyleContext, aInflation * 0.5f);
   }
 
   /**
@@ -1487,6 +1518,8 @@ public:
   }
 
   static void MarkDescendantsDirty(nsIFrame *aSubtreeRoot);
+
+  static void MarkIntrinsicISizesDirtyIfDependentOnBSize(nsIFrame* aFrame);
 
   /*
    * Calculate the used values for 'width' and 'height' for a replaced element.
@@ -2395,6 +2428,10 @@ public:
     return sSVGTransformBoxEnabled;
   }
 
+  static bool TextCombineUprightDigitsEnabled() {
+    return sTextCombineUprightDigitsEnabled;
+  }
+
   /**
    * See comment above "font.size.inflation.mappingIntercept" in
    * modules/libpref/src/init/all.js .
@@ -2537,19 +2574,12 @@ public:
    */
   static void
   TransformToAncestorAndCombineRegions(
-    const nsRect& aBounds,
+    const nsRegion& aRegion,
     nsIFrame* aFrame,
     const nsIFrame* aAncestorFrame,
     nsRegion* aPreciseTargetDest,
-    nsRegion* aImpreciseTargetDest);
-
-  /**
-   * Determine if aImageFrame (which is an nsImageFrame, nsImageControlFrame, or
-   * nsSVGImageFrame) is visible or close to being visible via scrolling and
-   * update the presshell with this knowledge.
-   */
-  static void
-  UpdateImageVisibilityForFrame(nsIFrame* aImageFrame);
+    nsRegion* aImpreciseTargetDest,
+    mozilla::Maybe<Matrix4x4>* aMatrixCache);
 
   /**
    * Populate aOutSize with the size of the content viewer corresponding
@@ -2791,10 +2821,6 @@ public:
   static nsRect GetSelectionBoundingRect(mozilla::dom::Selection* aSel);
 
   /**
-   * Returns true if the given frame is a scrollframe and it has snap points.
-   */
-  static bool IsScrollFrameWithSnapping(nsIFrame* aFrame);
-  /**
    * Calculate the bounding rect of |aContent|, relative to the origin
    * of the scrolled content of |aRootScrollFrame|.
    * Where the element is contained inside a scrollable subframe, the
@@ -2808,6 +2834,13 @@ public:
    */
   static nsBlockFrame* GetFloatContainingBlock(nsIFrame* aFrame);
 
+  /**
+   * Walks up the frame tree from |aForFrame| up to |aTopFrame|, or to the
+   * root of the frame tree if |aTopFrame| is nullptr, and returns true if
+   * a transformed frame is encountered.
+   */
+  static bool IsTransformed(nsIFrame* aForFrame, nsIFrame* aTopFrame = nullptr);
+
 private:
   static uint32_t sFontSizeInflationEmPerLine;
   static uint32_t sFontSizeInflationMinTwips;
@@ -2820,6 +2853,7 @@ private:
   static bool sCSSVariablesEnabled;
   static bool sInterruptibleReflowEnabled;
   static bool sSVGTransformBoxEnabled;
+  static bool sTextCombineUprightDigitsEnabled;
 
   /**
    * Helper function for LogTestDataForPaint().

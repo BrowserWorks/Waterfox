@@ -357,6 +357,11 @@ var gAdvancedPane = {
     this.observer = {
       onNetworkCacheDiskConsumption: function(consumption) {
         var size = DownloadUtils.convertByteUnits(consumption);
+        // The XBL binding for the string bundle may have been destroyed if
+        // the page was closed before this callback was executed.
+        if (!prefStrBundle.getFormattedString) {
+          return;
+        }
         actualSizeLabel.value = prefStrBundle.getFormattedString("actualDiskCacheSize", size);
       },
 
@@ -366,7 +371,7 @@ var gAdvancedPane = {
       ])
     };
 
-    actualSizeLabel.textContent = prefStrBundle.getString("actualDiskCacheSizeCalculated");
+    actualSizeLabel.value = prefStrBundle.getString("actualDiskCacheSizeCalculated");
 
     try {
       var cacheService =
@@ -385,6 +390,11 @@ var gAdvancedPane = {
         var actualSizeLabel = document.getElementById("actualAppCacheSize");
         var sizeStrings = DownloadUtils.convertByteUnits(aConsumption);
         var prefStrBundle = document.getElementById("bundlePreferences");
+        // The XBL binding for the string bundle may have been destroyed if
+        // the page was closed before this callback was executed.
+        if (!prefStrBundle.getFormattedString) {
+          return;
+        }
         var sizeStr = prefStrBundle.getFormattedString("actualAppCacheSize", sizeStrings);
         actualSizeLabel.value = sizeStr;
       }
@@ -707,7 +717,7 @@ var gAdvancedPane = {
       var wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
                 .createInstance(Components.interfaces.nsIWindowsRegKey);
       wrk.open(wrk.ROOT_KEY_LOCAL_MACHINE,
-               "SOFTWARE\\WaterfoxProject\\MaintenanceService",
+               "SOFTWARE\\Mozilla\\MaintenanceService",
                wrk.ACCESS_READ | wrk.WOW64_64);
       installed = wrk.readIntValue("Installed");
       wrk.close();

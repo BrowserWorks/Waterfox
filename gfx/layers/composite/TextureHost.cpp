@@ -442,10 +442,13 @@ BufferTextureHost::SetCompositor(Compositor* aCompositor)
   if (mCompositor == aCompositor) {
     return;
   }
-  RefPtr<TextureSource> it = mFirstSource;
-  while (it) {
-    it->SetCompositor(aCompositor);
-    it = it->GetNextSibling();
+  if (aCompositor && mCompositor &&
+      aCompositor->GetBackendType() == mCompositor->GetBackendType()) {
+    RefPtr<TextureSource> it = mFirstSource;
+    while (it) {
+      it->SetCompositor(aCompositor);
+      it = it->GetNextSibling();
+    }
   }
   if (mFirstSource && mFirstSource->IsOwnedBy(this)) {
     mFirstSource->SetOwner(nullptr);
@@ -555,7 +558,8 @@ BufferTextureHost::PrepareTextureSource(CompositableTextureSourceRef& aTexture)
                              || (mFormat == gfx::SurfaceFormat::YUV
                                  && mCompositor
                                  && mCompositor->SupportsEffect(EffectTypes::YCBCR)
-                                 && texture->GetNextSibling())
+                                 && texture->GetNextSibling()
+                                 && texture->GetNextSibling()->GetNextSibling())
                              || (mFormat == gfx::SurfaceFormat::YUV
                                  && mCompositor
                                  && !mCompositor->SupportsEffect(EffectTypes::YCBCR)
@@ -570,6 +574,15 @@ BufferTextureHost::PrepareTextureSource(CompositableTextureSourceRef& aTexture)
     mFirstSource = texture;
     mFirstSource->SetOwner(this);
     mNeedsFullUpdate = true;
+
+    // It's possible that texture belonged to a different compositor,
+    // so make sure we update it (and all of its siblings) to the
+    // current one.
+    RefPtr<TextureSource> it = mFirstSource;
+    while (it) {
+      it->SetCompositor(mCompositor);
+      it = it->GetNextSibling();
+    }
   }
 }
 
@@ -781,7 +794,8 @@ ShmemTextureHost::ShmemTextureHost(const ipc::Shmem& aShmem,
     // available, even though we did on the child process.
     // As a result this texture will be in an invalid state and Lock will
     // always fail.
-    gfxCriticalError() << "Failed to create a valid ShmemTextureHost";
+
+    gfxCriticalNote << "Failed to create a valid ShmemTextureHost";
   }
 
   MOZ_COUNT_CTOR(ShmemTextureHost);
@@ -801,7 +815,7 @@ ShmemTextureHost::DeallocateSharedData()
   if (mShmem) {
     MOZ_ASSERT(mDeallocator,
                "Shared memory would leak without a ISurfaceAllocator");
-    mDeallocator->DeallocShmem(*mShmem);
+    mDeallocator->AsShmemAllocator()->DeallocShmem(*mShmem);
     mShmem = nullptr;
   }
 }

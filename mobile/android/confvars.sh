@@ -27,12 +27,6 @@ MOZ_SAFE_BROWSING=1
 
 MOZ_NO_SMART_CARDS=1
 
-# Enable getUserMedia
-MOZ_MEDIA_NAVIGATOR=1
-
-# Enable NFC permission
-MOZ_ANDROID_BEAM=1
-
 MOZ_XULRUNNER=
 
 MOZ_CAPTURE=1
@@ -40,7 +34,6 @@ MOZ_RAW=1
 MOZ_PLACES=
 MOZ_SOCIAL=
 MOZ_ANDROID_HISTORY=1
-MOZ_DISABLE_EXPORT_JS=1
 
 # use custom widget for html:select
 MOZ_USE_NATIVE_POPUP_WINDOWS=1
@@ -57,12 +50,6 @@ fi
 
 # Enable UI for healthreporter
 MOZ_SERVICES_HEALTHREPORT=1
-
-# Enable runtime locale switching.
-MOZ_LOCALE_SWITCHER=1
-
-# Enable second screen and casting support for external devices.
-MOZ_DEVICES=1
 
 # Enable second screen using native Android libraries, provided we're
 # not resource constrained.
@@ -81,40 +68,11 @@ fi
 # Mark as WebGL conformant
 MOZ_WEBGL_CONFORMANT=1
 
-# Enable the Search Activity.
-MOZ_ANDROID_SEARCH_ACTIVITY=1
-
-# Enable the Mozilla Location Service stumbler.
-MOZ_ANDROID_MLS_STUMBLER=1
-
-# Enable adding to the system downloads list.
-MOZ_ANDROID_DOWNLOADS_INTEGRATION=1
-
 # Build and package the install bouncer APK by default.
 MOZ_ANDROID_PACKAGE_INSTALL_BOUNCER=1
 
 # Use the low-memory GC tuning.
 export JS_GC_SMALL_CHUNK_SIZE=1
 
-# Enable GCM registration on Nightly builds only.
-if test "$NIGHTLY_BUILD"; then
-  MOZ_ANDROID_GCM=1
-fi
-
-# Enable C++ APZ on Nightly builds only.
-if test "$NIGHTLY_BUILD"; then
-  MOZ_ANDROID_APZ=1
-fi
-
 # Enable checking that add-ons are signed by the trusted root
 MOZ_ADDON_SIGNING=1
-
-# Enable the Switchboard A/B framework code.
-# Note: The framework is always included in the app. This flag controls
-# usage of the framework.
-MOZ_SWITCHBOARD=1
-
-# Enable DLC background service and stop shipping fonts in the APK
-MOZ_ANDROID_DOWNLOAD_CONTENT_SERVICE=1
-MOZ_ANDROID_EXCLUDE_FONTS=1
-

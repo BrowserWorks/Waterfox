@@ -244,7 +244,8 @@ EMEDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                      layers::LayersBackend aLayersBackend,
                                      layers::ImageContainer* aImageContainer,
                                      FlushableTaskQueue* aVideoTaskQueue,
-                                     MediaDataDecoderCallback* aCallback)
+                                     MediaDataDecoderCallback* aCallback,
+                                     DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(aConfig.mCrypto.mValid);
 
@@ -264,6 +265,7 @@ EMEDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
     mPDM->CreateDecoder(aConfig,
                         aVideoTaskQueue,
                         aCallback,
+                        aDiagnostics,
                         aLayersBackend,
                         aImageContainer));
   if (!decoder) {
@@ -280,7 +282,8 @@ EMEDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
 already_AddRefed<MediaDataDecoder>
 EMEDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
                                      FlushableTaskQueue* aAudioTaskQueue,
-                                     MediaDataDecoderCallback* aCallback)
+                                     MediaDataDecoderCallback* aCallback,
+                                     DecoderDoctorDiagnostics* aDiagnostics)
 {
   MOZ_ASSERT(aConfig.mCrypto.mValid);
 
@@ -295,7 +298,7 @@ EMEDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
 
   MOZ_ASSERT(mPDM);
   RefPtr<MediaDataDecoder> decoder(
-    mPDM->CreateDecoder(aConfig, aAudioTaskQueue, aCallback));
+    mPDM->CreateDecoder(aConfig, aAudioTaskQueue, aCallback, aDiagnostics));
   if (!decoder) {
     return nullptr;
   }
@@ -318,7 +321,8 @@ EMEDecoderModule::DecoderNeedsConversion(const TrackInfo& aConfig) const
 }
 
 bool
-EMEDecoderModule::SupportsMimeType(const nsACString& aMimeType) const
+EMEDecoderModule::SupportsMimeType(const nsACString& aMimeType,
+                                   DecoderDoctorDiagnostics* aDiagnostics) const
 {
   Maybe<nsCString> gmp;
   gmp.emplace(NS_ConvertUTF16toUTF8(mProxy->KeySystem()));

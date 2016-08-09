@@ -77,28 +77,6 @@ AccTextChangeEvent::
     (states::FOCUSED | states::EDITABLE);
 }
 
-
-////////////////////////////////////////////////////////////////////////////////
-// AccReorderEvent
-////////////////////////////////////////////////////////////////////////////////
-
-uint32_t
-AccReorderEvent::IsShowHideEventTarget(const Accessible* aTarget) const
-{
-  uint32_t count = mDependentEvents.Length();
-  for (uint32_t index = count - 1; index < count; index--) {
-    if (mDependentEvents[index]->mAccessible == aTarget) {
-      uint32_t eventType = mDependentEvents[index]->mEventType;
-      if (eventType == nsIAccessibleEvent::EVENT_SHOW ||
-          eventType == nsIAccessibleEvent::EVENT_HIDE) {
-        return mDependentEvents[index]->mEventType;
-      }
-    }
-  }
-
-  return 0;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // AccHideEvent
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,6 +99,9 @@ AccShowEvent::
   AccShowEvent(Accessible* aTarget) :
   AccMutationEvent(::nsIAccessibleEvent::EVENT_SHOW, aTarget)
 {
+  int32_t idx = aTarget->IndexInParent();
+  MOZ_ASSERT(idx >= 0);
+  mInsertionIndex = idx;
 }
 
 

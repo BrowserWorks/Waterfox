@@ -18,7 +18,6 @@ using namespace mozilla::dom;
 jclass AndroidGeckoEvent::jGeckoEventClass = 0;
 jfieldID AndroidGeckoEvent::jActionField = 0;
 jfieldID AndroidGeckoEvent::jTypeField = 0;
-jfieldID AndroidGeckoEvent::jAckNeededField = 0;
 jfieldID AndroidGeckoEvent::jTimeField = 0;
 jfieldID AndroidGeckoEvent::jPoints = 0;
 jfieldID AndroidGeckoEvent::jPointIndicies = 0;
@@ -104,7 +103,6 @@ AndroidGeckoEvent::InitGeckoEventClass(JNIEnv *jEnv)
 
     jActionField = geckoEvent.getField("mAction", "I");
     jTypeField = geckoEvent.getField("mType", "I");
-    jAckNeededField = geckoEvent.getField("mAckNeeded", "Z");
     jTimeField = geckoEvent.getField("mTime", "J");
     jPoints = geckoEvent.getField("mPoints", "[Landroid/graphics/Point;");
     jPointIndicies = geckoEvent.getField("mPointIndicies", "[I");
@@ -341,7 +339,6 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
 
     mAction = jenv->GetIntField(jobj, jActionField);
     mType = jenv->GetIntField(jobj, jTypeField);
-    mAckNeeded = jenv->GetBooleanField(jobj, jAckNeededField);
 
     switch (mType) {
         case NATIVE_GESTURE_EVENT:
@@ -376,6 +373,7 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
              mW = jenv->GetDoubleField(jobj, jWField);
              mFlags = jenv->GetIntField(jobj, jFlagsField);
              mMetaState = jenv->GetIntField(jobj, jMetaStateField);
+             mTime = jenv->GetLongField(jobj, jTimeField);
              break;
 
         case LOCATION_EVENT: {
@@ -390,8 +388,7 @@ AndroidGeckoEvent::Init(JNIEnv *jenv, jobject jobj)
             break;
         }
 
-        case VIEWPORT:
-        case BROADCAST: {
+        case VIEWPORT: {
             ReadCharactersField(jenv);
             ReadCharactersExtraField(jenv);
             break;
@@ -513,7 +510,6 @@ void
 AndroidGeckoEvent::Init(int aType)
 {
     mType = aType;
-    mAckNeeded = false;
 }
 
 bool
@@ -608,11 +604,11 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
         return event;
     }
 
-    event.modifiers = DOMModifiers();
-    event.time = Time();
+    event.mModifiers = DOMModifiers();
+    event.mTime = Time();
 
     const LayoutDeviceIntPoint& offset = widget->WidgetToScreenOffset();
-    event.touches.SetCapacity(endIndex - startIndex);
+    event.mTouches.SetCapacity(endIndex - startIndex);
     for (int i = startIndex; i < endIndex; i++) {
         // In this code branch, we are dispatching this event directly
         // into Gecko (as opposed to going through the AsyncPanZoomController),
@@ -630,7 +626,7 @@ AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
                                     radius,
                                     Orientations()[i],
                                     Pressures()[i]);
-        event.touches.AppendElement(t);
+        event.mTouches.AppendElement(t);
     }
 
     return event;
@@ -728,16 +724,17 @@ AndroidGeckoEvent::MakeMouseEvent(nsIWidget* widget)
     if (msg != eMouseMove) {
         event.clickCount = 1;
     }
-    event.modifiers = DOMModifiers();
-    event.time = Time();
+    event.mModifiers = DOMModifiers();
+    event.mTime = Time();
 
     // We are dispatching this event directly into Gecko (as opposed to going
     // through the AsyncPanZoomController), and the Points() array has points
     // in CSS pixels, which we need to convert to LayoutDevice pixels.
     const LayoutDeviceIntPoint& offset = widget->WidgetToScreenOffset();
     CSSToLayoutDeviceScale scale = widget->GetDefaultScale();
-    event.refPoint = LayoutDeviceIntPoint((Points()[0].x * scale.scale) - offset.x,
-                                          (Points()[0].y * scale.scale) - offset.y);
+    event.mRefPoint =
+        LayoutDeviceIntPoint((Points()[0].x * scale.scale) - offset.x,
+                             (Points()[0].y * scale.scale) - offset.y);
     return event;
 }
 

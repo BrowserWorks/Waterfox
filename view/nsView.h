@@ -386,7 +386,8 @@ public:
   virtual bool PaintWindow(nsIWidget* aWidget,
                            LayoutDeviceIntRegion aRegion) override;
   virtual void DidPaintWindow() override;
-  virtual void DidCompositeWindow(const mozilla::TimeStamp& aCompositeStart,
+  virtual void DidCompositeWindow(uint64_t aTransactionId,
+                                  const mozilla::TimeStamp& aCompositeStart,
                                   const mozilla::TimeStamp& aCompositeEnd) override;
   virtual void RequestRepaint() override;
   virtual nsEventStatus HandleEvent(mozilla::WidgetGUIEvent* aEvent,
@@ -457,11 +458,8 @@ private:
 
   void NotifyEffectiveVisibilityChanged(bool aEffectivelyVisible);
 
-  // Update the cached RootViewManager for all view manager descendents,
-  // If the hierarchy is being removed, aViewManagerParent points to the view
-  // manager for the hierarchy's old parent, and will have its mouse grab
-  // released if it points to any view in this view hierarchy.
-  void InvalidateHierarchy(nsViewManager *aViewManagerParent);
+  // Update the cached RootViewManager for all view manager descendents.
+  void InvalidateHierarchy();
 
   nsViewManager    *mViewManager;
   nsView           *mParent;

@@ -6,6 +6,8 @@
 const { classes: Cc, interfaces: Ci, manager: Cm, utils: Cu, results: Cr } = Components;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
+Cu.import('resource://gre/modules/Services.jsm');
+Cu.import('resource://gre/modules/Timer.jsm');
 
 const uuidGenerator = Cc["@mozilla.org/uuid-generator;1"]
                       .getService(Ci.nsIUUIDGenerator);
@@ -52,7 +54,12 @@ addresses.appendElement(address, false);
 
 const mockedChannelDescription = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationChannelDescription]),
-  type: 1,
+  get type() {
+    if (Services.prefs.getBoolPref("dom.presentation.session_transport.data_channel.enable")) {
+      return Ci.nsIPresentationChannelDescription.TYPE_DATACHANNEL;
+    }
+    return Ci.nsIPresentationChannelDescription.TYPE_TCP;
+  },
   tcpAddress: addresses,
   tcpPort: 1234,
 };
@@ -201,6 +208,9 @@ const mockedDevicePrompt = {
 
 const mockedSessionTransport = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationSessionTransport,
+                                         Ci.nsIPresentationTCPSessionTransportBuilder,
+                                         Ci.nsIPresentationDataChannelSessionTransportBuilder,
+                                         Ci.nsIPresentationControlChannelListener,
                                          Ci.nsIFactory]),
   createInstance: function(aOuter, aIID) {
     if (aOuter) {
@@ -217,13 +227,20 @@ const mockedSessionTransport = {
   get selfAddress() {
     return this._selfAddress;
   },
-  initWithSocketTransport: function(transport, callback) {
+  buildTCPSenderTransport: function(transport, listener) {
     sendAsyncMessage('data-transport-initialized');
-    this._callback = callback;
-    this.simulateTransportReady();
+    this._listener = listener;
+    this._type = Ci.nsIPresentationSessionTransportBuilder.TYPE_SENDER;
+
+    setTimeout(()=>{
+      this._listener.onSessionTransport(this);
+      this._listener = null;
+      this.simulateTransportReady();
+    }, 0);
   },
-  initWithChannelDescription: function(description, callback) {
-    this._callback = callback;
+  buildTCPReceiverTransport: function(description, listener) {
+    this._listener = listener;
+    this._type = Ci.nsIPresentationSessionTransportBuilder.TYPE_RECEIVER;
 
     var addresses = description.QueryInterface(Ci.nsIPresentationChannelDescription).tcpAddress;
     this._selfAddress = {
@@ -232,16 +249,32 @@ const mockedSessionTransport = {
                 addresses.queryElementAt(0, Ci.nsISupportsCString).data : "",
       port: description.QueryInterface(Ci.nsIPresentationChannelDescription).tcpPort,
     };
+
+    setTimeout(()=>{
+      this._listener.onSessionTransport(this);
+      this._listener = null;
+    }, 0);
+  },
+  // in-process case
+  buildDataChannelTransport: function(type, window, controlChannel, listener) {
+    dump("build data channel transport\n");
+    this._listener = listener;
+    this._type = type;
+
+    var hasNavigator = window ? (typeof window.navigator != "undefined") : false;
+    sendAsyncMessage('check-navigator', hasNavigator);
+
+    setTimeout(()=>{
+      this._listener.onSessionTransport(this);
+      this._listener = null;
+      this.simulateTransportReady();
+    }, 0);
   },
   enableDataNotification: function() {
     sendAsyncMessage('data-transport-notification-enabled');
   },
   send: function(data) {
-    var binaryStream = Cc["@mozilla.org/binaryinputstream;1"].
-                       createInstance(Ci.nsIBinaryInputStream);
-    binaryStream.setInputStream(data);
-    var message = binaryStream.readBytes(binaryStream.available());
-    sendAsyncMessage('message-sent', message);
+    sendAsyncMessage('message-sent', data);
   },
   close: function(reason) {
     sendAsyncMessage('data-transport-closed', reason);
@@ -253,6 +286,10 @@ const mockedSessionTransport = {
   simulateIncomingMessage: function(message) {
     this._callback.QueryInterface(Ci.nsIPresentationSessionTransportCallback).notifyData(message);
   },
+  onOffer: function(aOffer) {
+  },
+  onAnswer: function(aAnswer) {
+  }
 };
 
 const mockedNetworkInfo = {
@@ -303,7 +340,10 @@ originalFactoryData.push(registerMockedFactory("@mozilla.org/presentation-device
 originalFactoryData.push(registerMockedFactory("@mozilla.org/network/server-socket;1",
                                                uuidGenerator.generateUUID(),
                                                mockedServerSocket));
-originalFactoryData.push(registerMockedFactory("@mozilla.org/presentation/presentationsessiontransport;1",
+originalFactoryData.push(registerMockedFactory("@mozilla.org/presentation/presentationtcpsessiontransport;1",
+                                               uuidGenerator.generateUUID(),
+                                               mockedSessionTransport));
+originalFactoryData.push(registerMockedFactory("@mozilla.org/presentation/datachanneltransportbuilder;1",
                                                uuidGenerator.generateUUID(),
                                                mockedSessionTransport));
 originalFactoryData.push(registerMockedFactory("@mozilla.org/network/manager;1",

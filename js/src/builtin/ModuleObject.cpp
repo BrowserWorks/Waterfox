@@ -13,6 +13,7 @@
 #include "gc/Tracer.h"
 
 #include "jsobjinlines.h"
+#include "jsscriptinlines.h"
 
 using namespace js;
 using namespace js::frontend;
@@ -529,11 +530,8 @@ void FunctionDeclaration::trace(JSTracer* trc)
 ///////////////////////////////////////////////////////////////////////////
 // ModuleObject
 
-/* static */ const Class
-ModuleObject::class_ = {
-    "Module",
-    JSCLASS_HAS_RESERVED_SLOTS(ModuleObject::SlotCount) |
-    JSCLASS_IS_ANONYMOUS,
+/* static */ const ClassOps
+ModuleObject::classOps_ = {
     nullptr,        /* addProperty */
     nullptr,        /* delProperty */
     nullptr,        /* getProperty */
@@ -546,6 +544,14 @@ ModuleObject::class_ = {
     nullptr,        /* hasInstance */
     nullptr,        /* construct   */
     ModuleObject::trace
+};
+
+/* static */ const Class
+ModuleObject::class_ = {
+    "Module",
+    JSCLASS_HAS_RESERVED_SLOTS(ModuleObject::SlotCount) |
+    JSCLASS_IS_ANONYMOUS,
+    &ModuleObject::classOps_
 };
 
 #define DEFINE_ARRAY_SLOT_ACCESSOR(cls, name, slot)                           \

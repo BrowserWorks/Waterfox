@@ -11,28 +11,25 @@
 
 #include "jit/RegisterSets.h"
 
-#define HWCAP_MIPS (1 << 31)
+#define HWCAP_MIPS (1 << 28)
+#define HWCAP_LOONGSON (1 << 27)
 #define HWCAP_FPU (1 << 0)
 
 namespace js {
 namespace jit {
 
-uint32_t GetMIPSFlags()
+static uint32_t
+get_mips_flags()
 {
-    static bool isSet = false;
-    static uint32_t flags = 0;
-    if (isSet)
-        return flags;
-#if defined(JS_SIMULATOR_MIPS32) || defined(JS_SIMULATOR_MIPS64)
-    isSet = true;
-    flags |= HWCAP_FPU;
-    return flags;
-#else
+    uint32_t flags = HWCAP_MIPS;
 
-#ifdef __linux__
+#if defined(JS_SIMULATOR_MIPS32) || defined(JS_SIMULATOR_MIPS64)
+    flags |= HWCAP_FPU;
+#else
+# ifdef __linux__
     FILE* fp = fopen("/proc/cpuinfo", "r");
     if (!fp)
-        return false;
+        return flags;
 
     char buf[1024];
     memset(buf, 0, sizeof(buf));
@@ -40,18 +37,28 @@ uint32_t GetMIPSFlags()
     fclose(fp);
     if (strstr(buf, "FPU"))
         flags |= HWCAP_FPU;
-
-    isSet = true;
-    return flags;
-#endif
-
-    return flags;
+    if (strstr(buf, "Loongson"))
+        flags |= HWCAP_LOONGSON;
+# endif
 #endif // JS_SIMULATOR_MIPS32 || JS_SIMULATOR_MIPS64
+    return flags;
 }
 
-bool hasFPU()
+static bool check_fpu()
 {
-    return js::jit::GetMIPSFlags() & HWCAP_FPU;
+    return mips_private::Flags & HWCAP_FPU;
+}
+
+static bool check_loongson()
+{
+    return mips_private::Flags & HWCAP_LOONGSON;
+}
+
+namespace mips_private {
+    // Cache a local copy so we only have to read /proc/cpuinfo once.
+    uint32_t Flags = get_mips_flags();
+    bool hasFPU = check_fpu();;
+    bool isLoongson = check_loongson();
 }
 
 Registers::Code

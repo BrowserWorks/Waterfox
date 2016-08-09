@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fr_CA.xml
 // *
 // ***************************************************************************
 fr_CA{
-    Version{"2.1.24.13"}
+    Version{"2.1.19.14"}
     zoneStrings{
         "Africa:Ndjamena"{
             ec{"Ndjamena"}
@@ -79,7 +79,6 @@ fr_CA{
         }
         "meta:Amazon"{
             ld{"heure avancée de l’Amazonie"}
-            lg{"heure de l’Amazonie"}
             ls{"heure normale de l’Amazonie"}
         }
         "meta:America_Central"{
@@ -141,7 +140,6 @@ fr_CA{
         }
         "meta:Argentina"{
             ld{"heure avancée de l’Argentine"}
-            lg{"heure de l’Argentine"}
             ls{"heure normale d’Argentine"}
         }
         "meta:Argentina_Western"{

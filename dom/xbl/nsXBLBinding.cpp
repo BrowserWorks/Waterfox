@@ -86,15 +86,19 @@ XBLEnumerate(JSContext *cx, JS::Handle<JSObject*> obj)
   return protoBinding->ResolveAllFields(cx, obj);
 }
 
+static const JSClassOps gPrototypeJSClassOps = {
+    nullptr, nullptr, nullptr, nullptr,
+    XBLEnumerate, nullptr,
+    nullptr, XBLFinalize,
+    nullptr, nullptr, nullptr, nullptr
+};
+
 static const JSClass gPrototypeJSClass = {
     "XBL prototype JSClass",
     JSCLASS_HAS_PRIVATE | JSCLASS_PRIVATE_IS_NSISUPPORTS |
     // Our one reserved slot holds the relevant nsXBLPrototypeBinding
     JSCLASS_HAS_RESERVED_SLOTS(1),
-    nullptr, nullptr, nullptr, nullptr,
-    XBLEnumerate, nullptr,
-    nullptr, XBLFinalize,
-    nullptr, nullptr, nullptr, nullptr
+    &gPrototypeJSClassOps
 };
 
 // Implementation /////////////////////////////////////////////////////////////////
@@ -198,7 +202,7 @@ nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElem
   // aElement.
   // (2) The children's parent back pointer should not be to this synthetic root
   // but should instead point to the enclosing parent element.
-  nsIDocument* doc = aElement->GetCurrentDoc();
+  nsIDocument* doc = aElement->GetUncomposedDoc();
   bool allowScripts = AllowScripts();
 
   nsAutoScriptBlocker scriptBlocker;

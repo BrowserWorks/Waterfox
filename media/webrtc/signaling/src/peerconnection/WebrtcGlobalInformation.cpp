@@ -664,7 +664,11 @@ static bool sLastAECDebug = false;
 void
 WebrtcGlobalInformation::SetDebugLevel(const GlobalObject& aGlobal, int32_t aLevel)
 {
-  StartWebRtcLog(webrtc::TraceLevel(aLevel));
+  if (aLevel) {
+    StartWebRtcLog(webrtc::TraceLevel(aLevel));
+  } else {
+    StopWebRtcLog();
+  }
   sLastSetLevel = aLevel;
 
   for (auto& cp : WebrtcContentParents::GetAll()){
@@ -681,8 +685,12 @@ WebrtcGlobalInformation::DebugLevel(const GlobalObject& aGlobal)
 void
 WebrtcGlobalInformation::SetAecDebug(const GlobalObject& aGlobal, bool aEnable)
 {
-  StartWebRtcLog(sLastSetLevel); // to make it read the aec path
-  webrtc::Trace::set_aec_debug(aEnable);
+  if (aEnable) {
+    StartAecLog();
+  } else {
+    StopAecLog();
+  }
+
   sLastAECDebug = aEnable;
 
   for (auto& cp : WebrtcContentParents::GetAll()){
@@ -881,8 +889,11 @@ bool
 WebrtcGlobalChild::RecvSetAecLogging(const bool& aEnable)
 {
   if (!mShutdown) {
-    StartWebRtcLog(sLastSetLevel); // to make it read the aec path
-    webrtc::Trace::set_aec_debug(aEnable);
+    if (aEnable) {
+      StartAecLog();
+    } else {
+      StopAecLog();
+    }
   }
   return true;
 }
@@ -891,7 +902,11 @@ bool
 WebrtcGlobalChild::RecvSetDebugMode(const int& aLevel)
 {
   if (!mShutdown) {
-    StartWebRtcLog(webrtc::TraceLevel(aLevel));
+    if (aLevel) {
+      StartWebRtcLog(webrtc::TraceLevel(aLevel));
+    } else {
+      StopWebRtcLog();
+    }
   }
   return true;
 }

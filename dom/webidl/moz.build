@@ -20,7 +20,7 @@ PREPROCESSED_WEBIDL_FILES = [
 WEBIDL_FILES = [
     'AbstractWorker.webidl',
     'ActivityRequestHandler.webidl',
-    'AlarmsManager.webidl',
+    'AddonManager.webidl',
     'AnalyserNode.webidl',
     'Animatable.webidl',
     'Animation.webidl',
@@ -51,6 +51,7 @@ WEBIDL_FILES = [
     'AutocompleteInfo.webidl',
     'AVInputPort.webidl',
     'BarProp.webidl',
+    'BaseKeyframeTypes.webidl',
     'BatteryManager.webidl',
     'BeforeAfterKeyboardEvent.webidl',
     'BeforeUnloadEvent.webidl',
@@ -111,6 +112,7 @@ WEBIDL_FILES = [
     'DataStore.webidl',
     'DataStoreImpl.webidl',
     'DataTransfer.webidl',
+    'DecoderDoctorNotification.webidl',
     'DedicatedWorkerGlobalScope.webidl',
     'DelayNode.webidl',
     'DesktopNotification.webidl',
@@ -196,7 +198,6 @@ WEBIDL_FILES = [
     'HTMLDocument.webidl',
     'HTMLElement.webidl',
     'HTMLEmbedElement.webidl',
-    'HTMLExtAppElement.webidl',
     'HTMLFieldSetElement.webidl',
     'HTMLFontElement.webidl',
     'HTMLFormControlsCollection.webidl',
@@ -285,7 +286,6 @@ WEBIDL_FILES = [
     'KeyAlgorithm.webidl',
     'KeyboardEvent.webidl',
     'KeyEvent.webidl',
-    'Keyframe.webidl',
     'KeyframeEffect.webidl',
     'KillSwitch.webidl',
     'LegacyQueryInterface.webidl',
@@ -392,7 +392,6 @@ WEBIDL_FILES = [
     'PresentationRequest.webidl',
     'ProcessingInstruction.webidl',
     'ProfileTimelineMarker.webidl',
-    'PropertyIndexedKeyframes.webidl',
     'RadioNodeList.webidl',
     'Range.webidl',
     'Rect.webidl',
@@ -688,7 +687,8 @@ WEBIDL_FILES += [
 # We only expose our prefable test interfaces in debug builds, just to be on
 # the safe side.
 if CONFIG['MOZ_DEBUG']:
-    WEBIDL_FILES += ['TestInterfaceJS.webidl',
+    WEBIDL_FILES += ['TestFunctions.webidl',
+                     'TestInterfaceJS.webidl',
                      'TestInterfaceJSDictionaries.webidl',
                      'TestInterfaceJSMaplikeSetlikeIterable.webidl']
 
@@ -727,6 +727,7 @@ else:
         'PushManager.webidl',
         'PushMessageData.webidl',
         'PushSubscription.webidl',
+        'PushSubscriptionOptions.webidl',
     ]
 
 if CONFIG['MOZ_NFC']:
@@ -769,6 +770,7 @@ if CONFIG['MOZ_B2G_FM']:
     ]
 
 GENERATED_EVENTS_WEBIDL_FILES = [
+    'AddonEvent.webidl',
     'AnimationPlaybackEvent.webidl',
     'AutocompleteErrorEvent.webidl',
     'BlobEvent.webidl',
@@ -791,7 +793,6 @@ GENERATED_EVENTS_WEBIDL_FILES = [
     'DOMTransactionEvent.webidl',
     'DownloadEvent.webidl',
     'ErrorEvent.webidl',
-    'ExternalAppEvent.webidl',
     'FontFaceSetLoadEvent.webidl',
     'HashChangeEvent.webidl',
     'IccChangeEvent.webidl',
@@ -927,4 +928,9 @@ if CONFIG['MOZ_B2G']:
     ]
     GENERATED_EVENTS_WEBIDL_FILES += [
         'MozApplicationEvent.webidl'
+    ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
+    WEBIDL_FILES += [
+        'AlarmsManager.webidl',
     ]

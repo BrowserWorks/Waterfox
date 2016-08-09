@@ -12,6 +12,7 @@
  * http://www.w3.org/2012/sysapps/runtime/#extension-to-the-navigator-interface-1
  * https://dvcs.w3.org/hg/gamepad/raw-file/default/gamepad.html#navigator-interface-extension
  * http://www.w3.org/TR/beacon/#sec-beacon-method
+ * https://html.spec.whatwg.org/#navigatorconcurrenthardware
  *
  * © Copyright 2004-2011 Apple Computer, Inc., Mozilla Foundation, and
  * Opera Software ASA. You are granted a license to use, reproduce
@@ -19,7 +20,7 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-navigator-object
-[HeaderFile="Navigator.h", NeedResolve]
+[HeaderFile="Navigator.h"]
 interface Navigator {
   // objects implementing this interface also implement the interfaces given below
 };
@@ -29,6 +30,7 @@ Navigator implements NavigatorOnLine;
 Navigator implements NavigatorContentUtils;
 Navigator implements NavigatorStorageUtils;
 Navigator implements NavigatorFeatures;
+Navigator implements NavigatorConcurrentHardware;
 
 [NoInterfaceObject, Exposed=(Window,Worker)]
 interface NavigatorID {
@@ -41,7 +43,7 @@ interface NavigatorID {
   readonly attribute DOMString appVersion;
   [Constant, Cached]
   readonly attribute DOMString platform;
-  [Pure, Cached, Throws=Workers]
+  [Pure, Cached, Throws]
   readonly attribute DOMString userAgent;
   [Constant, Cached]
   readonly attribute DOMString product; // constant "Gecko"
@@ -382,7 +384,6 @@ partial interface Navigator {
 };
 #endif // MOZ_AUDIO_CHANNEL_MANAGER
 
-#ifdef MOZ_MEDIA_NAVIGATOR
 callback NavigatorUserMediaSuccessCallback = void (MediaStream stream);
 callback NavigatorUserMediaErrorCallback = void (MediaStreamError error);
 
@@ -416,7 +417,6 @@ partial interface Navigator {
                               // now that devices are enumerated earlier.
                               optional DOMString callID = "");
 };
-#endif // MOZ_MEDIA_NAVIGATOR
 
 // Service Workers/Navigation Controllers
 partial interface Navigator {
@@ -476,3 +476,8 @@ partial interface Navigator {
   DOMRequest mozPay(any jwts);
 };
 #endif
+
+[NoInterfaceObject, Exposed=(Window,Worker)]
+interface NavigatorConcurrentHardware {
+  readonly attribute unsigned long long hardwareConcurrency;
+};

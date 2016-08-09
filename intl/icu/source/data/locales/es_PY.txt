@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_PY.xml
@@ -19,7 +19,7 @@ es_PY{
             }
         }
     }
-    Version{"2.1.22.17"}
+    Version{"2.1.19.94"}
     calendar{
         gregorian{
             dayNames{
@@ -53,7 +53,6 @@ es_PY{
                         morning1{"de la madrugada"}
                         morning2{"de la mañana"}
                         night1{"de la noche"}
-                        noon{"del mediodía"}
                     }
                 }
                 stand-alone{

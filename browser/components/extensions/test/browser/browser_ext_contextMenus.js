@@ -2,6 +2,67 @@
 /* vim: set sts=2 sw=2 et tw=80: */
 "use strict";
 
+
+add_task(function* () {
+  let tab1 = yield BrowserTestUtils.openNewForegroundTab(gBrowser,
+    "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context.html");
+
+  gBrowser.selectedTab = tab1;
+
+  let extension = ExtensionTestUtils.loadExtension({
+    manifest: {
+      "permissions": ["contextMenus"],
+    },
+
+    background: function() {
+      browser.contextMenus.create({
+        id: "clickme",
+        title: "Click me!",
+        contexts: ["image"],
+      });
+      browser.test.notifyPass();
+    },
+  });
+
+  yield extension.startup();
+  yield extension.awaitFinish();
+
+  let contentAreaContextMenu = document.getElementById("contentAreaContextMenu");
+  let popupShownPromise = BrowserTestUtils.waitForEvent(contentAreaContextMenu, "popupshown");
+  yield BrowserTestUtils.synthesizeMouseAtCenter("#img1", {
+    type: "contextmenu",
+    button: 2,
+  }, gBrowser.selectedBrowser);
+  yield popupShownPromise;
+
+  let item = contentAreaContextMenu.getElementsByAttribute("label", "Click me!");
+  is(item.length, 1, "contextMenu item for image was found");
+
+  let popupHiddenPromise = BrowserTestUtils.waitForEvent(contentAreaContextMenu, "popuphidden");
+  EventUtils.synthesizeMouseAtCenter(item[0], {});
+  yield popupHiddenPromise;
+
+  contentAreaContextMenu = document.getElementById("contentAreaContextMenu");
+  popupShownPromise = BrowserTestUtils.waitForEvent(contentAreaContextMenu, "popupshown");
+  yield BrowserTestUtils.synthesizeMouseAtCenter("body", {
+    type: "contextmenu",
+    button: 2,
+  }, gBrowser.selectedBrowser);
+  yield popupShownPromise;
+
+  item = contentAreaContextMenu.getElementsByAttribute("label", "Click me!");
+  is(item.length, 0, "no contextMenu item for image was found");
+
+  // click something to close the context menu
+  popupHiddenPromise = BrowserTestUtils.waitForEvent(contentAreaContextMenu, "popuphidden");
+  EventUtils.synthesizeMouseAtCenter(document.getElementById("context-selectall"), {});
+  yield popupHiddenPromise;
+
+  yield extension.unload();
+
+  yield BrowserTestUtils.removeTab(tab1);
+});
+
 /* globals content */
 /* eslint-disable mozilla/no-cpows-in-tests */
 add_task(function* () {
@@ -17,9 +78,13 @@ add_task(function* () {
 
     background: function() {
       // A generic onclick callback function.
-      function genericOnClick(info) {
-        browser.test.sendMessage("menuItemClick", info);
+      function genericOnClick(info, tab) {
+        browser.test.sendMessage("onclick", {info, tab});
       }
+
+      browser.contextMenus.onClicked.addListener((info, tab) => {
+        browser.test.sendMessage("browser.contextMenus.onClicked", {info, tab});
+      });
 
       browser.contextMenus.create({
         contexts: ["all"],
@@ -39,9 +104,9 @@ add_task(function* () {
         if (context == "selection") {
           browser.contextMenus.update("ext-selection", {
             title: "selection is: '%s'",
-            onclick: (info) => {
+            onclick: (info, tab) => {
               browser.contextMenus.removeAll();
-              genericOnClick(info);
+              genericOnClick(info, tab);
             },
           });
         }
@@ -80,28 +145,24 @@ add_task(function* () {
         title: "radio-group-1",
         type: "radio",
         checked: true,
-        contexts: ["page"],
         onclick: genericOnClick,
       });
 
       browser.contextMenus.create({
         title: "Checkbox",
         type: "checkbox",
-        contexts: ["page"],
         onclick: genericOnClick,
       });
 
       browser.contextMenus.create({
         title: "radio-group-2",
         type: "radio",
-        contexts: ["page"],
         onclick: genericOnClick,
       });
 
       browser.contextMenus.create({
         title: "radio-group-2",
         type: "radio",
-        contexts: ["page"],
         onclick: genericOnClick,
       });
 
@@ -113,15 +174,18 @@ add_task(function* () {
         title: "Checkbox",
         type: "checkbox",
         checked: true,
-        contexts: ["page"],
         onclick: genericOnClick,
       });
 
       browser.contextMenus.create({
         title: "Checkbox",
         type: "checkbox",
-        contexts: ["page"],
         onclick: genericOnClick,
+      });
+
+      browser.contextMenus.create({
+        title: "Without onclick property",
+        id: "ext-without-onclick",
       });
 
       browser.contextMenus.update(parent, {parentId: child2}).then(
@@ -162,20 +226,29 @@ add_task(function* () {
     yield popupShownPromise;
   }
 
-  function* closeContextMenu(itemToSelect, expectedClickInfo) {
-    function checkClickInfo(info) {
+  function* closeContextMenu(itemToSelect, expectedClickInfo, hasOnclickProperty = true) {
+    function checkClickInfo(info, tab) {
       for (let i of Object.keys(expectedClickInfo)) {
         is(info[i], expectedClickInfo[i],
            "click info " + i + " expected to be: " + expectedClickInfo[i] + " but was: " + info[i]);
       }
-      is(expectedClickInfo.pageSrc, info.tab.url);
+      is(expectedClickInfo.pageSrc, tab.url);
     }
     let popupHiddenPromise = BrowserTestUtils.waitForEvent(contentAreaContextMenu, "popuphidden");
     EventUtils.synthesizeMouseAtCenter(itemToSelect, {});
-    let clickInfo = yield extension.awaitMessage("menuItemClick");
-    if (expectedClickInfo) {
-      checkClickInfo(clickInfo);
+
+    if (hasOnclickProperty) {
+      let {info, tab} = yield extension.awaitMessage("onclick");
+      if (expectedClickInfo) {
+        checkClickInfo(info, tab);
+      }
     }
+
+    let {info, tab} = yield extension.awaitMessage("browser.contextMenus.onClicked");
+    if (expectedClickInfo) {
+      checkClickInfo(info, tab);
+    }
+
     yield popupHiddenPromise;
   }
 
@@ -282,6 +355,19 @@ add_task(function* () {
     range.setEnd(textNode, 100);
     selection.addRange(range);
   });
+
+  // Bring up context menu again
+  yield openExtensionMenu();
+
+  // Check some menu items
+  top = getTop();
+  items = top.getElementsByAttribute("label", "Without onclick property");
+  is(items.length, 1, "contextMenu item was found (context=page)");
+
+  yield closeContextMenu(items[0], {
+    menuItemId: "ext-without-onclick",
+    pageUrl: "http://mochi.test:8888/browser/browser/components/extensions/test/browser/context.html",
+  }, false /* hasOnclickProperty */);
 
   // Bring up context menu again
   yield openExtensionMenu();

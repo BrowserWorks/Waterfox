@@ -12,7 +12,17 @@
 #include "nsIDocument.h"
 #include "nsINode.h"
 #include "nsPIDOMWindow.h"
+#include "AnimationEvent.h"
+#include "BeforeAfterKeyboardEvent.h"
+#include "BeforeUnloadEvent.h"
+#include "ClipboardEvent.h"
+#include "CommandEvent.h"
+#include "CompositionEvent.h"
+#include "DataContainerEvent.h"
+#include "DeviceMotionEvent.h"
+#include "DragEvent.h"
 #include "GeckoProfiler.h"
+#include "KeyboardEvent.h"
 #include "mozilla/ContentEvents.h"
 #include "mozilla/dom/CloseEvent.h"
 #include "mozilla/dom/CustomEvent.h"
@@ -85,9 +95,46 @@ private:
   uint32_t mInitialCount;
 };
 
+static bool IsEventTargetChrome(EventTarget* aEventTarget,
+                                nsIDocument** aDocument = nullptr)
+{
+  if (aDocument) {
+    *aDocument = nullptr;
+  }
+
+  if (NS_WARN_IF(!aEventTarget)) {
+    return false;
+  }
+
+  nsCOMPtr<nsIDocument> doc = do_QueryInterface(aEventTarget);
+  if (!doc) {
+    nsCOMPtr<nsINode> node = do_QueryInterface(aEventTarget);
+    if (node) {
+      doc = node->OwnerDoc();
+    } else {
+      nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aEventTarget);
+      if (!window) {
+        return false;
+      }
+      doc = window->GetExtantDoc();
+    }
+    if (!doc) {
+      return false;
+    }
+  }
+  bool isChrome = nsContentUtils::IsChromeDoc(doc);
+  if (aDocument) {
+    doc.swap(*aDocument);
+  }
+  return isChrome;
+}
+
+
 #define NS_TARGET_CHAIN_FORCE_CONTENT_DISPATCH  (1 << 0)
 #define NS_TARGET_CHAIN_WANTS_WILL_HANDLE_EVENT (1 << 1)
 #define NS_TARGET_CHAIN_MAY_HAVE_MANAGER        (1 << 2)
+#define NS_TARGET_CHAIN_CHECKED_IF_CHROME       (1 << 3)
+#define NS_TARGET_CHAIN_IS_CHROME_CONTENT       (1 << 4)
 
 // EventTargetChainItem represents a single item in the event target chain.
 class EventTargetChainItem
@@ -207,7 +254,12 @@ public:
     if (WantsWillHandleEvent()) {
       mTarget->WillHandleEvent(aVisitor);
     }
-    if (aVisitor.mEvent->mFlags.mPropagationStopped) {
+    if (aVisitor.mEvent->PropagationStopped()) {
+      return;
+    }
+    if (aVisitor.mEvent->mFlags.mOnlySystemGroupDispatchInContent &&
+        !aVisitor.mEvent->mFlags.mInSystemGroup &&
+        !IsCurrentTargetChrome()) {
       return;
     }
     if (!mManager) {
@@ -217,13 +269,13 @@ public:
       mManager = mTarget->GetExistingListenerManager();
     }
     if (mManager) {
-      NS_ASSERTION(aVisitor.mEvent->currentTarget == nullptr,
+      NS_ASSERTION(aVisitor.mEvent->mCurrentTarget == nullptr,
                    "CurrentTarget should be null!");
       mManager->HandleEvent(aVisitor.mPresContext, aVisitor.mEvent,
                             &aVisitor.mDOMEvent,
                             CurrentTarget(),
                             &aVisitor.mEventStatus);
-      NS_ASSERTION(aVisitor.mEvent->currentTarget == nullptr,
+      NS_ASSERTION(aVisitor.mEvent->mCurrentTarget == nullptr,
                    "CurrentTarget should be null!");
     }
   }
@@ -233,6 +285,7 @@ public:
    */
   void PostHandleEvent(EventChainPostVisitor& aVisitor);
 
+private:
   nsCOMPtr<EventTarget>             mTarget;
   uint16_t                          mFlags;
   uint16_t                          mItemFlags;
@@ -241,6 +294,17 @@ public:
   nsCOMPtr<EventTarget>             mNewTarget;
   // Cache mTarget's event listener manager.
   RefPtr<EventListenerManager>    mManager;
+
+  bool IsCurrentTargetChrome()
+  {
+    if (!(mFlags & NS_TARGET_CHAIN_CHECKED_IF_CHROME)) {
+      mFlags |= NS_TARGET_CHAIN_CHECKED_IF_CHROME;
+      if (IsEventTargetChrome(mTarget)) {
+        mFlags |= NS_TARGET_CHAIN_IS_CHROME_CONTENT;
+      }
+    }
+    return !!(mFlags & NS_TARGET_CHAIN_IS_CHROME_CONTENT);
+  }
 };
 
 EventTargetChainItem::EventTargetChainItem(EventTarget* aTarget)
@@ -279,7 +343,7 @@ EventTargetChainItem::HandleEventTargetChain(
                         ELMCreationDetector& aCd)
 {
   // Save the target so that it can be restored later.
-  nsCOMPtr<EventTarget> firstTarget = aVisitor.mEvent->target;
+  nsCOMPtr<EventTarget> firstTarget = aVisitor.mEvent->mTarget;
   uint32_t chainLength = aChain.Length();
 
   // Capture
@@ -289,7 +353,7 @@ EventTargetChainItem::HandleEventTargetChain(
     EventTargetChainItem& item = aChain[i];
     if ((!aVisitor.mEvent->mFlags.mNoContentDispatch ||
          item.ForceContentDispatch()) &&
-        !aVisitor.mEvent->mFlags.mPropagationStopped) {
+        !aVisitor.mEvent->PropagationStopped()) {
       item.HandleEvent(aVisitor, aCd);
     }
 
@@ -299,7 +363,7 @@ EventTargetChainItem::HandleEventTargetChain(
         uint32_t childIndex = j - 1;
         EventTarget* newTarget = aChain[childIndex].GetNewTarget();
         if (newTarget) {
-          aVisitor.mEvent->target = newTarget;
+          aVisitor.mEvent->mTarget = newTarget;
           break;
         }
       }
@@ -309,7 +373,7 @@ EventTargetChainItem::HandleEventTargetChain(
   // Target
   aVisitor.mEvent->mFlags.mInBubblingPhase = true;
   EventTargetChainItem& targetItem = aChain[0];
-  if (!aVisitor.mEvent->mFlags.mPropagationStopped &&
+  if (!aVisitor.mEvent->PropagationStopped() &&
       (!aVisitor.mEvent->mFlags.mNoContentDispatch ||
        targetItem.ForceContentDispatch())) {
     targetItem.HandleEvent(aVisitor, aCd);
@@ -326,13 +390,13 @@ EventTargetChainItem::HandleEventTargetChain(
     if (newTarget) {
       // Item is at anonymous boundary. Need to retarget for the current item
       // and for parent items.
-      aVisitor.mEvent->target = newTarget;
+      aVisitor.mEvent->mTarget = newTarget;
     }
 
     if (aVisitor.mEvent->mFlags.mBubbles || newTarget) {
       if ((!aVisitor.mEvent->mFlags.mNoContentDispatch ||
            item.ForceContentDispatch()) &&
-          !aVisitor.mEvent->mFlags.mPropagationStopped) {
+          !aVisitor.mEvent->PropagationStopped()) {
         item.HandleEvent(aVisitor, aCd);
       }
       if (aVisitor.mEvent->mFlags.mInSystemGroup) {
@@ -349,7 +413,7 @@ EventTargetChainItem::HandleEventTargetChain(
     aVisitor.mEvent->mFlags.mImmediatePropagationStopped = false;
 
     // Setting back the original target of the event.
-    aVisitor.mEvent->target = aVisitor.mEvent->originalTarget;
+    aVisitor.mEvent->mTarget = aVisitor.mEvent->mOriginalTarget;
 
     // Special handling if PresShell (or some other caller)
     // used a callback object.
@@ -359,7 +423,7 @@ EventTargetChainItem::HandleEventTargetChain(
 
     // Retarget for system event group (which does the default handling too).
     // Setting back the target which was used also for default event group.
-    aVisitor.mEvent->target = firstTarget;
+    aVisitor.mEvent->mTarget = firstTarget;
     aVisitor.mEvent->mFlags.mInSystemGroup = true;
     HandleEventTargetChain(aChain,
                            aVisitor,
@@ -461,25 +525,16 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
         do_QueryInterface(content->FindFirstNonChromeOnlyAccessContent());
       NS_ENSURE_STATE(newTarget);
 
-      aEvent->originalTarget = target;
+      aEvent->mOriginalTarget = target;
       target = newTarget;
       retargeted = true;
     }
   }
 
   if (aEvent->mFlags.mOnlyChromeDispatch) {
-    nsCOMPtr<nsINode> node = do_QueryInterface(aTarget);
-    if (!node) {
-      nsCOMPtr<nsPIDOMWindowInner> win = do_QueryInterface(aTarget);
-      if (win) {
-        node = win->GetExtantDoc();
-      }
-    }
-
-    NS_ENSURE_STATE(node);
-    nsIDocument* doc = node->OwnerDoc();
-    if (!nsContentUtils::IsChromeDoc(doc)) {
-      nsPIDOMWindowInner* win = doc ? doc->GetInnerWindow() : nullptr;
+    nsCOMPtr<nsIDocument> doc;
+    if (!IsEventTargetChrome(target, getter_AddRefs(doc)) && doc) {
+      nsPIDOMWindowInner* win = doc->GetInnerWindow();
       // If we can't dispatch the event to chrome, do nothing.
       EventTarget* piTarget = win ? win->GetParentTarget() : nullptr;
       if (!piTarget) {
@@ -487,9 +542,11 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
       }
 
       // Set the target to be the original dispatch target,
-      aEvent->target = target;
+      aEvent->mTarget = target;
       // but use chrome event handler or TabChildGlobal for event target chain.
       target = piTarget;
+    } else if (NS_WARN_IF(!doc)) {
+      return NS_ERROR_UNEXPECTED;
     }
   }
 
@@ -543,30 +600,30 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
 
   // Make sure that nsIDOMEvent::target and nsIDOMEvent::originalTarget
   // point to the last item in the chain.
-  if (!aEvent->target) {
+  if (!aEvent->mTarget) {
     // Note, CurrentTarget() points always to the object returned by
     // GetTargetForEventTargetChain().
-    aEvent->target = targetEtci->CurrentTarget();
+    aEvent->mTarget = targetEtci->CurrentTarget();
   } else {
     // XXX But if the target is already set, use that. This is a hack
     //     for the 'load', 'beforeunload' and 'unload' events,
     //     which are dispatched to |window| but have document as their target.
     //
     // Make sure that the event target points to the right object.
-    aEvent->target = aEvent->target->GetTargetForEventTargetChain();
-    NS_ENSURE_STATE(aEvent->target);
+    aEvent->mTarget = aEvent->mTarget->GetTargetForEventTargetChain();
+    NS_ENSURE_STATE(aEvent->mTarget);
   }
 
   if (retargeted) {
-    aEvent->originalTarget =
-      aEvent->originalTarget->GetTargetForEventTargetChain();
-    NS_ENSURE_STATE(aEvent->originalTarget);
+    aEvent->mOriginalTarget =
+      aEvent->mOriginalTarget->GetTargetForEventTargetChain();
+    NS_ENSURE_STATE(aEvent->mOriginalTarget);
   }
   else {
-    aEvent->originalTarget = aEvent->target;
+    aEvent->mOriginalTarget = aEvent->mTarget;
   }
 
-  nsCOMPtr<nsIContent> content = do_QueryInterface(aEvent->originalTarget);
+  nsCOMPtr<nsIContent> content = do_QueryInterface(aEvent->mOriginalTarget);
   bool isInAnon = (content && (content->IsInAnonymousSubtree() ||
                                content->IsInShadowTree()));
 
@@ -590,7 +647,7 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
   if (preVisitor.mCanHandle) {
     // At least the original target can handle the event.
     // Setting the retarget to the |target| simplifies retargeting code.
-    nsCOMPtr<EventTarget> t = do_QueryInterface(aEvent->target);
+    nsCOMPtr<EventTarget> t = do_QueryInterface(aEvent->mTarget);
     targetEtci->SetNewTarget(t);
     EventTargetChainItem* topEtci = targetEtci;
     targetEtci = nullptr;
@@ -608,7 +665,7 @@ EventDispatcher::Dispatch(nsISupports* aTarget,
       if (preVisitor.mEventTargetAtParent) {
         // Need to set the target of the event
         // so that also the next retargeting works.
-        preVisitor.mEvent->target = preVisitor.mEventTargetAtParent;
+        preVisitor.mEvent->mTarget = preVisitor.mEventTargetAtParent;
         parentEtci->SetNewTarget(preVisitor.mEventTargetAtParent);
       }
 
@@ -703,8 +760,8 @@ EventDispatcher::DispatchDOMEvent(nsISupports* aTarget,
 
     bool dontResetTrusted = false;
     if (innerEvent->mFlags.mDispatchedAtLeastOnce) {
-      innerEvent->target = nullptr;
-      innerEvent->originalTarget = nullptr;
+      innerEvent->mTarget = nullptr;
+      innerEvent->mOriginalTarget = nullptr;
     } else {
       aDOMEvent->GetIsTrusted(&dontResetTrusted);
     }

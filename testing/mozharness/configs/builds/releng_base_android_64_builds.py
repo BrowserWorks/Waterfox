@@ -4,6 +4,7 @@ config = {
     #########################################################################
     ######## ANDROID GENERIC CONFIG KEYS/VAlUES
 
+    # note: overridden by MOZHARNESS_ACTIONS in TaskCluster tasks
     'default_actions': [
         'clobber',
         'clone-tools',
@@ -13,6 +14,7 @@ config = {
         'upload-files',
         'sendchange',
         'multi-l10n',
+        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     "buildbot_json_path": "buildprops.json",
@@ -38,6 +40,11 @@ config = {
         ('/builds/mozilla-fennec-geoloc-api.key', '/builds/mozilla-fennec-geoloc-api.key'),
         ('/builds/crash-stats-api.token', '/builds/crash-stats-api.token'),
         ('/usr/local/lib/hgext', '/usr/local/lib/hgext'),
+    ],
+    'secret_files': [
+        {'filename': '/builds/mozilla-fennec-geoloc-api.key',
+         'secret_name': 'project/releng/gecko/build/level-%(scm-level)s/mozilla-fennec-geoloc-api.key',
+         'min_scm_level': 2, 'default': 'try-build-has-no-secrets'},
     ],
     'enable_ccache': True,
     'vcs_share_base': '/builds/hg-shared',
@@ -66,12 +73,6 @@ config = {
         'DISPLAY': ':2',
         'HG_SHARE_BASE_DIR': '/builds/hg-shared',
         'MOZ_OBJDIR': 'obj-firefox',
-        # SYMBOL_SERVER_HOST is dictated from build_pool_specifics.py
-        'SYMBOL_SERVER_HOST': '%(symbol_server_host)s',
-        'SYMBOL_SERVER_SSH_KEY': "/home/mock_mozilla/.ssh/ffxbld_rsa",
-        'SYMBOL_SERVER_USER': 'ffxbld',
-        'SYMBOL_SERVER_PATH': '/mnt/netapp/breakpad/symbols_ffx/',
-        'POST_SYMBOL_UPLOAD_CMD': '/usr/local/bin/post-symbol-upload.py',
         'TINDERBOX_OUTPUT': '1',
         'TOOLTOOL_CACHE': '/builds/tooltool_cache',
         'TOOLTOOL_HOME': '/builds',

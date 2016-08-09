@@ -9,18 +9,17 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.graphics.Rect;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
-import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.BrowserApp.TabStripInterface;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.util.ColorUtils;
 import org.mozilla.gecko.widget.themed.ThemedImageButton;
 import org.mozilla.gecko.widget.themed.ThemedLinearLayout;
 
@@ -108,7 +107,7 @@ public class TabStrip extends ThemedLinearLayout
 
     private class TabsListener implements Tabs.OnTabsChangedListener {
         @Override
-        public void onTabChanged(Tab tab, Tabs.TabEvents msg, Object data) {
+        public void onTabChanged(Tab tab, Tabs.TabEvents msg, String data) {
             switch (msg) {
                 case RESTORED:
                     tabStripView.restoreTabs();
@@ -165,7 +164,7 @@ public class TabStrip extends ThemedLinearLayout
 
     @Override
     public void onLightweightThemeReset() {
-        final int defaultBackgroundColor = ColorUtils.getColor(getContext(), R.color.text_and_tabs_tray_grey);
+        final int defaultBackgroundColor = ContextCompat.getColor(getContext(), R.color.text_and_tabs_tray_grey);
         setBackgroundColor(defaultBackgroundColor);
     }
 }

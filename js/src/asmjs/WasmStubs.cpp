@@ -135,6 +135,8 @@ wasm::GenerateEntry(MacroAssembler& masm, unsigned target, const Sig& sig, bool 
     // Use a second non-argument/return register as temporary scratch.
     Register argv = ABIArgGenerator::NonArgReturnReg0;
     Register scratch = ABIArgGenerator::NonArgReturnReg1;
+    Register64 scratch64(scratch);
+
 #if defined(JS_CODEGEN_X86)
     masm.loadPtr(Address(masm.getStackPointer(), EntryFrameSize + masm.framePushed()), argv);
 #else
@@ -164,9 +166,13 @@ wasm::GenerateEntry(MacroAssembler& masm, unsigned target, const Sig& sig, bool 
         unsigned argOffset = iter.index() * Module::SizeOfEntryArg;
         Address src(argv, argOffset);
         MIRType type = iter.mirType();
+        MOZ_ASSERT_IF(type == MIRType_Int64, JitOptions.wasmTestMode);
         switch (iter->kind()) {
           case ABIArg::GPR:
-            masm.load32(src, iter->gpr());
+            if (type == MIRType_Int32)
+                masm.load32(src, iter->gpr());
+            else if (type == MIRType_Int64)
+                masm.load64(src, iter->gpr64());
             break;
 #ifdef JS_CODEGEN_REGISTER_PAIR
           case ABIArg::GPR_PAIR:
@@ -201,6 +207,10 @@ wasm::GenerateEntry(MacroAssembler& masm, unsigned target, const Sig& sig, bool 
               case MIRType_Int32:
                 masm.load32(src, scratch);
                 masm.storePtr(scratch, Address(masm.getStackPointer(), iter->offsetFromArgBase()));
+                break;
+              case MIRType_Int64:
+                masm.load64(src, scratch64);
+                masm.store64(scratch64, Address(masm.getStackPointer(), iter->offsetFromArgBase()));
                 break;
               case MIRType_Double:
                 masm.loadDouble(src, ScratchDoubleReg);
@@ -245,10 +255,12 @@ wasm::GenerateEntry(MacroAssembler& masm, unsigned target, const Sig& sig, bool 
       case ExprType::Void:
         break;
       case ExprType::I32:
-        masm.storeValue(JSVAL_TYPE_INT32, ReturnReg, Address(argv, 0));
+        masm.store32(ReturnReg, Address(argv, 0));
         break;
       case ExprType::I64:
-        MOZ_CRASH("no int64 in asm.js");
+        MOZ_ASSERT(JitOptions.wasmTestMode, "no int64 in asm.js/wasm");
+        masm.store64(ReturnReg64, Address(argv, 0));
+        break;
       case ExprType::F32:
         masm.convertFloat32ToDouble(ReturnFloat32Reg, ReturnDoubleReg);
         MOZ_FALLTHROUGH; // as ReturnDoubleReg now contains a Double
@@ -280,39 +292,85 @@ wasm::GenerateEntry(MacroAssembler& masm, unsigned target, const Sig& sig, bool 
     return offsets;
 }
 
+typedef bool ToValue;
+
 static void
 FillArgumentArray(MacroAssembler& masm, const ValTypeVector& args, unsigned argOffset,
-                  unsigned offsetToCallerStackArgs, Register scratch)
+                  unsigned offsetToCallerStackArgs, Register scratch, ToValue toValue)
 {
+    Register64 scratch64(scratch);
     for (ABIArgValTypeIter i(args); !i.done(); i++) {
         Address dstAddr(masm.getStackPointer(), argOffset + i.index() * sizeof(Value));
+
+        MIRType type = i.mirType();
+        MOZ_ASSERT_IF(type == MIRType_Int64, JitOptions.wasmTestMode);
+
         switch (i->kind()) {
           case ABIArg::GPR:
-            masm.storeValue(JSVAL_TYPE_INT32, i->gpr(), dstAddr);
+            if (type == MIRType_Int32) {
+                if (toValue)
+                    masm.storeValue(JSVAL_TYPE_INT32, i->gpr(), dstAddr);
+                else
+                    masm.store32(i->gpr(), dstAddr);
+            } else if (type == MIRType_Int64) {
+                // We can't box int64 into Values (yet).
+                if (toValue)
+                    masm.breakpoint();
+                else
+                    masm.store64(i->gpr64(), dstAddr);
+            } else {
+                MOZ_CRASH("unexpected input type?");
+            }
             break;
 #ifdef JS_CODEGEN_REGISTER_PAIR
           case ABIArg::GPR_PAIR:
             MOZ_CRASH("AsmJS uses hardfp for function calls.");
             break;
 #endif
-          case ABIArg::FPU:
-            masm.canonicalizeDouble(i->fpu());
-            masm.storeDouble(i->fpu(), dstAddr);
+          case ABIArg::FPU: {
+            MOZ_ASSERT(IsFloatingPointType(type));
+            FloatRegister srcReg = i->fpu();
+            if (toValue) {
+                if (type == MIRType_Float32) {
+                    masm.convertFloat32ToDouble(i->fpu(), ScratchDoubleReg);
+                    srcReg = ScratchDoubleReg;
+                }
+                masm.canonicalizeDouble(srcReg);
+            }
+            masm.storeDouble(srcReg, dstAddr);
             break;
+          }
           case ABIArg::Stack:
-            if (i.mirType() == MIRType_Int32) {
+            if (type == MIRType_Int32) {
                 Address src(masm.getStackPointer(), offsetToCallerStackArgs + i->offsetFromArgBase());
-#if defined(JS_CODEGEN_X86) || defined(JS_CODEGEN_X64)
                 masm.load32(src, scratch);
-                masm.storeValue(JSVAL_TYPE_INT32, scratch, dstAddr);
-#else
-                masm.memIntToValue(src, dstAddr);
-#endif
+                if (toValue)
+                    masm.storeValue(JSVAL_TYPE_INT32, scratch, dstAddr);
+                else
+                    masm.store32(scratch, dstAddr);
+            } else if (type == MIRType_Int64) {
+                // We can't box int64 into Values (yet).
+                if (toValue) {
+                    masm.breakpoint();
+                } else {
+                    Address src(masm.getStackPointer(), offsetToCallerStackArgs + i->offsetFromArgBase());
+                    masm.load64(src, scratch64);
+                    masm.store64(scratch64, dstAddr);
+                }
             } else {
-                MOZ_ASSERT(i.mirType() == MIRType_Double);
+                MOZ_ASSERT(IsFloatingPointType(type));
                 Address src(masm.getStackPointer(), offsetToCallerStackArgs + i->offsetFromArgBase());
-                masm.loadDouble(src, ScratchDoubleReg);
-                masm.canonicalizeDouble(ScratchDoubleReg);
+                if (toValue) {
+                    if (type == MIRType_Float32) {
+                        masm.loadFloat32(src, ScratchFloat32Reg);
+                        masm.convertFloat32ToDouble(ScratchFloat32Reg, ScratchDoubleReg);
+                    } else {
+                        masm.loadDouble(src, ScratchDoubleReg);
+                    }
+                    masm.canonicalizeDouble(ScratchDoubleReg);
+                } else {
+                    masm.loadDouble(src, ScratchDoubleReg);
+                }
                 masm.storeDouble(ScratchDoubleReg, dstAddr);
             }
             break;
@@ -351,7 +409,7 @@ wasm::GenerateInterpExit(MacroAssembler& masm, const Import& import, uint32_t im
     // Fill the argument array.
     unsigned offsetToCallerStackArgs = sizeof(AsmJSFrame) + masm.framePushed();
     Register scratch = ABIArgGenerator::NonArgReturnReg0;
-    FillArgumentArray(masm, sig.args(), argOffset, offsetToCallerStackArgs, scratch);
+    FillArgumentArray(masm, sig.args(), argOffset, offsetToCallerStackArgs, scratch, ToValue(false));
 
     // Prepare the arguments for the call to InvokeImport_*.
     ABIArgMIRTypeIter i(invokeArgTypes);
@@ -392,10 +450,14 @@ wasm::GenerateInterpExit(MacroAssembler& masm, const Import& import, uint32_t im
       case ExprType::I32:
         masm.call(SymbolicAddress::InvokeImport_I32);
         masm.branchTest32(Assembler::Zero, ReturnReg, ReturnReg, JumpTarget::Throw);
-        masm.unboxInt32(argv, ReturnReg);
+        masm.load32(argv, ReturnReg);
         break;
       case ExprType::I64:
-        MOZ_CRASH("no int64 in asm.js");
+        MOZ_ASSERT(JitOptions.wasmTestMode);
+        masm.call(SymbolicAddress::InvokeImport_I64);
+        masm.branchTest32(Assembler::Zero, ReturnReg, ReturnReg, JumpTarget::Throw);
+        masm.load64(argv, ReturnReg64);
+        break;
       case ExprType::F32:
         masm.call(SymbolicAddress::InvokeImport_F64);
         masm.branchTest32(Assembler::Zero, ReturnReg, ReturnReg, JumpTarget::Throw);
@@ -497,7 +559,7 @@ wasm::GenerateJitExit(MacroAssembler& masm, const Import& import, bool usesHeap)
 
     // 5. Fill the arguments
     unsigned offsetToCallerStackArgs = jitFramePushed + sizeof(AsmJSFrame);
-    FillArgumentArray(masm, sig.args(), argOffset, offsetToCallerStackArgs, scratch);
+    FillArgumentArray(masm, sig.args(), argOffset, offsetToCallerStackArgs, scratch, ToValue(true));
     argOffset += sig.args().length() * sizeof(Value);
     MOZ_ASSERT(argOffset == jitFrameBytes);
 
@@ -647,7 +709,11 @@ wasm::GenerateJitExit(MacroAssembler& masm, const Import& import, bool usesHeap)
                                  /* -0 check */ false);
         break;
       case ExprType::I64:
-        MOZ_CRASH("no int64 in asm.js");
+        MOZ_ASSERT(JitOptions.wasmTestMode, "no int64 in asm.js/wasm");
+        // We don't expect int64 to be returned from Ion yet, because of a
+        // guard in callImport.
+        masm.breakpoint();
+        break;
       case ExprType::F32:
         masm.convertValueToFloat(JSReturnOperand, ReturnFloat32Reg, &oolConvert);
         break;
@@ -776,7 +842,8 @@ GenerateErrorStub(MacroAssembler& masm, SymbolicAddress address)
     offsets.begin = masm.currentOffset();
 
     // sp can be anything at this point, so ensure it is aligned when calling
-    // into C++.  We unconditionally jump to throw so don't worry about restoring sp.
+    // into C++.  We unconditionally jump to throw so don't worry about
+    // restoring sp.
     masm.andToStackPtr(Imm32(~(ABIStackAlignment - 1)));
 
     masm.assertStackAlignment(ABIStackAlignment);
@@ -832,6 +899,8 @@ wasm::GenerateJumpTarget(MacroAssembler& masm, JumpTarget target)
         return GenerateErrorStub(masm, SymbolicAddress::OnOutOfBounds);
       case JumpTarget::BadIndirectCall:
         return GenerateErrorStub(masm, SymbolicAddress::BadIndirectCall);
+      case JumpTarget::UnreachableTrap:
+        return GenerateErrorStub(masm, SymbolicAddress::UnreachableTrap);
       case JumpTarget::Throw:
         return GenerateThrow(masm);
       case JumpTarget::Limit:
@@ -936,13 +1005,17 @@ wasm::GenerateInterruptStub(MacroAssembler& masm)
     masm.loadPtr(Address(IntArgReg0, WasmActivation::offsetOfResumePC()), IntArgReg1);
     masm.storePtr(IntArgReg1, Address(s0, masm.framePushed()));
 
+# ifdef USES_O32_ABI
     // MIPS ABI requires rewserving stack for registes $a0 to $a3.
     masm.subFromStackPtr(Imm32(4 * sizeof(intptr_t)));
+# endif
 
     masm.assertStackAlignment(ABIStackAlignment);
     masm.call(SymbolicAddress::HandleExecutionInterrupt);
 
+# ifdef USES_O32_ABI
     masm.addToStackPtr(Imm32(4 * sizeof(intptr_t)));
+# endif
 
     masm.branchIfFalseBool(ReturnReg, JumpTarget::Throw);
 

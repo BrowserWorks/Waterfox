@@ -87,9 +87,8 @@ HasCPUIDBit(unsigned int level, CPUIDRegister reg, unsigned int bit)
 #define HAVE_CPU_DETECTION
 #else
 
-#if defined(_MSC_VER) && _MSC_VER >= 1600 && (defined(_M_IX86) || defined(_M_AMD64))
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64))
 // MSVC 2005 or later supports __cpuid by intrin.h
-// But it does't work on MSVC 2005 with SDK 7.1 (Bug 753772)
 #include <intrin.h>
 
 #define HAVE_CPU_DETECTION
@@ -384,7 +383,8 @@ Factory::CreateDrawTargetForData(BackendType aBackend,
                                  unsigned char *aData,
                                  const IntSize &aSize,
                                  int32_t aStride,
-                                 SurfaceFormat aFormat)
+                                 SurfaceFormat aFormat,
+                                 bool aUninitialized)
 {
   MOZ_ASSERT(aData);
   if (!AllowedSurfaceSize(aSize)) {
@@ -400,7 +400,7 @@ Factory::CreateDrawTargetForData(BackendType aBackend,
     {
       RefPtr<DrawTargetSkia> newTarget;
       newTarget = new DrawTargetSkia();
-      newTarget->Init(aData, aSize, aStride, aFormat);
+      newTarget->Init(aData, aSize, aStride, aFormat, aUninitialized);
       retVal = newTarget;
       break;
     }

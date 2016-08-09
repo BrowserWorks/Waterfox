@@ -382,13 +382,32 @@ function promiseHistoryClearedState(aURIs, aShouldBeCleared) {
  *
  * @param aExpectedURL
  *        The URL of the document that is expected to load.
+ * @param aStopFromProgressListener
+ *        Whether to cancel the load directly from the progress listener. Defaults to true.
+ *        If you're using this method to avoid hitting the network, you want the default (true).
+ *        However, the browser UI will behave differently for loads stopped directly from
+ *        the progress listener (effectively in the middle of a call to loadURI) and so there
+ *        are cases where you may want to avoid stopping the load directly from within the
+ *        progress listener callback.
  * @return promise
  */
-function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser) {
-  function content_script() {
+function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser, aStopFromProgressListener=true) {
+  function content_script(aStopFromProgressListener) {
     let { interfaces: Ci, utils: Cu } = Components;
     Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
     let wp = docShell.QueryInterface(Ci.nsIWebProgress);
+
+    function stopContent(now, uri) {
+      if (now) {
+        /* Hammer time. */
+        content.stop();
+
+        /* Let the parent know we're done. */
+        sendAsyncMessage("Test:WaitForDocLoadAndStopIt", { uri });
+      } else {
+        setTimeout(stopContent.bind(null, true, uri), 0);
+      }
+    }
 
     let progressListener = {
       onStateChange: function (webProgress, req, flags, status) {
@@ -401,11 +420,7 @@ function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser
           let chan = req.QueryInterface(Ci.nsIChannel);
           dump(`waitForDocLoadAndStopIt: Document start: ${chan.URI.spec}\n`);
 
-          /* Hammer time. */
-          content.stop();
-
-          /* Let the parent know we're done. */
-          sendAsyncMessage("Test:WaitForDocLoadAndStopIt", { uri: chan.originalURI.spec });
+          stopContent(aStopFromProgressListener, chan.originalURI.spec);
         }
       },
       QueryInterface: XPCOMUtils.generateQI(["nsISupportsWeakReference"])
@@ -432,7 +447,7 @@ function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser
     }
 
     let mm = aBrowser.messageManager;
-    mm.loadFrameScript("data:,(" + content_script.toString() + ")();", true);
+    mm.loadFrameScript("data:,(" + content_script.toString() + ")(" + aStopFromProgressListener + ");", true);
     mm.addMessageListener("Test:WaitForDocLoadAndStopIt", complete);
     info("waitForDocLoadAndStopIt: Waiting for URL: " + aExpectedURL);
   });
@@ -541,7 +556,7 @@ var FullZoomHelper = {
   },
 
   reset: function reset() {
-    return new Promise(resolve => FullZoom.reset(resolve));
+    return FullZoom.reset();
   },
 
   BACK: 0,
@@ -587,40 +602,45 @@ var FullZoomHelper = {
  *        The tab to load into.
  * @param [optional] url
  *        The url to load, or the current url.
- * @param [optional] event
- *        The load event type to wait for.  Defaults to "load".
  * @return {Promise} resolved when the event is handled.
  * @resolves to the received event
  * @rejects if a valid load event is not received within a meaningful interval
  */
-function promiseTabLoadEvent(tab, url, eventType="load")
+function promiseTabLoadEvent(tab, url)
 {
   let deferred = Promise.defer();
-  info("Wait tab event: " + eventType);
+  info("Wait tab event: load");
 
-  function handle(event) {
-    if (event.originalTarget != tab.linkedBrowser.contentDocument ||
-        event.target.location.href == "about:blank" ||
-        (url && event.target.location.href != url)) {
-      info("Skipping spurious '" + eventType + "'' event" +
-           " for " + event.target.location.href);
-      return;
+  function handle(loadedUrl) {
+    if (loadedUrl === "about:blank" || (url && loadedUrl !== url)) {
+      info(`Skipping spurious load event for ${loadedUrl}`);
+      return false;
     }
-    clearTimeout(timeout);
-    tab.linkedBrowser.removeEventListener(eventType, handle, true);
-    info("Tab event received: " + eventType);
-    deferred.resolve(event);
+
+    info("Tab event received: load");
+    return true;
   }
 
+  // Create two promises: one resolved from the content process when the page
+  // loads and one that is rejected if we take too long to load the url.
+  let loaded = BrowserTestUtils.browserLoaded(tab.linkedBrowser, false, handle);
+
   let timeout = setTimeout(() => {
-    tab.linkedBrowser.removeEventListener(eventType, handle, true);
-    deferred.reject(new Error("Timed out while waiting for a '" + eventType + "'' event"));
+    deferred.reject(new Error("Timed out while waiting for a 'load' event"));
   }, 30000);
 
-  tab.linkedBrowser.addEventListener(eventType, handle, true, true);
+  loaded.then(() => {
+    clearTimeout(timeout);
+    deferred.resolve()
+  });
+
   if (url)
-    tab.linkedBrowser.loadURI(url);
-  return deferred.promise;
+    BrowserTestUtils.loadURI(tab.linkedBrowser, url);
+
+  // Promise.all rejects if either promise rejects (i.e. if we time out) and
+  // if our loaded promise resolves before the timeout, then we resolve the
+  // timeout promise as well, causing the all promise to resolve.
+  return Promise.all([deferred.promise, loaded]);
 }
 
 /**
@@ -916,15 +936,6 @@ function assertMixedContentBlockingState(tabbrowser, states = {}) {
   return new Promise(resolve => executeSoon(resolve));
 }
 
-function makeActionURI(action, params) {
-  let encodedParams = {};
-  for (let key in params) {
-    encodedParams[key] = encodeURIComponent(params[key]);
-  }
-  let url = "moz-action:" + action + "," + JSON.stringify(encodedParams);
-  return NetUtil.newURI(url);
-}
-
 function is_hidden(element) {
   var style = element.ownerDocument.defaultView.getComputedStyle(element, "");
   if (style.display == "none")
@@ -994,33 +1005,11 @@ function promisePopupHidden(popup) {
 function promiseNotificationShown(notification) {
   let win = notification.browser.ownerDocument.defaultView;
   if (win.PopupNotifications.panel.state == "open") {
-    return Promise.resolved();
+    return Promise.resolve();
   }
   let panelPromise = promisePopupShown(win.PopupNotifications.panel);
   notification.reshow();
   return panelPromise;
-}
-
-function promiseSearchComplete(win = window) {
-  return promisePopupShown(win.gURLBar.popup).then(() => {
-    function searchIsComplete() {
-      return win.gURLBar.controller.searchStatus >=
-        Ci.nsIAutoCompleteController.STATUS_COMPLETE_NO_MATCH;
-    }
-
-    // Wait until there are at least two matches.
-    return new Promise(resolve => waitForCondition(searchIsComplete, resolve));
-  });
-}
-
-function promiseAutocompleteResultPopup(inputText, win = window) {
-  waitForFocus(() => {
-    win.gURLBar.focus();
-    win.gURLBar.value = inputText;
-    win.gURLBar.controller.startSearch(inputText);
-  }, win);
-
-  return promiseSearchComplete(win);
 }
 
 /**

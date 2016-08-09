@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 1999-2016, International Business Machines Corporation and
+ * Copyright (c) 1999-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  *
  * Generator for source/i18n/collunsafe.h
@@ -105,8 +105,6 @@ int main(int argc, const char *argv[]) {
   printf("\n");
   printf("#ifndef COLLUNSAFE_H\n"
          "#define COLLUNSAFE_H\n"
-         "\n"
-         "#include \"unicode/utypes.h\"\n"
          "\n"
          "#define COLLUNSAFE_ICU_VERSION \"" U_ICU_VERSION "\"\n");
   printf("#define COLLUNSAFE_COLL_VERSION \"%s\"\n", verString);

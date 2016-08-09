@@ -16,8 +16,6 @@ dnl set DEVELOPER_OPTIONS early; MOZ_DEFAULT_COMPILER is usually the first non-s
       DEVELOPER_OPTIONS=,
       DEVELOPER_OPTIONS=1)
 
-  AC_SUBST(DEVELOPER_OPTIONS)
-
 dnl Default to MSVC for win32 and gcc-4.2 for darwin
 dnl ==============================================================
 if test -z "$CROSS_COMPILE"; then
@@ -448,7 +446,6 @@ AC_DEFUN([MOZ_SET_WARNINGS_CFLAGS],
     # -Wloop-analysis - catches issues around loops
     # -Wnon-literal-null-conversion - catches expressions used as a null pointer constant
     # -Wthread-safety - catches inconsistent use of mutexes
-    # -Wunreachable-code-aggressive - catches lots of dead code
     #
     # XXX: at the time of writing, the version of clang used on the OS X test
     # machines has a bug that causes it to reject some valid files if both
@@ -465,7 +462,6 @@ AC_DEFUN([MOZ_SET_WARNINGS_CFLAGS],
     fi
 
     MOZ_C_SUPPORTS_WARNING(-W, thread-safety, ac_c_has_wthread_safety)
-    MOZ_C_SUPPORTS_WARNING(-W, unreachable-code-aggressive, ac_c_has_wunreachable_code_aggressive)
 
     # Turn off some non-useful warnings that -Wall turns on.
 
@@ -498,6 +494,7 @@ AC_DEFUN([MOZ_SET_WARNINGS_CXXFLAGS],
     # -Wpointer-arith - catches pointer arithmetic using NULL or sizeof(void)
     # -Wsign-compare - catches comparing signed/unsigned ints
     # -Wtype-limits - catches overflow bugs, few false positives
+    # -Wunreachable-code - catches some dead code
     # -Wwrite-strings - catches treating string literals as non-const
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wall"
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wc++11-compat"
@@ -507,14 +504,14 @@ AC_DEFUN([MOZ_SET_WARNINGS_CXXFLAGS],
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wpointer-arith"
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wsign-compare"
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wtype-limits"
+    _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wunreachable-code"
     _WARNINGS_CXXFLAGS="${_WARNINGS_CXXFLAGS} -Wwrite-strings"
 
     # -Wclass-varargs - catches objects passed by value to variadic functions.
+    # -Wimplicit-fallthrough - catches unintentional switch case fallthroughs
     # -Wloop-analysis - catches issues around loops
     # -Wnon-literal-null-conversion - catches expressions used as a null pointer constant
     # -Wthread-safety - catches inconsistent use of mutexes
-    # -Wunreachable-code - catches some dead code
-    # -Wunreachable-code-return - catches dead code after return call
     #
     # XXX: at the time of writing, the version of clang used on the OS X test
     # machines has a bug that causes it to reject some valid files if both
@@ -528,6 +525,7 @@ AC_DEFUN([MOZ_SET_WARNINGS_CXXFLAGS],
     MOZ_CXX_SUPPORTS_WARNING(-W, c++14-compat-pedantic, ac_cxx_has_wcxx14_compat_pedantic)
     MOZ_CXX_SUPPORTS_WARNING(-W, c++1z-compat, ac_cxx_has_wcxx1z_compat)
     MOZ_CXX_SUPPORTS_WARNING(-W, class-varargs, ac_cxx_has_wclass_varargs)
+    MOZ_CXX_SUPPORTS_WARNING(-W, implicit-fallthrough, ac_cxx_has_wimplicit_fallthrough)
     MOZ_CXX_SUPPORTS_WARNING(-W, loop-analysis, ac_cxx_has_wloop_analysis)
 
     if test "$MOZ_ENABLE_WARNINGS_AS_ERRORS"; then
@@ -535,8 +533,6 @@ AC_DEFUN([MOZ_SET_WARNINGS_CXXFLAGS],
     fi
 
     MOZ_CXX_SUPPORTS_WARNING(-W, thread-safety, ac_cxx_has_wthread_safety)
-    MOZ_CXX_SUPPORTS_WARNING(-W, unreachable-code, ac_cxx_has_wunreachable_code)
-    MOZ_CXX_SUPPORTS_WARNING(-W, unreachable-code-return, ac_cxx_has_wunreachable_code_return)
 
     # Turn off some non-useful warnings that -Wall turns on.
 

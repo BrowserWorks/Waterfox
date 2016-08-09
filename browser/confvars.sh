@@ -3,8 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-MOZ_APP_BASENAME=Firefox
-MOZ_APP_VENDOR=Mozilla
+MOZ_APP_BASENAME=Waterfox
+MOZ_APP_VENDOR=Waterfoxproject.org
 MOZ_UPDATER=1
 MOZ_PHOENIX=1
 
@@ -25,10 +25,8 @@ if test "$OS_ARCH" = "WINNT"; then
 fi
 
 # Enable building ./signmar and running libmar signature tests
-MOZ_ENABLE_SIGNMAR=1
+MOZ_ENABLE_SIGNMAR=0
 
-MOZ_CHROME_FILE_FORMAT=omni
-MOZ_DISABLE_EXPORT_JS=1
 MOZ_SAFE_BROWSING=1
 MOZ_SERVICES_COMMON=1
 MOZ_SERVICES_CRYPTO=1
@@ -55,19 +53,16 @@ ACCEPTED_MAR_CHANNEL_IDS=firefox-mozilla-release
 MAR_CHANNEL_ID=firefox-mozilla-release
 MOZ_PROFILE_MIGRATOR=1
 MOZ_APP_STATIC_INI=1
-MOZ_WEBAPP_RUNTIME=1
-MOZ_MEDIA_NAVIGATOR=1
 MOZ_WEBGL_CONFORMANT=1
 # Enable navigator.mozPay
 MOZ_PAY=1
 # Enable activities. These are used for FxOS developers currently.
 MOZ_ACTIVITIES=1
 MOZ_JSDOWNLOADS=1
-MOZ_WEBM_ENCODER=1
 MOZ_RUST_MP4PARSE=1
 
 # Enable checking that add-ons are signed by the trusted root
-MOZ_ADDON_SIGNING=1
+MOZ_ADDON_SIGNING=0
 
 # Include the DevTools client, not just the server (which is the default)
 MOZ_DEVTOOLS=all

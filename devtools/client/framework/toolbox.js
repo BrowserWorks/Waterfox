@@ -183,7 +183,7 @@ Toolbox.HostType = {
 };
 
 Toolbox.prototype = {
-  _URL: "chrome://devtools/content/framework/toolbox.xul",
+  _URL: "about:devtools-toolbox",
 
   _prefs: {
     LAST_HOST: "devtools.toolbox.host",
@@ -358,7 +358,14 @@ Toolbox.prototype = {
       let iframe = yield this._host.create();
       let domReady = promise.defer();
 
-      iframe.setAttribute("src", this._URL);
+      // Prevent reloading the document when the toolbox is opened in a tab
+      let location = iframe.contentWindow.location.href;
+      if (!location.startsWith(this._URL)) {
+        iframe.setAttribute("src", this._URL);
+      } else {
+        // Update the URL so that onceDOMReady watch for the right url.
+        this._URL = location;
+      }
       iframe.setAttribute("aria-label", toolboxStrings("toolbox.label"));
       let domHelper = new DOMHelpers(iframe.contentWindow);
       domHelper.onceDOMReady(() => domReady.resolve(), this._URL);
@@ -406,6 +413,7 @@ Toolbox.prototype = {
         this._addZoomKeys();
         this._loadInitialZoom();
       }
+      this._setToolbarKeyboardNavigation();
 
       this.webconsolePanel = this.doc.querySelector("#toolbox-panel-webconsole");
       this.webconsolePanel.height = Services.prefs.getIntPref(SPLITCONSOLE_HEIGHT_PREF);
@@ -699,7 +707,10 @@ Toolbox.prototype = {
     zoomValue = Math.max(zoomValue, MIN_ZOOM);
     zoomValue = Math.min(zoomValue, MAX_ZOOM);
 
-    let contViewer = this.frame.docShell.contentViewer;
+    let docShell = this.frame.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIWebNavigation)
+      .QueryInterface(Ci.nsIDocShell);
+    let contViewer = docShell.contentViewer;
 
     contViewer.fullZoom = zoomValue;
 
@@ -894,6 +905,72 @@ Toolbox.prototype = {
     for (let definition of gDevTools.getToolDefinitionArray()) {
       this._buildTabForTool(definition);
     }
+  },
+
+  /**
+   * Sets up keyboard navigation with and within the dev tools toolbar.
+   */
+  _setToolbarKeyboardNavigation() {
+    let toolbar = this.doc.querySelector(".devtools-tabbar");
+    // Set and track aria-activedescendant to indicate which control is
+    // currently focused within the toolbar (for accessibility purposes).
+    toolbar.addEventListener("focus", event => {
+      let { target, rangeParent } = event;
+      let control, controlID = toolbar.getAttribute("aria-activedescendant");
+
+      if (controlID) {
+        control = this.doc.getElementById(controlID);
+      }
+      if (rangeParent || !control) {
+        // If range parent is present, the focused is moved within the toolbar,
+        // simply updating aria-activedescendant. Or if aria-activedescendant is
+        // not available, set it to target.
+        toolbar.setAttribute("aria-activedescendant", target.id);
+      } else {
+        // When range parent is not present, we focused into the toolbar, move
+        // focus to current aria-activedescendant.
+        event.preventDefault();
+        control.focus();
+      }
+    }, true)
+
+    toolbar.addEventListener("keypress", event => {
+      let { key, target } = event;
+      let win = this.doc.defaultView;
+      let elm, type;
+      if (key === "Tab") {
+        // Tabbing when toolbar or its contents are focused should move focus to
+        // next/previous focusable element relative to toolbar itself.
+        if (event.shiftKey) {
+          elm = toolbar;
+          type = Services.focus.MOVEFOCUS_BACKWARD;
+        } else {
+          // To move focus to next element following the toolbar, relative
+          // element needs to be the last element in its subtree.
+          let last = toolbar.lastChild;
+          while (last && last.lastChild) {
+            last = last.lastChild;
+          }
+          elm = last;
+          type = Services.focus.MOVEFOCUS_FORWARD;
+        }
+      } else if (key === "ArrowLeft") {
+        // Using left arrow key inside toolbar should move focus to previous
+        // toolbar control.
+        elm = target;
+        type = Services.focus.MOVEFOCUS_BACKWARD;
+      } else if (key === "ArrowRight") {
+        // Using right arrow key inside toolbar should move focus to next
+        // toolbar control.
+        elm = target;
+        type = Services.focus.MOVEFOCUS_FORWARD;
+      } else {
+        // Ignore all other keys.
+        return;
+      }
+      event.preventDefault();
+      Services.focus.moveFocus(win, elm, type, 0);
+    });
   },
 
   /**
@@ -1106,7 +1183,6 @@ Toolbox.prototype = {
       label.setAttribute("crop", "end");
       label.setAttribute("flex", "1");
       radio.appendChild(label);
-      radio.setAttribute("flex", "1");
     }
 
     if (!toolDefinition.bgTheme) {
@@ -1232,9 +1308,9 @@ Toolbox.prototype = {
         if (typeof panel.open == "function") {
           built = panel.open();
         } else {
-          let deferred = promise.defer();
-          deferred.resolve(panel);
-          built = deferred.promise;
+          let buildDeferred = promise.defer();
+          buildDeferred.resolve(panel);
+          built = buildDeferred.promise;
         }
       }
 
@@ -1276,10 +1352,30 @@ Toolbox.prototype = {
         iframe.removeEventListener("DOMContentLoaded", callback);
         onLoad();
       };
+
       iframe.addEventListener("DOMContentLoaded", callback);
     }
 
     return deferred.promise;
+  },
+
+  /**
+   * Mark all in collection as unselected; and id as selected
+   * @param {string} collection
+   *        DOM collection of items
+   * @param {string} id
+   *        The Id of the item within the collection to select
+   */
+  selectSingleNode: function(collection, id) {
+    [...collection].forEach(node => {
+      if (node.id === id) {
+        node.setAttribute("selected", "true");
+        node.setAttribute("aria-selected", "true");
+      } else {
+        node.removeAttribute("selected");
+        node.removeAttribute("aria-selected");
+      }
+    });
   },
 
   /**
@@ -1291,15 +1387,8 @@ Toolbox.prototype = {
   selectTool: function(id) {
     this.emit("before-select", id);
 
-    let selected = this.doc.querySelector(".devtools-tab[selected]");
-    if (selected) {
-      selected.removeAttribute("selected");
-      selected.setAttribute("aria-selected", "false");
-    }
-
-    let tab = this.doc.getElementById("toolbox-tab-" + id);
-    tab.setAttribute("selected", "true");
-    tab.setAttribute("aria-selected", "true");
+    let tabs = this.doc.querySelectorAll(".devtools-tab");
+    this.selectSingleNode(tabs, "toolbox-tab-" + id);
 
     // If options is selected, the separator between it and the
     // command buttons should be hidden.
@@ -1322,7 +1411,7 @@ Toolbox.prototype = {
       throw new Error("Can't select tool, wait for toolbox 'ready' event");
     }
 
-    tab = this.doc.getElementById("toolbox-tab-" + id);
+    let tab = this.doc.getElementById("toolbox-tab-" + id);
 
     if (tab) {
       if (this.currentToolId) {
@@ -1340,9 +1429,8 @@ Toolbox.prototype = {
     tabstrip.selectedItem = tab || tabstrip.childNodes[0];
 
     // and select the right iframe
-    let deck = this.doc.getElementById("toolbox-deck");
-    let panel = this.doc.getElementById("toolbox-panel-" + id);
-    deck.selectedPanel = panel;
+    let toolboxPanels = this.doc.querySelectorAll(".toolbox-panel");
+    this.selectSingleNode(toolboxPanels, "toolbox-panel-" + id);
 
     this.lastUsedToolId = this.currentToolId;
     this.currentToolId = id;

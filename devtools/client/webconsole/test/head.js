@@ -3,6 +3,7 @@
 /* Any copyright is dedicated to the Public Domain.
  * http://creativecommons.org/publicdomain/zero/1.0/ */
 
+/* import-globals-from ../../framework/test/shared-head.js */
 "use strict";
 
 // shared-head.js handles imports, constants, and utility functions
@@ -240,53 +241,6 @@ var closeConsole = Task.async(function* (tab) {
     yield toolbox.destroy();
   }
 });
-
-/**
- * Wait for a context menu popup to open.
- *
- * @param nsIDOMElement popup
- *        The XUL popup you expect to open.
- * @param nsIDOMElement button
- *        The button/element that receives the contextmenu event. This is
- *        expected to open the popup.
- * @param function onShown
- *        Function to invoke on popupshown event.
- * @param function onHidden
- *        Function to invoke on popuphidden event.
- * @return object
- *         A Promise object that is resolved after the popuphidden event
- *         callback is invoked.
- */
-function waitForContextMenu(popup, button, onShown, onHidden) {
-  let deferred = promise.defer();
-
-  function onPopupShown() {
-    info("onPopupShown");
-    popup.removeEventListener("popupshown", onPopupShown);
-
-    onShown && onShown();
-
-    // Use executeSoon() to get out of the popupshown event.
-    popup.addEventListener("popuphidden", onPopupHidden);
-    executeSoon(() => popup.hidePopup());
-  }
-  function onPopupHidden() {
-    info("onPopupHidden");
-    popup.removeEventListener("popuphidden", onPopupHidden);
-
-    onHidden && onHidden();
-
-    deferred.resolve(popup);
-  }
-
-  popup.addEventListener("popupshown", onPopupShown);
-
-  info("wait for the context menu to open");
-  let eventDetails = {type: "contextmenu", button: 2};
-  EventUtils.synthesizeMouse(button, 2, 2, eventDetails,
-                             button.ownerDocument.defaultView);
-  return deferred.promise;
-}
 
 /**
  * Listen for a new tab to open and return a promise that resolves when one
@@ -1070,16 +1024,16 @@ function waitForMessages(options) {
   }
 
   function checkSource(rule, element) {
-    let location = element.querySelector(".message-location");
+    let location = getRenderedSource(element);
     if (!location) {
       return false;
     }
 
-    if (!checkText(rule.source.url, location.getAttribute("title"))) {
+    if (!checkText(rule.source.url, location.url)) {
       return false;
     }
 
-    if ("line" in rule.source && location.sourceLine != rule.source.line) {
+    if ("line" in rule.source && location.line === rule.source.line) {
       return false;
     }
 
@@ -1111,10 +1065,10 @@ function waitForMessages(options) {
       }
 
       if (expected.file) {
-        let file = frame.querySelector(".message-location").title;
-        if (!checkText(expected.file, file)) {
+        let url = getRenderedSource(frame).url;
+        if (!checkText(expected.file, url)) {
           ok(false, "frame #" + i + " does not match file name: " +
-                    expected.file + " != " + file);
+                    expected.file + " != " + url);
           displayErrorContext(rule, element);
           return false;
         }
@@ -1131,7 +1085,7 @@ function waitForMessages(options) {
       }
 
       if (expected.line) {
-        let line = frame.querySelector(".message-location").sourceLine;
+        let line = getRenderedSource(frame).line;
         if (!checkText(expected.line, line)) {
           ok(false, "frame #" + i + " does not match the line number: " +
                     expected.line + " != " + line);
@@ -1317,9 +1271,9 @@ function waitForMessages(options) {
   function onMessagesAdded(event, newMessages) {
     for (let msg of newMessages) {
       let elem = msg.node;
-      let location = elem.querySelector(".message-location");
-      if (location) {
-        let url = location.title;
+      let location = getRenderedSource(elem);
+      if (location && location.url) {
+        let url = location.url;
         // Prevent recursion with the browser console and any potential
         // messages coming from head.js.
         if (url.indexOf("devtools/client/webconsole/test/head.js") != -1) {
@@ -1614,14 +1568,17 @@ function checkOutputForInputs(hud, inputTests) {
   function onTabOpen(entry, {resolve, reject}, event) {
     container.removeEventListener("TabOpen", entry._onTabOpen, true);
     entry._onTabOpen = null;
-
     let tab = event.target;
     let browser = gBrowser.getBrowserForTab(tab);
-    loadBrowser(browser).then(() => {
-      let uri = content.location.href;
+
+    Task.spawn(function* () {
+      yield loadBrowser(browser);
+      let uri = yield ContentTask.spawn(browser, {}, function* () {
+        return content.location.href;
+      });
       ok(entry.expectedTab && entry.expectedTab == uri,
          "opened tab '" + uri + "', expected tab '" + entry.expectedTab + "'");
-      return closeTab(tab);
+      yield closeTab(tab);
     }).then(resolve, reject);
   }
 
@@ -1766,4 +1723,13 @@ function simulateMessageLinkClick(element, expectedLink) {
   element.dispatchEvent(event);
 
   return deferred.promise;
+}
+
+function getRenderedSource (root) {
+  let location = root.querySelector(".message-location .frame-link");
+  return location ? {
+    url: location.getAttribute("data-url"),
+    line: location.getAttribute("data-line"),
+    column: location.getAttribute("data-column"),
+  } : null;
 }

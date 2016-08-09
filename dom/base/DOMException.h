@@ -75,10 +75,22 @@ public:
 
   void GetName(nsString& retval);
 
+  virtual void GetErrorMessage(nsAString& aRetVal)
+  {
+    // Since GetName and GetMessageMoz are non-virtual and they deal with
+    // different member variables in Exception vs. DOMException, have a 
+    // virtual method to ensure the right error message creation.
+    nsAutoString name;
+    nsAutoString message;
+    GetName(name);
+    GetMessageMoz(message);
+    CreateErrorMessage(name, message, aRetVal);
+  }
+
   // The XPCOM GetFilename does the right thing.  It might throw, but we want to
   // return an empty filename in that case anyway, instead of throwing.
 
-  uint32_t LineNumber() const;
+  uint32_t LineNumber(JSContext* aCx) const;
 
   uint32_t ColumnNumber() const;
 
@@ -86,9 +98,9 @@ public:
 
   already_AddRefed<nsISupports> GetData() const;
 
-  void GetStack(nsAString& aStack, ErrorResult& aRv) const;
+  void GetStack(JSContext* aCx, nsAString& aStack, ErrorResult& aRv) const;
 
-  void Stringify(nsString& retval);
+  void Stringify(JSContext* aCx, nsString& retval);
 
   // XPCOM factory ctor.
   Exception();
@@ -101,6 +113,23 @@ public:
 
 protected:
   virtual ~Exception();
+
+  void CreateErrorMessage(const nsAString& aName, const nsAString& aMessage,
+                          nsAString& aRetVal)
+  {
+    // Create similar error message as what ErrorReport::init does in jsexn.cpp.
+    if (!aName.IsEmpty() && !aMessage.IsEmpty()) {
+      aRetVal.Assign(aName);
+      aRetVal.AppendLiteral(": ");
+      aRetVal.Append(aMessage);
+    } else if (!aName.IsEmpty()) {
+      aRetVal.Assign(aName);
+    } else if (!aMessage.IsEmpty()) {
+      aRetVal.Assign(aMessage);
+    } else {
+      aRetVal.Truncate();
+    }
+  }
 
   nsCString       mMessage;
   nsresult        mResult;
@@ -131,7 +160,7 @@ public:
   NS_DECL_NSIDOMDOMEXCEPTION
 
   // nsIException overrides
-  NS_IMETHOD ToString(nsACString& aReturn) override;
+  NS_IMETHOD ToString(JSContext* aCx, nsACString& aReturn) override;
 
   // nsWrapperCache overrides
   virtual JSObject* WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
@@ -150,6 +179,16 @@ public:
   // Intentionally shadow the nsXPCException version.
   void GetMessageMoz(nsString& retval);
   void GetName(nsString& retval);
+
+  virtual void GetErrorMessage(nsAString& aRetVal) override
+  {
+    // See the comment in Exception::GetErrorMessage.
+    nsAutoString name;
+    nsAutoString message;
+    GetName(name);
+    GetMessageMoz(message);
+    CreateErrorMessage(name, message, aRetVal);
+  }
 
   static already_AddRefed<DOMException>
   Create(nsresult aRv);

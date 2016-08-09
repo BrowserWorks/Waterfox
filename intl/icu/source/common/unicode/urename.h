@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-*   Copyright (C) 2002-2016, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 *
@@ -1077,7 +1077,6 @@
 #define ulocdata_setNoSubstitute U_ICU_ENTRY_POINT_RENAME(ulocdata_setNoSubstitute)
 #define ulocimp_getCountry U_ICU_ENTRY_POINT_RENAME(ulocimp_getCountry)
 #define ulocimp_getLanguage U_ICU_ENTRY_POINT_RENAME(ulocimp_getLanguage)
-#define ulocimp_getRegionForSupplementalData U_ICU_ENTRY_POINT_RENAME(ulocimp_getRegionForSupplementalData)
 #define ulocimp_getScript U_ICU_ENTRY_POINT_RENAME(ulocimp_getScript)
 #define ulocimp_toBcpKey U_ICU_ENTRY_POINT_RENAME(ulocimp_toBcpKey)
 #define ulocimp_toBcpType U_ICU_ENTRY_POINT_RENAME(ulocimp_toBcpType)
@@ -1446,20 +1445,11 @@
 #define uregion_getRegionFromCode U_ICU_ENTRY_POINT_RENAME(uregion_getRegionFromCode)
 #define uregion_getRegionFromNumericCode U_ICU_ENTRY_POINT_RENAME(uregion_getRegionFromNumericCode)
 #define uregion_getType U_ICU_ENTRY_POINT_RENAME(uregion_getType)
-#define ureldatefmt_close U_ICU_ENTRY_POINT_RENAME(ureldatefmt_close)
-#define ureldatefmt_combineDateAndTime U_ICU_ENTRY_POINT_RENAME(ureldatefmt_combineDateAndTime)
-#define ureldatefmt_format U_ICU_ENTRY_POINT_RENAME(ureldatefmt_format)
-#define ureldatefmt_formatNumeric U_ICU_ENTRY_POINT_RENAME(ureldatefmt_formatNumeric)
-#define ureldatefmt_open U_ICU_ENTRY_POINT_RENAME(ureldatefmt_open)
 #define ures_close U_ICU_ENTRY_POINT_RENAME(ures_close)
 #define ures_copyResb U_ICU_ENTRY_POINT_RENAME(ures_copyResb)
 #define ures_countArrayItems U_ICU_ENTRY_POINT_RENAME(ures_countArrayItems)
 #define ures_findResource U_ICU_ENTRY_POINT_RENAME(ures_findResource)
 #define ures_findSubResource U_ICU_ENTRY_POINT_RENAME(ures_findSubResource)
-#define ures_getAllArrayItems U_ICU_ENTRY_POINT_RENAME(ures_getAllArrayItems)
-#define ures_getAllArrayItemsWithFallback U_ICU_ENTRY_POINT_RENAME(ures_getAllArrayItemsWithFallback)
-#define ures_getAllTableItems U_ICU_ENTRY_POINT_RENAME(ures_getAllTableItems)
-#define ures_getAllTableItemsWithFallback U_ICU_ENTRY_POINT_RENAME(ures_getAllTableItemsWithFallback)
 #define ures_getBinary U_ICU_ENTRY_POINT_RENAME(ures_getBinary)
 #define ures_getByIndex U_ICU_ENTRY_POINT_RENAME(ures_getByIndex)
 #define ures_getByKey U_ICU_ENTRY_POINT_RENAME(ures_getByKey)

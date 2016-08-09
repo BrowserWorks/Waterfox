@@ -5,6 +5,7 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 
+Cu.import("resource://gre/modules/ExtensionContent.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -26,15 +27,20 @@ var AboutReaderListener = {
     addEventListener("DOMContentLoaded", this, false);
     addEventListener("pageshow", this, false);
     addEventListener("pagehide", this, false);
-    addMessageListener("Reader:ParseDocument", this);
+    addMessageListener("Reader:ToggleReaderMode", this);
     addMessageListener("Reader:PushState", this);
   },
 
   receiveMessage: function(message) {
     switch (message.name) {
-      case "Reader:ParseDocument":
-        this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
-        content.document.location = "about:reader?url=" + encodeURIComponent(message.data.url);
+      case "Reader:ToggleReaderMode":
+        let url = content.document.location.href;
+        if (!this.isAboutReader) {
+          this._articlePromise = ReaderMode.parseDocument(content.document).catch(Cu.reportError);
+          ReaderMode.enterReaderMode(docShell, content);
+        } else {
+          ReaderMode.leaveReaderMode(docShell, content);
+        }
         break;
 
       case "Reader:PushState":
@@ -103,4 +109,9 @@ AboutReaderListener.init();
 
 addMessageListener("RemoteLogins:fillForm", function(message) {
   LoginManagerContent.receiveMessage(message, content);
+});
+
+ExtensionContent.init(this);
+addEventListener("unload", () => {
+  ExtensionContent.uninit(this);
 });

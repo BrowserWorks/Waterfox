@@ -5311,7 +5311,7 @@
 !ifmacrodef InitHashAppModelId
       ; setup the application model id registration value
       !ifdef AppName
-      ${InitHashAppModelId} "$INSTDIR" "Software\WaterfoxProject\${AppName}\TaskBarIDs"
+      ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
       !endif
 !endif
 
@@ -5556,12 +5556,12 @@
 
 !ifndef NO_INSTDIR_FROM_REG
       SetShellVarContext all      ; Set SHCTX to HKLM
-      ${GetSingleInstallPath} "Software\WaterfoxProject\${BrandFullNameInternal}" $R9
+      ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
 
       StrCmp "$R9" "false" +1 finish_get_install_dir
 
       SetShellVarContext current  ; Set SHCTX to HKCU
-      ${GetSingleInstallPath} "Software\WaterfoxProject\${BrandFullNameInternal}" $R9
+      ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
 
       ${If} ${RunningX64}
         ; In HKCU there is no WOW64 redirection, which means we may have gotten

@@ -142,7 +142,7 @@ New_HTMLLink(nsIContent* aContent, Accessible* aContext)
 {
   // Only some roles truly enjoy life as HTMLLinkAccessibles, for details
   // see closed bug 494807.
-  nsRoleMapEntry* roleMapEntry = aria::GetRoleMap(aContent->AsElement());
+  const nsRoleMapEntry* roleMapEntry = aria::GetRoleMap(aContent->AsElement());
   if (roleMapEntry && roleMapEntry->role != roles::NOTHING &&
       roleMapEntry->role != roles::LINK) {
     return new HyperTextAccessibleWrap(aContent, aContext->Document());
@@ -360,7 +360,7 @@ nsAccessibilityService::Observe(nsISupports *aSubject, const char *aTopic,
 void
 nsAccessibilityService::NotifyOfAnchorJumpTo(nsIContent* aTargetNode)
 {
-  nsIDocument* documentNode = aTargetNode->GetCurrentDoc();
+  nsIDocument* documentNode = aTargetNode->GetUncomposedDoc();
   if (documentNode) {
     DocAccessible* document = GetDocAccessible(documentNode);
     if (document)
@@ -416,7 +416,7 @@ public:
 
   NS_IMETHODIMP Notify(nsITimer* aTimer) final
   {
-    if (!mContent->IsInDoc())
+    if (!mContent->IsInUncomposedDoc())
       return NS_OK;
 
     nsIPresShell* ps = mContent->OwnerDoc()->GetShell();
@@ -580,8 +580,9 @@ nsAccessibilityService::ContentRemoved(nsIPresShell* aPresShell,
 #ifdef A11Y_LOG
   if (logging::IsEnabled(logging::eTree)) {
     logging::MsgBegin("TREE", "content removed");
-    logging::Node("container", aChildNode->GetFlattenedTreeParent());
-    logging::Node("content", aChildNode);
+    logging::Node("container node", aChildNode->GetFlattenedTreeParent());
+    logging::Node("content node", aChildNode);
+    logging::MsgEnd();
   }
 #endif
 
@@ -1010,26 +1011,20 @@ nsAccessibilityService::IsLogged(const nsAString& aModule, bool* aIsLogged)
 // nsAccessibilityService public
 
 Accessible*
-nsAccessibilityService::GetOrCreateAccessible(nsINode* aNode,
-                                              Accessible* aContext,
-                                              bool* aIsSubtreeHidden)
+nsAccessibilityService::CreateAccessible(nsINode* aNode,
+                                         Accessible* aContext,
+                                         bool* aIsSubtreeHidden)
 {
-  NS_PRECONDITION(aContext && aNode && !gIsShutdown,
-                  "Maybe let'd do a crash? Oh, yes, baby!");
+  MOZ_ASSERT(aContext, "No context provided");
+  MOZ_ASSERT(aNode, "No node to create an accessible for");
+  MOZ_ASSERT(!gIsShutdown, "No creation after shutdown");
 
   if (aIsSubtreeHidden)
     *aIsSubtreeHidden = false;
 
   DocAccessible* document = aContext->Document();
-
-  // Check to see if we already have an accessible for this node in the cache.
-  // XXX: we don't have context check here. It doesn't really necessary until
-  // we have in-law children adoption.
-  Accessible* cachedAccessible = document->GetAccessible(aNode);
-  if (cachedAccessible)
-    return cachedAccessible;
-
-  // No cache entry, so we must create the accessible.
+  MOZ_ASSERT(!document->GetAccessible(aNode),
+             "We already have an accessible for this node.");
 
   if (aNode->IsNodeOfType(nsINode::eDOCUMENT)) {
     // If it's document node then ask accessible document loader for
@@ -1039,7 +1034,7 @@ nsAccessibilityService::GetOrCreateAccessible(nsINode* aNode,
   }
 
   // We have a content node.
-  if (!aNode->GetCrossShadowCurrentDoc()) {
+  if (!aNode->GetComposedDoc()) {
     NS_WARNING("Creating accessible for node with no document");
     return nullptr;
   }
@@ -1132,7 +1127,7 @@ nsAccessibilityService::GetOrCreateAccessible(nsINode* aNode,
     return newAcc;
   }
 
-  nsRoleMapEntry* roleMapEntry = aria::GetRoleMap(content->AsElement());
+  const nsRoleMapEntry* roleMapEntry = aria::GetRoleMap(content->AsElement());
 
   // If the element is focusable or global ARIA attribute is applied to it or
   // it is referenced by ARIA relationship then treat role="presentation" on
@@ -1184,7 +1179,7 @@ nsAccessibilityService::GetOrCreateAccessible(nsINode* aNode,
     // expose their native roles.
     if (!roleMapEntry && newAcc && aContext->HasStrongARIARole()) {
       if (frame->AccessibleType() == eHTMLTableRowType) {
-        nsRoleMapEntry* contextRoleMap = aContext->ARIARoleMap();
+        const nsRoleMapEntry* contextRoleMap = aContext->ARIARoleMap();
         if (!contextRoleMap->IsOfType(eTable))
           roleMapEntry = &aria::gEmptyRoleMap;
 
@@ -1196,7 +1191,7 @@ nsAccessibilityService::GetOrCreateAccessible(nsINode* aNode,
                                               nsGkAtoms::li,
                                               nsGkAtoms::dd) ||
                  frame->AccessibleType() == eHTMLLiType) {
-        nsRoleMapEntry* contextRoleMap = aContext->ARIARoleMap();
+        const nsRoleMapEntry* contextRoleMap = aContext->ARIARoleMap();
         if (!contextRoleMap->IsOfType(eList))
           roleMapEntry = &aria::gEmptyRoleMap;
       }
@@ -1327,12 +1322,15 @@ nsAccessibilityService::Init()
   logging::CheckEnv();
 #endif
 
+  gAccessibilityService = this;
+
   if (XRE_IsParentProcess())
     gApplicationAccessible = new ApplicationAccessibleWrap();
   else
     gApplicationAccessible = new ApplicationAccessible();
 
   NS_ADDREF(gApplicationAccessible); // will release in Shutdown()
+  gApplicationAccessible->Init();
 
 #ifdef MOZ_CRASHREPORTER
   CrashReporter::
@@ -1828,9 +1826,7 @@ NS_GetAccessibilityService(nsIAccessibilityService** aResult)
 
   statistics::A11yInitialized();
 
-  nsAccessibilityService::gAccessibilityService = service;
   NS_ADDREF(*aResult = service);
-
   return NS_OK;
 }
 

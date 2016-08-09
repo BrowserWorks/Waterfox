@@ -6,20 +6,34 @@
 package org.mozilla.gecko.db;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.mozilla.apache.commons.codec.binary.Base32;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserContract.Combined;
 import org.mozilla.gecko.db.BrowserContract.Favicons;
 import org.mozilla.gecko.db.BrowserContract.History;
+import org.mozilla.gecko.db.BrowserContract.Visits;
 import org.mozilla.gecko.db.BrowserContract.Numbers;
 import org.mozilla.gecko.db.BrowserContract.ReadingListItems;
 import org.mozilla.gecko.db.BrowserContract.SearchHistory;
 import org.mozilla.gecko.db.BrowserContract.Thumbnails;
 import org.mozilla.gecko.db.BrowserContract.UrlAnnotations;
+import org.mozilla.gecko.fxa.FirefoxAccounts;
+import org.mozilla.gecko.reader.SavedReaderViewHelper;
+import org.mozilla.gecko.sync.Utils;
+import org.mozilla.gecko.sync.repositories.android.RepoUtils;
 import org.mozilla.gecko.util.FileUtils;
 
 import static org.mozilla.gecko.db.DBUtils.qualifyColumn;
@@ -44,13 +58,14 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
     // Replace the Bug number below with your Bug that is conducting a DB upgrade, as to force a merge conflict with any
     // other patches that require a DB upgrade.
-    public static final int DATABASE_VERSION = 30; // Bug 946857
+    public static final int DATABASE_VERSION = 32; // Bug 1046709
     public static final String DATABASE_NAME = "browser.db";
 
     final protected Context mContext;
 
     static final String TABLE_BOOKMARKS = Bookmarks.TABLE_NAME;
     static final String TABLE_HISTORY = History.TABLE_NAME;
+    static final String TABLE_VISITS = Visits.TABLE_NAME;
     static final String TABLE_FAVICONS = Favicons.TABLE_NAME;
     static final String TABLE_THUMBNAILS = Thumbnails.TABLE_NAME;
     static final String TABLE_READING_LIST = ReadingListItems.TABLE_NAME;
@@ -59,15 +74,21 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
     static final String TABLE_LOGINS = BrowserContract.Logins.TABLE_LOGINS;
     static final String TABLE_DELETED_LOGINS = BrowserContract.DeletedLogins.TABLE_DELETED_LOGINS;
     static final String TABLE_DISABLED_HOSTS = BrowserContract.LoginsDisabledHosts.TABLE_DISABLED_HOSTS;
+    static final String TABLE_ANNOTATIONS = UrlAnnotations.TABLE_NAME;
 
     static final String VIEW_COMBINED = Combined.VIEW_NAME;
     static final String VIEW_BOOKMARKS_WITH_FAVICONS = Bookmarks.VIEW_WITH_FAVICONS;
+    static final String VIEW_BOOKMARKS_WITH_ANNOTATIONS = Bookmarks.VIEW_WITH_ANNOTATIONS;
     static final String VIEW_HISTORY_WITH_FAVICONS = History.VIEW_WITH_FAVICONS;
     static final String VIEW_COMBINED_WITH_FAVICONS = Combined.VIEW_WITH_FAVICONS;
 
     static final String TABLE_BOOKMARKS_JOIN_FAVICONS = TABLE_BOOKMARKS + " LEFT OUTER JOIN " +
             TABLE_FAVICONS + " ON " + qualifyColumn(TABLE_BOOKMARKS, Bookmarks.FAVICON_ID) + " = " +
             qualifyColumn(TABLE_FAVICONS, Favicons._ID);
+
+    static final String TABLE_BOOKMARKS_JOIN_ANNOTATIONS = TABLE_BOOKMARKS + " JOIN " +
+            TABLE_ANNOTATIONS + " ON " + qualifyColumn(TABLE_BOOKMARKS, Bookmarks.URL) + " = " +
+            qualifyColumn(TABLE_ANNOTATIONS, UrlAnnotations.URL);
 
     static final String TABLE_HISTORY_JOIN_FAVICONS = TABLE_HISTORY + " LEFT OUTER JOIN " +
             TABLE_FAVICONS + " ON " + qualifyColumn(TABLE_HISTORY, History.FAVICON_ID) + " = " +
@@ -144,6 +165,24 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 + History.DATE_LAST_VISITED + ')');
     }
 
+    private void createVisitsTable(SQLiteDatabase db) {
+        debug("Creating " + TABLE_VISITS + " table");
+        db.execSQL("CREATE TABLE " + TABLE_VISITS + "(" +
+                Visits._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                Visits.HISTORY_GUID + " TEXT NOT NULL," +
+                Visits.VISIT_TYPE + " TINYINT NOT NULL DEFAULT 1," +
+                Visits.DATE_VISITED + " INTEGER NOT NULL, " +
+                Visits.IS_LOCAL + " TINYINT NOT NULL DEFAULT 1, " +
+
+                "FOREIGN KEY (" + Visits.HISTORY_GUID + ") REFERENCES " +
+                TABLE_HISTORY + "(" + History.GUID + ") ON DELETE CASCADE ON UPDATE CASCADE" +
+                ");");
+
+        db.execSQL("CREATE UNIQUE INDEX visits_history_guid_and_date_visited_index ON " + TABLE_VISITS + "("
+            + Visits.HISTORY_GUID + "," + Visits.DATE_VISITED + ")");
+        db.execSQL("CREATE INDEX visits_history_guid_index ON " + TABLE_VISITS + "(" + Visits.HISTORY_GUID + ")");
+    }
+
     private void createFaviconsTable(SQLiteDatabase db) {
         debug("Creating " + TABLE_FAVICONS + " table");
         db.execSQL("CREATE TABLE " + TABLE_FAVICONS + " (" +
@@ -175,6 +214,16 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 ", " + qualifyColumn(TABLE_FAVICONS, Favicons.DATA) + " AS " + Bookmarks.FAVICON +
                 ", " + qualifyColumn(TABLE_FAVICONS, Favicons.URL) + " AS " + Bookmarks.FAVICON_URL +
                 " FROM " + TABLE_BOOKMARKS_JOIN_FAVICONS);
+    }
+
+    private void createBookmarksWithAnnotationsView(SQLiteDatabase db) {
+        debug("Creating " + VIEW_BOOKMARKS_WITH_ANNOTATIONS + " view");
+
+        db.execSQL("CREATE VIEW IF NOT EXISTS " + VIEW_BOOKMARKS_WITH_ANNOTATIONS + " AS " +
+                   "SELECT " + qualifyColumn(TABLE_BOOKMARKS, "*") +
+                   ", " + qualifyColumn(TABLE_ANNOTATIONS, UrlAnnotations.KEY) + " AS " + Bookmarks.ANNOTATION_KEY +
+                   ", " + qualifyColumn(TABLE_ANNOTATIONS, UrlAnnotations.VALUE) + " AS " + Bookmarks.ANNOTATION_VALUE +
+                   " FROM " + TABLE_BOOKMARKS_JOIN_ANNOTATIONS);
     }
 
     private void createHistoryWithFaviconsView(SQLiteDatabase db) {
@@ -420,8 +469,6 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
 
         createOrUpdateAllSpecialFolders(db);
         createSearchHistoryTable(db);
-        createReadingListTable(db, TABLE_READING_LIST);
-        createReadingListIndices(db, TABLE_READING_LIST);
         createUrlAnnotationsTable(db);
         createNumbersTable(db);
 
@@ -429,6 +476,10 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
         createDisabledHostsTable(db, TABLE_DISABLED_HOSTS);
         createLoginsTable(db, TABLE_LOGINS);
         createLoginsTableIndices(db, TABLE_LOGINS);
+
+        createBookmarksWithAnnotationsView(db);
+
+        createVisitsTable(db);
     }
 
     /**
@@ -460,6 +511,136 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 oldTabsDB.close();
             }
         }
+    }
+
+    /**
+     * We used to have a separate history extensions database which was used by Sync to store arrays
+     * of visits for individual History GUIDs. It was only used by Sync.
+     * This function migrates contents of that database over to the Visits table.
+     *
+     * Warning to callers: this method might throw IllegalStateException if we fail to allocate a
+     * cursor to read HistoryExtensionsDB data for whatever reason. See Bug 1280409.
+     *
+     * @param historyExtensionDb Source History Extensions database
+     * @param db Destination database
+     */
+    private void copyHistoryExtensionDataToVisitsTable(final SQLiteDatabase historyExtensionDb, final SQLiteDatabase db) {
+        final String historyExtensionTable = "HistoryExtension";
+        final String columnGuid = "guid";
+        final String columnVisits = "visits";
+
+        final Cursor historyExtensionCursor = historyExtensionDb.query(historyExtensionTable,
+                new String[] {columnGuid, columnVisits},
+                null, null, null, null, null);
+        // Ignore null or empty cursor, we can't (or have nothing to) copy at this point.
+        if (historyExtensionCursor == null) {
+            return;
+        }
+        try {
+            if (!historyExtensionCursor.moveToFirst()) {
+                return;
+            }
+
+            final int guidCol = historyExtensionCursor.getColumnIndexOrThrow(columnGuid);
+
+            // Use prepared (aka "compiled") SQL statements because they are much faster when we're inserting
+            // lots of data. We avoid GC churn and recompilation of SQL statements on every insert.
+            // NB #1: OR IGNORE clause applies to UNIQUE, NOT NULL, CHECK, and PRIMARY KEY constraints.
+            // It does not apply to Foreign Key constraints, but in our case, at this point in time, foreign key
+            // constraints are disabled anyway.
+            // We care about OR IGNORE because we want to ensure that in case of (GUID,DATE)
+            // clash (the UNIQUE constraint), we will not fail the transaction, and just skip conflicting row.
+            // Clash might occur if visits array we got from Sync has duplicate (guid,date) records.
+            // NB #2: IS_LOCAL is always 0, since we consider all visits coming from Sync to be remote.
+            final String insertSqlStatement = "INSERT OR IGNORE INTO " + Visits.TABLE_NAME + " (" +
+                    Visits.DATE_VISITED + "," +
+                    Visits.VISIT_TYPE + "," +
+                    Visits.HISTORY_GUID + "," +
+                    Visits.IS_LOCAL + ") VALUES (?, ?, ?, " + Visits.VISIT_IS_REMOTE + ")";
+            final SQLiteStatement compiledInsertStatement = db.compileStatement(insertSqlStatement);
+
+            do {
+                final String guid = historyExtensionCursor.getString(guidCol);
+
+                // Sanity check, let's not risk a bad incoming GUID.
+                if (guid == null || guid.isEmpty()) {
+                    continue;
+                }
+
+                // First, check if history with given GUID exists in the History table.
+                // We might have a lot of entries in the HistoryExtensionDatabase whose GUID doesn't
+                // match one in the History table. Let's avoid doing unnecessary work by first checking if
+                // GUID exists locally.
+                // Note that we don't have foreign key constraints enabled at this point.
+                // See Bug 1266232 for details.
+                if (!isGUIDPresentInHistoryTable(db, guid)) {
+                    continue;
+                }
+
+                final JSONArray visitsInHistoryExtensionDB = RepoUtils.getJSONArrayFromCursor(historyExtensionCursor, columnVisits);
+
+                if (visitsInHistoryExtensionDB == null) {
+                    continue;
+                }
+
+                final int histExtVisitCount = visitsInHistoryExtensionDB.size();
+
+                debug("Inserting " + histExtVisitCount + " visits from history extension db for GUID: " + guid);
+                for (int i = 0; i < histExtVisitCount; i++) {
+                    final JSONObject visit = (JSONObject) visitsInHistoryExtensionDB.get(i);
+
+                    // Sanity check.
+                    if (visit == null) {
+                        continue;
+                    }
+
+                    // Let's not rely on underlying data being correct, and guard against casting failures.
+                    // Since we can't recover from this (other than ignoring this visit), let's not fail user's migration.
+                    final Long date;
+                    final Long visitType;
+                    try {
+                        date = (Long) visit.get("date");
+                        visitType = (Long) visit.get("type");
+                    } catch (ClassCastException e) {
+                        continue;
+                    }
+                    // Sanity check our incoming data.
+                    if (date == null || visitType == null) {
+                        continue;
+                    }
+
+                    // Bind parameters use a 1-based index.
+                    compiledInsertStatement.clearBindings();
+                    compiledInsertStatement.bindLong(1, date);
+                    compiledInsertStatement.bindLong(2, visitType);
+                    compiledInsertStatement.bindString(3, guid);
+                    compiledInsertStatement.executeInsert();
+                }
+            } while (historyExtensionCursor.moveToNext());
+        } finally {
+            // We return on a null cursor, so don't have to check it here.
+            historyExtensionCursor.close();
+        }
+    }
+
+    private boolean isGUIDPresentInHistoryTable(final SQLiteDatabase db, String guid) {
+        final Cursor historyCursor = db.query(
+                History.TABLE_NAME,
+                new String[] {History.GUID}, History.GUID + " = ?", new String[] {guid},
+                null, null, null);
+        if (historyCursor == null) {
+            return false;
+        }
+        try {
+            // No history record found for given GUID
+            if (!historyCursor.moveToFirst()) {
+                return false;
+            }
+        } finally {
+            historyCursor.close();
+        }
+
+        return true;
     }
 
     private void createSearchHistoryTable(SQLiteDatabase db) {
@@ -1043,7 +1224,10 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP INDEX IF EXISTS reading_list_guid");
         db.execSQL("DROP INDEX IF EXISTS reading_list_content_status");
 
-        final String thisDevice = ReadingListProvider.PLACEHOLDER_THIS_DEVICE;
+        // This used to be a part of the no longer existing ReadingListProvider, since we're deleting
+        // this table later in the second migration, and since sync for this table never existed,
+        // we don't care about the device name here.
+        final String thisDevice = "_fake_device_name_that_will_be_discarded_in_the_next_migration_";
         db.execSQL("INSERT INTO tmp_rl (" +
                    // Here are the columns we can preserve.
                    ReadingListItems._ID + ", " +
@@ -1166,6 +1350,295 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
         createLoginsTableIndices(db, TABLE_LOGINS);
     }
 
+    // Get the cache path for a URL, based on the storage format in place during the 27to28 transition.
+    // This is a reimplementation of _toHashedPath from ReaderMode.jsm - given that we're likely
+    // to migrate the SavedReaderViewHelper implementation at some point, it seems safest to have a local
+    // implementation here - moreover this is probably faster than calling into JS.
+    // This is public only to allow for testing.
+    @RobocopTarget
+    public static String getReaderCacheFileNameForURL(String url) {
+        try {
+            // On KitKat and above we can use java.nio.charset.StandardCharsets.UTF_8 in place of "UTF8"
+            // which avoids having to handle UnsupportedCodingException
+            byte[] utf8 = url.getBytes("UTF8");
+
+            final MessageDigest digester = MessageDigest.getInstance("MD5");
+            byte[] hash = digester.digest(utf8);
+
+            final String hashString = new Base32().encodeAsString(hash);
+            return hashString.substring(0, hashString.indexOf('=')) + ".json";
+        } catch (UnsupportedEncodingException e) {
+            // This should never happen
+            throw new IllegalStateException("UTF8 encoding not available - can't process readercache filename");
+        } catch (NoSuchAlgorithmException e) {
+            // This should also never happen
+            throw new IllegalStateException("MD5 digester unavailable - can't process readercache filename");
+        }
+    }
+
+    /*
+     * Moves reading list items from the 'reading_list' table back into the 'bookmarks' table. This time the
+     * reading list items are placed into a "Reading List" folder, which is a subfolder of the mobile-bookmarks table.
+     */
+    private void upgradeDatabaseFrom30to31(SQLiteDatabase db) {
+        // We only need to do the migration if reading-list items already exist. We could do a query of count(*) on
+        // TABLE_READING_LIST, however if we are doing the migration, we'll need to query all items in the reading-list,
+        // hence we might as well just query all items, and proceed with the migration if cursor.count > 0.
+
+        // We try to retain the original ordering below. Our LocalReadingListAccessor actually coalesced
+        // SERVER_STORED_ON with ADDED_ON to determine positioning, however reading list syncing was never
+        // implemented hence SERVER_STORED will have always been null.
+        final Cursor readingListCursor = db.query(TABLE_READING_LIST,
+                                     new String[] {
+                                             ReadingListItems.URL,
+                                             ReadingListItems.TITLE,
+                                             ReadingListItems.ADDED_ON,
+                                             ReadingListItems.CLIENT_LAST_MODIFIED
+                                     },
+                                     ReadingListItems.IS_DELETED + " = 0",
+                                     null,
+                                     null,
+                                     null,
+                                     ReadingListItems.ADDED_ON + " DESC");
+
+        // We'll want to walk the cache directory, so that we can (A) bookkeep readercache items
+        // that we want and (B) delete unneeded readercache items. (B) shouldn't actually happen, but
+        // is possible if there were bugs in our reader-caching code.
+        // We need to construct this here since we populate this map while walking the DB cursor,
+        // and use the map later when walking the cache.
+        final Map<String, String> fileToURLMap = new HashMap<>();
+
+
+        try {
+            if (!readingListCursor.moveToFirst()) {
+                return;
+            }
+
+            final Integer mobileBookmarksID = getMobileFolderId(db);
+
+            if (mobileBookmarksID == null) {
+                // This folder is created either on DB creation or during the 3-4 or 6-7 migrations.
+                throw new IllegalStateException("mobile bookmarks folder must already exist");
+            }
+
+            final long now = System.currentTimeMillis();
+
+            // We try to retain the same order as the reading-list would show. We should hopefully be reading the
+            // items in the order they are displayed on screen (final param of db.query above), by providing
+            // a position we should obtain the same ordering in the bookmark folder.
+            long position = 0;
+
+            final int titleColumnID = readingListCursor.getColumnIndexOrThrow(ReadingListItems.TITLE);
+            final int createdColumnID = readingListCursor.getColumnIndexOrThrow(ReadingListItems.ADDED_ON);
+
+            // This isn't the most efficient implementation, but the migration is one-off, and this
+            // also more maintainable than the SQL equivalent (generating the guids correctly is
+            // difficult in SQLite).
+            do {
+                final ContentValues readingListItemValues = new ContentValues();
+
+                final String url = readingListCursor.getString(readingListCursor.getColumnIndexOrThrow(ReadingListItems.URL));
+
+                readingListItemValues.put(Bookmarks.PARENT, mobileBookmarksID);
+                readingListItemValues.put(Bookmarks.GUID, Utils.generateGuid());
+                readingListItemValues.put(Bookmarks.URL, url);
+                // Title may be null, however we're expecting a String - we can generate an empty string if needed:
+                if (!readingListCursor.isNull(titleColumnID)) {
+                    readingListItemValues.put(Bookmarks.TITLE, readingListCursor.getString(titleColumnID));
+                } else {
+                    readingListItemValues.put(Bookmarks.TITLE, "");
+                }
+                readingListItemValues.put(Bookmarks.DATE_CREATED, readingListCursor.getLong(createdColumnID));
+                readingListItemValues.put(Bookmarks.DATE_MODIFIED, now);
+                readingListItemValues.put(Bookmarks.POSITION, position);
+
+                db.insert(TABLE_BOOKMARKS,
+                          null,
+                          readingListItemValues);
+
+                final String cacheFileName = getReaderCacheFileNameForURL(url);
+                fileToURLMap.put(cacheFileName, url);
+
+                position++;
+            } while (readingListCursor.moveToNext());
+
+        } finally {
+            readingListCursor.close();
+            // We need to do this work here since we might be returning (we return early if the
+            // reading-list table is empty).
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_READING_LIST);
+            createBookmarksWithAnnotationsView(db);
+        }
+
+        final File profileDir = GeckoProfile.get(mContext).getDir();
+        final File cacheDir = new File(profileDir, "readercache");
+
+        // At the time of this migration the SavedReaderViewHelper becomes a 1:1 mirror of reader view
+        // url-annotations. This may change in future implementations, however currently we only need to care
+        // about standard bookmarks (untouched during this migration) and bookmarks with a reader
+        // view annotation (which we're creating here, and which are guaranteed to be saved offline).
+        //
+        // This is why we have to migrate the cache items (instead of cleaning the cache
+        // and rebuilding it). We simply don't support uncached reader view bookmarks, and we would
+        // break existing reading list items (they would convert into plain bookmarks without
+        // reader view). This helps ensure that offline content isn't lost during the migration.
+        if (cacheDir.exists() && cacheDir.isDirectory()) {
+            SavedReaderViewHelper savedReaderViewHelper = SavedReaderViewHelper.getSavedReaderViewHelper(mContext);
+
+            // Usually we initialise the helper during onOpen(). However onUpgrade() is run before
+            // onOpen() hence we need to manually initialise it at this stage.
+            savedReaderViewHelper.loadItems();
+
+            for (File cacheFile : cacheDir.listFiles()) {
+                if (fileToURLMap.containsKey(cacheFile.getName())) {
+                    final String url = fileToURLMap.get(cacheFile.getName());
+                    final String path = cacheFile.getAbsolutePath();
+                    long size = cacheFile.length();
+
+                    savedReaderViewHelper.put(url, path, size);
+                } else {
+                    // This should never happen, but we don't actually know whether or not orphaned
+                    // items happened in the wild.
+                    boolean deleted = cacheFile.delete();
+
+                    if (!deleted) {
+                        Log.w(LOGTAG, "Failed to delete orphaned saved reader view file.");
+                    }
+                }
+            }
+        }
+    }
+
+    private void upgradeDatabaseFrom31to32(final SQLiteDatabase db) {
+        debug("Adding visits table");
+        createVisitsTable(db);
+
+        debug("Migrating visits from history extension db into visits table");
+        String historyExtensionDbName = "history_extension_database";
+
+        SQLiteDatabase historyExtensionDb = null;
+        final File historyExtensionsDatabase = mContext.getDatabasePath(historyExtensionDbName);
+
+        // Primary goal of this migration is to improve Top Sites experience by distinguishing between
+        // local and remote visits. If Sync is enabled, we rely on visit data from Sync and treat it as remote.
+        // However, if Sync is disabled but we detect evidence that it was enabled at some point (HistoryExtensionsDB is present)
+        // then we synthesize visits from the History table, but we mark them all as "remote". This will ensure
+        // that once user starts browsing around, their Top Sites will reflect their local browsing history.
+        // Otherwise, we risk overwhelming their Top Sites with remote history, just as we did before this migration.
+        try {
+            // If FxAccount exists (Sync is enabled) then port data over to the Visits table.
+            if (FirefoxAccounts.firefoxAccountsExist(mContext)) {
+                try {
+                    historyExtensionDb = SQLiteDatabase.openDatabase(historyExtensionsDatabase.getPath(), null,
+                            SQLiteDatabase.OPEN_READONLY);
+
+                    if (historyExtensionDb != null) {
+                        copyHistoryExtensionDataToVisitsTable(historyExtensionDb, db);
+                    }
+
+                // If we fail to open HistoryExtensionDatabase, then synthesize visits marking them as remote
+                } catch (SQLiteException e) {
+                    Log.w(LOGTAG, "Couldn't open history extension database; synthesizing visits instead", e);
+                    synthesizeAndInsertVisits(db, false);
+
+                // It's possible that we might fail to copy over visit data from the HistoryExtensionsDB,
+                // so let's synthesize visits marking them as remote. See Bug 1280409.
+                } catch (IllegalStateException e) {
+                    Log.w(LOGTAG, "Couldn't copy over history extension data; synthesizing visits instead", e);
+                    synthesizeAndInsertVisits(db, false);
+                }
+
+            // FxAccount doesn't exist, but there's evidence Sync was enabled at some point.
+            // Synthesize visits from History table marking them all as remote.
+            } else if (historyExtensionsDatabase.exists()) {
+                synthesizeAndInsertVisits(db, false);
+
+            // FxAccount doesn't exist and there's no evidence sync was ever enabled.
+            // Synthesize visits from History table marking them all as local.
+            } else {
+                synthesizeAndInsertVisits(db, true);
+            }
+        } finally {
+            if (historyExtensionDb != null) {
+                historyExtensionDb.close();
+            }
+        }
+
+        // Delete history extensions database if it's present.
+        if (historyExtensionsDatabase.exists()) {
+            if (!mContext.deleteDatabase(historyExtensionDbName)) {
+                Log.e(LOGTAG, "Couldn't remove history extension database");
+            }
+        }
+    }
+
+    private void synthesizeAndInsertVisits(final SQLiteDatabase db, boolean markAsLocal) {
+        final Cursor cursor = db.query(
+                History.TABLE_NAME,
+                new String[] {History.GUID, History.VISITS, History.DATE_LAST_VISITED},
+                null, null, null, null, null);
+        if (cursor == null) {
+            Log.e(LOGTAG, "Null cursor while selecting all history records");
+            return;
+        }
+
+        try {
+            if (!cursor.moveToFirst()) {
+                Log.e(LOGTAG, "No history records to synthesize visits for.");
+                return;
+            }
+
+            int guidCol = cursor.getColumnIndexOrThrow(History.GUID);
+            int visitsCol = cursor.getColumnIndexOrThrow(History.VISITS);
+            int dateCol = cursor.getColumnIndexOrThrow(History.DATE_LAST_VISITED);
+
+            // Re-use compiled SQL statements for faster inserts.
+            // Visit Type is going to be 1, which is the column's default value.
+            final String insertSqlStatement = "INSERT OR IGNORE INTO " + Visits.TABLE_NAME + "(" +
+                    Visits.DATE_VISITED + "," +
+                    Visits.HISTORY_GUID + "," +
+                    Visits.IS_LOCAL +
+                    ") VALUES (?, ?, ?)";
+            final SQLiteStatement compiledInsertStatement = db.compileStatement(insertSqlStatement);
+
+            // For each history record, insert as many visits as there are recorded in the VISITS column.
+            do {
+                final int numberOfVisits = cursor.getInt(visitsCol);
+                final String guid = cursor.getString(guidCol);
+                final long lastVisitedDate = cursor.getLong(dateCol);
+
+                // Sanity check.
+                if (guid == null) {
+                    continue;
+                }
+
+                // In a strange case that lastVisitedDate is a very low number, let's not introduce
+                // negative timestamps into our data.
+                if (lastVisitedDate - numberOfVisits < 0) {
+                    continue;
+                }
+
+                for (int i = 0; i < numberOfVisits; i++) {
+                    final long offsetVisitedDate = lastVisitedDate - i;
+                    compiledInsertStatement.clearBindings();
+                    compiledInsertStatement.bindLong(1, offsetVisitedDate);
+                    compiledInsertStatement.bindString(2, guid);
+                    // Very old school, 1 is true and 0 is false :)
+                    if (markAsLocal) {
+                        compiledInsertStatement.bindLong(3, Visits.VISIT_IS_LOCAL);
+                    } else {
+                        compiledInsertStatement.bindLong(3, Visits.VISIT_IS_REMOTE);
+                    }
+                    compiledInsertStatement.executeInsert();
+                }
+            } while (cursor.moveToNext());
+        } catch (Exception e) {
+            Log.e(LOGTAG, "Error while synthesizing visits for history record", e);
+        } finally {
+            cursor.close();
+        }
+    }
+
     private void createV19CombinedView(SQLiteDatabase db) {
         db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED);
         db.execSQL("DROP VIEW IF EXISTS " + VIEW_COMBINED_WITH_FAVICONS);
@@ -1181,7 +1654,7 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
         // We have to do incremental upgrades until we reach the current
         // database schema version.
         for (int v = oldVersion + 1; v <= newVersion; v++) {
-            switch(v) {
+            switch (v) {
                 case 4:
                     upgradeDatabaseFrom3to4(db);
                     break;
@@ -1263,6 +1736,14 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
                 case 30:
                     upgradeDatabaseFrom29to30(db);
                     break;
+
+                case 31:
+                    upgradeDatabaseFrom30to31(db);
+                    break;
+
+                case 32:
+                    upgradeDatabaseFrom31to32(db);
+                    break;
             }
         }
 
@@ -1282,6 +1763,14 @@ public final class BrowserDatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onOpen(SQLiteDatabase db) {
         debug("Opening browser.db: " + db.getPath());
+
+        // Force explicit readercache loading - we won't access readercache state for bookmarks
+        // until we actually know what our bookmarks are. Bookmarks are stored in the DB, hence
+        // it is sufficient to ensure that the readercache is loaded before the DB can be accessed.
+        // Note, this takes ~4-6ms to load on an N4 (compared to 20-50ms for most DB queries), and
+        // is only done once, hence this shouldn't have noticeable impact on performance. Moreover
+        // this is run on a background thread and therefore won't block UI code during startup.
+        SavedReaderViewHelper.getSavedReaderViewHelper(mContext).loadItems();
 
         Cursor cursor = null;
         try {

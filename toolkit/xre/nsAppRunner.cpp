@@ -68,6 +68,7 @@
 #include "nsIIOService2.h"
 #include "nsIObserverService.h"
 #include "nsINativeAppSupport.h"
+#include "nsIPlatformInfo.h"
 #include "nsIProcess.h"
 #include "nsIProfileUnlocker.h"
 #include "nsIPromptService.h"
@@ -108,10 +109,10 @@
 #ifndef PROCESS_DEP_ENABLE
 #define PROCESS_DEP_ENABLE 0x1
 #endif
-
-#if defined(MOZ_CONTENT_SANDBOX)
-#include "nsIUUIDGenerator.h"
 #endif
+
+#if (defined(XP_WIN) || defined(XP_MACOSX)) && defined(MOZ_CONTENT_SANDBOX)
+#include "nsIUUIDGenerator.h"
 #endif
 
 #ifdef ACCESSIBILITY
@@ -235,6 +236,8 @@ int    gRestartArgc;
 char **gRestartArgv;
 
 bool gIsGtest = false;
+
+nsString gAbsoluteArgv0Path;
 
 #ifdef MOZ_WIDGET_QT
 static int    gQtOnlyArgc;
@@ -620,8 +623,12 @@ GetAndCleanTempDir()
     return nullptr;
   }
 
+  // Don't return an error if the directory doesn't exist.
+  // Windows Remove() returns NS_ERROR_FILE_NOT_FOUND while
+  // OS X returns NS_ERROR_FILE_TARGET_DOES_NOT_EXIST.
   rv = tempDir->Remove(/* aRecursive */ true);
-  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND) {
+  if (NS_FAILED(rv) && rv != NS_ERROR_FILE_NOT_FOUND &&
+      rv != NS_ERROR_FILE_TARGET_DOES_NOT_EXIST) {
     NS_WARNING("Failed to delete temp directory.");
     return nullptr;
   }
@@ -745,6 +752,7 @@ class nsXULAppInfo : public nsIXULAppInfo,
 public:
   MOZ_CONSTEXPR nsXULAppInfo() {}
   NS_DECL_ISUPPORTS_INHERITED
+  NS_DECL_NSIPLATFORMINFO
   NS_DECL_NSIXULAPPINFO
   NS_DECL_NSIXULRUNTIME
   NS_DECL_NSIOBSERVER
@@ -768,7 +776,8 @@ NS_INTERFACE_MAP_BEGIN(nsXULAppInfo)
   NS_INTERFACE_MAP_ENTRY(nsICrashReporter)
   NS_INTERFACE_MAP_ENTRY(nsIFinishDumpingCallback)
 #endif
-  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIXULAppInfo, gAppData || 
+  NS_INTERFACE_MAP_ENTRY(nsIPlatformInfo)
+  NS_INTERFACE_MAP_ENTRY_CONDITIONAL(nsIXULAppInfo, gAppData ||
                                      XRE_IsContentProcess())
 NS_INTERFACE_MAP_END
 
@@ -3382,6 +3391,11 @@ XREMain::XRE_mainInit(bool* aExitFlag)
 #endif
 
 #ifdef XP_MACOSX
+  // Set up ability to respond to system (Apple) events. This must occur before
+  // ProcessUpdates to ensure that links clicked in external applications aren't
+  // lost when updates are pending.
+  SetupMacApplicationDelegate();
+
   if (EnvHasValue("MOZ_LAUNCHED_CHILD")) {
     // This is needed, on relaunch, to force the OS to use the "Cocoa Dock
     // API".  Otherwise the call to ReceiveNextEvent() below will make it
@@ -4277,10 +4291,6 @@ XREMain::XRE_mainRun()
 #endif
 
 #ifdef XP_MACOSX
-    // Set up ability to respond to system (Apple) events. This must be
-    // done before setting up the command line service.
-    SetupMacApplicationDelegate();
-
     // we re-initialize the command-line service and do appleevents munging
     // after we are sure that we're not restarting
     cmdLine = do_CreateInstance("@mozilla.org/toolkit/command-line;1");
@@ -4403,6 +4413,13 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
   // used throughout this file
   gAppData = mAppData;
 
+  nsCOMPtr<nsIFile> binFile;
+  rv = XRE_GetBinaryPath(argv[0], getter_AddRefs(binFile));
+  NS_ENSURE_SUCCESS(rv, 1);
+
+  rv = binFile->GetPath(gAbsoluteArgv0Path);
+  NS_ENSURE_SUCCESS(rv, 1);
+
   mozilla::IOInterposerInit ioInterposerGuard;
 
 #if MOZ_WIDGET_GTK == 2
@@ -4436,6 +4453,8 @@ XREMain::XRE_main(int argc, char* argv[], const nsXREAppData* aAppData)
 #ifdef MOZ_INSTRUMENT_EVENT_LOOP
   mozilla::ShutdownEventTracing();
 #endif
+
+  gAbsoluteArgv0Path.Truncate();
 
   // Check for an application initiated restart.  This is one that
   // corresponds to nsIAppStartup.quit(eRestart)
@@ -4656,11 +4675,10 @@ enum {
   kE10sDisabledForBidi = 6,
   kE10sDisabledForAddons = 7,
   kE10sForceDisabled = 8,
-  kE10sDisabledForXPAcceleration = 9, // not used yet
-  kE10sDisabledForGTK320 = 10,
+  kE10sDisabledForXPAcceleration = 9,
+  kE10sDisabledForOperatingSystem = 10,
 };
 
-#if defined(XP_WIN) || defined(XP_MACOSX)
 const char* kAccessibilityLastRunDatePref = "accessibility.lastLoadDate";
 const char* kAccessibilityLoadedLastSessionPref = "accessibility.loadedInLastSession";
 
@@ -4670,7 +4688,6 @@ PRTimeToSeconds(PRTime t_usec)
   PRTime usec_per_sec = PR_USEC_PER_SEC;
   return uint32_t(t_usec /= usec_per_sec);
 }
-#endif // XP_WIN || XP_MACOSX
 
 const char* kForceEnableE10sPref = "browser.tabs.remote.force-enable";
 const char* kForceDisableE10sPref = "browser.tabs.remote.force-disable";
@@ -4701,7 +4718,7 @@ MultiprocessBlockPolicy() {
   }
 
   bool disabledForA11y = false;
-#if defined(XP_WIN) || defined(XP_MACOSX)
+
   /**
    * Avoids enabling e10s if accessibility has recently loaded. Performs the
    * following checks:
@@ -4728,21 +4745,47 @@ MultiprocessBlockPolicy() {
       disabledForA11y = true;
     }
   }
-#endif // XP_WIN || XP_MACOSX
 
   if (disabledForA11y) {
     gMultiprocessBlockPolicy = kE10sDisabledForAccessibility;
     return gMultiprocessBlockPolicy;
   }
 
-#if defined(MOZ_WIDGET_GTK) && defined(RELEASE_BUILD)
-  // Bug 1266213 - Workaround for bug 1264454
-  // Disable for users of 3.20 or higher
-  if (gtk_check_version(3, 20, 0) == nullptr) {
-    gMultiprocessBlockPolicy = kE10sDisabledForGTK320;
+  /**
+   * Avoids enabling e10s for Windows XP users on the release channel.
+   */
+#if defined(XP_WIN)
+  if (Preferences::GetDefaultCString("app.update.channel").EqualsLiteral("release") &&
+      !IsVistaOrLater()) {
+    gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
     return gMultiprocessBlockPolicy;
   }
 #endif
+
+  /**
+   * Avoids enabling e10s for OS X 10.6 - 10.8 users (<= Mountain Lion) as these
+   * versions will be unsupported soon.
+   */
+#if defined(XP_MACOSX)
+  if (!nsCocoaFeatures::OnMavericksOrLater()) {
+    gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
+    return gMultiprocessBlockPolicy;
+  }
+#endif
+
+#if defined(XP_WIN)
+  /**
+   * We block on Windows XP if layers acceleration is requested. This is due to
+   * bug 1237769 where D3D9 and e10s behave badly together on XP.
+   */
+  bool layersAccelerationRequested = !Preferences::GetBool("layers.acceleration.disabled") ||
+                                      Preferences::GetBool("layers.acceleration.force-enabled");
+
+  if (layersAccelerationRequested && !IsVistaOrLater()) {
+    gMultiprocessBlockPolicy = kE10sDisabledForXPAcceleration;
+    return gMultiprocessBlockPolicy;
+  }
+#endif // XP_WIN
 
   /**
    * Avoids enabling e10s for certain locales that require bidi selection,
@@ -4761,8 +4804,6 @@ MultiprocessBlockPolicy() {
     return gMultiprocessBlockPolicy;
   }
 
-
-
   /*
    * None of the blocking policies matched, so e10s is allowed to run.
    * Cache the information and return 0, indicating success.
@@ -4779,6 +4820,11 @@ mozilla::BrowserTabsRemoteAutostart()
   }
   gBrowserTabsRemoteAutostartInitialized = true;
 
+  // If we're in the content process, we are running E10S.
+  if (XRE_IsContentProcess()) {
+    gBrowserTabsRemoteAutostart = true;
+    return gBrowserTabsRemoteAutostart;
+  }
 
   bool optInPref = Preferences::GetBool("browser.tabs.remote.autostart", false);
   bool trialPref = Preferences::GetBool("browser.tabs.remote.autostart.2", false);

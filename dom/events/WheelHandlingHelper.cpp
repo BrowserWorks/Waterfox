@@ -30,8 +30,8 @@ namespace mozilla {
 /******************************************************************/
 
 DeltaValues::DeltaValues(WidgetWheelEvent* aEvent)
-  : deltaX(aEvent->deltaX)
-  , deltaY(aEvent->deltaY)
+  : deltaX(aEvent->mDeltaX)
+  , deltaY(aEvent->mDeltaY)
 {
 }
 
@@ -129,7 +129,7 @@ WheelTransaction::UpdateTransaction(WidgetWheelEvent* aEvent)
   }
 
   if (!WheelHandlingUtils::CanScrollOn(scrollToFrame,
-                                       aEvent->deltaX, aEvent->deltaY)) {
+                                       aEvent->mDeltaX, aEvent->mDeltaY)) {
     OnFailToScrollTarget();
     // We should not modify the transaction state when the view will not be
     // scrolled actually.
@@ -235,7 +235,7 @@ WheelTransaction::OnEvent(WidgetEvent* aEvent)
         // If the cursor is moving to be outside the frame,
         // terminate the scrollwheel transaction.
         nsIntPoint pt = GetScreenPoint(mouseEvent);
-        nsIntRect r = sTargetFrame->GetScreenRectExternal();
+        nsIntRect r = sTargetFrame->GetScreenRect();
         if (!r.Contains(pt)) {
           EndTransaction();
           return;
@@ -338,8 +338,8 @@ WheelTransaction::SetTimeout()
 WheelTransaction::GetScreenPoint(WidgetGUIEvent* aEvent)
 {
   NS_ASSERTION(aEvent, "aEvent is null");
-  NS_ASSERTION(aEvent->widget, "aEvent-widget is null");
-  return (aEvent->refPoint + aEvent->widget->WidgetToScreenOffset())
+  NS_ASSERTION(aEvent->mWidget, "aEvent-mWidget is null");
+  return (aEvent->mRefPoint + aEvent->mWidget->WidgetToScreenOffset())
       .ToUnknownPoint();
 }
 
@@ -362,7 +362,7 @@ WheelTransaction::AccelerateWheelDelta(WidgetWheelEvent* aEvent,
   DeltaValues result(aEvent);
 
   // Don't accelerate the delta values if the event isn't line scrolling.
-  if (aEvent->deltaMode != nsIDOMWheelEvent::DOM_DELTA_LINE) {
+  if (aEvent->mDeltaMode != nsIDOMWheelEvent::DOM_DELTA_LINE) {
     return result;
   }
 
@@ -405,11 +405,11 @@ WheelTransaction::GetAccelerationFactor()
 WheelTransaction::OverrideSystemScrollSpeed(WidgetWheelEvent* aEvent)
 {
   MOZ_ASSERT(sTargetFrame, "We don't have mouse scrolling transaction");
-  MOZ_ASSERT(aEvent->deltaMode == nsIDOMWheelEvent::DOM_DELTA_LINE);
+  MOZ_ASSERT(aEvent->mDeltaMode == nsIDOMWheelEvent::DOM_DELTA_LINE);
 
   // If the event doesn't scroll to both X and Y, we don't need to do anything
   // here.
-  if (!aEvent->deltaX && !aEvent->deltaY) {
+  if (!aEvent->mDeltaX && !aEvent->mDeltaY) {
     return DeltaValues(aEvent);
   }
 

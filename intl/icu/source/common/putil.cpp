@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1997-2015, International Business Machines
+*   Copyright (C) 1997-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -1009,10 +1009,6 @@ uprv_tzname(int n)
         && uprv_strcmp(tzid, TZ_ENV_CHECK) != 0
 #endif
     ) {
-        /* The colon forces tzset() to treat the remainder as zoneinfo path */ 
-        if (tzid[0] == ':') { 
-            tzid++; 
-        } 
         /* This might be a good Olson ID. */
         skipZoneIDPrefix(&tzid);
         return tzid;
@@ -1396,18 +1392,9 @@ static const char *uprv_getPOSIXIDForCategory(int category)
         {
             /* Maybe we got some garbage.  Try something more reasonable */
             posixID = getenv("LC_ALL");
-            /* Solaris speaks POSIX -  See IEEE Std 1003.1-2008 
-             * This is needed to properly handle empty env. variables
-             */
-#if U_PLATFORM == U_PF_SOLARIS
-            if ((posixID == 0) || (posixID[0] == '\0')) {
-                posixID = getenv(category == LC_MESSAGES ? "LC_MESSAGES" : "LC_CTYPE");
-                if ((posixID == 0) || (posixID[0] == '\0')) {
-#else
             if (posixID == 0) {
                 posixID = getenv(category == LC_MESSAGES ? "LC_MESSAGES" : "LC_CTYPE");
                 if (posixID == 0) {
-#endif                    
                     posixID = getenv("LANG");
                 }
             }
@@ -1899,10 +1886,7 @@ int_getDefaultCodepage()
 
     localeName = uprv_getPOSIXIDForDefaultCodepage();
     uprv_memset(codesetName, 0, sizeof(codesetName));
-    /* On Solaris nl_langinfo returns C locale values unless setlocale
-     * was called earlier.
-     */
-#if (U_HAVE_NL_LANGINFO_CODESET && U_PLATFORM != U_PF_SOLARIS)
+#if U_HAVE_NL_LANGINFO_CODESET
     /* When available, check nl_langinfo first because it usually gives more
        useful names. It depends on LC_CTYPE.
        nl_langinfo may use the same buffer as setlocale. */
@@ -2213,7 +2197,6 @@ uprv_dlsym_func(void *lib, const char* sym, UErrorCode *status) {
 
 U_INTERNAL void * U_EXPORT2
 uprv_dl_open(const char *libName, UErrorCode *status) {
-    (void)libName;
     if(U_FAILURE(*status)) return NULL;
     *status = U_UNSUPPORTED_ERROR;
     return NULL;
@@ -2221,7 +2204,6 @@ uprv_dl_open(const char *libName, UErrorCode *status) {
 
 U_INTERNAL void U_EXPORT2
 uprv_dl_close(void *lib, UErrorCode *status) {
-    (void)lib;
     if(U_FAILURE(*status)) return;
     *status = U_UNSUPPORTED_ERROR;
     return;
@@ -2230,8 +2212,6 @@ uprv_dl_close(void *lib, UErrorCode *status) {
 
 U_INTERNAL UVoidFunction* U_EXPORT2
 uprv_dlsym_func(void *lib, const char* sym, UErrorCode *status) {
-  (void)lib;
-  (void)sym;
   if(U_SUCCESS(*status)) {
     *status = U_UNSUPPORTED_ERROR;
   }

@@ -188,7 +188,7 @@ Function un.UninstallServiceIfNotUsed
   ; Figure out the number of subkeys
   StrCpy $0 0
   ${Do}
-    EnumRegKey $1 HKLM "Software\WaterfoxProject\MaintenanceService" $0
+    EnumRegKey $1 HKLM "Software\Mozilla\MaintenanceService" $0
     ${If} "$1" == ""
       ${ExitDo}
     ${EndIf}
@@ -244,10 +244,10 @@ Section "Uninstall"
   ${EndIf}
 
   ; setup the application model id registration value
-  ${un.InitHashAppModelId} "$INSTDIR" "Software\WaterfoxProject\${AppName}\TaskBarIDs"
+  ${un.InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
 
   SetShellVarContext current  ; Set SHCTX to HKCU
-  ${un.RegCleanMain} "Software\WaterfoxProject"
+  ${un.RegCleanMain} "Software\Mozilla"
   ${un.RegCleanUninstall}
   ${un.DeleteShortcuts}
 
@@ -261,18 +261,18 @@ Section "Uninstall"
   ${un.CleanUpdateDirectories} "Mozilla\Firefox" "Mozilla\updates"
 
   ; Remove any app model id's stored in the registry for this install path
-  DeleteRegValue HKCU "Software\WaterfoxProject\${AppName}\TaskBarIDs" "$INSTDIR"
-  DeleteRegValue HKLM "Software\WaterfoxProject\${AppName}\TaskBarIDs" "$INSTDIR"
+  DeleteRegValue HKCU "Software\Mozilla\${AppName}\TaskBarIDs" "$INSTDIR"
+  DeleteRegValue HKLM "Software\Mozilla\${AppName}\TaskBarIDs" "$INSTDIR"
 
   ClearErrors
-  WriteRegStr HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     StrCpy $TmpVal "HKCU" ; used primarily for logging
   ${Else}
     SetShellVarContext all  ; Set SHCTX to HKLM
-    DeleteRegValue HKLM "Software\WaterfoxProject" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
     StrCpy $TmpVal "HKLM" ; used primarily for logging
-    ${un.RegCleanMain} "Software\WaterfoxProject"
+    ${un.RegCleanMain} "Software\Mozilla"
     ${un.RegCleanUninstall}
     ${un.DeleteShortcuts}
     ${un.SetAppLSPCategories}
@@ -309,10 +309,10 @@ Section "Uninstall"
   ${EndIf}
 
   SetShellVarContext all  ; Set SHCTX to HKLM
-  ${un.GetSecondInstallPath} "Software\WaterfoxProject" $R9
+  ${un.GetSecondInstallPath} "Software\Mozilla" $R9
   ${If} $R9 == "false"
     SetShellVarContext current  ; Set SHCTX to HKCU
-    ${un.GetSecondInstallPath} "Software\WaterfoxProject" $R9
+    ${un.GetSecondInstallPath} "Software\Mozilla" $R9
   ${EndIf}
 
   StrCpy $0 "Software\Clients\StartMenuInternet\${FileMainEXE}\shell\open\command"

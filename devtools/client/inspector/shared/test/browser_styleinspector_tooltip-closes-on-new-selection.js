@@ -8,7 +8,7 @@
 
 const TEST_URI = "<div class='one'>el 1</div><div class='two'>el 2</div>";
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("data:text/html;charset=utf-8," + encodeURIComponent(TEST_URI));
   let {inspector, view} = yield openRuleView();
   yield selectNode(".one", inspector);
@@ -17,7 +17,7 @@ add_task(function*() {
   yield testRuleView(view, inspector);
 
   info("Testing computed view tooltip closes on new selection");
-  ({view} = yield openComputedView());
+  view = selectComputedView(inspector);
   yield testComputedView(view, inspector);
 });
 

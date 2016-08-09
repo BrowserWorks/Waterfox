@@ -18,6 +18,10 @@ endif
 ifndef MOZ_PKG_PLATFORM
 MOZ_PKG_PLATFORM := $(TARGET_OS)-$(TARGET_CPU)
 
+ifeq ($(MOZ_BUILD_APP),mobile/android)
+MOZ_PKG_PLATFORM := android-$(TARGET_CPU)
+endif
+
 # TARGET_OS/TARGET_CPU may be unintuitive, so we hardcode some special formats
 ifeq ($(OS_ARCH),WINNT)
 ifeq ($(TARGET_CPU),x86_64)
@@ -145,11 +149,6 @@ ifneq (,$(wildcard $(DIST)/bin/application.ini))
 BUILDID = $(shell $(PYTHON) $(MOZILLA_DIR)/config/printconfigsetting.py $(DIST)/bin/application.ini App BuildID)
 else
 BUILDID = $(shell $(PYTHON) $(MOZILLA_DIR)/config/printconfigsetting.py $(DIST)/bin/platform.ini Build BuildID)
-endif
-
-ifndef INCLUDED_RCS_MK
-  USE_RCS_MK := 1
-  include $(MOZILLA_DIR)/config/makefiles/makeutils.mk
 endif
 
 MOZ_SOURCESTAMP_FILE = $(DIST)/$(PKG_PATH)/$(MOZ_INFO_BASENAME).txt

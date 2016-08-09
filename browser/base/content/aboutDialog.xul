@@ -46,7 +46,7 @@
       <vbox id="rightBox" flex="1">
         <hbox align="baseline">
 #expand <label id="version">__MOZ_APP_VERSION_DISPLAY__</label>
-#expand <label id="releasenotes" class="text-link" href="https://www.waterfoxproject.org/blog/waterfox-47.0-release-download">&releaseNotes.link;</label>
+#expand <label id="releasenotes" class="text-link" href="https://www.waterfoxproject.org/blog/waterfox-48.0-release-download">&releaseNotes.link;</label>
         </hbox>
 
         <label id="distribution" class="text-blurb"/>

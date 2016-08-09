@@ -16,6 +16,7 @@
 
 #include "jspubtd.h"
 
+#include "js/GCAnnotations.h"
 #include "js/GCAPI.h"
 #include "js/GCPolicyAPI.h"
 #include "js/HeapAPI.h"
@@ -563,6 +564,8 @@ struct JS_PUBLIC_API(MovableCellHasher)
     using Key = T;
     using Lookup = T;
 
+    static bool hasHash(const Lookup& l);
+    static bool ensureHash(const Lookup& l);
     static HashNumber hash(const Lookup& l);
     static bool match(const Key& k, const Lookup& l);
     static void rekey(Key& k, const Key& newKey) { k = newKey; }
@@ -574,9 +577,22 @@ struct JS_PUBLIC_API(MovableCellHasher<JS::Heap<T>>)
     using Key = JS::Heap<T>;
     using Lookup = T;
 
+    static bool hasHash(const Lookup& l) { return MovableCellHasher<T>::hasHash(l); }
+    static bool ensureHash(const Lookup& l) { return MovableCellHasher<T>::ensureHash(l); }
     static HashNumber hash(const Lookup& l) { return MovableCellHasher<T>::hash(l); }
     static bool match(const Key& k, const Lookup& l) { return MovableCellHasher<T>::match(k, l); }
     static void rekey(Key& k, const Key& newKey) { k.unsafeSet(newKey); }
+};
+
+template <typename T>
+struct FallibleHashMethods<MovableCellHasher<T>>
+{
+    template <typename Lookup> static bool hasHash(Lookup&& l) {
+        return MovableCellHasher<T>::hasHash(mozilla::Forward<Lookup>(l));
+    }
+    template <typename Lookup> static bool ensureHash(Lookup&& l) {
+        return MovableCellHasher<T>::ensureHash(mozilla::Forward<Lookup>(l));
+    }
 };
 
 } /* namespace js */
@@ -707,7 +723,7 @@ class MOZ_RAII Rooted : public js::RootedBase<T>
     MaybeWrapped ptr;
 
     Rooted(const Rooted&) = delete;
-};
+} JS_HAZ_ROOTED;
 
 } /* namespace JS */
 
@@ -1053,7 +1069,7 @@ class PersistentRooted : public js::PersistentRootedBase<T>,
         T>::Type;
 
     MaybeWrapped ptr;
-};
+} JS_HAZ_ROOTED;
 
 class JS_PUBLIC_API(ObjectPtr)
 {

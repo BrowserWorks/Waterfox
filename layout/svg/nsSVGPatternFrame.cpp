@@ -55,10 +55,10 @@ private:
 //----------------------------------------------------------------------
 // Implementation
 
-nsSVGPatternFrame::nsSVGPatternFrame(nsStyleContext* aContext) :
-  nsSVGPatternFrameBase(aContext),
-  mLoopFlag(false),
-  mNoHRefURI(false)
+nsSVGPatternFrame::nsSVGPatternFrame(nsStyleContext* aContext)
+  : nsSVGPaintServerFrame(aContext)
+  , mLoopFlag(false)
+  , mNoHRefURI(false)
 {
 }
 
@@ -94,7 +94,7 @@ nsSVGPatternFrame::AttributeChanged(int32_t         aNameSpaceID,
     nsSVGEffects::InvalidateDirectRenderingObservers(this);
   }
 
-  return nsSVGPatternFrameBase::AttributeChanged(aNameSpaceID,
+  return nsSVGPaintServerFrame::AttributeChanged(aNameSpaceID,
                                                  aAttribute, aModType);
 }
 
@@ -106,7 +106,7 @@ nsSVGPatternFrame::Init(nsIContent*       aContent,
 {
   NS_ASSERTION(aContent->IsSVGElement(nsGkAtoms::pattern), "Content is not an SVG pattern");
 
-  nsSVGPatternFrameBase::Init(aContent, aParent, aPrevInFlow);
+  nsSVGPaintServerFrame::Init(aContent, aParent, aPrevInFlow);
 }
 #endif /* DEBUG */
 
@@ -372,12 +372,13 @@ nsSVGPatternFrame::PaintPattern(const DrawTarget* aDrawTarget,
 
   RefPtr<DrawTarget> dt =
     aDrawTarget->CreateSimilarDrawTarget(surfaceSize, SurfaceFormat::B8G8R8A8);
-  if (!dt) {
+  if (!dt || !dt->IsValid()) {
     return nullptr;
   }
   dt->ClearRect(Rect(0, 0, surfaceSize.width, surfaceSize.height));
 
-  RefPtr<gfxContext> gfx = new gfxContext(dt);
+  RefPtr<gfxContext> gfx = gfxContext::ForDrawTarget(dt);
+  MOZ_ASSERT(gfx); // already checked the draw target above
 
   if (aGraphicOpacity != 1.0f) {
     gfx->Save();
@@ -562,7 +563,7 @@ nsSVGPatternFrame::GetReferencedPattern()
     nsCOMPtr<nsIURI> targetURI;
     nsCOMPtr<nsIURI> base = mContent->GetBaseURI();
     nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(targetURI), href,
-                                              mContent->GetCurrentDoc(), base);
+                                              mContent->GetUncomposedDoc(), base);
 
     property =
       nsSVGEffects::GetPaintingProperty(targetURI, this, nsSVGEffects::HrefProperty());

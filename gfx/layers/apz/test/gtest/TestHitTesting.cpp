@@ -58,6 +58,12 @@ protected:
     SetScrollableFrameMetrics(layers[3], FrameMetrics::START_SCROLL_ID + 2, CSSRect(0, 0, 80, 80));
   }
 
+  void DisableApzOn(Layer* aLayer) {
+    ScrollMetadata m = aLayer->GetScrollMetadata(0);
+    m.GetMetrics().SetForceDisableApz(true);
+    aLayer->SetScrollMetadata(m);
+  }
+
   void CreateComplexMultiLayerTree() {
     const char* layerTreeSyntax = "c(tc(t)tc(c(t)tt))";
     // LayerID                     0 12 3 45 6 7 89
@@ -453,6 +459,48 @@ TEST_F(APZHitTestingTester, TestRepaintFlushOnWheelEvents) {
   }
 }
 
+TEST_F(APZHitTestingTester, TestForceDisableApz) {
+  CreateSimpleScrollingLayer();
+  DisableApzOn(root);
+  ScopedLayerTreeRegistration registration(manager, 0, root, mcc);
+  manager->UpdateHitTestingTree(nullptr, root, false, 0, 0);
+  TestAsyncPanZoomController* apzcroot = ApzcOf(root);
+
+  ScreenPoint origin(100, 50);
+  ScrollWheelInput swi(MillisecondsSinceStartup(mcc->Time()), mcc->Time(), 0,
+    ScrollWheelInput::SCROLLMODE_INSTANT, ScrollWheelInput::SCROLLDELTA_PIXEL,
+    origin, 0, 10, false);
+  EXPECT_EQ(nsEventStatus_eConsumeDoDefault, manager->ReceiveInputEvent(swi, nullptr, nullptr));
+  EXPECT_EQ(origin, swi.mOrigin);
+
+  AsyncTransform viewTransform;
+  ParentLayerPoint point;
+  apzcroot->SampleContentTransformForFrame(&viewTransform, point);
+  // Since APZ is force-disabled, we expect to see the async transform via
+  // the NORMAL AsyncMode, but not via the RESPECT_FORCE_DISABLE AsyncMode.
+  EXPECT_EQ(0, point.x);
+  EXPECT_EQ(10, point.y);
+  EXPECT_EQ(0, viewTransform.mTranslation.x);
+  EXPECT_EQ(-10, viewTransform.mTranslation.y);
+  viewTransform = apzcroot->GetCurrentAsyncTransform(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+  point = apzcroot->GetCurrentAsyncScrollOffset(AsyncPanZoomController::RESPECT_FORCE_DISABLE);
+  EXPECT_EQ(0, point.x);
+  EXPECT_EQ(0, point.y);
+  EXPECT_EQ(0, viewTransform.mTranslation.x);
+  EXPECT_EQ(0, viewTransform.mTranslation.y);
+
+  mcc->AdvanceByMillis(10);
+
+  // With untransforming events we should get normal behaviour (in this case,
+  // no noticeable untransform, because the repaint request already got
+  // flushed).
+  swi = ScrollWheelInput(MillisecondsSinceStartup(mcc->Time()), mcc->Time(), 0,
+    ScrollWheelInput::SCROLLMODE_INSTANT, ScrollWheelInput::SCROLLDELTA_PIXEL,
+    origin, 0, 0, false);
+  EXPECT_EQ(nsEventStatus_eConsumeDoDefault, manager->ReceiveInputEvent(swi, nullptr, nullptr));
+  EXPECT_EQ(origin, swi.mOrigin);
+}
+
 TEST_F(APZHitTestingTester, Bug1148350) {
   CreateBug1148350LayerTree();
   ScopedLayerTreeRegistration registration(manager, 0, root, mcc);
@@ -487,3 +535,44 @@ TEST_F(APZHitTestingTester, Bug1148350) {
   check.Call("Tapped with interleaved transform");
 }
 
+TEST_F(APZHitTestingTester, HitTestingRespectsScrollClip_Bug1257288) {
+  // Create the layer tree.
+  const char* layerTreeSyntax = "c(tt)";
+  // LayerID                     0 12
+  nsIntRegion layerVisibleRegion[] = {
+    nsIntRegion(IntRect(0,0,200,200)),
+    nsIntRegion(IntRect(0,0,200,200)),
+    nsIntRegion(IntRect(0,0,200,100))
+  };
+  root = CreateLayerTree(layerTreeSyntax, layerVisibleRegion, nullptr, lm, layers);
+
+  // Add root scroll metadata to the first painted layer.
+  SetScrollableFrameMetrics(layers[1], FrameMetrics::START_SCROLL_ID, CSSRect(0,0,200,200));
+
+  // Add root and subframe scroll metadata to the second painted layer.
+  // Give the subframe metadata a scroll clip corresponding to the subframe's
+  // composition bounds.
+  // Importantly, give the layer a layer clip which leaks outside of the
+  // subframe's composition bounds.
+  ScrollMetadata rootMetadata = BuildScrollMetadata(
+      FrameMetrics::START_SCROLL_ID, CSSRect(0,0,200,200),
+      ParentLayerRect(0,0,200,200));
+  ScrollMetadata subframeMetadata = BuildScrollMetadata(
+      FrameMetrics::START_SCROLL_ID + 1, CSSRect(0,0,200,200),
+      ParentLayerRect(0,0,200,100));
+  subframeMetadata.SetClipRect(Some(ParentLayerIntRect(0,0,200,100)));
+  layers[2]->SetScrollMetadata({subframeMetadata, rootMetadata});
+  layers[2]->SetClipRect(Some(ParentLayerIntRect(0,0,200,200)));
+  SetEventRegionsBasedOnBottommostMetrics(layers[2]);
+
+  // Build the hit testing tree.
+  ScopedLayerTreeRegistration registration(manager, 0, root, mcc);
+  manager->UpdateHitTestingTree(nullptr, root, false, 0, 0);
+
+  // Pan on a region that's inside layers[2]'s layer clip, but outside
+  // its subframe metadata's scroll clip.
+  Pan(manager, mcc, 120, 110);
+
+  // Test that the subframe hasn't scrolled.
+  EXPECT_EQ(CSSPoint(0,0), ApzcOf(layers[2], 0)->GetFrameMetrics().GetScrollOffset());
+}

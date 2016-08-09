@@ -12,36 +12,84 @@ const ResizableViewport = createFactory(require("./resizable-viewport"));
 const ViewportDimension = createFactory(require("./viewport-dimension"));
 
 module.exports = createClass({
+  propTypes: {
+    devices: PropTypes.shape(Types.devices).isRequired,
+    location: Types.location.isRequired,
+    screenshot: PropTypes.shape(Types.screenshot).isRequired,
+    viewport: PropTypes.shape(Types.viewport).isRequired,
+    onBrowserMounted: PropTypes.func.isRequired,
+    onChangeViewportDevice: PropTypes.func.isRequired,
+    onContentResize: PropTypes.func.isRequired,
+    onResizeViewport: PropTypes.func.isRequired,
+    onRotateViewport: PropTypes.func.isRequired,
+    onUpdateDeviceModalOpen: PropTypes.func.isRequired,
+  },
 
   displayName: "Viewport",
 
-  propTypes: {
-    location: Types.location.isRequired,
-    viewport: PropTypes.shape(Types.viewport).isRequired,
-    onResizeViewport: PropTypes.func.isRequired,
-    onRotateViewport: PropTypes.func.isRequired,
+  onChangeViewportDevice(device) {
+    let {
+      viewport,
+      onChangeViewportDevice,
+    } = this.props;
+
+    onChangeViewportDevice(viewport.id, device);
+  },
+
+  onResizeViewport(width, height) {
+    let {
+      viewport,
+      onResizeViewport,
+    } = this.props;
+
+    onResizeViewport(viewport.id, width, height);
+  },
+
+  onRotateViewport() {
+    let {
+      viewport,
+      onRotateViewport,
+    } = this.props;
+
+    onRotateViewport(viewport.id);
   },
 
   render() {
     let {
+      devices,
       location,
+      screenshot,
       viewport,
-      onResizeViewport,
-      onRotateViewport,
+      onBrowserMounted,
+      onContentResize,
+      onUpdateDeviceModalOpen,
     } = this.props;
+
+    let {
+      onChangeViewportDevice,
+      onRotateViewport,
+      onResizeViewport,
+    } = this;
 
     return dom.div(
       {
         className: "viewport",
       },
       ResizableViewport({
+        devices,
         location,
+        screenshot,
         viewport,
+        onBrowserMounted,
+        onChangeViewportDevice,
+        onContentResize,
         onResizeViewport,
         onRotateViewport,
+        onUpdateDeviceModalOpen,
       }),
       ViewportDimension({
         viewport,
+        onChangeViewportDevice,
         onResizeViewport,
       })
     );

@@ -78,19 +78,19 @@ except ImportError:
 here = os.path.abspath(os.path.dirname(__file__))
 
 
-###########################
-# Option for NSPR logging #
-###########################
+########################################
+# Option for MOZ (former NSPR) logging #
+########################################
 
-# Set the desired log modules you want an NSPR log be produced by a try run for, or leave blank to disable the feature.
-# This will be passed to NSPR_LOG_MODULES environment variable. Try run will then put a download link for the log file
+# Set the desired log modules you want a log be produced by a try run for, or leave blank to disable the feature.
+# This will be passed to MOZ_LOG_MODULES environment variable. Try run will then put a download link for all log files
 # on tbpl.mozilla.org.
 
-NSPR_LOG_MODULES = ""
+MOZ_LOG_MODULES = ""
 
-####################
-# LOG HANDLING     #
-####################
+#####################
+# Test log handling #
+#####################
 
 # output processing
 
@@ -369,8 +369,7 @@ class MochitestServer(object):
         self.shutdownURL = "http://%(server)s:%(port)s/server/shutdown" % {
             "server": self.webServer,
             "port": self.httpPort}
-        self.testPrefix = "'webapprt_'" if options.get(
-            'webapprtContent') else "undefined"
+        self.testPrefix = "undefined"
 
         if options.get('httpdPath'):
             self._httpdPath = options['httpdPath']
@@ -535,6 +534,7 @@ class MochitestBase(object):
 
         self.marionette = None
         self.start_script = None
+        self.mozLogs = None
         self.start_script_args = []
 
         if self.log is None:
@@ -615,8 +615,7 @@ class MochitestBase(object):
             options.logFile = self.getLogFilePath(options.logFile)
 
         if options.browserChrome or options.chrome or \
-           options.a11y or options.webapprtChrome or options.jetpackPackage or \
-           options.jetpackAddon:
+           options.a11y or options.jetpackPackage or options.jetpackAddon:
             self.makeTestConfig(options)
         else:
             if options.autorun:
@@ -627,8 +626,6 @@ class MochitestBase(object):
                 self.urlOpts.append("maxTimeouts=%d" % options.maxTimeouts)
             if not options.keep_open:
                 self.urlOpts.append("closeWhenDone=1")
-            if options.webapprtContent:
-                self.urlOpts.append("testRoot=webapprtContent")
             if options.logFile:
                 self.urlOpts.append(
                     "logFile=" +
@@ -698,10 +695,6 @@ class MochitestBase(object):
             return "chrome"
         elif options.a11y:
             return "a11y"
-        elif options.webapprtChrome:
-            return "webapprt-chrome"
-        elif options.webapprtContent:
-            return "webapprt-content"
         else:
             return "mochitest"
 
@@ -718,11 +711,6 @@ class MochitestBase(object):
             testPattern = re.compile(r".+\.xpi")
         elif options.chrome or options.a11y:
             testPattern = re.compile(r"(browser|test)_.+\.(xul|html|js|xhtml)")
-        elif options.webapprtContent:
-            testPattern = re.compile(r"webapprt_")
-        elif options.webapprtChrome:
-            allow_js_css = True
-            testPattern = re.compile(r"browser_")
         else:
             testPattern = re.compile(r"test_")
 
@@ -746,10 +734,6 @@ class MochitestBase(object):
             self.testRoot = 'jetpack-addon'
         elif options.a11y:
             self.testRoot = 'a11y'
-        elif options.webapprtChrome:
-            self.testRoot = 'webapprtChrome'
-        elif options.webapprtContent:
-            self.testRoot = 'webapprtContent'
         elif options.chrome:
             self.testRoot = 'chrome'
         else:
@@ -1207,12 +1191,11 @@ toolbar#nav-bar {
         if options.fatalAssertions:
             browserEnv["XPCOM_DEBUG_BREAK"] = "stack-and-abort"
 
-        # Produce an NSPR log, is setup (see NSPR_LOG_MODULES global at the top of
+        # Produce a mozlog, if setup (see MOZ_LOG_MODULES global at the top of
         # this script).
-        self.nsprLogs = NSPR_LOG_MODULES and "MOZ_UPLOAD_DIR" in os.environ
-        if self.nsprLogs:
-            browserEnv["NSPR_LOG_MODULES"] = NSPR_LOG_MODULES
-            browserEnv["GECKO_SEPARATE_NSPR_LOGS"] = "1"
+        self.mozLogs = MOZ_LOG_MODULES and "MOZ_UPLOAD_DIR" in os.environ
+        if self.mozLogs:
+            browserEnv["MOZ_LOG_MODULES"] = MOZ_LOG_MODULES
 
         if debugger and not options.slowscript:
             browserEnv["JS_DISABLE_SLOW_SCRIPT_SIGNALS"] = "1"
@@ -2088,6 +2071,8 @@ class MochitestDesktop(MochitestBase):
             flavor = 'devtools-chrome'
         elif flavor == 'mochitest':
             flavor = 'plain'
+            if options.subsuite:
+                flavor = options.subsuite
 
         base = 'mochitest'
         if options.e10s:
@@ -2172,7 +2157,7 @@ class MochitestDesktop(MochitestBase):
         self.killNamedOrphans('xpcshell')
 
         # Until we have all green, this only runs on bc*/dt*/mochitest-chrome
-        # jobs, not webapprt*, jetpack*, a11yr (for perf reasons), or plain
+        # jobs, not jetpack*, a11yr (for perf reasons), or plain
 
         testsToRun = self.getTestsToRun(options)
         if not options.runByDir:
@@ -2197,6 +2182,8 @@ class MochitestDesktop(MochitestBase):
             if result == -1:
                 break
 
+        e10s_mode = "e10s" if options.e10s else "non-e10s"
+
         # printing total number of tests
         if options.browserChrome:
             print "TEST-INFO | checking window state"
@@ -2204,13 +2191,15 @@ class MochitestDesktop(MochitestBase):
             print "\tPassed: %s" % self.countpass
             print "\tFailed: %s" % self.countfail
             print "\tTodo: %s" % self.counttodo
+            print "\tMode: %s" % e10s_mode
             print "*** End BrowserChrome Test Results ***"
         else:
             print "0 INFO TEST-START | Shutdown"
             print "1 INFO Passed:  %s" % self.countpass
             print "2 INFO Failed:  %s" % self.countfail
             print "3 INFO Todo:    %s" % self.counttodo
-            print "4 INFO SimpleTest FINISHED"
+            print "4 INFO Mode:    %s" % e10s_mode
+            print "5 INFO SimpleTest FINISHED"
 
         return result
 
@@ -2290,8 +2279,8 @@ class MochitestDesktop(MochitestBase):
         if self.browserEnv is None:
             return 1
 
-        if self.nsprLogs:
-            self.browserEnv["NSPR_LOG_FILE"] = "{}/nspr-pid=%PID-uid={}.log".format(self.browserEnv["MOZ_UPLOAD_DIR"], str(uuid.uuid4()))
+        if self.mozLogs:
+            self.browserEnv["MOZ_LOG_FILE"] = "{}/moz-pid=%PID-uid={}.log".format(self.browserEnv["MOZ_UPLOAD_DIR"], str(uuid.uuid4()))
 
         try:
             self.startServers(options, debuggerInfo)
@@ -2318,15 +2307,6 @@ class MochitestDesktop(MochitestBase):
             if self.urlOpts:
                 testURL += "?" + "&".join(self.urlOpts)
 
-            # On Mac, pass the path to the runtime, to ensure the test app
-            # uses that specific runtime instead of another one on the system.
-            if mozinfo.isMac and options.webapprtChrome:
-                options.browserArgs.extend(('-runtime', os.path.dirname(os.path.dirname(options.xrePath))))
-
-            if options.webapprtContent:
-                options.browserArgs.extend(('-test-mode', testURL))
-                testURL = None
-
             if options.immersiveMode:
                 options.browserArgs.extend(('-firefoxpath', options.app))
                 options.app = self.immersiveHelperPath
@@ -2350,7 +2330,7 @@ class MochitestDesktop(MochitestBase):
 
             # detect shutdown leaks for m-bc runs
             detectShutdownLeaks = mozinfo.info[
-                "debug"] and options.browserChrome and not options.webapprtChrome
+                "debug"] and options.browserChrome
 
             self.start_script_args.append(self.getTestFlavor(options))
             marionette_args = {
@@ -2364,6 +2344,7 @@ class MochitestDesktop(MochitestBase):
                 marionette_args['host'] = host
                 marionette_args['port'] = int(port)
 
+            self.log.info("runtests.py | Running with e10s: {}".format(options.e10s))
             self.log.info("runtests.py | Running tests: start.\n")
             try:
                 status = self.runApp(testURL,
@@ -2651,10 +2632,10 @@ def run_test_harness(options):
 
     result = runner.runTests(options)
 
-    if runner.nsprLogs:
-        with zipfile.ZipFile("{}/nsprlogs.zip".format(runner.browserEnv["MOZ_UPLOAD_DIR"]),
+    if runner.mozLogs:
+        with zipfile.ZipFile("{}/mozLogs.zip".format(runner.browserEnv["MOZ_UPLOAD_DIR"]),
                              "w", zipfile.ZIP_DEFLATED) as logzip:
-            for logfile in glob.glob("{}/nspr*.log*".format(runner.browserEnv["MOZ_UPLOAD_DIR"])):
+            for logfile in glob.glob("{}/moz*.log*".format(runner.browserEnv["MOZ_UPLOAD_DIR"])):
                 logzip.write(logfile)
                 os.remove(logfile)
             logzip.close()

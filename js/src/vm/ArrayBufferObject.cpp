@@ -96,30 +96,35 @@ const Class ArrayBufferObject::protoClass = {
     JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer)
 };
 
-const Class ArrayBufferObject::class_ = {
-    "ArrayBuffer",
-    JSCLASS_DELAY_METADATA_CALLBACK |
-    JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) |
-    JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer) |
-    JSCLASS_BACKGROUND_FINALIZE,
-    nullptr,                 /* addProperty */
-    nullptr,                 /* delProperty */
-    nullptr,                 /* getProperty */
-    nullptr,                 /* setProperty */
-    nullptr,                 /* enumerate */
-    nullptr,                 /* resolve */
-    nullptr,                 /* mayResolve */
+const ClassOps ArrayBufferObject::classOps_ = {
+    nullptr,        /* addProperty */
+    nullptr,        /* delProperty */
+    nullptr,        /* getProperty */
+    nullptr,        /* setProperty */
+    nullptr,        /* enumerate */
+    nullptr,        /* resolve */
+    nullptr,        /* mayResolve */
     ArrayBufferObject::finalize,
     nullptr,        /* call        */
     nullptr,        /* hasInstance */
     nullptr,        /* construct   */
     ArrayBufferObject::trace,
+};
+
+static const ClassExtension ArrayBufferObjectClassExtension = {
+    nullptr,    /* weakmapKeyDelegateOp */
+    ArrayBufferObject::objectMoved
+};
+
+const Class ArrayBufferObject::class_ = {
+    "ArrayBuffer",
+    JSCLASS_DELAY_METADATA_BUILDER |
+    JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) |
+    JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer) |
+    JSCLASS_BACKGROUND_FINALIZE,
+    &ArrayBufferObject::classOps_,
     JS_NULL_CLASS_SPEC,
-    {
-        false,      /* isWrappedNative */
-        nullptr,    /* weakmapKeyDelegateOp */
-        ArrayBufferObject::objectMoved
-    }
+    &ArrayBufferObjectClassExtension
 };
 
 const JSFunctionSpec ArrayBufferObject::jsfuncs[] = {
@@ -131,6 +136,11 @@ const JSFunctionSpec ArrayBufferObject::jsstaticfuncs[] = {
     JS_FN("isView", ArrayBufferObject::fun_isView, 1, 0),
     JS_SELF_HOSTED_FN("slice", "ArrayBufferStaticSlice", 3,0),
     JS_FS_END
+};
+
+const JSPropertySpec ArrayBufferObject::jsstaticprops[] = {
+    JS_SELF_HOSTED_SYM_GET(species, "ArrayBufferSpecies", 0),
+    JS_PS_END
 };
 
 bool
@@ -1017,6 +1027,7 @@ ArrayBufferViewObject::trace(JSTracer* trc, JSObject* objArg)
             ArrayBufferObject& buf = AsArrayBuffer(MaybeForwarded(&bufSlot.toObject()));
             uint32_t offset = uint32_t(obj->getFixedSlot(TypedArrayObject::BYTEOFFSET_SLOT).toInt32());
             MOZ_ASSERT(buf.dataPointer() != nullptr);
+            MOZ_ASSERT(offset <= INT32_MAX);
 
             if (buf.forInlineTypedObject()) {
                 // The data is inline with an InlineTypedObject associated with the
@@ -1441,6 +1452,9 @@ js::InitArrayBufferClass(JSContext* cx, HandleObject obj)
         return nullptr;
 
     if (!JS_DefineFunctions(cx, ctor, ArrayBufferObject::jsstaticfuncs))
+        return nullptr;
+
+    if (!JS_DefineProperties(cx, ctor, ArrayBufferObject::jsstaticprops))
         return nullptr;
 
     if (!JS_DefineFunctions(cx, arrayBufferProto, ArrayBufferObject::jsfuncs))

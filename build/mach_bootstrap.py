@@ -9,8 +9,8 @@ import json
 import os
 import platform
 import random
+import subprocess
 import sys
-import time
 import uuid
 import __builtin__
 
@@ -120,6 +120,7 @@ MACH_MODULES = [
     'layout/tools/reftest/mach_commands.py',
     'python/mach_commands.py',
     'python/mach/mach/commands/commandinfo.py',
+    'python/mach/mach/commands/settings.py',
     'python/compare-locales/mach_commands.py',
     'python/mozboot/mozboot/mach_commands.py',
     'python/mozbuild/mozbuild/mach_commands.py',
@@ -187,10 +188,6 @@ CATEGORIES = {
         'priority': 0,
     }
 }
-
-
-# Server to which to submit telemetry data
-BUILD_TELEMETRY_SERVER = 'http://52.88.27.118/build-metrics-dev'
 
 
 # We submit data to telemetry approximately every this many mach invocations
@@ -344,6 +341,11 @@ def bootstrap(topsrcdir, mozilla_dir=None):
         if should_skip_dispatch(context, handler):
             return
 
+        # We call mach environment in client.mk which would cause the
+        # data submission below to block the forward progress of make.
+        if handler.name in ('environment'):
+            return
+
         # We have not opted-in to telemetry
         if 'BUILD_SYSTEM_TELEMETRY' not in os.environ:
             return
@@ -352,53 +354,12 @@ def bootstrap(topsrcdir, mozilla_dir=None):
         if random.randint(1, TELEMETRY_SUBMISSION_FREQUENCY) != 1:
             return
 
-        # No data to work with anyway
-        outgoing = os.path.join(get_state_dir()[0], 'telemetry', 'outgoing')
-        if not os.path.isdir(outgoing):
-            return
-
-        # We can't import requests until after it has been added during the
-        # bootstrapping below.
-        import requests
-
-        submitted = os.path.join(get_state_dir()[0], 'telemetry', 'submitted')
-        try:
-            os.mkdir(submitted)
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                raise
-
-        session = requests.Session()
-        for filename in os.listdir(outgoing):
-            path = os.path.join(outgoing, filename)
-            if os.path.isdir(path) or not path.endswith('.json'):
-                continue
-            with open(path, 'r') as f:
-                data = f.read()
-                try:
-                    r = session.post(BUILD_TELEMETRY_SERVER, data=data,
-                                     headers={'Content-Type': 'application/json'})
-                except Exception as e:
-                    print('Exception posting to telemetry server: %s' % str(e))
-                    break
-                # TODO: some of these errors are likely not recoverable, as
-                # written, we'll retry indefinitely
-                if r.status_code != 200:
-                    print('Error posting to telemetry: %s %s' %
-                          (r.status_code, r.text))
-                    continue
-
-            os.rename(os.path.join(outgoing, filename),
-                      os.path.join(submitted, filename))
-
-        session.close()
-
-        # Discard submitted data that is >= 30 days old
-        now = time.time()
-        for filename in os.listdir(submitted):
-            ctime = os.stat(os.path.join(submitted, filename)).st_ctime
-            if now - ctime >= 60*60*24*30:
-                os.remove(os.path.join(submitted, filename))
+        with open(os.devnull, 'wb') as devnull:
+            subprocess.Popen([sys.executable,
+                              os.path.join(topsrcdir, 'build',
+                                           'submit_telemetry_data.py'),
+                              get_state_dir()[0]],
+                              stdout=devnull, stderr=devnull)
 
     def populate_context(context, key=None):
         if key is None:
@@ -439,6 +400,12 @@ def bootstrap(topsrcdir, mozilla_dir=None):
 
     mach = mach.main.Mach(os.getcwd())
     mach.populate_context_handler = populate_context
+
+    if not mach.settings_paths:
+        # default global machrc location
+        mach.settings_paths.append(get_state_dir()[0])
+    # always load local repository configuration
+    mach.settings_paths.append(mozilla_dir)
 
     for category, meta in CATEGORIES.items():
         mach.define_category(category, meta['short'], meta['long'],

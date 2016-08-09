@@ -29,6 +29,7 @@
 
   --theme-body-color: #393f4c;
   --theme-body-color-alt: #585959;
+  --theme-body-color-inactive: #999797;
   --theme-content-color1: #292e33;
   --theme-content-color2: #8fa1b2;
   --theme-content-color3: #667380;
@@ -53,6 +54,10 @@
   --theme-graphs-grey: #cccccc;
   --theme-graphs-full-red: #f00;
   --theme-graphs-full-blue: #00f;
+
+  /* Images */
+  --theme-pane-collapse-image: url(chrome://devtools/skin/images/pane-collapse.svg);
+  --theme-pane-expand-image: url(chrome://devtools/skin/images/pane-expand.svg);
 }
 
 :root.theme-dark {
@@ -70,6 +75,7 @@
 
   --theme-body-color: #8fa1b2;
   --theme-body-color-alt: #b6babf;
+  --theme-body-color-inactive: #8fa1b2;
   --theme-content-color1: #a9bacb;
   --theme-content-color2: #8fa1b2;
   --theme-content-color3: #5f7387;
@@ -94,4 +100,61 @@
   --theme-graphs-grey: #757873;
   --theme-graphs-full-red: #f00;
   --theme-graphs-full-blue: #00f;
+
+  /* Images */
+  --theme-pane-collapse-image: url(chrome://devtools/skin/images/pane-collapse.svg);
+  --theme-pane-expand-image: url(chrome://devtools/skin/images/pane-expand.svg);
+}
+
+:root.theme-firebug {
+  --theme-body-background: #fcfcfc;
+  --theme-sidebar-background: #fcfcfc;
+  --theme-contrast-background: #e6b064;
+
+  --theme-tab-toolbar-background: #ebeced;
+  --theme-toolbar-background: #f0f1f2;
+  --theme-selection-background: #3399ff;
+  --theme-selection-background-semitransparent: rgba(128,128,128,0.2);
+  --theme-selection-color: white;
+  --theme-splitter-color: #aabccf;
+  --theme-comment: green;
+
+  --theme-body-color: #18191a;
+  --theme-body-color-alt: #585959;
+  --theme-content-color1: #292e33;
+  --theme-content-color2: #8fa1b2;
+  --theme-content-color3: #667380;
+
+  --theme-highlight-green: #2cbb0f;
+  --theme-highlight-blue: #0088cc;
+  --theme-highlight-bluegrey: #0072ab;
+  --theme-highlight-purple: #5b5fff;
+  --theme-highlight-lightorange: #d97e00;
+  --theme-highlight-orange: #f13c00;
+  --theme-highlight-red: #ed2655;
+  --theme-highlight-pink: #b82ee5;
+
+  /* Colors used in Graphs, like performance tools. Similar colors to Chrome's timeline. */
+  --theme-graphs-green: #85d175;
+  --theme-graphs-blue: #83b7f6;
+  --theme-graphs-bluegrey: #0072ab;
+  --theme-graphs-purple: #b693eb;
+  --theme-graphs-yellow: #efc052;
+  --theme-graphs-orange: #d97e00;
+  --theme-graphs-red: #e57180;
+  --theme-graphs-grey: #cccccc;
+  --theme-graphs-full-red: #f00;
+  --theme-graphs-full-blue: #00f;
+
+  /* Images */
+  --theme-pane-collapse-image: url(chrome://devtools/skin/images/firebug/pane-collapse.svg);
+  --theme-pane-expand-image: url(chrome://devtools/skin/images/firebug/pane-expand.svg);
+
+  /* Font size */
+  --theme-toolbar-font-size: 12px;
+
+  /* Header */
+  --theme-header-background: #F0F0F0 linear-gradient(to top,
+                                                     rgba(0, 0, 0, 0.1),
+                                                     transparent) repeat-x;
 }

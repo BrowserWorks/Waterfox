@@ -10,6 +10,8 @@
 #include "nsStringBuffer.h"
 %}
 
+native MallocSizeOf(mozilla::MallocSizeOf);
+
 /*
  * Should this really be scriptable?  Using atoms from script or proxies
  * could be dangerous since double-wrapping could lead to loss of
@@ -30,18 +32,18 @@ interface nsIAtom : nsISupports
    * Note that this will NEVER return/throw an error condition.
    */
   [binaryname(ScriptableEquals)] boolean equals(in AString aString);
-  
-  [noscript, notxpcom] boolean equalsUTF8(in AUTF8String aString);
 
-  /**
-   * Returns true if the atom is static and false otherwise.
-   */
-  [noscript, notxpcom] boolean isStaticAtom();
+  [noscript, notxpcom]
+  size_t SizeOfIncludingThis(in MallocSizeOf aMallocSizeOf);
 
 %{C++
   // note this is NOT virtual so this won't muck with the vtable!
   inline bool Equals(const nsAString& aString) const {
     return aString.Equals(nsDependentString(mString, mLength));
+  }
+
+  inline bool IsStaticAtom() const {
+    return mIsStatic;
   }
 
   inline char16ptr_t GetUTF16String() const {
@@ -72,7 +74,8 @@ interface nsIAtom : nsISupports
   }
 
 protected:
-  uint32_t mLength;
+  uint32_t mLength:31;
+  uint32_t mIsStatic:1;
   uint32_t mHash;
   /**
    * WARNING! There is an invisible constraint on |mString|: the chars it
@@ -86,19 +89,11 @@ protected:
 
 %{C++
 /*
- * The three forms of NS_NewAtom and do_GetAtom (for use with
- * |nsCOMPtr<nsIAtom>|) return the atom for the string given.  At any
- * given time there will always be one atom representing a given string.
- * Atoms are intended to make string comparison cheaper by simplifying
- * it to pointer equality.  A pointer to the atom that does not own a
- * reference is not guaranteed to be valid.
- *
- * The three forms of NS_NewPermanentAtom and do_GetPermanentAtom return
- * the atom for the given string and ensure that the atom is permanent.
- * An atom that is permanent will exist (occupy space at a specific
- * location in memory) until XPCOM is shut down.  The advantage of
- * permanent atoms is that they do not need to maintain a reference
- * count, which requires locking and hurts performance.
+ * The four forms of NS_Atomize (for use with |nsCOMPtr<nsIAtom>|) return the
+ * atom for the string given. At any given time there will always be one atom
+ * representing a given string. Atoms are intended to make string comparison
+ * cheaper by simplifying it to pointer equality. A pointer to the atom that
+ * does not own a reference is not guaranteed to be valid.
  */
 
 
@@ -106,33 +101,23 @@ protected:
  * Find an atom that matches the given UTF-8 string.
  * The string is assumed to be zero terminated.  Never returns null.
  */
-extern already_AddRefed<nsIAtom> NS_NewAtom(const char* aUTF8String);
+extern already_AddRefed<nsIAtom> NS_Atomize(const char* aUTF8String);
 
-inline already_AddRefed<nsIAtom> do_GetAtom(const char* aUTF8String)
-    { return NS_NewAtom(aUTF8String); }
- 
 /**
  * Find an atom that matches the given UTF-8 string.  Never returns null.
  */
-extern already_AddRefed<nsIAtom> NS_NewAtom(const nsACString& aUTF8String);
-inline already_AddRefed<nsIAtom> do_GetAtom(const nsACString& aUTF8String)
-    { return NS_NewAtom(aUTF8String); }
+extern already_AddRefed<nsIAtom> NS_Atomize(const nsACString& aUTF8String);
 
 /**
  * Find an atom that matches the given UTF-16 string.
  * The string is assumed to be zero terminated.  Never returns null.
  */
-extern already_AddRefed<nsIAtom> NS_NewAtom(const char16_t* aUTF16String);
-inline already_AddRefed<nsIAtom> do_GetAtom(const char16_t* aUTF16String)
-    { return NS_NewAtom(aUTF16String); }
+extern already_AddRefed<nsIAtom> NS_Atomize(const char16_t* aUTF16String);
 
 /**
  * Find an atom that matches the given UTF-16 string.  Never returns null.
  */
-extern already_AddRefed<nsIAtom> NS_NewAtom(const nsAString& aUTF16String);
-extern nsIAtom* NS_NewPermanentAtom(const nsAString& aUTF16String);
-inline already_AddRefed<nsIAtom> do_GetAtom(const nsAString& aUTF16String)
-    { return NS_NewAtom(aUTF16String); }
+extern already_AddRefed<nsIAtom> NS_Atomize(const nsAString& aUTF16String);
 
 /**
  * Return a count of the total number of atoms currently

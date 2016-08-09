@@ -105,13 +105,11 @@ Cu.import("resource://devtools/client/shared/widgets/VariablesView.jsm");
 Cu.import("resource://devtools/client/shared/widgets/VariablesViewController.jsm");
 Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
 
-/**
- * Localization convenience methods.
- */
-var L10N = new ViewHelpers.L10N(DBG_STRINGS_URI);
-
 Cu.import("resource://devtools/client/shared/browser-loader.js");
-const require = BrowserLoader("resource://devtools/client/debugger/", window).require;
+const { require } = BrowserLoader({
+  baseURI: "resource://devtools/client/debugger/",
+  window,
+});
 XPCOMUtils.defineConstant(this, "require", require);
 const { gDevTools } = require("devtools/client/framework/devtools");
 
@@ -148,6 +146,8 @@ var Editor = require("devtools/client/sourceeditor/editor");
 var DebuggerEditor = require("devtools/client/sourceeditor/debugger");
 var {Tooltip} = require("devtools/client/shared/widgets/Tooltip");
 var FastListWidget = require("devtools/client/shared/widgets/FastListWidget");
+var {LocalizationHelper} = require("devtools/client/shared/l10n");
+var {PrefsHelper} = require("devtools/client/shared/prefs");
 
 XPCOMUtils.defineConstant(this, "EVENTS", EVENTS);
 
@@ -170,6 +170,11 @@ Object.defineProperty(this, "NetworkHelper", {
   configurable: true,
   enumerable: true
 });
+
+/**
+ * Localization convenience methods.
+ */
+var L10N = new LocalizationHelper(DBG_STRINGS_URI);
 
 /**
  * Object defining the debugger controller components.
@@ -1192,7 +1197,7 @@ StackFrames.prototype = {
 /**
  * Shortcuts for accessing various debugger preferences.
  */
-var Prefs = new ViewHelpers.Prefs("devtools", {
+var Prefs = new PrefsHelper("devtools", {
   workersAndSourcesWidth: ["Int", "debugger.ui.panes-workers-and-sources-width"],
   instrumentsWidth: ["Int", "debugger.ui.panes-instruments-width"],
   panesVisibleOnStartup: ["Bool", "debugger.ui.panes-visible-on-startup"],

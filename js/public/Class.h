@@ -477,23 +477,55 @@ typedef bool
 typedef void
 (* FinalizeOp)(FreeOp* fop, JSObject* obj);
 
-#define JS_CLASS_MEMBERS(FinalizeOpType)                                      \
-    const char*         name;                                                \
-    uint32_t            flags;                                                \
-                                                                              \
-    /* Function pointer members (may be null). */                             \
-    JSAddPropertyOp     addProperty;                                          \
-    JSDeletePropertyOp  delProperty;                                          \
-    JSGetterOp          getProperty;                                          \
-    JSSetterOp          setProperty;                                          \
-    JSEnumerateOp       enumerate;                                            \
-    JSResolveOp         resolve;                                              \
-    JSMayResolveOp      mayResolve;                                           \
-    FinalizeOpType      finalize;                                             \
-    JSNative            call;                                                 \
-    JSHasInstanceOp     hasInstance;                                          \
-    JSNative            construct;                                            \
-    JSTraceOp           trace
+// The special treatment of |finalize| and |trace| is necessary because if we
+// assign either of those hooks to a local variable and then call it -- as is
+// done with the other hooks -- the GC hazard analysis gets confused.
+#define JS_CLASS_MEMBERS(ClassOpsType, FinalizeOpType, FreeOpType) \
+    const char* name; \
+    uint32_t flags; \
+    const ClassOpsType* cOps; \
+    \
+    JSAddPropertyOp    getAddProperty() const { return cOps ? cOps->addProperty : nullptr; } \
+    JSDeletePropertyOp getDelProperty() const { return cOps ? cOps->delProperty : nullptr; } \
+    JSGetterOp         getGetProperty() const { return cOps ? cOps->getProperty : nullptr; } \
+    JSSetterOp         getSetProperty() const { return cOps ? cOps->setProperty : nullptr; } \
+    JSEnumerateOp      getEnumerate()   const { return cOps ? cOps->enumerate   : nullptr; } \
+    JSResolveOp        getResolve()     const { return cOps ? cOps->resolve     : nullptr; } \
+    JSMayResolveOp     getMayResolve()  const { return cOps ? cOps->mayResolve  : nullptr; } \
+    JSNative           getCall()        const { return cOps ? cOps->call        : nullptr; } \
+    JSHasInstanceOp    getHasInstance() const { return cOps ? cOps->hasInstance : nullptr; } \
+    JSNative           getConstruct()   const { return cOps ? cOps->construct   : nullptr; } \
+    \
+    bool hasFinalize() const { return cOps && cOps->finalize; } \
+    bool hasTrace()    const { return cOps && cOps->trace;    } \
+    \
+    bool isTrace(JSTraceOp trace) const { return cOps && cOps->trace == trace; } \
+    \
+    void doFinalize(FreeOpType* fop, JSObject* obj) const { \
+        MOZ_ASSERT(cOps && cOps->finalize); \
+        cOps->finalize(fop, obj); \
+    } \
+    void doTrace(JSTracer* trc, JSObject* obj) const { \
+        MOZ_ASSERT(cOps && cOps->trace); \
+        cOps->trace(trc, obj); \
+    }
+
+struct ClassOps
+{
+    /* Function pointer members (may be null). */
+    JSAddPropertyOp     addProperty;
+    JSDeletePropertyOp  delProperty;
+    JSGetterOp          getProperty;
+    JSSetterOp          setProperty;
+    JSEnumerateOp       enumerate;
+    JSResolveOp         resolve;
+    JSMayResolveOp      mayResolve;
+    FinalizeOp          finalize;
+    JSNative            call;
+    JSHasInstanceOp     hasInstance;
+    JSNative            construct;
+    JSTraceOp           trace;
+};
 
 /** Callback for the creation of constructor and prototype objects. */
 typedef JSObject* (*ClassObjectCreationOp)(JSContext* cx, JSProtoKey key);
@@ -588,12 +620,6 @@ struct ClassSpec
 struct ClassExtension
 {
     /**
-     * isWrappedNative is true only if the class is an XPCWrappedNative.
-     * WeakMaps use this to override the wrapper disposal optimization.
-     */
-    bool                isWrappedNative;
-
-    /**
      * If an object is used as a key in a weakmap, it may be desirable for the
      * garbage collector to keep that object around longer than it otherwise
      * would. A common case is when the key is a wrapper around an object in
@@ -624,28 +650,26 @@ inline ClassObjectCreationOp DELEGATED_CLASSSPEC(const ClassSpec* spec) {
     return reinterpret_cast<ClassObjectCreationOp>(const_cast<ClassSpec*>(spec));
 }
 
-#define JS_NULL_CLASS_SPEC  {nullptr,nullptr,nullptr,nullptr,nullptr,nullptr}
-#define JS_NULL_CLASS_EXT   {false,nullptr}
+#define JS_NULL_CLASS_SPEC  nullptr
+#define JS_NULL_CLASS_EXT   nullptr
 
 struct ObjectOps
 {
-    LookupPropertyOp    lookupProperty;
-    DefinePropertyOp    defineProperty;
-    HasPropertyOp       hasProperty;
-    GetPropertyOp       getProperty;
-    SetPropertyOp       setProperty;
-    GetOwnPropertyOp    getOwnPropertyDescriptor;
-    DeletePropertyOp    deleteProperty;
-    WatchOp             watch;
-    UnwatchOp           unwatch;
-    GetElementsOp       getElements;
-    JSNewEnumerateOp    enumerate;
-    JSFunToStringOp     funToString;
+    LookupPropertyOp lookupProperty;
+    DefinePropertyOp defineProperty;
+    HasPropertyOp    hasProperty;
+    GetPropertyOp    getProperty;
+    SetPropertyOp    setProperty;
+    GetOwnPropertyOp getOwnPropertyDescriptor;
+    DeletePropertyOp deleteProperty;
+    WatchOp          watch;
+    UnwatchOp        unwatch;
+    GetElementsOp    getElements;
+    JSNewEnumerateOp enumerate;
+    JSFunToStringOp  funToString;
 };
 
-#define JS_NULL_OBJECT_OPS                                                    \
-    {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,  \
-     nullptr, nullptr, nullptr, nullptr}
+#define JS_NULL_OBJECT_OPS nullptr
 
 } // namespace js
 
@@ -653,19 +677,54 @@ struct ObjectOps
 
 typedef void (*JSClassInternal)();
 
-struct JSClass {
-    JS_CLASS_MEMBERS(JSFinalizeOp);
+struct JSClassOps
+{
+    /* Function pointer members (may be null). */
+    JSAddPropertyOp     addProperty;
+    JSDeletePropertyOp  delProperty;
+    JSGetterOp          getProperty;
+    JSSetterOp          setProperty;
+    JSEnumerateOp       enumerate;
+    JSResolveOp         resolve;
+    JSMayResolveOp      mayResolve;
+    JSFinalizeOp        finalize;
+    JSNative            call;
+    JSHasInstanceOp     hasInstance;
+    JSNative            construct;
+    JSTraceOp           trace;
+};
 
-    void*               reserved[23];
+#define JS_NULL_CLASS_OPS nullptr
+
+struct JSClass {
+    JS_CLASS_MEMBERS(JSClassOps, JSFinalizeOp, JSFreeOp);
+
+    void* reserved[3];
 };
 
 #define JSCLASS_HAS_PRIVATE             (1<<0)  // objects have private slot
-#define JSCLASS_DELAY_METADATA_CALLBACK (1<<1)  // class's initialization code
+#define JSCLASS_DELAY_METADATA_BUILDER  (1<<1)  // class's initialization code
                                                 // will call
                                                 // SetNewObjectMetadata itself
+#define JSCLASS_IS_WRAPPED_NATIVE       (1<<2)  // class is an XPCWrappedNative.
+                                                // WeakMaps use this to override
+                                                // the wrapper disposal
+                                                // mechanism.
 #define JSCLASS_PRIVATE_IS_NSISUPPORTS  (1<<3)  // private is (nsISupports*)
 #define JSCLASS_IS_DOMJSCLASS           (1<<4)  // objects are DOM
-// Bit 5 is unused.
+#define JSCLASS_HAS_XRAYED_CONSTRUCTOR  (1<<5)  // if wrapped by an xray
+                                                // wrapper, the builtin
+                                                // class's constructor won't
+                                                // be unwrapped and invoked.
+                                                // Instead, the constructor is
+                                                // resolved in the caller's
+                                                // compartment and invoked
+                                                // with a wrapped newTarget.
+                                                // The constructor has to
+                                                // detect and handle this
+                                                // situation.
+                                                // See PromiseConstructor for
+                                                // details.
 #define JSCLASS_EMULATES_UNDEFINED      (1<<6)  // objects of this class act
                                                 // like the value undefined,
                                                 // in some contexts
@@ -745,10 +804,10 @@ namespace js {
 
 struct Class
 {
-    JS_CLASS_MEMBERS(FinalizeOp);
-    ClassSpec          spec;
-    ClassExtension      ext;
-    ObjectOps           ops;
+    JS_CLASS_MEMBERS(js::ClassOps, FinalizeOp, FreeOp);
+    const ClassSpec* spec;
+    const ClassExtension* ext;
+    const ObjectOps* oOps;
 
     /*
      * Objects of this class aren't native objects. They don't have Shapes that
@@ -777,7 +836,7 @@ struct Class
 
     bool nonProxyCallable() const {
         MOZ_ASSERT(!isProxy());
-        return isJSFunction() || call;
+        return isJSFunction() || getCall();
     }
 
     bool isProxy() const {
@@ -788,40 +847,89 @@ struct Class
         return flags & JSCLASS_IS_DOMJSCLASS;
     }
 
-    bool shouldDelayMetadataCallback() const {
-        return flags & JSCLASS_DELAY_METADATA_CALLBACK;
+    bool shouldDelayMetadataBuilder() const {
+        return flags & JSCLASS_DELAY_METADATA_BUILDER;
+    }
+
+    bool isWrappedNative() const {
+        return flags & JSCLASS_IS_WRAPPED_NATIVE;
     }
 
     static size_t offsetOfFlags() { return offsetof(Class, flags); }
+
+    bool specDefined()         const { return spec ? spec->defined()   : false; }
+    bool specDependent()       const { return spec ? spec->dependent() : false; }
+    JSProtoKey specParentKey() const { return spec ? spec->parentKey() : JSProto_Null; }
+    bool specShouldDefineConstructor()
+                               const { return spec ? spec->shouldDefineConstructor() : true; }
+    ClassObjectCreationOp specCreateConstructorHook()
+                               const { return spec ? spec->createConstructorHook()   : nullptr; }
+    ClassObjectCreationOp specCreatePrototypeHook()
+                               const { return spec ? spec->createPrototypeHook()     : nullptr; }
+    const JSFunctionSpec* specConstructorFunctions()
+                               const { return spec ? spec->constructorFunctions()    : nullptr; }
+    const JSPropertySpec* specConstructorProperties()
+                               const { return spec ? spec->constructorProperties()   : nullptr; }
+    const JSFunctionSpec* specPrototypeFunctions()
+                               const { return spec ? spec->prototypeFunctions()      : nullptr; }
+    const JSPropertySpec* specPrototypeProperties()
+                               const { return spec ? spec->prototypeProperties()     : nullptr; }
+    FinishClassInitOp specFinishInitHook()
+                               const { return spec ? spec->finishInitHook()          : nullptr; }
+
+    JSWeakmapKeyDelegateOp extWeakmapKeyDelegateOp()
+                               const { return ext ? ext->weakmapKeyDelegateOp        : nullptr; }
+    JSObjectMovedOp extObjectMovedOp()
+                               const { return ext ? ext->objectMovedOp               : nullptr; }
+
+    LookupPropertyOp getOpsLookupProperty() const { return oOps ? oOps->lookupProperty : nullptr; }
+    DefinePropertyOp getOpsDefineProperty() const { return oOps ? oOps->defineProperty : nullptr; }
+    HasPropertyOp    getOpsHasProperty()    const { return oOps ? oOps->hasProperty    : nullptr; }
+    GetPropertyOp    getOpsGetProperty()    const { return oOps ? oOps->getProperty    : nullptr; }
+    SetPropertyOp    getOpsSetProperty()    const { return oOps ? oOps->setProperty    : nullptr; }
+    GetOwnPropertyOp getOpsGetOwnPropertyDescriptor()
+                                            const { return oOps ? oOps->getOwnPropertyDescriptor
+                                                                                     : nullptr; }
+    DeletePropertyOp getOpsDeleteProperty() const { return oOps ? oOps->deleteProperty : nullptr; }
+    WatchOp          getOpsWatch()          const { return oOps ? oOps->watch          : nullptr; }
+    UnwatchOp        getOpsUnwatch()        const { return oOps ? oOps->unwatch        : nullptr; }
+    GetElementsOp    getOpsGetElements()    const { return oOps ? oOps->getElements    : nullptr; }
+    JSNewEnumerateOp getOpsEnumerate()      const { return oOps ? oOps->enumerate      : nullptr; }
+    JSFunToStringOp  getOpsFunToString()    const { return oOps ? oOps->funToString    : nullptr; }
 };
+
+static_assert(offsetof(JSClassOps, addProperty) == offsetof(ClassOps, addProperty),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, delProperty) == offsetof(ClassOps, delProperty),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, getProperty) == offsetof(ClassOps, getProperty),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, setProperty) == offsetof(ClassOps, setProperty),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, enumerate) == offsetof(ClassOps, enumerate),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, resolve) == offsetof(ClassOps, resolve),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, mayResolve) == offsetof(ClassOps, mayResolve),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, finalize) == offsetof(ClassOps, finalize),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, call) == offsetof(ClassOps, call),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, construct) == offsetof(ClassOps, construct),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, hasInstance) == offsetof(ClassOps, hasInstance),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(offsetof(JSClassOps, trace) == offsetof(ClassOps, trace),
+              "ClassOps and JSClassOps must be consistent");
+static_assert(sizeof(JSClassOps) == sizeof(ClassOps),
+              "ClassOps and JSClassOps must be consistent");
 
 static_assert(offsetof(JSClass, name) == offsetof(Class, name),
               "Class and JSClass must be consistent");
 static_assert(offsetof(JSClass, flags) == offsetof(Class, flags),
               "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, addProperty) == offsetof(Class, addProperty),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, delProperty) == offsetof(Class, delProperty),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, getProperty) == offsetof(Class, getProperty),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, setProperty) == offsetof(Class, setProperty),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, enumerate) == offsetof(Class, enumerate),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, resolve) == offsetof(Class, resolve),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, mayResolve) == offsetof(Class, mayResolve),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, finalize) == offsetof(Class, finalize),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, call) == offsetof(Class, call),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, construct) == offsetof(Class, construct),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, hasInstance) == offsetof(Class, hasInstance),
-              "Class and JSClass must be consistent");
-static_assert(offsetof(JSClass, trace) == offsetof(Class, trace),
+static_assert(offsetof(JSClass, cOps) == offsetof(Class, cOps),
               "Class and JSClass must be consistent");
 static_assert(sizeof(JSClass) == sizeof(Class),
               "Class and JSClass must be consistent");
@@ -845,7 +953,7 @@ Valueify(const JSClass* c)
 enum ESClassValue {
     ESClass_Object, ESClass_Array, ESClass_Number, ESClass_String,
     ESClass_Boolean, ESClass_RegExp, ESClass_ArrayBuffer, ESClass_SharedArrayBuffer,
-    ESClass_Date, ESClass_Set, ESClass_Map,
+    ESClass_Date, ESClass_Set, ESClass_Map, ESClass_Promise,
 
     /** None of the above. */
     ESClass_Other

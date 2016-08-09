@@ -294,16 +294,14 @@ add_task(function* setup_server() {
       Assert.ok("context" in data, "should have context");
 
       res.write(JSON.stringify(kCreateRoomData));
+    } else if (req.queryString) {
+      let qs = parseQueryString(req.queryString);
+      let room = kRoomsResponses.get("_nxD4V4FflQ");
+      room.participants = kRoomUpdates[qs.version].participants;
+      room.deleted = kRoomUpdates[qs.version].deleted;
+      res.write(JSON.stringify([room]));
     } else {
-      if (req.queryString) {
-        let qs = parseQueryString(req.queryString);
-        let room = kRoomsResponses.get("_nxD4V4FflQ");
-        room.participants = kRoomUpdates[qs.version].participants;
-        room.deleted = kRoomUpdates[qs.version].deleted;
-        res.write(JSON.stringify([room]));
-      } else {
-        res.write(JSON.stringify([...kRoomsResponses.values()]));
-      }
+      res.write(JSON.stringify([...kRoomsResponses.values()]));
     }
 
     res.processAsync();
@@ -403,7 +401,7 @@ add_task(function* test_createRoom() {
 
   // We can't check the value of the key, but check we've got a # which indicates
   // there should be one.
-  Assert.ok(room.roomUrl.contains("#"), "Created room url should have a key");
+  Assert.ok(room.roomUrl.includes("#"), "Created room url should have a key");
   var key = room.roomUrl.split("#")[1];
   Assert.ok(key.length, "Created room url should have non-zero length key");
 
@@ -422,7 +420,7 @@ add_task(function* test_openRoom() {
   Assert.ok(openedUrl, "should open a chat window");
 
   // Stop the busy kicking in for following tests. (note: windowId can be 'fakeToken')
-  let windowId = openedUrl.match(/about:loopconversation\#(\w+)$/)[1];
+  let windowId = openedUrl.match(/about:loopconversation#(\w+)$/)[1];
   let windowData = MozLoopService.getConversationWindowData(windowId);
 
   Assert.equal(windowData.type, "room", "window data should contain room as the type");
@@ -601,11 +599,9 @@ add_task(function* test_updateRoom_domains() {
   Services.prefs.setBoolPref("loop.logDomains", true);
 
   let roomToken = "_nxD4V4FflQ";
-  let addContext = url => {
-    return LoopRooms.promise("update", roomToken, {
-      urls: [{ location: url }]
-    });
-  };
+  let addContext = url => LoopRooms.promise("update", roomToken, {
+    urls: [{ location: url }]
+  });
 
   // Make sure one domain context is counted.
   yield addContext("https://www.mozilla.org");

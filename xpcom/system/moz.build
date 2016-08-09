@@ -7,13 +7,13 @@
 XPIDL_SOURCES += [
     'nsIBlocklistService.idl',
     'nsIDeviceSensors.idl',
-    'nsIExternalApplication.idl',
     'nsIGConfService.idl',
     'nsIGeolocationProvider.idl',
     'nsIGIOService.idl',
     'nsIGSettingsService.idl',
     'nsIHapticFeedback.idl',
     'nsIPackageKitService.idl',
+    'nsIPlatformInfo.idl',
     'nsIXULAppInfo.idl',
     'nsIXULRuntime.idl',
 ]

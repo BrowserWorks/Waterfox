@@ -8,7 +8,6 @@ builtin(include, build/autoconf/acwinpaths.m4)dnl
 builtin(include, build/autoconf/hooks.m4)dnl
 builtin(include, build/autoconf/config.status.m4)dnl
 builtin(include, build/autoconf/toolchain.m4)dnl
-builtin(include, build/autoconf/wrapper.m4)dnl
 builtin(include, build/autoconf/nspr.m4)dnl
 builtin(include, build/autoconf/nspr-build.m4)dnl
 builtin(include, build/autoconf/nss.m4)dnl
@@ -26,7 +25,6 @@ builtin(include, build/autoconf/arch.m4)dnl
 builtin(include, build/autoconf/android.m4)dnl
 builtin(include, build/autoconf/zlib.m4)dnl
 builtin(include, build/autoconf/linux.m4)dnl
-builtin(include, build/autoconf/python-virtualenv.m4)dnl
 builtin(include, build/autoconf/winsdk.m4)dnl
 builtin(include, build/autoconf/icu.m4)dnl
 builtin(include, build/autoconf/ffi.m4)dnl

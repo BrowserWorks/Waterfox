@@ -26,7 +26,9 @@ class WebGLContextLossHandler : public dom::workers::WorkerFeature
     bool mShouldRunTimerAgain;
     bool mIsDisabled;
     bool mFeatureAdded;
-    DebugOnly<nsIThread*> mThread;
+#ifdef DEBUG
+    nsIThread* mThread;
+#endif
 
 public:
     NS_INLINE_DECL_REFCOUNTING(WebGLContextLossHandler)
@@ -35,7 +37,7 @@ public:
 
     void RunTimer();
     void DisableTimer();
-    bool Notify(JSContext* aCx, dom::workers::Status aStatus) override;
+    bool Notify(dom::workers::Status aStatus) override;
 
 protected:
     ~WebGLContextLossHandler();

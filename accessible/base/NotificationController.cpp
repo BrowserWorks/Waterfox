@@ -97,6 +97,17 @@ NotificationController::Shutdown()
   mNotifications.Clear();
   mEvents.Clear();
   mRelocations.Clear();
+  mEventTree.Clear();
+}
+
+EventTree*
+NotificationController::QueueMutation(Accessible* aContainer)
+{
+  EventTree* tree = mEventTree.FindOrInsert(aContainer);
+  if (tree) {
+    ScheduleProcessing();
+  }
+  return tree;
 }
 
 void
@@ -301,13 +312,11 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
   #endif
 
       // Make sure the text node is in accessible document still.
-      Accessible* container = mDocument->GetAccessibleOrContainer(containerNode);
-      NS_ASSERTION(container,
-                   "Text node having rendered text hasn't accessible document!");
+      Accessible* container = mDocument->AccessibleOrTrueContainer(containerNode);
+      MOZ_ASSERT(container,
+                 "Text node having rendered text hasn't accessible document!");
       if (container) {
-        nsTArray<nsCOMPtr<nsIContent> > insertedContents;
-        insertedContents.AppendElement(textNode);
-        mDocument->ProcessContentInserted(container, &insertedContents);
+        mDocument->ProcessContentInserted(container, textNode);
       }
     }
   }
@@ -381,7 +390,9 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
 
   // Process relocation list.
   for (uint32_t idx = 0; idx < mRelocations.Length(); idx++) {
-    mDocument->DoARIAOwnsRelocation(mRelocations[idx]);
+    if (mRelocations[idx]->IsInDocument()) {
+      mDocument->DoARIAOwnsRelocation(mRelocations[idx]);
+    }
   }
   mRelocations.Clear();
 
@@ -389,6 +400,8 @@ NotificationController::WillRefresh(mozilla::TimeStamp aTime)
   // process it synchronously.  However we do not want to reenter if fireing
   // events causes script to run.
   mObservingState = eRefreshProcessing;
+
+  mEventTree.Process();
 
   ProcessEventQueue();
 

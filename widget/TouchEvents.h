@@ -10,7 +10,7 @@
 
 #include "mozilla/dom/Touch.h"
 #include "mozilla/MouseEvents.h"
-#include "nsAutoPtr.h"
+#include "mozilla/RefPtr.h"
 #include "nsIDOMSimpleGestureEvent.h"
 #include "nsTArray.h"
 
@@ -106,8 +106,8 @@ public:
   }
 
   WidgetSimpleGestureEvent(const WidgetSimpleGestureEvent& aOther)
-    : WidgetMouseEventBase(aOther.mFlags.mIsTrusted, aOther.mMessage,
-                           aOther.widget, eSimpleGestureEventClass)
+    : WidgetMouseEventBase(aOther.IsTrusted(), aOther.mMessage,
+                           aOther.mWidget, eSimpleGestureEventClass)
     , allowedDirections(aOther.allowedDirections)
     , direction(aOther.direction)
     , delta(aOther.delta)
@@ -167,14 +167,14 @@ public:
   }
 
   WidgetTouchEvent(const WidgetTouchEvent& aOther)
-    : WidgetInputEvent(aOther.mFlags.mIsTrusted, aOther.mMessage, aOther.widget,
+    : WidgetInputEvent(aOther.IsTrusted(), aOther.mMessage, aOther.mWidget,
                        eTouchEventClass)
   {
     MOZ_COUNT_CTOR(WidgetTouchEvent);
-    modifiers = aOther.modifiers;
-    time = aOther.time;
-    timeStamp = aOther.timeStamp;
-    touches.AppendElements(aOther.touches);
+    mModifiers = aOther.mModifiers;
+    mTime = aOther.mTime;
+    mTimeStamp = aOther.mTimeStamp;
+    mTouches.AppendElements(aOther.mTouches);
     mFlags.mCancelable = mMessage != eTouchCancel;
     mFlags.mHandledByAPZ = aOther.mFlags.mHandledByAPZ;
   }
@@ -202,15 +202,15 @@ public:
     return result;
   }
 
-  TouchArray touches;
+  TouchArray mTouches;
 
   void AssignTouchEventData(const WidgetTouchEvent& aEvent, bool aCopyTargets)
   {
     AssignInputEventData(aEvent, aCopyTargets);
 
     // Assign*EventData() assume that they're called only new instance.
-    MOZ_ASSERT(touches.IsEmpty());
-    touches.AppendElements(aEvent.touches);
+    MOZ_ASSERT(mTouches.IsEmpty());
+    mTouches.AppendElements(aEvent.mTouches);
   }
 };
 

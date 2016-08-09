@@ -44,27 +44,6 @@ Permissions::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 namespace {
 
 already_AddRefed<PermissionStatus>
-CreatePushPermissionStatus(JSContext* aCx,
-                           JS::Handle<JSObject*> aPermission,
-                           nsPIDOMWindowInner* aWindow,
-                           ErrorResult& aRv)
-{
-  PushPermissionDescriptor permission;
-  JS::Rooted<JS::Value> value(aCx, JS::ObjectOrNullValue(aPermission));
-  if (NS_WARN_IF(!permission.Init(aCx, value))) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
-  }
-
-  if (permission.mUserVisible) {
-    aRv.Throw(NS_ERROR_NOT_IMPLEMENTED);
-    return nullptr;
-  }
-
-  return PermissionStatus::Create(aWindow, permission.mName, aRv);
-}
-
-already_AddRefed<PermissionStatus>
 CreatePermissionStatus(JSContext* aCx,
                        JS::Handle<JSObject*> aPermission,
                        nsPIDOMWindowInner* aWindow,
@@ -73,17 +52,15 @@ CreatePermissionStatus(JSContext* aCx,
   PermissionDescriptor permission;
   JS::Rooted<JS::Value> value(aCx, JS::ObjectOrNullValue(aPermission));
   if (NS_WARN_IF(!permission.Init(aCx, value))) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
+    aRv.NoteJSContextException(aCx);
     return nullptr;
   }
 
   switch (permission.mName) {
     case PermissionName::Geolocation:
     case PermissionName::Notifications:
-      return PermissionStatus::Create(aWindow, permission.mName, aRv);
-
     case PermissionName::Push:
-      return CreatePushPermissionStatus(aCx, aPermission, aWindow, aRv);
+      return PermissionStatus::Create(aWindow, permission.mName, aRv);
 
     default:
       MOZ_ASSERT_UNREACHABLE("Unhandled type");
@@ -105,20 +82,20 @@ Permissions::Query(JSContext* aCx,
     return nullptr;
   }
 
+  RefPtr<PermissionStatus> status =
+    CreatePermissionStatus(aCx, aPermission, mWindow, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    MOZ_ASSERT(!status);
+    return nullptr;
+  }
+
+  MOZ_ASSERT(status);
   RefPtr<Promise> promise = Promise::Create(global, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return nullptr;
   }
 
-  RefPtr<PermissionStatus> status =
-    CreatePermissionStatus(aCx, aPermission, mWindow, aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    MOZ_ASSERT(!status);
-    promise->MaybeReject(aRv);
-  } else {
-    MOZ_ASSERT(status);
-    promise->MaybeResolve(status);
-  }
+  promise->MaybeResolve(status);
   return promise.forget();
 }
 
@@ -149,7 +126,7 @@ Permissions::Revoke(JSContext* aCx,
   PermissionDescriptor permission;
   JS::Rooted<JS::Value> value(aCx, JS::ObjectOrNullValue(aPermission));
   if (NS_WARN_IF(!permission.Init(aCx, value))) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
+    aRv.NoteJSContextException(aCx);
     return nullptr;
   }
 
@@ -192,11 +169,11 @@ Permissions::Revoke(JSContext* aCx,
     CreatePermissionStatus(aCx, aPermission, mWindow, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     MOZ_ASSERT(!status);
-    promise->MaybeReject(aRv);
-  } else {
-    MOZ_ASSERT(status);
-    promise->MaybeResolve(status);
+    return nullptr;
   }
+
+  MOZ_ASSERT(status);
+  promise->MaybeResolve(status);
   return promise.forget();
 }
 

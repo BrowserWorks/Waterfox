@@ -836,7 +836,7 @@ ENUM_VALUES_PER_LINE   = 4
 # If the GENERATE_TREEVIEW tag is set to YES, a side panel will be
 # generated containing a tree-like index structure (just like the one that 
 # is generated for HTML Help). For this to work a browser that supports 
-# JavaScript, DHTML, CSS and frames is required (for instance WaterfoxProject 1.0+, 
+# JavaScript, DHTML, CSS and frames is required (for instance Mozilla 1.0+, 
 # Netscape 6.0+, Internet explorer 5.0+, or Konqueror). Windows users are 
 # probably better off using the HTML help feature.
 

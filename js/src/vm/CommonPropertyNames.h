@@ -19,7 +19,10 @@
     macro(apply, apply, "apply") \
     macro(arguments, arguments, "arguments") \
     macro(as, as, "as") \
+    macro(ArrayBufferSpecies, ArrayBufferSpecies, "ArrayBufferSpecies") \
     macro(ArrayIteratorNext, ArrayIteratorNext, "ArrayIteratorNext") \
+    macro(ArraySpecies, ArraySpecies, "ArraySpecies") \
+    macro(ArraySpeciesCreate, ArraySpeciesCreate, "ArraySpeciesCreate") \
     macro(ArrayType, ArrayType, "ArrayType") \
     macro(ArrayValues, ArrayValues, "ArrayValues") \
     macro(ArrayValuesAt, ArrayValuesAt, "ArrayValuesAt") \
@@ -56,7 +59,9 @@
     macro(construct, construct, "construct") \
     macro(constructor, constructor, "constructor") \
     macro(ConvertAndCopyTo, ConvertAndCopyTo, "ConvertAndCopyTo") \
+    macro(copyWithin, copyWithin, "copyWithin") \
     macro(count, count, "count") \
+    macro(CreateResolvingFunctions, CreateResolvingFunctions, "CreateResolvingFunctions") \
     macro(currency, currency, "currency") \
     macro(currencyDisplay, currencyDisplay, "currencyDisplay") \
     macro(DateTimeFormat, DateTimeFormat, "DateTimeFormat") \
@@ -85,6 +90,7 @@
     macro(encodeURI, encodeURI, "encodeURI") \
     macro(encodeURIComponent, encodeURIComponent, "encodeURIComponent") \
     macro(endTimestamp, endTimestamp, "endTimestamp") \
+    macro(entries, entries, "entries") \
     macro(enumerable, enumerable, "enumerable") \
     macro(enumerate, enumerate, "enumerate") \
     macro(era, era, "era") \
@@ -94,6 +100,9 @@
     macro(fieldOffsets, fieldOffsets, "fieldOffsets") \
     macro(fieldTypes, fieldTypes, "fieldTypes") \
     macro(fileName, fileName, "fileName") \
+    macro(fill, fill, "fill") \
+    macro(find, find, "find") \
+    macro(findIndex, findIndex, "findIndex") \
     macro(fix, fix, "fix") \
     macro(flags, flags, "flags") \
     macro(float32, float32, "float32") \
@@ -106,6 +115,9 @@
     macro(formatToParts, formatToParts, "formatToParts") \
     macro(frame, frame, "frame") \
     macro(from, from, "from") \
+    macro(futexOK, futexOK, "ok") \
+    macro(futexNotEqual, futexNotEqual, "not-equal") \
+    macro(futexTimedOut, futexTimedOut, "timed-out") \
     macro(gcCycleNumber, gcCycleNumber, "gcCycleNumber") \
     macro(GeneratorFunction, GeneratorFunction, "GeneratorFunction") \
     macro(get, get, "get") \
@@ -121,6 +133,7 @@
     macro(hour, hour, "hour") \
     macro(ignoreCase, ignoreCase, "ignoreCase") \
     macro(ignorePunctuation, ignorePunctuation, "ignorePunctuation") \
+    macro(includes, includes, "includes") \
     macro(index, index, "index") \
     macro(InitializeCollator, InitializeCollator, "InitializeCollator") \
     macro(InitializeDateTimeFormat, InitializeDateTimeFormat, "InitializeDateTimeFormat") \
@@ -144,6 +157,7 @@
     macro(isExtensible, isExtensible, "isExtensible") \
     macro(iteratorIntrinsic, iteratorIntrinsic, "__iterator__") \
     macro(join, join, "join") \
+    macro(js, js, "js") \
     macro(keys, keys, "keys") \
     macro(label, label, "label") \
     macro(lastIndex, lastIndex, "lastIndex") \
@@ -200,6 +214,11 @@
     macro(parseInt, parseInt, "parseInt") \
     macro(pattern, pattern, "pattern") \
     macro(preventExtensions, preventExtensions, "preventExtensions") \
+    macro(promise, promise, "promise") \
+    macro(state, state, "state") \
+    macro(pending, pending, "pending") \
+    macro(fulfilled, fulfilled, "fulfilled") \
+    macro(rejected, rejected, "rejected") \
     macro(propertyIsEnumerable, propertyIsEnumerable, "propertyIsEnumerable") \
     macro(proto, proto, "__proto__") \
     macro(prototype, prototype, "prototype") \
@@ -219,6 +238,7 @@
     macro(shape, shape, "shape") \
     macro(size, size, "size") \
     macro(source, source, "source") \
+    macro(SpeciesConstructor, SpeciesConstructor, "SpeciesConstructor") \
     macro(stack, stack, "stack") \
     macro(star, star, "*") \
     macro(starDefaultStar, starDefaultStar, "*default*") \
@@ -269,6 +289,7 @@
     macro(var, var, "var") \
     macro(variable, variable, "variable") \
     macro(void0, void0, "(void 0)") \
+    macro(wasm, wasm, "wasm") \
     macro(watch, watch, "watch") \
     macro(WeakSet_add, WeakSet_add, "WeakSet_add") \
     macro(weekday, weekday, "weekday") \
@@ -285,21 +306,6 @@
     macro(boolean, boolean, "boolean") \
     macro(null, null, "null") \
     macro(symbol, symbol, "symbol") \
-    /* Well-known atom names must be continuous and ordered, matching \
-     * enum JS::SymbolCode in jsapi.h. */ \
-    macro(iterator, iterator, "iterator") \
-    macro(match, match, "match") \
-    macro(species, species, "species") \
-    macro(toPrimitive, toPrimitive, "toPrimitive") \
-    /* Same goes for the descriptions of the well-known symbols. */ \
-    macro(Symbol_hasInstance, Symbol_hasInstance, "Symbol.hasInstance") \
-    macro(Symbol_isConcatSpreadable, Symbol_isConcatSpreadable, "Symbol.isConcatSpreadable") \
-    macro(Symbol_iterator, Symbol_iterator, "Symbol.iterator") \
-    macro(Symbol_match,    Symbol_match,    "Symbol.match") \
-    macro(Symbol_species,  Symbol_species,  "Symbol.species") \
-    macro(Symbol_toPrimitive, Symbol_toPrimitive, "Symbol.toPrimitive") \
-    macro(Symbol_toStringTag, Symbol_toStringTag, "Symbol.toStringTag") \
-    macro(Symbol_unscopables, Symbol_unscopables, "Symbol.unscopables") \
     /* Function names for properties named by symbols. */ \
     macro(Symbol_iterator_fun, Symbol_iterator_fun, "[Symbol.iterator]") \
 

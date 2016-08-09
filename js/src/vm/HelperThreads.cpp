@@ -187,12 +187,16 @@ js::CancelOffThreadIonCompile(JSCompartment* compartment, JSScript* script)
     }
 }
 
-static const JSClass parseTaskGlobalClass = {
-    "internal-parse-task-global", JSCLASS_GLOBAL_FLAGS,
+static const JSClassOps parseTaskGlobalClassOps = {
     nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr, nullptr,
     nullptr, nullptr, nullptr,
     JS_GlobalObjectTraceHook
+};
+
+static const JSClass parseTaskGlobalClass = {
+    "internal-parse-task-global", JSCLASS_GLOBAL_FLAGS,
+    &parseTaskGlobalClassOps
 };
 
 ParseTask::ParseTask(ParseTaskKind kind, ExclusiveContext* cx, JSObject* exclusiveContextGlobal,
@@ -462,7 +466,7 @@ js::StartOffThreadParseScript(JSContext* cx, const ReadOnlyCompileOptions& optio
     // which could require barriers on the atoms compartment.
     gc::AutoSuppressGC nogc(cx);
     gc::AutoAssertNoNurseryAlloc noNurseryAlloc(cx->runtime());
-    AutoSuppressObjectMetadataCallback suppressMetadata(cx);
+    AutoSuppressAllocationMetadataBuilder suppressMetadata(cx);
 
     JSObject* global = CreateGlobalForOffThreadParse(cx, ParseTaskKind::Script, nogc);
     if (!global)
@@ -499,7 +503,7 @@ js::StartOffThreadParseModule(JSContext* cx, const ReadOnlyCompileOptions& optio
     // which could require barriers on the atoms compartment.
     gc::AutoSuppressGC nogc(cx);
     gc::AutoAssertNoNurseryAlloc noNurseryAlloc(cx->runtime());
-    AutoSuppressObjectMetadataCallback suppressMetadata(cx);
+    AutoSuppressAllocationMetadataBuilder suppressMetadata(cx);
 
     JSObject* global = CreateGlobalForOffThreadParse(cx, ParseTaskKind::Module, nogc);
     if (!global)
@@ -674,7 +678,7 @@ GlobalHelperThreadState::lock()
     AssertCurrentThreadCanLock(HelperThreadStateLock);
     PR_Lock(helperLock);
 #ifdef DEBUG
-    lockOwner.value = PR_GetCurrentThread();
+    lockOwner = PR_GetCurrentThread();
 #endif
 }
 
@@ -683,7 +687,7 @@ GlobalHelperThreadState::unlock()
 {
     MOZ_ASSERT(isLocked());
 #ifdef DEBUG
-    lockOwner.value = nullptr;
+    lockOwner = nullptr;
 #endif
     PR_Unlock(helperLock);
 }
@@ -692,7 +696,7 @@ GlobalHelperThreadState::unlock()
 bool
 GlobalHelperThreadState::isLocked()
 {
-    return lockOwner.value == PR_GetCurrentThread();
+    return lockOwner == PR_GetCurrentThread();
 }
 #endif
 
@@ -701,14 +705,14 @@ GlobalHelperThreadState::wait(CondVar which, uint32_t millis)
 {
     MOZ_ASSERT(isLocked());
 #ifdef DEBUG
-    lockOwner.value = nullptr;
+    lockOwner = nullptr;
 #endif
     DebugOnly<PRStatus> status =
         PR_WaitCondVar(whichWakeup(which),
                        millis ? PR_MillisecondsToInterval(millis) : PR_INTERVAL_NO_TIMEOUT);
     MOZ_ASSERT(status == PR_SUCCESS);
 #ifdef DEBUG
-    lockOwner.value = PR_GetCurrentThread();
+    lockOwner = PR_GetCurrentThread();
 #endif
 }
 
@@ -1164,7 +1168,7 @@ GlobalHelperThreadState::finishParseTask(JSContext* maybecx, JSRuntime* rt, Pars
         return nullptr;
 
     RootedScript script(rt, parseTask->script);
-    assertSameCompartment(cx, script);
+    releaseAssertSameCompartment(cx, script);
 
     // Report out of memory errors eagerly, or errors could be malformed.
     if (parseTask->outOfMemory) {
@@ -1243,7 +1247,7 @@ GlobalHelperThreadState::mergeParseTaskCompartment(JSRuntime* rt, ParseTask* par
     // finished merging the contents of the parse task's compartment into the
     // destination compartment.  Finish any ongoing incremental GC first and
     // assert that no allocation can occur.
-    gc::AutoFinishGC finishGC(rt);
+    gc::FinishGC(rt);
     JS::AutoAssertNoAlloc noAlloc(rt);
 
     LeaveParseTaskZone(rt, parseTask);

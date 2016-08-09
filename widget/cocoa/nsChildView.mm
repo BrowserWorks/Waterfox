@@ -64,7 +64,7 @@
 #include "mozilla/layers/APZThreadUtils.h"
 #include "mozilla/layers/GLManager.h"
 #include "mozilla/layers/CompositorOGL.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/BasicCompositor.h"
 #include "mozilla/layers/InputAPZContext.h"
 #include "gfxUtils.h"
@@ -692,6 +692,10 @@ void* nsChildView::GetNativeData(uint32_t aDataType)
       break;
 
     case NS_RAW_NATIVE_IME_CONTEXT:
+      retVal = GetPseudoIMEContext();
+      if (retVal) {
+        break;
+      }
       retVal = [mView inputContext];
       // If input context isn't available on this widget, we should set |this|
       // instead of nullptr since if this returns nullptr, IMEStateManager
@@ -1435,7 +1439,7 @@ NS_IMETHODIMP nsChildView::DispatchEvent(WidgetGUIEvent* event,
                                          nsEventStatus& aStatus)
 {
 #ifdef DEBUG
-  debug_DumpEvent(stdout, event->widget, event, nsAutoCString("something"), 0);
+  debug_DumpEvent(stdout, event->mWidget, event, "something", 0);
 #endif
 
   NS_ASSERTION(!(mTextInputHandler && mTextInputHandler->IsIMEComposing() &&
@@ -1460,11 +1464,12 @@ NS_IMETHODIMP nsChildView::DispatchEvent(WidgetGUIEvent* event,
   nsCOMPtr<nsIWidget> kungFuDeathGrip = do_QueryInterface(mParentWidget ? mParentWidget : this);
   if (!listener && mParentWidget) {
     if (mParentWidget->WindowType() == eWindowType_popup) {
-      // Check just in case event->widget isn't this widget
-      if (event->widget)
-        listener = event->widget->GetWidgetListener();
+      // Check just in case event->mWidget isn't this widget
+      if (event->mWidget) {
+        listener = event->mWidget->GetWidgetListener();
+      }
       if (!listener) {
-        event->widget = mParentWidget;
+        event->mWidget = mParentWidget;
         listener = mParentWidget->GetWidgetListener();
       }
     }
@@ -1652,43 +1657,6 @@ bool nsChildView::HasPendingInputEvent()
 
 #pragma mark -
 
-nsresult
-nsChildView::NotifyIMEInternal(const IMENotification& aIMENotification)
-{
-  switch (aIMENotification.mMessage) {
-    case REQUEST_TO_COMMIT_COMPOSITION:
-      NS_ENSURE_TRUE(mTextInputHandler, NS_ERROR_NOT_AVAILABLE);
-      mTextInputHandler->CommitIMEComposition();
-      return NS_OK;
-    case REQUEST_TO_CANCEL_COMPOSITION:
-      NS_ENSURE_TRUE(mTextInputHandler, NS_ERROR_NOT_AVAILABLE);
-      mTextInputHandler->CancelIMEComposition();
-      return NS_OK;
-    case NOTIFY_IME_OF_FOCUS:
-      if (mTextInputHandler->IsFocused()) {
-        if (mInputContext.IsPasswordEditor()) {
-          TextInputHandler::EnableSecureEventInput();
-        } else {
-          TextInputHandler::EnsureSecureEventInputDisabled();
-        }
-      }
-
-      NS_ENSURE_TRUE(mTextInputHandler, NS_ERROR_NOT_AVAILABLE);
-      mTextInputHandler->OnFocusChangeInGecko(true);
-      return NS_OK;
-    case NOTIFY_IME_OF_BLUR:
-      NS_ENSURE_TRUE(mTextInputHandler, NS_ERROR_NOT_AVAILABLE);
-      mTextInputHandler->OnFocusChangeInGecko(false);
-      return NS_OK;
-    case NOTIFY_IME_OF_SELECTION_CHANGE:
-      NS_ENSURE_TRUE(mTextInputHandler, NS_ERROR_NOT_AVAILABLE);
-      mTextInputHandler->OnSelectionChange(aIMENotification);
-      return NS_OK;
-    default:
-      return NS_ERROR_NOT_IMPLEMENTED;
-  }
-}
-
 NS_IMETHODIMP
 nsChildView::StartPluginIME(const mozilla::WidgetKeyboardEvent& aKeyboardEvent,
                             int32_t aPanelX, int32_t aPanelY,
@@ -1787,6 +1755,15 @@ nsChildView::GetInputContext()
       break;
   }
   return mInputContext;
+}
+
+NS_IMETHODIMP_(TextEventDispatcherListener*)
+nsChildView::GetNativeTextEventDispatcherListener()
+{
+  if (NS_WARN_IF(!mTextInputHandler)) {
+    return nullptr;
+  }
+  return mTextInputHandler;
 }
 
 NS_IMETHODIMP
@@ -1924,7 +1901,7 @@ void
 nsChildView::CreateCompositor()
 {
   nsBaseWidget::CreateCompositor();
-  if (mCompositorChild) {
+  if (mCompositorBridgeChild) {
     [(ChildView *)mView setUsingOMTCompositor:true];
   }
 }
@@ -2098,7 +2075,7 @@ nsChildView::MaybeDrawResizeIndicator(GLManager* aManager)
   }
 
   if (!mResizerImage) {
-    mResizerImage = new RectTextureImage(aManager->gl());
+    mResizerImage = MakeUnique<RectTextureImage>(aManager->gl());
   }
 
   LayoutDeviceIntSize size = mResizeIndicatorRect.Size();
@@ -2312,7 +2289,7 @@ nsChildView::MaybeDrawTitlebar(GLManager* aManager)
   mUpdatedTitlebarRegion.SetEmpty();
 
   if (!mTitlebarImage) {
-    mTitlebarImage = new RectTextureImage(aManager->gl());
+    mTitlebarImage = MakeUnique<RectTextureImage>(aManager->gl());
   }
 
   mTitlebarImage->UpdateFromCGContext(mTitlebarRect.Size(),
@@ -2336,7 +2313,7 @@ nsChildView::MaybeDrawRoundedCorners(GLManager* aManager,
   MutexAutoLock lock(mEffectsLock);
 
   if (!mCornerMaskImage) {
-    mCornerMaskImage = new RectTextureImage(aManager->gl());
+    mCornerMaskImage = MakeUnique<RectTextureImage>(aManager->gl());
   }
 
   LayoutDeviceIntSize size(mDevPixelCornerRadius, mDevPixelCornerRadius);
@@ -2657,7 +2634,7 @@ nsChildView::StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion,
   LayoutDeviceIntSize renderSize = mBounds.Size();
 
   if (!mBasicCompositorImage) {
-    mBasicCompositorImage = new RectTextureImage(mGLPresenter->gl());
+    mBasicCompositorImage = MakeUnique<RectTextureImage>(mGLPresenter->gl());
   }
 
   RefPtr<gfx::DrawTarget> drawTarget =
@@ -2670,6 +2647,7 @@ nsChildView::StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion,
   }
 
   aInvalidRegion = mBasicCompositorImage->GetUpdateRegion();
+  *aBufferMode = BufferMode::BUFFER_NONE;
 
   return drawTarget.forget();
 }
@@ -2684,6 +2662,7 @@ nsChildView::EndRemoteDrawing()
 void
 nsChildView::CleanupRemoteDrawing()
 {
+  nsBaseWidget::CleanupRemoteDrawing();
   mBasicCompositorImage = nullptr;
   mCornerMaskImage = nullptr;
   mResizerImage = nullptr;
@@ -2815,7 +2794,8 @@ nsChildView::DispatchAPZWheelInputEvent(InputData& aEvent, bool aCanTriggerSwipe
         MOZ_CRASH("unsupported event type");
         return;
     }
-    if (event.mMessage == eWheel && (event.deltaX != 0 || event.deltaY != 0)) {
+    if (event.mMessage == eWheel &&
+        (event.mDeltaX != 0 || event.mDeltaY != 0)) {
       ProcessUntransformedAPZEvent(&event, guid, inputBlockId, result);
     }
     return;
@@ -2875,7 +2855,8 @@ nsChildView::DispatchAPZWheelInputEvent(InputData& aEvent, bool aCanTriggerSwipe
       MOZ_CRASH("unexpected event type");
       return;
   }
-  if (event.mMessage == eWheel && (event.deltaX != 0 || event.deltaY != 0)) {
+  if (event.mMessage == eWheel &&
+      (event.mDeltaX != 0 || event.mDeltaY != 0)) {
     DispatchEvent(&event, status);
   }
 }
@@ -3533,7 +3514,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
 
   nsEventStatus status = nsEventStatus_eIgnore;
   WidgetGUIEvent focusGuiEvent(true, eventMessage, mGeckoChild);
-  focusGuiEvent.time = PR_IntervalNow();
+  focusGuiEvent.mTime = PR_IntervalNow();
   mGeckoChild->DispatchEvent(&focusGuiEvent, status);
 }
 
@@ -3757,9 +3738,14 @@ NSEvent* gLastDragMouseDownEvent = nil;
     gfx::Factory::CreateDrawTargetForCairoCGContext(aContext,
                                                     gfx::IntSize(backingSize.width,
                                                                  backingSize.height));
-  MOZ_ASSERT(dt); // see implementation
+  if (!dt || !dt->IsValid()) {
+    // This used to be an assertion, so keep crashing in nightly+aurora
+    gfxDevCrash(mozilla::gfx::LogReason::InvalidContext) << "Cannot create target with CreateDrawTargetForCairoCGContext " << backingSize;
+    return;
+  }
   dt->AddUserData(&gfxContext::sDontUseAsSourceKey, dt, nullptr);
-  RefPtr<gfxContext> targetContext = new gfxContext(dt);
+  RefPtr<gfxContext> targetContext = gfxContext::ForDrawTarget(dt);
+  MOZ_ASSERT(targetContext); // already checked the draw target above
 
   // Set up the clip region.
   targetContext->NewPath();
@@ -4549,7 +4535,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
   else
     geckoEvent.button = WidgetMouseEvent::eLeftButton;
 
-  mGeckoChild->DispatchAPZAwareEvent(&geckoEvent);
+  mGeckoChild->DispatchInputEvent(&geckoEvent);
   mBlockedLastMouseDown = NO;
 
   // XXX maybe call markedTextSelectionChanged:client: here?
@@ -4576,11 +4562,11 @@ NSEvent* gLastDragMouseDownEvent = nil;
 
   // This might destroy our widget (and null out mGeckoChild).
   bool defaultPrevented =
-    (mGeckoChild->DispatchAPZAwareEvent(&geckoEvent) == nsEventStatus_eConsumeNoDefault);
+    (mGeckoChild->DispatchInputEvent(&geckoEvent) == nsEventStatus_eConsumeNoDefault);
 
   // Check to see if we are double-clicking in the titlebar.
   CGFloat locationInTitlebar = [[self window] frame].size.height - [theEvent locationInWindow].y;
-  LayoutDeviceIntPoint pos = geckoEvent.refPoint;
+  LayoutDeviceIntPoint pos = geckoEvent.mRefPoint;
   if (!defaultPrevented && [theEvent clickCount] == 2 &&
       mGeckoChild->GetDraggableRegion().Contains(pos.x, pos.y) &&
       [[self window] isKindOfClass:[ToolbarWindow class]] &&
@@ -4609,7 +4595,7 @@ NSEvent* gLastDragMouseDownEvent = nil;
 
   EventMessage msg = aEnter ? eMouseEnterIntoWidget : eMouseExitFromWidget;
   WidgetMouseEvent event(true, msg, mGeckoChild, WidgetMouseEvent::eReal);
-  event.refPoint = mGeckoChild->CocoaPointsToDevPixels(localEventLocation);
+  event.mRefPoint = mGeckoChild->CocoaPointsToDevPixels(localEventLocation);
 
   event.exit = aType;
 
@@ -4697,7 +4683,7 @@ NewCGSRegionFromRegion(const LayoutDeviceIntRegion& aRegion,
                               WidgetMouseEvent::eReal);
   [self convertCocoaMouseEvent:theEvent toGeckoEvent:&geckoEvent];
 
-  mGeckoChild->DispatchAPZAwareEvent(&geckoEvent);
+  mGeckoChild->DispatchInputEvent(&geckoEvent);
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
@@ -4743,7 +4729,7 @@ NewCGSRegionFromRegion(const LayoutDeviceIntRegion& aRegion,
   geckoEvent.button = WidgetMouseEvent::eRightButton;
   geckoEvent.clickCount = [theEvent clickCount];
 
-  mGeckoChild->DispatchAPZAwareEvent(&geckoEvent);
+  mGeckoChild->DispatchInputEvent(&geckoEvent);
   if (!mGeckoChild)
     return;
 
@@ -4767,7 +4753,7 @@ NewCGSRegionFromRegion(const LayoutDeviceIntRegion& aRegion,
   geckoEvent.clickCount = [theEvent clickCount];
 
   nsAutoRetainCocoaObject kungFuDeathGrip(self);
-  mGeckoChild->DispatchAPZAwareEvent(&geckoEvent);
+  mGeckoChild->DispatchInputEvent(&geckoEvent);
 
   NS_OBJC_END_TRY_ABORT_BLOCK;
 }
@@ -4851,7 +4837,7 @@ static int32_t RoundUp(double aDouble)
   WidgetWheelEvent wheelEvent(true, msg, mGeckoChild);
   [self convertCocoaMouseWheelEvent:theEvent toGeckoEvent:&wheelEvent];
   mExpectingWheelStop = (msg == eWheelOperationStart);
-  mGeckoChild->DispatchAPZAwareEvent(wheelEvent.AsInputEvent());
+  mGeckoChild->DispatchInputEvent(wheelEvent.AsInputEvent());
 }
 
 - (void)sendWheelCondition:(BOOL)condition
@@ -5176,9 +5162,10 @@ PanGestureTypeForEvent(NSEvent* aEvent)
   bool usePreciseDeltas = nsCocoaUtils::HasPreciseScrollingDeltas(aMouseEvent) &&
     Preferences::GetBool("mousewheel.enable_pixel_scrolling", true);
 
-  outWheelEvent->deltaMode = usePreciseDeltas ? nsIDOMWheelEvent::DOM_DELTA_PIXEL
-                                              : nsIDOMWheelEvent::DOM_DELTA_LINE;
-  outWheelEvent->isMomentum = nsCocoaUtils::IsMomentumScrollEvent(aMouseEvent);
+  outWheelEvent->mDeltaMode =
+    usePreciseDeltas ? nsIDOMWheelEvent::DOM_DELTA_PIXEL
+                     : nsIDOMWheelEvent::DOM_DELTA_LINE;
+  outWheelEvent->mIsMomentum = nsCocoaUtils::IsMomentumScrollEvent(aMouseEvent);
 }
 
 - (void) convertCocoaMouseEvent:(NSEvent*)aMouseEvent
@@ -5195,7 +5182,7 @@ PanGestureTypeForEvent(NSEvent* aEvent)
   // convert point to view coordinate system
   NSPoint locationInWindow = nsCocoaUtils::EventLocationForWindow(aMouseEvent, [self window]);
 
-  outGeckoEvent->refPoint = [self convertWindowCoordinates:locationInWindow];
+  outGeckoEvent->mRefPoint = [self convertWindowCoordinates:locationInWindow];
 
   WidgetMouseEventBase* mouseEvent = outGeckoEvent->AsMouseEventBase();
   mouseEvent->buttons = 0;
@@ -5727,7 +5714,7 @@ PanGestureTypeForEvent(NSEvent* aEvent)
   // Convert event from gecko global coords to gecko view coords.
   NSPoint draggingLoc = [aSender draggingLocation];
 
-  geckoEvent.refPoint = [self convertWindowCoordinates:draggingLoc];
+  geckoEvent.mRefPoint = [self convertWindowCoordinates:draggingLoc];
 
   nsAutoRetainCocoaObject kungFuDeathGrip(self);
   mGeckoChild->DispatchInputEvent(&geckoEvent);

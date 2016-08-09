@@ -147,8 +147,8 @@ public class DoorHangerPopup extends AnchoredPopup
 
     // This callback is automatically executed on the UI thread.
     @Override
-    public void onTabChanged(final Tab tab, final Tabs.TabEvents msg, final Object data) {
-        switch(msg) {
+    public void onTabChanged(final Tab tab, final Tabs.TabEvents msg, final String data) {
+        switch (msg) {
             case CLOSED:
                 // Remove any doorhangers for a tab when it's closed (make
                 // a temporary set to avoid a ConcurrentModificationException)
@@ -211,8 +211,7 @@ public class DoorHangerPopup extends AnchoredPopup
      */
     @Override
     public void onButtonClick(JSONObject response, DoorHanger doorhanger) {
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Doorhanger:Reply", response.toString());
-        GeckoAppShell.sendEventToGecko(e);
+        GeckoAppShell.notifyObservers("Doorhanger:Reply", response.toString());
         removeDoorHanger(doorhanger);
         updatePopup();
     }
@@ -329,11 +328,6 @@ public class DoorHangerPopup extends AnchoredPopup
         }
 
         show();
-
-        if (Versions.preICS) {
-            // Make the popup focusable for keyboard accessibility.
-            setFocusable(true);
-        }
     }
 
     //Show all inter-DoorHanger dividers (ie. Dividers on all visible DoorHangers except the last one)

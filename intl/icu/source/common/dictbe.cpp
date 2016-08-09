@@ -1,6 +1,6 @@
 /**
  *******************************************************************************
- * Copyright (C) 2006-2016, International Business Machines Corporation
+ * Copyright (C) 2006-2015, International Business Machines Corporation
  * and others. All Rights Reserved.
  *******************************************************************************
  */
@@ -70,13 +70,13 @@ DictionaryBreakEngine::findBreaks( UText *text,
             rangeStart = current;
             if (!isDict) {
                 utext_next32(text);
-                rangeStart = (int32_t)utext_getNativeIndex(text);
+                rangeStart = utext_getNativeIndex(text);
             }
         }
         // rangeEnd = start + 1;
         utext_setNativeIndex(text, start);
         utext_next32(text);
-        rangeEnd = (int32_t)utext_getNativeIndex(text);
+        rangeEnd = utext_getNativeIndex(text);
     }
     else {
         while((current = (int32_t)utext_getNativeIndex(text)) < endPos && fSet.contains(c)) {
@@ -335,9 +335,9 @@ foundBest:
                 UChar32 pc;
                 int32_t chars = 0;
                 for (;;) {
-                    int32_t pcIndex = (int32_t)utext_getNativeIndex(text);
+                    int32_t pcIndex = utext_getNativeIndex(text);
                     pc = utext_next32(text);
-                    int32_t pcSize = (int32_t)utext_getNativeIndex(text) - pcIndex;
+                    int32_t pcSize = utext_getNativeIndex(text) - pcIndex;
                     chars += pcSize;
                     remaining -= pcSize;
                     if (remaining <= 0) {
@@ -390,9 +390,9 @@ foundBest:
                     if (!fSuffixSet.contains(utext_previous32(text))) {
                         // Skip over previous end and PAIYANNOI
                         utext_next32(text);
-                        int32_t paiyannoiIndex = (int32_t)utext_getNativeIndex(text);
+                        int32_t paiyannoiIndex = utext_getNativeIndex(text);
                         utext_next32(text);
-                        cuWordLength += (int32_t)utext_getNativeIndex(text) - paiyannoiIndex;    // Add PAIYANNOI to word
+                        cuWordLength += utext_getNativeIndex(text) - paiyannoiIndex;    // Add PAIYANNOI to word
                         uc = utext_current32(text);     // Fetch next character
                     }
                     else {
@@ -404,9 +404,9 @@ foundBest:
                     if (utext_previous32(text) != THAI_MAIYAMOK) {
                         // Skip over previous end and MAIYAMOK
                         utext_next32(text);
-                        int32_t maiyamokIndex = (int32_t)utext_getNativeIndex(text);
+                        int32_t maiyamokIndex = utext_getNativeIndex(text);
                         utext_next32(text);
-                        cuWordLength += (int32_t)utext_getNativeIndex(text) - maiyamokIndex;    // Add MAIYAMOK to word
+                        cuWordLength += utext_getNativeIndex(text) - maiyamokIndex;    // Add MAIYAMOK to word
                     }
                     else {
                         // Restore prior position
@@ -568,9 +568,9 @@ foundBest:
                 UChar32 uc;
                 int32_t chars = 0;
                 for (;;) {
-                    int32_t pcIndex = (int32_t)utext_getNativeIndex(text);
+                    int32_t pcIndex = utext_getNativeIndex(text);
                     pc = utext_next32(text);
-                    int32_t pcSize = (int32_t)utext_getNativeIndex(text) - pcIndex;
+                    int32_t pcSize = utext_getNativeIndex(text) - pcIndex;
                     chars += pcSize;
                     remaining -= pcSize;
                     if (remaining <= 0) {
@@ -761,9 +761,9 @@ foundBest:
                 UChar32 uc;
                 int32_t chars = 0;
                 for (;;) {
-                    int32_t pcIndex = (int32_t)utext_getNativeIndex(text);
+                    int32_t pcIndex = utext_getNativeIndex(text);
                     pc = utext_next32(text);
-                    int32_t pcSize = (int32_t)utext_getNativeIndex(text) - pcIndex;
+                    int32_t pcSize = utext_getNativeIndex(text) - pcIndex;
                     chars += pcSize;
                     remaining -= pcSize;
                     if (remaining <= 0) {
@@ -967,9 +967,9 @@ foundBest:
                 UChar32 uc;
                 int32_t chars = 0;
                 for (;;) {
-                    int32_t pcIndex = (int32_t)utext_getNativeIndex(text);
+                    int32_t pcIndex = utext_getNativeIndex(text);
                     pc = utext_next32(text);
-                    int32_t pcSize = (int32_t)utext_getNativeIndex(text) - pcIndex;
+                    int32_t pcSize = utext_getNativeIndex(text) - pcIndex;
                     chars += pcSize;
                     remaining -= pcSize;
                     if (remaining <= 0) {
@@ -1166,14 +1166,14 @@ CjkBreakEngine::divideUpDictionaryRange( UText *inText,
         int32_t limit = rangeEnd;
         U_ASSERT(limit <= utext_nativeLength(inText));
         if (limit > utext_nativeLength(inText)) {
-            limit = (int32_t)utext_nativeLength(inText);
+            limit = utext_nativeLength(inText);
         }
         inputMap.adoptInsteadAndCheckErrorCode(new UVector32(status), status);
         if (U_FAILURE(status)) {
             return 0;
         }
         while (utext_getNativeIndex(inText) < limit) {
-            int32_t nativePosition = (int32_t)utext_getNativeIndex(inText);
+            int32_t nativePosition = utext_getNativeIndex(inText);
             UChar32 c = utext_next32(inText);
             U_ASSERT(c != U_SENTINEL);
             inString.append(c);

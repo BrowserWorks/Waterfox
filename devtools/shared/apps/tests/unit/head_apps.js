@@ -80,16 +80,7 @@ function setup() {
   Components.utils.import("resource://testing-common/AppInfo.jsm");
   updateAppInfo();
 
-  // We have to toggle this flag in order to have apps being listed in getAll
-  // as only launchable apps are returned
   Components.utils.import('resource://gre/modules/Webapps.jsm');
-  DOMApplicationRegistry.allAppsLaunchable = true;
-
-  // Mock WebappOSUtils
-  Cu.import("resource://gre/modules/WebappOSUtils.jsm");
-  WebappOSUtils.getPackagePath = function(aApp) {
-    return aApp.basePath + "/" + aApp.id;
-  }
 
   // Enable launch/close method of the webapps actor
   let {WebappsActor} = require("devtools/server/actors/webapps");

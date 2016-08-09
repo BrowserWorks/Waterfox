@@ -60,10 +60,10 @@ public:
   RefPtr<GenericPromise> EnsureInitialized();
   RefPtr<GenericPromise> AsyncAddPluginDirectory(const nsAString& aDirectory);
 
-  already_AddRefed<GMPStorage> GetMemoryStorageFor(const nsACString& aNodeId);
-
   // GMP thread access only
   bool IsShuttingDown();
+
+  already_AddRefed<GMPStorage> GetMemoryStorageFor(const nsACString& aNodeId);
 
 private:
   friend class GMPServiceParent;

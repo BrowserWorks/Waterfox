@@ -28,6 +28,7 @@ var gSyncUI = {
          "weave:ui:sync:error",
          "weave:ui:sync:finish",
          "weave:ui:clear-error",
+         "weave:engine:sync:finish"
   ],
 
   _unloaded: false,
@@ -251,7 +252,7 @@ var gSyncUI = {
       if (needsSetup || this._loginFailed()) {
         this.openSetup();
       } else {
-        return this.doSync();
+        this.doSync();
       }
     }).catch(err => {
       this.log.error("Failed to handle toolbar button command", err);
@@ -417,6 +418,17 @@ var gSyncUI = {
     let title = this._stringBundle.GetStringFromName("error.sync.title");
   },
 
+  onClientsSynced: function() {
+    let broadcaster = document.getElementById("sync-syncnow-state");
+    if (broadcaster) {
+      if (Weave.Service.clientsEngine.stats.numClients > 1) {
+        broadcaster.setAttribute("devices-status", "multi");
+      } else {
+        broadcaster.setAttribute("devices-status", "single");
+      }
+    }
+  },
+
   observe: function SUI_observe(subject, topic, data) {
     this.log.debug("observed", topic);
     if (this._unloaded) {
@@ -469,6 +481,12 @@ var gSyncUI = {
         break;
       case "weave:notification:added":
         this.initNotifications();
+        break;
+      case "weave:engine:sync:finish":
+        if (data != "clients") {
+          return;
+        }
+        this.onClientsSynced();
         break;
     }
   },

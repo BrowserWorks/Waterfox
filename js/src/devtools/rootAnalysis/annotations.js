@@ -68,14 +68,15 @@ var ignoreClasses = {
 // Ignore calls through TYPE.FIELD, where TYPE is the class or struct name containing
 // a function pointer field named FIELD.
 var ignoreCallees = {
-    "js::Class.trace" : true,
-    "js::Class.finalize" : true,
+    "js::ClassOps.trace" : true,
+    "js::ClassOps.finalize" : true,
     "JSRuntime.destroyPrincipals" : true,
     "icu_50::UObject.__deleting_dtor" : true, // destructors in ICU code can't cause GC
     "mozilla::CycleCollectedJSRuntime.DescribeCustomObjects" : true, // During tracing, cannot GC.
     "mozilla::CycleCollectedJSRuntime.NoteCustomGCThingXPCOMChildren" : true, // During tracing, cannot GC.
     "PLDHashTableOps.hashKey" : true,
     "z_stream_s.zfree" : true,
+    "z_stream_s.zalloc" : true,
     "GrGLInterface.fCallback" : true,
     "std::strstreambuf._M_alloc_fun" : true,
     "std::strstreambuf._M_free_fun" : true,
@@ -210,6 +211,7 @@ var ignoreFunctions = {
 
     "uint64 js::TenuringTracer::moveObjectToTenured(JSObject*, JSObject*, int32)" : true,
     "uint32 js::TenuringTracer::moveObjectToTenured(JSObject*, JSObject*, int32)" : true,
+    "void js::Nursery::freeMallocedBuffers()" : true,
 };
 
 function isProtobuf(name)
@@ -351,57 +353,9 @@ function isOverridableField(initialCSU, csu, field)
     return true;
 }
 
-function listGCTypes() {
-    return [
-        'js::gc::Cell',
-        'JSObject',
-        'JSString',
-        'JSFatInlineString',
-        'JSExternalString',
-        'js::Shape',
-        'js::AccessorShape',
-        'js::BaseShape',
-        'JSScript',
-        'js::ObjectGroup',
-        'js::LazyScript',
-        'js::jit::JitCode',
-        'JS::Symbol',
-    ];
-}
-
-function listGCPointers() {
-    return [
-        'JS::Value',
-        'jsid',
-
-        'js::TypeSet',
-        'js::TypeSet::ObjectKey',
-        'js::TypeSet::Type',
-
-        // AutoCheckCannotGC should also not be held live across a GC function.
-        'JS::AutoCheckCannotGC',
-    ];
-}
-
-function listNonGCTypes() {
-    return [
-    ];
-}
-
 function listNonGCPointers() {
     return [
-        // Both of these are safe only because jsids are currently only made
-        // from "interned" (pinned) strings. Once that changes, both should be
-        // removed from the list.
+        // Safe only because jsids are currently only made from pinned strings.
         'NPIdentifier',
-        'XPCNativeMember',
     ];
-}
-
-// Flexible mechanism for deciding an arbitrary type is a GCPointer. Its one
-// use turned out to be unnecessary due to another change, but the mechanism
-// seems useful for something like /Vector.*Something/.
-function isGCPointer(typeName)
-{
-    return false;
 }

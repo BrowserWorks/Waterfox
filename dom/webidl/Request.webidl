@@ -23,7 +23,6 @@ interface Request {
   readonly attribute ReferrerPolicy referrerPolicy;
   readonly attribute RequestMode mode;
   readonly attribute RequestCredentials credentials;
-  [Func="mozilla::dom::Request::RequestCacheEnabled"]
   readonly attribute RequestCache cache;
   readonly attribute RequestRedirect redirect;
 
@@ -32,7 +31,7 @@ interface Request {
 
   // Bug 1124638 - Allow chrome callers to set the context.
   [ChromeOnly]
-  void setContentPolicyType(nsContentPolicyType context);
+  void overrideContentPolicyType(nsContentPolicyType context);
 };
 Request implements Body;
 

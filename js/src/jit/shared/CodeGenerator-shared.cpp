@@ -83,7 +83,7 @@ CodeGeneratorShared::CodeGeneratorShared(MIRGenerator* gen, LIRGraph* graph, Mac
         // regular array where all slots are sizeof(Value), it maintains the max
         // argument stack depth separately.
         MOZ_ASSERT(graph->argumentSlotCount() == 0);
-        frameDepth_ += gen->maxAsmJSStackArgBytes();
+        frameDepth_ += gen->wasmMaxStackArgBytes();
 
         if (gen->usesSimd()) {
             // If the function uses any SIMD then we may need to insert padding
@@ -624,7 +624,8 @@ CodeGeneratorShared::assignBailoutId(LSnapshot* snapshot)
     unsigned bailoutId = bailouts_.length();
     snapshot->setBailoutId(bailoutId);
     JitSpew(JitSpew_IonSnapshots, "Assigned snapshot bailout id %u", bailoutId);
-    return bailouts_.append(snapshot->snapshotOffset());
+    masm.propagateOOM(bailouts_.append(snapshot->snapshotOffset()));
+    return true;
 }
 
 bool

@@ -50,6 +50,7 @@ public class BrowserContract {
     public static final String PARAM_INCREMENT_VISITS = "increment_visits";
     public static final String PARAM_EXPIRE_PRIORITY = "priority";
     public static final String PARAM_DATASET_ID = "dataset_id";
+    public static final String PARAM_GROUP_BY = "group_by";
 
     static public enum ExpirePriority {
         NORMAL,
@@ -105,6 +106,16 @@ public class BrowserContract {
         public static final String VISITS = "visits";
     }
 
+    @RobocopTarget
+    public interface VisitsColumns {
+        public static final String HISTORY_GUID = "history_guid";
+        public static final String VISIT_TYPE = "visit_type";
+        public static final String DATE_VISITED = "date";
+        // Used to distinguish between visits that were generated locally vs those that came in from Sync.
+        // Since we don't track "origin clientID" for visits, this is the best we can do for now.
+        public static final String IS_LOCAL = "is_local";
+    }
+
     public interface DeletedColumns {
         public static final String ID = "id";
         public static final String GUID = "guid";
@@ -150,10 +161,20 @@ public class BrowserContract {
 
         public static final String VIEW_WITH_FAVICONS = "bookmarks_with_favicons";
 
+        public static final String VIEW_WITH_ANNOTATIONS = "bookmarks_with_annotations";
+
         public static final int FIXED_ROOT_ID = 0;
         public static final int FAKE_DESKTOP_FOLDER_ID = -1;
         public static final int FIXED_READING_LIST_ID = -2;
         public static final int FIXED_PINNED_LIST_ID = -3;
+        public static final int FIXED_SCREENSHOT_FOLDER_ID = -4;
+        public static final int FAKE_READINGLIST_SMARTFOLDER_ID = -5;
+
+        /**
+         * This ID and the following negative IDs are reserved for bookmarks from Android's partner
+         * bookmark provider.
+         */
+        public static final long FAKE_PARTNER_BOOKMARKS_START = -1000;
 
         public static final String MOBILE_FOLDER_GUID = "mobile";
         public static final String PLACES_FOLDER_GUID = "places";
@@ -163,6 +184,8 @@ public class BrowserContract {
         public static final String UNFILED_FOLDER_GUID = "unfiled";
         public static final String FAKE_DESKTOP_FOLDER_GUID = "desktop";
         public static final String PINNED_FOLDER_GUID = "pinned";
+        public static final String SCREENSHOT_FOLDER_GUID = "screenshots";
+        public static final String FAKE_READINGLIST_SMARTFOLDER_GUID = "readinglist";
 
         public static final int TYPE_FOLDER = 0;
         public static final int TYPE_BOOKMARK = 1;
@@ -184,6 +207,9 @@ public class BrowserContract {
         public static final String TAGS = "tags";
         public static final String DESCRIPTION = "description";
         public static final String KEYWORD = "keyword";
+
+        public static final String ANNOTATION_KEY = "annotation_key";
+        public static final String ANNOTATION_VALUE = "annotation_value";
     }
 
     @RobocopTarget
@@ -198,6 +224,18 @@ public class BrowserContract {
         public static final Uri CONTENT_OLD_URI = Uri.withAppendedPath(AUTHORITY_URI, "history/old");
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/browser-history";
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/browser-history";
+    }
+
+    @RobocopTarget
+    public static final class Visits implements CommonColumns, VisitsColumns {
+        private Visits() {}
+
+        public static final String TABLE_NAME = "visits";
+
+        public static final Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, "visits");
+
+        public static final int VISIT_IS_LOCAL = 1;
+        public static final int VISIT_IS_REMOTE = 0;
     }
 
     // Combined bookmarks and history
@@ -512,6 +550,50 @@ public class BrowserContract {
         public static final String VALUE = "value";
         public static final String SYNC_STATUS = "sync_status";
 
+        public enum Key {
+            // We use a parameter, rather than name(), as defensive coding: we can't let the
+            // enum name change because we've already stored values into the DB.
+            SCREENSHOT ("screenshot"),
+
+            /**
+             * This key maps URLs to its feeds.
+             *
+             * Key:   feed
+             * Value: URL of feed
+             */
+            FEED("feed"),
+
+            /**
+             * This key maps URLs of feeds to an object describing the feed.
+             *
+             * Key:   feed_subscription
+             * Value: JSON object describing feed
+             */
+            FEED_SUBSCRIPTION("feed_subscription"),
+
+            /**
+             * Indicates that this URL (if stored as a bookmark) should be opened into reader view.
+             *
+             * Key:   reader_view
+             * Value: String "true" to indicate that we would like to open into reader view.
+             */
+            READER_VIEW("reader_view"),
+
+            /**
+             * Indicator that the user interacted with the URL in regards to home screen shortcuts.
+             *
+             * Key:   home_screen_shortcut
+             * Value: True: User created an home screen shortcut for this URL
+             *        False: User declined to create a shortcut for this URL
+             */
+            HOME_SCREEN_SHORTCUT("home_screen_shortcut");
+
+            private final String dbValue;
+
+            Key(final String dbValue) { this.dbValue = dbValue; }
+            public String getDbValue() { return dbValue; }
+        }
+
         public enum SyncStatus {
             // We use a parameter, rather than ordinal(), as defensive coding: we can't let the
             // ordinal values change because we've already stored values into the DB.
@@ -526,6 +608,11 @@ public class BrowserContract {
 
             public int getDBValue() { return dbValue; }
         }
+
+        /**
+         * Value used to indicate that a reader view item is saved. We use the
+         */
+        public static final String READER_VIEW_SAVED_VALUE = "true";
     }
 
     public static final class Numbers {

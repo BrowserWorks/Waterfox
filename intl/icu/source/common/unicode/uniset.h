@@ -1,6 +1,6 @@
 /*
 ***************************************************************************
-* Copyright (C) 1999-2016, International Business Machines Corporation
+* Copyright (C) 1999-2015, International Business Machines Corporation
 * and others. All Rights Reserved.
 ***************************************************************************
 *   Date        Name        Description
@@ -307,12 +307,12 @@ public:
      * A bogus set has no value. It is different from an empty set.
      * It can be used to indicate that no set value is available.
      *
-     * @return TRUE if the set is bogus/invalid, FALSE otherwise
+     * @return TRUE if the set is valid, FALSE otherwise
      * @see setToBogus()
      * @stable ICU 4.0
      */
     inline UBool isBogus(void) const;
-
+    
     /**
      * Make this UnicodeSet object invalid.
      * The string will test TRUE with isBogus().

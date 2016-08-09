@@ -521,7 +521,7 @@ TraceProtoAndIfaceCache(JSTracer* trc, JSObject* obj)
   }
 #endif
 
-  if (!HasProtoAndIfaceCache(obj))
+  if (!DOMGlobalHasProtoAndIFaceCache(obj))
     return;
   ProtoAndIfaceCache* protoAndIfaceCache = GetProtoAndIfaceCache(obj);
   protoAndIfaceCache->Trace(trc);
@@ -532,7 +532,7 @@ DestroyProtoAndIfaceCache(JSObject* obj)
 {
   MOZ_ASSERT(js::GetObjectClass(obj)->flags & JSCLASS_DOM_GLOBAL);
 
-  if (!HasProtoAndIfaceCache(obj)) {
+  if (!DOMGlobalHasProtoAndIFaceCache(obj)) {
     return;
   }
 
@@ -568,7 +568,9 @@ struct NamedConstructor
  * global is used as the parent of the interface object and the interface
  *        prototype object
  * protoProto is the prototype to use for the interface prototype object.
- * interfaceProto is the prototype to use for the interface object.
+ * interfaceProto is the prototype to use for the interface object.  This can be
+ *                null if both constructorClass and constructor are null (as in,
+ *                if we're not creating an interface object at all).
  * protoClass is the JSClass to use for the interface prototype object.
  *            This is null if we should not create an interface prototype
  *            object.
@@ -598,6 +600,8 @@ struct NamedConstructor
  *                false in situations where we want the properties to only
  *                appear on privileged Xrays but not on the unprivileged
  *                underlying global.
+ * unscopableNames if not null it points to a null-terminated list of const
+ *                 char* names of the unscopable properties for this interface.
  *
  * At least one of protoClass, constructorClass or constructor should be
  * non-null. If constructorClass or constructor are non-null, the resulting
@@ -614,7 +618,8 @@ CreateInterfaceObjects(JSContext* cx, JS::Handle<JSObject*> global,
                        JS::Heap<JSObject*>* constructorCache,
                        const NativeProperties* regularProperties,
                        const NativeProperties* chromeOnlyProperties,
-                       const char* name, bool defineOnGlobal);
+                       const char* name, bool defineOnGlobal,
+                       const char* const* unscopableNames);
 
 /**
  * Define the properties (regular and chrome-only) on obj.
@@ -647,16 +652,6 @@ DefineUnforgeableMethods(JSContext* cx, JS::Handle<JSObject*> obj,
 bool
 DefineUnforgeableAttributes(JSContext* cx, JS::Handle<JSObject*> obj,
                             const Prefable<const JSPropertySpec>* props);
-
-bool
-DefineWebIDLBindingUnforgeablePropertiesOnXPCObject(JSContext* cx,
-                                                    JS::Handle<JSObject*> obj,
-                                                    const NativeProperties* properties);
-
-bool
-DefineWebIDLBindingPropertiesOnXPCObject(JSContext* cx,
-                                         JS::Handle<JSObject*> obj,
-                                         const NativeProperties* properties);
 
 #define HAS_MEMBER_TYPEDEFS                                               \
 private:                                                                  \
@@ -2519,6 +2514,10 @@ XrayGetNativeProto(JSContext* cx, JS::Handle<JSObject*> obj,
 
 extern NativePropertyHooks sEmptyNativePropertyHooks;
 
+extern const js::ClassOps sBoringInterfaceObjectClassClassOps;
+
+extern const js::ObjectOps sInterfaceObjectClassObjectOps;
+
 // We use one constructor JSNative to represent all DOM interface objects (so
 // we can easily detect when we need to wrap them in an Xray wrapper). We store
 // the real JSNative in the mNative member of a JSNativeHolder in the
@@ -2549,7 +2548,7 @@ inline bool
 HasConstructor(JSObject* obj)
 {
   return JS_IsNativeFunction(obj, Constructor) ||
-         js::GetObjectClass(obj)->construct;
+         js::GetObjectClass(obj)->getConstruct();
 }
  #endif
 
@@ -2659,13 +2658,13 @@ GetContentGlobalForJSImplementedObject(JSContext* cx, JS::Handle<JSObject*> obj,
                                        nsIGlobalObject** global);
 
 void
-ConstructJSImplementation(JSContext* aCx, const char* aContractId,
+ConstructJSImplementation(const char* aContractId,
                           nsIGlobalObject* aGlobal,
                           JS::MutableHandle<JSObject*> aObject,
                           ErrorResult& aRv);
 
 already_AddRefed<nsIGlobalObject>
-ConstructJSImplementation(JSContext* aCx, const char* aContractId,
+ConstructJSImplementation(const char* aContractId,
                           const GlobalObject& aGlobal,
                           JS::MutableHandle<JSObject*> aObject,
                           ErrorResult& aRv);
@@ -3012,9 +3011,6 @@ struct CreateGlobalOptions
 {
   static MOZ_CONSTEXPR_VAR ProtoAndIfaceCache::Kind ProtoAndIfaceCacheKind =
     ProtoAndIfaceCache::NonWindowLike;
-  // Intl API is broken and makes JS_InitStandardClasses fail intermittently,
-  // see bug 934889.
-  static MOZ_CONSTEXPR_VAR bool ForceInitStandardClassesToFalse = true;
   static void TraceGlobal(JSTracer* aTrc, JSObject* aObj)
   {
     mozilla::dom::TraceProtoAndIfaceCache(aTrc, aObj);
@@ -3032,7 +3028,6 @@ struct CreateGlobalOptions<nsGlobalWindow>
 {
   static MOZ_CONSTEXPR_VAR ProtoAndIfaceCache::Kind ProtoAndIfaceCacheKind =
     ProtoAndIfaceCache::WindowLike;
-  static MOZ_CONSTEXPR_VAR bool ForceInitStandardClassesToFalse = false;
   static void TraceGlobal(JSTracer* aTrc, JSObject* aObj);
   static bool PostCreateGlobal(JSContext* aCx, JS::Handle<JSObject*> aGlobal);
 };
@@ -3083,7 +3078,6 @@ CreateGlobal(JSContext* aCx, T* aNative, nsWrapperCache* aCache,
   }
 
   if (aInitStandardClasses &&
-      !CreateGlobalOptions<T>::ForceInitStandardClassesToFalse &&
       !JS_InitStandardClasses(aCx, aGlobal)) {
     NS_WARNING("Failed to init standard classes");
     return nullptr;
@@ -3231,7 +3225,6 @@ WrappedJSToDictionary(nsISupports* aObject, T& aDictionary)
   // we need this AutoEntryScript here because the spec requires us to execute
   // getters when parsing a dictionary
   AutoEntryScript aes(global, "WebIDL dictionary creation");
-  aes.TakeOwnershipOfErrorReporting();
 
   JS::Rooted<JS::Value> v(aes.cx(), JS::ObjectValue(*obj));
   return aDictionary.Init(aes.cx(), v);

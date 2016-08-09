@@ -2744,16 +2744,21 @@ class OrphanReporter : public JS::ObjectPrivateVisitor
         // https://bugzilla.mozilla.org/show_bug.cgi?id=773533#c11 explains
         // that we have to skip XBL elements because they violate certain
         // assumptions.  Yuk.
-        if (node && !node->IsInDoc() &&
+        if (node && !node->IsInUncomposedDoc() &&
             !(node->IsElement() && node->AsElement()->IsInNamespace(kNameSpaceID_XBL)))
         {
             // This is an orphan node.  If we haven't already handled the
             // sub-tree that this node belongs to, measure the sub-tree's size
             // and then record its root so we don't measure it again.
             nsCOMPtr<nsINode> orphanTree = node->SubtreeRoot();
-            if (!mAlreadyMeasuredOrphanTrees.Contains(orphanTree)) {
-                n += SizeOfTreeIncludingThis(orphanTree);
-                mAlreadyMeasuredOrphanTrees.PutEntry(orphanTree);
+            if (orphanTree &&
+                !mAlreadyMeasuredOrphanTrees.Contains(orphanTree)) {
+                // If PutEntry() fails we don't measure this tree, which could
+                // lead to under-measurement. But that's better than the
+                // alternatives, which are over-measurement or an OOM abort.
+                if (mAlreadyMeasuredOrphanTrees.PutEntry(orphanTree, fallible)) {
+                    n += SizeOfTreeIncludingThis(orphanTree);
+                }
             }
         }
         return n;
@@ -3522,7 +3527,6 @@ XPCJSRuntime::Initialize()
                            kStackQuota - kSystemCodeBuffer,
                            kStackQuota - kSystemCodeBuffer - kTrustedScriptBuffer);
 
-    JS_SetErrorReporter(runtime, xpc::SystemErrorReporter);
     JS_SetDestroyCompartmentCallback(runtime, CompartmentDestroyedCallback);
     JS_SetSizeOfIncludingThisCompartmentCallback(runtime, CompartmentSizeOfIncludingThisCallback);
     JS_SetCompartmentNameCallback(runtime, CompartmentNameCallback);

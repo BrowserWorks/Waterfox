@@ -152,6 +152,16 @@ struct AnimatedGeometryRoot
   AnimatedGeometryRoot* mParentAGR;
 };
 
+enum class nsDisplayListBuilderMode : uint8_t {
+  PAINTING,
+  EVENT_DELIVERY,
+  PLUGIN_GEOMETRY,
+  FRAME_VISIBILITY,
+  TRANSFORM_COMPUTATION,
+  GENERATE_GLYPH,
+  PAINTING_SELECTION_BACKGROUND
+};
+
 /**
  * This manages a display list and is passed as a parameter to
  * nsIFrame::BuildDisplayList.
@@ -221,14 +231,9 @@ public:
    * @param aBuildCaret whether or not we should include the caret in any
    * display lists that we make.
    */
-  enum Mode {
-    PAINTING,
-    EVENT_DELIVERY,
-    PLUGIN_GEOMETRY,
-    IMAGE_VISIBILITY,
-    TRANSFORM_COMPUTATION
-  };
-  nsDisplayListBuilder(nsIFrame* aReferenceFrame, Mode aMode, bool aBuildCaret);
+  nsDisplayListBuilder(nsIFrame* aReferenceFrame,
+                       nsDisplayListBuilderMode aMode,
+                       bool aBuildCaret);
   ~nsDisplayListBuilder();
 
   void SetWillComputePluginGeometry(bool aWillComputePluginGeometry)
@@ -237,9 +242,9 @@ public:
   }
   void SetForPluginGeometry()
   {
-    NS_ASSERTION(mMode == PAINTING, "Can only switch from PAINTING to PLUGIN_GEOMETRY");
+    NS_ASSERTION(mMode == nsDisplayListBuilderMode::PAINTING, "Can only switch from PAINTING to PLUGIN_GEOMETRY");
     NS_ASSERTION(mWillComputePluginGeometry, "Should have signalled this in advance");
-    mMode = PLUGIN_GEOMETRY;
+    mMode = nsDisplayListBuilderMode::PLUGIN_GEOMETRY;
   }
 
   mozilla::layers::LayerManager* GetWidgetLayerManager(nsView** aView = nullptr, bool* aAllowRetaining = nullptr);
@@ -248,7 +253,11 @@ public:
    * @return true if the display is being built in order to determine which
    * frame is under the mouse position.
    */
-  bool IsForEventDelivery() { return mMode == EVENT_DELIVERY; }
+  bool IsForEventDelivery()
+  {
+    return mMode == nsDisplayListBuilderMode::EVENT_DELIVERY;
+  }
+
   /**
    * Be careful with this. The display list will be built in PAINTING mode
    * first and then switched to PLUGIN_GEOMETRY before a second call to
@@ -256,16 +265,46 @@ public:
    * @return true if the display list is being built to compute geometry
    * for plugins.
    */
-  bool IsForPluginGeometry() { return mMode == PLUGIN_GEOMETRY; }
+  bool IsForPluginGeometry()
+  {
+    return mMode == nsDisplayListBuilderMode::PLUGIN_GEOMETRY;
+  }
+
   /**
    * @return true if the display list is being built for painting.
    */
-  bool IsForPainting() { return mMode == PAINTING; }
+  bool IsForPainting()
+  {
+    return mMode == nsDisplayListBuilderMode::PAINTING;
+  }
+
   /**
-   * @return true if the display list is being built for determining image
+   * @return true if the display list is being built for determining frame
    * visibility.
    */
-  bool IsForImageVisibility() { return mMode == IMAGE_VISIBILITY; }
+  bool IsForFrameVisibility()
+  {
+    return mMode == nsDisplayListBuilderMode::FRAME_VISIBILITY;
+  }
+
+  /**
+   * @return true if the display list is being built for creating the glyph
+   * mask from text items.
+   */
+  bool IsForGenerateGlyphMask()
+  {
+    return mMode == nsDisplayListBuilderMode::GENERATE_GLYPH;
+  }
+
+  /**
+   * @return true if the display list is being built for painting selection
+   * background.
+   */
+  bool IsForPaintingSelectionBG()
+  {
+    return mMode == nsDisplayListBuilderMode::PAINTING_SELECTION_BACKGROUND;
+  }
+
   bool WillComputePluginGeometry() { return mWillComputePluginGeometry; }
   /**
    * @return true if "painting is suppressed" during page load and we
@@ -679,7 +718,8 @@ public:
         mPrevDirtyRect(aBuilder->mDirtyRect),
         mPrevAGR(aBuilder->mCurrentAGR),
         mPrevIsAtRootOfPseudoStackingContext(aBuilder->mIsAtRootOfPseudoStackingContext),
-        mPrevAncestorHasApzAwareEventHandler(aBuilder->mAncestorHasApzAwareEventHandler)
+        mPrevAncestorHasApzAwareEventHandler(aBuilder->mAncestorHasApzAwareEventHandler),
+        mPrevBuildingInvisibleItems(aBuilder->mBuildingInvisibleItems)
     {
       if (aForChild->IsTransformed()) {
         aBuilder->mCurrentOffsetToReferenceFrame = nsPoint();
@@ -719,6 +759,9 @@ public:
       return *mBuilder->mCurrentAGR == mBuilder->mCurrentFrame;
 
     }
+    void RestoreBuildingInvisibleItemsValue() {
+      mBuilder->mBuildingInvisibleItems = mPrevBuildingInvisibleItems;
+    }
     ~AutoBuildingDisplayList() {
       mBuilder->mCurrentFrame = mPrevFrame;
       mBuilder->mCurrentReferenceFrame = mPrevReferenceFrame;
@@ -728,6 +771,7 @@ public:
       mBuilder->mCurrentAGR = mPrevAGR;
       mBuilder->mIsAtRootOfPseudoStackingContext = mPrevIsAtRootOfPseudoStackingContext;
       mBuilder->mAncestorHasApzAwareEventHandler = mPrevAncestorHasApzAwareEventHandler;
+      mBuilder->mBuildingInvisibleItems = mPrevBuildingInvisibleItems;
     }
   private:
     nsDisplayListBuilder* mBuilder;
@@ -740,6 +784,7 @@ public:
     AnimatedGeometryRoot* mPrevAGR;
     bool                  mPrevIsAtRootOfPseudoStackingContext;
     bool                  mPrevAncestorHasApzAwareEventHandler;
+    bool                  mPrevBuildingInvisibleItems;
   };
 
   /**
@@ -1059,22 +1104,6 @@ public:
   void AppendNewScrollInfoItemForHoisting(nsDisplayScrollInfoLayer* aScrollInfoItem);
 
   /**
-   * Store the dirty rect of the scrolled contents of aScrollableFrame. This
-   * is a bound for the extents of the new visible region of the scrolled
-   * layer.
-   * @param aScrollableFrame the scrollable frame
-   * @param aDirty           the dirty rect, relative to aScrollableFrame
-   */
-  void StoreDirtyRectForScrolledContents(const nsIFrame* aScrollableFrame, const nsRect& aDirty);
-
-  /**
-   * Retrieve the stored dirty rect for the scrolled contents of aScrollableFrame.
-   * @param  aScrollableFrame the scroll frame
-   * @return                  the dirty rect, relative to aScrollableFrame's *reference frame*
-   */
-  nsRect GetDirtyRectForScrolledContents(const nsIFrame* aScrollableFrame) const;
-
-  /**
    * A helper class to install/restore nsDisplayListBuilder::mPreserves3DCtx.
    *
    * mPreserves3DCtx is used by class AutoAccumulateTransform &
@@ -1112,6 +1141,11 @@ public:
   }
   void SetPreserves3DDirtyRect(const nsRect &aDirtyRect) {
     mPreserves3DCtx.mDirtyRect = aDirtyRect;
+  }
+
+  bool IsBuildingInvisibleItems() const { return mBuildingInvisibleItems; }
+  void SetBuildingInvisibleItems(bool aBuildingInvisibleItems) {
+    mBuildingInvisibleItems = aBuildingInvisibleItems;
   }
 
 private:
@@ -1210,9 +1244,6 @@ private:
   // Set of frames already counted in budget
   nsTHashtable<nsPtrHashKey<nsIFrame> > mAGRBudgetSet;
 
-  // rects are relative to the frame's reference frame
-  nsDataHashtable<nsPtrHashKey<nsIFrame>, nsRect> mDirtyRectForScrolledContents;
-
   // Relative to mCurrentFrame.
   nsRect                         mDirtyRect;
   nsRegion                       mWindowExcludeGlassRegion;
@@ -1229,7 +1260,7 @@ private:
   nsDisplayList*                 mScrollInfoItemsForHoisting;
   nsTArray<DisplayItemScrollClip*> mScrollClipsToDestroy;
   nsTArray<DisplayItemClip*>     mDisplayItemClipsToDestroy;
-  Mode                           mMode;
+  nsDisplayListBuilderMode       mMode;
   ViewID                         mCurrentScrollParentId;
   ViewID                         mCurrentScrollbarTarget;
   uint32_t                       mCurrentScrollbarFlags;
@@ -1266,6 +1297,7 @@ private:
   bool                           mIsBuildingForPopup;
   bool                           mForceLayerForScrollParent;
   bool                           mAsyncPanZoomEnabled;
+  bool                           mBuildingInvisibleItems;
 };
 
 class nsDisplayItem;
@@ -1865,6 +1897,7 @@ protected:
   // of the item. Paint implementations can use this to limit their drawing.
   // Guaranteed to be contained in GetBounds().
   nsRect    mVisibleRect;
+  bool      mForceNotVisible;
 #ifdef MOZ_DUMP_PAINTING
   // True if this frame has been painted.
   bool      mPainted;
@@ -2175,8 +2208,6 @@ private:
   nsDisplayItemLink  mSentinel;
   nsDisplayItemLink* mTop;
 
-  // This is set by ComputeVisibility
-  nsRect mVisibleRect;
   // This is set to true by FrameLayerBuilder if the final visible region
   // is empty (i.e. everything that was visible is covered by some
   // opaque content in this list).
@@ -2321,12 +2352,16 @@ public:
    * CanOptimizeToImageLayer() first and it returned true.
    */
   virtual bool CanOptimizeToImageLayer(LayerManager* aManager,
-                                       nsDisplayListBuilder* aBuilder) = 0;
+                                       nsDisplayListBuilder* aBuilder);
 
-  virtual already_AddRefed<ImageContainer> GetContainer(LayerManager* aManager,
-                                                        nsDisplayListBuilder* aBuilder) = 0;
-  virtual void ConfigureLayer(ImageLayer* aLayer,
-                              const ContainerLayerParameters& aParameters) = 0;
+  already_AddRefed<ImageContainer> GetContainer(LayerManager* aManager,
+                                                nsDisplayListBuilder* aBuilder);
+  void ConfigureLayer(ImageLayer* aLayer,
+                      const ContainerLayerParameters& aParameters);
+
+  virtual already_AddRefed<imgIContainer> GetImage() = 0;
+
+  virtual nsRect GetDestRect() = 0;
 
   virtual bool SupportsOptimizingToImage() override { return true; }
 };
@@ -2716,10 +2751,8 @@ public:
   
   virtual bool CanOptimizeToImageLayer(LayerManager* aManager,
                                        nsDisplayListBuilder* aBuilder) override;
-  virtual already_AddRefed<ImageContainer> GetContainer(LayerManager* aManager,
-                                                        nsDisplayListBuilder *aBuilder) override;
-  virtual void ConfigureLayer(ImageLayer* aLayer,
-                              const ContainerLayerParameters& aParameters) override;
+  virtual already_AddRefed<imgIContainer> GetImage() override;
+  virtual nsRect GetDestRect() override;
 
   static nsRegion GetInsideClipRegion(nsDisplayItem* aItem, uint8_t aClip,
                                       const nsRect& aRect);
@@ -2731,11 +2764,10 @@ protected:
   typedef class mozilla::layers::ImageLayer ImageLayer;
 
   bool TryOptimizeToImageLayer(LayerManager* aManager, nsDisplayListBuilder* aBuilder);
-  bool IsSingleFixedPositionImage(nsDisplayListBuilder* aBuilder,
-                                  const nsRect& aClipRect,
-                                  gfxRect* aDestRect);
   bool IsNonEmptyFixedImage() const;
   nsRect GetBoundsInternal(nsDisplayListBuilder* aBuilder);
+  bool ShouldTreatAsFixed() const;
+  bool ComputeShouldTreatAsFixed(bool isTransformedFixed) const;
 
   void PaintInternal(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx,
                      const nsRect& aBounds, nsRect* aClipRect);
@@ -2754,11 +2786,14 @@ protected:
   // mIsThemed is true or if FindBackground returned false.
   const nsStyleBackground* mBackgroundStyle;
   nsCOMPtr<imgIContainer> mImage;
-  RefPtr<ImageContainer> mImageContainer;
-  LayoutDeviceRect mDestRect;
+  nsRect mFillRect;
+  nsRect mDestRect;
   /* Bounds of this display item */
   nsRect mBounds;
   uint32_t mLayer;
+  bool mIsRasterImage;
+  /* Whether the image should be treated as fixed to the viewport. */
+  bool mShouldTreatAsFixed;
 };
 
 
@@ -3123,6 +3158,7 @@ public:
   // displayport.
   void AddInactiveScrollPort(const nsRect& aRect);
 
+  bool IsEmpty() const;
   const nsRegion& HitRegion() { return mHitRegion; }
   const nsRegion& MaybeHitRegion() { return mMaybeHitRegion; }
   const nsRegion& DispatchToContentHitRegion() { return mDispatchToContentHitRegion; }
@@ -3369,9 +3405,14 @@ public:
 
   bool CanUseAsyncAnimations(nsDisplayListBuilder* aBuilder) override;
 
+  void SetParticipatesInPreserve3D(bool aParticipatesInPreserve3D)
+  {
+    mParticipatesInPreserve3D = aParticipatesInPreserve3D;
+  }
 private:
   float mOpacity;
   bool mForEventsOnly;
+  bool mParticipatesInPreserve3D;
 };
 
 class nsDisplayBlendMode : public nsDisplayWrapList {

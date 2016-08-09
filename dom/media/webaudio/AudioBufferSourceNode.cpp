@@ -5,11 +5,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "AudioBufferSourceNode.h"
+#include "nsDebug.h"
 #include "mozilla/dom/AudioBufferSourceNodeBinding.h"
 #include "mozilla/dom/AudioParam.h"
 #include "mozilla/FloatingPoint.h"
 #include "nsContentUtils.h"
 #include "nsMathUtils.h"
+#include "AlignmentUtils.h"
 #include "AudioNodeEngine.h"
 #include "AudioNodeStream.h"
 #include "AudioDestinationNode.h"
@@ -180,7 +182,10 @@ public:
       if (mResamplerOutRate == aOutRate) {
         return;
       }
-      speex_resampler_set_rate(mResampler, mBufferSampleRate, aOutRate);
+      if (speex_resampler_set_rate(mResampler, mBufferSampleRate, aOutRate) != RESAMPLER_ERR_SUCCESS) {
+        NS_ASSERTION(false, "speex_resampler_set_rate failed");
+        return;
+      }
     }
 
     mResamplerOutRate = aOutRate;
@@ -410,7 +415,15 @@ public:
 
     uint32_t numFrames = std::min(aBufferMax - mBufferPosition,
                                   availableInOutput);
-    if (numFrames == WEBAUDIO_BLOCK_SIZE) {
+
+    bool inputBufferAligned = true;
+    for (uint32_t i = 0; i < aChannels; ++i) {
+      if (!IS_ALIGNED16(mBuffer->GetData(i) + mBufferPosition)) {
+        inputBufferAligned = false;
+      }
+    }
+
+    if (numFrames == WEBAUDIO_BLOCK_SIZE && inputBufferAligned) {
       MOZ_ASSERT(mBufferPosition < aBufferMax);
       BorrowFromInputBuffer(aOutput, aChannels);
     } else {
@@ -615,9 +628,8 @@ size_t
 AudioBufferSourceNode::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t amount = AudioNode::SizeOfExcludingThis(aMallocSizeOf);
-  if (mBuffer) {
-    amount += mBuffer->SizeOfIncludingThis(aMallocSizeOf);
-  }
+
+  /* mBuffer can be shared and is accounted for separately. */
 
   amount += mPlaybackRate->SizeOfIncludingThis(aMallocSizeOf);
   amount += mDetune->SizeOfIncludingThis(aMallocSizeOf);

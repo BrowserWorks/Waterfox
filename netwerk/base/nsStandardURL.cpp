@@ -1191,7 +1191,7 @@ nsStandardURL::GetAsciiSpec(nsACString &result)
 
     // get the hostport
     nsAutoCString hostport;
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(GetAsciiHostPort(hostport)));
+    MOZ_ALWAYS_SUCCEEDS(GetAsciiHostPort(hostport));
     result += hostport;
 
     NS_EscapeURL(Path(), esc_OnlyNonASCII | esc_AlwaysCopy, result);
@@ -1207,7 +1207,7 @@ nsStandardURL::GetAsciiHostPort(nsACString &result)
         return NS_OK;
     }
 
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(GetAsciiHost(result)));
+    MOZ_ALWAYS_SUCCEEDS(GetAsciiHost(result));
 
     // As our mHostEncoding is not eEncoding_ASCII, we know that
     // the our host is not ipv6, and we can avoid looking at it.
@@ -3001,22 +3001,8 @@ nsStandardURL::Init(uint32_t urlType,
 
     mOriginCharset.Truncate();
 
-    if (charset == nullptr || *charset == '\0') {
-        // check if baseURI provides an origin charset and use that.
-        if (baseURI)
-            baseURI->GetOriginCharset(mOriginCharset);
-
-        // URI can't be encoded in UTF-16, UTF-16BE, UTF-16LE, UTF-32,
-        // UTF-32-LE, UTF-32LE, UTF-32BE (yet?). Truncate mOriginCharset if
-        // it starts with "utf" (since an empty mOriginCharset implies
-        // UTF-8, this is safe even if mOriginCharset is UTF-8).
-
-        if (mOriginCharset.Length() > 3 &&
-            IsUTFCharset(mOriginCharset.get())) {
-            mOriginCharset.Truncate();
-        }
-    }
-    else if (!IsUTFCharset(charset)) {
+    //if charset override is absent, use UTF8 as url encoding
+    if (charset != nullptr && *charset != '\0' && !IsUTFCharset(charset)) {
         mOriginCharset = charset;
     }
 

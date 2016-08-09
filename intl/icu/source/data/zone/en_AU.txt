@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en_AU.xml
@@ -8,7 +8,7 @@
 // ***************************************************************************
 en_AU{
     %%Parent{"en_001"}
-    Version{"2.1.24.13"}
+    Version{"2.1.20.4"}
     zoneStrings{
         "meta:Africa_Eastern"{
             ls{"Eastern Africa Time"}
@@ -19,9 +19,7 @@ en_AU{
             ls{"Arabia Standard Time"}
         }
         "meta:Australia_Central"{
-            ld{"Australian Central Daylight Time"}
             lg{"Australian Central Time"}
-            ls{"Australian Central Standard Time"}
             sd{"ACDT"}
             sg{"ACT"}
             ss{"ACST"}
@@ -32,17 +30,13 @@ en_AU{
             ss{"ACWST"}
         }
         "meta:Australia_Eastern"{
-            ld{"Australian Eastern Daylight Time"}
             lg{"Australian Eastern Time"}
-            ls{"Australian Eastern Standard Time"}
             sd{"AEDT"}
             sg{"AET"}
             ss{"AEST"}
         }
         "meta:Australia_Western"{
-            ld{"Australian Western Daylight Time"}
             lg{"Australian Western Time"}
-            ls{"Australian Western Standard Time"}
             sd{"AWDT"}
             sg{"AWT"}
             ss{"AWST"}
@@ -54,13 +48,10 @@ en_AU{
         }
         "meta:Japan"{
             ld{"Japan Summer Time"}
-            lg{"Japan Time"}
-            ls{"Japan Standard Time"}
         }
         "meta:Korea"{
             ld{"Korean Summer Time"}
             lg{"Korea Time"}
-            ls{"Korean Standard Time"}
         }
         "meta:Lord_Howe"{
             sd{"LHDT"}
@@ -69,8 +60,6 @@ en_AU{
         }
         "meta:Moscow"{
             ld{"Moscow Daylight Time"}
-            lg{"Moscow Time"}
-            ls{"Moscow Standard Time"}
         }
         "meta:New_Zealand"{
             sd{"NZDT"}
@@ -79,13 +68,9 @@ en_AU{
         }
         "meta:Samoa"{
             ld{"Samoa Summer Time"}
-            lg{"Samoa Time"}
-            ls{"Samoa Standard Time"}
         }
         "meta:Taipei"{
             ld{"Taipei Summer Time"}
-            lg{"Taipei Time"}
-            ls{"Taipei Standard Time"}
         }
     }
 }

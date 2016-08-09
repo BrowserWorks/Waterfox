@@ -17,7 +17,7 @@ interface WorkerGlobalScope : EventTarget {
   [Constant, Cached]
   readonly attribute WorkerGlobalScope self;
 
-  [Replaceable]
+  [Throws, Replaceable]
   readonly attribute Console console;
 
   readonly attribute WorkerLocation location;
@@ -47,6 +47,7 @@ readonly attribute CacheStorage caches;
 WorkerGlobalScope implements WindowTimers;
 WorkerGlobalScope implements WindowBase64;
 WorkerGlobalScope implements GlobalFetch;
+WorkerGlobalScope implements GlobalCrypto;
 WorkerGlobalScope implements IDBEnvironment;
 WorkerGlobalScope implements ImageBitmapFactories;
 

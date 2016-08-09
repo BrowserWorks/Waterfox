@@ -294,6 +294,7 @@ var PopupBlocking = {
       case "pagehide":
         return this.onPageHide(ev);
     }
+    return undefined;
   },
 
   onPopupBlocked: function(ev) {
@@ -303,7 +304,7 @@ var PopupBlocking = {
     }
 
     let obj = {
-      popupWindowURI: ev.popupWindowURI.spec,
+      popupWindowURI: ev.popupWindowURI ? ev.popupWindowURI.spec : "about:blank",
       popupWindowFeatures: ev.popupWindowFeatures,
       popupWindowName: ev.popupWindowName
     };
@@ -659,6 +660,7 @@ var FindBar = {
       event.preventDefault();
       return false;
     }
+    return undefined;
   },
 
   _onMouseup(event) {
@@ -717,6 +719,8 @@ var AudioPlaybackListener = {
 
   init() {
     Services.obs.addObserver(this, "audio-playback", false);
+    Services.obs.addObserver(this, "AudioFocusChanged", false);
+
     addMessageListener("AudioPlaybackMute", this);
     addEventListener("unload", () => {
       AudioPlaybackListener.uninit();
@@ -725,6 +729,8 @@ var AudioPlaybackListener = {
 
   uninit() {
     Services.obs.removeObserver(this, "audio-playback");
+    Services.obs.removeObserver(this, "AudioFocusChanged");
+
     removeMessageListener("AudioPlaybackMute", this);
   },
 
@@ -734,6 +740,21 @@ var AudioPlaybackListener = {
         let name = "AudioPlayback:";
         name += (data === "active") ? "Start" : "Stop";
         sendAsyncMessage(name);
+      }
+    } else if (topic == "AudioFocusChanged") {
+      let utils = global.content.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIDOMWindowUtils);
+      switch (data) {
+        // The AudioFocus:LossTransient means the media would be resumed after
+        // the interruption ended, but AudioFocus:Loss doesn't.
+        // TODO : distinguish these types, it would be done in bug1242874.
+        case "Loss":
+        case "LossTransient":
+          utils.mediaSuspended = true;
+          break;
+        case "Gain":
+          utils.mediaSuspended = false;
+          break;
       }
     }
   },

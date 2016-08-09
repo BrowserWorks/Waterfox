@@ -4,24 +4,70 @@
   let url = SimpleTest.getTestFileURL("mockpushserviceparent.js");
   let chromeScript = SpecialPowers.loadChromeScript(url);
 
+  /**
+   * Replaces `PushService.jsm` with a mock implementation that handles requests
+   * from the DOM API. This allows tests to simulate local errors and error
+   * reporting, bypassing the `PushService.jsm` machinery.
+   */
+  function replacePushService(mockService) {
+    chromeScript.sendSyncMessage("service-replace");
+    chromeScript.addMessageListener("service-delivery-error", function(msg) {
+      mockService.reportDeliveryError(msg.messageId, msg.reason);
+    });
+    chromeScript.addMessageListener("service-request", function(msg) {
+      let promise;
+      try {
+        let handler = mockService[msg.name];
+        promise = Promise.resolve(handler(msg.params));
+      } catch (error) {
+        promise = Promise.reject(error);
+      }
+      promise.then(result => {
+        chromeScript.sendAsyncMessage("service-response", {
+          id: msg.id,
+          result: result,
+        });
+      }, error => {
+        chromeScript.sendAsyncMessage("service-response", {
+          id: msg.id,
+          error: error,
+        });
+      });
+    });
+  }
+
+  function restorePushService() {
+    chromeScript.sendSyncMessage("service-restore");
+  }
+
   let userAgentID = "8e1c93a9-139b-419c-b200-e715bb1e8ce8";
 
   let currentMockSocket = null;
 
-  function setupMockPushService(mockWebSocket) {
+  /**
+   * Sets up a mock connection for the WebSocket backend. This only replaces
+   * the transport layer; `PushService.jsm` still handles DOM API requests,
+   * observes permission changes, writes to IndexedDB, and notifies service
+   * workers of incoming push messages.
+   */
+  function setupMockPushSocket(mockWebSocket) {
     currentMockSocket = mockWebSocket;
     currentMockSocket._isActive = true;
-    chromeScript.sendSyncMessage("setup");
-    chromeScript.addMessageListener("client-msg", function(msg) {
+    chromeScript.sendSyncMessage("socket-setup");
+    chromeScript.addMessageListener("socket-client-msg", function(msg) {
       mockWebSocket.handleMessage(msg);
     });
   }
 
-  function teardownMockPushService() {
+  function teardownMockPushSocket() {
     if (currentMockSocket) {
-      currentMockSocket._isActive = false;
-      chromeScript.sendSyncMessage("teardown");
+      return new Promise(resolve => {
+        currentMockSocket._isActive = false;
+        chromeScript.addMessageListener("socket-server-teardown", resolve);
+        chromeScript.sendSyncMessage("socket-teardown");
+      });
     }
+    return Promise.resolve();
   }
 
   /**
@@ -90,24 +136,27 @@
 
     serverSendMsg(msg) {
       if (this._isActive) {
-        chromeScript.sendAsyncMessage("server-msg", msg);
+        chromeScript.sendAsyncMessage("socket-server-msg", msg);
       }
     },
   };
 
   g.MockWebSocket = MockWebSocket;
-  g.setupMockPushService = setupMockPushService;
-  g.teardownMockPushService = teardownMockPushService;
+  g.setupMockPushSocket = setupMockPushSocket;
+  g.teardownMockPushSocket = teardownMockPushSocket;
+  g.replacePushService = replacePushService;
+  g.restorePushService = restorePushService;
 }(this));
 
 // Remove permissions and prefs when the test finishes.
 SimpleTest.registerCleanupFunction(() => {
-  new Promise(resolve => {
+  return new Promise(resolve => {
     SpecialPowers.flushPermissions(_ => {
       SpecialPowers.flushPrefEnv(resolve);
     });
   }).then(_ => {
-    teardownMockPushService();
+    restorePushService();
+    return teardownMockPushSocket();
   });
 });
 
@@ -119,9 +168,8 @@ function setPushPermission(allow) {
   });
 }
 
-function setupPrefsAndMock(mockSocket) {
+function setupPrefs() {
   return new Promise(resolve => {
-    setupMockPushService(mockSocket);
     SpecialPowers.pushPrefEnv({"set": [
       ["dom.push.enabled", true],
       ["dom.push.connection.enabled", true],
@@ -130,6 +178,16 @@ function setupPrefsAndMock(mockSocket) {
       ["dom.serviceWorkers.testing.enabled", true]
       ]}, resolve);
   });
+}
+
+function setupPrefsAndReplaceService(mockService) {
+  replacePushService(mockService);
+  return setupPrefs();
+}
+
+function setupPrefsAndMockSocket(mockSocket) {
+  setupMockPushSocket(mockSocket);
+  return setupPrefs();
 }
 
 function injectControlledFrame(target = document.body) {
@@ -145,6 +203,10 @@ function injectControlledFrame(target = document.body) {
       waitOnWorkerMessage(type) {
         return iframe ? iframe.contentWindow.waitOnWorkerMessage(type) :
                Promise.reject(new Error("Frame removed from document"));
+      },
+      innerWindowId() {
+        var utils = SpecialPowers.getDOMWindowUtils(iframe.contentWindow);
+        return utils.currentInnerWindowID;
       },
     };
 

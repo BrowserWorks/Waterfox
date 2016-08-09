@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en_GB.xml
@@ -8,7 +8,7 @@
 // ***************************************************************************
 en_GB{
     %%Parent{"en_001"}
-    Version{"2.1.22.17"}
+    Version{"2.1.19.79"}
     calendar{
         gregorian{
             AmPmMarkers{
@@ -35,9 +35,21 @@ en_GB{
                 "{1}, {0}",
             }
             dayPeriod{
+                format{
+                    abbreviated{
+                        noon{"noon"}
+                    }
+                    narrow{
+                        noon{"n"}
+                    }
+                    wide{
+                        noon{"noon"}
+                    }
+                }
                 stand-alone{
                     narrow{
                         am{"a"}
+                        noon{"n"}
                         pm{"p"}
                     }
                     wide{
@@ -107,11 +119,9 @@ en_GB{
             relativeTime{
                 future{
                     one{"in {0} mo"}
-                    other{"in {0} mo"}
                 }
                 past{
                     one{"{0} mo ago"}
-                    other{"{0} mo ago"}
                 }
             }
         }
@@ -133,11 +143,9 @@ en_GB{
             relativeTime{
                 future{
                     one{"in {0} qtr"}
-                    other{"in {0} qtr"}
                 }
                 past{
                     one{"{0} qtr ago"}
-                    other{"{0} qtr ago"}
                 }
             }
         }
@@ -184,7 +192,6 @@ en_GB{
             relativeTime{
                 future{
                     one{"in {0} wk"}
-                    other{"in {0} wk"}
                 }
                 past{
                     one{"{0} wk ago"}
@@ -209,11 +216,9 @@ en_GB{
             relativeTime{
                 future{
                     one{"in {0} yr"}
-                    other{"in {0} yr"}
                 }
                 past{
                     one{"{0} yr ago"}
-                    other{"{0} yr ago"}
                 }
             }
         }

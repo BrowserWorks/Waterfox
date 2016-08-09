@@ -26,6 +26,7 @@
 #include "CaretAssociationHint.h"
 #include "FramePropertyTable.h"
 #include "mozilla/layout/FrameChildList.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/WritingModes.h"
 #include "nsDirection.h"
 #include "nsFrameList.h"
@@ -37,6 +38,7 @@
 #include "nsStringGlue.h"
 #include "nsStyleContext.h"
 #include "nsStyleStruct.h"
+#include "Visibility.h"
 
 #ifdef ACCESSIBILITY
 #include "mozilla/a11y/AccTypes.h"
@@ -416,8 +418,12 @@ static void ReleaseValue(T* aPropertyValue)
 class nsIFrame : public nsQueryFrame
 {
 public:
+  template <typename T> using Maybe = mozilla::Maybe<T>;
+  using Nothing = mozilla::Nothing;
+  using OnNonvisible = mozilla::OnNonvisible;
   template<typename T=void>
   using PropertyDescriptor = const mozilla::FramePropertyDescriptor<T>*;
+  using Visibility = mozilla::Visibility;
 
   typedef mozilla::FrameProperties FrameProperties;
   typedef mozilla::layers::Layer Layer;
@@ -713,6 +719,12 @@ public:
   nscoord BSize(mozilla::WritingMode aWritingMode) const {
     return GetLogicalSize(aWritingMode).BSize(aWritingMode);
   }
+  nscoord ContentBSize() const { return ContentBSize(GetWritingMode()); }
+  nscoord ContentBSize(mozilla::WritingMode aWritingMode) const {
+    auto bp = GetLogicalUsedBorderAndPadding(aWritingMode);
+    bp.ApplySkipSides(GetLogicalSkipSides());
+    return std::max(0, BSize(aWritingMode) - bp.BStartEnd(aWritingMode));
+  }
 
   /**
    * When we change the size of the frame's border-box rect, we may need to
@@ -919,6 +931,10 @@ public:
 
   NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(LineBaselineOffset, nscoord)
 
+  // Temporary override for a flex item's main-size property (either width
+  // or height), imposed by its flex container.
+  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(FlexItemMainSizeOverride, nscoord)
+
   NS_DECLARE_FRAME_PROPERTY_RELEASABLE(CachedBackgroundImage, gfxASurface)
   NS_DECLARE_FRAME_PROPERTY_RELEASABLE(CachedBackgroundImageDT, DrawTarget)
 
@@ -955,10 +971,11 @@ public:
    * its rect) and the padding edge of the frame. Like GetRect(), returns
    * the dimensions as of the most recent reflow.
    *
-   * Note that this differs from StyleBorder()->GetBorder() in that
-   * this describes region of the frame's box, and
-   * StyleBorder()->GetBorder() describes a border.  They differ only
-   * for tables, particularly border-collapse tables.
+   * Note that this differs from StyleBorder()->GetComputedBorder() in
+   * that this describes a region of the frame's box, and
+   * StyleBorder()->GetComputedBorder() describes a border.  They differ
+   * for tables (particularly border-collapse tables) and themed
+   * elements.
    */
   virtual nsMargin GetUsedBorder() const;
   virtual mozilla::LogicalMargin
@@ -1074,6 +1091,94 @@ public:
   virtual nscoord GetCaretBaseline() const {
     return GetLogicalBaseline(GetWritingMode());
   }
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // The public visibility API.
+  ///////////////////////////////////////////////////////////////////////////////
+
+  /// @return true if we're tracking visibility for this frame.
+  bool TrackingVisibility() const
+  {
+    return bool(GetStateBits() & NS_FRAME_VISIBILITY_IS_TRACKED);
+  }
+
+  /// @return the visibility state of this frame. See the Visibility enum
+  /// for the possible return values and their meanings.
+  Visibility GetVisibility() const;
+
+  /// Update the visibility state of this frame synchronously.
+  /// XXX(seth): Avoid using this method; we should be relying on the refresh
+  /// driver for visibility updates. This method, which replaces
+  /// nsLayoutUtils::UpdateApproximateFrameVisibility(), exists purely as a
+  /// temporary measure to avoid changing behavior during the transition from
+  /// the old image visibility code.
+  void UpdateVisibilitySynchronously();
+
+  // A frame property which stores the visibility state of this frame. Right
+  // now that consists of an approximate visibility counter represented as a
+  // uint32_t. When the visibility of this frame is not being tracked, this
+  // property is absent.
+  NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(VisibilityStateProperty, uint32_t);
+
+protected:
+
+  /**
+   * Subclasses can call this method to enable visibility tracking for this frame.
+   *
+   * If visibility tracking was previously disabled, this will schedule an
+   * update an asynchronous update of visibility.
+   */
+  void EnableVisibilityTracking();
+
+  /**
+   * Subclasses can call this method to disable visibility tracking for this frame.
+   *
+   * Note that if visibility tracking was previously enabled, disabling visibility
+   * tracking will cause a synchronous call to OnVisibilityChange().
+   */
+  void DisableVisibilityTracking();
+
+  /**
+   * Called when a frame transitions between visibility states (for example,
+   * from nonvisible to visible, or from visible to nonvisible).
+   *
+   * @param aNewVisibility    The new visibility state.
+   * @param aNonvisibleAction A requested action if the frame has become
+   *                          nonvisible. If Nothing(), no action is
+   *                          requested. If DISCARD_IMAGES is specified, the
+   *                          frame is requested to ask any images it's
+   *                          associated with to discard their surfaces if
+   *                          possible.
+   *
+   * Subclasses which override this method should call their parent class's
+   * implementation.
+   */
+  virtual void OnVisibilityChange(Visibility aNewVisibility,
+                                  Maybe<OnNonvisible> aNonvisibleAction = Nothing());
+
+public:
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // Internal implementation for the approximate frame visibility API.
+  ///////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * We track the approximate visibility of frames using a counter; if it's
+   * non-zero, then the frame is considered visible. Using a counter allows us
+   * to account for situations where the frame may be visible in more than one
+   * place (for example, via -moz-element), and it simplifies the
+   * implementation of our approximate visibility tracking algorithms.
+   *
+   * @param aNonvisibleAction A requested action if the frame has become
+   *                          nonvisible. If Nothing(), no action is
+   *                          requested. If DISCARD_IMAGES is specified, the
+   *                          frame is requested to ask any images it's
+   *                          associated with to discard their surfaces if
+   *                          possible.
+   */
+  void DecApproximateVisibleCount(Maybe<OnNonvisible> aNonvisibleAction = Nothing());
+  void IncApproximateVisibleCount();
+
 
   /**
    * Get the specified child list.
@@ -1226,7 +1331,7 @@ public:
   /**
    * Returns true if this frame is transformed (e.g. has CSS or SVG transforms)
    * or if its parent is an SVG frame that has children-only transforms (e.g.
-   * an SVG viewBox attribute).
+   * an SVG viewBox attribute) or if its transform-style is preserve-3d.
    */
   bool IsTransformed() const;
 
@@ -1580,58 +1685,58 @@ public:
    */
   struct InlineIntrinsicISizeData {
     InlineIntrinsicISizeData()
-      : line(nullptr)
-      , lineContainer(nullptr)
-      , prevLines(0)
-      , currentLine(0)
-      , trailingWhitespace(0)
-      , skipWhitespace(true)
+      : mLine(nullptr)
+      , mLineContainer(nullptr)
+      , mPrevLines(0)
+      , mCurrentLine(0)
+      , mTrailingWhitespace(0)
+      , mSkipWhitespace(true)
     {}
 
     // The line. This may be null if the inlines are not associated with
     // a block or if we just don't know the line.
-    const nsLineList_iterator* line;
+    const nsLineList_iterator* mLine;
 
     // The line container. Private, to ensure we always use SetLineContainer
-    // to update it (so that we have a chance to store the lineContainerWM).
+    // to update it (so that we have a chance to store the mLineContainerWM).
     //
     // Note that nsContainerFrame::DoInlineIntrinsicISize will clear the
-    // |line| and |lineContainer| fields when following a next-in-flow link,
+    // |mLine| and |mLineContainer| fields when following a next-in-flow link,
     // so we must not assume these can always be dereferenced.
   private:
-    nsIFrame* lineContainer;
+    nsIFrame* mLineContainer;
 
     // Setter and getter for the lineContainer field:
   public:
     void SetLineContainer(nsIFrame* aLineContainer)
     {
-      lineContainer = aLineContainer;
-      if (lineContainer) {
-        lineContainerWM = lineContainer->GetWritingMode();
+      mLineContainer = aLineContainer;
+      if (mLineContainer) {
+        mLineContainerWM = mLineContainer->GetWritingMode();
       }
     }
-    nsIFrame* LineContainer() const { return lineContainer; }
+    nsIFrame* LineContainer() const { return mLineContainer; }
 
     // The maximum intrinsic width for all previous lines.
-    nscoord prevLines;
+    nscoord mPrevLines;
 
     // The maximum intrinsic width for the current line.  At a line
     // break (mandatory for preferred width; allowed for minimum width),
     // the caller should call |Break()|.
-    nscoord currentLine;
+    nscoord mCurrentLine;
 
     // This contains the width of the trimmable whitespace at the end of
-    // |currentLine|; it is zero if there is no such whitespace.
-    nscoord trailingWhitespace;
+    // |mCurrentLine|; it is zero if there is no such whitespace.
+    nscoord mTrailingWhitespace;
 
     // True if initial collapsable whitespace should be skipped.  This
     // should be true at the beginning of a block, after hard breaks
     // and when the last text ended with whitespace.
-    bool skipWhitespace;
+    bool mSkipWhitespace;
 
     // Writing mode of the line container (stored here so that we don't
-    // lose track of it if the lineContainer field is reset).
-    mozilla::WritingMode lineContainerWM;
+    // lose track of it if the mLineContainer field is reset).
+    mozilla::WritingMode mLineContainerWM;
 
     // Floats encountered in the lines.
     class FloatInfo {
@@ -1647,14 +1752,18 @@ public:
       nscoord         mWidth;
     };
 
-    nsTArray<FloatInfo> floats;
+    nsTArray<FloatInfo> mFloats;
   };
 
   struct InlineMinISizeData : public InlineIntrinsicISizeData {
     InlineMinISizeData()
-      : trailingTextFrame(nullptr)
-      , atStartOfLine(true)
+      : mAtStartOfLine(true)
     {}
+
+    // The default implementation for nsIFrame::AddInlineMinISize.
+    void DefaultAddInlineMinISize(nsIFrame* aFrame,
+                                  nscoord   aISize,
+                                  bool      aAllowBreak = true);
 
     // We need to distinguish forced and optional breaks for cases where the
     // current line total is negative.  When it is, we need to ignore
@@ -1666,19 +1775,17 @@ public:
     // width of the current line.
     void OptionallyBreak(nscoord aHyphenWidth = 0);
 
-    // The last text frame processed so far in the current line, when
-    // the last characters in that text frame are relevant for line
-    // break opportunities.
-    nsIFrame *trailingTextFrame;
-
     // Whether we're currently at the start of the line.  If we are, we
     // can't break (for example, between the text-indent and the first
     // word).
-    bool atStartOfLine;
+    bool mAtStartOfLine;
   };
 
   struct InlinePrefISizeData : public InlineIntrinsicISizeData {
     void ForceBreak();
+
+    // The default implementation for nsIFrame::AddInlinePrefISize.
+    void DefaultAddInlinePrefISize(nscoord aISize);
   };
 
   /**
@@ -1689,7 +1796,7 @@ public:
    *
    * All *allowed* breakpoints within the frame determine what counts as
    * a line for the |InlineIntrinsicISizeData|.  This means that
-   * |aData->trailingWhitespace| will always be zero (unlike for
+   * |aData->mTrailingWhitespace| will always be zero (unlike for
    * AddInlinePrefISize).
    *
    * All the comments for |GetMinISize| apply, except that this function
@@ -1993,7 +2100,6 @@ public:
    */
   bool HasView() const { return !!(mState & NS_FRAME_HAS_VIEW); }
   nsView* GetView() const;
-  virtual nsView* GetViewExternal() const;
   nsresult SetView(nsView* aView);
 
   /**
@@ -2007,7 +2113,6 @@ public:
    * Find the closest ancestor (excluding |this| !) that has a view
    */
   nsIFrame* GetAncestorWithView() const;
-  virtual nsIFrame* GetAncestorWithViewExternal() const;
 
   /**
    * Get the offset between the coordinate systems of |this| and aOther.
@@ -2026,7 +2131,6 @@ public:
    * aOther.
    */
   nsPoint GetOffsetTo(const nsIFrame* aOther) const;
-  virtual nsPoint GetOffsetToExternal(const nsIFrame* aOther) const;
 
   /**
    * Get the offset between the coordinate systems of |this| and aOther
@@ -2061,14 +2165,12 @@ public:
    * @return the pixel rect of the frame in screen coordinates.
    */
   nsIntRect GetScreenRect() const;
-  virtual nsIntRect GetScreenRectExternal() const;
 
   /**
    * Get the screen rect of the frame in app units.
    * @return the app unit rect of the frame in screen coordinates.
    */
   nsRect GetScreenRectInAppUnits() const;
-  virtual nsRect GetScreenRectInAppUnitsExternal() const;
 
   /**
    * Returns the offset from this frame to the closest geometric parent that
@@ -2081,16 +2183,15 @@ public:
    * view and the view has a widget, then this frame's widget is
    * returned, otherwise this frame's geometric parent is checked
    * recursively upwards.
-   * XXX virtual because gfx callers use it! (themes)
    */
-  virtual nsIWidget* GetNearestWidget() const;
+  nsIWidget* GetNearestWidget() const;
 
   /**
    * Same as GetNearestWidget() above but uses an outparam to return the offset
    * of this frame to the returned widget expressed in appunits of |this| (the
    * widget might be in a different document with a different zoom).
    */
-  virtual nsIWidget* GetNearestWidget(nsPoint& aOffset) const;
+  nsIWidget* GetNearestWidget(nsPoint& aOffset) const;
 
   /**
    * Get the "type" of the frame. May return nullptr.
@@ -2726,7 +2827,9 @@ public:
    * rect, with coordinates relative to this frame's origin. aRect must not be
    * null!
    */
-  bool GetClipPropClipRect(const nsStyleDisplay* aDisp, nsRect* aRect,
+  bool GetClipPropClipRect(const nsStyleDisplay* aDisp,
+                           const nsStyleEffects* aEffects,
+                           nsRect* aRect,
                            const nsSize& aSize) const;
 
   /**
@@ -2752,7 +2855,7 @@ public:
   // BOX LAYOUT METHODS
   // These methods have been migrated from nsIBox and are in the process of
   // being refactored. DO NOT USE OUTSIDE OF XUL.
-  bool IsBoxFrame() const
+  bool IsXULBoxFrame() const
   {
     return IsFrameOfType(nsIFrame::eXULBox);
   }
@@ -2775,86 +2878,84 @@ public:
    * @param[in] aBoxLayoutState The desired state to calculate for
    * @return The minimum size
    */
-  virtual nsSize GetMinSize(nsBoxLayoutState& aBoxLayoutState) = 0;
+  virtual nsSize GetXULMinSize(nsBoxLayoutState& aBoxLayoutState) = 0;
 
   /**
    * This calculates the preferred size of a box based on its state
    * @param[in] aBoxLayoutState The desired state to calculate for
    * @return The preferred size
    */
-  virtual nsSize GetPrefSize(nsBoxLayoutState& aBoxLayoutState) = 0;
+  virtual nsSize GetXULPrefSize(nsBoxLayoutState& aBoxLayoutState) = 0;
 
   /**
    * This calculates the maximum size for a box based on its state
    * @param[in] aBoxLayoutState The desired state to calculate for
    * @return The maximum size
    */    
-  virtual nsSize GetMaxSize(nsBoxLayoutState& aBoxLayoutState) = 0;
+  virtual nsSize GetXULMaxSize(nsBoxLayoutState& aBoxLayoutState) = 0;
 
   /**
    * This returns the minimum size for the scroll area if this frame is
    * being scrolled. Usually it's (0,0).
    */
-  virtual nsSize GetMinSizeForScrollArea(nsBoxLayoutState& aBoxLayoutState) = 0;
+  virtual nsSize GetXULMinSizeForScrollArea(nsBoxLayoutState& aBoxLayoutState) = 0;
 
   // Implemented in nsBox, used in nsBoxFrame
-  uint32_t GetOrdinal();
+  uint32_t GetXULOrdinal();
 
-  virtual nscoord GetFlex() = 0;
-  virtual nscoord GetBoxAscent(nsBoxLayoutState& aBoxLayoutState) = 0;
-  virtual bool IsCollapsed() = 0;
+  virtual nscoord GetXULFlex() = 0;
+  virtual nscoord GetXULBoxAscent(nsBoxLayoutState& aBoxLayoutState) = 0;
+  virtual bool IsXULCollapsed() = 0;
   // This does not alter the overflow area. If the caller is changing
   // the box size, the caller is responsible for updating the overflow
-  // area. It's enough to just call Layout or SyncLayout on the
+  // area. It's enough to just call XULLayout or SyncLayout on the
   // box. You can pass true to aRemoveOverflowArea as a
   // convenience.
-  virtual void SetBounds(nsBoxLayoutState& aBoxLayoutState, const nsRect& aRect,
-                         bool aRemoveOverflowAreas = false) = 0;
-  nsresult Layout(nsBoxLayoutState& aBoxLayoutState);
+  virtual void SetXULBounds(nsBoxLayoutState& aBoxLayoutState, const nsRect& aRect,
+                            bool aRemoveOverflowAreas = false) = 0;
+  nsresult XULLayout(nsBoxLayoutState& aBoxLayoutState);
   // Box methods.  Note that these do NOT just get the CSS border, padding,
   // etc.  They also talk to nsITheme.
-  virtual nsresult GetBorderAndPadding(nsMargin& aBorderAndPadding);
-  virtual nsresult GetBorder(nsMargin& aBorder)=0;
-  virtual nsresult GetPadding(nsMargin& aBorderAndPadding)=0;
-  virtual nsresult GetMargin(nsMargin& aMargin)=0;
-  virtual void SetLayoutManager(nsBoxLayout* aLayout) { }
-  virtual nsBoxLayout* GetLayoutManager() { return nullptr; }
-  nsresult GetClientRect(nsRect& aContentRect);
+  virtual nsresult GetXULBorderAndPadding(nsMargin& aBorderAndPadding);
+  virtual nsresult GetXULBorder(nsMargin& aBorder)=0;
+  virtual nsresult GetXULPadding(nsMargin& aBorderAndPadding)=0;
+  virtual nsresult GetXULMargin(nsMargin& aMargin)=0;
+  virtual void SetXULLayoutManager(nsBoxLayout* aLayout) { }
+  virtual nsBoxLayout* GetXULLayoutManager() { return nullptr; }
+  nsresult GetXULClientRect(nsRect& aContentRect);
 
   // For nsSprocketLayout
-  virtual Valignment GetVAlign() const = 0;
-  virtual Halignment GetHAlign() const = 0;
+  virtual Valignment GetXULVAlign() const = 0;
+  virtual Halignment GetXULHAlign() const = 0;
 
-  bool IsHorizontal() const { return (mState & NS_STATE_IS_HORIZONTAL) != 0; }
-  bool IsNormalDirection() const { return (mState & NS_STATE_IS_DIRECTION_NORMAL) != 0; }
+  bool IsXULHorizontal() const { return (mState & NS_STATE_IS_HORIZONTAL) != 0; }
+  bool IsXULNormalDirection() const { return (mState & NS_STATE_IS_DIRECTION_NORMAL) != 0; }
 
-  nsresult Redraw(nsBoxLayoutState& aState);
-  virtual nsresult RelayoutChildAtOrdinal(nsIFrame* aChild)=0;
-  // XXX take this out after we've branched
-  virtual bool GetMouseThrough() const { return false; }
+  nsresult XULRedraw(nsBoxLayoutState& aState);
+  virtual nsresult XULRelayoutChildAtOrdinal(nsIFrame* aChild)=0;
 
 #ifdef DEBUG_LAYOUT
-  virtual nsresult SetDebug(nsBoxLayoutState& aState, bool aDebug)=0;
-  virtual nsresult GetDebug(bool& aDebug)=0;
+  virtual nsresult SetXULDebug(nsBoxLayoutState& aState, bool aDebug)=0;
+  virtual nsresult GetXULDebug(bool& aDebug)=0;
 
-  virtual nsresult DumpBox(FILE* out)=0;
+  virtual nsresult XULDumpBox(FILE* out)=0;
 #endif
+
+  static bool AddXULPrefSize(nsIFrame* aBox, nsSize& aSize, bool& aWidth, bool& aHeightSet);
+  static bool AddXULMinSize(nsBoxLayoutState& aState, nsIFrame* aBox,
+                            nsSize& aSize, bool& aWidth, bool& aHeightSet);
+  static bool AddXULMaxSize(nsIFrame* aBox, nsSize& aSize, bool& aWidth, bool& aHeightSet);
+  static bool AddXULFlex(nsIFrame* aBox, nscoord& aFlex);
+
+  // END OF BOX LAYOUT METHODS
+  // The above methods have been migrated from nsIBox and are in the process of
+  // being refactored. DO NOT USE OUTSIDE OF XUL.
 
   /**
    * @return true if this text frame ends with a newline character.  It
    * should return false if this is not a text frame.
    */
   virtual bool HasSignificantTerminalNewline() const;
-
-  static bool AddCSSPrefSize(nsIFrame* aBox, nsSize& aSize, bool& aWidth, bool& aHeightSet);
-  static bool AddCSSMinSize(nsBoxLayoutState& aState, nsIFrame* aBox,
-                            nsSize& aSize, bool& aWidth, bool& aHeightSet);
-  static bool AddCSSMaxSize(nsIFrame* aBox, nsSize& aSize, bool& aWidth, bool& aHeightSet);
-  static bool AddCSSFlex(nsIFrame* aBox, nscoord& aFlex);
-
-  // END OF BOX LAYOUT METHODS
-  // The above methods have been migrated from nsIBox and are in the process of
-  // being refactored. DO NOT USE OUTSIDE OF XUL.
 
   struct CaretPosition {
     CaretPosition();

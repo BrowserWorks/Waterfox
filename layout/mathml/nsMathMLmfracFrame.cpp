@@ -164,6 +164,20 @@ nsMathMLmfracFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
   }
 }
 
+
+nsresult
+nsMathMLmfracFrame::AttributeChanged(int32_t  aNameSpaceID,
+                                     nsIAtom* aAttribute,
+                                     int32_t  aModType)
+{
+  if (nsGkAtoms::linethickness_ == aAttribute) {
+    InvalidateFrame();
+  }
+  return
+    nsMathMLContainerFrame::AttributeChanged(aNameSpaceID, aAttribute,
+                                             aModType);
+}
+
 /* virtual */ nsresult
 nsMathMLmfracFrame::MeasureForWidth(DrawTarget* aDrawTarget,
                                     nsHTMLReflowMetrics& aDesiredSize)
@@ -218,9 +232,8 @@ nsMathMLmfracFrame::PlaceInternal(DrawTarget*          aDrawTarget,
   nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
 
   float fontSizeInflation = nsLayoutUtils::FontSizeInflationFor(this);
-  RefPtr<nsFontMetrics> fm;
-  nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
-                                        fontSizeInflation);
+  RefPtr<nsFontMetrics> fm =
+    nsLayoutUtils::GetFontMetricsForFrame(this, fontSizeInflation);
 
   nscoord defaultRuleThickness, axisHeight;
   nscoord oneDevPixel = fm->AppUnitsPerDevPixel();
@@ -616,8 +629,9 @@ void nsDisplayMathMLSlash::Paint(nsDisplayListBuilder* aBuilder,
   Rect rect = NSRectToRect(mRect + ToReferenceFrame(),
                            presContext->AppUnitsPerDevPixel());
   
+  nsCSSProperty colorProp = mFrame->StyleContext()->GetTextFillColorProp();
   ColorPattern color(ToDeviceColor(
-                       mFrame->GetVisitedDependentColor(eCSSProperty_color)));
+                                 mFrame->GetVisitedDependentColor(colorProp)));
  
   // draw the slash as a parallelogram 
   Point delta = Point(presContext->AppUnitsToGfxUnits(mThickness), 0);

@@ -270,16 +270,6 @@ public:
 
   /**
    * Perform scroll snapping, possibly resulting in a smooth scroll to
-   * maintain the scroll snap position constraints.  A predicted landing
-   * position determined by the APZC is used to select the best matching
-   * snap point, allowing touchscreen fling gestures to navigate between
-   * snap points.
-   * @param aDestination The desired landing position of the fling, which
-   * is used to select the best matching snap point.
-   */
-  virtual void FlingSnap(const mozilla::CSSPoint& aDestination) = 0;
-  /**
-   * Perform scroll snapping, possibly resulting in a smooth scroll to
    * maintain the scroll snap position constraints.  Velocity sampled from
    * main thread scrolling is used to determine best matching snap point
    * when called after a fling gesture on a trackpad or mouse wheel.
@@ -346,13 +336,13 @@ public:
    */
   virtual void ClearDidHistoryRestore() = 0;
   /**
-   * Determine if the passed in rect is nearly visible according to the image
+   * Determine if the passed in rect is nearly visible according to the frame
    * visibility heuristics for how close it is to the visible scrollport.
    */
   virtual bool IsRectNearlyVisible(const nsRect& aRect) = 0;
  /**
   * Expand the given rect taking into account which directions we can scroll
-  * and how far we want to expand for image visibility purposes.
+  * and how far we want to expand for frame visibility purposes.
   */
   virtual nsRect ExpandRectToNearlyVisible(const nsRect& aRect) const = 0;
   /**
@@ -421,6 +411,14 @@ public:
   virtual bool IsTransformingByAPZ() const = 0;
 
   /**
+   * Notify this scroll frame that it can be scrolled by APZ. In particular,
+   * this is called *after* the APZ code has created an APZC for this scroll
+   * frame and verified that it is not a scrollinfo layer. Therefore, setting an
+   * async transform on it is actually user visible.
+   */
+  virtual void SetScrollableByAPZ(bool aScrollable) = 0;
+
+  /**
    * Notify this scroll frame that it can be zoomed by APZ.
    */
   virtual void SetZoomableByAPZ(bool aZoomable) = 0;
@@ -444,16 +442,16 @@ public:
                                      bool aAllowCreateDisplayPort) = 0;
 
   /**
-   * Notification that this scroll frame is getting its image visibility updated.
+   * Notification that this scroll frame is getting its frame visibility updated.
    */
-  virtual void NotifyImageVisibilityUpdate() = 0;
+  virtual void NotifyApproximateFrameVisibilityUpdate() = 0;
 
   /**
-   * Returns true if this scroll frame had a display port at the last image
+   * Returns true if this scroll frame had a display port at the last frame
    * visibility update and fills in aDisplayPort with that displayport. Returns
    * false otherwise, and doesn't touch aDisplayPort.
    */
-  virtual bool GetDisplayPortAtLastImageVisibilityUpdate(nsRect* aDisplayPort) = 0;
+  virtual bool GetDisplayPortAtLastApproximateFrameVisibilityUpdate(nsRect* aDisplayPort) = 0;
 
   /**
    * This is called when a descendant scrollframe's has its displayport expired.
@@ -466,6 +464,8 @@ public:
    * Returns information required to determine where to snap to after a scroll.
    */
   virtual ScrollSnapInfo GetScrollSnapInfo() const = 0;
+
+  virtual void SetScrollsClipOnUnscrolledOutOfFlow() = 0;
 };
 
 #endif

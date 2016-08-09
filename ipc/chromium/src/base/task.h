@@ -6,12 +6,12 @@
 #ifndef BASE_TASK_H_
 #define BASE_TASK_H_
 
-#include "base/non_thread_safe.h"
 #include "base/revocable_store.h"
 #include "base/tracked.h"
 #include "base/tuple.h"
 #include "mozilla/IndexSequence.h"
 #include "mozilla/Tuple.h"
+#include "nsISupportsImpl.h"
 
 // Helper functions so that we can call a function a pass it arguments that come
 // from a Tuple.
@@ -63,7 +63,7 @@ void DispatchTupleToFunction(Function function, mozilla::Tuple<Args...>& arg)
 class Task : public tracked_objects::Tracked {
  public:
   Task() {}
-  virtual  B2G_ACL_EXPORT ~Task() {}
+  virtual ~Task() {}
 
   // Tasks are automatically deleted after Run is called.
   virtual void Run() = 0;
@@ -128,7 +128,7 @@ class ScopedTaskFactory : public RevocableStore {
     return new TaskWrapper(this);
   }
 
-  class TaskWrapper : public TaskType, public NonThreadSafe {
+  class TaskWrapper : public TaskType {
    public:
     explicit TaskWrapper(RevocableStore* store) : revocable_(store) { }
 
@@ -137,8 +137,14 @@ class ScopedTaskFactory : public RevocableStore {
         TaskType::Run();
     }
 
+    ~TaskWrapper() {
+      NS_ASSERT_OWNINGTHREAD(TaskWrapper);
+    }
+
    private:
     Revocable revocable_;
+
+    NS_DECL_OWNINGTHREAD
 
     DISALLOW_EVIL_CONSTRUCTORS(TaskWrapper);
   };
@@ -205,24 +211,6 @@ class DeleteTask : public CancelableTask {
   }
   virtual void Run() {
     delete obj_;
-  }
-  virtual void Cancel() {
-    obj_ = NULL;
-  }
- private:
-  T* MOZ_UNSAFE_REF("The validity of this pointer must be enforced by "
-                    "external factors.") obj_;
-};
-
-// Task to Release() an object
-template<class T>
-class ReleaseTask : public CancelableTask {
- public:
-  explicit ReleaseTask(T* obj) : obj_(obj) {
-  }
-  virtual void Run() {
-    if (obj_)
-      obj_->Release();
   }
   virtual void Cancel() {
     obj_ = NULL;

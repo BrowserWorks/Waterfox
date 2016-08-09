@@ -48,6 +48,9 @@
         return decodeURIComponent(url.slice(error + 2, duffUrl));
       }
 
+      // Set to true on init if the error code is nssBadCert.
+      var gIsCertError;
+
       function getCSSClass()
       {
         var url = document.documentURI;
@@ -103,7 +106,7 @@
           'none': 'block',
           'block': 'none'
         };
-        node.style.display = toggle[node.style.display];
+        return (node.style.display = toggle[node.style.display]);
       }
 
       function showCertificateErrorReporting() {
@@ -112,23 +115,28 @@
       }
 
       function showAdvancedButton(allowOverride) {
-        // Display weak crypto advanced UI
-        document.getElementById("buttonContainer").style.display = "flex";
-        document.getElementById("advancedButton").style.display = "block";
-        document.getElementById("errorTryAgain").style.display = "none";
-
         // Get the hostname and add it to the panel
-        var panel = document.getElementById("weakCryptoAdvancedPanel");
+        var panelId = gIsCertError ? "badCertAdvancedPanel" : "weakCryptoAdvancedPanel";
+        var panel = document.getElementById(panelId);
         for (var span of panel.querySelectorAll("span.hostname")) {
           span.textContent = document.location.hostname;
         }
-        panel.replaceChild(document.getElementById("errorLongDesc"),
-                           document.getElementById("advancedLongDesc"));
+        if (!gIsCertError) {
+          panel.replaceChild(document.getElementById("errorLongDesc"),
+                             document.getElementById("advancedLongDesc"));
+        }
 
         // Register click handler for the weakCryptoAdvancedPanel
         document.getElementById("advancedButton")
                 .addEventListener("click", function togglePanelVisibility() {
           toggleDisplay(panel);
+          if (gIsCertError) {
+            // Toggling the advanced panel must ensure that the debugging
+            // information panel is hidden as well, since it's opened by the
+            // error code link in the advanced panel.
+            var div = document.getElementById("certificateErrorDebugInformation");
+            div.style.display = "none";
+          }
 
           if (panel.style.display == "block") {
             // send event to trigger telemetry ping
@@ -144,9 +152,68 @@
         }
       }
 
+      function initPageCertError() {
+        document.body.className = "certerror";
+        document.title = document.getElementById("certErrorPageTitle").textContent;
+        for (let host of document.querySelectorAll(".hostname")) {
+          host.textContent = document.location.hostname;
+        }
+
+        showAdvancedButton(true);
+
+        var cssClass = getCSSClass();
+        if (cssClass == "expertBadCert") {
+          toggleDisplay(document.getElementById("badCertAdvancedPanel"));
+          // Toggling the advanced panel must ensure that the debugging
+          // information panel is hidden as well, since it's opened by the
+          // error code link in the advanced panel.
+          var div = document.getElementById("certificateErrorDebugInformation");
+          div.style.display = "none";
+        }
+
+        document.getElementById("learnMoreContainer").style.display = "block";
+
+        var checkbox = document.getElementById("automaticallyReportInFuture");
+        checkbox.addEventListener("change", function ({target: {checked}}) {
+          document.dispatchEvent(new CustomEvent("AboutNetErrorSetAutomatic", {
+            detail: checked,
+            bubbles: true
+          }));
+        });
+
+        addEventListener("AboutNetErrorOptions", function (event) {
+          var options = JSON.parse(event.detail);
+          if (options && options.enabled) {
+            // Display error reporting UI
+            document.getElementById("certificateErrorReporting").style.display = "block";
+
+            // set the checkbox
+            checkbox.checked = !!options.automatic;
+          }
+        }, true, true);
+
+        // Disallow overrides if this is a Strict-Transport-Security
+        // host and the cert is bad (STS Spec section 7.3) or if the
+        // certerror is in a frame (bug 633691).
+        if (cssClass == "badStsCert" || window != top) {
+          document.getElementById("exceptionDialogButton").setAttribute("hidden", "true");
+        }
+        if (cssClass == "badStsCert") {
+          document.getElementById("badStsCertExplanation").removeAttribute("hidden");
+        }
+
+        document.getElementById("badCertTechnicalInfo").textContent = getDescription();
+
+        var event = new CustomEvent("AboutNetErrorLoad", {bubbles:true});
+        document.getElementById("advancedButton").dispatchEvent(event);
+
+        addDomainErrorLinks();
+      }
+
       function initPage()
       {
         var err = getErrorCode();
+        gIsCertError = (err == "nssBadCert");
 
         // if it's an unknown error or there's no title or description
         // defined, get the generic message
@@ -158,37 +225,37 @@
           errDesc  = document.getElementById("ed_generic");
         }
 
-        var title = document.getElementById("errorTitleText");
-        if (title)
-        {
-          title.parentNode.replaceChild(errTitle, title);
-          // change id to the replaced child's id so styling works
-          errTitle.id = "errorTitleText";
-        }
+        document.querySelector(".title-text").innerHTML = errTitle.innerHTML;
 
         var sd = document.getElementById("errorShortDescText");
-        if (sd)
-          sd.textContent = getDescription();
+        if (sd) {
+          if (gIsCertError) {
+            sd.innerHTML = document.getElementById("ed_nssBadCert").innerHTML;
+          }
+          else {
+            sd.textContent = getDescription();
+          }
+        }
+        if (gIsCertError) {
+          initPageCertError();
+          return;
+        }
 
         var ld = document.getElementById("errorLongDesc");
         if (ld)
         {
-          ld.parentNode.replaceChild(errDesc, ld);
-          // change id to the replaced child's id so styling works
-          errDesc.id = "errorLongDesc";
+          ld.innerHTML = errDesc.innerHTML;
         }
 
         if (err == "sslv3Used") {
-          document.getElementById("errorTitle").setAttribute("sslv3", "true");
-          document.getElementById("errorTryAgain").style.display = "none";
           document.getElementById("learnMoreContainer").style.display = "block";
           var learnMoreLink = document.getElementById("learnMoreLink");
           learnMoreLink.href = "https://support.mozilla.org/kb/how-resolve-sslv3-error-messages-firefox";
-          document.getElementById("buttonContainer").style.display = "flex";
+          document.body.className = "certerror";
         }
 
         if (err == "weakCryptoUsed") {
-          document.getElementById("errorTitle").setAttribute("weakCrypto", "true");
+          document.body.className = "certerror";
         }
 
         // remove undisplayed errors to avoid bug 39098
@@ -211,20 +278,17 @@
           favicon.setAttribute("href", "chrome://global/skin/icons/" + className + "_favicon.png");
           faviconParent.appendChild(favicon);
         }
-        if (className == "expertBadCert") {
-          showSecuritySection();
-        }
 
         if (err == "remoteXUL") {
           // Remove the "Try again" button for remote XUL errors given that
           // it is useless.
-          document.getElementById("errorTryAgain").style.display = "none";
+          document.getElementById("netErrorButtonContainer").style.display = "none";
         }
 
         if (err == "cspBlocked") {
           // Remove the "Try again" button for CSP violations, since it's
           // almost certainly useless. (Bug 553180)
-          document.getElementById("errorTryAgain").style.display = "none";
+          document.getElementById("netErrorButtonContainer").style.display = "none";
         }
 
         window.addEventListener("AboutNetErrorOptions", function(evt) {
@@ -265,25 +329,18 @@
         var event = new CustomEvent("AboutNetErrorLoad", {bubbles:true});
         document.dispatchEvent(event);
 
-        if (err == "nssBadCert") {
-          // Remove the "Try again" button for security exceptions, since it's
-          // almost certainly useless.
+        if (err == "inadequateSecurityError") {
+          // Remove the "Try again" button for HTTP/2 inadequate security as it
+          // is useless.
           document.getElementById("errorTryAgain").style.display = "none";
-          document.getElementById("errorPageContainer").setAttribute("class", "certerror");
-        }
-        else {
-          // Remove the override block for non-certificate errors.  CSS-hiding
-          // isn't good enough here, because of bug 39098
-          var secOverride = document.getElementById("securityOverrideDiv");
-          secOverride.parentNode.removeChild(secOverride);
-        }
-        addDomainErrorLinks();
-      }
 
-      function showSecuritySection() {
-        // Swap link out, content in
-        document.getElementById('securityOverrideContent').style.display = '';
-        document.getElementById('securityOverrideLink').style.display = 'none';
+          var container = document.getElementById("errorLongDesc");
+          for (var span of container.querySelectorAll("span.hostname")) {
+            span.textContent = document.location.hostname;
+          }
+        }
+
+        addDomainErrorLinks();
       }
 
       /* Try to preserve the links contained in the error description, like
@@ -297,7 +354,8 @@
       */
       function addDomainErrorLinks() {
         // Rather than textContent, we need to treat description as HTML
-        var sd = document.getElementById("errorShortDescText");
+        var sdid = gIsCertError ? "badCertTechnicalInfo" : "errorShortDescText";
+        var sd = document.getElementById(sdid);
         if (sd) {
           var desc = getDescription();
 
@@ -333,6 +391,21 @@
 
           // Finally, append text for anything after the last closing </a>.
           sd.appendChild(document.createTextNode(desc.slice(desc.lastIndexOf("</a>") + "</a>".length)));
+        }
+
+        if (gIsCertError) {
+          // Initialize the error code link embedded in the error message to
+          // display debug information about the cert error.
+          var errorCode = document.getElementById("errorCode");
+          if (errorCode) {
+            errorCode.href = "#technicalInformation";
+            errorCode.addEventListener("click", () => {
+              var div = document.getElementById("certificateErrorDebugInformation");
+              if (toggleDisplay(div) == "block") {
+                div.scrollIntoView({block: "start", behavior: "smooth"});
+              }
+            }, false);
+          }
         }
 
         // Initialize the cert domain link.
@@ -375,8 +448,17 @@
 
         // If we set a link, meaning there's something helpful for
         // the user here, expand the section by default
-        if (link.href && getCSSClass() != "expertBadCert")
-          toggleVisibility("advancedPanel");
+        if (link.href && getCSSClass() != "expertBadCert") {
+          var panelId = gIsCertError ? "badCertAdvancedPanel" : "weakCryptoAdvancedPanel"
+          toggleDisplay(document.getElementById(panelId));
+          if (gIsCertError) {
+            // Toggling the advanced panel must ensure that the debugging
+            // information panel is hidden as well, since it's opened by the
+            // error code link in the advanced panel.
+            var div = document.getElementById("certificateErrorDebugInformation");
+            div.style.display = "none";
+          }
+        }
       }
 
       function createLink(el, id, text) {
@@ -390,6 +472,8 @@
   </head>
 
   <body dir="&locale.dir;">
+    <!-- Contains an alternate page title set on page init for cert errors. -->
+    <div id="certErrorPageTitle" style="display: none;">&certerror.pagetitle1;</div>
 
     <!-- ERROR ITEM CONTAINER (removed during loading to avoid bug 39098) -->
     <div id="errorContainer">
@@ -397,6 +481,7 @@
         <h1 id="et_generic">&generic.title;</h1>
         <h1 id="et_dnsNotFound">&dnsNotFound.title;</h1>
         <h1 id="et_fileNotFound">&fileNotFound.title;</h1>
+        <h1 id="et_fileAccessDenied">&fileAccessDenied.title;</h1>
         <h1 id="et_malformedURI">&malformedURI.title;</h1>
         <h1 id="et_unknownProtocolFound">&unknownProtocolFound.title;</h1>
         <h1 id="et_connectionFailure">&connectionFailure.title;</h1>
@@ -413,17 +498,19 @@
         <h1 id="et_contentEncodingError">&contentEncodingError.title;</h1>
         <h1 id="et_unsafeContentType">&unsafeContentType.title;</h1>
         <h1 id="et_nssFailure2">&nssFailure2.title;</h1>
-        <h1 id="et_nssBadCert">&nssBadCert.title;</h1>
+        <h1 id="et_nssBadCert">&certerror.longpagetitle1;</h1>
         <h1 id="et_cspBlocked">&cspBlocked.title;</h1>
         <h1 id="et_remoteXUL">&remoteXUL.title;</h1>
         <h1 id="et_corruptedContentError">&corruptedContentError.title;</h1>
         <h1 id="et_sslv3Used">&sslv3Used.title;</h1>
         <h1 id="et_weakCryptoUsed">&weakCryptoUsed.title;</h1>
+        <h1 id="et_inadequateSecurityError">&inadequateSecurityError.title;</h1>
       </div>
       <div id="errorDescriptionsContainer">
         <div id="ed_generic">&generic.longDesc;</div>
         <div id="ed_dnsNotFound">&dnsNotFound.longDesc;</div>
         <div id="ed_fileNotFound">&fileNotFound.longDesc;</div>
+        <div id="ed_fileAccessDenied">&fileAccessDenied.longDesc;</div>
         <div id="ed_malformedURI">&malformedURI.longDesc;</div>
         <div id="ed_unknownProtocolFound">&unknownProtocolFound.longDesc;</div>
         <div id="ed_connectionFailure">&connectionFailure.longDesc;</div>
@@ -440,21 +527,22 @@
         <div id="ed_contentEncodingError">&contentEncodingError.longDesc;</div>
         <div id="ed_unsafeContentType">&unsafeContentType.longDesc;</div>
         <div id="ed_nssFailure2">&nssFailure2.longDesc2;</div>
-        <div id="ed_nssBadCert">&nssBadCert.longDesc2;</div>
+        <div id="ed_nssBadCert">&certerror.introPara;</div>
         <div id="ed_cspBlocked">&cspBlocked.longDesc;</div>
         <div id="ed_remoteXUL">&remoteXUL.longDesc;</div>
         <div id="ed_corruptedContentError">&corruptedContentError.longDesc;</div>
         <div id="ed_sslv3Used">&sslv3Used.longDesc2;</div>
         <div id="ed_weakCryptoUsed">&weakCryptoUsed.longDesc2;</div>
+        <div id="ed_inadequateSecurityError">&inadequateSecurityError.longDesc;</div>
       </div>
     </div>
 
     <!-- PAGE CONTAINER (for styling purposes only) -->
-    <div id="errorPageContainer">
+    <div id="errorPageContainer" class="container">
 
       <!-- Error Title -->
-      <div id="errorTitle">
-        <h1 id="errorTitleText" />
+      <div class="title">
+        <h1 class="title-text"/>
       </div>
 
       <!-- LONG CONTENT (the section most likely to require scrolling) -->
@@ -464,29 +552,26 @@
         <div id="errorShortDesc">
           <p id="errorShortDescText" />
         </div>
+        <p id="badStsCertExplanation" hidden="true">&certerror.whatShouldIDo.badStsCertExplanation;</p>
 
         <!-- Long Description (Note: See netError.dtd for used XHTML tags) -->
         <div id="errorLongDesc" />
-
-        <!-- Override section - For ssl errors only.  Removed on init for other
-             error types.  -->
-        <div id="securityOverrideDiv">
-          <a id="securityOverrideLink" href="javascript:showSecuritySection();" >&securityOverride.linkText;</a>
-          <div id="securityOverrideContent" style="display: none;">&securityOverride.warningContent;</div>
-        </div>
 
         <div id="learnMoreContainer">
           <p><a href="https://support.mozilla.org/kb/what-does-your-connection-is-not-secure-mean" id="learnMoreLink" target="new">&errorReporting.learnMore;</a></p>
         </div>
 
-        <div id="buttonContainer">
-          <button id="returnButton" autocomplete="off" autofocus="true">&returnToPreviousPage.label;</button>
-          <div id="buttonSpacer"></div>
+        <div id="certErrorButtonContainer" class="button-container">
+          <button id="returnButton" class="primary" autocomplete="off" autofocus="true">&returnToPreviousPage.label;</button>
+          <div class="button-spacer"></div>
           <button id="advancedButton" autocomplete="off" autofocus="true">&advanced.label;</button>
         </div>
       </div>
 
-      <button id="errorTryAgain" autocomplete="off" onclick="retryThis(this);">&retry.label;</button>
+      <div id="netErrorButtonContainer" class="button-container">
+        <button id="errorTryAgain" class="primary" autocomplete="off" onclick="retryThis(this);">&retry.label;</button>
+      </div>
+
       <script>
         // Only do autofocus if we're the toplevel frame; otherwise we
         // don't want to call attention to ourselves!  The key part is
@@ -495,11 +580,10 @@
         // button.
         if (window.top == window) {
             var button = document.getElementById("errorTryAgain");
-            var nextSibling = button.nextSibling;
             var parent = button.parentNode;
-            parent.removeChild(button);
+            button.remove();
             button.setAttribute("autofocus", "true");
-            parent.insertBefore(button, nextSibling);
+            parent.appendChild(button);
         }
       </script>
 
@@ -513,7 +597,7 @@
       </div>
 
       <div id="advancedPanelContainer">
-        <div id="weakCryptoAdvancedPanel">
+        <div id="weakCryptoAdvancedPanel" class="advanced-panel">
           <div id="weakCryptoAdvancedDescription">
             <p>&weakCryptoAdvanced.longDesc;</p>
           </div>
@@ -522,8 +606,20 @@
             <a id="overrideWeakCrypto" href="#">&weakCryptoAdvanced.override;</a>
           </div>
         </div>
+
+        <div id="badCertAdvancedPanel" class="advanced-panel">
+          <p id="badCertTechnicalInfo"/>
+          <button id="exceptionDialogButton">&securityOverride.exceptionButtonLabel;</button>
+        </div>
       </div>
 
+    </div>
+
+    <div id="certificateErrorDebugInformation">
+      <a name="technicalInformation"></a>
+      <button id="copyToClipboard">&certerror.copyToClipboard.label;</button>
+      <div id="certificateErrorText"/>
+      <button id="copyToClipboard">&certerror.copyToClipboard.label;</button>
     </div>
 
     <!--

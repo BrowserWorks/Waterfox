@@ -1,13 +1,23 @@
-. $topsrcdir/browser/config/mozconfig
+export WIN32_REDIST_DIR="/c/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x64/Microsoft.VC140.CRT"
+export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64"
 
-export WIN32_REDIST_DIR=$VCINSTALLDIR/redist/x64/Microsoft.VC120.CRT
+. $topsrcdir/build/mozconfig.vs-common
 
+mk_export_correct_style WIN32_REDIST_DIR
+mk_export_correct_style WIN_UCRT_REDIST_DIR
+
+MOZ_REQUIRE_SIGNING=0
+MOZ_ADDON_SIGNING=0
+
+mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j8
 mk_add_options MOZ_OBJDIR=objdir
 
+export CC="clang-cl"
+export CXX="clang-cl"
+
 ac_add_options --disable-crashreporter
 ac_add_options --disable-eme
-ac_add_options --disable-js-diagnostics
 ac_add_options --disable-js-shell
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-profiling
@@ -16,7 +26,8 @@ ac_add_options --disable-verify-mar
 ac_add_options --disable-webapp-runtime
 ac_add_options --disable-websms-backend
 
-ac_add_options --enable-optimize="-O2"
+ac_add_options --enable-application=browser
+ac_add_options --enable-optimize="-O2 -w"
 ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 ac_add_options --enable-update-packaging

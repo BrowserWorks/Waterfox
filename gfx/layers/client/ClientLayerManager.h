@@ -31,7 +31,7 @@ namespace mozilla {
 namespace layers {
 
 class ClientPaintedLayer;
-class CompositorChild;
+class CompositorBridgeChild;
 class ImageLayer;
 class PLayerChild;
 class FrameUniformityData;
@@ -44,13 +44,7 @@ class ClientLayerManager final : public LayerManager
 public:
   explicit ClientLayerManager(nsIWidget* aWidget);
 
-  virtual void Destroy() override
-  {
-    // It's important to call ClearCachedResource before Destroy because the
-    // former will early-return if the later has already run.
-    ClearCachedResources();
-    LayerManager::Destroy();
-  }
+  virtual void Destroy() override;
 
 protected:
   virtual ~ClientLayerManager();
@@ -158,9 +152,9 @@ public:
   void* GetPaintedLayerCallbackData() const
   { return mPaintedLayerCallbackData; }
 
-  CompositorChild* GetRemoteRenderer();
+  CompositorBridgeChild* GetRemoteRenderer();
 
-  CompositorChild* GetCompositorChild();
+  CompositorBridgeChild* GetCompositorBridgeChild();
 
   // Disable component alpha layers with the software compositor.
   virtual bool ShouldAvoidComponentAlphaLayers() override { return !IsCompositingCheap(); }
@@ -299,6 +293,8 @@ private:
 
   void ClearLayer(Layer* aLayer);
 
+  void HandleMemoryPressureLayer(Layer* aLayer);
+
   bool EndTransactionInternal(DrawPaintedLayerCallback aCallback,
                               void* aCallbackData,
                               EndTransactionFlags);
@@ -385,6 +381,10 @@ public:
   }
 
   virtual void ClearCachedResources() { }
+
+  // Shrink memory usage.
+  // Called when "memory-pressure" is observed.
+  virtual void HandleMemoryPressure() { }
 
   virtual void RenderLayer() = 0;
   virtual void RenderLayerWithReadback(ReadbackProcessor *aReadback) { RenderLayer(); }

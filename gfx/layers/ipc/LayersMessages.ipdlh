@@ -7,7 +7,7 @@
 
 include LayersSurfaces;
 include protocol PCompositable;
-include protocol PCompositor;
+include protocol PCompositorBridge;
 include protocol PLayer;
 include protocol PImageContainer;
 include protocol PRenderFrame;
@@ -230,6 +230,7 @@ struct CommonLayerAttributes {
   uint64_t scrollbarTargetContainerId;
   uint32_t scrollbarDirection;
   float scrollbarThumbRatio;
+  bool isScrollbarContainer;
   int8_t mixBlendMode;
   bool forceIsolatedGroup;
   nullable PLayer maskLayer;
@@ -515,7 +516,7 @@ union AsyncParentMessageData {
 };
 
 union AsyncChildMessageData {
-  OpRemoveTextureAsync;
+  CompositableOperation;
 };
 
 } // namespace

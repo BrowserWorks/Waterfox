@@ -246,6 +246,14 @@ EVENT(keyup,
       eKeyUp,
       EventNameType_HTMLXUL,
       eKeyboardEventClass)
+EVENT(mozkeydownonplugin,
+      eKeyDownOnPlugin,
+      EventNameType_None,
+      eKeyboardEventClass)
+EVENT(mozkeyuponplugin,
+      eKeyUpOnPlugin,
+      EventNameType_None,
+      eKeyboardEventClass)
 NON_IDL_EVENT(mozbrowserbeforekeydown,
               eBeforeKeyDown,
               EventNameType_None,
@@ -419,6 +427,10 @@ EVENT(suspend,
       eBasicEventClass)
 EVENT(timeupdate,
       eTimeUpdate,
+      EventNameType_HTML,
+      eBasicEventClass)
+EVENT(toggle,
+      eToggle,
       EventNameType_HTML,
       eBasicEventClass)
 EVENT(volumechange,

@@ -12,10 +12,11 @@ Cu.import("resource://gre/modules/ReaderMode.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncPrefs", "resource://gre/modules/AsyncPrefs.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "NarrateControls", "resource://gre/modules/narrate/NarrateControls.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Rect", "resource://gre/modules/Geometry.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task", "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "UITelemetry", "resource://gre/modules/UITelemetry.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "NarrateControls", "resource://gre/modules/narrate/NarrateControls.jsm");
 
 var gStrings = Services.strings.createBundle("chrome://global/locale/aboutReader.properties");
 
@@ -36,6 +37,7 @@ var AboutReader = function(mm, win, articlePromise) {
   this._mm.addMessageListener("Reader:CloseDropdown", this);
   this._mm.addMessageListener("Reader:AddButton", this);
   this._mm.addMessageListener("Reader:RemoveButton", this);
+  this._mm.addMessageListener("Reader:GetStoredArticleData", this);
 
   this._docRef = Cu.getWeakReference(doc);
   this._winRef = Cu.getWeakReference(win);
@@ -204,6 +206,9 @@ AboutReader.prototype = {
         }
         break;
       }
+      case "Reader:GetStoredArticleData": {
+        this._mm.sendAsyncMessage("Reader:StoredArticleData", { article: this._article });
+      }
     }
   },
 
@@ -252,13 +257,14 @@ AboutReader.prototype = {
         this._mm.removeMessageListener("Reader:CloseDropdown", this);
         this._mm.removeMessageListener("Reader:AddButton", this);
         this._mm.removeMessageListener("Reader:RemoveButton", this);
+        this._mm.removeMessageListener("Reader:GetStoredArticleData", this);
         this._windowUnloaded = true;
         break;
     }
   },
 
   _onReaderClose: function() {
-    this._win.location.href = this._getOriginalUrl();
+    ReaderMode.leaveReaderMode(this._mm.docShell, this._win);
   },
 
   _setFontSize: function(newFontSize) {
@@ -269,11 +275,7 @@ AboutReader.prototype = {
 
     this._fontSize = newFontSize;
     containerClasses.add("font-size" + this._fontSize);
-
-    this._mm.sendAsyncMessage("Reader:SetIntPref", {
-      name: "reader.font_size",
-      value: this._fontSize
-    });
+    return AsyncPrefs.set("reader.font_size", this._fontSize);
   },
 
   _setupFontSizeButtons: function() {
@@ -425,10 +427,7 @@ AboutReader.prototype = {
     this._enableAmbientLighting(colorSchemePref === "auto");
     this._setColorScheme(colorSchemePref);
 
-    this._mm.sendAsyncMessage("Reader:SetCharPref", {
-      name: "reader.color_scheme",
-      value: colorSchemePref
-    });
+    AsyncPrefs.set("reader.color_scheme", colorSchemePref);
   },
 
   _setFontType: function(newFontType) {
@@ -443,10 +442,7 @@ AboutReader.prototype = {
     this._fontType = newFontType;
     bodyClasses.add(this._fontType);
 
-    this._mm.sendAsyncMessage("Reader:SetCharPref", {
-      name: "reader.font_type",
-      value: this._fontType
-    });
+    AsyncPrefs.set("reader.font_type", this._fontType);
   },
 
   _setSystemUIVisibility: function(visible) {

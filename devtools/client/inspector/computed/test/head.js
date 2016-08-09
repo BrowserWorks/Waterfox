@@ -1,6 +1,8 @@
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
  http://creativecommons.org/publicdomain/zero/1.0/ */
+/* eslint no-unused-vars: [2, {"vars": "local"}] */
+/* import-globals-from ../../test/head.js */
 "use strict";
 
 // Import the inspector's head.js first (which itself imports shared-head.js).
@@ -13,70 +15,12 @@ registerCleanupFunction(() => {
 });
 
 /**
- * Open the toolbox, with the inspector tool visible, and the computed-view
- * sidebar tab selected.
- * @return a promise that resolves when the inspector is ready and the computed
- * view is visible and ready
- */
-function openComputedView() {
-  return openInspectorSidebarTab("computedview").then(({toolbox, inspector}) => {
-    return {
-      toolbox,
-      inspector,
-      view: inspector.computedview.view
-    };
-  });
-}
-
-/**
- * Get the NodeFront for a given css selector, via the protocol
- *
- * @param {String} selector
- * @param {InspectorPanel} inspector
- *        The instance of InspectorPanel currently loaded in the toolbox
- * @return {Promise} Resolves to the NodeFront instance
- */
-function getNodeFront(selector, {walker}) {
-  return walker.querySelector(walker.rootNode, selector);
-}
-
-/**
- * Listen for a new tab to open and return a promise that resolves when one
- * does and completes the load event.
- *
- * @return a promise that resolves to the tab object
- */
-var waitForTab = Task.async(function*() {
-  info("Waiting for a tab to open");
-  yield once(gBrowser.tabContainer, "TabOpen");
-  let tab = gBrowser.selectedTab;
-  let browser = tab.linkedBrowser;
-  yield once(browser, "load", true);
-  info("The tab load completed");
-  return tab;
-});
-
-/**
  * Dispatch the copy event on the given element
  */
 function fireCopyEvent(element) {
   let evt = element.ownerDocument.createEvent("Event");
   evt.initEvent("copy", true, true);
   element.dispatchEvent(evt);
-}
-
-/**
- * Simulate the key input for the given input in the window.
- *
- * @param {String} input
- *        The string value to input
- * @param {Window} win
- *        The window containing the panel
- */
-function synthesizeKeys(input, win) {
-  for (let key of input.split("")) {
-    EventUtils.synthesizeKey(key, {}, win);
-  }
 }
 
 /**
@@ -138,7 +82,7 @@ function getComputedViewPropertyView(view, name) {
  * @return {Promise} A promise that resolves to the property matched rules
  * container
  */
-var getComputedViewMatchedRules = Task.async(function*(view, name) {
+var getComputedViewMatchedRules = Task.async(function* (view, name) {
   let expander;
   let propertyContent;
   for (let property of view.styleDocument.querySelectorAll(".property-view")) {

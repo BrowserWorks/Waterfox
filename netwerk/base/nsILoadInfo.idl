@@ -158,6 +158,15 @@ interface nsILoadInfo : nsISupports
   const unsigned long SEC_DONT_FOLLOW_REDIRECTS = (1<<11);
 
   /**
+   * Force private browsing. Setting this flag the private browsing can be
+   * enforce even when a loading is not happening in the context of a document.
+   *
+   * If the flag is true, even if a document context is present,
+   * GetUsePrivateBrowsing will always return true.
+   */
+  const unsigned long SEC_FORCE_PRIVATE_BROWSING = (1<<12);
+
+  /**
    * The loadingPrincipal is the principal that is responsible for the load.
    * It is *NOT* the principal tied to the resource/URI that this
    * channel is loading, it's the principal of the resource's
@@ -283,6 +292,11 @@ interface nsILoadInfo : nsISupports
   [infallible] readonly attribute boolean aboutBlankInherits;
 
   /**
+   * If usePrivateBrowsing is true, private browsing will be used.
+   */
+  [infallible] readonly attribute boolean usePrivateBrowsing;
+
+  /**
    * If allowChrome is true, then use nsIScriptSecurityManager::ALLOW_CHROME
    * when calling CheckLoadURIWithPrincipal().
    */
@@ -335,6 +349,22 @@ interface nsILoadInfo : nsISupports
    * upgradeInsecureRequests is false.
    */
   [infallible] readonly attribute boolean upgradeInsecureRequests;
+
+  /**
+   * If true, the content of the channel is queued up and checked
+   * if it matches a content signature. Note, setting this flag
+   * to true will negatively impact performance since the preloader
+   * can not start until all of the content is fetched from the
+   * netwerk.
+   *
+   * Only use that in combination with TYPE_DOCUMENT.
+   */
+  [infallible] attribute boolean verifySignedContent;
+
+  /**
+   * If true, this load will fail if it has no SRI integrity
+   */
+  [infallible] attribute boolean enforceSRI;
 
   /**
    * Typically these are the window IDs of the window in which the element being
@@ -518,14 +548,14 @@ interface nsILoadInfo : nsISupports
   mozilla::LoadTainting GetTainting()
   {
     uint32_t tainting = TAINTING_BASIC;
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(GetTainting(&tainting)));
+    MOZ_ALWAYS_SUCCEEDS(GetTainting(&tainting));
     return static_cast<mozilla::LoadTainting>(tainting);
   }
 
   void MaybeIncreaseTainting(mozilla::LoadTainting aTainting)
   {
     uint32_t tainting = static_cast<uint32_t>(aTainting);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(MaybeIncreaseTainting(tainting)));
+    MOZ_ALWAYS_SUCCEEDS(MaybeIncreaseTainting(tainting));
   }
 %}
 };

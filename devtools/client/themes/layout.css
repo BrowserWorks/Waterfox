@@ -7,6 +7,12 @@
   overflow: auto;
 }
 
+#layout-wrapper {
+  /* The sidebar-panel is not focusable, this wrapper will catch click events in
+     all the empty area around the layout-container */
+  height: 100%;
+}
+
 #layout-container {
   /* The view will grow bigger as the window gets resized, until 400px */
   max-width: 400px;
@@ -120,6 +126,26 @@
 
 #layout-content {
   background-color: #87ceeb;
+}
+
+.theme-firebug #layout-main,
+.theme-firebug #layout-borders,
+.theme-firebug #layout-content {
+  border-style: solid;
+}
+
+.theme-firebug #layout-main,
+.theme-firebug #layout-header {
+  font-family: var(--proportional-font-family);
+}
+
+.theme-firebug #layout-main {
+  color: var(--theme-body-color);
+  font-size: var(--theme-toolbar-font-size);
+}
+
+.theme-firebug #layout-header {
+  font-size: var(--theme-toolbar-font-size);
 }
 
 /* Editable region sizes are contained in absolutely positioned <p> */
@@ -335,4 +361,17 @@
 #layout-container.inactive > #layout-header > #layout-element-size,
 #layout-container.inactive > #layout-main > p {
    visibility: hidden;
+}
+
+#layout-position-group {
+  display: flex;
+  align-items: center;
+}
+
+#layout-geometry-editor {
+  visibility: hidden;
+}
+
+#layout-geometry-editor::before {
+  background: url(images/geometry-editor.svg) no-repeat center center / 16px 16px;
 }

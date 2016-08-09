@@ -26,19 +26,8 @@ var gSearchPane = {
    * Initialize autocomplete to ensure prefs are in sync.
    */
   _initAutocomplete: function () {
-    let unifiedCompletePref = false;
-    try {
-      unifiedCompletePref =
-        Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
-    } catch (ex) {}
-
-    if (unifiedCompletePref) {
-      Components.classes["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
-                .getService(Components.interfaces.mozIPlacesAutoComplete);
-    } else {
-      Components.classes["@mozilla.org/autocomplete/search;1?name=history"]
-                .getService(Components.interfaces.mozIPlacesAutoComplete);
-    }
+    Components.classes["@mozilla.org/autocomplete/search;1?name=unifiedcomplete"]
+              .getService(Components.interfaces.mozIPlacesAutoComplete);
   },
 
   init: function ()
@@ -70,14 +59,11 @@ var gSearchPane = {
   },
 
   updateSuggestsCheckbox() {
-    let urlbarSuggests = document.getElementById("urlBarSuggestion");
-    urlbarSuggests.hidden =
-      !Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete");
-
     let suggestsPref =
       document.getElementById("browser.search.suggest.enabled");
     let permanentPB =
       Services.prefs.getBoolPref("browser.privatebrowsing.autostart");
+    let urlbarSuggests = document.getElementById("urlBarSuggestion");
     urlbarSuggests.disabled = !suggestsPref.value || permanentPB;
 
     let urlbarSuggestsPref =
@@ -183,7 +169,13 @@ var gSearchPane = {
         gSearchPane.remove(aEngine);
         break;
       case "engine-current":
-        gSearchPane.buildDefaultEngineDropDown();
+        // If the user is going through the drop down using up/down keys, the
+        // dropdown may still be open (eg. on Windows) when engine-current is
+        // fired, so rebuilding the list unconditionally would get in the way.
+        let selectedEngine =
+          document.getElementById("defaultEngine").selectedItem.engine;
+        if (selectedEngine.name != aEngine.name)
+          gSearchPane.buildDefaultEngineDropDown();
         break;
       case "engine-default":
         // Not relevant

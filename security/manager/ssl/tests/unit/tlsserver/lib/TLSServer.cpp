@@ -10,6 +10,7 @@
 
 #include "ScopedNSSTypes.h"
 #include "base64.h"
+#include "mozilla/Move.h"
 #include "mozilla/Snprintf.h"
 #include "nspr.h"
 #include "nss.h"
@@ -74,12 +75,12 @@ ReadFileToBuffer(const char* basePath, const char* filename, char (&buf)[N])
     PrintPRError("snprintf failed");
     return SECFailure;
   }
-  ScopedPRFileDesc fd(PR_OpenFile(buf, PR_RDONLY, 0));
+  UniquePRFileDesc fd(PR_OpenFile(buf, PR_RDONLY, 0));
   if (!fd) {
     PrintPRError("PR_Open failed");
     return SECFailure;
   }
-  int32_t fileSize = PR_Available(fd);
+  int32_t fileSize = PR_Available(fd.get());
   if (fileSize < 0) {
     PrintPRError("PR_Available failed");
     return SECFailure;
@@ -88,7 +89,7 @@ ReadFileToBuffer(const char* basePath, const char* filename, char (&buf)[N])
     PR_fprintf(PR_STDERR, "file too large - not reading\n");
     return SECFailure;
   }
-  int32_t bytesRead = PR_Read(fd, buf, fileSize);
+  int32_t bytesRead = PR_Read(fd.get(), buf, fileSize);
   if (bytesRead != fileSize) {
     PrintPRError("PR_Read failed");
     return SECFailure;
@@ -128,7 +129,8 @@ AddKeyFromFile(const char* basePath, const char* filename)
   }
 
   unsigned int binLength;
-  ScopedPORTString bin((char*)ATOB_AsciiToData(base64, &binLength));
+  UniquePORTString bin(
+    reinterpret_cast<char*>(ATOB_AsciiToData(base64, &binLength)));
   if (!bin || binLength == 0) {
     PrintPRError("ATOB_AsciiToData failed");
     return SECFailure;
@@ -138,7 +140,7 @@ AddKeyFromFile(const char* basePath, const char* filename)
     PrintPRError("SECITEM_AllocItem failed");
     return SECFailure;
   }
-  PORT_Memcpy(secitem->data, bin, binLength);
+  PORT_Memcpy(secitem->data, bin.get(), binLength);
   ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
   if (!slot) {
     PrintPRError("PK11_GetInternalKeySlot failed");
@@ -188,7 +190,7 @@ AddCertificateFromFile(const char* basePath, const char* filename)
     PrintPRError("CERT_DecodeCertPackage failed");
     return rv;
   }
-  ScopedCERTCertificate cert(CERT_NewTempCertificate(CERT_GetDefaultCertDB(),
+  UniqueCERTCertificate cert(CERT_NewTempCertificate(CERT_GetDefaultCertDB(),
                                                      &certDER, nullptr, false,
                                                      true));
   PORT_Free(certDER.data);
@@ -203,7 +205,8 @@ AddCertificateFromFile(const char* basePath, const char* filename)
   }
   // The nickname is the filename without '.pem'.
   std::string nickname(filename, strlen(filename) - 4);
-  rv = PK11_ImportCert(slot, cert, CK_INVALID_HANDLE, nickname.c_str(), false);
+  rv = PK11_ImportCert(slot.get(), cert.get(), CK_INVALID_HANDLE,
+                       nickname.c_str(), false);
   if (rv != SECSuccess) {
     PrintPRError("PK11_ImportCert failed");
     return rv;
@@ -220,7 +223,7 @@ LoadCertificatesAndKeys(const char* basePath)
     basePath = basePath + 4;
   }
 
-  ScopedPRDir fdDir(PR_OpenDir(basePath));
+  UniquePRDir fdDir(PR_OpenDir(basePath));
   if (!fdDir) {
     PrintPRError("PR_OpenDir failed");
     return SECFailure;
@@ -236,8 +239,8 @@ LoadCertificatesAndKeys(const char* basePath)
   // AddKeyFromFile.)
   std::vector<std::string> certificates;
   std::vector<std::string> keys;
-  for (PRDirEntry* dirEntry = PR_ReadDir(fdDir, PR_SKIP_BOTH); dirEntry;
-       dirEntry = PR_ReadDir(fdDir, PR_SKIP_BOTH)) {
+  for (PRDirEntry* dirEntry = PR_ReadDir(fdDir.get(), PR_SKIP_BOTH); dirEntry;
+       dirEntry = PR_ReadDir(fdDir.get(), PR_SKIP_BOTH)) {
     size_t nameLength = strlen(dirEntry->name);
     if (nameLength > 4) {
       if (strncmp(dirEntry->name + nameLength - 4, ".pem", 4) == 0) {
@@ -352,10 +355,10 @@ ReadRequest(Connection *aConn)
 }
 
 void
-HandleConnection(PRFileDesc *aSocket, PRFileDesc *aModelSocket)
+HandleConnection(PRFileDesc* aSocket, const UniquePRFileDesc& aModelSocket)
 {
   Connection conn(aSocket);
-  nsresult rv = SetupTLS(&conn, aModelSocket);
+  nsresult rv = SetupTLS(&conn, aModelSocket.get());
   if (NS_FAILED(rv)) {
     PR_SetError(PR_INVALID_STATE_ERROR, 0);
     PrintPRError("PR_Recv failed");
@@ -377,7 +380,7 @@ HandleConnection(PRFileDesc *aSocket, PRFileDesc *aModelSocket)
 int
 DoCallback()
 {
-  ScopedPRFileDesc socket(PR_NewTCPSocket());
+  UniquePRFileDesc socket(PR_NewTCPSocket());
   if (!socket) {
     PrintPRError("PR_NewTCPSocket failed");
     return 1;
@@ -385,16 +388,16 @@ DoCallback()
 
   PRNetAddr addr;
   PR_InitializeNetAddr(PR_IpAddrLoopback, gCallbackPort, &addr);
-  if (PR_Connect(socket, &addr, PR_INTERVAL_NO_TIMEOUT) != PR_SUCCESS) {
+  if (PR_Connect(socket.get(), &addr, PR_INTERVAL_NO_TIMEOUT) != PR_SUCCESS) {
     PrintPRError("PR_Connect failed");
     return 1;
   }
 
   const char *request = "GET / HTTP/1.0\r\n\r\n";
-  SendAll(socket, request, strlen(request));
+  SendAll(socket.get(), request, strlen(request));
   char buf[4096];
   memset(buf, 0, sizeof(buf));
-  int32_t bytesRead = PR_Recv(socket, buf, sizeof(buf) - 1, 0,
+  int32_t bytesRead = PR_Recv(socket.get(), buf, sizeof(buf) - 1, 0,
                               PR_INTERVAL_NO_TIMEOUT);
   if (bytesRead < 0) {
     PrintPRError("PR_Recv failed 1");
@@ -409,11 +412,11 @@ DoCallback()
 }
 
 SECStatus
-ConfigSecureServerWithNamedCert(PRFileDesc *fd, const char *certName,
-                                /*optional*/ ScopedCERTCertificate *certOut,
-                                /*optional*/ SSLKEAType *keaOut)
+ConfigSecureServerWithNamedCert(PRFileDesc* fd, const char* certName,
+                                /*optional*/ UniqueCERTCertificate* certOut,
+                                /*optional*/ SSLKEAType* keaOut)
 {
-  ScopedCERTCertificate cert(PK11_FindCertFromNickname(certName, nullptr));
+  UniqueCERTCertificate cert(PK11_FindCertFromNickname(certName, nullptr));
   if (!cert) {
     PrintPRError("PK11_FindCertFromNickname failed");
     return SECFailure;
@@ -422,8 +425,8 @@ ConfigSecureServerWithNamedCert(PRFileDesc *fd, const char *certName,
   // directly by a trust anchor), we want to send it along in the handshake so
   // we don't encounter unknown issuer errors when that's not what we're
   // testing.
-  ScopedCERTCertificateList certList;
-  ScopedCERTCertificate issuerCert(
+  UniqueCERTCertificateList certList;
+  UniqueCERTCertificate issuerCert(
     CERT_FindCertByName(CERT_GetDefaultCertDB(), &cert->derIssuer));
   // If we can't find the issuer cert, continue without it.
   if (issuerCert) {
@@ -431,18 +434,18 @@ ConfigSecureServerWithNamedCert(PRFileDesc *fd, const char *certName,
     // utility function, so we must create it ourselves. This consists
     // of creating an arena, allocating space for the CERTCertificateList,
     // and then transferring ownership of the arena to that list.
-    ScopedPLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
+    UniquePLArenaPool arena(PORT_NewArena(DER_DEFAULT_CHUNKSIZE));
     if (!arena) {
       PrintPRError("PORT_NewArena failed");
       return SECFailure;
     }
-    certList = reinterpret_cast<CERTCertificateList*>(
-      PORT_ArenaAlloc(arena, sizeof(CERTCertificateList)));
+    certList.reset(static_cast<CERTCertificateList*>(
+      PORT_ArenaAlloc(arena.get(), sizeof(CERTCertificateList))));
     if (!certList) {
       PrintPRError("PORT_ArenaAlloc failed");
       return SECFailure;
     }
-    certList->arena = arena.forget();
+    certList->arena = arena.release();
     // We also have to manually copy the certificates we care about to the
     // list, because there aren't any utility functions for that either.
     certList->certs = reinterpret_cast<SECItem*>(
@@ -461,22 +464,23 @@ ConfigSecureServerWithNamedCert(PRFileDesc *fd, const char *certName,
   }
 
   ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
-  ScopedSECKEYPrivateKey key(PK11_FindKeyByDERCert(slot, cert, nullptr));
+  UniqueSECKEYPrivateKey key(
+    PK11_FindKeyByDERCert(slot.get(), cert.get(), nullptr));
   if (!key) {
     PrintPRError("PK11_FindKeyByDERCert failed");
     return SECFailure;
   }
 
-  SSLKEAType certKEA = NSS_FindCertKEAType(cert);
+  SSLKEAType certKEA = NSS_FindCertKEAType(cert.get());
 
-  if (SSL_ConfigSecureServerWithCertChain(fd, cert, certList, key, certKEA)
-        != SECSuccess) {
+  if (SSL_ConfigSecureServerWithCertChain(fd, cert.get(), certList.get(),
+                                          key.get(), certKEA) != SECSuccess) {
     PrintPRError("SSL_ConfigSecureServer failed");
     return SECFailure;
   }
 
   if (certOut) {
-    *certOut = cert.forget();
+    *certOut = Move(cert);
   }
 
   if (keaOut) {
@@ -523,7 +527,7 @@ StartServer(const char *nssCertDBDir, SSLSNISocketConfig sniSocketConfig,
     return 1;
   }
 
-  ScopedPRFileDesc serverSocket(PR_NewTCPSocket());
+  UniquePRFileDesc serverSocket(PR_NewTCPSocket());
   if (!serverSocket) {
     PrintPRError("PR_NewTCPSocket failed");
     return 1;
@@ -532,34 +536,34 @@ StartServer(const char *nssCertDBDir, SSLSNISocketConfig sniSocketConfig,
   PRSocketOptionData socketOption;
   socketOption.option = PR_SockOpt_Reuseaddr;
   socketOption.value.reuse_addr = true;
-  PR_SetSocketOption(serverSocket, &socketOption);
+  PR_SetSocketOption(serverSocket.get(), &socketOption);
 
   PRNetAddr serverAddr;
   PR_InitializeNetAddr(PR_IpAddrLoopback, LISTEN_PORT, &serverAddr);
-  if (PR_Bind(serverSocket, &serverAddr) != PR_SUCCESS) {
+  if (PR_Bind(serverSocket.get(), &serverAddr) != PR_SUCCESS) {
     PrintPRError("PR_Bind failed");
     return 1;
   }
 
-  if (PR_Listen(serverSocket, 1) != PR_SUCCESS) {
+  if (PR_Listen(serverSocket.get(), 1) != PR_SUCCESS) {
     PrintPRError("PR_Listen failed");
     return 1;
   }
 
-  ScopedPRFileDesc rawModelSocket(PR_NewTCPSocket());
+  UniquePRFileDesc rawModelSocket(PR_NewTCPSocket());
   if (!rawModelSocket) {
     PrintPRError("PR_NewTCPSocket failed for rawModelSocket");
     return 1;
   }
 
-  ScopedPRFileDesc modelSocket(SSL_ImportFD(nullptr, rawModelSocket.forget()));
+  UniquePRFileDesc modelSocket(SSL_ImportFD(nullptr, rawModelSocket.release()));
   if (!modelSocket) {
     PrintPRError("SSL_ImportFD of rawModelSocket failed");
     return 1;
   }
 
-  if (SECSuccess != SSL_SNISocketConfigHook(modelSocket, sniSocketConfig,
-                                            sniSocketConfigArg)) {
+  if (SSL_SNISocketConfigHook(modelSocket.get(), sniSocketConfig,
+                              sniSocketConfigArg) != SECSuccess) {
     PrintPRError("SSL_SNISocketConfigHook failed");
     return 1;
   }
@@ -567,9 +571,8 @@ StartServer(const char *nssCertDBDir, SSLSNISocketConfig sniSocketConfig,
   // We have to configure the server with a certificate, but it's not one
   // we're actually going to end up using. In the SNI callback, we pick
   // the right certificate for the connection.
-  if (SECSuccess != ConfigSecureServerWithNamedCert(modelSocket,
-                                                    DEFAULT_CERT_NICKNAME,
-                                                    nullptr, nullptr)) {
+  if (ConfigSecureServerWithNamedCert(modelSocket.get(), DEFAULT_CERT_NICKNAME,
+                                      nullptr, nullptr) != SECSuccess) {
     return 1;
   }
 
@@ -581,7 +584,7 @@ StartServer(const char *nssCertDBDir, SSLSNISocketConfig sniSocketConfig,
 
   while (true) {
     PRNetAddr clientAddr;
-    PRFileDesc *clientSocket = PR_Accept(serverSocket, &clientAddr,
+    PRFileDesc* clientSocket = PR_Accept(serverSocket.get(), &clientAddr,
                                          PR_INTERVAL_NO_TIMEOUT);
     HandleConnection(clientSocket, modelSocket);
   }

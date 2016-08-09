@@ -481,32 +481,6 @@ MacroAssembler::branch32(Condition cond, const BaseIndex& lhs, Imm32 rhs, Label*
     branch32(cond, scratch2, rhs, label);
 }
 
-
-void
-MacroAssembler::branch32(Condition cond, const Operand& lhs, Register rhs, Label* label)
-{
-    if (lhs.getTag() == Operand::OP2) {
-        branch32(cond, lhs.toReg(), rhs, label);
-    } else {
-        ScratchRegisterScope scratch(*this);
-        ma_ldr(lhs.toAddress(), scratch);
-        branch32(cond, scratch, rhs, label);
-    }
-}
-
-void
-MacroAssembler::branch32(Condition cond, const Operand& lhs, Imm32 rhs, Label* label)
-{
-    if (lhs.getTag() == Operand::OP2) {
-        branch32(cond, lhs.toReg(), rhs, label);
-    } else {
-        // branch32 will use ScratchRegister.
-        AutoRegisterScope scratch(*this, secondScratchReg_);
-        ma_ldr(lhs.toAddress(), scratch);
-        branch32(cond, scratch, rhs, label);
-    }
-}
-
 void
 MacroAssembler::branch32(Condition cond, wasm::SymbolicAddress lhs, Imm32 rhs, Label* label)
 {
@@ -1188,6 +1162,13 @@ MacroAssembler::branchTestMagicImpl(Condition cond, const T& t, L label)
 {
     cond = testMagic(cond, t);
     ma_b(label, cond);
+}
+
+void
+MacroAssembler::branchTestMagic(Condition cond, const Address& valaddr, JSWhyMagic why, Label* label)
+{
+    branchTestMagic(cond, valaddr, label);
+    branch32(cond, ToPayload(valaddr), Imm32(why), label);
 }
 
 //}}} check_macroassembler_style

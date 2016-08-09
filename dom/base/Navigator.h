@@ -71,11 +71,9 @@ class MozIdleObserver;
 #ifdef MOZ_GAMEPAD
 class Gamepad;
 #endif // MOZ_GAMEPAD
-#ifdef MOZ_MEDIA_NAVIGATOR
 class NavigatorUserMediaSuccessCallback;
 class NavigatorUserMediaErrorCallback;
 class MozGetUserMediaDevicesSuccessCallback;
-#endif // MOZ_MEDIA_NAVIGATOR
 
 namespace network {
 class Connection;
@@ -152,6 +150,10 @@ public:
 
   // The XPCOM GetProduct is OK
   // The XPCOM GetLanguage is OK
+  void GetUserAgent(nsString& aUserAgent, ErrorResult& /* unused */)
+  {
+    GetUserAgent(aUserAgent);
+  }
   bool OnLine();
   void RegisterProtocolHandler(const nsAString& aScheme, const nsAString& aURL,
                                const nsAString& aTitle, ErrorResult& aRv);
@@ -219,6 +221,7 @@ public:
   }
   PowerManager* GetMozPower(ErrorResult& aRv);
   bool JavaEnabled(ErrorResult& aRv);
+  uint64_t HardwareConcurrency();
   bool TaintEnabled()
   {
     return false;
@@ -289,7 +292,6 @@ public:
                   const Nullable<ArrayBufferViewOrBlobOrStringOrFormData>& aData,
                   ErrorResult& aRv);
 
-#ifdef MOZ_MEDIA_NAVIGATOR
   void MozGetUserMedia(const MediaStreamConstraints& aConstraints,
                        NavigatorUserMediaSuccessCallback& aOnSuccess,
                        NavigatorUserMediaErrorCallback& aOnError,
@@ -300,18 +302,9 @@ public:
                               uint64_t aInnerWindowID,
                               const nsAString& aCallID,
                               ErrorResult& aRv);
-#endif // MOZ_MEDIA_NAVIGATOR
 
   already_AddRefed<ServiceWorkerContainer> ServiceWorker();
 
-  bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
-                 JS::Handle<jsid> aId,
-                 JS::MutableHandle<JS::PropertyDescriptor> aDesc);
-  // The return value is whether DoResolve might end up resolving the given id.
-  // If in doubt, return true.
-  static bool MayResolve(jsid aId);
-  void GetOwnPropertyNames(JSContext* aCx, nsTArray<nsString>& aNames,
-                           ErrorResult& aRv);
   void GetLanguages(nsTArray<nsString>& aLanguages);
 
   bool MozE10sEnabled();
@@ -333,10 +326,8 @@ public:
 #ifdef MOZ_NFC
   static bool HasNFCSupport(JSContext* /* unused */, JSObject* aGlobal);
 #endif // MOZ_NFC
-#ifdef MOZ_MEDIA_NAVIGATOR
   static bool HasUserMediaSupport(JSContext* /* unused */,
                                   JSObject* /* unused */);
-#endif // MOZ_MEDIA_NAVIGATOR
 
   static bool HasDataStoreSupport(nsIPrincipal* aPrincipal);
 
@@ -417,14 +408,9 @@ private:
   RefPtr<DeviceStorageAreaListener> mDeviceStorageAreaListener;
   RefPtr<Presentation> mPresentation;
 
-  // Hashtable for saving cached objects DoResolve created, so we don't create
-  // the object twice if asked for it twice, whether due to use of "delete" or
-  // due to Xrays.  We could probably use a nsJSThingHashtable here, but then
-  // we'd need to figure out exactly how to trace that, and that seems to be
-  // rocket science.  :(
-  nsInterfaceHashtable<nsStringHashKey, nsISupports> mCachedResolveResults;
-
   nsTArray<RefPtr<Promise> > mVRGetDevicesPromises;
+
+  bool mBatteryTelemetryReported;
 };
 
 } // namespace dom

@@ -341,6 +341,8 @@ class IonCache
         MOZ_ASSERT(pc_);
         return pc_;
     }
+
+    void trace(JSTracer* trc);
 };
 
 // Define the cache kind and pre-declare data structures used for calling inline
@@ -818,6 +820,9 @@ class NameIC : public IonCache
     }
 IONCACHE_KIND_LIST(CACHE_CASTS)
 #undef OPCODE_CASTS
+
+bool IsCacheableProtoChainForIonOrCacheIR(JSObject* obj, JSObject* holder);
+bool IsCacheableGetPropReadSlotForIonOrCacheIR(JSObject* obj, JSObject* holder, Shape* shape);
 
 } // namespace jit
 } // namespace js

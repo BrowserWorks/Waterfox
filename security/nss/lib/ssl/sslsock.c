@@ -127,7 +127,11 @@ int ssl_lock_readers = 1; /* default true. */
 char ssl_debug;
 char ssl_trace;
 FILE *ssl_trace_iob;
+
+#ifdef NSS_ALLOW_SSLKEYLOGFILE
 FILE *ssl_keylog_iob;
+#endif
+
 char lockStatus[] = "Locks are ENABLED.  ";
 #define LOCKSTATUS_OFFSET 10 /* offset of ENABLED */
 
@@ -212,6 +216,7 @@ ssl_DupSocket(sslSocket *os)
 {
     sslSocket *ss;
     SECStatus rv;
+    sslServerCert *sc = NULL;
 
     ss = ssl_NewSocket((PRBool)(!os->opt.noLocks), os->protocolVariant);
     if (ss) {
@@ -229,9 +234,6 @@ ssl_DupSocket(sslSocket *os)
         ss->dbHandle = os->dbHandle;
 
         /* copy ssl2&3 policy & prefs, even if it's not selected (yet) */
-        ss->allowedByPolicy = os->allowedByPolicy;
-        ss->maybeAllowedByPolicy = os->maybeAllowedByPolicy;
-        ss->chosenPreference = os->chosenPreference;
         PORT_Memcpy(ss->cipherSuites, os->cipherSuites, sizeof os->cipherSuites);
         PORT_Memcpy(ss->ssl3.dtlsSRTPCiphers, os->ssl3.dtlsSRTPCiphers,
                     sizeof(PRUint16) * os->ssl3.dtlsSRTPCipherCount);
@@ -256,27 +258,14 @@ ssl_DupSocket(sslSocket *os)
             ss->ssl3.dheGroups = NULL;
         }
 
-        if (os->cipherSpecs) {
-            ss->cipherSpecs = (unsigned char *)PORT_Alloc(os->sizeCipherSpecs);
-            if (ss->cipherSpecs)
-                PORT_Memcpy(ss->cipherSpecs, os->cipherSpecs,
-                            os->sizeCipherSpecs);
-            ss->sizeCipherSpecs = os->sizeCipherSpecs;
-            ss->preferredCipher = os->preferredCipher;
-        } else {
-            ss->cipherSpecs = NULL; /* produced lazily */
-            ss->sizeCipherSpecs = 0;
-            ss->preferredCipher = NULL;
-        }
         if (ss->opt.useSecurity) {
-            /* This int should be SSLKEAType, but CC on Irix complains,
-             * during the for loop.
-             */
-            int i;
-            sslServerCerts *oc = os->serverCerts;
-            sslServerCerts *sc = ss->serverCerts;
+            PRCList *cursor;
+            for (cursor = PR_NEXT_LINK(&os->serverCerts);
+                 cursor != &os->serverCerts;
+                 cursor = PR_NEXT_LINK(cursor)) {
+                sslServerCert *oc = (sslServerCert*)cursor;
+                sc = ssl_NewServerCert(&oc->certType);
 
-            for (i = kt_null; i < kt_kea_size; i++, oc++, sc++) {
                 if (oc->serverCert && oc->serverCertChain) {
                     sc->serverCert = CERT_DupCertificate(oc->serverCert);
                     sc->serverCertChain = CERT_DupCertList(oc->serverCertChain);
@@ -286,16 +275,26 @@ ssl_DupSocket(sslSocket *os)
                     sc->serverCert = NULL;
                     sc->serverCertChain = NULL;
                 }
-                sc->serverKeyPair = oc->serverKeyPair ? ssl3_GetKeyPairRef(oc->serverKeyPair)
-                                                      : NULL;
+                sc->serverKeyPair = oc->serverKeyPair ?
+                        ssl3_GetKeyPairRef(oc->serverKeyPair) : NULL;
                 if (oc->serverKeyPair && !sc->serverKeyPair)
                     goto loser;
                 sc->serverKeyBits = oc->serverKeyBits;
-                ss->certStatusArray[i] = !os->certStatusArray[i] ? NULL : SECITEM_DupArray(NULL, os->certStatusArray[i]);
+                sc->certStatusArray = !oc->certStatusArray ? NULL :
+                        SECITEM_DupArray(NULL, oc->certStatusArray);
+                if (SECITEM_CopyItem(NULL, &sc->signedCertTimestamps,
+                                     &oc->signedCertTimestamps) != SECSuccess)
+                    goto loser;
+                PR_APPEND_LINK(&sc->link, &ss->serverCerts);
             }
-            ss->stepDownKeyPair = !os->stepDownKeyPair ? NULL : ssl3_GetKeyPairRef(os->stepDownKeyPair);
-            ss->ephemeralECDHKeyPair = !os->ephemeralECDHKeyPair ? NULL : ssl3_GetKeyPairRef(os->ephemeralECDHKeyPair);
-            ss->dheKeyPair = !os->dheKeyPair ? NULL : ssl3_GetKeyPairRef(os->dheKeyPair);
+            sc = NULL;
+
+            ss->stepDownKeyPair = !os->stepDownKeyPair ? NULL :
+                                  ssl3_GetKeyPairRef(os->stepDownKeyPair);
+            ss->ephemeralECDHKeyPair = !os->ephemeralECDHKeyPair ? NULL :
+                                  ssl3_GetKeyPairRef(os->ephemeralECDHKeyPair);
+            ss->dheKeyPair = !os->dheKeyPair ? NULL :
+                             ssl3_GetKeyPairRef(os->dheKeyPair);
             ss->dheParams = os->dheParams;
 
             /*
@@ -327,6 +326,7 @@ ssl_DupSocket(sslSocket *os)
 
 loser:
     ssl_FreeSocket(ss);
+    ssl_FreeServerCert(sc);
     return NULL;
 }
 
@@ -369,10 +369,7 @@ ssl_DestroyLocks(sslSocket *ss)
 static void
 ssl_DestroySocketContents(sslSocket *ss)
 {
-    /* "i" should be of type SSLKEAType, but CC on IRIX complains during
-     * the for loop.
-     */
-    int i;
+    PRCList *cursor;
 
     /* Free up socket */
     ssl_DestroySecurityInfo(&ss->sec);
@@ -381,34 +378,18 @@ ssl_DestroySocketContents(sslSocket *ss)
 
     PORT_Free(ss->saveBuf.buf);
     PORT_Free(ss->pendingBuf.buf);
-    ssl_DestroyGather(&ss->gs);
+    ssl3_DestroyGather(&ss->gs);
 
     if (ss->peerID != NULL)
         PORT_Free(ss->peerID);
     if (ss->url != NULL)
         PORT_Free((void *)ss->url); /* CONST */
-    if (ss->cipherSpecs) {
-        PORT_Free(ss->cipherSpecs);
-        ss->cipherSpecs = NULL;
-        ss->sizeCipherSpecs = 0;
-    }
 
-    /* Clean up server configuration */
-    for (i = kt_null; i < kt_kea_size; i++) {
-        sslServerCerts *sc = ss->serverCerts + i;
-        if (sc->serverCert != NULL)
-            CERT_DestroyCertificate(sc->serverCert);
-        if (sc->serverCertChain != NULL)
-            CERT_DestroyCertificateList(sc->serverCertChain);
-        if (sc->serverKeyPair != NULL)
-            ssl3_FreeKeyPair(sc->serverKeyPair);
-        if (ss->certStatusArray[i] != NULL) {
-            SECITEM_FreeArray(ss->certStatusArray[i], PR_TRUE);
-            ss->certStatusArray[i] = NULL;
-        }
-        if (ss->signedCertTimestamps[i].data) {
-            SECITEM_FreeItem(&ss->signedCertTimestamps[i], PR_FALSE);
-        }
+    /* Clean up server certificates and sundries. */
+    while (!PR_CLIST_IS_EMPTY(&ss->serverCerts)) {
+        cursor = PR_LIST_TAIL(&ss->serverCerts);
+        PR_REMOVE_LINK(cursor);
+        ssl_FreeServerCert((sslServerCert *)cursor);
     }
     if (ss->stepDownKeyPair) {
         ssl3_FreeKeyPair(ss->stepDownKeyPair);
@@ -557,7 +538,7 @@ ssl_EnableTLS(SSLVersionRange *vrange, PRBool on)
             return;
         }
     }
-    if (SSL3_ALL_VERSIONS_DISABLED(vrange)) {
+    if (SSL_ALL_VERSIONS_DISABLED(vrange)) {
         if (on) {
             vrange->min = SSL_LIBRARY_VERSION_TLS_1_0;
             vrange->max = SSL_LIBRARY_VERSION_TLS_1_0;
@@ -594,7 +575,7 @@ ssl_EnableSSL3(SSLVersionRange *vrange, PRBool on)
             return;
         }
     }
-    if (SSL3_ALL_VERSIONS_DISABLED(vrange)) {
+    if (SSL_ALL_VERSIONS_DISABLED(vrange)) {
         if (on) {
             vrange->min = SSL_LIBRARY_VERSION_3_0;
             vrange->max = SSL_LIBRARY_VERSION_3_0;
@@ -686,12 +667,6 @@ SSL_OptionSet(PRFileDesc *fd, PRInt32 which, PRBool on)
                 break;
             }
             ssl_EnableTLS(&ss->vrange, on);
-            ss->preferredCipher = NULL;
-            if (ss->cipherSpecs) {
-                PORT_Free(ss->cipherSpecs);
-                ss->cipherSpecs = NULL;
-                ss->sizeCipherSpecs = 0;
-            }
             break;
 
         case SSL_ENABLE_SSL3:
@@ -703,39 +678,6 @@ SSL_OptionSet(PRFileDesc *fd, PRInt32 which, PRBool on)
                 break;
             }
             ssl_EnableSSL3(&ss->vrange, on);
-            ss->preferredCipher = NULL;
-            if (ss->cipherSpecs) {
-                PORT_Free(ss->cipherSpecs);
-                ss->cipherSpecs = NULL;
-                ss->sizeCipherSpecs = 0;
-            }
-            break;
-
-        case SSL_ENABLE_SSL2:
-            if (IS_DTLS(ss)) {
-                if (on) {
-                    PORT_SetError(SEC_ERROR_INVALID_ARGS);
-                    rv = SECFailure; /* not allowed */
-                }
-                break;
-            }
-            if (on) {
-                /* don't turn it on if ssl2 disallowed by by policy */
-                if (!ssl_VersionIsSupportedByPolicy(ssl_variant_stream,
-                                                    SSL_LIBRARY_VERSION_2)) {
-                    break;
-                }
-            }
-            ss->opt.enableSSL2 = on;
-            if (on) {
-                ss->opt.v2CompatibleHello = on;
-            }
-            ss->preferredCipher = NULL;
-            if (ss->cipherSpecs) {
-                PORT_Free(ss->cipherSpecs);
-                ss->cipherSpecs = NULL;
-                ss->sizeCipherSpecs = 0;
-            }
             break;
 
         case SSL_NO_CACHE:
@@ -748,20 +690,6 @@ SSL_OptionSet(PRFileDesc *fd, PRInt32 which, PRBool on)
                 rv = SECFailure;
             }
             ss->opt.fdx = on;
-            break;
-
-        case SSL_V2_COMPATIBLE_HELLO:
-            if (IS_DTLS(ss)) {
-                if (on) {
-                    PORT_SetError(SEC_ERROR_INVALID_ARGS);
-                    rv = SECFailure; /* not allowed */
-                }
-                break;
-            }
-            ss->opt.v2CompatibleHello = on;
-            if (!on) {
-                ss->opt.enableSSL2 = on;
-            }
             break;
 
         case SSL_ROLLBACK_DETECTION:
@@ -933,17 +861,11 @@ SSL_OptionGet(PRFileDesc *fd, PRInt32 which, PRBool *pOn)
         case SSL_ENABLE_SSL3:
             on = ss->vrange.min == SSL_LIBRARY_VERSION_3_0;
             break;
-        case SSL_ENABLE_SSL2:
-            on = ss->opt.enableSSL2;
-            break;
         case SSL_NO_CACHE:
             on = ss->opt.noCache;
             break;
         case SSL_ENABLE_FDX:
             on = ss->opt.fdx;
-            break;
-        case SSL_V2_COMPATIBLE_HELLO:
-            on = ss->opt.v2CompatibleHello;
             break;
         case SSL_ROLLBACK_DETECTION:
             on = ss->opt.detectRollBack;
@@ -1050,17 +972,11 @@ SSL_OptionGetDefault(PRInt32 which, PRBool *pOn)
         case SSL_ENABLE_SSL3:
             on = versions_defaults_stream.min == SSL_LIBRARY_VERSION_3_0;
             break;
-        case SSL_ENABLE_SSL2:
-            on = ssl_defaults.enableSSL2;
-            break;
         case SSL_NO_CACHE:
             on = ssl_defaults.noCache;
             break;
         case SSL_ENABLE_FDX:
             on = ssl_defaults.fdx;
-            break;
-        case SSL_V2_COMPATIBLE_HELLO:
-            on = ssl_defaults.v2CompatibleHello;
             break;
         case SSL_ROLLBACK_DETECTION:
             on = ssl_defaults.detectRollBack;
@@ -1189,20 +1105,6 @@ SSL_OptionSetDefault(PRInt32 which, PRBool on)
             ssl_EnableSSL3(&versions_defaults_stream, on);
             break;
 
-        case SSL_ENABLE_SSL2:
-            if (on) {
-                /* don't turn it on if ssl2 disallowed by by policy */
-                if (!ssl_VersionIsSupportedByPolicy(ssl_variant_stream,
-                                                    SSL_LIBRARY_VERSION_2)) {
-                    break;
-                }
-            }
-            ssl_defaults.enableSSL2 = on;
-            if (on) {
-                ssl_defaults.v2CompatibleHello = on;
-            }
-            break;
-
         case SSL_NO_CACHE:
             ssl_defaults.noCache = on;
             break;
@@ -1213,13 +1115,6 @@ SSL_OptionSetDefault(PRInt32 which, PRBool on)
                 return SECFailure;
             }
             ssl_defaults.fdx = on;
-            break;
-
-        case SSL_V2_COMPATIBLE_HELLO:
-            ssl_defaults.v2CompatibleHello = on;
-            if (!on) {
-                ssl_defaults.enableSSL2 = on;
-            }
             break;
 
         case SSL_ROLLBACK_DETECTION:
@@ -1365,8 +1260,6 @@ ssl_CipherPolicySet(PRInt32 which, PRInt32 policy)
 
     if (ssl_IsRemovedCipherSuite(which)) {
         rv = SECSuccess;
-    } else if (SSL_IS_SSL2_CIPHER(which)) {
-        rv = ssl2_SetPolicy(which, policy);
     } else {
         rv = ssl3_SetPolicy((ssl3CipherSuite)which, policy);
     }
@@ -1395,8 +1288,6 @@ SSL_CipherPolicyGet(PRInt32 which, PRInt32 *oPolicy)
     if (ssl_IsRemovedCipherSuite(which)) {
         *oPolicy = SSL_NOT_ALLOWED;
         rv = SECSuccess;
-    } else if (SSL_IS_SSL2_CIPHER(which)) {
-        rv = ssl2_GetPolicy(which, oPolicy);
     } else {
         rv = ssl3_GetPolicy((ssl3CipherSuite)which, oPolicy);
     }
@@ -1426,20 +1317,13 @@ SSL_EnableCipher(long which, PRBool enabled)
 SECStatus
 ssl_CipherPrefSetDefault(PRInt32 which, PRBool enabled)
 {
-    SECStatus rv = SECSuccess;
-
     if (ssl_IsRemovedCipherSuite(which))
         return SECSuccess;
     if (enabled && ssl_defaults.noStepDown && SSL_IsExportCipherSuite(which)) {
         PORT_SetError(SEC_ERROR_INVALID_ALGORITHM);
         return SECFailure;
     }
-    if (SSL_IS_SSL2_CIPHER(which)) {
-        rv = ssl2_CipherPrefSetDefault(which, enabled);
-    } else {
-        rv = ssl3_CipherPrefSetDefault((ssl3CipherSuite)which, enabled);
-    }
-    return rv;
+    return ssl3_CipherPrefSetDefault((ssl3CipherSuite)which, enabled);
 }
 
 SECStatus
@@ -1465,8 +1349,6 @@ SSL_CipherPrefGetDefault(PRInt32 which, PRBool *enabled)
     if (ssl_IsRemovedCipherSuite(which)) {
         *enabled = PR_FALSE;
         rv = SECSuccess;
-    } else if (SSL_IS_SSL2_CIPHER(which)) {
-        rv = ssl2_CipherPrefGetDefault(which, enabled);
     } else {
         rv = ssl3_CipherPrefGetDefault((ssl3CipherSuite)which, enabled);
     }
@@ -1476,7 +1358,6 @@ SSL_CipherPrefGetDefault(PRInt32 which, PRBool *enabled)
 SECStatus
 SSL_CipherPrefSet(PRFileDesc *fd, PRInt32 which, PRBool enabled)
 {
-    SECStatus rv;
     sslSocket *ss = ssl_FindSocket(fd);
 
     if (!ss) {
@@ -1489,12 +1370,7 @@ SSL_CipherPrefSet(PRFileDesc *fd, PRInt32 which, PRBool enabled)
         PORT_SetError(SEC_ERROR_INVALID_ALGORITHM);
         return SECFailure;
     }
-    if (SSL_IS_SSL2_CIPHER(which)) {
-        rv = ssl2_CipherPrefSet(ss, which, enabled);
-    } else {
-        rv = ssl3_CipherPrefSet(ss, (ssl3CipherSuite)which, enabled);
-    }
-    return rv;
+    return ssl3_CipherPrefSet(ss, (ssl3CipherSuite)which, enabled);
 }
 
 SECStatus
@@ -1515,8 +1391,6 @@ SSL_CipherPrefGet(PRFileDesc *fd, PRInt32 which, PRBool *enabled)
     if (ssl_IsRemovedCipherSuite(which)) {
         *enabled = PR_FALSE;
         rv = SECSuccess;
-    } else if (SSL_IS_SSL2_CIPHER(which)) {
-        rv = ssl2_CipherPrefGet(ss, which, enabled);
     } else {
         rv = ssl3_CipherPrefGet(ss, (ssl3CipherSuite)which, enabled);
     }
@@ -2026,9 +1900,8 @@ PRFileDesc *
 SSL_ReconfigFD(PRFileDesc *model, PRFileDesc *fd)
 {
     sslSocket *sm = NULL, *ss = NULL;
-    int i;
-    sslServerCerts *mc = NULL;
-    sslServerCerts *sc = NULL;
+    PRCList *cursor;
+    sslServerCert *sc = NULL;
 
     if (model == NULL) {
         PR_SetError(SEC_ERROR_INVALID_ARGS, 0);
@@ -2063,52 +1936,44 @@ SSL_ReconfigFD(PRFileDesc *model, PRFileDesc *fd)
         PORT_SetError(SEC_ERROR_INVALID_ARGS);
         return NULL;
     }
-    /* This int should be SSLKEAType, but CC on Irix complains,
-     * during the for loop.
-     */
-    for (i = kt_null; i < kt_kea_size; i++) {
-        mc = &(sm->serverCerts[i]);
-        sc = &(ss->serverCerts[i]);
+    while (!PR_CLIST_IS_EMPTY(&ss->serverCerts)) {
+        cursor = PR_LIST_TAIL(&ss->serverCerts);
+        PR_REMOVE_LINK(cursor);
+        ssl_FreeServerCert((sslServerCert *)cursor);
+    }
+    for (cursor = PR_NEXT_LINK(&sm->serverCerts);
+         cursor != &sm->serverCerts;
+         cursor = PR_NEXT_LINK(cursor)) {
+        sslServerCert *mc = (sslServerCert*)cursor;
+
+        sc = ssl_NewServerCert(&mc->certType);
         if (mc->serverCert && mc->serverCertChain) {
-            if (sc->serverCert) {
-                CERT_DestroyCertificate(sc->serverCert);
-            }
-            sc->serverCert = CERT_DupCertificate(mc->serverCert);
-            if (sc->serverCertChain) {
-                CERT_DestroyCertificateList(sc->serverCertChain);
-            }
+            sc->serverCert      = CERT_DupCertificate(mc->serverCert);
             sc->serverCertChain = CERT_DupCertList(mc->serverCertChain);
             if (!sc->serverCertChain)
                 goto loser;
-            if (sm->certStatusArray[i]) {
-                if (ss->certStatusArray[i]) {
-                    SECITEM_FreeArray(ss->certStatusArray[i], PR_TRUE);
-                    ss->certStatusArray[i] = NULL;
-                }
-                ss->certStatusArray[i] = SECITEM_DupArray(NULL, sm->certStatusArray[i]);
-                if (!ss->certStatusArray[i])
+            if (mc->certStatusArray) {
+                sc->certStatusArray = SECITEM_DupArray(NULL, mc->certStatusArray);
+                if (!sc->certStatusArray)
                     goto loser;
             }
-            if (sm->signedCertTimestamps[i].data) {
-                if (ss->signedCertTimestamps[i].data) {
-                    SECITEM_FreeItem(&ss->signedCertTimestamps[i], PR_FALSE);
-                }
+            if (mc->signedCertTimestamps.data) {
                 if (SECITEM_CopyItem(NULL,
-                                     &ss->signedCertTimestamps[i],
-                                     &sm->signedCertTimestamps[i]) !=
+                                     &sc->signedCertTimestamps,
+                                     &mc->signedCertTimestamps) !=
                     SECSuccess) {
                     goto loser;
                 }
             }
         }
         if (mc->serverKeyPair) {
-            if (sc->serverKeyPair) {
-                ssl3_FreeKeyPair(sc->serverKeyPair);
-            }
             sc->serverKeyPair = ssl3_GetKeyPairRef(mc->serverKeyPair);
             sc->serverKeyBits = mc->serverKeyBits;
         }
+        PR_APPEND_LINK(&sc->link, &ss->serverCerts);
     }
+    sc = NULL;
+
     if (sm->stepDownKeyPair) {
         if (ss->stepDownKeyPair) {
             ssl3_FreeKeyPair(ss->stepDownKeyPair);
@@ -2157,6 +2022,7 @@ SSL_ReconfigFD(PRFileDesc *model, PRFileDesc *fd)
         ss->pkcs11PinArg = sm->pkcs11PinArg;
     return fd;
 loser:
+    ssl_FreeServerCert(sc);
     return NULL;
 }
 
@@ -2303,10 +2169,6 @@ SSL_PeerSignedCertTimestamps(PRFileDesc *fd)
         return NULL;
     }
 
-    if (ss->sec.ci.sid->version < SSL_LIBRARY_VERSION_3_0) {
-        PORT_SetError(SSL_ERROR_FEATURE_NOT_SUPPORTED_FOR_SSL2);
-        return NULL;
-    }
     return &ss->sec.ci.sid->u.ssl3.signedCertTimestamps;
 }
 
@@ -2539,10 +2401,10 @@ ssl_Accept(PRFileDesc *fd, PRNetAddr *sockaddr, PRIntervalTime timeout)
     */
     if (ns->opt.useSecurity) {
         if (ns->opt.handshakeAsClient) {
-            ns->handshake = ssl2_BeginClientHandshake;
+            ns->handshake = ssl_BeginClientHandshake;
             ss->handshaking = sslHandshakingAsClient;
         } else {
-            ns->handshake = ssl2_BeginServerHandshake;
+            ns->handshake = ssl_BeginServerHandshake;
             ss->handshaking = sslHandshakingAsServer;
         }
     }
@@ -2816,64 +2678,6 @@ ssl_GetSockName(PRFileDesc *fd, PRNetAddr *name)
 }
 
 SECStatus
-SSL_SetStapledOCSPResponses(PRFileDesc *fd, const SECItemArray *responses,
-                            SSLKEAType kea)
-{
-    sslSocket *ss;
-
-    ss = ssl_FindSocket(fd);
-    if (!ss) {
-        SSL_DBG(("%d: SSL[%d]: bad socket in SSL_SetStapledOCSPResponses",
-                 SSL_GETPID(), fd));
-        return SECFailure;
-    }
-
-    if (kea <= 0 || kea >= kt_kea_size) {
-        SSL_DBG(("%d: SSL[%d]: invalid key type in SSL_SetStapledOCSPResponses",
-                 SSL_GETPID(), fd));
-        return SECFailure;
-    }
-
-    if (ss->certStatusArray[kea]) {
-        SECITEM_FreeArray(ss->certStatusArray[kea], PR_TRUE);
-        ss->certStatusArray[kea] = NULL;
-    }
-    if (responses) {
-        ss->certStatusArray[kea] = SECITEM_DupArray(NULL, responses);
-    }
-    return (ss->certStatusArray[kea] || !responses) ? SECSuccess : SECFailure;
-}
-
-SECStatus
-SSL_SetSignedCertTimestamps(PRFileDesc *fd, const SECItem *scts, SSLKEAType kea)
-{
-    sslSocket *ss;
-
-    ss = ssl_FindSocket(fd);
-    if (!ss) {
-        SSL_DBG(("%d: SSL[%d]: bad socket in SSL_SetSignedCertTimestamps",
-                 SSL_GETPID(), fd));
-        return SECFailure;
-    }
-
-    if (kea <= 0 || kea >= kt_kea_size) {
-        SSL_DBG(("%d: SSL[%d]: invalid key type in SSL_SetSignedCertTimestamps",
-                 SSL_GETPID(), fd));
-        return SECFailure;
-    }
-
-    if (ss->signedCertTimestamps[kea].data) {
-        SECITEM_FreeItem(&ss->signedCertTimestamps[kea], PR_FALSE);
-    }
-
-    if (!scts) {
-        return SECSuccess;
-    }
-
-    return SECITEM_CopyItem(NULL, &ss->signedCertTimestamps[kea], scts);
-}
-
-SECStatus
 SSL_SetSockPeerID(PRFileDesc *fd, const char *peerID)
 {
     sslSocket *ss;
@@ -2951,8 +2755,7 @@ ssl_Poll(PRFileDesc *fd, PRInt16 how_flags, PRInt16 *p_out_flags)
                 ** handshake has been sent.  So do NOT to poll on write
                 ** unless we did false start.
                 */
-                if (!(ss->version >= SSL_LIBRARY_VERSION_3_0 &&
-                      ss->ssl3.hs.canFalseStart)) {
+                if (!ss->ssl3.hs.canFalseStart) {
                     new_flags ^= PR_POLL_WRITE; /* don't select on write. */
                 }
                 new_flags |= PR_POLL_READ; /* do    select on read. */
@@ -2966,8 +2769,7 @@ ssl_Poll(PRFileDesc *fd, PRInt16 how_flags, PRInt16 *p_out_flags)
         new_flags |= PR_POLL_WRITE;         /* also select on write. */
     }
 
-    if (ss->version >= SSL_LIBRARY_VERSION_3_0 &&
-        ss->ssl3.hs.restartTarget != NULL) {
+    if (ss->ssl3.hs.restartTarget != NULL) {
         /* Read and write will block until the asynchronous callback completes
          * (e.g. until SSL_AuthCertificateComplete is called), so don't tell
          * the caller to poll the socket unless there is pending write data.
@@ -3069,7 +2871,7 @@ ssl_WriteV(PRFileDesc *fd, const PRIOVec *iov, PRInt32 vectors,
     const PRInt32 first_len = sslFirstBufSize;
     const PRInt32 limit = sslCopyLimit;
     PRBool blocking;
-    PRIOVec myIov = { 0, 0 };
+    PRIOVec myIov;
     char buf[MAX_FRAGMENT_LENGTH];
 
     if (vectors < 0) {
@@ -3494,6 +3296,7 @@ ssl_SetDefaultsFromEnvironment(void)
             SSL_TRACE(("SSL: debugging set to %d", ssl_debug));
         }
 #endif /* DEBUG */
+#ifdef NSS_ALLOW_SSLKEYLOGFILE
         ev = PR_GetEnvSecure("SSLKEYLOGFILE");
         if (ev && ev[0]) {
             ssl_keylog_iob = fopen(ev, "a");
@@ -3507,6 +3310,7 @@ ssl_SetDefaultsFromEnvironment(void)
                 SSL_TRACE(("SSL: logging SSL/TLS secrets to %s", ev));
             }
         }
+#endif
 #ifndef NO_PKCS11_BYPASS
         ev = PR_GetEnvSecure("SSLBYPASS");
         if (ev && ev[0]) {
@@ -3566,10 +3370,9 @@ ssl_NewSocket(PRBool makeLocks, SSLProtocolVariant protocolVariant)
     /* Make a new socket and get it ready */
     ss = (sslSocket *)PORT_ZAlloc(sizeof(sslSocket));
     if (ss) {
-        /* This should be of type SSLKEAType, but CC on IRIX
+        /* This should be of type SSLAuthType, but CC on IRIX
          * complains during the for loop.
          */
-        int i;
         SECStatus status;
 
         ss->opt = ssl_defaults;
@@ -3582,19 +3385,9 @@ ssl_NewSocket(PRBool makeLocks, SSLProtocolVariant protocolVariant)
         ss->rTimeout = PR_INTERVAL_NO_TIMEOUT;
         ss->wTimeout = PR_INTERVAL_NO_TIMEOUT;
         ss->cTimeout = PR_INTERVAL_NO_TIMEOUT;
-        ss->cipherSpecs = NULL;
-        ss->sizeCipherSpecs = 0; /* produced lazily */
-        ss->preferredCipher = NULL;
         ss->url = NULL;
 
-        for (i = kt_null; i < kt_kea_size; i++) {
-            sslServerCerts *sc = ss->serverCerts + i;
-            sc->serverCert = NULL;
-            sc->serverCertChain = NULL;
-            sc->serverKeyPair = NULL;
-            sc->serverKeyBits = 0;
-            ss->certStatusArray[i] = NULL;
-        }
+        PR_INIT_CLIST(&ss->serverCerts);
         ss->stepDownKeyPair = NULL;
 
         ss->dheParams = NULL;
@@ -3614,7 +3407,6 @@ ssl_NewSocket(PRBool makeLocks, SSLProtocolVariant protocolVariant)
         ss->ephemeralECDHKeyPair = NULL;
 
         ssl_ChooseOps(ss);
-        ssl2_InitSocketPolicy(ss);
         ssl3_InitSocketPolicy(ss);
         PR_INIT_CLIST(&ss->ssl3.hs.lastMessageFlight);
         PR_INIT_CLIST(&ss->ssl3.hs.remoteKeyShares);
@@ -3627,7 +3419,7 @@ ssl_NewSocket(PRBool makeLocks, SSLProtocolVariant protocolVariant)
         status = ssl_CreateSecurityInfo(ss);
         if (status != SECSuccess)
             goto loser;
-        status = ssl_InitGather(&ss->gs);
+        status = ssl3_InitGather(&ss->gs);
         if (status != SECSuccess) {
         loser:
             ssl_DestroySocketContents(ss);

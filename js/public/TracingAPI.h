@@ -317,15 +317,19 @@ UnsafeTraceRoot(JSTracer* trc, T* edgep, const char* name);
 extern JS_PUBLIC_API(void)
 TraceChildren(JSTracer* trc, GCCellPtr thing);
 
-typedef js::HashSet<Zone*, js::DefaultHasher<Zone*>, js::SystemAllocPolicy> ZoneSet;
-} // namespace JS
+using ZoneSet = js::HashSet<Zone*, js::DefaultHasher<Zone*>, js::SystemAllocPolicy>;
+using CompartmentSet = js::HashSet<JSCompartment*, js::DefaultHasher<JSCompartment*>,
+                                   js::SystemAllocPolicy>;
 
 /**
- * Trace every value within |zones| that is wrapped by a cross-compartment
- * wrapper from a zone that is not an element of |zones|.
+ * Trace every value within |compartments| that is wrapped by a
+ * cross-compartment wrapper from a compartment that is not an element of
+ * |compartments|.
  */
 extern JS_PUBLIC_API(void)
-JS_TraceIncomingCCWs(JSTracer* trc, const JS::ZoneSet& zones);
+TraceIncomingCCWs(JSTracer* trc, const JS::CompartmentSet& compartments);
+
+} // namespace JS
 
 extern JS_PUBLIC_API(void)
 JS_GetTraceThingInfo(char* buf, size_t bufsize, JSTracer* trc,
@@ -343,6 +347,7 @@ extern JS_PUBLIC_API(void)
 UnsafeTraceManuallyBarrieredEdge(JSTracer* trc, T* edgep, const char* name);
 
 namespace gc {
+// Return true if the given edge is not live and is about to be swept.
 template <typename T>
 extern JS_PUBLIC_API(bool)
 EdgeNeedsSweep(JS::Heap<T>* edgep);

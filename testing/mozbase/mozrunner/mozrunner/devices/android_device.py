@@ -35,15 +35,12 @@ class AvdInfo(object):
        Simple class to contain an AVD description.
     """
     def __init__(self, description, name, tooltool_manifest, extra_args,
-                 port, uses_sut, sut_port, sut_port2):
+                 port):
         self.description = description
         self.name = name
         self.tooltool_manifest = tooltool_manifest
         self.extra_args = extra_args
         self.port = port
-        self.uses_sut = uses_sut
-        self.sut_port = sut_port
-        self.sut_port2 = sut_port2
 
 
 """
@@ -53,32 +50,19 @@ class AvdInfo(object):
    and the parameters for each reflect those used in mozharness.
 """
 AVD_DICT = {
-    '2.3': AvdInfo('Android 2.3',
-                   'mozemulator-2.3',
-                   'testing/config/tooltool-manifests/androidarm/releng.manifest',
-                   ['-debug',
-                    'init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket',
-                    '-qemu', '-m', '1024', '-cpu', 'cortex-a9'],
-                   5554,
-                   True,
-                   20701, 20700),
     '4.3': AvdInfo('Android 4.3',
                    'mozemulator-4.3',
                    'testing/config/tooltool-manifests/androidarm_4_3/releng.manifest',
                    ['-show-kernel', '-debug',
                     'init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket'],
-                   5554,
-                   False,
-                   0, 0),
+                   5554),
     'x86': AvdInfo('Android 4.2 x86',
                    'mozemulator-x86',
                    'testing/config/tooltool-manifests/androidx86/releng.manifest',
                    ['-debug',
                     'init,console,gles,memcheck,adbserver,adbclient,adb,avd_config,socket',
                     '-qemu', '-m', '1024', '-enable-kvm'],
-                   5554,
-                   False,
-                   0, 0)
+                   5554)
 }
 
 def verify_android_device(build_obj, install=False, xre=False, debugger=False):
@@ -370,9 +354,13 @@ class AndroidEmulator(object):
         """
         avd = os.path.join(
             EMULATOR_HOME_DIR, 'avd', self.avd_info.name + '.avd')
+        ini_file = os.path.join(
+            EMULATOR_HOME_DIR, 'avd', self.avd_info.name + '.ini')
         if force and os.path.exists(avd):
             shutil.rmtree(avd)
         if not os.path.exists(avd):
+            if os.path.exists(ini_file):
+                os.remove(ini_file)
             url = '%s/%s' % (TRY_URL, self.avd_info.tooltool_manifest)
             _download_file(url, 'releng.manifest', EMULATOR_HOME_DIR)
             _tooltool_fetch()
@@ -446,9 +434,6 @@ class AndroidEmulator(object):
 
         if not self._verify_emulator():
             return False
-        if self.avd_info.uses_sut:
-            if not self._verify_sut():
-                return False
         return True
 
     def wait(self):
@@ -514,15 +499,6 @@ class AndroidEmulator(object):
                 if tn is not None:
                     res = tn.read_until('OK', 10)
                     self._telnet_cmd(tn, 'avd status')
-                    if self.avd_info.uses_sut:
-                        cmd = 'redir add tcp:%s:%s' % \
-                           (str(self.avd_info.sut_port),
-                            str(self.avd_info.sut_port))
-                        self._telnet_cmd(tn, cmd)
-                        cmd = 'redir add tcp:%s:%s' % \
-                            (str(self.avd_info.sut_port2),
-                             str(self.avd_info.sut_port2))
-                        self._telnet_cmd(tn, cmd)
                     self._telnet_cmd(tn, 'redir list')
                     self._telnet_cmd(tn, 'network status')
                     tn.write('quit\n')
@@ -542,42 +518,12 @@ class AndroidEmulator(object):
                     return False
         return telnet_ok
 
-    def _verify_sut(self):
-        sut_ok = False
-        while(not sut_ok):
-            try:
-                tn = telnetlib.Telnet('localhost', self.avd_info.sut_port, 10)
-                if tn is not None:
-                    _log_debug(
-                        "Connected to port %d" % self.avd_info.sut_port)
-                    res = tn.read_until('$>', 10)
-                    if res.find('$>') == -1:
-                        _log_debug("Unexpected SUT response: %s" % res)
-                    else:
-                        _log_debug("SUT response: %s" % res)
-                        sut_ok = True
-                    tn.write('quit\n')
-                    tn.read_all()
-            except:
-                _log_debug("Caught exception while verifying sutagent")
-            finally:
-                if tn is not None:
-                    tn.close()
-            if not sut_ok:
-                time.sleep(10)
-                if self.proc.proc.poll() is not None:
-                    _log_warning("Emulator has already completed!")
-                    return False
-        return sut_ok
-
     def _get_avd_type(self, requested):
         if requested in AVD_DICT.keys():
             return requested
         if self.substs:
             if not self.substs['TARGET_CPU'].startswith('arm'):
                 return 'x86'
-            if self.substs['MOZ_ANDROID_MIN_SDK_VERSION'] == '9':
-                return '2.3'
         return '4.3'
 
 def _find_sdk_exe(substs, exe, tools):

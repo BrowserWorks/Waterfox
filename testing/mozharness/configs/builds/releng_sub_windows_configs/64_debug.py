@@ -12,7 +12,7 @@ config = {
         'upload-files',
         'sendchange',
         'check-test',
-        # 'generate-build-stats',
+        'generate-build-stats',
         'update',  # decided by query_is_nightly()
     ],
     'stage_platform': 'win64-debug',
@@ -31,6 +31,8 @@ config = {
         'PROPERTIES_FILE': os.path.join(os.getcwd(), 'buildprops.json'),
         'TINDERBOX_OUTPUT': '1',
         'XPCOM_DEBUG_BREAK': 'stack-and-abort',
+        'TOOLTOOL_CACHE': '/c/builds/tooltool_cache',
+        'TOOLTOOL_HOME': '/c/builds',
     },
     'src_mozconfig': 'browser/config/mozconfigs/win64/debug',
     #######################

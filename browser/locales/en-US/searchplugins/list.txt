@@ -3,6 +3,6 @@ ddg
 disconnect
 ecosia
 google
-startpage
 wikipedia
+startpage
 yahoo

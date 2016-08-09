@@ -67,6 +67,7 @@ using mozilla::EventMessage from "mozilla/EventForwards.h";
 using nsEventStatus from "mozilla/EventForwards.h";
 using nsSizeMode from "nsIWidgetListener.h";
 using mozilla::widget::CandidateWindowPosition from "ipc/nsGUIEventIPC.h";
+using class mozilla::NativeEventData from "ipc/nsGUIEventIPC.h";
 
 namespace mozilla {
 namespace dom {
@@ -156,6 +157,21 @@ parent:
      * the next or previous focusable element or document.
      */
     async MoveFocus(bool forward, bool forDocumentNavigation);
+
+    /**
+     * SizeShellTo request propagation to parent.
+     *
+     * aFlag            Can indicate if one of the dimensions should be ignored.
+     *                  If only one dimension has changed it has to be indicated
+     *                  by the nsIEmbeddingSiteWindow::DIM_FLAGS_IGNORE_* flags.
+     * aShellItemWidth,
+     * aShellItemHeight On parent side we won't be able to decide the dimensions
+     *                  of the shell item parameter in the original SizeShellTo
+     *                  call so we send over its dimensions that will be used
+     *                  for the actual resize.
+     **/
+    async SizeShellTo(uint32_t aFlag, int32_t aWidth, int32_t aHeight,
+                      int32_t aShellItemWidth, int32_t aShellItemHeight);
 
     async Event(RemoteDOMEvent aEvent);
 
@@ -284,6 +300,16 @@ parent:
     async SetCandidateWindowForPlugin(CandidateWindowPosition aPosition);
 
     /**
+     * Notifies the parent process of native key event data received in a
+     * plugin process directly.
+     *
+     * aKeyEventData    The native key event data.  The actual type copied into
+     *                  NativeEventData depending on the caller.  Please check
+     *                  PluginInstanceChild.
+     */
+    prio(urgent) async OnWindowedPluginKeyEvent(NativeEventData aKeyEventData);
+
+    /**
      *  When plugin event isn't consumed, call this
      */
     async DefaultProcOfPluginEvent(WidgetPluginEvent aEvent);
@@ -374,7 +400,7 @@ parent:
      * Show/hide a tooltip when the mouse hovers over an element in the content
      * document.
      */
-    async ShowTooltip(uint32_t x, uint32_t y, nsString tooltip);
+    async ShowTooltip(uint32_t x, uint32_t y, nsString tooltip, nsString direction);
     async HideTooltip();
 
     /**
@@ -409,9 +435,11 @@ parent:
      *
      * @param opener the PBrowser whose content called window.open.
      */
-    sync BrowserFrameOpenWindow(PBrowser opener, nsString aURL,
-                                nsString aName, nsString aFeatures)
-      returns (bool windowOpened);
+    sync BrowserFrameOpenWindow(PBrowser opener, PRenderFrame renderFrame,
+                                nsString aURL, nsString aName, nsString aFeatures)
+      returns (bool windowOpened,
+               TextureFactoryIdentifier textureFactoryIdentifier,
+               uint64_t layersId);
 
     /**
      * Tells the containing widget whether the given input block results in a
@@ -460,14 +488,23 @@ parent:
                                            uint64_t aObserverId);
     async SynthesizeNativeTouchPoint(uint32_t aPointerId,
                                      TouchPointerState aPointerState,
-                                     ScreenIntPoint aPointerScreenPoint,
+                                     LayoutDeviceIntPoint aPoint,
                                      double aPointerPressure,
                                      uint32_t aPointerOrientation,
                                      uint64_t aObserverId);
-    async SynthesizeNativeTouchTap(ScreenIntPoint aPointerScreenPoint,
+    async SynthesizeNativeTouchTap(LayoutDeviceIntPoint aPoint,
                                    bool aLongTap,
                                    uint64_t aObserverId);
     async ClearNativeTouchSequence(uint64_t aObserverId);
+
+    /**
+     * Returns the number of tabs in the window via the out parameter.
+     * If the number of tabs can't be determined, returns 0.
+     *
+     * @param aValue where to store the tab count
+     */
+    sync GetTabCount() returns (uint32_t value);
+
 child:
     async NativeSynthesisResponse(uint64_t aObserverId, nsCString aResponse);
 
@@ -482,10 +519,6 @@ parent:
      * @see RequestNotifyAfterRemotePaint
      */
     async RemotePaintIsReady();
-
-    sync GetRenderFrameInfo(PRenderFrame aRenderFrame)
-        returns (TextureFactoryIdentifier textureFactoryIdentifier,
-                 uint64_t layersId);
 
     /**
      * Sent by the child to the parent to inform it that an update to the
@@ -724,6 +757,25 @@ child:
     async AudioChannelChangeNotification(uint32_t aAudioChannel,
                                          float aVolume,
                                          bool aMuted);
+
+    /**
+     * Tells the root child docShell whether or not to use
+     * global history. This is sent right after the PBrowser
+     * is bound to a frameloader element.
+     */
+    async SetUseGlobalHistory(bool aUse);
+
+    /**
+     * HandledWindowedPluginKeyEvent() is always called after posting a native
+     * key event with OnWindowedPluginKeyEvent().
+     *
+     * @param aKeyEventData      The key event which was posted to the parent
+     *                           process.
+     * @param aIsConsumed        true if aKeyEventData is consumed in the
+     *                           parent process.  Otherwise, false.
+     */
+    async HandledWindowedPluginKeyEvent(NativeEventData aKeyEventData,
+                                        bool aIsConsumed);
 
 /*
  * FIXME: write protocol!

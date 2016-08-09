@@ -11,12 +11,8 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.gfx.Layer.RenderContext;
-import org.mozilla.gecko.gfx.RenderTask;
 import org.mozilla.gecko.mozglue.DirectBufferAllocator;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -650,7 +646,6 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
                     @Override
                     public void run() {
                         mView.setSurfaceBackgroundColor(Color.TRANSPARENT);
-                        Log.i("GeckoBug1151102", "Cleared bg color");
                     }
                 });
                 mView.setPaintState(LayerView.PAINT_AFTER_FIRST);
@@ -660,14 +655,13 @@ public class LayerRenderer implements Tabs.OnTabsChangedListener {
     }
 
     @Override
-    public void onTabChanged(final Tab tab, Tabs.TabEvents msg, Object data) {
+    public void onTabChanged(final Tab tab, Tabs.TabEvents msg, String data) {
         // Sets the background of the newly selected tab. This background color
         // gets cleared in endDrawing(). This function runs on the UI thread,
         // but other code that touches the paint state is run on the compositor
         // thread, so this may need to be changed if any problems appear.
         if (msg == Tabs.TabEvents.SELECTED) {
             if (mView != null) {
-                Log.i("GeckoBug1151102", "Tab switch; entering PAINT_START");
                 mView.setSurfaceBackgroundColor(tab.getBackgroundColor());
                 mView.setPaintState(LayerView.PAINT_START);
             }

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/fi.xml
@@ -14,7 +14,7 @@ fi{
                 "[import und-u-co-search]"
                 "[import fi-u-co-trad]"
             }
-            Version{"29"}
+            Version{"28"}
         }
         standard{
             Sequence{
@@ -26,7 +26,7 @@ fi{
                 "&Z\u0335<<ʒ<<<Ʒ"
                 "&[before 1]ǀ<å<<<Å<ä<<<Ä<<æ<<<Æ<ö<<<Ö<<ø<<<Ø"
             }
-            Version{"29"}
+            Version{"28"}
         }
         traditional{
             Sequence{
@@ -37,7 +37,7 @@ fi{
                 "&Y<<ü<<<Ü<<ű<<<Ű"
                 "&[before 1]ǀ<å<<<Å<ä<<<Ä<<æ<<<Æ<ö<<<Ö<<ø<<<Ø<<ő<<<Ő<<õ<<<Õ<<œ<<<Œ"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

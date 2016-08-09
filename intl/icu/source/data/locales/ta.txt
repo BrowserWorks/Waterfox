@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ta.xml
@@ -212,7 +212,7 @@ ta{
         native{"tamldec"}
         traditional{"taml"}
     }
-    Version{"2.1.23.16"}
+    Version{"2.1.19.55"}
     calendar{
         chinese{
             DateTimePatterns{
@@ -976,10 +976,7 @@ ta{
         day-narrow{
             dn{"நா."}
             relative{
-                "-1"{"நேற்று"}
                 "-2"{"நேற்று முன் தினம்"}
-                "0"{"இன்று"}
-                "1"{"நாளை"}
                 "2"{"நாளை மறுநாள்"}
             }
             relativeTime{
@@ -996,10 +993,7 @@ ta{
         day-short{
             dn{"நாள்"}
             relative{
-                "-1"{"நேற்று"}
                 "-2"{"நேற்று முன் தினம்"}
-                "0"{"இன்று"}
-                "1"{"நாளை"}
                 "2"{"நாளை மறுநாள்"}
             }
             relativeTime{

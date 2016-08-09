@@ -686,6 +686,10 @@ VectorImage::IsOpaque()
 NS_IMETHODIMP_(already_AddRefed<SourceSurface>)
 VectorImage::GetFrame(uint32_t aWhichFrame, uint32_t aFlags)
 {
+  if (mError) {
+    return nullptr;
+  }
+
   // Look up height & width
   // ----------------------
   SVGSVGElement* svgElem = mSVGDocumentWrapper->GetRootSVGElem();
@@ -726,12 +730,13 @@ VectorImage::GetFrameAtSize(const IntSize& aSize,
   // (either the full image size, or the restricted region)
   RefPtr<DrawTarget> dt = gfxPlatform::GetPlatform()->
     CreateOffscreenContentDrawTarget(aSize, SurfaceFormat::B8G8R8A8);
-  if (!dt) {
+  if (!dt || !dt->IsValid()) {
     NS_ERROR("Could not create a DrawTarget");
     return nullptr;
   }
 
-  RefPtr<gfxContext> context = new gfxContext(dt);
+  RefPtr<gfxContext> context = gfxContext::ForDrawTarget(dt);
+  MOZ_ASSERT(context); // already checked the draw target above
 
   auto result = Draw(context, aSize, ImageRegion::Create(aSize),
                      aWhichFrame, Filter::POINT, Nothing(), aFlags);
@@ -763,7 +768,6 @@ struct SVGDrawingParameters
                        uint32_t aFlags)
     : context(aContext)
     , size(aSize.width, aSize.height)
-    , imageRect(0, 0, aSize.width, aSize.height)
     , region(aRegion)
     , filter(aFilter)
     , svgContext(aSVGContext)
@@ -780,7 +784,6 @@ struct SVGDrawingParameters
 
   gfxContext*                   context;
   IntSize                       size;
-  IntRect                       imageRect;
   ImageRegion                   region;
   Filter                        filter;
   const Maybe<SVGImageContext>& svgContext;
@@ -834,7 +837,7 @@ VectorImage::Draw(gfxContext* aContext,
   AutoSVGRenderingState autoSVGState(aSVGContext, animTime,
                                      mSVGDocumentWrapper->GetRootSVGElem());
 
-  // Pack up the drawing parameters.
+
   SVGDrawingParameters params(aContext, aSize, aRegion, aFilter,
                               aSVGContext, animTime, aFlags);
 

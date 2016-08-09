@@ -20,8 +20,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "LanguageDetector",
                                   "resource:///modules/translation/LanguageDetector.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Locale",
                                   "resource://gre/modules/Locale.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "MessageChannel",
+                                  "resource://gre/modules/MessageChannel.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Preferences",
                                   "resource://gre/modules/Preferences.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
+                                  "resource://gre/modules/PromiseUtils.jsm");
 
 function filterStack(error) {
   return String(error.stack).replace(/(^.*(Task\.jsm|Promise-backend\.js).*\n)+/gm, "<Promise Chain>\n");
@@ -52,6 +56,11 @@ function runSafeWithoutClone(f, ...args) {
 // Run a function, cloning arguments into context.cloneScope, and
 // report exceptions. |f| is expected to be in context.cloneScope.
 function runSafeSync(context, f, ...args) {
+  if (context.unloaded) {
+    Cu.reportError("runSafeSync called after context unloaded");
+    return;
+  }
+
   try {
     args = Cu.cloneInto(args, context.cloneScope);
   } catch (e) {
@@ -69,6 +78,10 @@ function runSafe(context, f, ...args) {
   } catch (e) {
     Cu.reportError(e);
     dump(`runSafe failure: cloning into ${context.cloneScope}: ${e}\n\n${filterStack(Error())}`);
+  }
+  if (context.unloaded) {
+    dump(`runSafe failure: context is already unloaded ${filterStack(new Error())}\n`);
+    return undefined;
   }
   return runSafeWithoutClone(f, ...args);
 }
@@ -125,11 +138,16 @@ class SpreadArgs extends Array {
   }
 }
 
+let gContextId = 0;
+
 class BaseContext {
-  constructor() {
+  constructor(extensionId) {
     this.onClose = new Set();
     this.checkedLastError = false;
     this._lastError = null;
+    this.contextId = ++gContextId;
+    this.unloaded = false;
+    this.extensionId = extensionId;
   }
 
   get cloneScope() {
@@ -138,6 +156,22 @@ class BaseContext {
 
   get principal() {
     throw new Error("Not implemented");
+  }
+
+  runSafe(...args) {
+    if (this.unloaded) {
+      Cu.reportError("context.runSafe called after context unloaded");
+    } else {
+      return runSafeSync(this, ...args);
+    }
+  }
+
+  runSafeWithoutClone(...args) {
+    if (this.unloaded) {
+      Cu.reportError("context.runSafeWithoutClone called after context unloaded");
+    } else {
+      return runSafeSyncWithoutClone(...args);
+    }
   }
 
   checkLoadURL(url, options = {}) {
@@ -170,6 +204,22 @@ class BaseContext {
     this.onClose.delete(obj);
   }
 
+  /**
+   * A wrapper around MessageChannel.sendMessage which adds the extension ID
+   * to the recipient object, and ensures replies are not processed after the
+   * context has been unloaded.
+   */
+  sendMessage(target, messageName, data, options = {}) {
+    options.recipient = options.recipient || {};
+    options.sender = options.sender || {};
+
+    options.recipient.extensionId = this.extension.id;
+    options.sender.extensionId = this.extension.id;
+    options.sender.contextId = this.contextId;
+
+    return MessageChannel.sendMessage(target, messageName, data, options);
+  }
+
   get lastError() {
     this.checkedLastError = true;
     return this._lastError;
@@ -178,6 +228,26 @@ class BaseContext {
   set lastError(val) {
     this.checkedLastError = false;
     this._lastError = val;
+  }
+
+  /**
+   * Normalizes the given error object for use by the target scope. If
+   * the target is an error object which belongs to that scope, it is
+   * returned as-is. If it is an ordinary object with a `message`
+   * property, it is converted into an error belonging to the target
+   * scope. If it is an Error object which does *not* belong to the
+   * clone scope, it is reported, and converted to an unexpected
+   * exception error.
+   */
+  normalizeError(error) {
+    if (error instanceof this.cloneScope.Error) {
+      return error;
+    }
+    if (!instanceOf(error, "Object")) {
+      Cu.reportError(error);
+      error = {message: "An unexpected error occurred"};
+    }
+    return new this.cloneScope.Error(error.message);
   }
 
   /**
@@ -191,15 +261,12 @@ class BaseContext {
    * @returns {*} The return value of callback.
    */
   withLastError(error, callback) {
-    if (!(error instanceof this.cloneScope.Error)) {
-      error = new this.cloneScope.Error(error.message);
-    }
-    this.lastError = error;
+    this.lastError = this.normalizeError(error);
     try {
       return callback();
     } finally {
       if (!this.checkedLastError) {
-        Cu.reportError(`Unchecked lastError value: ${error}`);
+        Cu.reportError(`Unchecked lastError value: ${this.lastError}`);
       }
       this.lastError = null;
     }
@@ -233,15 +300,17 @@ class BaseContext {
   wrapPromise(promise, callback = null) {
     // Note: `promise instanceof this.cloneScope.Promise` returns true
     // here even for promises that do not belong to the content scope.
-    let runSafe = runSafeSync.bind(null, this);
+    let runSafe = this.runSafe.bind(this);
     if (promise.constructor === this.cloneScope.Promise) {
-      runSafe = runSafeSyncWithoutClone;
+      runSafe = this.runSafeWithoutClone.bind(this);
     }
 
     if (callback) {
       promise.then(
         args => {
-          if (args instanceof SpreadArgs) {
+          if (this.unloaded) {
+            dump(`Promise resolved after context unloaded\n`);
+          } else if (args instanceof SpreadArgs) {
             runSafe(callback, ...args);
           } else {
             runSafe(callback, args);
@@ -249,24 +318,42 @@ class BaseContext {
         },
         error => {
           this.withLastError(error, () => {
-            runSafeSyncWithoutClone(callback);
+            if (this.unloaded) {
+              dump(`Promise rejected after context unloaded\n`);
+            } else {
+              this.runSafeWithoutClone(callback);
+            }
           });
         });
     } else {
       return new this.cloneScope.Promise((resolve, reject) => {
         promise.then(
-          value => { runSafe(resolve, value); },
           value => {
-            if (!(value instanceof this.cloneScope.Error)) {
-              value = new this.cloneScope.Error(value.message);
+            if (this.unloaded) {
+              dump(`Promise resolved after context unloaded\n`);
+            } else {
+              runSafe(resolve, value);
             }
-            runSafeSyncWithoutClone(reject, value);
+          },
+          value => {
+            if (this.unloaded) {
+              dump(`Promise rejected after context unloaded\n`);
+            } else {
+              this.runSafeWithoutClone(reject, this.normalizeError(value));
+            }
           });
       });
     }
   }
 
   unload() {
+    this.unloaded = true;
+
+    MessageChannel.abortResponses({
+      extensionId: this.extensionId,
+      contextId: this.contextId,
+    });
+
     for (let obj of this.onClose) {
       obj.close();
     }
@@ -277,6 +364,7 @@ function LocaleData(data) {
   this.defaultLocale = data.defaultLocale;
   this.selectedLocale = data.selectedLocale;
   this.locales = data.locales || new Map();
+  this.warnedMissingKeys = new Set();
 
   // Map(locale-name -> Map(message-key -> localized-string))
   //
@@ -308,8 +396,16 @@ LocaleData.prototype = {
   },
 
   // https://developer.chrome.com/extensions/i18n
-  localizeMessage(message, substitutions = [], locale = this.selectedLocale, defaultValue = "??") {
-    let locales = new Set([this.BUILTIN, locale, this.defaultLocale]
+  localizeMessage(message, substitutions = [], options = {}) {
+    let defaultOptions = {
+      locale: this.selectedLocale,
+      defaultValue: "",
+      cloneScope: null,
+    };
+
+    options = Object.assign(defaultOptions, options);
+
+    let locales = new Set([this.BUILTIN, options.locale, this.defaultLocale]
                           .filter(locale => this.messages.has(locale)));
 
     // Message names are case-insensitive, so normalize them to lower-case.
@@ -358,8 +454,15 @@ LocaleData.prototype = {
       }
     }
 
-    Cu.reportError(`Unknown localization message ${message}`);
-    return defaultValue;
+    if (!this.warnedMissingKeys.has(message)) {
+      let error = `Unknown localization message ${message}`;
+      if (options.cloneScope) {
+        error = new options.cloneScope.Error(error);
+      }
+      Cu.reportError(error);
+      this.warnedMissingKeys.add(message);
+    }
+    return options.defaultValue;
   },
 
   // Localize a string, replacing all |__MSG_(.*)__| tokens with the
@@ -374,7 +477,7 @@ LocaleData.prototype = {
     }
 
     return str.replace(/__MSG_([A-Za-z0-9@_]+?)__/g, (matched, message) => {
-      return this.localizeMessage(message, [], locale, matched);
+      return this.localizeMessage(message, [], {locale, defaultValue: matched});
     });
   },
 
@@ -464,7 +567,7 @@ LocaleData.prototype = {
 //
 // The result is an object with addListener, removeListener, and
 // hasListener methods. |context| is an add-on scope (either an
-// ExtensionPage in the chrome process or ExtensionContext in a
+// ExtensionContext in the chrome process or ExtensionContext in a
 // content process). |name| is for debugging. |register| is a function
 // to register the listener. |register| is only called once, event if
 // multiple listeners are registered. |register| should return an
@@ -514,13 +617,19 @@ EventManager.prototype = {
 
   fire(...args) {
     for (let callback of this.callbacks) {
-      runSafe(this.context, callback, ...args);
+      Promise.resolve(callback).then(callback => {
+        if (this.context.unloaded) {
+          dump(`${this.name} event fired after context unloaded.\n`);
+        } else if (this.callbacks.has(callback)) {
+          this.context.runSafe(callback, ...args);
+        }
+      });
     }
   },
 
   fireWithoutClone(...args) {
     for (let callback of this.callbacks) {
-      runSafeSyncWithoutClone(callback, ...args);
+      this.context.runSafeWithoutClone(callback, ...args);
     }
   },
 
@@ -528,7 +637,7 @@ EventManager.prototype = {
     if (this.callbacks.size) {
       this.unregister();
     }
-    this.callbacks = null;
+    this.callbacks = Object.freeze([]);
   },
 
   api() {
@@ -553,7 +662,15 @@ function SingletonEventManager(context, name, register) {
 
 SingletonEventManager.prototype = {
   addListener(callback, ...args) {
-    let unregister = this.register(callback, ...args);
+    let wrappedCallback = (...args) => {
+      if (this.context.unloaded) {
+        dump(`${this.name} event fired after context unloaded.\n`);
+      } else if (this.unregister.has(callback)) {
+        return callback(...args);
+      }
+    };
+
+    let unregister = this.register(wrappedCallback, ...args);
     this.unregister.set(callback, unregister);
   },
 
@@ -656,101 +773,7 @@ function promiseDocumentReady(doc) {
  * Messaging primitives.
  */
 
-var nextBrokerId = 1;
-
-var MESSAGES = [
-  "Extension:Message",
-  "Extension:Connect",
-];
-
-// Receives messages from multiple message managers and directs them
-// to a set of listeners. On the child side: one broker per frame
-// script.  On the parent side: one broker total, covering both the
-// global MM and the ppmm. Message must be tagged with a recipient,
-// which is an object with properties. Listeners can filter for
-// messages that have a certain value for a particular property in the
-// recipient. (If a message doesn't specify the given property, it's
-// considered a match.)
-function MessageBroker(messageManagers) {
-  this.messageManagers = messageManagers;
-  for (let mm of this.messageManagers) {
-    for (let message of MESSAGES) {
-      mm.addMessageListener(message, this);
-    }
-  }
-
-  this.listeners = {message: [], connect: []};
-}
-
-MessageBroker.prototype = {
-  uninit() {
-    for (let mm of this.messageManagers) {
-      for (let message of MESSAGES) {
-        mm.removeMessageListener(message, this);
-      }
-    }
-
-    this.listeners = null;
-  },
-
-  makeId() {
-    return nextBrokerId++;
-  },
-
-  addListener(type, listener, filter) {
-    this.listeners[type].push({filter, listener});
-  },
-
-  removeListener(type, listener) {
-    for (let i = 0; i < this.listeners[type].length; i++) {
-      if (this.listeners[type][i].listener == listener) {
-        this.listeners[type].splice(i, 1);
-        return;
-      }
-    }
-  },
-
-  runListeners(type, target, data) {
-    let listeners = [];
-    for (let {listener, filter} of this.listeners[type]) {
-      let pass = true;
-      for (let prop in filter) {
-        if (prop in data.recipient && filter[prop] != data.recipient[prop]) {
-          pass = false;
-          break;
-        }
-      }
-
-      // Save up the list of listeners to call in case they modify the
-      // set of listeners.
-      if (pass) {
-        listeners.push(listener);
-      }
-    }
-
-    for (let listener of listeners) {
-      listener(type, target, data.message, data.sender, data.recipient);
-    }
-  },
-
-  receiveMessage({name, data, target}) {
-    switch (name) {
-      case "Extension:Message":
-        this.runListeners("message", target, data);
-        break;
-
-      case "Extension:Connect":
-        this.runListeners("connect", target, data);
-        break;
-    }
-  },
-
-  sendMessage(messageManager, type, message, sender, recipient) {
-    let data = {message, sender, recipient};
-    let names = {message: "Extension:Message", connect: "Extension:Connect"};
-    messageManager.sendAsyncMessage(names[type], data);
-  },
-};
+let gNextPortId = 1;
 
 // Abstraction for a Port object in the extension API. Each port has a unique ID.
 function Port(context, messageManager, name, id, sender) {
@@ -863,128 +886,123 @@ function getMessageManager(target) {
 // basics of sendMessage, onMessage, connect, and onConnect.
 //
 // |context| is the extension scope.
-// |broker| is a MessageBroker used to receive and send messages.
+// |messageManagers| is an array of MessageManagers used to receive messages.
 // |sender| is an object describing the sender (usually giving its extension id, tabId, etc.)
 // |filter| is a recipient filter to apply to incoming messages from the broker.
 // |delegate| is an object that must implement a few methods:
 //    getSender(context, messageManagerTarget, sender): returns a MessageSender
 //      See https://developer.chrome.com/extensions/runtime#type-MessageSender.
-function Messenger(context, broker, sender, filter, delegate) {
+function Messenger(context, messageManagers, sender, filter, delegate) {
   this.context = context;
-  this.broker = broker;
+  this.messageManagers = messageManagers;
   this.sender = sender;
   this.filter = filter;
   this.delegate = delegate;
 }
 
 Messenger.prototype = {
+  _sendMessage(messageManager, message, data, recipient) {
+    let options = {
+      recipient,
+      sender: this.sender,
+      responseType: MessageChannel.RESPONSE_FIRST,
+    };
+
+    return this.context.sendMessage(messageManager, message, data, options);
+  },
+
   sendMessage(messageManager, msg, recipient, responseCallback) {
-    let id = this.broker.makeId();
-    let replyName = `Extension:Reply-${id}`;
-    recipient.messageId = id;
-    this.broker.sendMessage(messageManager, "message", msg, this.sender, recipient);
-
-    let promise = new Promise((resolve, reject) => {
-      let onClose;
-      let listener = ({data: response}) => {
-        messageManager.removeMessageListener(replyName, listener);
-        this.context.forgetOnClose(onClose);
-
-        if (response.gotData) {
-          resolve(response.data);
-        } else if (response.error) {
-          reject(response.error);
-        } else if (!responseCallback) {
-          // As a special case, we don't call the callback variant if we
-          // receive no response, but the promise needs to resolve or
-          // reject in either case.
-          resolve();
+    let promise = this._sendMessage(messageManager, "Extension:Message", msg, recipient)
+      .catch(error => {
+        if (error.result == MessageChannel.RESULT_NO_HANDLER) {
+          return Promise.reject({message: "Could not establish connection. Receiving end does not exist."});
+        } else if (error.result == MessageChannel.RESULT_NO_RESPONSE) {
+          if (responseCallback) {
+            // As a special case, we don't call the callback variant if we
+            // receive no response. So return a promise which will never
+            // resolve.
+            return new Promise(() => {});
+          }
+        } else {
+          return Promise.reject({message: error.message});
         }
-      };
-      onClose = {
-        close() {
-          messageManager.removeMessageListener(replyName, listener);
-        },
-      };
-
-      messageManager.addMessageListener(replyName, listener);
-      this.context.callOnClose(onClose);
-    });
+      });
 
     return this.context.wrapPromise(promise, responseCallback);
   },
 
   onMessage(name) {
     return new SingletonEventManager(this.context, name, callback => {
-      let listener = (type, target, message, sender, recipient) => {
-        message = Cu.cloneInto(message, this.context.cloneScope);
-        if (this.delegate) {
-          this.delegate.getSender(this.context, target, sender);
-        }
-        sender = Cu.cloneInto(sender, this.context.cloneScope);
+      let listener = {
+        messageFilterPermissive: this.filter,
 
-        let mm = getMessageManager(target);
-        let replyName = `Extension:Reply-${recipient.messageId}`;
+        receiveMessage: ({target, data: message, sender, recipient}) => {
+          if (this.delegate) {
+            this.delegate.getSender(this.context, target, sender);
+          }
 
-        new Promise((resolve, reject) => {
-          let sendResponse = Cu.exportFunction(resolve, this.context.cloneScope);
+          let sendResponse;
+          let response = undefined;
+          let promise = new Promise(resolve => {
+            sendResponse = value => {
+              resolve(value);
+              response = promise;
+            };
+          });
+
+          message = Cu.cloneInto(message, this.context.cloneScope);
+          sender = Cu.cloneInto(sender, this.context.cloneScope);
+          sendResponse = Cu.exportFunction(sendResponse, this.context.cloneScope);
 
           // Note: We intentionally do not use runSafe here so that any
           // errors are propagated to the message sender.
           let result = callback(message, sender, sendResponse);
-          if (result instanceof Promise) {
-            resolve(result);
-          } else if (result !== true) {
-            reject();
+          if (result instanceof this.context.cloneScope.Promise) {
+            return result;
+          } else if (result === true) {
+            return promise;
           }
-        }).then(
-          data => {
-            mm.sendAsyncMessage(replyName, {data, gotData: true});
-          },
-          error => {
-            if (error) {
-              // The result needs to be structured-clonable, which
-              // ordinary Error objects are not.
-              try {
-                error = {message: String(error.message), stack: String(error.stack)};
-              } catch (e) {
-                error = {message: String(error)};
-              }
-            }
-            mm.sendAsyncMessage(replyName, {error, gotData: false});
-          });
+          return response;
+        },
       };
 
-      this.broker.addListener("message", listener, this.filter);
+      MessageChannel.addListener(this.messageManagers, "Extension:Message", listener);
       return () => {
-        this.broker.removeListener("message", listener);
+        MessageChannel.removeListener(this.messageManagers, "Extension:Message", listener);
       };
     }).api();
   },
 
   connect(messageManager, name, recipient) {
-    let portId = this.broker.makeId();
+    // TODO(robwu): Use a process ID instead of the process type. bugzil.la/1287626
+    let portId = `${gNextPortId++}-${Services.appinfo.processType}`;
     let port = new Port(this.context, messageManager, name, portId, null);
     let msg = {name, portId};
-    this.broker.sendMessage(messageManager, "connect", msg, this.sender, recipient);
+    // TODO: Disconnect the port if no response?
+    this._sendMessage(messageManager, "Extension:Connect", msg, recipient);
     return port.api();
   },
 
   onConnect(name) {
-    return new EventManager(this.context, name, fire => {
-      let listener = (type, target, message, sender, recipient) => {
-        let {name, portId} = message;
-        let mm = getMessageManager(target);
-        if (this.delegate) {
-          this.delegate.getSender(this.context, target, sender);
-        }
-        let port = new Port(this.context, mm, name, portId, sender);
-        fire.withoutClone(port.api());
+    return new SingletonEventManager(this.context, name, callback => {
+      let listener = {
+        messageFilterPermissive: this.filter,
+
+        receiveMessage: ({target, data: message, sender, recipient}) => {
+          let {name, portId} = message;
+          let mm = getMessageManager(target);
+          if (this.delegate) {
+            this.delegate.getSender(this.context, target, sender);
+          }
+          let port = new Port(this.context, mm, name, portId, sender);
+          this.context.runSafeWithoutClone(callback, port.api());
+          return true;
+        },
       };
 
-      this.broker.addListener("connect", listener, this.filter);
+      MessageChannel.addListener(this.messageManagers, "Extension:Connect", listener);
       return () => {
-        this.broker.removeListener("connect", listener);
+        MessageChannel.removeListener(this.messageManagers, "Extension:Connect", listener);
       };
     }).api();
   },
@@ -1026,6 +1044,150 @@ function detectLanguage(text) {
   }));
 }
 
+let nextId = 1;
+
+// We create one instance of this class for every extension context
+// that needs to use remote APIs. It uses the message manager to
+// communicate with the ParentAPIManager singleton in
+// Extension.jsm. It handles asynchronous function calls as well as
+// event listeners.
+class ChildAPIManager {
+  constructor(context, messageManager, namespaces, contextData) {
+    this.context = context;
+    this.messageManager = messageManager;
+    this.namespaces = namespaces;
+
+    let id = String(context.extension.id) + "." + String(context.contextId);
+    this.id = id;
+
+    let data = {childId: id, extensionId: context.extension.id, principal: context.principal};
+    Object.assign(data, contextData);
+    messageManager.sendAsyncMessage("API:CreateProxyContext", data);
+
+    messageManager.addMessageListener("API:RunListener", this);
+    messageManager.addMessageListener("API:CallResult", this);
+
+    // Map[path -> Set[listener]]
+    // path is, e.g., "runtime.onMessage".
+    this.listeners = new Map();
+
+    // Map[callId -> Deferred]
+    this.callPromises = new Map();
+  }
+
+  receiveMessage({name, data}) {
+    if (data.childId != this.id) {
+      return;
+    }
+
+    switch (name) {
+      case "API:RunListener":
+        let ref = data.path.concat(data.name).join(".");
+        let listeners = this.listeners.get(ref);
+        for (let callback of listeners) {
+          runSafe(this.context, callback, ...data.args);
+        }
+        break;
+
+      case "API:CallResult":
+        let deferred = this.callPromises.get(data.callId);
+        if (data.lastError) {
+          deferred.reject({message: data.lastError});
+        } else {
+          deferred.resolve(new SpreadArgs(data.args));
+        }
+        this.callPromises.delete(data.callId);
+        break;
+    }
+  }
+
+  close() {
+    this.messageManager.sendAsyncMessage("Extension:CloseProxyContext", {childId: this.id});
+  }
+
+  get cloneScope() {
+    return this.context.cloneScope;
+  }
+
+  callFunction(path, name, args) {
+    throw new Error("Not implemented");
+  }
+
+  callFunctionNoReturn(path, name, args) {
+    this.messageManager.sendAsyncMessage("API:Call", {
+      childId: this.id,
+      path, name, args,
+    });
+  }
+
+  callAsyncFunction(path, name, args, callback) {
+    let callId = nextId++;
+    let deferred = PromiseUtils.defer();
+    this.callPromises.set(callId, deferred);
+
+    this.messageManager.sendAsyncMessage("API:Call", {
+      childId: this.id,
+      callId,
+      path, name, args,
+    });
+
+    return this.context.wrapPromise(deferred.promise, callback);
+  }
+
+  shouldInject(namespace, name) {
+    return this.namespaces.includes(namespace);
+  }
+
+  getProperty(path, name) {
+    throw new Error("Not implemented");
+  }
+
+  setProperty(path, name, value) {
+    throw new Error("Not implemented");
+  }
+
+  addListener(path, name, listener, args) {
+    let ref = path.concat(name).join(".");
+    let set;
+    if (this.listeners.has(ref)) {
+      set = this.listeners.get(ref);
+    } else {
+      set = new Set();
+      this.listeners.set(ref, set);
+    }
+
+    set.add(listener);
+
+    if (set.size == 1) {
+      args = args.slice(1);
+
+      this.messageManager.sendAsyncMessage("API:AddListener", {
+        childId: this.id,
+        path, name, args,
+      });
+    }
+  }
+
+  removeListener(path, name, listener) {
+    let ref = path.concat(name).join(".");
+    let set = this.listeners.get(ref) || new Set();
+    set.remove(listener);
+
+    if (set.size == 0) {
+      this.messageManager.sendAsyncMessage("Extension:RemoveListener", {
+        childId: this.id,
+        path, name,
+      });
+    }
+  }
+
+  hasListener(path, name, listener) {
+    let ref = path.concat(name).join(".");
+    let set = this.listeners.get(ref) || new Set();
+    return set.has(listener);
+  }
+}
+
 this.ExtensionUtils = {
   detectLanguage,
   extend,
@@ -1042,9 +1204,9 @@ this.ExtensionUtils = {
   DefaultWeakMap,
   EventManager,
   LocaleData,
-  MessageBroker,
   Messenger,
   PlatformInfo,
   SingletonEventManager,
   SpreadArgs,
+  ChildAPIManager,
 };

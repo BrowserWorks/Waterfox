@@ -50,14 +50,6 @@ auto DownloadsIntegration::ScanMedia(mozilla::jni::String::Param a0, mozilla::jn
 template<> const char mozilla::jni::Context<GeckoAppShell, jobject>::name[] =
         "org/mozilla/gecko/GeckoAppShell";
 
-constexpr char GeckoAppShell::AcknowledgeEvent_t::name[];
-constexpr char GeckoAppShell::AcknowledgeEvent_t::signature[];
-
-auto GeckoAppShell::AcknowledgeEvent() -> void
-{
-    return mozilla::jni::Method<AcknowledgeEvent_t>::Call(GeckoAppShell::Context(), nullptr);
-}
-
 constexpr char GeckoAppShell::AddPluginViewWrapper_t::name[];
 constexpr char GeckoAppShell::AddPluginViewWrapper_t::signature[];
 
@@ -248,6 +240,14 @@ constexpr char GeckoAppShell::GamepadAdded_t::signature[];
 auto GeckoAppShell::GamepadAdded(int32_t a0, int32_t a1) -> void
 {
     return mozilla::jni::Method<GamepadAdded_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1);
+}
+
+constexpr char GeckoAppShell::GetApplicationContext_t::name[];
+constexpr char GeckoAppShell::GetApplicationContext_t::signature[];
+
+auto GeckoAppShell::GetApplicationContext() -> mozilla::jni::Object::LocalRef
+{
+    return mozilla::jni::Method<GetApplicationContext_t>::Call(GeckoAppShell::Context(), nullptr);
 }
 
 constexpr char GeckoAppShell::GetConnection_t::name[];
@@ -554,6 +554,9 @@ auto GeckoAppShell::MoveTaskToBack() -> void
     return mozilla::jni::Method<MoveTaskToBack_t>::Call(GeckoAppShell::Context(), nullptr);
 }
 
+constexpr char GeckoAppShell::NotifyObservers_t::name[];
+constexpr char GeckoAppShell::NotifyObservers_t::signature[];
+
 constexpr char GeckoAppShell::NetworkLinkType_t::name[];
 constexpr char GeckoAppShell::NetworkLinkType_t::signature[];
 
@@ -682,14 +685,6 @@ auto GeckoAppShell::ShowAlertNotificationWrapper(mozilla::jni::String::Param a0,
     return mozilla::jni::Method<ShowAlertNotificationWrapper_t>::Call(GeckoAppShell::Context(), nullptr, a0, a1, a2, a3, a4, a5);
 }
 
-constexpr char GeckoAppShell::ShowInputMethodPicker_t::name[];
-constexpr char GeckoAppShell::ShowInputMethodPicker_t::signature[];
-
-auto GeckoAppShell::ShowInputMethodPicker() -> void
-{
-    return mozilla::jni::Method<ShowInputMethodPicker_t>::Call(GeckoAppShell::Context(), nullptr);
-}
-
 constexpr char GeckoAppShell::StartMonitoringGamepad_t::name[];
 constexpr char GeckoAppShell::StartMonitoringGamepad_t::signature[];
 
@@ -705,6 +700,9 @@ auto GeckoAppShell::StopMonitoringGamepad() -> void
 {
     return mozilla::jni::Method<StopMonitoringGamepad_t>::Call(GeckoAppShell::Context(), nullptr);
 }
+
+constexpr char GeckoAppShell::SyncNotifyObservers_t::name[];
+constexpr char GeckoAppShell::SyncNotifyObservers_t::signature[];
 
 constexpr char GeckoAppShell::UnlockProfile_t::name[];
 constexpr char GeckoAppShell::UnlockProfile_t::signature[];
@@ -947,6 +945,15 @@ auto GeckoThread::CheckAndSetState(mozilla::jni::Object::Param a0, mozilla::jni:
     return mozilla::jni::Method<CheckAndSetState_t>::Call(GeckoThread::Context(), nullptr, a0, a1);
 }
 
+constexpr char GeckoThread::CreateServices_t::name[];
+constexpr char GeckoThread::CreateServices_t::signature[];
+
+constexpr char GeckoThread::OnPause_t::name[];
+constexpr char GeckoThread::OnPause_t::signature[];
+
+constexpr char GeckoThread::OnResume_t::name[];
+constexpr char GeckoThread::OnResume_t::signature[];
+
 constexpr char GeckoThread::PumpMessageLoop_t::name[];
 constexpr char GeckoThread::PumpMessageLoop_t::signature[];
 
@@ -965,6 +972,9 @@ auto GeckoThread::SetState(mozilla::jni::Object::Param a0) -> void
 
 constexpr char GeckoThread::SpeculativeConnect_t::name[];
 constexpr char GeckoThread::SpeculativeConnect_t::signature[];
+
+constexpr char GeckoThread::WaitOnGecko_t::name[];
+constexpr char GeckoThread::WaitOnGecko_t::signature[];
 
 constexpr char GeckoThread::ClsLoader_t::name[];
 constexpr char GeckoThread::ClsLoader_t::signature[];
@@ -1181,25 +1191,6 @@ constexpr char PrefsHelper::OnPrefChange_t::signature[];
 auto PrefsHelper::OnPrefChange(mozilla::jni::String::Param a0, int32_t a1, bool a2, int32_t a3, mozilla::jni::String::Param a4) -> void
 {
     return mozilla::jni::Method<OnPrefChange_t>::Call(PrefsHelper::Context(), nullptr, a0, a1, a2, a3, a4);
-}
-
-template<> const char mozilla::jni::Context<Restrictions, jobject>::name[] =
-        "org/mozilla/gecko/Restrictions";
-
-constexpr char Restrictions::IsAllowed_t::name[];
-constexpr char Restrictions::IsAllowed_t::signature[];
-
-auto Restrictions::IsAllowed(int32_t a0, mozilla::jni::String::Param a1) -> bool
-{
-    return mozilla::jni::Method<IsAllowed_t>::Call(Restrictions::Context(), nullptr, a0, a1);
-}
-
-constexpr char Restrictions::IsUserRestricted_t::name[];
-constexpr char Restrictions::IsUserRestricted_t::signature[];
-
-auto Restrictions::IsUserRestricted() -> bool
-{
-    return mozilla::jni::Method<IsUserRestricted_t>::Call(Restrictions::Context(), nullptr);
 }
 
 template<> const char mozilla::jni::Context<SurfaceBits, jobject>::name[] =
@@ -1541,6 +1532,12 @@ constexpr char NativePanZoomController::DisposeNative_t::signature[];
 constexpr char NativePanZoomController::HandleMotionEvent_t::name[];
 constexpr char NativePanZoomController::HandleMotionEvent_t::signature[];
 
+constexpr char NativePanZoomController::HandleMotionEventVelocity_t::name[];
+constexpr char NativePanZoomController::HandleMotionEventVelocity_t::signature[];
+
+constexpr char NativePanZoomController::HandleMouseEvent_t::name[];
+constexpr char NativePanZoomController::HandleMouseEvent_t::signature[];
+
 constexpr char NativePanZoomController::HandleScrollEvent_t::name[];
 constexpr char NativePanZoomController::HandleScrollEvent_t::signature[];
 
@@ -1550,12 +1547,28 @@ constexpr char NativePanZoomController::AbortAnimation_t::signature[];
 constexpr char NativePanZoomController::SetIsLongpressEnabled_t::name[];
 constexpr char NativePanZoomController::SetIsLongpressEnabled_t::signature[];
 
+constexpr char NativePanZoomController::OnSelectionDragState_t::name[];
+constexpr char NativePanZoomController::OnSelectionDragState_t::signature[];
+
+auto NativePanZoomController::OnSelectionDragState(bool a0) const -> void
+{
+    return mozilla::jni::Method<OnSelectionDragState_t>::Call(NativePanZoomController::mCtx, nullptr, a0);
+}
+
 constexpr char NativePanZoomController::RequestContentRepaintWrapper_t::name[];
 constexpr char NativePanZoomController::RequestContentRepaintWrapper_t::signature[];
 
 auto NativePanZoomController::RequestContentRepaintWrapper(float a0, float a1, float a2, float a3, float a4) const -> void
 {
     return mozilla::jni::Method<RequestContentRepaintWrapper_t>::Call(NativePanZoomController::mCtx, nullptr, a0, a1, a2, a3, a4);
+}
+
+constexpr char NativePanZoomController::SetScrollingRootContent_t::name[];
+constexpr char NativePanZoomController::SetScrollingRootContent_t::signature[];
+
+auto NativePanZoomController::SetScrollingRootContent(bool a0) const -> void
+{
+    return mozilla::jni::Method<SetScrollingRootContent_t>::Call(NativePanZoomController::mCtx, nullptr, a0);
 }
 
 constexpr char NativePanZoomController::UpdateOverscrollOffset_t::name[];
@@ -1771,6 +1784,44 @@ auto ViewTransform::Y() const -> float
 auto ViewTransform::Y(float a0) const -> void
 {
     return mozilla::jni::Field<Y_t>::Set(ViewTransform::mCtx, nullptr, a0);
+}
+
+template<> const char mozilla::jni::Context<AudioFocusAgent, jobject>::name[] =
+        "org/mozilla/gecko/media/AudioFocusAgent";
+
+constexpr char AudioFocusAgent::NotifyStartedPlaying_t::name[];
+constexpr char AudioFocusAgent::NotifyStartedPlaying_t::signature[];
+
+auto AudioFocusAgent::NotifyStartedPlaying() -> void
+{
+    return mozilla::jni::Method<NotifyStartedPlaying_t>::Call(AudioFocusAgent::Context(), nullptr);
+}
+
+constexpr char AudioFocusAgent::NotifyStoppedPlaying_t::name[];
+constexpr char AudioFocusAgent::NotifyStoppedPlaying_t::signature[];
+
+auto AudioFocusAgent::NotifyStoppedPlaying() -> void
+{
+    return mozilla::jni::Method<NotifyStoppedPlaying_t>::Call(AudioFocusAgent::Context(), nullptr);
+}
+
+template<> const char mozilla::jni::Context<Restrictions, jobject>::name[] =
+        "org/mozilla/gecko/restrictions/Restrictions";
+
+constexpr char Restrictions::IsAllowed_t::name[];
+constexpr char Restrictions::IsAllowed_t::signature[];
+
+auto Restrictions::IsAllowed(int32_t a0, mozilla::jni::String::Param a1) -> bool
+{
+    return mozilla::jni::Method<IsAllowed_t>::Call(Restrictions::Context(), nullptr, a0, a1);
+}
+
+constexpr char Restrictions::IsUserRestricted_t::name[];
+constexpr char Restrictions::IsUserRestricted_t::signature[];
+
+auto Restrictions::IsUserRestricted() -> bool
+{
+    return mozilla::jni::Method<IsUserRestricted_t>::Call(Restrictions::Context(), nullptr);
 }
 
 template<> const char mozilla::jni::Context<MatrixBlobCursor, jobject>::name[] =

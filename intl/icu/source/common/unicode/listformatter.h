@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2012-2016, International Business Machines
+*   Copyright (C) 2012-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -145,7 +145,7 @@ class U_COMMON_API ListFormatter : public UObject{
     /**
      * @internal constructor made public for testing.
      */
-    ListFormatter(const ListFormatData &data, UErrorCode &errorCode);
+    ListFormatter(const ListFormatData &data);
     /**
      * @internal constructor made public for testing.
      */

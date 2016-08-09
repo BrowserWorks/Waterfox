@@ -43,7 +43,7 @@ MakeContext ()
     RefPtr<DrawTarget> drawTarget = gfxPlatform::GetPlatform()->
         CreateOffscreenContentDrawTarget(IntSize(size, size),
                                          SurfaceFormat::B8G8R8X8);
-    RefPtr<gfxContext> ctx = new gfxContext(drawTarget);
+    RefPtr<gfxContext> ctx = gfxContext::ForDrawTarget(drawTarget);
 
     return ctx.forget();
 }
@@ -58,7 +58,7 @@ RunTest (TestEntry *test, gfxContext *ctx) {
                                               400,
                                               0,
                                               16.0,
-                                              NS_NewPermanentAtom(NS_LITERAL_STRING("en")),
+                                              NS_Atomize(NS_LITERAL_STRING("en")),
                                               0.0,
                                               false, false,
                                               NS_LITERAL_STRING(""));
@@ -66,7 +66,7 @@ RunTest (TestEntry *test, gfxContext *ctx) {
         fontGroup = gfxPlatform::GetPlatform()->CreateFontGroup(NS_ConvertUTF8toUTF16(test->mFamilies), &style_western_normal_16, nullptr, nullptr, 1.0);
     }
 
-    nsAutoPtr<gfxTextRun> textRun;
+    UniquePtr<gfxTextRun> textRun;
     uint32_t i;
     bool isASCII = true;
     for (i = 0; test->mString[i]; ++i) {
@@ -84,7 +84,8 @@ RunTest (TestEntry *test, gfxContext *ctx) {
         flags |= gfxTextRunFactory::TEXT_IS_ASCII |
                  gfxTextRunFactory::TEXT_IS_8BIT;
         length = strlen(test->mString);
-        textRun = fontGroup->MakeTextRun(reinterpret_cast<const uint8_t*>(test->mString), length, &params, flags);
+        textRun = fontGroup->MakeTextRun(
+            reinterpret_cast<const uint8_t*>(test->mString), length, &params, flags);
     } else {
         NS_ConvertUTF8toUTF16 str(nsDependentCString(test->mString));
         length = str.Length();

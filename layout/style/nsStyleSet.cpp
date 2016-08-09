@@ -510,7 +510,7 @@ nsStyleSet::GatherRuleProcessors(SheetType aType)
         sheetsForScope.AppendElements(sheets.Elements() + start, end - start);
         nsCSSRuleProcessor* oldRP = oldScopedRuleProcessorHash.Get(scope);
         mScopedDocSheetRuleProcessors.AppendElement
-          (new nsCSSRuleProcessor(sheetsForScope, aType, scope, oldRP));
+          (new nsCSSRuleProcessor(Move(sheetsForScope), aType, scope, oldRP));
 
         start = end;
       } while (start < count);
@@ -979,6 +979,8 @@ nsStyleSet::GetContext(nsStyleContext* aParentContext,
       // Update CSS animations in case the animation-name has just changed.
       PresContext()->AnimationManager()->UpdateAnimations(result,
                                                           aElementForAnimation);
+      PresContext()->EffectCompositor()->UpdateEffectProperties(
+        result, aElementForAnimation, result->GetPseudoType());
 
       animRule = PresContext()->EffectCompositor()->
                    GetAnimationRule(aElementForAnimation,
@@ -1016,7 +1018,7 @@ nsStyleSet::GetContext(nsStyleContext* aParentContext,
       aElementForAnimation->IsHTMLElement(nsGkAtoms::body) &&
       aPseudoType == CSSPseudoElementType::NotPseudo &&
       PresContext()->CompatibilityMode() == eCompatibility_NavQuirks) {
-    nsIDocument* doc = aElementForAnimation->GetCurrentDoc();
+    nsIDocument* doc = aElementForAnimation->GetUncomposedDoc();
     if (doc && doc->GetBodyElement() == aElementForAnimation) {
       // Update the prescontext's body color
       PresContext()->SetBodyTextColor(result->StyleColor()->mColor);
@@ -1779,12 +1781,12 @@ nsStyleSet::ResolveStyleWithoutAnimation(dom::Element* aTarget,
 }
 
 already_AddRefed<nsStyleContext>
-nsStyleSet::ResolveStyleForNonElement(nsStyleContext* aParentContext)
+nsStyleSet::ResolveStyleForNonElement(nsStyleContext* aParentContext,
+                                      nsIAtom* aPseudoTag)
 {
-  return GetContext(aParentContext, mRuleTree, nullptr,
-                    nsCSSAnonBoxes::mozNonElement,
-                    CSSPseudoElementType::AnonBox, nullptr,
-                    eNoFlags);
+  MOZ_ASSERT(nsCSSAnonBoxes::IsNonElement(aPseudoTag));
+  return GetContext(aParentContext, mRuleTree, nullptr, aPseudoTag,
+                    CSSPseudoElementType::AnonBox, nullptr, eNoFlags);
 }
 
 void
@@ -2212,7 +2214,6 @@ nsStyleSet::GCRuleTrees()
   NS_ASSERTION(!mOldRootNode, "Should have GCed old root node");
   mOldRootNode = nullptr;
 #endif
-
   mUnusedRuleNodeCount = 0;
   mInGC = false;
 }

@@ -214,7 +214,6 @@ class LinuxArtifactJob(ArtifactJob):
         'firefox/platform.ini',
         'firefox/plugin-container',
         'firefox/updater',
-        'firefox/webapprt-stub',
         'firefox/**/*.so',
     }
 
@@ -307,7 +306,6 @@ class MacArtifactJob(ArtifactJob):
                 'gmp-clearkey/0.1/libclearkey.dylib',
                 # 'gmp-fake/1.0/libfake.dylib',
                 # 'gmp-fakeopenh264/1.0/libfakeopenh264.dylib',
-                'webapprt-stub',
             ])
 
             with JarWriter(file=processed_filename, optimize=False, compress_level=5) as writer:
@@ -388,10 +386,9 @@ class WinArtifactJob(ArtifactJob):
 # https://tools.taskcluster.net/index/artifacts/#buildbot.branches.mozilla-central/buildbot.branches.mozilla-central.
 # The values correpsond to a pair of (<package regex>, <test archive regex>).
 JOB_DETAILS = {
-    # 'android-api-9': (AndroidArtifactJob, 'public/build/fennec-(.*)\.android-arm\.apk'),
-    'android-api-15': (AndroidArtifactJob, ('public/build/fennec-(.*)\.android-arm\.apk',
+    'android-api-15': (AndroidArtifactJob, ('public/build/fennec-(.*)-arm\.apk',
                                             None)),
-    'android-x86': (AndroidArtifactJob, ('public/build/fennec-(.*)\.android-i386\.apk',
+    'android-x86': (AndroidArtifactJob, ('public/build/fennec-(.*)-i386\.apk',
                                          None)),
     'linux': (LinuxArtifactJob, ('public/build/firefox-(.*)\.linux-i686\.tar\.bz2',
                                  'public/build/firefox-(.*)\.common\.tests\.zip')),
@@ -687,7 +684,7 @@ class ArtifactCache(CacheManager):
                 if now == self._last_dl_update:
                     return
                 self._last_dl_update = now
-                self.log(logging.DEBUG, 'artifact',
+                self.log(logging.INFO, 'artifact',
                          {'bytes_so_far': bytes_so_far, 'total_size': total_size, 'percent': percent},
                          'Downloading... {percent:02.1f} %')
 
@@ -727,9 +724,6 @@ class Artifacts(object):
         self._log = log
         self._hg = hg
         self._git = git
-        if self._git:
-            import which
-            self._cinnabar = which.which('git-cinnabar')
         self._cache_dir = cache_dir
         self._skip_cache = skip_cache
 
@@ -821,7 +815,7 @@ class Artifacts(object):
         ])
 
         hg_hash_list = subprocess.check_output([
-            self._cinnabar, 'git2hg'
+            self._git, 'cinnabar', 'git2hg'
         ] + rev_list.splitlines())
 
         zeroes = "0" * 40
@@ -991,7 +985,7 @@ class Artifacts(object):
                 raise ValueError('hg revision specification must resolve to exactly one commit')
         else:
             revision = subprocess.check_output([self._git, 'rev-parse', revset]).strip()
-            revision = subprocess.check_output([self._cinnabar, 'git2hg', revision]).strip()
+            revision = subprocess.check_output([self._git, 'cinnabar', 'git2hg', revision]).strip()
             if len(revision.split('\n')) != 1:
                 raise ValueError('hg revision specification must resolve to exactly one commit')
             if revision == "0" * 40:

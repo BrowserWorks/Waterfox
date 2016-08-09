@@ -3,7 +3,7 @@
 "use strict";
 
 function* testInArea(area) {
-  let scriptPage = url => `<html><head><meta charset="utf-8"><script src="${url}"></script></head></html>`;
+  let scriptPage = url => `<html><head><meta charset="utf-8"><script src="${url}"></script></head><body>${url}</body></html>`;
 
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
@@ -12,13 +12,18 @@ function* testInArea(area) {
       },
       "browser_action": {
         "default_popup": "popup-a.html",
+        "browser_style": true,
       },
     },
 
     files: {
       "popup-a.html": scriptPage("popup-a.js"),
       "popup-a.js": function() {
-        browser.runtime.sendMessage("from-popup-a");
+        window.onload = () => {
+          let background = window.getComputedStyle(document.body).backgroundColor;
+          browser.test.assertEq("rgb(252, 252, 252)", background);
+          browser.runtime.sendMessage("from-popup-a");
+        };
         browser.runtime.onMessage.addListener(msg => {
           if (msg == "close-popup") {
             window.close();

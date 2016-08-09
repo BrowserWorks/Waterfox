@@ -912,7 +912,7 @@ HTMLTableAccessible::HasDescendant(const nsAString& aTagName, bool aAllowEmpty)
   // performance problems only. Note, currently 'aAllowEmpty' flag is used for
   // caption element only. On another hand we create accessible object for
   // the first entry of caption element (see
-  // HTMLTableAccessible::CacheChildren).
+  // HTMLTableAccessible::InsertChildAt).
   return !!elements->Item(1);
 }
 
@@ -1056,7 +1056,7 @@ HTMLTableAccessible::IsProbablyLayoutTable()
     RETURN_LAYOUT_ANSWER(false, "table's first cell has no frame!");
 
   nsMargin border;
-  cellFrame->GetBorder(border);
+  cellFrame->GetXULBorder(border);
   if (border.top && border.bottom && border.left && border.right) {
     RETURN_LAYOUT_ANSWER(false, "Has nonzero border-width on table cell");
   }

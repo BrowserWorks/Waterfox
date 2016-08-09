@@ -7,25 +7,25 @@ package org.mozilla.gecko.home;
 
 import java.util.EnumSet;
 
-import android.os.AsyncTask;
 import org.mozilla.gecko.EditBookmarkDialog;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoEvent;
+import org.mozilla.gecko.GeckoApplication;
 import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.IntentHelper;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.ReaderModeUtils;
-import org.mozilla.gecko.Restrictions;
 import org.mozilla.gecko.SnackbarHelper;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
-import org.mozilla.gecko.favicons.Favicons;
 import org.mozilla.gecko.home.HomeContextMenuInfo.RemoveItemType;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenInBackgroundListener;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
 import org.mozilla.gecko.home.TopSitesGridView.TopSitesGridContextMenuInfo;
+import org.mozilla.gecko.reader.SavedReaderViewHelper;
+import org.mozilla.gecko.reader.ReadingListHelper;
 import org.mozilla.gecko.restrictions.Restrictable;
+import org.mozilla.gecko.restrictions.Restrictions;
 import org.mozilla.gecko.util.Clipboard;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -55,7 +55,7 @@ import android.view.View;
  */
 public abstract class HomeFragment extends Fragment {
     // Log Tag.
-    private static final String LOGTAG="GeckoHomeFragment";
+    private static final String LOGTAG = "GeckoHomeFragment";
 
     // Share MIME type.
     protected static final String SHARE_MIME_TYPE = "text/plain";
@@ -118,6 +118,13 @@ public abstract class HomeFragment extends Fragment {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        GeckoApplication.watchReference(getActivity(), this);
+    }
+
+    @Override
     public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
         if (!(menuInfo instanceof HomeContextMenuInfo)) {
             return;
@@ -142,7 +149,7 @@ public abstract class HomeFragment extends Fragment {
 
         // Hide the "Edit" menuitem if this item isn't a bookmark,
         // or if this is a reading list item.
-        if (!info.hasBookmarkId() || info.isInReadingList()) {
+        if (!info.hasBookmarkId()) {
             menu.findItem(R.id.home_edit_bookmark).setVisible(false);
         }
 
@@ -158,9 +165,6 @@ public abstract class HomeFragment extends Fragment {
         if (!Restrictions.isAllowed(view.getContext(), Restrictable.PRIVATE_BROWSING)) {
             menu.findItem(R.id.home_open_private_tab).setVisible(false);
         }
-
-        menu.findItem(R.id.mark_read).setVisible(info.isInReadingList() && info.isUnread);
-        menu.findItem(R.id.mark_unread).setVisible(info.isInReadingList() && !info.isUnread);
     }
 
     @Override
@@ -204,7 +208,7 @@ public abstract class HomeFragment extends Fragment {
                 Log.e(LOGTAG, "Can't share because URL is null");
                 return false;
             } else {
-                GeckoAppShell.openUriExternal(info.url, SHARE_MIME_TYPE, "", "",
+                IntentHelper.openUriExternal(info.url, SHARE_MIME_TYPE, "", "",
                                               Intent.ACTION_SEND, info.getDisplayTitle(), false);
 
                 // Context: Sharing via chrome homepage contextmenu list (home session should be active)
@@ -242,9 +246,7 @@ public abstract class HomeFragment extends Fragment {
             // the PinSiteDialog are wrapped in a special URI until we can get a
             // valid URL. If the url is a user-entered url, decode the URL
             // before loading it.
-            final String url = StringUtils.decodeUserEnteredUrl(info.isInReadingList()
-                    ? ReaderModeUtils.getAboutReaderForUrl(info.url)
-                    : info.url);
+            final String url = StringUtils.decodeUserEnteredUrl(info.url);
 
             final EnumSet<OnUrlOpenInBackgroundListener.Flags> flags = EnumSet.noneOf(OnUrlOpenInBackgroundListener.Flags.class);
             if (item.getItemId() == R.id.home_open_private_tab) {
@@ -270,22 +272,6 @@ public abstract class HomeFragment extends Fragment {
 
             (new RemoveItemByUrlTask(context, info.url, info.itemType, position)).execute();
             return true;
-        }
-
-        if (itemId == R.id.mark_read) {
-            GeckoProfile
-                    .get(context)
-                    .getDB()
-                    .getReadingListAccessor()
-                    .markAsRead(context.getContentResolver(), info.id);
-        }
-
-        if (itemId == R.id.mark_unread) {
-            GeckoProfile
-                    .get(context)
-                    .getDB()
-                    .getReadingListAccessor()
-                    .markAsUnread(context.getContentResolver(), info.id);
         }
 
         return false;
@@ -392,20 +378,29 @@ public abstract class HomeFragment extends Fragment {
                 }
             }
 
-            switch(mType) {
+            switch (mType) {
                 case BOOKMARKS:
-                    Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.CONTEXT_MENU, "bookmark");
+                    SavedReaderViewHelper rch = SavedReaderViewHelper.getSavedReaderViewHelper(mContext);
+                    final boolean isReaderViewPage = rch.isURLCached(mUrl);
+
+                    final String extra;
+                    if (isReaderViewPage) {
+                        extra = "bookmark_reader";
+                    } else {
+                        extra = "bookmark";
+                    }
+
+                    Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.CONTEXT_MENU, extra);
                     mDB.removeBookmarksWithURL(cr, mUrl);
+
+                    if (isReaderViewPage) {
+                        ReadingListHelper.removeCachedReaderItem(mUrl, mContext);
+                    }
+
                     break;
 
                 case HISTORY:
                     mDB.removeHistoryEntry(cr, mUrl);
-                    break;
-
-                case READING_LIST:
-                    Telemetry.sendUIEvent(TelemetryContract.Event.UNSAVE, TelemetryContract.Method.CONTEXT_MENU, "reading_list");
-                    mDB.getReadingListAccessor().removeReadingListItemWithURL(cr, mUrl);
-                    GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Reader:Removed", mUrl));
                     break;
 
                 default:

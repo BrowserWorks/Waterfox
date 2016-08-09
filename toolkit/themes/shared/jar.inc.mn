@@ -25,6 +25,7 @@ toolkit.jar:
   skin/classic/global/icons/loading-inverted.png           (../../shared/icons/loading-inverted.png)
   skin/classic/global/icons/loading-inverted@2x.png        (../../shared/icons/loading-inverted@2x.png)
   skin/classic/global/icons/warning.svg                    (../../shared/incontent-icons/warning.svg)
+  skin/classic/global/icons/blocked.svg                    (../../shared/incontent-icons/blocked.svg)
   skin/classic/global/alerts/alert-common.css              (../../shared/alert-common.css)
   skin/classic/global/narrate.css                          (../../shared/narrate.css)
   skin/classic/global/narrateControls.css                  (../../shared/narrateControls.css)
@@ -46,9 +47,16 @@ toolkit.jar:
   skin/classic/global/in-content/dropdown.svg              (../../shared/in-content/dropdown.svg)
   skin/classic/global/in-content/help-glyph.svg            (../../shared/in-content/help-glyph.svg)
   skin/classic/global/in-content/radio.svg                 (../../shared/in-content/radio.svg)
+  skin/classic/global/passwordmgr.css                      (../../shared/passwordmgr.css)
   skin/classic/global/reader/RM-Close-24x24.svg            (../../shared/reader/RM-Close-24x24.svg)
   skin/classic/global/reader/RM-Minus-24x24.svg            (../../shared/reader/RM-Minus-24x24.svg)
   skin/classic/global/reader/RM-Plus-24x24.svg             (../../shared/reader/RM-Plus-24x24.svg)
   skin/classic/global/reader/RM-Type-Controls-24x24.svg    (../../shared/reader/RM-Type-Controls-24x24.svg)
   skin/classic/global/reader/RM-Type-Controls-Arrow.svg    (../../shared/reader/RM-Type-Controls-Arrow.svg)
+#ifdef MOZ_PLACES
+  skin/classic/mozapps/places/defaultFavicon.png           (../../shared/places/defaultFavicon.png)
+  skin/classic/mozapps/places/defaultFavicon@2x.png        (../../shared/places/defaultFavicon@2x.png)
+  skin/classic/mozapps/places/defaultFavicon-inverted.png  (../../shared/places/defaultFavicon-inverted.png)
+  skin/classic/mozapps/places/defaultFavicon-inverted@2x.png (../../shared/places/defaultFavicon-inverted@2x.png)
+#endif
 

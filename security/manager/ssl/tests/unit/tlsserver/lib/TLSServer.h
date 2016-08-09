@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_test__TLSServer_h
-#define mozilla_test__TLSServer_h
+#ifndef TLSServer_h
+#define TLSServer_h
 
 // This is a standalone server for testing SSL features of Gecko.
 // The client is expected to connect and initiate an SSL handshake (with SNI
@@ -21,8 +21,7 @@
 
 namespace mozilla {
 
-MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPRDir, PRDir, PR_CloseDir);
-MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedPORTString, char, PORT_Free);
+MOZ_TYPE_SPECIFIC_UNIQUE_PTR_TEMPLATE(UniquePRDir, PRDir, PR_CloseDir);
 
 } // namespace mozilla
 
@@ -45,9 +44,9 @@ extern const char DEFAULT_CERT_NICKNAME[];
 // Pass DEFAULT_CERT_NICKNAME as certName unless you need a specific
 // certificate.
 SECStatus
-ConfigSecureServerWithNamedCert(PRFileDesc *fd, const char *certName,
-                                /*optional*/ ScopedCERTCertificate *cert,
-                                /*optional*/ SSLKEAType *kea);
+ConfigSecureServerWithNamedCert(PRFileDesc* fd, const char* certName,
+                                /*optional*/ UniqueCERTCertificate* cert,
+                                /*optional*/ SSLKEAType* kea);
 
 SECStatus
 InitializeNSS(const char* nssCertDBDir);
@@ -85,4 +84,4 @@ GetHostForSNI(const SECItem *aSrvNameArr, uint32_t aSrvNameArrSize,
 
 } } // namespace mozilla::test
 
-#endif // mozilla_test__TLSServer_h
+#endif // TLSServer_h

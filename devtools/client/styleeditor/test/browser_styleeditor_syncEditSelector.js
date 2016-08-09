@@ -6,9 +6,6 @@
 // Test that changes in the style inspector are synchronized into the
 // style editor.
 
-/* import-globals-from ../../inspector/shared/test/head.js */
-Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/client/inspector/shared/test/head.js", this);
-
 const TESTCASE_URI = TEST_BASE_HTTP + "sync.html";
 
 const expectedText = `
@@ -22,7 +19,7 @@ const expectedText = `
   }
   `;
 
-add_task(function*() {
+add_task(function* () {
   yield addTab(TESTCASE_URI);
   let { inspector, view } = yield openRuleView();
   yield selectNode("#testid", inspector);

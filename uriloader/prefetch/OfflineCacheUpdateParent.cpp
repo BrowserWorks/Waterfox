@@ -31,7 +31,7 @@ using mozilla::dom::TabParent;
 // this enables LogLevel::Debug level information and places all output in
 // the file offlineupdate.log
 //
-extern PRLogModuleInfo *gOfflineCacheUpdateLog;
+extern mozilla::LazyLogModule gOfflineCacheUpdateLog;
 
 #undef LOG
 #define LOG(args) MOZ_LOG(gOfflineCacheUpdateLog, mozilla::LogLevel::Debug, args)
@@ -130,11 +130,15 @@ OfflineCacheUpdateParent::Schedule(const URIParams& aManifestURI,
         rv = update->Init(manifestURI, documentURI, mLoadingPrincipal, nullptr, nullptr);
         NS_ENSURE_SUCCESS(rv, rv);
 
+        // Must add before Schedule() call otherwise we would miss
+        // oncheck event notification.
+        update->AddObserver(this, false);
+
         rv = update->Schedule();
         NS_ENSURE_SUCCESS(rv, rv);
+    } else {
+        update->AddObserver(this, false);
     }
-
-    update->AddObserver(this, false);
 
     if (stickDocument) {
         nsCOMPtr<nsIURI> stickURI;

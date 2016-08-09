@@ -15,28 +15,22 @@
 
           "applications": {
             "type": "object",
+            "optional": true,
             "properties": {
               "gecko": {
-                "type": "object",
-                "properties": {
-                  "id": { "$ref": "ExtensionID" },
+                "$ref": "FirefoxSpecificProperties",
+                "optional": true
+              }
+            }
+          },
 
-                  "update_url": {
-                    "type": "string",
-                    "format": "url",
-                    "optional": true
-                  },
-
-                  "strict_min_version": {
-                    "type": "string",
-                    "optional": true
-                  },
-
-                  "strict_max_version": {
-                    "type": "string",
-                    "optional": true
-                  }
-                }
+          "browser_specific_settings": {
+            "type": "object",
+            "optional": true,
+            "properties": {
+              "gecko": {
+                "$ref": "FirefoxSpecificProperties",
+                "optional": true
               }
             }
           },
@@ -85,13 +79,25 @@
             }
           },
 
+          "incognito": {
+            "type": "string",
+            "enum": ["spanning"],
+            "optional": true,
+            "onError": "warn"
+          },
+
           "background": {
             "choices": [
               {
                 "type": "object",
                 "properties": {
-                  "page": { "$ref": "ExtensionURL" }
-                }
+                  "page": { "$ref": "ExtensionURL" },
+                  "persistent": {
+                    "optional": true,
+                    "$ref": "PersistentBackgroundProperty"
+                  }
+                },
+                "additionalProperties": { "$ref": "UnrecognizedProperty" }
               },
               {
                 "type": "object",
@@ -99,17 +105,56 @@
                   "scripts": {
                     "type": "array",
                     "items": { "$ref": "ExtensionURL" }
+                  },
+                  "persistent": {
+                    "optional": true,
+                    "$ref": "PersistentBackgroundProperty"
                   }
-                }
+                },
+                "additionalProperties": { "$ref": "UnrecognizedProperty" }
               }
             ],
             "optional": true
+          },
+
+          "options_ui": {
+            "type": "object",
+
+            "optional": true,
+
+            "properties": {
+              "page": { "$ref": "ExtensionURL" },
+              "browser_style": {
+                "type": "boolean",
+                "optional": true
+              },
+              "chrome_style": {
+                "type": "boolean",
+                "optional": true
+              },
+              "open_in_tab": {
+                "type": "boolean",
+                "optional": true
+              }
+            },
+
+            "additionalProperties": {
+              "type": "any",
+              "deprecated": "An unexpected property was found in the WebExtension manifest"
+            }
           },
 
           "content_scripts": {
             "type": "array",
             "optional": true,
             "items": { "$ref": "ContentScript" }
+          },
+
+          "content_security_policy": {
+            "type": "string",
+            "optional": true,
+            "format": "contentSecurityPolicy",
+            "onError": "warn"
           },
 
           "permissions": {
@@ -133,10 +178,7 @@
           }
         },
 
-        "additionalProperties": {
-          "type": "any",
-          "deprecated": "An unexpected property was found in the WebExtension manifest"
-        }
+        "additionalProperties": { "$ref": "UnrecognizedProperty" }
       },
       {
         "id": "Permission",
@@ -172,6 +214,32 @@
         ]
       },
       {
+        "id": "FirefoxSpecificProperties",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "ExtensionID",
+            "optional": true
+          },
+
+          "update_url": {
+            "type": "string",
+            "format": "url",
+            "optional": true
+          },
+
+          "strict_min_version": {
+            "type": "string",
+            "optional": true
+          },
+
+          "strict_max_version": {
+            "type": "string",
+            "optional": true
+          }
+        }
+      },
+      {
         "id": "MatchPattern",
         "choices": [
           {
@@ -192,6 +260,7 @@
         "id": "ContentScript",
         "type": "object",
         "description": "Details of the script or CSS to inject. Either the code or the file property must be set, but both may not be set at the same time. Based on InjectDetails, but using underscore rather than camel case naming conventions.",
+        "additionalProperties": { "$ref": "UnrecognizedProperty" },
         "properties": {
           "matches": {
             "type": "array",
@@ -204,6 +273,16 @@
             "optional": true,
             "minItems": 1,
             "items": { "$ref": "MatchPattern" }
+          },
+          "include_globs": {
+            "type": "array",
+            "optional": true,
+            "items": { "type": "string" }
+          },
+          "exclude_globs": {
+            "type": "array",
+            "optional": true,
+            "items": { "type": "string" }
           },
           "css": {
             "type": "array",
@@ -257,6 +336,16 @@
             "isInstanceOf": "ImageData"
           }
         ]
+      },
+      {
+        "id": "UnrecognizedProperty",
+        "type": "any",
+        "deprecated": "An unexpected property was found in the WebExtension manifest."
+      },
+      {
+        "id": "PersistentBackgroundProperty",
+        "type": "boolean",
+        "deprecated": "Event pages are not currently supported. This will run as a persistent background page."
       }
     ]
   }

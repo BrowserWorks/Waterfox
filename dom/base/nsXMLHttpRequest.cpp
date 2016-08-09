@@ -1379,11 +1379,7 @@ nsXMLHttpRequest::GetLoadGroup() const
     return ref.forget();
   }
 
-  nsresult rv = NS_ERROR_FAILURE;
-  nsIScriptContext* sc =
-    const_cast<nsXMLHttpRequest*>(this)->GetContextForEventHandlers(&rv);
-  nsCOMPtr<nsIDocument> doc =
-    nsContentUtils::GetDocumentFromScriptContext(sc);
+  nsIDocument* doc = GetDocumentIfCurrent();
   if (doc) {
     return doc->GetDocumentLoadGroup();
   }
@@ -1489,7 +1485,9 @@ nsXMLHttpRequest::Open(const nsACString& inMethod, const nsACString& url,
                        bool async, const Optional<nsAString>& user,
                        const Optional<nsAString>& password)
 {
-  NS_ENSURE_ARG(!inMethod.IsEmpty());
+  if (inMethod.IsEmpty()) {
+    return NS_ERROR_DOM_SYNTAX_ERR;
+  }
 
   if (!async && !DontWarnAboutSyncXHR() && GetOwner() &&
       GetOwner()->GetExtantDoc()) {
@@ -1550,10 +1548,15 @@ nsXMLHttpRequest::Open(const nsACString& inMethod, const nsACString& url,
     mState &= ~XML_HTTP_REQUEST_ASYNC;
   }
 
-  nsIScriptContext* sc = GetContextForEventHandlers(&rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-  nsCOMPtr<nsIDocument> doc =
-    nsContentUtils::GetDocumentFromScriptContext(sc);
+  nsCOMPtr<nsIDocument> doc = GetDocumentIfCurrent();
+  if (!doc) {
+    // This could be because we're no longer current or because we're in some
+    // non-window context...
+    nsresult rv = CheckInnerWindowCorrectness();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return NS_ERROR_DOM_INVALID_STATE_ERR;
+    }
+  }
 
   nsCOMPtr<nsIURI> baseURI;
   if (mBaseURI) {
@@ -1564,8 +1567,13 @@ nsXMLHttpRequest::Open(const nsACString& inMethod, const nsACString& url,
   }
 
   rv = NS_NewURI(getter_AddRefs(uri), url, nullptr, baseURI);
-  if (NS_FAILED(rv)) return rv;
 
+  if (NS_FAILED(rv)) {
+    if (rv ==  NS_ERROR_MALFORMED_URI) {
+      return NS_ERROR_DOM_SYNTAX_ERR;
+    }
+    return rv;
+  }
   rv = CheckInnerWindowCorrectness();
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2007,14 +2015,16 @@ nsXMLHttpRequest::OnStartRequest(nsIRequest *request, nsISupports *ctxt)
     NS_ENSURE_SUCCESS(rv, rv);
     baseURI = docURI;
 
-    nsIScriptContext* sc = GetContextForEventHandlers(&rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-    nsCOMPtr<nsIDocument> doc =
-      nsContentUtils::GetDocumentFromScriptContext(sc);
+    nsCOMPtr<nsIDocument> doc = GetDocumentIfCurrent();
     nsCOMPtr<nsIURI> chromeXHRDocURI, chromeXHRDocBaseURI;
     if (doc) {
       chromeXHRDocURI = doc->GetDocumentURI();
       chromeXHRDocBaseURI = doc->GetBaseURI();
+    } else {
+      // If we're no longer current, just kill the load, though it really should
+      // have been killed already.
+      nsresult rv = CheckInnerWindowCorrectness();
+      NS_ENSURE_SUCCESS(rv, rv);
     }
 
     // Create an empty document from it.
@@ -2410,13 +2420,13 @@ GetRequestBody(nsIVariant* aBody, nsIInputStream** aResult, uint64_t* aContentLe
     }
 
     // ArrayBuffer?
-    AutoSafeJSContext cx;
-    JS::Rooted<JS::Value> realVal(cx);
+    JSContext* rootingCx = nsContentUtils::RootingCx();
+    JS::Rooted<JS::Value> realVal(rootingCx);
 
     nsresult rv = aBody->GetAsJSVal(&realVal);
     if (NS_SUCCEEDED(rv) && !realVal.isPrimitive()) {
-      JS::Rooted<JSObject*> obj(cx, realVal.toObjectOrNull());
-      ArrayBuffer buf;
+      JS::Rooted<JSObject*> obj(rootingCx, realVal.toObjectOrNull());
+      RootedTypedArray<ArrayBuffer> buf(rootingCx);
       if (buf.Init(obj)) {
           buf.ComputeLengthAndData();
           return GetRequestBody(buf.Data(), buf.Length(), aResult,

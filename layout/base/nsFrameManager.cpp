@@ -57,8 +57,7 @@ struct PlaceholderMapEntry : public PLDHashEntryHdr {
 };
 
 static bool
-PlaceholderMapMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                         const void *key)
+PlaceholderMapMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const PlaceholderMapEntry *entry =
     static_cast<const PlaceholderMapEntry*>(hdr);
@@ -552,7 +551,7 @@ nsFrameManager::CaptureFrameStateFor(nsIFrame* aFrame,
   // Exit early if we get empty key
   nsAutoCString stateKey;
   nsIContent* content = aFrame->GetContent();
-  nsIDocument* doc = content ? content->GetCurrentDoc() : nullptr;
+  nsIDocument* doc = content ? content->GetUncomposedDoc() : nullptr;
   rv = statefulFrame->GenerateStateKey(content, doc, stateKey);
   if(NS_FAILED(rv) || stateKey.IsEmpty()) {
     return;
@@ -615,7 +614,7 @@ nsFrameManager::RestoreFrameStateFor(nsIFrame* aFrame,
   }
 
   nsAutoCString stateKey;
-  nsIDocument* doc = content->GetCurrentDoc();
+  nsIDocument* doc = content->GetUncomposedDoc();
   nsresult rv = statefulFrame->GenerateStateKey(content, doc, stateKey);
   if (NS_FAILED(rv) || stateKey.IsEmpty()) {
     return;

@@ -279,6 +279,10 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     void storeValue(ValueOperand val, BaseIndex dest) {
         storePtr(val.valueReg(), dest);
     }
+    void storeValue(const Address& src, const Address& dest, Register temp) {
+        loadPtr(src, temp);
+        storePtr(temp, dest);
+    }
 
     template <typename T>
     void storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest, MIRType slotType) {
@@ -1026,6 +1030,12 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
     }
     void cmp32(Register a, Register b) {
         Cmp(ARMRegister(a, 32), Operand(ARMRegister(b, 32)));
+    }
+    void cmp32(const Address& lhs, Imm32 rhs) {
+        cmp32(Operand(lhs.base, lhs.offset), rhs);
+    }
+    void cmp32(const Address& lhs, Register rhs) {
+        cmp32(Operand(lhs.base, lhs.offset), rhs);
     }
     void cmp32(const Operand& lhs, Imm32 rhs) {
         vixl::UseScratchRegisterScope temps(this);
@@ -1910,15 +1920,6 @@ class MacroAssemblerCompat : public vixl::MacroAssembler
                                 uint8_t* globalData, unsigned globalDataOffset)
     {
         MOZ_CRASH("patchAsmJSGlobalAccess");
-    }
-
-    void memIntToValue(const Address& src, const Address& dest) {
-        vixl::UseScratchRegisterScope temps(this);
-        const Register scratch = temps.AcquireX().asUnsized();
-        MOZ_ASSERT(scratch != src.base);
-        MOZ_ASSERT(scratch != dest.base);
-        load32(src, scratch);
-        storeValue(JSVAL_TYPE_INT32, scratch, dest);
     }
 
     void profilerEnterFrame(Register framePtr, Register scratch) {

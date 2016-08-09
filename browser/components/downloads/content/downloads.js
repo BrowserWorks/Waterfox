@@ -1035,17 +1035,10 @@ DownloadsViewItem.prototype = {
   _element: null,
 
   onStateChanged() {
-    this.element.setAttribute("image", this.image);
-    this.element.setAttribute("state",
-                              DownloadsCommon.stateOfDownload(this.download));
+    this._updateState();
   },
 
   onChanged() {
-    // This cannot be placed within onStateChanged because
-    // when a download goes from hasBlockedData to !hasBlockedData
-    // it will still remain in the same state.
-    this.element.classList.toggle("temporary-block",
-                                  !!this.download.hasBlockedData);
     this._updateProgress();
   },
 
@@ -1099,12 +1092,17 @@ DownloadsViewItem.prototype = {
 
   downloadsCmd_unblock() {
     DownloadsPanel.hidePanel();
-    DownloadsCommon.confirmUnblockDownload(DownloadsCommon.BLOCK_VERDICT_MALWARE,
-                                           window).then((confirmed) => {
-      if (confirmed) {
-        return this.download.unblock();
-      }
-    }).catch(Cu.reportError);
+    this.confirmUnblock(window, "unblock");
+  },
+
+  downloadsCmd_chooseUnblock() {
+    DownloadsPanel.hidePanel();
+    this.confirmUnblock(window, "chooseUnblock");
+  },
+
+  downloadsCmd_chooseOpen() {
+    DownloadsPanel.hidePanel();
+    this.confirmUnblock(window, "chooseOpen");
   },
 
   downloadsCmd_open() {

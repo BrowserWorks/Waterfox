@@ -2379,15 +2379,19 @@ nsCookieService::Remove(const nsACString &aHost,
     // have originAttributes param as mandatory. But for now, we don't want to
     // break existing addons, so we write a console message to inform the addon
     // developers about it.
-    nsContentUtils::ReportToConsoleNonLocalized(
-      NS_LITERAL_STRING("“nsICookieManager.remove()” is changed. Update your code and pass the correct originAttributes. Read more on MDN: https://developer.mozilla.org/docs/Mozilla/Tech/XPCOM/Reference/Interface/nsICookieManager"),
-      nsIScriptError::warningFlag,
-      NS_LITERAL_CSTRING("Cookie Manager"),
-      nullptr);
+    nsContentUtils::ReportToConsole(nsIScriptError::warningFlag,
+                                    NS_LITERAL_CSTRING("Cookie Manager"),
+                                    nullptr,
+                                    nsContentUtils::eNECKO_PROPERTIES,
+                                    "nsICookieManagerRemoveDeprecated");
   }
 
   NeckoOriginAttributes attrs;
-  MOZ_ASSERT(attrs.Init(aCx, aOriginAttributes));
+  if (aArgc == 1 &&
+      (!aOriginAttributes.isObject() ||
+       !attrs.Init(aCx, aOriginAttributes))) {
+    return NS_ERROR_INVALID_ARG;
+  }
   return RemoveNative(aHost, aName, aPath, aBlocked, &attrs);
 }
 
@@ -2713,7 +2717,7 @@ nsCookieService::EnsureReadComplete()
 
   nsCString baseDomain, name, value, host, path;
   bool hasResult;
-  AutoTArray<CookieDomainTuple, kMaxNumberOfCookies> array;
+  nsTArray<CookieDomainTuple> array(kMaxNumberOfCookies);
   while (1) {
     rv = stmt->ExecuteStep(&hasResult);
     if (NS_FAILED(rv)) {
@@ -4103,8 +4107,8 @@ nsCookieService::PurgeCookies(int64_t aCurrentTimeInUsec)
     ("PurgeCookies(): beginning purge with %ld cookies and %lld oldest age",
      mDBState->cookieCount, aCurrentTimeInUsec - mDBState->cookieOldestTime));
 
-  typedef AutoTArray<nsListIter, kMaxNumberOfCookies> PurgeList;
-  PurgeList purgeList;
+  typedef nsTArray<nsListIter> PurgeList;
+  PurgeList purgeList(kMaxNumberOfCookies);
 
   nsCOMPtr<nsIMutableArray> removedList = do_CreateInstance(NS_ARRAY_CONTRACTID);
 

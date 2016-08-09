@@ -280,7 +280,7 @@ nsIContent::LookupNamespaceURIInternal(const nsAString& aNamespacePrefix,
 
   nsCOMPtr<nsIAtom> name;
   if (!aNamespacePrefix.IsEmpty()) {
-    name = do_GetAtom(aNamespacePrefix);
+    name = NS_Atomize(aNamespacePrefix);
     NS_ENSURE_TRUE(name, NS_ERROR_OUT_OF_MEMORY);
   }
   else {
@@ -642,7 +642,7 @@ FragmentOrElement::FragmentOrElement(already_AddRefed<mozilla::dom::NodeInfo>&& 
 
 FragmentOrElement::~FragmentOrElement()
 {
-  NS_PRECONDITION(!IsInDoc(),
+  NS_PRECONDITION(!IsInUncomposedDoc(),
                   "Please remove this from the document properly");
   if (GetParent()) {
     NS_RELEASE(mParent);
@@ -692,7 +692,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // dispatched or when we're about to propagate from
       // chrome access only subtree or if we are about to propagate out of
       // a shadow root to a shadow root host.
-      ((this == aVisitor.mEvent->originalTarget &&
+      ((this == aVisitor.mEvent->mOriginalTarget &&
         !ChromeOnlyAccess()) || isAnonForEvents || GetShadowRoot())) {
      nsCOMPtr<nsIContent> relatedTarget =
        do_QueryInterface(aVisitor.mEvent->AsMouseEvent()->relatedTarget);
@@ -717,7 +717,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
       // If this is the original target, aVisitor.mRelatedTargetIsInAnon
       // must be updated.
       if (isAnonForEvents || aVisitor.mRelatedTargetIsInAnon ||
-          (aVisitor.mEvent->originalTarget == this &&
+          (aVisitor.mEvent->mOriginalTarget == this &&
            (aVisitor.mRelatedTargetIsInAnon =
             relatedTarget->ChromeOnlyAccess()))) {
         nsIContent* anonOwner = FindChromeAccessOnlySubtreeOwner(this);
@@ -736,7 +736,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
             if (anonOwner == anonOwnerRelated) {
 #ifdef DEBUG_smaug
               nsCOMPtr<nsIContent> originalTarget =
-                do_QueryInterface(aVisitor.mEvent->originalTarget);
+                do_QueryInterface(aVisitor.mEvent->mOriginalTarget);
               nsAutoString ot, ct, rt;
               if (originalTarget) {
                 originalTarget->NodeInfo()->NameAtom()->ToString(ot);
@@ -875,7 +875,8 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
 #ifdef DEBUG
     // If a DOM event is explicitly dispatched using node.dispatchEvent(), then
     // all the events are allowed even in the native anonymous content..
-    nsCOMPtr<nsIContent> t = do_QueryInterface(aVisitor.mEvent->originalTarget);
+    nsCOMPtr<nsIContent> t =
+      do_QueryInterface(aVisitor.mEvent->mOriginalTarget);
     NS_ASSERTION(!t || !t->ChromeOnlyAccess() ||
                  aVisitor.mEvent->mClass != eMutationEventClass ||
                  aVisitor.mDOMEvent,
@@ -883,7 +884,7 @@ nsIContent::PreHandleEvent(EventChainPreVisitor& aVisitor)
 #endif
     aVisitor.mEventTargetAtParent = parent;
   } else if (parent && aVisitor.mOriginalTargetIsInAnon) {
-    nsCOMPtr<nsIContent> content(do_QueryInterface(aVisitor.mEvent->target));
+    nsCOMPtr<nsIContent> content(do_QueryInterface(aVisitor.mEvent->mTarget));
     if (content && content->GetBindingParent() == parent) {
       aVisitor.mEventTargetAtParent = parent;
     }
@@ -1185,10 +1186,6 @@ FragmentOrElement::DestroyContent()
   document->BindingManager()->RemovedFromDocument(this, document,
                                                   nsBindingManager::eRunDtor);
   document->ClearBoxObjectFor(this);
-
-  // XXX We really should let cycle collection do this, but that currently still
-  //     leaks (see https://bugzilla.mozilla.org/show_bug.cgi?id=406684).
-  ReleaseWrapper(this);
 
   uint32_t i, count = mAttrsAndChildren.ChildCount();
   for (i = 0; i < count; ++i) {
@@ -1875,7 +1872,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(FragmentOrElement)
     }
 
     nsAutoCString orphan;
-    if (!tmp->IsInDoc() &&
+    if (!tmp->IsInUncomposedDoc() &&
         // Ignore xbl:content, which is never in the document and hence always
         // appears to be orphaned.
         !tmp->NodeInfo()->Equals(nsGkAtoms::content, kNameSpaceID_XBL)) {

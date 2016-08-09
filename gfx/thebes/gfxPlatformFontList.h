@@ -91,6 +91,8 @@ class gfxUserFontSet;
 class gfxPlatformFontList : public gfxFontInfoLoader
 {
 public:
+    typedef mozilla::unicode::Script Script;
+
     static gfxPlatformFontList* PlatformFontList() {
         return sPlatformFontList;
     }
@@ -126,7 +128,7 @@ public:
 
     gfxFontEntry*
     SystemFindFontForChar(uint32_t aCh, uint32_t aNextCh,
-                          int32_t aRunScript,
+                          Script aRunScript,
                           const gfxFontStyle* aStyle);
 
     // Find family(ies) matching aFamily and append to the aOutput array
@@ -284,13 +286,13 @@ protected:
 
     // returns default font for a given character, null otherwise
     gfxFontEntry* CommonFontFallback(uint32_t aCh, uint32_t aNextCh,
-                                     int32_t aRunScript,
+                                     Script aRunScript,
                                      const gfxFontStyle* aMatchStyle,
                                      gfxFontFamily** aMatchedFamily);
 
     // search fonts system-wide for a given character, null otherwise
     virtual gfxFontEntry* GlobalFontFallback(const uint32_t aCh,
-                                             int32_t aRunScript,
+                                             Script aRunScript,
                                              const gfxFontStyle* aMatchStyle,
                                              uint32_t& aCmapCount,
                                              gfxFontFamily** aMatchedFamily);
@@ -391,16 +393,16 @@ protected:
       // Postscript name ==> font entry (unique, one name per font entry)
       FontEntryTable mPostscriptNames;
     };
-    nsAutoPtr<ExtraNames> mExtraNames;
+    mozilla::UniquePtr<ExtraNames> mExtraNames;
 
     // face names missed when face name loading takes a long time
-    nsAutoPtr<nsTHashtable<nsStringHashKey> > mFaceNamesMissed;
+    mozilla::UniquePtr<nsTHashtable<nsStringHashKey> > mFaceNamesMissed;
 
     // localized family names missed when face name loading takes a long time
-    nsAutoPtr<nsTHashtable<nsStringHashKey> > mOtherNamesMissed;
+    mozilla::UniquePtr<nsTHashtable<nsStringHashKey> > mOtherNamesMissed;
 
     typedef nsTArray<RefPtr<gfxFontFamily>> PrefFontList;
-    typedef mozilla::RangedArray<nsAutoPtr<PrefFontList>,
+    typedef mozilla::RangedArray<mozilla::UniquePtr<PrefFontList>,
                                  mozilla::eFamily_generic_first,
                                  mozilla::eFamily_generic_count> PrefFontsForLangGroup;
     mozilla::RangedArray<PrefFontsForLangGroup,

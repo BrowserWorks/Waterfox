@@ -220,6 +220,9 @@ var gPlayTests = [
   // Test playback of a WebM file with non-zero start time.
   { name:"split.webm", type:"video/webm", duration:1.967 },
 
+  // Test playback of a WebM file with resolution changes.
+  { name:"resolution-change.webm", type:"video/webm", duration:6.533 },
+
   // Test playback of a raw file
   { name:"seek.yuv", type:"video/x-raw-yuv", duration:1.833 },
 
@@ -282,6 +285,11 @@ var gSnifferTests = [
   // A mp3 file with id3 tags.
   { name:"id3tags.mp3", type:"audio/mpeg", duration:0.28, size:3530},
   { name:"bogus.duh", type:"bogus/duh" }
+];
+
+// Files that contain resolution changes
+var gResolutionChangeTests = [
+  { name:"resolution-change.webm", type:"video/webm", duration:6.533 },
 ];
 
 // Files we must reject as invalid.
@@ -506,10 +514,16 @@ function IsWindows8OrLater() {
   return winver && winver.length == 2 && parseFloat(winver[1]) >= 6.2;
 }
 
+// These files are WebMs without cues. They're seekable within their buffered
+// ranges. If work renders WebMs fully seekable these files should be moved
+// into gSeekTests
+var gCuelessWebMTests = [
+  { name:"no-cues.webm", type:"video/webm", duration:3.967 },
+];
+
 // These are files that are non seekable, due to problems with the media,
 // for example broken or missing indexes.
 var gUnseekableTests = [
-  { name:"no-cues.webm", type:"video/webm" },
   { name:"bogus.duh", type:"bogus/duh"}
 ];
 
@@ -1401,7 +1415,8 @@ var PARALLEL_TESTS = 2;
 var gTestPrefs = [
   ['media.recorder.max_memory', 1024],
   ["media.preload.default", 2], // default preload = metadata
-  ["media.preload.auto", 3] // auto preload = enough
+  ["media.preload.auto", 3], // auto preload = enough
+  ["media.test.dumpDebugInfo", true],
 ];
 
 // When true, we'll loop forever on whatever test we run. Use this to debug
@@ -1573,4 +1588,14 @@ function isSlowPlatform() {
 // like file_access_controls.html.
 if ("SimpleTest" in window) {
   SimpleTest.requestFlakyTimeout("untriaged");
+
+  // Register timeout function to dump debugging logs.
+  SimpleTest.registerTimeoutFunction(function() {
+    for (var v of document.getElementsByTagName("video")) {
+      v.mozDumpDebugInfo();
+    }
+    for (var a of document.getElementsByTagName("audio")) {
+      a.mozDumpDebugInfo();
+    }
+  });
 }

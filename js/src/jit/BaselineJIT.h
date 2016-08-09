@@ -110,7 +110,15 @@ struct DependentWasmModuleImport
 struct BaselineScript
 {
   public:
+    // Largest script that the baseline compiler will attempt to compile.
+#if defined(JS_CODEGEN_ARM)
+    // ARM branches can only reach 32MB, and the macroassembler doesn't mitigate
+    // that limitation. Use a stricter limit on the acceptable script size to
+    // avoid crashing when branches go out of range.
+    static const uint32_t MAX_JSSCRIPT_LENGTH = 1000000u;
+#else
     static const uint32_t MAX_JSSCRIPT_LENGTH = 0x0fffffffu;
+#endif
 
     // Limit the locals on a given script so that stack check on baseline frames
     // doesn't overflow a uint32_t value.
@@ -236,6 +244,12 @@ struct BaselineScript
                    uint32_t traceLoggerEnterToggleOffset,
                    uint32_t traceLoggerExitToggleOffset,
                    uint32_t postDebugPrologueOffset);
+
+    ~BaselineScript() {
+        // The contents of the fallback stub space are removed and freed
+        // separately after the next minor GC. See BaselineScript::Destroy.
+        MOZ_ASSERT(fallbackStubSpace_.isEmpty());
+    }
 
     static BaselineScript* New(JSScript* jsscript, uint32_t prologueOffset,
                                uint32_t epilogueOffset, uint32_t postDebugPrologueOffset,
@@ -589,5 +603,19 @@ BaselineCompile(JSContext* cx, JSScript* script, bool forceDebugInstrumentation 
 
 } // namespace jit
 } // namespace js
+
+namespace JS {
+
+template <>
+struct DeletePolicy<js::jit::BaselineScript>
+{
+    explicit DeletePolicy(JSRuntime* rt) : rt_(rt) {}
+    void operator()(const js::jit::BaselineScript* script);
+
+  private:
+    JSRuntime* rt_;
+};
+
+} // namespace JS
 
 #endif /* jit_BaselineJIT_h */

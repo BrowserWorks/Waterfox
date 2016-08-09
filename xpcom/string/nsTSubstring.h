@@ -315,13 +315,13 @@ public:
    * for wide strings. Call this version when you know the
    * length of 'data'.
    */
-  bool NS_FASTCALL B2G_ACL_EXPORT EqualsASCII(const char* aData, size_type aLen) const;
+  bool NS_FASTCALL EqualsASCII(const char* aData, size_type aLen) const;
   /**
    * An efficient comparison with ASCII that can be used even
    * for wide strings. Call this version when 'data' is
    * null-terminated.
    */
-  bool NS_FASTCALL B2G_ACL_EXPORT EqualsASCII(const char* aData) const;
+  bool NS_FASTCALL EqualsASCII(const char* aData) const;
 
   // EqualsLiteral must ONLY be applied to an actual literal string, or
   // a char array *constant* declared without an explicit size.
@@ -365,6 +365,9 @@ public:
                                                  const fallible_t&);
 
   void NS_FASTCALL Assign(const char_type* aData);
+  MOZ_WARN_UNUSED_RESULT bool NS_FASTCALL Assign(const char_type* aData,
+                                                 const fallible_t&);
+
   void NS_FASTCALL Assign(const char_type* aData, size_type aLength);
   MOZ_WARN_UNUSED_RESULT bool NS_FASTCALL Assign(const char_type* aData,
                                                  size_type aLength,
@@ -382,12 +385,6 @@ public:
   void Assign(char16ptr_t aData)
   {
     Assign(static_cast<const char16_t*>(aData));
-  }
-
-  MOZ_WARN_UNUSED_RESULT bool Assign(char16ptr_t aData,
-                                     const fallible_t& aFallible)
-  {
-    return Assign(static_cast<const char16_t*>(aData), aFallible);
   }
 
   void Assign(char16ptr_t aData, size_type aLength)
@@ -951,7 +948,7 @@ protected:
    * any of its member variables.  in other words, this function acts
    * like a destructor.
    */
-  void NS_FASTCALL B2G_ACL_EXPORT Finalize();
+  void NS_FASTCALL Finalize();
 
   /**
    * this function prepares mData to be mutated.

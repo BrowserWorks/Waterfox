@@ -1,6 +1,6 @@
-/*
+/*  
 ********************************************************************************
-*   Copyright (C) 1997-2016, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -14,10 +14,10 @@
 *                            Changed to match C++ conventions
 ********************************************************************************
 */
-
+     
 #ifndef DTFMTSYM_H
 #define DTFMTSYM_H
-
+ 
 #include "unicode/utypes.h"
 
 #if !UCONFIG_NO_FORMATTING
@@ -29,7 +29,7 @@
 #include "unicode/ures.h"
 
 /**
- * \file
+ * \file 
  * \brief C++ API: Symbols for formatting dates.
  */
 
@@ -115,7 +115,7 @@ public:
      * data for the default locale, it will return a last-resort object
      * based on hard-coded strings.
      *
-     * @param type      Type of calendar (as returned by Calendar::getType).
+     * @param type      Type of calendar (as returned by Calendar::getType). 
      *                  Will be used to access the correct set of strings.
      *                  (NULL or empty string defaults to "gregorian".)
      * @param status    Status code.  Failure
@@ -130,7 +130,7 @@ public:
      * resources for the given locale, in the default calendar (Gregorian).
      *
      * @param locale    Locale to load format data from.
-     * @param type      Type of calendar (as returned by Calendar::getType).
+     * @param type      Type of calendar (as returned by Calendar::getType). 
      *                  Will be used to access the correct set of strings.
      *                  (NULL or empty string defaults to "gregorian".)
      * @param status    Status code.  Failure
@@ -421,22 +421,24 @@ public:
      * @internal
      */
     static const UChar ALTERNATE_TIME_SEPARATOR = 0x002e;  // '.'
+#endif  /* U_HIDE_INTERNAL_API */
 
+#ifndef U_HIDE_DRAFT_API
     /**
      * Gets the time separator string. For example: ":".
      * @param result Output param which will receive the time separator string.
      * @return       A reference to 'result'.
-     * @internal
+     * @draft ICU 55
      */
     UnicodeString& getTimeSeparatorString(UnicodeString& result) const;
 
     /**
      * Sets the time separator string. For example: ":".
      * @param newTimeSeparator the new time separator string.
-     * @internal
+     * @draft ICU 55
      */
     void setTimeSeparatorString(const UnicodeString& newTimeSeparator);
-#endif  /* U_HIDE_INTERNAL_API */
+#endif  /* U_HIDE_DRAFT_API */
 
     /**
      * Gets cyclic year name strings if the calendar has them, by width and context.
@@ -849,42 +851,6 @@ private:
      * titlecase for stand-alone context.
      */
      UBool fCapitalization[kCapContextUsageTypeCount][2];
-
-    /**
-     * Abbreviated (== short) day period strings.
-     */
-    UnicodeString  *fAbbreviatedDayPeriods;
-    int32_t         fAbbreviatedDayPeriodsCount;
-
-    /**
-     * Wide day period strings.
-     */
-    UnicodeString  *fWideDayPeriods;
-    int32_t         fWideDayPeriodsCount;
-
-    /**
-     * Narrow day period strings.
-     */
-    UnicodeString  *fNarrowDayPeriods;
-    int32_t         fNarrowDayPeriodsCount;
-
-    /**
-     * Stand-alone abbreviated (== short) day period strings.
-     */
-    UnicodeString  *fStandaloneAbbreviatedDayPeriods;
-    int32_t         fStandaloneAbbreviatedDayPeriodsCount;
-
-    /**
-     * Stand-alone wide day period strings.
-     */
-    UnicodeString  *fStandaloneWideDayPeriods;
-    int32_t         fStandaloneWideDayPeriodsCount;
-
-    /**
-     * Stand-alone narrow day period strings.
-     */
-    UnicodeString  *fStandaloneNarrowDayPeriods;
-    int32_t         fStandaloneNarrowDayPeriodsCount;
 
 private:
     /** valid/actual locale information 

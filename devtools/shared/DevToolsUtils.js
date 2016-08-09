@@ -292,8 +292,17 @@ exports.defineLazyGetter(this, "AppConstants", () => {
  */
 exports.noop = function () { };
 
+let assertionFailureCount = 0;
+
+Object.defineProperty(exports, "assertionFailureCount", {
+  get() {
+    return assertionFailureCount;
+  }
+});
+
 function reallyAssert(condition, message) {
   if (!condition) {
+    assertionFailureCount++;
     const err = new Error("Assertion failure: " + message);
     exports.reportException("DevToolsUtils.assert", err);
     throw err;
@@ -488,10 +497,33 @@ function mainThreadFetch(aURL, aOptions={ loadFromCache: true,
  * @param {Object} options - The options object passed to @method fetch.
  * @return {nsIChannel} - The newly created channel. Throws on failure.
  */
-function newChannelForURL(url, { policy }) {
+function newChannelForURL(url, { policy, window }) {
+  var securityFlags = Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL;
+  if (window) {
+    // Respect private browsing.
+    var req = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                    .getInterface(Ci.nsIWebNavigation)
+                    .QueryInterface(Ci.nsIDocumentLoader)
+                    .loadGroup;
+    if (req) {
+      var nc = req.notificationCallbacks;
+      if (nc) {
+        try {
+          var lc = nc.getInterface(Ci.nsILoadContext);
+          if (lc) {
+            if (lc.usePrivateBrowsing) {
+              securityFlags |= Ci.nsILoadInfo.SEC_FORCE_PRIVATE_BROWSING;
+            }
+          }
+        } catch(ex) {}
+      }
+    }
+  }
+
   let channelOptions = {
     contentPolicyType: policy,
     loadUsingSystemPrincipal: true,
+    securityFlags: securityFlags,
     uri: url
   };
 

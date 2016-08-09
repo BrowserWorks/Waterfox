@@ -25,9 +25,6 @@
         <!-- Style for MenuItemActionBar when shown in SecondaryActionBar -->
         <attr name="menuItemSecondaryActionBarStyle" format="reference"/>
 
-        <!-- Style for MenuItemSwitcherLayout's ShareActionButton -->
-        <attr name="menuItemShareActionButtonStyle" format="reference"/>
-
         <!-- Default style for the BookmarksListView -->
         <attr name="bookmarksListViewStyle" format="reference" />
 
@@ -137,12 +134,8 @@
     </declare-styleable>
 
     <declare-styleable name="BookmarkFolderView">
-        <attr name="state_open" format="boolean"/>
-    </declare-styleable>
-
-    <declare-styleable name="GeckoView">
-        <attr name="url" format="string"/>
-        <attr name="doinit" format="boolean"/>
+        <attr name="parent" format="boolean"/>
+        <attr name="reading_list" format="boolean"/>
     </declare-styleable>
 
     <declare-styleable name="IconTabWidget">

@@ -11,8 +11,6 @@
 #include "mozilla/mozalloc.h" // for operator new, and new (fallible)
 #include "mozilla/RefPtr.h"
 #include "mozilla/TaskQueue.h"
-#include "mozilla/UniquePtr.h"
-#include "mozilla/UniquePtrExtensions.h"
 #include "nsRect.h"
 #include "PlatformDecoderModule.h"
 #include "TimeUnits.h"
@@ -194,8 +192,7 @@ public:
         frames.value() > (UINT32_MAX / mChannelCount)) {
       return nullptr;
     }
-    auto samples =
-      MakeUniqueFallible<AudioDataValue[]>(frames.value() * mChannelCount);
+    AlignedAudioBuffer samples(frames.value() * mChannelCount);
     if (!samples) {
       return nullptr;
     }
@@ -233,7 +230,8 @@ public:
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
                      FlushableTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) override {
+                     MediaDataDecoderCallback* aCallback,
+                     DecoderDoctorDiagnostics* aDiagnostics) override {
     BlankVideoDataCreator* creator = new BlankVideoDataCreator(
       aConfig.mDisplay.width, aConfig.mDisplay.height, aImageContainer);
     RefPtr<MediaDataDecoder> decoder =
@@ -248,7 +246,8 @@ public:
   already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const AudioInfo& aConfig,
                      FlushableTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) override {
+                     MediaDataDecoderCallback* aCallback,
+                     DecoderDoctorDiagnostics* aDiagnostics) override {
     BlankAudioDataCreator* creator = new BlankAudioDataCreator(
       aConfig.mChannels, aConfig.mRate);
 
@@ -261,7 +260,8 @@ public:
   }
 
   bool
-  SupportsMimeType(const nsACString& aMimeType) const override
+  SupportsMimeType(const nsACString& aMimeType,
+                   DecoderDoctorDiagnostics* aDiagnostics) const override
   {
     return true;
   }

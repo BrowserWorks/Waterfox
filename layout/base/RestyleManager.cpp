@@ -494,6 +494,23 @@ RestyleManager::RecomputePosition(nsIFrame* aFrame)
   parentFrame->RemoveStateBits(~nsFrameState(0));
   parentFrame->AddStateBits(savedState);
 
+  // The bogus parent state here was created with no parent state of its own,
+  // and therefore it won't have an mCBReflowState set up.
+  // But we may need one (for InitCBReflowState in a child state), so let's
+  // try to create one here for the cases where it will be needed.
+  Maybe<nsHTMLReflowState> cbReflowState;
+  nsIFrame* cbFrame = parentFrame->GetContainingBlock();
+  if (cbFrame && (aFrame->GetContainingBlock() != parentFrame ||
+                  parentFrame->GetType() == nsGkAtoms::tableFrame)) {
+    LogicalSize cbSize = cbFrame->GetLogicalSize();
+    cbReflowState.emplace(cbFrame->PresContext(), cbFrame, &rc, cbSize);
+    cbReflowState->ComputedPhysicalMargin() = cbFrame->GetUsedMargin();
+    cbReflowState->ComputedPhysicalPadding() = cbFrame->GetUsedPadding();
+    cbReflowState->ComputedPhysicalBorderPadding() =
+      cbFrame->GetUsedBorderAndPadding();
+    parentReflowState.mCBReflowState = cbReflowState.ptr();
+  }
+
   NS_WARN_IF_FALSE(parentSize.ISize(parentWM) != NS_INTRINSICSIZE &&
                    parentSize.BSize(parentWM) != NS_INTRINSICSIZE,
                    "parentSize should be valid");
@@ -568,7 +585,7 @@ static bool
 HasBoxAncestor(nsIFrame* aFrame)
 {
   for (nsIFrame* f = aFrame; f; f = f->GetParent()) {
-    if (f->IsBoxFrame()) {
+    if (f->IsXULBoxFrame()) {
       return true;
     }
   }
@@ -1115,6 +1132,8 @@ RestyleManager::AnimationsWithDestroyedFrame::StopAnimationsWithoutFrame(
 {
   nsAnimationManager* animationManager =
     mRestyleManager->PresContext()->AnimationManager();
+  nsTransitionManager* transitionManager =
+    mRestyleManager->PresContext()->TransitionManager();
   for (nsIContent* content : aArray) {
     if (content->GetPrimaryFrame()) {
       continue;
@@ -1122,6 +1141,7 @@ RestyleManager::AnimationsWithDestroyedFrame::StopAnimationsWithoutFrame(
     dom::Element* element = content->AsElement();
 
     animationManager->StopAnimationsForElement(element, aPseudoType);
+    transitionManager->StopTransitionsForElement(element, aPseudoType);
   }
 }
 
@@ -1171,7 +1191,7 @@ RestyleManager::ContentStateChanged(nsIContent* aContent,
         if (theme && theme->ThemeSupportsWidget(mPresContext,
                                                 primaryFrame, app)) {
           bool repaint = false;
-          theme->WidgetStateChanged(primaryFrame, app, nullptr, &repaint);
+          theme->WidgetStateChanged(primaryFrame, app, nullptr, &repaint, nullptr);
           if (repaint) {
             NS_UpdateHint(hint, nsChangeHint_RepaintFrame);
           }
@@ -1300,7 +1320,8 @@ RestyleManager::AttributeChanged(Element* aElement,
       nsITheme *theme = mPresContext->GetTheme();
       if (theme && theme->ThemeSupportsWidget(mPresContext, primaryFrame, disp->mAppearance)) {
         bool repaint = false;
-        theme->WidgetStateChanged(primaryFrame, disp->mAppearance, aAttribute, &repaint);
+        theme->WidgetStateChanged(primaryFrame, disp->mAppearance, aAttribute,
+            &repaint, aOldValue);
         if (repaint)
           NS_UpdateHint(hint, nsChangeHint_RepaintFrame);
       }
@@ -2771,7 +2792,7 @@ ElementRestyler::CaptureChange(nsStyleContext* aOldContext,
               RestyleManager::ChangeHintToString(mHintsNotHandledForDescendants).get());
 }
 
-class MOZ_STACK_CLASS AutoSelectorArrayTruncater final
+class MOZ_RAII AutoSelectorArrayTruncater final
 {
 public:
   explicit AutoSelectorArrayTruncater(
@@ -3098,7 +3119,7 @@ ElementRestyler::MoveStyleContextsForContentChildren(
         return false;
       }
       nsIAtom* pseudoTag = sc->GetPseudo();
-      if (pseudoTag && pseudoTag != nsCSSAnonBoxes::mozNonElement) {
+      if (pseudoTag && !nsCSSAnonBoxes::IsNonElement(pseudoTag)) {
         return false;
       }
       aContextsToMove.AppendElement(sc);
@@ -3531,7 +3552,7 @@ ElementRestyler::ComputeRestyleResultFromFrame(nsIFrame* aSelf,
   // where we have this kind of inheritance, we keep restyling past
   // pseudos.
   nsIAtom* pseudoTag = oldContext->GetPseudo();
-  if (pseudoTag && pseudoTag != nsCSSAnonBoxes::mozNonElement) {
+  if (pseudoTag && !nsCSSAnonBoxes::IsNonElement(pseudoTag)) {
     LOG_RESTYLE_CONTINUE("the old style context is for a pseudo");
     aRestyleResult = eRestyleResult_Continue;
     aCanStopWithStyleChange = false;
@@ -3545,7 +3566,10 @@ ElementRestyler::ComputeRestyleResultFromFrame(nsIFrame* aSelf,
     // be inheriting from a grandparent frame's style context (or a further
     // ancestor).
     nsIAtom* parentPseudoTag = parent->StyleContext()->GetPseudo();
-    if (parentPseudoTag && parentPseudoTag != nsCSSAnonBoxes::mozNonElement) {
+    if (parentPseudoTag &&
+        parentPseudoTag != nsCSSAnonBoxes::mozOtherNonElement) {
+      MOZ_ASSERT(parentPseudoTag != nsCSSAnonBoxes::mozText,
+                 "Style of text node should not be parent of anything");
       LOG_RESTYLE_CONTINUE("the old style context's parent is for a pseudo");
       aRestyleResult = eRestyleResult_Continue;
       // Parent style context pseudo-ness doesn't affect whether we can
@@ -3641,6 +3665,14 @@ ElementRestyler::ComputeRestyleResultFromNewContext(nsIFrame* aSelf,
         aNewContext->IsInDisplayNoneSubtree()) {
     LOG_RESTYLE_CONTINUE("NS_STYLE_IN_DISPLAY_NONE_SUBTREE differs between old"
                          " and new style contexts");
+    aRestyleResult = eRestyleResult_Continue;
+    aCanStopWithStyleChange = false;
+    return;
+  }
+
+  if (oldContext->IsTextCombined() != aNewContext->IsTextCombined()) {
+    LOG_RESTYLE_CONTINUE("NS_STYLE_IS_TEXT_COMBINED differs between "
+                         "old and new style contexts");
     aRestyleResult = eRestyleResult_Continue;
     aCanStopWithStyleChange = false;
     return;
@@ -3902,11 +3934,10 @@ ElementRestyler::RestyleSelf(nsIFrame* aSelf,
     // continuation.
     LOG_RESTYLE("using previous continuation's context");
     newContext = prevContinuationContext;
-  }
-  else if (pseudoTag == nsCSSAnonBoxes::mozNonElement) {
+  } else if (nsCSSAnonBoxes::IsNonElement(pseudoTag)) {
     NS_ASSERTION(aSelf->GetContent(),
                  "non pseudo-element frame without content node");
-    newContext = styleSet->ResolveStyleForNonElement(parentContext);
+    newContext = styleSet->ResolveStyleForNonElement(parentContext, pseudoTag);
   }
   else {
     Element* element = ElementForStyleContext(mParentContent, aSelf, pseudoType);
@@ -4251,7 +4282,7 @@ ElementRestyler::RestyleSelf(nsIFrame* aSelf,
     const CSSPseudoElementType extraPseudoType =
       oldExtraContext->GetPseudoType();
     NS_ASSERTION(extraPseudoTag &&
-                 extraPseudoTag != nsCSSAnonBoxes::mozNonElement,
+                 !nsCSSAnonBoxes::IsNonElement(extraPseudoTag),
                  "extra style context is not pseudo element");
     Element* element = extraPseudoType != CSSPseudoElementType::AnonBox
                          ? mContent->AsElement() : nullptr;

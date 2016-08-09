@@ -428,9 +428,23 @@ struct JSAtomState
 #define PROPERTYNAME_FIELD(name, code, init, clasp) js::ImmutablePropertyNamePtr name;
     JS_FOR_EACH_PROTOTYPE(PROPERTYNAME_FIELD)
 #undef PROPERTYNAME_FIELD
+#define PROPERTYNAME_FIELD(name) js::ImmutablePropertyNamePtr name;
+    JS_FOR_EACH_WELL_KNOWN_SYMBOL(PROPERTYNAME_FIELD)
+#undef PROPERTYNAME_FIELD
+#define PROPERTYNAME_FIELD(name) js::ImmutablePropertyNamePtr Symbol_##name;
+    JS_FOR_EACH_WELL_KNOWN_SYMBOL(PROPERTYNAME_FIELD)
+#undef PROPERTYNAME_FIELD
+
+    js::ImmutablePropertyNamePtr* wellKnownSymbolNames() {
+#define FIRST_PROPERTYNAME_FIELD(name) return &name;
+    JS_FOR_EACH_WELL_KNOWN_SYMBOL(FIRST_PROPERTYNAME_FIELD)
+#undef FIRST_PROPERTYNAME_FIELD
+    }
 
     js::ImmutablePropertyNamePtr* wellKnownSymbolDescriptions() {
-        return &Symbol_iterator;
+#define FIRST_PROPERTYNAME_FIELD(name) return &Symbol_ ##name;
+    JS_FOR_EACH_WELL_KNOWN_SYMBOL(FIRST_PROPERTYNAME_FIELD)
+#undef FIRST_PROPERTYNAME_FIELD
     }
 };
 
@@ -447,10 +461,9 @@ namespace js {
  */
 struct WellKnownSymbols
 {
-    js::ImmutableSymbolPtr iterator;
-    js::ImmutableSymbolPtr match;
-    js::ImmutableSymbolPtr species;
-    js::ImmutableSymbolPtr toPrimitive;
+#define DECLARE_SYMBOL(name) js::ImmutableSymbolPtr name;
+    JS_FOR_EACH_WELL_KNOWN_SYMBOL(DECLARE_SYMBOL)
+#undef DECLARE_SYMBOL
 
     const ImmutableSymbolPtr& get(size_t u) const {
         MOZ_ASSERT(u < JS::WellKnownSymbolLimit);
@@ -709,7 +722,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     /*
      * Value of asyncCause to be attached to asyncStackForNewActivations.
      */
-    JS::PersistentRooted<JSString*> asyncCauseForNewActivations;
+    const char* asyncCauseForNewActivations;
 
     /*
      * True if the async call was explicitly requested, e.g. via
@@ -904,6 +917,9 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     JSInterruptCallback interruptCallback;
 
+    JSEnqueuePromiseJobCallback enqueuePromiseJobCallback;
+    void* enqueuePromiseJobCallbackData;
+
 #ifdef DEBUG
     void assertCanLock(js::RuntimeLock which);
 #else
@@ -919,9 +935,11 @@ struct JSRuntime : public JS::shadow::Runtime,
      * Locking this only occurs if there is actually a thread other than the
      * main thread with an ExclusiveContext which could access such data.
      */
-    PRLock* exclusiveAccessLock;
-    mozilla::DebugOnly<PRThread*> exclusiveAccessOwner;
-    mozilla::DebugOnly<bool> mainThreadHasExclusiveAccess;
+    js::Mutex exclusiveAccessLock;
+#ifdef DEBUG
+    PRThread* exclusiveAccessOwner;
+    bool mainThreadHasExclusiveAccess;
+#endif
 
     /* Number of non-main threads with an ExclusiveContext. */
     size_t numExclusiveThreads;
@@ -957,7 +975,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     /* Default JSVersion. */
     JSVersion defaultVersion_;
 
-    /* Futex state, used by futexWait and futexWake on the Atomics object */
+    /* Futex state, used by Atomics.wait() and Atomics.wake() on the Atomics object */
     js::FutexRuntime fx;
 
   private:
@@ -1009,6 +1027,8 @@ struct JSRuntime : public JS::shadow::Runtime,
     js::InterpreterStack& interpreterStack() {
         return interpreterStack_;
     }
+
+    bool enqueuePromiseJob(JSContext* cx, js::HandleFunction job);
 
     //-------------------------------------------------------------------------
     // Self-hosting support
@@ -1172,8 +1192,10 @@ struct JSRuntime : public JS::shadow::Runtime,
     /* Had an out-of-memory error which did not populate an exception. */
     bool                hadOutOfMemory;
 
+#ifdef DEBUG
     /* We are currently deleting an object due to an initialization failure. */
-    mozilla::DebugOnly<bool> handlingInitFailure;
+    bool handlingInitFailure;
+#endif
 
     /* A context has been created on this runtime. */
     bool                haveCreatedContext;
@@ -1196,7 +1218,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     /* Client opaque pointers */
     void*               data;
 
-#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS_FOR_OOB)
+#if defined(XP_DARWIN) && defined(ASMJS_MAY_USE_SIGNAL_HANDLERS)
     js::wasm::MachExceptionHandler wasmMachExceptionHandler;
 #endif
 
@@ -1234,6 +1256,8 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     /* Optional error reporter. */
     JSErrorReporter     errorReporter;
+
+    JS::BuildIdOp buildIdOp;
 
     /* AsmJSCache callbacks are runtime-wide. */
     JS::AsmJSCacheOps   asmJSCacheOps;
@@ -1666,7 +1690,10 @@ class MOZ_RAII AutoLockGC
   public:
     explicit AutoLockGC(JSRuntime* rt
                         MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
-      : runtime_(rt), wasUnlocked_(false)
+      : runtime_(rt)
+#ifdef DEBUG
+      , wasUnlocked_(false)
+#endif
     {
         MOZ_GUARD_OBJECT_NOTIFIER_INIT;
         lock();
@@ -1682,7 +1709,9 @@ class MOZ_RAII AutoLockGC
 
     void unlock() {
         runtime_->unlockGC();
+#ifdef DEBUG
         wasUnlocked_ = true;
+#endif
     }
 
 #ifdef DEBUG
@@ -1693,7 +1722,9 @@ class MOZ_RAII AutoLockGC
 
   private:
     JSRuntime* runtime_;
-    mozilla::DebugOnly<bool> wasUnlocked_;
+#ifdef DEBUG
+    bool wasUnlocked_;
+#endif
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
     AutoLockGC(const AutoLockGC&) = delete;

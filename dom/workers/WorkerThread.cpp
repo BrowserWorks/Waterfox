@@ -69,7 +69,9 @@ WorkerThread::WorkerThread()
   , mWorkerPrivateCondVar(mLock, "WorkerThread::mWorkerPrivateCondVar")
   , mWorkerPrivate(nullptr)
   , mOtherThreadsDispatchingViaEventTarget(0)
+#ifdef DEBUG
   , mAcceptingNonWorkerRunnables(true)
+#endif
 {
 }
 
@@ -109,13 +111,15 @@ WorkerThread::SetWorker(const WorkerThreadFriendKey& /* aKey */,
       MOZ_ASSERT(mAcceptingNonWorkerRunnables);
 
       mWorkerPrivate = aWorkerPrivate;
+#ifdef DEBUG
       mAcceptingNonWorkerRunnables = false;
+#endif
     }
 
     mObserver = new Observer(aWorkerPrivate);
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(AddObserver(mObserver)));
+    MOZ_ALWAYS_SUCCEEDS(AddObserver(mObserver));
   } else {
-    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(RemoveObserver(mObserver)));
+    MOZ_ALWAYS_SUCCEEDS(RemoveObserver(mObserver));
     mObserver = nullptr;
 
     {
@@ -131,7 +135,9 @@ WorkerThread::SetWorker(const WorkerThreadFriendKey& /* aKey */,
         mWorkerPrivateCondVar.Wait();
       }
 
+#ifdef DEBUG
       mAcceptingNonWorkerRunnables = true;
+#endif
       mWorkerPrivate = nullptr;
     }
   }

@@ -130,8 +130,7 @@ GrallocTextureHostOGL::~GrallocTextureHostOGL()
 void
 GrallocTextureHostOGL::SetCompositor(Compositor* aCompositor)
 {
-  MOZ_ASSERT(aCompositor);
-  mCompositor = static_cast<CompositorOGL*>(aCompositor);
+  mCompositor = AssertGLCompositor(aCompositor);
   if (mGLTextureSource) {
     mGLTextureSource->SetCompositor(mCompositor);
   }
@@ -465,6 +464,16 @@ GrallocTextureHostOGL::BindTextureSource(CompositableTextureSourceRef& aTextureS
 #endif
   return true;
 }
+
+FenceHandle
+GrallocTextureHostOGL::GetCompositorReleaseFence()
+{
+  if (!mCompositor) {
+    return FenceHandle();
+  }
+  return mCompositor->GetReleaseFence();
+}
+
 
 } // namepsace layers
 } // namepsace mozilla

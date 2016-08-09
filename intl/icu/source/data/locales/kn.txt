@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/kn.xml
@@ -213,7 +213,7 @@ kn{
         minimumGroupingDigits{"1"}
         native{"knda"}
     }
-    Version{"2.1.22.93"}
+    Version{"2.1.19.77"}
     calendar{
         generic{
             DateTimePatterns{
@@ -842,10 +842,7 @@ kn{
         day-narrow{
             dn{"ದಿನ"}
             relative{
-                "-1"{"ನಿನ್ನೆ"}
                 "-2"{"ಮೊನ್ನೆ"}
-                "0"{"ಇಂದು"}
-                "1"{"ನಾಳೆ"}
                 "2"{"ನಾಡಿದ್ದು"}
             }
             relativeTime{
@@ -862,10 +859,7 @@ kn{
         day-short{
             dn{"ದಿನ"}
             relative{
-                "-1"{"ನಿನ್ನೆ"}
                 "-2"{"ಮೊನ್ನೆ"}
-                "0"{"ಇಂದು"}
-                "1"{"ನಾಳೆ"}
                 "2"{"ನಾಡಿದ್ದು"}
             }
             relativeTime{

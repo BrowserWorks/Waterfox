@@ -10,13 +10,13 @@
 // because there's an other test that does this :
 // browser_animation_toggle_button_toggles_animation.js
 
-add_task(function*() {
-  yield addTab(TEST_URL_ROOT + "doc_simple_animation.html");
+add_task(function* () {
+  yield addTab(URL_ROOT + "doc_simple_animation.html");
   let {panel, inspector, window, controller} = yield openAnimationInspector();
   let {toggleAllButtonEl} = panel;
 
   // select a node without animations
-  yield selectNode(".still", inspector);
+  yield selectNodeAndWaitForAnimations(".still", inspector);
 
   // ensure the focus is on the animation panel
   window.focus();

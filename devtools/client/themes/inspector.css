@@ -3,55 +3,36 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-:root[platform="mac"] #inspector-toolbar:-moz-locale-dir(ltr) {
-  padding-left: 2px;
-}
-
-:root[platform="mac"] #inspector-toolbar:-moz-locale-dir(rtl) {
-  padding-left: 4px;
-}
-
 #inspector-searchlabel {
   overflow: hidden;
 }
 
-#inspector-searchbox {
-  transition-property: max-width, -moz-padding-end, -moz-padding-start;
-  transition-duration: 250ms;
-  transition-timing-function: ease;
-}
-
-#inspector-searchbox:not([focused]):not([filled]) > .textbox-input-box {
-  overflow: hidden;
-}
-
-#inspector-searchbox:not([focused]):not([filled]) {
-  max-width: 20px !important;
-  -moz-padding-end: 5px;
-  -moz-padding-start: 22px;
-  background-position: 8px center, top left, top left;
-}
-
-#inspector-searchbox[focused],
-#inspector-searchbox[filled] {
-  max-width: 200px !important;
+#inspector-breadcrumbs-toolbar {
+  padding: 0px;
+  border-bottom-width: 0px;
+  border-top-width: 1px;
 }
 
 /* Expand/collapse panel toolbar button */
 
 #inspector-pane-toggle {
-  list-style-image: url(chrome://devtools/skin/images/pane-collapse.svg);
+  list-style-image: var(--theme-pane-collapse-image);
 }
 
 #inspector-pane-toggle[pane-collapsed] {
-  list-style-image: url(chrome://devtools/skin/images/pane-expand.svg);
+  list-style-image: var(--theme-pane-expand-image);
 }
 
 @media (max-width: 700px) {
   #inspector-pane-toggle > .toolbarbutton-icon {
     transform: rotate(90deg);
   }
+}
+
+/* Add element toolbar button */
+
+#inspector-element-add-button {
+  list-style-image: url("chrome://devtools/skin/images/add.svg");
 }
 
 /* Tooltip: Events */

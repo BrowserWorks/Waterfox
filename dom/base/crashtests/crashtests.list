@@ -143,7 +143,6 @@ load 700090-1.html
 load 700090-2.html
 load 700512.html
 load 706283-1.html
-load 708405-1.html
 load 709384.html
 load 709954.html
 load 713417-1.html
@@ -200,9 +199,11 @@ pref(dom.webcomponents.enabled,true) load 1027461-1.html
 pref(dom.webcomponents.enabled,true) load 1029710.html
 load 1154598.xhtml
 load 1157995.html
+load 1158412.html
 load 1181619.html
 load structured_clone_container_throws.html
 HTTP(..) load xhr_abortinprogress.html
 load xhr_empty_datauri.html
 load xhr_html_nullresponse.html
 load 1230422.html
+load 1251361.html

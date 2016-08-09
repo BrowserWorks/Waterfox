@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------ */
 /* decNumber package local type, tuning, and macro definitions        */
 /* ------------------------------------------------------------------ */
-/* Copyright (c) IBM Corporation, 2000-2016.   All rights reserved.   */
+/* Copyright (c) IBM Corporation, 2000-2012.   All rights reserved.   */
 /*                                                                    */
 /* This software is made available under the terms of the             */
 /* ICU License -- ICU 1.8.1 and later.                                */
@@ -29,7 +29,6 @@
 
   #include <stdlib.h>         /* for abs                              */
   #include <string.h>         /* for memset, strcpy                   */
-  #include "decContext.h"
 
   /* Conditional code flag -- set this to match hardware platform     */
   #if !defined(DECLITEND)

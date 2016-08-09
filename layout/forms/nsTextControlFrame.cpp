@@ -155,11 +155,8 @@ nsTextControlFrame::CalcIntrinsicSize(nsRenderingContext* aRenderingContext,
   nscoord charWidth   = 0;
   nscoord charMaxAdvance  = 0;
 
-  RefPtr<nsFontMetrics> fontMet;
-  nsresult rv =
-    nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fontMet),
-                                          aFontSizeInflation);
-  NS_ENSURE_SUCCESS(rv, rv);
+  RefPtr<nsFontMetrics> fontMet =
+    nsLayoutUtils::GetFontMetricsForFrame(this, aFontSizeInflation);
 
   lineHeight =
     nsHTMLReflowState::CalcLineHeight(GetContent(), StyleContext(),
@@ -480,7 +477,7 @@ nsTextControlFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
                                           aCBSize, aAvailableISize,
                                           aMargin, aBorder,
                                           aPadding, aShrinkWrap);
-      // Disabled when there's inflation; see comment in GetPrefSize.
+      // Disabled when there's inflation; see comment in GetXULPrefSize.
       MOZ_ASSERT(inflation != 1.0f ||
                  ancestorAutoSize.ISize(aWM) == autoSize.ISize(aWM),
                  "Incorrect size computed by ComputeAutoSize?");
@@ -523,9 +520,8 @@ nsTextControlFrame::Reflow(nsPresContext*   aPresContext,
     lineHeight = nsHTMLReflowState::CalcLineHeight(GetContent(), StyleContext(),
                                                    NS_AUTOHEIGHT, inflation);
   }
-  RefPtr<nsFontMetrics> fontMet;
-  nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fontMet),
-                                        inflation);
+  RefPtr<nsFontMetrics> fontMet =
+    nsLayoutUtils::GetFontMetricsForFrame(this, inflation);
   // now adjust for our borders and padding
   aDesiredSize.SetBlockStartAscent(
     nsLayoutUtils::GetCenteredFontBaseline(fontMet, lineHeight,
@@ -590,14 +586,14 @@ nsTextControlFrame::ReflowTextControlChild(nsIFrame*                aKid,
 }
 
 nsSize
-nsTextControlFrame::GetMinSize(nsBoxLayoutState& aState)
+nsTextControlFrame::GetXULMinSize(nsBoxLayoutState& aState)
 {
   // XXXbz why?  Why not the nsBoxFrame sizes?
-  return nsBox::GetMinSize(aState);
+  return nsBox::GetXULMinSize(aState);
 }
 
 bool
-nsTextControlFrame::IsCollapsed()
+nsTextControlFrame::IsXULCollapsed()
 {
   // We're never collapsed in the box sense.
   return false;
@@ -1398,7 +1394,7 @@ nsTextControlFrame::RestoreState(nsPresState* aState)
   // Most likely, we don't have our anonymous content constructed yet, which
   // would cause us to end up here.  In this case, we'll just store the scroll
   // pos ourselves, and forward it to the scroll frame later when it's created.
-  Properties().Set(ContentScrollPos(), new nsPoint(aState->GetScrollState()));
+  Properties().Set(ContentScrollPos(), new nsPoint(aState->GetScrollPosition()));
   return NS_OK;
 }
 

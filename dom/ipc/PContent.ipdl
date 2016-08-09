@@ -10,7 +10,7 @@ include protocol PBlob;
 include protocol PBluetooth;
 include protocol PBrowser;
 include protocol PCellBroadcast;
-include protocol PCompositor;
+include protocol PCompositorBridge;
 include protocol PContentBridge;
 include protocol PContentPermissionRequest;
 include protocol PCycleCollectWithLogs;
@@ -21,7 +21,6 @@ include protocol PHandlerService;
 include protocol PDeviceStorageRequest;
 include protocol PFileDescriptorSet;
 include protocol PFMRadio;
-include protocol PFileSystemRequest;
 include protocol PHal;
 include protocol PHeapSnapshotTempFileHelper;
 include protocol PIcc;
@@ -42,6 +41,7 @@ include protocol PPluginModule;
 include protocol PGMP;
 include protocol PPrinting;
 include protocol POfflineCacheUpdate;
+include protocol PRenderFrame;
 include protocol PScreenManager;
 include protocol PSharedBufferManager;
 include protocol PSms;
@@ -91,10 +91,12 @@ using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
 using mozilla::gfx::IntSize from "mozilla/gfx/2D.h";
 using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
 using mozilla::dom::ContentParentId from "mozilla/dom/ipc/IdType.h";
+using mozilla::LayoutDeviceIntPoint from "Units.h";
 using struct LookAndFeelInt from "mozilla/widget/WidgetMessageUtils.h";
 using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
 using mozilla::DataStorageType from "ipc/DataStorageIPCUtils.h";
 using mozilla::DocShellOriginAttributes from "mozilla/ipc/BackgroundUtils.h";
+using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
 
 union ChromeRegistryItem
 {
@@ -265,71 +267,6 @@ union FMRadioRequestParams
   FMRadioRequestCancelSeekParams;
 };
 
-struct FileSystemCreateDirectoryParams
-{
-  nsString filesystem;
-  nsString realPath;
-};
-
-union FileSystemFileDataValue
-{
-  uint8_t[];
-  PBlob;
-};
-
-struct FileSystemCreateFileParams
-{
-  nsString filesystem;
-  nsString realPath;
-  FileSystemFileDataValue data;
-  bool replace;
-};
-
-struct FileSystemGetDirectoryListingParams
-{
-  nsString filesystem;
-  nsString realPath;
-  // 'filters' could be an array rather than a semicolon separated string
-  // (we'd then use InfallibleTArray<nsString> internally), but that is
-  // wasteful.  E10s requires us to pass the filters over as a string anyway,
-  // so avoiding using an array avoids serialization on the side passing the
-  // filters.  Since an nsString can share its buffer when copied,
-  // using that instead of InfallibleTArray<nsString> makes copying the filters
-  // around in any given process a bit more efficient too, since copying a
-  // single nsString is cheaper than copying InfallibleTArray member data and
-  // each nsString that it contains.
-  nsString filters;
-};
-
-struct FileSystemGetFileOrDirectoryParams
-{
-  nsString filesystem;
-  nsString realPath;
-};
-
-union FileSystemPathOrFileValue
-{
-  nsString;
-  PBlob;
-};
-
-struct FileSystemRemoveParams
-{
-  nsString filesystem;
-  nsString directory;
-  FileSystemPathOrFileValue target;
-  bool recursive;
-};
-
-union FileSystemParams
-{
-  FileSystemCreateDirectoryParams;
-  FileSystemCreateFileParams;
-  FileSystemGetDirectoryListingParams;
-  FileSystemGetFileOrDirectoryParams;
-  FileSystemRemoveParams;
-};
-
 union PrefValue {
   nsCString;
   int32_t;
@@ -459,7 +396,7 @@ prio(normal upto urgent) sync protocol PContent
 {
     parent spawns PPluginModule;
 
-    parent opens PCompositor;
+    parent opens PCompositorBridge;
     parent opens PProcessHangMonitor;
     parent opens PSharedBufferManager;
     parent opens PImageBridge;
@@ -476,7 +413,6 @@ prio(normal upto urgent) sync protocol PContent
     manages PCrashReporter;
     manages PCycleCollectWithLogs;
     manages PDeviceStorageRequest;
-    manages PFileSystemRequest;
     manages PPSMContentDownloader;
     manages PExternalHelperApp;
     manages PFileDescriptorSet;
@@ -608,8 +544,6 @@ child:
     // nsIPermissionManager messages
     async AddPermission(Permission permission);
 
-    async ScreenSizeChanged(IntSize size);
-
     async Volumes(VolumeInfo[] volumes);
 
     async FlushMemory(nsString reason);
@@ -687,7 +621,8 @@ child:
 
     async InvokeDragSession(IPCDataTransfer[] transfers, uint32_t action);
 
-    async EndDragSession(bool aDoneDrag, bool aUserCancelled);
+    async EndDragSession(bool aDoneDrag, bool aUserCancelled,
+                         LayoutDeviceIntPoint aDragEndPoint);
 
     async DomainSetChanged(uint32_t aSetType, uint32_t aChangeType, OptionalURIParams aDomain);
 
@@ -730,17 +665,23 @@ child:
     /**
      * Send a `push` event without data to a service worker in the child.
      */
-    async Push(nsCString scope, Principal principal);
+    async Push(nsCString scope, Principal principal, nsString messageId);
 
     /**
      * Send a `push` event with data to a service worker in the child.
      */
-    async PushWithData(nsCString scope, Principal principal, uint8_t[] data);
+    async PushWithData(nsCString scope, Principal principal,
+                       nsString messageId, uint8_t[] data);
 
     /**
      * Send a `pushsubscriptionchange` event to a service worker in the child.
      */
     async PushSubscriptionChange(nsCString scope, Principal principal);
+
+    /**
+     * Send a Push error message to all service worker clients in the child.
+     */
+    async PushError(nsCString scope, nsString message, uint32_t flags);
 
     /**
      * Windows specific: associate this content process with the browsers
@@ -823,12 +764,51 @@ parent:
     async PRemoteSpellcheckEngine();
     async PDeviceStorageRequest(DeviceStorageParams params);
 
-    async PFileSystemRequest(FileSystemParams params);
-
     sync PCrashReporter(NativeThreadId tid, uint32_t processType);
 
-    prio(urgent) sync GetRandomValues(uint32_t length)
-        returns (uint8_t[] randomValues);
+    /**
+     * Is this token compatible with the provided version?
+     *
+     * |version| The offered version to test
+     * Returns |True| if the offered version is compatible
+     */
+    sync NSSU2FTokenIsCompatibleVersion(nsString version)
+        returns (bool result);
+
+    /**
+     * Return whether the provided KeyHandle belongs to this Token
+     *
+     * |keyHandle| Key Handle to evaluate.
+     * Returns |True| if the Key Handle is ours.
+     */
+    sync NSSU2FTokenIsRegistered(uint8_t[] keyHandle)
+        returns (bool isValidKeyHandle);
+
+    /**
+     * Generates a public/private keypair for the provided application
+     * and challenge, returning the pubkey, challenge response, and
+     * key handle in the registration data.
+     *
+     * |application| The FIDO Application data to associate with the key.
+     * |challenge| The Challenge to satisfy in the response.
+     * |registration| An array containing the pubkey, challenge response,
+     *                     and key handle.
+     */
+    sync NSSU2FTokenRegister(uint8_t[] application, uint8_t[] challenge)
+        returns (uint8_t[] registration);
+
+    /**
+     * Creates a signature over the "param" arguments using the private key
+     * provided in the key handle argument.
+     *
+     * |application| The FIDO Application data to associate with the key.
+     * |challenge| The Challenge to satisfy in the response.
+     * |keyHandle| The Key Handle opaque object to use.
+     * |signature| The resulting signature.
+     */
+    sync NSSU2FTokenSign(uint8_t[] application, uint8_t[] challenge,
+                         uint8_t[] keyHandle)
+        returns (uint8_t[] signature);
 
     async GetSystemMemory(uint64_t getterId);
 
@@ -1020,7 +1000,8 @@ parent:
                                 bool isAudio,
                                 bool isVideo);
 
-    sync GetGraphicsFeatureStatus(int32_t aFeature) returns (int32_t aStatus, bool aSuccess);
+    sync GetGraphicsFeatureStatus(int32_t aFeature) returns (int32_t aStatus, nsCString aFailureCode,
+                                                             bool aSuccess);
 
     // Graphics errors
     async GraphicsError(nsCString aError);
@@ -1167,6 +1148,7 @@ parent:
 
     sync CreateWindow(nullable PBrowser aThisTab,
                       PBrowser aNewTab,
+                      PRenderFrame aRenderFrame,
                       uint32_t aChromeFlags,
                       bool aCalledFromJS,
                       bool aPositionSpecified,
@@ -1175,11 +1157,14 @@ parent:
                       nsString aName,
                       nsCString aFeatures,
                       nsCString aBaseURI,
-                      DocShellOriginAttributes aOpenerOriginAttributes)
+                      DocShellOriginAttributes aOpenerOriginAttributes,
+                      float aFullZoom)
       returns (nsresult rv,
                bool windowOpened,
                FrameScriptInfo[] frameScripts,
-               nsCString urlToLoad);
+               nsCString urlToLoad,
+               TextureFactoryIdentifier textureFactoryIdentifier,
+               uint64_t layersId);
 
     sync GetDeviceStorageLocation(nsString type)
         returns (nsString path);

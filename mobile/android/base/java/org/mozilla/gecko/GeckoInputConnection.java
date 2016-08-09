@@ -44,8 +44,7 @@ class GeckoInputConnection
     extends BaseInputConnection
     implements InputConnectionListener, GeckoEditableListener {
 
-    // Turned on temporarily for debugging bug 1248459.
-    private static final boolean DEBUG = !AppConstants.RELEASE_BUILD;
+    private static final boolean DEBUG = false;
     protected static final String LOGTAG = "GeckoInputConnection";
 
     private static final String CUSTOM_HANDLER_TEST_METHOD = "testInputConnection";
@@ -72,6 +71,9 @@ class GeckoInputConnection
     private boolean mBatchSelectionChanged;
     private boolean mBatchTextChanged;
     private final InputConnection mKeyInputConnection;
+
+    // Prevent showSoftInput and hideSoftInput from causing reentrant calls on some devices.
+    private volatile boolean mSoftInputReentrancyGuard;
 
     public static GeckoEditableListener create(View targetView,
                                                GeckoEditableClient editable) {
@@ -235,36 +237,41 @@ class GeckoInputConnection
     }
 
     private void showSoftInput() {
-        final InputMethodManager imm = getInputMethodManager();
-        if (imm != null) {
-            final View v = getView();
-
-            if (v.hasFocus() && !imm.isActive(v)) {
-                // Workaround: The view has focus but it is not the active view for the input method. (Bug 1211848)
-                refocusAndShowSoftInput(imm, v);
-            } else {
-                imm.showSoftInput(v, 0);
-            }
+        if (mSoftInputReentrancyGuard) {
+            return;
         }
-    }
+        final View v = getView();
+        final InputMethodManager imm = getInputMethodManager();
+        if (v == null || imm == null) {
+            return;
+        }
 
-    private static void refocusAndShowSoftInput(final InputMethodManager imm, final View v) {
-        ThreadUtils.postToUiThread(new Runnable() {
+        v.post(new Runnable() {
             @Override
             public void run() {
-                v.clearFocus();
-                v.requestFocus();
-
+                if (v.hasFocus() && !imm.isActive(v)) {
+                    // Marshmallow workaround: The view has focus but it is not the active
+                    // view for the input method. (Bug 1211848)
+                    v.clearFocus();
+                    v.requestFocus();
+                }
+                mSoftInputReentrancyGuard = true;
                 imm.showSoftInput(v, 0);
+                mSoftInputReentrancyGuard = false;
             }
         });
     }
 
     private void hideSoftInput() {
+        if (mSoftInputReentrancyGuard) {
+            return;
+        }
         final InputMethodManager imm = getInputMethodManager();
         if (imm != null) {
             final View v = getView();
+            mSoftInputReentrancyGuard = true;
             imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            mSoftInputReentrancyGuard = false;
         }
     }
 
@@ -291,7 +298,7 @@ class GeckoInputConnection
         }
         try {
             imm.restartInput(v);
-        } catch(RuntimeException e) {
+        } catch (RuntimeException e) {
             Log.e(LOGTAG, "Error restarting input", e);
         }
     }
@@ -473,8 +480,6 @@ class GeckoInputConnection
         return mEditableClient.setInputConnectionHandler(getBackgroundHandler());
     }
 
-    private boolean mIsVisible = false;
-
     @Override
     public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
         // Some keyboards require us to fill out outAttrs even if we return null.
@@ -483,6 +488,7 @@ class GeckoInputConnection
         outAttrs.actionLabel = null;
 
         if (mIMEState == IME_STATE_DISABLED) {
+            hideSoftInput();
             return null;
         }
 
@@ -589,12 +595,7 @@ class GeckoInputConnection
         outAttrs.initialSelStart = Selection.getSelectionStart(editable);
         outAttrs.initialSelEnd = Selection.getSelectionEnd(editable);
 
-        if (mIsVisible) {
-            // The app has been brought to the foreground and the Soft Keyboard
-            // was previously visible, so request that it be shown again.
-            showSoftInput();
-        }
-
+        showSoftInput();
         return this;
     }
 
@@ -800,16 +801,6 @@ class GeckoInputConnection
         return processKey(KeyEvent.ACTION_UP, keyCode, event);
     }
 
-    @Override
-    public void onWindowVisibilityChanged (int visibility) {
-        if (visibility == View.VISIBLE) {
-            mIsVisible = true;
-        } else {
-            mIsVisible = false;
-            hideSoftInput();
-        }
-    }
-
     /**
      * Get a key that represents a given character.
      */
@@ -938,11 +929,6 @@ class GeckoInputConnection
             return;
         }
         restartInput();
-        if (mIMEState == IME_STATE_DISABLED) {
-            hideSoftInput();
-        } else {
-            showSoftInput();
-        }
     }
 }
 

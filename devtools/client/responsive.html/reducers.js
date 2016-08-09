@@ -4,5 +4,7 @@
 
 "use strict";
 
+exports.devices = require("./reducers/devices");
 exports.location = require("./reducers/location");
+exports.screenshot = require("./reducers/screenshot");
 exports.viewports = require("./reducers/viewports");

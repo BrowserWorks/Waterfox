@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/collation/sk.xml
@@ -27,7 +27,7 @@ sk{
                 "&Y<ý<<<Ý"
                 "&Z<ž<<<Ž"
             }
-            Version{"29"}
+            Version{"28"}
         }
         standard{
             Sequence{
@@ -39,7 +39,7 @@ sk{
                 "&S<š<<<Š"
                 "&Z<ž<<<Ž"
             }
-            Version{"29"}
+            Version{"28"}
         }
     }
 }

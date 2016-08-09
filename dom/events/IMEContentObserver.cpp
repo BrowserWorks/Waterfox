@@ -740,10 +740,11 @@ IMEContentObserver::HandleQueryContentEvent(WidgetQueryContentEvent* aEvent)
   mIsHandlingQueryContentEvent = true;
   ContentEventHandler handler(GetPresContext());
   nsresult rv = handler.HandleQueryContentEvent(aEvent);
-  if (aEvent->mSucceeded) {
-    // We need to guarantee that mRootContent should be always same value for
-    // the observing editor.
-    aEvent->mReply.mContentsRoot = mRootContent;
+
+  if (!IsInitializedWithPlugin() &&
+      NS_WARN_IF(aEvent->mReply.mContentsRoot != mRootContent)) {
+    // Focus has changed unexpectedly, so make the query fail.
+    aEvent->mSucceeded = false;
   }
   return rv;
 }
@@ -755,9 +756,9 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
   if (!mUpdatePreference.WantMouseButtonEventOnChar()) {
     return false;
   }
-  if (!aMouseEvent->mFlags.mIsTrusted ||
-      aMouseEvent->mFlags.mDefaultPrevented ||
-      !aMouseEvent->widget) {
+  if (!aMouseEvent->IsTrusted() ||
+      aMouseEvent->DefaultPrevented() ||
+      !aMouseEvent->mWidget) {
     return false;
   }
   // Now, we need to notify only mouse down and mouse up event.
@@ -775,8 +776,8 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
   RefPtr<IMEContentObserver> kungFuDeathGrip(this);
 
   WidgetQueryContentEvent charAtPt(true, eQueryCharacterAtPoint,
-                                   aMouseEvent->widget);
-  charAtPt.refPoint = aMouseEvent->refPoint;
+                                   aMouseEvent->mWidget);
+  charAtPt.mRefPoint = aMouseEvent->mRefPoint;
   ContentEventHandler handler(aPresContext);
   handler.OnQueryCharacterAtPoint(&charAtPt);
   if (NS_WARN_IF(!charAtPt.mSucceeded) ||
@@ -800,8 +801,8 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
   }
   // The refPt is relative to its widget.
   // We should notify it with offset in the widget.
-  if (aMouseEvent->widget != mWidget) {
-    charAtPt.refPoint += aMouseEvent->widget->WidgetToScreenOffset() -
+  if (aMouseEvent->mWidget != mWidget) {
+    charAtPt.mRefPoint += aMouseEvent->mWidget->WidgetToScreenOffset() -
       mWidget->WidgetToScreenOffset();
   }
 
@@ -809,12 +810,12 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
   notification.mMouseButtonEventData.mEventMessage = aMouseEvent->mMessage;
   notification.mMouseButtonEventData.mOffset = charAtPt.mReply.mOffset;
   notification.mMouseButtonEventData.mCursorPos.Set(
-    charAtPt.refPoint.ToUnknownPoint());
+    charAtPt.mRefPoint.ToUnknownPoint());
   notification.mMouseButtonEventData.mCharRect.Set(
     charAtPt.mReply.mRect.ToUnknownRect());
   notification.mMouseButtonEventData.mButton = aMouseEvent->button;
   notification.mMouseButtonEventData.mButtons = aMouseEvent->buttons;
-  notification.mMouseButtonEventData.mModifiers = aMouseEvent->modifiers;
+  notification.mMouseButtonEventData.mModifiers = aMouseEvent->mModifiers;
 
   nsresult rv = IMEStateManager::NotifyIME(notification, mWidget);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -822,7 +823,9 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
   }
 
   bool consumed = (rv == NS_SUCCESS_EVENT_CONSUMED);
-  aMouseEvent->mFlags.mDefaultPrevented = consumed;
+  if (consumed) {
+    aMouseEvent->PreventDefault();
+  }
   return consumed;
 }
 
@@ -1261,7 +1264,8 @@ IMEContentObserver::UpdateSelectionCache()
   WidgetQueryContentEvent selection(true, eQuerySelectedText, mWidget);
   ContentEventHandler handler(GetPresContext());
   handler.OnQuerySelectedText(&selection);
-  if (NS_WARN_IF(!selection.mSucceeded)) {
+  if (NS_WARN_IF(!selection.mSucceeded) ||
+      NS_WARN_IF(selection.mReply.mContentsRoot != mRootContent)) {
     return false;
   }
 

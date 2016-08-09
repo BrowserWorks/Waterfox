@@ -683,7 +683,7 @@ nsHTMLReflowState::InitResizeFlags(nsPresContext* aPresContext, nsIAtom* aFrameT
     mStylePosition->MaxBSizeDependsOnContainer(wm) ||
     mStylePosition->OffsetHasPercent(wm.PhysicalSide(eLogicalSideBStart)) ||
     mStylePosition->mOffset.GetBEndUnit(wm) != eStyleUnit_Auto ||
-    frame->IsBoxFrame();
+    frame->IsXULBoxFrame();
 
   if (mStyleText->mLineHeight.GetUnit() == eStyleUnit_Enumerated) {
     NS_ASSERTION(mStyleText->mLineHeight.GetIntValue() ==
@@ -818,6 +818,7 @@ nsHTMLReflowState::InitFrameType(nsIAtom* aFrameType)
     case NS_STYLE_DISPLAY_TABLE:
     case NS_STYLE_DISPLAY_TABLE_CAPTION:
     case NS_STYLE_DISPLAY_FLEX:
+    case NS_STYLE_DISPLAY_WEBKIT_BOX:
     case NS_STYLE_DISPLAY_GRID:
     case NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER:
       frameType = NS_CSS_FRAME_TYPE_BLOCK;
@@ -830,6 +831,7 @@ nsHTMLReflowState::InitFrameType(nsIAtom* aFrameType)
     case NS_STYLE_DISPLAY_INLINE_XUL_GRID:
     case NS_STYLE_DISPLAY_INLINE_STACK:
     case NS_STYLE_DISPLAY_INLINE_FLEX:
+    case NS_STYLE_DISPLAY_WEBKIT_INLINE_BOX:
     case NS_STYLE_DISPLAY_INLINE_GRID:
     case NS_STYLE_DISPLAY_RUBY:
     case NS_STYLE_DISPLAY_RUBY_BASE:
@@ -2716,10 +2718,8 @@ ComputeLineHeight(nsStyleContext* aStyleContext,
     }
   }
 
-  RefPtr<nsFontMetrics> fm;
-  nsLayoutUtils::GetFontMetricsForStyleContext(aStyleContext,
-                                               getter_AddRefs(fm),
-                                               aFontSizeInflation);
+  RefPtr<nsFontMetrics> fm = nsLayoutUtils::
+    GetFontMetricsForStyleContext(aStyleContext, aFontSizeInflation);
   return GetNormalLineHeight(fm);
 }
 

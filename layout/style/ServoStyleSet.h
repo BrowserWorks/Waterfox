@@ -63,7 +63,8 @@ public:
                   TreeMatchContext& aTreeMatchContext);
 
   already_AddRefed<nsStyleContext>
-  ResolveStyleForNonElement(nsStyleContext* aParentContext);
+  ResolveStyleForNonElement(nsStyleContext* aParentContext,
+                            nsIAtom* aPseudoTag);
 
   already_AddRefed<nsStyleContext>
   ResolvePseudoElementStyle(dom::Element* aParentElement,
@@ -114,6 +115,7 @@ public:
                                        EventStates aStateMask);
 
 private:
+  nsPresContext* mPresContext;
   UniquePtr<RawServoStyleSet> mRawSet;
   EnumeratedArray<SheetType, SheetType::Count,
                   nsTArray<RefPtr<ServoStyleSheet>>> mSheets;

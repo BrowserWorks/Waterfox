@@ -25,6 +25,7 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/Event.h"
+#include "mozilla/dom/TouchEvent.h"
 #include "mozilla/TimelineConsumers.h"
 #include "mozilla/EventTimelineMarker.h"
 
@@ -676,13 +677,13 @@ EventListenerManager::ListenerCanHandle(const Listener* aListener,
   }
   if (aEvent->mMessage == eUnidentifiedEvent) {
     if (mIsMainThreadELM) {
-      return aListener->mTypeAtom == aEvent->userType;
+      return aListener->mTypeAtom == aEvent->mSpecifiedEventType;
     }
-    return aListener->mTypeString.Equals(aEvent->typeString);
+    return aListener->mTypeString.Equals(aEvent->mSpecifiedEventTypeString);
   }
   if (!nsContentUtils::IsUnprefixedFullscreenApiEnabled() &&
-      aEvent->mFlags.mIsTrusted && (aEventMessage == eFullscreenChange ||
-                                    aEventMessage == eFullscreenError)) {
+      aEvent->IsTrusted() && (aEventMessage == eFullscreenChange ||
+                              aEventMessage == eFullscreenError)) {
     // If unprefixed Fullscreen API is not enabled, don't dispatch it
     // to the content.
     if (!aEvent->mFlags.mInSystemGroup && !aListener->mIsChrome) {
@@ -700,7 +701,7 @@ EventListenerManager::AddEventListenerByType(
                         const EventListenerFlags& aFlags)
 {
   nsCOMPtr<nsIAtom> atom =
-    mIsMainThreadELM ? do_GetAtom(NS_LITERAL_STRING("on") + aType) : nullptr;
+    mIsMainThreadELM ? NS_Atomize(NS_LITERAL_STRING("on") + aType) : nullptr;
   EventMessage message = nsContentUtils::GetEventMessage(atom);
   AddEventListenerInternal(aListenerHolder, message, atom, aType, aFlags);
 }
@@ -712,7 +713,7 @@ EventListenerManager::RemoveEventListenerByType(
                         const EventListenerFlags& aFlags)
 {
   nsCOMPtr<nsIAtom> atom =
-    mIsMainThreadELM ? do_GetAtom(NS_LITERAL_STRING("on") + aType) : nullptr;
+    mIsMainThreadELM ? NS_Atomize(NS_LITERAL_STRING("on") + aType) : nullptr;
   EventMessage message = nsContentUtils::GetEventMessage(atom);
   RemoveEventListenerInternal(aListenerHolder, message, atom, aType, aFlags);
 }
@@ -818,7 +819,7 @@ EventListenerManager::SetEventHandler(nsIAtom* aName,
   if (doc) {
     // Don't allow adding an event listener if the document is sandboxed
     // without 'allow-scripts'.
-    if (doc->GetSandboxFlags() & SANDBOXED_SCRIPTS) {
+    if (doc->HasScriptsBlockedBySandbox()) {
       return NS_ERROR_DOM_SECURITY_ERR;
     }
 
@@ -928,7 +929,6 @@ EventListenerManager::CompileEventHandlerInternal(Listener* aListener,
   if (NS_WARN_IF(!jsapi.Init(global))) {
     return NS_ERROR_UNEXPECTED;
   }
-  jsapi.TakeOwnershipOfErrorReporting();
   JSContext* cx = jsapi.cx();
 
   nsCOMPtr<nsIAtom> typeAtom = aListener->mTypeAtom;
@@ -1201,8 +1201,11 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
                                           nsEventStatus* aEventStatus)
 {
   //Set the value of the internal PreventDefault flag properly based on aEventStatus
-  if (*aEventStatus == nsEventStatus_eConsumeNoDefault) {
-    aEvent->mFlags.mDefaultPrevented = true;
+  if (!aEvent->DefaultPrevented() &&
+      *aEventStatus == nsEventStatus_eConsumeNoDefault) {
+    // Assume that if only aEventStatus claims that the event has already been
+    // consumed, the consumer is default event handler.
+    aEvent->PreventDefault();
   }
 
   Maybe<nsAutoPopupStatePusher> popupStatePusher;
@@ -1230,21 +1233,20 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
         hasListenerForCurrentGroup = hasListenerForCurrentGroup ||
           listener->mFlags.mInSystemGroup == aEvent->mFlags.mInSystemGroup;
         if (listener->IsListening(aEvent) &&
-            (aEvent->mFlags.mIsTrusted ||
-             listener->mFlags.mAllowUntrustedEvents)) {
+            (aEvent->IsTrusted() || listener->mFlags.mAllowUntrustedEvents)) {
           if (!*aDOMEvent) {
             // This is tiny bit slow, but happens only once per event.
             nsCOMPtr<EventTarget> et =
-              do_QueryInterface(aEvent->originalTarget);
+              do_QueryInterface(aEvent->mOriginalTarget);
             RefPtr<Event> event = EventDispatcher::CreateEvent(et, aPresContext,
                                                                aEvent,
                                                                EmptyString());
             event.forget(aDOMEvent);
           }
           if (*aDOMEvent) {
-            if (!aEvent->currentTarget) {
-              aEvent->currentTarget = aCurrentTarget->GetTargetForDOMEvent();
-              if (!aEvent->currentTarget) {
+            if (!aEvent->mCurrentTarget) {
+              aEvent->mCurrentTarget = aCurrentTarget->GetTargetForDOMEvent();
+              if (!aEvent->mCurrentTarget) {
                 break;
               }
             }
@@ -1310,14 +1312,14 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
     usingLegacyMessage = true;
   }
 
-  aEvent->currentTarget = nullptr;
+  aEvent->mCurrentTarget = nullptr;
 
   if (mIsMainThreadELM && !hasListener) {
     mNoListenerForEvent = aEvent->mMessage;
-    mNoListenerForEventAtom = aEvent->userType;
+    mNoListenerForEventAtom = aEvent->mSpecifiedEventType;
   }
 
-  if (aEvent->mFlags.mDefaultPrevented) {
+  if (aEvent->DefaultPrevented()) {
     *aEventStatus = nsEventStatus_eConsumeNoDefault;
   }
 }
@@ -1423,7 +1425,7 @@ bool
 EventListenerManager::HasListenersFor(const nsAString& aEventName)
 {
   if (mIsMainThreadELM) {
-    nsCOMPtr<nsIAtom> atom = do_GetAtom(NS_LITERAL_STRING("on") + aEventName);
+    nsCOMPtr<nsIAtom> atom = NS_Atomize(NS_LITERAL_STRING("on") + aEventName);
     return HasListenersFor(atom);
   }
 
@@ -1669,12 +1671,25 @@ EventListenerManager::HasApzAwareListeners()
 bool
 EventListenerManager::IsApzAwareEvent(nsIAtom* aEvent)
 {
-  return aEvent == nsGkAtoms::ontouchstart ||
-         aEvent == nsGkAtoms::ontouchmove ||
-         aEvent == nsGkAtoms::onwheel ||
-         aEvent == nsGkAtoms::onDOMMouseScroll ||
-         aEvent == nsHtml5Atoms::onmousewheel ||
-         aEvent == nsGkAtoms::onMozMousePixelScroll;
+  if (aEvent == nsGkAtoms::onwheel ||
+      aEvent == nsGkAtoms::onDOMMouseScroll ||
+      aEvent == nsHtml5Atoms::onmousewheel ||
+      aEvent == nsGkAtoms::onMozMousePixelScroll) {
+    return true;
+  }
+  // In theory we should schedule a repaint if the touch event pref changes,
+  // because the event regions might be out of date. In practice that seems like
+  // overkill because users generally shouldn't be flipping this pref, much
+  // less expecting touch listeners on the page to immediately start preventing
+  // scrolling without so much as a repaint. Tests that we write can work
+  // around this constraint easily enough.
+  if (TouchEvent::PrefEnabled()) {
+    if (aEvent == nsGkAtoms::ontouchstart ||
+        aEvent == nsGkAtoms::ontouchmove) {
+      return true;
+    }
+  }
+  return false;
 }
 
 already_AddRefed<nsIScriptGlobalObject>

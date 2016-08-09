@@ -10,7 +10,7 @@
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/OwningNonNull.h"
-#include "mozilla/Pair.h"
+#include "mozilla/NonOwningAnimationTarget.h"
 #include "mozilla/PseudoElementHashEntry.h"
 #include "mozilla/RefPtr.h"
 #include "nsCSSProperty.h"
@@ -29,7 +29,6 @@ namespace mozilla {
 
 class EffectSet;
 class RestyleTracker;
-enum class CSSPseudoElementType : uint8_t;
 struct AnimationPerformanceWarning;
 
 namespace dom {
@@ -112,6 +111,14 @@ public:
   // posted because updates on the main thread are throttled.
   void PostRestyleForThrottledAnimations();
 
+  // Called when the style context on the specified (pseudo-) element might
+  // have changed so that any context-sensitive values stored within
+  // animation effects (e.g. em-based endpoints used in keyframe effects)
+  // can be re-resolved to computed values.
+  void UpdateEffectProperties(nsStyleContext* aStyleContext,
+                              dom::Element* aElement,
+                              CSSPseudoElementType aPseudoType);
+
   // Updates the animation rule stored on the EffectSet for the
   // specified (pseudo-)element for cascade level |aLevel|.
   // If the animation rule is not marked as needing an update,
@@ -185,7 +192,7 @@ public:
   // Returns an empty result when a suitable element cannot be found including
   // when the frame represents a pseudo-element on which we do not support
   // animations.
-  static Maybe<Pair<dom::Element*, CSSPseudoElementType>>
+  static Maybe<NonOwningAnimationTarget>
   GetAnimationElementAndPseudoForFrame(const nsIFrame* aFrame);
 
   // Associates a performance warning with effects on |aFrame| that animates

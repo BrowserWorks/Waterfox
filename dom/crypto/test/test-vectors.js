@@ -649,6 +649,16 @@ tv = {
     )
   },
 
+  pbkdf2_sha256_no_salt: {
+    password: util.hex2abv(
+      "9c13a23bc58a52be8bb4fa1a2cbdff01747265736f7269745f64625f7265636f72645f6964"),
+    length: 32 * 8,
+    iterations: 1,
+
+    derived: util.hex2abv(
+      "ef29dd382fa66a83a95be7ccfb71f1ccfee494977855a4c260d90c2f8c91e062")
+  },
+
   broken_pkcs8: {
     // A DH key with parameters p and g, and a private value.
     // This currently fails the key import due to the missing public value.
@@ -723,7 +733,7 @@ tv = {
       kty: "EC",
       crv: "P-384",
       d: "RT8f0pRw4CL1Tgk4rwuNnNbFoQBNTTBkr7WVLLm4fDA3boYZpNB_t-rbMVLx0CRp",
-      x: "_XwhXRnOzEfCsWIRCz3QLClaDkigQFvXmqYNdh/7vJdADykPbfGi1VgAu3XJdXoD",
+      x: "_XwhXRnOzEfCsWIRCz3QLClaDkigQFvXmqYNdh_7vJdADykPbfGi1VgAu3XJdXoD",
       y: "S1P_FBCXYGE-5VPvTCRnFT7bPIPmUPV9qKTM24TQFYEUgIDfzCLsyGCWK-rhP6jU"
     },
 

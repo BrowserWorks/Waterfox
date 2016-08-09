@@ -48,6 +48,14 @@ public abstract class SessionParser {
         public JSONObject getTabObject() {
             return mTabObject;
         }
+
+        /**
+         * Is this tab pointing to about:home and does not contain any other history?
+         */
+        public boolean isAboutHomeWithoutHistory() {
+            JSONArray entries = mTabObject.optJSONArray("entries");
+            return entries != null && entries.length() == 1 && AboutPages.isAboutHome(mUrl);
+        }
     };
 
     abstract public void onTabRead(SessionTab tab);
@@ -58,7 +66,7 @@ public abstract class SessionParser {
      * @param closedTabs, JSONArray of recently closed tab entries.
      * @throws JSONException
      */
-    public void onClosedTabsRead(final JSONArray closedTabs) throws JSONException{
+    public void onClosedTabsRead(final JSONArray closedTabs) throws JSONException {
     }
 
     public void parse(String... sessionStrings) {
@@ -100,7 +108,7 @@ public abstract class SessionParser {
 
                     totalCount++;
                     boolean selected = false;
-                    if (optSelected == i+1) {
+                    if (optSelected == i + 1) {
                         selected = true;
                         selectedIndex = totalCount;
                     }

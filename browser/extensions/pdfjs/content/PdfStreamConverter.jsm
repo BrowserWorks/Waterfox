@@ -264,11 +264,9 @@ ChromeActions.prototype = {
     var extHelperAppSvc =
           Cc['@mozilla.org/uriloader/external-helper-app-service;1'].
              getService(Ci.nsIExternalHelperAppService);
-    var frontWindow = Cc['@mozilla.org/embedcomp/window-watcher;1'].
-                         getService(Ci.nsIWindowWatcher).activeWindow;
 
     var docIsPrivate = this.isInPrivateBrowsing();
-    var netChannel = createNewChannel(blobUri, frontWindow.document, null);
+    var netChannel = createNewChannel(blobUri, this.domWindow.document, null);
     if ('nsIPrivateBrowsingChannel' in Ci &&
         netChannel instanceof Ci.nsIPrivateBrowsingChannel) {
       netChannel.setPrivate(docIsPrivate);
@@ -304,10 +302,14 @@ ChromeActions.prototype = {
       var listener = {
         extListener: null,
         onStartRequest: function(aRequest, aContext) {
+          var loadContext = self.domWindow
+                                .QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIWebNavigation)
+                                .QueryInterface(Ci.nsILoadContext);
           this.extListener = extHelperAppSvc.doContent(
             (data.isAttachment ? 'application/octet-stream' :
                                  'application/pdf'),
-            aRequest, frontWindow, false);
+            aRequest, loadContext, false);
           this.extListener.onStartRequest(aRequest, aContext);
         },
         onStopRequest: function(aRequest, aContext, aStatusCode) {
@@ -1021,14 +1023,18 @@ PdfStreamConverter.prototype = {
     // Keep the URL the same so the browser sees it as the same.
     channel.originalURI = aRequest.URI;
     channel.loadGroup = aRequest.loadGroup;
+    channel.loadInfo.originAttributes = aRequest.loadInfo.originAttributes;
 
     // We can use resource principal when data is fetched by the chrome
+    // make sure we reuse the origin attributes from the request channel to keep
+    // isolation consistent.
     // e.g. useful for NoScript
     var ssm = Cc['@mozilla.org/scriptsecuritymanager;1']
                 .getService(Ci.nsIScriptSecurityManager);
     var uri = NetUtil.newURI(PDF_VIEWER_WEB_PAGE, null, null);
+    var attrs = aRequest.loadInfo.originAttributes;
     var resourcePrincipal;
-    resourcePrincipal = ssm.createCodebasePrincipal(uri, {});
+    resourcePrincipal = ssm.createCodebasePrincipal(uri, attrs);
     aRequest.owner = resourcePrincipal;
     channel.asyncOpen(proxy, aContext);
   },

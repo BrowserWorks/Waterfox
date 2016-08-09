@@ -42,16 +42,18 @@ function PushRecord(props) {
   this.p256dhPrivateKey = props.p256dhPrivateKey;
   this.authenticationSecret = props.authenticationSecret;
   this.systemRecord = !!props.systemRecord;
+  this.appServerKey = props.appServerKey;
   this.setQuota(props.quota);
   this.ctime = (typeof props.ctime === "number") ? props.ctime : 0;
 }
 
 PushRecord.prototype = {
   setQuota(suggestedQuota) {
-    if (this.quotaApplies() && !isNaN(suggestedQuota) && suggestedQuota >= 0) {
-      this.quota = suggestedQuota;
+    if (this.quotaApplies()) {
+      let quota = +suggestedQuota;
+      this.quota = quota >= 0 ? quota : prefs.get("maxQuotaPerSubscription");
     } else {
-      this.resetQuota();
+      this.quota = Infinity;
     }
   },
 
@@ -74,8 +76,10 @@ PushRecord.prototype = {
     }
     if (lastVisit > this.lastPush) {
       // If the user visited the site since the last time we received a
-      // notification, reset the quota.
-      let daysElapsed = (Date.now() - lastVisit) / 24 / 60 / 60 / 1000;
+      // notification, reset the quota. `Math.max(0, ...)` ensures the
+      // last visit date isn't in the future.
+      let daysElapsed =
+        Math.max(0, (Date.now() - lastVisit) / 24 / 60 / 60 / 1000);
       this.quota = Math.min(
         Math.round(8 * Math.pow(daysElapsed, -0.8)),
         prefs.get("maxQuotaPerSubscription")
@@ -231,6 +235,17 @@ PushRecord.prototype = {
            this.authenticationSecret.byteLength == 16;
   },
 
+  matchesAppServerKey(key) {
+    if (!this.appServerKey) {
+      return !key;
+    }
+    if (!key) {
+      return false;
+    }
+    return this.appServerKey.length === key.length &&
+           this.appServerKey.every((value, index) => value === key[index]);
+  },
+
   toSubscription() {
     return {
       endpoint: this.pushEndpoint,
@@ -238,6 +253,7 @@ PushRecord.prototype = {
       pushCount: this.pushCount,
       p256dhKey: this.p256dhPublicKey,
       authenticationSecret: this.authenticationSecret,
+      appServerKey: this.appServerKey,
       quota: this.quotaApplies() ? this.quota : -1,
     };
   },

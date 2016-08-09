@@ -200,3 +200,9 @@ SSL_SetDowngradeCheckVersion;
 ;+    local:
 ;+*;
 ;+};
+;+NSS_3.24 {    # NSS 3.24 release
+;+    global:
+SSL_ConfigServerCert;
+;+    local:
+;+*;
+;+};

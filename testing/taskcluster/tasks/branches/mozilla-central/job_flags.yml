@@ -17,38 +17,24 @@ builds:
     types:
       opt:
         task: tasks/builds/android_api_15.yml
-  aries-dogfood:
+  aries:
     platforms:
       - b2g
     types:
-      opt:
-        task: tasks/builds/b2g_aries_spark_dogfood.yml
-        additional-parameters:
-          b2g_update_channel: 'dogfood'
-  aries-ota:
-    platforms:
-      - b2g
-    types:
-      opt:
-        task: tasks/builds/b2g_aries_spark_ota_balrog_opt.yml
-        additional-parameters:
-          b2g_update_channel: 'nightly'
       debug:
-        task: tasks/builds/b2g_aries_spark_ota_balrog_debug.yml
-        additional-parameters:
-          b2g_update_channel: 'nightly'
-  flame-kk-ota:
+        task: tasks/builds/b2g_aries_spark_debug.yml
+  aries-eng:
     platforms:
       - b2g
     types:
       opt:
-        task: tasks/builds/b2g_flame_kk_ota_opt.yml
-        additional-parameters:
-          b2g_update_channel: 'nightly'
-      debug:
-        task: tasks/builds/b2g_flame_kk_ota_debug.yml
-        additional-parameters:
-          b2g_update_channel: 'nightly'
+        task: tasks/builds/b2g_aries_eng.yml
+  nexus-5l-eng:
+    platforms:
+      - b2g
+    types:
+      opt:
+        task: tasks/builds/b2g_nexus_5l_eng.yml
 
 post-build:
   simulator:

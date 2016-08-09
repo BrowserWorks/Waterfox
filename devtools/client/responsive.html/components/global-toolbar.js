@@ -4,27 +4,33 @@
 
 "use strict";
 
-const { getStr } = require("./utils/l10n");
-const { DOM: dom, createClass, PropTypes } =
+const { getStr } = require("../utils/l10n");
+const { DOM: dom, createClass, PropTypes, addons } =
   require("devtools/client/shared/vendor/react");
+const Types = require("../types");
 
 module.exports = createClass({
+  propTypes: {
+    onExit: PropTypes.func.isRequired,
+    onScreenshot: PropTypes.func.isRequired,
+    screenshot: PropTypes.shape(Types.screenshot).isRequired,
+  },
 
   displayName: "GlobalToolbar",
 
-  propTypes: {
-    onExit: PropTypes.func.isRequired,
-  },
+  mixins: [ addons.PureRenderMixin ],
 
   render() {
     let {
       onExit,
+      onScreenshot,
+      screenshot,
     } = this.props;
 
     return dom.header(
       {
         id: "global-toolbar",
-        className: "toolbar",
+        className: "container",
       },
       dom.span(
         {
@@ -32,8 +38,15 @@ module.exports = createClass({
         },
         getStr("responsive.title")),
       dom.button({
+        id: "global-screenshot-button",
+        className: "toolbar-button devtools-button",
+        title: getStr("responsive.screenshot"),
+        onClick: onScreenshot,
+        disabled: screenshot.isCapturing,
+      }),
+      dom.button({
         id: "global-exit-button",
-        className: "toolbar-button",
+        className: "toolbar-button devtools-button",
         title: getStr("responsive.exit"),
         onClick: onExit,
       })

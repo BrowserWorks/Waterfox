@@ -86,8 +86,8 @@ private:
   // If we are forced to draw a temporary surface, we cache it here.
   UniquePtr<ClippedImageCachedSurface> mCachedSurface;
 
-  nsIntRect   mClip;              // The region to clip to.
-  Maybe<bool> mShouldClip;        // Memoized ShouldClip() if present.
+  nsIntRect        mClip;            // The region to clip to.
+  Maybe<bool>      mShouldClip;      // Memoized ShouldClip() if present.
 
   friend class DrawSingleTileCallback;
   friend class ImageOps;

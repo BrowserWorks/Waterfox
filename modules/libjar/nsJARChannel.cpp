@@ -49,7 +49,7 @@ static NS_DEFINE_CID(kZipReaderCID, NS_ZIPREADER_CID);
 //
 // set NSPR_LOG_MODULES=nsJarProtocol:5
 //
-static PRLogModuleInfo *gJarProtocolLog = nullptr;
+static LazyLogModule gJarProtocolLog("nsJarProtocol");
 
 #define LOG(args)     MOZ_LOG(gJarProtocolLog, mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(gJarProtocolLog, mozilla::LogLevel::Debug)
@@ -204,9 +204,6 @@ nsJARChannel::nsJARChannel()
     , mOpeningRemote(false)
     , mBlockRemoteFiles(false)
 {
-    if (!gJarProtocolLog)
-        gJarProtocolLog = PR_NewLogModule("nsJarProtocol");
-
     mBlockRemoteFiles = Preferences::GetBool("network.jar.block-remote-files", false);
 
     // hold an owning reference to the jar handler
@@ -657,25 +654,6 @@ nsJARChannel::SetNotificationCallbacks(nsIInterfaceRequestor *aCallbacks)
 {
     mCallbacks = aCallbacks;
     return NS_OK;
-}
-
-nsresult
-nsJARChannel::OverrideSecurityInfo(nsISupports* aSecurityInfo)
-{
-  MOZ_RELEASE_ASSERT(!mSecurityInfo,
-                     "This can only be called when we don't have a security info object already");
-  MOZ_RELEASE_ASSERT(aSecurityInfo,
-                     "This can only be called with a valid security info object");
-  mSecurityInfo = aSecurityInfo;
-  return NS_OK;
-}
-
-void
-nsJARChannel::OverrideURI(nsIURI* aRedirectedURI)
-{
-  MOZ_RELEASE_ASSERT(mLoadFlags & LOAD_REPLACE,
-                     "This can only happen if the LOAD_REPLACE flag is set");
-  mAppURI = aRedirectedURI;
 }
 
 NS_IMETHODIMP

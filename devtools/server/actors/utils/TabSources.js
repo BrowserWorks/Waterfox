@@ -10,6 +10,7 @@ const { assert, fetch } = DevToolsUtils;
 const EventEmitter = require("devtools/shared/event-emitter");
 const { OriginalLocation, GeneratedLocation } = require("devtools/server/actors/common");
 const { resolve } = require("promise");
+const { joinURI } = require("devtools/shared/path");
 const URL = require("URL");
 
 loader.lazyRequireGetter(this, "SourceActor", "devtools/server/actors/source", true);
@@ -246,6 +247,7 @@ TabSources.prototype = {
     }
 
     throw new Error('getSourceByURL: could not find source for ' + url);
+    return null;
   },
 
   /**
@@ -299,6 +301,9 @@ TabSources.prototype = {
     let element = aSource.element ? aSource.element.unsafeDereference() : null;
     if (element && (element.tagName !== "SCRIPT" || !element.hasAttribute("src"))) {
       spec.isInlineSource = true;
+    } else if (aSource.introductionType === "wasm") {
+      // Wasm sources are not JavaScript. Give them their own content-type.
+      spec.contentType = "text/wasm";
     } else {
       if (url) {
         // There are a few special URLs that we know are JavaScript:
@@ -324,7 +329,13 @@ TabSources.prototype = {
             }
           } catch (e) {
             // This only needs to be here because URL is not yet exposed to
-            // workers.
+            // workers. (BUG 1258892)
+            const filename = url;
+            const index = filename.lastIndexOf(".");
+            const extension = index >= 0 ? filename.slice(index + 1) : "";
+            if (extension === "js") {
+              spec.contentType = "text/javascript";
+            }
           }
         }
       }
@@ -401,7 +412,7 @@ TabSources.prototype = {
 
     let sourceMapURL = aSource.sourceMapURL;
     if (aSource.url) {
-      sourceMapURL = this._normalize(sourceMapURL, aSource.url);
+      sourceMapURL = joinURI(aSource.url, sourceMapURL);
     }
     let result = this._fetchSourceMap(sourceMapURL, aSource.url);
 
@@ -481,7 +492,7 @@ TabSources.prototype = {
         ? aScriptURL
         : aAbsSourceMapURL);
     aSourceMap.sourceRoot = aSourceMap.sourceRoot
-      ? this._normalize(aSourceMap.sourceRoot, base)
+      ? joinURI(base, aSourceMap.sourceRoot)
       : base;
   },
 
@@ -554,6 +565,7 @@ TabSources.prototype = {
     // Forcefully set the sourcemap cache. This will be used even if
     // sourcemaps are disabled.
     this._sourceMapCache[url] = resolve(aMap);
+    this.emit("updatedSource", this.getSourceActor(aSource));
   },
 
   /**
@@ -780,19 +792,6 @@ TabSources.prototype = {
    */
   disablePrettyPrint: function (aURL) {
     this.prettyPrintedSources.delete(aURL);
-  },
-
-  /**
-   * Normalize multiple relative paths towards the base paths on the right.
-   */
-  _normalize: function (...aURLs) {
-    assert(aURLs.length > 1, "Should have more than 1 URL");
-    let base = new URL(aURLs.pop());
-    let url;
-    while ((url = aURLs.pop())) {
-      base = new URL(url, base);
-    }
-    return base.href;
   },
 
   iter: function () {

@@ -4,29 +4,30 @@
 
 #include "nsCertTree.h"
 
-#include "pkix/pkixtypes.h"
-#include "nsNSSComponent.h" // for PIPNSS string bundle calls.
+#include "ScopedNSSTypes.h"
+#include "mozilla/Logging.h"
+#include "nsArray.h"
+#include "nsArrayUtils.h"
+#include "nsHashKeys.h"
+#include "nsISupportsPrimitives.h"
 #include "nsITreeColumns.h"
+#include "nsIX509CertDB.h"
 #include "nsIX509Cert.h"
 #include "nsIX509CertValidity.h"
-#include "nsIX509CertDB.h"
-#include "nsXPIDLString.h"
-#include "nsReadableUtils.h"
-#include "nsUnicharUtils.h"
-#include "nsNSSCertificate.h"
 #include "nsNSSCertHelper.h"
-#include "nsIMutableArray.h"
-#include "nsArrayUtils.h"
-#include "nsISupportsPrimitives.h"
-#include "nsXPCOMCID.h"
+#include "nsNSSCertificate.h"
+#include "nsNSSComponent.h" // for PIPNSS string bundle calls.
+#include "nsNSSHelper.h"
+#include "nsReadableUtils.h"
 #include "nsTHashtable.h"
-#include "nsHashKeys.h"
-
-#include "mozilla/Logging.h"
+#include "nsUnicharUtils.h"
+#include "nsXPCOMCID.h"
+#include "nsXPIDLString.h"
+#include "pkix/pkixtypes.h"
 
 using namespace mozilla;
 
-extern PRLogModuleInfo* gPIPNSSLog;
+extern LazyLogModule gPIPNSSLog;
 
 static NS_DEFINE_CID(kCertOverrideCID, NS_CERTOVERRIDE_CID);
 
@@ -61,8 +62,7 @@ CompareCacheHashEntry::CompareCacheHashEntry()
 }
 
 static bool
-CompareCacheMatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
-                         const void *key)
+CompareCacheMatchEntry(const PLDHashEntryHdr *hdr, const void *key)
 {
   const CompareCacheHashEntryPtr *entryPtr = static_cast<const CompareCacheHashEntryPtr*>(hdr);
   return entryPtr->entry->key == key;
@@ -686,7 +686,7 @@ nsCertTree::UpdateUIContents()
   mNumOrgs = CountOrganizations();
   mTreeArray = new treeArrayEl[mNumOrgs];
 
-  mCellText = do_CreateInstance(NS_ARRAY_CONTRACTID);
+  mCellText = nsArrayBase::Create();
 
 if (count) {
   uint32_t j = 0;
@@ -792,12 +792,12 @@ nsCertTree::DeleteEntryObject(uint32_t index)
             // although there are still overrides stored,
             // so, we keep the cert, but remove the trust
 
-            ScopedCERTCertificate nsscert(cert->GetCert());
+            UniqueCERTCertificate nsscert(cert->GetCert());
 
             if (nsscert) {
               CERTCertTrust trust;
               memset((void*)&trust, 0, sizeof(trust));
-            
+
               SECStatus srv = CERT_DecodeTrustString(&trust, ""); // no override 
               if (srv == SECSuccess) {
                 CERT_ChangeCertTrust(CERT_GetDefaultCertDB(), nsscert.get(),
@@ -856,19 +856,6 @@ nsCertTree::GetTreeItem(uint32_t aIndex, nsICertTreeItem **_treeitem)
 
   *_treeitem = certdi;
   NS_IF_ADDREF(*_treeitem);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsCertTree::IsHostPortOverride(uint32_t aIndex, bool *_retval)
-{
-  NS_ENSURE_ARG(_retval);
-
-  RefPtr<nsCertTreeDispInfo> certdi(GetDispInfoAtIndex(aIndex));
-  if (!certdi)
-    return NS_ERROR_FAILURE;
-
-  *_retval = (certdi->mTypeOfEntry == nsCertTreeDispInfo::host_port_override);
   return NS_OK;
 }
 
@@ -1046,7 +1033,7 @@ nsCertTree::GetCellText(int32_t row, nsITreeColumn* col,
   if (!mTreeArray)
     return NS_ERROR_NOT_INITIALIZED;
 
-  nsresult rv;
+  nsresult rv = NS_OK;
   _retval.Truncate();
 
   const char16_t* colID;

@@ -383,10 +383,6 @@ obj_setPrototypeOf(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    RootedObject setPrototypeOf(cx, &args.callee());
-    if (!GlobalObject::warnOnceAboutPrototypeMutation(cx, setPrototypeOf))
-        return false;
-
     if (args.length() < 2) {
         JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_MORE_ARGS_NEEDED,
                              "Object.setPrototypeOf", "1", "");
@@ -438,10 +434,16 @@ js::WatchHandler(JSContext* cx, JSObject* obj_, jsid id_, JS::Value old,
     if (resolving.alreadyStarted())
         return true;
 
-    JSObject* callable = (JSObject*)closure;
-    Value argv[] = { IdToValue(id), old, *nvp };
+    FixedInvokeArgs<3> args(cx);
+
+    args[0].set(IdToValue(id));
+    args[1].set(old);
+    args[2].set(*nvp);
+
+    RootedValue callable(cx, ObjectValue(*static_cast<JSObject*>(closure)));
+    RootedValue thisv(cx, ObjectValue(*obj));
     RootedValue rv(cx);
-    if (!Invoke(cx, ObjectValue(*obj), ObjectOrNullValue(callable), ArrayLength(argv), argv, &rv))
+    if (!Call(cx, callable, thisv, args, &rv))
         return false;
 
     *nvp = rv;
@@ -675,7 +677,7 @@ js::obj_getOwnPropertyDescriptor(JSContext* cx, unsigned argc, Value* vp)
     // Steps 5-7.
     Rooted<PropertyDescriptor> desc(cx);
     return GetOwnPropertyDescriptor(cx, obj, id, &desc) &&
-           FromPropertyDescriptor(cx, desc, args.rval());
+           JS::FromPropertyDescriptor(cx, desc, args.rval());
 }
 
 enum EnumerableOwnPropertiesKind {
@@ -1054,13 +1056,6 @@ ProtoSetter(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    // Do this here, rather than after the this-check so even likely-buggy
-    // use of the __proto__ setter on unacceptable values, where no subsequent
-    // use occurs on an acceptable value, will trigger a warning.
-    RootedObject callee(cx, &args.callee());
-    if (!GlobalObject::warnOnceAboutPrototypeMutation(cx, callee))
-       return false;
-
     HandleValue thisv = args.thisv();
     if (thisv.isNullOrUndefined()) {
         ReportIncompatible(cx, args);
@@ -1222,30 +1217,21 @@ FinishObjectClassInit(JSContext* cx, JS::HandleObject ctor, JS::HandleObject pro
     return true;
 }
 
+static const ClassSpec PlainObjectClassSpec = {
+    CreateObjectConstructor,
+    CreateObjectPrototype,
+    object_static_methods,
+    nullptr,
+    object_methods,
+    object_properties,
+    FinishObjectClassInit
+};
+
 const Class PlainObject::class_ = {
     js_Object_str,
     JSCLASS_HAS_CACHED_PROTO(JSProto_Object),
-    nullptr,  /* addProperty */
-    nullptr,  /* delProperty */
-    nullptr,  /* getProperty */
-    nullptr,  /* setProperty */
-    nullptr,  /* enumerate */
-    nullptr,  /* resolve */
-    nullptr,  /* mayResolve */
-    nullptr,  /* finalize */
-    nullptr,  /* call */
-    nullptr,  /* hasInstance */
-    nullptr,  /* construct */
-    nullptr,  /* trace */
-    {
-        CreateObjectConstructor,
-        CreateObjectPrototype,
-        object_static_methods,
-        nullptr,
-        object_methods,
-        object_properties,
-        FinishObjectClassInit
-    }
+    JS_NULL_CLASS_OPS,
+    &PlainObjectClassSpec
 };
 
 const Class* const js::ObjectClassPtr = &PlainObject::class_;

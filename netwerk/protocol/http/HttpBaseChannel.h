@@ -216,6 +216,8 @@ public:
   NS_IMETHOD SetCorsMode(uint32_t aCorsMode) override;
   NS_IMETHOD GetRedirectMode(uint32_t* aRedirectMode) override;
   NS_IMETHOD SetRedirectMode(uint32_t aRedirectMode) override;
+  NS_IMETHOD GetFetchCacheMode(uint32_t* aFetchCacheMode) override;
+  NS_IMETHOD SetFetchCacheMode(uint32_t aFetchCacheMode) override;
   NS_IMETHOD GetTopWindowURI(nsIURI **aTopWindowURI) override;
   NS_IMETHOD GetProxyURI(nsIURI **proxyURI) override;
   virtual void SetCorsPreflightParameters(const nsTArray<nsCString>& unsafeHeaders) override;
@@ -303,10 +305,6 @@ public: /* Necko internal use only... */
     // the new mUploadStream.
     void EnsureUploadStreamIsCloneableComplete(nsresult aStatus);
 
-    // Returns an https URI for channels that need to go through secure
-    // upgrades.
-    static nsresult GetSecureUpgradedURI(nsIURI* aURI, nsIURI** aUpgradedURI);
-
 protected:
   nsCOMArray<nsISecurityConsoleMessage> mSecurityConsoleMessages;
 
@@ -318,6 +316,8 @@ protected:
   void ReleaseListeners();
 
   nsPerformance* GetPerformance();
+  nsIURI* GetReferringPage();
+  nsPIDOMWindowInner* GetInnerDOMWindow();
 
   void AddCookiesToRequest();
   virtual nsresult SetupReplacementChannel(nsIURI *,
@@ -491,10 +491,12 @@ protected:
   bool mCorsIncludeCredentials;
   uint32_t mCorsMode;
   uint32_t mRedirectMode;
+  uint32_t mFetchCacheMode;
 
-  // This parameter is used to ensure that we do not call OnStartRequest more
-  // than once.
+  // These parameters are used to ensure that we do not call OnStartRequest and
+  // OnStopRequest more than once.
   bool mOnStartRequestCalled;
+  bool mOnStopRequestCalled;
 
   uint64_t mTransferSize;
   uint64_t mDecodedBodySize;

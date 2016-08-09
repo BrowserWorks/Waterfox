@@ -262,6 +262,58 @@ add_task(function* test_get_signed_in_user_initially_unset() {
   do_check_eq(result, null);
 });
 
+add_task(function* test_update_account_data() {
+  _("Check updateUserAccountData does the right thing.");
+  let account = MakeFxAccounts();
+  let credentials = {
+    email: "foo@example.com",
+    uid: "1234@lcip.org",
+    assertion: "foobar",
+    sessionToken: "dead",
+    kA: "beef",
+    kB: "cafe",
+    verified: true
+  };
+  yield account.setSignedInUser(credentials);
+
+  let newCreds = {
+    email: credentials.email,
+    uid: credentials.uid,
+    assertion: "new_assertion",
+  }
+  yield account.updateUserAccountData(newCreds);
+  do_check_eq((yield account.getSignedInUser()).assertion, "new_assertion",
+              "new field value was saved");
+
+  // but we should fail attempting to change email or uid.
+  newCreds = {
+    email: "someoneelse@example.com",
+    uid: credentials.uid,
+    assertion: "new_assertion",
+  }
+  yield Assert.rejects(account.updateUserAccountData(newCreds));
+  newCreds = {
+    email: credentials.email,
+    uid: "another_uid",
+    assertion: "new_assertion",
+  }
+  yield Assert.rejects(account.updateUserAccountData(newCreds));
+
+  // should fail without email or uid.
+  newCreds = {
+    assertion: "new_assertion",
+  }
+  yield Assert.rejects(account.updateUserAccountData(newCreds));
+
+  // and should fail with a field name that's not known by storage.
+  newCreds = {
+    email: credentials.email,
+    uid: "another_uid",
+    foo: "bar",
+  }
+  yield Assert.rejects(account.updateUserAccountData(newCreds));
+});
+
 add_task(function* test_getCertificateOffline() {
   _("getCertificateOffline()");
   let fxa = MakeFxAccounts();
@@ -501,6 +553,71 @@ add_test(function test_getKeys() {
   });
 });
 
+add_task(function* test_getKeys_nonexistent_account() {
+  let fxa = new MockFxAccounts();
+  let bismarck = getTestUser("bismarck");
+
+  let client = fxa.internal.fxAccountsClient;
+  client.accountStatus = () => Promise.resolve(false);
+  client.accountKeys = () => {
+    return Promise.reject({
+      code: 401,
+      errno: ERRNO_INVALID_AUTH_TOKEN,
+    });
+  };
+
+  yield fxa.setSignedInUser(bismarck);
+
+  let promiseLogout = new Promise(resolve => {
+    makeObserver(ONLOGOUT_NOTIFICATION, function() {
+      log.debug("test_getKeys_nonexistent_account observed logout");
+      resolve();
+    });
+  });
+
+  try {
+    yield fxa.internal.getKeys();
+    do_check_true(false);
+  } catch (err) {
+    do_check_eq(err.code, 401);
+    do_check_eq(err.errno, ERRNO_INVALID_AUTH_TOKEN);
+  }
+
+  yield promiseLogout;
+
+  let user = yield fxa.internal.getUserAccountData();
+  do_check_eq(user, null);
+});
+
+// getKeys with invalid keyFetchToken should delete keyFetchToken from storage
+add_task(function* test_getKeys_invalid_token() {
+  let fxa = new MockFxAccounts();
+  let yusuf = getTestUser("yusuf");
+
+  let client = fxa.internal.fxAccountsClient;
+  client.accountStatus = () => Promise.resolve(true);
+  client.accountKeys = () => {
+    return Promise.reject({
+      code: 401,
+      errno: ERRNO_INVALID_AUTH_TOKEN,
+    });
+  };
+
+  yield fxa.setSignedInUser(yusuf);
+
+  try {
+    yield fxa.internal.getKeys();
+    do_check_true(false);
+  } catch (err) {
+    do_check_eq(err.code, 401);
+    do_check_eq(err.errno, ERRNO_INVALID_AUTH_TOKEN);
+  }
+
+  let user = yield fxa.internal.getUserAccountData();
+  do_check_eq(user.email, yusuf.email);
+  do_check_eq(user.keyFetchToken, null);
+});
+
 //  fetchAndUnwrapKeys with no keyFetchToken should trigger signOut
 add_test(function test_fetchAndUnwrapKeys_no_token() {
   let fxa = new MockFxAccounts();
@@ -563,6 +680,39 @@ add_test(function test_overlapping_signins() {
       });
     });
   });
+});
+
+add_task(function* test_getAssertion_invalid_token() {
+  let fxa = new MockFxAccounts();
+
+  let client = fxa.internal.fxAccountsClient;
+  client.accountStatus = () => Promise.resolve(true);
+
+  let creds = {
+    sessionToken: "sessionToken",
+    kA: expandHex("11"),
+    kB: expandHex("66"),
+    verified: true,
+    email: "sonia@example.com",
+  };
+  yield fxa.setSignedInUser(creds);
+
+  try {
+    let promiseAssertion = fxa.getAssertion("audience.example.com");
+    fxa.internal._d_signCertificate.reject({
+      code: 401,
+      errno: ERRNO_INVALID_AUTH_TOKEN,
+    });
+    yield promiseAssertion;
+    do_check_true(false, "getAssertion should reject invalid session token");
+  } catch (err) {
+    do_check_eq(err.code, 401);
+    do_check_eq(err.errno, ERRNO_INVALID_AUTH_TOKEN);
+  }
+
+  let user = yield fxa.internal.getUserAccountData();
+  do_check_eq(user.email, creds.email);
+  do_check_eq(user.sessionToken, null);
 });
 
 add_task(function* test_getAssertion() {
@@ -731,6 +881,39 @@ add_test(function test_accountStatus() {
   );
 });
 
+add_task(function* test_resend_email_invalid_token() {
+  let fxa = new MockFxAccounts();
+  let sophia = getTestUser("sophia");
+  do_check_neq(sophia.sessionToken, null);
+
+  let client = fxa.internal.fxAccountsClient;
+  client.resendVerificationEmail = () => {
+    return Promise.reject({
+      code: 401,
+      errno: ERRNO_INVALID_AUTH_TOKEN,
+    });
+  };
+  client.accountStatus = () => Promise.resolve(true);
+
+  yield fxa.setSignedInUser(sophia);
+  let user = yield fxa.internal.getUserAccountData();
+  do_check_eq(user.email, sophia.email);
+  do_check_eq(user.verified, false);
+  log.debug("Sophia wants verification email resent");
+
+  try {
+    yield fxa.resendVerificationEmail();
+    do_check_true(false, "resendVerificationEmail should reject invalid session token");
+  } catch (err) {
+    do_check_eq(err.code, 401);
+    do_check_eq(err.errno, ERRNO_INVALID_AUTH_TOKEN);
+  }
+
+  user = yield fxa.internal.getUserAccountData();
+  do_check_eq(user.email, sophia.email);
+  do_check_eq(user.sessionToken, null);
+});
+
 add_test(function test_resend_email() {
   let fxa = new MockFxAccounts();
   let alice = getTestUser("alice");
@@ -866,22 +1049,27 @@ add_task(function* test_sign_out_without_device() {
   yield promise;
 });
 
-add_test(function test_sign_out_with_remote_error() {
+add_task(function* test_sign_out_with_remote_error() {
   let fxa = new MockFxAccounts();
   let client = fxa.internal.fxAccountsClient;
   let remoteSignOutCalled = false;
   // Force remote sign out to trigger an error
-  client.signOut = function() { remoteSignOutCalled = true; throw "Remote sign out error"; };
-  makeObserver(ONLOGOUT_NOTIFICATION, function() {
-    log.debug("test_sign_out_with_remote_error observed onlogout");
-    // user should be undefined after sign out
-    fxa.internal.getUserAccountData().then(user => {
-      do_check_eq(user, null);
-      do_check_true(remoteSignOutCalled);
-      run_next_test();
+  client.signOutAndDestroyDevice = function() { remoteSignOutCalled = true; throw "Remote sign out error"; };
+  let promiseLogout = new Promise(resolve => {
+    makeObserver(ONLOGOUT_NOTIFICATION, function() {
+      log.debug("test_sign_out_with_remote_error observed onlogout");
+      resolve();
     });
   });
-  fxa.signOut();
+
+  let jane = getTestUser("jane");
+  yield fxa.setSignedInUser(jane);
+  yield fxa.signOut();
+  yield promiseLogout;
+
+  let user = yield fxa.internal.getUserAccountData();
+  do_check_eq(user, null);
+  do_check_true(remoteSignOutCalled);
 });
 
 add_test(function test_getOAuthToken() {
@@ -1248,6 +1436,33 @@ add_test(function test_getSignedInUserProfile_no_account_data() {
        fxa.signOut().then(run_next_test);
     });
 
+});
+
+add_task(function* test_checkVerificationStatusFailed() {
+  let fxa = new MockFxAccounts();
+  let alice = getTestUser("alice");
+  alice.verified = true;
+
+  let client = fxa.internal.fxAccountsClient;
+  client.recoveryEmailStatus = () => {
+    return Promise.reject({
+      code: 401,
+      errno: ERRNO_INVALID_AUTH_TOKEN,
+    });
+  };
+  client.accountStatus = () => Promise.resolve(true);
+
+  yield fxa.setSignedInUser(alice);
+  let user = yield fxa.internal.getUserAccountData();
+  do_check_neq(alice.sessionToken, null);
+  do_check_eq(user.email, alice.email);
+  do_check_eq(user.verified, true);
+
+  yield fxa.checkVerificationStatus();
+
+  user = yield fxa.internal.getUserAccountData();
+  do_check_eq(user.email, alice.email);
+  do_check_eq(user.sessionToken, null);
 });
 
 /*

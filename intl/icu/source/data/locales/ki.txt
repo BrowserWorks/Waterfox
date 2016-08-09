@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ki.xml
@@ -18,7 +18,7 @@ ki{
             }
         }
     }
-    Version{"2.1.23.7"}
+    Version{"2.1.19.14"}
     calendar{
         generic{
             DateTimePatterns{
@@ -62,10 +62,6 @@ ki{
         }
         gregorian{
             AmPmMarkers{
-                "Kiroko",
-                "Hwaĩ-inĩ",
-            }
-            AmPmMarkersAbbr{
                 "Kiroko",
                 "Hwaĩ-inĩ",
             }

@@ -420,10 +420,17 @@ function countGraphObjects (win) {
 /**
 * Forces cycle collection and GC, used in AudioNode destruction tests.
 */
-function forceCC () {
-  SpecialPowers.DOMWindowUtils.cycleCollect();
-  SpecialPowers.DOMWindowUtils.garbageCollect();
-  SpecialPowers.DOMWindowUtils.garbageCollect();
+function forceNodeCollection() {
+  ContentTask.spawn(gBrowser.selectedBrowser, {}, function*() {
+    // Kill the reference keeping stuff alive.
+    content.wrappedJSObject.keepAlive = null;
+
+    // Collect the now-deceased nodes.
+    Cu.forceGC();
+    Cu.forceCC();
+    Cu.forceGC();
+    Cu.forceCC();
+  });
 }
 
 /**

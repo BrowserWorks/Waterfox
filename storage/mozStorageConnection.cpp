@@ -19,6 +19,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorNames.h"
 #include "mozilla/unused.h"
+#include "mozilla/dom/quota/QuotaObject.h"
 
 #include "mozIStorageAggregateFunction.h"
 #include "mozIStorageCompletionCallback.h"
@@ -49,7 +50,7 @@
 // Maximum size of the pages cache per connection.
 #define MAX_CACHE_SIZE_KIBIBYTES 2048 // 2 MiB
 
-PRLogModuleInfo* gStorageLog = nullptr;
+mozilla::LazyLogModule gStorageLog("mozStorage");
 
 // Checks that the protected code is running on the main-thread only if the
 // connection was also opened on it.
@@ -66,6 +67,8 @@ PRLogModuleInfo* gStorageLog = nullptr;
 
 namespace mozilla {
 namespace storage {
+
+using mozilla::dom::quota::QuotaObject;
 
 namespace {
 
@@ -473,7 +476,9 @@ Connection::Connection(Service *aService,
 , threadOpenedOn(do_GetCurrentThread())
 , mDBConn(nullptr)
 , mAsyncExecutionThreadShuttingDown(false)
+#ifdef DEBUG
 , mAsyncExecutionThreadIsAlive(false)
+#endif
 , mConnectionClosed(false)
 , mTransactionInProgress(false)
 , mProgressHandler(nullptr)
@@ -559,7 +564,10 @@ Connection::getAsyncExecutionTarget()
                              mAsyncExecutionThread);
   }
 
+#ifdef DEBUG
   mAsyncExecutionThreadIsAlive = true;
+#endif
+
   return mAsyncExecutionThread;
 }
 
@@ -675,9 +683,6 @@ Connection::initializeInternal()
 
   // Properly wrap the database handle's mutex.
   sharedDBMutex.initWithMutex(sqlite3_db_mutex(mDBConn));
-
-  if (!gStorageLog)
-    gStorageLog = ::PR_NewLogModule("mozStorage");
 
   // SQLite tracing can slow down queries (especially long queries)
   // significantly. Don't trace unless the user is actively monitoring SQLite.
@@ -895,7 +900,9 @@ Connection::shutdownAsyncThread(nsIThread *aThread) {
 
   DebugOnly<nsresult> rv = aThread->Shutdown();
   MOZ_ASSERT(NS_SUCCEEDED(rv));
+#ifdef DEBUG
   mAsyncExecutionThreadIsAlive = false;
+#endif
 }
 
 nsresult
@@ -1909,6 +1916,47 @@ Connection::EnableModule(const nsACString& aModuleName)
   }
 
   return NS_ERROR_FAILURE;
+}
+
+// Implemented in TelemetryVFS.cpp
+already_AddRefed<QuotaObject>
+GetQuotaObjectForFile(sqlite3_file *pFile);
+
+NS_IMETHODIMP
+Connection::GetQuotaObjects(QuotaObject** aDatabaseQuotaObject,
+                            QuotaObject** aJournalQuotaObject)
+{
+  MOZ_ASSERT(aDatabaseQuotaObject);
+  MOZ_ASSERT(aJournalQuotaObject);
+
+  if (!mDBConn) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
+  sqlite3_file* file;
+  int srv = ::sqlite3_file_control(mDBConn,
+                                   nullptr,
+                                   SQLITE_FCNTL_FILE_POINTER,
+                                   &file);
+  if (srv != SQLITE_OK) {
+    return convertResultCode(srv);
+  }
+
+  RefPtr<QuotaObject> databaseQuotaObject = GetQuotaObjectForFile(file);
+
+  srv = ::sqlite3_file_control(mDBConn,
+                               nullptr,
+                               SQLITE_FCNTL_JOURNAL_POINTER,
+                               &file);
+  if (srv != SQLITE_OK) {
+    return convertResultCode(srv);
+  }
+
+  RefPtr<QuotaObject> journalQuotaObject = GetQuotaObjectForFile(file);
+
+  databaseQuotaObject.forget(aDatabaseQuotaObject);
+  journalQuotaObject.forget(aJournalQuotaObject);
+  return NS_OK;
 }
 
 } // namespace storage

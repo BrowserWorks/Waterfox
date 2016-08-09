@@ -22,12 +22,17 @@ namespace nss_test {
 class TlsConnectTestBase : public ::testing::Test {
  public:
   static ::testing::internal::ParamGenerator<std::string> kTlsModesStream;
+  static ::testing::internal::ParamGenerator<std::string> kTlsModesDatagram;
   static ::testing::internal::ParamGenerator<std::string> kTlsModesAll;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV10;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV11;
+  static ::testing::internal::ParamGenerator<uint16_t> kTlsV10V11;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV11V12;
-  static ::testing::internal::ParamGenerator<uint16_t> kTlsV12Plus;
+  static ::testing::internal::ParamGenerator<uint16_t> kTlsV10To12;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV13;
+  static ::testing::internal::ParamGenerator<uint16_t> kTlsV11Plus;
+  static ::testing::internal::ParamGenerator<uint16_t> kTlsV12Plus;
+  static ::testing::internal::ParamGenerator<uint16_t> kTlsVAll;
 
   static inline Mode ToMode(const std::string& str) {
     return str == "TLS" ? STREAM : DGRAM;
@@ -41,13 +46,16 @@ class TlsConnectTestBase : public ::testing::Test {
 
   // Initialize client and server.
   void Init();
-  // Re-initialize client and server with the default RSA cert.
-  void ResetRsa();
-  // Re-initialize client and server with an ECDSA cert on the server
-  // and some ECDHE suites.
-  void ResetEcdsa();
+  // Clear the statistics.
+  void ClearStats();
+  // Clear the server session cache.
+  void ClearServerCache();
   // Make sure TLS is configured for a connection.
   void EnsureTlsSetup();
+  // Reset
+  void Reset();
+  // Reset, and update the server name
+  void Reset(const std::string& server_name);
 
   // Run the handshake.
   void Handshake();
@@ -57,7 +65,8 @@ class TlsConnectTestBase : public ::testing::Test {
   void CheckConnected();
   // Connect and expect it to fail.
   void ConnectExpectFail();
-  void CheckKeys(SSLKEAType keyType, SSLAuthType authType) const;
+  void ConnectWithCipherSuite(uint16_t cipher_suite);
+  void CheckKeys(SSLKEAType akeyType, SSLAuthType authType) const;
 
   void SetExpectedVersion(uint16_t version);
   // Expect resumption of a particular type.
@@ -65,6 +74,7 @@ class TlsConnectTestBase : public ::testing::Test {
   void DisableDheAndEcdheCiphers();
   void DisableDheCiphers();
   void DisableEcdheCiphers();
+  void EnableSomeEcdhCiphers();
   void EnableExtendedMasterSecret();
   void ConfigureSessionCache(SessionResumptionMode client,
                              SessionResumptionMode server);
@@ -84,7 +94,6 @@ class TlsConnectTestBase : public ::testing::Test {
   std::vector<std::vector<uint8_t>> session_ids_;
 
  private:
-  void Reset(const std::string& server_name, SSLKEAType kea);
   void CheckResumption(SessionResumptionMode expected);
   void CheckExtendedMasterSecret();
 

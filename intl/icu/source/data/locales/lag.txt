@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/lag.xml
@@ -9,7 +9,7 @@
 lag{
     ExemplarCharacters{"[a á b c d e é f g h i í ɨ j k l m n o ó p q r s t u ú ʉ v w x y z]"}
     ExemplarCharactersIndex{"[A B C D E F G H I Ɨ J K L M N O P Q R S T U Ʉ V W X Y Z]"}
-    Version{"2.1.23.7"}
+    Version{"2.1.19.14"}
     calendar{
         generic{
             DateTimePatterns{
@@ -53,10 +53,6 @@ lag{
         }
         gregorian{
             AmPmMarkers{
-                "TOO",
-                "MUU",
-            }
-            AmPmMarkersAbbr{
                 "TOO",
                 "MUU",
             }

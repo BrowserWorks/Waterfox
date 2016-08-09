@@ -8,9 +8,6 @@
 <script class="testbody" type="text/javascript">
 "use strict";
 
-SpecialPowers.setBoolPref("security.webauth.u2f", true);
-SpecialPowers.setBoolPref("security.webauth.u2f.softtoken", true);
-
 local_is(window.location.origin, "https://example.com", "Is loaded correctly");
 
 var version = "U2F_V2";
@@ -52,14 +49,6 @@ u2f.register(window.location.origin + "/otherAppId", [{
   challenge: bytesToBase64UrlSafe(challenge),
 }], [], function(res){
   local_is(res.errorCode, 0, "Direct window origin should work");
-});
-
-// eTLD+1 check
-u2f.register("https://test1.example.com/appId", [{
-  version: version,
-  challenge: bytesToBase64UrlSafe(challenge),
-}], [], function(res){
-  local_is(res.errorCode, 0, "Subdomain AppID should work");
 });
 
 local_finished();

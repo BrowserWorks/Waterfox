@@ -2285,7 +2285,7 @@ LIRGenerator::visitRegExpTester(MRegExpTester* ins)
     assignSafepoint(lir, ins);
 }
 
-void
+void 
 LIRGenerator::visitRegExpReplace(MRegExpReplace* ins)
 {
     MOZ_ASSERT(ins->pattern()->type() == MIRType_Object);
@@ -2335,6 +2335,17 @@ LIRGenerator::visitUnarySharedStub(MUnarySharedStub* ins)
     MOZ_ASSERT(ins->type() == MIRType_Value);
 
     LUnarySharedStub* lir = new(alloc()) LUnarySharedStub(useBoxFixedAtStart(input, R0));
+    defineSharedStubReturn(lir, ins);
+    assignSafepoint(lir, ins);
+}
+
+void
+LIRGenerator::visitNullarySharedStub(MNullarySharedStub* ins)
+{
+    MOZ_ASSERT(ins->type() == MIRType_Value);
+
+    LNullarySharedStub* lir = new(alloc()) LNullarySharedStub();
+
     defineSharedStubReturn(lir, ins);
     assignSafepoint(lir, ins);
 }
@@ -2464,6 +2475,23 @@ LIRGenerator::visitAsmJSInterruptCheck(MAsmJSInterruptCheck* ins)
 {
     gen->setPerformsCall();
     add(new(alloc()) LAsmJSInterruptCheck, ins);
+}
+
+void
+LIRGenerator::visitAsmThrowUnreachable(MAsmThrowUnreachable* ins)
+{
+    add(new(alloc()) LAsmThrowUnreachable, ins);
+}
+
+void
+LIRGenerator::visitAsmReinterpret(MAsmReinterpret* ins)
+{
+    if (ins->type() == MIRType_Int64)
+        defineInt64(new(alloc()) LAsmReinterpretToI64(useRegisterAtStart(ins->input())), ins);
+    else if (ins->input()->type() == MIRType_Int64)
+        define(new(alloc()) LAsmReinterpretFromI64(useInt64RegisterAtStart(ins->input())), ins);
+    else
+        define(new(alloc()) LAsmReinterpret(useRegisterAtStart(ins->input())), ins);
 }
 
 void
@@ -2689,6 +2717,18 @@ LIRGenerator::visitSetArrayLength(MSetArrayLength* ins)
     MOZ_ASSERT(ins->index()->isConstant());
     add(new(alloc()) LSetArrayLength(useRegister(ins->elements()),
                                      useRegisterOrConstant(ins->index())), ins);
+}
+
+void
+LIRGenerator::visitGetNextMapEntryForIterator(MGetNextMapEntryForIterator* ins)
+{
+    MOZ_ASSERT(ins->iter()->type() == MIRType_Object);
+    MOZ_ASSERT(ins->result()->type() == MIRType_Object);
+    auto lir = new(alloc()) LGetNextMapEntryForIterator(useRegister(ins->iter()),
+                                                        useRegister(ins->result()),
+                                                        temp(), temp(), temp());
+    define(lir, ins);
+    assignSafepoint(lir, ins);
 }
 
 void
@@ -3155,21 +3195,6 @@ LIRGenerator::visitArrayPush(MArrayPush* ins)
         break;
       }
     }
-}
-
-void
-LIRGenerator::visitArrayConcat(MArrayConcat* ins)
-{
-    MOZ_ASSERT(ins->type() == MIRType_Object);
-    MOZ_ASSERT(ins->lhs()->type() == MIRType_Object);
-    MOZ_ASSERT(ins->rhs()->type() == MIRType_Object);
-
-    LArrayConcat* lir = new(alloc()) LArrayConcat(useFixed(ins->lhs(), CallTempReg1),
-                                                  useFixed(ins->rhs(), CallTempReg2),
-                                                  tempFixed(CallTempReg3),
-                                                  tempFixed(CallTempReg4));
-    defineReturn(lir, ins);
-    assignSafepoint(lir, ins);
 }
 
 void
@@ -3962,6 +3987,14 @@ LIRGenerator::visitIsCallable(MIsCallable* ins)
     define(new(alloc()) LIsCallable(useRegister(ins->object())), ins);
 }
 
+void
+LIRGenerator::visitIsConstructor(MIsConstructor* ins)
+{
+    MOZ_ASSERT(ins->object()->type() == MIRType_Object);
+    MOZ_ASSERT(ins->type() == MIRType_Boolean);
+    define(new(alloc()) LIsConstructor(useRegister(ins->object())), ins);
+}
+
 static bool
 CanEmitIsObjectAtUses(MInstruction* ins)
 {
@@ -4173,13 +4206,6 @@ LIRGenerator::visitRecompileCheck(MRecompileCheck* ins)
     LRecompileCheck* lir = new(alloc()) LRecompileCheck(temp());
     add(lir, ins);
     assignSafepoint(lir, ins);
-}
-
-void
-LIRGenerator::visitMemoryBarrier(MMemoryBarrier* ins)
-{
-    LMemoryBarrier* lir = new(alloc()) LMemoryBarrier(ins->type());
-    add(lir, ins);
 }
 
 void
@@ -4676,6 +4702,17 @@ LIRGenerator::updateResumeState(MInstruction* ins)
 void
 LIRGenerator::updateResumeState(MBasicBlock* block)
 {
+    // As Value Numbering phase can remove edges from the entry basic block to a
+    // code paths reachable from the OSR entry point, we have to add fixup
+    // blocks to keep the dominator tree organized the same way. These fixup
+    // blocks are flaged as unreachable, and should only exist iff the graph has
+    // an OSR block.
+    //
+    // Note: RangeAnalysis can flag blocks as unreachable, but they are only
+    // removed iff GVN (including UCE) is enabled.
+    MOZ_ASSERT_IF(!mir()->compilingAsmJS() && !block->unreachable(), block->entryResumePoint());
+    MOZ_ASSERT_IF(block->unreachable(), block->graph().osrBlock() ||
+                  !mir()->optimizationInfo().gvnEnabled());
     lastResumePoint_ = block->entryResumePoint();
     if (JitSpewEnabled(JitSpew_IonSnapshots) && lastResumePoint_)
         SpewResumePoint(block, nullptr, lastResumePoint_);
@@ -4689,6 +4726,12 @@ LIRGenerator::visitBlock(MBasicBlock* block)
 
     definePhis();
 
+    // See fixup blocks added by Value Numbering, to keep the dominator relation
+    // modified by the presence of the OSR block.
+    MOZ_ASSERT_IF(block->unreachable(), *block->begin() == block->lastIns() ||
+                  !mir()->optimizationInfo().gvnEnabled());
+    MOZ_ASSERT_IF(block->unreachable(), block->graph().osrBlock() ||
+                  !mir()->optimizationInfo().gvnEnabled());
     for (MInstructionIterator iter = block->begin(); *iter != block->lastIns(); iter++) {
         if (!visitInstruction(*iter))
             return false;
@@ -4719,27 +4762,6 @@ LIRGenerator::visitBlock(MBasicBlock* block)
     // Now emit the last instruction, which is some form of branch.
     if (!visitInstruction(block->lastIns()))
         return false;
-
-    // If we have a resume point check that all the following blocks have one,
-    // otherwise reuse the last resume point as the entry resume point of the
-    // basic block.  This is used to handle fallible code which is moved/added
-    // into split edge blocks, which do not have resume points.  See
-    // SplitCriticalEdgesForBlock.
-    //
-    // When folding conditions, we might create split-edge blocks which have
-    // multiple predecessors, in such case it is invalid to have any instruction
-    // in these blocks, as these blocks have no associated pc, thus we cannot
-    // safely bailout from such block.
-    if (lastResumePoint_) {
-        for (size_t s = 0; s < block->numSuccessors(); s++) {
-            MBasicBlock* succ = block->getSuccessor(s);
-            if (!succ->entryResumePoint() && succ->numPredecessors() == 1) {
-                MOZ_ASSERT(succ->isSplitEdge());
-                MOZ_ASSERT(succ->phisBegin() == succ->phisEnd());
-                succ->setEntryResumePoint(lastResumePoint_);
-            }
-        }
-    }
 
     return true;
 }

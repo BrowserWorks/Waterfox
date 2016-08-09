@@ -67,7 +67,6 @@ struct LinkedProgramInfo final
     std::map<nsCString, const WebGLActiveInfo*> attribMap;
     std::map<nsCString, const WebGLActiveInfo*> uniformMap;
     std::map<nsCString, const WebGLActiveInfo*> transformFeedbackVaryingsMap;
-    std::map<nsCString, const nsCString>* fragDataMap;
 
     std::vector<RefPtr<UniformBlockInfo>> uniformBlocks;
 
@@ -110,17 +109,6 @@ struct LinkedProgramInfo final
         }
 
         return false;
-    }
-
-    bool FindFragData(const nsCString& baseUserName,
-                      nsCString* const out_baseMappedName) const
-    {
-        if (!fragDataMap) {
-            *out_baseMappedName = baseUserName;
-            return true;
-        }
-
-        MOZ_CRASH("Not implemented.");
     }
 
     bool HasActiveAttrib(GLuint loc) const {
@@ -168,12 +156,14 @@ public:
                            dom::Nullable< nsTArray<GLuint> >& retval) const;
     void UniformBlockBinding(GLuint uniformBlockIndex, GLuint uniformBlockBinding) const;
 
-    bool LinkProgram();
+    void LinkProgram();
     bool UseProgram() const;
     void ValidateProgram() const;
 
     ////////////////
 
+    bool FindActiveOutputMappedNameByUserName(const nsACString& userName,
+                                              nsCString* const out_mappedName) const;
     bool FindAttribUserNameByMappedName(const nsACString& mappedName,
                                         nsDependentCString* const out_userName) const;
     bool FindVaryingByMappedName(const nsACString& mappedName,
@@ -205,7 +195,7 @@ public:
 private:
     ~WebGLProgram();
 
-    bool LinkAndUpdate();
+    void LinkAndUpdate();
 
 public:
     const GLuint mGLName;

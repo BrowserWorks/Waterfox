@@ -4,105 +4,189 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+"use strict";
+
 define(function(require, exports, module) {
+  const { DOM: dom, createFactory, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
+  const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
+  const TreeView = createFactory(require("devtools/client/shared/components/tree/tree-view"));
+  const { Rep } = createFactories(require("devtools/client/shared/components/reps/rep"));
+  const { SearchBox } = createFactories(require("./search-box"));
+  const { Toolbar, ToolbarButton } = createFactories(require("./reps/toolbar"));
 
-const React = require("devtools/client/shared/vendor/react");
-const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
-const { TreeView } = createFactories(require("./reps/tree-view"));
-const { SearchBox } = createFactories(require("./search-box"));
-const { Toolbar, ToolbarButton } = createFactories(require("./reps/toolbar"));
-const DOM = React.DOM;
+  const { div } = dom;
+  const AUTO_EXPAND_MAX_SIZE = 100 * 1024;
+  const AUTO_EXPAND_MAX_LEVEL = 7;
 
-/**
- * This template represents the 'JSON' panel. The panel is
- * responsible for rendering an expandable tree that allows simple
- * inspection of JSON structure.
- */
-var JsonPanel = React.createClass({
-  displayName: "JsonPanel",
+  /**
+   * This template represents the 'JSON' panel. The panel is
+   * responsible for rendering an expandable tree that allows simple
+   * inspection of JSON structure.
+   */
+  let JsonPanel = createClass({
+    propTypes: {
+      data: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.array,
+        PropTypes.object
+      ]),
+      jsonTextLength: PropTypes.number,
+      searchFilter: PropTypes.string,
+      actions: PropTypes.object,
+    },
 
-  getInitialState: function() {
-    return {};
-  },
+    displayName: "JsonPanel",
 
-  componentDidMount: function() {
-    document.addEventListener("keypress", this.onKeyPress, true);
-  },
+    getInitialState: function() {
+      return {};
+    },
 
-  componentWillUnmount: function() {
-    document.removeEventListener("keypress", this.onKeyPress, true);
-  },
+    componentDidMount: function() {
+      document.addEventListener("keypress", this.onKeyPress, true);
+    },
 
-  onKeyPress: function(e) {
-    // XXX shortcut for focusing the Filter field (see Bug 1178771).
-  },
+    componentWillUnmount: function() {
+      document.removeEventListener("keypress", this.onKeyPress, true);
+    },
 
-  render: function() {
-    var content;
-    var data = this.props.data;
+    onKeyPress: function(e) {
+      // XXX shortcut for focusing the Filter field (see Bug 1178771).
+    },
 
-    try {
-      if (typeof data == "object") {
-        content = TreeView({
-          data: this.props.data,
-          mode: "tiny",
-          searchFilter: this.props.searchFilter
-        });
-      } else {
-        content = DOM.div({className: "jsonParseError"},
-          data + ""
+    onFilter: function(object) {
+      if (!this.props.searchFilter) {
+        return true;
+      }
+
+      let json = JSON.stringify(object).toLowerCase();
+      return json.indexOf(this.props.searchFilter) >= 0;
+    },
+
+    getExpandedNodes: function(object, path = "", level = 0) {
+      if (typeof object != "object") {
+        return null;
+      }
+
+      if (level > AUTO_EXPAND_MAX_LEVEL) {
+        return null;
+      }
+
+      let expandedNodes = new Set();
+      for (let prop in object) {
+        let nodePath = path + "/" + prop;
+        expandedNodes.add(nodePath);
+
+        let nodes = this.getExpandedNodes(object[prop], nodePath, level + 1);
+        if (nodes) {
+          expandedNodes = new Set([...expandedNodes, ...nodes]);
+        }
+      }
+      return expandedNodes;
+    },
+
+    renderValue: props => {
+      let member = props.member;
+
+      // Hide object summary when object is expanded (bug 1244912).
+      if (typeof member.value == "object" && member.open) {
+        return null;
+      }
+
+      // Render the value (summary) using Reps library.
+      return Rep(props);
+    },
+
+    renderTree: function() {
+      // Append custom column for displaying values. This column
+      // Take all available horizontal space.
+      let columns = [{
+        id: "value",
+        width: "100%"
+      }];
+
+      // Expand the document by default if its size isn't bigger than 100KB.
+      let expandedNodes = new Set();
+      if (this.props.jsonTextLength <= AUTO_EXPAND_MAX_SIZE) {
+        expandedNodes = this.getExpandedNodes(this.props.data);
+      }
+
+      // Render tree component.
+      return TreeView({
+        object: this.props.data,
+        mode: "tiny",
+        onFilter: this.onFilter,
+        columns: columns,
+        renderValue: this.renderValue,
+        expandedNodes: expandedNodes,
+      });
+    },
+
+    render: function() {
+      let content;
+      let data = this.props.data;
+
+      try {
+        if (typeof data == "object") {
+          content = this.renderTree();
+        } else {
+          content = div({className: "jsonParseError"},
+            data + ""
+          );
+        }
+      } catch (err) {
+        content = div({className: "jsonParseError"},
+          err + ""
         );
       }
-    } catch (err) {
-      content = DOM.div({className: "jsonParseError"},
-        err + ""
+
+      return (
+        div({className: "jsonPanelBox"},
+          JsonToolbar({actions: this.props.actions}),
+          div({className: "panelContent"},
+            content
+          )
+        )
       );
     }
+  });
 
-    return (
-      DOM.div({className: "jsonPanelBox"},
-        JsonToolbar({actions: this.props.actions}),
-        DOM.div({className: "panelContent"},
-          content
+  /**
+   * This template represents a toolbar within the 'JSON' panel.
+   */
+  let JsonToolbar = createFactory(createClass({
+    propTypes: {
+      actions: PropTypes.object,
+    },
+
+    displayName: "JsonToolbar",
+
+    // Commands
+
+    onSave: function(event) {
+      this.props.actions.onSaveJson();
+    },
+
+    onCopy: function(event) {
+      this.props.actions.onCopyJson();
+    },
+
+    render: function() {
+      return (
+        Toolbar({},
+          ToolbarButton({className: "btn save", onClick: this.onSave},
+            Locale.$STR("jsonViewer.Save")
+          ),
+          ToolbarButton({className: "btn copy", onClick: this.onCopy},
+            Locale.$STR("jsonViewer.Copy")
+          ),
+          SearchBox({
+            actions: this.props.actions
+          })
         )
-      )
-    );
-  }
-});
+      );
+    },
+  }));
 
-/**
- * This template represents a toolbar within the 'JSON' panel.
- */
-var JsonToolbar = React.createFactory(React.createClass({
-  displayName: "JsonToolbar",
-
-  render: function() {
-    return (
-      Toolbar({},
-        ToolbarButton({className: "btn save", onClick: this.onSave},
-          Locale.$STR("jsonViewer.Save")
-        ),
-        ToolbarButton({className: "btn copy", onClick: this.onCopy},
-          Locale.$STR("jsonViewer.Copy")
-        ),
-        SearchBox({
-          actions: this.props.actions
-        })
-      )
-    )
-  },
-
-  // Commands
-
-  onSave: function(event) {
-    this.props.actions.onSaveJson();
-  },
-
-  onCopy: function(event) {
-    this.props.actions.onCopyJson();
-  },
-}));
-
-// Exports from this module
-exports.JsonPanel = JsonPanel;
+  // Exports from this module
+  exports.JsonPanel = JsonPanel;
 });

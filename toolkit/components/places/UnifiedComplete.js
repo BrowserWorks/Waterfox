@@ -59,9 +59,6 @@ const QUERYTYPE_AUTOFILL_URL        = 2;
 // "comment" back into the title and the tag.
 const TITLE_TAGS_SEPARATOR = " \u2013 ";
 
-// This separator identifies the search engine name in the title.
-const TITLE_SEARCH_ENGINE_SEPARATOR = " \u00B7\u2013\u00B7 ";
-
 // Telemetry probes.
 const TELEMETRY_1ST_RESULT = "PLACES_AUTOCOMPLETE_1ST_RESULT_TIME_MS";
 const TELEMETRY_6_FIRST_RESULTS = "PLACES_AUTOCOMPLETE_6_FIRST_RESULTS_TIME_MS";
@@ -911,9 +908,11 @@ Search.prototype = {
     if (!this.pending)
       return;
 
-    yield this._matchSearchSuggestions();
-    if (!this.pending)
-      return;
+    if (this._enableActions) {
+      yield this._matchSearchSuggestions();
+      if (!this.pending)
+        return;
+    }
 
     for (let [query, params] of queries) {
       yield conn.executeCached(query, params, this._onResultRow.bind(this));
@@ -1259,7 +1258,7 @@ Search.prototype = {
         // the URLBar.
         value: makeActionURL("remotetab", { url, deviceName }),
         comment: title || url,
-        style: "action",
+        style: "action remotetab",
         // we want frecency > FRECENCY_DEFAULT so it doesn't get pushed out
         // by "remote" matches.
         frecency: FRECENCY_DEFAULT + 1,
@@ -1385,10 +1384,15 @@ Search.prototype = {
       return;
     }
 
-    // Use the special separator that the binding will use to style the item.
-    match.style = "search " + match.style;
-    match.comment = parseResult.terms + TITLE_SEARCH_ENGINE_SEPARATOR +
-                    parseResult.engineName;
+    // Turn the match into a searchengine action with a favicon.
+    match.value = makeActionURL("searchengine", {
+      engineName: parseResult.engineName,
+      input: parseResult.terms,
+      searchQuery: parseResult.terms,
+    });
+    match.comment = parseResult.engineName;
+    match.icon = match.icon || match.iconUrl;
+    match.style = "action searchengine favicon";
   },
 
   _addMatch(match) {
@@ -1425,7 +1429,7 @@ Search.prototype = {
       match.style += " heuristic";
     }
 
-    match.icon = match.icon || PlacesUtils.favicons.defaultFavicon.spec;
+    match.icon = match.icon || "";
     match.finalCompleteValue = match.finalCompleteValue || "";
 
     this._result.insertMatchAt(this._getInsertIndexForMatch(match),
@@ -1958,6 +1962,8 @@ UnifiedComplete.prototype = {
     TelemetryStopwatch.cancel(TELEMETRY_6_FIRST_RESULTS, this);
     // Clear state now to avoid race conditions, see below.
     let search = this._currentSearch;
+    if (!search)
+      return;
     this._lastLowResultsSearchSuggestion = search._lastLowResultsSearchSuggestion;
     delete this._currentSearch;
 

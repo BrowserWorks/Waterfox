@@ -12,7 +12,6 @@
 #include "mozilla/unused.h"
 #include "nsIRedirectChannelRegistrar.h"
 #include "nsIHttpEventSink.h"
-#include "nsIPackagedAppChannelListener.h"
 #include "nsIHttpHeaderVisitor.h"
 #include "nsQueryObject.h"
 
@@ -45,7 +44,6 @@ NS_INTERFACE_MAP_BEGIN(HttpChannelParentListener)
   NS_INTERFACE_MAP_ENTRY(nsIStreamListener)
   NS_INTERFACE_MAP_ENTRY(nsIRequestObserver)
   NS_INTERFACE_MAP_ENTRY(nsIChannelEventSink)
-  NS_INTERFACE_MAP_ENTRY(nsIPackagedAppChannelListener)
   NS_INTERFACE_MAP_ENTRY(nsIRedirectResultListener)
   NS_INTERFACE_MAP_ENTRY(nsINetworkInterceptController)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIInterfaceRequestor)
@@ -112,22 +110,6 @@ HttpChannelParentListener::OnDataAvailable(nsIRequest *aRequest,
 }
 
 //-----------------------------------------------------------------------------
-// HttpChannelParentListener::nsIPackagedAppChannelListener
-//-----------------------------------------------------------------------------
-NS_IMETHODIMP
-HttpChannelParentListener::OnStartSignedPackageRequest(const nsACString& aPackageId)
-{
-  nsCOMPtr<nsIPackagedAppChannelListener> listener = do_QueryInterface(mNextListener);
-  if (listener) {
-    listener->OnStartSignedPackageRequest(aPackageId);
-  } else {
-    NS_WARNING("mNextListener is not nsIPackagedAppChannelListener");
-  }
-
-  return NS_OK;
-}
-
-//-----------------------------------------------------------------------------
 // HttpChannelParentListener::nsIInterfaceRequestor
 //-----------------------------------------------------------------------------
 
@@ -166,6 +148,14 @@ HttpChannelParentListener::AsyncOnChannelRedirect(
 {
   nsresult rv;
 
+  nsCOMPtr<nsIParentRedirectingChannel> activeRedirectingChannel =
+      do_QueryInterface(mNextListener);
+  if (!activeRedirectingChannel) {
+    NS_ERROR("Channel got a redirect response, but doesn't implement "
+             "nsIParentRedirectingChannel to handle it.");
+    return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
   // Register the new channel and obtain id for it
   nsCOMPtr<nsIRedirectChannelRegistrar> registrar =
       do_GetService("@mozilla.org/redirectchannelregistrar;1", &rv);
@@ -175,13 +165,6 @@ HttpChannelParentListener::AsyncOnChannelRedirect(
   NS_ENSURE_SUCCESS(rv, rv);
 
   LOG(("Registered %p channel under id=%d", newChannel, mRedirectChannelId));
-
-  nsCOMPtr<nsIParentRedirectingChannel> activeRedirectingChannel =
-      do_QueryInterface(mNextListener);
-  if (!activeRedirectingChannel) {
-    NS_RUNTIMEABORT("Channel got a redirect response, but doesn't implement "
-                    "nsIParentRedirectingChannel to handle it.");
-  }
 
   return activeRedirectingChannel->StartRedirect(mRedirectChannelId,
                                                  newChannel,

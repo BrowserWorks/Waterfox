@@ -22,6 +22,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "WebChannel",
                                   "resource://gre/modules/WebChannel.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
                                   "resource://gre/modules/FxAccounts.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "FxAccountsStorageManagerCanStoreField",
+                                  "resource://gre/modules/FxAccountsStorage.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Weave",
                                   "resource://services-sync/main.js");
 
@@ -31,9 +33,30 @@ const COMMAND_LOGIN                = "fxaccounts:login";
 const COMMAND_LOGOUT               = "fxaccounts:logout";
 const COMMAND_DELETE               = "fxaccounts:delete";
 const COMMAND_SYNC_PREFERENCES     = "fxaccounts:sync_preferences";
+const COMMAND_CHANGE_PASSWORD      = "fxaccounts:change_password";
 
 const PREF_LAST_FXA_USER           = "identity.fxaccounts.lastSignedInUserHash";
 const PREF_SYNC_SHOW_CUSTOMIZATION = "services.sync-setup.ui.showCustomizationDialog";
+
+/**
+ * A helper function that extracts the message and stack from an error object.
+ * Returns a `{ message, stack }` tuple. `stack` will be null if the error
+ * doesn't have a stack trace.
+ */
+function getErrorDetails(error) {
+  let details = { message: String(error), stack: null };
+
+  // Adapted from Console.jsm.
+  if (error.stack) {
+    let frames = [];
+    for (let frame = error.stack; frame; frame = frame.caller) {
+      frames.push(String(frame).padStart(4));
+    }
+    details.stack = frames.join("\n");
+  }
+
+  return details;
+}
 
 /**
  * Create a new FxAccountsWebChannel to listen for account updates
@@ -113,6 +136,59 @@ this.FxAccountsWebChannel.prototype = {
     }
   },
 
+  _receiveMessage(message, sendingContext) {
+    let command = message.command;
+    let data = message.data;
+
+    switch (command) {
+      case COMMAND_PROFILE_CHANGE:
+        Services.obs.notifyObservers(null, ON_PROFILE_CHANGE_NOTIFICATION, data.uid);
+        break;
+      case COMMAND_LOGIN:
+        this._helpers.login(data).catch(error =>
+          this._sendError(error, message, sendingContext));
+        break;
+      case COMMAND_LOGOUT:
+      case COMMAND_DELETE:
+        this._helpers.logout(data.uid).catch(error =>
+          this._sendError(error, message, sendingContext));
+        break;
+      case COMMAND_CAN_LINK_ACCOUNT:
+        let canLinkAccount = this._helpers.shouldAllowRelink(data.email);
+
+        let response = {
+          command: command,
+          messageId: message.messageId,
+          data: { ok: canLinkAccount }
+        };
+
+        log.debug("FxAccountsWebChannel response", response);
+        this._channel.send(response, sendingContext);
+        break;
+      case COMMAND_SYNC_PREFERENCES:
+        this._helpers.openSyncPreferences(sendingContext.browser, data.entryPoint);
+        break;
+      case COMMAND_CHANGE_PASSWORD:
+        this._helpers.changePassword(data).catch(error =>
+          this._sendError(error, message, sendingContext));
+        break;
+      default:
+        log.warn("Unrecognized FxAccountsWebChannel command", command);
+        break;
+    }
+  },
+
+  _sendError(error, incomingMessage, sendingContext) {
+    log.error("Failed to handle FxAccountsWebChannel message", error);
+    this._channel.send({
+      command: incomingMessage.command,
+      messageId: incomingMessage.messageId,
+      data: {
+        error: getErrorDetails(error),
+      },
+    }, sendingContext);
+  },
+
   /**
    * Create a new channel with the WebChannelBroker, setup a callback listener
    * @private
@@ -143,38 +219,10 @@ this.FxAccountsWebChannel.prototype = {
         if (logPII) {
           log.debug("FxAccountsWebChannel message details", message);
         }
-        let command = message.command;
-        let data = message.data;
-
-        switch (command) {
-          case COMMAND_PROFILE_CHANGE:
-            Services.obs.notifyObservers(null, ON_PROFILE_CHANGE_NOTIFICATION, data.uid);
-            break;
-          case COMMAND_LOGIN:
-            this._helpers.login(data);
-            break;
-          case COMMAND_LOGOUT:
-          case COMMAND_DELETE:
-            this._helpers.logout(data.uid);
-            break;
-          case COMMAND_CAN_LINK_ACCOUNT:
-            let canLinkAccount = this._helpers.shouldAllowRelink(data.email);
-
-            let response = {
-              command: command,
-              messageId: message.messageId,
-              data: { ok: canLinkAccount }
-            };
-
-            log.debug("FxAccountsWebChannel response", response);
-            this._channel.send(response, sendingContext);
-            break;
-          case COMMAND_SYNC_PREFERENCES:
-            this._helpers.openSyncPreferences(sendingContext.browser, data.entryPoint);
-            break;
-          default:
-            log.warn("Unrecognized FxAccountsWebChannel command", command);
-            break;
+        try {
+          this._receiveMessage(message, sendingContext);
+        } catch (error) {
+          this._sendError(error, message, sendingContext);
         }
       }
     };
@@ -273,6 +321,27 @@ this.FxAccountsWebChannelHelpers.prototype = {
         return fxAccounts.signOut(true);
       }
     });
+  },
+
+  changePassword(credentials) {
+    // If |credentials| has fields that aren't handled by accounts storage,
+    // updateUserAccountData will throw - mainly to prevent errors in code
+    // that hard-codes field names.
+    // However, in this case the field names aren't really in our control.
+    // We *could* still insist the server know what fields names are valid,
+    // but that makes life difficult for the server when Firefox adds new
+    // features (ie, new fields) - forcing the server to track a map of
+    // versions to supported field names doesn't buy us much.
+    // So we just remove field names we know aren't handled.
+    let newCredentials = {};
+    for (let name of Object.keys(credentials)) {
+      if (name == "email" || name == "uid" || FxAccountsStorageManagerCanStoreField(name)) {
+        newCredentials[name] = credentials[name];
+      } else {
+        log.info("changePassword ignoring unsupported field", name);
+      }
+    }
+    return this._fxAccounts.updateUserAccountData(newCredentials);
   },
 
   /**

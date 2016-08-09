@@ -6,6 +6,7 @@
 /* eslint no-unused-vars: [2, {"vars": "local"}] */
 /* import-globals-from ../../../framework/test/shared-head.js */
 /* import-globals-from ../../../framework/test/shared-redux-head.js */
+/* import-globals-from ../../../commandline/test/helpers.js */
 
 Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/framework/test/shared-head.js",
@@ -14,16 +15,37 @@ Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/framework/test/shared-redux-head.js",
   this);
 
+// Import the GCLI test helper
+Services.scriptloader.loadSubScript(
+  "chrome://mochitests/content/browser/devtools/client/commandline/test/helpers.js",
+  this);
+
+const TEST_URI_ROOT = "http://example.com/browser/devtools/client/responsive.html/test/browser/";
+
+SimpleTest.requestCompleteLog();
+SimpleTest.waitForExplicitFinish();
+
+DevToolsUtils.testing = true;
+Services.prefs.clearUserPref("devtools.responsive.html.displayedDeviceList");
+Services.prefs.setCharPref("devtools.devices.url",
+  TEST_URI_ROOT + "devices.json");
 Services.prefs.setBoolPref("devtools.responsive.html.enabled", true);
+
 registerCleanupFunction(() => {
+  DevToolsUtils.testing = false;
+  Services.prefs.clearUserPref("devtools.devices.url");
   Services.prefs.clearUserPref("devtools.responsive.html.enabled");
+  Services.prefs.clearUserPref("devtools.responsive.html.displayedDeviceList");
 });
 const { ResponsiveUIManager } = Cu.import("resource://devtools/client/responsivedesign/responsivedesign.jsm", {});
+const { loadDeviceList } = require("devtools/client/responsive.html/devices");
+
+const OPEN_DEVICE_MODAL_VALUE = "OPEN_DEVICE_MODAL";
 
 /**
  * Open responsive design mode for the given tab.
  */
-var openRDM = Task.async(function*(tab) {
+var openRDM = Task.async(function* (tab) {
   info("Opening responsive design mode");
   let manager = ResponsiveUIManager;
   let ui = yield manager.openIfNeeded(window, tab);
@@ -34,10 +56,10 @@ var openRDM = Task.async(function*(tab) {
 /**
  * Close responsive design mode for the given tab.
  */
-var closeRDM = Task.async(function*(tab) {
+var closeRDM = Task.async(function* (tab) {
   info("Closing responsive design mode");
   let manager = ResponsiveUIManager;
-  manager.closeIfNeeded(window, tab);
+  yield manager.closeIfNeeded(window, tab);
   info("Responsive design mode closed");
 });
 
@@ -53,7 +75,7 @@ var closeRDM = Task.async(function*(tab) {
  *   });
  */
 function addRDMTask(url, generator) {
-  add_task(function*() {
+  add_task(function* () {
     const tab = yield addTab(url);
     const results = yield openRDM(tab);
 
@@ -68,12 +90,65 @@ function addRDMTask(url, generator) {
   });
 }
 
-var waitForFrameLoad = Task.async(function*(frame, targetURL) {
-  let window = frame.contentWindow;
-  if ((window.document.readyState == "complete" ||
-       window.document.readyState == "interactive") &&
-      window.location.href == targetURL) {
-    return;
+function spawnViewportTask(ui, args, task) {
+  return ContentTask.spawn(ui.getViewportMessageManager(), args, task);
+}
+
+function waitForFrameLoad(ui, targetURL) {
+  return spawnViewportTask(ui, { targetURL }, function* (args) {
+    if ((content.document.readyState == "complete" ||
+         content.document.readyState == "interactive") &&
+        content.location.href == args.targetURL) {
+      return;
+    }
+    yield ContentTaskUtils.waitForEvent(this, "DOMContentLoaded");
+  });
+}
+
+function waitForViewportResizeTo(ui, width, height) {
+  return new Promise(resolve => {
+    let onResize = (_, data) => {
+      if (data.width != width || data.height != height) {
+        return;
+      }
+      ui.off("content-resize", onResize);
+      info(`Got content-resize to ${width} x ${height}`);
+      resolve();
+    };
+    info(`Waiting for content-resize to ${width} x ${height}`);
+    ui.on("content-resize", onResize);
+  });
+}
+
+var setViewportSize = Task.async(function* (ui, manager, width, height) {
+  let size = ui.getViewportSize();
+  info(`Current size: ${size.width} x ${size.height}, ` +
+       `set to: ${width} x ${height}`);
+  if (size.width != width || size.height != height) {
+    let resized = waitForViewportResizeTo(ui, width, height);
+    ui.setViewportSize(width, height);
+    yield resized;
   }
-  yield once(frame, "load");
 });
+
+function openDeviceModal(ui) {
+  let { document } = ui.toolWindow;
+  let select = document.querySelector(".viewport-device-selector");
+  let modal = document.querySelector(".device-modal");
+  let editDeviceOption = [...select.options].filter(o => {
+    return o.value === OPEN_DEVICE_MODAL_VALUE;
+  })[0];
+
+  info("Checking initial device modal state");
+  ok(modal.classList.contains("hidden"),
+    "The device modal is hidden by default.");
+
+  info("Opening device modal through device selector.");
+  EventUtils.synthesizeMouseAtCenter(select, {type: "mousedown"},
+    ui.toolWindow);
+  EventUtils.synthesizeMouseAtCenter(editDeviceOption, {type: "mouseup"},
+    ui.toolWindow);
+
+  ok(!modal.classList.contains("hidden"),
+    "The device modal is displayed.");
+}

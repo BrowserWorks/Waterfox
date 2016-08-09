@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/da.xml
@@ -24,7 +24,7 @@ da{
         default{"latn"}
         latn{
             miscPatterns{
-                atLeast{"{0}+"}
+                atLeast{"{0} eller derover"}
                 range{"{0}-{1}"}
             }
             patterns{
@@ -206,7 +206,7 @@ da{
         minimumGroupingDigits{"1"}
         native{"latn"}
     }
-    Version{"2.1.23.87"}
+    Version{"2.1.19.44"}
     calendar{
         buddhist{
             eras{
@@ -905,10 +905,7 @@ da{
         day-narrow{
             dn{"dag"}
             relative{
-                "-1"{"i går"}
                 "-2"{"i forgårs"}
-                "0"{"i dag"}
-                "1"{"i morgen"}
                 "2"{"i overmorgen"}
             }
             relativeTime{
@@ -925,10 +922,7 @@ da{
         day-short{
             dn{"dag"}
             relative{
-                "-1"{"i går"}
                 "-2"{"i forgårs"}
-                "0"{"i dag"}
-                "1"{"i morgen"}
                 "2"{"i overmorgen"}
             }
             relativeTime{

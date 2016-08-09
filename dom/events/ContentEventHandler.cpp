@@ -183,9 +183,9 @@ ContentEventHandler::InitCommon()
   NS_ENSURE_TRUE(endNode, NS_ERROR_FAILURE);
 
   // See bug 537041 comment 5, the range could have removed node.
-  NS_ENSURE_TRUE(startNode->GetCurrentDoc() == mPresShell->GetDocument(),
+  NS_ENSURE_TRUE(startNode->GetUncomposedDoc() == mPresShell->GetDocument(),
                  NS_ERROR_NOT_AVAILABLE);
-  NS_ASSERTION(startNode->GetCurrentDoc() == endNode->GetCurrentDoc(),
+  NS_ASSERTION(startNode->GetUncomposedDoc() == endNode->GetUncomposedDoc(),
                "mFirstSelectedRange crosses the document boundary");
 
   mRootContent = startNode->GetSelectionRootContent(mPresShell);
@@ -658,10 +658,9 @@ ContentEventHandler::AppendFontRanges(FontRangeArray& aFontRanges,
       }
     }
 
-    uint32_t skipStart = iter.ConvertOriginalToSkipped(frameXPStart);
-    uint32_t skipEnd = iter.ConvertOriginalToSkipped(frameXPEnd);
-    gfxTextRun::GlyphRunIterator runIter(
-      textRun, skipStart, skipEnd - skipStart);
+    gfxTextRun::Range skipRange(iter.ConvertOriginalToSkipped(frameXPStart),
+                                iter.ConvertOriginalToSkipped(frameXPEnd));
+    gfxTextRun::GlyphRunIterator runIter(textRun, skipRange);
     int32_t lastXPEndOffset = frameXPStart;
     while (runIter.NextRun()) {
       gfxFont* font = runIter.GetGlyphRun()->mFont.get();
@@ -1454,23 +1453,14 @@ ContentEventHandler::OnQueryCaretRect(WidgetQueryContentEvent* aEvent)
   rect.x = posInFrame.x;
   rect.y = posInFrame.y;
 
-  nscoord fontHeight = 0;
-  float inflation = nsLayoutUtils::FontSizeInflationFor(frame);
-  RefPtr<nsFontMetrics> fontMetrics;
-  rv = nsLayoutUtils::GetFontMetricsForFrame(frame, getter_AddRefs(fontMetrics),
-                                             inflation);
-  if (NS_WARN_IF(!fontMetrics)) {
-    // If we cannot get font height, use frame size instead.
-    fontHeight = isVertical ? frame->GetSize().width : frame->GetSize().height;
-  } else {
-    fontHeight = fontMetrics->MaxAscent() + fontMetrics->MaxDescent();
-  }
+  RefPtr<nsFontMetrics> fontMetrics =
+    nsLayoutUtils::GetInflatedFontMetricsForFrame(frame);
   if (isVertical) {
-    rect.width = fontHeight;
+    rect.width = fontMetrics->MaxHeight();
     rect.height = caretRect.height;
   } else {
     rect.width = caretRect.width;
-    rect.height = fontHeight;
+    rect.height = fontMetrics->MaxHeight();
   }
 
   rv = ConvertToRootRelativeOffset(frame, rect);
@@ -1544,9 +1534,9 @@ ContentEventHandler::OnQueryCharacterAtPoint(WidgetQueryContentEvent* aEvent)
 
   // The root frame's widget might be different, e.g., the event was fired on
   // a popup but the rootFrame is the document root.
-  if (rootWidget != aEvent->widget) {
-    NS_PRECONDITION(aEvent->widget, "The event must have the widget");
-    nsView* view = nsView::GetViewFor(aEvent->widget);
+  if (rootWidget != aEvent->mWidget) {
+    NS_PRECONDITION(aEvent->mWidget, "The event must have the widget");
+    nsView* view = nsView::GetViewFor(aEvent->mWidget);
     NS_ENSURE_TRUE(view, NS_ERROR_FAILURE);
     rootFrame = view->GetFrame();
     NS_ENSURE_TRUE(rootFrame, NS_ERROR_FAILURE);
@@ -1557,9 +1547,9 @@ ContentEventHandler::OnQueryCharacterAtPoint(WidgetQueryContentEvent* aEvent)
   WidgetQueryContentEvent eventOnRoot(true, eQueryCharacterAtPoint,
                                       rootWidget);
   eventOnRoot.mUseNativeLineBreak = aEvent->mUseNativeLineBreak;
-  eventOnRoot.refPoint = aEvent->refPoint;
-  if (rootWidget != aEvent->widget) {
-    eventOnRoot.refPoint += aEvent->widget->WidgetToScreenOffset() -
+  eventOnRoot.mRefPoint = aEvent->mRefPoint;
+  if (rootWidget != aEvent->mWidget) {
+    eventOnRoot.mRefPoint += aEvent->mWidget->WidgetToScreenOffset() -
       rootWidget->WidgetToScreenOffset();
   }
   nsPoint ptInRoot =
@@ -1621,7 +1611,7 @@ ContentEventHandler::OnQueryCharacterAtPoint(WidgetQueryContentEvent* aEvent)
     return rv;
   }
 
-  WidgetQueryContentEvent textRect(true, eQueryTextRect, aEvent->widget);
+  WidgetQueryContentEvent textRect(true, eQueryTextRect, aEvent->mWidget);
   textRect.InitForQueryTextRect(offset, 1, aEvent->mUseNativeLineBreak);
   rv = OnQueryTextRect(&textRect);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1647,14 +1637,15 @@ ContentEventHandler::OnQueryDOMWidgetHittest(WidgetQueryContentEvent* aEvent)
   aEvent->mSucceeded = false;
   aEvent->mReply.mWidgetIsHit = false;
 
-  NS_ENSURE_TRUE(aEvent->widget, NS_ERROR_FAILURE);
+  NS_ENSURE_TRUE(aEvent->mWidget, NS_ERROR_FAILURE);
 
   nsIDocument* doc = mPresShell->GetDocument();
   NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
   nsIFrame* docFrame = mPresShell->GetRootFrame();
   NS_ENSURE_TRUE(docFrame, NS_ERROR_FAILURE);
 
-  LayoutDeviceIntPoint eventLoc = aEvent->refPoint + aEvent->widget->WidgetToScreenOffset();
+  LayoutDeviceIntPoint eventLoc =
+    aEvent->mRefPoint + aEvent->mWidget->WidgetToScreenOffset();
   nsIntRect docFrameRect = docFrame->GetScreenRect(); // Returns CSS pixels
   CSSIntPoint eventLocCSS(
     mPresContext->DevPixelsToIntCSSPixels(eventLoc.x) - docFrameRect.x,
@@ -1671,7 +1662,7 @@ ContentEventHandler::OnQueryDOMWidgetHittest(WidgetQueryContentEvent* aEvent)
     } else if (targetFrame) {
       targetWidget = targetFrame->GetNearestWidget();
     }
-    if (aEvent->widget == targetWidget) {
+    if (aEvent->mWidget == targetWidget) {
       aEvent->mReply.mWidgetIsHit = true;
     }
   }

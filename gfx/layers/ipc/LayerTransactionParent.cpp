@@ -179,6 +179,8 @@ LayerTransactionParent::Destroy()
   }
   InfallibleTArray<PTextureParent*> textures;
   ManagedPTextureParent(textures);
+  // We expect all textures to be destroyed by now.
+  MOZ_DIAGNOSTIC_ASSERT(textures.Length() == 0);
   for (unsigned int i = 0; i < textures.Length(); ++i) {
     RefPtr<TextureHost> tex = TextureHost::AsTextureHost(textures[i]);
     tex->DeallocateDeviceData();
@@ -359,6 +361,9 @@ LayerTransactionParent::RecvUpdate(InfallibleTArray<Edit>&& cset,
       layer->SetScrollbarData(common.scrollbarTargetContainerId(),
         static_cast<Layer::ScrollDirection>(common.scrollbarDirection()),
         common.scrollbarThumbRatio());
+      if (common.isScrollbarContainer()) {
+        layer->SetIsScrollbarContainer();
+      }
       layer->SetMixBlendMode((gfx::CompositionOp)common.mixBlendMode());
       layer->SetForceIsolatedGroup(common.forceIsolatedGroup());
       if (PLayerParent* maskLayer = common.maskLayerParent()) {
@@ -723,7 +728,7 @@ LayerTransactionParent::RecvGetAnimationTransform(PLayerParent* aParent,
 
   // Make sure we apply the latest animation style or else we can end up with
   // a race between when we temporarily clear the animation transform (in
-  // CompositorParent::SetShadowProperties) and when animation recalculates
+  // CompositorBridgeParent::SetShadowProperties) and when animation recalculates
   // the value.
   mShadowLayersManager->ApplyAsyncProperties(this);
 
@@ -991,8 +996,16 @@ LayerTransactionParent::RecvChildAsyncMessages(InfallibleTArray<AsyncChildMessag
     const AsyncChildMessageData& message = aMessages[i];
 
     switch (message.type()) {
-      case AsyncChildMessageData::TOpRemoveTextureAsync: {
-        const OpRemoveTextureAsync& op = message.get_OpRemoveTextureAsync();
+      case AsyncChildMessageData::TCompositableOperation: {
+
+        const CompositableOperation& compositable_op =
+          message.get_CompositableOperation();
+        MOZ_ASSERT(compositable_op.detail().type() ==
+          CompositableOperationDetail::TOpRemoveTextureAsync);
+
+        const OpRemoveTextureAsync& op =
+          compositable_op.detail().get_OpRemoveTextureAsync();
+
         CompositableHost* compositable = CompositableHost::FromIPDLActor(op.compositableParent());
         RefPtr<TextureHost> tex = TextureHost::AsTextureHost(op.textureParent());
 
@@ -1006,8 +1019,7 @@ LayerTransactionParent::RecvChildAsyncMessages(InfallibleTArray<AsyncChildMessag
             GetChildProcessId(),
             op.holderId(),
             op.transactionId(),
-            op.textureParent(),
-            compositable);
+            op.textureParent());
           // Send message back via PImageBridge.
           ImageBridgeParent::ReplyRemoveTexture(
             GetChildProcessId(),
@@ -1069,25 +1081,22 @@ bool LayerTransactionParent::IsSameProcess() const
 }
 
 void
-LayerTransactionParent::SendFenceHandleIfPresent(PTextureParent* aTexture,
-                                                 CompositableHost* aCompositableHost)
+LayerTransactionParent::SendFenceHandleIfPresent(PTextureParent* aTexture)
 {
   RefPtr<TextureHost> texture = TextureHost::AsTextureHost(aTexture);
-  if (!texture) {
+  if (!texture || !texture->NeedsFenceHandle()) {
     return;
   }
 
   // Send a ReleaseFence of CompositorOGL.
-  if (aCompositableHost && aCompositableHost->GetCompositor()) {
-    FenceHandle fence = aCompositableHost->GetCompositor()->GetReleaseFence();
-    if (fence.IsValid()) {
-      mPendingAsyncMessage.push_back(OpDeliverFence(aTexture, nullptr,
-                                                    fence));
-    }
+  FenceHandle fence = texture->GetCompositorReleaseFence();
+  if (fence.IsValid()) {
+    mPendingAsyncMessage.push_back(OpDeliverFence(aTexture, nullptr,
+                                                  fence));
   }
 
-  // Send a ReleaseFence that is set by HwcComposer2D.
-  FenceHandle fence = texture->GetAndResetReleaseFenceHandle();
+  // Send a ReleaseFence that is set to TextureHost by HwcComposer2D.
+  fence = texture->GetAndResetReleaseFenceHandle();
   if (fence.IsValid()) {
     mPendingAsyncMessage.push_back(OpDeliverFence(aTexture, nullptr,
                                                   fence));

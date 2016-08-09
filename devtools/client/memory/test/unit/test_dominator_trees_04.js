@@ -27,7 +27,7 @@ add_task(function *() {
 
   for (let intermediateSnapshotState of [states.SAVING,
                                          states.READING,
-                                         states.SAVING_CENSUS]) {
+                                         states.READ]) {
     dumpn(`Testing switching to the DOMINATOR_TREE view in the middle of the ${intermediateSnapshotState} snapshot state`);
 
     let store = Store();
@@ -37,7 +37,7 @@ add_task(function *() {
     yield waitUntilSnapshotState(store, [intermediateSnapshotState]);
 
     dispatch(changeView(viewState.DOMINATOR_TREE));
-    equal(getState().view, viewState.DOMINATOR_TREE,
+    equal(getState().view.state, viewState.DOMINATOR_TREE,
           "We should now be in the DOMINATOR_TREE view");
 
     // Wait for the dominator tree to start being computed.

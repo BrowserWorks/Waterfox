@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2007-2016, International Business Machines Corporation and
+* Copyright (C) 2007-2014, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 */
@@ -13,8 +13,8 @@
 
 #include "reldtfmt.h"
 #include "unicode/datefmt.h"
-#include "unicode/simpleformatter.h"
 #include "unicode/smpdtfmt.h"
+#include "unicode/msgfmt.h"
 #include "unicode/udisplaycontext.h"
 #include "unicode/uchar.h"
 #include "unicode/brkiter.h"
@@ -56,7 +56,7 @@ RelativeDateFormat::RelativeDateFormat(const RelativeDateFormat& other) :
         fDateTimeFormatter = (SimpleDateFormat*)other.fDateTimeFormatter->clone();
     }
     if(other.fCombinedFormat != NULL) {
-        fCombinedFormat = new SimpleFormatter(*other.fCombinedFormat);
+        fCombinedFormat = (MessageFormat*)other.fCombinedFormat->clone();
     }
     if (fDatesLen > 0) {
         fDates = (URelativeString*) uprv_malloc(sizeof(fDates[0])*fDatesLen);
@@ -211,11 +211,12 @@ UnicodeString& RelativeDateFormat::format(  Calendar& cal,
             datePattern.setTo(fDatePattern);
         }
         UnicodeString combinedPattern;
-        fCombinedFormat->format(fTimePattern, datePattern, combinedPattern, status);
+        Formattable timeDatePatterns[] = { fTimePattern, datePattern };
+        fCombinedFormat->format(timeDatePatterns, 2, combinedPattern, pos, status); // pos is ignored by this
         fDateTimeFormatter->applyPattern(combinedPattern);
         fDateTimeFormatter->format(cal,appendTo,pos);
     }
-
+    
     return appendTo;
 }
 
@@ -307,7 +308,8 @@ void RelativeDateFormat::parse( const UnicodeString& text,
             }
         }
         UnicodeString combinedPattern;
-        fCombinedFormat->format(fTimePattern, fDatePattern, combinedPattern, status);
+        Formattable timeDatePatterns[] = { fTimePattern, fDatePattern };
+        fCombinedFormat->format(timeDatePatterns, 2, combinedPattern, fPos, status); // pos is ignored by this
         fDateTimeFormatter->applyPattern(combinedPattern);
         fDateTimeFormatter->parse(modifiedText,cal,pos);
 
@@ -379,7 +381,9 @@ RelativeDateFormat::toPattern(UnicodeString& result, UErrorCode& status) const
         } else if (fTimePattern.isEmpty() || fCombinedFormat == NULL) {
             result.setTo(fDatePattern);
         } else {
-            fCombinedFormat->format(fTimePattern, fDatePattern, result, status);
+            Formattable timeDatePatterns[] = { fTimePattern, fDatePattern };
+            FieldPosition pos;
+            fCombinedFormat->format(timeDatePatterns, 2, result, pos, status);
         }
     }
     return result;
@@ -510,7 +514,7 @@ void RelativeDateFormat::loadDates(UErrorCode &status) {
             if (U_SUCCESS(tempStatus) && resStrLen >= patItem1Len && u_strncmp(resStr,patItem1,patItem1Len)==0) {
                 fCombinedHasDateAtStart = TRUE;
             }
-            fCombinedFormat = new SimpleFormatter(UnicodeString(TRUE, resStr, resStrLen), 2, 2, tempStatus);
+            fCombinedFormat = new MessageFormat(UnicodeString(TRUE, resStr, resStrLen), fLocale, tempStatus);
         }
     }
 

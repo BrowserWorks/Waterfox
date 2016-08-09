@@ -213,15 +213,15 @@ Bindings::initWithTemporaryStorage(ExclusiveContext* cx, MutableHandle<Bindings>
     return true;
 }
 
-bool
-Bindings::initTrivial(ExclusiveContext* cx)
+/* static */ bool
+Bindings::initTrivialForScript(ExclusiveContext* cx, HandleScript script)
 {
     Shape* shape = EmptyShape::getInitialShape(cx, &CallObject::class_, TaggedProto(nullptr),
                                                CallObject::RESERVED_SLOTS,
                                                BaseShape::QUALIFIED_VAROBJ | BaseShape::DELEGATE);
     if (!shape)
         return false;
-    callObjShape_.init(shape);
+    script->bindings.callObjShape_.init(shape);
     return true;
 }
 
@@ -242,7 +242,7 @@ Bindings::clone(JSContext* cx, MutableHandle<Bindings> self,
                 uint8_t* dstScriptData, HandleScript srcScript)
 {
     /* The clone has the same bindingArray_ offset as 'src'. */
-    Handle<Bindings> src = Handle<Bindings>::fromMarkedLocation(&srcScript->bindings);
+    const Bindings& src = srcScript->bindings;
     ptrdiff_t off = (uint8_t*)src.bindingArray() - srcScript->data;
     MOZ_ASSERT(off >= 0);
     MOZ_ASSERT(size_t(off) <= srcScript->dataSize());
@@ -346,8 +346,7 @@ Binding::trace(JSTracer* trc)
 void
 Bindings::trace(JSTracer* trc)
 {
-    if (callObjShape_)
-        TraceEdge(trc, &callObjShape_, "callObjShape");
+    TraceNullableEdge(trc, &callObjShape_, "callObjShape");
 
     /*
      * As the comment in Bindings explains, bindingsArray may point into freed
@@ -1703,10 +1702,7 @@ ScriptSourceObject::finalize(FreeOp* fop, JSObject* obj)
     sso->setReservedSlot(SOURCE_SLOT, PrivateValue(nullptr));
 }
 
-const Class ScriptSourceObject::class_ = {
-    "ScriptSource",
-    JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) |
-    JSCLASS_IS_ANONYMOUS,
+static const ClassOps ScriptSourceObjectClassOps = {
     nullptr, /* addProperty */
     nullptr, /* delProperty */
     nullptr, /* getProperty */
@@ -1714,11 +1710,18 @@ const Class ScriptSourceObject::class_ = {
     nullptr, /* enumerate */
     nullptr, /* resolve */
     nullptr, /* mayResolve */
-    finalize,
+    ScriptSourceObject::finalize,
     nullptr, /* call */
     nullptr, /* hasInstance */
     nullptr, /* construct */
-    trace
+    ScriptSourceObject::trace
+};
+
+const Class ScriptSourceObject::class_ = {
+    "ScriptSource",
+    JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) |
+    JSCLASS_IS_ANONYMOUS,
+    &ScriptSourceObjectClassOps
 };
 
 ScriptSourceObject*
@@ -1745,7 +1748,7 @@ ScriptSourceObject::create(ExclusiveContext* cx, ScriptSource* source)
 ScriptSourceObject::initFromOptions(JSContext* cx, HandleScriptSource source,
                                     const ReadOnlyCompileOptions& options)
 {
-    assertSameCompartment(cx, source);
+    releaseAssertSameCompartment(cx, source);
     MOZ_ASSERT(source->getReservedSlot(ELEMENT_SLOT).isMagic(JS_GENERIC_MAGIC));
     MOZ_ASSERT(source->getReservedSlot(ELEMENT_PROPERTY_SLOT).isMagic(JS_GENERIC_MAGIC));
     MOZ_ASSERT(source->getReservedSlot(INTRODUCTION_SCRIPT_SLOT).isMagic(JS_GENERIC_MAGIC));
@@ -2217,6 +2220,7 @@ ScriptSource::~ScriptSource()
         }
     };
 
+    MOZ_ASSERT(refs == 0);
     MOZ_ASSERT_IF(inCompressedSourceSet, data.is<Compressed>());
 
     DestroyMatcher dm(*this);
@@ -2938,7 +2942,7 @@ JSScript::partiallyInit(ExclusiveContext* cx, HandleScript script, uint32_t ncon
 /* static */ bool
 JSScript::fullyInitTrivial(ExclusiveContext* cx, Handle<JSScript*> script)
 {
-    if (!script->bindings.initTrivial(cx))
+    if (!Bindings::initTrivialForScript(cx, script))
         return false;
 
     if (!partiallyInit(cx, script, 0, 0, 0, 0, 0, 0))
@@ -3966,10 +3970,8 @@ JSScript::traceChildren(JSTracer* trc)
                   zone()->isCollecting());
 
     if (atoms) {
-        for (uint32_t i = 0; i < natoms(); ++i) {
-            if (atoms[i])
-                TraceEdge(trc, &atoms[i], "atom");
-        }
+        for (uint32_t i = 0; i < natoms(); ++i)
+            TraceNullableEdge(trc, &atoms[i], "atom");
     }
 
     if (hasObjects()) {
@@ -3982,19 +3984,13 @@ JSScript::traceChildren(JSTracer* trc)
         TraceRange(trc, constarray->length, constarray->vector, "consts");
     }
 
-    if (sourceObject()) {
-        MOZ_ASSERT(MaybeForwarded(sourceObject())->compartment() == compartment());
-        TraceEdge(trc, &sourceObject_, "sourceObject");
-    }
+    MOZ_ASSERT_IF(sourceObject(), MaybeForwarded(sourceObject())->compartment() == compartment());
+    TraceNullableEdge(trc, &sourceObject_, "sourceObject");
 
-    if (functionNonDelazifying())
-        TraceEdge(trc, &function_, "function");
+    TraceNullableEdge(trc, &function_, "function");
+    TraceNullableEdge(trc, &module_, "module");
 
-    if (module_)
-        TraceEdge(trc, &module_, "module");
-
-    if (enclosingStaticScope_)
-        TraceEdge(trc, &enclosingStaticScope_, "enclosingStaticScope");
+    TraceNullableEdge(trc, &enclosingStaticScope_, "enclosingStaticScope");
 
     if (maybeLazyScript())
         TraceManuallyBarrieredEdge(trc, &lazyScript, "lazyScript");
@@ -4284,11 +4280,14 @@ LazyScript::resetScript()
 }
 
 void
-LazyScript::setParent(JSObject* enclosingScope, ScriptSourceObject* sourceObject)
+LazyScript::setEnclosingScopeAndSource(JSObject* enclosingScope, ScriptSourceObject* sourceObject)
 {
-    MOZ_ASSERT(!sourceObject_ && !enclosingScope_);
     MOZ_ASSERT_IF(enclosingScope, function_->compartment() == enclosingScope->compartment());
     MOZ_ASSERT(function_->compartment() == sourceObject->compartment());
+    // This method may be called to update the enclosing scope. See comment
+    // above the callsite in BytecodeEmitter::emitFunction.
+    MOZ_ASSERT_IF(sourceObject_, sourceObject_ == sourceObject && enclosingScope_);
+    MOZ_ASSERT_IF(!sourceObject_, !enclosingScope_);
 
     enclosingScope_ = enclosingScope;
     sourceObject_ = sourceObject;
@@ -4399,7 +4398,7 @@ LazyScript::Create(ExclusiveContext* cx, HandleFunction fun,
     // Set the enclosing scope of the lazy function, this would later be
     // used to define the environment when the function would be used.
     MOZ_ASSERT(!res->sourceObject());
-    res->setParent(enclosingScope, &sourceObjectScript->scriptSourceUnwrap());
+    res->setEnclosingScopeAndSource(enclosingScope, &sourceObjectScript->scriptSourceUnwrap());
 
     MOZ_ASSERT(!res->hasScript());
     if (script)

@@ -9,12 +9,14 @@ var Ci = SpecialPowers.Ci;
 
 // Specifies whether we are using fake streams to run this automation
 var FAKE_ENABLED = true;
+var TEST_AUDIO_FREQ = 1000;
 try {
   var audioDevice = SpecialPowers.getCharPref('media.audio_loopback_dev');
   var videoDevice = SpecialPowers.getCharPref('media.video_loopback_dev');
   dump('TEST DEVICES: Using media devices:\n');
   dump('audio: ' + audioDevice + '\nvideo: ' + videoDevice + '\n');
   FAKE_ENABLED = false;
+  TEST_AUDIO_FREQ = 440;
 } catch (e) {
   dump('TEST DEVICES: No test devices found (in media.{audio,video}_loopback_dev, using fake streams.\n');
   FAKE_ENABLED = true;
@@ -31,12 +33,13 @@ try {
 function AudioStreamAnalyser(ac, stream) {
   this.audioContext = ac;
   this.stream = stream;
-  this.sourceNode = this.audioContext.createMediaStreamSource(this.stream);
+  this.sourceNodes = this.stream.getAudioTracks().map(
+    t => this.audioContext.createMediaStreamSource(new MediaStream([t])));
   this.analyser = this.audioContext.createAnalyser();
   // Setting values lower than default for speedier testing on emulators
   this.analyser.smoothingTimeConstant = 0.2;
   this.analyser.fftSize = 1024;
-  this.sourceNode.connect(this.analyser);
+  this.sourceNodes.forEach(n => n.connect(this.analyser));
   this.data = new Uint8Array(this.analyser.frequencyBinCount);
 }
 
@@ -92,6 +95,17 @@ AudioStreamAnalyser.prototype = {
 
     this.debugCanvas.stopDrawing = true;
     this.debugCanvas.parentElement.removeChild(this.debugCanvas);
+  },
+
+  /**
+   * Disconnects the input stream from our internal analyser node.
+   * Call this to reduce main thread processing, mostly necessary on slow
+   * devices.
+   */
+  disconnect: function() {
+    this.disableDebugCanvas();
+    this.sourceNodes.forEach(n => n.disconnect());
+    this.sourceNodes = [];
   },
 
   /**
@@ -266,10 +280,7 @@ function setupEnvironment() {
     return;
   }
 
-  // Running as a Mochitest.
-  SimpleTest.requestFlakyTimeout("WebRTC inherently depends on timeouts");
-  window.finish = () => SimpleTest.finish();
-  SpecialPowers.pushPrefEnv({
+  var defaultMochitestPrefs = {
     'set': [
       ['media.peerconnection.enabled', true],
       ['media.peerconnection.identity.enabled', true],
@@ -283,7 +294,22 @@ function setupEnvironment() {
       ['media.getusermedia.audiocapture.enabled', true],
       ['media.recorder.audio_node.enabled', true]
     ]
-  }, setTestOptions);
+  };
+
+  const isAndroid = !!navigator.userAgent.includes("Android");
+
+  if (isAndroid) {
+    defaultMochitestPrefs.set.push(
+      ["media.navigator.video.default_width", 320],
+      ["media.navigator.video.default_height", 240],
+      ["media.navigator.video.max_fr", 10]
+    );
+  }
+
+  // Running as a Mochitest.
+  SimpleTest.requestFlakyTimeout("WebRTC inherently depends on timeouts");
+  window.finish = () => SimpleTest.finish();
+  SpecialPowers.pushPrefEnv(defaultMochitestPrefs, setTestOptions);
 
   // We don't care about waiting for this to complete, we just want to ensure
   // that we don't build up a huge backlog of GC work.
@@ -369,6 +395,34 @@ function checkMediaStreamContains(mediaStream, tracks, message) {
                          " contains track " + t.id));
   is(mediaStream.getTracks().length, tracks.length,
      message + "MediaStream " + mediaStream.id + " contains no extra tracks");
+}
+
+function checkMediaStreamCloneAgainstOriginal(clone, original) {
+  isnot(clone.id.length, 0, "Stream clone should have an id string");
+  isnot(clone, original,
+        "Stream clone should be different from the original");
+  isnot(clone.id, original.id,
+        "Stream clone's id should be different from the original's");
+  is(clone.getAudioTracks().length, original.getAudioTracks().length,
+     "All audio tracks should get cloned");
+  is(clone.getVideoTracks().length, original.getVideoTracks().length,
+     "All video tracks should get cloned");
+  original.getTracks()
+          .forEach(t => ok(!clone.getTracks().includes(t),
+                           "The clone's tracks should be originals"));
+}
+
+function checkMediaStreamTrackCloneAgainstOriginal(clone, original) {
+  isnot(clone.id.length, 0,
+        "Track clone should have an id string");
+  isnot(clone, original,
+        "Track clone should be different from the original");
+  isnot(clone.id, original.id,
+        "Track clone's id should be different from the original's");
+  is(clone.kind, original.kind,
+     "Track clone's kind should be same as the original's");
+  is(clone.enabled, original.enabled,
+     "Track clone's kind should be same as the original's");
 }
 
 /*** Utility methods */

@@ -137,8 +137,7 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
             public void onRouteRemoved(MediaRouter router, RouteInfo route) {
                 debug("onRouteRemoved: route=" + route);
                 displays.remove(route.getId());
-                GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent(
-                        "MediaPlayer:Removed", route.getId()));
+                GeckoAppShell.notifyObservers("MediaPlayer:Removed", route.getId());
                 updatePresentation();
             }
 
@@ -190,8 +189,7 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
                 }
 
                 displays.put(route.getId(), display);
-                final GeckoEvent event = GeckoEvent.createBroadcastEvent(eventName, json.toString());
-                GeckoAppShell.sendEventToGecko(event);
+                GeckoAppShell.notifyObservers(eventName, json.toString());
             }
         };
 
@@ -200,7 +198,7 @@ public class MediaPlayerManager extends Fragment implements NativeEventListener 
             if (route.supportsControlCategory(MediaControlIntent.CATEGORY_REMOTE_PLAYBACK)) {
                 return new ChromeCast(getActivity(), route);
             }
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             debug("Error handling presentation", ex);
         }
 

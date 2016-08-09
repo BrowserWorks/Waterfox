@@ -43,6 +43,7 @@ from mozharness.mozilla.buildbot import (
 )
 from mozharness.mozilla.purge import PurgeMixin
 from mozharness.mozilla.mock import MockMixin
+from mozharness.mozilla.secrets import SecretsMixin
 from mozharness.mozilla.signing import SigningMixin
 from mozharness.mozilla.mock import ERROR_MSGS as MOCK_ERROR_MSGS
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
@@ -97,8 +98,6 @@ class MakeUploadOutputParser(OutputParser):
         ('symbolsUrl', "m.endswith('crashreporter-symbols.zip') or "
                        "m.endswith('crashreporter-symbols-full.zip')"),
         ('testsUrl', "m.endswith(('tests.tar.bz2', 'tests.zip'))"),
-        ('unsignedApkUrl', "m.endswith('apk') and "
-                           "'unsigned-unaligned' in m"),
         ('robocopApkUrl', "m.endswith('apk') and 'robocop' in m"),
         ('jsshellUrl', "'jsshell-' in m and m.endswith('.zip')"),
         ('partialMarUrl', "m.endswith('.mar') and '.partial.' in m"),
@@ -342,6 +341,7 @@ class BuildOptionParser(object):
     # *It will warn and fail if there is not a config for the current
     # platform/bits
     build_variants = {
+        'add-on-devel': 'builds/releng_sub_%s_configs/%s_add-on-devel.py',
         'asan': 'builds/releng_sub_%s_configs/%s_asan.py',
         'tsan': 'builds/releng_sub_%s_configs/%s_tsan.py',
         'b2g-debug': 'b2g/releng_sub_%s_configs/%s_debug.py',
@@ -358,6 +358,7 @@ class BuildOptionParser(object):
         'api-9': 'builds/releng_sub_%s_configs/%s_api_9.py',
         'api-11': 'builds/releng_sub_%s_configs/%s_api_11.py',
         'api-15-frontend': 'builds/releng_sub_%s_configs/%s_api_15_frontend.py',
+        'api-15-gradle-dependencies': 'builds/releng_sub_%s_configs/%s_api_15_gradle_dependencies.py',
         'api-15': 'builds/releng_sub_%s_configs/%s_api_15.py',
         'api-9-debug': 'builds/releng_sub_%s_configs/%s_api_9_debug.py',
         'api-11-debug': 'builds/releng_sub_%s_configs/%s_api_11_debug.py',
@@ -365,8 +366,8 @@ class BuildOptionParser(object):
         'x86': 'builds/releng_sub_%s_configs/%s_x86.py',
         'api-11-partner-sample1': 'builds/releng_sub_%s_configs/%s_api_11_partner_sample1.py',
         'api-15-partner-sample1': 'builds/releng_sub_%s_configs/%s_api_15_partner_sample1.py',
-        'api-11-b2gdroid': 'builds/releng_sub_%s_configs/%s_api_11_b2gdroid.py',
-        'api-15-b2gdroid': 'builds/releng_sub_%s_configs/%s_api_15_b2gdroid.py',
+        'android-checkstyle': 'builds/releng_sub_%s_configs/%s_checkstyle.py',
+        'android-lint': 'builds/releng_sub_%s_configs/%s_lint.py',
     }
     build_pool_cfg_file = 'builds/build_pool_specifics.py'
     branch_cfg_file = 'builds/branch_specifics.py'
@@ -544,6 +545,14 @@ BUILD_BASE_CONFIG_OPTIONS = [
                 " %s for possibilites" % (
                     BuildOptionParser.branch_cfg_file,
                 )}],
+    [['--scm-level'], {
+        "action": "store",
+        "type": "int",
+        "dest": "scm_level",
+        "default": 1,
+        "help": "This sets the SCM level for the branch being built."
+                " See https://www.mozilla.org/en-US/about/"
+                "governance/policies/commit/access-policy/"}],
     [['--enable-pgo'], {
         "action": "store_true",
         "dest": "pgo_build",
@@ -577,7 +586,7 @@ def generate_build_UID():
 
 class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
                   SigningMixin, VirtualenvMixin, MercurialScript,
-                  InfluxRecordingMixin):
+                  InfluxRecordingMixin, SecretsMixin):
     def __init__(self, **kwargs):
         # objdir is referenced in _query_abs_dirs() so let's make sure we
         # have that attribute before calling BaseScript.__init__
@@ -608,8 +617,8 @@ class BuildScript(BuildbotMixin, PurgeMixin, MockMixin, BalrogMixin,
         self.client_id = None
         self.access_token = None
 
-        # Call this before creating the virtualenv so that we have things like
-        # symbol_server_host in the config
+        # Call this before creating the virtualenv so that we can support
+        # substituting config values with other config values.
         self.query_build_env()
 
         # We need to create the virtualenv directly (without using an action) in
@@ -829,20 +838,13 @@ or run without that action (ie: --no-{action})"
         branch_enabled = self.branch in self.config.get('nightly_promotion_branches')
         return platform_enabled and branch_enabled
 
-    def query_build_env(self, replace_dict=None, **kwargs):
+    def query_build_env(self, **kwargs):
         c = self.config
-
-        if not replace_dict:
-            replace_dict = {}
-        # now let's grab the right host based off staging/production
-        # symbol_server_host is defined in build_pool_specifics.py
-        replace_dict.update({"symbol_server_host": c['symbol_server_host']})
 
         # let's evoke the base query_env and make a copy of it
         # as we don't always want every key below added to the same dict
         env = copy.deepcopy(
-            super(BuildScript, self).query_env(replace_dict=replace_dict,
-                                               **kwargs)
+            super(BuildScript, self).query_env(**kwargs)
         )
 
         # first grab the buildid
@@ -941,28 +943,6 @@ or run without that action (ie: --no-{action})"
             for env_var, env_value in c['check_test_env'].iteritems():
                 check_test_env[env_var] = env_value % dirs
         return check_test_env
-
-    def _query_moz_symbols_buildid(self):
-        # this is a bit confusing but every platform that make
-        # uploadsymbols may or may not include a
-        # MOZ_SYMBOLS_EXTRA_BUILDID in the env and the value of this
-        # varies.
-        # logic goes:
-        #   If it's the release branch, we only include it for
-        # 64bit platforms and we use just the platform as value.
-        #   If it's a project branch off m-c, we include only the branch
-        # for the value on 32 bit platforms and we include both the
-        # platform and branch for 64 bit platforms
-        c = self.config
-        moz_symbols_extra_buildid = ''
-        if c.get('use_platform_in_symbols_extra_buildid'):
-            moz_symbols_extra_buildid += self.stage_platform
-        if c.get('use_branch_in_symbols_extra_buildid'):
-            if moz_symbols_extra_buildid:
-                moz_symbols_extra_buildid += '-%s' % (self.branch,)
-            else:
-                moz_symbols_extra_buildid = self.branch
-        return moz_symbols_extra_buildid
 
     def _query_who(self):
         """ looks for who triggered the build with a change.
@@ -1153,6 +1133,9 @@ or run without that action (ie: --no-{action})"
         auth_file = self._get_tooltool_auth_file()
         if auth_file:
             cmd.extend(['--authentication-file', auth_file])
+        cache = c['env'].get('TOOLTOOL_CACHE')
+        if cache:
+            cmd.extend(['-c', cache])
         self.info(str(cmd))
         self.run_command_m(cmd, cwd=dirs['abs_src_dir'], halt_on_failure=True)
 
@@ -1512,8 +1495,6 @@ or run without that action (ie: --no-{action})"
             ('symbolsUrl', lambda m: m.endswith('crashreporter-symbols.zip') or
                            m.endswith('crashreporter-symbols-full.zip')),
             ('testsUrl', lambda m: m.endswith(('tests.tar.bz2', 'tests.zip'))),
-            ('unsignedApkUrl', lambda m: m.endswith('apk') and
-                               'unsigned-unaligned' in m),
             ('robocopApkUrl', lambda m: m.endswith('apk') and 'robocop' in m),
             ('jsshellUrl', lambda m: 'jsshell-' in m and m.endswith('.zip')),
             # Temporarily use "TC" in MarUrl parameters. We don't want to
@@ -1536,71 +1517,6 @@ or run without that action (ie: --no-{action})"
 
         self._taskcluster_upload(files, templates,
                                  property_conditions=property_conditions)
-
-        # Report some important file sizes for display in treeherder
-        dirs = self.query_abs_dirs()
-        paths = [
-            (packageName, os.path.join(dirs['abs_obj_dir'], 'dist', packageName)),
-            ('omni.ja', os.path.join(dirs['abs_obj_dir'], 'dist', 'fennec', 'assets', 'omni.ja')),
-            ('classes.dex', os.path.join(dirs['abs_obj_dir'], 'dist', 'fennec', 'classes.dex'))
-        ]
-
-        # Find a stripped version of libxul if possible
-        def find_file(rootPath, fileName):
-            for root, dirs, files in os.walk(rootPath):
-                for file in files:
-                    if file == fileName:
-                        return (fileName, os.path.join(root, file))
-            return None
-
-        # Check in the firefox and fennec dist dirs
-        libxul = None
-        dist_root = os.path.join(dirs['abs_obj_dir'], 'dist')
-        for dist in ('firefox', 'fennec', 'b2g'):
-            libxul = find_file(os.path.join(dist_root, dist), 'libxul.so')
-            if libxul:
-                break
-
-        if libxul:
-            paths.append(libxul)
-        else:
-            paths.append( ('libxul.so', os.path.join(dirs['abs_obj_dir'], 'dist', 'bin', 'libxul.so')) )
-
-        size_measurements = []
-        installer_size = 0
-        for (name, path) in paths:
-            # FIXME: Remove the tinderboxprints when bug 1161249 is fixed and
-            # we're displaying perfherder data for each job automatically
-            if os.path.exists(path):
-                filesize = self.query_filesize(path)
-                self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' % (
-                    name, filesize))
-                if any(name.endswith(extension) for extension in ['apk',
-                                                                  'dmg',
-                                                                  'bz2',
-                                                                  'zip']):
-                    installer_size = filesize
-                else:
-                    size_measurements.append({'name': name, 'value': filesize})
-
-        perfherder_data = {
-            "framework": {
-                "name": "build_metrics"
-            },
-            "suites": [],
-        }
-        if installer_size or size_measurements:
-            perfherder_data["suites"].append({
-                "name": "installer size",
-                "value": installer_size,
-                "subtests": size_measurements
-            })
-        if (hasattr(self, "build_metrics_summary") and
-            self.build_metrics_summary):
-            perfherder_data["suites"].append(self.build_metrics_summary)
-
-        if perfherder_data["suites"]:
-            self.info('PERFHERDER_DATA: %s' % json.dumps(perfherder_data))
 
     def _set_file_properties(self, file_name, find_dir, prop_type,
                              error_level=ERROR):
@@ -1689,9 +1605,6 @@ or run without that action (ie: --no-{action})"
         """builds application."""
         env = self.query_build_env()
         env.update(self.query_mach_build_env())
-        symbols_extra_buildid = self._query_moz_symbols_buildid()
-        if symbols_extra_buildid:
-            env['MOZ_SYMBOLS_EXTRA_BUILDID'] = symbols_extra_buildid
 
         # XXX Bug 1037883 - mozconfigs can not find buildprops.json when builds
         # are through mozharness. This is not pretty but it is a stopgap
@@ -1920,15 +1833,98 @@ or run without that action (ie: --no-{action})"
         and then posts to graph server the results.
         We only post to graph server for non nightly build
         """
+        import tarfile
+        import zipfile
         c = self.config
 
         if c.get('enable_count_ctors'):
-            if c.get('enable_count_ctors'):
-                self.info("counting ctors...")
-                self._count_ctors()
+            self.info("counting ctors...")
+            self._count_ctors()
         else:
-            self.info("Nothing to do for this action since ctors "
-                      "counts are disabled for this build.")
+            self.info("ctors counts are disabled for this build.")
+
+        # Report some important file sizes for display in treeherder
+
+        dirs = self.query_abs_dirs()
+        packageName = self.query_buildbot_property('packageFilename')
+
+        # if packageName is not set because we are not running in Buildbot,
+        # then assume we are using MOZ_SIMPLE_PACKAGE_NAME, which means the
+        # package is named one of target.{tar.bz2,zip,dmg}.
+        if not packageName:
+            dist_dir = os.path.join(dirs['abs_obj_dir'], 'dist')
+            for ext in ['apk', 'dmg', 'tar.bz2', 'zip']:
+                name = 'target.' + ext
+                if os.path.exists(os.path.join(dist_dir, name)):
+                    packageName = name
+                    break
+            else:
+                self.fatal("could not determine packageName")
+
+        interests = ['libxul.so', 'classes.dex', 'omni.ja']
+        installer = os.path.join(dirs['abs_obj_dir'], 'dist', packageName)
+        installer_size = 0
+        size_measurements = []
+
+        if os.path.exists(installer):
+            installer_size = self.query_filesize(installer)
+            self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' % (
+                packageName, installer_size))
+            try:
+                subtests = {}
+                if zipfile.is_zipfile(installer):
+                    with zipfile.ZipFile(installer, 'r') as zf:
+                        for zi in zf.infolist():
+                            name = os.path.basename(zi.filename)
+                            size = zi.file_size
+                            if name in interests:
+                                if name in subtests:
+                                    # File seen twice in same archive;
+                                    # ignore to avoid confusion.
+                                    subtests[name] = None
+                                else:
+                                    subtests[name] = size
+                elif tarfile.is_tarfile(installer):
+                    with tarfile.open(installer, 'r:*') as tf:
+                        for ti in tf:
+                            name = os.path.basename(ti.name)
+                            size = ti.size
+                            if name in interests:
+                                if name in subtests:
+                                    # File seen twice in same archive;
+                                    # ignore to avoid confusion.
+                                    subtests[name] = None
+                                else:
+                                    subtests[name] = size
+                for name in subtests:
+                    if subtests[name] is not None:
+                        self.info('TinderboxPrint: Size of %s<br/>%s bytes\n' % (
+                            name, subtests[name]))
+                        size_measurements.append({'name': name, 'value': subtests[name]})
+            except:
+                self.info('Unable to search %s for component sizes.' % installer)
+                size_measurements = []
+
+        perfherder_data = {
+            "framework": {
+                "name": "build_metrics"
+            },
+            "suites": [],
+        }
+        if installer_size or size_measurements:
+            perfherder_data["suites"].append({
+                "name": "installer size",
+                "value": installer_size,
+                "alertThreshold": 0.25,
+                "subtests": size_measurements
+            })
+        if (hasattr(self, "build_metrics_summary") and
+            self.build_metrics_summary):
+            perfherder_data["suites"].append(self.build_metrics_summary)
+
+        if perfherder_data["suites"]:
+            self.info('PERFHERDER_DATA: %s' % json.dumps(perfherder_data))
+
 
     def sendchange(self):
         if self.config.get('enable_talos_sendchange'):

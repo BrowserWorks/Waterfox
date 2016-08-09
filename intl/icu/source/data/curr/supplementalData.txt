@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2016 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/supplementalData.xml
@@ -4759,13 +4759,13 @@ supplementalData:table(nofallback){
             2,
             0,
             2,
-            5,
+            0,
         }
         CHF:intvector{
             2,
             0,
             2,
-            5,
+            0,
         }
         CLF:intvector{
             4,
@@ -4794,7 +4794,7 @@ supplementalData:table(nofallback){
         CZK:intvector{
             2,
             0,
-            0,
+            2,
             0,
         }
         DEFAULT:intvector{
@@ -4830,7 +4830,7 @@ supplementalData:table(nofallback){
         HUF:intvector{
             2,
             0,
-            0,
+            2,
             0,
         }
         IDR:intvector{
@@ -5034,7 +5034,7 @@ supplementalData:table(nofallback){
         TWD:intvector{
             2,
             0,
-            0,
+            2,
             0,
         }
         TZS:intvector{

@@ -45,6 +45,12 @@ PCMappingSlotInfo::ToSlotLocation(const StackValue* stackVal)
     return SlotIgnore;
 }
 
+void
+ICStubSpace::freeAllAfterMinorGC(JSRuntime* rt)
+{
+    rt->gc.freeAllLifoBlocksAfterMinorGC(&allocator_);
+}
+
 BaselineScript::BaselineScript(uint32_t prologueOffset, uint32_t epilogueOffset,
                                uint32_t profilerEnterToggleOffset,
                                uint32_t profilerExitToggleOffset,
@@ -456,8 +462,7 @@ void
 BaselineScript::trace(JSTracer* trc)
 {
     TraceEdge(trc, &method_, "baseline-method");
-    if (templateScope_)
-        TraceEdge(trc, &templateScope_, "baseline-template-scope");
+    TraceNullableEdge(trc, &templateScope_, "baseline-template-scope");
 
     // Mark all IC stub codes hanging off the IC stub entries.
     for (size_t i = 0; i < numICEntries(); i++) {
@@ -483,20 +488,27 @@ BaselineScript::Trace(JSTracer* trc, BaselineScript* script)
 void
 BaselineScript::Destroy(FreeOp* fop, BaselineScript* script)
 {
-    /*
-     * When the script contains pointers to nursery things, the store buffer
-     * will contain entries refering to the referenced things. Since we can
-     * destroy scripts outside the context of a GC, this situation can result
-     * in invalid store buffer entries. Assert that if we do destroy scripts
-     * outside of a GC that we at least emptied the nursery first.
-     */
-    MOZ_ASSERT(fop->runtime()->gc.nursery.isEmpty());
-
     MOZ_ASSERT(!script->hasPendingIonBuilder());
 
     script->unlinkDependentWasmModules(fop);
 
+    /*
+     * When the script contains pointers to nursery things, the store buffer can
+     * contain entries that point into the fallback stub space. Since we can
+     * destroy scripts outside the context of a GC, this situation could result
+     * in us trying to mark invalid store buffer entries.
+     *
+     * Defer freeing any allocated blocks until after the next minor GC.
+     */
+    script->fallbackStubSpace_.freeAllAfterMinorGC(fop->runtime());
+
     fop->delete_(script);
+}
+
+void
+JS::DeletePolicy<js::jit::BaselineScript>::operator()(const js::jit::BaselineScript* script)
+{
+    BaselineScript::Destroy(rt_->defaultFreeOp(), const_cast<BaselineScript*>(script));
 }
 
 void

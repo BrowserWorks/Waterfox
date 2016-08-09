@@ -5,13 +5,22 @@
 import firefox_puppeteer.errors as errors
 
 from marionette_driver import By, Wait
-from marionette_driver.errors import NoSuchWindowException
+from marionette_driver.errors import (
+    NoSuchElementException,
+    NoSuchWindowException)
 from marionette_driver.keys import Keys
 
 from firefox_puppeteer.api.l10n import L10n
 from firefox_puppeteer.api.prefs import Preferences
 from firefox_puppeteer.decorators import use_class_as_property
 from firefox_puppeteer.ui.about_window.window import AboutWindow
+from firefox_puppeteer.ui.browser.notifications import (
+    AddOnInstallBlockedNotification,
+    AddOnInstallConfirmationNotification,
+    AddOnInstallCompleteNotification,
+    AddOnInstallFailedNotification,
+    AddOnProgressNotification,
+    BaseNotification)
 from firefox_puppeteer.ui.browser.tabbar import TabBar
 from firefox_puppeteer.ui.browser.toolbars import NavBar
 from firefox_puppeteer.ui.pageinfo.window import PageInfoWindow
@@ -83,6 +92,55 @@ class BrowserWindow(BaseWindow):
             self._navbar = NavBar(lambda: self.marionette, self, navbar)
 
         return self._navbar
+
+    @property
+    def notification(self):
+        """Provides access to the currently displayed notification."""
+
+        notifications_map = {
+            'addon-install-blocked-notification': AddOnInstallBlockedNotification,
+            'addon-install-confirmation-notification': AddOnInstallConfirmationNotification,
+            'addon-install-complete-notification': AddOnInstallCompleteNotification,
+            'addon-install-failed-notification': AddOnInstallFailedNotification,
+            'addon-progress-notification': AddOnProgressNotification,
+        }
+
+        try:
+            notification = self.window_element.find_element(
+                By.CSS_SELECTOR, '#notification-popup popupnotification')
+
+            notification_id = notification.get_attribute('id')
+            return notifications_map.get(notification_id, BaseNotification)(
+                lambda: self.marionette, self, notification)
+
+        except NoSuchElementException:
+            return None  # no notification is displayed
+
+    def wait_for_notification(self, notification_class=BaseNotification,
+                              timeout=5):
+        """Waits for the specified notification to be displayed.
+
+        :param notification_class: Optional, the notification class to wait for.
+         If `None` is specified it will wait for any notification to be closed.
+         Defaults to `BaseNotification`.
+        :param timeout: Optional, how long to wait for the expected notification.
+         Defaults to 5 seconds.
+        """
+        wait = Wait(self.marionette, timeout=timeout)
+
+        if notification_class:
+            if notification_class is BaseNotification:
+                message = 'No notification was shown.'
+            else:
+                message = '{0} was not shown.'.format(notification_class.__name__)
+            wait.until(
+                lambda _: isinstance(self.notification, notification_class),
+                message=message)
+        else:
+            message = 'Unexpected notification shown.'
+            wait.until(
+                lambda _: self.notification is None,
+                message='Unexpected notification shown.')
 
     @property
     def tabbar(self):

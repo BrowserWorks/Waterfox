@@ -20,7 +20,7 @@
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/layers/APZCTreeManager.h"
 #include "mozilla/layers/APZThreadUtils.h"
-#include "mozilla/layers/CompositorParent.h"
+#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/LayerTransactionParent.h"
 #include "nsContentUtils.h"
 #include "nsFocusManager.h"
@@ -32,7 +32,7 @@
 #include "nsViewportFrame.h"
 #include "RenderFrameParent.h"
 #include "mozilla/layers/LayerManagerComposite.h"
-#include "mozilla/layers/CompositorChild.h"
+#include "mozilla/layers/CompositorBridgeChild.h"
 #include "ClientLayerManager.h"
 #include "FrameLayerBuilder.h"
 
@@ -86,51 +86,55 @@ GetFrom(nsFrameLoader* aFrameLoader)
   return nsContentUtils::LayerManagerForDocument(doc);
 }
 
-RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader,
-                                     TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                     uint64_t* aId,
-                                     bool* aSuccess)
+RenderFrameParent::RenderFrameParent(nsFrameLoader* aFrameLoader, bool* aSuccess)
   : mLayersId(0)
   , mFrameLoader(aFrameLoader)
   , mFrameLoaderDestroyed(false)
   , mAsyncPanZoomEnabled(false)
+  , mInitted(false)
 {
-  *aId = 0;
-  *aSuccess = false;
-  if (!mFrameLoader) {
-    return;
+  mInitted = Init(aFrameLoader);
+  *aSuccess = mInitted;
+}
+
+RenderFrameParent::~RenderFrameParent()
+{}
+
+bool
+RenderFrameParent::Init(nsFrameLoader* aFrameLoader)
+{
+  if (mInitted || !aFrameLoader) {
+    return false;
   }
+
+  mFrameLoader = aFrameLoader;
 
   RefPtr<LayerManager> lm = GetFrom(mFrameLoader);
 
   mAsyncPanZoomEnabled = lm && lm->AsyncPanZoomEnabled();
 
-  // Perhaps the document containing this frame currently has no presentation?
-  if (lm && lm->AsClientLayerManager()) {
-    *aTextureFactoryIdentifier = lm->AsClientLayerManager()->GetTextureFactoryIdentifier();
-  } else {
-    *aTextureFactoryIdentifier = TextureFactoryIdentifier();
-  }
-
   TabParent* browser = TabParent::GetFrom(mFrameLoader);
   if (XRE_IsParentProcess()) {
     // Our remote frame will push layers updates to the compositor,
     // and we'll keep an indirect reference to that tree.
-    browser->Manager()->AsContentParent()->AllocateLayerTreeId(browser, aId);
-    mLayersId = *aId;
+    browser->Manager()->AsContentParent()->AllocateLayerTreeId(browser, &mLayersId);
     if (lm && lm->AsClientLayerManager()) {
       lm->AsClientLayerManager()->GetRemoteRenderer()->SendNotifyChildCreated(mLayersId);
     }
   } else if (XRE_IsContentProcess()) {
-    ContentChild::GetSingleton()->SendAllocateLayerTreeId(browser->Manager()->ChildID(), browser->GetTabId(), aId);
-    mLayersId = *aId;
-    CompositorChild::Get()->SendNotifyChildCreated(mLayersId);
+    ContentChild::GetSingleton()->SendAllocateLayerTreeId(browser->Manager()->ChildID(), browser->GetTabId(), &mLayersId);
+    CompositorBridgeChild::Get()->SendNotifyChildCreated(mLayersId);
   }
-  *aSuccess = true;
+
+  mInitted = true;
+  return true;
 }
 
-RenderFrameParent::~RenderFrameParent()
-{}
+bool
+RenderFrameParent::IsInitted()
+{
+  return mInitted;
+}
 
 void
 RenderFrameParent::Destroy()
@@ -207,6 +211,7 @@ RenderFrameParent::OwnerContentChanged(nsIContent* aContent)
   // Perhaps the document containing this frame currently has no presentation?
   if (lm && lm->AsClientLayerManager()) {
     lm->AsClientLayerManager()->GetRemoteRenderer()->SendAdoptChild(mLayersId);
+    FrameLayerBuilder::InvalidateAllLayers(lm);
   }
 }
 
@@ -217,7 +222,7 @@ RenderFrameParent::ActorDestroy(ActorDestroyReason why)
     if (XRE_IsContentProcess()) {
       ContentChild::GetSingleton()->SendDeallocateLayerTreeId(mLayersId);
     } else {
-      CompositorParent::DeallocateLayerTreeId(mLayersId);
+      CompositorBridgeParent::DeallocateLayerTreeId(mLayersId);
     }
   }
 
@@ -334,8 +339,10 @@ nsDisplayRemote::nsDisplayRemote(nsDisplayListBuilder* aBuilder,
   , mEventRegionsOverride(EventRegionsOverride::NoOverride)
 {
   if (aBuilder->IsBuildingLayerEventRegions()) {
-    bool frameIsPointerEventsNone = !aFrame->PassPointerEventsToChildren()
-        && (aFrame->StyleVisibility()->GetEffectivePointerEvents(aFrame) == NS_STYLE_POINTER_EVENTS_NONE);
+    bool frameIsPointerEventsNone =
+      !aFrame->PassPointerEventsToChildren() &&
+      aFrame->StyleUserInterface()->GetEffectivePointerEvents(aFrame) ==
+        NS_STYLE_POINTER_EVENTS_NONE;
     if (aBuilder->IsInsidePointerEventsNoneDoc() || frameIsPointerEventsNone) {
       mEventRegionsOverride |= EventRegionsOverride::ForceEmptyHitRegion;
     }

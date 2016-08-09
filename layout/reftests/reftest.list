@@ -327,6 +327,9 @@ include ../tables/reftests/reftest.list
 # text/
 include text/reftest.list
 
+# text-stroke
+include text-stroke/reftest.list
+
 # text-decoration/
 include text-decoration/reftest.list
 
@@ -396,7 +399,6 @@ include z-index/reftest.list
 
 # reftest(s) to verify content bugfixes
 include ../../dom/html/reftests/reftest.list
-include ../../dom/imptests/reftest.list
 
 # editor/
 include ../../editor/reftests/reftest.list

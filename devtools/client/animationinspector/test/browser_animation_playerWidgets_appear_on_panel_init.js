@@ -9,14 +9,8 @@
 
 const { ANIMATION_TYPES } = require("devtools/server/actors/animation");
 
-add_task(function*() {
-  yield new Promise(resolve => {
-    SpecialPowers.pushPrefEnv({"set": [
-      ["dom.animations-api.core.enabled", true]
-    ]}, resolve);
-  });
-
-  yield addTab(TEST_URL_ROOT + "doc_multiple_animation_types.html");
+add_task(function* () {
+  yield addTab(URL_ROOT + "doc_multiple_animation_types.html");
 
   let {panel} = yield openAnimationInspector();
   is(panel.animationsTimelineComponent.animations.length, 3,

@@ -13,8 +13,7 @@
 #include "mozilla/Telemetry.h"
 #include "mozilla/Logging.h"
 
-extern mozilla::LogModule* GetPDMLog();
-#define LOG(...) MOZ_LOG(GetPDMLog(), mozilla::LogLevel::Debug, (__VA_ARGS__))
+#define LOG(...) MOZ_LOG(sPDMLog, mozilla::LogLevel::Debug, (__VA_ARGS__))
 
 namespace mozilla {
 
@@ -290,7 +289,10 @@ WMFAudioMFTManager::Output(int64_t aStreamOffset,
     return S_OK;
   }
 
-  auto audioData = MakeUnique<AudioDataValue[]>(numSamples);
+  AlignedAudioBuffer audioData(numSamples);
+  if (!audioData) {
+    return E_OUTOFMEMORY;
+  }
 
   int16_t* pcm = (int16_t*)data;
   for (int32_t i = 0; i < numSamples; ++i) {

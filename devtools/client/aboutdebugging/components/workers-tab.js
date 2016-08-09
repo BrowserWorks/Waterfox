@@ -5,16 +5,19 @@
 "use strict";
 
 const { Ci } = require("chrome");
-const { Task } = require("resource://gre/modules/Task.jsm");
-const Services = require("Services");
-
 const { createClass, createFactory, DOM: dom } =
   require("devtools/client/shared/vendor/react");
+const { getWorkerForms } = require("../modules/worker");
+const Services = require("Services");
+
 const TabHeader = createFactory(require("./tab-header"));
 const TargetList = createFactory(require("./target-list"));
+const WorkerTarget = createFactory(require("./worker-target"));
+const ServiceWorkerTarget = createFactory(require("./service-worker-target"));
 
 const Strings = Services.strings.createBundle(
   "chrome://devtools/locale/aboutdebugging.properties");
+
 const WorkerIcon = "chrome://devtools/skin/images/debugging-workers.svg";
 
 module.exports = createClass({
@@ -45,43 +48,12 @@ module.exports = createClass({
     client.removeListener("workerListChanged", this.update);
   },
 
-  render() {
-    let { client } = this.props;
-    let { workers } = this.state;
-
-    return dom.div({
-      id: "tab-workers",
-      className: "tab",
-      role: "tabpanel",
-      "aria-labelledby": "tab-workers-header-name" },
-    TabHeader({
-      id: "tab-workers-header-name",
-      name: Strings.GetStringFromName("workers") }),
-    dom.div({ id: "workers", className: "inverted-icons" },
-      TargetList({
-        id: "service-workers",
-        name: Strings.GetStringFromName("serviceWorkers"),
-        targets: workers.service,
-        client }),
-      TargetList({
-        id: "shared-workers",
-        name: Strings.GetStringFromName("sharedWorkers"),
-        targets: workers.shared,
-        client }),
-      TargetList({
-        id: "other-workers",
-        name: Strings.GetStringFromName("otherWorkers"),
-        targets: workers.other,
-        client })));
-  },
-
   update() {
     let workers = this.getInitialState().workers;
 
-    this.getWorkerForms().then(forms => {
+    getWorkerForms(this.props.client).then(forms => {
       forms.registrations.forEach(form => {
         workers.service.push({
-          type: "serviceworker",
           icon: WorkerIcon,
           name: form.url,
           url: form.url,
@@ -92,7 +64,6 @@ module.exports = createClass({
 
       forms.workers.forEach(form => {
         let worker = {
-          type: "worker",
           icon: WorkerIcon,
           name: form.url,
           url: form.url,
@@ -113,7 +84,6 @@ module.exports = createClass({
             }
             break;
           case Ci.nsIWorkerDebugger.TYPE_SHARED:
-            worker.type = "sharedworker";
             workers.shared.push(worker);
             break;
           default:
@@ -129,38 +99,42 @@ module.exports = createClass({
     });
   },
 
-  getWorkerForms: Task.async(function*() {
-    let client = this.props.client;
-    let registrations = [];
-    let workers = [];
+  render() {
+    let { client, id } = this.props;
+    let { workers } = this.state;
 
-    try {
-      // List service worker registrations
-      ({ registrations } =
-        yield client.mainRoot.listServiceWorkerRegistrations());
-
-      // List workers from the Parent process
-      ({ workers } = yield client.mainRoot.listWorkers());
-
-      // And then from the Child processes
-      let { processes } = yield client.mainRoot.listProcesses();
-      for (let process of processes) {
-        // Ignore parent process
-        if (process.parent) {
-          continue;
-        }
-        let { form } = yield client.getProcess(process.id);
-        let processActor = form.actor;
-        let response = yield client.request({
-          to: processActor,
-          type: "listWorkers"
-        });
-        workers = workers.concat(response.workers);
-      }
-    } catch (e) {
-      // Something went wrong, maybe our client is disconnected?
-    }
-
-    return { registrations, workers };
-  }),
+    return dom.div({
+      id: id,
+      className: "tab",
+      role: "tabpanel",
+      "aria-labelledby": "tab-workers-header-name"
+    },
+    TabHeader({
+      id: "tab-workers-header-name",
+      name: Strings.GetStringFromName("workers")
+    }),
+    dom.div({ id: "workers", className: "inverted-icons" },
+      TargetList({
+        client,
+        id: "service-workers",
+        name: Strings.GetStringFromName("serviceWorkers"),
+        targetClass: ServiceWorkerTarget,
+        targets: workers.service
+      }),
+      TargetList({
+        client,
+        id: "shared-workers",
+        name: Strings.GetStringFromName("sharedWorkers"),
+        targetClass: WorkerTarget,
+        targets: workers.shared
+      }),
+      TargetList({
+        client,
+        id: "other-workers",
+        name: Strings.GetStringFromName("otherWorkers"),
+        targetClass: WorkerTarget,
+        targets: workers.other
+      })
+    ));
+  }
 });

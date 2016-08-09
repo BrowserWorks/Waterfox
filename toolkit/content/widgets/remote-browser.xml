@@ -30,10 +30,10 @@
           }
 
           // We want to double-wrap the JS implemented interface, so that QI and instanceof works.
-          var ptr = Cc["@mozilla.org/supports-interface-pointer;1"].
-                        createInstance(Ci.nsISupportsInterfacePointer);
+          var ptr = Components.classes["@mozilla.org/supports-interface-pointer;1"]
+                              .createInstance(Components.interfaces.nsISupportsInterfacePointer);
           ptr.data = this._securityUI;
-          return ptr.data.QueryInterface(Ci.nsISecureBrowserUI);
+          return ptr.data.QueryInterface(Components.interfaces.nsISecureBrowserUI);
         ]]></getter>
       </property>
 
@@ -77,7 +77,7 @@
                 return null;
 
               let jsm = "resource://gre/modules/RemoteWebProgress.jsm";
-              let { RemoteWebProgressManager } = Cu.import(jsm, {});
+              let { RemoteWebProgressManager } = Components.utils.import(jsm, {});
               this._remoteWebProgressManager = new RemoteWebProgressManager(this);
               this._remoteWebProgress = this._remoteWebProgressManager.topLevelWebProgress;
             }
@@ -97,7 +97,7 @@
               return null;
 
             let jsm = "resource://gre/modules/RemoteFinder.jsm";
-            let { RemoteFinder } = Cu.import(jsm, {});
+            let { RemoteFinder } = Components.utils.import(jsm, {});
             this._remoteFinder = new RemoteFinder(this);
           }
           return this._remoteFinder;
@@ -212,7 +212,7 @@
 
       <property name="hasContentOpener">
         <getter><![CDATA[
-          let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
+          let {frameLoader} = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
           return frameLoader.tabParent.hasContentOpener;
         ]]></getter>
       </property>
@@ -236,13 +236,13 @@
       <property name="docShellIsActive">
         <getter>
           <![CDATA[
-            let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
+            let {frameLoader} = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
             return frameLoader.tabParent.docShellIsActive;
           ]]>
         </getter>
         <setter>
           <![CDATA[
-            let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
+            let {frameLoader} = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
             frameLoader.tabParent.docShellIsActive = val;
             return val;
           ]]>
@@ -254,7 +254,7 @@
         <body><![CDATA[
           // See the explanation for what this does in nsITabParent.ipdl
 
-          let {frameLoader} = this.QueryInterface(Ci.nsIFrameLoaderOwner);
+          let {frameLoader} = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
           frameLoader.tabParent.setDocShellIsActiveAndForeground(isActive);
         ]]></body>
       </method>
@@ -288,9 +288,6 @@
       <method name="permitUnload">
         <body>
         <![CDATA[
-          const Cc = Components.classes;
-          const Ci = Components.interfaces;
-
           const kTimeout = 5000;
 
           let finished = false;
@@ -298,6 +295,7 @@
           let permitUnload;
           let id = this._permitUnloadId++;
           let mm = this.messageManager;
+          let Services = Components.utils.import("resource://gre/modules/Services.jsm", {}).Services;
 
           let msgListener = msg => {
             if (msg.data.id != id) {
@@ -334,10 +332,10 @@
             }
 
             // Dispatch something to ensure that the main thread wakes up.
-            Services.tm.mainThread.dispatch(function() {}, Ci.nsIThread.DISPATCH_NORMAL);
+            Services.tm.mainThread.dispatch(function() {}, Components.interfaces.nsIThread.DISPATCH_NORMAL);
           }
 
-          let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+          let timer = Components.classes["@mozilla.org/timer;1"].createInstance(Components.interfaces.nsITimer);
           timer.initWithCallback(timeout, kTimeout, timer.TYPE_ONE_SHOT);
 
           while (!finished && !timedOut) {
@@ -356,8 +354,8 @@
            * the <browser> element may not be initialized yet.
            */
 
-          this._remoteWebNavigation =
-            Cc["@mozilla.org/remote-web-navigation;1"].createInstance(Ci.nsIWebNavigation);
+          this._remoteWebNavigation = Components.classes["@mozilla.org/remote-web-navigation;1"]
+                                                .createInstance(Components.interfaces.nsIWebNavigation);
           this._remoteWebNavigationImpl = this._remoteWebNavigation.wrappedJSObject;
           this._remoteWebNavigationImpl.swapBrowser(this);
 
@@ -380,7 +378,8 @@
           }
 
           if (!this.hasAttribute("disablehistory")) {
-            Services.obs.addObserver(this, "browser:purge-session-history", true)
+            Components.utils.import("resource://gre/modules/Services.jsm", {}).Services
+                      .obs.addObserver(this, "browser:purge-session-history", true);
           }
 
           let jsm = "resource://gre/modules/RemoteController.jsm";
@@ -402,6 +401,12 @@
            Note: This overrides the destroy() method from browser.xml. -->
       <method name="destroy">
         <body><![CDATA[
+          // Make sure that any open select is closed.
+          if (this._selectParentHelper) {
+            let menulist = document.getElementById(this.getAttribute("selectmenulist"));
+            this._selectParentHelper.hide(menulist, this);
+          }
+
           if (this.mDestroyed)
             return;
           this.mDestroyed = true;
@@ -414,6 +419,7 @@
           }
 
           if (!this.hasAttribute("disablehistory")) {
+            let Services = Components.utils.import("resource://gre/modules/Services.jsm", {}).Services;
             try {
               Services.obs.removeObserver(this, "browser:purge-session-history");
             } catch (ex) {
@@ -430,10 +436,9 @@
           switch (aMessage.name) {
             case "Browser:Init":
               this._outerWindowID = data.outerWindowID;
-              let result = {};
-              result.useGlobalHistory = !this.hasAttribute("disableglobalhistory");
-              result.initPopup = this.autoCompletePopup != null;
-              return result;
+              this.messageManager.sendAsyncMessage("Browser:InitReceived", {
+                initPopup: this.autoCompletePopup != null,
+              });
               break;
             case "DOMTitleChanged":
               this._contentTitle = data.title;
@@ -484,21 +489,21 @@
             case "Forms:HideDropDown": {
               if (this._selectParentHelper) {
                 let menulist = document.getElementById(this.getAttribute("selectmenulist"));
-                this._selectParentHelper.hide(menulist);
+                this._selectParentHelper.hide(menulist, this);
               }
               break;
             }
 
             case "DOMFullscreen:RequestExit": {
-              let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                                      .getInterface(Ci.nsIDOMWindowUtils);
+              let windowUtils = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                                      .getInterface(Components.interfaces.nsIDOMWindowUtils);
               windowUtils.exitFullscreen();
               break;
             }
 
             case "DOMFullscreen:RequestRollback": {
-              let windowUtils = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                                      .getInterface(Ci.nsIDOMWindowUtils);
+              let windowUtils = window.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                                      .getInterface(Components.interfaces.nsIDOMWindowUtils);
               windowUtils.remoteFrameFullscreenReverted();
               break;
             }
@@ -512,6 +517,7 @@
               return this._receiveMessage(aMessage);
               break;
           }
+          return undefined;
         ]]></body>
       </method>
 

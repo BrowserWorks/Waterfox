@@ -2,29 +2,54 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from marionette import MarionetteTestCase
+import unittest
 
 from firefox_puppeteer import Puppeteer
 from firefox_puppeteer.ui.browser.window import BrowserWindow
 
 
-class FirefoxTestCase(MarionetteTestCase, Puppeteer):
-    """Base testcase class for Firefox Desktop tests.
+class BaseFirefoxTestCase(unittest.TestCase, Puppeteer):
+    """Base TestCase class for Firefox Desktop tests.
 
-    It enhances the Marionette testcase by inserting the Puppeteer mixin class,
-    so Firefox specific API modules are exposed to test scope.
+    This is designed to enhance MarionetteTestCase by inserting the Puppeteer
+    mixin class (so Firefox specific API modules are exposed to test scope) and
+    providing common set-up and tear-down code for Firefox tests.
+
+    Child classes are expected to also subclass MarionetteTestCase such that
+    MarionetteTestCase is inserted into the MRO after FirefoxTestCase but before
+    unittest.TestCase.
+
+    example:
+    `class AwesomeTestCase(FirefoxTestCase, MarionetteTestCase)`
+
+    The key role of MarionetteTestCase is to set self.marionette appropriately
+    in `__init__`. Any TestCase class that satisfies this requirement is
+    compatible with this class.
+
+    If you're extending the inheritance tree further to make specialized
+    TestCases, favour the use of super() as opposed to explicit calls to a
+    parent class.
+
     """
     def __init__(self, *args, **kwargs):
-        MarionetteTestCase.__init__(self, *args, **kwargs)
+        super(BaseFirefoxTestCase, self).__init__(*args, **kwargs)
 
     def _check_and_fix_leaked_handles(self):
         handle_count = len(self.marionette.window_handles)
+        url = []
 
         try:
-            self.assertEqual(handle_count, self._start_handle_count,
-                             'A test must not leak window handles. This test started with '
-                             '%s open top level browsing contexts, but ended with %s.' %
-                             (self._start_handle_count, handle_count))
+            #Verify the existence of leaked tabs and print their URLs.
+            if self._start_handle_count < handle_count:
+                message = ('A test must not leak window handles. This test started with '
+                           '%s open top level browsing contexts, but ended with %s.'
+                           ' Remaining Tabs URLs:') % (self._start_handle_count , handle_count)
+                with self.marionette.using_context('content'):
+                    for tab in self.marionette.window_handles:
+                        if tab not in self._init_tab_handles:
+                            url.append(' %s' % self.marionette.get_url())
+                self.assertListEqual(self._init_tab_handles , self.marionette.window_handles ,
+                                     message + ','.join(url))
         finally:
             # For clean-up make sure we work on a proper browser window
             if not self.browser or self.browser.closed:
@@ -63,10 +88,10 @@ class FirefoxTestCase(MarionetteTestCase, Puppeteer):
         self.browser = self.windows.switch_to(lambda win: type(win) is BrowserWindow)
 
     def setUp(self, *args, **kwargs):
-        MarionetteTestCase.setUp(self, *args, **kwargs)
-        Puppeteer.set_marionette(self, self.marionette)
+        super(BaseFirefoxTestCase, self).setUp(*args, **kwargs)
 
         self._start_handle_count = len(self.marionette.window_handles)
+        self._init_tab_handles = self.marionette.window_handles
         self.marionette.set_context('chrome')
 
         self.browser = self.windows.current
@@ -86,4 +111,4 @@ class FirefoxTestCase(MarionetteTestCase, Puppeteer):
             # in a state that is more inconsistent than necessary.
             self._check_and_fix_leaked_handles()
         finally:
-            MarionetteTestCase.tearDown(self, *args, **kwargs)
+            super(BaseFirefoxTestCase, self).tearDown(*args, **kwargs)

@@ -446,7 +446,6 @@ class StructTypeDescr : public ComplexTypeDescr
 
     // Returns the number of fields defined in this struct.
     size_t fieldCount() const;
-    size_t maybeForwardedFieldCount() const;
 
     // Set `*out` to the index of the field named `id` and returns true,
     // or return false if no such field exists.
@@ -457,11 +456,9 @@ class StructTypeDescr : public ComplexTypeDescr
 
     // Return the type descr of the field at index `index`.
     TypeDescr& fieldDescr(size_t index) const;
-    TypeDescr& maybeForwardedFieldDescr(size_t index) const;
 
     // Return the offset of the field at index `index`.
     size_t fieldOffset(size_t index) const;
-    size_t maybeForwardedFieldOffset(size_t index) const;
 
   private:
     ArrayObject& fieldInfoObject(size_t slot) const {
@@ -499,6 +496,8 @@ class TypedObject : public JSObject
                                     MutableHandleValue vp);
 
   protected:
+    static const ObjectOps objectOps_;
+
     HeapPtrShape shape_;
 
     static bool obj_lookupProperty(JSContext* cx, HandleObject obj,
@@ -543,7 +542,6 @@ class TypedObject : public JSObject
     uint8_t* typedMem() const;
     uint8_t* typedMemBase() const;
     bool isAttached() const;
-    bool maybeForwardedIsAttached() const;
 
     int32_t size() const {
         return typeDescr().size();

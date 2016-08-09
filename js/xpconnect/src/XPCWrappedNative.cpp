@@ -767,7 +767,7 @@ XPCWrappedNative::Init(const XPCNativeScriptableCreateInfo* sci)
 
     // create our flatJSObject
 
-    const JSClass* jsclazz = si ? si->GetJSClass() : Jsvalify(&XPC_WN_NoHelper_JSClass.base);
+    const JSClass* jsclazz = si ? si->GetJSClass() : Jsvalify(&XPC_WN_NoHelper_JSClass);
 
     // We should have the global jsclass flag if and only if we're a global.
     MOZ_ASSERT_IF(si, !!si->GetFlags().IsGlobalObject() == !!(jsclazz->flags & JSCLASS_IS_GLOBAL));
@@ -775,8 +775,8 @@ XPCWrappedNative::Init(const XPCNativeScriptableCreateInfo* sci)
     MOZ_ASSERT(jsclazz &&
                jsclazz->name &&
                jsclazz->flags &&
-               jsclazz->resolve &&
-               jsclazz->finalize, "bad class");
+               jsclazz->getResolve() &&
+               jsclazz->hasFinalize(), "bad class");
 
     // XXXbz JS_GetObjectPrototype wants an object, even though it then asserts
     // that this object is same-compartment with cx, which means it could just

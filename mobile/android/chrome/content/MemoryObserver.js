@@ -23,7 +23,7 @@ var MemoryObserver = {
     let tabs = BrowserApp.tabs;
     let selected = BrowserApp.selectedTab;
     for (let i = 0; i < tabs.length; i++) {
-      if (tabs[i] != selected) {
+      if (tabs[i] != selected && !tabs[i].playingAudio) {
         this.zombify(tabs[i]);
       }
     }
@@ -43,7 +43,8 @@ var MemoryObserver = {
     let data = browser.__SS_data;
     let extra = browser.__SS_extdata;
 
-    // Notify the session store that the original tab object is going to be destroyed
+    // Notify any interested parties (e.g. the session store)
+    // that the original tab object is going to be destroyed
     let evt = document.createEvent("UIEvents");
     evt.initUIEvent("TabPreZombify", true, false, window, null);
     browser.dispatchEvent(evt);
