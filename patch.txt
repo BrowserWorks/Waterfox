@@ -1,0 +1,452 @@
+
+# HG changeset patch
+# User Jim Mathies <jmathies@mozilla.com>
+# Date 1469479529 18000
+# Node ID 698bdd627b48a975b31d7a5eda46eb781fd67ce8
+# Parent  c5fdc568bd3b213a3b03636aa6ca400cfd8cfd99
+Bug 1283274 - Disable windowless workaround if we detect a flash library that support async rendering. r=aklotz, a=gchang
+
+MozReview-Commit-ID: 3RubBjRoeEa
+
+diff --git a/dom/plugins/base/nsPluginHost.cpp b/dom/plugins/base/nsPluginHost.cpp
+--- a/dom/plugins/base/nsPluginHost.cpp
++++ b/dom/plugins/base/nsPluginHost.cpp
+@@ -2459,16 +2459,17 @@ nsPluginHost::FindPluginsInContent(bool 
+                                                "", // aFullPath
+                                                tag.version().get(),
+                                                nsTArray<nsCString>(tag.mimeTypes()),
+                                                nsTArray<nsCString>(tag.mimeDescriptions()),
+                                                nsTArray<nsCString>(tag.extensions()),
+                                                tag.isJavaPlugin(),
+                                                tag.isFlashPlugin(),
+                                                tag.supportsAsyncInit(),
++                                               tag.supportsAsyncRender(),
+                                                tag.lastModifiedTime(),
+                                                tag.isFromExtension(),
+                                                tag.sandboxLevel());
+       AddPluginTag(pluginTag);
+     }
+   }
+ 
+   mPluginsLoaded = true;
+@@ -2699,16 +2700,17 @@ nsPluginHost::FindPluginsForContent(uint
+                                       tag->Name(),
+                                       tag->Description(),
+                                       tag->MimeTypes(),
+                                       tag->MimeDescriptions(),
+                                       tag->Extensions(),
+                                       tag->mIsJavaPlugin,
+                                       tag->mIsFlashPlugin,
+                                       tag->mSupportsAsyncInit,
++                                      tag->mSupportsAsyncRender,
+                                       tag->FileName(),
+                                       tag->Version(),
+                                       tag->mLastModifiedTime,
+                                       tag->IsFromExtension(),
+                                       tag->mSandboxLevel));
+   }
+   return NS_OK;
+ }
+diff --git a/dom/plugins/base/nsPluginTags.cpp b/dom/plugins/base/nsPluginTags.cpp
+--- a/dom/plugins/base/nsPluginTags.cpp
++++ b/dom/plugins/base/nsPluginTags.cpp
+@@ -231,16 +231,17 @@ nsPluginTag::nsPluginTag(nsPluginInfo* a
+                          aPluginInfo->fFileName, aPluginInfo->fVersion),
+     mId(sNextId++),
+     mContentProcessRunningCount(0),
+     mHadLocalInstance(false),
+     mLibrary(nullptr),
+     mIsJavaPlugin(false),
+     mIsFlashPlugin(false),
+     mSupportsAsyncInit(false),
++    mSupportsAsyncRender(false),
+     mFullPath(aPluginInfo->fFullPath),
+     mLastModifiedTime(aLastModifiedTime),
+     mSandboxLevel(0),
+     mCachedBlocklistState(nsIBlocklistService::STATE_NOT_BLOCKED),
+     mCachedBlocklistStateValid(false),
+     mIsFromExtension(fromExtension)
+ {
+   InitMime(aPluginInfo->fMimeTypeArray,
+@@ -266,16 +267,17 @@ nsPluginTag::nsPluginTag(const char* aNa
+   : nsIInternalPluginTag(aName, aDescription, aFileName, aVersion),
+     mId(sNextId++),
+     mContentProcessRunningCount(0),
+     mHadLocalInstance(false),
+     mLibrary(nullptr),
+     mIsJavaPlugin(false),
+     mIsFlashPlugin(false),
+     mSupportsAsyncInit(false),
++    mSupportsAsyncRender(false),
+     mFullPath(aFullPath),
+     mLastModifiedTime(aLastModifiedTime),
+     mSandboxLevel(0),
+     mCachedBlocklistState(nsIBlocklistService::STATE_NOT_BLOCKED),
+     mCachedBlocklistStateValid(false),
+     mIsFromExtension(fromExtension)
+ {
+   InitMime(aMimeTypes, aMimeDescriptions, aExtensions,
+@@ -293,27 +295,29 @@ nsPluginTag::nsPluginTag(uint32_t aId,
+                          const char* aFullPath,
+                          const char* aVersion,
+                          nsTArray<nsCString> aMimeTypes,
+                          nsTArray<nsCString> aMimeDescriptions,
+                          nsTArray<nsCString> aExtensions,
+                          bool aIsJavaPlugin,
+                          bool aIsFlashPlugin,
+                          bool aSupportsAsyncInit,
++                         bool aSupportsAsyncRender,
+                          int64_t aLastModifiedTime,
+                          bool aFromExtension,
+                          int32_t aSandboxLevel)
+   : nsIInternalPluginTag(aName, aDescription, aFileName, aVersion, aMimeTypes,
+                          aMimeDescriptions, aExtensions),
+     mId(aId),
+     mContentProcessRunningCount(0),
+     mLibrary(nullptr),
+     mIsJavaPlugin(aIsJavaPlugin),
+     mIsFlashPlugin(aIsFlashPlugin),
+     mSupportsAsyncInit(aSupportsAsyncInit),
++    mSupportsAsyncRender(aSupportsAsyncRender),
+     mLastModifiedTime(aLastModifiedTime),
+     mSandboxLevel(aSandboxLevel),
+     mNiceFileName(),
+     mCachedBlocklistState(nsIBlocklistService::STATE_NOT_BLOCKED),
+     mCachedBlocklistStateValid(false),
+     mIsFromExtension(aFromExtension)
+ {
+ }
+diff --git a/dom/plugins/base/nsPluginTags.h b/dom/plugins/base/nsPluginTags.h
+--- a/dom/plugins/base/nsPluginTags.h
++++ b/dom/plugins/base/nsPluginTags.h
+@@ -124,16 +124,17 @@ public:
+               const char* aFullPath,
+               const char* aVersion,
+               nsTArray<nsCString> aMimeTypes,
+               nsTArray<nsCString> aMimeDescriptions,
+               nsTArray<nsCString> aExtensions,
+               bool aIsJavaPlugin,
+               bool aIsFlashPlugin,
+               bool aSupportsAsyncInit,
++              bool aSupportsAsyncRender,
+               int64_t aLastModifiedTime,
+               bool aFromExtension,
+               int32_t aSandboxLevel);
+ 
+   void TryUnloadPlugin(bool inShutdown);
+ 
+   // plugin is enabled and not blocklisted
+   bool IsActive();
+@@ -163,16 +164,17 @@ public:
+   // True if we've ever created an instance of this plugin in the current process.
+   bool          mHadLocalInstance;
+ 
+   PRLibrary     *mLibrary;
+   RefPtr<nsNPAPIPlugin> mPlugin;
+   bool          mIsJavaPlugin;
+   bool          mIsFlashPlugin;
+   bool          mSupportsAsyncInit;
++  bool          mSupportsAsyncRender;
+   nsCString     mFullPath; // UTF-8
+   int64_t       mLastModifiedTime;
+   nsCOMPtr<nsITimer> mUnloadTimer;
+   int32_t       mSandboxLevel;
+ 
+   void          InvalidateBlocklistState();
+ 
+ private:
+diff --git a/dom/plugins/base/nsPluginsDir.h b/dom/plugins/base/nsPluginsDir.h
+--- a/dom/plugins/base/nsPluginsDir.h
++++ b/dom/plugins/base/nsPluginsDir.h
+@@ -29,16 +29,17 @@ struct nsPluginInfo {
+ 	char* fDescription;			// etc.
+ 	uint32_t fVariantCount;
+ 	char** fMimeTypeArray;
+ 	char** fMimeDescriptionArray;
+ 	char** fExtensionArray;
+ 	char* fFileName;
+ 	char* fFullPath;
+ 	char* fVersion;
++	bool fSupportsAsyncRender;
+ };
+ 
+ /**
+  * Provides cross-platform access to a plugin file. Deals with reading
+  * properties from the plugin file, and loading the plugin's shared
+  * library. Insulates core nsIPluginHost implementations from these
+  * details.
+  */
+diff --git a/dom/plugins/base/nsPluginsDirWin.cpp b/dom/plugins/base/nsPluginsDirWin.cpp
+--- a/dom/plugins/base/nsPluginsDirWin.cpp
++++ b/dom/plugins/base/nsPluginsDirWin.cpp
+@@ -104,16 +104,30 @@ static char* GetVersion(void* verbuf)
+                        LOWORD(fileInfo->dwFileVersionMS),
+                        HIWORD(fileInfo->dwFileVersionLS),
+                        LOWORD(fileInfo->dwFileVersionLS));
+   }
+ 
+   return nullptr;
+ }
+ 
++// Returns a boolean indicating if the key's value contains a string
++// entry equal to "1" or "0". No entry for the key returns false.
++static bool GetBooleanFlag(void* verbuf, const WCHAR* key,
++                           UINT language, UINT codepage)
++{
++  char* flagStr = GetKeyValue(verbuf, key, language, codepage);
++  if (!flagStr) {
++    return false;
++  }
++  bool result = (PL_strncmp("1", flagStr, 1) == 0);
++  PL_strfree(flagStr);
++  return result;
++}
++
+ static uint32_t CalculateVariantCount(char* mimeTypes)
+ {
+   uint32_t variants = 1;
+ 
+   if (!mimeTypes)
+     return 0;
+ 
+   char* index = mimeTypes;
+@@ -351,21 +365,22 @@ nsresult nsPluginFile::GetPluginInfo(nsP
+   if (versionsize > 0)
+     verbuf = PR_Malloc(versionsize);
+   if (!verbuf)
+     return NS_ERROR_OUT_OF_MEMORY;
+ 
+   if (::GetFileVersionInfoW(lpFilepath, 0, versionsize, verbuf))
+   {
+     // TODO: get appropriately-localized info from plugin file
+-    UINT lang = 1033; // language = English
+-    UINT cp = 1252;   // codepage = Western
++    UINT lang = 1033; // language = English, 0x409
++    UINT cp = 1252;   // codepage = Western, 0x4E4
+     info.fName = GetKeyValue(verbuf, L"ProductName", lang, cp);
+     info.fDescription = GetKeyValue(verbuf, L"FileDescription", lang, cp);
+- 
++    info.fSupportsAsyncRender = GetBooleanFlag(verbuf, L"AsyncDrawingSupport", lang, cp);
++
+     char *mimeType = GetKeyValue(verbuf, L"MIMEType", lang, cp);
+     char *mimeDescription = GetKeyValue(verbuf, L"FileOpenName", lang, cp);
+     char *extensions = GetKeyValue(verbuf, L"FileExtents", lang, cp);
+ 
+     info.fVariantCount = CalculateVariantCount(mimeType);
+     info.fMimeTypeArray = MakeStringArray(info.fVariantCount, mimeType);
+     info.fMimeDescriptionArray = MakeStringArray(info.fVariantCount, mimeDescription);
+     info.fExtensionArray = MakeStringArray(info.fVariantCount, extensions);
+diff --git a/dom/plugins/ipc/PPluginModule.ipdl b/dom/plugins/ipc/PPluginModule.ipdl
+--- a/dom/plugins/ipc/PPluginModule.ipdl
++++ b/dom/plugins/ipc/PPluginModule.ipdl
+@@ -43,16 +43,21 @@ intr protocol PPluginModule
+ both:
+   // Window-specific message which instructs the interrupt mechanism to enter
+   // a nested event loop for the current interrupt call.
+   async ProcessNativeEventsInInterruptCall();
+ 
+ child:
+   async DisableFlashProtectedMode();
+ 
++  // Sync query to check if a Flash library indicates it
++  // supports async rendering mode.
++  intr ModuleSupportsAsyncRender()
++    returns (bool result);
++
+   // Forces the child process to update its plugin function table.
+   intr NP_GetEntryPoints()
+     returns (NPError rv);
+ 
+   intr NP_Initialize(PluginSettings settings)
+     returns (NPError rv);
+ 
+   async AsyncNP_Initialize(PluginSettings settings);
+diff --git a/dom/plugins/ipc/PluginModuleChild.cpp b/dom/plugins/ipc/PluginModuleChild.cpp
+--- a/dom/plugins/ipc/PluginModuleChild.cpp
++++ b/dom/plugins/ipc/PluginModuleChild.cpp
+@@ -132,16 +132,17 @@ PluginModuleChild::PluginModuleChild(boo
+ #elif defined(MOZ_WIDGET_GTK)
+   , mNestedLoopTimerId(0)
+ #elif defined(MOZ_WIDGET_QT)
+   , mNestedLoopTimerObject(0)
+ #endif
+ #ifdef OS_WIN
+   , mNestedEventHook(nullptr)
+   , mGlobalCallWndProcHook(nullptr)
++  , mAsyncRenderSupport(false)
+ #endif
+ {
+     memset(&mFunctions, 0, sizeof(mFunctions));
+     if (mIsChrome) {
+         MOZ_ASSERT(!gChromeInstance);
+         gChromeInstance = this;
+     }
+ 
+@@ -261,36 +262,39 @@ PluginModuleChild::InitForChrome(const s
+         return false;
+ 
+     bool exists;
+     localFile->Exists(&exists);
+     NS_ASSERTION(exists, "plugin file ain't there");
+ 
+     nsPluginFile pluginFile(localFile);
+ 
+-#if defined(MOZ_X11) || defined(XP_MACOSX)
+     nsPluginInfo info = nsPluginInfo();
+     if (NS_FAILED(pluginFile.GetPluginInfo(info, &mLibrary))) {
+         return false;
+     }
+ 
++#if defined(XP_WIN)
++    // XXX quirks isn't initialized yet
++    mAsyncRenderSupport = info.fSupportsAsyncRender;
++#endif
+ #if defined(MOZ_X11)
+     NS_NAMED_LITERAL_CSTRING(flash10Head, "Shockwave Flash 10.");
+     if (StringBeginsWith(nsDependentCString(info.fDescription), flash10Head)) {
+         AddQuirk(QUIRK_FLASH_EXPOSE_COORD_TRANSLATION);
+     }
+-#else // defined(XP_MACOSX)
++#endif
++#if defined(XP_MACOSX)
+     const char* namePrefix = "Plugin Content";
+     char nameBuffer[80];
+     snprintf(nameBuffer, sizeof(nameBuffer), "%s (%s)", namePrefix, info.fName);
+     mozilla::plugins::PluginUtilsOSX::SetProcessName(nameBuffer);
+ #endif
+-
+     pluginFile.FreePluginInfo(info);
+-
++#if defined(MOZ_X11) || defined(XP_MACOSX)
+     if (!mLibrary)
+ #endif
+     {
+         nsresult rv = pluginFile.LoadPlugin(&mLibrary);
+         if (NS_FAILED(rv))
+             return false;
+     }
+     NS_ASSERTION(mLibrary, "couldn't open shared object");
+@@ -2164,16 +2168,28 @@ PluginModuleChild::InitQuirksModes(const
+     if (mQuirks != QUIRKS_NOT_INITIALIZED) {
+       return;
+     }
+ 
+     mQuirks = GetQuirksFromMimeTypeAndFilename(aMimeType, mPluginFilename);
+ }
+ 
+ bool
++PluginModuleChild::AnswerModuleSupportsAsyncRender(bool* aResult)
++{
++#if defined(XP_WIN)
++    *aResult = gChromeInstance->mAsyncRenderSupport;
++    return true;
++#else
++    NS_NOTREACHED("Shouldn't get here!");
++    return false;
++#endif
++}
++
++bool
+ PluginModuleChild::RecvPPluginInstanceConstructor(PPluginInstanceChild* aActor,
+                                                   const nsCString& aMimeType,
+                                                   const uint16_t& aMode,
+                                                   InfallibleTArray<nsCString>&& aNames,
+                                                   InfallibleTArray<nsCString>&& aValues)
+ {
+     PLUGIN_LOG_DEBUG_METHOD;
+     AssertPluginThread();
+diff --git a/dom/plugins/ipc/PluginModuleChild.h b/dom/plugins/ipc/PluginModuleChild.h
+--- a/dom/plugins/ipc/PluginModuleChild.h
++++ b/dom/plugins/ipc/PluginModuleChild.h
+@@ -145,16 +145,18 @@ protected:
+ 
+     virtual bool
+     RecvProcessNativeEventsInInterruptCall() override;
+ 
+     virtual bool RecvStartProfiler(const ProfilerInitParams& params) override;
+     virtual bool RecvStopProfiler() override;
+     virtual bool RecvGatherProfile() override;
+ 
++    virtual bool
++    AnswerModuleSupportsAsyncRender(bool* aResult) override;
+ public:
+     explicit PluginModuleChild(bool aIsChrome);
+     virtual ~PluginModuleChild();
+ 
+     bool CommonInit(base::ProcessId aParentPid,
+                     MessageLoop* aIOLoop,
+                     IPC::Channel* aChannel);
+ 
+@@ -369,15 +371,17 @@ private:
+                                                  LPARAM lParam);
+     static LRESULT CALLBACK CallWindowProcHook(int code,
+                                                WPARAM wParam,
+                                                LPARAM lParam);
+     void SetEventHooks();
+     void ResetEventHooks();
+     HHOOK mNestedEventHook;
+     HHOOK mGlobalCallWndProcHook;
++public:
++    bool mAsyncRenderSupport;
+ #endif
+ };
+ 
+ } /* namespace plugins */
+ } /* namespace mozilla */
+ 
+ #endif  // ifndef dom_plugins_PluginModuleChild_h
+diff --git a/dom/plugins/ipc/PluginModuleParent.cpp b/dom/plugins/ipc/PluginModuleParent.cpp
+--- a/dom/plugins/ipc/PluginModuleParent.cpp
++++ b/dom/plugins/ipc/PluginModuleParent.cpp
+@@ -2673,21 +2673,26 @@ PluginModuleParent::NPP_NewInternal(NPMI
+ 
+     nsDependentCString strPluginType(pluginType);
+     PluginInstanceParent* parentInstance =
+         new PluginInstanceParent(this, instance, strPluginType, mNPNIface);
+ 
+     if (mIsFlashPlugin) {
+         parentInstance->InitMetadata(strPluginType, srcAttribute);
+ #ifdef XP_WIN
+-        // Force windowless mode (bug 1201904) when sandbox level >= 2 or Win64
++        bool supportsAsyncRender = false;
++        CallModuleSupportsAsyncRender(&supportsAsyncRender);
+ #ifdef _WIN64
+-        {
++        // For 64-bit builds force windowless if the flash library doesn't support
++        // async rendering regardless of sandbox level.
++        if (!supportsAsyncRender) {
+ #else
+-        if (mSandboxLevel >= 2) {
++        // For 32-bit builds force windowless if the flash library doesn't support
++        // async rendering and the sandbox level is 2 or greater.
++        if (!supportsAsyncRender && mSandboxLevel >= 2) {
+ #endif
+            NS_NAMED_LITERAL_CSTRING(wmodeAttributeName, "wmode");
+            NS_NAMED_LITERAL_CSTRING(opaqueAttributeValue, "opaque");
+            auto wmodeAttributeIndex =
+                names.IndexOf(wmodeAttributeName, 0, comparator);
+            if (wmodeAttributeIndex != names.NoIndex) {
+                if (!values[wmodeAttributeIndex].EqualsLiteral("transparent")) {
+                    values[wmodeAttributeIndex].Assign(opaqueAttributeValue);
+diff --git a/dom/plugins/ipc/PluginTypes.ipdlh b/dom/plugins/ipc/PluginTypes.ipdlh
+--- a/dom/plugins/ipc/PluginTypes.ipdlh
++++ b/dom/plugins/ipc/PluginTypes.ipdlh
+@@ -12,16 +12,17 @@ struct PluginTag
+   nsCString name;
+   nsCString description;
+   nsCString[] mimeTypes;
+   nsCString[] mimeDescriptions;
+   nsCString[] extensions;
+   bool isJavaPlugin;
+   bool isFlashPlugin;
+   bool supportsAsyncInit;
++  bool supportsAsyncRender; // flash specific
+   nsCString filename;
+   nsCString version;
+   int64_t lastModifiedTime;
+   bool isFromExtension;
+   int32_t sandboxLevel;
+ };
+ 
+ union PluginIdentifier
+

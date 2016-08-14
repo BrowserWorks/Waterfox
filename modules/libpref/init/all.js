@@ -4547,7 +4547,7 @@ pref("browser.history.maxStateObjectSize", 655360);
 pref("browser.meta_refresh_when_inactive.disabled", false);
 
 // XPInstall prefs
-pref("xpinstall.whitelist.required", true);
+pref("xpinstall.whitelist.required", false);
 // Only Firefox requires add-on signatures
 pref("xpinstall.signatures.required", false);
 pref("extensions.alwaysUnpack", false);

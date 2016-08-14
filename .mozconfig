@@ -13,8 +13,8 @@ mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_MAKE_FLAGS=-j8
 mk_add_options MOZ_OBJDIR=objdir
 
-export CC="clang-cl"
-export CXX="clang-cl"
+#export CC="clang-cl"
+#export CXX="clang-cl"
 
 ac_add_options --disable-crashreporter
 ac_add_options --disable-eme
