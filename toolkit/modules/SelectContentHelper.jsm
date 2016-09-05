@@ -17,6 +17,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "DOMUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
                                   "resource://gre/modules/DeferredTask.jsm");
 
+const kStateActive = 0x00000001; // NS_EVENT_STATE_ACTIVE
 const kStateHover = 0x00000004; // NS_EVENT_STATE_HOVER
 
 // A process global state for whether or not content thinks
@@ -63,6 +64,7 @@ this.SelectContentHelper.prototype = {
   },
 
   uninit: function() {
+    this.element.openInParentProcess = false;
     this.global.removeMessageListener("Forms:SelectDropDownItem", this);
     this.global.removeMessageListener("Forms:DismissedDropDown", this);
     this.global.removeMessageListener("Forms:MouseOver", this);
@@ -78,6 +80,7 @@ this.SelectContentHelper.prototype = {
   },
 
   showDropDown: function() {
+    this.element.openInParentProcess = true;
     let rect = this._getBoundingContentRect();
     this.global.sendAsyncMessage("Forms:ShowDropDown", {
       rect: rect,
@@ -112,8 +115,23 @@ this.SelectContentHelper.prototype = {
         break;
 
       case "Forms:DismissedDropDown":
-        if (this.initialSelection != this.element.item(this.element.selectedIndex)) {
+        let selectedOption = this.element.item(this.element.selectedIndex);
+        if (this.initialSelection != selectedOption) {
           let win = this.element.ownerDocument.defaultView;
+          // For ordering of events, we're using non-e10s as our guide here,
+          // since the spec isn't exactly clear. In non-e10s, we fire:
+          // mousedown, mouseup, input, change, click.
+          const MOUSE_EVENTS = ["mousedown", "mouseup"];
+          for (let eventName of MOUSE_EVENTS) {
+            let mouseEvent = new win.MouseEvent(eventName, {
+              view: win,
+              bubbles: true,
+              cancelable: true,
+            });
+            selectedOption.dispatchEvent(mouseEvent);
+          }
+          DOMUtils.removeContentState(this.element, kStateActive);
+
           let inputEvent = new win.UIEvent("input", {
             bubbles: true,
           });
@@ -124,20 +142,12 @@ this.SelectContentHelper.prototype = {
           });
           this.element.dispatchEvent(changeEvent);
 
-          // Going for mostly-Blink parity here, which (at least on Windows)
-          // fires a mouseup and click event after each selection -
-          // even by keyboard. We're firing a mousedown too, since that
-          // seems to make more sense. Unfortunately, the spec on form
-          // control behaviours for these events is really not clear.
-          const MOUSE_EVENTS = ["mousedown", "mouseup", "click"];
-          for (let eventName of MOUSE_EVENTS) {
-            let mouseEvent = new win.MouseEvent(eventName, {
-              view: win,
-              bubbles: true,
-              cancelable: true,
-            });
-            this.element.dispatchEvent(mouseEvent);
-          }
+          let mouseEvent = new win.MouseEvent("click", {
+            view: win,
+            bubbles: true,
+            cancelable: true,
+          });
+          selectedOption.dispatchEvent(mouseEvent);
         }
 
         this.uninit();

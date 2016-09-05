@@ -1023,7 +1023,7 @@ pref("security.sandbox.windows.log", false);
 pref("dom.ipc.plugins.sandbox-level.default", 0);
 #if defined(_AMD64_)
 // The lines in PluginModuleParent.cpp should be changed in line with this.
-pref("dom.ipc.plugins.sandbox-level.flash", 2);
+pref("dom.ipc.plugins.sandbox-level.flash", 0);
 #else
 pref("dom.ipc.plugins.sandbox-level.flash", 0);
 #endif
