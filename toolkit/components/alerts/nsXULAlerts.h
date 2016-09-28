@@ -6,6 +6,7 @@
 #ifndef nsXULAlerts_h__
 #define nsXULAlerts_h__
 
+#include "nsCycleCollectionParticipant.h"
 #include "nsHashKeys.h"
 #include "nsInterfaceHashtable.h"
 
@@ -43,8 +44,9 @@ protected:
  */
 class nsXULAlertObserver : public nsIObserver {
 public:
-  NS_DECL_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_NSIOBSERVER
+  NS_DECL_CYCLE_COLLECTION_CLASS(nsXULAlertObserver)
 
   nsXULAlertObserver(nsXULAlerts* aXULAlerts, const nsAString& aAlertName,
                      nsIObserver* aObserver)

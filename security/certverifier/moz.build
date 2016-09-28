@@ -13,10 +13,12 @@ EXPORTS += [
 UNIFIED_SOURCES += [
     'BRNameMatchingPolicy.cpp',
     'CertVerifier.cpp',
+    'CTSerialization.cpp',
     'NSSCertDBTrustDomain.cpp',
     'OCSPCache.cpp',
     'OCSPRequestor.cpp',
     'OCSPVerificationTrustDomain.cpp',
+    'SignedCertificateTimestamp.cpp',
 ]
 
 if not CONFIG['NSS_NO_EV_CERTS']:
@@ -31,6 +33,10 @@ LOCAL_INCLUDES += [
 
 DIRS += [
     '../pkix',
+]
+
+TEST_DIRS += [
+    'tests/gtest',
 ]
 
 CXXFLAGS += ['-Wall']
@@ -79,5 +85,8 @@ if CONFIG['_MSC_VER']:
     '-wd4127', # conditional expression is constant
     '-wd4946', # reinterpret_cast used between related types
   ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']
 
 FINAL_LIBRARY = 'xul'

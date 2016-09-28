@@ -10,14 +10,13 @@ var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 const XHTML_NS = "http://www.w3.org/1999/xhtml";
 
-const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
-
 // This gives logging to stdout for tests
 var {console} = Cu.import("resource://gre/modules/Console.jsm", {});
 
 var {require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 var Services = require("Services");
 var WebConsoleUtils = require("devtools/shared/webconsole/utils").Utils;
+var {Task} = require("devtools/shared/task");
 
 var ConsoleAPIStorage = Cc["@mozilla.org/consoleAPI-storage;1"]
                           .getService(Ci.nsIConsoleAPIStorage);
@@ -29,7 +28,7 @@ var {ConsoleServiceListener, ConsoleAPIListener} =
 
 function initCommon()
 {
-  //Services.prefs.setBoolPref("devtools.debugger.log", true);
+  // Services.prefs.setBoolPref("devtools.debugger.log", true);
 }
 
 function initDebuggerServer()
@@ -68,8 +67,8 @@ function _attachConsole(aListeners, aCallback, aAttachToTab, aAttachToWorker)
   function _onAttachConsole(aState, aResponse, aWebConsoleClient)
   {
     if (aResponse.error) {
-      Cu.reportError("attachConsole failed: " + aResponse.error + " " +
-                     aResponse.message);
+      console.error("attachConsole failed: " + aResponse.error + " " +
+                    aResponse.message);
     }
 
     aState.client = aWebConsoleClient;
@@ -79,8 +78,8 @@ function _attachConsole(aListeners, aCallback, aAttachToTab, aAttachToWorker)
 
   connectToDebugger(function _onConnect(aState, aResponse) {
     if (aResponse.error) {
-      Cu.reportError("client.connect() failed: " + aResponse.error + " " +
-                     aResponse.message);
+      console.error("client.connect() failed: " + aResponse.error + " " +
+                    aResponse.message);
       aCallback(aState, aResponse);
       return;
     }
@@ -88,20 +87,35 @@ function _attachConsole(aListeners, aCallback, aAttachToTab, aAttachToWorker)
     if (aAttachToTab) {
       aState.dbgClient.listTabs(function _onListTabs(aResponse) {
         if (aResponse.error) {
-          Cu.reportError("listTabs failed: " + aResponse.error + " " +
-                         aResponse.message);
+          console.error("listTabs failed: " + aResponse.error + " " +
+                        aResponse.message);
           aCallback(aState, aResponse);
           return;
         }
         let tab = aResponse.tabs[aResponse.selected];
         aState.dbgClient.attachTab(tab.actor, function (response, tabClient) {
           if (aAttachToWorker) {
-            var worker = new Worker("console-test-worker.js");
+            let workerName = "console-test-worker.js#" + new Date().getTime();
+            var worker = new Worker(workerName);
+            // Keep a strong reference to the Worker to avoid it being
+            // GCd during the test (bug 1237492).
+            aState._worker_ref = worker;
             worker.addEventListener("message", function listener() {
               worker.removeEventListener("message", listener);
               tabClient.listWorkers(function (response) {
-                tabClient.attachWorker(response.workers[0].actor, function (response, workerClient) {
-                  workerClient.attachThread({}, function(aResponse) {
+                let worker = response.workers.filter(w => w.url == workerName)[0];
+                if (!worker) {
+                  console.error("listWorkers failed. Unable to find the " +
+                                "worker actor\n");
+                  return;
+                }
+                tabClient.attachWorker(worker.actor, function (response, workerClient) {
+                  if (!workerClient || response.error) {
+                    console.error("attachWorker failed. No worker client or " +
+                                  " error: " + response.error);
+                    return;
+                  }
+                  workerClient.attachThread({}, function (aResponse) {
                     aState.actor = workerClient.consoleActor;
                     aState.dbgClient.attachConsole(workerClient.consoleActor, aListeners,
                                                    _onAttachConsole.bind(null, aState));
@@ -139,8 +153,8 @@ function closeDebugger(aState, aCallback)
 function checkConsoleAPICalls(consoleCalls, expectedConsoleCalls)
 {
   is(consoleCalls.length, expectedConsoleCalls.length,
-    'received correct number of console calls');
-  expectedConsoleCalls.forEach(function(aMessage, aIndex) {
+    "received correct number of console calls");
+  expectedConsoleCalls.forEach(function (aMessage, aIndex) {
     info("checking received console call #" + aIndex);
     checkConsoleAPICall(consoleCalls[aIndex], expectedConsoleCalls[aIndex]);
   });
@@ -260,7 +274,7 @@ function nextTest(aMessage)
 function withFrame(url) {
   return new Promise(resolve => {
     let iframe = document.createElement("iframe");
-    iframe.onload = function() {
+    iframe.onload = function () {
       resolve(iframe);
     };
     iframe.src = url;
@@ -270,7 +284,7 @@ function withFrame(url) {
 
 function navigateFrame(iframe, url) {
   return new Promise(resolve => {
-    iframe.onload = function() {
+    iframe.onload = function () {
       resolve(iframe);
     };
     iframe.src = url;
@@ -279,7 +293,7 @@ function navigateFrame(iframe, url) {
 
 function forceReloadFrame(iframe) {
   return new Promise(resolve => {
-    iframe.onload = function() {
+    iframe.onload = function () {
       resolve(iframe);
     };
     iframe.contentWindow.location.reload(true);
@@ -302,9 +316,9 @@ function withActiveServiceWorker(win, url, scope) {
     // workers state change events to determine when its activated.
     return new Promise(resolve => {
       let sw = swr.waiting || swr.installing;
-      sw.addEventListener('statechange', function stateHandler(evt) {
-        if (sw.state === 'activated') {
-          sw.removeEventListener('statechange', stateHandler);
+      sw.addEventListener("statechange", function stateHandler(evt) {
+        if (sw.state === "activated") {
+          sw.removeEventListener("statechange", stateHandler);
           resolve(swr);
         }
       });
@@ -319,9 +333,9 @@ function messageServiceWorker(win, scope, message) {
         resolve();
       };
       let sw = swr.active || swr.waiting || swr.installing;
-      sw.postMessage({ type: 'PING', message: message });
+      sw.postMessage({ type: "PING", message: message });
     });
-  })
+  });
 }
 
 function unregisterServiceWorker(win) {

@@ -71,6 +71,11 @@ TEST_HARNESS_FILES.testing.mochitest += [
     'start_desktop.js',
 ]
 
+TEST_HARNESS_FILES.testing.mochitest.embed += [
+    'embed/Xm5i5kbIXzc',
+    'embed/Xm5i5kbIXzc^headers^',
+]
+
 TEST_HARNESS_FILES.testing.mochitest.pywebsocket += [
     'pywebsocket/standalone.py',
 ]
@@ -153,3 +158,13 @@ TEST_HARNESS_FILES.testing.mochitest.tests.testing.mochitest.tests['MochiKit-1.4
     'tests/MochiKit-1.4.2/MochiKit/Test.js',
     'tests/MochiKit-1.4.2/MochiKit/Visual.js',
 ]
+
+TEST_HARNESS_FILES.testing.mochitest.iceserver += [
+    '/testing/tools/iceserver/iceserver.py',
+]
+
+TEST_HARNESS_FILES.testing.mochitest.websocketprocessbridge += [
+    '/testing/tools/websocketprocessbridge/websocketprocessbridge.py',
+    '/testing/tools/websocketprocessbridge/websocketprocessbridge_requirements.txt',
+]
+

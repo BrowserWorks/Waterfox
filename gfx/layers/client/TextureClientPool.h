@@ -12,12 +12,14 @@
 #include "TextureClient.h"
 #include "nsITimer.h"
 #include <stack>
+#include <list>
 
 namespace mozilla {
 namespace layers {
 
 class ISurfaceAllocator;
 class CompositableForwarder;
+class TextureReadLock;
 
 class TextureClientAllocator
 {
@@ -111,6 +113,8 @@ public:
   void Destroy();
 
 private:
+  void ReturnUnlockedClients();
+
   // The minimum size of the pool (the number of tiles that will be kept after
   // shrinking).
   static const uint32_t sMinCacheSize = 0;
@@ -141,7 +145,8 @@ private:
   // On ICS, fence wait happens implicitly before drawing.
   // Since JB, fence wait happens explicitly when fetching a client from the pool.
   std::stack<RefPtr<TextureClient> > mTextureClients;
-  std::stack<RefPtr<TextureClient> > mTextureClientsDeferred;
+
+  std::list<RefPtr<TextureClient>> mTextureClientsDeferred;
   RefPtr<nsITimer> mTimer;
   RefPtr<CompositableForwarder> mSurfaceAllocator;
 };

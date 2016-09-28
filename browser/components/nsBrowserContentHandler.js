@@ -514,6 +514,13 @@ nsBrowserContentHandler.prototype = {
             willRestoreSession = ss.isAutomaticRestoreEnabled();
 
             overridePage = Services.urlFormatter.formatURLPref("startup.homepage_override_url");
+            // Temporary hack for Firefox 49 to show whatsnew for zh-TW.
+            // See Bug #1292637
+            var locale = prefb.getCharPref("general.useragent.locale");
+            if (locale == "zh-TW") {
+              overridePage = "https://www.mozilla.org/zh-TW/firefox/49.0/whatsnew/";
+            }
+
             if (prefb.prefHasUserValue("app.update.postupdate"))
               overridePage = getPostUpdateOverridePage(overridePage);
 
@@ -526,6 +533,22 @@ nsBrowserContentHandler.prototype = {
     // formatURLPref might return "about:blank" if getting the pref fails
     if (overridePage == "about:blank")
       overridePage = "";
+
+    // Temporary override page for users who are running Firefox on Windows 10 for their first time.
+    let platformVersion = Services.sysinfo.getProperty("version");
+    if (AppConstants.platform == "win" &&
+        Services.vc.compare(platformVersion, "10") == 0 &&
+        !Services.prefs.getBoolPref("browser.usedOnWindows10")) {
+      Services.prefs.setBoolPref("browser.usedOnWindows10", true);
+      let firstUseOnWindows10URL = Services.urlFormatter.formatURLPref("browser.usedOnWindows10.introURL");
+
+      if (firstUseOnWindows10URL && firstUseOnWindows10URL.length) {
+        additionalPage = firstUseOnWindows10URL;
+        if (override == OVERRIDE_NEW_PROFILE) {
+          additionalPage += "&utm_content=firstrun";
+        }
+      }
+    }
 
     if (!additionalPage) {
       additionalPage = LaterRun.getURL() || "";
@@ -699,12 +722,12 @@ nsDefaultCommandLineHandler.prototype = {
     // instances where users explicitly decide to "open with" the browser.
     // Note that users who launch firefox manually with the -url flag will
     // get erroneously counted.
-    if (cmdLine.findFlag("url", false) &&
-        ShellService.isDefaultBrowser(false, false)) {
-      try {
+    try {
+      if (cmdLine.findFlag("url", false) &&
+          ShellService.isDefaultBrowser(false, false)) {
         Services.telemetry.getHistogramById("FX_STARTUP_EXTERNAL_CONTENT_HANDLER").add();
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
 
     var urilist = [];
 

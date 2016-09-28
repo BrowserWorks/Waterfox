@@ -21,7 +21,7 @@ sys.path.insert(1, os.path.dirname(sys.path[0]))
 from mozprocess import ProcessHandler
 
 from mozharness.base.log import FATAL
-from mozharness.base.script import BaseScript, PostScriptRun
+from mozharness.base.script import BaseScript, PostScriptRun, PreScriptAction
 from mozharness.base.vcs.vcsbase import VCSMixin
 from mozharness.mozilla.blob_upload import BlobUploadMixin, blobupload_config_options
 from mozharness.mozilla.mozbase import MozbaseMixin
@@ -143,18 +143,28 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             abs_dirs['abs_work_dir'], 'blobber_upload_dir')
         dirs['abs_emulator_dir'] = os.path.join(
             abs_dirs['abs_work_dir'], 'emulator')
-
-        if self.config.get("developer_mode"):
-            dirs['abs_avds_dir'] = os.path.join(
-                abs_dirs['abs_work_dir'], "avds_dir")
-        else:
-            dirs['abs_avds_dir'] = "/home/cltbld/.android"
+        dirs['abs_mochitest_dir'] = os.path.join(
+            dirs['abs_test_install_dir'], 'mochitest')
+        dirs['abs_avds_dir'] = self.config.get("avds_dir", "/home/cltbld/.android")
 
         for key in dirs.keys():
             if key not in abs_dirs:
                 abs_dirs[key] = dirs[key]
         self.abs_dirs = abs_dirs
         return self.abs_dirs
+
+    @PreScriptAction('create-virtualenv')
+    def _pre_create_virtualenv(self, action):
+        dirs = self.query_abs_dirs()
+
+        if os.path.isdir(dirs['abs_mochitest_dir']):
+            # mochitest is the only thing that needs this
+            requirements = os.path.join(dirs['abs_mochitest_dir'],
+                        'websocketprocessbridge',
+                        'websocketprocessbridge_requirements.txt')
+
+            self.register_virtualenv_module(requirements=[requirements],
+                                            two_pass=True)
 
     def _build_arg(self, option, value):
         """
@@ -218,7 +228,6 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
         # constructed in start_emulators.
         env['LD_LIBRARY_PATH'] = self.abs_dirs['abs_work_dir']
 
-        # Specifically for developer mode we have to set this variable
         avd_home_dir = self.abs_dirs['abs_avds_dir']
         env['ANDROID_AVD_HOME'] = os.path.join(avd_home_dir, 'avd')
 
@@ -551,10 +560,9 @@ class AndroidEmulatorTest(BlobUploadMixin, TestingMixin, EmulatorMixin, VCSMixin
             self.fatal("properties in self.buildbot_config are required to "
                        "retrieve tooltool manifest to be used for avds setup")
 
-        if self.config.get("developer_mode"):
-            # For developer mode we have to modify the downloaded avds to
-            # point to the right directory.
-            avd_home_dir = self.abs_dirs['abs_avds_dir']
+        avd_home_dir = self.abs_dirs['abs_avds_dir']
+        if avd_home_dir != "/home/cltbld/.android":
+            # Modify the downloaded avds to point to the right directory.
             cmd = [
                 'bash', '-c',
                 'sed -i "s|/home/cltbld/.android|%s|" %s/test-*.ini' %

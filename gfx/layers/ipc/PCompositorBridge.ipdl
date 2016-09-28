@@ -8,8 +8,11 @@
 include LayersSurfaces;
 include LayersMessages;
 include protocol PBrowser;
+include protocol PCompositable;
+include protocol PImageContainer;
 include protocol PLayer;
 include protocol PLayerTransaction;
+include protocol PTexture;
 include "mozilla/GfxMessageUtils.h";
 
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
@@ -27,6 +30,7 @@ using mozilla::LayoutDeviceIntPoint from "Units.h";
 using mozilla::LayoutDeviceIntRegion from "Units.h";
 using class mozilla::TimeStamp from "mozilla/TimeStamp.h";
 using class mozilla::layers::FrameUniformityData from "mozilla/layers/FrameUniformityData.h";
+using mozilla::layers::TextureFlags from "mozilla/layers/CompositorTypes.h";
 
 namespace mozilla {
 namespace layers {
@@ -41,6 +45,7 @@ sync protocol PCompositorBridge
 {
   // A Compositor manages a single Layer Manager (PLayerTransaction)
   manages PLayerTransaction;
+  manages PTexture;
 
 child:
   // The child should invalidate retained layers. This is used for local
@@ -182,6 +187,8 @@ parent:
   // scrollable layer GUID that the child considers 'approximately visible'.
   // We visualize this information in the APZ minimap.
   async NotifyApproximatelyVisibleRegion(ScrollableLayerGuid guid, CSSIntRegion region);
+
+  async PTexture(SurfaceDescriptor aSharedData, LayersBackend aBackend, TextureFlags aTextureFlags, uint64_t id);
 
 child:
   // Send back Compositor Frame Metrics from APZCs so tiled layers can

@@ -101,7 +101,7 @@ public:
     if (mSubpropertyCount[aProperty] == 0) {
       uint32_t count = 0;
       CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(
-          p, aProperty, nsCSSProps::eEnabledForAllContent) {
+          p, aProperty, CSSEnabledState::eForAllContent) {
         ++count;
       }
       mSubpropertyCount[aProperty] = count;
@@ -352,6 +352,9 @@ GetPropertyValuesPairs(JSContext* aCx,
                        nsTArray<PropertyValuesPair>& aResult);
 
 static bool
+IsAnimatableProperty(nsCSSProperty aProperty);
+
+static bool
 AppendStringOrStringSequenceToArray(JSContext* aCx,
                                     JS::Handle<JS::Value> aValue,
                                     ListAllowance aAllowLists,
@@ -370,7 +373,8 @@ static bool
 HasValidOffsets(const nsTArray<Keyframe>& aKeyframes);
 
 static void
-BuildSegmentsFromValueEntries(nsTArray<KeyframeValueEntry>& aEntries,
+BuildSegmentsFromValueEntries(nsStyleContext* aStyleContext,
+                              nsTArray<KeyframeValueEntry>& aEntries,
                               nsTArray<AnimationProperty>& aResult);
 
 static void
@@ -513,13 +517,13 @@ KeyframeUtils::GetAnimationPropertiesFromKeyframes(
       if (nsCSSProps::IsShorthand(pair.mProperty)) {
         nsCSSValueTokenStream* tokenStream = pair.mValue.GetTokenStreamValue();
         if (!StyleAnimationValue::ComputeValues(pair.mProperty,
-              nsCSSProps::eEnabledForAllContent, aElement, aStyleContext,
+              CSSEnabledState::eForAllContent, aElement, aStyleContext,
               tokenStream->mTokenStream, /* aUseSVGMode */ false, values)) {
           continue;
         }
       } else {
         if (!StyleAnimationValue::ComputeValues(pair.mProperty,
-              nsCSSProps::eEnabledForAllContent, aElement, aStyleContext,
+              CSSEnabledState::eForAllContent, aElement, aStyleContext,
               pair.mValue, /* aUseSVGMode */ false, values)) {
           continue;
         }
@@ -547,7 +551,7 @@ KeyframeUtils::GetAnimationPropertiesFromKeyframes(
   }
 
   nsTArray<AnimationProperty> result;
-  BuildSegmentsFromValueEntries(entries, result);
+  BuildSegmentsFromValueEntries(aStyleContext, entries, result);
 
   return result;
 }
@@ -716,13 +720,8 @@ GetPropertyValuesPairs(JSContext* aCx,
     }
     nsCSSProperty property =
       nsCSSProps::LookupPropertyByIDLName(propName,
-                                          nsCSSProps::eEnabledForAllContent);
-    if (property != eCSSProperty_UNKNOWN &&
-        (nsCSSProps::IsShorthand(property) ||
-         nsCSSProps::kAnimTypeTable[property] != eStyleAnimType_None)) {
-      // Only need to check for longhands being animatable, as the
-      // StyleAnimationValue::ComputeValues calls later on will check for
-      // a shorthand's components being animatable.
+                                          CSSEnabledState::eForAllContent);
+    if (IsAnimatableProperty(property)) {
       AdditionalProperty* p = properties.AppendElement();
       p->mProperty = property;
       p->mJsidIndex = i;
@@ -749,6 +748,31 @@ GetPropertyValuesPairs(JSContext* aCx,
   }
 
   return true;
+}
+
+/**
+ * Returns true if |aProperty| or, for shorthands, one or more of
+ * |aProperty|'s subproperties, is animatable.
+ */
+static bool
+IsAnimatableProperty(nsCSSProperty aProperty)
+{
+  if (aProperty == eCSSProperty_UNKNOWN) {
+    return false;
+  }
+
+  if (!nsCSSProps::IsShorthand(aProperty)) {
+    return nsCSSProps::kAnimTypeTable[aProperty] != eStyleAnimType_None;
+  }
+
+  CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(subprop, aProperty,
+                                       CSSEnabledState::eForAllContent) {
+    if (nsCSSProps::kAnimTypeTable[*subprop] != eStyleAnimType_None) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -885,12 +909,43 @@ HasValidOffsets(const nsTArray<Keyframe>& aKeyframes)
   return true;
 }
 
+static already_AddRefed<nsStyleContext>
+CreateStyleContextForAnimationValue(nsCSSProperty aProperty,
+                                    StyleAnimationValue aValue,
+                                    nsStyleContext* aBaseStyleContext)
+{
+  MOZ_ASSERT(aBaseStyleContext,
+             "CreateStyleContextForAnimationValue needs to be called "
+             "with a valid nsStyleContext");
+
+  RefPtr<AnimValuesStyleRule> styleRule = new AnimValuesStyleRule();
+  styleRule->AddValue(aProperty, aValue);
+
+  nsCOMArray<nsIStyleRule> rules;
+  rules.AppendObject(styleRule);
+
+  MOZ_ASSERT(aBaseStyleContext->PresContext()->StyleSet()->IsGecko(),
+             "ServoStyleSet should not use StyleAnimationValue for animations");
+  nsStyleSet* styleSet =
+    aBaseStyleContext->PresContext()->StyleSet()->AsGecko();
+
+  RefPtr<nsStyleContext> styleContext =
+    styleSet->ResolveStyleByAddingRules(aBaseStyleContext, rules);
+
+  // We need to call StyleData to generate cached data for the style context.
+  // Otherwise CalcStyleDifference returns no meaningful result.
+  styleContext->StyleData(nsCSSProps::kSIDTable[aProperty]);
+
+  return styleContext.forget();
+}
+
 /**
  * Builds an array of AnimationProperty objects to represent the keyframe
  * animation segments in aEntries.
  */
 static void
-BuildSegmentsFromValueEntries(nsTArray<KeyframeValueEntry>& aEntries,
+BuildSegmentsFromValueEntries(nsStyleContext* aStyleContext,
+                              nsTArray<KeyframeValueEntry>& aEntries,
                               nsTArray<AnimationProperty>& aResult)
 {
   if (aEntries.IsEmpty()) {
@@ -1022,6 +1077,22 @@ BuildSegmentsFromValueEntries(nsTArray<KeyframeValueEntry>& aEntries,
     segment->mFromValue = aEntries[i].mValue;
     segment->mToValue   = aEntries[j].mValue;
     segment->mTimingFunction = aEntries[i].mTimingFunction;
+
+    RefPtr<nsStyleContext> fromContext =
+      CreateStyleContextForAnimationValue(animationProperty->mProperty,
+                                          segment->mFromValue, aStyleContext);
+
+    RefPtr<nsStyleContext> toContext =
+      CreateStyleContextForAnimationValue(animationProperty->mProperty,
+                                          segment->mToValue, aStyleContext);
+
+    uint32_t equalStructs = 0;
+    uint32_t samePointerStructs = 0;
+    segment->mChangeHint =
+        fromContext->CalcStyleDifference(toContext,
+          nsChangeHint(0),
+          &equalStructs,
+          &samePointerStructs);
 
     i = j;
   }
@@ -1186,7 +1257,7 @@ RequiresAdditiveAnimation(const nsTArray<Keyframe>& aKeyframes,
           continue;
         }
         CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(
-            prop, pair.mProperty, nsCSSProps::eEnabledForAllContent) {
+            prop, pair.mProperty, CSSEnabledState::eForAllContent) {
           addToPropertySets(*prop, offsetToUse);
         }
       } else {

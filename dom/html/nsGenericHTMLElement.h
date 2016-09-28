@@ -38,7 +38,6 @@ class EventListenerManager;
 class EventStates;
 namespace dom {
 class HTMLFormElement;
-class HTMLPropertiesCollection;
 class HTMLMenuElement;
 } // namespace dom
 } // namespace mozilla
@@ -96,45 +95,6 @@ public:
     SetHTMLAttr(nsGkAtoms::dir, aDir, aError);
   }
   already_AddRefed<nsDOMStringMap> Dataset();
-  bool ItemScope() const
-  {
-    return GetBoolAttr(nsGkAtoms::itemscope);
-  }
-  void SetItemScope(bool aItemScope, mozilla::ErrorResult& aError)
-  {
-    SetHTMLBoolAttr(nsGkAtoms::itemscope, aItemScope, aError);
-  }
-  nsDOMTokenList* ItemType()
-  {
-    return GetTokenList(nsGkAtoms::itemtype);
-  }
-  void GetItemId(nsString& aItemId)
-  {
-    GetHTMLURIAttr(nsGkAtoms::itemid, aItemId);
-  }
-  void SetItemId(const nsAString& aItemID, mozilla::ErrorResult& aError)
-  {
-    SetHTMLAttr(nsGkAtoms::itemid, aItemID, aError);
-  }
-  nsDOMTokenList* ItemRef()
-  {
-    return GetTokenList(nsGkAtoms::itemref);
-  }
-  nsDOMTokenList* ItemProp()
-  {
-    return GetTokenList(nsGkAtoms::itemprop);
-  }
-  mozilla::dom::HTMLPropertiesCollection* Properties();
-  void GetItemValue(JSContext* aCx, JSObject* aScope,
-                    JS::MutableHandle<JS::Value> aRetval,
-                    mozilla::ErrorResult& aError);
-  void GetItemValue(JSContext* aCx, JS::MutableHandle<JS::Value> aRetval,
-                    mozilla::ErrorResult& aError)
-  {
-    GetItemValue(aCx, GetWrapperPreserveColor(), aRetval, aError);
-  }
-  void SetItemValue(JSContext* aCx, JS::Value aValue,
-                    mozilla::ErrorResult& aError);
   bool Hidden() const
   {
     return GetBoolAttr(nsGkAtoms::hidden);
@@ -324,10 +284,6 @@ public:
 protected:
   virtual ~nsGenericHTMLElement() {}
 
-  // These methods are used to implement element-specific behavior of Get/SetItemValue
-  // when an element has @itemprop but no @itemscope.
-  virtual void GetItemValueText(mozilla::dom::DOMString& text);
-  virtual void SetItemValueText(const nsAString& text);
 public:
   virtual already_AddRefed<mozilla::dom::UndoManager> GetUndoManager() override;
   virtual bool UndoScope() override;
@@ -392,50 +348,6 @@ public:
     mozilla::ErrorResult rv;
     Blur(rv);
     return rv.StealNSResult();
-  }
-  NS_IMETHOD GetItemScope(bool* aItemScope) final override {
-    *aItemScope = ItemScope();
-    return NS_OK;
-  }
-  NS_IMETHOD SetItemScope(bool aItemScope) final override {
-    mozilla::ErrorResult rv;
-    SetItemScope(aItemScope, rv);
-    return rv.StealNSResult();
-  }
-  NS_IMETHOD GetItemType(nsIVariant** aType) final override {
-    GetTokenList(nsGkAtoms::itemtype, aType);
-    return NS_OK;
-  }
-  NS_IMETHOD SetItemType(nsIVariant* aType) final override {
-    return SetTokenList(nsGkAtoms::itemtype, aType);
-  }
-  NS_IMETHOD GetItemId(nsAString& aId) final override {
-    nsString id;
-    GetItemId(id);
-    aId.Assign(id);
-    return NS_OK;
-  }
-  NS_IMETHOD SetItemId(const nsAString& aId) final override {
-    mozilla::ErrorResult rv;
-    SetItemId(aId, rv);
-    return rv.StealNSResult();
-  }
-  NS_IMETHOD GetProperties(nsISupports** aReturn) final override;
-  NS_IMETHOD GetItemValue(nsIVariant** aValue) final override;
-  NS_IMETHOD SetItemValue(nsIVariant* aValue) final override;
-  NS_IMETHOD GetItemRef(nsIVariant** aRef) final override {
-    GetTokenList(nsGkAtoms::itemref, aRef);
-    return NS_OK;
-  }
-  NS_IMETHOD SetItemRef(nsIVariant* aRef) final override {
-    return SetTokenList(nsGkAtoms::itemref, aRef);
-  }
-  NS_IMETHOD GetItemProp(nsIVariant** aProp) final override {
-    GetTokenList(nsGkAtoms::itemprop, aProp);
-    return NS_OK;
-  }
-  NS_IMETHOD SetItemProp(nsIVariant* aProp) final override {
-    return SetTokenList(nsGkAtoms::itemprop, aProp);
   }
   NS_IMETHOD GetAccessKey(nsAString& aAccessKey) final override {
     nsString accessKey;
@@ -1025,8 +937,6 @@ protected:
     GetEventListenerManagerForAttr(nsIAtom* aAttrName,
                                    bool* aDefer) override;
 
-  virtual const nsAttrName* InternalGetExistingAttrNameFromQName(const nsAString& aStr) const override;
-
   /**
    * Dispatch a simulated mouse click by keyboard to the given element.
    */
@@ -1136,12 +1046,19 @@ protected:
    *
    * @param aAttr    name of attribute.
    * @param aValue   Integer value of attribute.
+   * @param aDefault Default value (in case value is out of range).  If the spec
+   *                 doesn't provide one, should be 1 if the value is limited to
+   *                 nonzero values, and 0 otherwise.
    */
-  void SetUnsignedIntAttr(nsIAtom* aName, uint32_t aValue,
+  void SetUnsignedIntAttr(nsIAtom* aName, uint32_t aValue, uint32_t aDefault,
                           mozilla::ErrorResult& aError)
   {
     nsAutoString value;
-    value.AppendInt(aValue);
+    if (aValue > INT32_MAX) {
+      value.AppendInt(aDefault);
+    } else {
+      value.AppendInt(aValue);
+    }
 
     SetHTMLAttr(aName, value, aError);
   }
@@ -1555,7 +1472,7 @@ protected:
   _class::Set##_method(uint32_t aValue)                                   \
   {                                                                       \
     mozilla::ErrorResult rv;                                              \
-    SetUnsignedIntAttr(nsGkAtoms::_atom, aValue, rv);                     \
+    SetUnsignedIntAttr(nsGkAtoms::_atom, aValue, _default, rv);           \
     return rv.StealNSResult();                                            \
   }
 
@@ -1582,7 +1499,7 @@ protected:
       return NS_ERROR_DOM_INDEX_SIZE_ERR;                                 \
     }                                                                     \
     mozilla::ErrorResult rv;                                              \
-    SetUnsignedIntAttr(nsGkAtoms::_atom, aValue, rv);                     \
+    SetUnsignedIntAttr(nsGkAtoms::_atom, aValue, _default, rv);           \
     return rv.StealNSResult();                                            \
   }
 

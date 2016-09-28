@@ -15,8 +15,6 @@ from collections import (
 from StringIO import StringIO
 from itertools import chain
 
-from reftest import ReftestManifest
-
 from mozpack.manifests import (
     InstallManifest,
 )
@@ -229,8 +227,6 @@ class BackendMakeFile(object):
 
     def close(self):
         if self.xpt_name:
-            self.fh.write('XPT_NAME := %s\n' % self.xpt_name)
-
             # We just recompile all xpidls because it's easier and less error
             # prone.
             self.fh.write('NONRECURSIVE_TARGETS += export\n')
@@ -509,7 +505,14 @@ class RecursiveMakeBackend(CommonBackend):
             self._process_defines(obj, backend_file)
 
         elif isinstance(obj, GeneratedFile):
-            tier = 'misc' if any(isinstance(f, ObjDirPath) for f in obj.inputs) else 'export'
+            export_suffixes = (
+                '.c',
+                '.cpp',
+                '.h',
+                '.inc',
+                '.py',
+            )
+            tier = 'export' if any(f.endswith(export_suffixes) for f in obj.outputs) else 'misc'
             self._no_skip[tier].add(backend_file.relobjdir)
             first_output = obj.outputs[0]
             dep_file = "%s.pp" % first_output
@@ -526,7 +529,7 @@ class RecursiveMakeBackend(CommonBackend):
 
 """.format(output=first_output,
            dep_file=dep_file,
-           inputs=' ' + ' '.join([f.full_path for f in obj.inputs]) if obj.inputs else '',
+           inputs=' ' + ' '.join([self._pretty_path(f, backend_file) for f in obj.inputs]) if obj.inputs else '',
            flags=' ' + ' '.join(obj.flags) if obj.flags else '',
            backend=' backend.mk' if obj.flags else '',
            script=obj.script,
@@ -1076,10 +1079,17 @@ class RecursiveMakeBackend(CommonBackend):
             (obj.install_prefix, set()))
         m[1].add(obj.manifest_obj_relpath)
 
-        if isinstance(obj.manifest, ReftestManifest):
-            # Mark included files as part of the build backend so changes
-            # result in re-config.
-            self.backend_input_files |= obj.manifest.manifests
+        try:
+            from reftest import ReftestManifest
+
+            if isinstance(obj.manifest, ReftestManifest):
+                # Mark included files as part of the build backend so changes
+                # result in re-config.
+                self.backend_input_files |= obj.manifest.manifests
+        except ImportError:
+            # Ignore errors caused by the reftest module not being present.
+            # This can happen when building SpiderMonkey standalone, for example.
+            pass
 
     def _process_local_include(self, local_include, backend_file):
         d, path = self._pretty_path_parts(local_include, backend_file)

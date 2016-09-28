@@ -11,7 +11,7 @@
   --timing-dns-color: rgba(223, 128, 255, 0.8); /* pink */
   --timing-connect-color: rgba(217, 102, 41, 0.8); /* orange */
   --timing-send-color: rgba(70, 175, 227, 0.8); /* light blue */
-  --timig-wait-color: rgba(94, 136, 176, 0.8); /* blue grey */
+  --timing-wait-color: rgba(94, 136, 176, 0.8); /* blue grey */
   --timing-receive-color: rgba(112, 191, 83, 0.8); /* green */
 
   --sort-ascending-image: url(chrome://devtools/skin/images/sort-arrows.svg#ascending);
@@ -201,7 +201,7 @@
   width: calc(1em + 4px);
   height: calc(1em + 4px);
   margin: -4px 0px;
-  -moz-margin-end: 4px;
+  margin-inline-end: 4px;
 }
 
 .requests-menu-icon {
@@ -215,7 +215,7 @@
 .requests-security-state-icon {
   width: 16px;
   height: 16px;
-  -moz-margin-end: 4px;
+  margin-inline-end: 4px;
   cursor: pointer;
 }
 
@@ -246,6 +246,25 @@
   width: 8vw;
 }
 
+.requests-menu-cause {
+  max-width: 8em;
+  width: 8vw;
+}
+
+.requests-menu-cause-stack {
+  background-color: var(--theme-body-color-alt);
+  color: var(--theme-body-background);
+  font-size: 8px;
+  font-weight: bold;
+  line-height: 10px;
+  border-radius: 3px;
+  padding: 0 2px;
+  margin: 0;
+  margin-inline-end: 3px;
+  -moz-user-select: none;
+  cursor: pointer;
+}
+
 .requests-menu-transferred {
   max-width: 8em;
   text-align: center;
@@ -255,17 +274,17 @@
 /* Network requests table: status codes */
 
 .requests-menu-status-code {
-  -moz-margin-start: 3px !important;
+  margin-inline-start: 3px !important;
   width: 3em;
-  -moz-margin-end: -3em !important;
+  margin-inline-end: -3em !important;
 }
 
 .requests-menu-status-icon {
   background: #fff;
   height: 10px;
   width: 10px;
-  -moz-margin-start: 5px;
-  -moz-margin-end: 5px;
+  margin-inline-start: 5px;
+  margin-inline-end: 5px;
   border-radius: 10px;
   transition: box-shadow 0.5s ease-in-out;
 }
@@ -363,8 +382,8 @@
 /* Network requests table: waterfall items */
 
 .requests-menu-subitem.requests-menu-waterfall {
-  -moz-padding-start: 0px;
-  -moz-padding-end: 4px;
+  padding-inline-start: 0px;
+  padding-inline-end: 4px;
   /* Background created on a <canvas> in js. */
   /* @see devtools/client/netmonitor/netmonitor-view.js */
   background-image: -moz-element(#waterfall-background);
@@ -393,7 +412,7 @@
 }
 
 .requests-menu-timings-total {
-  -moz-padding-start: 4px;
+  padding-inline-start: 4px;
   font-size: 85%;
   font-weight: 600;
 }
@@ -515,14 +534,14 @@
 }
 
 .tabpanel-summary-label {
-  -moz-padding-start: 4px;
-  -moz-padding-end: 3px;
+  padding-inline-start: 4px;
+  padding-inline-end: 3px;
   font-weight: 600;
 }
 
 .tabpanel-summary-value {
   color: inherit;
-  -moz-padding-start: 3px;
+  padding-inline-start: 3px;
 }
 
 .theme-dark .tabpanel-summary-value {
@@ -542,12 +561,12 @@
 
 #headers-summary-resend {
   margin-top: -10px;
-  -moz-margin-end: 6px;
+  margin-inline-end: 6px;
 }
 
 #toggle-raw-headers {
   margin-top: -10px;
-  -moz-margin-end: 6px;
+  margin-inline-end: 6px;
 }
 
 .raw-response-textarea {
@@ -607,7 +626,7 @@
 
 /* Security tabpanel */
 .security-info-section {
-  -moz-padding-start: 1em;
+  padding-inline-start: 1em;
 }
 
 .theme-dark #security-error-message {
@@ -621,7 +640,7 @@
 .security-warning-icon {
   background-image: url(images/alerticon-warning.png);
   background-size: 13px 12px;
-  -moz-margin-start: 5px;
+  margin-inline-start: 5px;
   vertical-align: top;
   width: 13px;
   height: 12px;
@@ -676,6 +695,40 @@
   color: var(--theme-selection-color);
 }
 
+/* Requests menu stacktrace tooltip */
+.requests-menu-stack-trace {
+  max-height: 400px;
+  width: 586px;
+  overflow-y: auto;
+}
+
+.requests-menu-stack-frame {
+  color: var(--theme-body-color-alt);
+  cursor: pointer;
+  display: flex;
+}
+
+.requests-menu-stack-frame:hover {
+  background-color: var(--theme-selection-background-semitransparent);
+}
+
+.requests-menu-stack-frame-function-name {
+  color: var(--theme-highlight-blue);
+  cursor: inherit;
+  flex-grow: 1;
+}
+
+.requests-menu-stack-frame-file-name {
+  cursor: inherit;
+  margin-inline-end: 0;
+}
+
+.requests-menu-stack-frame-line {
+  color: var(--theme-highlight-orange);
+  cursor: inherit;
+  margin-inline-start: 0;
+}
+
 /* Performance analysis buttons */
 
 #requests-menu-network-summary-button {
@@ -683,7 +736,7 @@
   box-shadow: none;
   border-color: transparent;
   list-style-image: url(images/profiler-stopwatch.svg);
-  -moz-padding-end: 0;
+  padding-inline-end: 0;
   cursor: pointer;
   margin-inline-end: 1em;
   min-width: 0;
@@ -705,7 +758,7 @@
   border-radius: 0;
   border-top: none;
   border-bottom: none;
-  -moz-border-start: none;
+  border-inline-start: none;
 }
 
 #network-statistics-view-splitter {
@@ -723,13 +776,13 @@
 }
 
 #network-statistics-charts .pie-chart-container {
-  -moz-margin-start: 3vw;
-  -moz-margin-end: 1vw;
+  margin-inline-start: 3vw;
+  margin-inline-end: 1vw;
 }
 
 #network-statistics-charts .table-chart-container {
-  -moz-margin-start: 1vw;
-  -moz-margin-end: 3vw;
+  margin-inline-start: 1vw;
+  margin-inline-end: 3vw;
 }
 
 .chart-colored-blob[name=html] {

@@ -8,9 +8,46 @@
 
 BEGIN_WORKERS_NAMESPACE
 
+namespace {
+
+class ContinueActivateRunnable final : public LifeCycleEventCallback
+{
+  nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo> mRegistration;
+  bool mSuccess;
+
+public:
+  explicit ContinueActivateRunnable(const nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo>& aRegistration)
+    : mRegistration(aRegistration)
+    , mSuccess(false)
+  {
+    AssertIsOnMainThread();
+  }
+
+  void
+  SetResult(bool aResult) override
+  {
+    mSuccess = aResult;
+  }
+
+  NS_IMETHOD
+  Run() override
+  {
+    AssertIsOnMainThread();
+    mRegistration->FinishActivate(mSuccess);
+    mRegistration = nullptr;
+    return NS_OK;
+  }
+};
+
+} // anonymous namespace
+
 void
 ServiceWorkerRegistrationInfo::Clear()
 {
+  if (mEvaluatingWorker) {
+    mEvaluatingWorker = nullptr;
+  }
+
   if (mInstallingWorker) {
     mInstallingWorker->UpdateState(ServiceWorkerState::Redundant);
     mInstallingWorker->WorkerPrivate()->NoteDeadServiceWorkerInfo();
@@ -153,8 +190,12 @@ ServiceWorkerRegistrationInfo::RemoveListener(
 already_AddRefed<ServiceWorkerInfo>
 ServiceWorkerRegistrationInfo::GetServiceWorkerInfoById(uint64_t aId)
 {
+  AssertIsOnMainThread();
+
   RefPtr<ServiceWorkerInfo> serviceWorker;
-  if (mInstallingWorker && mInstallingWorker->ID() == aId) {
+  if (mEvaluatingWorker && mEvaluatingWorker->ID() == aId) {
+    serviceWorker = mEvaluatingWorker;
+  } else if (mInstallingWorker && mInstallingWorker->ID() == aId) {
     serviceWorker = mInstallingWorker;
   } else if (mWaitingWorker && mWaitingWorker->ID() == aId) {
     serviceWorker = mWaitingWorker;
@@ -168,21 +209,22 @@ ServiceWorkerRegistrationInfo::GetServiceWorkerInfoById(uint64_t aId)
 void
 ServiceWorkerRegistrationInfo::TryToActivateAsync()
 {
-  nsCOMPtr<nsIRunnable> r =
-  NS_NewRunnableMethod(this,
-                       &ServiceWorkerRegistrationInfo::TryToActivate);
-  MOZ_ALWAYS_SUCCEEDS(NS_DispatchToMainThread(r));
+  MOZ_ALWAYS_SUCCEEDS(
+    NS_DispatchToMainThread(NewRunnableMethod(this,
+                                              &ServiceWorkerRegistrationInfo::TryToActivate)));
 }
 
 /*
- * TryToActivate should not be called directly, use TryToACtivateAsync instead.
+ * TryToActivate should not be called directly, use TryToActivateAsync instead.
  */
 void
 ServiceWorkerRegistrationInfo::TryToActivate()
 {
-  if (!IsControllingDocuments() ||
-      // Waiting worker will be removed if the registration is removed
-      (mWaitingWorker && mWaitingWorker->SkipWaitingFlag())) {
+  AssertIsOnMainThread();
+  bool controlling = IsControllingDocuments();
+  bool skipWaiting = mWaitingWorker && mWaitingWorker->SkipWaitingFlag();
+  bool idle = !mActiveWorker || mActiveWorker->WorkerPrivate()->IsIdle();
+  if (idle && (!controlling || skipWaiting)) {
     Activate();
   }
 }
@@ -203,14 +245,14 @@ ServiceWorkerRegistrationInfo::Activate()
 
   // "Queue a task to fire a simple event named controllerchange..."
   nsCOMPtr<nsIRunnable> controllerChangeRunnable =
-    NS_NewRunnableMethodWithArg<RefPtr<ServiceWorkerRegistrationInfo>>(
+    NewRunnableMethod<RefPtr<ServiceWorkerRegistrationInfo>>(
       swm, &ServiceWorkerManager::FireControllerChange, this);
   NS_DispatchToMainThread(controllerChangeRunnable);
 
   nsCOMPtr<nsIRunnable> failRunnable =
-    NS_NewRunnableMethodWithArg<bool>(this,
-                                      &ServiceWorkerRegistrationInfo::FinishActivate,
-                                      false /* success */);
+    NewRunnableMethod<bool>(this,
+                            &ServiceWorkerRegistrationInfo::FinishActivate,
+                            false /* success */);
 
   nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo> handle(
     new nsMainThreadPtrHolder<ServiceWorkerRegistrationInfo>(this));
@@ -332,6 +374,13 @@ ServiceWorkerRegistrationInfo::CheckAndClearIfUpdateNeeded()
 }
 
 ServiceWorkerInfo*
+ServiceWorkerRegistrationInfo::GetEvaluating() const
+{
+  AssertIsOnMainThread();
+  return mEvaluatingWorker;
+}
+
+ServiceWorkerInfo*
 ServiceWorkerRegistrationInfo::GetInstalling() const
 {
   AssertIsOnMainThread();
@@ -353,6 +402,32 @@ ServiceWorkerRegistrationInfo::GetActive() const
 }
 
 void
+ServiceWorkerRegistrationInfo::SetEvaluating(ServiceWorkerInfo* aServiceWorker)
+{
+  AssertIsOnMainThread();
+  MOZ_ASSERT(aServiceWorker);
+  MOZ_ASSERT(!mEvaluatingWorker);
+  MOZ_ASSERT(!mInstallingWorker);
+  MOZ_ASSERT(mWaitingWorker != aServiceWorker);
+  MOZ_ASSERT(mActiveWorker != aServiceWorker);
+
+  mEvaluatingWorker = aServiceWorker;
+}
+
+void
+ServiceWorkerRegistrationInfo::ClearEvaluating()
+{
+  AssertIsOnMainThread();
+
+  if (!mEvaluatingWorker) {
+    return;
+  }
+
+  mEvaluatingWorker->UpdateState(ServiceWorkerState::Redundant);
+  mEvaluatingWorker = nullptr;
+}
+
+void
 ServiceWorkerRegistrationInfo::ClearInstalling()
 {
   AssertIsOnMainThread();
@@ -367,15 +442,13 @@ ServiceWorkerRegistrationInfo::ClearInstalling()
 }
 
 void
-ServiceWorkerRegistrationInfo::SetInstalling(ServiceWorkerInfo* aServiceWorker)
+ServiceWorkerRegistrationInfo::TransitionEvaluatingToInstalling()
 {
   AssertIsOnMainThread();
-  MOZ_ASSERT(aServiceWorker);
+  MOZ_ASSERT(mEvaluatingWorker);
   MOZ_ASSERT(!mInstallingWorker);
-  MOZ_ASSERT(mWaitingWorker != aServiceWorker);
-  MOZ_ASSERT(mActiveWorker != aServiceWorker);
 
-  mInstallingWorker = aServiceWorker;
+  mInstallingWorker = mEvaluatingWorker.forget();
   mInstallingWorker->UpdateState(ServiceWorkerState::Installing);
   NotifyListenersOnChange(WhichServiceWorker::INSTALLING_WORKER);
 }

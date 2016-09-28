@@ -50,6 +50,9 @@ shellmoduleloader.inputs = [
     'ModuleLoader.js',
 ]
 
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-shadow']
+
 # This is intended as a temporary workaround to enable VS2015.
 if CONFIG['_MSC_VER']:
     CXXFLAGS += ['-wd4312']
@@ -59,3 +62,6 @@ if CONFIG['_MSC_VER']:
 DEFINES['topsrcdir'] = '%s/js/src' % TOPSRCDIR
 FINAL_TARGET_PP_FILES += ['js-gdb.py.in']
 OBJDIR_FILES.js.src.shell += ['!/dist/bin/js-gdb.py']
+
+# People expect the js shell to wind up in the top-level JS dir.
+OBJDIR_FILES.js.src += ['!js%s' % CONFIG['BIN_SUFFIX']]

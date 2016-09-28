@@ -168,7 +168,7 @@ namespace widget {
 
 static IMMHandler* gIMMHandler = nullptr;
 
-PRLogModuleInfo* gIMMLog = nullptr;
+LazyLogModule gIMMLog("nsIMM32HandlerWidgets");
 
 /******************************************************************************
  * IMEContext
@@ -238,9 +238,6 @@ IMMHandler::EnsureHandlerInstance()
 void
 IMMHandler::Initialize()
 {
-  if (!gIMMLog) {
-    gIMMLog = PR_NewLogModule("nsIMM32HandlerWidgets");
-  }
   if (!sWM_MSIME_MOUSE) {
     sWM_MSIME_MOUSE = ::RegisterWindowMessage(RWM_MOUSE);
   }
@@ -1891,7 +1888,7 @@ IMMHandler::CommitCompositionOnPreviousWindow(nsWindow* aWindow)
   return false;
 }
 
-static uint32_t
+static TextRangeType
 PlatformToNSAttr(uint8_t aAttr)
 {
   switch (aAttr)
@@ -1899,35 +1896,16 @@ PlatformToNSAttr(uint8_t aAttr)
     case ATTR_INPUT_ERROR:
     // case ATTR_FIXEDCONVERTED:
     case ATTR_INPUT:
-      return NS_TEXTRANGE_RAWINPUT;
+      return TextRangeType::eRawClause;
     case ATTR_CONVERTED:
-      return NS_TEXTRANGE_CONVERTEDTEXT;
+      return TextRangeType::eConvertedClause;
     case ATTR_TARGET_NOTCONVERTED:
-      return NS_TEXTRANGE_SELECTEDRAWTEXT;
+      return TextRangeType::eSelectedRawClause;
     case ATTR_TARGET_CONVERTED:
-      return NS_TEXTRANGE_SELECTEDCONVERTEDTEXT;
+      return TextRangeType::eSelectedClause;
     default:
       NS_ASSERTION(false, "unknown attribute");
-      return NS_TEXTRANGE_CARETPOSITION;
-  }
-}
-
-static const char*
-GetRangeTypeName(uint32_t aRangeType)
-{
-  switch (aRangeType) {
-    case NS_TEXTRANGE_RAWINPUT:
-      return "NS_TEXTRANGE_RAWINPUT";
-    case NS_TEXTRANGE_CONVERTEDTEXT:
-      return "NS_TEXTRANGE_CONVERTEDTEXT";
-    case NS_TEXTRANGE_SELECTEDRAWTEXT:
-      return "NS_TEXTRANGE_SELECTEDRAWTEXT";
-    case NS_TEXTRANGE_SELECTEDCONVERTEDTEXT:
-      return "NS_TEXTRANGE_SELECTEDCONVERTEDTEXT";
-    case NS_TEXTRANGE_CARETPOSITION:
-      return "NS_TEXTRANGE_CARETPOSITION";
-    default:
-      return "UNKNOWN SELECTION TYPE!!";
+      return TextRangeType::eCaret;
   }
 }
 
@@ -1975,8 +1953,8 @@ IMMHandler::DispatchCompositionChangeEvent(nsWindow* aWindow,
 
   // NOTE: Calling SetIMERelatedWindowsPos() from this method will be failure
   //       in e10s mode.  compositionchange event will notify this of
-  //       NOTIFY_IME_OF_COMPOSITION_UPDATE, then SetIMERelatedWindowsPos()
-  //       will be called.
+  //       NOTIFY_IME_OF_COMPOSITION_EVENT_HANDLED, then
+  //       SetIMERelatedWindowsPos() will be called.
 
   // XXX Sogou (Simplified Chinese IME) returns contradictory values:
   //     The cursor position is actual cursor position. However, other values
@@ -2017,8 +1995,9 @@ IMMHandler::DispatchCompositionChangeEvent(nsWindow* aWindow,
       }
 
       uint32_t length = current - lastOffset;
-      uint32_t attr = PlatformToNSAttr(mAttributeArray[lastOffset]);
-      rv = dispatcher->AppendClauseToPendingComposition(length, attr);
+      TextRangeType textRangeType =
+        PlatformToNSAttr(mAttributeArray[lastOffset]);
+      rv = dispatcher->AppendClauseToPendingComposition(length, textRangeType);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         MOZ_LOG(gIMMLog, LogLevel::Error,
           ("IMM: DispatchCompositionChangeEvent, FAILED due to"
@@ -2031,7 +2010,7 @@ IMMHandler::DispatchCompositionChangeEvent(nsWindow* aWindow,
       MOZ_LOG(gIMMLog, LogLevel::Info,
         ("IMM: DispatchCompositionChangeEvent, index=%ld, rangeType=%s, "
          "range length=%lu",
-         i, GetRangeTypeName(attr), length));
+         i, ToChar(textRangeType), length));
     }
   }
 

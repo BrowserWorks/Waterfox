@@ -13,7 +13,7 @@ const TAB_URL = EXAMPLE_URL + "doc_inline-debugger-statement.html";
 
 function test() {
   addWindow(TAB_URL)
-    .then(win => initDebugger(TAB_URL, win))
+    .then(win => initDebugger(TAB_URL, { window: win }))
     .then(([aTab, aDebuggee, aPanel, aWindow]) => {
       gDebuggee = aDebuggee;
       gPanel = aPanel;
@@ -78,7 +78,7 @@ function testCleanExit() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gWindow = null;
   gDebuggee = null;
   gPanel = null;

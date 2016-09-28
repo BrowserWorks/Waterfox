@@ -200,7 +200,7 @@ private:
    * and uri+id extension.
    */
   nsresult AddStorageEntry(CacheStorage const* aStorage,
-                           nsIURI* aURI,
+                           const nsACString & aURI,
                            const nsACString & aIdExtension,
                            bool aReplace,
                            CacheEntryHandle** aResult);
@@ -210,7 +210,7 @@ private:
    * when the information cannot be obtained synchronously w/o blocking.
    */
   nsresult CheckStorageEntry(CacheStorage const* aStorage,
-                             nsIURI* aURI,
+                             const nsACString & aURI,
                              const nsACString & aIdExtension,
                              bool* aResult);
 
@@ -219,7 +219,7 @@ private:
    * and returns it.
    */
   nsresult DoomStorageEntry(CacheStorage const* aStorage,
-                            nsIURI* aURI,
+                            const nsACString & aURI,
                             const nsACString & aIdExtension,
                             nsICacheEntryDoomCallback* aCallback);
 
@@ -292,7 +292,7 @@ private:
                               bool aPin,
                               nsICacheEntryDoomCallback* aCallback);
   nsresult AddStorageEntry(nsCSubstring const& aContextKey,
-                           nsIURI* aURI,
+                           const nsACString & aURI,
                            const nsACString & aIdExtension,
                            bool aWriteToDisk,
                            bool aSkipSizeCheck,
@@ -353,7 +353,7 @@ private:
 
   nsCOMPtr<nsITimer> mPurgeTimer;
 
-  class PurgeFromMemoryRunnable : public nsRunnable
+  class PurgeFromMemoryRunnable : public Runnable
   {
   public:
     PurgeFromMemoryRunnable(CacheStorageService* aService, uint32_t aWhat)
@@ -375,7 +375,7 @@ private:
   nsDataHashtable<nsCStringHashKey, mozilla::TimeStamp> mPurgeTimeStamps;
 
   // nsICacheTesting
-  class IOThreadSuspender : public nsRunnable
+  class IOThreadSuspender : public Runnable
   {
   public:
     IOThreadSuspender() : mMon("IOThreadSuspender"), mSignaled(false) { }

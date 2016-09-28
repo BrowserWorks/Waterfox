@@ -320,7 +320,7 @@ Section "-Application" APP_IDX
   ; Default for creating Quick Launch shortcut (1 = create, 0 = don't create)
   ${If} $AddQuickLaunchSC == ""
     ; Don't install the quick launch shortcut on Windows 7
-    ${If} ${AtLeastWinXP}
+    ${If} ${AtLeastWin7}
       StrCpy $AddQuickLaunchSC "0"
     ${Else}
       StrCpy $AddQuickLaunchSC "1"
@@ -532,7 +532,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$SMPROGRAMS\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$SMPROGRAMS\${BrandFullName}.lnk" \
                                            "$INSTDIR"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$SMPROGRAMS\${BrandFullName}.lnk" "$AppUserModelID" "true"
       ${EndIf}
@@ -547,7 +547,7 @@ Section "-Application" APP_IDX
     ${If} ${FileExists} "$DESKTOP\${BrandFullName}.lnk"
       ShellLink::SetShortCutWorkingDirectory "$DESKTOP\${BrandFullName}.lnk" \
                                              "$INSTDIR"
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} "$AppUserModelID" != ""
         ApplicationID::Set "$DESKTOP\${BrandFullName}.lnk" "$AppUserModelID"  "true"
       ${EndIf}
@@ -560,7 +560,7 @@ Section "-Application" APP_IDX
   ; If elevated the Quick Launch shortcut must be added from the unelevated
   ; original process.
   ${If} $AddQuickLaunchSC == 1
-    ${Unless} ${AtLeastWinXP}
+    ${Unless} ${AtLeastWin7}
       ClearErrors
       ${GetParameters} $0
       ${GetOptions} "$0" "/UAC:" $0
@@ -910,7 +910,7 @@ Function leaveShortcuts
   ${MUI_INSTALLOPTIONS_READ} $AddStartMenuSC "shortcuts.ini" "Field 3" "State"
 
   ; Don't install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWinXP}
+  ${Unless} ${AtLeastWin7}
     ${MUI_INSTALLOPTIONS_READ} $AddQuickLaunchSC "shortcuts.ini" "Field 4" "State"
   ${EndUnless}
 
@@ -1108,12 +1108,76 @@ Function .onInit
   StrCpy $LANGUAGE 0
   ${SetBrandNameVars} "$EXEDIR\core\distribution\setup.ini"
 
-  ${InstallOnInitCommon} "$(WARN_MIN_SUPPORTED_OS_MSG)"
+  ; Don't install on systems that don't support SSE2. The parameter value of
+  ; 10 is for PF_XMMI64_INSTRUCTIONS_AVAILABLE which will check whether the
+  ; SSE2 instruction set is available.
+  System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R7"
+
+!ifdef HAVE_64BIT_BUILD
+  ; Restrict x64 builds from being installed on x86 and pre Win7
+  ${Unless} ${RunningX64}
+  ${OrUnless} ${AtLeastWin7}
+    ${If} "$R7" == "0"
+      strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
+    ${Else}
+      strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_MSG)"
+    ${EndIf}
+    MessageBox MB_OKCANCEL|MB_ICONSTOP "$R7" IDCANCEL +2
+    ExecShell "open" "${URLSystemRequirements}"
+    Quit
+  ${EndUnless}
+
+  SetRegView 64
+!else
+  StrCpy $R8 "0"
+  ${If} ${AtMostWin2000}
+    StrCpy $R8 "1"
+  ${EndIf}
+
+  ${If} ${IsWinXP}
+  ${AndIf} ${AtMostServicePack} 1
+    StrCpy $R8 "1"
+  ${EndIf}
+
+  ${If} $R8 == "1"
+    ; XXX-rstrong - some systems failed the AtLeastWin2000 test that we
+    ; used to use for an unknown reason and likely fail the AtMostWin2000
+    ; and possibly the IsWinXP test as well. To work around this also
+    ; check if the Windows NT registry Key exists and if it does if the
+    ; first char in CurrentVersion is equal to 3 (Windows NT 3.5 and
+    ; 3.5.1), 4 (Windows NT 4), or 5 (Windows 2000 and Windows XP).
+    StrCpy $R8 ""
+    ClearErrors
+    ReadRegStr $R8 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentVersion"
+    StrCpy $R8 "$R8" 1
+    ${If} ${Errors}
+    ${OrIf} "$R8" == "3"
+    ${OrIf} "$R8" == "4"
+    ${OrIf} "$R8" == "5"
+      ${If} "$R7" == "0"
+        strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
+      ${Else}
+        strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_MSG)"
+      ${EndIf}
+      MessageBox MB_OKCANCEL|MB_ICONSTOP "$R7" IDCANCEL +2
+      ExecShell "open" "${URLSystemRequirements}"
+      Quit
+    ${EndIf}
+  ${EndUnless}
+!endif
+
+  ${If} "$R7" == "0"
+    MessageBox MB_OKCANCEL|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_CPU_MSG)" IDCANCEL +2
+    ExecShell "open" "${URLSystemRequirements}"
+    Quit
+  ${EndIf}
+
+  ${InstallOnInitCommon} "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
 
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWinVista}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif
@@ -1165,7 +1229,7 @@ Function .onInit
 
   ; Setup the shortcuts.ini file for the Custom Shortcuts Page
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "3"
   ${Else}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Settings" NumFields "4"
@@ -1196,7 +1260,7 @@ Function .onInit
   WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 3" State  "1"
 
   ; Don't offer to install the quick launch shortcut on Windows 7
-  ${Unless} ${AtLeastWinXP}
+  ${Unless} ${AtLeastWin7}
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Type   "checkbox"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Text   "$(ICONS_QUICKLAUNCH)"
     WriteINIStr "$PLUGINSDIR\shortcuts.ini" "Field 4" Left   "0"

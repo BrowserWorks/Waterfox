@@ -246,7 +246,7 @@ nsLineLayout::BeginLineReflow(nscoord aICoord, nscoord aBCoord,
       mBlockReflowState->mStyleDisplay->IsRelativelyPositionedStyle();
     if (pfd->mRelativePos) {
       MOZ_ASSERT(
-        mBlockReflowState->GetWritingMode() == frame->GetWritingMode(),
+        mBlockReflowState->GetWritingMode() == pfd->mWritingMode,
         "mBlockReflowState->frame == frame, "
         "hence they should have identical writing mode");
       pfd->mOffsets = mBlockReflowState->ComputedLogicalOffsets();
@@ -685,13 +685,13 @@ nsLineLayout::NewPerFrameData(nsIFrame* aFrame)
   pfd->mIsEmpty = false;
   pfd->mIsLinkedToBase = false;
 
-  WritingMode frameWM = aFrame->GetWritingMode();
+  pfd->mWritingMode = aFrame->GetWritingMode();
   WritingMode lineWM = mRootSpan->mWritingMode;
   pfd->mBounds = LogicalRect(lineWM);
   pfd->mOverflowAreas.Clear();
   pfd->mMargin = LogicalMargin(lineWM);
   pfd->mBorderPadding = LogicalMargin(lineWM);
-  pfd->mOffsets = LogicalMargin(frameWM);
+  pfd->mOffsets = LogicalMargin(pfd->mWritingMode);
 
   pfd->mJustificationInfo = JustificationInfo();
   pfd->mJustificationAssignment = JustificationAssignment();
@@ -836,7 +836,7 @@ nsLineLayout::ReflowFrame(nsIFrame* aFrame,
 
   // Stash copies of some of the computed state away for later
   // (block-direction alignment, for example)
-  WritingMode frameWM = aFrame->GetWritingMode();
+  WritingMode frameWM = pfd->mWritingMode;
   WritingMode lineWM = mRootSpan->mWritingMode;
 
   // NOTE: While the inline direction coordinate remains relative to the
@@ -1192,20 +1192,18 @@ nsLineLayout::AllowForStartMargin(PerFrameData* pfd,
     // Zero this out so that when we compute the max-element-width of
     // the frame we will properly avoid adding in the starting margin.
     pfd->mMargin.IStart(lineWM) = 0;
-  } else {
+  } else if (NS_UNCONSTRAINEDSIZE == aReflowState.ComputedISize()) {
     NS_WARN_IF_FALSE(NS_UNCONSTRAINEDSIZE != aReflowState.AvailableISize(),
                      "have unconstrained inline-size; this should only result "
                      "from very large sizes, not attempts at intrinsic "
                      "inline-size calculation");
-    if (NS_UNCONSTRAINEDSIZE == aReflowState.ComputedISize()) {
-      // For inline-ish and text-ish things (which don't compute widths
-      // in the reflow state), adjust available inline-size to account for the
-      // start margin. The end margin will be accounted for when we
-      // finish flowing the frame.
-      WritingMode wm = aReflowState.GetWritingMode();
-      aReflowState.AvailableISize() -=
-          pfd->mMargin.ConvertTo(wm, lineWM).IStart(wm);
-    }
+    // For inline-ish and text-ish things (which don't compute widths
+    // in the reflow state), adjust available inline-size to account
+    // for the start margin. The end margin will be accounted for when
+    // we finish flowing the frame.
+    WritingMode wm = aReflowState.GetWritingMode();
+    aReflowState.AvailableISize() -=
+        pfd->mMargin.ConvertTo(wm, lineWM).IStart(wm);
   }
 }
 
@@ -1439,7 +1437,7 @@ nsLineLayout::PlaceFrame(PerFrameData* pfd, nsHTMLReflowMetrics& aMetrics)
   // If the frame's block direction does not match the line's, we can't use
   // its ascent; instead, treat it as a block with baseline at the block-end
   // edge (or block-begin in the case of an "inverted" line).
-  if (pfd->mFrame->GetWritingMode().GetBlockDir() != lineWM.GetBlockDir()) {
+  if (pfd->mWritingMode.GetBlockDir() != lineWM.GetBlockDir()) {
     pfd->mAscent = lineWM.IsLineInverted() ? 0 : aMetrics.BSize(lineWM);
   } else {
     if (aMetrics.BlockStartAscent() == nsHTMLReflowMetrics::ASK_FOR_BASELINE) {
@@ -1799,7 +1797,7 @@ nsLineLayout::VerticalAlignFrames(PerSpanData* psd)
          spanFramePFD->mBounds.BSize(lineWM),
          emptyContinuation ? "yes" : "no");
   if (psd != mRootSpan) {
-    WritingMode frameWM = spanFramePFD->mFrame->GetWritingMode();
+    WritingMode frameWM = spanFramePFD->mWritingMode;
     printf(" bp=%d,%d,%d,%d margin=%d,%d,%d,%d",
            spanFramePFD->mBorderPadding.Top(lineWM),
            spanFramePFD->mBorderPadding.Right(lineWM),
@@ -2919,8 +2917,10 @@ nsLineLayout::ApplyFrameJustification(PerSpanData* aPSD,
       nscoord dw = 0;
       WritingMode lineWM = mRootSpan->mWritingMode;
       const auto& assign = pfd->mJustificationAssignment;
+      bool isInlineText = pfd->mIsTextFrame &&
+                          !pfd->mWritingMode.IsOrthogonalTo(lineWM);
 
-      if (true == pfd->mIsTextFrame) {
+      if (isInlineText) {
         if (aState.IsJustifiable()) {
           // Set corresponding justification gaps here, so that the
           // text frame knows how it should add gaps at its sides.
@@ -2942,9 +2942,9 @@ nsLineLayout::ApplyFrameJustification(PerSpanData* aPSD,
 
       pfd->mBounds.ISize(lineWM) += dw;
       nscoord gapsAtEnd = 0;
-      if (!pfd->mIsTextFrame && assign.TotalGaps()) {
-        // It is possible that we assign gaps to non-text frame.
-        // Apply the gaps as margin around the frame.
+      if (!isInlineText && assign.TotalGaps()) {
+        // It is possible that we assign gaps to non-text frame or an
+        // orthogonal text frame. Apply the gaps as margin for them.
         deltaICoord += aState.Consume(assign.mGapsAtStart);
         gapsAtEnd = aState.Consume(assign.mGapsAtEnd);
         dw += gapsAtEnd;
@@ -3139,7 +3139,7 @@ nsLineLayout::TextAlignLine(nsLineBox* aLine,
     textAlignTrue = mStyleText->mTextAlignLastTrue;
     if (mStyleText->mTextAlignLast == NS_STYLE_TEXT_ALIGN_AUTO) {
       if (textAlign == NS_STYLE_TEXT_ALIGN_JUSTIFY) {
-        textAlign = NS_STYLE_TEXT_ALIGN_DEFAULT;
+        textAlign = NS_STYLE_TEXT_ALIGN_START;
       }
     } else {
       textAlign = mStyleText->mTextAlignLast;
@@ -3201,7 +3201,7 @@ nsLineLayout::TextAlignLine(nsLineBox* aLine,
         MOZ_FALLTHROUGH;
       }
 
-      case NS_STYLE_TEXT_ALIGN_DEFAULT:
+      case NS_STYLE_TEXT_ALIGN_START:
         // default alignment is to start edge so do nothing
         break;
 
@@ -3261,7 +3261,7 @@ nsLineLayout::ApplyRelativePositioning(PerFrameData* aPFD)
   }
 
   nsIFrame* frame = aPFD->mFrame;
-  WritingMode frameWM = frame->GetWritingMode();
+  WritingMode frameWM = aPFD->mWritingMode;
   LogicalPoint origin = frame->GetLogicalPosition(ContainerSize());
   // right and bottom are handled by
   // nsHTMLReflowState::ComputeRelativeOffsets

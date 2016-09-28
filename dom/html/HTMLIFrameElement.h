@@ -86,7 +86,7 @@ public:
   }
   nsDOMTokenList* Sandbox()
   {
-    return GetTokenList(nsGkAtoms::sandbox);
+    return GetTokenList(nsGkAtoms::sandbox, sSupportedSandboxTokens);
   }
   bool AllowFullscreen() const
   {
@@ -193,14 +193,13 @@ public:
 protected:
   virtual ~HTMLIFrameElement();
 
-  virtual void GetItemValueText(DOMString& text) override;
-  virtual void SetItemValueText(const nsAString& text) override;
-
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
                                     nsRuleData* aData);
+
+  static const DOMTokenListSupportedToken sSupportedSandboxTokens[];
 };
 
 } // namespace dom

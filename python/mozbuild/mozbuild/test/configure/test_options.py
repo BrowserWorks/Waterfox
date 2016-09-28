@@ -238,6 +238,44 @@ class TestOption(unittest.TestCase):
         option = Option('--with-option', choices=('a', 'b'))
         self.assertEqual(option.nargs, 1)
 
+        # Test "relative" values
+        option = Option('--with-option', nargs='*', default=('b', 'c'),
+                        choices=('a', 'b', 'c', 'd'))
+
+        value = option.get_value('--with-option=+d')
+        self.assertEquals(PositiveOptionValue(('b', 'c', 'd')), value)
+
+        value = option.get_value('--with-option=-b')
+        self.assertEquals(PositiveOptionValue(('c',)), value)
+
+        value = option.get_value('--with-option=-b,+d')
+        self.assertEquals(PositiveOptionValue(('c','d')), value)
+
+        # Adding something that is in the default is fine
+        value = option.get_value('--with-option=+b')
+        self.assertEquals(PositiveOptionValue(('b', 'c')), value)
+
+        # Removing something that is not in the default is fine, as long as it
+        # is one of the choices
+        value = option.get_value('--with-option=-a')
+        self.assertEquals(PositiveOptionValue(('b', 'c')), value)
+
+        with self.assertRaises(InvalidOptionError) as e:
+            option.get_value('--with-option=-e')
+        self.assertEquals(e.exception.message,
+                          "'e' is not one of 'a', 'b', 'c', 'd'")
+
+        # Other "not a choice" errors.
+        with self.assertRaises(InvalidOptionError) as e:
+            option.get_value('--with-option=+e')
+        self.assertEquals(e.exception.message,
+                          "'e' is not one of 'a', 'b', 'c', 'd'")
+
+        with self.assertRaises(InvalidOptionError) as e:
+            option.get_value('--with-option=e')
+        self.assertEquals(e.exception.message,
+                          "'e' is not one of 'a', 'b', 'c', 'd'")
+
     def test_option_value_format(self):
         val = PositiveOptionValue()
         self.assertEquals('--with-value', val.format('--with-value'))
@@ -784,6 +822,30 @@ class TestCommandLineHelper(unittest.TestCase):
         self.assertEqual('other-origin', cm.exception.origin)
         self.assertEqual('--with-foo=a,b', cm.exception.old_arg)
         self.assertEqual('command-line', cm.exception.old_origin)
+
+    def test_possible_origins(self):
+        with self.assertRaises(InvalidOptionError):
+            Option('--foo', possible_origins='command-line')
+
+        helper = CommandLineHelper({'BAZ': '1'}, ['cmd', '--foo', '--bar'])
+        foo = Option('--foo',
+                     possible_origins=('command-line',))
+        value, option = helper.handle(foo)
+        self.assertEquals(PositiveOptionValue(), value)
+        self.assertEquals('command-line', value.origin)
+        self.assertEquals('--foo', option)
+
+        bar = Option('--bar',
+                     possible_origins=('mozconfig',))
+        with self.assertRaisesRegexp(InvalidOptionError,
+            "--bar can not be set by command-line. Values are accepted from: mozconfig"):
+            helper.handle(bar)
+
+        baz = Option(env='BAZ',
+                     possible_origins=('implied',))
+        with self.assertRaisesRegexp(InvalidOptionError,
+            "BAZ=1 can not be set by environment. Values are accepted from: implied"):
+            helper.handle(baz)
 
 
 if __name__ == '__main__':

@@ -390,6 +390,10 @@ CanvasClientSharedSurface::UpdateRenderer(gfx::IntSize aSize, Renderer& aRendere
     }
   } else {
     mShSurfClient = gl->Screen()->Front();
+    if (mShSurfClient && mShSurfClient->GetAllocator() &&
+        mShSurfClient->GetAllocator()->AsCompositableForwarder() != GetForwarder()) {
+      mShSurfClient = CloneSurface(mShSurfClient->Surf(), gl->Screen()->Factory());
+    }
     if (!mShSurfClient) {
       return;
     }
@@ -422,18 +426,24 @@ CanvasClientSharedSurface::UpdateRenderer(gfx::IntSize aSize, Renderer& aRendere
     auto layersBackend = shadowForwarder->GetCompositorBackendType();
     mReadbackClient = TexClientFromReadback(surf, forwarder, flags, layersBackend);
 
-    if (asyncRenderer) {
-      // Above codes will readback the GLContext to mReadbackClient
-      // in order to send frame to compositor. We copy from this
-      // TextureClient directly by calling CopyFromTextureClient().
-      // Therefore, if main-thread want the content of GLContext,
-      // it don't have to readback it again.
-      asyncRenderer->CopyFromTextureClient(mReadbackClient);
-    }
-
     newFront = mReadbackClient;
   } else {
     mReadbackClient = nullptr;
+  }
+
+  if (asyncRenderer) {
+    // If surface type is Basic, above codes will readback
+    // the GLContext to mReadbackClient in order to send frame to
+    // compositor. We copy from this TextureClient directly by
+    // calling CopyFromTextureClient().
+    // Therefore, if main-thread want the content of GLContext,
+    // it doesn't have to readback from GLContext again.
+    //
+    // Otherwise, if surface type isn't Basic, we will read from
+    // SharedSurface directly from main-thread. We still pass
+    // mReadbackClient which is nullptr here to tell
+    // AsyncCanvasRenderer reset some properties.
+    asyncRenderer->CopyFromTextureClient(mReadbackClient);
   }
 
   MOZ_ASSERT(newFront);
@@ -491,6 +501,14 @@ CanvasClientSharedSurface::Updated()
   //            the new VRDisplay API.
   t->mInputFrameID = VRManagerChild::Get()->GetInputFrameID();
   forwarder->UseTextures(this, textures);
+}
+
+void
+CanvasClientSharedSurface::OnDetach() {
+  if (mShSurfClient) {
+    mShSurfClient->CancelWaitForCompositorRecycle();
+  }
+  ClearSurfaces();
 }
 
 void

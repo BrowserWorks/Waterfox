@@ -55,7 +55,7 @@ static const gc::AllocKind ITERATOR_FINALIZE_KIND = gc::AllocKind::OBJECT2_BACKG
 void
 NativeIterator::trace(JSTracer* trc)
 {
-    for (HeapPtrFlatString* str = begin(); str < end(); str++)
+    for (GCPtrFlatString* str = begin(); str < end(); str++)
         TraceNullableEdge(trc, str, "prop");
     TraceNullableEdge(trc, &obj, "obj");
 
@@ -111,8 +111,10 @@ Enumerate(JSContext* cx, HandleObject pobj, jsid id,
         // It's not necessary to add properties to the hash table at the end of
         // the prototype chain, but custom enumeration behaviors might return
         // duplicated properties, so always add in such cases.
-        if ((pobj->is<ProxyObject>() || pobj->getProto() || pobj->getOpsEnumerate()) && !ht->add(p, id))
-            return false;
+        if (pobj->is<ProxyObject>() || pobj->staticPrototype() || pobj->getOpsEnumerate()) {
+            if (!ht->add(p, id))
+                return false;
+        }
     }
 
     // Symbol-keyed properties and nonenumerable properties are skipped unless
@@ -606,7 +608,7 @@ NativeIterator::allocateIterator(JSContext* cx, uint32_t numGuards, uint32_t ple
     void** extra = reinterpret_cast<void**>(ni + 1);
     PodZero(ni);
     PodZero(extra, extraLength);
-    ni->props_array = ni->props_cursor = reinterpret_cast<HeapPtrFlatString*>(extra);
+    ni->props_array = ni->props_cursor = reinterpret_cast<GCPtrFlatString*>(extra);
     ni->props_end = ni->props_array + plength;
     return ni;
 }
@@ -701,7 +703,11 @@ VectorToKeyIterator(JSContext* cx, HandleObject obj, unsigned flags, AutoIdVecto
         size_t ind = 0;
         do {
             ni->guard_array[ind++].init(ReceiverGuard(pobj));
-            pobj = pobj->getProto();
+
+            // The one caller of this method that passes |numGuards > 0|, does
+            // so only if the entire chain consists of cacheable objects (that
+            // necessarily have static prototypes).
+            pobj = pobj->staticPrototype();
         } while (pobj);
         MOZ_ASSERT(ind == numGuards);
     }
@@ -843,10 +849,10 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
                 CanCompareIterableObjectToCache(obj) &&
                 ReceiverGuard(obj) == lastni->guard_array[0])
             {
-                JSObject* proto = obj->getProto();
+                JSObject* proto = obj->staticPrototype();
                 if (CanCompareIterableObjectToCache(proto) &&
                     ReceiverGuard(proto) == lastni->guard_array[1] &&
-                    !proto->getProto())
+                    !proto->staticPrototype())
                 {
                     objp.set(last);
                     UpdateNativeIterator(lastni, obj);
@@ -856,12 +862,9 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
             }
         }
 
-        /*
-         * The iterator object for JSITER_ENUMERATE never escapes, so we
-         * don't care for the proper parent/proto to be set. This also
-         * allows us to re-use a previous iterator object that is not
-         * currently active.
-         */
+        // The iterator object for JSITER_ENUMERATE never escapes, so we don't
+        // care that the "proper" prototype is set.  This also lets us reuse an
+        // old, inactive iterator object.
         {
             JSObject* pobj = obj;
             do {
@@ -869,11 +872,13 @@ js::GetIterator(JSContext* cx, HandleObject obj, unsigned flags, MutableHandleOb
                     guards.clear();
                     goto miss;
                 }
+
                 ReceiverGuard guard(pobj);
                 key = (key + (key << 16)) ^ guard.hash();
                 if (!guards.append(guard))
                     return false;
-                pobj = pobj->getProto();
+
+                pobj = pobj->staticPrototype();
             } while (pobj);
         }
 
@@ -1288,9 +1293,9 @@ SuppressDeletedPropertyHelper(JSContext* cx, HandleObject obj, StringPredicate p
         /* This only works for identified suppressed keys, not values. */
         if (ni->isKeyIter() && ni->obj == obj && ni->props_cursor < ni->props_end) {
             /* Check whether id is still to come. */
-            HeapPtrFlatString* props_cursor = ni->current();
-            HeapPtrFlatString* props_end = ni->end();
-            for (HeapPtrFlatString* idp = props_cursor; idp < props_end; ++idp) {
+            GCPtrFlatString* props_cursor = ni->current();
+            GCPtrFlatString* props_end = ni->end();
+            for (GCPtrFlatString* idp = props_cursor; idp < props_end; ++idp) {
                 if (predicate(*idp)) {
                     /*
                      * Check whether another property along the prototype chain
@@ -1330,7 +1335,7 @@ SuppressDeletedPropertyHelper(JSContext* cx, HandleObject obj, StringPredicate p
                     if (idp == props_cursor) {
                         ni->incCursor();
                     } else {
-                        for (HeapPtrFlatString* p = idp; p + 1 != props_end; p++)
+                        for (GCPtrFlatString* p = idp; p + 1 != props_end; p++)
                             *p = *(p + 1);
                         ni->props_end = ni->end() - 1;
 

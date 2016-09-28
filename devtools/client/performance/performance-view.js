@@ -118,6 +118,14 @@ var PerformanceView = {
    * "empty", "recording", "console-recording", "recorded".
    */
   setState: function (state) {
+    // Make sure that the focus isn't captured on a hidden iframe. This fixes a
+    // XUL bug where shortcuts stop working.
+    const iframes = window.document.querySelectorAll('iframe');
+    for (let iframe of iframes) {
+      iframe.blur();
+    }
+    window.focus();
+
     let viewConfig = this.states[state];
     if (!viewConfig) {
       throw new Error(`Invalid state for PerformanceView: ${state}`);
@@ -274,7 +282,7 @@ var PerformanceView = {
   /**
    * Handler for clicking the import button.
    */
-  _onImportButtonClick: function(e) {
+  _onImportButtonClick: function (e) {
     let fp = Cc["@mozilla.org/filepicker;1"].createInstance(Ci.nsIFilePicker);
     fp.init(window, L10N.getStr("recordingsList.importDialogTitle"), Ci.nsIFilePicker.modeOpen);
     fp.appendFilter(L10N.getStr("recordingsList.saveDialogJSONFilter"), "*.json");

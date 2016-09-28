@@ -24,10 +24,20 @@ const JSErrorFormatString*
 my_GetErrorMessage(void* userRef, const unsigned errorNumber);
 
 void
-my_ErrorReporter(JSContext* cx, const char* message, JSErrorReport* report);
+WarningReporter(JSContext* cx, const char* message, JSErrorReport* report);
+
+class MOZ_STACK_CLASS AutoReportException
+{
+    JSContext* cx;
+  public:
+    explicit AutoReportException(JSContext* cx)
+      : cx(cx)
+    {}
+    ~AutoReportException();
+};
 
 bool
-GenerateInterfaceHelp(JSContext* cx, HandleObject obj, const char* name);
+GenerateInterfaceHelp(JSContext* cx, JS::HandleObject obj, const char* name);
 
 JSString*
 FileAsString(JSContext* cx, const char* pathname);

@@ -1,3 +1,5 @@
+"use strict";
+
 const EventEmitter = require("devtools/shared/event-emitter");
 const Services = require("Services");
 const { Preferences } = require("resource://gre/modules/Preferences.jsm");
@@ -10,17 +12,18 @@ const PREF_CHANGE_EVENT = "pref-changed";
  * - branchName: The name of the prefs branch, like "devtools.debugger."
  * - menupopup: The XUL `menupopup` item that contains the pref buttons.
  *
- * Fires an event, PREF_CHANGE_EVENT, with the preference name that changed as the second
- * argument. Fires events on opening/closing the XUL panel (OPTIONS_SHOW_EVENT, OPTIONS_HIDDEN_EVENT)
- * as the second argument in the listener, used for tests mostly.
+ * Fires an event, PREF_CHANGE_EVENT, with the preference name that changed as
+ * the second argument. Fires events on opening/closing the XUL panel
+ * (OPTIONS_SHOW_EVENT, OPTIONS_HIDDEN_EVENT) as the second argument in the
+ * listener, used for tests mostly.
  */
-const OptionsView = function (options={}) {
+const OptionsView = function (options = {}) {
   this.branchName = options.branchName;
   this.menupopup = options.menupopup;
   this.window = this.menupopup.ownerDocument.defaultView;
   let { document } = this.window;
   this.$ = document.querySelector.bind(document);
-  this.$$ = (selector, parent=document) => parent.querySelectorAll(selector);
+  this.$$ = (selector, parent = document) => parent.querySelectorAll(selector);
   // Get the corresponding button that opens the popup by looking
   // for an element with a `popup` attribute matching the menu's ID
   this.button = this.$(`[popup=${this.menupopup.getAttribute("id")}]`);
@@ -43,8 +46,8 @@ OptionsView.prototype = {
     this._onPopupHidden = this._onPopupHidden.bind(this);
 
     // We use a mutation observer instead of a click handler
-    // because the click handler is fired before the XUL menuitem updates
-    // it's checked status, which cascades incorrectly with the Preference observer.
+    // because the click handler is fired before the XUL menuitem updates its
+    // checked status, which cascades incorrectly with the Preference observer.
     this.mutationObserver = new MutationObserver(this._onOptionChange);
     let observerConfig = { attributes: true, attributeFilter: ["checked"]};
 

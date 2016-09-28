@@ -102,16 +102,26 @@
 
       function toggleDisplay(node) {
         toggle = {
-          '': 'block',
-          'none': 'block',
-          'block': 'none'
+          "": "block",
+          "none": "block",
+          "block": "none"
         };
         return (node.style.display = toggle[node.style.display]);
       }
 
       function showCertificateErrorReporting() {
         // Display error reporting UI
-        document.getElementById('certificateErrorReporting').style.display = 'block';
+        document.getElementById("certificateErrorReporting").style.display = "block";
+      }
+
+      function showPrefChangeContainer() {
+        const panel = document.getElementById("prefChangeContainer");
+        panel.style.display = "block";
+        document.getElementById("netErrorButtonContainer").style.display = "none";
+        document.getElementById("prefResetButton").addEventListener("click", function resetPreferences(e) {
+          const event = new CustomEvent("AboutNetErrorResetPreferences", {bubbles:true});
+          document.dispatchEvent(event);
+        });
       }
 
       function showAdvancedButton(allowOverride) {
@@ -307,18 +317,29 @@
 
             var options = JSON.parse(evt.detail);
             if (options && options.enabled) {
-              var checkbox = document.getElementById('automaticallyReportInFuture');
+              var checkbox = document.getElementById("automaticallyReportInFuture");
               showCertificateErrorReporting();
               if (options.automatic) {
                 // set the checkbox
                 checkbox.checked = true;
               }
 
-              checkbox.addEventListener('change', function(evt) {
+              checkbox.addEventListener("change", function(evt) {
                   var event = new CustomEvent("AboutNetErrorSetAutomatic",
                     {bubbles:true, detail:evt.target.checked});
                   document.dispatchEvent(event);
                 }, false);
+            }
+            const hasPrefStyleError = [
+              "interrupted", // This happens with subresources that are above the max tls
+              "SSL_ERROR_PROTOCOL_VERSION_ALERT",
+              "SSL_ERROR_UNSUPPORTED_VERSION",
+              "SSL_ERROR_NO_CYPHER_OVERLAP",
+              "SSL_ERROR_NO_CIPHERS_SUPPORTED"
+            ].some((substring) => getDescription().includes(substring));
+            // If it looks like an error that is user config based
+            if (getErrorCode() == "nssFailure2" && hasPrefStyleError && options && options.changedCertPrefs) {
+              showPrefChangeContainer();
             }
           }
           if (getErrorCode() == "weakCryptoUsed" || getErrorCode() == "sslv3Used") {
@@ -409,7 +430,7 @@
         }
 
         // Initialize the cert domain link.
-        var link = document.getElementById('cert_domain_link');
+        var link = document.getElementById("cert_domain_link");
         if (!link)
           return;
 
@@ -501,7 +522,7 @@
         <h1 id="et_nssBadCert">&certerror.longpagetitle1;</h1>
         <h1 id="et_cspBlocked">&cspBlocked.title;</h1>
         <h1 id="et_remoteXUL">&remoteXUL.title;</h1>
-        <h1 id="et_corruptedContentError">&corruptedContentError.title;</h1>
+        <h1 id="et_corruptedContentErrorv2">&corruptedContentErrorv2.title;</h1>
         <h1 id="et_sslv3Used">&sslv3Used.title;</h1>
         <h1 id="et_weakCryptoUsed">&weakCryptoUsed.title;</h1>
         <h1 id="et_inadequateSecurityError">&inadequateSecurityError.title;</h1>
@@ -530,7 +551,7 @@
         <div id="ed_nssBadCert">&certerror.introPara;</div>
         <div id="ed_cspBlocked">&cspBlocked.longDesc;</div>
         <div id="ed_remoteXUL">&remoteXUL.longDesc;</div>
-        <div id="ed_corruptedContentError">&corruptedContentError.longDesc;</div>
+        <div id="ed_corruptedContentErrorv2">&corruptedContentErrorv2.longDesc;</div>
         <div id="ed_sslv3Used">&sslv3Used.longDesc2;</div>
         <div id="ed_weakCryptoUsed">&weakCryptoUsed.longDesc2;</div>
         <div id="ed_inadequateSecurityError">&inadequateSecurityError.longDesc;</div>
@@ -554,11 +575,20 @@
         </div>
         <p id="badStsCertExplanation" hidden="true">&certerror.whatShouldIDo.badStsCertExplanation;</p>
 
+        <div id="wrongSystemTimePanel" style="display: none;">
+          &certerror.wrongSystemTime;
+        </div>
+
         <!-- Long Description (Note: See netError.dtd for used XHTML tags) -->
         <div id="errorLongDesc" />
 
         <div id="learnMoreContainer">
           <p><a href="https://support.mozilla.org/kb/what-does-your-connection-is-not-secure-mean" id="learnMoreLink" target="new">&errorReporting.learnMore;</a></p>
+        </div>
+
+        <div id="prefChangeContainer" class="button-container">
+          <p>&prefReset.longDesc;</p>
+          <button id="prefResetButton" class="primary" autocomplete="off">&prefReset.label;</button>
         </div>
 
         <div id="certErrorButtonContainer" class="button-container">

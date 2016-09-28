@@ -106,7 +106,7 @@ struct BaseRect {
   // (including edges) of *this and aRect. If there are no points in that
   // intersection, returns an empty rectangle with x/y set to the std::max of the x/y
   // of *this and aRect.
-  MOZ_WARN_UNUSED_RESULT Sub Intersect(const Sub& aRect) const
+  MOZ_MUST_USE Sub Intersect(const Sub& aRect) const
   {
     Sub result;
     result.x = std::max<T>(x, aRect.x);
@@ -136,7 +136,7 @@ struct BaseRect {
   // If both rectangles are empty, returns this.
   // WARNING! This is not safe against overflow, prefer using SafeUnion instead
   // when dealing with int-based rects.
-  MOZ_WARN_UNUSED_RESULT Sub Union(const Sub& aRect) const
+  MOZ_MUST_USE Sub Union(const Sub& aRect) const
   {
     if (IsEmpty()) {
       return aRect;
@@ -151,7 +151,7 @@ struct BaseRect {
   // Thus, empty input rectangles are allowed to affect the result.
   // WARNING! This is not safe against overflow, prefer using SafeUnionEdges
   // instead when dealing with int-based rects.
-  MOZ_WARN_UNUSED_RESULT Sub UnionEdges(const Sub& aRect) const
+  MOZ_MUST_USE Sub UnionEdges(const Sub& aRect) const
   {
     Sub result;
     result.x = std::min(x, aRect.x);
@@ -326,7 +326,7 @@ struct BaseRect {
       case RectCorner::BottomRight: return BottomRight();
       case RectCorner::BottomLeft: return BottomLeft();
     }
-    MOZ_CRASH("Incomplete switch");
+    MOZ_CRASH("GFX: Incomplete switch");
   }
   Point CCWCorner(mozilla::Side side) const {
     switch (side) {
@@ -335,7 +335,7 @@ struct BaseRect {
       case NS_SIDE_BOTTOM: return BottomRight();
       case NS_SIDE_LEFT: return BottomLeft();
     }
-    MOZ_CRASH("Incomplete switch");
+    MOZ_CRASH("GFX: Incomplete switch");
   }
   Point CWCorner(mozilla::Side side) const {
     switch (side) {
@@ -344,7 +344,7 @@ struct BaseRect {
       case NS_SIDE_BOTTOM: return BottomLeft();
       case NS_SIDE_LEFT: return TopLeft();
     }
-    MOZ_CRASH("Incomplete switch");
+    MOZ_CRASH("GFX: Incomplete switch");
   }
   Point Center() const { return Point(x, y) + Point(width, height)/2; }
   SizeT Size() const { return SizeT(width, height); }
@@ -368,7 +368,7 @@ struct BaseRect {
       case NS_SIDE_BOTTOM: return YMost();
       case NS_SIDE_LEFT: return X();
     }
-    MOZ_CRASH("Incomplete switch");
+    MOZ_CRASH("GFX: Incomplete switch");
   }
 
   // Moves one edge of the rect without moving the opposite edge.
@@ -529,7 +529,7 @@ struct BaseRect {
    * Clamp aPoint to this rectangle. It is allowed to end up on any
    * edge of the rectangle.
    */
-  MOZ_WARN_UNUSED_RESULT Point ClampPoint(const Point& aPoint) const
+  MOZ_MUST_USE Point ClampPoint(const Point& aPoint) const
   {
     return Point(std::max(x, std::min(XMost(), aPoint.x)),
                  std::max(y, std::min(YMost(), aPoint.y)));
@@ -540,7 +540,7 @@ struct BaseRect {
    * aRect then the dimensions that don't fit will be shrunk so that they
    * do fit. The resulting rect is returned.
    */
-  MOZ_WARN_UNUSED_RESULT Sub MoveInsideAndClamp(const Sub& aRect) const
+  MOZ_MUST_USE Sub MoveInsideAndClamp(const Sub& aRect) const
   {
     Sub rect(std::max(aRect.x, x),
              std::max(aRect.y, y),

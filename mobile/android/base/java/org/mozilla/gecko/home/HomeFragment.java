@@ -18,6 +18,7 @@ import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
+import org.mozilla.gecko.distribution.PartnerBookmarksProviderProxy;
 import org.mozilla.gecko.home.HomeContextMenuInfo.RemoveItemType;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenInBackgroundListener;
 import org.mozilla.gecko.home.HomePager.OnUrlOpenListener;
@@ -76,6 +77,30 @@ public abstract class HomeFragment extends Fragment {
 
     // Helper for opening a tab in the background.
     private OnUrlOpenInBackgroundListener mUrlOpenInBackgroundListener;
+
+    protected PanelStateChangeListener mPanelStateChangeListener = null;
+
+    /**
+     * Listener to notify when a home panels' state has changed in a way that needs to be stored
+     * for history/restoration. E.g. when a folder is opened/closed in bookmarks.
+     */
+    public interface PanelStateChangeListener {
+
+        /**
+         * @param bundle Data that should be persisted, and passed to this panel if restored at a later
+         * stage.
+         */
+        void onStateChanged(Bundle bundle);
+    }
+
+    public void restoreData(Bundle data) {
+        // Do nothing
+    }
+
+    public void setPanelStateChangeListener(
+            PanelStateChangeListener mPanelStateChangeListener) {
+        this.mPanelStateChangeListener = mPanelStateChangeListener;
+    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -270,7 +295,11 @@ public abstract class HomeFragment extends Fragment {
             // For Top Sites grid items, position is required in case item is Pinned.
             final int position = info instanceof TopSitesGridContextMenuInfo ? info.position : -1;
 
-            (new RemoveItemByUrlTask(context, info.url, info.itemType, position)).execute();
+            if (info.hasPartnerBookmarkId()) {
+                new RemovePartnerBookmarkTask(context, info.bookmarkId).execute();
+            } else {
+                new RemoveItemByUrlTask(context, info.url, info.itemType, position).execute();
+            }
             return true;
         }
 
@@ -414,6 +443,36 @@ public abstract class HomeFragment extends Fragment {
         public void onPostExecute(Void result) {
             SnackbarHelper.showSnackbar((Activity) mContext,
                     mContext.getString(R.string.page_removed),
+                    Snackbar.LENGTH_LONG);
+        }
+    }
+
+    private static class RemovePartnerBookmarkTask extends UIAsyncTask.WithoutParams<Void> {
+        private Context context;
+        private long bookmarkId;
+
+        public RemovePartnerBookmarkTask(Context context, long bookmarkId) {
+            super(ThreadUtils.getBackgroundHandler());
+
+            this.context = context;
+            this.bookmarkId = bookmarkId;
+        }
+
+        @Override
+        protected Void doInBackground() {
+            context.getContentResolver().delete(
+                    PartnerBookmarksProviderProxy.getUriForBookmark(context, bookmarkId),
+                    null,
+                    null
+            );
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            SnackbarHelper.showSnackbar((Activity) context,
+                    context.getString(R.string.page_removed),
                     Snackbar.LENGTH_LONG);
         }
     }

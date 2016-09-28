@@ -220,7 +220,7 @@ public:
   nsresult
   ClaimClients(nsIPrincipal* aPrincipal, const nsCString& aScope, uint64_t aId);
 
-  nsresult
+  void
   SetSkipWaitingFlag(nsIPrincipal* aPrincipal, const nsCString& aScope,
                      uint64_t aServiceWorkerID);
 
@@ -258,6 +258,9 @@ public:
 
   nsresult
   NotifyUnregister(nsIPrincipal* aPrincipal, const nsAString& aScope);
+
+  void
+  WorkerIsIdle(ServiceWorkerInfo* aWorker);
 
 private:
   ServiceWorkerManager();
@@ -431,6 +434,20 @@ private:
 
   void
   MaybeSendUnregister(nsIPrincipal* aPrincipal, const nsACString& aScope);
+
+  nsresult
+  SendNotificationEvent(const nsAString& aEventName,
+                        const nsACString& aOriginSuffix,
+                        const nsACString& aScope,
+                        const nsAString& aID,
+                        const nsAString& aTitle,
+                        const nsAString& aDir,
+                        const nsAString& aLang,
+                        const nsAString& aBody,
+                        const nsAString& aTag,
+                        const nsAString& aIcon,
+                        const nsAString& aData,
+                        const nsAString& aBehavior);
 };
 
 } // namespace workers

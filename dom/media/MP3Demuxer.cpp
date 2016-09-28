@@ -10,7 +10,7 @@
 #include <algorithm>
 
 #include "mozilla/Assertions.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "VideoUtils.h"
 #include "TimeUnits.h"
 #include "prenv.h"
@@ -27,6 +27,7 @@ mozilla::LazyLogModule gMP3DemuxerLog("MP3Demuxer");
 #endif
 
 using mozilla::media::TimeUnit;
+using mozilla::media::TimeInterval;
 using mozilla::media::TimeIntervals;
 using mp4_demuxer::ByteReader;
 
@@ -325,13 +326,33 @@ MP3TrackDemuxer::GetResourceOffset() const {
 
 TimeIntervals
 MP3TrackDemuxer::GetBuffered() {
-  TimeUnit duration = Duration();
-
-  if (duration <= TimeUnit()) {
-    return TimeIntervals();
-  }
   AutoPinned<MediaResource> stream(mSource.GetResource());
-  return GetEstimatedBufferedTimeRanges(stream, duration.ToMicroseconds());
+  TimeIntervals buffered;
+
+  if (Duration() > TimeUnit() && stream->IsDataCachedToEndOfResource(0)) {
+    // Special case completely cached files. This also handles local files.
+    buffered += TimeInterval(TimeUnit(), Duration());
+    MP3LOGV("buffered = [[%" PRId64 ", %" PRId64 "]]",
+            TimeUnit().ToMicroseconds(), Duration().ToMicroseconds());
+    return buffered;
+  }
+
+  MediaByteRangeSet ranges;
+  nsresult rv = stream->GetCachedRanges(ranges);
+  NS_ENSURE_SUCCESS(rv, buffered);
+
+  for (const auto& range: ranges) {
+    if (range.IsEmpty()) {
+      continue;
+    }
+    TimeUnit start = Duration(FrameIndexFromOffset(range.mStart));
+    TimeUnit end = Duration(FrameIndexFromOffset(range.mEnd));
+    MP3LOGV("buffered += [%" PRId64 ", %" PRId64 "]",
+            start.ToMicroseconds(), end.ToMicroseconds());
+    buffered += TimeInterval(start, end);
+  }
+
+  return buffered;
 }
 
 int64_t
@@ -347,7 +368,7 @@ MP3TrackDemuxer::Duration() const {
 
   int64_t numFrames = 0;
   const auto numAudioFrames = mParser.VBRInfo().NumAudioFrames();
-  if (mParser.VBRInfo().IsValid()) {
+  if (mParser.VBRInfo().IsValid() && numAudioFrames.valueOr(0) + 1 > 1) {
     // VBR headers don't include the VBR header frame.
     numFrames = numAudioFrames.value() + 1;
   } else {
@@ -560,7 +581,6 @@ MP3TrackDemuxer::GetNextFrame(const MediaByteRange& aRange) {
 
   if (mNumParsedFrames == 1) {
     // First frame parsed, let's read VBR info if available.
-    // TODO: read info that helps with seeking (bug 1163667).
     ByteReader reader(frame->Data(), frame->Size());
     mParser.ParseVBRHeader(&reader);
     reader.DiscardRemaining();
@@ -581,7 +601,7 @@ MP3TrackDemuxer::OffsetFromFrameIndex(int64_t aFrameIndex) const {
   int64_t offset = 0;
   const auto& vbr = mParser.VBRInfo();
 
-  if (vbr.IsValid()) {
+  if (vbr.IsComplete()) {
     offset = mFirstFrameOffset + aFrameIndex * vbr.NumBytes().value() /
              vbr.NumAudioFrames().value();
   } else if (AverageFrameLength() > 0) {
@@ -597,7 +617,7 @@ MP3TrackDemuxer::FrameIndexFromOffset(int64_t aOffset) const {
   int64_t frameIndex = 0;
   const auto& vbr = mParser.VBRInfo();
 
-  if (vbr.IsValid()) {
+  if (vbr.IsComplete()) {
     frameIndex = static_cast<float>(aOffset - mFirstFrameOffset) /
                  vbr.NumBytes().value() * vbr.NumAudioFrames().value();
     frameIndex = std::min<int64_t>(vbr.NumAudioFrames().value(), frameIndex);
@@ -673,7 +693,7 @@ MP3TrackDemuxer::AverageFrameLength() const {
     return static_cast<double>(mTotalFrameLen) / mNumParsedFrames;
   }
   const auto& vbr = mParser.VBRInfo();
-  if (vbr.IsValid() && vbr.NumAudioFrames().value() + 1) {
+  if (vbr.IsComplete() && vbr.NumAudioFrames().value() + 1) {
     return static_cast<double>(vbr.NumBytes().value()) /
            (vbr.NumAudioFrames().value() + 1);
   }
@@ -1014,7 +1034,12 @@ FrameParser::VBRHeader::IsTOCPresent() const {
 
 bool
 FrameParser::VBRHeader::IsValid() const {
-  return mType != NONE &&
+  return mType != NONE;
+}
+
+bool
+FrameParser::VBRHeader::IsComplete() const {
+  return IsValid() &&
          mNumAudioFrames.valueOr(0) > 0 &&
          mNumBytes.valueOr(0) > 0 &&
          // We don't care about the scale for any computations here.

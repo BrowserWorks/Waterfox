@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include "base/message_loop.h"
+#include "base/task.h"
 #include "DiskSpaceWatcher.h"
 #include "fanotify.h"
 #include "nsIObserverService.h"
@@ -23,13 +24,6 @@ using namespace mozilla;
 namespace mozilla { namespace hal_impl { class GonkDiskSpaceWatcher; } }
 
 using namespace mozilla::hal_impl;
-
-template<>
-struct RunnableMethodTraits<GonkDiskSpaceWatcher>
-{
-  static void RetainCallee(GonkDiskSpaceWatcher* obj) { }
-  static void ReleaseCallee(GonkDiskSpaceWatcher* obj) { }
-};
 
 namespace mozilla {
 namespace hal_impl {
@@ -119,7 +113,7 @@ static GonkDiskSpaceWatcher* gHalDiskSpaceWatcher = nullptr;
 static const char kWatchedPath[] = "/data";
 
 // Helper class to dispatch calls to xpcom on the main thread.
-class DiskSpaceNotifier : public nsRunnable
+class DiskSpaceNotifier : public Runnable
 {
 public:
   DiskSpaceNotifier(const bool aIsDiskFull, const uint64_t aFreeSpace) :
@@ -139,7 +133,7 @@ private:
 };
 
 // Helper runnable to delete the watcher on the main thread.
-class DiskSpaceCleaner : public nsRunnable
+class DiskSpaceCleaner : public Runnable
 {
 public:
   NS_IMETHOD Run()
@@ -311,8 +305,7 @@ StartDiskSpaceWatcher()
   gHalDiskSpaceWatcher = new GonkDiskSpaceWatcher();
 
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(gHalDiskSpaceWatcher, &GonkDiskSpaceWatcher::DoStart));
+    NewNonOwningRunnableMethod(gHalDiskSpaceWatcher, &GonkDiskSpaceWatcher::DoStart));
 }
 
 void
@@ -324,8 +317,7 @@ StopDiskSpaceWatcher()
   }
 
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(gHalDiskSpaceWatcher, &GonkDiskSpaceWatcher::DoStop));
+    NewNonOwningRunnableMethod(gHalDiskSpaceWatcher, &GonkDiskSpaceWatcher::DoStop));
 }
 
 } // namespace hal_impl

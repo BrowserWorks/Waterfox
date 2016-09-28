@@ -153,7 +153,7 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
             if url:
                 self.gecko_repos.append({
                     "repo": url,
-                    "revision": self.config.get("%s_repo_revision", "default"),
+                    "branch": self.config.get("%s_repo_branch" % (k,), "default"),
                     "dest": dirs['abs_%s_dir' % k],
                     "vcs": "hg",
                 })
@@ -177,11 +177,7 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
         return dirs.get('abs_from_dir'), dirs.get('abs_to_dir')
 
     def query_push_args(self, cwd):
-        if cwd == self.query_abs_dirs()['abs_to_dir'] and \
-                self.config['migration_behavior'] == 'beta_to_release':
-            return ['--new-branch']
-        else:
-            return []
+        return ['-r', '.']
 
     def query_from_revision(self):
         """ Shortcut to get the revision for the from repo
@@ -462,7 +458,7 @@ class GeckoMigration(MercurialScript, BalrogMixin, VirtualenvMixin,
             """
         repos = [{
             "repo": self.config["tools_repo_url"],
-            "revision": self.config["tools_repo_revision"],
+            "branch": self.config["tools_repo_branch"],
             "dest": "tools",
             "vcs": "hg",
         }] + self.query_repos()

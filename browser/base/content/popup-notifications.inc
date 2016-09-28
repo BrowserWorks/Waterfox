@@ -54,6 +54,7 @@
       <popupnotificationcontent orient="vertical">
         <textbox id="password-notification-username"/>
         <textbox id="password-notification-password" type="password" show-content=""/>
+        <checkbox id="password-notification-visibilityToggle" hidden="true"/>
       </popupnotificationcontent>
     </popupnotification>
 
@@ -73,12 +74,6 @@
         </hbox>
       </vbox>
     </stack>
-
-#ifdef E10S_TESTING_ONLY
-    <popupnotification id="enable-e10s-notification" hidden="true">
-      <popupnotificationcontent orient="vertical"/>
-    </popupnotification>
-#endif
 
     <popupnotification id="addon-progress-notification" hidden="true">
       <popupnotificationcontent orient="vertical">

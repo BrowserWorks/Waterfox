@@ -27,7 +27,7 @@ dictionary KeyframeEffectOptions : AnimationEffectTimingProperties {
 [HeaderFile="mozilla/dom/KeyframeEffect.h",
  Func="nsDocument::IsWebAnimationsEnabled",
  Constructor((Element or CSSPseudoElement)? target,
-             object? frames,
+             object? keyframes,
              optional (unrestricted double or KeyframeEffectOptions) options)]
 interface KeyframeEffectReadOnly : AnimationEffectReadOnly {
   // Bug 1241783: As with the constructor, we use (Element or CSSPseudoElement)?
@@ -42,7 +42,7 @@ interface KeyframeEffectReadOnly : AnimationEffectReadOnly {
 
   // We use object instead of ComputedKeyframe so that we can put the
   // property-value pairs on the object.
-  [Throws] sequence<object> getFrames();
+  [Throws] sequence<object> getKeyframes();
 };
 
 // Non-standard extensions
@@ -66,11 +66,10 @@ partial interface KeyframeEffectReadOnly {
 
 [Func="nsDocument::IsWebAnimationsEnabled",
  Constructor ((Element or CSSPseudoElement)? target,
-              object? frames,
+              object? keyframes,
               optional (unrestricted double or KeyframeEffectOptions) options)]
 interface KeyframeEffect : KeyframeEffectReadOnly {
-  // Bug 1067769 - Allow setting KeyframeEffect.target
-  // inherit attribute Animatable?                 target;
+  inherit attribute (Element or CSSPseudoElement)? target;
   // Bug 1216843 - implement animation composition
   // inherit attribute IterationCompositeOperation iterationComposite;
   // Bug 1216844 - implement additive animation
@@ -78,5 +77,5 @@ interface KeyframeEffect : KeyframeEffectReadOnly {
   // Bug 1244590 - implement spacing modes
   // inherit attribute DOMString                   spacing;
   [Throws]
-  void setFrames (object? frames);
+  void setKeyframes (object? keyframes);
 };

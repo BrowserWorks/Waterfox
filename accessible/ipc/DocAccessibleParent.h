@@ -64,6 +64,10 @@ public:
                                    const bool& aIsInsert,
                                    const bool& aFromUser) override;
 
+  virtual bool RecvSelectionEvent(const uint64_t& aID,
+                                  const uint64_t& aWidgetID,
+                                  const uint32_t& aType) override;
+
   virtual bool RecvBindChildDoc(PDocAccessibleParent* aChildDoc, const uint64_t& aID) override;
   void Unbind()
   {
@@ -162,7 +166,7 @@ private:
   uint32_t AddSubtree(ProxyAccessible* aParent,
                       const nsTArray<AccessibleData>& aNewTree, uint32_t aIdx,
                       uint32_t aIdxInParent);
-  MOZ_WARN_UNUSED_RESULT bool CheckDocTree() const;
+  MOZ_MUST_USE bool CheckDocTree() const;
   xpcAccessibleGeneric* GetXPCAccessible(ProxyAccessible* aProxy);
 
   nsTArray<DocAccessibleParent*> mChildDocs;

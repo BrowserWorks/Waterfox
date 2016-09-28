@@ -24,6 +24,7 @@
 #endif
 #include "nsBindingManager.h"
 #include "nsGenericHTMLElement.h"
+#include "mozilla/AnimationTarget.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/HTMLImageElement.h"
@@ -424,7 +425,6 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
   // attributes and children).
 
   nsAutoScriptBlocker scriptBlocker;
-  AutoJSContext cx;
   nsresult rv;
 
   nsNodeInfoManager *nodeInfoManager = aNewNodeInfoManager;
@@ -563,13 +563,14 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
     }
 
     if (aReparentScope) {
+      AutoJSContext cx;
       JS::Rooted<JSObject*> wrapper(cx);
       if ((wrapper = aNode->GetWrapper())) {
         MOZ_ASSERT(IsDOMObject(wrapper));
         JSAutoCompartment ac(cx, wrapper);
         rv = ReparentWrapper(cx, wrapper);
         if (NS_FAILED(rv)) {
-          aNode->mNodeInfo.swap(nodeInfo);
+          aNode->mNodeInfo.swap(newNodeInfo);
 
           return rv;
         }

@@ -504,6 +504,7 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
                   aLocalPort,
                   mAddressReuse,
                   mLoopback,
+                  0,
                   0);
 
   if (NS_FAILED(rv)) {
@@ -541,7 +542,7 @@ UDPSocket::Init(const nsString& aLocalAddress,
     return rv.StealNSResult();
   }
 
-  class OpenSocketRunnable final : public nsRunnable
+  class OpenSocketRunnable final : public Runnable
   {
   public:
     explicit OpenSocketRunnable(UDPSocket* aSocket) : mSocket(aSocket)

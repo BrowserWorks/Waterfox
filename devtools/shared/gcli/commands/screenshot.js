@@ -7,11 +7,12 @@
 const { Cc, Ci, Cr } = require("chrome");
 const l10n = require("gcli/l10n");
 const Services = require("Services");
+const { NetUtil } = require("resource://gre/modules/NetUtil.jsm");
 const { getRect } = require("devtools/shared/layout/utils");
 const promise = require("promise");
+const { Task } = require("devtools/shared/task");
 
 loader.lazyImporter(this, "Downloads", "resource://gre/modules/Downloads.jsm");
-loader.lazyImporter(this, "Task", "resource://gre/modules/Task.jsm");
 loader.lazyImporter(this, "OS", "resource://gre/modules/osfile.jsm");
 loader.lazyImporter(this, "FileUtils", "resource://gre/modules/FileUtils.jsm");
 loader.lazyImporter(this, "PrivateBrowsingUtils",
@@ -173,7 +174,7 @@ exports.items = [
     returnType: "imageSummary",
     buttonId: "command-button-screenshot",
     buttonClass: "command-button command-button-invertable",
-    tooltipText: l10n.lookup("screenshotTooltip"),
+    tooltipText: l10n.lookup("screenshotTooltipPage"),
     params: [
       filenameParam,
       standardParams,
@@ -357,19 +358,18 @@ function getFilename(defaultName) {
  */
 function saveToClipboard(context, reply) {
   try {
+    const channel = NetUtil.newChannel({
+      uri: reply.data,
+      loadUsingSystemPrincipal: true,
+      contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE
+    });
+    const input = channel.open2();
+
     const loadContext = context.environment.chromeWindow
                                .QueryInterface(Ci.nsIInterfaceRequestor)
                                .getInterface(Ci.nsIWebNavigation)
                                .QueryInterface(Ci.nsILoadContext);
-    const io = Cc["@mozilla.org/network/io-service;1"]
-                  .getService(Ci.nsIIOService);
-    const channel = io.newChannel2(reply.data, null, null,
-                                   null,      // aLoadingNode
-                                   Services.scriptSecurityManager.getSystemPrincipal(),
-                                   null,      // aTriggeringPrincipal
-                                   Ci.nsILoadInfo.SEC_NORMAL,
-                                   Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE);
-    const input = channel.open();
+
     const imgTools = Cc["@mozilla.org/image/tools;1"]
                         .getService(Ci.imgITools);
 

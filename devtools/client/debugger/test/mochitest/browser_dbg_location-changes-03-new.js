@@ -11,7 +11,11 @@ const TAB_URL_1 = EXAMPLE_URL + "doc_recursion-stack.html";
 const TAB_URL_2 = EXAMPLE_URL + "doc_iframes.html";
 
 function test() {
-  initDebugger(TAB_URL_1).then(([aTab, aDebuggee, aPanel]) => {
+  let options = {
+    source: TAB_URL_1,
+    line: 1
+  };
+  initDebugger(TAB_URL_1, options).then(([aTab, aDebuggee, aPanel]) => {
     const gTab = aTab;
     const gDebuggee = aDebuggee;
     const gPanel = aPanel;
@@ -19,10 +23,12 @@ function test() {
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
     const gFrames = gDebugger.DebuggerView.StackFrames;
-    const constants = gDebugger.require('./content/constants');
+    const constants = gDebugger.require("./content/constants");
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 14);
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretUpdated(gPanel, 14);
+      callInTab(gTab, "simpleCall");
+      yield onCaretUpdated;
 
       const startedLoading = waitForNextDispatch(gDebugger.DebuggerController,
                                                  constants.LOAD_SOURCE_TEXT);
@@ -49,7 +55,5 @@ function test() {
       yield waitForDispatch(gPanel, constants.LOAD_SOURCE_TEXT);
       closeDebuggerAndFinish(gPanel);
     });
-
-    gDebuggee.simpleCall();
   });
 }

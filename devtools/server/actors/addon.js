@@ -85,6 +85,7 @@ BrowserAddonActor.prototype = {
       url: this.url,
       iconURL: this._addon.iconURL,
       debuggable: this._addon.isDebuggable,
+      temporarilyInstalled: this._addon.temporarilyInstalled,
       consoleActor: this._consoleActor.actorID,
 
       traits: {
@@ -163,7 +164,7 @@ BrowserAddonActor.prototype = {
       });
   },
 
-  preNest: function() {
+  preNest: function () {
     let e = Services.wm.getEnumerator(null);
     while (e.hasMoreElements()) {
       let win = e.getNext();
@@ -174,7 +175,7 @@ BrowserAddonActor.prototype = {
     }
   },
 
-  postNest: function() {
+  postNest: function () {
     let e = Services.wm.getEnumerator(null);
     while (e.hasMoreElements()) {
       let win = e.getNext();
@@ -200,11 +201,7 @@ BrowserAddonActor.prototype = {
     } catch (e) {}
 
     if (global instanceof Ci.nsIDOMWindow) {
-      let id = {};
-      if (mapURIToAddonID(global.document.documentURIObject, id)) {
-        return id.value === this.id;
-      }
-      return false;
+      return mapURIToAddonID(global.document.documentURIObject) == this.id;
     }
 
     // Check the global for a __URI__ property and then try to map that to an
@@ -223,9 +220,8 @@ BrowserAddonActor.prototype = {
         return false;
       }
 
-      let id = {};
-      if (mapURIToAddonID(uri, id)) {
-        return id.value === this.id;
+      if (mapURIToAddonID(uri) == this.id) {
+        return true;
       }
     }
 
@@ -237,7 +233,7 @@ BrowserAddonActor.prototype = {
    * sure every script and source with a URL is stored when debugging
    * add-ons.
    */
-  _allowSource: function(aSource) {
+  _allowSource: function (aSource) {
     // XPIProvider.jsm evals some code in every add-on's bootstrap.js. Hide it.
     if (aSource.url === "resource://gre/modules/addons/XPIProvider.jsm") {
       return false;

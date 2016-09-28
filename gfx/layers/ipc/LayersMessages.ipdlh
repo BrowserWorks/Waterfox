@@ -17,7 +17,7 @@ include "gfxipc/ShadowLayerUtils.h";
 include "mozilla/GfxMessageUtils.h";
 include "ImageLayers.h";
 
-using mozilla::gfx::Filter from "mozilla/gfx/2D.h";
+using mozilla::gfx::SamplingFilter from "mozilla/gfx/2D.h";
 using struct mozilla::gfx::Color from "mozilla/gfx/2D.h";
 using struct mozilla::gfx::Point3D from "mozilla/gfx/Point.h";
 using mozilla::gfx::IntPoint from "mozilla/gfx/Point.h";
@@ -45,6 +45,7 @@ using struct mozilla::layers::ScrollMetadata from "FrameMetrics.h";
 using mozilla::layers::FrameMetrics::ViewID from "FrameMetrics.h";
 using struct mozilla::layers::FenceHandle from "mozilla/layers/FenceUtils.h";
 using mozilla::layers::LayersBackend from "mozilla/layers/LayersTypes.h";
+using mozilla::layers::MaybeLayerClip from "FrameMetrics.h";
 
 namespace mozilla {
 namespace layers {
@@ -218,11 +219,11 @@ struct CommonLayerAttributes {
   float opacity;
   bool useClipRect;
   ParentLayerIntRect clipRect;
+  MaybeLayerClip scrolledClip;
   bool isFixedPosition;
   uint64_t fixedPositionScrollContainerId;
   LayerPoint fixedPositionAnchor;
   int32_t fixedPositionSides;
-  bool isClipFixed;
   bool isStickyPosition;
   uint64_t stickyScrollContainerId;
   LayerRect stickyScrollRangeOuter;
@@ -257,14 +258,14 @@ struct ContainerLayerAttributes {
   int32_t inputFrameID;
 };
 struct ColorLayerAttributes     { LayerColor color; IntRect bounds; };
-struct CanvasLayerAttributes    { Filter filter; IntRect bounds; };
+struct CanvasLayerAttributes    { SamplingFilter samplingFilter; IntRect bounds; };
 struct RefLayerAttributes {
   int64_t id;
   // TODO: Once bug 1132895 is fixed we shouldn't need to propagate the override
   // explicitly here.
   EventRegionsOverride eventRegionsOverride;
 };
-struct ImageLayerAttributes     { Filter filter; IntSize scaleToSize; ScaleMode scaleMode; };
+struct ImageLayerAttributes     { SamplingFilter samplingFilter; IntSize scaleToSize; ScaleMode scaleMode; };
 
 union SpecificLayerAttributes {
   null_t;
@@ -311,9 +312,10 @@ struct ShmemSection {
   size_t size;
 };
 
-union TileLock {
+union ReadLockDescriptor {
   ShmemSection;
   uintptr_t;
+  null_t;
 };
 
 union MaybeTexture {
@@ -325,7 +327,9 @@ struct TexturedTileDescriptor {
   PTexture texture;
   MaybeTexture textureOnWhite;
   IntRect updateRect;
-  TileLock sharedLock;
+  ReadLockDescriptor sharedLock;
+  ReadLockDescriptor sharedLockOnWhite;
+  bool wasPlaceholder;
 };
 
 struct PlaceholderTileDescriptor {
@@ -348,6 +352,7 @@ struct SurfaceDescriptorTiles {
   float       resolution;
   float       frameXResolution;
   float       frameYResolution;
+  bool        isProgressive;
 };
 
 struct OpUseTiledLayerBuffer {
@@ -390,6 +395,7 @@ union MaybeFence {
 
 struct TimedTexture {
   PTexture texture;
+  ReadLockDescriptor sharedLock;
   MaybeFence fence;
   TimeStamp timeStamp;
   IntRect picture;
@@ -415,6 +421,8 @@ struct OpUseTexture {
 struct OpUseComponentAlphaTextures {
   PTexture textureOnBlack;
   PTexture textureOnWhite;
+  ReadLockDescriptor sharedLockBlack;
+  ReadLockDescriptor sharedLockWhite;
 };
 
 union MaybeRegion {
@@ -452,6 +460,8 @@ struct CompositableOperation {
 };
 
 // A unit of a changeset; a set of these comprise a changeset
+// If adding a new edit type that requires the hit testing tree to be updated,
+// set the updateHitTestingTree flag to true in RecvUpdate()
 union Edit {
   OpCreatePaintedLayer;
   OpCreateContainerLayer;

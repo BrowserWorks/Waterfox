@@ -84,7 +84,7 @@ public class SearchEngineManager implements SharedPreferences.OnSharedPreference
     private String distributionLocale;
 
     public static interface SearchEngineCallback {
-        public void execute(SearchEngine engine);
+        public void execute(@Nullable SearchEngine engine);
     }
 
     public SearchEngineManager(Context context, Distribution distribution) {
@@ -301,7 +301,7 @@ public class SearchEngineManager implements SharedPreferences.OnSharedPreference
         }
 
         try {
-            final JSONObject all = new JSONObject(FileUtils.getFileContents(prefFile));
+            final JSONObject all = FileUtils.readJSONObjectFromFile(prefFile);
 
             // First, look for a default locale specified by the distribution.
             if (all.has("Preferences")) {

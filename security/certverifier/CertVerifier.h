@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_psm__CertVerifier_h
-#define mozilla_psm__CertVerifier_h
+#ifndef CertVerifier_h
+#define CertVerifier_h
 
 #include "BRNameMatchingPolicy.h"
 #include "OCSPCache.h"
@@ -32,6 +32,8 @@ enum class SHA1ModeResult {
   SucceededWithSHA1 = 4,
   Failed = 5,
 };
+
+enum class NetscapeStepUpPolicy : uint32_t;
 
 class PinningTelemetryInfo
 {
@@ -74,7 +76,7 @@ public:
                        mozilla::pkix::Time time,
                        void* pinArg,
                        const char* hostname,
-               /*out*/ ScopedCERTCertList& builtChain,
+               /*out*/ UniqueCERTCertList& builtChain,
                        Flags flags = 0,
        /*optional in*/ const SECItem* stapledOCSPResponse = nullptr,
       /*optional out*/ SECOidTag* evOidPolicy = nullptr,
@@ -89,7 +91,7 @@ public:
                     mozilla::pkix::Time time,
        /*optional*/ void* pinarg,
                     const char* hostname,
-            /*out*/ ScopedCERTCertList& builtChain,
+            /*out*/ UniqueCERTCertList& builtChain,
        /*optional*/ bool saveIntermediatesInPermanentDatabase = false,
        /*optional*/ Flags flags = 0,
    /*optional out*/ SECOidTag* evOidPolicy = nullptr,
@@ -123,7 +125,8 @@ public:
   CertVerifier(OcspDownloadConfig odc, OcspStrictConfig osc,
                OcspGetConfig ogc, uint32_t certShortLifetimeInDays,
                PinningMode pinningMode, SHA1Mode sha1Mode,
-               BRNameMatchingPolicy::Mode nameMatchingMode);
+               BRNameMatchingPolicy::Mode nameMatchingMode,
+               NetscapeStepUpPolicy netscapeStepUpPolicy);
   ~CertVerifier();
 
   void ClearOCSPCache() { mOCSPCache.Clear(); }
@@ -135,6 +138,7 @@ public:
   const PinningMode mPinningMode;
   const SHA1Mode mSHA1Mode;
   const BRNameMatchingPolicy::Mode mNameMatchingMode;
+  const NetscapeStepUpPolicy mNetscapeStepUpPolicy;
 
 private:
   OCSPCache mOCSPCache;
@@ -154,4 +158,4 @@ mozilla::pkix::Result CertListContainsExpectedKeys(
 
 } } // namespace mozilla::psm
 
-#endif // mozilla_psm__CertVerifier_h
+#endif // CertVerifier_h

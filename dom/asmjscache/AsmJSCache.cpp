@@ -238,7 +238,7 @@ EvictEntries(nsIFile* aDirectory, const nsACString& aGroup,
 // FileDescriptorHolder owns a file descriptor and its memory mapping.
 // FileDescriptorHolder is derived by two runnable classes (that is,
 // (Parent|Child)Runnable.
-class FileDescriptorHolder : public nsRunnable
+class FileDescriptorHolder : public Runnable
 {
 public:
   FileDescriptorHolder()
@@ -589,6 +589,7 @@ private:
 
   // State initialized during eInitial:
   quota::PersistenceType mPersistence;
+  nsCString mSuffix;
   nsCString mGroup;
   nsCString mOrigin;
   RefPtr<DirectoryLock> mDirectoryLock;
@@ -685,8 +686,8 @@ ParentRunnable::InitOnMainThread()
     return rv;
   }
 
-  rv = QuotaManager::GetInfoFromPrincipal(principal, &mGroup, &mOrigin,
-                                          &mIsApp);
+  rv = QuotaManager::GetInfoFromPrincipal(principal, &mSuffix, &mGroup,
+                                          &mOrigin, &mIsApp);
   NS_ENSURE_SUCCESS(rv, rv);
 
   InitPersistenceType();
@@ -727,8 +728,8 @@ ParentRunnable::ReadMetadata()
   MOZ_ASSERT(qm, "We are on the QuotaManager's IO thread");
 
   nsresult rv =
-    qm->EnsureOriginIsInitialized(mPersistence, mGroup, mOrigin, mIsApp,
-                                  getter_AddRefs(mDirectory));
+    qm->EnsureOriginIsInitialized(mPersistence, mSuffix, mGroup, mOrigin,
+                                  mIsApp, getter_AddRefs(mDirectory));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     mResult = JS::AsmJSCache_StorageInitFailure;
     return rv;
@@ -1848,7 +1849,7 @@ ParamTraits<Metadata>::Write(Message* aMsg, const paramType& aParam)
 }
 
 bool
-ParamTraits<Metadata>::Read(const Message* aMsg, void** aIter,
+ParamTraits<Metadata>::Read(const Message* aMsg, PickleIterator* aIter,
                             paramType* aResult)
 {
   for (unsigned i = 0; i < Metadata::kNumEntries; i++) {
@@ -1887,7 +1888,7 @@ ParamTraits<WriteParams>::Write(Message* aMsg, const paramType& aParam)
 }
 
 bool
-ParamTraits<WriteParams>::Read(const Message* aMsg, void** aIter,
+ParamTraits<WriteParams>::Read(const Message* aMsg, PickleIterator* aIter,
                                paramType* aResult)
 {
   return ReadParam(aMsg, aIter, &aResult->mSize) &&

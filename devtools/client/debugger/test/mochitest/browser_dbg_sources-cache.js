@@ -11,7 +11,11 @@ const TAB_URL = EXAMPLE_URL + "doc_function-search.html";
 const TOTAL_SOURCES = 4;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_function-search-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab, aDebuggee, aPanel]) => {
     const gTab = aTab;
     const gDebuggee = aDebuggee;
     const gPanel = aPanel;
@@ -21,7 +25,7 @@ function test() {
     const gPrevLabelsCache = gDebugger.SourceUtils._labelsCache;
     const gPrevGroupsCache = gDebugger.SourceUtils._groupsCache;
     const getState = gDebugger.DebuggerController.getState;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
 
     function initialChecks() {
@@ -37,9 +41,9 @@ function test() {
       is(gSources.visibleItems.length, TOTAL_SOURCES,
          "There should be " + TOTAL_SOURCES + " sources visible in the sources list.");
       is(gSources.attachments.length, TOTAL_SOURCES,
-         "There should be " + TOTAL_SOURCES + " attachments stored in the sources container model.")
+         "There should be " + TOTAL_SOURCES + " attachments stored in the sources container model.");
       is(gSources.values.length, TOTAL_SOURCES,
-         "There should be " + TOTAL_SOURCES + " values stored in the sources container model.")
+         "There should be " + TOTAL_SOURCES + " values stored in the sources container model.");
 
       info("Source labels: " + gSources.attachments.toSource());
       info("Source values: " + gSources.values.toSource());
@@ -126,8 +130,7 @@ function test() {
          "There should be " + TOTAL_SOURCES + " groups cached after reload.");
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "-01.js");
+    Task.spawn(function* () {
       yield initialChecks();
       yield testCacheIntegrity(["code_function-search-01.js"]);
       yield fetchAllSources();

@@ -3,7 +3,7 @@
 Firefox Puppeteer
 =================
 
-Firefox Puppeteer is a library built on top of the `Marionette python client`_.
+`Firefox Puppeteer`_ is a library built on top of the `Marionette Python client`_.
 It aims to make automation of Firefox's browser UI simpler. It does **not**
 make sense to use Firefox Puppeteer if:
 
@@ -14,16 +14,40 @@ Roughly speaking, Firefox Puppeteer provides a library to manipulate each
 visual section of Firefox's browser UI. For example, there are different
 libraries for the tab bar, the navigation bar, etc.
 
+.. _Firefox Puppeteer: http://firefox-puppeteer.readthedocs.io/
+.. _Marionette Python client: http://marionette-client.readthedocs.org/
 
 Installation
 ------------
 
-Currently Firefox Puppeteer lives in the `firefox-ui-tests`_ repository,
-along with instructions for installation and usage.
-There are plans to move it alongside the `Marionette python client`_.
+For end-users Firefox Puppeteer can be easily installed as a `Python package`_
+from PyPI. If you want to contribute to the project we propose that you clone
+the `mozilla-central`_ repository and run the following commands::
 
-.. _Marionette python client: http://marionette-client.readthedocs.org/en/latest/
-.. _firefox-ui-tests: https://github.com/mozilla/firefox-ui-tests/tree/mozilla-central/firefox_puppeteer
+$ cd testing/puppeteer/firefox
+$ python setup.py develop
+
+In both cases all necessary files including all dependencies will be installed.
+
+.. _Python package: https://pypi.python.org/pypi/firefox-puppeteer
+.. _mozilla-central: https://hg.mozilla.org/mozilla-central
+
+Versioning
+----------
+
+Puppeteer versions as regularly released from the Python source code, will follow
+a specific versioning schema. It means the major version number will always
+be identical with the supported Firefox version. Minor releases - the second part
+of the version number - are done throughout the life-cycle of a Firefox version
+when Puppeteer itself needs API changes for back-end and front-end modules. The
+last part of the version number is the patch level, and is only used for bugfix
+releases without any API changes.
+
+Examples:
+
+  firefox_puppeteer_45.0.0 - First release for Firefox 45.0 and Firefox 45.xESR
+  firefox_puppeteer_46.2.0 - Second release for Firefox 46.0 caused by API changes
+  firefox_puppeteer_47.0.1 - First bugfix release for the new Firefox 47.0 support
 
 
 Libraries

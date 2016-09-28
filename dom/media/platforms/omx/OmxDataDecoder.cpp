@@ -113,9 +113,7 @@ OmxDataDecoder::OmxDataDecoder(const TrackInfo& aTrackInfo,
   LOG("");
   mOmxLayer = new OmxPromiseLayer(mOmxTaskQueue, this, aImageContainer);
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::InitializationTask);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::InitializationTask));
 }
 
 OmxDataDecoder::~OmxDataDecoder()
@@ -208,9 +206,7 @@ OmxDataDecoder::Flush()
 
   mFlushing = true;
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::DoFlush);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::DoFlush));
 
   // According to the definition of Flush() in PDM:
   // "the decoder must be ready to accept new input for decoding".
@@ -228,9 +224,7 @@ OmxDataDecoder::Drain()
 {
   LOG("");
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::SendEosBuffer);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::SendEosBuffer));
 
   return NS_OK;
 }
@@ -242,9 +236,7 @@ OmxDataDecoder::Shutdown()
 
   mShuttingDown = true;
 
-  nsCOMPtr<nsIRunnable> r =
-    NS_NewRunnableMethod(this, &OmxDataDecoder::DoAsyncShutdown);
-  mOmxTaskQueue->Dispatch(r.forget());
+  mOmxTaskQueue->Dispatch(NewRunnableMethod(this, &OmxDataDecoder::DoAsyncShutdown));
 
   {
     // DoAsyncShutdown() will be running for a while, it could be still running
@@ -446,10 +438,10 @@ OmxDataDecoder::EmptyBufferFailure(OmxBufferFailureHolder aFailureHolder)
 }
 
 void
-OmxDataDecoder::NotifyError(OMX_ERRORTYPE aError, const char* aLine)
+OmxDataDecoder::NotifyError(OMX_ERRORTYPE aOmxError, const char* aLine, MediaDataDecoderError aError)
 {
-  LOG("NotifyError %d at %s", aError, aLine);
-  mCallback->Error();
+  LOG("NotifyError %d (%d) at %s", aOmxError, aError, aLine);
+  mCallback->Error(aError);
 }
 
 void
@@ -704,6 +696,11 @@ OmxDataDecoder::Event(OMX_EVENTTYPE aEvent, OMX_U32 aData1, OMX_U32 aData2)
     }
     default:
     {
+      // Got error during decoding, send msg to MFR skipping to next key frame.
+      if (aEvent == OMX_EventError && mOmxState == OMX_StateExecuting) {
+        NotifyError((OMX_ERRORTYPE)aData1, __func__, MediaDataDecoderError::DECODE_ERROR);
+        return true;
+      }
       LOG("WARNING: got none handle event: %d, aData1: %d, aData2: %d",
           aEvent, aData1, aData2);
       return false;

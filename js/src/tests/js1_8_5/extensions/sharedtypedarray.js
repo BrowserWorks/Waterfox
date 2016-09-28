@@ -24,8 +24,6 @@ function testSharedArrayBuffer() {
     assertEq(b instanceof SharedArrayBuffer, true);
     assertEq(b.byteLength, 4096);
 
-    assertEq(!!SharedArrayBuffer.isView, true);
-
     b.fnord = "Hi there";
     assertEq(b.fnord, "Hi there");
 
@@ -50,9 +48,9 @@ function testSharedTypedArray() {
     var x1 = new Int8Array(b);
     var x2 = new Int32Array(b);
 
-    assertEq(SharedArrayBuffer.isView(x1), true);
-    assertEq(SharedArrayBuffer.isView(x2), true);
-    assertEq(SharedArrayBuffer.isView({}), false);
+    assertEq(ArrayBuffer.isView(x1), true); // ArrayBuffer.isView() works even if the buffer is a SharedArrayBuffer
+    assertEq(ArrayBuffer.isView(x2), true);
+    assertEq(ArrayBuffer.isView({}), false);
 
     assertEq(x1.buffer, b);
     assertEq(x2.buffer, b);
@@ -84,13 +82,13 @@ function testSharedTypedArray() {
     assertThrowsInstanceOf(() => new Int8Array(b, -7), RangeError);
 
     // not congruent mod element size
-    assertThrowsInstanceOf(() => new Int32Array(b, 3), TypeError); // Bug 1227207: should be RangeError
+    assertThrowsInstanceOf(() => new Int32Array(b, 3), RangeError);
 
     // start out of range
-    assertThrowsInstanceOf(() => new Int32Array(b, 4104), TypeError); // Ditto
+    assertThrowsInstanceOf(() => new Int32Array(b, 4104), RangeError);
 
     // end out of range
-    assertThrowsInstanceOf(() => new Int32Array(b, 4092, 2), TypeError); // Ditto
+    assertThrowsInstanceOf(() => new Int32Array(b, 4092, 2), RangeError);
 
     // Views alias the storage
     x2[0] = -1;

@@ -14,18 +14,18 @@ exports.items = [
   {
     item: "command",
     runAt: "client",
-    name: 'splitconsole',
+    name: "splitconsole",
     hidden: true,
     buttonId: "command-button-splitconsole",
     buttonClass: "command-button command-button-invertable",
     tooltipText: l10n.lookup("splitconsoleTooltip"),
     isRemoteSafe: true,
     state: {
-      isChecked: function(target) {
+      isChecked: function (target) {
         let toolbox = gDevTools.getToolbox(target);
         return !!(toolbox && toolbox.splitConsole);
       },
-      onChange: function(target, changeHandler) {
+      onChange: function (target, changeHandler) {
         // Register handlers for when a change event should be fired
         // (which resets the checked state of the button).
         let toolbox = gDevTools.getToolbox(target);
@@ -41,17 +41,16 @@ exports.items = [
         });
       }
     },
-    exec: function(args, context) {
+    exec: function (args, context) {
       let target = context.environment.target;
       let toolbox = gDevTools.getToolbox(target);
 
       if (!toolbox) {
-        return gDevTools.showToolbox(target, "inspector").then((toolbox) => {
-          toolbox.toggleSplitConsole();
+        return gDevTools.showToolbox(target, "inspector").then((newToolbox) => {
+          newToolbox.toggleSplitConsole();
         });
-      } else {
-        toolbox.toggleSplitConsole();
       }
+      return toolbox.toggleSplitConsole();
     }
   },
   {
@@ -64,15 +63,15 @@ exports.items = [
     runAt: "client",
     name: "console clear",
     description: l10n.lookup("consoleclearDesc"),
-    exec: function(args, context) {
+    exec: function (args, context) {
       let toolbox = gDevTools.getToolbox(context.environment.target);
       if (toolbox == null) {
-        return;
+        return null;
       }
 
       let panel = toolbox.getPanel("webconsole");
       if (panel == null) {
-        return;
+        return null;
       }
 
       let onceMessagesCleared = panel.hud.jsterm.once("messages-cleared");
@@ -85,9 +84,9 @@ exports.items = [
     runAt: "client",
     name: "console close",
     description: l10n.lookup("consolecloseDesc"),
-    exec: function(args, context) {
-      return gDevTools.closeToolbox(context.environment.target)
-                      .then(() => {}); // Don't return a value to GCLI
+    exec: function (args, context) {
+      // Don't return a value to GCLI
+      return gDevTools.closeToolbox(context.environment.target).then(() => {});
     }
   },
   {
@@ -95,10 +94,10 @@ exports.items = [
     runAt: "client",
     name: "console open",
     description: l10n.lookup("consoleopenDesc"),
-    exec: function(args, context) {
+    exec: function (args, context) {
       const target = context.environment.target;
-      return gDevTools.showToolbox(target, "webconsole")
-                      .then(() => {}); // Don't return a value to GCLI
+      // Don't return a value to GCLI
+      return gDevTools.showToolbox(target, "webconsole").then(() => {});
     }
   }
 ];

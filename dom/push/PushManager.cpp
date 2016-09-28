@@ -6,6 +6,7 @@
 
 #include "mozilla/dom/PushManager.h"
 
+#include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/unused.h"
 #include "mozilla/dom/PushManagerBinding.h"
@@ -54,7 +55,8 @@ GetPermissionState(nsIPrincipal* aPrincipal,
     return rv;
   }
 
-  if (permission == nsIPermissionManager::ALLOW_ACTION) {
+  if (permission == nsIPermissionManager::ALLOW_ACTION ||
+      Preferences::GetBool("dom.push.testing.ignorePermission", false)) {
     aState = PushPermissionState::Granted;
   } else if (permission == nsIPermissionManager::DENY_ACTION) {
     aState = PushPermissionState::Denied;
@@ -98,8 +100,8 @@ CopySubscriptionKeyToArray(nsIPushSubscription* aSubscription,
   if (NS_FAILED(rv)) {
     return rv;
   }
-  if (!aKey.SetLength(keyLen, fallible) ||
-      !aKey.ReplaceElementsAt(0, keyLen, keyBuffer, keyLen, fallible)) {
+  if (!aKey.SetCapacity(keyLen, fallible) ||
+      !aKey.InsertElementsAt(0, keyBuffer, keyLen, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   return NS_OK;
@@ -262,7 +264,7 @@ private:
 
 NS_IMPL_ISUPPORTS(GetSubscriptionCallback, nsIPushSubscriptionCallback)
 
-class GetSubscriptionRunnable final : public nsRunnable
+class GetSubscriptionRunnable final : public Runnable
 {
 public:
   GetSubscriptionRunnable(PromiseWorkerProxy* aProxy,
@@ -393,7 +395,7 @@ private:
   PushPermissionState mState;
 };
 
-class PermissionStateRunnable final : public nsRunnable
+class PermissionStateRunnable final : public Runnable
 {
 public:
   explicit PermissionStateRunnable(PromiseWorkerProxy* aProxy)

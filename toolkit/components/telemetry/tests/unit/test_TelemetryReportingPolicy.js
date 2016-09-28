@@ -61,6 +61,9 @@ function run_test() {
   do_get_profile(true);
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
 
+  // Make sure we don't generate unexpected pings due to pref changes.
+  setEmptyPrefWatchlist();
+
   Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);
   // Don't bypass the notifications in this test, we'll fake it.
   Services.prefs.setBoolPref(PREF_BYPASS_NOTIFICATION, false);
@@ -217,7 +220,7 @@ add_task(function* test_canSend() {
   PingServer.start();
   Preferences.set(PREF_SERVER, "http://localhost:" + PingServer.port);
 
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
   TelemetryReportingPolicy.reset();
 
   // User should be reported as not notified by default.
@@ -248,7 +251,7 @@ add_task(function* test_canSend() {
 
   // Fake a restart with a pending ping.
   yield TelemetryController.addPendingPing(TEST_PING_TYPE, {});
-  yield TelemetryController.reset();
+  yield TelemetryController.testReset();
 
   // We should be immediately sending the ping out.
   ping = yield PingServer.promiseNextPings(1);

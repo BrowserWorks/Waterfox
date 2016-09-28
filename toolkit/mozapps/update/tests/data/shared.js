@@ -23,7 +23,6 @@ const PREF_APP_UPDATE_NEVER_BRANCH        = "app.update.never.";
 const PREF_APP_UPDATE_NOTIFIEDUNSUPPORTED = "app.update.notifiedUnsupported";
 const PREF_APP_UPDATE_PROMPTWAITTIME      = "app.update.promptWaitTime";
 const PREF_APP_UPDATE_SERVICE_ENABLED     = "app.update.service.enabled";
-const PREF_APP_UPDATE_SHOW_INSTALLED_UI   = "app.update.showInstalledUI";
 const PREF_APP_UPDATE_SILENT              = "app.update.silent";
 const PREF_APP_UPDATE_STAGING_ENABLED     = "app.update.staging.enabled";
 const PREF_APP_UPDATE_URL                 = "app.update.url";
@@ -38,9 +37,6 @@ const PREF_APP_UPDATE_CERT_INVALID_ATTR_NAME = PREF_APP_UPDATE_CERTS_BRANCH +
 const PREF_APP_PARTNER_BRANCH             = "app.partner.";
 const PREF_DISTRIBUTION_ID                = "distribution.id";
 const PREF_DISTRIBUTION_VERSION           = "distribution.version";
-
-const PREF_EXTENSIONS_UPDATE_URL          = "extensions.update.url";
-const PREF_EXTENSIONS_STRICT_COMPAT       = "extensions.strictCompatibility";
 
 const NS_APP_PROFILE_DIR_STARTUP   = "ProfDS";
 const NS_APP_USER_PROFILE_50_DIR   = "ProfD";
@@ -139,6 +135,11 @@ XPCOMUtils.defineLazyGetter(this, "gZipW", function test_gZipW() {
   return Cc["@mozilla.org/zipwriter;1"].
          createInstance(Ci.nsIZipWriter);
 });
+
+/* Triggers post-update processing */
+function testPostUpdateProcessing() {
+  gAUS.observe(null, "test-post-update-processing", "");
+}
 
 /* Initializes the update service stub */
 function initUpdateServiceStub() {

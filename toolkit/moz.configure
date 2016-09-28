@@ -332,10 +332,31 @@ add_old_configure_assignment('MOZ_FMP4', fmp4)
 
 # EME Support
 # ==============================================================
-option('--enable-eme', nargs='*', choices=('adobe','widevine',),
+# Widevine is enabled by default in desktop browser builds.
+@depends(build_project, '--help')
+def eme_default(build_project, help):
+    if build_project == 'browser':
+        return 'widevine'
+
+option('--enable-eme',
+       nargs='*',
+       choices=('adobe','widevine',),
+       default=eme_default,
        help='Enable support for Encrypted Media Extensions')
 
-@depends('--enable-eme', fmp4)
+@depends('--enable-eme', target)
+def enable_eme(value, target):
+    # Widevine EME by default enabled on desktop Windows, MacOS and Linux,
+    # x86 and x64 builds.
+    if (target.kernel in ('Darwin', 'WINNT', 'Linux') and
+        target.os not in ('Android', 'iOS') and
+        target.cpu in ('x86', 'x86_64')):
+        return value
+    elif value and value.origin != 'default':
+        die('%s is not supported on %s' % (value.format('--enable-eme'), target.alias))
+    return value
+
+@depends(enable_eme, fmp4)
 def eme(value, fmp4):
     enabled = bool(value)
     if value.origin == 'default':
@@ -346,7 +367,7 @@ def eme(value, fmp4):
     if enabled:
         return True
 
-@depends('--enable-eme')
+@depends(enable_eme)
 def eme_modules(value):
     # Theoretically, we could pass `value` directly when it is a
     # PositiveOptionValue, but somehow, the JSON serialization in configure.py
@@ -394,6 +415,34 @@ def omnijar_name(toolkit):
     return 'assets/omni.ja' if toolkit == 'android' else 'omni.ja'
 
 set_config('OMNIJAR_NAME', omnijar_name)
+
+project_flag('MOZ_PLACES',
+             help='Build Places if required',
+             set_as_define=True)
+
+project_flag('MOZ_SOCIAL',
+             help='Build SocialAPI if required',
+             default=True)
+
+project_flag('MOZ_SERVICES_HEALTHREPORT',
+             help='Build Firefox Health Reporter Service',
+             set_for_old_configure=True,
+             set_as_define=True)
+
+project_flag('MOZ_SERVICES_SYNC',
+             help='Build Sync Services if required')
+
+project_flag('MOZ_SERVICES_CLOUDSYNC',
+             help='Build Services/CloudSync if required')
+
+project_flag('MOZ_ANDROID_HISTORY',
+             help='Enable Android History instead of Places',
+             set_as_define=True)
+
+@depends('MOZ_PLACES', 'MOZ_ANDROID_HISTORY')
+def check_places_and_android_history(places, android_history):
+    if places and android_history:
+        die('Cannot use MOZ_ANDROID_HISTORY alongside MOZ_PLACES.')
 
 # Miscellaneous programs
 # ==============================================================

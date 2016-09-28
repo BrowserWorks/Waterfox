@@ -13,7 +13,6 @@ namespace mozilla {
 
 CDMCaps::CDMCaps()
   : mMonitor("CDMCaps")
-  , mCaps(0)
 {
 }
 
@@ -33,13 +32,6 @@ CDMCaps::Unlock()
   mMonitor.Unlock();
 }
 
-bool
-CDMCaps::HasCap(uint64_t aCap)
-{
-  mMonitor.AssertCurrentThreadOwns();
-  return (mCaps & aCap) == aCap;
-}
-
 CDMCaps::AutoLock::AutoLock(CDMCaps& aInstance)
   : mData(aInstance)
 {
@@ -51,68 +43,23 @@ CDMCaps::AutoLock::~AutoLock()
   mData.Unlock();
 }
 
-static void
-TestCap(uint64_t aFlag,
-        uint64_t aCaps,
-        const nsACString& aCapName,
-        nsACString& aCapStr)
+// Keys with kGMPUsable, kGMPOutputDownscaled, or kGMPOutputRestricted status
+// can be used by the CDM to decrypt or decrypt-and-decode samples.
+static bool
+IsUsableStatus(GMPMediaKeyStatus aStatus)
 {
-  if (!(aFlag & aCaps)) {
-    return;
-  }
-  if (!aCapStr.IsEmpty()) {
-    aCapStr.AppendLiteral(",");
-  }
-  aCapStr.Append(aCapName);
-}
-
-nsCString
-CapsToString(uint64_t aCaps)
-{
-  nsCString capsStr;
-  TestCap(GMP_EME_CAP_DECRYPT_AUDIO, aCaps, NS_LITERAL_CSTRING("DecryptAudio"), capsStr);
-  TestCap(GMP_EME_CAP_DECRYPT_VIDEO, aCaps, NS_LITERAL_CSTRING("DecryptVideo"), capsStr);
-  TestCap(GMP_EME_CAP_DECRYPT_AND_DECODE_AUDIO, aCaps, NS_LITERAL_CSTRING("DecryptAndDecodeAudio"), capsStr);
-  TestCap(GMP_EME_CAP_DECRYPT_AND_DECODE_VIDEO, aCaps, NS_LITERAL_CSTRING("DecryptAndDecodeVideo"), capsStr);
-  return capsStr;
-}
-
-void
-CDMCaps::AutoLock::SetCaps(uint64_t aCaps)
-{
-  EME_LOG("SetCaps() %s", CapsToString(aCaps).get());
-  mData.mMonitor.AssertCurrentThreadOwns();
-  mData.mCaps = aCaps;
-  for (size_t i = 0; i < mData.mWaitForCaps.Length(); i++) {
-    NS_DispatchToMainThread(mData.mWaitForCaps[i], NS_DISPATCH_NORMAL);
-  }
-  mData.mWaitForCaps.Clear();
-}
-
-void
-CDMCaps::AutoLock::CallOnMainThreadWhenCapsAvailable(nsIRunnable* aContinuation)
-{
-  mData.mMonitor.AssertCurrentThreadOwns();
-  if (mData.mCaps) {
-    NS_DispatchToMainThread(aContinuation, NS_DISPATCH_NORMAL);
-    MOZ_ASSERT(mData.mWaitForCaps.IsEmpty());
-  } else {
-    mData.mWaitForCaps.AppendElement(aContinuation);
-  }
+  return aStatus == kGMPUsable ||
+         aStatus == kGMPOutputRestricted ||
+         aStatus == kGMPOutputDownscaled;
 }
 
 bool
 CDMCaps::AutoLock::IsKeyUsable(const CencKeyId& aKeyId)
 {
   mData.mMonitor.AssertCurrentThreadOwns();
-  const auto& keys = mData.mKeyStatuses;
-  for (size_t i = 0; i < keys.Length(); i++) {
-    if (keys[i].mId != aKeyId) {
-      continue;
-    }
-    if (keys[i].mStatus == kGMPUsable ||
-        keys[i].mStatus == kGMPOutputDownscaled) {
-      return true;
+  for (const KeyStatus& keyStatus : mData.mKeyStatuses) {
+    if (keyStatus.mId == aKeyId) {
+      return IsUsableStatus(keyStatus.mStatus);
     }
   }
   return false;
@@ -125,31 +72,34 @@ CDMCaps::AutoLock::SetKeyStatus(const CencKeyId& aKeyId,
 {
   mData.mMonitor.AssertCurrentThreadOwns();
   KeyStatus key(aKeyId, aSessionId, aStatus);
-  auto index = mData.mKeyStatuses.IndexOf(key);
 
   if (aStatus == kGMPUnknown) {
     // Return true if the element is found to notify key changes.
     return mData.mKeyStatuses.RemoveElement(key);
   }
 
+  auto index = mData.mKeyStatuses.IndexOf(key);
   if (index != mData.mKeyStatuses.NoIndex) {
     if (mData.mKeyStatuses[index].mStatus == aStatus) {
+      // No change.
       return false;
     }
     auto oldStatus = mData.mKeyStatuses[index].mStatus;
     mData.mKeyStatuses[index].mStatus = aStatus;
-    if (oldStatus == kGMPUsable || oldStatus == kGMPOutputDownscaled) {
+    // The old key status was one for which we can decrypt media. We don't
+    // need to do the "notify usable" step below, as it should be impossible
+    // for us to have anything waiting on this key to become usable, since it
+    // was already usable.
+    if (IsUsableStatus(oldStatus)) {
       return true;
     }
   } else {
     mData.mKeyStatuses.AppendElement(key);
   }
 
-  // Both kGMPUsable and kGMPOutputDownscaled are treated able to decrypt.
-  // We don't need to notify when transition happens between kGMPUsable and
-  // kGMPOutputDownscaled. Only call NotifyUsable() when we are going from
-  // ![kGMPUsable|kGMPOutputDownscaled] to [kGMPUsable|kGMPOutputDownscaled]
-  if (aStatus != kGMPUsable && aStatus != kGMPOutputDownscaled) {
+  // Only call NotifyUsable() for a key when we are going from non-usable
+  // to usable state.
+  if (!IsUsableStatus(aStatus)) {
     return true;
   }
 
@@ -177,57 +127,13 @@ CDMCaps::AutoLock::NotifyWhenKeyIdUsable(const CencKeyId& aKey,
   mData.mWaitForKeys.AppendElement(WaitForKeys(aKey, aListener));
 }
 
-bool
-CDMCaps::AutoLock::AreCapsKnown()
-{
-  mData.mMonitor.AssertCurrentThreadOwns();
-  return mData.mCaps != 0;
-}
-
-bool
-CDMCaps::AutoLock::CanRenderAudio()
-{
-  return mData.HasCap(GMP_EME_CAP_RENDER_AUDIO);
-}
-
-bool
-CDMCaps::AutoLock::CanRenderVideo()
-{
-  return mData.HasCap(GMP_EME_CAP_RENDER_VIDEO);
-}
-
-bool
-CDMCaps::AutoLock::CanDecryptAndDecodeAudio()
-{
-  return mData.HasCap(GMP_EME_CAP_DECRYPT_AND_DECODE_AUDIO);
-}
-
-bool
-CDMCaps::AutoLock::CanDecryptAndDecodeVideo()
-{
-  return mData.HasCap(GMP_EME_CAP_DECRYPT_AND_DECODE_VIDEO);
-}
-
-bool
-CDMCaps::AutoLock::CanDecryptAudio()
-{
-  return mData.HasCap(GMP_EME_CAP_DECRYPT_AUDIO);
-}
-
-bool
-CDMCaps::AutoLock::CanDecryptVideo()
-{
-  return mData.HasCap(GMP_EME_CAP_DECRYPT_VIDEO);
-}
-
 void
 CDMCaps::AutoLock::GetKeyStatusesForSession(const nsAString& aSessionId,
                                             nsTArray<KeyStatus>& aOutKeyStatuses)
 {
-  for (size_t i = 0; i < mData.mKeyStatuses.Length(); i++) {
-    const auto& key = mData.mKeyStatuses[i];
-    if (key.mSessionId.Equals(aSessionId)) {
-      aOutKeyStatuses.AppendElement(key);
+  for (const KeyStatus& keyStatus : mData.mKeyStatuses) {
+    if (keyStatus.mSessionId.Equals(aSessionId)) {
+      aOutKeyStatuses.AppendElement(keyStatus);
     }
   }
 }
@@ -236,7 +142,7 @@ void
 CDMCaps::AutoLock::GetSessionIdsForKeyId(const CencKeyId& aKeyId,
                                          nsTArray<nsCString>& aOutSessionIds)
 {
-  for (const auto& keyStatus : mData.mKeyStatuses) {
+  for (const KeyStatus& keyStatus : mData.mKeyStatuses) {
     if (keyStatus.mId == aKeyId) {
       aOutSessionIds.AppendElement(NS_ConvertUTF16toUTF8(keyStatus.mSessionId));
     }
@@ -249,8 +155,8 @@ CDMCaps::AutoLock::RemoveKeysForSession(const nsString& aSessionId)
   bool changed = false;
   nsTArray<KeyStatus> statuses;
   GetKeyStatusesForSession(aSessionId, statuses);
-  for (const KeyStatus& status : statuses) {
-    changed |= SetKeyStatus(status.mId, aSessionId, kGMPUnknown);
+  for (const KeyStatus& keyStatus : statuses) {
+    changed |= SetKeyStatus(keyStatus.mId, aSessionId, kGMPUnknown);
   }
   return changed;
 }

@@ -1197,9 +1197,9 @@ test-pref(dom.use_xbl_scopes_for_remote_xul,true) != 449149-1b.html about:blank
 == 455280-1.xhtml 455280-1-ref.xhtml
 skip-if(B2G||Mulet) == 455826-1.html 455826-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) fails-if(cocoaWidget) fails-if(Android) == 456147.xul 456147-ref.html # bug 458047 # Initial mulet triage: parity with B2G/B2G Desktop
-fuzzy-if(Android||B2G,11,41) fuzzy-if(winWidget,2,3) fuzzy-if(d2d,2,69) fuzzy-if(gtkWidget,4,6) == 456219-1a.html 456219-1-ref.html # bug 1128229
-fuzzy-if(Android||B2G,11,41) fuzzy-if(winWidget,2,3) fuzzy-if(d2d,2,69) fuzzy-if(gtkWidget,4,6) == 456219-1b.html 456219-1-ref.html # bug 1128229
-fuzzy-if(Android||B2G,11,41) fuzzy-if(winWidget,2,3) fuzzy-if(d2d,2,69) fuzzy-if(gtkWidget,4,6) == 456219-1c.html 456219-1-ref.html # bug 1128229
+fuzzy-if(Android||B2G,11,41) fuzzy-if(winWidget||gtkWidget,4,6) fuzzy-if(d2d,4,69) == 456219-1a.html 456219-1-ref.html # bug 1128229
+fuzzy-if(Android||B2G,11,41) fuzzy-if(winWidget||gtkWidget,4,6) fuzzy-if(d2d,4,69) == 456219-1b.html 456219-1-ref.html # bug 1128229
+fuzzy-if(Android||B2G,11,41) fuzzy-if(winWidget||gtkWidget,4,6) fuzzy-if(d2d,4,69) == 456219-1c.html 456219-1-ref.html # bug 1128229
 fuzzy-if(skiaContent,1,45) == 456219-2.html 456219-2-ref.html
 == 456330-1.gif 456330-1-ref.png
 == 456484-1.html 456484-1-ref.html
@@ -1237,7 +1237,7 @@ fuzzy-if(skiaContent,1,12000) == 461512-1.html 461512-1-ref.html
 skip-if((B2G&&browserIsRemote)||Mulet) == 463217-1.xul 463217-1-ref.xul # bug 974780 # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) == 463952-1.html 463952-1-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 == 464811-1.html 464811-1-ref.html
-fails == 465574-1.html 465574-1-ref.html # bug 421436
+== 465574-1.html 465574-1-ref.html # bug 421436
 == 466258-1.html 466258-1-ref.html
 == 466395-1.html 466395-1-ref.html
 == 466395-2.html 466395-2-ref.html
@@ -1709,7 +1709,7 @@ needs-focus != 703186-1.html 703186-2.html
 == 714519-1-q.html 714519-1-ref.html
 == 714519-2-as.html 714519-2-ref.html
 == 714519-2-q.html 714519-2-ref.html
-skip-if(B2G||Mulet) fuzzy-if(true,1,21) fuzzy-if(cocoaWidget,1,170) == 718521.html 718521-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
+skip-if(B2G||Mulet) fuzzy-if(true,1,21) fuzzy-if(d2d,68,173) fuzzy-if(cocoaWidget,1,170) == 718521.html 718521-ref.html # bug 773482 # Initial mulet triage: parity with B2G/B2G Desktop
 == 720987.html 720987-ref.html
 == 722888-1.html 722888-1-ref.html
 == 722923-1.html 722923-1-ref.html
@@ -1797,7 +1797,7 @@ fuzzy-if(OSX==1006,2,30) skip-if((B2G&&browserIsRemote)||Mulet) == 933264-1.html
 == 936670-1.svg 936670-1-ref.svg
 == 941940-1.html 941940-1-ref.html
 fails == 942017.html 942017-ref.html # bug 942017
-fuzzy-if(B2G,1,7) fuzzy-if(skiaContent,1,160000) == 942672-1.html 942672-1-ref.html
+fuzzy-if(Android,1,1) fuzzy-if(B2G,1,7) fuzzy-if(skiaContent,1,160000) == 942672-1.html 942672-1-ref.html
 == 953334-win32-clipping.html 953334-win32-clipping-ref.html
 fuzzy-if(skiaContent,1,5) == 956513-1.svg 956513-1-ref.svg
 == 944291-1.html 944291-1-ref.html
@@ -1949,5 +1949,16 @@ random-if(OSX==1006) == 1238243-2.html 1238243-2-ref.html # fails on 10.6 with d
 fuzzy(100,2000) == 1239564.html 1239564-ref.html
 == 1242172-1.html 1242172-1-ref.html
 == 1242172-2.html 1242172-2-ref.html
+== 1242781.html 1242781-ref.html
 == 1263845.html 1263845-ref.html
 == 1260543-1.html 1260543-1-ref.html
+== 1272997-1.html 1272997-1-ref.html
+random-if(!winWidget) == 1273154-1.html 1273154-1-ref.html # depends on Windows font
+random-if(!winWidget) == 1273154-2.html 1273154-2-ref.html # depends on Windows font
+== 1274368-1.html 1274368-1-ref.html
+== 1275411-1.html 1275411-1-ref.html
+# Buttons in 2 pages have different position and the rendering result can be
+# different, but they should use the same button style and the background color
+# should be same.  |fuzzy()| here allows the difference in border, but not
+# background color.
+fuzzy(255,1000) skip-if(!cocoaWidget) == 1294102-1.html 1294102-1-ref.html

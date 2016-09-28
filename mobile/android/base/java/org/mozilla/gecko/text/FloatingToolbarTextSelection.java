@@ -104,8 +104,6 @@ public class FloatingToolbarTextSelection implements TextSelection, GeckoEventLi
 
     @Override
     public void handleMessage(final String event, final JSONObject message) {
-        Log.w("SKDBG", "Received event " + event + " with message: " + message.toString());
-
         ThreadUtils.postToUiThread(new Runnable() {
             @Override
             public void run() {
@@ -121,6 +119,11 @@ public class FloatingToolbarTextSelection implements TextSelection, GeckoEventLi
 
             selectionID = message.optString("selectionID");
         } else if ("TextSelection:ActionbarStatus".equals(event)) {
+            // Ensure async updates from SearchService for example are valid.
+            if (selectionID != message.optString("selectionID")) {
+                return;
+            }
+
             updateRect(message);
 
             if (!isRectVisible()) {

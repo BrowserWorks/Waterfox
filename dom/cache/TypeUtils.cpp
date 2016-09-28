@@ -11,13 +11,13 @@
 #include "mozilla/dom/InternalRequest.h"
 #include "mozilla/dom/Request.h"
 #include "mozilla/dom/Response.h"
-#include "mozilla/dom/cache/CachePushStreamChild.h"
 #include "mozilla/dom/cache/CacheTypes.h"
 #include "mozilla/dom/cache/ReadStream.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundChild.h"
 #include "mozilla/ipc/PFileDescriptorSetChild.h"
 #include "mozilla/ipc/InputStreamUtils.h"
+#include "mozilla/ipc/SendStream.h"
 #include "nsCOMPtr.h"
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
@@ -34,6 +34,7 @@ namespace mozilla {
 namespace dom {
 namespace cache {
 
+using mozilla::ipc::AutoIPCStream;
 using mozilla::ipc::BackgroundChild;
 using mozilla::ipc::FileDescriptor;
 using mozilla::ipc::PBackgroundChild;
@@ -62,31 +63,6 @@ HasVaryStar(mozilla::dom::InternalHeaders* aHeaders)
     }
   }
   return false;
-}
-
-void
-SerializeNormalStream(nsIInputStream* aStream, CacheReadStream& aReadStreamOut)
-{
-  AutoTArray<FileDescriptor, 4> fds;
-  SerializeInputStream(aStream, aReadStreamOut.params(), fds);
-
-  PFileDescriptorSetChild* fdSet = nullptr;
-  if (!fds.IsEmpty()) {
-    // We should not be serializing until we have an actor ready
-    PBackgroundChild* manager = BackgroundChild::GetForCurrentThread();
-    MOZ_ASSERT(manager);
-
-    fdSet = manager->SendPFileDescriptorSetConstructor(fds[0]);
-    for (uint32_t i = 1; i < fds.Length(); ++i) {
-      Unused << fdSet->SendAddFileDescriptor(fds[i]);
-    }
-  }
-
-  if (fdSet) {
-    aReadStreamOut.fds() = fdSet;
-  } else {
-    aReadStreamOut.fds() = void_t();
-  }
 }
 
 void
@@ -145,6 +121,7 @@ TypeUtils::ToInternalRequest(const OwningRequestOrUSVString& aIn,
 void
 TypeUtils::ToCacheRequest(CacheRequest& aOut, InternalRequest* aIn,
                           BodyAction aBodyAction, SchemeAction aSchemeAction,
+                          nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList,
                           ErrorResult& aRv)
 {
   MOZ_ASSERT(aIn);
@@ -191,7 +168,7 @@ TypeUtils::ToCacheRequest(CacheRequest& aOut, InternalRequest* aIn,
 
   nsCOMPtr<nsIInputStream> stream;
   aIn->GetBody(getter_AddRefs(stream));
-  SerializeCacheStream(stream, &aOut.body(), aRv);
+  SerializeCacheStream(stream, &aOut.body(), aStreamCleanupList, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
@@ -203,15 +180,15 @@ TypeUtils::ToCacheResponseWithoutBody(CacheResponse& aOut,
 {
   aOut.type() = aIn.Type();
 
-  aIn.GetUnfilteredUrl(aOut.url());
+  aIn.GetUnfilteredURLList(aOut.urlList());
+  AutoTArray<nsCString, 4> urlList;
+  aIn.GetURLList(urlList);
 
-  if (aOut.url() != EmptyCString()) {
+  for (uint32_t i = 0; i < aOut.urlList().Length(); i++) {
+    MOZ_ASSERT(!aOut.urlList()[i].IsEmpty());
     // Pass all Response URL schemes through... The spec only requires we take
     // action on invalid schemes for Request objects.
-    ProcessURL(aOut.url(), nullptr, nullptr, nullptr, aRv);
-    if (aRv.Failed()) {
-      return;
-    }
+    ProcessURL(aOut.urlList()[i], nullptr, nullptr, nullptr, aRv);
   }
 
   aOut.status() = aIn.GetUnfilteredStatus();
@@ -233,7 +210,9 @@ TypeUtils::ToCacheResponseWithoutBody(CacheResponse& aOut,
 }
 
 void
-TypeUtils::ToCacheResponse(CacheResponse& aOut, Response& aIn, ErrorResult& aRv)
+TypeUtils::ToCacheResponse(CacheResponse& aOut, Response& aIn,
+                           nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList,
+                           ErrorResult& aRv)
 {
   if (aIn.BodyUsed()) {
     aRv.ThrowTypeError<MSG_FETCH_BODY_CONSUMED_ERROR>();
@@ -252,7 +231,7 @@ TypeUtils::ToCacheResponse(CacheResponse& aOut, Response& aIn, ErrorResult& aRv)
     aIn.SetBodyUsed();
   }
 
-  SerializeCacheStream(stream, &aOut.body(), aRv);
+  SerializeCacheStream(stream, &aOut.body(), aStreamCleanupList, aRv);
   if (NS_WARN_IF(aRv.Failed())) {
     return;
   }
@@ -285,7 +264,7 @@ TypeUtils::ToResponse(const CacheResponse& aIn)
 
   RefPtr<InternalResponse> ir = new InternalResponse(aIn.status(),
                                                        aIn.statusText());
-  ir->SetUrl(aIn.url());
+  ir->SetURLList(aIn.urlList());
 
   RefPtr<InternalHeaders> internalHeaders =
     ToInternalHeaders(aIn.headers(), aIn.headersGuard());
@@ -302,7 +281,7 @@ TypeUtils::ToResponse(const CacheResponse& aIn)
   }
 
   nsCOMPtr<nsIInputStream> stream = ReadStream::Create(aIn.body());
-  ir->SetBody(stream);
+  ir->SetBody(stream, InternalResponse::UNKNOWN_BODY_SIZE);
 
   switch (aIn.type())
   {
@@ -332,13 +311,12 @@ TypeUtils::ToResponse(const CacheResponse& aIn)
 already_AddRefed<InternalRequest>
 TypeUtils::ToInternalRequest(const CacheRequest& aIn)
 {
-  RefPtr<InternalRequest> internalRequest = new InternalRequest();
-
-  internalRequest->SetMethod(aIn.method());
-
   nsAutoCString url(aIn.urlWithoutQuery());
   url.Append(aIn.urlQuery());
-  internalRequest->SetURL(url);
+
+  RefPtr<InternalRequest> internalRequest = new InternalRequest(url);
+
+  internalRequest->SetMethod(aIn.method());
 
   internalRequest->SetReferrer(aIn.referrer());
   internalRequest->SetReferrerPolicy(aIn.referrerPolicy());
@@ -501,6 +479,7 @@ TypeUtils::ToInternalRequest(const nsAString& aIn, ErrorResult& aRv)
 void
 TypeUtils::SerializeCacheStream(nsIInputStream* aStream,
                                 CacheReadStreamOrVoid* aStreamOut,
+                                nsTArray<UniquePtr<AutoIPCStream>>& aStreamCleanupList,
                                 ErrorResult& aRv)
 {
   *aStreamOut = void_t();
@@ -508,61 +487,22 @@ TypeUtils::SerializeCacheStream(nsIInputStream* aStream,
     return;
   }
 
-  // Option 1: Send a cache-specific ReadStream if we can.
   RefPtr<ReadStream> controlled = do_QueryObject(aStream);
   if (controlled) {
-    controlled->Serialize(aStreamOut, aRv);
+    controlled->Serialize(aStreamOut, aStreamCleanupList, aRv);
     return;
   }
 
-  CacheReadStream readStream;
-  readStream.controlChild() = nullptr;
-  readStream.controlParent() = nullptr;
-  readStream.pushStreamChild() = nullptr;
-  readStream.pushStreamParent() = nullptr;
+  *aStreamOut = CacheReadStream();
+  CacheReadStream& cacheStream = aStreamOut->get_CacheReadStream();
 
-  // Option 2: Do normal stream serialization if its supported.
-  nsCOMPtr<nsIIPCSerializableInputStream> serial = do_QueryInterface(aStream);
-  if (serial) {
-    SerializeNormalStream(aStream, readStream);
+  cacheStream.controlChild() = nullptr;
+  cacheStream.controlParent() = nullptr;
 
-  // Option 3: As a last resort push data across manually.  Should only be
-  //           needed for nsPipe input stream.  Only works for async,
-  //           non-blocking streams.
-  } else {
-    SerializePushStream(aStream, readStream, aRv);
-    if (NS_WARN_IF(aRv.Failed())) { return; }
-  }
+  UniquePtr<AutoIPCStream> autoStream(new AutoIPCStream(cacheStream.stream()));
+  autoStream->Serialize(aStream, GetIPCManager());
 
-  *aStreamOut = readStream;
-}
-
-void
-TypeUtils::SerializePushStream(nsIInputStream* aStream,
-                               CacheReadStream& aReadStreamOut,
-                               ErrorResult& aRv)
-{
-  nsCOMPtr<nsIAsyncInputStream> asyncStream = do_QueryInterface(aStream);
-  if (NS_WARN_IF(!asyncStream)) {
-    aRv = NS_ERROR_FAILURE;
-    return;
-  }
-
-  bool nonBlocking = false;
-  aRv = asyncStream->IsNonBlocking(&nonBlocking);
-  if (NS_WARN_IF(aRv.Failed())) { return; }
-  if (NS_WARN_IF(!nonBlocking)) {
-    aRv = NS_ERROR_FAILURE;
-    return;
-  }
-
-  aReadStreamOut.pushStreamChild() = CreatePushStream(asyncStream);
-  MOZ_ASSERT(aReadStreamOut.pushStreamChild());
-  aReadStreamOut.params() = void_t();
-  aReadStreamOut.fds() = void_t();
-
-  // CachePushStreamChild::Start() must be called after sending the stream
-  // across to the parent side.
+  aStreamCleanupList.AppendElement(Move(autoStream));
 }
 
 } // namespace cache

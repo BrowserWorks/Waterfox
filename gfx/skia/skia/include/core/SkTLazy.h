@@ -29,7 +29,7 @@ public:
 
     SkTLazy(const SkTLazy<T>& src) : fPtr(NULL) {
         if (src.isValid()) {
-            fPtr = new (fStorage.get()) T(*src->get());
+            fPtr = new (fStorage.get()) T(*src.get());
         } else {
             fPtr = NULL;
         }
@@ -51,7 +51,7 @@ public:
         if (this->isValid()) {
             fPtr->~T();
         }
-        fPtr = new (SkTCast<T*>(fStorage.get())) T(std::forward<Args>(args)...);
+        fPtr = new (SkTCast<T*>(fStorage.get())) T(std__forward<Args>(args)...);
         return fPtr;
     }
 

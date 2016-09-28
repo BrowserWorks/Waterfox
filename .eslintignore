@@ -7,7 +7,6 @@ obj*/**
 # We ignore all these directories by default, until we get them enabled.
 # If you are enabling a directory, please add directory specific exclusions
 # below.
-accessible/**
 addon-sdk/**
 build/**
 caps/**
@@ -41,6 +40,8 @@ python/**
 rdf/**
 startupcache/**
 testing/**
+!testing/eslint-plugin-mozilla/
+testing/eslint-plugin-mozilla/node_modules/**
 tools/**
 uriloader/**
 view/**
@@ -73,23 +74,12 @@ browser/extensions/pdfjs/**
 browser/extensions/pocket/content/panels/js/vendor/**
 browser/locales/**
 
-# Ignore all of loop since it is imported from github and checked at source.
-browser/extensions/loop/**
-
 # devtools/ exclusions
-devtools/*.js
 devtools/client/canvasdebugger/**
 devtools/client/commandline/**
 devtools/client/debugger/**
 devtools/client/eyedropper/**
 devtools/client/framework/**
-# devtools/client/inspector/shared/*.js files are eslint-clean, so they aren't
-# included in the ignore list.
-devtools/client/inspector/computed/**
-devtools/client/inspector/fonts/**
-devtools/client/inspector/shared/test/**
-devtools/client/inspector/test/**
-devtools/client/inspector/*.js
 devtools/client/jsonview/lib/**
 devtools/client/memory/**
 devtools/client/netmonitor/test/**
@@ -100,19 +90,34 @@ devtools/client/promisedebugger/**
 devtools/client/responsivedesign/**
 devtools/client/scratchpad/**
 devtools/client/shadereditor/**
-devtools/client/shared/**
+devtools/client/shared/*.jsm
+devtools/client/shared/webgl-utils.js
+devtools/client/shared/developer-toolbar.js
+devtools/client/shared/components/test/**
+devtools/client/shared/redux/middleware/test/**
+devtools/client/shared/test/**
+devtools/client/shared/widgets/*.jsm
 devtools/client/sourceeditor/**
 devtools/client/webaudioeditor/**
 devtools/client/webconsole/**
 !devtools/client/webconsole/panel.js
+!devtools/client/webconsole/jsterm.js
+!devtools/client/webconsole/console-commands.js
 devtools/client/webide/**
 devtools/server/**
+!devtools/server/actors/webbrowser.js
+!devtools/server/actors/styles.js
+!devtools/server/actors/string.js
 devtools/shared/*.js
+!devtools/shared/css-lexer.js
+!devtools/shared/defer.js
+!devtools/shared/task.js
 devtools/shared/*.jsm
 devtools/shared/apps/**
 devtools/shared/client/**
 devtools/shared/discovery/**
 devtools/shared/gcli/**
+!devtools/shared/gcli/templater.js
 devtools/shared/heapsnapshot/**
 devtools/shared/inspector/**
 devtools/shared/layout/**
@@ -122,6 +127,7 @@ devtools/shared/qrcode/**
 devtools/shared/security/**
 devtools/shared/shims/**
 devtools/shared/tests/**
+!devtools/shared/tests/unit/test_csslexer.js
 devtools/shared/touch/**
 devtools/shared/transport/**
 devtools/shared/webconsole/test/**
@@ -141,11 +147,24 @@ devtools/shared/pretty-fast/*
 devtools/shared/sourcemap/*
 devtools/shared/qrcode/decoder/*
 devtools/shared/qrcode/encoder/*
+devtools/client/shared/demangle.js
 devtools/client/shared/vendor/*
 devtools/client/sourceeditor/codemirror/*.js
 devtools/client/sourceeditor/codemirror/**/*.js
 devtools/client/sourceeditor/test/codemirror/*
 devtools/client/inspector/markup/test/lib_*
+devtools/client/jsonview/lib/require.js
+devtools/server/actors/utils/automation-timeline.js
+
+# Ignore devtools files testing sourcemaps / code style
+devtools/client/debugger/test/mochitest/code_binary_search.js
+devtools/client/debugger/test/mochitest/code_math.min.js
+devtools/client/debugger/test/mochitest/code_math_bogus_map.js
+devtools/client/debugger/test/mochitest/code_ugly*
+devtools/client/debugger/test/mochitest/code_worker-source-map.js
+devtools/client/framework/test/code_ugly*
+devtools/server/tests/unit/babel_and_browserify_script_with_source_map.js
+devtools/server/tests/unit/setBreakpoint*
 
 # mobile/android/ exclusions
 mobile/android/chrome/content

@@ -18,7 +18,7 @@ var { Toolbox } = require("devtools/client/framework/toolbox");
 var Services = require("Services");
 var { DebuggerClient } = require("devtools/shared/client/main");
 var { PrefsHelper } = require("devtools/client/shared/prefs");
-var { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+var { Task } = require("devtools/shared/task");
 
 /**
  * Shortcuts for accessing various debugger preferences.
@@ -75,7 +75,7 @@ window.addEventListener("load", function() {
     let errorMessage = document.getElementById("error-message");
     errorMessage.value = e;
     errorMessageContainer.hidden = false;
-    Cu.reportError(e);
+    console.error(e);
   });
 });
 
@@ -190,7 +190,7 @@ function onMessage(event) {
         setTitle(json.data.value);
         break;
     }
-  } catch(e) { Cu.reportError(e); }
+  } catch(e) { console.error(e); }
 }
 
 window.addEventListener("message", onMessage);

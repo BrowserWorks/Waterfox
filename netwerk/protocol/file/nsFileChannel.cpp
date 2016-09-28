@@ -33,7 +33,7 @@ using namespace mozilla::net;
 
 //-----------------------------------------------------------------------------
 
-class nsFileCopyEvent : public nsRunnable {
+class nsFileCopyEvent : public Runnable {
 public:
   nsFileCopyEvent(nsIOutputStream *dest, nsIInputStream *source, int64_t len)
     : mDest(dest)
@@ -232,7 +232,7 @@ nsFileUploadContentStream::AsyncWait(nsIInputStreamCallback *callback,
 
   if (IsNonBlocking()) {
     nsCOMPtr<nsIRunnable> callback =
-      NS_NewRunnableMethod(this, &nsFileUploadContentStream::OnCopyComplete);
+      NewRunnableMethod(this, &nsFileUploadContentStream::OnCopyComplete);
     mCopyEvent->Dispatch(callback, mSink, target);
   }
 

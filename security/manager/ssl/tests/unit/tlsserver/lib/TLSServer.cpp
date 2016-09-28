@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-#include "ScopedNSSTypes.h"
 #include "base64.h"
 #include "mozilla/Move.h"
 #include "mozilla/Snprintf.h"
@@ -130,32 +129,32 @@ AddKeyFromFile(const char* basePath, const char* filename)
 
   unsigned int binLength;
   UniquePORTString bin(
-    reinterpret_cast<char*>(ATOB_AsciiToData(base64, &binLength)));
+    BitwiseCast<char*, unsigned char*>(ATOB_AsciiToData(base64, &binLength)));
   if (!bin || binLength == 0) {
     PrintPRError("ATOB_AsciiToData failed");
     return SECFailure;
   }
-  ScopedSECItem secitem(::SECITEM_AllocItem(nullptr, nullptr, binLength));
+  UniqueSECItem secitem(::SECITEM_AllocItem(nullptr, nullptr, binLength));
   if (!secitem) {
     PrintPRError("SECITEM_AllocItem failed");
     return SECFailure;
   }
   PORT_Memcpy(secitem->data, bin.get(), binLength);
-  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
   if (!slot) {
     PrintPRError("PK11_GetInternalKeySlot failed");
     return SECFailure;
   }
-  if (PK11_NeedUserInit(slot)) {
-    if (PK11_InitPin(slot, nullptr, nullptr) != SECSuccess) {
+  if (PK11_NeedUserInit(slot.get())) {
+    if (PK11_InitPin(slot.get(), nullptr, nullptr) != SECSuccess) {
       PrintPRError("PK11_InitPin failed");
       return SECFailure;
     }
   }
   SECKEYPrivateKey* privateKey;
-  if (PK11_ImportDERPrivateKeyInfoAndReturnKey(slot, secitem, nullptr, nullptr,
-                                               true, false, KU_ALL,
-                                               &privateKey, nullptr)
+  if (PK11_ImportDERPrivateKeyInfoAndReturnKey(slot.get(), secitem.get(),
+                                               nullptr, nullptr, true, false,
+                                               KU_ALL, &privateKey, nullptr)
         != SECSuccess) {
     PrintPRError("PK11_ImportDERPrivateKeyInfoAndReturnKey failed");
     return SECFailure;
@@ -198,7 +197,7 @@ AddCertificateFromFile(const char* basePath, const char* filename)
     PrintPRError("CERT_NewTempCertificate failed");
     return SECFailure;
   }
-  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
   if (!slot) {
     PrintPRError("PK11_GetInternalKeySlot failed");
     return SECFailure;
@@ -448,7 +447,7 @@ ConfigSecureServerWithNamedCert(PRFileDesc* fd, const char* certName,
     certList->arena = arena.release();
     // We also have to manually copy the certificates we care about to the
     // list, because there aren't any utility functions for that either.
-    certList->certs = reinterpret_cast<SECItem*>(
+    certList->certs = static_cast<SECItem*>(
       PORT_ArenaAlloc(certList->arena, 2 * sizeof(SECItem)));
     if (SECITEM_CopyItem(certList->arena, certList->certs, &cert->derCert)
           != SECSuccess) {
@@ -463,7 +462,11 @@ ConfigSecureServerWithNamedCert(PRFileDesc* fd, const char* certName,
     certList->len = 2;
   }
 
-  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
+  if (!slot) {
+    PrintPRError("PK11_GetInternalKeySlot failed");
+    return SECFailure;
+  }
   UniqueSECKEYPrivateKey key(
     PK11_FindKeyByDERCert(slot.get(), cert.get(), nullptr));
   if (!key) {

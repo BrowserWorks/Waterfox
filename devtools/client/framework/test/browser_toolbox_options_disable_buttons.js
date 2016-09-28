@@ -115,7 +115,7 @@ function testToggleToolboxButtons() {
 
     is(matchedCheckboxes[0].nextSibling.textContent, tool.label,
       "The label for checkbox matches the tool definition.");
-    is(matchedButtons[0].getAttribute("tooltiptext"), tool.label,
+    is(matchedButtons[0].getAttribute("title"), tool.label,
       "The tooltip for button matches the tool definition.");
   }
 
@@ -150,7 +150,7 @@ function getBoolPref(key) {
 }
 
 function cleanup() {
-  toolbox.destroy().then(function() {
+  toolbox.destroy().then(function () {
     gBrowser.removeCurrentTab();
     for (let pref of modifiedPrefs) {
       Services.prefs.clearUserPref(pref);

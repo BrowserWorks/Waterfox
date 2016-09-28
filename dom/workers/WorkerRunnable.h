@@ -264,77 +264,6 @@ private:
   PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override;
 };
 
-// This runnable is used to stop a sync loop . As sync loops keep the busy count
-// incremented as long as they run this runnable does not modify the busy count
-// in any way.
-class StopSyncLoopRunnable : public WorkerSyncRunnable
-{
-  bool mResult;
-
-public:
-  // Passing null for aSyncLoopTarget is not allowed.
-  StopSyncLoopRunnable(WorkerPrivate* aWorkerPrivate,
-                       already_AddRefed<nsIEventTarget>&& aSyncLoopTarget,
-                       bool aResult);
-
-  // By default StopSyncLoopRunnables cannot be canceled since they could leave
-  // a sync loop spinning forever.
-  nsresult
-  Cancel() override;
-
-protected:
-  virtual ~StopSyncLoopRunnable()
-  { }
-
-  // Called on the worker thread, in WorkerRun, right before stopping the
-  // syncloop to set an exception (however subclasses want to handle that) if
-  // mResult is false.  Note that overrides of this method must NOT set an
-  // actual exception on the JSContext; they may only set some state that will
-  // get turned into an exception once the syncloop actually terminates and
-  // control is returned to whoever was spinning the syncloop.
-  virtual void
-  MaybeSetException()
-  { }
-
-private:
-  virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override;
-
-  virtual bool
-  DispatchInternal() override final;
-};
-
-// This runnable is identical to StopSyncLoopRunnable except it is meant to be
-// used on the main thread only.
-class MainThreadStopSyncLoopRunnable : public StopSyncLoopRunnable
-{
-public:
-  // Passing null for aSyncLoopTarget is not allowed.
-  MainThreadStopSyncLoopRunnable(
-                               WorkerPrivate* aWorkerPrivate,
-                               already_AddRefed<nsIEventTarget>&& aSyncLoopTarget,
-                               bool aResult)
-  : StopSyncLoopRunnable(aWorkerPrivate, Move(aSyncLoopTarget), aResult)
-  {
-    AssertIsOnMainThread();
-  }
-
-protected:
-  virtual ~MainThreadStopSyncLoopRunnable()
-  { }
-
-private:
-  virtual bool
-  PreDispatch(WorkerPrivate* aWorkerPrivate) override final
-  {
-    AssertIsOnMainThread();
-    return true;
-  }
-
-  virtual void
-  PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override;
-};
-
 // This runnable is processed as soon as it is received by the worker,
 // potentially running before previously queued runnables and perhaps even with
 // other JS code executing on the stack. These runnables must not alter the
@@ -424,13 +353,15 @@ protected:
 // dispatch the tasks from the worker thread to the main thread.
 //
 // Note that the derived class must override MainThreadRun.
-class WorkerMainThreadRunnable : public nsRunnable
+class WorkerMainThreadRunnable : public Runnable
 {
 protected:
   WorkerPrivate* mWorkerPrivate;
   nsCOMPtr<nsIEventTarget> mSyncLoopTarget;
+  const nsCString mTelemetryKey;
 
-  explicit WorkerMainThreadRunnable(WorkerPrivate* aWorkerPrivate);
+  explicit WorkerMainThreadRunnable(WorkerPrivate* aWorkerPrivate,
+                                    const nsACString& aTelemetryKey);
   ~WorkerMainThreadRunnable() {}
 
   virtual bool MainThreadRun() = 0;
@@ -452,13 +383,14 @@ private:
 // them happen while a worker is shutting down.
 //
 // Do NOT copy what this class is doing elsewhere.  Just don't.
-class WorkerCheckAPIExposureOnMainThreadRunnable : public WorkerMainThreadRunnable
+class WorkerCheckAPIExposureOnMainThreadRunnable
+  : public WorkerMainThreadRunnable
 {
 public:
-  explicit WorkerCheckAPIExposureOnMainThreadRunnable(WorkerPrivate* aWorkerPrivate):
-    WorkerMainThreadRunnable(aWorkerPrivate)
-  {}
-  ~WorkerCheckAPIExposureOnMainThreadRunnable() {}
+  explicit
+  WorkerCheckAPIExposureOnMainThreadRunnable(WorkerPrivate* aWorkerPrivate);
+  virtual
+  ~WorkerCheckAPIExposureOnMainThreadRunnable();
 
   // Returns whether the dispatch succeeded.  If this returns false, the API
   // should not be exposed.

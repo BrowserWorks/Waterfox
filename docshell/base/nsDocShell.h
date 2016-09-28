@@ -232,6 +232,7 @@ public:
   NS_IMETHOD GetUseRemoteTabs(bool*) override;
   NS_IMETHOD SetRemoteTabs(bool) override;
   NS_IMETHOD GetOriginAttributes(JS::MutableHandle<JS::Value>) override;
+  NS_IMETHOD IsTrackingProtectionOn(bool*) override;
 
   // Restores a cached presentation from history (mLSHE).
   // This method swaps out the content viewer and simulates loads for
@@ -276,7 +277,7 @@ public:
     return mOriginAttributes;
   }
 
-  void SetOriginAttributes(const mozilla::DocShellOriginAttributes& aAttrs);
+  nsresult SetOriginAttributes(const mozilla::DocShellOriginAttributes& aAttrs);
 
   void GetInterceptedDocumentId(nsAString& aId)
   {
@@ -759,7 +760,7 @@ protected:
 
 public:
   // Event type dispatched by RestorePresentation
-  class RestorePresentationEvent : public nsRunnable
+  class RestorePresentationEvent : public mozilla::Runnable
   {
   public:
     NS_DECL_NSIRUNNABLE

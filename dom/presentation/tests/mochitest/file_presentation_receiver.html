@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Test for B2G PresentationReceiver at receiver side</title>
+  <title>Test for B2G PresentationReceiver at receiver side (OOP)</title>
 </head>
 <body>
 <div id="content"></div>
@@ -11,58 +11,98 @@
 "use strict";
 
 function is(a, b, msg) {
-  window.parent.postMessage((a === b ? 'OK ' : 'KO ') + msg, '*');
+  alert((a === b ? 'OK ' : 'KO ') + msg);
 }
 
 function ok(a, msg) {
-  window.parent.postMessage((a ? 'OK ' : 'KO ') + msg, '*');
+  alert((a ? 'OK ' : 'KO ') + msg);
 }
 
 function info(msg) {
-  window.parent.postMessage('INFO ' + msg, '*');
+  alert('INFO ' + msg);
 }
 
 function command(msg) {
-  window.parent.postMessage('COMMAND ' + JSON.stringify(msg), '*');
+  alert('COMMAND ' + JSON.stringify(msg));
 }
 
 function finish() {
-  window.parent.postMessage('DONE', '*');
+  alert('DONE');
 }
 
 var connection;
 
 function testConnectionAvailable() {
   return new Promise(function(aResolve, aReject) {
-    ok(navigator.presentation, "navigator.presentation should be available.");
-    ok(navigator.presentation.receiver, "navigator.presentation.receiver should be available.");
+    ok(navigator.presentation, "navigator.presentation should be available in OOP receiving pages.");
+    ok(navigator.presentation.receiver, "navigator.presentation.receiver should be available in OOP receiving pages.");
 
-    navigator.presentation.receiver.getConnection().then(
-      function(aConnection) {
-        connection = aConnection;
-
+    navigator.presentation.receiver.connectionList.then(
+      function(aList) {
+        is(aList.connections.length, 1, "Should get one conncetion.");
+        connection = aList.connections[0];
         ok(connection.id, "Connection ID should be set: " + connection.id);
-        is(connection.state, "closed", "Connection state at receiver side should be closed by default.");
+        is(connection.state, "connected", "Connection state at receiver side should be connected.");
         aResolve();
       },
       function(aError) {
-        ok(false, "Error occurred when getting the connection: " + aError);
+        ok(false, "Error occurred when getting the connection list: " + aError);
         finish();
         aReject();
       }
     );
+    command({ name: 'trigger-incoming-offer' });
   });
 }
 
-function testConnectionReady() {
+function testDefauleRequestIsNull() {
   return new Promise(function(aResolve, aReject) {
-    connection.onstatechange = function() {
-      connection.onstatechange = null;
-      is(connection.state, "connected", "Connection state should become connected.");
+    navigator.presentation.defaultRequest = new PresentationRequest("http://example.com");
+    if (navigator.presentation.defaultRequest === null) {
+      ok(true, "defaultRequest should be null.");
       aResolve();
-    };
+    }
+    else {
+      ok(false, "defaultRequest should be null.");
+      aReject();
+    }
+  });
+}
 
-    command({ name: 'trigger-incoming-offer' });
+function testConnectionAvailableSameOriginInnerIframe() {
+  return new Promise(function(aResolve, aReject) {
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('src', './file_presentation_receiver_inner_iframe.html');
+    document.body.appendChild(iframe);
+
+    aResolve();
+  });
+}
+
+function testConnectionUnavailableDiffOriginInnerIframe() {
+  return new Promise(function(aResolve, aReject) {
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('src', 'http://example.com/tests/dom/presentation/tests/mochitest/file_presentation_non_receiver_inner_iframe.html');
+    document.body.appendChild(iframe);
+
+    aResolve();
+  });
+}
+
+function testConnectionListSameObject() {
+  return new Promise(function(aResolve, aReject) {
+    is(navigator.presentation.receiver.connectionList, navigator.presentation.receiver.connectionList, "The promise should be the same object.");
+    var promise = navigator.presentation.receiver.connectionList.then(
+      function(aList) {
+        is(connection, aList.connections[0], "The connection from list and the one from |connectionavailable| event should be the same.");
+        aResolve();
+      },
+      function(aError) {
+        ok(false, "Error occurred when getting the connection list: " + aError);
+        finish();
+        aReject();
+      }
+    );
   });
 }
 
@@ -77,14 +117,14 @@ function testIncomingMessage() {
     });
 
     command({ name: 'trigger-incoming-message',
-    	        data: incomingMessage });
+              data: incomingMessage });
   });
 }
 
 function testTerminateConnection() {
   return new Promise(function(aResolve, aReject) {
-    connection.onstatechange = function() {
-      connection.onstatechange = null;
+    connection.onterminate = function() {
+      connection.onterminate = null;
       is(connection.state, "terminated", "Connection should be terminated.");
       aResolve();
     };
@@ -94,7 +134,10 @@ function testTerminateConnection() {
 }
 
 testConnectionAvailable().
-then(testConnectionReady).
+then(testDefauleRequestIsNull).
+then(testConnectionAvailableSameOriginInnerIframe).
+then(testConnectionUnavailableDiffOriginInnerIframe).
+then(testConnectionListSameObject).
 then(testIncomingMessage).
 then(testTerminateConnection).
 then(finish);

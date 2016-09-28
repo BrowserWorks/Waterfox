@@ -27,7 +27,7 @@
 #include "MediaEngineCameraVideoSource.h"
 #include "VideoSegment.h"
 #include "AudioSegment.h"
-#include "StreamBuffer.h"
+#include "StreamTracks.h"
 #include "MediaStreamGraph.h"
 #include "cubeb/cubeb.h"
 #include "CubebUtils.h"
@@ -395,6 +395,7 @@ public:
   }
   virtual void DeviceChanged() override
   {
+    MutexAutoLock lock(mMutex);
     if (mAudioSource) {
       mAudioSource->DeviceChanged();
     }
@@ -430,22 +431,18 @@ public:
     , mCapIndex(aIndex)
     , mChannel(-1)
     , mNrAllocations(0)
-    , mInitDone(false)
     , mStarted(false)
     , mSampleFrequency(MediaEngine::DEFAULT_SAMPLE_RATE)
-    , mEchoOn(false), mAgcOn(false), mNoiseOn(false)
-    , mEchoCancel(webrtc::kEcDefault)
-    , mAGC(webrtc::kAgcDefault)
-    , mNoiseSuppress(webrtc::kNsDefault)
     , mPlayoutDelay(0)
     , mNullTransport(nullptr)
-    , mInputBufferLen(0) {
+    , mSkipProcessing(false)
+  {
     MOZ_ASSERT(aVoiceEnginePtr);
     MOZ_ASSERT(aAudioInput);
     mDeviceName.Assign(NS_ConvertUTF8toUTF16(name));
     mDeviceUUID.Assign(uuid);
     mListener = new mozilla::WebRTCAudioDataListener(this);
-    Init();
+    // We'll init lazily as needed
   }
 
   void GetName(nsAString& aName) override;
@@ -513,16 +510,40 @@ protected:
   }
 
 private:
-  void Init();
+  // These allocate/configure and release the channel
+  bool AllocChannel();
+  void FreeChannel();
+  // These start/stop VoEBase and associated interfaces
+  bool InitEngine();
+  void DeInitEngine();
+
+  // This is true when all processing is disabled, we can skip
+  // packetization, resampling and other processing passes.
+  bool PassThrough() {
+    return mSkipProcessing;
+  }
+  template<typename T>
+  void InsertInGraph(const T* aBuffer,
+                     size_t aFrames,
+                     uint32_t aChannels);
+
+  void PacketizeAndProcess(MediaStreamGraph* aGraph,
+                           const AudioDataValue* aBuffer,
+                           size_t aFrames,
+                           TrackRate aRate,
+                           uint32_t aChannels);
 
   webrtc::VoiceEngine* mVoiceEngine;
   RefPtr<mozilla::AudioInput> mAudioInput;
   RefPtr<WebRTCAudioDataListener> mListener;
 
-  ScopedCustomReleasePtr<webrtc::VoEBase> mVoEBase;
-  ScopedCustomReleasePtr<webrtc::VoEExternalMedia> mVoERender;
-  ScopedCustomReleasePtr<webrtc::VoENetwork> mVoENetwork;
-  ScopedCustomReleasePtr<webrtc::VoEAudioProcessing> mVoEProcessing;
+  // Note: shared across all microphone sources - we don't want to Terminate()
+  // the VoEBase until there are no active captures
+  static int sChannelsOpen;
+  static ScopedCustomReleasePtr<webrtc::VoEBase> mVoEBase;
+  static ScopedCustomReleasePtr<webrtc::VoEExternalMedia> mVoERender;
+  static ScopedCustomReleasePtr<webrtc::VoENetwork> mVoENetwork;
+  static ScopedCustomReleasePtr<webrtc::VoEAudioProcessing> mVoEProcessing;
 
   // accessed from the GraphDriver thread except for deletion
   nsAutoPtr<AudioPacketizer<AudioDataValue, int16_t>> mPacketizer;
@@ -535,29 +556,27 @@ private:
   Monitor mMonitor;
   nsTArray<RefPtr<SourceMediaStream>> mSources;
   nsTArray<PrincipalHandle> mPrincipalHandles; // Maps to mSources.
+
   nsCOMPtr<nsIThread> mThread;
   int mCapIndex;
   int mChannel;
-  int mNrAllocations; // When this becomes 0, we shut down HW
+  int mNrAllocations; // Per-channel - When this becomes 0, we shut down HW for the channel
   TrackID mTrackID;
-  bool mInitDone;
   bool mStarted;
 
   nsString mDeviceName;
   nsCString mDeviceUUID;
 
-  uint32_t mSampleFrequency;
-  bool mEchoOn, mAgcOn, mNoiseOn;
-  webrtc::EcModes  mEchoCancel;
-  webrtc::AgcModes mAGC;
-  webrtc::NsModes  mNoiseSuppress;
+  int32_t mSampleFrequency;
   int32_t mPlayoutDelay;
 
   NullTransport *mNullTransport;
 
-  // For full_duplex packetizer output
-  size_t mInputBufferLen;
-  UniquePtr<int16_t[]> mInputBuffer;
+  nsTArray<int16_t> mInputBuffer;
+  // mSkipProcessing is true if none of the processing passes are enabled,
+  // because of prefs or constraints. This allows simply copying the audio into
+  // the MSG, skipping resampling and the whole webrtc.org code.
+  bool mSkipProcessing;
 };
 
 class MediaEngineWebRTC : public MediaEngine
@@ -568,6 +587,9 @@ public:
   // Clients should ensure to clean-up sources video/audio sources
   // before invoking Shutdown on this class.
   void Shutdown() override;
+
+  // Returns whether the host supports duplex audio stream.
+  bool SupportsDuplex();
 
   void EnumerateVideoDevices(dom::MediaSourceEnum,
                              nsTArray<RefPtr<MediaEngineVideoSource>>*) override;
@@ -589,7 +611,6 @@ private:
   webrtc::VoiceEngine* mVoiceEngine;
   webrtc::Config mConfig;
   RefPtr<mozilla::AudioInput> mAudioInput;
-  bool mAudioEngineInit;
   bool mFullDuplex;
   bool mExtendedFilter;
   bool mDelayAgnostic;

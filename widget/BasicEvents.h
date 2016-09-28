@@ -87,9 +87,9 @@ public:
   // If mIsSynthesizedForTests is true, the event has been synthesized for
   // automated tests or something hacky approach of an add-on.
   bool    mIsSynthesizedForTests : 1;
-  // If mExceptionHasBeenRisen is true, one of the event handlers has risen an
+  // If mExceptionWasRaised is true, one of the event handlers has raised an
   // exception.
-  bool    mExceptionHasBeenRisen : 1;
+  bool    mExceptionWasRaised : 1;
   // If mRetargetToNonNativeAnonymous is true and the target is in a non-native
   // native anonymous subtree, the event target is set to mOriginalTarget.
   bool    mRetargetToNonNativeAnonymous : 1;
@@ -123,6 +123,9 @@ public:
   // perform its associated action. This is currently only relevant for
   // wheel and touch events.
   bool mHandledByAPZ : 1;
+  // True if the event is currently being handled by an event listener that
+  // was registered as a passive listener.
+  bool mInPassiveListener: 1;
 
   // If the event is being handled in target phase, returns true.
   inline bool InTargetPhase() const
@@ -264,6 +267,63 @@ public:
 
 class WidgetEvent : public WidgetEventTime
 {
+private:
+  void SetDefaultCancelableAndBubbles()
+  {
+    switch (mClass) {
+      case eEditorInputEventClass:
+        mFlags.mCancelable = false;
+        mFlags.mBubbles = mFlags.mIsTrusted;
+        break;
+      case eMouseEventClass:
+        mFlags.mCancelable = (mMessage != eMouseEnter &&
+                              mMessage != eMouseLeave);
+        mFlags.mBubbles = (mMessage != eMouseEnter &&
+                           mMessage != eMouseLeave);
+        break;
+      case ePointerEventClass:
+        mFlags.mCancelable = (mMessage != ePointerEnter &&
+                              mMessage != ePointerLeave &&
+                              mMessage != ePointerCancel &&
+                              mMessage != ePointerGotCapture &&
+                              mMessage != ePointerLostCapture);
+        mFlags.mBubbles = (mMessage != ePointerEnter &&
+                           mMessage != ePointerLeave);
+        break;
+      case eDragEventClass:
+        mFlags.mCancelable = (mMessage != eDragExit &&
+                              mMessage != eDragLeave &&
+                              mMessage != eDragEnd);
+        mFlags.mBubbles = true;
+        break;
+      case eSMILTimeEventClass:
+        mFlags.mCancelable = false;
+        mFlags.mBubbles = false;
+        break;
+      case eTransitionEventClass:
+      case eAnimationEventClass:
+      case eSVGZoomEventClass:
+        mFlags.mCancelable = false;
+        mFlags.mBubbles = true;
+        break;
+      case eCompositionEventClass:
+        // XXX compositionstart is cancelable in draft of DOM3 Events.
+        //     However, it doesn't make sense for us, we cannot cancel
+        //     composition when we send compositionstart event.
+        mFlags.mCancelable = false;
+        mFlags.mBubbles = true;
+        break;
+      default:
+        if (mMessage == eResize) {
+          mFlags.mCancelable = false;
+        } else {
+          mFlags.mCancelable = true;
+        }
+        mFlags.mBubbles = true;
+        break;
+    }
+  }
+
 protected:
   WidgetEvent(bool aIsTrusted,
               EventMessage aMessage,
@@ -278,8 +338,7 @@ protected:
     MOZ_COUNT_CTOR(WidgetEvent);
     mFlags.Clear();
     mFlags.mIsTrusted = aIsTrusted;
-    mFlags.mCancelable = true;
-    mFlags.mBubbles = true;
+    SetDefaultCancelableAndBubbles();
   }
 
   WidgetEvent()
@@ -290,18 +349,8 @@ protected:
 
 public:
   WidgetEvent(bool aIsTrusted, EventMessage aMessage)
-    : WidgetEventTime()
-    , mClass(eBasicEventClass)
-    , mMessage(aMessage)
-    , mRefPoint(0, 0)
-    , mLastRefPoint(0, 0)
-    , mSpecifiedEventType(nullptr)
+    : WidgetEvent(aIsTrusted, aMessage, eBasicEventClass)
   {
-    MOZ_COUNT_CTOR(WidgetEvent);
-    mFlags.Clear();
-    mFlags.mIsTrusted = aIsTrusted;
-    mFlags.mCancelable = true;
-    mFlags.mBubbles = true;
   }
 
   virtual ~WidgetEvent()

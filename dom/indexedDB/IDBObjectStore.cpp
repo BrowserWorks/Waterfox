@@ -23,7 +23,7 @@
 #include "js/Date.h"
 #include "js/StructuredClone.h"
 #include "KeyPath.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Move.h"
 #include "mozilla/dom/BindingUtils.h"
@@ -1815,47 +1815,9 @@ IDBObjectStore::DeleteInternal(JSContext* aCx,
 
 already_AddRefed<IDBIndex>
 IDBObjectStore::CreateIndex(const nsAString& aName,
-                            const nsAString& aKeyPath,
+                            const StringOrStringSequence& aKeyPath,
                             const IDBIndexParameters& aOptionalParameters,
                             ErrorResult& aRv)
-{
-  AssertIsOnOwningThread();
-
-  KeyPath keyPath(0);
-  if (NS_FAILED(KeyPath::Parse(aKeyPath, &keyPath)) ||
-      !keyPath.IsValid()) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return nullptr;
-  }
-
-  return CreateIndexInternal(aName, keyPath, aOptionalParameters, aRv);
-}
-
-already_AddRefed<IDBIndex>
-IDBObjectStore::CreateIndex(const nsAString& aName,
-                            const Sequence<nsString >& aKeyPath,
-                            const IDBIndexParameters& aOptionalParameters,
-                            ErrorResult& aRv)
-{
-  AssertIsOnOwningThread();
-
-  KeyPath keyPath(0);
-  if (aKeyPath.IsEmpty() ||
-      NS_FAILED(KeyPath::Parse(aKeyPath, &keyPath)) ||
-      !keyPath.IsValid()) {
-    aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
-    return nullptr;
-  }
-
-  return CreateIndexInternal(aName, keyPath, aOptionalParameters, aRv);
-}
-
-already_AddRefed<IDBIndex>
-IDBObjectStore::CreateIndexInternal(
-                                  const nsAString& aName,
-                                  const KeyPath& aKeyPath,
-                                  const IDBIndexParameters& aOptionalParameters,
-                                  ErrorResult& aRv)
 {
   AssertIsOnOwningThread();
 
@@ -1883,7 +1845,24 @@ IDBObjectStore::CreateIndexInternal(
     }
   }
 
-  if (aOptionalParameters.mMultiEntry && aKeyPath.IsArray()) {
+  KeyPath keyPath(0);
+  if (aKeyPath.IsString()) {
+    if (NS_FAILED(KeyPath::Parse(aKeyPath.GetAsString(), &keyPath)) ||
+        !keyPath.IsValid()) {
+      aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+      return nullptr;
+    }
+  } else {
+    MOZ_ASSERT(aKeyPath.IsStringSequence());
+    if (aKeyPath.GetAsStringSequence().IsEmpty() ||
+        NS_FAILED(KeyPath::Parse(aKeyPath.GetAsStringSequence(), &keyPath)) ||
+        !keyPath.IsValid()) {
+      aRv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+      return nullptr;
+    }
+  }
+
+  if (aOptionalParameters.mMultiEntry && keyPath.IsArray()) {
     aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return nullptr;
   }
@@ -1912,7 +1891,7 @@ IDBObjectStore::CreateIndexInternal(
 #endif
 
   IndexMetadata* metadata = indexes.AppendElement(
-    IndexMetadata(transaction->NextIndexId(), nsString(aName), aKeyPath,
+    IndexMetadata(transaction->NextIndexId(), nsString(aName), keyPath,
                   locale,
                   aOptionalParameters.mUnique,
                   aOptionalParameters.mMultiEntry,
@@ -2263,6 +2242,59 @@ IDBObjectStore::Name() const
   MOZ_ASSERT(mSpec);
 
   return mSpec->metadata().name();
+}
+
+void
+IDBObjectStore::SetName(const nsAString& aName, ErrorResult& aRv)
+{
+  AssertIsOnOwningThread();
+
+  if (mTransaction->GetMode() != IDBTransaction::VERSION_CHANGE ||
+      mDeletedSpec) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+
+  IDBTransaction* transaction = IDBTransaction::GetCurrent();
+  if (!transaction || transaction != mTransaction) {
+    aRv.Throw(NS_ERROR_DOM_INDEXEDDB_TRANSACTION_INACTIVE_ERR);
+    return;
+  }
+
+  MOZ_ASSERT(transaction->IsOpen());
+
+  if (aName == mSpec->metadata().name()) {
+    return;
+  }
+
+  // Cache logging string of this object store before renaming.
+  const LoggingString loggingOldObjectStore(this);
+
+  nsresult rv =
+    transaction->Database()->RenameObjectStore(mSpec->metadata().id(),
+                                               aName);
+
+  if (NS_FAILED(rv)) {
+    aRv.Throw(rv);
+    return;
+  }
+
+  // Don't do this in the macro because we always need to increment the serial
+  // number to keep in sync with the parent.
+  const uint64_t requestSerialNumber = IDBRequest::NextSerialNumber();
+
+  IDB_LOG_MARK("IndexedDB %s: Child  Transaction[%lld] Request[%llu]: "
+                 "database(%s).transaction(%s).objectStore(%s).rename(%s)",
+               "IndexedDB %s: C T[%lld] R[%llu]: IDBObjectStore.rename()",
+               IDB_LOG_ID_STRING(),
+               mTransaction->LoggingSerialNumber(),
+               requestSerialNumber,
+               IDB_LOG_STRINGIFY(mTransaction->Database()),
+               IDB_LOG_STRINGIFY(mTransaction),
+               loggingOldObjectStore.get(),
+               IDB_LOG_STRINGIFY(this));
+
+  transaction->RenameObjectStore(mSpec->metadata().id(), aName);
 }
 
 bool

@@ -5,8 +5,8 @@
 "use strict";
 
 const { Cu } = require("chrome");
-const protocol = require("devtools/server/protocol");
-const { Task } = require("resource://gre/modules/Task.jsm");
+const protocol = require("devtools/shared/protocol");
+const { Task } = require("devtools/shared/task");
 const { Actor, custom, method, RetVal, Arg, Option, types, preEvent } = protocol;
 const { actorBridge } = require("devtools/server/actors/common");
 const { PerformanceRecordingActor, PerformanceRecordingFront } = require("devtools/server/actors/performance-recording");
@@ -91,7 +91,7 @@ var PerformanceActor = exports.PerformanceActor = protocol.ActorClass({
    * `disconnect` method required to call destroy, since this
    * actor is not managed by a parent actor.
    */
-  disconnect: function() {
+  disconnect: function () {
     this.destroy();
   },
 
@@ -109,13 +109,13 @@ var PerformanceActor = exports.PerformanceActor = protocol.ActorClass({
     response: RetVal("json")
   }),
 
-  canCurrentlyRecord: method(function() {
+  canCurrentlyRecord: method(function () {
     return this.bridge.canCurrentlyRecord();
   }, {
     response: { value: RetVal("json") }
   }),
 
-  startRecording: method(Task.async(function *(options={}) {
+  startRecording: method(Task.async(function* (options = {}) {
     if (!this.bridge.canCurrentlyRecord().success) {
       return null;
     }
@@ -179,7 +179,7 @@ var PerformanceActor = exports.PerformanceActor = protocol.ActorClass({
   },
 });
 
-exports.createPerformanceFront = function createPerformanceFront (target) {
+exports.createPerformanceFront = function createPerformanceFront(target) {
   // If we force legacy mode, or the server does not have a performance actor (< Fx42),
   // use our LegacyPerformanceFront which will handle
   // the communication over RDP to other underlying actors.
@@ -206,7 +206,7 @@ const PerformanceFront = exports.PerformanceFront = protocol.FrontClass(Performa
    * Conenct to the server, and handle once-off tasks like storing traits
    * or system info.
    */
-  connect: custom(Task.async(function *() {
+  connect: custom(Task.async(function* () {
     let systemClient = yield getSystemInfo();
     let { traits } = yield this._connect({ systemClient });
     this._traits = traits;

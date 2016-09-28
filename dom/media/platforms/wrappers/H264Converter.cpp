@@ -19,7 +19,7 @@ H264Converter::H264Converter(PlatformDecoderModule* aPDM,
                              const VideoInfo& aConfig,
                              layers::LayersBackend aLayersBackend,
                              layers::ImageContainer* aImageContainer,
-                             FlushableTaskQueue* aVideoTaskQueue,
+                             TaskQueue* aTaskQueue,
                              MediaDataDecoderCallback* aCallback,
                              DecoderDoctorDiagnostics* aDiagnostics)
   : mPDM(aPDM)
@@ -27,7 +27,7 @@ H264Converter::H264Converter(PlatformDecoderModule* aPDM,
   , mCurrentConfig(aConfig)
   , mLayersBackend(aLayersBackend)
   , mImageContainer(aImageContainer)
-  , mVideoTaskQueue(aVideoTaskQueue)
+  , mTaskQueue(aTaskQueue)
   , mCallback(aCallback)
   , mDecoder(nullptr)
   , mNeedAVCC(aPDM->DecoderNeedsConversion(aConfig) == PlatformDecoderModule::kNeedAVCC)
@@ -149,7 +149,7 @@ H264Converter::CreateDecoder(DecoderDoctorDiagnostics* aDiagnostics)
   mDecoder = mPDM->CreateVideoDecoder(mNeedAVCC ? mCurrentConfig : mOriginalConfig,
                                       mLayersBackend,
                                       mImageContainer,
-                                      mVideoTaskQueue,
+                                      mTaskQueue,
                                       mCallback,
                                       aDiagnostics);
   if (!mDecoder) {
@@ -191,7 +191,7 @@ H264Converter::OnDecoderInitDone(const TrackType aTrackType)
   mInitPromiseRequest.Complete();
   for (uint32_t i = 0 ; i < mMediaRawSamples.Length(); i++) {
     if (NS_FAILED(mDecoder->Input(mMediaRawSamples[i]))) {
-      mCallback->Error();
+      mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
     }
   }
   mMediaRawSamples.Clear();
@@ -201,7 +201,7 @@ void
 H264Converter::OnDecoderInitFailed(MediaDataDecoder::DecoderFailureReason aReason)
 {
   mInitPromiseRequest.Complete();
-  mCallback->Error();
+  mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
 }
 
 nsresult

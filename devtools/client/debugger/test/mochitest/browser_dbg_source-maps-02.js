@@ -14,7 +14,11 @@ var gTab, gPanel, gDebugger, gEditor;
 var gSources, gFrames, gPrefs, gOptions;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_binary_search.coffee",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -24,8 +28,7 @@ function test() {
     gPrefs = gDebugger.Prefs;
     gOptions = gDebugger.DebuggerView.Options;
 
-    waitForSourceShown(gPanel, ".coffee")
-      .then(testToggleGeneratedSource)
+    testToggleGeneratedSource()
       .then(testSetBreakpoint)
       .then(testToggleOnPause)
       .then(testResume)
@@ -41,7 +44,7 @@ function testToggleGeneratedSource() {
     is(gPrefs.sourceMapsEnabled, false,
       "The source maps pref should have been set to false.");
     is(gOptions._showOriginalSourceItem.getAttribute("checked"), "false",
-      "Source maps should now be disabled.")
+      "Source maps should now be disabled.");
 
     is(gSources.selectedItem.attachment.source.url.indexOf(".coffee"), -1,
       "The debugger should not show the source mapped coffee source file.");
@@ -97,7 +100,7 @@ function testToggleOnPause() {
     is(gPrefs.sourceMapsEnabled, true,
       "The source maps pref should have been set to true.");
     is(gOptions._showOriginalSourceItem.getAttribute("checked"), "true",
-      "Source maps should now be enabled.")
+      "Source maps should now be enabled.");
 
     isnot(gSources.selectedItem.attachment.source.url.indexOf(".coffee"), -1,
       "The debugger should show the source mapped coffee source file.");
@@ -138,7 +141,7 @@ function testResume() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

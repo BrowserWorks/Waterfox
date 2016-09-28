@@ -10,7 +10,7 @@
 #include "mozilla/gfx/Matrix.h"         // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for IntSize, etc
 #include "mozilla/gfx/TiledRegion.h"    // for TiledRegion
-#include "mozilla/gfx/Types.h"          // for Filter, SurfaceFormat
+#include "mozilla/gfx/Types.h"          // for SamplingFilter, SurfaceFormat
 #include "mozilla/layers/CompositorTypes.h"  // for TextureFlags
 #include "nsAString.h"
 #include "nsPrintfCString.h"            // for nsPrintfCString
@@ -225,7 +225,8 @@ AppendToString(std::stringstream& aStream, const mozilla::gfx::Matrix5x4& m,
                const char* pfx="", const char* sfx="");
 
 void
-AppendToString(std::stringstream& aStream, const mozilla::gfx::Filter filter,
+AppendToString(std::stringstream& aStream,
+               const mozilla::gfx::SamplingFilter samplingFilter,
                const char* pfx="", const char* sfx="");
 
 void

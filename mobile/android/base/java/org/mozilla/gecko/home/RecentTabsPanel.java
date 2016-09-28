@@ -217,9 +217,33 @@ public class RecentTabsPanel extends HomeFragment
         }
     }
 
+    private void updateCursor(final boolean initialLoad) {
+        Thread updateCursorThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // We need to ensure that the session restore code has updated sessionstore.bak as necessary.
+                GeckoProfile.get(getContext()).waitForOldSessionDataProcessing();
+
+                ThreadUtils.postToUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Reload the cursor to show recently closed tabs.
+                        if (initialLoad) {
+                            getLoaderManager().initLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+                        } else {
+                            getLoaderManager().restartLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+                        }
+                    }
+                });
+            }
+        }, "RecentTabsCursorThread");
+
+        updateCursorThread.start();
+    }
+
     @Override
     protected void load() {
-        getLoaderManager().initLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+        updateCursor(true);
     }
 
     @Override
@@ -242,8 +266,7 @@ public class RecentTabsPanel extends HomeFragment
                 // The fragment might have been detached before this code
                 // runs in the UI thread.
                 if (getActivity() != null) {
-                    // Reload the cursor to show recently closed tabs.
-                    getLoaderManager().restartLoader(LOADER_ID_RECENT_TABS, null, mCursorLoaderCallbacks);
+                    updateCursor(false);
                 }
             }
         });

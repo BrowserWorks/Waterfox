@@ -9,10 +9,10 @@
 const {Cc, Ci, Cu} = require("chrome");
 
 var WebConsoleUtils = require("devtools/shared/webconsole/utils").Utils;
-var Heritage = require("sdk/core/heritage");
+var { extend } = require("sdk/core/heritage");
 var {TargetFactory} = require("devtools/client/framework/target");
 var {Tools} = require("devtools/client/definitions");
-const { Task } = require("resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 var promise = require("promise");
 var Services = require("Services");
 
@@ -34,8 +34,7 @@ const BROWSER_CONSOLE_FILTER_PREFS_PREFIX = "devtools.browserconsole.filter.";
 
 var gHudId = 0;
 
-///////////////////////////////////////////////////////////////////////////
-//// The HUD service
+// The HUD service
 
 function HUD_SERVICE()
 {
@@ -234,7 +233,7 @@ HUD_SERVICE.prototype =
         .then((aBrowserConsole) => {
           this._browserConsoleDefer.resolve(aBrowserConsole);
           this._browserConsoleDefer = null;
-        })
+        });
     }, console.error.bind(console));
 
     return this._browserConsoleDefer.promise;
@@ -490,7 +489,7 @@ WebConsole.prototype = {
     }
     toolbox.viewSourceInDebugger(aSourceURL, aSourceLine).then(() => {
       this.ui.emit("source-in-debugger-opened");
-    })
+    });
   },
 
   /**
@@ -588,7 +587,7 @@ WebConsole.prototype = {
       }
     }
 
-    let onDestroy = Task.async(function*() {
+    let onDestroy = Task.async(function* () {
       if (!this._browserConsole) {
         try {
           yield this.target.activeTab.focus();
@@ -638,8 +637,7 @@ function BrowserConsole()
   this._telemetry = new Telemetry();
 }
 
-BrowserConsole.prototype = Heritage.extend(WebConsole.prototype,
-{
+BrowserConsole.prototype = extend(WebConsole.prototype, {
   _browserConsole: true,
   _bc_init: null,
   _bc_destroyer: null,
@@ -670,9 +668,6 @@ BrowserConsole.prototype = Heritage.extend(WebConsole.prototype,
       this.destroy();
     };
     window.addEventListener("unload", onClose);
-
-    // Make sure Ctrl-W closes the Browser Console window.
-    window.document.getElementById("cmd_close").removeAttribute("disabled");
 
     this._telemetry.toolOpened("browserconsole");
 

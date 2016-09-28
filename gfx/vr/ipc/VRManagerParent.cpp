@@ -10,18 +10,11 @@
 #include "mozilla/ipc/ProtocolTypes.h"
 #include "mozilla/ipc/ProtocolUtils.h"       // for IToplevelProtocol
 #include "mozilla/TimeStamp.h"               // for TimeStamp
-#include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/layers/CompositorThread.h"
 #include "mozilla/unused.h"
 #include "VRManager.h"
 
 namespace mozilla {
-namespace layers {
-
-// defined in CompositorBridgeParent.cpp
-CompositorThreadHolder* GetCompositorThreadHolder();
-
-} // namespace layers
-
 namespace gfx {
 
 VRManagerParent::VRManagerParent(MessageLoop* aLoop,
@@ -44,8 +37,8 @@ VRManagerParent::~VRManagerParent()
   Transport* trans = GetTransport();
   if (trans) {
     MOZ_ASSERT(XRE_GetIOMessageLoop());
-    XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
-                                     new DeleteTask<Transport>(trans));
+    RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(trans);
+    XRE_GetIOMessageLoop()->PostTask(task.forget());
   }
   MOZ_COUNT_DTOR(VRManagerParent);
 }
@@ -76,11 +69,10 @@ VRManagerParent::ConnectVRManagerInParentProcess(VRManagerParent* aVRManager,
 /*static*/ VRManagerParent*
 VRManagerParent::CreateCrossProcess(Transport* aTransport, ProcessId aChildProcessId)
 {
-  MessageLoop* loop = mozilla::layers::CompositorBridgeParent::CompositorLoop();
+  MessageLoop* loop = mozilla::layers::CompositorThreadHolder::Loop();
   RefPtr<VRManagerParent> vmp = new VRManagerParent(loop, aTransport, aChildProcessId);
   vmp->mSelfRef = vmp;
-  loop->PostTask(FROM_HERE,
-                 NewRunnableFunction(ConnectVRManagerInParentProcess,
+  loop->PostTask(NewRunnableFunction(ConnectVRManagerInParentProcess,
                                      vmp.get(), aTransport, aChildProcessId));
   return vmp.get();
 }
@@ -94,12 +86,11 @@ VRManagerParent::RegisterVRManagerInCompositorThread(VRManagerParent* aVRManager
 /*static*/ VRManagerParent*
 VRManagerParent::CreateSameProcess()
 {
-  MessageLoop* loop = mozilla::layers::CompositorBridgeParent::CompositorLoop();
+  MessageLoop* loop = mozilla::layers::CompositorThreadHolder::Loop();
   RefPtr<VRManagerParent> vmp = new VRManagerParent(loop, nullptr, base::GetCurrentProcId());
-  vmp->mCompositorThreadHolder = layers::GetCompositorThreadHolder();
+  vmp->mCompositorThreadHolder = layers::CompositorThreadHolder::GetSingleton();
   vmp->mSelfRef = vmp;
-  loop->PostTask(FROM_HERE,
-                 NewRunnableFunction(RegisterVRManagerInCompositorThread, vmp.get()));
+  loop->PostTask(NewRunnableFunction(RegisterVRManagerInCompositorThread, vmp.get()));
   return vmp.get();
 }
 
@@ -114,9 +105,7 @@ void
 VRManagerParent::ActorDestroy(ActorDestroyReason why)
 {
   UnregisterFromManager();
-  MessageLoop::current()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(this, &VRManagerParent::DeferredDestroy));
+  MessageLoop::current()->PostTask(NewRunnableMethod(this, &VRManagerParent::DeferredDestroy));
 }
 
 mozilla::ipc::IToplevelProtocol*
@@ -143,7 +132,7 @@ VRManagerParent::CloneToplevel(const InfallibleTArray<mozilla::ipc::ProtocolFdMa
 void
 VRManagerParent::OnChannelConnected(int32_t aPid)
 {
-  mCompositorThreadHolder = layers::GetCompositorThreadHolder();
+  mCompositorThreadHolder = layers::CompositorThreadHolder::GetSingleton();
 }
 
 bool

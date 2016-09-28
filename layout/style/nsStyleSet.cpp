@@ -708,40 +708,8 @@ nsStyleSet::AddDocStyleSheet(CSSStyleSheet* aSheet, nsIDocument* aDocument)
   nsTArray<RefPtr<CSSStyleSheet>>& sheets = mSheets[type];
 
   bool present = sheets.RemoveElement(aSheet);
-  nsStyleSheetService *sheetService = nsStyleSheetService::GetInstance();
 
-  // lowest index first
-  int32_t newDocIndex = aDocument->GetIndexOfStyleSheet(aSheet);
-
-  int32_t count = sheets.Length();
-  int32_t index;
-  for (index = 0; index < count; index++) {
-    CSSStyleSheet* sheet = sheets[index];
-    int32_t sheetDocIndex = aDocument->GetIndexOfStyleSheet(sheet);
-    if (sheetDocIndex > newDocIndex)
-      break;
-
-    // If the sheet is not owned by the document it can be an author
-    // sheet registered at nsStyleSheetService or an additional author
-    // sheet on the document, which means the new 
-    // doc sheet should end up before it.
-    if (sheetDocIndex < 0) {
-      if (sheetService) {
-        auto& authorSheets = *sheetService->AuthorStyleSheets();
-        StyleSheetHandle handle = sheet;
-        if (authorSheets.IndexOf(handle) != authorSheets.NoIndex) {
-          break;
-        }
-      }
-      MOZ_ASSERT(!aDocument->GetFirstAdditionalAuthorSheet() ||
-                 aDocument->GetFirstAdditionalAuthorSheet()->IsGecko(),
-                 "why do we have a ServoStyleSheet for an nsStyleSet?");
-      if (sheet == aDocument->GetFirstAdditionalAuthorSheet()->GetAsGecko()) {
-        break;
-      }
-    }
-  }
-
+  size_t index = aDocument->FindDocStyleSheetInsertionPoint(sheets, aSheet);
   sheets.InsertElementAt(index, aSheet);
 
   if (!present) {
@@ -897,8 +865,9 @@ nsStyleSet::GetContext(nsStyleContext* aParentContext,
                    aPseudoType ==
                      CSSPseudoElementType::NotPseudo) ||
                   (aPseudoTag &&
-                   nsCSSPseudoElements::GetPseudoType(aPseudoTag) ==
-                     aPseudoType),
+                   nsCSSPseudoElements::GetPseudoType(
+                     aPseudoTag, CSSEnabledState::eIgnoreEnabledState) ==
+                   aPseudoType),
                   "Pseudo mismatch");
 
   if (aVisitedRuleNode == aRuleNode) {
@@ -946,6 +915,13 @@ nsStyleSet::GetContext(nsStyleContext* aParentContext,
 #endif
 
   if (!result) {
+    // |aVisitedRuleNode| may have a ref-count of zero since we are yet
+    // to create the style context that will hold an owning reference to it.
+    // As a result, we need to make sure it stays alive until that point
+    // in case something in the first call to NS_NewStyleContext triggers a
+    // GC sweep of rule nodes.
+    RefPtr<nsRuleNode> kungFuDeathGrip{aVisitedRuleNode};
+
     result = NS_NewStyleContext(aParentContext, aPseudoTag, aPseudoType,
                                 aRuleNode,
                                 aFlags & eSkipParentDisplayBasedStyleFixup);
@@ -1781,11 +1757,20 @@ nsStyleSet::ResolveStyleWithoutAnimation(dom::Element* aTarget,
 }
 
 already_AddRefed<nsStyleContext>
-nsStyleSet::ResolveStyleForNonElement(nsStyleContext* aParentContext,
-                                      nsIAtom* aPseudoTag)
+nsStyleSet::ResolveStyleForText(nsIContent* aTextNode,
+                                nsStyleContext* aParentContext)
 {
-  MOZ_ASSERT(nsCSSAnonBoxes::IsNonElement(aPseudoTag));
-  return GetContext(aParentContext, mRuleTree, nullptr, aPseudoTag,
+  MOZ_ASSERT(aTextNode && aTextNode->IsNodeOfType(nsINode::eTEXT));
+  return GetContext(aParentContext, mRuleTree, nullptr,
+                    nsCSSAnonBoxes::mozText,
+                    CSSPseudoElementType::AnonBox, nullptr, eNoFlags);
+}
+
+already_AddRefed<nsStyleContext>
+nsStyleSet::ResolveStyleForOtherNonElement(nsStyleContext* aParentContext)
+{
+  return GetContext(aParentContext, mRuleTree, nullptr,
+                    nsCSSAnonBoxes::mozOtherNonElement,
                     CSSPseudoElementType::AnonBox, nullptr, eNoFlags);
 }
 

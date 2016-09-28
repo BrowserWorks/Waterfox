@@ -851,6 +851,9 @@ public:
                                 nsIFrame * aFrame);
 #endif
 
+  void RestyledElement() {
+    ++mElementsRestyled;
+  }
   void ConstructedFrame() {
     ++mFramesConstructed;
   }
@@ -858,6 +861,9 @@ public:
     ++mFramesReflowed;
   }
 
+  uint64_t ElementsRestyledCount() {
+    return mElementsRestyled;
+  }
   uint64_t FramesConstructedCount() {
     return mFramesConstructed;
   }
@@ -1013,6 +1019,12 @@ public:
    * ReflowStarted call. Cannot itself trigger an interrupt check.
    */
   bool HasPendingInterrupt() { return mHasPendingInterrupt; }
+  /**
+   * Sets a flag that will trip a reflow interrupt. This only bypasses the
+   * interrupt timeout and the pending event check; other checks such as whether
+   * interrupts are enabled and the interrupt check skipping still take effect.
+   */
+  void SetPendingInterruptFromTest() { mPendingInterruptFromTest = true; }
 
   /**
    * If we have a presshell, and if the given content's current
@@ -1033,7 +1045,6 @@ public:
   }
 
   bool IsRootContentDocument() const;
-  bool IsCrossProcessRootContentDocument();
 
   bool IsGlyph() const {
     return mIsGlyph;
@@ -1303,6 +1314,7 @@ protected:
 
   // Counters for tests and tools that want to detect frame construction
   // or reflow.
+  uint64_t              mElementsRestyled;
   uint64_t              mFramesConstructed;
   uint64_t              mFramesReflowed;
 
@@ -1312,6 +1324,7 @@ protected:
   mozilla::TimeStamp    mLastStyleUpdateForAllAnimations;
 
   unsigned              mHasPendingInterrupt : 1;
+  unsigned              mPendingInterruptFromTest : 1;
   unsigned              mInterruptsEnabled : 1;
   unsigned              mUseDocumentFonts : 1;
   unsigned              mUseDocumentColors : 1;
@@ -1517,7 +1530,7 @@ protected:
    */
   void CancelApplyPluginGeometryTimer();
 
-  class RunWillPaintObservers : public nsRunnable {
+  class RunWillPaintObservers : public mozilla::Runnable {
   public:
     explicit RunWillPaintObservers(nsRootPresContext* aPresContext) : mPresContext(aPresContext) {}
     void Revoke() { mPresContext = nullptr; }

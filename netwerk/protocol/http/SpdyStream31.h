@@ -43,12 +43,13 @@ public:
   bool HasRegisteredID() { return mStreamID != 0; }
 
   nsAHttpTransaction *Transaction() { return mTransaction; }
-  virtual nsISchedulingContext *SchedulingContext()
+  virtual nsIRequestContext *RequestContext()
   {
-    return mTransaction ? mTransaction->SchedulingContext() : nullptr;
+    return mTransaction ? mTransaction->RequestContext() : nullptr;
   }
 
   void Close(nsresult reason);
+  void SetResponseIsComplete();
 
   void SetRecvdFin(bool aStatus) { mRecvdFin = aStatus ? 1 : 0; }
   bool RecvdFin() { return mRecvdFin; }

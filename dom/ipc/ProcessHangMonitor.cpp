@@ -230,22 +230,6 @@ public:
 
 } // namespace
 
-template<>
-struct RunnableMethodTraits<HangMonitorChild>
-{
-  typedef HangMonitorChild Class;
-  static void RetainCallee(Class* obj) { }
-  static void ReleaseCallee(Class* obj) { }
-};
-
-template<>
-struct RunnableMethodTraits<HangMonitorParent>
-{
-  typedef HangMonitorParent Class;
-  static void RetainCallee(Class* obj) { }
-  static void ReleaseCallee(Class* obj) { }
-};
-
 /* HangMonitorChild implementation */
 
 HangMonitorChild::HangMonitorChild(ProcessHangMonitor* aMonitor)
@@ -265,7 +249,8 @@ HangMonitorChild::~HangMonitorChild()
 {
   // For some reason IPDL doesn't automatically delete the channel for a
   // bridged protocol (bug 1090570). So we have to do it ourselves.
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(GetTransport()));
+  RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(GetTransport());
+  XRE_GetIOMessageLoop()->PostTask(task.forget());
 
   MOZ_RELEASE_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(sInstance == this);
@@ -302,9 +287,7 @@ HangMonitorChild::ActorDestroy(ActorDestroyReason aWhy)
 
   // We use a task here to ensure that IPDL is finished with this
   // HangMonitorChild before it gets deleted on the main thread.
-  MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(this, &HangMonitorChild::ShutdownOnThread));
+  MonitorLoop()->PostTask(NewNonOwningRunnableMethod(this, &HangMonitorChild::ShutdownOnThread));
 }
 
 bool
@@ -390,10 +373,10 @@ HangMonitorChild::NotifySlowScript(nsITabChild* aTabChild,
   }
   nsAutoCString filename(aFileName);
 
-  MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(this, &HangMonitorChild::NotifySlowScriptAsync,
-                      id, filename, aLineNo));
+  MonitorLoop()->PostTask(NewNonOwningRunnableMethod
+                          <TabId, nsCString, unsigned>(this,
+                                                       &HangMonitorChild::NotifySlowScriptAsync,
+                                                       id, filename, aLineNo));
   return SlowScriptAction::Continue;
 }
 
@@ -421,11 +404,9 @@ HangMonitorChild::NotifyPluginHang(uint32_t aPluginId)
   mSentReport = true;
 
   // bounce to background thread
-  MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(this,
-                      &HangMonitorChild::NotifyPluginHangAsync,
-                      aPluginId));
+  MonitorLoop()->PostTask(NewNonOwningRunnableMethod<uint32_t>(this,
+                                                               &HangMonitorChild::NotifyPluginHangAsync,
+                                                               aPluginId));
 }
 
 void
@@ -447,9 +428,7 @@ HangMonitorChild::ClearHang()
 
   if (mSentReport) {
     // bounce to background thread
-    MonitorLoop()->PostTask(
-      FROM_HERE,
-      NewRunnableMethod(this, &HangMonitorChild::ClearHangAsync));
+    MonitorLoop()->PostTask(NewNonOwningRunnableMethod(this, &HangMonitorChild::ClearHangAsync));
 
     MonitorAutoLock lock(mMonitor);
     mSentReport = false;
@@ -487,7 +466,8 @@ HangMonitorParent::~HangMonitorParent()
 {
   // For some reason IPDL doesn't automatically delete the channel for a
   // bridged protocol (bug 1090570). So we have to do it ourselves.
-  XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(GetTransport()));
+  RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(GetTransport());
+  XRE_GetIOMessageLoop()->PostTask(task.forget());
 
 #ifdef MOZ_CRASHREPORTER
   MutexAutoLock lock(mBrowserCrashDumpHashLock);
@@ -513,9 +493,8 @@ HangMonitorParent::Shutdown()
     mProcess = nullptr;
   }
 
-  MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(this, &HangMonitorParent::ShutdownOnThread));
+  MonitorLoop()->PostTask(NewNonOwningRunnableMethod(this,
+                                                     &HangMonitorParent::ShutdownOnThread));
 
   while (!mShutdownDone) {
     mMonitor.Wait();
@@ -556,7 +535,7 @@ HangMonitorParent::Open(Transport* aTransport, ProcessId aPid,
   MOZ_ASSERT(ok);
 }
 
-class HangObserverNotifier final : public nsRunnable
+class HangObserverNotifier final : public Runnable
 {
 public:
   HangObserverNotifier(HangMonitoredProcess* aProcess,
@@ -637,7 +616,7 @@ HangMonitorParent::RecvHangEvidence(const HangData& aHangData)
   return true;
 }
 
-class ClearHangNotifier final : public nsRunnable
+class ClearHangNotifier final : public Runnable
 {
 public:
   explicit ClearHangNotifier(HangMonitoredProcess* aProcess)
@@ -835,9 +814,8 @@ HangMonitoredProcess::TerminateScript()
     return NS_ERROR_UNEXPECTED;
   }
 
-  ProcessHangMonitor::Get()->MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(mActor, &HangMonitorParent::TerminateScript));
+  ProcessHangMonitor::Get()->MonitorLoop()->PostTask(NewNonOwningRunnableMethod(mActor,
+                                                                                &HangMonitorParent::TerminateScript));
   return NS_OK;
 }
 
@@ -853,9 +831,8 @@ HangMonitoredProcess::BeginStartingDebugger()
     return NS_ERROR_UNEXPECTED;
   }
 
-  ProcessHangMonitor::Get()->MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(mActor, &HangMonitorParent::BeginStartingDebugger));
+  ProcessHangMonitor::Get()->MonitorLoop()->PostTask(NewNonOwningRunnableMethod(mActor,
+                                                                                &HangMonitorParent::BeginStartingDebugger));
   return NS_OK;
 }
 
@@ -871,9 +848,8 @@ HangMonitoredProcess::EndStartingDebugger()
     return NS_ERROR_UNEXPECTED;
   }
 
-  ProcessHangMonitor::Get()->MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(mActor, &HangMonitorParent::EndStartingDebugger));
+  ProcessHangMonitor::Get()->MonitorLoop()->PostTask(NewNonOwningRunnableMethod(mActor,
+                                                                                &HangMonitorParent::EndStartingDebugger));
   return NS_OK;
 }
 
@@ -1051,10 +1027,13 @@ mozilla::CreateHangMonitorParent(ContentParent* aContentParent,
   HangMonitoredProcess* process = new HangMonitoredProcess(parent, aContentParent);
   parent->SetProcess(process);
 
-  monitor->MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(parent, &HangMonitorParent::Open,
-                      aTransport, aOtherPid, XRE_GetIOMessageLoop()));
+  monitor->MonitorLoop()->PostTask(NewNonOwningRunnableMethod
+                                   <mozilla::ipc::Transport*,
+                                    base::ProcessId,
+                                    MessageLoop*>(parent,
+                                                  &HangMonitorParent::Open,
+                                                  aTransport, aOtherPid,
+                                                  XRE_GetIOMessageLoop()));
 
   return parent;
 }
@@ -1068,10 +1047,13 @@ mozilla::CreateHangMonitorChild(mozilla::ipc::Transport* aTransport,
   ProcessHangMonitor* monitor = ProcessHangMonitor::GetOrCreate();
   HangMonitorChild* child = new HangMonitorChild(monitor);
 
-  monitor->MonitorLoop()->PostTask(
-    FROM_HERE,
-    NewRunnableMethod(child, &HangMonitorChild::Open,
-                      aTransport, aOtherPid, XRE_GetIOMessageLoop()));
+  monitor->MonitorLoop()->PostTask(NewNonOwningRunnableMethod
+                                   <mozilla::ipc::Transport*,
+                                    base::ProcessId,
+                                    MessageLoop*>(child,
+                                                  &HangMonitorChild::Open,
+                                                  aTransport, aOtherPid,
+                                                  XRE_GetIOMessageLoop()));
 
   return child;
 }

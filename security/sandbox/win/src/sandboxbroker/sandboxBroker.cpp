@@ -7,10 +7,9 @@
 #include "sandboxBroker.h"
 
 #include "base/win/windows_version.h"
+#include "mozilla/Assertions.h"
 #include "sandbox/win/src/sandbox.h"
-#include "sandbox/win/src/sandbox_factory.h"
 #include "sandbox/win/src/security_level.h"
-#include "mozilla/sandboxing/sandboxLogging.h"
 
 namespace mozilla
 {
@@ -18,20 +17,10 @@ namespace mozilla
 sandbox::BrokerServices *SandboxBroker::sBrokerService = nullptr;
 
 /* static */
-bool
-SandboxBroker::Initialize()
+void
+SandboxBroker::Initialize(sandbox::BrokerServices* aBrokerServices)
 {
-  sBrokerService = sandbox::SandboxFactory::GetBrokerServices();
-  if (!sBrokerService) {
-    return false;
-  }
-
-  if (sBrokerService->Init() != sandbox::SBOX_ALL_OK) {
-    sBrokerService = nullptr;
-    return false;
-  }
-
-  return true;
+  sBrokerService = aBrokerServices;
 }
 
 SandboxBroker::SandboxBroker()
@@ -59,7 +48,7 @@ SandboxBroker::LaunchApp(const wchar_t *aPath,
 
   // If logging enabled, set up the policy.
   if (aEnableLogging) {
-    mozilla::sandboxing::ApplyLoggingPolicy(*mPolicy);
+    ApplyLoggingPolicy();
   }
 
 #if defined(DEBUG)
@@ -122,7 +111,7 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
     accessTokenLevel = sandbox::USER_LIMITED;
     initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
     delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
-  } else if (aSandboxLevel == 2) {
+  } else if (aSandboxLevel >= 2) {
     jobLevel = sandbox::JOB_INTERACTIVE;
     accessTokenLevel = sandbox::USER_INTERACTIVE;
     initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
@@ -133,10 +122,8 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
     initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
     delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_LOW;
   } else {
-    jobLevel = sandbox::JOB_NONE;
-    accessTokenLevel = sandbox::USER_NON_ADMIN;
-    initialIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
-    delayedIntegrityLevel = sandbox::INTEGRITY_LEVEL_MEDIUM;
+    MOZ_ASSERT_UNREACHABLE("Should not be called with aSandboxLevel < 1");
+    return false;
   }
 
   sandbox::ResultCode result = mPolicy->SetJobLevel(jobLevel,
@@ -157,24 +144,22 @@ SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel)
     ret = ret && (sandbox::SBOX_ALL_OK == result);
   }
 
-  if (aSandboxLevel >= 1) {
-    sandbox::MitigationFlags mitigations =
-      sandbox::MITIGATION_BOTTOM_UP_ASLR |
-      sandbox::MITIGATION_HEAP_TERMINATE |
-      sandbox::MITIGATION_SEHOP |
-      sandbox::MITIGATION_DEP_NO_ATL_THUNK |
-      sandbox::MITIGATION_DEP;
+  sandbox::MitigationFlags mitigations =
+    sandbox::MITIGATION_BOTTOM_UP_ASLR |
+    sandbox::MITIGATION_HEAP_TERMINATE |
+    sandbox::MITIGATION_SEHOP |
+    sandbox::MITIGATION_DEP_NO_ATL_THUNK |
+    sandbox::MITIGATION_DEP;
 
-    result = mPolicy->SetProcessMitigations(mitigations);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
+  result = mPolicy->SetProcessMitigations(mitigations);
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
 
-    mitigations =
-      sandbox::MITIGATION_STRICT_HANDLE_CHECKS |
-      sandbox::MITIGATION_DLL_SEARCH_ORDER;
+  mitigations =
+    sandbox::MITIGATION_STRICT_HANDLE_CHECKS |
+    sandbox::MITIGATION_DLL_SEARCH_ORDER;
 
-    result = mPolicy->SetDelayedProcessMitigations(mitigations);
-    ret = ret && (sandbox::SBOX_ALL_OK == result);
-  }
+  result = mPolicy->SetDelayedProcessMitigations(mitigations);
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
 
   // Add the policy for the client side of a pipe. It is just a file
   // in the \pipe\ namespace. We restrict it to pipes that start with
@@ -483,6 +468,28 @@ SandboxBroker::AddTargetPeer(HANDLE aPeerProcess)
 
   sandbox::ResultCode result = sBrokerService->AddTargetPeer(aPeerProcess);
   return (sandbox::SBOX_ALL_OK == result);
+}
+
+void
+SandboxBroker::ApplyLoggingPolicy()
+{
+  MOZ_ASSERT(mPolicy);
+
+  // Add dummy rules, so that we can log in the interception code.
+  // We already have a file interception set up for the client side of pipes.
+  // Also, passing just "dummy" for file system policy causes win_utils.cc
+  // IsReparsePoint() to loop.
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_NAMED_PIPES,
+                  sandbox::TargetPolicy::NAMEDPIPES_ALLOW_ANY, L"dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_PROCESS,
+                  sandbox::TargetPolicy::PROCESS_MIN_EXEC, L"dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_REGISTRY,
+                  sandbox::TargetPolicy::REG_ALLOW_READONLY,
+                  L"HKEY_CURRENT_USER\\dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_SYNC,
+                  sandbox::TargetPolicy::EVENTS_ALLOW_READONLY, L"dummy");
+  mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_HANDLES,
+                  sandbox::TargetPolicy::HANDLES_DUP_BROKER, L"dummy");
 }
 
 SandboxBroker::~SandboxBroker()

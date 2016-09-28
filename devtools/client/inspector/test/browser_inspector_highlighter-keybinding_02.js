@@ -8,7 +8,7 @@
 
 const TEST_URL = URL_ROOT + "doc_inspector_highlighter_dom.html";
 
-add_task(function*() {
+add_task(function* () {
   let {inspector, toolbox, testActor} = yield openInspectorForURL(TEST_URL);
 
   yield startPicker(toolbox);
@@ -20,18 +20,22 @@ add_task(function*() {
   yield moveMouseOver("#ahoy");
 
   yield doKeyHover({key: "VK_LEFT", options: {}});
-  ok((yield testActor.assertHighlightedNode("#simple-div2")), "The highlighter shows #simple-div2. OK.");
+  ok((yield testActor.assertHighlightedNode("#simple-div2")),
+     "The highlighter shows #simple-div2. OK.");
 
   yield doKeyHover({key: "VK_RIGHT", options: {}});
-  ok((yield testActor.assertHighlightedNode("#ahoy")), "The highlighter shows #ahoy. OK.");
+  ok((yield testActor.assertHighlightedNode("#ahoy")),
+     "The highlighter shows #ahoy. OK.");
 
   info("Going back up to the complex-div DIV");
   yield doKeyHover({key: "VK_LEFT", options: {}});
   yield doKeyHover({key: "VK_LEFT", options: {}});
-  ok((yield testActor.assertHighlightedNode("#complex-div")), "The highlighter shows #complex-div. OK.");
+  ok((yield testActor.assertHighlightedNode("#complex-div")),
+     "The highlighter shows #complex-div. OK.");
 
   yield doKeyHover({key: "VK_RIGHT", options: {}});
-  ok((yield testActor.assertHighlightedNode("#simple-div2")), "The highlighter shows #simple-div2. OK.");
+  ok((yield testActor.assertHighlightedNode("#simple-div2")),
+     "The highlighter shows #simple-div2. OK.");
 
   info("Previously chosen child is remembered. Passed.");
 
@@ -57,5 +61,4 @@ add_task(function*() {
     });
     return promise.all([onHighlighterReady, onPickerNodeHovered]);
   }
-
 });

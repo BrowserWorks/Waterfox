@@ -9,9 +9,22 @@ body {
 @media (max-width: 785px) {
   body {
     padding-top: 64px;
-    -moz-padding-end: 0;
+    padding-inline-end: 0;
     padding-bottom: 64px;
-    -moz-padding-start: 51px;
+    padding-inline-start: 51px;
+  }
+}
+
+@media print {
+  #container {
+    max-width: 100% !important;
+    font-size: 14px !important;
+    font-family: Georgia, "Times New Roman", serif !important;
+  }
+
+  body {
+    padding-top: 0px;
+    padding-bottom: 0px;
   }
 }
 
@@ -93,6 +106,42 @@ body.serif .remove-button  {
   font-size: 28px;
 }
 
+#container.content-width1 {
+  max-width: 20em;
+}
+
+#container.content-width2 {
+  max-width: 25em;
+}
+
+#container.content-width3 {
+  max-width: 30em;
+}
+
+#container.content-width4  {
+  max-width: 35em;
+}
+
+#container.content-width5 {
+  max-width: 40em;
+}
+
+#container.content-width6 {
+  max-width: 45em;
+}
+
+#container.content-width7 {
+  max-width: 50em;
+}
+
+#container.content-width8 {
+  max-width: 55em;
+}
+
+#container.content-width9 {
+  max-width: 60em;
+}
+
 /* Override some controls and content styles based on color scheme */
 
 body.light > .container > .header > .domain {
@@ -112,13 +161,27 @@ body.sepia > .container > .footer {
 }
 
 body.light blockquote {
-  -moz-border-start: 2px solid #333333 !important;
+  border-inline-start: 2px solid #333333 !important;
 }
 
 body.sepia blockquote {
-  -moz-border-start: 2px solid #5b4636 !important;
+  border-inline-start: 2px solid #5b4636 !important;
 }
 
 body.dark blockquote {
-  -moz-border-start: 2px solid #eeeeee !important;
+  border-inline-start: 2px solid #eeeeee !important;
+}
+
+/* Add toolbar transition base on loaded class  */
+
+body.loaded .toolbar {
+  transition: transform 0.3s ease-out;
+}
+
+body:not(.loaded) .toolbar:-moz-locale-dir(ltr) {
+  transform: translateX(-100%);
+}
+
+body:not(.loaded) .toolbar:-moz-locale-dir(rtl) {
+  transform: translateX(100%);
 }

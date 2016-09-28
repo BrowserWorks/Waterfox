@@ -19,12 +19,13 @@
 
 using namespace mozilla;
 
-class nsBlockOnBackgroundThreadEvent : public nsRunnable {
+class nsBlockOnBackgroundThreadEvent : public Runnable {
 public:
   nsBlockOnBackgroundThreadEvent() {}
   NS_IMETHOD Run()
   {
     MutexAutoLock lock(nsDeleteDir::gInstance->mLock);
+    nsDeleteDir::gInstance->mNotified = true;
     nsDeleteDir::gInstance->mCondVar.Notify();
     return NS_OK;
   }
@@ -36,6 +37,7 @@ nsDeleteDir * nsDeleteDir::gInstance = nullptr;
 nsDeleteDir::nsDeleteDir()
   : mLock("nsDeleteDir.mLock"),
     mCondVar(mLock, "nsDeleteDir.mCondVar"),
+    mNotified(false),
     mShutdownPending(false),
     mStopDeleting(false)
 {
@@ -101,7 +103,10 @@ nsDeleteDir::Shutdown(bool finishDeleting)
         return NS_ERROR_UNEXPECTED;
       }
 
-      rv = gInstance->mCondVar.Wait();
+      gInstance->mNotified = false;
+      while (!gInstance->mNotified) {
+        gInstance->mCondVar.Wait();
+      }
       nsShutdownThread::BlockingShutdown(thread);
     }
   }

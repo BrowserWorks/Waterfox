@@ -7,7 +7,6 @@
 
 #include "mozilla/dom/Selection.h"      // local var
 #include "mozilla/dom/Text.h"           // mTextNode
-#include "mozilla/Preferences.h"        // nsCaret Visibility
 #include "nsAString.h"                  // params
 #include "nsDebug.h"                    // for NS_ASSERTION, etc
 #include "nsEditor.h"                   // mEditor
@@ -18,10 +17,6 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
-
-/*static*/ bool
-IMETextTxn::sCaretsExtendedVisibility = false;
-
 
 IMETextTxn::IMETextTxn(Text& aTextNode, uint32_t aOffset,
                        uint32_t aReplaceLength,
@@ -37,12 +32,6 @@ IMETextTxn::IMETextTxn(Text& aTextNode, uint32_t aOffset,
   , mEditor(aEditor)
   , mFixed(false)
 {
-  static bool addedPrefs = false;
-  if (!addedPrefs) {
-    mozilla::Preferences::AddBoolVarCache(&sCaretsExtendedVisibility,
-                                          "layout.accessiblecaret.extendedvisibility");
-    addedPrefs = true;
-  }
 }
 
 IMETextTxn::~IMETextTxn()
@@ -146,16 +135,16 @@ IMETextTxn::GetTxnDescription(nsAString& aString)
 
 /* ============ private methods ================== */
 static SelectionType
-ToSelectionType(uint32_t aTextRangeType)
+ToSelectionType(TextRangeType aTextRangeType)
 {
-  switch(aTextRangeType) {
-    case NS_TEXTRANGE_RAWINPUT:
+  switch (aTextRangeType) {
+    case TextRangeType::eRawClause:
       return nsISelectionController::SELECTION_IME_RAWINPUT;
-    case NS_TEXTRANGE_SELECTEDRAWTEXT:
+    case TextRangeType::eSelectedRawClause:
       return nsISelectionController::SELECTION_IME_SELECTEDRAWTEXT;
-    case NS_TEXTRANGE_CONVERTEDTEXT:
+    case TextRangeType::eConvertedClause:
       return nsISelectionController::SELECTION_IME_CONVERTEDTEXT;
-    case NS_TEXTRANGE_SELECTEDCONVERTEDTEXT:
+    case TextRangeType::eSelectedClause:
       return nsISelectionController::SELECTION_IME_SELECTEDCONVERTEDTEXT;
     default:
       MOZ_CRASH("Selection type is invalid");
@@ -224,7 +213,7 @@ IMETextTxn::SetIMESelection(nsEditor& aEditor,
 
     // Caret needs special handling since its length may be 0 and if it's not
     // specified explicitly, we need to handle it ourselves later.
-    if (textRange.mRangeType == NS_TEXTRANGE_CARETPOSITION) {
+    if (textRange.mRangeType == TextRangeType::eCaret) {
       NS_ASSERTION(!setCaret, "The ranges already has caret position");
       NS_ASSERTION(!textRange.Length(), "nsEditor doesn't support wide caret");
       int32_t caretOffset = static_cast<int32_t>(
@@ -310,11 +299,8 @@ IMETextTxn::SetIMESelection(nsEditor& aEditor,
                  "Failed to set caret at the end of composition string");
 
     // If caret range isn't specified explicitly, we should hide the caret.
-    // Hiding the caret benefits a Windows build (see bug 555642 comment #6),
-    // but causes loss of Fennec AccessibleCaret visibility during Caret drag.
-    if (!sCaretsExtendedVisibility) {
-      aEditor.HideCaret(true);
-    }
+    // Hiding the caret benefits a Windows build (see bug 555642 comment #6).
+    aEditor.HideCaret(true);
   }
 
   rv = selection->EndBatchChangesInternal();

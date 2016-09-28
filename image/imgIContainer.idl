@@ -50,7 +50,7 @@ native DrawResult(mozilla::image::DrawResult);
 [ref] native gfxMatrix(gfxMatrix);
 [ref] native gfxRect(gfxRect);
 [ref] native gfxSize(gfxSize);
-native Filter(mozilla::gfx::Filter);
+native SamplingFilter(mozilla::gfx::SamplingFilter);
 [ref] native nsIntRect(nsIntRect);
 native nsIntRectByVal(nsIntRect);
 [ref] native nsIntSize(nsIntSize);
@@ -116,12 +116,12 @@ interface imgIContainer : nsISupports
    * @param aDest The size of the destination rect into which this image will be
    *              drawn, in device pixels.
    * @param aWhichFrame Frame specifier of the FRAME_* variety.
-   * @param aFilter The filter to be used if we're scaling the image.
+   * @param aSamplingFilter The filter to be used if we're scaling the image.
    * @param aFlags Flags of the FLAG_* variety
    */
   [notxpcom, nostdcall] nsIntSizeByVal
   optimalImageSizeForDest([const] in gfxSize aDest, in uint32_t aWhichFrame,
-                          in Filter aFilter, in uint32_t aFlags);
+                          in SamplingFilter aSamplingFilter, in uint32_t aFlags);
 
   /**
     * Enumerated values for the 'type' attribute (below).
@@ -185,6 +185,16 @@ interface imgIContainer : nsISupports
    * cached rendering from the surface cache. This is used when we are printing,
    * for example, where we want the vector commands from VectorImages to end up
    * in the PDF output rather than a cached rendering at screen resolution.
+   *
+   * FLAG_FORCE_PRESERVEASPECTRATIO_NONE: Force scaling this image
+   * non-uniformly if necessary. This flag is for vector image only. A raster
+   * image should ignore this flag. While drawing a vector image with this
+   * flag, do not force uniform scaling even if its root <svg> node has a
+   * preserveAspectRatio attribute that would otherwise require uniform
+   * scaling , such as xMinYMin/ xMidYMin. Always scale the graphic content of
+   * the given image non-uniformly if necessary such that the image's
+   * viewBox (if specified or implied by height/width attributes) exactly
+   * matches the viewport rectangle.
    */
   const unsigned long FLAG_NONE                            = 0x0;
   const unsigned long FLAG_SYNC_DECODE                     = 0x1;
@@ -196,6 +206,8 @@ interface imgIContainer : nsISupports
   const unsigned long FLAG_HIGH_QUALITY_SCALING            = 0x40;
   const unsigned long FLAG_WANT_DATA_SURFACE               = 0x80;
   const unsigned long FLAG_BYPASS_SURFACE_CACHE            = 0x100;
+  const unsigned long FLAG_FORCE_PRESERVEASPECTRATIO_NONE  = 0x200;
+  const unsigned long FLAG_FORCE_UNIFORM_SCALING           = 0x400;
 
   /**
    * A constant specifying the default set of decode flags (i.e., the default
@@ -367,7 +379,7 @@ interface imgIContainer : nsISupports
    *                is only of use to callers which need to draw with pixel
    *                snapping.
    * @param aWhichFrame Frame specifier of the FRAME_* variety.
-   * @param aFilter The filter to be used if we're scaling the image.
+   * @param aSamplingFilter The filter to be used if we're scaling the image.
    * @param aSVGContext If specified, SVG-related rendering context, such as
    *                    overridden attributes on the image document's root <svg>
    *                    node, and the size of the viewport that the full image
@@ -381,7 +393,7 @@ interface imgIContainer : nsISupports
        [const] in nsIntSize aSize,
        [const] in ImageRegion aRegion,
        in uint32_t aWhichFrame,
-       in Filter aFilter,
+       in SamplingFilter aSamplingFilter,
        [const] in MaybeSVGImageContext aSVGContext,
        in uint32_t aFlags);
 

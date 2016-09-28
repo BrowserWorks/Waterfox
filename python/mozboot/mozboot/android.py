@@ -15,7 +15,7 @@ import sys
 # mobile/android, respectively. Try to keep these in synch with the
 # build system and Mozilla's automation.
 ANDROID_TARGET_SDK = '23'
-ANDROID_BUILD_TOOLS_VERSION = '23.0.1'
+ANDROID_BUILD_TOOLS_VERSION = '23.0.3'
 
 # These are the "Android packages" needed for building Firefox for Android.
 # Use |android list sdk --extended| to see these identifiers.
@@ -258,13 +258,13 @@ def suggest_mozconfig(sdk_path=None, ndk_path=None, artifact_mode=False):
         print(MOBILE_ANDROID_MOZCONFIG_TEMPLATE % (sdk_path, ndk_path))
 
 
-def android_ndk_url(os_name, ver='r10e'):
-    # Produce a URL like 'https://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.bin'.
-    base_url = 'https://dl.google.com/android/ndk/android-ndk'
+def android_ndk_url(os_name, ver='r11b'):
+    # Produce a URL like 'https://dl.google.com/android/repository/android-ndk-r11b-linux-x86_64.zip
+    base_url = 'https://dl.google.com/android/repository/android-ndk'
 
     if sys.maxsize > 2**32:
         arch = 'x86_64'
     else:
         arch = 'x86'
 
-    return '%s-%s-%s-%s.bin' % (base_url, ver, os_name, arch)
+    return '%s-%s-%s-%s.zip' % (base_url, ver, os_name, arch)

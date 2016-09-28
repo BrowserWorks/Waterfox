@@ -12,13 +12,16 @@ const TAB_URL = EXAMPLE_URL + "doc_binary_search.html";
 var gTab, gPanel, gDebugger;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_binary_search.coffee",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
 
-    waitForSourceShown(gPanel, ".coffee")
-      .then(testBlackBoxSource)
+    testBlackBoxSource()
       .then(testBlackBoxReload)
       .then(() => closeDebuggerAndFinish(gPanel))
       .then(null, aError => {
@@ -47,7 +50,7 @@ function testBlackBoxReload() {
   });
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

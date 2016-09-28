@@ -5,9 +5,9 @@
 "use strict";
 
 const TEST_URI = "data:text/html;charset=utf-8,browser_css_angle.js";
-var {angleUtils} = require("devtools/shared/css-angle");
+var {angleUtils} = require("devtools/client/shared/css-angle");
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("about:blank");
   let [host] = yield createHost("bottom", TEST_URI);
 

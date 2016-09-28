@@ -9,24 +9,25 @@
 #include <stdint.h>
 
 #include "ExtendedValidation.h"
+#include "NSSErrorsService.h"
 #include "OCSPRequestor.h"
 #include "OCSPVerificationTrustDomain.h"
-#include "certdb.h"
+#include "PublicKeyPinningService.h"
 #include "cert.h"
+#include "certdb.h"
+#include "mozilla/Casting.h"
 #include "mozilla/UniquePtr.h"
+#include "mozilla/unused.h"
 #include "nsNSSCertificate.h"
-#include "nss.h"
-#include "NSSErrorsService.h"
 #include "nsServiceManagerUtils.h"
+#include "nss.h"
 #include "pk11pub.h"
+#include "pkix/Result.h"
 #include "pkix/pkix.h"
 #include "pkix/pkixnss.h"
-#include "pkix/Result.h"
 #include "prerror.h"
 #include "prmem.h"
 #include "prprf.h"
-#include "PublicKeyPinningService.h"
-#include "ScopedNSSTypes.h"
 #include "secerr.h"
 
 #include "CNNICHashWhitelist.inc"
@@ -52,7 +53,8 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
                                            unsigned int minRSABits,
                                            ValidityCheckingMode validityCheckingMode,
                                            CertVerifier::SHA1Mode sha1Mode,
-                                           ScopedCERTCertList& builtChain,
+                                           NetscapeStepUpPolicy netscapeStepUpPolicy,
+                                           UniqueCERTCertList& builtChain,
                               /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo,
                               /*optional*/ const char* hostname)
   : mCertDBTrustType(certDBTrustType)
@@ -65,6 +67,7 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
   , mMinRSABits(minRSABits)
   , mValidityCheckingMode(validityCheckingMode)
   , mSHA1Mode(sha1Mode)
+  , mNetscapeStepUpPolicy(netscapeStepUpPolicy)
   , mBuiltChain(builtChain)
   , mPinningTelemetryInfo(pinningTelemetryInfo)
   , mHostname(hostname)
@@ -76,7 +79,7 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
 // If useRoots is true, we only use root certificates in the candidate list.
 // If useRoots is false, we only use non-root certificates in the list.
 static Result
-FindIssuerInner(ScopedCERTCertList& candidates, bool useRoots,
+FindIssuerInner(const UniqueCERTCertList& candidates, bool useRoots,
                 Input encodedIssuerName, TrustDomain::IssuerChecker& checker,
                 /*out*/ bool& keepGoing)
 {
@@ -98,9 +101,9 @@ FindIssuerInner(ScopedCERTCertList& candidates, bool useRoots,
       const_cast<unsigned char*>(encodedIssuerName.UnsafeGetData()),
       encodedIssuerName.GetLength()
     };
-    ScopedSECItem nameConstraints(::SECITEM_AllocItem(nullptr, nullptr, 0));
+    ScopedAutoSECItem nameConstraints;
     SECStatus srv = CERT_GetImposedNameConstraints(&encodedIssuerNameItem,
-                                                   nameConstraints.get());
+                                                   &nameConstraints);
     if (srv != SECSuccess) {
       if (PR_GetError() != SEC_ERROR_EXTENSION_NOT_FOUND) {
         return Result::FATAL_ERROR_LIBRARY_FAILURE;
@@ -111,9 +114,8 @@ FindIssuerInner(ScopedCERTCertList& candidates, bool useRoots,
     } else {
       // Otherwise apply the constraints
       Input nameConstraintsInput;
-      if (nameConstraintsInput.Init(
-              nameConstraints->data,
-              nameConstraints->len) != Success) {
+      if (nameConstraintsInput.Init(nameConstraints.data, nameConstraints.len)
+            != Success) {
         return Result::FATAL_ERROR_LIBRARY_FAILURE;
       }
       rv = checker.Check(certDER, &nameConstraintsInput, keepGoing);
@@ -136,7 +138,7 @@ NSSCertDBTrustDomain::FindIssuer(Input encodedIssuerName,
   // TODO: NSS seems to be ambiguous between "no potential issuers found" and
   // "there was an error trying to retrieve the potential issuers."
   SECItem encodedIssuerNameItem = UnsafeMapInputToSECItem(encodedIssuerName);
-  ScopedCERTCertList
+  UniqueCERTCertList
     candidates(CERT_CreateSubjectCertList(nullptr, CERT_GetDefaultCertDB(),
                                           &encodedIssuerNameItem, 0,
                                           false));
@@ -735,7 +737,7 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
   MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
          ("NSSCertDBTrustDomain: IsChainValid"));
 
-  ScopedCERTCertList certList;
+  UniqueCERTCertList certList;
   SECStatus srv = ConstructCERTCertListFromReversedDERArray(certArray,
                                                             certList);
   if (srv != SECSuccess) {
@@ -776,7 +778,7 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
       return Result::FATAL_ERROR_LIBRARY_FAILURE;
     }
     const uint8_t* certHash(
-      reinterpret_cast<const uint8_t*>(digest.get().data));
+      BitwiseCast<uint8_t*, unsigned char*>(digest.get().data));
     size_t certHashLen = digest.get().len;
     size_t unused;
     if (!mozilla::BinarySearchIf(WhitelistedCNNICHashes, 0,
@@ -813,7 +815,7 @@ NSSCertDBTrustDomain::IsChainValid(const DERArray& certArray, Time time)
     }
   }
 
-  mBuiltChain = certList.forget();
+  mBuiltChain = Move(certList);
 
   return Success;
 }
@@ -928,39 +930,33 @@ NSSCertDBTrustDomain::CheckValidityIsAcceptable(Time notBefore, Time notAfter,
   return Success;
 }
 
-namespace {
-
-static char*
-nss_addEscape(const char* string, char quote)
+Result
+NSSCertDBTrustDomain::NetscapeStepUpMatchesServerAuth(Time notBefore,
+                                                      /*out*/ bool& matches)
 {
-  char* newString = 0;
-  size_t escapes = 0, size = 0;
-  const char* src;
-  char* dest;
+  // (new Date("2015-08-23T00:00:00Z")).getTime() / 1000
+  static const Time AUGUST_23_2015 = TimeFromEpochInSeconds(1440288000);
+  // (new Date("2016-08-23T00:00:00Z")).getTime() / 1000
+  static const Time AUGUST_23_2016 = TimeFromEpochInSeconds(1471910400);
 
-  for (src = string; *src; src++) {
-  if ((*src == quote) || (*src == '\\')) {
-    escapes++;
+  switch (mNetscapeStepUpPolicy) {
+    case NetscapeStepUpPolicy::AlwaysMatch:
+      matches = true;
+      return Success;
+    case NetscapeStepUpPolicy::MatchBefore23August2016:
+      matches = notBefore < AUGUST_23_2016;
+      return Success;
+    case NetscapeStepUpPolicy::MatchBefore23August2015:
+      matches = notBefore < AUGUST_23_2015;
+      return Success;
+    case NetscapeStepUpPolicy::NeverMatch:
+      matches = false;
+      return Success;
+    default:
+      MOZ_ASSERT_UNREACHABLE("unhandled NetscapeStepUpPolicy type");
   }
-  size++;
-  }
-
-  newString = (char*) PORT_ZAlloc(escapes + size + 1u);
-  if (!newString) {
-    return nullptr;
-  }
-
-  for (src = string, dest = newString; *src; src++, dest++) {
-    if ((*src == quote) || (*src == '\\')) {
-      *dest++ = '\\';
-    }
-    *dest = *src;
-  }
-
-  return newString;
+  return Result::FATAL_ERROR_LIBRARY_FAILURE;
 }
-
-} // unnamed namespace
 
 SECStatus
 InitializeNSS(const char* dir, bool readOnly, bool loadPKCS11Modules)
@@ -1007,9 +1003,11 @@ LoadLoadableRoots(/*optional*/ const char* dir, const char* modNameUTF8)
     return SECFailure;
   }
 
-  UniquePORTString escapedFullLibraryPath(nss_addEscape(fullLibraryPath.get(),
-                                                        '\"'));
-  if (!escapedFullLibraryPath) {
+  // Escape the \ and " characters.
+  nsAutoCString escapedFullLibraryPath(fullLibraryPath.get());
+  escapedFullLibraryPath.ReplaceSubstring("\\", "\\\\");
+  escapedFullLibraryPath.ReplaceSubstring("\"", "\\\"");
+  if (escapedFullLibraryPath.IsEmpty()) {
     return SECFailure;
   }
 
@@ -1017,16 +1015,16 @@ LoadLoadableRoots(/*optional*/ const char* dir, const char* modNameUTF8)
   int modType;
   SECMOD_DeleteModule(modNameUTF8, &modType);
 
-  UniquePtr<char, void(&)(char*)>
-    pkcs11ModuleSpec(PR_smprintf("name=\"%s\" library=\"%s\"", modNameUTF8,
-                                 escapedFullLibraryPath.get()),
-                     PR_smprintf_free);
-  if (!pkcs11ModuleSpec) {
+  nsAutoCString pkcs11ModuleSpec;
+  pkcs11ModuleSpec.AppendPrintf("name=\"%s\" library=\"%s\"", modNameUTF8,
+                                escapedFullLibraryPath.get());
+  if (pkcs11ModuleSpec.IsEmpty()) {
     return SECFailure;
   }
 
-  UniqueSECMODModule rootsModule(SECMOD_LoadUserModule(pkcs11ModuleSpec.get(),
-                                                       nullptr, false));
+  UniqueSECMODModule rootsModule(
+    SECMOD_LoadUserModule(const_cast<char*>(pkcs11ModuleSpec.get()), nullptr,
+                          false));
   if (!rootsModule) {
     return SECFailure;
   }
@@ -1050,66 +1048,75 @@ UnloadLoadableRoots(const char* modNameUTF8)
   }
 }
 
-char*
-DefaultServerNicknameForCert(CERTCertificate* cert)
+nsresult
+DefaultServerNicknameForCert(const CERTCertificate* cert,
+                     /*out*/ nsCString& nickname)
 {
-  char* nickname = nullptr;
-  int count;
-  bool conflict;
-  char* servername = nullptr;
+  MOZ_ASSERT(cert);
+  NS_ENSURE_ARG_POINTER(cert);
 
-  servername = CERT_GetCommonName(&cert->subject);
-  if (!servername) {
-    // Certs without common names are strange, but they do exist...
-    // Let's try to use another string for the nickname
-    servername = CERT_GetOrgUnitName(&cert->subject);
-    if (!servername) {
-      servername = CERT_GetOrgName(&cert->subject);
-      if (!servername) {
-        servername = CERT_GetLocalityName(&cert->subject);
-        if (!servername) {
-          servername = CERT_GetStateName(&cert->subject);
-          if (!servername) {
-            servername = CERT_GetCountryName(&cert->subject);
-            if (!servername) {
-              // We tried hard, there is nothing more we can do.
-              // A cert without any names doesn't really make sense.
-              return nullptr;
-            }
-          }
-        }
-      }
-    }
+  UniquePORTString baseName(CERT_GetCommonName(&cert->subject));
+  if (!baseName) {
+    baseName = UniquePORTString(CERT_GetOrgUnitName(&cert->subject));
+  }
+  if (!baseName) {
+    baseName = UniquePORTString(CERT_GetOrgName(&cert->subject));
+  }
+  if (!baseName) {
+    baseName = UniquePORTString(CERT_GetLocalityName(&cert->subject));
+  }
+  if (!baseName) {
+    baseName = UniquePORTString(CERT_GetStateName(&cert->subject));
+  }
+  if (!baseName) {
+    baseName = UniquePORTString(CERT_GetCountryName(&cert->subject));
+  }
+  if (!baseName) {
+    return NS_ERROR_FAILURE;
   }
 
-  count = 1;
-  while (1) {
-    if (count == 1) {
-      nickname = PR_smprintf("%s", servername);
+  // This function is only used in contexts where a failure to find a suitable
+  // nickname does not block the overall task from succeeding.
+  // As such, we use an arbitrary limit to prevent this nickname searching
+  // process from taking forever.
+  static const uint32_t ARBITRARY_LIMIT = 500;
+  for (uint32_t count = 1; count < ARBITRARY_LIMIT; count++) {
+    nickname = baseName.get();
+    if (count != 1) {
+      nickname.AppendPrintf(" #%u", count);
     }
-    else {
-      nickname = PR_smprintf("%s #%d", servername, count);
-    }
-    if (!nickname) {
-      break;
+    if (nickname.IsEmpty()) {
+      return NS_ERROR_FAILURE;
     }
 
-    conflict = SEC_CertNicknameConflict(nickname, &cert->derSubject,
-                                        cert->dbhandle);
+    bool conflict = SEC_CertNicknameConflict(nickname.get(), &cert->derSubject,
+                                             cert->dbhandle);
     if (!conflict) {
-      break;
+      return NS_OK;
     }
-    PR_Free(nickname);
-    count++;
   }
-  PR_FREEIF(servername);
-  return nickname;
+
+  return NS_ERROR_FAILURE;
 }
 
+/**
+ * Given a list of certificates representing a verified certificate path from an
+ * end-entity certificate to a trust anchor, imports the intermediate
+ * certificates into the permanent certificate database. This is an attempt to
+ * cope with misconfigured servers that don't include the appropriate
+ * intermediate certificates in the TLS handshake.
+ *
+ * @param certList the verified certificate list
+ */
 void
-SaveIntermediateCerts(const ScopedCERTCertList& certList)
+SaveIntermediateCerts(const UniqueCERTCertList& certList)
 {
   if (!certList) {
+    return;
+  }
+
+  UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
+  if (!slot) {
     return;
   }
 
@@ -1133,16 +1140,30 @@ SaveIntermediateCerts(const ScopedCERTCertList& certList)
       continue;
     }
 
-    // We have found a signer cert that we want to remember.
-    char* nickname = DefaultServerNicknameForCert(node->cert);
-    if (nickname && *nickname) {
-      ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
-      if (slot) {
-        PK11_ImportCert(slot.get(), node->cert, CK_INVALID_HANDLE,
-                        nickname, false);
-      }
+    // No need to save the trust anchor - it's either already a permanent
+    // certificate or it's the Microsoft Family Safety root or an enterprise
+    // root temporarily imported via the child mode or enterprise root features.
+    // We don't want to import these because they're intended to be temporary
+    // (and because importing them happens to reset their trust settings, which
+    // breaks these features).
+    if (node == CERT_LIST_TAIL(certList)) {
+      continue;
     }
-    PR_FREEIF(nickname);
+
+    // We have found a signer cert that we want to remember.
+    nsAutoCString nickname;
+    nsresult rv = DefaultServerNicknameForCert(node->cert, nickname);
+    if (NS_FAILED(rv)) {
+      continue;
+    }
+
+    // Saving valid intermediate certs to the database is a compatibility hack
+    // to work around unknown issuer errors for incorrectly configured servers
+    // that fail to send the necessary intermediate certs. As such, we ignore
+    // the return value of PK11_ImportCert(), since it doesn't really matter if
+    // it fails.
+    Unused << PK11_ImportCert(slot.get(), node->cert, CK_INVALID_HANDLE,
+                              nickname.get(), false);
   }
 }
 

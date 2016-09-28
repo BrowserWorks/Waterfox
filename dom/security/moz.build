@@ -14,6 +14,7 @@ EXPORTS.mozilla.dom += [
     'nsCSPUtils.h',
     'nsMixedContentBlocker.h',
     'SRICheck.h',
+    'SRILogHelper.h',
     'SRIMetadata.h',
 ]
 
@@ -42,5 +43,5 @@ LOCAL_INCLUDES += [
 ]
 
 if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wshadow', '-Wformat-security']
-    CXXFLAGS += ['-Wshadow', '-Wformat-security']
+    CFLAGS += ['-Wformat-security']
+    CXXFLAGS += ['-Wformat-security']

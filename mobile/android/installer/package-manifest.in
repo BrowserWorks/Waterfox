@@ -262,9 +262,6 @@
 @BINPATH@/components/zipwriter.xpt
 
 ; JavaScript components
-@BINPATH@/components/RequestSync.manifest
-@BINPATH@/components/RequestSyncManager.js
-@BINPATH@/components/RequestSyncScheduler.js
 @BINPATH@/components/ChromeNotifications.js
 @BINPATH@/components/ChromeNotifications.manifest
 @BINPATH@/components/ConsoleAPI.manifest
@@ -415,7 +412,7 @@
 @BINPATH@/components/PresentationDeviceInfoManager.manifest
 @BINPATH@/components/PresentationDeviceInfoManager.js
 @BINPATH@/components/BuiltinProviders.manifest
-@BINPATH@/components/TCPPresentationServer.js
+@BINPATH@/components/PresentationControlService.js
 @BINPATH@/components/PresentationNetworkHelper.js
 @BINPATH@/components/PresentationNetworkHelper.manifest
 @BINPATH@/components/PresentationDataChannelSessionTransport.js
@@ -541,6 +538,7 @@
 @BINPATH@/components/MobileComponents.manifest
 @BINPATH@/components/MobileComponents.xpt
 @BINPATH@/components/NSSDialogService.js
+@BINPATH@/components/PresentationDevicePrompt.js
 @BINPATH@/components/PromptService.js
 @BINPATH@/components/SessionStore.js
 @BINPATH@/components/SiteSpecificUserAgent.js
@@ -555,10 +553,8 @@
 @BINPATH@/components/marionettecomponent.js
 #endif
 
-@BINPATH@/components/DataStore.manifest
-@BINPATH@/components/DataStoreImpl.js
-@BINPATH@/components/dom_datastore.xpt
-
 #ifdef PKG_LOCALE_MANIFEST
 #include @PKG_LOCALE_MANIFEST@
 #endif
+
+@BINPATH@/components/dom_audiochannel.xpt

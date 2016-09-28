@@ -12,6 +12,8 @@ if (AppConstants.MOZ_SERVICES_CLOUDSYNC) {
 XPCOMUtils.defineLazyModuleGetter(this, "fxAccounts",
                                   "resource://gre/modules/FxAccounts.jsm");
 
+const MIN_STATUS_ANIMATION_DURATION = 1600;
+
 // gSyncUI handles updating the tools menu and displaying notifications.
 var gSyncUI = {
   _obs: ["weave:service:sync:start",
@@ -32,8 +34,10 @@ var gSyncUI = {
   ],
 
   _unloaded: false,
-  // The number of "active" syncs - while this is non-zero, our button will spin
-  _numActiveSyncTasks: 0,
+  // The last sync start time. Used to calculate the leftover animation time
+  // once syncing completes (bug 1239042).
+  _syncStartTime: 0,
+  _syncAnimationTimer: 0,
 
   init: function () {
     Cu.import("resource://services-common/stringbundle.js");
@@ -52,6 +56,7 @@ var gSyncUI = {
     this.updateUI();
 
     Services.obs.addObserver(this, "weave:service:ready", true);
+    Services.obs.addObserver(this, "quit-application", true);
 
     // Remove the observer if the window is closed before the observer
     // was triggered.
@@ -59,6 +64,7 @@ var gSyncUI = {
       gSyncUI._unloaded = true;
       window.removeEventListener("unload", onUnload, false);
       Services.obs.removeObserver(gSyncUI, "weave:service:ready");
+      Services.obs.removeObserver(gSyncUI, "quit-application");
 
       if (Weave.Status.ready) {
         gSyncUI._obs.forEach(function(topic) {
@@ -154,6 +160,9 @@ var gSyncUI = {
   // Updates the UI - returns a promise.
   _promiseUpdateUI() {
     return this._needsSetup().then(needsSetup => {
+      if (!gBrowser)
+        return Promise.resolve();
+
       let loginFailed = this._loginFailed();
 
       // Start off with a clean slate
@@ -181,36 +190,44 @@ var gSyncUI = {
     if (!gBrowser)
       return;
 
-    this.log.debug("onActivityStart with numActive", this._numActiveSyncTasks);
-    if (++this._numActiveSyncTasks == 1) {
-      let broadcaster = document.getElementById("sync-status");
-      broadcaster.setAttribute("syncstatus", "active");
-      broadcaster.setAttribute("label", this._stringBundle.GetStringFromName("syncing2.label"));
-      broadcaster.setAttribute("disabled", "true");
-    }
+    this.log.debug("onActivityStart");
+
+    clearTimeout(this._syncAnimationTimer);
+    this._syncStartTime = Date.now();
+
+    let broadcaster = document.getElementById("sync-status");
+    broadcaster.setAttribute("syncstatus", "active");
+    broadcaster.setAttribute("label", this._stringBundle.GetStringFromName("syncing2.label"));
+    broadcaster.setAttribute("disabled", "true");
+
+    this.updateUI();
+  },
+
+  _updateSyncStatus() {
+    if (!gBrowser)
+      return;
+    let broadcaster = document.getElementById("sync-status");
+    broadcaster.removeAttribute("syncstatus");
+    broadcaster.removeAttribute("disabled");
+    broadcaster.setAttribute("label", this._stringBundle.GetStringFromName("syncnow.label"));
     this.updateUI();
   },
 
   onActivityStop() {
     if (!gBrowser)
       return;
-    this.log.debug("onActivityStop with numActive", this._numActiveSyncTasks);
-    if (--this._numActiveSyncTasks) {
-      if (this._numActiveSyncTasks < 0) {
-        // This isn't particularly useful (it seems more likely we'll set a
-        // "start" without a "stop" meaning it forever remains > 0) but it
-        // might offer some value...
-        this.log.error("mismatched onActivityStart/Stop calls",
-                       new Error("active=" + this._numActiveSyncTasks));
-      }
-      return; // active tasks are still ongoing...
-    }
+    this.log.debug("onActivityStop");
 
-    let broadcaster = document.getElementById("sync-status");
-    broadcaster.removeAttribute("syncstatus");
-    broadcaster.removeAttribute("disabled");
-    broadcaster.setAttribute("label", this._stringBundle.GetStringFromName("syncnow.label"));
-    this.updateUI();
+    let now = Date.now();
+    let syncDuration = now - this._syncStartTime;
+
+    if (syncDuration < MIN_STATUS_ANIMATION_DURATION) {
+      let animationTime = MIN_STATUS_ANIMATION_DURATION - syncDuration;
+      clearTimeout(this._syncAnimationTimer);
+      this._syncAnimationTimer = setTimeout(() => this._updateSyncStatus(), animationTime);
+    } else {
+      this._updateSyncStatus();
+    }
   },
 
   onLoginError: function SUI_onLoginError() {
@@ -386,10 +403,7 @@ var gSyncUI = {
       // Sync appears configured - format the "last synced at" time.
       try {
         let lastSync = new Date(Services.prefs.getCharPref("services.sync.lastSync"));
-        // Show the day-of-week and time (HH:MM) of last sync
-        let lastSyncDateString = lastSync.toLocaleDateString(undefined,
-          {weekday: 'long', hour: 'numeric', minute: 'numeric'});
-        tooltiptext = this._stringBundle.formatStringFromName("lastSync2.label", [lastSyncDateString], 1);
+        tooltiptext = this.formatLastSyncDate(lastSync);
       }
       catch (e) {
         // pref doesn't exist (which will be the case until we've seen the
@@ -413,6 +427,24 @@ var gSyncUI = {
       }
     }
   }),
+
+  formatLastSyncDate: function(date) {
+    let dateFormat;
+    let sixDaysAgo = (() => {
+      let date = new Date();
+      date.setDate(date.getDate() - 6);
+      date.setHours(0, 0, 0, 0);
+      return date;
+    })();
+    // It may be confusing for the user to see "Last Sync: Monday" when the last sync was a indeed a Monday but 3 weeks ago
+    if (date < sixDaysAgo) {
+      dateFormat = {month: 'long', day: 'numeric'};
+    } else {
+      dateFormat = {weekday: 'long', hour: 'numeric', minute: 'numeric'};
+    }
+    let lastSyncDateString = date.toLocaleDateString(undefined, dateFormat);
+    return this._stringBundle.formatStringFromName("lastSync2.label", [lastSyncDateString], 1);
+  },
 
   onSyncFinish: function SUI_onSyncFinish() {
     let title = this._stringBundle.GetStringFromName("error.sync.title");
@@ -487,6 +519,11 @@ var gSyncUI = {
           return;
         }
         this.onClientsSynced();
+        break;
+      case "quit-application":
+        // Stop the animation timer on shutdown, since we can't update the UI
+        // after this.
+        clearTimeout(this._syncAnimationTimer);
         break;
     }
   },

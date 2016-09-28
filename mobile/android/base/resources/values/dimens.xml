@@ -50,6 +50,7 @@
 
     <!-- Dimensions used by Favicons and FaviconView -->
     <dimen name="favicon_bg">32dp</dimen>
+    <dimen name="favicon_corner_radius">4dp</dimen>
     <!-- Set the upper limit on the size of favicon that will be processed. Favicons larger than
          this will be downscaled to this value. If you need to use larger Favicons (Due to a UI
          redesign sometime after this is written) you should increase this value to the largest
@@ -59,8 +60,8 @@
     <dimen name="favicon_largest_interesting_size">32dp</dimen>
 
     <dimen name="firstrun_content_width">300dp</dimen>
-    <dimen name="firstrun_min_height">180dp</dimen>
-    <dimen name="firstrun_background_height">180dp</dimen>
+    <dimen name="firstrun_min_height">120dp</dimen>
+    <dimen name="firstrun_background_height">120dp</dimen>
 
     <dimen name="overlay_prompt_content_width">260dp</dimen>
     <dimen name="overlay_prompt_button_width">148dp</dimen>
@@ -216,4 +217,6 @@
 
     <item name="tab_strip_content_start" type="dimen">12dp</item>
     <item name="firstrun_tab_strip_content_start" type="dimen">15dp</item>
+
+    <item name="notification_media_cover" type="dimen">128dp</item>
 </resources>

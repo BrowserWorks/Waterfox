@@ -32,10 +32,8 @@ interfaces = [
     'smil',
     'apps',
     'gamepad',
+    'push',
 ]
-
-if not CONFIG['MOZ_SIMPLEPUSH']:
-    interfaces += ['push']
 
 DIRS += ['interfaces/' + i for i in interfaces]
 
@@ -46,7 +44,6 @@ DIRS += [
     'bluetooth',
     'activities',
     'archivereader',
-    'requestsync',
     'bindings',
     'battery',
     'browser-element',
@@ -57,13 +54,13 @@ DIRS += [
     'crypto',
     'phonenumberutils',
     'alarm',
-    'datastore',
     'devicestorage',
     'encoding',
     'events',
     'fetch',
     'filehandle',
     'filesystem',
+    'flyweb',
     'fmradio',
     'geolocation',
     'html',
@@ -153,8 +150,7 @@ if CONFIG['MOZ_B2G']:
     DIRS += [
         'downloads',
         'identity',
-        'mobileid',
-        'engineeringmode'
+        'mobileid'
     ]
 
 DIRS += ['presentation']

@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2006-2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -27,7 +29,7 @@ namespace IPC {
 
 class MessageIterator {
  public:
-  explicit MessageIterator(const Message& m) : msg_(m), iter_(NULL) {
+  explicit MessageIterator(const Message& m) : msg_(m), iter_(m) {
   }
   int NextInt() const {
     int val;
@@ -53,14 +55,9 @@ class MessageIterator {
       NOTREACHED();
     return val;
   }
-  void NextData(const char** data, int* length) const {
-    if (!msg_.ReadData(&iter_, data, length)) {
-      NOTREACHED();
-    }
-  }
  private:
   const Message& msg_;
-  mutable void* iter_;
+  mutable PickleIterator iter_;
 };
 
 //-----------------------------------------------------------------------------
@@ -115,7 +112,7 @@ static inline void WriteParam(Message* m, const P& p) {
 }
 
 template <class P>
-static inline bool WARN_UNUSED_RESULT ReadParam(const Message* m, void** iter,
+static inline bool WARN_UNUSED_RESULT ReadParam(const Message* m, PickleIterator* iter,
                                                 P* p) {
   return ParamTraits<P>::Read(m, iter, p);
 }
@@ -136,7 +133,7 @@ struct ParamTraitsFundamental<bool> {
   static void Write(Message* m, const param_type& p) {
     m->WriteBool(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadBool(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -150,7 +147,7 @@ struct ParamTraitsFundamental<int> {
   static void Write(Message* m, const param_type& p) {
     m->WriteInt(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadInt(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -164,7 +161,7 @@ struct ParamTraitsFundamental<long> {
   static void Write(Message* m, const param_type& p) {
     m->WriteLong(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadLong(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -178,7 +175,7 @@ struct ParamTraitsFundamental<unsigned long> {
   static void Write(Message* m, const param_type& p) {
     m->WriteULong(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadULong(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -190,19 +187,10 @@ template <>
 struct ParamTraitsFundamental<long long> {
   typedef long long param_type;
   static void Write(Message* m, const param_type& p) {
-    m->WriteData(reinterpret_cast<const char*>(&p), sizeof(param_type));
- }
-  static bool Read(const Message* m, void** iter, param_type* r) {
-    const char *data;
-    int data_size = 0;
-    bool result = m->ReadData(iter, &data, &data_size);
-    if (result && data_size == sizeof(param_type)) {
-      memcpy(r, data, sizeof(param_type));
-    } else {
-      result = false;
-      NOTREACHED();
-    }
-    return result;
+    m->WriteBytes(&p, sizeof(param_type));
+  }
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
+    return m->ReadBytesInto(iter, r, sizeof(*r));
   }
   static void Log(const param_type& p, std::wstring* l) {
     l->append(StringPrintf(L"%ll", p));
@@ -213,19 +201,10 @@ template <>
 struct ParamTraitsFundamental<unsigned long long> {
   typedef unsigned long long param_type;
   static void Write(Message* m, const param_type& p) {
-    m->WriteData(reinterpret_cast<const char*>(&p), sizeof(param_type));
- }
-  static bool Read(const Message* m, void** iter, param_type* r) {
-    const char *data;
-    int data_size = 0;
-    bool result = m->ReadData(iter, &data, &data_size);
-    if (result && data_size == sizeof(param_type)) {
-      memcpy(r, data, sizeof(param_type));
-    } else {
-      result = false;
-      NOTREACHED();
-    }
-    return result;
+    m->WriteBytes(&p, sizeof(param_type));
+  }
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
+    return m->ReadBytesInto(iter, r, sizeof(*r));
   }
   static void Log(const param_type& p, std::wstring* l) {
     l->append(StringPrintf(L"%ull", p));
@@ -236,20 +215,10 @@ template <>
 struct ParamTraitsFundamental<double> {
   typedef double param_type;
   static void Write(Message* m, const param_type& p) {
-    m->WriteData(reinterpret_cast<const char*>(&p), sizeof(param_type));
+    m->WriteDouble(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
-    const char *data;
-    int data_size = 0;
-    bool result = m->ReadData(iter, &data, &data_size);
-    if (result && data_size == sizeof(param_type)) {
-      memcpy(r, data, sizeof(param_type));
-    } else {
-      result = false;
-      NOTREACHED();
-    }
-
-    return result;
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
+    return m->ReadDouble(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
     l->append(StringPrintf(L"e", p));
@@ -267,7 +236,7 @@ struct ParamTraitsFixed<int16_t> {
   static void Write(Message* m, const param_type& p) {
     m->WriteInt16(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadInt16(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -281,7 +250,7 @@ struct ParamTraitsFixed<uint16_t> {
   static void Write(Message* m, const param_type& p) {
     m->WriteUInt16(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadUInt16(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -295,7 +264,7 @@ struct ParamTraitsFixed<uint32_t> {
   static void Write(Message* m, const param_type& p) {
     m->WriteUInt32(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadUInt32(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -309,7 +278,7 @@ struct ParamTraitsFixed<int64_t> {
   static void Write(Message* m, const param_type& p) {
     m->WriteInt64(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadInt64(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -323,7 +292,7 @@ struct ParamTraitsFixed<uint64_t> {
   static void Write(Message* m, const param_type& p) {
     m->WriteInt64(static_cast<int64_t>(p));
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadInt64(iter, reinterpret_cast<int64_t*>(r));
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -342,7 +311,7 @@ struct ParamTraitsLibC<size_t> {
   static void Write(Message* m, const param_type& p) {
     m->WriteSize(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadSize(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -361,7 +330,7 @@ struct ParamTraitsStd<std::string> {
   static void Write(Message* m, const param_type& p) {
     m->WriteString(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadString(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -375,7 +344,7 @@ struct ParamTraitsStd<std::wstring> {
   static void Write(Message* m, const param_type& p) {
     m->WriteWString(p);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadWString(iter, r);
   }
   static void Log(const param_type& p, std::wstring* l) {
@@ -394,7 +363,7 @@ struct ParamTraitsStd<std::map<K, V> > {
       WriteParam(m, iter->second);
     }
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     int size;
     if (!ReadParam(m, iter, &size) || size < 0)
       return false;
@@ -425,7 +394,7 @@ struct ParamTraitsWindows<HANDLE> {
   static void Write(Message* m, const param_type& p) {
     m->WriteIntPtr(reinterpret_cast<intptr_t>(p));
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     DCHECK_EQ(sizeof(param_type), sizeof(intptr_t));
     return m->ReadIntPtr(iter, reinterpret_cast<intptr_t*>(r));
   }
@@ -440,7 +409,7 @@ struct ParamTraitsWindows<HWND> {
   static void Write(Message* m, const param_type& p) {
     m->WriteIntPtr(reinterpret_cast<intptr_t>(p));
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     DCHECK_EQ(sizeof(param_type), sizeof(intptr_t));
     return m->ReadIntPtr(iter, reinterpret_cast<intptr_t*>(r));
   }
@@ -484,7 +453,7 @@ struct ParamTraitsIPC<base::FileDescriptor> {
       }
     }
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     bool valid;
     if (!ReadParam(m, iter, &valid))
       return false;
@@ -515,7 +484,7 @@ struct ParamTraitsIPC<TransportDIB::Id> {
     WriteParam(m, p.handle);
     WriteParam(m, p.sequence_num);
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return (ReadParam(m, iter, &r->handle) &&
             ReadParam(m, iter, &r->sequence_num));
   }
@@ -540,7 +509,7 @@ struct ParamTraitsMozilla<nsresult> {
   static void Write(Message* m, const param_type& p) {
     m->WriteUInt32(static_cast<uint32_t>(p));
   }
-  static bool Read(const Message* m, void** iter, param_type* r) {
+  static bool Read(const Message* m, PickleIterator* iter, param_type* r) {
     return m->ReadUInt32(iter, reinterpret_cast<uint32_t*>(r));
   }
   static void Log(const param_type& p, std::wstring* l) {

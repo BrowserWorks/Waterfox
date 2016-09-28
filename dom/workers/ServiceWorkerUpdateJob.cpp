@@ -6,12 +6,78 @@
 
 #include "ServiceWorkerUpdateJob.h"
 
+#include "nsIScriptError.h"
+#include "nsIURL.h"
 #include "ServiceWorkerScriptCache.h"
 #include "Workers.h"
 
 namespace mozilla {
 namespace dom {
 namespace workers {
+
+namespace {
+
+/**
+ * The spec mandates slightly different behaviors for computing the scope
+ * prefix string in case a Service-Worker-Allowed header is specified versus
+ * when it's not available.
+ *
+ * With the header:
+ *   "Set maxScopeString to "/" concatenated with the strings in maxScope's
+ *    path (including empty strings), separated from each other by "/"."
+ * Without the header:
+ *   "Set maxScopeString to "/" concatenated with the strings, except the last
+ *    string that denotes the script's file name, in registration's registering
+ *    script url's path (including empty strings), separated from each other by
+ *    "/"."
+ *
+ * In simpler terms, if the header is not present, we should only use the
+ * "directory" part of the pathname, and otherwise the entire pathname should be
+ * used.  ScopeStringPrefixMode allows the caller to specify the desired
+ * behavior.
+ */
+enum ScopeStringPrefixMode {
+  eUseDirectory,
+  eUsePath
+};
+
+nsresult
+GetRequiredScopeStringPrefix(nsIURI* aScriptURI, nsACString& aPrefix,
+                             ScopeStringPrefixMode aPrefixMode)
+{
+  nsresult rv = aScriptURI->GetPrePath(aPrefix);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  if (aPrefixMode == eUseDirectory) {
+    nsCOMPtr<nsIURL> scriptURL(do_QueryInterface(aScriptURI));
+    if (NS_WARN_IF(!scriptURL)) {
+      return NS_ERROR_FAILURE;
+    }
+
+    nsAutoCString dir;
+    rv = scriptURL->GetDirectory(dir);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    aPrefix.Append(dir);
+  } else if (aPrefixMode == eUsePath) {
+    nsAutoCString path;
+    rv = aScriptURI->GetPath(path);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    aPrefix.Append(path);
+  } else {
+    MOZ_ASSERT_UNREACHABLE("Invalid value for aPrefixMode");
+  }
+  return NS_OK;
+}
+
+} // anonymous namespace
 
 class ServiceWorkerUpdateJob::CompareCallback final : public serviceWorkerScriptCache::CompareCallback
 {
@@ -144,12 +210,7 @@ ServiceWorkerUpdateJob::FailUpdateJob(ErrorResult& aRv)
   // but we must handle many more internal errors.  So we check for
   // cleanup on every non-successful exit.
   if (mRegistration) {
-    if (mServiceWorker) {
-      mServiceWorker->UpdateState(ServiceWorkerState::Redundant);
-      serviceWorkerScriptCache::PurgeCache(mRegistration->mPrincipal,
-                                           mServiceWorker->CacheName());
-    }
-
+    mRegistration->ClearEvaluating();
     mRegistration->ClearInstalling();
 
     RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
@@ -158,7 +219,6 @@ ServiceWorkerUpdateJob::FailUpdateJob(ErrorResult& aRv)
     }
   }
 
-  mServiceWorker = nullptr;
   mRegistration = nullptr;
 
   Finish(aRv);
@@ -352,16 +412,18 @@ ServiceWorkerUpdateJob::ComparisonResult(nsresult aStatus,
 
   // Begin step 7 of the Update algorithm to evaluate the new script.
 
-  MOZ_ASSERT(!mServiceWorker);
-  mServiceWorker = new ServiceWorkerInfo(mRegistration->mPrincipal,
-                                         mRegistration->mScope,
-                                         mScriptSpec, aNewCacheName);
+  RefPtr<ServiceWorkerInfo> sw =
+    new ServiceWorkerInfo(mRegistration->mPrincipal,
+                          mRegistration->mScope,
+                          mScriptSpec, aNewCacheName);
+
+  mRegistration->SetEvaluating(sw);
 
   nsMainThreadPtrHandle<ServiceWorkerUpdateJob> handle(
       new nsMainThreadPtrHolder<ServiceWorkerUpdateJob>(this));
   RefPtr<LifeCycleEventCallback> callback = new ContinueUpdateRunnable(handle);
 
-  ServiceWorkerPrivate* workerPrivate = mServiceWorker->WorkerPrivate();
+  ServiceWorkerPrivate* workerPrivate = sw->WorkerPrivate();
   MOZ_ASSERT(workerPrivate);
   rv = workerPrivate->CheckScriptEvaluation(callback);
 
@@ -409,9 +471,7 @@ ServiceWorkerUpdateJob::Install()
   //
   //  https://slightlyoff.github.io/ServiceWorker/spec/service_worker/index.html#installation-algorithm
 
-  MOZ_ASSERT(mServiceWorker);
-  mRegistration->SetInstalling(mServiceWorker);
-  mServiceWorker = nullptr;
+  mRegistration->TransitionEvaluatingToInstalling();
 
   // Step 6 of the Install algorithm resolving the job promise.
   InvokeResultCallbacks(NS_OK);
@@ -423,7 +483,7 @@ ServiceWorkerUpdateJob::Install()
 
   // fire the updatefound event
   nsCOMPtr<nsIRunnable> upr =
-    NS_NewRunnableMethodWithArg<RefPtr<ServiceWorkerRegistrationInfo>>(
+    NewRunnableMethod<RefPtr<ServiceWorkerRegistrationInfo>>(
       swm,
       &ServiceWorkerManager::FireUpdateFoundOnServiceWorkerRegistrations,
       mRegistration);
@@ -431,7 +491,7 @@ ServiceWorkerUpdateJob::Install()
 
   // Call ContinueAfterInstallEvent(false) on main thread if the SW
   // script fails to load.
-  nsCOMPtr<nsIRunnable> failRunnable = NS_NewRunnableMethodWithArgs<bool>
+  nsCOMPtr<nsIRunnable> failRunnable = NewRunnableMethod<bool>
     (this, &ServiceWorkerUpdateJob::ContinueAfterInstallEvent, false);
 
   nsMainThreadPtrHandle<ServiceWorkerUpdateJob> handle(

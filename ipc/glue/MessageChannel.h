@@ -273,7 +273,7 @@ class MessageChannel : HasResultCodes
     bool HasPendingEvents();
 
     void ProcessPendingRequests(AutoEnterTransaction& aTransaction);
-    bool ProcessPendingRequest(const Message &aUrgent);
+    bool ProcessPendingRequest(Message &&aUrgent);
 
     void MaybeUndeferIncall();
     void EnqueuePendingMessages();
@@ -283,7 +283,7 @@ class MessageChannel : HasResultCodes
     bool DequeueOne(Message *recvd);
 
     // Dispatches an incoming message to its appropriate handler.
-    void DispatchMessage(const Message &aMsg);
+    void DispatchMessage(Message &&aMsg);
 
     // DispatchMessage will route to one of these functions depending on the
     // protocol type of the message.
@@ -291,7 +291,7 @@ class MessageChannel : HasResultCodes
     void DispatchUrgentMessage(const Message &aMsg);
     void DispatchAsyncMessage(const Message &aMsg);
     void DispatchRPCMessage(const Message &aMsg);
-    void DispatchInterruptMessage(const Message &aMsg, size_t aStackDepth);
+    void DispatchInterruptMessage(Message &&aMsg, size_t aStackDepth);
 
     // Return true if the wait ended because a notification was received.
     //
@@ -362,7 +362,7 @@ class MessageChannel : HasResultCodes
 
     void DebugAbort(const char* file, int line, const char* cond,
                     const char* why,
-                    bool reply=false) const;
+                    bool reply=false);
 
     // This method is only safe to call on the worker thread, or in a
     // debugger with all threads paused.
@@ -462,16 +462,17 @@ class MessageChannel : HasResultCodes
     typedef std::deque<Message> MessageQueue;
     typedef std::map<size_t, Message> MessageMap;
 
+    // XXXkhuey this can almost certainly die.
     // All dequeuing tasks require a single point of cancellation,
     // which is handled via a reference-counted task.
     class RefCountedTask
     {
       public:
-        explicit RefCountedTask(CancelableTask* aTask)
+        explicit RefCountedTask(already_AddRefed<CancelableRunnable> aTask)
           : mTask(aTask)
         { }
       private:
-        ~RefCountedTask() { delete mTask; }
+        ~RefCountedTask() { }
       public:
         void Run() { mTask->Run(); }
         void Cancel() { mTask->Cancel(); }
@@ -479,18 +480,27 @@ class MessageChannel : HasResultCodes
         NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RefCountedTask)
 
       private:
-        CancelableTask* mTask;
+        RefPtr<CancelableRunnable> mTask;
     };
 
     // Wrap an existing task which can be cancelled at any time
     // without the wrapper's knowledge.
-    class DequeueTask : public Task
+    class DequeueTask : public CancelableRunnable
     {
       public:
         explicit DequeueTask(RefCountedTask* aTask)
           : mTask(aTask)
         { }
-        void Run() override { mTask->Run(); }
+        NS_IMETHOD Run() override {
+          if (mTask) {
+            mTask->Run();
+          }
+          return NS_OK;
+        }
+        nsresult Cancel() override {
+          mTask = nullptr;
+          return NS_OK;
+        }
 
       private:
         RefPtr<RefCountedTask> mTask;
@@ -503,7 +513,7 @@ class MessageChannel : HasResultCodes
     Side mSide;
     MessageLink* mLink;
     MessageLoop* mWorkerLoop;           // thread where work is done
-    CancelableTask* mChannelErrorTask;  // NotifyMaybeChannelError runnable
+    RefPtr<CancelableRunnable> mChannelErrorTask;  // NotifyMaybeChannelError runnable
 
     // id() of mWorkerLoop.  This persists even after mWorkerLoop is cleared
     // during channel shutdown.

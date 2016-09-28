@@ -28,14 +28,13 @@ function findSourceDir(path) {
   ).then(exists => {
     if (exists) {
       return path;
-    } else {
-      return findSourceDir(OS.Path.dirname(path));
     }
+    return findSourceDir(OS.Path.dirname(path));
   });
 }
 
 let worker = null;
-const onPrefChange = function() {
+const onPrefChange = function () {
   // We need to figure out a src dir to watch. These are the actual
   // files the user is working with, not the files in the obj dir. We
   // do this by walking up the filesystem and looking for the devtools
@@ -56,7 +55,8 @@ const onPrefChange = function() {
     const searchPoint = OS.Path.dirname(OS.Path.dirname(devtoolsPath));
     findSourceDir(searchPoint)
       .then(srcPath => {
-        const rootPath = srcPath ? OS.Path.join(srcPath, "devtools") : devtoolsPath;
+        const rootPath = srcPath ? OS.Path.join(srcPath, "devtools")
+                                 : devtoolsPath;
         const watchPath = OS.Path.join(rootPath, "client");
         const { watchFiles } = require("devtools/client/shared/file-watcher");
         worker = watchFiles(watchPath, path => {
@@ -68,7 +68,8 @@ const onPrefChange = function() {
     worker.terminate();
     worker = null;
   }
-}
+};
+
 Services.prefs.addObserver(HOTRELOAD_PREF, {
   observe: onPrefChange
 }, false);

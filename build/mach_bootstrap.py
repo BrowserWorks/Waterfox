@@ -57,6 +57,7 @@ SEARCH_PATHS = [
     'python/mach',
     'python/mozboot',
     'python/mozbuild',
+    'python/mozlint',
     'python/mozversioncontrol',
     'python/blessings',
     'python/compare-locales',
@@ -76,6 +77,7 @@ SEARCH_PATHS = [
     'dom/media/test/external',
     'layout/tools/reftest',
     'other-licenses/ply',
+    'taskcluster',
     'testing',
     'testing/firefox-ui/harness',
     'testing/firefox-ui/tests',
@@ -128,6 +130,7 @@ MACH_MODULES = [
     'python/mozbuild/mozbuild/compilation/codecomplete.py',
     'python/mozbuild/mozbuild/frontend/mach_commands.py',
     'services/common/tests/mach_commands.py',
+    'taskcluster/mach_commands.py',
     'testing/firefox-ui/mach_commands.py',
     'testing/luciddream/mach_commands.py',
     'testing/mach_commands.py',
@@ -139,6 +142,7 @@ MACH_MODULES = [
     'testing/web-platform/mach_commands.py',
     'testing/xpcshell/mach_commands.py',
     'tools/docs/mach_commands.py',
+    'tools/lint/mach_commands.py',
     'tools/mercurial/mach_commands.py',
     'tools/mach_commands.py',
     'tools/power/mach_commands.py',
@@ -229,11 +233,8 @@ def bootstrap(topsrcdir, mozilla_dir=None):
     # case. For default behavior, we educate users and give them an opportunity
     # to react. We always exit after creating the directory because users don't
     # like surprises.
-    try:
-        import mach.main
-    except ImportError:
-        sys.path[0:0] = [os.path.join(mozilla_dir, path) for path in SEARCH_PATHS]
-        import mach.main
+    sys.path[0:0] = [os.path.join(mozilla_dir, path) for path in SEARCH_PATHS]
+    import mach.main
 
     def telemetry_handler(context, data):
         # We have not opted-in to telemetry

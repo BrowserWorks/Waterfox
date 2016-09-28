@@ -9,8 +9,6 @@
 
 #include "nsString.h"
 
-#include "mozilla/dom/ThreadSafeChromeUtilsBinding.h"
-
 class nsIInputStream;
 
 namespace mozilla {
@@ -27,32 +25,45 @@ Base64EncodeInputStream(nsIInputStream* aInputStream,
                         uint32_t aOffset = 0);
 
 nsresult
-Base64Encode(const nsACString& aString, nsACString& aBinary);
+Base64Encode(const char* aBinary, uint32_t aBinaryLen, char** aBase64);
 nsresult
-Base64Encode(const nsAString& aString, nsAString& aBinaryData);
+Base64Encode(const nsACString& aBinary, nsACString& aBase64);
+nsresult
+Base64Encode(const nsAString& aBinary, nsAString& aBase64);
 
 nsresult
-Base64Decode(const nsACString& aBinaryData, nsACString& aString);
+Base64Decode(const nsACString& aBase64, nsACString& aBinary);
 nsresult
-Base64Decode(const nsAString& aBinaryData, nsAString& aString);
+Base64Decode(const nsAString& aBase64, nsAString& aBinary);
+
+enum class Base64URLEncodePaddingPolicy {
+  Include,
+  Omit,
+};
 
 /**
- * Converts |aData| to an unpadded, Base64 URL-encoded string per RFC 4648.
+ * Converts |aBinary| to an unpadded, Base64 URL-encoded string per RFC 4648.
  * Aims to encode the data in constant time. The caller retains ownership
- * of |aData|.
+ * of |aBinary|.
  */
 nsresult
-Base64URLEncode(uint32_t aLength, const uint8_t* aData,
-                const dom::Base64URLEncodeOptions& aOptions,
-                nsACString& aString);
+Base64URLEncode(uint32_t aBinaryLen, const uint8_t* aBinary,
+                Base64URLEncodePaddingPolicy aPaddingPolicy,
+                nsACString& aBase64);
+
+enum class Base64URLDecodePaddingPolicy {
+  Require,
+  Ignore,
+  Reject,
+};
 
 /**
- * Decodes a Base64 URL-encoded |aString| into |aOutput|.
+ * Decodes a Base64 URL-encoded |aBase64| into |aBinary|.
  */
 nsresult
-Base64URLDecode(const nsACString& aString,
-                const dom::Base64URLDecodeOptions& aOptions,
-                FallibleTArray<uint8_t>& aOutput);
+Base64URLDecode(const nsACString& aBase64,
+                Base64URLDecodePaddingPolicy aPaddingPolicy,
+                FallibleTArray<uint8_t>& aBinary);
 
 } // namespace mozilla
 

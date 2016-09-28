@@ -33,14 +33,14 @@ add_task(function* () {
     messages: [
       {
         name: "Logged blocking mixed active content",
-        text: "Blocked loading mixed active content \"http://example.com/\"",
+        text: "Blocked loading mixed active content \u201chttp://example.com/\u201d",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_ERROR,
         objects: true,
       },
       {
         name: "Logged blocking mixed passive content - image",
-        text: "Blocked loading mixed active content \"http://example.com/\"",
+        text: "Blocked loading mixed active content \u201chttp://example.com/\u201d",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_ERROR,
         objects: true,
@@ -80,7 +80,7 @@ function mixedContentOverrideTest2(hud, browser) {
       {
         name: "Logged blocking mixed active content",
         text: "Loading mixed (insecure) active content " +
-              "\"http://example.com/\" on a secure page",
+              "\u201chttp://example.com/\u201d on a secure page",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,
         objects: true,
@@ -88,14 +88,14 @@ function mixedContentOverrideTest2(hud, browser) {
       {
         name: "Logged blocking mixed passive content - image",
         text: "Loading mixed (insecure) display content" +
-          " \"http://example.com/tests/image/test/mochitest/blue.png\"" +
+          " \u201chttp://example.com/tests/image/test/mochitest/blue.png\u201d" +
           " on a secure page",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,
         objects: true,
       },
     ],
-  }).then(msgs => deferred.resolve(msgs), Cu.reportError);
+  }).then(msgs => deferred.resolve(msgs), e => console.error(e));
 
   return deferred.promise;
 }

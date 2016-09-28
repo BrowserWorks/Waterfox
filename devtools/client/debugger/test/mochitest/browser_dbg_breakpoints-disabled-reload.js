@@ -10,20 +10,23 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gPanel = aPanel;
     const gTab = aTab;
     const gDebugger = gPanel.panelWin;
     const gEvents = gDebugger.EVENTS;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
     let gBreakpointLocation;
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "-01.js");
+    Task.spawn(function* () {
       gBreakpointLocation = { actor: getSourceActor(gSources, EXAMPLE_URL + "code_script-switching-01.js"),
                               line: 5 };
 
@@ -49,7 +52,7 @@ function test() {
     });
 
     function verifyView({ disabled }) {
-      return Task.spawn(function*() {
+      return Task.spawn(function* () {
         // It takes a tick for the checkbox in the SideMenuWidget and the
         // gutter in the editor to get updated.
         yield waitForTick();
@@ -68,7 +71,7 @@ function test() {
     // before causing the debuggee to pause, to allow functions to yield first.
 
     function testWhenBreakpointEnabledAndFirstSourceShown() {
-      return Task.spawn(function*() {
+      return Task.spawn(function* () {
         yield ensureSourceIs(gPanel, "-01.js");
         yield verifyView({ disabled: false });
 
@@ -85,7 +88,7 @@ function test() {
     }
 
     function testWhenBreakpointEnabledAndSecondSourceShown() {
-      return Task.spawn(function*() {
+      return Task.spawn(function* () {
         yield ensureSourceIs(gPanel, "-02.js", true);
         yield verifyView({ disabled: false });
 
@@ -100,7 +103,7 @@ function test() {
     }
 
     function testWhenBreakpointDisabledAndSecondSourceShown() {
-      return Task.spawn(function*() {
+      return Task.spawn(function* () {
         yield ensureSourceIs(gPanel, "-02.js", true);
         yield verifyView({ disabled: true });
 

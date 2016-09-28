@@ -44,6 +44,7 @@
 #include <algorithm>
 
 using namespace mozilla;
+using namespace mozilla::net;
 
 /******************************************************************************
  * nsCacheProfilePrefObserver
@@ -222,7 +223,7 @@ NS_IMPL_ISUPPORTS(nsSetDiskSmartSizeCallback, nsITimerCallback)
 
 // Runnable sent to main thread after the cache IO thread calculates available
 // disk space, so that there is no race in setting mDiskCacheCapacity.
-class nsSetSmartSizeEvent: public nsRunnable 
+class nsSetSmartSizeEvent: public Runnable 
 {
 public:
     explicit nsSetSmartSizeEvent(int32_t smartSize)
@@ -259,7 +260,7 @@ private:
 
 
 // Runnable sent from main thread to cacheIO thread
-class nsGetSmartSizeEvent: public nsRunnable
+class nsGetSmartSizeEvent: public Runnable
 {
 public:
     nsGetSmartSizeEvent(const nsAString& cachePath, uint32_t currentSize,
@@ -287,7 +288,7 @@ private:
     bool     mShouldUseOldMaxSmartSize;
 };
 
-class nsBlockOnCacheThreadEvent : public nsRunnable {
+class nsBlockOnCacheThreadEvent : public Runnable {
 public:
     nsBlockOnCacheThreadEvent()
     {
@@ -296,6 +297,7 @@ public:
     {
         nsCacheServiceAutoLock autoLock(LOCK_TELEM(NSBLOCKONCACHETHREADEVENT_RUN));
         CACHE_LOG_DEBUG(("nsBlockOnCacheThreadEvent [%p]\n", this));
+        nsCacheService::gService->mNotified = true;
         nsCacheService::gService->mCondVar.Notify();
         return NS_OK;
     }
@@ -852,9 +854,12 @@ nsCacheService::SyncWithCacheIOThread()
     }
 
     // wait until notified, then return
-    rv = gService->mCondVar.Wait();
+    gService->mNotified = false;
+    while (!gService->mNotified) {
+      gService->mCondVar.Wait();
+    }
 
-    return rv;
+    return NS_OK;
 }
 
 
@@ -966,7 +971,7 @@ nsCacheProfilePrefObserver::CacheCompressionLevel()
  * nsProcessRequestEvent
  *****************************************************************************/
 
-class nsProcessRequestEvent : public nsRunnable {
+class nsProcessRequestEvent : public Runnable {
 public:
     explicit nsProcessRequestEvent(nsCacheRequest *aRequest)
     {
@@ -1004,7 +1009,7 @@ private:
  * nsDoomEvent
  *****************************************************************************/
 
-class nsDoomEvent : public nsRunnable {
+class nsDoomEvent : public Runnable {
 public:
     nsDoomEvent(nsCacheSession *session,
                 const nsACString &key,
@@ -1073,6 +1078,7 @@ nsCacheService::nsCacheService()
     : mObserver(nullptr),
       mLock("nsCacheService.mLock"),
       mCondVar(mLock, "nsCacheService.mCondVar"),
+      mNotified(false),
       mTimeStampLock("nsCacheService.mTimeStampLock"),
       mInitialized(false),
       mClearingEntries(false),
@@ -1321,7 +1327,7 @@ nsCacheService::EvictEntriesForSession(nsCacheSession * session)
 
 namespace {
 
-class EvictionNotifierRunnable : public nsRunnable
+class EvictionNotifierRunnable : public Runnable
 {
 public:
     explicit EvictionNotifierRunnable(nsISupports* aSubject)
@@ -1525,8 +1531,8 @@ nsresult nsCacheService::EvictEntriesInternal(nsCacheStoragePolicy storagePolicy
     if (storagePolicy == nsICache::STORE_ANYWHERE) {
         // if not called on main thread, dispatch the notification to the main thread to notify observers
         if (!NS_IsMainThread()) { 
-            nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethod(this,
-                                                               &nsCacheService::FireClearNetworkCacheStoredAnywhereNotification);
+            nsCOMPtr<nsIRunnable> event = NewRunnableMethod(this,
+                                                            &nsCacheService::FireClearNetworkCacheStoredAnywhereNotification);
             NS_DispatchToMainThread(event);
         } else {
             // else you're already on main thread - notify observers
@@ -1638,7 +1644,7 @@ nsCacheService::CreateDiskDevice()
 }
 
 // Runnable sent from cache thread to main thread
-class nsDisableOldMaxSmartSizePrefEvent: public nsRunnable
+class nsDisableOldMaxSmartSizePrefEvent: public Runnable
 {
 public:
     nsDisableOldMaxSmartSizePrefEvent() {}
@@ -1848,7 +1854,7 @@ nsCacheService::CreateRequest(nsCacheSession *   session,
 }
 
 
-class nsCacheListenerEvent : public nsRunnable
+class nsCacheListenerEvent : public Runnable
 {
 public:
     nsCacheListenerEvent(nsICacheListener *listener,

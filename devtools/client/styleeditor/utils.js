@@ -6,10 +6,8 @@
 
 "use strict";
 
-const {Cu} = require("chrome");
 const Services = require("Services");
-
-Cu.import("resource://devtools/shared/event-emitter.js");
+const EventEmitter = require("devtools/shared/event-emitter");
 
 exports.PREF_ORIG_SOURCES = "devtools.styleeditor.source-maps-enabled";
 
@@ -28,13 +26,13 @@ function PrefObserver(branchName) {
 exports.PrefObserver = PrefObserver;
 
 PrefObserver.prototype = {
-  observe: function(subject, topic, data) {
+  observe: function (subject, topic, data) {
     if (topic == "nsPref:changed") {
       this.emit(this.branchName + data);
     }
   },
 
-  destroy: function() {
+  destroy: function () {
     if (this.branch) {
       this.branch.removeObserver("", this);
     }

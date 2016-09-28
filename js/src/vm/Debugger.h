@@ -69,12 +69,12 @@ typedef HashSet<ReadBarrieredGlobalObject,
  * transitions.
  */
 template <class UnbarrieredKey, bool InvisibleKeysOk=false>
-class DebuggerWeakMap : private WeakMap<RelocatablePtr<UnbarrieredKey>, RelocatablePtrObject,
-                                        MovableCellHasher<RelocatablePtr<UnbarrieredKey>>>
+class DebuggerWeakMap : private WeakMap<HeapPtr<UnbarrieredKey>, HeapPtr<JSObject*>,
+                                        MovableCellHasher<HeapPtr<UnbarrieredKey>>>
 {
   private:
-    typedef RelocatablePtr<UnbarrieredKey> Key;
-    typedef RelocatablePtrObject Value;
+    typedef HeapPtr<UnbarrieredKey> Key;
+    typedef HeapPtr<JSObject*> Value;
 
     typedef HashMap<JS::Zone*,
                     uintptr_t,
@@ -209,11 +209,24 @@ class AutoSuppressDebuggeeNoExecuteChecks
     }
 };
 
+class MOZ_RAII EvalOptions {
+    const char* filename_;
+    unsigned lineno_;
+
+  public:
+    EvalOptions() : filename_(nullptr), lineno_(1) {}
+    ~EvalOptions();
+    const char* filename() const { return filename_; }
+    unsigned lineno() const { return lineno_; }
+    bool setFilename(JSContext* cx, const char* filename);
+    void setLineno(unsigned lineno) { lineno_ = lineno; }
+};
+
 /*
- * Env is the type of what ES5 calls "lexical environments" (runtime
- * activations of lexical scopes). This is currently just JSObject, and is
- * implemented by Call, Block, With, and DeclEnv objects, among others--but
- * environments and objects are really two different concepts.
+ * Env is the type of what ES5 calls "lexical environments" (runtime activations
+ * of lexical scopes). This is currently just JSObject, and is implemented by
+ * CallObject, ClonedBlockObject, DynamicWithObject, and DeclEnvObject, among
+ * others--but environments and objects are really two different concepts.
  */
 typedef JSObject Env;
 
@@ -330,10 +343,10 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
             MOZ_ASSERT_IF(frame, UncheckedUnwrap(frame)->is<SavedFrame>());
         };
 
-        RelocatablePtrObject frame;
+        HeapPtr<JSObject*> frame;
         double when;
         const char* className;
-        RelocatablePtrAtom ctorName;
+        HeapPtr<JSAtom*> ctorName;
         size_t size;
         bool inNursery;
 
@@ -350,10 +363,10 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void writeBarrierPost(Debugger** vp, Debugger* prev, Debugger* next) {}
 
   private:
-    HeapPtrNativeObject object;         /* The Debugger object. Strong reference. */
-    WeakGlobalObjectSet debuggees;      /* Debuggee globals. Cross-compartment weak references. */
+    GCPtrNativeObject object; /* The Debugger object. Strong reference. */
+    WeakGlobalObjectSet debuggees; /* Debuggee globals. Cross-compartment weak references. */
     JS::ZoneSet debuggeeZones; /* Set of zones that we have debuggees in. */
-    js::HeapPtrObject uncaughtExceptionHook; /* Strong reference. */
+    js::GCPtrObject uncaughtExceptionHook; /* Strong reference. */
     bool enabled;
     bool allowUnobservedAsmJS;
 
@@ -440,7 +453,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      * has to be different.
      */
     typedef HashMap<AbstractFramePtr,
-                    RelocatablePtrNativeObject,
+                    HeapPtr<NativeObject*>,
                     DefaultHasher<AbstractFramePtr>,
                     RuntimeAllocPolicy> FrameMap;
     FrameMap frames;
@@ -706,7 +719,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
      * whenever possible.
      */
     template <typename ReferentVariant, typename Referent, typename Map>
-    JSObject* wrapVariantReferent(JSContext* cx, Map& map, CrossCompartmentKey::Kind keyKind,
+    JSObject* wrapVariantReferent(JSContext* cx, Map& map, Handle<CrossCompartmentKey> key,
                                   Handle<ReferentVariant> referent);
     JSObject* wrapVariantReferent(JSContext* cx, Handle<DebuggerScriptReferent> referent);
     JSObject* wrapVariantReferent(JSContext* cx, Handle<DebuggerSourceReferent> referent);
@@ -755,8 +768,8 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     ~Debugger();
 
     bool init(JSContext* cx);
-    inline const js::HeapPtrNativeObject& toJSObject() const;
-    inline js::HeapPtrNativeObject& toJSObjectRef();
+    inline const js::GCPtrNativeObject& toJSObject() const;
+    inline js::GCPtrNativeObject& toJSObjectRef();
     static inline Debugger* fromJSObject(const JSObject* obj);
     static Debugger* fromChildJSObject(JSObject* obj);
 
@@ -787,7 +800,7 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     static void markAll(JSTracer* trc);
     static void sweepAll(FreeOp* fop);
     static void detachAllDebuggersFromGlobal(FreeOp* fop, GlobalObject* global);
-    static void findZoneEdges(JS::Zone* v, gc::ComponentFinder<JS::Zone>& finder);
+    static void findZoneEdges(JS::Zone* v, gc::ZoneComponentFinder& finder);
 
     // Checks it the current compartment is allowed to execute code.
     static inline bool checkNoExecute(JSContext* cx, HandleScript script);
@@ -1028,6 +1041,66 @@ class Debugger : private mozilla::LinkedListElement<Debugger>
     Debugger & operator=(const Debugger&) = delete;
 };
 
+class DebuggerObject : public NativeObject
+{
+  public:
+    static const Class class_;
+
+    static NativeObject* initClass(JSContext* cx, HandleObject obj, HandleObject debugCtor);
+    static DebuggerObject* create(JSContext* cx, HandleObject proto, HandleObject obj,
+                                  HandleNativeObject debugger);
+
+    static bool isExtensible(JSContext* cx, Handle<DebuggerObject*> object, bool& result);
+    static bool isSealed(JSContext* cx, Handle<DebuggerObject*> object, bool& result);
+    static bool isFrozen(JSContext* cx, Handle<DebuggerObject*> object, bool& result);
+    static bool getOwnPropertyNames(JSContext* cx, Handle<DebuggerObject*> object,
+                                    MutableHandle<IdVector> result);
+    static bool getOwnPropertySymbols(JSContext* cx, Handle<DebuggerObject*> object,
+                                      MutableHandle<IdVector> result);
+    static bool getOwnPropertyDescriptor(JSContext* cx, Handle<DebuggerObject*> object,
+                                         HandleId id, MutableHandle<PropertyDescriptor> desc);
+    static bool preventExtensions(JSContext* cx, Handle<DebuggerObject*> object);
+    static bool seal(JSContext* cx, Handle<DebuggerObject*> object);
+    static bool freeze(JSContext* cx, Handle<DebuggerObject*> object);
+    static bool defineProperty(JSContext* cx, Handle<DebuggerObject*> object, HandleId id,
+                               Handle<PropertyDescriptor> desc);
+    static bool defineProperties(JSContext* cx, Handle<DebuggerObject*> object,
+                                 Handle<IdVector> ids,
+                                 Handle<PropertyDescriptorVector> descs);
+    static bool deleteProperty(JSContext* cx, Handle<DebuggerObject*> object, HandleId id,
+                               ObjectOpResult& result);
+    static bool call(JSContext* cx, Handle<DebuggerObject*> object, HandleValue thisv,
+                     Handle<ValueVector> args, MutableHandleValue result);
+    static bool forceLexicalInitializationByName(JSContext* cx, Handle<DebuggerObject*> object,
+                                                 HandleId id, bool& result);
+    static bool executeInGlobal(JSContext* cx, Handle<DebuggerObject*> object,
+                                mozilla::Range<const char16_t> chars, HandleObject bindings,
+                                const EvalOptions& options, MutableHandleValue result);
+
+  private:
+    enum {
+        OWNER_SLOT
+    };
+
+    static const unsigned RESERVED_SLOTS = 1;
+
+    static const JSPropertySpec properties_[];
+#ifdef SPIDERMONKEY_PROMISE
+    static const JSPropertySpec promiseProperties_[];
+#endif // SPIDERMONKEY_PROMISE
+    static const JSFunctionSpec methods_[];
+
+    static bool requireGlobalObject(JSContext* cx, Handle<DebuggerObject*> object);
+
+    JSObject* referent() const {
+        JSObject* obj = (JSObject*) getPrivate();
+        MOZ_ASSERT(obj);
+        return obj;
+    }
+
+    Debugger* owner() const;
+};
+
 class BreakpointSite {
     friend class Breakpoint;
     friend struct ::JSCompartment;
@@ -1110,14 +1183,14 @@ Debugger::fromOnNewGlobalObjectWatchersLink(JSCList* link) {
     return reinterpret_cast<Debugger*>(p - offsetof(Debugger, onNewGlobalObjectWatchersLink));
 }
 
-const js::HeapPtrNativeObject&
+const js::GCPtrNativeObject&
 Debugger::toJSObject() const
 {
     MOZ_ASSERT(object);
     return object;
 }
 
-js::HeapPtrNativeObject&
+js::GCPtrNativeObject&
 Debugger::toJSObjectRef()
 {
     MOZ_ASSERT(object);
@@ -1186,5 +1259,12 @@ bool ReportObjectRequired(JSContext* cx);
 
 } /* namespace js */
 
+namespace JS {
+
+template <>
+struct DeletePolicy<js::Debugger> : public js::GCManagedDeletePolicy<js::Debugger>
+{};
+
+} /* namespace JS */
 
 #endif /* vm_Debugger_h */

@@ -67,10 +67,12 @@ config = {
                 "--no-slow",
                 "--no-progress",
                 "--format=automation",
-                "--jitflags=all"
+                "--jitflags=all",
+                "--timeout=970" # Keep in sync with run_timeout below.
             ],
             "run_filename": "jit_test.py",
-            "testsdir": "jit-test/jit-test"
+            "testsdir": "jit-test/jit-test",
+            "run_timeout": 1000 # Keep in sync with --timeout above.
         },
         "mochitest": {
             "options": [
@@ -83,6 +85,7 @@ config = {
                 "--log-raw=%(raw_log_file)s",
                 "--log-errorsummary=%(error_summary_file)s",
                 "--screenshot-on-fail",
+                "--cleanup-crashes",
             ],
             "run_filename": "runtests.py",
             "testsdir": "mochitest"
@@ -111,6 +114,7 @@ config = {
                 "--utility-path=tests/bin",
                 "--extra-profile-file=tests/bin/plugins",
                 "--symbols-path=%(symbols_path)s"
+                "--cleanup-crashes",
             ],
             "run_filename": "runreftest.py",
             "testsdir": "reftest"
@@ -140,11 +144,17 @@ config = {
     # local mochi suites
     "all_mochitest_suites": {
         "plain": [],
+        "plain-gpu": ["--subsuite=gpu"],
+        "plain-clipboard": ["--subsuite=clipboard"],
         "plain-chunked": ["--chunk-by-dir=4"],
         "mochitest-media": ["--subsuite=media"],
         "chrome": ["--chrome"],
+        "chrome-gpu": ["--chrome", "--subsuite=gpu"],
+        "chrome-clipboard": ["--chrome", "--subsuite=clipboard"],
         "chrome-chunked": ["--chrome", "--chunk-by-dir=4"],
         "browser-chrome": ["--browser-chrome"],
+        "browser-chrome-gpu": ["--browser-chrome", "--subsuite=gpu"],
+        "browser-chrome-clipboard": ["--browser-chrome", "--subsuite=clipboard"],
         "browser-chrome-chunked": ["--browser-chrome", "--chunk-by-runtime"],
         "browser-chrome-addons": ["--browser-chrome", "--chunk-by-runtime", "--tag=addons"],
         "browser-chrome-screenshots": ["--browser-chrome", "--subsuite=screenshots"],
@@ -152,6 +162,7 @@ config = {
         "mochitest-devtools-chrome": ["--browser-chrome", "--subsuite=devtools"],
         "mochitest-devtools-chrome-chunked": ["--browser-chrome", "--subsuite=devtools", "--chunk-by-runtime"],
         "jetpack-package": ["--jetpack-package"],
+        "jetpack-package-clipboard": ["--jetpack-package", "--subsuite=clipboard"],
         "jetpack-addon": ["--jetpack-addon"],
         "a11y": ["--a11y"],
     },

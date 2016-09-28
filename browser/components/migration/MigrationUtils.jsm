@@ -10,17 +10,21 @@ const { classes: Cc, interfaces: Ci, results: Cr, utils: Cu } = Components;
 const TOPIC_WILL_IMPORT_BOOKMARKS = "initial-migration-will-import-default-bookmarks";
 const TOPIC_DID_IMPORT_BOOKMARKS = "initial-migration-did-import-default-bookmarks";
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
-Cu.import("resource://gre/modules/AppConstants.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
-                                  "resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AutoMigrate",
+                                  "resource:///modules/AutoMigrate.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "BookmarkHTMLUtils",
                                   "resource://gre/modules/BookmarkHTMLUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
+                                  "resource://gre/modules/PlacesUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PromiseUtils",
                                   "resource://gre/modules/PromiseUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "TelemetryStopwatch",
+                                  "resource://gre/modules/TelemetryStopwatch.jsm");
 
 var gMigrators = null;
 var gProfileStartup = null;
@@ -95,7 +99,7 @@ this.MigratorPrototype = {
    * profiles.
    *
    * Each migration resource should provide:
-   * - a |type| getter, retunring any of the migration types (see
+   * - a |type| getter, returning any of the migration types (see
    *   nsIBrowserProfileMigrator).
    *
    * - a |migrate| method, taking a single argument, aCallback(bool success),
@@ -181,6 +185,10 @@ this.MigratorPrototype = {
     return types.reduce((a, b) => a |= b, 0);
   },
 
+  getKey: function MP_getKey() {
+    return this.contractID.match(/\=([^\=]+)$/)[1];
+  },
+
   /**
    * DO NOT OVERRIDE - After deCOMing migration, the UI will just call
    * migrate for each resource.
@@ -200,6 +208,31 @@ this.MigratorPrototype = {
       return new Promise(resolve => {
         Services.tm.mainThread.dispatch(resolve, Ci.nsIThread.DISPATCH_NORMAL);
       });
+    };
+
+    let getHistogramForResourceType = resourceType => {
+      if (resourceType == MigrationUtils.resourceTypes.HISTORY) {
+        return "FX_MIGRATION_HISTORY_IMPORT_MS";
+      }
+      if (resourceType == MigrationUtils.resourceTypes.BOOKMARKS) {
+        return "FX_MIGRATION_BOOKMARKS_IMPORT_MS";
+      }
+      if (resourceType == MigrationUtils.resourceTypes.PASSWORDS) {
+        return "FX_MIGRATION_LOGINS_IMPORT_MS";
+      }
+      return null;
+    };
+    let maybeStartTelemetryStopwatch = (resourceType, resource) => {
+      let histogram = getHistogramForResourceType(resourceType);
+      if (histogram) {
+        TelemetryStopwatch.startKeyed(histogram, this.getKey(), resource);
+      }
+    };
+    let maybeStopTelemetryStopwatch = (resourceType, resource) => {
+      let histogram = getHistogramForResourceType(resourceType);
+      if (histogram) {
+        TelemetryStopwatch.finishKeyed(histogram, this.getKey(), resource);
+      }
     };
 
     // Called either directly or through the bookmarks import callback.
@@ -230,8 +263,10 @@ this.MigratorPrototype = {
         for (let res of itemResources) {
           // Workaround bug 449811.
           let resource = res;
+          maybeStartTelemetryStopwatch(migrationType, resource);
           let completeDeferred = PromiseUtils.defer();
           let resourceDone = function(aSuccess) {
+            maybeStopTelemetryStopwatch(migrationType, resource);
             itemResources.delete(resource);
             itemSuccess |= aSuccess;
             if (itemResources.size == 0) {
@@ -436,6 +471,36 @@ this.MigrationUtils = Object.freeze({
       aKey, aReplacements, aReplacements.length);
   },
 
+  _getLocalePropertyForBrowser(browserId) {
+    switch (browserId) {
+      case "edge":
+        return "sourceNameEdge";
+      case "ie":
+        return "sourceNameIE";
+      case "safari":
+        return "sourceNameSafari";
+      case "canary":
+        return "sourceNameCanary";
+      case "chrome":
+        return "sourceNameChrome";
+      case "chromium":
+        return "sourceNameChromium";
+      case "firefox":
+        return "sourceNameFirefox";
+      case "360se":
+        return "sourceName360se";
+    }
+    return null;
+  },
+
+  getBrowserName(browserId) {
+    let prop = this._getLocalePropertyForBrowser(browserId);
+    if (prop) {
+      return this.getLocalizedString(prop);
+    }
+    return null;
+  },
+
   /**
    * Helper for creating a folder for imported bookmarks from a particular
    * migration source.  The folder is created at the end of the given folder.
@@ -513,6 +578,7 @@ this.MigrationUtils = Object.freeze({
     // Canary uses the same description as Chrome so we can't distinguish them.
     const APP_DESC_TO_KEY = {
       "Internet Explorer":                 "ie",
+      "Microsoft Edge":                    "edge",
       "Safari":                            "safari",
       "Firefox":                           "firefox",
       "Google Chrome":                     "chrome",  // Windows, Linux
@@ -567,6 +633,7 @@ this.MigrationUtils = Object.freeze({
    *        - {nsIBrowserProfileMigrator} actual migrator object
    *        - {Boolean} whether this is a startup migration
    *        - {Boolean} whether to skip the 'source' page
+   *        - {String} an identifier for the profile to use when migrating
    *        NB: If you add new consumers, please add a migration entry point
    *        constant below, and specify at least the first element of the array
    *        (the migration entry point for purposes of telemetry).
@@ -649,11 +716,13 @@ this.MigrationUtils = Object.freeze({
    *        migrator for it, or with the first option selected as a fallback
    *        (The first option is hardcoded to be the most common browser for
    *         the OS we run on.  See migration.xul).
+   * @param [optional] aProfileToMigrate
+   *        If set, the migration wizard will import from the profile indicated.
    * @throws if aMigratorKey is invalid or if it points to a non-existent
    *         source.
    */
   startupMigration:
-  function MU_startupMigrator(aProfileStartup, aMigratorKey) {
+  function MU_startupMigrator(aProfileStartup, aMigratorKey, aProfileToMigrate) {
     if (!aProfileStartup) {
       throw new Error("an profile-startup instance is required for startup-migration");
     }
@@ -693,8 +762,21 @@ this.MigrationUtils = Object.freeze({
       }
     }
 
+    let isRefresh = migrator && skipSourcePage &&
+                    migratorKey == AppConstants.MOZ_APP_NAME;
+
+    if (!isRefresh && AutoMigrate.enabled) {
+      try {
+        AutoMigrate.migrate(aProfileStartup, aMigratorKey, aProfileToMigrate);
+        return;
+      } catch (ex) {
+        // If automigration failed, continue and show the dialog.
+        Cu.reportError(ex);
+      }
+    }
+
     let migrationEntryPoint = this.MIGRATION_ENTRYPOINT_FIRSTRUN;
-    if (migrator && skipSourcePage && migratorKey == AppConstants.MOZ_APP_NAME) {
+    if (isRefresh) {
       migrationEntryPoint = this.MIGRATION_ENTRYPOINT_FXREFRESH;
     }
 
@@ -703,7 +785,8 @@ this.MigrationUtils = Object.freeze({
       migratorKey,
       migrator,
       aProfileStartup,
-      skipSourcePage
+      skipSourcePage,
+      aProfileToMigrate,
     ];
     this.showMigrationWizard(null, params);
   },
@@ -716,6 +799,8 @@ this.MigrationUtils = Object.freeze({
     gProfileStartup = null;
     gMigrationBundle = null;
   },
+
+  gAvailableMigratorKeys,
 
   MIGRATION_ENTRYPOINT_UNKNOWN: 0,
   MIGRATION_ENTRYPOINT_FIRSTRUN: 1,

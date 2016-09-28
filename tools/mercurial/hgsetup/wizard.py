@@ -44,12 +44,16 @@ To begin, press the enter/return key.
 
 # This should match MODERN_MERCURIAL_VERSION in
 # python/mozboot/mozboot/base.py.
-OLDEST_NON_LEGACY_VERSION = LooseVersion('3.5.2')
+OLDEST_NON_LEGACY_VERSION = LooseVersion('3.7.3')
 LEGACY_MERCURIAL = '''
 You are running an out of date Mercurial client (%s).
 
 For a faster and better Mercurial experience, we HIGHLY recommend you
 upgrade.
+
+Legacy versions of Mercurial have known security vulnerabilities. Failure
+to upgrade may leave you exposed. You are highly encouraged to upgrade
+in case you aren't running a patched version.
 '''.strip()
 
 MISSING_USERNAME = '''
@@ -67,18 +71,6 @@ not configured to produce patches in that format.
 (Relevant config options: diff.git, diff.showfunc, diff.unified)
 '''.strip()
 
-MQ_INFO = '''
-The mq extension manages patches as separate files. It provides an
-alternative to the recommended bookmark-based development workflow.
-
-If you are a newcomer to Mercurial or are coming from Git, it is
-recommended to avoid mq.
-
-(Relevant config option: extensions.mq)
-
-Would you like to activate the mq extension
-'''.strip()
-
 BZEXPORT_INFO = '''
 If you plan on uploading patches to Mozilla, there is an extension called
 bzexport that makes it easy to upload patches from the command line via the
@@ -90,39 +82,12 @@ https://hg.mozilla.org/hgcustom/version-control-tools/file/default/hgext/bzexpor
 Would you like to activate bzexport
 '''.strip()
 
-MQEXT_INFO = '''
-The mqext extension adds a number of features, including automatically committing
-changes to your mq patch queue. More info is available at
-https://hg.mozilla.org/hgcustom/version-control-tools/file/default/hgext/mqext/README.txt
-
-(Relevant config option: extensions.mqext)
-
-Would you like to activate mqext
-'''.strip()
-
-QIMPORTBZ_INFO = '''
-The qimportbz extension
-(https://hg.mozilla.org/hgcustom/version-control-tools/file/default/hgext/qimportbz/README) makes it possible to
-import patches from Bugzilla using a friendly bz:// URL handler. e.g.
-|hg qimport bz://123456|.
-
-(Relevant config option: extensions.qimportbz)
-
-Would you like to activate qimportbz
-'''.strip()
-
-QNEWCURRENTUSER_INFO = '''
-The mercurial queues command |hg qnew|, which creates new patches in your patch
-queue does not set patch author information by default. Author information
-should be included when uploading for review.
-'''.strip()
-
 FINISHED = '''
 Your Mercurial should now be properly configured and recommended extensions
 should be up to date!
 '''.strip()
 
-REVIEWBOARD_MINIMUM_VERSION = LooseVersion('3.3')
+REVIEWBOARD_MINIMUM_VERSION = LooseVersion('3.5')
 
 REVIEWBOARD_INCOMPATIBLE = '''
 Your Mercurial is too old to use the reviewboard extension, which is necessary
@@ -164,7 +129,7 @@ if you have enabled 2 Factor Authentication in Bugzilla.
 All consumers formerly looking at these options should support API Keys.
 '''.lstrip()
 
-BZPOST_MINIMUM_VERSION = LooseVersion('3.3')
+BZPOST_MINIMUM_VERSION = LooseVersion('3.5')
 
 BZPOST_INFO = '''
 The bzpost extension automatically records the URLs of pushed commits to
@@ -175,7 +140,7 @@ referenced Bugzilla bugs after push.
 Would you like to activate bzpost
 '''.strip()
 
-FIREFOXTREE_MINIMUM_VERSION = LooseVersion('3.3')
+FIREFOXTREE_MINIMUM_VERSION = LooseVersion('3.5')
 
 FIREFOXTREE_INFO = '''
 The firefoxtree extension makes interacting with the multiple Firefox
@@ -201,7 +166,7 @@ b) perform head/bookmark-based development (as opposed to mq)
 Would you like to activate firefoxtree
 '''.strip()
 
-PUSHTOTRY_MINIMUM_VERSION = LooseVersion('3.3')
+PUSHTOTRY_MINIMUM_VERSION = LooseVersion('3.5')
 
 PUSHTOTRY_INFO = '''
 The push-to-try extension generates a temporary commit with a given
@@ -261,19 +226,19 @@ Would you like to install the `hg wip` alias?
 '''.strip()
 
 HGWATCHMAN_MINIMUM_VERSION = LooseVersion('3.5.2')
+FSMONITOR_MINIMUM_VERSION = LooseVersion('3.8')
 
-HGWATCHMAN_INFO = '''
-The hgwatchman extension integrates the watchman filesystem watching
+FSMONITOR_INFO = '''
+Filesystem monitor integrates the watchman filesystem watching
 tool with Mercurial. Commands like `hg status`, `hg diff`, and
 `hg commit` that need to examine filesystem state can query watchman
 and obtain filesystem state nearly instantaneously. The result is much
 faster command execution.
 
-When installed, the hgwatchman extension will launch a background
-watchman file watching daemon for accessed Mercurial repositories. It
-should "just work."
+When enabled, the filesystem monitor tool will launch a background
+watchman file watching daemon for accessed Mercurial repositories.
 
-Would you like to install hgwatchman
+Would you like to enable filesystem monitor tool
 '''.strip()
 
 FILE_PERMISSIONS_WARNING = '''
@@ -392,27 +357,32 @@ class MercurialSetupWizard(object):
 
         # hgwatchman is provided by MozillaBuild and we don't yet support
         # Linux/BSD.
+        # Note that the hgwatchman project has been renamed to fsmonitor and has
+        # been moved into Mercurial core, as of version 3.8. So, if your Mercurial
+        # version is modern enough (>=3.8), you could set fsmonitor in hgrc file
+        # directly.
         if ('hgwatchman' not in c.extensions
             and sys.platform.startswith('darwin')
             and hg_version >= HGWATCHMAN_MINIMUM_VERSION
-            and self._prompt_yn(HGWATCHMAN_INFO)):
-            # Unlike other extensions, we need to run an installer
-            # to compile a Python C extension.
-            try:
-                subprocess.check_output(
-                    ['make', 'local'],
-                    cwd=self.updater.hgwatchman_dir,
-                    stderr=subprocess.STDOUT)
+            and self._prompt_yn(FSMONITOR_INFO)):
+            if (hg_version >= FSMONITOR_MINIMUM_VERSION):
+                c.activate_extension('fsmonitor')
+            else:
+                # Unlike other extensions, we need to run an installer
+                # to compile a Python C extension.
+                try:
+                    subprocess.check_output(
+                        ['make', 'local'],
+                        cwd=self.updater.hgwatchman_dir,
+                        stderr=subprocess.STDOUT)
 
-                ext_path = os.path.join(self.updater.hgwatchman_dir,
-                                        'hgwatchman')
-                if self.can_use_extension(c, 'hgwatchman', ext_path):
-                    c.activate_extension('hgwatchman', ext_path)
-            except subprocess.CalledProcessError as e:
-                print('Error compiling hgwatchman; will not install hgwatchman')
-                print(e.output)
-
-        self.prompt_native_extension(c, 'mq', MQ_INFO)
+                    ext_path = os.path.join(self.updater.hgwatchman_dir,
+                                            'hgwatchman')
+                    if self.can_use_extension(c, 'hgwatchman', ext_path):
+                        c.activate_extension('hgwatchman', ext_path)
+                except subprocess.CalledProcessError as e:
+                    print('Error compiling hgwatchman; will not install hgwatchman')
+                    print(e.output)
 
         if 'reviewboard' not in c.extensions:
             if hg_version < REVIEWBOARD_MINIMUM_VERSION:
@@ -449,25 +419,6 @@ class MercurialSetupWizard(object):
         if not c.have_wip():
             if self._prompt_yn(WIP_INFO):
                 c.install_wip_alias()
-
-        if 'mq' in c.extensions:
-            self.prompt_external_extension(c, 'mqext', MQEXT_INFO)
-
-            if 'mqext' in c.extensions and not c.have_mqext_autocommit_mq():
-                if self._prompt_yn('Would you like to configure mqext to '
-                    'automatically commit changes as you modify patches'):
-                    c.ensure_mqext_autocommit_mq()
-                    print('Configured mqext to auto-commit.\n')
-
-            self.prompt_external_extension(c, 'qimportbz', QIMPORTBZ_INFO)
-
-            if not c.have_qnew_currentuser_default():
-                print(QNEWCURRENTUSER_INFO)
-                if self._prompt_yn('Would you like qnew to set patch author by '
-                                   'default'):
-                    c.ensure_qnew_currentuser_default()
-                    print('Configured qnew to set patch author by default.')
-                    print('')
 
         if 'reviewboard' in c.extensions or 'bzpost' in c.extensions:
             bzuser, bzpass, bzuserid, bzcookie, bzapikey = c.get_bugzilla_credentials()

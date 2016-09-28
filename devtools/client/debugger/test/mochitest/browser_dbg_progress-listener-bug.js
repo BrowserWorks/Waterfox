@@ -16,7 +16,11 @@ const TAB_URL = EXAMPLE_URL + "doc_inline-script.html";
 function test() {
   installListener();
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -29,14 +33,14 @@ function test() {
 }
 
 function testPause() {
-  waitForSourceAndCaretAndScopes(gPanel, ".html", 16).then(() => {
+  let onCaretUpdated = waitForCaretUpdated(gPanel, 16);
+  callInTab(gTab, "runDebuggerStatement");
+  onCaretUpdated.then(() => {
     is(gDebugger.gThreadClient.state, "paused",
       "The debugger statement was reached.");
 
     resumeDebuggerThenCloseAndFinish(gPanel);
   });
-
-  callInTab(gTab, "runDebuggerStatement");
 }
 
 // This is taken almost verbatim from bug 771655.
@@ -44,7 +48,7 @@ function installListener() {
   if ("_testPL" in window) {
     gOldListener = _testPL;
 
-    Cc['@mozilla.org/docloaderservice;1']
+    Cc["@mozilla.org/docloaderservice;1"]
       .getService(Ci.nsIWebProgress)
       .removeProgressListener(_testPL);
   }
@@ -52,26 +56,26 @@ function installListener() {
   window._testPL = {
     START_DOC: Ci.nsIWebProgressListener.STATE_START |
                Ci.nsIWebProgressListener.STATE_IS_DOCUMENT,
-    onStateChange: function(wp, req, stateFlags, status) {
+    onStateChange: function (wp, req, stateFlags, status) {
       if ((stateFlags & this.START_DOC) === this.START_DOC) {
         // This DOMWindow access triggers the unload event.
         wp.DOMWindow;
       }
     },
-    QueryInterface: function(iid) {
+    QueryInterface: function (iid) {
       if (iid.equals(Ci.nsISupportsWeakReference) ||
           iid.equals(Ci.nsIWebProgressListener))
         return this;
       throw Cr.NS_ERROR_NO_INTERFACE;
     }
-  }
+  };
 
-  Cc['@mozilla.org/docloaderservice;1']
+  Cc["@mozilla.org/docloaderservice;1"]
     .getService(Ci.nsIWebProgress)
     .addProgressListener(_testPL, Ci.nsIWebProgress.NOTIFY_STATE_REQUEST);
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   if (gOldListener) {
     window._testPL = gOldListener;
   } else {

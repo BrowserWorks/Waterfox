@@ -13,6 +13,7 @@
  * https://dvcs.w3.org/hg/webperf/raw-file/tip/specs/NavigationTiming/Overview.html
  * https://dvcs.w3.org/hg/webcrypto-api/raw-file/tip/spec/Overview.html
  * http://dvcs.w3.org/hg/speech-api/raw-file/tip/speechapi.html
+ * https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
  */
 
 interface ApplicationCache;
@@ -23,7 +24,7 @@ interface nsIDOMCrypto;
 typedef any Transferable;
 
 // http://www.whatwg.org/specs/web-apps/current-work/
-[PrimaryGlobal, NeedResolve]
+[PrimaryGlobal, LegacyUnenumerableNamedProperties, NeedResolve]
 /*sealed*/ interface Window : EventTarget {
   // the current browsing context
   [Unforgeable, Constant, StoreInSlot,
@@ -87,6 +88,12 @@ typedef any Transferable;
 };
 Window implements GlobalEventHandlers;
 Window implements WindowEventHandlers;
+
+[NoInterfaceObject, Exposed=(Window)]
+interface AppInstallEventHandlersMixin {
+  attribute EventHandler oninstall;
+};
+Window implements AppInstallEventHandlersMixin;
 
 // http://www.whatwg.org/specs/web-apps/current-work/
 [NoInterfaceObject, Exposed=(Window,Worker)]
@@ -412,10 +419,9 @@ partial interface Window {
 };
 #endif
 
-// ConsoleAPI
+// https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
 partial interface Window {
-  [Replaceable, GetterThrows]
-  readonly attribute Console console;
+  readonly attribute boolean isSecureContext;
 };
 
 #ifdef HAVE_SIDEBAR

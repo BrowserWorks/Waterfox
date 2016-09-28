@@ -93,7 +93,6 @@ add_task(function* test_notification_ack_data_setup() {
 
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -246,7 +245,7 @@ add_task(function* test_notification_ack_data() {
 
   let sendAndReceive = testData => {
     let messageReceived = testData.receive ? promiseObserverNotification(PushServiceComponent.pushTopic, (subject, data) => {
-      let notification = subject.QueryInterface(Ci.nsIPushMessage);
+      let notification = subject.QueryInterface(Ci.nsIPushMessage).data;
       equal(notification.text(), testData.receive.data,
             'Check data for notification ' + testData.version);
       equal(data, testData.receive.scope,

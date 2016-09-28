@@ -4,7 +4,9 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+import __main__
 import argparse
+import json
 import logging
 import mozpack.path as mozpath
 import os
@@ -24,10 +26,17 @@ from mach.decorators import (
     Command,
 )
 
+ESLINT_PACKAGES = [
+    "eslint@2.9.0",
+    "eslint-plugin-html@1.4.0",
+    "eslint-plugin-mozilla@0.0.3",
+    "eslint-plugin-react@4.2.3"
+]
+
 ESLINT_NOT_FOUND_MESSAGE = '''
 Could not find eslint!  We looked at the --binary option, at the ESLINT
-environment variable, and then at your path.  Install eslint and needed plugins
-with
+environment variable, and then at your local node_modules path. Please Install
+eslint and needed plugins with:
 
 mach eslint --setup
 
@@ -202,6 +211,8 @@ class MachCommands(MachCommandBase):
     def eslint(self, setup, ext=None, binary=None, args=None):
         '''Run eslint.'''
 
+        module_path = self.get_eslint_module_path()
+
         # eslint requires at least node 4.2.3
         nodePath = self.getNodeOrNpmPath("node", LooseVersion("4.2.3"))
         if not nodePath:
@@ -210,24 +221,35 @@ class MachCommands(MachCommandBase):
         if setup:
             return self.eslint_setup()
 
+        npmPath = self.getNodeOrNpmPath("npm")
+        if not npmPath:
+            return 1
+
+        if self.eslintModuleHasIssues():
+            install = self._prompt_yn("\nContinuing will automatically fix "
+                                      "these issues. Would you like to "
+                                      "continue")
+            if install:
+                self.eslint_setup()
+            else:
+                return 1
+
+        # Valid binaries are:
+        #  - Any provided by the binary argument.
+        #  - Any pointed at by the ESLINT environmental variable.
+        #  - Those provided by mach eslint --setup.
+        #
+        #  eslint --setup installs some mozilla specific plugins and installs
+        #  all node modules locally. This is the preferred method of
+        #  installation.
+
         if not binary:
             binary = os.environ.get('ESLINT', None)
+
             if not binary:
-                try:
-                    binary = which.which('eslint')
-                except which.WhichError:
-                    npmPath = self.getNodeOrNpmPath("npm")
-                    if npmPath:
-                        try:
-                            output = subprocess.check_output([npmPath, "bin", "-g"],
-                                                             stderr=subprocess.STDOUT)
-                            if minversion:
-                                base = output.split("\n").strip()
-                                binary = os.path.join(base, "eslint")
-                                if not os.path.is_file(binary):
-                                    binary = None
-                        except (subprocess.CalledProcessError, WindowsError):
-                            pass
+                binary = os.path.join(module_path, "node_modules", ".bin", "eslint")
+                if not os.path.isfile(binary):
+                    binary = None
 
         if not binary:
             print(ESLINT_NOT_FOUND_MESSAGE)
@@ -264,44 +286,48 @@ class MachCommands(MachCommandBase):
         guide you through an interactive wizard helping you configure
         eslint for optimal use on Mozilla projects.
         """
+        orig_cwd = os.getcwd()
         sys.path.append(os.path.dirname(__file__))
+
+        module_path = self.get_eslint_module_path()
+
+        # npm sometimes fails to respect cwd when it is run using check_call so
+        # we manually switch folders here instead.
+        os.chdir(module_path)
 
         npmPath = self.getNodeOrNpmPath("npm")
         if not npmPath:
             return 1
 
-        # Install eslint 1.10.3.
-        # Note that that's the version currently compatible with the mozilla
-        # eslint plugin.
-        success = self.callProcess("eslint",
-                                   [npmPath, "install", "eslint@2.8.0", "-g"])
-        if not success:
-            return 1
+        # Install eslint and necessary plugins.
+        for pkg in ESLINT_PACKAGES:
+            name, version = pkg.split("@")
+            success = False
 
-        # Install eslint-plugin-mozilla.
-        success = self.callProcess("eslint-plugin-mozilla",
-                                   [npmPath, "link"],
-                                   "testing/eslint-plugin-mozilla")
-        if not success:
-            return 1
+            if self.node_package_installed(pkg, cwd=module_path):
+                success = True
+            else:
+                if pkg.startswith("eslint-plugin-mozilla"):
+                    cmd = [npmPath, "install",
+                           os.path.join(module_path, "eslint-plugin-mozilla")]
+                else:
+                    cmd = [npmPath, "install", pkg]
 
-        # Install eslint-plugin-html.
-        success = self.callProcess("eslint-plugin-html",
-                                   [npmPath, "install", "eslint-plugin-html@1.4.0", "-g"])
-        if not success:
-            return 1
+                print("Installing %s v%s using \"%s\"..."
+                      % (name, version, " ".join(cmd)))
+                success = self.callProcess(pkg, cmd)
 
-        # Install eslint-plugin-react.
-        success = self.callProcess("eslint-plugin-react",
-                                   [npmPath, "install", "eslint-plugin-react@4.2.3", "-g"])
-        if not success:
-            return 1
+            if not success:
+                return 1
+
+        eslint_path = os.path.join(module_path, "node_modules", ".bin", "eslint")
 
         print("\nESLint and approved plugins installed successfully!")
+        print("\nNOTE: Your local eslint binary is at %s\n" % eslint_path)
+
+        os.chdir(orig_cwd)
 
     def callProcess(self, name, cmd, cwd=None):
-        print("\nInstalling %s using \"%s\"..." % (name, " ".join(cmd)))
-
         try:
             with open(os.devnull, "w") as fnull:
                 subprocess.check_call(cmd, cwd=cwd, stdout=fnull)
@@ -314,6 +340,43 @@ class MachCommands(MachCommandBase):
             return False
 
         return True
+
+    def eslintModuleHasIssues(self):
+        has_issues = False
+        node_module_path = os.path.join(self.get_eslint_module_path(), "node_modules")
+
+        for pkg in ESLINT_PACKAGES:
+            name, req_version = pkg.split("@")
+            path = os.path.join(node_module_path, name, "package.json")
+
+            if not os.path.exists(path):
+                print("%s v%s needs to be installed locally." % (name, req_version))
+                has_issues = True
+                continue
+
+            data = json.load(open(path))
+
+            if data["version"] != req_version:
+                print("%s v%s should be v%s." % (name, version, req_version))
+                has_issues = True
+
+        return has_issues
+
+    def node_package_installed(self, package_name="", globalInstall=False, cwd=None):
+        try:
+            npmPath = self.getNodeOrNpmPath("npm")
+
+            cmd = [npmPath, "ls", "--parseable", package_name]
+
+            if globalInstall:
+                cmd.append("-g")
+
+            with open(os.devnull, "w") as fnull:
+                subprocess.check_call(cmd, stdout=fnull, stderr=fnull, cwd=cwd)
+
+            return True
+        except subprocess.CalledProcessError:
+            return False
 
     def getPossibleNodePathsWin(self):
         """
@@ -376,5 +439,32 @@ class MachCommands(MachCommandBase):
                 version = LooseVersion(version_str.lstrip('v'))
                 return version >= minversion
             return True
-        except (subprocess.CalledProcessError, WindowsError):
+        except (subprocess.CalledProcessError, OSError):
             return False
+
+    def get_project_root(self):
+        fullpath = os.path.abspath(sys.modules['__main__'].__file__)
+        return os.path.dirname(fullpath)
+
+    def get_eslint_module_path(self):
+        return os.path.join(self.get_project_root(), "testing", "eslint")
+
+    def _prompt_yn(self, msg):
+        if not sys.stdin.isatty():
+            return False
+
+        print('%s? [Y/n]' % msg)
+
+        while True:
+            choice = raw_input().lower().strip()
+
+            if not choice:
+                return True
+
+            if choice in ('y', 'yes'):
+                return True
+
+            if choice in ('n', 'no'):
+                return False
+
+            print('Must reply with one of {yes, no, y, n}.')

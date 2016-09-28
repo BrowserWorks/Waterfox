@@ -24,12 +24,13 @@
 #include "mozilla/plugins/PluginWidgetParent.h"
 #include "mozilla/EventStateManager.h"
 #include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/DataSurfaceHelpers.h"
+#include "mozilla/gfx/GPUProcessManager.h"
 #include "mozilla/Hal.h"
 #include "mozilla/IMEStateManager.h"
 #include "mozilla/ipc/DocumentRendererParent.h"
 #include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 #include "mozilla/layers/AsyncDragMetrics.h"
-#include "mozilla/layers/CompositorBridgeParent.h"
 #include "mozilla/layers/InputAPZContext.h"
 #include "mozilla/layout/RenderFrameParent.h"
 #include "mozilla/LookAndFeel.h"
@@ -85,7 +86,6 @@
 #include "nsNetCID.h"
 #include "nsIAuthInformation.h"
 #include "nsIAuthPromptCallback.h"
-#include "SourceSurfaceRawData.h"
 #include "nsAuthInformationHolder.h"
 #include "nsICancelable.h"
 #include "gfxPrefs.h"
@@ -105,12 +105,13 @@ using namespace mozilla::layout;
 using namespace mozilla::services;
 using namespace mozilla::widget;
 using namespace mozilla::jsipc;
+using namespace mozilla::gfx;
 
 // The flags passed by the webProgress notifications are 16 bits shifted
 // from the ones registered by webProgressListeners.
 #define NOTIFY_FLAG_SHIFT 16
 
-class OpenFileAndSendFDRunnable : public nsRunnable
+class OpenFileAndSendFDRunnable : public mozilla::Runnable
 {
     const nsString mPath;
     RefPtr<TabParent> mTabParent;
@@ -696,13 +697,6 @@ TabParent::SendLoadRemoteScript(const nsString& aURL,
   return PBrowserParent::SendLoadRemoteScript(aURL, aRunInGlobalScope);
 }
 
-bool
-TabParent::InitBrowserConfiguration(const nsCString& aURI,
-                                    BrowserConfiguration& aConfiguration)
-{
-  return ContentParent::GetBrowserConfiguration(aURI, aConfiguration);
-}
-
 void
 TabParent::LoadURL(nsIURI* aURI)
 {
@@ -730,13 +724,7 @@ TabParent::LoadURL(nsIURI* aURI)
     }
     mSendOfflineStatus = false;
 
-    // This object contains the configuration for this new app.
-    BrowserConfiguration configuration;
-    if (NS_WARN_IF(!InitBrowserConfiguration(spec, configuration))) {
-      return;
-    }
-
-    Unused << SendLoadURL(spec, configuration, GetShowInfo());
+    Unused << SendLoadURL(spec, GetShowInfo());
 
     // If this app is a packaged app then we can speed startup by sending over
     // the file descriptor for the "application.zip" file that it will
@@ -877,7 +865,8 @@ TabParent::RecvSetDimensions(const uint32_t& aFlags,
 
   if (aFlags & nsIEmbeddingSiteWindow::DIM_FLAGS_POSITION &&
       aFlags & nsIEmbeddingSiteWindow::DIM_FLAGS_SIZE_OUTER) {
-    treeOwnerAsWin->SetPositionAndSize(x, y, cx, cy, true);
+    treeOwnerAsWin->SetPositionAndSize(x, y, cx, cy,
+                                       nsIBaseWindow::eRepaint);
     return true;
   }
 
@@ -995,12 +984,12 @@ TabParent::ThemeChanged()
 }
 
 void
-TabParent::HandleAccessKey(nsTArray<uint32_t>& aCharCodes,
-                           const bool& aIsTrusted,
+TabParent::HandleAccessKey(const WidgetKeyboardEvent& aEvent,
+                           nsTArray<uint32_t>& aCharCodes,
                            const int32_t& aModifierMask)
 {
   if (!mIsDestroyed) {
-    Unused << SendHandleAccessKey(aCharCodes, aIsTrusted, aModifierMask);
+    Unused << SendHandleAccessKey(aEvent, aCharCodes, aModifierMask);
   }
 }
 
@@ -1254,7 +1243,7 @@ bool TabParent::SendRealMouseEvent(WidgetMouseEvent& event)
   ApzAwareEventRoutingToChild(&guid, &blockId, nullptr);
 
   if (eMouseMove == event.mMessage) {
-    if (event.reason == WidgetMouseEvent::eSynthesized) {
+    if (event.mReason == WidgetMouseEvent::eSynthesized) {
       return SendSynthMouseMoveEvent(event, guid, blockId);
     } else {
       return SendRealMouseMoveEvent(event, guid, blockId);
@@ -1741,12 +1730,11 @@ TabParent::RecvSetCustomCursor(const nsCString& aCursorData,
     if (mTabSetsCursor) {
       const gfx::IntSize size(aWidth, aHeight);
 
-      RefPtr<gfx::DataSourceSurface> customCursor = new mozilla::gfx::SourceSurfaceRawData();
-      mozilla::gfx::SourceSurfaceRawData* raw = static_cast<mozilla::gfx::SourceSurfaceRawData*>(customCursor.get());
-      raw->InitWrappingData(
-        reinterpret_cast<uint8_t*>(const_cast<nsCString&>(aCursorData).BeginWriting()),
-        size, aStride, static_cast<mozilla::gfx::SurfaceFormat>(aFormat), false);
-      raw->GuaranteePersistance();
+      RefPtr<gfx::DataSourceSurface> customCursor =
+          gfx::CreateDataSourceSurfaceFromData(size,
+                                               static_cast<gfx::SurfaceFormat>(aFormat),
+                                               reinterpret_cast<const uint8_t*>(aCursorData.BeginReading()),
+                                               aStride);
 
       RefPtr<gfxDrawable> drawable = new gfxSurfaceDrawable(customCursor, size);
       nsCOMPtr<imgIContainer> cursorImage(image::ImageOps::CreateFromDrawable(drawable));
@@ -2132,6 +2120,31 @@ TabParent::RecvDispatchAfterKeyboardEvent(const WidgetKeyboardEvent& aEvent)
       localEvent.mMessage != eKeyPress) {
     presShell->DispatchAfterKeyboardEvent(mFrameElement, localEvent,
                                           aEvent.DefaultPrevented());
+  }
+
+  return true;
+}
+
+bool
+TabParent::RecvAccessKeyNotHandled(const WidgetKeyboardEvent& aEvent)
+{
+  NS_ENSURE_TRUE(mFrameElement, true);
+
+  WidgetKeyboardEvent localEvent(aEvent);
+  localEvent.mMessage = eAccessKeyNotFound;
+  localEvent.mAccessKeyForwardedToChild = false;
+
+  // Here we convert the WidgetEvent that we received to an nsIDOMEvent
+  // to be able to dispatch it to the <browser> element as the target element.
+  nsIDocument* doc = mFrameElement->OwnerDoc();
+  nsIPresShell* presShell = doc->GetShell();
+  NS_ENSURE_TRUE(presShell, true);
+
+  if (presShell->CanDispatchEvent()) {
+    nsPresContext* presContext = presShell->GetPresContext();
+    NS_ENSURE_TRUE(presContext, true);
+
+    EventDispatcher::Dispatch(mFrameElement, presContext, &localEvent);
   }
 
   return true;
@@ -2728,6 +2741,9 @@ TabParent::RecvBrowserFrameOpenWindow(PBrowserParent* aOpener,
                                         this, aRenderFrame, aURL, aName, aFeatures,
                                         aTextureFactoryIdentifier, aLayersId);
   *aOutWindowOpened = (opened == BrowserElementParent::OPEN_WINDOW_ADDED);
+  if (!*aOutWindowOpened) {
+    Destroy();
+  }
   return true;
 }
 
@@ -2834,6 +2850,8 @@ TabParent::GetUseAsyncPanZoom(bool* useAsyncPanZoom)
 NS_IMETHODIMP
 TabParent::SetDocShellIsActive(bool isActive)
 {
+  // docshell is consider prerendered only if not active yet
+  mIsPrerendered &= !isActive;
   mDocShellIsActive = isActive;
   Unused << SendSetDocShellIsActive(isActive, true);
   return NS_OK;
@@ -2847,8 +2865,17 @@ TabParent::GetDocShellIsActive(bool* aIsActive)
 }
 
 NS_IMETHODIMP
+TabParent::GetIsPrerendered(bool* aIsPrerendered)
+{
+  *aIsPrerendered = mIsPrerendered;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 TabParent::SetDocShellIsActiveAndForeground(bool isActive)
 {
+  // docshell is consider prerendered only if not active yet
+  mIsPrerendered &= !isActive;
   mDocShellIsActive = isActive;
   Unused << SendSetDocShellIsActive(isActive, false);
   return NS_OK;
@@ -2902,7 +2929,7 @@ TabParent::NavigateByKey(bool aForward, bool aForDocumentNavigation)
 }
 
 class LayerTreeUpdateRunnable final
-  : public nsRunnable
+  : public mozilla::Runnable
 {
   RefPtr<LayerTreeUpdateObserver> mUpdateObserver;
   bool mActive;
@@ -2942,7 +2969,7 @@ TabParent::RequestNotifyLayerTreeReady()
   if (!frame || !frame->IsInitted()) {
     mNeedLayerTreeReadyNotification = true;
   } else {
-    CompositorBridgeParent::RequestNotifyLayerTreeReady(
+    GPUProcessManager::Get()->RequestNotifyLayerTreeReady(
       frame->GetLayersId(),
       mLayerUpdateObserver);
   }
@@ -2957,7 +2984,7 @@ TabParent::RequestNotifyLayerTreeCleared()
     return false;
   }
 
-  CompositorBridgeParent::RequestNotifyLayerTreeCleared(
+  GPUProcessManager::Get()->RequestNotifyLayerTreeCleared(
     frame->GetLayersId(),
     mLayerUpdateObserver);
   return true;
@@ -2998,10 +3025,10 @@ TabParent::SwapLayerTreeObservers(TabParent* aOther)
     return;
   }
 
-  // The swap that happens for the observers in CompositorBridgeParent has to
+  // The swap that happens for the observers in GPUProcessManager has to
   // happen in a lock so that an update being processed on the compositor thread
   // can't grab the layer update observer for the wrong tab parent.
-  CompositorBridgeParent::SwapLayerTreeObservers(
+  GPUProcessManager::Get()->SwapLayerTreeObservers(
     rfp->GetLayersId(),
     otherRfp->GetLayersId());
 
@@ -3149,6 +3176,7 @@ public:
   NS_IMETHOD GetOriginAttributes(JS::MutableHandleValue) NO_IMPL
   NS_IMETHOD GetUseRemoteTabs(bool*) NO_IMPL
   NS_IMETHOD SetRemoteTabs(bool) NO_IMPL
+  NS_IMETHOD IsTrackingProtectionOn(bool*) NO_IMPL
 #undef NO_IMPL
 
 protected:
@@ -3191,7 +3219,7 @@ TabParent::RecvAsyncAuthPrompt(const nsCString& aUri,
 bool
 TabParent::RecvInvokeDragSession(nsTArray<IPCDataTransfer>&& aTransfers,
                                  const uint32_t& aAction,
-                                 const nsCString& aVisualDnDData,
+                                 const OptionalShmem& aVisualDnDData,
                                  const uint32_t& aWidth, const uint32_t& aHeight,
                                  const uint32_t& aStride, const uint8_t& aFormat,
                                  const int32_t& aDragAreaX, const int32_t& aDragAreaY)
@@ -3218,24 +3246,25 @@ TabParent::RecvInvokeDragSession(nsTArray<IPCDataTransfer>&& aTransfers,
     }
   }
 
-  if (aVisualDnDData.IsEmpty() ||
-      (aVisualDnDData.Length() < aHeight * aStride)) {
+  if (aVisualDnDData.type() == OptionalShmem::Tvoid_t ||
+      !aVisualDnDData.get_Shmem().IsReadable() ||
+      aVisualDnDData.get_Shmem().Size<char>() < aHeight * aStride) {
     mDnDVisualization = nullptr;
   } else {
     mDnDVisualization =
-      new mozilla::gfx::SourceSurfaceRawData();
-    mozilla::gfx::SourceSurfaceRawData* raw =
-      static_cast<mozilla::gfx::SourceSurfaceRawData*>(mDnDVisualization.get());
-    raw->InitWrappingData(
-      reinterpret_cast<uint8_t*>(const_cast<nsCString&>(aVisualDnDData).BeginWriting()),
-      mozilla::gfx::IntSize(aWidth, aHeight), aStride,
-      static_cast<mozilla::gfx::SurfaceFormat>(aFormat), false);
-    raw->GuaranteePersistance();
+        gfx::CreateDataSourceSurfaceFromData(gfx::IntSize(aWidth, aHeight),
+                                             static_cast<gfx::SurfaceFormat>(aFormat),
+                                             aVisualDnDData.get_Shmem().get<uint8_t>(),
+                                             aStride);
   }
   mDragAreaX = aDragAreaX;
   mDragAreaY = aDragAreaY;
 
   esm->BeginTrackingRemoteDragGesture(mFrameElement);
+
+  if (aVisualDnDData.type() == OptionalShmem::TShmem) {
+    Unused << DeallocShmem(aVisualDnDData);
+  }
 
   return true;
 }
@@ -3259,7 +3288,7 @@ TabParent::AddInitialDnDDataTo(DataTransfer* aDataTransfer)
         auto* parent = static_cast<BlobParent*>(item.data().get_PBlobParent());
         RefPtr<BlobImpl> impl = parent->GetBlobImpl();
         variant->SetAsISupports(impl);
-      } else if (item.data().type() == IPCDataTransferData::TnsCString) {
+      } else if (item.data().type() == IPCDataTransferData::TShmem) {
         if (nsContentUtils::IsFlavorImage(item.flavor())) {
           // An image! Get the imgIContainer for it and set it in the variant.
           nsCOMPtr<imgIContainer> imageContainer;
@@ -3271,8 +3300,11 @@ TabParent::AddInitialDnDDataTo(DataTransfer* aDataTransfer)
           }
           variant->SetAsISupports(imageContainer);
         } else {
-          variant->SetAsACString(item.data().get_nsCString());
+          Shmem data = item.data().get_Shmem();
+          variant->SetAsACString(nsDependentCString(data.get<char>(), data.Size<char>()));
         }
+
+        mozilla::Unused << DeallocShmem(item.data().get_Shmem());
       }
 
       // Using system principal here, since once the data is on parent process
@@ -3328,12 +3360,15 @@ TabParent::GetShowInfo()
       mFrameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::allowfullscreen) ||
       mFrameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::mozallowfullscreen);
     bool isPrivate = mFrameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::mozprivatebrowsing);
+    bool isTransparent =
+      nsContentUtils::IsChromeDoc(mFrameElement->OwnerDoc()) &&
+      mFrameElement->HasAttr(kNameSpaceID_None, nsGkAtoms::transparent);
     return ShowInfo(name, allowFullscreen, isPrivate, false,
-                    mDPI, mDefaultScale.scale);
+                    isTransparent, mDPI, mDefaultScale.scale);
   }
 
   return ShowInfo(EmptyString(), false, false, false,
-                  mDPI, mDefaultScale.scale);
+                  false, mDPI, mDefaultScale.scale);
 }
 
 void
@@ -3354,8 +3389,8 @@ TabParent::AudioChannelChangeNotification(nsPIDOMWindowOuter* aWindow,
       break;
     }
 
-    nsCOMPtr<nsPIDOMWindowOuter> win = window->GetScriptableParent();
-    if (window == win) {
+    nsCOMPtr<nsPIDOMWindowOuter> win = window->GetScriptableParentOrNull();
+    if (!win) {
       break;
     }
 
@@ -3376,6 +3411,22 @@ TabParent::RecvGetTabCount(uint32_t* aValue)
   NS_ENSURE_SUCCESS(rv, true);
 
   *aValue = tabCount;
+  return true;
+}
+
+bool
+TabParent::RecvLookUpDictionary(const nsString& aText,
+                                nsTArray<FontRange>&& aFontRangeArray,
+                                const bool& aIsVertical,
+                                const LayoutDeviceIntPoint& aPoint)
+{
+  nsCOMPtr<nsIWidget> widget = GetWidget();
+  if (!widget) {
+    return true;
+  }
+
+  widget->LookUpDictionary(aText, aFontRangeArray, aIsVertical,
+                           aPoint - GetChildProcessOffset());
   return true;
 }
 

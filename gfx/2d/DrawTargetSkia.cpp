@@ -30,6 +30,14 @@
 #include "skia/include/gpu/gl/GrGLInterface.h"
 #endif
 
+#ifdef MOZ_WIDGET_COCOA
+#include <ApplicationServices/ApplicationServices.h>
+#include "mozilla/Vector.h"
+#include "ScaledFontMac.h"
+#include "DrawTargetCG.h"
+#include "CGTextDrawing.h"
+#endif
+
 namespace mozilla {
 namespace gfx {
 
@@ -126,11 +134,28 @@ GetBitmapForSurface(SourceSurface* aSurface)
 
 DrawTargetSkia::DrawTargetSkia()
   : mSnapshot(nullptr)
+#ifdef MOZ_WIDGET_COCOA
+  , mCG(nullptr)
+  , mColorSpace(nullptr)
+  , mCanvasData(nullptr)
+  , mCGSize(0, 0)
+#endif
 {
 }
 
 DrawTargetSkia::~DrawTargetSkia()
 {
+#ifdef MOZ_WIDGET_COCOA
+  if (mCG) {
+    CGContextRelease(mCG);
+    mCG = nullptr;
+  }
+
+  if (mColorSpace) {
+    CGColorSpaceRelease(mColorSpace);
+    mColorSpace = nullptr;
+  }
+#endif
 }
 
 already_AddRefed<SourceSurface>
@@ -161,7 +186,7 @@ DrawTargetSkia::LockBits(uint8_t** aData, IntSize* aSize,
   /* Test if the canvas' device has accessible pixels first, as actually
    * accessing the pixels may trigger side-effects, even if it fails.
    */
-  if (!mCanvas->peekPixels(nullptr, nullptr)) {
+  if (!mCanvas->peekPixels(nullptr)) {
     return false;
   }
 
@@ -213,12 +238,12 @@ SetPaintPattern(SkPaint& aPaint, const Pattern& aPattern, Float aAlpha = 1.0)
 
         SkMatrix mat;
         GfxMatrixToSkiaMatrix(pat.mMatrix, mat);
-        SkShader* shader = SkGradientShader::CreateLinear(points,
-                                                          &stops->mColors.front(),
-                                                          &stops->mPositions.front(),
-                                                          stops->mCount,
-                                                          mode, 0, &mat);
-        SkSafeUnref(aPaint.setShader(shader));
+        sk_sp<SkShader> shader = SkGradientShader::MakeLinear(points,
+                                                              &stops->mColors.front(),
+                                                              &stops->mPositions.front(),
+                                                              stops->mCount,
+                                                              mode, 0, &mat);
+        aPaint.setShader(shader);
       }
       break;
     }
@@ -238,15 +263,15 @@ SetPaintPattern(SkPaint& aPaint, const Pattern& aPattern, Float aAlpha = 1.0)
 
         SkMatrix mat;
         GfxMatrixToSkiaMatrix(pat.mMatrix, mat);
-        SkShader* shader = SkGradientShader::CreateTwoPointConical(points[0],
-                                                                   SkFloatToScalar(pat.mRadius1),
-                                                                   points[1],
-                                                                   SkFloatToScalar(pat.mRadius2),
-                                                                   &stops->mColors.front(),
-                                                                   &stops->mPositions.front(),
-                                                                   stops->mCount,
-                                                                   mode, 0, &mat);
-        SkSafeUnref(aPaint.setShader(shader));
+        sk_sp<SkShader> shader = SkGradientShader::MakeTwoPointConical(points[0],
+                                                                       SkFloatToScalar(pat.mRadius1),
+                                                                       points[1],
+                                                                       SkFloatToScalar(pat.mRadius2),
+                                                                       &stops->mColors.front(),
+                                                                       &stops->mPositions.front(),
+                                                                       stops->mCount,
+                                                                       mode, 0, &mat);
+        aPaint.setShader(shader);
       }
       break;
     }
@@ -266,9 +291,9 @@ SetPaintPattern(SkPaint& aPaint, const Pattern& aPattern, Float aAlpha = 1.0)
       SkShader::TileMode xTileMode = ExtendModeToTileMode(pat.mExtendMode, Axis::X_AXIS);
       SkShader::TileMode yTileMode = ExtendModeToTileMode(pat.mExtendMode, Axis::Y_AXIS);
 
-      SkShader* shader = SkShader::CreateBitmapShader(bitmap, xTileMode, yTileMode, &mat);
-      SkSafeUnref(aPaint.setShader(shader));
-      if (pat.mFilter == Filter::POINT) {
+      sk_sp<SkShader> shader = SkShader::MakeBitmapShader(bitmap, xTileMode, yTileMode, &mat);
+      aPaint.setShader(shader);
+      if (pat.mSamplingFilter == SamplingFilter::POINT) {
         aPaint.setFilterQuality(kNone_SkFilterQuality);
       }
       break;
@@ -383,7 +408,7 @@ DrawTargetSkia::DrawSurface(SourceSurface *aSurface,
   SkBitmap bitmap = GetBitmapForSurface(aSurface);
 
   AutoPaintSetup paint(mCanvas.get(), aOptions, &aDest);
-  if (aSurfOptions.mFilter == Filter::POINT) {
+  if (aSurfOptions.mSamplingFilter == SamplingFilter::POINT) {
     paint.mPaint.setFilterQuality(kNone_SkFilterQuality);
   }
 
@@ -443,7 +468,7 @@ DrawTargetSkia::DrawSurfaceWithShadow(SourceSurface *aSurface,
   // to blur the image ourselves.
 
   SkPaint shadowPaint;
-  shadowPaint.setXfermode(paint.getXfermode());
+  shadowPaint.setXfermodeMode(GfxOpToSkiaOp(aOperator));
 
   IntPoint shadowDest = RoundedToInt(aDest + aOffset);
 
@@ -465,12 +490,12 @@ DrawTargetSkia::DrawSurfaceWithShadow(SourceSurface *aSurface,
 
     mCanvas->drawBitmap(blurMask, shadowDest.x, shadowDest.y, &shadowPaint);
   } else {
-    SkAutoTUnref<SkImageFilter> blurFilter(SkBlurImageFilter::Create(aSigma, aSigma));
-    SkAutoTUnref<SkColorFilter> colorFilter(
-      SkColorFilter::CreateModeFilter(ColorToSkColor(aColor, 1.0f), SkXfermode::kSrcIn_Mode));
+    sk_sp<SkImageFilter> blurFilter(SkBlurImageFilter::Make(aSigma, aSigma, nullptr));
+    sk_sp<SkColorFilter> colorFilter(
+      SkColorFilter::MakeModeFilter(ColorToSkColor(aColor, 1.0f), SkXfermode::kSrcIn_Mode));
 
-    shadowPaint.setImageFilter(blurFilter.get());
-    shadowPaint.setColorFilter(colorFilter.get());
+    shadowPaint.setImageFilter(blurFilter);
+    shadowPaint.setColorFilter(colorFilter);
 
     mCanvas->drawBitmap(bitmap, shadowDest.x, shadowDest.y, &shadowPaint);
   }
@@ -597,6 +622,380 @@ DrawTargetSkia::ShouldLCDRenderText(FontType aFontType, AntialiasMode aAntialias
   return (aAntialiasMode == AntialiasMode::SUBPIXEL);
 }
 
+#ifdef MOZ_WIDGET_COCOA
+class CGClipApply : public SkCanvas::ClipVisitor {
+public:
+  explicit CGClipApply(CGContextRef aCGContext)
+    : mCG(aCGContext) {}
+  void clipRect(const SkRect& aRect, SkRegion::Op op, bool antialias) override {
+    CGRect rect = CGRectMake(aRect.x(), aRect.y(), aRect.width(), aRect.height());
+    CGContextClipToRect(mCG, rect);
+  }
+
+  void clipRRect(const SkRRect& rrect, SkRegion::Op op, bool antialias) override {
+    SkPath path;
+    path.addRRect(rrect);
+    clipPath(path, op, antialias);
+  }
+
+  void clipPath(const SkPath& aPath, SkRegion::Op, bool antialias) override {
+    SkPath::Iter iter(aPath, true);
+    SkPoint source[4];
+    SkPath::Verb verb;
+    RefPtr<PathBuilderCG> pathBuilder =
+        new PathBuilderCG(GetFillRule(aPath.getFillType()));
+
+    while ((verb = iter.next(source)) != SkPath::kDone_Verb) {
+      switch (verb) {
+      case SkPath::kMove_Verb:
+      {
+        SkPoint dest = source[0];
+        pathBuilder->MoveTo(Point(dest.fX, dest.fY));
+        break;
+      }
+      case SkPath::kLine_Verb:
+      {
+        // The first point should be the end point of whatever
+        // verb we got to get here.
+        SkPoint second = source[1];
+        pathBuilder->LineTo(Point(second.fX, second.fY));
+        break;
+      }
+      case SkPath::kQuad_Verb:
+      {
+        SkPoint second = source[1];
+        SkPoint third = source[2];
+
+        pathBuilder->QuadraticBezierTo(Point(second.fX, second.fY),
+                                       Point(third.fX, third.fY));
+        break;
+      }
+      case SkPath::kCubic_Verb:
+      {
+        SkPoint second = source[1];
+        SkPoint third = source[2];
+        SkPoint fourth = source[2];
+
+        pathBuilder->BezierTo(Point(second.fX, second.fY),
+                              Point(third.fX, third.fY),
+                              Point(fourth.fX, fourth.fY));
+        break;
+      }
+      case SkPath::kClose_Verb:
+      {
+        pathBuilder->Close();
+        break;
+      }
+      default:
+      {
+        SkDEBUGFAIL("unknown verb");
+        break;
+      }
+      } // end switch
+    } // end while
+
+    RefPtr<Path> path = pathBuilder->Finish();
+    PathCG* cgPath = static_cast<PathCG*>(path.get());
+
+    // Weirdly, CoreGraphics clips empty paths as all shown
+    // but empty rects as all clipped.  We detect this situation and
+    // workaround it appropriately
+    if (CGPathIsEmpty(cgPath->GetPath())) {
+      CGContextClipToRect(mCG, CGRectZero);
+      return;
+    }
+
+    CGContextBeginPath(mCG);
+    CGContextAddPath(mCG, cgPath->GetPath());
+
+    if (cgPath->GetFillRule() == FillRule::FILL_EVEN_ODD) {
+      CGContextEOClip(mCG);
+    } else {
+      CGContextClip(mCG);
+    }
+  }
+
+private:
+  CGContextRef mCG;
+};
+
+/***
+ * We have to do a lot of work to draw glyphs with CG because
+ * CG assumes that the origin of rects are in the bottom left
+ * while every other DrawTarget assumes the top left is the origin.
+ * This means we have to transform the CGContext to have rects
+ * actually be applied in top left fashion. We do this by:
+ *
+ * 1) Translating the context up by the height of the canvas
+ * 2) Flipping the context by the Y axis so it's upside down.
+ *
+ * These two transforms put the origin in the top left.
+ * Transforms are better understood thinking about them from right to left order (mathematically).
+ *
+ * Consider a point we want to draw at (0, 10) in normal cartesian planes with
+ * a box of (100, 100). in CG terms, this would be at (0, 10).
+ * Positive Y values point up.
+ * In our DrawTarget terms, positive Y values point down, so (0, 10) would be
+ * at (0, 90) in cartesian plane terms. That means our point at (0, 10) in DrawTarget
+ * terms should end up at (0, 90). How does this work with the current transforms?
+ *
+ * Going right to left with the transforms, a CGPoint of (0, 10) has cartesian coordinates
+ * of (0, 10). The first flip of the Y axis puts the point now at (0, -10);
+ * Next, we translate the context up by the size of the canvas (Positive Y values go up in CG
+ * coordinates but down in our draw target coordinates). Since our canvas size is (100, 100),
+ * the resulting coordinate becomes (0, 90), which is what we expect from our DrawTarget code.
+ * These two transforms put the CG context equal to what every other DrawTarget expects.
+ *
+ * Next, we need two more transforms for actual text. IF we left the transforms as is,
+ * the text would be drawn upside down, so we need another flip of the Y axis
+ * to draw the text right side up. However, with only the flip, the text would be drawn
+ * in the wrong place. Thus we also have to invert the Y position of the glyphs to get them
+ * in the right place.
+ *
+ * Thus we have the following transforms:
+ * 1) Translation of the context up
+ * 2) Flipping the context around the Y axis
+ * 3) Flipping the context around the Y axis
+ * 4) Inverting the Y position of each glyph
+ *
+ * We cannot cancel out (2) and (3) as we have to apply the clips and transforms
+ * of DrawTargetSkia between (2) and (3).
+ *
+ * Consider the example letter P, drawn at (0, 20) in CG coordinates in a (100, 100) rect.
+ * Again, going right to left of the transforms. We'd get:
+ *
+ * 1) The letter P drawn at (0, -20) due to the inversion of the Y axis
+ * 2) The letter P upside down (b) at (0, 20) due to the second flip
+ * 3) The letter P right side up at (0, -20) due to the first flip
+ * 4) The letter P right side up at (0, 80) due to the translation
+ *
+ * tl;dr - CGRects assume origin is bottom left, DrawTarget rects assume top left.
+ */
+static bool
+SetupCGContext(DrawTargetSkia* aDT,
+               CGContextRef aCGContext,
+               RefPtrSkia<SkCanvas> aCanvas)
+{
+  // DrawTarget expects the origin to be at the top left, but CG
+  // expects it to be at the bottom left. Transform to set the origin to
+  // the top left. Have to set this before we do anything else.
+  // This is transform (1) up top
+  CGContextTranslateCTM(aCGContext, 0, aDT->GetSize().height);
+
+  // Transform (2) from the comments.
+  CGContextScaleCTM(aCGContext, 1, -1);
+
+  // Want to apply clips BEFORE the transform since the transform
+  // will apply to the clips we apply.
+  // CGClipApply applies clips in device space, so it would be a mistake
+  // to transform these clips.
+  CGClipApply clipApply(aCGContext);
+  aCanvas->replayClips(&clipApply);
+
+  CGContextConcatCTM(aCGContext, GfxMatrixToCGAffineTransform(aDT->GetTransform()));
+  return true;
+}
+
+static bool
+SetupCGGlyphs(CGContextRef aCGContext,
+              const GlyphBuffer& aBuffer,
+              Vector<CGGlyph,32>& aGlyphs,
+              Vector<CGPoint,32>& aPositions)
+{
+  // Flip again so we draw text in right side up. Transform (3) from the top
+  CGContextScaleCTM(aCGContext, 1, -1);
+
+  if (!aGlyphs.resizeUninitialized(aBuffer.mNumGlyphs) ||
+      !aPositions.resizeUninitialized(aBuffer.mNumGlyphs)) {
+    gfxDevCrash(LogReason::GlyphAllocFailedCG) << "glyphs/positions allocation failed";
+    return false;
+  }
+
+  for (unsigned int i = 0; i < aBuffer.mNumGlyphs; i++) {
+    aGlyphs[i] = aBuffer.mGlyphs[i].mIndex;
+
+    // Flip the y coordinates so that text ends up in the right spot after the (3) flip
+    // Inversion from (4) in the comments.
+    aPositions[i] = CGPointMake(aBuffer.mGlyphs[i].mPosition.x,
+                                -aBuffer.mGlyphs[i].mPosition.y);
+  }
+
+  return true;
+}
+// End long comment about transforms. SetupCGContext and SetupCGGlyphs should stay
+// next to each other.
+
+// The context returned from this method will have the origin
+// in the top left and will hvae applied all the neccessary clips
+// and transforms to the CGContext. See the comment above
+// SetupCGContext.
+CGContextRef
+DrawTargetSkia::BorrowCGContext(const DrawOptions &aOptions)
+{
+  int32_t stride;
+  SurfaceFormat format;
+  IntSize size;
+
+  uint8_t* aSurfaceData = nullptr;
+  if (!LockBits(&aSurfaceData, &size, &stride, &format)) {
+    NS_WARNING("Could not lock skia bits to wrap CG around");
+    return nullptr;
+  }
+
+  if ((aSurfaceData == mCanvasData) && mCG && (mCGSize == size)) {
+    // If our canvas data still points to the same data,
+    // we can reuse the CG Context
+    CGContextSaveGState(mCG);
+    CGContextSetAlpha(mCG, aOptions.mAlpha);
+    SetupCGContext(this, mCG, mCanvas);
+    return mCG;
+  }
+
+  if (!mColorSpace) {
+    mColorSpace = CGColorSpaceCreateDeviceRGB();
+  }
+
+  if (mCG) {
+    // Release the old CG context since it's no longer valid.
+    CGContextRelease(mCG);
+  }
+
+  mCanvasData = aSurfaceData;
+  mCGSize = size;
+
+  mCG = CGBitmapContextCreateWithData(mCanvasData,
+                                      mCGSize.width,
+                                      mCGSize.height,
+                                      8, /* bits per component */
+                                      stride,
+                                      mColorSpace,
+                                      kCGBitmapByteOrder32Host | kCGImageAlphaPremultipliedFirst,
+                                      NULL, /* Callback when released */
+                                      NULL);
+  if (!mCG) {
+    ReleaseBits(mCanvasData);
+    NS_WARNING("Could not create bitmap around skia data\n");
+    return nullptr;
+  }
+
+  CGContextSetAlpha(mCG, aOptions.mAlpha);
+  CGContextSetShouldAntialias(mCG, aOptions.mAntialiasMode != AntialiasMode::NONE);
+  CGContextSetShouldSmoothFonts(mCG, true);
+  CGContextSetTextDrawingMode(mCG, kCGTextFill);
+  CGContextSaveGState(mCG);
+  SetupCGContext(this, mCG, mCanvas);
+  return mCG;
+}
+
+void
+DrawTargetSkia::ReturnCGContext(CGContextRef aCGContext)
+{
+  MOZ_ASSERT(aCGContext == mCG);
+  ReleaseBits(mCanvasData);
+  CGContextRestoreGState(aCGContext);
+}
+
+static void
+SetFontColor(CGContextRef aCGContext, CGColorSpaceRef aColorSpace, const Pattern& aPattern)
+{
+  const Color& color = static_cast<const ColorPattern&>(aPattern).mColor;
+  CGColorRef textColor = ColorToCGColor(aColorSpace, color);
+  CGContextSetFillColorWithColor(aCGContext, textColor);
+  CGColorRelease(textColor);
+}
+
+/***
+ * We need this to support subpixel AA text on OS X in two cases:
+ * text in DrawTargets that are not opaque and text over vibrant backgrounds.
+ * Skia normally doesn't support subpixel AA text on transparent backgrounds.
+ * To get around this, we have to wrap the Skia bytes with a CGContext and ask
+ * CG to draw the text.
+ * In vibrancy cases, we have to use a private API,
+ * CGContextSetFontSmoothingBackgroundColor, which sets the expected
+ * background color the text will draw onto so that CG can render the text
+ * properly. After that, we have to go back and fixup the pixels
+ * such that their alpha values are correct.
+ */
+bool
+DrawTargetSkia::FillGlyphsWithCG(ScaledFont *aFont,
+                                 const GlyphBuffer &aBuffer,
+                                 const Pattern &aPattern,
+                                 const DrawOptions &aOptions,
+                                 const GlyphRenderingOptions *aRenderingOptions)
+{
+  MOZ_ASSERT(aFont->GetType() == FontType::MAC);
+  MOZ_ASSERT(aPattern.GetType() == PatternType::COLOR);
+
+  CGContextRef cgContext = BorrowCGContext(aOptions);
+  if (!cgContext) {
+    return false;
+  }
+
+  Vector<CGGlyph,32> glyphs;
+  Vector<CGPoint,32> positions;
+  if (!SetupCGGlyphs(cgContext, aBuffer, glyphs, positions)) {
+    ReturnCGContext(cgContext);
+    return false;
+  }
+
+  SetFontSmoothingBackgroundColor(cgContext, mColorSpace, aRenderingOptions);
+  SetFontColor(cgContext, mColorSpace, aPattern);
+
+  ScaledFontMac* macFont = static_cast<ScaledFontMac*>(aFont);
+  if (ScaledFontMac::CTFontDrawGlyphsPtr != nullptr) {
+    ScaledFontMac::CTFontDrawGlyphsPtr(macFont->mCTFont, glyphs.begin(),
+                                       positions.begin(),
+                                       aBuffer.mNumGlyphs, cgContext);
+  } else {
+    CGContextSetFont(cgContext, macFont->mFont);
+    CGContextSetFontSize(cgContext, macFont->mSize);
+    CGContextShowGlyphsAtPositions(cgContext, glyphs.begin(), positions.begin(),
+                                   aBuffer.mNumGlyphs);
+  }
+
+  // Calculate the area of the text we just drew
+  CGRect *bboxes = new CGRect[aBuffer.mNumGlyphs];
+  CTFontGetBoundingRectsForGlyphs(macFont->mCTFont, kCTFontDefaultOrientation,
+                                  glyphs.begin(), bboxes, aBuffer.mNumGlyphs);
+  CGRect extents = ComputeGlyphsExtents(bboxes, positions.begin(), aBuffer.mNumGlyphs, 1.0f);
+  delete[] bboxes;
+
+  CGAffineTransform cgTransform = CGContextGetCTM(cgContext);
+  extents = CGRectApplyAffineTransform(extents, cgTransform);
+
+  // Have to round it out to ensure we fully cover all pixels
+  Rect rect(extents.origin.x, extents.origin.y, extents.size.width, extents.size.height);
+  rect.RoundOut();
+  extents = CGRectMake(rect.x, rect.y, rect.width, rect.height);
+
+  EnsureValidPremultipliedData(cgContext, extents);
+
+  ReturnCGContext(cgContext);
+  return true;
+}
+
+static bool
+HasFontSmoothingBackgroundColor(const GlyphRenderingOptions* aRenderingOptions)
+{
+  // This should generally only be true if we have a popup context menu
+  if (aRenderingOptions && aRenderingOptions->GetType() == FontType::MAC) {
+    Color fontSmoothingBackgroundColor =
+      static_cast<const GlyphRenderingOptionsCG*>(aRenderingOptions)->FontSmoothingBackgroundColor();
+    return fontSmoothingBackgroundColor.a > 0;
+  }
+
+  return false;
+}
+
+static bool
+ShouldUseCGToFillGlyphs(const GlyphRenderingOptions* aOptions, const Pattern& aPattern)
+{
+  return HasFontSmoothingBackgroundColor(aOptions) &&
+          aPattern.GetType() == PatternType::COLOR;
+}
+
+#endif
+
 void
 DrawTargetSkia::FillGlyphs(ScaledFont *aFont,
                            const GlyphBuffer &aBuffer,
@@ -612,6 +1011,14 @@ DrawTargetSkia::FillGlyphs(ScaledFont *aFont,
   }
 
   MarkChanged();
+
+#ifdef MOZ_WIDGET_COCOA
+  if (ShouldUseCGToFillGlyphs(aRenderingOptions, aPattern)) {
+    if (FillGlyphsWithCG(aFont, aBuffer, aPattern, aOptions, aRenderingOptions)) {
+      return;
+    }
+  }
+#endif
 
   ScaledFontBase* skiaFont = static_cast<ScaledFontBase*>(aFont);
   SkTypeface* typeface = skiaFont->GetSkTypeface();
@@ -641,22 +1048,27 @@ DrawTargetSkia::FillGlyphs(ScaledFont *aFont,
       paint.mPaint.setAntiAlias(false);
     }
   } else {
-    // SkFontHost_cairo does not support subpixel text, so only enable it for other font hosts.
+    // SkFontHost_cairo does not support subpixel text positioning,
+    // so only enable it for other font hosts.
     paint.mPaint.setSubpixelText(true);
 
     if (aFont->GetType() == FontType::MAC &&
-       (shouldLCDRenderText || aOptions.mAntialiasMode == AntialiasMode::GRAY)) {
-      // SkFontHost_mac only enables CG Font Smoothing if hinting is disabled.
-      // CG Font Smoothing normally enables subpixel AA in CG, but Skia supports
-      // font smoothing with grayscale AA.
-      // SkFontHost_mac only supports subpixel antialiasing when hinting is turned off.
-      // We can get grayscale AA if we have -moz-osx-font-smoothing: grayscale
-      // explicitly enabled or for transparent surfaces.
-      // If we have AA grayscale explicit through the draw options,
-      // then we want to disable font smoothing.
-      // If we have a transparent surface, shouldLCDRenderText will be false. But unless
-      // grayscale font smoothing is explicitly requested, we still want Skia to use
-      // CG Font smoothing.
+       aOptions.mAntialiasMode == AntialiasMode::GRAY) {
+      // Normally, Skia enables LCD FontSmoothing which creates thicker fonts
+      // and also enables subpixel AA. CoreGraphics without font smoothing
+      // explicitly creates thinner fonts and grayscale AA.
+      // CoreGraphics doesn't support a configuration that produces thicker
+      // fonts with grayscale AA as LCD Font Smoothing enables or disables both.
+      // However, Skia supports it by enabling font smoothing (producing subpixel AA)
+      // and converts it to grayscale AA. Since Skia doesn't support subpixel AA on
+      // transparent backgrounds, we still want font smoothing for the thicker fonts,
+      // even if it is grayscale AA.
+      //
+      // With explicit Grayscale AA (from -moz-osx-font-smoothing:grayscale),
+      // we want to have grayscale AA with no smoothing at all. This means
+      // disabling the LCD font smoothing behaviour.
+      // To accomplish this we have to explicitly disable hinting,
+      // and disable LCDRenderText.
       paint.mPaint.setHinting(SkPaint::kNo_Hinting);
     } else {
       paint.mPaint.setHinting(SkPaint::kNormal_Hinting);
@@ -690,8 +1102,8 @@ DrawTargetSkia::Mask(const Pattern &aSource,
 
   SkLayerRasterizer::Builder builder;
   builder.addLayer(maskPaint);
-  SkAutoTUnref<SkRasterizer> raster(builder.detachRasterizer());
-  paint.mPaint.setRasterizer(raster.get());
+  sk_sp<SkLayerRasterizer> raster(builder.detach());
+  paint.mPaint.setRasterizer(raster);
 
   mCanvas->drawPaint(paint.mPaint);
 }
@@ -716,8 +1128,8 @@ DrawTargetSkia::MaskSurface(const Pattern &aSource,
       paint.mPaint.getShader()) {
     SkMatrix transform;
     transform.setTranslate(PointToSkPoint(-aOffset));
-    SkShader* matrixShader = paint.mPaint.getShader()->newWithLocalMatrix(transform);
-    SkSafeUnref(paint.mPaint.setShader(matrixShader));
+    sk_sp<SkShader> matrixShader = paint.mPaint.getShader()->makeWithLocalMatrix(transform);
+    paint.mPaint.setShader(matrixShader);
   }
 
   mCanvas->drawBitmap(bitmap, aOffset.x, aOffset.y, &paint.mPaint);
@@ -1040,10 +1452,10 @@ DrawTargetSkia::InitWithGrContext(GrContext* aGrContext,
 
   // Create a GPU rendertarget/texture using the supplied GrContext.
   // NewRenderTarget also implicitly clears the underlying texture on creation.
-  SkAutoTUnref<SkSurface> gpuSurface(
-    SkSurface::NewRenderTarget(aGrContext,
-                               SkSurface::Budgeted(aCached),
-                               MakeSkiaImageInfo(aSize, aFormat)));
+  sk_sp<SkSurface> gpuSurface =
+    SkSurface::MakeRenderTarget(aGrContext,
+                                SkBudgeted(aCached),
+                                MakeSkiaImageInfo(aSize, aFormat));
   if (!gpuSurface) {
     return false;
   }
@@ -1179,8 +1591,8 @@ public:
     : SkImageFilter(0, nullptr)
   {}
 
-  virtual bool onFilterImage(Proxy*, const SkBitmap& src, const Context&,
-                             SkBitmap* result, SkIPoint* offset) const override {
+  virtual bool onFilterImageDeprecated(Proxy*, const SkBitmap& src, const Context&,
+                                       SkBitmap* result, SkIPoint* offset) const override {
     *result = src;
     offset->set(0, 0);
     return true;
@@ -1190,11 +1602,11 @@ public:
   SK_DECLARE_PUBLIC_FLATTENABLE_DESERIALIZATION_PROCS(CopyLayerImageFilter)
 };
 
-SkFlattenable*
+sk_sp<SkFlattenable>
 CopyLayerImageFilter::CreateProc(SkReadBuffer& buffer)
 {
   SK_IMAGEFILTER_UNFLATTEN_COMMON(common, 0);
-  return new CopyLayerImageFilter;
+  return sk_make_sp<CopyLayerImageFilter>();
 }
 
 #ifndef SK_IGNORE_TO_STRING
@@ -1231,6 +1643,11 @@ DrawTargetSkia::PushLayer(bool aOpaque, Float aOpacity, SourceSurface* aMask,
   mCanvas->saveLayer(saveRec);
 
   SetPermitSubpixelAA(aOpaque);
+
+#ifdef MOZ_WIDGET_COCOA
+  CGContextRelease(mCG);
+  mCG = nullptr;
+#endif
 }
 
 void
@@ -1267,11 +1684,11 @@ DrawTargetSkia::PopLayer()
       // even though the mask is. So first we use the inverse of the transform
       // affecting the mask, then add back on the layer's origin.
       layerMat.preTranslate(layerBounds.x(), layerBounds.y());
-      SkShader* shader = SkShader::CreateBitmapShader(layerBitmap,
-                                                      SkShader::kClamp_TileMode,
-                                                      SkShader::kClamp_TileMode,
-                                                      &layerMat);
-      SkSafeUnref(paint.setShader(shader));
+      sk_sp<SkShader> shader = SkShader::MakeBitmapShader(layerBitmap,
+                                                          SkShader::kClamp_TileMode,
+                                                          SkShader::kClamp_TileMode,
+                                                          &layerMat);
+      paint.setShader(shader);
 
       SkBitmap mask = GetBitmapForSurface(layer.mMask);
       if (mask.colorType() != kAlpha_8_SkColorType &&
@@ -1298,6 +1715,11 @@ DrawTargetSkia::PopLayer()
   SetPermitSubpixelAA(layer.mOldPermitSubpixelAA);
 
   mPushedLayers.pop_back();
+
+#ifdef MOZ_WIDGET_COCOA
+  CGContextRelease(mCG);
+  mCG = nullptr;
+#endif
 }
 
 already_AddRefed<GradientStops>

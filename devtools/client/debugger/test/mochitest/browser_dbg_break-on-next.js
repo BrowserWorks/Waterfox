@@ -14,7 +14,11 @@ function test() {
   let gTab, gPanel, gDebugger;
   let gSources, gBreakpoints, gTarget, gResumeButton, gResumeKey, gThreadClient;
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  const options = {
+    source: EXAMPLE_URL + "code_script-eval.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -24,8 +28,7 @@ function test() {
     gResumeButton = gDebugger.document.getElementById("resume");
     gResumeKey = gDebugger.document.getElementById("resumeKey");
 
-    waitForSourceShown(gPanel, "-eval.js")
-      .then(testInterval)
+    testInterval()
       .then(testEvent)
       .then(() => closeDebuggerAndFinish(gPanel));
   });
@@ -34,7 +37,7 @@ function test() {
   // it's less likely to fail due to timing issues.  If the
   // first callback happens to fire before the break request
   // happens then we'll just get it next time.
-  let testInterval = Task.async(function*() {
+  let testInterval = Task.async(function* () {
     info("Starting testInterval");
 
     yield evalInTab(gTab, `
@@ -66,7 +69,7 @@ function test() {
     yield onceResumed;
   });
 
-  let testEvent = Task.async(function*() {
+  let testEvent = Task.async(function* () {
     info("Starting testEvent");
 
     let oncePaused = gTarget.once("thread-paused");

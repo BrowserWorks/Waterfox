@@ -29,7 +29,7 @@ HTTP(..) == lineheight-metrics-2a.html lineheight-metrics-2-ref.html
 HTTP(..) == lineheight-metrics-2b.html lineheight-metrics-2-ref.html
 == lineheight-percentage-1.html lineheight-percentage-1-ref.html
 skip-if(B2G||Mulet) == long-1.html long-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-fuzzy-if(Android,255,42) == pre-line-1.html pre-line-1-ref.html
+fuzzy-if(Android,255,147) == pre-line-1.html pre-line-1-ref.html
 == pre-line-2.html pre-line-2-ref.html
 == pre-line-3.html pre-line-3-ref.html
 == pre-line-4.html pre-line-4-ref.html
@@ -125,14 +125,21 @@ pref(gfx.font_rendering.graphite.enabled,true) HTTP(..) == wordbreak-9.html word
 HTTP(..) == wordwrap-02.html wordwrap-02-ref.html
 fuzzy-if(gtkWidget,1,177) fuzzy-if(skiaContent,1,50) skip-if(B2G||Mulet) HTTP(..) == wordwrap-03.html wordwrap-03-ref.html # Initial mulet triage: parity with B2G/B2G Desktop # Fuzzy on Linux because the native textbox gradient is painted in a slightly different position depending on the invalid area.
 == wordwrap-04.html wordwrap-04-ref.html
+== overflowwrap-04.html wordwrap-04-ref.html
 == wordwrap-05.html wordwrap-05-ref.html
+== overflowwrap-05.html wordwrap-05-ref.html
 == wordwrap-06.html wordwrap-06-ref.html
+== overflowwrap-06.html wordwrap-06-ref.html
 == wordwrap-07.html wordwrap-07-ref.html
+== overflowwrap-07.html wordwrap-07-ref.html
 skip-if(B2G||Mulet) != wordwrap-08.html wordwrap-01-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) == wordwrap-08.html wordwrap-08-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) != wordwrap-09.html wordwrap-01-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+skip-if(B2G||Mulet) != overflowwrap-09.html wordwrap-01-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 skip-if(B2G||Mulet) == wordwrap-09.html wordwrap-09-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
+skip-if(B2G||Mulet) == overflowwrap-09.html wordwrap-09-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
 == wordwrap-10.html wordwrap-10-ref.html # bug 752459
+== overflowwrap-10.html wordwrap-10-ref.html
 == word-spacing-01.html word-spacing-01-ref.html
 # the following will fail when rendering with Core Text (see bug 389074) due to what appears to be
 # an Apple bug: the presence of ZWNJ disturbs the positioning of an adjacent glyph. rdar://6427865
@@ -145,7 +152,7 @@ HTTP(..) == zwnj-02.xhtml zwnj-02-ref.xhtml # HTTP(..) for ../filters.svg
 == 449555-1.html 449555-1-ref.html
 == 467722.html 467722-ref.html
 skip-if(B2G||Mulet) fuzzy-if(skiaContent,1,600) HTTP(..) == 475092-sub.html 475092-ref.html # Initial mulet triage: parity with B2G/B2G Desktop
-fails-if(!winWidget&&!gtkWidget) skip-if(B2G||Mulet) fuzzy-if(skiaContent,64,3100) HTTP(..) == 475092-pos.html 475092-sub.html # bug 482596 # Initial mulet triage: parity with B2G/B2G Desktop
+fails-if(!winWidget&&!gtkWidget) skip-if(B2G||Mulet) fuzzy-if(skiaContent,89,3100) HTTP(..) == 475092-pos.html 475092-sub.html # bug 482596 # Initial mulet triage: parity with B2G/B2G Desktop
 == 476378-soft-hyphen-fallback.html 476378-soft-hyphen-fallback-ref.html
 # Test for bug 484954
 == rgba-text.html rgba-text-ref.html
@@ -227,6 +234,8 @@ pref(gfx.font_rendering.graphite.enabled,true) HTTP(..) == glyph-decomposition-g
 
 # test for bidi bug in graphite 1.3.2, fixed in 1.3.3 (bug 1207061)
 HTTP(..) == graphite-bidi-1.html graphite-bidi-1-ref.html
+
+HTTP(..) == graphite-surrogate-selection.html graphite-surrogate-selection-ref.html
 
 # Tests for hyphenation with hyphens property
 == auto-hyphenation-1.html auto-hyphenation-1-ref.html

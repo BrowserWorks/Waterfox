@@ -30,6 +30,7 @@
 #include "js/Conversions.h"
 #include "js/GCVector.h"
 #include "vm/Opcodes.h"
+#include "vm/SelfHosting.h"
 #include "vm/TypedArrayCommon.h"
 
 #include "jsboolinlines.h"
@@ -784,11 +785,13 @@ IsCacheableSetPropAddSlot(JSContext* cx, JSObject* obj, Shape* oldShape,
     size_t chainDepth = 0;
     // Walk up the object prototype chain and ensure that all prototypes are
     // native, and that all prototypes have no setter defined on the property.
-    for (JSObject* proto = obj->getProto(); proto; proto = proto->getProto()) {
+    for (JSObject* proto = obj->staticPrototype(); proto; proto = proto->staticPrototype()) {
         chainDepth++;
         // if prototype is non-native, don't optimize
         if (!proto->isNative())
             return false;
+
+        MOZ_ASSERT(proto->hasStaticPrototype());
 
         // if prototype defines this property in a non-plain way, don't optimize
         Shape* protoShape = proto->as<NativeObject>().lookup(cx, id);
@@ -1401,7 +1404,9 @@ TryAttachGetElemStub(JSContext* cx, JSScript* script, jsbytecode* pc, ICGetElem_
     RootedObject obj(cx, &lhs.toObject());
 
     // Check for ArgumentsObj[int] accesses
-    if (obj->is<ArgumentsObject>() && rhs.isInt32()) {
+    if (obj->is<ArgumentsObject>() && rhs.isInt32() &&
+        !obj->as<ArgumentsObject>().hasOverriddenElement())
+    {
         ICGetElem_Arguments::Which which = ICGetElem_Arguments::Mapped;
         if (obj->is<UnmappedArgumentsObject>())
             which = ICGetElem_Arguments::Unmapped;
@@ -1938,7 +1943,8 @@ ICGetElemNativeCompiler<T>::generateStubCode(MacroAssembler& masm)
             if (popR1)
                 masm.addToStackPtr(ImmWord(sizeof(size_t)));
 
-            emitCallNative(masm, objReg);
+            if (!emitCallNative(masm, objReg))
+                return false;
 
         } else {
             MOZ_ASSERT(acctype_ == ICGetElemNativeStub::ScriptedGetter);
@@ -1954,7 +1960,8 @@ ICGetElemNativeCompiler<T>::generateStubCode(MacroAssembler& masm)
             if (popR1)
                 masm.addToStackPtr(Imm32(sizeof(size_t)));
 
-            emitCallScripted(masm, objReg);
+            if (!emitCallScripted(masm, objReg))
+                return false;
         }
     }
 
@@ -2271,10 +2278,11 @@ ICGetElem_Arguments::Compiler::generateStubCode(MacroAssembler& masm)
     // Get initial ArgsObj length value.
     masm.unboxInt32(Address(objReg, ArgumentsObject::getInitialLengthSlotOffset()), scratchReg);
 
-    // Test if length has been overridden.
+    // Test if length or any element have been overridden.
     masm.branchTest32(Assembler::NonZero,
                       scratchReg,
-                      Imm32(ArgumentsObject::LENGTH_OVERRIDDEN_BIT),
+                      Imm32(ArgumentsObject::LENGTH_OVERRIDDEN_BIT |
+                            ArgumentsObject::ELEMENT_OVERRIDDEN_BIT),
                       &failure);
 
     // Length has not been overridden, ensure that R1 is an integer and is <= length.
@@ -2348,13 +2356,13 @@ SetElemAddHasSameShapes(ICSetElem_DenseOrUnboxedArrayAdd* stub, JSObject* obj)
     if (obj->maybeShape() != nstub->shape(0))
         return false;
 
-    JSObject* proto = obj->getProto();
+    JSObject* proto = obj->staticPrototype();
     for (size_t i = 0; i < stub->protoChainDepth(); i++) {
         if (!proto->isNative())
             return false;
         if (proto->as<NativeObject>().lastProperty() != nstub->shape(i + 1))
             return false;
-        proto = obj->getProto();
+        proto = obj->staticPrototype();
         if (!proto) {
             if (i != stub->protoChainDepth() - 1)
                 return false;
@@ -2475,12 +2483,12 @@ CanOptimizeDenseOrUnboxedArraySetElem(JSObject* obj, uint32_t index,
     // Scan the prototype and shape chain to make sure that this is not the case.
     if (obj->isIndexed())
         return false;
-    JSObject* curObj = obj->getProto();
+    JSObject* curObj = obj->staticPrototype();
     while (curObj) {
         ++*protoDepthOut;
         if (!curObj->isNative() || curObj->isIndexed())
             return false;
-        curObj = curObj->getProto();
+        curObj = curObj->staticPrototype();
     }
 
     if (*protoDepthOut > ICSetElem_DenseOrUnboxedArrayAdd::MAX_PROTO_CHAIN_DEPTH)
@@ -2733,9 +2741,9 @@ void
 EmitUnboxedPreBarrierForBaseline(MacroAssembler &masm, T address, JSValueType type)
 {
     if (type == JSVAL_TYPE_OBJECT)
-        EmitPreBarrier(masm, address, MIRType_Object);
+        EmitPreBarrier(masm, address, MIRType::Object);
     else if (type == JSVAL_TYPE_STRING)
-        EmitPreBarrier(masm, address, MIRType_String);
+        EmitPreBarrier(masm, address, MIRType::String);
     else
         MOZ_ASSERT(!UnboxedTypeNeedsPreBarrier(type));
 }
@@ -2852,7 +2860,7 @@ ICSetElem_DenseOrUnboxedArray::Compiler::generateStubCode(MacroAssembler& masm)
 
         ValueOperand tmpVal = regs.takeAnyValue();
         masm.loadValue(valueAddr, tmpVal);
-        EmitPreBarrier(masm, element, MIRType_Value);
+        EmitPreBarrier(masm, element, MIRType::Value);
         masm.storeValue(tmpVal, element);
     } else {
         // Set element on an unboxed array.
@@ -3694,7 +3702,7 @@ TryAttachGlobalNameValueStub(JSContext* cx, HandleScript script, jsbytecode* pc,
         if (current == globalLexical) {
             current = &globalLexical->global();
         } else {
-            JSObject* proto = current->getProto();
+            JSObject* proto = current->staticPrototype();
             if (!proto || !proto->is<NativeObject>())
                 return true;
             current = &proto->as<NativeObject>();
@@ -3769,7 +3777,7 @@ TryAttachGlobalNameAccessorStub(JSContext* cx, HandleScript script, jsbytecode* 
         shape = current->lookup(cx, id);
         if (shape)
             break;
-        JSObject* proto = current->getProto();
+        JSObject* proto = current->staticPrototype();
         if (!proto || !proto->is<NativeObject>())
             return true;
         current = &proto->as<NativeObject>();
@@ -4745,7 +4753,7 @@ ICSetProp_Native::Compiler::generateStubCode(MacroAssembler& masm)
 
     // Perform the store.
     masm.load32(Address(ICStubReg, ICSetProp_Native::offsetOfOffset()), scratch);
-    EmitPreBarrier(masm, BaseIndex(holderReg, scratch, TimesOne), MIRType_Value);
+    EmitPreBarrier(masm, BaseIndex(holderReg, scratch, TimesOne), MIRType::Value);
     masm.storeValue(R1, BaseIndex(holderReg, scratch, TimesOne));
     if (holderReg != objReg)
         regs.add(holderReg);
@@ -4863,7 +4871,7 @@ ICSetPropNativeAddCompiler::generateStubCode(MacroAssembler& masm)
 
         // Change the object's group.
         Address groupAddr(objReg, JSObject::offsetOfGroup());
-        EmitPreBarrier(masm, groupAddr, MIRType_ObjectGroup);
+        EmitPreBarrier(masm, groupAddr, MIRType::ObjectGroup);
         masm.storePtr(scratch, groupAddr);
 
         masm.bind(&noGroupChange);
@@ -4879,7 +4887,7 @@ ICSetPropNativeAddCompiler::generateStubCode(MacroAssembler& masm)
 
         // Write the expando object's new shape.
         Address shapeAddr(holderReg, JSObject::offsetOfShape());
-        EmitPreBarrier(masm, shapeAddr, MIRType_Shape);
+        EmitPreBarrier(masm, shapeAddr, MIRType::Shape);
         masm.loadPtr(Address(ICStubReg, ICSetProp_NativeAdd::offsetOfNewShape()), scratch);
         masm.storePtr(scratch, shapeAddr);
 
@@ -4888,7 +4896,7 @@ ICSetPropNativeAddCompiler::generateStubCode(MacroAssembler& masm)
     } else {
         // Write the object's new shape.
         Address shapeAddr(objReg, JSObject::offsetOfShape());
-        EmitPreBarrier(masm, shapeAddr, MIRType_Shape);
+        EmitPreBarrier(masm, shapeAddr, MIRType::Shape);
         masm.loadPtr(Address(ICStubReg, ICSetProp_NativeAdd::offsetOfNewShape()), scratch);
         masm.storePtr(scratch, shapeAddr);
 
@@ -5074,12 +5082,12 @@ ICSetProp_TypedObject::Compiler::generateStubCode(MacroAssembler& masm)
 
         switch (type) {
           case ReferenceTypeDescr::TYPE_ANY:
-            EmitPreBarrier(masm, dest, MIRType_Value);
+            EmitPreBarrier(masm, dest, MIRType::Value);
             masm.storeValue(R1, dest);
             break;
 
           case ReferenceTypeDescr::TYPE_OBJECT: {
-            EmitPreBarrier(masm, dest, MIRType_Object);
+            EmitPreBarrier(masm, dest, MIRType::Object);
             Label notObject;
             masm.branchTestObject(Assembler::NotEqual, R1, &notObject);
             Register rhsObject = masm.extractObject(R1, ExtractTemp0);
@@ -5092,7 +5100,7 @@ ICSetProp_TypedObject::Compiler::generateStubCode(MacroAssembler& masm)
           }
 
           case ReferenceTypeDescr::TYPE_STRING: {
-            EmitPreBarrier(masm, dest, MIRType_String);
+            EmitPreBarrier(masm, dest, MIRType::String);
             masm.branchTestString(Assembler::NotEqual, R1, &failure);
             Register rhsString = masm.extractString(R1, ExtractTemp0);
             masm.storePtr(rhsString, dest);
@@ -5415,9 +5423,15 @@ GetTemplateObjectForSimd(JSContext* cx, JSFunction* target, MutableHandleObject 
     // Check if this is a native inlinable SIMD operation.
     SimdType ctrlType;
     switch (jitInfo->inlinableNative) {
+      case InlinableNative::SimdInt8x16:   ctrlType = SimdType::Int8x16;   break;
+      case InlinableNative::SimdUint8x16:  ctrlType = SimdType::Uint8x16;  break;
+      case InlinableNative::SimdInt16x8:   ctrlType = SimdType::Int16x8;   break;
+      case InlinableNative::SimdUint16x8:  ctrlType = SimdType::Uint16x8;  break;
       case InlinableNative::SimdInt32x4:   ctrlType = SimdType::Int32x4;   break;
       case InlinableNative::SimdUint32x4:  ctrlType = SimdType::Uint32x4;  break;
       case InlinableNative::SimdFloat32x4: ctrlType = SimdType::Float32x4; break;
+      case InlinableNative::SimdBool8x16:  ctrlType = SimdType::Bool8x16;  break;
+      case InlinableNative::SimdBool16x8:  ctrlType = SimdType::Bool16x8;  break;
       case InlinableNative::SimdBool32x4:  ctrlType = SimdType::Bool32x4;  break;
       // This is not an inlinable SIMD operation.
       default: return false;
@@ -5511,7 +5525,9 @@ GetTemplateObjectForNative(JSContext* cx, JSFunction* target, const CallArgs& ar
         }
     }
 
-    if (native == js::str_split && args.length() == 1 && args[0].isString()) {
+    if (native == js::intrinsic_StringSplitString && args.length() == 2 && args[0].isString() &&
+        args[1].isString())
+    {
         ObjectGroup* group = ObjectGroup::callingAllocationSiteGroup(cx, JSProto_Array);
         if (!group)
             return false;
@@ -5564,19 +5580,19 @@ GetTemplateObjectForClassHook(JSContext* cx, JSNative hook, CallArgs& args,
 }
 
 static bool
-IsOptimizableCallStringSplit(Value callee, Value thisv, int argc, Value* args)
+IsOptimizableCallStringSplit(Value callee, int argc, Value* args)
 {
-    if (argc != 1 || !thisv.isString() || !args[0].isString())
+    if (argc != 2 || !args[0].isString() || !args[1].isString())
         return false;
 
-    if (!thisv.toString()->isAtom() || !args[0].toString()->isAtom())
+    if (!args[0].toString()->isAtom() || !args[1].toString()->isAtom())
         return false;
 
     if (!callee.isObject() || !callee.toObject().is<JSFunction>())
         return false;
 
     JSFunction& calleeFun = callee.toObject().as<JSFunction>();
-    if (!calleeFun.isNative() || calleeFun.native() != js::str_split)
+    if (!calleeFun.isNative() || calleeFun.native() != js::intrinsic_StringSplitString)
         return false;
 
     return true;
@@ -5603,7 +5619,7 @@ TryAttachCallStub(JSContext* cx, ICCall_Fallback* stub, HandleScript script, jsb
 
     // Don't attach an optimized call stub if we could potentially attach an
     // optimized StringSplit stub.
-    if (stub->numOptimizedStubs() == 0 && IsOptimizableCallStringSplit(callee, thisv, argc, vp + 2))
+    if (stub->numOptimizedStubs() == 0 && IsOptimizableCallStringSplit(callee, argc, vp + 2))
         return true;
 
     MOZ_ASSERT_IF(stub->hasStub(ICStub::Call_StringSplit), stub->numOptimizedStubs() == 1);
@@ -5851,21 +5867,20 @@ TryAttachStringSplit(JSContext* cx, ICCall_Fallback* stub, HandleScript script,
     if (stub->numOptimizedStubs() != 0)
         return true;
 
-    RootedValue thisv(cx, vp[1]);
     Value* args = vp + 2;
 
     // String.prototype.split will not yield a constructable.
     if (JSOp(*pc) == JSOP_NEW)
         return true;
 
-    if (!IsOptimizableCallStringSplit(callee, thisv, argc, args))
+    if (!IsOptimizableCallStringSplit(callee, argc, args))
         return true;
 
     MOZ_ASSERT(callee.isObject());
     MOZ_ASSERT(callee.toObject().is<JSFunction>());
 
-    RootedString thisString(cx, thisv.toString());
-    RootedString argString(cx, args[0].toString());
+    RootedString str(cx, args[0].toString());
+    RootedString sep(cx, args[1].toString());
     RootedObject obj(cx, &res.toObject());
     RootedValue arr(cx);
 
@@ -5888,7 +5903,7 @@ TryAttachStringSplit(JSContext* cx, ICCall_Fallback* stub, HandleScript script,
     }
 
     ICCall_StringSplit::Compiler compiler(cx, stub->fallbackMonitorStub()->firstMonitorStub(),
-                                          script->pcToOffset(pc), thisString, argString,
+                                          script->pcToOffset(pc), str, sep,
                                           arr);
     ICStub* newStub = compiler.getStub(compiler.getStubSpace(script));
     if (!newStub)
@@ -6782,21 +6797,25 @@ ICCall_StringSplit::Compiler::generateStubCode(MacroAssembler& masm)
 {
     MOZ_ASSERT(engine_ == Engine::Baseline);
 
-    // Stack Layout: [ ..., CalleeVal, ThisVal, Arg0Val, +ICStackValueOffset+ ]
+    // Stack Layout: [ ..., CalleeVal, ThisVal, strVal, sepVal, +ICStackValueOffset+ ]
+    static const size_t SEP_DEPTH = 0;
+    static const size_t STR_DEPTH = sizeof(Value);
+    static const size_t CALLEE_DEPTH = 3 * sizeof(Value);
+
     AllocatableGeneralRegisterSet regs(availableGeneralRegs(0));
     Label failureRestoreArgc;
 #ifdef DEBUG
-    Label oneArg;
+    Label twoArg;
     Register argcReg = R0.scratchReg();
-    masm.branch32(Assembler::Equal, argcReg, Imm32(1), &oneArg);
-    masm.assumeUnreachable("Expected argc == 1");
-    masm.bind(&oneArg);
+    masm.branch32(Assembler::Equal, argcReg, Imm32(2), &twoArg);
+    masm.assumeUnreachable("Expected argc == 2");
+    masm.bind(&twoArg);
 #endif
     Register scratchReg = regs.takeAny();
 
-    // Guard that callee is native function js::str_split.
+    // Guard that callee is native function js::intrinsic_StringSplitString.
     {
-        Address calleeAddr(masm.getStackPointer(), ICStackValueOffset + (2 * sizeof(Value)));
+        Address calleeAddr(masm.getStackPointer(), ICStackValueOffset + CALLEE_DEPTH);
         ValueOperand calleeVal = regs.takeAnyValue();
 
         // Ensure that callee is an object.
@@ -6808,41 +6827,42 @@ ICCall_StringSplit::Compiler::generateStubCode(MacroAssembler& masm)
         masm.branchTestObjClass(Assembler::NotEqual, calleeObj, scratchReg,
                                 &JSFunction::class_, &failureRestoreArgc);
 
-        // Ensure that callee's function impl is the native str_split.
+        // Ensure that callee's function impl is the native intrinsic_StringSplitString.
         masm.loadPtr(Address(calleeObj, JSFunction::offsetOfNativeOrScript()), scratchReg);
-        masm.branchPtr(Assembler::NotEqual, scratchReg, ImmPtr(js::str_split), &failureRestoreArgc);
+        masm.branchPtr(Assembler::NotEqual, scratchReg, ImmPtr(js::intrinsic_StringSplitString),
+                       &failureRestoreArgc);
 
         regs.add(calleeVal);
     }
 
-    // Guard argument.
+    // Guard sep.
     {
-        // Ensure that arg is a string.
-        Address argAddr(masm.getStackPointer(), ICStackValueOffset);
-        ValueOperand argVal = regs.takeAnyValue();
+        // Ensure that sep is a string.
+        Address sepAddr(masm.getStackPointer(), ICStackValueOffset + SEP_DEPTH);
+        ValueOperand sepVal = regs.takeAnyValue();
 
-        masm.loadValue(argAddr, argVal);
-        masm.branchTestString(Assembler::NotEqual, argVal, &failureRestoreArgc);
+        masm.loadValue(sepAddr, sepVal);
+        masm.branchTestString(Assembler::NotEqual, sepVal, &failureRestoreArgc);
 
-        Register argString = masm.extractString(argVal, ExtractTemp0);
-        masm.branchPtr(Assembler::NotEqual, Address(ICStubReg, offsetOfExpectedArg()),
-                       argString, &failureRestoreArgc);
-        regs.add(argVal);
+        Register sep = masm.extractString(sepVal, ExtractTemp0);
+        masm.branchPtr(Assembler::NotEqual, Address(ICStubReg, offsetOfExpectedSep()),
+                       sep, &failureRestoreArgc);
+        regs.add(sepVal);
     }
 
-    // Guard this-value.
+    // Guard str.
     {
-        // Ensure that thisv is a string.
-        Address thisvAddr(masm.getStackPointer(), ICStackValueOffset + sizeof(Value));
-        ValueOperand thisvVal = regs.takeAnyValue();
+        // Ensure that str is a string.
+        Address strAddr(masm.getStackPointer(), ICStackValueOffset + STR_DEPTH);
+        ValueOperand strVal = regs.takeAnyValue();
 
-        masm.loadValue(thisvAddr, thisvVal);
-        masm.branchTestString(Assembler::NotEqual, thisvVal, &failureRestoreArgc);
+        masm.loadValue(strAddr, strVal);
+        masm.branchTestString(Assembler::NotEqual, strVal, &failureRestoreArgc);
 
-        Register thisvString = masm.extractString(thisvVal, ExtractTemp0);
-        masm.branchPtr(Assembler::NotEqual, Address(ICStubReg, offsetOfExpectedThis()),
-                       thisvString, &failureRestoreArgc);
-        regs.add(thisvVal);
+        Register str = masm.extractString(strVal, ExtractTemp0);
+        masm.branchPtr(Assembler::NotEqual, Address(ICStubReg, offsetOfExpectedStr()),
+                       str, &failureRestoreArgc);
+        regs.add(strVal);
     }
 
     // Main stub body.
@@ -6865,7 +6885,7 @@ ICCall_StringSplit::Compiler::generateStubCode(MacroAssembler& masm)
 
     // Guard failure path.
     masm.bind(&failureRestoreArgc);
-    masm.move32(Imm32(1), R0.scratchReg());
+    masm.move32(Imm32(2), R0.scratchReg());
     EmitStubGuardFailure(masm);
     return true;
 }

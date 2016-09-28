@@ -88,7 +88,7 @@ public:
     }
   }
 
-  MOZ_WARN_UNUSED_RESULT bool Push(void* aItem, const fallible_t&);
+  MOZ_MUST_USE bool Push(void* aItem, const fallible_t&);
 
   /**
    * Inserts new member at the front of the deque.
@@ -102,7 +102,7 @@ public:
     }
   }
 
-  MOZ_WARN_UNUSED_RESULT bool PushFront(void* aItem, const fallible_t&);
+  MOZ_MUST_USE bool PushFront(void* aItem, const fallible_t&);
 
   /**
    * Remove and return the last item in the container.
@@ -124,13 +124,13 @@ public:
    * @return  the first item in container
    */
 
-  void* Peek();
+  void* Peek() const;
   /**
    * Return topmost item without removing it.
    *
    * @return  the first item in container
    */
-  void* PeekFront();
+  void* PeekFront() const;
 
   /**
    * Retrieve a member from the deque without removing it.

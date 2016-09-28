@@ -34,6 +34,7 @@
 #include "nsAttrValue.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/DOMTokenListSupportedTokens.h"
 #include "mozilla/dom/WindowBinding.h"
 #include "mozilla/dom/ElementBinding.h"
 #include "mozilla/dom/Nullable.h"
@@ -659,7 +660,7 @@ public:
                          ErrorResult& aError);
   bool HasAttribute(const nsAString& aName) const
   {
-    return InternalGetExistingAttrNameFromQName(aName) != nullptr;
+    return InternalGetAttrNameFromQName(aName) != nullptr;
   }
   bool HasAttributeNS(const nsAString& aNamespaceURI,
                       const nsAString& aLocalName) const;
@@ -851,7 +852,7 @@ public:
 
   already_AddRefed<Animation>
   Animate(JSContext* aContext,
-          JS::Handle<JSObject*> aFrames,
+          JS::Handle<JSObject*> aKeyframes,
           const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
           ErrorResult& aError);
 
@@ -860,7 +861,7 @@ public:
   static already_AddRefed<Animation>
   Animate(const Nullable<ElementOrCSSPseudoElement>& aTarget,
           JSContext* aContext,
-          JS::Handle<JSObject*> aFrames,
+          JS::Handle<JSObject*> aKeyframes,
           const UnrestrictedDoubleOrKeyframeAnimationOptions& aOptions,
           ErrorResult& aError);
 
@@ -1272,9 +1273,13 @@ protected:
     GetEventListenerManagerForAttr(nsIAtom* aAttrName, bool* aDefer);
 
   /**
-   * Internal hook for converting an attribute name-string to an atomized name
+   * Internal hook for converting an attribute name-string to nsAttrName in
+   * case there is such existing attribute. aNameToUse can be passed to get
+   * name which was used for looking for the attribute (lowercase in HTML).
    */
-  virtual const nsAttrName* InternalGetExistingAttrNameFromQName(const nsAString& aStr) const;
+  const nsAttrName*
+  InternalGetAttrNameFromQName(const nsAString& aStr,
+                               nsAutoString* aNameToUse = nullptr) const;
 
   nsIFrame* GetStyledFrame();
 
@@ -1333,9 +1338,8 @@ protected:
    */
   virtual void GetLinkTarget(nsAString& aTarget);
 
-  nsDOMTokenList* GetTokenList(nsIAtom* aAtom);
-  void GetTokenList(nsIAtom* aAtom, nsIVariant** aResult);
-  nsresult SetTokenList(nsIAtom* aAtom, nsIVariant* aValue);
+  nsDOMTokenList* GetTokenList(nsIAtom* aAtom,
+                               const DOMTokenListSupportedTokenArray aSupportedTokens = nullptr);
 
 private:
   /**
@@ -1351,7 +1355,7 @@ private:
   EventStates mState;
 };
 
-class RemoveFromBindingManagerRunnable : public nsRunnable
+class RemoveFromBindingManagerRunnable : public mozilla::Runnable
 {
 public:
   RemoveFromBindingManagerRunnable(nsBindingManager* aManager,

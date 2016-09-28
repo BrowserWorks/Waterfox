@@ -9,7 +9,7 @@
 
 const TEST_URL = URL_ROOT + "doc_inspector_highlighter_rect.html";
 
-add_task(function*() {
+add_task(function* () {
   let {inspector, testActor} = yield openInspectorForURL(TEST_URL);
   let front = inspector.inspector;
   let highlighter = yield front.getHighlighterByType("RectHighlighter");
@@ -22,7 +22,8 @@ add_task(function*() {
     rect: {x: 50, y: 50, width: 100, height: 100}
   });
 
-  let style = yield testActor.getHighlighterNodeAttribute("highlighted-rect", "style", highlighter);
+  let style = yield testActor.getHighlighterNodeAttribute("highlighted-rect",
+    "style", highlighter);
 
   // The parent body has margin=50px and border=10px
   // The parent iframe also has margin=50px and border=10px

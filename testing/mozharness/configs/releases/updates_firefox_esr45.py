@@ -3,10 +3,11 @@ config = {
     "log_name": "updates_esr45",
     "repo": {
         "repo": "https://hg.mozilla.org/build/tools",
-        "revision": "default",
+        "branch": "default",
         "dest": "tools",
         "vcs": "hg",
     },
+    "vcs_share_base": "/builds/hg-shared",
     "push_dest": "ssh://hg.mozilla.org/build/tools",
     "shipped-locales-url": "https://hg.mozilla.org/releases/mozilla-esr45/raw-file/{revision}/browser/locales/shipped-locales",
     "ignore_no_changes": True,

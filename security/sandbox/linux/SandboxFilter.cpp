@@ -41,6 +41,10 @@ using namespace sandbox::bpf_dsl;
 #define MADV_DONTDUMP 16
 #endif
 
+#ifndef PR_SET_PTRACER
+#define PR_SET_PTRACER 0x59616d61
+#endif
+
 // To avoid visual confusion between "ifdef ANDROID" and "ifndef ANDROID":
 #ifndef ANDROID
 #define DESKTOP
@@ -124,7 +128,8 @@ public:
     return Switch(op)
       .CASES((PR_GET_SECCOMP, // BroadcastSetThreadSandbox, etc.
               PR_SET_NAME,    // Thread creation
-              PR_SET_DUMPABLE), // Crash reporting
+              PR_SET_DUMPABLE, // Crash reporting
+              PR_SET_PTRACER), // Debug-mode crash handling
              Allow())
       .Default(InvalidSyscall());
   }
@@ -437,6 +442,9 @@ public:
     case SYS_SEND:
     case SYS_SOCKET: // DANGEROUS
     case SYS_CONNECT: // DANGEROUS
+    case SYS_ACCEPT:
+    case SYS_BIND:
+    case SYS_LISTEN:
     case SYS_SETSOCKOPT:
     case SYS_GETSOCKNAME:
     case SYS_GETPEERNAME:
@@ -514,6 +522,7 @@ public:
     case __NR_utimes:
     case __NR_unlink:
     case __NR_fchown:
+    case __NR_fchmod:
 #endif
       return Allow();
 
@@ -615,6 +624,7 @@ public:
     case __NR_eventfd2:
     case __NR_inotify_init1:
     case __NR_inotify_add_watch:
+    case __NR_inotify_rm_watch:
       return Allow();
 #endif
 
@@ -671,15 +681,15 @@ class GMPSandboxPolicy : public SandboxPolicyCommon {
       MOZ_CRASH("unexpected syscall number");
     }
 
+    if (strcmp(path, plugin->mPath) != 0) {
+      SANDBOX_LOG_ERROR("attempt to open file %s (flags=0%o) which is not the"
+                        " media plugin %s", path, flags, plugin->mPath);
+      return -EPERM;
+    }
     if ((flags & O_ACCMODE) != O_RDONLY) {
       SANDBOX_LOG_ERROR("non-read-only open of file %s attempted (flags=0%o)",
                         path, flags);
-      return -ENOSYS;
-    }
-    if (strcmp(path, plugin->mPath) != 0) {
-      SANDBOX_LOG_ERROR("attempt to open file %s which is not the media plugin"
-                        " %s", path, plugin->mPath);
-      return -ENOSYS;
+      return -EPERM;
     }
     int fd = plugin->mFd.exchange(-1);
     if (fd < 0) {
@@ -738,7 +748,7 @@ public:
         .Else(InvalidSyscall());
     }
     case __NR_brk:
-    case __NR_geteuid:
+    CASES_FOR_geteuid:
       return Allow();
     case __NR_sched_getparam:
     case __NR_sched_getscheduler:

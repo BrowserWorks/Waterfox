@@ -4,10 +4,11 @@ config = {
     # TODO: use real repo
     "repo": {
         "repo": "https://hg.mozilla.org/users/raliiev_mozilla.com/tools",
-        "revision": "default",
+        "branch": "default",
         "dest": "tools",
         "vcs": "hg",
     },
+    "vcs_share_base": "/builds/hg-shared",
     # TODO: use real repo
     "push_dest": "ssh://hg.mozilla.org/users/raliiev_mozilla.com/tools",
     # jamun  repo used for staging release

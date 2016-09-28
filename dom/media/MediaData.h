@@ -222,8 +222,8 @@ private:
     const CheckedInt<size_t> sizeNeeded =
       CheckedInt<size_t>(aLength) * sizeof(Type) + AlignmentPaddingSize();
 
-    if (!sizeNeeded.isValid()) {
-      // overflow.
+    if (!sizeNeeded.isValid() || sizeNeeded.value() >= INT32_MAX) {
+      // overflow or over an acceptable size.
       return false;
     }
     if (mData && mCapacity >= sizeNeeded.value()) {
@@ -544,6 +544,10 @@ public:
   int32_t mFrameID;
 
   bool mSentToCompositor;
+
+  // True if this video frame is reported as dropped
+  // for missing the compositor deadline.
+  bool mIsDropped = false;
 
   VideoData(int64_t aOffset,
             int64_t aTime,

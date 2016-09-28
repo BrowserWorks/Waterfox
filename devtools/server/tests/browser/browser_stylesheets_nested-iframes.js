@@ -7,9 +7,9 @@
 // Test that StyleSheetsActor.getStyleSheets() works if an iframe does not have
 // a content document.
 
-const {StyleSheetsFront} = require("devtools/server/actors/stylesheets");
+const {StyleSheetsFront} = require("devtools/shared/fronts/stylesheets");
 
-add_task(function*() {
+add_task(function* () {
   let browser = yield addTab(MAIN_DOMAIN + "stylesheets-nested-iframes.html");
   let doc = browser.contentDocument;
 

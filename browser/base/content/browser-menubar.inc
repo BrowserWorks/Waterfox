@@ -22,32 +22,7 @@
                       label="&newUserContext.label;"
                       accesskey="&newUserContext.accesskey;"
                       hidden="true">
-                  <menupopup>
-                    <menuitem id="menu_newUserContextTabPersonal"
-                              usercontextid="1"
-                              class="menuitem-iconic"
-                              label="&userContextPersonal.label;"
-                              command="Browser:NewUserContextTab"
-                              accesskey="&userContextPersonal.accesskey;"/>
-                    <menuitem id="menu_newUserContextTabWork"
-                              usercontextid="2"
-                              class="menuitem-iconic"
-                              label="&userContextWork.label;"
-                              command="Browser:NewUserContextTab"
-                              accesskey="&userContextWork.accesskey;"/>
-                    <menuitem id="menu_newUserContextTabBanking"
-                              usercontextid="3"
-                              class="menuitem-iconic"
-                              label="&userContextBanking.label;"
-                              command="Browser:NewUserContextTab"
-                              accesskey="&userContextBanking.accesskey;"/>
-                    <menuitem id="menu_newUserContextTabShopping"
-                              usercontextid="4"
-                              class="menuitem-iconic"
-                              label="&userContextShopping.label;"
-                              command="Browser:NewUserContextTab"
-                              accesskey="&userContextShopping.accesskey;"/>
-                  </menupopup>
+                  <menupopup onpopupshowing="return createUserContextMenu(event);" />
                 </menu>
                 <menuitem id="menu_newNavigator"
                           label="&newNavigatorCmd.label;"
@@ -451,6 +426,10 @@
                 class="show-only-for-keyboard"
                 command="Browser:BookmarkAllTabs"
                 key="bookmarkAllTabsKb"/>
+      <menuseparator/>
+      <menuitem label="&recentBookmarks.label;"
+                id="menu_recentBookmarks"
+                disabled="true"/>
       <menuseparator id="bookmarksToolbarSeparator"/>
       <menu id="bookmarksToolbarFolderMenu"
             class="menu-iconic bookmark-item"

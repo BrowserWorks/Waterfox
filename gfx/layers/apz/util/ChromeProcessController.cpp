@@ -36,9 +36,7 @@ ChromeProcessController::ChromeProcessController(nsIWidget* aWidget,
   MOZ_ASSERT(aAPZEventState);
   MOZ_ASSERT(aAPZCTreeManager);
 
-  mUILoop->PostTask(
-      FROM_HERE,
-      NewRunnableMethod(this, &ChromeProcessController::InitializeRoot));
+  mUILoop->PostTask(NewRunnableMethod(this, &ChromeProcessController::InitializeRoot));
 }
 
 ChromeProcessController::~ChromeProcessController() {}
@@ -63,18 +61,16 @@ ChromeProcessController::RequestContentRepaint(const FrameMetrics& aFrameMetrics
 }
 
 void
-ChromeProcessController::PostDelayedTask(Task* aTask, int aDelayMs)
+ChromeProcessController::PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs)
 {
-  MessageLoop::current()->PostDelayedTask(FROM_HERE, aTask, aDelayMs);
+  MessageLoop::current()->PostDelayedTask(Move(aTask), aDelayMs);
 }
 
 void
 ChromeProcessController::Destroy()
 {
   if (MessageLoop::current() != mUILoop) {
-    mUILoop->PostTask(
-      FROM_HERE,
-      NewRunnableMethod(this, &ChromeProcessController::Destroy));
+    mUILoop->PostTask(NewRunnableMethod(this, &ChromeProcessController::Destroy));
     return;
   }
 
@@ -123,10 +119,12 @@ ChromeProcessController::HandleDoubleTap(const mozilla::CSSPoint& aPoint,
                                          const ScrollableLayerGuid& aGuid)
 {
   if (MessageLoop::current() != mUILoop) {
-    mUILoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &ChromeProcessController::HandleDoubleTap,
-                          aPoint, aModifiers, aGuid));
+    mUILoop->PostTask(NewRunnableMethod
+                      <CSSPoint,
+                       Modifiers,
+                       ScrollableLayerGuid>(this,
+                                            &ChromeProcessController::HandleDoubleTap,
+                                            aPoint, aModifiers, aGuid));
     return;
   }
 
@@ -161,10 +159,12 @@ ChromeProcessController::HandleSingleTap(const CSSPoint& aPoint,
                                          const ScrollableLayerGuid& aGuid)
 {
   if (MessageLoop::current() != mUILoop) {
-    mUILoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &ChromeProcessController::HandleSingleTap,
-                          aPoint, aModifiers, aGuid));
+    mUILoop->PostTask(NewRunnableMethod
+                      <CSSPoint,
+                       Modifiers,
+                      ScrollableLayerGuid>(this,
+                                           &ChromeProcessController::HandleSingleTap,
+                                           aPoint, aModifiers, aGuid));
     return;
   }
 
@@ -177,10 +177,12 @@ ChromeProcessController::HandleLongTap(const mozilla::CSSPoint& aPoint, Modifier
                                        uint64_t aInputBlockId)
 {
   if (MessageLoop::current() != mUILoop) {
-    mUILoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &ChromeProcessController::HandleLongTap,
-                          aPoint, aModifiers, aGuid, aInputBlockId));
+    mUILoop->PostTask(NewRunnableMethod
+                      <mozilla::CSSPoint,
+                       Modifiers,
+                       ScrollableLayerGuid,
+                       uint64_t>(this, &ChromeProcessController::HandleLongTap,
+                                 aPoint, aModifiers, aGuid, aInputBlockId));
     return;
   }
 
@@ -194,10 +196,11 @@ ChromeProcessController::NotifyAPZStateChange(const ScrollableLayerGuid& aGuid,
                                               int aArg)
 {
   if (MessageLoop::current() != mUILoop) {
-    mUILoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &ChromeProcessController::NotifyAPZStateChange,
-                          aGuid, aChange, aArg));
+    mUILoop->PostTask(NewRunnableMethod
+                      <ScrollableLayerGuid,
+                       APZStateChange,
+                       int>(this, &ChromeProcessController::NotifyAPZStateChange,
+                            aGuid, aChange, aArg));
     return;
   }
 
@@ -208,9 +211,10 @@ void
 ChromeProcessController::NotifyMozMouseScrollEvent(const FrameMetrics::ViewID& aScrollId, const nsString& aEvent)
 {
   if (MessageLoop::current() != mUILoop) {
-    mUILoop->PostTask(
-      FROM_HERE,
-      NewRunnableMethod(this, &ChromeProcessController::NotifyMozMouseScrollEvent, aScrollId, aEvent));
+    mUILoop->PostTask(NewRunnableMethod
+                      <FrameMetrics::ViewID,
+                       nsString>(this, &ChromeProcessController::NotifyMozMouseScrollEvent,
+                                 aScrollId, aEvent));
     return;
   }
 

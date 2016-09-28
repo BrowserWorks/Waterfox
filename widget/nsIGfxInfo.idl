@@ -159,6 +159,45 @@ interface nsIGfxInfo : nsISupports
   [implicit_jscontext]
   jsval getInfo();
 
+  // Return an object describing all features that have been configured:
+  //
+  //   "features": [
+  //     // For each feature:
+  //     {
+  //       "name": <string>,
+  //       "description": <string>,
+  //       "status": <string>,
+  //       "log": [
+  //          // One or more log entries, the first denotes the default value.
+  //          {
+  //            "type": <string>,    // "base", "user", "env", or "runtime"
+  //            "status": <string>,
+  //            "message": <string>  // Set unless type is "base" and status is "available".
+  //          }
+  //       ]
+  //     }
+  //   ]
+  //   "fallbacks": [
+  //     // For each workaround:
+  //     {
+  //       "name:" <string>,
+  //       "description": <string>,
+  //       "message": <string>
+  //     ]
+  //   }
+  //
+  // When a message is prefixed with a '#', it is a special status code. Status
+  // codes are unique identifiers that can be searched in the codebase to find
+  // which line of code caused the message. Some codes are standardized to
+  // improve about:support messaging:
+  //
+  //   "[CONTEXT_]FEATURE_FAILURE_BUG_<number>"
+  //     CONTEXT is optional and can currently only be "BLOCKLIST".
+  //     <number> refers to a bug number in Bugzilla.
+  //
+  [implicit_jscontext]
+  jsval getFeatureLog();
+
   // Returns an object containing information about graphics features. It is
   // intended to be directly included into the Telemetry environment.
   //
@@ -184,5 +223,20 @@ interface nsIGfxInfo : nsISupports
   //   }
   [implicit_jscontext]
   jsval getFeatures();
+
+  // Returns an array listing any active crash guards.
+  //
+  //   [
+  //     {
+  //       // Type is one of "d3d11layers", "d3d9video", "glcontext",
+  //       // or "d3d11video".
+  //       "type":        "<identifier>",
+  //
+  //       // Preference that must be deleted/reset to retrigger the guard.
+  //       "prefName":    "<preference>",
+  //     }
+  //   ]
+  [implicit_jscontext]
+  jsval getActiveCrashGuards();
 };
 

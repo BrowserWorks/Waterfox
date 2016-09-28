@@ -93,7 +93,7 @@ public:
   static already_AddRefed<Animation>
   Constructor(const GlobalObject& aGlobal,
               KeyframeEffectReadOnly* aEffect,
-              AnimationTimeline* aTimeline,
+              const Optional<AnimationTimeline*>& aTimeline,
               ErrorResult& aRv);
   void GetId(nsAString& aResult) const { aResult = mId; }
   void SetId(const nsAString& aId);
@@ -144,7 +144,8 @@ public:
 
   // Wrapper functions for Animation DOM methods when called from style.
 
-  virtual void CancelFromStyle() { DoCancel(); }
+  virtual void CancelFromStyle() { CancelNoUpdate(); }
+  void SetTimelineNoUpdate(AnimationTimeline* aTimeline);
 
   virtual void Tick();
   bool NeedsTicks() const
@@ -319,9 +320,9 @@ public:
 protected:
   void SilentlySetCurrentTime(const TimeDuration& aNewCurrentTime);
   void SilentlySetPlaybackRate(double aPlaybackRate);
-  void DoCancel();
-  void DoPlay(ErrorResult& aRv, LimitBehavior aLimitBehavior);
-  void DoPause(ErrorResult& aRv);
+  void CancelNoUpdate();
+  void PlayNoUpdate(ErrorResult& aRv, LimitBehavior aLimitBehavior);
+  void PauseNoUpdate(ErrorResult& aRv);
   void ResumeAt(const TimeDuration& aReadyTime);
   void PauseAt(const TimeDuration& aReadyTime);
   void FinishPendingAt(const TimeDuration& aReadyTime)

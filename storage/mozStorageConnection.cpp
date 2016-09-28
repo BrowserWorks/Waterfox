@@ -344,7 +344,7 @@ WaitForUnlockNotify(sqlite3* aDatabase)
 
 namespace {
 
-class AsyncCloseConnection final: public nsRunnable
+class AsyncCloseConnection final: public Runnable
 {
 public:
   AsyncCloseConnection(Connection *aConnection,
@@ -367,7 +367,7 @@ public:
     MOZ_ASSERT(onAsyncThread);
 #endif // DEBUG
 
-    nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethodWithArg<nsCOMPtr<nsIThread>>
+    nsCOMPtr<nsIRunnable> event = NewRunnableMethod<nsCOMPtr<nsIThread>>
       (mConnection, &Connection::shutdownAsyncThread, mAsyncExecutionThread);
     (void)NS_DispatchToMainThread(event);
 
@@ -400,7 +400,7 @@ private:
  *
  * Must be executed on the clone's async execution thread.
  */
-class AsyncInitializeClone final: public nsRunnable
+class AsyncInitializeClone final: public Runnable
 {
 public:
   /**

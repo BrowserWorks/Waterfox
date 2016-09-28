@@ -82,10 +82,6 @@ struct GenericParseContext
     {}
 };
 
-template <typename ParseHandler>
-bool
-GenerateBlockId(TokenStream& ts, ParseContext<ParseHandler>* pc, uint32_t& blockid);
-
 /*
  * The struct ParseContext stores information about the current parsing context,
  * which is part of the parser state (see the field Parser::pc). The current
@@ -201,7 +197,7 @@ struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
     void prepareToAddDuplicateArg(HandlePropertyName name, DefinitionNode prevDecl);
 
     /* See the sad story in MakeDefIntoUse. */
-    void updateDecl(TokenStream& ts, JSAtom* atom, Node newDecl);
+    MOZ_MUST_USE bool updateDecl(TokenStream& ts, JSAtom* atom, Node newDecl);
 
     // After a script has been parsed, the parser generates the code's
     // "bindings". Bindings are a data-structure, ultimately stored in the
@@ -288,7 +284,7 @@ struct MOZ_STACK_CLASS ParseContext : public GenericParseContext
 
     ~ParseContext();
 
-    bool init(Parser<ParseHandler>& parser);
+    MOZ_MUST_USE bool init(Parser<ParseHandler>& parser);
 
     unsigned blockid() { return stmtStack.innermost() ? stmtStack.innermost()->blockid : bodyid; }
 
@@ -875,8 +871,7 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     bool tryNewTarget(Node& newTarget);
     bool checkAndMarkSuperScope();
 
-    Node methodDefinition(YieldHandling yieldHandling, PropertyType propType,
-                          HandlePropertyName funName);
+    Node methodDefinition(YieldHandling yieldHandling, PropertyType propType, HandleAtom funName);
 
     /*
      * Additional JS parsers.
@@ -884,7 +879,7 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     bool functionArguments(YieldHandling yieldHandling, FunctionSyntaxKind kind,
                            Node funcpn, bool* hasRest);
 
-    Node functionDef(InHandling inHandling, YieldHandling uieldHandling, HandlePropertyName name,
+    Node functionDef(InHandling inHandling, YieldHandling uieldHandling, HandleAtom name,
                      FunctionSyntaxKind kind, GeneratorKind generatorKind,
                      InvokedPrediction invoked = PredictUninvoked,
                      Node* assignmentForAnnexBOut = nullptr);
@@ -952,7 +947,7 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
     bool makeDefIntoUse(Definition* dn, Node pn, HandleAtom atom);
     bool bindLexicalFunctionName(HandlePropertyName funName, ParseNode* pn);
     bool bindBodyLevelFunctionName(HandlePropertyName funName, ParseNode** pn);
-    bool checkFunctionDefinition(HandlePropertyName funName, Node* pn, FunctionSyntaxKind kind,
+    bool checkFunctionDefinition(HandleAtom funAtom, Node* pn, FunctionSyntaxKind kind,
                                  bool* pbodyProcessed, Node* assignmentForAnnexBOut);
     bool finishFunctionDefinition(Node pn, FunctionBox* funbox, Node body);
     bool addFreeVariablesFromLazyFunction(JSFunction* fun, ParseContext<ParseHandler>* pc);
@@ -1058,6 +1053,8 @@ class Parser : private JS::AutoGCRooter, public StrictModeGetter
 
     bool leaveFunction(Node fn, ParseContext<ParseHandler>* outerpc,
                        FunctionSyntaxKind kind = Expression);
+
+    JSAtom* prefixAccessorName(PropertyType propType, HandleAtom propAtom);
 
     TokenPos pos() const { return tokenStream.currentToken().pos; }
 

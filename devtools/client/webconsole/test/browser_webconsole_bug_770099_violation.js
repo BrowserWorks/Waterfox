@@ -10,10 +10,10 @@
 const TEST_URI = "data:text/html;charset=utf8,Web Console CSP violation test";
 const TEST_VIOLATION = "https://example.com/browser/devtools/client/" +
                        "webconsole/test/test_bug_770099_violation.html";
-const CSP_VIOLATION_MSG = "Content Security Policy: The page's settings " +
+const CSP_VIOLATION_MSG = "Content Security Policy: The page\u2019s settings " +
                           "blocked the loading of a resource at " +
-                          "http://some.example.com/test.png (\"default-src " +
-                            "https://example.com\").";
+                          "http://some.example.com/test.png (\u201cdefault-src " +
+                          "https://example.com\u201d).";
 
 add_task(function* () {
   let { browser } = yield loadTab(TEST_URI);
@@ -28,7 +28,7 @@ add_task(function* () {
 
   yield waitForSuccess({
     name: "CSP policy URI warning displayed successfully",
-    validator: function() {
+    validator: function () {
       return hud.outputNode.textContent.indexOf(CSP_VIOLATION_MSG) > -1;
     }
   });

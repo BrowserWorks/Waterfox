@@ -42,6 +42,7 @@
 #include "nsStyleCoord.h"
 #include "TabChild.h"
 #include "nsFrameLoader.h"
+#include "nsNumberControlFrame.h"
 
 #include "mozilla/ContentEvents.h"
 #include "mozilla/dom/Element.h"
@@ -310,6 +311,24 @@ nsFocusManager::GetFocusedDescendant(nsPIDOMWindowOuter* aWindow, bool aDeep,
 nsIContent*
 nsFocusManager::GetRedirectedFocus(nsIContent* aContent)
 {
+  // For input number, redirect focus to our anonymous text control.
+  if (aContent->IsHTMLElement(nsGkAtoms::input)) {
+    bool typeIsNumber =
+      static_cast<dom::HTMLInputElement*>(aContent)->GetType() ==
+        NS_FORM_INPUT_NUMBER;
+
+    if (typeIsNumber) {
+      nsNumberControlFrame* numberControlFrame =
+        do_QueryFrame(aContent->GetPrimaryFrame());
+
+      if (numberControlFrame) {
+        HTMLInputElement* textControl =
+          numberControlFrame->GetAnonTextControl();
+        return static_cast<nsIContent*>(textControl);
+      }
+    }
+  }
+
 #ifdef MOZ_XUL
   if (aContent->IsXULElement()) {
     nsCOMPtr<nsIDOMNode> inputField;
@@ -1110,11 +1129,12 @@ nsFocusManager::EnsureCurrentWidgetFocused()
   }
 }
 
-void
+bool
 ActivateOrDeactivateChild(TabParent* aParent, void* aArg)
 {
   bool active = static_cast<bool>(aArg);
   Unused << aParent->SendParentActivated(active);
+  return false;
 }
 
 void
@@ -1504,8 +1524,8 @@ nsFocusManager::CheckIfFocusable(nsIContent* aContent, uint32_t aFlags)
   if (!aContent)
     return nullptr;
 
-  // this is a special case for some XUL elements where an anonymous child is
-  // actually focusable and not the element itself.
+  // this is a special case for some XUL elements or input number, where an
+  // anonymous child is actually focusable and not the element itself.
   nsIContent* redirectedFocus = GetRedirectedFocus(aContent);
   if (redirectedFocus)
     return CheckIfFocusable(redirectedFocus, aFlags);
@@ -1958,7 +1978,7 @@ nsFocusManager::Focus(nsPIDOMWindowOuter* aWindow,
     mFirstFocusEvent = nullptr;
 }
 
-class FocusBlurEvent : public nsRunnable
+class FocusBlurEvent : public Runnable
 {
 public:
   FocusBlurEvent(nsISupports* aTarget, EventMessage aEventMessage,
@@ -3453,7 +3473,7 @@ nsFocusManager::GetFocusInSelection(nsPIDOMWindowOuter* aWindow,
   while (selectionNode && selectionNode != endSelectionNode);
 }
 
-class PointerUnlocker : public nsRunnable
+class PointerUnlocker : public Runnable
 {
 public:
   PointerUnlocker()

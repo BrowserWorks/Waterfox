@@ -13,13 +13,15 @@ const TAB_URL = EXAMPLE_URL + "doc_blackboxing_unblackbox.html";
 var gTab, gPanel, gDebugger;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_blackboxing_unblackbox.min.js",
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
 
-    waitForSourceShown(gPanel, ".min.js")
-      .then(testBlackBoxSource)
+    testBlackBoxSource()
       .then(testBlackBoxReload)
       .then(() => closeDebuggerAndFinish(gPanel))
       .then(null, aError => {
@@ -44,7 +46,7 @@ function testBlackBoxReload() {
   });
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

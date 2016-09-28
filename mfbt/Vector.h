@@ -56,22 +56,13 @@ template<typename T, size_t N, class AP, bool IsPod>
 struct VectorImpl
 {
   /*
-   * Constructs a default object in the uninitialized memory at *aDst.
+   * Constructs an object in the uninitialized memory at *aDst with aArgs.
    */
+  template<typename... Args>
   MOZ_NONNULL(1)
-  static inline void new_(T* aDst)
+  static inline void new_(T* aDst, Args&&... aArgs)
   {
-    new(aDst) T();
-  }
-
-  /*
-   * Constructs an object in the uninitialized memory at *aDst from aSrc.
-   */
-  template<typename U>
-  MOZ_NONNULL(1)
-  static inline void new_(T* aDst, U&& aU)
-  {
-    new(aDst) T(Forward<U>(aU));
+    new(aDst) T(Forward<Args>(aArgs)...);
   }
 
   /* Destroys constructed objects in the range [aBegin, aEnd). */
@@ -137,7 +128,7 @@ struct VectorImpl
    * aNewCap has not overflowed, and (2) multiplying aNewCap by sizeof(T) will
    * not overflow.
    */
-  static inline bool
+  static inline MOZ_MUST_USE bool
   growTo(Vector<T, N, AP>& aV, size_t aNewCap)
   {
     MOZ_ASSERT(!aV.usingInlineStorage());
@@ -168,15 +159,16 @@ struct VectorImpl
 template<typename T, size_t N, class AP>
 struct VectorImpl<T, N, AP, true>
 {
-  static inline void new_(T* aDst)
+  template<typename... Args>
+  MOZ_NONNULL(1)
+  static inline void new_(T* aDst, Args&&... aArgs)
   {
-    *aDst = T();
-  }
-
-  template<typename U>
-  static inline void new_(T* aDst, U&& aU)
-  {
-    *aDst = Forward<U>(aU);
+    // Explicitly construct a local object instead of using a temporary since
+    // T(args...) will be treated like a C-style cast in the unary case and
+    // allow unsafe conversions. Both forms should be equivalent to an
+    // optimizing compiler.
+    T temp(Forward<Args>(aArgs)...);
+    *aDst = temp;
   }
 
   static inline void destroy(T*, T*) {}
@@ -228,7 +220,7 @@ struct VectorImpl<T, N, AP, true>
     }
   }
 
-  static inline bool
+  static inline MOZ_MUST_USE bool
   growTo(Vector<T, N, AP>& aV, size_t aNewCap)
   {
     MOZ_ASSERT(!aV.usingInlineStorage());
@@ -241,6 +233,20 @@ struct VectorImpl<T, N, AP, true>
     /* aV.mLength is unchanged. */
     aV.mCapacity = aNewCap;
     return true;
+  }
+
+  static inline void
+  podResizeToFit(Vector<T, N, AP>& aV)
+  {
+    if (aV.usingInlineStorage() || aV.mLength == aV.mCapacity) {
+      return;
+    }
+    T* newbuf = aV.template pod_realloc<T>(aV.mBegin, aV.mCapacity, aV.mLength);
+    if (MOZ_UNLIKELY(!newbuf)) {
+      return;
+    }
+    aV.mBegin = newbuf;
+    aV.mCapacity = aV.mLength;
   }
 };
 
@@ -281,9 +287,9 @@ class Vector final : private AllocPolicy
 
   friend struct detail::VectorTesting;
 
-  MOZ_WARN_UNUSED_RESULT bool growStorageBy(size_t aIncr);
-  MOZ_WARN_UNUSED_RESULT bool convertToHeapStorage(size_t aNewCap);
-  MOZ_WARN_UNUSED_RESULT bool maybeCheckSimulatedOOM(size_t aRequestedSize);
+  MOZ_MUST_USE bool growStorageBy(size_t aIncr);
+  MOZ_MUST_USE bool convertToHeapStorage(size_t aNewCap);
+  MOZ_MUST_USE bool maybeCheckSimulatedOOM(size_t aRequestedSize);
 
   /* magic constants */
 
@@ -528,7 +534,7 @@ public:
    * Given that the vector is empty and has no inline storage, grow to
    * |capacity|.
    */
-  MOZ_WARN_UNUSED_RESULT bool initCapacity(size_t aRequest);
+  MOZ_MUST_USE bool initCapacity(size_t aRequest);
 
   /**
    * If reserve(aRequest) succeeds and |aRequest >= length()|, then appending
@@ -538,7 +544,7 @@ public:
    * A request to reserve an amount less than the current length does not affect
    * reserved space.
    */
-  MOZ_WARN_UNUSED_RESULT bool reserve(size_t aRequest);
+  MOZ_MUST_USE bool reserve(size_t aRequest);
 
   /**
    * Destroy elements in the range [end() - aIncr, end()). Does not deallocate
@@ -553,24 +559,31 @@ public:
   void shrinkTo(size_t aNewLength);
 
   /** Grow the vector by aIncr elements. */
-  MOZ_WARN_UNUSED_RESULT bool growBy(size_t aIncr);
+  MOZ_MUST_USE bool growBy(size_t aIncr);
 
   /** Call shrinkBy or growBy based on whether newSize > length(). */
-  MOZ_WARN_UNUSED_RESULT bool resize(size_t aNewLength);
+  MOZ_MUST_USE bool resize(size_t aNewLength);
 
   /**
    * Increase the length of the vector, but don't initialize the new elements
    * -- leave them as uninitialized memory.
    */
-  MOZ_WARN_UNUSED_RESULT bool growByUninitialized(size_t aIncr);
+  MOZ_MUST_USE bool growByUninitialized(size_t aIncr);
   void infallibleGrowByUninitialized(size_t aIncr);
-  MOZ_WARN_UNUSED_RESULT bool resizeUninitialized(size_t aNewLength);
+  MOZ_MUST_USE bool resizeUninitialized(size_t aNewLength);
 
   /** Shorthand for shrinkBy(length()). */
   void clear();
 
   /** Clears and releases any heap-allocated storage. */
   void clearAndFree();
+
+  /**
+   * Calls the AllocPolicy's pod_realloc to release excess capacity. Since
+   * realloc is only safe on PODs, this method fails to compile if IsPod<T>
+   * is false.
+   */
+  void podResizeToFit();
 
   /**
    * If true, appending |aNeeded| elements won't reallocate elements storage.
@@ -587,25 +600,25 @@ public:
    * vector, instead of copying it. If it fails, |aU| is left unmoved. ("We are
    * not amused.")
    */
-  template<typename U> MOZ_WARN_UNUSED_RESULT bool append(U&& aU);
+  template<typename U> MOZ_MUST_USE bool append(U&& aU);
 
   /**
    * Construct a T in-place as a new entry at the end of this vector.
    */
   template<typename... Args>
-  MOZ_WARN_UNUSED_RESULT bool emplaceBack(Args&&... aArgs)
+  MOZ_MUST_USE bool emplaceBack(Args&&... aArgs)
   {
     if (!growByUninitialized(1))
       return false;
-    new (&back()) T(Forward<Args>(aArgs)...);
+    Impl::new_(&back(), Forward<Args>(aArgs)...);
     return true;
   }
 
   template<typename U, size_t O, class BP>
-  MOZ_WARN_UNUSED_RESULT bool appendAll(const Vector<U, O, BP>& aU);
-  MOZ_WARN_UNUSED_RESULT bool appendN(const T& aT, size_t aN);
-  template<typename U> MOZ_WARN_UNUSED_RESULT bool append(const U* aBegin, const U* aEnd);
-  template<typename U> MOZ_WARN_UNUSED_RESULT bool append(const U* aBegin, size_t aLength);
+  MOZ_MUST_USE bool appendAll(const Vector<U, O, BP>& aU);
+  MOZ_MUST_USE bool appendN(const T& aT, size_t aN);
+  template<typename U> MOZ_MUST_USE bool append(const U* aBegin, const U* aEnd);
+  template<typename U> MOZ_MUST_USE bool append(const U* aBegin, size_t aLength);
 
   /*
    * Guaranteed-infallible append operations for use upon vectors whose
@@ -632,7 +645,7 @@ public:
   void infallibleEmplaceBack(Args&&... aArgs)
   {
     infallibleGrowByUninitialized(1);
-    new (&back()) T(Forward<Args>(aArgs)...);
+    Impl::new_(&back(), Forward<Args>(aArgs)...);
   }
 
   void popBack();
@@ -640,16 +653,34 @@ public:
   T popCopy();
 
   /**
-   * Transfers ownership of the internal buffer used by this vector to the
-   * caller.  (It's the caller's responsibility to properly deallocate this
-   * buffer, in accordance with this vector's AllocPolicy.)  After this call,
-   * the vector is empty.  Since the returned buffer may need to be allocated
-   * (if the elements are currently stored in-place), the call can fail,
-   * returning nullptr.
+   * If elements are stored in-place, return nullptr and leave this vector
+   * unmodified.
+   *
+   * Otherwise return this vector's elements buffer, and clear this vector as if
+   * by clearAndFree(). The caller now owns the buffer and is responsible for
+   * deallocating it consistent with this vector's AllocPolicy.
    *
    * N.B. Although a T*, only the range [0, length()) is constructed.
    */
-  MOZ_WARN_UNUSED_RESULT T* extractRawBuffer();
+  MOZ_MUST_USE T* extractRawBuffer();
+
+  /**
+   * If elements are stored in-place, allocate a new buffer, move this vector's
+   * elements into it, and return that buffer.
+   *
+   * Otherwise return this vector's elements buffer. The caller now owns the
+   * buffer and is responsible for deallocating it consistent with this vector's
+   * AllocPolicy.
+   *
+   * This vector is cleared, as if by clearAndFree(), when this method
+   * succeeds. This method fails and returns nullptr only if new elements buffer
+   * allocation fails.
+   *
+   * N.B. Only the range [0, length()) of the returned buffer is constructed.
+   * If any of these elements are uninitialized (as growByUninitialized
+   * enables), behavior is undefined.
+   */
+  MOZ_MUST_USE T* extractOrCopyRawBuffer();
 
   /**
    * Transfer ownership of an array of objects into the vector.  The caller
@@ -677,7 +708,7 @@ public:
    * This is inherently a linear-time operation.  Be careful!
    */
   template<typename U>
-  MOZ_WARN_UNUSED_RESULT T* insert(T* aP, U&& aVal);
+  MOZ_MUST_USE T* insert(T* aP, U&& aVal);
 
   /**
    * Removes the element |aT|, which must fall in the bounds [begin, end),
@@ -1099,6 +1130,15 @@ Vector<T, N, AP>::clearAndFree()
 }
 
 template<typename T, size_t N, class AP>
+inline void
+Vector<T, N, AP>::podResizeToFit()
+{
+  // This function is only defined if IsPod is true and will fail to compile
+  // otherwise.
+  Impl::podResizeToFit(*this);
+}
+
+template<typename T, size_t N, class AP>
 inline bool
 Vector<T, N, AP>::canAppendWithoutRealloc(size_t aNeeded) const
 {
@@ -1303,26 +1343,46 @@ template<typename T, size_t N, class AP>
 inline T*
 Vector<T, N, AP>::extractRawBuffer()
 {
-  T* ret;
+  MOZ_REENTRANCY_GUARD_ET_AL;
+
   if (usingInlineStorage()) {
-    ret = this->template pod_malloc<T>(mLength);
-    if (!ret) {
-      return nullptr;
-    }
-    Impl::copyConstruct(ret, beginNoCheck(), endNoCheck());
-    Impl::destroy(beginNoCheck(), endNoCheck());
-    /* mBegin, mCapacity are unchanged. */
-    mLength = 0;
-  } else {
-    ret = mBegin;
-    mBegin = static_cast<T*>(mStorage.addr());
-    mLength = 0;
-    mCapacity = kInlineCapacity;
-#ifdef DEBUG
-    mReserved = 0;
-#endif
+    return nullptr;
   }
+
+  T* ret = mBegin;
+  mBegin = static_cast<T*>(mStorage.addr());
+  mLength = 0;
+  mCapacity = kInlineCapacity;
+#ifdef DEBUG
+  mReserved = 0;
+#endif
   return ret;
+}
+
+template<typename T, size_t N, class AP>
+inline T*
+Vector<T, N, AP>::extractOrCopyRawBuffer()
+{
+  if (T* ret = extractRawBuffer()) {
+    return ret;
+  }
+
+  MOZ_REENTRANCY_GUARD_ET_AL;
+
+  T* copy = this->template pod_malloc<T>(mLength);
+  if (!copy) {
+    return nullptr;
+  }
+
+  Impl::moveConstruct(copy, beginNoCheck(), endNoCheck());
+  Impl::destroy(beginNoCheck(), endNoCheck());
+  mBegin = static_cast<T*>(mStorage.addr());
+  mLength = 0;
+  mCapacity = kInlineCapacity;
+#ifdef DEBUG
+  mReserved = 0;
+#endif
+  return copy;
 }
 
 template<typename T, size_t N, class AP>

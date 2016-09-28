@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -141,10 +141,9 @@ NS_IMETHODIMP_(MozExternalRefCountType) SharedThreadPool::Release(void)
   MOZ_ASSERT(!sPools->Get(mName));
 
   // Dispatch an event to the main thread to call Shutdown() on
-  // the nsIThreadPool. The Runnable here  will add a refcount to the pool,
+  // the nsIThreadPool. The Runnable here will add a refcount to the pool,
   // and when the Runnable releases the nsIThreadPool it will be deleted.
-  nsCOMPtr<nsIRunnable> r = NS_NewRunnableMethod(mPool, &nsIThreadPool::Shutdown);
-  NS_DispatchToMainThread(r);
+  NS_DispatchToMainThread(NewRunnableMethod(mPool, &nsIThreadPool::Shutdown));
 
   // Stabilize refcount, so that if something in the dtor QIs, it won't explode.
   mRefCnt = 1;

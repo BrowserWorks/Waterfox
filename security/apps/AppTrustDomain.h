@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef mozilla_psm_AppsTrustDomain_h
-#define mozilla_psm_AppsTrustDomain_h
+#ifndef AppTrustDomain_h
+#define AppTrustDomain_h
 
 #include "pkix/pkixtypes.h"
 #include "mozilla/StaticMutex.h"
@@ -21,7 +21,7 @@ class AppTrustDomain final : public mozilla::pkix::TrustDomain
 public:
   typedef mozilla::pkix::Result Result;
 
-  AppTrustDomain(ScopedCERTCertList&, void* pinArg);
+  AppTrustDomain(UniqueCERTCertList& certChain, void* pinArg);
 
   SECStatus SetTrustedRoot(AppTrustedRoot trustedRoot);
 
@@ -61,13 +61,16 @@ public:
                    mozilla::pkix::Time notBefore, mozilla::pkix::Time notAfter,
                    mozilla::pkix::EndEntityOrCA endEntityOrCA,
                    mozilla::pkix::KeyPurposeId keyPurpose) override;
+  virtual Result NetscapeStepUpMatchesServerAuth(
+                   mozilla::pkix::Time notBefore,
+                   /*out*/ bool& matches) override;
   virtual Result DigestBuf(mozilla::pkix::Input item,
                            mozilla::pkix::DigestAlgorithm digestAlg,
                            /*out*/ uint8_t* digestBuf,
                            size_t digestBufLen) override;
 
 private:
-  /*out*/ ScopedCERTCertList& mCertChain;
+  /*out*/ UniqueCERTCertList& mCertChain;
   void* mPinArg; // non-owning!
   UniqueCERTCertificate mTrustedRoot;
   unsigned int mMinRSABits;
@@ -79,4 +82,4 @@ private:
 
 } } // namespace mozilla::psm
 
-#endif // mozilla_psm_AppsTrustDomain_h
+#endif // AppTrustDomain_h

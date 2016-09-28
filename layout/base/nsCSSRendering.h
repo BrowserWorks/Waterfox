@@ -217,7 +217,8 @@ public:
                             const nsRect&        aDest,
                             const nsRect&        aFill,
                             const nsPoint&       aAnchor,
-                            const nsRect&        aDirty);
+                            const nsRect&        aDirty,
+                            const nsSize&        aRepeatSize);
 
   /**
    * Draw the image to a single component of a border-image style rendering.
@@ -231,6 +232,10 @@ public:
    * aIndex identifies the component: 0 1 2
    *                                  3 4 5
    *                                  6 7 8
+   * aSVGViewportSize The image size evaluated by default sizing algorithm.
+   * Pass Nothing() if we can read a valid viewport size or aspect-ratio from
+   * the drawing image directly, otherwise, pass Some() with viewport size
+   * evaluated from default sizing algorithm.
    */
   DrawResult
   DrawBorderImageComponent(nsPresContext*       aPresContext,
@@ -241,7 +246,8 @@ public:
                            uint8_t              aHFill,
                            uint8_t              aVFill,
                            const nsSize&        aUnitSize,
-                           uint8_t              aIndex);
+                           uint8_t              aIndex,
+                           const mozilla::Maybe<nsSize>& aSVGViewportSize);
 
   bool IsRasterImage();
   bool IsAnimatedImage();
@@ -268,10 +274,11 @@ private:
                   const nsRect&        aDest,
                   const nsRect&        aFill,
                   const nsPoint&       aAnchor,
+                  const nsSize&        aRepeatSize,
                   const mozilla::CSSIntRect& aSrc);
 
   /**
-   * Helper method for creating a gfxDrawable from mPaintServerFrame or 
+   * Helper method for creating a gfxDrawable from mPaintServerFrame or
    * mImageElementSurface.
    * Requires mType is eStyleImageType_Element.
    * Returns null if we cannot create the drawable.
@@ -331,6 +338,11 @@ struct nsBackgroundLayerState {
    * PrepareImageLayer.
    */
   nsPoint mAnchor;
+  /**
+   * The background-repeat property space keyword computes the
+   * repeat size which is image size plus spacing.
+   */
+  nsSize mRepeatSize;
 };
 
 struct nsCSSRendering {
@@ -438,6 +450,7 @@ struct nsCSSRendering {
                             const nsRect& aDirtyRect,
                             const nsRect& aDest,
                             const nsRect& aFill,
+                            const nsSize& aRepeatSize,
                             const mozilla::CSSIntRect& aSrc,
                             const nsSize& aIntrinsiceSize);
 
@@ -584,15 +597,47 @@ struct nsCSSRendering {
      */
     PAINTBG_MASK_IMAGE = 0x08
   };
-  static DrawResult PaintBackground(nsPresContext* aPresContext,
-                                    nsRenderingContext& aRenderingContext,
-                                    nsIFrame* aForFrame,
-                                    const nsRect& aDirtyRect,
-                                    const nsRect& aBorderArea,
-                                    uint32_t aFlags,
-                                    nsRect* aBGClipRect = nullptr,
-                                    int32_t aLayer = -1,
-                                    CompositionOp aCompositionOp = CompositionOp::OP_OVER);
+
+  struct PaintBGParams {
+    nsPresContext& presCtx;
+    nsRenderingContext& renderingCtx;
+    nsRect dirtyRect;
+    nsRect borderArea;
+    nsIFrame* frame;
+    uint32_t paintFlags = 0;
+    nsRect* bgClipRect = nullptr;
+    int32_t layer;                  // -1 means painting all layers; other
+                                    // value means painting one specific
+                                    // layer only.
+    CompositionOp compositionOp = CompositionOp::OP_OVER;
+
+    static PaintBGParams ForAllLayers(nsPresContext& aPresCtx,
+                                      nsRenderingContext& aRenderingCtx,
+                                      const nsRect& aDirtyRect,
+                                      const nsRect& aBorderArea,
+                                      nsIFrame *aFrame,
+                                      uint32_t aPaintFlags);
+    static PaintBGParams ForSingleLayer(nsPresContext& aPresCtx,
+                                        nsRenderingContext& aRenderingCtx,
+                                        const nsRect& aDirtyRect,
+                                        const nsRect& aBorderArea,
+                                        nsIFrame *aFrame,
+                                        uint32_t aPaintFlags,
+                                        int32_t aLayer,
+                                        CompositionOp aCompositionOp  = CompositionOp::OP_OVER);
+
+  private:
+    PaintBGParams(nsPresContext& aPresCtx,
+                  nsRenderingContext& aRenderingCtx,
+                  const nsRect& aDirtyRect,
+                  const nsRect& aBorderArea)
+     : presCtx(aPresCtx),
+       renderingCtx(aRenderingCtx),
+       dirtyRect(aDirtyRect),
+       borderArea(aBorderArea) { }
+  };
+
+  static DrawResult PaintBackground(const PaintBGParams& aParams);
 
 
   /**
@@ -607,17 +652,9 @@ struct nsCSSRendering {
    * If all layers are painted, the image layer's blend mode (or the mask
    * layer's composition mode) will be used.
    */
-  static DrawResult PaintBackgroundWithSC(nsPresContext* aPresContext,
-                                          nsRenderingContext& aRenderingContext,
-                                          nsIFrame* aForFrame,
-                                          const nsRect& aDirtyRect,
-                                          const nsRect& aBorderArea,
-                                          nsStyleContext *aStyleContext,
-                                          const nsStyleBorder& aBorder,
-                                          uint32_t aFlags,
-                                          nsRect* aBGClipRect = nullptr,
-                                          int32_t aLayer = -1,
-                                          CompositionOp aCompositionOp = CompositionOp::OP_OVER);
+  static DrawResult PaintBackgroundWithSC(const PaintBGParams& aParams,
+                                          nsStyleContext *mBackgroundSC,
+                                          const nsStyleBorder& aBorder);
 
   /**
    * Returns the rectangle covered by the given background layer image, taking

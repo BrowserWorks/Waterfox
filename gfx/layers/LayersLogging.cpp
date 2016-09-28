@@ -149,11 +149,15 @@ AppendToString(std::stringstream& aStream, const ScrollMetadata& m,
                const char* pfx, const char* sfx)
 {
   aStream << pfx;
-  AppendToString(aStream, m.GetMetrics(), "{ [metrics=", "]");
-  if (m.HasClipRect()) {
-    AppendToString(aStream, m.ClipRect(), " [clip=", "]");
+  AppendToString(aStream, m.GetMetrics(), "{ [metrics=");
+  AppendToString(aStream, m.GetBackgroundColor(), "] [color=");
+  if (m.GetScrollParentId() != FrameMetrics::NULL_SCROLL_ID) {
+    AppendToString(aStream, m.GetScrollParentId(), "] [scrollParent=");
   }
-  aStream << "}" << sfx;
+  if (m.HasScrollClip()) {
+    AppendToString(aStream, m.ScrollClip().GetClipRect(), "] [clip=");
+  }
+  aStream << "] }" << sfx;
 }
 
 void
@@ -169,12 +173,8 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
   }
   AppendToString(aStream, m.GetDisplayPort(), "] [dp=");
   AppendToString(aStream, m.GetCriticalDisplayPort(), "] [cdp=");
-  AppendToString(aStream, m.GetBackgroundColor(), "] [color=");
   if (!detailed) {
     AppendToString(aStream, m.GetScrollId(), "] [scrollId=");
-    if (m.GetScrollParentId() != FrameMetrics::NULL_SCROLL_ID) {
-      AppendToString(aStream, m.GetScrollParentId(), "] [scrollParent=");
-    }
     if (m.IsRootContent()) {
       aStream << "] [rcd";
     }
@@ -193,7 +193,6 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
     aStream << nsPrintfCString(")] [u=(%d %d %lu)",
             m.GetScrollUpdateType(), m.GetDoSmoothScroll(),
             m.GetScrollGeneration()).get();
-    AppendToString(aStream, m.GetScrollParentId(), "] [p=");
     aStream << nsPrintfCString("] [i=(%ld %lld %d)] }",
             m.GetPresShellId(), m.GetScrollId(), m.IsRootContent()).get();
   }
@@ -249,17 +248,17 @@ AppendToString(std::stringstream& aStream, const Matrix5x4& m,
 }
 
 void
-AppendToString(std::stringstream& aStream, const Filter filter,
+AppendToString(std::stringstream& aStream, const SamplingFilter filter,
                const char* pfx, const char* sfx)
 {
   aStream << pfx;
 
   switch (filter) {
-    case Filter::GOOD: aStream << "Filter::GOOD"; break;
-    case Filter::LINEAR: aStream << "Filter::LINEAR"; break;
-    case Filter::POINT: aStream << "Filter::POINT"; break;
+    case SamplingFilter::GOOD: aStream << "SamplingFilter::GOOD"; break;
+    case SamplingFilter::LINEAR: aStream << "SamplingFilter::LINEAR"; break;
+    case SamplingFilter::POINT: aStream << "SamplingFilter::POINT"; break;
     default:
-      NS_ERROR("unknown filter type");
+      NS_ERROR("unknown SamplingFilter type");
       aStream << "???";
   }
   aStream << sfx;

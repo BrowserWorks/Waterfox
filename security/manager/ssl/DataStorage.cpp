@@ -106,7 +106,7 @@ DataStorage::Init(bool& aDataWillPersist)
 
   nsresult rv;
   if (XRE_IsParentProcess()) {
-    rv = NS_NewThread(getter_AddRefs(mWorkerThread));
+    rv = NS_NewNamedThread("DataStorage", getter_AddRefs(mWorkerThread));
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
@@ -148,9 +148,10 @@ DataStorage::Init(bool& aDataWillPersist)
   // dispatched, so we need to clean up on xpcom-shutdown.
   if (XRE_IsParentProcess()) {
     os->AddObserver(this, "profile-before-change", false);
-  } else {
-    os->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
   }
+  // In the Parent process, this is a backstop for xpcshell and other cases
+  // where profile-before-change might not get sent.
+  os->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
 
   // For test purposes, we can set the write timer to be very fast.
   mTimerDelay = Preferences::GetInt("test.datastorage.write_timer_ms",
@@ -163,7 +164,7 @@ DataStorage::Init(bool& aDataWillPersist)
   return NS_OK;
 }
 
-class DataStorage::Reader : public nsRunnable
+class DataStorage::Reader : public Runnable
 {
 public:
   explicit Reader(DataStorage* aDataStorage)
@@ -193,9 +194,9 @@ DataStorage::Reader::~Reader()
 
   // This is for tests.
   nsCOMPtr<nsIRunnable> job =
-    NS_NewRunnableMethodWithArg<const char*>(mDataStorage,
-                                             &DataStorage::NotifyObservers,
-                                             "data-storage-ready");
+    NewRunnableMethod<const char*>(mDataStorage,
+                                   &DataStorage::NotifyObservers,
+                                   "data-storage-ready");
   nsresult rv = NS_DispatchToMainThread(job, NS_DISPATCH_NORMAL);
   Unused << NS_WARN_IF(NS_FAILED(rv));
 }
@@ -629,7 +630,7 @@ DataStorage::Remove(const nsCString& aKey, DataStorageType aType)
   });
 }
 
-class DataStorage::Writer : public nsRunnable
+class DataStorage::Writer : public Runnable
 {
 public:
   Writer(nsCString& aData, DataStorage* aDataStorage)
@@ -686,9 +687,9 @@ DataStorage::Writer::Run()
 
   // Observed by tests.
   nsCOMPtr<nsIRunnable> job =
-    NS_NewRunnableMethodWithArg<const char*>(mDataStorage,
-                                             &DataStorage::NotifyObservers,
-                                             "data-storage-written");
+    NewRunnableMethod<const char*>(mDataStorage,
+                                   &DataStorage::NotifyObservers,
+                                   "data-storage-written");
   rv = NS_DispatchToMainThread(job, NS_DISPATCH_NORMAL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
@@ -777,7 +778,7 @@ DataStorage::AsyncSetTimer(const MutexAutoLock& /*aProofOfLock*/)
 
   mPendingWrite = true;
   nsCOMPtr<nsIRunnable> job =
-    NS_NewRunnableMethod(this, &DataStorage::SetTimer);
+    NewRunnableMethod(this, &DataStorage::SetTimer);
   nsresult rv = mWorkerThread->Dispatch(job, NS_DISPATCH_NORMAL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
@@ -827,7 +828,7 @@ DataStorage::DispatchShutdownTimer(const MutexAutoLock& /*aProofOfLock*/)
   MOZ_ASSERT(XRE_IsParentProcess());
 
   nsCOMPtr<nsIRunnable> job =
-    NS_NewRunnableMethod(this, &DataStorage::ShutdownTimer);
+    NewRunnableMethod(this, &DataStorage::ShutdownTimer);
   nsresult rv = mWorkerThread->Dispatch(job, NS_DISPATCH_NORMAL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
@@ -864,8 +865,11 @@ DataStorage::Observe(nsISupports* aSubject, const char* aTopic,
   if (strcmp(aTopic, "last-pb-context-exited") == 0) {
     MutexAutoLock lock(mMutex);
     mPrivateDataTable.Clear();
-  } else if (strcmp(aTopic, "profile-before-change") == 0) {
+  } else if (strcmp(aTopic, "profile-before-change") == 0 ||
+             (strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID) == 0 &&
+              XRE_IsParentProcess())) {
     MOZ_ASSERT(XRE_IsParentProcess());
+    // per bug 1271402, this should be safe to run multiple times
     {
       MutexAutoLock lock(mMutex);
       rv = AsyncWriteData(lock);

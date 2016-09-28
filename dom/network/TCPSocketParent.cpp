@@ -21,13 +21,6 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsNetUtil.h"
 
-//
-// set NSPR_LOG_MODULES=TCPSocket:5
-//
-extern mozilla::LazyLogModule gTCPSocketLog;
-#define TCPSOCKET_LOG(args)     MOZ_LOG(gTCPSocketLog, mozilla::LogLevel::Debug, args)
-#define TCPSOCKET_LOG_ENABLED() MOZ_LOG_TEST(gTCPSocketLog, mozilla::LogLevel::Debug)
-
 namespace IPC {
 
 //Defined in TCPSocketChild.cpp
@@ -39,6 +32,16 @@ DeserializeArrayBuffer(JSContext* aCx,
 } // namespace IPC
 
 namespace mozilla {
+
+namespace net {
+//
+// set NSPR_LOG_MODULES=TCPSocket:5
+//
+extern LazyLogModule gTCPSocketLog;
+#define TCPSOCKET_LOG(args)     MOZ_LOG(gTCPSocketLog, LogLevel::Debug, args)
+#define TCPSOCKET_LOG_ENABLED() MOZ_LOG_TEST(gTCPSocketLog, LogLevel::Debug)
+} // namespace net
+
 namespace dom {
 
 static void
@@ -340,7 +343,7 @@ TCPSocketParent::RecvData(const SendableData& aData,
     default:
       MOZ_CRASH("unexpected SendableData type");
   }
-  NS_ENSURE_FALSE(rv.Failed(), true);
+  NS_ENSURE_SUCCESS(rv.StealNSResult(), true);
   return true;
 }
 

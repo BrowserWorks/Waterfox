@@ -119,7 +119,8 @@ public:
 
     virtual nsresult Init(nsIURI *aURI, uint32_t aCaps, nsProxyInfo *aProxyInfo,
                           uint32_t aProxyResolveFlags,
-                          nsIURI *aProxyURI) override;
+                          nsIURI *aProxyURI,
+                          const nsID& aChannelId) override;
 
     nsresult OnPush(const nsACString &uri, Http2PushedStream *pushedStream);
 
@@ -270,7 +271,7 @@ private:
     nsresult Connect();
     void     SpeculativeConnect();
     nsresult SetupTransaction();
-    void     SetupTransactionSchedulingContext();
+    void     SetupTransactionRequestContext();
     nsresult CallOnStartRequest();
     nsresult ProcessResponse();
     nsresult ContinueProcessResponse1(nsresult);
@@ -433,6 +434,10 @@ private:
 
     void MaybeWarnAboutAppCache();
 
+    void SetLoadGroupUserAgentOverride();
+
+    void SetDoNotTrack();
+
 private:
     nsCOMPtr<nsICancelable>           mProxyRequest;
 
@@ -536,6 +541,11 @@ private:
     uint32_t                          mIsPackagedAppResource : 1;
     // True if CORS preflight has been performed
     uint32_t                          mIsCorsPreflightDone : 1;
+
+    // if the http transaction was performed (i.e. not cached) and
+    // the result in OnStopRequest was known to be correctly delimited
+    // by chunking, content-length, or h2 end-stream framing
+    uint32_t                          mStronglyFramed : 1;
 
     nsCOMPtr<nsIChannel>              mPreflightChannel;
 

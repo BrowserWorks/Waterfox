@@ -185,7 +185,6 @@ var dataProviders = {
     let data = {
       name: Services.appinfo.name,
       osVersion: sysInfo.getProperty("name") + " " + sysInfo.getProperty("version"),
-      arch: sysInfo.getProperty("arch"),
       version: AppConstants.MOZ_APP_VERSION_DISPLAY,
       buildID: Services.appinfo.appBuildID,
       userAgent: Cc["@mozilla.org/network/protocol;1?name=http"].
@@ -210,7 +209,7 @@ var dataProviders = {
 
     data.numTotalWindows = 0;
     data.numRemoteWindows = 0;
-    let winEnumer = Services.ww.getWindowEnumerator("navigator:browser");
+    let winEnumer = Services.wm.getEnumerator("navigator:browser");
     while (winEnumer.hasMoreElements()) {
       data.numTotalWindows++;
       let remote = winEnumer.getNext().
@@ -473,6 +472,9 @@ var dataProviders = {
         data.indices = failureIndices.value;
       }
     }
+
+    data.featureLog = gfxInfo.getFeatureLog();
+    data.crashGuards = gfxInfo.getActiveCrashGuards();
 
     completed();
   },

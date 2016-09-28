@@ -6,6 +6,7 @@ package org.mozilla.mozstumbler.service.stumblerthread.datahandling;
 
 import android.location.Location;
 import android.net.wifi.ScanResult;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -23,6 +24,8 @@ public final class StumblerBundle implements Parcelable {
     private final Location mGpsPosition;
     private final Map<String, ScanResult> mWifiData;
     private final Map<String, CellInfo> mCellData;
+    private float mPressureHPA;
+
 
     public void wasSent() {
         mGpsPosition.setTime(System.currentTimeMillis());
@@ -115,6 +118,13 @@ public final class StumblerBundle implements Parcelable {
         item.put(DataStorageContract.ReportsColumns.LAT, Math.floor(mGpsPosition.getLatitude() * 1.0E6) / 1.0E6);
         item.put(DataStorageContract.ReportsColumns.LON, Math.floor(mGpsPosition.getLongitude() * 1.0E6) / 1.0E6);
 
+        item.put(DataStorageContract.ReportsColumns.HEADING, mGpsPosition.getBearing());
+        item.put(DataStorageContract.ReportsColumns.SPEED,  mGpsPosition.getSpeed());
+        if (mPressureHPA != 0.0) {
+            item.put(DataStorageContract.ReportsColumns.PRESSURE,  mPressureHPA);
+        }
+
+
         if (mGpsPosition.hasAccuracy()) {
             item.put(DataStorageContract.ReportsColumns.ACCURACY, (int) Math.ceil(mGpsPosition.getAccuracy()));
         }
@@ -142,11 +152,25 @@ public final class StumblerBundle implements Parcelable {
         item.put(DataStorageContract.ReportsColumns.CELL_COUNT, cellJSON.length());
 
         JSONArray wifis = new JSONArray();
+
+        long gpsTimeSinceBootInMS = 0;
+
+        if (Build.VERSION.SDK_INT >= 17) {
+            gpsTimeSinceBootInMS = mGpsPosition.getElapsedRealtimeNanos() / 1000000;
+        }
+
         for (ScanResult s : mWifiData.values()) {
             JSONObject wifiEntry = new JSONObject();
             wifiEntry.put("key", s.BSSID);
             wifiEntry.put("frequency", s.frequency);
             wifiEntry.put("signal", s.level);
+
+            if (Build.VERSION.SDK_INT >= 17) {
+                long wifiTimeSinceBootInMS = (s.timestamp / 1000);
+                long ageMS =  wifiTimeSinceBootInMS - gpsTimeSinceBootInMS;
+                wifiEntry.put("age", ageMS);
+            }
+
             wifis.put(wifiEntry);
         }
         item.put(DataStorageContract.ReportsColumns.WIFI, wifis);
@@ -154,4 +178,10 @@ public final class StumblerBundle implements Parcelable {
 
         return item;
     }
+
+
+    public void addPressure(float hPa) {
+        mPressureHPA = hPa;
+    }
+
 }

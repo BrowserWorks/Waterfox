@@ -44,7 +44,7 @@ extern "C" MFBT_API bool IsSignalHandlingBroken();
 
 // For platforms where the signal/exception handler runs on the same
 // thread/stack as the victim (Unix and Windows), we can use TLS to find any
-// currently executing asm.js code.
+// currently executing wasm code.
 static JSRuntime*
 RuntimeForCurrentThread()
 {
@@ -670,8 +670,7 @@ EmulateHeapAccess(EMULATOR_CONTEXT* context, uint8_t* pc, uint8_t* faultingAddre
     uint32_t wrappedOffset = uint32_t(unwrappedOffset);
     size_t size = access.size();
     MOZ_RELEASE_ASSERT(wrappedOffset + size > wrappedOffset);
-    bool inBounds = wrappedOffset < module.heapLength() &&
-                    wrappedOffset + size < module.heapLength();
+    bool inBounds = wrappedOffset + size < module.heapLength();
 
     // If this is storing Z of an XYZ, check whether X is also in bounds, so
     // that we don't store anything before throwing.
@@ -959,9 +958,8 @@ static const mach_msg_id_t sExceptionId = 2405;
 static const mach_msg_id_t sQuitId = 42;
 
 static void
-MachExceptionHandlerThread(void* threadArg)
+MachExceptionHandlerThread(JSRuntime* rt)
 {
-    JSRuntime* rt = reinterpret_cast<JSRuntime*>(threadArg);
     mach_port_t port = rt->wasmMachExceptionHandler.port();
     kern_return_t kret;
 
@@ -1013,7 +1011,6 @@ MachExceptionHandlerThread(void* threadArg)
 
 MachExceptionHandler::MachExceptionHandler()
   : installed_(false),
-    thread_(nullptr),
     port_(MACH_PORT_NULL)
 {}
 
@@ -1032,7 +1029,7 @@ MachExceptionHandler::uninstall()
             MOZ_CRASH();
         installed_ = false;
     }
-    if (thread_ != nullptr) {
+    if (thread_.joinable()) {
         // Break the handler thread out of the mach_msg loop.
         mach_msg_header_t msg;
         msg.msgh_bits = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0);
@@ -1049,8 +1046,7 @@ MachExceptionHandler::uninstall()
         }
 
         // Wait for the handler thread to complete before deallocating the port.
-        PR_JoinThread(thread_);
-        thread_ = nullptr;
+        thread_.join();
     }
     if (port_ != MACH_PORT_NULL) {
         DebugOnly<kern_return_t> kret = mach_port_destroy(mach_task_self(), port_);
@@ -1075,9 +1071,7 @@ MachExceptionHandler::install(JSRuntime* rt)
         goto error;
 
     // Create a thread to block on reading port_.
-    thread_ = PR_CreateThread(PR_USER_THREAD, MachExceptionHandlerThread, rt,
-                              PR_PRIORITY_NORMAL, PR_GLOBAL_THREAD, PR_JOINABLE_THREAD, 0);
-    if (!thread_)
+    if (!thread_.init(MachExceptionHandlerThread, rt))
         goto error;
 
     // Direct exceptions on this thread to port_ (and thus our handler thread).
@@ -1327,16 +1321,16 @@ wasm::EnsureSignalHandlersInstalled(JSRuntime* rt)
 // JSRuntime::requestInterrupt sets interrupt_ (which is checked frequently by
 // C++ code at every Baseline JIT loop backedge) and jitStackLimit_ (which is
 // checked at every Baseline and Ion JIT function prologue). The remaining
-// sources of potential iloops (Ion loop backedges and all asm.js code) are
+// sources of potential iloops (Ion loop backedges and all wasm code) are
 // handled by this function:
-//  1. Ion loop backedges are patched to instead point to a stub that handles the
-//     interrupt;
-//  2. if the main thread's pc is inside asm.js code, the pc is updated to point
+//  1. Ion loop backedges are patched to instead point to a stub that handles
+//     the interrupt;
+//  2. if the main thread's pc is inside wasm code, the pc is updated to point
 //     to a stub that handles the interrupt.
 void
 js::InterruptRunningJitCode(JSRuntime* rt)
 {
-    // If signal handlers weren't installed, then Ion and asm.js emit normal
+    // If signal handlers weren't installed, then Ion and wasm emit normal
     // interrupt checks and don't need asynchronous interruption.
     if (!rt->canUseSignalHandlers())
         return;
@@ -1346,8 +1340,8 @@ js::InterruptRunningJitCode(JSRuntime* rt)
     if (!rt->startHandlingJitInterrupt())
         return;
 
-    // If we are on runtime's main thread, then: pc is not in asm.js code (so
-    // nothing to do for asm.js) and we can patch Ion backedges without any
+    // If we are on runtime's main thread, then: pc is not in wasm code (so
+    // nothing to do for wasm) and we can patch Ion backedges without any
     // special synchronization.
     if (rt == RuntimeForCurrentThread()) {
         RedirectIonBackedgesToInterruptCheck(rt);

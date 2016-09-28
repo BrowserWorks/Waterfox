@@ -1,8 +1,7 @@
+amazondotcom
 bing
-ddg
-disconnect
-ecosia
 google
+twitter
 wikipedia
-startpage
 yahoo
+yahoo-en-CA:hidden

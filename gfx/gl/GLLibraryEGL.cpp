@@ -4,10 +4,12 @@
 
 #include "GLLibraryEGL.h"
 
+#include "gfxConfig.h"
 #include "gfxCrashReporterUtils.h"
 #include "gfxUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Assertions.h"
+#include "mozilla/Telemetry.h"
 #include "mozilla/unused.h"
 #include "nsDirectoryServiceDefs.h"
 #include "nsDirectoryServiceUtils.h"
@@ -127,8 +129,8 @@ GetAndInitWARPDisplay(GLLibraryEGL& egl, void* displayType)
     if (display == EGL_NO_DISPLAY) {
         const EGLint err = egl.fGetError();
         if (err != LOCAL_EGL_SUCCESS) {
-            printf_stderr("Unexpected error: 0x%04x", err);
-            MOZ_CRASH("Unexpected error.");
+	    gfxCriticalError() << "Unexpected GL error: " << gfx::hexa(err);
+            MOZ_CRASH("GFX: Unexpected GL error.");
         }
         return EGL_NO_DISPLAY;
     }
@@ -140,14 +142,19 @@ GetAndInitWARPDisplay(GLLibraryEGL& egl, void* displayType)
 }
 
 static bool
-IsAccelAngleSupported(const nsCOMPtr<nsIGfxInfo>& gfxInfo)
+IsAccelAngleSupported(const nsCOMPtr<nsIGfxInfo>& gfxInfo, nsACString& aFailureId)
 {
     int32_t angleSupport;
-    nsCString discardFailureId;
+    nsCString failureId;
     gfxUtils::ThreadSafeGetFeatureStatus(gfxInfo,
                                          nsIGfxInfo::FEATURE_WEBGL_ANGLE,
-                                         discardFailureId,
+                                         failureId,
                                          &angleSupport);
+    Telemetry::Accumulate(Telemetry::CANVAS_WEBGL_ACCL_FAILURE_ID,
+                          failureId);
+    if (failureId.IsEmpty()) {
+      aFailureId = failureId;
+    }
     return (angleSupport == nsIGfxInfo::FEATURE_STATUS_OK);
 }
 
@@ -169,20 +176,20 @@ GetAndInitDisplayForAccelANGLE(GLLibraryEGL& egl)
 {
     EGLDisplay ret = 0;
 
-    // D3D11 ANGLE only works with OMTC; there's a bug in the non-OMTC layer
-    // manager, and it's pointless to try to fix it.  We also don't try
-    // D3D11 ANGLE if the layer manager is prefering D3D9 (hrm, do we care?)
-    if (!gfxPrefs::LayersOffMainThreadCompositionForceDisabled() &&
-        !gfxPrefs::LayersPreferD3D9())
-    {
-        if (gfxPrefs::WebGLANGLEForceD3D11())
-            return GetAndInitDisplay(egl, LOCAL_EGL_D3D11_ONLY_DISPLAY_ANGLE);
+    FeatureState& d3d11ANGLE = gfxConfig::GetFeature(Feature::D3D11_HW_ANGLE);
 
-        if (gfxPrefs::WebGLANGLETryD3D11() &&
-            gfxPlatform::GetPlatform()->CanUseDirect3D11ANGLE())
-        {
-            ret = GetAndInitDisplay(egl, LOCAL_EGL_D3D11_ELSE_D3D9_DISPLAY_ANGLE);
-        }
+    if (!gfxPrefs::WebGLANGLETryD3D11())
+        d3d11ANGLE.UserDisable("User disabled D3D11 ANGLE by pref",
+                               NS_LITERAL_CSTRING("FAILURE_ID_ANGLE_PREF"));
+
+    if (gfxPrefs::WebGLANGLEForceD3D11())
+        d3d11ANGLE.UserForceEnable("User force-enabled D3D11 ANGLE on disabled hardware");
+
+    if (gfxConfig::IsForcedOnByUser(Feature::D3D11_HW_ANGLE))
+        return GetAndInitDisplay(egl, LOCAL_EGL_D3D11_ONLY_DISPLAY_ANGLE);
+
+    if (d3d11ANGLE.IsEnabled()) {
+        ret = GetAndInitDisplay(egl, LOCAL_EGL_D3D11_ELSE_D3D9_DISPLAY_ANGLE);
     }
 
     if (!ret) {
@@ -197,7 +204,9 @@ GLLibraryEGL::ReadbackEGLImage(EGLImage image, gfx::DataSourceSurface* out_surfa
 {
     StaticMutexAutoUnlock lock(sMutex);
     if (!mReadbackGL) {
-        mReadbackGL = gl::GLContextProvider::CreateHeadless(gl::CreateContextFlags::NONE);
+        nsCString discardFailureId;
+        mReadbackGL = gl::GLContextProvider::CreateHeadless(gl::CreateContextFlags::NONE,
+                                                            discardFailureId);
     }
 
     ScopedTexture destTex(mReadbackGL);
@@ -219,7 +228,7 @@ GLLibraryEGL::ReadbackEGLImage(EGLImage image, gfx::DataSourceSurface* out_surfa
 }
 
 bool
-GLLibraryEGL::EnsureInitialized(bool forceAccel)
+GLLibraryEGL::EnsureInitialized(bool forceAccel, nsACString& aFailureId)
 {
     if (mInitialized) {
         return true;
@@ -385,39 +394,41 @@ GLLibraryEGL::EnsureInitialized(bool forceAccel)
     EGLDisplay chosenDisplay = nullptr;
 
     if (IsExtensionSupported(ANGLE_platform_angle_d3d)) {
-        bool accelAngleSupport = IsAccelAngleSupported(gfxInfo);
-
+        bool accelAngleSupport = IsAccelAngleSupported(gfxInfo, aFailureId);
         bool shouldTryAccel = forceAccel || accelAngleSupport;
-        bool shouldTryWARP = !shouldTryAccel;
+        bool shouldTryWARP = !forceAccel; // Only if ANGLE not supported or fails
+
+        // If WARP preferred, will override ANGLE support
         if (gfxPrefs::WebGLANGLEForceWARP()) {
             shouldTryWARP = true;
             shouldTryAccel = false;
         }
 
-        // Fallback to a WARP display if non-WARP is blacklisted, or if WARP is forced.
-        if (shouldTryWARP) {
-            chosenDisplay = GetAndInitWARPDisplay(*this, EGL_DEFAULT_DISPLAY);
-            if (chosenDisplay) {
-                mIsWARP = true;
-            }
+        // Hardware accelerated ANGLE path (supported or force accel)
+        if (shouldTryAccel) {
+            chosenDisplay = GetAndInitDisplayForAccelANGLE(*this);
         }
 
-        if (!chosenDisplay) {
-            // If falling back to WARP did not work and we don't want to try
-            // using HW accelerated ANGLE, then fail.
-            if (!shouldTryAccel) {
-                NS_ERROR("Fallback WARP ANGLE context failed to initialize.");
+        // Fallback to a WARP display if ANGLE fails, or if WARP is forced
+        if (!chosenDisplay && shouldTryWARP) {
+            chosenDisplay = GetAndInitWARPDisplay(*this, EGL_DEFAULT_DISPLAY);
+            if (!chosenDisplay) {
+                if (aFailureId.IsEmpty()) {
+                    aFailureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_WARP_FALLBACK");
+                }
+                NS_ERROR("Fallback WARP context failed to initialize.");
                 return false;
             }
-
-            // Hardware accelerated ANGLE path
-            chosenDisplay = GetAndInitDisplayForAccelANGLE(*this);
+            mIsWARP = true;
         }
     } else {
         chosenDisplay = GetAndInitDisplay(*this, EGL_DEFAULT_DISPLAY);
     }
 
     if (!chosenDisplay) {
+        if (aFailureId.IsEmpty()) {
+            aFailureId = NS_LITERAL_CSTRING("FEATURE_FAILURE_NO_DISPLAY");
+        }
         NS_WARNING("Failed to initialize a display.");
         return false;
     }

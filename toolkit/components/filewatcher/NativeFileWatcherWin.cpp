@@ -27,7 +27,7 @@ namespace {
 /**
  * An event used to notify the main thread when an error happens.
  */
-class WatchedErrorEvent final : public nsRunnable
+class WatchedErrorEvent final : public Runnable
 {
 public:
   /**
@@ -65,7 +65,7 @@ public:
 /**
  * An event used to notify the main thread when an operation is successful.
  */
-class WatchedSuccessEvent final : public nsRunnable
+class WatchedSuccessEvent final : public Runnable
 {
 public:
   /**
@@ -103,7 +103,7 @@ public:
  * An event used to notify the main thread of a change in a watched
  * resource.
  */
-class WatchedChangeEvent final : public nsRunnable
+class WatchedChangeEvent final : public Runnable
 {
 public:
   /**
@@ -224,7 +224,7 @@ struct PathRunnablesParametersWrapper {
  * This runnable is dispatched to the main thread in order to safely
  * shutdown the worker thread.
  */
-class NativeWatcherIOShutdownTask : public nsRunnable
+class NativeWatcherIOShutdownTask : public Runnable
 {
 public:
   NativeWatcherIOShutdownTask()
@@ -255,7 +255,7 @@ private:
  * by issuing a NS_DispatchToCurrentThread(this) before exiting. This is done to allow
  * the execution of other runnables enqueued within the thread task queue.
  */
-class NativeFileWatcherIOTask : public nsRunnable
+class NativeFileWatcherIOTask : public Runnable
 {
 public:
   NativeFileWatcherIOTask(HANDLE aIOCompletionPort)
@@ -1311,7 +1311,7 @@ NativeFileWatcherService::AddPath(const nsAString& aPathToWatch,
   nsMainThreadPtrHandle<nsINativeFileWatcherSuccessCallback> successCallbackHandle(
     new nsMainThreadPtrHolder<nsINativeFileWatcherSuccessCallback>(aOnSuccess));
 
-  // Wrap the path and the callbacks in order to pass them using NS_NewRunnableMethodWithArg.
+  // Wrap the path and the callbacks in order to pass them using NewRunnableMethod.
   UniquePtr<PathRunnablesParametersWrapper> wrappedCallbacks(
     new PathRunnablesParametersWrapper(
       aPathToWatch,
@@ -1322,7 +1322,7 @@ NativeFileWatcherService::AddPath(const nsAString& aPathToWatch,
   // Since this function does a bit of I/O stuff , run it in the IO thread.
   nsresult rv =
     mIOThread->Dispatch(
-      NS_NewRunnableMethodWithArg<PathRunnablesParametersWrapper*>(
+      NewRunnableMethod<PathRunnablesParametersWrapper*>(
         static_cast<NativeFileWatcherIOTask*>(mWorkerIORunnable.get()),
         &NativeFileWatcherIOTask::AddPathRunnableMethod,
         wrappedCallbacks.get()),
@@ -1381,7 +1381,7 @@ NativeFileWatcherService::RemovePath(const nsAString& aPathToRemove,
   nsMainThreadPtrHandle<nsINativeFileWatcherSuccessCallback> successCallbackHandle(
     new nsMainThreadPtrHolder<nsINativeFileWatcherSuccessCallback>(aOnSuccess));
 
-  // Wrap the path and the callbacks in order to pass them using NS_NewRunnableMethodWithArg.
+  // Wrap the path and the callbacks in order to pass them using NewRunnableMethod.
   UniquePtr<PathRunnablesParametersWrapper> wrappedCallbacks(
     new PathRunnablesParametersWrapper(
       aPathToRemove,
@@ -1392,7 +1392,7 @@ NativeFileWatcherService::RemovePath(const nsAString& aPathToRemove,
   // Since this function does a bit of I/O stuff, run it in the IO thread.
   nsresult rv =
     mIOThread->Dispatch(
-      NS_NewRunnableMethodWithArg<PathRunnablesParametersWrapper*>(
+      NewRunnableMethod<PathRunnablesParametersWrapper*>(
         static_cast<NativeFileWatcherIOTask*>(mWorkerIORunnable.get()),
         &NativeFileWatcherIOTask::RemovePathRunnableMethod,
         wrappedCallbacks.get()),
@@ -1441,7 +1441,7 @@ NativeFileWatcherService::Uninit()
   // in the IO thread.
   nsresult rv =
     ioThread->Dispatch(
-      NS_NewRunnableMethod(
+      NewRunnableMethod(
         static_cast<NativeFileWatcherIOTask*>(mWorkerIORunnable.get()),
         &NativeFileWatcherIOTask::DeactivateRunnableMethod),
       nsIEventTarget::DISPATCH_NORMAL);

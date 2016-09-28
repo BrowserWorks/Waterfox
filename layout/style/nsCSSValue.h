@@ -20,6 +20,7 @@
 #include "nsCSSProperty.h"
 #include "nsColor.h"
 #include "nsCoord.h"
+#include "nsProxyRelease.h"
 #include "nsRefPtrHashtable.h"
 #include "nsString.h"
 #include "nsStringBuffer.h"
@@ -85,7 +86,8 @@ class CSSStyleSheet;
 namespace mozilla {
 namespace css {
 
-struct URLValue {
+struct URLValueData
+{
   // Methods are not inline because using an nsIPrincipal means requiring
   // caps, which leads to REQUIRES hell, since this header is included all
   // over.
@@ -94,54 +96,88 @@ struct URLValue {
   // For both constructors aOriginPrincipal must not be null.
   // Construct with a base URI; this will create the actual URI lazily from
   // aString and aBaseURI.
-  URLValue(nsStringBuffer* aString, nsIURI* aBaseURI, nsIURI* aReferrer,
-           nsIPrincipal* aOriginPrincipal);
+  URLValueData(nsStringBuffer* aString,
+               already_AddRefed<PtrHolder<nsIURI>> aBaseURI,
+               already_AddRefed<PtrHolder<nsIURI>> aReferrer,
+               already_AddRefed<PtrHolder<nsIPrincipal>> aOriginPricinpal);
   // Construct with the actual URI.
-  URLValue(nsIURI* aURI, nsStringBuffer* aString, nsIURI* aReferrer,
-           nsIPrincipal* aOriginPrincipal);
+  URLValueData(already_AddRefed<PtrHolder<nsIURI>> aURI,
+               nsStringBuffer* aString,
+               already_AddRefed<PtrHolder<nsIURI>> aReferrer,
+               already_AddRefed<PtrHolder<nsIPrincipal>> aOriginPrincipal);
 
-protected:
-  ~URLValue() {};
-
-public:
-  bool operator==(const URLValue& aOther) const;
+  bool operator==(const URLValueData& aOther) const;
 
   // URIEquals only compares URIs and principals (unlike operator==, which
   // also compares the original strings).  URIEquals also assumes that the
   // mURI member of both URL objects is non-null.  Do NOT call this method
   // unless you're sure this is the case.
-  bool URIEquals(const URLValue& aOther) const;
+  bool URIEquals(const URLValueData& aOther) const;
 
   nsIURI* GetURI() const;
 
-  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+  size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
 
 private:
   // If mURIResolved is false, mURI stores the base URI.
   // If mURIResolved is true, mURI stores the URI we resolve to; this may be
   // null if the URI is invalid.
-  mutable nsCOMPtr<nsIURI> mURI;
+  mutable PtrHandle<nsIURI> mURI;
 public:
   RefPtr<nsStringBuffer> mString;
-  nsCOMPtr<nsIURI> mReferrer;
-  nsCOMPtr<nsIPrincipal> mOriginPrincipal;
-
-  NS_INLINE_DECL_REFCOUNTING(URLValue)
-
+  PtrHandle<nsIURI> mReferrer;
+  PtrHandle<nsIPrincipal> mOriginPrincipal;
 private:
   mutable bool mURIResolved;
 
-  URLValue(const URLValue& aOther) = delete;
-  URLValue& operator=(const URLValue& aOther) = delete;
+  URLValueData(const URLValueData& aOther) = delete;
+  URLValueData& operator=(const URLValueData& aOther) = delete;
 };
 
-struct ImageValue : public URLValue {
+struct URLValue : public URLValueData
+{
+  // These two constructors are safe to call only on the main thread.
+  URLValue(nsStringBuffer* aString, nsIURI* aBaseURI, nsIURI* aReferrer,
+           nsIPrincipal* aOriginPrincipal);
+  URLValue(nsIURI* aURI, nsStringBuffer* aString, nsIURI* aReferrer,
+           nsIPrincipal* aOriginPrincipal);
+
+  // This constructor is safe to call from any thread.
+  URLValue(nsStringBuffer* aString,
+           already_AddRefed<PtrHolder<nsIURI>> aBaseURI,
+           already_AddRefed<PtrHolder<nsIURI>> aReferrer,
+           already_AddRefed<PtrHolder<nsIPrincipal>> aOriginPrincipal)
+    : URLValueData(aString, Move(aBaseURI), Move(aReferrer),
+                   Move(aOriginPrincipal)) {}
+
+  URLValue(const URLValue&) = delete;
+  URLValue& operator=(const URLValue&) = delete;
+
+  size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
+
+protected:
+  ~URLValue() {}
+
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(URLValue)
+};
+
+struct ImageValue : public URLValueData
+{
   // Not making the constructor and destructor inline because that would
   // force us to include imgIRequest.h, which leads to REQUIRES hell, since
   // this header is included all over.
   // aString must not be null.
+  //
+  // This constructor is only safe to call from the main thread.
   ImageValue(nsIURI* aURI, nsStringBuffer* aString, nsIURI* aReferrer,
              nsIPrincipal* aOriginPrincipal, nsIDocument* aDocument);
+
+  ImageValue(const ImageValue&) = delete;
+  ImageValue& operator=(const ImageValue&) = delete;
+
+  // XXXheycam We should have our own SizeOfIncludingThis method.
+
 private:
   ~ImageValue();
 
@@ -150,11 +186,7 @@ public:
 
   nsRefPtrHashtable<nsPtrHashKey<nsIDocument>, imgRequestProxy> mRequests;
 
-  // Override AddRef and Release to not only log ourselves correctly, but
-  // also so that we delete correctly without a virtual destructor (assuming
-  // callers always call *our* Release method and not our base class's).
-  NS_METHOD_(MozExternalRefCountType) AddRef();
-  NS_METHOD_(MozExternalRefCountType) Release();
+  NS_INLINE_DECL_REFCOUNTING(ImageValue)
 };
 
 struct GridNamedArea {
@@ -332,13 +364,15 @@ enum nsCSSUnit {
   eCSSUnit_RGBAColor           = 82,   // (nscolor) an RGBA value specified as rgba()
   eCSSUnit_HexColor            = 83,   // (nscolor) an opaque RGBA value specified as #rrggbb
   eCSSUnit_ShortHexColor       = 84,   // (nscolor) an opaque RGBA value specified as #rgb
-  eCSSUnit_PercentageRGBColor  = 85,   // (nsCSSValueFloatColor*)
-  eCSSUnit_PercentageRGBAColor = 86,   // (nsCSSValueFloatColor*)
-  eCSSUnit_HSLColor            = 87,   // (nsCSSValueFloatColor*)
-  eCSSUnit_HSLAColor           = 88,   // (nsCSSValueFloatColor*)
+  eCSSUnit_HexColorAlpha       = 85,   // (nscolor) an opaque RGBA value specified as #rrggbbaa
+  eCSSUnit_ShortHexColorAlpha  = 86,   // (nscolor) an opaque RGBA value specified as #rgba
+  eCSSUnit_PercentageRGBColor  = 87,   // (nsCSSValueFloatColor*)
+  eCSSUnit_PercentageRGBAColor = 88,   // (nsCSSValueFloatColor*)
+  eCSSUnit_HSLColor            = 89,   // (nsCSSValueFloatColor*)
+  eCSSUnit_HSLAColor           = 90,   // (nsCSSValueFloatColor*)
 
-  eCSSUnit_Percent      = 90,     // (float) 1.0 == 100%) value is percentage of something
-  eCSSUnit_Number       = 91,     // (float) value is numeric (usually multiplier, different behavior that percent)
+  eCSSUnit_Percent      = 100,     // (float) 1.0 == 100%) value is percentage of something
+  eCSSUnit_Number       = 101,     // (float) value is numeric (usually multiplier, different behavior than percent)
 
   // Physical length units
   eCSSUnit_PhysicalMillimeter = 200,   // (float) 1/25.4 inch
@@ -362,7 +396,8 @@ enum nsCSSUnit {
   eCSSUnit_Millimeter   = 902,    // (float) 96/25.4 CSS pixels
   eCSSUnit_Centimeter   = 903,    // (float) 96/2.54 CSS pixels
   eCSSUnit_Pica         = 904,    // (float) 12 points == 16 CSS pixls
-  eCSSUnit_Pixel        = 905,    // (float) CSS pixel unit
+  eCSSUnit_Quarter      = 905,    // (float) 96/101.6 CSS pixels
+  eCSSUnit_Pixel        = 906,    // (float) CSS pixel unit
 
   // Angular units
   eCSSUnit_Degree       = 1000,    // (float) 360 per circle
@@ -402,7 +437,7 @@ public:
   struct Array;
   friend struct Array;
 
-  friend struct mozilla::css::URLValue;
+  friend struct mozilla::css::URLValueData;
 
   friend struct mozilla::css::ImageValue;
 
@@ -424,9 +459,16 @@ public:
   explicit nsCSSValue(mozilla::css::GridTemplateAreasValue* aValue);
   explicit nsCSSValue(mozilla::css::FontFamilyListRefCnt* aValue);
   nsCSSValue(const nsCSSValue& aCopy);
+  nsCSSValue(nsCSSValue&& aOther)
+    : mUnit(aOther.mUnit)
+    , mValue(aOther.mValue)
+  {
+    aOther.mUnit = eCSSUnit_Null;
+  }
   ~nsCSSValue() { Reset(); }
 
   nsCSSValue&  operator=(const nsCSSValue& aCopy);
+  nsCSSValue&  operator=(nsCSSValue&& aCopy);
   bool        operator==(const nsCSSValue& aOther) const;
 
   bool operator!=(const nsCSSValue& aOther) const
@@ -495,8 +537,10 @@ public:
   //       eCSSUnit_RGBAColor            -- rgba(int,int,int,float)
   //       eCSSUnit_HexColor             -- #rrggbb
   //       eCSSUnit_ShortHexColor        -- #rgb
+  //       eCSSUnit_HexColorAlpha        -- #rrggbbaa
+  //       eCSSUnit_ShortHexColorAlpha   -- #rgba
   //
-  //   - IsFLoatColorUnit returns true for:
+  //   - IsFloatColorUnit returns true for:
   //       eCSSUnit_PercentageRGBColor   -- rgb(%,%,%)
   //       eCSSUnit_PercentageRGBAColor  -- rgba(%,%,%,float)
   //       eCSSUnit_HSLColor             -- hsl(float,%,%)
@@ -510,7 +554,7 @@ public:
   bool IsFloatColorUnit() const { return IsFloatColorUnit(mUnit); }
   bool IsNumericColorUnit() const { return IsNumericColorUnit(mUnit); }
   static bool IsIntegerColorUnit(nsCSSUnit aUnit)
-  { return eCSSUnit_RGBColor <= aUnit && aUnit <= eCSSUnit_ShortHexColor; }
+  { return eCSSUnit_RGBColor <= aUnit && aUnit <= eCSSUnit_ShortHexColorAlpha; }
   static bool IsFloatColorUnit(nsCSSUnit aUnit)
   { return eCSSUnit_PercentageRGBColor <= aUnit &&
            aUnit <= eCSSUnit_HSLAColor; }

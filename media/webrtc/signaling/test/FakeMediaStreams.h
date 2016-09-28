@@ -22,7 +22,7 @@
 #include "mozilla/Mutex.h"
 #include "AudioSegment.h"
 #include "MediaSegment.h"
-#include "StreamBuffer.h"
+#include "StreamTracks.h"
 #include "nsTArray.h"
 #include "nsIRunnable.h"
 #include "nsISupportsImpl.h"
@@ -92,8 +92,13 @@ public:
                                         uint32_t aTrackEvents,
                                         const mozilla::MediaSegment& aQueuedMedia,
                                         Fake_MediaStream* aInputStream,
-                                        mozilla::TrackID aInputTrackID) = 0;
+                                        mozilla::TrackID aInputTrackID) {}
   virtual void NotifyPull(mozilla::MediaStreamGraph* aGraph, mozilla::StreamTime aDesiredTime) = 0;
+  virtual void NotifyQueuedAudioData(mozilla::MediaStreamGraph* aGraph, mozilla::TrackID aID,
+                                       mozilla::StreamTime aTrackOffset,
+                                       const mozilla::AudioSegment& aQueuedMedia,
+                                       Fake_MediaStream* aInputStream,
+                                       mozilla::TrackID aInputTrackID) {}
 
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Fake_MediaStreamListener)
 };
@@ -447,9 +452,9 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
   static already_AddRefed<Fake_DOMMediaStream>
-  CreateSourceStream(nsPIDOMWindowInner* aWindow,
-		     mozilla::MediaStreamGraph* aGraph,
-		     uint32_t aHintContents = 0) {
+  CreateSourceStreamAsInput(nsPIDOMWindowInner* aWindow,
+                            mozilla::MediaStreamGraph* aGraph,
+                            uint32_t aHintContents = 0) {
     Fake_SourceMediaStream *source = new Fake_SourceMediaStream();
 
     RefPtr<Fake_DOMMediaStream> ds = new Fake_DOMMediaStream(source);

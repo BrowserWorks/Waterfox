@@ -35,112 +35,12 @@
 #include "nsTArray.h"                   // for nsTArray, nsTArray_Impl, etc
 #include "nsExpirationTracker.h"
 #include "mozilla/layers/ISurfaceAllocator.h"
-#include "pratom.h"                     // For PR_ATOMIC_INCREMENT/DECREMENT
 
 namespace mozilla {
 namespace layers {
 
 class ClientTiledPaintedLayer;
 class ClientLayerManager;
-
-
-// A class to help implement copy-on-write semantics for shared tiles.
-class gfxSharedReadLock {
-protected:
-  virtual ~gfxSharedReadLock() {}
-
-public:
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(gfxSharedReadLock)
-
-  virtual int32_t ReadLock() = 0;
-  virtual int32_t ReadUnlock() = 0;
-  virtual int32_t GetReadCount() = 0;
-  virtual bool IsValid() const = 0;
-
-  enum gfxSharedReadLockType {
-    TYPE_MEMORY,
-    TYPE_SHMEM
-  };
-  virtual gfxSharedReadLockType GetType() = 0;
-
-protected:
-  NS_DECL_OWNINGTHREAD
-};
-
-class gfxMemorySharedReadLock : public gfxSharedReadLock {
-public:
-  gfxMemorySharedReadLock();
-
-protected:
-  ~gfxMemorySharedReadLock();
-
-public:
-  virtual int32_t ReadLock() override;
-
-  virtual int32_t ReadUnlock() override;
-
-  virtual int32_t GetReadCount() override;
-
-  virtual gfxSharedReadLockType GetType() override { return TYPE_MEMORY; }
-
-  virtual bool IsValid() const override { return true; };
-
-private:
-  int32_t mReadCount;
-};
-
-class gfxShmSharedReadLock : public gfxSharedReadLock {
-private:
-  struct ShmReadLockInfo {
-    int32_t readCount;
-  };
-
-public:
-  explicit gfxShmSharedReadLock(ClientIPCAllocator* aAllocator);
-
-protected:
-  ~gfxShmSharedReadLock();
-
-public:
-  virtual int32_t ReadLock() override;
-
-  virtual int32_t ReadUnlock() override;
-
-  virtual int32_t GetReadCount() override;
-
-  virtual bool IsValid() const override { return mAllocSuccess; };
-
-  virtual gfxSharedReadLockType GetType() override { return TYPE_SHMEM; }
-
-  mozilla::layers::ShmemSection& GetShmemSection() { return mShmemSection; }
-
-  static already_AddRefed<gfxShmSharedReadLock>
-  Open(mozilla::layers::ISurfaceAllocator* aAllocator, const mozilla::layers::ShmemSection& aShmemSection)
-  {
-    MOZ_RELEASE_ASSERT(aShmemSection.shmem().IsReadable());
-    RefPtr<gfxShmSharedReadLock> readLock = new gfxShmSharedReadLock(aAllocator, aShmemSection);
-    return readLock.forget();
-  }
-
-private:
-  gfxShmSharedReadLock(ISurfaceAllocator* aAllocator, const mozilla::layers::ShmemSection& aShmemSection)
-    : mAllocator(aAllocator)
-    , mShmemSection(aShmemSection)
-    , mAllocSuccess(true)
-  {
-    MOZ_COUNT_CTOR(gfxShmSharedReadLock);
-  }
-
-  ShmReadLockInfo* GetShmReadLockInfoPtr()
-  {
-    return reinterpret_cast<ShmReadLockInfo*>
-      (mShmemSection.shmem().get<char>() + mShmemSection.offset());
-  }
-
-  RefPtr<ISurfaceAllocator> mAllocator;
-  mozilla::layers::ShmemSection mShmemSection;
-  bool mAllocSuccess;
-};
 
 /**
  * Represent a single tile in tiled buffer. The buffer keeps tiles,
@@ -188,22 +88,6 @@ struct TileClient
   bool IsPlaceholderTile() const
   {
     return mBackBuffer == nullptr && mFrontBuffer == nullptr;
-  }
-
-  void ReadUnlock()
-  {
-    MOZ_ASSERT(mFrontLock, "ReadLock with no gfxSharedReadLock");
-    if (mFrontLock) {
-      mFrontLock->ReadUnlock();
-    }
-  }
-
-  void ReadLock()
-  {
-    MOZ_ASSERT(mFrontLock, "ReadLock with no gfxSharedReadLock");
-    if (mFrontLock) {
-      mFrontLock->ReadLock();
-    }
   }
 
   void DiscardBuffers()
@@ -270,12 +154,11 @@ struct TileClient
   RefPtr<TextureClient> mBackBufferOnWhite;
   RefPtr<TextureClient> mFrontBuffer;
   RefPtr<TextureClient> mFrontBufferOnWhite;
-  RefPtr<gfxSharedReadLock> mBackLock;
-  RefPtr<gfxSharedReadLock> mFrontLock;
   RefPtr<ClientLayerManager> mManager;
   RefPtr<TextureClientAllocator> mAllocator;
   gfx::IntRect mUpdateRect;
   CompositableClient* mCompositableClient;
+  bool mWasPlaceholder;
 #ifdef GFX_TILEDLAYER_DEBUG_OVERLAY
   TimeStamp        mLastUpdate;
 #endif
@@ -355,6 +238,11 @@ struct BasicTiledLayerPaintData {
   bool mPaintFinished : 1;
 
   /*
+   * Whether or not there is an async transform animation active
+   */
+  bool mHasTransformAnimation : 1;
+
+  /*
    * Initializes/clears data to prepare for paint action.
    */
   void ResetPaintData();
@@ -408,13 +296,15 @@ public:
     , mCompositableClient(aCompositableClient)
     , mLastPaintContentType(gfxContentType::COLOR)
     , mLastPaintSurfaceMode(SurfaceMode::SURFACE_OPAQUE)
+    , mWasLastPaintProgressive(false)
   {}
 
   virtual void PaintThebes(const nsIntRegion& aNewValidRegion,
                    const nsIntRegion& aPaintRegion,
                    const nsIntRegion& aDirtyRegion,
                    LayerManager::DrawPaintedLayerCallback aCallback,
-                   void* aCallbackData) = 0;
+                   void* aCallbackData,
+                   bool aIsProgressive = false) = 0;
 
   virtual bool SupportsProgressiveUpdate() = 0;
   virtual bool ProgressiveUpdate(nsIntRegion& aValidRegion,
@@ -449,6 +339,8 @@ protected:
   gfxContentType mLastPaintContentType;
   SurfaceMode mLastPaintSurfaceMode;
   CSSToParentLayerScale2D mFrameResolution;
+
+  bool mWasLastPaintProgressive;
 };
 
 class ClientMultiTiledLayerBuffer
@@ -475,7 +367,8 @@ public:
                    const nsIntRegion& aPaintRegion,
                    const nsIntRegion& aDirtyRegion,
                    LayerManager::DrawPaintedLayerCallback aCallback,
-                   void* aCallbackData) override;
+                   void* aCallbackData,
+                   bool aIsProgressive = false) override;
 
   virtual bool SupportsProgressiveUpdate() override { return true; }
   /**

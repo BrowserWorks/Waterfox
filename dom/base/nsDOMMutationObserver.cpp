@@ -6,12 +6,15 @@
 
 #include "nsDOMMutationObserver.h"
 
+#include "mozilla/AnimationTarget.h"
+#include "mozilla/Maybe.h"
 #include "mozilla/OwningNonNull.h"
 
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/KeyframeEffect.h"
 
 #include "nsContentUtils.h"
+#include "nsCSSPseudoElements.h"
 #include "nsError.h"
 #include "nsIDOMMutationEvent.h"
 #include "nsIScriptGlobalObject.h"
@@ -19,8 +22,11 @@
 #include "nsTextFragment.h"
 #include "nsThreadUtils.h"
 
+using mozilla::Maybe;
+using mozilla::NonOwningAnimationTarget;
 using mozilla::dom::TreeOrderComparator;
 using mozilla::dom::Animation;
+using mozilla::dom::Element;
 
 AutoTArray<RefPtr<nsDOMMutationObserver>, 4>*
   nsDOMMutationObserver::sScheduledMutationObservers = nullptr;
@@ -393,14 +399,14 @@ nsAnimationReceiver::RecordAnimationMutation(Animation* aAnimation,
     return;
   }
 
-  dom::Element* elem = animationTarget->mElement;
+  Element* elem = animationTarget->mElement;
   if (!Animations() || !(Subtree() || elem == Target()) ||
       elem->ChromeOnlyAccess()) {
     return;
   }
 
   // Record animations targeting to a pseudo element only when subtree is true.
-  if (animationTarget->mPseudoType != CSSPseudoElementType::NotPseudo &&
+  if (animationTarget->mPseudoType != mozilla::CSSPseudoElementType::NotPseudo &&
       !Subtree()) {
     return;
   }
@@ -623,15 +629,11 @@ nsDOMMutationObserver::Observe(nsINode& aTarget,
   bool attributeOldValue =
     aOptions.mAttributeOldValue.WasPassed() &&
     aOptions.mAttributeOldValue.Value();
-  bool nativeAnonymousChildList = aOptions.mNativeAnonymousChildList &&
-    nsContentUtils::ThreadsafeIsCallerChrome();
+  bool nativeAnonymousChildList = aOptions.mNativeAnonymousChildList;
   bool characterDataOldValue =
     aOptions.mCharacterDataOldValue.WasPassed() &&
     aOptions.mCharacterDataOldValue.Value();
-  bool animations =
-    aOptions.mAnimations.WasPassed() &&
-    aOptions.mAnimations.Value() &&
-    nsContentUtils::ThreadsafeIsCallerChrome();
+  bool animations = aOptions.mAnimations;
 
   if (!aOptions.mAttributes.WasPassed() &&
       (aOptions.mAttributeOldValue.WasPassed() ||
@@ -757,7 +759,7 @@ nsDOMMutationObserver::GetObservingInfo(
     info.mAttributeOldValue.Construct(mr->AttributeOldValue());
     info.mCharacterDataOldValue.Construct(mr->CharacterDataOldValue());
     info.mNativeAnonymousChildList = mr->NativeAnonymousChildList();
-    info.mAnimations.Construct(mr->Animations());
+    info.mAnimations = mr->Animations();
     nsCOMArray<nsIAtom>& filters = mr->AttributeFilter();
     if (filters.Count()) {
       info.mAttributeFilter.Construct();
@@ -855,7 +857,7 @@ nsDOMMutationObserver::HandleMutation()
   mCallback->Call(this, mutations, *this);
 }
 
-class AsyncMutationHandler : public nsRunnable
+class AsyncMutationHandler : public mozilla::Runnable
 {
 public:
   NS_IMETHOD Run()

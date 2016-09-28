@@ -24,6 +24,8 @@ const servicePrefs = new Preferences('dom.push.');
 
 const WEBSOCKET_CLOSE_GOING_AWAY = 1001;
 
+const MS_IN_ONE_DAY = 24 * 60 * 60 * 1000;
+
 var isParent = Cc['@mozilla.org/xre/runtime;1']
                  .getService(Ci.nsIXULRuntime).processType ==
                  Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
@@ -140,31 +142,17 @@ function setPrefs(prefs = {}) {
     'connection.enabled': true,
     userAgentID: '',
     enabled: true,
-    // Disable adaptive pings and UDP wake-up by default; these are
-    // tested separately.
-    'adaptive.enabled': false,
-    'udp.wakeupEnabled': false,
-    // Defaults taken from /b2g/app/b2g.js.
+    // Defaults taken from /modules/libpref/init/all.js.
     requestTimeout: 10000,
     retryBaseInterval: 5000,
     pingInterval: 30 * 60 * 1000,
-    'pingInterval.default': 3 * 60 * 1000,
-    'pingInterval.mobile': 3 * 60 * 1000,
-    'pingInterval.wifi': 3 * 60 * 1000,
-    'adaptive.lastGoodPingInterval': 3 * 60 * 1000,
-    'adaptive.lastGoodPingInterval.mobile': 3 * 60 * 1000,
-    'adaptive.lastGoodPingInterval.wifi': 3 * 60 * 1000,
-    'adaptive.gap': 60000,
-    'adaptive.upperLimit': 29 * 60 * 1000,
     // Misc. defaults.
-    'adaptive.mobile': '',
     'http2.maxRetries': 2,
     'http2.retryInterval': 500,
     'http2.reset_retry_count_after_ms': 60000,
     maxQuotaPerSubscription: 16,
     quotaUpdateDelay: 3000,
     'testing.notifyWorkers': false,
-    'testing.notifyAllObservers': true,
   }, prefs);
   for (let pref in defaultPrefs) {
     servicePrefs.set(pref, defaultPrefs[pref]);
@@ -308,8 +296,7 @@ MockWebSocket.prototype = {
 
   /**
    * Closes the server end of the connection, calling onServerClose()
-   * followed by onStop(). Used to test abrupt connection termination
-   * and UDP wake-up.
+   * followed by onStop(). Used to test abrupt connection termination.
    *
    * @param {Number} [statusCode] The WebSocket connection close code.
    * @param {String} [reason] The connection close reason.
@@ -327,58 +314,6 @@ MockWebSocket.prototype = {
   serverInterrupt(result = Cr.NS_ERROR_NET_RESET) {
     waterfall(() => this._listener.onStop(this._context, result));
   },
-};
-
-/**
- * Creates an object that exposes the same interface as NetworkInfo, used
- * to simulate network status changes on Desktop. All methods returns empty
- * carrier data.
- */
-function MockDesktopNetworkInfo() {}
-
-MockDesktopNetworkInfo.prototype = {
-  getNetworkInformation() {
-    return {mcc: '', mnc: '', ip: ''};
-  },
-
-  getNetworkState(callback) {
-    callback({mcc: '', mnc: '', ip: '', netid: ''});
-  },
-
-  getNetworkStateChangeEventName() {
-    return 'network:offline-status-changed';
-  }
-};
-
-/**
- * Creates an object that exposes the same interface as NetworkInfo, used
- * to simulate network status changes on B2G.
- *
- * @param {String} [info.mcc] The mobile country code.
- * @param {String} [info.mnc] The mobile network code.
- * @param {String} [info.ip] The carrier IP address.
- * @param {String} [info.netid] The resolved network ID for UDP wake-up.
- */
-function MockMobileNetworkInfo(info = {}) {
-  this._info = info;
-}
-
-MockMobileNetworkInfo.prototype = {
-  _info: null,
-
-  getNetworkInformation() {
-    let {mcc, mnc, ip} = this._info;
-    return {mcc, mnc, ip};
-  },
-
-  getNetworkState(callback) {
-    let {mcc, mnc, ip, netid} = this._info;
-    callback({mcc, mnc, ip, netid});
-  },
-
-  getNetworkStateChangeEventName() {
-    return 'network-active-changed';
-  }
 };
 
 var setUpServiceInParent = Task.async(function* (service, db) {
@@ -424,7 +359,6 @@ var setUpServiceInParent = Task.async(function* (service, db) {
 
   service.init({
     serverURI: 'wss://push.example.org/',
-    networkInfo: new MockDesktopNetworkInfo(),
     db: makeStub(db, {
       put(prev, record) {
         if (record.scope == 'https://example.com/sub/fail') {
@@ -500,3 +434,23 @@ var tearDownServiceInParent = Task.async(function* (db) {
   record = yield db.getByKeyID('3a414737-2fd0-44c0-af05-7efc172475fc');
   ok(!record, 'Unsubscribed record should not exist');
 });
+
+function putTestRecord(db, keyID, scope, quota) {
+  return db.put({
+    channelID: keyID,
+    pushEndpoint: 'https://example.org/push/' + keyID,
+    scope: scope,
+    pushCount: 0,
+    lastPush: 0,
+    version: null,
+    originAttributes: '',
+    quota: quota,
+    systemRecord: quota == Infinity,
+  });
+}
+
+function getAllKeyIDs(db) {
+  return db.getAllKeyIDs().then(records =>
+    records.map(record => record.keyID).sort(compareAscending)
+  );
+}

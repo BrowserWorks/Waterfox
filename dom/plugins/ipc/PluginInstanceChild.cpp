@@ -112,13 +112,6 @@ static const TCHAR kPluginIgnoreSubclassProperty[] = TEXT("PluginIgnoreSubclassP
 #include "PluginUtilsOSX.h"
 #endif // defined(XP_MACOSX)
 
-template<>
-struct RunnableMethodTraits<PluginInstanceChild>
-{
-    static void RetainCallee(PluginInstanceChild* obj) { }
-    static void ReleaseCallee(PluginInstanceChild* obj) { }
-};
-
 /**
  * We can't use gfxPlatform::CreateDrawTargetForSurface() because calling
  * gfxPlatform::GetPlatform() instantiates the prefs service, and that's not
@@ -195,8 +188,6 @@ PluginInstanceChild::PluginInstanceChild(const NPPluginFuncs* aPluginIface,
     , mAccumulatedInvalidRect(0,0,0,0)
     , mIsTransparent(false)
     , mSurfaceType(gfxSurfaceType::Max)
-    , mCurrentInvalidateTask(nullptr)
-    , mCurrentAsyncSetWindowTask(nullptr)
     , mPendingPluginCall(false)
     , mDoAlphaExtraction(false)
     , mHasPainted(false)
@@ -2624,7 +2615,7 @@ PluginInstanceChild::FlashThrottleAsyncMsg::GetProc()
     return nullptr;
 }
  
-void
+NS_IMETHODIMP
 PluginInstanceChild::FlashThrottleAsyncMsg::Run()
 {
     RemoveFromAsyncList();
@@ -2633,10 +2624,11 @@ PluginInstanceChild::FlashThrottleAsyncMsg::Run()
     // PluginInstanceChild. We don't transport sub-class procedure
     // ptrs around in FlashThrottleAsyncMsg msgs.
     if (!GetProc())
-        return;
+        return NS_OK;
   
     // deliver the event to flash 
     CallWindowProc(GetProc(), GetWnd(), GetMsg(), GetWParam(), GetLParam());
+    return NS_OK;
 }
 
 void
@@ -2648,14 +2640,15 @@ PluginInstanceChild::FlashThrottleMessage(HWND aWnd,
 {
     // We reuse ChildAsyncCall so we get the cancelation work
     // that's done in Destroy.
-    FlashThrottleAsyncMsg* task = new FlashThrottleAsyncMsg(this,
-        aWnd, aMsg, aWParam, aLParam, isWindowed);
+    RefPtr<FlashThrottleAsyncMsg> task =
+        new FlashThrottleAsyncMsg(this, aWnd, aMsg, aWParam,
+                                  aLParam, isWindowed);
     {
         MutexAutoLock lock(mAsyncCallMutex);
         mPendingAsyncCalls.AppendElement(task);
     }
-    MessageLoop::current()->PostDelayedTask(FROM_HERE,
-        task, kFlashWMUSERMessageThrottleDelayMs);
+    MessageLoop::current()->PostDelayedTask(task.forget(),
+                                            kFlashWMUSERMessageThrottleDelayMs);
 }
 
 #endif // OS_WIN
@@ -2797,7 +2790,7 @@ public:
     {
     }
 
-    void Run() override
+    NS_IMETHOD Run() override
     {
         RemoveFromAsyncList();
 
@@ -2807,6 +2800,7 @@ public:
         DebugOnly<bool> sendOk =
             mBrowserStreamChild->SendAsyncNPP_NewStreamResult(rv, stype);
         MOZ_ASSERT(sendOk);
+        return NS_OK;
     }
 
 private:
@@ -2822,9 +2816,9 @@ PluginInstanceChild::RecvAsyncNPP_NewStream(PBrowserStreamChild* actor,
 {
     // Reusing ChildAsyncCall so that the task is cancelled properly on Destroy
     BrowserStreamChild* child = static_cast<BrowserStreamChild*>(actor);
-    NewStreamAsyncCall* task = new NewStreamAsyncCall(this, child, mimeType,
-                                                      seekable);
-    PostChildAsyncCall(task);
+    RefPtr<NewStreamAsyncCall> task =
+        new NewStreamAsyncCall(this, child, mimeType, seekable);
+    PostChildAsyncCall(task.forget());
     return true;
 }
 
@@ -3298,12 +3292,10 @@ PluginInstanceChild::RecvAsyncSetWindow(const gfxSurfaceType& aSurfaceType,
     // RPC call, and both Flash and Java don't expect to receive setwindow calls
     // at arbitrary times.
     mCurrentAsyncSetWindowTask =
-        NewRunnableMethod<PluginInstanceChild,
-                          void (PluginInstanceChild::*)(const gfxSurfaceType&, const NPRemoteWindow&, bool),
-                          const gfxSurfaceType&, const NPRemoteWindow&, bool>
-        (this, &PluginInstanceChild::DoAsyncSetWindow,
-         aSurfaceType, aWindow, true);
-    MessageLoop::current()->PostTask(FROM_HERE, mCurrentAsyncSetWindowTask);
+        NewNonOwningCancelableRunnableMethod<gfxSurfaceType, NPRemoteWindow, bool>
+        (this, &PluginInstanceChild::DoAsyncSetWindow, aSurfaceType, aWindow, true);
+    RefPtr<Runnable> addrefedTask = mCurrentAsyncSetWindowTask;
+    MessageLoop::current()->PostTask(addrefedTask.forget());
 
     return true;
 }
@@ -4221,8 +4213,9 @@ PluginInstanceChild::AsyncShowPluginFrame(void)
     }
 
     mCurrentInvalidateTask =
-        NewRunnableMethod(this, &PluginInstanceChild::InvalidateRectDelayed);
-    MessageLoop::current()->PostTask(FROM_HERE, mCurrentInvalidateTask);
+        NewNonOwningCancelableRunnableMethod(this, &PluginInstanceChild::InvalidateRectDelayed);
+    RefPtr<Runnable> addrefedTask = mCurrentInvalidateTask;
+    MessageLoop::current()->PostTask(addrefedTask.forget());
 }
 
 void
@@ -4378,18 +4371,20 @@ PluginInstanceChild::UnscheduleTimer(uint32_t id)
 void
 PluginInstanceChild::AsyncCall(PluginThreadCallback aFunc, void* aUserData)
 {
-    ChildAsyncCall* task = new ChildAsyncCall(this, aFunc, aUserData);
-    PostChildAsyncCall(task);
+    RefPtr<ChildAsyncCall> task = new ChildAsyncCall(this, aFunc, aUserData);
+    PostChildAsyncCall(task.forget());
 }
 
 void
-PluginInstanceChild::PostChildAsyncCall(ChildAsyncCall* aTask)
+PluginInstanceChild::PostChildAsyncCall(already_AddRefed<ChildAsyncCall> aTask)
 {
+    RefPtr<ChildAsyncCall> task = aTask;
+
     {
         MutexAutoLock lock(mAsyncCallMutex);
-        mPendingAsyncCalls.AppendElement(aTask);
+        mPendingAsyncCalls.AppendElement(task);
     }
-    ProcessChild::message_loop()->PostTask(FROM_HERE, aTask);
+    ProcessChild::message_loop()->PostTask(task.forget());
 }
 
 void

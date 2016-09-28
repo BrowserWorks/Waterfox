@@ -474,8 +474,6 @@ class JSString : public js::gc::TenuredCell
 
     inline void finalize(js::FreeOp* fop);
 
-    void fixupAfterMovingGC() {}
-
     /* Gets the number of bytes that the chars take on the heap. */
 
     size_t sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf);
@@ -1140,7 +1138,7 @@ NameToId(PropertyName* name)
     return NON_INTEGER_ATOM_TO_JSID(name);
 }
 
-using PropertyNameVector = js::GCVector<PropertyName*>;
+using PropertyNameVector = JS::GCVector<PropertyName*>;
 
 template <typename CharT>
 void

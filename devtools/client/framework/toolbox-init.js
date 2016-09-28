@@ -19,7 +19,7 @@ if (url.search.length > 1) {
   const { TargetFactory } = require("devtools/client/framework/target");
   const { DebuggerServer } = require("devtools/server/main");
   const { DebuggerClient } = require("devtools/shared/client/main");
-  const { Task } = require("resource://gre/modules/Task.jsm");
+  const { Task } = require("devtools/shared/task");
 
   // `host` is the frame element loading the toolbox.
   let host = window.QueryInterface(Ci.nsIInterfaceRequestor)
@@ -51,7 +51,7 @@ if (url.search.length > 1) {
         DebuggerServer.addBrowserActors();
       }
       let client = new DebuggerClient(DebuggerServer.connectPipe());
-      Task.spawn(function*() {
+      Task.spawn(function* () {
         yield client.connect();
         // Creates a target for a given browser iframe.
         let response = yield client.getTab({ tab });

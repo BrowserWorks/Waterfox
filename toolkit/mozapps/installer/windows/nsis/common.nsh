@@ -3718,7 +3718,7 @@
       Push $R5
       Push $R4
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ; Since shortcuts that are pinned can later be removed without removing
         ; the pinned shortcut unpin the pinned shortcuts for the application's
         ; main exe using the pinned shortcuts themselves.
@@ -5097,10 +5097,20 @@
       Push $R6
       Push $R5
 
+      ; Don't install on systems that don't support SSE2. The parameter value of
+      ; 10 is for PF_XMMI64_INSTRUCTIONS_AVAILABLE which will check whether the
+      ; SSE2 instruction set is available.
+      System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R8"
+      ${If} "$R8" == "0"
+        MessageBox MB_OK|MB_ICONSTOP "$R9"
+        ; Nothing initialized so no need to call OnEndCommon
+        Quit
+      ${EndIf}
+
       !ifdef HAVE_64BIT_BUILD
         ${Unless} ${RunningX64}
-        ${OrUnless} ${AtLeastWinXP}
-          MessageBox MB_OK|MB_ICONSTOP "$R9" IDOK
+        ${OrUnless} ${AtLeastWin7}
+          MessageBox MB_OK|MB_ICONSTOP "$R9"
           ; Nothing initialized so no need to call OnEndCommon
           Quit
         ${EndUnless}
@@ -5132,7 +5142,7 @@
           ${OrIf} "$R8" == "3"
           ${OrIf} "$R8" == "4"
           ${OrIf} "$R8" == "5"
-            MessageBox MB_OK|MB_ICONSTOP "$R9" IDOK
+            MessageBox MB_OK|MB_ICONSTOP "$R9"
             ; Nothing initialized so no need to call OnEndCommon
             Quit
           ${EndIf}
@@ -5860,7 +5870,7 @@
       Push $0
 
 !ifndef NONADMIN_ELEVATE
-        ${If} ${AtLeastWinXP}
+        ${If} ${AtLeastWinVista}
           UAC::IsAdmin
           ; If the user is not an admin already
           ${If} "$0" != "1"
@@ -5891,7 +5901,7 @@
           ${EndIf}
         ${EndIf}
 !else
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWinVista}
         UAC::IsAdmin
         ; If the user is not an admin already
         ${If} "$0" != "1"
@@ -6004,7 +6014,7 @@
     !define ${_MOZFUNC_UN}UnloadUAC "!insertmacro ${_MOZFUNC_UN}UnloadUACCall"
 
     Function ${_MOZFUNC_UN}UnloadUAC
-      ${Unless} ${AtLeastWinXP}
+      ${Unless} ${AtLeastWinVista}
         Return
       ${EndUnless}
 
@@ -6657,7 +6667,7 @@
     !define ${_MOZFUNC_UN}SetAppLSPCategories "!insertmacro ${_MOZFUNC_UN}SetAppLSPCategoriesCall"
 
     Function ${_MOZFUNC_UN}SetAppLSPCategories
-      ${Unless} ${AtLeastWinXP}
+      ${Unless} ${AtLeastWinVista}
         Return
       ${EndUnless}
 
@@ -6770,7 +6780,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6850,7 +6860,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -6922,7 +6932,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6983,7 +6993,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -7064,7 +7074,7 @@
 
       StrCpy $R3 "false"
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ; installed shortcuts
         ${${_MOZFUNC_UN}GetLongPath} "$INSTDIR\uninstall\${SHORTCUTS_LOG}" $R6
         ${If} ${FileExists} "$R6"
@@ -7295,7 +7305,7 @@
       Exch $R8 ; stack: $R8, $R9   | $R8 = regpath
       Push $R7
 
-      ${If} ${AtLeastWinXP}
+      ${If} ${AtLeastWin7}
         ${${_MOZFUNC_UN}GetLongPath} "$R9" $R9
         ; Always create a new AppUserModelID and overwrite the existing one
         ; for the current installation path.
@@ -7398,7 +7408,7 @@
       ; Don't create when running silently.
       ${Unless} ${Silent}
         ; This is only supported on Win 7 and above.
-        ${If} ${AtLeastWinXP}
+        ${If} ${AtLeastWin7}
           System::Call "ole32::CoCreateInstance(g '${CLSID_ITaskbarList}', \
                                                 i 0, \
                                                 i ${CLSCTX_INPROC_SERVER}, \

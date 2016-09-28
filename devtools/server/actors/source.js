@@ -7,10 +7,11 @@
 "use strict";
 
 const { Cc, Ci } = require("chrome");
+const Services = require("Services");
 const { BreakpointActor, setBreakpointAtEntryPoints } = require("devtools/server/actors/breakpoint");
 const { OriginalLocation, GeneratedLocation } = require("devtools/server/actors/common");
 const { createValueGrip } = require("devtools/server/actors/object");
-const { ActorClass, Arg, RetVal, method } = require("devtools/server/protocol");
+const { ActorClass, Arg, RetVal, method } = require("devtools/shared/protocol");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const { assert, fetch } = DevToolsUtils;
 const { joinURI } = require("devtools/shared/path");
@@ -25,11 +26,11 @@ function isEvalSource(source) {
   let introType = source.introductionType;
   // These are all the sources that are essentially eval-ed (either
   // by calling eval or passing a string to one of these functions).
-  return (introType === 'eval' ||
-          introType === 'Function' ||
-          introType === 'eventHandler' ||
-          introType === 'setTimeout' ||
-          introType === 'setInterval');
+  return (introType === "eval" ||
+          introType === "Function" ||
+          introType === "eventHandler" ||
+          introType === "setTimeout" ||
+          introType === "setInterval");
 }
 
 exports.isEvalSource = isEvalSource;
@@ -43,7 +44,7 @@ function getSourceURL(source, window) {
     if (source.displayURL && source.introductionScript &&
        !isEvalSource(source.introductionScript.source)) {
 
-      if (source.introductionScript.source.url === 'debugger eval code') {
+      if (source.introductionScript.source.url === "debugger eval code") {
         if (window) {
           // If this is a named eval script created from the console, make it
           // relative to the current page. window is only available
@@ -58,7 +59,7 @@ function getSourceURL(source, window) {
 
     return source.displayURL;
   }
-  else if (source.url === 'debugger eval code') {
+  else if (source.url === "debugger eval code") {
     // Treat code evaluated by the console as unnamed eval scripts
     return null;
   }
@@ -134,6 +135,8 @@ function resolveURIToLocalPath(aURI) {
  * @param Debugger.Source generatedSource
  *        Optional, passed in when aSourceMap is also passed in. The generated
  *        source object that introduced this source.
+ * @param Boolean isInlineSource
+ *        Optional. True if this is an inline source from a HTML or XUL page.
  * @param String contentType
  *        Optional. The content type of this source, if immediately available.
  */
@@ -217,6 +220,7 @@ let SourceActor = ActorClass({
       isBlackBoxed: this.threadActor.sources.isBlackBoxed(this.url),
       isPrettyPrinted: this.threadActor.sources.isPrettyPrinted(this.url),
       isSourceMapped: this.isSourceMapped,
+      sourceMapURL: source ? source.sourceMapURL : null,
       introductionUrl: introductionUrl ? introductionUrl.split(" -> ").pop() : null,
       introductionType: source ? source.introductionType : null
     };
@@ -228,7 +232,7 @@ let SourceActor = ActorClass({
     }
   },
 
-  _mapSourceToAddon: function() {
+  _mapSourceToAddon: function () {
     try {
       var nsuri = Services.io.newURI(this.url.split(" -> ").pop(), null, null);
     }
@@ -238,43 +242,47 @@ let SourceActor = ActorClass({
     }
 
     let localURI = resolveURIToLocalPath(nsuri);
+    if (!localURI) {
+      return;
+    }
 
-    let id = {};
-    if (localURI && mapURIToAddonID(localURI, id)) {
-      this._addonID = id.value;
+    let id = mapURIToAddonID(localURI);
+    if (!id) {
+      return;
+    }
+    this._addonID = id;
 
-      if (localURI instanceof Ci.nsIJARURI) {
-        // The path in the add-on is easy for jar: uris
-        this._addonPath = localURI.JAREntry;
+    if (localURI instanceof Ci.nsIJARURI) {
+      // The path in the add-on is easy for jar: uris
+      this._addonPath = localURI.JAREntry;
+    }
+    else if (localURI instanceof Ci.nsIFileURL) {
+      // For file: uris walk up to find the last directory that is part of the
+      // add-on
+      let target = localURI.file;
+      let path = target.leafName;
+
+      // We can assume that the directory containing the source file is part
+      // of the add-on
+      let root = target.parent;
+      let file = root.parent;
+      while (file && mapURIToAddonID(Services.io.newFileURI(file))) {
+        path = root.leafName + "/" + path;
+        root = file;
+        file = file.parent;
       }
-      else if (localURI instanceof Ci.nsIFileURL) {
-        // For file: uris walk up to find the last directory that is part of the
-        // add-on
-        let target = localURI.file;
-        let path = target.leafName;
 
-        // We can assume that the directory containing the source file is part
-        // of the add-on
-        let root = target.parent;
-        let file = root.parent;
-        while (file && mapURIToAddonID(Services.io.newFileURI(file), {})) {
-          path = root.leafName + "/" + path;
-          root = file;
-          file = file.parent;
-        }
-
-        if (!file) {
-          const error = new Error("Could not find the root of the add-on for " + this.url);
-          DevToolsUtils.reportException("SourceActor.prototype._mapSourceToAddon", error)
-          return;
-        }
-
-        this._addonPath = path;
+      if (!file) {
+        const error = new Error("Could not find the root of the add-on for " + this.url);
+        DevToolsUtils.reportException("SourceActor.prototype._mapSourceToAddon", error);
+        return;
       }
+
+      this._addonPath = path;
     }
   },
 
-  _reportLoadSourceError: function (error, map=null) {
+  _reportLoadSourceError: function (error, map = null) {
     try {
       DevToolsUtils.reportException("SourceActor", error);
 
@@ -345,7 +353,35 @@ let SourceActor = ActorClass({
         // fetching the original text for sourcemapped code, and the
         // page hasn't requested it before (if it has, it was a
         // previous debugging session).
-        let sourceFetched = fetch(this.url, { loadFromCache: this.isInlineSource });
+        let loadFromCache = this.isInlineSource;
+
+        // Fetch the sources with the same principal as the original document
+        let win = this.threadActor._parent.window;
+        let principal, cacheKey;
+        // On xpcshell, we don't have a window but a Sandbox
+        if (!isWorker && win instanceof Ci.nsIDOMWindow) {
+          let webNav = win.QueryInterface(Ci.nsIInterfaceRequestor)
+                          .getInterface(Ci.nsIWebNavigation);
+          let channel = webNav.currentDocumentChannel;
+          principal = channel.loadInfo.loadingPrincipal;
+
+          // Retrieve the cacheKey in order to load POST requests from cache
+          // Note that chrome:// URLs don't support this interface.
+          if (loadFromCache &&
+            webNav.currentDocumentChannel instanceof Ci.nsICacheInfoChannel) {
+            cacheKey = webNav.currentDocumentChannel.cacheKey;
+            assert(
+              cacheKey,
+              "Could not fetch the cacheKey from the related document."
+            );
+          }
+        }
+
+        let sourceFetched = fetch(this.url, {
+          principal,
+          cacheKey,
+          loadFromCache
+        });
 
         // Record the contentType we just learned during fetching
         return sourceFetched
@@ -405,7 +441,7 @@ let SourceActor = ActorClass({
    * @param Boolean onlyLine - will return only the line number
    * @return Set - Executable offsets/lines of the script
    **/
-  getExecutableOffsets: function  (source, onlyLine) {
+  getExecutableOffsets: function (source, onlyLine) {
     let offsets = new Set();
     for (let s of this.threadActor.scripts.getScriptsBySource(source)) {
       for (let offset of s.getAllColumnOffsets()) {
@@ -482,7 +518,7 @@ let SourceActor = ActorClass({
         url: this.url,
         indent: aIndent,
         source: content
-      })
+      });
     };
   },
 
@@ -529,7 +565,7 @@ let SourceActor = ActorClass({
    * pretty printing a source mapped source, we need to compose the existing
    * source map with our new one.
    */
-  _encodeAndSetSourceMapURL: function  ({ map: sm }) {
+  _encodeAndSetSourceMapURL: function ({ map: sm }) {
     let source = this.generatedSource || this.source;
     let sources = this.threadActor.sources;
 
@@ -566,7 +602,7 @@ let SourceActor = ActorClass({
       sources.setSourceMapHard(source,
                                this._oldSourceMapping.url,
                                this._oldSourceMapping.map);
-       this._oldSourceMapping = null;
+      this._oldSourceMapping = null;
     }
 
     this.threadActor.sources.disablePrettyPrint(this.url);
@@ -841,8 +877,8 @@ let SourceActor = ActorClass({
       for (let script of scripts) {
         let columnToOffsetMap = script.getAllColumnOffsets()
                                       .filter(({ lineNumber }) => {
-          return lineNumber === generatedLine;
-        });
+                                        return lineNumber === generatedLine;
+                                      });
         for (let { columnNumber: column, offset } of columnToOffsetMap) {
           if (column >= generatedColumn && column <= generatedLastColumn) {
             entryPoints.push({ script, offsets: [offset] });

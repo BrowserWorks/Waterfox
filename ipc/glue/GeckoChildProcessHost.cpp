@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*-
- */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -8,6 +8,7 @@
 
 #include "base/command_line.h"
 #include "base/string_util.h"
+#include "base/task.h"
 #include "chrome/common/chrome_switches.h"
 #include "chrome/common/process_watcher.h"
 #ifdef MOZ_WIDGET_COCOA
@@ -31,6 +32,7 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/ipc/BrowserProcessSubThread.h"
 #include "mozilla/Omnijar.h"
+#include "mozilla/Telemetry.h"
 #include "ProtocolUtils.h"
 #include <sys/stat.h>
 
@@ -80,13 +82,6 @@ ShouldHaveDirectoryService()
 {
   return GeckoProcessType_Default == XRE_GetProcessType();
 }
-
-template<>
-struct RunnableMethodTraits<GeckoChildProcessHost>
-{
-    static void RetainCallee(GeckoChildProcessHost* obj) { }
-    static void ReleaseCallee(GeckoChildProcessHost* obj) { }
-};
 
 /*static*/
 base::ChildPrivileges
@@ -351,10 +346,10 @@ GeckoChildProcessHost::SyncLaunch(std::vector<std::string> aExtraOpts, int aTime
   MessageLoop* ioLoop = XRE_GetIOMessageLoop();
   NS_ASSERTION(MessageLoop::current() != ioLoop, "sync launch from the IO thread NYI");
 
-  ioLoop->PostTask(FROM_HERE,
-                   NewRunnableMethod(this,
-                                     &GeckoChildProcessHost::RunPerformAsyncLaunch,
-                                     aExtraOpts, arch));
+  ioLoop->PostTask(NewNonOwningRunnableMethod
+                   <std::vector<std::string>, base::ProcessArchitecture>
+                   (this, &GeckoChildProcessHost::RunPerformAsyncLaunch,
+                    aExtraOpts, arch));
 
   return WaitUntilConnected(aTimeoutMs);
 }
@@ -366,10 +361,11 @@ GeckoChildProcessHost::AsyncLaunch(std::vector<std::string> aExtraOpts,
   PrepareLaunch();
 
   MessageLoop* ioLoop = XRE_GetIOMessageLoop();
-  ioLoop->PostTask(FROM_HERE,
-                   NewRunnableMethod(this,
-                                     &GeckoChildProcessHost::RunPerformAsyncLaunch,
-                                     aExtraOpts, arch));
+
+  ioLoop->PostTask(NewNonOwningRunnableMethod
+                   <std::vector<std::string>, base::ProcessArchitecture>
+                   (this, &GeckoChildProcessHost::RunPerformAsyncLaunch,
+                    aExtraOpts, arch));
 
   // This may look like the sync launch wait, but we only delay as
   // long as it takes to create the channel.
@@ -425,10 +421,10 @@ GeckoChildProcessHost::LaunchAndWaitForProcessHandle(StringVector aExtraOpts)
   PrepareLaunch();
 
   MessageLoop* ioLoop = XRE_GetIOMessageLoop();
-  ioLoop->PostTask(FROM_HERE,
-                   NewRunnableMethod(this,
-                                     &GeckoChildProcessHost::RunPerformAsyncLaunch,
-                                     aExtraOpts, base::GetCurrentProcessArchitecture()));
+  ioLoop->PostTask(NewNonOwningRunnableMethod
+                   <std::vector<std::string>, base::ProcessArchitecture>
+                   (this, &GeckoChildProcessHost::RunPerformAsyncLaunch,
+                    aExtraOpts, base::GetCurrentProcessArchitecture()));
 
   MonitorAutoLock lock(mMonitor);
   while (mProcessState < PROCESS_CREATED) {
@@ -480,8 +476,7 @@ void
 DelayedDeleteSubprocess(GeckoChildProcessHost* aSubprocess)
 {
   XRE_GetIOMessageLoop()
-    ->PostTask(FROM_HERE,
-       new DeleteTask<GeckoChildProcessHost>(aSubprocess));
+    ->PostTask(mozilla::MakeAndAddRef<DeleteTask<GeckoChildProcessHost>>(aSubprocess));
 }
 
 }
@@ -491,30 +486,31 @@ GeckoChildProcessHost::DissociateActor()
 {
   if (!--mAssociatedActors) {
     MessageLoop::current()->
-      PostTask(FROM_HERE,
-        NewRunnableFunction(DelayedDeleteSubprocess, this));
+      PostTask(NewRunnableFunction(DelayedDeleteSubprocess, this));
   }
 }
 
 int32_t GeckoChildProcessHost::mChildCounter = 0;
 
 void
-GeckoChildProcessHost::SetChildLogName(const char* varName, const char* origLogName)
+GeckoChildProcessHost::SetChildLogName(const char* varName, const char* origLogName,
+                                       nsACString &buffer)
 {
   // We currently have no portable way to launch child with environment
   // different than parent.  So temporarily change NSPR_LOG_FILE so child
   // inherits value we want it to have. (NSPR only looks at NSPR_LOG_FILE at
   // startup, so it's 'safe' to play with the parent's environment this way.)
-  nsAutoCString setChildLogName(varName);
-  setChildLogName.Append(origLogName);
+  buffer.Assign(varName);
+  buffer.Append(origLogName);
 
   // Append child-specific postfix to name
-  setChildLogName.AppendLiteral(".child-");
-  setChildLogName.AppendInt(mChildCounter);
+  buffer.AppendLiteral(".child-");
+  buffer.AppendInt(mChildCounter);
 
-  // Passing temporary to PR_SetEnv is ok here because env gets copied
-  // by exec, etc., to permanent storage in child when process launched.
-  PR_SetEnv(setChildLogName.get());
+  // Passing temporary to PR_SetEnv is ok here if we keep the temporary
+  // for the time we launch the sub-process.  It's copied to the new
+  // environment.
+  PR_SetEnv(buffer.BeginReading());
 }
 
 bool
@@ -527,37 +523,38 @@ GeckoChildProcessHost::PerformAsyncLaunch(std::vector<std::string> aExtraOpts, b
     return PerformAsyncLaunchInternal(aExtraOpts, arch);
   }
 
-  ++mChildCounter;
-
-  // remember original value so we can restore it.
   // - Note: this code is not called re-entrantly, nor are restoreOrig*LogName
   //   or mChildCounter touched by any other thread, so this is safe.
-  static nsAutoCString restoreOrigNSPRLogName;
-  static nsAutoCString restoreOrigMozLogName;
+  ++mChildCounter;
+
+  // Must keep these on the same stack where from we call PerformAsyncLaunchInternal
+  // so that PR_DuplicateEnvironment() still sees a valid memory.
+  nsAutoCString nsprLogName;
+  nsAutoCString mozLogName;
 
   if (origNSPRLogName) {
-    if (restoreOrigNSPRLogName.IsEmpty()) {
-      restoreOrigNSPRLogName.AssignLiteral("NSPR_LOG_FILE=");
-      restoreOrigNSPRLogName.Append(origNSPRLogName);
+    if (mRestoreOrigNSPRLogName.IsEmpty()) {
+      mRestoreOrigNSPRLogName.AssignLiteral("NSPR_LOG_FILE=");
+      mRestoreOrigNSPRLogName.Append(origNSPRLogName);
     }
-    SetChildLogName("NSPR_LOG_FILE=", origNSPRLogName);
+    SetChildLogName("NSPR_LOG_FILE=", origNSPRLogName, nsprLogName);
   }
   if (origMozLogName) {
-    if (restoreOrigMozLogName.IsEmpty()) {
-      restoreOrigMozLogName.AssignLiteral("MOZ_LOG_FILE=");
-      restoreOrigMozLogName.Append(origMozLogName);
+    if (mRestoreOrigMozLogName.IsEmpty()) {
+      mRestoreOrigMozLogName.AssignLiteral("MOZ_LOG_FILE=");
+      mRestoreOrigMozLogName.Append(origMozLogName);
     }
-    SetChildLogName("MOZ_LOG_FILE=", origMozLogName);
+    SetChildLogName("MOZ_LOG_FILE=", origMozLogName, mozLogName);
   }
 
   bool retval = PerformAsyncLaunchInternal(aExtraOpts, arch);
 
   // Revert to original value
   if (origNSPRLogName) {
-    PR_SetEnv(restoreOrigNSPRLogName.get());
+    PR_SetEnv(mRestoreOrigNSPRLogName.get());
   }
   if (origMozLogName) {
-    PR_SetEnv(restoreOrigMozLogName.get());
+    PR_SetEnv(mRestoreOrigMozLogName.get());
   }
 
   return retval;
@@ -568,7 +565,16 @@ GeckoChildProcessHost::RunPerformAsyncLaunch(std::vector<std::string> aExtraOpts
                                              base::ProcessArchitecture aArch)
 {
   InitializeChannel();
-  return PerformAsyncLaunch(aExtraOpts, aArch);
+
+  if (PerformAsyncLaunch(aExtraOpts, aArch)) {
+    return true;
+  } else {
+    CHROMIUM_LOG(ERROR) << "Failed to launch " <<
+      XRE_ChildProcessTypeToString(mProcessType) << " subprocess";
+    Telemetry::Accumulate(Telemetry::SUBPROCESS_LAUNCH_FAILURE,
+      nsDependentCString(XRE_ChildProcessTypeToString(mProcessType)));
+    return false;
+  }
 }
 
 void
@@ -994,7 +1000,8 @@ GeckoChildProcessHost::PerformAsyncLaunchInternal(std::vector<std::string>& aExt
   switch (mProcessType) {
     case GeckoProcessType_Content:
 #if defined(MOZ_CONTENT_SANDBOX)
-      if (!PR_GetEnv("MOZ_DISABLE_CONTENT_SANDBOX")) {
+      if (mSandboxLevel > 0 &&
+          !PR_GetEnv("MOZ_DISABLE_CONTENT_SANDBOX")) {
         mSandboxBroker.SetSecurityLevelForContentProcess(mSandboxLevel);
         cmdLine.AppendLooseValue(UTF8ToWide("-sandbox"));
         shouldSandboxCurrentProcess = true;

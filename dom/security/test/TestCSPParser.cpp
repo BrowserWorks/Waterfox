@@ -28,6 +28,8 @@ template<class T> class nsReadingIterator;
 #include "TestHarness.h"
 #include "nsIScriptSecurityManager.h"
 #include "mozilla/dom/nsCSPContext.h"
+#include "nsIPrefService.h"
+#include "nsIPrefBranch.h"
 
 #ifndef MOZILLA_INTERNAL_API
 #undef nsString_h___
@@ -101,7 +103,9 @@ nsresult runTest(uint32_t aExpectedPolicyCount, // this should be 0 for policies
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIPrincipal> selfURIPrincipal;
-  rv = secman->GetSimpleCodebasePrincipal(selfURI, getter_AddRefs(selfURIPrincipal));
+  // Can't use BasePrincipal::CreateCodebasePrincipal here
+  // because the symbol is not visible here
+  rv = secman->GetCodebasePrincipal(selfURI, getter_AddRefs(selfURIPrincipal));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // create a CSP object
@@ -164,10 +168,23 @@ nsresult runTestSuite(const PolicyTest* aPolicies,
                       uint32_t aPolicyCount,
                       uint32_t aExpectedPolicyCount) {
   nsresult rv;
+  nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+  bool experimentalEnabledCache = false;
+  if (prefs)
+  {
+    prefs->GetBoolPref("security.csp.experimentalEnabled", &experimentalEnabledCache);
+    prefs->SetBoolPref("security.csp.experimentalEnabled", true);
+  }
+
   for (uint32_t i = 0; i < aPolicyCount; i++) {
     rv = runTest(aExpectedPolicyCount, aPolicies[i].policy, aPolicies[i].expectedResult);
     NS_ENSURE_SUCCESS(rv, rv);
   }
+
+  if (prefs) {
+    prefs->SetBoolPref("security.csp.experimentalEnabled", experimentalEnabledCache);
+  }
+
   return NS_OK;
 }
 
@@ -202,7 +219,9 @@ nsresult TestDirectives() {
     { "script-src 'sha256-siVR8vAcqP06h2ppeNwqgjr0yZ6yned4X2VF84j4GmI='",
       "script-src 'sha256-siVR8vAcqP06h2ppeNwqgjr0yZ6yned4X2VF84j4GmI='" },
     { "referrer no-referrer",
-      "referrer no-referrer" }
+      "referrer no-referrer" },
+    { "require-sri-for script style",
+      "require-sri-for script style"}
   };
 
   uint32_t policyCount = sizeof(policies) / sizeof(PolicyTest);
@@ -268,7 +287,9 @@ nsresult TestIgnoreUpperLowerCasePolicies() {
     { "refERRer No-refeRRer",
       "referrer No-refeRRer" },
     { "upgrade-INSECURE-requests",
-      "upgrade-insecure-requests" }
+      "upgrade-insecure-requests" },
+    { "require-SRI-for sCript stYle",
+        "require-sri-for script style"}
   };
 
   uint32_t policyCount = sizeof(policies) / sizeof(PolicyTest);
@@ -505,9 +526,14 @@ nsresult TestPoliciesWithInvalidSrc() {
       "connect-src 'none'" },
     { "script-src https://foo.com/%$",
       "script-src 'none'" },
+    { "require-SRI-for script elephants",
+      "require-sri-for script"},
+    { "require-sri-for paul",
+      ""}
   };
 
-  uint32_t policyCount = sizeof(policies) / sizeof(PolicyTest);
+  // amount of tests - 1, because the latest should be ignored.
+  uint32_t policyCount = (sizeof(policies) / sizeof(PolicyTest)) -1;
   return runTestSuite(policies, policyCount, 1);
 }
 

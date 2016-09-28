@@ -79,13 +79,20 @@ class ABIArgGenerator
     ABIArg& current() { return current_; }
     uint32_t stackBytesConsumedSoFar() const { return stackOffset_; }
 
-    // Note: these registers are all guaranteed to be different
-    static const Register NonArgReturnReg0;
-    static const Register NonArgReturnReg1;
-    static const Register NonVolatileReg;
-    static const Register NonArg_VolatileReg;
-    static const Register NonReturn_VolatileReg0;
 };
+
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg0 = eax;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg1 = ecx;
+
+// Note: these three registers are all guaranteed to be different
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg0 = ecx;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg1 = edx;
+static MOZ_CONSTEXPR_VAR Register ABINonVolatileReg = ebx;
+
+// Registers used for asm.js/wasm table calls. These registers must be disjoint
+// from the ABI argument registers and from each other.
+static MOZ_CONSTEXPR_VAR Register WasmTableCallPtrReg = ABINonArgReg0;
+static MOZ_CONSTEXPR_VAR Register WasmTableCallSigReg = ABINonArgReg1;
 
 static MOZ_CONSTEXPR_VAR Register OsrFrameReg = edx;
 static MOZ_CONSTEXPR_VAR Register PreBarrierReg = edx;
@@ -108,13 +115,11 @@ static MOZ_CONSTEXPR_VAR Register AsmJSIonExitRegD2 = esi;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherRegExpReg = CallTempReg0;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherStringReg = CallTempReg1;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherLastIndexReg = CallTempReg2;
-static MOZ_CONSTEXPR_VAR Register RegExpMatcherStickyReg = CallTempReg4;
 
 // Registerd used in RegExpTester instruction (do not use ReturnReg).
 static MOZ_CONSTEXPR_VAR Register RegExpTesterRegExpReg = CallTempReg0;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterStringReg = CallTempReg2;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterLastIndexReg = CallTempReg3;
-static MOZ_CONSTEXPR_VAR Register RegExpTesterStickyReg = CallTempReg4;
 
 // GCC stack is aligned on 16 bytes. Ion does not maintain this for internal
 // calls. asm.js code does.

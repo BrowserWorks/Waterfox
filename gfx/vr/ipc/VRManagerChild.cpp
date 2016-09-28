@@ -10,7 +10,7 @@
 #include "VRDeviceProxy.h"
 #include "VRDeviceProxyOrientationFallBack.h"
 #include "mozilla/StaticPtr.h"
-#include "mozilla/layers/CompositorBridgeParent.h" // for CompositorBridgeParent
+#include "mozilla/layers/CompositorThread.h" // for CompositorThread
 #include "mozilla/dom/Navigator.h"
 
 namespace mozilla {
@@ -38,8 +38,8 @@ VRManagerChild::~VRManagerChild()
   Transport* trans = GetTransport();
   if (trans) {
     MOZ_ASSERT(XRE_GetIOMessageLoop());
-    XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
-                                     new DeleteTask<Transport>(trans));
+    RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(trans);
+    XRE_GetIOMessageLoop()->PostTask(task.forget());
   }
 }
 
@@ -77,7 +77,7 @@ VRManagerChild::StartUpSameProcess()
     sVRManagerChildSingleton = new VRManagerChild();
     sVRManagerParentSingleton = VRManagerParent::CreateSameProcess();
     sVRManagerChildSingleton->Open(sVRManagerParentSingleton->GetIPCChannel(),
-                                   mozilla::layers::CompositorBridgeParent::CompositorLoop(),
+                                   mozilla::layers::CompositorThreadHolder::Loop(),
                                    mozilla::ipc::ChildSide);
   }
 }
@@ -109,7 +109,7 @@ VRManagerChild::Destroy()
 
   // The DeferredDestroyVRManager task takes ownership of
   // the VRManagerChild and will release it when it runs.
-  MessageLoop::current()->PostTask(FROM_HERE,
+  MessageLoop::current()->PostTask(
              NewRunnableFunction(DeferredDestroy, selfRef));
 }
 

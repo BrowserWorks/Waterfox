@@ -6,7 +6,7 @@
 
 "use strict";
 
-const {Cc, Ci, Cu, Cr} = require("chrome");
+const {Cc, Ci, Cm, Cu, Cr, components} = require("chrome");
 const Services = require("Services");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -37,6 +37,236 @@ const HTTP_TEMPORARY_REDIRECT = 307;
 const RESPONSE_BODY_LIMIT = 1048576;
 
 /**
+ * Check if a given network request should be logged by a network monitor
+ * based on the specified filters.
+ *
+ * @param nsIHttpChannel channel
+ *        Request to check.
+ * @param filters
+ *        NetworkMonitor filters to match against.
+ * @return boolean
+ *         True if the network request should be logged, false otherwise.
+ */
+function matchRequest(channel, filters) {
+  // Log everything if no filter is specified
+  if (!filters.topFrame && !filters.window && !filters.appId) {
+    return true;
+  }
+
+  // Ignore requests from chrome or add-on code when we are monitoring
+  // content.
+  // TODO: one particular test (browser_styleeditor_fetch-from-cache.js) needs
+  // the DevToolsUtils.testing check. We will move to a better way to serve
+  // its needs in bug 1167188, where this check should be removed.
+  if (!DevToolsUtils.testing && channel.loadInfo &&
+      channel.loadInfo.loadingDocument === null &&
+      channel.loadInfo.loadingPrincipal ===
+      Services.scriptSecurityManager.getSystemPrincipal()) {
+    return false;
+  }
+
+  if (filters.window) {
+    // Since frames support, this.window may not be the top level content
+    // frame, so that we can't only compare with win.top.
+    let win = NetworkHelper.getWindowForRequest(channel);
+    while (win) {
+      if (win == filters.window) {
+        return true;
+      }
+      if (win.parent == win) {
+        break;
+      }
+      win = win.parent;
+    }
+  }
+
+  if (filters.topFrame) {
+    let topFrame = NetworkHelper.getTopFrameForRequest(channel);
+    if (topFrame && topFrame === filters.topFrame) {
+      return true;
+    }
+  }
+
+  if (filters.appId) {
+    let appId = NetworkHelper.getAppIdForRequest(channel);
+    if (appId && appId == filters.appId) {
+      return true;
+    }
+  }
+
+  // The following check is necessary because beacon channels don't come
+  // associated with a load group. Bug 1160837 will hopefully introduce a
+  // platform fix that will render the following code entirely useless.
+  if (channel.loadInfo &&
+      channel.loadInfo.externalContentPolicyType ==
+      Ci.nsIContentPolicy.TYPE_BEACON) {
+    let nonE10sMatch = filters.window &&
+        channel.loadInfo.loadingDocument === filters.window.document;
+    const loadingPrincipal = channel.loadInfo.loadingPrincipal;
+    let e10sMatch = filters.topFrame &&
+        filters.topFrame.contentPrincipal &&
+        filters.topFrame.contentPrincipal.equals(loadingPrincipal) &&
+        filters.topFrame.contentPrincipal.URI.spec == channel.referrer.spec;
+    let b2gMatch = filters.appId && loadingPrincipal.appId === filters.appId;
+    if (nonE10sMatch || e10sMatch || b2gMatch) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * This is a nsIChannelEventSink implementation that monitors channel redirects and
+ * informs the registered StackTraceCollector about the old and new channels.
+ */
+const SINK_CLASS_DESCRIPTION = "NetworkMonitor Channel Event Sink";
+const SINK_CLASS_ID = components.ID("{e89fa076-c845-48a8-8c45-2604729eba1d}");
+const SINK_CONTRACT_ID = "@mozilla.org/network/monitor/channeleventsink;1";
+const SINK_CATEGORY_NAME = "net-channel-event-sinks";
+
+function ChannelEventSink() {
+  this.wrappedJSObject = this;
+  this.collectors = new Set();
+}
+
+ChannelEventSink.prototype = {
+  QueryInterface: XPCOMUtils.generateQI([Ci.nsIChannelEventSink]),
+
+  registerCollector(collector) {
+    this.collectors.add(collector);
+  },
+
+  unregisterCollector(collector) {
+    this.collectors.delete(collector);
+
+    if (this.collectors.size == 0) {
+      ChannelEventSinkFactory.unregister();
+    }
+  },
+
+  asyncOnChannelRedirect(oldChannel, newChannel, flags, callback) {
+    for (let collector of this.collectors) {
+      try {
+        collector.onChannelRedirect(oldChannel, newChannel, flags);
+      } catch (ex) {
+        console.error("StackTraceCollector.onChannelRedirect threw an exception", ex);
+      }
+    }
+    callback.onRedirectVerifyCallback(Cr.NS_OK);
+  }
+};
+
+const ChannelEventSinkFactory = XPCOMUtils.generateSingletonFactory(ChannelEventSink);
+
+ChannelEventSinkFactory.register = function () {
+  const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
+  if (registrar.isCIDRegistered(SINK_CLASS_ID)) {
+    return;
+  }
+
+  registrar.registerFactory(SINK_CLASS_ID,
+                            SINK_CLASS_DESCRIPTION,
+                            SINK_CONTRACT_ID,
+                            ChannelEventSinkFactory);
+
+  XPCOMUtils.categoryManager.addCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID,
+    SINK_CONTRACT_ID, false, true);
+};
+
+ChannelEventSinkFactory.unregister = function () {
+  const registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
+  registrar.unregisterFactory(SINK_CLASS_ID, ChannelEventSinkFactory);
+
+  XPCOMUtils.categoryManager.deleteCategoryEntry(SINK_CATEGORY_NAME, SINK_CONTRACT_ID,
+    false);
+};
+
+ChannelEventSinkFactory.getService = function () {
+  // Make sure the ChannelEventSink service is registered before accessing it
+  ChannelEventSinkFactory.register();
+
+  return Cc[SINK_CONTRACT_ID].getService(Ci.nsIChannelEventSink).wrappedJSObject;
+};
+
+function StackTraceCollector(filters) {
+  this.filters = filters;
+  this.stacktracesById = new Map();
+}
+
+StackTraceCollector.prototype = {
+  init() {
+    Services.obs.addObserver(this, "http-on-opening-request", false);
+    ChannelEventSinkFactory.getService().registerCollector(this);
+  },
+
+  destroy() {
+    Services.obs.removeObserver(this, "http-on-opening-request");
+    ChannelEventSinkFactory.getService().unregisterCollector(this);
+  },
+
+  _saveStackTrace(channel, stacktrace) {
+    this.stacktracesById.set(channel.channelId, stacktrace);
+  },
+
+  observe(subject) {
+    let channel = subject.QueryInterface(Ci.nsIHttpChannel);
+
+    if (!matchRequest(channel, this.filters)) {
+      return;
+    }
+
+    // Convert the nsIStackFrame XPCOM objects to a nice JSON that can be
+    // passed around through message managers etc.
+    let frame = components.stack;
+    let stacktrace = [];
+    if (frame && frame.caller) {
+      frame = frame.caller;
+      while (frame) {
+        stacktrace.push({
+          filename: frame.filename,
+          lineNumber: frame.lineNumber,
+          columnNumber: frame.columnNumber,
+          functionName: frame.name
+        });
+        if (frame.asyncCaller) {
+          frame = frame.asyncCaller;
+        } else {
+          frame = frame.caller;
+        }
+      }
+    }
+
+    this._saveStackTrace(channel, stacktrace);
+  },
+
+  onChannelRedirect(oldChannel, newChannel, flags) {
+    // We can be called with any nsIChannel, but are interested only in HTTP channels
+    try {
+      oldChannel.QueryInterface(Ci.nsIHttpChannel);
+      newChannel.QueryInterface(Ci.nsIHttpChannel);
+    } catch (ex) {
+      return;
+    }
+
+    let oldId = oldChannel.channelId;
+    let stacktrace = this.stacktracesById.get(oldId);
+    if (stacktrace) {
+      this.stacktracesById.delete(oldId);
+      this._saveStackTrace(newChannel, stacktrace);
+    }
+  },
+
+  getStackTrace(channelId) {
+    let trace = this.stacktracesById.get(channelId);
+    this.stacktracesById.delete(channelId);
+    return trace;
+  }
+};
+
+exports.StackTraceCollector = StackTraceCollector;
+
+/**
  * The network response listener implements the nsIStreamListener and
  * nsIRequestObserver interfaces. This is used within the NetworkMonitor feature
  * to get the response body of the request.
@@ -63,7 +293,6 @@ function NetworkResponseListener(owner, httpActivity) {
   this._wrappedNotificationCallbacks = channel.notificationCallbacks;
   channel.notificationCallbacks = this;
 }
-exports.NetworkResponseListener = NetworkResponseListener;
 
 NetworkResponseListener.prototype = {
   QueryInterface:
@@ -166,7 +395,7 @@ NetworkResponseListener.prototype = {
    *        current callback is removed.
    * @return void
    */
-  setAsyncListener: function(stream, listener) {
+  setAsyncListener: function (stream, listener) {
     // Asynchronously wait for the stream to be readable or closed.
     stream.asyncWait(listener, 0, 0, Services.tm.mainThread);
   },
@@ -185,7 +414,7 @@ NetworkResponseListener.prototype = {
    * @param unsigned long offset
    * @param unsigned long count
    */
-  onDataAvailable: function(request, context, inputStream, offset, count) {
+  onDataAvailable: function (request, context, inputStream, offset, count) {
     this._findOpenResponse();
     let data = NetUtil.readInputStreamToString(inputStream, count);
 
@@ -205,7 +434,7 @@ NetworkResponseListener.prototype = {
    * @param nsIRequest request
    * @param nsISupports context
    */
-  onStartRequest: function(request) {
+  onStartRequest: function (request) {
     // Converter will call this again, we should just ignore that.
     if (this.request) {
       return;
@@ -255,7 +484,7 @@ NetworkResponseListener.prototype = {
   /**
    * Parse security state of this request and report it to the client.
    */
-  _getSecurityInfo: DevToolsUtils.makeInfallible(function() {
+  _getSecurityInfo: DevToolsUtils.makeInfallible(function () {
     // Take the security information from the original nsIHTTPChannel instead of
     // the nsIRequest received in onStartRequest. If response to this request
     // was a redirect from http to https, the request object seems to contain
@@ -272,7 +501,7 @@ NetworkResponseListener.prototype = {
    * For more documentation about nsIRequestObserver go to:
    * https://developer.mozilla.org/En/NsIRequestObserver
    */
-  onStopRequest: function() {
+  onStopRequest: function () {
     this._findOpenResponse();
     this.sink.outputStream.close();
   },
@@ -283,14 +512,14 @@ NetworkResponseListener.prototype = {
    * Handle progress event as data is transferred.  This is used to record the
    * size on the wire, which may be compressed / encoded.
    */
-  onProgress: function(request, context, progress, progressMax) {
+  onProgress: function (request, context, progress, progressMax) {
     this.transferredSize = progress;
     // Need to forward as well to keep things like Download Manager's progress
     // bar working properly.
     this._forwardNotification(Ci.nsIProgressEventSink, "onProgress", arguments);
   },
 
-  onStatus: function() {
+  onStatus: function () {
     this._forwardNotification(Ci.nsIProgressEventSink, "onStatus", arguments);
   },
 
@@ -303,7 +532,7 @@ NetworkResponseListener.prototype = {
    *
    * @private
    */
-  _findOpenResponse: function() {
+  _findOpenResponse: function () {
     if (!this.owner || this._foundOpenResponse) {
       return;
     }
@@ -335,7 +564,7 @@ NetworkResponseListener.prototype = {
    * stream is closed.
    * @return void
    */
-  onStreamClose: function() {
+  onStreamClose: function () {
     if (!this.httpActivity) {
       return;
     }
@@ -365,7 +594,7 @@ NetworkResponseListener.prototype = {
    *        Optional, the received data coming from the response listener or
    *        from the cache.
    */
-  _onComplete: function(data) {
+  _onComplete: function (data) {
     let response = {
       mimeType: "",
       text: data || "",
@@ -420,7 +649,7 @@ NetworkResponseListener.prototype = {
    *        The sink input stream from which data is coming.
    * @returns void
    */
-  onInputStreamReady: function(stream) {
+  onInputStreamReady: function (stream) {
     if (!(stream instanceof Ci.nsIAsyncInputStream) || !this.httpActivity) {
       return;
     }
@@ -462,7 +691,7 @@ NetworkResponseListener.prototype = {
  * @param object filters
  *        Object with the filters to use for network requests:
  *        - window (nsIDOMWindow): filter network requests by the associated
- *        window object.
+ *          window object.
  *        - appId (number): filter requests by the appId.
  *        - topFrame (nsIDOMElement): filter requests by their topFrameElement.
  *        Filters are optional. If any of these filters match the request is
@@ -471,23 +700,17 @@ NetworkResponseListener.prototype = {
  * @param object owner
  *        The network monitor owner. This object needs to hold:
  *        - onNetworkEvent(requestInfo, channel, networkMonitor).
- *        This method is invoked once for every new network request and it is
- *        given the following arguments: the initial network request
- *        information, and the channel. The third argument is the NetworkMonitor
- *        instance.
- *        onNetworkEvent() must return an object which holds several add*()
- *        methods which are used to add further network request/response
- *        information.
+ *          This method is invoked once for every new network request and it is
+ *          given the following arguments: the initial network request
+ *          information, and the channel. The third argument is the NetworkMonitor
+ *          instance. onNetworkEvent() must return an object which holds several add*()
+ *          methods which are used to add further network request/response
+ *          information.
+ *        - stackTraceCollector If the owner has this optional property, it will
+ *          be used as a StackTraceCollector by the NetworkMonitor.
  */
 function NetworkMonitor(filters, owner) {
-  if (filters) {
-    this.window = filters.window;
-    this.appId = filters.appId;
-    this.topFrame = filters.topFrame;
-  }
-  if (!this.window && !this.appId && !this.topFrame) {
-    this._logEverything = true;
-  }
+  this.filters = filters;
   this.owner = owner;
   this.openRequests = {};
   this.openResponses = {};
@@ -495,13 +718,11 @@ function NetworkMonitor(filters, owner) {
     DevToolsUtils.makeInfallible(this._httpResponseExaminer).bind(this);
   this._serviceWorkerRequest = this._serviceWorkerRequest.bind(this);
 }
+
 exports.NetworkMonitor = NetworkMonitor;
 
 NetworkMonitor.prototype = {
-  _logEverything: false,
-  window: null,
-  appId: null,
-  topFrame: null,
+  filters: null,
 
   httpTransactionCodes: {
     0x5001: "REQUEST_HEADER",
@@ -545,7 +766,7 @@ NetworkMonitor.prototype = {
   /**
    * The network monitor initializer.
    */
-  init: function() {
+  init: function () {
     this.responsePipeSegmentSize = Services.prefs
                                    .getIntPref("network.buffer.cache.size");
     this.interceptedChannels = new Set();
@@ -563,10 +784,10 @@ NetworkMonitor.prototype = {
                              "service-worker-synthesized-response", false);
   },
 
-  _serviceWorkerRequest: function(subject, topic, data) {
+  _serviceWorkerRequest: function (subject, topic, data) {
     let channel = subject.QueryInterface(Ci.nsIHttpChannel);
 
-    if (!this._matchRequest(channel)) {
+    if (!matchRequest(channel, this.filters)) {
       return;
     }
 
@@ -587,7 +808,7 @@ NetworkMonitor.prototype = {
    * @param string topic
    * @returns void
    */
-  _httpResponseExaminer: function(subject, topic) {
+  _httpResponseExaminer: function (subject, topic) {
     // The httpResponseExaminer is used to retrieve the uncached response
     // headers. The data retrieved is stored in openResponses. The
     // NetworkResponseListener is responsible with updating the httpActivity
@@ -602,7 +823,7 @@ NetworkMonitor.prototype = {
 
     let channel = subject.QueryInterface(Ci.nsIHttpChannel);
 
-    if (!this._matchRequest(channel)) {
+    if (!matchRequest(channel, this.filters)) {
       return;
     }
 
@@ -616,7 +837,7 @@ NetworkMonitor.prototype = {
     let setCookieHeader = null;
 
     channel.visitResponseHeaders({
-      visitHeader: function(name, value) {
+      visitHeader: function (name, value) {
         let lowerName = name.toLowerCase();
         if (lowerName == "set-cookie") {
           setCookieHeader = value;
@@ -690,7 +911,7 @@ NetworkMonitor.prototype = {
    * @param string extraStringData
    */
   observeActivity:
-  DevToolsUtils.makeInfallible(function(channel, activityType, activitySubtype,
+  DevToolsUtils.makeInfallible(function (channel, activityType, activitySubtype,
                                         timestamp, extraSizeData,
                                         extraStringData) {
     if (!this.owner ||
@@ -757,87 +978,9 @@ NetworkMonitor.prototype = {
   }),
 
   /**
-   * Check if a given network request should be logged by this network monitor
-   * instance based on the current filters.
-   *
-   * @private
-   * @param nsIHttpChannel channel
-   *        Request to check.
-   * @return boolean
-   *         True if the network request should be logged, false otherwise.
-   */
-  _matchRequest: function(channel) {
-    if (this._logEverything) {
-      return true;
-    }
-
-    // Ignore requests from chrome or add-on code when we are monitoring
-    // content.
-    // TODO: one particular test (browser_styleeditor_fetch-from-cache.js) needs
-    // the DevToolsUtils.testing check. We will move to a better way to serve
-    // its needs in bug 1167188, where this check should be removed.
-    if (!DevToolsUtils.testing && channel.loadInfo &&
-        channel.loadInfo.loadingDocument === null &&
-        channel.loadInfo.loadingPrincipal ===
-        Services.scriptSecurityManager.getSystemPrincipal()) {
-      return false;
-    }
-
-    if (this.window) {
-      // Since frames support, this.window may not be the top level content
-      // frame, so that we can't only compare with win.top.
-      let win = NetworkHelper.getWindowForRequest(channel);
-      while (win) {
-        if (win == this.window) {
-          return true;
-        }
-        if (win.parent == win) {
-          break;
-        }
-        win = win.parent;
-      }
-    }
-
-    if (this.topFrame) {
-      let topFrame = NetworkHelper.getTopFrameForRequest(channel);
-      if (topFrame && topFrame === this.topFrame) {
-        return true;
-      }
-    }
-
-    if (this.appId) {
-      let appId = NetworkHelper.getAppIdForRequest(channel);
-      if (appId && appId == this.appId) {
-        return true;
-      }
-    }
-
-    // The following check is necessary because beacon channels don't come
-    // associated with a load group. Bug 1160837 will hopefully introduce a
-    // platform fix that will render the following code entirely useless.
-    if (channel.loadInfo &&
-        channel.loadInfo.externalContentPolicyType ==
-        Ci.nsIContentPolicy.TYPE_BEACON) {
-      let nonE10sMatch = this.window &&
-          channel.loadInfo.loadingDocument === this.window.document;
-      const loadingPrincipal = channel.loadInfo.loadingPrincipal;
-      let e10sMatch = this.topFrame &&
-          this.topFrame.contentPrincipal &&
-          this.topFrame.contentPrincipal.equals(loadingPrincipal) &&
-          this.topFrame.contentPrincipal.URI.spec == channel.referrer.spec;
-      let b2gMatch = this.appId && loadingPrincipal.appId === this.appId;
-      if (nonE10sMatch || e10sMatch || b2gMatch) {
-        return true;
-      }
-    }
-
-    return false;
-  },
-
-  /**
    *
    */
-  _createNetworkEvent: function(channel, { timestamp, extraStringData,
+  _createNetworkEvent: function (channel, { timestamp, extraStringData,
                                            fromCache, fromServiceWorker }) {
     let win = NetworkHelper.getWindowForRequest(channel);
     let httpActivity = this.createActivityObject(channel);
@@ -857,6 +1000,7 @@ NetworkMonitor.prototype = {
 
     let event = {};
     event.method = channel.requestMethod;
+    event.channelId = channel.channelId;
     event.url = channel.URI.spec;
     event.private = httpActivity.private;
     event.headersSize = 0;
@@ -871,12 +1015,26 @@ NetworkMonitor.prototype = {
       event.headersSize = extraStringData.length;
     }
 
-    // Determine if this is an XHR request.
+    // Determine the cause and if this is an XHR request.
+    let causeType = channel.loadInfo.externalContentPolicyType;
+    let loadingPrincipal = channel.loadInfo.loadingPrincipal;
+    let causeUri = loadingPrincipal ? loadingPrincipal.URI : null;
+    let stacktrace;
+    // If this is the parent process, there is no stackTraceCollector - the stack
+    // trace will be added in NetworkMonitorChild._onNewEvent.
+    if (this.owner.stackTraceCollector) {
+      stacktrace = this.owner.stackTraceCollector.getStackTrace(event.channelId);
+    }
+
+    event.cause = {
+      type: causeType,
+      loadingDocumentUri: causeUri ? causeUri.spec : null,
+      stacktrace
+    };
+
     httpActivity.isXHR = event.isXHR =
-      (channel.loadInfo.externalContentPolicyType ===
-       Ci.nsIContentPolicy.TYPE_XMLHTTPREQUEST ||
-       channel.loadInfo.externalContentPolicyType ===
-       Ci.nsIContentPolicy.TYPE_FETCH);
+        (causeType === Ci.nsIContentPolicy.TYPE_XMLHTTPREQUEST ||
+         causeType === Ci.nsIContentPolicy.TYPE_FETCH);
 
     // Determine the HTTP version.
     let httpVersionMaj = {};
@@ -896,7 +1054,7 @@ NetworkMonitor.prototype = {
 
     // Copy the request header data.
     channel.visitRequestHeaders({
-      visitHeader: function(name, value) {
+      visitHeader: function (name, value) {
         if (name == "Cookie") {
           cookieHeader = value;
         }
@@ -931,13 +1089,12 @@ NetworkMonitor.prototype = {
    * @param string extraStringData
    * @return void
    */
-  _onRequestHeader: function(channel, timestamp, extraStringData) {
-    if (!this._matchRequest(channel)) {
+  _onRequestHeader: function (channel, timestamp, extraStringData) {
+    if (!matchRequest(channel, this.filters)) {
       return;
     }
 
-    this._createNetworkEvent(channel, { timestamp: timestamp,
-                                         extraStringData: extraStringData });
+    this._createNetworkEvent(channel, { timestamp, extraStringData });
   },
 
   /**
@@ -953,7 +1110,7 @@ NetworkMonitor.prototype = {
    * @return object
    *         The new HTTP activity object.
    */
-  createActivityObject: function(channel) {
+  createActivityObject: function (channel) {
     return {
       id: gSequenceId(),
       channel: channel,
@@ -981,7 +1138,7 @@ NetworkMonitor.prototype = {
    * @param object httpActivity
    *        The HTTP activity object we are tracking.
    */
-  _setupResponseListener: function(httpActivity) {
+  _setupResponseListener: function (httpActivity) {
     let channel = httpActivity.channel;
     channel.QueryInterface(Ci.nsITraceableChannel);
 
@@ -1018,7 +1175,7 @@ NetworkMonitor.prototype = {
    * @param object httpActivity
    *        The HTTP activity object we are working with.
    */
-  _onRequestBodySent: function(httpActivity) {
+  _onRequestBodySent: function (httpActivity) {
     if (httpActivity.discardRequestBody) {
       return;
     }
@@ -1056,7 +1213,7 @@ NetworkMonitor.prototype = {
    * @param string extraStringData
    *        The uncached response headers.
    */
-  _onResponseHeader: function(httpActivity, extraStringData) {
+  _onResponseHeader: function (httpActivity, extraStringData) {
     // extraStringData contains the uncached response headers. The first line
     // contains the response status (e.g. HTTP/1.1 200 OK).
     //
@@ -1106,7 +1263,7 @@ NetworkMonitor.prototype = {
    * @param object httpActivity
    *        The HTTP activity object we work with.
    */
-  _onTransactionClose: function(httpActivity) {
+  _onTransactionClose: function (httpActivity) {
     let result = this._setupHarTimings(httpActivity);
     httpActivity.owner.addEventTimings(result.total, result.timings);
     delete this.openRequests[httpActivity.id];
@@ -1128,7 +1285,7 @@ NetworkMonitor.prototype = {
    *         - total - the total time for all of the request and response.
    *         - timings - the HAR timings object.
    */
-  _setupHarTimings: function(httpActivity, fromCache) {
+  _setupHarTimings: function (httpActivity, fromCache) {
     if (fromCache) {
       // If it came from the browser cache, we have no timing
       // information and these should all be 0
@@ -1211,7 +1368,7 @@ NetworkMonitor.prototype = {
    * Suspend Web Console activity. This is called when all Web Consoles are
    * closed.
    */
-  destroy: function() {
+  destroy: function () {
     if (Services.appinfo.processType != Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT) {
       gActivityDistributor.removeObserver(this);
       Services.obs.removeObserver(this._httpResponseExaminer,
@@ -1227,8 +1384,7 @@ NetworkMonitor.prototype = {
     this.openRequests = {};
     this.openResponses = {};
     this.owner = null;
-    this.window = null;
-    this.topFrame = null;
+    this.filters = null;
   },
 };
 
@@ -1264,6 +1420,7 @@ function NetworkMonitorChild(appId, messageManager, connID, owner) {
   this._onUpdateEvent = this._onUpdateEvent.bind(this);
   this._netEvents = new Map();
 }
+
 exports.NetworkMonitorChild = NetworkMonitorChild;
 
 NetworkMonitorChild.prototype = {
@@ -1280,7 +1437,6 @@ NetworkMonitorChild.prototype = {
     this._saveRequestAndResponseBodies = val;
 
     this._messageManager.sendAsyncMessage("debug:netmonitor:" + this.connID, {
-      appId: this.appId,
       action: "setPreferences",
       preferences: {
         saveRequestAndResponseBodies: this._saveRequestAndResponseBodies,
@@ -1288,7 +1444,7 @@ NetworkMonitorChild.prototype = {
     });
   },
 
-  init: function() {
+  init: function () {
     let mm = this._messageManager;
     mm.addMessageListener("debug:netmonitor:" + this.connID + ":newEvent",
                           this._onNewEvent);
@@ -1302,6 +1458,13 @@ NetworkMonitorChild.prototype = {
 
   _onNewEvent: DevToolsUtils.makeInfallible(function _onNewEvent(msg) {
     let {id, event} = msg.data;
+
+    // Try to add stack trace to the event data received from parent
+    if (this.owner.stackTraceCollector) {
+      event.cause.stacktrace =
+        this.owner.stackTraceCollector.getStackTrace(event.channelId);
+    }
+
     let actor = this.owner.onNetworkEvent(event);
     this._netEvents.set(id, Cu.getWeakReference(actor));
   }),
@@ -1311,19 +1474,19 @@ NetworkMonitorChild.prototype = {
     let weakActor = this._netEvents.get(id);
     let actor = weakActor ? weakActor.get() : null;
     if (!actor) {
-      Cu.reportError("Received debug:netmonitor:updateEvent for unknown " +
-                     "event ID: " + id);
+      console.error("Received debug:netmonitor:updateEvent for unknown " +
+                    "event ID: " + id);
       return;
     }
     if (!(method in actor)) {
-      Cu.reportError("Received debug:netmonitor:updateEvent unsupported " +
-                     "method: " + method);
+      console.error("Received debug:netmonitor:updateEvent unsupported " +
+                    "method: " + method);
       return;
     }
     actor[method].apply(actor, args);
   }),
 
-  destroy: function() {
+  destroy: function () {
     let mm = this._messageManager;
     try {
       mm.removeMessageListener("debug:netmonitor:" + this.connID + ":newEvent",
@@ -1368,8 +1531,8 @@ function NetworkEventActorProxy(messageManager, connID) {
 }
 exports.NetworkEventActorProxy = NetworkEventActorProxy;
 
-NetworkEventActorProxy.methodFactory = function(method) {
-  return DevToolsUtils.makeInfallible(function() {
+NetworkEventActorProxy.methodFactory = function (method) {
+  return DevToolsUtils.makeInfallible(function () {
     let args = Array.slice(arguments);
     let mm = this.messageManager;
     mm.sendAsyncMessage("debug:netmonitor:" + this.connID + ":updateEvent", {
@@ -1390,7 +1553,7 @@ NetworkEventActorProxy.prototype = {
    * @return object
    *         This object.
    */
-  init: DevToolsUtils.makeInfallible(function(event) {
+  init: DevToolsUtils.makeInfallible(function (event) {
     let mm = this.messageManager;
     mm.sendAsyncMessage("debug:netmonitor:" + this.connID + ":newEvent", {
       id: this.id,
@@ -1400,7 +1563,7 @@ NetworkEventActorProxy.prototype = {
   }),
 };
 
-(function() {
+(function () {
   // Listeners for new network event data coming from the NetworkMonitor.
   let methods = ["addRequestHeaders", "addRequestCookies", "addRequestPostData",
                  "addResponseStart", "addSecurityInfo", "addResponseHeaders",
@@ -1447,12 +1610,13 @@ NetworkMonitorManager.prototype = {
    * @param object msg
    *        Message from the content.
    */
-  onNetMonitorMessage: DevToolsUtils.makeInfallible(function(msg) {
-    let { action, appId } = msg.json;
+  onNetMonitorMessage: DevToolsUtils.makeInfallible(function (msg) {
+    let {action} = msg.json;
     // Pipe network monitor data from parent to child via the message manager.
     switch (action) {
       case "start":
         if (!this.netMonitor) {
+          let {appId} = msg.json;
           this.netMonitor = new NetworkMonitor({
             topFrame: this.frame,
             appId: appId,
@@ -1498,7 +1662,7 @@ NetworkMonitorManager.prototype = {
     return new NetworkEventActorProxy(this.messageManager, this.id).init(event);
   }),
 
-  destroy: function() {
+  destroy: function () {
     if (this.messageManager) {
       this.messageManager.removeMessageListener("debug:netmonitor:" + this.id,
                                                 this.onNetMonitorMessage);
@@ -1576,7 +1740,7 @@ ConsoleProgressListener.prototype = {
    * Initialize the ConsoleProgressListener.
    * @private
    */
-  _init: function() {
+  _init: function () {
     if (this._initialized) {
       return;
     }
@@ -1601,7 +1765,7 @@ ConsoleProgressListener.prototype = {
    *        - this.MONITOR_LOCATION_CHANGE
    *          Track location changes for the top window.
    */
-  startMonitor: function(monitor) {
+  startMonitor: function (monitor) {
     switch (monitor) {
       case this.MONITOR_FILE_ACTIVITY:
         this._fileActivity = true;
@@ -1623,7 +1787,7 @@ ConsoleProgressListener.prototype = {
    *        Tells what you want to stop tracking. See this.startMonitor() for
    *        the list of constants.
    */
-  stopMonitor: function(monitor) {
+  stopMonitor: function (monitor) {
     switch (monitor) {
       case this.MONITOR_FILE_ACTIVITY:
         this._fileActivity = false;
@@ -1641,7 +1805,7 @@ ConsoleProgressListener.prototype = {
     }
   },
 
-  onStateChange: function(progress, request, state, status) {
+  onStateChange: function (progress, request, state, status) {
     if (!this.owner) {
       return;
     }
@@ -1661,7 +1825,7 @@ ConsoleProgressListener.prototype = {
    * URI has been loaded, then the remote Web Console instance is notified.
    * @private
    */
-  _checkFileActivity: function(progress, request, state, status) {
+  _checkFileActivity: function (progress, request, state, status) {
     if (!(state & Ci.nsIWebProgressListener.STATE_START)) {
       return;
     }
@@ -1688,7 +1852,7 @@ ConsoleProgressListener.prototype = {
    * Web Console instance is notified.
    * @private
    */
-  _checkLocationChange: function(progress, request, state) {
+  _checkLocationChange: function (progress, request, state) {
     let isStart = state & Ci.nsIWebProgressListener.STATE_START;
     let isStop = state & Ci.nsIWebProgressListener.STATE_STOP;
     let isNetwork = state & Ci.nsIWebProgressListener.STATE_IS_NETWORK;
@@ -1707,15 +1871,15 @@ ConsoleProgressListener.prototype = {
     }
   },
 
-  onLocationChange: function() {},
-  onStatusChange: function() {},
-  onProgressChange: function() {},
-  onSecurityChange: function() {},
+  onLocationChange: function () {},
+  onStatusChange: function () {},
+  onProgressChange: function () {},
+  onSecurityChange: function () {},
 
   /**
    * Destroy the ConsoleProgressListener.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._initialized) {
       return;
     }

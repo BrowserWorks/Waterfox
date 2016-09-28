@@ -12,7 +12,11 @@ var gTab, gPanel, gDebugger;
 const TAB_URL = EXAMPLE_URL + "doc_inline-debugger-statement.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  const options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -33,7 +37,7 @@ function testCleanExit() {
   callInTab(gTab, "runDebuggerStatement");
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

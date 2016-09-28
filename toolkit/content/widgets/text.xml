@@ -318,9 +318,7 @@
             if (this.getAttribute("useoriginprincipal") == "true") {
               principal = this.nodePrincipal;
             } else {
-              principal =
-                Components.classes["@mozilla.org/nullprincipal;1"]
-                          .createInstance(Components.interfaces.nsIPrincipal);
+              principal = secMan.createNullPrincipal({});
             }
             try {
               secMan.checkLoadURIWithPrincipal(principal, uri,
@@ -358,9 +356,11 @@
           var linkHandled = Components.classes["@mozilla.org/supports-PRBool;1"]
                                       .createInstance(Components.interfaces.nsISupportsPRBool);
           linkHandled.data = false;
+          let {shiftKey, ctrlKey, metaKey, altKey, button} = aEvent;
+          let data = {shiftKey, ctrlKey, metaKey, altKey, button, href};
           Components.classes["@mozilla.org/observer-service;1"]
                     .getService(Components.interfaces.nsIObserverService)
-                    .notifyObservers(linkHandled, "handle-xul-text-link", href);
+                    .notifyObservers(linkHandled, "handle-xul-text-link", JSON.stringify(data));
           if (linkHandled.data)
             return;
 
@@ -378,6 +378,7 @@
 
     <handlers>
       <handler event="click" phase="capturing" button="0" action="this.open(event)"/>
+      <handler event="click" phase="capturing" button="1" action="this.open(event)"/>
       <handler event="keypress" preventdefault="true" keycode="VK_RETURN" action="this.click()" />
     </handlers>
   </binding>

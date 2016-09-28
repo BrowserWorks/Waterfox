@@ -7,7 +7,6 @@
 
 #include "mozilla/Logging.h"
 #include "mozilla/dom/HTMLMediaElement.h"
-#include "mozilla/Preferences.h"
 #include "MediaDecoderStateMachine.h"
 #include "MediaSource.h"
 #include "MediaSourceResource.h"
@@ -100,6 +99,10 @@ MediaSourceDecoder::GetBuffered()
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  if (!mMediaSource) {
+    NS_WARNING("MediaSource element isn't attached");
+    return media::TimeIntervals::Invalid();
+  }
   dom::SourceBufferList* sourceBuffers = mMediaSource->ActiveSourceBuffers();
   if (!sourceBuffers) {
     // Media source object is shutting down.
@@ -137,7 +140,7 @@ MediaSourceDecoder::GetBuffered()
   return buffered;
 }
 
-RefPtr<ShutdownPromise>
+void
 MediaSourceDecoder::Shutdown()
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -149,7 +152,7 @@ MediaSourceDecoder::Shutdown()
   }
   mDemuxer = nullptr;
 
-  return MediaDecoder::Shutdown();
+  MediaDecoder::Shutdown();
 }
 
 /*static*/
@@ -178,7 +181,12 @@ MediaSourceDecoder::Ended(bool aEnded)
 {
   MOZ_ASSERT(NS_IsMainThread());
   static_cast<MediaSourceResource*>(GetResource())->SetEnded(aEnded);
-  mEnded = true;
+  if (aEnded) {
+    // We want the MediaSourceReader to refresh its buffered range as it may
+    // have been modified (end lined up).
+    NotifyDataArrived();
+  }
+  mEnded = aEnded;
 }
 
 void
@@ -268,7 +276,7 @@ MediaSourceDecoder::NextFrameBufferedStatus()
   TimeInterval interval(currentPosition,
                         currentPosition + media::TimeUnit::FromMicroseconds(DEFAULT_NEXT_FRAME_AVAILABLE_BUFFERED),
                         MediaSourceDemuxer::EOS_FUZZ);
-  return GetBuffered().Contains(interval)
+  return GetBuffered().Contains(ClampIntervalToEnd(interval))
     ? MediaDecoderOwner::NEXT_FRAME_AVAILABLE
     : MediaDecoderOwner::NEXT_FRAME_UNAVAILABLE;
 }
@@ -301,7 +309,19 @@ MediaSourceDecoder::CanPlayThrough()
   TimeInterval interval(currentPosition,
                         timeAhead,
                         MediaSourceDemuxer::EOS_FUZZ);
-  return GetBuffered().Contains(interval);
+  return GetBuffered().Contains(ClampIntervalToEnd(interval));
+}
+
+TimeInterval
+MediaSourceDecoder::ClampIntervalToEnd(const TimeInterval& aInterval)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!mEnded) {
+    return aInterval;
+  }
+  TimeInterval interval(TimeUnit(), TimeUnit::FromSeconds(GetDuration()));
+  return aInterval.Intersection(interval);
 }
 
 #undef MSE_DEBUG

@@ -40,7 +40,7 @@ BEGIN_WORKERS_NAMESPACE
 
 class ServiceWorkerRegistrationInfo;
 
-class CancelChannelRunnable final : public nsRunnable
+class CancelChannelRunnable final : public Runnable
 {
   nsMainThreadPtrHandle<nsIInterceptedChannel> mChannel;
   nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo> mRegistration;
@@ -207,7 +207,7 @@ public:
                    ErrorResult& aRv);
   already_AddRefed<mozilla::dom::Blob> Blob(ErrorResult& aRv);
 
-  PushMessageData(nsISupports* aOwner, const nsTArray<uint8_t>& aBytes);
+  PushMessageData(nsISupports* aOwner, nsTArray<uint8_t>&& aBytes);
 private:
   nsCOMPtr<nsISupports> mOwner;
   nsTArray<uint8_t> mBytes;

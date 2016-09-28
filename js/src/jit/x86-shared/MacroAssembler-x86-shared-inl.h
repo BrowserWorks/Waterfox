@@ -76,6 +76,64 @@ MacroAssembler::xor32(Imm32 imm, Register dest)
     xorl(imm, dest);
 }
 
+void
+MacroAssembler::clz32(Register src, Register dest, bool knownNotZero)
+{
+    // On very recent chips (Haswell and newer?) there is actually an
+    // LZCNT instruction that does all of this.
+
+    bsrl(src, dest);
+    if (!knownNotZero) {
+        // If the source is zero then bsrl leaves garbage in the destination.
+        Label nonzero;
+        j(Assembler::NonZero, &nonzero);
+        movl(Imm32(0x3F), dest);
+        bind(&nonzero);
+    }
+    xorl(Imm32(0x1F), dest);
+}
+
+void
+MacroAssembler::ctz32(Register src, Register dest, bool knownNotZero)
+{
+    bsfl(src, dest);
+    if (!knownNotZero) {
+        Label nonzero;
+        j(Assembler::NonZero, &nonzero);
+        movl(Imm32(32), dest);
+        bind(&nonzero);
+    }
+}
+
+void
+MacroAssembler::popcnt32(Register input, Register output, Register tmp)
+{
+    if (AssemblerX86Shared::HasPOPCNT()) {
+        popcntl(input, output);
+        return;
+    }
+
+    MOZ_ASSERT(tmp != InvalidReg);
+
+    // Equivalent to mozilla::CountPopulation32()
+
+    movl(input, output);
+    shrl(Imm32(1), output);
+    andl(Imm32(0x55555555), output);
+    subl(output, tmp);
+    movl(tmp, output);
+    andl(Imm32(0x33333333), output);
+    shrl(Imm32(2), tmp);
+    andl(Imm32(0x33333333), tmp);
+    addl(output, tmp);
+    movl(tmp, output);
+    shrl(Imm32(4), output);
+    addl(tmp, output);
+    andl(Imm32(0xF0F0F0F), output);
+    imull(Imm32(0x1010101), output, output);
+    shrl(Imm32(24), output);
+}
+
 // ===============================================================
 // Arithmetic instructions
 
@@ -161,7 +219,7 @@ void
 MacroAssembler::negateFloat(FloatRegister reg)
 {
     ScratchFloat32Scope scratch(*this);
-    vpcmpeqw(scratch, scratch, scratch);
+    vpcmpeqw(Operand(scratch), scratch, scratch);
     vpsllq(Imm32(31), scratch, scratch);
 
     // XOR the float in a float register with -0.0.
@@ -173,11 +231,69 @@ MacroAssembler::negateDouble(FloatRegister reg)
 {
     // From MacroAssemblerX86Shared::maybeInlineDouble
     ScratchDoubleScope scratch(*this);
-    vpcmpeqw(scratch, scratch, scratch);
+    vpcmpeqw(Operand(scratch), scratch, scratch);
     vpsllq(Imm32(63), scratch, scratch);
 
     // XOR the float in a float register with -0.0.
     vxorpd(scratch, reg, reg); // s ^ 0x80000000000000
+}
+
+// ===============================================================
+// Rotation instructions
+void
+MacroAssembler::rotateLeft(Imm32 count, Register input, Register dest)
+{
+    MOZ_ASSERT(input == dest, "defineReuseInput");
+    if (count.value)
+        roll(count, input);
+}
+
+void
+MacroAssembler::rotateLeft(Register count, Register input, Register dest)
+{
+    MOZ_ASSERT(input == dest, "defineReuseInput");
+    MOZ_ASSERT(count == ecx, "defineFixed(ecx)");
+    roll_cl(input);
+}
+
+void
+MacroAssembler::rotateRight(Imm32 count, Register input, Register dest)
+{
+    MOZ_ASSERT(input == dest, "defineReuseInput");
+    if (count.value)
+        rorl(count, input);
+}
+
+void
+MacroAssembler::rotateRight(Register count, Register input, Register dest)
+{
+    MOZ_ASSERT(input == dest, "defineReuseInput");
+    MOZ_ASSERT(count == ecx, "defineFixed(ecx)");
+    rorl_cl(input);
+}
+
+// ===============================================================
+// Shift instructions
+
+void
+MacroAssembler::lshift32(Register shift, Register srcDest)
+{
+    MOZ_ASSERT(shift == ecx);
+    shll_cl(srcDest);
+}
+
+void
+MacroAssembler::rshift32(Register shift, Register srcDest)
+{
+    MOZ_ASSERT(shift == ecx);
+    shrl_cl(srcDest);
+}
+
+void
+MacroAssembler::rshift32Arithmetic(Register shift, Register srcDest)
+{
+    MOZ_ASSERT(shift == ecx);
+    sarl_cl(srcDest);
 }
 
 // ===============================================================
@@ -792,6 +908,106 @@ MacroAssembler::branchTestMagicImpl(Condition cond, const T& t, L label)
 {
     cond = testMagic(cond, t);
     j(cond, label);
+}
+
+// ========================================================================
+// Canonicalization primitives.
+void
+MacroAssembler::canonicalizeFloat32x4(FloatRegister reg, FloatRegister scratch)
+{
+    ScratchSimd128Scope scratch2(*this);
+
+    MOZ_ASSERT(scratch.asSimd128() != scratch2.asSimd128());
+    MOZ_ASSERT(reg.asSimd128() != scratch2.asSimd128());
+    MOZ_ASSERT(reg.asSimd128() != scratch.asSimd128());
+
+    FloatRegister mask = scratch;
+    vcmpordps(Operand(reg), reg, mask);
+
+    FloatRegister ifFalse = scratch2;
+    float nanf = float(JS::GenericNaN());
+    loadConstantSimd128Float(SimdConstant::SplatX4(nanf), ifFalse);
+
+    bitwiseAndSimd128(Operand(mask), reg);
+    bitwiseAndNotSimd128(Operand(ifFalse), mask);
+    bitwiseOrSimd128(Operand(mask), reg);
+}
+
+// ========================================================================
+// Memory access primitives.
+void
+MacroAssembler::storeUncanonicalizedDouble(FloatRegister src, const Address& dest)
+{
+    vmovsd(src, dest);
+}
+void
+MacroAssembler::storeUncanonicalizedDouble(FloatRegister src, const BaseIndex& dest)
+{
+    vmovsd(src, dest);
+}
+void
+MacroAssembler::storeUncanonicalizedDouble(FloatRegister src, const Operand& dest)
+{
+    switch (dest.kind()) {
+      case Operand::MEM_REG_DISP:
+        storeUncanonicalizedDouble(src, dest.toAddress());
+        break;
+      case Operand::MEM_SCALE:
+        storeUncanonicalizedDouble(src, dest.toBaseIndex());
+        break;
+      default:
+        MOZ_CRASH("unexpected operand kind");
+    }
+}
+
+template void MacroAssembler::storeDouble(FloatRegister src, const Operand& dest);
+
+void
+MacroAssembler::storeUncanonicalizedFloat32(FloatRegister src, const Address& dest)
+{
+    vmovss(src, dest);
+}
+void
+MacroAssembler::storeUncanonicalizedFloat32(FloatRegister src, const BaseIndex& dest)
+{
+    vmovss(src, dest);
+}
+void
+MacroAssembler::storeUncanonicalizedFloat32(FloatRegister src, const Operand& dest)
+{
+    switch (dest.kind()) {
+      case Operand::MEM_REG_DISP:
+        storeUncanonicalizedFloat32(src, dest.toAddress());
+        break;
+      case Operand::MEM_SCALE:
+        storeUncanonicalizedFloat32(src, dest.toBaseIndex());
+        break;
+      default:
+        MOZ_CRASH("unexpected operand kind");
+    }
+}
+
+template void MacroAssembler::storeFloat32(FloatRegister src, const Operand& dest);
+
+void
+MacroAssembler::storeFloat32x3(FloatRegister src, const Address& dest)
+{
+    Address destZ(dest);
+    destZ.offset += 2 * sizeof(int32_t);
+    storeDouble(src, dest);
+    ScratchSimd128Scope scratch(*this);
+    vmovhlps(src, scratch, scratch);
+    storeFloat32(scratch, destZ);
+}
+void
+MacroAssembler::storeFloat32x3(FloatRegister src, const BaseIndex& dest)
+{
+    BaseIndex destZ(dest);
+    destZ.offset += 2 * sizeof(int32_t);
+    storeDouble(src, dest);
+    ScratchSimd128Scope scratch(*this);
+    vmovhlps(src, scratch, scratch);
+    storeFloat32(scratch, destZ);
 }
 
 //}}} check_macroassembler_style

@@ -24,7 +24,7 @@ function log(...stuff) {
 
   var d = new Date();
   let msg = "SafeBrowsing: " + d.toTimeString() + ": " + stuff.join(" ");
-  dump(msg + "\n");
+  dump(Services.urlFormatter.trimSensitiveURLs(msg) + "\n");
 }
 
 // Skip all the ones containining "test", because we never need to ask for
@@ -81,6 +81,12 @@ this.SafeBrowsing = {
 
     let providerName = this.listToProvider[listname];
     let provider = this.providers[providerName];
+
+    if (!providerName || !provider) {
+      log("No provider info found for " + listname);
+      log("Check browser.safebrowsing.provider.[google/mozilla].lists");
+      return;
+    }
 
     listManager.registerTable(listname, providerName, provider.updateURL, provider.gethashURL);
   },

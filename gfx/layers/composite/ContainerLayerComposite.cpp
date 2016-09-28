@@ -53,24 +53,6 @@ namespace layers {
 
 using namespace gfx;
 
-static bool
-LayerHasCheckerboardingAPZC(Layer* aLayer, Color* aOutColor)
-{
-  for (LayerMetricsWrapper i(aLayer, LayerMetricsWrapper::StartAt::BOTTOM); i; i = i.GetParent()) {
-    if (!i.Metrics().IsScrollable()) {
-      continue;
-    }
-    if (i.GetApzc() && i.GetApzc()->IsCurrentlyCheckerboarding()) {
-      if (aOutColor) {
-        *aOutColor = i.Metrics().GetBackgroundColor();
-      }
-      return true;
-    }
-    break;
-  }
-  return false;
-}
-
 static void DrawLayerInfo(const RenderTargetIntRect& aClipRect,
                           LayerManagerComposite* aManager,
                           Layer* aLayer)
@@ -322,8 +304,8 @@ ContainerRenderVR(ContainerT* aContainer,
     }
   }
 
-  gfx::Rect rect(surfaceRect.x, surfaceRect.y, surfaceRect.width, surfaceRect.height);
-  gfx::Rect clipRect(aClipRect.x, aClipRect.y, aClipRect.width, aClipRect.height);
+  gfx::IntRect rect(surfaceRect.x, surfaceRect.y, surfaceRect.width, surfaceRect.height);
+  gfx::IntRect clipRect(aClipRect.x, aClipRect.y, aClipRect.width, aClipRect.height);
 
   // The VR geometry may not cover the entire area; we need to fill with a solid color
   // first.
@@ -332,7 +314,7 @@ ContainerRenderVR(ContainerT* aContainer,
   // the entire rect)
   EffectChain solidEffect(aContainer);
   solidEffect.mPrimaryEffect = new EffectSolidColor(Color(0.0, 0.0, 0.0, 1.0));
-  aManager->GetCompositor()->DrawQuad(rect, rect, solidEffect, 1.0, gfx::Matrix4x4());
+  aManager->GetCompositor()->DrawQuad(Rect(rect), rect, solidEffect, 1.0, gfx::Matrix4x4());
 
   // draw the temporary surface with VR distortion to the original destination
   EffectChain vrEffect(aContainer);
@@ -351,19 +333,10 @@ ContainerRenderVR(ContainerT* aContainer,
   // XXX we shouldn't use visibleRect here -- the VR distortion needs to know the
   // full rect, not just the visible one.  Luckily, right now, VR distortion is only
   // rendered when the element is fullscreen, so the visibleRect will be right anyway.
-  aManager->GetCompositor()->DrawQuad(rect, clipRect, vrEffect, opacity,
+  aManager->GetCompositor()->DrawQuad(Rect(rect), clipRect, vrEffect, opacity,
                                       scaleTransform);
 
   DUMP("<<< ContainerRenderVR [%p]\n", aContainer);
-}
-
-static bool
-NeedToDrawCheckerboardingForLayer(Layer* aLayer, Color* aOutCheckerboardingColor)
-{
-  return (aLayer->Manager()->AsyncPanZoomEnabled() &&
-         aLayer->GetContentFlags() & Layer::CONTENT_OPAQUE) &&
-         aLayer->IsOpaqueForVisibility() &&
-         LayerHasCheckerboardingAPZC(aLayer, aOutCheckerboardingColor);
 }
 
 /* all of the prepared data that we need in RenderLayer() */
@@ -412,7 +385,7 @@ ContainerPrepare(ContainerT* aContainer,
     // may be null which is not allowed.
     if (!layerToRender->GetLayer()->AsContainerLayer()) {
       if (!layerToRender->GetLayer()->IsVisible() &&
-          !NeedToDrawCheckerboardingForLayer(layerToRender->GetLayer(), nullptr)) {
+          !layerToRender->NeedToDrawCheckerboarding(nullptr)) {
         CULLING_LOG("Sublayer %p has no effective visible region\n", layerToRender->GetLayer());
         continue;
       }
@@ -524,8 +497,8 @@ RenderMinimap(ContainerT* aContainer, LayerManagerComposite* aManager,
   float scaleFactorX;
   float scaleFactorY;
   Rect dest = Rect(aClipRect.ToUnknownRect());
-  if (aLayer->GetEffectiveClipRect()) {
-    dest = Rect(aLayer->GetEffectiveClipRect().value().ToUnknownRect());
+  if (aLayer->GetLocalClipRect()) {
+    dest = Rect(aLayer->GetLocalClipRect().value().ToUnknownRect());
   } else {
     dest = aContainer->GetEffectiveTransform().Inverse().TransformBounds(dest);
   }
@@ -542,9 +515,7 @@ RenderMinimap(ContainerT* aContainer, LayerManagerComposite* aManager,
 
   Rect transformedScrollRect = transform.TransformBounds(scrollRect.ToUnknownRect());
 
-  Rect clipRect = aContainer->GetEffectiveTransform().TransformBounds(transformedScrollRect);
-  clipRect.width++;
-  clipRect.height++;
+  IntRect clipRect = RoundedOut(aContainer->GetEffectiveTransform().TransformBounds(transformedScrollRect));
 
   // Render the scrollable area.
   compositor->FillRect(transformedScrollRect, backgroundColor, clipRect, aContainer->GetEffectiveTransform());
@@ -613,7 +584,7 @@ RenderLayers(ContainerT* aContainer,
     }
 
     Color color;
-    if (NeedToDrawCheckerboardingForLayer(layer, &color)) {
+    if (layerToRender->NeedToDrawCheckerboarding(&color)) {
       if (gfxPrefs::APZHighlightCheckerboardedAreas()) {
         color = Color(255 / 255.f, 188 / 255.f, 217 / 255.f, 1.f); // "Cotton Candy"
       }
@@ -627,7 +598,7 @@ RenderLayers(ContainerT* aContainer,
       EffectChain effectChain(layer);
       effectChain.mPrimaryEffect = new EffectSolidColor(color);
       aManager->GetCompositor()->DrawQuad(gfx::Rect(layerBounds.x, layerBounds.y, layerBounds.width, layerBounds.height),
-                                          gfx::Rect(clipRect.ToUnknownRect()),
+                                          clipRect.ToUnknownRect(),
                                           effectChain, layer->GetEffectiveOpacity(),
                                           layer->GetEffectiveTransform());
     }
@@ -670,7 +641,7 @@ RenderLayers(ContainerT* aContainer,
         ParentLayerRect compositionBounds = layer->GetFrameMetrics(i - 1).GetCompositionBounds();
         aManager->GetCompositor()->DrawDiagnostics(DiagnosticFlags::CONTAINER,
                                                    compositionBounds.ToUnknownRect(),
-                                                   gfx::Rect(aClipRect.ToUnknownRect()),
+                                                   aClipRect.ToUnknownRect(),
                                                    asyncTransform * aContainer->GetEffectiveTransform());
         if (AsyncPanZoomController* apzc = layer->GetAsyncPanZoomController(i - 1)) {
           asyncTransform =
@@ -802,7 +773,7 @@ ContainerRender(ContainerT* aContainer,
 
     RefPtr<ContainerT> container = aContainer;
     RenderWithAllMasks(aContainer, compositor, aClipRect,
-                       [&, surface, compositor, container](EffectChain& effectChain, const Rect& clipRect) {
+                       [&, surface, compositor, container](EffectChain& effectChain, const IntRect& clipRect) {
       effectChain.mPrimaryEffect = new EffectRenderTarget(surface);
       compositor->DrawQuad(visibleRect, clipRect, effectChain,
                            container->GetEffectiveOpacity(),
@@ -896,6 +867,8 @@ void
 ContainerLayerComposite::CleanupResources()
 {
   mLastIntermediateSurface = nullptr;
+  mVRRenderTargetSet = nullptr;
+  mPrepared = nullptr;
 
   for (Layer* l = GetFirstChild(); l; l = l->GetNextSibling()) {
     LayerComposite* layerToCleanup = static_cast<LayerComposite*>(l->ImplData());
@@ -943,11 +916,12 @@ RefLayerComposite::Prepare(const RenderTargetIntRect& aClipRect)
   ContainerPrepare(this, mCompositeManager, aClipRect);
 }
 
-
 void
 RefLayerComposite::CleanupResources()
 {
   mLastIntermediateSurface = nullptr;
+  mVRRenderTargetSet = nullptr;
+  mPrepared = nullptr;
 }
 
 } // namespace layers

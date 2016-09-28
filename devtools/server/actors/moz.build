@@ -12,6 +12,7 @@ DIRS += [
 DevToolsModules(
     'actor-registry.js',
     'addon.js',
+    'addons.js',
     'animation.js',
     'breakpoint.js',
     'call-watcher.js',
@@ -20,6 +21,7 @@ DevToolsModules(
     'childtab.js',
     'chrome.js',
     'common.js',
+    'css-properties.js',
     'csscoverage.js',
     'device.js',
     'director-manager.js',
@@ -36,7 +38,6 @@ DevToolsModules(
     'inspector.js',
     'layout.js',
     'memory.js',
-    'memprof.js',
     'monitor.js',
     'object.js',
     'performance-entries.js',

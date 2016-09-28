@@ -55,7 +55,6 @@
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
 #include "nsNetUtil.h"
-#include "nsIURL.h"
 #include "nsProxyRelease.h"
 #include "nsQueryObject.h"
 #include "nsTArray.h"
@@ -190,7 +189,7 @@ PopulateRegistrationData(nsIPrincipal* aPrincipal,
   return NS_OK;
 }
 
-class TeardownRunnable final : public nsRunnable
+class TeardownRunnable final : public Runnable
 {
 public:
   explicit TeardownRunnable(ServiceWorkerManagerChild* aActor)
@@ -273,35 +272,6 @@ ServiceWorkerManager::Init()
   }
 }
 
-class ContinueActivateRunnable final : public LifeCycleEventCallback
-{
-  nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo> mRegistration;
-  bool mSuccess;
-
-public:
-  explicit ContinueActivateRunnable(const nsMainThreadPtrHandle<ServiceWorkerRegistrationInfo>& aRegistration)
-    : mRegistration(aRegistration)
-    , mSuccess(false)
-  {
-    AssertIsOnMainThread();
-  }
-
-  void
-  SetResult(bool aResult) override
-  {
-    mSuccess = aResult;
-  }
-
-  NS_IMETHOD
-  Run() override
-  {
-    AssertIsOnMainThread();
-    mRegistration->FinishActivate(mSuccess);
-    mRegistration = nullptr;
-    return NS_OK;
-  }
-};
-
 class ServiceWorkerResolveWindowPromiseOnRegisterCallback final : public ServiceWorkerJob::Callback
 {
   RefPtr<nsPIDOMWindowInner> mWindow;
@@ -345,67 +315,7 @@ public:
 
 namespace {
 
-/**
- * The spec mandates slightly different behaviors for computing the scope
- * prefix string in case a Service-Worker-Allowed header is specified versus
- * when it's not available.
- *
- * With the header:
- *   "Set maxScopeString to "/" concatenated with the strings in maxScope's
- *    path (including empty strings), separated from each other by "/"."
- * Without the header:
- *   "Set maxScopeString to "/" concatenated with the strings, except the last
- *    string that denotes the script's file name, in registration's registering
- *    script url's path (including empty strings), separated from each other by
- *    "/"."
- *
- * In simpler terms, if the header is not present, we should only use the
- * "directory" part of the pathname, and otherwise the entire pathname should be
- * used.  ScopeStringPrefixMode allows the caller to specify the desired
- * behavior.
- */
-enum ScopeStringPrefixMode {
-  eUseDirectory,
-  eUsePath
-};
-
-nsresult
-GetRequiredScopeStringPrefix(nsIURI* aScriptURI, nsACString& aPrefix,
-                             ScopeStringPrefixMode aPrefixMode)
-{
-  nsresult rv = aScriptURI->GetPrePath(aPrefix);
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  if (aPrefixMode == eUseDirectory) {
-    nsCOMPtr<nsIURL> scriptURL(do_QueryInterface(aScriptURI));
-    if (NS_WARN_IF(!scriptURL)) {
-      return NS_ERROR_FAILURE;
-    }
-
-    nsAutoCString dir;
-    rv = scriptURL->GetDirectory(dir);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    aPrefix.Append(dir);
-  } else if (aPrefixMode == eUsePath) {
-    nsAutoCString path;
-    rv = aScriptURI->GetPath(path);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    aPrefix.Append(path);
-  } else {
-    MOZ_ASSERT_UNREACHABLE("Invalid value for aPrefixMode");
-  }
-  return NS_OK;
-}
-
-class PropagateSoftUpdateRunnable final : public nsRunnable
+class PropagateSoftUpdateRunnable final : public Runnable
 {
 public:
   PropagateSoftUpdateRunnable(const PrincipalOriginAttributes& aOriginAttributes,
@@ -433,7 +343,7 @@ private:
   const nsString mScope;
 };
 
-class PropagateUnregisterRunnable final : public nsRunnable
+class PropagateUnregisterRunnable final : public Runnable
 {
 public:
   PropagateUnregisterRunnable(nsIPrincipal* aPrincipal,
@@ -470,7 +380,7 @@ private:
   const nsString mScope;
 };
 
-class RemoveRunnable final : public nsRunnable
+class RemoveRunnable final : public Runnable
 {
 public:
   explicit RemoveRunnable(const nsACString& aHost)
@@ -494,7 +404,7 @@ private:
   const nsCString mHost;
 };
 
-class PropagateRemoveRunnable final : public nsRunnable
+class PropagateRemoveRunnable final : public Runnable
 {
 public:
   explicit PropagateRemoveRunnable(const nsACString& aHost)
@@ -518,7 +428,7 @@ private:
   const nsCString mHost;
 };
 
-class PropagateRemoveAllRunnable final : public nsRunnable
+class PropagateRemoveAllRunnable final : public Runnable
 {
 public:
   PropagateRemoveAllRunnable()
@@ -555,7 +465,7 @@ IsFromAuthenticatedOrigin(nsIDocument* aDoc)
   }
 
   while (doc && !nsContentUtils::IsChromeDoc(doc)) {
-    bool trustworthyURI = false;
+    bool trustworthyOrigin = false;
 
     // The origin of the document may be different from the document URI
     // itself.  Check the principal, not the document URI itself.
@@ -565,15 +475,8 @@ IsFromAuthenticatedOrigin(nsIDocument* aDoc)
     // principal inside the loop.
     MOZ_ASSERT(!nsContentUtils::IsSystemPrincipal(documentPrincipal));
 
-    // Pass the principal as a URI to the security manager
-    nsCOMPtr<nsIURI> uri;
-    documentPrincipal->GetURI(getter_AddRefs(uri));
-    if (NS_WARN_IF(!uri)) {
-      return false;
-    }
-
-    csm->IsURIPotentiallyTrustworthy(uri, &trustworthyURI);
-    if (!trustworthyURI) {
+    csm->IsOriginPotentiallyTrustworthy(documentPrincipal, &trustworthyOrigin);
+    if (!trustworthyOrigin) {
       return false;
     }
 
@@ -654,7 +557,7 @@ ServiceWorkerManager::Register(mozIDOMWindow* aWindow,
     return NS_ERROR_DOM_SECURITY_ERR;
   }
 
-  // The IsURIPotentiallyTrustworthy() check allows file:// and possibly other
+  // The IsOriginPotentiallyTrustworthy() check allows file:// and possibly other
   // URI schemes.  We need to explicitly only allows http and https schemes.
   // Note, we just use the aScriptURI here for the check since its already
   // been verified as same origin with the document principal.  This also
@@ -739,7 +642,7 @@ ServiceWorkerManager::AppendPendingOperation(nsIRunnable* aRunnable)
 /*
  * Implements the async aspects of the getRegistrations algorithm.
  */
-class GetRegistrationsRunnable final : public nsRunnable
+class GetRegistrationsRunnable final : public Runnable
 {
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
   RefPtr<Promise> mPromise;
@@ -854,7 +757,7 @@ ServiceWorkerManager::GetRegistrations(mozIDOMWindow* aWindow,
 /*
  * Implements the async aspects of the getRegistration algorithm.
  */
-class GetRegistrationRunnable final : public nsRunnable
+class GetRegistrationRunnable final : public Runnable
 {
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
   RefPtr<Promise> mPromise;
@@ -956,7 +859,7 @@ ServiceWorkerManager::GetRegistration(mozIDOMWindow* aWindow,
   return NS_DispatchToCurrentThread(runnable);
 }
 
-class GetReadyPromiseRunnable final : public nsRunnable
+class GetReadyPromiseRunnable final : public Runnable
 {
   nsCOMPtr<nsPIDOMWindowInner> mWindow;
   RefPtr<Promise> mPromise;
@@ -1056,6 +959,37 @@ ServiceWorkerManager::SendPushSubscriptionChangeEvent(const nsACString& aOriginA
 #endif
 }
 
+nsresult
+ServiceWorkerManager::SendNotificationEvent(const nsAString& aEventName,
+                                            const nsACString& aOriginSuffix,
+                                            const nsACString& aScope,
+                                            const nsAString& aID,
+                                            const nsAString& aTitle,
+                                            const nsAString& aDir,
+                                            const nsAString& aLang,
+                                            const nsAString& aBody,
+                                            const nsAString& aTag,
+                                            const nsAString& aIcon,
+                                            const nsAString& aData,
+                                            const nsAString& aBehavior)
+{
+  PrincipalOriginAttributes attrs;
+  if (!attrs.PopulateFromSuffix(aOriginSuffix)) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  ServiceWorkerInfo* info = GetActiveWorkerInfoForScope(attrs, aScope);
+  if (!info) {
+    return NS_ERROR_FAILURE;
+  }
+
+  ServiceWorkerPrivate* workerPrivate = info->WorkerPrivate();
+  return workerPrivate->SendNotificationEvent(aEventName, aID, aTitle, aDir,
+                                              aLang, aBody, aTag,
+                                              aIcon, aData, aBehavior,
+                                              NS_ConvertUTF8toUTF16(aScope));
+}
+
 NS_IMETHODIMP
 ServiceWorkerManager::SendNotificationClickEvent(const nsACString& aOriginSuffix,
                                                  const nsACString& aScope,
@@ -1069,21 +1003,27 @@ ServiceWorkerManager::SendNotificationClickEvent(const nsACString& aOriginSuffix
                                                  const nsAString& aData,
                                                  const nsAString& aBehavior)
 {
-  PrincipalOriginAttributes attrs;
-  if (!attrs.PopulateFromSuffix(aOriginSuffix)) {
-    return NS_ERROR_INVALID_ARG;
-  }
+  return SendNotificationEvent(NS_LITERAL_STRING(NOTIFICATION_CLICK_EVENT_NAME),
+                               aOriginSuffix, aScope, aID, aTitle, aDir, aLang,
+                               aBody, aTag, aIcon, aData, aBehavior);
+}
 
-  ServiceWorkerInfo* info = GetActiveWorkerInfoForScope(attrs, aScope);
-  if (!info) {
-    return NS_ERROR_FAILURE;
-  }
-
-  ServiceWorkerPrivate* workerPrivate = info->WorkerPrivate();
-  return workerPrivate->SendNotificationClickEvent(aID, aTitle, aDir,
-                                                   aLang, aBody, aTag,
-                                                   aIcon, aData, aBehavior,
-                                                   NS_ConvertUTF8toUTF16(aScope));
+NS_IMETHODIMP
+ServiceWorkerManager::SendNotificationCloseEvent(const nsACString& aOriginSuffix,
+                                                 const nsACString& aScope,
+                                                 const nsAString& aID,
+                                                 const nsAString& aTitle,
+                                                 const nsAString& aDir,
+                                                 const nsAString& aLang,
+                                                 const nsAString& aBody,
+                                                 const nsAString& aTag,
+                                                 const nsAString& aIcon,
+                                                 const nsAString& aData,
+                                                 const nsAString& aBehavior)
+{
+  return SendNotificationEvent(NS_LITERAL_STRING(NOTIFICATION_CLOSE_EVENT_NAME),
+                               aOriginSuffix, aScope, aID, aTitle, aDir, aLang,
+                               aBody, aTag, aIcon, aData, aBehavior);
 }
 
 NS_IMETHODIMP
@@ -1347,6 +1287,23 @@ ServiceWorkerManager::NotifyUnregister(nsIPrincipal* aPrincipal,
 
   queue->ScheduleJob(job);
   return NS_OK;
+}
+
+void
+ServiceWorkerManager::WorkerIsIdle(ServiceWorkerInfo* aWorker)
+{
+  AssertIsOnMainThread();
+  MOZ_ASSERT(aWorker);
+
+  RefPtr<ServiceWorkerRegistrationInfo> reg =
+    GetRegistration(aWorker->GetPrincipal(), aWorker->Scope());
+  if (!reg) {
+    return;
+  }
+
+  if (reg->GetActive() == aWorker) {
+    reg->TryToActivateAsync();
+  }
 }
 
 already_AddRefed<ServiceWorkerJobQueue>
@@ -2015,13 +1972,10 @@ ServiceWorkerManager::StopControllingADocument(ServiceWorkerRegistrationInfo* aR
     if (aRegistration->mPendingUninstall) {
       RemoveRegistration(aRegistration);
     } else {
-      // If the registration has an active worker that is running
-      // this might be a good time to stop it.
-      if (aRegistration->GetActive()) {
-        ServiceWorkerPrivate* serviceWorkerPrivate =
-          aRegistration->GetActive()->WorkerPrivate();
-        serviceWorkerPrivate->NoteStoppedControllingDocuments();
-      }
+      // We use to aggressively terminate the worker at this point, but it
+      // caused problems.  There are more uses for a service worker than actively
+      // controlled documents.  We need to let the worker naturally terminate
+      // in case its handling push events, message events, etc.
       aRegistration->TryToActivateAsync();
     }
   }
@@ -2174,7 +2128,7 @@ ServiceWorkerManager::GetServiceWorkerForScope(nsPIDOMWindowInner* aWindow,
 
 namespace {
 
-class ContinueDispatchFetchEventRunnable : public nsRunnable
+class ContinueDispatchFetchEventRunnable : public Runnable
 {
   RefPtr<ServiceWorkerPrivate> mServiceWorkerPrivate;
   nsCOMPtr<nsIInterceptedChannel> mChannel;
@@ -2866,7 +2820,7 @@ ServiceWorkerManager::ClaimClients(nsIPrincipal* aPrincipal,
   return NS_OK;
 }
 
-nsresult
+void
 ServiceWorkerManager::SetSkipWaitingFlag(nsIPrincipal* aPrincipal,
                                          const nsCString& aScope,
                                          uint64_t aServiceWorkerID)
@@ -2874,24 +2828,21 @@ ServiceWorkerManager::SetSkipWaitingFlag(nsIPrincipal* aPrincipal,
   RefPtr<ServiceWorkerRegistrationInfo> registration =
     GetRegistration(aPrincipal, aScope);
   if (NS_WARN_IF(!registration)) {
-    return NS_ERROR_FAILURE;
+    return;
   }
 
-  if (registration->GetInstalling() &&
-      (registration->GetInstalling()->ID() == aServiceWorkerID)) {
-    registration->GetInstalling()->SetSkipWaitingFlag();
-  } else if (registration->GetWaiting() &&
-             (registration->GetWaiting()->ID() == aServiceWorkerID)) {
-    registration->GetWaiting()->SetSkipWaitingFlag();
-    if (registration->GetWaiting()->State() == ServiceWorkerState::Installed) {
-      registration->TryToActivateAsync();
-    }
-  } else {
-    NS_WARNING("Failed to set skipWaiting flag, no matching worker.");
-    return NS_ERROR_FAILURE;
+  RefPtr<ServiceWorkerInfo> worker =
+    registration->GetServiceWorkerInfoById(aServiceWorkerID);
+
+  if (NS_WARN_IF(!worker)) {
+    return;
   }
 
-  return NS_OK;
+  worker->SetSkipWaitingFlag();
+
+  if (worker->State() == ServiceWorkerState::Installed) {
+    registration->TryToActivateAsync();
+  }
 }
 
 void

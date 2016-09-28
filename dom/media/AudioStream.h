@@ -35,26 +35,33 @@ class AudioConverter;
 class AudioClock
 {
 public:
-  explicit AudioClock(AudioStream* aStream);
-  // Initialize the clock with the current AudioStream. Need to be called
-  // before querying the clock. Called on the audio thread.
-  void Init();
+  AudioClock();
+
+  // Initialize the clock with the current sampling rate.
+  // Need to be called before querying the clock.
+  void Init(uint32_t aRate);
+
   // Update the number of samples that has been written in the audio backend.
   // Called on the state machine thread.
   void UpdateFrameHistory(uint32_t aServiced, uint32_t aUnderrun);
-  // Get the read position of the stream, in microseconds.
-  // Called on the state machine thead.
-  // Assumes the AudioStream lock is held and thus calls Unlocked versions
-  // of AudioStream funcs.
-  int64_t GetPositionUnlocked() const;
-  // Get the read position of the stream, in frames.
-  // Called on the state machine thead.
-  int64_t GetPositionInFrames() const;
+
+  /**
+   * @param aFrames The playback position in frames of the audio engine.
+   * @return The playback position in frames of the stream,
+   *         adjusted by playback rate changes and underrun frames.
+   */
+  int64_t GetPositionInFrames(int64_t aFrames) const;
+
+  /**
+   * @param frames The playback position in frames of the audio engine.
+   * @return The playback position in microseconds of the stream,
+   *         adjusted by playback rate changes and underrun frames.
+   */
+  int64_t GetPosition(int64_t frames) const;
+
   // Set the playback rate.
   // Called on the audio thread.
-  // Assumes the AudioStream lock is held and thus calls Unlocked versions
-  // of AudioStream funcs.
-  void SetPlaybackRateUnlocked(double aPlaybackRate);
+  void SetPlaybackRate(double aPlaybackRate);
   // Get the current playback rate.
   // Called on the audio thread.
   double GetPlaybackRate() const;
@@ -64,10 +71,8 @@ public:
   // Get the current pitch preservation state.
   // Called on the audio thread.
   bool GetPreservesPitch() const;
+
 private:
-  // This AudioStream holds a strong reference to this AudioClock. This
-  // pointer is garanteed to always be valid.
-  AudioStream* const mAudioStream;
   // Output rate in Hz (characteristic of the playback rate)
   uint32_t mOutRate;
   // Input rate in Hz (characteristic of the media being played)
@@ -76,78 +81,6 @@ private:
   bool mPreservesPitch;
   // The history of frames sent to the audio engine in each DataCallback.
   const nsAutoPtr<FrameHistory> mFrameHistory;
-};
-
-class CircularByteBuffer
-{
-public:
-  CircularByteBuffer()
-    : mBuffer(nullptr), mCapacity(0), mStart(0), mCount(0)
-  {}
-
-  // Set the capacity of the buffer in bytes.  Must be called before any
-  // call to append or pop elements.
-  void SetCapacity(uint32_t aCapacity) {
-    MOZ_ASSERT(!mBuffer, "Buffer allocated.");
-    mCapacity = aCapacity;
-    mBuffer = MakeUnique<uint8_t[]>(mCapacity);
-  }
-
-  uint32_t Length() {
-    return mCount;
-  }
-
-  uint32_t Capacity() {
-    return mCapacity;
-  }
-
-  uint32_t Available() {
-    return Capacity() - Length();
-  }
-
-  // Append aLength bytes from aSrc to the buffer.  Caller must check that
-  // sufficient space is available.
-  void AppendElements(const uint8_t* aSrc, uint32_t aLength) {
-    MOZ_ASSERT(mBuffer && mCapacity, "Buffer not initialized.");
-    MOZ_ASSERT(aLength <= Available(), "Buffer full.");
-
-    uint32_t end = (mStart + mCount) % mCapacity;
-
-    uint32_t toCopy = std::min(mCapacity - end, aLength);
-    memcpy(&mBuffer[end], aSrc, toCopy);
-    memcpy(&mBuffer[0], aSrc + toCopy, aLength - toCopy);
-    mCount += aLength;
-  }
-
-  // Remove aSize bytes from the buffer.  Caller must check returned size in
-  // aSize{1,2} before using the pointer returned in aData{1,2}.  Caller
-  // must not specify an aSize larger than Length().
-  void PopElements(uint32_t aSize, void** aData1, uint32_t* aSize1,
-                   void** aData2, uint32_t* aSize2) {
-    MOZ_ASSERT(mBuffer && mCapacity, "Buffer not initialized.");
-    MOZ_ASSERT(aSize <= Length(), "Request too large.");
-
-    *aData1 = &mBuffer[mStart];
-    *aSize1 = std::min(mCapacity - mStart, aSize);
-    *aData2 = &mBuffer[0];
-    *aSize2 = aSize - *aSize1;
-    mCount -= *aSize1 + *aSize2;
-    mStart += *aSize1 + *aSize2;
-    mStart %= mCapacity;
-  }
-
-  size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
-  {
-    size_t amount = 0;
-    amount += aMallocSizeOf(mBuffer.get());
-    return amount;
-  }
-
-private:
-  UniquePtr<uint8_t[]> mBuffer;
-  uint32_t mCapacity;
-  uint32_t mStart;
-  uint32_t mCount;
 };
 
 /*
@@ -283,9 +216,11 @@ public:
   // was opened, of the audio hardware.  Thread-safe.
   int64_t GetPositionInFrames();
 
-  // Returns true when the audio stream is paused.
-  bool IsPaused();
-
+  static uint32_t GetPreferredRate()
+  {
+    CubebUtils::InitPreferredSampleRate();
+    return CubebUtils::PreferredSampleRate();
+  }
   uint32_t GetRate() { return mOutRate; }
   uint32_t GetChannels() { return mChannels; }
   uint32_t GetOutChannels() { return mOutChannels; }
@@ -308,7 +243,8 @@ protected:
   int64_t GetPositionInFramesUnlocked();
 
 private:
-  nsresult OpenCubeb(cubeb_stream_params &aParams);
+  nsresult OpenCubeb(cubeb_stream_params& aParams,
+                     TimeStamp aStartTime, bool aIsFirst);
 
   static long DataCallback_S(cubeb_stream*, void* aThis,
                              const void* /* aInputBuffer */, void* aOutputBuffer,
@@ -328,13 +264,15 @@ private:
 
   nsresult EnsureTimeStretcherInitializedUnlocked();
 
-  // Return true if downmixing succeeds otherwise false.
-  bool Downmix(Chunk* aChunk);
+  // Return true if audio frames are valid (correct sampling rate and valid
+  // channel count) otherwise false.
+  bool IsValidAudioFormat(Chunk* aChunk);
 
   void GetUnprocessed(AudioBufferWriter& aWriter);
   void GetTimeStretched(AudioBufferWriter& aWriter);
 
-  void StartUnlocked();
+  template <typename Function, typename... Args>
+  int InvokeCubeb(Function aFunction, Args&&... aArgs);
 
   // The monitor is held to protect all access to member variables.
   Monitor mMonitor;
@@ -348,9 +286,6 @@ private:
   AudioClock mAudioClock;
   soundtouch::SoundTouch* mTimeStretcher;
 
-  // Stream start time for stream open delay telemetry.
-  TimeStamp mStartTime;
-
   // Output file for dumping audio
   FILE* mDumpFile;
 
@@ -359,8 +294,7 @@ private:
 
   enum StreamState {
     INITIALIZED, // Initialized, playback has not begun.
-    STARTED,     // cubeb started, but callbacks haven't started
-    RUNNING,     // DataCallbacks have started after STARTED, or after Resume().
+    STARTED,     // cubeb started.
     STOPPED,     // Stopped by a call to Pause().
     DRAINED,     // StateCallback has indicated that the drain is complete.
     ERRORED,     // Stream disabled due to an internal error.
@@ -368,13 +302,8 @@ private:
   };
 
   StreamState mState;
-  bool mIsFirst;
-  // Get this value from the preference, if true, we would downmix the stereo.
-  bool mIsMonoAudioEnabled;
 
   DataSource& mDataSource;
-
-  UniquePtr<AudioConverter> mAudioConverter;
 };
 
 } // namespace mozilla

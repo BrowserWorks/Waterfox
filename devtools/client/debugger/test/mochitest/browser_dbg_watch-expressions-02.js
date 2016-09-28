@@ -16,7 +16,11 @@ function test() {
   let gTab, gPanel, gDebugger;
   let gWatch, gVariables;
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -25,9 +29,8 @@ function test() {
 
     gDebugger.DebuggerView.toggleInstrumentsPane({ visible: true, animated: false });
 
-    waitForSourceShown(gPanel, ".html", 1)
-      .then(addExpressions)
-      .then(performTest)
+    addExpressions();
+    performTest()
       .then(finishTest)
       .then(() => closeDebuggerAndFinish(gPanel))
       .then(null, aError => {
@@ -77,15 +80,15 @@ function test() {
     is(gDebugger.document.querySelectorAll(".dbg-expression:not([hidden=true])").length, 28,
       "There should be 28 visible nodes in the watch expressions container");
 
-    test1(function() {
-      test2(function() {
-        test3(function() {
-          test4(function() {
-            test5(function() {
-              test6(function() {
-                test7(function() {
-                  test8(function() {
-                    test9(function() {
+    test1(function () {
+      test2(function () {
+        test3(function () {
+          test4(function () {
+            test5(function () {
+              test6(function () {
+                test7(function () {
+                  test8(function () {
+                    test9(function () {
                       deferred.resolve();
                     });
                   });
@@ -192,7 +195,7 @@ function test() {
         args: "sensational"
       });
       aCallback();
-    })
+    });
 
     gWatch.addExpression("decodeURI(\"\\\")");
     EventUtils.sendKey("RETURN", gDebugger);
@@ -375,6 +378,6 @@ function test() {
     is(w24.value, "RangeError: precision -4 out of range", "The 24th value is correct.");
     is(w25.value, "Error: bazinga", "The 25th value is correct.");
     is(w26.value, "Error: bazinga", "The 26th value is correct.");
-    is(w28.value, 'foo$$', "The 28th value is correct.");
+    is(w28.value, "foo$$", "The 28th value is correct.");
   }
 }

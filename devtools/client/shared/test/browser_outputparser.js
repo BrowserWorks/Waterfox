@@ -3,11 +3,9 @@
 
 "use strict";
 
-var {Loader} = Cu.import("resource://gre/modules/commonjs/toolkit/loader.js",
-                         {});
 var {OutputParser} = require("devtools/client/shared/output-parser");
 
-add_task(function*() {
+add_task(function* () {
   yield addTab("about:blank");
   yield performTest();
   gBrowser.removeCurrentTab();
@@ -51,8 +49,8 @@ function makeColorTest(name, value, segments) {
       result.expected += segment;
     } else {
       result.expected += "<span data-color=\"" + segment.name + "\">" +
-        "<span style=\"background-color:" + segment.name +
-        "\" class=\"" + COLOR_TEST_CLASS + "\"></span><span>" +
+        "<span class=\"" + COLOR_TEST_CLASS + "\" style=\"background-color:" +
+        segment.name + "\"></span><span>" +
         segment.name + "</span></span>";
     }
   }
@@ -216,6 +214,13 @@ function testParseURL(doc, parser) {
       expectedTrailer: ")"
     },
     {
+      desc: "bad url, missing paren, with baseURI",
+      baseURI: "data:text/html,<style></style>",
+      leader: "url(",
+      trailer: "",
+      expectedTrailer: ")"
+    },
+    {
       desc: "bad url, double quote, missing paren",
       leader: "url(\"",
       trailer: "\"",
@@ -232,7 +237,8 @@ function testParseURL(doc, parser) {
   for (let test of tests) {
     let url = test.leader + "something.jpg" + test.trailer;
     let frag = parser.parseCssProperty("background", url, {
-      urlClass: "test-urlclass"
+      urlClass: "test-urlclass",
+      baseURI: test.baseURI,
     });
 
     let target = doc.querySelector("div");
@@ -241,8 +247,8 @@ function testParseURL(doc, parser) {
     let expectedTrailer = test.expectedTrailer || test.trailer;
 
     let expected = test.leader +
-        "<a href=\"something.jpg\" class=\"test-urlclass\" " +
-        "target=\"_blank\">something.jpg</a>" +
+        "<a target=\"_blank\" class=\"test-urlclass\" " +
+        "href=\"something.jpg\">something.jpg</a>" +
         expectedTrailer;
 
     is(target.innerHTML, expected, test.desc);

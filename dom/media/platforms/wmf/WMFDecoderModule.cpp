@@ -9,7 +9,6 @@
 #include "WMFVideoMFTManager.h"
 #include "WMFAudioMFTManager.h"
 #include "MFTDecoder.h"
-#include "mozilla/Preferences.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Services.h"
 #include "WMFMediaDataDecoder.h"
@@ -21,16 +20,14 @@
 #include "GfxDriverInfo.h"
 #include "gfxWindowsPlatform.h"
 #include "MediaInfo.h"
+#include "MediaPrefs.h"
 #include "prsystem.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/StaticMutex.h"
 
 namespace mozilla {
 
-static bool sDXVAEnabled = false;
-static int  sNumDecoderThreads = -1;
-static bool sIsIntelDecoderEnabled = false;
-static bool sLowLatencyMFTEnabled = false;
+static Atomic<bool> sDXVAEnabled(false);
 
 WMFDecoderModule::WMFDecoderModule()
   : mWMFInitialized(false)
@@ -45,49 +42,29 @@ WMFDecoderModule::~WMFDecoderModule()
   }
 }
 
-static void
-SetNumOfDecoderThreads()
-{
-  MOZ_ASSERT(NS_IsMainThread(), "Preferences can only be read on main thread");
-  int32_t numCores = PR_GetNumberOfProcessors();
-
-  // If we have more than 4 cores, let the decoder decide how many threads.
-  // On an 8 core machine, WMF chooses 4 decoder threads
-  const int WMF_DECODER_DEFAULT = -1;
-  int32_t prefThreadCount = Preferences::GetInt("media.wmf.decoder.thread-count", -1);
-  if (prefThreadCount != WMF_DECODER_DEFAULT) {
-    sNumDecoderThreads = std::max(prefThreadCount, 1);
-  } else if (numCores > 4) {
-    sNumDecoderThreads = WMF_DECODER_DEFAULT;
-  } else {
-    sNumDecoderThreads = std::max(numCores - 1, 1);
-  }
-}
-
 /* static */
 void
 WMFDecoderModule::Init()
 {
-  MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
   sDXVAEnabled = gfxPlatform::GetPlatform()->CanUseHardwareVideoDecoding();
-  Preferences::AddBoolVarCache(&sIsIntelDecoderEnabled,
-                               "media.webm.intel_decoder.enabled");
-  sLowLatencyMFTEnabled = Preferences::GetBool("media.wmf.low-latency.enabled", false);
-  SetNumOfDecoderThreads();
 }
 
 /* static */
 int
 WMFDecoderModule::GetNumDecoderThreads()
 {
-  return sNumDecoderThreads;
-}
+  int32_t numCores = PR_GetNumberOfProcessors();
 
-/* static */
-bool
-WMFDecoderModule::LowLatencyMFTEnabled()
-{
-  return sLowLatencyMFTEnabled;
+  // If we have more than 4 cores, let the decoder decide how many threads.
+  // On an 8 core machine, WMF chooses 4 decoder threads
+  const int WMF_DECODER_DEFAULT = -1;
+  int32_t prefThreadCount = MediaPrefs::PDMWMFThreadCount();
+  if (prefThreadCount != WMF_DECODER_DEFAULT) {
+    return std::max(prefThreadCount, 1);
+  } else if (numCores > 4) {
+    return WMF_DECODER_DEFAULT;
+  }
+  return std::max(numCores - 1, 1);
 }
 
 nsresult
@@ -101,7 +78,7 @@ already_AddRefed<MediaDataDecoder>
 WMFDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
                                      layers::LayersBackend aLayersBackend,
                                      layers::ImageContainer* aImageContainer,
-                                     FlushableTaskQueue* aVideoTaskQueue,
+                                     TaskQueue* aTaskQueue,
                                      MediaDataDecoderCallback* aCallback,
                                      DecoderDoctorDiagnostics* aDiagnostics)
 {
@@ -116,14 +93,14 @@ WMFDecoderModule::CreateVideoDecoder(const VideoInfo& aConfig,
   }
 
   RefPtr<MediaDataDecoder> decoder =
-    new WMFMediaDataDecoder(manager.forget(), aVideoTaskQueue, aCallback);
+    new WMFMediaDataDecoder(manager.forget(), aTaskQueue, aCallback);
 
   return decoder.forget();
 }
 
 already_AddRefed<MediaDataDecoder>
 WMFDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
-                                     FlushableTaskQueue* aAudioTaskQueue,
+                                     TaskQueue* aTaskQueue,
                                      MediaDataDecoderCallback* aCallback,
                                      DecoderDoctorDiagnostics* aDiagnostics)
 {
@@ -134,7 +111,7 @@ WMFDecoderModule::CreateAudioDecoder(const AudioInfo& aConfig,
   }
 
   RefPtr<MediaDataDecoder> decoder =
-    new WMFMediaDataDecoder(manager.forget(), aAudioTaskQueue, aCallback);
+    new WMFMediaDataDecoder(manager.forget(), aTaskQueue, aCallback);
   return decoder.forget();
 }
 
@@ -232,7 +209,7 @@ WMFDecoderModule::SupportsMimeType(const nsACString& aMimeType,
       CanCreateWMFDecoder<CLSID_CMP3DecMediaObject>()) {
     return true;
   }
-  if (sIsIntelDecoderEnabled && sDXVAEnabled) {
+  if (MediaPrefs::PDMWMFIntelDecoderEnabled() && sDXVAEnabled) {
     if (aMimeType.EqualsLiteral("video/webm; codecs=vp8") &&
         CanCreateWMFDecoder<CLSID_WebmMfVp8Dec>()) {
       return true;

@@ -11,7 +11,11 @@ var gTab, gPanel, gClient, gThreadClient, gSource;
 const TAB_URL = EXAMPLE_URL + "doc_pretty-print-2.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_ugly-2.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gClient = gPanel.panelWin.gClient;
@@ -24,7 +28,7 @@ function test() {
 function findSource() {
   gThreadClient.getSources(({ error, sources }) => {
     ok(!error);
-    sources = sources.filter(s => s.url.includes('code_ugly-2.js'));
+    sources = sources.filter(s => s.url.includes("code_ugly-2.js"));
     is(sources.length, 1);
     gSource = sources[0];
     prettyPrintSource();
@@ -53,6 +57,6 @@ function testUgly({ error, source }) {
   closeDebuggerAndFinish(gPanel);
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = gPanel = gClient = gThreadClient = gSource = null;
 });

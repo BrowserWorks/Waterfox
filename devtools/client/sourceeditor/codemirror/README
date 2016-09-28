@@ -5,7 +5,7 @@ code, and optionally help with indentation.
 
 # Upgrade
 
-Currently used version is 5.13.2. To upgrade, download a new version of
+Currently used version is 5.15.2. To upgrade, download a new version of
 CodeMirror from the project's page [1] and replace all JavaScript and
 CSS files inside the codemirror directory [2].
 
@@ -81,8 +81,8 @@ diff --git a/devtools/client/sourceeditor/codemirror/addon/search/search.js b/de
 +
 +      inp.type = "search";
 +      inp.placeholder = cm.l10n("findCmd.promptMessage");
-+      inp.style.MozMarginStart = "1em";
-+      inp.style.MozMarginEnd = "1em";
++      inp.style.marginInlineStart = "1em";
++      inp.style.marginInlineEnd = "1em";
 +      inp.style.flexGrow = "1";
 +      inp.addEventListener("focus", () => inp.select());
 +

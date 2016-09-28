@@ -194,7 +194,8 @@ class CompositorOGL final : public Compositor
   std::map<ShaderConfigOGL, ShaderProgramOGL*> mPrograms;
 public:
   explicit CompositorOGL(CompositorBridgeParent* aParent,
-                         nsIWidget *aWidget, int aSurfaceWidth = -1, int aSurfaceHeight = -1,
+                         widget::CompositorWidgetProxy* aWidget,
+                         int aSurfaceWidth = -1, int aSurfaceHeight = -1,
                          bool aUseExternalSurfaceSize = false);
 
 protected:
@@ -209,8 +210,6 @@ public:
   virtual bool Initialize() override;
 
   virtual void Destroy() override;
-
-  virtual void DetachWidget() override { mWidget = nullptr; }
 
   virtual TextureFactoryIdentifier GetTextureFactoryIdentifier() override
   {
@@ -235,7 +234,7 @@ public:
   virtual CompositingRenderTarget* GetCurrentRenderTarget() const override;
 
   virtual void DrawQuad(const gfx::Rect& aRect,
-                        const gfx::Rect& aClipRect,
+                        const gfx::IntRect& aClipRect,
                         const EffectChain &aEffectChain,
                         gfx::Float aOpacity,
                         const gfx::Matrix4x4& aTransform,
@@ -278,8 +277,6 @@ public:
 
   virtual void Pause() override;
   virtual bool Resume() override;
-
-  virtual nsIWidget* GetWidget() const override { return mWidget; }
 
   virtual bool HasImageHostOverlays() override
   {
@@ -345,7 +342,7 @@ private:
   void DestroyVR(GLContext *gl);
 
   void DrawVRDistortion(const gfx::Rect& aRect,
-                        const gfx::Rect& aClipRect,
+                        const gfx::IntRect& aClipRect,
                         const EffectChain& aEffectChain,
                         gfx::Float aOpacity,
                         const gfx::Matrix4x4& aTransform);
@@ -353,7 +350,6 @@ private:
   void PrepareViewport(CompositingRenderTargetOGL *aRenderTarget);
 
   /** Widget associated with this compositor */
-  nsIWidget *mWidget;
   LayoutDeviceIntSize mWidgetSize;
   RefPtr<GLContext> mGLContext;
   UniquePtr<GLBlitTextureImageHelper> mBlitTextureImageHelper;
@@ -404,11 +400,11 @@ private:
    * sets *aClipRectOut to the screen dimensions.
    */
   virtual void BeginFrame(const nsIntRegion& aInvalidRegion,
-                          const gfx::Rect *aClipRectIn,
-                          const gfx::Rect& aRenderBounds,
+                          const gfx::IntRect *aClipRectIn,
+                          const gfx::IntRect& aRenderBounds,
                           const nsIntRegion& aOpaqueRegion,
-                          gfx::Rect *aClipRectOut = nullptr,
-                          gfx::Rect *aRenderBoundsOut = nullptr) override;
+                          gfx::IntRect *aClipRectOut = nullptr,
+                          gfx::IntRect *aRenderBoundsOut = nullptr) override;
 
   ShaderConfigOGL GetShaderConfigFor(Effect *aEffect,
                                      MaskType aMask = MaskType::MaskNone,

@@ -932,8 +932,10 @@ CustomizeMode.prototype = {
 
     if (aNode.hasAttribute("label")) {
       wrapper.setAttribute("title", aNode.getAttribute("label"));
+      wrapper.setAttribute("tooltiptext", aNode.getAttribute("label"));
     } else if (aNode.hasAttribute("title")) {
       wrapper.setAttribute("title", aNode.getAttribute("title"));
+      wrapper.setAttribute("tooltiptext", aNode.getAttribute("title"));
     }
 
     if (aNode.hasAttribute("flex")) {
@@ -1175,6 +1177,8 @@ CustomizeMode.prototype = {
 
       CustomizableUI.reset();
 
+      this.swatchForTheme(this.document);
+
       yield this._wrapToolbarItems();
       this.populatePalette();
 
@@ -1200,6 +1204,8 @@ CustomizeMode.prototype = {
       yield this._unwrapToolbarItems();
 
       CustomizableUI.undoReset();
+
+      this.swatchForTheme(this.document);
 
       yield this._wrapToolbarItems();
       this.populatePalette();
@@ -1341,6 +1347,8 @@ CustomizeMode.prototype = {
     const DEFAULT_THEME_ID = "{972ce4c6-7e08-4474-a285-3208198ce6fd}";
     const RECENT_LWT_COUNT = 5;
 
+    this.resetLWThemesMenu(aEvent.target);
+
     function previewTheme(aEvent) {
       LightweightThemeManager.previewTheme(aEvent.target.theme.id != DEFAULT_THEME_ID ?
                                            aEvent.target.theme : null);
@@ -1432,22 +1440,11 @@ CustomizeMode.prototype = {
       }
       let hideRecommendedLabel = (footer.previousSibling == recommendedLabel);
       recommendedLabel.hidden = hideRecommendedLabel;
-
-      let hideMyThemesSection = themesInMyThemesSection < 2 && hideRecommendedLabel;
-      let headerLabel = doc.getElementById("customization-lwtheme-menu-header");
-      if (hideMyThemesSection) {
-        let element = recommendedLabel.previousSibling;
-        while (element && element != headerLabel) {
-          element.hidden = true;
-          element = element.previousSibling;
-        }
-      }
-      headerLabel.hidden = hideMyThemesSection;
     }.bind(this));
   },
 
-  onLWThemesMenuHidden: function(aEvent) {
-    let doc = aEvent.target.ownerDocument;
+  resetLWThemesMenu: function(target) {
+    let doc = target.ownerDocument;
     let footer = doc.getElementById("customization-lwtheme-menu-footer");
     let recommendedLabel = doc.getElementById("customization-lwtheme-menu-recommended");
     this.swatchForTheme(doc);
@@ -1457,7 +1454,11 @@ CustomizeMode.prototype = {
         element.previousSibling.remove();
       }
     }
-    aEvent.target.removeAttribute("height");
+    target.removeAttribute("height");
+
+    if (LightweightThemeManager.currentTheme) {
+      this._onUIChange();
+    }
   },
 
   _onUIChange: function() {

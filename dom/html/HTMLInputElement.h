@@ -37,9 +37,12 @@ class EventChainPreVisitor;
 
 namespace dom {
 
+class AfterSetFilesOrDirectoriesRunnable;
 class Date;
+class DispatchChangeEventCallback;
 class File;
 class FileList;
+class GetFilesHelper;
 
 /**
  * A class we use to create a singleton object that is used to keep track of
@@ -106,9 +109,13 @@ class HTMLInputElement final : public nsGenericHTMLFormElementWithState,
                                public nsIDOMNSEditableElement,
                                public nsIConstraintValidation
 {
+  friend class AfterSetFilesOrDirectoriesCallback;
+  friend class DispatchChangeEventCallback;
+
 public:
   using nsIConstraintValidation::GetValidationMessage;
   using nsIConstraintValidation::CheckValidity;
+  using nsIConstraintValidation::ReportValidity;
   using nsIConstraintValidation::WillValidate;
   using nsIConstraintValidation::Validity;
   using nsGenericHTMLFormElementWithState::GetForm;
@@ -484,7 +491,7 @@ public:
 
   void SetHeight(uint32_t aValue, ErrorResult& aRv)
   {
-    SetUnsignedIntAttr(nsGkAtoms::height, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::height, aValue, 0, aRv);
   }
 
   bool Indeterminate() const
@@ -588,7 +595,7 @@ public:
       return;
     }
 
-    SetUnsignedIntAttr(nsGkAtoms::size, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::size, aValue, DEFAULT_COLS, aRv);
   }
 
   // XPCOM GetSrc() is OK
@@ -641,7 +648,7 @@ public:
 
   void SetWidth(uint32_t aValue, ErrorResult& aRv)
   {
-    SetUnsignedIntAttr(nsGkAtoms::width, aValue, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::width, aValue, 0, aRv);
   }
 
   void StepUp(int32_t aN, ErrorResult& aRv)
@@ -698,9 +705,21 @@ public:
     SetHTMLBoolAttr(nsGkAtoms::directory, aValue, aRv);
   }
 
+  bool WebkitDirectoryAttr() const
+  {
+    return HasAttr(kNameSpaceID_None, nsGkAtoms::webkitdirectory);
+  }
+
+  void SetWebkitDirectoryAttr(bool aValue, ErrorResult& aRv)
+  {
+    SetHTMLBoolAttr(nsGkAtoms::webkitdirectory, aValue, aRv);
+  }
+
   bool IsFilesAndDirectoriesSupported() const;
 
   already_AddRefed<Promise> GetFilesAndDirectories(ErrorResult& aRv);
+
+  already_AddRefed<Promise> GetFiles(bool aRecursiveFlag, ErrorResult& aRv);
 
   void ChooseDirectory(ErrorResult& aRv);
 
@@ -934,8 +953,16 @@ protected:
 
   /**
    * Called after calling one of the SetFilesOrDirectories() functions.
+   * This method can explore the directory recursively if needed.
    */
   void AfterSetFilesOrDirectories(bool aSetValueChanged);
+  void AfterSetFilesOrDirectoriesInternal(bool aSetValueChanged);
+
+  /**
+   * Recursively explore the directory and populate mFileOrDirectories correctly
+   * for webkitdirectory.
+   */
+  void ExploreDirectoryRecursively(bool aSetValuechanged);
 
   /**
    * Determine whether the editor needs to be initialized explicitly for
@@ -1252,6 +1279,11 @@ protected:
    */
   bool IsPopupBlocked() const;
 
+  GetFilesHelper* GetOrCreateGetFilesHelper(bool aRecursiveFlag,
+                                            ErrorResult& aRv);
+
+  void ClearGetFilesHelpers();
+
   nsCOMPtr<nsIControllers> mControllers;
 
   /*
@@ -1285,6 +1317,9 @@ protected:
    */
   nsTArray<OwningFileOrDirectory> mFilesOrDirectories;
 
+  RefPtr<GetFilesHelper> mGetFilesRecursiveHelper;
+  RefPtr<GetFilesHelper> mGetFilesNonRecursiveHelper;
+
 #ifndef MOZ_CHILD_PERMISSIONS
   /**
    * Hack for bug 1086684: Stash the .value when we're a file picker.
@@ -1293,18 +1328,17 @@ protected:
 #endif
 
   RefPtr<FileList>  mFileList;
-  RefPtr<Promise> mFilesAndDirectoriesPromise;
 
   nsString mStaticDocFileList;
-  
-  /** 
+
+  /**
    * The value of the input element when first initialized and it is updated
-   * when the element is either changed through a script, focused or dispatches   
+   * when the element is either changed through a script, focused or dispatches
    * a change event. This is to ensure correct future change event firing.
    * NB: This is ONLY applicable where the element is a text control. ie,
    * where type= "text", "email", "search", "tel", "url" or "password".
    */
-  nsString mFocusedValue;  
+  nsString mFocusedValue;
 
   /**
    * If mIsDraggingRange is true, this is the value that the input had before
@@ -1412,7 +1446,7 @@ private:
         return false;
       }
     }
-    
+
     // Filter mask, using values defined in nsIFilePicker
     int32_t mFilterMask;
     // If mFilterMask is defined, mTitle and mFilter are useless and should be

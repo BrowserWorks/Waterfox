@@ -12,7 +12,6 @@ XPIDL_SOURCES += [
     'nsIASN1Sequence.idl',
     'nsIAssociatedContentSecurity.idl',
     'nsIBadCertListener2.idl',
-    'nsIBufEntropyCollector.idl',
     'nsICertBlocklist.idl',
     'nsICertificateDialogs.idl',
     'nsICertOverrideService.idl',
@@ -39,6 +38,7 @@ XPIDL_SOURCES += [
     'nsISSLStatusProvider.idl',
     'nsITokenDialogs.idl',
     'nsITokenPasswordDialogs.idl',
+    'nsIU2FToken.idl',
     'nsIUserCertPicker.idl',
     'nsIWeakCryptoOverride.idl',
     'nsIX509Cert.idl',
@@ -98,7 +98,6 @@ UNIFIED_SOURCES += [
     'nsCrypto.cpp',
     'nsCryptoHash.cpp',
     'nsDataSignatureVerifier.cpp',
-    'nsEntropyCollector.cpp',
     'nsKeygenHandler.cpp',
     'nsKeygenHandlerContent.cpp',
     'nsKeygenThread.cpp',
@@ -190,3 +189,6 @@ USE_LIBS += [
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

@@ -274,7 +274,7 @@ speechd_cb(size_t msg_id, size_t client_id, SPDNotificationType state)
 
   if (service) {
     NS_DispatchToMainThread(
-      NS_NewRunnableMethodWithArgs<uint32_t, SPDNotificationType>(
+      NewRunnableMethod<uint32_t, SPDNotificationType>(
         service, &SpeechDispatcherService::EventNotify,
         static_cast<uint32_t>(msg_id), state));
   }
@@ -311,7 +311,7 @@ SpeechDispatcherService::Init()
                                              getter_AddRefs(mInitThread));
   MOZ_ASSERT(NS_SUCCEEDED(rv));
   rv = mInitThread->Dispatch(
-    NS_NewRunnableMethod(this, &SpeechDispatcherService::Setup), NS_DISPATCH_NORMAL);
+    NewRunnableMethod(this, &SpeechDispatcherService::Setup), NS_DISPATCH_NORMAL);
   MOZ_ASSERT(NS_SUCCEEDED(rv));
 }
 
@@ -341,6 +341,13 @@ SpeechDispatcherService::Setup()
 
   if (!speechdLib) {
     NS_WARNING("Failed to load speechd library");
+    return;
+  }
+
+  if (!PR_FindFunctionSymbol(speechdLib, "spd_get_volume")) {
+    // There is no version getter function, so we rely on a symbol that was
+    // introduced in release 0.8.2 in order to check for ABI compatibility.
+    NS_WARNING("Unsupported version of speechd detected");
     return;
   }
 
@@ -412,7 +419,7 @@ SpeechDispatcherService::Setup()
     }
   }
 
-  NS_DispatchToMainThread(NS_NewRunnableMethod(this, &SpeechDispatcherService::RegisterVoices));
+  NS_DispatchToMainThread(NewRunnableMethod(this, &SpeechDispatcherService::RegisterVoices));
 
   //mInitialized = true;
 }
@@ -518,10 +525,10 @@ SpeechDispatcherService::Speak(const nsAString& aText, const nsAString& aUri,
     // Speech dispatcher does not work well with empty strings.
     // In that case, don't send empty string to speechd,
     // and just emulate a speechd start and end event.
-    NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<SPDNotificationType>(
+    NS_DispatchToMainThread(NewRunnableMethod<SPDNotificationType>(
         callback, &SpeechDispatcherCallback::OnSpeechEvent, SPD_EVENT_BEGIN));
 
-    NS_DispatchToMainThread(NS_NewRunnableMethodWithArgs<SPDNotificationType>(
+    NS_DispatchToMainThread(NewRunnableMethod<SPDNotificationType>(
         callback, &SpeechDispatcherCallback::OnSpeechEvent, SPD_EVENT_END));
   }
 

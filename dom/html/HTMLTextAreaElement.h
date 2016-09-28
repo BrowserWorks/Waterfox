@@ -179,7 +179,7 @@ public:
     if (aCols == 0) {
       aError.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     } else {
-      SetUnsignedIntAttr(nsGkAtoms::cols, aCols, aError);
+      SetUnsignedIntAttr(nsGkAtoms::cols, aCols, DEFAULT_COLS, aError);
     }
   }
   bool Disabled()
@@ -247,7 +247,7 @@ public:
     if (aRows == 0) {
       aError.Throw(NS_ERROR_DOM_INDEX_SIZE_ERR);
     } else {
-      SetUnsignedIntAttr(nsGkAtoms::rows, aRows, aError);
+      SetUnsignedIntAttr(nsGkAtoms::rows, aRows, DEFAULT_ROWS_TEXTAREA, aError);
     }
   }
   // XPCOM GetWrap is fine
@@ -265,6 +265,7 @@ public:
   // nsIConstraintValidation::GetValidationMessage() is fine.
   // nsIConstraintValidation::CheckValidity() is fine.
   using nsIConstraintValidation::CheckValidity;
+  using nsIConstraintValidation::ReportValidity;
   // nsIConstraintValidation::SetCustomValidity() is fine.
   // XPCOM Select is fine
   uint32_t GetSelectionStart(ErrorResult& aError);
@@ -304,9 +305,9 @@ protected:
   bool                     mCanShowInvalidUI;
   /** Whether we should make :-moz-ui-valid apply on the element. **/
   bool                     mCanShowValidUI;
-  
+
   void FireChangeEventIfNeeded();
-  
+
   nsString mFocusedValue;
 
   /** The state of the text editor (selection controller and the editor) **/

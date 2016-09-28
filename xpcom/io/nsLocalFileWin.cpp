@@ -111,7 +111,7 @@ GetMostRecentNavigatorHWND()
  * A runnable to dispatch back to the main thread when
  * AsyncRevealOperation completes.
 */
-class AsyncLocalFileWinDone : public nsRunnable
+class AsyncLocalFileWinDone : public Runnable
 {
 public:
   AsyncLocalFileWinDone() :
@@ -140,7 +140,7 @@ private:
  * A runnable to dispatch from the main thread when an async operation should
  * be performed.
 */
-class AsyncRevealOperation : public nsRunnable
+class AsyncRevealOperation : public Runnable
 {
 public:
   explicit AsyncRevealOperation(const nsAString& aResolvedPath)

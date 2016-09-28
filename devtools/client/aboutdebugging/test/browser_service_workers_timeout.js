@@ -48,7 +48,7 @@ add_task(function* () {
 
   // Click on it and wait for the toolbox to be ready
   let onToolboxReady = new Promise(done => {
-    gDevTools.once("toolbox-ready", function(e, toolbox) {
+    gDevTools.once("toolbox-ready", function (e, toolbox) {
       done(toolbox);
     });
   });
@@ -78,8 +78,12 @@ add_task(function* () {
     "The debug button was removed when the worker was killed");
 
   // Finally, unregister the service worker itself.
-  yield unregisterServiceWorker(swTab);
-  ok(true, "Service worker registration unregistered");
+  try {
+    yield unregisterServiceWorker(swTab);
+    ok(true, "Service worker registration unregistered");
+  } catch (e) {
+    ok(false, "SW not unregistered; " + e);
+  }
 
   // Now ensure that the worker registration is correctly removed.
   // The list should update once the registration is destroyed.

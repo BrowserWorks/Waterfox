@@ -5,25 +5,20 @@
   "globals": {
     "atob": true,
     "btoa": true,
-    "Cc": true,
-    "Ci": true,
     "Components": true,
+    "clearInterval": true,
+    "clearTimeout": true,
     "console": true,
-    "Cr": true,
-    "Cu": true,
-    "devtools": true,
     "dump": true,
-    "EventEmitter": true,
     "exports": true,
     "isWorker": true,
     "loader": true,
     "module": true,
-    "reportError": true,
     "require": true,
-    "Services": true,
-    "Task": true,
-    "XPCNativeWrapper": true,
-    "XPCOMUtils": true,
+    "setInterval": true,
+    "setTimeout": true,
+    "XMLHttpRequest": true,
+    "URL": true,
     "_Iterator": true,
   },
   "rules": {
@@ -50,10 +45,33 @@
     "react/prop-types": 0,
     "react/sort-comp": [2, {
       order: [
-        "propTypes",
+        "lifecycle",
         "everything-else",
         "render"
-      ]
+      ],
+      groups: {
+        lifecycle: [
+          "displayName",
+          "propTypes",
+          "contextTypes",
+          "childContextTypes",
+          "mixins",
+          "statics",
+          "defaultProps",
+          "constructor",
+          "getDefaultProps",
+          "getInitialState",
+          "state",
+          "getChildContext",
+          "componentWillMount",
+          "componentDidMount",
+          "componentWillReceiveProps",
+          "shouldComponentUpdate",
+          "componentWillUpdate",
+          "componentDidUpdate",
+          "componentWillUnmount"
+        ]
+      }
     }],
 
     // Disallow using variables outside the blocks they are defined (especially
@@ -118,7 +136,7 @@
     // rule is a better rule to check this.
     "max-depth": 0,
     // Maximum length of a line.
-    "max-len": [2, 80, 2, {"ignoreUrls": true, "ignorePattern": "data:image\/|\\s*require\\s*\\(|^\\s*loader\\.lazy|-\\*-"}],
+    "max-len": [2, 90, 2, {"ignoreUrls": true, "ignorePattern": "data:image\/|\\s*require\\s*\\(|^\\s*loader\\.lazy|-\\*-"}],
     // Maximum depth callbacks can be nested.
     "max-nested-callbacks": [2, 3],
     // Don't limit the number of parameters that can be used in a function.
@@ -329,8 +347,9 @@
     "space-before-blocks": [2, "always"],
     // Deprecated, will be removed in 1.0.
     "space-before-function-parentheses": 0,
-    // Disallow space before function opening parenthesis.
-    "space-before-function-paren": [2, "never"],
+    // Require space after keyword for anonymous functions, but disallow space
+    // after name of named functions.
+    "space-before-function-paren": [2, {"anonymous": "always", "named": "never"}],
     // Disable the rule that checks if spaces inside {} and [] are there or not.
     // Our code is split on conventions, and it'd be nice to have 2 rules
     // instead, one for [] and one for {}. So, disabling until we write them.

@@ -11,12 +11,12 @@ var {loader, require} = Cu.import("resource://devtools/shared/Loader.jsm", {});
 var Telemetry = require("devtools/client/shared/telemetry");
 var {showDoorhanger} = require("devtools/client/shared/doorhanger");
 var {TouchEventSimulator} = require("devtools/shared/touch/simulator");
-var {Task} = require("resource://gre/modules/Task.jsm");
+var {Task} = require("devtools/shared/task");
 var promise = require("promise");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
 var Services = require("Services");
 var EventEmitter = require("devtools/shared/event-emitter");
-var {ViewHelpers} = require("devtools/client/shared/widgets/ViewHelpers.jsm");
+var {ViewHelpers} = require("devtools/client/shared/widgets/view-helpers");
 var { LocalizationHelper } = require("devtools/client/shared/l10n");
 
 loader.lazyImporter(this, "SystemAppProxy",
@@ -56,7 +56,7 @@ var Manager = {
    * @param aWindow the main window.
    * @param aTab the tab targeted.
    */
-  toggle: function(aWindow, aTab) {
+  toggle: function (aWindow, aTab) {
     if (this.isActiveForTab(aTab)) {
       ActiveTabs.get(aTab).close();
     } else {
@@ -71,7 +71,7 @@ var Manager = {
    * @param aTab the tab targeted.
    * @returns {ResponsiveUI} the instance of ResponsiveUI for the current tab.
    */
-  runIfNeeded: Task.async(function*(aWindow, aTab) {
+  runIfNeeded: Task.async(function* (aWindow, aTab) {
     let ui;
     if (!this.isActiveForTab(aTab)) {
       ui = new ResponsiveUI(aWindow, aTab);
@@ -87,14 +87,14 @@ var Manager = {
    *
    * @param aTab the tab targeted.
    */
-  isActiveForTab: function(aTab) {
+  isActiveForTab: function (aTab) {
     return ActiveTabs.has(aTab);
   },
 
   /**
    * Return the responsive UI controller for a tab.
    */
-  getResponsiveUIForTab: function(aTab) {
+  getResponsiveUIForTab: function (aTab) {
     return ActiveTabs.get(aTab);
   },
 
@@ -106,7 +106,7 @@ var Manager = {
    * @param aCommand the command name.
    * @param aArgs command arguments.
    */
-  handleGcliCommand: Task.async(function*(aWindow, aTab, aCommand, aArgs) {
+  handleGcliCommand: Task.async(function* (aWindow, aTab, aCommand, aArgs) {
     switch (aCommand) {
       case "resize to":
         let ui = yield this.runIfNeeded(aWindow, aTab);
@@ -125,7 +125,7 @@ var Manager = {
       default:
     }
   })
-}
+};
 
 EventEmitter.decorate(Manager);
 
@@ -212,7 +212,7 @@ ResponsiveUI.prototype = {
     }
   },
 
-  init: Task.async(function*() {
+  init: Task.async(function* () {
     debug("INIT BEGINS");
     let ready = this.waitForMessage("ResponsiveMode:ChildScriptReady");
     this.mm.loadFrameScript("resource://devtools/client/responsivedesign/responsivedesign-child.js", true);
@@ -243,7 +243,7 @@ ResponsiveUI.prototype = {
       if (Services.prefs.getBoolPref("devtools.responsiveUI.rotate")) {
         this.rotate();
       }
-    } catch(e) {}
+    } catch (e) {}
 
     // Touch events support
     this.touchEnableBefore = false;
@@ -265,7 +265,7 @@ ResponsiveUI.prototype = {
     ResponsiveUIManager.emit("on", { tab: this.tab });
   }),
 
-  connectToServer: Task.async(function*() {
+  connectToServer: Task.async(function* () {
     if (!DebuggerServer.initialized) {
       DebuggerServer.init();
       DebuggerServer.addBrowserActors();
@@ -276,19 +276,19 @@ ResponsiveUI.prototype = {
     let [response, tabClient] = yield this.client.attachTab(tab.actor);
     this.tabClient = tabClient;
     if (!tabClient) {
-      Cu.reportError("Responsive Mode: failed to attach tab");
+      console.error(new Error("Responsive Mode: failed to attach tab"));
     }
   }),
 
-  loadPresets: function() {
+  loadPresets: function () {
     // Try to load presets from prefs
     let presets = defaultPresets;
     if (Services.prefs.prefHasUserValue("devtools.responsiveUI.presets")) {
       try {
         presets = JSON.parse(Services.prefs.getCharPref("devtools.responsiveUI.presets"));
-      } catch(e) {
+      } catch (e) {
         // User pref is malformated.
-        Cu.reportError("Could not parse pref `devtools.responsiveUI.presets`: " + e);
+        console.error("Could not parse pref `devtools.responsiveUI.presets`: " + e);
       }
     }
 
@@ -297,7 +297,7 @@ ResponsiveUI.prototype = {
     if (Array.isArray(presets)) {
       this.presets = [this.customPreset].concat(presets);
     } else {
-      Cu.reportError("Presets value (devtools.responsiveUI.presets) is malformated.");
+      console.error("Presets value (devtools.responsiveUI.presets) is malformated.");
       this.presets = [this.customPreset];
     }
 
@@ -308,7 +308,7 @@ ResponsiveUI.prototype = {
       this.customPreset.height = Math.min(MAX_HEIGHT, height);
 
       this.currentPresetKey = Services.prefs.getCharPref("devtools.responsiveUI.currentPreset");
-    } catch(e) {
+    } catch (e) {
       // Default size. The first preset (custom) is the one that will be used.
       let bbox = this.stack.getBoundingClientRect();
 
@@ -322,7 +322,7 @@ ResponsiveUI.prototype = {
   /**
    * Destroy the nodes. Remove listeners. Reset the style.
    */
-  close: Task.async(function*() {
+  close: Task.async(function* () {
     debug("CLOSE BEGINS");
     if (this.closing) {
       debug("ALREADY CLOSING, ABORT");
@@ -419,7 +419,7 @@ ResponsiveUI.prototype = {
   /**
    * Emit an event when the content has been resized. Only used in tests.
    */
-  onContentResize: function(msg) {
+  onContentResize: function (msg) {
     ResponsiveUIManager.emit("contentResize", {
       tab: this.tab,
       width: msg.data.width,
@@ -449,19 +449,19 @@ ResponsiveUI.prototype = {
   /**
    * Check the menu items.
    */
-   checkMenus: function RUI_checkMenus() {
-     this.chromeDoc.getElementById("menu_responsiveUI").setAttribute("checked", "true");
-   },
+  checkMenus: function RUI_checkMenus() {
+    this.chromeDoc.getElementById("menu_responsiveUI").setAttribute("checked", "true");
+  },
 
   /**
    * Uncheck the menu items.
    */
-   unCheckMenus: function RUI_unCheckMenus() {
-     let el = this.chromeDoc.getElementById("menu_responsiveUI");
-     if (el) {
-       el.setAttribute("checked", "false");
-     }
-   },
+  unCheckMenus: function RUI_unCheckMenus() {
+    let el = this.chromeDoc.getElementById("menu_responsiveUI");
+    if (el) {
+      el.setAttribute("checked", "false");
+    }
+  },
 
   /**
    * Build the toolbar and the resizers.
@@ -569,14 +569,14 @@ ResponsiveUI.prototype = {
     this.resizer.setAttribute("tooltiptext", resizerTooltip);
     this.resizer.onmousedown = this.bound_startResizing;
 
-    this.resizeBarV =  this.chromeDoc.createElement("box");
+    this.resizeBarV = this.chromeDoc.createElement("box");
     this.resizeBarV.className = "devtools-responsiveui-resizebarV";
     this.resizeBarV.setAttribute("top", "0");
     this.resizeBarV.setAttribute("right", "0");
     this.resizeBarV.setAttribute("tooltiptext", resizerTooltip);
     this.resizeBarV.onmousedown = this.bound_startResizing;
 
-    this.resizeBarH =  this.chromeDoc.createElement("box");
+    this.resizeBarH = this.chromeDoc.createElement("box");
     this.resizeBarH.className = "devtools-responsiveui-resizebarH";
     this.resizeBarH.setAttribute("bottom", "0");
     this.resizeBarH.setAttribute("left", "0");
@@ -613,19 +613,19 @@ ResponsiveUI.prototype = {
     let volumeUp = this.chromeDoc.createElement("button");
     volumeUp.className = "devtools-responsiveui-volume-up-button";
     volumeUp.addEventListener("mousedown", () => {
-      SystemAppProxy.dispatchKeyboardEvent("keydown", {key: "VolumeUp"});
+      SystemAppProxy.dispatchKeyboardEvent("keydown", {key: "AudioVolumeUp"});
     });
     volumeUp.addEventListener("mouseup", () => {
-      SystemAppProxy.dispatchKeyboardEvent("keyup", {key: "VolumeUp"});
+      SystemAppProxy.dispatchKeyboardEvent("keyup", {key: "AudioVolumeUp"});
     });
 
     let volumeDown = this.chromeDoc.createElement("button");
     volumeDown.className = "devtools-responsiveui-volume-down-button";
     volumeDown.addEventListener("mousedown", () => {
-      SystemAppProxy.dispatchKeyboardEvent("keydown", {key: "VolumeDown"});
+      SystemAppProxy.dispatchKeyboardEvent("keydown", {key: "AudioVolumeDown"});
     });
     volumeDown.addEventListener("mouseup", () => {
-      SystemAppProxy.dispatchKeyboardEvent("keyup", {key: "VolumeDown"});
+      SystemAppProxy.dispatchKeyboardEvent("keyup", {key: "AudioVolumeDown"});
     });
 
     volumeButtons.appendChild(volumeUp);
@@ -672,8 +672,8 @@ ResponsiveUI.prototype = {
       this.menulist.selectedItem = menuitem;
     }
 
-    let w = this.customPreset.width = parseInt(value[1],10);
-    let h = this.customPreset.height = parseInt(value[2],10);
+    let w = this.customPreset.width = parseInt(value[1], 10);
+    let h = this.customPreset.height = parseInt(value[2], 10);
 
     this.saveCustomSize();
     this.setSize(w, h);
@@ -900,60 +900,60 @@ ResponsiveUI.prototype = {
   /**
    * Enable/Disable mouse -> touch events translation.
    */
-   enableTouch: function RUI_enableTouch() {
-     this.touchbutton.setAttribute("checked", "true");
-     return this.touchEventSimulator.start();
-   },
+  enableTouch: function RUI_enableTouch() {
+    this.touchbutton.setAttribute("checked", "true");
+    return this.touchEventSimulator.start();
+  },
 
-   disableTouch: function RUI_disableTouch() {
-     this.touchbutton.removeAttribute("checked");
-     return this.touchEventSimulator.stop();
-   },
+  disableTouch: function RUI_disableTouch() {
+    this.touchbutton.removeAttribute("checked");
+    return this.touchEventSimulator.stop();
+  },
 
-   hideTouchNotification: function RUI_hideTouchNotification() {
-     let nbox = this.mainWindow.gBrowser.getNotificationBox(this.browser);
-     let n = nbox.getNotificationWithValue("responsive-ui-need-reload");
-     if (n) {
-       n.close();
-     }
-   },
+  hideTouchNotification: function RUI_hideTouchNotification() {
+    let nbox = this.mainWindow.gBrowser.getNotificationBox(this.browser);
+    let n = nbox.getNotificationWithValue("responsive-ui-need-reload");
+    if (n) {
+      n.close();
+    }
+  },
 
-   toggleTouch: Task.async(function*() {
-     this.hideTouchNotification();
-     if (this.touchEventSimulator.enabled) {
-       this.disableTouch();
-     } else {
-       let isReloadNeeded = yield this.enableTouch();
-       if (isReloadNeeded) {
-         if (Services.prefs.getBoolPref("devtools.responsiveUI.no-reload-notification")) {
-           return;
-         }
+  toggleTouch: Task.async(function* () {
+    this.hideTouchNotification();
+    if (this.touchEventSimulator.enabled) {
+      this.disableTouch();
+    } else {
+      let isReloadNeeded = yield this.enableTouch();
+      if (isReloadNeeded) {
+        if (Services.prefs.getBoolPref("devtools.responsiveUI.no-reload-notification")) {
+          return;
+        }
 
-         let nbox = this.mainWindow.gBrowser.getNotificationBox(this.browser);
+        let nbox = this.mainWindow.gBrowser.getNotificationBox(this.browser);
 
-         var buttons = [{
-           label: this.strings.GetStringFromName("responsiveUI.notificationReload"),
-           callback: () => {
-             this.browser.reload();
-           },
-           accessKey: this.strings.GetStringFromName("responsiveUI.notificationReload_accesskey"),
-         }, {
-           label: this.strings.GetStringFromName("responsiveUI.dontShowReloadNotification"),
-           callback: function() {
-             Services.prefs.setBoolPref("devtools.responsiveUI.no-reload-notification", true);
-           },
-           accessKey: this.strings.GetStringFromName("responsiveUI.dontShowReloadNotification_accesskey"),
-         }];
+        var buttons = [{
+          label: this.strings.GetStringFromName("responsiveUI.notificationReload"),
+          callback: () => {
+            this.browser.reload();
+          },
+          accessKey: this.strings.GetStringFromName("responsiveUI.notificationReload_accesskey"),
+        }, {
+          label: this.strings.GetStringFromName("responsiveUI.dontShowReloadNotification"),
+          callback: function () {
+            Services.prefs.setBoolPref("devtools.responsiveUI.no-reload-notification", true);
+          },
+          accessKey: this.strings.GetStringFromName("responsiveUI.dontShowReloadNotification_accesskey"),
+        }];
 
-         nbox.appendNotification(
+        nbox.appendNotification(
            this.strings.GetStringFromName("responsiveUI.needReload"),
            "responsive-ui-need-reload",
            null,
            nbox.PRIORITY_INFO_LOW,
            buttons);
-       }
-     }
-   }),
+      }
+    }
+  }),
 
   waitForReload() {
     let navigatedDeferred = promise.defer();
@@ -971,7 +971,7 @@ ResponsiveUI.prototype = {
   /**
    * Change the user agent string
    */
-  changeUA: Task.async(function*() {
+  changeUA: Task.async(function* () {
     let value = this.userAgentInput.value;
     if (value) {
       this.userAgentInput.setAttribute("attention", "true");
@@ -1113,15 +1113,15 @@ ResponsiveUI.prototype = {
     }
 
     if (width < MIN_WIDTH) {
-        width = MIN_WIDTH;
+      width = MIN_WIDTH;
     } else {
-        this.lastScreenX = screenX;
+      this.lastScreenX = screenX;
     }
 
     if (height < MIN_HEIGHT) {
-        height = MIN_HEIGHT;
+      height = MIN_HEIGHT;
     } else {
-        this.lastScreenY = screenY;
+      this.lastScreenY = screenY;
     }
 
     this.setSize(width, height);
@@ -1150,18 +1150,18 @@ ResponsiveUI.prototype = {
   /**
    * Store the custom size as a pref.
    */
-   saveCustomSize: function RUI_saveCustomSize() {
-     Services.prefs.setIntPref("devtools.responsiveUI.customWidth", this.customPreset.width);
-     Services.prefs.setIntPref("devtools.responsiveUI.customHeight", this.customPreset.height);
-   },
+  saveCustomSize: function RUI_saveCustomSize() {
+    Services.prefs.setIntPref("devtools.responsiveUI.customWidth", this.customPreset.width);
+    Services.prefs.setIntPref("devtools.responsiveUI.customHeight", this.customPreset.height);
+  },
 
   /**
    * Store the current preset as a pref.
    */
-   saveCurrentPreset: function RUI_saveCurrentPreset() {
-     Services.prefs.setCharPref("devtools.responsiveUI.currentPreset", this.currentPresetKey);
-     Services.prefs.setBoolPref("devtools.responsiveUI.rotate", this.rotateValue);
-   },
+  saveCurrentPreset: function RUI_saveCurrentPreset() {
+    Services.prefs.setCharPref("devtools.responsiveUI.currentPreset", this.currentPresetKey);
+    Services.prefs.setBoolPref("devtools.responsiveUI.rotate", this.rotateValue);
+  },
 
   /**
    * Store the list of all registered presets as a pref.
@@ -1174,7 +1174,7 @@ ResponsiveUI.prototype = {
 
     Services.prefs.setCharPref("devtools.responsiveUI.presets", JSON.stringify(registeredPresets));
   },
-}
+};
 
 loader.lazyGetter(ResponsiveUI.prototype, "strings", function () {
   return Services.strings.createBundle("chrome://devtools/locale/responsiveUI.properties");

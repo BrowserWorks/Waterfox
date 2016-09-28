@@ -65,7 +65,7 @@ using namespace mozilla::gl;
 
 typedef nsNPAPIPluginInstance::VideoInfo VideoInfo;
 
-class PluginEventRunnable : public nsRunnable
+class PluginEventRunnable : public Runnable
 {
 public:
   PluginEventRunnable(nsNPAPIPluginInstance* instance, ANPEvent* event)
@@ -92,7 +92,8 @@ static RefPtr<GLContext> sPluginContext = nullptr;
 static bool EnsureGLContext()
 {
   if (!sPluginContext) {
-    sPluginContext = GLContextProvider::CreateHeadless(CreateContextFlags::REQUIRE_COMPAT_PROFILE);
+    nsCString failureId;
+    sPluginContext = GLContextProvider::CreateHeadless(CreateContextFlags::REQUIRE_COMPAT_PROFILE, failureId);
   }
 
   return sPluginContext != nullptr;
@@ -891,7 +892,7 @@ already_AddRefed<AndroidSurfaceTexture> nsNPAPIPluginInstance::CreateSurfaceText
     return nullptr;
   }
 
-  nsCOMPtr<nsIRunnable> frameCallback = NS_NewRunnableMethod(this, &nsNPAPIPluginInstance::OnSurfaceTextureFrameAvailable);
+  nsCOMPtr<nsIRunnable> frameCallback = NewRunnableMethod(this, &nsNPAPIPluginInstance::OnSurfaceTextureFrameAvailable);
   surface->SetFrameAvailableCallback(frameCallback);
   return surface.forget();
 }
@@ -1547,35 +1548,6 @@ nsNPAPIPluginInstance::GetMIMEType(const char* *result)
   return NS_OK;
 }
 
-nsresult
-nsNPAPIPluginInstance::GetJSContext(JSContext* *outContext)
-{
-  if (!mOwner)
-    return NS_ERROR_FAILURE;
-
-  RefPtr<nsPluginInstanceOwner> deathGrip(mOwner);
-
-  *outContext = nullptr;
-  nsCOMPtr<nsIDocument> document;
-
-  nsresult rv = mOwner->GetDocument(getter_AddRefs(document));
-
-  if (NS_SUCCEEDED(rv) && document) {
-    nsCOMPtr<nsIScriptGlobalObject> global =
-      do_QueryInterface(document->GetWindow());
-
-    if (global) {
-      nsIScriptContext *context = global->GetContext();
-
-      if (context) {
-        *outContext = context->GetNativeContext();
-      }
-    }
-  }
-
-  return rv;
-}
-
 nsPluginInstanceOwner*
 nsNPAPIPluginInstance::GetOwner()
 {
@@ -1639,7 +1611,7 @@ nsNPAPIPluginInstance::SetCurrentAsyncSurface(NPAsyncSurface *surface, NPRect *c
   }
 }
 
-class CarbonEventModelFailureEvent : public nsRunnable {
+class CarbonEventModelFailureEvent : public Runnable {
 public:
   nsCOMPtr<nsIContent> mContent;
 
@@ -1846,6 +1818,15 @@ nsNPAPIPluginInstance::WindowVolumeChanged(float aVolume, bool aMuted)
   nsresult rv = SetMuted(aMuted);
   NS_WARN_IF(NS_FAILED(rv));
   return rv;
+}
+
+NS_IMETHODIMP
+nsNPAPIPluginInstance::WindowSuspendChanged(nsSuspendedTypes aSuspend)
+{
+  // It doesn't support suspended, so we just do something like mute/unmute.
+  WindowVolumeChanged(1.0, /* useless */
+                      aSuspend != nsISuspendedTypes::NONE_SUSPENDED);
+  return NS_OK;
 }
 
 NS_IMETHODIMP

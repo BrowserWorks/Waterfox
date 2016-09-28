@@ -575,7 +575,8 @@ BacktrackingAllocator::buildLivenessInfo()
                     }
                 }
 
-                CallRange* callRange = new(alloc()) CallRange(outputOf(*ins), outputOf(*ins).next());
+                CallRange* callRange =
+                    new(alloc().fallible()) CallRange(outputOf(*ins), outputOf(*ins).next());
                 if (!callRange)
                     return false;
 
@@ -702,7 +703,7 @@ BacktrackingAllocator::buildLivenessInfo()
 
                     if (!vreg(use).addInitialRange(alloc(), entryOf(block), to.next()))
                         return false;
-                    UsePosition* usePosition = new(alloc()) UsePosition(use, to);
+                    UsePosition* usePosition = new(alloc().fallible()) UsePosition(use, to);
                     if (!usePosition)
                         return false;
                     vreg(use).addInitialUse(usePosition);
@@ -1354,7 +1355,8 @@ BacktrackingAllocator::computeRequirement(LiveBundle* bundle,
                     return false;
             } else if (policy == LUse::ANY) {
                 // ANY differs from KEEPALIVE by actively preferring a register.
-                hint->merge(Requirement(Requirement::REGISTER));
+                if (!hint->merge(Requirement(Requirement::REGISTER)))
+                    return false;
             }
         }
     }
@@ -1446,6 +1448,8 @@ BacktrackingAllocator::tryAllocateRegister(PhysicalRegister& r, LiveBundle* bund
 
     for (LiveRange::BundleLinkIterator iter = bundle->rangesBegin(); iter; iter++) {
         LiveRange* range = LiveRange::get(*iter);
+        if (!alloc().ensureBallast())
+            return false;
         if (!r.allocations.insert(range))
             return false;
     }
@@ -1650,7 +1654,7 @@ BacktrackingAllocator::pickStackSlot(SpillSet* spillSet)
     // We need a new physical stack slot.
     uint32_t stackSlot = stackSlotAllocator.allocateSlot(type);
 
-    SpillSlot* spillSlot = new(alloc()) SpillSlot(stackSlot, alloc().lifoAlloc());
+    SpillSlot* spillSlot = new(alloc().fallible()) SpillSlot(stackSlot, alloc().lifoAlloc());
     if (!spillSlot)
         return false;
 
@@ -1671,6 +1675,8 @@ BacktrackingAllocator::insertAllRanges(LiveRangeSet& set, LiveBundle* bundle)
 {
     for (LiveRange::BundleLinkIterator iter = bundle->rangesBegin(); iter; iter++) {
         LiveRange* range = LiveRange::get(*iter);
+        if (!alloc().ensureBallast())
+            return false;
         if (!set.insert(range))
             return false;
     }
@@ -1726,9 +1732,6 @@ BacktrackingAllocator::resolveControlFlow()
         if (mir->shouldCancel("Backtracking Resolve Control Flow (vreg loop)"))
             return false;
 
-        if (!alloc().ensureBallast())
-            return false;
-
         for (LiveRange::RegisterLinkIterator iter = reg.rangesBegin(); iter; ) {
             LiveRange* range = LiveRange::get(*iter);
 
@@ -1775,6 +1778,9 @@ BacktrackingAllocator::resolveControlFlow()
                 continue;
             }
 
+            if (!alloc().ensureBallast())
+                return false;
+
             LiveRange* predecessorRange = reg.rangeFor(start.previous(), /* preferRegister = */ true);
             if (start.subpos() == CodePosition::INPUT) {
                 if (!moveInput(ins->toInstruction(), predecessorRange, range, reg.type()))
@@ -1816,6 +1822,8 @@ BacktrackingAllocator::resolveControlFlow()
                 LiveRange* from = vreg(input).rangeFor(exitOf(predecessor), /* preferRegister = */ true);
                 MOZ_ASSERT(from);
 
+                if (!alloc().ensureBallast())
+                    return false;
                 if (!moveAtExit(predecessor, from, to, def->type()))
                     return false;
             }
@@ -1846,6 +1854,8 @@ BacktrackingAllocator::resolveControlFlow()
                     if (targetRange->covers(exitOf(predecessor)))
                         continue;
 
+                    if (!alloc().ensureBallast())
+                        return false;
                     LiveRange* from = reg.rangeFor(exitOf(predecessor), true);
                     if (successor->mir()->numPredecessors() > 1) {
                         MOZ_ASSERT(predecessor->mir()->numSuccessors() == 1);

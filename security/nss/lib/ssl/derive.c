@@ -68,6 +68,7 @@ ssl3_KeyAndMacDeriveBypass(
     const unsigned char *cr,
     const unsigned char *sr,
     PRBool isTLS,
+    HASH_HashType tls12HashType,
     PRBool isExport)
 {
     const ssl3BulkCipherDef *cipher_def = pwSpec->cipher_def;
@@ -158,7 +159,7 @@ ssl3_KeyAndMacDeriveBypass(
         keyblk.len = block_needed;
 
         if (isTLS12) {
-            status = TLS_P_hash(HASH_AlgSHA256, &pwSpec->msItem,
+            status = TLS_P_hash(tls12HashType, &pwSpec->msItem,
                                 "key expansion", &srcr, &keyblk, isFIPS);
         } else {
             status = TLS_PRF(&pwSpec->msItem, "key expansion", &srcr, &keyblk,
@@ -169,7 +170,7 @@ ssl3_KeyAndMacDeriveBypass(
         }
         block_bytes = keyblk.len;
     } else {
-       /* key_block =
+        /* key_block =
         *     MD5(master_secret + SHA('A' + master_secret +
         *                      ServerHello.random + ClientHello.random)) +
         *     MD5(master_secret + SHA('BB' + master_secret +
@@ -435,6 +436,7 @@ ssl3_MasterSecretDeriveBypass(
     const unsigned char *sr,
     const SECItem *pms,
     PRBool isTLS,
+    HASH_HashType tls12HashType,
     PRBool isRSA)
 {
     unsigned char *key_block = pwSpec->key_block;
@@ -477,7 +479,7 @@ ssl3_MasterSecretDeriveBypass(
         master.len = SSL3_MASTER_SECRET_LENGTH;
 
         if (isTLS12) {
-            rv = TLS_P_hash(HASH_AlgSHA256, pms, "master secret", &crsr,
+            rv = TLS_P_hash(tls12HashType, pms, "master secret", &crsr,
                             &master, isFIPS);
         } else {
             rv = TLS_PRF(pms, "master secret", &crsr, &master, isFIPS);
@@ -619,9 +621,7 @@ SSL_CanBypass(CERTCertificate *cert, SECKEYPrivateKey *srvPrivkey,
     PRBool testrsa_export = PR_FALSE;
     PRBool testecdh = PR_FALSE;
     PRBool testecdhe = PR_FALSE;
-#ifndef NSS_DISABLE_ECC
     SECKEYECParams ecParams = { siBuffer, NULL, 0 };
-#endif
 
     if (!cert || !srvPrivkey || !ciphersuites || !pcanbypass) {
         PORT_SetError(SEC_ERROR_INVALID_ARGS);
@@ -756,7 +756,6 @@ SSL_CanBypass(CERTCertificate *cert, SECKEYPrivateKey *srvPrivkey,
         if (enc_pms.data != NULL) {
             SECITEM_FreeItem(&enc_pms, PR_FALSE);
         }
-#ifndef NSS_DISABLE_ECC
         for (; (privKeytype == ecKey && (testecdh || testecdhe)) ||
                (privKeytype == rsaKey && testecdhe);) {
             CK_MECHANISM_TYPE target;
@@ -771,7 +770,7 @@ SSL_CanBypass(CERTCertificate *cert, SECKEYPrivateKey *srvPrivkey,
                 pecParams = &srvPubkey->u.ec.DEREncodedParams;
             } else if (privKeytype == rsaKey && testecdhe) {
                 /* TLS_ECDHE_RSA */
-                ECName ec_curve;
+                const namedGroupDef *ecGroup;
                 int serverKeyStrengthInBits;
                 int signatureKeyStrength;
                 int requiredECCbits;
@@ -794,11 +793,10 @@ SSL_CanBypass(CERTCertificate *cert, SECKEYPrivateKey *srvPrivkey,
                 if (requiredECCbits > signatureKeyStrength)
                     requiredECCbits = signatureKeyStrength;
 
-                ec_curve =
-                    ssl3_GetCurveWithECKeyStrength(
-                        ssl3_GetSupportedECCurveMask(NULL),
-                        requiredECCbits);
-                rv = ssl3_ECName2Params(NULL, ec_curve, &ecParams);
+                ecGroup =
+                    ssl_GetECGroupWithStrength(PR_UINT32_MAX,
+                                               requiredECCbits);
+                rv = ssl_NamedGroup2ECParams(NULL, ecGroup, &ecParams);
                 if (rv == SECFailure) {
                     break;
                 }
@@ -860,7 +858,6 @@ SSL_CanBypass(CERTCertificate *cert, SECKEYPrivateKey *srvPrivkey,
             PORT_Free(ecParams.data);
             ecParams.data = NULL;
         }
-#endif /* NSS_DISABLE_ECC */
         if (pms)
             PK11_FreeSymKey(pms);
     }
@@ -878,12 +875,10 @@ done:
     if (enc_pms.data != NULL) {
         SECITEM_FreeItem(&enc_pms, PR_FALSE);
     }
-#ifndef NSS_DISABLE_ECC
     if (ecParams.data != NULL) {
         PORT_Free(ecParams.data);
         ecParams.data = NULL;
     }
-#endif /* NSS_DISABLE_ECC */
 
     if (srvPubkey) {
         SECKEY_DestroyPublicKey(srvPubkey);

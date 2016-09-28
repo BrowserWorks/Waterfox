@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 
+#include "jit/AliasAnalysisShared.h"
 #include "jit/Ion.h"
 #include "jit/IonBuilder.h"
 #include "jit/JitSpewer.h"
@@ -56,45 +57,8 @@ class LoopAliasInfo : public TempObject
 } // namespace jit
 } // namespace js
 
-namespace {
-
-// Iterates over the flags in an AliasSet.
-class AliasSetIterator
-{
-  private:
-    uint32_t flags;
-    unsigned pos;
-
-  public:
-    explicit AliasSetIterator(AliasSet set)
-      : flags(set.flags()), pos(0)
-    {
-        while (flags && (flags & 1) == 0) {
-            flags >>= 1;
-            pos++;
-        }
-    }
-    AliasSetIterator& operator ++(int) {
-        do {
-            flags >>= 1;
-            pos++;
-        } while (flags && (flags & 1) == 0);
-        return *this;
-    }
-    explicit operator bool() const {
-        return !!flags;
-    }
-    unsigned operator*() const {
-        MOZ_ASSERT(pos < AliasSet::NumCategories);
-        return pos;
-    }
-};
-
-} /* anonymous namespace */
-
 AliasAnalysis::AliasAnalysis(MIRGenerator* mir, MIRGraph& graph)
-  : mir(mir),
-    graph_(graph),
+  : AliasAnalysisShared(mir, graph),
     loop_(nullptr)
 {
 }
@@ -231,7 +195,10 @@ AliasAnalysis::analyze()
                     MInstructionVector& aliasedStores = stores[*iter];
                     for (int i = aliasedStores.length() - 1; i >= 0; i--) {
                         MInstruction* store = aliasedStores[i];
-                        if (def->mightAlias(store) && BlockMightReach(store->block(), *block)) {
+                        if (genericMightAlias(*def, store) != MDefinition::AliasType::NoAlias &&
+                            def->mightAlias(store) != MDefinition::AliasType::NoAlias &&
+                            BlockMightReach(store->block(), *block))
+                        {
                             if (lastStore->id() < store->id())
                                 lastStore = store;
                             break;
@@ -276,7 +243,9 @@ AliasAnalysis::analyze()
                         MInstruction* store = aliasedStores[i];
                         if (store->id() < firstLoopIns->id())
                             break;
-                        if (ins->mightAlias(store)) {
+                        if (genericMightAlias(ins, store) != MDefinition::AliasType::NoAlias &&
+                            ins->mightAlias(store) != MDefinition::AliasType::NoAlias)
+                        {
                             hasAlias = true;
                             IonSpewDependency(ins, store, "aliases", "store in loop body");
                             break;
@@ -306,6 +275,8 @@ AliasAnalysis::analyze()
             loop_ = loop_->outer();
         }
     }
+
+    spewDependencyList();
 
     MOZ_ASSERT(loop_ == nullptr);
     return true;

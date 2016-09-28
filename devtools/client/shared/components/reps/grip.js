@@ -6,34 +6,32 @@
 "use strict";
 
 // Make this available to both AMD and CJS environments
-define(function(require, exports, module) {
+define(function (require, exports, module) {
   // ReactJS
   const React = require("devtools/client/shared/vendor/react");
-
   // Dependencies
   const { createFactories, isGrip } = require("./rep-utils");
   const { ObjectBox } = createFactories(require("./object-box"));
   const { Caption } = createFactories(require("./caption"));
-
+  const { PropRep } = createFactories(require("./prop-rep"));
   // Shortcuts
   const { span } = React.DOM;
-
   /**
    * @template TODO docs
    */
   const Grip = React.createClass({
+    displayName: "Grip",
+
     propTypes: {
       object: React.PropTypes.object.isRequired,
       mode: React.PropTypes.string,
     },
 
-    displayName: "Grip",
-
-    getTitle: function() {
-      return "";
+    getTitle: function () {
+      return this.props.object.class || "Object";
     },
 
-    longPropIterator: function(object) {
+    longPropIterator: function (object) {
       try {
         return this.propIterator(object, 100);
       } catch (err) {
@@ -42,7 +40,7 @@ define(function(require, exports, module) {
       return [];
     },
 
-    shortPropIterator: function(object) {
+    shortPropIterator: function (object) {
       try {
         return this.propIterator(object, 3);
       } catch (err) {
@@ -51,7 +49,7 @@ define(function(require, exports, module) {
       return [];
     },
 
-    propIterator: function(object, max) {
+    propIterator: function (object, max) {
       // Property filter. Show only interesting properties to the user.
       let isInterestingProp = (type, value) => {
         return (
@@ -97,7 +95,7 @@ define(function(require, exports, module) {
       return props;
     },
 
-    getProps: function(object, max, filter) {
+    getProps: function (object, max, filter) {
       let props = [];
 
       max = max || 3;
@@ -139,15 +137,14 @@ define(function(require, exports, module) {
       return props;
     },
 
-    render: function() {
+    render: function () {
       let object = this.props.object;
       let props = this.shortPropIterator(object);
 
       if (this.props.mode == "tiny" || !props.length) {
         return (
           ObjectBox({className: "object"},
-            span({className: "objectTitle"}, this.getTitle(object)),
-            span({className: "objectLeftBrace", role: "presentation"}, "{}")
+            span({className: "objectTitle"}, this.getTitle(object))
           )
         );
       }
@@ -155,57 +152,18 @@ define(function(require, exports, module) {
       return (
         ObjectBox({className: "object"},
           span({className: "objectTitle"}, this.getTitle(object)),
-          span({className: "objectLeftBrace", role: "presentation"}, "{"),
+          span({className: "objectLeftBrace", role: "presentation"}, " {"),
           props,
           span({className: "objectRightBrace"}, "}")
         )
       );
     },
   });
-
-  /**
-   * Property for a grip object.
-   */
-  let PropRep = React.createFactory(React.createClass({
-    propTypes: {
-      name: React.PropTypes.string,
-      equal: React.PropTypes.string,
-      delim: React.PropTypes.string,
-    },
-
-    displayName: "PropRep",
-
-    render: function() {
-      let { Rep } = createFactories(require("./rep"));
-
-      return (
-        span({},
-          span({
-            "className": "nodeName"},
-            this.props.name),
-          span({
-            "className": "objectEqual",
-            role: "presentation"},
-            this.props.equal
-          ),
-          Rep(this.props),
-          span({
-            "className": "objectComma",
-            role: "presentation"},
-            this.props.delim
-          )
-        )
-      );
-    }
-  }));
-
   // Registration
-
   function supportsObject(object, type) {
     if (!isGrip(object)) {
       return false;
     }
-
     return (object.preview && object.preview.ownProperties);
   }
 

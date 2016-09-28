@@ -1,6 +1,7 @@
 /* vim: set ft=javascript ts=2 et sw=2 tw=80: */
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
+/* eslint no-inline-comments: 0 */
 "use strict";
 
 requestLongerTimeout(2);
@@ -74,7 +75,7 @@ add_task(function* () {
     info("Got processing-done event");
 
     if (key === "VK_RETURN") {
-      info ("Waiting for " + (isValid ? "NO " : "") + "results");
+      info("Waiting for " + (isValid ? "NO " : "") + "results");
       yield inspector.search.once("search-result");
     }
 

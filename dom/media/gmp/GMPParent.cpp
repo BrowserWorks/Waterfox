@@ -22,6 +22,7 @@
 #include "mozilla/SandboxInfo.h"
 #endif
 #include "GMPContentParent.h"
+#include "MediaPrefs.h"
 
 #include "mozilla/dom/CrashReporterParent.h"
 using mozilla::dom::CrashReporterParent;
@@ -39,7 +40,7 @@ using CrashReporter::GetIDFromMinidump;
 #include "WMFDecoderModule.h"
 #endif
 
-#ifdef MOZ_WIDEVINE_EME
+#ifdef MOZ_EME
 #include "mozilla/dom/WidevineCDMManifestBinding.h"
 #include "widevine-adapter/WidevineAdapter.h"
 #endif
@@ -252,7 +253,7 @@ GMPParent::EnsureAsyncShutdownTimeoutSet()
    return rv;
   }
 
-  int32_t timeout = GMP_DEFAULT_ASYNC_SHUTDONW_TIMEOUT;
+  int32_t timeout = MediaPrefs::GMPAsyncShutdownTimeout();
   RefPtr<GeckoMediaPluginServiceParent> service =
     GeckoMediaPluginServiceParent::GetSingleton();
   if (service) {
@@ -471,7 +472,7 @@ GMPParent::Shutdown()
   MOZ_ASSERT(mState == GMPStateNotLoaded);
 }
 
-class NotifyGMPShutdownTask : public nsRunnable {
+class NotifyGMPShutdownTask : public Runnable {
 public:
   explicit NotifyGMPShutdownTask(const nsAString& aNodeId)
     : mNodeId(aNodeId)
@@ -502,7 +503,7 @@ GMPParent::ChildTerminated()
     // removed so there is no harm in not trying to remove it again.
     LOGD("%s::%s: GMPThread() returned nullptr.", __CLASS__, __FUNCTION__);
   } else {
-    gmpThread->Dispatch(NS_NewRunnableMethodWithArg<RefPtr<GMPParent>>(
+    gmpThread->Dispatch(NewRunnableMethod<RefPtr<GMPParent>>(
                          mService,
                          &GeckoMediaPluginServiceParent::PluginTerminated,
                          self),
@@ -521,7 +522,7 @@ GMPParent::DeleteProcess()
     mState = GMPStateClosing;
     Close();
   }
-  mProcess->Delete(NS_NewRunnableMethod(this, &GMPParent::ChildTerminated));
+  mProcess->Delete(NewRunnableMethod(this, &GMPParent::ChildTerminated));
   LOGD("%s: Shut down process", __FUNCTION__);
   mProcess = nullptr;
   mState = GMPStateNotLoaded;
@@ -808,7 +809,7 @@ GMPParent::ReadGMPMetaData()
     return ReadGMPInfoFile(infoFile);
   }
 
-#ifdef MOZ_WIDEVINE_EME
+#ifdef MOZ_EME
   // Maybe this is the Widevine adapted plugin?
   nsCOMPtr<nsIFile> manifestFile;
   rv = mDirectory->Clone(getter_AddRefs(manifestFile));
@@ -818,7 +819,7 @@ GMPParent::ReadGMPMetaData()
   manifestFile->AppendRelativePath(NS_LITERAL_STRING("manifest.json"));
   return ReadChromiumManifestFile(manifestFile);
 #else
-  return GenericPromise::CreateAndReject(rv, __func__);
+  return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
 #endif
 }
 
@@ -914,7 +915,6 @@ GMPParent::ReadGMPInfoFile(nsIFile* aFile)
   return GenericPromise::CreateAndResolve(true, __func__);
 }
 
-#ifdef MOZ_WIDEVINE_EME
 RefPtr<GenericPromise>
 GMPParent::ReadChromiumManifestFile(nsIFile* aFile)
 {
@@ -934,6 +934,7 @@ GMPParent::ParseChromiumManifest(nsString aJSON)
   LOGD("%s: for '%s'", __FUNCTION__, NS_LossyConvertUTF16toASCII(aJSON).get());
 
   MOZ_ASSERT(NS_IsMainThread());
+#ifdef MOZ_EME
   mozilla::dom::WidevineCDMManifest m;
   if (!m.Init(aJSON)) {
     return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
@@ -966,8 +967,11 @@ GMPParent::ParseChromiumManifest(nsString aJSON)
 #endif
 
   return GenericPromise::CreateAndResolve(true, __func__);
-}
+#else
+  MOZ_ASSERT_UNREACHABLE("don't call me if EME isn't enabled");
+  return GenericPromise::CreateAndReject(NS_ERROR_FAILURE, __func__);
 #endif
+}
 
 bool
 GMPParent::CanBeSharedCrossNodeIds() const
@@ -1041,7 +1045,7 @@ GMPParent::RecvAsyncShutdownComplete()
   return true;
 }
 
-class RunCreateContentParentCallbacks : public nsRunnable
+class RunCreateContentParentCallbacks : public Runnable
 {
 public:
   explicit RunCreateContentParentCallbacks(GMPContentParent* aGMPContentParent)

@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include <algorithm>
 
 #ifdef MOZ_ENABLE_GIO
@@ -106,15 +106,16 @@ moz_gdk_pixbuf_to_channel(GdkPixbuf* aPixbuf, nsIURI* aURI,
   MOZ_ASSERT(NS_SUCCEEDED(rv));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // nsIconProtocolHandler::NewChannel2 will provide the correct loadInfo for
+  // this iconChannel. Use the most restrictive security settings for the
+  // temporary loadInfo to make sure the channel can not be openend.
   nsCOMPtr<nsIPrincipal> nullPrincipal = nsNullPrincipal::Create();
-  NS_ENSURE_TRUE(nullPrincipal, NS_ERROR_FAILURE);
-
   return NS_NewInputStreamChannel(aChannel,
                                   aURI,
                                   stream,
                                   nullPrincipal,
-                                  nsILoadInfo::SEC_NORMAL,
-                                  nsIContentPolicy::TYPE_OTHER,
+                                  nsILoadInfo::SEC_REQUIRE_SAME_ORIGIN_DATA_IS_BLOCKED,
+                                  nsIContentPolicy::TYPE_INTERNAL_IMAGE,
                                   NS_LITERAL_CSTRING(IMAGE_ICON_MS));
 }
 

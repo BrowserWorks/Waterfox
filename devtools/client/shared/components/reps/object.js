@@ -5,35 +5,33 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 "use strict";
-
 // Make this available to both AMD and CJS environments
-define(function(require, exports, module) {
+define(function (require, exports, module) {
   // Dependencies
   const React = require("devtools/client/shared/vendor/react");
   const { createFactories } = require("./rep-utils");
   const { ObjectBox } = createFactories(require("./object-box"));
   const { Caption } = createFactories(require("./caption"));
-
+  const { PropRep } = createFactories(require("./prop-rep"));
   // Shortcuts
   const { span } = React.DOM;
-
   /**
    * Renders an object. An object is represented by a list of its
    * properties enclosed in curly brackets.
    */
   const Obj = React.createClass({
+    displayName: "Obj",
+
     propTypes: {
       object: React.PropTypes.object,
       mode: React.PropTypes.string,
     },
 
-    displayName: "Obj",
-
-    getTitle: function() {
-      return "";
+    getTitle: function () {
+      return "Object";
     },
 
-    longPropIterator: function(object) {
+    longPropIterator: function (object) {
       try {
         return this.propIterator(object, 100);
       } catch (err) {
@@ -42,7 +40,7 @@ define(function(require, exports, module) {
       return [];
     },
 
-    shortPropIterator: function(object) {
+    shortPropIterator: function (object) {
       try {
         return this.propIterator(object, 3);
       } catch (err) {
@@ -51,7 +49,7 @@ define(function(require, exports, module) {
       return [];
     },
 
-    propIterator: function(object, max) {
+    propIterator: function (object, max) {
       let isInterestingProp = (t, value) => {
         // Do not pick objects, it could cause recursion.
         return (t == "boolean" || t == "number" || (t == "string" && value));
@@ -90,7 +88,7 @@ define(function(require, exports, module) {
       return props;
     },
 
-    getProps: function(object, max, filter) {
+    getProps: function (object, max, filter) {
       let props = [];
 
       max = max || 3;
@@ -132,13 +130,21 @@ define(function(require, exports, module) {
       return props;
     },
 
-    render: function() {
+    render: function () {
       let object = this.props.object;
       let props = this.shortPropIterator(object);
 
+      if (this.props.mode == "tiny" || !props.length) {
+        return (
+          ObjectBox({className: "object"},
+            span({className: "objectTitle"}, this.getTitle())
+          )
+        );
+      }
+
       return (
         ObjectBox({className: "object"},
-          span({className: "objectTitle"}, this.getTitle(object)),
+          span({className: "objectTitle"}, this.getTitle()),
           span({className: "objectLeftBrace", role: "presentation"}, "{"),
           props,
           span({className: "objectRightBrace"}, "}")
@@ -146,57 +152,10 @@ define(function(require, exports, module) {
       );
     },
   });
-
-  /**
-   * Renders object property, name-value pair.
-   */
-  let PropRep = React.createFactory(React.createClass({
-    propTypes: {
-      object: React.PropTypes.any,
-      mode: React.PropTypes.string,
-      name: React.PropTypes.string,
-      equal: React.PropTypes.string,
-      delim: React.PropTypes.string,
-    },
-
-    displayName: "PropRep",
-
-    render: function() {
-      let { Rep } = createFactories(require("./rep"));
-      let object = this.props.object;
-      let mode = this.props.mode;
-
-      return (
-        span({},
-          span({
-            "className": "nodeName"},
-            this.props.name
-          ),
-          span({
-            "className": "objectEqual",
-            role: "presentation"},
-            this.props.equal
-          ),
-          Rep({
-            object: object,
-            mode: mode
-          }),
-          span({
-            "className": "objectComma",
-            role: "presentation"},
-            this.props.delim
-          )
-        )
-      );
-    }
-  }));
-
   function supportsObject(object, type) {
     return true;
   }
-
   // Exports from this module
-
   exports.Obj = {
     rep: Obj,
     supportsObject: supportsObject

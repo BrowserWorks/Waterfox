@@ -31,6 +31,7 @@ public class GeckoService extends Service {
     private static final String INTENT_ACTION_CREATE_SERVICES = "create-services";
 
     private static final String INTENT_SERVICE_CATEGORY = "category";
+    private static final String INTENT_SERVICE_DATA = "data";
 
     private static class EventListener implements NativeEventListener {
         @Override // NativeEventListener
@@ -86,8 +87,8 @@ public class GeckoService extends Service {
     public void onCreate() {
         GeckoAppShell.ensureCrashHandling();
         GeckoAppShell.setApplicationContext(getApplicationContext());
+        GeckoAppShell.setNotificationClient(new ServiceNotificationClient(getApplicationContext()));
         GeckoThread.onResume();
-
         super.onCreate();
 
         if (DEBUG) {
@@ -117,6 +118,13 @@ public class GeckoService extends Service {
         if (profile != null) {
             setIntentProfile(intent, profile.getName(), profile.getDir().getAbsolutePath());
         }
+        return intent;
+    }
+
+    public static Intent getIntentToCreateServices(final Context context, final String category, final String data) {
+        final Intent intent = getIntentForAction(context, INTENT_ACTION_CREATE_SERVICES);
+        intent.putExtra(INTENT_SERVICE_CATEGORY, category);
+        intent.putExtra(INTENT_SERVICE_DATA, data);
         return intent;
     }
 
@@ -168,11 +176,12 @@ public class GeckoService extends Service {
 
         case INTENT_ACTION_CREATE_SERVICES:
             final String category = intent.getStringExtra(INTENT_SERVICE_CATEGORY);
+            final String data = intent.getStringExtra(INTENT_SERVICE_DATA);
 
             if (category == null) {
                 break;
             }
-            GeckoThread.createServices(category);
+            GeckoThread.createServices(category, data);
             break;
 
         default:

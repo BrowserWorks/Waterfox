@@ -387,9 +387,10 @@ void sdp_free_attr (sdp_attr_t *attr_p)
         }
     } else if ((attr_p->type == SDP_ATTR_SDESCRIPTIONS) ||
               (attr_p->type == SDP_ATTR_SRTP_CONTEXT)) {
-              SDP_FREE(attr_p->attr.srtp_context.session_parameters);
+        SDP_FREE(attr_p->attr.srtp_context.session_parameters);
+    } else if (attr_p->type == SDP_ATTR_IDENTITY) {
+        SDP_FREE(attr_p->attr.stringp);
     }
-
 
     if (attr_p->type == SDP_ATTR_GROUP) {
         for (i = 0; i < attr_p->attr.stream_data.num_group_id; i++) {
@@ -681,7 +682,6 @@ static boolean sdp_attr_is_simple_string(sdp_attr_e attr_type) {
         (attr_type != SDP_ATTR_X_SIDOUT)&&
         (attr_type != SDP_ATTR_X_CONFID) &&
         (attr_type != SDP_ATTR_LABEL) &&
-        (attr_type != SDP_ATTR_IDENTITY) &&
         (attr_type != SDP_ATTR_ICE_OPTIONS) &&
         (attr_type != SDP_ATTR_IMAGEATTR) &&
         (attr_type != SDP_ATTR_SIMULCAST) &&
@@ -733,6 +733,39 @@ const char *sdp_attr_get_simple_string (sdp_t *sdp_p, sdp_attr_e attr_type,
         return (NULL);
     } else {
         return (attr_p->attr.string_val);
+    }
+}
+
+static boolean sdp_attr_is_long_string(sdp_attr_e attr_type) {
+  return attr_type == SDP_ATTR_IDENTITY;
+}
+
+/* Identical in usage to sdp_attr_get_simple_string() */
+const char *sdp_attr_get_long_string (sdp_t *sdp_p, sdp_attr_e attr_type,
+                                      uint16_t level, uint8_t cap_num, uint16_t inst_num)
+{
+    sdp_attr_t  *attr_p;
+
+    if (!sdp_attr_is_long_string(attr_type)) {
+        if (sdp_p->debug_flag[SDP_DEBUG_ERRORS]) {
+            CSFLogError(logTag, "%s Attribute type is not a long string (%s)",
+                      sdp_p->debug_str, sdp_get_attr_name(attr_type));
+        }
+        sdp_p->conf_p->num_invalid_param++;
+        return (NULL);
+    }
+
+    attr_p = sdp_find_attr(sdp_p, level, cap_num, attr_type, inst_num);
+    if (attr_p == NULL) {
+        if (sdp_p->debug_flag[SDP_DEBUG_ERRORS]) {
+            CSFLogError(logTag, "%s Attribute %s, level %u instance %u not found.",
+                      sdp_p->debug_str, sdp_get_attr_name(attr_type),
+                      (unsigned)level, (unsigned)inst_num);
+        }
+        sdp_p->conf_p->num_invalid_param++;
+        return (NULL);
+    } else {
+        return (attr_p->attr.stringp);
     }
 }
 
@@ -6007,6 +6040,26 @@ sdp_attr_get_rtcp_fb_trr_int(sdp_t *sdp_p, uint16_t level,
     return (attr_p->attr.rtcp_fb.param.trr_int);
 }
 
+/* Function:    sdp_attr_get_rtcp_fb_remb_enabled
+ * Description: Returns true if rtcp-fb:...goog-remb attribute exists
+ * Parameters:  sdp_p      The SDP handle returned by sdp_init_description.
+ *              level        The level to check for the attribute.
+ *              payload_type The payload to get the attribute for
+ * Returns:     true if rtcp-fb:...goog-remb exists
+ */
+tinybool
+sdp_attr_get_rtcp_fb_remb_enabled(sdp_t *sdp_p,
+                                  uint16_t level,
+                                  uint16_t payload_type)
+{
+    sdp_attr_t  *attr_p;
+
+    attr_p = sdp_find_rtcp_fb_attr(sdp_p, level, payload_type,
+                                   SDP_RTCP_FB_REMB,
+                                   1); // always check for 1st instance
+    return (attr_p? TRUE : FALSE); // either exists or not
+}
+
 /* Function:    sdp_attr_get_rtcp_fb_ccm
  * Description: Returns the value of the rtcp-fb:...ccm attribute
  * Parameters:  sdp_p      The SDP handle returned by sdp_init_description.
@@ -6137,6 +6190,38 @@ sdp_attr_set_rtcp_fb_trr_int(sdp_t *sdp_p, uint16_t level, uint16_t payload_type
     attr_p->attr.rtcp_fb.feedback_type = SDP_RTCP_FB_TRR_INT;
     attr_p->attr.rtcp_fb.param.trr_int = interval;
     attr_p->attr.rtcp_fb.extra[0] = '\0';
+    return (SDP_SUCCESS);
+}
+
+/* Function:    sdp_attr_set_rtcp_fb_remb
+ * Description: Sets the value of an rtcp-fb:...goog-remb attribute
+ * Parameters:  sdp_p        The SDP handle returned by sdp_init_description.
+ *              level          The level to set the attribute.
+ *              payload_type   The value to set the payload type to for
+ *                             this attribute. Can be SDP_ALL_PAYLOADS.
+ *              inst_num       The attribute instance number to check.
+ * Returns:     SDP_SUCCESS            Attribute param was set successfully.
+ *              SDP_INVALID_PARAMETER  Specified attribute is not defined.
+ */
+sdp_result_e
+sdp_attr_set_rtcp_fb_remb(sdp_t *sdp_p, uint16_t level, uint16_t payload_type,
+                          uint16_t inst)
+{
+    sdp_attr_t  *attr_p;
+
+    attr_p = sdp_find_attr(sdp_p, level, 0, SDP_ATTR_RTCP_FB, inst);
+    if (!attr_p) {
+        if (sdp_p->debug_flag[SDP_DEBUG_ERRORS]) {
+            CSFLogError(logTag, "%s rtcp_fb goog-remb attribute, level %u "
+                      "instance %u not found.", sdp_p->debug_str, (unsigned)level,
+                      (unsigned)inst);
+        }
+        sdp_p->conf_p->num_invalid_param++;
+        return (SDP_INVALID_PARAMETER);
+    }
+
+    attr_p->attr.rtcp_fb.payload_num = payload_type;
+    attr_p->attr.rtcp_fb.feedback_type = SDP_RTCP_FB_REMB;
     return (SDP_SUCCESS);
 }
 

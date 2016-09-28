@@ -29,6 +29,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "LightweightThemeManager",
                                   "resource://gre/modules/LightweightThemeManager.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ExtensionData",
                                   "resource://gre/modules/Extension.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ExtensionManagement",
+                                  "resource://gre/modules/ExtensionManagement.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Locale",
                                   "resource://gre/modules/Locale.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
@@ -55,6 +57,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "UpdateUtils",
                                   "resource://gre/modules/UpdateUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
                                   "resource://gre/modules/AppConstants.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "isAddonPartOfE10SRollout",
+                                  "resource://gre/modules/addons/E10SAddonsRollout.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "Blocklist",
                                    "@mozilla.org/extensions/blocklist;1",
@@ -71,12 +75,18 @@ XPCOMUtils.defineLazyServiceGetter(this,
                                    "AddonPolicyService",
                                    "@mozilla.org/addons/policy-service;1",
                                    "nsIAddonPolicyService");
+XPCOMUtils.defineLazyServiceGetter(this,
+                                   "AddonPathService",
+                                   "@mozilla.org/addon-path-service;1",
+                                   "amIAddonPathService");
 
 XPCOMUtils.defineLazyGetter(this, "CertUtils", function() {
   let certUtils = {};
   Components.utils.import("resource://gre/modules/CertUtils.jsm", certUtils);
   return certUtils;
 });
+
+Cu.importGlobalProperties(["URL"]);
 
 const nsIFile = Components.Constructor("@mozilla.org/file/local;1", "nsIFile",
                                        "initWithPath");
@@ -113,6 +123,9 @@ const PREF_INTERPOSITION_ENABLED      = "extensions.interposition.enabled";
 const PREF_SYSTEM_ADDON_SET           = "extensions.systemAddonSet";
 const PREF_SYSTEM_ADDON_UPDATE_URL    = "extensions.systemAddon.update.url";
 const PREF_E10S_BLOCK_ENABLE          = "extensions.e10sBlocksEnabling";
+const PREF_E10S_ADDON_BLOCKLIST       = "extensions.e10s.rollout.blocklist";
+const PREF_E10S_ADDON_POLICY          = "extensions.e10s.rollout.policy";
+const PREF_E10S_HAS_NONEXEMPT_ADDON   = "extensions.e10s.rollout.hasAddon";
 
 const PREF_EM_MIN_COMPAT_APP_VERSION      = "extensions.minCompatibleAppVersion";
 const PREF_EM_MIN_COMPAT_PLATFORM_VERSION = "extensions.minCompatiblePlatformVersion";
@@ -881,6 +894,11 @@ var loadManifestFromWebManifest = Task.async(function*(aUri) {
     logger.warn("Ignoring applications property in manifest");
   }
 
+  // A * is illegal in strict_min_version
+  if (bss.strict_min_version && bss.strict_min_version.split(".").some(part => part == "*")) {
+    logger.warn("The use of '*' in strict_min_version is deprecated");
+  }
+
   let addon = new AddonInternal();
   addon.id = bss.id;
   addon.version = manifest.version;
@@ -898,7 +916,9 @@ var loadManifestFromWebManifest = Task.async(function*(aUri) {
   addon.aboutURL = null;
 
   if (manifest.options_ui) {
-    addon.optionsURL = extension.getURL(manifest.options_ui.page);
+    // Store just the relative path here, the AddonWrapper getURL
+    // wrapper maps this to a full URL.
+    addon.optionsURL = manifest.options_ui.page;
     if (manifest.options_ui.open_in_tab)
       addon.optionsType = AddonManager.OPTIONS_TYPE_TAB;
     else
@@ -2438,8 +2458,7 @@ this.XPIProvider = {
     logger.info("Mapping " + aID + " to " + aFile.path);
     this._addonFileMap.set(aID, aFile.path);
 
-    let service = Cc["@mozilla.org/addon-path-service;1"].getService(Ci.amIAddonPathService);
-    service.insertPath(aFile.path, aID);
+    AddonPathService.insertPath(aFile.path, aID);
   },
 
   /**
@@ -2663,6 +2682,8 @@ this.XPIProvider = {
 
       Services.prefs.addObserver(PREF_EM_MIN_COMPAT_APP_VERSION, this, false);
       Services.prefs.addObserver(PREF_EM_MIN_COMPAT_PLATFORM_VERSION, this, false);
+      Services.prefs.addObserver(PREF_E10S_ADDON_BLOCKLIST, this, false);
+      Services.prefs.addObserver(PREF_E10S_ADDON_POLICY, this, false);
       if (!REQUIRE_SIGNING)
         Services.prefs.addObserver(PREF_XPI_SIGNATURES_REQUIRED, this, false);
       Services.obs.addObserver(this, NOTIFICATION_FLUSH_PERMISSIONS, false);
@@ -3028,7 +3049,6 @@ this.XPIProvider = {
     }
 
     // Download all the add-ons
-    // Bug 1204158: If we already have some of these locally then just use those
     let downloadAddon = Task.async(function*(item) {
       try {
         let sourceAddon = updatedAddons.get(item.spec.id);
@@ -3899,6 +3919,7 @@ this.XPIProvider = {
       throw new Error("Only restartless (bootstrap) add-ons"
                     + " can be temporarily installed:", addon.id);
     }
+    let installReason = BOOTSTRAP_REASONS.ADDON_INSTALL;
     let oldAddon = yield new Promise(
                    resolve => XPIDatabase.getVisibleAddonForID(addon.id, resolve));
     if (oldAddon) {
@@ -3918,9 +3939,12 @@ this.XPIProvider = {
         // call its uninstall method
         let newVersion = addon.version;
         let oldVersion = oldAddon.version;
-        let uninstallReason = Services.vc.compare(oldVersion, newVersion) < 0 ?
-                              BOOTSTRAP_REASONS.ADDON_UPGRADE :
-                              BOOTSTRAP_REASONS.ADDON_DOWNGRADE;
+        if (Services.vc.compare(newVersion, oldVersion) >= 0) {
+          installReason = BOOTSTRAP_REASONS.ADDON_UPGRADE;
+        } else {
+          installReason = BOOTSTRAP_REASONS.ADDON_DOWNGRADE;
+        }
+        let uninstallReason = installReason;
 
         if (oldAddon.active) {
           XPIProvider.callBootstrapMethod(oldAddon, existingAddon,
@@ -3937,8 +3961,7 @@ this.XPIProvider = {
     let file = addon._sourceBundle;
 
     XPIProvider._addURIMapping(addon.id, file);
-    XPIProvider.callBootstrapMethod(addon, file, "install",
-                                    BOOTSTRAP_REASONS.ADDON_INSTALL);
+    XPIProvider.callBootstrapMethod(addon, file, "install", installReason);
     addon.state = AddonManager.STATE_INSTALLED;
     logger.debug("Install of temporary addon in " + aFile.path + " completed.");
     addon.visible = true;
@@ -4111,20 +4134,8 @@ this.XPIProvider = {
    * @see    amIAddonManager.mapURIToAddonID
    */
   mapURIToAddonID: function(aURI) {
-    if (aURI.scheme == "moz-extension") {
-      return AddonPolicyService.extensionURIToAddonId(aURI);
-    }
-
-    let resolved = this._resolveURIToFile(aURI);
-    if (!resolved || !(resolved instanceof Ci.nsIFileURL))
-      return null;
-
-    for (let [id, path] of this._addonFileMap) {
-      if (resolved.file.path.startsWith(path))
-        return id;
-    }
-
-    return null;
+    // Returns `null` instead of empty string if the URI can't be mapped.
+    return AddonPathService.mapURIToAddonId(aURI) || null;
   },
 
   /**
@@ -4313,6 +4324,11 @@ this.XPIProvider = {
       case PREF_XPI_SIGNATURES_REQUIRED:
         this.updateAddonAppDisabledStates();
         break;
+
+      case PREF_E10S_ADDON_BLOCKLIST:
+      case PREF_E10S_ADDON_POLICY:
+        XPIDatabase.updateAddonsBlockingE10s();
+        break;
       }
     }
   },
@@ -4347,6 +4363,12 @@ this.XPIProvider = {
         locName == KEY_APP_SYSTEM_ADDONS)
       return false;
 
+    if (isAddonPartOfE10SRollout(aAddon)) {
+      Preferences.set(PREF_E10S_HAS_NONEXEMPT_ADDON, true);
+      return false;
+    }
+
+    logger.debug("Add-on " + aAddon.id + " blocks e10s rollout.");
     return true;
   },
 
@@ -7006,16 +7028,33 @@ AddonWrapper.prototype = {
     return getExternalType(addonFor(this).type);
   },
 
+  get temporarilyInstalled() {
+    return addonFor(this)._installLocation == TemporaryInstallLocation;
+  },
+
   get aboutURL() {
     return this.isActive ? addonFor(this)["aboutURL"] : null;
   },
 
   get optionsURL() {
-    let addon = addonFor(this);
-    if (this.isActive && addon.optionsURL)
-      return addon.optionsURL;
+    if (!this.isActive) {
+      return null;
+    }
 
-    if (this.isActive && this.hasResource("options.xul"))
+    let addon = addonFor(this);
+    if (addon.optionsURL) {
+      if (addon.type == "webextension") {
+        // The internal object's optionsURL property comes from the addons
+        // DB and should be a relative URL.  However, extensions with
+        // options pages installed before bug 1293721 was fixed got absolute
+        // URLs in the addons db.  This code handles both cases.
+        let base = ExtensionManagement.getURLForExtension(addon.id);
+        return new URL(addon.optionsURL, base).href;
+      }
+      return addon.optionsURL;
+    }
+
+    if (this.hasResource("options.xul"))
       return this.getResourceURI("options.xul").spec;
 
     return null;
@@ -7382,25 +7421,26 @@ AddonWrapper.prototype = {
     }
   },
 
+  /**
+   * Reloads the add-on as if one had uninstalled it then reinstalled it.
+   *
+   * Currently, only temporarily installed add-ons can be reloaded. Attempting
+   * to reload other kinds of add-ons will result in a rejected promise.
+   *
+   * @return Promise
+   */
   reload: function() {
-    return new Promise(resolve => {
-      if (this.appDisabled) {
-        throw new Error(
-          "cannot reload add-on because it is disabled by the application");
-      }
-
+    return new Promise((resolve) => {
       const addon = addonFor(this);
-      const isReloadable = (!XPIProvider.enableRequiresRestart(addon) &&
-                            !XPIProvider.disableRequiresRestart(addon));
-      if (!isReloadable) {
-        throw new Error(
-          "cannot reload add-on because it requires a browser restart");
+
+      if (!this.temporarilyInstalled) {
+        logger.debug(`Cannot reload add-on at ${addon._sourceBundle}`);
+        throw new Error("Only temporary add-ons can be reloaded");
       }
 
-      this.userDisabled = true;
-      flushChromeCaches();
-      this.userDisabled = false;
-      resolve();
+      logger.debug(`reloading add-on ${addon.id}`);
+      // This function supports re-installing an existing add-on.
+      resolve(AddonManager.installTemporaryAddon(addon._sourceBundle));
     });
   },
 

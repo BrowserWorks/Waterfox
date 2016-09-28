@@ -93,7 +93,7 @@ if (!defined($official)) {$official="";}
 if (!defined($milestone)) {$milestone="";}
 if (!defined($module)) {$module="";}
 if (!defined($binary)) {$binary="";}
-if (!defined($displayname)) {$displayname="WaterfoxProject";}
+if (!defined($displayname)) {$displayname="Mozilla";}
 if (!defined($appversion)) {$appversion=$milestone;}
 if (!defined($depth)) {$depth=".";}
 if (!defined($rcinclude)) {$rcinclude="";}
@@ -235,8 +235,8 @@ for ($j = 1; $j < 4; $j++)
 my $winappversion = "$appver[0],$appver[1],$appver[2],$appver[3]";
 
 my $copyright = "License: MPL 2";
-my $company = "WaterfoxProject";
-my $trademarks = "WaterfoxProject";
+my $company = "Mozilla Foundation";
+my $trademarks = "Mozilla";
 my $productname = $displayname;
 
 

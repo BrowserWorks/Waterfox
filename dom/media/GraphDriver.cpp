@@ -157,7 +157,7 @@ ThreadedDriver::ThreadedDriver(MediaStreamGraphImpl* aGraphImpl)
   : GraphDriver(aGraphImpl)
 { }
 
-class MediaStreamGraphShutdownThreadRunnable : public nsRunnable {
+class MediaStreamGraphShutdownThreadRunnable : public Runnable {
 public:
   explicit MediaStreamGraphShutdownThreadRunnable(already_AddRefed<nsIThread> aThread)
     : mThread(aThread)
@@ -188,7 +188,7 @@ ThreadedDriver::~ThreadedDriver()
     }
   }
 }
-class MediaStreamGraphInitThreadRunnable : public nsRunnable {
+class MediaStreamGraphInitThreadRunnable : public Runnable {
 public:
   explicit MediaStreamGraphInitThreadRunnable(ThreadedDriver* aDriver)
     : mDriver(aDriver)
@@ -430,7 +430,6 @@ OfflineClockDriver::OfflineClockDriver(MediaStreamGraphImpl* aGraphImpl, GraphTi
 
 }
 
-
 OfflineClockDriver::~OfflineClockDriver()
 {
 }
@@ -627,6 +626,9 @@ AudioCallbackDriver::Init()
                           mGraphImpl->mOutputWanted ? &output : nullptr, latency,
                           DataCallback_s, StateCallback_s, this) == CUBEB_OK) {
       mAudioStream.own(stream);
+      DebugOnly<int> rv = cubeb_stream_set_volume(mAudioStream, CubebUtils::GetVolumeScale());
+      NS_WARN_IF_FALSE(rv == CUBEB_OK,
+          "Could not set the audio stream volume in GraphDriver.cpp");
     } else {
 #ifdef MOZ_WEBRTC
       StaticMutexAutoUnlock unlock(AudioInputCubeb::Mutex());
@@ -844,6 +846,15 @@ AudioCallbackDriver::DataCallback(const AudioDataValue* aInputBuffer,
     mIterationDurationMS /= 4;
   }
 
+  // Process mic data if any/needed
+  if (aInputBuffer) {
+    if (mAudioInput) { // for this specific input-only or full-duplex stream
+      mAudioInput->NotifyInputData(mGraphImpl, aInputBuffer,
+                                   static_cast<size_t>(aFrames),
+                                   mSampleRate, mInputChannels);
+    }
+  }
+
   mBuffer.SetBuffer(aOutputBuffer, aFrames);
   // fill part or all with leftover data from last iteration (since we
   // align to Audio blocks)
@@ -899,15 +910,6 @@ AudioCallbackDriver::DataCallback(const AudioDataValue* aInputBuffer,
   // use separate callback methods.
   mGraphImpl->NotifyOutputData(aOutputBuffer, static_cast<size_t>(aFrames),
                                mSampleRate, ChannelCount);
-
-  // Process mic data if any/needed -- after inserting far-end data for AEC!
-  if (aInputBuffer) {
-    if (mAudioInput) { // for this specific input-only or full-duplex stream
-      mAudioInput->NotifyInputData(mGraphImpl, aInputBuffer,
-                                   static_cast<size_t>(aFrames),
-                                   mSampleRate, mInputChannels);
-    }
-  }
 
   bool switching = false;
   {

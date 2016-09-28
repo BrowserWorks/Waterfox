@@ -99,7 +99,8 @@ gfxFontEntry::gfxFontEntry() :
     mUnitsPerEm(0),
     mHBFace(nullptr),
     mGrFace(nullptr),
-    mGrFaceRefCnt(0)
+    mGrFaceRefCnt(0),
+    mComputedSizeOfUserFont(0)
 {
     memset(&mDefaultSubSpaceFeatures, 0, sizeof(mDefaultSubSpaceFeatures));
     memset(&mNonDefaultSubSpaceFeatures, 0, sizeof(mNonDefaultSubSpaceFeatures));
@@ -138,7 +139,8 @@ gfxFontEntry::gfxFontEntry(const nsAString& aName, bool aIsStandardFace) :
     mUnitsPerEm(0),
     mHBFace(nullptr),
     mGrFace(nullptr),
-    mGrFaceRefCnt(0)
+    mGrFaceRefCnt(0),
+    mComputedSizeOfUserFont(0)
 {
     memset(&mDefaultSubSpaceFeatures, 0, sizeof(mDefaultSubSpaceFeatures));
     memset(&mNonDefaultSubSpaceFeatures, 0, sizeof(mNonDefaultSubSpaceFeatures));
@@ -1098,6 +1100,44 @@ gfxFontEntry::AddSizeOfExcludingThis(MallocSizeOf aMallocSizeOf,
         aSizes->mFontTableCacheSize +=
             mFontTableCache->SizeOfIncludingThis(aMallocSizeOf);
     }
+
+    // If the font has UVS data, we count that as part of the character map.
+    if (mUVSData) {
+        aSizes->mCharMapsSize += aMallocSizeOf(mUVSData.get());
+    }
+
+    // The following, if present, are essentially cached forms of font table
+    // data, so we'll accumulate them together with the basic table cache.
+    if (mUserFontData) {
+        aSizes->mFontTableCacheSize +=
+            mUserFontData->SizeOfIncludingThis(aMallocSizeOf);
+    }
+    if (mSVGGlyphs) {
+        aSizes->mFontTableCacheSize +=
+            mSVGGlyphs->SizeOfIncludingThis(aMallocSizeOf);
+    }
+    if (mMathTable) {
+        aSizes->mFontTableCacheSize +=
+            mMathTable->SizeOfIncludingThis(aMallocSizeOf);
+    }
+    if (mSupportedFeatures) {
+        aSizes->mFontTableCacheSize +=
+            mSupportedFeatures->ShallowSizeOfIncludingThis(aMallocSizeOf);
+    }
+    if (mFeatureInputs) {
+        aSizes->mFontTableCacheSize +=
+            mFeatureInputs->ShallowSizeOfIncludingThis(aMallocSizeOf);
+        for (auto iter = mFeatureInputs->ConstIter(); !iter.Done();
+             iter.Next()) {
+            // There's no API to get the real size of an hb_set, so we'll use
+            // an approximation based on knowledge of the implementation.
+            aSizes->mFontTableCacheSize += 8192; // vector of 64K bits
+        }
+    }
+    // We don't include the size of mCOLR/mCPAL here, because (depending on the
+    // font backend implementation) they will either wrap blocks of data owned
+    // by the system (and potentially shared), or tables that are in our font
+    // table cache and therefore already counted.
 }
 
 void
@@ -1106,6 +1146,32 @@ gfxFontEntry::AddSizeOfIncludingThis(MallocSizeOf aMallocSizeOf,
 {
     aSizes->mFontListSize += aMallocSizeOf(this);
     AddSizeOfExcludingThis(aMallocSizeOf, aSizes);
+}
+
+// This is used to report the size of an individual downloaded font in the
+// user font cache. (Fonts that are part of the platform font list accumulate
+// their sizes to the font list's reporter using the AddSizeOf... methods
+// above.)
+size_t
+gfxFontEntry::ComputedSizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
+{
+    FontListSizes s = { 0 };
+    AddSizeOfExcludingThis(aMallocSizeOf, &s);
+
+    // When reporting memory used for the main platform font list,
+    // where we're typically summing the totals for a few hundred font faces,
+    // we report the fields of FontListSizes separately.
+    // But for downloaded user fonts, the actual resource data (added below)
+    // will dominate, and the minor overhead of these pieces isn't worth
+    // splitting out for an individual font.
+    size_t result = s.mFontListSize + s.mFontTableCacheSize + s.mCharMapsSize;
+
+    if (mIsDataUserFont) {
+        MOZ_ASSERT(mComputedSizeOfUserFont > 0, "user font with no data?");
+        result += mComputedSizeOfUserFont;
+    }
+
+    return result;
 }
 
 //////////////////////////////////////////////////////////////////////////////

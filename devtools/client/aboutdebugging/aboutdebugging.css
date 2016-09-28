@@ -17,7 +17,7 @@ button {
   min-width: 100px;
 }
 
-/* Category tabs */
+/* Category panels */
 
 .category {
   display: flex;
@@ -40,7 +40,7 @@ button {
   flex: 1;
 }
 
-.tab {
+.panel {
   max-width: 800px;
 }
 
@@ -112,6 +112,7 @@ button {
   margin: 5px 4px 5px 0px;
 }
 
+.service-worker-disabled .warning,
 .addons-install-error .warning {
   background-image: url(chrome://devtools/skin/images/alerticon-warning.png);
   background-size: 13px 12px;
@@ -122,6 +123,7 @@ button {
 }
 
 @media (min-resolution: 1.1dppx) {
+  .service-worker-disabled .warning,
   .addons-install-error .warning {
     background-image: url(chrome://devtools/skin/images/alerticon-warning@2x.png);
   }
@@ -134,4 +136,17 @@ button {
 .addons-debugging-label {
   display: inline-block;
   margin: 0 5px 5px 0;
+}
+
+.error-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.error-page .error-page-details {
+  color: gray;
 }

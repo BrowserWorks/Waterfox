@@ -38,6 +38,9 @@ Request::Request(nsIGlobalObject* aOwner, InternalRequest* aRequest)
   , mOwner(aOwner)
   , mRequest(aRequest)
 {
+  MOZ_ASSERT(aRequest->Headers()->Guard() == HeadersGuardEnum::Immutable ||
+             aRequest->Headers()->Guard() == HeadersGuardEnum::Request ||
+             aRequest->Headers()->Guard() == HeadersGuardEnum::Request_no_cors);
   SetMimeType();
 }
 
@@ -231,7 +234,8 @@ public:
   ReferrerSameOriginChecker(workers::WorkerPrivate* aWorkerPrivate,
                             const nsAString& aReferrerURL,
                             nsresult& aResult)
-    : workers::WorkerMainThreadRunnable(aWorkerPrivate),
+    : workers::WorkerMainThreadRunnable(aWorkerPrivate,
+                                        NS_LITERAL_CSTRING("Fetch :: Referrer same origin check")),
       mReferrerURL(aReferrerURL),
       mResult(aResult)
   {
@@ -284,18 +288,8 @@ Request::Constructor(const GlobalObject& aGlobal,
     request = inputReq->GetInternalRequest();
 
   } else {
-    request = new InternalRequest();
-  }
-
-  request = request->GetRequestConstructorCopy(global, aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return nullptr;
-  }
-
-  RequestMode fallbackMode = RequestMode::EndGuard_;
-  RequestCredentials fallbackCredentials = RequestCredentials::EndGuard_;
-  RequestCache fallbackCache = RequestCache::EndGuard_;
-  if (aInput.IsUSVString()) {
+    // aInput is USVString.
+    // We need to get url before we create a InternalRequest.
     nsAutoString input;
     input.Assign(aInput.GetAsUSVString());
 
@@ -316,7 +310,18 @@ Request::Constructor(const GlobalObject& aGlobal,
       return nullptr;
     }
 
-    request->SetURL(NS_ConvertUTF16toUTF8(requestURL));
+    request = new InternalRequest(NS_ConvertUTF16toUTF8(requestURL));
+  }
+
+  request = request->GetRequestConstructorCopy(global, aRv);
+  if (NS_WARN_IF(aRv.Failed())) {
+    return nullptr;
+  }
+
+  RequestMode fallbackMode = RequestMode::EndGuard_;
+  RequestCredentials fallbackCredentials = RequestCredentials::EndGuard_;
+  RequestCache fallbackCache = RequestCache::EndGuard_;
+  if (aInput.IsUSVString()) {
     fallbackMode = RequestMode::Cors;
     fallbackCredentials = RequestCredentials::Omit;
     fallbackCache = RequestCache::Default;
@@ -511,8 +516,11 @@ Request::Constructor(const GlobalObject& aGlobal,
         bodyInitNullable.Value();
       nsCOMPtr<nsIInputStream> stream;
       nsAutoCString contentType;
+      uint64_t contentLengthUnused;
       aRv = ExtractByteStreamFromBody(bodyInit,
-                                      getter_AddRefs(stream), contentType);
+                                      getter_AddRefs(stream),
+                                      contentType,
+                                      contentLengthUnused);
       if (NS_WARN_IF(aRv.Failed())) {
         return nullptr;
       }

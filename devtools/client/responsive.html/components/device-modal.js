@@ -10,14 +10,14 @@ const { getStr } = require("../utils/l10n");
 const Types = require("../types");
 
 module.exports = createClass({
+  displayName: "DeviceModal",
+
   propTypes: {
     devices: PropTypes.shape(Types.devices).isRequired,
     onDeviceListUpdate: PropTypes.func.isRequired,
     onUpdateDeviceDisplayed: PropTypes.func.isRequired,
     onUpdateDeviceModalOpen: PropTypes.func.isRequired,
   },
-
-  displayName: "DeviceModal",
 
   mixins: [ addons.PureRenderMixin ],
 
@@ -83,6 +83,12 @@ module.exports = createClass({
       modalClass += " hidden";
     }
 
+    const sortedDevices = {};
+    for (let type of devices.types) {
+      sortedDevices[type] = Object.assign([], devices[type])
+        .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
     return dom.div(
       {
         className: modalClass,
@@ -108,7 +114,7 @@ module.exports = createClass({
               },
               type
             ),
-            devices[type].map(device => {
+            sortedDevices[type].map(device => {
               return dom.label(
                 {
                   className: "device-label",

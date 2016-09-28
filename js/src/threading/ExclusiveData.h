@@ -99,6 +99,14 @@ class ExclusiveData
         new (value_.addr()) T(mozilla::Forward<U>(u));
     }
 
+    /**
+     * Create a new `ExclusiveData`, constructing the protected value in place.
+     */
+    template <typename... Args>
+    explicit ExclusiveData(Args&&... args) {
+        new (value_.addr()) T(mozilla::Forward<Args>(args)...);
+    }
+
     ~ExclusiveData() {
         acquire();
         value_.addr()->~T();
@@ -158,6 +166,11 @@ class ExclusiveData
 
         operator T& () const { return get(); }
         T* operator->() const { return &get(); }
+
+        const ExclusiveData<T>* parent() const {
+            MOZ_ASSERT(parent_);
+            return parent_;
+        }
 
         ~Guard() {
             if (parent_)

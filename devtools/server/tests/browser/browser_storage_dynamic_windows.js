@@ -4,7 +4,7 @@
 
 "use strict";
 
-const {StorageFront} = require("devtools/server/actors/storage");
+const {StorageFront} = require("devtools/shared/fronts/storage");
 Services.scriptloader.loadSubScript("chrome://mochitests/content/browser/devtools/server/tests/browser/storage-helpers.js", this);
 
 const beforeReload = {
@@ -273,7 +273,7 @@ function testRemoveIframe(front) {
   });
 }
 
-add_task(function*() {
+add_task(function* () {
   yield openTabAndSetupStorage(MAIN_DOMAIN + "storage-dynamic-windows.html");
 
   initDebuggerServer();

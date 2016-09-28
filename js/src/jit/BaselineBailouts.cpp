@@ -580,7 +580,7 @@ static bool
 InitFromBailout(JSContext* cx, HandleScript caller, jsbytecode* callerPC,
                 HandleFunction fun, HandleScript script, IonScript* ionScript,
                 SnapshotIterator& iter, bool invalidate, BaselineStackBuilder& builder,
-                AutoValueVector& startFrameFormals, MutableHandleFunction nextCallee,
+                MutableHandle<GCVector<Value>> startFrameFormals, MutableHandleFunction nextCallee,
                 jsbytecode** callPC, const ExceptionBailoutInfo* excInfo)
 {
     // The Baseline frames we will reconstruct on the heap are not rooted, so GC
@@ -1491,7 +1491,7 @@ jit::BailoutIonToBaseline(JSContext* cx, JitActivation* activation, JitFrameIter
 
     if (!excInfo)
         iter.ionScript()->incNumBailouts();
-    iter.script()->updateBaselineOrIonRaw(cx);
+    iter.script()->updateBaselineOrIonRaw(cx->runtime());
 
     // Allocate buffer to hold stack replacement data.
     BaselineStackBuilder builder(iter, 1024);
@@ -1530,7 +1530,7 @@ jit::BailoutIonToBaseline(JSContext* cx, JitActivation* activation, JitFrameIter
     RootedScript caller(cx);
     jsbytecode* callerPC = nullptr;
     RootedFunction fun(cx, callee);
-    AutoValueVector startFrameFormals(cx);
+    Rooted<GCVector<Value>> startFrameFormals(cx, GCVector<Value>(cx));
 
     gc::AutoSuppressGC suppress(cx);
 
@@ -1560,7 +1560,7 @@ jit::BailoutIonToBaseline(JSContext* cx, JitActivation* activation, JitFrameIter
         jsbytecode* callPC = nullptr;
         RootedFunction nextCallee(cx, nullptr);
         if (!InitFromBailout(cx, caller, callerPC, fun, scr, iter.ionScript(),
-                             snapIter, invalidate, builder, startFrameFormals,
+                             snapIter, invalidate, builder, &startFrameFormals,
                              &nextCallee, &callPC, passExcInfo ? excInfo : nullptr))
         {
             return BAILOUT_RETURN_FATAL_ERROR;
@@ -1888,9 +1888,7 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo* bailoutInfo)
       case Bailout_NonObjectInput:
       case Bailout_NonStringInput:
       case Bailout_NonSymbolInput:
-      case Bailout_NonSimdBool32x4Input:
-      case Bailout_NonSimdInt32x4Input:
-      case Bailout_NonSimdFloat32x4Input:
+      case Bailout_UnexpectedSimdInput:
       case Bailout_NonSharedTypedArrayInput:
       case Bailout_Debugger:
       case Bailout_UninitializedThis:

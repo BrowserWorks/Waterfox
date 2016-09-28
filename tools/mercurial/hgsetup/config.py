@@ -11,7 +11,7 @@ import os
 
 
 HOST_FINGERPRINTS = {
-    'bitbucket.org': '46:de:34:e7:9b:18:cd:7f:ae:fd:8b:e3:bc:f4:1a:5e:38:d7:ac:24',
+    'bitbucket.org': '3f:d3:c5:17:23:3c:cd:f5:2d:17:76:06:93:7e:ee:97:42:21:14:aa',
     'bugzilla.mozilla.org': '7c:7a:c4:6c:91:3b:6b:89:cf:f2:8c:13:b8:02:c4:25:bd:1e:25:17',
     'hg.mozilla.org': 'af:27:b9:34:47:4e:e5:98:01:f6:83:2b:51:c9:aa:d8:df:fb:1a:27',
 }
@@ -152,43 +152,6 @@ class MercurialConfig(object):
         d['git'] = 1
         d['showfunc'] = 1
         d['unified'] = 8
-
-    def have_mqext_autocommit_mq(self):
-        if 'mqext' not in self._c:
-            return False
-        v = self._c['mqext'].get('mqcommit')
-        return v == 'auto' or v == 'yes'
-
-    def ensure_mqext_autocommit_mq(self):
-        if self.have_mqext_autocommit_mq():
-            return
-        if 'mqext' not in self._c:
-            self._c['mqext'] = {}
-        self._c['mqext']['mqcommit'] = 'auto'
-
-    def have_qnew_currentuser_default(self):
-        if 'defaults' not in self._c:
-            return False
-        d = self._c['defaults']
-        if 'qnew' not in d:
-            return False
-        argv = d['qnew'].split(' ')
-        for arg in argv:
-            if arg == '--currentuser' or re.match("-[^-]*U.*", arg):
-                return True
-        return False
-
-    def ensure_qnew_currentuser_default(self):
-        if self.have_qnew_currentuser_default():
-            return
-        if 'defaults' not in self._c:
-            self._c['defaults'] = {}
-
-        d = self._c['defaults']
-        if 'qnew' not in d:
-            d['qnew'] = '-U'
-        else:
-            d['qnew'] = '-U ' + d['qnew']
 
     def get_bugzilla_credentials(self):
         if 'bugzilla' not in self._c:

@@ -13,7 +13,7 @@ const LEARN_MORE_URI = "https://developer.mozilla.org/Firefox/Privacy/Tracking_P
 const PREF = "privacy.trackingprotection.enabled";
 const {UrlClassifierTestUtils} = Cu.import("resource://testing-common/UrlClassifierTestUtils.jsm", {});
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   Services.prefs.clearUserPref(PREF);
   UrlClassifierTestUtils.cleanupTestTrackers();
 });
@@ -31,7 +31,7 @@ add_task(function* testMessagesAppear() {
     messages: [
       {
         name: "Was blocked because tracking protection is enabled",
-        text: "The resource at \"http://tracking.example.com/\" was blocked because tracking protection is enabled",
+        text: "The resource at \u201chttp://tracking.example.com/\u201d was blocked because tracking protection is enabled",
         category: CATEGORY_SECURITY,
         severity: SEVERITY_WARNING,
         objects: true,

@@ -81,6 +81,7 @@ EXPORTS += [
 
 EXPORTS.mozilla += [
     'AnimationCollection.h',
+    'CSSEnabledState.h',
     'CSSStyleSheet.h',
     'CSSVariableDeclarations.h',
     'CSSVariableResolver.h',
@@ -247,7 +248,3 @@ GENERATED_FILES += [
 
 style_struct_list = GENERATED_FILES['nsStyleStructList.h']
 style_struct_list.script = 'generate-stylestructlist.py'
-
-if CONFIG['GNU_CC']:
-    CFLAGS += ['-Wshadow']
-    CXXFLAGS += ['-Wshadow']

@@ -15,6 +15,11 @@ Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
+XPCOMUtils.defineLazyGetter(this, "getExtensionUUID", () => {
+  let {getExtensionUUID} = Cu.import("resource://gre/modules/Extension.jsm", {});
+  return getExtensionUUID;
+});
+
 /*
  * This file should be kept short and simple since it's loaded even
  * when no extensions are running.
@@ -110,6 +115,11 @@ var Schemas = {
     return this.schemas;
   },
 };
+
+function getURLForExtension(id, path = "") {
+  let uuid = getExtensionUUID(id);
+  return `moz-extension://${uuid}/${path}`;
+}
 
 // This object manages various platform-level issues related to
 // moz-extension:// URIs. It lives here so that it can be used in both
@@ -261,6 +271,14 @@ function getAPILevelForWindow(window, addonId) {
       return FULL_PRIVILEGES;
     }
 
+    // The addon iframes embedded in a addon page from with the same addonId
+    // should have the same privileges of the sameTypeParent.
+    // (see Bug 1258347 for rationale)
+    let parentSameAddonPrivileges = getAPILevelForWindow(parentWindow, addonId);
+    if (parentSameAddonPrivileges > NO_PRIVILEGES) {
+      return parentSameAddonPrivileges;
+    }
+
     // In all the other cases, WebExtension URLs loaded into sub-frame UI
     // will have "content script API level privileges".
     // (see Bug 1214658 for rationale)
@@ -283,6 +301,8 @@ this.ExtensionManagement = {
 
   getFrameId: Frames.getId.bind(Frames),
   getParentFrameId: Frames.getParentId.bind(Frames),
+
+  getURLForExtension,
 
   // exported API Level Helpers
   getAddonIdForWindow,

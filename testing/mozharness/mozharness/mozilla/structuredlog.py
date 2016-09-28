@@ -28,10 +28,11 @@ class StructuredOutputParser(OutputParser):
 
         self.suite_category = kwargs.pop('suite_category', None)
 
+        tbpl_compact = kwargs.pop("log_compact", False)
         super(StructuredOutputParser, self).__init__(**kwargs)
 
         mozlog = self._get_mozlog_module()
-        self.formatter = mozlog.formatters.TbplFormatter()
+        self.formatter = mozlog.formatters.TbplFormatter(compact=tbpl_compact)
         self.handler = mozlog.handlers.StatusHandler()
         self.log_actions = mozlog.structuredlog.log_actions()
 
@@ -82,8 +83,10 @@ class StructuredOutputParser(OutputParser):
         if action == "log":
             level = getattr(log, data["level"].upper())
 
-        self.log(self.formatter(data), level=level)
-        self.update_levels(tbpl_level, level)
+        log_data = self.formatter(data)
+        if log_data is not None:
+            self.log(log_data, level=level)
+            self.update_levels(tbpl_level, level)
 
     def evaluate_parser(self, return_code, success_codes=None):
         success_codes = success_codes or [0]
@@ -152,7 +155,7 @@ class StructuredOutputParser(OutputParser):
             fail_text = '0'
 
         text_summary = "%s/%s/%s" % (expected_count, fail_text, expected_failures)
-        self.info("TinderboxPrint: %s: %s\n" % (suite_name, text_summary))
+        self.info("TinderboxPrint: %s<br/>%s\n" % (suite_name, text_summary))
 
     def append_tinderboxprint_line(self, suite_name):
         summary = self.handler.summarize()

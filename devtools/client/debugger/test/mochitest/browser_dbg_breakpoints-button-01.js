@@ -10,7 +10,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
@@ -27,9 +31,7 @@ function test() {
          "Breakpoints should be " + (isDisabled ? "disabled" : "enabled") + ".");
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "-01.js");
-
+    Task.spawn(function* () {
       yield actions.addBreakpoint({ actor: gSources.values[0], line: 5 });
       yield actions.addBreakpoint({ actor: gSources.values[1], line: 6 });
       yield actions.addBreakpoint({ actor: gSources.values[1], line: 7 });
@@ -37,7 +39,7 @@ function test() {
 
       gSources.toggleBreakpoints();
       yield waitForDispatch(gPanel, gDebugger.constants.REMOVE_BREAKPOINT, 3);
-      checkBreakpointsDisabled(true)
+      checkBreakpointsDisabled(true);
 
       const finished = waitForDebuggerEvents(gPanel, gDebugger.EVENTS.BREAKPOINT_ADDED, 3);
       gSources.toggleBreakpoints();
@@ -47,7 +49,7 @@ function test() {
       if (gDebugger.gThreadClient.state !== "attached") {
         yield waitForThreadEvents(gPanel, "resumed");
       }
-      closeDebuggerAndFinish(gPanel)
+      closeDebuggerAndFinish(gPanel);
     });
   });
 }

@@ -12,7 +12,6 @@ var promise = require("promise");
 
 loader.lazyRequireGetter(this, "FileUtils",
                          "resource://gre/modules/FileUtils.jsm", true);
-loader.lazyRequireGetter(this, "setTimeout", "Timer", true);
 
 // Re-export the thread-safe utils.
 const ThreadSafeDevToolsUtils = require("./ThreadSafeDevToolsUtils.js");
@@ -136,7 +135,7 @@ exports.defineLazyPrototypeGetter =
 function defineLazyPrototypeGetter(aObject, aKey, aCallback) {
   Object.defineProperty(aObject, aKey, {
     configurable: true,
-    get: function() {
+    get: function () {
       const value = aCallback.call(this);
 
       Object.defineProperty(this, aKey, {
@@ -148,7 +147,7 @@ function defineLazyPrototypeGetter(aObject, aKey, aCallback) {
       return value;
     }
   });
-}
+};
 
 /**
  * Safely get the property value from a Debugger.Object for a given key. Walks
@@ -195,7 +194,7 @@ exports.hasSafeGetter = function hasSafeGetter(aDesc) {
   try {
     let fn = aDesc.get.unwrap();
     return fn && fn.callable && fn.class == "Function" && fn.script === undefined;
-  } catch(e) {
+  } catch (e) {
     // Avoid exception 'Object in compartment marked as invisible to Debugger'
     return false;
   }
@@ -246,7 +245,7 @@ exports.dumpn.wantLogging = false;
 /**
  * A verbose logger for low-level tracing.
  */
-exports.dumpv = function(msg) {
+exports.dumpv = function (msg) {
   if (exports.dumpv.wantVerbose) {
     exports.dumpn(msg);
   }
@@ -382,8 +381,14 @@ exports.defineLazyGetter(this, "NetworkHelper", () => {
  *        - loadFromCache: if false, will bypass the cache and
  *          always load fresh from the network (default: true)
  *        - policy: the nsIContentPolicy type to apply when fetching the URL
+ *                  (only works when loading from system principal)
  *        - window: the window to get the loadGroup from
  *        - charset: the charset to use if the channel doesn't provide one
+ *        - principal: the principal to use, if omitted, the request is loaded
+ *                     with the system principal
+ *        - cacheKey: when loading from cache, use this key to retrieve a cache
+ *                    specific to a given SHEntry. (Allows loading POST
+ *                    requests from cache)
  * @returns Promise that resolves with an object with the following members on
  *          success:
  *           - content: the document at that URL, as a string,
@@ -395,10 +400,12 @@ exports.defineLazyGetter(this, "NetworkHelper", () => {
  * without relying on caching when we can (not for eval, etc.):
  * http://www.softwareishard.com/blog/firebug/nsitraceablechannel-intercept-http-traffic/
  */
-function mainThreadFetch(aURL, aOptions={ loadFromCache: true,
+function mainThreadFetch(aURL, aOptions = { loadFromCache: true,
                                           policy: Ci.nsIContentPolicy.TYPE_OTHER,
                                           window: null,
-                                          charset: null }) {
+                                          charset: null,
+                                          principal: null,
+                                          cacheKey: null }) {
   // Create a channel.
   let url = aURL.split(" -> ").pop();
   let channel;
@@ -412,6 +419,13 @@ function mainThreadFetch(aURL, aOptions={ loadFromCache: true,
   channel.loadFlags = aOptions.loadFromCache
     ? channel.LOAD_FROM_CACHE
     : channel.LOAD_BYPASS_CACHE;
+
+  // When loading from cache, the cacheKey allows us to target a specific
+  // SHEntry and offer ways to restore POST requests from cache.
+  if (aOptions.loadFromCache &&
+      aOptions.cacheKey && channel instanceof Ci.nsICacheInfoChannel) {
+    channel.cacheKey = aOptions.cacheKey;
+  }
 
   if (aOptions.window) {
     // Respect private browsing.
@@ -497,7 +511,7 @@ function mainThreadFetch(aURL, aOptions={ loadFromCache: true,
  * @param {Object} options - The options object passed to @method fetch.
  * @return {nsIChannel} - The newly created channel. Throws on failure.
  */
-function newChannelForURL(url, { policy, window }) {
+function newChannelForURL(url, { policy, window, principal }) {
   var securityFlags = Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL;
   if (window) {
     // Respect private browsing.
@@ -515,17 +529,25 @@ function newChannelForURL(url, { policy, window }) {
               securityFlags |= Ci.nsILoadInfo.SEC_FORCE_PRIVATE_BROWSING;
             }
           }
-        } catch(ex) {}
+        } catch (ex) {}
       }
     }
   }
 
   let channelOptions = {
     contentPolicyType: policy,
-    loadUsingSystemPrincipal: true,
     securityFlags: securityFlags,
     uri: url
   };
+  if (principal) {
+    // contentPolicyType is required when loading with a custom principal
+    if (!channelOptions.contentPolicyType) {
+      channelOptions.contentPolicyType = Ci.nsIContentPolicy.TYPE_OTHER;
+    }
+    channelOptions.loadingPrincipal = principal;
+  } else {
+    channelOptions.loadUsingSystemPrincipal = true;
+  }
 
   try {
     return NetUtil.newChannel(channelOptions);
@@ -571,7 +593,7 @@ if (!this.isWorker) {
  *         promise in the list of given promises to be rejected.
  */
 exports.settleAll = values => {
-  if (values === null || typeof(values[Symbol.iterator]) != "function") {
+  if (values === null || typeof (values[Symbol.iterator]) != "function") {
     throw new Error("settleAll() expects an iterable.");
   }
 
@@ -614,7 +636,7 @@ exports.settleAll = values => {
       checkForCompletion();
     };
 
-    if (value && typeof(value.then) == "function") {
+    if (value && typeof (value.then) == "function") {
       value.then(resolver, rejecter);
     } else {
       // Given value is not a promise, forward it as a resolution value.
@@ -631,10 +653,10 @@ exports.settleAll = values => {
  */
 var testing = false;
 Object.defineProperty(exports, "testing", {
-  get: function() {
+  get: function () {
     return testing;
   },
-  set: function(state) {
+  set: function (state) {
     testing = state;
   }
 });

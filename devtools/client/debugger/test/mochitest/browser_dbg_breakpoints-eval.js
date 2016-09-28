@@ -10,23 +10,25 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-eval.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-eval.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gSources = gDebugger.DebuggerView.Sources;
     const actions = bindActionCreators(gPanel);
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "-eval.js");
-
+    Task.spawn(function* () {
       let newSource = waitForDebuggerEvents(gPanel, gDebugger.EVENTS.NEW_SOURCE);
       callInTab(gTab, "evalSourceWithSourceURL");
       yield newSource;
       // Wait for it to be added to the UI
       yield waitForTick();
 
-      const newSourceActor = getSourceActor(gSources, EXAMPLE_URL + 'bar.js');
+      const newSourceActor = getSourceActor(gSources, EXAMPLE_URL + "bar.js");
       yield actions.addBreakpoint({
         actor: newSourceActor,
         line: 2

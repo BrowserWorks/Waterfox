@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS.mozilla.ipc += [
+    'DBusConnectionDelete.h',
     'DBusConnectionRefPtr.h',
     'DBusHelpers.h',
     'DBusMessageRefPtr.h',
@@ -30,6 +31,3 @@ if CONFIG['MOZ_ENABLE_DBUS']:
     CFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
     CXXFLAGS += CONFIG['MOZ_DBUS_CFLAGS']
     CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

@@ -24,41 +24,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
                                   "resource://gre/modules/Services.jsm");
 
-function RemoteTagServiceService()
-{
-}
-
-RemoteTagServiceService.prototype = {
-  classID: Components.ID("{dfd07380-6083-11e4-9803-0800200c9a66}"),
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIRemoteTagService, Ci.nsISupportsWeakReference]),
-
-  /**
-   * CPOWs can have user data attached to them. This data originates
-   * in the local process from this function, getRemoteObjectTag. It's
-   * sent along with the CPOW to the remote process, where it can be
-   * fetched with Components.utils.getCrossProcessWrapperTag.
-   */
-  getRemoteObjectTag: function(target) {
-    try {
-      if (target.QueryInterface) {
-        try {
-          if (target.QueryInterface(Ci.nsIDocShellTreeItem)) {
-            return "ContentDocShellTreeItem";
-          }
-        } catch (e) {}
-
-        try {
-          if (target.QueryInterface(Ci.nsIDOMDocument)) {
-            return "ContentDocument";
-          }
-        } catch (e) {}
-      }
-    } catch (e) {}
-
-    return "generic";
-  }
-};
-
 function AddonPolicyService()
 {
   this.wrappedJSObject = this;
@@ -260,7 +225,10 @@ AddonLocalizationConverter.prototype = {
     this.checkTypes(aFromType, aToType);
     let addonId = this.getAddonId(aContext);
 
-    let string = NetUtil.readInputStreamToString(aStream, aStream.available());
+    let string = (
+      aStream.available() ?
+      NetUtil.readInputStreamToString(aStream, aStream.available()): ""
+    );
     return this.convertToStream(addonId, string);
   },
 
@@ -294,5 +262,5 @@ AddonLocalizationConverter.prototype = {
   },
 };
 
-this.NSGetFactory = XPCOMUtils.generateNSGetFactory([RemoteTagServiceService, AddonPolicyService,
+this.NSGetFactory = XPCOMUtils.generateNSGetFactory([AddonPolicyService,
                                                      AddonLocalizationConverter]);

@@ -82,7 +82,7 @@
 #include "mozilla/dom/PBrowserParent.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/dom/TypedArray.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/gfx/PathHelpers.h"
@@ -275,15 +275,16 @@ public:
         mode = ExtendMode::REPEAT;
       }
 
-      Filter filter;
+      SamplingFilter samplingFilter;
       if (state.imageSmoothingEnabled) {
-        filter = Filter::GOOD;
+        samplingFilter = SamplingFilter::GOOD;
       } else {
-        filter = Filter::POINT;
+        samplingFilter = SamplingFilter::POINT;
       }
 
       mPattern.InitSurfacePattern(state.patternStyles[aStyle]->mSurface, mode,
-                                  state.patternStyles[aStyle]->mTransform, filter);
+                                  state.patternStyles[aStyle]->mTransform,
+                                  samplingFilter);
     }
 
     return *mPattern.GetPattern();
@@ -319,9 +320,21 @@ public:
     nsIntRegion fillPaintNeededRegion;
     nsIntRegion strokePaintNeededRegion;
 
-    FilterSupport::ComputeSourceNeededRegions(
-      aCtx->CurrentState().filter, mPostFilterBounds,
-      sourceGraphicNeededRegion, fillPaintNeededRegion, strokePaintNeededRegion);
+    if (aCtx->CurrentState().updateFilterOnWriteOnly) {
+      aCtx->UpdateFilter();
+      aCtx->CurrentState().updateFilterOnWriteOnly = false;
+    }
+
+    // This should not be empty, but if it is, we want to handle it
+    // rather than crash, as UpdateFilter() call above could have changed
+    // the number of filter primitives.
+    MOZ_ASSERT(!aCtx->CurrentState().filter.mPrimitives.IsEmpty());
+    if (!aCtx->CurrentState().filter.mPrimitives.IsEmpty()) {
+      FilterSupport::ComputeSourceNeededRegions(
+        aCtx->CurrentState().filter, mPostFilterBounds,
+        sourceGraphicNeededRegion, fillPaintNeededRegion,
+        strokePaintNeededRegion);
+    }
 
     mSourceGraphicRect = sourceGraphicNeededRegion.GetBounds();
     mFillPaintRect = fillPaintNeededRegion.GetBounds();
@@ -396,6 +409,7 @@ public:
     AutoRestoreTransform autoRestoreTransform(mFinalTarget);
     mFinalTarget->SetTransform(Matrix());
 
+    MOZ_RELEASE_ASSERT(!mCtx->CurrentState().filter.mPrimitives.IsEmpty());
     gfx::FilterSupport::RenderFilterDescription(
       mFinalTarget, mCtx->CurrentState().filter,
       gfx::Rect(mPostFilterBounds),
@@ -405,6 +419,12 @@ public:
       mCtx->CurrentState().filterAdditionalImages,
       mPostFilterBounds.TopLeft() - mOffset,
       DrawOptions(1.0f, mCompositionOp));
+
+    const gfx::FilterDescription& filter = mCtx->CurrentState().filter;
+    MOZ_RELEASE_ASSERT(!filter.mPrimitives.IsEmpty());
+    if (filter.mPrimitives.LastElement().IsTainted() && mCtx->mCanvasElement) {
+      mCtx->mCanvasElement->SetWriteOnly();
+    }
   }
 
   DrawTarget* DT()
@@ -1616,18 +1636,16 @@ CanvasRenderingContext2D::ReturnTarget()
 }
 
 NS_IMETHODIMP
-CanvasRenderingContext2D::InitializeWithSurface(nsIDocShell* aShell,
-                                                gfxASurface* aSurface,
-                                                int32_t aWidth,
-                                                int32_t aHeight)
+CanvasRenderingContext2D::InitializeWithDrawTarget(nsIDocShell* aShell,
+                                                   gfx::DrawTarget* aTarget)
 {
   RemovePostRefreshObserver();
   mDocShell = aShell;
   AddPostRefreshObserverIfNecessary();
 
-  SetDimensions(aWidth, aHeight);
-  mTarget = gfxPlatform::GetPlatform()->
-    CreateDrawTargetForSurface(aSurface, IntSize(aWidth, aHeight));
+  IntSize size = aTarget->GetSize();
+  SetDimensions(size.width, size.height);
+  mTarget = aTarget;
 
   if (!mTarget) {
     EnsureErrorTarget();
@@ -2176,7 +2194,6 @@ CanvasRenderingContext2D::CreatePattern(const CanvasImageSource& aSource,
       nsLayoutUtils::SFE_WANT_FIRST_FRAME, mTarget);
 
   if (!res.GetSourceSurface()) {
-    aError.Throw(NS_ERROR_NOT_AVAILABLE);
     return nullptr;
   }
 
@@ -2470,6 +2487,9 @@ CanvasRenderingContext2D::SetFilter(const nsAString& aFilter, ErrorResult& aErro
                                       mCanvasElement, this);
       UpdateFilter();
     }
+  }
+  if (mCanvasElement && !mCanvasElement->IsWriteOnly()) {
+    CurrentState().updateFilterOnWriteOnly = true;
   }
 }
 
@@ -3585,6 +3605,22 @@ struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcess
       // throughout the text layout process
     }
 
+    mCtx->EnsureTarget();
+
+    // If the operation is 'fill' with a simple color, we defer to gfxTextRun
+    // which will handle color/svg-in-ot fonts appropriately. Such fonts will
+    // not render well via the code below.
+    if (mOp == CanvasRenderingContext2D::TextDrawOperation::FILL &&
+        mState->StyleIsColor(CanvasRenderingContext2D::Style::FILL)) {
+      RefPtr<gfxContext> thebes =
+        gfxContext::ForDrawTargetWithTransform(mCtx->mTarget);
+      nscolor fill = mState->colorStyles[CanvasRenderingContext2D::Style::FILL];
+      thebes->SetColor(Color::FromABGR(fill));
+      gfxTextRun::DrawParams params(thebes);
+      mTextRun->Draw(gfxTextRun::Range(mTextRun.get()), point, params);
+      return;
+    }
+
     uint32_t numRuns;
     const gfxTextRun::GlyphRun *runs = mTextRun->GetGlyphRuns(&numRuns);
     const int32_t appUnitsPerDevUnit = mAppUnitsPerDevPixel;
@@ -3594,7 +3630,6 @@ struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcess
 
     float advanceSum = 0;
 
-    mCtx->EnsureTarget();
     for (uint32_t c = 0; c < numRuns; c++) {
       gfxFont *font = runs[c].mFont;
 
@@ -4364,57 +4399,6 @@ ExtractSubrect(SourceSurface* aSurface, gfx::Rect* aSourceRect, DrawTarget* aTar
   return subrectDT->Snapshot();
 }
 
-// Acts like nsLayoutUtils::SurfaceFromElement, but it'll attempt
-// to pull a SourceSurface from our cache. This allows us to avoid
-// reoptimizing surfaces if content and canvas backends are different.
-nsLayoutUtils::SurfaceFromElementResult
-CanvasRenderingContext2D::CachedSurfaceFromElement(Element* aElement)
-{
-  nsLayoutUtils::SurfaceFromElementResult res;
-
-  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(aElement);
-  if (!imageLoader) {
-    return res;
-  }
-
-  nsCOMPtr<imgIRequest> imgRequest;
-  imageLoader->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
-                          getter_AddRefs(imgRequest));
-  if (!imgRequest) {
-    return res;
-  }
-
-  uint32_t status;
-  if (NS_FAILED(imgRequest->GetImageStatus(&status)) ||
-      !(status & imgIRequest::STATUS_LOAD_COMPLETE)) {
-    return res;
-  }
-
-  nsCOMPtr<nsIPrincipal> principal;
-  if (NS_FAILED(imgRequest->GetImagePrincipal(getter_AddRefs(principal))) ||
-      !principal) {
-    return res;
-  }
-
-  res.mSourceSurface =
-    CanvasImageCache::SimpleLookup(aElement, mIsSkiaGL);
-  if (!res.mSourceSurface) {
-    return res;
-  }
-
-  int32_t corsmode = imgIRequest::CORS_NONE;
-  if (NS_SUCCEEDED(imgRequest->GetCORSMode(&corsmode))) {
-    res.mCORSUsed = corsmode != imgIRequest::CORS_NONE;
-  }
-
-  res.mSize = res.mSourceSurface->GetSize();
-  res.mPrincipal = principal.forget();
-  res.mIsWriteOnly = false;
-  res.mImageRequest = imgRequest.forget();
-
-  return res;
-}
-
 //
 // image
 //
@@ -4436,6 +4420,56 @@ ClipImageDimension(double& aSourceCoord, double& aSourceSize, int32_t aImageSize
     aDestSize += delta * scale;
     aSourceSize = aImageSize - aSourceCoord;
   }
+}
+
+// Acts like nsLayoutUtils::SurfaceFromElement, but it'll attempt
+// to pull a SourceSurface from our cache. This allows us to avoid
+// reoptimizing surfaces if content and canvas backends are different.
+nsLayoutUtils::SurfaceFromElementResult
+CanvasRenderingContext2D::CachedSurfaceFromElement(Element* aElement)
+{
+  nsLayoutUtils::SurfaceFromElementResult res;
+  nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(aElement);
+  if (!imageLoader) {
+    return res;
+  }
+
+  nsCOMPtr<imgIRequest> imgRequest;
+  imageLoader->GetRequest(nsIImageLoadingContent::CURRENT_REQUEST,
+                          getter_AddRefs(imgRequest));
+  if (!imgRequest) {
+    return res;
+  }
+
+  uint32_t status = 0;
+  if (NS_FAILED(imgRequest->GetImageStatus(&status)) ||
+      !(status & imgIRequest::STATUS_LOAD_COMPLETE)) {
+    return res;
+  }
+
+  nsCOMPtr<nsIPrincipal> principal;
+  if (NS_FAILED(imgRequest->GetImagePrincipal(getter_AddRefs(principal))) ||
+      !principal) {
+    return res;
+  }
+
+  res.mSourceSurface =
+    CanvasImageCache::LookupAllCanvas(aElement, mIsSkiaGL);
+  if (!res.mSourceSurface) {
+    return res;
+  }
+
+  int32_t corsmode = imgIRequest::CORS_NONE;
+  if (NS_SUCCEEDED(imgRequest->GetCORSMode(&corsmode))) {
+    res.mCORSUsed = corsmode != imgIRequest::CORS_NONE;
+  }
+
+  res.mSize = res.mSourceSurface->GetSize();
+  res.mPrincipal = principal.forget();
+  res.mIsWriteOnly = false;
+  res.mImageRequest = imgRequest.forget();
+
+  return res;
 }
 
 // drawImage(in HTMLImageElement image, in float dx, in float dy);
@@ -4507,7 +4541,7 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     }
 
     srcSurf =
-      CanvasImageCache::Lookup(element, mCanvasElement, &imgSize, mIsSkiaGL);
+     CanvasImageCache::LookupCanvas(element, mCanvasElement, &imgSize, mIsSkiaGL);
   }
 
   nsLayoutUtils::DirectDrawInfo drawInfo;
@@ -4616,15 +4650,13 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     // of animated images. We also don't want to rasterize vector images.
     uint32_t sfeFlags = nsLayoutUtils::SFE_WANT_FIRST_FRAME |
                         nsLayoutUtils::SFE_NO_RASTERIZING_VECTORS;
-    // The cache lookup can miss even if the image is already in the cache
-    // if the image is coming from a different element or cached for a
-    // different canvas. This covers the case when we miss due to caching
-    // for a different canvas, but CanvasImageCache should be fixed if we
-    // see misses due to different elements drawing the same image.
+
     nsLayoutUtils::SurfaceFromElementResult res =
-      CachedSurfaceFromElement(element);
-    if (!res.mSourceSurface)
+      CanvasRenderingContext2D::CachedSurfaceFromElement(element);
+
+    if (!res.mSourceSurface) {
       res = nsLayoutUtils::SurfaceFromElement(element, sfeFlags, mTarget);
+    }
 
     if (!res.mSourceSurface && !res.mDrawInfo.mImgContainer) {
       // The spec says to silently do nothing in the following cases:
@@ -4656,10 +4688,8 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
 
     if (res.mSourceSurface) {
       if (res.mImageRequest) {
-        CanvasImageCache::NotifyDrawImage(element, mCanvasElement, res.mImageRequest,
-                                          res.mSourceSurface, imgSize, mIsSkiaGL);
+        CanvasImageCache::NotifyDrawImage(element, mCanvasElement, res.mSourceSurface, imgSize, mIsSkiaGL);
       }
-
       srcSurf = res.mSourceSurface;
     } else {
       drawInfo = res.mDrawInfo;
@@ -4690,12 +4720,12 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
     return;
   }
 
-  Filter filter;
+  SamplingFilter samplingFilter;
 
   if (CurrentState().imageSmoothingEnabled)
-    filter = gfx::Filter::LINEAR;
+    samplingFilter = gfx::SamplingFilter::LINEAR;
   else
-    filter = gfx::Filter::POINT;
+    samplingFilter = gfx::SamplingFilter::POINT;
 
   gfx::Rect bounds;
 
@@ -4718,7 +4748,7 @@ CanvasRenderingContext2D::DrawImage(const CanvasImageSource& aImage,
       DrawSurface(srcSurf,
                   gfx::Rect(aDx, aDy, aDw, aDh),
                   sourceRect,
-                  DrawSurfaceOptions(filter),
+                  DrawSurfaceOptions(samplingFilter),
                   DrawOptions(CurrentState().globalAlpha, UsedOperation()));
   } else {
     DrawDirectlyToCanvas(drawInfo, &bounds,
@@ -4785,7 +4815,7 @@ CanvasRenderingContext2D::DrawDirectlyToCanvas(
   auto result = aImage.mImgContainer->
     Draw(context, scaledImageSize,
          ImageRegion::Create(gfxRect(aSrc.x, aSrc.y, aSrc.width, aSrc.height)),
-         aImage.mWhichFrame, Filter::GOOD, Some(svgContext), modifiedFlags);
+         aImage.mWhichFrame, SamplingFilter::GOOD, Some(svgContext), modifiedFlags);
 
   if (result != DrawResult::SUCCESS) {
     NS_WARNING("imgIContainer::Draw failed");
@@ -5020,7 +5050,7 @@ CanvasRenderingContext2D::DrawWindow(nsGlobalWindow& aWindow, double aX,
     gfx::Rect destRect(0, 0, aW, aH);
     gfx::Rect sourceRect(0, 0, sw, sh);
     mTarget->DrawSurface(source, destRect, sourceRect,
-                         DrawSurfaceOptions(gfx::Filter::POINT),
+                         DrawSurfaceOptions(gfx::SamplingFilter::POINT),
                          DrawOptions(GlobalAlpha(), UsedOperation(),
                                      AntialiasMode::NONE));
     mTarget->Flush();

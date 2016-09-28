@@ -39,7 +39,6 @@
 
 #if defined(XP_WIN)
 #include "mozilla/WindowsVersion.h"
-#include "nsNativeConnectionHelper.h"
 #include "ShutdownLayer.h"
 #endif
 
@@ -59,9 +58,6 @@
 #define SUCCESSFUL_CONNECTING_TO_IPV6_ADDRESS 2
 #define UNSUCCESSFUL_CONNECTING_TO_IPV6_ADDRESS 3
 
-using namespace mozilla;
-using namespace mozilla::net;
-
 //-----------------------------------------------------------------------------
 
 static NS_DEFINE_CID(kSocketProviderServiceCID, NS_SOCKETPROVIDERSERVICE_CID);
@@ -69,7 +65,10 @@ static NS_DEFINE_CID(kDNSServiceCID, NS_DNSSERVICE_CID);
 
 //-----------------------------------------------------------------------------
 
-class nsSocketEvent : public nsRunnable
+namespace mozilla {
+namespace net {
+
+class nsSocketEvent : public Runnable
 {
 public:
     nsSocketEvent(nsSocketTransport *transport, uint32_t type,
@@ -206,8 +205,8 @@ ErrorAccordingToNSPR(PRErrorCode errorCode)
         rv = NS_ERROR_FILE_READ_ONLY;
         break;
     default:
-        if (mozilla::psm::IsNSSErrorCode(errorCode)) {
-            rv = mozilla::psm::GetXPCOMFromNSSError(errorCode);
+        if (psm::IsNSSErrorCode(errorCode)) {
+            rv = psm::GetXPCOMFromNSSError(errorCode);
         }
         break;
 
@@ -746,6 +745,7 @@ nsSocketTransport::nsSocketTransport()
     , mResolving(false)
     , mNetAddrIsSet(false)
     , mSelfAddrIsSet(false)
+    , mNetAddrPreResolved(false)
     , mLock("nsSocketTransport.mLock")
     , mFD(this)
     , mFDref(0)
@@ -886,6 +886,23 @@ nsSocketTransport::Init(const char **types, uint32_t typeCount,
 }
 
 nsresult
+nsSocketTransport::InitPreResolved(const char **socketTypes, uint32_t typeCount,
+                                   const nsACString &host, uint16_t port,
+                                   const nsACString &hostRoute, uint16_t portRoute,
+                                   nsIProxyInfo *proxyInfo,
+                                   const mozilla::net::NetAddr* addr)
+{
+  nsresult rv = Init(socketTypes, typeCount, host, port, hostRoute, portRoute, proxyInfo);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  mNetAddr = *addr;
+  mNetAddrPreResolved = true;
+  return NS_OK;
+}
+
+nsresult
 nsSocketTransport::InitWithFilename(const char *filename)
 {
 #if defined(XP_UNIX)
@@ -1015,6 +1032,11 @@ nsSocketTransport::ResolveHost()
                 " bypass cache" : ""));
 
     nsresult rv;
+
+    if (mNetAddrPreResolved) {
+        mState = STATE_RESOLVING;
+        return PostEvent(MSG_DNS_LOOKUP_COMPLETE, NS_OK, nullptr);
+    }
 
     if (!mProxyHost.IsEmpty()) {
         if (!mProxyTransparent || mProxyTransparentResolvesHost) {
@@ -1325,7 +1347,7 @@ nsSocketTransport::InitiateSocket()
     }
 
     // Attach network activity monitor
-    mozilla::net::NetworkActivityMonitor::AttachIOLayer(fd);
+    NetworkActivityMonitor::AttachIOLayer(fd);
 
     PRStatus status;
 
@@ -1611,19 +1633,6 @@ nsSocketTransport::RecoverFromError()
         }
     }
 
-#if defined(XP_WIN)
-    // If not trying next address, try to make a connection using dialup. 
-    // Retry if that connection is made.
-    if (!tryAgain) {
-        bool autodialEnabled;
-        mSocketTransportService->GetAutodialEnabled(&autodialEnabled);
-        if (autodialEnabled) {
-          tryAgain = nsNativeConnectionHelper::OnConnectionFailed(
-                       NS_ConvertUTF8toUTF16(SocketHost()).get());
-	    }
-    }
-#endif
-
     // prepare to try again.
     if (tryAgain) {
         uint32_t msg;
@@ -1713,7 +1722,7 @@ nsSocketTransport::OnSocketConnected()
         mFDconnected = true;
 
 #ifdef XP_WIN
-        if (!mozilla::IsWin2003OrLater()) { // windows xp
+        if (!IsWin2003OrLater()) { // windows xp
             PRSocketOptionData opt;
             opt.option = PR_SockOpt_RecvBufferSize;
             if (PR_GetSocketOption(mFD, &opt) == PR_SUCCESS) {
@@ -1770,7 +1779,7 @@ nsSocketTransport::GetFD_Locked()
     return mFD;
 }
 
-class ThunkPRClose : public nsRunnable
+class ThunkPRClose : public Runnable
 {
 public:
   explicit ThunkPRClose(PRFileDesc *fd) : mFD(fd) {}
@@ -1891,8 +1900,9 @@ nsSocketTransport::OnSocketEvent(uint32_t type, nsresult status, nsISupports *pa
             else
                 mCondition = status;
         }
-        else if (mState == STATE_RESOLVING)
+        else if (mState == STATE_RESOLVING) {
             mCondition = InitiateSocket();
+        }
         break;
 
     case MSG_RETRY_INIT_SOCKET:
@@ -3126,7 +3136,7 @@ void
 nsSocketTransport::CloseSocket(PRFileDesc *aFd, bool aTelemetryEnabled)
 {
 #if defined(XP_WIN)
-    mozilla::net::AttachShutdownLayer(aFd);
+    AttachShutdownLayer(aFd);
 #endif
 
     // We use PRIntervalTime here because we need
@@ -3180,3 +3190,6 @@ nsSocketTransport::SendPRBlockingTelemetry(PRIntervalTime aStart,
                               PR_IntervalToMilliseconds(now - aStart));
     }
 }
+
+} // namespace net
+} // namespace mozilla

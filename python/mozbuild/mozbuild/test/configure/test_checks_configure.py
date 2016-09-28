@@ -126,9 +126,11 @@ class TestChecksConfigure(unittest.TestCase):
     KNOWN_A = mozpath.abspath('/usr/bin/known-a')
     KNOWN_B = mozpath.abspath('/usr/local/bin/known-b')
     KNOWN_C = mozpath.abspath('/home/user/bin/known c')
+    OTHER_A = mozpath.abspath('/lib/other/known-a')
 
     def get_result(self, command='', args=[], environ={},
-                   prog='/bin/configure'):
+                   prog='/bin/configure', extra_paths=None,
+                   includes=('util.configure', 'checks.configure')):
         config = {}
         out = StringIO()
         paths = {
@@ -136,13 +138,17 @@ class TestChecksConfigure(unittest.TestCase):
             self.KNOWN_B: None,
             self.KNOWN_C: None,
         }
+        if extra_paths:
+            paths.update(extra_paths)
         environ = dict(environ)
-        environ['PATH'] = os.pathsep.join(os.path.dirname(p) for p in paths)
+        if 'PATH' not in environ:
+            environ['PATH'] = os.pathsep.join(os.path.dirname(p) for p in paths)
+        paths[self.OTHER_A] = None
         sandbox = ConfigureTestSandbox(paths, config, environ, [prog] + args,
                                        out, out)
         base_dir = os.path.join(topsrcdir, 'build', 'moz.configure')
-        sandbox.include_file(os.path.join(base_dir, 'util.configure'))
-        sandbox.include_file(os.path.join(base_dir, 'checks.configure'))
+        for f in includes:
+            sandbox.include_file(os.path.join(base_dir, f))
 
         status = 0
         try:
@@ -395,6 +401,391 @@ class TestChecksConfigure(unittest.TestCase):
         self.assertEqual(e.exception.message,
                          'input must resolve to a tuple or a list with a '
                          'single element, or a string')
+
+    def test_check_prog_with_path(self):
+        config, out, status = self.get_result('check_prog("A", ("known-a",), paths=["/some/path"])')
+        self.assertEqual(status, 1)
+        self.assertEqual(config, {})
+        self.assertEqual(out, textwrap.dedent('''\
+            checking for a... not found
+            DEBUG: a: Trying known-a
+            ERROR: Cannot find a
+        '''))
+
+        config, out, status = self.get_result('check_prog("A", ("known-a",), paths=["%s"])' %
+                                              os.path.dirname(self.OTHER_A))
+        self.assertEqual(status, 0)
+        self.assertEqual(config, {'A': self.OTHER_A})
+        self.assertEqual(out, textwrap.dedent('''\
+            checking for a... %s
+        ''' % self.OTHER_A))
+
+        dirs = map(mozpath.dirname, (self.OTHER_A, self.KNOWN_A))
+        config, out, status = self.get_result(textwrap.dedent('''\
+            check_prog("A", ("known-a",), paths=["%s"])
+        ''' % os.pathsep.join(dirs)))
+        self.assertEqual(status, 0)
+        self.assertEqual(config, {'A': self.OTHER_A})
+        self.assertEqual(out, textwrap.dedent('''\
+            checking for a... %s
+        ''' % self.OTHER_A))
+
+        dirs = map(mozpath.dirname, (self.KNOWN_A, self.KNOWN_B))
+        config, out, status = self.get_result(textwrap.dedent('''\
+            check_prog("A", ("known-a",), paths=["%s", "%s"])
+        ''' % (os.pathsep.join(dirs), self.OTHER_A)))
+        self.assertEqual(status, 0)
+        self.assertEqual(config, {'A': self.KNOWN_A})
+        self.assertEqual(out, textwrap.dedent('''\
+            checking for a... %s
+        ''' % self.KNOWN_A))
+
+        config, out, status = self.get_result('check_prog("A", ("known-a",), paths="%s")' %
+                                              os.path.dirname(self.OTHER_A))
+
+        self.assertEqual(status, 1)
+        self.assertEqual(config, {})
+        self.assertEqual(out, textwrap.dedent('''\
+            checking for a... 
+            DEBUG: a: Trying known-a
+            ERROR: Paths provided to find_program must be a list of strings, not %r
+        ''' % mozpath.dirname(self.OTHER_A)))
+
+    def test_java_tool_checks(self):
+        includes = ('util.configure', 'checks.configure', 'java.configure')
+
+        def mock_valid_javac(_, args):
+            if len(args) == 1 and args[0] == '-version':
+                return 0, '1.7', ''
+            self.fail("Unexpected arguments to mock_valid_javac: %s" % args)
+
+        # A valid set of tools in a standard location.
+        java = mozpath.abspath('/usr/bin/java')
+        javah = mozpath.abspath('/usr/bin/javah')
+        javac = mozpath.abspath('/usr/bin/javac')
+        jar = mozpath.abspath('/usr/bin/jar')
+        jarsigner = mozpath.abspath('/usr/bin/jarsigner')
+        keytool = mozpath.abspath('/usr/bin/keytool')
+
+        paths = {
+            java: None,
+            javah: None,
+            javac: mock_valid_javac,
+            jar: None,
+            jarsigner: None,
+            keytool: None,
+        }
+
+        config, out, status = self.get_result(includes=includes, extra_paths=paths)
+        self.assertEqual(status, 0)
+        self.assertEqual(config, {
+            'JAVA': java,
+            'JAVAH': javah,
+            'JAVAC': javac,
+            'JAR': jar,
+            'JARSIGNER': jarsigner,
+            'KEYTOOL': keytool,
+        })
+        self.assertEqual(out, textwrap.dedent('''\
+             checking for java... %s
+             checking for javah... %s
+             checking for jar... %s
+             checking for jarsigner... %s
+             checking for keytool... %s
+             checking for javac... %s
+             checking for javac version... 1.7
+        ''' % (java, javah, jar, jarsigner, keytool, javac)))
+
+        # An alternative valid set of tools referred to by JAVA_HOME.
+        alt_java = mozpath.abspath('/usr/local/bin/java')
+        alt_javah = mozpath.abspath('/usr/local/bin/javah')
+        alt_javac = mozpath.abspath('/usr/local/bin/javac')
+        alt_jar = mozpath.abspath('/usr/local/bin/jar')
+        alt_jarsigner = mozpath.abspath('/usr/local/bin/jarsigner')
+        alt_keytool = mozpath.abspath('/usr/local/bin/keytool')
+        alt_java_home = mozpath.dirname(mozpath.dirname(alt_java))
+
+        paths.update({
+            alt_java: None,
+            alt_javah: None,
+            alt_javac: mock_valid_javac,
+            alt_jar: None,
+            alt_jarsigner: None,
+            alt_keytool: None,
+        })
+
+        config, out, status = self.get_result(includes=includes,
+                                              extra_paths=paths,
+                                              environ={
+                                                  'JAVA_HOME': alt_java_home,
+                                                  'PATH': mozpath.dirname(java)
+                                              })
+        self.assertEqual(status, 0)
+        self.assertEqual(config, {
+            'JAVA': alt_java,
+            'JAVAH': alt_javah,
+            'JAVAC': alt_javac,
+            'JAR': alt_jar,
+            'JARSIGNER': alt_jarsigner,
+            'KEYTOOL': alt_keytool,
+        })
+        self.assertEqual(out, textwrap.dedent('''\
+             checking for java... %s
+             checking for javah... %s
+             checking for jar... %s
+             checking for jarsigner... %s
+             checking for keytool... %s
+             checking for javac... %s
+             checking for javac version... 1.7
+        ''' % (alt_java, alt_javah, alt_jar, alt_jarsigner,
+               alt_keytool, alt_javac)))
+
+        # We can use --with-java-bin-path instead of JAVA_HOME to similar
+        # effect.
+        config, out, status = self.get_result(
+            args=['--with-java-bin-path=%s' % mozpath.dirname(alt_java)],
+            includes=includes,
+            extra_paths=paths,
+            environ={
+                'PATH': mozpath.dirname(java)
+            })
+        self.assertEqual(status, 0)
+        self.assertEqual(config, {
+            'JAVA': alt_java,
+            'JAVAH': alt_javah,
+            'JAVAC': alt_javac,
+            'JAR': alt_jar,
+            'JARSIGNER': alt_jarsigner,
+            'KEYTOOL': alt_keytool,
+        })
+        self.assertEqual(out, textwrap.dedent('''\
+             checking for java... %s
+             checking for javah... %s
+             checking for jar... %s
+             checking for jarsigner... %s
+             checking for keytool... %s
+             checking for javac... %s
+             checking for javac version... 1.7
+        ''' % (alt_java, alt_javah, alt_jar, alt_jarsigner,
+               alt_keytool, alt_javac)))
+
+        # If --with-java-bin-path and JAVA_HOME are both set,
+        # --with-java-bin-path takes precedence.
+        config, out, status = self.get_result(
+            args=['--with-java-bin-path=%s' % mozpath.dirname(alt_java)],
+            includes=includes,
+            extra_paths=paths,
+            environ={
+                'PATH': mozpath.dirname(java),
+                'JAVA_HOME': mozpath.dirname(mozpath.dirname(java)),
+            })
+        self.assertEqual(status, 0)
+        self.assertEqual(config, {
+            'JAVA': alt_java,
+            'JAVAH': alt_javah,
+            'JAVAC': alt_javac,
+            'JAR': alt_jar,
+            'JARSIGNER': alt_jarsigner,
+            'KEYTOOL': alt_keytool,
+        })
+        self.assertEqual(out, textwrap.dedent('''\
+             checking for java... %s
+             checking for javah... %s
+             checking for jar... %s
+             checking for jarsigner... %s
+             checking for keytool... %s
+             checking for javac... %s
+             checking for javac version... 1.7
+        ''' % (alt_java, alt_javah, alt_jar, alt_jarsigner,
+               alt_keytool, alt_javac)))
+
+        def mock_old_javac(_, args):
+            if len(args) == 1 and args[0] == '-version':
+                return 0, '1.6.9', ''
+            self.fail("Unexpected arguments to mock_old_javac: %s" % args)
+
+        # An old javac is fatal.
+        paths[javac] = mock_old_javac
+        config, out, status = self.get_result(includes=includes,
+                                              extra_paths=paths,
+                                              environ={
+                                                  'PATH': mozpath.dirname(java)
+                                              })
+        self.assertEqual(status, 1)
+        self.assertEqual(config, {
+            'JAVA': java,
+            'JAVAH': javah,
+            'JAVAC': javac,
+            'JAR': jar,
+            'JARSIGNER': jarsigner,
+            'KEYTOOL': keytool,
+        })
+        self.assertEqual(out, textwrap.dedent('''\
+             checking for java... %s
+             checking for javah... %s
+             checking for jar... %s
+             checking for jarsigner... %s
+             checking for keytool... %s
+             checking for javac... %s
+             checking for javac version... 
+             ERROR: javac 1.7 or higher is required (found 1.6.9)
+        ''' % (java, javah, jar, jarsigner, keytool, javac)))
+
+        # Any missing tool is fatal when these checks run.
+        del paths[jarsigner]
+        config, out, status = self.get_result(includes=includes,
+                                              extra_paths=paths,
+                                              environ={
+                                                  'PATH': mozpath.dirname(java)
+                                              })
+        self.assertEqual(status, 1)
+        self.assertEqual(config, {
+            'JAVA': java,
+            'JAVAH': javah,
+            'JAR': jar,
+            'JARSIGNER': ':',
+        })
+        self.assertEqual(out, textwrap.dedent('''\
+             checking for java... %s
+             checking for javah... %s
+             checking for jar... %s
+             checking for jarsigner... not found
+             ERROR: The program jarsigner was not found.  Set $JAVA_HOME to your Java SDK directory or use '--with-java-bin-path={java-bin-dir}'
+        ''' % (java, javah, jar)))
+
+    def test_pkg_check_modules(self):
+        mock_pkg_config_version = '0.10.0'
+        mock_pkg_config_path = mozpath.abspath('/usr/bin/pkg-config')
+
+        def mock_pkg_config(_, args):
+            if args[0:2] == ['--errors-to-stdout', '--print-errors']:
+                assert len(args) == 3
+                package = args[2]
+                if package == 'unknown':
+                    return (1, "Package unknown was not found in the pkg-config search path.\n"
+                            "Perhaps you should add the directory containing `unknown.pc'\n"
+                            "to the PKG_CONFIG_PATH environment variable\n"
+                            "No package 'unknown' found", '')
+                if package == 'valid':
+                    return 0, '', ''
+                if package == 'new > 1.1':
+                    return 1, "Requested 'new > 1.1' but version of new is 1.1", ''
+            if args[0] == '--cflags':
+                assert len(args) == 2
+                return 0, '-I/usr/include/%s' % args[1], ''
+            if args[0] == '--libs':
+                assert len(args) == 2
+                return 0, '-l%s' % args[1], ''
+            if args[0] == '--version':
+                return 0, mock_pkg_config_version, ''
+            self.fail("Unexpected arguments to mock_pkg_config: %s" % args)
+
+        extra_paths = {
+            mock_pkg_config_path: mock_pkg_config,
+        }
+        includes = ('util.configure', 'checks.configure', 'pkg.configure')
+
+        config, output, status = self.get_result("pkg_check_modules('MOZ_VALID', 'valid')",
+                                                 includes=includes)
+        self.assertEqual(status, 1)
+        self.assertEqual(output, textwrap.dedent('''\
+            checking for pkg_config... not found
+            ERROR: *** The pkg-config script could not be found. Make sure it is
+            *** in your path, or set the PKG_CONFIG environment variable
+            *** to the full path to pkg-config.
+        '''))
+
+
+        config, output, status = self.get_result("pkg_check_modules('MOZ_VALID', 'valid')",
+                                                 extra_paths=extra_paths,
+                                                 includes=includes)
+        self.assertEqual(status, 0)
+        self.assertEqual(output, textwrap.dedent('''\
+            checking for pkg_config... %s
+            checking for pkg-config version... %s
+            checking for valid... yes
+            checking MOZ_VALID_CFLAGS... -I/usr/include/valid
+            checking MOZ_VALID_LIBS... -lvalid
+        ''' % (mock_pkg_config_path, mock_pkg_config_version)))
+        self.assertEqual(config, {
+            'PKG_CONFIG': mock_pkg_config_path,
+            'MOZ_VALID_CFLAGS': ('-I/usr/include/valid',),
+            'MOZ_VALID_LIBS': ('-lvalid',),
+        })
+
+        config, output, status = self.get_result("pkg_check_modules('MOZ_UKNOWN', 'unknown')",
+                                                 extra_paths=extra_paths,
+                                                 includes=includes)
+        self.assertEqual(status, 1)
+        self.assertEqual(output, textwrap.dedent('''\
+            checking for pkg_config... %s
+            checking for pkg-config version... %s
+            checking for unknown... no
+            ERROR: Package unknown was not found in the pkg-config search path.
+            ERROR: Perhaps you should add the directory containing `unknown.pc'
+            ERROR: to the PKG_CONFIG_PATH environment variable
+            ERROR: No package 'unknown' found
+        ''' % (mock_pkg_config_path, mock_pkg_config_version)))
+        self.assertEqual(config, {
+            'PKG_CONFIG': mock_pkg_config_path,
+        })
+
+        config, output, status = self.get_result("pkg_check_modules('MOZ_NEW', 'new > 1.1')",
+                                                 extra_paths=extra_paths,
+                                                 includes=includes)
+        self.assertEqual(status, 1)
+        self.assertEqual(output, textwrap.dedent('''\
+            checking for pkg_config... %s
+            checking for pkg-config version... %s
+            checking for new > 1.1... no
+            ERROR: Requested 'new > 1.1' but version of new is 1.1
+        ''' % (mock_pkg_config_path, mock_pkg_config_version)))
+        self.assertEqual(config, {
+            'PKG_CONFIG': mock_pkg_config_path,
+        })
+
+        # allow_missing makes missing packages non-fatal.
+        cmd = textwrap.dedent('''\
+        have_new_module = pkg_check_modules('MOZ_NEW', 'new > 1.1', allow_missing=True)
+        @depends(have_new_module)
+        def log_new_module_error(mod):
+            if mod is not True:
+                log.info('Module not found.')
+        ''')
+
+        config, output, status = self.get_result(cmd,
+                                                 extra_paths=extra_paths,
+                                                 includes=includes)
+        self.assertEqual(status, 0)
+        self.assertEqual(output, textwrap.dedent('''\
+            checking for pkg_config... %s
+            checking for pkg-config version... %s
+            checking for new > 1.1... no
+            WARNING: Requested 'new > 1.1' but version of new is 1.1
+            Module not found.
+        ''' % (mock_pkg_config_path, mock_pkg_config_version)))
+        self.assertEqual(config, {
+            'PKG_CONFIG': mock_pkg_config_path,
+        })
+
+        def mock_old_pkg_config(_, args):
+            if args[0] == '--version':
+                return 0, '0.8.10', ''
+            self.fail("Unexpected arguments to mock_old_pkg_config: %s" % args)
+
+        extra_paths = {
+            mock_pkg_config_path: mock_old_pkg_config,
+        }
+
+        config, output, status = self.get_result("pkg_check_modules('MOZ_VALID', 'valid')",
+                                                 extra_paths=extra_paths,
+                                                 includes=includes)
+        self.assertEqual(status, 1)
+        self.assertEqual(output, textwrap.dedent('''\
+            checking for pkg_config... %s
+            checking for pkg-config version... 0.8.10
+            ERROR: *** Your version of pkg-config is too old. You need version 0.9.0 or newer.
+        ''' % mock_pkg_config_path))
 
 
 if __name__ == '__main__':

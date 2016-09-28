@@ -9,6 +9,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsWin32Locale.h"
 #include "GeckoProfiler.h"
+#include "nsEscape.h"
 
 #include "mozilla/dom/nsSynthVoiceRegistry.h"
 #include "mozilla/dom/nsSpeechTask.h"
@@ -159,10 +160,11 @@ SapiCallback::OnSpeechEvent(const SPEVENT& speechEvent)
 void __stdcall
 SapiService::SpeechEventCallback(WPARAM aWParam, LPARAM aLParam)
 {
-  RefPtr<SapiService> service = (SapiService*) aWParam;
+  RefPtr<ISpVoice> spVoice = (ISpVoice*) aWParam;
+  RefPtr<SapiService> service = (SapiService*) aLParam;
 
   SPEVENT speechEvent;
-  while (service->mSapiClient->GetEvents(1, &speechEvent, nullptr) == S_OK) {
+  while (spVoice->GetEvents(1, &speechEvent, nullptr) == S_OK) {
     for (size_t i = 0; i < service->mCallbacks.Length(); i++) {
       RefPtr<SapiCallback> callback = service->mCallbacks[i];
       if (callback->GetStreamNum() == speechEvent.ulStreamNum) {
@@ -207,9 +209,22 @@ SapiService::Init()
     return false;
   }
 
-  if (FAILED(CoCreateInstance(CLSID_SpVoice, nullptr, CLSCTX_ALL, IID_ISpVoice,
-                              getter_AddRefs(mSapiClient)))) {
+  // Get all the voices from sapi and register in the SynthVoiceRegistry
+  if (!RegisterVoices()) {
     return false;
+  }
+
+  mInitialized = true;
+  return true;
+}
+
+already_AddRefed<ISpVoice>
+SapiService::InitSapiInstance()
+{
+  RefPtr<ISpVoice> spVoice;
+  if (FAILED(CoCreateInstance(CLSID_SpVoice, nullptr, CLSCTX_ALL, IID_ISpVoice,
+                              getter_AddRefs(spVoice)))) {
+    return nullptr;
   }
 
   // Set interest for all the events we are interested in
@@ -220,21 +235,16 @@ SapiService::Init()
     SPFEI(SPEI_SENTENCE_BOUNDARY) |
     SPFEI(SPEI_END_INPUT_STREAM);
 
-  if (FAILED(mSapiClient->SetInterest(eventMask, eventMask))) {
-    return false;
-  }
-
-  // Get all the voices from sapi and register in the SynthVoiceRegistry
-  if (!RegisterVoices()) {
-    return false;
+  if (FAILED(spVoice->SetInterest(eventMask, eventMask))) {
+    return nullptr;
   }
 
   // Set the callback function for receiving the events
-  mSapiClient->SetNotifyCallbackFunction(
-    (SPNOTIFYCALLBACK*) SapiService::SpeechEventCallback, (WPARAM) this, 0);
+  spVoice->SetNotifyCallbackFunction(
+    (SPNOTIFYCALLBACK*) SapiService::SpeechEventCallback,
+    (WPARAM) spVoice.get(), (LPARAM) this);
 
-  mInitialized = true;
-  return true;
+  return spVoice.forget();
 }
 
 bool
@@ -330,11 +340,16 @@ SapiService::Speak(const nsAString& aText, const nsAString& aUri,
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  if (FAILED(mSapiClient->SetVoice(voiceToken))) {
+  RefPtr<ISpVoice> spVoice = InitSapiInstance();
+  if (!spVoice) {
     return NS_ERROR_FAILURE;
   }
 
-  if (FAILED(mSapiClient->SetVolume(static_cast<USHORT>(aVolume * 100)))) {
+  if (FAILED(spVoice->SetVoice(voiceToken))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  if (FAILED(spVoice->SetVolume(static_cast<USHORT>(aVolume * 100)))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -347,22 +362,30 @@ SapiService::Speak(const nsAString& aText, const nsAString& aUri,
   //  rate by the 10th root of 3"
   // https://msdn.microsoft.com/en-us/library/ee431826(v=vs.85).aspx
   long rate = aRate != 0 ? static_cast<long>(10 * log10(aRate) / log10(3)) : 0;
-  if (FAILED(mSapiClient->SetRate(rate))) {
+  if (FAILED(spVoice->SetRate(rate))) {
     return NS_ERROR_FAILURE;
   }
 
   // Set the pitch using xml
   nsAutoString xml;
   xml.AssignLiteral("<pitch absmiddle=\"");
-  xml.AppendFloat(aPitch * 10.0f - 10.0f);
+  // absmiddle doesn't allow float type
+  xml.AppendInt(static_cast<int32_t>(aPitch * 10.0f - 10.0f));
   xml.AppendLiteral("\">");
   uint32_t textOffset = xml.Length();
 
-  xml.Append(aText);
+  const char16_t* escapedText =
+    nsEscapeHTML2(aText.BeginReading(), aText.Length());
+  if (!escapedText) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  xml.Append(escapedText);
+  free((void*)escapedText);
+
   xml.AppendLiteral("</pitch>");
 
   RefPtr<SapiCallback> callback =
-    new SapiCallback(aTask, mSapiClient, textOffset, aText.Length());
+    new SapiCallback(aTask, spVoice, textOffset, aText.Length());
 
   // The last three parameters doesn't matter for an indirect service
   nsresult rv = aTask->Setup(callback, 0, 0, 0);
@@ -371,7 +394,7 @@ SapiService::Speak(const nsAString& aText, const nsAString& aUri,
   }
 
   ULONG streamNum;
-  if (FAILED(mSapiClient->Speak(xml.get(), SPF_ASYNC, &streamNum))) {
+  if (FAILED(spVoice->Speak(xml.get(), SPF_ASYNC, &streamNum))) {
     aTask->Setup(nullptr, 0, 0, 0);
     return NS_ERROR_FAILURE;
   }

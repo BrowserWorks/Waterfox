@@ -178,12 +178,15 @@ TreeMutation::Done()
 // EventTree
 
 void
-EventTree::Process()
+EventTree::Process(const RefPtr<DocAccessible>& aDeathGrip)
 {
   while (mFirst) {
     // Skip a node and its subtree if its container is not in the document.
     if (mFirst->mContainer->IsInDocument()) {
-      mFirst->Process();
+      mFirst->Process(aDeathGrip);
+      if (aDeathGrip->IsDefunct()) {
+        return;
+      }
     }
     mFirst = mFirst->mNext.forget();
   }
@@ -192,6 +195,7 @@ EventTree::Process()
              "No container, no events");
   MOZ_ASSERT(!mContainer || !mContainer->IsDefunct(),
              "Processing events for defunct container");
+  MOZ_ASSERT(!mFireReorder || mContainer, "No target for reorder event");
 
   // Fire mutation events.
   uint32_t eventsCount = mDependentEvents.Length();
@@ -199,10 +203,18 @@ EventTree::Process()
     AccMutationEvent* mtEvent = mDependentEvents[jdx];
     MOZ_ASSERT(mtEvent->mEventRule != AccEvent::eDoNotEmit,
                "The event shouldn't be presented in the tree");
+    MOZ_ASSERT(mtEvent->Document(), "No document for event target");
 
     nsEventShell::FireEvent(mtEvent);
+    if (aDeathGrip->IsDefunct()) {
+      return;
+    }
+
     if (mtEvent->mTextChangeEvent) {
       nsEventShell::FireEvent(mtEvent->mTextChangeEvent);
+      if (aDeathGrip->IsDefunct()) {
+        return;
+      }
     }
 
     if (mtEvent->IsHide()) {
@@ -218,18 +230,20 @@ EventTree::Process()
       if (mtEvent->mAccessible->ARIARole() == roles::MENUPOPUP) {
         nsEventShell::FireEvent(nsIAccessibleEvent::EVENT_MENUPOPUP_END,
                                 mtEvent->mAccessible);
+        if (aDeathGrip->IsDefunct()) {
+          return;
+        }
       }
 
       AccHideEvent* hideEvent = downcast_accEvent(mtEvent);
       if (hideEvent->NeedsShutdown()) {
-        mtEvent->GetDocAccessible()->ShutdownChildrenInSubtree(mtEvent->mAccessible);
+        aDeathGrip->ShutdownChildrenInSubtree(mtEvent->mAccessible);
       }
     }
   }
 
   // Fire reorder event at last.
   if (mFireReorder) {
-    MOZ_ASSERT(mContainer);
     nsEventShell::FireEvent(nsIAccessibleEvent::EVENT_REORDER, mContainer);
     mContainer->Document()->MaybeNotifyOfValueChange(mContainer);
   }
@@ -353,7 +367,7 @@ EventTree::Clear()
   for (uint32_t jdx = 0; jdx < eventsCount; jdx++) {
     AccHideEvent* ev = downcast_accEvent(mDependentEvents[jdx]);
     if (ev && ev->NeedsShutdown()) {
-      ev->GetDocAccessible()->ShutdownChildrenInSubtree(ev->mAccessible);
+      ev->Document()->ShutdownChildrenInSubtree(ev->mAccessible);
     }
   }
   mDependentEvents.Clear();

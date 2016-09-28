@@ -6,7 +6,7 @@
 
 "use strict";
 
-define(function(require, exports, module) {
+define(function (require, exports, module) {
   const { DOM: dom, createFactory, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
 
   const { div, span, table, tbody, tr, td, code } = dom;
@@ -17,26 +17,24 @@ define(function(require, exports, module) {
    * received or response headers.
    */
   let Headers = createClass({
+    displayName: "Headers",
+
     propTypes: {
       data: PropTypes.object,
     },
 
-    displayName: "Headers",
-
-    getInitialState: function() {
+    getInitialState: function () {
       return {};
     },
 
-    render: function() {
+    render: function () {
       let data = this.props.data;
 
       return (
         div({className: "netInfoHeadersTable"},
           div({className: "netHeadersGroup"},
             div({className: "netInfoHeadersGroup"},
-              span({className: "netHeader twisty"},
-                Locale.$STR("jsonViewer.responseHeaders")
-              )
+              Locale.$STR("jsonViewer.responseHeaders")
             ),
             table({cellPadding: 0, cellSpacing: 0},
               HeaderList({headers: data.response})
@@ -44,9 +42,7 @@ define(function(require, exports, module) {
           ),
           div({className: "netHeadersGroup"},
             div({className: "netInfoHeadersGroup"},
-              span({className: "netHeader twisty"},
-                Locale.$STR("jsonViewer.requestHeaders")
-              )
+              Locale.$STR("jsonViewer.requestHeaders")
             ),
             table({cellPadding: 0, cellSpacing: 0},
               HeaderList({headers: data.request})
@@ -62,6 +58,8 @@ define(function(require, exports, module) {
    * name + value pairs.
    */
   let HeaderList = createFactory(createClass({
+    displayName: "HeaderList",
+
     propTypes: {
       headers: PropTypes.arrayOf(PropTypes.shape({
         name: PropTypes.string,
@@ -69,18 +67,16 @@ define(function(require, exports, module) {
       }))
     },
 
-    displayName: "HeaderList",
-
-    getInitialState: function() {
+    getInitialState: function () {
       return {
         headers: []
       };
     },
 
-    render: function() {
+    render: function () {
       let headers = this.props.headers;
 
-      headers.sort(function(a, b) {
+      headers.sort(function (a, b) {
         return a.name > b.name ? 1 : -1;
       });
 

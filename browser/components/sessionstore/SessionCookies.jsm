@@ -125,7 +125,7 @@ var SessionCookiesInternal = {
       if (!Services.cookies.cookieExists(cookieObj)) {
         Services.cookies.add(cookie.host, cookie.path || "", cookie.name || "",
                              cookie.value, !!cookie.secure, !!cookie.httponly,
-                             /* isSession = */ true, expiry);
+                             /* isSession = */ true, expiry, cookie.originAttributes || {});
       }
     }
   },
@@ -369,7 +369,9 @@ var CookieStore = {
       }
 
       for (let pathToNamesMap of this._hosts.get(host).values()) {
-        cookies.push(...pathToNamesMap.values());
+        for (let nameToCookiesMap of pathToNamesMap.values()) {
+          cookies.push(...nameToCookiesMap.values());
+        }
       }
     }
 
@@ -417,6 +419,10 @@ var CookieStore = {
       jscookie.expiry = cookie.expiry;
     }
 
+    if (cookie.originAttributes) {
+      jscookie.originAttributes = cookie.originAttributes;
+    }
+
     this._ensureMap(cookie).set(cookie.name, jscookie);
   },
 
@@ -451,7 +457,14 @@ var CookieStore = {
       this._hosts.set(cookie.host, new Map());
     }
 
-    let pathToNamesMap = this._hosts.get(cookie.host);
+    let originAttributesMap = this._hosts.get(cookie.host);
+    // If cookie.originAttributes is null, originAttributes will be an empty string.
+    let originAttributes = ChromeUtils.originAttributesToSuffix(cookie.originAttributes);
+    if (!originAttributesMap.has(originAttributes)) {
+      originAttributesMap.set(originAttributes, new Map());
+    }
+
+    let pathToNamesMap = originAttributesMap.get(originAttributes);
 
     if (!pathToNamesMap.has(cookie.path)) {
       pathToNamesMap.set(cookie.path, new Map());

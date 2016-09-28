@@ -34,7 +34,7 @@
 typedef mozilla::net::LoadContextInfo LoadContextInfo;
 
 // Must release mChannel on the main thread
-class nsWyciwygAsyncEvent : public nsRunnable {
+class nsWyciwygAsyncEvent : public mozilla::Runnable {
 public:
   explicit nsWyciwygAsyncEvent(nsWyciwygChannel *aChannel) : mChannel(aChannel) {}
 
@@ -700,7 +700,7 @@ nsWyciwygChannel::OnCacheEntryAvailable(nsICacheEntry *aCacheEntry,
     if (!aNew) {
       // Since OnCacheEntryAvailable can be called directly from AsyncOpen
       // we must dispatch.
-      NS_DispatchToCurrentThread(NS_NewRunnableMethod(
+      NS_DispatchToCurrentThread(mozilla::NewRunnableMethod(
         this, &nsWyciwygChannel::NotifyListener));
     }
   }

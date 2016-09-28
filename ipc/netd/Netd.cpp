@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 
 #include "android/log.h"
+#include "base/task.h"
 
 #include "nsWhitespaceTokenizer.h"
 #include "nsXULAppAPI.h"
@@ -31,7 +32,7 @@ namespace {
 RefPtr<mozilla::ipc::NetdClient> gNetdClient;
 RefPtr<mozilla::ipc::NetdConsumer> gNetdConsumer;
 
-class StopNetdConsumer : public nsRunnable {
+class StopNetdConsumer : public mozilla::Runnable {
 public:
   NS_IMETHOD Run()
   {
@@ -217,8 +218,7 @@ NetdClient::Start()
     }
 
     MessageLoopForIO::current()->
-      PostDelayedTask(FROM_HERE,
-                      NewRunnableFunction(NetdClient::Start),
+      PostDelayedTask(NewRunnableFunction(NetdClient::Start),
                       1000);
     return;
   }
@@ -334,7 +334,6 @@ StartNetd(NetdConsumer* aNetdConsumer)
 
   gNetdConsumer = aNetdConsumer;
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
     NewRunnableFunction(InitNetdIOThread));
 }
 
@@ -347,7 +346,6 @@ StopNetd()
   NS_ASSERTION(currentThread, "This should never be null!");
 
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
     NewRunnableFunction(ShutdownNetdIOThread));
 
   while (gNetdConsumer) {
@@ -370,7 +368,6 @@ SendNetdCommand(NetdCommand* aMessage)
   MOZ_ASSERT(aMessage);
 
   XRE_GetIOMessageLoop()->PostTask(
-    FROM_HERE,
     NewRunnableFunction(NetdClient::SendNetdCommandIOThread, aMessage));
 }
 

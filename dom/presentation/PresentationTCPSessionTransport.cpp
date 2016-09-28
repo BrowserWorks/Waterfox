@@ -68,12 +68,13 @@ NS_IMPL_CYCLE_COLLECTING_RELEASE(PresentationTCPSessionTransport)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(PresentationTCPSessionTransport)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIPresentationSessionTransport)
-  NS_INTERFACE_MAP_ENTRY(nsIPresentationSessionTransport)
-  NS_INTERFACE_MAP_ENTRY(nsITransportEventSink)
-  NS_INTERFACE_MAP_ENTRY(nsIPresentationTCPSessionTransportBuilder)
   NS_INTERFACE_MAP_ENTRY(nsIInputStreamCallback)
-  NS_INTERFACE_MAP_ENTRY(nsIStreamListener)
+  NS_INTERFACE_MAP_ENTRY(nsIPresentationSessionTransport)
+  NS_INTERFACE_MAP_ENTRY(nsIPresentationSessionTransportBuilder)
+  NS_INTERFACE_MAP_ENTRY(nsIPresentationTCPSessionTransportBuilder)
   NS_INTERFACE_MAP_ENTRY(nsIRequestObserver)
+  NS_INTERFACE_MAP_ENTRY(nsIStreamListener)
+  NS_INTERFACE_MAP_ENTRY(nsITransportEventSink)
 NS_INTERFACE_MAP_END
 
 PresentationTCPSessionTransport::PresentationTCPSessionTransport()
@@ -107,23 +108,22 @@ PresentationTCPSessionTransport::BuildTCPSenderTransport(nsISocketTransport* aTr
     return rv;
   }
 
-  mType = nsIPresentationSessionTransportBuilder::TYPE_SENDER;
+  mRole = nsIPresentationService::ROLE_CONTROLLER;
 
   nsCOMPtr<nsIPresentationSessionTransport> sessionTransport = do_QueryObject(this);
   nsCOMPtr<nsIRunnable> onSessionTransportRunnable =
-    NS_NewRunnableMethodWithArgs
+    NewRunnableMethod
       <nsIPresentationSessionTransport*>(mListener,
                                          &nsIPresentationSessionTransportBuilderListener::OnSessionTransport,
                                          sessionTransport);
 
-  NS_DispatchToCurrentThread(onSessionTransportRunnable);
-
+  NS_DispatchToCurrentThread(onSessionTransportRunnable.forget());
 
   nsCOMPtr<nsIRunnable> setReadyStateRunnable =
-    NS_NewRunnableMethodWithArgs<ReadyState>(this,
-                                             &PresentationTCPSessionTransport::SetReadyState,
-                                             ReadyState::OPEN);
-  return NS_DispatchToCurrentThread(setReadyStateRunnable);
+    NewRunnableMethod<ReadyState>(this,
+                                  &PresentationTCPSessionTransport::SetReadyState,
+                                  ReadyState::OPEN);
+  return NS_DispatchToCurrentThread(setReadyStateRunnable.forget());
 }
 
 NS_IMETHODIMP
@@ -190,15 +190,15 @@ PresentationTCPSessionTransport::BuildTCPReceiverTransport(nsIPresentationChanne
     return rv;
   }
 
-  mType = nsIPresentationSessionTransportBuilder::TYPE_RECEIVER;
+  mRole = nsIPresentationService::ROLE_RECEIVER;
 
   nsCOMPtr<nsIPresentationSessionTransport> sessionTransport = do_QueryObject(this);
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethodWithArgs
+    NewRunnableMethod
       <nsIPresentationSessionTransport*>(mListener,
                                          &nsIPresentationSessionTransportBuilderListener::OnSessionTransport,
                                          sessionTransport);
-  return NS_DispatchToCurrentThread(runnable);
+  return NS_DispatchToCurrentThread(runnable.forget());
 }
 
 nsresult

@@ -9,7 +9,7 @@ from marionette_driver.marionette import HTMLElement
 from decorators import use_class_as_property
 
 
-__version__ = '4.0.0'
+__version__ = '49.0.0'
 
 
 class Puppeteer(object):
@@ -66,7 +66,7 @@ class Puppeteer(object):
 
         :returns: Platform name
         """
-        return self.marionette.session_capabilities['platformName'].lower()
+        return self.marionette.session_capabilities['platformName']
 
     @use_class_as_property('api.prefs.Preferences')
     def prefs(self):

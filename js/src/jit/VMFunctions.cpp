@@ -611,17 +611,19 @@ PostWriteElementBarrier(JSRuntime* rt, JSObject* obj, int32_t index)
 {
     MOZ_ASSERT(!IsInsideNursery(obj));
     if (obj->is<NativeObject>() &&
+        !obj->as<NativeObject>().isInWholeCellBuffer() &&
         uint32_t(index) < obj->as<NativeObject>().getDenseInitializedLength() &&
         (obj->as<NativeObject>().getDenseInitializedLength() > MAX_WHOLE_CELL_BUFFER_SIZE
 #ifdef JS_GC_ZEAL
          || rt->hasZealMode(gc::ZealMode::ElementsBarrier)
 #endif
-            ))
+        ))
     {
         rt->gc.storeBuffer.putSlot(&obj->as<NativeObject>(), HeapSlot::Element, index, 1);
-    } else {
-        rt->gc.storeBuffer.putWholeCell(obj);
+        return;
     }
+
+    rt->gc.storeBuffer.putWholeCell(obj);
 }
 
 void
@@ -1061,15 +1063,6 @@ CreateDerivedTypedObj(JSContext* cx, HandleObject descr,
     Rooted<TypeDescr*> descr1(cx, &descr->as<TypeDescr>());
     Rooted<TypedObject*> owner1(cx, &owner->as<TypedObject>());
     return OutlineTypedObject::createDerived(cx, descr1, owner1, offset);
-}
-
-JSString*
-RegExpReplace(JSContext* cx, HandleString string, HandleObject regexp, HandleString repl)
-{
-    MOZ_ASSERT(string);
-    MOZ_ASSERT(repl);
-
-    return str_replace_regexp_raw(cx, string, regexp.as<RegExpObject>(), repl);
 }
 
 JSString*

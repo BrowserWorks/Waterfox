@@ -377,6 +377,7 @@ Context::QuotaInitRunnable::Run()
       RefPtr<ManagerId> managerId = mManager->GetManagerId();
       nsCOMPtr<nsIPrincipal> principal = managerId->Principal();
       nsresult rv = QuotaManager::GetInfoFromPrincipal(principal,
+                                                       &mQuotaInfo.mSuffix,
                                                        &mQuotaInfo.mGroup,
                                                        &mQuotaInfo.mOrigin,
                                                        &mQuotaInfo.mIsApp);
@@ -435,6 +436,7 @@ Context::QuotaInitRunnable::Run()
       QuotaManager* qm = QuotaManager::Get();
       MOZ_ASSERT(qm);
       nsresult rv = qm->EnsureOriginIsInitialized(PERSISTENCE_TYPE_DEFAULT,
+                                                  mQuotaInfo.mSuffix,
                                                   mQuotaInfo.mGroup,
                                                   mQuotaInfo.mOrigin,
                                                   mQuotaInfo.mIsApp,
@@ -740,7 +742,7 @@ Context::ThreadsafeHandle::AllowToClose()
   // Dispatch is guaranteed to succeed here because we block shutdown until
   // all Contexts have been destroyed.
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(this, &ThreadsafeHandle::AllowToCloseOnOwningThread);
+    NewRunnableMethod(this, &ThreadsafeHandle::AllowToCloseOnOwningThread);
   MOZ_ALWAYS_SUCCEEDS(
     mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
 }
@@ -756,7 +758,7 @@ Context::ThreadsafeHandle::InvalidateAndAllowToClose()
   // Dispatch is guaranteed to succeed here because we block shutdown until
   // all Contexts have been destroyed.
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(this, &ThreadsafeHandle::InvalidateAndAllowToCloseOnOwningThread);
+    NewRunnableMethod(this, &ThreadsafeHandle::InvalidateAndAllowToCloseOnOwningThread);
   MOZ_ALWAYS_SUCCEEDS(
     mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
 }
@@ -780,10 +782,7 @@ Context::ThreadsafeHandle::~ThreadsafeHandle()
 
   // Dispatch is guaranteed to succeed here because we block shutdown until
   // all Contexts have been destroyed.
-  nsCOMPtr<nsIRunnable> runnable =
-    NS_NewNonOwningRunnableMethod(mStrongRef.forget().take(), &Context::Release);
-  MOZ_ALWAYS_SUCCEEDS(
-    mOwningThread->Dispatch(runnable, nsIThread::DISPATCH_NORMAL));
+  NS_ProxyRelease(mOwningThread, mStrongRef.forget());
 }
 
 void

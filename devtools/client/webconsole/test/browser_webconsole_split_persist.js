@@ -5,7 +5,7 @@
 
  "use strict";
 
-function test() {
+ function test() {
   info("Test that the split console state is persisted");
 
   let toolbox;
@@ -104,7 +104,7 @@ function test() {
 
   function toggleSplitConsoleWithEscape() {
     let onceSplitConsole = toolbox.once("split-console");
-    let contentWindow = toolbox.frame.contentWindow;
+    let contentWindow = toolbox.win;
     contentWindow.focus();
     EventUtils.sendKey("ESCAPE", contentWindow);
     return onceSplitConsole;

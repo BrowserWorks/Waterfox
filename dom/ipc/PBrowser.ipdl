@@ -15,10 +15,12 @@ include protocol PFilePicker;
 include protocol PIndexedDBPermissionRequest;
 include protocol PRenderFrame;
 include protocol PPluginWidget;
+include protocol PRemotePrintJob;
 include DOMTypes;
 include JavaScriptTypes;
 include URIParams;
-include BrowserConfiguration;
+include PPrintingTypes;
+include PTabContext;
 
 
 using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
@@ -68,6 +70,7 @@ using nsEventStatus from "mozilla/EventForwards.h";
 using nsSizeMode from "nsIWidgetListener.h";
 using mozilla::widget::CandidateWindowPosition from "ipc/nsGUIEventIPC.h";
 using class mozilla::NativeEventData from "ipc/nsGUIEventIPC.h";
+using mozilla::FontRange from "ipc/nsGUIEventIPC.h";
 
 namespace mozilla {
 namespace dom {
@@ -91,8 +94,15 @@ struct ShowInfo
   bool fullscreenAllowed;
   bool isPrivate;
   bool fakeShowInfo;
+  bool isTransparent;
   float dpi;
   double defaultScale;
+};
+
+union OptionalShmem
+{
+  void_t;
+  Shmem;
 };
 
 prio(normal upto urgent) sync protocol PBrowser
@@ -457,6 +467,16 @@ parent:
      */
     async AsyncAuthPrompt(nsCString uri, nsString realm, uint64_t aCallbackId);
 
+    /**
+     * Look up dictionary by selected word for OSX
+     *
+     * @param aText       The word to look up
+     * @param aFontRange  Text decoration of aText
+     * @param aIsVertical true if vertical layout
+     */
+    async LookUpDictionary(nsString aText, FontRange[] aFontRangeArray,
+                           bool aIsVertical, LayoutDeviceIntPoint aPoint);
+
     async __delete__();
 
     async ReplyKeyEvent(WidgetKeyboardEvent event);
@@ -505,6 +525,8 @@ parent:
      */
     sync GetTabCount() returns (uint32_t value);
 
+    async AccessKeyNotHandled(WidgetKeyboardEvent event);
+
 child:
     async NativeSynthesisResponse(uint64_t aObserverId, nsCString aResponse);
 
@@ -531,7 +553,8 @@ parent:
     prio(high) sync DispatchKeyboardEvent(WidgetKeyboardEvent event);
 
     async InvokeDragSession(IPCDataTransfer[] transfers, uint32_t action,
-                            nsCString visualData, uint32_t width, uint32_t height,
+                            OptionalShmem visualData,
+                            uint32_t width, uint32_t height,
                             uint32_t stride, uint8_t format,
                             int32_t dragAreaX, int32_t dragAreaY);
 
@@ -556,7 +579,7 @@ child:
                bool parentIsActive,
                nsSizeMode sizeMode);
 
-    async LoadURL(nsCString uri, BrowserConfiguration config, ShowInfo info);
+    async LoadURL(nsCString uri, ShowInfo info);
 
     async CacheFileDescriptor(nsString path, FileDescriptor fd);
 
@@ -739,17 +762,18 @@ child:
      * Tell the browser that its frame loader has been swapped
      * with another.
      */
-    async SwappedWithOtherRemoteLoader();
+    async SwappedWithOtherRemoteLoader(IPCTabContext context);
 
     /**
      * A potential accesskey was just pressed. Look for accesskey targets
      * using the list of provided charCodes.
      *
-     * @param charCode array of potential character codes
+     * @param event keyboard event
      * @param isTrusted true if triggered by a trusted key event
      * @param modifierMask indicates which accesskey modifiers are pressed
      */
-    async HandleAccessKey(uint32_t[] charCodes, bool isTrusted, int32_t modifierMask);
+    async HandleAccessKey(WidgetKeyboardEvent event,
+                          uint32_t[] charCodes, int32_t modifierMask);
 
     /**
      * Propagate a refresh to the child process
@@ -776,6 +800,14 @@ child:
      */
     async HandledWindowedPluginKeyEvent(NativeEventData aKeyEventData,
                                         bool aIsConsumed);
+
+    /**
+     * Tell the child to print the current page with the given settings.
+     *
+     * @param aOuterWindowID the ID of the outer window to print
+     * @param aPrintData the serialized settings to print with
+     */
+    async Print(uint64_t aOuterWindowID, PrintData aPrintData);
 
 /*
  * FIXME: write protocol!

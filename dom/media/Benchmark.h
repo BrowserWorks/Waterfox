@@ -17,7 +17,7 @@
 
 namespace mozilla {
 
-class FlushableTaskQueue;
+class TaskQueue;
 class Benchmark;
 
 class BenchmarkPlayback : public QueueObject, private MediaDataDecoderCallback
@@ -32,14 +32,14 @@ class BenchmarkPlayback : public QueueObject, private MediaDataDecoderCallback
   // MediaDataDecoderCallback
   // Those methods are called on the MediaDataDecoder's task queue.
   void Output(MediaData* aData) override;
-  void Error() override;
+  void Error(MediaDataDecoderError aError) override;
   void InputExhausted() override;
   void DrainComplete() override;
   bool OnReaderTaskQueue() override;
 
   Atomic<Benchmark*> mMainThreadState;
 
-  RefPtr<FlushableTaskQueue> mDecoderTaskQueue;
+  RefPtr<TaskQueue> mDecoderTaskQueue;
   RefPtr<MediaDataDecoder> mDecoder;
 
   // Object only accessed on Thread()

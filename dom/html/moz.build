@@ -28,7 +28,6 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'content_html'
 
 EXPORTS += [
-    'HTMLPropertiesCollection.h',
     'nsFormSubmission.h',
     'nsGenericHTMLElement.h',
     'nsHTMLDNSPrefetch.h',
@@ -168,7 +167,6 @@ UNIFIED_SOURCES += [
     'HTMLPictureElement.cpp',
     'HTMLPreElement.cpp',
     'HTMLProgressElement.cpp',
-    'HTMLPropertiesCollection.cpp',
     'HTMLScriptElement.cpp',
     'HTMLSelectElement.cpp',
     'HTMLShadowElement.cpp',
@@ -246,3 +244,6 @@ LOCAL_INCLUDES += [
 ]
 
 FINAL_LIBRARY = 'xul'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

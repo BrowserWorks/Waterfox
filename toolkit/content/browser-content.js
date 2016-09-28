@@ -11,6 +11,9 @@ var Cr = Components.results;
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "ReaderMode",
+  "resource://gre/modules/ReaderMode.jsm");
+
 var global = this;
 
 
@@ -263,6 +266,7 @@ var PopupBlocking = {
     addEventListener("pagehide", this, true);
 
     addMessageListener("PopupBlocking:UnblockPopup", this);
+    addMessageListener("PopupBlocking:GetBlockedPopupList", this);
   },
 
   receiveMessage: function(msg) {
@@ -277,9 +281,34 @@ var PopupBlocking = {
           // If we have a requesting window and the requesting document is
           // still the current document, open the popup.
           if (dwi && dwi.document == internals.requestingDocument) {
-            dwi.open(data.popupWindowURI, data.popupWindowName, data.popupWindowFeatures);
+            dwi.open(data.popupWindowURIspec, data.popupWindowName, data.popupWindowFeatures);
           }
         }
+        break;
+      }
+
+      case "PopupBlocking:GetBlockedPopupList": {
+        let popupData = [];
+        let length = this.popupData ? this.popupData.length : 0;
+
+        // Limit 15 popup URLs to be reported through the UI
+        length = Math.min(length, 15);
+
+        for (let i = 0; i < length; i++) {
+          let popupWindowURIspec = this.popupData[i].popupWindowURIspec;
+
+          if (popupWindowURIspec == global.content.location.href) {
+            popupWindowURIspec = "<self>";
+          } else {
+            // Limit 500 chars to be sent because the URI will be cropped
+            // by the UI anyway, and data: URIs can be significantly larger.
+            popupWindowURIspec = popupWindowURIspec.substring(0, 500)
+          }
+
+          popupData.push({popupWindowURIspec});
+        }
+
+        sendAsyncMessage("PopupBlocking:ReplyGetBlockedPopupList", {popupData});
         break;
       }
     }
@@ -304,7 +333,7 @@ var PopupBlocking = {
     }
 
     let obj = {
-      popupWindowURI: ev.popupWindowURI ? ev.popupWindowURI.spec : "about:blank",
+      popupWindowURIspec: ev.popupWindowURI ? ev.popupWindowURI.spec : "about:blank",
       popupWindowFeatures: ev.popupWindowFeatures,
       popupWindowName: ev.popupWindowName
     };
@@ -351,7 +380,10 @@ var PopupBlocking = {
 
   updateBlockedPopups: function(freshPopup) {
     sendAsyncMessage("PopupBlocking:UpdateBlockedPopups",
-                     {blockedPopups: this.popupData, freshPopup: freshPopup});
+      {
+        count: this.popupData ? this.popupData.length : 0,
+        freshPopup
+      });
   },
 };
 PopupBlocking.init();
@@ -376,6 +408,7 @@ var Printing = {
     "Printing:Preview:Enter",
     "Printing:Preview:Exit",
     "Printing:Preview:Navigate",
+    "Printing:Preview:ParseDocument",
     "Printing:Preview:UpdatePageCount",
     "Printing:Print",
   ],
@@ -408,7 +441,7 @@ var Printing = {
     let data = message.data;
     switch(message.name) {
       case "Printing:Preview:Enter": {
-        this.enterPrintPreview(Services.wm.getOuterWindowWithId(data.windowID));
+        this.enterPrintPreview(Services.wm.getOuterWindowWithId(data.windowID), data.simplifiedMode);
         break;
       }
 
@@ -419,6 +452,11 @@ var Printing = {
 
       case "Printing:Preview:Navigate": {
         this.navigate(data.navType, data.pageNum);
+        break;
+      }
+
+      case "Printing:Preview:ParseDocument": {
+        this.parseDocument(data.URL, Services.wm.getOuterWindowWithId(data.windowID));
         break;
       }
 
@@ -458,7 +496,98 @@ var Printing = {
     return null;
   },
 
-  enterPrintPreview(contentWindow) {
+  parseDocument(URL, contentWindow) {
+    // By using ReaderMode primitives, we parse given document and place the
+    // resulting JS object into the DOM of current browser.
+    let articlePromise = ReaderMode.parseDocument(contentWindow.document).catch(Cu.reportError);
+    articlePromise.then(function (article) {
+      content.document.head.innerHTML = "";
+
+      // Set title of document
+      content.document.title = article.title;
+
+      // Set base URI of document. Print preview code will read this value to
+      // populate the URL field in print settings so that it doesn't show
+      // "about:blank" as its URI.
+      let headBaseElement = content.document.createElement("base");
+      headBaseElement.setAttribute("href", URL);
+      content.document.head.appendChild(headBaseElement);
+
+      // Create link element referencing aboutReader.css and append it to head
+      let headStyleElement = content.document.createElement("link");
+      headStyleElement.setAttribute("rel", "stylesheet");
+      headStyleElement.setAttribute("href", "chrome://global/skin/aboutReader.css");
+      headStyleElement.setAttribute("type", "text/css");
+      content.document.head.appendChild(headStyleElement);
+
+      content.document.body.innerHTML = "";
+
+      // Create container div (main element) and append it to body
+      let containerElement = content.document.createElement("div");
+      containerElement.setAttribute("id", "container");
+      content.document.body.appendChild(containerElement);
+
+      // Create header div and append it to container
+      let headerElement = content.document.createElement("div");
+      headerElement.setAttribute("id", "reader-header");
+      headerElement.setAttribute("class", "header");
+      containerElement.appendChild(headerElement);
+
+      // Create style element for header div and import simplifyMode.css
+      let controlHeaderStyle = content.document.createElement("style");
+      controlHeaderStyle.setAttribute("scoped", "");
+      controlHeaderStyle.textContent = "@import url(\"chrome://global/content/simplifyMode.css\");";
+      headerElement.appendChild(controlHeaderStyle);
+
+      // Jam the article's title and byline into header div
+      let titleElement = content.document.createElement("h1");
+      titleElement.setAttribute("id", "reader-title");
+      titleElement.textContent = article.title;
+      headerElement.appendChild(titleElement);
+
+      let bylineElement = content.document.createElement("div");
+      bylineElement.setAttribute("id", "reader-credits");
+      bylineElement.setAttribute("class", "credits");
+      bylineElement.textContent = article.byline;
+      headerElement.appendChild(bylineElement);
+
+      // Display header element
+      headerElement.style.display = "block";
+
+      // Create content div and append it to container
+      let contentElement = content.document.createElement("div");
+      contentElement.setAttribute("class", "content");
+      containerElement.appendChild(contentElement);
+
+      // Create style element for content div and import aboutReaderContent.css
+      let controlContentStyle = content.document.createElement("style");
+      controlContentStyle.setAttribute("scoped", "");
+      controlContentStyle.textContent = "@import url(\"chrome://global/skin/aboutReaderContent.css\");";
+      contentElement.appendChild(controlContentStyle);
+
+      // Jam the article's content into content div
+      let readerContent = content.document.createElement("div");
+      readerContent.setAttribute("id", "moz-reader-content");
+      contentElement.appendChild(readerContent);
+
+      let articleUri = Services.io.newURI(article.url, null, null);
+      let parserUtils = Cc["@mozilla.org/parserutils;1"].getService(Ci.nsIParserUtils);
+      let contentFragment = parserUtils.parseFragment(article.content,
+        Ci.nsIParserUtils.SanitizerDropForms | Ci.nsIParserUtils.SanitizerAllowStyle,
+        false, articleUri, readerContent);
+
+      readerContent.appendChild(contentFragment);
+
+      // Display reader content element
+      readerContent.style.display = "block";
+
+      // Here we tell the parent that we have parsed the document successfully
+      // using ReaderMode primitives and we are able to enter on preview mode.
+      sendAsyncMessage("Printing:Preview:ReaderModeReady");
+    });
+  },
+
+  enterPrintPreview(contentWindow, simplifiedMode) {
     // We'll call this whenever we've finished reflowing the document, or if
     // we errored out while attempting to print preview (in which case, we'll
     // notify the parent that we've failed).
@@ -482,6 +611,13 @@ var Printing = {
 
     try {
       let printSettings = this.getPrintSettings();
+
+      // If we happen to be on simplified mode, we need to set docURL in order
+      // to generate header/footer content correctly, since simplified tab has
+      // "about:blank" as its URI.
+      if (printSettings && simplifiedMode)
+        printSettings.docURL = contentWindow.document.baseURI;
+
       docShell.printPreview.printPreview(printSettings, contentWindow, this);
     } catch(error) {
       // This might fail if we, for example, attempt to print a XUL document.
@@ -502,6 +638,13 @@ var Printing = {
       let print = contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
                                .getInterface(Ci.nsIWebBrowserPrint);
       print.print(printSettings, null);
+
+      let histogram = Services.telemetry.getKeyedHistogramById("PRINT_COUNT");
+      if (print.doingPrintPreview) {
+        histogram.add("WITH_PREVIEW");
+      } else {
+        histogram.add("WITHOUT_PREVIEW");
+      }
     } catch(e) {
       // Pressing cancel is expressed as an NS_ERROR_ABORT return value,
       // causing an exception to be thrown which we catch here.
@@ -720,8 +863,9 @@ var AudioPlaybackListener = {
   init() {
     Services.obs.addObserver(this, "audio-playback", false);
     Services.obs.addObserver(this, "AudioFocusChanged", false);
+    Services.obs.addObserver(this, "MediaControl", false);
 
-    addMessageListener("AudioPlaybackMute", this);
+    addMessageListener("AudioPlayback", this);
     addEventListener("unload", () => {
       AudioPlaybackListener.uninit();
     });
@@ -730,8 +874,47 @@ var AudioPlaybackListener = {
   uninit() {
     Services.obs.removeObserver(this, "audio-playback");
     Services.obs.removeObserver(this, "AudioFocusChanged");
+    Services.obs.removeObserver(this, "MediaControl");
 
-    removeMessageListener("AudioPlaybackMute", this);
+    removeMessageListener("AudioPlayback", this);
+  },
+
+  handleMediaControlMessage(msg) {
+    let utils = global.content.QueryInterface(Ci.nsIInterfaceRequestor)
+                              .getInterface(Ci.nsIDOMWindowUtils);
+    let suspendTypes = Ci.nsISuspendedTypes;
+    switch (msg) {
+      case "mute":
+        utils.audioMuted = true;
+        break;
+      case "unmute":
+        utils.audioMuted = false;
+        break;
+      case "lostAudioFocus":
+        utils.mediaSuspend = suspendTypes.SUSPENDED_PAUSE_DISPOSABLE;
+        break;
+      case "lostAudioFocusTransiently":
+        utils.mediaSuspend = suspendTypes.SUSPENDED_PAUSE;
+        break;
+      case "gainAudioFocus":
+        utils.mediaSuspend = suspendTypes.NONE_SUSPENDED;
+        break;
+      case "mediaControlPaused":
+        utils.mediaSuspend = suspendTypes.SUSPENDED_PAUSE_DISPOSABLE;
+        break;
+      case "mediaControlStopped":
+        utils.mediaSuspend = suspendTypes.SUSPENDED_STOP_DISPOSABLE;
+        break;
+      case "blockInactivePageMedia":
+        utils.mediaSuspend = suspendTypes.SUSPENDED_BLOCK;
+        break;
+      case "resumeMedia":
+        utils.mediaSuspend = suspendTypes.NONE_SUSPENDED;
+        break;
+      default:
+        dump("Error : wrong media control msg!\n");
+        break;
+    }
   },
 
   observe(subject, topic, data) {
@@ -741,29 +924,14 @@ var AudioPlaybackListener = {
         name += (data === "active") ? "Start" : "Stop";
         sendAsyncMessage(name);
       }
-    } else if (topic == "AudioFocusChanged") {
-      let utils = global.content.QueryInterface(Ci.nsIInterfaceRequestor)
-                                .getInterface(Ci.nsIDOMWindowUtils);
-      switch (data) {
-        // The AudioFocus:LossTransient means the media would be resumed after
-        // the interruption ended, but AudioFocus:Loss doesn't.
-        // TODO : distinguish these types, it would be done in bug1242874.
-        case "Loss":
-        case "LossTransient":
-          utils.mediaSuspended = true;
-          break;
-        case "Gain":
-          utils.mediaSuspended = false;
-          break;
-      }
+    } else if (topic == "AudioFocusChanged" || topic == "MediaControl") {
+      this.handleMediaControlMessage(data);
     }
   },
 
   receiveMessage(msg) {
-    if (msg.name == "AudioPlaybackMute") {
-      let utils = global.content.QueryInterface(Ci.nsIInterfaceRequestor)
-                                .getInterface(Ci.nsIDOMWindowUtils);
-      utils.audioMuted = msg.data.type === "mute";
+    if (msg.name == "AudioPlayback") {
+      this.handleMediaControlMessage(msg.data.type);
     }
   },
 };

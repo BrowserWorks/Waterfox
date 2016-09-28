@@ -713,6 +713,7 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
   }
   // Note: only for overriding parameters from GetCodec()!
   CodecConfigToWebRTCCodec(codecConfig, video_codec);
+  video_codec.mode = mCodecMode;
 
   if(mPtrViECodec->SetSendCodec(mChannel, video_codec) == -1)
   {
@@ -755,11 +756,6 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
     }
   }
 
-  condError = StartTransmitting();
-  if (condError != kMediaConduitNoError) {
-    return condError;
-  }
-
   {
     MutexAutoLock lock(mCodecMutex);
 
@@ -767,7 +763,8 @@ WebrtcVideoConduit::ConfigureSendMediaCodec(const VideoCodecConfig* codecConfig)
     mCurSendCodecConfig = new VideoCodecConfig(*codecConfig);
   }
 
-  mPtrRTP->SetRembStatus(mChannel, true, false);
+  bool remb_requested = codecConfig->RtcpFbRembIsSet();
+  mPtrRTP->SetRembStatus(mChannel, true, remb_requested);
 
   return kMediaConduitNoError;
 }
@@ -795,6 +792,7 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
   webrtc::ViEKeyFrameRequestMethod kf_request = webrtc::kViEKeyFrameRequestNone;
   bool use_nack_basic = false;
   bool use_tmmbr = false;
+  bool use_remb = false;
 
   //Try Applying the codecs in the list
   // we treat as success if atleast one codec was applied and reception was
@@ -827,6 +825,11 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
     // Check whether TMMBR is requested
     if (codecConfigList[i]->RtcpFbCcmIsSet("tmmbr")) {
       use_tmmbr = true;
+    }
+
+    // Check whether REMB is requested
+    if (codecConfigList[i]->RtcpFbRembIsSet()) {
+      use_remb = true;
     }
 
     webrtc::VideoCodec  video_codec;
@@ -977,7 +980,9 @@ WebrtcVideoConduit::ConfigureRecvMediaCodecs(
   }
 
   // by now we should be successfully started the reception
-  mPtrRTP->SetRembStatus(mChannel, false, true);
+  CSFLogDebug(logTag, "REMB enabled for video stream %s",
+              (use_remb ? "yes" : "no"));
+  mPtrRTP->SetRembStatus(mChannel, use_remb, true);
   DumpCodecDB();
   return kMediaConduitNoError;
 }
@@ -1046,13 +1051,13 @@ WebrtcVideoConduit::SelectBitrates(unsigned short width,
   if (framerate >= 10) {
     out_min = out_min * (framerate/30);
     out_start = out_start * (framerate/30);
-    out_max = out_max * (framerate/30);
+    out_max = std::max((unsigned int)(out_max * (framerate/30)), cap);
   } else {
     // At low framerates, don't reduce bandwidth as much - cut slope to 1/2.
     // Mostly this would be ultra-low-light situations/mobile or screensharing.
     out_min = out_min * ((10-(framerate/2))/30);
     out_start = out_start * ((10-(framerate/2))/30);
-    out_max = out_max * ((10-(framerate/2))/30);
+    out_max = std::max((unsigned int)(out_max * ((10-(framerate/2))/30)), cap);
   }
 
   if (mMinBitrate && mMinBitrate > out_min) {
@@ -1235,7 +1240,7 @@ WebrtcVideoConduit::SelectSendResolution(unsigned short width,
         new_frame->ShallowCopy(*frame);
       }
       RefPtr<WebrtcVideoConduit> self(this);
-      RefPtr<nsRunnable> webrtc_runnable =
+      RefPtr<Runnable> webrtc_runnable =
         media::NewRunnableFrom([self, width, height, new_frame]() -> nsresult {
             UniquePtr<webrtc::I420VideoFrame> local_frame(new_frame); // Simplify cleanup
 
@@ -1342,6 +1347,7 @@ WebrtcVideoConduit::ReconfigureSendCodec(unsigned short width,
                                       std::min(minStartBitrate,
                                                vie_codec.maxBitrate));
   }
+  vie_codec.mode = mCodecMode;
   if ((err = mPtrViECodec->SetSendCodec(mChannel, vie_codec)) != 0)
   {
     CSFLogError(logTag, "%s: SetSendCodec(%ux%u) failed, err %d",

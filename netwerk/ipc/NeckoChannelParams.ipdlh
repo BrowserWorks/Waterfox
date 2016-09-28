@@ -114,18 +114,19 @@ struct HttpChannelOpenArgs
   OptionalHttpResponseHead    synthesizedResponseHead;
   nsCString                   synthesizedSecurityInfoSerialization;
   uint32_t                    cacheKey;
-  nsCString                   schedulingContextID;
+  nsCString                   requestContextID;
   OptionalCorsPreflightArgs   preflightArgs;
   uint32_t                    initialRwin;
   bool                        blockAuthPrompt;
   bool                        suspendAfterSynthesizeResponse;
   bool                        allowStaleCacheContent;
   nsCString                   contentTypeHint;
+  nsCString                   channelId;
 };
 
 struct HttpChannelConnectArgs
 {
-  uint32_t channelId;
+  uint32_t registrarId;
   bool shouldIntercept;
 };
 

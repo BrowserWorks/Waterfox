@@ -30,7 +30,7 @@
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 
 #include <algorithm>
 #include <elf.h>
@@ -475,7 +475,7 @@ bool EHInterp::unwind() {
 
 
 bool operator<(const EHTable &lhs, const EHTable &rhs) {
-  return lhs.startPC() < rhs.endPC();
+  return lhs.startPC() < rhs.startPC();
 }
 
 // Async signal unsafe.

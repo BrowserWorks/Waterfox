@@ -6,8 +6,8 @@
 
 "use strict";
 
-const {Cu} = require("chrome");
-const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
+const {Task} = require("devtools/shared/task");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {createNode, TimeScale} = require("devtools/client/animationinspector/utils");
 const {Keyframes} = require("devtools/client/animationinspector/components/keyframes");
 
@@ -35,17 +35,17 @@ AnimationDetails.prototype = {
   // array is used to skip them.
   NON_PROPERTIES: ["easing", "composite", "computedOffset", "offset"],
 
-  init: function(containerEl) {
+  init: function (containerEl) {
     this.containerEl = containerEl;
   },
 
-  destroy: function() {
+  destroy: function () {
     this.unrender();
     this.containerEl = null;
     this.serverTraits = null;
   },
 
-  unrender: function() {
+  unrender: function () {
     for (let component of this.keyframeComponents) {
       component.off("frame-selected", this.onFrameSelected);
       component.destroy();
@@ -55,6 +55,29 @@ AnimationDetails.prototype = {
     while (this.containerEl.firstChild) {
       this.containerEl.firstChild.remove();
     }
+  },
+
+  getPerfDataForProperty: function (animation, propertyName) {
+    let warning = "";
+    let className = "";
+    if (animation.state.propertyState) {
+      let isRunningOnCompositor;
+      for (let propState of animation.state.propertyState) {
+        if (propState.property == propertyName) {
+          isRunningOnCompositor = propState.runningOnCompositor;
+          if (typeof propState.warning != "undefined") {
+            warning = propState.warning;
+          }
+          break;
+        }
+      }
+      if (isRunningOnCompositor && warning == "") {
+        className = "oncompositor";
+      } else if (!isRunningOnCompositor && warning != "") {
+        className = "warning";
+      }
+    }
+    return {className, warning};
   },
 
   /**
@@ -137,16 +160,19 @@ AnimationDetails.prototype = {
         parent: this.containerEl,
         attributes: {"class": "property"}
       });
-
+      let {warning, className} =
+        this.getPerfDataForProperty(animation, propertyName);
       createNode({
         // text-overflow doesn't work in flex items, so we need a second level
         // of container to actually have an ellipsis on the name.
         // See bug 972664.
         parent: createNode({
           parent: line,
-          attributes: {"class": "name"},
+          attributes: {"class": "name"}
         }),
-        textContent: getCssPropertyName(propertyName)
+        textContent: getCssPropertyName(propertyName),
+        attributes: {"title": warning,
+                     "class": className}
       });
 
       // Add the keyframes diagram for this property.
@@ -178,7 +204,7 @@ AnimationDetails.prototype = {
     }
   }),
 
-  onFrameSelected: function(e, args) {
+  onFrameSelected: function (e, args) {
     // Relay the event up, it's needed in parents too.
     this.emit(e, args);
   }

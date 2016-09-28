@@ -287,6 +287,17 @@
         </body>
       </method>
 
+      <method name="makePrerenderedBrowserActive">
+        <body>
+        <![CDATA[
+          let frameLoader = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
+          if (frameLoader) {
+            frameLoader.makePrerenderedLoaderActive();
+          }
+        ]]>
+        </body>
+      </method>
+
       <property name="imageDocument"
                 readonly="true">
         <getter>
@@ -663,6 +674,24 @@
         </body>
       </method>
 
+      <method name="retrieveListOfBlockedPopups">
+        <body>
+          <![CDATA[
+          this.messageManager.sendAsyncMessage("PopupBlocking:GetBlockedPopupList", null);
+          return new Promise(resolve => {
+            let self = this;
+            this.messageManager.addMessageListener("PopupBlocking:ReplyGetBlockedPopupList",
+              function replyReceived(msg) {
+                self.messageManager.removeMessageListener("PopupBlocking:ReplyGetBlockedPopupList",
+                                                          replyReceived);
+                resolve(msg.data.popupData);
+              }
+            );
+          });
+          ]]>
+        </body>
+      </method>
+
       <method name="unblockPopup">
         <parameter name="aPopupIndex"/>
         <body><![CDATA[
@@ -707,7 +736,7 @@
         <body>
           <![CDATA[
             this._audioMuted = true;
-            this.messageManager.sendAsyncMessage("AudioPlaybackMute",
+            this.messageManager.sendAsyncMessage("AudioPlayback",
                                                  {type: "mute"});
           ]]>
         </body>
@@ -717,8 +746,52 @@
         <body>
           <![CDATA[
             this._audioMuted = false;
-            this.messageManager.sendAsyncMessage("AudioPlaybackMute",
+            this.messageManager.sendAsyncMessage("AudioPlayback",
                                                  {type: "unmute"});
+          ]]>
+        </body>
+      </method>
+
+      <method name="pauseMedia">
+        <parameter name="disposable"/>
+        <body>
+          <![CDATA[
+            let suspendedReason;
+            if (disposable) {
+              suspendedReason = "mediaControlPaused";
+            } else {
+              suspendedReason = "lostAudioFocusTransiently";
+            }
+
+            this.messageManager.sendAsyncMessage("AudioPlayback",
+                                                 {type: suspendedReason});
+          ]]>
+        </body>
+      </method>
+
+      <method name="stopMedia">
+        <body>
+          <![CDATA[
+            this.messageManager.sendAsyncMessage("AudioPlayback",
+                                                 {type: "mediaControlStopped"});
+          ]]>
+        </body>
+      </method>
+
+      <method name="blockMedia">
+        <body>
+          <![CDATA[
+            this.messageManager.sendAsyncMessage("AudioPlayback",
+                                                 {type: "blockInactivePageMedia"});
+          ]]>
+        </body>
+      </method>
+
+      <method name="resumeMedia">
+        <body>
+          <![CDATA[
+            this.messageManager.sendAsyncMessage("AudioPlayback",
+                                                 {type: "resumeMedia"});
           ]]>
         </body>
       </method>
@@ -931,17 +1004,11 @@
           let data = aMessage.data;
           switch (aMessage.name) {
             case "PopupBlocking:UpdateBlockedPopups": {
-              this.blockedPopups = data.blockedPopups;
-              if (this.blockedPopups) {
-                for (let i = 0; i < this.blockedPopups.length; i++) {
-                  let scope = Components.utils.import("resource://gre/modules/BrowserUtils.jsm", {});
-                  let uri = scope.BrowserUtils.makeURI(this.blockedPopups[i].popupWindowURI);
-                  this.blockedPopups[i].popupWindowURI = uri;
-                }
-                if (data.freshPopup) {
-                  this.blockedPopups.reported = false;
-                }
-              }
+              this.blockedPopups = {
+                length: data.count,
+                reported: !data.freshPopup,
+              };
+
               this.updateBlockedPopups();
               break;
             }
@@ -1279,6 +1346,24 @@
           }
           return {permitUnload: this.docShell.contentViewer.permitUnload(), timedOut: false};
         ]]>
+        </body>
+      </method>
+
+      <method name="print">
+        <parameter name="aOuterWindowID"/>
+        <parameter name="aPrintSettings"/>
+        <parameter name="aPrintProgressListener"/>
+        <body>
+          <![CDATA[
+            var owner = this.QueryInterface(Components.interfaces.nsIFrameLoaderOwner);
+            if (!owner.frameLoader) {
+              throw Components.Exception("No frame loader.",
+                                         Components.results.NS_ERROR_FAILURE);
+            }
+
+            owner.frameLoader.print(aOuterWindowID, aPrintSettings,
+                                    aPrintProgressListener);
+          ]]>
         </body>
       </method>
 

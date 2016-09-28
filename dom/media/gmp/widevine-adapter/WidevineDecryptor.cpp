@@ -39,8 +39,6 @@ WidevineDecryptor::Init(GMPDecryptorCallback* aCallback)
 {
   MOZ_ASSERT(aCallback);
   mCallback = aCallback;
-  mCallback->SetCapabilities(GMP_EME_CAP_DECRYPT_AND_DECODE_VIDEO |
-                             GMP_EME_CAP_DECRYPT_AUDIO);
 }
 
 static SessionType
@@ -195,7 +193,7 @@ WidevineDecryptor::DecryptingComplete()
 
 class WidevineBuffer : public cdm::Buffer {
 public:
-  WidevineBuffer(size_t aSize) {
+  explicit WidevineBuffer(size_t aSize) {
     Log("WidevineBuffer(size=" PRIuSIZE ") created", aSize);
     mBuffer.SetLength(aSize);
   }

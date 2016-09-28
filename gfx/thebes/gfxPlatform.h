@@ -95,8 +95,6 @@ enum eGfxLog {
 // when searching through pref langs, max number of pref langs
 const uint32_t kMaxLenPrefLangList = 32;
 
-extern bool gANGLESupportsD3D11;
-
 #define UNINITIALIZED_VALUE  (-1)
 
 inline const char*
@@ -138,7 +136,8 @@ enum class DeviceResetReason
 
 enum class ForcedDeviceResetReason
 {
-  OPENSHAREDHANDLE = 0
+  OPENSHAREDHANDLE = 0,
+  COMPOSITOR_UPDATED,
 };
 
 class gfxPlatform {
@@ -449,14 +448,7 @@ public:
 
     static bool OffMainThreadCompositingEnabled();
 
-    static bool CanUseDirect3D9();
-    static bool CanUseDirect3D11();
     virtual bool CanUseHardwareVideoDecoding();
-    virtual bool CanUseDirect3D11ANGLE() { return false; }
-
-    // Returns whether or not layers acceleration should be used. This should
-    // only be called on the parent process.
-    bool ShouldUseLayersAcceleration();
 
     // Returns a prioritized list of all available compositor backends.
     void GetCompositorBackends(bool useAcceleration, nsTArray<mozilla::layers::LayersBackend>& aBackends);
@@ -530,6 +522,12 @@ public:
      * for measuring text etc as if they will be rendered to the screen
      */
     gfxASurface* ScreenReferenceSurface() { return mScreenReferenceSurface; }
+
+    /**
+     * Returns a 1x1 DrawTarget that can be used for measuring text etc. as
+     * it would measure if rendered on-screen.  Guaranteed to return a
+     * non-null and valid DrawTarget.
+     */
     mozilla::gfx::DrawTarget* ScreenReferenceDrawTarget() { return mScreenReferenceDrawTarget; }
 
     virtual mozilla::gfx::SurfaceFormat Optimal2DFormatForContent(gfxContentType aContent);
@@ -617,11 +615,6 @@ public:
     // widget. This should only be used within nsRefreshDriver.
     virtual void SchedulePaintIfDeviceReset() {}
 
-    // Immediately update all platform bits if a device reset has occurred.
-    // This should only be used at the top of the callstack (i.e. within
-    // a task, OS event, or IPDL message).
-    virtual void UpdateRenderModeIfDeviceReset() {}
-
     /**
      * Helper method, creates a draw target for a specific Azure backend.
      * Used by CreateOffscreenDrawTarget.
@@ -641,6 +634,8 @@ public:
     mozilla::layers::LayersBackend GetCompositorBackend() const {
       return mCompositorBackend;
     }
+
+    virtual void CompositorUpdated() {}
 
     // Return information on how child processes should initialize graphics
     // devices. Currently this is only used on Windows.
@@ -665,6 +660,8 @@ protected:
     gfxPlatform();
     virtual ~gfxPlatform();
 
+    virtual void InitAcceleration();
+
     /**
      * Initialized hardware vsync based on each platform.
      */
@@ -686,20 +683,15 @@ protected:
                           uint32_t aContentBitmask, mozilla::gfx::BackendType aContentDefault);
 
     /**
-     * If in a child process, triggers a refresh of device preferences.
+     * If in a child process, triggers a refresh of device preferences, then returns true.
+     * In a parent process, nothing happens and false is returned.
      */
-    void UpdateDeviceInitData();
+    virtual bool UpdateDeviceInitData();
 
     /**
      * Increase the global device counter after a device has been removed/reset.
      */
     void BumpDeviceCounter();
-
-    /**
-     * Called when new device preferences are available.
-     */
-    virtual void SetDeviceInitData(mozilla::gfx::DeviceInitData& aData)
-    {}
 
     /**
      * returns the first backend named in the pref gfx.canvas.azure.backends
@@ -728,6 +720,8 @@ protected:
 
     static already_AddRefed<mozilla::gfx::ScaledFont>
       GetScaledFontForFontWithCairoSkia(mozilla::gfx::DrawTarget* aTarget, gfxFont* aFont);
+
+    static mozilla::gfx::DeviceInitData& GetParentDevicePrefs();
 
     int8_t  mAllowDownloadableFonts;
     int8_t  mGraphiteShapingEnabled;
@@ -777,6 +771,8 @@ private:
      * This uses nsIScreenManager to determine the screen size and color depth
      */
     void PopulateScreenInfo();
+
+    void InitCompositorAccelerationPrefs();
 
     RefPtr<gfxASurface> mScreenReferenceSurface;
     nsCOMPtr<nsIObserver> mSRGBOverrideObserver;

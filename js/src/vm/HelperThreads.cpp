@@ -16,6 +16,7 @@
 #include "gc/GCInternals.h"
 #include "jit/IonBuilder.h"
 #include "vm/Debugger.h"
+#include "vm/SharedImmutableStringsCache.h"
 #include "vm/Time.h"
 #include "vm/TraceLogging.h"
 
@@ -28,6 +29,7 @@ using namespace js;
 
 using mozilla::ArrayLength;
 using mozilla::DebugOnly;
+using mozilla::TimeDuration;
 
 namespace js {
 
@@ -130,7 +132,7 @@ CompiledScriptMatches(JSCompartment* compartment, JSScript* script, JSScript* ta
 }
 
 void
-js::CancelOffThreadIonCompile(JSCompartment* compartment, JSScript* script)
+js::CancelOffThreadIonCompile(JSCompartment* compartment, JSScript* script, bool discardLazyLinkList)
 {
     if (compartment && !compartment->jitCompartment())
         return;
@@ -176,14 +178,16 @@ js::CancelOffThreadIonCompile(JSCompartment* compartment, JSScript* script)
     }
 
     /* Cancel lazy linking for pending builders (attached to the ionScript). */
-    jit::IonBuilder* builder = HelperThreadState().ionLazyLinkList().getFirst();
-    while (builder) {
-        jit::IonBuilder* next = builder->getNext();
-        if (CompiledScriptMatches(compartment, script, builder->script())) {
-            builder->script()->baselineScript()->removePendingIonBuilder(builder->script());
-            jit::FinishOffThreadBuilder(nullptr, builder);
+    if (discardLazyLinkList) {
+        MOZ_ASSERT(compartment);
+        JSRuntime* runtime = compartment->runtimeFromMainThread();
+        jit::IonBuilder* builder = runtime->ionLazyLinkList().getFirst();
+        while (builder) {
+            jit::IonBuilder* next = builder->getNext();
+            if (CompiledScriptMatches(compartment, script, builder->script()))
+                jit::FinishOffThreadBuilder(runtime, builder);
+            builder = next;
         }
-        builder = next;
     }
 }
 
@@ -654,8 +658,6 @@ GlobalHelperThreadState::finish()
     PR_DestroyCondVar(producerWakeup);
     PR_DestroyCondVar(pauseWakeup);
     PR_DestroyLock(helperLock);
-
-    ionLazyLinkList_.clear();
 }
 
 void
@@ -701,15 +703,13 @@ GlobalHelperThreadState::isLocked()
 #endif
 
 void
-GlobalHelperThreadState::wait(CondVar which, uint32_t millis)
+GlobalHelperThreadState::wait(CondVar which, TimeDuration timeout /* = TimeDuration::Forever() */)
 {
     MOZ_ASSERT(isLocked());
 #ifdef DEBUG
     lockOwner = nullptr;
 #endif
-    DebugOnly<PRStatus> status =
-        PR_WaitCondVar(whichWakeup(which),
-                       millis ? PR_MillisecondsToInterval(millis) : PR_INTERVAL_NO_TIMEOUT);
+    DebugOnly<PRStatus> status = PR_WaitCondVar(whichWakeup(which), DurationToPRInterval(timeout));
     MOZ_ASSERT(status == PR_SUCCESS);
 #ifdef DEBUG
     lockOwner = PR_GetCurrentThread();
@@ -748,7 +748,7 @@ GlobalHelperThreadState::hasActiveThreads()
 void
 GlobalHelperThreadState::waitForAllThreads()
 {
-    CancelOffThreadIonCompile(nullptr, nullptr);
+    CancelOffThreadIonCompile(nullptr, nullptr, /* discardLazyLinkList = */ false);
 
     AutoLockHelperThreadState lock;
     while (hasActiveThreads())
@@ -1109,6 +1109,9 @@ HelperThread::handleGCParallelWorkload()
     MOZ_ASSERT(HelperThreadState().canStartGCParallelTask());
     MOZ_ASSERT(idle());
 
+    TraceLoggerThread* logger = TraceLoggerForCurrentThread();
+    AutoTraceLog logCompile(logger, TraceLogger_GC);
+
     currentTask.emplace(HelperThreadState().gcParallelWorklist().popCopy());
     gcParallelTask()->runFromHelperThread();
     currentTask.reset();
@@ -1195,11 +1198,6 @@ GlobalHelperThreadState::finishParseTask(JSContext* maybecx, JSRuntime* rt, Pars
     // The Debugger only needs to be told about the topmost script that was compiled.
     Debugger::onNewScript(cx, script);
 
-    // Update the compressed source table with the result. This is normally
-    // called by setCompressedSource when compilation occurs on the main thread.
-    if (script->scriptSource()->hasCompressedSource())
-        script->scriptSource()->updateCompressedSourceSet(rt);
-
     return script;
 }
 
@@ -1253,8 +1251,6 @@ GlobalHelperThreadState::mergeParseTaskCompartment(JSRuntime* rt, ParseTask* par
     LeaveParseTaskZone(rt, parseTask);
 
     {
-        gc::ZoneCellIter iter(parseTask->cx->zone(), gc::AllocKind::OBJECT_GROUP);
-
         // Generator functions don't have Function.prototype as prototype but a
         // different function object, so the IdentifyStandardPrototype trick
         // below won't work.  Just special-case it.
@@ -1270,8 +1266,7 @@ GlobalHelperThreadState::mergeParseTaskCompartment(JSRuntime* rt, ParseTask* par
         // to the corresponding prototype in the new compartment. This will briefly
         // create cross compartment pointers, which will be fixed by the
         // MergeCompartments call below.
-        for (; !iter.done(); iter.next()) {
-            ObjectGroup* group = iter.get<ObjectGroup>();
+        for (auto group = parseTask->cx->zone()->cellIter<ObjectGroup>(); !group.done(); group.next()) {
             TaggedProto proto(group->proto());
             if (!proto.isObject())
                 continue;
@@ -1365,6 +1360,10 @@ HelperThread::handleWasmWorkload()
     wasm::IonCompileTask* task = wasmTask();
     {
         AutoUnlockHelperThreadState unlock;
+
+        TraceLoggerThread* logger = TraceLoggerForCurrentThread();
+        AutoTraceLog logCompile(logger, TraceLogger_WasmCompilation);
+
         PerThreadData::AutoEnterRuntime enter(threadData.ptr(), task->runtime());
         success = wasm::IonCompileFunction(task);
     }
@@ -1407,15 +1406,16 @@ HelperThread::handleIonWorkload()
     currentTask.emplace(builder);
     builder->setPauseFlag(&pause);
 
-    TraceLoggerThread* logger = TraceLoggerForCurrentThread();
-    TraceLoggerEvent event(logger, TraceLogger_AnnotateScripts, builder->script());
-    AutoTraceLog logScript(logger, event);
-    AutoTraceLog logCompile(logger, TraceLogger_IonCompilation);
-
     JSRuntime* rt = builder->script()->compartment()->runtimeFromAnyThread();
 
     {
         AutoUnlockHelperThreadState unlock;
+
+        TraceLoggerThread* logger = TraceLoggerForCurrentThread();
+        TraceLoggerEvent event(logger, TraceLogger_AnnotateScripts, builder->script());
+        AutoTraceLog logScript(logger, event);
+        AutoTraceLog logCompile(logger, TraceLogger_IonCompilation);
+
         PerThreadData::AutoEnterRuntime enter(threadData.ptr(),
                                               builder->script()->runtimeFromAnyThread());
         jit::JitContext jctx(jit::CompileRuntime::get(rt),
@@ -1570,6 +1570,10 @@ HelperThread::handleCompressionWorkload()
 
     {
         AutoUnlockHelperThreadState unlock;
+
+        TraceLoggerThread* logger = TraceLoggerForCurrentThread();
+        AutoTraceLog logCompile(logger, TraceLogger_CompressSource);
+
         task->result = task->work();
     }
 
@@ -1613,10 +1617,8 @@ GlobalHelperThreadState::compressionInProgress(SourceCompressionTask* task)
 bool
 SourceCompressionTask::complete()
 {
-    if (!active()) {
-        MOZ_ASSERT(!compressed);
+    if (!active())
         return true;
-    }
 
     {
         AutoLockHelperThreadState lock;
@@ -1625,22 +1627,14 @@ SourceCompressionTask::complete()
     }
 
     if (result == Success) {
-        ss->setCompressedSource(cx->isJSContext() ? cx->asJSContext()->runtime() : nullptr,
-                                compressed, compressedBytes, compressedHash);
-
-        // Update memory accounting.
-        cx->updateMallocCounter(ss->computedSizeOfData());
+        MOZ_ASSERT(resultString);
+        ss->setCompressedSource(mozilla::Move(*resultString), ss->length());
     } else {
-        js_free(compressed);
-
         if (result == OOM)
             ReportOutOfMemory(cx);
-        else if (result == Aborted && !ss->ensureOwnsSource(cx))
-            result = OOM;
     }
 
     ss = nullptr;
-    compressed = nullptr;
     MOZ_ASSERT(!active());
 
     return result != OOM;

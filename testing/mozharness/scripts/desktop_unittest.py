@@ -171,6 +171,35 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.abs_app_dir = None
         self.abs_res_dir = None
 
+        # Construct an identifier to be used to identify Perfherder data
+        # for resource monitoring recording. This attempts to uniquely
+        # identify this test invocation configuration.
+        perfherder_parts = []
+        perfherder_options = []
+        suites = (
+            ('specified_mochitest_suites', 'mochitest'),
+            ('specified_reftest_suites', 'reftest'),
+            ('specified_xpcshell_suites', 'xpcshell'),
+            ('specified_cppunittest_suites', 'cppunit'),
+            ('specified_gtest_suites', 'gtest'),
+            ('specified_jittest_suites', 'jittest'),
+            ('specified_mozbase_suites', 'mozbase'),
+            ('specified_mozmill_suites', 'mozmill'),
+        )
+        for s, prefix in suites:
+            if s in c:
+                perfherder_parts.append(prefix)
+                perfherder_parts.extend(c[s])
+
+        if 'this_chunk' in c:
+            perfherder_parts.append(c['this_chunk'])
+
+        if c['e10s']:
+            perfherder_options.append('e10s')
+
+        self.resource_monitor_perfherder_id = ('.'.join(perfherder_parts),
+                                               perfherder_options)
+
     # helper methods {{{2
     def _pre_config_lock(self, rw_config):
         super(DesktopUnittest, self)._pre_config_lock(rw_config)
@@ -260,11 +289,20 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
         self.register_virtualenv_module(name='mock')
         self.register_virtualenv_module(name='simplejson')
 
-        requirements = os.path.join(dirs['abs_test_install_dir'],
-                                    'config',
-                                    'marionette_requirements.txt')
-        if os.path.isfile(requirements):
-            self.register_virtualenv_module(requirements=[requirements],
+        requirements_files = [
+                os.path.join(dirs['abs_test_install_dir'],
+                    'config',
+                    'marionette_requirements.txt')]
+
+        if os.path.isdir(dirs['abs_mochitest_dir']):
+            # mochitest is the only thing that needs this
+            requirements_files.append(
+                os.path.join(dirs['abs_mochitest_dir'],
+                             'websocketprocessbridge',
+                             'websocketprocessbridge_requirements.txt'))
+
+        for requirements_file in requirements_files:
+            self.register_virtualenv_module(requirements=[requirements_file],
                                             two_pass=True)
 
     def _query_symbols_url(self):
@@ -541,6 +579,11 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                                                     'resources',
                                                     module))
 
+    def get_timeout_for_category(self, suite_category):
+        if suite_category == 'cppunittest':
+            return 2500
+        return self.config["suite_definitions"][suite_category].get('run_timeout', 1000)
+
     def _run_category_suites(self, suite_category, preflight_run_method=None):
         """run suite(s) to a specific category"""
         dirs = self.query_abs_dirs()
@@ -600,7 +643,7 @@ class DesktopUnittest(TestingMixin, MercurialScript, BlobUploadMixin, MozbaseMix
                 if not os.path.isdir(env['MOZ_UPLOAD_DIR']):
                     self.mkdir_p(env['MOZ_UPLOAD_DIR'])
                 env = self.query_env(partial_env=env, log_level=INFO)
-                cmd_timeout = 2500 if suite_category == 'cppunittest' else 1000
+                cmd_timeout = self.get_timeout_for_category(suite_category)
                 return_code = self.run_command(cmd, cwd=dirs['abs_work_dir'],
                                                output_timeout=cmd_timeout,
                                                output_parser=parser,

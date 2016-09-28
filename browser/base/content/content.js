@@ -128,7 +128,7 @@ var handleContentContextMenu = function (event) {
   if (Services.prefs.getBoolPref("network.http.enablePerElementReferrer")) {
     let referrerAttrValue = Services.netUtils.parseAttributePolicyString(event.target.
                             getAttribute("referrerpolicy"));
-    if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT) {
+    if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_UNSET) {
       referrerPolicy = referrerAttrValue;
     }
   }
@@ -221,9 +221,24 @@ const TLS_ERROR_REPORT_TELEMETRY_EXPANDED = 1;
 const TLS_ERROR_REPORT_TELEMETRY_SUCCESS  = 6;
 const TLS_ERROR_REPORT_TELEMETRY_FAILURE  = 7;
 
-const SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
+const SEC_ERROR_BASE          = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
+const MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.MOZILLA_PKIX_ERROR_BASE;
 
-const SEC_ERROR_UNKNOWN_ISSUER = SEC_ERROR_BASE + 13;
+const SEC_ERROR_EXPIRED_CERTIFICATE                = SEC_ERROR_BASE + 11;
+const SEC_ERROR_UNKNOWN_ISSUER                     = SEC_ERROR_BASE + 13;
+const SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE         = SEC_ERROR_BASE + 30;
+const SEC_ERROR_OCSP_FUTURE_RESPONSE               = SEC_ERROR_BASE + 131;
+const SEC_ERROR_OCSP_OLD_RESPONSE                  = SEC_ERROR_BASE + 132;
+const MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE = MOZILLA_PKIX_ERROR_BASE + 5;
+
+const PREF_BLOCKLIST_CLOCK_SKEW_SECONDS = "services.blocklist.clock_skew_seconds";
+
+const PREF_SSL_IMPACT_ROOTS = ["security.tls.version.", "security.ssl3."];
+
+const PREF_SSL_IMPACT = PREF_SSL_IMPACT_ROOTS.reduce((prefs, root) => {
+  return prefs.concat(Services.prefs.getChildList(root));
+}, []);
+
 
 var AboutNetAndCertErrorListener = {
   init: function(chromeGlobal) {
@@ -231,6 +246,7 @@ var AboutNetAndCertErrorListener = {
     chromeGlobal.addEventListener('AboutNetErrorLoad', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
     chromeGlobal.addEventListener('AboutNetErrorOverride', this, false, true);
+    chromeGlobal.addEventListener('AboutNetErrorResetPreferences', this, false, true);
   },
 
   get isAboutNetError() {
@@ -262,6 +278,41 @@ var AboutNetAndCertErrorListener = {
         let learnMoreLink = content.document.getElementById("learnMoreLink");
         learnMoreLink.href = "https://support.mozilla.org/kb/troubleshoot-SEC_ERROR_UNKNOWN_ISSUER";
         break;
+
+      // in case the certificate expired we make sure the system clock
+      // matches settings server (kinto) time
+      case SEC_ERROR_EXPIRED_CERTIFICATE:
+      case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
+      case SEC_ERROR_OCSP_FUTURE_RESPONSE:
+      case SEC_ERROR_OCSP_OLD_RESPONSE:
+      case MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE:
+
+        // use blocklist stats if available
+        if (Services.prefs.getPrefType(PREF_BLOCKLIST_CLOCK_SKEW_SECONDS)) {
+          let difference = Services.prefs.getIntPref(PREF_BLOCKLIST_CLOCK_SKEW_SECONDS);
+
+          // if the difference is more than a day
+          if (Math.abs(difference) > 60 * 60 * 24) {
+            let formatter = new Intl.DateTimeFormat();
+            let systemDate = formatter.format(new Date());
+            // negative difference means local time is behind server time
+            let actualDate = formatter.format(new Date(Date.now() - difference * 1000));
+
+            content.document.getElementById("wrongSystemTime_URL")
+              .textContent = content.document.location.hostname;
+            content.document.getElementById("wrongSystemTime_systemDate")
+              .textContent = systemDate;
+            content.document.getElementById("wrongSystemTime_actualDate")
+              .textContent = actualDate;
+
+            content.document.getElementById("errorShortDesc")
+              .style.display = "none";
+            content.document.getElementById("wrongSystemTimePanel")
+              .style.display = "block";
+          }
+        }
+
+        break;
     }
   },
 
@@ -280,7 +331,20 @@ var AboutNetAndCertErrorListener = {
     case "AboutNetErrorOverride":
       this.onOverride(aEvent);
       break;
+    case "AboutNetErrorResetPreferences":
+      this.onResetPreferences(aEvent);
+      break;
     }
+  },
+
+  changedCertPrefs: function () {
+    for (let prefName of PREF_SSL_IMPACT) {
+      if (Services.prefs.prefHasUserValue(prefName)) {
+        return true;
+      }
+    }
+
+    return false;
   },
 
   onPageLoad: function(evt) {
@@ -294,12 +358,18 @@ var AboutNetAndCertErrorListener = {
     content.dispatchEvent(new content.CustomEvent("AboutNetErrorOptions", {
       detail: JSON.stringify({
         enabled: Services.prefs.getBoolPref("security.ssl.errorReporting.enabled"),
+        changedCertPrefs: this.changedCertPrefs(),
         automatic: automatic
       })
     }));
 
     sendAsyncMessage("Browser:SSLErrorReportTelemetry",
                      {reportStatus: TLS_ERROR_REPORT_TELEMETRY_UI_SHOWN});
+  },
+
+
+  onResetPreferences: function(evt) {
+    sendAsyncMessage("Browser:ResetSSLPreferences");
   },
 
   onSetAutomatic: function(evt) {
@@ -376,7 +446,7 @@ var ClickEventHandler = {
         node) {
       let referrerAttrValue = Services.netUtils.parseAttributePolicyString(node.
                               getAttribute("referrerpolicy"));
-      if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_DEFAULT) {
+      if (referrerAttrValue !== Ci.nsIHttpChannel.REFERRER_POLICY_UNSET) {
         referrerPolicy = referrerAttrValue;
       }
     }
@@ -384,7 +454,8 @@ var ClickEventHandler = {
     let json = { button: event.button, shiftKey: event.shiftKey,
                  ctrlKey: event.ctrlKey, metaKey: event.metaKey,
                  altKey: event.altKey, href: null, title: null,
-                 bookmark: false, referrerPolicy: referrerPolicy };
+                 bookmark: false, referrerPolicy: referrerPolicy,
+                 originAttributes: principal ? principal.originAttributes : {} };
 
     if (href) {
       try {
@@ -667,6 +738,9 @@ addMessageListener("ContextMenu:MediaCommand", (message) => {
     case "pause":
       media.pause();
       break;
+    case "loop":
+      media.loop = !media.loop;
+      break;
     case "mute":
       media.muted = true;
       break;
@@ -681,13 +755,6 @@ addMessageListener("ContextMenu:MediaCommand", (message) => {
       break;
     case "showcontrols":
       media.setAttribute("controls", "true");
-      break;
-    case "hidestats":
-    case "showstats":
-      let event = media.ownerDocument.createEvent("CustomEvent");
-      event.initCustomEvent("media-showStatistics", false, true,
-                            message.data.command == "showstats");
-      media.dispatchEvent(event);
       break;
     case "fullscreen":
       if (content.document.fullscreenEnabled)
@@ -983,6 +1050,7 @@ var PageInfoListener = {
     docInfo.contentType = document.contentType;
     docInfo.characterSet = document.characterSet;
     docInfo.lastModified = document.lastModified;
+    docInfo.principal = document.nodePrincipal;
 
     let documentURIObject = {};
     documentURIObject.spec = document.documentURIObject.spec;
@@ -1411,4 +1479,3 @@ let OfflineApps = {
 
 addEventListener("MozApplicationManifest", OfflineApps, false);
 addMessageListener("OfflineApps:StartFetching", OfflineApps);
-

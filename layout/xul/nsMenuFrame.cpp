@@ -62,7 +62,7 @@ static int32_t gEatMouseMove = false;
 const int32_t kBlinkDelay = 67; // milliseconds
 
 // this class is used for dispatching menu activation events asynchronously.
-class nsMenuActivateEvent : public nsRunnable
+class nsMenuActivateEvent : public Runnable
 {
 public:
   nsMenuActivateEvent(nsIContent *aMenu,
@@ -107,7 +107,7 @@ private:
   bool mIsActivate;
 };
 
-class nsMenuAttributeChangedEvent : public nsRunnable
+class nsMenuAttributeChangedEvent : public Runnable
 {
 public:
   nsMenuAttributeChangedEvent(nsIFrame* aFrame, nsIAtom* aAttr)
@@ -389,10 +389,10 @@ nsMenuFrame::HandleEvent(nsPresContext* aPresContext,
 
   if (aEvent->mMessage == eKeyPress && !IsDisabled()) {
     WidgetKeyboardEvent* keyEvent = aEvent->AsKeyboardEvent();
-    uint32_t keyCode = keyEvent->keyCode;
+    uint32_t keyCode = keyEvent->mKeyCode;
 #ifdef XP_MACOSX
     // On mac, open menulist on either up/down arrow or space (w/o Cmd pressed)
-    if (!IsOpen() && ((keyEvent->charCode == NS_VK_SPACE && !keyEvent->IsMeta()) ||
+    if (!IsOpen() && ((keyEvent->mCharCode == ' ' && !keyEvent->IsMeta()) ||
         (keyCode == NS_VK_UP || keyCode == NS_VK_DOWN))) {
       *aEventStatus = nsEventStatus_eConsumeNoDefault;
       OpenMenu(false);

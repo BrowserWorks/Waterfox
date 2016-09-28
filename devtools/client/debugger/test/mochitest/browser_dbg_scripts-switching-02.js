@@ -14,7 +14,11 @@ var gLabel2 = "code_script-switching-02.js";
 var gParams = "?foo=bar,baz|lol";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
@@ -145,13 +149,13 @@ function test() {
       return deferred.promise;
     }
 
-    Task.spawn(function*() {
+    Task.spawn(function* () {
       yield waitForSourceAndCaretAndScopes(gPanel, "-02.js", 1);
       yield testSourcesDisplay();
       yield testSwitchPaused1();
       yield testSwitchPaused2();
       yield testSwitchRunning();
-      resumeDebuggerThenCloseAndFinish(gPanel)
+      resumeDebuggerThenCloseAndFinish(gPanel);
     });
 
     callInTab(gTab, "firstCall");

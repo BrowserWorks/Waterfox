@@ -13,7 +13,7 @@ const TEST_URI = "data:text/html;charset=utf-8," +
   "<iframe style='margin:100px' src='data:text/html," +
   "<div id=\"inner\">Look I am here!</div>'>";
 
-add_task(function*() {
+add_task(function* () {
   info("Enable command-button-frames preference setting");
   Services.prefs.setBoolPref("devtools.command-button-frames.enabled", true);
   let {inspector, toolbox, testActor} = yield openInspectorForURL(TEST_URI);
@@ -42,13 +42,16 @@ add_task(function*() {
  * @return {Promise}
  */
 function* switchToFrameContext(frameIndex, toolbox, inspector) {
-  // Verify that the frame list button is visible and populated
-  let frameListBtn = toolbox.doc.getElementById("command-button-frames");
-  let frameBtns = frameListBtn.firstChild.querySelectorAll("[data-window-id]");
+  // Open frame menu and wait till it's available on the screen.
+  let btn = toolbox.doc.getElementById("command-button-frames");
+  let menu = toolbox.showFramesMenu({target: btn});
+  yield once(menu, "open");
 
   info("Select the iframe in the frame list.");
   let newRoot = inspector.once("new-root");
-  frameBtns[frameIndex].click();
+
+  menu.items[frameIndex].click();
+
   yield newRoot;
   yield inspector.once("inspector-updated");
 

@@ -420,6 +420,38 @@ MacroAssembler::rshift64(Imm32 imm, Register64 dest)
 }
 
 // ===============================================================
+// Rotate functions
+void
+MacroAssembler::rotateLeft(Imm32 count, Register input, Register dest)
+{
+    if (count.value)
+        ma_rol(count, input, dest);
+    else
+        ma_mov(input, dest);
+}
+
+void
+MacroAssembler::rotateLeft(Register count, Register input, Register dest)
+{
+    ma_rol(count, input, dest);
+}
+
+void
+MacroAssembler::rotateRight(Imm32 count, Register input, Register dest)
+{
+    if (count.value)
+        ma_ror(count, input, dest);
+    else
+        ma_mov(input, dest);
+}
+
+void
+MacroAssembler::rotateRight(Register count, Register input, Register dest)
+{
+    ma_ror(count, input, dest);
+}
+
+// ===============================================================
 // Branch functions
 
 void
@@ -682,7 +714,7 @@ MacroAssembler::branchDouble(DoubleCondition cond, FloatRegister lhs, FloatRegis
     ma_b(label, ConditionFromDoubleCondition(cond));
 }
 
-// There are two options for implementing emitTruncateDouble:
+// There are two options for implementing branchTruncateDouble:
 //
 // 1. Convert the floating point value to an integer, if it did not fit, then it
 // was clamped to INT_MIN/INT_MAX, and we can test it. NOTE: if the value
@@ -1169,6 +1201,43 @@ MacroAssembler::branchTestMagic(Condition cond, const Address& valaddr, JSWhyMag
 {
     branchTestMagic(cond, valaddr, label);
     branch32(cond, ToPayload(valaddr), Imm32(why), label);
+}
+
+// ========================================================================
+// Memory access primitives.
+void
+MacroAssembler::storeUncanonicalizedDouble(FloatRegister src, const Address& addr)
+{
+    ma_vstr(src, addr);
+}
+void
+MacroAssembler::storeUncanonicalizedDouble(FloatRegister src, const BaseIndex& addr)
+{
+    uint32_t scale = Imm32::ShiftOf(addr.scale).value;
+    ma_vstr(src, addr.base, addr.index, scale, addr.offset);
+}
+
+void
+MacroAssembler::storeUncanonicalizedFloat32(FloatRegister src, const Address& addr)
+{
+    ma_vstr(src.asSingle(), addr);
+}
+void
+MacroAssembler::storeUncanonicalizedFloat32(FloatRegister src, const BaseIndex& addr)
+{
+    uint32_t scale = Imm32::ShiftOf(addr.scale).value;
+    ma_vstr(src.asSingle(), addr.base, addr.index, scale, addr.offset);
+}
+
+void
+MacroAssembler::storeFloat32x3(FloatRegister src, const Address& dest)
+{
+    MOZ_CRASH("NYI");
+}
+void
+MacroAssembler::storeFloat32x3(FloatRegister src, const BaseIndex& dest)
+{
+    MOZ_CRASH("NYI");
 }
 
 //}}} check_macroassembler_style

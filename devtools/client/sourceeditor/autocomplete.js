@@ -46,7 +46,7 @@ function initializeAutoCompletion(ctx, options = {}) {
     win.tern = require("./tern/tern");
     cm.tern = new CodeMirror.TernServer({
       defs: defs,
-      typeTip: function(data) {
+      typeTip: function (data) {
         let tip = document.createElement("span");
         tip.className = "CodeMirror-Tern-information";
         let tipType = document.createElement("strong");
@@ -93,7 +93,7 @@ function initializeAutoCompletion(ctx, options = {}) {
     };
     cm.addKeyMap(keyMap);
 
-    let destroyTern = function() {
+    let destroyTern = function () {
       ed.off("destroy", destroyTern);
       cm.off("cursorActivity", updateArgHintsCallback);
       cm.removeKeyMap(keyMap);
@@ -240,7 +240,7 @@ function autoComplete({ ed, cm }) {
       autocompleteOpts.suggestionInsertedOnce = false;
       // This event is used in tests.
       ed.emit("after-suggest");
-    }).then(null, Cu.reportError);
+    }).then(null, e => console.error(e));
 }
 
 /**
@@ -381,9 +381,11 @@ function getPopup({ ed }) {
  * implementation of completer supports it.
  */
 function getInfoAt({ ed }, caret) {
-  let completer = autocompleteMap.get(ed).completer;
-  if (completer && completer.getInfoAt) {
-    return completer.getInfoAt(ed.getText(), caret);
+  if (autocompleteMap.has(ed)) {
+    let completer = autocompleteMap.get(ed).completer;
+    if (completer && completer.getInfoAt) {
+      return completer.getInfoAt(ed.getText(), caret);
+    }
   }
 
   return null;

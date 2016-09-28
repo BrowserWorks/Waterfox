@@ -3,36 +3,103 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* Use flex layout for the Inspector toolbar. For now, it's done
+   specifically for the Inspector toolbar since general rule applied
+   on .devtools-toolbar breaks breadcrubs and also toolbars in other
+   panels (e.g. webconsole, debugger), these are not ready for HTML
+   layout yet. */
+#inspector-toolbar.devtools-toolbar {
+  display: flex;
+}
+
+#inspector-toolbar.devtools-toolbar .devtools-toolbar-spacer {
+  flex-grow: 1;
+  display: inline-block;
+}
+
 #inspector-searchlabel {
   overflow: hidden;
+}
+
+/* Make sure the text is vertically centered in Inspector's
+   search box. This can be removed when the search box is
+   switched to HTML.
+   See also: https://bugzilla.mozilla.org/show_bug.cgi?id=1265759 */
+.theme-dark #inspector-searchbox,
+.theme-light #inspector-searchbox {
+  line-height: 19px;
+}
+.theme-firebug #inspector-searchbox {
+  line-height: 17px;
 }
 
 #inspector-breadcrumbs-toolbar {
   padding: 0px;
   border-bottom-width: 0px;
   border-top-width: 1px;
+  display: block;
+  position: relative;
+}
+
+#inspector-breadcrumbs-toolbar,
+#inspector-breadcrumbs-toolbar * {
+  box-sizing: border-box;
+}
+
+#inspector-breadcrumbs {
+  display: flex;
+
+  /* Break out of the XUL flexbox, so the splitter can still shrink the
+     markup view even if the contents of the breadcrumbs are wider than
+     the new width. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+
+#inspector-breadcrumbs .scrollbutton-up,
+#inspector-breadcrumbs .scrollbutton-down {
+  flex: 0;
+  display: flex;
+  align-items: center;
+}
+
+#inspector-breadcrumbs .html-arrowscrollbox-inner {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+#inspector-breadcrumbs .breadcrumbs-widget-item {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font: message-box;
 }
 
 /* Expand/collapse panel toolbar button */
 
-#inspector-pane-toggle {
-  list-style-image: var(--theme-pane-collapse-image);
+#inspector-pane-toggle::before {
+  background-image: var(--theme-pane-collapse-image);
 }
 
-#inspector-pane-toggle[pane-collapsed] {
-  list-style-image: var(--theme-pane-expand-image);
+#inspector-pane-toggle[pane-collapsed]::before {
+  background-image: var(--theme-pane-expand-image);
 }
 
+/* Rotate button icon 90deg if the toolbox container is
+  in vertical mode (sidebar displayed under the main panel) */
 @media (max-width: 700px) {
-  #inspector-pane-toggle > .toolbarbutton-icon {
+  #inspector-pane-toggle::before {
     transform: rotate(90deg);
   }
 }
 
 /* Add element toolbar button */
 
-#inspector-element-add-button {
-  list-style-image: url("chrome://devtools/skin/images/add.svg");
+#inspector-element-add-button::before {
+  background-image: url("chrome://devtools/skin/images/add.svg");
 }
 
 /* Tooltip: Events */
@@ -60,7 +127,7 @@
 .event-tooltip-event-type,
 .event-tooltip-filename,
 .event-tooltip-attributes {
-  -moz-margin-start: 0;
+  margin-inline-start: 0;
   flex-shrink: 0;
   cursor: pointer;
 }
@@ -71,7 +138,7 @@
 }
 
 .event-tooltip-filename {
-  -moz-margin-end: 0;
+  margin-inline-end: 0;
   font-size: 100%;
   flex-shrink: 1;
 }
@@ -79,7 +146,7 @@
 .event-tooltip-debugger-icon {
   width: 16px;
   height: 16px;
-  -moz-margin-end: 4px;
+  margin-inline-end: 4px;
   opacity: 0.6;
   flex-shrink: 0;
 }
@@ -92,7 +159,7 @@
   display: none;
   height: 100px;
   overflow: hidden;
-  -moz-margin-end: 0;
+  margin-inline-end: 0;
   border: 1px solid var(--theme-splitter-color);
   border-width: 1px 0 0 0;
 }
@@ -108,8 +175,8 @@
 .event-tooltip-source-container {
   margin-top: 5px;
   margin-bottom: 10px;
-  -moz-margin-start: 5px;
-  -moz-margin-end: 0;
+  margin-inline-start: 5px;
+  margin-inline-end: 0;
 }
 
 .event-tooltip-source {
@@ -129,7 +196,7 @@
   align-items: center;
   border-radius: 3px;
   padding: 2px;
-  -moz-margin-start: 5px;
+  margin-inline-start: 5px;
   background-color: var(--theme-body-color-alt);
   color: var(--theme-toolbar-background);
 }

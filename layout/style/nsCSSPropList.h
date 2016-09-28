@@ -567,15 +567,35 @@ CSS_PROP_BACKGROUND(
     kImageLayerOriginKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_None)
-CSS_PROP_BACKGROUND(
+CSS_PROP_SHORTHAND(
     background-position,
     background_position,
     BackgroundPosition,
     CSS_PROPERTY_PARSE_FUNCTION |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK,
+    "")
+CSS_PROP_BACKGROUND(
+    background-position-x,
+    background_position_x,
+    BackgroundPositionX,
+    CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER_AND_FIRST_LINE |
         CSS_PROPERTY_APPLIES_TO_PLACEHOLDER |
         CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
-        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
+        CSS_PROPERTY_STORES_CALC,
+    "",
+    0,
+    kImageLayerPositionKTable,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_Custom)
+CSS_PROP_BACKGROUND(
+    background-position-y,
+    background_position_y,
+    BackgroundPositionY,
+    CSS_PROPERTY_PARSE_FUNCTION |
+        CSS_PROPERTY_APPLIES_TO_FIRST_LETTER_AND_FIRST_LINE |
+        CSS_PROPERTY_APPLIES_TO_PLACEHOLDER |
+        CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
         CSS_PROPERTY_STORES_CALC,
     "",
     0,
@@ -2123,10 +2143,10 @@ CSS_PROP_POSITION(
         CSS_PROPERTY_VALUE_NONNEGATIVE |
         CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
     "layout.css.grid.enabled",
-    VARIANT_HL | VARIANT_CALC,
+    VARIANT_HLP | VARIANT_CALC,
     nullptr,
     offsetof(nsStylePosition, mGridColumnGap),
-    eStyleAnimType_nscoord)
+    eStyleAnimType_Coord)
 CSS_PROP_POSITION(
     grid-column-start,
     grid_column_start,
@@ -2167,10 +2187,10 @@ CSS_PROP_POSITION(
         CSS_PROPERTY_VALUE_NONNEGATIVE |
         CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
     "layout.css.grid.enabled",
-    VARIANT_HL | VARIANT_CALC,
+    VARIANT_HLP | VARIANT_CALC,
     nullptr,
     offsetof(nsStylePosition, mGridRowGap),
-    eStyleAnimType_nscoord)
+    eStyleAnimType_Coord)
 CSS_PROP_POSITION(
     grid-row-start,
     grid_row_start,
@@ -2714,10 +2734,29 @@ CSS_PROP_SVGRESET(
     kImageLayerOriginKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_None)
-CSS_PROP_SVGRESET(
+CSS_PROP_SHORTHAND(
     mask-position,
     mask_position,
     MaskPosition,
+    CSS_PROPERTY_PARSE_FUNCTION |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK,
+    "")
+CSS_PROP_SVGRESET(
+    mask-position-x,
+    mask_position_x,
+    MaskPositionX,
+    CSS_PROPERTY_PARSE_FUNCTION |
+        CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
+        CSS_PROPERTY_STORES_CALC,
+    "",
+    0,
+    kImageLayerPositionKTable,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_Custom)
+CSS_PROP_SVGRESET(
+    mask-position-y,
+    mask_position_y,
+    MaskPositionY,
     CSS_PROPERTY_PARSE_FUNCTION |
         CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
         CSS_PROPERTY_STORES_CALC,
@@ -3850,9 +3889,9 @@ CSS_PROP_TEXT(
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_None)
 CSS_PROP_TEXT(
-    -moz-text-align-last,
+    text-align-last,
     text_align_last,
-    CSS_PROP_DOMPROP_PREFIXED(TextAlignLast),
+    TextAlignLast,
     CSS_PROPERTY_PARSE_VALUE | CSS_PROPERTY_VALUE_PARSER_FUNCTION,
     "",
     VARIANT_HK,
@@ -3928,17 +3967,15 @@ CSS_PROP_SHORTHAND(
     text-emphasis,
     text_emphasis,
     TextEmphasis,
-    CSS_PROPERTY_PARSE_FUNCTION |
-        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
-    "layout.css.text-emphasis.enabled")
+    CSS_PROPERTY_PARSE_FUNCTION,
+    "")
 CSS_PROP_TEXT(
     text-emphasis-color,
     text_emphasis_color,
     TextEmphasisColor,
     CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED |
-        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
-    "layout.css.text-emphasis.enabled",
+        CSS_PROPERTY_IGNORED_WHEN_COLORS_DISABLED,
+    "",
     VARIANT_HC,
     nullptr,
     CSS_PROP_NO_OFFSET,
@@ -3948,9 +3985,8 @@ CSS_PROP_TEXT(
     text_emphasis_position,
     TextEmphasisPosition,
     CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_VALUE_PARSER_FUNCTION |
-        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
-    "layout.css.text-emphasis.enabled",
+        CSS_PROPERTY_VALUE_PARSER_FUNCTION,
+    "",
     0,
     kTextEmphasisPositionKTable,
     CSS_PROP_NO_OFFSET,
@@ -3960,9 +3996,8 @@ CSS_PROP_TEXT(
     text_emphasis_style,
     TextEmphasisStyle,
     CSS_PROPERTY_PARSE_VALUE |
-        CSS_PROPERTY_VALUE_PARSER_FUNCTION |
-        CSS_PROPERTY_ENABLED_IN_UA_SHEETS,
-    "layout.css.text-emphasis.enabled",
+        CSS_PROPERTY_VALUE_PARSER_FUNCTION,
+    "",
     0,
     nullptr,
     CSS_PROP_NO_OFFSET,
@@ -4431,13 +4466,13 @@ CSS_PROP_TEXT(
     offsetof(nsStyleText, mWordSpacing),
     eStyleAnimType_Coord)
 CSS_PROP_TEXT(
-    word-wrap,
-    word_wrap,
-    WordWrap,
+    overflow-wrap,
+    overflow_wrap,
+    OverflowWrap,
     CSS_PROPERTY_PARSE_VALUE,
     "",
     VARIANT_HK,
-    kWordWrapKTable,
+    kOverflowWrapKTable,
     CSS_PROP_NO_OFFSET,
     eStyleAnimType_None)
 CSS_PROP_VISIBILITY(

@@ -4,16 +4,16 @@
 
 #include "PublicKeyPinningService.h"
 
+#include "RootCertificateTelemetryUtils.h"
 #include "mozilla/Base64.h"
+#include "mozilla/Casting.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Telemetry.h"
 #include "nsISiteSecurityService.h"
 #include "nsServiceManagerUtils.h"
 #include "nsSiteSecurityService.h"
 #include "nssb64.h"
 #include "pkix/pkixtypes.h"
-#include "mozilla/Logging.h"
-#include "RootCertificateTelemetryUtils.h"
-#include "ScopedNSSTypes.h"
 #include "seccomon.h"
 #include "sechash.h"
 
@@ -40,7 +40,7 @@ GetBase64HashSPKI(const CERTCertificate* cert, nsACString& hashSPKIDigest)
     return rv;
   }
   return Base64Encode(nsDependentCSubstring(
-                        reinterpret_cast<const char*>(digest.get().data),
+                        BitwiseCast<char*, unsigned char*>(digest.get().data),
                         digest.get().len),
                       hashSPKIDigest);
 }
@@ -98,7 +98,8 @@ EvalCert(const CERTCertificate* cert, const StaticFingerprints* fingerprints,
  * dynamicFingerprints array, or to false otherwise.
  */
 static nsresult
-EvalChain(const CERTCertList* certList, const StaticFingerprints* fingerprints,
+EvalChain(const UniqueCERTCertList& certList,
+          const StaticFingerprints* fingerprints,
           const nsTArray<nsCString>* dynamicFingerprints,
   /*out*/ bool& certListIntersectsPinset)
 {
@@ -135,16 +136,15 @@ EvalChain(const CERTCertList* certList, const StaticFingerprints* fingerprints,
   Comparator for the is public key pinned host.
 */
 static int
-TransportSecurityPreloadCompare(const void *key, const void *entry) {
-  const char *keyStr = reinterpret_cast<const char *>(key);
-  const TransportSecurityPreload *preloadEntry =
-    reinterpret_cast<const TransportSecurityPreload *>(entry);
+TransportSecurityPreloadCompare(const void* key, const void* entry) {
+  auto keyStr = static_cast<const char*>(key);
+  auto preloadEntry = static_cast<const TransportSecurityPreload*>(entry);
 
   return strcmp(keyStr, preloadEntry->mHost);
 }
 
 nsresult
-PublicKeyPinningService::ChainMatchesPinset(const CERTCertList* certList,
+PublicKeyPinningService::ChainMatchesPinset(const UniqueCERTCertList& certList,
                                             const nsTArray<nsCString>& aSHA256keys,
                                     /*out*/ bool& chainMatchesPinset)
 {
@@ -231,7 +231,7 @@ FindPinningInformation(const char* hostname, mozilla::pkix::Time time,
 // subject public key info data in the list and the most relevant non-expired
 // pinset for the host or there is no pinning information for the host.
 static nsresult
-CheckPinsForHostname(const CERTCertList* certList, const char* hostname,
+CheckPinsForHostname(const UniqueCERTCertList& certList, const char* hostname,
                      bool enforceTestMode, mozilla::pkix::Time time,
              /*out*/ bool& chainHasValidPins,
     /*optional out*/ PinningTelemetryInfo* pinningTelemetryInfo)
@@ -318,7 +318,7 @@ CheckPinsForHostname(const CERTCertList* certList, const char* hostname,
 }
 
 nsresult
-PublicKeyPinningService::ChainHasValidPins(const CERTCertList* certList,
+PublicKeyPinningService::ChainHasValidPins(const UniqueCERTCertList& certList,
                                            const char* hostname,
                                            mozilla::pkix::Time time,
                                            bool enforceTestMode,

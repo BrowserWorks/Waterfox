@@ -3,7 +3,7 @@
 MOZ_AUTOMATION_SDK=${MOZ_AUTOMATION_SDK-1}
 
 if [ -n "$ENABLE_RELEASE_PROMOTION" ]; then
-  MOZ_AUTOMATION_UPLOAD_SYMBOLS=1
+  MOZ_AUTOMATION_UPLOAD_SYMBOLS=${MOZ_AUTOMATION_UPLOAD_SYMBOLS-1}
   MOZ_AUTOMATION_UPDATE_PACKAGING=1
 fi
 
@@ -18,5 +18,4 @@ mk_add_options MOZ_PGO=1
 # defines.sh during the beta cycle
 export BUILDING_RELEASE=1
 
-. "$topsrcdir/build/mozconfig.rust"
 . "$topsrcdir/build/mozconfig.common.override"

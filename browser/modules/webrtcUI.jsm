@@ -52,6 +52,11 @@ this.webrtcUI = {
     mm.removeMessageListener("webrtc:Request", this);
     mm.removeMessageListener("webrtc:CancelRequest", this);
     mm.removeMessageListener("webrtc:UpdateBrowserIndicators", this);
+
+    if (gIndicatorWindow) {
+      gIndicatorWindow.close();
+      gIndicatorWindow = null;
+    }
   },
 
   processIndicators: new Map(),
@@ -220,7 +225,18 @@ this.webrtcUI = {
         updateIndicators(aMessage.data, aMessage.target);
         break;
       case "webrtc:UpdateBrowserIndicators":
-        webrtcUI._streams.push({browser: aMessage.target, state: aMessage.data});
+        let id = aMessage.data.windowId;
+        let index;
+        for (index = 0; index < webrtcUI._streams.length; ++index) {
+          if (webrtcUI._streams[index].state.windowId == id)
+            break;
+        }
+        // If there's no documentURI, the update is actually a removal of the
+        // stream, triggered by the recording-window-ended notification.
+        if (!aMessage.data.documentURI && index < webrtcUI._streams.length)
+          webrtcUI._streams.splice(index, 1);
+        else
+          webrtcUI._streams[index] = {browser: aMessage.target, state: aMessage.data};
         updateBrowserSpecificIndicator(aMessage.target, aMessage.data);
         break;
       case "child-process-shutdown":
@@ -254,15 +270,8 @@ function getHost(uri, href) {
   } catch (ex) {}
   if (!host) {
     if (uri && uri.scheme.toLowerCase() == "about") {
-      // Special case-ing Loop/ Hello gUM requests.
-      if (uri.specIgnoringRef == "about:loopconversation") {
-        const kBundleURI = "chrome://browser/locale/loop/loop.properties";
-        let bundle = Services.strings.createBundle(kBundleURI);
-        host = bundle.GetStringFromName("clientShortname2");
-      } else {
-        // For other about URIs, just use the full spec, without any #hash parts.
-        host = uri.specIgnoringRef;
-      }
+      // For about URIs, just use the full spec, without any #hash parts.
+      host = uri.specIgnoringRef;
     } else {
       // This is unfortunate, but we should display *something*...
       const kBundleURI = "chrome://browser/locale/browser.properties";
@@ -509,14 +518,6 @@ function prompt(aBrowser, aRequest) {
 
       if (!sharingAudio)
         listDevices(micMenupopup, audioDevices);
-
-      if (requestTypes.length == 2) {
-        let stringBundle = chromeDoc.defaultView.gNavigatorBundle;
-        if (!sharingScreen)
-          addDeviceToList(camMenupopup, stringBundle.getString("getUserMedia.noVideo.label"), "-1");
-        if (!sharingAudio)
-          addDeviceToList(micMenupopup, stringBundle.getString("getUserMedia.noAudio.label"), "-1");
-      }
 
       this.mainAction.callback = function(aRemember) {
         let allowedDevices = [];

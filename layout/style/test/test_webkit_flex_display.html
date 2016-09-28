@@ -22,8 +22,8 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=1274096
 
 SimpleTest.waitForExplicitFinish();
 SpecialPowers.pushPrefEnv(
-  {"set": [["layout.css.prefixes.webkit", true]]},
-  runTest);
+  {"set": [["layout.css.prefixes.webkit", true]]}
+).then(runTest);
 
 function runTest() {
   testValue("display", "-webkit-flex", "flex");

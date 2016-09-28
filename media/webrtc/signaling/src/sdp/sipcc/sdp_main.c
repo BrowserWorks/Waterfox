@@ -181,7 +181,7 @@ const sdp_attrarray_t sdp_attr[SDP_MAX_ATTR_TYPES] =
     {"extmap", sizeof("extmap"),
       sdp_parse_attr_extmap, sdp_build_attr_extmap},
     {"identity", sizeof("identity"),
-      sdp_parse_attr_simple_string, sdp_build_attr_simple_string},
+      sdp_parse_attr_long_line, sdp_build_attr_long_line},
     {"msid", sizeof("msid"),
       sdp_parse_attr_msid, sdp_build_attr_msid},
     {"msid-semantic", sizeof("msid-semantic"),
@@ -485,7 +485,8 @@ const sdp_namearray_t sdp_rtcp_fb_type_val[SDP_MAX_RTCP_FB] =
     SDP_NAME("ack"),
     SDP_NAME("ccm"),
     SDP_NAME("nack"),
-    SDP_NAME("trr-int")
+    SDP_NAME("trr-int"),
+    SDP_NAME("goog-remb")
 };
 
 /* Maintain the same order as defined in typdef sdp_rtcp_fb_nack_type_e */

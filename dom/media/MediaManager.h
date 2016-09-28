@@ -129,6 +129,7 @@ public:
     uint64_t aWindowID,
     const PrincipalHandle& aPrincipalHandle)
     : mMediaThread(aThread)
+    , mMainThreadCheck(nullptr)
     , mWindowID(aWindowID)
     , mPrincipalHandle(aPrincipalHandle)
     , mStopped(false)
@@ -149,6 +150,7 @@ public:
                 VideoDevice* aVideoDevice)
   {
     MOZ_ASSERT(NS_IsMainThread());
+    mMainThreadCheck = PR_GetCurrentThread();
     mStream = aStream;
     mAudioDevice = aAudioDevice;
     mVideoDevice = aVideoDevice;
@@ -274,14 +276,33 @@ public:
   NotifyEvent(MediaStreamGraph* aGraph,
               MediaStreamListener::MediaStreamGraphEvent aEvent) override
   {
+    nsresult rv;
+    nsCOMPtr<nsIThread> thread;
+
     switch (aEvent) {
       case EVENT_FINISHED:
-        NS_DispatchToMainThread(
-          NS_NewRunnableMethod(this, &GetUserMediaCallbackMediaStreamListener::NotifyFinished));
+        rv = NS_GetMainThread(getter_AddRefs(thread));
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          NS_ASSERTION(false, "Mainthread not available; running on current thread");
+          // Ensure this really *was* MainThread (NS_GetCurrentThread won't work)
+          MOZ_RELEASE_ASSERT(mMainThreadCheck == PR_GetCurrentThread());
+          NotifyFinished();
+          return;
+        }
+        thread->Dispatch(NewRunnableMethod(this, &GetUserMediaCallbackMediaStreamListener::NotifyFinished),
+                         NS_DISPATCH_NORMAL);
         break;
       case EVENT_REMOVED:
-        NS_DispatchToMainThread(
-          NS_NewRunnableMethod(this, &GetUserMediaCallbackMediaStreamListener::NotifyRemoved));
+        rv = NS_GetMainThread(getter_AddRefs(thread));
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          NS_ASSERTION(false, "Mainthread not available; running on current thread");
+          // Ensure this really *was* MainThread (NS_GetCurrentThread won't work)
+          MOZ_RELEASE_ASSERT(mMainThreadCheck == PR_GetCurrentThread());
+          NotifyRemoved();
+          return;
+        }
+        thread->Dispatch(NewRunnableMethod(this, &GetUserMediaCallbackMediaStreamListener::NotifyRemoved),
+                         NS_DISPATCH_NORMAL);
         break;
       case EVENT_HAS_DIRECT_LISTENERS:
         NotifyDirectListeners(aGraph, true);
@@ -308,6 +329,9 @@ public:
 private:
   // Set at construction
   base::Thread* mMediaThread;
+  // never ever indirect off this; just for assertions
+  PRThread* mMainThreadCheck;
+
   uint64_t mWindowID;
   const PrincipalHandle mPrincipalHandle;
 
@@ -339,7 +363,7 @@ private:
   RefPtr<SourceMediaStream> mStream; // threadsafe refcnt
 };
 
-class GetUserMediaNotificationEvent: public nsRunnable
+class GetUserMediaNotificationEvent: public Runnable
 {
   public:
     enum GetUserMediaStatus {
@@ -389,7 +413,7 @@ typedef enum {
 class MediaManager;
 class GetUserMediaTask;
 
-class ReleaseMediaOperationResource : public nsRunnable
+class ReleaseMediaOperationResource : public Runnable
 {
 public:
   ReleaseMediaOperationResource(already_AddRefed<DOMMediaStream> aStream,
@@ -424,7 +448,7 @@ public:
   static MediaManager* Get();
   static MediaManager* GetIfExists();
   static void StartupInit();
-  static void PostTask(const tracked_objects::Location& from_here, Task* task);
+  static void PostTask(already_AddRefed<Runnable> task);
 #ifdef DEBUG
   static bool IsInMediaThread();
 #endif
@@ -536,7 +560,7 @@ private:
 
   // ONLY access from MainThread so we don't need to lock
   WindowTable mActiveWindows;
-  nsClassHashtable<nsStringHashKey, GetUserMediaTask> mActiveCallbacks;
+  nsRefPtrHashtable<nsStringHashKey, GetUserMediaTask> mActiveCallbacks;
   nsClassHashtable<nsUint64HashKey, nsTArray<nsString>> mCallIds;
 
   // Always exists

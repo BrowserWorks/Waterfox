@@ -12,10 +12,17 @@
  * https://bugzilla.mozilla.org/show_bug.cgi?id=427099
  */
 
-#include <stdlib.h>
-#include <string.h>
 #if defined(__cplusplus)
 #  include <new>
+// Since libstdc++ 6, including the C headers (e.g. stdlib.h) instead of the
+// corresponding C++ header (e.g. cstdlib) can cause confusion in C++ code
+// using things defined there. Specifically, with stdlib.h, the use of abs()
+// in gfx/graphite2/src/inc/UtfCodec.h somehow ends up picking the wrong abs()
+#  include <cstdlib>
+#  include <cstring>
+#else
+#  include <stdlib.h>
+#  include <string.h>
 #endif
 
 #if defined(__cplusplus)
@@ -37,8 +44,8 @@
 
 /* Workaround build problem with Sun Studio 12 */
 #if defined(__SUNPRO_C) || defined(__SUNPRO_CC)
-#  undef MOZ_WARN_UNUSED_RESULT
-#  define MOZ_WARN_UNUSED_RESULT
+#  undef MOZ_MUST_USE
+#  define MOZ_MUST_USE
 #  undef MOZ_ALLOCATOR
 #  define MOZ_ALLOCATOR
 #endif
@@ -97,10 +104,10 @@ MFBT_API char* moz_xstrndup(const char* str, size_t strsize)
 
 
 #if defined(HAVE_POSIX_MEMALIGN)
-MFBT_API MOZ_WARN_UNUSED_RESULT
+MFBT_API MOZ_MUST_USE
 int moz_xposix_memalign(void **ptr, size_t alignment, size_t size);
 
-MFBT_API MOZ_WARN_UNUSED_RESULT
+MFBT_API MOZ_MUST_USE
 int moz_posix_memalign(void **ptr, size_t alignment, size_t size);
 #endif /* if defined(HAVE_POSIX_MEMALIGN) */
 
@@ -312,6 +319,11 @@ public:
 
     void reportAllocOverflow() const
     {
+    }
+
+    bool checkSimulatedOOM() const
+    {
+        return true;
     }
 };
 

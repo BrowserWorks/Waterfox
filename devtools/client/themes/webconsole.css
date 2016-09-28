@@ -3,21 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* Webconsole specific theme variables */
-
-.theme-dark {
-  --command-line-image: -moz-image-rect(url("chrome://devtools/skin/images/commandline-icon.png"), 0, 32, 16, 16);
-  --command-line-image-2x: -moz-image-rect(url('chrome://devtools/skin/images/commandline-icon@2x.png'), 0, 64, 32, 32);
-}
-
-.theme-light {
-  --command-line-image: -moz-image-rect(url("chrome://devtools/skin/images/commandline-icon.png"), 0, 32, 16, 16);
-  --command-line-image-2x: -moz-image-rect(url('chrome://devtools/skin/images/commandline-icon@2x.png'), 0, 64, 32, 32);
-}
-
 .theme-firebug {
-  --command-line-image: url(chrome://devtools/skin/images/firebug/commandline-icon.svg);
-  --command-line-image-2x: url(chrome://devtools/skin/images/firebug/commandline-icon.svg);
-
   --error-color: #FF0000;
   --error-background-color: #FFEBEB;
   --warning-background-color: #FFFFC8;
@@ -175,8 +161,8 @@ a {
    since it's way faster than using 100% with -moz-box-flex (see Bug 1237368) */
 
 #output-container.hideTimestamps > .message {
-  -moz-padding-start: 0;
-  -moz-margin-start: 7px;
+  padding-inline-start: 0;
+  margin-inline-start: 7px;
   width: calc(100% - 7px);
 }
 
@@ -247,7 +233,7 @@ a {
 }
 
 .message[category=network] > .indent {
-  -moz-border-end: solid var(--theme-body-color-alt) 6px;
+  border-inline-end: solid var(--theme-body-color-alt) 6px;
 }
 
 .message[category=network][severity=error] > .icon::before {
@@ -275,7 +261,7 @@ a {
 
 .message[category=network] .status {
   flex: none;
-  -moz-margin-start: 6px;
+  margin-inline-start: 6px;
 }
 
 .message[category=network].mixed-content .url {
@@ -306,7 +292,7 @@ a {
 }
 
 .message[category=cssparser] > .indent {
-  -moz-border-end: solid #00b6f0 6px;
+  border-inline-end: solid #00b6f0 6px;
 }
 
 .message[category=cssparser][severity=error] > .icon::before {
@@ -324,7 +310,7 @@ a {
 }
 
 .message[category=exception] > .indent {
-  -moz-border-end: solid #fb9500 6px;
+  border-inline-end: solid #fb9500 6px;
 }
 
 .message[category=exception][severity=error] > .icon::before {
@@ -342,7 +328,7 @@ a {
 }
 
 .message[category=console] > .indent {
-  -moz-border-end: solid #cbcbcb 6px;
+  border-inline-end: solid #cbcbcb 6px;
 }
 
 .message[category=console][severity=error] > .icon::before,
@@ -369,13 +355,13 @@ a {
 }
 
 .message[category=server] > .indent {
-  -moz-border-end: solid #90B090 6px;
+  border-inline-end: solid #90B090 6px;
 }
 
 /* Input and output styles */
 .message[category=input] > .indent,
 .message[category=output] > .indent {
-  -moz-border-end: solid #808080 6px;
+  border-inline-end: solid #808080 6px;
 }
 
 .message[category=input] > .icon::before {
@@ -406,9 +392,16 @@ a {
 .jsterm-input-node,
 .jsterm-complete-node {
   border: none;
-  padding: 0 0 0 16px;
+  padding: 0;
+  padding-inline-start: 20px;
+  margin: 0;
   -moz-appearance: none;
   background-color: transparent;
+}
+
+.jsterm-input-node[focused="true"] {
+  background-image: var(--theme-command-line-image-focus);
+  box-shadow: none;
 }
 
 .jsterm-complete-node {
@@ -419,21 +412,20 @@ a {
   /* Always allow scrolling on input - it auto expands in js by setting height,
      but don't want it to get bigger than the window. 24px = toolbar height. */
   max-height: calc(90vh - 24px);
-  background-image: var(--command-line-image);
+  background-image: var(--theme-command-line-image);
   background-repeat: no-repeat;
   background-size: 16px 16px;
+  background-position: 4px 50%;
   color: var(--theme-content-color1);
-}
-
-@media (min-resolution: 1.1dppx) {
-  .jsterm-input-node {
-    background-image: var(--command-line-image-2x);
-  }
 }
 
 :-moz-any(.jsterm-input-node,
           .jsterm-complete-node) > .textbox-input-box > .textbox-textarea {
   overflow-x: hidden;
+  /* Set padding for console input on textbox to make sure it is inlcuded in
+     scrollHeight that is used when resizing JSTerminal's input. Note: textbox
+     default style has important already */
+  padding: 4px 0 !important;
 }
 
 .inlined-variables-view .message-body {
@@ -448,7 +440,7 @@ a {
   flex: 1;
   margin-top: 5px;
   margin-bottom: 15px;
-  -moz-margin-end: 15px;
+  margin-inline-end: 15px;
   border: 1px solid var(--theme-splitter-color);
   border-radius: 3px;
 }
@@ -470,7 +462,7 @@ a {
 /* Security styles */
 
 .message[category=security] > .indent {
-  -moz-border-end: solid red 6px;
+  border-inline-end: solid red 6px;
 }
 
 .webconsole-filter-button[category="security"] > .toolbarbutton-menubutton-button:before {
@@ -496,7 +488,7 @@ a {
 }
 
 .navigation-marker .url {
-  -moz-padding-end: 9px;
+  padding-inline-end: 9px;
   text-decoration: none;
   background: var(--theme-body-background);
 }

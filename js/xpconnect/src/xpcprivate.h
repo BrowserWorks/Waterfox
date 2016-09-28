@@ -303,12 +303,6 @@ public:
                                     bool showLocals,
                                     bool showThisProps) override;
 
-
-    static bool ReportAllJSExceptions()
-    {
-      return gReportAllJSExceptions > 0;
-    }
-
 protected:
     virtual ~nsXPConnect();
 
@@ -321,8 +315,6 @@ private:
 
     XPCJSRuntime*                   mRuntime;
     bool                            mShuttingDown;
-
-    static uint32_t gReportAllJSExceptions;
 
 public:
     static nsIScriptSecurityManager* gScriptSecurityManager;
@@ -551,6 +543,7 @@ public:
         return mStrings[index];
     }
 
+    virtual bool UsefulToMergeZones() const override;
     void TraceNativeBlackRoots(JSTracer* trc) override;
     void TraceAdditionalNativeGrayRoots(JSTracer* aTracer) override;
     void TraverseAdditionalNativeRoots(nsCycleCollectionNoteRootCallback& cb) override;
@@ -789,8 +782,6 @@ public:
     NS_IMETHOD GetLanguage(uint16_t* aResult);
 
     enum {NO_ARGS = (unsigned) -1};
-
-    static JSContext* GetDefaultJSContext();
 
     XPCCallContext(XPCContext::LangType callerLanguage,
                    JSContext* cx,
@@ -2300,8 +2291,7 @@ private:
     static nsresult CheckForException(XPCCallContext & ccx,
                                       mozilla::dom::AutoEntryScript& aes,
                                       const char * aPropertyName,
-                                      const char * anInterfaceName,
-                                      bool aForceReport);
+                                      const char * anInterfaceName);
     virtual ~nsXPCWrappedJSClass();
 
     nsXPCWrappedJSClass();   // not implemented
@@ -2775,19 +2765,9 @@ private:
 /***************************************************************************/
 // XPCJSContextStack is not actually an xpcom object, but xpcom calls are
 // delegated to it as an implementation detail.
-struct XPCJSContextInfo {
-    explicit XPCJSContextInfo(JSContext* aCx) :
-        cx(aCx),
-        savedFrameChain(false)
-    {}
-    JSContext* cx;
-
-    // Whether the frame chain was saved
-    bool savedFrameChain;
-};
 
 namespace xpc {
-bool PushNullJSContext();
+void PushNullJSContext();
 void PopNullJSContext();
 
 } /* namespace xpc */
@@ -2817,27 +2797,23 @@ public:
 
     JSContext* Peek()
     {
-        return mStack.IsEmpty() ? nullptr : mStack[mStack.Length() - 1].cx;
+        return mStack.IsEmpty() ? nullptr : mStack[mStack.Length() - 1];
     }
 
     JSContext* InitSafeJSContext();
     JSContext* GetSafeJSContext();
-    bool HasJSContext(JSContext* cx);
-
-    const InfallibleTArray<XPCJSContextInfo>* GetStack()
-    { return &mStack; }
 
 private:
     friend class mozilla::dom::danger::AutoCxPusher;
-    friend bool xpc::PushNullJSContext();
+    friend void xpc::PushNullJSContext();
     friend void xpc::PopNullJSContext();
 
     // We make these private so that stack manipulation can only happen
     // through one of the above friends.
-    JSContext* Pop();
-    bool Push(JSContext* cx);
+    void Pop();
+    void Push(JSContext* cx);
 
-    AutoTArray<XPCJSContextInfo, 16> mStack;
+    AutoTArray<JSContext*, 16> mStack;
     XPCJSRuntime* mRuntime;
     JSContext*  mSafeJSContext;
 };
@@ -3407,6 +3383,7 @@ protected:
     bool ParseString(const char* name, nsCString& prop);
     bool ParseString(const char* name, nsString& prop);
     bool ParseId(const char* name, JS::MutableHandleId id);
+    bool ParseUInt32(const char* name, uint32_t* prop);
 
     JSContext* mCx;
     JS::RootedObject mObject;
@@ -3431,6 +3408,7 @@ public:
         , invisibleToDebugger(false)
         , discardSource(false)
         , metadata(cx)
+        , userContextId(0)
     { }
 
     virtual bool Parse();
@@ -3451,6 +3429,7 @@ public:
     bool discardSource;
     GlobalProperties globalProperties;
     JS::RootedValue metadata;
+    uint32_t userContextId;
 
 protected:
     bool ParseGlobalProperties();
@@ -3797,9 +3776,7 @@ bool EnableUniversalXPConnect(JSContext* cx);
 inline void
 CrashIfNotInAutomation()
 {
-    const char* prefName =
-      "security.turn_off_all_security_so_that_viruses_can_take_over_this_computer";
-    MOZ_RELEASE_ASSERT(mozilla::Preferences::GetBool(prefName));
+    MOZ_RELEASE_ASSERT(IsInAutomation());
 }
 
 inline XPCWrappedNativeScope*

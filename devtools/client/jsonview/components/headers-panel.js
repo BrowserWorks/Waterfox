@@ -6,7 +6,7 @@
 
 "use strict";
 
-define(function(require, exports, module) {
+define(function (require, exports, module) {
   const { DOM: dom, createFactory, createClass, PropTypes } = require("devtools/client/shared/vendor/react");
   const { createFactories } = require("devtools/client/shared/components/reps/rep-utils");
   const { Headers } = createFactories(require("./headers"));
@@ -19,20 +19,20 @@ define(function(require, exports, module) {
    * s responsible for rendering its content.
    */
   let HeadersPanel = createClass({
+    displayName: "HeadersPanel",
+
     propTypes: {
       actions: PropTypes.object,
       data: PropTypes.object,
     },
 
-    displayName: "HeadersPanel",
-
-    getInitialState: function() {
+    getInitialState: function () {
       return {
         data: {}
       };
     },
 
-    render: function() {
+    render: function () {
       let data = this.props.data;
 
       return (
@@ -51,19 +51,19 @@ define(function(require, exports, module) {
    * within the 'Headers' panel.
    */
   let HeadersToolbar = createFactory(createClass({
+    displayName: "HeadersToolbar",
+
     propTypes: {
       actions: PropTypes.object,
     },
 
-    displayName: "HeadersToolbar",
-
     // Commands
 
-    onCopy: function(event) {
+    onCopy: function (event) {
       this.props.actions.onCopyHeaders();
     },
 
-    render: function() {
+    render: function () {
       return (
         Toolbar({},
           ToolbarButton({className: "btn copy", onClick: this.onCopy},

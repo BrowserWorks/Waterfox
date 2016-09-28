@@ -73,21 +73,20 @@ AppendPercentHex(char16_t* aBuffer, char16_t aChar)
 }
 
 //----------------------------------------------------------------------------------------
-static char*
-nsEscapeCount(const char* aStr, nsEscapeMask aFlags, size_t* aOutLen)
+char*
+nsEscape(const char* aStr, size_t aLength, size_t* aOutputLength,
+         nsEscapeMask aFlags)
 //----------------------------------------------------------------------------------------
 {
   if (!aStr) {
-    return 0;
+    return nullptr;
   }
 
-  size_t len = 0;
   size_t charsToEscape = 0;
 
   const unsigned char* src = (const unsigned char*)aStr;
-  while (*src) {
-    len++;
-    if (!IS_OK(*src++)) {
+  for (size_t i = 0; i < aLength; ++i) {
+    if (!IS_OK(src[i])) {
       charsToEscape++;
     }
   }
@@ -95,29 +94,29 @@ nsEscapeCount(const char* aStr, nsEscapeMask aFlags, size_t* aOutLen)
   // calculate how much memory should be allocated
   // original length + 2 bytes for each escaped character + terminating '\0'
   // do the sum in steps to check for overflow
-  size_t dstSize = len + 1 + charsToEscape;
-  if (dstSize <= len) {
-    return 0;
+  size_t dstSize = aLength + 1 + charsToEscape;
+  if (dstSize <= aLength) {
+    return nullptr;
   }
   dstSize += charsToEscape;
-  if (dstSize < len) {
-    return 0;
+  if (dstSize < aLength) {
+    return nullptr;
   }
 
   // fail if we need more than 4GB
   if (dstSize > UINT32_MAX) {
-    return 0;
+    return nullptr;
   }
 
   char* result = (char*)moz_xmalloc(dstSize);
   if (!result) {
-    return 0;
+    return nullptr;
   }
 
   unsigned char* dst = (unsigned char*)result;
   src = (const unsigned char*)aStr;
   if (aFlags == url_XPAlphas) {
-    for (size_t i = 0; i < len; ++i) {
+    for (size_t i = 0; i < aLength; ++i) {
       unsigned char c = *src++;
       if (IS_OK(c)) {
         *dst++ = c;
@@ -130,7 +129,7 @@ nsEscapeCount(const char* aStr, nsEscapeMask aFlags, size_t* aOutLen)
       }
     }
   } else {
-    for (size_t i = 0; i < len; ++i) {
+    for (size_t i = 0; i < aLength; ++i) {
       unsigned char c = *src++;
       if (IS_OK(c)) {
         *dst++ = c;
@@ -143,21 +142,11 @@ nsEscapeCount(const char* aStr, nsEscapeMask aFlags, size_t* aOutLen)
   }
 
   *dst = '\0';     /* tack on eos */
-  if (aOutLen) {
-    *aOutLen = dst - (unsigned char*)result;
+  if (aOutputLength) {
+    *aOutputLength = dst - (unsigned char*)result;
   }
-  return result;
-}
 
-//----------------------------------------------------------------------------------------
-char*
-nsEscape(const char* aStr, nsEscapeMask aFlags)
-//----------------------------------------------------------------------------------------
-{
-  if (!aStr) {
-    return nullptr;
-  }
-  return nsEscapeCount(aStr, aFlags, nullptr);
+  return result;
 }
 
 //----------------------------------------------------------------------------------------
@@ -540,6 +529,9 @@ NS_UnescapeURL(const char* aStr, int32_t aLen, uint32_t aFlags,
     return false;
   }
 
+  MOZ_ASSERT(aResult.IsEmpty(),
+             "Passing a non-empty string as an out parameter!");
+
   if (aLen < 0) {
     aLen = strlen(aStr);
   }
@@ -549,6 +541,10 @@ NS_UnescapeURL(const char* aStr, int32_t aLen, uint32_t aFlags,
   bool writing = !!(aFlags & esc_AlwaysCopy);
   bool skipControl = !!(aFlags & esc_SkipControl);
   bool skipInvalidHostChar = !!(aFlags & esc_Host);
+
+  if (writing) {
+    aResult.SetCapacity(aLen);
+  }
 
   const char* last = aStr;
   const char* p = aStr;
@@ -563,7 +559,10 @@ NS_UnescapeURL(const char* aStr, int32_t aLen, uint32_t aFlags,
           ((c1 < '8' && !ignoreAscii) || (c1 >= '8' && !ignoreNonAscii)) &&
           !(skipControl &&
             (c1 < '2' || (c1 == '7' && (c2 == 'f' || c2 == 'F'))))) {
-        writing = true;
+        if (!writing) {
+          writing = true;
+          aResult.SetCapacity(aLen);
+        }
         if (p > last) {
           aResult.Append(last, p - last);
           last = p;

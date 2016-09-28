@@ -158,7 +158,7 @@ public:
    * Schedules a runnable to run on the controller/UI thread at some time
    * in the future.
    */
-  void PostDelayedTask(Task* aTask, int aDelayMs);
+  void PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs);
 
   // --------------------------------------------------------------------------
   // These methods must only be called on the compositor thread.
@@ -174,7 +174,7 @@ public:
   bool AdvanceAnimations(const TimeStamp& aSampleTime);
 
   bool UpdateAnimation(const TimeStamp& aSampleTime,
-                       nsTArray<Task*>* aOutDeferredTasks);
+                       nsTArray<RefPtr<Runnable>>* aOutDeferredTasks);
 
   /**
    * A shadow layer update has arrived. |aScrollMetdata| is the new ScrollMetadata
@@ -326,7 +326,7 @@ public:
    * Returns whether this APZC is for an element marked with the 'scrollgrab'
    * attribute.
    */
-  bool HasScrollgrab() const { return mFrameMetrics.GetHasScrollgrab(); }
+  bool HasScrollgrab() const { return mScrollMetadata.GetHasScrollgrab(); }
 
   /**
    * Returns whether this APZC has room to be panned (in any direction).
@@ -584,7 +584,7 @@ protected:
    * from a non-main thread, it will redispatch itself to the main thread, and
    * use the latest metrics during the redispatch.
    */
-  void RequestContentRepaint();
+  void RequestContentRepaint(bool aUserAction = true);
 
   /**
    * Send the provided metrics to Gecko to trigger a repaint. This function
@@ -674,13 +674,14 @@ protected:
   mutable ReentrantMonitor mMonitor;
 
 private:
-  // Metrics of the container layer corresponding to this APZC. This is
+  // Metadata of the container layer corresponding to this APZC. This is
   // stored here so that it is accessible from the UI/controller thread.
   // These are the metrics at last content paint, the most recent
   // values we were notified of in NotifyLayersUpdate(). Since it represents
   // the Gecko state, it should be used as a basis for untransformation when
   // sending messages back to Gecko.
-  FrameMetrics mLastContentPaintMetrics;
+  ScrollMetadata mLastContentPaintMetadata;
+  FrameMetrics& mLastContentPaintMetrics;  // for convenience, refers to mLastContentPaintMetadata.mMetrics
   // The last metrics used for a content repaint request.
   FrameMetrics mLastPaintRequestMetrics;
   // The metrics that we expect content to have. This is updated when we
@@ -897,6 +898,8 @@ private:
   ParentLayerPoint mLastFlingVelocity;
   // The time at which the most recent fling started.
   TimeStamp mLastFlingTime;
+  // Indicates if the repaint-during-pinch timer is currently set
+  bool mPinchPaintTimerSet;
 
   // Deal with overscroll resulting from a fling animation. This is only ever
   // called on APZC instances that were actually performing a fling.
@@ -919,6 +922,9 @@ private:
 
   // Returns whether overscroll is allowed during an event.
   bool AllowScrollHandoffInCurrentBlock() const;
+
+  // Invoked by the pinch repaint timer.
+  void DoDelayedRequestContentRepaint();
 
   /* ===================================================================
    * The functions and members in this section are used to make ancestor chains
@@ -943,7 +949,7 @@ public:
 
   bool IsRootForLayersId() const {
     ReentrantMonitorAutoEnter lock(mMonitor);
-    return mFrameMetrics.IsLayersIdRoot();
+    return mScrollMetadata.IsLayersIdRoot();
   }
 
   bool IsRootContent() const {
@@ -964,7 +970,7 @@ private:
    */
 public:
   FrameMetrics::ViewID GetScrollHandoffParentId() const {
-    return mFrameMetrics.GetScrollParentId();
+    return mScrollMetadata.GetScrollParentId();
   }
 
   /**

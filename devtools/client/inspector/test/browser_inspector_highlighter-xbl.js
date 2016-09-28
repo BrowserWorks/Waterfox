@@ -7,7 +7,7 @@
 
 const TEST_URL = URL_ROOT + "doc_inspector_highlighter_xbl.xul";
 
-add_task(function*() {
+add_task(function* () {
   let {inspector, toolbox, testActor} = yield openInspectorForURL(TEST_URL);
 
   yield startPicker(toolbox);
@@ -36,5 +36,4 @@ add_task(function*() {
     });
     return inspector.toolbox.once("picker-node-hovered");
   }
-
 });

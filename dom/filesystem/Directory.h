@@ -56,8 +56,16 @@ public:
   static bool
   DeviceStorageEnabled(JSContext* aCx, JSObject* aObj);
 
+  static bool
+  WebkitBlinkDirectoryPickerEnabled(JSContext* aCx, JSObject* aObj);
+
   static already_AddRefed<Promise>
   GetRoot(FileSystemBase* aFileSystem, ErrorResult& aRv);
+
+  static already_AddRefed<Directory>
+  Constructor(const GlobalObject& aGlobal,
+              const nsAString& aRealPath,
+              ErrorResult& aRv);
 
   static already_AddRefed<Directory>
   Create(nsISupports* aParent, nsIFile* aDirectory,

@@ -14,14 +14,14 @@ enum AnimationPlayState { "idle", "pending", "running", "paused", "finished" };
 
 [Func="nsDocument::IsElementAnimateEnabled",
  Constructor (optional KeyframeEffectReadOnly? effect = null,
-              optional AnimationTimeline? timeline = null)]
+              optional AnimationTimeline? timeline)]
 interface Animation : EventTarget {
   attribute DOMString id;
   // Bug 1049975: Make 'effect' writeable
   [Func="nsDocument::IsWebAnimationsEnabled", Pure]
   readonly attribute AnimationEffectReadOnly? effect;
   [Func="nsDocument::IsWebAnimationsEnabled"]
-  readonly attribute AnimationTimeline? timeline;
+  attribute AnimationTimeline? timeline;
   [BinaryName="startTimeAsDouble"]
   attribute double? startTime;
   [SetterThrows, BinaryName="currentTimeAsDouble"]

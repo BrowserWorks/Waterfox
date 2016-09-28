@@ -9,6 +9,7 @@
 
 #include <tuple>
 
+#include "sslproto.h"
 #include "sslt.h"
 
 #include "tls_agent.h"
@@ -26,9 +27,10 @@ class TlsConnectTestBase : public ::testing::Test {
   static ::testing::internal::ParamGenerator<std::string> kTlsModesAll;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV10;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV11;
+  static ::testing::internal::ParamGenerator<uint16_t> kTlsV12;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV10V11;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV11V12;
-  static ::testing::internal::ParamGenerator<uint16_t> kTlsV10To12;
+  static ::testing::internal::ParamGenerator<uint16_t> kTlsV10ToV12;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV13;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV11Plus;
   static ::testing::internal::ParamGenerator<uint16_t> kTlsV12Plus;
@@ -71,9 +73,9 @@ class TlsConnectTestBase : public ::testing::Test {
   void SetExpectedVersion(uint16_t version);
   // Expect resumption of a particular type.
   void ExpectResumption(SessionResumptionMode expected);
-  void DisableDheAndEcdheCiphers();
-  void DisableDheCiphers();
-  void DisableEcdheCiphers();
+  void DisableAllCiphers();
+  void EnableOnlyStaticRsaCiphers();
+  void EnableOnlyDheCiphers();
   void EnableSomeEcdhCiphers();
   void EnableExtendedMasterSecret();
   void ConfigureSessionCache(SessionResumptionMode client,
@@ -155,6 +157,31 @@ class TlsConnectTls12
  public:
   TlsConnectTls12();
 };
+
+// A TLS 1.2+ generic test.
+class TlsConnectTls12Plus
+  : public TlsConnectTestBase,
+    public ::testing::WithParamInterface<std::tuple<std::string, uint16_t>> {
+ public:
+  TlsConnectTls12Plus();
+};
+
+#ifdef NSS_ENABLE_TLS_1_3
+// A TLS 1.3 only generic test.
+class TlsConnectTls13
+  : public TlsConnectTestBase,
+    public ::testing::WithParamInterface<std::string> {
+ public:
+  TlsConnectTls13();
+};
+
+class TlsConnectDatagram13
+  : public TlsConnectTestBase {
+ public:
+  TlsConnectDatagram13()
+      : TlsConnectTestBase(DGRAM, SSL_LIBRARY_VERSION_TLS_1_3) {}
+};
+#endif
 
 // A variant that is used only with Pre13.
 class TlsConnectGenericPre13 : public TlsConnectGeneric {

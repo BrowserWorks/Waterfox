@@ -74,7 +74,9 @@ ThreadSafeChromeUtils::Base64URLEncode(GlobalObject& aGlobal,
     MOZ_CRASH("Uninitialized union: expected buffer or view");
   }
 
-  nsresult rv = mozilla::Base64URLEncode(length, data, aOptions, aResult);
+  auto paddingPolicy = aOptions.mPad ? Base64URLEncodePaddingPolicy::Include :
+                                       Base64URLEncodePaddingPolicy::Omit;
+  nsresult rv = mozilla::Base64URLEncode(length, data, paddingPolicy, aResult);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     aResult.Truncate();
     aRv.Throw(rv);
@@ -88,8 +90,26 @@ ThreadSafeChromeUtils::Base64URLDecode(GlobalObject& aGlobal,
                                        JS::MutableHandle<JSObject*> aRetval,
                                        ErrorResult& aRv)
 {
+  Base64URLDecodePaddingPolicy paddingPolicy;
+  switch (aOptions.mPadding) {
+    case Base64URLDecodePadding::Require:
+      paddingPolicy = Base64URLDecodePaddingPolicy::Require;
+      break;
+
+    case Base64URLDecodePadding::Ignore:
+      paddingPolicy = Base64URLDecodePaddingPolicy::Ignore;
+      break;
+
+    case Base64URLDecodePadding::Reject:
+      paddingPolicy = Base64URLDecodePaddingPolicy::Reject;
+      break;
+
+    default:
+      aRv.Throw(NS_ERROR_INVALID_ARG);
+      return;
+  }
   FallibleTArray<uint8_t> data;
-  nsresult rv = mozilla::Base64URLDecode(aString, aOptions, data);
+  nsresult rv = mozilla::Base64URLDecode(aString, paddingPolicy, data);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     aRv.Throw(rv);
     return;
@@ -157,6 +177,16 @@ ChromeUtils::IsOriginAttributesEqual(dom::GlobalObject& aGlobal,
 {
   return aA.mAddonId == aB.mAddonId &&
          aA.mAppId == aB.mAppId &&
+         aA.mInIsolatedMozBrowser == aB.mInIsolatedMozBrowser &&
+         aA.mSignedPkg == aB.mSignedPkg &&
+         aA.mUserContextId == aB.mUserContextId;
+}
+
+/* static */ bool
+ChromeUtils::IsOriginAttributesEqualIgnoringAddonId(const dom::OriginAttributesDictionary& aA,
+                                                    const dom::OriginAttributesDictionary& aB)
+{
+  return aA.mAppId == aB.mAppId &&
          aA.mInIsolatedMozBrowser == aB.mInIsolatedMozBrowser &&
          aA.mSignedPkg == aB.mSignedPkg &&
          aA.mUserContextId == aB.mUserContextId;

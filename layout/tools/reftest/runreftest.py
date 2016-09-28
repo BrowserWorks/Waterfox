@@ -412,6 +412,9 @@ class RefTest(object):
         self.killNamedOrphans('ssltunnel')
         self.killNamedOrphans('xpcshell')
 
+        if options.cleanupCrashes:
+            mozcrash.cleanup_pending_crash_reports()
+
         manifests = self.resolver.resolveManifests(options, tests)
         if options.filter:
             manifests[""] = options.filter
@@ -504,6 +507,7 @@ class RefTest(object):
         # TODO: bug 913975 : _processOutput should call self.processOutputLine
         # one more time one timeout (I think)
         self.log.error("%s | application timed out after %d seconds with no output" % (self.lastTestSeen, int(timeout)))
+        self.log.error("Force-terminating active process(es).");
         self.killAndGetStack(
             proc, utilityPath, debuggerInfo, dump_screen=not debuggerInfo)
 
@@ -602,14 +606,17 @@ class RefTest(object):
         proc = runner.process_handler
 
         if self.use_marionette:
-            marionette_args = { 'symbols_path': options.symbolsPath }
+            marionette_args = {
+                'socket_timeout': options.marionette_socket_timeout,
+                'symbols_path': options.symbolsPath,
+            }
             if options.marionette:
                 host, port = options.marionette.split(':')
                 marionette_args['host'] = host
                 marionette_args['port'] = int(port)
 
             marionette = Marionette(**marionette_args)
-            marionette.start_session()
+            marionette.start_session(timeout=options.marionette_port_timeout)
 
             addons = Addons(marionette)
             if options.specialPowersExtensionPath:

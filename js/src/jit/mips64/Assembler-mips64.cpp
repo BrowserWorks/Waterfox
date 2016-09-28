@@ -23,8 +23,8 @@ ABIArg
 ABIArgGenerator::next(MIRType type)
 {
     switch (type) {
-      case MIRType_Int32:
-      case MIRType_Pointer: {
+      case MIRType::Int32:
+      case MIRType::Pointer: {
         Register destReg;
         if (GetIntArgReg(usedArgSlots_, &destReg))
             current_ = ABIArg(destReg);
@@ -33,13 +33,13 @@ ABIArgGenerator::next(MIRType type)
         usedArgSlots_++;
         break;
       }
-      case MIRType_Float32:
-      case MIRType_Double: {
+      case MIRType::Float32:
+      case MIRType::Double: {
         FloatRegister destFReg;
         FloatRegister::ContentType contentType;
         if (!usedArgSlots_)
             firstArgFloat = true;
-        contentType = (type == MIRType_Double) ?
+        contentType = (type == MIRType::Double) ?
             FloatRegisters::Double : FloatRegisters::Single;
         if (GetFloatArgReg(usedArgSlots_, &destFReg))
             current_ = ABIArg(FloatRegister(destFReg.id(), contentType));
@@ -54,12 +54,6 @@ ABIArgGenerator::next(MIRType type)
     return current_;
 }
 
-const Register ABIArgGenerator::NonArgReturnReg0 = t0;
-const Register ABIArgGenerator::NonArgReturnReg1 = t1;
-const Register ABIArgGenerator::NonArg_VolatileReg = v0;
-const Register ABIArgGenerator::NonReturn_VolatileReg0 = a0;
-const Register ABIArgGenerator::NonReturn_VolatileReg1 = a1;
-
 uint32_t
 js::jit::RT(FloatRegister r)
 {
@@ -72,6 +66,13 @@ js::jit::RD(FloatRegister r)
 {
     MOZ_ASSERT(r.id() < FloatRegisters::TotalPhys);
     return r.id() << RDShift;
+}
+
+uint32_t
+js::jit::RZ(FloatRegister r)
+{
+    MOZ_ASSERT(r.id() < FloatRegisters::TotalPhys);
+    return r.id() << RZShift;
 }
 
 uint32_t

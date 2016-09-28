@@ -37,6 +37,8 @@
 
 typedef uint16_t nsMediaNetworkState;
 typedef uint16_t nsMediaReadyState;
+typedef uint32_t SuspendTypes;
+typedef uint32_t AudibleChangedReasons;
 
 namespace mozilla {
 class DecoderDoctorDiagnostics;
@@ -447,8 +449,12 @@ public:
   // when the connection between Rtsp server and client gets lost.
   virtual void ResetConnectionState() final override;
 
-  // Called by media decoder when the audible state changed.
-  virtual void NotifyAudibleStateChanged(bool aAudible) final override;
+  // Called by media decoder when the audible state changed or when input is
+  // a media stream.
+  virtual void SetAudibleState(bool aAudible) final override;
+
+  // Notify agent when the MediaElement changes its audible state.
+  void NotifyAudioPlaybackChanged(AudibleChangedReasons aReason);
 
   // XPCOM GetPreload() is OK
   void SetPreload(const nsAString& aValue, ErrorResult& aRv)
@@ -474,6 +480,8 @@ public:
   void SetCurrentTime(double aCurrentTime, ErrorResult& aRv);
 
   void FastSeek(double aTime, ErrorResult& aRv);
+
+  void SeekToNextFrame(ErrorResult& aRv);
 
   double Duration() const;
 
@@ -573,16 +581,6 @@ public:
   void SetDefaultMuted(bool aMuted, ErrorResult& aRv)
   {
     SetHTMLBoolAttr(nsGkAtoms::muted, aMuted, aRv);
-  }
-
-  bool MozMediaStatisticsShowing() const
-  {
-    return mStatsShowing;
-  }
-
-  void SetMozMediaStatisticsShowing(bool aShow)
-  {
-    mStatsShowing = aShow;
   }
 
   bool MozAllowCasting() const
@@ -702,6 +700,11 @@ public:
       mTextTrackManager->AddCue(aCue);
     }
   }
+  void NotifyCueRemoved(TextTrackCue& aCue) {
+    if (mTextTrackManager) {
+      mTextTrackManager->NotifyCueRemoved(aCue);
+    }
+  }
 
   /**
    * A public wrapper for FinishDecoderSetup()
@@ -718,9 +721,10 @@ public:
   IMPL_EVENT_HANDLER(mozinterruptbegin)
   IMPL_EVENT_HANDLER(mozinterruptend)
 
-  // This is for testing only
+  // These are used for testing only
   float ComputedVolume() const;
   bool ComputedMuted() const;
+  nsSuspendedTypes ComputedSuspended() const;
 
 protected:
   virtual ~HTMLMediaElement();
@@ -736,9 +740,6 @@ protected:
     MOZ_ASSERT(aDecoder); // Use ShutdownDecoder() to clear.
     mDecoder = aDecoder;
   }
-
-  virtual void GetItemValueText(DOMString& text) override;
-  virtual void SetItemValueText(const nsAString& text) override;
 
   class WakeLockBoolWrapper {
   public:
@@ -1109,13 +1110,10 @@ protected:
 #ifdef MOZ_EME
   void ReportEMETelemetry();
 #endif
-  void ReportMSETelemetry();
+  void ReportTelemetry();
 
   // Check the permissions for audiochannel.
   bool CheckAudioChannelPermissions(const nsAString& aType);
-
-  // This method does the check for muting/nmuting the audio channel.
-  nsresult UpdateChannelMuteState(float aVolume, bool aMuted);
 
   // Seeks to aTime seconds. aSeekType can be Exact to seek to exactly the
   // seek target, or PrevSyncPoint if a quicker but less precise seek is
@@ -1150,6 +1148,40 @@ protected:
   // Creates the audio channel agent if needed.  Returns true if the audio
   // channel agent is ready to be used.
   bool MaybeCreateAudioChannelAgent();
+
+  /**
+   * We have different kinds of suspended cases,
+   * - SUSPENDED_PAUSE
+   * It's used when we temporary lost platform audio focus. MediaElement can
+   * only be resumed when we gain the audio focus again.
+   *
+   * - SUSPENDED_PAUSE_DISPOSABLE
+   * It's used when user press the pause botton on the remote media-control.
+   * MediaElement can be resumed by reomte media-control or via play().
+   *
+   * - SUSPENDED_BLOCK
+   * It's used to reduce the power comsuption, we won't play the auto-play
+   * audio/video in the page we have never visited before. MediaElement would
+   * be resumed when the page is active. See bug647429 for more details.
+   *
+   * - SUSPENDED_STOP_DISPOSABLE
+   * When we permanently lost platform audio focus, we shuold stop playing
+   * and stop the audio channel agent. MediaElement can only be restarted by
+   * play().
+   */
+  void PauseByAudioChannel(SuspendTypes aSuspend);
+  void BlockByAudioChannel();
+
+  void ResumeFromAudioChannel();
+  void ResumeFromAudioChannelPaused(SuspendTypes aSuspend);
+  void ResumeFromAudioChannelBlocked();
+
+  bool IsSuspendedByAudioChannel() const;
+  void SetAudioChannelSuspended(SuspendTypes aSuspend);
+
+  bool IsAllowedToPlay();
+
+  bool IsAudible() const;
 
   class nsAsyncEventRunner;
   using nsGenericHTMLElement::DispatchEvent;
@@ -1370,6 +1402,7 @@ protected:
   };
 
   uint32_t mMuted;
+  SuspendTypes mAudioChannelSuspended;
 
   // True if the media statistics are currently being shown by the builtin
   // video controls
@@ -1566,11 +1599,8 @@ public:
     uint32_t mCount;
   };
 private:
-  // Total time an MSE video has spent playing
+  // Total time a video has spent playing.
   TimeDurationAccumulator mPlayTime;
-
-  // Time spent between video load and video playback.
-  TimeDurationAccumulator mJoinLatency;
 
   // Indicates if user has interacted with the element.
   // Used to block autoplay when disabled.
@@ -1584,8 +1614,11 @@ private:
   // be seeked even before the media is loaded.
   double mDefaultPlaybackStartPosition;
 
-  // True if the audio track is producing audible sound.
+  // True if the audio track is not silent.
   bool mIsAudioTrackAudible;
+
+  // True if media element is audible for users.
+  bool mAudible;
 };
 
 } // namespace dom

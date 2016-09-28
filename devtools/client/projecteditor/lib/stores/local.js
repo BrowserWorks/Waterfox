@@ -9,12 +9,11 @@ const { Class } = require("sdk/core/heritage");
 const { OS } = Cu.import("resource://gre/modules/osfile.jsm", {});
 const { emit } = require("sdk/event/core");
 const { Store } = require("devtools/client/projecteditor/lib/stores/base");
-const { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
+const { Task } = require("devtools/shared/task");
 const promise = require("promise");
 const Services = require("Services");
 const { on, forget } = require("devtools/client/projecteditor/lib/helpers/event");
 const { FileResource } = require("devtools/client/projecteditor/lib/stores/resource");
-const {setTimeout, clearTimeout} = Cu.import("resource://gre/modules/Timer.jsm", {});
 
 const CHECK_LINKED_DIRECTORY_DELAY = 5000;
 const SHOULD_LIVE_REFRESH = true;

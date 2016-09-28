@@ -248,6 +248,15 @@ const int32_t nsNavHistory::kGetInfoIndex_ItemTags = 11;
 const int32_t nsNavHistory::kGetInfoIndex_Frecency = 12;
 const int32_t nsNavHistory::kGetInfoIndex_Hidden = 13;
 const int32_t nsNavHistory::kGetInfoIndex_Guid = 14;
+const int32_t nsNavHistory::kGetInfoIndex_VisitId = 15;
+const int32_t nsNavHistory::kGetInfoIndex_FromVisitId = 16;
+const int32_t nsNavHistory::kGetInfoIndex_VisitType = 17;
+// These columns are followed by corresponding constants in nsNavBookmarks.cpp,
+// which must be kept in sync:
+// nsNavBookmarks::kGetChildrenIndex_Guid = 18;
+// nsNavBookmarks::kGetChildrenIndex_Position = 19;
+// nsNavBookmarks::kGetChildrenIndex_Type = 20;
+// nsNavBookmarks::kGetChildrenIndex_PlaceID = 21;
 
 PLACES_FACTORY_SINGLETON_IMPLEMENTATION(nsNavHistory, gHistoryService)
 
@@ -543,7 +552,7 @@ nsNavHistory::NotifyManyFrecenciesChanged()
 
 namespace {
 
-class FrecencyNotification : public nsRunnable
+class FrecencyNotification : public Runnable
 {
 public:
   FrecencyNotification(const nsACString& aSpec,
@@ -1094,14 +1103,24 @@ nsNavHistory::CanAddURI(nsIURI* aURI, bool* canAdd)
   NS_ENSURE_ARG(aURI);
   NS_ENSURE_ARG_POINTER(canAdd);
 
+  // Default to false.
+  *canAdd = false;
+
   // If history is disabled, don't add any entry.
   if (IsHistoryDisabled()) {
-    *canAdd = false;
+    return NS_OK;
+  }
+
+  // If the url length is over a threshold, don't add it.
+  nsCString spec;
+  nsresult rv = aURI->GetSpec(spec);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (!mDB || spec.Length() > mDB->MaxUrlLength()) {
     return NS_OK;
   }
 
   nsAutoCString scheme;
-  nsresult rv = aURI->GetScheme(scheme);
+  rv = aURI->GetScheme(scheme);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // first check the most common cases (HTTP, HTTPS) to allow in to avoid most
@@ -1128,7 +1147,6 @@ nsNavHistory::CanAddURI(nsIURI* aURI, bool* canAdd)
       scheme.EqualsLiteral("wyciwyg") ||
       scheme.EqualsLiteral("javascript") ||
       scheme.EqualsLiteral("blob")) {
-    *canAdd = false;
     return NS_OK;
   }
   *canAdd = true;
@@ -1475,7 +1493,8 @@ PlacesSQLQueryBuilder::SelectAsURI()
       mQueryString = NS_LITERAL_CSTRING(
         "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, "
         "h.last_visit_date, f.url, null, null, null, null, ") +
-        tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+        tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+        "null, null, null "
         "FROM moz_places h "
         "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
         // WHERE 1 is a no-op since additonal conditions will start with AND.
@@ -1502,7 +1521,7 @@ PlacesSQLQueryBuilder::SelectAsURI()
             "h.rev_host, h.visit_count, h.last_visit_date, f.url, b2.id, "
             "b2.dateAdded, b2.lastModified, b2.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-            "b2.guid, b2.position, b2.type, b2.fk "
+            "null, null, null, b2.guid, b2.position, b2.type, b2.fk "
           "FROM moz_bookmarks b2 "
           "JOIN (SELECT b.fk "
                 "FROM moz_bookmarks b "
@@ -1527,7 +1546,7 @@ PlacesSQLQueryBuilder::SelectAsURI()
             "h.rev_host, h.visit_count, h.last_visit_date, f.url, b.id, "
             "b.dateAdded, b.lastModified, b.parent, ") +
             tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid,"
-            "b.guid, b.position, b.type, b.fk "
+            "null, null, null, b.guid, b.position, b.type, b.fk "
           "FROM moz_bookmarks b "
           "JOIN moz_places h ON b.fk = h.id "
           "LEFT OUTER JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -1559,7 +1578,8 @@ PlacesSQLQueryBuilder::SelectAsVisit()
   mQueryString = NS_LITERAL_CSTRING(
     "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, "
       "v.visit_date, f.url, null, null, null, null, ") +
-      tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+      tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+      "v.id, v.from_visit, v.visit_type "
     "FROM moz_places h "
     "JOIN moz_historyvisits v ON h.id = v.place_id "
     "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -1594,7 +1614,8 @@ PlacesSQLQueryBuilder::SelectAsDay()
   mQueryString = nsPrintfCString(
      "SELECT null, "
        "'place:type=%ld&sort=%ld&beginTime='||beginTime||'&endTime='||endTime, "
-      "dayTitle, null, null, beginTime, null, null, null, null, null, null "
+      "dayTitle, null, null, beginTime, null, null, null, null, null, null, "
+      "null, null, null "
      "FROM (", // TOUTER BEGIN
      resultType,
      sortingMode);
@@ -1797,7 +1818,8 @@ PlacesSQLQueryBuilder::SelectAsSite()
 
   mQueryString = nsPrintfCString(
     "SELECT null, 'place:type=%ld&sort=%ld&domain=&domainIsHost=true'%s, "
-           ":localhost, :localhost, null, null, null, null, null, null, null "
+           ":localhost, :localhost, null, null, null, null, null, null, null, "
+           "null, null, null "
     "WHERE EXISTS ( "
       "SELECT h.id FROM moz_places h "
       "%s "
@@ -1810,7 +1832,8 @@ PlacesSQLQueryBuilder::SelectAsSite()
     "UNION ALL "
     "SELECT null, "
            "'place:type=%ld&sort=%ld&domain='||host||'&domainIsHost=true'%s, "
-           "host, host, null, null, null, null, null, null, null "
+           "host, host, null, null, null, null, null, null, null, "
+           "null, null, null "
     "FROM ( "
       "SELECT get_unreversed_host(h.rev_host) AS host "
       "FROM moz_places h "
@@ -1850,7 +1873,7 @@ PlacesSQLQueryBuilder::SelectAsTag()
   mQueryString = nsPrintfCString(
     "SELECT null, 'place:folder=' || id || '&queryType=%d&type=%ld', "
            "title, null, null, null, null, null, dateAdded, "
-           "lastModified, null, null, null "
+           "lastModified, null, null, null, null, null, null "
     "FROM moz_bookmarks "
     "WHERE parent = %lld",
     nsINavHistoryQueryOptions::QUERY_TYPE_BOOKMARKS,
@@ -2084,7 +2107,8 @@ nsNavHistory::ConstructQueryString(
     queryString = NS_LITERAL_CSTRING(
       "SELECT h.id, h.url, h.title AS page_title, h.rev_host, h.visit_count, h.last_visit_date, "
           "f.url, null, null, null, null, ") +
-          tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+          tagsSqlFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+          "null, null, null "
         "FROM moz_places h "
         "LEFT OUTER JOIN moz_favicons f ON h.favicon_id = f.id "
         "WHERE h.hidden = 0 "
@@ -2225,6 +2249,9 @@ nsNavHistory::AddObserver(nsINavHistoryObserver* aObserver, bool aOwnsWeak)
 {
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG(aObserver);
+
+  if (NS_WARN_IF(!mCanNotify))
+    return NS_ERROR_UNEXPECTED;
 
   return mObservers.AppendWeakElement(aObserver, aOwnsWeak);
 }
@@ -3063,9 +3090,10 @@ nsNavHistory::Observe(nsISupports *aSubject, const char *aTopic,
   }
 
   else if (strcmp(aTopic, TOPIC_PLACES_CONNECTION_CLOSED) == 0) {
-      // Don't even try to notify observers from this point on, the category
-      // cache would init services that could try to use our APIs.
-      mCanNotify = false;
+    // Don't even try to notify observers from this point on, the category
+    // cache would init services that could try to use our APIs.
+    mCanNotify = false;
+    mObservers.Clear();
   }
 
 #ifdef MOZ_XUL
@@ -3936,6 +3964,19 @@ nsNavHistory::RowToResult(mozIStorageValueArray* aRow,
     rv = aRow->GetUTF8String(kGetInfoIndex_Guid, resultNode->mPageGuid);
     NS_ENSURE_SUCCESS(rv, rv);
 
+    rv = aRow->GetInt64(kGetInfoIndex_VisitId, &resultNode->mVisitId);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    int64_t fromVisitId;
+    rv = aRow->GetInt64(kGetInfoIndex_FromVisitId, &fromVisitId);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    if (fromVisitId > 0) {
+      resultNode->mFromVisitId = fromVisitId;
+    }
+
+    resultNode->mTransitionType = aRow->AsInt32(kGetInfoIndex_VisitType);
+
     resultNode.forget(aResult);
     return NS_OK;
   }
@@ -4044,7 +4085,8 @@ nsNavHistory::VisitIdToResultNode(int64_t visitId,
       statement = mDB->GetStatement(NS_LITERAL_CSTRING(
         "SELECT h.id, h.url, h.title, h.rev_host, h.visit_count, "
                "v.visit_date, f.url, null, null, null, null, "
-               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+              "v.id, v.from_visit, v.visit_type "
         "FROM moz_places h "
         "JOIN moz_historyvisits v ON h.id = v.place_id "
         "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -4058,7 +4100,8 @@ nsNavHistory::VisitIdToResultNode(int64_t visitId,
       statement = mDB->GetStatement(NS_LITERAL_CSTRING(
         "SELECT h.id, h.url, h.title, h.rev_host, h.visit_count, "
                "h.last_visit_date, f.url, null, null, null, null, "
-               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid "
+               ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
+              "null, null, null "
         "FROM moz_places h "
         "JOIN moz_historyvisits v ON h.id = v.place_id "
         "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -4105,7 +4148,7 @@ nsNavHistory::BookmarkIdToResultNode(int64_t aBookmarkId, nsNavHistoryQueryOptio
              "h.rev_host, h.visit_count, h.last_visit_date, f.url, b.id, "
              "b.dateAdded, b.lastModified, b.parent, "
              ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-             "b.guid, b.position, b.type, b.fk "
+             "null, null, null, b.guid, b.position, b.type, b.fk "
       "FROM moz_bookmarks b "
       "JOIN moz_places h ON b.fk = h.id "
       "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "
@@ -4146,7 +4189,7 @@ nsNavHistory::URIToResultNode(nsIURI* aURI,
            "h.rev_host, h.visit_count, h.last_visit_date, f.url, "
            "b.id, b.dateAdded, b.lastModified, b.parent, "
            ) + tagsFragment + NS_LITERAL_CSTRING(", h.frecency, h.hidden, h.guid, "
-           "b.guid, b.position, b.type, b.fk "
+           "null, null, null, b.guid, b.position, b.type, b.fk "
     "FROM moz_places h "
     "LEFT JOIN moz_bookmarks b ON b.fk = h.id "
     "LEFT JOIN moz_favicons f ON h.favicon_id = f.id "

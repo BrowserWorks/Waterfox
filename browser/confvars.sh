@@ -3,8 +3,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-MOZ_APP_BASENAME=Waterfox
-MOZ_APP_VENDOR=Waterfoxproject.org
+MOZ_APP_BASENAME=Firefox
+MOZ_APP_VENDOR=Mozilla
 MOZ_UPDATER=1
 MOZ_PHOENIX=1
 
@@ -25,14 +25,9 @@ if test "$OS_ARCH" = "WINNT"; then
 fi
 
 # Enable building ./signmar and running libmar signature tests
-MOZ_ENABLE_SIGNMAR=0
+MOZ_ENABLE_SIGNMAR=1
 
 MOZ_SAFE_BROWSING=1
-MOZ_SERVICES_COMMON=1
-MOZ_SERVICES_CRYPTO=1
-MOZ_SERVICES_HEALTHREPORT=1
-MOZ_SERVICES_SYNC=1
-MOZ_SERVICES_CLOUDSYNC=1
 MOZ_APP_VERSION=$FIREFOX_VERSION
 MOZ_APP_VERSION_DISPLAY=$FIREFOX_VERSION_DISPLAY
 MOZ_EXTENSIONS_DEFAULT=" gio"
@@ -60,9 +55,6 @@ MOZ_PAY=1
 MOZ_ACTIVITIES=1
 MOZ_JSDOWNLOADS=1
 MOZ_RUST_MP4PARSE=1
-
-# Enable checking that add-ons are signed by the trusted root
-MOZ_ADDON_SIGNING=0
 
 # Include the DevTools client, not just the server (which is the default)
 MOZ_DEVTOOLS=all

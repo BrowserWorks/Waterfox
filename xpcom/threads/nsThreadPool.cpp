@@ -68,7 +68,7 @@ nsThreadPool::PutEvent(nsIRunnable* aEvent)
 }
 
 nsresult
-nsThreadPool::PutEvent(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags)
+nsThreadPool::PutEvent(already_AddRefed<nsIRunnable> aEvent, uint32_t aFlags)
 {
   // Avoid spawning a new thread while holding the event queue lock...
 
@@ -146,9 +146,8 @@ nsThreadPool::ShutdownThread(nsIThread* aThread)
   // shutdown requires this thread have an event loop (and it may not, see bug
   // 10204784).  The simplest way to cover all cases is to asynchronously
   // shutdown aThread from the main thread.
-  nsCOMPtr<nsIRunnable> r = NS_NewRunnableMethod(aThread,
-                                                 &nsIThread::AsyncShutdown);
-  NS_DispatchToMainThread(r);
+  NS_DispatchToMainThread(NewRunnableMethod(aThread,
+                                            &nsIThread::AsyncShutdown));
 }
 
 NS_IMETHODIMP
@@ -249,7 +248,7 @@ nsThreadPool::DispatchFromScript(nsIRunnable* aEvent, uint32_t aFlags)
 }
 
 NS_IMETHODIMP
-nsThreadPool::Dispatch(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags)
+nsThreadPool::Dispatch(already_AddRefed<nsIRunnable> aEvent, uint32_t aFlags)
 {
   LOG(("THRD-P(%p) dispatch [%p %x]\n", this, /* XXX aEvent*/ nullptr, aFlags));
 
@@ -277,6 +276,12 @@ nsThreadPool::Dispatch(already_AddRefed<nsIRunnable>&& aEvent, uint32_t aFlags)
     PutEvent(Move(aEvent), aFlags);
   }
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsThreadPool::DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP

@@ -57,6 +57,19 @@ add_task(function* testNarrate() {
 
     NarrateTestUtils.isStartedState(content, ok);
 
+    paragraph = speechinfo.paragraph;
+    $(NarrateTestUtils.STOP).click();
+    yield ContentTaskUtils.waitForCondition(
+      () => !$(NarrateTestUtils.STOP), "transitioned to stopped state");
+    NarrateTestUtils.isStoppedState(content, ok);
+
+    promiseEvent = ContentTaskUtils.waitForEvent(content, "paragraphstart");
+    $(NarrateTestUtils.START).click();
+    speechinfo = (yield promiseEvent).detail;
+    is(speechinfo.paragraph, paragraph, "read same paragraph again");
+
+    NarrateTestUtils.isStartedState(content, ok);
+
     let eventUtils = NarrateTestUtils.getEventUtils(content);
 
     promiseEvent = ContentTaskUtils.waitForEvent(content, "paragraphstart");
@@ -94,10 +107,15 @@ add_task(function* testNarrate() {
     yield promiseEvent;
     ok(NarrateTestUtils.isVisible(popup), "popup stays visible after scroll");
 
-    promiseEvent = ContentTaskUtils.waitForEvent(content, "paragraphend");
     toggle.click();
-    yield promiseEvent;
     ok(!NarrateTestUtils.isVisible(popup), "popup is dismissed while speaking");
-    ok(true, "speech stopped when popup is dismissed");
+    NarrateTestUtils.isStartedState(content, ok);
+
+    promiseEvent = ContentTaskUtils.waitForEvent(content, "paragraphend");
+    $(NarrateTestUtils.STOP).click();
+    yield promiseEvent;
+    yield ContentTaskUtils.waitForCondition(
+      () => !$(NarrateTestUtils.STOP), "transitioned to stopped state");
+    NarrateTestUtils.isStoppedState(content, ok);
   });
 });

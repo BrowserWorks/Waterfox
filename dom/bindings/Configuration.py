@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from WebIDL import IDLInterface, IDLExternalInterface, IDLImplementsStatement
+from WebIDL import IDLImplementsStatement
 import os
 from collections import defaultdict
 
@@ -53,7 +53,7 @@ class Configuration:
 
             assert not thing.isType()
 
-            if not thing.isInterface():
+            if not thing.isInterface() and not thing.isNamespace():
                 continue
             iface = thing
             self.interfaces[iface.identifier.name] = iface
@@ -433,6 +433,7 @@ class Descriptor(DescriptorProvider):
         # them as having a concrete descendant.
         self.concrete = (not self.interface.isExternal() and
                          not self.interface.isCallback() and
+                         not self.interface.isNamespace() and
                          desc.get('concrete', True))
         self.hasUnforgeableMembers = (self.concrete and
                                       any(MemberIsUnforgeable(m, self) for m in
@@ -515,7 +516,8 @@ class Descriptor(DescriptorProvider):
 
             self.proxy = (self.supportsIndexedProperties() or
                           (self.supportsNamedProperties() and
-                           not self.hasNamedPropertiesObject))
+                           not self.hasNamedPropertiesObject) or
+                          self.hasNonOrdinaryGetPrototypeOf())
 
             if self.proxy:
                 if (not self.operations['IndexedGetter'] and
@@ -747,6 +749,9 @@ class Descriptor(DescriptorProvider):
     def supportsNamedProperties(self):
         return self.operations['NamedGetter'] is not None
 
+    def hasNonOrdinaryGetPrototypeOf(self):
+        return self.interface.getExtendedAttribute("NonOrdinaryGetPrototypeOf")
+
     def needsConstructHookHolder(self):
         assert self.interface.hasInterfaceObject()
         return False
@@ -766,6 +771,10 @@ class Descriptor(DescriptorProvider):
                 self.interface.parent)
 
     def hasThreadChecks(self):
+        # isExposedConditionally does not necessarily imply thread checks
+        # (since at least [SecureContext] is independent of them), but we're
+        # only used to decide whether to include nsThreadUtils.h, so we don't
+        # worry about that.
         return ((self.isExposedConditionally() and
                  not self.interface.isExposedInWindow()) or
                 self.interface.isExposedInSomeButNotAllWorkers())
@@ -805,6 +814,28 @@ class Descriptor(DescriptorProvider):
         """
         return (self.interface.getExtendedAttribute("Global") or
                 self.interface.getExtendedAttribute("PrimaryGlobal"))
+
+    @property
+    def namedPropertiesEnumerable(self):
+        """
+        Returns whether this interface should have enumerable named properties
+        """
+        assert self.proxy
+        assert self.supportsNamedProperties()
+        iface = self.interface
+        while iface:
+            if iface.getExtendedAttribute("LegacyUnenumerableNamedProperties"):
+                return False
+            iface = iface.parent
+        return True
+
+    @property
+    def registersGlobalNamesOnWindow(self):
+        return (not self.interface.isExternal() and
+                self.interface.hasInterfaceObject() and
+                not self.workers and
+                self.interface.isExposedInWindow() and
+                self.register)
 
 
 # Some utility methods

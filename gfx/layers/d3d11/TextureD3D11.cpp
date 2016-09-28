@@ -31,7 +31,7 @@ public:
   TextureMemoryMeasurer(size_t aMemoryUsed)
   {
     mMemoryUsed = aMemoryUsed;
-    gfxWindowsPlatform::sD3D11MemoryUsed += mMemoryUsed;
+    gfxWindowsPlatform::sD3D11SharedTextures += mMemoryUsed;
     mRefCnt = 0;
   }
   STDMETHODIMP_(ULONG) AddRef() {
@@ -57,7 +57,7 @@ public:
   STDMETHODIMP_(ULONG) Release() {
     int refCnt = --mRefCnt;
     if (refCnt == 0) {
-      gfxWindowsPlatform::sD3D11MemoryUsed -= mMemoryUsed;
+      gfxWindowsPlatform::sD3D11SharedTextures -= mMemoryUsed;
       delete this;
     }
     return refCnt;
@@ -283,11 +283,11 @@ DXGITextureData::PrepareDrawTargetInLock(OpenMode aMode)
   }
 
   if (mNeedsClear) {
-    mDrawTarget->ClearRect(Rect(0, 0, GetSize().width, GetSize().height));
+    mDrawTarget->ClearRect(Rect(0, 0, mSize.width, mSize.height));
     mNeedsClear = false;
   }
   if (mNeedsClearWhite) {
-    mDrawTarget->FillRect(Rect(0, 0, GetSize().width, GetSize().height), ColorPattern(Color(1.0, 1.0, 1.0, 1.0)));
+    mDrawTarget->FillRect(Rect(0, 0, mSize.width, mSize.height), ColorPattern(Color(1.0, 1.0, 1.0, 1.0)));
     mNeedsClearWhite = false;
   }
 
@@ -298,6 +298,17 @@ void
 D3D11TextureData::Unlock()
 {
   UnlockD3DTexture(mTexture.get());
+}
+
+
+void
+DXGITextureData::FillInfo(TextureData::Info& aInfo) const
+{
+  aInfo.size = mSize;
+  aInfo.format = mFormat;
+  aInfo.supportsMoz2D = true;
+  aInfo.hasIntermediateBuffer = false;
+  aInfo.hasSynchronization = mHasSynchronization;
 }
 
 void
@@ -498,12 +509,22 @@ DXGIYCbCrTextureData::Create(ClientIPCAllocator* aAllocator,
                                       aSize, aSizeY, aSizeCbCr);
 }
 
+void
+DXGIYCbCrTextureData::FillInfo(TextureData::Info& aInfo) const
+{
+  aInfo.size = mSize;
+  aInfo.format = gfx::SurfaceFormat::YUV;
+  aInfo.supportsMoz2D = false;
+  aInfo.hasIntermediateBuffer = false;
+  aInfo.hasSynchronization = false;
+}
+
 bool
 DXGIYCbCrTextureData::Serialize(SurfaceDescriptor& aOutDescriptor)
 {
   aOutDescriptor = SurfaceDescriptorDXGIYCbCr(
     (WindowsHandle)mHandles[0], (WindowsHandle)mHandles[1], (WindowsHandle)mHandles[2],
-    GetSize(), mSizeY, mSizeCbCr
+    mSize, mSizeY, mSizeCbCr
   );
   return true;
 }
@@ -663,6 +684,12 @@ DXGITextureHostD3D11::SetCompositor(Compositor* aCompositor)
   }
 }
 
+Compositor*
+DXGITextureHostD3D11::GetCompositor()
+{
+  return mCompositor;
+}
+
 bool
 DXGITextureHostD3D11::Lock()
 {
@@ -784,6 +811,12 @@ DXGIYCbCrTextureHostD3D11::SetCompositor(Compositor* aCompositor)
   if (mTextureSources[0]) {
     mTextureSources[0]->SetCompositor(aCompositor);
   }
+}
+
+Compositor*
+DXGIYCbCrTextureHostD3D11::GetCompositor()
+{
+  return mCompositor;
 }
 
 bool
@@ -914,7 +947,7 @@ DataTextureSourceD3D11::Update(DataSourceSurface* aSurface,
 
         void* data = map.mData + map.mStride * rect.y + BytesPerPixel(aSurface->GetFormat()) * rect.x;
 
-        mCompositor->GetDC()->UpdateSubresource(mTexture, 0, &box, data, map.mStride, map.mStride * mSize.height);
+        mCompositor->GetDC()->UpdateSubresource(mTexture, 0, &box, data, map.mStride, map.mStride * rect.height);
       }
     } else {
       mCompositor->GetDC()->UpdateSubresource(mTexture, 0, nullptr, aSurface->GetData(),

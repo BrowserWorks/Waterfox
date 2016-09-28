@@ -6,6 +6,7 @@
 #include "GMPDecryptorChild.h"
 #include "GMPContentChild.h"
 #include "GMPChild.h"
+#include "base/task.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/unused.h"
 #include "runnable_utils.h"
@@ -61,8 +62,9 @@ GMPDecryptorChild::CallOnGMPThread(MethodType aMethod, ParamType&&... aParams)
     // Use const reference when we have to.
     auto m = &GMPDecryptorChild::CallMethod<
         decltype(aMethod), typename AddConstReference<ParamType>::Type...>;
-    auto t = NewRunnableMethod(this, m, aMethod, Forward<ParamType>(aParams)...);
-    mPlugin->GMPMessageLoop()->PostTask(FROM_HERE, t);
+    RefPtr<mozilla::Runnable> t =
+      dont_add_new_uses_of_this::NewRunnableMethod(this, m, aMethod, Forward<ParamType>(aParams)...);
+    mPlugin->GMPMessageLoop()->PostTask(t.forget());
   }
 }
 
@@ -170,8 +172,10 @@ GMPDecryptorChild::Decrypted(GMPBuffer* aBuffer, GMPErr aResult)
   if (!ON_GMP_THREAD()) {
     // We should run this whole method on the GMP thread since the buffer needs
     // to be deleted after the SendDecrypted call.
-    auto t = NewRunnableMethod(this, &GMPDecryptorChild::Decrypted, aBuffer, aResult);
-    mPlugin->GMPMessageLoop()->PostTask(FROM_HERE, t);
+    mPlugin->GMPMessageLoop()->PostTask(NewRunnableMethod
+                                        <GMPBuffer*, GMPErr>(this,
+                                                             &GMPDecryptorChild::Decrypted,
+                                                             aBuffer, aResult));
     return;
   }
 
@@ -190,7 +194,7 @@ GMPDecryptorChild::Decrypted(GMPBuffer* aBuffer, GMPErr aResult)
 void
 GMPDecryptorChild::SetCapabilities(uint64_t aCaps)
 {
-  CALL_ON_GMP_THREAD(SendSetCaps, aCaps);
+  // Deprecated.
 }
 
 void

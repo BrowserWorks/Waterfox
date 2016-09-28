@@ -83,7 +83,7 @@ class OrderedHashTable
     explicit OrderedHashTable(AllocPolicy& ap)
         : hashTable(nullptr), data(nullptr), dataLength(0), ranges(nullptr), alloc(ap) {}
 
-    bool init() {
+    MOZ_MUST_USE bool init() {
         MOZ_ASSERT(!hashTable, "init must be called at most once");
 
         uint32_t buckets = initialBuckets();
@@ -150,7 +150,7 @@ class OrderedHashTable
      * means the element was not added to the table.
      */
     template <typename ElementInput>
-    bool put(ElementInput&& element) {
+    MOZ_MUST_USE bool put(ElementInput&& element) {
         HashNumber h = prepareHash(Ops::getKey(element));
         if (Data* e = lookup(Ops::getKey(element), h)) {
             e->element = Forward<ElementInput>(element);
@@ -221,7 +221,7 @@ class OrderedHashTable
      * particular, those Ranges are still live and will see any entries added
      * after a successful clear().
      */
-    bool clear() {
+    MOZ_MUST_USE bool clear() {
         if (dataLength != 0) {
             Data** oldHashTable = hashTable;
             Data* oldData = data;
@@ -627,7 +627,7 @@ class OrderedHashTable
      * empty elements in data[0:dataLength]. On allocation failure, this
      * leaves everything as it was and returns false.
      */
-    bool rehash(uint32_t newHashShift) {
+    MOZ_MUST_USE bool rehash(uint32_t newHashShift) {
         // If the size of the table is not changing, rehash in place to avoid
         // allocating memory.
         if (newHashShift == hashShift) {
@@ -740,17 +740,17 @@ class OrderedHashMap
     typedef typename Impl::Range Range;
 
     explicit OrderedHashMap(AllocPolicy ap = AllocPolicy()) : impl(ap) {}
-    MOZ_WARN_UNUSED_RESULT bool init()              { return impl.init(); }
+    MOZ_MUST_USE bool init()                        { return impl.init(); }
     uint32_t count() const                          { return impl.count(); }
     bool has(const Key& key) const                  { return impl.has(key); }
     Range all()                                     { return impl.all(); }
     const Entry* get(const Key& key) const          { return impl.get(key); }
     Entry* get(const Key& key)                      { return impl.get(key); }
     bool remove(const Key& key, bool* foundp)       { return impl.remove(key, foundp); }
-    MOZ_WARN_UNUSED_RESULT bool clear()             { return impl.clear(); }
+    MOZ_MUST_USE bool clear()                       { return impl.clear(); }
 
     template <typename V>
-    MOZ_WARN_UNUSED_RESULT bool put(const Key& key, V&& value) {
+    MOZ_MUST_USE bool put(const Key& key, V&& value) {
         return impl.put(Entry(key, Forward<V>(value)));
     }
 
@@ -792,13 +792,13 @@ class OrderedHashSet
     typedef typename Impl::Range Range;
 
     explicit OrderedHashSet(AllocPolicy ap = AllocPolicy()) : impl(ap) {}
-    MOZ_WARN_UNUSED_RESULT bool init()              { return impl.init(); }
+    MOZ_MUST_USE bool init()                        { return impl.init(); }
     uint32_t count() const                          { return impl.count(); }
     bool has(const T& value) const                  { return impl.has(value); }
     Range all()                                     { return impl.all(); }
-    MOZ_WARN_UNUSED_RESULT bool put(const T& value) { return impl.put(value); }
+    MOZ_MUST_USE bool put(const T& value)           { return impl.put(value); }
     bool remove(const T& value, bool* foundp)       { return impl.remove(value, foundp); }
-    MOZ_WARN_UNUSED_RESULT bool clear()             { return impl.clear(); }
+    MOZ_MUST_USE bool clear()                       { return impl.clear(); }
 
     void rekeyOneEntry(const T& current, const T& newKey) {
         return impl.rekeyOneEntry(current, newKey, newKey);

@@ -13,6 +13,7 @@ echo "running as" $(id)
 : MOZHARNESS_SCRIPT             ${MOZHARNESS_SCRIPT}
 : MOZHARNESS_CONFIG             ${MOZHARNESS_CONFIG}
 : MOZHARNESS_ACTIONS            ${MOZHARNESS_ACTIONS}
+: MOZHARNESS_OPTIONS            ${MOZHARNESS_OPTIONS}
 
 : TOOLTOOL_CACHE                ${TOOLTOOL_CACHE:=/home/worker/tooltool-cache}
 
@@ -40,6 +41,9 @@ export TINDERBOX_OUTPUT=1
 # use "simple" package names so that they can be hard-coded in the task's
 # extras.locations
 export MOZ_SIMPLE_PACKAGE_NAME=target
+
+# Do not try to upload symbols (see https://bugzilla.mozilla.org/show_bug.cgi?id=1164615)
+export MOZ_AUTOMATION_UPLOAD_SYMBOLS=0
 
 # Ensure that in tree libraries can be found
 export LIBRARY_PATH=$LIBRARY_PATH:$WORKSPACE/src/obj-firefox:$WORKSPACE/src/gcc/lib64
@@ -115,11 +119,21 @@ if [ -n "$MOZHARNESS_ACTIONS" ]; then
     done
 fi
 
+# if MOZHARNESS_OPTIONS is given, append them to mozharness command line run
+# e.g. enable-pgo
+if [ -n "$MOZHARNESS_OPTIONS" ]; then
+    options=""
+    for option in $MOZHARNESS_OPTIONS; do
+        options="$options --$option"
+    done
+fi
+
 python2.7 $WORKSPACE/build/src/testing/${MOZHARNESS_SCRIPT} ${config_cmds} \
   $debug_flag \
   $custom_build_variant_cfg_flag \
   --disable-mock \
   $actions \
+  $options \
   --log-level=debug \
   --scm-level=$MOZ_SCM_LEVEL \
   --work-dir=$WORKSPACE/build \

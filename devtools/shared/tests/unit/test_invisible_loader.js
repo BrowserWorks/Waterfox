@@ -16,7 +16,7 @@ function run_test() {
 function visible_loader() {
   let loader = new DevToolsLoader();
   loader.invisibleToDebugger = false;
-  loader.require("devtools/shared/css-color");
+  loader.require("devtools/shared/indentation");
 
   let dbg = new Debugger();
   let sandbox = loader._provider.loader.sharedGlobalSandbox;
@@ -24,7 +24,7 @@ function visible_loader() {
   try {
     dbg.addDebuggee(sandbox);
     do_check_true(true);
-  } catch(e) {
+  } catch (e) {
     do_throw("debugger could not add visible value");
   }
 
@@ -37,7 +37,7 @@ function visible_loader() {
 function invisible_loader() {
   let loader = new DevToolsLoader();
   loader.invisibleToDebugger = true;
-  loader.require("devtools/shared/css-color");
+  loader.require("devtools/shared/indentation");
 
   let dbg = new Debugger();
   let sandbox = loader._provider.loader.sharedGlobalSandbox;
@@ -45,7 +45,7 @@ function invisible_loader() {
   try {
     dbg.addDebuggee(sandbox);
     do_throw("debugger added invisible value");
-  } catch(e) {
+  } catch (e) {
     do_check_true(true);
   }
 

@@ -28,7 +28,10 @@ namespace widget {
 // Key code constants
 enum
 {
+#if !defined(MAC_OS_X_VERSION_10_12) || \
+  MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
   kVK_RightCommand    = 0x36, // right command key
+#endif
 
   kVK_PC_PrintScreen     = kVK_F13,
   kVK_PC_ScrollLock      = kVK_F14,
@@ -227,8 +230,8 @@ public:
                     const nsAString *aInsertString = nullptr);
 
   /**
-   * WillDispatchKeyboardEvent() computes aKeyEvent.alternativeCharCodes and
-   * recompute aKeyEvent.charCode if it's necessary.
+   * WillDispatchKeyboardEvent() computes aKeyEvent.mAlternativeCharCodes and
+   * recompute aKeyEvent.mCharCode if it's necessary.
    *
    * @param aNativeKeyEvent       A native key event for which you want to
    *                              dispatch a Gecko key event.
@@ -501,6 +504,9 @@ protected:
     // String specified by InsertText().  This is not null only during a
     // call of InsertText().
     nsAString* mInsertString;
+    // String which are included in [mKeyEvent characters] and already handled
+    // by InsertText() call(s).
+    nsString mInsertedString;
     // Whether keydown event was consumed by web contents or chrome contents.
     bool mKeyDownHandled;
     // Whether keypress event was dispatched for mKeyEvent.
@@ -521,17 +527,7 @@ protected:
       Set(aNativeKeyEvent);
     }
 
-    KeyEventState(const KeyEventState &aOther) : mKeyEvent(nullptr)
-    {
-      Clear();
-      if (aOther.mKeyEvent) {
-        mKeyEvent = [aOther.mKeyEvent retain];
-      }
-      mKeyDownHandled = aOther.mKeyDownHandled;
-      mKeyPressDispatched = aOther.mKeyPressDispatched;
-      mKeyPressHandled = aOther.mKeyPressHandled;
-      mCausedOtherKeyEvents = aOther.mCausedOtherKeyEvents;
-    }
+    KeyEventState(const KeyEventState &aOther) = delete;
 
     ~KeyEventState()
     {
@@ -552,6 +548,7 @@ protected:
         mKeyEvent = nullptr;
       }
       mInsertString = nullptr;
+      mInsertedString.Truncate();
       mKeyDownHandled = false;
       mKeyPressDispatched = false;
       mKeyPressHandled = false;
@@ -567,6 +564,19 @@ protected:
     {
       return !mKeyPressDispatched && !IsDefaultPrevented();
     }
+
+    void InitKeyEvent(TextInputHandlerBase* aHandler,
+                      WidgetKeyboardEvent& aKeyEvent);
+
+    /**
+     * GetUnhandledString() returns characters of the event which have not been
+     * handled with InsertText() yet. For example, if there is a composition
+     * caused by a dead key press like '`' and it's committed by some key
+     * combinations like |Cmd+v|, then, the |v|'s KeyDown event's |characters|
+     * is |`v|.  Then, after |`| is committed with a call of InsertString(),
+     * this returns only 'v'.
+     */
+    void GetUnhandledString(nsAString& aUnhandledString) const;
   };
 
   /**
@@ -595,12 +605,8 @@ protected:
       : mState(aState)
     {
     }
-    ~AutoInsertStringClearer()
-    {
-      if (mState) {
-        mState->mInsertString = nullptr;
-      }
-    }
+    ~AutoInsertStringClearer();
+
   private:
     KeyEventState* mState;
   };
@@ -756,6 +762,11 @@ public:
   void OnSelectionChange(const IMENotification& aIMENotification);
 
   /**
+   * Call [NSTextInputContext handleEvent] for mouse event support of IME
+   */
+  bool OnHandleEvent(NSEvent* aEvent);
+
+  /**
    * SetMarkedText() is a handler of setMarkedText of NSTextInput.
    *
    * @param aAttrString           This mut be an instance of NSAttributedString.
@@ -771,15 +782,6 @@ public:
   void SetMarkedText(NSAttributedString* aAttrString,
                      NSRange& aSelectedRange,
                      NSRange* aReplacementRange = nullptr);
-
-  /**
-   * ConversationIdentifier() returns an ID for the current editor.  The ID is
-   * guaranteed to be unique among currently existing editors.  But it might be
-   * the same as the ID of an editor that has already been destroyed.
-   *
-   * @return                      An identifier of current focused editor.
-   */
-  NSInteger ConversationIdentifier();
 
   /**
    * GetAttributedSubstringFromRange() returns an NSAttributedString instance
@@ -970,8 +972,8 @@ private:
    * @param aSelectedRange        Current selected range (or caret position).
    * @return                      NS_TEXTRANGE_*.
    */
-  uint32_t ConvertToTextRangeType(uint32_t aUnderlineStyle,
-                                  NSRange& aSelectedRange);
+  TextRangeType ConvertToTextRangeType(uint32_t aUnderlineStyle,
+                                       NSRange& aSelectedRange);
 
   /**
    * GetRangeCount() computes the range count of aAttrString.

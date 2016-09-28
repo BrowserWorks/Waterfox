@@ -36,12 +36,11 @@ namespace mozilla {
 struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
 {
   ElementPropertyTransition(nsIDocument* aDocument,
-                            dom::Element* aTarget,
-                            CSSPseudoElementType aPseudoType,
+                            Maybe<OwningAnimationTarget>& aTarget,
                             const TimingParams &aTiming,
                             StyleAnimationValue aStartForReversingTest,
                             double aReversePortion)
-    : dom::KeyframeEffectReadOnly(aDocument, aTarget, aPseudoType, aTiming)
+    : dom::KeyframeEffectReadOnly(aDocument, aTarget, aTiming)
     , mStartForReversingTest(aStartForReversingTest)
     , mReversePortion(aReversePortion)
   { }
@@ -53,13 +52,13 @@ struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
   }
 
   nsCSSProperty TransitionProperty() const {
-    MOZ_ASSERT(mFrames.Length() == 2,
-               "Transitions should have exactly two animation frames. "
+    MOZ_ASSERT(mKeyframes.Length() == 2,
+               "Transitions should have exactly two animation keyframes. "
                "Perhaps we are using an un-initialized transition?");
-    MOZ_ASSERT(mFrames[0].mPropertyValues.Length() == 1,
+    MOZ_ASSERT(mKeyframes[0].mPropertyValues.Length() == 1,
                "Transitions should have exactly one property in their first "
                "frame");
-    return mFrames[0].mPropertyValues[0].mProperty;
+    return mKeyframes[0].mPropertyValues[0].mProperty;
   }
 
   StyleAnimationValue ToValue() const {
@@ -96,6 +95,20 @@ struct ElementPropertyTransition : public dom::KeyframeEffectReadOnly
   // at the current time.  (The input to the transition timing function
   // has time units, the output has value units.)
   double CurrentValuePortion() const;
+
+  // For a new transition interrupting an existing transition on the
+  // compositor, update the start value to match the value of the replaced
+  // transitions at the current time.
+  void UpdateStartValueFromReplacedTransition();
+
+  struct ReplacedTransitionProperties {
+    TimeDuration mStartTime;
+    double mPlaybackRate;
+    TimingParams mTiming;
+    Maybe<ComputedTimingFunction> mTimingFunction;
+    StyleAnimationValue mFromValue, mToValue;
+  };
+  Maybe<ReplacedTransitionProperties> mReplacedTransition;
 };
 
 namespace dom {
@@ -128,7 +141,7 @@ public:
   void PlayFromStyle()
   {
     ErrorResult rv;
-    DoPlay(rv, Animation::LimitBehavior::Continue);
+    PlayNoUpdate(rv, Animation::LimitBehavior::Continue);
     // play() should not throw when LimitBehavior is Continue
     MOZ_ASSERT(!rv.Failed(), "Unexpected exception playing transition");
   }
@@ -184,6 +197,17 @@ public:
   // True for transitions that are generated from CSS markup and continue to
   // reflect changes to that markup.
   bool IsTiedToMarkup() const { return mOwningElement.IsSet(); }
+
+  // Return the animation current time based on a given TimeStamp, a given
+  // start time and a given playbackRate on a given timeline.  This is useful
+  // when we estimate the current animated value running on the compositor
+  // because the animation on the compositor may be running ahead while
+  // main-thread is busy.
+  static Nullable<TimeDuration> GetCurrentTimeAt(
+      const DocumentTimeline& aTimeline,
+      const TimeStamp& aBaseTime,
+      const TimeDuration& aStartTime,
+      double aPlaybackRate);
 
 protected:
   virtual ~CSSTransition()

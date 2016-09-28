@@ -14,6 +14,7 @@ import copy
 import re
 import json
 
+import mozharness
 from mozharness.base.config import parse_config_file
 from mozharness.base.errors import PythonErrorList
 from mozharness.base.log import OutputParser, DEBUG, ERROR, CRITICAL
@@ -24,6 +25,11 @@ from mozharness.base.vcs.vcsbase import MercurialScript
 from mozharness.mozilla.testing.errors import TinderBoxPrintRe
 from mozharness.mozilla.buildbot import TBPL_SUCCESS, TBPL_WORST_LEVEL_TUPLE
 from mozharness.mozilla.buildbot import TBPL_RETRY, TBPL_FAILURE, TBPL_WARNING
+
+external_tools_path = os.path.join(
+    os.path.abspath(os.path.dirname(os.path.dirname(mozharness.__file__))),
+    'external_tools',
+)
 
 TalosErrorList = PythonErrorList + [
     {'regex': re.compile(r'''run-as: Package '.*' is unknown'''), 'level': DEBUG},
@@ -177,14 +183,17 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
                 opts = None
 
             if opts:
+              # In the case of a multi-line commit message, only examine
+              # the first line for mozharness options
+              opts = opts.split('\n')[0]
               opts = re.sub(r'\w+:.*', '', opts).strip().split(' ')
               if "--spsProfile" in opts:
                   # overwrite whatever was set here.
                   self.sps_profile = True
               try:
-                    idx = opts.index('--spsProfileInterval')
-                    if len(opts) > idx + 1:
-                        self.sps_profile_interval = opts[idx + 1]
+                  idx = opts.index('--spsProfileInterval')
+                  if len(opts) > idx + 1:
+                      self.sps_profile_interval = opts[idx + 1]
               except ValueError:
                   pass
         # finally, if sps_profile is set, we add that to the talos options
@@ -242,8 +251,6 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             kw_options['suite'] = self.config['suite']
         if self.config.get('title'):
             kw_options['title'] = self.config['title']
-            if kw_options['title'].startswith('tst-linux64-spot'):
-                kw_options['framework'] = 'talos-aws'
         if self.config.get('branch'):
             kw_options['branchName'] = self.config['branch']
         if self.symbols_path:
@@ -339,8 +346,8 @@ class Talos(TestingMixin, MercurialScript, BlobUploadMixin):
             parser.update_worst_log_and_tbpl_levels(WARNING, TBPL_WARNING)
             return
 
-        schema_path = os.path.join(self.talos_path, 'treeherder-schemas',
-                                   'performance-artifact.json')
+        schema_path = os.path.join(external_tools_path,
+                                   'performance-artifact-schema.json')
         self.info("Validating PERFHERDER_DATA against %s" % schema_path)
         try:
             with open(schema_path) as f:

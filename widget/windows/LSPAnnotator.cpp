@@ -29,7 +29,7 @@
 namespace mozilla {
 namespace crashreporter {
 
-class LSPAnnotationGatherer : public nsRunnable
+class LSPAnnotationGatherer : public Runnable
 {
   ~LSPAnnotationGatherer() {}
 
@@ -145,7 +145,7 @@ LSPAnnotationGatherer::Run()
   }
 
   mString = str;
-  NS_DispatchToMainThread(NS_NewRunnableMethod(this, &LSPAnnotationGatherer::Annotate));
+  NS_DispatchToMainThread(NewRunnableMethod(this, &LSPAnnotationGatherer::Annotate));
   return NS_OK;
 }
 

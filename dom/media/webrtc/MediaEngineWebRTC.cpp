@@ -12,13 +12,11 @@
 #include "prenv.h"
 
 #include "mozilla/Logging.h"
+#ifdef XP_WIN
+#include "mozilla/WindowsVersion.h"
+#endif
 
-static mozilla::LogModule*
-GetUserMediaLog()
-{
-  static mozilla::LazyLogModule sLog("GetUserMedia");
-  return sLog;
-}
+static mozilla::LazyLogModule sGetUserMediaLog("GetUserMedia");
 
 #include "MediaEngineWebRTC.h"
 #include "ImageContainer.h"
@@ -40,7 +38,7 @@ GetUserMediaLog()
 #endif
 
 #undef LOG
-#define LOG(args) MOZ_LOG(GetUserMediaLog(), mozilla::LogLevel::Debug, args)
+#define LOG(args) MOZ_LOG(sGetUserMediaLog, mozilla::LogLevel::Debug, args)
 
 namespace mozilla {
 
@@ -111,7 +109,6 @@ MediaEngineWebRTC::MediaEngineWebRTC(MediaEnginePrefs &aPrefs)
   : mMutex("mozilla::MediaEngineWebRTC"),
     mVoiceEngine(nullptr),
     mAudioInput(nullptr),
-    mAudioEngineInit(false),
     mFullDuplex(aPrefs.mFullDuplex),
     mExtendedFilter(aPrefs.mExtendedFilter),
     mDelayAgnostic(aPrefs.mDelayAgnostic)
@@ -298,6 +295,16 @@ MediaEngineWebRTC::EnumerateVideoDevices(dom::MediaSourceEnum aMediaSource,
 #endif
 }
 
+bool
+MediaEngineWebRTC::SupportsDuplex()
+{
+#ifndef XP_WIN
+  return mFullDuplex;
+#else
+  return IsVistaOrLater() && mFullDuplex;
+#endif
+}
+
 void
 MediaEngineWebRTC::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
                                          nsTArray<RefPtr<MediaEngineAudioSource> >* aASources)
@@ -342,15 +349,16 @@ MediaEngineWebRTC::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
     return;
   }
 
-  if (!mAudioEngineInit) {
-    if (ptrVoEBase->Init() < 0) {
-      return;
-    }
-    mAudioEngineInit = true;
+  // Always re-init the voice engine, since if we close the last use we
+  // DeInitEngine() and Terminate(), which shuts down Process() - but means
+  // we have to Init() again before using it.  Init() when already inited is
+  // just a no-op, so call always.
+  if (ptrVoEBase->Init() < 0) {
+    return;
   }
 
   if (!mAudioInput) {
-    if (mFullDuplex) {
+    if (SupportsDuplex()) {
       // The platform_supports_full_duplex.
       mAudioInput = new mozilla::AudioInputCubeb(mVoiceEngine);
     } else {
@@ -394,7 +402,7 @@ MediaEngineWebRTC::EnumerateAudioDevices(dom::MediaSourceEnum aMediaSource,
       aASources->AppendElement(aSource.get());
     } else {
       AudioInput* audioinput = mAudioInput;
-      if (mFullDuplex) {
+      if (SupportsDuplex()) {
         // The platform_supports_full_duplex.
 
         // For cubeb, it has state (the selected ID)

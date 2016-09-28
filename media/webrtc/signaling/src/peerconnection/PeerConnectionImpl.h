@@ -32,7 +32,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/PeerConnectionImplEnumsBinding.h"
 #include "PrincipalChangeObserver.h"
-#include "StreamBuffer.h"
+#include "StreamTracks.h"
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
 #include "mozilla/TimeStamp.h"
@@ -330,7 +330,7 @@ public:
   }
 
   // Get the STS thread
-  nsCOMPtr<nsIEventTarget> GetSTSThread() {
+  nsIEventTarget* GetSTSThread() {
     PC_AUTO_ENTER_API_CALL_NO_CHECK();
     return mSTSThread;
   }
@@ -648,9 +648,6 @@ public:
   // PeerConnectionMedia can't do it because it doesn't know about principals
   virtual void PrincipalChanged(dom::MediaStreamTrack* aTrack) override;
 
-  nsresult GetRemoteTrackId(const std::string streamId,
-                            const dom::MediaStreamTrack& track,
-                            std::string* trackId) const;
 #endif
 
   static std::string GetStreamId(const DOMMediaStream& aStream);

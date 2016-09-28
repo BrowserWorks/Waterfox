@@ -49,6 +49,8 @@ public:
 protected:
     virtual ~WebGLExtensionBase();
 
+    virtual void OnMarkLost() { }
+
     bool mIsLost;
 };
 
@@ -149,6 +151,18 @@ class WebGLExtensionElementIndexUint
 public:
     explicit WebGLExtensionElementIndexUint(WebGLContext*);
     virtual ~WebGLExtensionElementIndexUint();
+
+    DECL_WEBGL_EXTENSION_GOOP
+};
+
+class WebGLExtensionEXTColorBufferFloat
+    : public WebGLExtensionBase
+{
+public:
+    explicit WebGLExtensionEXTColorBufferFloat(WebGLContext*);
+    virtual ~WebGLExtensionEXTColorBufferFloat() { }
+
+    static bool IsSupported(const WebGLContext*);
 
     DECL_WEBGL_EXTENSION_GOOP
 };
@@ -375,6 +389,8 @@ public:
     DECL_WEBGL_EXTENSION_GOOP
 
 private:
+    virtual void OnMarkLost() override;
+
     /**
      * An active TIME_ELAPSED query participating in a begin/end block.
      */

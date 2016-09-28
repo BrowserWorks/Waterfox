@@ -288,7 +288,7 @@ nsComboboxControlFrame::SetFocus(bool aOn, bool aRepaint)
       }
     }
     // May delete |this|.
-    mListControlFrame->FireOnChange();
+    mListControlFrame->FireOnInputAndOnChange();
   }
 
   if (!weakFrame.IsAlive()) {
@@ -378,7 +378,7 @@ nsComboboxControlFrame::ShowList(bool aShowList)
 }
 
 class nsResizeDropdownAtFinalPosition final
-  : public nsIReflowCallback, public nsRunnable
+  : public nsIReflowCallback, public Runnable
 {
 public:
   explicit nsResizeDropdownAtFinalPosition(nsComboboxControlFrame* aFrame)
@@ -517,7 +517,7 @@ nsComboboxControlFrame::GetCSSTransformTranslation()
   return translation;
 }
 
-class nsAsyncRollup : public nsRunnable
+class nsAsyncRollup : public Runnable
 {
 public:
   explicit nsAsyncRollup(nsComboboxControlFrame* aFrame) : mFrame(aFrame) {}
@@ -532,7 +532,7 @@ public:
   nsWeakFrame mFrame;
 };
 
-class nsAsyncResize : public nsRunnable
+class nsAsyncResize : public Runnable
 {
 public:
   explicit nsAsyncResize(nsComboboxControlFrame* aFrame) : mFrame(aFrame) {}
@@ -1013,8 +1013,7 @@ nsComboboxControlFrame::RedisplayText(int32_t aIndex)
 
     RefPtr<RedisplayTextEvent> event = new RedisplayTextEvent(this);
     mRedisplayTextEvent = event;
-    if (!nsContentUtils::AddScriptRunner(event))
-      mRedisplayTextEvent.Forget();
+    nsContentUtils::AddScriptRunner(event);
   }
   return rv;
 }
@@ -1373,8 +1372,8 @@ nsComboboxControlFrame::CreateFrameFor(nsIContent*      aContent)
                              nsStyleSet::eSkipParentDisplayBasedStyleFixup);
 
   RefPtr<nsStyleContext> textStyleContext;
-  textStyleContext = styleSet->
-    ResolveStyleForNonElement(mStyleContext, nsCSSAnonBoxes::mozText);
+  textStyleContext =
+    styleSet->ResolveStyleForText(mDisplayContent, mStyleContext);
 
   // Start by creating our anonymous block frame
   mDisplayFrame = new (shell) nsComboboxDisplayFrame(styleContext, this);

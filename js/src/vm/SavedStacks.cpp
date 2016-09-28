@@ -258,6 +258,8 @@ SavedFrame::HashPolicy::hash(const Lookup& lookup)
 /* static */ bool
 SavedFrame::HashPolicy::match(SavedFrame* existing, const Lookup& lookup)
 {
+    MOZ_ASSERT(existing);
+
     if (existing->getLine() != lookup.line)
         return false;
 
@@ -1093,7 +1095,7 @@ SavedStacks::saveCurrentStack(JSContext* cx, MutableHandleSavedFrame frame, unsi
     }
 
     AutoSPSEntry psuedoFrame(cx->runtime(), "js::SavedStacks::saveCurrentStack");
-    FrameIter iter(cx, FrameIter::ALL_CONTEXTS, FrameIter::GO_THROUGH_SAVED);
+    FrameIter iter(cx);
     return insertFrames(cx, iter, frame, maxFrameCount);
 }
 
@@ -1373,8 +1375,10 @@ SavedStacks::getOrCreateSavedFrame(JSContext* cx, SavedFrame::HandleLookup looku
 {
     const SavedFrame::Lookup& lookupInstance = lookup.get();
     DependentAddPtr<SavedFrame::Set> p(cx, frames, lookupInstance);
-    if (p)
+    if (p) {
+        MOZ_ASSERT(*p);
         return *p;
+    }
 
     RootedSavedFrame frame(cx, createFrameFromLookup(cx, lookup));
     if (!frame)

@@ -9,13 +9,17 @@
  */
 
 const TAB_URL = EXAMPLE_URL + "doc_blackboxing.html";
-const BLACKBOXME_URL = EXAMPLE_URL + "code_blackboxing_blackboxme.js"
+const BLACKBOXME_URL = EXAMPLE_URL + "code_blackboxing_blackboxme.js";
 
 var gTab, gPanel, gDebugger;
 var gFrames, gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: BLACKBOXME_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -52,7 +56,7 @@ function testBlackBoxSource() {
   });
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

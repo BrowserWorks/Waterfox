@@ -828,26 +828,33 @@ ObjectMayHaveExtraIndexedOwnProperties(JSObject* obj)
                              obj->getClass(), INT_TO_JSID(0), obj);
 }
 
+/*
+ * Whether obj may have indexed properties anywhere besides its dense
+ * elements. This includes other indexed properties in its shape hierarchy, and
+ * indexed properties or elements along its prototype chain.
+ */
 bool
 js::ObjectMayHaveExtraIndexedProperties(JSObject* obj)
 {
-    /*
-     * Whether obj may have indexed properties anywhere besides its dense
-     * elements. This includes other indexed properties in its shape hierarchy,
-     * and indexed properties or elements along its prototype chain.
-     */
+    MOZ_ASSERT_IF(obj->hasDynamicPrototype(), !obj->isNative());
 
     if (ObjectMayHaveExtraIndexedOwnProperties(obj))
         return true;
 
-    while ((obj = obj->getProto()) != nullptr) {
+    do {
+        MOZ_ASSERT(obj->hasStaticPrototype(),
+                   "dynamic-prototype objects must be non-native, ergo must "
+                   "have failed ObjectMayHaveExtraIndexedOwnProperties");
+
+        obj = obj->staticPrototype();
+        if (!obj)
+            return false; // no extra indexed properties found
+
         if (ObjectMayHaveExtraIndexedOwnProperties(obj))
             return true;
         if (GetAnyBoxedOrUnboxedInitializedLength(obj) != 0)
             return true;
-    }
-
-    return false;
+    } while (true);
 }
 
 static bool
@@ -1721,9 +1728,9 @@ MatchNumericComparator(JSContext* cx, const Value& v)
 
 template <typename K, typename C>
 static inline bool
-MergeSortByKey(K keys, size_t len, K scratch, C comparator, AutoValueVector* vec)
+MergeSortByKey(K keys, size_t len, K scratch, C comparator, MutableHandle<GCVector<Value>> vec)
 {
-    MOZ_ASSERT(vec->length() >= len);
+    MOZ_ASSERT(vec.length() >= len);
 
     /* Sort keys. */
     if (!MergeSort(keys, len, scratch, comparator))
@@ -1747,18 +1754,18 @@ MergeSortByKey(K keys, size_t len, K scratch, C comparator, AutoValueVector* vec
             continue; // fixed point
 
         MOZ_ASSERT(j > i, "Everything less than |i| should be in the right place!");
-        Value tv = (*vec)[j];
+        Value tv = vec[j];
         do {
             size_t k = keys[j].elementIndex;
             keys[j].elementIndex = j;
-            (*vec)[j].set((*vec)[k]);
+            vec[j].set(vec[k]);
             j = k;
         } while (j != i);
 
         // We could assert the loop invariant that |i == keys[i].elementIndex|
         // here if we synced |keys[i].elementIndex|.  But doing so would render
         // the assertion vacuous, so don't bother, even in debug builds.
-        (*vec)[i].set(tv);
+        vec[i].set(tv);
     }
 
     return true;
@@ -1771,9 +1778,9 @@ MergeSortByKey(K keys, size_t len, K scratch, C comparator, AutoValueVector* vec
  * to strings at once, then sorts the elements by these cached strings.
  */
 static bool
-SortLexicographically(JSContext* cx, AutoValueVector* vec, size_t len)
+SortLexicographically(JSContext* cx, MutableHandle<GCVector<Value>> vec, size_t len)
 {
-    MOZ_ASSERT(vec->length() >= len);
+    MOZ_ASSERT(vec.length() >= len);
 
     StringBuffer sb(cx);
     Vector<StringifiedElement, 0, TempAllocPolicy> strElements(cx);
@@ -1788,7 +1795,7 @@ SortLexicographically(JSContext* cx, AutoValueVector* vec, size_t len)
         if (!CheckForInterrupt(cx))
             return false;
 
-        if (!ValueToStringBuffer(cx, (*vec)[i], sb))
+        if (!ValueToStringBuffer(cx, vec[i], sb))
             return false;
 
         strElements[i] = { cursor, sb.length(), i };
@@ -1807,9 +1814,10 @@ SortLexicographically(JSContext* cx, AutoValueVector* vec, size_t len)
  * numerics at once, then sorts the elements by these cached numerics.
  */
 static bool
-SortNumerically(JSContext* cx, AutoValueVector* vec, size_t len, ComparatorMatchResult comp)
+SortNumerically(JSContext* cx, MutableHandle<GCVector<Value>> vec, size_t len,
+                ComparatorMatchResult comp)
 {
-    MOZ_ASSERT(vec->length() >= len);
+    MOZ_ASSERT(vec.length() >= len);
 
     Vector<NumericElement, 0, TempAllocPolicy> numElements(cx);
 
@@ -1823,7 +1831,7 @@ SortNumerically(JSContext* cx, AutoValueVector* vec, size_t len, ComparatorMatch
             return false;
 
         double dv;
-        if (!ToNumber(cx, (*vec)[i], &dv))
+        if (!ToNumber(cx, vec[i], &dv))
             return false;
 
         numElements[i] = { dv, i };
@@ -1912,7 +1920,7 @@ js::array_sort(JSContext* cx, unsigned argc, Value* vp)
      */
     size_t n, undefs;
     {
-        AutoValueVector vec(cx);
+        Rooted<GCVector<Value>> vec(cx, GCVector<Value>(cx));
         if (!vec.reserve(2 * size_t(len)))
             return false;
 
@@ -2695,7 +2703,7 @@ GetIndexedPropertiesInRange(JSContext* cx, HandleObject obj, uint32_t begin, uin
     do {
         if (!pobj->isNative() || pobj->getClass()->getResolve() || pobj->getOpsLookupProperty())
             return true;
-    } while ((pobj = pobj->getProto()));
+    } while ((pobj = pobj->staticPrototype()));
 
     // Collect indexed property names.
     pobj = obj;
@@ -2740,7 +2748,7 @@ GetIndexedPropertiesInRange(JSContext* cx, HandleObject obj, uint32_t begin, uin
                     return false;
             }
         }
-    } while ((pobj = pobj->getProto()));
+    } while ((pobj = pobj->staticPrototype()));
 
     // Sort the indexes.
     Vector<uint32_t> tmp(cx);
@@ -3604,7 +3612,7 @@ NewArrayTryReuseGroup(JSContext* cx, JSObject* obj, size_t length,
     if (!obj->is<ArrayObject>() && !obj->is<UnboxedArrayObject>())
         return NewArray<maxLength>(cx, length, nullptr, newKind);
 
-    if (obj->getProto() != cx->global()->maybeGetArrayPrototype())
+    if (obj->staticPrototype() != cx->global()->maybeGetArrayPrototype())
         return NewArray<maxLength>(cx, length, nullptr, newKind);
 
     RootedObjectGroup group(cx, obj->getGroup(cx));

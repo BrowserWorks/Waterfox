@@ -13,7 +13,11 @@ function test() {
   let gTab, gPanel, gDebugger;
   let gSources, gFrames;
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -35,7 +39,7 @@ function test() {
   function checkNavigationWhileNotFocused() {
     checkState({ frame: 1, source: 1, line: 6 });
 
-    return Task.spawn(function*() {
+    return Task.spawn(function* () {
       EventUtils.sendKey("DOWN", gDebugger);
       checkState({ frame: 1, source: 1, line: 7 });
 
@@ -51,7 +55,7 @@ function test() {
   }
 
   function checkNavigationWhileFocused() {
-    return Task.spawn(function*() {
+    return Task.spawn(function* () {
       yield promise.all([
         waitForDebuggerEvents(gPanel, gDebugger.EVENTS.FETCHED_SCOPES),
         waitForSourceAndCaret(gPanel, "-01.js", 5),

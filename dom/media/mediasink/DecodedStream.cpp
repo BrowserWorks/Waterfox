@@ -54,7 +54,7 @@ public:
   {
     if (event == EVENT_FINISHED) {
       nsCOMPtr<nsIRunnable> event =
-        NS_NewRunnableMethod(this, &DecodedStreamGraphListener::DoNotifyFinished);
+        NewRunnableMethod(this, &DecodedStreamGraphListener::DoNotifyFinished);
       aGraph->DispatchToMainThreadAfterStreamStateUpdate(event.forget());
     }
   }
@@ -99,9 +99,9 @@ UpdateStreamSuspended(MediaStream* aStream, bool aBlocking)
   } else {
     nsCOMPtr<nsIRunnable> r;
     if (aBlocking) {
-      r = NS_NewRunnableMethod(aStream, &MediaStream::Suspend);
+      r = NewRunnableMethod(aStream, &MediaStream::Suspend);
     } else {
-      r = NS_NewRunnableMethod(aStream, &MediaStream::Resume);
+      r = NewRunnableMethod(aStream, &MediaStream::Resume);
     }
     AbstractThread::MainThread()->Dispatch(r.forget());
   }
@@ -270,7 +270,7 @@ DecodedStream::Start(int64_t aStartTime, const MediaInfo& aInfo)
   mPlaying = true;
   ConnectListener();
 
-  class R : public nsRunnable {
+  class R : public Runnable {
     typedef MozPromiseHolder<GenericPromise> Promise;
   public:
     R(PlaybackInfoInit&& aInit, Promise&& aPromise, OutputStreamManager* aManager)

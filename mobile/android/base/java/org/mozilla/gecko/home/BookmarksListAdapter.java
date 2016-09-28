@@ -119,7 +119,7 @@ class BookmarksListAdapter extends MultiTypeCursorAdapter {
 
     // mParentStack holds folder info instances (id + title) that allow
     // us to navigate back up the folder hierarchy.
-    private final LinkedList<FolderInfo> mParentStack;
+    private LinkedList<FolderInfo> mParentStack;
 
     // Refresh folder listener.
     private OnRefreshFolderListener mListener;
@@ -135,6 +135,11 @@ class BookmarksListAdapter extends MultiTypeCursorAdapter {
         } else {
             mParentStack = new LinkedList<FolderInfo>(parentStack);
         }
+    }
+
+    public void restoreData(List<FolderInfo> parentStack) {
+        mParentStack = new LinkedList<FolderInfo>(parentStack);
+        notifyDataSetChanged();
     }
 
     public List<FolderInfo> getParentStack() {
@@ -329,12 +334,13 @@ class BookmarksListAdapter extends MultiTypeCursorAdapter {
             final BookmarkFolderView row = (BookmarkFolderView) view;
             if (cursor == null) {
                 final Resources res = context.getResources();
-                row.setText(res.getString(R.string.home_move_back_to_filter, mParentStack.get(1).title));
+                row.update(res.getString(R.string.home_move_back_to_filter, mParentStack.get(1).title), -1);
                 row.setState(FolderState.PARENT);
             } else {
-                row.setText(getFolderTitle(context, cursor));
-
                 int id = cursor.getInt(cursor.getColumnIndexOrThrow(Bookmarks._ID));
+
+                row.update(getFolderTitle(context, cursor), id);
+
                 if (id == Bookmarks.FAKE_READINGLIST_SMARTFOLDER_ID) {
                     row.setState(FolderState.READING_LIST);
                 } else {

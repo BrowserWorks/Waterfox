@@ -39,6 +39,44 @@ static bool SchemeIs(nsIURI* aURI, const char* aScheme)
   return NS_SUCCEEDED(baseURI->SchemeIs(aScheme, &isScheme)) && isScheme;
 }
 
+
+static bool IsImageLoadInEditorAppType(nsILoadInfo* aLoadInfo)
+{
+  // Editor apps get special treatment here, editors can load images
+  // from anywhere.  This allows editor to insert images from file://
+  // into documents that are being edited.
+  nsContentPolicyType type = aLoadInfo->InternalContentPolicyType();
+  if (type != nsIContentPolicy::TYPE_INTERNAL_IMAGE  &&
+      type != nsIContentPolicy::TYPE_INTERNAL_IMAGE_PRELOAD &&
+      type != nsIContentPolicy::TYPE_IMAGESET) {
+    return false;
+  }
+
+  uint32_t appType = nsIDocShell::APP_TYPE_UNKNOWN;
+  nsINode* node = aLoadInfo->LoadingNode();
+  if (!node) {
+    return false;
+  }
+  nsIDocument* doc = node->OwnerDoc();
+  if (!doc) {
+    return false;
+  }
+
+  nsCOMPtr<nsIDocShellTreeItem> docShellTreeItem = doc->GetDocShell();
+  if (!docShellTreeItem) {
+    return false;
+  }
+
+  nsCOMPtr<nsIDocShellTreeItem> root;
+  docShellTreeItem->GetRootTreeItem(getter_AddRefs(root));
+  nsCOMPtr<nsIDocShell> docShell(do_QueryInterface(root));
+  if (!docShell || NS_FAILED(docShell->GetAppType(&appType))) {
+    appType = nsIDocShell::APP_TYPE_UNKNOWN;
+  }
+
+  return appType == nsIDocShell::APP_TYPE_EDITOR;
+}
+
 static nsresult
 DoCheckLoadURIChecks(nsIURI* aURI, nsILoadInfo* aLoadInfo)
 {
@@ -47,9 +85,16 @@ DoCheckLoadURIChecks(nsIURI* aURI, nsILoadInfo* aLoadInfo)
     return NS_OK;
   }
 
+  if (IsImageLoadInEditorAppType(aLoadInfo)) {
+    return NS_OK;
+  }
+
   uint32_t flags = nsIScriptSecurityManager::STANDARD;
   if (aLoadInfo->GetAllowChrome()) {
     flags |= nsIScriptSecurityManager::ALLOW_CHROME;
+  }
+  if (aLoadInfo->GetDisallowScript()) {
+    flags |= nsIScriptSecurityManager::DISALLOW_SCRIPT;
   }
 
   // Only call CheckLoadURIWithPrincipal() using the TriggeringPrincipal and not
@@ -139,7 +184,8 @@ DoContentSecurityChecks(nsIURI* aURI, nsILoadInfo* aLoadInfo)
     }
 
     case nsIContentPolicy::TYPE_IMAGE: {
-      MOZ_ASSERT(false, "contentPolicyType not supported yet");
+      mimeTypeGuess = EmptyCString();
+      requestingContext = aLoadInfo->LoadingNode();
       break;
     }
 
@@ -279,7 +325,8 @@ DoContentSecurityChecks(nsIURI* aURI, nsILoadInfo* aLoadInfo)
     }
 
     case nsIContentPolicy::TYPE_IMAGESET: {
-      MOZ_ASSERT(false, "contentPolicyType not supported yet");
+      mimeTypeGuess = EmptyCString();
+      requestingContext = aLoadInfo->LoadingNode();
       break;
     }
 
@@ -528,18 +575,44 @@ nsContentSecurityManager::PerformSecurityCheck(nsIChannel* aChannel,
 }
 
 NS_IMETHODIMP
-nsContentSecurityManager::IsURIPotentiallyTrustworthy(nsIURI* aURI, bool* aIsTrustWorthy)
+nsContentSecurityManager::IsOriginPotentiallyTrustworthy(nsIPrincipal* aPrincipal,
+                                                         bool* aIsTrustWorthy)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  NS_ENSURE_ARG_POINTER(aURI);
+  NS_ENSURE_ARG_POINTER(aPrincipal);
   NS_ENSURE_ARG_POINTER(aIsTrustWorthy);
 
+  if (aPrincipal->GetIsSystemPrincipal()) {
+    *aIsTrustWorthy = true;
+    return NS_OK;
+  }
+
+  // The following implements:
+  // https://w3c.github.io/webappsec-secure-contexts/#is-origin-trustworthy
+
   *aIsTrustWorthy = false;
+
+  if (aPrincipal->GetIsNullPrincipal()) {
+    return NS_OK;
+  }
+
+  MOZ_ASSERT(aPrincipal->GetIsCodebasePrincipal(),
+             "Nobody is expected to call us with an nsIExpandedPrincipal");
+
+  nsCOMPtr<nsIURI> uri;
+  aPrincipal->GetURI(getter_AddRefs(uri));
+
   nsAutoCString scheme;
-  nsresult rv = aURI->GetScheme(scheme);
+  nsresult rv = uri->GetScheme(scheme);
   if (NS_FAILED(rv)) {
     return NS_OK;
   }
+
+  // Blobs are expected to inherit their principal so we don't expect to have
+  // a codebase principal with scheme 'blob' here.  We can't assert that though
+  // since someone could mess with a non-blob URI to give it that scheme.
+  NS_WARN_IF_FALSE(!scheme.EqualsLiteral("blob"),
+                   "IsOriginPotentiallyTrustworthy ignoring blob scheme");
 
   // According to the specification, the user agent may choose to extend the
   // trust to other, vendor-specific URL schemes. We use this for "resource:",
@@ -556,7 +629,7 @@ nsContentSecurityManager::IsURIPotentiallyTrustworthy(nsIURI* aURI, bool* aIsTru
   }
 
   nsAutoCString host;
-  rv = aURI->GetHost(host);
+  rv = uri->GetHost(host);
   if (NS_FAILED(rv)) {
     return NS_OK;
   }

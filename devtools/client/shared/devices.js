@@ -4,7 +4,6 @@
 
 "use strict";
 
-const { Ci, Cc } = require("chrome");
 const { getJSON } = require("devtools/client/shared/getjson");
 const Services = require("Services");
 const promise = require("promise");
@@ -48,11 +47,11 @@ function AddDevice(device, type = "phones") {
 exports.AddDevice = AddDevice;
 
 // Get the complete devices catalog.
-function GetDevices(bypassCache = false) {
+function GetDevices() {
   let deferred = promise.defer();
 
   // Fetch common devices from Mozilla's CDN.
-  getJSON(DEVICES_URL, bypassCache).then(devices => {
+  getJSON(DEVICES_URL).then(devices => {
     for (let type in localDevices) {
       if (!devices[type]) {
         devices.TYPES.push(type);

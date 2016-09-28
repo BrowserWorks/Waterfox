@@ -46,6 +46,7 @@
 #include "nsProxyRelease.h"
 #include "nsServiceManagerUtils.h"
 #include "nsStructuredCloneContainer.h"
+#include "nsThreadUtils.h"
 #include "nsToolkitCompsCID.h"
 #include "nsXULAppAPI.h"
 #include "ServiceWorkerManager.h"
@@ -200,7 +201,7 @@ NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(NotificationStorageCallback)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
 NS_INTERFACE_MAP_END
 
-class NotificationGetRunnable final : public nsRunnable
+class NotificationGetRunnable final : public Runnable
 {
   const nsString mOrigin;
   const nsString mTag;
@@ -289,7 +290,8 @@ class GetPermissionRunnable final : public WorkerMainThreadRunnable
 
 public:
   explicit GetPermissionRunnable(WorkerPrivate* aWorker)
-    : WorkerMainThreadRunnable(aWorker)
+    : WorkerMainThreadRunnable(aWorker,
+                               NS_LITERAL_CSTRING("Notification :: Get Permission"))
     , mPermission(NotificationPermission::Denied)
   { }
 
@@ -310,7 +312,7 @@ public:
   }
 };
 
-class FocusWindowRunnable final : public nsRunnable
+class FocusWindowRunnable final : public Runnable
 {
   nsMainThreadPtrHandle<nsPIDOMWindowInner> mWindow;
 public:
@@ -520,7 +522,7 @@ public:
   }
 };
 
-class NotificationTask : public nsRunnable
+class NotificationTask : public Runnable
 {
 public:
   enum NotificationAction {
@@ -543,7 +545,8 @@ protected:
 
 uint32_t Notification::sCount = 0;
 
-NS_IMPL_CYCLE_COLLECTION(NotificationPermissionRequest, mWindow, mPromise)
+NS_IMPL_CYCLE_COLLECTION(NotificationPermissionRequest, mWindow, mPromise,
+                                                        mCallback)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION(NotificationPermissionRequest)
   NS_INTERFACE_MAP_ENTRY(nsIContentPermissionRequest)
@@ -644,9 +647,8 @@ NotificationPermissionRequest::GetRequester(nsIContentPermissionRequester** aReq
 inline nsresult
 NotificationPermissionRequest::DispatchResolvePromise()
 {
-  nsCOMPtr<nsIRunnable> resolveRunnable = NS_NewRunnableMethod(this,
-    &NotificationPermissionRequest::ResolvePromise);
-  return NS_DispatchToMainThread(resolveRunnable);
+  return NS_DispatchToMainThread(NewRunnableMethod(this,
+                                                   &NotificationPermissionRequest::ResolvePromise));
 }
 
 nsresult
@@ -1588,29 +1590,31 @@ ServiceWorkerNotificationObserver::Observe(nsISupports* aSubject,
 {
   AssertIsOnMainThread();
 
+  nsAutoCString originSuffix;
+  nsresult rv = mPrincipal->GetOriginSuffix(originSuffix);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  nsCOMPtr<nsIServiceWorkerManager> swm =
+    mozilla::services::GetServiceWorkerManager();
+  if (NS_WARN_IF(!swm)) {
+    return NS_ERROR_FAILURE;
+  }
+
   if (!strcmp("alertclickcallback", aTopic)) {
-    nsAutoCString originSuffix;
-    nsresult rv = mPrincipal->GetOriginSuffix(originSuffix);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    nsCOMPtr<nsIServiceWorkerManager> swm =
-      mozilla::services::GetServiceWorkerManager();
-
-    if (swm) {
-      swm->SendNotificationClickEvent(originSuffix,
-                                      NS_ConvertUTF16toUTF8(mScope),
-                                      mID,
-                                      mTitle,
-                                      mDir,
-                                      mLang,
-                                      mBody,
-                                      mTag,
-                                      mIcon,
-                                      mData,
-                                      mBehavior);
-    }
+    rv = swm->SendNotificationClickEvent(originSuffix,
+                                         NS_ConvertUTF16toUTF8(mScope),
+                                         mID,
+                                         mTitle,
+                                         mDir,
+                                         mLang,
+                                         mBody,
+                                         mTag,
+                                         mIcon,
+                                         mData,
+                                         mBehavior);
+    Unused << NS_WARN_IF(NS_FAILED(rv));
     return NS_OK;
   }
 
@@ -1627,6 +1631,20 @@ ServiceWorkerNotificationObserver::Observe(nsISupports* aSubject,
     if (notificationStorage) {
       notificationStorage->Delete(origin, mID);
     }
+
+    rv = swm->SendNotificationCloseEvent(originSuffix,
+                                         NS_ConvertUTF16toUTF8(mScope),
+                                         mID,
+                                         mTitle,
+                                         mDir,
+                                         mLang,
+                                         mBody,
+                                         mTag,
+                                         mIcon,
+                                         mData,
+                                         mBehavior);
+    Unused << NS_WARN_IF(NS_FAILED(rv));
+    return NS_OK;
   }
 
   return NS_OK;
@@ -2166,7 +2184,7 @@ private:
 
 NS_IMPL_ISUPPORTS(WorkerGetCallback, nsINotificationStorageCallback)
 
-class WorkerGetRunnable final : public nsRunnable
+class WorkerGetRunnable final : public Runnable
 {
   RefPtr<PromiseWorkerProxy> mPromiseProxy;
   const nsString mTag;
@@ -2447,7 +2465,8 @@ class CloseNotificationRunnable final
 
   public:
   explicit CloseNotificationRunnable(Notification* aNotification)
-    : WorkerMainThreadRunnable(aNotification->mWorkerPrivate)
+    : WorkerMainThreadRunnable(aNotification->mWorkerPrivate,
+                               NS_LITERAL_CSTRING("Notification :: Close Notification"))
     , mNotification(aNotification)
     , mHadObserver(false)
   {}
@@ -2554,7 +2573,8 @@ class CheckLoadRunnable final : public WorkerMainThreadRunnable
 
 public:
   explicit CheckLoadRunnable(WorkerPrivate* aWorker, const nsACString& aScope)
-    : WorkerMainThreadRunnable(aWorker)
+    : WorkerMainThreadRunnable(aWorker,
+                               NS_LITERAL_CSTRING("Notification :: Check Load"))
     , mRv(NS_ERROR_DOM_SECURITY_ERR)
     , mScope(aScope)
   { }

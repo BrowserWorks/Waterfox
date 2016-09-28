@@ -46,6 +46,7 @@ class nsIThread;
 class nsIThreadInternal;
 class nsITimer;
 class nsIURI;
+template<class T> class nsMainThreadPtrHandle;
 
 namespace JS {
 struct RuntimeStats;
@@ -56,6 +57,7 @@ namespace dom {
 class Function;
 class MessagePort;
 class MessagePortIdentifier;
+class PromiseNativeHandler;
 class StructuredCloneHolder;
 } // namespace dom
 namespace ipc {
@@ -233,10 +235,11 @@ private:
   PostMessageInternal(JSContext* aCx, JS::Handle<JS::Value> aMessage,
                       const Optional<Sequence<JS::Value>>& aTransferable,
                       UniquePtr<ServiceWorkerClientInfo>&& aClientInfo,
+                      PromiseNativeHandler* aHandler,
                       ErrorResult& aRv);
 
   nsresult
-  DispatchPrivate(already_AddRefed<WorkerRunnable>&& aRunnable, nsIEventTarget* aSyncLoopTarget);
+  DispatchPrivate(already_AddRefed<WorkerRunnable> aRunnable, nsIEventTarget* aSyncLoopTarget);
 
 public:
   virtual JSObject*
@@ -261,19 +264,19 @@ public:
   }
 
   nsresult
-  Dispatch(already_AddRefed<WorkerRunnable>&& aRunnable)
+  Dispatch(already_AddRefed<WorkerRunnable> aRunnable)
   {
     return DispatchPrivate(Move(aRunnable), nullptr);
   }
 
   nsresult
-  DispatchControlRunnable(already_AddRefed<WorkerControlRunnable>&& aWorkerControlRunnable);
+  DispatchControlRunnable(already_AddRefed<WorkerControlRunnable> aWorkerControlRunnable);
 
   nsresult
-  DispatchDebuggerRunnable(already_AddRefed<WorkerRunnable>&& aDebuggerRunnable);
+  DispatchDebuggerRunnable(already_AddRefed<WorkerRunnable> aDebuggerRunnable);
 
   already_AddRefed<WorkerRunnable>
-  MaybeWrapAsWorkerRunnable(already_AddRefed<nsIRunnable>&& aRunnable);
+  MaybeWrapAsWorkerRunnable(already_AddRefed<nsIRunnable> aRunnable);
 
   already_AddRefed<nsIEventTarget>
   GetEventTarget();
@@ -347,6 +350,7 @@ public:
   PostMessageToServiceWorker(JSContext* aCx, JS::Handle<JS::Value> aMessage,
                              const Optional<Sequence<JS::Value>>& aTransferable,
                              UniquePtr<ServiceWorkerClientInfo>&& aClientInfo,
+                             PromiseNativeHandler* aHandler,
                              ErrorResult& aRv);
 
   void
@@ -435,9 +439,6 @@ public:
     mMutex.AssertCurrentThreadOwns();
     return mParentStatus;
   }
-
-  JSContext*
-  ParentJSContext() const;
 
   nsIScriptContext*
   GetScriptContext() const
@@ -1382,14 +1383,25 @@ private:
   bool
   ScheduleKillCloseEventRunnable();
 
-  bool
+  enum class ProcessAllControlRunnablesResult
+  {
+    // We did not process anything.
+    Nothing,
+    // We did process something, states may have changed, but we can keep
+    // executing script.
+    MayContinue,
+    // We did process something, and should not continue executing script.
+    Abort
+  };
+
+  ProcessAllControlRunnablesResult
   ProcessAllControlRunnables()
   {
     MutexAutoLock lock(mMutex);
     return ProcessAllControlRunnablesLocked();
   }
 
-  bool
+  ProcessAllControlRunnablesResult
   ProcessAllControlRunnablesLocked();
 
   void
@@ -1527,7 +1539,10 @@ protected:
 
 
   NS_IMETHOD
-  Dispatch(already_AddRefed<nsIRunnable>&& aRunnable, uint32_t aFlags) override;
+  Dispatch(already_AddRefed<nsIRunnable> aRunnable, uint32_t aFlags) override;
+
+  NS_IMETHOD
+  DelayedDispatch(already_AddRefed<nsIRunnable>, uint32_t) override;
 
   NS_IMETHOD
   IsOnCurrentThread(bool* aIsOnCurrentThread) override;

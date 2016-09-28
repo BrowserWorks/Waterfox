@@ -9,7 +9,8 @@
 "use strict";
 
 thisTestLeaksUncaughtRejectionsAndShouldBeFixed(null);
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("TypeError: this.toolbox is null");
+thisTestLeaksUncaughtRejectionsAndShouldBeFixed(
+  "TypeError: this.toolbox is null");
 
 // Test the webconsole output for various types of DOM Nodes.
 
@@ -19,7 +20,7 @@ const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
 var inputTests = [
   {
     input: "testBodyNode()",
-    output: '<body id="body-id" class="body-class">',
+    output: '<body class="body-class" id="body-id">',
     printOutput: "[object HTMLBodyElement]",
     inspectable: true,
     noClick: true,
@@ -28,7 +29,7 @@ var inputTests = [
 
   {
     input: "testDocumentElement()",
-    output: '<html lang="en-US" dir="ltr">',
+    output: '<html dir="ltr" lang="en-US">',
     printOutput: "[object HTMLHtmlElement]",
     inspectable: true,
     noClick: true,
@@ -55,9 +56,9 @@ var inputTests = [
 
   {
     input: "testNodeList()",
-    output: "NodeList [ <html>, <head>, <meta>, <title>, " +
-            "<body#body-id.body-class>, <p>, <p#lots-of-attributes>, <iframe>, " +
-            "<div.some.classname.here.with.more.classnames.here>, <script> ]",
+    output: "NodeList [ <p>, <p#lots-of-attributes>, <iframe>, " +
+            "<div.some.classname.here.with.more.classnames.here>, " +
+            "<svg>, <clipPath>, <rect>, <script> ]",
     printOutput: "[object NodeList]",
     inspectable: true,
     noClick: true,
@@ -75,7 +76,8 @@ var inputTests = [
 
   {
     input: "testLotsOfAttributes()",
-    output: '<p n="" m="" l="" k="" j="" i="" h="" g="" f="" e="" d="" c="" b="" a="" id="lots-of-attributes">',
+    output: '<p id="lots-of-attributes" a="" b="" c="" d="" e="" f="" g="" ' +
+            'h="" i="" j="" k="" l="" m="" n="">',
     printOutput: "[object HTMLParagraphElement]",
     inspectable: true,
     noClick: true,
@@ -112,7 +114,7 @@ var inputTests = [
 
 function test() {
   requestLongerTimeout(2);
-  Task.spawn(function*() {
+  Task.spawn(function* () {
     let {tab} = yield loadTab(TEST_URI);
     let hud = yield openConsole(tab);
     yield checkOutputForInputs(hud, inputTests);

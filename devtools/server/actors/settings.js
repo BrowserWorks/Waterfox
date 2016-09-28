@@ -3,11 +3,12 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const {Cc, Ci, Cu, CC} = require("chrome");
-const protocol = require("devtools/server/protocol");
+const protocol = require("devtools/shared/protocol");
 const {Arg, method, RetVal} = protocol;
 const {DebuggerServer} = require("devtools/server/main");
 const promise = require("promise");
 const Services = require("Services");
+const { settingsSpec } = require("devtools/shared/specs/settings");
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
@@ -15,11 +16,11 @@ Cu.import("resource://gre/modules/NetUtil.jsm");
 var defaultSettings = {};
 var settingsFile;
 
-exports.register = function(handle) {
+exports.register = function (handle) {
   handle.addGlobalActor(SettingsActor, "settingsActor");
 };
 
-exports.unregister = function(handle) {
+exports.unregister = function (handle) {
 };
 
 function getDefaultSettings() {
@@ -37,7 +38,7 @@ function getDefaultSettings() {
 
   try {
     defaultSettings = JSON.parse(rawstr);
-  } catch(e) { }
+  } catch (e) { }
   stream.close();
 }
 
@@ -63,56 +64,48 @@ function loadSettingsFile() {
   }
 }
 
-var SettingsActor = exports.SettingsActor = protocol.ActorClass({
-  typeName: "settings",
-
-  _getSettingsService: function() {
+var SettingsActor = exports.SettingsActor = protocol.ActorClassWithSpec(settingsSpec, {
+  _getSettingsService: function () {
     let win = Services.wm.getMostRecentWindow(DebuggerServer.chromeWindowType);
     return win.navigator.mozSettings;
   },
 
-  getSetting: method(function(name) {
+  getSetting: function (name) {
     let deferred = promise.defer();
     let lock = this._getSettingsService().createLock();
     let req = lock.get(name);
-    req.onsuccess = function() {
+    req.onsuccess = function () {
       deferred.resolve(req.result[name]);
     };
-    req.onerror = function() {
+    req.onerror = function () {
       deferred.reject(req.error);
     };
     return deferred.promise;
-  }, {
-    request: { value: Arg(0) },
-    response: { value: RetVal("json") }
-  }),
+  },
 
-  setSetting: method(function(name, value) {
+  setSetting: function (name, value) {
     let deferred = promise.defer();
     let data = {};
     data[name] = value;
     let lock = this._getSettingsService().createLock();
     let req = lock.set(data);
-    req.onsuccess = function() {
+    req.onsuccess = function () {
       deferred.resolve(true);
     };
-    req.onerror = function() {
+    req.onerror = function () {
       deferred.reject(req.error);
     };
     return deferred.promise;
-  }, {
-    request: { name: Arg(0), value: Arg(1) },
-    response: {}
-  }),
+  },
 
-  _hasUserSetting: function(name, value) {
+  _hasUserSetting: function (name, value) {
     if (typeof value === "object") {
       return JSON.stringify(defaultSettings[name]) !== JSON.stringify(value);
     }
     return (defaultSettings[name] !== value);
   },
 
-  getAllSettings: method(function() {
+  getAllSettings: function () {
     loadSettingsFile();
     let settings = {};
     let self = this;
@@ -121,7 +114,7 @@ var SettingsActor = exports.SettingsActor = protocol.ActorClass({
     let lock = this._getSettingsService().createLock();
     let req = lock.get("*");
 
-    req.onsuccess = function() {
+    req.onsuccess = function () {
       for (var name in req.result) {
         settings[name] = {
           value: req.result[name],
@@ -130,52 +123,24 @@ var SettingsActor = exports.SettingsActor = protocol.ActorClass({
       }
       deferred.resolve(settings);
     };
-    req.onfailure = function() {
+    req.onfailure = function () {
       deferred.reject(req.error);
     };
 
     return deferred.promise;
-  }, {
-    request: {},
-    response: { value: RetVal("json") }
-  }),
+  },
 
-  clearUserSetting: method(function(name) {
+  clearUserSetting: function (name) {
     loadSettingsFile();
     try {
       this.setSetting(name, defaultSettings[name]);
     } catch (e) {
       console.log(e);
     }
-  }, {
-    request: { name: Arg(0) },
-    response: {}
-  })
-});
-
-var SettingsFront = protocol.FrontClass(SettingsActor, {
-  initialize: function(client, form) {
-    protocol.Front.prototype.initialize.call(this, client);
-    this.actorID = form.settingsActor;
-    this.manage(this);
-  },
-});
-
-const _knownSettingsFronts = new WeakMap();
-
-exports.getSettingsFront = function(client, form) {
-  if (!form.settingsActor) {
-    return null;
   }
-  if (_knownSettingsFronts.has(client)) {
-    return _knownSettingsFronts.get(client);
-  }
-  let front = new SettingsFront(client, form);
-  _knownSettingsFronts.set(client, front);
-  return front;
-};
+});
 
 // For tests
-exports._setDefaultSettings = function(settings) {
+exports._setDefaultSettings = function (settings) {
   defaultSettings = settings || {};
 };

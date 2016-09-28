@@ -55,6 +55,11 @@ if [ ! -f "$ABSDIR/variants/$VARIANT" ]; then
     exit 1
 fi
 
+if [[ "$VARIANT" = "nonunified" ]]; then
+    # Hack the moz.build files to turn off unified compilation.
+    find "$SOURCE/js/src" -name moz.build -exec sed -i 's/UNIFIED_SOURCES/SOURCES/' '{}' ';'
+fi
+
 (cd "$SOURCE/js/src"; autoconf-2.13 || autoconf2.13 || autoconf213)
 
 TRY_OVERRIDE=$SOURCE/js/src/config.try
@@ -177,6 +182,8 @@ fi
 RUN_JSTESTS=true
 RUN_JITTEST=true
 RUN_JSAPITESTS=true
+: ${RUN_CHECK_STYLE_ONLY:=false}
+: ${RUN_MAKE_CHECKS:=true}
 
 PARENT=$$
 
@@ -216,6 +223,10 @@ elif [[ "$VARIANT" = "arm-sim" ||
         "$VARIANT" = "arm-sim-osx" ||
         "$VARIANT" = "plaindebug" ]]; then
     export JSTESTS_EXTRA_ARGS=--jitflags=debug
+elif [[ "$VARIANT" = "nonunified" ]]; then
+    RUN_JSTESTS=false
+    RUN_JITTEST=false
+    RUN_CHECK_STYLE_ONLY=true
 elif [[ "$VARIANT" = arm64* ]]; then
     # The ARM64 simulator is slow, so some tests are timing out.
     # Run a reduced set of test cases so this doesn't take hours.
@@ -223,7 +234,13 @@ elif [[ "$VARIANT" = arm64* ]]; then
     export JITTEST_EXTRA_ARGS="--jitflags=none --args=--baseline-eager -x ion/ -x asm.js/"
 fi
 
-$COMMAND_PREFIX $MAKE check || exit 1
+if $RUN_MAKE_CHECKS; then
+    if $RUN_CHECK_STYLE_ONLY; then
+        $COMMAND_PREFIX $MAKE check-style || exit 1
+    else
+        $COMMAND_PREFIX $MAKE check || exit 1
+    fi
+fi
 
 RESULT=0
 

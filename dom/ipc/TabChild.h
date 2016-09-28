@@ -194,11 +194,11 @@ public:
   // Get the Document for the top-level window in this tab.
   already_AddRefed<nsIDocument> GetDocument() const;
 
-protected:
-  virtual ~TabChildBase();
-
   // Get the pres-shell of the document for the top-level window in this tab.
   already_AddRefed<nsIPresShell> GetPresShell() const;
+
+protected:
+  virtual ~TabChildBase();
 
   // Wraps up a JSON object as a structured clone and sends it to the browser
   // chrome script.
@@ -228,7 +228,8 @@ class TabChild final : public TabChildBase,
                        public nsITabChild,
                        public nsIObserver,
                        public TabContext,
-                       public nsITooltipListener
+                       public nsITooltipListener,
+                       public mozilla::ipc::IShmemAllocator
 {
   typedef mozilla::dom::ClonedMessageData ClonedMessageData;
   typedef mozilla::layout::RenderFrameChild RenderFrameChild;
@@ -265,8 +266,6 @@ public:
   Create(nsIContentChild* aManager, const TabId& aTabId,
          const TabContext& aContext, uint32_t aChromeFlags);
 
-  bool IsRootContentDocument() const;
-
   // Let managees query if it is safe to send messages.
   bool IsDestroyed() const{ return mDestroyed; }
 
@@ -286,6 +285,8 @@ public:
   NS_DECL_NSITABCHILD
   NS_DECL_NSIOBSERVER
   NS_DECL_NSITOOLTIPLISTENER
+
+  FORWARD_SHMEM_ALLOCATOR_TO(PBrowserChild)
 
   /**
    * MessageManagerCallback methods that we override.
@@ -310,7 +311,6 @@ public:
                           const Maybe<ZoomConstraints>& aConstraints) override;
 
   virtual bool RecvLoadURL(const nsCString& aURI,
-                           const BrowserConfiguration& aConfiguration,
                            const ShowInfo& aInfo) override;
 
   virtual bool RecvCacheFileDescriptor(const nsString& aPath,
@@ -417,7 +417,8 @@ public:
   virtual bool RecvAppOfflineStatus(const uint32_t& aId,
                                     const bool& aOffline) override;
 
-  virtual bool RecvSwappedWithOtherRemoteLoader() override;
+  virtual bool
+  RecvSwappedWithOtherRemoteLoader(const IPCTabContext& aContext) override;
 
   virtual PDocAccessibleChild*
   AllocPDocAccessibleChild(PDocAccessibleChild*, const uint64_t&) override;
@@ -474,6 +475,8 @@ public:
   void GetDPI(float* aDPI);
 
   void GetDefaultScale(double *aScale);
+
+  bool IsTransparent() const { return mIsTransparent; }
 
   void GetMaxTouchPoints(uint32_t* aTouchPoints);
 
@@ -565,8 +568,8 @@ public:
   virtual bool
   RecvThemeChanged(nsTArray<LookAndFeelInt>&& aLookAndFeelIntCache) override;
 
-  virtual bool RecvHandleAccessKey(nsTArray<uint32_t>&& aCharCodes,
-                                   const bool& aIsTrusted,
+  virtual bool RecvHandleAccessKey(const WidgetKeyboardEvent& aEvent,
+                                   nsTArray<uint32_t>&& aCharCodes,
                                    const int32_t& aModifierMask) override;
 
   virtual bool RecvAudioChannelChangeNotification(const uint32_t& aAudioChannel,
@@ -578,6 +581,9 @@ public:
   virtual bool RecvHandledWindowedPluginKeyEvent(
                  const mozilla::NativeEventData& aKeyEventData,
                  const bool& aIsConsumed) override;
+
+  virtual bool RecvPrint(const uint64_t& aOuterWindowID,
+                         const PrintData& aPrintData) override;
 
   /**
    * Native widget remoting protocol for use with windowed plugins with e10s.
@@ -676,11 +682,14 @@ protected:
 
 private:
   // Notify others that our TabContext has been updated.  (At the moment, this
-  // sets the appropriate app-id and is-browser flags on our docshell.)
+  // sets the appropriate origin attributes on our docshell.)
   //
   // You should call this after calling TabContext::SetTabContext().  We also
   // call this during Init().
   void NotifyTabContextUpdated();
+
+  // Update the frameType on our docshell.
+  void UpdateFrameType();
 
   void ActorDestroy(ActorDestroyReason why) override;
 
@@ -749,6 +758,8 @@ private:
   friend class ContentChild;
   float mDPI;
   double mDefaultScale;
+
+  bool mIsTransparent;
 
   bool mIPCOpen;
   bool mParentIsActive;

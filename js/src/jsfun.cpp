@@ -43,6 +43,7 @@
 #include "vm/GlobalObject.h"
 #include "vm/Interpreter.h"
 #include "vm/Shape.h"
+#include "vm/SharedImmutableStringsCache.h"
 #include "vm/StringBuffer.h"
 #include "vm/WrapperObject.h"
 #include "vm/Xdr.h"
@@ -112,6 +113,17 @@ ThrowTypeErrorBehavior(JSContext* cx)
                                  JSMSG_THROW_TYPE_ERROR);
 }
 
+static bool
+IsFunctionInStrictMode(JSFunction* fun)
+{
+    // Interpreted functions have a strict flag.
+    if (fun->isInterpreted() && fun->strict())
+        return true;
+
+    // Only asm.js functions can also be strict.
+    return IsAsmJSStrictModeModuleOrFunction(fun);
+}
+
 // Beware: this function can be invoked on *any* function! That includes
 // natives, strict mode functions, bound functions, arrow functions,
 // self-hosted functions and constructors, asm.js functions, functions with
@@ -122,12 +134,10 @@ static bool
 ArgumentsRestrictions(JSContext* cx, HandleFunction fun)
 {
     // Throw if the function is a builtin (note: this doesn't include asm.js),
-    // a strict mode function (FIXME: needs work handle strict asm.js functions
-    // correctly, should fall out of bug 1057208), or a bound function.
-    if (fun->isBuiltin() ||
-        (fun->isInterpreted() && fun->strict()) ||
-        fun->isBoundFunction())
-    {
+    // a strict mode function, or a bound function.
+    // TODO (bug 1057208): ensure semantics are correct for all possible
+    // pairings of callee/caller.
+    if (fun->isBuiltin() || IsFunctionInStrictMode(fun) || fun->isBoundFunction()) {
         ThrowTypeErrorBehavior(cx);
         return false;
     }
@@ -211,12 +221,10 @@ static bool
 CallerRestrictions(JSContext* cx, HandleFunction fun)
 {
     // Throw if the function is a builtin (note: this doesn't include asm.js),
-    // a strict mode function (FIXME: needs work handle strict asm.js functions
-    // correctly, should fall out of bug 1057208), or a bound function.
-    if (fun->isBuiltin() ||
-        (fun->isInterpreted() && fun->strict()) ||
-        fun->isBoundFunction())
-    {
+    // a strict mode function, or a bound function.
+    // TODO (bug 1057208): ensure semantics are correct for all possible
+    // pairings of callee/caller.
+    if (fun->isBuiltin() || IsFunctionInStrictMode(fun) || fun->isBoundFunction()) {
         ThrowTypeErrorBehavior(cx);
         return false;
     }
@@ -504,15 +512,15 @@ fun_resolve(JSContext* cx, HandleObject obj, HandleId id, bool* resolvedp)
                 // It's impossible to have an empty named class expression. We
                 // use empty as a sentinel when creating default class
                 // constructors.
-                MOZ_ASSERT(fun->atom() != cx->names().empty);
+                MOZ_ASSERT(fun->name() != cx->names().empty);
 
                 // Unnamed class expressions should not get a .name property
                 // at all.
-                if (fun->atom() == nullptr)
+                if (fun->name() == nullptr)
                     return true;
             }
 
-            v.setString(fun->atom() == nullptr ? cx->runtime()->emptyString : fun->atom());
+            v.setString(fun->name() == nullptr ? cx->runtime()->emptyString : fun->name());
         }
 
         if (!NativeDefineProperty(cx, fun, id, v, nullptr, nullptr,
@@ -566,7 +574,7 @@ js::XDRInterpretedFunction(XDRState<mode>* xdr, HandleObject enclosingScope, Han
             return false;
         }
 
-        if (fun->atom() || fun->hasGuessedAtom())
+        if (fun->name() || fun->hasGuessedAtom())
             firstword |= HasAtom;
 
         if (fun->isStarGenerator())
@@ -697,7 +705,7 @@ JSFunction::trace(JSTracer* trc)
 {
     if (isExtended()) {
         TraceRange(trc, ArrayLength(toExtended()->extendedSlots),
-                   (HeapValue*)toExtended()->extendedSlots, "nativeReserved");
+                   (GCPtrValue*)toExtended()->extendedSlots, "nativeReserved");
     }
 
     TraceNullableEdge(trc, &atom_, "atom");
@@ -767,18 +775,17 @@ CreateFunctionPrototype(JSContext* cx, JSProtoKey key)
 
     const char* rawSource = "() {\n}";
     size_t sourceLen = strlen(rawSource);
-    char16_t* source = InflateString(cx, rawSource, &sourceLen);
+    mozilla::UniquePtr<char16_t[], JS::FreePolicy> source(InflateString(cx, rawSource, &sourceLen));
     if (!source)
         return nullptr;
 
-    ScriptSource* ss =
-        cx->new_<ScriptSource>();
-    if (!ss) {
-        js_free(source);
+    ScriptSource* ss = cx->new_<ScriptSource>();
+    if (!ss)
         return nullptr;
-    }
     ScriptSourceHolder ssHolder(ss);
-    ss->setSource(source, sourceLen);
+    if (!ss->setSource(cx, mozilla::Move(source), sourceLen))
+        return nullptr;
+
     CompileOptions options(cx);
     options.setNoScriptRval(true)
            .setVersion(JSVERSION_DEFAULT);
@@ -976,8 +983,8 @@ js::FunctionToString(JSContext* cx, HandleFunction fun, bool lambdaParen)
         if (!(fun->isStarGenerator() ? out.append("function* ") : out.append("function ")))
             return nullptr;
     }
-    if (fun->atom()) {
-        if (!out.append(fun->atom()))
+    if (fun->name()) {
+        if (!out.append(fun->name()))
             return nullptr;
     }
 
@@ -1495,6 +1502,11 @@ JSFunction::maybeRelazify(JSRuntime* rt)
     if (comp->isDebuggee() || comp->isSelfHosting)
         return;
 
+    // Don't relazify if the compartment and/or runtime is instrumented to
+    // collect code coverage for analysis.
+    if (comp->collectCoverageForDebug())
+        return;
+
     // Don't relazify functions with JIT code.
     if (!u.i.s.script_->isRelazifiable())
         return;
@@ -2007,7 +2019,7 @@ js::CloneFunctionReuseScript(JSContext* cx, HandleFunction fun, HandleObject par
      * Clone the function, reusing its script. We can use the same group as
      * the original function provided that its prototype is correct.
      */
-    if (fun->getProto() == clone->getProto())
+    if (fun->staticPrototype() == clone->staticPrototype())
         clone->setGroup(fun->group());
     return clone;
 }
@@ -2152,16 +2164,16 @@ js::DefineFunction(JSContext* cx, HandleObject obj, HandleId id, Native native,
 }
 
 void
-js::ReportIncompatibleMethod(JSContext* cx, CallReceiver call, const Class* clasp)
+js::ReportIncompatibleMethod(JSContext* cx, const CallArgs& args, const Class* clasp)
 {
-    RootedValue thisv(cx, call.thisv());
+    RootedValue thisv(cx, args.thisv());
 
 #ifdef DEBUG
     if (thisv.isObject()) {
         MOZ_ASSERT(thisv.toObject().getClass() != clasp ||
                    !thisv.toObject().isNative() ||
-                   !thisv.toObject().getProto() ||
-                   thisv.toObject().getProto()->getClass() != clasp);
+                   !thisv.toObject().staticPrototype() ||
+                   thisv.toObject().staticPrototype()->getClass() != clasp);
     } else if (thisv.isString()) {
         MOZ_ASSERT(clasp != &StringObject::class_);
     } else if (thisv.isNumber()) {
@@ -2175,7 +2187,7 @@ js::ReportIncompatibleMethod(JSContext* cx, CallReceiver call, const Class* clas
     }
 #endif
 
-    if (JSFunction* fun = ReportIfNotFunction(cx, call.calleev())) {
+    if (JSFunction* fun = ReportIfNotFunction(cx, args.calleev())) {
         JSAutoByteString funNameBytes;
         if (const char* funName = GetFunctionNameBytes(cx, fun, &funNameBytes)) {
             JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
@@ -2185,13 +2197,13 @@ js::ReportIncompatibleMethod(JSContext* cx, CallReceiver call, const Class* clas
 }
 
 void
-js::ReportIncompatible(JSContext* cx, CallReceiver call)
+js::ReportIncompatible(JSContext* cx, const CallArgs& args)
 {
-    if (JSFunction* fun = ReportIfNotFunction(cx, call.calleev())) {
+    if (JSFunction* fun = ReportIfNotFunction(cx, args.calleev())) {
         JSAutoByteString funNameBytes;
         if (const char* funName = GetFunctionNameBytes(cx, fun, &funNameBytes)) {
             JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_METHOD,
-                                 funName, "method", InformalValueTypeName(call.thisv()));
+                                 funName, "method", InformalValueTypeName(args.thisv()));
         }
     }
 }

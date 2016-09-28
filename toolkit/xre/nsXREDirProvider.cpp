@@ -362,9 +362,9 @@ nsXREDirProvider::GetFile(const char* aProperty, bool* aPersistent,
   else if (!strcmp(aProperty, XRE_SYS_SHARE_EXTENSION_PARENT_DIR)) {
 #ifdef ENABLE_SYSTEM_EXTENSION_DIRS
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
-    static const char *const sysLExtDir = "/usr/local/share/WaterfoxProject/extensions";
+    static const char *const sysLExtDir = "/usr/local/share/mozilla/extensions";
 #else
-    static const char *const sysLExtDir = "/usr/share/WaterfoxProject/extensions";
+    static const char *const sysLExtDir = "/usr/share/mozilla/extensions";
 #endif
     return NS_NewNativeLocalFile(nsDependentCString(sysLExtDir),
                                  false, aFile);
@@ -1519,7 +1519,7 @@ nsXREDirProvider::AppendSysUserExtensionPath(nsIFile* aFile)
 
 #if defined (XP_MACOSX) || defined(XP_WIN)
 
-  static const char* const sXR = "WaterfoxProject";
+  static const char* const sXR = "Mozilla";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1529,7 +1529,7 @@ nsXREDirProvider::AppendSysUserExtensionPath(nsIFile* aFile)
 
 #elif defined(XP_UNIX)
 
-  static const char* const sXR = ".WaterfoxProject";
+  static const char* const sXR = ".mozilla";
   rv = aFile->AppendNative(nsDependentCString(sXR));
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1608,7 +1608,7 @@ nsXREDirProvider::AppendProfilePath(nsIFile* aFile,
   // XXXsmaug ...and the rest of the profile creation!
   MOZ_ASSERT(!aAppName,
              "Profile creation for external applications is not implemented!");
-  rv = aFile->AppendNative(nsDependentCString("waterfoxproject"));
+  rv = aFile->AppendNative(nsDependentCString("mozilla"));
   NS_ENSURE_SUCCESS(rv, rv);
 #elif defined(XP_UNIX)
   nsAutoCString folder;

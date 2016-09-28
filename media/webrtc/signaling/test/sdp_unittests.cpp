@@ -87,6 +87,9 @@ class SdpTest : public ::testing::Test {
     }
 
     static void TearDownTestCase() {
+      if (gThread) {
+        gThread->Shutdown();
+      }
       gThread = nullptr;
     }
 
@@ -208,6 +211,16 @@ class SdpTest : public ::testing::Test {
                                  &inst_num), SDP_SUCCESS);
       EXPECT_EQ(sdp_attr_set_rtcp_fb_trr_int(sdp_ptr_, level, payload, inst_num,
                                              interval), SDP_SUCCESS);
+      return inst_num;
+    }
+
+    uint16_t AddNewRtcpFbRemb(int level,
+                              uint16_t payload = SDP_ALL_PAYLOADS) {
+      uint16_t inst_num = 0;
+      EXPECT_EQ(sdp_add_new_attr(sdp_ptr_, level, 0, SDP_ATTR_RTCP_FB,
+                                 &inst_num), SDP_SUCCESS);
+      EXPECT_EQ(sdp_attr_set_rtcp_fb_remb(sdp_ptr_, level, payload, inst_num
+                                          ), SDP_SUCCESS);
       return inst_num;
     }
 
@@ -352,6 +365,17 @@ TEST_F(SdpTest, parseRtcpFbNackFooBarBaz) {
             SDP_RTCP_FB_NACK_UNKNOWN);
 }
 
+TEST_F(SdpTest, parseRtcpFbRemb) {
+  ParseSdp(kVideoSdp + "a=rtcp-fb:120 goog-remb\r\n");
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 1, 120), true);
+}
+
+TEST_F(SdpTest, parseRtcpRbRembAllPt) {
+  ParseSdp(kVideoSdp + "a=rtcp-fb:* goog-remb\r\n");
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 1, SDP_ALL_PAYLOADS),
+                                              true);
+}
+
 TEST_F(SdpTest, parseRtcpFbTrrInt0) {
   ParseSdp(kVideoSdp + "a=rtcp-fb:120 trr-int 0\r\n");
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 1), 0U);
@@ -435,6 +459,7 @@ TEST_F(SdpTest, parseRtcpFbKitchenSink) {
     "a=rtcp-fb:120 nack foo bar baz\r\n"
     "a=rtcp-fb:120 trr-int 0\r\n"
     "a=rtcp-fb:120 trr-int 123\r\n"
+    "a=rtcp-fb:120 goog-remb\r\n"
     "a=rtcp-fb:120 ccm fir\r\n"
     "a=rtcp-fb:120 ccm tmmbr\r\n"
     "a=rtcp-fb:120 ccm tmmbr smaxpr=456\r\n"
@@ -478,6 +503,9 @@ TEST_F(SdpTest, parseRtcpFbKitchenSink) {
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 1), 0U);
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 2), 123U);
   ASSERT_EQ(sdp_attr_get_rtcp_fb_trr_int(sdp_ptr_, 1, 120, 3), 0xFFFFFFFF);
+
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 1, 120), true);
+  ASSERT_EQ(sdp_attr_get_rtcp_fb_remb_enabled(sdp_ptr_, 2, 120), false);
 
   ASSERT_EQ(sdp_attr_get_rtcp_fb_ccm(sdp_ptr_, 1, 120, 1), SDP_RTCP_FB_CCM_FIR);
   ASSERT_EQ(sdp_attr_get_rtcp_fb_ccm(sdp_ptr_, 1, 120, 2),
@@ -672,6 +700,22 @@ TEST_F(SdpTest, addRtcpFbNackEcnAllPt) {
   AddNewRtcpFbNack(level, SDP_RTCP_FB_NACK_ECN);
   std::string body = SerializeSdp();
   ASSERT_NE(body.find("a=rtcp-fb:* nack ecn\r\n"), std::string::npos);
+}
+
+TEST_F(SdpTest, addRtcpFbRemb) {
+  InitLocalSdp();
+  int level = AddNewMedia(SDP_MEDIA_VIDEO);
+  AddNewRtcpFbRemb(level, 120);
+  std::string body = SerializeSdp();
+  ASSERT_NE(body.find("a=rtcp-fb:120 goog-remb\r\n"), std::string::npos);
+}
+
+TEST_F(SdpTest, addRtcpFbRembAllPt) {
+  InitLocalSdp();
+  int level = AddNewMedia(SDP_MEDIA_VIDEO);
+  AddNewRtcpFbRemb(level);
+  std::string body = SerializeSdp();
+  ASSERT_NE(body.find("a=rtcp-fb:* goog-remb\r\n"), std::string::npos);
 }
 
 TEST_F(SdpTest, addRtcpFbTrrInt) {
@@ -1126,6 +1170,12 @@ TEST_P(NewSdpTest, CheckMediaSectionGetBandwidth) {
     << "Wrong bandwidth in media section";
 }
 
+// Define a string that is 258 characters long. We use a long string here so
+// that we can test that we are able to parse and handle a string longer than
+// the default maximum length of 256 in sipcc.
+#define ID_A "1234567890abcdef"
+#define ID_B ID_A ID_A ID_A ID_A
+#define LONG_IDENTITY ID_B ID_B ID_B ID_B "xx"
 
 // SDP from a basic A/V apprtc call FFX/FFX
 const std::string kBasicAudioVideoOffer =
@@ -1141,7 +1191,7 @@ const std::string kBasicAudioVideoOffer =
 "a=msid-semantic:WMS stream streama" CRLF
 "a=msid-semantic:foo stream" CRLF
 "a=fingerprint:sha-256 DF:2E:AC:8A:FD:0A:8E:99:BF:5D:E8:3C:E7:FA:FB:08:3B:3C:54:1D:D7:D4:05:77:A0:72:9B:14:08:6D:0F:4C" CRLF
-"a=identity:blahblahblah foo;bar" CRLF
+"a=identity:" LONG_IDENTITY CRLF
 "a=group:BUNDLE first second" CRLF
 "a=group:BUNDLE third" CRLF
 "a=group:LS first third" CRLF
@@ -1336,7 +1386,7 @@ TEST_P(NewSdpTest, CheckIdentity) {
   ASSERT_TRUE(mSdp->GetAttributeList().HasAttribute(
         SdpAttribute::kIdentityAttribute));
   auto identity = mSdp->GetAttributeList().GetIdentity();
-  ASSERT_EQ("blahblahblah", identity) << "Wrong identity assertion";
+  ASSERT_EQ(LONG_IDENTITY, identity) << "Wrong identity assertion";
 }
 
 TEST_P(NewSdpTest, CheckNumberOfMediaSections) {
@@ -1910,6 +1960,7 @@ const std::string kBasicAudioVideoDataOffer =
 "a=rtcp-fb:120 ccm vbcm" CRLF
 "a=rtcp-fb:120 ccm foo" CRLF // Should be ignored
 "a=rtcp-fb:120 trr-int 10" CRLF
+"a=rtcp-fb:120 goog-remb" CRLF
 "a=rtcp-fb:120 foo" CRLF // Should be ignored
 "a=rtcp-fb:126 nack" CRLF
 "a=rtcp-fb:126 nack pli" CRLF
@@ -2004,7 +2055,7 @@ TEST_P(NewSdpTest, CheckRtcpFb) {
   auto& video_attrs = mSdp->GetMediaSection(1).GetAttributeList();
   ASSERT_TRUE(video_attrs.HasAttribute(SdpAttribute::kRtcpFbAttribute));
   auto& rtcpfbs = video_attrs.GetRtcpFb().mFeedbacks;
-  ASSERT_EQ(19U, rtcpfbs.size());
+  ASSERT_EQ(20U, rtcpfbs.size());
   CheckRtcpFb(rtcpfbs[0], "120", SdpRtcpFbAttributeList::kAck, "rpsi");
   CheckRtcpFb(rtcpfbs[1], "120", SdpRtcpFbAttributeList::kAck, "app", "foo");
   CheckRtcpFb(rtcpfbs[2], "120", SdpRtcpFbAttributeList::kNack, "");
@@ -2017,13 +2068,14 @@ TEST_P(NewSdpTest, CheckRtcpFb) {
   CheckRtcpFb(rtcpfbs[9], "120", SdpRtcpFbAttributeList::kCcm, "tstr");
   CheckRtcpFb(rtcpfbs[10], "120", SdpRtcpFbAttributeList::kCcm, "vbcm");
   CheckRtcpFb(rtcpfbs[11], "120", SdpRtcpFbAttributeList::kTrrInt, "10");
-  CheckRtcpFb(rtcpfbs[12], "126", SdpRtcpFbAttributeList::kNack, "");
-  CheckRtcpFb(rtcpfbs[13], "126", SdpRtcpFbAttributeList::kNack, "pli");
-  CheckRtcpFb(rtcpfbs[14], "126", SdpRtcpFbAttributeList::kCcm, "fir");
-  CheckRtcpFb(rtcpfbs[15], "97",  SdpRtcpFbAttributeList::kNack, "");
-  CheckRtcpFb(rtcpfbs[16], "97",  SdpRtcpFbAttributeList::kNack, "pli");
-  CheckRtcpFb(rtcpfbs[17], "97", SdpRtcpFbAttributeList::kCcm, "fir");
-  CheckRtcpFb(rtcpfbs[18], "*", SdpRtcpFbAttributeList::kCcm, "tmmbr");
+  CheckRtcpFb(rtcpfbs[12], "120", SdpRtcpFbAttributeList::kRemb, "");
+  CheckRtcpFb(rtcpfbs[13], "126", SdpRtcpFbAttributeList::kNack, "");
+  CheckRtcpFb(rtcpfbs[14], "126", SdpRtcpFbAttributeList::kNack, "pli");
+  CheckRtcpFb(rtcpfbs[15], "126", SdpRtcpFbAttributeList::kCcm, "fir");
+  CheckRtcpFb(rtcpfbs[16], "97",  SdpRtcpFbAttributeList::kNack, "");
+  CheckRtcpFb(rtcpfbs[17], "97",  SdpRtcpFbAttributeList::kNack, "pli");
+  CheckRtcpFb(rtcpfbs[18], "97", SdpRtcpFbAttributeList::kCcm, "fir");
+  CheckRtcpFb(rtcpfbs[19], "*", SdpRtcpFbAttributeList::kCcm, "tmmbr");
 }
 
 TEST_P(NewSdpTest, CheckRtcp) {

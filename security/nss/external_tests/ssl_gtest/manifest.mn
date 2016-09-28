@@ -12,12 +12,14 @@ CSRCS = \
       $(NULL)
 
 CPPSRCS = \
-      ssl_v2_client_hello_unittest.cc \
       ssl_agent_unittest.cc \
-      ssl_loopback_unittest.cc \
+      ssl_ciphersuite_unittest.cc \
+      ssl_dhe_unittest.cc \
       ssl_extension_unittest.cc \
-      ssl_skip_unittest.cc \
       ssl_gtest.cc \
+      ssl_loopback_unittest.cc \
+      ssl_skip_unittest.cc \
+      ssl_v2_client_hello_unittest.cc \
       test_io.cc \
       tls_agent.cc \
       tls_connect.cc \
@@ -32,6 +34,7 @@ INCLUDES += -I$(CORE_DEPTH)/external_tests/google_test/gtest/include \
 REQUIRES = nspr nss libdbm gtest
 
 PROGRAM = ssl_gtest
-EXTRA_LIBS = $(DIST)/lib/$(LIB_PREFIX)gtest.$(LIB_SUFFIX)
+EXTRA_LIBS = $(DIST)/lib/$(LIB_PREFIX)gtest.$(LIB_SUFFIX) \
+             $(DIST)/lib/$(LIB_PREFIX)softokn.$(LIB_SUFFIX)
 
 USE_STATIC_LIBS = 1

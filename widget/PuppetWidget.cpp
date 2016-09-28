@@ -21,6 +21,8 @@
 #include "PuppetWidget.h"
 #include "nsContentUtils.h"
 #include "nsIWidgetListener.h"
+#include "imgIContainer.h"
+#include "nsView.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -87,6 +89,9 @@ PuppetWidget::PuppetWidget(TabChild* aTabChild)
   mSingleLineCommands.SetCapacity(4);
   mMultiLineCommands.SetCapacity(4);
   mRichTextCommands.SetCapacity(4);
+
+  // Setting 'Unknown' means "not yet cached".
+  mInputContext.mIMEState.mEnabled = IMEState::UNKNOWN;
 }
 
 PuppetWidget::~PuppetWidget()
@@ -636,7 +641,7 @@ PuppetWidget::NotifyIMEInternal(const IMENotification& aIMENotification)
       return NotifyIMEOfSelectionChange(aIMENotification);
     case NOTIFY_IME_OF_TEXT_CHANGE:
       return NotifyIMEOfTextChange(aIMENotification);
-    case NOTIFY_IME_OF_COMPOSITION_UPDATE:
+    case NOTIFY_IME_OF_COMPOSITION_EVENT_HANDLED:
       return NotifyIMEOfCompositionUpdate(aIMENotification);
     case NOTIFY_IME_OF_MOUSE_BUTTON_EVENT:
       return NotifyIMEOfMouseButtonEvent(aIMENotification);
@@ -683,6 +688,10 @@ PuppetWidget::SetInputContext(const InputContext& aContext,
                               const InputContextAction& aAction)
 {
   mInputContext = aContext;
+  // Any widget instances cannot cache IME open state because IME open state
+  // can be changed by user but native IME may not notify us of changing the
+  // open state on some platforms.
+  mInputContext.mIMEState.mOpen = IMEState::OPEN_STATE_NOT_SUPPORTED;
 
 #ifndef MOZ_CROSS_PROCESS_IME
   return;
@@ -708,10 +717,25 @@ PuppetWidget::GetInputContext()
   return InputContext();
 #endif
 
+  // XXX Currently, we don't support retrieving IME open state from child
+  //     process.
+
+  // When this widget caches input context and currently managed by
+  // IMEStateManager, the cache is valid.  Only in this case, we can
+  // avoid to use synchronous IPC.
+  if (mInputContext.mIMEState.mEnabled != IMEState::UNKNOWN &&
+      IMEStateManager::GetWidgetForActiveInputContext() == this) {
+    return mInputContext;
+  }
+
+  NS_WARNING("PuppetWidget::GetInputContext() needs to retrieve it with IPC");
+
+  // Don't cache InputContext here because this process isn't managing IME
+  // state of the chrome widget.  So, we cannot modify mInputContext when
+  // chrome widget is set to new context.
   InputContext context;
   if (mTabChild) {
     int32_t enabled, open;
-    // TODO: This is too expensive. PuppetWidget should cache IMEState.
     mTabChild->SendGetInputContext(&enabled, &open);
     context.mIMEState.mEnabled = static_cast<IMEState::Enabled>(enabled);
     context.mIMEState.mOpen = static_cast<IMEState::Open>(open);
@@ -990,7 +1014,7 @@ PuppetWidget::SetCursor(imgIContainer* aCursor,
   size_t length;
   int32_t stride;
   mozilla::UniquePtr<char[]> surfaceData =
-    nsContentUtils::GetSurfaceData(dataSurface, &length, &stride);
+    nsContentUtils::GetSurfaceData(WrapNotNull(dataSurface), &length, &stride);
 
   nsDependentCString cursorData(surfaceData.get(), length);
   mozilla::gfx::IntSize size = dataSurface->GetSize();
@@ -1427,6 +1451,20 @@ PuppetWidget::ZoomToRect(const uint32_t& aPresShellId,
   }
 
   mTabChild->ZoomToRect(aPresShellId, aViewId, aRect, aFlags);
+}
+
+void
+PuppetWidget::LookUpDictionary(
+                const nsAString& aText,
+                const nsTArray<mozilla::FontRange>& aFontRangeArray,
+                const bool aIsVertical,
+                const LayoutDeviceIntPoint& aPoint)
+{
+  if (!mTabChild) {
+    return;
+  }
+
+  mTabChild->SendLookUpDictionary(nsString(aText), aFontRangeArray, aIsVertical, aPoint);
 }
 
 bool

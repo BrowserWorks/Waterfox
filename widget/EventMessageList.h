@@ -52,8 +52,17 @@ NS_EVENT_MESSAGE(eAfterKeyDown)
 NS_EVENT_MESSAGE(eBeforeKeyUp)
 NS_EVENT_MESSAGE(eAfterKeyUp)
 
+// This message is sent after a content process handles a key event or accesskey
+// to indicate that an potential accesskey was not found. The parent process may
+// then respond by, for example, opening menus and processing other shortcuts.
+// It inherits its properties from a keypress event.
+NS_EVENT_MESSAGE(eAccessKeyNotFound)
+
 NS_EVENT_MESSAGE(eResize)
 NS_EVENT_MESSAGE(eScroll)
+
+// Application installation
+NS_EVENT_MESSAGE(eInstall)
 
 // A plugin was clicked or otherwise focused. ePluginActivate should be
 // used when the window is not active. ePluginFocus should be used when
@@ -306,6 +315,7 @@ NS_EVENT_MESSAGE(eContentCommandDelete)
 NS_EVENT_MESSAGE(eContentCommandUndo)
 NS_EVENT_MESSAGE(eContentCommandRedo)
 NS_EVENT_MESSAGE(eContentCommandPasteTransferable)
+NS_EVENT_MESSAGE(eContentCommandLookUpDictionary)
 // eContentCommandScroll scrolls the nearest scrollable element to the
 // currently focused content or latest DOM selection. This would normally be
 // the same element scrolled by keyboard scroll commands, except that this event

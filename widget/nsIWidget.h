@@ -42,7 +42,6 @@ class   nsIRunnable;
 class   nsIKeyEventInPluginCallback;
 
 namespace mozilla {
-class CompositorVsyncDispatcher;
 namespace dom {
 class TabChild;
 } // namespace dom
@@ -322,7 +321,8 @@ private:
  * The base class for all the widgets. It provides the interface for
  * all basic and necessary functionality.
  */
-class nsIWidget : public nsISupports {
+class nsIWidget : public nsISupports
+{
   protected:
     typedef mozilla::dom::TabChild TabChild;
 
@@ -346,7 +346,6 @@ class nsIWidget : public nsISupports {
     typedef mozilla::widget::TextEventDispatcher TextEventDispatcher;
     typedef mozilla::widget::TextEventDispatcherListener
       TextEventDispatcherListener;
-    typedef mozilla::CompositorVsyncDispatcher CompositorVsyncDispatcher;
     typedef mozilla::LayoutDeviceIntMargin LayoutDeviceIntMargin;
     typedef mozilla::LayoutDeviceIntPoint LayoutDeviceIntPoint;
     typedef mozilla::LayoutDeviceIntRect LayoutDeviceIntRect;
@@ -555,11 +554,6 @@ class nsIWidget : public nsISupports {
      * potentially multi-screen, mixed-resolution desktop.
      */
     virtual mozilla::DesktopToLayoutDeviceScale GetDesktopToDeviceScale() = 0;
-
-    /**
-     * Returns the CompositorVsyncDispatcher associated with this widget
-     */
-    virtual CompositorVsyncDispatcher* GetCompositorVsyncDispatcher() = 0;
 
     /**
      * Return the default scale factor for the window. This is the
@@ -1245,100 +1239,6 @@ class nsIWidget : public nsISupports {
     virtual void PrepareWindowEffects() = 0;
 
     /**
-     * Called when shutting down the LayerManager to clean-up any cached resources.
-     *
-     * Always called from the compositing thread, which may be the main-thread if
-     * OMTC is not enabled.
-     */
-    virtual void CleanupWindowEffects() = 0;
-
-    /**
-     * Called before rendering using OMTC. Returns false when the widget is
-     * not ready to be rendered (for example while the window is closed).
-     *
-     * Always called from the compositing thread, which may be the main-thread if
-     * OMTC is not enabled.
-     */
-    virtual bool PreRender(LayerManagerComposite* aManager) = 0;
-
-    /**
-     * Called after rendering using OMTC. Not called when rendering was
-     * cancelled by a negative return value from PreRender.
-     *
-     * Always called from the compositing thread, which may be the main-thread if
-     * OMTC is not enabled.
-     */
-    virtual void PostRender(LayerManagerComposite* aManager) = 0;
-
-    /**
-     * Called before the LayerManager draws the layer tree.
-     *
-     * Always called from the compositing thread.
-     */
-    virtual void DrawWindowUnderlay(LayerManagerComposite* aManager,
-                                    LayoutDeviceIntRect aRect) = 0;
-
-    /**
-     * Called after the LayerManager draws the layer tree
-     *
-     * Always called from the compositing thread.
-     */
-    virtual void DrawWindowOverlay(LayerManagerComposite* aManager,
-                                   LayoutDeviceIntRect aRect) = 0;
-
-    /**
-     * Return a DrawTarget for the window which can be composited into.
-     *
-     * Called by BasicCompositor on the compositor thread for OMTC drawing
-     * before each composition.
-     *
-     * The window may specify its buffer mode. If unspecified, it is assumed
-     * to require double-buffering.
-     */
-    virtual already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawing() = 0;
-    virtual already_AddRefed<mozilla::gfx::DrawTarget> StartRemoteDrawingInRegion(LayoutDeviceIntRegion& aInvalidRegion,
-                                                                                  mozilla::layers::BufferMode* aBufferMode) {
-      return StartRemoteDrawing();
-    }
-
-    /**
-     * Ensure that what was painted into the DrawTarget returned from
-     * StartRemoteDrawing reaches the screen.
-     *
-     * Called by BasicCompositor on the compositor thread for OMTC drawing
-     * after each composition.
-     */
-    virtual void EndRemoteDrawing() = 0;
-    virtual void EndRemoteDrawingInRegion(mozilla::gfx::DrawTarget* aDrawTarget, LayoutDeviceIntRegion& aInvalidRegion) {
-      EndRemoteDrawing();
-    }
-
-    /**
-     * Clean up any resources used by Start/EndRemoteDrawing.
-     *
-     * Called by BasicCompositor on the compositor thread for OMTC drawing
-     * when the compositor is destroyed.
-     */
-    virtual void CleanupRemoteDrawing() = 0;
-
-    /**
-     * Create DrawTarget used as BackBuffer of the screen
-     */
-    virtual already_AddRefed<mozilla::gfx::DrawTarget> CreateBackBufferDrawTarget(mozilla::gfx::DrawTarget* aScreenTarget,
-                                                                                  const LayoutDeviceIntRect& aRect,
-                                                                                  const LayoutDeviceIntRect& aClearRect) = 0;
-
-    /**
-     * A hook for the widget to prepare a Compositor, during the latter's initialization.
-     *
-     * If this method returns true, it means that the widget will be able to
-     * present frames from the compoositor.
-     * Returning false will cause the compositor's initialization to fail, and
-     * a different compositor backend will be used (if any).
-     */
-    virtual bool InitCompositor(mozilla::layers::Compositor*) { return true; }
-
-    /**
      * Called when Gecko knows which themed widgets exist in this window.
      * The passed array contains an entry for every themed widget of the right
      * type (currently only NS_THEME_TOOLBAR) within the window, except for
@@ -1937,12 +1837,6 @@ public:
     NS_IMETHOD ReparentNativeWidget(nsIWidget* aNewParent) = 0;
 
     /**
-     * Return the internal format of the default framebuffer for this
-     * widget.
-     */
-    virtual uint32_t GetGLFrameBufferFormat() { return 0; /*GL_NONE*/ }
-
-    /**
      * Return true if widget has it's own GL context
      */
     virtual bool HasGLContext() { return false; }
@@ -2016,16 +1910,6 @@ public:
     { return nullptr; }
 
     /**
-     * If this widget has a more efficient composer available for its
-     * native framebuffer, return it.
-     *
-     * This can be called from a non-main thread, but that thread must
-     * hold a strong reference to this.
-     */
-    virtual Composer2D* GetComposer2D()
-    { return nullptr; }
-
-    /**
      * Some platforms (only cocoa right now) round widget coordinates to the
      * nearest even pixels (see bug 892994), this function allows us to
      * determine how widget coordinates will be rounded.
@@ -2076,6 +1960,22 @@ public:
     virtual nsresult OnWindowedPluginKeyEvent(
                        const mozilla::NativeEventData& aKeyEventData,
                        nsIKeyEventInPluginCallback* aCallback);
+
+
+    /**
+     * LookUpDictionary shows the dictionary for the word around current point.
+     *
+     * @param aText            the word to look up dictiorary.
+     * @param aFontRangeArray  text decoration of aText
+     * @param aIsVertical      true if the word is vertical layout
+     * @param aPoint           top-left point of aText
+     */
+    virtual void LookUpDictionary(
+                   const nsAString& aText,
+                   const nsTArray<mozilla::FontRange>& aFontRangeArray,
+                   const bool aIsVertical,
+                   const LayoutDeviceIntPoint& aPoint)
+    { }
 
 protected:
     /**

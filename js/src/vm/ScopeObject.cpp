@@ -683,7 +683,7 @@ DeclEnvObject::createTemplateObject(JSContext* cx, HandleFunction fun, NewObject
         return nullptr;
 
     // Assign a fixed slot to a property with the same name as the lambda.
-    Rooted<jsid> id(cx, AtomToId(fun->atom()));
+    Rooted<jsid> id(cx, AtomToId(fun->name()));
     const Class* clasp = obj->getClass();
     unsigned attrs = JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY;
 
@@ -1381,7 +1381,7 @@ const Class RuntimeLexicalErrorObject::class_ = {
 static inline JSAtom*
 CallObjectLambdaName(JSFunction& fun)
 {
-    return fun.isNamedLambda() ? fun.atom() : nullptr;
+    return fun.isNamedLambda() ? fun.name() : nullptr;
 }
 
 ScopeIter::ScopeIter(JSContext* cx, const ScopeIter& si
@@ -1459,8 +1459,8 @@ ScopeIter::settle()
         // function frame case above, if the script starts with a lexical
         // block, the SSI could see 2 block scopes here. So skip between 1-2
         // static block scopes here.
-        MOZ_ASSERT(ssi_.type() == StaticScopeIter<CanGC>::Block);
-        incrementStaticScopeIter();
+        if (ssi_.type() == StaticScopeIter<CanGC>::Block)
+            incrementStaticScopeIter();
         if (ssi_.type() == StaticScopeIter<CanGC>::Block)
             incrementStaticScopeIter();
         MOZ_ASSERT(ssi_.type() == StaticScopeIter<CanGC>::Eval);
@@ -2003,6 +2003,12 @@ class DebugScopeProxy : public BaseProxyHandler
         return isFunctionScope(scope) && !scope.as<CallObject>().callee().hasLexicalThis();
     }
 
+    bool getPrototypeIfOrdinary(JSContext* cx, HandleObject proxy, bool* isOrdinary,
+                                MutableHandleObject protop) const override
+    {
+        MOZ_CRASH("shouldn't be possible to access the prototype chain of a DebugScopeProxy");
+    }
+
     bool preventExtensions(JSContext* cx, HandleObject proxy,
                            ObjectOpResult& result) const override
     {
@@ -2313,7 +2319,8 @@ class DebugScopeProxy : public BaseProxyHandler
                 if (inScope)
                     props[j++].set(props[i]);
             }
-            props.resize(j);
+            if (!props.resize(j))
+                return false;
         }
 
         /*
@@ -2586,7 +2593,7 @@ DebugScopes::ensureCompartmentData(JSContext* cx)
     if (c->debugScopes)
         return c->debugScopes;
 
-    AutoInitGCManagedObject<DebugScopes> debugScopes(cx->make_unique<DebugScopes>(cx));
+    auto debugScopes = cx->make_unique<DebugScopes>(cx);
     if (!debugScopes || !debugScopes->init()) {
         ReportOutOfMemory(cx);
         return nullptr;
@@ -2729,7 +2736,7 @@ DebugScopes::onPopCall(AbstractFramePtr frame, JSContext* cx)
          * aliasing. This unnecessarily includes aliased variables
          * but it simplifies later indexing logic.
          */
-        AutoValueVector vec(cx);
+        Rooted<GCVector<Value>> vec(cx, GCVector<Value>(cx));
         if (!frame.copyRawFrameSlots(&vec) || vec.length() == 0)
             return;
 

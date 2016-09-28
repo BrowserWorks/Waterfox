@@ -43,6 +43,7 @@ XPCOMUtils.defineLazyGetter(this, "DEFAULT_AREA_PLACEMENTS", function() {
       "find-button",
       "preferences-button",
       "add-ons-button",
+      "sync-button",
       "developer-button",
     ],
     "nav-bar": [
@@ -91,7 +92,7 @@ XPCOMUtils.defineLazyGetter(this, "PALETTE_ITEMS", function() {
     "developer-button",
     "feed-button",
     "email-link-button",
-    "sync-button",
+    "containers-panelmenu",
   ];
 
   let panelPlacements = DEFAULT_AREA_PLACEMENTS["PanelUI-contents"];
@@ -178,6 +179,9 @@ this.BrowserUITelemetry = {
     // simple measure function with UITelemetry.
     UITelemetry.addSimpleMeasureFunction("UITour",
                                          () => UITour.getTelemetry());
+
+    UITelemetry.addSimpleMeasureFunction("syncstate",
+                                         this.getSyncState.bind(this));
 
     Services.obs.addObserver(this, "sessionstore-windows-restored", false);
     Services.obs.addObserver(this, "browser-delayed-startup-finished", false);
@@ -585,6 +589,18 @@ this.BrowserUITelemetry = {
     return result;
   },
 
+  getSyncState: function() {
+    let result = {};
+    for (let sub of ["desktop", "mobile"]) {
+      let count = 0;
+      try {
+        count = Services.prefs.getIntPref("services.sync.clients.devices." + sub);
+      } catch (ex) {}
+      result[sub] = count;
+    }
+    return result;
+  },
+
   countCustomizationEvent: function(aEventType) {
     this._countEvent(["customize", aEventType]);
   },
@@ -613,6 +629,18 @@ this.BrowserUITelemetry = {
 
   countTabMutingEvent: function(action, reason) {
     this._countEvent(["tab-audio-control", action, reason || "no reason given"]);
+  },
+
+  countSyncedTabEvent: function(what, where) {
+    // "what" will be, eg, "open"
+    // "where" will be "toolbarbutton-subview" or "sidebar"
+    this._countEvent(["synced-tabs", what, where]);
+  },
+
+  countSidebarEvent: function(sidebarID, action) {
+    // sidebarID is the ID of the sidebar (duh!)
+    // action will be "hide" or "show"
+    this._countEvent(["sidebar", sidebarID, action]);
   },
 
   _logAwesomeBarSearchResult: function (url) {
@@ -670,9 +698,9 @@ this.BrowserUITelemetry = {
     "marklinkMenu", "copyemail", "copylink", "media-play", "media-pause",
     "media-mute", "media-unmute", "media-playbackrate",
     "media-playbackrate-050x", "media-playbackrate-100x",
-    "media-playbackrate-150x", "media-playbackrate-200x",
-    "media-showcontrols", "media-hidecontrols", "video-showstats",
-    "video-hidestats", "video-fullscreen", "leave-dom-fullscreen",
+    "media-playbackrate-125x", "media-playbackrate-150x", "media-playbackrate-200x",
+    "media-showcontrols", "media-hidecontrols",
+    "video-fullscreen", "leave-dom-fullscreen",
     "reloadimage", "viewimage", "viewvideo", "copyimage-contents", "copyimage",
     "copyvideourl", "copyaudiourl", "saveimage", "shareimage", "sendimage",
     "setDesktopBackground", "viewimageinfo", "viewimagedesc", "savevideo",

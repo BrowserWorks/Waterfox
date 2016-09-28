@@ -25,10 +25,16 @@ Cu.import("resource://gre/modules/Downloads.jsm");
 const BASE = "http://mochi.test:8888/chrome/toolkit/components/extensions/test/mochitest";
 const TXT_FILE = "file_download.txt";
 const TXT_URL = BASE + "/" + TXT_FILE;
-const INTERRUPTIBLE_URL = BASE + "/interruptible.sjs";
+
 // Keep these in sync with code in interruptible.sjs
 const INT_PARTIAL_LEN = 15;
 const INT_TOTAL_LEN = 31;
+
+let interruptibleCount = 0;
+function getInterruptibleUrl() {
+  let n = interruptibleCount++;
+  return `${BASE}/interruptible.sjs?count=${n}`;
+}
 
 function backgroundScript() {
   let events = new Set();
@@ -246,11 +252,12 @@ add_task(function* test_events() {
 });
 
 add_task(function* test_cancel() {
-  let msg = yield runInExtension("download", {url: INTERRUPTIBLE_URL});
+  let url = getInterruptibleUrl();
+  let msg = yield runInExtension("download", {url});
   is(msg.status, "success", "download() succeeded");
   const id = msg.result;
 
-  let progressPromise = waitForProgress(INTERRUPTIBLE_URL, INT_PARTIAL_LEN);
+  let progressPromise = waitForProgress(url, INT_PARTIAL_LEN);
 
   msg = yield runInExtension("waitForEvents", [
     {type: "onCreated", data: {id}},
@@ -318,11 +325,12 @@ add_task(function* test_cancel() {
 });
 
 add_task(function* test_pauseresume() {
-  let msg = yield runInExtension("download", {url: INTERRUPTIBLE_URL});
+  let url = getInterruptibleUrl();
+  let msg = yield runInExtension("download", {url});
   is(msg.status, "success", "download() succeeded");
   const id = msg.result;
 
-  let progressPromise = waitForProgress(INTERRUPTIBLE_URL, INT_PARTIAL_LEN);
+  let progressPromise = waitForProgress(url, INT_PARTIAL_LEN);
 
   msg = yield runInExtension("waitForEvents", [
     {type: "onCreated", data: {id}},
@@ -443,11 +451,12 @@ add_task(function* test_pauseresume() {
 });
 
 add_task(function* test_pausecancel() {
-  let msg = yield runInExtension("download", {url: INTERRUPTIBLE_URL});
+  let url = getInterruptibleUrl();
+  let msg = yield runInExtension("download", {url});
   is(msg.status, "success", "download() succeeded");
   const id = msg.result;
 
-  let progressPromise = waitForProgress(INTERRUPTIBLE_URL, INT_PARTIAL_LEN);
+  let progressPromise = waitForProgress(url, INT_PARTIAL_LEN);
 
   msg = yield runInExtension("waitForEvents", [
     {type: "onCreated", data: {id}},
@@ -589,11 +598,12 @@ add_task(function* test_file_removal() {
 });
 
 add_task(function* test_removal_of_incomplete_download() {
-  let msg = yield runInExtension("download", {url: INTERRUPTIBLE_URL});
+  let url = getInterruptibleUrl();
+  let msg = yield runInExtension("download", {url});
   is(msg.status, "success", "download() succeeded");
   const id = msg.result;
 
-  let progressPromise = waitForProgress(INTERRUPTIBLE_URL, INT_PARTIAL_LEN);
+  let progressPromise = waitForProgress(url, INT_PARTIAL_LEN);
 
   msg = yield runInExtension("waitForEvents", [
     {type: "onCreated", data: {id}},

@@ -17,21 +17,16 @@ function scrollPage() {
   };
   SpecialPowers.Services.obs.addObserver(transformEnd, "APZ:TransformEnd", false);
 
-  const TOUCH_SLOP = 1;
-  synthesizeNativeDrag(document.body, 10, 100, 0, -(50 + TOUCH_SLOP));
+  synthesizeNativeTouchDrag(document.body, 10, 100, 0, -(50 + TOUCH_SLOP));
   dump("Finished native drag, waiting for transform-end observer...\n");
 }
 
 function checkScroll() {
-  window.opener.is(window.scrollY, 50, "check that the window scrolled");
-  window.opener.testDone();
+  is(window.scrollY, 50, "check that the window scrolled");
+  subtestDone();
 }
 
-window.onload = function() {
-  waitForAllPaints(function() {
-    flushApzRepaints(scrollPage);
-  });
-}
+waitUntilApzStable().then(scrollPage);
 
   </script>
 </head>

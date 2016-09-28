@@ -29,6 +29,7 @@
 #include "nsWindow.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/layers/CompositorThread.h"
 #include "mozilla/Services.h"
 #include "mozilla/ProcessPriorityManager.h"
 #include "nsIdleService.h"
@@ -56,7 +57,7 @@ using namespace mozilla::dom;
 
 namespace {
 
-class ScreenOnOffEvent : public nsRunnable {
+class ScreenOnOffEvent : public mozilla::Runnable {
 public:
     ScreenOnOffEvent(bool on)
         : mIsOn(on)
@@ -152,8 +153,9 @@ nsScreenGonk::nsScreenGonk(uint32_t aId,
 }
 
 static void
-ReleaseGLContextSync(mozilla::gl::GLContext* aGLContext) {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+ReleaseGLContextSync(mozilla::gl::GLContext* aGLContext)
+{
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     aGLContext->Release();
 }
 
@@ -161,8 +163,7 @@ nsScreenGonk::~nsScreenGonk()
 {
     // Release GLContext on compositor thread
     if (mGLContext) {
-        CompositorBridgeParent::CompositorLoop()->PostTask(
-            FROM_HERE,
+        CompositorThreadHolder::Loop()->PostTask(
             NewRunnableFunction(&ReleaseGLContextSync,
                                 mGLContext.forget().take()));
         mGLContext = nullptr;
@@ -423,7 +424,7 @@ NeedsRBSwap(int aHalFormat)
 already_AddRefed<DrawTarget>
 nsScreenGonk::StartRemoteDrawing()
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     MOZ_ASSERT(!mFramebuffer);
     MOZ_ASSERT(!mMappedBuffer);
 
@@ -461,7 +462,7 @@ nsScreenGonk::StartRemoteDrawing()
 void
 nsScreenGonk::EndRemoteDrawing()
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
 
     if (mFramebufferTarget && mFramebuffer) {
         IntSize size = mFramebufferTarget->GetSize();
@@ -528,7 +529,7 @@ nsScreenGonk::QueueBuffer(ANativeWindowBuffer* buf)
 nsresult
 nsScreenGonk::MakeSnapshot(ANativeWindowBuffer* aBuffer)
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     MOZ_ASSERT(aBuffer);
 
     layers::CompositorBridgeParent* compositorParent = mCompositorBridgeParent;
@@ -610,7 +611,7 @@ nsScreenGonk::SetEGLInfo(hwc_display_t aDisplay,
                          hwc_surface_t aSurface,
                          gl::GLContext* aGLContext)
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     mEGLDisplay = aDisplay;
     mEGLSurface = aSurface;
     mGLContext = aGLContext;
@@ -619,21 +620,21 @@ nsScreenGonk::SetEGLInfo(hwc_display_t aDisplay,
 hwc_display_t
 nsScreenGonk::GetEGLDisplay()
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     return mEGLDisplay;
 }
 
 hwc_surface_t
 nsScreenGonk::GetEGLSurface()
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     return mEGLSurface;
 }
 
 already_AddRefed<mozilla::gl::GLContext>
 nsScreenGonk::GetGLContext()
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     RefPtr<mozilla::gl::GLContext>glContext = mGLContext;
     return glContext.forget();
 }
@@ -641,7 +642,7 @@ nsScreenGonk::GetGLContext()
 static void
 UpdateMirroringWidgetSync(nsMainThreadPtrHandle<nsScreenGonk>&& aScreen, nsWindow* aWindow)
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     already_AddRefed<nsWindow> window(aWindow);
     aScreen->UpdateMirroringWidget(window);
 }
@@ -668,8 +669,7 @@ nsScreenGonk::EnableMirroring()
     // Update mMirroringWidget on compositor thread
     nsMainThreadPtrHandle<nsScreenGonk> primary =
       nsMainThreadPtrHandle<nsScreenGonk>(new nsMainThreadPtrHolder<nsScreenGonk>(primaryScreen, false));
-    CompositorBridgeParent::CompositorLoop()->PostTask(
-        FROM_HERE,
+    CompositorThreadHolder::Loop()->PostTask(
         NewRunnableFunction(&UpdateMirroringWidgetSync,
                             primary,
                             window.forget().take()));
@@ -694,8 +694,7 @@ nsScreenGonk::DisableMirroring()
     // Update mMirroringWidget on compositor thread
     nsMainThreadPtrHandle<nsScreenGonk> primary =
       nsMainThreadPtrHandle<nsScreenGonk>(new nsMainThreadPtrHolder<nsScreenGonk>(primaryScreen, false));
-    CompositorBridgeParent::CompositorLoop()->PostTask(
-        FROM_HERE,
+    CompositorThreadHolder::Loop()->PostTask(
         NewRunnableFunction(&UpdateMirroringWidgetSync,
                             primary,
                             nullptr));
@@ -731,7 +730,7 @@ nsScreenGonk::ClearMirroringScreen(nsScreenGonk* aScreen)
 void
 nsScreenGonk::UpdateMirroringWidget(already_AddRefed<nsWindow>& aWindow)
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     MOZ_ASSERT(IsPrimaryScreen());
 
     if (mMirroringWidget) {
@@ -744,7 +743,7 @@ nsScreenGonk::UpdateMirroringWidget(already_AddRefed<nsWindow>& aWindow)
 nsWindow*
 nsScreenGonk::GetMirroringWidget()
 {
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread());
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread());
     MOZ_ASSERT(IsPrimaryScreen());
 
     return mMirroringWidget;
@@ -903,9 +902,9 @@ nsScreenManagerGonk::VsyncControl(bool aEnabled)
 {
     if (!NS_IsMainThread()) {
         NS_DispatchToMainThread(
-            NS_NewRunnableMethodWithArgs<bool>(this,
-                                               &nsScreenManagerGonk::VsyncControl,
-                                               aEnabled));
+            NewRunnableMethod<bool>(this,
+                                    &nsScreenManagerGonk::VsyncControl,
+                                    aEnabled));
         return;
     }
 
@@ -974,7 +973,7 @@ private:
 
 NS_IMPL_ISUPPORTS(DisplayInfo, nsIDisplayInfo, nsISupports)
 
-class NotifyTask : public nsRunnable {
+class NotifyTask : public mozilla::Runnable {
 public:
     NotifyTask(uint32_t aId, bool aConnected)
         : mDisplayInfo(new DisplayInfo(aId, aConnected))

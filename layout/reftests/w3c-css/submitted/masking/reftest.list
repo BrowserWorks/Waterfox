@@ -5,18 +5,28 @@
 # mask-composite test cases
 fails == mask-composite-1a.html mask-composite-1-ref.html
 fails == mask-composite-1b.html mask-composite-1-ref.html
+fails == mask-composite-1c.html mask-composite-1-ref.html
 fails == mask-composite-2a.html mask-composite-2-ref.html
 fails == mask-composite-2b.html mask-composite-2-ref.html
+fails == mask-composite-2c.html mask-composite-2-ref.html
 
 # mask-mode test cases
 fails == mask-mode-a.html mask-mode-ref.html
 fails == mask-mode-b.html mask-mode-ref.html
+fails == mask-mode-to-mask-type.html mask-mode-to-mask-type-ref.html
 
 # mask-image test cases
 fails == mask-image-1a.html mask-image-1-ref.html
 fails == mask-image-1b.html mask-image-1-ref.html
 fails == mask-image-1c.html mask-image-1-ref.html
 fails == mask-image-2.html mask-image-2-ref.html
+fails == mask-image-3a.html mask-image-3-ref.html
+fails == mask-image-3b.html mask-image-3-ref.html
+fails == mask-image-3c.html mask-image-3-ref.html
+fails == mask-image-3d.html mask-image-3-ref.html
+fails == mask-image-3e.html mask-image-3-ref.html
+fails == mask-image-4a.html blank.html
+fails == mask-image-4b.html blank.html
 
 # mask-clip test cases
 fails == mask-clip-1.html mask-clip-1-ref.html

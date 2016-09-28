@@ -54,7 +54,7 @@ using namespace workers;
 
 #ifndef SPIDERMONKEY_PROMISE
 // This class processes the promise's callbacks with promise's result.
-class PromiseReactionJob final : public nsRunnable
+class PromiseReactionJob final : public Runnable
 {
 public:
   PromiseReactionJob(Promise* aPromise,
@@ -180,7 +180,7 @@ GetPromise(JSContext* aCx, JS::Handle<JSObject*> aFunc)
 
 // Runnable to resolve thenables.
 // Equivalent to the specification's ResolvePromiseViaThenableTask.
-class PromiseResolveThenableJob final : public nsRunnable
+class PromiseResolveThenableJob final : public Runnable
 {
 public:
   PromiseResolveThenableJob(Promise* aPromise,
@@ -525,6 +525,10 @@ Promise::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto,
 already_AddRefed<Promise>
 Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv)
 {
+  if (!aGlobal) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
   RefPtr<Promise> p = new Promise(aGlobal);
   p->CreateWrapper(nullptr, aRv);
   if (aRv.Failed()) {
@@ -859,6 +863,10 @@ already_AddRefed<Promise>
 Promise::Create(nsIGlobalObject* aGlobal, ErrorResult& aRv,
                 JS::Handle<JSObject*> aDesiredProto)
 {
+  if (!aGlobal) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
   RefPtr<Promise> p = new Promise(aGlobal);
   p->CreateWrapper(aDesiredProto, aRv);
   if (aRv.Failed()) {
@@ -2615,7 +2623,7 @@ Promise::ResolveInternal(JSContext* aCx,
   mResolvePending = true;
 
   if (aValue.isObject()) {
-    AutoDontReportUncaught silenceReporting(aCx);
+    MOZ_ASSERT(JS::ContextOptionsRef(aCx).autoJSAPIOwnsErrorReporting());
     JS::Rooted<JSObject*> valueObj(aCx, &aValue.toObject());
 
     // Thenables.

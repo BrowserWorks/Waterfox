@@ -21,6 +21,7 @@ UNIFIED_SOURCES += [
     'gfxVR.cpp',
     'gfxVRCardboard.cpp',
     'gfxVROculus.cpp',
+    'gfxVROSVR.cpp',
     'ipc/VRManagerChild.cpp',
     'ipc/VRManagerParent.cpp',
     'VRDeviceProxy.cpp',
@@ -54,9 +55,6 @@ CFLAGS += CONFIG['TK_CFLAGS']
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
-
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']
 
 # This is intended as a temporary hack to enable VS2015 builds.
 if CONFIG['_MSC_VER']:

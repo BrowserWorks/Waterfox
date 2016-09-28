@@ -86,19 +86,17 @@
   display: none;
 }
 
-/* NB: these would be -moz-margin-start/end if it wasn't for the fact that OS X
+/* NB: these would be margin-inline-start/end if it wasn't for the fact that OS X
  * doesn't reverse the order of the items in the titlebar in RTL mode. */
 .titlebar-placeholder[type="caption-buttons"],
 #titlebar-buttonbox {
   margin-left: 7px;
 }
 
-@media (-moz-mac-lion-theme) {
-  .titlebar-placeholder[type="fullscreen-button"],
-  #titlebar-secondary-buttonbox {
-    margin-right: 7px;
-    margin-left: 7px;
-  }
+.titlebar-placeholder[type="fullscreen-button"],
+#titlebar-secondary-buttonbox {
+  margin-right: 7px;
+  margin-left: 7px;
 }
 
 #main-window:not(:-moz-lwtheme) > #titlebar {
@@ -322,8 +320,8 @@ toolbarbutton.bookmark-item:not(.subviewbutton),
   list-style-image: url("chrome://browser/skin/places/folderDropArrow.png");
   -moz-image-region: rect(0, 7px, 5px, 0);
   margin-top: 1px;
-  -moz-margin-start: 3px;
-  -moz-margin-end: -2px;
+  margin-inline-start: 3px;
+  margin-inline-end: -2px;
 }
 
 @media (min-resolution: 2dppx) {
@@ -371,7 +369,7 @@ toolbarbutton.bookmark-item:not(.subviewbutton)[open="true"] {
 }
 
 toolbarbutton.bookmark-item > menupopup {
-  -moz-margin-start: 3px;
+  margin-inline-start: 3px;
 }
 
 .bookmark-item > .toolbarbutton-icon,
@@ -383,7 +381,7 @@ toolbarbutton.bookmark-item > menupopup {
 
 .bookmark-item > .toolbarbutton-icon[label]:not([label=""]),
 .bookmark-item > .toolbarbutton-icon[type="menu"] {
-  -moz-margin-end: 5px;
+  margin-inline-end: 5px;
 }
 
 .bookmark-item[container] {
@@ -578,6 +576,7 @@ toolbarpaletteitem[place="palette"] > #personal-bookmarks > #bookmarks-toolbar-p
   list-style-image: url("chrome://browser/skin/places/bookmarksToolbar.png");
 }
 
+#menu_unsortedBookmarks,
 #BMB_unsortedBookmarks,
 #panelMenu_unsortedBookmarks {
   list-style-image: url("chrome://browser/skin/places/unfiledBookmarks.png");
@@ -702,7 +701,7 @@ toolbar .toolbarbutton-1:not(:hover):not(:active):not([open]) > .toolbarbutton-m
   display: -moz-box;
   width: 1px;
   height: 18px;
-  -moz-margin-start: -1px;
+  margin-inline-start: -1px;
   background-image: linear-gradient(currentColor 0, currentColor 100%);
   background-position: center;
   background-repeat: no-repeat;
@@ -738,8 +737,8 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-ic
   margin-bottom: 0;
   padding-top: 1px;
   padding-bottom: 1px;
-  -moz-margin-start: 7px;
-  -moz-margin-end: 7px;
+  margin-inline-start: 7px;
+  margin-inline-end: 7px;
 }
 
 %include ../shared/toolbarbuttons.inc.css
@@ -796,6 +795,10 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-ic
 
   #sync-button@toolbarButtonPressed@ {
     -moz-image-region: rect(18px, 792px, 36px, 774px);
+  }
+
+  #containers-panelmenu@toolbarButtonPressed@ {
+    -moz-image-region: rect(18px, 810px, 36px, 792px);
   }
 
   #feed-button@toolbarButtonPressed@ {
@@ -953,6 +956,10 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-ic
     -moz-image-region: rect(36px, 1584px, 72px, 1548px);
   }
 
+  #containers-panelmenu@toolbarButtonPressed@ {
+    -moz-image-region: rect(36px, 1620px, 72px, 1584px);
+  }
+
   #feed-button@toolbarButtonPressed@ {
     -moz-image-region: rect(36px, 576px, 72px, 540px);
   }
@@ -1057,11 +1064,6 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-ic
   #panic-button@toolbarButtonPressed@ {
     -moz-image-region: rect(36px, 1404px, 72px, 1368px);
   }
-
-  #add-share-provider {
-    list-style-image: url(chrome://browser/skin/menuPanel-small@2x.png);
-    -moz-image-region: rect(0px, 192px, 32px, 160px);
-  }
 }
 
 toolbar .toolbarbutton-1:not([type="menu-button"]),
@@ -1071,31 +1073,23 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 
 #main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-icon,
 #main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-badge-stack > .toolbarbutton-icon,
-#main-window:not([customizing]) .toolbarbutton-1 > .toolbarbutton-menubutton-button[disabled="true"] > .toolbarbutton-icon {
-  opacity: .4;
+#main-window:not([customizing]) .toolbarbutton-1 > .toolbarbutton-menubutton-button[disabled="true"] > .toolbarbutton-icon,
+#main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-menu-dropmarker,
+#main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-menubutton-dropmarker,
+.toolbarbutton-1:not(:hover):-moz-window-inactive > #downloads-indicator-anchor,
+.toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-icon,
+.toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-text,
+.toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-badge-stack > .toolbarbutton-icon,
+.toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-menu-dropmarker,
+.toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon,
+.toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
+  opacity: .5;
 }
 
-@media (-moz-mac-lion-theme) {
-  #main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-icon,
-  #main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-badge-stack > .toolbarbutton-icon,
-  #main-window:not([customizing]) .toolbarbutton-1 > .toolbarbutton-menubutton-button[disabled="true"] > .toolbarbutton-icon,
-  #main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-menu-dropmarker,
-  #main-window:not([customizing]) .toolbarbutton-1[disabled="true"] > .toolbarbutton-menubutton-dropmarker,
-  .toolbarbutton-1:not(:hover):-moz-window-inactive > #downloads-indicator-anchor,
-  .toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-icon,
-  .toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-text,
-  .toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-badge-stack > .toolbarbutton-icon,
-  .toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-menu-dropmarker,
-  .toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon,
-  .toolbarbutton-1:not(:hover):-moz-window-inactive > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
-    opacity: .5;
-  }
-
-  #main-window:not([customizing]) .toolbarbutton-1:-moz-window-inactive[disabled="true"] > .toolbarbutton-icon,
-  #main-window:not([customizing]) .toolbarbutton-1:-moz-window-inactive[disabled="true"] > .toolbarbutton-badge-stack > .toolbarbutton-icon,
-  #main-window:not([customizing]) .toolbarbutton-1:-moz-window-inactive > .toolbarbutton-menubutton-button[disabled="true"] > .toolbarbutton-icon {
-    opacity: .25;
-  }
+#main-window:not([customizing]) .toolbarbutton-1:-moz-window-inactive[disabled="true"] > .toolbarbutton-icon,
+#main-window:not([customizing]) .toolbarbutton-1:-moz-window-inactive[disabled="true"] > .toolbarbutton-badge-stack > .toolbarbutton-icon,
+#main-window:not([customizing]) .toolbarbutton-1:-moz-window-inactive > .toolbarbutton-menubutton-button[disabled="true"] > .toolbarbutton-icon {
+  opacity: .25;
 }
 
 .toolbarbutton-1 > .toolbarbutton-menu-dropmarker,
@@ -1116,11 +1110,11 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 }
 
 .toolbarbutton-1 > .toolbarbutton-menu-dropmarker {
-  -moz-margin-end: 1px;
+  margin-inline-end: 1px;
 }
 
 .toolbarbutton-1 > .toolbarbutton-menubutton-button {
-  -moz-border-end: none !important;
+  border-inline-end: none !important;
 }
 
 .toolbarbutton-1 > .toolbarbutton-menubutton-button:-moz-locale-dir(rtl),
@@ -1184,7 +1178,7 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
   width: 32px;
   height: 32px;
   padding: 4px 5px 4px 3px;
-  -moz-margin-end: 0;
+  margin-inline-end: 0;
   border-radius: 10000px;
 }
 
@@ -1231,48 +1225,26 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 }
 
 #forward-button:not(:-moz-lwtheme) {
-  background: linear-gradient(hsl(0,0%,99%), hsl(0,0%,67%)) padding-box;
+  background-image: linear-gradient(hsla(0,0%,100%,.73), hsla(0,0%,100%,.05) 85%);
   border: 1px solid;
-  border-color: hsl(0,0%,31%) hsla(0,0%,29%,.6) hsl(0,0%,27%);
-  box-shadow: inset 0 1px 0 hsla(0,0%,100%,.35),
+  border-color: hsla(0,0%,0%,.35) hsla(0,0%,0%,.25) hsla(0,0%,0%,.2);
+  box-shadow: inset 0 1px 0 hsla(0,0%,100%,.2),
+              inset 0 0 1px hsla(0,0%,100%,.1),
               0 1px 0 hsla(0,0%,100%,.2);
 }
 
 #forward-button:hover:active:not(:-moz-lwtheme) {
-  background-image: linear-gradient(hsl(0,0%,74%), hsl(0,0%,61%));
-  box-shadow: inset rgba(0,0,0,.3) 0 -6px 10px,
-              inset #000 0 1px 3px,
-              inset rgba(0,0,0,.2) 0 1px 3px,
+  background-image: linear-gradient(hsla(0,0%,60%,.37), hsla(0,0%,100%,.35) 95%);
+  border-color: hsla(0,0%,0%,.43) hsla(0,0%,0%,.25) hsla(0,0%,0%,.37);
+  box-shadow: inset 0 1px 0 hsla(0,0%,0%,.02),
+              inset 0 1px 2px hsla(0,0%,0%,.2),
               0 1px 0 hsla(0,0%,100%,.2);
 }
 
 #forward-button:-moz-window-inactive:not(:-moz-lwtheme) {
-  border-color: hsl(0,0%,64%) hsl(0,0%,65%) hsl(0,0%,66%);
-  background-image: linear-gradient(hsl(0,0%,99%), hsl(0,0%,82%));
+  background-image: none;
+  border-color: hsla(0,0%,0%,.2);
   box-shadow: inset 0 1px 0 hsla(0,0%,100%,.35);
-}
-
-@media (-moz-mac-lion-theme) {
-  #forward-button:not(:-moz-lwtheme) {
-    background-image: linear-gradient(hsla(0,0%,100%,.73), hsla(0,0%,100%,.05) 85%);
-    border-color: hsla(0,0%,0%,.35) hsla(0,0%,0%,.25) hsla(0,0%,0%,.2);
-    box-shadow: inset 0 1px 0 hsla(0,0%,100%,.2),
-                inset 0 0 1px hsla(0,0%,100%,.1),
-                0 1px 0 hsla(0,0%,100%,.2);
-  }
-
-  #forward-button:hover:active:not(:-moz-lwtheme) {
-    background-image: linear-gradient(hsla(0,0%,60%,.37), hsla(0,0%,100%,.35) 95%);
-    border-color: hsla(0,0%,0%,.43) hsla(0,0%,0%,.25) hsla(0,0%,0%,.37);
-    box-shadow: inset 0 1px 0 hsla(0,0%,0%,.02),
-                inset 0 1px 2px hsla(0,0%,0%,.2),
-                0 1px 0 hsla(0,0%,100%,.2);
-  }
-
-  #forward-button:-moz-window-inactive:not(:-moz-lwtheme) {
-    background-image: none;
-    border-color: hsla(0,0%,0%,.2);
-  }
 }
 
 @media (-moz-mac-yosemite-theme) {
@@ -1411,16 +1383,16 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 }
 
 #cut-button {
-  -moz-margin-end: 0;
+  margin-inline-end: 0;
 }
 
 #edit-controls[cui-areatype="toolbar"] > #cut-button {
-  -moz-border-end: 0;
+  border-inline-end: 0;
 }
 
 #paste-button {
-  -moz-border-start: none;
-  -moz-margin-start: 0;
+  border-inline-start: none;
+  margin-inline-start: 0;
 }
 
 #cut-button:-moz-locale-dir(ltr),
@@ -1444,20 +1416,20 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 /* zoom controls */
 
 #zoom-out-button {
-  -moz-margin-end: 0;
+  margin-inline-end: 0;
 }
 
 #zoom-in-button {
-  -moz-margin-start: 0;
-  -moz-border-start: 0;
+  margin-inline-start: 0;
+  border-inline-start: 0;
 }
 
 #zoom-controls[cui-areatype="toolbar"] > #zoom-out-button {
-  -moz-border-end: 0;
+  border-inline-end: 0;
 }
 
 #zoom-controls[cui-areatype="toolbar"] > #zoom-in-button {
-  -moz-border-start-width: 1px;
+  border-inline-start-width: 1px;
 }
 
 #zoom-controls[cui-areatype="toolbar"] > #zoom-reset-button {
@@ -1497,34 +1469,19 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 .searchbar-textbox {
   font: icon;
   -moz-appearance: none;
-  box-shadow: 0 1px rgba(255, 255, 255, 0.2), inset 0 1px hsla(0,0%,0%,.05);
+  box-shadow: 0 1px 0 hsla(0,0%,100%,.2),
+              inset 0 0 1px hsla(0,0%,0%,.05),
+              inset 0 1px 2px hsla(0,0%,0%,.1);
   margin: 0 4px;
   padding: 1px 0;
   border: 1px solid;
-  border-color: #626262 #787878 #8c8c8c;
+  background-image: linear-gradient(hsl(0,0%,97%), hsl(0,0%,100%));
+  border-color: hsla(0,0%,0%,.35) hsla(0,0%,0%,.25) hsla(0,0%,0%,.15);
   background-clip: padding-box;
 }
 
 #urlbar[readonly] {
   background-color: -moz-field;
-}
-
-@media (-moz-mac-lion-theme) {
-  #urlbar,
-  .searchbar-textbox {
-    background-image: linear-gradient(hsl(0,0%,97%), hsl(0,0%,100%));
-    border-color: hsla(0,0%,0%,.35) hsla(0,0%,0%,.25) hsla(0,0%,0%,.15);
-    box-shadow: 0 1px 0 hsla(0,0%,100%,.2),
-                inset 0 0 1px hsla(0,0%,0%,.05),
-                inset 0 1px 2px hsla(0,0%,0%,.1);
-  }
-}
-
-@media not all and (-moz-mac-lion-theme) {
-  #urlbar:-moz-window-inactive,
-  .searchbar-textbox:-moz-window-inactive {
-    border-color: @toolbarbuttonInactiveBorderColor@;
-  }
 }
 
 @media (-moz-mac-yosemite-theme) {
@@ -1557,7 +1514,7 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 }
 
 @conditionalForwardWithUrlbar@ > #urlbar {
-  -moz-border-start: none;
+  border-inline-start: none;
   margin-left: 0;
 }
 
@@ -1626,12 +1583,12 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 #identity-box:-moz-focusring {
   box-shadow: 0 0 2px 1px -moz-mac-focusring inset,
               0 0 2px 2px -moz-mac-focusring;
-  -moz-border-end-style: none;
-  -moz-padding-end: 5px;
+  border-inline-end-style: none;
+  padding-inline-end: 5px;
 }
 
 .urlbar-input-box {
-  -moz-margin-start: 0;
+  margin-inline-start: 0;
   padding: 3px 0 2px;
 }
 
@@ -1721,8 +1678,8 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button {
 }
 
 #urlbar-display-box {
-  -moz-border-end: 1px solid #AAA;
-  -moz-margin-end: 3px;
+  border-inline-end: 1px solid #AAA;
+  margin-inline-end: 3px;
 }
 
 .urlbar-display {
@@ -2157,7 +2114,7 @@ html|span.ac-emphasize-text-url {
 }
 
 .editBookmarkPanelBottomButton:last-child {
-  -moz-margin-start: 8px;
+  margin-inline-start: 8px;
 }
 
 /* The following elements come from editBookmarkOverlay.xul. Styling that's
@@ -2182,7 +2139,7 @@ html|span.ac-emphasize-text-url {
 #editBMPanel_newFolderButton {
   -moz-appearance: none;
   border: 0 solid #a5a5a5;
-  -moz-border-end-width: 1px;
+  border-inline-end-width: 1px;
   padding: 0 9px;
   margin: 0;
   min-width: 21px;
@@ -2213,8 +2170,8 @@ html|span.ac-emphasize-text-url {
   min-height: 22px;
   padding-top: 2px;
   padding-bottom: 1px;
-  -moz-padding-start: 8px;
-  -moz-padding-end: 4px;
+  padding-inline-start: 8px;
+  padding-inline-end: 4px;
 }
 
 #editBMPanel_folderMenuList:-moz-focusring {
@@ -2233,7 +2190,7 @@ html|span.ac-emphasize-text-url {
   border: 0;
   margin: 0;
   padding: 0;
-  -moz-padding-end: 4px;
+  padding-inline-end: 4px;
   width: 7px;
 }
 
@@ -2277,7 +2234,7 @@ html|span.ac-emphasize-text-url {
 #editBookmarkPanel .expander-down {
   @hudButton@
   margin: 0;
-  -moz-margin-start: 4px;
+  margin-inline-start: 4px;
   min-width: 27px;
   min-height: 22px;
 }
@@ -2348,14 +2305,8 @@ html|span.ac-emphasize-text-url {
 /* ----- SIDEBAR ELEMENTS ----- */
 
 #sidebar-box {
-  background-color: hsl(212,19%,85%);
-  background-image: linear-gradient(hsl(213,26%,93%), hsl(212,19%,85%));
+  -moz-appearance: -moz-mac-source-list;
   box-shadow: inset -2px 0 0 hsla(0,0%,100%,.2);
-}
-
-#sidebar-box:-moz-window-inactive {
-  background-color: hsl(0,0%,92%);
-  background-image: linear-gradient(hsl(0,0%,97%), hsl(0,0%,92%));
 }
 
 sidebarheader {
@@ -2364,21 +2315,21 @@ sidebarheader {
 }
 
 .sidebar-splitter {
-  -moz-border-start: none;
-  -moz-border-end: 1px solid #b4b4b4;
+  border-inline-start: none;
+  border-inline-end: 1px solid #b4b4b4;
   min-width: 1px;
   width: 3px;
   background-image: none !important;
   background-color: transparent;
-  -moz-margin-start: -3px;
+  margin-inline-start: -3px;
   position: relative;
 }
 
 #appcontent ~ .sidebar-splitter {
-  -moz-border-start: 1px solid #ccc;
-  -moz-border-end: none;
-  -moz-margin-start: 0;
-  -moz-margin-end: -3px;
+  border-inline-start: 1px solid #ccc;
+  border-inline-end: none;
+  margin-inline-start: 0;
+  margin-inline-end: -3px;
 }
 
 .sidebar-title,
@@ -2407,13 +2358,7 @@ sidebarheader {
 
 @media (-moz-mac-yosemite-theme) {
   #sidebar-box {
-    -moz-appearance: -moz-mac-vibrancy-light;
-    background-image: none;
     box-shadow: none;
-  }
-
-  #sidebar-box:-moz-window-inactive {
-    background-image: none;
   }
 
   sidebarheader {
@@ -2663,10 +2608,8 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
   text-shadow: @loweredShadow@;
 }
 
-@media (-moz-mac-lion-theme) {
-  #navigator-toolbox[inFullscreen] > #TabsToolbar {
-    padding-top: var(--space-above-tabbar);
-  }
+#navigator-toolbox[inFullscreen] > #TabsToolbar {
+  padding-top: var(--space-above-tabbar);
 }
 
 #tabbrowser-tabs {
@@ -2699,7 +2642,7 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
  */
 
 .tab-close-button > .toolbarbutton-icon {
-  -moz-margin-end: 0px !important;
+  margin-inline-end: 0px !important;
 }
 
 .tab-close-button {
@@ -2728,11 +2671,11 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
 }
 
 .tabbrowser-arrowscrollbox > .scrollbutton-up {
-  -moz-border-end: 2px solid transparent;
+  border-inline-end: 2px solid transparent;
 }
 
 .tabbrowser-arrowscrollbox > .scrollbutton-down {
-  -moz-border-start: 2px solid transparent;
+  border-inline-start: 2px solid transparent;
   transition: 1s background-color ease-out;
 }
 
@@ -2978,7 +2921,7 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
 }
 
 #alltabs-button > .toolbarbutton-icon {
-  -moz-margin-end: 2px;
+  margin-inline-end: 2px;
 }
 
 /* All Tabs Menupopup */
@@ -3044,7 +2987,7 @@ menuitem:hover > hbox > .alltabs-endimage[soundplaying] {
 .menupopup-drop-indicator {
   list-style-image: none;
   height: 2px;
-  -moz-margin-end: -4em;
+  margin-inline-end: -4em;
   background-color: Highlight;
 }
 
@@ -3131,8 +3074,8 @@ button.translate-infobar-element[anonid="translate"]:hover {
 }
 
 button.translate-infobar-element.options-menu-button {
-  -moz-padding-start: 0.5em !important;
-  -moz-padding-end: 0em !important;
+  padding-inline-start: 0.5em !important;
+  padding-inline-end: 0em !important;
 }
 
 button.translate-infobar-element.options-menu-button > .button-box > .button-menu-dropmarker {
@@ -3166,7 +3109,7 @@ menulist.translate-infobar-element {
 
 menulist.translate-infobar-element > .menulist-label-box {
   padding-top: 1px;
-  -moz-padding-start: 0.3em;
+  padding-inline-start: 0.3em;
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -3270,55 +3213,6 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   margin-top: .5em;
 }
 
-/* Sync Panels */
-
-.sync-panel-icon {
-  height:32px;
-  width: 32px;
-  background: url("chrome://browser/content/abouthome/sync.png") top left no-repeat;
-}
-
-@media (min-resolution: 2dppx) {
-  .sync-panel-icon {
-    background: url("chrome://browser/content/abouthome/sync@2x.png") top left no-repeat;
-    background-size: 32px 32px;
-  }
-}
-
-.sync-panel-inner {
-  width: 0;
-  padding-left: 10px;
-}
-
-.sync-panel-button-box {
-  margin-top: 1em;
-}
-
-.sync-panel-button {
-  @hudButton@
-  margin: 0;
-  min-width: 72px;
-  min-height: 22px;
-}
-
-.sync-panel-button:hover:active {
-  @hudButtonPressed@
-}
-
-.sync-panel-button:-moz-focusring {
-  @hudButtonFocused@
-}
-
-#sync-start-panel-title {
-  font-size: 120%;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-#sync-start-panel-subtitle {
-  margin-bottom: 0;
-}
-
 /* Status panel */
 
 .statuspanel-label {
@@ -3357,7 +3251,7 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   the default closebutton margins from notification.css require adjustment */
 
 .click-to-play-plugins-notification-description-box > .popup-notification-closebutton {
-  -moz-margin-end: -6px;
+  margin-inline-end: -6px;
   margin-top: -7px;
 }
 
@@ -3417,7 +3311,7 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   width: 32px;
   height: 32px;
   margin: 4px;
-  -moz-margin-start: 0;
+  margin-inline-start: 0;
 }
 
 .social-panel > .panel-arrowcontainer > .panel-arrowcontent {
@@ -3592,25 +3486,23 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   }
 }
 
-@media (-moz-mac-lion-theme) {
-  #TabsToolbar > .private-browsing-indicator {
-    transform: translateY(calc(-1 * var(--space-above-tabbar)));
-    /* We offset by 38px for mask graphic, plus 4px to account for the
-     * margin-left, which sums to 42px.
-     */
-    margin-right: -42px;
-  }
+#TabsToolbar > .private-browsing-indicator {
+  transform: translateY(calc(-1 * var(--space-above-tabbar)));
+  /* We offset by 38px for mask graphic, plus 4px to account for the
+   * margin-left, which sums to 42px.
+   */
+  margin-right: -42px;
+}
 
-  #main-window[privatebrowsingmode=temporary] .titlebar-placeholder[type="fullscreen-button"],
-  #main-window[privatebrowsingmode=temporary] > #titlebar > #titlebar-content > #titlebar-secondary-buttonbox > #titlebar-fullscreen-button {
-    margin-left: 0px;
-  }
+#main-window[privatebrowsingmode=temporary] .titlebar-placeholder[type="fullscreen-button"],
+#main-window[privatebrowsingmode=temporary] > #titlebar > #titlebar-content > #titlebar-secondary-buttonbox > #titlebar-fullscreen-button {
+  margin-left: 0px;
+}
 
-  #main-window[privatebrowsingmode=temporary][inFullscreen] .titlebar-placeholder[type="fullscreen-button"] {
-    /* Override display:none for .titlebar-placeholder in fullscreen so we can have consistent
-       position and padding for the private browsing indicator. */
-    display: -moz-box;
-  }
+#main-window[privatebrowsingmode=temporary][inFullscreen] .titlebar-placeholder[type="fullscreen-button"] {
+  /* Override display:none for .titlebar-placeholder in fullscreen so we can have consistent
+     position and padding for the private browsing indicator. */
+  display: -moz-box;
 }
 
 #TabsToolbar > .private-browsing-indicator:-moz-locale-dir(rtl) {
@@ -3625,7 +3517,7 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 }
 
 #UITourTooltipClose {
-  -moz-margin-end: -10px;
+  margin-inline-end: -10px;
   margin-top: -14px;
 }
 
@@ -3647,4 +3539,10 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   overflow: hidden;
 }
 
-%include ../shared/usercontext/usercontext.inc.css
+.cui-widget-panelview[id^=PanelUI-webext-] {
+  border-radius: 3.5px;
+}
+
+.webextension-popup-browser {
+  border-radius: inherit;
+}

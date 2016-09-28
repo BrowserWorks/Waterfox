@@ -4,10 +4,12 @@
 
 #include "LocalCertService.h"
 
+#include "CryptoTask.h"
+#include "ScopedNSSTypes.h"
+#include "cert.h"
+#include "mozilla/Casting.h"
 #include "mozilla/ModuleUtils.h"
 #include "mozilla/RefPtr.h"
-#include "cert.h"
-#include "CryptoTask.h"
 #include "nsIPK11Token.h"
 #include "nsIPK11TokenDB.h"
 #include "nsIX509Cert.h"
@@ -18,7 +20,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsString.h"
 #include "pk11pub.h"
-#include "ScopedNSSTypes.h"
 
 namespace mozilla {
 
@@ -36,7 +37,7 @@ protected:
     nsresult rv;
 
     for (;;) {
-      ScopedCERTCertificate cert(
+      UniqueCERTCertificate cert(
         PK11_FindCertFromNickname(mNickname.get(), nullptr));
       if (!cert) {
         return NS_OK; // All done
@@ -56,7 +57,7 @@ protected:
         return NS_ERROR_UNEXPECTED; // Issuer should match nickname
       }
 
-      rv = MapSECStatus(PK11_DeleteTokenCertAndKey(cert, nullptr));
+      rv = MapSECStatus(PK11_DeleteTokenCertAndKey(cert.get(), nullptr));
       if (NS_FAILED(rv)) {
         return rv; // Some error, abort the loop
       }
@@ -109,7 +110,7 @@ private:
     nsresult rv;
 
     // Get the key slot for generation later
-    ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+    UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
     if (!slot) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
@@ -123,7 +124,7 @@ private:
     // Generate a new cert
     NS_NAMED_LITERAL_CSTRING(commonNamePrefix, "CN=");
     nsAutoCString subjectNameStr(commonNamePrefix + mNickname);
-    ScopedCERTName subjectName(CERT_AsciiToName(subjectNameStr.get()));
+    UniqueCERTName subjectName(CERT_AsciiToName(subjectNameStr.get()));
     if (!subjectName) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
@@ -141,25 +142,25 @@ private:
     memcpy(keyParams.data + 2, curveOidData->oid.data, curveOidData->oid.len);
 
     // Generate cert key pair
-    ScopedSECKEYPrivateKey privateKey;
-    ScopedSECKEYPublicKey publicKey;
     SECKEYPublicKey* tempPublicKey;
-    privateKey = PK11_GenerateKeyPair(slot, CKM_EC_KEY_PAIR_GEN, &keyParams,
-                                      &tempPublicKey, true /* token */,
-                                      true /* sensitive */, nullptr);
-    if (!privateKey) {
+    UniqueSECKEYPrivateKey privateKey(
+      PK11_GenerateKeyPair(slot.get(), CKM_EC_KEY_PAIR_GEN, &keyParams,
+                           &tempPublicKey, true /* token */,
+                           true /* sensitive */, nullptr));
+    UniqueSECKEYPublicKey publicKey(tempPublicKey);
+    tempPublicKey = nullptr;
+    if (!privateKey || !publicKey) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
-    publicKey = tempPublicKey;
 
     // Create subject public key info and cert request
-    ScopedCERTSubjectPublicKeyInfo spki(
-      SECKEY_CreateSubjectPublicKeyInfo(publicKey));
+    UniqueCERTSubjectPublicKeyInfo spki(
+      SECKEY_CreateSubjectPublicKeyInfo(publicKey.get()));
     if (!spki) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
-    ScopedCERTCertificateRequest certRequest(
-      CERT_CreateCertificateRequest(subjectName, spki, nullptr));
+    UniqueCERTCertificateRequest certRequest(
+      CERT_CreateCertificateRequest(subjectName.get(), spki.get(), nullptr));
     if (!certRequest) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
@@ -173,7 +174,7 @@ private:
     PRTime now = PR_Now();
     PRTime notBefore = now - oneDay;
     PRTime notAfter = now + (PRTime(365) * oneDay);
-    ScopedCERTValidity validity(CERT_CreateValidity(notBefore, notAfter));
+    UniqueCERTValidity validity(CERT_CreateValidity(notBefore, notAfter));
     if (!validity) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
@@ -181,17 +182,17 @@ private:
     // Generate random serial
     unsigned long serial;
     // This serial in principle could collide, but it's unlikely
-    rv = MapSECStatus(
-           PK11_GenerateRandomOnSlot(slot,
-                                     reinterpret_cast<unsigned char *>(&serial),
-                                     sizeof(serial)));
+    rv = MapSECStatus(PK11_GenerateRandomOnSlot(
+           slot.get(), BitwiseCast<unsigned char*, unsigned long*>(&serial),
+           sizeof(serial)));
     if (NS_FAILED(rv)) {
       return rv;
     }
 
     // Create the cert from these pieces
-    ScopedCERTCertificate cert(
-      CERT_CreateCertificate(serial, subjectName, validity, certRequest));
+    UniqueCERTCertificate cert(
+      CERT_CreateCertificate(serial, subjectName.get(), validity.get(),
+                             certRequest.get()));
     if (!cert) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
@@ -216,22 +217,22 @@ private:
     }
 
     // Encode and self-sign the cert
-    ScopedSECItem certDER(
-      SEC_ASN1EncodeItem(nullptr, nullptr, cert,
+    UniqueSECItem certDER(
+      SEC_ASN1EncodeItem(nullptr, nullptr, cert.get(),
                          SEC_ASN1_GET(CERT_CertificateTemplate)));
     if (!certDER) {
       return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
     }
     rv = MapSECStatus(
            SEC_DerSignData(arena, &cert->derCert, certDER->data, certDER->len,
-                           privateKey,
+                           privateKey.get(),
                            SEC_OID_ANSIX962_ECDSA_SHA256_SIGNATURE));
     if (NS_FAILED(rv)) {
       return rv;
     }
 
     // Create a CERTCertificate from the signed data
-    ScopedCERTCertificate certFromDER(
+    UniqueCERTCertificate certFromDER(
       CERT_NewTempCertificate(CERT_GetDefaultCertDB(), &cert->derCert, nullptr,
                               true /* perm */, true /* copyDER */));
     if (!certFromDER) {
@@ -239,8 +240,9 @@ private:
     }
 
     // Save the cert in the DB
-    rv = MapSECStatus(PK11_ImportCert(slot, certFromDER, CK_INVALID_HANDLE,
-                                      mNickname.get(), false /* unused */));
+    rv = MapSECStatus(PK11_ImportCert(slot.get(), certFromDER.get(),
+                                      CK_INVALID_HANDLE, mNickname.get(),
+                                      false /* unused */));
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -368,21 +370,21 @@ LocalCertService::LoginToKeySlot()
   nsresult rv;
 
   // Get access to key slot
-  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
   if (!slot) {
     return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
   }
 
   // If no user password yet, set it an empty one
-  if (PK11_NeedUserInit(slot)) {
-    rv = MapSECStatus(PK11_InitPin(slot, "", ""));
+  if (PK11_NeedUserInit(slot.get())) {
+    rv = MapSECStatus(PK11_InitPin(slot.get(), "", ""));
     if (NS_FAILED(rv)) {
       return rv;
     }
   }
 
   // If user has a password set, prompt to login
-  if (PK11_NeedLogin(slot) && !PK11_IsLoggedIn(slot, nullptr)) {
+  if (PK11_NeedLogin(slot.get()) && !PK11_IsLoggedIn(slot.get(), nullptr)) {
     // Switching to XPCOM to get the UI prompt that PSM owns
     nsCOMPtr<nsIPK11TokenDB> tokenDB =
       do_GetService(NS_PK11TOKENDB_CONTRACTID);
@@ -452,20 +454,21 @@ LocalCertService::GetLoginPromptRequired(bool* aRequired)
   nsresult rv;
 
   // Get access to key slot
-  ScopedPK11SlotInfo slot(PK11_GetInternalKeySlot());
+  UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
   if (!slot) {
     return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
   }
 
   // If no user password yet, set it an empty one
-  if (PK11_NeedUserInit(slot)) {
-    rv = MapSECStatus(PK11_InitPin(slot, "", ""));
+  if (PK11_NeedUserInit(slot.get())) {
+    rv = MapSECStatus(PK11_InitPin(slot.get(), "", ""));
     if (NS_FAILED(rv)) {
       return rv;
     }
   }
 
-  *aRequired = PK11_NeedLogin(slot) && !PK11_IsLoggedIn(slot, nullptr);
+  *aRequired = PK11_NeedLogin(slot.get()) &&
+               !PK11_IsLoggedIn(slot.get(), nullptr);
   return NS_OK;
 }
 

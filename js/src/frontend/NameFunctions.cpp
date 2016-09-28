@@ -183,7 +183,7 @@ class NameResolver
     /*
      * Resolve the name of a function. If the function already has a name
      * listed, then it is skipped. Otherwise an intelligent name is guessed to
-     * assign to the function's displayAtom field
+     * assign to the function's displayAtom field.
      */
     bool resolveFun(ParseNode* pn, HandleAtom prefix, MutableHandleAtom retAtom) {
         MOZ_ASSERT(pn != nullptr);

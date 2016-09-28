@@ -5,7 +5,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "CertBlocklist.h"
+
 #include "mozilla/Base64.h"
+#include "mozilla/Casting.h"
+#include "mozilla/Logging.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/unused.h"
 #include "nsAppDirectoryServiceDefs.h"
@@ -21,7 +24,6 @@
 #include "nsTHashtable.h"
 #include "nsThreadUtils.h"
 #include "pkix/Input.h"
-#include "mozilla/Logging.h"
 #include "prtime.h"
 
 NS_IMPL_ISUPPORTS(CertBlocklist, nsICertBlocklist)
@@ -30,7 +32,7 @@ using namespace mozilla;
 using namespace mozilla::pkix;
 
 #define PREF_BACKGROUND_UPDATE_TIMER "app.update.lastUpdateTime.blocklist-background-update-timer"
-#define PREF_KINTO_ONECRL_CHECKED "services.kinto.onecrl.checked"
+#define PREF_BLOCKLIST_ONECRL_CHECKED "services.blocklist.onecrl.checked"
 #define PREF_MAX_STALENESS_IN_SECONDS "security.onecrl.maximum_staleness_in_seconds"
 #define PREF_ONECRL_VIA_AMO "security.onecrl.via.amo"
 
@@ -82,9 +84,9 @@ CertBlocklistItem::~CertBlocklistItem()
 nsresult
 CertBlocklistItem::ToBase64(nsACString& b64DNOut, nsACString& b64OtherOut)
 {
-  nsDependentCSubstring DNString(reinterpret_cast<char*>(mDNData),
+  nsDependentCSubstring DNString(BitwiseCast<char*, uint8_t*>(mDNData),
                                  mDNLength);
-  nsDependentCSubstring otherString(reinterpret_cast<char*>(mOtherData),
+  nsDependentCSubstring otherString(BitwiseCast<char*, uint8_t*>(mOtherData),
                                     mOtherLength);
   nsresult rv = Base64Encode(DNString, b64DNOut);
   if (NS_FAILED(rv)) {
@@ -144,7 +146,7 @@ CertBlocklist::~CertBlocklist()
                                   PREF_ONECRL_VIA_AMO,
                                   this);
   Preferences::UnregisterCallback(CertBlocklist::PreferenceChanged,
-                                  PREF_KINTO_ONECRL_CHECKED,
+                                  PREF_BLOCKLIST_ONECRL_CHECKED,
                                   this);
 }
 
@@ -181,7 +183,7 @@ CertBlocklist::Init()
     return rv;
   }
   rv = Preferences::RegisterCallbackAndCall(CertBlocklist::PreferenceChanged,
-                                            PREF_KINTO_ONECRL_CHECKED,
+                                            PREF_BLOCKLIST_ONECRL_CHECKED,
                                             this);
   if (NS_FAILED(rv)) {
     return rv;
@@ -344,25 +346,24 @@ CertBlocklist::AddRevokedCertInternal(const nsACString& aEncodedDN,
                                       CertBlocklistItemState aItemState,
                                       MutexAutoLock& /*proofOfLock*/)
 {
-    nsCString decodedDN;
-    nsCString decodedOther;
+  nsCString decodedDN;
+  nsCString decodedOther;
 
-    nsresult rv = Base64Decode(aEncodedDN, decodedDN);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
-    rv = Base64Decode(aEncodedOther, decodedOther);
-    if (NS_FAILED(rv)) {
-      return rv;
-    }
+  nsresult rv = Base64Decode(aEncodedDN, decodedDN);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = Base64Decode(aEncodedOther, decodedOther);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
 
-    CertBlocklistItem item(reinterpret_cast<const uint8_t*>(decodedDN.get()),
-                           decodedDN.Length(),
-                           reinterpret_cast<const uint8_t*>(decodedOther.get()),
-                           decodedOther.Length(),
-                           aMechanism);
-
-
+  CertBlocklistItem item(
+    BitwiseCast<const uint8_t*, const char*>(decodedDN.get()),
+    decodedDN.Length(),
+    BitwiseCast<const uint8_t*, const char*>(decodedOther.get()),
+    decodedOther.Length(),
+    aMechanism);
 
   if (aItemState == CertNewFromBlocklist) {
     // We want SaveEntries to be a no-op if no new entries are added.
@@ -585,8 +586,7 @@ CertBlocklist::IsCertRevoked(const uint8_t* aIssuer,
     return rv;
   }
 
-  rv = crypto->Update(reinterpret_cast<const unsigned char*>(aPubKey),
-                      aPubKeyLength);
+  rv = crypto->Update(aPubKey, aPubKeyLength);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -597,11 +597,12 @@ CertBlocklist::IsCertRevoked(const uint8_t* aIssuer,
     return rv;
   }
 
-  CertBlocklistItem subjectPubKey(aSubject,
-                                  static_cast<size_t>(aSubjectLength),
-                                  reinterpret_cast<const uint8_t*>(hashString.get()),
-                                  hashString.Length(),
-                                  BlockBySubjectAndPubKey);
+  CertBlocklistItem subjectPubKey(
+    aSubject,
+    static_cast<size_t>(aSubjectLength),
+    BitwiseCast<const uint8_t*, const char*>(hashString.get()),
+    hashString.Length(),
+    BlockBySubjectAndPubKey);
 
   rv = subjectPubKey.ToBase64(encDN, encOther);
   if (NS_FAILED(rv)) {
@@ -650,7 +651,7 @@ void
 CertBlocklist::PreferenceChanged(const char* aPref, void* aClosure)
 
 {
-  CertBlocklist* blocklist = reinterpret_cast<CertBlocklist*>(aClosure);
+  auto blocklist = static_cast<CertBlocklist*>(aClosure);
   MutexAutoLock lock(blocklist->mMutex);
 
   MOZ_LOG(gCertBlockPRLog, LogLevel::Warning,
@@ -658,8 +659,8 @@ CertBlocklist::PreferenceChanged(const char* aPref, void* aClosure)
   if (strcmp(aPref, PREF_BACKGROUND_UPDATE_TIMER) == 0) {
     sLastBlocklistUpdate = Preferences::GetUint(PREF_BACKGROUND_UPDATE_TIMER,
                                                 uint32_t(0));
-  } else if (strcmp(aPref, PREF_KINTO_ONECRL_CHECKED) == 0) {
-    sLastKintoUpdate = Preferences::GetUint(PREF_KINTO_ONECRL_CHECKED,
+  } else if (strcmp(aPref, PREF_BLOCKLIST_ONECRL_CHECKED) == 0) {
+    sLastKintoUpdate = Preferences::GetUint(PREF_BLOCKLIST_ONECRL_CHECKED,
                                             uint32_t(0));
   } else if (strcmp(aPref, PREF_MAX_STALENESS_IN_SECONDS) == 0) {
     sMaxStaleness = Preferences::GetUint(PREF_MAX_STALENESS_IN_SECONDS,

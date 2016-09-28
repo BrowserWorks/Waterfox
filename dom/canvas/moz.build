@@ -4,15 +4,20 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-TEST_DIRS += ['compiledtest']
+TEST_DIRS += [
+    'compiledtest', 
+    'gtest'
+]
 
-# Number changes to this file to avoid bug 1081323 (clobber after changing a manifest):
-# 12
+# Change the following line to avoid bug 1081323 (clobber after changing a manifest):
+# Add test for webglcontextcreationerror.
 
 MOCHITEST_MANIFESTS += [
+    'test/crash/mochitest.ini',
     'test/crossorigin/mochitest.ini',
-    'test/mochitest-subsuite-webgl.ini',
     'test/mochitest.ini',
+    'test/webgl-conf/generated-mochitest.ini',
+    'test/webgl-mochitest/mochitest.ini',
 ]
 
 MOCHITEST_CHROME_MANIFESTS += ['test/chrome/chrome.ini']
@@ -51,9 +56,15 @@ UNIFIED_SOURCES += [
     'DocumentRendererChild.cpp',
     'DocumentRendererParent.cpp',
     'ImageBitmap.cpp',
+    'ImageBitmapColorUtils.cpp',
     'ImageBitmapRenderingContext.cpp',
+    'ImageBitmapUtils.cpp',
     'ImageData.cpp',
     'OffscreenCanvas.cpp',
+]
+
+SOURCES += [
+    'ImageUtils.cpp',
 ]
 
 # WebGL Sources
@@ -110,6 +121,7 @@ UNIFIED_SOURCES += [
     'WebGLExtensionDisjointTimerQuery.cpp',
     'WebGLExtensionDrawBuffers.cpp',
     'WebGLExtensionElementIndexUint.cpp',
+    'WebGLExtensionEXTColorBufferFloat.cpp',
     'WebGLExtensionFragDepth.cpp',
     'WebGLExtensionInstancedArrays.cpp',
     'WebGLExtensionLoseContext.cpp',
@@ -183,6 +195,9 @@ CXXFLAGS += CONFIG['MOZ_CAIRO_CFLAGS']
 CXXFLAGS += CONFIG['TK_CFLAGS']
 
 LOCAL_INCLUDES += CONFIG['SKIA_INCLUDES']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']
 
 if CONFIG['_MSC_VER']:
     # This is intended as a temporary workaround to unblock compilation

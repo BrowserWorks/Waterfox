@@ -1188,6 +1188,24 @@ class ChildAPIManager {
   }
 }
 
+/**
+ * Convert any of several different representations of a date/time to a Date object.
+ * Accepts several formats:
+ * a Date object, an ISO8601 string, or a number of milliseconds since the epoch as
+ * either a number or a string.
+ *
+ * @param date: (Date) or (String) or (Number)
+ *      The date to convert.
+ * @returns (Date)
+ *      A Date object
+ */
+function normalizeTime(date) {
+  // Of all the formats we accept the "number of milliseconds since the epoch as a string"
+  // is an outlier, everything else can just be passed directly to the Date constructor.
+  return new Date((typeof date == "string" && /^\d+$/.test(date))
+                        ? parseInt(date, 10) : date);
+}
+
 this.ExtensionUtils = {
   detectLanguage,
   extend,
@@ -1195,6 +1213,7 @@ this.ExtensionUtils = {
   ignoreEvent,
   injectAPI,
   instanceOf,
+  normalizeTime,
   promiseDocumentReady,
   runSafe,
   runSafeSync,

@@ -17,15 +17,15 @@
 #include "gfxPrefs.h"
 #include "gfxCrashReporterUtils.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/widget/WinCompositorWidgetProxy.h"
 
 namespace mozilla {
 namespace layers {
 
 using namespace mozilla::gfx;
 
-CompositorD3D9::CompositorD3D9(CompositorBridgeParent* aParent, nsIWidget *aWidget)
-  : Compositor(aParent)
-  , mWidget(aWidget)
+CompositorD3D9::CompositorD3D9(CompositorBridgeParent* aParent, widget::CompositorWidgetProxy* aWidget)
+  : Compositor(aWidget, aParent)
   , mDeviceResetCount(0)
   , mFailedResetAttempts(0)
 {
@@ -40,20 +40,14 @@ CompositorD3D9::~CompositorD3D9()
 bool
 CompositorD3D9::Initialize()
 {
-  bool force = gfxPrefs::LayersAccelerationForceEnabled();
-
-  ScopedGfxFeatureReporter reporter("D3D9 Layers", force);
-
-  MOZ_ASSERT(gfxPlatform::CanUseDirect3D9());
+  ScopedGfxFeatureReporter reporter("D3D9 Layers");
 
   mDeviceManager = gfxWindowsPlatform::GetPlatform()->GetD3D9DeviceManager();
   if (!mDeviceManager) {
     return false;
   }
 
-  mSwapChain = mDeviceManager->
-    CreateSwapChain((HWND)mWidget->GetNativeData(NS_NATIVE_WINDOW));
-
+  mSwapChain = mDeviceManager->CreateSwapChain(mWidget->AsWindowsProxy()->GetHwnd());
   if (!mSwapChain) {
     return false;
   }
@@ -248,7 +242,7 @@ CompositorD3D9::ClearRect(const gfx::Rect& aRect)
 
 void
 CompositorD3D9::DrawQuad(const gfx::Rect &aRect,
-                         const gfx::Rect &aClipRect,
+                         const gfx::IntRect &aClipRect,
                          const EffectChain &aEffectChain,
                          gfx::Float aOpacity,
                          const gfx::Matrix4x4& aTransform,
@@ -369,7 +363,7 @@ CompositorD3D9::DrawQuad(const gfx::Rect &aRect,
                                              textureCoords.height),
                                            1);
 
-      SetSamplerForFilter(texturedEffect->mFilter);
+      SetSamplerForSamplingFilter(texturedEffect->mSamplingFilter);
 
       TextureSourceD3D9* source = texturedEffect->mTexture->AsSourceD3D9();
       d3d9Device->SetTexture(0, source->GetD3D9Texture());
@@ -387,7 +381,7 @@ CompositorD3D9::DrawQuad(const gfx::Rect &aRect,
       EffectYCbCr* ycbcrEffect =
         static_cast<EffectYCbCr*>(aEffectChain.mPrimaryEffect.get());
 
-      SetSamplerForFilter(Filter::LINEAR);
+      SetSamplerForSamplingFilter(SamplingFilter::LINEAR);
 
       Rect textureCoords = ycbcrEffect->mTextureCoords;
       d3d9Device->SetVertexShaderConstantF(CBvTextureCoords,
@@ -485,7 +479,7 @@ CompositorD3D9::DrawQuad(const gfx::Rect &aRect,
                                              textureCoords.height),
                                            1);
 
-      SetSamplerForFilter(effectComponentAlpha->mFilter);
+      SetSamplerForSamplingFilter(effectComponentAlpha->mSamplingFilter);
 
       maskTexture = mDeviceManager->SetShaderMode(DeviceManagerD3D9::COMPONENTLAYERPASS1, maskType);
       SetMask(aEffectChain, maskTexture);
@@ -596,8 +590,7 @@ CompositorD3D9::EnsureSwapChain()
   MOZ_ASSERT(mDeviceManager, "Don't call EnsureSwapChain without a device manager");
 
   if (!mSwapChain) {
-    mSwapChain = mDeviceManager->
-      CreateSwapChain((HWND)mWidget->GetNativeData(NS_NATIVE_WINDOW));
+    mSwapChain = mDeviceManager->CreateSwapChain(mWidget->AsWindowsProxy()->GetHwnd());
     // We could not create a swap chain, return false
     if (!mSwapChain) {
       // Check the state of the device too
@@ -678,11 +671,11 @@ CompositorD3D9::FailedToResetDevice() {
 
 void
 CompositorD3D9::BeginFrame(const nsIntRegion& aInvalidRegion,
-                           const Rect *aClipRectIn,
-                           const Rect& aRenderBounds,
+                           const IntRect *aClipRectIn,
+                           const IntRect& aRenderBounds,
                            const nsIntRegion& aOpaqueRegion,
-                           Rect *aClipRectOut,
-                           Rect *aRenderBoundsOut)
+                           IntRect *aClipRectOut,
+                           IntRect *aRenderBoundsOut)
 {
   MOZ_ASSERT(mDeviceManager && mSwapChain);
 
@@ -694,10 +687,10 @@ CompositorD3D9::BeginFrame(const nsIntRegion& aInvalidRegion,
   device()->BeginScene();
 
   if (aClipRectOut) {
-    *aClipRectOut = Rect(0, 0, mSize.width, mSize.height);
+    *aClipRectOut = IntRect(0, 0, mSize.width, mSize.height);
   }
   if (aRenderBoundsOut) {
-    *aRenderBoundsOut = Rect(0, 0, mSize.width, mSize.height);
+    *aRenderBoundsOut = IntRect(0, 0, mSize.width, mSize.height);
   }
 
   RECT r;
@@ -723,6 +716,8 @@ CompositorD3D9::BeginFrame(const nsIntRegion& aInvalidRegion,
 void
 CompositorD3D9::EndFrame()
 {
+  Compositor::EndFrame();
+
   if (mDeviceManager) {
     device()->EndScene();
 
@@ -765,21 +760,18 @@ CompositorD3D9::PrepareViewport(const gfx::IntSize& aSize)
 void
 CompositorD3D9::EnsureSize()
 {
-  LayoutDeviceIntRect rect;
-  mWidget->GetClientBounds(rect);
-
-  mSize = rect.Size();
+  mSize = mWidget->GetClientSize();
 }
 
 void
-CompositorD3D9::SetSamplerForFilter(Filter aFilter)
+CompositorD3D9::SetSamplerForSamplingFilter(SamplingFilter aSamplingFilter)
 {
-  switch (aFilter) {
-  case Filter::LINEAR:
+  switch (aSamplingFilter) {
+  case SamplingFilter::LINEAR:
     device()->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
     device()->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
     return;
-  case Filter::POINT:
+  case SamplingFilter::POINT:
     device()->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
     device()->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_POINT);
     return;

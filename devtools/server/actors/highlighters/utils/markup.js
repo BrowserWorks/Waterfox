@@ -240,7 +240,7 @@ function CanvasFrameAnonymousContentHelper(highlighterEnv, nodeBuilder) {
 }
 
 CanvasFrameAnonymousContentHelper.prototype = {
-  destroy: function() {
+  destroy: function () {
     try {
       let doc = this.anonymousContentDocument;
       doc.removeAnonymousContent(this._content);
@@ -256,7 +256,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
     this._removeAllListeners();
   },
 
-  _insert: function() {
+  _insert: function () {
     // Insert the content node only if the page isn't in a XUL window, and if
     // the document still exists.
     if (!this.highlighterEnv.document.documentElement ||
@@ -265,20 +265,6 @@ CanvasFrameAnonymousContentHelper.prototype = {
     }
     let doc = this.highlighterEnv.document;
 
-    // On B2G, for example, when connecting to keyboard just after startup,
-    // we connect to a hidden document, which doesn't accept
-    // insertAnonymousContent call yet.
-    if (doc.hidden) {
-      // In such scenario, just wait for the document to be visible
-      // before injecting anonymous content.
-      let onVisibilityChange = () => {
-        doc.removeEventListener("visibilitychange", onVisibilityChange);
-        this._insert();
-      };
-      doc.addEventListener("visibilitychange", onVisibilityChange);
-      return;
-    }
-
     // For now highlighters.css is injected in content as a ua sheet because
     // <style scoped> doesn't work inside anonymous content (see bug 1086532).
     // If it did, highlighters.css would be injected as an anonymous content
@@ -286,10 +272,16 @@ CanvasFrameAnonymousContentHelper.prototype = {
     installHelperSheet(this.highlighterEnv.window,
       "@import url('" + STYLESHEET_URI + "');");
     let node = this.nodeBuilder();
+
+    // It was stated that hidden documents don't accept
+    // `insertAnonymousContent` calls yet. That doesn't seems the case anymore,
+    // at least on desktop. Therefore, removing the code that was dealing with
+    // that scenario, fixes when we're adding anonymous content in a tab that
+    // is not the active one (see bug 1260043 and bug 1260044)
     this._content = doc.insertAnonymousContent(node);
   },
 
-  _onNavigate: function(e, {isTopLevel}) {
+  _onNavigate: function (e, {isTopLevel}) {
     if (isTopLevel) {
       this._removeAllListeners();
       this._insert();
@@ -297,39 +289,39 @@ CanvasFrameAnonymousContentHelper.prototype = {
     }
   },
 
-  getTextContentForElement: function(id) {
+  getTextContentForElement: function (id) {
     if (!this.content) {
       return null;
     }
     return this.content.getTextContentForElement(id);
   },
 
-  setTextContentForElement: function(id, text) {
+  setTextContentForElement: function (id, text) {
     if (this.content) {
       this.content.setTextContentForElement(id, text);
     }
   },
 
-  setAttributeForElement: function(id, name, value) {
+  setAttributeForElement: function (id, name, value) {
     if (this.content) {
       this.content.setAttributeForElement(id, name, value);
     }
   },
 
-  getAttributeForElement: function(id, name) {
+  getAttributeForElement: function (id, name) {
     if (!this.content) {
       return null;
     }
     return this.content.getAttributeForElement(id, name);
   },
 
-  removeAttributeForElement: function(id, name) {
+  removeAttributeForElement: function (id, name) {
     if (this.content) {
       this.content.removeAttributeForElement(id, name);
     }
   },
 
-  hasAttributeForElement: function(id, name) {
+  hasAttributeForElement: function (id, name) {
     return typeof this.getAttributeForElement(id, name) === "string";
   },
 
@@ -369,7 +361,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
    * @param {String} type
    * @param {Function} handler
    */
-  addEventListenerForElement: function(id, type, handler) {
+  addEventListenerForElement: function (id, type, handler) {
     if (typeof id !== "string") {
       throw new Error("Expected a string ID in addEventListenerForElement but" +
         " got: " + id);
@@ -393,7 +385,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
    * @param {String} id
    * @param {String} type
    */
-  removeEventListenerForElement: function(id, type) {
+  removeEventListenerForElement: function (id, type) {
     let listeners = this.listeners.get(type);
     if (!listeners) {
       return;
@@ -407,7 +399,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
     }
   },
 
-  handleEvent: function(event) {
+  handleEvent: function (event) {
     let listeners = this.listeners.get(event.type);
     if (!listeners) {
       return;
@@ -444,7 +436,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
     }
   },
 
-  _removeAllListeners: function() {
+  _removeAllListeners: function () {
     if (this.highlighterEnv) {
       let target = this.highlighterEnv.pageListenerTarget;
       for (let [type] of this.listeners) {
@@ -454,7 +446,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
     this.listeners.clear();
   },
 
-  getElement: function(id) {
+  getElement: function (id) {
     let classList = new ClassList(this.getAttributeForElement(id, "class"));
 
     on(classList, "update", () => {
@@ -506,7 +498,7 @@ CanvasFrameAnonymousContentHelper.prototype = {
    * should be used to read the current zoom value.
    * @param {String} id The ID of the root element inserted with this API.
    */
-  scaleRootElement: function(node, id) {
+  scaleRootElement: function (node, id) {
     let zoom = getCurrentZoom(node);
     let value = "position:absolute;width:100%;height:100%;";
 

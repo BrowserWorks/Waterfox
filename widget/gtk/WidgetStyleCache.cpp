@@ -22,7 +22,7 @@ static bool sStyleContextNeedsRestore;
 static GtkStyleContext* sCurrentStyleContext;
 #endif
 static GtkStyleContext*
-GetStyleInternal(WidgetNodeType aNodeType);
+GetCssNodeStyleInternal(WidgetNodeType aNodeType);
 
 static GtkWidget*
 CreateWindowWidget()
@@ -73,6 +73,50 @@ CreateRadiobuttonWidget()
 }
 
 static GtkWidget*
+CreateMenuBarWidget()
+{
+  GtkWidget* widget = gtk_menu_bar_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateMenuPopupWidget()
+{
+  GtkWidget* widget = gtk_menu_new();
+  gtk_menu_attach_to_widget(GTK_MENU(widget), GetWidget(MOZ_GTK_WINDOW),
+                            nullptr);
+  return widget;
+}
+
+static GtkWidget*
+CreateMenuItemWidget(WidgetNodeType aShellType)
+{
+  GtkWidget* widget = gtk_menu_item_new();
+  gtk_menu_shell_append(GTK_MENU_SHELL(GetWidget(aShellType)), widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateProgressWidget()
+{
+  GtkWidget* widget = gtk_progress_bar_new();
+  AddToWindowContainer(widget);
+  return widget;
+}
+
+static GtkWidget*
+CreateTooltipWidget()
+{
+  MOZ_ASSERT(gtk_check_version(3, 20, 0) != nullptr,
+             "CreateTooltipWidget should be used for Gtk < 3.20 only.");
+  GtkWidget* widget = CreateWindowWidget();
+  GtkStyleContext* style = gtk_widget_get_style_context(widget);
+  gtk_style_context_add_class(style, GTK_STYLE_CLASS_TOOLTIP);
+  return widget;
+}
+
+static GtkWidget*
 CreateWidget(WidgetNodeType aWidgetType)
 {
   switch (aWidgetType) {
@@ -80,16 +124,28 @@ CreateWidget(WidgetNodeType aWidgetType)
       return CreateWindowWidget();
     case MOZ_GTK_WINDOW_CONTAINER:
       return CreateWindowContainerWidget();
+    case MOZ_GTK_CHECKBUTTON_CONTAINER:
+      return CreateCheckboxWidget();
+    case MOZ_GTK_PROGRESSBAR:
+      return CreateProgressWidget();
+    case MOZ_GTK_RADIOBUTTON_CONTAINER:
+      return CreateRadiobuttonWidget();
     case MOZ_GTK_SCROLLBAR_HORIZONTAL:
       return CreateScrollbarWidget(aWidgetType,
                                    GTK_ORIENTATION_HORIZONTAL);
     case MOZ_GTK_SCROLLBAR_VERTICAL:
       return CreateScrollbarWidget(aWidgetType,
                                    GTK_ORIENTATION_VERTICAL);
-    case MOZ_GTK_CHECKBUTTON_CONTAINER:
-      return CreateCheckboxWidget();
-    case MOZ_GTK_RADIOBUTTON_CONTAINER:
-      return CreateRadiobuttonWidget();
+    case MOZ_GTK_MENUBAR:
+      return CreateMenuBarWidget();
+    case MOZ_GTK_MENUPOPUP:
+      return CreateMenuPopupWidget();
+    case MOZ_GTK_MENUBARITEM:
+      return CreateMenuItemWidget(MOZ_GTK_MENUBAR);
+    case MOZ_GTK_MENUITEM:
+      return CreateMenuItemWidget(MOZ_GTK_MENUPOPUP);
+    case MOZ_GTK_TOOLTIP:
+      return CreateTooltipWidget();
     default:
       /* Not implemented */
       return nullptr;
@@ -107,17 +163,41 @@ GetWidget(WidgetNodeType aWidgetType)
   return widget;
 }
 
-static GtkStyleContext*
-CreateCSSNode(const char* aName, GtkStyleContext *aParentStyle)
+GtkStyleContext*
+CreateStyleForWidget(GtkWidget* aWidget, GtkStyleContext* aParentStyle)
+{
+  GtkWidgetPath* path =
+    gtk_widget_path_copy(gtk_style_context_get_path(aParentStyle));
+
+  // Work around https://bugzilla.gnome.org/show_bug.cgi?id=767312
+  // which exists in GTK+ 3.20.
+  gtk_widget_get_style_context(aWidget);
+
+  gtk_widget_path_append_for_widget(path, aWidget);
+  // Release any floating reference on aWidget.
+  g_object_ref_sink(aWidget);
+  g_object_unref(aWidget);
+
+  GtkStyleContext *context = gtk_style_context_new();
+  gtk_style_context_set_path(context, path);
+  gtk_style_context_set_parent(context, aParentStyle);
+  gtk_widget_path_unref(path);
+
+  return context;
+}
+
+GtkStyleContext*
+CreateCSSNode(const char* aName, GtkStyleContext* aParentStyle, GType aType)
 {
   static auto sGtkWidgetPathIterSetObjectName =
     reinterpret_cast<void (*)(GtkWidgetPath *, gint, const char *)>
     (dlsym(RTLD_DEFAULT, "gtk_widget_path_iter_set_object_name"));
 
-  GtkWidgetPath* path =
-    gtk_widget_path_copy(gtk_style_context_get_path(aParentStyle));
+  GtkWidgetPath* path = aParentStyle ?
+    gtk_widget_path_copy(gtk_style_context_get_path(aParentStyle)) :
+    gtk_widget_path_new();
 
-  gtk_widget_path_append_type(path, G_TYPE_NONE);
+  gtk_widget_path_append_type(path, aType);
 
   (*sGtkWidgetPathIterSetObjectName)(path, -1, aName);
 
@@ -130,95 +210,115 @@ CreateCSSNode(const char* aName, GtkStyleContext *aParentStyle)
 }
 
 static GtkStyleContext*
-GetChildNodeStyle(WidgetNodeType aStyleType,
-                  WidgetNodeType aWidgetType,
-                  const gchar*   aStyleClass,
-                  WidgetNodeType aParentNodeType)
+CreateChildCSSNode(const char* aName, WidgetNodeType aParentNodeType)
 {
-  GtkStyleContext* style;
-
-  if (gtk_check_version(3, 20, 0) != nullptr) {
-    style = gtk_widget_get_style_context(sWidgetStorage[aWidgetType]);
-
-    gtk_style_context_save(style);
-    MOZ_ASSERT(!sStyleContextNeedsRestore);
-    sStyleContextNeedsRestore = true;
-
-    gtk_style_context_add_class(style, aStyleClass);
-  }
-  else {
-    style = sStyleStorage[aStyleType];
-    if (!style) {
-      style = CreateCSSNode(aStyleClass, GetStyleInternal(aParentNodeType));
-      MOZ_ASSERT(!sStyleContextNeedsRestore);
-      sStyleStorage[aStyleType] = style;
-    }
-  }
-
-  return style;
+  return CreateCSSNode(aName, GetCssNodeStyleInternal(aParentNodeType));
 }
 
+/* GetCssNodeStyleInternal is used by Gtk >= 3.20 */
 static GtkStyleContext*
-GetStyleInternal(WidgetNodeType aNodeType)
+GetCssNodeStyleInternal(WidgetNodeType aNodeType)
 {
+  GtkStyleContext* style = sStyleStorage[aNodeType];
+  if (style)
+    return style;
+
   switch (aNodeType) {
-    case MOZ_GTK_SCROLLBAR_HORIZONTAL:
-      /* Root CSS node / widget for scrollbars */
-      break;
     case MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL:
-      return GetChildNodeStyle(aNodeType,
-                               MOZ_GTK_SCROLLBAR_HORIZONTAL,
-                               GTK_STYLE_CLASS_TROUGH,
-                               MOZ_GTK_SCROLLBAR_HORIZONTAL);
-
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
+                                 MOZ_GTK_SCROLLBAR_HORIZONTAL);
+      break;
     case MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL:
-      return GetChildNodeStyle(aNodeType,
-                               MOZ_GTK_SCROLLBAR_HORIZONTAL,
-                               GTK_STYLE_CLASS_SLIDER,
-                               MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL);
-
-    case MOZ_GTK_SCROLLBAR_VERTICAL:
-      /* Root CSS node / widget for scrollbars */
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_SLIDER,
+                                 MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL);
       break;
     case MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL:
-      return GetChildNodeStyle(aNodeType,
-                               MOZ_GTK_SCROLLBAR_VERTICAL,
-                               GTK_STYLE_CLASS_TROUGH,
-                               MOZ_GTK_SCROLLBAR_VERTICAL);
-
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
+                                 MOZ_GTK_SCROLLBAR_VERTICAL);
+      break;
     case MOZ_GTK_SCROLLBAR_THUMB_VERTICAL:
-      return GetChildNodeStyle(aNodeType,
-                               MOZ_GTK_SCROLLBAR_VERTICAL,
-                               GTK_STYLE_CLASS_SLIDER,
-                               MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL);
-
-    case MOZ_GTK_RADIOBUTTON_CONTAINER:
-      /* Root CSS node / widget for checkboxes */
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_SLIDER,
+                                 MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL);
       break;
     case MOZ_GTK_RADIOBUTTON:
-      return GetChildNodeStyle(aNodeType,
-                               MOZ_GTK_RADIOBUTTON_CONTAINER,
-                               GTK_STYLE_CLASS_RADIO,
-                               MOZ_GTK_RADIOBUTTON_CONTAINER);
-    case MOZ_GTK_CHECKBUTTON_CONTAINER:
-      /* Root CSS node / widget for radiobuttons */
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_RADIO,
+                                 MOZ_GTK_RADIOBUTTON_CONTAINER);
       break;
     case MOZ_GTK_CHECKBUTTON:
-      return GetChildNodeStyle(aNodeType,
-                               MOZ_GTK_CHECKBUTTON_CONTAINER,
-                               GTK_STYLE_CLASS_CHECK,
-                               MOZ_GTK_CHECKBUTTON_CONTAINER);
-    default:
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_CHECK,
+                                 MOZ_GTK_CHECKBUTTON_CONTAINER);
       break;
+    case MOZ_GTK_PROGRESS_TROUGH:
+      /* Progress bar background (trough) */
+      style = CreateChildCSSNode(GTK_STYLE_CLASS_TROUGH,
+                                 MOZ_GTK_PROGRESSBAR);
+      break;
+    case MOZ_GTK_PROGRESS_CHUNK:
+      style = CreateChildCSSNode("progress",
+                                 MOZ_GTK_PROGRESS_TROUGH);
+      break;
+    case MOZ_GTK_TOOLTIP:
+      // We create this from the path because GtkTooltipWindow is not public.
+      style = CreateCSSNode("tooltip", nullptr, GTK_TYPE_TOOLTIP);
+      gtk_style_context_add_class(style, GTK_STYLE_CLASS_BACKGROUND);
+      break; 
+    default:
+      // TODO - create style from style path
+      GtkWidget* widget = GetWidget(aNodeType);
+      return gtk_widget_get_style_context(widget);
   }
 
-  GtkWidget* widget = GetWidget(aNodeType);
-  if (widget) {
-    return gtk_widget_get_style_context(widget);
+  if (style) {
+    sStyleStorage[aNodeType] = style;
+    return style;
   }
 
   MOZ_ASSERT_UNREACHABLE("missing style context for node type");
   return nullptr;
+}
+
+static GtkStyleContext*
+GetWidgetStyleWithClass(WidgetNodeType aWidgetType, const gchar* aStyleClass)
+{
+  GtkStyleContext* style = gtk_widget_get_style_context(GetWidget(aWidgetType));
+  gtk_style_context_save(style);
+  MOZ_ASSERT(!sStyleContextNeedsRestore);
+  sStyleContextNeedsRestore = true;
+  gtk_style_context_add_class(style, aStyleClass);
+  return style;
+}
+
+/* GetWidgetStyleInternal is used by Gtk < 3.20 */
+static GtkStyleContext*
+GetWidgetStyleInternal(WidgetNodeType aNodeType)
+{
+  switch (aNodeType) {
+    case MOZ_GTK_SCROLLBAR_TROUGH_HORIZONTAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCROLLBAR_HORIZONTAL,
+                                     GTK_STYLE_CLASS_TROUGH);
+    case MOZ_GTK_SCROLLBAR_THUMB_HORIZONTAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCROLLBAR_HORIZONTAL,
+                                     GTK_STYLE_CLASS_SLIDER);
+    case MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCROLLBAR_VERTICAL,
+                                     GTK_STYLE_CLASS_TROUGH);
+    case MOZ_GTK_SCROLLBAR_THUMB_VERTICAL:
+      return GetWidgetStyleWithClass(MOZ_GTK_SCROLLBAR_VERTICAL,
+                                     GTK_STYLE_CLASS_SLIDER);
+    case MOZ_GTK_RADIOBUTTON:
+      return GetWidgetStyleWithClass(MOZ_GTK_RADIOBUTTON_CONTAINER,
+                                     GTK_STYLE_CLASS_RADIO);
+    case MOZ_GTK_CHECKBUTTON:
+      return GetWidgetStyleWithClass(MOZ_GTK_CHECKBUTTON_CONTAINER,
+                                     GTK_STYLE_CLASS_CHECK);
+    case MOZ_GTK_PROGRESS_TROUGH:
+      return GetWidgetStyleWithClass(MOZ_GTK_PROGRESSBAR,
+                                     GTK_STYLE_CLASS_TROUGH);
+    default:
+      GtkWidget* widget = GetWidget(aNodeType);
+      MOZ_ASSERT(widget);
+      return gtk_widget_get_style_context(widget);
+  }
 }
 
 void
@@ -245,13 +345,39 @@ ResetWidgetCache(void)
 
 GtkStyleContext*
 ClaimStyleContext(WidgetNodeType aNodeType, GtkTextDirection aDirection,
-                  StyleFlags aFlags)
+                  GtkStateFlags aStateFlags, StyleFlags aFlags)
 {
-  GtkStyleContext* style = GetStyleInternal(aNodeType);
+  MOZ_ASSERT(!sStyleContextNeedsRestore);
+  GtkStyleContext* style;
+  if (gtk_check_version(3, 20, 0) != nullptr) {
+    style = GetWidgetStyleInternal(aNodeType);
+  } else {
+    style = GetCssNodeStyleInternal(aNodeType);
+  }
 #ifdef DEBUG
   MOZ_ASSERT(!sCurrentStyleContext);
   sCurrentStyleContext = style;
 #endif
+  GtkStateFlags oldState = gtk_style_context_get_state(style);
+  GtkTextDirection oldDirection = gtk_style_context_get_direction(style);
+  if (oldState != aStateFlags || oldDirection != aDirection) {
+    // From GTK 3.8, set_state() will overwrite the direction, so set
+    // direction after state.
+    gtk_style_context_set_state(style, aStateFlags);
+    gtk_style_context_set_direction(style, aDirection);
+
+    // This invalidate is necessary for unsaved style contexts from GtkWidgets
+    // in pre-3.18 GTK, because automatic invalidation of such contexts
+    // was delayed until a resize event runs.
+    //
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1272194#c7
+    //
+    // Avoid calling invalidate on saved contexts to avoid performing
+    // build_properties() (in 3.16 stylecontext.c) unnecessarily early.
+    if (!sStyleContextNeedsRestore) {
+      gtk_style_context_invalidate(style);
+    }
+  }
   return style;
 }
 

@@ -24,15 +24,7 @@ class CompositorD3D11;
 class DXGITextureData : public TextureData
 {
 public:
-  virtual gfx::IntSize GetSize() const override { return mSize; }
- 
-  virtual gfx::SurfaceFormat GetFormat() const override { return mFormat; }
- 
-  virtual bool SupportsMoz2D() const override { return true; }
-
-  virtual bool HasIntermediateBuffer() const override { return false; }
-
-  virtual bool HasSynchronization() const override { return mHasSynchronization; }
+  virtual void FillInfo(TextureData::Info& aInfo) const override;
 
   virtual bool Serialize(SurfaceDescriptor& aOutDescrptor) override;
 
@@ -139,16 +131,9 @@ public:
 
   virtual void Unlock() override {}
 
+  virtual void FillInfo(TextureData::Info& aInfo) const override;
+
   virtual bool Serialize(SurfaceDescriptor& aOutDescriptor) override;
-
-  // TODO - DXGIYCbCrTextureClient returned true but that looks like a mistake
-  virtual bool HasIntermediateBuffer() const override{ return false; }
-
-  virtual gfx::IntSize GetSize() const override { return mSize; }
-
-  virtual gfx::SurfaceFormat GetFormat() const override { return gfx::SurfaceFormat::YUV; }
-
-  virtual bool SupportsMoz2D() const override { return false; }
 
   virtual already_AddRefed<gfx::DrawTarget> BorrowDrawTarget() override { return nullptr; }
 
@@ -296,6 +281,8 @@ public:
 
   virtual void SetCompositor(Compositor* aCompositor) override;
 
+  virtual Compositor* GetCompositor() override;
+
   virtual gfx::SurfaceFormat GetFormat() const override { return mFormat; }
 
   virtual bool Lock() override;
@@ -334,6 +321,8 @@ public:
   virtual void DeallocateDeviceData() override{}
 
   virtual void SetCompositor(Compositor* aCompositor) override;
+
+  virtual Compositor* GetCompositor() override;
 
   virtual gfx::SurfaceFormat GetFormat() const override{ return gfx::SurfaceFormat::YUV; }
 

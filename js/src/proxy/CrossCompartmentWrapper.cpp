@@ -109,6 +109,28 @@ CrossCompartmentWrapper::setPrototype(JSContext* cx, HandleObject wrapper,
 }
 
 bool
+CrossCompartmentWrapper::getPrototypeIfOrdinary(JSContext* cx, HandleObject wrapper,
+                                                bool* isOrdinary, MutableHandleObject protop) const
+{
+    {
+        RootedObject wrapped(cx, wrappedObject(wrapper));
+        AutoCompartment call(cx, wrapped);
+        if (!GetPrototypeIfOrdinary(cx, wrapped, isOrdinary, protop))
+            return false;
+
+        if (!*isOrdinary)
+            return true;
+
+        if (protop) {
+            if (!protop->setDelegate(cx))
+                return false;
+        }
+    }
+
+    return cx->compartment()->wrap(cx, protop);
+}
+
+bool
 CrossCompartmentWrapper::setImmutablePrototype(JSContext* cx, HandleObject wrapper, bool* succeeded) const
 {
     PIERCE(cx, wrapper,
@@ -469,7 +491,7 @@ js::NukeCrossCompartmentWrappers(JSContext* cx,
             // Some cross-compartment wrappers are for strings.  We're not
             // interested in those.
             const CrossCompartmentKey& k = e.front().key();
-            if (k.kind != CrossCompartmentKey::ObjectWrapper)
+            if (!k.is<JSObject*>())
                 continue;
 
             AutoWrapperRooter wobj(cx, WrapperValue(e));
@@ -598,12 +620,12 @@ js::RecomputeWrappers(JSContext* cx, const CompartmentFilter& sourceFilter,
         // Iterate over the wrappers, filtering appropriately.
         for (JSCompartment::WrapperEnum e(c); !e.empty(); e.popFront()) {
             // Filter out non-objects.
-            const CrossCompartmentKey& k = e.front().key();
-            if (k.kind != CrossCompartmentKey::ObjectWrapper)
+            CrossCompartmentKey& k = e.front().mutableKey();
+            if (!k.is<JSObject*>())
                 continue;
 
             // Filter by target compartment.
-            if (!targetFilter.match(static_cast<JSObject*>(k.wrapped)->compartment()))
+            if (!targetFilter.match(k.compartment()))
                 continue;
 
             // Add it to the list.

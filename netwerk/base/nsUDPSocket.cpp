@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/Attributes.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/dom/TypedArray.h"
 #include "mozilla/HoldDropJSObjects.h"
 #include "mozilla/Telemetry.h"
@@ -35,8 +35,8 @@
 #include "NetStatistics.h"
 #endif
 
-using namespace mozilla::net;
-using namespace mozilla;
+namespace mozilla {
+namespace net {
 
 static const uint32_t UDP_PACKET_CHUNK_SIZE = 1400;
 static NS_DEFINE_CID(kSocketTransportServiceCID2, NS_SOCKETTRANSPORTSERVICE_CID);
@@ -48,12 +48,10 @@ typedef void (nsUDPSocket:: *nsUDPSocketFunc)(void);
 static nsresult
 PostEvent(nsUDPSocket *s, nsUDPSocketFunc func)
 {
-  nsCOMPtr<nsIRunnable> ev = NS_NewRunnableMethod(s, func);
-
   if (!gSocketTransportService)
     return NS_ERROR_FAILURE;
 
-  return gSocketTransportService->Dispatch(ev, NS_DISPATCH_NORMAL);
+  return gSocketTransportService->Dispatch(NewRunnableMethod(s, func), NS_DISPATCH_NORMAL);
 }
 
 static nsresult
@@ -75,7 +73,7 @@ ResolveHost(const nsACString &host, nsIDNSListener *listener)
 
 //-----------------------------------------------------------------------------
 
-class SetSocketOptionRunnable : public nsRunnable
+class SetSocketOptionRunnable : public Runnable
 {
 public:
   SetSocketOptionRunnable(nsUDPSocket* aSocket, const PRSocketOptionData& aOpt)
@@ -197,7 +195,7 @@ nsUDPMessage::nsUDPMessage(NetAddr* aAddr,
 
 nsUDPMessage::~nsUDPMessage()
 {
-  mozilla::DropJSObjects(this);
+  DropJSObjects(this);
 }
 
 NS_IMETHODIMP
@@ -231,8 +229,8 @@ nsUDPMessage::GetRawData(JSContext* cx,
                          JS::MutableHandleValue aRawData)
 {
   if(!mJsobj){
-    mJsobj = mozilla::dom::Uint8Array::Create(cx, nullptr, mData.Length(), mData.Elements());
-    mozilla::HoldJSObjects(this);
+    mJsobj = dom::Uint8Array::Create(cx, nullptr, mData.Length(), mData.Elements());
+    HoldJSObjects(this);
   }
   aRawData.setObject(*mJsobj);
   return NS_OK;
@@ -347,7 +345,7 @@ nsUDPSocket::TryAttach()
   if (!gSocketTransportService->CanAttachSocket())
   {
     nsCOMPtr<nsIRunnable> event =
-      NS_NewRunnableMethod(this, &nsUDPSocket::OnMsgAttach);
+      NewRunnableMethod(this, &nsUDPSocket::OnMsgAttach);
 
     nsresult rv = gSocketTransportService->NotifyWhenCanAttachSocket(event);
     if (NS_FAILED(rv))
@@ -762,7 +760,7 @@ nsUDPSocket::SaveNetworkStats(bool aEnforce)
   if (aEnforce || total > NETWORK_STATS_THRESHOLD) {
     // Create the event to save the network statistics.
     // the event is then dispathed to the main thread.
-    RefPtr<nsRunnable> event =
+    RefPtr<Runnable> event =
       new SaveNetworkStatsEvent(mAppId, mIsInIsolatedMozBrowserElement, mActiveNetworkInfo,
                                 mByteReadCount, mByteWriteCount, false);
     NS_DispatchToMainThread(event);
@@ -848,7 +846,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIUDPSOCKETLISTENER
 
-  class OnPacketReceivedRunnable : public nsRunnable
+  class OnPacketReceivedRunnable : public Runnable
   {
   public:
     OnPacketReceivedRunnable(const nsMainThreadPtrHandle<nsIUDPSocketListener>& aListener,
@@ -867,7 +865,7 @@ public:
     nsCOMPtr<nsIUDPMessage> mMessage;
   };
 
-  class OnStopListeningRunnable : public nsRunnable
+  class OnStopListeningRunnable : public Runnable
   {
   public:
     OnStopListeningRunnable(const nsMainThreadPtrHandle<nsIUDPSocketListener>& aListener,
@@ -953,7 +951,7 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
   NS_DECL_NSIUDPSOCKETLISTENER
 
-  class OnPacketReceivedRunnable : public nsRunnable
+  class OnPacketReceivedRunnable : public Runnable
   {
   public:
     OnPacketReceivedRunnable(const nsCOMPtr<nsIUDPSocketListener>& aListener,
@@ -972,7 +970,7 @@ public:
     nsCOMPtr<nsIUDPMessage> mMessage;
   };
 
-  class OnStopListeningRunnable : public nsRunnable
+  class OnStopListeningRunnable : public Runnable
   {
   public:
     OnStopListeningRunnable(const nsCOMPtr<nsIUDPSocketListener>& aListener,
@@ -1132,7 +1130,7 @@ PendingSendStream::OnLookupComplete(nsICancelable *request,
   return NS_OK;
 }
 
-class SendRequestRunnable: public nsRunnable {
+class SendRequestRunnable: public Runnable {
 public:
   SendRequestRunnable(nsUDPSocket *aSocket,
                       const NetAddr &aAddr,
@@ -1502,6 +1500,33 @@ nsUDPSocket::SetRecvBufferSize(int size)
 }
 
 NS_IMETHODIMP
+nsUDPSocket::GetSendBufferSize(int* size)
+{
+  // Bug 1252759 - missing support for GetSocketOption
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsUDPSocket::SetSendBufferSize(int size)
+{
+  if (NS_WARN_IF(!mFD)) {
+    return NS_ERROR_NOT_INITIALIZED;
+  }
+
+  PRSocketOptionData opt;
+
+  opt.option = PR_SockOpt_SendBufferSize;
+  opt.value.send_buffer_size = size;
+
+  nsresult rv = SetSocketOption(opt);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsUDPSocket::GetMulticastInterface(nsACString& aIface)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
@@ -1560,3 +1585,6 @@ nsUDPSocket::SetMulticastInterfaceInternal(const PRNetAddr& aIface)
 
   return NS_OK;
 }
+
+} // namespace net
+} // namespace mozilla

@@ -29,8 +29,12 @@
 #include "nsFocusManager.h"
 #include "nsCopySupport.h"
 #include "nsIClipboard.h"
+#include "ContentEventHandler.h"
+#include "nsContentUtils.h"
+#include "nsIWordBreaker.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/BasicEvents.h"
+#include "mozilla/TextEvents.h"
 #include "mozilla/dom/Selection.h"
 
 #include "nsIClipboardDragDropHooks.h"
@@ -484,7 +488,8 @@ nsClipboardCommand::IsCommandEnabled(const char* aCommandName, nsISupports *aCon
 
   if (strcmp(aCommandName, "cmd_copy") &&
       strcmp(aCommandName, "cmd_copyAndCollapseToEnd") &&
-      strcmp(aCommandName, "cmd_cut"))
+      strcmp(aCommandName, "cmd_cut") &&
+      strcmp(aCommandName, "cmd_paste"))
     return NS_OK;
 
   nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryInterface(aContext);
@@ -492,11 +497,13 @@ nsClipboardCommand::IsCommandEnabled(const char* aCommandName, nsISupports *aCon
 
   nsCOMPtr<nsIDocument> doc = window->GetExtantDoc();
   if (doc->IsHTMLOrXHTML()) {
-    // In HTML and XHTML documents, we always want cut and copy commands to be enabled.
+    // In HTML and XHTML documents, we always want the cut, copy and paste
+    // commands to be enabled.
     *outCmdEnabled = true;
   } else {
     // Cut isn't enabled in xul documents which use nsClipboardCommand
-    if (strcmp(aCommandName, "cmd_cut")) {
+    if (strcmp(aCommandName, "cmd_copy") == 0 ||
+        strcmp(aCommandName, "cmd_copyAndCollapseToEnd") == 0) {
       *outCmdEnabled = nsCopySupport::CanCopy(doc);
     }
   }
@@ -508,7 +515,8 @@ nsClipboardCommand::DoCommand(const char *aCommandName, nsISupports *aContext)
 {
   if (strcmp(aCommandName, "cmd_cut") &&
       strcmp(aCommandName, "cmd_copy") &&
-      strcmp(aCommandName, "cmd_copyAndCollapseToEnd"))
+      strcmp(aCommandName, "cmd_copyAndCollapseToEnd") &&
+      strcmp(aCommandName, "cmd_paste"))
     return NS_OK;
 
   nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryInterface(aContext);
@@ -523,14 +531,17 @@ nsClipboardCommand::DoCommand(const char *aCommandName, nsISupports *aContext)
   EventMessage eventMessage = eCopy;
   if (strcmp(aCommandName, "cmd_cut") == 0) {
     eventMessage = eCut;
+  } else if (strcmp(aCommandName, "cmd_paste") == 0) {
+    eventMessage = ePaste;
   }
 
   bool actionTaken = false;
-  nsCopySupport::FireClipboardEvent(eventMessage,
-                                    nsIClipboard::kGlobalClipboard,
-                                    presShell, nullptr, &actionTaken);
+  bool notCancelled =
+    nsCopySupport::FireClipboardEvent(eventMessage,
+                                      nsIClipboard::kGlobalClipboard,
+                                      presShell, nullptr, &actionTaken);
 
-  if (!strcmp(aCommandName, "cmd_copyAndCollapseToEnd")) {
+  if (notCancelled && !strcmp(aCommandName, "cmd_copyAndCollapseToEnd")) {
     dom::Selection *sel =
       presShell->GetCurrentSelection(nsISelectionController::SELECTION_NORMAL);
     NS_ENSURE_TRUE(sel, NS_ERROR_FAILURE);
@@ -979,6 +990,163 @@ nsClipboardDragDropHookCommand::GetCommandStateParams(const char *aCommandName,
   return aParams->SetBooleanValue("state_enabled", true);
 }
 
+class nsLookUpDictionaryCommand final : public nsIControllerCommand
+{
+public:
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSICONTROLLERCOMMAND
+
+private:
+  virtual ~nsLookUpDictionaryCommand()
+  {
+  }
+};
+
+NS_IMPL_ISUPPORTS(nsLookUpDictionaryCommand, nsIControllerCommand)
+
+NS_IMETHODIMP
+nsLookUpDictionaryCommand::IsCommandEnabled(
+                             const char* aCommandName,
+                             nsISupports* aCommandContext,
+                             bool* aRetval)
+{
+  *aRetval = true;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsLookUpDictionaryCommand::GetCommandStateParams(const char* aCommandName,
+                                                 nsICommandParams* aParams,
+                                                 nsISupports* aCommandContext)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsLookUpDictionaryCommand::DoCommand(const char* aCommandName,
+                                     nsISupports *aCommandContext)
+{
+  return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+nsLookUpDictionaryCommand::DoCommandParams(const char* aCommandName,
+                                           nsICommandParams* aParams,
+                                           nsISupports* aCommandContext)
+{
+  if (NS_WARN_IF(!nsContentUtils::IsSafeToRunScript())) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  int32_t x;
+  int32_t y;
+
+  nsresult rv = aParams->GetLongValue("x", &x);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  rv = aParams->GetLongValue("y", &y);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  LayoutDeviceIntPoint point(x, y);
+
+  nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryInterface(aCommandContext);
+  if (NS_WARN_IF(!window)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsIDocShell* docShell = window->GetDocShell();
+  if (NS_WARN_IF(!docShell)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsIPresShell> presShell = docShell->GetPresShell();
+  if (NS_WARN_IF(!presShell)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsPresContext* presContext = presShell->GetPresContext();
+  if (NS_WARN_IF(!presContext)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsIWidget> widget = presContext->GetRootWidget();
+  if (NS_WARN_IF(!widget)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  WidgetQueryContentEvent charAt(true, eQueryCharacterAtPoint, widget);
+  charAt.mRefPoint.x = x;
+  charAt.mRefPoint.y = y;
+  ContentEventHandler handler(presContext);
+  handler.OnQueryCharacterAtPoint(&charAt);
+
+  if (NS_WARN_IF(!charAt.mSucceeded) ||
+      charAt.mReply.mOffset == WidgetQueryContentEvent::NOT_FOUND) {
+    return NS_ERROR_FAILURE;
+  }
+
+  WidgetQueryContentEvent textContent(true, eQueryTextContent, widget);
+  // OSX 10.7 queries 50 characters before/after current point.  So we fetch
+  // same length.
+  uint32_t offset = charAt.mReply.mOffset;
+  if (offset > 50) {
+    offset -= 50;
+  } else {
+    offset = 0;
+  }
+  textContent.InitForQueryTextContent(offset, 100);
+  handler.OnQueryTextContent(&textContent);
+  if (NS_WARN_IF(!textContent.mSucceeded ||
+                 textContent.mReply.mString.IsEmpty())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // XXX nsIWordBreaker doesn't use contextual breaker.
+  // If OS provides it, widget should use it if contextual breaker is needed.
+  nsCOMPtr<nsIWordBreaker> wordBreaker = nsContentUtils::WordBreaker();
+  if (NS_WARN_IF(!wordBreaker)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsWordRange range =
+    wordBreaker->FindWord(textContent.mReply.mString.get(),
+                          textContent.mReply.mString.Length(),
+                          charAt.mReply.mOffset - offset);
+  if (range.mEnd == range.mBegin) {
+    return NS_ERROR_FAILURE;
+  }
+  range.mBegin += offset;
+  range.mEnd += offset;
+
+  WidgetQueryContentEvent lookUpContent(true, eQueryTextContent, widget);
+  lookUpContent.InitForQueryTextContent(range.mBegin,
+                                        range.mEnd - range.mBegin);
+  lookUpContent.RequestFontRanges();
+  handler.OnQueryTextContent(&lookUpContent);
+  if (NS_WARN_IF(!lookUpContent.mSucceeded ||
+                 lookUpContent.mReply.mString.IsEmpty())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  WidgetQueryContentEvent charRect(true, eQueryTextRect, widget);
+  charRect.InitForQueryTextRect(range.mBegin, range.mEnd - range.mBegin);
+  handler.OnQueryTextRect(&charRect);
+  if (NS_WARN_IF(!charRect.mSucceeded)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  widget->LookUpDictionary(lookUpContent.mReply.mString,
+                           lookUpContent.mReply.mFontRanges,
+                           charRect.mReply.mWritingMode.IsVertical(),
+                           charRect.mReply.mRect.TopLeft());
+
+  return NS_OK;
+}
+
 /*---------------------------------------------------------------------------
 
   RegisterWindowCommands
@@ -1089,6 +1257,8 @@ nsWindowCommandRegistration::RegisterWindowCommands(
 #endif
 
   NS_REGISTER_ONE_COMMAND(nsClipboardDragDropHookCommand, "cmd_clipboardDragDropHook");
+
+  NS_REGISTER_ONE_COMMAND(nsLookUpDictionaryCommand, "cmd_lookUpDictionary");
 
   return rv;
 }

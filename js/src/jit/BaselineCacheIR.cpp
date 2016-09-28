@@ -169,7 +169,7 @@ class MOZ_RAII CacheRegisterAllocator
         writer_(writer)
     {}
 
-    MOZ_WARN_UNUSED_RESULT bool init(const AllocatableGeneralRegisterSet& available) {
+    MOZ_MUST_USE bool init(const AllocatableGeneralRegisterSet& available) {
         availableRegs_ = available;
         if (!origInputLocations_.resize(writer_.numInputOperands()))
             return false;
@@ -395,12 +395,12 @@ class MOZ_RAII BaselineCacheIRCompiler : public CacheIRCompiler
         stubDataOffset_(stubDataOffset)
     {}
 
-    MOZ_WARN_UNUSED_RESULT bool init(CacheKind kind);
+    MOZ_MUST_USE bool init(CacheKind kind);
 
     JitCode* compile();
 
   private:
-#define DEFINE_OP(op) MOZ_WARN_UNUSED_RESULT bool emit##op();
+#define DEFINE_OP(op) MOZ_MUST_USE bool emit##op();
     CACHE_IR_OPS(DEFINE_OP)
 #undef DEFINE_OP
 
@@ -844,6 +844,101 @@ BaselineCacheIRCompiler::emitLoadDynamicSlotResult()
 }
 
 bool
+BaselineCacheIRCompiler::emitLoadUnboxedPropertyResult()
+{
+    Register obj = allocator.useRegister(masm, reader.objOperandId());
+    AutoScratchRegister scratch(allocator, masm);
+
+    JSValueType fieldType = reader.valueType();
+
+    Address fieldOffset(stubAddress(reader.stubOffset()));
+    masm.load32(fieldOffset, scratch);
+    masm.loadUnboxedProperty(BaseIndex(obj, scratch, TimesOne), fieldType, R0);
+
+    if (fieldType == JSVAL_TYPE_OBJECT)
+        emitEnterTypeMonitorIC();
+    else
+        emitReturnFromIC();
+
+    return true;
+}
+
+bool
+BaselineCacheIRCompiler::emitGuardNoDetachedTypedObjects()
+{
+    FailurePath* failure;
+    if (!addFailurePath(&failure))
+        return false;
+
+    CheckForTypedObjectWithDetachedStorage(cx_, masm, failure->label());
+    return true;
+}
+
+bool
+BaselineCacheIRCompiler::emitLoadTypedObjectResult()
+{
+    Register obj = allocator.useRegister(masm, reader.objOperandId());
+    AutoScratchRegister scratch1(allocator, masm);
+    AutoScratchRegister scratch2(allocator, masm);
+
+    TypedThingLayout layout = reader.typedThingLayout();
+    uint32_t typeDescr = reader.typeDescrKey();
+    Address fieldOffset(stubAddress(reader.stubOffset()));
+
+    // Get the object's data pointer.
+    LoadTypedThingData(masm, layout, obj, scratch1);
+
+    // Get the address being written to.
+    masm.load32(fieldOffset, scratch2);
+    masm.addPtr(scratch2, scratch1);
+
+    // Only monitor the result if the type produced by this stub might vary.
+    bool monitorLoad;
+    if (SimpleTypeDescrKeyIsScalar(typeDescr)) {
+        Scalar::Type type = ScalarTypeFromSimpleTypeDescrKey(typeDescr);
+        monitorLoad = type == Scalar::Uint32;
+
+        masm.loadFromTypedArray(type, Address(scratch1, 0), R0, /* allowDouble = */ true,
+                                scratch2, nullptr);
+    } else {
+        ReferenceTypeDescr::Type type = ReferenceTypeFromSimpleTypeDescrKey(typeDescr);
+        monitorLoad = type != ReferenceTypeDescr::TYPE_STRING;
+
+        switch (type) {
+          case ReferenceTypeDescr::TYPE_ANY:
+            masm.loadValue(Address(scratch1, 0), R0);
+            break;
+
+          case ReferenceTypeDescr::TYPE_OBJECT: {
+            Label notNull, done;
+            masm.loadPtr(Address(scratch1, 0), scratch1);
+            masm.branchTestPtr(Assembler::NonZero, scratch1, scratch1, &notNull);
+            masm.moveValue(NullValue(), R0);
+            masm.jump(&done);
+            masm.bind(&notNull);
+            masm.tagValue(JSVAL_TYPE_OBJECT, scratch1, R0);
+            masm.bind(&done);
+            break;
+          }
+
+          case ReferenceTypeDescr::TYPE_STRING:
+            masm.loadPtr(Address(scratch1, 0), scratch1);
+            masm.tagValue(JSVAL_TYPE_STRING, scratch1, R0);
+            break;
+
+          default:
+            MOZ_CRASH("Invalid ReferenceTypeDescr");
+        }
+    }
+
+    if (monitorLoad)
+        emitEnterTypeMonitorIC();
+    else
+        emitReturnFromIC();
+    return true;
+}
+
+bool
 BaselineCacheIRCompiler::emitLoadUndefinedResult()
 {
     masm.moveValue(UndefinedValue(), R0);
@@ -964,31 +1059,31 @@ BaselineCacheIRCompiler::init(CacheKind kind)
 }
 
 template <typename T>
-static HeapPtr<T>*
-AsHeapPtr(uintptr_t* ptr)
+static GCPtr<T>*
+AsGCPtr(uintptr_t* ptr)
 {
-    return reinterpret_cast<HeapPtr<T>*>(ptr);
+    return reinterpret_cast<GCPtr<T>*>(ptr);
 }
 
 template<class T>
-HeapPtr<T>&
+GCPtr<T>&
 CacheIRStubInfo::getStubField(ICStub* stub, uint32_t field) const
 {
     uint8_t* stubData = (uint8_t*)stub + stubDataOffset_;
     MOZ_ASSERT(uintptr_t(stubData) % sizeof(uintptr_t) == 0);
 
-    return *AsHeapPtr<T>((uintptr_t*)stubData + field);
+    return *AsGCPtr<T>((uintptr_t*)stubData + field);
 }
 
-template HeapPtr<Shape*>& CacheIRStubInfo::getStubField(ICStub* stub, uint32_t offset) const;
-template HeapPtr<ObjectGroup*>& CacheIRStubInfo::getStubField(ICStub* stub, uint32_t offset) const;
-template HeapPtr<JSObject*>& CacheIRStubInfo::getStubField(ICStub* stub, uint32_t offset) const;
+template GCPtr<Shape*>& CacheIRStubInfo::getStubField(ICStub* stub, uint32_t offset) const;
+template GCPtr<ObjectGroup*>& CacheIRStubInfo::getStubField(ICStub* stub, uint32_t offset) const;
+template GCPtr<JSObject*>& CacheIRStubInfo::getStubField(ICStub* stub, uint32_t offset) const;
 
 template <typename T>
 static void
-InitHeapPtr(uintptr_t* ptr, uintptr_t val)
+InitGCPtr(uintptr_t* ptr, uintptr_t val)
 {
-    AsHeapPtr<T*>(ptr)->init((T*)val);
+    AsGCPtr<T*>(ptr)->init((T*)val);
 }
 
 void
@@ -1002,13 +1097,13 @@ CacheIRWriter::copyStubData(uint8_t* dest) const
             destWords[i] = stubFields_[i].word;
             continue;
           case StubField::GCType::Shape:
-            InitHeapPtr<Shape>(destWords + i, stubFields_[i].word);
+            InitGCPtr<Shape>(destWords + i, stubFields_[i].word);
             continue;
           case StubField::GCType::JSObject:
-            InitHeapPtr<JSObject>(destWords + i, stubFields_[i].word);
+            InitGCPtr<JSObject>(destWords + i, stubFields_[i].word);
             continue;
           case StubField::GCType::ObjectGroup:
-            InitHeapPtr<ObjectGroup>(destWords + i, stubFields_[i].word);
+            InitGCPtr<ObjectGroup>(destWords + i, stubFields_[i].word);
             continue;
           case StubField::GCType::Limit:
             break;

@@ -43,6 +43,8 @@ class ArrayBufferViewOrBlobOrStringOrFormData;
 struct MobileIdOptions;
 class ServiceWorkerContainer;
 class DOMRequest;
+struct FlyWebPublishOptions;
+struct FlyWebFilter;
 } // namespace dom
 } // namespace mozilla
 
@@ -167,11 +169,9 @@ public:
   Promise* GetBattery(ErrorResult& aRv);
   battery::BatteryManager* GetDeprecatedBattery(ErrorResult& aRv);
 
-  static already_AddRefed<Promise> GetDataStores(nsPIDOMWindowInner* aWindow,
-                                                 const nsAString& aName,
-                                                 const nsAString& aOwner,
-                                                 ErrorResult& aRv);
-
+  already_AddRefed<Promise> PublishServer(const nsAString& aName,
+                                          const FlyWebPublishOptions& aOptions,
+                                          ErrorResult& aRv);
   static void AppName(nsAString& aAppName, bool aUsePrefOverriddenValue);
 
   static nsresult GetPlatform(nsAString& aPlatform,
@@ -189,10 +189,6 @@ public:
   // NavigatorBinding::ClearCachedUserAgentValue(this);
   void ClearUserAgentCache();
 
-  already_AddRefed<Promise> GetDataStores(const nsAString& aName,
-                                          const nsAString& aOwner,
-                                          ErrorResult& aRv);
-
   // Feature Detection API
   already_AddRefed<Promise> GetFeature(const nsAString& aName,
                                        ErrorResult& aRv);
@@ -202,6 +198,7 @@ public:
 
   bool Vibrate(uint32_t aDuration);
   bool Vibrate(const nsTArray<uint32_t>& aDuration);
+  void SetVibrationPermission(bool aPermitted, bool aPersistent);
   uint32_t MaxTouchPoints();
   void GetAppCodeName(nsString& aAppCodeName, ErrorResult& aRv)
   {
@@ -329,10 +326,6 @@ public:
   static bool HasUserMediaSupport(JSContext* /* unused */,
                                   JSObject* /* unused */);
 
-  static bool HasDataStoreSupport(nsIPrincipal* aPrincipal);
-
-  static bool HasDataStoreSupport(JSContext* cx, JSObject* aGlobal);
-
 #ifdef MOZ_B2G
   static bool HasMobileIdSupport(JSContext* aCx, JSObject* aGlobal);
 #endif
@@ -409,6 +402,7 @@ private:
   RefPtr<Presentation> mPresentation;
 
   nsTArray<RefPtr<Promise> > mVRGetDevicesPromises;
+  nsTArray<uint32_t> mRequestedVibrationPattern;
 
   bool mBatteryTelemetryReported;
 };

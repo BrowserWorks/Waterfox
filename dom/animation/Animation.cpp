@@ -8,15 +8,15 @@
 #include "AnimationUtils.h"
 #include "mozilla/dom/AnimationBinding.h"
 #include "mozilla/dom/AnimationPlaybackEvent.h"
+#include "mozilla/dom/DocumentTimeline.h"
+#include "mozilla/AnimationTarget.h"
 #include "mozilla/AutoRestore.h"
 #include "mozilla/AsyncEventDispatcher.h" // For AsyncEventDispatcher
 #include "mozilla/Maybe.h" // For Maybe
-#include "mozilla/NonOwningAnimationTarget.h"
 #include "nsAnimationManager.h" // For CSSAnimation
 #include "nsDOMMutationObserver.h" // For nsAutoAnimationMutationBatch
 #include "nsIDocument.h" // For nsIDocument
 #include "nsIPresShell.h" // For nsIPresShell
-#include "nsLayoutUtils.h" // For PostRestyleEvent (remove after bug 1073336)
 #include "nsThreadUtils.h" // For nsRunnableMethod and nsRevocableEventPtr
 #include "nsTransitionManager.h" // For CSSTransition
 #include "PendingAnimationTracker.h" // For PendingAnimationTracker
@@ -88,7 +88,7 @@ namespace {
 /* static */ already_AddRefed<Animation>
 Animation::Constructor(const GlobalObject& aGlobal,
                        KeyframeEffectReadOnly* aEffect,
-                       AnimationTimeline* aTimeline,
+                       const Optional<AnimationTimeline*>& aTimeline,
                        ErrorResult& aRv)
 {
   nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
@@ -99,13 +99,21 @@ Animation::Constructor(const GlobalObject& aGlobal,
     aRv.Throw(NS_ERROR_DOM_ANIM_NO_EFFECT_ERR);
     return nullptr;
   }
-  if (!aTimeline) {
-    // Bug 1096776: We do not support null timeline yet.
-    aRv.Throw(NS_ERROR_DOM_ANIM_NO_TIMELINE_ERR);
-    return nullptr;
+
+  AnimationTimeline* timeline;
+  if (aTimeline.WasPassed()) {
+    timeline = aTimeline.Value();
+  } else {
+    nsIDocument* document =
+      AnimationUtils::GetCurrentRealmDocument(aGlobal.Context());
+    if (!document) {
+      aRv.Throw(NS_ERROR_FAILURE);
+      return nullptr;
+    }
+    timeline = document->Timeline();
   }
 
-  animation->SetTimeline(aTimeline);
+  animation->SetTimelineNoUpdate(timeline);
   animation->SetEffect(aEffect);
 
   return animation.forget();
@@ -143,22 +151,29 @@ Animation::SetEffect(KeyframeEffectReadOnly* aEffect)
 void
 Animation::SetTimeline(AnimationTimeline* aTimeline)
 {
+  SetTimelineNoUpdate(aTimeline);
+  PostUpdate();
+}
+
+// https://w3c.github.io/web-animations/#setting-the-timeline
+void
+Animation::SetTimelineNoUpdate(AnimationTimeline* aTimeline)
+{
+  RefPtr<AnimationTimeline> oldTimeline = mTimeline;
   if (mTimeline == aTimeline) {
     return;
   }
 
   if (mTimeline) {
-    mTimeline->NotifyAnimationUpdated(*this);
+    mTimeline->RemoveAnimation(this);
   }
 
   mTimeline = aTimeline;
+  if (!mStartTime.IsNull()) {
+    mHoldTime.SetNull();
+  }
 
-  // FIXME(spec): Once we implement the seeking defined in the spec
-  // surely this should be SeekFlag::DidSeek but the spec says otherwise.
   UpdateTiming(SeekFlag::NoSeek, SyncNotifyFlag::Async);
-
-  // FIXME: When we expose this method to script we'll need to call PostUpdate
-  // (but *not* when this method gets called from style).
 }
 
 // https://w3c.github.io/web-animations/#set-the-animation-start-time
@@ -350,7 +365,7 @@ Animation::GetFinished(ErrorResult& aRv)
 void
 Animation::Cancel()
 {
-  DoCancel();
+  CancelNoUpdate();
   PostUpdate();
 }
 
@@ -413,14 +428,14 @@ Animation::Finish(ErrorResult& aRv)
 void
 Animation::Play(ErrorResult& aRv, LimitBehavior aLimitBehavior)
 {
-  DoPlay(aRv, aLimitBehavior);
+  PlayNoUpdate(aRv, aLimitBehavior);
   PostUpdate();
 }
 
 void
 Animation::Pause(ErrorResult& aRv)
 {
-  DoPause(aRv);
+  PauseNoUpdate(aRv);
   PostUpdate();
 }
 
@@ -654,7 +669,7 @@ Animation::SilentlySetPlaybackRate(double aPlaybackRate)
 
 // https://w3c.github.io/web-animations/#cancel-an-animation
 void
-Animation::DoCancel()
+Animation::CancelNoUpdate()
 {
   if (mPendingState != PendingState::NotPending) {
     CancelPendingTasks();
@@ -837,7 +852,7 @@ Animation::NotifyEffectTimingUpdated()
 
 // https://w3c.github.io/web-animations/#play-an-animation
 void
-Animation::DoPlay(ErrorResult& aRv, LimitBehavior aLimitBehavior)
+Animation::PlayNoUpdate(ErrorResult& aRv, LimitBehavior aLimitBehavior)
 {
   AutoMutationBatchForAnimation mb(*this);
 
@@ -917,7 +932,7 @@ Animation::DoPlay(ErrorResult& aRv, LimitBehavior aLimitBehavior)
 
 // https://w3c.github.io/web-animations/#pause-an-animation
 void
-Animation::DoPause(ErrorResult& aRv)
+Animation::PauseNoUpdate(ErrorResult& aRv)
 {
   if (IsPausedOrPausing()) {
     return;
@@ -1160,8 +1175,8 @@ Animation::IsPossiblyOrphanedPendingAnimation() const
   //   when we have been painted.
   // * When we started playing we couldn't find a PendingAnimationTracker to
   //   register with (perhaps the effect had no document) so we simply
-  //   set mPendingState in DoPlay and relied on this method to catch us on the
-  //   next tick.
+  //   set mPendingState in PlayNoUpdate and relied on this method to catch us
+  //   on the next tick.
 
   // If we're not pending we're ok.
   if (mPendingState == PendingState::NotPending) {
@@ -1236,7 +1251,7 @@ Animation::DoFinishNotification(SyncNotifyFlag aSyncNotifyFlag)
     DoFinishNotificationImmediately();
   } else if (!mFinishNotificationTask.IsPending()) {
     RefPtr<nsRunnableMethod<Animation>> runnable =
-      NS_NewRunnableMethod(this, &Animation::DoFinishNotificationImmediately);
+      NewRunnableMethod(this, &Animation::DoFinishNotificationImmediately);
     runtime->DispatchToMicroTask(runnable);
     mFinishNotificationTask = runnable;
   }

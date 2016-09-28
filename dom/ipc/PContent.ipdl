@@ -40,6 +40,7 @@ include protocol PGMPService;
 include protocol PPluginModule;
 include protocol PGMP;
 include protocol PPrinting;
+include protocol PSendStream;
 include protocol POfflineCacheUpdate;
 include protocol PRenderFrame;
 include protocol PScreenManager;
@@ -56,6 +57,7 @@ include protocol PWebBrowserPersistDocument;
 include protocol PWebrtcGlobal;
 include protocol PPresentation;
 include protocol PVRManager;
+include protocol PFlyWebPublishedServer;
 include DOMTypes;
 include JavaScriptTypes;
 include InputStreamParams;
@@ -65,7 +67,7 @@ include PluginTypes;
 include ProtocolTypes;
 include PBackgroundSharedTypes;
 include PContentPermission;
-include BrowserConfiguration;
+include ServiceWorkerConfiguration;
 include GraphicsMessages;
 include ProfilerTypes;
 
@@ -97,6 +99,7 @@ using class mozilla::dom::ipc::StructuredCloneData from "ipc/IPCMessageUtils.h";
 using mozilla::DataStorageType from "ipc/DataStorageIPCUtils.h";
 using mozilla::DocShellOriginAttributes from "mozilla/ipc/BackgroundUtils.h";
 using struct mozilla::layers::TextureFactoryIdentifier from "mozilla/layers/CompositorTypes.h";
+using struct mozilla::dom::FlyWebPublishOptions from "mozilla/dom/FlyWebPublishOptionsIPCSerializer.h";
 
 union ChromeRegistryItem
 {
@@ -290,14 +293,6 @@ struct DataStorageItem {
   DataStorageType type;
 };
 
-struct DataStoreSetting {
-  nsString name;
-  nsString originURL;
-  nsString manifestURL;
-  bool readOnly;
-  bool enabled;
-};
-
 // Note: Any changes to this structure should also be changed in
 // FileSystemUpdate below.
 struct VolumeInfo {
@@ -427,6 +422,7 @@ prio(normal upto urgent) sync protocol PContent
     manages PNecko;
     manages POfflineCacheUpdate;
     manages PPrinting;
+    manages PSendStream;
     manages PScreenManager;
     manages PSms;
     manages PSpeechSynthesis;
@@ -439,6 +435,7 @@ prio(normal upto urgent) sync protocol PContent
     manages PWebBrowserPersistDocument;
     manages PWebrtcGlobal;
     manages PPresentation;
+    manages PFlyWebPublishedServer;
 
 both:
     // Depending on exactly how the new browser is being created, it might be
@@ -499,9 +496,6 @@ child:
      */
     async BidiKeyboardNotify(bool isLangRTL);
 
-    async DataStoreNotify(uint32_t aAppId, nsString aName,
-                          nsString aManifestURL);
-
     /**
      * Dump this process's GC and CC logs to the provided files.
      *
@@ -519,6 +513,8 @@ child:
     async RegisterChrome(ChromePackage[] packages, SubstitutionMapping[] substitutions,
                          OverrideMapping[] overrides, nsCString locale, bool reset);
     async RegisterChromeItem(ChromeRegistryItem item);
+
+    async ClearImageCache(bool privateLoader, bool chrome);
 
     async SetOffline(bool offline);
     async SetConnectivity(bool connectivity);
@@ -559,6 +555,11 @@ child:
     async AppInfo(nsCString version, nsCString buildID, nsCString name, nsCString UAName,
                   nsCString ID, nsCString vendor);
     async AppInit();
+
+    /**
+     * Send ServiceWorkerRegistrationData to child process.
+     */
+    async InitServiceWorkers(ServiceWorkerConfiguration aConfig);
 
     // Notify child that last-pb-context-exited notification was observed
     async LastPrivateDocShellDestroyed();
@@ -663,6 +664,11 @@ child:
     async NotifyGMPsChanged();
 
     /**
+     * Notify the child that cache is emptied.
+     */
+    async NotifyEmptyHTTPCache();
+
+    /**
      * Send a `push` event without data to a service worker in the child.
      */
     async Push(nsCString scope, Principal principal, nsString messageId);
@@ -681,7 +687,8 @@ child:
     /**
      * Send a Push error message to all service worker clients in the child.
      */
-    async PushError(nsCString scope, nsString message, uint32_t flags);
+    async PushError(nsCString scope, Principal principal, nsString message,
+                    uint32_t flags);
 
     /**
      * Windows specific: associate this content process with the browsers
@@ -832,6 +839,8 @@ parent:
 
     async PPrinting();
 
+    async PSendStream();
+
     prio(high) sync PScreenManager()
         returns (uint32_t numberOfScreens,
                  float systemDefaultScale,
@@ -858,6 +867,8 @@ parent:
     async PWebrtcGlobal();
 
     async PPresentation();
+
+    async PFlyWebPublishedServer(nsString name, FlyWebPublishOptions params);
 
     // Services remoting
 
@@ -954,9 +965,6 @@ parent:
                                     bool aAnyActiveChannel);
 
     async AudioChannelChangeDefVolChannel(int32_t aChannel, bool aHidden);
-
-    sync DataStoreGetStores(nsString aName, nsString aOwner, Principal aPrincipal)
-        returns (DataStoreSetting[] dataStores);
 
     async FilePathUpdateNotify(nsString aType,
                                nsString aStorageName,
@@ -1122,12 +1130,6 @@ parent:
     async PContentPermissionRequest(PermissionRequest[] aRequests, Principal aPrincipal,
                                     TabId tabId);
 
-    /**
-     * Send ServiceWorkerRegistrationData to child process.
-     */
-    sync GetBrowserConfiguration(nsCString aUri)
-        returns (BrowserConfiguration aConfig);
-
     /*
      * Tells the parent to start the gamepad listening service if it hasn't already.
      */
@@ -1153,7 +1155,6 @@ parent:
                       bool aCalledFromJS,
                       bool aPositionSpecified,
                       bool aSizeSpecified,
-                      nsCString aURI,
                       nsString aName,
                       nsCString aFeatures,
                       nsCString aBaseURI,
@@ -1191,9 +1192,40 @@ parent:
      */
     async NotifyBenchmarkResult(nsString aCodecName, uint32_t aDecodeFPS);
 
+    /**
+     * Notify `push-message` observers without data in the parent.
+     */
+    async NotifyPushObservers(nsCString scope, Principal principal,
+                              nsString messageId);
+
+    /**
+     * Notify `push-message` observers with data in the parent.
+     */
+    async NotifyPushObserversWithData(nsCString scope, Principal principal,
+                                      nsString messageId, uint8_t[] data);
+
+    /**
+     * Notify `push-subscription-change` observers in the parent.
+     */
+    async NotifyPushSubscriptionChangeObservers(nsCString scope,
+                                                Principal principal);
+
+    /**
+     * Tell the parent process that the child process is low on memory. This
+     * allows the parent process to save a memory report that can potentially be
+     * sent with a crash report from the content process.
+     */
+     async NotifyLowMemory();
+
 both:
      async AsyncMessage(nsString aMessage, CpowEntry[] aCpows,
                         Principal aPrincipal, ClonedMessageData aData);
+
+    /**
+     * Notify `push-subscription-modified` observers in the parent and child.
+     */
+    async NotifyPushSubscriptionModifiedObservers(nsCString scope,
+                                                  Principal principal);
 };
 
 }

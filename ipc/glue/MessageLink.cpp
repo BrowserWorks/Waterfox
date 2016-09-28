@@ -9,6 +9,7 @@
 #include "mozilla/ipc/MessageChannel.h"
 #include "mozilla/ipc/BrowserProcessSubThread.h"
 #include "mozilla/ipc/ProtocolUtils.h"
+#include "chrome/common/ipc_channel.h"
 
 #ifdef MOZ_NUWA_PROCESS
 #include "ipc/Nuwa.h"
@@ -25,18 +26,14 @@ extern "C" char* PrintJSStack();
 #include "mozilla/Assertions.h"
 #include "mozilla/DebugOnly.h"
 #include "nsDebug.h"
+#ifdef MOZ_CRASHREPORTER
+#include "nsExceptionHandler.h"
+#endif
 #include "nsISupportsImpl.h"
 #include "nsXULAppAPI.h"
 
 using namespace mozilla;
 using namespace std;
-
-template<>
-struct RunnableMethodTraits<mozilla::ipc::ProcessLink>
-{
-    static void RetainCallee(mozilla::ipc::ProcessLink* obj) { }
-    static void ReleaseCallee(mozilla::ipc::ProcessLink* obj) { }
-};
 
 // We rely on invariants about the lifetime of the transport:
 //
@@ -50,12 +47,6 @@ struct RunnableMethodTraits<mozilla::ipc::ProcessLink>
 // Transport, because whatever task triggers its deletion only runs on
 // the IO thread, and only runs after this MessageChannel is done with
 // the Transport.
-template<>
-struct RunnableMethodTraits<mozilla::ipc::MessageChannel::Transport>
-{
-    static void RetainCallee(mozilla::ipc::MessageChannel::Transport* obj) { }
-    static void ReleaseCallee(mozilla::ipc::MessageChannel::Transport* obj) { }
-};
 
 namespace mozilla {
 namespace ipc {
@@ -131,16 +122,12 @@ ProcessLink::Open(mozilla::ipc::Transport* aTransport, MessageLoop *aIOLoop, Sid
             // Transport::Connect() has not been called.  Call it so
             // we start polling our pipe and processing outgoing
             // messages.
-            mIOLoop->PostTask(
-                FROM_HERE,
-                NewRunnableMethod(this, &ProcessLink::OnChannelOpened));
+            mIOLoop->PostTask(NewNonOwningRunnableMethod(this, &ProcessLink::OnChannelOpened));
         } else {
             // Transport::Connect() has already been called.  Take
             // over the channel from the previous listener and process
             // any queued messages.
-            mIOLoop->PostTask(
-                FROM_HERE,
-                NewRunnableMethod(this, &ProcessLink::OnTakeConnectedChannel));
+            mIOLoop->PostTask(NewNonOwningRunnableMethod(this, &ProcessLink::OnTakeConnectedChannel));
         }
 
 #ifdef MOZ_NUWA_PROCESS
@@ -167,15 +154,21 @@ ProcessLink::EchoMessage(Message *msg)
     mChan->AssertWorkerThread();
     mChan->mMonitor->AssertCurrentThreadOwns();
 
-    mIOLoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this, &ProcessLink::OnEchoMessage, msg));
+    mIOLoop->PostTask(NewNonOwningRunnableMethod<Message*>(this, &ProcessLink::OnEchoMessage, msg));
     // OnEchoMessage takes ownership of |msg|
 }
 
 void
 ProcessLink::SendMessage(Message *msg)
 {
+    if (msg->size() > IPC::Channel::kMaximumMessageSize) {
+#ifdef MOZ_CRASHREPORTER
+      CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCMessageName"), nsDependentCString(msg->name()));
+      CrashReporter::AnnotateCrashReport(NS_LITERAL_CSTRING("IPCMessageSize"), nsPrintfCString("%d", msg->size()));
+#endif
+      MOZ_CRASH("IPC message size is too large");
+    }
+
     mChan->AssertWorkerThread();
     mChan->mMonitor->AssertCurrentThreadOwns();
 
@@ -215,9 +208,7 @@ ProcessLink::SendMessage(Message *msg)
 #endif
 #endif
 
-    mIOLoop->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(mTransport, &Transport::Send, msg));
+    mIOLoop->PostTask(NewNonOwningRunnableMethod<Message*>(mTransport, &Transport::Send, msg));
 }
 
 void
@@ -226,8 +217,7 @@ ProcessLink::SendClose()
     mChan->AssertWorkerThread();
     mChan->mMonitor->AssertCurrentThreadOwns();
 
-    mIOLoop->PostTask(
-        FROM_HERE, NewRunnableMethod(this, &ProcessLink::OnCloseChannel));
+    mIOLoop->PostTask(NewNonOwningRunnableMethod(this, &ProcessLink::OnCloseChannel));
 }
 
 ThreadLink::ThreadLink(MessageChannel *aChan, MessageChannel *aTargetChan)

@@ -10,6 +10,7 @@
 #include "NSSCertDBTrustDomain.h"
 #include "certdb.h"
 #include "mozilla/Base64.h"
+#include "mozilla/Casting.h"
 #include "mozilla/unused.h"
 #include "nsArray.h"
 #include "nsCOMPtr.h"
@@ -532,12 +533,14 @@ nsNSSCertificate::GetDbKey(const UniqueCERTCertificate& cert, nsACString& aDbKey
   const char leadingZeroes[] = {0, 0, 0, 0, 0, 0, 0, 0};
   buf.Append(leadingZeroes, sizeof(leadingZeroes));
   uint32_t serialNumberLen = htonl(cert->serialNumber.len);
-  buf.Append(reinterpret_cast<const char*>(&serialNumberLen), sizeof(uint32_t));
+  buf.Append(BitwiseCast<const char*, const uint32_t*>(&serialNumberLen),
+             sizeof(uint32_t));
   uint32_t issuerLen = htonl(cert->derIssuer.len);
-  buf.Append(reinterpret_cast<const char*>(&issuerLen), sizeof(uint32_t));
-  buf.Append(reinterpret_cast<const char*>(cert->serialNumber.data),
+  buf.Append(BitwiseCast<const char*, const uint32_t*>(&issuerLen),
+             sizeof(uint32_t));
+  buf.Append(BitwiseCast<char*, unsigned char*>(cert->serialNumber.data),
              cert->serialNumber.len);
-  buf.Append(reinterpret_cast<const char*>(cert->derIssuer.data),
+  buf.Append(BitwiseCast<char*, unsigned char*>(cert->derIssuer.data),
              cert->derIssuer.len);
 
   return Base64Encode(buf, aDbKey);
@@ -841,10 +844,10 @@ nsNSSCertificate::GetChain(nsIArray** _rvChain)
 
   mozilla::pkix::Time now(mozilla::pkix::Now());
 
-  ScopedCERTCertList nssChain;
   RefPtr<SharedCertVerifier> certVerifier(GetDefaultCertVerifier());
   NS_ENSURE_TRUE(certVerifier, NS_ERROR_UNEXPECTED);
 
+  UniqueCERTCertList nssChain;
   // We want to test all usages, but we start with server because most of the
   // time Firefox users care about server certs.
   if (certVerifier->VerifyCert(mCert.get(), certificateUsageSSLServer, now,
@@ -884,16 +887,15 @@ nsNSSCertificate::GetChain(nsIArray** _rvChain)
   }
 
   if (!nssChain) {
-    // There is not verified path for the chain, howeever we still want to 
+    // There is not verified path for the chain, however we still want to
     // present to the user as much of a possible chain as possible, in the case
     // where there was a problem with the cert or the issuers.
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
            ("pipnss: getchain :CertVerify failed to get chain for '%s'\n",
             mCert->nickname));
-    nssChain = CERT_GetCertChainFromCert(mCert.get(), PR_Now(),
-                                         certUsageSSLClient);
-  } 
-
+    nssChain = UniqueCERTCertList(
+      CERT_GetCertChainFromCert(mCert.get(), PR_Now(), certUsageSSLClient));
+  }
   if (!nssChain) {
     return NS_ERROR_FAILURE;
   }
@@ -1102,7 +1104,7 @@ nsNSSCertificate::GetSha256SubjectPublicKeyInfoDigest(nsACString& aSha256SPKIDig
     return rv;
   }
   rv = Base64Encode(nsDependentCSubstring(
-                      reinterpret_cast<const char*> (digest.get().data),
+                      BitwiseCast<char*, unsigned char*>(digest.get().data),
                       digest.get().len),
                     aSha256SPKIDigest);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -1273,8 +1275,12 @@ nsNSSCertificate::GetValidity(nsIX509CertValidity** aValidity)
     return NS_ERROR_NOT_AVAILABLE;
 
   NS_ENSURE_ARG(aValidity);
-  RefPtr<nsX509CertValidity> validity = new nsX509CertValidity(mCert.get());
 
+  if (!mCert) {
+    return NS_ERROR_FAILURE;
+  }
+
+  nsCOMPtr<nsIX509CertValidity> validity = new nsX509CertValidity(mCert);
   validity.forget(aValidity);
   return NS_OK;
 }
@@ -1405,7 +1411,7 @@ nsNSSCertificate::hasValidEVOidTag(SECOidTag& resultOidTag, bool& validEV)
 
   uint32_t flags = mozilla::psm::CertVerifier::FLAG_LOCAL_ONLY |
     mozilla::psm::CertVerifier::FLAG_MUST_BE_EV;
-  ScopedCERTCertList unusedBuiltChain;
+  UniqueCERTCertList unusedBuiltChain;
   SECStatus rv = certVerifier->VerifyCert(mCert.get(),
     certificateUsageSSLServer, mozilla::pkix::Now(),
     nullptr /* XXX pinarg */,
@@ -1478,9 +1484,9 @@ namespace mozilla {
 SECStatus
 ConstructCERTCertListFromReversedDERArray(
   const mozilla::pkix::DERArray& certArray,
-  /*out*/ ScopedCERTCertList& certList)
+  /*out*/ UniqueCERTCertList& certList)
 {
-  certList = CERT_NewCertList();
+  certList = UniqueCERTCertList(CERT_NewCertList());
   if (!certList) {
     return SECFailure;
   }
@@ -1518,19 +1524,19 @@ NS_IMPL_ISUPPORTS_CI(nsNSSCertList,
                      nsIX509CertList,
                      nsISerializable)
 
-nsNSSCertList::nsNSSCertList(ScopedCERTCertList& certList,
+nsNSSCertList::nsNSSCertList(UniqueCERTCertList certList,
                              const nsNSSShutDownPreventionLock& proofOfLock)
 {
   if (certList) {
-    mCertList = certList.forget();
+    mCertList = Move(certList);
   } else {
-    mCertList = CERT_NewCertList();
+    mCertList = UniqueCERTCertList(CERT_NewCertList());
   }
 }
 
 nsNSSCertList::nsNSSCertList()
 {
-  mCertList = CERT_NewCertList();
+  mCertList = UniqueCERTCertList(CERT_NewCertList());
 }
 
 nsNSSCertList::~nsNSSCertList()
@@ -1550,9 +1556,7 @@ void nsNSSCertList::virtualDestroyNSSReference()
 
 void nsNSSCertList::destructorSafeDestroyNSSReference()
 {
-  if (mCertList) {
-    mCertList = nullptr;
-  }
+  mCertList = nullptr;
 }
 
 NS_IMETHODIMP
@@ -1607,30 +1611,37 @@ nsNSSCertList::DeleteCert(nsIX509Cert* aCert)
   return NS_OK; // XXX Should we fail if we couldn't find it?
 }
 
-CERTCertList*
-nsNSSCertList::DupCertList(CERTCertList* aCertList,
+UniqueCERTCertList
+nsNSSCertList::DupCertList(const UniqueCERTCertList& certList,
                            const nsNSSShutDownPreventionLock& /*proofOfLock*/)
 {
-  if (!aCertList) {
+  if (!certList) {
     return nullptr;
   }
 
-  CERTCertList* newList = CERT_NewCertList();
-
+  UniqueCERTCertList newList(CERT_NewCertList());
   if (!newList) {
     return nullptr;
   }
 
-  CERTCertListNode* node;
-  for (node = CERT_LIST_HEAD(aCertList); !CERT_LIST_END(node, aCertList);
-                                              node = CERT_LIST_NEXT(node)) {
-    CERTCertificate* cert = CERT_DupCertificate(node->cert);
-    CERT_AddCertToListTail(newList, cert);
+  for (CERTCertListNode* node = CERT_LIST_HEAD(certList);
+       !CERT_LIST_END(node, certList);
+       node = CERT_LIST_NEXT(node)) {
+    UniqueCERTCertificate cert(CERT_DupCertificate(node->cert));
+    if (!cert) {
+      return nullptr;
+    }
+
+    if (CERT_AddCertToListTail(newList.get(), cert.get()) != SECSuccess) {
+      return nullptr;
+    }
+
+    Unused << cert.release(); // Ownership transferred to the cert list.
   }
   return newList;
 }
 
-void*
+CERTCertList*
 nsNSSCertList::GetRawCertList()
 {
   // This function should only be called after acquiring a
@@ -1732,8 +1743,13 @@ nsNSSCertList::GetEnumerator(nsISimpleEnumerator** _retval)
   if (isAlreadyShutDown()) {
     return NS_ERROR_NOT_AVAILABLE;
   }
+
+  if (!mCertList) {
+    return NS_ERROR_FAILURE;
+  }
+
   nsCOMPtr<nsISimpleEnumerator> enumerator =
-    new nsNSSCertListEnumerator(mCertList.get(), locker);
+    new nsNSSCertListEnumerator(mCertList, locker);
 
   enumerator.forget(_retval);
   return NS_OK;
@@ -1803,8 +1819,10 @@ nsNSSCertList::Equals(nsIX509CertList* other, bool* result)
 NS_IMPL_ISUPPORTS(nsNSSCertListEnumerator, nsISimpleEnumerator)
 
 nsNSSCertListEnumerator::nsNSSCertListEnumerator(
-  CERTCertList* certList, const nsNSSShutDownPreventionLock& proofOfLock)
+  const UniqueCERTCertList& certList,
+  const nsNSSShutDownPreventionLock& proofOfLock)
 {
+  MOZ_ASSERT(certList);
   mCertList = nsNSSCertList::DupCertList(certList, proofOfLock);
 }
 
@@ -1825,9 +1843,7 @@ void nsNSSCertListEnumerator::virtualDestroyNSSReference()
 
 void nsNSSCertListEnumerator::destructorSafeDestroyNSSReference()
 {
-  if (mCertList) {
-    mCertList = nullptr;
-  }
+  mCertList = nullptr;
 }
 
 NS_IMETHODIMP

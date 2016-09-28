@@ -1117,7 +1117,7 @@ nsDisplayTableItem::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
     static_cast<const nsDisplayTableItemGeometry*>(aGeometry);
 
   bool invalidateForAttachmentFixed = false;
-  if (mPartHasFixedBackground) {
+  if (mDrawsBackground && mPartHasFixedBackground) {
     nsPoint frameOffsetToViewport = mFrame->GetOffsetTo(
         mFrame->PresContext()->PresShell()->GetRootFrame());
     invalidateForAttachmentFixed =
@@ -1137,8 +1137,9 @@ nsDisplayTableItem::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
 class nsDisplayTableBorderBackground : public nsDisplayTableItem {
 public:
   nsDisplayTableBorderBackground(nsDisplayListBuilder* aBuilder,
-                                 nsTableFrame* aFrame) :
-    nsDisplayTableItem(aBuilder, aFrame) {
+                                 nsTableFrame* aFrame,
+                                 bool aDrawsBackground) :
+    nsDisplayTableItem(aBuilder, aFrame, aDrawsBackground) {
     MOZ_COUNT_CTOR(nsDisplayTableBorderBackground);
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
@@ -1253,6 +1254,7 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
     // XXX how to handle collapsed borders?
     if (aBuilder->IsForEventDelivery()) {
       nsDisplayBackgroundImage::AppendBackgroundItemsToTop(aBuilder, aFrame,
+                                                           aFrame->GetRectRelativeToSelf(),
                                                            lists->BorderBackground());
     }
 
@@ -1320,8 +1322,8 @@ nsTableFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 
   nsDisplayTableItem* item = nullptr;
   if (IsVisibleInSelection(aBuilder)) {
+    nsMargin deflate = GetDeflationForBackground(PresContext());
     if (StyleVisibility()->IsVisible()) {
-      nsMargin deflate = GetDeflationForBackground(PresContext());
       // If 'deflate' is (0,0,0,0) then we can paint the table background
       // in its own display item, so do that to take advantage of
       // opacity and visibility optimizations
@@ -1338,7 +1340,8 @@ nsTableFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
     if (aBuilder->IsForEventDelivery() ||
         AnyTablePartHasBorderOrBackground(this, GetNextSibling()) ||
         AnyTablePartHasBorderOrBackground(mColGroups.FirstChild(), nullptr)) {
-      item = new (aBuilder) nsDisplayTableBorderBackground(aBuilder, this);
+      item = new (aBuilder) nsDisplayTableBorderBackground(aBuilder, this,
+          deflate != nsMargin(0, 0, 0, 0));
       aLists.BorderBackground()->AppendNewToTop(item);
     }
   }
@@ -1675,7 +1678,7 @@ nsTableFrame::AncestorsHaveStyleBSize(const nsHTMLReflowState& aParentReflowStat
 {
   WritingMode wm = aParentReflowState.GetWritingMode();
   for (const nsHTMLReflowState* rs = &aParentReflowState;
-       rs && rs->frame; rs = rs->parentReflowState) {
+       rs && rs->frame; rs = rs->mParentReflowState) {
     nsIAtom* frameType = rs->frame->GetType();
     if (IS_TABLE_CELL(frameType)                     ||
         (nsGkAtoms::tableRowFrame      == frameType) ||
@@ -1710,7 +1713,7 @@ nsTableFrame::CheckRequestSpecialBSizeReflow(const nsHTMLReflowState& aReflowSta
       (NS_UNCONSTRAINEDSIZE == aReflowState.ComputedBSize() ||  // no computed bsize
        0                    == aReflowState.ComputedBSize()) &&
       eStyleUnit_Percent == aReflowState.mStylePosition->BSize(wm).GetUnit() && // pct bsize
-      nsTableFrame::AncestorsHaveStyleBSize(*aReflowState.parentReflowState)) {
+      nsTableFrame::AncestorsHaveStyleBSize(*aReflowState.mParentReflowState)) {
     nsTableFrame::RequestSpecialBSizeReflow(aReflowState);
   }
 }
@@ -1724,7 +1727,7 @@ void
 nsTableFrame::RequestSpecialBSizeReflow(const nsHTMLReflowState& aReflowState)
 {
   // notify the frame and its ancestors of the special reflow, stopping at the containing table
-  for (const nsHTMLReflowState* rs = &aReflowState; rs && rs->frame; rs = rs->parentReflowState) {
+  for (const nsHTMLReflowState* rs = &aReflowState; rs && rs->frame; rs = rs->mParentReflowState) {
     nsIAtom* frameType = rs->frame->GetType();
     NS_ASSERTION(IS_TABLE_CELL(frameType) ||
                  nsGkAtoms::tableRowFrame == frameType ||
@@ -2053,22 +2056,19 @@ nsTableFrame::FixupPositionedTableParts(nsPresContext*           aPresContext,
 }
 
 bool
-nsTableFrame::UpdateOverflow()
+nsTableFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
 {
-  nsRect bounds(nsPoint(0, 0), GetSize());
-
   // As above in Reflow, make sure the table overflow area includes the table
   // rect, and check for collapsed borders leaking out.
   if (!ShouldApplyOverflowClipping(this, StyleDisplay())) {
+    nsRect bounds(nsPoint(0, 0), GetSize());
     WritingMode wm = GetWritingMode();
     LogicalMargin bcMargin = GetExcludedOuterBCBorder(wm);
     bounds.Inflate(bcMargin.GetPhysicalMargin(wm));
+
+    aOverflowAreas.UnionAllWith(bounds);
   }
-
-  nsOverflowAreas overflowAreas(bounds, bounds);
-  nsLayoutUtils::UnionChildOverflow(this, overflowAreas);
-
-  return FinishAndStoreOverflow(overflowAreas, GetSize());
+  return nsContainerFrame::ComputeCustomOverflow(aOverflowAreas);
 }
 
 void
@@ -2762,7 +2762,7 @@ nsTableFrame::InitChildReflowState(nsHTMLReflowState& aReflowState)
   aReflowState.Init(presContext, nullptr, pCollapseBorder, &padding);
 
   NS_ASSERTION(!mBits.mResizedColumns ||
-               !aReflowState.parentReflowState->mFlags.mSpecialBSizeReflow,
+               !aReflowState.mParentReflowState->mFlags.mSpecialBSizeReflow,
                "should not resize columns on special bsize reflow");
   if (mBits.mResizedColumns) {
     aReflowState.SetIResize(true);
@@ -4797,7 +4797,7 @@ GetPaintStyleInfo(const nsIFrame* aFrame,
   }
 }
 
-class nsDelayedCalcBCBorders : public nsRunnable {
+class nsDelayedCalcBCBorders : public Runnable {
 public:
   explicit nsDelayedCalcBCBorders(nsIFrame* aFrame) :
     mFrame(aFrame) {}

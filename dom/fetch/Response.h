@@ -53,8 +53,14 @@ public:
   GetUrl(nsAString& aUrl) const
   {
     nsCString url;
-    mInternalResponse->GetUrl(url);
+    mInternalResponse->GetURL(url);
     CopyUTF8toUTF16(url, aUrl);
+  }
+
+  bool
+  Redirected() const
+  {
+    return mInternalResponse->IsRedirected();
   }
 
   uint16_t
@@ -128,7 +134,7 @@ public:
   CloneUnfiltered(ErrorResult& aRv) const;
 
   void
-  SetBody(nsIInputStream* aBody);
+  SetBody(nsIInputStream* aBody, int64_t aBodySize);
 
   already_AddRefed<InternalResponse>
   GetInternalResponse() const;

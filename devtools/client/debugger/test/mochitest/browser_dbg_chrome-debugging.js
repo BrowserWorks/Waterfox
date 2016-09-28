@@ -11,13 +11,13 @@ const TAB_URL = EXAMPLE_URL + "doc_inline-debugger-statement.html";
 
 var gClient, gThreadClient;
 var gAttached = promise.defer();
-var gNewGlobal = promise.defer()
-var gNewChromeSource = promise.defer()
+var gNewGlobal = promise.defer();
+var gNewChromeSource = promise.defer();
 
 var { DevToolsLoader } = Cu.import("resource://devtools/shared/Loader.jsm", {});
-var loader = new DevToolsLoader();
-loader.invisibleToDebugger = true;
-var { DebuggerServer } = loader.require("devtools/server/main");
+var customLoader = new DevToolsLoader();
+customLoader.invisibleToDebugger = true;
+var { DebuggerServer } = customLoader.require("devtools/server/main");
 
 function test() {
   if (!DebuggerServer.initialized) {
@@ -90,13 +90,13 @@ function resumeAndCloseConnection() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gClient = null;
   gThreadClient = null;
   gAttached = null;
   gNewGlobal = null;
   gNewChromeSource = null;
 
-  loader = null;
+  customLoader = null;
   DebuggerServer = null;
 });

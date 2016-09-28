@@ -68,7 +68,7 @@ js::TaggedProto::ensureUniqueId() const
 uint64_t
 js::TaggedProto::uniqueId() const
 {
-    if (isLazy())
+    if (isDynamic())
         return uint64_t(1);
     JSObject* obj = toObjectOrNull();
     if (!obj)

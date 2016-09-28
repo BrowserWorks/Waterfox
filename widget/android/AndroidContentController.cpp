@@ -34,7 +34,7 @@ AndroidContentController::NotifyDefaultPrevented(APZCTreeManager* aManager,
         // The notification must reach the APZ on the Java UI thread (aka the
         // APZ "controller" thread) but we get it from the Gecko thread, so we
         // have to throw it onto the other thread.
-        AndroidBridge::Bridge()->PostTaskToUiThread(NewRunnableMethod(
+        AndroidBridge::Bridge()->PostTaskToUiThread(NewRunnableMethod<uint64_t, bool>(
             aManager, &APZCTreeManager::ContentReceivedInputBlock,
             aInputBlockId, aDefaultPrevented), 0);
         return;
@@ -87,9 +87,9 @@ AndroidContentController::HandleSingleTap(const CSSPoint& aPoint,
 }
 
 void
-AndroidContentController::PostDelayedTask(Task* aTask, int aDelayMs)
+AndroidContentController::PostDelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs)
 {
-    AndroidBridge::Bridge()->PostTaskToUiThread(aTask, aDelayMs);
+    AndroidBridge::Bridge()->PostTaskToUiThread(Move(aTask), aDelayMs);
 }
 void
 AndroidContentController::UpdateOverscrollVelocity(const float aX, const float aY)

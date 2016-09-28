@@ -31,7 +31,7 @@ class StaticBlockScope;
 class ClonedBlockObject;
 
 class SimdTypeDescr;
-enum class SimdType : uint8_t;
+enum class SimdType;
 
 /*
  * Global object slots are reserved as follows:
@@ -272,7 +272,6 @@ class GlobalObject : public NativeObject
 
     Value createArrayFromBufferHelper(uint32_t slot) const {
         MOZ_ASSERT(FROM_BUFFER_UINT8 <= slot && slot <= FROM_BUFFER_UINT8CLAMPED);
-        MOZ_ASSERT(!getSlot(slot).isUndefined());
         return getSlot(slot);
     }
 

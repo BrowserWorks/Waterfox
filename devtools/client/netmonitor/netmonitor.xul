@@ -221,6 +221,17 @@
                         flex="1">
                 </button>
               </hbox>
+              <hbox id="requests-menu-cause-header-box"
+                    class="requests-menu-header requests-menu-cause"
+                    align="center">
+                <button id="requests-menu-cause-button"
+                        class="requests-menu-header-button requests-menu-cause"
+                        data-key="cause"
+                        label="&netmonitorUI.toolbar.cause;"
+                        crop="end"
+                        flex="1">
+                </button>
+              </hbox>
               <hbox id="requests-menu-type-header-box"
                     class="requests-menu-header requests-menu-type"
                     align="center">
@@ -262,6 +273,7 @@
                         class="requests-menu-header-button requests-menu-waterfall"
                         data-key="waterfall"
                         pack="start"
+                        label="&netmonitorUI.toolbar.waterfall;"
                         flex="1">
                   <image id="requests-menu-waterfall-image"/>
                   <box id="requests-menu-waterfall-label-wrapper">
@@ -288,6 +300,7 @@
               <label value="&netmonitorUI.perfNotice1;"/>
               <button id="requests-menu-perf-notice-button"
                       standalone="true"
+                      label="&netmonitorUI.perfNotice3;"
                       class="devtools-toolbarbutton"/>
               <label value="&netmonitorUI.perfNotice2;"/>
             </hbox>
@@ -320,6 +333,10 @@
                 <label class="plain requests-menu-domain"
                        crop="end"
                        flex="1"/>
+              </hbox>
+              <hbox class="requests-menu-subitem requests-menu-cause" align="center">
+                <label class="requests-menu-cause-stack" value="JS" hidden="true"/>
+                <label class="plain requests-menu-cause-label" flex="1" crop="end"/>
               </hbox>
               <label class="plain requests-menu-subitem requests-menu-type"
                      crop="end"/>

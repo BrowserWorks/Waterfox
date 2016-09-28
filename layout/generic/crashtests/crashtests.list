@@ -473,7 +473,7 @@ load 700031.xhtml
 load 718516.html
 load 723108.html
 load 724235.html
-load 724978.xhtml
+skip-if(Android&&isDebugBuild) load 724978.xhtml # bug 1263300 - slow
 skip-if(Android&&isDebugBuild) load 730559.html # bug 1245634 - slow
 load 734777.html
 load 737313-1.html
@@ -624,3 +624,6 @@ load text-overflow-form-elements.html
 load text-overflow-iframe.html
 asserts-if(Android,2-4) asserts-if(!Android,4) load 1225005.html # bug 682647 and bug 448083
 load 1233191.html
+asserts(2) load 1272983-1.html # bug 586628
+asserts(2) load 1272983-2.html # bug 586628
+load 1278007.html

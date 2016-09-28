@@ -20,6 +20,7 @@ UNIFIED_SOURCES += [
     # 'TestMP4Reader.cpp', disabled so we can turn check tests back on (bug 1175752)
     'TestTrackEncoder.cpp',
     'TestVideoSegment.cpp',
+    'TestVideoUtils.cpp',
     'TestVPXDecoding.cpp',
     'TestWebMBuffered.cpp',
 ]
@@ -72,3 +73,10 @@ LOCAL_INCLUDES += [
 ]
 
 FINAL_LIBRARY = 'xul-gtest'
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']
+
+USE_LIBS += [
+   'rlz',
+]

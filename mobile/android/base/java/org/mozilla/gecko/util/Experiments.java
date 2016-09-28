@@ -7,7 +7,6 @@ package org.mozilla.gecko.util;
 import android.content.Context;
 
 import android.util.Log;
-import org.mozilla.gecko.mozglue.ContextUtils.SafeIntent;
 import android.text.TextUtils;
 
 import com.keepsafe.switchboard.Preferences;
@@ -24,9 +23,6 @@ import java.util.List;
 public class Experiments {
     private static final String LOGTAG = "GeckoExperiments";
 
-    // Show search mode (instead of home panels) when tapping on urlbar if there is a search term in the urlbar.
-    public static final String SEARCH_TERM = "search-term";
-
     // Show a system notification linking to a "What's New" page on app update.
     public static final String WHATSNEW_NOTIFICATION = "whatsnew-notification";
 
@@ -35,7 +31,11 @@ public class Experiments {
     public static final String CONTENT_NOTIFICATIONS_8AM = "content-notifications-8am";
     public static final String CONTENT_NOTIFICATIONS_5PM = "content-notifications-5pm";
 
-    public static final String ONBOARDING2_C = "onboarding2-c"; // 4 static + 1 clickable (Data saving) Feature slides
+    // Onboarding: "Features and Story". These experiments are determined
+    // on the client, they are not part of the server config.
+    public static final String ONBOARDING3_A = "onboarding3-a"; // Control: No first run
+    public static final String ONBOARDING3_B = "onboarding3-b"; // 4 static Feature + 1 dynamic slides
+    public static final String ONBOARDING3_C = "onboarding3-c"; // Differentiating features slides
 
     // Synchronizing the catalog of downloadable content from Kinto
     public static final String DOWNLOAD_CONTENT_CATALOG_SYNC = "download-content-catalog-sync";
@@ -45,42 +45,14 @@ public class Experiments {
 
     public static final String PREF_ONBOARDING_VERSION = "onboarding_version";
 
+    // Promotion to bookmark reader-view items after entering reader view three times (Bug 1247689)
+    public static final String TRIPLE_READERVIEW_BOOKMARK_PROMPT = "triple-readerview-bookmark-prompt";
+
     // Only show origin in URL bar instead of full URL (Bug 1236431)
     public static final String URLBAR_SHOW_ORIGIN_ONLY = "urlbar-show-origin-only";
 
     // Show name of organization (EV cert) instead of full URL in URL bar (Bug 1249594).
     public static final String URLBAR_SHOW_EV_CERT_OWNER = "urlbar-show-ev-cert-owner";
-
-    private static volatile Boolean disabled = null;
-
-    /**
-     * Determines whether Switchboard is disabled by the MOZ_DISABLE_SWITCHBOARD
-     * environment variable. We need to read this value from the intent string
-     * extra because environment variables from our test harness aren't set
-     * until Gecko is loaded, and we need to know this before then.
-     *
-     * @param intent Main intent that launched the app
-     * @return Whether Switchboard is disabled
-     */
-    public static boolean isDisabled(SafeIntent intent) {
-        if (disabled != null) {
-            return disabled;
-        }
-
-        String env = intent.getStringExtra("env0");
-        for (int i = 1; env != null; i++) {
-            if (env.startsWith("MOZ_DISABLE_SWITCHBOARD=")) {
-                if (!env.endsWith("=")) {
-                    Log.d(LOGTAG, "Switchboard disabled by MOZ_DISABLE_SWITCHBOARD environment variable");
-                    disabled = true;
-                    return disabled;
-                }
-            }
-            env = intent.getStringExtra("env" + i);
-        }
-        disabled = false;
-        return disabled;
-    }
 
     /**
      * Returns if a user is in certain local experiment.
@@ -88,7 +60,15 @@ public class Experiments {
      * @return returns value for experiment or false if experiment does not exist.
      */
     public static boolean isInExperimentLocal(Context context, String experiment) {
-        return Experiments.ONBOARDING2_C.equals(experiment);
+        if (SwitchBoard.isInBucket(context, 0, 20)) {
+            return Experiments.ONBOARDING3_A.equals(experiment);
+        } else if (SwitchBoard.isInBucket(context, 20, 60)) {
+            return Experiments.ONBOARDING3_B.equals(experiment);
+        } else if (SwitchBoard.isInBucket(context, 60, 100)) {
+            return Experiments.ONBOARDING3_C.equals(experiment);
+        } else {
+            return false;
+        }
     }
 
     /**

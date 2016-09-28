@@ -257,6 +257,8 @@ class JitFrameIterator
 
     inline BaselineFrame* baselineFrame() const;
 
+    // This function isn't used, but we keep it here (debug-only) because it is
+    // helpful when chasing issues with the jitcode map.
 #ifdef DEBUG
     bool verifyReturnAddressUsingNativeToBytecodeMap();
 #else
@@ -298,7 +300,7 @@ class JitProfilingFrameIterator
 class RInstructionResults
 {
     // Vector of results of recover instructions.
-    typedef mozilla::Vector<RelocatableValue, 1, SystemAllocPolicy> Values;
+    typedef mozilla::Vector<HeapPtr<Value>, 1, SystemAllocPolicy> Values;
     UniquePtr<Values> results_;
 
     // The frame pointer is used as a key to check if the current frame already
@@ -326,7 +328,7 @@ class RInstructionResults
 
     JitFrameLayout* frame() const;
 
-    RelocatableValue& operator[](size_t index);
+    HeapPtr<Value>& operator[](size_t index);
 
     void trace(JSTracer* trc);
 };

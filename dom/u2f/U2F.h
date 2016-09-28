@@ -13,7 +13,7 @@
 #include "mozilla/dom/Nullable.h"
 #include "mozilla/ErrorResult.h"
 #include "nsCycleCollectionParticipant.h"
-#include "nsINSSU2FToken.h"
+#include "nsIU2FToken.h"
 #include "nsNSSShutDown.h"
 #include "nsPIDOMWindow.h"
 #include "nsWrapperCache.h"
@@ -28,12 +28,6 @@ struct RegisteredKey;
 class U2FRegisterCallback;
 class U2FSignCallback;
 
-} // namespace dom
-} // namespace mozilla
-
-namespace mozilla {
-namespace dom {
-
 // These enumerations are defined in the FIDO U2F Javascript API under the
 // interface "ErrorCode" as constant integers, and thus in the U2F.webidl file.
 // Any changes to these must occur in both locations.
@@ -46,7 +40,9 @@ enum class ErrorCode {
   TIMEOUT = 5
 };
 
-class U2FTask : public nsRunnable
+typedef nsCOMPtr<nsIU2FToken> Authenticator;
+
+class U2FTask : public Runnable
 {
 public:
   U2FTask(const nsAString& aOrigin,
@@ -71,7 +67,7 @@ public:
                   const Sequence<RegisterRequest>& aRegisterRequests,
                   const Sequence<RegisteredKey>& aRegisteredKeys,
                   U2FRegisterCallback* aCallback,
-                  const nsCOMPtr<nsINSSU2FToken>& aNSSToken);
+                  const Sequence<Authenticator>& aAuthenticators);
 
   // No NSS resources to release.
   virtual
@@ -86,7 +82,7 @@ private:
   Sequence<RegisterRequest> mRegisterRequests;
   Sequence<RegisteredKey> mRegisteredKeys;
   RefPtr<U2FRegisterCallback> mCallback;
-  nsCOMPtr<nsINSSU2FToken> mNSSToken;
+  Sequence<Authenticator> mAuthenticators;
 };
 
 class U2FSignTask final : public nsNSSShutDownObject,
@@ -98,7 +94,7 @@ public:
               const nsAString& aChallenge,
               const Sequence<RegisteredKey>& aRegisteredKeys,
               U2FSignCallback* aCallback,
-              const nsCOMPtr<nsINSSU2FToken>& aNSSToken);
+              const Sequence<Authenticator>& aAuthenticators);
 
   // No NSS resources to release.
   virtual
@@ -113,7 +109,7 @@ private:
   nsString mChallenge;
   Sequence<RegisteredKey> mRegisteredKeys;
   RefPtr<U2FSignCallback> mCallback;
-  nsCOMPtr<nsINSSU2FToken> mNSSToken;
+  Sequence<Authenticator> mAuthenticators;
 };
 
 class U2F final : public nsISupports,
@@ -161,8 +157,7 @@ public:
 private:
   nsCOMPtr<nsPIDOMWindowInner> mParent;
   nsString mOrigin;
-  USBToken mUSBToken;
-  nsCOMPtr<nsINSSU2FToken> mNSSToken;
+  Sequence<Authenticator> mAuthenticators;
 
   ~U2F();
 };

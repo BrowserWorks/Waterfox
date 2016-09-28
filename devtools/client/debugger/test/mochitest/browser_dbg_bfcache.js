@@ -17,7 +17,11 @@ var gSources;
 const test = Task.async(function* () {
   info("Starting browser_dbg_bfcache.js's `test`.");
 
-  ([gTab, gDebuggee, gPanel]) = yield initDebugger(TAB_URL_1);
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  ([gTab, gDebuggee, gPanel]) = yield initDebugger(TAB_URL_1, options);
   gDebugger = gPanel.panelWin;
   gSources = gDebugger.DebuggerView.Sources;
 
@@ -82,7 +86,7 @@ function validateSecondPage() {
     "Found the single source label.");
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gDebuggee = null;
   gPanel = null;

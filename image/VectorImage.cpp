@@ -263,7 +263,7 @@ public:
   { }
   virtual bool operator()(gfxContext* aContext,
                           const gfxRect& aFillRect,
-                          const Filter& aFilter,
+                          const SamplingFilter aSamplingFilter,
                           const gfxMatrix& aTransform);
 private:
   RefPtr<SVGDocumentWrapper> mSVGDocumentWrapper;
@@ -276,7 +276,7 @@ private:
 bool
 SVGDrawingCallback::operator()(gfxContext* aContext,
                                const gfxRect& aFillRect,
-                               const Filter& aFilter,
+                               const SamplingFilter aSamplingFilter,
                                const gfxMatrix& aTransform)
 {
   MOZ_ASSERT(mSVGDocumentWrapper, "need an SVGDocumentWrapper");
@@ -739,7 +739,7 @@ VectorImage::GetFrameAtSize(const IntSize& aSize,
   MOZ_ASSERT(context); // already checked the draw target above
 
   auto result = Draw(context, aSize, ImageRegion::Create(aSize),
-                     aWhichFrame, Filter::POINT, Nothing(), aFlags);
+                     aWhichFrame, SamplingFilter::POINT, Nothing(), aFlags);
 
   return result == DrawResult::SUCCESS ? dt->Snapshot() : nullptr;
 }
@@ -762,14 +762,14 @@ struct SVGDrawingParameters
   SVGDrawingParameters(gfxContext* aContext,
                        const nsIntSize& aSize,
                        const ImageRegion& aRegion,
-                       Filter aFilter,
+                       SamplingFilter aSamplingFilter,
                        const Maybe<SVGImageContext>& aSVGContext,
                        float aAnimationTime,
                        uint32_t aFlags)
     : context(aContext)
     , size(aSize.width, aSize.height)
     , region(aRegion)
-    , filter(aFilter)
+    , samplingFilter(aSamplingFilter)
     , svgContext(aSVGContext)
     , viewportSize(aSize)
     , animationTime(aAnimationTime)
@@ -785,7 +785,7 @@ struct SVGDrawingParameters
   gfxContext*                   context;
   IntSize                       size;
   ImageRegion                   region;
-  Filter                        filter;
+  SamplingFilter                samplingFilter;
   const Maybe<SVGImageContext>& svgContext;
   nsIntSize                     viewportSize;
   float                         animationTime;
@@ -799,7 +799,7 @@ VectorImage::Draw(gfxContext* aContext,
                   const nsIntSize& aSize,
                   const ImageRegion& aRegion,
                   uint32_t aWhichFrame,
-                  Filter aFilter,
+                  SamplingFilter aSamplingFilter,
                   const Maybe<SVGImageContext>& aSVGContext,
                   uint32_t aFlags)
 {
@@ -831,15 +831,32 @@ VectorImage::Draw(gfxContext* aContext,
   AutoRestore<bool> autoRestoreIsDrawing(mIsDrawing);
   mIsDrawing = true;
 
+  Maybe<SVGImageContext> svgContext;
+  // If FLAG_FORCE_PRESERVEASPECTRATIO_NONE bit is set, that mean we should
+  // overwrite SVG preserveAspectRatio attibute of this image with none, and
+  // always stretch this image to viewport non-uniformly.
+  // And we can do this only if the caller pass in the the SVG viewport, via
+  // aSVGContext.
+  if ((aFlags & FLAG_FORCE_PRESERVEASPECTRATIO_NONE) && aSVGContext.isSome()) {
+    Maybe<SVGPreserveAspectRatio> aspectRatio =
+      Some(SVGPreserveAspectRatio(SVG_PRESERVEASPECTRATIO_NONE,
+                                  SVG_MEETORSLICE_UNKNOWN));
+    svgContext =
+      Some(SVGImageContext(aSVGContext->GetViewportSize(),
+                           aspectRatio));
+  } else {
+    svgContext = aSVGContext;
+  }
+
   float animTime =
     (aWhichFrame == FRAME_FIRST) ? 0.0f
                                  : mSVGDocumentWrapper->GetCurrentTime();
-  AutoSVGRenderingState autoSVGState(aSVGContext, animTime,
+  AutoSVGRenderingState autoSVGState(svgContext, animTime,
                                      mSVGDocumentWrapper->GetRootSVGElem());
 
 
-  SVGDrawingParameters params(aContext, aSize, aRegion, aFilter,
-                              aSVGContext, animTime, aFlags);
+  SVGDrawingParameters params(aContext, aSize, aRegion, aSamplingFilter,
+                              svgContext, animTime, aFlags);
 
   if (aFlags & FLAG_BYPASS_SURFACE_CACHE) {
     CreateSurfaceAndShow(params);
@@ -910,7 +927,7 @@ VectorImage::CreateSurfaceAndShow(const SVGDrawingParameters& aParams)
   nsresult rv =
     frame->InitWithDrawable(svgDrawable, aParams.size,
                             SurfaceFormat::B8G8R8A8,
-                            Filter::POINT, aParams.flags);
+                            SamplingFilter::POINT, aParams.flags);
 
   // If we couldn't create the frame, it was probably because it would end
   // up way too big. Generally it also wouldn't fit in the cache, but the prefs
@@ -952,7 +969,8 @@ VectorImage::Show(gfxDrawable* aDrawable, const SVGDrawingParameters& aParams)
                              aParams.size,
                              aParams.region,
                              SurfaceFormat::B8G8R8A8,
-                             aParams.filter, aParams.flags, aParams.opacity);
+                             aParams.samplingFilter,
+                             aParams.flags, aParams.opacity);
 
   MOZ_ASSERT(mRenderingObserver, "Should have a rendering observer by now");
   mRenderingObserver->ResumeHonoringInvalidations();
@@ -1050,9 +1068,7 @@ VectorImage::OnSurfaceDiscarded()
 {
   MOZ_ASSERT(mProgressTracker);
 
-  nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(mProgressTracker, &ProgressTracker::OnDiscard);
-  NS_DispatchToMainThread(runnable);
+  NS_DispatchToMainThread(NewRunnableMethod(mProgressTracker, &ProgressTracker::OnDiscard));
 }
 
 //******************************************************************************
@@ -1271,7 +1287,7 @@ VectorImage::ReportUseCounters()
 nsIntSize
 VectorImage::OptimalImageSizeForDest(const gfxSize& aDest,
                                      uint32_t aWhichFrame,
-                                     Filter aFilter,
+                                     SamplingFilter aSamplingFilter,
                                      uint32_t aFlags)
 {
   MOZ_ASSERT(aDest.width >= 0 || ceil(aDest.width) <= INT32_MAX ||

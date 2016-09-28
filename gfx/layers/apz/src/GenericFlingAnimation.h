@@ -111,9 +111,9 @@ public:
       //   is this one, then the SetState(NOTHING) in UpdateAnimation will
       //   stomp on the SetState(SNAP_BACK) it does.
       mDeferredTasks.AppendElement(
-            NewRunnableMethod(mOverscrollHandoffChain.get(),
-                              &OverscrollHandoffChain::SnapBackOverscrolledApzc,
-                              &mApzc));
+            NewRunnableMethod<AsyncPanZoomController*>(mOverscrollHandoffChain.get(),
+                                                       &OverscrollHandoffChain::SnapBackOverscrolledApzc,
+                                                       &mApzc));
       return false;
     }
 
@@ -163,11 +163,13 @@ public:
       // called after mMonitor is released.
       FLING_LOG("%p fling went into overscroll, handing off with velocity %s\n", &mApzc, Stringify(velocity).c_str());
       mDeferredTasks.AppendElement(
-            NewRunnableMethod(&mApzc,
-                              &AsyncPanZoomController::HandleFlingOverscroll,
-                              velocity,
-                              mOverscrollHandoffChain,
-                              mScrolledApzc));
+          NewRunnableMethod<ParentLayerPoint,
+                            RefPtr<const OverscrollHandoffChain>,
+                            RefPtr<const AsyncPanZoomController>>(&mApzc,
+                                                                  &AsyncPanZoomController::HandleFlingOverscroll,
+                                                                  velocity,
+                                                                  mOverscrollHandoffChain,
+                                                                  mScrolledApzc));
 
       // If there is a remaining velocity on this APZC, continue this fling
       // as well. (This fling and the handed-off fling will run concurrently.)

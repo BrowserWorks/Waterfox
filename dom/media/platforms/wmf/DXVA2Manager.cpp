@@ -12,10 +12,10 @@
 #include "D3D9SurfaceImage.h"
 #include "mozilla/layers/D3D11ShareHandleImage.h"
 #include "mozilla/layers/ImageBridgeChild.h"
-#include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
 #include "MediaTelemetryConstants.h"
 #include "mfapi.h"
+#include "MediaPrefs.h"
 #include "MFTDecoder.h"
 #include "DriverCrashGuard.h"
 #include "nsPrintfCString.h"
@@ -191,6 +191,13 @@ static const GUID DXVA2_Intel_ModeH264_E = {
 bool
 D3D9DXVA2Manager::SupportsConfig(IMFMediaType* aType, float aFramerate)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  gfx::D3D9VideoCrashGuard crashGuard;
+  if (crashGuard.Crashed()) {
+    NS_WARNING("DXVA2D3D9 crash detected");
+    return false;
+  }
+
   DXVA2_VideoDesc desc;
   HRESULT hr = ConvertMFTypeToDXVAType(aType, &desc);
   NS_ENSURE_TRUE(SUCCEEDED(hr), false);
@@ -393,8 +400,7 @@ D3D9DXVA2Manager::Init(nsACString& aFailureReason)
     return hr;
   }
 
-  if (adapter.VendorId == 0x1022 &&
-      !Preferences::GetBool("media.wmf.skip-blacklist", false)) {
+  if (adapter.VendorId == 0x1022 && !MediaPrefs::PDMWMFSkipBlacklist()) {
     for (size_t i = 0; i < MOZ_ARRAY_LENGTH(sAMDPreUVD4); i++) {
       if (adapter.DeviceId == sAMDPreUVD4[i]) {
         mIsAMDPreUVD4 = true;
@@ -482,8 +488,7 @@ DXVA2Manager::CreateD3D9DXVA(nsACString& aFailureReason)
 
   // DXVA processing takes up a lot of GPU resources, so limit the number of
   // videos we use DXVA with at any one time.
-  const uint32_t dxvaLimit =
-    Preferences::GetInt("media.windows-media-foundation.max-dxva-videos", 8);
+  const uint32_t dxvaLimit = MediaPrefs::PDMWMFMaxDXVAVideos();
   if (sDXVAVideosCount == dxvaLimit) {
     aFailureReason.AssignLiteral("Too many DXVA videos playing");
     return nullptr;
@@ -544,6 +549,13 @@ private:
 bool
 D3D11DXVA2Manager::SupportsConfig(IMFMediaType* aType, float aFramerate)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+  gfx::D3D11VideoCrashGuard crashGuard;
+  if (crashGuard.Crashed()) {
+    NS_WARNING("DXVA2D3D9 crash detected");
+    return false;
+  }
+
   RefPtr<ID3D11VideoDevice> videoDevice;
   HRESULT hr = mDevice->QueryInterface(static_cast<ID3D11VideoDevice**>(getter_AddRefs(videoDevice)));
   NS_ENSURE_TRUE(SUCCEEDED(hr), false);
@@ -712,8 +724,7 @@ D3D11DXVA2Manager::Init(nsACString& aFailureReason)
     return hr;
   }
 
-  if (adapterDesc.VendorId == 0x1022 &&
-      !Preferences::GetBool("media.wmf.skip-blacklist", false)) {
+  if (adapterDesc.VendorId == 0x1022 && !MediaPrefs::PDMWMFSkipBlacklist()) {
     for (size_t i = 0; i < MOZ_ARRAY_LENGTH(sAMDPreUVD4); i++) {
       if (adapterDesc.DeviceId == sAMDPreUVD4[i]) {
         mIsAMDPreUVD4 = true;
@@ -886,8 +897,7 @@ DXVA2Manager::CreateD3D11DXVA(nsACString& aFailureReason)
 {
   // DXVA processing takes up a lot of GPU resources, so limit the number of
   // videos we use DXVA with at any one time.
-  const uint32_t dxvaLimit =
-    Preferences::GetInt("media.windows-media-foundation.max-dxva-videos", 8);
+  const uint32_t dxvaLimit = MediaPrefs::PDMWMFMaxDXVAVideos();
   if (sDXVAVideosCount == dxvaLimit) {
     aFailureReason.AssignLiteral("Too many DXVA videos playing");
     return nullptr;

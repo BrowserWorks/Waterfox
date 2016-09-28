@@ -36,13 +36,60 @@ function NarrateControls(mm, win) {
   let dropdown = win.document.createElement("ul");
   dropdown.className = "dropdown";
   dropdown.id = "narrate-dropdown";
+  // We need inline svg here for the animation to work (bug 908634 & 1190881).
+  // The style animation can't be scoped (bug 830056).
   dropdown.innerHTML =
     localize`<style scoped>
       @import url("chrome://global/skin/narrateControls.css");
     </style>
     <li>
-       <button class="dropdown-toggle button"
-               id="narrate-toggle" title="${"narrate"}"></button>
+       <button class="dropdown-toggle button" id="narrate-toggle"
+               title="${"narrate"}" hidden>
+         <svg xmlns="http://www.w3.org/2000/svg"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              width="24" height="24" viewBox="0 0 24 24">
+          <style>
+            @keyframes grow {
+              0%   { transform: scaleY(1);   }
+              15%  { transform: scaleY(1.5); }
+              15%  { transform: scaleY(1.5); }
+              30%  { transform: scaleY(1);   }
+              100% { transform: scaleY(1);   }
+            }
+
+            #waveform > rect {
+              fill: #808080;
+            }
+
+            .speaking #waveform > rect {
+              fill: #58bf43;
+              transform-box: fill-box;
+              transform-origin: 50% 50%;
+              animation-name: grow;
+              animation-duration: 1750ms;
+              animation-iteration-count: infinite;
+              animation-timing-function: linear;
+            }
+
+            #waveform > rect:nth-child(2) { animation-delay: 250ms; }
+            #waveform > rect:nth-child(3) { animation-delay: 500ms; }
+            #waveform > rect:nth-child(4) { animation-delay: 750ms; }
+            #waveform > rect:nth-child(5) { animation-delay: 1000ms; }
+            #waveform > rect:nth-child(6) { animation-delay: 1250ms; }
+            #waveform > rect:nth-child(7) { animation-delay: 1500ms; }
+
+          </style>
+          <g id="waveform">
+            <rect x="1"  y="8" width="2" height="8"  rx=".5" ry=".5" />
+            <rect x="4"  y="5" width="2" height="14" rx=".5" ry=".5" />
+            <rect x="7"  y="8" width="2" height="8"  rx=".5" ry=".5" />
+            <rect x="10" y="4" width="2" height="16" rx=".5" ry=".5" />
+            <rect x="13" y="2" width="2" height="20" rx=".5" ry=".5" />
+            <rect x="16" y="4" width="2" height="16" rx=".5" ry=".5" />
+            <rect x="19" y="7" width="2" height="10" rx=".5" ry=".5" />
+          </g>
+         </svg>
+        </button>
     </li>
     <li class="dropdown-popup">
       <div id="narrate-control" class="narrate-row">
@@ -65,8 +112,6 @@ function NarrateControls(mm, win) {
   let branch = Services.prefs.getBranch("narrate.");
   let selectLabel = gStrings.GetStringFromName("selectvoicelabel");
   this.voiceSelect = new VoiceSelect(win, selectLabel);
-  this.voiceSelect.addOptions(this._getVoiceOptions(),
-    branch.getCharPref("voice"));
   this.voiceSelect.element.addEventListener("change", this);
   this.voiceSelect.element.id = "voice-select";
   win.speechSynthesis.addEventListener("voiceschanged", this);
@@ -82,6 +127,11 @@ function NarrateControls(mm, win) {
 
   // The rate is stored as an integer.
   rateRange.value = branch.getIntPref("rate");
+
+  if (this._setupVoices(branch.getCharPref("voice"))) {
+    // We disable this entire feature if there are no synthesis voices.
+    dropdown.querySelector("#narrate-toggle").hidden = false;
+  }
 
   let tb = win.document.getElementById("reader-toolbar");
   tb.appendChild(dropdown);
@@ -106,14 +156,18 @@ NarrateControls.prototype = {
         this._onButtonClick(evt);
         break;
       case "voiceschanged":
-        this.voiceSelect.clear();
-        this.voiceSelect.addOptions(this._getVoiceOptions(),
-          Services.prefs.getCharPref("narrate.voice"));
+        // We disable this entire feature if there are no synthesis voices.
+        this._doc.getElementById("narrate-toggle").hidden =
+          !this._setupVoices(Services.prefs.getCharPref("narrate.voice"));
         break;
     }
   },
 
-  _getVoiceOptions: function() {
+  /**
+   * Returns true if synth voices are available.
+   */
+  _setupVoices: function(selectedVoice) {
+    this.voiceSelect.clear();
     let win = this._win;
     let comparer = win.Intl ?
       (new Intl.Collator()).compare : (a, b) => a.localeCompare(b);
@@ -123,12 +177,16 @@ NarrateControls.prototype = {
         value: v.voiceURI
       };
     }).sort((a, b) => comparer(a.label, b.label));
-    options.unshift({
-      label: gStrings.GetStringFromName("defaultvoice"),
-      value: "automatic"
-    });
 
-    return options;
+    if (options.length) {
+      options.unshift({
+        label: gStrings.GetStringFromName("defaultvoice"),
+        value: "automatic"
+      });
+      this.voiceSelect.addOptions(options, selectedVoice);
+    }
+
+    return !!options.length;
   },
 
   _onRateInput: function(evt) {
@@ -166,29 +224,15 @@ NarrateControls.prototype = {
           });
         }
         break;
-      case "narrate-toggle":
-        let dropdown = this._doc.getElementById("narrate-dropdown");
-        if (dropdown.classList.contains("open")) {
-          if (this.narrator.speaking) {
-            this.narrator.stop();
-          }
-
-          // We need to remove "keep-open" class here so that AboutReader
-          // closes this dropdown properly. This class is eventually removed in
-          // _updateSpeechControls which gets called after narration stops,
-          // but that happend asynchronously and is too late.
-          dropdown.classList.remove("keep-open");
-        }
-        break;
     }
   },
 
   _updateSpeechControls: function(speaking) {
     let dropdown = this._doc.getElementById("narrate-dropdown");
     dropdown.classList.toggle("keep-open", speaking);
+    dropdown.classList.toggle("speaking", speaking);
 
     let startStopButton = this._doc.getElementById("narrate-start-stop");
-    startStopButton.classList.toggle("speaking", speaking);
     startStopButton.title =
       gStrings.GetStringFromName(speaking ? "stop" : "start");
 

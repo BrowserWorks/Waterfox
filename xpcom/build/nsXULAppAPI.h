@@ -19,6 +19,8 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Vector.h"
 #include "mozilla/TimeStamp.h"
+#include "XREChildData.h"
+#include "XREShellData.h"
 
 /**
  * A directory service key which provides the platform-correct "application
@@ -130,12 +132,32 @@
 #define XRE_ADDON_APP_DIR "XREAddonAppDir"
 
 /**
- * A directory service key which provides the update directory.
- * At present this is supported only on Windows.
- * Windows: Documents and Settings\<User>\Local Settings\Application Data\
- *          <Vendor>\<Application>\<relative path to app dir from Program Files>
- * If appDir is not under the Program Files, directory service will fail.
- * Callers should fallback to appDir.
+ * A directory service key which provides the update directory. Callers should
+ * fall back to appDir.
+ * Windows:    If vendor name exists:
+ *             Documents and Settings\<User>\Local Settings\Application Data\
+ *             <vendor name>\updates\
+ *             <hash of the path to XRE_EXECUTABLE_FILE’s parent directory>
+ *
+ *             If vendor name doesn't exist, but product name exists:
+ *             Documents and Settings\<User>\Local Settings\Application Data\
+ *             <product name>\updates\
+ *             <hash of the path to XRE_EXECUTABLE_FILE’s parent directory>
+ *
+ *             If neither vendor nor product name exists:
+ *               If app dir is under Program Files:
+ *               Documents and Settings\<User>\Local Settings\Application Data\
+ *               <relative path to app dir from Program Files>
+ *
+ *               If app dir isn’t under Program Files:
+ *               Documents and Settings\<User>\Local Settings\Application Data\
+ *               <MOZ_APP_NAME>
+ *
+ * Mac:        ~/Library/Caches/Mozilla/updates/<absolute path to app dir>
+ *
+ * Gonk:       /data/local
+ *
+ * All others: Parent directory of XRE_EXECUTABLE_FILE.
  */
 #define XRE_UPDATE_ROOT_DIR "UpdRootD"
 
@@ -411,7 +433,7 @@ class GMPLoader;
 XRE_API(nsresult,
         XRE_InitChildProcess, (int aArgc,
                                char* aArgv[],
-                               mozilla::gmp::GMPLoader* aGMPLoader))
+                               const XREChildData* aChildData))
 
 XRE_API(GeckoProcessType,
         XRE_GetProcessType, ())
@@ -486,7 +508,8 @@ XRE_API(void,
 #endif // MOZ_B2G_LOADER
 
 XRE_API(int,
-        XRE_XPCShellMain, (int argc, char** argv, char** envp))
+        XRE_XPCShellMain, (int argc, char** argv, char** envp,
+                           const XREShellData* aShellData))
 
 #if MOZ_WIDGET_GTK == 2
 XRE_API(void,

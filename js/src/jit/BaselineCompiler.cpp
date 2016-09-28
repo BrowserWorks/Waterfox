@@ -96,9 +96,9 @@ BaselineCompiler::compile()
     if (!script->ensureHasTypes(cx) || !script->ensureHasAnalyzedArgsUsage(cx))
         return Method_Error;
 
-    // When a Debugger set the collectCoverageInfo flag, we recompile baseline
-    // scripts without entering the interpreter again. We have to create the
-    // ScriptCounts if they do not exist.
+    // When code coverage is only enabled for optimizations, or when a Debugger
+    // set the collectCoverageInfo flag, we have to create the ScriptCounts if
+    // they do not exist.
     if (!script->hasScriptCounts() && cx->compartment()->collectCoverage()) {
         if (!script->initScriptCounts(cx))
             return Method_Error;
@@ -302,7 +302,7 @@ BaselineCompiler::compile()
         code->setHasBytecodeMap();
     }
 
-    script->setBaselineScript(cx, baselineScript.release());
+    script->setBaselineScript(cx->runtime(), baselineScript.release());
 
     return Method_Compiled;
 }
@@ -828,17 +828,6 @@ BaselineCompiler::emitDebugTrap()
     return appendICEntry(ICEntry::Kind_DebugTrap, masm.currentOffset());
 }
 
-void
-BaselineCompiler::emitCoverage(jsbytecode* pc)
-{
-    PCCounts* counts = script->maybeGetPCCounts(pc);
-    if (!counts)
-        return;
-
-    uint64_t* counterAddr = &counts->numExec();
-    masm.inc64(AbsoluteAddress(counterAddr));
-}
-
 #ifdef JS_TRACE_LOGGING
 bool
 BaselineCompiler::emitTraceLoggerEnter()
@@ -936,7 +925,6 @@ BaselineCompiler::emitBody()
     bool lastOpUnreachable = false;
     uint32_t emittedOps = 0;
     mozilla::DebugOnly<jsbytecode*> prevpc = pc;
-    bool compileCoverage = script->hasScriptCounts();
 
     while (true) {
         JSOp op = JSOp(*pc);
@@ -991,10 +979,6 @@ BaselineCompiler::emitBody()
         if (compileDebugInstrumentation_ && !emitDebugTrap())
             return Method_Error;
 
-        // Emit code coverage code, to fill the same data as the interpreter.
-        if (compileCoverage)
-            emitCoverage(pc);
-
         switch (op) {
           default:
             JitSpew(JitSpew_BaselineAbort, "Unhandled op: %s", CodeName[op]);
@@ -1007,6 +991,13 @@ BaselineCompiler::emitBody()
             break;
 OPCODE_LIST(EMIT_OP)
 #undef EMIT_OP
+        }
+
+        // If the main instruction is not a jump target, then we emit the
+        //  corresponding code coverage counter.
+        if (pc == script->main() && !BytecodeIsJumpTarget(op)) {
+            if (!emit_JSOP_JUMPTARGET())
+                return Method_Error;
         }
 
         // Test if last instructions and stop emitting in that case.
@@ -1027,6 +1018,12 @@ OPCODE_LIST(EMIT_OP)
 
 bool
 BaselineCompiler::emit_JSOP_NOP()
+{
+    return true;
+}
+
+bool
+BaselineCompiler::emit_JSOP_NOP_DESTRUCTURING()
 {
     return true;
 }
@@ -1255,12 +1252,16 @@ BaselineCompiler::emit_JSOP_POS()
 bool
 BaselineCompiler::emit_JSOP_LOOPHEAD()
 {
+    if (!emit_JSOP_JUMPTARGET())
+        return false;
     return emitInterruptCheck();
 }
 
 bool
 BaselineCompiler::emit_JSOP_LOOPENTRY()
 {
+    if (!emit_JSOP_JUMPTARGET())
+        return false;
     frame.syncStack(0);
     return emitWarmUpCounterIncrement(LoopEntryCanIonOsr(pc));
 }
@@ -2496,7 +2497,7 @@ BaselineCompiler::emit_JSOP_SETALIASEDVAR()
 
     getScopeCoordinateObject(objReg);
     Address address = getScopeCoordinateAddressFromObject(objReg, R1.scratchReg());
-    masm.patchableCallPreBarrier(address, MIRType_Value);
+    masm.patchableCallPreBarrier(address, MIRType::Value);
     masm.storeValue(R0, address);
     frame.push(R0);
 
@@ -2600,7 +2601,8 @@ BaselineCompiler::emit_JSOP_GETIMPORT()
     // Imports are initialized by this point except in rare circumstances, so
     // don't emit a check unless we have to.
     if (targetEnv->getSlot(shape->slot()).isMagic(JS_UNINITIALIZED_LEXICAL))
-        emitUninitializedLexicalCheck(R0);
+        if (!emitUninitializedLexicalCheck(R0))
+            return false;
 
     if (ionCompileable_) {
         // No need to monitor types if we know Ion can't compile this script.
@@ -2906,7 +2908,7 @@ BaselineCompiler::emitFormalArgAccess(uint32_t arg, bool get)
         masm.loadValue(argAddr, R0);
         frame.push(R0);
     } else {
-        masm.patchableCallPreBarrier(argAddr, MIRType_Value);
+        masm.patchableCallPreBarrier(argAddr, MIRType::Value);
         masm.loadValue(frame.addressOfStackValue(frame.peek(-1)), R0);
         masm.storeValue(R0, argAddr);
 
@@ -3339,6 +3341,9 @@ BaselineCompiler::emit_JSOP_THROWING()
 bool
 BaselineCompiler::emit_JSOP_TRY()
 {
+    if (!emit_JSOP_JUMPTARGET())
+        return false;
+
     // Ionmonkey can't inline function with JSOP_TRY.
     script->setUninlineable();
     return true;
@@ -3770,6 +3775,8 @@ BaselineCompiler::emit_JSOP_ISNOITER()
 bool
 BaselineCompiler::emit_JSOP_ENDITER()
 {
+    if (!emit_JSOP_JUMPTARGET())
+        return false;
     frame.popRegsAndSync(1);
 
     ICIteratorClose_Fallback::Compiler compiler(cx);
@@ -3942,7 +3949,7 @@ BaselineCompiler::emit_JSOP_INITIALYIELD()
     Register scopeObj = R0.scratchReg();
     Address scopeChainSlot(genObj, GeneratorObject::offsetOfScopeChainSlot());
     masm.loadPtr(frame.addressOfScopeChain(), scopeObj);
-    masm.patchableCallPreBarrier(scopeChainSlot, MIRType_Value);
+    masm.patchableCallPreBarrier(scopeChainSlot, MIRType::Value);
     masm.storeValue(JSVAL_TYPE_OBJECT, scopeObj, scopeChainSlot);
 
     Register temp = R1.scratchReg();
@@ -3987,7 +3994,7 @@ BaselineCompiler::emit_JSOP_YIELD()
         Register scopeObj = R0.scratchReg();
         Address scopeChainSlot(genObj, GeneratorObject::offsetOfScopeChainSlot());
         masm.loadPtr(frame.addressOfScopeChain(), scopeObj);
-        masm.patchableCallPreBarrier(scopeChainSlot, MIRType_Value);
+        masm.patchableCallPreBarrier(scopeChainSlot, MIRType::Value);
         masm.storeValue(JSVAL_TYPE_OBJECT, scopeObj, scopeChainSlot);
 
         Register temp = R1.scratchReg();
@@ -4215,7 +4222,7 @@ BaselineCompiler::emit_JSOP_RESUME()
         }
         masm.bind(&loopDone);
 
-        masm.patchableCallPreBarrier(exprStackSlot, MIRType_Value);
+        masm.patchableCallPreBarrier(exprStackSlot, MIRType::Value);
         masm.storeValue(NullValue(), exprStackSlot);
         regs.add(initLength);
     }
@@ -4319,4 +4326,15 @@ BaselineCompiler::emit_JSOP_DEBUGCHECKSELFHOSTED()
 #endif
     return true;
 
+}
+
+bool
+BaselineCompiler::emit_JSOP_JUMPTARGET()
+{
+    if (!script->hasScriptCounts())
+        return true;
+    PCCounts* counts = script->maybeGetPCCounts(pc);
+    uint64_t* counterAddr = &counts->numExec();
+    masm.inc64(AbsoluteAddress(counterAddr));
+    return true;
 }

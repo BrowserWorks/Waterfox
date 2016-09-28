@@ -222,7 +222,7 @@ class Heap : public js::HeapBase<T>
     Heap() {
         static_assert(sizeof(T) == sizeof(Heap<T>),
                       "Heap<T> must be binary compatible with T.");
-        init(js::GCPolicy<T>::initial());
+        init(GCPolicy<T>::initial());
     }
     explicit Heap(T p) { init(p); }
 
@@ -235,7 +235,7 @@ class Heap : public js::HeapBase<T>
     explicit Heap(const Heap<T>& p) { init(p.ptr); }
 
     ~Heap() {
-        post(ptr, js::GCPolicy<T>::initial());
+        post(ptr, GCPolicy<T>::initial());
     }
 
     DECLARE_POINTER_CONSTREF_OPS(T);
@@ -259,7 +259,7 @@ class Heap : public js::HeapBase<T>
   private:
     void init(T newPtr) {
         ptr = newPtr;
-        post(js::GCPolicy<T>::initial(), ptr);
+        post(GCPolicy<T>::initial(), ptr);
     }
 
     void set(T newPtr) {
@@ -615,7 +615,7 @@ class DispatchWrapper
   public:
     template <typename U>
     MOZ_IMPLICIT DispatchWrapper(U&& initial)
-      : tracer(&GCPolicy<T>::trace),
+      : tracer(&JS::GCPolicy<T>::trace),
         storage(mozilla::Forward<U>(initial))
     { }
 
@@ -649,24 +649,31 @@ namespace JS {
 template <typename T>
 class MOZ_RAII Rooted : public js::RootedBase<T>
 {
-    /* Note: CX is a subclass of either ContextFriendFields or PerThreadDataFriendFields. */
-    void registerWithRootLists(js::RootLists& roots) {
-        this->stack = &roots.stackRoots_[JS::MapTypeToRootKind<T>::kind];
+    inline void registerWithRootLists(js::RootedListHeads& roots) {
+        this->stack = &roots[JS::MapTypeToRootKind<T>::kind];
         this->prev = *stack;
         *stack = reinterpret_cast<Rooted<void*>*>(this);
     }
 
-    js::RootLists& rootLists(js::ContextFriendFields* cx) { return cx->roots; }
-    js::RootLists& rootLists(JSContext* cx) { return js::ContextFriendFields::get(cx)->roots; }
-    js::RootLists& rootLists(js::PerThreadDataFriendFields* pt) { return pt->roots; }
-    js::RootLists& rootLists(JSRuntime* rt) {
-        return js::PerThreadDataFriendFields::getMainThread(rt)->roots;
+    inline js::RootedListHeads& rootLists(js::ContextFriendFields* cx) {
+        return rootLists(reinterpret_cast<JSContext*>(cx));
+    }
+    inline js::RootedListHeads& rootLists(JSContext* cx) {
+        if (JS::Zone* zone = js::GetContextZone(cx))
+            return JS::shadow::Zone::asShadowZone(zone)->stackRoots_;
+        return rootLists(js::GetRuntime(cx));
+    }
+    inline js::RootedListHeads& rootLists(js::PerThreadDataFriendFields* pt) {
+        return pt->roots.stackRoots_;
+    }
+    inline js::RootedListHeads& rootLists(JSRuntime* rt) {
+        return js::PerThreadDataFriendFields::getMainThread(rt)->roots.stackRoots_;
     }
 
   public:
     template <typename RootingContext>
     explicit Rooted(const RootingContext& cx)
-      : ptr(js::GCPolicy<T>::initial())
+      : ptr(GCPolicy<T>::initial())
     {
         registerWithRootLists(rootLists(cx));
     }
@@ -771,7 +778,7 @@ class MOZ_RAII FakeRooted : public RootedBase<T>
 {
   public:
     template <typename CX>
-    explicit FakeRooted(CX* cx) : ptr(GCPolicy<T>::initial()) {}
+    explicit FakeRooted(CX* cx) : ptr(JS::GCPolicy<T>::initial()) {}
 
     template <typename CX>
     FakeRooted(CX* cx, T initial) : ptr(initial) {}
@@ -985,11 +992,11 @@ class PersistentRooted : public js::PersistentRootedBase<T>,
     }
 
   public:
-    PersistentRooted() : ptr(js::GCPolicy<T>::initial()) {}
+    PersistentRooted() : ptr(GCPolicy<T>::initial()) {}
 
     template <typename RootingContext>
     explicit PersistentRooted(const RootingContext& cx)
-      : ptr(js::GCPolicy<T>::initial())
+      : ptr(GCPolicy<T>::initial())
     {
         registerWithRootLists(rootLists(cx));
     }
@@ -1022,7 +1029,7 @@ class PersistentRooted : public js::PersistentRootedBase<T>,
 
     template <typename RootingContext>
     void init(const RootingContext& cx) {
-        init(cx, js::GCPolicy<T>::initial());
+        init(cx, GCPolicy<T>::initial());
     }
 
     template <typename RootingContext, typename U>
@@ -1033,7 +1040,7 @@ class PersistentRooted : public js::PersistentRootedBase<T>,
 
     void reset() {
         if (initialized()) {
-            set(js::GCPolicy<T>::initial());
+            set(GCPolicy<T>::initial());
             ListBase::remove();
         }
     }

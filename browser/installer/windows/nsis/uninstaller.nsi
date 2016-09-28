@@ -252,7 +252,7 @@ Section "Uninstall"
   ${un.DeleteShortcuts}
 
   ; Unregister resources associated with Win7 taskbar jump lists.
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
   ${AndIf} "$AppUserModelID" != ""
     ApplicationID::UninstallJumpLists "$AppUserModelID"
   ${EndIf}
@@ -450,6 +450,13 @@ Section "Uninstall"
   ; clients registry key by the OS under some conditions.
   System::Call "shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i 0, i 0, i 0)"
 
+  ; Users who uninstall then reinstall expecting Firefox to use a clean profile
+  ; may be surprised during first-run. This key is checked during startup of Firefox and
+  ; subsequently deleted after checking. If the value is found during startup
+  ; the browser will offer to Reset Firefox. We use the UpdateChannel to match
+  ; uninstalls of Firefox-release with reinstalls of Firefox-release, for example.
+  WriteRegStr HKCU "Software\Mozilla\Firefox" "Uninstalled-${UpdateChannel}" "True"
+
 !ifdef MOZ_MAINTENANCE_SERVICE
   ; Get the path the allowed cert is at and remove it
   ; Keep this block of code last since it modfies the reg view
@@ -610,7 +617,7 @@ Function un.onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWinVista}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif

@@ -11,6 +11,9 @@
 
 #include "WorkerPrivate.h"
 
+#define NOTIFICATION_CLICK_EVENT_NAME "notificationclick"
+#define NOTIFICATION_CLOSE_EVENT_NAME "notificationclose"
+
 class nsIInterceptedChannel;
 
 namespace mozilla {
@@ -21,7 +24,7 @@ class ServiceWorkerInfo;
 class ServiceWorkerRegistrationInfo;
 class KeepAliveToken;
 
-class LifeCycleEventCallback : public nsRunnable
+class LifeCycleEventCallback : public Runnable
 {
 public:
   // Called on the worker thread.
@@ -93,16 +96,17 @@ public:
   SendPushSubscriptionChangeEvent();
 
   nsresult
-  SendNotificationClickEvent(const nsAString& aID,
-                             const nsAString& aTitle,
-                             const nsAString& aDir,
-                             const nsAString& aLang,
-                             const nsAString& aBody,
-                             const nsAString& aTag,
-                             const nsAString& aIcon,
-                             const nsAString& aData,
-                             const nsAString& aBehavior,
-                             const nsAString& aScope);
+  SendNotificationEvent(const nsAString& aEventName,
+                        const nsAString& aID,
+                        const nsAString& aTitle,
+                        const nsAString& aDir,
+                        const nsAString& aLang,
+                        const nsAString& aBody,
+                        const nsAString& aTag,
+                        const nsAString& aIcon,
+                        const nsAString& aData,
+                        const nsAString& aBehavior,
+                        const nsAString& aScope);
 
   nsresult
   SendFetchEvent(nsIInterceptedChannel* aChannel,
@@ -142,6 +146,9 @@ public:
   nsresult
   DetachDebugger();
 
+  bool
+  IsIdle() const;
+
 private:
   enum WakeUpReason {
     FetchEvent = 0,
@@ -149,6 +156,7 @@ private:
     PushSubscriptionChangeEvent,
     MessageEvent,
     NotificationClickEvent,
+    NotificationCloseEvent,
     LifeCycleEvent,
     AttachEvent
   };
@@ -181,6 +189,9 @@ private:
 
   ~ServiceWorkerPrivate();
 
+  already_AddRefed<KeepAliveToken>
+  CreateEventKeepAliveToken();
+
   // The info object owns us. It is possible to outlive it for a brief period
   // of time if there are pending waitUntil promises, in which case it
   // will be null and |SpawnWorkerIfNeeded| will always fail.
@@ -193,14 +204,9 @@ private:
 
   nsCOMPtr<nsITimer> mIdleWorkerTimer;
 
-  // We keep track if this worker received any push events since it was last
-  // woken up. The flag is reset to false every time a new WorkerPrivate
-  // is created.
-  bool mIsPushWorker;
-
   // We keep a token for |dom.serviceWorkers.idle_timeout| seconds to give the
   // worker a grace period after each event.
-  RefPtr<KeepAliveToken> mKeepAliveToken;
+  RefPtr<KeepAliveToken> mIdleKeepAliveToken;
 
   uint64_t mDebuggerCount;
 

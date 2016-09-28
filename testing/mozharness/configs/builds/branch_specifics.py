@@ -87,6 +87,9 @@ config = {
             'linux64-tsan': {
                 'update_channel': 'default',
             },
+            'linux64-add-on-devel': {
+                'update_channel': 'default',
+            },
             'macosx64-debug': {
                 'update_channel': 'default',
             },
@@ -99,13 +102,22 @@ config = {
             'macosx64-st-an-debug': {
                 'update_channel': 'default',
             },
+            'macosx64-add-on-devel': {
+                'update_channel': 'default',
+            },
             'win32-debug': {
                 'update_channel': 'default',
             },
             'win32-mulet': {
                 'update_channel': 'default',
             },
+            'win32-add-on-devel': {
+                'update_channel': 'default',
+            },
             'win64-debug': {
+                'update_channel': 'default',
+            },
+            'win64-add-on-devel': {
                 'update_channel': 'default',
             },
         },
@@ -161,6 +173,9 @@ config = {
             'linux64-tsan': {
                 'update_channel': 'default',
             },
+            'linux64-add-on-devel': {
+                'update_channel': 'default',
+            },
             'macosx64-debug': {
                 'update_channel': 'default',
             },
@@ -173,13 +188,22 @@ config = {
             'macosx64-st-an-debug': {
                 'update_channel': 'default',
             },
+            'macosx64-add-on-devel': {
+                'update_channel': 'default',
+            },
             'win32-debug': {
                 'update_channel': 'default',
             },
             'win32-mulet': {
                 'update_channel': 'default',
             },
+            'win32-add-on-devel': {
+                'update_channel': 'default',
+            },
             'win64-debug': {
+                'update_channel': 'default',
+            },
+            'win64-add-on-devel': {
                 'update_channel': 'default',
             },
         },
@@ -269,6 +293,9 @@ config = {
         'repo_path': 'try',
         'clone_by_revision': True,
         'clone_with_purge': True,
+        # FUTURE this should be a unified repo because Try pushes may e.g.
+        # be on Aurora or Beta revisions.
+        'clone_upstream_url': 'https://hg.mozilla.org/mozilla-central',
         'tinderbox_build_dir': '%(who)s-%(got_revision)s',
         'to_tinderbox_dated': False,
         'include_post_upload_builddir': True,
@@ -281,10 +308,6 @@ config = {
     },
 
     ### project branches
-    'b2g-inbound': {
-        'repo_path': 'integration/b2g-inbound',
-        'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
-    },
     'fx-team': {
         'repo_path': 'integration/fx-team',
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
@@ -297,8 +320,8 @@ config = {
         'repo_path': 'integration/mozilla-inbound',
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
     },
-    'services-central': {
-        'repo_path': 'services/services-central',
+    'autoland': {
+        'repo_path': 'integration/autoland',
         'stage_server': 'upload.ffxbld.productdelivery.prod.mozaws.net',
     },
     'ux': {

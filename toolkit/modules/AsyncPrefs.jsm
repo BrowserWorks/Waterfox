@@ -25,6 +25,8 @@ const kAllowedPrefs = new Set([
   "reader.font_size",
   "reader.font_type",
   "reader.color_scheme",
+  "reader.content_width",
+  "reader.line_height",
 ]);
 
 const kPrefTypeMap = new Map([

@@ -8,7 +8,6 @@
 
 #include "mozilla/Maybe.h"
 #include "nsIDOMEventListener.h"
-#include "nsIDocument.h"
 #include "nsIObserver.h"
 #include "Units.h"
 
@@ -27,6 +26,15 @@ public:
   MobileViewportManager(nsIPresShell* aPresShell,
                         nsIDocument* aDocument);
   void Destroy();
+
+  /* Provide a resolution to use during the first paint instead of the default
+   * resolution computed from the viewport info metadata. This is in the same
+   * "units" as the argument to nsDOMWindowUtils::SetResolutionAndScaleTo.
+   * Also takes the previous display dimensions as they were at the time the
+   * resolution was stored in order to correctly adjust the resolution if the
+   * device was rotated in the meantime. */
+  void SetRestoreResolution(float aResolution,
+                            mozilla::LayoutDeviceIntSize aDisplaySize);
 
   /* Notify the MobileViewportManager that a reflow was requested in the
    * presShell.*/
@@ -50,14 +58,27 @@ private:
   /* Secondary main helper method to update just the SPCSPS. */
   void RefreshSPCSPS();
 
+  /* Helper to clamp the given zoom by the min/max in the viewport info. */
+  mozilla::CSSToScreenScale ClampZoom(const mozilla::CSSToScreenScale& aZoom,
+                                      const nsViewportInfo& aViewportInfo);
+
+  /* Helper to update the given resolution according to changed display and viewport widths. */
+  mozilla::LayoutDeviceToLayerScale
+  ScaleResolutionWithDisplayWidth(const mozilla::LayoutDeviceToLayerScale& aRes,
+                                  const float& aDisplayWidthChangeRatio,
+                                  const mozilla::CSSSize& aNewViewport,
+                                  const mozilla::CSSSize& aOldViewport);
+
   /* Updates the presShell resolution and returns the new zoom. */
   mozilla::CSSToScreenScale UpdateResolution(const nsViewportInfo& aViewportInfo,
                                              const mozilla::ScreenIntSize& aDisplaySize,
                                              const mozilla::CSSSize& aViewport,
                                              const mozilla::Maybe<float>& aDisplayWidthChangeRatio);
+
   /* Updates the scroll-position-clamping scrollport size */
   void UpdateSPCSPS(const mozilla::ScreenIntSize& aDisplaySize,
                     const mozilla::CSSToScreenScale& aZoom);
+
   /* Updates the displayport margins for the presShell's root scrollable frame */
   void UpdateDisplayPortMargins();
 
@@ -68,6 +89,8 @@ private:
   bool mPainted;
   mozilla::LayoutDeviceIntSize mDisplaySize;
   mozilla::CSSSize mMobileViewportSize;
+  mozilla::Maybe<float> mRestoreResolution;
+  mozilla::Maybe<mozilla::ScreenIntSize> mRestoreDisplaySize;
 };
 
 #endif

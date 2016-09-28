@@ -36,11 +36,13 @@
 #include "nsIFileStreams.h"
 #include "nsContentUtils.h"
 
+#include "mozilla/dom/Directory.h"
 #include "mozilla/dom/EncodingUtils.h"
 #include "mozilla/dom/File.h"
 
 using namespace mozilla;
 using mozilla::dom::Blob;
+using mozilla::dom::Directory;
 using mozilla::dom::EncodingUtils;
 using mozilla::dom::File;
 
@@ -115,7 +117,7 @@ protected:
    * @param aEncoded the encoded string [OUT]
    * @throws NS_ERROR_OUT_OF_MEMORY if we run out of memory
    */
-  nsresult URLEncode(const nsAString& aStr, nsCString& aEncoded);
+  nsresult URLEncode(const nsAString& aStr, nsACString& aEncoded);
 
 private:
   /**
@@ -279,8 +281,10 @@ nsFSURLEncoded::GetEncodedSubmission(nsIURI* aURI,
       HandleMailtoSubject(path);
 
       // Append the body to and force-plain-text args to the mailto line
-      nsCString escapedBody;
-      escapedBody.Adopt(nsEscape(mQueryString.get(), url_XAlphas));
+      nsAutoCString escapedBody;
+      if (NS_WARN_IF(!NS_Escape(mQueryString, escapedBody, url_XAlphas))) {
+        return NS_ERROR_OUT_OF_MEMORY;
+      }
 
       path += NS_LITERAL_CSTRING("&force-plain-text=Y&body=") + escapedBody;
 
@@ -361,23 +365,28 @@ nsFSURLEncoded::GetEncodedSubmission(nsIURI* aURI,
 
 // i18n helper routines
 nsresult
-nsFSURLEncoded::URLEncode(const nsAString& aStr, nsCString& aEncoded)
+nsFSURLEncoded::URLEncode(const nsAString& aStr, nsACString& aEncoded)
 {
   // convert to CRLF breaks
+  int32_t convertedBufLength = 0;
   char16_t* convertedBuf =
-    nsLinebreakConverter::ConvertUnicharLineBreaks(PromiseFlatString(aStr).get(),
+    nsLinebreakConverter::ConvertUnicharLineBreaks(aStr.BeginReading(),
                                                    nsLinebreakConverter::eLinebreakAny,
-                                                   nsLinebreakConverter::eLinebreakNet);
+                                                   nsLinebreakConverter::eLinebreakNet,
+                                                   aStr.Length(),
+                                                   &convertedBufLength);
   NS_ENSURE_TRUE(convertedBuf, NS_ERROR_OUT_OF_MEMORY);
 
+  nsAutoString convertedString;
+  convertedString.Adopt(convertedBuf, convertedBufLength);
+
   nsAutoCString encodedBuf;
-  nsresult rv = EncodeVal(nsDependentString(convertedBuf), encodedBuf, false);
-  free(convertedBuf);
+  nsresult rv = EncodeVal(convertedString, encodedBuf, false);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  char* escapedBuf = nsEscape(encodedBuf.get(), url_XPAlphas);
-  NS_ENSURE_TRUE(escapedBuf, NS_ERROR_OUT_OF_MEMORY);
-  aEncoded.Adopt(escapedBuf);
+  if (NS_WARN_IF(!NS_Escape(encodedBuf, aEncoded, url_XPAlphas))) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   return NS_OK;
 }
@@ -464,21 +473,19 @@ nsFSMultipartFormData::AddNameBlobOrNullPair(const nsAString& aName,
 
   if (aBlob) {
     nsAutoString filename16;
-    RetrieveFileName(aBlob, filename16);
 
-    ErrorResult error;
-    nsAutoString filepath16;
     RefPtr<File> file = aBlob->ToFile();
     if (file) {
-      file->GetPath(filepath16, error);
-      if (NS_WARN_IF(error.Failed())) {
-        return error.StealNSResult();
+      nsAutoString path;
+      file->GetPath(path);
+      if (Directory::WebkitBlinkDirectoryPickerEnabled(nullptr, nullptr) &&
+          !path.IsEmpty()) {
+        filename16 = path;
       }
-    }
 
-    if (!filepath16.IsEmpty()) {
-      // File.path includes trailing "/"
-      filename16 = filepath16 + filename16;
+      if (filename16.IsEmpty()) {
+        RetrieveFileName(aBlob, filename16);
+      }
     }
 
     rv = EncodeVal(filename16, filename, true);
@@ -497,6 +504,7 @@ nsFSMultipartFormData::AddNameBlobOrNullPair(const nsAString& aName,
                                         nsLinebreakConverter::eLinebreakSpace));
 
     // Get input stream
+    ErrorResult error;
     aBlob->GetInternalStream(getter_AddRefs(fileStream), error);
     if (NS_WARN_IF(error.Failed())) {
       return error.StealNSResult();
@@ -660,11 +668,11 @@ nsFSTextPlain::GetEncodedSubmission(nsIURI* aURI,
     HandleMailtoSubject(path);
 
     // Append the body to and force-plain-text args to the mailto line
-    char* escapedBuf = nsEscape(NS_ConvertUTF16toUTF8(mBody).get(),
-                                url_XAlphas);
-    NS_ENSURE_TRUE(escapedBuf, NS_ERROR_OUT_OF_MEMORY);
-    nsCString escapedBody;
-    escapedBody.Adopt(escapedBuf);
+    nsAutoCString escapedBody;
+    if (NS_WARN_IF(!NS_Escape(NS_ConvertUTF16toUTF8(mBody), escapedBody,
+                              url_XAlphas))) {
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
 
     path += NS_LITERAL_CSTRING("&force-plain-text=Y&body=") + escapedBody;
 

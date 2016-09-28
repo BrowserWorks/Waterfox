@@ -107,6 +107,7 @@ using mozilla::plugins::PluginModuleContentParent;
 #endif
 
 #include "nsIAudioChannelAgent.h"
+#include "AudioChannelService.h"
 
 using namespace mozilla;
 using namespace mozilla::plugins::parent;
@@ -477,7 +478,7 @@ namespace {
 
 static char *gNPPException;
 
-class nsPluginThreadRunnable : public nsRunnable,
+class nsPluginThreadRunnable : public Runnable,
                                public PRCList
 {
 public:
@@ -1061,9 +1062,9 @@ _getwindowobject(NPP npp)
   nsCOMPtr<nsPIDOMWindowOuter> outer = doc->GetWindow();
   NS_ENSURE_TRUE(outer, nullptr);
 
-  AutoJSContext cx;
-  JS::Rooted<JSObject*> global(cx, nsGlobalWindow::Cast(outer)->GetGlobalJSObject());
-  return nsJSObjWrapper::GetNewOrUsed(npp, cx, global);
+  JS::Rooted<JSObject*> global(nsContentUtils::RootingCx(),
+                               nsGlobalWindow::Cast(outer)->GetGlobalJSObject());
+  return nsJSObjWrapper::GetNewOrUsed(npp, global);
 }
 
 NPObject*
@@ -1103,7 +1104,7 @@ _getpluginelement(NPP npp)
                   NS_GET_IID(nsIDOMElement), obj.address());
   NS_ENSURE_TRUE(obj, nullptr);
 
-  return nsJSObjWrapper::GetNewOrUsed(npp, cx, obj);
+  return nsJSObjWrapper::GetNewOrUsed(npp, obj);
 }
 
 NPIdentifier
@@ -2289,14 +2290,27 @@ _setvalue(NPP npp, NPPVariable variable, void *result)
           return NPERR_NO_ERROR;
         }
       } else {
-        float volume = 0.0;
-        bool muted = true;
-        rv = agent->NotifyStartedPlaying(&volume, &muted);
+
+        dom::AudioPlaybackConfig config;
+        rv = agent->NotifyStartedPlaying(&config,
+                                         dom::AudioChannelService::AudibleState::eAudible);
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return NPERR_NO_ERROR;
         }
 
-        rv = inst->WindowVolumeChanged(volume, muted);
+        rv = inst->WindowVolumeChanged(config.mVolume, config.mMuted);
+        if (NS_WARN_IF(NS_FAILED(rv))) {
+          return NPERR_NO_ERROR;
+        }
+
+        // Since we only support for muting now, the implementation of suspend
+        // is equal to muting. Therefore, if we have already muted the plugin,
+        // then we don't need to call WindowSuspendChanged() again.
+        if (config.mMuted) {
+          return NPERR_NO_ERROR;
+        }
+
+        rv = inst->WindowSuspendChanged(config.mSuspend);
         if (NS_WARN_IF(NS_FAILED(rv))) {
           return NPERR_NO_ERROR;
         }

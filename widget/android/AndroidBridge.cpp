@@ -809,7 +809,7 @@ AndroidBridge::OpenGraphicsLibraries()
 }
 
 namespace mozilla {
-    class TracerRunnable : public nsRunnable{
+    class TracerRunnable : public Runnable{
     public:
         TracerRunnable() {
             mTracerLock = new Mutex("TracerRunnable");
@@ -1646,15 +1646,43 @@ nsAndroidBridge::Observe(nsISupports* aSubject, const char* aTopic,
     RemoveObservers();
   } else if (!strcmp(aTopic, "audio-playback")) {
     ALOG_BRIDGE("nsAndroidBridge::Observe, get audio-playback event.");
+
+    nsCOMPtr<nsPIDOMWindowOuter> window = do_QueryInterface(aSubject);
+    MOZ_ASSERT(window);
+
     nsAutoString activeStr(aData);
-    if (activeStr.EqualsLiteral("active")) {
+    if (activeStr.EqualsLiteral("inactive-nonaudible")) {
+      // This state means the audio becomes silent, but it's still playing, so
+      // we don't need to notify the AudioFocusAgent.
+      return NS_OK;
+    }
+
+    bool isPlaying = activeStr.EqualsLiteral("active");
+
+    UpdateAudioPlayingWindows(window, isPlaying);
+  }
+  return NS_OK;
+}
+
+void
+nsAndroidBridge::UpdateAudioPlayingWindows(nsPIDOMWindowOuter* aWindow,
+                                           bool aPlaying)
+{
+  // Request audio focus for the first audio playing window and abandon focus
+  // for the last audio playing window.
+  if (aPlaying && !mAudioPlayingWindows.Contains(aWindow)) {
+    mAudioPlayingWindows.AppendElement(aWindow);
+    if (mAudioPlayingWindows.Length() == 1) {
+      ALOG_BRIDGE("nsAndroidBridge, request audio focus.");
       AudioFocusAgent::NotifyStartedPlaying();
-    } else {
+    }
+  } else if (!aPlaying && mAudioPlayingWindows.Contains(aWindow)) {
+    mAudioPlayingWindows.RemoveElement(aWindow);
+    if (mAudioPlayingWindows.Length() == 0) {
+      ALOG_BRIDGE("nsAndroidBridge, abandon audio focus.");
       AudioFocusAgent::NotifyStoppedPlaying();
     }
   }
-
-  return NS_OK;
 }
 
 void
@@ -2101,12 +2129,12 @@ class AndroidBridge::DelayedTask
     using TimeDuration = mozilla::TimeDuration;
 
 public:
-    DelayedTask(Task* aTask)
+    DelayedTask(already_AddRefed<Runnable> aTask)
         : mTask(aTask)
         , mRunTime() // Null timestamp representing no delay.
     {}
 
-    DelayedTask(Task* aTask, int aDelayMs)
+    DelayedTask(already_AddRefed<Runnable> aTask, int aDelayMs)
         : mTask(aTask)
         , mRunTime(TimeStamp::Now() + TimeDuration::FromMilliseconds(aDelayMs))
     {}
@@ -2129,25 +2157,25 @@ public:
         return 0;
     }
 
-    UniquePtr<Task>&& GetTask()
+    already_AddRefed<Runnable> TakeTask()
     {
-        return static_cast<UniquePtr<Task>&&>(mTask);
+        return mTask.forget();
     }
 
 private:
-    UniquePtr<Task> mTask;
+    RefPtr<Runnable> mTask;
     const TimeStamp mRunTime;
 };
 
 
 void
-AndroidBridge::PostTaskToUiThread(Task* aTask, int aDelayMs)
+AndroidBridge::PostTaskToUiThread(already_AddRefed<Runnable> aTask, int aDelayMs)
 {
     // add the new task into the mUiTaskQueue, sorted with
     // the earliest task first in the queue
     size_t i;
-    DelayedTask newTask(aDelayMs ? DelayedTask(aTask, aDelayMs)
-                                 : DelayedTask(aTask));
+    DelayedTask newTask(aDelayMs ? DelayedTask(mozilla::Move(aTask), aDelayMs)
+                                 : DelayedTask(mozilla::Move(aTask)));
 
     {
         MutexAutoLock lock(mUiTaskQueueLock);
@@ -2188,7 +2216,7 @@ AndroidBridge::RunDelayedUiThreadTasks()
         }
 
         // Retrieve task before unlocking/running.
-        const UniquePtr<Task> nextTask(mUiTaskQueue[0].GetTask());
+        RefPtr<Runnable> nextTask(mUiTaskQueue[0].TakeTask());
         mUiTaskQueue.RemoveElementAt(0);
 
         // Unlock to allow posting new tasks reentrantly.

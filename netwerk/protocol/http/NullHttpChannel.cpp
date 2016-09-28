@@ -58,6 +58,18 @@ NullHttpChannel::Init(nsIURI *aURI,
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
+NullHttpChannel::GetChannelId(nsACString& aChannelId)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::SetChannelId(const nsACString& aChannelId)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 NullHttpChannel::GetTransferSize(uint64_t *aTransferSize)
 {
     return NS_ERROR_NOT_IMPLEMENTED;
@@ -210,6 +222,19 @@ NullHttpChannel::VisitResponseHeaders(nsIHttpHeaderVisitor *aVisitor)
 }
 
 NS_IMETHODIMP
+NullHttpChannel::GetOriginalResponseHeader(const nsACString & header,
+                                            nsIHttpHeaderVisitor *aVisitor)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
+NullHttpChannel::VisitOriginalResponseHeaders(nsIHttpHeaderVisitor *aVisitor)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 NullHttpChannel::IsNoStoreResponse(bool *_retval)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
@@ -234,13 +259,13 @@ NullHttpChannel::RedirectTo(nsIURI *aNewURI)
 }
 
 NS_IMETHODIMP
-NullHttpChannel::GetSchedulingContextID(nsID *_retval)
+NullHttpChannel::GetRequestContextID(nsID *_retval)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP
-NullHttpChannel::SetSchedulingContextID(const nsID scID)
+NullHttpChannel::SetRequestContextID(const nsID rcID)
 {
   return NS_ERROR_NOT_IMPLEMENTED;
 }

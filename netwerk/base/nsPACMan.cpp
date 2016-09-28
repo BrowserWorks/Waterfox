@@ -22,17 +22,14 @@
 #endif
 
 //-----------------------------------------------------------------------------
-using namespace mozilla;
-using namespace mozilla::net;
 
 namespace mozilla {
 namespace net {
+
 LazyLogModule gProxyLog("proxy");
-} // namespace net
-} // namespace mozilla
 
 #undef LOG
-#define LOG(args) MOZ_LOG(mozilla::net::gProxyLog, mozilla::LogLevel::Debug, args)
+#define LOG(args) MOZ_LOG(gProxyLog, LogLevel::Debug, args)
 
 // The PAC thread does evaluations of both PAC files and
 // nsISystemProxySettings because they can both block the calling thread and we
@@ -61,7 +58,7 @@ HttpRequestSucceeded(nsIStreamLoader *loader)
 // nsPACManCallback::OnQueryComplete on the Main thread when its completion is
 // discovered on the pac thread
 
-class ExecuteCallback final : public nsRunnable
+class ExecuteCallback final : public Runnable
 {
 public:
   ExecuteCallback(nsPACManCallback *aCallback,
@@ -101,7 +98,7 @@ private:
 // acts as a proxy to do that, as the PACMan is reference counted
 // and might be destroyed on either thread
 
-class ShutdownThread final : public nsRunnable
+class ShutdownThread final : public Runnable
 {
 public:
   explicit ShutdownThread(nsIThread *thread)
@@ -122,7 +119,7 @@ private:
 
 // Dispatch this to wait until the PAC thread shuts down.
 
-class WaitForThreadShutdown final : public nsRunnable
+class WaitForThreadShutdown final : public Runnable
 {
 public:
   explicit WaitForThreadShutdown(nsPACMan *aPACMan)
@@ -150,7 +147,7 @@ private:
 // the javascript PAC file has been installed (perhaps unsuccessfully)
 // and that there is no reason to queue executions anymore
 
-class PACLoadComplete final : public nsRunnable
+class PACLoadComplete final : public Runnable
 {
 public:
   explicit PACLoadComplete(nsPACMan *aPACMan)
@@ -176,13 +173,14 @@ private:
 // thread onto the PAC thread. There are 3 options: process the queue,
 // cancel the queue, and setup the javascript context with a new PAC file
 
-class ExecutePACThreadAction final : public nsRunnable
+class ExecutePACThreadAction final : public Runnable
 {
 public:
   // by default we just process the queue
   explicit ExecutePACThreadAction(nsPACMan *aPACMan)
     : mPACMan(aPACMan)
     , mCancel(false)
+    , mCancelStatus(NS_OK)
     , mSetupPAC(false)
   { }
 
@@ -415,10 +413,8 @@ nsPACMan::LoadPACFromURI(const nsCString &spec)
   // queries the enter between now and when we actually load the PAC file.
 
   if (!mLoadPending) {
-    nsCOMPtr<nsIRunnable> event =
-      NS_NewRunnableMethod(this, &nsPACMan::StartLoading);
     nsresult rv;
-    if (NS_FAILED(rv = NS_DispatchToCurrentThread(event)))
+    if (NS_FAILED(rv = NS_DispatchToCurrentThread(NewRunnableMethod(this, &nsPACMan::StartLoading))))
       return rv;
     mLoadPending = true;
   }
@@ -784,9 +780,12 @@ nsPACMan::Init(nsISystemProxySettings *systemProxySettings)
   if (NS_FAILED(rv))
     return rv;
 
-  nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethod(this, &nsPACMan::NamePACThread);
   // don't check return value as it is not a big deal for this to fail.
-  mPACThread->Dispatch(event, nsIEventTarget::DISPATCH_NORMAL);
+  mPACThread->Dispatch(NewRunnableMethod(this, &nsPACMan::NamePACThread),
+                       nsIEventTarget::DISPATCH_NORMAL);
 
   return NS_OK;
 }
+
+} // namespace net
+} // namespace mozilla

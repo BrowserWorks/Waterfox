@@ -143,9 +143,9 @@ Narrator.prototype = {
   _speakInner: function() {
     this._win.speechSynthesis.cancel();
     let tw = this._treeWalker;
-    let paragraph = tw.nextNode();
-    if (!paragraph) {
-      tw.currentNode = tw.root;
+    let paragraph = tw.currentNode;
+    if (paragraph == tw.root) {
+      this._sendTestEvent("paragraphsdone", {});
       return Promise.resolve();
     }
 
@@ -193,6 +193,7 @@ Narrator.prototype = {
           // User pressed stopped.
           resolve();
         } else {
+          tw.currentNode = tw.nextNode() || tw.root;
           this._speakInner().then(resolve, reject);
         }
       });
@@ -216,10 +217,14 @@ Narrator.prototype = {
       let tw = this._treeWalker;
       if (!this._isParagraphInView(tw.currentNode)) {
         tw.currentNode = tw.root;
-        while (tw.nextNode() && !this._isParagraphInView(tw.currentNode)) {}
-        // _speakInner will advance to the next node for us, so we need
-        // to have it one paragraph back from the first visible one.
-        tw.previousNode();
+        while (tw.nextNode()) {
+          if (this._isParagraphInView(tw.currentNode)) {
+            break;
+          }
+        }
+      }
+      if (tw.currentNode == tw.root) {
+        tw.nextNode();
       }
 
       return this._speakInner();

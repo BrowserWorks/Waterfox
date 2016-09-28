@@ -16,12 +16,13 @@ namespace mozilla {
 class AppleVTDecoder : public AppleVDADecoder {
 public:
   AppleVTDecoder(const VideoInfo& aConfig,
-                 FlushableTaskQueue* aVideoTaskQueue,
+                 TaskQueue* aTaskQueue,
                  MediaDataDecoderCallback* aCallback,
                  layers::ImageContainer* aImageContainer);
+
+private:
   virtual ~AppleVTDecoder();
   RefPtr<InitPromise> Init() override;
-  nsresult Input(MediaRawData* aSample) override;
   bool IsHardwareAccelerated(nsACString& aFailureReason) const override
   {
     return mIsHardwareAccelerated;
@@ -34,17 +35,15 @@ public:
       : "apple software VT decoder";
   }
 
-protected:
   void ProcessFlush() override;
   void ProcessDrain() override;
   void ProcessShutdown() override;
 
-private:
   CMVideoFormatDescriptionRef mFormat;
   VTDecompressionSessionRef mSession;
 
   // Method to pass a frame to VideoToolbox for decoding.
-  nsresult SubmitFrame(MediaRawData* aSample);
+  nsresult DoDecode(MediaRawData* aSample) override;
   // Method to set up the decompression session.
   nsresult InitializeSession();
   nsresult WaitForAsynchronousFrames();

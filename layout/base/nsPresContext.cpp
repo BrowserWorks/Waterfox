@@ -111,7 +111,7 @@ public:
 
 namespace {
 
-class CharSetChangingRunnable : public nsRunnable
+class CharSetChangingRunnable : public Runnable
 {
 public:
   CharSetChangingRunnable(nsPresContext* aPresContext,
@@ -261,8 +261,7 @@ nsPresContext::nsPresContext(nsIDocument* aDocument, nsPresContextType aType)
   mCounterStylesDirty = true;
 
   // if text perf logging enabled, init stats struct
-  LogModule* log = gfxPlatform::GetLog(eGfxLog_textperf);
-  if (MOZ_LOG_TEST(log, LogLevel::Warning)) {
+  if (MOZ_LOG_TEST(gfxPlatform::GetLog(eGfxLog_textperf), LogLevel::Warning)) {
     mTextPerf = new gfxTextPerfMetrics();
   }
 
@@ -769,7 +768,7 @@ nsPresContext::UpdateAfterPreferencesChanged()
   nsChangeHint hint = nsChangeHint(0);
 
   if (mPrefChangePendingNeedsReflow) {
-    NS_UpdateHint(hint, NS_STYLE_HINT_REFLOW);
+    hint |= NS_STYLE_HINT_REFLOW;
   }
 
   // Preferences require rerunning selector matching because we rebuild
@@ -1590,17 +1589,18 @@ nsPresContext::ThemeChanged()
     sThemeChanged = true;
 
     nsCOMPtr<nsIRunnable> ev =
-      NS_NewRunnableMethod(this, &nsPresContext::ThemeChangedInternal);
+      NewRunnableMethod(this, &nsPresContext::ThemeChangedInternal);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(ev))) {
       mPendingThemeChanged = true;
     }
   }
 }
 
-static void
+static bool
 NotifyThemeChanged(TabParent* aTabParent, void* aArg)
 {
   aTabParent->ThemeChanged();
+  return false;
 }
 
 void
@@ -1649,7 +1649,7 @@ nsPresContext::SysColorChanged()
   if (!mPendingSysColorChanged) {
     sLookAndFeelChanged = true;
     nsCOMPtr<nsIRunnable> ev =
-      NS_NewRunnableMethod(this, &nsPresContext::SysColorChangedInternal);
+      NewRunnableMethod(this, &nsPresContext::SysColorChangedInternal);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(ev))) {
       mPendingSysColorChanged = true;
     }
@@ -1681,7 +1681,7 @@ nsPresContext::UIResolutionChanged()
 {
   if (!mPendingUIResolutionChanged) {
     nsCOMPtr<nsIRunnable> ev =
-      NS_NewRunnableMethod(this, &nsPresContext::UIResolutionChangedInternal);
+      NewRunnableMethod(this, &nsPresContext::UIResolutionChangedInternal);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(ev))) {
       mPendingUIResolutionChanged = true;
     }
@@ -1915,8 +1915,7 @@ nsPresContext::MediaFeatureValuesChanged(nsRestyleHint aRestyleHint,
       for (uint32_t i = 0, i_end = notifyList.Length(); i != i_end; ++i) {
         nsAutoMicroTask mt;
         MediaQueryList::HandleChangeData &d = notifyList[i];
-        ErrorResult result;
-        d.callback->Call(*d.mql, result);
+        d.callback->Call(*d.mql);
       }
     }
 
@@ -1932,7 +1931,7 @@ nsPresContext::PostMediaFeatureValuesChangedEvent()
   // need to track whether it's been added).
   if (!mPendingMediaFeatureValuesChanged) {
     nsCOMPtr<nsIRunnable> ev =
-      NS_NewRunnableMethod(this, &nsPresContext::HandleMediaFeatureValuesChangedEvent);
+      NewRunnableMethod(this, &nsPresContext::HandleMediaFeatureValuesChangedEvent);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(ev))) {
       mPendingMediaFeatureValuesChanged = true;
       mDocument->SetNeedStyleFlush();
@@ -1950,11 +1949,12 @@ nsPresContext::HandleMediaFeatureValuesChangedEvent()
   }
 }
 
-static void
+static bool
 NotifyTabSizeModeChanged(TabParent* aTab, void* aArg)
 {
   nsSizeMode* sizeMode = static_cast<nsSizeMode*>(aArg);
   aTab->SizeModeChanged(*sizeMode);
+  return false;
 }
 
 void
@@ -2032,6 +2032,12 @@ nsPresContext::UpdateIsChrome()
 nsPresContext::HasAuthorSpecifiedRules(const nsIFrame *aFrame,
                                        uint32_t ruleTypeMask) const
 {
+#ifdef MOZ_STYLO
+  if (!mShell || mShell->StyleSet()->IsServo()) {
+    NS_ERROR("stylo: nsPresContext::HasAuthorSpecifiedRules not implemented");
+    return true;
+  }
+#endif
   return
     nsRuleNode::HasAuthorSpecifiedRules(aFrame->StyleContext(),
                                         ruleTypeMask,
@@ -2123,7 +2129,7 @@ nsPresContext::RebuildCounterStyles()
   mDocument->SetNeedStyleFlush();
   if (!mPostedFlushCounterStyles) {
     nsCOMPtr<nsIRunnable> ev =
-      NS_NewRunnableMethod(this, &nsPresContext::HandleRebuildCounterStyles);
+      NewRunnableMethod(this, &nsPresContext::HandleRebuildCounterStyles);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(ev))) {
       mPostedFlushCounterStyles = true;
     }
@@ -2400,7 +2406,7 @@ NotifyDidPaintSubdocumentCallback(nsIDocument* aDocument, void* aData)
   return true;
 }
 
-class DelayedFireDOMPaintEvent : public nsRunnable {
+class DelayedFireDOMPaintEvent : public Runnable {
 public:
   DelayedFireDOMPaintEvent(nsPresContext* aPresContext,
                            nsInvalidateRequestList* aList,
@@ -2675,6 +2681,12 @@ nsPresContext::CheckForInterrupt(nsIFrame* aFrame)
     TimeStamp::Now() - mReflowStartTime > sInterruptTimeout &&
     HavePendingInputEvent() &&
     !IsChrome();
+
+  if (mPendingInterruptFromTest) {
+    mPendingInterruptFromTest = false;
+    mHasPendingInterrupt = true;
+  }
+
   if (mHasPendingInterrupt) {
 #ifdef NOISY_INTERRUPTIBLE_REFLOW
     printf("*** DETECTED pending interrupt (time=%lld)\n", PR_Now());
@@ -2732,21 +2744,6 @@ nsPresContext::IsRootContentDocument() const
 
   nsIFrame* f = view->GetFrame();
   return (f && f->PresContext()->IsChrome());
-}
-
-bool
-nsPresContext::IsCrossProcessRootContentDocument()
-{
-  if (!IsRootContentDocument()) {
-    return false;
-  }
-
-  if (XRE_IsParentProcess()) {
-    return true;
-  }
-
-  TabChild* tabChild = TabChild::GetFrom(mShell);
-  return (tabChild && tabChild->IsRootContentDocument());
 }
 
 bool nsPresContext::GetPaintFlashing() const

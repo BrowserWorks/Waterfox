@@ -4,7 +4,7 @@
 "use strict";
 
 const { Cc, Ci, Cu } = require("chrome");
-const { Task } = require("resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 
 loader.lazyRequireGetter(this, "Services");
 loader.lazyRequireGetter(this, "promise");
@@ -32,7 +32,7 @@ const APP_MAP = {
 
 var CACHED_INFO = null;
 
-function *getSystemInfo() {
+function* getSystemInfo() {
   if (CACHED_INFO) {
     return CACHED_INFO;
   }
@@ -40,7 +40,14 @@ function *getSystemInfo() {
   let appInfo = Services.appinfo;
   let win = Services.wm.getMostRecentWindow(DebuggerServer.chromeWindowType);
   let [processor, compiler] = appInfo.XPCOMABI.split("-");
-  let dpi, useragent, width, height, os, brandName;
+  let dpi,
+    useragent,
+    width,
+    height,
+    physicalWidth,
+    physicalHeight,
+    os,
+    brandName;
   let appid = appInfo.ID;
   let apptype = APP_MAP[appid];
   let geckoVersion = appInfo.platformVersion;
@@ -77,6 +84,8 @@ function *getSystemInfo() {
     useragent = win.navigator.userAgent;
     width = win.screen.width;
     height = win.screen.height;
+    physicalWidth = win.screen.width * win.devicePixelRatio;
+    physicalHeight = win.screen.height * win.devicePixelRatio;
   }
 
   let info = {
@@ -163,6 +172,8 @@ function *getSystemInfo() {
     useragent,
     width,
     height,
+    physicalWidth,
+    physicalHeight,
     brandName,
   };
 
@@ -170,7 +181,7 @@ function *getSystemInfo() {
   return info;
 }
 
-function getProfileLocation () {
+function getProfileLocation() {
   // In child processes, we cannot access the profile location.
   try {
     let profd = Services.dirsvc.get("ProfD", Ci.nsILocalFile);

@@ -118,13 +118,6 @@ PluginInstanceParent::LookupPluginInstanceByID(uintptr_t aId)
 }
 #endif
 
-template<>
-struct RunnableMethodTraits<PluginInstanceParent>
-{
-    static void RetainCallee(PluginInstanceParent* obj) { }
-    static void ReleaseCallee(PluginInstanceParent* obj) { }
-};
-
 PluginInstanceParent::PluginInstanceParent(PluginModuleParent* parent,
                                            NPP npp,
                                            const nsCString& aMimeType,
@@ -151,7 +144,6 @@ PluginInstanceParent::PluginInstanceParent(PluginModuleParent* parent,
     , mShColorSpace(nullptr)
 #endif
 #if defined(XP_WIN)
-    , mCaptureRefreshTask(nullptr)
     , mValidFirstCapture(false)
     , mIsScrolling(false)
 #endif
@@ -1224,8 +1216,9 @@ PluginInstanceParent::ScheduleScrollCapture(int aTimeout)
     }
     CAPTURE_LOG("delayed scroll capture requested.");
     mCaptureRefreshTask =
-        NewRunnableMethod(this, &PluginInstanceParent::ScheduledUpdateScrollCaptureCallback);
-    MessageLoop::current()->PostDelayedTask(FROM_HERE, mCaptureRefreshTask,
+        NewNonOwningCancelableRunnableMethod(this, &PluginInstanceParent::ScheduledUpdateScrollCaptureCallback);
+    RefPtr<Runnable> addrefedTask = mCaptureRefreshTask;
+    MessageLoop::current()->PostDelayedTask(addrefedTask.forget(),
                                             kScrollCaptureDelayMs);
 }
 

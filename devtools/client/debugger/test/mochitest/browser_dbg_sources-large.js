@@ -12,7 +12,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_function-search.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_function-search-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab, aDebuggee, aPanel]) => {
     const gTab = aTab;
     const gDebuggee = aDebuggee;
     const gPanel = aPanel;
@@ -58,8 +62,7 @@ function test() {
         "Search box is prefilled with current token");
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "-01.js");
+    Task.spawn(function* () {
       yield testLargeFile();
 
       info("Making it appear as a small file and then reselecting 01.js");

@@ -53,7 +53,7 @@ Debug_SetValueRangeToCrashOnTouch(Value* vec, size_t len)
 }
 
 static MOZ_ALWAYS_INLINE void
-Debug_SetValueRangeToCrashOnTouch(HeapValue* vec, size_t len)
+Debug_SetValueRangeToCrashOnTouch(GCPtrValue* vec, size_t len)
 {
 #ifdef DEBUG
     Debug_SetValueRangeToCrashOnTouch((Value*) vec, len);
@@ -180,7 +180,15 @@ class ObjectElements
         // For TypedArrays only: this TypedArray's storage is mapping shared
         // memory.  This is a static property of the TypedArray, set when it
         // is created and never changed.
-        SHARED_MEMORY               = 0x8
+        SHARED_MEMORY               = 0x8,
+
+        // Set if the object has already been added to the whole-cell store
+        // buffer, and therefore adding individual elements into the slots store
+        // buffer would be pointless. This is never set for the empty or shared
+        // elements headers, nor if the elements are copy on write; in such
+        // situations it isn't clear *which* object that references this
+        // elements header has already been put in the whole-cell store buffer.
+        IN_WHOLE_CELL_BUFFER        = 0x10,
     };
 
   private:
@@ -237,6 +245,19 @@ class ObjectElements
         MOZ_ASSERT(isCopyOnWrite());
         flags &= ~COPY_ON_WRITE;
     }
+    bool isInWholeCellBuffer() const {
+        return flags & IN_WHOLE_CELL_BUFFER;
+    }
+    void setInWholeCellBuffer() {
+        MOZ_ASSERT(!isSharedMemory());
+        MOZ_ASSERT(!isCopyOnWrite());
+        flags |= IN_WHOLE_CELL_BUFFER;
+    }
+    void clearInWholeCellBuffer() {
+        MOZ_ASSERT(!isSharedMemory());
+        MOZ_ASSERT(!isCopyOnWrite());
+        flags &= ~IN_WHOLE_CELL_BUFFER;
+    }
 
   public:
     MOZ_CONSTEXPR ObjectElements(uint32_t capacity, uint32_t length)
@@ -265,9 +286,9 @@ class ObjectElements
         return flags & SHARED_MEMORY;
     }
 
-    HeapPtrNativeObject& ownerObject() const {
+    GCPtrNativeObject& ownerObject() const {
         MOZ_ASSERT(isCopyOnWrite());
-        return *(HeapPtrNativeObject*)(&elements()[initializedLength]);
+        return *(GCPtrNativeObject*)(&elements()[initializedLength]);
     }
 
     static int offsetOfFlags() {
@@ -358,7 +379,7 @@ class NativeObject : public JSObject
 {
   protected:
     // Property layout description and other state.
-    HeapPtrShape shape_;
+    GCPtrShape shape_;
 
     /* Slots for object properties. */
     js::HeapSlot* slots_;
@@ -457,6 +478,18 @@ class NativeObject : public JSObject
     void setIsSharedMemory() {
         MOZ_ASSERT(elements_ == emptyObjectElements);
         elements_ = emptyObjectElementsShared;
+    }
+
+    bool isInWholeCellBuffer() const {
+        return getElementsHeader()->isInWholeCellBuffer();
+    }
+    void setInWholeCellBuffer() {
+        if (!hasEmptyElements() && !isSharedMemory() && !getElementsHeader()->isCopyOnWrite())
+            getElementsHeader()->setInWholeCellBuffer();
+    }
+    void clearInWholeCellBuffer() {
+        if (!hasEmptyElements() && !isSharedMemory() && !getElementsHeader()->isCopyOnWrite())
+            getElementsHeader()->clearInWholeCellBuffer();
     }
 
   protected:

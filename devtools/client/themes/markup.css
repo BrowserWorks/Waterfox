@@ -64,7 +64,7 @@ body.dragging .tag-line {
   flex: 1 1 auto;
 
   /* Keep the editor away from the markup view floating scrollbars */
-  -moz-margin-end: 12px;
+  margin-inline-end: 12px;
 }
 
 .html-editor iframe {
@@ -173,7 +173,7 @@ ul.children + .tag-line::before {
   z-index: 1;
 }
 
-.child.collapsed .child {
+.child.collapsed .child, .child.collapsed .children {
   display: none;
 }
 
@@ -191,6 +191,12 @@ ul.children + .tag-line::before {
 
 .child.collapsed .close {
   display: inline;
+}
+
+/* Hide HTML void elements (img, hr, br, …) closing tag when the element is not
+ * expanded (it can be if it has pseudo-elements attached) */
+.child.collapsed > .tag-line .void-element .close {
+  display: none;
 }
 
 .closing-bracket {
@@ -312,7 +318,7 @@ ul.children + .tag-line::before {
   line-height: 10px;
   border-radius: 3px;
   padding: 0px 2px;
-  -moz-margin-start: 5px;
+  margin-inline-start: 5px;
   -moz-user-select: none;
 }
 

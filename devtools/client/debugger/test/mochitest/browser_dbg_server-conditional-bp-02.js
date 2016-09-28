@@ -10,14 +10,18 @@
 const TAB_URL = EXAMPLE_URL + "doc_conditional-breakpoints.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
-    const constants = gDebugger.require('./content/constants');
+    const queries = gDebugger.require("./content/queries");
+    const constants = gDebugger.require("./content/constants");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
@@ -122,8 +126,10 @@ function test() {
       return waitForDispatch(gPanel, constants.SET_BREAKPOINT_CONDITION);
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 17);
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretAndScopes(gPanel, 17);
+      callInTab(gTab, "ermahgerd");
+      yield onCaretUpdated;
 
       is(gDebugger.gThreadClient.state, "paused",
          "Should only be getting stack frames while paused.");
@@ -138,7 +144,7 @@ function test() {
          "No breakpoints currently added.");
 
       yield addBreakpoint1();
-      testBreakpoint(18, false, undefined)
+      testBreakpoint(18, false, undefined);
 
       yield addBreakpoint2();
       testBreakpoint(19, false, undefined);
@@ -192,7 +198,5 @@ function test() {
 
       resumeDebuggerThenCloseAndFinish(gPanel);
     });
-
-    callInTab(gTab, "ermahgerd");
   });
 }

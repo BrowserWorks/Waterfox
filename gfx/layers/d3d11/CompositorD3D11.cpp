@@ -17,10 +17,12 @@
 #include "mozilla/layers/Effects.h"
 #include "nsWindowsHelpers.h"
 #include "gfxPrefs.h"
+#include "gfxConfig.h"
 #include "gfxCrashReporterUtils.h"
 #include "gfxVR.h"
 #include "mozilla/gfx/StackArray.h"
 #include "mozilla/Services.h"
+#include "mozilla/widget/WinCompositorWidgetProxy.h"
 
 #include "mozilla/EnumeratedArray.h"
 #include "mozilla/Telemetry.h"
@@ -158,10 +160,9 @@ private:
   bool mInitOkay;
 };
 
-CompositorD3D11::CompositorD3D11(CompositorBridgeParent* aParent, nsIWidget* aWidget)
-  : Compositor(aParent)
+CompositorD3D11::CompositorD3D11(CompositorBridgeParent* aParent, widget::CompositorWidgetProxy* aWidget)
+  : Compositor(aWidget, aParent)
   , mAttachments(nullptr)
-  , mWidget(aWidget)
   , mHwnd(nullptr)
   , mDisableSequenceForNextFrame(false)
   , mVerifyBuffersFailed(false)
@@ -196,11 +197,9 @@ CompositorD3D11::~CompositorD3D11()
 bool
 CompositorD3D11::Initialize()
 {
-  bool force = gfxPrefs::LayersAccelerationForceEnabled();
+  ScopedGfxFeatureReporter reporter("D3D11 Layers");
 
-  ScopedGfxFeatureReporter reporter("D3D11 Layers", force);
-
-  MOZ_ASSERT(gfxPlatform::CanUseDirect3D11());
+  MOZ_ASSERT(gfxConfig::IsEnabled(Feature::D3D11_COMPOSITING));
 
   HRESULT hr;
 
@@ -217,7 +216,7 @@ CompositorD3D11::Initialize()
 
   mFeatureLevel = mDevice->GetFeatureLevel();
 
-  mHwnd = (HWND)mWidget->GetNativeData(NS_NATIVE_WINDOW);
+  mHwnd = mWidget->AsWindowsProxy()->GetHwnd();
 
   memset(&mVSConstants, 0, sizeof(VertexShaderConstants));
 
@@ -697,7 +696,7 @@ CompositorD3D11::ClearRect(const gfx::Rect& aRect)
 
 void
 CompositorD3D11::DrawVRDistortion(const gfx::Rect& aRect,
-                                  const gfx::Rect& aClipRect,
+                                  const gfx::IntRect& aClipRect,
                                   const EffectChain& aEffectChain,
                                   gfx::Float aOpacity,
                                   const gfx::Matrix4x4& aTransform)
@@ -873,7 +872,7 @@ EffectToBlendLayerType(Effect* aEffect)
 
 void
 CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
-                          const gfx::Rect& aClipRect,
+                          const gfx::IntRect& aClipRect,
                           const EffectChain& aEffectChain,
                           gfx::Float aOpacity,
                           const gfx::Matrix4x4& aTransform,
@@ -1015,14 +1014,14 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
         restoreBlendMode = true;
       }
 
-      SetSamplerForFilter(texturedEffect->mFilter);
+      SetSamplerForSamplingFilter(texturedEffect->mSamplingFilter);
     }
     break;
   case EffectTypes::YCBCR: {
       EffectYCbCr* ycbcrEffect =
         static_cast<EffectYCbCr*>(aEffectChain.mPrimaryEffect.get());
 
-      SetSamplerForFilter(Filter::LINEAR);
+      SetSamplerForSamplingFilter(SamplingFilter::LINEAR);
 
       pTexCoordRect = &ycbcrEffect->mTextureCoords;
 
@@ -1065,7 +1064,7 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
         return;
       }
 
-      SetSamplerForFilter(effectComponentAlpha->mFilter);
+      SetSamplerForSamplingFilter(effectComponentAlpha->mSamplingFilter);
 
       pTexCoordRect = &effectComponentAlpha->mTextureCoords;
 
@@ -1117,18 +1116,18 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
 
 void
 CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
-                            const Rect* aClipRectIn,
-                            const Rect& aRenderBounds,
+                            const IntRect* aClipRectIn,
+                            const IntRect& aRenderBounds,
                             const nsIntRegion& aOpaqueRegion,
-                            Rect* aClipRectOut,
-                            Rect* aRenderBoundsOut)
+                            IntRect* aClipRectOut,
+                            IntRect* aRenderBoundsOut)
 {
   // Don't composite if we are minimised. Other than for the sake of efficency,
   // this is important because resizing our buffers when mimised will fail and
   // cause a crash when we're restored.
   NS_ASSERTION(mHwnd, "Couldn't find an HWND when initialising?");
   if (::IsIconic(mHwnd) || mDevice->GetDeviceRemovedReason() != S_OK) {
-    *aRenderBoundsOut = Rect();
+    *aRenderBoundsOut = IntRect();
     return;
   }
 
@@ -1137,7 +1136,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // Failed to create a render target or the view.
   if (!UpdateRenderTarget() || !mDefaultRT || !mDefaultRT->mRTView ||
       mSize.width <= 0 || mSize.height <= 0) {
-    *aRenderBoundsOut = Rect();
+    *aRenderBoundsOut = IntRect();
     return;
   }
 
@@ -1159,7 +1158,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   }
 
   if (clipRect.IsEmpty()) {
-    *aRenderBoundsOut = Rect();
+    *aRenderBoundsOut = IntRect();
     return;
   }
 
@@ -1174,10 +1173,10 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   mInvalidRegion = invalidRegionSafe;
 
   if (aClipRectOut) {
-    *aClipRectOut = Rect(0, 0, mSize.width, mSize.height);
+    *aClipRectOut = IntRect(0, 0, mSize.width, mSize.height);
   }
   if (aRenderBoundsOut) {
-    *aRenderBoundsOut = Rect(0, 0, mSize.width, mSize.height);
+    *aRenderBoundsOut = IntRect(0, 0, mSize.width, mSize.height);
   }
 
   mCurrentClip = IntRect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
@@ -1206,6 +1205,8 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
 void
 CompositorD3D11::EndFrame()
 {
+  Compositor::EndFrame();
+
   if (!mDefaultRT) {
     return;
   }
@@ -1321,13 +1322,12 @@ CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize)
 void
 CompositorD3D11::ForcePresent()
 {
-  LayoutDeviceIntRect rect;
-  mWidget->GetClientBounds(rect);
+  LayoutDeviceIntSize size = mWidget->GetClientSize();
 
   DXGI_SWAP_CHAIN_DESC desc;
   mSwapChain->GetDesc(&desc);
 
-  if (desc.BufferDesc.Width == rect.width && desc.BufferDesc.Height == rect.height) {
+  if (desc.BufferDesc.Width == size.width && desc.BufferDesc.Height == size.height) {
     mSwapChain->Present(0, 0);
   }
 }
@@ -1353,10 +1353,7 @@ CompositorD3D11::PrepareViewport(const gfx::IntSize& aSize,
 void
 CompositorD3D11::EnsureSize()
 {
-  LayoutDeviceIntRect rect;
-  mWidget->GetClientBounds(rect);
-
-  mSize = rect.Size();
+  mSize = mWidget->GetClientSize();
 }
 
 bool
@@ -1590,14 +1587,14 @@ CompositorD3D11::UpdateConstantBuffers()
 }
 
 void
-CompositorD3D11::SetSamplerForFilter(Filter aFilter)
+CompositorD3D11::SetSamplerForSamplingFilter(SamplingFilter aSamplingFilter)
 {
   ID3D11SamplerState *sampler;
-  switch (aFilter) {
-    case Filter::POINT:
+  switch (aSamplingFilter) {
+    case SamplingFilter::POINT:
     sampler = mAttachments->mPointSamplerState;
     break;
-  case Filter::LINEAR:
+  case SamplingFilter::LINEAR:
   default:
     sampler = mAttachments->mLinearSamplerState;
     break;

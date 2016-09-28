@@ -16,7 +16,7 @@ window.onload = function() {
   const {Promise: promise} =
     Cu.import("resource://gre/modules/Promise.jsm", {});
   const {InspectorFront} =
-    devtools.require("devtools/server/actors/inspector");
+    devtools.require("devtools/shared/fronts/inspector");
   const {WalkerSearch, WalkerIndex} =
     devtools.require("devtools/server/actors/utils/walker-search");
   const {console} = Cu.import("resource://gre/modules/Console.jsm", {});
@@ -156,7 +156,7 @@ window.onload = function() {
       desc: "Search with multiple matches in a single tag expecting a single result",
       search: "💩",
       expected: [
-        {node: inspectee.getElementById("💩"), type: "attributeName"}
+        {node: inspectee.getElementById("💩"), type: "attributeValue"}
       ]
     },
     {

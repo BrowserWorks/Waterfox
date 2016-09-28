@@ -10,22 +10,26 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
-    const addBreakpoints = Task.async(function*() {
+    const addBreakpoints = Task.async(function* () {
       yield actions.addBreakpoint({ actor: gSources.values[0], line: 5 });
       yield actions.addBreakpoint({ actor: gSources.values[1], line: 6 });
       yield actions.addBreakpoint({ actor: gSources.values[1], line: 7 });
       yield actions.addBreakpoint({ actor: gSources.values[1], line: 8 });
-      yield actions.addBreakpoint({ actor: gSources.values[1], line: 9 })
+      yield actions.addBreakpoint({ actor: gSources.values[1], line: 9 });
     });
 
     function clickBreakpointAndCheck(aBreakpointIndex, aSourceIndex, aCaretLine) {
@@ -73,9 +77,7 @@ function test() {
       }
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "-01.js");
-
+    Task.spawn(function* () {
       yield addBreakpoints();
       yield clickBreakpointAndCheck(0, 0, 5);
       yield clickBreakpointAndCheck(1, 1, 6);

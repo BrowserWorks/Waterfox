@@ -15,6 +15,7 @@
 #include "nsServiceManagerUtils.h"
 #include "nsIPresShell.h"
 #include "nsNetUtil.h"
+#include "nsNullPrincipal.h"
 #include "nsIInputStream.h"
 #include "nsStringStream.h"
 #include "nsStreamUtils.h"
@@ -255,6 +256,22 @@ gfxSVGGlyphs::HasSVGGlyph(uint32_t aGlyphId)
     return !!GetGlyphElement(aGlyphId);
 }
 
+size_t
+gfxSVGGlyphs::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
+{
+    // We don't include the size of mSVGData here, because (depending on the
+    // font backend implementation) it will either wrap a block of data owned
+    // by the system (and potentially shared), or a table that's in our font
+    // table cache and therefore already counted.
+    size_t result = aMallocSizeOf(this)
+                    + mGlyphDocs.ShallowSizeOfExcludingThis(aMallocSizeOf)
+                    + mGlyphIdMap.ShallowSizeOfExcludingThis(aMallocSizeOf);
+    for (auto iter = mGlyphDocs.ConstIter(); !iter.Done(); iter.Next()) {
+        result += iter.Data()->SizeOfIncludingThis(aMallocSizeOf);
+    }
+    return result;
+}
+
 Element *
 gfxSVGGlyphsDocument::GetGlyphElement(uint32_t aGlyphId)
 {
@@ -342,9 +359,7 @@ gfxSVGGlyphsDocument::ParseDocument(const uint8_t *aBuffer, uint32_t aBufLen)
     rv = NS_NewURI(getter_AddRefs(uri), mSVGGlyphsDocumentURI);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsCOMPtr<nsIPrincipal> principal =
-      do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
-    NS_ENSURE_TRUE(principal, NS_ERROR_FAILURE);
+    nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
 
     nsCOMPtr<nsIDOMDocument> domDoc;
     rv = NS_NewDOMDocument(getter_AddRefs(domDoc),
@@ -436,6 +451,15 @@ gfxSVGGlyphsDocument::InsertGlyphId(Element *aGlyphElement)
     }
 
     mGlyphIdMap.Put(id, aGlyphElement);
+}
+
+size_t
+gfxSVGGlyphsDocument::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+{
+    return aMallocSizeOf(this)
+           + mGlyphIdMap.ShallowSizeOfExcludingThis(aMallocSizeOf)
+           + mSVGGlyphsDocumentURI.SizeOfExcludingThisIfUnshared(aMallocSizeOf);
+
 }
 
 void

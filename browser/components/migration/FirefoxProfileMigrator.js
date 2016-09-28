@@ -29,6 +29,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "ProfileAge",
                                   "resource://gre/modules/ProfileAge.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "AppConstants",
+                                  "resource://gre/modules/AppConstants.jsm");
 
 
 function FirefoxProfileMigrator() {
@@ -132,7 +134,7 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
   let sessionFile = this._getFileObject(sourceProfileDir, "sessionstore.js");
   let session;
   if (sessionFile) {
-    session = aProfile ? getFileResource(types.SESSION, ["sessionstore.js"]) : {
+    session = {
       type: types.SESSION,
       migrate: function(aCallback) {
         sessionCheckpoints.copyTo(currentProfileDir, "sessionCheckpoints.json");
@@ -148,6 +150,11 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
           // session with the "what's new" page:
           Services.prefs.setCharPref("browser.startup.homepage_override.mstone", mstone);
           Services.prefs.setCharPref("browser.startup.homepage_override.buildID", buildID);
+          // Also set the Windows 10 pref to avoid the win10 intro page to show up
+          // on startup.
+          if (AppConstants.isPlatformAndVersionAtLeast("win", "10")) {
+            Services.prefs.setBoolPref("browser.usedOnWindows10", true);
+          }
           // It's too early in startup for the pref service to have a profile directory,
           // so we have to manually tell it where to save the prefs file.
           let newPrefsFile = currentProfileDir.clone();
@@ -158,7 +165,7 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
           aCallback(false);
         });
       }
-    }
+    };
   }
 
   // Telemetry related migrations.

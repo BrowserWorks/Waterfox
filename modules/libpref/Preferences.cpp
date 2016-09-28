@@ -103,19 +103,24 @@ public:
   static PLDHashNumber HashKey(const ValueObserverHashKey *aKey)
   {
     PLDHashNumber hash = HashString(aKey->mPrefName);
+    hash = AddToHash(hash, aKey->mMatchKind);
     return AddToHash(hash, aKey->mCallback);
   }
 
-  ValueObserverHashKey(const char *aPref, PrefChangedFunc aCallback) :
-    mPrefName(aPref), mCallback(aCallback) { }
+  ValueObserverHashKey(const char *aPref, PrefChangedFunc aCallback, Preferences::MatchKind aMatchKind) :
+    mPrefName(aPref), mCallback(aCallback), mMatchKind(aMatchKind) { }
 
   explicit ValueObserverHashKey(const ValueObserverHashKey *aOther) :
-    mPrefName(aOther->mPrefName), mCallback(aOther->mCallback)
+    mPrefName(aOther->mPrefName),
+    mCallback(aOther->mCallback),
+    mMatchKind(aOther->mMatchKind)
   { }
 
   bool KeyEquals(const ValueObserverHashKey *aOther) const
   {
-    return mCallback == aOther->mCallback && mPrefName == aOther->mPrefName;
+    return mCallback == aOther->mCallback &&
+           mPrefName == aOther->mPrefName &&
+           mMatchKind == aOther->mMatchKind;
   }
 
   ValueObserverHashKey *GetKey() const
@@ -127,6 +132,7 @@ public:
 
   nsCString mPrefName;
   PrefChangedFunc mCallback;
+  Preferences::MatchKind mMatchKind;
 };
 
 class ValueObserver final : public nsIObserver,
@@ -140,8 +146,8 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIOBSERVER
 
-  ValueObserver(const char *aPref, PrefChangedFunc aCallback)
-    : ValueObserverHashKey(aPref, aCallback) { }
+  ValueObserver(const char *aPref, PrefChangedFunc aCallback, Preferences::MatchKind aMatchKind)
+    : ValueObserverHashKey(aPref, aCallback, aMatchKind) { }
 
   void AppendClosure(void *aClosure) {
     mClosures.AppendElement(aClosure);
@@ -168,6 +174,9 @@ ValueObserver::Observe(nsISupports     *aSubject,
   NS_ASSERTION(!nsCRT::strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID),
                "invalid topic");
   NS_ConvertUTF16toUTF8 data(aData);
+  if (mMatchKind == Preferences::ExactMatch && !mPrefName.EqualsASCII(data.get())) {
+    return NS_OK;
+  }
   for (uint32_t i = 0; i < mClosures.Length(); i++) {
     mCallback(data.get(), mClosures.ElementAt(i));
   }
@@ -218,6 +227,14 @@ AssertNotAlreadyCached(const char* aPrefType,
   }
 }
 #endif
+
+static void
+ReportToConsole(const char* aMessage, int aLine, bool aError)
+{
+  nsPrintfCString message("** Preference parsing %s (line %d) = %s **\n",
+                          (aError ? "error" : "warning"), aLine, aMessage);
+  nsPrefBranch::ReportToConsole(NS_ConvertUTF8toUTF16(message.get()));
+}
 
 // Although this is a member of Preferences, it measures sPreferences and
 // several other global structures.
@@ -366,7 +383,7 @@ PreferenceServiceReporter::CollectReports(nsIMemoryReporterCallback* aCb,
 }
 
 namespace {
-class AddPreferencesMemoryReporterRunnable : public nsRunnable
+class AddPreferencesMemoryReporterRunnable : public Runnable
 {
   NS_IMETHOD Run()
   {
@@ -683,7 +700,7 @@ ReadExtensionPrefs(nsIFile *aFile)
     uint32_t read;
 
     PrefParseState ps;
-    PREF_InitParseState(&ps, PREF_ReaderCallback, nullptr);
+    PREF_InitParseState(&ps, PREF_ReaderCallback, ReportToConsole, nullptr);
     while (NS_SUCCEEDED(rv = stream->Available(&avail)) && avail) {
       rv = stream->Read(buffer, 4096, &read);
       if (NS_FAILED(rv)) {
@@ -1004,7 +1021,7 @@ static nsresult openPrefFile(nsIFile* aFile)
     return NS_ERROR_OUT_OF_MEMORY;
 
   PrefParseState ps;
-  PREF_InitParseState(&ps, PREF_ReaderCallback, nullptr);
+  PREF_InitParseState(&ps, PREF_ReaderCallback, ReportToConsole, nullptr);
 
   // Read is not guaranteed to return a buf the size of fileSize,
   // but usually will.
@@ -1186,7 +1203,7 @@ static nsresult pref_ReadPrefFromJar(nsZipArchive* jarReader, const char *name)
   NS_ENSURE_TRUE(manifest.Buffer(), NS_ERROR_NOT_AVAILABLE);
 
   PrefParseState ps;
-  PREF_InitParseState(&ps, PREF_ReaderCallback, nullptr);
+  PREF_InitParseState(&ps, PREF_ReaderCallback, ReportToConsole, nullptr);
   PREF_ParseBuf(&ps, manifest, manifest.Length());
   PREF_FinalizeParseState(&ps);
 
@@ -1661,11 +1678,12 @@ Preferences::RemoveObservers(nsIObserver* aObserver,
 nsresult
 Preferences::RegisterCallback(PrefChangedFunc aCallback,
                               const char* aPref,
-                              void* aClosure)
+                              void* aClosure,
+                              MatchKind aMatchKind)
 {
   NS_ENSURE_TRUE(InitStaticMembers(), NS_ERROR_NOT_AVAILABLE);
 
-  ValueObserverHashKey hashKey(aPref, aCallback);
+  ValueObserverHashKey hashKey(aPref, aCallback, aMatchKind);
   RefPtr<ValueObserver> observer;
   gObserverTable->Get(&hashKey, getter_AddRefs(observer));
   if (observer) {
@@ -1673,7 +1691,7 @@ Preferences::RegisterCallback(PrefChangedFunc aCallback,
     return NS_OK;
   }
 
-  observer = new ValueObserver(aPref, aCallback);
+  observer = new ValueObserver(aPref, aCallback, aMatchKind);
   observer->AppendClosure(aClosure);
   nsresult rv = AddStrongObserver(observer, aPref);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1685,9 +1703,10 @@ Preferences::RegisterCallback(PrefChangedFunc aCallback,
 nsresult
 Preferences::RegisterCallbackAndCall(PrefChangedFunc aCallback,
                                      const char* aPref,
-                                     void* aClosure)
+                                     void* aClosure,
+                                     MatchKind aMatchKind)
 {
-  nsresult rv = RegisterCallback(aCallback, aPref, aClosure);
+  nsresult rv = RegisterCallback(aCallback, aPref, aClosure, aMatchKind);
   if (NS_SUCCEEDED(rv)) {
     (*aCallback)(aPref, aClosure);
   }
@@ -1698,14 +1717,15 @@ Preferences::RegisterCallbackAndCall(PrefChangedFunc aCallback,
 nsresult
 Preferences::UnregisterCallback(PrefChangedFunc aCallback,
                                 const char* aPref,
-                                void* aClosure)
+                                void* aClosure,
+                                MatchKind aMatchKind)
 {
   if (!sPreferences && sShutdown) {
     return NS_OK; // Observers have been released automatically.
   }
   NS_ENSURE_TRUE(sPreferences, NS_ERROR_NOT_AVAILABLE);
 
-  ValueObserverHashKey hashKey(aPref, aCallback);
+  ValueObserverHashKey hashKey(aPref, aCallback, aMatchKind);
   RefPtr<ValueObserver> observer;
   gObserverTable->Get(&hashKey, getter_AddRefs(observer));
   if (!observer) {
@@ -1742,7 +1762,7 @@ Preferences::AddBoolVarCache(bool* aCache,
   data->cacheLocation = aCache;
   data->defaultValueBool = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(BoolVarChanged, aPref, data);
+  return RegisterCallback(BoolVarChanged, aPref, data, ExactMatch);
 }
 
 static void IntVarChanged(const char* aPref, void* aClosure)
@@ -1767,7 +1787,7 @@ Preferences::AddIntVarCache(int32_t* aCache,
   data->cacheLocation = aCache;
   data->defaultValueInt = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(IntVarChanged, aPref, data);
+  return RegisterCallback(IntVarChanged, aPref, data, ExactMatch);
 }
 
 static void UintVarChanged(const char* aPref, void* aClosure)
@@ -1792,7 +1812,7 @@ Preferences::AddUintVarCache(uint32_t* aCache,
   data->cacheLocation = aCache;
   data->defaultValueUint = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(UintVarChanged, aPref, data);
+  return RegisterCallback(UintVarChanged, aPref, data, ExactMatch);
 }
 
 template <MemoryOrdering Order>
@@ -1819,7 +1839,7 @@ Preferences::AddAtomicUintVarCache(Atomic<uint32_t, Order>* aCache,
   data->cacheLocation = aCache;
   data->defaultValueUint = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(AtomicUintVarChanged<Order>, aPref, data);
+  return RegisterCallback(AtomicUintVarChanged<Order>, aPref, data, ExactMatch);
 }
 
 // Since the definition of this template function is not in a header file,
@@ -1851,7 +1871,7 @@ Preferences::AddFloatVarCache(float* aCache,
   data->cacheLocation = aCache;
   data->defaultValueFloat = aDefault;
   gCacheData->AppendElement(data);
-  return RegisterCallback(FloatVarChanged, aPref, data);
+  return RegisterCallback(FloatVarChanged, aPref, data, ExactMatch);
 }
 
 // static

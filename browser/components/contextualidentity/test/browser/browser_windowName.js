@@ -13,16 +13,11 @@ const BASE_URI = "http://mochi.test:8888/browser/browser/components/"
 
 add_task(function* setup() {
   // make sure userContext is enabled.
-  SpecialPowers.pushPrefEnv({"set": [
-    ["privacy.userContext.enabled", true],
-    ["browser.link.open_newwindow", 3],
-  ]});
-});
-
-add_task(function* cleanup() {
-  // make sure we don't leave any prefs set for the next tests
-  registerCleanupFunction(function() {
-    SpecialPowers.popPrefEnv();
+  yield new Promise(resolve => {
+    SpecialPowers.pushPrefEnv({"set": [
+      ["privacy.userContext.enabled", true],
+      ["browser.link.open_newwindow", 3],
+    ]}, resolve);
   });
 });
 
@@ -52,18 +47,18 @@ add_task(function* test() {
     }));
   });
 
-  is(browser1.contentDocument.title, '?old', "Tab1 title must be 'old'");
-  is(browser1.contentDocument.nodePrincipal.userContextId, 1, "Tab1 UCI must be 1");
+  is(browser1.contentTitle, '?old', "Tab1 title must be 'old'");
+  is(browser1.contentPrincipal.userContextId, 1, "Tab1 UCI must be 1");
 
-  is(browser2.contentDocument.title, '?old', "Tab2 title must be 'old'");
-  is(browser2.contentDocument.nodePrincipal.userContextId, 2, "Tab2 UCI must be 2");
+  is(browser2.contentTitle, '?old', "Tab2 title must be 'old'");
+  is(browser2.contentPrincipal.userContextId, 2, "Tab2 UCI must be 2");
 
   let found = false;
   for (let i = 0; i < gBrowser.tabContainer.childNodes.length; ++i) {
     let tab = gBrowser.tabContainer.childNodes[i];
     let browser = gBrowser.getBrowserForTab(tab);
-    if (browser.contentDocument.title == '?new') {
-      is(browser.contentDocument.nodePrincipal.userContextId, 1, "Tab3 UCI must be 1");
+    if (browser.contentTitle == '?new') {
+      is(browser.contentPrincipal.userContextId, 1, "Tab3 UCI must be 1");
       isnot(browser, browser1, "Tab3 is not browser 1");
       isnot(browser, browser2, "Tab3 is not browser 2");
       gBrowser.removeTab(tab);

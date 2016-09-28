@@ -5,7 +5,6 @@
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://testing-common/Assert.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 
 var { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 var { gDevTools } = require("devtools/client/framework/devtools");
@@ -15,6 +14,7 @@ var Services = require("Services");
 var { DebuggerServer } = require("devtools/server/main");
 var { DebuggerClient } = require("devtools/shared/client/main");
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
+var { Task } = require("devtools/shared/task");
 var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
 
@@ -23,6 +23,10 @@ var { require: browserRequire } = BrowserLoader({
   baseURI: "resource://devtools/client/shared/",
   window: this
 });
+
+let ReactDOM = browserRequire("devtools/client/shared/vendor/react-dom");
+let React = browserRequire("devtools/client/shared/vendor/react");
+var TestUtils = React.addons.TestUtils;
 
 var EXAMPLE_URL = "http://example.com/browser/browser/devtools/shared/test/";
 
@@ -166,4 +170,21 @@ function checkFrameString({ frame, file, line, column, source, shouldLink, toolt
   } else {
     ok(!$column, "Should not have an element for `column`");
   }
+}
+
+function renderComponent(component, props) {
+  const el = React.createElement(component, props, {});
+  // By default, renderIntoDocument() won't work for stateless components, but
+  // it will work if the stateless component is wrapped in a stateful one.
+  // See https://github.com/facebook/react/issues/4839
+  const wrappedEl = React.DOM.span({}, [el]);
+  const renderedComponent = TestUtils.renderIntoDocument(wrappedEl);
+  return ReactDOM.findDOMNode(renderedComponent).children[0];
+}
+
+function shallowRenderComponent(component, props) {
+  const el = React.createElement(component, props);
+  const renderer = TestUtils.createRenderer();
+  renderer.render(el, {});
+  return renderer.getRenderOutput();
 }

@@ -210,7 +210,7 @@ public:
   }
   void SetSize(uint32_t aSize, ErrorResult& aRv)
   {
-    SetUnsignedIntAttr(nsGkAtoms::size, aSize, aRv);
+    SetUnsignedIntAttr(nsGkAtoms::size, aSize, 0, aRv);
   }
 
   // Uses XPCOM GetType.
@@ -267,6 +267,7 @@ public:
   // nsIConstraintValidation::GetValidationMessage() is fine.
   // nsIConstraintValidation::CheckValidity() is fine.
   using nsIConstraintValidation::CheckValidity;
+  using nsIConstraintValidation::ReportValidity;
   // nsIConstraintValidation::SetCustomValidity() is fine.
 
   using nsINode::Remove;
@@ -378,7 +379,7 @@ public:
                                 const nsAttrValue* aValue, bool aNotify) override;
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
                              bool aNotify) override;
-  
+
   virtual void DoneAddingChildren(bool aHaveNotified) override;
   virtual bool IsDoneAddingChildren() override {
     return mIsDoneAddingChildren;

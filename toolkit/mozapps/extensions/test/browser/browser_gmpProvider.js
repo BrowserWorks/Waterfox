@@ -102,7 +102,8 @@ add_task(function* initializeState() {
       gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_LAST_UPDATE, addon.id));
       gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_AUTOUPDATE, addon.id));
       gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_VERSION, addon.id));
-      gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCEVISIBLE, addon.id));
+      gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_VISIBLE, addon.id));
+      gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCE_SUPPORTED, addon.id));
     }
     gPrefs.clearUserPref(GMPScope.GMPPrefs.KEY_LOGGING_DUMP);
     gPrefs.clearUserPref(GMPScope.GMPPrefs.KEY_LOGGING_LEVEL);
@@ -125,8 +126,8 @@ add_task(function* initializeState() {
     gPrefs.setIntPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_LAST_UPDATE, addon.id), 0);
     gPrefs.setBoolPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_AUTOUPDATE, addon.id), false);
     gPrefs.setCharPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_VERSION, addon.id), "");
-    gPrefs.setBoolPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCEVISIBLE, addon.id),
-                       true);
+    gPrefs.setBoolPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_VISIBLE, addon.id), true);
+    gPrefs.setBoolPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCE_SUPPORTED, addon.id), true);
   }
   yield GMPScope.GMPProvider.shutdown();
   GMPScope.GMPProvider.startup();
@@ -370,7 +371,7 @@ add_task(function* testUpdateButton() {
 
 add_task(function* testEmeSupport() {
   for (let addon of gMockAddons) {
-    gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCEVISIBLE, addon.id));
+    gPrefs.clearUserPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCE_SUPPORTED, addon.id));
   }
   yield GMPScope.GMPProvider.shutdown();
   GMPScope.GMPProvider.startup();
@@ -380,7 +381,7 @@ add_task(function* testEmeSupport() {
     let doc = gManagerWindow.document;
     let item = get_addon_element(gManagerWindow, addon.id);
     if (addon.id == GMPScope.EME_ADOBE_ID) {
-      if (Services.appinfo.OS == "WINNT") {
+      if (AppConstants.isPlatformAndVersionAtLeast("win", "6")) {
         Assert.ok(item, "Adobe EME supported, found add-on element.");
       } else {
         Assert.ok(!item,
@@ -388,7 +389,8 @@ add_task(function* testEmeSupport() {
       }
     } else if (addon.id == GMPScope.WIDEVINE_ID) {
       if (AppConstants.isPlatformAndVersionAtLeast("win", "6") ||
-          AppConstants.isPlatformAndVersionAtLeast("macosx", "10.7")) {
+          AppConstants.platform == "macosx" ||
+          AppConstants.platform == "linux") {
         Assert.ok(item, "Widevine supported, found add-on element.");
       } else {
         Assert.ok(!item,
@@ -400,8 +402,8 @@ add_task(function* testEmeSupport() {
   }
 
   for (let addon of gMockAddons) {
-    gPrefs.setBoolPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCEVISIBLE, addon.id),
-                       true);
+    gPrefs.setBoolPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_VISIBLE, addon.id), true);
+    gPrefs.setBoolPref(getKey(GMPScope.GMPPrefs.KEY_PLUGIN_FORCE_SUPPORTED, addon.id), true);
   }
   yield GMPScope.GMPProvider.shutdown();
   GMPScope.GMPProvider.startup();

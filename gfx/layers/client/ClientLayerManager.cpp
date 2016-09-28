@@ -205,6 +205,7 @@ ClientLayerManager::BeginTransactionWithTarget(gfxContext* aTarget)
 
   if (DependsOnStaleDevice()) {
     FrameLayerBuilder::InvalidateAllLayers(this);
+    mDeviceCounter = gfxPlatform::GetPlatform()->GetDeviceCounter();
   }
 
   MOZ_ASSERT(mKeepAlive.IsEmpty(), "uncommitted txn?");
@@ -352,10 +353,6 @@ ClientLayerManager::EndTransaction(DrawPaintedLayerCallback aCallback,
     MakeSnapshotIfRequired();
   }
 
-  for (size_t i = 0; i < mTexturePools.Length(); i++) {
-    mTexturePools[i]->ReturnDeferredClients();
-  }
-
   mInTransaction = false;
   mTransactionStart = TimeStamp();
 }
@@ -431,6 +428,10 @@ ClientLayerManager::DidComposite(uint64_t aTransactionId,
   // These observers fire whether or not we were in a transaction.
   for (size_t i = 0; i < mDidCompositeObservers.Length(); i++) {
     mDidCompositeObservers[i]->DidComposite();
+  }
+
+  for (size_t i = 0; i < mTexturePools.Length(); i++) {
+    mTexturePools[i]->ReturnDeferredClients();
   }
 }
 

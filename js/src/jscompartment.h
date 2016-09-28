@@ -10,6 +10,7 @@
 #include "mozilla/LinkedList.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/Tuple.h"
 #include "mozilla/Variant.h"
 #include "mozilla/XorShift128PlusRNG.h"
 
@@ -28,15 +29,17 @@ class JitCompartment;
 } // namespace jit
 
 namespace gc {
-template<class Node> class ComponentFinder;
+template <typename Node, typename Derived> class ComponentFinder;
 } // namespace gc
 
 namespace wasm {
 class Module;
 } // namespace wasm
 
-struct NativeIterator;
 class ClonedBlockObject;
+class ScriptSourceObject;
+class WasmModuleObject;
+struct NativeIterator;
 
 /*
  * A single-entry cache for some base-10 double-to-string conversions. This
@@ -71,75 +74,117 @@ class DtoaCache {
 
 struct CrossCompartmentKey
 {
-    enum Kind {
-        ObjectWrapper,
-        StringWrapper,
-        DebuggerScript,
-        DebuggerSource,
-        DebuggerObject,
-        DebuggerEnvironment,
-        DebuggerWasmScript,
-        DebuggerWasmSource
+  public:
+    enum DebuggerObjectKind : uint8_t { DebuggerSource, DebuggerEnvironment, DebuggerObject,
+                                        DebuggerWasmScript, DebuggerWasmSource };
+    using DebuggerAndObject = mozilla::Tuple<NativeObject*, JSObject*, DebuggerObjectKind>;
+    using DebuggerAndScript = mozilla::Tuple<NativeObject*, JSScript*>;
+    using WrappedType = mozilla::Variant<
+        JSObject*,
+        JSString*,
+        DebuggerAndScript,
+        DebuggerAndObject>;
+
+    explicit CrossCompartmentKey(JSObject* obj) : wrapped(obj) { MOZ_RELEASE_ASSERT(obj); }
+    explicit CrossCompartmentKey(JSString* str) : wrapped(str) { MOZ_RELEASE_ASSERT(str); }
+    explicit CrossCompartmentKey(JS::Value v)
+      : wrapped(v.isString() ? WrappedType(v.toString()) : WrappedType(&v.toObject()))
+    {}
+    explicit CrossCompartmentKey(NativeObject* debugger, JSObject* obj, DebuggerObjectKind kind)
+      : wrapped(DebuggerAndObject(debugger, obj, kind))
+    {
+        MOZ_RELEASE_ASSERT(debugger);
+        MOZ_RELEASE_ASSERT(obj);
+    }
+    explicit CrossCompartmentKey(NativeObject* debugger, JSScript* script)
+      : wrapped(DebuggerAndScript(debugger, script))
+    {
+        MOZ_RELEASE_ASSERT(debugger);
+        MOZ_RELEASE_ASSERT(script);
+    }
+
+    bool operator==(const CrossCompartmentKey& other) const { return wrapped == other.wrapped; }
+    bool operator!=(const CrossCompartmentKey& other) const { return wrapped != other.wrapped; }
+
+    template <typename T> bool is() const { return wrapped.is<T>(); }
+    template <typename T> const T& as() const { return wrapped.as<T>(); }
+
+    template <typename F>
+    auto applyToWrapped(F f) -> typename F::ReturnType {
+        struct WrappedMatcher {
+            using ReturnType = typename F::ReturnType;
+            F f_;
+            explicit WrappedMatcher(F f) : f_(f) {}
+            ReturnType match(JSObject*& obj) { return f_(&obj); }
+            ReturnType match(JSString*& str) { return f_(&str); }
+            ReturnType match(DebuggerAndScript& tpl) { return f_(&mozilla::Get<1>(tpl)); }
+            ReturnType match(DebuggerAndObject& tpl) { return f_(&mozilla::Get<1>(tpl)); }
+        } matcher(f);
+        return wrapped.match(matcher);
+    }
+
+    template <typename F>
+    auto applyToDebugger(F f) -> typename F::ReturnType {
+        struct DebuggerMatcher {
+            using ReturnType = typename F::ReturnType;
+            F f_;
+            explicit DebuggerMatcher(F f) : f_(f) {}
+            ReturnType match(JSObject*& obj) { return ReturnType(); }
+            ReturnType match(JSString*& str) { return ReturnType(); }
+            ReturnType match(DebuggerAndScript& tpl) { return f_(&mozilla::Get<0>(tpl)); }
+            ReturnType match(DebuggerAndObject& tpl) { return f_(&mozilla::Get<0>(tpl)); }
+        } matcher(f);
+        return wrapped.match(matcher);
+    }
+
+    // Valid for JSObject* and Debugger keys. Crashes immediately if used on a
+    // JSString* key.
+    JSCompartment* compartment() {
+        struct GetCompartmentFunctor {
+            using ReturnType = JSCompartment*;
+            ReturnType operator()(JSObject** tp) const { return (*tp)->compartment(); }
+            ReturnType operator()(JSScript** tp) const { return (*tp)->compartment(); }
+            ReturnType operator()(JSString** tp) const {
+                MOZ_CRASH("invalid ccw key"); return nullptr;
+            }
+        };
+        return applyToWrapped(GetCompartmentFunctor());
+    }
+
+    struct Hasher : public DefaultHasher<CrossCompartmentKey>
+    {
+        struct HashFunctor {
+            using ReturnType = HashNumber;
+            ReturnType match(JSObject* obj) { return DefaultHasher<JSObject*>::hash(obj); }
+            ReturnType match(JSString* str) { return DefaultHasher<JSString*>::hash(str); }
+            ReturnType match(const DebuggerAndScript& tpl) {
+                return DefaultHasher<NativeObject*>::hash(mozilla::Get<0>(tpl)) ^
+                       DefaultHasher<JSScript*>::hash(mozilla::Get<1>(tpl));
+            }
+            ReturnType match(const DebuggerAndObject& tpl) {
+                return DefaultHasher<NativeObject*>::hash(mozilla::Get<0>(tpl)) ^
+                       DefaultHasher<JSObject*>::hash(mozilla::Get<1>(tpl)) ^
+                       (mozilla::Get<2>(tpl) << 5);
+            }
+        };
+        static HashNumber hash(const CrossCompartmentKey& key) {
+            return key.wrapped.match(HashFunctor());
+        }
+
+        static bool match(const CrossCompartmentKey& l, const CrossCompartmentKey& k) {
+            return l.wrapped == k.wrapped;
+        }
     };
-
-    Kind kind;
-    JSObject* debugger;
-    js::gc::Cell* wrapped;
-
-    explicit CrossCompartmentKey(JSObject* wrapped)
-      : kind(ObjectWrapper), debugger(nullptr), wrapped(wrapped)
-    {
-        MOZ_RELEASE_ASSERT(wrapped);
-    }
-    explicit CrossCompartmentKey(JSString* wrapped)
-      : kind(StringWrapper), debugger(nullptr), wrapped(wrapped)
-    {
-        MOZ_RELEASE_ASSERT(wrapped);
-    }
-    explicit CrossCompartmentKey(Value wrappedArg)
-      : kind(wrappedArg.isString() ? StringWrapper : ObjectWrapper),
-        debugger(nullptr),
-        wrapped((js::gc::Cell*)wrappedArg.toGCThing())
-    {
-        MOZ_RELEASE_ASSERT(wrappedArg.isString() || wrappedArg.isObject());
-        MOZ_RELEASE_ASSERT(wrapped);
-    }
-    explicit CrossCompartmentKey(const RootedValue& wrappedArg)
-      : kind(wrappedArg.get().isString() ? StringWrapper : ObjectWrapper),
-        debugger(nullptr),
-        wrapped((js::gc::Cell*)wrappedArg.get().toGCThing())
-    {
-        MOZ_RELEASE_ASSERT(wrappedArg.isString() || wrappedArg.isObject());
-        MOZ_RELEASE_ASSERT(wrapped);
-    }
-    CrossCompartmentKey(Kind kind, JSObject* dbg, js::gc::Cell* wrapped)
-      : kind(kind), debugger(dbg), wrapped(wrapped)
-    {
-        MOZ_RELEASE_ASSERT(dbg);
-        MOZ_RELEASE_ASSERT(wrapped);
-    }
-
+    void trace(JSTracer* trc);
     bool needsSweep();
 
   private:
     CrossCompartmentKey() = delete;
-};
-
-struct WrapperHasher : public DefaultHasher<CrossCompartmentKey>
-{
-    static HashNumber hash(const CrossCompartmentKey& key) {
-        static_assert(sizeof(HashNumber) == sizeof(uint32_t),
-                      "subsequent code assumes a four-byte hash");
-        return uint32_t(uintptr_t(key.wrapped)) | uint32_t(key.kind);
-    }
-
-    static bool match(const CrossCompartmentKey& l, const CrossCompartmentKey& k) {
-        return l.kind == k.kind && l.debugger == k.debugger && l.wrapped == k.wrapped;
-    }
+    WrappedType wrapped;
 };
 
 using WrapperMap = GCRekeyableHashMap<CrossCompartmentKey, ReadBarrieredValue,
-                                      WrapperHasher, SystemAllocPolicy>;
+                                      CrossCompartmentKey::Hasher, SystemAllocPolicy>;
 
 // We must ensure that all newly allocated JSObjects get their metadata
 // set. However, metadata builders may require the new object be in a sane
@@ -195,7 +240,7 @@ using WrapperMap = GCRekeyableHashMap<CrossCompartmentKey, ReadBarrieredValue,
 
 struct ImmediateMetadata { };
 struct DelayMetadata { };
-using PendingMetadata = ReadBarrieredObject;
+using PendingMetadata = JSObject*;
 
 using NewObjectMetadataState = mozilla::Variant<ImmediateMetadata,
                                                 DelayMetadata,
@@ -215,7 +260,7 @@ class MOZ_RAII AutoSetNewObjectMetadata : private JS::CustomAutoRooter
     virtual void trace(JSTracer* trc) override {
         if (prevState_.is<PendingMetadata>()) {
             TraceRoot(trc,
-                      prevState_.as<PendingMetadata>().unsafeUnbarrieredForTracing(),
+                      &prevState_.as<PendingMetadata>(),
                       "Object pending metadata");
         }
     }
@@ -298,7 +343,6 @@ struct JSCompartment
   public:
     bool                         isSelfHosting;
     bool                         marked;
-    bool                         warnedAboutFlagsArgument;
     bool                         warnedAboutExprClosure;
 
 #ifdef DEBUG
@@ -521,27 +565,19 @@ struct JSCompartment
     JSCompartment(JS::Zone* zone, const JS::CompartmentOptions& options);
     ~JSCompartment();
 
-    MOZ_WARN_UNUSED_RESULT bool init(JSContext* maybecx);
+    MOZ_MUST_USE bool init(JSContext* maybecx);
 
-    MOZ_WARN_UNUSED_RESULT inline bool wrap(JSContext* cx, JS::MutableHandleValue vp,
+    MOZ_MUST_USE inline bool wrap(JSContext* cx, JS::MutableHandleValue vp,
                                             JS::HandleObject existing = nullptr);
 
-    MOZ_WARN_UNUSED_RESULT bool wrap(JSContext* cx, js::MutableHandleString strp);
-    MOZ_WARN_UNUSED_RESULT bool wrap(JSContext* cx, JS::MutableHandleObject obj,
+    MOZ_MUST_USE bool wrap(JSContext* cx, js::MutableHandleString strp);
+    MOZ_MUST_USE bool wrap(JSContext* cx, JS::MutableHandleObject obj,
                                      JS::HandleObject existingArg = nullptr);
-    MOZ_WARN_UNUSED_RESULT bool wrap(JSContext* cx, JS::MutableHandle<js::PropertyDescriptor> desc);
+    MOZ_MUST_USE bool wrap(JSContext* cx, JS::MutableHandle<js::PropertyDescriptor> desc);
+    MOZ_MUST_USE bool wrap(JSContext* cx, JS::MutableHandle<JS::GCVector<JS::Value>> vec);
 
-    template<typename T> MOZ_WARN_UNUSED_RESULT bool wrap(JSContext* cx,
-                                                          JS::AutoVectorRooter<T>& vec) {
-        for (size_t i = 0; i < vec.length(); ++i) {
-            if (!wrap(cx, vec[i]))
-                return false;
-        }
-        return true;
-    };
-
-    MOZ_WARN_UNUSED_RESULT bool putWrapper(JSContext* cx, const js::CrossCompartmentKey& wrapped,
-                                           const js::Value& wrapper);
+    MOZ_MUST_USE bool putWrapper(JSContext* cx, const js::CrossCompartmentKey& wrapped,
+                                 const js::Value& wrapper);
 
     js::WrapperMap::Ptr lookupWrapper(const js::Value& wrapped) const {
         return crossCompartmentWrappers.lookup(js::CrossCompartmentKey(wrapped));
@@ -588,7 +624,6 @@ struct JSCompartment
     void sweepCrossCompartmentWrappers();
     void sweepSavedStacks();
     void sweepGlobalObject(js::FreeOp* fop);
-    void sweepObjectPendingMetadata();
     void sweepSelfHostingScriptSource();
     void sweepJitCompartment(js::FreeOp* fop);
     void sweepRegExps();
@@ -621,7 +656,7 @@ struct JSCompartment
 
     js::SavedStacks& savedStacks() { return savedStacks_; }
 
-    void findOutgoingEdges(js::gc::ComponentFinder<JS::Zone>& finder);
+    void findOutgoingEdges(js::gc::ZoneComponentFinder& finder);
 
     js::DtoaCache dtoaCache;
 
@@ -630,6 +665,10 @@ struct JSCompartment
 
     // Initialize randomNumberGenerator if needed.
     void ensureRandomNumberGenerator();
+
+    static size_t offsetOfRegExps() {
+        return offsetof(JSCompartment, regExps);
+    }
 
   private:
     JSCompartment* thisForCtor() { return this; }
@@ -713,6 +752,8 @@ struct JSCompartment
     // The code coverage can be enabled either for each compartment, with the
     // Debugger API, or for the entire runtime.
     bool collectCoverage() const;
+    bool collectCoverageForDebug() const;
+    bool collectCoverageForPGO() const;
     void clearScriptCounts();
 
     bool needsDelazificationForDebugger() const {
@@ -800,7 +841,7 @@ struct JSCompartment
         // NO LONGER USING 4
         // NO LONGER USING 5
         // NO LONGER USING 6
-        DeprecatedFlagsArgument = 7,        // JS 1.3 or older
+        // NO LONGER USING 7
         // NO LONGER USING 8
         // NO LONGER USING 9
         DeprecatedBlockScopeFunRedecl = 10,

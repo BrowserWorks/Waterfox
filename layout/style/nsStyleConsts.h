@@ -82,8 +82,8 @@ enum class StyleBoxSizing : uint8_t {
 #define NS_STYLE_BOX_SHADOW_INSET         0
 
 // float-edge
-#define NS_STYLE_FLOAT_EDGE_CONTENT       0
-#define NS_STYLE_FLOAT_EDGE_MARGIN        1
+#define NS_STYLE_FLOAT_EDGE_CONTENT_BOX    0
+#define NS_STYLE_FLOAT_EDGE_MARGIN_BOX     1
 
 // user-focus
 #define NS_STYLE_USER_FOCUS_NONE            0
@@ -300,6 +300,8 @@ enum class FillMode : uint32_t;
 #define NS_STYLE_IMAGELAYER_REPEAT_REPEAT_X          0x01
 #define NS_STYLE_IMAGELAYER_REPEAT_REPEAT_Y          0x02
 #define NS_STYLE_IMAGELAYER_REPEAT_REPEAT            0x03
+#define NS_STYLE_IMAGELAYER_REPEAT_SPACE             0x04
+#define NS_STYLE_IMAGELAYER_REPEAT_ROUND             0x05
 
 // See nsStyleImageLayers
 #define NS_STYLE_IMAGELAYER_SIZE_CONTAIN             0
@@ -799,7 +801,7 @@ enum class FillMode : uint32_t;
 #define NS_STYLE_RESIZE_VERTICAL                3
 
 // See nsStyleText
-#define NS_STYLE_TEXT_ALIGN_DEFAULT               0
+#define NS_STYLE_TEXT_ALIGN_START                 0
 #define NS_STYLE_TEXT_ALIGN_LEFT                  1
 #define NS_STYLE_TEXT_ALIGN_RIGHT                 2
 #define NS_STYLE_TEXT_ALIGN_CENTER                3
@@ -849,7 +851,7 @@ enum class FillMode : uint32_t;
 #define NS_STYLE_TEXT_TRANSFORM_CAPITALIZE      1
 #define NS_STYLE_TEXT_TRANSFORM_LOWERCASE       2
 #define NS_STYLE_TEXT_TRANSFORM_UPPERCASE       3
-#define NS_STYLE_TEXT_TRANSFORM_FULLWIDTH       4
+#define NS_STYLE_TEXT_TRANSFORM_FULL_WIDTH      4
 
 // See nsStyleDisplay
 #define NS_STYLE_TOUCH_ACTION_NONE            (1 << 0)
@@ -912,8 +914,8 @@ enum class FillMode : uint32_t;
 #define NS_STYLE_WORDBREAK_KEEP_ALL             2
 
 // See nsStyleText
-#define NS_STYLE_WORDWRAP_NORMAL                0
-#define NS_STYLE_WORDWRAP_BREAK_WORD            1
+#define NS_STYLE_OVERFLOWWRAP_NORMAL            0
+#define NS_STYLE_OVERFLOWWRAP_BREAK_WORD        1
 
 // See nsStyleText
 #define NS_STYLE_HYPHENS_NONE                   0

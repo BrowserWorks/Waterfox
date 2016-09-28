@@ -204,14 +204,14 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
           settings.percent(k, vals0) ? settings.set("snapToLines", false) : null;
           settings.alt(k, vals0, ["auto"]);
           if (vals.length === 2) {
-            settings.alt("lineAlign", vals[1], ["start", "middle", "end"]);
+            settings.alt("lineAlign", vals[1], ["start", "center", "end"]);
           }
           break;
         case "position":
           vals = v.split(",");
           settings.percent(k, vals[0]);
           if (vals.length === 2) {
-            settings.alt("positionAlign", vals[1], ["start", "middle", "end"]);
+            settings.alt("positionAlign", vals[1], ["line-left", "center", "line-right", "auto"]);
           }
           break;
         case "size":
@@ -238,13 +238,7 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
         end: 100,
         right: 100
       }, cue.align);
-      cue.positionAlign = settings.get("positionAlign", {
-        start: "start",
-        left: "start",
-        middle: "middle",
-        end: "end",
-        right: "end"
-      }, cue.align);
+      cue.positionAlign = settings.get("positionAlign", "center");
     }
 
     function skipWhitespace() {
@@ -788,16 +782,17 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
     // position of the cue box. The reference edge will be resolved later when
     // the box orientation styles are applied.
     var textPos = 0;
-    switch (cue.positionAlign) {
-    case "start":
-      textPos = cue.position;
-      break;
-    case "middle":
-      textPos = cue.position - (cue.size / 2);
-      break;
-    case "end":
-      textPos = cue.position - cue.size;
-      break;
+    switch (cue.computedPositionAlign) {
+      // TODO : modify these fomula to follow the spec, see bug 1277437.
+      case "line-left":
+        textPos = cue.position;
+        break;
+      case "center":
+        textPos = cue.position - (cue.size / 2);
+        break;
+      case "line-right":
+        textPos = cue.position - cue.size;
+        break;
     }
 
     // Horizontal box orientation; textPos is the distance from the left edge of the
@@ -1051,6 +1046,10 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
           maxPosition = containerBox[size] + step,
           initialAxis = axis[0];
 
+      if (step == 0) {
+        return;
+      }
+
       // If the specified intial position is greater then the max position then
       // clamp the box to the amount of steps it would take for the box to
       // reach the max position.
@@ -1077,7 +1076,7 @@ this.EXPORTED_SYMBOLS = ["WebVTT"];
       var calculatedPercentage = (boxPosition.lineHeight / containerBox.height) * 100;
 
       switch (cue.lineAlign) {
-      case "middle":
+      case "center":
         linePos -= (calculatedPercentage / 2);
         break;
       case "end":

@@ -3,11 +3,11 @@
 
 /* eslint-env browser */
 /* eslint-disable mozilla/no-cpows-in-tests */
-/* exported openAboutDebugging, closeAboutDebugging, installAddon,
-   uninstallAddon, waitForMutation, assertHasTarget, getServiceWorkerList,
-   waitForInitialAddonList, waitForServiceWorkerRegistered,
-   unregisterServiceWorker */
-/* global sendAsyncMessage */
+/* exported openAboutDebugging, changeAboutDebuggingHash, closeAboutDebugging,
+   installAddon, uninstallAddon, waitForMutation, assertHasTarget,
+   getServiceWorkerList, getTabList, openPanel, waitForInitialAddonList,
+   waitForServiceWorkerRegistered, unregisterServiceWorker,
+   waitForDelayedStartupFinished */
 
 "use strict";
 
@@ -25,14 +25,14 @@ registerCleanupFunction(() => {
   DevToolsUtils.testing = false;
 });
 
-function* openAboutDebugging(page) {
+function* openAboutDebugging(page, win) {
   info("opening about:debugging");
   let url = "about:debugging";
   if (page) {
     url += "#" + page;
   }
 
-  let tab = yield addTab(url);
+  let tab = yield addTab(url, win);
   let browser = tab.linkedBrowser;
   let document = browser.contentDocument;
 
@@ -43,12 +43,33 @@ function* openAboutDebugging(page) {
   return { tab, document };
 }
 
-function closeAboutDebugging(tab) {
-  info("Closing about:debugging");
-  return removeTab(tab);
+/**
+ * Change url hash for current about:debugging tab, return a promise after
+ * new content is loaded.
+ * @param  {DOMDocument}  document   container document from current tab
+ * @param  {String}       hash       hash for about:debugging
+ * @return {Promise}
+ */
+function changeAboutDebuggingHash(document, hash) {
+  info(`Opening about:debugging#${hash}`);
+  window.openUILinkIn(`about:debugging#${hash}`, "current");
+  return waitForMutation(
+    document.querySelector(".main-content"), {childList: true});
 }
 
-function addTab(url, win) {
+function openPanel(document, panelId) {
+  info(`Opening ${panelId} panel`);
+  document.querySelector(`[aria-controls="${panelId}"]`).click();
+  return waitForMutation(
+    document.querySelector(".main-content"), {childList: true});
+}
+
+function closeAboutDebugging(tab, win) {
+  info("Closing about:debugging");
+  return removeTab(tab, win);
+}
+
+function addTab(url, win, backgroundTab = false) {
   info("Adding tab: " + url);
 
   return new Promise(done => {
@@ -56,7 +77,10 @@ function addTab(url, win) {
     let targetBrowser = targetWindow.gBrowser;
 
     targetWindow.focus();
-    let tab = targetBrowser.selectedTab = targetBrowser.addTab(url);
+    let tab = targetBrowser.addTab(url);
+    if (!backgroundTab) {
+      targetBrowser.selectedTab = tab;
+    }
     let linkedBrowser = tab.linkedBrowser;
 
     linkedBrowser.addEventListener("load", function onLoad() {
@@ -115,6 +139,17 @@ function getServiceWorkerList(document) {
     document.querySelector("#service-workers.targets");
 }
 
+/**
+ * Depending on whether there are tabs opened, return either a
+ * target list element or its container.
+ * @param  {DOMDocument}  document   #tabs section container document
+ * @return {DOMNode}                 target list or container element
+ */
+function getTabList(document) {
+  return document.querySelector("#tabs .target-list") ||
+    document.querySelector("#tabs.targets");
+}
+
 function* installAddon(document, path, name, evt) {
   // Mock the file picker to select a test addon
   let MockFilePicker = SpecialPowers.MockFilePicker;
@@ -155,7 +190,7 @@ function* uninstallAddon(document, addonId, addonName) {
   yield new Promise(done => {
     AddonManager.getAddonByID(addonId, addon => {
       let listener = {
-        onUninstalled: function(uninstalledAddon) {
+        onUninstalled: function (uninstalledAddon) {
           if (uninstalledAddon != addon) {
             return;
           }
@@ -238,24 +273,13 @@ function assertHasTarget(expected, document, type, name) {
  * Returns a promise that will resolve after the service worker in the page
  * has successfully registered itself.
  * @param {Tab} tab
+ * @return {Promise} Resolves when the service worker is registered.
  */
 function waitForServiceWorkerRegistered(tab) {
-  // Make the test page notify us when the service worker is registered.
-  let frameScript = function() {
+  return ContentTask.spawn(tab.linkedBrowser, {}, function* () {
     // Retrieve the `sw` promise created in the html page.
     let { sw } = content.wrappedJSObject;
-    sw.then(function(registration) {
-      sendAsyncMessage("sw-registered");
-    });
-  };
-  let mm = tab.linkedBrowser.messageManager;
-  mm.loadFrameScript("data:,(" + encodeURIComponent(frameScript) + ")()", true);
-
-  return new Promise(done => {
-    mm.addMessageListener("sw-registered", function listener() {
-      mm.removeMessageListener("sw-registered", listener);
-      done();
-    });
+    yield sw;
   });
 }
 
@@ -263,28 +287,30 @@ function waitForServiceWorkerRegistered(tab) {
  * Asks the service worker within the test page to unregister, and returns a
  * promise that will resolve when it has successfully unregistered itself.
  * @param {Tab} tab
+ * @return {Promise} Resolves when the service worker is unregistered.
  */
 function unregisterServiceWorker(tab) {
-  // Use message manager to work with e10s.
-  let frameScript = function() {
-    // Retrieve the `sw` promise created in the html page.
+  return ContentTask.spawn(tab.linkedBrowser, {}, function* () {
+    // Retrieve the `sw` promise created in the html page
     let { sw } = content.wrappedJSObject;
-    sw.then(function(registration) {
-      registration.unregister().then(function() {
-        sendAsyncMessage("sw-unregistered");
-      },
-      function(e) {
-        dump("SW not unregistered; " + e + "\n");
-      });
-    });
-  };
-  let mm = tab.linkedBrowser.messageManager;
-  mm.loadFrameScript("data:,(" + encodeURIComponent(frameScript) + ")()", true);
+    let registration = yield sw;
+    yield registration.unregister();
+  });
+}
 
-  return new Promise(done => {
-    mm.addMessageListener("sw-unregistered", function listener() {
-      mm.removeMessageListener("sw-unregistered", listener);
-      done();
-    });
+/**
+ * Waits for the creation of a new window, usually used with create private
+ * browsing window.
+ * Returns a promise that will resolve when the window is successfully created.
+ * @param {window} win
+ */
+function waitForDelayedStartupFinished(win) {
+  return new Promise(function (resolve) {
+    Services.obs.addObserver(function observer(subject, topic) {
+      if (win == subject) {
+        Services.obs.removeObserver(observer, topic);
+        resolve();
+      }
+    }, "browser-delayed-startup-finished", false);
   });
 }

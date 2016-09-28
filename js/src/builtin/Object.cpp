@@ -611,7 +611,7 @@ js::ObjectCreateImpl(JSContext* cx, HandleObject proto, NewObjectKind newKind,
 PlainObject*
 js::ObjectCreateWithTemplate(JSContext* cx, HandlePlainObject templateObj)
 {
-    RootedObject proto(cx, templateObj->getProto());
+    RootedObject proto(cx, templateObj->staticPrototype());
     RootedObjectGroup group(cx, templateObj->group());
     return ObjectCreateImpl(cx, proto, GenericObject, group);
 }
@@ -1031,18 +1031,23 @@ static bool
 ProtoGetter(JSContext* cx, unsigned argc, Value* vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    HandleValue thisv = args.thisv();
-    if (thisv.isNullOrUndefined()) {
-        ReportIncompatible(cx, args);
-        return false;
-    }
-    if (thisv.isPrimitive() && !BoxNonStrictThis(cx, args))
-        return false;
 
-    RootedObject obj(cx, &args.thisv().toObject());
+    RootedValue thisv(cx, args.thisv());
+    if (thisv.isPrimitive()) {
+        if (thisv.isNullOrUndefined()) {
+            ReportIncompatible(cx, args);
+            return false;
+        }
+
+        if (!BoxNonStrictThis(cx, thisv, &thisv))
+            return false;
+    }
+
+    RootedObject obj(cx, &thisv.toObject());
     RootedObject proto(cx);
     if (!GetPrototype(cx, obj, &proto))
         return false;
+
     args.rval().setObjectOrNull(proto);
     return true;
 }

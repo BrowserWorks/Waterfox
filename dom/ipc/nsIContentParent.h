@@ -9,6 +9,7 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/ipc/IdType.h"
+#include "mozilla/ipc/ProtocolUtils.h"
 
 #include "nsFrameMessageManager.h"
 #include "nsISupports.h"
@@ -46,6 +47,7 @@ class PBrowserParent;
 class nsIContentParent : public nsISupports
                        , public mozilla::dom::ipc::MessageManagerCallback
                        , public CPOWManagerGetter
+                       , public mozilla::ipc::IShmemAllocator
 {
 public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_ICONTENTPARENT_IID)
@@ -59,11 +61,11 @@ public:
   virtual bool IsForApp() const = 0;
   virtual bool IsForBrowser() const = 0;
 
-  MOZ_WARN_UNUSED_RESULT virtual PBlobParent*
+  MOZ_MUST_USE virtual PBlobParent*
   SendPBlobConstructor(PBlobParent* aActor,
                        const BlobConstructorParams& aParams) = 0;
 
-  MOZ_WARN_UNUSED_RESULT virtual PBrowserParent*
+  MOZ_MUST_USE virtual PBrowserParent*
   SendPBrowserConstructor(PBrowserParent* actor,
                           const TabId& aTabId,
                           const IPCTabContext& context,

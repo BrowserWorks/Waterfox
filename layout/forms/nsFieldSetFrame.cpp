@@ -101,7 +101,6 @@ public:
     MOZ_COUNT_DTOR(nsDisplayFieldSetBorderBackground);
   }
 #endif
-
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
                        HitTestState* aState,
                        nsTArray<nsIFrame*> *aOutFrames) override;
@@ -128,7 +127,7 @@ nsDisplayFieldSetBorderBackground::Paint(nsDisplayListBuilder* aBuilder,
                                          nsRenderingContext* aCtx)
 {
   DrawResult result = static_cast<nsFieldSetFrame*>(mFrame)->
-    PaintBorderBackground(aBuilder, *aCtx, ToReferenceFrame(), mVisibleRect);
+    PaintBorder(aBuilder, *aCtx, ToReferenceFrame(), mVisibleRect);
 
   nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
 }
@@ -171,8 +170,11 @@ nsFieldSetFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
         nsDisplayBoxShadowOuter(aBuilder, this));
     }
 
-    // don't bother checking to see if we really have a border or background.
-    // we usually will have a border.
+    nsDisplayBackgroundImage::AppendBackgroundItemsToTop(
+      aBuilder, this, VisualBorderRectRelativeToSelf(),
+      aLists.BorderBackground(),
+      /* aAllowWillPaintBorderOptimization = */ false);
+
     aLists.BorderBackground()->AppendNewToTop(new (aBuilder)
       nsDisplayFieldSetBorderBackground(aBuilder, this));
   
@@ -209,7 +211,7 @@ nsFieldSetFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
 }
 
 DrawResult
-nsFieldSetFrame::PaintBorderBackground(
+nsFieldSetFrame::PaintBorder(
   nsDisplayListBuilder* aBuilder,
   nsRenderingContext& aRenderingContext,
   nsPoint aPt,
@@ -225,14 +227,11 @@ nsFieldSetFrame::PaintBorderBackground(
   rect += aPt;
   nsPresContext* presContext = PresContext();
 
-  uint32_t bgFlags = aBuilder->GetBackgroundPaintFlags();
   PaintBorderFlags borderFlags = aBuilder->ShouldSyncDecodeImages()
                                ? PaintBorderFlags::SYNC_DECODE_IMAGES
                                : PaintBorderFlags();
 
-  DrawResult result =
-    nsCSSRendering::PaintBackground(presContext, aRenderingContext, this,
-                                    aDirtyRect, rect, bgFlags);
+  DrawResult result = DrawResult::SUCCESS;
 
   nsCSSRendering::PaintBoxShadowInner(presContext, aRenderingContext,
                                       this, rect);
@@ -580,31 +579,28 @@ nsFieldSetFrame::Reflow(nsPresContext*           aPresContext,
     // If the inner content rect is larger than the legend, we can align the
     // legend.
     if (innerContentRect.ISize(wm) > mLegendRect.ISize(wm)) {
+      // NOTE legend @align values are: left/right/center/top/bottom.
+      // GetLogicalAlign converts left/right to start/end for the given WM.
+      // @see HTMLLegendElement::ParseAttribute, nsLegendFrame::GetLogicalAlign
       int32_t align = static_cast<nsLegendFrame*>
-        (legend->GetContentInsertionFrame())->GetAlign();
-      if (!wm.IsBidiLTR()) {
-        if (align == NS_STYLE_TEXT_ALIGN_LEFT ||
-            align == NS_STYLE_TEXT_ALIGN_MOZ_LEFT) {
-          align = NS_STYLE_TEXT_ALIGN_END;
-        } else if (align == NS_STYLE_TEXT_ALIGN_RIGHT ||
-                   align == NS_STYLE_TEXT_ALIGN_MOZ_RIGHT) {
-          align = NS_STYLE_TEXT_ALIGN_DEFAULT;
-        }
-      }
+        (legend->GetContentInsertionFrame())->GetLogicalAlign(wm);
       switch (align) {
         case NS_STYLE_TEXT_ALIGN_END:
           mLegendRect.IStart(wm) =
             innerContentRect.IEnd(wm) - mLegendRect.ISize(wm);
           break;
         case NS_STYLE_TEXT_ALIGN_CENTER:
-        case NS_STYLE_TEXT_ALIGN_MOZ_CENTER:
           // Note: rounding removed; there doesn't seem to be any need
           mLegendRect.IStart(wm) = innerContentRect.IStart(wm) +
             (innerContentRect.ISize(wm) - mLegendRect.ISize(wm)) / 2;
           break;
-        default:
+        case NS_STYLE_TEXT_ALIGN_START:
+        case NS_STYLE_VERTICAL_ALIGN_TOP:
+        case NS_STYLE_VERTICAL_ALIGN_BOTTOM:
           mLegendRect.IStart(wm) = innerContentRect.IStart(wm);
           break;
+        default:
+          MOZ_ASSERT_UNREACHABLE("unexpected GetLogicalAlign value");
       }
     } else {
       // otherwise make place for the legend

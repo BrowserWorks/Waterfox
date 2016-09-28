@@ -109,7 +109,8 @@ static const char *sPacUtils =
   "    var wd1 = getDay(arguments[0]);\n"
   "    var wd2 = (argc == 2) ? getDay(arguments[1]) : wd1;\n"
   "    return (wd1 == -1 || wd2 == -1) ? false\n"
-  "                                    : (wd1 <= wday && wday <= wd2);\n"
+  "                                    : (wd1 <= wd2) ? (wd1 <= wday && wday <= wd2)\n"
+  "                                                   : (wd2 >= wday || wday >= wd1);\n"
   "}\n"
   ""
   "function dateRange() {\n"
@@ -184,7 +185,8 @@ static const char *sPacUtils =
   "        tmp.setSeconds(date.getUTCSeconds());\n"
   "        date = tmp;\n"
   "    }\n"
-  "    return ((date1 <= date) && (date <= date2));\n"
+  "    return (date1 <= date2) ? (date1 <= date) && (date <= date2)\n"
+  "                            : (date2 >= date) || (date >= date1);\n"
   "}\n"
   ""
   "function timeRange() {\n"
@@ -237,7 +239,9 @@ static const char *sPacUtils =
   "        date.setMinutes(date.getUTCMinutes());\n"
   "        date.setSeconds(date.getUTCSeconds());\n"
   "    }\n"
-  "    return ((date1 <= date) && (date <= date2));\n"
+  "    return (date1 <= date2) ? (date1 <= date) && (date <= date2)\n"
+  "                            : (date2 >= date) || (date >= date1);\n"
+  "\n"
   "}\n"
   "";
 
@@ -315,17 +319,56 @@ void PACLogToConsole(nsString &aMessage)
   consoleService->LogStringMessage(aMessage.get());
 }
 
-// Javascript errors are logged to the main error console
+// Javascript errors and warnings are logged to the main error console
 static void
-PACErrorReporter(JSContext *cx, const char *message, JSErrorReport *report)
+PACLogErrorOrWarning(const nsAString& aKind, JSErrorReport* aReport)
 {
-  nsString formattedMessage(NS_LITERAL_STRING("PAC Execution Error: "));
-  formattedMessage += report->ucmessage;
+  nsString formattedMessage(NS_LITERAL_STRING("PAC Execution "));
+  formattedMessage += aKind;
+  formattedMessage += NS_LITERAL_STRING(": ");
+  formattedMessage += aReport->ucmessage;
   formattedMessage += NS_LITERAL_STRING(" [");
-  formattedMessage.Append(report->linebuf(), report->linebufLength());
+  formattedMessage.Append(aReport->linebuf(), aReport->linebufLength());
   formattedMessage += NS_LITERAL_STRING("]");
   PACLogToConsole(formattedMessage);
 }
+
+static void
+PACWarningReporter(JSContext* aCx, const char* aMessage, JSErrorReport* aReport)
+{
+  MOZ_ASSERT(aReport);
+  MOZ_ASSERT(JSREPORT_IS_WARNING(aReport->flags));
+
+  PACLogErrorOrWarning(NS_LITERAL_STRING("Warning"), aReport);
+}
+
+class MOZ_STACK_CLASS AutoPACErrorReporter
+{
+  JSContext* mCx;
+
+public:
+  explicit AutoPACErrorReporter(JSContext* aCx)
+    : mCx(aCx)
+  {}
+  ~AutoPACErrorReporter() {
+    if (!JS_IsExceptionPending(mCx)) {
+      return;
+    }
+    JS::RootedValue exn(mCx);
+    if (!JS_GetPendingException(mCx, &exn)) {
+      return;
+    }
+    JS_ClearPendingException(mCx);
+
+    js::ErrorReport report(mCx);
+    if (!report.init(mCx, exn, js::ErrorReport::WithSideEffects)) {
+      JS_ClearPendingException(mCx);
+      return;
+    }
+
+    PACLogErrorOrWarning(NS_LITERAL_STRING("Error"), report.report());
+  }
+};
 
 // timeout of 0 means the normal necko timeout strategy, otherwise the dns request
 // will be canceled after aTimeout milliseconds
@@ -616,7 +659,7 @@ class JSRuntimeWrapper
   }
 
 private:
-  static const unsigned sRuntimeHeapSize = 2 << 20;
+  static const unsigned sRuntimeHeapSize = 4 << 20; // 4 MB
 
   JSRuntime *mRuntime;
   JSContext *mContext;
@@ -639,10 +682,12 @@ private:
      */
     JS_SetNativeStackQuota(mRuntime, 128 * sizeof(size_t) * 1024);
 
-    JS_SetErrorReporter(mRuntime, PACErrorReporter);
+    JS_SetErrorReporter(mRuntime, PACWarningReporter);
 
     mContext = JS_NewContext(mRuntime, 0);
     NS_ENSURE_TRUE(mContext, NS_ERROR_OUT_OF_MEMORY);
+
+    JS::ContextOptionsRef(mContext).setAutoJSAPIOwnsErrorReporting(true);
 
     JSAutoRequest ar(mContext);
 
@@ -651,14 +696,20 @@ private:
     options.behaviors().setVersion(JSVERSION_LATEST);
     mGlobal = JS_NewGlobalObject(mContext, &sGlobalClass, nullptr,
                                  JS::DontFireOnNewGlobalHook, options);
-    NS_ENSURE_TRUE(mGlobal, NS_ERROR_OUT_OF_MEMORY);
+    if (!mGlobal) {
+      JS_ClearPendingException(mContext);
+      return NS_ERROR_OUT_OF_MEMORY;
+    }
     JS::Rooted<JSObject*> global(mContext, mGlobal);
 
     JSAutoCompartment ac(mContext, global);
-    JS_InitStandardClasses(mContext, global);
-
-    if (!JS_DefineFunctions(mContext, global, PACGlobalFunctions))
+    AutoPACErrorReporter aper(mContext);
+    if (!JS_InitStandardClasses(mContext, global)) {
       return NS_ERROR_FAILURE;
+    }
+    if (!JS_DefineFunctions(mContext, global, PACGlobalFunctions)) {
+      return NS_ERROR_FAILURE;
+    }
 
     JS_FireOnNewGlobalObject(mContext, global);
 
@@ -719,6 +770,7 @@ ProxyAutoConfig::SetupJS()
   JSContext* cx = mJSRuntime->Context();
   JSAutoRequest ar(cx);
   JSAutoCompartment ac(cx, mJSRuntime->Global());
+  AutoPACErrorReporter aper(cx);
 
   // check if this is a data: uri so that we don't spam the js console with
   // huge meaningless strings. this is not on the main thread, so it can't
@@ -781,6 +833,7 @@ ProxyAutoConfig::GetProxyForURI(const nsCString &aTestURI,
   JSContext *cx = mJSRuntime->Context();
   JSAutoRequest ar(cx);
   JSAutoCompartment ac(cx, mJSRuntime->Global());
+  AutoPACErrorReporter aper(cx);
 
   // the sRunning flag keeps a new PAC file from being installed
   // while the event loop is spinning on a DNS function. Don't early return.

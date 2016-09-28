@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-#include "ScopedNSSTypes.h"
+#include "mozilla/Casting.h"
 #include "mozilla/Snprintf.h"
 #include "mozilla/UniquePtr.h"
 #include "nsCOMPtr.h"
@@ -101,7 +101,7 @@ ProcessVersion(SECItem* versionItem, nsINSSComponent* nssComponent,
     if (versionItem->len != 1) {
       return NS_ERROR_FAILURE;
     }
-    version = *reinterpret_cast<const uint8_t*>(versionItem->data);
+    version = *BitwiseCast<uint8_t*, unsigned char*>(versionItem->data);
   } else {
     // If there is no version present in the cert, then RFC 5280 says we
     // default to v1 (0).
@@ -2063,8 +2063,8 @@ getCertType(CERTCertificate *cert)
   return nsIX509Cert::UNKNOWN_CERT;
 }
 
-CERTCertNicknames *
-getNSSCertNicknamesFromCertList(CERTCertList *certList)
+CERTCertNicknames*
+getNSSCertNicknamesFromCertList(const UniqueCERTCertList& certList)
 {
   static NS_DEFINE_CID(kNSSComponentCID, NS_NSSCOMPONENT_CID);
 
@@ -2089,10 +2089,9 @@ getNSSCertNicknamesFromCertList(CERTCertList *certList)
   NS_ConvertUTF16toUTF8 aUtf8ExpiredString(expiredStringLeadingSpace);
   NS_ConvertUTF16toUTF8 aUtf8NotYetValidString(notYetValidStringLeadingSpace);
 
-  return CERT_NicknameStringsFromCertList(certList,
+  return CERT_NicknameStringsFromCertList(certList.get(),
                                           const_cast<char*>(aUtf8ExpiredString.get()),
                                           const_cast<char*>(aUtf8NotYetValidString.get()));
-  
 }
 
 nsresult

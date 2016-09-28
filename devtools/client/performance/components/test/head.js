@@ -6,11 +6,11 @@
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://testing-common/Assert.jsm");
-Cu.import("resource://gre/modules/Task.jsm");
 var { Promise: promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 var { require } = Cu.import("resource://gre/modules/devtools/shared/Loader.jsm", {});
 var { BrowserLoader } = Cu.import("resource://devtools/client/shared/browser-loader.js", {});
 var DevToolsUtils = require("devtools/shared/DevToolsUtils");
+var { Task } = require("devtools/shared/task");
 var { TargetFactory } = require("devtools/client/framework/target");
 var { Toolbox } = require("devtools/client/framework/toolbox");
 
@@ -20,8 +20,8 @@ var { require: browserRequire } = BrowserLoader({
   window: this
 });
 
-var $ = (selector, scope=document) => scope.querySelector(selector);
-var $$ = (selector, scope=document) => scope.querySelectorAll(selector);
+var $ = (selector, scope = document) => scope.querySelector(selector);
+var $$ = (selector, scope = document) => scope.querySelectorAll(selector);
 
 function forceRender(comp) {
   return setState(comp, {})
@@ -105,9 +105,9 @@ let OPTS_DATA_GENERAL = [{
       mirType: "Object",
       typeset: [
         { id: 2, keyedBy: "primitive" },
-        { id: 2, keyedBy: "constructor", name: "B", location: "http://mypage.com/file.js", line: "2" }, 
-        { id: 2, keyedBy: "constructor", name: "C", location: "http://mypage.com/file.js", line: "3" }, 
-        { id: 2, keyedBy: "constructor", name: "D", location: "http://mypage.com/file.js", line: "4" }, 
+        { id: 2, keyedBy: "constructor", name: "B", location: "http://mypage.com/file.js", line: "2" },
+        { id: 2, keyedBy: "constructor", name: "C", location: "http://mypage.com/file.js", line: "3" },
+        { id: 2, keyedBy: "constructor", name: "D", location: "http://mypage.com/file.js", line: "4" },
       ],
     }]
   }
@@ -123,7 +123,7 @@ OPTS_DATA_GENERAL.forEach(site => {
 });
 
 
-function checkOptimizationHeader (name, file, line) {
+function checkOptimizationHeader(name, file, line) {
   is($(".optimization-header .header-function-name").textContent, name,
     "correct optimization header function name");
   is($(".optimization-header .frame-link-filename").textContent, file,
@@ -132,7 +132,7 @@ function checkOptimizationHeader (name, file, line) {
     "correct optimization header line");
 }
 
-function checkOptimizationTree (rowData) {
+function checkOptimizationTree(rowData) {
   let rows = $$(".tree .tree-node");
 
   for (let i = 0; i < rowData.length; i++) {
@@ -181,4 +181,3 @@ function checkOptimizationTree (rowData) {
     }
   }
 }
-

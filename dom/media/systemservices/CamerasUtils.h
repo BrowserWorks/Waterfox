@@ -18,7 +18,7 @@ namespace camera {
 
 nsresult SynchronouslyCreatePBackground();
 
-class ThreadDestructor : public nsRunnable
+class ThreadDestructor : public Runnable
 {
   DISALLOW_COPY_AND_ASSIGN(ThreadDestructor);
 
@@ -37,21 +37,6 @@ public:
 private:
   ~ThreadDestructor() {}
   nsCOMPtr<nsIThread> mThread;
-};
-
-class RunnableTask : public Task
-{
-public:
-  explicit RunnableTask(nsRunnable* aRunnable)
-    : mRunnable(aRunnable) {}
-
-  void Run() override {
-    mRunnable->Run();
-  }
-
-private:
-  ~RunnableTask() {}
-  RefPtr<nsRunnable> mRunnable;
 };
 
 }

@@ -56,7 +56,7 @@ var SelectHelper = {
   show: function(element) {
     let list = this.getListForElement(element);
     let p = new Prompt({
-      window: element.contentDocument
+      window: element.ownerDocument.defaultView
     });
 
     if (element.multiple) {
@@ -150,7 +150,8 @@ var SelectHelper = {
   _isDisabledElement : function(element) {
     let currentElement = element;
     while (currentElement) {
-      if (currentElement.disabled) {
+      // Must test with === in case a form has a field named "disabled". See bug 1263589.
+      if (currentElement.disabled === true) {
         return true;
       }
       currentElement = currentElement.parentElement;

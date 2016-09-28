@@ -48,6 +48,7 @@ extern "C" {
 #include "async_timer.h"
 #include "r_data.h"
 #include "util.h"
+#include "r_time.h"
 }
 
 #define GTEST_HAS_RTTI 0
@@ -56,8 +57,6 @@ extern "C" {
 
 
 using namespace mozilla;
-
-bool stream_added = false;
 
 static unsigned int kDefaultTimeout = 7000;
 
@@ -110,6 +109,7 @@ Resolve(const std::string& fqdn, int address_family)
     default:
       std::cerr << "Got unexpected address family in DNS lookup: "
                 << res->ai_family << std::endl;
+      freeaddrinfo(res);
       return "";
   }
 
@@ -117,6 +117,7 @@ Resolve(const std::string& fqdn, int address_family)
     std::cerr << "inet_ntop failed" << std::endl;
   }
 
+  freeaddrinfo(res);
   return str_addr;
 }
 
@@ -177,6 +178,8 @@ public:
 };
 
 enum TrickleMode { TRICKLE_NONE, TRICKLE_SIMULATE, TRICKLE_REAL };
+
+enum ConsentStatus { CONSENT_FRESH, CONSENT_STALE, CONSENT_EXPIRED};
 
 const unsigned int ICE_TEST_PEER_OFFERER = (1 << 0);
 const unsigned int ICE_TEST_PEER_ALLOW_LOOPBACK = (1 << 1);
@@ -412,6 +415,8 @@ class IceTestPeer : public sigslot::has_slots<> {
         this,
         &IceTestPeer::ConnectionStateChange);
 
+    consent_timestamp_.tv_sec = 0;
+    consent_timestamp_.tv_usec = 0;
     int r = ice_ctx_->ctx()->SetNat(nat_);
     (void)r;
     MOZ_ASSERT(!r);
@@ -541,6 +546,14 @@ class IceTestPeer : public sigslot::has_slots<> {
     nat_->enabled_ = true;
   }
 
+  void SetTimerDivider(int div) {
+    ice_ctx_->ctx()->internal_SetTimerAccelarator(div);
+  }
+
+  void SetStunResponseDelay(uint32_t delay) {
+    nat_->delay_stun_resp_ms_ = delay;
+  }
+
   void SetFilteringType(TestNat::NatBehavior type) {
     MOZ_ASSERT(!nat_->has_port_mappings());
     nat_->filtering_type_ = type;
@@ -554,6 +567,10 @@ class IceTestPeer : public sigslot::has_slots<> {
   void SetBlockUdp(bool block) {
     MOZ_ASSERT(!nat_->has_port_mappings());
     nat_->block_udp_ = block;
+  }
+
+  void SetBlockStun(bool block) {
+    nat_->block_stun_ = block;
   }
 
   // Get various pieces of state
@@ -1232,6 +1249,20 @@ class IceTestPeer : public sigslot::has_slots<> {
     std::cerr << name_ << ": sent " << len << " bytes" << std::endl;
   }
 
+  void SendFailure(int stream, int component) {
+    RefPtr<NrIceMediaStream> media_stream = ice_ctx_->ctx()->GetStream(stream);
+    if (!media_stream) {
+      ADD_FAILURE() << "No such stream " << stream;
+      return;
+    }
+
+    const std::string d("FAIL");
+    ASSERT_TRUE(NS_FAILED(media_stream->SendPacket(component,
+      reinterpret_cast<const unsigned char *>(d.c_str()), d.length())));
+
+    std::cerr << name_ << ": send failed as expected" << std::endl;
+  }
+
   void SetCandidateFilter(CandidateFilter filter) {
     candidate_filter_ = filter;
   }
@@ -1274,6 +1305,44 @@ class IceTestPeer : public sigslot::has_slots<> {
         NS_DISPATCH_SYNC);
   }
 
+  void AssertConsentRefresh_s(size_t stream, int component_id, ConsentStatus status) {
+    ASSERT_LT(stream, ice_ctx_->ctx()->GetStreamCount());
+    ASSERT_TRUE(ice_ctx_->ctx()->GetStream(stream).get()) << "No such stream "
+                                                          << stream;
+    bool can_send;
+    struct timeval timestamp;
+    nsresult res = ice_ctx_->ctx()->GetStream(stream)->
+                    GetConsentStatus(component_id, &can_send, &timestamp);
+    ASSERT_TRUE(NS_SUCCEEDED(res));
+    if (status == CONSENT_EXPIRED) {
+      ASSERT_EQ(can_send, 0);
+    } else {
+      ASSERT_EQ(can_send, 1);
+    }
+    if (consent_timestamp_.tv_sec) {
+      if (status == CONSENT_FRESH) {
+        ASSERT_EQ(r_timeval_cmp(&timestamp, &consent_timestamp_), 1);
+      } else {
+        ASSERT_EQ(r_timeval_cmp(&timestamp, &consent_timestamp_), 0);
+      }
+    }
+    consent_timestamp_.tv_sec = timestamp.tv_sec;
+    consent_timestamp_.tv_usec = timestamp.tv_usec;
+    std::cerr << name_ << ": new consent timestamp = " <<
+      consent_timestamp_.tv_sec << "." << consent_timestamp_.tv_usec <<
+      std::endl;
+  }
+
+  void AssertConsentRefresh(ConsentStatus status) {
+    test_utils_->sts_target()->Dispatch(
+        WrapRunnable(this,
+                        &IceTestPeer::AssertConsentRefresh_s,
+                        0,
+                        1,
+                        status),
+        NS_DISPATCH_SYNC);
+  }
+
   int trickled() { return trickled_; }
 
   void SetControlling(NrIceCtx::Controlling controlling) {
@@ -1284,6 +1353,10 @@ class IceTestPeer : public sigslot::has_slots<> {
                         controlling),
         NS_DISPATCH_SYNC);
     ASSERT_TRUE(NS_SUCCEEDED(res));
+  }
+
+  NrIceCtx::Controlling GetControlling() {
+    return ice_ctx_->ctx()->GetControlling();
   }
 
   void SetTiebreaker(uint64_t tiebreaker) {
@@ -1332,6 +1405,7 @@ class IceTestPeer : public sigslot::has_slots<> {
   bool ice_reached_checking_;
   size_t received_;
   size_t sent_;
+  struct timeval consent_timestamp_;
   NrIceResolverFake fake_resolver_;
   RefPtr<NrIceResolver> dns_resolver_;
   IceTestPeer *remote_;
@@ -1545,7 +1619,7 @@ class WebRtcIceConnectTest : public StunTest {
     StunTest::TearDown();
   }
 
-  void AddStream(const std::string& name, int components) {
+  void AddStream(int components) {
     Init(false, false);
     p1_->AddStream(components);
     p2_->AddStream(components);
@@ -1645,6 +1719,21 @@ class WebRtcIceConnectTest : public StunTest {
     // note: |block_udp_| is used only in InitPeer.
     // Use IceTestPeer::SetBlockUdp to act on the peer directly.
     block_udp_ = true;
+  }
+
+  void SetupAndCheckConsent() {
+    p1_->SetTimerDivider(10);
+    p2_->SetTimerDivider(10);
+    ASSERT_TRUE(Gather());
+    Connect();
+    p1_->AssertConsentRefresh(CONSENT_FRESH);
+    p2_->AssertConsentRefresh(CONSENT_FRESH);
+    SendReceive();
+  }
+
+  void AssertConsentRefresh(ConsentStatus status = CONSENT_FRESH) {
+    p1_->AssertConsentRefresh(status);
+    p2_->AssertConsentRefresh(status);
   }
 
   void InitTestStunServer() {
@@ -1823,6 +1912,13 @@ class WebRtcIceConnectTest : public StunTest {
     } else {
       ASSERT_TRUE_WAIT(p2->received() == previousReceived+1, 1000);
     }
+  }
+
+  void SendFailure() {
+    test_utils_->sts_target()->Dispatch(
+        WrapRunnable(p1_.get(),
+                     &IceTestPeer::SendFailure, 0, 1),
+        NS_DISPATCH_SYNC);
   }
 
  protected:
@@ -2397,33 +2493,55 @@ TEST_F(WebRtcIceGatherTest, TestStunTcpAndUdpServerTrickle) {
   ASSERT_TRUE(StreamHasMatchingCandidate(0, " 192.0.3.1 ", " tcptype "));
 }
 
+TEST_F(WebRtcIceGatherTest, TestSetIceControlling) {
+  EnsurePeer();
+  peer_->SetControlling(NrIceCtx::ICE_CONTROLLING);
+  NrIceCtx::Controlling controlling = peer_->GetControlling();
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLING, controlling);
+  // SetControlling should only allow setting this once
+  peer_->SetControlling(NrIceCtx::ICE_CONTROLLED);
+  controlling = peer_->GetControlling();
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLING, controlling);
+}
+
+TEST_F(WebRtcIceGatherTest, TestSetIceControlled) {
+  EnsurePeer();
+  peer_->SetControlling(NrIceCtx::ICE_CONTROLLED);
+  NrIceCtx::Controlling controlling = peer_->GetControlling();
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, controlling);
+  // SetControlling should only allow setting this once
+  peer_->SetControlling(NrIceCtx::ICE_CONTROLLING);
+  controlling = peer_->GetControlling();
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, controlling);
+}
+
 TEST_F(WebRtcIceConnectTest, TestGather) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
 TEST_F(WebRtcIceConnectTest, TestGatherTcp) {
   Init(false, true);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
 TEST_F(WebRtcIceConnectTest, TestGatherAutoPrioritize) {
   Init(false, false);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
 
 TEST_F(WebRtcIceConnectTest, TestConnect) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   Connect();
 }
 
 
 TEST_F(WebRtcIceConnectTest, TestConnectRestartIce) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   Connect();
   SendReceive(p1_.get(), p2_.get());
@@ -2455,9 +2573,8 @@ TEST_F(WebRtcIceConnectTest, TestConnectRestartIce) {
   p3_ = nullptr;
 }
 
-
 TEST_F(WebRtcIceConnectTest, TestConnectRestartIceThenAbort) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   Connect();
   SendReceive(p1_.get(), p2_.get());
@@ -2489,10 +2606,57 @@ TEST_F(WebRtcIceConnectTest, TestConnectRestartIceThenAbort) {
   p3_ = nullptr;
 }
 
+TEST_F(WebRtcIceConnectTest, TestConnectSetControllingAfterIceRestart) {
+  AddStream(1);
+  ASSERT_TRUE(Gather());
+  // Just for fun lets do this with switched rolls
+  p1_->SetControlling(NrIceCtx::ICE_CONTROLLED);
+  p2_->SetControlling(NrIceCtx::ICE_CONTROLLING);
+  Connect();
+  SendReceive(p1_.get(), p2_.get());
+  // Set rolls should not switch by connecting
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, p1_->GetControlling());
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLING, p2_->GetControlling());
+
+  p2_->RestartIce();
+  ASSERT_FALSE(p2_->gathering_complete());
+  // ICE restart should allow us to set control role again
+  p2_->SetControlling(NrIceCtx::ICE_CONTROLLED);
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, p2_->GetControlling());
+  // But still only allowed to set control role once
+  p2_->SetControlling(NrIceCtx::ICE_CONTROLLING);
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, p2_->GetControlling());
+
+  mozilla::UniquePtr<IceTestPeer> p3_;
+  p3_ = MakeUnique<IceTestPeer>("P3", test_utils_, true, false,
+                                false, false, false);
+  InitPeer(p3_.get());
+  p3_->AddStream(1);
+  // Set control role for p3 accordingly (w/o role conflict)
+  p3_->SetControlling(NrIceCtx::ICE_CONTROLLING);
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLING, p3_->GetControlling());
+
+  p2_->AddStream(1);
+  ASSERT_TRUE(GatherCallerAndCallee(p2_.get(), p3_.get()));
+  std::cout << "-------------------------------------------------" << std::endl;
+  ConnectCallerAndCallee(p3_.get(), p2_.get());
+  // Again connecting should not result in role switch
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, p2_->GetControlling());
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLING, p3_->GetControlling());
+
+  p2_->FinalizeIceRestart();
+  // And again we are not allowed to switch roles at this point any more
+  p2_->SetControlling(NrIceCtx::ICE_CONTROLLING);
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLED, p2_->GetControlling());
+  p3_->SetControlling(NrIceCtx::ICE_CONTROLLED);
+  ASSERT_EQ(NrIceCtx::ICE_CONTROLLING, p3_->GetControlling());
+
+  p3_ = nullptr;
+}
 
 TEST_F(WebRtcIceConnectTest, TestConnectTcp) {
   Init(false, true);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsTcpCandidate);
   SetExpectedTypes(NrIceCandidate::Type::ICE_HOST,
@@ -2504,7 +2668,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTcp) {
 //  tc qdisc add dev lo root netem delay 10ms
 TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectTcpSo) {
   Init(false, true);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsTcpSoCandidate);
   SetExpectedTypes(NrIceCandidate::Type::ICE_HOST,
@@ -2515,7 +2679,7 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectTcpSo) {
 // Disabled because this breaks with hairpinning.
 TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectDefaultRouteOnly) {
   Init(false, false, true);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   SetExpectedTypes(NrIceCandidate::Type::ICE_SERVER_REFLEXIVE,
     NrIceCandidate::Type::ICE_SERVER_REFLEXIVE, kNrIceTransportTcp);
@@ -2524,7 +2688,7 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestConnectDefaultRouteOnly) {
 
 TEST_F(WebRtcIceConnectTest, TestLoopbackOnlySortOf) {
   Init(true, false, false, false);
-  AddStream("first", 1);
+  AddStream(1);
   SetCandidateFilter(IsLoopbackCandidate);
   ASSERT_TRUE(Gather());
   SetExpectedRemoteCandidateAddr("127.0.0.1");
@@ -2532,7 +2696,7 @@ TEST_F(WebRtcIceConnectTest, TestLoopbackOnlySortOf) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectBothControllingP1Wins) {
-  AddStream("first", 1);
+  AddStream(1);
   p1_->SetTiebreaker(1);
   p2_->SetTiebreaker(0);
   ASSERT_TRUE(Gather());
@@ -2542,7 +2706,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectBothControllingP1Wins) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectBothControllingP2Wins) {
-  AddStream("first", 1);
+  AddStream(1);
   p1_->SetTiebreaker(0);
   p2_->SetTiebreaker(1);
   ASSERT_TRUE(Gather());
@@ -2552,14 +2716,14 @@ TEST_F(WebRtcIceConnectTest, TestConnectBothControllingP2Wins) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectIceLiteOfferer) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   p1_->SimulateIceLite();
   Connect();
 }
 
 TEST_F(WebRtcIceConnectTest, TestTrickleBothControllingP1Wins) {
-  AddStream("first", 1);
+  AddStream(1);
   p1_->SetTiebreaker(1);
   p2_->SetTiebreaker(0);
   ASSERT_TRUE(Gather());
@@ -2573,7 +2737,7 @@ TEST_F(WebRtcIceConnectTest, TestTrickleBothControllingP1Wins) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestTrickleBothControllingP2Wins) {
-  AddStream("first", 1);
+  AddStream(1);
   p1_->SetTiebreaker(0);
   p2_->SetTiebreaker(1);
   ASSERT_TRUE(Gather());
@@ -2587,7 +2751,7 @@ TEST_F(WebRtcIceConnectTest, TestTrickleBothControllingP2Wins) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestTrickleIceLiteOfferer) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   p1_->SimulateIceLite();
   ConnectTrickle();
@@ -2599,21 +2763,21 @@ TEST_F(WebRtcIceConnectTest, TestTrickleIceLiteOfferer) {
 
 TEST_F(WebRtcIceConnectTest, TestGatherFullCone) {
   UseNat();
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
 TEST_F(WebRtcIceConnectTest, TestGatherFullConeAutoPrioritize) {
   UseNat();
   Init(true, false);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
 
 TEST_F(WebRtcIceConnectTest, TestConnectFullCone) {
   UseNat();
-  AddStream("first", 1);
+  AddStream(1);
   SetExpectedTypes(NrIceCandidate::Type::ICE_SERVER_REFLEXIVE,
                    NrIceCandidate::Type::ICE_SERVER_REFLEXIVE);
   ASSERT_TRUE(Gather());
@@ -2622,7 +2786,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectFullCone) {
 
 TEST_F(WebRtcIceConnectTest, TestConnectNoNatRouteOnly) {
   Init(false, false, true, false);
-  AddStream("first", 1);
+  AddStream(1);
   UseTestStunServer();
   // Because we are connecting from our host candidate to the
   // other side's apparent srflx (which is also their host)
@@ -2636,7 +2800,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectNoNatRouteOnly) {
 TEST_F(WebRtcIceConnectTest, TestConnectFullConeDefaultRouteOnly) {
   UseNat();
   Init(false, false, true);
-  AddStream("first", 1);
+  AddStream(1);
   SetExpectedTypes(NrIceCandidate::Type::ICE_SERVER_REFLEXIVE,
                    NrIceCandidate::Type::ICE_SERVER_REFLEXIVE);
   ASSERT_TRUE(Gather());
@@ -2647,7 +2811,7 @@ TEST_F(WebRtcIceConnectTest, TestGatherAddressRestrictedCone) {
   UseNat();
   SetFilteringType(TestNat::ADDRESS_DEPENDENT);
   SetMappingType(TestNat::ENDPOINT_INDEPENDENT);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
@@ -2655,7 +2819,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectAddressRestrictedCone) {
   UseNat();
   SetFilteringType(TestNat::ADDRESS_DEPENDENT);
   SetMappingType(TestNat::ENDPOINT_INDEPENDENT);
-  AddStream("first", 1);
+  AddStream(1);
   SetExpectedTypes(NrIceCandidate::Type::ICE_SERVER_REFLEXIVE,
                    NrIceCandidate::Type::ICE_SERVER_REFLEXIVE);
   ASSERT_TRUE(Gather());
@@ -2666,7 +2830,7 @@ TEST_F(WebRtcIceConnectTest, TestGatherPortRestrictedCone) {
   UseNat();
   SetFilteringType(TestNat::PORT_DEPENDENT);
   SetMappingType(TestNat::ENDPOINT_INDEPENDENT);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
@@ -2674,7 +2838,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectPortRestrictedCone) {
   UseNat();
   SetFilteringType(TestNat::PORT_DEPENDENT);
   SetMappingType(TestNat::ENDPOINT_INDEPENDENT);
-  AddStream("first", 1);
+  AddStream(1);
   SetExpectedTypes(NrIceCandidate::Type::ICE_SERVER_REFLEXIVE,
                    NrIceCandidate::Type::ICE_SERVER_REFLEXIVE);
   ASSERT_TRUE(Gather());
@@ -2685,7 +2849,7 @@ TEST_F(WebRtcIceConnectTest, TestGatherSymmetricNat) {
   UseNat();
   SetFilteringType(TestNat::PORT_DEPENDENT);
   SetMappingType(TestNat::PORT_DEPENDENT);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 }
 
@@ -2696,7 +2860,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectSymmetricNat) {
   UseNat();
   SetFilteringType(TestNat::PORT_DEPENDENT);
   SetMappingType(TestNat::PORT_DEPENDENT);
-  AddStream("first", 1);
+  AddStream(1);
   p1_->SetExpectedTypes(NrIceCandidate::Type::ICE_RELAYED,
                         NrIceCandidate::Type::ICE_RELAYED);
   p2_->SetExpectedTypes(NrIceCandidate::Type::ICE_RELAYED,
@@ -2713,7 +2877,7 @@ TEST_F(WebRtcIceConnectTest, TestGatherNatBlocksUDP) {
 
   UseNat();
   BlockUdp();
-  AddStream("first", 1);
+  AddStream(1);
   std::vector<NrIceTurnServer> turn_servers;
   std::vector<unsigned char> password_vec(turn_password_.begin(),
                                           turn_password_.end());
@@ -2734,7 +2898,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectNatBlocksUDP) {
 
   UseNat();
   BlockUdp();
-  AddStream("first", 1);
+  AddStream(1);
   std::vector<NrIceTurnServer> turn_servers;
   std::vector<unsigned char> password_vec(turn_password_.begin(),
                                           turn_password_.end());
@@ -2756,13 +2920,13 @@ TEST_F(WebRtcIceConnectTest, TestConnectNatBlocksUDP) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectTwoComponents) {
-  AddStream("first", 2);
+  AddStream(2);
   ASSERT_TRUE(Gather());
   Connect();
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectTwoComponentsDisableSecond) {
-  AddStream("first", 2);
+  AddStream(2);
   ASSERT_TRUE(Gather());
   p1_->DisableComponent(0, 2);
   p2_->DisableComponent(0, 2);
@@ -2771,7 +2935,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTwoComponentsDisableSecond) {
 
 
 TEST_F(WebRtcIceConnectTest, TestConnectP2ThenP1) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectP2();
   PR_Sleep(1000);
@@ -2780,7 +2944,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectP2ThenP1) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectP2ThenP1Trickle) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectP2();
   PR_Sleep(1000);
@@ -2790,8 +2954,8 @@ TEST_F(WebRtcIceConnectTest, TestConnectP2ThenP1Trickle) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectP2ThenP1TrickleTwoComponents) {
-  AddStream("first", 1);
-  AddStream("second", 2);
+  AddStream(1);
+  AddStream(2);
   ASSERT_TRUE(Gather());
   ConnectP2();
   PR_Sleep(1000);
@@ -2806,13 +2970,13 @@ TEST_F(WebRtcIceConnectTest, TestConnectP2ThenP1TrickleTwoComponents) {
 
 TEST_F(WebRtcIceConnectTest, TestConnectAutoPrioritize) {
   Init(false, false);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   Connect();
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectTrickleOneStreamOneComponent) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   SimulateTrickle(0);
@@ -2822,8 +2986,8 @@ TEST_F(WebRtcIceConnectTest, TestConnectTrickleOneStreamOneComponent) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectTrickleTwoStreamsOneComponent) {
-  AddStream("first", 1);
-  AddStream("second", 1);
+  AddStream(1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   SimulateTrickle(0);
@@ -2903,12 +3067,12 @@ void DropTrickleCandidates(
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectTrickleAddStreamDuringICE) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(0));
   RealisticTrickleDelay(p2_->ControlTrickle(0));
-  AddStream("second", 1);
+  AddStream(1);
   RealisticTrickleDelay(p1_->ControlTrickle(1));
   RealisticTrickleDelay(p2_->ControlTrickle(1));
   ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
@@ -2917,14 +3081,14 @@ TEST_F(WebRtcIceConnectTest, TestConnectTrickleAddStreamDuringICE) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectTrickleAddStreamAfterICE) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(0));
   RealisticTrickleDelay(p2_->ControlTrickle(0));
   ASSERT_TRUE_WAIT(p1_->ice_complete(), 1000);
   ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
-  AddStream("second", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(1));
@@ -2935,8 +3099,8 @@ TEST_F(WebRtcIceConnectTest, TestConnectTrickleAddStreamAfterICE) {
 }
 
 TEST_F(WebRtcIceConnectTest, RemoveStream) {
-  AddStream("first", 1);
-  AddStream("second", 1);
+  AddStream(1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(0));
@@ -2952,7 +3116,7 @@ TEST_F(WebRtcIceConnectTest, RemoveStream) {
 }
 
 TEST_F(WebRtcIceConnectTest, P1NoTrickle) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   DropTrickleCandidates(p1_->ControlTrickle(0));
@@ -2962,7 +3126,7 @@ TEST_F(WebRtcIceConnectTest, P1NoTrickle) {
 }
 
 TEST_F(WebRtcIceConnectTest, P2NoTrickle) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(0));
@@ -2972,8 +3136,8 @@ TEST_F(WebRtcIceConnectTest, P2NoTrickle) {
 }
 
 TEST_F(WebRtcIceConnectTest, RemoveAndAddStream) {
-  AddStream("first", 1);
-  AddStream("second", 1);
+  AddStream(1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(0));
@@ -2984,7 +3148,7 @@ TEST_F(WebRtcIceConnectTest, RemoveAndAddStream) {
   ASSERT_TRUE_WAIT(p2_->ice_complete(), 1000);
 
   RemoveStream(0);
-  AddStream("third", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(2));
@@ -2994,8 +3158,8 @@ TEST_F(WebRtcIceConnectTest, RemoveAndAddStream) {
 }
 
 TEST_F(WebRtcIceConnectTest, RemoveStreamBeforeGather) {
-  AddStream("first", 1);
-  AddStream("second", 1);
+  AddStream(1);
+  AddStream(1);
   ASSERT_TRUE(Gather(0));
   RemoveStream(0);
   WaitForGather();
@@ -3007,8 +3171,8 @@ TEST_F(WebRtcIceConnectTest, RemoveStreamBeforeGather) {
 }
 
 TEST_F(WebRtcIceConnectTest, RemoveStreamDuringGather) {
-  AddStream("first", 1);
-  AddStream("second", 1);
+  AddStream(1);
+  AddStream(1);
   RemoveStream(0);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
@@ -3019,8 +3183,8 @@ TEST_F(WebRtcIceConnectTest, RemoveStreamDuringGather) {
 }
 
 TEST_F(WebRtcIceConnectTest, RemoveStreamDuringConnect) {
-  AddStream("first", 1);
-  AddStream("second", 1);
+  AddStream(1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectTrickle();
   RealisticTrickleDelay(p1_->ControlTrickle(0));
@@ -3033,8 +3197,8 @@ TEST_F(WebRtcIceConnectTest, RemoveStreamDuringConnect) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectRealTrickleOneStreamOneComponent) {
-  AddStream("first", 1);
-  AddStream("second", 1);
+  AddStream(1);
+  AddStream(1);
   ASSERT_TRUE(Gather(0));
   ConnectTrickle(TRICKLE_REAL);
   ASSERT_TRUE_WAIT(p1_->ice_complete(), kDefaultTimeout);
@@ -3044,7 +3208,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectRealTrickleOneStreamOneComponent) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestSendReceive) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   Connect();
   SendReceive();
@@ -3052,7 +3216,7 @@ TEST_F(WebRtcIceConnectTest, TestSendReceive) {
 
 TEST_F(WebRtcIceConnectTest, TestSendReceiveTcp) {
   Init(false, true);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsTcpCandidate);
   SetExpectedTypes(NrIceCandidate::Type::ICE_HOST,
@@ -3065,7 +3229,7 @@ TEST_F(WebRtcIceConnectTest, TestSendReceiveTcp) {
 //  tc qdisc add dev lo root netem delay 10ms
 TEST_F(WebRtcIceConnectTest, DISABLED_TestSendReceiveTcpSo) {
   Init(false, true);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsTcpSoCandidate);
   SetExpectedTypes(NrIceCandidate::Type::ICE_HOST,
@@ -3074,11 +3238,72 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestSendReceiveTcpSo) {
   SendReceive();
 }
 
+TEST_F(WebRtcIceConnectTest, TestConsent) {
+  AddStream(1);
+  SetupAndCheckConsent();
+  PR_Sleep(1500);
+  AssertConsentRefresh();
+  SendReceive();
+}
+
+TEST_F(WebRtcIceConnectTest, TestConsentTcp) {
+  Init(false, true);
+  AddStream(1);
+  SetCandidateFilter(IsTcpCandidate);
+  SetExpectedTypes(NrIceCandidate::Type::ICE_HOST,
+    NrIceCandidate::Type::ICE_HOST, kNrIceTransportTcp);
+  SetupAndCheckConsent();
+  PR_Sleep(1500);
+  AssertConsentRefresh();
+  SendReceive();
+}
+
+TEST_F(WebRtcIceConnectTest, TestConsentIntermittent) {
+  AddStream(1);
+  SetupAndCheckConsent();
+  p1_->SetBlockStun(true);
+  p2_->SetBlockStun(true);
+  PR_Sleep(1000);
+  AssertConsentRefresh(CONSENT_STALE);
+  SendReceive();
+  p1_->SetBlockStun(false);
+  p2_->SetBlockStun(false);
+  PR_Sleep(600);
+  AssertConsentRefresh();
+  SendReceive();
+}
+
+TEST_F(WebRtcIceConnectTest, TestConsentTimeout) {
+  AddStream(1);
+  SetupAndCheckConsent();
+  p1_->SetBlockStun(true);
+  p2_->SetBlockStun(true);
+  PR_Sleep(600);
+  AssertConsentRefresh(CONSENT_STALE);
+  SendReceive();
+  PR_Sleep(2500);
+  AssertConsentRefresh(CONSENT_EXPIRED);
+  SendFailure();
+}
+
+TEST_F(WebRtcIceConnectTest, TestConsentDelayed) {
+  AddStream(1);
+  SetupAndCheckConsent();
+  /* Note: We don't have a list of STUN transaction IDs of the previously timed
+           out consent requests. Thus responses after sending the next consent
+           request are ignored. */
+  p1_->SetStunResponseDelay(300);
+  p2_->SetStunResponseDelay(300);
+  PR_Sleep(1000);
+  AssertConsentRefresh();
+  SendReceive();
+}
+
 TEST_F(WebRtcIceConnectTest, TestConnectTurn) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
   ASSERT_TRUE(Gather());
@@ -3089,7 +3314,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTurnWithDelay) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
   SetCandidateFilter(SabotageHostCandidateAndDropReflexive);
@@ -3105,7 +3330,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTurnWithNormalTrickleDelay) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
   ASSERT_TRUE(Gather());
@@ -3122,7 +3347,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTurnWithNormalTrickleDelayOneSided) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
   ASSERT_TRUE(Gather());
@@ -3139,7 +3364,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTurnWithLargeTrickleDelay) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
   SetCandidateFilter(SabotageHostCandidateAndDropReflexive);
@@ -3158,7 +3383,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTurnTcp) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_, kNrIceTransportTcp);
   ASSERT_TRUE(Gather());
@@ -3169,7 +3394,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTurnOnly) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
   ASSERT_TRUE(Gather());
@@ -3183,7 +3408,7 @@ TEST_F(WebRtcIceConnectTest, TestConnectTurnTcpOnly) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_, kNrIceTransportTcp);
   ASSERT_TRUE(Gather());
@@ -3198,7 +3423,7 @@ TEST_F(WebRtcIceConnectTest, TestSendReceiveTurnOnly) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_);
   ASSERT_TRUE(Gather());
@@ -3213,7 +3438,7 @@ TEST_F(WebRtcIceConnectTest, TestSendReceiveTurnTcpOnly) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   SetTurnServer(turn_server_, kDefaultStunServerPort,
                 turn_user_, turn_password_, kNrIceTransportTcp);
   ASSERT_TRUE(Gather());
@@ -3229,7 +3454,7 @@ TEST_F(WebRtcIceConnectTest, TestSendReceiveTurnBothOnly) {
   if (turn_server_.empty())
     return;
 
-  AddStream("first", 1);
+  AddStream(1);
   std::vector<NrIceTurnServer> turn_servers;
   std::vector<unsigned char> password_vec(turn_password_.begin(),
                                           turn_password_.end());
@@ -3251,13 +3476,13 @@ TEST_F(WebRtcIceConnectTest, TestSendReceiveTurnBothOnly) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestConnectShutdownOneSide) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   ConnectThenDelete();
 }
 
 TEST_F(WebRtcIceConnectTest, TestPollCandPairsBeforeConnect) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 
   std::vector<NrIceCandidatePair> pairs;
@@ -3272,7 +3497,7 @@ TEST_F(WebRtcIceConnectTest, TestPollCandPairsBeforeConnect) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestPollCandPairsAfterConnect) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   Connect();
 
@@ -3298,7 +3523,7 @@ TEST_F(WebRtcIceConnectTest, TestPollCandPairsAfterConnect) {
 // candidates from different RFC1918 ranges
 TEST_F(WebRtcIceConnectTest, DISABLED_TestHostCandPairingFilter) {
   Init(false, false, false, false);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsIpv4Candidate);
 
@@ -3332,7 +3557,7 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestSrflxCandPairingFilter) {
   }
 
   Init(false, false, false, false);
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
   SetCandidateFilter(IsSrflxCandidate);
 
@@ -3370,7 +3595,7 @@ TEST_F(WebRtcIceConnectTest, DISABLED_TestSrflxCandPairingFilter) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestPollCandPairsDuringConnect) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 
   p2_->Connect(p1_.get(), TRICKLE_NONE, false);
@@ -3395,7 +3620,7 @@ TEST_F(WebRtcIceConnectTest, TestPollCandPairsDuringConnect) {
 }
 
 TEST_F(WebRtcIceConnectTest, TestRLogRingBuffer) {
-  AddStream("first", 1);
+  AddStream(1);
   ASSERT_TRUE(Gather());
 
   p2_->Connect(p1_.get(), TRICKLE_NONE, false);

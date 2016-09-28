@@ -16,6 +16,7 @@
 #include "nsWrapperCache.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/BindingDeclarations.h"
+#include "mozilla/dom/DOMTokenListSupportedTokens.h"
 
 namespace mozilla {
 class ErrorResult;
@@ -37,7 +38,8 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(nsDOMTokenList)
 
-  nsDOMTokenList(Element* aElement, nsIAtom* aAttrAtom);
+  nsDOMTokenList(Element* aElement, nsIAtom* aAttrAtom,
+                 const mozilla::dom::DOMTokenListSupportedTokenArray = nullptr);
 
   virtual JSObject* WrapObject(JSContext *cx, JS::Handle<JSObject*> aGivenProto) override;
 
@@ -56,17 +58,22 @@ public:
     }
   }
   void IndexedGetter(uint32_t aIndex, bool& aFound, nsAString& aResult);
-  bool Contains(const nsAString& aToken, mozilla::ErrorResult& aError);
+  bool Contains(const nsAString& aToken);
   void Add(const nsAString& aToken, mozilla::ErrorResult& aError);
   void Add(const nsTArray<nsString>& aTokens,
            mozilla::ErrorResult& aError);
   void Remove(const nsAString& aToken, mozilla::ErrorResult& aError);
   void Remove(const nsTArray<nsString>& aTokens,
               mozilla::ErrorResult& aError);
+  void Replace(const nsAString& aToken,
+               const nsAString& aNewToken,
+               mozilla::ErrorResult& aError);
   bool Toggle(const nsAString& aToken,
               const mozilla::dom::Optional<bool>& force,
               mozilla::ErrorResult& aError);
-  
+  bool Supports(const nsAString& aToken,
+                mozilla::ErrorResult& aError);
+
   void GetValue(nsAString& aResult) { Stringify(aResult); }
   void SetValue(const nsAString& aValue, mozilla::ErrorResult& rv);
   void Stringify(nsAString& aResult);
@@ -84,6 +91,7 @@ protected:
 
   nsCOMPtr<Element> mElement;
   nsCOMPtr<nsIAtom> mAttrAtom;
+  const mozilla::dom::DOMTokenListSupportedTokenArray mSupportedTokens;
 };
 
 #endif // nsDOMTokenList_h___

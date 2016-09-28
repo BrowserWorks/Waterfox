@@ -195,6 +195,36 @@ class LSimdUnbox : public LInstructionHelper<1, 1, 1>
     }
 };
 
+// Constructs a SIMD value with 16 equal components (int8x16).
+class LSimdSplatX16 : public LInstructionHelper<1, 1, 0>
+{
+  public:
+    LIR_HEADER(SimdSplatX16)
+    explicit LSimdSplatX16(const LAllocation& v)
+    {
+        setOperand(0, v);
+    }
+
+    MSimdSplat* mir() const {
+        return mir_->toSimdSplat();
+    }
+};
+
+// Constructs a SIMD value with 8 equal components (int16x8).
+class LSimdSplatX8 : public LInstructionHelper<1, 1, 0>
+{
+  public:
+    LIR_HEADER(SimdSplatX8)
+    explicit LSimdSplatX8(const LAllocation& v)
+    {
+        setOperand(0, v);
+    }
+
+    MSimdSplat* mir() const {
+        return mir_->toSimdSplat();
+    }
+};
+
 // Constructs a SIMD value with 4 equal components (e.g. int32x4, float32x4).
 class LSimdSplatX4 : public LInstructionHelper<1, 1, 0>
 {
@@ -205,8 +235,8 @@ class LSimdSplatX4 : public LInstructionHelper<1, 1, 0>
         setOperand(0, v);
     }
 
-    MSimdSplatX4* mir() const {
-        return mir_->toSimdSplatX4();
+    MSimdSplat* mir() const {
+        return mir_->toSimdSplat();
     }
 };
 
@@ -236,17 +266,8 @@ class LSimdExtractElementBase : public LInstructionHelper<1, 1, 0>
     const LAllocation* getBase() {
         return getOperand(0);
     }
-    SimdLane lane() const {
-        return mir_->toSimdExtractElement()->lane();
-    }
-    const char* extraName() const {
-        switch (lane()) {
-          case LaneX: return "lane x";
-          case LaneY: return "lane y";
-          case LaneZ: return "lane z";
-          case LaneW: return "lane w";
-        }
-        return "unknown lane";
+    MSimdExtractElement* mir() const {
+        return mir_->toSimdExtractElement();
     }
 };
 
@@ -289,8 +310,8 @@ class LSimdExtractElementU2D : public LInstructionHelper<1, 1, 1>
         setOperand(0, base);
         setTemp(0, temp);
     }
-    SimdLane lane() const {
-        return mir_->toSimdExtractElement()->lane();
+    MSimdExtractElement* mir() const {
+        return mir_->toSimdExtractElement();
     }
     const LDefinition* temp() {
         return getTemp(0);
@@ -314,11 +335,11 @@ class LSimdInsertElementBase : public LInstructionHelper<1, 2, 0>
     const LAllocation* value() {
         return getOperand(1);
     }
-    SimdLane lane() const {
+    unsigned lane() const {
         return mir_->toSimdInsertElement()->lane();
     }
-    const char* extraName() const {
-        return MSimdInsertElement::LaneName(lane());
+    unsigned length() const {
+        return SimdTypeToLength(mir_->toSimdInsertElement()->type());
     }
 };
 
@@ -344,7 +365,7 @@ class LSimdInsertElementF : public LSimdInsertElementBase
 };
 
 // Base class for both int32x4 and float32x4 shuffle instructions.
-class LSimdSwizzleBase : public LInstructionHelper<1, 1, 0>
+class LSimdSwizzleBase : public LInstructionHelper<1, 1, 1>
 {
   public:
     explicit LSimdSwizzleBase(const LAllocation& base)
@@ -356,10 +377,8 @@ class LSimdSwizzleBase : public LInstructionHelper<1, 1, 0>
         return getOperand(0);
     }
 
-    uint32_t laneX() const { return mir_->toSimdSwizzle()->laneX(); }
-    uint32_t laneY() const { return mir_->toSimdSwizzle()->laneY(); }
-    uint32_t laneZ() const { return mir_->toSimdSwizzle()->laneZ(); }
-    uint32_t laneW() const { return mir_->toSimdSwizzle()->laneW(); }
+    unsigned numLanes() const { return mir_->toSimdSwizzle()->numLanes(); }
+    uint32_t lane(unsigned i) const { return mir_->toSimdSwizzle()->lane(i); }
 
     bool lanesMatch(uint32_t x, uint32_t y, uint32_t z, uint32_t w) const {
         return mir_->toSimdSwizzle()->lanesMatch(x, y, z, w);
@@ -424,6 +443,31 @@ class LSimdGeneralShuffleF : public LSimdGeneralShuffleBase
 };
 
 // Base class for both int32x4 and float32x4 shuffle instructions.
+class LSimdShuffleX4 : public LInstructionHelper<1, 2, 1>
+{
+  public:
+    LIR_HEADER(SimdShuffleX4);
+    LSimdShuffleX4()
+    {}
+
+    const LAllocation* lhs() {
+        return getOperand(0);
+    }
+    const LAllocation* rhs() {
+        return getOperand(1);
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
+
+    uint32_t lane(unsigned i) const { return mir_->toSimdShuffle()->lane(i); }
+
+    bool lanesMatch(uint32_t x, uint32_t y, uint32_t z, uint32_t w) const {
+        return mir_->toSimdShuffle()->lanesMatch(x, y, z, w);
+    }
+};
+
+// Remaining shuffles (8x16, 16x8).
 class LSimdShuffle : public LInstructionHelper<1, 2, 1>
 {
   public:
@@ -441,14 +485,8 @@ class LSimdShuffle : public LInstructionHelper<1, 2, 1>
         return getTemp(0);
     }
 
-    uint32_t laneX() const { return mir_->toSimdShuffle()->laneX(); }
-    uint32_t laneY() const { return mir_->toSimdShuffle()->laneY(); }
-    uint32_t laneZ() const { return mir_->toSimdShuffle()->laneZ(); }
-    uint32_t laneW() const { return mir_->toSimdShuffle()->laneW(); }
-
-    bool lanesMatch(uint32_t x, uint32_t y, uint32_t z, uint32_t w) const {
-        return mir_->toSimdShuffle()->lanesMatch(x, y, z, w);
-    }
+    unsigned numLanes() const { return mir_->toSimdShuffle()->numLanes(); }
+    unsigned lane(unsigned i) const { return mir_->toSimdShuffle()->lane(i); }
 };
 
 // Binary SIMD comparison operation between two SIMD operands
@@ -472,7 +510,23 @@ public:
     }
 };
 
-// Binary SIMD comparison operation between two Int32x4 operands
+// Binary SIMD comparison operation between two Int8x16 operands.
+class LSimdBinaryCompIx16 : public LSimdBinaryComp
+{
+  public:
+    LIR_HEADER(SimdBinaryCompIx16);
+    LSimdBinaryCompIx16() : LSimdBinaryComp() {}
+};
+
+// Binary SIMD comparison operation between two Int16x8 operands.
+class LSimdBinaryCompIx8 : public LSimdBinaryComp
+{
+  public:
+    LIR_HEADER(SimdBinaryCompIx8);
+    LSimdBinaryCompIx8() : LSimdBinaryComp() {}
+};
+
+// Binary SIMD comparison operation between two Int32x4 operands.
 class LSimdBinaryCompIx4 : public LSimdBinaryComp
 {
   public:
@@ -512,6 +566,22 @@ class LSimdBinaryArith : public LInstructionHelper<1, 2, 1>
     }
 };
 
+// Binary SIMD arithmetic operation between two Int8x16 operands
+class LSimdBinaryArithIx16 : public LSimdBinaryArith
+{
+  public:
+    LIR_HEADER(SimdBinaryArithIx16);
+    LSimdBinaryArithIx16() : LSimdBinaryArith() {}
+};
+
+// Binary SIMD arithmetic operation between two Int16x8 operands
+class LSimdBinaryArithIx8 : public LSimdBinaryArith
+{
+  public:
+    LIR_HEADER(SimdBinaryArithIx8);
+    LSimdBinaryArithIx8() : LSimdBinaryArith() {}
+};
+
 // Binary SIMD arithmetic operation between two Int32x4 operands
 class LSimdBinaryArithIx4 : public LSimdBinaryArith
 {
@@ -528,6 +598,34 @@ class LSimdBinaryArithFx4 : public LSimdBinaryArith
     LSimdBinaryArithFx4() : LSimdBinaryArith() {}
 };
 
+// Binary SIMD saturating arithmetic operation between two SIMD operands
+class LSimdBinarySaturating : public LInstructionHelper<1, 2, 0>
+{
+  public:
+    LIR_HEADER(SimdBinarySaturating);
+    LSimdBinarySaturating() {}
+
+    const LAllocation* lhs() {
+        return this->getOperand(0);
+    }
+    const LAllocation* rhs() {
+        return this->getOperand(1);
+    }
+
+    MSimdBinarySaturating::Operation operation() const {
+        return this->mir_->toSimdBinarySaturating()->operation();
+    }
+    SimdSign signedness() const {
+        return this->mir_->toSimdBinarySaturating()->signedness();
+    }
+    MIRType type() const {
+        return mir_->type();
+    }
+    const char* extraName() const {
+        return MSimdBinarySaturating::OperationName(operation());
+    }
+};
+
 // Unary SIMD arithmetic operation on a SIMD operand
 class LSimdUnaryArith : public LInstructionHelper<1, 1, 0>
 {
@@ -538,6 +636,22 @@ class LSimdUnaryArith : public LInstructionHelper<1, 1, 0>
     MSimdUnaryArith::Operation operation() const {
         return mir_->toSimdUnaryArith()->operation();
     }
+};
+
+// Unary SIMD arithmetic operation on a Int8x16 operand
+class LSimdUnaryArithIx16 : public LSimdUnaryArith
+{
+  public:
+    LIR_HEADER(SimdUnaryArithIx16);
+    explicit LSimdUnaryArithIx16(const LAllocation& in) : LSimdUnaryArith(in) {}
+};
+
+// Unary SIMD arithmetic operation on a Int16x8 operand
+class LSimdUnaryArithIx8 : public LSimdUnaryArith
+{
+  public:
+    LIR_HEADER(SimdUnaryArithIx8);
+    explicit LSimdUnaryArithIx8(const LAllocation& in) : LSimdUnaryArith(in) {}
 };
 
 // Unary SIMD arithmetic operation on a Int32x4 operand
@@ -556,11 +670,11 @@ class LSimdUnaryArithFx4 : public LSimdUnaryArith
     explicit LSimdUnaryArithFx4(const LAllocation& in) : LSimdUnaryArith(in) {}
 };
 
-// Binary SIMD bitwise operation between two int32x4 or float32x4 operands
-class LSimdBinaryBitwiseX4 : public LInstructionHelper<1, 2, 0>
+// Binary SIMD bitwise operation between two 128-bit operands.
+class LSimdBinaryBitwise : public LInstructionHelper<1, 2, 0>
 {
   public:
-    LIR_HEADER(SimdBinaryBitwiseX4);
+    LIR_HEADER(SimdBinaryBitwise);
     const LAllocation* lhs() {
         return getOperand(0);
     }
@@ -607,6 +721,9 @@ class LSimdShift : public LInstructionHelper<1, 2, 1>
     }
     MSimdShift* mir() const {
         return mir_->toSimdShift();
+    }
+    MIRType type() const {
+        return mir_->type();
     }
 };
 
@@ -768,23 +885,24 @@ class LFloat32 : public LInstructionHelper<1, 0, 0>
     }
 };
 
-// Constant SIMD int32x4. Also used for bool32x4.
-class LInt32x4 : public LInstructionHelper<1, 0, 0>
+// Constant 128-bit SIMD integer vector (8x16, 16x8, 32x4).
+// Also used for Bool32x4, Bool16x8, etc.
+class LSimd128Int : public LInstructionHelper<1, 0, 0>
 {
   public:
-    LIR_HEADER(Int32x4);
+    LIR_HEADER(Simd128Int);
 
-    explicit LInt32x4() {}
+    explicit LSimd128Int() {}
     const SimdConstant& getValue() const { return mir_->toSimdConstant()->value(); }
 };
 
-// Constant SIMD float32x4.
-class LFloat32x4 : public LInstructionHelper<1, 0, 0>
+// Constant 128-bit SIMD floating point vector (32x4, 64x2).
+class LSimd128Float : public LInstructionHelper<1, 0, 0>
 {
   public:
-    LIR_HEADER(Float32x4);
+    LIR_HEADER(Simd128Float);
 
-    explicit LFloat32x4() {}
+    explicit LSimd128Float() {}
     const SimdConstant& getValue() const { return mir_->toSimdConstant()->value(); }
 };
 
@@ -1295,6 +1413,32 @@ class LAsmReinterpretToI64 : public LAsmReinterpretBase<INT64_PIECES, 1>
     explicit LAsmReinterpretToI64(const LAllocation& input) {
         setOperand(0, input);
     }
+};
+
+namespace details {
+    template<size_t Defs, size_t Ops>
+    class RotateBase : public LInstructionHelper<Defs, Ops, 0>
+    {
+        typedef LInstructionHelper<Defs, Ops, 0> Base;
+      public:
+        MRotate* mir() {
+            return Base::mir_->toRotate();
+        }
+        const LAllocation* input() { return Base::getOperand(0); }
+        const LAllocation* count() { return Base::getOperand(1); }
+    };
+} // details
+
+class LRotate : public details::RotateBase<1, 2>
+{
+  public:
+    LIR_HEADER(Rotate);
+};
+
+class LRotate64 : public details::RotateBase<INT64_PIECES, INT64_PIECES + 1>
+{
+  public:
+    LIR_HEADER(Rotate64);
 };
 
 class LInterruptCheck : public LInstructionHelper<0, 0, 0>
@@ -2874,6 +3018,17 @@ class LNotI : public LInstructionHelper<1, 1, 0>
     }
 };
 
+// Not operation on an int64.
+class LNotI64 : public LInstructionHelper<1, INT64_PIECES, 0>
+{
+  public:
+    LIR_HEADER(NotI64)
+
+    explicit LNotI64(const LInt64Allocation& input) {
+        setInt64Operand(0, input);
+    }
+};
+
 // Not operation on a double.
 class LNotD : public LInstructionHelper<1, 1, 0>
 {
@@ -3244,7 +3399,7 @@ class LAbsF : public LInstructionHelper<1, 1, 0>
     }
 };
 
-// Count leading zeroes
+// Count leading zeroes on an int32.
 class LClzI : public LInstructionHelper<1, 1, 0>
 {
   public:
@@ -3258,7 +3413,21 @@ class LClzI : public LInstructionHelper<1, 1, 0>
     }
 };
 
-// Count trailing zeroes
+// Count leading zeroes on an int64.
+class LClzI64 : public LInstructionHelper<INT64_PIECES, INT64_PIECES, 0>
+{
+  public:
+    LIR_HEADER(ClzI64)
+    explicit LClzI64(const LInt64Allocation& num) {
+        setInt64Operand(0, num);
+    }
+
+    MClz* mir() const {
+        return mir_->toClz();
+    }
+};
+
+// Count trailing zeroes on an int32.
 class LCtzI : public LInstructionHelper<1, 1, 0>
 {
   public:
@@ -3272,7 +3441,21 @@ class LCtzI : public LInstructionHelper<1, 1, 0>
     }
 };
 
-// Count population
+// Count trailing zeroes on an int64.
+class LCtzI64 : public LInstructionHelper<INT64_PIECES, INT64_PIECES, 0>
+{
+  public:
+    LIR_HEADER(CtzI64)
+    explicit LCtzI64(const LInt64Allocation& num) {
+        setInt64Operand(0, num);
+    }
+
+    MCtz* mir() const {
+        return mir_->toCtz();
+    }
+};
+
+// Count population on an int32.
 class LPopcntI : public LInstructionHelper<1, 1, 1>
 {
   public:
@@ -3288,6 +3471,21 @@ class LPopcntI : public LInstructionHelper<1, 1, 1>
 
     const LDefinition* temp() {
         return getTemp(0);
+    }
+};
+
+// Count population on an int64.
+class LPopcntI64 : public LInstructionHelper<INT64_PIECES, INT64_PIECES, 1>
+{
+  public:
+    LIR_HEADER(PopcntI64)
+    explicit LPopcntI64(const LInt64Allocation& num, const LInt64Definition& temp) {
+        setInt64Operand(0, num);
+        setInt64Temp(0, temp);
+    }
+
+    MPopcnt* mir() const {
+        return mir_->toPopcnt();
     }
 };
 
@@ -4013,6 +4211,20 @@ class LTruncateFToInt32 : public LInstructionHelper<1, 1, 1>
     }
 };
 
+class LWasmTruncateToInt32 : public LInstructionHelper<1, 1, 0>
+{
+  public:
+    LIR_HEADER(WasmTruncateToInt32)
+
+    explicit LWasmTruncateToInt32(const LAllocation& in) {
+        setOperand(0, in);
+    }
+
+    MWasmTruncateToInt32* mir() const {
+        return mir_->toWasmTruncateToInt32();
+    }
+};
+
 class LWrapInt64ToInt32 : public LInstructionHelper<1, INT64_PIECES, 0>
 {
   public:
@@ -4310,18 +4522,17 @@ class LRegExp : public LCallInstructionHelper<1, 0, 0>
     }
 };
 
-class LRegExpMatcher : public LCallInstructionHelper<BOX_PIECES, 4, 0>
+class LRegExpMatcher : public LCallInstructionHelper<BOX_PIECES, 3, 0>
 {
   public:
     LIR_HEADER(RegExpMatcher)
 
     LRegExpMatcher(const LAllocation& regexp, const LAllocation& string,
-                   const LAllocation& lastIndex, const LAllocation& sticky)
+                   const LAllocation& lastIndex)
     {
         setOperand(0, regexp);
         setOperand(1, string);
         setOperand(2, lastIndex);
-        setOperand(3, sticky);
     }
 
     const LAllocation* regexp() {
@@ -4332,9 +4543,6 @@ class LRegExpMatcher : public LCallInstructionHelper<BOX_PIECES, 4, 0>
     }
     const LAllocation* lastIndex() {
         return getOperand(2);
-    }
-    const LAllocation* sticky() {
-        return getOperand(3);
     }
 
     const MRegExpMatcher* mir() const {
@@ -4342,19 +4550,17 @@ class LRegExpMatcher : public LCallInstructionHelper<BOX_PIECES, 4, 0>
     }
 };
 
-class LRegExpTester : public LCallInstructionHelper<1, 4, 0>
+class LRegExpSearcher : public LCallInstructionHelper<1, 3, 0>
 {
   public:
-    LIR_HEADER(RegExpTester)
-    //tODO
+    LIR_HEADER(RegExpSearcher)
 
-    LRegExpTester(const LAllocation& regexp, const LAllocation& string,
-                  const LAllocation& lastIndex, const LAllocation& sticky)
+    LRegExpSearcher(const LAllocation& regexp, const LAllocation& string,
+                    const LAllocation& lastIndex)
     {
         setOperand(0, regexp);
         setOperand(1, string);
         setOperand(2, lastIndex);
-        setOperand(3, sticky);
     }
 
     const LAllocation* regexp() {
@@ -4366,8 +4572,33 @@ class LRegExpTester : public LCallInstructionHelper<1, 4, 0>
     const LAllocation* lastIndex() {
         return getOperand(2);
     }
-    const LAllocation* sticky() {
-        return getOperand(3);
+
+    const MRegExpSearcher* mir() const {
+        return mir_->toRegExpSearcher();
+    }
+};
+
+class LRegExpTester : public LCallInstructionHelper<1, 3, 0>
+{
+  public:
+    LIR_HEADER(RegExpTester)
+
+    LRegExpTester(const LAllocation& regexp, const LAllocation& string,
+                  const LAllocation& lastIndex)
+    {
+        setOperand(0, regexp);
+        setOperand(1, string);
+        setOperand(2, lastIndex);
+    }
+
+    const LAllocation* regexp() {
+        return getOperand(0);
+    }
+    const LAllocation* string() {
+        return getOperand(1);
+    }
+    const LAllocation* lastIndex() {
+        return getOperand(2);
     }
 
     const MRegExpTester* mir() const {
@@ -4375,16 +4606,92 @@ class LRegExpTester : public LCallInstructionHelper<1, 4, 0>
     }
 };
 
-
-class LStrReplace : public LCallInstructionHelper<1, 3, 0>
+class LRegExpPrototypeOptimizable : public LInstructionHelper<1, 1, 1>
 {
   public:
-    LStrReplace(const LAllocation& string, const LAllocation& pattern,
+    LIR_HEADER(RegExpPrototypeOptimizable);
+    explicit LRegExpPrototypeOptimizable(const LAllocation& object, const LDefinition& temp) {
+        setOperand(0, object);
+        setTemp(0, temp);
+    }
+
+    const LAllocation* object() {
+        return getOperand(0);
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
+    MRegExpPrototypeOptimizable* mir() const {
+        return mir_->toRegExpPrototypeOptimizable();
+    }
+};
+
+class LRegExpInstanceOptimizable : public LInstructionHelper<1, 2, 1>
+{
+  public:
+    LIR_HEADER(RegExpInstanceOptimizable);
+    explicit LRegExpInstanceOptimizable(const LAllocation& object, const LAllocation& proto,
+                                        const LDefinition& temp) {
+        setOperand(0, object);
+        setOperand(1, proto);
+        setTemp(0, temp);
+    }
+
+    const LAllocation* object() {
+        return getOperand(0);
+    }
+    const LAllocation* proto() {
+        return getOperand(1);
+    }
+    const LDefinition* temp() {
+        return getTemp(0);
+    }
+    MRegExpInstanceOptimizable* mir() const {
+        return mir_->toRegExpInstanceOptimizable();
+    }
+};
+
+class LGetFirstDollarIndex : public LInstructionHelper<1, 1, 3>
+{
+  public:
+    LIR_HEADER(GetFirstDollarIndex);
+    explicit LGetFirstDollarIndex(const LAllocation& str, const LDefinition& temp0,
+                                  const LDefinition& temp1, const LDefinition& temp2) {
+        setOperand(0, str);
+        setTemp(0, temp0);
+        setTemp(1, temp1);
+        setTemp(2, temp2);
+    }
+
+    const LAllocation* str() {
+        return getOperand(0);
+    }
+    const LDefinition* temp0() {
+        return getTemp(0);
+    }
+    const LDefinition* temp1() {
+        return getTemp(1);
+    }
+    const LDefinition* temp2() {
+        return getTemp(2);
+    }
+};
+
+class LStringReplace: public LCallInstructionHelper<1, 3, 0>
+{
+  public:
+    LIR_HEADER(StringReplace);
+
+    LStringReplace(const LAllocation& string, const LAllocation& pattern,
                    const LAllocation& replacement)
     {
         setOperand(0, string);
         setOperand(1, pattern);
         setOperand(2, replacement);
+    }
+
+    const MStringReplace* mir() const {
+        return mir_->toStringReplace();
     }
 
     const LAllocation* string() {
@@ -4395,38 +4702,6 @@ class LStrReplace : public LCallInstructionHelper<1, 3, 0>
     }
     const LAllocation* replacement() {
         return getOperand(2);
-    }
-};
-
-class LRegExpReplace: public LStrReplace
-{
-  public:
-    LIR_HEADER(RegExpReplace);
-
-    LRegExpReplace(const LAllocation& string, const LAllocation& pattern,
-                   const LAllocation& replacement)
-      : LStrReplace(string, pattern, replacement)
-    {
-    }
-
-    const MRegExpReplace* mir() const {
-        return mir_->toRegExpReplace();
-    }
-};
-
-class LStringReplace: public LStrReplace
-{
-  public:
-    LIR_HEADER(StringReplace);
-
-    LStringReplace(const LAllocation& string, const LAllocation& pattern,
-                   const LAllocation& replacement)
-      : LStrReplace(string, pattern, replacement)
-    {
-    }
-
-    const MStringReplace* mir() const {
-        return mir_->toStringReplace();
     }
 };
 

@@ -17,13 +17,6 @@
 
 using mozilla::net::gNeckoChild;
 
-//
-// set NSPR_LOG_MODULES=UDPSocket:5
-//
-extern mozilla::LazyLogModule gUDPSocketLog;
-#define UDPSOCKET_LOG(args)     MOZ_LOG(gUDPSocketLog, mozilla::LogLevel::Debug, args)
-#define UDPSOCKET_LOG_ENABLED() MOZ_LOG_TEST(gUDPSocketLog, mozilla::LogLevel::Debug)
-
 namespace mozilla {
 namespace dom {
 
@@ -172,7 +165,8 @@ UDPSocketChild::Bind(nsIUDPSocketInternal* aSocket,
                      uint16_t aPort,
                      bool aAddressReuse,
                      bool aLoopback,
-                     uint32_t recvBufferSize)
+                     uint32_t recvBufferSize,
+                     uint32_t sendBufferSize)
 {
   UDPSOCKET_LOG(("%s: %s:%u", __FUNCTION__, PromiseFlatCString(aHost).get(), aPort));
 
@@ -191,7 +185,8 @@ UDPSocketChild::Bind(nsIUDPSocketInternal* aSocket,
                                            mFilterName);
   }
 
-  SendBind(UDPAddressInfo(nsCString(aHost), aPort), aAddressReuse, aLoopback, recvBufferSize);
+  SendBind(UDPAddressInfo(nsCString(aHost), aPort), aAddressReuse, aLoopback,
+           recvBufferSize, sendBufferSize);
   return NS_OK;
 }
 

@@ -10,7 +10,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
@@ -121,7 +125,7 @@ function test() {
       waitForThreadEvents(gPanel, "paused").then(() => {
         waitForDebuggerEvents(gPanel, gDebugger.EVENTS.SOURCE_SHOWN).then(deferred.resolve);
         gDebugger.gThreadClient.stepOut();
-      })
+      });
       gDebugger.gThreadClient.stepOut();
 
       return deferred.promise;
@@ -146,8 +150,7 @@ function test() {
          "The debugged line is highlighted appropriately (3). (4)");
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "-01.js", 1);
+    Task.spawn(function* () {
       ok(gDebugger.document.title.endsWith(EXAMPLE_URL + gLabel1),
          "Title with first source is correct.");
 

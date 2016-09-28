@@ -62,7 +62,7 @@ static LazyLogModule prlog("BackgroundFileSaver");
  * Runnable object used to notify the control thread that file contents will now
  * be saved to the specified file.
  */
-class NotifyTargetChangeRunnable final : public nsRunnable
+class NotifyTargetChangeRunnable final : public Runnable
 {
 public:
   NotifyTargetChangeRunnable(BackgroundFileSaver *aSaver, nsIFile *aTarget)
@@ -127,10 +127,7 @@ BackgroundFileSaver::~BackgroundFileSaver()
 void
 BackgroundFileSaver::destructorSafeDestroyNSSReference()
 {
-  if (mDigestContext) {
-    mozilla::psm::PK11_DestroyContext_true(mDigestContext.forget());
-    mDigestContext = nullptr;
-  }
+  mDigestContext = nullptr;
 }
 
 void
@@ -327,11 +324,9 @@ BackgroundFileSaver::GetWorkerThreadAttention(bool aShouldInterruptCopy)
 
   if (!mAsyncCopyContext) {
     // Copy is not in progress, post an event to handle the change manually.
-    nsCOMPtr<nsIRunnable> event =
-      NS_NewRunnableMethod(this, &BackgroundFileSaver::ProcessAttention);
-    NS_ENSURE_TRUE(event, NS_ERROR_FAILURE);
-
-    rv = mWorkerThread->Dispatch(event, NS_DISPATCH_NORMAL);
+    rv = mWorkerThread->Dispatch(NewRunnableMethod(this,
+                                                   &BackgroundFileSaver::ProcessAttention),
+                                 NS_DISPATCH_NORMAL);
     NS_ENSURE_SUCCESS(rv, rv);
   } else if (aShouldInterruptCopy) {
     // Interrupt the copy.  The copy will be resumed, if needed, by the
@@ -556,8 +551,8 @@ BackgroundFileSaver::ProcessStateChange()
   if (sha256Enabled && !mDigestContext) {
     nsNSSShutDownPreventionLock lock;
     if (!isAlreadyShutDown()) {
-      mDigestContext =
-        PK11_CreateDigestContext(static_cast<SECOidTag>(SEC_OID_SHA256));
+      mDigestContext = UniquePK11Context(
+        PK11_CreateDigestContext(SEC_OID_SHA256));
       NS_ENSURE_TRUE(mDigestContext, NS_ERROR_OUT_OF_MEMORY);
     }
   }
@@ -588,7 +583,7 @@ BackgroundFileSaver::ProcessStateChange()
           return NS_ERROR_NOT_AVAILABLE;
         }
 
-        nsresult rv = MapSECStatus(PK11_DigestOp(mDigestContext,
+        nsresult rv = MapSECStatus(PK11_DigestOp(mDigestContext.get(),
                                                  uint8_t_ptr_cast(buffer),
                                                  count));
         NS_ENSURE_SUCCESS(rv, rv);
@@ -634,7 +629,7 @@ BackgroundFileSaver::ProcessStateChange()
     // the outputStream. BackgroundFileSaver is reference-counted before the
     // call to AsyncCopy, and mDigestContext is never destroyed before
     // AsyncCopyCallback.
-    outputStream = new DigestOutputStream(outputStream, mDigestContext);
+    outputStream = new DigestOutputStream(outputStream, mDigestContext.get());
   }
 
   // Start copying our input to the target file.  No errors can be raised past
@@ -749,10 +744,9 @@ BackgroundFileSaver::CheckCompletion()
   }
 
   // Post an event to notify that the operation completed.
-  nsCOMPtr<nsIRunnable> event =
-    NS_NewRunnableMethod(this, &BackgroundFileSaver::NotifySaveComplete);
-  if (!event ||
-      NS_FAILED(mControlThread->Dispatch(event, NS_DISPATCH_NORMAL))) {
+  if (NS_FAILED(mControlThread->Dispatch(NewRunnableMethod(this,
+                                                           &BackgroundFileSaver::NotifySaveComplete),
+                                         NS_DISPATCH_NORMAL))) {
     NS_WARNING("Unable to post completion event to the control thread.");
   }
 
@@ -1156,10 +1150,9 @@ BackgroundFileSaverStreamListener::AsyncCopyProgressCallback(void *aClosure,
       self->mReceivedTooMuchData = false;
 
       // Post an event to verify if the request should be resumed.
-      nsCOMPtr<nsIRunnable> event = NS_NewRunnableMethod(self,
-        &BackgroundFileSaverStreamListener::NotifySuspendOrResume);
-      if (!event || NS_FAILED(self->mControlThread->Dispatch(event,
-                                                    NS_DISPATCH_NORMAL))) {
+      if (NS_FAILED(self->mControlThread->Dispatch(NewRunnableMethod(self,
+                                                                     &BackgroundFileSaverStreamListener::NotifySuspendOrResume),
+                                                   NS_DISPATCH_NORMAL))) {
         NS_WARNING("Unable to post resume event to the control thread.");
       }
     }

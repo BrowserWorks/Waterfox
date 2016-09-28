@@ -125,11 +125,9 @@ AudioStream::AudioStream(DataSource& aSource)
   , mOutRate(0)
   , mChannels(0)
   , mOutChannels(0)
-  , mAudioClock(this)
   , mTimeStretcher(nullptr)
   , mDumpFile(nullptr)
   , mState(INITIALIZED)
-  , mIsMonoAudioEnabled(gfxPrefs::MonoAudio())
   , mDataSource(aSource)
 {
 }
@@ -189,7 +187,7 @@ nsresult AudioStream::SetPlaybackRate(double aPlaybackRate)
     return NS_ERROR_FAILURE;
   }
 
-  mAudioClock.SetPlaybackRateUnlocked(aPlaybackRate);
+  mAudioClock.SetPlaybackRate(aPlaybackRate);
   mOutRate = mInRate / aPlaybackRate;
 
   if (mAudioClock.GetPreservesPitch()) {
@@ -316,22 +314,24 @@ struct ToCubebFormat<AUDIO_FORMAT_S16> {
   static const cubeb_sample_format value = CUBEB_SAMPLE_S16NE;
 };
 
+template <typename Function, typename... Args>
+int AudioStream::InvokeCubeb(Function aFunction, Args&&... aArgs)
+{
+  MonitorAutoUnlock mon(mMonitor);
+  return aFunction(mCubebStream.get(), Forward<Args>(aArgs)...);
+}
+
 nsresult
 AudioStream::Init(uint32_t aNumChannels, uint32_t aRate,
                   const dom::AudioChannel aAudioChannel)
 {
-  mStartTime = TimeStamp::Now();
-  mIsFirst = CubebUtils::GetFirstStream();
+  auto startTime = TimeStamp::Now();
+  auto isFirst = CubebUtils::GetFirstStream();
 
-  if (!CubebUtils::GetCubebContext()) {
-    return NS_ERROR_FAILURE;
-  }
-
-  MOZ_LOG(gAudioStreamLog, LogLevel::Debug,
-    ("%s  channels: %d, rate: %d for %p", __FUNCTION__, aNumChannels, aRate, this));
+  LOG("%s channels: %d, rate: %d", __FUNCTION__, aNumChannels, aRate);
   mInRate = mOutRate = aRate;
   mChannels = aNumChannels;
-  mOutChannels = mIsMonoAudioEnabled ? 1 : aNumChannels;
+  mOutChannels = aNumChannels;
 
   mDumpFile = OpenDumpFile(this);
 
@@ -351,59 +351,37 @@ AudioStream::Init(uint32_t aNumChannels, uint32_t aRate,
 #endif
 
   params.format = ToCubebFormat<AUDIO_OUTPUT_FORMAT>::value;
-  mAudioClock.Init();
+  mAudioClock.Init(aRate);
 
-  if (mIsMonoAudioEnabled) {
-    AudioConfig inConfig(mChannels, mInRate);
-    AudioConfig outConfig(mOutChannels, mOutRate);
-    mAudioConverter = MakeUnique<AudioConverter>(inConfig, outConfig);
-  }
-  return OpenCubeb(params);
+  return OpenCubeb(params, startTime, isFirst);
 }
 
-// This code used to live inside AudioStream::Init(), but on Mac (others?)
-// it has been known to take 300-800 (or even 8500) ms to execute(!)
 nsresult
-AudioStream::OpenCubeb(cubeb_stream_params &aParams)
+AudioStream::OpenCubeb(cubeb_stream_params& aParams,
+                       TimeStamp aStartTime, bool aIsFirst)
 {
   cubeb* cubebContext = CubebUtils::GetCubebContext();
   if (!cubebContext) {
     NS_WARNING("Can't get cubeb context!");
-    MonitorAutoLock mon(mMonitor);
-    mState = AudioStream::ERRORED;
     return NS_ERROR_FAILURE;
   }
 
-  // If the latency pref is set, use it. Otherwise, if this stream is intended
-  // for low latency playback, try to get the lowest latency possible.
-  // Otherwise, for normal streams, use 100ms.
-  uint32_t latency = CubebUtils::GetCubebLatency();
-
-  {
-    cubeb_stream* stream;
-    if (cubeb_stream_init(cubebContext, &stream, "AudioStream",
-                          nullptr, nullptr, nullptr, &aParams,
-                          latency, DataCallback_S, StateCallback_S, this) == CUBEB_OK) {
-      MonitorAutoLock mon(mMonitor);
-      MOZ_ASSERT(mState != SHUTDOWN);
-      mCubebStream.reset(stream);
-    } else {
-      MonitorAutoLock mon(mMonitor);
-      mState = ERRORED;
-      NS_WARNING(nsPrintfCString("AudioStream::OpenCubeb() %p failed to init cubeb", this).get());
-      return NS_ERROR_FAILURE;
-    }
+  cubeb_stream* stream = nullptr;
+  if (cubeb_stream_init(cubebContext, &stream, "AudioStream",
+                        nullptr, nullptr, nullptr, &aParams,
+                        CubebUtils::GetCubebLatency(),
+                        DataCallback_S, StateCallback_S, this) == CUBEB_OK) {
+    mCubebStream.reset(stream);
+  } else {
+    NS_WARNING(nsPrintfCString("AudioStream::OpenCubeb() %p failed to init cubeb", this).get());
+    return NS_ERROR_FAILURE;
   }
 
-  mState = INITIALIZED;
-
-  if (!mStartTime.IsNull()) {
-    TimeDuration timeDelta = TimeStamp::Now() - mStartTime;
-    LOG("creation time %sfirst: %u ms", mIsFirst ? "" : "not ",
-        (uint32_t) timeDelta.ToMilliseconds());
-    Telemetry::Accumulate(mIsFirst ? Telemetry::AUDIOSTREAM_FIRST_OPEN_MS :
-        Telemetry::AUDIOSTREAM_LATER_OPEN_MS, timeDelta.ToMilliseconds());
-  }
+  TimeDuration timeDelta = TimeStamp::Now() - aStartTime;
+  LOG("creation time %sfirst: %u ms", aIsFirst ? "" : "not ",
+      (uint32_t) timeDelta.ToMilliseconds());
+  Telemetry::Accumulate(aIsFirst ? Telemetry::AUDIOSTREAM_FIRST_OPEN_MS :
+      Telemetry::AUDIOSTREAM_LATER_OPEN_MS, timeDelta.ToMilliseconds());
 
   return NS_OK;
 }
@@ -422,54 +400,30 @@ void
 AudioStream::Start()
 {
   MonitorAutoLock mon(mMonitor);
-  StartUnlocked();
-}
-
-void
-AudioStream::StartUnlocked()
-{
-  mMonitor.AssertCurrentThreadOwns();
-  if (!mCubebStream) {
-    return;
-  }
-
-  if (mState == INITIALIZED) {
-    mState = STARTED;
-    int r;
-    {
-      MonitorAutoUnlock mon(mMonitor);
-      r = cubeb_stream_start(mCubebStream.get());
-      // DataCallback might be called before we exit this scope
-      // if cubeb_stream_start() succeeds. mState must be set to STARTED
-      // beforehand.
-    }
-    if (r != CUBEB_OK) {
-      mState = ERRORED;
-    }
-    LOG("started, state %s", mState == STARTED ? "STARTED" : "ERRORED");
-  }
+  MOZ_ASSERT(mState == INITIALIZED);
+  auto r = InvokeCubeb(cubeb_stream_start);
+  mState = r == CUBEB_OK ? STARTED : ERRORED;
+  LOG("started, state %s", mState == STARTED ? "STARTED" : "ERRORED");
 }
 
 void
 AudioStream::Pause()
 {
   MonitorAutoLock mon(mMonitor);
+  MOZ_ASSERT(mState != INITIALIZED, "Must be Start()ed.");
+  MOZ_ASSERT(mState != STOPPED, "Already Pause()ed.");
+  MOZ_ASSERT(mState != SHUTDOWN, "Already Shutdown()ed.");
 
-  if (mState == ERRORED) {
+  // Do nothing if we are already drained or errored.
+  if (mState == DRAINED || mState == ERRORED) {
     return;
   }
 
-  if (!mCubebStream || (mState != STARTED && mState != RUNNING)) {
-    mState = STOPPED; // which also tells async OpenCubeb not to start, just init
-    return;
-  }
-
-  int r;
-  {
-    MonitorAutoUnlock mon(mMonitor);
-    r = cubeb_stream_stop(mCubebStream.get());
-  }
-  if (mState != ERRORED && r == CUBEB_OK) {
+  if (InvokeCubeb(cubeb_stream_stop) != CUBEB_OK) {
+    mState = ERRORED;
+  } else if (mState != DRAINED && mState != ERRORED) {
+    // Don't transition to other states if we are already
+    // drained or errored.
     mState = STOPPED;
   }
 }
@@ -478,16 +432,20 @@ void
 AudioStream::Resume()
 {
   MonitorAutoLock mon(mMonitor);
-  if (!mCubebStream || mState != STOPPED) {
+  MOZ_ASSERT(mState != INITIALIZED, "Must be Start()ed.");
+  MOZ_ASSERT(mState != STARTED, "Already Start()ed.");
+  MOZ_ASSERT(mState != SHUTDOWN, "Already Shutdown()ed.");
+
+  // Do nothing if we are already drained or errored.
+  if (mState == DRAINED || mState == ERRORED) {
     return;
   }
 
-  int r;
-  {
-    MonitorAutoUnlock mon(mMonitor);
-    r = cubeb_stream_start(mCubebStream.get());
-  }
-  if (mState != ERRORED && r == CUBEB_OK) {
+  if (InvokeCubeb(cubeb_stream_start) != CUBEB_OK) {
+    mState = ERRORED;
+  } else if (mState != DRAINED && mState != ERRORED) {
+    // Don't transition to other states if we are already
+    // drained or errored.
     mState = STARTED;
   }
 }
@@ -514,14 +472,16 @@ int64_t
 AudioStream::GetPosition()
 {
   MonitorAutoLock mon(mMonitor);
-  return mAudioClock.GetPositionUnlocked();
+  int64_t frames = GetPositionInFramesUnlocked();
+  return frames >= 0 ? mAudioClock.GetPosition(frames) : -1;
 }
 
 int64_t
 AudioStream::GetPositionInFrames()
 {
   MonitorAutoLock mon(mMonitor);
-  return mAudioClock.GetPositionInFrames();
+  int64_t frames = GetPositionInFramesUnlocked();
+  return frames >= 0 ? mAudioClock.GetPositionInFrames(frames) : -1;
 }
 
 int64_t
@@ -529,30 +489,19 @@ AudioStream::GetPositionInFramesUnlocked()
 {
   mMonitor.AssertCurrentThreadOwns();
 
-  if (!mCubebStream || mState == ERRORED) {
+  if (mState == ERRORED) {
     return -1;
   }
 
   uint64_t position = 0;
-  {
-    MonitorAutoUnlock mon(mMonitor);
-    if (cubeb_stream_get_position(mCubebStream.get(), &position) != CUBEB_OK) {
-      return -1;
-    }
+  if (InvokeCubeb(cubeb_stream_get_position, &position) != CUBEB_OK) {
+    return -1;
   }
-
   return std::min<uint64_t>(position, INT64_MAX);
 }
 
 bool
-AudioStream::IsPaused()
-{
-  MonitorAutoLock mon(mMonitor);
-  return mState == STOPPED;
-}
-
-bool
-AudioStream::Downmix(Chunk* aChunk)
+AudioStream::IsValidAudioFormat(Chunk* aChunk)
 {
   if (aChunk->Rate() != mInRate) {
     LOGW("mismatched sample %u, mInRate=%u", aChunk->Rate(), mInRate);
@@ -561,10 +510,6 @@ AudioStream::Downmix(Chunk* aChunk)
 
   if (aChunk->Channels() > 8) {
     return false;
-  }
-
-  if (mAudioConverter) {
-    mAudioConverter->Process(aChunk->GetWritable(), aChunk->Frames());
   }
 
   return true;
@@ -595,10 +540,10 @@ AudioStream::GetUnprocessed(AudioBufferWriter& aWriter)
       break;
     }
     MOZ_ASSERT(c->Frames() <= aWriter.Available());
-    if (Downmix(c.get())) {
+    if (IsValidAudioFormat(c.get())) {
       aWriter.Write(c->Data(), c->Frames());
     } else {
-      // Write silence if downmixing fails.
+      // Write silence if invalid format.
       aWriter.WriteZeros(c->Frames());
     }
   }
@@ -623,10 +568,10 @@ AudioStream::GetTimeStretched(AudioBufferWriter& aWriter)
       break;
     }
     MOZ_ASSERT(c->Frames() <= toPopFrames);
-    if (Downmix(c.get())) {
+    if (IsValidAudioFormat(c.get())) {
       mTimeStretcher->putSamples(c->Data(), c->Frames());
     } else {
-      // Write silence if downmixing fails.
+      // Write silence if invalid format.
       AutoTArray<AudioDataValue, 1000> buf;
       buf.SetLength(mOutChannels * c->Frames());
       memset(buf.Elements(), 0, buf.Length() * sizeof(AudioDataValue));
@@ -659,11 +604,6 @@ AudioStream::DataCallback(void* aBuffer, long aFrames)
 
   // NOTE: wasapi (others?) can call us back *after* stop()/Shutdown() (mState == SHUTDOWN)
   // Bug 996162
-
-  // callback tells us cubeb succeeded initializing
-  if (mState == STARTED) {
-    mState = RUNNING;
-  }
 
   if (mInRate == mOutRate) {
     GetUnprocessed(writer);
@@ -705,18 +645,17 @@ AudioStream::StateCallback(cubeb_state aState)
   }
 }
 
-AudioClock::AudioClock(AudioStream* aStream)
- :mAudioStream(aStream),
-  mOutRate(0),
+AudioClock::AudioClock()
+: mOutRate(0),
   mInRate(0),
   mPreservesPitch(true),
   mFrameHistory(new FrameHistory())
 {}
 
-void AudioClock::Init()
+void AudioClock::Init(uint32_t aRate)
 {
-  mOutRate = mAudioStream->GetRate();
-  mInRate = mAudioStream->GetRate();
+  mOutRate = aRate;
+  mInRate = aRate;
 }
 
 void AudioClock::UpdateFrameHistory(uint32_t aServiced, uint32_t aUnderrun)
@@ -724,20 +663,18 @@ void AudioClock::UpdateFrameHistory(uint32_t aServiced, uint32_t aUnderrun)
   mFrameHistory->Append(aServiced, aUnderrun, mOutRate);
 }
 
-int64_t AudioClock::GetPositionUnlocked() const
+int64_t AudioClock::GetPositionInFrames(int64_t aFrames) const
 {
-  // GetPositionInFramesUnlocked() asserts it owns the monitor
-  int64_t frames = mAudioStream->GetPositionInFramesUnlocked();
-  NS_ASSERTION(frames < 0 || (mInRate != 0 && mOutRate != 0), "AudioClock not initialized.");
-  return frames >= 0 ? mFrameHistory->GetPosition(frames) : -1;
+  CheckedInt64 v = UsecsToFrames(GetPosition(aFrames), mInRate);
+  return v.isValid() ? v.value() : -1;
 }
 
-int64_t AudioClock::GetPositionInFrames() const
+int64_t AudioClock::GetPosition(int64_t frames) const
 {
-  return (GetPositionUnlocked() * mInRate) / USECS_PER_S;
+  return mFrameHistory->GetPosition(frames);
 }
 
-void AudioClock::SetPlaybackRateUnlocked(double aPlaybackRate)
+void AudioClock::SetPlaybackRate(double aPlaybackRate)
 {
   mOutRate = static_cast<uint32_t>(mInRate / aPlaybackRate);
 }

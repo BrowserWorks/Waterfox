@@ -98,8 +98,7 @@ struct nsComputedStyleMap
 
     bool IsEnabled() const
     {
-      return nsCSSProps::IsEnabled(mProperty,
-                                   nsCSSProps::eEnabledForAllContent);
+      return nsCSSProps::IsEnabled(mProperty, CSSEnabledState::eForAllContent);
     }
   };
 
@@ -489,7 +488,8 @@ nsComputedDOMStyle::GetStyleContextForElementNoFlush(Element* aElement,
 
   RefPtr<nsStyleContext> sc;
   if (aPseudo) {
-    CSSPseudoElementType type = nsCSSPseudoElements::GetPseudoType(aPseudo);
+    CSSPseudoElementType type = nsCSSPseudoElements::
+      GetPseudoType(aPseudo, CSSEnabledState::eIgnoreEnabledState);
     if (type >= CSSPseudoElementType::Count) {
       return nullptr;
     }
@@ -765,8 +765,8 @@ nsComputedDOMStyle::ClearCurrentStyleSources()
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::GetPropertyCSSValue(const nsAString& aPropertyName, ErrorResult& aRv)
 {
-  nsCSSProperty prop = nsCSSProps::LookupProperty(aPropertyName,
-                                                  nsCSSProps::eEnabledForAllContent);
+  nsCSSProperty prop =
+    nsCSSProps::LookupProperty(aPropertyName, CSSEnabledState::eForAllContent);
 
   bool needsLayoutFlush;
   nsComputedStyleMap::Entry::ComputeMethod getter;
@@ -2159,13 +2159,44 @@ nsComputedDOMStyle::DoGetImageLayerImage(const nsStyleImageLayers& aLayers)
 already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetImageLayerPosition(const nsStyleImageLayers& aLayers)
 {
-  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
+  if (aLayers.mPositionXCount != aLayers.mPositionYCount) {
+    // No value to return.  We can't express this combination of
+    // values as a shorthand.
+    return nullptr;
+  }
 
-  for (uint32_t i = 0, i_end = aLayers.mPositionCount; i < i_end; ++i) {
+  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
+  for (uint32_t i = 0, i_end = aLayers.mPositionXCount; i < i_end; ++i) {
     RefPtr<nsDOMCSSValueList> itemList = GetROCSSValueList(false);
 
     SetValueToPosition(aLayers.mLayers[i].mPosition, itemList);
     valueList->AppendCSSValue(itemList.forget());
+  }
+
+  return valueList.forget();
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetImageLayerPositionX(const nsStyleImageLayers& aLayers)
+{
+  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
+  for (uint32_t i = 0, i_end = aLayers.mPositionXCount; i < i_end; ++i) {
+    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+    SetValueToPositionCoord(aLayers.mLayers[i].mPosition.mXPosition, val);
+    valueList->AppendCSSValue(val.forget());
+  }
+
+  return valueList.forget();
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetImageLayerPositionY(const nsStyleImageLayers& aLayers)
+{
+  RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
+  for (uint32_t i = 0, i_end = aLayers.mPositionYCount; i < i_end; ++i) {
+    RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
+    SetValueToPositionCoord(aLayers.mLayers[i].mPosition.mYPosition, val);
+    valueList->AppendCSSValue(val.forget());
   }
 
   return valueList.forget();
@@ -2358,6 +2389,20 @@ nsComputedDOMStyle::DoGetBackgroundPosition()
 {
   const nsStyleImageLayers& layers = StyleBackground()->mImage;
   return DoGetImageLayerPosition(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundPositionX()
+{
+  const nsStyleImageLayers& layers = StyleBackground()->mImage;
+  return DoGetImageLayerPositionX(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetBackgroundPositionY()
+{
+  const nsStyleImageLayers& layers = StyleBackground()->mImage;
+  return DoGetImageLayerPositionY(layers);
 }
 
 already_AddRefed<CSSValue>
@@ -2791,7 +2836,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetGridColumnGap()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetAppUnits(StylePosition()->mGridColumnGap);
+  SetValueToCoord(val, StylePosition()->mGridColumnGap, true);
   return val.forget();
 }
 
@@ -2799,7 +2844,7 @@ already_AddRefed<CSSValue>
 nsComputedDOMStyle::DoGetGridRowGap()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
-  val->SetAppUnits(StylePosition()->mGridRowGap);
+  SetValueToCoord(val, StylePosition()->mGridRowGap, true);
   return val.forget();
 }
 
@@ -3882,12 +3927,12 @@ nsComputedDOMStyle::DoGetWordBreak()
 }
 
 already_AddRefed<CSSValue>
-nsComputedDOMStyle::DoGetWordWrap()
+nsComputedDOMStyle::DoGetOverflowWrap()
 {
   RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
   val->SetIdent(
-    nsCSSProps::ValueToKeywordEnum(StyleText()->mWordWrap,
-                                   nsCSSProps::kWordWrapKTable));
+    nsCSSProps::ValueToKeywordEnum(StyleText()->mOverflowWrap,
+                                   nsCSSProps::kOverflowWrapKTable));
   return val.forget();
 }
 
@@ -5577,7 +5622,7 @@ nsComputedDOMStyle::DoGetStrokeDasharray()
 {
   const nsStyleSVG* svg = StyleSVG();
 
-  if (!svg->mStrokeDasharrayLength || !svg->mStrokeDasharray) {
+  if (svg->mStrokeDasharray.IsEmpty()) {
     RefPtr<nsROCSSPrimitiveValue> val = new nsROCSSPrimitiveValue;
     val->SetIdent(eCSSKeyword_none);
     return val.forget();
@@ -5585,7 +5630,7 @@ nsComputedDOMStyle::DoGetStrokeDasharray()
 
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(true);
 
-  for (uint32_t i = 0; i < svg->mStrokeDasharrayLength; i++) {
+  for (uint32_t i = 0; i < svg->mStrokeDasharray.Length(); i++) {
     RefPtr<nsROCSSPrimitiveValue> dash = new nsROCSSPrimitiveValue;
     SetValueToCoord(dash, svg->mStrokeDasharray[i], true);
     valueList->AppendCSSValue(dash.forget());
@@ -5842,83 +5887,93 @@ nsComputedDOMStyle::BasicShapeRadiiToString(nsAString& aCssText,
 }
 
 already_AddRefed<CSSValue>
+nsComputedDOMStyle::CreatePrimitiveValueForBasicShape(
+  const nsStyleBasicShape* aStyleBasicShape)
+{
+  MOZ_ASSERT(aStyleBasicShape, "Expect a valid basic shape pointer!");
+
+  nsStyleBasicShape::Type type = aStyleBasicShape->GetShapeType();
+  // Shape function name and opening parenthesis.
+  nsAutoString shapeFunctionString;
+  AppendASCIItoUTF16(nsCSSKeywords::GetStringValue(
+                       aStyleBasicShape->GetShapeTypeName()),
+                     shapeFunctionString);
+  shapeFunctionString.Append('(');
+  switch (type) {
+    case nsStyleBasicShape::Type::ePolygon: {
+      bool hasEvenOdd = aStyleBasicShape->GetFillRule() ==
+        NS_STYLE_FILL_RULE_EVENODD;
+      if (hasEvenOdd) {
+        shapeFunctionString.AppendLiteral("evenodd");
+      }
+      for (size_t i = 0;
+           i < aStyleBasicShape->Coordinates().Length(); i += 2) {
+        nsAutoString coordString;
+        if (i > 0 || hasEvenOdd) {
+          shapeFunctionString.AppendLiteral(", ");
+        }
+        SetCssTextToCoord(coordString,
+                          aStyleBasicShape->Coordinates()[i]);
+        shapeFunctionString.Append(coordString);
+        shapeFunctionString.Append(' ');
+        SetCssTextToCoord(coordString,
+                          aStyleBasicShape->Coordinates()[i + 1]);
+        shapeFunctionString.Append(coordString);
+      }
+      break;
+    }
+    case nsStyleBasicShape::Type::eCircle:
+    case nsStyleBasicShape::Type::eEllipse: {
+      const nsTArray<nsStyleCoord>& radii = aStyleBasicShape->Coordinates();
+      MOZ_ASSERT(radii.Length() ==
+                 (type == nsStyleBasicShape::Type::eCircle ? 1 : 2),
+                 "wrong number of radii");
+      for (size_t i = 0; i < radii.Length(); ++i) {
+        nsAutoString radius;
+        RefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
+        bool clampNegativeCalc = true;
+        SetValueToCoord(value, radii[i], clampNegativeCalc, nullptr,
+                        nsCSSProps::kShapeRadiusKTable);
+        value->GetCssText(radius);
+        shapeFunctionString.Append(radius);
+        shapeFunctionString.Append(' ');
+      }
+      shapeFunctionString.AppendLiteral("at ");
+
+      RefPtr<nsDOMCSSValueList> position = GetROCSSValueList(false);
+      nsAutoString positionString;
+      SetValueToPosition(aStyleBasicShape->GetPosition(), position);
+      position->GetCssText(positionString);
+      shapeFunctionString.Append(positionString);
+      break;
+    }
+    case nsStyleBasicShape::Type::eInset: {
+      BoxValuesToString(shapeFunctionString, aStyleBasicShape->Coordinates());
+      if (aStyleBasicShape->HasRadius()) {
+        shapeFunctionString.AppendLiteral(" round ");
+        nsAutoString radiiString;
+        BasicShapeRadiiToString(radiiString, aStyleBasicShape->GetRadius());
+        shapeFunctionString.Append(radiiString);
+      }
+      break;
+    }
+    default:
+      NS_NOTREACHED("unexpected type");
+  }
+  shapeFunctionString.Append(')');
+  RefPtr<nsROCSSPrimitiveValue> functionValue = new nsROCSSPrimitiveValue;
+  functionValue->SetString(shapeFunctionString);
+  return functionValue.forget();
+}
+
+already_AddRefed<CSSValue>
 nsComputedDOMStyle::CreatePrimitiveValueForClipPath(
   const nsStyleBasicShape* aStyleBasicShape, uint8_t aSizingBox)
 {
   RefPtr<nsDOMCSSValueList> valueList = GetROCSSValueList(false);
   if (aStyleBasicShape) {
-    nsStyleBasicShape::Type type = aStyleBasicShape->GetShapeType();
-    // Shape function name and opening parenthesis.
-    nsAutoString shapeFunctionString;
-    AppendASCIItoUTF16(nsCSSKeywords::GetStringValue(
-                         aStyleBasicShape->GetShapeTypeName()),
-                       shapeFunctionString);
-    shapeFunctionString.Append('(');
-    switch (type) {
-      case nsStyleBasicShape::Type::ePolygon: {
-        bool hasEvenOdd = aStyleBasicShape->GetFillRule() ==
-                              NS_STYLE_FILL_RULE_EVENODD;
-        if (hasEvenOdd) {
-          shapeFunctionString.AppendLiteral("evenodd");
-        }
-        for (size_t i = 0;
-             i < aStyleBasicShape->Coordinates().Length(); i += 2) {
-          nsAutoString coordString;
-          if (i > 0 || hasEvenOdd) {
-            shapeFunctionString.AppendLiteral(", ");
-          }
-          SetCssTextToCoord(coordString,
-                            aStyleBasicShape->Coordinates()[i]);
-          shapeFunctionString.Append(coordString);
-          shapeFunctionString.Append(' ');
-          SetCssTextToCoord(coordString,
-                            aStyleBasicShape->Coordinates()[i + 1]);
-          shapeFunctionString.Append(coordString);
-        }
-        break;
-      }
-      case nsStyleBasicShape::Type::eCircle:
-      case nsStyleBasicShape::Type::eEllipse: {
-        const nsTArray<nsStyleCoord>& radii = aStyleBasicShape->Coordinates();
-        MOZ_ASSERT(radii.Length() ==
-                   (type == nsStyleBasicShape::Type::eCircle ? 1 : 2),
-                   "wrong number of radii");
-        for (size_t i = 0; i < radii.Length(); ++i) {
-          nsAutoString radius;
-          RefPtr<nsROCSSPrimitiveValue> value = new nsROCSSPrimitiveValue;
-          bool clampNegativeCalc = true;
-          SetValueToCoord(value, radii[i], clampNegativeCalc, nullptr,
-                          nsCSSProps::kShapeRadiusKTable);
-          value->GetCssText(radius);
-          shapeFunctionString.Append(radius);
-          shapeFunctionString.Append(' ');
-        }
-        shapeFunctionString.AppendLiteral("at ");
-
-        RefPtr<nsDOMCSSValueList> position = GetROCSSValueList(false);
-        nsAutoString positionString;
-        SetValueToPosition(aStyleBasicShape->GetPosition(), position);
-        position->GetCssText(positionString);
-        shapeFunctionString.Append(positionString);
-        break;
-      }
-      case nsStyleBasicShape::Type::eInset: {
-        BoxValuesToString(shapeFunctionString, aStyleBasicShape->Coordinates());
-        if (aStyleBasicShape->HasRadius()) {
-          shapeFunctionString.AppendLiteral(" round ");
-          nsAutoString radiiString;
-          BasicShapeRadiiToString(radiiString, aStyleBasicShape->GetRadius());
-          shapeFunctionString.Append(radiiString);
-        }
-        break;
-      }
-      default:
-        NS_NOTREACHED("unexpected type");
-    }
-    shapeFunctionString.Append(')');
-    RefPtr<nsROCSSPrimitiveValue> functionValue = new nsROCSSPrimitiveValue;
-    functionValue->SetString(shapeFunctionString);
-    valueList->AppendCSSValue(functionValue.forget());
+    valueList->AppendCSSValue(
+      CreatePrimitiveValueForBasicShape(aStyleBasicShape));
   }
 
   if (aSizingBox == NS_STYLE_CLIP_SHAPE_SIZING_NOBOX) {
@@ -6041,18 +6096,18 @@ nsComputedDOMStyle::DoGetMask()
   const nsStyleImageLayers::Layer& firstLayer = svg->mMask.mLayers[0];
 
   // Mask is now a shorthand, but it used to be a longhand, so that we
-  // need to support computed style for the cases where it used  to be
+  // need to support computed style for the cases where it used to be
   // a longhand.
   if (svg->mMask.mImageCount > 1 ||
       firstLayer.mClip != NS_STYLE_IMAGELAYER_CLIP_BORDER ||
-      firstLayer.mOrigin != NS_STYLE_IMAGELAYER_ORIGIN_PADDING ||
+      firstLayer.mOrigin != NS_STYLE_IMAGELAYER_ORIGIN_BORDER ||
       firstLayer.mComposite != NS_STYLE_MASK_COMPOSITE_ADD ||
       firstLayer.mMaskMode != NS_STYLE_MASK_MODE_MATCH_SOURCE ||
       !firstLayer.mPosition.IsInitialValue() ||
-      !firstLayer.mRepeat.IsInitialValue() ||
+      !firstLayer.mRepeat.IsInitialValue(nsStyleImageLayers::LayerType::Mask) ||
       !firstLayer.mSize.IsInitialValue() ||
       !(firstLayer.mImage.GetType() == eStyleImageType_Null ||
-          firstLayer.mImage.GetType() == eStyleImageType_Image)){
+        firstLayer.mImage.GetType() == eStyleImageType_Image)) {
     return nullptr;
   }
 
@@ -6116,6 +6171,20 @@ nsComputedDOMStyle::DoGetMaskPosition()
 {
   const nsStyleImageLayers& layers = StyleSVGReset()->mMask;
   return DoGetImageLayerPosition(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskPositionX()
+{
+  const nsStyleImageLayers& layers = StyleSVGReset()->mMask;
+  return DoGetImageLayerPositionX(layers);
+}
+
+already_AddRefed<CSSValue>
+nsComputedDOMStyle::DoGetMaskPositionY()
+{
+  const nsStyleImageLayers& layers = StyleSVGReset()->mMask;
+  return DoGetImageLayerPositionY(layers);
 }
 
 already_AddRefed<CSSValue>

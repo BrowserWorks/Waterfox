@@ -250,6 +250,11 @@ class nsObjectLoadingContent : public nsImageLoadingContent
       return runID;
     }
 
+    bool IsRewrittenYoutubeEmbed() const
+    {
+      return mRewrittenYoutubeEmbed;
+    }
+
   protected:
     /**
      * Begins loading the object when called
@@ -441,6 +446,11 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     nsresult CloseChannel();
 
     /**
+     * If this object should be tested against blocking list.
+     */
+    bool ShouldBlockContent();
+
+    /**
      * If this object is allowed to play plugin content, or if it would display
      * click-to-play instead.
      * NOTE that this does not actually check if the object is a loadable plugin
@@ -625,7 +635,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     FallbackType                mFallbackType : 8;
 
     uint32_t                    mRunID;
-    bool                        mHasRunID;
+    bool                        mHasRunID : 1;
 
     // If true, we have opened a channel as the listener and it has reached
     // OnStartRequest. Does not get set for channels that are passed directly to
@@ -645,6 +655,9 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // activated by PlayPlugin(). (see ShouldPlay())
     bool                        mActivated : 1;
 
+    // Whether content blocking is enabled or not for this object.
+    bool                        mContentBlockingDisabled : 1;
+
     // Protects DoStopPlugin from reentry (bug 724781).
     bool                        mIsStopping : 1;
 
@@ -654,6 +667,12 @@ class nsObjectLoadingContent : public nsImageLoadingContent
     // For plugin stand-in types (click-to-play) tracks
     // whether content js has tried to access the plugin script object.
     bool                        mScriptRequested : 1;
+
+    // True if object represents an object/embed tag pointing to a flash embed
+    // for a youtube video. When possible (see IsRewritableYoutubeEmbed function
+    // comments for details), we change these to try to load HTML5 versions of
+    // videos.
+    bool                        mRewrittenYoutubeEmbed : 1;
 
     nsWeakFrame                 mPrintFrame;
 

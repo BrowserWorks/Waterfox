@@ -7,18 +7,19 @@
 #include "ContentSignatureVerifier.h"
 
 #include "BRNameMatchingPolicy.h"
+#include "SharedCertVerifier.h"
 #include "cryptohi.h"
 #include "keyhi.h"
+#include "mozilla/Casting.h"
 #include "nsCOMPtr.h"
 #include "nsNSSComponent.h"
-#include "nssb64.h"
+#include "nsSecurityHeaderParser.h"
 #include "nsWhitespaceTokenizer.h"
 #include "nsXPCOMStrings.h"
+#include "nssb64.h"
 #include "pkix/pkix.h"
 #include "pkix/pkixtypes.h"
 #include "secerr.h"
-#include "SharedCertVerifier.h"
-#include "nsSecurityHeaderParser.h"
 
 NS_IMPL_ISUPPORTS(ContentSignatureVerifier, nsIContentSignatureVerifier)
 
@@ -146,8 +147,7 @@ ContentSignatureVerifier::CreateContext(const nsACString& aData,
     return NS_ERROR_ALREADY_INITIALIZED;
   }
 
-  ScopedCERTCertList certCertList(CERT_NewCertList());
-
+  UniqueCERTCertList certCertList(CERT_NewCertList());
   if (!certCertList) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
@@ -166,7 +166,7 @@ ContentSignatureVerifier::CreateContext(const nsACString& aData,
 
   Input certDER;
   Result result =
-    certDER.Init(reinterpret_cast<const uint8_t*>(certSecItem->data),
+    certDER.Init(BitwiseCast<uint8_t*, unsigned char*>(certSecItem->data),
                  certSecItem->len);
   if (result != Success) {
     return NS_ERROR_FAILURE;

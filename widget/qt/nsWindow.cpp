@@ -965,7 +965,7 @@ InitMouseEvent(WidgetMouseEvent& aMouseEvent, QMouseEvent* aEvent,
                                    aEvent->modifiers() & Qt::AltModifier,
                                    aEvent->modifiers() & Qt::ShiftModifier,
                                    aEvent->modifiers() & Qt::MetaModifier);
-    aMouseEvent.clickCount = aClickCount;
+    aMouseEvent.mClickCount = aClickCount;
 
     switch (aEvent->button()) {
     case Qt::LeftButton:
@@ -1127,12 +1127,12 @@ InitKeyEvent(WidgetKeyboardEvent& aEvent, QKeyEvent* aQEvent)
     }
 
     if (aQEvent->text().length() && aQEvent->text()[0].isPrint()) {
-        aEvent.charCode = (int32_t) aQEvent->text()[0].unicode();
-        aEvent.keyCode = 0;
+        aEvent.mCharCode = static_cast<uint32_t>(aQEvent->text()[0].unicode());
+        aEvent.mKeyCode = 0;
         aEvent.mKeyNameIndex = KEY_NAME_INDEX_PrintableKey;
     } else {
-        aEvent.charCode = 0;
-        aEvent.keyCode = QtKeyCodeToDOMKeyCode(aQEvent->key());
+        aEvent.mCharCode = 0;
+        aEvent.mKeyCode = QtKeyCodeToDOMKeyCode(aQEvent->key());
         aEvent.mKeyNameIndex = QtKeyCodeToDOMKeyNameIndex(aQEvent->key());
     }
 
@@ -1991,7 +1991,7 @@ nsWindow::ProcessMotionEvent()
                                  mMoveEvent.modifiers & Qt::AltModifier,
                                  mMoveEvent.modifiers & Qt::ShiftModifier,
                                  mMoveEvent.modifiers & Qt::MetaModifier);
-        event.clickCount      = 0;
+        event.mClickCount = 0;
 
         DispatchEvent(&event);
         mMoveEvent.needDispatch = false;

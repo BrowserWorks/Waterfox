@@ -90,7 +90,7 @@ Shape::removeFromDictionary(NativeObject* obj)
 }
 
 void
-Shape::insertIntoDictionary(HeapPtrShape* dictp)
+Shape::insertIntoDictionary(GCPtrShape* dictp)
 {
     // Don't assert inDictionaryMode() here because we may be called from
     // JSObject::toDictionaryMode via JSObject::newDictionaryShape.
@@ -104,7 +104,7 @@ Shape::insertIntoDictionary(HeapPtrShape* dictp)
     setParent(dictp->get());
     if (parent)
         parent->listp = &parent;
-    listp = (HeapPtrShape*) dictp;
+    listp = (GCPtrShape*) dictp;
     *dictp = this;
 }
 
@@ -483,7 +483,7 @@ js::NativeObject::toDictionaryMode(ExclusiveContext* cx)
             return false;
         }
 
-        HeapPtrShape* listp = dictionaryShape ? &dictionaryShape->parent : nullptr;
+        GCPtrShape* listp = dictionaryShape ? &dictionaryShape->parent : nullptr;
         StackShape child(shape);
         dprop->initDictionaryShape(child, self->numFixedSlots(), listp);
 
@@ -1194,7 +1194,7 @@ JSObject::setFlags(ExclusiveContext* cx, BaseShape::Flag flags, GenerateShape ge
     if (!existingShape)
         return false;
 
-    Shape* newShape = Shape::setObjectFlags(cx, flags, self->getTaggedProto(), existingShape);
+    Shape* newShape = Shape::setObjectFlags(cx, flags, self->taggedProto(), existingShape);
     if (!newShape)
         return false;
 
@@ -1335,8 +1335,6 @@ BaseShape::traceChildren(JSTracer* trc)
 void
 BaseShape::traceChildrenSkipShapeTable(JSTracer* trc)
 {
-    assertConsistency();
-
     if (trc->isMarkingTracer())
         compartment()->mark();
 
@@ -1346,6 +1344,8 @@ BaseShape::traceChildrenSkipShapeTable(JSTracer* trc)
     JSObject* global = compartment()->unsafeUnbarrieredMaybeGlobal();
     if (global)
         TraceManuallyBarrieredEdge(trc, &global, "global");
+
+    assertConsistency();
 }
 
 void
@@ -1589,6 +1589,7 @@ JSCompartment::fixupInitialShapeTable()
             shape = Forwarded(shape);
             e.mutableFront().shape.set(shape);
         }
+        shape->updateBaseShapeAfterMovingGC();
 
         // If the prototype has moved we have to rekey the entry.
         InitialShapeEntry entry = e.front();

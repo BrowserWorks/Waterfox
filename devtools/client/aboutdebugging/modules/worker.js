@@ -4,7 +4,7 @@
 
 "use strict";
 
-const { Task } = require("resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 
 loader.lazyRequireGetter(this, "gDevTools",
   "devtools/client/framework/devtools", true);
@@ -21,7 +21,7 @@ loader.lazyRequireGetter(this, "Toolbox",
  * @param {Object} workerActor
  *        worker actor form to debug
  */
-exports.debugWorker = function(client, workerActor) {
+exports.debugWorker = function (client, workerActor) {
   client.attachWorker(workerActor, (response, workerClient) => {
     let workerTarget = TargetFactory.forWorker(workerClient);
     gDevTools.showToolbox(workerTarget, "jsdebugger", Toolbox.HostType.WINDOW)

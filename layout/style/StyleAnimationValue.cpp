@@ -449,6 +449,32 @@ CalcPositionSquareDistance(const nsCSSValue& aPos1,
   return squareDistance;
 }
 
+static PixelCalcValue
+CalcBackgroundCoord(const nsCSSValue& aCoord)
+{
+  NS_ASSERTION(aCoord.GetUnit() == eCSSUnit_Array,
+               "Expected array");
+
+  nsCSSValue::Array* array = aCoord.GetArrayValue();
+  MOZ_ASSERT(array->Count() == 2 &&
+             array->Item(0).GetUnit() == eCSSUnit_Null &&
+             array->Item(1).GetUnit() != eCSSUnit_Null,
+             "Invalid position value");
+  return ExtractCalcValue(array->Item(1));
+}
+
+double
+CalcPositionCoordSquareDistance(const nsCSSValue& aPos1,
+                                const nsCSSValue& aPos2)
+{
+  PixelCalcValue calcVal1 = CalcBackgroundCoord(aPos1);
+  PixelCalcValue calcVal2 = CalcBackgroundCoord(aPos2);
+
+  float difflen = calcVal2.mLength - calcVal1.mLength;
+  float diffpct = calcVal2.mPercent - calcVal1.mPercent;
+  return difflen * difflen + diffpct * diffpct;
+}
+
 // CLASS METHODS
 // -------------
 
@@ -844,7 +870,7 @@ StyleAnimationValue::ComputeDistance(nsCSSProperty aProperty,
     case eUnit_Transform: {
       return false;
     }
-    case eUnit_BackgroundPosition: {
+    case eUnit_BackgroundPositionCoord: {
       const nsCSSValueList *position1 = aStartValue.GetCSSValueListValue();
       const nsCSSValueList *position2 = aEndValue.GetCSSValueListValue();
 
@@ -852,8 +878,8 @@ StyleAnimationValue::ComputeDistance(nsCSSProperty aProperty,
       MOZ_ASSERT(!position1 == !position2, "lists should be same length");
 
       while (position1 && position2) {
-        squareDistance += CalcPositionSquareDistance(position1->mValue,
-                                                     position2->mValue);
+        squareDistance += CalcPositionCoordSquareDistance(position1->mValue,
+                                                          position2->mValue);
         position1 = position1->mNext;
         position2 = position2->mNext;
       }
@@ -1806,7 +1832,7 @@ AddPositions(double aCoeff1, const nsCSSValue& aPos1,
   }
 }
 
-static UniquePtr<nsCSSValuePair>
+static Maybe<nsCSSValuePair>
 AddCSSValuePair(nsCSSProperty aProperty, uint32_t aRestrictions,
                 double aCoeff1, const nsCSSValuePair* aPair1,
                 double aCoeff2, const nsCSSValuePair* aPair2)
@@ -1814,7 +1840,7 @@ AddCSSValuePair(nsCSSProperty aProperty, uint32_t aRestrictions,
   MOZ_ASSERT(aPair1, "expected pair");
   MOZ_ASSERT(aPair2, "expected pair");
 
-  UniquePtr<nsCSSValuePair> result;
+  Maybe<nsCSSValuePair> result;
   nsCSSUnit unit[2];
   unit[0] = GetCommonUnit(aProperty, aPair1->mXValue.GetUnit(),
                           aPair2->mXValue.GetUnit());
@@ -1822,10 +1848,10 @@ AddCSSValuePair(nsCSSProperty aProperty, uint32_t aRestrictions,
                           aPair2->mYValue.GetUnit());
   if (unit[0] == eCSSUnit_Null || unit[1] == eCSSUnit_Null ||
       unit[0] == eCSSUnit_URL || unit[0] == eCSSUnit_Enumerated) {
-    return result; // nullptr (returning |result| for RVO)
+    return result; // Nothing() (returning |result| for RVO)
   }
 
-  result = MakeUnique<nsCSSValuePair>();
+  result.emplace();
 
   static nsCSSValue nsCSSValuePair::* const pairValues[2] = {
     &nsCSSValuePair::mXValue, &nsCSSValuePair::mYValue
@@ -1835,10 +1861,10 @@ AddCSSValuePair(nsCSSProperty aProperty, uint32_t aRestrictions,
     if (!AddCSSValuePixelPercentCalc(aRestrictions, unit[i],
                                      aCoeff1, aPair1->*member,
                                      aCoeff2, aPair2->*member,
-                                     result.get()->*member) ) {
+                                     result.ref().*member) ) {
       MOZ_ASSERT(false, "unexpected unit");
       result.reset();
-      return result; // nullptr (returning |result| for RVO)
+      return result; // Nothing() (returning |result| for RVO)
     }
   }
 
@@ -2008,14 +2034,14 @@ AddShapeFunction(nsCSSProperty aProperty,
       for (size_t i = 0; i < 4; ++i) {
         const nsCSSValuePair& pair1 = radii1->Item(i).GetPairValue();
         const nsCSSValuePair& pair2 = radii2->Item(i).GetPairValue();
-        UniquePtr<nsCSSValuePair>
-          pairResult(AddCSSValuePair(aProperty, restrictions,
-                                     aCoeff1, &pair1,
-                                     aCoeff2, &pair2));
+        const Maybe<nsCSSValuePair> pairResult =
+          AddCSSValuePair(aProperty, restrictions,
+                          aCoeff1, &pair1,
+                          aCoeff2, &pair2);
         if (!pairResult) {
           return nullptr;
         }
-        resultRadii->Item(i).SetPairValue(pairResult.release());
+        resultRadii->Item(i).SetPairValue(pairResult.ptr());
       }
       break;
     }
@@ -2191,6 +2217,26 @@ AddTransformLists(double aCoeff1, const nsCSSValueList* aList1,
   return result.forget();
 }
 
+static void
+AddPositionCoords(double aCoeff1, const nsCSSValue& aPos1,
+                  double aCoeff2, const nsCSSValue& aPos2,
+                  nsCSSValue& aResultPos)
+{
+  const nsCSSValue::Array* posArray1 = aPos1.GetArrayValue();
+  const nsCSSValue::Array* posArray2 = aPos2.GetArrayValue();
+  nsCSSValue::Array* resultPosArray = nsCSSValue::Array::Create(2);
+  aResultPos.SetArrayValue(resultPosArray, eCSSUnit_Array);
+
+  /* Only compute element 1. The <position-coord> is
+   * 'uncomputed' to only that element.
+   */
+  const nsCSSValue& v1 = posArray1->Item(1);
+  const nsCSSValue& v2 = posArray2->Item(1);
+  nsCSSValue& vr = resultPosArray->Item(1);
+  AddCSSValueCanonicalCalc(aCoeff1, v1,
+                           aCoeff2, v2, vr);
+}
+
 bool
 StyleAnimationValue::AddWeighted(nsCSSProperty aProperty,
                                  double aCoeff1,
@@ -2359,15 +2405,17 @@ StyleAnimationValue::AddWeighted(nsCSSProperty aProperty,
     }
     case eUnit_CSSValuePair: {
       uint32_t restrictions = nsCSSProps::ValueRestrictions(aProperty);
-      UniquePtr<nsCSSValuePair> result(
+      Maybe<nsCSSValuePair> result =
         AddCSSValuePair(aProperty, restrictions,
                         aCoeff1, aValue1.GetCSSValuePairValue(),
-                        aCoeff2, aValue2.GetCSSValuePairValue()));
+                        aCoeff2, aValue2.GetCSSValuePairValue());
       if (!result) {
         return false;
       }
 
-      aResultValue.SetAndAdoptCSSValuePairValue(result.release(),
+      // We need a heap allocated object to adopt here:
+      auto heapResult = MakeUnique<nsCSSValuePair>(*result);
+      aResultValue.SetAndAdoptCSSValuePairValue(heapResult.release(),
                                                 eUnit_CSSValuePair);
       return true;
     }
@@ -2562,8 +2610,7 @@ StyleAnimationValue::AddWeighted(nsCSSProperty aProperty,
       if (!result) {
         return false;
       }
-      aResultValue.SetAndAdoptCSSValueArrayValue(result.forget().take(),
-                                                 eUnit_Shape);
+      aResultValue.SetCSSValueArrayValue(result, eUnit_Shape);
       return true;
     }
     case eUnit_Filter: {
@@ -2665,7 +2712,7 @@ StyleAnimationValue::AddWeighted(nsCSSProperty aProperty,
       aResultValue.SetTransformValue(new nsCSSValueSharedList(result.forget()));
       return true;
     }
-    case eUnit_BackgroundPosition: {
+    case eUnit_BackgroundPositionCoord: {
       const nsCSSValueList *position1 = aValue1.GetCSSValueListValue();
       const nsCSSValueList *position2 = aValue2.GetCSSValueListValue();
       nsAutoPtr<nsCSSValueList> result;
@@ -2675,8 +2722,8 @@ StyleAnimationValue::AddWeighted(nsCSSProperty aProperty,
         *resultTail = item;
         resultTail = &item->mNext;
 
-        AddPositions(aCoeff1, position1->mValue,
-                     aCoeff2, position2->mValue, item->mValue);
+        AddPositionCoords(aCoeff1, position1->mValue,
+                          aCoeff2, position2->mValue, item->mValue);
 
         position1 = position1->mNext;
         position2 = position2->mNext;
@@ -2688,7 +2735,7 @@ StyleAnimationValue::AddWeighted(nsCSSProperty aProperty,
       }
 
       aResultValue.SetAndAdoptCSSValueListValue(result.forget(),
-                                                eUnit_BackgroundPosition);
+                                                eUnit_BackgroundPositionCoord);
       return true;
     }
     case eUnit_CSSValuePairList: {
@@ -2774,7 +2821,7 @@ BuildStyleRule(nsCSSProperty aProperty,
 
 static bool
 ComputeValuesFromStyleRule(nsCSSProperty aProperty,
-                           nsCSSProps::EnabledState aEnabledState,
+                           CSSEnabledState aEnabledState,
                            dom::Element* aTargetElement,
                            nsStyleContext* aStyleContext,
                            css::StyleRule* aStyleRule,
@@ -2895,7 +2942,7 @@ StyleAnimationValue::ComputeValue(nsCSSProperty aProperty,
 
   AutoTArray<PropertyStyleAnimationValuePair,1> values;
   bool ok = ComputeValuesFromStyleRule(aProperty,
-                                       nsCSSProps::eIgnoreEnabledState,
+                                       CSSEnabledState::eIgnoreEnabledState,
                                        aTargetElement, aStyleContext, styleRule,
                                        values, aIsContextSensitive);
   if (!ok) {
@@ -2913,7 +2960,7 @@ template <class T>
 bool
 ComputeValuesFromSpecifiedValue(
     nsCSSProperty aProperty,
-    nsCSSProps::EnabledState aEnabledState,
+    CSSEnabledState aEnabledState,
     dom::Element* aTargetElement,
     nsStyleContext* aStyleContext,
     T& aSpecifiedValue,
@@ -2941,7 +2988,7 @@ ComputeValuesFromSpecifiedValue(
 /* static */ bool
 StyleAnimationValue::ComputeValues(
     nsCSSProperty aProperty,
-    nsCSSProps::EnabledState aEnabledState,
+    CSSEnabledState aEnabledState,
     dom::Element* aTargetElement,
     nsStyleContext* aStyleContext,
     const nsAString& aSpecifiedValue,
@@ -2957,7 +3004,7 @@ StyleAnimationValue::ComputeValues(
 /* static */ bool
 StyleAnimationValue::ComputeValues(
     nsCSSProperty aProperty,
-    nsCSSProps::EnabledState aEnabledState,
+    CSSEnabledState aEnabledState,
     dom::Element* aTargetElement,
     nsStyleContext* aStyleContext,
     const nsCSSValue& aSpecifiedValue,
@@ -3057,7 +3104,7 @@ StyleAnimationValue::UncomputeValue(nsCSSProperty aProperty,
     case eUnit_Dasharray:
     case eUnit_Shadow:
     case eUnit_Filter:
-    case eUnit_BackgroundPosition:
+    case eUnit_BackgroundPositionCoord:
       {
         nsCSSValueList* computedList = aComputedValue.GetCSSValueListValue();
         if (computedList) {
@@ -3096,7 +3143,7 @@ StyleAnimationValue::UncomputeValue(nsCSSProperty aProperty,
     case eUnit_Dasharray:
     case eUnit_Shadow:
     case eUnit_Filter:
-    case eUnit_BackgroundPosition:
+    case eUnit_BackgroundPositionCoord:
       {
         UniquePtr<nsCSSValueList> computedList =
           aComputedValue.TakeCSSValueListValue();
@@ -3276,6 +3323,23 @@ SetPositionValue(const nsStyleImageLayers::Position& aPos, nsCSSValue& aCSSValue
   SetCalcValue(&aPos.mYPosition, yValue);
 }
 
+static void
+SetPositionCoordValue(const nsStyleImageLayers::Position::PositionCoord& aPosCoord,
+                      nsCSSValue& aCSSValue)
+{
+  RefPtr<nsCSSValue::Array> posArray = nsCSSValue::Array::Create(2);
+  aCSSValue.SetArrayValue(posArray.get(), eCSSUnit_Array);
+
+  // NOTE: Array entry #0 here is intentionally left untouched, with
+  // eCSSUnit_Null.  The purpose of this entry in our specified-style
+  // <position-coord> representation is to store edge names.  But for values
+  // extracted from computed style (which is what we're dealing with here),
+  // we'll just have a normalized "x"/"y" position, with no edge names needed.
+  nsCSSValue& value = posArray->Item(1);
+
+  SetCalcValue(&aPosCoord, value);
+}
+
 /*
  * Assign |aOutput = aInput|, except with any non-pixel lengths
  * replaced with the equivalent in pixels, and any non-canonical calc()
@@ -3319,22 +3383,43 @@ SubstitutePixelValues(nsStyleContext* aStyleContext,
 }
 
 static void
-ExtractImageLayerPositionList(const nsStyleImageLayers& aLayer,
-                              StyleAnimationValue& aComputedValue)
+ExtractImageLayerPositionXList(const nsStyleImageLayers& aLayer,
+                               StyleAnimationValue& aComputedValue)
 {
-  MOZ_ASSERT(aLayer.mPositionCount > 0, "unexpected count");
+  MOZ_ASSERT(aLayer.mPositionXCount > 0, "unexpected count");
 
   nsAutoPtr<nsCSSValueList> result;
   nsCSSValueList **resultTail = getter_Transfers(result);
-  for (uint32_t i = 0, i_end = aLayer.mPositionCount; i != i_end; ++i) {
+  for (uint32_t i = 0, i_end = aLayer.mPositionXCount; i != i_end; ++i) {
     nsCSSValueList *item = new nsCSSValueList;
     *resultTail = item;
     resultTail = &item->mNext;
-    SetPositionValue(aLayer.mLayers[i].mPosition, item->mValue);
+    SetPositionCoordValue(aLayer.mLayers[i].mPosition.mXPosition,
+                          item->mValue);
   }
 
   aComputedValue.SetAndAdoptCSSValueListValue(result.forget(),
-    StyleAnimationValue::eUnit_BackgroundPosition);
+    StyleAnimationValue::eUnit_BackgroundPositionCoord);
+}
+
+static void
+ExtractImageLayerPositionYList(const nsStyleImageLayers& aLayer,
+                               StyleAnimationValue& aComputedValue)
+{
+  MOZ_ASSERT(aLayer.mPositionYCount > 0, "unexpected count");
+
+  nsAutoPtr<nsCSSValueList> result;
+  nsCSSValueList **resultTail = getter_Transfers(result);
+  for (uint32_t i = 0, i_end = aLayer.mPositionYCount; i != i_end; ++i) {
+    nsCSSValueList *item = new nsCSSValueList;
+    *resultTail = item;
+    resultTail = &item->mNext;
+    SetPositionCoordValue(aLayer.mLayers[i].mPosition.mYPosition,
+                          item->mValue);
+  }
+
+  aComputedValue.SetAndAdoptCSSValueListValue(result.forget(),
+    StyleAnimationValue::eUnit_BackgroundPositionCoord);
 }
 
 static void
@@ -3483,9 +3568,9 @@ StyleClipBasicShapeToCSSArray(const nsStyleClipPath& aClipPath,
                                   pair->mXValue) ||
             !StyleCoordToCSSValue(radii.Get(NS_FULL_TO_HALF_CORNER(corner, true)),
                                   pair->mYValue)) {
-              return false;
-            }
-        radiusArray->Item(corner).SetPairValue(pair.release());
+          return false;
+        }
+        radiusArray->Item(corner).SetPairValue(pair.get());
       }
       // Set the last item in functionArray to the radius array:
       functionArray->Item(functionArray->Count() - 1).
@@ -3688,15 +3773,10 @@ StyleAnimationValue::ExtractComputedValue(nsCSSProperty aProperty,
 
         case eCSSProperty_stroke_dasharray: {
           const nsStyleSVG *svg = static_cast<const nsStyleSVG*>(styleStruct);
-          MOZ_ASSERT((svg->mStrokeDasharray != nullptr) ==
-                     (svg->mStrokeDasharrayLength != 0),
-                     "pointer/length mismatch");
           nsAutoPtr<nsCSSValueList> result;
-          if (svg->mStrokeDasharray) {
-            MOZ_ASSERT(svg->mStrokeDasharrayLength > 0,
-                       "non-null list should have positive length");
+          if (!svg->mStrokeDasharray.IsEmpty()) {
             nsCSSValueList **resultTail = getter_Transfers(result);
-            for (uint32_t i = 0, i_end = svg->mStrokeDasharrayLength;
+            for (uint32_t i = 0, i_end = svg->mStrokeDasharray.Length();
                  i != i_end; ++i) {
               nsCSSValueList *item = new nsCSSValueList;
               *resultTail = item;
@@ -3821,17 +3901,34 @@ StyleAnimationValue::ExtractComputedValue(nsCSSProperty aProperty,
           break;
         }
 
-        case eCSSProperty_background_position: {
+        case eCSSProperty_background_position_x: {
           const nsStyleImageLayers& layers =
             static_cast<const nsStyleBackground*>(styleStruct)->mImage;
-          ExtractImageLayerPositionList(layers, aComputedValue);
+          ExtractImageLayerPositionXList(layers, aComputedValue);
           break;
         }
+        case eCSSProperty_background_position_y: {
+          const nsStyleImageLayers& layers =
+            static_cast<const nsStyleBackground*>(styleStruct)->mImage;
+          ExtractImageLayerPositionYList(layers, aComputedValue);
+          break;
+
+
+
+
+        }
 #ifdef MOZ_ENABLE_MASK_AS_SHORTHAND
-        case eCSSProperty_mask_position: {
+        case eCSSProperty_mask_position_x: {
           const nsStyleImageLayers& layers =
             static_cast<const nsStyleSVGReset*>(styleStruct)->mMask;
-          ExtractImageLayerPositionList(layers, aComputedValue);
+          ExtractImageLayerPositionXList(layers, aComputedValue);
+          break;
+        }
+        case eCSSProperty_mask_position_y: {
+          const nsStyleImageLayers& layers =
+            static_cast<const nsStyleSVGReset*>(styleStruct)->mMask;
+          ExtractImageLayerPositionYList(layers, aComputedValue);
+
           break;
         }
 #endif
@@ -3875,8 +3972,8 @@ StyleAnimationValue::ExtractComputedValue(nsCSSProperty aProperty,
             if (!StyleClipBasicShapeToCSSArray(clipPath, result)) {
               return false;
             }
-            aComputedValue.SetAndAdoptCSSValueArrayValue(result.forget().take(),
-                                                         eUnit_Shape);
+            aComputedValue.SetCSSValueArrayValue(result, eUnit_Shape);
+
           } else {
             MOZ_ASSERT(type == NS_STYLE_CLIP_PATH_NONE, "unknown type");
             aComputedValue.SetNoneValue();
@@ -4248,7 +4345,7 @@ StyleAnimationValue::operator=(const StyleAnimationValue& aOther)
     case eUnit_Dasharray:
     case eUnit_Shadow:
     case eUnit_Filter:
-    case eUnit_BackgroundPosition:
+    case eUnit_BackgroundPositionCoord:
       MOZ_ASSERT(mUnit == eUnit_Shadow || mUnit == eUnit_Filter ||
                  aOther.mValue.mCSSValueList,
                  "value lists other than shadows and filters may not be null");
@@ -4406,15 +4503,16 @@ StyleAnimationValue::SetAndAdoptCSSRectValue(nsCSSRect *aRect, Unit aUnit)
 }
 
 void
-StyleAnimationValue::SetAndAdoptCSSValueArrayValue(nsCSSValue::Array* aValue,
-                                                   Unit aUnit)
+StyleAnimationValue::SetCSSValueArrayValue(nsCSSValue::Array* aValue,
+                                           Unit aUnit)
 {
   FreeValue();
   MOZ_ASSERT(IsCSSValueArrayUnit(aUnit), "bad unit");
   MOZ_ASSERT(aValue != nullptr,
              "not currently expecting any arrays to be null");
   mUnit = aUnit;
-  mValue.mCSSValueArray = aValue; // take ownership
+  mValue.mCSSValueArray = aValue;
+  mValue.mCSSValueArray->AddRef();
 }
 
 void
@@ -4466,6 +4564,8 @@ StyleAnimationValue::FreeValue()
     delete mValue.mCSSRect;
   } else if (IsCSSValuePairListUnit(mUnit)) {
     delete mValue.mCSSValuePairList;
+  } else if (IsCSSValueArrayUnit(mUnit)) {
+    mValue.mCSSValueArray->Release();
   } else if (IsStringUnit(mUnit)) {
     MOZ_ASSERT(mValue.mString, "expecting non-null string");
     mValue.mString->Release();
@@ -4512,7 +4612,7 @@ StyleAnimationValue::operator==(const StyleAnimationValue& aOther) const
     case eUnit_Dasharray:
     case eUnit_Shadow:
     case eUnit_Filter:
-    case eUnit_BackgroundPosition:
+    case eUnit_BackgroundPositionCoord:
       return nsCSSValueList::Equal(mValue.mCSSValueList,
                                    aOther.mValue.mCSSValueList);
     case eUnit_Shape:

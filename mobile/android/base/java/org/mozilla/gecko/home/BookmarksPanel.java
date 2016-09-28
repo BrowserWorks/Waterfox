@@ -5,6 +5,8 @@
 
 package org.mozilla.gecko.home;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.mozilla.gecko.GeckoProfile;
@@ -13,7 +15,7 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.db.BrowserContract;
 import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserDB;
-import org.mozilla.gecko.distribution.PartnerBookmarksProviderClient;
+import org.mozilla.gecko.distribution.PartnerBookmarksProviderProxy;
 import org.mozilla.gecko.home.BookmarksListAdapter.FolderInfo;
 import org.mozilla.gecko.home.BookmarksListAdapter.OnRefreshFolderListener;
 import org.mozilla.gecko.home.BookmarksListAdapter.RefreshType;
@@ -28,6 +30,8 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.MergeCursor;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
@@ -66,6 +70,20 @@ public class BookmarksPanel extends HomeFragment {
 
     // Callback for cursor loaders.
     private CursorLoaderCallbacks mLoaderCallbacks;
+
+    @Override
+    public void restoreData(@NonNull Bundle data) {
+        final ArrayList<FolderInfo> stack = data.getParcelableArrayList("parentStack");
+        if (stack == null) {
+            return;
+        }
+
+        if (mListAdapter == null) {
+            mSavedParentStack = new LinkedList<FolderInfo>(stack);
+        } else {
+            mListAdapter.restoreData(stack);
+        }
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -157,7 +175,16 @@ public class BookmarksPanel extends HomeFragment {
 
     @Override
     protected void load() {
-        getLoaderManager().initLoader(LOADER_ID_BOOKMARKS_LIST, null, mLoaderCallbacks);
+        final Bundle bundle;
+        if (mSavedParentStack != null && mSavedParentStack.size() > 1) {
+            bundle = new Bundle();
+            bundle.putParcelable(BOOKMARKS_FOLDER_INFO, mSavedParentStack.get(0));
+            bundle.putParcelable(BOOKMARKS_REFRESH_TYPE, RefreshType.CHILD);
+        } else {
+            bundle = null;
+        }
+
+        getLoaderManager().initLoader(LOADER_ID_BOOKMARKS_LIST, bundle, mLoaderCallbacks);
     }
 
     private void updateUiFromCursor(Cursor c) {
@@ -208,7 +235,7 @@ public class BookmarksPanel extends HomeFragment {
 
             if (GeckoSharedPrefs.forProfile(getContext()).getBoolean(GeckoPreferences.PREFS_READ_PARTNER_BOOKMARKS_PROVIDER, false)
                     && (isRootFolder || mFolderInfo.id <= Bookmarks.FAKE_PARTNER_BOOKMARKS_START)) {
-                partnerCursor = PartnerBookmarksProviderClient.getBookmarksInFolder(contentResolver, mFolderInfo.id);
+                partnerCursor = contentResolver.query(PartnerBookmarksProviderProxy.getUriForBookmarks(getContext(), mFolderInfo.id), null, null, null, null, null);
             }
 
             if (isRootFolder || mFolderInfo.id > Bookmarks.FAKE_PARTNER_BOOKMARKS_START) {
@@ -263,6 +290,19 @@ public class BookmarksPanel extends HomeFragment {
         public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
             BookmarksLoader bl = (BookmarksLoader) loader;
             mListAdapter.swapCursor(c, bl.getFolderInfo(), bl.getRefreshType());
+
+            if (mPanelStateChangeListener != null) {
+                final List<FolderInfo> parentStack = mListAdapter.getParentStack();
+                final Bundle bundle = new Bundle();
+
+                // Bundle likes to store ArrayLists or Arrays, but we've got a generic List (which
+                // is actually an unmodifiable wrapper around a LinkedList). We'll need to do a
+                // LinkedList conversion at the other end, when saving we need to use this awkward
+                // syntax to create an Array.
+                bundle.putParcelableArrayList("parentStack", new ArrayList<FolderInfo>(parentStack));
+
+                mPanelStateChangeListener.onStateChanged(bundle);
+            }
             updateUiFromCursor(c);
         }
 

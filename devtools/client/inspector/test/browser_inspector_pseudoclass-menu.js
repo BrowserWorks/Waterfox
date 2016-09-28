@@ -11,7 +11,7 @@ const TEST_URI = "data:text/html;charset=UTF-8," +
                  "<div>test div</div>";
 const PSEUDOS = ["hover", "active", "focus"];
 
-add_task(function*() {
+add_task(function* () {
   let {inspector, testActor} = yield openInspectorForURL(TEST_URI);
   yield selectNode("div", inspector);
 
@@ -32,7 +32,8 @@ function openMenu(menu) {
 
 function* testMenuItems(testActor, menu, inspector) {
   for (let pseudo of PSEUDOS) {
-    let menuitem = inspector.panelDoc.getElementById("node-menu-pseudo-" + pseudo);
+    let menuitem = inspector.panelDoc.getElementById(
+      "node-menu-pseudo-" + pseudo);
     ok(menuitem, ":" + pseudo + " menuitem exists");
 
     // Give the inspector panels a chance to update when the pseudoclass changes

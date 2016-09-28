@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2008 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -14,6 +16,12 @@
 
 #include "nspr.h"
 #include "base/eintr_wrapper.h"
+
+namespace {
+
+static mozilla::EnvironmentLog gProcessLog("MOZ_PROCESS_LOG");
+
+}  // namespace
 
 namespace base {
 
@@ -133,6 +141,8 @@ bool LaunchApp(const std::vector<std::string>& argv,
   if (!spawn_succeeded || !process_handle_valid) {
     retval = false;
   } else {
+    gProcessLog.print("==> process %d launched child process %d\n",
+                      GetCurrentProcId(), pid);
     if (wait)
       HANDLE_EINTR(waitpid(pid, 0, 0));
 

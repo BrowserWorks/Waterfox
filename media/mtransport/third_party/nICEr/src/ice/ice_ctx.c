@@ -168,6 +168,31 @@ int nr_ice_ctx_set_turn_servers(nr_ice_ctx *ctx,nr_ice_turn_server *servers,int 
     return(_status);
   }
 
+int nr_ice_ctx_copy_turn_servers(nr_ice_ctx *ctx, nr_ice_turn_server *servers, int ct)
+  {
+    int _status, i, r;
+
+    if (r = nr_ice_ctx_set_turn_servers(ctx, servers, ct)) {
+      ABORT(r);
+    }
+
+    // make copies of the username and password so they aren't freed twice
+    for (i = 0; i < ct; ++i) {
+      if (!(ctx->turn_servers[i].username = r_strdup(servers[i].username))) {
+        ABORT(R_NO_MEMORY);
+      }
+      if (r = r_data_create(&ctx->turn_servers[i].password,
+                            servers[i].password->data,
+                            servers[i].password->len)) {
+        ABORT(r);
+      }
+    }
+
+    _status=0;
+   abort:
+    return(_status);
+  }
+
 static int nr_ice_ctx_set_local_addrs(nr_ice_ctx *ctx,nr_local_addr *addrs,int ct)
   {
     int _status,i,r;
@@ -413,6 +438,8 @@ int nr_ice_ctx_create_with_credentials(char *label, UINT4 flags, char *ufrag, ch
 
     ctx->Ta = 20;
 
+    ctx->test_timer_divider = 0;
+
     if (r=nr_socket_factory_create_int(NULL, &default_socket_factory_vtbl, &ctx->socket_factory))
       ABORT(r);
 
@@ -515,6 +542,7 @@ void nr_ice_gather_finished_cb(NR_SOCKET s, int h, void *cb_arg)
     ctx = cand->ctx;
 
     ctx->uninitialized_candidates--;
+    r_log(LOG_ICE,LOG_DEBUG,"ICE(%s)/CAND(%s): initialized, %d remaining",ctx->label,cand->codeword,ctx->uninitialized_candidates);
 
     /* Avoid the need for yet another initialization function */
     if (cand->state == NR_ICE_CAND_STATE_INITIALIZING && cand->type == HOST)

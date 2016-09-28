@@ -31,8 +31,6 @@ namespace gmp {
 
 class GetGMPContentParentCallback;
 
-#define GMP_DEFAULT_ASYNC_SHUTDONW_TIMEOUT 3000
-
 class GeckoMediaPluginService : public mozIGeckoMediaPluginService
                               , public nsIObserver
 {
@@ -90,6 +88,7 @@ protected:
                                     UniquePtr<GetGMPContentParentCallback>&& aCallback) = 0;
 
   nsresult GMPDispatch(nsIRunnable* event, uint32_t flags = NS_DISPATCH_NORMAL);
+  nsresult GMPDispatch(already_AddRefed<nsIRunnable> event, uint32_t flags = NS_DISPATCH_NORMAL);
   void ShutdownGMPThread();
 
   Mutex mMutex; // Protects mGMPThread, mAbstractGMPThread and

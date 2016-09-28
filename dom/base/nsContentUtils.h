@@ -32,6 +32,7 @@
 #include "mozilla/FloatingPoint.h"
 #include "mozilla/net/ReferrerPolicy.h"
 #include "mozilla/Logging.h"
+#include "mozilla/NotNull.h"
 #include "nsIContentPolicy.h"
 
 #if defined(XP_WIN)
@@ -129,6 +130,11 @@ class Selection;
 class TabParent;
 } // namespace dom
 
+namespace ipc {
+class Shmem;
+class IShmemAllocator;
+}
+
 namespace gfx {
 class DataSourceSurface;
 } // namespace gfx
@@ -169,9 +175,12 @@ struct EventNameMapping
   int32_t  mType;
   mozilla::EventMessage mMessage;
   mozilla::EventClassID mEventClassID;
+  // True if mAtom is possibly used by special SVG/SMIL events, but
+  // mMessage is eUnidentifiedEvent. See EventNameList.h
+  bool mMaybeSpecialSVGorSMILEvent;
 };
 
-typedef void (*CallOnRemoteChildFunction) (mozilla::dom::TabParent* aTabParent,
+typedef bool (*CallOnRemoteChildFunction) (mozilla::dom::TabParent* aTabParent,
                                            void* aArg);
 
 class nsContentUtils
@@ -393,7 +402,7 @@ public:
    */
   static bool IsFirstLetterPunctuation(uint32_t aChar);
   static bool IsFirstLetterPunctuationAt(const nsTextFragment* aFrag, uint32_t aOffset);
- 
+
   /**
    * Returns true if aChar is of class Lu, Ll, Lt, Lm, Lo, Nd, Nl or No
    */
@@ -908,15 +917,6 @@ public:
                                      nsXPIDLString& aResult);
 
   /**
-   * A helper function that parses a sandbox attribute (of an <iframe> or
-   * a CSP directive) and converts it to the set of flags used internally.
-   *
-   * @param sandboxAttr   the sandbox attribute
-   * @return              the set of flags (0 if sandboxAttr is null)
-   */
-  static uint32_t ParseSandboxAttributeToFlags(const nsAttrValue* sandboxAttr);
-
-  /**
    * Helper function that generates a UUID.
    */
   static nsresult GenerateUUIDInPlace(nsID& aUUID);
@@ -933,7 +933,7 @@ private:
                                         const char16_t** aParams,
                                         uint32_t aParamsLength,
                                         nsXPIDLString& aResult);
-  
+
 public:
   template<uint32_t N>
   static nsresult FormatLocalizedString(PropertiesFile aFile,
@@ -1181,6 +1181,13 @@ public:
   static mozilla::EventMessage GetEventMessage(nsIAtom* aName);
 
   /**
+   * Returns the EventMessage and nsIAtom to be used for event listener
+   * registration.
+   */
+  static mozilla::EventMessage
+  GetEventMessageAndAtomForListener(const nsAString& aName, nsIAtom** aOnName);
+
+  /**
    * Return the EventClassID for the event with the given name. The name is the
    * event name *without* the 'on' prefix. Returns eBasicEventClass if the event
    * is not known to be of any particular event class.
@@ -1392,7 +1399,7 @@ public:
    * @param aResult the result. Out param.
    * @return false on out of memory errors, true otherwise.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   static bool GetNodeTextContent(nsINode* aNode, bool aDeep,
                                  nsAString& aResult, const mozilla::fallible_t&);
 
@@ -1606,9 +1613,9 @@ public:
    *                   scripts. Passing null is allowed and results in nothing
    *                   happening. It is also allowed to pass an object that
    *                   has not yet been AddRefed.
-   * @return false on out of memory, true otherwise.
    */
-  static bool AddScriptRunner(nsIRunnable* aRunnable);
+  static void AddScriptRunner(already_AddRefed<nsIRunnable> aRunnable);
+  static void AddScriptRunner(nsIRunnable* aRunnable);
 
   /**
    * Returns true if it's safe to execute content script and false otherwise.
@@ -1764,7 +1771,7 @@ public:
    */
   static bool CanAccessNativeAnon();
 
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   static nsresult WrapNative(JSContext *cx, nsISupports *native,
                              const nsIID* aIID, JS::MutableHandle<JS::Value> vp,
                              bool aAllowWrapping = true)
@@ -1773,7 +1780,7 @@ public:
   }
 
   // Same as the WrapNative above, but use this one if aIID is nsISupports' IID.
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   static nsresult WrapNative(JSContext *cx, nsISupports *native,
                              JS::MutableHandle<JS::Value> vp,
                              bool aAllowWrapping = true)
@@ -1781,7 +1788,7 @@ public:
     return WrapNative(cx, native, nullptr, nullptr, vp, aAllowWrapping);
   }
 
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   static nsresult WrapNative(JSContext *cx, nsISupports *native,
                              nsWrapperCache *cache,
                              JS::MutableHandle<JS::Value> vp,
@@ -1814,7 +1821,7 @@ public:
    * @param aString the string to convert the newlines inside [in/out]
    */
   static void PlatformToDOMLineBreaks(nsString &aString);
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   static bool PlatformToDOMLineBreaks(nsString &aString,
                                       const mozilla::fallible_t&);
 
@@ -1949,7 +1956,7 @@ public:
   {
     return sIsPerformanceTimingEnabled;
   }
-  
+
   /*
    * Returns true if user timing API should print to console.
    */
@@ -2255,11 +2262,11 @@ public:
 
   /**
    * Function checks if the user is idle.
-   * 
+   *
    * @param aRequestedIdleTimeInMS    The idle observer's requested idle time.
-   * @param aUserIsIdle               boolean indicating if the user 
+   * @param aUserIsIdle               boolean indicating if the user
    *                                  is currently idle or not.   *
-   * @return NS_OK                    NS_OK returned if the requested idle service and 
+   * @return NS_OK                    NS_OK returned if the requested idle service and
    *                                  the current idle time were successfully obtained.
    *                                  NS_ERROR_FAILURE returned if the the requested
    *                                  idle service or the current idle were not obtained.
@@ -2315,6 +2322,11 @@ public:
    * Returns true if the browser.dom.window.dump.enabled pref is set.
    */
   static bool DOMWindowDumpEnabled();
+
+  /**
+   * Returns true if the privacy.donottrackheader.enabled pref is set.
+   */
+  static bool DoNotTrackEnabled();
 
   /**
    * Returns a LogModule that dump calls from content script are logged to.
@@ -2379,7 +2391,7 @@ public:
 
   /*
    * Call the given callback on all remote children of the given top-level
-   * window.
+   * window. Return true from the callback to stop calling further children.
    */
   static void CallOnAllRemoteChildren(nsPIDOMWindowOuter* aWindow,
                                       CallOnRemoteChildFunction aCallback,
@@ -2431,8 +2443,18 @@ public:
    * Get the pixel data from the given source surface and return it as a buffer.
    * The length and stride will be assigned from the surface.
    */
-  static mozilla::UniquePtr<char[]> GetSurfaceData(mozilla::gfx::DataSourceSurface* aSurface,
-                                                   size_t* aLength, int32_t* aStride);
+  static mozilla::UniquePtr<char[]> GetSurfaceData(
+    mozilla::NotNull<mozilla::gfx::DataSourceSurface*> aSurface,
+    size_t* aLength, int32_t* aStride);
+
+  /*
+   * Get the pixel data from the given source surface and fill it in Shmem.
+   * The length and stride will be assigned from the surface.
+   */
+  static void GetSurfaceData(mozilla::gfx::DataSourceSurface* aSurface,
+                             size_t* aLength, int32_t* aStride,
+                             mozilla::ipc::IShmemAllocator* aAlloc,
+                             mozilla::ipc::Shmem *aOutShmem);
 
   // Helpers shared by the implementations of nsContentUtils methods and
   // nsIDOMWindowUtils methods.
@@ -2562,6 +2584,12 @@ public:
 
   static void SetScrollbarsVisibility(nsIDocShell* aDocShell, bool aVisible);
 
+  /*
+   * Return the associated presentation URL of the presented content.
+   * Will return empty string if the docshell is not in a presented content.
+   */
+  static void GetPresentationURL(nsIDocShell* aDocShell, nsAString& aPresentationUrl);
+
 private:
   static bool InitializeEventTable();
 
@@ -2598,7 +2626,7 @@ private:
   static AutocompleteAttrState InternalSerializeAutocompleteAttribute(const nsAttrValue* aAttrVal,
                                                                       mozilla::dom::AutocompleteInfo& aInfo);
 
-  static void CallOnAllRemoteChildren(nsIMessageBroadcaster* aManager,
+  static bool CallOnAllRemoteChildren(nsIMessageBroadcaster* aManager,
                                       CallOnRemoteChildFunction aCallback,
                                       void* aArg);
 
@@ -2627,15 +2655,6 @@ private:
   static nsIIOService *sIOService;
   static nsIUUIDGenerator *sUUIDGenerator;
 
-  static bool sImgLoaderInitialized;
-  static void InitImgLoader();
-
-  // The following four members are initialized lazily
-  static imgLoader* sImgLoader;
-  static imgLoader* sPrivateImgLoader;
-  static imgICache* sImgCache;
-  static imgICache* sPrivateImgCache;
-
   static nsIConsoleService* sConsoleService;
 
   static nsDataHashtable<nsISupportsHashKey, EventNameMapping>* sAtomEventTable;
@@ -2658,7 +2677,7 @@ private:
   static uint32_t sDOMNodeRemovedSuppressCount;
   static uint32_t sMicroTaskLevel;
   // Not an nsCOMArray because removing elements from those is slower
-  static nsTArray< nsCOMPtr<nsIRunnable> >* sBlockedScriptRunners;
+  static AutoTArray<nsCOMPtr<nsIRunnable>, 8>* sBlockedScriptRunners;
   static uint32_t sRunnersCountAtFirstBlocker;
   static uint32_t sScriptBlockerCountWhereRunnersPrevented;
 
@@ -2702,6 +2721,7 @@ private:
 #if !(defined(DEBUG) || defined(MOZ_ENABLE_JS_DUMP))
   static bool sDOMWindowDumpEnabled;
 #endif
+  static bool sDoNotTrackEnabled;
   static mozilla::LazyLogModule sDOMDumpLog;
 };
 

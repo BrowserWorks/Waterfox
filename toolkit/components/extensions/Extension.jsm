@@ -108,8 +108,8 @@ const COMMENT_REGEXP = new RegExp(String.raw`
     ^
     (
       (?:
-        [^"] |
-        " (?:[^"\\] | \\.)* "
+        [^"\n] |
+        " (?:[^"\\\n] | \\.)* "
       )*?
     )
 
@@ -546,6 +546,10 @@ GlobalManager = {
     schemaApi.extensionTypes = {};
 
     let schemaWrapper = {
+      get principal() {
+        return context.principal;
+      },
+
       get cloneScope() {
         return context.cloneScope;
       },
@@ -887,7 +891,7 @@ ExtensionData.prototype = {
       };
 
       if (this.localeData) {
-        context.preprocessors.localize = this.localize.bind(this);
+        context.preprocessors.localize = (value, context) => this.localize(value);
       }
 
       let normalized = Schemas.normalize(this.manifest, "manifest.WebExtensionManifest", context);
@@ -898,7 +902,10 @@ ExtensionData.prototype = {
       }
 
       try {
-        this.id = this.manifest.applications.gecko.id;
+        // Do not override the add-on id that has been already assigned.
+        if (!this.id && this.manifest.applications.gecko.id) {
+          this.id = this.manifest.applications.gecko.id;
+        }
       } catch (e) {
         // Errors are handled by the type checks above.
       }
@@ -1496,6 +1503,6 @@ Extension.prototype = extend(Object.create(ExtensionData.prototype), {
   },
 
   get name() {
-    return this.localize(this.manifest.name);
+    return this.manifest.name;
   },
 });

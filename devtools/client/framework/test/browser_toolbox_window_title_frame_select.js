@@ -9,7 +9,8 @@
 
 /**
  * Check that the detached devtools window title is not updated when switching
- * the selected frame.
+ * the selected frame. Also check that frames command button has 'open'
+ * attribute set when the list of frames is opened.
  */
 
 var {Toolbox} = require("devtools/client/framework/toolbox");
@@ -27,16 +28,28 @@ add_task(function* () {
   yield toolbox.selectTool("inspector");
   yield toolbox.switchHost(Toolbox.HostType.WINDOW);
 
-  is(getTitle(), "Inspector - Page title",
+  is(getTitle(), `Developer Tools - Page title - ${URL}`,
     "Devtools title correct after switching to detached window host");
 
-  // Verify that the frame list button is visible and populated
+  // Wait for tick to avoid unexpected 'popuphidden' event, which
+  // blocks the frame popup menu opened below. See also bug 1276873
+  yield waitForTick();
+
+  // Open frame menu and wait till it's available on the screen.
+  // Also check 'open' attribute on the command button.
   let btn = toolbox.doc.getElementById("command-button-frames");
-  let frames = Array.slice(btn.firstChild.querySelectorAll("[data-window-id]"));
+  ok(!btn.getAttribute("open"), "The open attribute must not be present");
+  let menu = toolbox.showFramesMenu({target: btn});
+  yield once(menu, "open");
+
+  is(btn.getAttribute("open"), "true", "The open attribute must be set");
+
+  // Verify that the frame list menu is populated
+  let frames = menu.items;
   is(frames.length, 2, "We have both frames in the list");
 
-  let topFrameBtn = frames.filter(b => b.getAttribute("label") == URL)[0];
-  let iframeBtn = frames.filter(b => b.getAttribute("label") == IFRAME_URL)[0];
+  let topFrameBtn = frames.filter(b => b.label == URL)[0];
+  let iframeBtn = frames.filter(b => b.label == IFRAME_URL)[0];
   ok(topFrameBtn, "Got top level document in the list");
   ok(iframeBtn, "Got iframe document in the list");
 
@@ -53,7 +66,7 @@ add_task(function* () {
   yield newRoot;
 
   info("Navigation to the iframe is done, the inspector should be back up");
-  is(getTitle(), "Inspector - Page title",
+  is(getTitle(), `Developer Tools - Page title - ${URL}`,
     "Devtools title was not updated after changing inspected frame");
 
   info("Cleanup toolbox and test preferences.");

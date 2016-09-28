@@ -9,7 +9,6 @@
 #include "MediaDecoderStateMachine.h"
 #include "MediaFormatReader.h"
 #include "MP3Demuxer.h"
-#include "mozilla/Preferences.h"
 #include "PDMFactory.h"
 
 namespace mozilla {
@@ -32,7 +31,6 @@ MP3Decoder::CreateStateMachine() {
 /* static */
 bool
 MP3Decoder::IsEnabled() {
-  PDMFactory::Init();
   RefPtr<PDMFactory> platform = new PDMFactory();
   return platform->SupportsMimeType(NS_LITERAL_CSTRING("audio/mpeg"),
                                     /* DecoderDoctorDiagnostics* */ nullptr);

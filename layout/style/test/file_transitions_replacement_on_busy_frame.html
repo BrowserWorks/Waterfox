@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<!--
+https://bugzilla.mozilla.org/show_bug.cgi?id=1167519
+-->
+<head>
+  <meta charset=utf-8>
+  <script type="application/javascript"
+    src="/tests/SimpleTest/paint_listener.js"></script>
+  <style>
+    #target {
+      height: 100px;
+      width: 100px;
+      background: green;
+      transition: transform 100s linear;
+    }
+  </style>
+</head>
+<body>
+<div id="target"></div>
+<script>
+'use strict';
+
+var ok = opener.ok.bind(opener);
+var isnot = opener.isnot.bind(opener);
+
+function finish() {
+  var o = opener;
+  self.close();
+  o.SimpleTest.finish();
+}
+
+var OMTAPrefKey = "layers.offmainthreadcomposition.async-animations";
+var omtaEnabled = SpecialPowers.DOMWindowUtils.layerManagerRemote &&
+                  opener.SpecialPowers.getBoolPref(OMTAPrefKey);
+window.addEventListener("load", function() {
+  if (!omtaEnabled) {
+    ok(true, "Skipping the test since OMTA is disabled");
+    finish();
+    return;
+  }
+
+  var div = document.getElementById("target");
+  // Start first transition
+  div.style.transform = "translateX(300px)";
+  getComputedStyle(div);
+
+  // Wait for a paint to ensure that the first transition has started.
+  waitForAllPaints(function() {
+    var previousMatrix;
+    var anim;
+    requestAnimationFrame(function() {
+      // Start second transition
+      div.style.transform = "translateX(0px)";
+      getComputedStyle(div).transform;
+
+      anim = div.getAnimations()[0];
+      var properties = SpecialPowers.wrap(anim.effect).getProperties();
+      previousMatrix = properties[0].values[0].value;
+    });
+
+    requestAnimationFrame(function() {
+      // Tie up main thread for 300ms. In the meantime, the first transition
+      // will continue running on the compositor. If we don't update the start
+      // point of the second transition, it will appear to jump when it starts.
+      var startTime = performance.now();
+      while (performance.now() - startTime < 300);
+
+      // Ensure that our paint process has been done.
+      // Note that requestAnimationFrame is not suitable here since on Android
+      // there is a case where the paint process has not completed even when the
+      // requestAnimationFrame callback is run (and it is during the paint
+      // process that we update the transition start point).
+      waitForAllPaints(function() {
+        var properties = SpecialPowers.wrap(anim.effect).getProperties();
+        var currentMatrix = properties[0].values[0].value;
+        isnot(currentMatrix, previousMatrix,
+              "From value of transition is updated since the moment when " +
+              "it was generated");
+        finish();
+      });
+    });
+  });
+});
+
+</script>
+</body>
+</html>

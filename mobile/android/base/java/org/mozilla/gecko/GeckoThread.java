@@ -36,43 +36,54 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class GeckoThread extends Thread {
     private static final String LOGTAG = "GeckoThread";
 
-    @WrapForJNI
     public enum State {
         // After being loaded by class loader.
-        INITIAL,
+        @WrapForJNI INITIAL(0),
         // After launching Gecko thread
-        LAUNCHED,
+        @WrapForJNI LAUNCHED(1),
         // After loading the mozglue library.
-        MOZGLUE_READY,
+        @WrapForJNI MOZGLUE_READY(2),
         // After loading the libxul library.
-        LIBS_READY,
+        @WrapForJNI LIBS_READY(3),
         // After initializing nsAppShell and JNI calls.
-        JNI_READY,
+        @WrapForJNI JNI_READY(4),
         // After initializing profile and prefs.
-        PROFILE_READY,
+        @WrapForJNI PROFILE_READY(5),
         // After initializing frontend JS
-        RUNNING,
+        @WrapForJNI RUNNING(6),
         // After leaving Gecko event loop
-        EXITING,
+        @WrapForJNI EXITING(3),
         // After exiting GeckoThread (corresponding to "Gecko:Exited" event)
-        EXITED;
+        @WrapForJNI EXITED(0);
+
+        /* The rank is an arbitrary value reflecting the amount of components or features
+         * that are available for use. During startup and up to the RUNNING state, the
+         * rank value increases because more components are initialized and available for
+         * use. During shutdown and up to the EXITED state, the rank value decreases as
+         * components are shut down and become unavailable. EXITING has the same rank as
+         * LIBS_READY because both states have a similar amount of components available.
+         */
+        private final int rank;
+
+        private State(int rank) {
+            this.rank = rank;
+        }
 
         public boolean is(final State other) {
             return this == other;
         }
 
         public boolean isAtLeast(final State other) {
-            return ordinal() >= other.ordinal();
+            return this.rank >= other.rank;
         }
 
         public boolean isAtMost(final State other) {
-            return ordinal() <= other.ordinal();
+            return this.rank <= other.rank;
         }
 
         // Inclusive
         public boolean isBetween(final State min, final State max) {
-            final int ord = ordinal();
-            return ord >= min.ordinal() && ord <= max.ordinal();
+            return this.rank >= min.rank && this.rank <= max.rank;
         }
     }
 
@@ -130,10 +141,16 @@ public class GeckoThread extends Thread {
         return false;
     }
 
-    private static boolean canUseProfile(final GeckoProfile profile, final String profileName,
-                                         final File profileDir) {
+    private static boolean canUseProfile(final Context context, final GeckoProfile profile,
+                                         final String profileName, final File profileDir) {
+        if (profileDir != null && !profileDir.isDirectory()) {
+            return false;
+        }
+
         if (profile == null) {
-            return true;
+            // We haven't initialized; any profile is okay as long as we follow the guest mode setting.
+            return GuestSession.shouldUse(context) ==
+                    GeckoProfile.isGuestProfile(context, profileName, profileDir);
         }
 
         // We already initialized and have a profile; see if it matches ours.
@@ -150,7 +167,8 @@ public class GeckoThread extends Thread {
         if (profileName == null) {
             throw new IllegalArgumentException("Null profile name");
         }
-        return canUseProfile(getActiveProfile(), profileName, profileDir);
+        return canUseProfile(GeckoAppShell.getApplicationContext(), getActiveProfile(),
+                             profileName, profileDir);
     }
 
     public static boolean initWithProfile(final String profileName, final File profileDir) {
@@ -158,13 +176,20 @@ public class GeckoThread extends Thread {
             throw new IllegalArgumentException("Null profile name");
         }
 
+        final Context context = GeckoAppShell.getApplicationContext();
         final GeckoProfile profile = getActiveProfile();
+
+        if (!canUseProfile(context, profile, profileName, profileDir)) {
+            // Profile is incompatible with current profile.
+            return false;
+        }
+
         if (profile != null) {
-            return canUseProfile(profile, profileName, profileDir);
+            // We already have a compatible profile.
+            return true;
         }
 
         // We haven't initialized yet; okay to initialize now.
-        final Context context = GeckoAppShell.getApplicationContext();
         return init(GeckoProfile.get(context, profileName, profileDir),
                     /* args */ null, /* action */ null, /* debugging */ false);
     }
@@ -383,25 +408,16 @@ public class GeckoThread extends Thread {
     private String addCustomProfileArg(String args) {
         String profileArg = "";
 
-        if (mProfile != null && mProfile.inGuestMode()) {
-            profileArg = " -profile " + mProfile.getDir().getAbsolutePath();
+        // Make sure a profile exists.
+        final GeckoProfile profile = getProfile();
+        profile.getDir(); // call the lazy initializer
 
-            if (args == null || !args.contains(BrowserApp.GUEST_BROWSING_ARG)) {
-                profileArg += " " + BrowserApp.GUEST_BROWSING_ARG;
-            }
-
-        } else {
-            // Make sure a profile exists.
-            final GeckoProfile profile = getProfile();
-            profile.getDir(); // call the lazy initializer
-
-            // If args don't include the profile, make sure it's included.
-            if (args == null || !args.matches(".*\\B-(P|profile)\\s+\\S+.*")) {
-                if (profile.isCustomProfile()) {
-                    profileArg = " -profile " + profile.getDir().getAbsolutePath();
-                } else {
-                    profileArg = " -P " + profile.getName();
-                }
+        // If args don't include the profile, make sure it's included.
+        if (args == null || !args.matches(".*\\B-(P|profile)\\s+\\S+.*")) {
+            if (profile.isCustomProfile()) {
+                profileArg = " -profile " + profile.getDir().getAbsolutePath();
+            } else {
+                profileArg = " -P " + profile.getName();
             }
         }
 
@@ -409,8 +425,9 @@ public class GeckoThread extends Thread {
     }
 
     private String getGeckoArgs(final String apkPath) {
-        // First argument is the .apk path
-        final StringBuilder args = new StringBuilder(apkPath);
+        // argv[0] is the program name, which for us is the package name.
+        final Context context = GeckoAppShell.getApplicationContext();
+        final StringBuilder args = new StringBuilder(context.getPackageName());
         args.append(" -greomni ").append(apkPath);
 
         final String userArgs = addCustomProfileArg(mArgs);
@@ -450,12 +467,7 @@ public class GeckoThread extends Thread {
     public synchronized GeckoProfile getProfile() {
         if (mProfile == null) {
             final Context context = GeckoAppShell.getApplicationContext();
-            mProfile = GeckoProfile.getFromArgs(context, mArgs);
-
-            // fall back to default profile if we didn't load a specific one
-            if (mProfile == null) {
-                mProfile = GeckoProfile.getDefaultProfile(context);
-            }
+            mProfile = GeckoProfile.initFromArgs(context, mArgs);
         }
         return mProfile;
     }
@@ -657,14 +669,14 @@ public class GeckoThread extends Thread {
     }
 
     @WrapForJNI(stubName = "CreateServices")
-    private static native void nativeCreateServices(String category);
+    private static native void nativeCreateServices(String category, String data);
 
-    public static void createServices(final String category) {
+    public static void createServices(final String category, final String data) {
         if (isStateAtLeast(State.PROFILE_READY)) {
-            nativeCreateServices(category);
+            nativeCreateServices(category, data);
         } else {
             queueNativeCallUntil(State.PROFILE_READY, GeckoThread.class, "nativeCreateServices",
-                                 String.class, category);
+                                 String.class, category, String.class, data);
         }
     }
 }

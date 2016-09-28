@@ -22,7 +22,7 @@ class CSTrustDomain final : public mozilla::pkix::TrustDomain
 public:
   typedef mozilla::pkix::Result Result;
 
-  explicit CSTrustDomain(ScopedCERTCertList& certChain);
+  explicit CSTrustDomain(UniqueCERTCertList& certChain);
 
   virtual Result GetCertTrust(
     mozilla::pkix::EndEntityOrCA endEntityOrCA,
@@ -60,13 +60,15 @@ public:
     mozilla::pkix::Time notBefore, mozilla::pkix::Time notAfter,
     mozilla::pkix::EndEntityOrCA endEntityOrCA,
     mozilla::pkix::KeyPurposeId keyPurpose) override;
+  virtual Result NetscapeStepUpMatchesServerAuth(
+    mozilla::pkix::Time notBefore, /*out*/ bool& matches) override;
   virtual Result DigestBuf(mozilla::pkix::Input item,
                            mozilla::pkix::DigestAlgorithm digestAlg,
                            /*out*/ uint8_t* digestBuf,
                            size_t digestBufLen) override;
 
 private:
-  /*out*/ ScopedCERTCertList& mCertChain;
+  /*out*/ UniqueCERTCertList& mCertChain;
   nsCOMPtr<nsICertBlocklist> mCertBlocklist;
 };
 

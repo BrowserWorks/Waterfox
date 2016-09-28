@@ -24,6 +24,9 @@
 
 using namespace mozilla::ipc;
 
+namespace mozilla {
+namespace net {
+
 static NS_DEFINE_CID(kThisSimpleURIImplementationCID,
                      NS_THIS_SIMPLEURI_IMPLEMENTATION_CID);
 static NS_DEFINE_CID(kSimpleURICID, NS_SIMPLEURI_CID);
@@ -194,16 +197,12 @@ nsSimpleURI::SetSpec(const nsACString &aSpec)
     NS_ENSURE_STATE(mMutable);
     
     const nsAFlatCString& flat = PromiseFlatCString(aSpec);
-    const char* specPtr = flat.get();
 
     // filter out unexpected chars "\r\n\t" if necessary
     nsAutoCString filteredSpec;
-    int32_t specLen;
-    if (net_FilterURIString(specPtr, filteredSpec)) {
-        specPtr = filteredSpec.get();
-        specLen = filteredSpec.Length();
-    } else
-        specLen = flat.Length();
+    net_FilterURIString(flat, filteredSpec);
+    const char* specPtr = filteredSpec.get();
+    int32_t specLen = filteredSpec.Length();
 
     // nsSimpleURI currently restricts the charset to US-ASCII
     nsAutoCString spec;
@@ -214,7 +213,7 @@ nsSimpleURI::SetSpec(const nsACString &aSpec)
         return NS_ERROR_MALFORMED_URI;
 
     mScheme.Truncate();
-    mozilla::DebugOnly<int32_t> n = spec.Left(mScheme, colonPos);
+    DebugOnly<int32_t> n = spec.Left(mScheme, colonPos);
     NS_ASSERTION(n == colonPos, "Left failed");
     ToLowerCase(mScheme);
 
@@ -236,7 +235,7 @@ nsSimpleURI::SetScheme(const nsACString &scheme)
 
     const nsPromiseFlatCString &flat = PromiseFlatCString(scheme);
     if (!net_IsValidScheme(flat)) {
-        NS_ERROR("the given url scheme contains invalid characters");
+        NS_WARNING("the given url scheme contains invalid characters");
         return NS_ERROR_MALFORMED_URI;
     }
 
@@ -633,7 +632,7 @@ nsSimpleURI::SetMutable(bool value)
 //----------------------------------------------------------------------------
 
 size_t 
-nsSimpleURI::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
+nsSimpleURI::SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const
 {
   return mScheme.SizeOfExcludingThisIfUnshared(aMallocSizeOf) +
          mPath.SizeOfExcludingThisIfUnshared(aMallocSizeOf) +
@@ -641,7 +640,9 @@ nsSimpleURI::SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf) const
 }
 
 size_t
-nsSimpleURI::SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const {
+nsSimpleURI::SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const {
   return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
 }
 
+} // namespace net
+} // namespace mozilla

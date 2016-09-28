@@ -13,7 +13,11 @@ var gTab, gPanel, gDebugger;
 var gResumeButton, gResumeKey, gFrames;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -77,7 +81,7 @@ function testResume() {
   EventUtils.sendMouseEvent({ type: "mousedown" }, gResumeButton, gDebugger);
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

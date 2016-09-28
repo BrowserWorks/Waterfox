@@ -67,6 +67,15 @@
     -moz-image-region: rect(32px, 1024px, 64px, 992px);
   }
 
+  #containers-panelmenu[cui-areatype="menu-panel"],
+  toolbarpaletteitem[place="palette"] > #containers-panelmenu {
+    -moz-image-region: rect(0px, 1056px, 32px, 1024px);
+  }
+
+  #containers-panelmenu[cui-areatype="menu-panel"][panel-multiview-anchor=true] {
+    -moz-image-region: rect(32px, 1056px, 64px, 1024px);
+  }
+
   #feed-button[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > #feed-button {
     -moz-image-region: rect(0px, 416px, 32px, 384px);
@@ -271,6 +280,15 @@
     -moz-image-region: rect(64px, 2048px, 128px, 1984px);
   }
 
+  #containers-panelmenu[cui-areatype="menu-panel"],
+  toolbarpaletteitem[place="palette"] > #containers-panelmenu {
+    -moz-image-region: rect(0px, 2112px, 64px, 2048px);
+  }
+
+  #containers-panelmenu[cui-areatype="menu-panel"][panel-multiview-anchor=true] {
+    -moz-image-region: rect(64px, 2112px, 128px, 2048px);
+  }
+
   #feed-button[cui-areatype="menu-panel"],
   toolbarpaletteitem[place="palette"] > #feed-button {
     -moz-image-region: rect(0px, 832px, 64px, 768px);
@@ -373,6 +391,11 @@
 
   toolbaritem[sdkstylewidget="true"] > toolbarbutton {
     -moz-image-region: rect(0, 1664px, 64px, 1600px);
+  }
+
+  #add-share-provider {
+    list-style-image: url(chrome://browser/skin/menuPanel-small@2x.png);
+    -moz-image-region: rect(0px, 192px, 32px, 160px);
   }
 
   /* Footer and wide panel control icons */

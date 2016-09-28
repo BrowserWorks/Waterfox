@@ -40,7 +40,8 @@ const TEST_DATA = [
     ]
   },
   {
-    desc: "Open popup and then tab away (2 times) to the a next focusable element",
+    desc: "Open popup and then tab away (2 times) to the a next focusable " +
+          "element",
     focused: false,
     keys: [
       {
@@ -69,7 +70,7 @@ const TEST_DATA = [
   }
 ];
 
-add_task(function*() {
+add_task(function* () {
   let { inspector } = yield openInspectorForURL(TEST_URL);
   let { searchBox } = inspector;
   let doc = inspector.panelDoc;

@@ -13,11 +13,11 @@ let panelWin = null;
 const URL = "data:text/html;charset=utf8,test split console key delegation";
 const XULNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-add_task(function*() {
+add_task(function* () {
   let tab = yield addTab(URL);
   let target = TargetFactory.forTab(tab);
-  gToolbox = yield gDevTools.showToolbox(target, "inspector");
-  panelWin = gToolbox.getPanel("inspector").panelWin;
+  gToolbox = yield gDevTools.showToolbox(target, "jsdebugger");
+  panelWin = gToolbox.getPanel("jsdebugger").panelWin;
 
   yield gToolbox.openSplitConsole();
   yield testIsSplitConsoleFocused();
@@ -41,11 +41,11 @@ function* testUseKeyWithSplitConsole() {
 
   let keyElm = panelWin.document.createElementNS(XULNS, "key");
   keyElm.setAttribute("keycode", "VK_F3");
-  keyElm.addEventListener("command", () => {commandCalled = true}, false);
-  panelWin.document.getElementsByTagName('keyset')[0].appendChild(keyElm);
+  keyElm.addEventListener("command", () => {commandCalled = true;}, false);
+  panelWin.document.getElementsByTagName("keyset")[0].appendChild(keyElm);
 
-  info("useKeyWithSplitConsole on inspector while inspector is focused");
-  gToolbox.useKeyWithSplitConsole(keyElm, "inspector");
+  info("useKeyWithSplitConsole on debugger while debugger is focused");
+  gToolbox.useKeyWithSplitConsole(keyElm, "jsdebugger");
 
   info("synthesizeKey with the console focused");
   let consoleInput = gToolbox.getPanel("webconsole").hud.jsterm.inputNode;
@@ -61,11 +61,11 @@ function* testUseKeyWithSplitConsoleWrongTool() {
 
   let keyElm = panelWin.document.createElementNS(XULNS, "key");
   keyElm.setAttribute("keycode", "VK_F4");
-  keyElm.addEventListener("command", () => {commandCalled = true}, false);
-  panelWin.document.getElementsByTagName('keyset')[0].appendChild(keyElm);
+  keyElm.addEventListener("command", () => {commandCalled = true;}, false);
+  panelWin.document.getElementsByTagName("keyset")[0].appendChild(keyElm);
 
-  info("useKeyWithSplitConsole on jsdebugger while inspector is focused");
-  gToolbox.useKeyWithSplitConsole(keyElm, "jsdebugger");
+  info("useKeyWithSplitConsole on inspector while debugger is focused");
+  gToolbox.useKeyWithSplitConsole(keyElm, "inspector");
 
   info("synthesizeKey with the console focused");
   let consoleInput = gToolbox.getPanel("webconsole").hud.jsterm.inputNode;

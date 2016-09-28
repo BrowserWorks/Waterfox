@@ -11,7 +11,7 @@ const { ThreadNode } = require("devtools/client/performance/modules/logic/tree-m
 const { CallView } = require("devtools/client/performance/modules/widgets/tree-view");
 const { synthesizeProfile } = require("devtools/client/performance/test/helpers/synth-utils");
 
-add_task(function() {
+add_task(function () {
   let profile = synthesizeProfile();
   let threadNode = new ThreadNode(profile.threads[0], { startTime: 0, endTime: 20 });
 
@@ -60,6 +60,6 @@ add_task(function() {
 
   is(container.childNodes[0].childNodes[5].getAttribute("type"), "function",
     "The root node in the tree has a function cell.");
-  is(container.childNodes[0].childNodes[5].style.MozMarginStart, "0px",
+  is(container.childNodes[0].childNodes[5].style.marginInlineStart, "0px",
     "The root node in the tree has the correct indentation.");
 });

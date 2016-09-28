@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=2 autoindent cindent expandtab: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -250,8 +250,7 @@ ProcLoaderClientDeinit()
   sProcLoaderLoop = nullptr;
 
   MessageLoop::current()->
-    PostTask(FROM_HERE,
-             NewRunnableFunction(&_ProcLoaderParentDestroy,
+    PostTask(NewRunnableFunction(&_ProcLoaderParentDestroy,
                                  procLoaderParent));
 }
 
@@ -314,8 +313,7 @@ ProcLoaderLoad(const char *aArgv[],
   *aProcessHandle = sProcLoaderPid;
   sProcLoaderPid = 0;
 
-  sProcLoaderLoop->PostTask(FROM_HERE,
-                            NewRunnableFunction(AsyncSendLoad, load));
+  sProcLoaderLoop->PostTask(NewRunnableFunction(AsyncSendLoad, load));
   return true;
 }
 
@@ -491,9 +489,8 @@ ProcLoaderChild::RecvLoad(InfallibleTArray<nsCString>&& aArgv,
 
   SendLoadComplete(mPeerPid, aCookie);
 
-  MessageLoop::current()->PostTask(FROM_HERE,
-                                   NewRunnableFunction(_ProcLoaderChildDestroy,
-                                                       this));
+  MessageLoop::current()->PostTask(
+    NewRunnableFunction(_ProcLoaderChildDestroy, this));
   return true;
 }
 
@@ -510,9 +507,8 @@ ProcLoaderChild::OnChannelError()
   MOZ_ASSERT(sProcLoaderDispatchedTask == nullptr);
   sProcLoaderDispatchedTask = new ProcLoaderNoopRunner();
 
-  MessageLoop::current()->PostTask(FROM_HERE,
-                                   NewRunnableFunction(_ProcLoaderChildDestroy,
-                                                       this));
+  MessageLoop::current()->PostTask(
+    NewRunnableFunction(_ProcLoaderChildDestroy, this));
 }
 
 /**

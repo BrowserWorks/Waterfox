@@ -140,7 +140,8 @@ nsHttpRequestHead::SetHeader(nsHttpAtom h, const nsACString &v,
         return NS_ERROR_FAILURE;
     }
 
-    return mHeaders.SetHeader(h, v, m);
+    return mHeaders.SetHeader(h, v, m,
+                              nsHttpHeaderArray::eVarietyRequestOverride);
 }
 
 nsresult
@@ -165,7 +166,8 @@ nsHttpRequestHead::SetEmptyHeader(nsHttpAtom h)
         return NS_ERROR_FAILURE;
     }
 
-    return mHeaders.SetEmptyHeader(h);
+    return mHeaders.SetEmptyHeader(h,
+                                   nsHttpHeaderArray::eVarietyRequestOverride);
 }
 
 nsresult
@@ -226,7 +228,8 @@ nsHttpRequestHead::SetHeaderOnce(nsHttpAtom h, const char *v,
     }
 
     if (!merge || !mHeaders.HasHeaderValue(h, v)) {
-        return mHeaders.SetHeader(h, nsDependentCString(v), merge);
+        return mHeaders.SetHeader(h, nsDependentCString(v), merge,
+                                  nsHttpHeaderArray::eVarietyRequestOverride);
     }
     return NS_OK;
 }
@@ -249,7 +252,24 @@ void
 nsHttpRequestHead::ParseHeaderSet(char *buffer)
 {
     ReentrantMonitorAutoEnter mon(mReentrantMonitor);
-    mHeaders.ParseHeaderSet(buffer);
+    nsHttpAtom hdr;
+    char *val;
+    while (buffer) {
+        char *eof = strchr(buffer, '\r');
+        if (!eof) {
+            break;
+        }
+        *eof = '\0';
+        if (NS_SUCCEEDED(nsHttpHeaderArray::ParseHeaderLine(buffer,
+                                                            &hdr,
+                                                            &val))) {
+            mHeaders.SetHeaderFromNet(hdr, nsDependentCString(val), false);
+        }
+        buffer = eof + 1;
+        if (*buffer == '\n') {
+            buffer++;
+        }
+    }
 }
 
 bool
@@ -341,7 +361,7 @@ nsHttpRequestHead::Flatten(nsACString &buf, bool pruneProxyHeaders)
 
     buf.AppendLiteral("\r\n");
 
-    mHeaders.Flatten(buf, pruneProxyHeaders);
+    mHeaders.Flatten(buf, pruneProxyHeaders, false);
 }
 
 } // namespace net

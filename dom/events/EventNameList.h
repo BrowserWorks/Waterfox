@@ -270,6 +270,10 @@ NON_IDL_EVENT(mozbrowserafterkeyup,
               eAfterKeyUp,
               EventNameType_None,
               eBeforeAfterKeyboardEventClass)
+NON_IDL_EVENT(mozaccesskeynotfound,
+              eAccessKeyNotFound,
+              EventNameType_None,
+              eKeyboardEventClass)
 EVENT(loadeddata,
       eLoadedData,
       EventNameType_HTML,
@@ -583,6 +587,13 @@ WINDOW_ONLY_EVENT(devicelight,
                   eDeviceLight,
                   EventNameType_None,
                   eBasicEventClass)
+
+// Install events as per W3C Manifest spec
+WINDOW_ONLY_EVENT(install,
+                  eInstall,
+                  EventNameType_None,
+                  eBasicEventClass)
+
 
 #ifdef MOZ_B2G
 WINDOW_ONLY_EVENT(moztimechange,

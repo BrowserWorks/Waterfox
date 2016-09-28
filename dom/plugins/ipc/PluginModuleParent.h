@@ -608,7 +608,7 @@ private:
 
     DWORD mFlashProcess1;
     DWORD mFlashProcess2;
-    mozilla::plugins::FinishInjectorInitTask* mFinishInitTask;
+    RefPtr<mozilla::plugins::FinishInjectorInitTask> mFinishInitTask;
 #endif
 
     void OnProcessLaunched(const bool aSucceeded);
@@ -622,9 +622,10 @@ private:
             MOZ_ASSERT(aModule);
         }
 
-        void Run() override
+        NS_IMETHOD Run() override
         {
             mModule->OnProcessLaunched(mLaunchSucceeded);
+            return NS_OK;
         }
 
     private:
@@ -641,7 +642,7 @@ private:
     // In other contexts it is *unsafe*, as there might be multiple content
     // processes in existence!
     dom::ContentParent* mContentParent;
-    nsCOMPtr<nsIObserver> mOfflineObserver;
+    nsCOMPtr<nsIObserver> mPluginOfflineObserver;
 #ifdef MOZ_ENABLE_PROFILER_SPS
     RefPtr<mozilla::ProfileGatherer> mGatherer;
 #endif

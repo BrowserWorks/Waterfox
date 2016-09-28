@@ -119,18 +119,7 @@ WebGLContext::GetChannelBits(const char* funcName, GLenum pname, GLint* const ou
 
         case LOCAL_GL_DEPTH_BITS:
             if (mOptions.depth) {
-                const auto& glFormats = gl->GetGLFormats();
-
-                GLenum depthFormat = glFormats.depth;
-                if (mOptions.stencil && glFormats.depthStencil) {
-                    depthFormat = glFormats.depthStencil;
-                }
-
-                if (depthFormat == LOCAL_GL_DEPTH_COMPONENT16) {
-                    *out_val = 16;
-                } else {
-                    *out_val = 24;
-                }
+                *out_val = gl->Screen()->DepthBits();
             } else {
                 *out_val = 0;
             }
@@ -391,16 +380,11 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
             return JS::NumberValue(uint32_t(i));
         }
         case LOCAL_GL_IMPLEMENTATION_COLOR_READ_TYPE: {
-            if (mBoundReadFramebuffer) {
-                nsCString fbStatusInfoIgnored;
-                const auto status = mBoundReadFramebuffer->CheckFramebufferStatus(&fbStatusInfoIgnored);
-                if (status != LOCAL_GL_FRAMEBUFFER_COMPLETE) {
-                    ErrorInvalidOperation("getParameter: Read framebuffer must be"
-                                          " complete before querying"
-                                          " IMPLEMENTATION_COLOR_READ_TYPE.");
-                    return JS::NullValue();
-                }
-            }
+            const webgl::FormatUsageInfo* usage;
+            uint32_t width, height;
+            GLenum mode;
+            if (!ValidateCurFBForRead(funcName, &usage, &width, &height, &mode))
+                return JS::NullValue();
 
             GLint i = 0;
             if (gl->IsSupported(gl::GLFeature::ES2_compatibility)) {
@@ -412,16 +396,11 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
             return JS::NumberValue(uint32_t(i));
         }
         case LOCAL_GL_IMPLEMENTATION_COLOR_READ_FORMAT: {
-            if (mBoundReadFramebuffer) {
-                nsCString fbStatusInfoIgnored;
-                const auto status = mBoundReadFramebuffer->CheckFramebufferStatus(&fbStatusInfoIgnored);
-                if (status != LOCAL_GL_FRAMEBUFFER_COMPLETE) {
-                    ErrorInvalidOperation("getParameter: Read framebuffer must be"
-                                          " complete before querying"
-                                          " IMPLEMENTATION_COLOR_READ_FORMAT.");
-                    return JS::NullValue();
-                }
-            }
+            const webgl::FormatUsageInfo* usage;
+            uint32_t width, height;
+            GLenum mode;
+            if (!ValidateCurFBForRead(funcName, &usage, &width, &height, &mode))
+                return JS::NullValue();
 
             GLint i = 0;
             if (gl->IsSupported(gl::GLFeature::ES2_compatibility)) {

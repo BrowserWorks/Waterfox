@@ -230,6 +230,36 @@ let tabListener = {
 
     this.emit("tab-removed", {tab, tabId, windowId, isWindowClosing});
   },
+
+  tabReadyInitialized: false,
+  tabReadyPromises: new WeakMap(),
+
+  initTabReady() {
+    if (!this.tabReadyInitialized) {
+      AllWindowEvents.addListener("progress", this);
+
+      this.tabReadyInitialized = true;
+    }
+  },
+
+  onLocationChange(browser, webProgress, request, locationURI, flags) {
+    if (webProgress.isTopLevel) {
+      let gBrowser = browser.ownerDocument.defaultView.gBrowser;
+      let tab = gBrowser.getTabForBrowser(browser);
+
+      let deferred = this.tabReadyPromises.get(tab);
+      if (deferred) {
+        deferred.resolve(tab);
+        this.tabReadyPromises.delete(tab);
+      }
+    }
+  },
+
+  awaitTabReady(tab) {
+    return new Promise((resolve, reject) => {
+      this.tabReadyPromises.set(tab, {resolve, reject});
+    });
+  },
 };
 
 extensions.registerSchemaAPI("tabs", null, (extension, context) => {
@@ -453,39 +483,6 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
 
       create: function(createProperties) {
         return new Promise((resolve, reject) => {
-          function createInWindow(window) {
-            let url;
-
-            if (createProperties.url !== null) {
-              url = context.uri.resolve(createProperties.url);
-
-              if (!context.checkLoadURL(url, {dontReportErrors: true})) {
-                reject({message: `URL not allowed: ${url}`});
-                return;
-              }
-            }
-
-            let tab = window.gBrowser.addTab(url || window.BROWSER_NEW_TAB_URL);
-
-            let active = true;
-            if (createProperties.active !== null) {
-              active = createProperties.active;
-            }
-            if (active) {
-              window.gBrowser.selectedTab = tab;
-            }
-
-            if (createProperties.index !== null) {
-              window.gBrowser.moveTabTo(tab, createProperties.index);
-            }
-
-            if (createProperties.pinned) {
-              window.gBrowser.pinTab(tab);
-            }
-
-            resolve(TabManager.convert(extension, tab));
-          }
-
           let window = createProperties.windowId !== null ?
             WindowManager.getWindow(createProperties.windowId, context) :
             WindowManager.topWindow;
@@ -495,12 +492,55 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
                 return;
               }
               Services.obs.removeObserver(obs, "browser-delayed-startup-finished");
-              createInWindow(window);
+              resolve(window);
             };
             Services.obs.addObserver(obs, "browser-delayed-startup-finished", false);
           } else {
-            createInWindow(window);
+            resolve(window);
           }
+        }).then(window => {
+          let url;
+
+          if (createProperties.url !== null) {
+            url = context.uri.resolve(createProperties.url);
+
+            if (!context.checkLoadURL(url, {dontReportErrors: true})) {
+              return Promise.reject({message: `Illegal URL: ${url}`});
+            }
+          }
+
+          tabListener.initTabReady();
+          let tab = window.gBrowser.addTab(url || window.BROWSER_NEW_TAB_URL);
+
+          let active = true;
+          if (createProperties.active !== null) {
+            active = createProperties.active;
+          }
+          if (active) {
+            window.gBrowser.selectedTab = tab;
+          }
+
+          if (createProperties.index !== null) {
+            window.gBrowser.moveTabTo(tab, createProperties.index);
+          }
+
+          if (createProperties.pinned) {
+            window.gBrowser.pinTab(tab);
+          }
+
+          if (!createProperties.url || createProperties.url.startsWith("about:")) {
+            // We can't wait for a location change event for about:newtab,
+            // since it may be pre-rendered, in which case its initial
+            // location change event has already fired.
+            return tab;
+          }
+
+          // Wait for the first location change event, so that operations
+          // like `executeScript` are dispatched to the inner window that
+          // contains the URL we're attempting to load.
+          return tabListener.awaitTabReady(tab);
+        }).then(tab => {
+          return TabManager.convert(extension, tab);
         });
       },
 
@@ -530,7 +570,7 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
           let url = context.uri.resolve(updateProperties.url);
 
           if (!context.checkLoadURL(url, {dontReportErrors: true})) {
-            return Promise.reject({message: `URL not allowed: ${url}`});
+            return Promise.reject({message: `Illegal URL: ${url}`});
           }
 
           tab.linkedBrowser.loadURI(url);
@@ -707,6 +747,7 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
                                    {}, {recipient});
       },
 
+      // Used to executeScript, insertCSS and removeCSS.
       _execute: function(tabId, details, kind, method) {
         let tab = tabId !== null ? TabManager.getTab(tabId) : TabManager.activeTab;
         let mm = tab.linkedBrowser.messageManager;
@@ -714,6 +755,7 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
         let options = {
           js: [],
           css: [],
+          remove_css: method == "removeCSS",
         };
 
         // We require a `code` or a `file` property, but we can't accept both.
@@ -771,6 +813,10 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
 
       insertCSS: function(tabId, details) {
         return self.tabs._execute(tabId, details, "css", "insertCSS");
+      },
+
+      removeCSS: function(tabId, details) {
+        return self.tabs._execute(tabId, details, "css", "removeCSS");
       },
 
       connect: function(tabId, connectInfo) {
@@ -958,6 +1004,80 @@ extensions.registerSchemaAPI("tabs", null, (extension, context) => {
         }
         return Promise.resolve();
       },
+
+      onZoomChange: new EventManager(context, "tabs.onZoomChange", fire => {
+        let getZoomLevel = browser => {
+          let {ZoomManager} = browser.ownerDocument.defaultView;
+
+          return ZoomManager.getZoomForBrowser(browser);
+        };
+
+        // Stores the last known zoom level for each tab's browser.
+        // WeakMap[<browser> -> number]
+        let zoomLevels = new WeakMap();
+
+        // Store the zoom level for all existing tabs.
+        for (let window of WindowListManager.browserWindows()) {
+          for (let tab of window.gBrowser.tabs) {
+            let browser = tab.linkedBrowser;
+            zoomLevels.set(browser, getZoomLevel(browser));
+          }
+        }
+
+        let tabCreated = (eventName, event) => {
+          let browser = event.tab.linkedBrowser;
+          zoomLevels.set(browser, getZoomLevel(browser));
+        };
+
+
+        let zoomListener = event => {
+          let browser = event.originalTarget;
+
+          // For non-remote browsers, this event is dispatched on the document
+          // rather than on the <browser>.
+          if (browser instanceof Ci.nsIDOMDocument) {
+            browser = browser.defaultView.QueryInterface(Ci.nsIInterfaceRequestor)
+                             .getInterface(Ci.nsIDocShell)
+                             .chromeEventHandler;
+          }
+
+          let {gBrowser} = browser.ownerDocument.defaultView;
+          let tab = gBrowser.getTabForBrowser(browser);
+          if (!tab) {
+            // We only care about zoom events in the top-level browser of a tab.
+            return;
+          }
+
+          let oldZoomFactor = zoomLevels.get(browser);
+          let newZoomFactor = getZoomLevel(browser);
+
+          if (oldZoomFactor != newZoomFactor) {
+            zoomLevels.set(browser, newZoomFactor);
+
+            let tabId = TabManager.getId(tab);
+            fire({
+              tabId,
+              oldZoomFactor,
+              newZoomFactor,
+              zoomSettings: self.tabs._getZoomSettings(tabId),
+            });
+          }
+        };
+
+        tabListener.init();
+        tabListener.on("tab-attached", tabCreated);
+        tabListener.on("tab-created", tabCreated);
+
+        AllWindowEvents.addListener("FullZoomChange", zoomListener);
+        AllWindowEvents.addListener("TextZoomChange", zoomListener);
+        return () => {
+          tabListener.off("tab-attached", tabCreated);
+          tabListener.off("tab-created", tabCreated);
+
+          AllWindowEvents.removeListener("FullZoomChange", zoomListener);
+          AllWindowEvents.removeListener("TextZoomChange", zoomListener);
+        };
+      }).api(),
     },
   };
   return self;

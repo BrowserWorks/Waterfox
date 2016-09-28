@@ -6,6 +6,7 @@
 
 include protocol PContent;
 include protocol PPresentationRequest;
+include protocol PPresentationBuilder;
 
 include InputStreamParams;
 
@@ -18,22 +19,27 @@ struct StartSessionRequest
   nsString sessionId;
   nsString origin;
   nsString deviceId;
+  uint64_t windowId;
 };
 
 struct SendSessionMessageRequest
 {
   nsString sessionId;
+  uint8_t role;
   nsString data;
 };
 
 struct CloseSessionRequest
 {
   nsString sessionId;
+  uint8_t role;
+  uint8_t closedReason;
 };
 
 struct TerminateSessionRequest
 {
   nsString sessionId;
+  uint8_t role;
 };
 
 union PresentationIPCRequest
@@ -47,13 +53,18 @@ union PresentationIPCRequest
 sync protocol PPresentation
 {
   manager PContent;
+  manages PPresentationBuilder;
   manages PPresentationRequest;
 
 child:
   async NotifyAvailableChange(bool aAvailable);
-  async NotifySessionStateChange(nsString aSessionId, uint16_t aState);
+  async NotifySessionStateChange(nsString aSessionId,
+                                 uint16_t aState,
+                                 nsresult aReason);
   async NotifyMessage(nsString aSessionId, nsCString aData);
   async NotifySessionConnect(uint64_t aWindowId, nsString aSessionId);
+
+  async PPresentationBuilder(nsString aSessionId, uint8_t aRole);
 
 parent:
   async __delete__();
@@ -61,15 +72,16 @@ parent:
   async RegisterAvailabilityHandler();
   async UnregisterAvailabilityHandler();
 
-  async RegisterSessionHandler(nsString aSessionId);
-  async UnregisterSessionHandler(nsString aSessionId);
+  async RegisterSessionHandler(nsString aSessionId, uint8_t aRole);
+  async UnregisterSessionHandler(nsString aSessionId, uint8_t aRole);
 
   async RegisterRespondingHandler(uint64_t aWindowId);
   async UnregisterRespondingHandler(uint64_t aWindowId);
 
   async PPresentationRequest(PresentationIPCRequest aRequest);
 
-  async NotifyReceiverReady(nsString aSessionId);
+  async NotifyReceiverReady(nsString aSessionId, uint64_t aWindowId);
+  async NotifyTransportClosed(nsString aSessionId, uint8_t aRole, nsresult aReason);
 };
 
 } // namespace dom

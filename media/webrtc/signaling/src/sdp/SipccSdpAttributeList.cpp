@@ -106,8 +106,6 @@ SipccSdpAttributeList::LoadSimpleStrings(sdp_t* sdp, uint16_t level,
                    errorHolder);
   LoadSimpleString(sdp, level, SDP_ATTR_LABEL, SdpAttribute::kLabelAttribute,
                    errorHolder);
-  LoadSimpleString(sdp, level, SDP_ATTR_IDENTITY,
-                   SdpAttribute::kIdentityAttribute, errorHolder);
 }
 
 void
@@ -648,6 +646,16 @@ SipccSdpAttributeList::LoadMsidSemantics(sdp_t* sdp, uint16_t level,
 }
 
 void
+SipccSdpAttributeList::LoadIdentity(sdp_t* sdp, uint16_t level)
+{
+  const char* val = sdp_attr_get_long_string(sdp, SDP_ATTR_IDENTITY, level, 0, 1);
+  if (val) {
+    SetAttribute(new SdpStringAttribute(SdpAttribute::kIdentityAttribute,
+                                        std::string(val)));
+  }
+}
+
+void
 SipccSdpAttributeList::LoadFmtp(sdp_t* sdp, uint16_t level)
 {
   auto fmtps = MakeUnique<SdpFmtpAttributeList>();
@@ -923,6 +931,9 @@ SipccSdpAttributeList::LoadRtcpFb(sdp_t* sdp, uint16_t level,
         os << rtcpfb->param.trr_int;
         parameter = os.str();
       } break;
+      case SDP_RTCP_FB_REMB: {
+        type = SdpRtcpFbAttributeList::kRemb;
+      } break;
       default:
         // Type we don't care about, ignore.
         continue;
@@ -996,6 +1007,8 @@ SipccSdpAttributeList::Load(sdp_t* sdp, uint16_t level,
     if (!LoadMsidSemantics(sdp, level, errorHolder)) {
       return false;
     }
+
+    LoadIdentity(sdp, level);
   } else {
     sdp_media_e mtype = sdp_get_media_type(sdp, level);
     if (mtype == SDP_MEDIA_APPLICATION) {

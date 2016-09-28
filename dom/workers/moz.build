@@ -32,8 +32,6 @@ EXPORTS.mozilla.dom.workers += [
 
 # Stuff needed for the bindings, not really public though.
 EXPORTS.mozilla.dom.workers.bindings += [
-    'DataStore.h',
-    'DataStoreCursor.h',
     'Performance.h',
     'ServiceWorker.h',
     'ServiceWorkerClient.h',
@@ -55,8 +53,6 @@ XPIDL_SOURCES += [
 
 UNIFIED_SOURCES += [
     'ChromeWorkerScope.cpp',
-    'DataStore.cpp',
-    'DataStoreCursor.cpp',
     'FileReaderSync.cpp',
     'Performance.cpp',
     'Principal.cpp',
@@ -139,3 +135,6 @@ XPCSHELL_TESTS_MANIFESTS += ['test/xpcshell/xpcshell.ini']
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 
 TEST_DIRS += ['test/gtest']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

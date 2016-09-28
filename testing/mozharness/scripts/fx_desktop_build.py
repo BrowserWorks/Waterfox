@@ -37,6 +37,7 @@ class FxDesktopBuild(BuildScript, object):
                 'upload-files',  # upload from BB to TC
                 'sendchange',
                 'check-test',
+                'valgrind-test',
                 'package-source',
                 'generate-source-signing-manifest',
                 'multi-l10n',
@@ -56,7 +57,6 @@ class FxDesktopBuild(BuildScript, object):
                 'taskcluster_credentials_file': 'oauth.txt',
                 'periodic_clobber': 168,
                 # hg tool stuff
-                'default_vcs': 'hgtool',
                 "tools_repo": "https://hg.mozilla.org/build/tools",
                 "repo_base": "https://hg.mozilla.org",
                 'tooltool_url': 'https://api.pub.build.mozilla.org/tooltool/',

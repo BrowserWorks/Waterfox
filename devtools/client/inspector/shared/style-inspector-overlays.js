@@ -12,9 +12,14 @@
 // - in-content highlighters that appear when hovering over property values
 // - etc.
 
-const {Cu} = require("chrome");
+const {getColor} = require("devtools/client/shared/theme");
+const {HTMLTooltip} = require("devtools/client/shared/widgets/HTMLTooltip");
 const {
-  Tooltip,
+  getImageDimensions,
+  setImageTooltip,
+  setBrokenImageTooltip,
+} = require("devtools/client/shared/widgets/tooltip/ImageTooltipHelper");
+const {
   SwatchColorPickerTooltip,
   SwatchCubicBezierTooltip,
   CssDocsTooltip,
@@ -22,7 +27,7 @@ const {
 } = require("devtools/client/shared/widgets/Tooltip");
 const EventEmitter = require("devtools/shared/event-emitter");
 const promise = require("promise");
-Cu.import("resource://gre/modules/Task.jsm");
+const {Task} = require("devtools/shared/task");
 const Services = require("Services");
 
 const PREF_IMAGE_TOOLTIP_SIZE = "devtools.inspector.imagePreviewTooltipSize";
@@ -77,7 +82,7 @@ HighlightersOverlay.prototype = {
    * Add the highlighters overlay to the view. This will start tracking mouse
    * movements and display highlighters when needed
    */
-  addToView: function() {
+  addToView: function () {
     if (!this.supportsHighlighters || this._isStarted || this._isDestroyed) {
       return;
     }
@@ -93,7 +98,7 @@ HighlightersOverlay.prototype = {
    * Remove the overlay from the current view. This will stop tracking mouse
    * movement and showing highlighters
    */
-  removeFromView: function() {
+  removeFromView: function () {
     if (!this.supportsHighlighters || !this._isStarted || this._isDestroyed) {
       return;
     }
@@ -107,7 +112,7 @@ HighlightersOverlay.prototype = {
     this._isStarted = false;
   },
 
-  _onMouseMove: function(event) {
+  _onMouseMove: function (event) {
     // Bail out if the target is the same as for the last mousemove
     if (event.target === this._lastHovered) {
       return;
@@ -143,7 +148,7 @@ HighlightersOverlay.prototype = {
     }
   },
 
-  _onMouseLeave: function() {
+  _onMouseLeave: function () {
     this._lastHovered = null;
     this._hideCurrent();
   },
@@ -154,7 +159,7 @@ HighlightersOverlay.prototype = {
    * @param {Object} nodeInfo
    * @return {Boolean}
    */
-  _isRuleViewTransform: function(nodeInfo) {
+  _isRuleViewTransform: function (nodeInfo) {
     let isTransform = nodeInfo.type === VIEW_NODE_VALUE_TYPE &&
                       nodeInfo.value.property === "transform";
     let isEnabled = nodeInfo.value.enabled &&
@@ -170,7 +175,7 @@ HighlightersOverlay.prototype = {
    * @param {Object} nodeInfo
    * @return {Boolean}
    */
-  _isComputedViewTransform: function(nodeInfo) {
+  _isComputedViewTransform: function (nodeInfo) {
     let isTransform = nodeInfo.type === VIEW_NODE_VALUE_TYPE &&
                       nodeInfo.value.property === "transform";
     return !this.isRuleView && isTransform;
@@ -179,7 +184,7 @@ HighlightersOverlay.prototype = {
   /**
    * Hide the currently shown highlighter
    */
-  _hideCurrent: function() {
+  _hideCurrent: function () {
     if (!this.highlighterShown || !this.highlighters[this.highlighterShown]) {
       return;
     }
@@ -202,7 +207,7 @@ HighlightersOverlay.prototype = {
    * @param {String} type The highlighter type. One of this.highlighters
    * @return a promise that resolves to the highlighter
    */
-  _getHighlighter: function(type) {
+  _getHighlighter: function (type) {
     let utils = this.highlighterUtils;
 
     if (this.highlighters[type]) {
@@ -219,7 +224,7 @@ HighlightersOverlay.prototype = {
    * Destroy this overlay instance, removing it from the view and destroying
    * all initialized highlighters
    */
-  destroy: function() {
+  destroy: function () {
     this.removeFromView();
 
     for (let type in this.highlighters) {
@@ -266,7 +271,7 @@ TooltipsOverlay.prototype = {
    * Add the tooltips overlay to the view. This will start tracking mouse
    * movements and display tooltips when needed
    */
-  addToView: function() {
+  addToView: function () {
     if (this._isStarted || this._isDestroyed) {
       return;
     }
@@ -274,7 +279,9 @@ TooltipsOverlay.prototype = {
     let panelDoc = this.view.inspector.panelDoc;
 
     // Image, fonts, ... preview tooltip
-    this.previewTooltip = new Tooltip(panelDoc);
+    this.previewTooltip = new HTMLTooltip(this.view.inspector.toolbox, {
+      type: "arrow"
+    });
     this.previewTooltip.startTogglingOnHover(this.view.element,
       this._onPreviewTooltipTargetHover.bind(this));
 
@@ -297,7 +304,7 @@ TooltipsOverlay.prototype = {
    * Remove the tooltips overlay from the view. This will stop tracking mouse
    * movements and displaying tooltips
    */
-  removeFromView: function() {
+  removeFromView: function () {
     if (!this._isStarted || this._isDestroyed) {
       return;
     }
@@ -331,7 +338,7 @@ TooltipsOverlay.prototype = {
    * @param {Object} nodeInfo
    * @return {String} The tooltip type to be shown, or null
    */
-  _getTooltipType: function({type, value: prop}) {
+  _getTooltipType: function ({type, value: prop}) {
     let tooltipType = null;
     let inspector = this.view.inspector;
 
@@ -359,18 +366,19 @@ TooltipsOverlay.prototype = {
    * Checks if the hovered target is a css value we support tooltips for.
    *
    * @param {DOMNode} target The currently hovered node
+   * @return {Promise}
    */
-  _onPreviewTooltipTargetHover: function(target) {
+  _onPreviewTooltipTargetHover: Task.async(function* (target) {
     let nodeInfo = this.view.getNodeInfo(target);
     if (!nodeInfo) {
       // The hovered node isn't something we care about
-      return promise.reject(false);
+      return false;
     }
 
     let type = this._getTooltipType(nodeInfo);
     if (!type) {
       // There is no tooltip type defined for the hovered node
-      return promise.reject(false);
+      return false;
     }
 
     if (this.isRuleView && this.colorPicker.tooltip.isShown()) {
@@ -395,22 +403,86 @@ TooltipsOverlay.prototype = {
     let inspector = this.view.inspector;
 
     if (type === TOOLTIP_IMAGE_TYPE) {
-      let dim = Services.prefs.getIntPref(PREF_IMAGE_TOOLTIP_SIZE);
-      // nodeInfo contains an absolute uri
-      let uri = nodeInfo.value.url;
-      return this.previewTooltip.setRelativeImageContent(uri,
-        inspector.inspector, dim);
+      try {
+        yield this._setImagePreviewTooltip(nodeInfo.value.url);
+      } catch (e) {
+        yield setBrokenImageTooltip(this.previewTooltip, this.view.inspector.panelDoc);
+      }
+      return true;
     }
 
     if (type === TOOLTIP_FONTFAMILY_TYPE) {
-      return this.previewTooltip.setFontFamilyContent(nodeInfo.value.value,
-        inspector.selection.nodeFront);
+      let font = nodeInfo.value.value;
+      let nodeFront = inspector.selection.nodeFront;
+      yield this._setFontPreviewTooltip(font, nodeFront);
+      return true;
     }
 
-    return undefined;
-  },
+    return false;
+  }),
 
-  _onNewSelection: function() {
+  /**
+   * Set the content of the preview tooltip to display an image preview. The image URL can
+   * be relative, a call will be made to the debuggee to retrieve the image content as an
+   * imageData URI.
+   *
+   * @param {String} imageUrl
+   *        The image url value (may be relative or absolute).
+   * @return {Promise} A promise that resolves when the preview tooltip content is ready
+   */
+  _setImagePreviewTooltip: Task.async(function* (imageUrl) {
+    let doc = this.view.inspector.panelDoc;
+    let maxDim = Services.prefs.getIntPref(PREF_IMAGE_TOOLTIP_SIZE);
+
+    let naturalWidth, naturalHeight;
+    if (imageUrl.startsWith("data:")) {
+      // If the imageUrl already is a data-url, save ourselves a round-trip
+      let size = yield getImageDimensions(doc, imageUrl);
+      naturalWidth = size.naturalWidth;
+      naturalHeight = size.naturalHeight;
+    } else {
+      let inspectorFront = this.view.inspector.inspector;
+      let {data, size} = yield inspectorFront.getImageDataFromURL(imageUrl, maxDim);
+      imageUrl = yield data.string();
+      naturalWidth = size.naturalWidth;
+      naturalHeight = size.naturalHeight;
+    }
+
+    yield setImageTooltip(this.previewTooltip, doc, imageUrl,
+      {maxDim, naturalWidth, naturalHeight});
+  }),
+
+  /**
+   * Set the content of the preview tooltip to display a font family preview.
+   *
+   * @param {String} font
+   *        The font family value.
+   * @param {object} nodeFront
+   *        The NodeActor that will used to retrieve the dataURL for the font
+   *        family tooltip contents.
+   * @return {Promise} A promise that resolves when the preview tooltip content is ready
+   */
+  _setFontPreviewTooltip: Task.async(function* (font, nodeFront) {
+    if (!font || !nodeFront || typeof nodeFront.getFontFamilyDataURL !== "function") {
+      throw new Error("Unable to create font preview tooltip content.");
+    }
+
+    font = font.replace(/"/g, "'");
+    font = font.replace("!important", "");
+    font = font.trim();
+
+    let fillStyle = getColor("body-color");
+    let {data, size: maxDim} = yield nodeFront.getFontFamilyDataURL(font, fillStyle);
+
+    let imageUrl = yield data.string();
+    let doc = this.view.inspector.panelDoc;
+    let {naturalWidth, naturalHeight} = yield getImageDimensions(doc, imageUrl);
+
+    yield setImageTooltip(this.previewTooltip, doc, imageUrl,
+      {hideDimensionLabel: true, maxDim, naturalWidth, naturalHeight});
+  }),
+
+  _onNewSelection: function () {
     if (this.previewTooltip) {
       this.previewTooltip.hide();
     }
@@ -435,7 +507,7 @@ TooltipsOverlay.prototype = {
   /**
    * Destroy this overlay instance, removing it from the view
    */
-  destroy: function() {
+  destroy: function () {
     this.removeFromView();
 
     this.view.inspector.selection.off("new-node-front", this._onNewSelection);

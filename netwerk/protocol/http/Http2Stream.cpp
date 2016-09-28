@@ -425,10 +425,10 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
   // check the push cache for GET
   if (head->IsGet()) {
     // from :scheme, :authority, :path
-    nsISchedulingContext *schedulingContext = mTransaction->SchedulingContext();
+    nsIRequestContext *requestContext = mTransaction->RequestContext();
     SpdyPushCache *cache = nullptr;
-    if (schedulingContext) {
-      schedulingContext->GetSpdyPushCache(&cache);
+    if (requestContext) {
+      requestContext->GetSpdyPushCache(&cache);
     }
 
     Http2PushedStream *pushedStream = nullptr;
@@ -455,8 +455,8 @@ Http2Stream::ParseHttpRequestHeaders(const char *buf,
     }
 
     LOG3(("Pushed Stream Lookup "
-          "session=%p key=%s schedulingcontext=%p cache=%p hit=%p\n",
-          mSession, hashkey.get(), schedulingContext, cache, pushedStream));
+          "session=%p key=%s requestcontext=%p cache=%p hit=%p\n",
+          mSession, hashkey.get(), requestContext, cache, pushedStream));
 
     if (pushedStream) {
       LOG3(("Pushed Stream Match located %p id=0x%X key=%s\n",
@@ -1080,6 +1080,15 @@ void
 Http2Stream::Close(nsresult reason)
 {
   mTransaction->Close(reason);
+}
+
+void
+Http2Stream::SetResponseIsComplete()
+{
+  nsHttpTransaction *trans = mTransaction->QueryHttpTransaction();
+  if (trans) {
+    trans->SetResponseIsComplete();
+  }
 }
 
 void

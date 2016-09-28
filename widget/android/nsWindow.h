@@ -32,8 +32,7 @@ namespace mozilla {
     }
 }
 
-class nsWindow :
-    public nsBaseWidget
+class nsWindow : public nsBaseWidget
 {
 private:
     virtual ~nsWindow();
@@ -48,6 +47,13 @@ public:
     static void InitNatives();
 
 private:
+    // An Event subclass that guards against stale events.
+    template<typename Lambda,
+             bool IsStatic = Lambda::isStatic,
+             typename InstanceType = typename Lambda::ThisArgType,
+             class Impl = typename Lambda::TargetClass>
+    class WindowEvent;
+
     class GeckoViewSupport;
     // Object that implements native GeckoView calls and associated states.
     // nullptr for nsWindows that were not opened from GeckoView.
@@ -171,9 +177,6 @@ public:
     virtual void DrawWindowUnderlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override;
     virtual void DrawWindowOverlay(LayerManagerComposite* aManager, LayoutDeviceIntRect aRect) override;
 
-    virtual mozilla::layers::CompositorBridgeParent* NewCompositorBridgeParent(
-      int aSurfaceWidth, int aSurfaceHeight) override;
-
     static bool IsCompositionPaused();
     static void InvalidateAndScheduleComposite();
     static void SchedulePauseComposition();
@@ -194,6 +197,14 @@ public:
                                         double aPointerPressure,
                                         uint32_t aPointerOrientation,
                                         nsIObserver* aObserver) override;
+    nsresult SynthesizeNativeMouseEvent(LayoutDeviceIntPoint aPoint,
+                                        uint32_t aNativeMessage,
+                                        uint32_t aModifierFlags,
+                                        nsIObserver* aObserver) override;
+    nsresult SynthesizeNativeMouseMove(LayoutDeviceIntPoint aPoint,
+                                       nsIObserver* aObserver) override;
+
+    CompositorBridgeParent* GetCompositorBridgeParent() const;
 
 protected:
     void BringToFront();
@@ -226,6 +237,10 @@ protected:
 
     virtual nsresult NotifyIMEInternal(
                          const IMENotification& aIMENotification) override;
+
+    bool UseExternalCompositingSurface() const override {
+      return true;
+    }
 
     static void DumpWindows();
     static void DumpWindows(const nsTArray<nsWindow*>& wins, int indent = 0);

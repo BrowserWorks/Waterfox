@@ -161,7 +161,7 @@ var pktApi = (function() {
     function getCookiesFromPocket() {
 
         var cookieManager = Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieManager2);
-        var pocketCookies = cookieManager.getCookiesFromHost(pocketSiteHost);
+        var pocketCookies = cookieManager.getCookiesFromHost(pocketSiteHost, {});
         var cookies = {};
         while (pocketCookies.hasMoreElements()) {
             var cookie = pocketCookies.getNext().QueryInterface(Ci.nsICookie2);
@@ -326,8 +326,8 @@ var pktApi = (function() {
     /**
      * Add a new link to Pocket
      * @param {string} url     URL of the link
-     * @param {Object | undefined} options Can provide an title and have a
-     *                                     success and error callbacks
+     * @param {Object | undefined} options Can provide a string-based title, a
+     *                                     `success` callback and an `error` callback.
      * @return {Boolean} Returns Boolean whether the api call started sucessfully
      */
     function addLink(url, options) {
@@ -341,9 +341,8 @@ var pktApi = (function() {
             since: since ? since : 0
         };
 
-        var title = options.title;
-        if (title !== "undefined") {
-            sendData.title = title;
+        if (options.title) {
+            sendData.title = options.title;
         }
 
         return apiRequest({

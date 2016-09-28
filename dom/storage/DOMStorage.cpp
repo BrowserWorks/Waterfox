@@ -176,7 +176,7 @@ DOMStorage::Clear(ErrorResult& aRv)
 
 namespace {
 
-class StorageNotifierRunnable : public nsRunnable
+class StorageNotifierRunnable : public Runnable
 {
 public:
   StorageNotifierRunnable(nsISupports* aSubject, const char16_t* aType)
@@ -296,7 +296,7 @@ DOMStorage::CanAccess(nsIPrincipal* aPrincipal)
 }
 
 void
-DOMStorage::GetSupportedNames(unsigned, nsTArray<nsString>& aKeys)
+DOMStorage::GetSupportedNames(nsTArray<nsString>& aKeys)
 {
   if (!CanUseStorage(nullptr, this)) {
     // return just an empty array

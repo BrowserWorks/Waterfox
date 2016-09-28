@@ -526,6 +526,19 @@ public class TopSitesPanel extends HomeFragment {
             return super.getItem(position + mMaxGridEntries);
         }
 
+        /**
+         * We have to override default getItemId implementation, since for a given position, it returns
+         * value of the _id column. In our case _id is always 0 (see Combined view).
+         */
+        @Override
+        public long getItemId(int position) {
+            final int adjustedPosition = position + mMaxGridEntries;
+            final Cursor cursor = getCursor();
+
+            cursor.moveToPosition(adjustedPosition);
+            return getItemIdForTopSitesCursor(cursor);
+        }
+
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
             final int position = cursor.getPosition();
@@ -585,6 +598,18 @@ public class TopSitesPanel extends HomeFragment {
             notifyDataSetChanged();
         }
 
+        /**
+         * We have to override default getItemId implementation, since for a given position, it returns
+         * value of the _id column. In our case _id is always 0 (see Combined view).
+         */
+        @Override
+        public long getItemId(int position) {
+            final Cursor cursor = getCursor();
+            cursor.moveToPosition(position);
+
+            return getItemIdForTopSitesCursor(cursor);
+        }
+
         @Override
         public void bindView(View bindView, Context context, Cursor cursor) {
             final String url = cursor.getString(cursor.getColumnIndexOrThrow(TopSites.URL));
@@ -639,9 +664,6 @@ public class TopSitesPanel extends HomeFragment {
                 // Great!
                 return;
             }
-
-            // Otherwise, do this until the async lookup returns.
-            view.displayThumbnail(R.drawable.favicon_globe);
 
             // Give each side enough information to shake hands later.
             listener.setLoadId(loadId);
@@ -948,5 +970,26 @@ public class TopSitesPanel extends HomeFragment {
                 mGridAdapter.updateThumbnails(null);
             }
         }
+    }
+
+    /**
+     * We are trying to return stable IDs so that Android can recycle views appropriately:
+     * - If we have a history ID then we return it
+     * - If we only have a bookmark ID then we negate it and return it. We negate it in order
+     *   to avoid clashing/conflicting with history IDs.
+     *
+     * @param cursorInPosition Cursor already moved to position for which we're getting a stable ID
+     * @return Stable ID for a given cursor
+     */
+    private static long getItemIdForTopSitesCursor(final Cursor cursorInPosition) {
+        final int historyIdCol = cursorInPosition.getColumnIndexOrThrow(TopSites.HISTORY_ID);
+        final long historyId = cursorInPosition.getLong(historyIdCol);
+        if (historyId != 0) {
+            return historyId;
+        }
+
+        final int bookmarkIdCol = cursorInPosition.getColumnIndexOrThrow(TopSites.BOOKMARK_ID);
+        final long bookmarkId = cursorInPosition.getLong(bookmarkIdCol);
+        return -1 * bookmarkId;
     }
 }

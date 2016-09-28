@@ -25,6 +25,7 @@
 
 #include "jsprf.h"
 
+#include "asmjs/WasmBinaryToExperimentalText.h"
 #include "asmjs/WasmBinaryToText.h"
 #include "asmjs/WasmSerialize.h"
 #include "builtin/AtomicsObject.h"
@@ -358,54 +359,60 @@ Import::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
 }
 
 CodeRange::CodeRange(Kind kind, Offsets offsets)
-  : funcIndex_(0),
-    funcLineOrBytecode_(0),
-    begin_(offsets.begin),
+  : begin_(offsets.begin),
     profilingReturn_(0),
-    end_(offsets.end)
+    end_(offsets.end),
+    funcIndex_(0),
+    funcLineOrBytecode_(0),
+    funcBeginToTableEntry_(0),
+    funcBeginToTableProfilingJump_(0),
+    funcBeginToNonProfilingEntry_(0),
+    funcProfilingJumpToProfilingReturn_(0),
+    funcProfilingEpilogueToProfilingReturn_(0),
+    kind_(kind)
 {
-    PodZero(&u);  // zero padding for Valgrind
-    u.kind_ = kind;
-
     MOZ_ASSERT(begin_ <= end_);
-    MOZ_ASSERT(u.kind_ == Entry || u.kind_ == Inline || u.kind_ == CallThunk);
+    MOZ_ASSERT(kind_ == Entry || kind_ == Inline || kind_ == CallThunk);
 }
 
 CodeRange::CodeRange(Kind kind, ProfilingOffsets offsets)
-  : funcIndex_(0),
-    funcLineOrBytecode_(0),
-    begin_(offsets.begin),
+  : begin_(offsets.begin),
     profilingReturn_(offsets.profilingReturn),
-    end_(offsets.end)
+    end_(offsets.end),
+    funcIndex_(0),
+    funcLineOrBytecode_(0),
+    funcBeginToTableEntry_(0),
+    funcBeginToTableProfilingJump_(0),
+    funcBeginToNonProfilingEntry_(0),
+    funcProfilingJumpToProfilingReturn_(0),
+    funcProfilingEpilogueToProfilingReturn_(0),
+    kind_(kind)
 {
-    PodZero(&u);  // zero padding for Valgrind
-    u.kind_ = kind;
-
     MOZ_ASSERT(begin_ < profilingReturn_);
     MOZ_ASSERT(profilingReturn_ < end_);
-    MOZ_ASSERT(u.kind_ == ImportJitExit || u.kind_ == ImportInterpExit || u.kind_ == ErrorExit);
+    MOZ_ASSERT(kind_ == ImportJitExit || kind_ == ImportInterpExit);
 }
 
 CodeRange::CodeRange(uint32_t funcIndex, uint32_t funcLineOrBytecode, FuncOffsets offsets)
-  : funcIndex_(funcIndex),
-    funcLineOrBytecode_(funcLineOrBytecode)
+  : begin_(offsets.begin),
+    profilingReturn_(offsets.profilingReturn),
+    end_(offsets.end),
+    funcIndex_(funcIndex),
+    funcLineOrBytecode_(funcLineOrBytecode),
+    funcBeginToTableEntry_(offsets.tableEntry - begin_),
+    funcBeginToTableProfilingJump_(offsets.tableProfilingJump - begin_),
+    funcBeginToNonProfilingEntry_(offsets.nonProfilingEntry - begin_),
+    funcProfilingJumpToProfilingReturn_(profilingReturn_ - offsets.profilingJump),
+    funcProfilingEpilogueToProfilingReturn_(profilingReturn_ - offsets.profilingEpilogue),
+    kind_(Function)
 {
-    PodZero(&u);  // zero padding for Valgrind
-    u.kind_ = Function;
-
-    MOZ_ASSERT(offsets.nonProfilingEntry - offsets.begin <= UINT8_MAX);
-    begin_ = offsets.begin;
-    u.func.beginToEntry_ = offsets.nonProfilingEntry - begin_;
-
-    MOZ_ASSERT(offsets.nonProfilingEntry < offsets.profilingReturn);
-    MOZ_ASSERT(offsets.profilingReturn - offsets.profilingJump <= UINT8_MAX);
-    MOZ_ASSERT(offsets.profilingReturn - offsets.profilingEpilogue <= UINT8_MAX);
-    profilingReturn_ = offsets.profilingReturn;
-    u.func.profilingJumpToProfilingReturn_ = profilingReturn_ - offsets.profilingJump;
-    u.func.profilingEpilogueToProfilingReturn_ = profilingReturn_ - offsets.profilingEpilogue;
-
-    MOZ_ASSERT(offsets.nonProfilingEntry < offsets.end);
-    end_ = offsets.end;
+    MOZ_ASSERT(begin_ < profilingReturn_);
+    MOZ_ASSERT(profilingReturn_ < end_);
+    MOZ_ASSERT(funcBeginToTableEntry_ == offsets.tableEntry - begin_);
+    MOZ_ASSERT(funcBeginToTableProfilingJump_ == offsets.tableProfilingJump - begin_);
+    MOZ_ASSERT(funcBeginToNonProfilingEntry_ == offsets.nonProfilingEntry - begin_);
+    MOZ_ASSERT(funcProfilingJumpToProfilingReturn_ == profilingReturn_ - offsets.profilingJump);
+    MOZ_ASSERT(funcProfilingEpilogueToProfilingReturn_ == profilingReturn_ - offsets.profilingEpilogue);
 }
 
 static size_t
@@ -588,7 +595,7 @@ ModuleData::sizeOfExcludingThis(MallocSizeOf mallocSizeOf) const
            codeRanges.sizeOfExcludingThis(mallocSizeOf) +
            callSites.sizeOfExcludingThis(mallocSizeOf) +
            callThunks.sizeOfExcludingThis(mallocSizeOf) +
-           prettyFuncNames.sizeOfExcludingThis(mallocSizeOf) +
+           SizeOfVectorExcludingThis(prettyFuncNames, mallocSizeOf) +
            filename.sizeOfExcludingThis(mallocSizeOf);
 }
 
@@ -803,29 +810,31 @@ Module::setProfilingEnabled(JSContext* cx, bool enabled)
         AutoFlushICache::setRange(uintptr_t(code()), codeBytes());
 
         for (const CallSite& callSite : module_->callSites)
-            EnableProfilingPrologue(*this, callSite, enabled);
+            ToggleProfiling(*this, callSite, enabled);
 
         for (const CallThunk& callThunk : module_->callThunks)
-            EnableProfilingThunk(*this, callThunk, enabled);
+            ToggleProfiling(*this, callThunk, enabled);
 
         for (const CodeRange& codeRange : module_->codeRanges)
-            EnableProfilingEpilogue(*this, codeRange, enabled);
+            ToggleProfiling(*this, codeRange, enabled);
     }
 
-    // Update the function-pointer tables to point to profiling prologues.
-    for (FuncPtrTable& table : funcPtrTables_) {
-        auto array = reinterpret_cast<void**>(globalData() + table.globalDataOffset);
-        for (size_t i = 0; i < table.numElems; i++) {
-            const CodeRange* codeRange = lookupCodeRange(array[i]);
-            // Don't update entries for the BadIndirectCall exit.
-            if (codeRange->isErrorExit())
-                continue;
-            void* from = code() + codeRange->funcNonProfilingEntry();
-            void* to = code() + codeRange->funcProfilingEntry();
-            if (!enabled)
-                Swap(from, to);
-            MOZ_ASSERT(array[i] == from);
-            array[i] = to;
+    // In asm.js, table elements point directly to the prologue and must be
+    // updated to reflect the profiling mode. In wasm, table elements point to
+    // the (one) table entry which checks signature before jumping to the
+    // appropriate prologue (which is patched by ToggleProfiling).
+    if (isAsmJS()) {
+        for (FuncPtrTable& table : funcPtrTables_) {
+            auto array = reinterpret_cast<void**>(globalData() + table.globalDataOffset);
+            for (size_t i = 0; i < table.numElems; i++) {
+                const CodeRange* codeRange = lookupCodeRange(array[i]);
+                void* from = code() + codeRange->funcNonProfilingEntry();
+                void* to = code() + codeRange->funcProfilingEntry();
+                if (!enabled)
+                    Swap(from, to);
+                MOZ_ASSERT(array[i] == from);
+                array[i] = to;
+            }
         }
     }
 
@@ -1081,7 +1090,7 @@ Module::staticallyLink(ExclusiveContext* cx, const StaticLinkData& linkData)
         for (size_t i = 0; i < table.elemOffsets.length(); i++) {
             uint8_t* elem = code() + table.elemOffsets[i];
             const CodeRange* codeRange = lookupCodeRange(elem);
-            if (profilingEnabled_ && !codeRange->isErrorExit())
+            if (profilingEnabled_ && !codeRange->isInline())
                 elem = code() + codeRange->funcProfilingEntry();
             array[i] = elem;
         }
@@ -1341,6 +1350,20 @@ Module::callExport(JSContext* cx, uint32_t exportIndex, CallArgs args)
             if (!ToNumber(cx, v, (double*)&coercedArgs[i]))
                 return false;
             break;
+          case ValType::I8x16: {
+            SimdConstant simd;
+            if (!ToSimdConstant<Int8x16>(cx, v, &simd))
+                return false;
+            memcpy(&coercedArgs[i], simd.asInt8x16(), Simd128DataSize);
+            break;
+          }
+          case ValType::I16x8: {
+            SimdConstant simd;
+            if (!ToSimdConstant<Int16x8>(cx, v, &simd))
+                return false;
+            memcpy(&coercedArgs[i], simd.asInt16x8(), Simd128DataSize);
+            break;
+          }
           case ValType::I32x4: {
             SimdConstant simd;
             if (!ToSimdConstant<Int32x4>(cx, v, &simd))
@@ -1353,6 +1376,22 @@ Module::callExport(JSContext* cx, uint32_t exportIndex, CallArgs args)
             if (!ToSimdConstant<Float32x4>(cx, v, &simd))
                 return false;
             memcpy(&coercedArgs[i], simd.asFloat32x4(), Simd128DataSize);
+            break;
+          }
+          case ValType::B8x16: {
+            SimdConstant simd;
+            if (!ToSimdConstant<Bool8x16>(cx, v, &simd))
+                return false;
+            // Bool8x16 uses the same representation as Int8x16.
+            memcpy(&coercedArgs[i], simd.asInt8x16(), Simd128DataSize);
+            break;
+          }
+          case ValType::B16x8: {
+            SimdConstant simd;
+            if (!ToSimdConstant<Bool16x8>(cx, v, &simd))
+                return false;
+            // Bool16x8 uses the same representation as Int16x8.
+            memcpy(&coercedArgs[i], simd.asInt16x8(), Simd128DataSize);
             break;
           }
           case ValType::B32x4: {
@@ -1415,6 +1454,16 @@ Module::callExport(JSContext* cx, uint32_t exportIndex, CallArgs args)
       case ExprType::F64:
         args.rval().set(NumberValue(*(double*)retAddr));
         break;
+      case ExprType::I8x16:
+        retObj = CreateSimd<Int8x16>(cx, (int8_t*)retAddr);
+        if (!retObj)
+            return false;
+        break;
+      case ExprType::I16x8:
+        retObj = CreateSimd<Int16x8>(cx, (int16_t*)retAddr);
+        if (!retObj)
+            return false;
+        break;
       case ExprType::I32x4:
         retObj = CreateSimd<Int32x4>(cx, (int32_t*)retAddr);
         if (!retObj)
@@ -1422,6 +1471,16 @@ Module::callExport(JSContext* cx, uint32_t exportIndex, CallArgs args)
         break;
       case ExprType::F32x4:
         retObj = CreateSimd<Float32x4>(cx, (float*)retAddr);
+        if (!retObj)
+            return false;
+        break;
+      case ExprType::B8x16:
+        retObj = CreateSimd<Bool8x16>(cx, (int8_t*)retAddr);
+        if (!retObj)
+            return false;
+        break;
+      case ExprType::B16x8:
+        retObj = CreateSimd<Bool16x8>(cx, (int16_t*)retAddr);
         if (!retObj)
             return false;
         break;
@@ -1474,8 +1533,12 @@ Module::callImport(JSContext* cx, uint32_t importIndex, unsigned argc, const uin
             hasI64Arg = true;
             break;
           }
+          case ValType::I8x16:
+          case ValType::I16x8:
           case ValType::I32x4:
           case ValType::F32x4:
+          case ValType::B8x16:
+          case ValType::B16x8:
           case ValType::B32x4:
           case ValType::Limit:
             MOZ_CRASH("unhandled type in callImport");
@@ -1537,8 +1600,12 @@ Module::callImport(JSContext* cx, uint32_t importIndex, unsigned argc, const uin
           case ValType::I64:   MOZ_CRASH("can't happen because of above guard");
           case ValType::F32:   type = TypeSet::DoubleType(); break;
           case ValType::F64:   type = TypeSet::DoubleType(); break;
+          case ValType::I8x16: MOZ_CRASH("NYI");
+          case ValType::I16x8: MOZ_CRASH("NYI");
           case ValType::I32x4: MOZ_CRASH("NYI");
           case ValType::F32x4: MOZ_CRASH("NYI");
+          case ValType::B8x16: MOZ_CRASH("NYI");
+          case ValType::B16x8: MOZ_CRASH("NYI");
           case ValType::B32x4: MOZ_CRASH("NYI");
           case ValType::Limit: MOZ_CRASH("Limit");
         }
@@ -1556,16 +1623,18 @@ Module::callImport(JSContext* cx, uint32_t importIndex, unsigned argc, const uin
 }
 
 const char*
-Module::prettyFuncName(uint32_t funcIndex) const
+Module::maybePrettyFuncName(uint32_t funcIndex) const
 {
+    if (funcIndex >= module_->prettyFuncNames.length())
+        return nullptr;
     return module_->prettyFuncNames[funcIndex].get();
 }
 
 const char*
 Module::getFuncName(JSContext* cx, uint32_t funcIndex, UniqueChars* owner) const
 {
-    if (!module_->prettyFuncNames.empty())
-        return prettyFuncName(funcIndex);
+    if (const char* prettyName = maybePrettyFuncName(funcIndex))
+        return prettyName;
 
     char* chars = JS_smprintf("wasm-function[%u]", funcIndex);
     if (!chars) {
@@ -1615,7 +1684,7 @@ Module::createText(JSContext* cx)
     if (!source_.empty()) {
         if (!buffer.append(experimentalWarning))
             return nullptr;
-        if (!BinaryToText(cx, source_.begin(), source_.length(), buffer))
+        if (!BinaryToExperimentalText(cx, source_.begin(), source_.length(), buffer, ExperimentalTextFormatting()))
             return nullptr;
     } else {
         if (!buffer.append(enabledMessage))

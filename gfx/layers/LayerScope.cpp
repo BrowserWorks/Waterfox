@@ -10,14 +10,14 @@
 #include "nsAppRunner.h"
 #include "Composer2D.h"
 #include "Effects.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/MathAlgorithms.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/TimeStamp.h"
 
 #include "TexturePoolOGL.h"
 #include "mozilla/layers/CompositorOGL.h"
-#include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/layers/CompositorThread.h"
 #include "mozilla/layers/LayerManagerComposite.h"
 #include "mozilla/layers/TextureHostOGL.h"
 
@@ -342,7 +342,7 @@ public:
     }
 private:
     friend class CreateServerSocketRunnable;
-    class CreateServerSocketRunnable : public nsRunnable
+    class CreateServerSocketRunnable : public Runnable
     {
     public:
         explicit CreateServerSocketRunnable(LayerScopeManager *aLayerScopeManager)
@@ -380,20 +380,21 @@ static void DumpRect(T* aPacketRect, const Rect& aRect)
     aPacketRect->set_h(aRect.height);
 }
 
-static void DumpFilter(TexturePacket* aTexturePacket, const Filter& aFilter)
+static void DumpFilter(TexturePacket* aTexturePacket,
+                       const SamplingFilter aSamplingFilter)
 {
-    switch (aFilter) {
-        case Filter::GOOD:
+    switch (aSamplingFilter) {
+        case SamplingFilter::GOOD:
             aTexturePacket->set_mfilter(TexturePacket::GOOD);
             break;
-        case Filter::LINEAR:
+        case SamplingFilter::LINEAR:
             aTexturePacket->set_mfilter(TexturePacket::LINEAR);
             break;
-        case Filter::POINT:
+        case SamplingFilter::POINT:
             aTexturePacket->set_mfilter(TexturePacket::POINT);
             break;
         default:
-            MOZ_ASSERT(false, "Can't dump unexpected mFilter to texture packet!");
+            MOZ_ASSERT(false, "Can't dump unexpected mSamplingFilter to texture packet!");
             break;
     }
 }
@@ -1054,7 +1055,7 @@ GLuint
 SenderHelper::GetTextureID(GLContext* aGLContext,
                            TextureSourceOGL* aSource) {
     GLenum textureTarget = aSource->GetTextureTarget();
-    aSource->BindTexture(LOCAL_GL_TEXTURE0, gfx::Filter::LINEAR);
+    aSource->BindTexture(LOCAL_GL_TEXTURE0, gfx::SamplingFilter::LINEAR);
 
     GLuint texID = 0;
     // This is horrid hack. It assumes that aGLContext matches the context
@@ -1164,7 +1165,7 @@ SenderHelper::SetAndSendTexture(GLContext* aGLContext,
     auto packet = MakeUnique<layerscope::Packet>();
     layerscope::TexturePacket* texturePacket = packet->mutable_texture();
     texturePacket->set_mpremultiplied(aEffect->mPremultiplied);
-    DumpFilter(texturePacket, aEffect->mFilter);
+    DumpFilter(texturePacket, aEffect->mSamplingFilter);
     DumpRect(texturePacket->mutable_mtexturecoords(), aEffect->mTextureCoords);
     SendTextureSource(aGLContext, aLayerRef, aSource, false, false, Move(packet));
 }
@@ -1899,7 +1900,7 @@ bool
 LayerScope::CheckSendable()
 {
     // Only compositor threads check LayerScope status
-    MOZ_ASSERT(CompositorBridgeParent::IsInCompositorThread() || gIsGtest);
+    MOZ_ASSERT(CompositorThreadHolder::IsInCompositorThread() || gIsGtest);
 
     if (!gfxPrefs::LayerScopeEnabled()) {
         return false;

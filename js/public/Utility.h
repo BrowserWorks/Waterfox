@@ -180,6 +180,13 @@ namespace js {
 struct MOZ_RAII AutoEnterOOMUnsafeRegion
 {
     MOZ_NORETURN MOZ_COLD void crash(const char* reason);
+    MOZ_NORETURN MOZ_COLD void crash(size_t size, const char* reason);
+
+    using AnnotateOOMAllocationSizeCallback = void(*)(size_t);
+    static AnnotateOOMAllocationSizeCallback annotateOOMSizeCallback;
+    static void setAnnotateOOMAllocationSizeCallback(AnnotateOOMAllocationSizeCallback callback) {
+        annotateOOMSizeCallback = callback;
+    }
 
 #if defined(DEBUG) || defined(JS_OOM_BREAKPOINT)
     AutoEnterOOMUnsafeRegion()
@@ -344,7 +351,7 @@ namespace js {
  * instances of type |T|.  Return false if the calculation overflowed.
  */
 template <typename T>
-MOZ_WARN_UNUSED_RESULT inline bool
+MOZ_MUST_USE inline bool
 CalculateAllocSize(size_t numElems, size_t* bytesOut)
 {
     *bytesOut = numElems * sizeof(T);
@@ -357,7 +364,7 @@ CalculateAllocSize(size_t numElems, size_t* bytesOut)
  * false if the calculation overflowed.
  */
 template <typename T, typename Extra>
-MOZ_WARN_UNUSED_RESULT inline bool
+MOZ_MUST_USE inline bool
 CalculateAllocSizeWithExtra(size_t numExtra, size_t* bytesOut)
 {
     *bytesOut = sizeof(T) + numExtra * sizeof(Extra);

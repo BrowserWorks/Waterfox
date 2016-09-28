@@ -9,8 +9,8 @@
 
 const TEST_URL = "data:text/html;charset=utf-8,custom highlighters";
 
-add_task(function*() {
-  let {inspector, toolbox} = yield openInspectorForURL(TEST_URL);
+add_task(function* () {
+  let {inspector} = yield openInspectorForURL(TEST_URL);
 
   yield onlyOneInstanceOfMainHighlighter(inspector);
   yield manyInstancesOfCustomHighlighters(inspector);

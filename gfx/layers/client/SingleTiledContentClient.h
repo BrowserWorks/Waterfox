@@ -41,7 +41,8 @@ public:
                    const nsIntRegion& aPaintRegion,
                    const nsIntRegion& aDirtyRegion,
                    LayerManager::DrawPaintedLayerCallback aCallback,
-                   void* aCallbackData) override;
+                   void* aCallbackData,
+                   bool aIsProgressive = false) override;
  
   bool SupportsProgressiveUpdate() override { return false; }
   bool ProgressiveUpdate(nsIntRegion& aValidRegion,
@@ -69,8 +70,6 @@ public:
     return false;
   }
 
-  void ReadLock();
-
   void ReleaseTiles();
 
   void DiscardBuffers();
@@ -88,6 +87,7 @@ private:
 
   nsIntRegion mPaintedRegion;
   nsIntRegion mValidRegion;
+  bool mWasLastPaintProgressive;
 
   /**
    * While we're adding tiles, this is used to keep track of the position of

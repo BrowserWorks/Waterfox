@@ -31,13 +31,6 @@
 
 using namespace mozilla;
 
-template<>
-struct RunnableMethodTraits<WebCore::ReverbConvolver>
-{
-  static void RetainCallee(WebCore::ReverbConvolver* obj) {}
-  static void ReleaseCallee(WebCore::ReverbConvolver* obj) {}
-};
-
 namespace WebCore {
 
 const int InputBufferSize = 8 * 16384;
@@ -158,8 +151,8 @@ ReverbConvolver::ReverbConvolver(const float* impulseResponseData,
           NS_WARNING("Cannot start convolver thread.");
           return;
         }
-        CancelableTask* task = NewRunnableMethod(this, &ReverbConvolver::backgroundThreadEntry);
-        m_backgroundThread.message_loop()->PostTask(FROM_HERE, task);
+        m_backgroundThread.message_loop()->PostTask(NewNonOwningRunnableMethod(this,
+									       &ReverbConvolver::backgroundThreadEntry));
     }
 }
 

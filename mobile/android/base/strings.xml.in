@@ -45,17 +45,27 @@
   <string name="firstrun_signin_message">&firstrun_signin_message;</string>
   <string name="firstrun_signin_button">&firstrun_signin_button;</string>
   <string name="firstrun_welcome_button_browser">&onboard_start_button_browser;</string>
+  <string name="firstrun_button_notnow">&firstrun_button_notnow;</string>
   <string name="firstrun_button_next">&firstrun_button_next;</string>
+
+  <string name="firstrun_tabqueue_title">&firstrun_tabqueue_title;</string>
+  <string name="firstrun_tabqueue_message_off">&firstrun_tabqueue_message_off;</string>
+  <string name="firstrun_tabqueue_subtext_off">&firstrun_tabqueue_subtext_off;</string>
+  <string name="firstrun_tabqueue_message_on">&firstrun_tabqueue_message_on;</string>
+  <string name="firstrun_tabqueue_subtext_on">&firstrun_tabqueue_subtext_on;</string>
+
+  <string name="firstrun_readerview_title">&firstrun_readerview_title;</string>
+  <string name="firstrun_readerview_message">&firstrun_readerview_message;</string>
+  <string name="firstrun_readerview_subtext">&firstrun_readerview_subtext;</string>
+
+  <string name="firstrun_account_title">&firstrun_account_title;</string>
+  <string name="firstrun_account_message">&firstrun_account_message;</string>
 
   <string name="firstrun_welcome_restricted">&onboard_start_restricted1;</string>
 
   <string name="bookmarks_title">&bookmarks_title;</string>
   <string name="history_title">&history_title;</string>
-  <string name="reading_list_title">&reading_list_title;</string>
   <string name="recent_tabs_title">&recent_tabs_title;</string>
-
-  <!-- https://support.mozilla.org/1/mobile/%VERSION%/%OS%/%LOCALE%/reading-list -->
-  <string name="migrated_reading_list_url">https://support.mozilla.org/1/mobile/&formatS1;/&formatS2;/&formatS3;/reading-list</string>
 
   <string name="switch_to_tab">&switch_to_tab;</string>
 
@@ -89,6 +99,8 @@
   <string name="screenshot_added_to_bookmarks">&screenshot_added_to_bookmarks;</string>
   <string name="screenshot_folder_label_in_bookmarks">&screenshot_folder_label_in_bookmarks;</string>
   <string name="readinglist_smartfolder_label_in_bookmarks">&readinglist_smartfolder_label_in_bookmarks;</string>
+  <string name="bookmark_folder_items">&bookmark_folder_items;</string>
+  <string name="bookmark_folder_one_item">&bookmark_folder_one_item;</string>
 
   <string name="reader_saved_offline">&reader_saved_offline;</string>
   <string name="reader_switch_to_bookmarks">&reader_switch_to_bookmarks;</string>
@@ -297,7 +309,8 @@
 
   <string name="content_notification_summary">&content_notification_summary;</string>
   <string name="content_notification_title_plural">&content_notification_title_plural;</string>
-  <string name="content_notification_action_settings">&content_notification_action_settings;</string>
+  <string name="content_notification_action_settings">&content_notification_action_settings2;</string>
+  <string name="content_notification_action_read_now">&content_notification_action_read_now;</string>
   <string name="content_notification_updated_on">&content_notification_updated_on;</string>
 
   <string name="pref_default_browser">&pref_default_browser;</string>
@@ -370,11 +383,6 @@
   <string name="site_settings_cancel">&site_settings_cancel;</string>
   <string name="site_settings_clear">&site_settings_clear;</string>
 
-  <string name="reading_list_migration_title">&reading_list_migration_title;</string>
-  <string name="reading_list_migration_subtext">&reading_list_migration_subtext;</string>
-  <string name="reading_list_migration_goto_bookmarks">&reading_list_migration_goto_bookmarks;</string>
-  <string name="reading_list_migration_bookmarks_hidden">&reading_list_migration_bookmarks_hidden;</string>
-
   <string name="page_action_dropmarker_description">&page_action_dropmarker_description;</string>
 
   <string name="contextmenu_open_new_tab">&contextmenu_open_new_tab;</string>
@@ -439,6 +447,7 @@
   <string name="home_history_title">&home_history_title;</string>
   <string name="home_synced_devices_smartfolder">&home_synced_devices_smartfolder;</string>
   <string name="home_synced_devices_number">&home_synced_devices_number;</string>
+  <string name="home_synced_devices_one">&home_synced_devices_one;</string>
   <string name="home_history_back_to">&home_history_back_to2;</string>
   <string name="home_clear_history_button">&home_clear_history_button;</string>
   <string name="home_clear_history_confirm">&home_clear_history_confirm;</string>
@@ -610,5 +619,9 @@
   <string name="helper_first_offline_bookmark_title">&helper_first_offline_bookmark_title;</string>
   <string name="helper_first_offline_bookmark_message">&helper_first_offline_bookmark_message;</string>
   <string name="helper_first_offline_bookmark_button">&helper_first_offline_bookmark_button;</string>
+
+  <string name="helper_triple_readerview_open_title">&helper_triple_readerview_open_title;</string>
+  <string name="helper_triple_readerview_open_message">&helper_triple_readerview_open_message;</string>
+  <string name="helper_triple_readerview_open_button">&helper_triple_readerview_open_button;</string>
 
 </resources>

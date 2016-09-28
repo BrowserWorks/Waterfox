@@ -8,6 +8,7 @@
 
 #include "nsCSSAnonBoxes.h"
 #include "nsCSSPseudoElements.h"
+#include "nsIDocumentInlines.h"
 #include "nsStyleContext.h"
 #include "nsStyleSet.h"
 
@@ -68,23 +69,40 @@ ServoStyleSet::EndUpdate()
   return NS_OK;
 }
 
-// resolve a style context
 already_AddRefed<nsStyleContext>
 ServoStyleSet::ResolveStyleFor(Element* aElement,
                                nsStyleContext* aParentContext)
 {
-  RefPtr<ServoComputedValues> computedValues = dont_AddRef(Servo_GetComputedValues(aElement));
-  MOZ_ASSERT(computedValues);
+  return GetContext(aElement, aParentContext, nullptr,
+                    CSSPseudoElementType::NotPseudo);
+}
 
+already_AddRefed<nsStyleContext>
+ServoStyleSet::GetContext(nsIContent* aContent,
+                          nsStyleContext* aParentContext,
+                          nsIAtom* aPseudoTag,
+                          CSSPseudoElementType aPseudoType)
+{
+  RefPtr<ServoComputedValues> computedValues = dont_AddRef(Servo_GetComputedValues(aContent));
+  MOZ_ASSERT(computedValues);
+  return GetContext(computedValues.forget(), aParentContext, aPseudoTag, aPseudoType);
+}
+
+already_AddRefed<nsStyleContext>
+ServoStyleSet::GetContext(already_AddRefed<ServoComputedValues> aComputedValues,
+                          nsStyleContext* aParentContext,
+                          nsIAtom* aPseudoTag,
+                          CSSPseudoElementType aPseudoType)
+{
   // XXXbholley: nsStyleSet does visited handling here.
 
   // XXXbholley: Figure out the correct thing to pass here. Does this fixup
   // duplicate something that servo already does?
   bool skipFixup = false;
 
-  return NS_NewStyleContext(aParentContext, mPresContext, nullptr,
-                            CSSPseudoElementType::NotPseudo,
-                            computedValues.forget(), skipFixup);
+  return NS_NewStyleContext(aParentContext, mPresContext, aPseudoTag,
+                            aPseudoType,
+                            Move(aComputedValues), skipFixup);
 }
 
 already_AddRefed<nsStyleContext>
@@ -92,14 +110,32 @@ ServoStyleSet::ResolveStyleFor(Element* aElement,
                                nsStyleContext* aParentContext,
                                TreeMatchContext& aTreeMatchContext)
 {
-  MOZ_CRASH("stylo: not implemented");
+  // aTreeMatchContext is used to speed up selector matching,
+  // but if the element already has a ServoComputedValues computed in
+  // advance, then we shouldn't need to use it.
+  return ResolveStyleFor(aElement, aParentContext);
 }
 
 already_AddRefed<nsStyleContext>
-ServoStyleSet::ResolveStyleForNonElement(nsStyleContext* aParentContext,
-                                         nsIAtom* aPseudoTag)
+ServoStyleSet::ResolveStyleForText(nsIContent* aTextNode,
+                                   nsStyleContext* aParentContext)
 {
-  MOZ_CRASH("stylo: not implemented");
+  MOZ_ASSERT(aTextNode && aTextNode->IsNodeOfType(nsINode::eTEXT));
+  return GetContext(aTextNode, aParentContext, nsCSSAnonBoxes::mozText,
+                    CSSPseudoElementType::AnonBox);
+}
+
+already_AddRefed<nsStyleContext>
+ServoStyleSet::ResolveStyleForOtherNonElement(nsStyleContext* aParentContext)
+{
+  RefPtr<ServoComputedValues> computedValues =
+    Servo_InheritComputedValues(
+      aParentContext->StyleSource().AsServoComputedValues());
+  MOZ_ASSERT(computedValues);
+
+  return GetContext(computedValues.forget(), aParentContext,
+                    nsCSSAnonBoxes::mozOtherNonElement,
+                    CSSPseudoElementType::AnonBox);
 }
 
 already_AddRefed<nsStyleContext>
@@ -108,7 +144,20 @@ ServoStyleSet::ResolvePseudoElementStyle(Element* aParentElement,
                                          nsStyleContext* aParentContext,
                                          Element* aPseudoElement)
 {
-  MOZ_CRASH("stylo: not implemented");
+  if (aPseudoElement) {
+    NS_ERROR("stylo: We don't support CSS_PSEUDO_ELEMENT_SUPPORTS_USER_ACTION_STATE yet");
+  }
+  MOZ_ASSERT(aParentContext);
+  MOZ_ASSERT(aType < CSSPseudoElementType::Count);
+  nsIAtom* pseudoTag = nsCSSPseudoElements::GetPseudoAtom(aType);
+
+  RefPtr<ServoComputedValues> computedValues =
+    Servo_GetComputedValuesForPseudoElement(
+      aParentContext->StyleSource().AsServoComputedValues(),
+      aParentElement, pseudoTag, mRawSet.get(), /* is_probe = */ false);
+  MOZ_ASSERT(computedValues);
+
+  return GetContext(computedValues.forget(), aParentContext, pseudoTag, aType);
 }
 
 // aFlags is an nsStyleSet flags bitfield
@@ -127,10 +176,11 @@ ServoStyleSet::ResolveAnonymousBoxStyle(nsIAtom* aPseudoTag,
     aParentContext ? aParentContext->StyleSource().AsServoComputedValues()
                    : nullptr;
   RefPtr<ServoComputedValues> computedValues =
-    dont_AddRef(Servo_GetComputedValuesForAnonymousBox(parentStyle, aPseudoTag));
+    dont_AddRef(Servo_GetComputedValuesForAnonymousBox(parentStyle, aPseudoTag,
+                                                       mRawSet.get()));
   MOZ_ASSERT(computedValues);
 
-  return NS_NewStyleContext(aParentContext, mPresContext, nullptr,
+  return NS_NewStyleContext(aParentContext, mPresContext, aPseudoTag,
                             CSSPseudoElementType::AnonBox,
                             computedValues.forget(), skipFixup);
 }
@@ -198,7 +248,23 @@ ServoStyleSet::InsertStyleSheetBefore(SheetType aType,
                                       ServoStyleSheet* aNewSheet,
                                       ServoStyleSheet* aReferenceSheet)
 {
-  MOZ_CRASH("stylo: not implemented");
+  MOZ_ASSERT(aNewSheet);
+  MOZ_ASSERT(aReferenceSheet);
+  MOZ_ASSERT(aNewSheet->IsApplicable());
+
+  mSheets[aType].RemoveElement(aNewSheet);
+  size_t idx = mSheets[aType].IndexOf(aReferenceSheet);
+  if (idx == mSheets[aType].NoIndex) {
+    return NS_ERROR_INVALID_ARG;
+  }
+
+  mSheets[aType].InsertElementAt(idx, aNewSheet);
+
+  // Maintain a mirrored list of sheets on the servo side.
+  Servo_InsertStyleSheetBefore(aNewSheet->RawSheet(),
+                               aReferenceSheet->RawSheet(), mRawSet.get());
+
+  return NS_OK;
 }
 
 int32_t
@@ -219,15 +285,31 @@ ServoStyleSet::StyleSheetAt(SheetType aType,
 nsresult
 ServoStyleSet::RemoveDocStyleSheet(ServoStyleSheet* aSheet)
 {
-  MOZ_CRASH("stylo: not implemented");
+  return RemoveStyleSheet(SheetType::Doc, aSheet);
 }
 
 nsresult
 ServoStyleSet::AddDocStyleSheet(ServoStyleSheet* aSheet,
                                 nsIDocument* aDocument)
 {
-  // XXXbholley: Implement this.
-  NS_ERROR("stylo: no support for adding doc stylesheets to ServoStyleSet");
+  StyleSheetHandle::RefPtr strong(aSheet);
+
+  mSheets[SheetType::Doc].RemoveElement(aSheet);
+
+  size_t index =
+    aDocument->FindDocStyleSheetInsertionPoint(mSheets[SheetType::Doc], aSheet);
+  mSheets[SheetType::Doc].InsertElementAt(index, aSheet);
+
+  // Maintain a mirrored list of sheets on the servo side.
+  ServoStyleSheet* followingSheet =
+    mSheets[SheetType::Doc].SafeElementAt(index + 1);
+  if (followingSheet) {
+    Servo_InsertStyleSheetBefore(aSheet->RawSheet(), followingSheet->RawSheet(),
+                                 mRawSet.get());
+  } else {
+    Servo_AppendStyleSheet(aSheet->RawSheet(), mRawSet.get());
+  }
+
   return NS_OK;
 }
 
@@ -236,7 +318,35 @@ ServoStyleSet::ProbePseudoElementStyle(Element* aParentElement,
                                        CSSPseudoElementType aType,
                                        nsStyleContext* aParentContext)
 {
-  MOZ_CRASH("stylo: not implemented");
+  MOZ_ASSERT(aParentContext);
+  MOZ_ASSERT(aType < CSSPseudoElementType::Count);
+  nsIAtom* pseudoTag = nsCSSPseudoElements::GetPseudoAtom(aType);
+
+  RefPtr<ServoComputedValues> computedValues =
+    Servo_GetComputedValuesForPseudoElement(
+      aParentContext->StyleSource().AsServoComputedValues(),
+      aParentElement, pseudoTag, mRawSet.get(), /* is_probe = */ true);
+
+  if (!computedValues) {
+    return nullptr;
+  }
+
+  // For :before and :after pseudo-elements, having display: none or no
+  // 'content' property is equivalent to not having the pseudo-element
+  // at all.
+  if (computedValues &&
+      (pseudoTag == nsCSSPseudoElements::before ||
+       pseudoTag == nsCSSPseudoElements::after)) {
+    const nsStyleDisplay *display = Servo_GetStyleDisplay(computedValues);
+    const nsStyleContent *content = Servo_GetStyleContent(computedValues);
+    // XXXldb What is contentCount for |content: ""|?
+    if (display->mDisplay == NS_STYLE_DISPLAY_NONE ||
+        content->ContentCount() == 0) {
+      return nullptr;
+    }
+  }
+
+  return GetContext(computedValues.forget(), aParentContext, pseudoTag, aType);
 }
 
 already_AddRefed<nsStyleContext>
@@ -246,7 +356,10 @@ ServoStyleSet::ProbePseudoElementStyle(Element* aParentElement,
                                        TreeMatchContext& aTreeMatchContext,
                                        Element* aPseudoElement)
 {
-  MOZ_CRASH("stylo: not implemented");
+  if (aPseudoElement) {
+    NS_ERROR("stylo: We don't support CSS_PSEUDO_ELEMENT_SUPPORTS_USER_ACTION_STATE yet");
+  }
+  return ProbePseudoElementStyle(aParentElement, aType, aParentContext);
 }
 
 nsRestyleHint
@@ -263,4 +376,10 @@ ServoStyleSet::HasStateDependentStyle(dom::Element* aElement,
                                      EventStates aStateMask)
 {
   MOZ_CRASH("stylo: not implemented");
+}
+
+void
+ServoStyleSet::RestyleSubtree(nsINode* aNode)
+{
+  Servo_RestyleSubtree(aNode, mRawSet.get());
 }

@@ -73,7 +73,8 @@ public:
   InitializeRunnable(WorkerPrivate* aWorkerPrivate, nsACString& aOrigin,
                      PrincipalInfo& aPrincipalInfo, bool& aPrivateBrowsing,
                      ErrorResult& aRv)
-    : WorkerMainThreadRunnable(aWorkerPrivate)
+    : WorkerMainThreadRunnable(aWorkerPrivate,
+                               NS_LITERAL_CSTRING("BroadcastChannel :: Initialize"))
     , mWorkerPrivate(GetCurrentThreadWorkerPrivate())
     , mOrigin(aOrigin)
     , mPrincipalInfo(aPrincipalInfo)
@@ -440,7 +441,7 @@ BroadcastChannel::PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
                               ErrorResult& aRv)
 {
   if (mState != StateActive) {
-    aRv.Throw(NS_ERROR_FAILURE);
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
 
@@ -593,11 +594,11 @@ BroadcastChannel::SetOnmessage(EventHandlerNonNull* aCallback)
 void
 BroadcastChannel::AddEventListener(const nsAString& aType,
                                    EventListener* aCallback,
-                                   bool aCapture,
+                                   const AddEventListenerOptionsOrBoolean& aOptions,
                                    const dom::Nullable<bool>& aWantsUntrusted,
                                    ErrorResult& aRv)
 {
-  DOMEventTargetHelper::AddEventListener(aType, aCallback, aCapture,
+  DOMEventTargetHelper::AddEventListener(aType, aCallback, aOptions,
                                          aWantsUntrusted, aRv);
 
   if (aRv.Failed()) {
@@ -610,10 +611,10 @@ BroadcastChannel::AddEventListener(const nsAString& aType,
 void
 BroadcastChannel::RemoveEventListener(const nsAString& aType,
                                       EventListener* aCallback,
-                                      bool aCapture,
+                                      const EventListenerOptionsOrBoolean& aOptions,
                                       ErrorResult& aRv)
 {
-  DOMEventTargetHelper::RemoveEventListener(aType, aCallback, aCapture, aRv);
+  DOMEventTargetHelper::RemoveEventListener(aType, aCallback, aOptions, aRv);
 
   if (aRv.Failed()) {
     return;

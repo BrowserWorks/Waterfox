@@ -64,9 +64,6 @@ const WINTASKBAR_CONTRACTID = "@mozilla.org/windows-taskbar;1";
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Various utility properties
-XPCOMUtils.defineLazyServiceGetter(this, "ioSvc",
-                                   "@mozilla.org/network/io-service;1",
-                                   "nsIIOService");
 XPCOMUtils.defineLazyServiceGetter(this, "imgTools",
                                    "@mozilla.org/image/tools;1",
                                    "imgITools");
@@ -75,12 +72,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "PageThumbs",
 
 // nsIURI -> imgIContainer
 function _imageFromURI(uri, privateMode, callback) {
-  let channel = ioSvc.newChannelFromURI2(uri,
-                                         null,
-                                         Services.scriptSecurityManager.getSystemPrincipal(),
-                                         null,
-                                         Ci.nsILoadInfo.SEC_NORMAL,
-                                         Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE);
+  let channel = NetUtil.newChannel({
+    uri: uri,
+    loadUsingSystemPrincipal: true,
+    contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE
+  });
+
   try {
     channel.QueryInterface(Ci.nsIPrivateBrowsingChannel);
     channel.setPrivate(privateMode);

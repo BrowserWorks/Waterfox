@@ -14,7 +14,11 @@ var gTab, gPanel, gDebugger;
 var gEditor, gSources, gSearchView, gSearchBox;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -67,9 +71,9 @@ function firstSearch() {
       let item0 = gDebugger.SourceResults.getItemForElement(sourceResults[0]);
       let item1 = gDebugger.SourceResults.getItemForElement(sourceResults[1]);
       is(item0.instance.expanded, true,
-        "The first source results should automatically be expanded.")
+        "The first source results should automatically be expanded.");
       is(item1.instance.expanded, true,
-        "The second source results should automatically be expanded.")
+        "The second source results should automatically be expanded.");
 
       let searchResult0 = sourceResults[0].querySelectorAll(".dbg-search-result");
       let searchResult1 = sourceResults[1].querySelectorAll(".dbg-search-result");
@@ -136,9 +140,9 @@ function firstSearch() {
 
       is(secondLine1.querySelectorAll(".dbg-results-line-contents-string[match=false]").length, 2,
         "The second result for the second source doesn't have the correct number of non-matches in a line.");
-      is(secondLine1.querySelectorAll(".dbg-results-line-contents-string[match=false]")[0].getAttribute("value"), '  ',
+      is(secondLine1.querySelectorAll(".dbg-results-line-contents-string[match=false]")[0].getAttribute("value"), "  ",
         "The second result for the second source doesn't have the correct non-matches in a line.");
-      is(secondLine1.querySelectorAll(".dbg-results-line-contents-string[match=false]")[1].getAttribute("value"), 'bugger;',
+      is(secondLine1.querySelectorAll(".dbg-results-line-contents-string[match=false]")[1].getAttribute("value"), "bugger;",
         "The second result for the second source doesn't have the correct non-matches in a line.");
 
       deferred.resolve();
@@ -181,9 +185,9 @@ function secondSearch() {
       let item0 = gDebugger.SourceResults.getItemForElement(sourceResults[0]);
       let item1 = gDebugger.SourceResults.getItemForElement(sourceResults[1]);
       is(item0.instance.expanded, true,
-        "The first source results should automatically be expanded.")
+        "The first source results should automatically be expanded.");
       is(item1.instance.expanded, true,
-        "The second source results should automatically be expanded.")
+        "The second source results should automatically be expanded.");
 
       let searchResult0 = sourceResults[0].querySelectorAll(".dbg-search-result");
       let searchResult1 = sourceResults[1].querySelectorAll(".dbg-search-result");
@@ -263,7 +267,7 @@ function clearSearch() {
     "The global search pane splitter shouldn't be visible after clearing.");
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

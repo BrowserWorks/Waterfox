@@ -36,9 +36,9 @@ function AutocompletePopup(document, options = {}) {
   this.position = options.position || "after_start";
   this.direction = options.direction || "ltr";
 
-  this.onSelect = options.onSelect;
-  this.onClick = options.onClick;
-  this.onKeypress = options.onKeypress;
+  this.onSelectCallback = options.onSelect;
+  this.onClickCallback = options.onClick;
+  this.onKeypressCallback = options.onKeypress;
 
   let id = options.panelId || "devtools_autoCompletePopup";
   let theme = options.theme || "dark";
@@ -93,17 +93,13 @@ function AutocompletePopup(document, options = {}) {
   }
   this._list.className = "devtools-autocomplete-listbox " + theme + "-theme";
 
-  if (this.onSelect) {
-    this._list.addEventListener("select", this.onSelect, false);
-  }
+  this.onSelect = this.onSelect.bind(this);
+  this.onClick = this.onClick.bind(this);
+  this.onKeypress = this.onKeypress.bind(this);
+  this._list.addEventListener("select", this.onSelect, false);
+  this._list.addEventListener("click", this.onClick, false);
+  this._list.addEventListener("keypress", this.onKeypress, false);
 
-  if (this.onClick) {
-    this._list.addEventListener("click", this.onClick, false);
-  }
-
-  if (this.onKeypress) {
-    this._list.addEventListener("keypress", this.onKeypress, false);
-  }
   this._itemIdCounter = 0;
 
   events.decorate(this);
@@ -117,9 +113,26 @@ AutocompletePopup.prototype = {
   __scrollbarWidth: null,
 
   // Event handlers.
-  onSelect: null,
-  onClick: null,
-  onKeypress: null,
+  onSelect: function (e) {
+    this.emit("popup-select");
+    if (this.onSelectCallback) {
+      this.onSelectCallback(e);
+    }
+  },
+
+  onClick: function (e) {
+    this.emit("popup-click");
+    if (this.onClickCallback) {
+      this.onClickCallback(e);
+    }
+  },
+
+  onKeypress: function (e) {
+    this.emit("popup-keypress");
+    if (this.onKeypressCallback) {
+      this.onKeypressCallback(e);
+    }
+  },
 
   /**
    * Open the autocomplete popup panel.
@@ -135,7 +148,7 @@ AutocompletePopup.prototype = {
    * @param {Number} index
    *        The position of item to select.
    */
-  openPopup: function(anchor, xOffset = 0, yOffset = 0, index) {
+  openPopup: function (anchor, xOffset = 0, yOffset = 0, index) {
     this.__maxLabelLength = -1;
     this._updateSize();
     this._panel.openPopup(anchor, this.position, xOffset, yOffset);
@@ -153,7 +166,7 @@ AutocompletePopup.prototype = {
    * @param {Number} index
    *        The position of the item to select.
    */
-  selectItemAtIndex: function(index) {
+  selectItemAtIndex: function (index) {
     if (typeof index != "number") {
       // If no index was provided, select the item closest to the input.
       let isAboveInput = this.position.includes("before");
@@ -166,7 +179,7 @@ AutocompletePopup.prototype = {
   /**
    * Hide the autocomplete popup panel.
    */
-  hidePopup: function() {
+  hidePopup: function () {
     // Return accessibility focus to the input.
     this._document.activeElement.removeAttribute("aria-activedescendant");
     this._panel.hidePopup();
@@ -186,22 +199,14 @@ AutocompletePopup.prototype = {
    * same code. It is the responsability of the client code to perform DOM
    * cleanup.
    */
-  destroy: function() {
+  destroy: function () {
     if (this.isOpen) {
       this.hidePopup();
     }
 
-    if (this.onSelect) {
-      this._list.removeEventListener("select", this.onSelect, false);
-    }
-
-    if (this.onClick) {
-      this._list.removeEventListener("click", this.onClick, false);
-    }
-
-    if (this.onKeypress) {
-      this._list.removeEventListener("keypress", this.onKeypress, false);
-    }
+    this._list.removeEventListener("select", this.onSelect, false);
+    this._list.removeEventListener("click", this.onClick, false);
+    this._list.removeEventListener("keypress", this.onKeypress, false);
 
     if (this.autoThemeEnabled) {
       gDevTools.off("pref-changed", this._handleThemeChange);
@@ -222,7 +227,7 @@ AutocompletePopup.prototype = {
    *
    * @return {Object} The autocomplete item at index index.
    */
-  getItemAtIndex: function(index) {
+  getItemAtIndex: function (index) {
     return this._list.getItemAtIndex(index)._autocompleteItem;
   },
 
@@ -231,10 +236,10 @@ AutocompletePopup.prototype = {
    *
    * @return {Array} The array of autocomplete items.
    */
-  getItems: function() {
+  getItems: function () {
     let items = [];
 
-    Array.forEach(this._list.childNodes, function(item) {
+    Array.forEach(this._list.childNodes, function (item) {
       items.push(item._autocompleteItem);
     });
 
@@ -249,7 +254,7 @@ AutocompletePopup.prototype = {
    * @param {Number} index
    *        The position of the item to select.
    */
-  setItems: function(items, index) {
+  setItems: function (items, index) {
     this.clearItems();
     items.forEach(this.appendItem, this);
 
@@ -286,7 +291,7 @@ AutocompletePopup.prototype = {
   /**
    * Update the panel size to fit the content.
    */
-  _updateSize: function() {
+  _updateSize: function () {
     if (!this._panel) {
       return;
     }
@@ -298,7 +303,7 @@ AutocompletePopup.prototype = {
   /**
    * Update accessibility appropriately when the selected item is changed.
    */
-  _updateAriaActiveDescendant: function() {
+  _updateAriaActiveDescendant: function () {
     if (!this._list.selectedItem) {
       // Return accessibility focus to the input.
       this._document.activeElement.removeAttribute("aria-activedescendant");
@@ -312,7 +317,7 @@ AutocompletePopup.prototype = {
   /**
    * Clear all the items from the autocomplete list.
    */
-  clearItems: function() {
+  clearItems: function () {
     // Reset the selectedIndex to -1 before clearing the list
     this.selectedIndex = -1;
 
@@ -395,7 +400,7 @@ AutocompletePopup.prototype = {
    *        - count {Number} [Optional] The number to represent the count of
    *                autocompleted label.
    */
-  appendItem: function(item) {
+  appendItem: function (item) {
     let listItem = this._document.createElementNS(XUL_NS, "richlistitem");
     // Items must have an id for accessibility.
     listItem.id = this._panel.id + "_item_" + this._itemIdCounter++;
@@ -436,7 +441,7 @@ AutocompletePopup.prototype = {
    * @return {nsIDOMNode} The nsIDOMNode that belongs to the given item object.
    *         This node is the richlistitem element. Can be null.
    */
-  _findListItem: function(item) {
+  _findListItem: function (item) {
     for (let i = 0; i < this._list.childNodes.length; i++) {
       let child = this._list.childNodes[i];
       if (child._autocompleteItem == item) {
@@ -452,7 +457,7 @@ AutocompletePopup.prototype = {
    * @param {Object} item
    *        The item you want removed.
    */
-  removeItem: function(item) {
+  removeItem: function (item) {
     let listItem = this._findListItem(item);
     if (!listItem) {
       throw new Error("Item not found!");
@@ -483,7 +488,7 @@ AutocompletePopup.prototype = {
    * @return {Object}
    *         The newly selected item object.
    */
-  selectNextItem: function() {
+  selectNextItem: function () {
     if (this.selectedIndex < (this.itemCount - 1)) {
       this.selectedIndex++;
     } else {
@@ -499,7 +504,7 @@ AutocompletePopup.prototype = {
    * @return {Object}
    *         The newly-selected item object.
    */
-  selectPreviousItem: function() {
+  selectPreviousItem: function () {
     if (this.selectedIndex > 0) {
       this.selectedIndex--;
     } else {
@@ -516,7 +521,7 @@ AutocompletePopup.prototype = {
    * @return {Object}
    *         The newly-selected item object.
    */
-  selectNextPageItem: function() {
+  selectNextPageItem: function () {
     let itemsPerPane = Math.floor(this._list.scrollHeight / this._itemHeight);
     let nextPageIndex = this.selectedIndex + itemsPerPane + 1;
     this.selectedIndex = nextPageIndex > this.itemCount - 1 ?
@@ -532,7 +537,7 @@ AutocompletePopup.prototype = {
    * @return {Object}
    *         The newly-selected item object.
    */
-  selectPreviousPageItem: function() {
+  selectPreviousPageItem: function () {
     let itemsPerPane = Math.floor(this._list.scrollHeight / this._itemHeight);
     let prevPageIndex = this.selectedIndex - itemsPerPane - 1;
     this.selectedIndex = prevPageIndex < 0 ? 0 : prevPageIndex;
@@ -543,7 +548,7 @@ AutocompletePopup.prototype = {
   /**
    * Focuses the richlistbox.
    */
-  focus: function() {
+  focus: function () {
     this._list.focus();
   },
 
@@ -561,7 +566,7 @@ AutocompletePopup.prototype = {
    *        - newValue {Object} The new value of the preference.
    *        - oldValue {Object} The old value of the preference.
    */
-  _handleThemeChange: function(event, data) {
+  _handleThemeChange: function (event, data) {
     if (data.pref == "devtools.theme") {
       this._panel.classList.toggle(data.oldValue + "-theme", false);
       this._panel.classList.toggle(data.newValue + "-theme", true);

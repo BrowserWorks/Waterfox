@@ -148,6 +148,10 @@ skip-if(!winWidget) pref(webgl.disable-angle,true)  == webgl-color-test.html?nat
 # Do we correctly handle multiple clip paths?
 != clip-multiple-paths.html clip-multiple-paths-badref.html
 
+# Bug 1255062
+== clip-multiple-move-1.html clip-multiple-move-1-ref.html
+== clip-multiple-move-2.html clip-multiple-move-2-ref.html
+
 # Bug 815648
 == stroketext-shadow.html stroketext-shadow-ref.html
 
@@ -158,7 +162,7 @@ pref(canvas.customfocusring.enabled,true) skip-if(B2G) skip-if(cocoaWidget) skip
 # Check that captureStream() displays in a local video element
 == capturestream.html wrapper.html?green.png
 
-fuzzy-if(azureSkiaGL,1,2) fuzzy-if(Android,3,40) fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu),1,1) == 1177726-text-stroke-bounds.html 1177726-text-stroke-bounds-ref.html
+fuzzy-if(azureSkia,16,2) fuzzy-if(Android,3,40) fuzzy-if(/^Windows\x20NT\x2010\.0/.test(http.oscpu),1,1) == 1177726-text-stroke-bounds.html 1177726-text-stroke-bounds-ref.html
 
 # Canvas Filter Reftests
 include filters/reftest.list

@@ -53,6 +53,7 @@ extern bool
 CurrentThreadIsIonCompiling();
 #endif
 
+// The return value indicates if anything was unmarked.
 extern bool
 UnmarkGrayCellRecursively(gc::Cell* cell, JS::TraceKind kind);
 
@@ -113,10 +114,59 @@ enum class AllocKind {
     LAST = LIMIT - 1
 };
 
+// Macro to enumerate the different allocation kinds supplying information about
+// the trace kind, C++ type and allocation size.
+#define FOR_EACH_OBJECT_ALLOCKIND(D) \
+ /* AllocKind              TraceKind    TypeName           SizedType */ \
+    D(FUNCTION,            Object,      JSObject,          JSFunction) \
+    D(FUNCTION_EXTENDED,   Object,      JSObject,          FunctionExtended) \
+    D(OBJECT0,             Object,      JSObject,          JSObject_Slots0) \
+    D(OBJECT0_BACKGROUND,  Object,      JSObject,          JSObject_Slots0) \
+    D(OBJECT2,             Object,      JSObject,          JSObject_Slots2) \
+    D(OBJECT2_BACKGROUND,  Object,      JSObject,          JSObject_Slots2) \
+    D(OBJECT4,             Object,      JSObject,          JSObject_Slots4) \
+    D(OBJECT4_BACKGROUND,  Object,      JSObject,          JSObject_Slots4) \
+    D(OBJECT8,             Object,      JSObject,          JSObject_Slots8) \
+    D(OBJECT8_BACKGROUND,  Object,      JSObject,          JSObject_Slots8) \
+    D(OBJECT12,            Object,      JSObject,          JSObject_Slots12) \
+    D(OBJECT12_BACKGROUND, Object,      JSObject,          JSObject_Slots12) \
+    D(OBJECT16,            Object,      JSObject,          JSObject_Slots16) \
+    D(OBJECT16_BACKGROUND, Object,      JSObject,          JSObject_Slots16)
+
+#define FOR_EACH_NONOBJECT_ALLOCKIND(D) \
+ /* AllocKind              TraceKind    TypeName           SizedType */ \
+    D(SCRIPT,              Script,      JSScript,          JSScript) \
+    D(LAZY_SCRIPT,         LazyScript,  js::LazyScript,    js::LazyScript) \
+    D(SHAPE,               Shape,       js::Shape,         js::Shape) \
+    D(ACCESSOR_SHAPE,      Shape,       js::AccessorShape, js::AccessorShape) \
+    D(BASE_SHAPE,          BaseShape,   js::BaseShape,     js::BaseShape) \
+    D(OBJECT_GROUP,        ObjectGroup, js::ObjectGroup,   js::ObjectGroup) \
+    D(FAT_INLINE_STRING,   String,      JSFatInlineString, JSFatInlineString) \
+    D(STRING,              String,      JSString,          JSString) \
+    D(EXTERNAL_STRING,     String,      JSExternalString,  JSExternalString) \
+    D(SYMBOL,              Symbol,      JS::Symbol,        JS::Symbol) \
+    D(JITCODE,             JitCode,     js::jit::JitCode,  js::jit::JitCode)
+
+#define FOR_EACH_ALLOCKIND(D) \
+    FOR_EACH_OBJECT_ALLOCKIND(D) \
+    FOR_EACH_NONOBJECT_ALLOCKIND(D)
+
 static_assert(int(AllocKind::FIRST) == 0, "Various places depend on AllocKind starting at 0, "
                                           "please audit them carefully!");
 static_assert(int(AllocKind::OBJECT_FIRST) == 0, "Various places depend on AllocKind::OBJECT_FIRST "
                                                  "being 0, please audit them carefully!");
+
+inline bool
+IsAllocKind(AllocKind kind)
+{
+    return kind >= AllocKind::FIRST && kind <= AllocKind::LIMIT;
+}
+
+inline bool
+IsValidAllocKind(AllocKind kind)
+{
+    return kind >= AllocKind::FIRST && kind <= AllocKind::LAST;
+}
 
 inline bool
 IsObjectAllocKind(AllocKind kind)
@@ -128,17 +178,6 @@ inline bool
 IsShapeAllocKind(AllocKind kind)
 {
     return kind == AllocKind::SHAPE || kind == AllocKind::ACCESSOR_SHAPE;
-}
-
-inline bool
-IsValidAllocKind(AllocKind kind)
-{
-    return kind >= AllocKind::FIRST && kind <= AllocKind::LAST;
-}
-
-inline bool IsAllocKind(AllocKind kind)
-{
-    return kind >= AllocKind::FIRST && kind <= AllocKind::LIMIT;
 }
 
 // Returns a sequence for use in a range-based for loop,
@@ -181,31 +220,10 @@ static inline JS::TraceKind
 MapAllocToTraceKind(AllocKind kind)
 {
     static const JS::TraceKind map[] = {
-        JS::TraceKind::Object,       /* AllocKind::FUNCTION */
-        JS::TraceKind::Object,       /* AllocKind::FUNCTION_EXTENDED */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT0 */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT0_BACKGROUND */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT2 */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT2_BACKGROUND */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT4 */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT4_BACKGROUND */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT8 */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT8_BACKGROUND */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT12 */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT12_BACKGROUND */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT16 */
-        JS::TraceKind::Object,       /* AllocKind::OBJECT16_BACKGROUND */
-        JS::TraceKind::Script,       /* AllocKind::SCRIPT */
-        JS::TraceKind::LazyScript,   /* AllocKind::LAZY_SCRIPT */
-        JS::TraceKind::Shape,        /* AllocKind::SHAPE */
-        JS::TraceKind::Shape,        /* AllocKind::ACCESSOR_SHAPE */
-        JS::TraceKind::BaseShape,    /* AllocKind::BASE_SHAPE */
-        JS::TraceKind::ObjectGroup,  /* AllocKind::OBJECT_GROUP */
-        JS::TraceKind::String,       /* AllocKind::FAT_INLINE_STRING */
-        JS::TraceKind::String,       /* AllocKind::STRING */
-        JS::TraceKind::String,       /* AllocKind::EXTERNAL_STRING */
-        JS::TraceKind::Symbol,       /* AllocKind::SYMBOL */
-        JS::TraceKind::JitCode,      /* AllocKind::JITCODE */
+#define EXPAND_ELEMENT(allocKind, traceKind, type, sizedType) \
+        JS::TraceKind::traceKind,
+FOR_EACH_ALLOCKIND(EXPAND_ELEMENT)
+#undef EXPAND_ELEMENT
     };
 
     static_assert(MOZ_ARRAY_LENGTH(map) == size_t(AllocKind::LIMIT),
@@ -267,6 +285,7 @@ class TenuredCell : public Cell
 
     // Mark bit management.
     MOZ_ALWAYS_INLINE bool isMarked(uint32_t color = BLACK) const;
+    // The return value indicates if the cell went from unmarked to marked.
     MOZ_ALWAYS_INLINE bool markIfUnmarked(uint32_t color = BLACK) const;
     MOZ_ALWAYS_INLINE void unmark(uint32_t color) const;
     MOZ_ALWAYS_INLINE void copyMarkBitsFrom(const TenuredCell* src);
@@ -295,6 +314,9 @@ class TenuredCell : public Cell
 
     static MOZ_ALWAYS_INLINE void writeBarrierPost(void* cellp, TenuredCell* prior,
                                                    TenuredCell* next);
+
+    // Default implementation for kinds that don't require fixup.
+    void fixupAfterMovingGC() {}
 
 #ifdef DEBUG
     inline bool isAligned() const;
@@ -849,6 +871,7 @@ struct ChunkBitmap
         return *word & mask;
     }
 
+    // The return value indicates if the cell went from unmarked to marked.
     MOZ_ALWAYS_INLINE bool markIfUnmarked(const Cell* cell, uint32_t color) {
         uintptr_t* word, mask;
         getMarkWordAndMask(cell, BLACK, &word, &mask);
@@ -967,7 +990,7 @@ struct Chunk
     void releaseArena(JSRuntime* rt, Arena* arena, const AutoLockGC& lock);
     void recycleArena(Arena* arena, SortedArenaList& dest, size_t thingsPerArena);
 
-    bool decommitOneFreeArena(JSRuntime* rt, AutoLockGC& lock);
+    MOZ_MUST_USE bool decommitOneFreeArena(JSRuntime* rt, AutoLockGC& lock);
     void decommitAllArenasWithoutUnlocking(const AutoLockGC& lock);
 
     static Chunk* allocate(JSRuntime* rt);
@@ -989,7 +1012,7 @@ struct Chunk
 
   public:
     /* Unlink and return the freeArenasHead. */
-    inline Arena* fetchNextFreeArena(JSRuntime* rt);
+    Arena* fetchNextFreeArena(JSRuntime* rt);
 };
 
 static_assert(sizeof(Chunk) == ChunkSize,

@@ -34,7 +34,6 @@
 static const char gScheme[][sizeof("moz-safe-about")] =
     {"chrome", "file", "http", "https", "jar", "data", "about", "moz-safe-about", "resource"};
 
-class nsAsyncRedirectVerifyHelper;
 class nsINetworkLinkService;
 class nsIPrefBranch;
 class nsIProtocolProxyService2;
@@ -44,9 +43,8 @@ class nsPISocketTransportService;
 
 namespace mozilla {
 namespace net {
-    class NeckoChild;
-} // namespace net
-} // namespace mozilla
+class NeckoChild;
+class nsAsyncRedirectVerifyHelper;
 
 class nsIOService final : public nsIIOService2
                         , public nsIObserver
@@ -100,6 +98,8 @@ public:
     // Should only be called from NeckoChild. Use SetAppOffline instead.
     void SetAppOfflineInternal(uint32_t appId, int32_t status);
 
+    // Used to trigger a recheck of the captive portal status
+    nsresult RecheckCaptivePortal();
 private:
     // These shouldn't be called directly:
     // - construct using GetInstance
@@ -178,7 +178,6 @@ private:
 
     nsTArray<int32_t>                    mRestrictedPortList;
 
-    bool                                 mAutoDialEnabled;
     bool                                 mNetworkNotifyChanged;
     int32_t                              mPreviousWifiState;
     // Hashtable of (appId, nsIAppOffineInfo::mode) pairs
@@ -240,5 +239,8 @@ private:
  * Reference to the IO service singleton. May be null.
  */
 extern nsIOService* gIOService;
+
+} // namespace net
+} // namespace mozilla
 
 #endif // nsIOService_h__

@@ -25,6 +25,7 @@ EXTRA_COMPONENTS += [
     'ImageBlockingPolicy.js',
     'LoginManagerPrompter.js',
     'NSSDialogService.js',
+    'PresentationDevicePrompt.js',
     'PromptService.js',
     'SessionStore.js',
     'SiteSpecificUserAgent.js',
@@ -39,4 +40,7 @@ EXTRA_PP_COMPONENTS += [
     'MobileComponents.manifest',
 ]
 
-DIRS += ['build']
+DIRS += [
+    'extensions',
+    'build',
+]

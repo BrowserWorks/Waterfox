@@ -4,6 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+DIRS += [
+    'tooltip',
+]
+
 DevToolsModules(
     'AbstractTreeItem.jsm',
     'BarGraphWidget.js',
@@ -16,6 +20,7 @@ DevToolsModules(
     'FlameGraph.js',
     'Graphs.js',
     'GraphsWorker.js',
+    'HTMLTooltip.js',
     'LineGraphWidget.js',
     'MdnDocsWidget.js',
     'MountainGraphWidget.js',
@@ -27,5 +32,5 @@ DevToolsModules(
     'TreeWidget.js',
     'VariablesView.jsm',
     'VariablesViewController.jsm',
-    'ViewHelpers.jsm',
+    'view-helpers.js',
 )

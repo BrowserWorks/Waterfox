@@ -97,7 +97,7 @@ BluetoothOppManager::Observe(nsISupports* aSubject,
   return NS_ERROR_UNEXPECTED;
 }
 
-class SendSocketDataTask : public nsRunnable
+class SendSocketDataTask : public Runnable
 {
 public:
   SendSocketDataTask(UniquePtr<uint8_t[]> aStream, uint32_t aSize)
@@ -121,7 +121,7 @@ private:
   uint32_t mSize;
 };
 
-class ReadFileTask : public nsRunnable
+class ReadFileTask : public Runnable
 {
 public:
   ReadFileTask(nsIInputStream* aInputStream,
@@ -167,7 +167,7 @@ private:
   uint32_t mAvailablePacketSize;
 };
 
-class CloseSocketTask : public Task
+class CloseSocketTask : public Runnable
 {
 public:
   CloseSocketTask(BluetoothSocket* aSocket) : mSocket(aSocket)
@@ -175,7 +175,7 @@ public:
     MOZ_ASSERT(aSocket);
   }
 
-  void Run() override
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -183,6 +183,7 @@ public:
         SocketConnectionStatus::SOCKET_CONNECTED) {
       mSocket->Close();
     }
+    return NS_OK;
   }
 
 private:
@@ -1076,7 +1077,7 @@ BluetoothOppManager::ClientDataHandler(UnixSocketBuffer* aMessage)
     // disconnected, we will close it.
     if (mSocket) {
       MessageLoop::current()->
-        PostDelayedTask(FROM_HERE, new CloseSocketTask(mSocket), 1000);
+        PostDelayedTask(MakeAndAddRef<CloseSocketTask>(mSocket), 1000);
     }
   } else if (mLastCommand == ObexRequestCode::Connect) {
     MOZ_ASSERT(!mFileName.IsEmpty());

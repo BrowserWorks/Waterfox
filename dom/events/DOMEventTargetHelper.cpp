@@ -31,7 +31,12 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(DOMEventTargetHelper)
     if (tmp->mOwnerWindow && tmp->mOwnerWindow->GetExtantDoc()) {
       tmp->mOwnerWindow->GetExtantDoc()->GetDocumentURI(uri);
     }
-    snprintf_literal(name, "DOMEventTargetHelper %s",
+
+    nsXPCOMCycleCollectionParticipant* participant = nullptr;
+    CallQueryInterface(tmp, &participant);
+
+    snprintf_literal(name, "%s %s",
+                     participant->ClassName(),
                      NS_ConvertUTF16toUTF8(uri).get());
     cb.DescribeRefCountedNode(tmp->mRefCnt.get(), name);
   } else {
@@ -222,7 +227,7 @@ DOMEventTargetHelper::AddEventListener(const nsAString& aType,
 void
 DOMEventTargetHelper::AddEventListener(const nsAString& aType,
                                        EventListener* aListener,
-                                       bool aUseCapture,
+                                       const AddEventListenerOptionsOrBoolean& aOptions,
                                        const Nullable<bool>& aWantsUntrusted,
                                        ErrorResult& aRv)
 {
@@ -242,7 +247,8 @@ DOMEventTargetHelper::AddEventListener(const nsAString& aType,
     aRv.Throw(NS_ERROR_UNEXPECTED);
     return;
   }
-  elm->AddEventListener(aType, aListener, aUseCapture, wantsUntrusted);
+
+  elm->AddEventListener(aType, aListener, aOptions, wantsUntrusted);
 }
 
 NS_IMETHODIMP

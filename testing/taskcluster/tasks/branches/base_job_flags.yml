@@ -57,15 +57,19 @@ flags:
     mochitest-dt-e10s: /mochitest-devtools-chrome-e10s.*/
     mochitest-gl: /mochitest-webgl.*/
     mochitest-gl-e10s: /mochitest-webgl-e10s.*/
+    mochitest-gpu: /mochitest-gpu.*/
+    mochitest-gpu-e10s: /mochitest-gpu-e10s.*/
+    mochitest-clipboard: /mochitest-clipboard.*/
+    mochitest-clipboard-e10s: /mochitest-clipboard-e10s.*/
     mochitest-jetpack: /mochitest-jetpack.*/
     mochitest-media: /mochitest-media.*/
     mochitest-media-e10s: /mochitest-media-e10s.*/
     mochitest-vg: /mochitest-valgrind.*/
     reftest: /(plain-)?reftest.*/
     reftest-no-accel: /(plain-)?reftest-no-accel.*/
-    reftest-no-accel-e10s: /(plain-)?reftest-no-accel-e10s.*/
     reftests: /(plain-)?reftest.*/
     reftests-e10s: /(plain-)?reftest-e10s.*/
+    reftest-no-accel-e10s: /(plain-)?reftest-no-accel-e10s.*/
     robocop: /robocop.*/
     web-platform-test: /web-platform-tests.*/
     web-platform-tests: /web-platform-tests.*/
@@ -75,14 +79,11 @@ flags:
     xpcshell: /xpcshell.*/
 
   builds:
-    - emulator
-    - emulator-jb
-    - emulator-kk
-    - emulator-x86-kk
-    - emulator-l
     - linux32_gecko  # b2g desktop linux 32 bit
     - linux64_gecko  # b2g desktop linux 64 bit
     - linux64-mulet  # Firefox desktop - b2g gecko linux 64 bit
+    - linux64-haz    # Firefox desktop browser, rooting hazard analysis
+    - linux64-shell-haz  # JS shell, rooting hazard analysis
     - linux64-mulet-haz  # Firefox desktop - b2g gecko linux 64 bit, rooting hazard analysis
     - macosx64_gecko # b2g desktop osx 64 bit
     - win32_gecko    # b2g desktop win 32 bit
@@ -96,6 +97,9 @@ flags:
     - linux64
     - linux64-st-an
     - linux64-artifact
+    - linux64-asan
+    - linux64-pgo
+    - linux64-valgrind
     - macosx64
     - macosx64-st-an
 
@@ -133,6 +137,10 @@ flags:
     - mochitest-media-e10s
     - mochitest-webgl
     - mochitest-webgl-e10s
+    - mochitest-gpu
+    - mochitest-gpu-e10s
+    - mochitest-clipboard
+    - mochitest-clipboard-e10s
     - mochitest-valgrind
     - mozmill
     - reftest

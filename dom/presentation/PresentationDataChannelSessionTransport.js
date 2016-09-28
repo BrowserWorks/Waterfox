@@ -20,7 +20,6 @@ const PRESENTATIONTRANSPORT_CONTRACTID = "mozilla.org/presentation/datachanneltr
 const PRESENTATIONTRANSPORTBUILDER_CID = Components.ID("{215b2f62-46e2-4004-a3d1-6858e56c20f3}");
 const PRESENTATIONTRANSPORTBUILDER_CONTRACTID = "mozilla.org/presentation/datachanneltransportbuilder;1";
 
-
 function PresentationDataChannelDescription(aDataChannelSDP) {
   this._dataChannelSDP = JSON.stringify(aDataChannelSDP);
 }
@@ -41,7 +40,6 @@ PresentationDataChannelDescription.prototype = {
   }
 };
 
-
 function PresentationTransportBuilder() {
   log("PresentationTransportBuilder construct");
   this._isControlChannelNeeded = true;
@@ -51,11 +49,10 @@ PresentationTransportBuilder.prototype = {
   classID: PRESENTATIONTRANSPORTBUILDER_CID,
   contractID: PRESENTATIONTRANSPORTBUILDER_CONTRACTID,
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIPresentationDataChannelSessionTransportBuilder,
-                                         Ci.nsIPresentationControlChannelListener,
                                          Ci.nsITimerCallback]),
 
-  buildDataChannelTransport: function(aType, aWindow, aControlChannel, aListener) {
-    if (!aType || !aWindow || !aControlChannel || !aListener) {
+  buildDataChannelTransport: function(aRole, aWindow, aListener) {
+    if (!aRole || !aWindow || !aListener) {
       log("buildDataChannelTransport with illegal parameters");
       throw Cr.NS_ERROR_ILLEGAL_VALUE;
     }
@@ -65,37 +62,35 @@ PresentationTransportBuilder.prototype = {
       throw Cr.NS_ERROR_UNEXPECTED;
     }
 
-    log("buildDataChannelTransport with type " + aType);
-    this._type = aType;
+    log("buildDataChannelTransport with role " + aRole);
+    this._role = aRole;
     this._window = aWindow;
-    this._controlChannel = aControlChannel.QueryInterface(Ci.nsIPresentationControlChannel);
-    this._controlChannel.listener = this;
     this._listener = aListener.QueryInterface(Ci.nsIPresentationSessionTransportBuilderListener);
 
     // TODO bug 1227053 set iceServers from |nsIPresentationDevice|
     this._peerConnection = new this._window.RTCPeerConnection();
 
-    // |this._controlChannel == null| will throw since the control channel is
+    // |this._listener == null| will throw since the control channel is
     // abnormally closed.
     this._peerConnection.onicecandidate = aEvent => aEvent.candidate &&
-      this._controlChannel.sendIceCandidate(JSON.stringify(aEvent.candidate));
+      this._listener.sendIceCandidate(JSON.stringify(aEvent.candidate));
 
     this._peerConnection.onnegotiationneeded = () => {
-      log("onnegotiationneeded with type " + this._type);
+      log("onnegotiationneeded with role " + this._role);
       this._peerConnection.createOffer()
           .then(aOffer => this._peerConnection.setLocalDescription(aOffer))
-          .then(() => this._controlChannel
+          .then(() => this._listener
                           .sendOffer(new PresentationDataChannelDescription(this._peerConnection.localDescription)))
           .catch(e => this._reportError(e));
     }
 
-    switch (this._type) {
-      case Ci.nsIPresentationSessionTransportBuilder.TYPE_SENDER:
+    switch (this._role) {
+      case Ci.nsIPresentationService.ROLE_CONTROLLER:
         this._dataChannel = this._peerConnection.createDataChannel("presentationAPI");
         this._setDataChannel();
         break;
 
-      case Ci.nsIPresentationSessionTransportBuilder.TYPE_RECEIVER:
+      case Ci.nsIPresentationService.ROLE_RECEIVER:
         this._peerConnection.ondatachannel = aEvent => {
           this._dataChannel = aEvent.channel;
           this._setDataChannel();
@@ -133,7 +128,7 @@ PresentationTransportBuilder.prototype = {
 
   _setDataChannel: function() {
     this._dataChannel.onopen = () => {
-      log("data channel is open, notify the listener, type " + this._type);
+      log("data channel is open, notify the listener, role " + this._role);
 
       // Handoff the ownership of _peerConnection and _dataChannel to
       // _sessionTransport
@@ -168,13 +163,8 @@ PresentationTransportBuilder.prototype = {
       this._peerConnection = null;
     }
 
-    this._type = null;
+    this._role = null;
     this._window = null;
-
-    if (this._controlChannel) {
-      this._controlChannel.close(aReason);
-      this._controlChannel = null;
-    }
 
     this._listener = null;
     this._sessionTransport = null;
@@ -187,13 +177,13 @@ PresentationTransportBuilder.prototype = {
 
   // nsIPresentationControlChannelListener
   onOffer: function(aOffer) {
-    if (this._type !== Ci.nsIPresentationSessionTransportBuilder.TYPE_RECEIVER ||
+    if (this._role !== Ci.nsIPresentationService.ROLE_RECEIVER ||
           this._sessionTransport) {
       log("onOffer status error");
       this._cleanup(Cr.NS_ERROR_FAILURE);
     }
 
-    log("onOffer: " + aOffer.dataChannelSDP + " with type " + this._type);
+    log("onOffer: " + aOffer.dataChannelSDP + " with role " + this._role);
 
     let offer = new this._window
                         .RTCSessionDescription(JSON.parse(aOffer.dataChannelSDP));
@@ -204,19 +194,19 @@ PresentationTransportBuilder.prototype = {
         .then(aAnswer => this._peerConnection.setLocalDescription(aAnswer))
         .then(() => {
           this._isControlChannelNeeded = false;
-          this._controlChannel
+          this._listener
               .sendAnswer(new PresentationDataChannelDescription(this._peerConnection.localDescription))
         }).catch(e => this._reportError(e));
   },
 
   onAnswer: function(aAnswer) {
-    if (this._type !== Ci.nsIPresentationSessionTransportBuilder.TYPE_SENDER ||
+    if (this._role !== Ci.nsIPresentationService.ROLE_CONTROLLER ||
           this._sessionTransport) {
       log("onAnswer status error");
       this._cleanup(Cr.NS_ERROR_FAILURE);
     }
 
-    log("onAnswer: " + aAnswer.dataChannelSDP + " with type " + this._type);
+    log("onAnswer: " + aAnswer.dataChannelSDP + " with role " + this._role);
 
     let answer = new this._window
                          .RTCSessionDescription(JSON.parse(aAnswer.dataChannelSDP));
@@ -226,13 +216,9 @@ PresentationTransportBuilder.prototype = {
   },
 
   onIceCandidate: function(aCandidate) {
-    log("onIceCandidate: " + aCandidate + " with type " + this._type);
+    log("onIceCandidate: " + aCandidate + " with role " + this._role);
     let candidate = new this._window.RTCIceCandidate(JSON.parse(aCandidate));
     this._peerConnection.addIceCandidate(candidate).catch(e => this._reportError(e));
-  },
-
-  notifyOpened: function() {
-    log("notifyOpened, should be opened beforehand");
   },
 
   notifyClosed: function(aReason) {
@@ -243,10 +229,8 @@ PresentationTransportBuilder.prototype = {
     } else if (this._isControlChannelNeeded) {
       this._cleanup(Cr.NS_ERROR_FAILURE);
     }
-    this._controlChannel = null;
   },
 };
-
 
 function PresentationTransport() {
   this._messageQueue = [];
@@ -286,7 +270,6 @@ PresentationTransport.prototype = {
       }
       this._callback.notifyData(aEvent.data);
     };
-
 
     this._dataChannel.onerror = aError => {
       log("data channel onerror " + aError.name + ":" + aError.message);

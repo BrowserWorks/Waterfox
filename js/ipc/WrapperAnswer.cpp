@@ -410,9 +410,7 @@ WrapperAnswer::RecvCallOrConstruct(const ObjectId& objId,
 
     RootedValue rval(cx);
     {
-        AutoSaveContextOptions asco(cx);
-        ContextOptionsRef(cx).setDontReportUncaught(true);
-
+        MOZ_ASSERT(JS::ContextOptionsRef(cx).autoJSAPIOwnsErrorReporting());
         HandleValueArray args = HandleValueArray::subarray(vals, 2, vals.length() - 2);
         if (construct) {
             RootedObject obj(cx);
@@ -550,7 +548,8 @@ WrapperAnswer::RecvClassName(const ObjectId& objId, nsCString* name)
     RootedObject obj(cx, findObjectById(cx, objId));
     if (!obj) {
         // This is very unfortunate, but we have no choice.
-        return "<dead CPOW>";
+        *name = "<dead CPOW>";
+        return true;
     }
 
     LOG("%s.className()", ReceiverObj(objId));
@@ -581,6 +580,34 @@ WrapperAnswer::RecvGetPrototype(const ObjectId& objId, ReturnStatus* rs, ObjectO
         return fail(jsapi, rs);
 
     LOG("getPrototype(%s)", ReceiverObj(objId));
+
+    return ok(rs);
+}
+
+bool
+WrapperAnswer::RecvGetPrototypeIfOrdinary(const ObjectId& objId, ReturnStatus* rs, bool* isOrdinary,
+                                          ObjectOrNullVariant* result)
+{
+    *result = NullVariant();
+    *isOrdinary = false;
+
+    AutoJSAPI jsapi;
+    if (NS_WARN_IF(!jsapi.Init(scopeForTargetObjects())))
+        return false;
+    JSContext* cx = jsapi.cx();
+
+    RootedObject obj(cx, findObjectById(cx, objId));
+    if (!obj)
+        return fail(jsapi, rs);
+
+    JS::RootedObject proto(cx);
+    if (!JS_GetPrototypeIfOrdinary(cx, obj, isOrdinary, &proto))
+        return fail(jsapi, rs);
+
+    if (!toObjectOrNullVariant(cx, proto, result))
+        return fail(jsapi, rs);
+
+    LOG("getPrototypeIfOrdinary(%s)", ReceiverObj(objId));
 
     return ok(rs);
 }

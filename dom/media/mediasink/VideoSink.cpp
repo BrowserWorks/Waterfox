@@ -342,6 +342,10 @@ VideoSink::RenderVideoFrames(int32_t aMaxFrames,
     VideoData* frame = frames[i]->As<VideoData>();
 
     frame->mSentToCompositor = true;
+    // This frame is behind the current time. Let's report it as dropped.
+    if (aClockTime >= frame->GetEndTime()) {
+      frame->mIsDropped = true;
+    }
 
     if (!frame->mImage || !frame->mImage->IsValid()) {
       continue;
@@ -399,13 +403,14 @@ VideoSink::UpdateRenderedVideoFrames()
     RefPtr<MediaData> currentFrame = VideoQueue().PopFront();
     int32_t framesRemoved = 0;
     while (VideoQueue().GetSize() > 0) {
-      MediaData* nextFrame = VideoQueue().PeekFront();
+      RefPtr<MediaData> nextFrame = VideoQueue().PeekFront();
       if (nextFrame->mTime > clockTime) {
         remainingTime = nextFrame->mTime - clockTime;
         break;
       }
       ++framesRemoved;
-      if (!currentFrame->As<VideoData>()->mSentToCompositor) {
+      if (!currentFrame->As<VideoData>()->mSentToCompositor ||
+          currentFrame->As<VideoData>()->mIsDropped) {
         mFrameStats.NotifyDecodedFrames(0, 0, 1);
         VSINK_LOG_V("discarding video frame mTime=%lld clock_time=%lld",
                     currentFrame->mTime, clockTime);

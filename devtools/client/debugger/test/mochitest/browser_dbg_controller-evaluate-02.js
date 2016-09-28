@@ -10,16 +10,20 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  Task.spawn(function*() {
-    const [tab,, panel] = yield initDebugger(TAB_URL);
+  Task.spawn(function* () {
+    const options = {
+      source: EXAMPLE_URL + "code_script-switching-01.js",
+      line: 1
+    };
+    const [tab,, panel] = yield initDebugger(TAB_URL, options);
     const win = panel.panelWin;
     const frames = win.DebuggerController.StackFrames;
     const framesView = win.DebuggerView.StackFrames;
     const sourcesView = win.DebuggerView.Sources;
     const editorView = win.DebuggerView.editor;
     const events = win.EVENTS;
-    const queries = win.require('./content/queries');
-    const constants = win.require('./content/constants');
+    const queries = win.require("./content/queries");
+    const constants = win.require("./content/constants");
     const actions = bindActionCreators(panel);
     const getState = win.DebuggerController.getState;
 

@@ -288,13 +288,13 @@ nsTreeColumn::Invalidate()
   const nsStyleText* textStyle = frame->StyleText();
 
   mTextAlignment = textStyle->mTextAlign;
-  // DEFAULT or END alignment sometimes means RIGHT
-  if ((mTextAlignment == NS_STYLE_TEXT_ALIGN_DEFAULT &&
+  // START or END alignment sometimes means RIGHT
+  if ((mTextAlignment == NS_STYLE_TEXT_ALIGN_START &&
        vis->mDirection == NS_STYLE_DIRECTION_RTL) ||
       (mTextAlignment == NS_STYLE_TEXT_ALIGN_END &&
        vis->mDirection == NS_STYLE_DIRECTION_LTR)) {
     mTextAlignment = NS_STYLE_TEXT_ALIGN_RIGHT;
-  } else if (mTextAlignment == NS_STYLE_TEXT_ALIGN_DEFAULT ||
+  } else if (mTextAlignment == NS_STYLE_TEXT_ALIGN_START ||
              mTextAlignment == NS_STYLE_TEXT_ALIGN_END) {
     mTextAlignment = NS_STYLE_TEXT_ALIGN_LEFT;
   }
@@ -606,12 +606,6 @@ nsTreeColumns::NamedGetter(const nsAString& aId, bool& aFound)
   return nullptr;
 }
 
-bool
-nsTreeColumns::NameIsEnumerable(const nsAString& aName)
-{
-  return true;
-}
-
 nsTreeColumn*
 nsTreeColumns::GetNamedColumn(const nsAString& aId)
 {
@@ -627,7 +621,7 @@ nsTreeColumns::GetNamedColumn(const nsAString& aId, nsITreeColumn** _retval)
 }
 
 void
-nsTreeColumns::GetSupportedNames(unsigned, nsTArray<nsString>& aNames)
+nsTreeColumns::GetSupportedNames(nsTArray<nsString>& aNames)
 {
   for (nsTreeColumn* currCol = mFirstColumn; currCol; currCol = currCol->GetNext()) {
     aNames.AppendElement(currCol->GetId());

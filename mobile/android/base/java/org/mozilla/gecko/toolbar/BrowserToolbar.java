@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.BrowserApp;
@@ -161,8 +162,9 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
     }
 
     public static BrowserToolbar create(final Context context, final AttributeSet attrs) {
+        final boolean isLargeResource = context.getResources().getBoolean(R.bool.is_large_resource);
         final BrowserToolbar toolbar;
-        if (HardwareUtils.isTablet()) {
+        if (isLargeResource) {
             toolbar = new BrowserToolbarTablet(context, attrs);
         } else {
             toolbar = new BrowserToolbarPhone(context, attrs);
@@ -403,7 +405,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
     }
 
     @Override
-    public void onTabChanged(@NonNull Tab tab, Tabs.TabEvents msg, String data) {
+    public void onTabChanged(@Nullable Tab tab, Tabs.TabEvents msg, String data) {
         Log.d(LOGTAG, "onTabChanged: " + msg);
         final Tabs tabs = Tabs.getInstance();
 
@@ -492,7 +494,7 @@ public abstract class BrowserToolbar extends ThemedRelativeLayout
                     break;
             }
 
-            if (!flags.isEmpty()) {
+            if (!flags.isEmpty() && tab != null) {
                 updateDisplayLayout(tab, flags);
             }
         }

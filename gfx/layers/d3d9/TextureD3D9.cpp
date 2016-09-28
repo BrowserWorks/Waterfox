@@ -497,7 +497,13 @@ static CompositorD3D9* AssertD3D9Compositor(Compositor* aCompositor)
 {
   CompositorD3D9* compositor = aCompositor ? aCompositor->AsCompositorD3D9()
                                            : nullptr;
-  MOZ_DIAGNOSTIC_ASSERT(!!compositor);
+  if (!compositor) {
+    // We probably had a device reset and this D3D9 texture was already sent but
+    // we are now falling back to a basic compositor. That can happen if a video
+    // is playing while the device reset occurs and it's not too bad if we miss a
+    // few frames.
+    gfxCriticalNote << "[D3D9] Attempt to set an incompatible compositor";
+  }
   return compositor;
 }
 
@@ -592,6 +598,17 @@ D3D9TextureData::CreateSimilar(ClientIPCAllocator*, TextureFlags aFlags, Texture
   return D3D9TextureData::Create(mSize, mFormat, aAllocFlags);
 }
 
+void
+D3D9TextureData::FillInfo(TextureData::Info& aInfo) const
+{
+  aInfo.size = mSize;
+  aInfo.format = mFormat;
+  aInfo.hasIntermediateBuffer = true;
+  aInfo.supportsMoz2D = true;
+  aInfo.canExposeMappedData = false;
+  aInfo.hasSynchronization = false;
+}
+
 bool
 D3D9TextureData::Lock(OpenMode aMode, FenceHandle*)
 {
@@ -668,11 +685,11 @@ D3D9TextureData::BorrowDrawTarget()
   }
 
   if (mNeedsClear) {
-    dt->ClearRect(Rect(0, 0, GetSize().width, GetSize().height));
+    dt->ClearRect(Rect(0, 0, mSize.width, mSize.height));
     mNeedsClear = false;
   }
   if (mNeedsClearWhite) {
-    dt->FillRect(Rect(0, 0, GetSize().width, GetSize().height), ColorPattern(Color(1.0, 1.0, 1.0, 1.0)));
+    dt->FillRect(Rect(0, 0, mSize.width, mSize.height), ColorPattern(Color(1.0, 1.0, 1.0, 1.0)));
     mNeedsClearWhite = false;
   }
 
@@ -733,7 +750,7 @@ DXGID3D9TextureData::DXGID3D9TextureData(gfx::SurfaceFormat aFormat,
 
 DXGID3D9TextureData::~DXGID3D9TextureData()
 {
-  gfxWindowsPlatform::sD3D9SharedTextureUsed -= mDesc.Width * mDesc.Height * 4;
+  gfxWindowsPlatform::sD3D9SharedTextures -= mDesc.Width * mDesc.Height * 4;
   MOZ_COUNT_DTOR(DXGID3D9TextureData);
 }
 
@@ -770,8 +787,19 @@ DXGID3D9TextureData::Create(gfx::IntSize aSize, gfx::SurfaceFormat aFormat,
   DXGID3D9TextureData* data = new DXGID3D9TextureData(aFormat, texture, shareHandle, aDevice);
   data->mDesc = surfaceDesc;
 
-  gfxWindowsPlatform::sD3D9SharedTextureUsed += aSize.width * aSize.height * 4;
+  gfxWindowsPlatform::sD3D9SharedTextures += aSize.width * aSize.height * 4;
   return data;
+}
+
+void
+DXGID3D9TextureData::FillInfo(TextureData::Info& aInfo) const
+{
+  aInfo.size = GetSize();
+  aInfo.format = mFormat;
+  aInfo.supportsMoz2D = false;
+  aInfo.canExposeMappedData = false;
+  aInfo.hasIntermediateBuffer = false;
+  aInfo.hasSynchronization = false;
 }
 
 already_AddRefed<IDirect3DSurface9>
@@ -907,6 +935,8 @@ TextureHostD3D9::UpdatedInternal(const nsIntRegion* aRegion)
   if (!mTextureSource->UpdateFromTexture(mTexture, regionToUpdate)) {
     gfxCriticalNote << "[D3D9] DataTextureSourceD3D9::UpdateFromTexture failed";
   }
+
+  ReadUnlock();
 }
 
 IDirect3DDevice9*
@@ -929,6 +959,12 @@ TextureHostD3D9::SetCompositor(Compositor* aCompositor)
   if (mTextureSource) {
     mTextureSource->SetCompositor(aCompositor);
   }
+}
+
+Compositor*
+TextureHostD3D9::GetCompositor()
+{
+  return mCompositor;
 }
 
 bool
@@ -1057,6 +1093,12 @@ DXGITextureHostD3D9::SetCompositor(Compositor* aCompositor)
   }
 }
 
+Compositor*
+DXGITextureHostD3D9::GetCompositor()
+{
+  return mCompositor;
+}
+
 void
 DXGITextureHostD3D9::DeallocateDeviceData()
 {
@@ -1094,6 +1136,12 @@ DXGIYCbCrTextureHostD3D9::SetCompositor(Compositor* aCompositor)
     mTextureSources[1] = nullptr;
     mTextureSources[2] = nullptr;
   }
+}
+
+Compositor*
+DXGIYCbCrTextureHostD3D9::GetCompositor()
+{
+  return mCompositor;
 }
 
 bool

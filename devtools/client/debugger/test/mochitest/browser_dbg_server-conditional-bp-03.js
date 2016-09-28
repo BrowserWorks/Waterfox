@@ -11,13 +11,17 @@
 const TAB_URL = EXAMPLE_URL + "doc_conditional-breakpoints.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
-    const constants = gDebugger.require('./content/constants');
+    const queries = gDebugger.require("./content/queries");
+    const constants = gDebugger.require("./content/constants");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
@@ -28,8 +32,11 @@ function test() {
       return waitForDispatch(gPanel, constants.SET_BREAKPOINT_CONDITION);
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 17);
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretAndScopes(gPanel, 17);
+      callInTab(gTab, "ermahgerd");
+      yield onCaretUpdated;
+
       const location = { actor: gSources.selectedValue, line: 18 };
 
       yield actions.addBreakpoint(location, "hello");
@@ -46,7 +53,7 @@ function test() {
       yield finished;
 
       const textbox = gDebugger.document.getElementById("conditional-breakpoint-panel-textbox");
-      is(textbox.value, "hello", "The expression is correct (2).")
+      is(textbox.value, "hello", "The expression is correct (2).");
 
       yield waitForConditionUpdate();
       yield actions.disableBreakpoint(location);
@@ -58,11 +65,9 @@ function test() {
                                 gDebugger.document.querySelector(".dbg-breakpoint"),
                                 gDebugger);
       yield finished;
-      is(textbox.value, "foo", "The expression is correct (3).")
+      is(textbox.value, "foo", "The expression is correct (3).");
 
       yield resumeDebuggerThenCloseAndFinish(gPanel);
     });
-
-    callInTab(gTab, "ermahgerd");
   });
 }

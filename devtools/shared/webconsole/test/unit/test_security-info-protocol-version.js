@@ -9,7 +9,7 @@
 const { require } = Components.utils.import("resource://devtools/shared/Loader.jsm", {});
 
 Object.defineProperty(this, "NetworkHelper", {
-  get: function() {
+  get: function () {
     return require("devtools/shared/webconsole/network-helper");
   },
   configurable: true,
@@ -31,6 +31,10 @@ const TEST_CASES = [
     description: "TLS_VERSION_1.2",
     input: 3,
     expected: "TLSv1.2"
+  }, {
+    description: "TLS_VERSION_1.3",
+    input: 4,
+    expected: "TLSv1.3"
   }, {
     description: "invalid version",
     input: -1,

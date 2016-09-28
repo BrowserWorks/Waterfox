@@ -4,9 +4,9 @@
 
 "use strict";
 
-const {Cu, Ci} = require("chrome");
-
+const {Ci} = require("chrome");
 const promise = require("promise");
+const {Task} = require("devtools/shared/task");
 
 loader.lazyGetter(this, "system", () => require("devtools/shared/system"));
 loader.lazyGetter(this, "EventEmitter", () => require("devtools/shared/event-emitter"));
@@ -52,19 +52,19 @@ InspectorSearch.prototype = {
     return this.inspector.walker;
   },
 
-  destroy: function() {
+  destroy: function () {
     this.searchBox.removeEventListener("keydown", this._onKeyDown, true);
     this.searchBox.removeEventListener("command", this._onCommand, true);
     this.searchBox = null;
     this.autocompleter.destroy();
   },
 
-  _onSearch: function(reverse = false) {
+  _onSearch: function (reverse = false) {
     this.doFullTextSearch(this.searchBox.value, reverse)
         .catch(e => console.error(e));
   },
 
-  doFullTextSearch: Task.async(function*(query, reverse) {
+  doFullTextSearch: Task.async(function* (query, reverse) {
     let lastSearched = this._lastSearched;
     this._lastSearched = query;
 
@@ -95,13 +95,13 @@ InspectorSearch.prototype = {
     }
   }),
 
-  _onCommand: function() {
+  _onCommand: function () {
     if (this.searchBox.value.length === 0) {
       this._onSearch();
     }
   },
 
-  _onKeyDown: function(event) {
+  _onKeyDown: function (event) {
     if (this.searchBox.value.length === 0) {
       this.searchBox.removeAttribute("filled");
     } else {
@@ -111,8 +111,8 @@ InspectorSearch.prototype = {
       this._onSearch(event.shiftKey);
     }
 
-    const modifierKey = system.constants.platform === "macosx" ? event.metaKey :
-event.ctrlKey;
+    const modifierKey = system.constants.platform === "macosx"
+                        ? event.metaKey : event.ctrlKey;
     if (event.keyCode === Ci.nsIDOMKeyEvent.DOM_VK_G && modifierKey) {
       this._onSearch(event.shiftKey);
       event.preventDefault();
@@ -180,6 +180,7 @@ SelectorAutocompleter.prototype = {
     CLASS: "class",
     ID: "id",
     TAG: "tag",
+    ATTRIBUTE: "attribute",
   },
 
   // The current state of the query.
@@ -212,7 +213,8 @@ SelectorAutocompleter.prototype = {
 
     this._state = null;
     let subQuery = "";
-    // Now we iterate over the query and decide the state character by character.
+    // Now we iterate over the query and decide the state character by
+    // character.
     // The logic here is that while iterating, the state can go from one to
     // another with some restrictions. Like, if the state is Class, then it can
     // never go to Tag state without a space or '>' character; Or like, a Class
@@ -227,33 +229,63 @@ SelectorAutocompleter.prototype = {
         case null:
           // This will happen only in the first iteration of the for loop.
           lastChar = secondLastChar;
-        case this.States.TAG:
-          this._state = lastChar == "."
-            ? this.States.CLASS
-            : lastChar == "#"
-              ? this.States.ID
-              : this.States.TAG;
+
+        case this.States.TAG: // eslint-disable-line
+          if (lastChar == ".") {
+            this._state = this.States.CLASS;
+          } else if (lastChar == "#") {
+            this._state = this.States.ID;
+          } else if (lastChar == "[") {
+            this._state = this.States.ATTRIBUTE;
+          } else {
+            this._state = this.States.TAG;
+          }
           break;
 
         case this.States.CLASS:
           if (subQuery.match(/[\.]+[^\.]*$/)[0].length > 2) {
-            // Checks whether the subQuery has atleast one [a-zA-Z] after the '.'.
-            this._state = (lastChar == " " || lastChar == ">")
-            ? this.States.TAG
-            : lastChar == "#"
-              ? this.States.ID
-              : this.States.CLASS;
+            // Checks whether the subQuery has atleast one [a-zA-Z] after the
+            // '.'.
+            if (lastChar == " " || lastChar == ">") {
+              this._state = this.States.TAG;
+            } else if (lastChar == "#") {
+              this._state = this.States.ID;
+            } else if (lastChar == "[") {
+              this._state = this.States.ATTRIBUTE;
+            } else {
+              this._state = this.States.CLASS;
+            }
           }
           break;
 
         case this.States.ID:
           if (subQuery.match(/[#]+[^#]*$/)[0].length > 2) {
-            // Checks whether the subQuery has atleast one [a-zA-Z] after the '#'.
-            this._state = (lastChar == " " || lastChar == ">")
-            ? this.States.TAG
-            : lastChar == "."
-              ? this.States.CLASS
-              : this.States.ID;
+            // Checks whether the subQuery has atleast one [a-zA-Z] after the
+            // '#'.
+            if (lastChar == " " || lastChar == ">") {
+              this._state = this.States.TAG;
+            } else if (lastChar == ".") {
+              this._state = this.States.CLASS;
+            } else if (lastChar == "[") {
+              this._state = this.States.ATTRIBUTE;
+            } else {
+              this._state = this.States.ID;
+            }
+          }
+          break;
+
+        case this.States.ATTRIBUTE:
+          if (subQuery.match(/[\[][^\]]+[\]]/) != null) {
+            // Checks whether the subQuery has at least one ']' after the '['.
+            if (lastChar == " " || lastChar == ">") {
+              this._state = this.States.TAG;
+            } else if (lastChar == ".") {
+              this._state = this.States.CLASS;
+            } else if (lastChar == "#") {
+              this._state = this.States.ID;
+            } else {
+              this._state = this.States.ATTRIBUTE;
+            }
           }
           break;
       }
@@ -264,9 +296,10 @@ SelectorAutocompleter.prototype = {
   /**
    * Removes event listeners and cleans up references.
    */
-  destroy: function() {
+  destroy: function () {
     this.searchBox.removeEventListener("input", this.showSuggestions, true);
-    this.searchBox.removeEventListener("keypress", this._onSearchKeypress, true);
+    this.searchBox.removeEventListener("keypress",
+      this._onSearchKeypress, true);
     this.inspector.off("markupmutation", this._onMarkupMutation);
     this.searchPopup.destroy();
     this.searchPopup = null;
@@ -277,18 +310,21 @@ SelectorAutocompleter.prototype = {
   /**
    * Handles keypresses inside the input box.
    */
-  _onSearchKeypress: function(event) {
+  _onSearchKeypress: function (event) {
     let query = this.searchBox.value;
-    switch(event.keyCode) {
+    let popup = this.searchPopup;
+
+    switch (event.keyCode) {
       case event.DOM_VK_RETURN:
       case event.DOM_VK_TAB:
-        if (this.searchPopup.isOpen &&
-            this.searchPopup.getItemAtIndex(this.searchPopup.itemCount - 1)
+        if (popup.isOpen &&
+            popup.getItemAtIndex(popup.itemCount - 1)
                 .preLabel == query) {
-          this.searchPopup.selectedIndex = this.searchPopup.itemCount - 1;
-          this.searchBox.value = this.searchPopup.selectedItem.label;
+          popup.selectedIndex = popup.itemCount - 1;
+          this.searchBox.value = popup.selectedItem.label;
           this.hidePopup();
-        } else if (!this.searchPopup.isOpen && event.keyCode === event.DOM_VK_TAB) {
+        } else if (!popup.isOpen &&
+                   event.keyCode === event.DOM_VK_TAB) {
           // When tab is pressed with focus on searchbox and closed popup,
           // do not prevent the default to avoid a keyboard trap and move focus
           // to next/previous element.
@@ -298,24 +334,23 @@ SelectorAutocompleter.prototype = {
         break;
 
       case event.DOM_VK_UP:
-        if (this.searchPopup.isOpen && this.searchPopup.itemCount > 0) {
-          this.searchPopup.focus();
-          if (this.searchPopup.selectedIndex == this.searchPopup.itemCount - 1) {
-            this.searchPopup.selectedIndex =
-              Math.max(0, this.searchPopup.itemCount - 2);
+        if (popup.isOpen && popup.itemCount > 0) {
+          popup.focus();
+          if (popup.selectedIndex == popup.itemCount - 1) {
+            popup.selectedIndex =
+              Math.max(0, popup.itemCount - 2);
+          } else {
+            popup.selectedIndex = popup.itemCount - 1;
           }
-          else {
-            this.searchPopup.selectedIndex = this.searchPopup.itemCount - 1;
-          }
-          this.searchBox.value = this.searchPopup.selectedItem.label;
+          this.searchBox.value = popup.selectedItem.label;
         }
         break;
 
       case event.DOM_VK_DOWN:
-        if (this.searchPopup.isOpen && this.searchPopup.itemCount > 0) {
-          this.searchPopup.focus();
-          this.searchPopup.selectedIndex = 0;
-          this.searchBox.value = this.searchPopup.selectedItem.label;
+        if (popup.isOpen && popup.itemCount > 0) {
+          popup.focus();
+          popup.selectedIndex = 0;
+          this.searchBox.value = popup.selectedItem.label;
         }
         break;
 
@@ -331,41 +366,42 @@ SelectorAutocompleter.prototype = {
   /**
    * Handles keypress and mouse click on the suggestions richlistbox.
    */
-  _onListBoxKeypress: function(event) {
-    switch(event.keyCode || event.button) {
+  _onListBoxKeypress: function (event) {
+    let popup = this.searchPopup;
+
+    switch (event.keyCode || event.button) {
       case event.DOM_VK_RETURN:
       case event.DOM_VK_TAB:
-      case 0: // left mouse button
+      case 0:
+        // left mouse button
         event.stopPropagation();
         event.preventDefault();
-        this.searchBox.value = this.searchPopup.selectedItem.label;
+        this.searchBox.value = popup.selectedItem.label;
         this.searchBox.focus();
         this.hidePopup();
         break;
 
       case event.DOM_VK_UP:
-        if (this.searchPopup.selectedIndex == 0) {
-          this.searchPopup.selectedIndex = -1;
+        if (popup.selectedIndex == 0) {
+          popup.selectedIndex = -1;
           event.stopPropagation();
           event.preventDefault();
           this.searchBox.focus();
-        }
-        else {
-          let index = this.searchPopup.selectedIndex;
-          this.searchBox.value = this.searchPopup.getItemAtIndex(index - 1).label;
+        } else {
+          let index = popup.selectedIndex;
+          this.searchBox.value = popup.getItemAtIndex(index - 1).label;
         }
         break;
 
       case event.DOM_VK_DOWN:
-        if (this.searchPopup.selectedIndex == this.searchPopup.itemCount - 1) {
-          this.searchPopup.selectedIndex = -1;
+        if (popup.selectedIndex == popup.itemCount - 1) {
+          popup.selectedIndex = -1;
           event.stopPropagation();
           event.preventDefault();
           this.searchBox.focus();
-        }
-        else {
-          let index = this.searchPopup.selectedIndex;
-          this.searchBox.value = this.searchPopup.getItemAtIndex(index + 1).label;
+        } else {
+          let index = popup.selectedIndex;
+          this.searchBox.value = popup.getItemAtIndex(index + 1).label;
         }
         break;
 
@@ -374,8 +410,8 @@ SelectorAutocompleter.prototype = {
         event.preventDefault();
         this.searchBox.focus();
         if (this.searchBox.selectionStart > 0) {
-          this.searchBox.value =
-            this.searchBox.value.substring(0, this.searchBox.selectionStart - 1);
+          this.searchBox.value = this.searchBox.value.substring(0,
+            this.searchBox.selectionStart - 1);
         }
         this.hidePopup();
         break;
@@ -387,7 +423,7 @@ SelectorAutocompleter.prototype = {
    * Reset previous search results on markup-mutations to make sure we search
    * again after nodes have been added/removed/changed.
    */
-  _onMarkupMutation: function() {
+  _onMarkupMutation: function () {
     this._searchResults = null;
     this._lastSearched = null;
   },
@@ -395,12 +431,12 @@ SelectorAutocompleter.prototype = {
   /**
    * Populates the suggestions list and show the suggestion popup.
    */
-  _showPopup: function(list, firstPart, aState) {
+  _showPopup: function (list, firstPart, popupState) {
     let total = 0;
     let query = this.searchBox.value;
     let items = [];
 
-    for (let [value, /*count*/, state] of list) {
+    for (let [value, , state] of list) {
       if (query.match(/[\s>+]$/)) {
         // for cases like 'div ' or 'div >' or 'div+'
         value = query + value;
@@ -412,9 +448,10 @@ SelectorAutocompleter.prototype = {
         // for cases like 'div.class' or '#foo.bar' and likewise
         let lastPart = query.match(/[a-zA-Z][#\.][^#\.\s+>]*$/)[0];
         value = query.slice(0, -1 * lastPart.length + 1) + value;
-      } else if (query.match(/[a-zA-Z]\[[^\]]*\]?$/)) {
-        // for cases like 'div[foo=bar]' and likewise
-        value = query;
+      } else if (query.match(/[a-zA-Z]*\[[^\]]*\][^\]]*/)) {
+        // for cases like '[foo].bar' and likewise
+        let attrPart = query.substring(0, query.lastIndexOf("]") + 1);
+        value = attrPart + value;
       }
 
       let item = {
@@ -422,17 +459,12 @@ SelectorAutocompleter.prototype = {
         label: value
       };
 
-      // In case of tagNames, change the case to small
-      if (value.match(/.*[\.#][^\.#]{0,}$/) == null) {
-        item.label = value.toLowerCase();
-      }
-
       // In case the query's state is tag and the item's state is id or class
       // adjust the preLabel
-      if (aState === this.States.TAG && state === this.States.CLASS) {
+      if (popupState === this.States.TAG && state === this.States.CLASS) {
         item.preLabel = "." + item.preLabel;
       }
-      if (aState === this.States.TAG && state === this.States.ID) {
+      if (popupState === this.States.TAG && state === this.States.ID) {
         item.preLabel = "#" + item.preLabel;
       }
 
@@ -444,17 +476,15 @@ SelectorAutocompleter.prototype = {
     if (total > 0) {
       this.searchPopup.setItems(items);
       this.searchPopup.openPopup(this.searchBox);
-    }
-    else {
+    } else {
       this.hidePopup();
     }
   },
 
-
   /**
    * Hide the suggestion popup if necessary.
    */
-  hidePopup: function() {
+  hidePopup: function () {
     if (this.searchPopup.isOpen) {
       this.searchPopup.hidePopup();
     }
@@ -464,30 +494,29 @@ SelectorAutocompleter.prototype = {
    * Suggests classes,ids and tags based on the user input as user types in the
    * searchbox.
    */
-  showSuggestions: function() {
+  showSuggestions: function () {
     let query = this.searchBox.value;
     let state = this.state;
     let firstPart = "";
 
-    if (query.endsWith("*")) {
-      // Hide the popup if the query ends with * because we don't want to
-      // suggest all nodes.
+    if (query.endsWith("*") || state === this.States.ATTRIBUTE) {
+      // Hide the popup if the query ends with * (because we don't want to
+      // suggest all nodes) or if it is an attribute selector (because
+      // it would give a lot of useless results).
       this.hidePopup();
       return;
     }
 
     if (state === this.States.TAG) {
-      // gets the tag that is being completed. For ex. 'div.foo > s' returns 's',
-      // 'di' returns 'di' and likewise.
+      // gets the tag that is being completed. For ex. 'div.foo > s' returns
+      // 's', 'di' returns 'di' and likewise.
       firstPart = (query.match(/[\s>+]?([a-zA-Z]*)$/) || ["", query])[1];
       query = query.slice(0, query.length - firstPart.length);
-    }
-    else if (state === this.States.CLASS) {
+    } else if (state === this.States.CLASS) {
       // gets the class that is being completed. For ex. '.foo.b' returns 'b'
       firstPart = query.match(/\.([^\.]*)$/)[1];
       query = query.slice(0, query.length - firstPart.length - 1);
-    }
-    else if (state === this.States.ID) {
+    } else if (state === this.States.ID) {
       // gets the id that is being completed. For ex. '.foo#b' returns 'b'
       firstPart = query.match(/#([^#]*)$/)[1];
       query = query.slice(0, query.length - firstPart.length - 1);
@@ -498,7 +527,9 @@ SelectorAutocompleter.prototype = {
       query += "*";
     }
 
-    this._lastQuery = this.walker.getSuggestionsForQuery(query, firstPart, state).then(result => {
+    let suggestionsPromise = this.walker.getSuggestionsForQuery(
+      query, firstPart, state);
+    this._lastQuery = suggestionsPromise.then(result => {
       this.emit("processing-done");
       if (result.query !== query) {
         // This means that this response is for a previous request and the user
@@ -519,10 +550,9 @@ SelectorAutocompleter.prototype = {
         result.suggestions = [];
       }
 
-
       this._showPopup(result.suggestions, firstPart, state);
     });
 
-    return this._lastQuery;
+    return;
   }
 };

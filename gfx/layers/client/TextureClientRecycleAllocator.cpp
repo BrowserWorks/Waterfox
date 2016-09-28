@@ -93,7 +93,7 @@ TextureClientRecycleAllocator::SetMaxPoolSize(uint32_t aMax)
   mMaxPooledSize = aMax;
 }
 
-class TextureClientRecycleTask : public Task
+class TextureClientRecycleTask : public Runnable
 {
 public:
   explicit TextureClientRecycleTask(TextureClient* aClient, TextureFlags aFlags)
@@ -101,9 +101,10 @@ public:
     , mFlags(aFlags)
   {}
 
-  virtual void Run() override
+  NS_IMETHOD Run() override
   {
     mTextureClient->RecycleTexture(mFlags);
+    return NS_OK;
   }
 
 private:
@@ -146,7 +147,7 @@ TextureClientRecycleAllocator::CreateOrRecycle(ITextureClientAllocationHelper& a
     if (!mPooledClients.empty()) {
       textureHolder = mPooledClients.top();
       mPooledClients.pop();
-      Task* task = nullptr;
+      RefPtr<Runnable> task;
       // If a pooled TextureClient is not compatible, release it.
       if (!aHelper.IsCompatible(textureHolder->GetTextureClient())) {
         // Release TextureClient.
@@ -156,7 +157,7 @@ TextureClientRecycleAllocator::CreateOrRecycle(ITextureClientAllocationHelper& a
       } else {
         task = new TextureClientRecycleTask(textureHolder->GetTextureClient(), aHelper.mTextureFlags);
       }
-      mSurfaceAllocator->GetMessageLoop()->PostTask(FROM_HERE, task);
+      mSurfaceAllocator->GetMessageLoop()->PostTask(task.forget());
     }
   }
 
@@ -204,16 +205,17 @@ TextureClientRecycleAllocator::ShrinkToMinimumSize()
   }
 }
 
-class TextureClientWaitTask : public Task
+class TextureClientWaitTask : public Runnable
 {
 public:
   explicit TextureClientWaitTask(TextureClient* aClient)
     : mTextureClient(aClient)
   {}
 
-  virtual void Run() override
+  NS_IMETHOD Run() override
   {
     mTextureClient->WaitForCompositorRecycle();
+    return NS_OK;
   }
 
 private:
@@ -228,8 +230,8 @@ TextureClientRecycleAllocator::RecycleTextureClient(TextureClient* aClient)
     // This adds another ref to aClient, and drops it after a round trip
     // to the compositor. We should then get this callback a second time
     // and can recycle properly.
-    Task* task = new TextureClientWaitTask(aClient);
-    mSurfaceAllocator->GetMessageLoop()->PostTask(FROM_HERE, task);
+    RefPtr<Runnable> task = new TextureClientWaitTask(aClient);
+    mSurfaceAllocator->GetMessageLoop()->PostTask(task.forget());
     return;
   }
   // Clearing the recycle allocator drops a reference, so make sure we stay alive

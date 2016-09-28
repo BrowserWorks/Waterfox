@@ -68,7 +68,7 @@ private:
   void NuwaFork();
 
   // initialization off the critical path of app startup.
-  CancelableTask* mPreallocateAppProcessTask;
+  CancelableRunnable* mPreallocateAppProcessTask;
 
   // The array containing the preallocated processes. 4 as the inline storage size
   // should be enough so we don't need to grow the AutoTArray.
@@ -205,7 +205,6 @@ PreallocatedProcessManagerImpl::AllocateAfterDelay()
   }
 
   MessageLoop::current()->PostDelayedTask(
-    FROM_HERE,
     NewRunnableMethod(this, &PreallocatedProcessManagerImpl::AllocateOnIdle),
     Preferences::GetUint("dom.ipc.processPrelaunch.delayMs",
                          DEFAULT_ALLOCATE_DELAY));
@@ -218,9 +217,7 @@ PreallocatedProcessManagerImpl::AllocateOnIdle()
     return;
   }
 
-  MessageLoop::current()->PostIdleTask(
-    FROM_HERE,
-    NewRunnableMethod(this, &PreallocatedProcessManagerImpl::AllocateNow));
+  MessageLoop::current()->PostIdleTask(NewRunnableMethod(this, &PreallocatedProcessManagerImpl::AllocateNow));
 }
 
 void
@@ -245,10 +242,10 @@ PreallocatedProcessManagerImpl::ScheduleDelayedNuwaFork()
     return;
   }
 
-  mPreallocateAppProcessTask = NewRunnableMethod(
+  RefPtr<CancelableRunnable> task = NewCancelableRunnableMethod(
     this, &PreallocatedProcessManagerImpl::DelayedNuwaFork);
-  MessageLoop::current()->PostDelayedTask(
-    FROM_HERE, mPreallocateAppProcessTask,
+  mPreallocateAppProcessTask = task;
+  MessageLoop::current()->PostDelayedTask(task.forget(),
     Preferences::GetUint("dom.ipc.processPrelaunch.delayMs",
                          DEFAULT_ALLOCATE_DELAY));
 }

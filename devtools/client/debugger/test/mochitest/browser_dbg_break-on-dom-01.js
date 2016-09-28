@@ -16,13 +16,17 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed(
 const TAB_URL = EXAMPLE_URL + "doc_event-listeners-02.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     let gPanel = aPanel;
     let gDebugger = aPanel.panelWin;
     let gView = gDebugger.DebuggerView;
     let gEvents = gView.EventListeners;
     let gController = gDebugger.DebuggerController;
-    let constants = gDebugger.require('./content/constants');
+    let constants = gDebugger.require("./content/constants");
 
     gDebugger.on(gDebugger.EVENTS.EVENT_LISTENERS_FETCHED, () => {
       ok(false, "Shouldn't have fetched any event listeners.");
@@ -38,8 +42,7 @@ function test() {
     is(gView.instrumentsPaneTab, "variables-tab",
       "The variables tab should be selected by default.");
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(aPanel, ".html");
+    Task.spawn(function* () {
       is(gEvents.itemCount, 0, "There should be no events before reloading.");
 
       let reloaded = waitForNavigation(gPanel);

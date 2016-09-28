@@ -83,7 +83,7 @@ ContentAreaDropListener.prototype =
 
     // Use file:/// as the default uri so that drops of file URIs are always allowed
     let principal = sourceNode ? sourceNode.nodePrincipal
-                               : secMan.getSimpleCodebasePrincipal(ioService.newURI("file:///", null, null));
+                               : secMan.createCodebasePrincipal(ioService.newURI("file:///", null, null), {});
 
     secMan.checkLoadURIStrWithPrincipal(principal, uriString, flags);
 
@@ -120,6 +120,8 @@ ContentAreaDropListener.prototype =
     // also check for nodes in other child or sibling frames by checking
     // if both have the same top window.
     if (sourceDocument && eventDocument) {
+      if (sourceDocument.defaultView == null)
+        return true;
       let sourceRoot = sourceDocument.defaultView.top;
       if (sourceRoot && sourceRoot == eventDocument.defaultView.top)
         return false;

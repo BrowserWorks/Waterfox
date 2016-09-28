@@ -5,17 +5,17 @@
 "use strict";
 
 const { Cc, Ci, Cu, components } = require("chrome");
-const protocol = require("devtools/server/protocol");
+const protocol = require("devtools/shared/protocol");
 const { method, RetVal, Arg, types } = protocol;
 const { Memory } = require("devtools/server/performance/memory");
 const { actorBridge } = require("devtools/server/actors/common");
+const { Task } = require("devtools/shared/task");
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "StackFrameCache",
                          "devtools/server/actors/utils/stack", true);
 loader.lazyRequireGetter(this, "FileUtils",
                          "resource://gre/modules/FileUtils.jsm", true);
 loader.lazyRequireGetter(this, "NetUtil", "resource://gre/modules/NetUtil.jsm", true);
-loader.lazyRequireGetter(this, "Task", "resource://gre/modules/Task.jsm", true);
 loader.lazyRequireGetter(this, "HeapSnapshotFileUtils",
                          "devtools/shared/heapsnapshot/HeapSnapshotFileUtils");
 loader.lazyRequireGetter(this, "ThreadSafeChromeUtils");
@@ -68,7 +68,7 @@ var MemoryActor = exports.MemoryActor = protocol.ActorClass({
     },
   },
 
-  initialize: function(conn, parent, frameCache = new StackFrameCache()) {
+  initialize: function (conn, parent, frameCache = new StackFrameCache()) {
     protocol.Actor.prototype.initialize.call(this, conn);
 
     this._onGarbageCollection = this._onGarbageCollection.bind(this);
@@ -78,7 +78,7 @@ var MemoryActor = exports.MemoryActor = protocol.ActorClass({
     this.bridge.on("allocations", this._onAllocations);
   },
 
-  destroy: function() {
+  destroy: function () {
     this.bridge.off("garbage-collection", this._onGarbageCollection);
     this.bridge.off("allocations", this._onAllocations);
     this.bridge.destroy();
@@ -185,7 +185,7 @@ var MemoryActor = exports.MemoryActor = protocol.ActorClass({
 });
 
 exports.MemoryFront = protocol.FrontClass(MemoryActor, {
-  initialize: function(client, form, rootForm = null) {
+  initialize: function (client, form, rootForm = null) {
     protocol.Front.prototype.initialize.call(this, client, form);
     this._client = client;
     this.actorID = form.memoryActor;

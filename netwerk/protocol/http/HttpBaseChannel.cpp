@@ -52,8 +52,8 @@
 #include "nsIURL.h"
 #include "nsIConsoleService.h"
 #include "mozilla/BinarySearch.h"
-#include "nsIXULRuntime.h"
 #include "nsIHttpHeaderVisitor.h"
+#include "nsIXULRuntime.h"
 
 #include <algorithm>
 
@@ -125,7 +125,7 @@ HttpBaseChannel::HttpBaseChannel()
 #endif
   mSelfAddr.raw.family = PR_AF_UNSPEC;
   mPeerAddr.raw.family = PR_AF_UNSPEC;
-  mSchedulingContextID.Clear();
+  mRequestContextID.Clear();
 }
 
 HttpBaseChannel::~HttpBaseChannel()
@@ -143,7 +143,8 @@ HttpBaseChannel::Init(nsIURI *aURI,
                       uint32_t aCaps,
                       nsProxyInfo *aProxyInfo,
                       uint32_t aProxyResolveFlags,
-                      nsIURI *aProxyURI)
+                      nsIURI *aProxyURI,
+                      const nsID& aChannelId)
 {
   LOG(("HttpBaseChannel::Init [this=%p]\n", this));
 
@@ -155,6 +156,7 @@ HttpBaseChannel::Init(nsIURI *aURI,
   mCaps = aCaps;
   mProxyResolveFlags = aProxyResolveFlags;
   mProxyURI = aProxyURI;
+  mChannelId = aChannelId;
 
   // Construct connection info object
   nsAutoCString host;
@@ -439,8 +441,8 @@ HttpBaseChannel::GetContentType(nsACString& aContentType)
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  if (!mResponseHead->ContentType().IsEmpty()) {
-    aContentType = mResponseHead->ContentType();
+  mResponseHead->ContentType(aContentType);
+  if (!aContentType.IsEmpty()) {
     return NS_OK;
   }
 
@@ -481,7 +483,7 @@ HttpBaseChannel::GetContentCharset(nsACString& aContentCharset)
   if (!mResponseHead)
     return NS_ERROR_NOT_AVAILABLE;
 
-  aContentCharset = mResponseHead->ContentCharset();
+  mResponseHead->ContentCharset(aContentCharset);
   return NS_OK;
 }
 
@@ -667,7 +669,7 @@ void
 CopyComplete(void* aClosure, nsresult aStatus) {
   // Called on the STS thread by NS_AsyncCopy
   auto channel = static_cast<HttpBaseChannel*>(aClosure);
-  nsCOMPtr<nsIRunnable> runnable = NS_NewRunnableMethodWithArg<nsresult>(
+  nsCOMPtr<nsIRunnable> runnable = NewRunnableMethod<nsresult>(
     channel, &HttpBaseChannel::EnsureUploadStreamIsCloneableComplete, aStatus);
   NS_DispatchToMainThread(runnable.forget());
 }
@@ -998,12 +1000,14 @@ HttpBaseChannel::GetContentEncodings(nsIUTF8StringEnumerator** aEncodings)
     return NS_OK;
   }
 
-  const char *encoding = mResponseHead->PeekHeader(nsHttp::Content_Encoding);
-  if (!encoding) {
+  nsAutoCString encoding;
+  mResponseHead->GetHeader(nsHttp::Content_Encoding, encoding);
+  if (encoding.IsEmpty()) {
     *aEncodings = nullptr;
     return NS_OK;
   }
-  nsContentEncodings* enumerator = new nsContentEncodings(this, encoding);
+  nsContentEncodings* enumerator = new nsContentEncodings(this,
+                                                          encoding.get());
   NS_ADDREF(*aEncodings = enumerator);
   return NS_OK;
 }
@@ -1154,6 +1158,28 @@ HttpBaseChannel::nsContentEncodings::PrepareForNext(void)
 //-----------------------------------------------------------------------------
 // HttpBaseChannel::nsIHttpChannel
 //-----------------------------------------------------------------------------
+
+NS_IMETHODIMP
+HttpBaseChannel::GetChannelId(nsACString& aChannelId)
+{
+  char id[NSID_LENGTH];
+  mChannelId.ToProvidedString(id);
+  aChannelId.AssignASCII(id);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetChannelId(const nsACString& aChannelId)
+{
+  nsID newId;
+  nsAutoCString idStr(aChannelId);
+  if (newId.Parse(idStr.get())) {
+    mChannelId = newId;
+    return NS_OK;
+  }
+
+  return NS_ERROR_FAILURE;
+}
 
 NS_IMETHODIMP
 HttpBaseChannel::GetTransferSize(uint64_t *aTransferSize)
@@ -1409,7 +1435,7 @@ HttpBaseChannel::SetReferrerWithPolicy(nsIURI *referrer,
     rv = ssm->CheckSameOriginURI(triggeringURI, mURI, false);
     isCrossOrigin = NS_FAILED(rv);
   } else {
-    NS_WARNING("no triggering principal available via loadInfo, assuming load is cross-origin");
+    LOG(("no triggering principal available via loadInfo, assuming load is cross-origin"));
   }
 
   nsCOMPtr<nsIURI> clone;
@@ -1666,9 +1692,38 @@ HttpBaseChannel::SetResponseHeader(const nsACString& header,
 NS_IMETHODIMP
 HttpBaseChannel::VisitResponseHeaders(nsIHttpHeaderVisitor *visitor)
 {
-  if (!mResponseHead)
+  if (!mResponseHead) {
     return NS_ERROR_NOT_AVAILABLE;
-  return mResponseHead->Headers().VisitHeaders(visitor);
+  }
+  return mResponseHead->VisitHeaders(visitor,
+    nsHttpHeaderArray::eFilterResponse);
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetOriginalResponseHeader(const nsACString& aHeader,
+                                           nsIHttpHeaderVisitor *aVisitor)
+{
+  if (!mResponseHead) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  nsHttpAtom atom = nsHttp::ResolveAtom(aHeader);
+  if (!atom) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return mResponseHead->GetOriginalHeader(atom, aVisitor);
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::VisitOriginalResponseHeaders(nsIHttpHeaderVisitor *aVisitor)
+{
+  if (!mResponseHead) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
+
+  return mResponseHead->VisitHeaders(aVisitor,
+      nsHttpHeaderArray::eFilterResponseOriginal);
 }
 
 NS_IMETHODIMP
@@ -1791,7 +1846,7 @@ HttpBaseChannel::GetResponseStatusText(nsACString& aValue)
 {
   if (!mResponseHead)
     return NS_ERROR_NOT_AVAILABLE;
-  aValue = mResponseHead->StatusText();
+  mResponseHead->StatusText(aValue);
   return NS_OK;
 }
 
@@ -1819,17 +1874,17 @@ HttpBaseChannel::RedirectTo(nsIURI *targetURI)
 }
 
 NS_IMETHODIMP
-HttpBaseChannel::GetSchedulingContextID(nsID *aSCID)
+HttpBaseChannel::GetRequestContextID(nsID *aRCID)
 {
-  NS_ENSURE_ARG_POINTER(aSCID);
-  *aSCID = mSchedulingContextID;
+  NS_ENSURE_ARG_POINTER(aRCID);
+  *aRCID = mRequestContextID;
   return NS_OK;
 }
 
 NS_IMETHODIMP
-HttpBaseChannel::SetSchedulingContextID(const nsID aSCID)
+HttpBaseChannel::SetRequestContextID(const nsID aRCID)
 {
-  mSchedulingContextID = aSCID;
+  mRequestContextID = aRCID;
   return NS_OK;
 }
 
@@ -1889,15 +1944,16 @@ HttpBaseChannel::GetTopWindowURI(nsIURI **aTopWindowURI)
       return NS_ERROR_NOT_AVAILABLE;
     }
     nsCOMPtr<mozIDOMWindowProxy> win;
-    nsresult rv = util->GetTopWindowForChannel(this, getter_AddRefs(win));
+    rv = util->GetTopWindowForChannel(this, getter_AddRefs(win));
     if (NS_SUCCEEDED(rv)) {
       rv = util->GetURIFromWindow(win, getter_AddRefs(mTopWindowURI));
 #if DEBUG
       if (mTopWindowURI) {
         nsCString spec;
-        rv = mTopWindowURI->GetSpec(spec);
-        LOG(("HttpChannelBase::Setting topwindow URI spec %s [this=%p]\n",
-             spec.get(), this));
+        if (NS_SUCCEEDED(mTopWindowURI->GetSpec(spec))) {
+          LOG(("HttpChannelBase::Setting topwindow URI spec %s [this=%p]\n",
+               spec.get(), this));
+        }
       }
 #endif
     }
@@ -1954,7 +2010,7 @@ HttpBaseChannel::GetResponseVersion(uint32_t *major, uint32_t *minor)
 
 namespace {
 
-class CookieNotifierRunnable : public nsRunnable
+class CookieNotifierRunnable : public Runnable
 {
 public:
   CookieNotifierRunnable(HttpBaseChannel* aChannel, char const * aCookie)
@@ -1994,9 +2050,11 @@ HttpBaseChannel::SetCookie(const char *aCookieHeader)
   nsICookieService *cs = gHttpHandler->GetCookieService();
   NS_ENSURE_TRUE(cs, NS_ERROR_FAILURE);
 
+  nsAutoCString date;
+  mResponseHead->GetHeader(nsHttp::Date, date);
   nsresult rv =
     cs->SetCookieStringFromHttp(mURI, nullptr, nullptr, aCookieHeader,
-                                mResponseHead->PeekHeader(nsHttp::Date), this);
+                                date.get(), this);
   if (NS_SUCCEEDED(rv)) {
     RefPtr<CookieNotifierRunnable> r =
       new CookieNotifierRunnable(this, aCookieHeader);
@@ -2439,20 +2497,16 @@ HttpBaseChannel::GetEntityID(nsACString& aEntityID)
     // Accept-Ranges: none
     // Not sending the Accept-Ranges header means we can still try
     // sending range requests.
-    const char* acceptRanges =
-        mResponseHead->PeekHeader(nsHttp::Accept_Ranges);
-    if (acceptRanges &&
-        !nsHttp::FindToken(acceptRanges, "bytes", HTTP_HEADER_VALUE_SEPS)) {
+    nsAutoCString acceptRanges;
+    mResponseHead->GetHeader(nsHttp::Accept_Ranges, acceptRanges);
+    if (!acceptRanges.IsEmpty() &&
+        !nsHttp::FindToken(acceptRanges.get(), "bytes", HTTP_HEADER_VALUE_SEPS)) {
       return NS_ERROR_NOT_RESUMABLE;
     }
 
     size = mResponseHead->TotalEntitySize();
-    const char* cLastMod = mResponseHead->PeekHeader(nsHttp::Last_Modified);
-    if (cLastMod)
-      lastmod = cLastMod;
-    const char* cEtag = mResponseHead->PeekHeader(nsHttp::ETag);
-    if (cEtag)
-      etag = cEtag;
+    mResponseHead->GetHeader(nsHttp::Last_Modified, lastmod);
+    mResponseHead->GetHeader(nsHttp::ETag, etag);
   }
   nsCString entityID;
   NS_EscapeURL(etag.BeginReading(), etag.Length(), esc_AlwaysCopy |
@@ -2552,41 +2606,6 @@ HttpBaseChannel::ShouldIntercept(nsIURI* aURI)
     }
   }
   return shouldIntercept;
-}
-
-void
-HttpBaseChannel::SetLoadGroupUserAgentOverride()
-{
-  nsCOMPtr<nsIURI> uri;
-  GetURI(getter_AddRefs(uri));
-  nsAutoCString uriScheme;
-  if (uri) {
-    uri->GetScheme(uriScheme);
-  }
-  nsCOMPtr<nsILoadGroupChild> childLoadGroup = do_QueryInterface(mLoadGroup);
-  nsCOMPtr<nsILoadGroup> rootLoadGroup;
-  if (childLoadGroup) {
-    childLoadGroup->GetRootLoadGroup(getter_AddRefs(rootLoadGroup));
-  }
-  if (rootLoadGroup && !uriScheme.EqualsLiteral("file")) {
-    nsAutoCString ua;
-    if (nsContentUtils::IsNonSubresourceRequest(this)) {
-      gHttpHandler->OnUserAgentRequest(this);
-      GetRequestHeader(NS_LITERAL_CSTRING("User-Agent"), ua);
-      rootLoadGroup->SetUserAgentOverrideCache(ua);
-    } else {
-      GetRequestHeader(NS_LITERAL_CSTRING("User-Agent"), ua);
-      // Don't overwrite the UA if it is already set (eg by an XHR with explicit UA).
-      if (ua.IsEmpty()) {
-        rootLoadGroup->GetUserAgentOverrideCache(ua);
-        SetRequestHeader(NS_LITERAL_CSTRING("User-Agent"), ua, false);
-      }
-    }
-  } else {
-    // If the root loadgroup doesn't exist or if the channel's URI's scheme is "file",
-    // fall back on getting the UA override per channel.
-    gHttpHandler->OnUserAgentRequest(this);
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -2941,8 +2960,8 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
     }
   }
 
-  // share the scheduling context - see bug 1236650
-  httpChannel->SetSchedulingContextID(mSchedulingContextID);
+  // share the request context - see bug 1236650
+  httpChannel->SetRequestContextID(mRequestContextID);
 
   if (httpInternal) {
     // Convey third party cookie and spdy flags.
@@ -3399,12 +3418,12 @@ HttpBaseChannel::GetInnerDOMWindow()
 //------------------------------------------------------------------------------
 
 bool
-HttpBaseChannel::EnsureSchedulingContextID()
+HttpBaseChannel::EnsureRequestContextID()
 {
     nsID nullID;
     nullID.Clear();
-    if (!mSchedulingContextID.Equals(nullID)) {
-        // Already have a scheduling context ID, no need to do the rest of this work
+    if (!mRequestContextID.Equals(nullID)) {
+        // Already have a request context ID, no need to do the rest of this work
         return true;
     }
 
@@ -3423,7 +3442,7 @@ HttpBaseChannel::EnsureSchedulingContextID()
     }
 
     // Set the load group connection scope on the transaction
-    rootLoadGroup->GetSchedulingContextID(&mSchedulingContextID);
+    rootLoadGroup->GetRequestContextID(&mRequestContextID);
     return true;
 }
 

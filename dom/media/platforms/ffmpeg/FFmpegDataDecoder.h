@@ -24,7 +24,7 @@ template <>
 class FFmpegDataDecoder<LIBAV_VER> : public MediaDataDecoder
 {
 public:
-  FFmpegDataDecoder(FFmpegLibWrapper* aLib, FlushableTaskQueue* aTaskQueue,
+  FFmpegDataDecoder(FFmpegLibWrapper* aLib, TaskQueue* aTaskQueue,
                     MediaDataDecoderCallback* aCallback,
                     AVCodecID aCodecID);
   virtual ~FFmpegDataDecoder();
@@ -32,7 +32,7 @@ public:
   static bool Link();
 
   RefPtr<InitPromise> Init() override = 0;
-  nsresult Input(MediaRawData* aSample) override = 0;
+  nsresult Input(MediaRawData* aSample) override;
   nsresult Flush() override;
   nsresult Drain() override;
   nsresult Shutdown() override;
@@ -40,16 +40,21 @@ public:
   static AVCodec* FindAVCodec(FFmpegLibWrapper* aLib, AVCodecID aCodec);
 
 protected:
+  enum DecodeResult {
+    DECODE_FRAME,
+    DECODE_NO_FRAME,
+    DECODE_ERROR,
+    FATAL_ERROR
+  };
+
   // Flush and Drain operation, always run
   virtual void ProcessFlush();
-  virtual void ProcessDrain() = 0;
   virtual void ProcessShutdown();
   virtual void InitCodecContext() {}
   AVFrame*        PrepareFrame();
   nsresult        InitDecoder();
 
   FFmpegLibWrapper* mLib;
-  RefPtr<FlushableTaskQueue> mTaskQueue;
   MediaDataDecoderCallback* mCallback;
 
   AVCodecContext* mCodecContext;
@@ -58,7 +63,15 @@ protected:
   AVCodecID mCodecID;
 
 private:
+  void ProcessDecode(MediaRawData* aSample);
+  virtual DecodeResult DoDecode(MediaRawData* aSample) = 0;
+  virtual void ProcessDrain() = 0;
+
   static StaticMutex sMonitor;
+  const RefPtr<TaskQueue> mTaskQueue;
+  // Set/cleared on reader thread calling Flush() to indicate that output is
+  // not required and so input samples on mTaskQueue need not be processed.
+  Atomic<bool> mIsFlushing;
 };
 
 } // namespace mozilla

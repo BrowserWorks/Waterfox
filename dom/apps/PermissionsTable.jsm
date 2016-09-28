@@ -452,11 +452,6 @@ this.PermissionsTable =  { geolocation: {
                              access: ["read", "write"],
                              additional: ["settings-api"]
                            },
-                           "engineering-mode": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
                            "tv": {
                              app: DENY_ACTION,
                              privileged: DENY_ACTION,
@@ -468,11 +463,6 @@ this.PermissionsTable =  { geolocation: {
                              certified: ALLOW_ACTION
                            },
                            "presentation-device-manage": {
-                             app: DENY_ACTION,
-                             privileged: DENY_ACTION,
-                             certified: ALLOW_ACTION
-                           },
-                           "requestsync-manager": {
                              app: DENY_ACTION,
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION

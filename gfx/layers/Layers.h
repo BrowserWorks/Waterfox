@@ -505,7 +505,7 @@ public:
   /**
    * This can be used anytime. Ownership passes to the caller!
    */
-  nsAutoPtr<LayerUserData> RemoveUserData(void* aKey);
+  UniquePtr<LayerUserData> RemoveUserData(void* aKey);
 
   /**
    * This getter can be used anytime.
@@ -867,7 +867,9 @@ public:
    */
   virtual void SetVisibleRegion(const LayerIntRegion& aRegion)
   {
-    if (!mVisibleRegion.IsEqual(aRegion)) {
+    // IsEmpty is required otherwise we get invalidation glitches.
+    // See bug 1288464 for investigating why.
+    if (!mVisibleRegion.IsEqual(aRegion) || aRegion.IsEmpty()) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) VisibleRegion was %s is %s", this,
         mVisibleRegion.ToString().get(), aRegion.ToString().get()));
       mVisibleRegion = aRegion;
@@ -1037,6 +1039,26 @@ public:
 
   /**
    * CONSTRUCTION PHASE ONLY
+   * Set an optional scrolled clip on the layer.
+   * The scrolled clip, if present, consists of a clip rect and an optional mask.
+   * This scrolled clip is always scrolled by all scroll frames associated with
+   * this layer. (By contrast, the scroll clips stored in ScrollMetadata are
+   * only scrolled by scroll frames above that ScrollMetadata, and the layer's
+   * mClipRect is always fixed to the layer contents (which may or may not be
+   * scrolled by some of the scroll frames associated with the layer, depending
+   * on whether the layer is fixed).)
+   */
+  void SetScrolledClip(const Maybe<LayerClip>& aScrolledClip)
+  {
+    if (mScrolledClip != aScrolledClip) {
+      MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) ScrolledClip", this));
+      mScrolledClip = aScrolledClip;
+      Mutated();
+    }
+  }
+
+  /**
+   * CONSTRUCTION PHASE ONLY
    * Set a layer to mask this layer.
    *
    * The mask layer should be applied using its effective transform (after it
@@ -1068,7 +1090,7 @@ public:
 
   /**
    * CONSTRUCTION PHASE ONLY
-   * Add a FrameMetrics-associated mask layer.
+   * Add mask layers associated with LayerClips.
    */
   void SetAncestorMaskLayers(const nsTArray<RefPtr<Layer>>& aLayers) {
     if (aLayers != mAncestorMaskLayers) {
@@ -1076,6 +1098,15 @@ public:
       mAncestorMaskLayers = aLayers;
       Mutated();
     }
+  }
+
+  /**
+   * CONSTRUCTION PHASE ONLY
+   * Add a mask layer associated with a LayerClip.
+   */
+  void AddAncestorMaskLayer(const RefPtr<Layer>& aLayer) {
+    mAncestorMaskLayers.AppendElement(aLayer);
+    Mutated();
   }
 
   /**
@@ -1189,22 +1220,15 @@ public:
    *     This is used if the viewport size is changed in the compositor and
    *     fixed position items need to shift accordingly. This value is made up
    *     combining appropriate values from mozilla::SideBits.
-   *
-   *   - |aIsClipFixed| is true if this layer's clip rect and mask layer
-   *     should also remain fixed during async scrolling/animations.
-   *     This is the case for fixed position layers, but not for
-   *     fixed background layers.
    */
   void SetFixedPositionData(FrameMetrics::ViewID aScrollId,
                             const LayerPoint& aAnchor,
-                            int32_t aSides,
-                            bool aIsClipFixed)
+                            int32_t aSides)
   {
     if (!mFixedPositionData ||
         mFixedPositionData->mScrollId != aScrollId ||
         mFixedPositionData->mAnchor != aAnchor ||
-        mFixedPositionData->mSides != aSides ||
-        mFixedPositionData->mIsClipFixed != aIsClipFixed) {
+        mFixedPositionData->mSides != aSides) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) FixedPositionData", this));
       if (!mFixedPositionData) {
         mFixedPositionData = MakeUnique<FixedPositionData>();
@@ -1212,7 +1236,6 @@ public:
       mFixedPositionData->mScrollId = aScrollId;
       mFixedPositionData->mAnchor = aAnchor;
       mFixedPositionData->mSides = aSides;
-      mFixedPositionData->mIsClipFixed = aIsClipFixed;
       Mutated();
     }
   }
@@ -1281,6 +1304,8 @@ public:
   float GetOpacity() { return mOpacity; }
   gfx::CompositionOp GetMixBlendMode() const { return mMixBlendMode; }
   const Maybe<ParentLayerIntRect>& GetClipRect() const { return mClipRect; }
+  const Maybe<LayerClip>& GetScrolledClip() const { return mScrolledClip; }
+  Maybe<ParentLayerIntRect> GetScrolledClipRect() const;
   uint32_t GetContentFlags() { return mContentFlags; }
   const gfx::IntRect& GetLayerBounds() const { return mLayerBounds; }
   const LayerIntRegion& GetVisibleRegion() const { return mVisibleRegion; }
@@ -1298,7 +1323,7 @@ public:
   const Layer* GetPrevSibling() const { return mPrevSibling; }
   virtual Layer* GetFirstChild() const { return nullptr; }
   virtual Layer* GetLastChild() const { return nullptr; }
-  const gfx::Matrix4x4 GetTransform() const;
+  gfx::Matrix4x4 GetTransform() const;
   // Same as GetTransform(), but returns the transform as a strongly-typed
   // matrix. Eventually this will replace GetTransform().
   const CSSTransformMatrix GetTransformTyped() const;
@@ -1312,7 +1337,6 @@ public:
   FrameMetrics::ViewID GetFixedPositionScrollContainerId() { return mFixedPositionData ? mFixedPositionData->mScrollId : FrameMetrics::NULL_SCROLL_ID; }
   LayerPoint GetFixedPositionAnchor() { return mFixedPositionData ? mFixedPositionData->mAnchor : LayerPoint(); }
   int32_t GetFixedPositionSides() { return mFixedPositionData ? mFixedPositionData->mSides : eSideBitsNone; }
-  bool IsClipFixed() { return mFixedPositionData ? mFixedPositionData->mIsClipFixed : false; }
   FrameMetrics::ViewID GetStickyScrollContainerId() { return mStickyPositionData->mScrollId; }
   const LayerRect& GetStickyScrollRangeOuter() { return mStickyPositionData->mOuter; }
   const LayerRect& GetStickyScrollRangeInner() { return mStickyPositionData->mInner; }
@@ -1329,6 +1353,9 @@ public:
   }
   Layer* GetAncestorMaskLayerAt(size_t aIndex) const {
     return mAncestorMaskLayers.ElementAt(aIndex);
+  }
+  const nsTArray<RefPtr<Layer>>& GetAllAncestorMaskLayers() const {
+    return mAncestorMaskLayers;
   }
 
   bool HasMaskLayers() const {
@@ -1375,7 +1402,7 @@ public:
    * for shadow layers, GetShadowBaseTransform(), in either case with the
    * pre- and post-scales applied.
    */
-  const gfx::Matrix4x4 GetLocalTransform();
+  gfx::Matrix4x4 GetLocalTransform();
 
   /**
    * Same as GetLocalTransform(), but returns a strongly-typed matrix.
@@ -1437,7 +1464,7 @@ public:
   /**
    * This can be used anytime. Ownership passes to the caller!
    */
-  nsAutoPtr<LayerUserData> RemoveUserData(void* aKey);
+  UniquePtr<LayerUserData> RemoveUserData(void* aKey);
   /**
    * This getter can be used anytime.
    */
@@ -1505,7 +1532,7 @@ public:
   // These getters can be used anytime.  They return the effective
   // values that should be used when drawing this layer to screen,
   // accounting for this layer possibly being a shadow.
-  const Maybe<ParentLayerIntRect>& GetEffectiveClipRect();
+  const Maybe<ParentLayerIntRect>& GetLocalClipRect();
   const LayerIntRegion& GetLocalVisibleRegion();
 
   bool Extend3DContext() {
@@ -1676,7 +1703,7 @@ public:
    * Returns the current area of the layer (in layer-space coordinates)
    * marked as needed to be recomposited.
    */
-  const gfx::TiledIntRegion& GetInvalidRegion() { return mInvalidRegion; }
+  const virtual gfx::TiledIntRegion& GetInvalidRegion() { return mInvalidRegion; }
   void AddInvalidRegion(const nsIntRegion& aRegion) {
     mInvalidRegion.Add(aRegion);
   }
@@ -1850,6 +1877,7 @@ protected:
   gfx::CompositionOp mMixBlendMode;
   bool mForceIsolatedGroup;
   Maybe<ParentLayerIntRect> mClipRect;
+  Maybe<LayerClip> mScrolledClip;
   gfx::IntRect mTileSourceRect;
   gfx::TiledIntRegion mInvalidRegion;
   nsTArray<RefPtr<AsyncPanZoomController> > mApzcs;
@@ -1861,7 +1889,6 @@ protected:
     FrameMetrics::ViewID mScrollId;
     LayerPoint mAnchor;
     int32_t mSides;
-    bool mIsClipFixed;
   };
   UniquePtr<FixedPositionData> mFixedPositionData;
   struct StickyPositionData {
@@ -2446,15 +2473,15 @@ public:
    * CONSTRUCTION PHASE ONLY
    * Set the filter used to resample this image (if necessary).
    */
-  void SetFilter(gfx::Filter aFilter)
+  void SetSamplingFilter(gfx::SamplingFilter aSamplingFilter)
   {
-    if (mFilter != aFilter) {
+    if (mSamplingFilter != aSamplingFilter) {
       MOZ_LAYERS_LOG_IF_SHADOWABLE(this, ("Layer::Mutated(%p) Filter", this));
-      mFilter = aFilter;
+      mSamplingFilter = aSamplingFilter;
       Mutated();
     }
   }
-  gfx::Filter GetFilter() const { return mFilter; }
+  gfx::SamplingFilter GetSamplingFilter() const { return mSamplingFilter; }
 
   MOZ_LAYER_DECL_NAME("CanvasLayer", TYPE_CANVAS)
 
@@ -2499,7 +2526,7 @@ protected:
   void* mPreTransCallbackData;
   DidTransactionCallback mPostTransCallback;
   void* mPostTransCallbackData;
-  gfx::Filter mFilter;
+  gfx::SamplingFilter mSamplingFilter;
   RefPtr<AsyncCanvasRenderer> mAsyncRenderer;
 
 private:
@@ -2531,13 +2558,13 @@ class RefLayer : public ContainerLayer {
 
 private:
   virtual bool InsertAfter(Layer* aChild, Layer* aAfter) override
-  { MOZ_CRASH(); return false; }
+  { MOZ_CRASH("GFX: RefLayer"); return false; }
 
   virtual bool RemoveChild(Layer* aChild) override
-  { MOZ_CRASH(); return false; }
+  { MOZ_CRASH("GFX: RefLayer"); return false; }
 
   virtual bool RepositionChild(Layer* aChild, Layer* aAfter) override
-  { MOZ_CRASH(); return false; }
+  { MOZ_CRASH("GFX: RefLayer"); return false; }
 
 public:
   /**

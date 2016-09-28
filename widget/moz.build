@@ -87,14 +87,13 @@ XPIDL_SOURCES += [
 XPIDL_MODULE = 'widget'
 
 EXPORTS += [
-    'ContentHelper.h',
+    'CompositorWidgetProxy.h',
     'GfxDriverInfo.h',
     'GfxInfoBase.h',
     'GfxInfoCollector.h',
     'InputData.h',
     'nsBaseScreen.h',
     'nsBaseWidget.h',
-    'nsDeviceContextSpecProxy.h',
     'nsIDeviceContextSpec.h',
     'nsIKeyEventInPluginCallback.h',
     'nsIPluginWidget.h',
@@ -135,28 +134,25 @@ EXPORTS.mozilla.widget += [
 ]
 
 UNIFIED_SOURCES += [
+    'CompositorWidgetProxy.cpp',
     'ContentCache.cpp',
-    'ContentHelper.cpp',
     'GfxDriverInfo.cpp',
     'GfxInfoBase.cpp',
     'GfxInfoCollector.cpp',
     'GfxInfoWebGL.cpp',
     'InputData.cpp',
     'nsBaseAppShell.cpp',
-    'nsBaseDragService.cpp',
     'nsBaseScreen.cpp',
     'nsClipboardHelper.cpp',
     'nsClipboardProxy.cpp',
     'nsColorPickerProxy.cpp',
     'nsContentProcessWidgetFactory.cpp',
-    'nsDeviceContextSpecProxy.cpp',
     'nsDragServiceProxy.cpp',
     'nsFilePickerProxy.cpp',
     'nsHTMLFormatConverter.cpp',
     'nsIdleService.cpp',
     'nsIWidgetListener.cpp',
     'nsPrimitiveHelpers.cpp',
-    'nsPrintSession.cpp',
     'nsPrintSettingsImpl.cpp',
     'nsScreenManagerProxy.cpp',
     'nsTransferable.cpp',
@@ -174,15 +170,20 @@ UNIFIED_SOURCES += [
 
 if CONFIG['MOZ_XUL'] and CONFIG['NS_PRINTING']:
     EXPORTS += [
+        'nsDeviceContextSpecProxy.h',
         'nsPrintOptionsImpl.h',
     ]
     UNIFIED_SOURCES += [
+        'nsDeviceContextSpecProxy.cpp',
         'nsPrintOptionsImpl.cpp',
+        'nsPrintSession.cpp',
     ]
 
 # nsBaseWidget.cpp needs to be built separately because of name clashes in the OS X headers
+# nsBaseDragService.cpp moved out of UNIFIED to fix xgill crash (bug 1259850) after moving widget/ContentHelper -> apz/util/TouchActionHelper
 SOURCES += [
-    'nsBaseWidget.cpp',
+    'nsBaseDragService.cpp',
+    'nsBaseWidget.cpp'
 ]
 
 if CONFIG['MOZ_INSTRUMENT_EVENT_LOOP']:
@@ -251,3 +252,6 @@ if CONFIG['MOZ_ENABLE_D3D10_LAYER']:
     DEFINES['MOZ_ENABLE_D3D10_LAYER'] = True
 
 CXXFLAGS += CONFIG['TK_CFLAGS']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

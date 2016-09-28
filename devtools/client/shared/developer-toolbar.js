@@ -12,13 +12,11 @@ const Telemetry = require("devtools/client/shared/telemetry");
 
 const NS_XHTML = "http://www.w3.org/1999/xhtml";
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-const Node = Ci.nsIDOMNode;
 
-loader.lazyImporter(this, "console", "resource://gre/modules/Console.jsm");
 loader.lazyImporter(this, "PluralForm", "resource://gre/modules/PluralForm.jsm");
 loader.lazyImporter(this, "EventEmitter", "resource://devtools/shared/event-emitter.js");
 
-loader.lazyGetter(this, "prefBranch", function() {
+loader.lazyGetter(this, "prefBranch", function () {
   return Services.prefs.getBranch(null)
                     .QueryInterface(Ci.nsIPrefBranch2);
 });
@@ -29,7 +27,9 @@ loader.lazyGetter(this, "toolboxStrings", function () {
 loader.lazyRequireGetter(this, "gcliInit", "devtools/shared/gcli/commands/index");
 loader.lazyRequireGetter(this, "util", "gcli/util/util");
 loader.lazyRequireGetter(this, "ConsoleServiceListener", "devtools/shared/webconsole/utils", true);
+loader.lazyRequireGetter(this, "gDevTools", "devtools/client/framework/devtools", true);
 loader.lazyRequireGetter(this, "gDevToolsBrowser", "devtools/client/framework/devtools-browser", true);
+loader.lazyRequireGetter(this, "nodeConstants", "devtools/shared/dom-node-constants", true);
 
 /**
  * A collection of utilities to help working with commands
@@ -38,7 +38,7 @@ var CommandUtils = {
   /**
    * Utility to ensure that things are loaded in the correct order
    */
-  createRequisition: function(target, options) {
+  createRequisition: function (target, options) {
     if (!gcliInit) {
       return promise.reject("Unable to load gcli");
     }
@@ -51,7 +51,7 @@ var CommandUtils = {
   /**
    * Destroy the remote side of the requisition as well as the local side
    */
-  destroyRequisition: function(requisition, target) {
+  destroyRequisition: function (requisition, target) {
     requisition.destroy();
     gcliInit.releaseSystem(target);
   },
@@ -60,7 +60,7 @@ var CommandUtils = {
    * Read a toolbarSpec from preferences
    * @param pref The name of the preference to read
    */
-  getCommandbarSpec: function(pref) {
+  getCommandbarSpec: function (pref) {
     let value = prefBranch.getComplexValue(pref, Ci.nsISupportsString).data;
     return JSON.parse(value);
   },
@@ -72,11 +72,11 @@ var CommandUtils = {
    * buttons that are of type checkbox. this means that we don't properly
    * unregister event handlers until the window is destroyed.
    */
-  createButtons: function(toolbarSpec, target, document, requisition) {
+  createButtons: function (toolbarSpec, target, document, requisition) {
     return util.promiseEach(toolbarSpec, typed => {
       // Ask GCLI to parse the typed string (doesn't execute it)
       return requisition.update(typed).then(() => {
-        let button = document.createElement("toolbarbutton");
+        let button = document.createElementNS(NS_XHTML, "button");
 
         // Ignore invalid commands
         let command = requisition.commandAssignment.value;
@@ -93,13 +93,15 @@ var CommandUtils = {
         else {
           button.setAttribute("text-as-image", "true");
           button.setAttribute("label", command.name);
-          button.className = "devtools-toolbarbutton";
         }
+
+        button.classList.add("devtools-button");
+
         if (command.tooltipText != null) {
-          button.setAttribute("tooltiptext", command.tooltipText);
+          button.setAttribute("title", command.tooltipText);
         }
         else if (command.description != null) {
-          button.setAttribute("tooltiptext", command.description);
+          button.setAttribute("title", command.description);
         }
 
         button.addEventListener("click", () => {
@@ -165,7 +167,7 @@ var CommandUtils = {
    * @param targetContainer An object containing a 'target' property which
    * reflects the current debug target
    */
-  createEnvironment: function(container, targetProperty="target") {
+  createEnvironment: function (container, targetProperty = "target") {
     if (!container[targetProperty].toString ||
         !/TabTarget/.test(container[targetProperty].toString())) {
       throw new Error("Missing target");
@@ -211,14 +213,14 @@ exports.CommandUtils = CommandUtils;
  * When bug 780102 is fixed all isLinux checks can be removed and we can revert
  * to using panels.
  */
-loader.lazyGetter(this, "isLinux", function() {
+loader.lazyGetter(this, "isLinux", function () {
   return OS == "Linux";
 });
-loader.lazyGetter(this, "isMac", function() {
+loader.lazyGetter(this, "isMac", function () {
   return OS == "Darwin";
 });
 
-loader.lazyGetter(this, "OS", function() {
+loader.lazyGetter(this, "OS", function () {
   let os = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime).OS;
   return os;
 });
@@ -240,6 +242,9 @@ function DeveloperToolbar(aChromeWindow)
   this._errorsCount = {};
   this._warningsCount = {};
   this._errorListeners = {};
+
+  this._onToolboxReady = this._onToolboxReady.bind(this);
+  this._onToolboxDestroyed = this._onToolboxDestroyed.bind(this);
 
   EventEmitter.decorate(this);
 }
@@ -269,7 +274,7 @@ DeveloperToolbar.prototype.NOTIFICATIONS = NOTIFICATIONS;
  * Is the toolbar open?
  */
 Object.defineProperty(DeveloperToolbar.prototype, "visible", {
-  get: function() {
+  get: function () {
     return this._element && !this._element.hidden;
   },
   enumerable: true
@@ -281,7 +286,7 @@ var _gSequenceId = 0;
  * Getter for a unique ID.
  */
 Object.defineProperty(DeveloperToolbar.prototype, "sequenceId", {
-  get: function() {
+  get: function () {
     return _gSequenceId++;
   },
   enumerable: true
@@ -290,7 +295,7 @@ Object.defineProperty(DeveloperToolbar.prototype, "sequenceId", {
 /**
  * Create the <toolbar> element to insert within browser UI
  */
-DeveloperToolbar.prototype.createToolbar = function() {
+DeveloperToolbar.prototype.createToolbar = function () {
   if (this._element) {
     return;
   }
@@ -356,7 +361,7 @@ DeveloperToolbar.prototype.createToolbar = function() {
  * Called from browser.xul in response to menu-click or keyboard shortcut to
  * toggle the toolbar
  */
-DeveloperToolbar.prototype.toggle = function() {
+DeveloperToolbar.prototype.toggle = function () {
   if (this.visible) {
     return this.hide().catch(console.error);
   } else {
@@ -368,7 +373,7 @@ DeveloperToolbar.prototype.toggle = function() {
  * Called from browser.xul in response to menu-click or keyboard shortcut to
  * toggle the toolbar
  */
-DeveloperToolbar.prototype.focus = function() {
+DeveloperToolbar.prototype.focus = function () {
   if (this.visible) {
     this._input.focus();
     return promise.resolve();
@@ -381,13 +386,13 @@ DeveloperToolbar.prototype.focus = function() {
  * Called from browser.xul in response to menu-click or keyboard shortcut to
  * toggle the toolbar
  */
-DeveloperToolbar.prototype.focusToggle = function() {
+DeveloperToolbar.prototype.focusToggle = function () {
   if (this.visible) {
     // If we have focus then the active element is the HTML input contained
     // inside the xul input element
     let active = this._chromeWindow.document.activeElement;
     let position = this._input.compareDocumentPosition(active);
-    if (position & Node.DOCUMENT_POSITION_CONTAINED_BY) {
+    if (position & nodeConstants.DOCUMENT_POSITION_CONTAINED_BY) {
       this.hide();
     }
     else {
@@ -409,7 +414,7 @@ DeveloperToolbar.introShownThisSession = false;
 /**
  * Show the developer toolbar
  */
-DeveloperToolbar.prototype.show = function(focus) {
+DeveloperToolbar.prototype.show = function (focus) {
   if (this._showPromise != null) {
     return this._showPromise;
   }
@@ -451,10 +456,10 @@ DeveloperToolbar.prototype.show = function(focus) {
         // we fetch it early
         let value = this._input.value || "";
         return this.requisition.update(value).then(() => {
-          const Inputter = require('gcli/mozui/inputter').Inputter;
-          const Completer = require('gcli/mozui/completer').Completer;
-          const Tooltip = require('gcli/mozui/tooltip').Tooltip;
-          const FocusManager = require('gcli/ui/focus').FocusManager;
+          const Inputter = require("gcli/mozui/inputter").Inputter;
+          const Completer = require("gcli/mozui/completer").Completer;
+          const Tooltip = require("gcli/mozui/tooltip").Tooltip;
+          const FocusManager = require("gcli/ui/focus").FocusManager;
 
           this.onOutput = this.requisition.commandOutputManager.onOutput;
 
@@ -496,6 +501,9 @@ DeveloperToolbar.prototype.show = function(focus) {
           tabbrowser.tabContainer.addEventListener("TabClose", this, false);
           tabbrowser.addEventListener("load", this, true);
           tabbrowser.addEventListener("beforeunload", this, true);
+
+          gDevTools.on("toolbox-ready", this._onToolboxReady);
+          gDevTools.on("toolbox-destroyed", this._onToolboxDestroyed);
 
           this._initErrorsCount(tabbrowser.selectedTab);
 
@@ -542,7 +550,7 @@ DeveloperToolbar.prototype.show = function(focus) {
 /**
  * Hide the developer toolbar.
  */
-DeveloperToolbar.prototype.hide = function() {
+DeveloperToolbar.prototype.hide = function () {
   // If we're already in the process of hiding, just use the other promise
   if (this._hidePromise != null) {
     return this._hidePromise;
@@ -576,7 +584,7 @@ DeveloperToolbar.prototype.hide = function() {
  * @param nsIDOMNode tab the xul:tab for which you want to track the number of
  * errors.
  */
-DeveloperToolbar.prototype._initErrorsCount = function(tab) {
+DeveloperToolbar.prototype._initErrorsCount = function (tab) {
   let tabId = tab.linkedPanel;
   if (tabId in this._errorsCount) {
     this._updateErrorsCount();
@@ -607,7 +615,7 @@ DeveloperToolbar.prototype._initErrorsCount = function(tab) {
  * @param nsIDOMNode tab the xul:tab for which you want to stop tracking the
  * number of errors.
  */
-DeveloperToolbar.prototype._stopErrorsCount = function(tab) {
+DeveloperToolbar.prototype._stopErrorsCount = function (tab) {
   let tabId = tab.linkedPanel;
   if (!(tabId in this._errorsCount) || !(tabId in this._warningsCount)) {
     this._updateErrorsCount();
@@ -625,7 +633,7 @@ DeveloperToolbar.prototype._stopErrorsCount = function(tab) {
 /**
  * Hide the developer toolbar
  */
-DeveloperToolbar.prototype.destroy = function() {
+DeveloperToolbar.prototype.destroy = function () {
   if (this._input == null) {
     return; // Already destroyed
   }
@@ -635,6 +643,9 @@ DeveloperToolbar.prototype.destroy = function() {
   tabbrowser.tabContainer.removeEventListener("TabClose", this, false);
   tabbrowser.removeEventListener("load", this, true);
   tabbrowser.removeEventListener("beforeunload", this, true);
+
+  gDevTools.off("toolbox-ready", this._onToolboxReady);
+  gDevTools.off("toolbox-destroyed", this._onToolboxDestroyed);
 
   Array.prototype.forEach.call(tabbrowser.tabs, this._stopErrorsCount, this);
 
@@ -667,7 +678,7 @@ DeveloperToolbar.prototype.destroy = function() {
  * Utility for sending notifications
  * @param topic a NOTIFICATION constant
  */
-DeveloperToolbar.prototype._notify = function(topic) {
+DeveloperToolbar.prototype._notify = function (topic) {
   let data = { toolbar: this };
   data.wrappedJSObject = data;
   Services.obs.notifyObservers(data, topic, null);
@@ -676,7 +687,7 @@ DeveloperToolbar.prototype._notify = function(topic) {
 /**
  * Update various parts of the UI when the current tab changes
  */
-DeveloperToolbar.prototype.handleEvent = function(ev) {
+DeveloperToolbar.prototype.handleEvent = function (ev) {
   if (ev.type == "TabSelect" || ev.type == "load") {
     if (this.visible) {
       let tab = this._chromeWindow.gBrowser.selectedTab;
@@ -711,6 +722,16 @@ DeveloperToolbar.prototype.handleEvent = function(ev) {
 };
 
 /**
+ * Update toolbox toggle button when toolbox goes on and off
+ */
+DeveloperToolbar.prototype._onToolboxReady = function () {
+  this._errorCounterButton.setAttribute("checked", "true");
+};
+DeveloperToolbar.prototype._onToolboxDestroyed = function () {
+  this._errorCounterButton.setAttribute("checked", "false");
+};
+
+/**
  * Count a page error received for the currently selected tab. This
  * method counts the JavaScript exceptions received and CSS errors/warnings.
  *
@@ -719,7 +740,7 @@ DeveloperToolbar.prototype.handleEvent = function(ev) {
  * @param object pageError the page error object received from the
  * PageErrorListener.
  */
-DeveloperToolbar.prototype._onPageError = function(tabId, pageError) {
+DeveloperToolbar.prototype._onPageError = function (tabId, pageError) {
   if (pageError.category == "CSS Parser" ||
       pageError.category == "CSS Loader") {
     return;
@@ -740,14 +761,14 @@ DeveloperToolbar.prototype._onPageError = function(tabId, pageError) {
  * @private
  * @param nsIDOMEvent ev the beforeunload DOM event.
  */
-DeveloperToolbar.prototype._onPageBeforeUnload = function(ev) {
+DeveloperToolbar.prototype._onPageBeforeUnload = function (ev) {
   let window = ev.target.defaultView;
   if (window.top !== window) {
     return;
   }
 
   let tabs = this._chromeWindow.gBrowser.tabs;
-  Array.prototype.some.call(tabs, function(tab) {
+  Array.prototype.some.call(tabs, function (tab) {
     if (tab.linkedBrowser.contentWindow === window) {
       let tabId = tab.linkedPanel;
       if (tabId in this._errorsCount || tabId in this._warningsCount) {
@@ -770,7 +791,7 @@ DeveloperToolbar.prototype._onPageBeforeUnload = function(ev) {
  * count changed. If this is provided and it doesn't match the currently
  * selected tab, then the button is not updated.
  */
-DeveloperToolbar.prototype._updateErrorsCount = function(changedTabId) {
+DeveloperToolbar.prototype._updateErrorsCount = function (changedTabId) {
   let tabId = this._chromeWindow.gBrowser.selectedTab.linkedPanel;
   if (changedTabId && tabId != changedTabId) {
     return;
@@ -808,7 +829,7 @@ DeveloperToolbar.prototype._updateErrorsCount = function(changedTabId) {
  * @param nsIDOMElement tab The xul:tab for which you want to reset the page
  * errors counters.
  */
-DeveloperToolbar.prototype.resetErrorsCount = function(tab) {
+DeveloperToolbar.prototype.resetErrorsCount = function (tab) {
   let tabId = tab.linkedPanel;
   if (tabId in this._errorsCount || tabId in this._warningsCount) {
     this._errorsCount[tabId] = 0;
@@ -840,7 +861,7 @@ function OutputPanel() {
  *
  * @param devtoolbar The parent DeveloperToolbar object
  */
-OutputPanel.create = function(devtoolbar) {
+OutputPanel.create = function (devtoolbar) {
   var outputPanel = Object.create(OutputPanel.prototype);
   return outputPanel._init(devtoolbar);
 };
@@ -848,7 +869,7 @@ OutputPanel.create = function(devtoolbar) {
 /**
  * @private See OutputPanel.create
  */
-OutputPanel.prototype._init = function(devtoolbar) {
+OutputPanel.prototype._init = function (devtoolbar) {
   this._devtoolbar = devtoolbar;
   this._input = this._devtoolbar._input;
   this._toolbar = this._devtoolbar._doc.getElementById("developer-toolbar");
@@ -920,11 +941,11 @@ OutputPanel.prototype._init = function(devtoolbar) {
   this._frame.addEventListener("load", onload, true);
 
   return deferred.promise;
-}
+};
 
 /* Copy the current devtools theme attribute into the iframe,
    so it can be styled correctly. */
-OutputPanel.prototype._copyTheme = function() {
+OutputPanel.prototype._copyTheme = function () {
   if (this.document) {
     let theme =
       this._devtoolbar._doc.documentElement.getAttribute("devtoolstheme");
@@ -935,7 +956,7 @@ OutputPanel.prototype._copyTheme = function() {
 /**
  * Prevent the popup from hiding if it is not permitted via this.canHide.
  */
-OutputPanel.prototype._onpopuphiding = function(ev) {
+OutputPanel.prototype._onpopuphiding = function (ev) {
   // TODO: When we switch back from tooltip to panel we can remove this hack:
   // https://bugzilla.mozilla.org/show_bug.cgi?id=780102
   if (isLinux && !this.canHide) {
@@ -946,7 +967,7 @@ OutputPanel.prototype._onpopuphiding = function(ev) {
 /**
  * Display the OutputPanel.
  */
-OutputPanel.prototype.show = function() {
+OutputPanel.prototype.show = function () {
   if (isLinux) {
     this.canHide = false;
   }
@@ -967,9 +988,9 @@ OutputPanel.prototype.show = function() {
  * Internal helper to set the height of the output panel to fit the available
  * content;
  */
-OutputPanel.prototype._resize = function() {
+OutputPanel.prototype._resize = function () {
   if (this._panel == null || this.document == null || !this._panel.state == "closed") {
-    return
+    return;
   }
 
   // Set max panel width to match any content with a max of the width of the
@@ -980,7 +1001,7 @@ OutputPanel.prototype._resize = function() {
   // We'd like to put this in CSS but we can't:
   //   body { width: calc(min(-5px, max-content)); }
   //   #_panel { max-width: -5px; }
-  switch(OS) {
+  switch (OS) {
     case "Linux":
       maxWidth -= 5;
       break;
@@ -1028,7 +1049,7 @@ OutputPanel.prototype._resize = function() {
 /**
  * Called by GCLI when a command is executed.
  */
-OutputPanel.prototype._outputChanged = function(ev) {
+OutputPanel.prototype._outputChanged = function (ev) {
   if (ev.output.hidden) {
     return;
   }
@@ -1050,7 +1071,7 @@ OutputPanel.prototype._outputChanged = function(ev) {
  * Called when displayed Output says it's changed or from outputChanged, which
  * happens when there is a new displayed Output.
  */
-OutputPanel.prototype._update = function() {
+OutputPanel.prototype._update = function () {
   // destroy has been called, bail out
   if (this._div == null) {
     return;
@@ -1086,7 +1107,7 @@ OutputPanel.prototype._update = function() {
 /**
  * Detach listeners from the currently displayed Output.
  */
-OutputPanel.prototype.remove = function() {
+OutputPanel.prototype.remove = function () {
   if (isLinux) {
     this.canHide = true;
   }
@@ -1103,7 +1124,7 @@ OutputPanel.prototype.remove = function() {
 /**
  * Detach listeners from the currently displayed Output.
  */
-OutputPanel.prototype.destroy = function() {
+OutputPanel.prototype.destroy = function () {
   this.remove();
 
   this._panel.removeEventListener("popuphiding", this._onpopuphiding, true);
@@ -1126,7 +1147,7 @@ OutputPanel.prototype.destroy = function() {
  * Called by GCLI to indicate that we should show or hide one either the
  * tooltip panel or the output panel.
  */
-OutputPanel.prototype._visibilityChanged = function(ev) {
+OutputPanel.prototype._visibilityChanged = function (ev) {
   if (ev.outputVisible === true) {
     // this.show is called by _outputChanged
   } else {
@@ -1160,7 +1181,7 @@ function TooltipPanel() {
  *
  * @param devtoolbar The parent DeveloperToolbar object
  */
-TooltipPanel.create = function(devtoolbar) {
+TooltipPanel.create = function (devtoolbar) {
   var tooltipPanel = Object.create(TooltipPanel.prototype);
   return tooltipPanel._init(devtoolbar);
 };
@@ -1168,7 +1189,7 @@ TooltipPanel.create = function(devtoolbar) {
 /**
  * @private See TooltipPanel.create
  */
-TooltipPanel.prototype._init = function(devtoolbar) {
+TooltipPanel.prototype._init = function (devtoolbar) {
   let deferred = promise.defer();
 
   let chromeDocument = devtoolbar._doc;
@@ -1246,7 +1267,7 @@ TooltipPanel.prototype._init = function(devtoolbar) {
 
 /* Copy the current devtools theme attribute into the iframe,
    so it can be styled correctly. */
-TooltipPanel.prototype._copyTheme = function() {
+TooltipPanel.prototype._copyTheme = function () {
   if (this.document) {
     let theme =
       this._devtoolbar._doc.documentElement.getAttribute("devtoolstheme");
@@ -1257,7 +1278,7 @@ TooltipPanel.prototype._copyTheme = function() {
 /**
  * Prevent the popup from hiding if it is not permitted via this.canHide.
  */
-TooltipPanel.prototype._onpopuphiding = function(ev) {
+TooltipPanel.prototype._onpopuphiding = function (ev) {
   // TODO: When we switch back from tooltip to panel we can remove this hack:
   // https://bugzilla.mozilla.org/show_bug.cgi?id=780102
   if (isLinux && !this.canHide) {
@@ -1268,7 +1289,7 @@ TooltipPanel.prototype._onpopuphiding = function(ev) {
 /**
  * Display the TooltipPanel.
  */
-TooltipPanel.prototype.show = function(dimensions) {
+TooltipPanel.prototype.show = function (dimensions) {
   if (!dimensions) {
     dimensions = { start: 0, end: 0 };
   }
@@ -1304,9 +1325,9 @@ const AVE_CHAR_WIDTH = 4.5;
 /**
  * Display the TooltipPanel.
  */
-TooltipPanel.prototype._resize = function() {
+TooltipPanel.prototype._resize = function () {
   if (this._panel == null || this.document == null || !this._panel.state == "closed") {
-    return
+    return;
   }
 
   let offset = 10 + Math.floor(this._dimensions.start * AVE_CHAR_WIDTH);
@@ -1327,7 +1348,7 @@ TooltipPanel.prototype._resize = function() {
 /**
  * Hide the TooltipPanel.
  */
-TooltipPanel.prototype.remove = function() {
+TooltipPanel.prototype.remove = function () {
   if (isLinux) {
     this.canHide = true;
   }
@@ -1339,7 +1360,7 @@ TooltipPanel.prototype.remove = function() {
 /**
  * Hide the TooltipPanel.
  */
-TooltipPanel.prototype.destroy = function() {
+TooltipPanel.prototype.destroy = function () {
   this.remove();
 
   this._panel.removeEventListener("popuphiding", this._onpopuphiding, true);
@@ -1363,7 +1384,7 @@ TooltipPanel.prototype.destroy = function() {
  * Called by GCLI to indicate that we should show or hide one either the
  * tooltip panel or the output panel.
  */
-TooltipPanel.prototype._visibilityChanged = function(ev) {
+TooltipPanel.prototype._visibilityChanged = function (ev) {
   if (ev.tooltipVisible === true) {
     this.show(ev.dimensions);
   } else {

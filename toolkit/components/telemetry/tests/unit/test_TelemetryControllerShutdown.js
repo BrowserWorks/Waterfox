@@ -30,6 +30,8 @@ function run_test() {
   // Addon manager needs a profile directory
   do_get_profile();
   loadAddonManager("xpcshell@tests.mozilla.org", "XPCShell", "1", "1.9.2");
+  // Make sure we don't generate unexpected pings due to pref changes.
+  setEmptyPrefWatchlist();
 
   Services.prefs.setBoolPref(PREF_TELEMETRY_ENABLED, true);
   Services.prefs.setBoolPref(PREF_FHR_UPLOAD_ENABLED, true);
@@ -37,18 +39,25 @@ function run_test() {
   run_next_test();
 }
 
-add_task(function* test_sendTimeout() {
-  const TIMEOUT = 100;
+/**
+ * Ensures that TelemetryController does not hang processing shutdown
+ * phases. Assumes that Telemetry shutdown routines do not take longer than
+ * CRASH_TIMEOUT_MS to complete.
+ */
+add_task(function* test_sendTelemetryShutsDownWithinReasonableTimeout() {
+  const CRASH_TIMEOUT_MS = 5 * 1000;
   // Enable testing mode for AsyncShutdown, otherwise some testing-only functionality
   // is not available.
   Services.prefs.setBoolPref("toolkit.asyncshutdown.testing", true);
-  Services.prefs.setIntPref("toolkit.asyncshutdown.crash_timeout", TIMEOUT);
+  // Reducing the max delay for waitiing on phases to complete from 1 minute
+  // (standard) to 10 seconds to avoid blocking the tests in case of misbehavior.
+  Services.prefs.setIntPref("toolkit.asyncshutdown.crash_timeout", CRASH_TIMEOUT_MS);
 
   let httpServer = new HttpServer();
   httpServer.registerPrefixHandler("/", contentHandler);
   httpServer.start(-1);
 
-  yield TelemetryController.setup();
+  yield TelemetryController.testSetup();
   TelemetrySend.setServer("http://localhost:" + httpServer.identity.primaryPort);
   let submissionPromise = TelemetryController.submitExternalPing("test-ping-type", {});
 

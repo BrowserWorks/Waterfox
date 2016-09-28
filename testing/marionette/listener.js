@@ -18,7 +18,6 @@ Cu.import("chrome://marionette/content/atom.js");
 Cu.import("chrome://marionette/content/capture.js");
 Cu.import("chrome://marionette/content/cookies.js");
 Cu.import("chrome://marionette/content/element.js");
-Cu.import("chrome://marionette/content/emulator.js");
 Cu.import("chrome://marionette/content/error.js");
 Cu.import("chrome://marionette/content/evaluate.js");
 Cu.import("chrome://marionette/content/event.js");
@@ -125,7 +124,7 @@ function registerSelf() {
   if (register[0]) {
     let {id, remotenessChange} = register[0][0];
     capabilities = register[0][2];
-    isB2G = capabilities.platformName == "B2G";
+    isB2G = capabilities.platformName == "b2g";
     listenerId = id;
     if (typeof id != "undefined") {
       // check if we're the main process
@@ -541,8 +540,6 @@ function* executeInSandbox(script, args, timeout, opts) {
   if (opts.sandboxName) {
     sb = sandbox.augment(sb, {global: sb});
     sb = sandbox.augment(sb, new logging.Adapter(contentLog));
-    let emulatorClient = new emulator.EmulatorServiceClient(asyncChrome);
-    sb = sandbox.augment(sb, new emulator.Adapter(emulatorClient));
   }
 
   let wargs = element.fromJson(
@@ -595,20 +592,21 @@ function setTestName(msg) {
  * sendKeysToElement action on a file input element.
  */
 function receiveFiles(msg) {
-  if ('error' in msg.json) {
+  if ("error" in msg.json) {
     let err = new InvalidArgumentError(msg.json.error);
     sendError(err, msg.json.command_id);
     return;
   }
+
   if (!fileInputElement) {
     let err = new InvalidElementStateError("receiveFiles called with no valid fileInputElement");
     sendError(err, msg.json.command_id);
     return;
   }
-  let fs = Array.prototype.slice.call(fileInputElement.files);
-  fs.push(msg.json.file);
-  fileInputElement.mozSetFileArray(fs);
+
+  interaction.uploadFile(fileInputElement, msg.json.file);
   fileInputElement = null;
+
   sendOk(msg.json.command_id);
 }
 
@@ -664,8 +662,8 @@ function singleTap(id, corx, cory) {
 
   let a11y = accessibility.get(capabilities.raisesAccessibilityExceptions);
   return a11y.getAccessible(el, true).then(acc => {
-    a11y.checkVisible(acc, el, visible);
-    a11y.checkActionable(acc, el);
+    a11y.assertVisible(acc, el, visible);
+    a11y.assertActionable(acc, el);
     if (!curContainer.frame.document.createTouch) {
       actions.mouseEventsOnly = true;
     }
@@ -1104,7 +1102,7 @@ function getElementAttribute(id, name) {
 
 function getElementProperty(id, name) {
   let el = seenEls.get(id, curContainer);
-  return el[name];
+  return typeof el[name] != "undefined" ? el[name] : null;
 }
 
 /**

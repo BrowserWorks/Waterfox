@@ -189,16 +189,7 @@ Accessible::Description(nsString& aDescription)
                            aDescription);
 
   if (aDescription.IsEmpty()) {
-    bool isXUL = mContent->IsXULElement();
-    if (isXUL) {
-      // Try XUL <description control="[id]">description text</description>
-      XULDescriptionIterator iter(Document(), mContent);
-      Accessible* descr = nullptr;
-      while ((descr = iter.Next())) {
-        nsTextEquivUtils::AppendTextEquivFromContent(this, descr->GetContent(),
-                                                     &aDescription);
-      }
-    }
+    NativeDescription(aDescription);
 
     if (aDescription.IsEmpty()) {
       // Keep the Name() method logic.
@@ -883,6 +874,15 @@ Accessible::HandleAccEvent(AccEvent* aEvent)
                                       event->IsFromUserInput());
           break;
                                                      }
+        case nsIAccessibleEvent::EVENT_SELECTION:
+        case nsIAccessibleEvent::EVENT_SELECTION_ADD:
+        case nsIAccessibleEvent::EVENT_SELECTION_REMOVE: {
+          AccSelChangeEvent* selEvent = downcast_accEvent(aEvent);
+          uint64_t widgetID = selEvent->Widget()->IsDoc() ? 0 :
+            reinterpret_cast<uintptr_t>(selEvent->Widget());
+          ipcDoc->SendSelectionEvent(id, widgetID, aEvent->GetEventType());
+          break;
+                                                         }
         default:
                                                          ipcDoc->SendEvent(id, aEvent->GetEventType());
       }
@@ -1758,7 +1758,7 @@ Accessible::GetNativeInterface(void** aNativeAccessible)
 void
 Accessible::DoCommand(nsIContent *aContent, uint32_t aActionIndex)
 {
-  class Runnable final : public nsRunnable
+  class Runnable final : public mozilla::Runnable
   {
   public:
     Runnable(Accessible* aAcc, nsIContent* aContent, uint32_t aIdx) :
@@ -1956,6 +1956,22 @@ Accessible::NativeName(nsString& aName)
   }
 
   return eNameOK;
+}
+
+// Accessible protected
+void
+Accessible::NativeDescription(nsString& aDescription)
+{
+  bool isXUL = mContent->IsXULElement();
+  if (isXUL) {
+    // Try XUL <description control="[id]">description text</description>
+    XULDescriptionIterator iter(Document(), mContent);
+    Accessible* descr = nullptr;
+    while ((descr = iter.Next())) {
+      nsTextEquivUtils::AppendTextEquivFromContent(this, descr->GetContent(),
+                                                   &aDescription);
+    }
+  }
 }
 
 // Accessible protected

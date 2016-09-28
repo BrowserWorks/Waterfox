@@ -118,7 +118,7 @@ tabpanels {
 }
 
 caption {
-  -moz-padding-start: 5px;
+  padding-inline-start: 5px;
   padding-top: 4px;
   padding-bottom: 2px;
 }
@@ -184,32 +184,14 @@ caption {
 }
 
 /**
- * Privacy Pane
- */
-
-html|a.inline-link {
-  color: -moz-nativehyperlinktext;
-  text-decoration: none;
-}
-
-html|a.inline-link:hover {
-  text-decoration: underline;
-}
-
-html|a.inline-link:-moz-focusring {
-  outline-width: 0;
-  box-shadow: @focusRingShadow@;
-}
-
-/**
  * Update Preferences
  */
 #autoInstallOptions {
-  -moz-margin-start: 20px;
+  margin-inline-start: 20px;
 }
 
 .updateControls {
-  -moz-margin-start: 10px;
+  margin-inline-start: 10px;
 }
 
 /**

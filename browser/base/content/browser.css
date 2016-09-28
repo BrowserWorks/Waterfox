@@ -252,16 +252,6 @@ toolbar[customizing] > .overflow-button {
   -moz-appearance: -moz-mac-fullscreen-button;
 }
 
-/* Because these buttons don't move, they should always be aligned the same,
- * left and right were deprecated, so we have to do work to get it to mean that: */
-#titlebar-buttonbox-container:-moz-locale-dir(ltr) {
-  -moz-box-align: start;
-}
-
-#titlebar-buttonbox-container:-moz-locale-dir(rtl) {
-  -moz-box-align: end;
-}
-
 /* Fullscreen and caption buttons don't move with RTL on OS X so override the automatic ordering. */
 #titlebar-secondary-buttonbox:-moz-locale-dir(ltr),
 #titlebar-buttonbox-container:-moz-locale-dir(rtl),
@@ -276,6 +266,17 @@ toolbar[customizing] > .overflow-button {
 .titlebar-placeholder[type="fullscreen-button"]:-moz-locale-dir(rtl) {
   -moz-box-ordinal-group: 0;
 }
+
+/* In private windows, the #titlebar-content is higher because of the
+ * private browsing indicator. With the margin-top the titlebar buttons
+ * align to the top correctly in that case, but only if we don't stretch
+ * the box they're in because the container is too high, so we override
+ * the default alignment value (stretch).
+ */
+#main-window[tabsintitlebar] > #titlebar > #titlebar-content > #titlebar-buttonbox-container {
+  -moz-box-align: start;
+}
+
 %else
 /* On non-OSX, these should be start-aligned */
 #titlebar-buttonbox-container {
@@ -574,7 +575,7 @@ toolbar:not(#TabsToolbar) > #personal-bookmarks {
 }
 
 #identity-box.verifiedIdentity > #identity-icon-labels > #identity-icon-label {
-  -moz-margin-end: 0.25em !important;
+  margin-inline-end: 0.25em !important;
 }
 
 #main-window[customizing] :-moz-any(#urlbar, .searchbar-textbox) > .autocomplete-textbox-container > .textbox-input-box {
@@ -1026,7 +1027,7 @@ toolbarpaletteitem[place="palette"] > #downloads-button[indicator] > #downloads-
 
 /* Indent options in optgroups */
 .contentSelectDropdown-ingroup .menu-iconic-text {
-  -moz-padding-start: 2em;
+  padding-inline-start: 2em;
 }
 
 /* Give this menupopup an arrow panel styling */
@@ -1283,26 +1284,8 @@ toolbarpaletteitem[place="palette"][hidden] {
   box-shadow: 0 0 2px 2px rgba(255,0,0,0.4);
 }
 
-#password-notification-password::after {
-  color: hsl(0,0%,60%);
-  content: attr(show-content);
-  pointer-events: none;
-  position: absolute;
-  right: 0;
-  transition: color 250ms;
-}
-
-#password-notification-password:hover::after {
-  color: hsl(210,100%,50%);
-}
-
-#password-notification-password[focused]::after {
-  content: none;
-}
-
-/* Bug 1175941: Disable the transition on 10.10 due to flickering, possibly due to an OS X bug. */
-@media (-moz-mac-yosemite-theme) {
-  #password-notification-password::after {
-    transition: none;
-  }
+.dragfeedback-tab {
+  -moz-appearance: none;
+  opacity: 0.65;
+  -moz-window-shadow: none;
 }

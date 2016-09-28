@@ -110,7 +110,7 @@ CheckMetadata(const ImageTestCase& aTestCase,
 
   // Create a full decoder, so we can compare the result.
   decoder =
-    DecoderFactory::CreateAnonymousDecoder(decoderType, sourceBuffer,
+    DecoderFactory::CreateAnonymousDecoder(decoderType, sourceBuffer, Nothing(),
                                            DefaultSurfaceFlags());
   ASSERT_TRUE(decoder != nullptr);
 
@@ -197,7 +197,7 @@ TEST(ImageMetadata, NoFrameDelayGIFFullDecode)
 
   // Create an image.
   RefPtr<Image> image =
-    ImageFactory::CreateAnonymousImage(nsAutoCString(testCase.mMimeType));
+    ImageFactory::CreateAnonymousImage(nsDependentCString(testCase.mMimeType));
   ASSERT_TRUE(!image->HasError());
 
   nsCOMPtr<nsIInputStream> inputStream = LoadFile(testCase.mPath);

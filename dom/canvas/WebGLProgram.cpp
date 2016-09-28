@@ -10,6 +10,7 @@
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "mozilla/RefPtr.h"
+#include "nsPrintfCString.h"
 #include "WebGLActiveInfo.h"
 #include "WebGLContext.h"
 #include "WebGLShader.h"
@@ -962,7 +963,19 @@ WebGLProgram::LinkProgram()
     }
 
     LinkAndUpdate();
-    if (IsLinked())
+    if (IsLinked()) {
+        // Check if the attrib name conflicting to uniform name
+        for (const auto& uniform : mMostRecentLinkInfo->uniformMap) {
+            if (mMostRecentLinkInfo->attribMap.find(uniform.first) != mMostRecentLinkInfo->attribMap.end()) {
+                mLinkLog = nsPrintfCString("The uniform name (%s) conflicts with attribute name.",
+                                           uniform.first.get());
+                mMostRecentLinkInfo = nullptr;
+                break;
+            }
+        }
+    }
+
+    if (mMostRecentLinkInfo)
         return;
 
     // Failed link.

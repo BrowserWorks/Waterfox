@@ -167,13 +167,11 @@ static MOZ_CONSTEXPR_VAR Register AsmJSIonExitRegD2 = rbx;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherRegExpReg = CallTempReg0;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherStringReg = CallTempReg1;
 static MOZ_CONSTEXPR_VAR Register RegExpMatcherLastIndexReg = CallTempReg2;
-static MOZ_CONSTEXPR_VAR Register RegExpMatcherStickyReg = CallTempReg4;
 
 // Registerd used in RegExpTester instruction (do not use ReturnReg).
 static MOZ_CONSTEXPR_VAR Register RegExpTesterRegExpReg = CallTempReg1;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterStringReg = CallTempReg2;
 static MOZ_CONSTEXPR_VAR Register RegExpTesterLastIndexReg = CallTempReg3;
-static MOZ_CONSTEXPR_VAR Register RegExpTesterStickyReg = CallTempReg4;
 
 class ABIArgGenerator
 {
@@ -191,14 +189,21 @@ class ABIArgGenerator
     ABIArg next(MIRType argType);
     ABIArg& current() { return current_; }
     uint32_t stackBytesConsumedSoFar() const { return stackOffset_; }
-
-    // Note: these registers are all guaranteed to be different
-    static const Register NonArgReturnReg0;
-    static const Register NonArgReturnReg1;
-    static const Register NonVolatileReg;
-    static const Register NonArg_VolatileReg;
-    static const Register NonReturn_VolatileReg0;
 };
+
+// Avoid r11, which is the MacroAssembler's ScratchReg.
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg0 = rax;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReg1 = rbx;
+
+// Note: these three registers are all guaranteed to be different
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg0 = r10;
+static MOZ_CONSTEXPR_VAR Register ABINonArgReturnReg1 = r12;
+static MOZ_CONSTEXPR_VAR Register ABINonVolatileReg = r13;
+
+// Registers used for asm.js/wasm table calls. These registers must be disjoint
+// from the ABI argument registers and from each other.
+static MOZ_CONSTEXPR_VAR Register WasmTableCallPtrReg = ABINonArgReg0;
+static MOZ_CONSTEXPR_VAR Register WasmTableCallSigReg = ABINonArgReg1;
 
 static MOZ_CONSTEXPR_VAR Register OsrFrameReg = IntArgReg3;
 
@@ -591,6 +596,18 @@ class Assembler : public AssemblerX86Shared
     void sarq_cl(Register dest) {
         masm.sarq_CLr(dest.encoding());
     }
+    void rolq(Imm32 imm, Register dest) {
+        masm.rolq_ir(imm.value, dest.encoding());
+    }
+    void rolq_cl(Register dest) {
+        masm.rolq_CLr(dest.encoding());
+    }
+    void rorq(Imm32 imm, Register dest) {
+        masm.rorq_ir(imm.value, dest.encoding());
+    }
+    void rorq_cl(Register dest) {
+        masm.rorq_CLr(dest.encoding());
+    }
     void orq(Imm32 imm, Register dest) {
         masm.orq_ir(imm.value, dest.encoding());
     }
@@ -632,6 +649,16 @@ class Assembler : public AssemblerX86Shared
           default:
             MOZ_CRASH("unexpected operand kind");
         }
+    }
+
+    void bsrq(const Register& src, const Register& dest) {
+        masm.bsrq_rr(src.encoding(), dest.encoding());
+    }
+    void bsfq(const Register& src, const Register& dest) {
+        masm.bsfq_rr(src.encoding(), dest.encoding());
+    }
+    void popcntq(const Register& src, const Register& dest) {
+        masm.popcntq_rr(src.encoding(), dest.encoding());
     }
 
     void imulq(Register src, Register dest) {
@@ -741,6 +768,9 @@ class Assembler : public AssemblerX86Shared
     }
     CodeOffset storeRipRelativeInt32(Register dest) {
         return CodeOffset(masm.movl_rrip(dest.encoding()).offset());
+    }
+    CodeOffset storeRipRelativeInt64(Register dest) {
+        return CodeOffset(masm.movq_rrip(dest.encoding()).offset());
     }
     CodeOffset storeRipRelativeDouble(FloatRegister dest) {
         return CodeOffset(masm.vmovsd_rrip(dest.encoding()).offset());

@@ -28,22 +28,22 @@ const PropTypes = React.PropTypes;
  * within the 'Headers' panel.
  */
 var MainToolbar = React.createClass({
+  displayName: "MainToolbar",
+
   propTypes: {
     object: PropTypes.any.isRequired,
     dispatch: PropTypes.func.isRequired,
   },
 
-  displayName: "MainToolbar",
-
-  onRefresh: function() {
+  onRefresh: function () {
     this.props.dispatch(fetchProperties(this.props.object));
   },
 
-  onSearch: function(value) {
+  onSearch: function (value) {
     this.props.dispatch(setVisibilityFilter(value));
   },
 
-  render: function() {
+  render: function () {
     return (
       Toolbar({},
         ToolbarButton({

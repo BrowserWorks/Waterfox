@@ -10,27 +10,68 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsIPrincipal.h"
 #include "nsString.h"
-#include "nsTArray.h"
 
 #include "mozilla/Maybe.h"
-
-#define PUSHNOTIFIER_CONTRACTID \
-  "@mozilla.org/push/Notifier;1"
-
-// These constants are duplicated in `PushComponents.js`.
-#define OBSERVER_TOPIC_PUSH "push-message"
-#define OBSERVER_TOPIC_SUBSCRIPTION_CHANGE "push-subscription-change"
 
 namespace mozilla {
 namespace dom {
 
+class ContentChild;
+class ContentParent;
+
+/**
+ * `PushDispatcher` is a base class used to forward observer notifications and
+ * service worker events to the correct process.
+ */
+class MOZ_STACK_CLASS PushDispatcher
+{
+public:
+  // Fires an XPCOM observer notification. This method may be called from both
+  // processes.
+  virtual nsresult NotifyObservers() = 0;
+
+  // Fires a service worker event. This method is called from the content
+  // process if e10s is enabled, or the parent otherwise.
+  virtual nsresult NotifyWorkers() = 0;
+
+  // A convenience method that calls `NotifyObservers` and `NotifyWorkers`.
+  nsresult NotifyObserversAndWorkers();
+
+  // Sends an IPDL message to fire an observer notification in the parent
+  // process. This method is only called from the content process, and only
+  // if e10s is enabled.
+  virtual bool SendToParent(ContentChild* aParentActor) = 0;
+
+  // Sends an IPDL message to fire an observer notification and a service worker
+  // event in the content process. This method is only called from the parent,
+  // and only if e10s is enabled.
+  virtual bool SendToChild(ContentParent* aContentActor) = 0;
+
+  // An optional method, called from the parent if e10s is enabled and there
+  // are no active content processes. The default behavior is a no-op.
+  virtual nsresult HandleNoChildProcesses();
+
+protected:
+  PushDispatcher(const nsACString& aScope,
+                 nsIPrincipal* aPrincipal);
+
+  virtual ~PushDispatcher();
+
+  bool ShouldNotifyWorkers();
+  nsresult DoNotifyObservers(nsISupports *aSubject, const char *aTopic,
+                             const nsACString& aScope);
+
+  const nsCString mScope;
+  nsCOMPtr<nsIPrincipal> mPrincipal;
+};
+
 /**
  * `PushNotifier` implements the `nsIPushNotifier` interface. This service
- * forwards incoming push messages to service workers running in the content
- * process, and emits XPCOM observer notifications for system subscriptions.
+ * broadcasts XPCOM observer notifications for incoming push messages, then
+ * forwards incoming push messages to service workers.
  *
- * This service exists solely to support `PushService.jsm`. Other callers
- * should use `ServiceWorkerManager` directly.
+ * All scriptable methods on this interface may be called from the parent or
+ * content process. Observer notifications are broadcasted to both processes.
  */
 class PushNotifier final : public nsIPushNotifier
 {
@@ -41,55 +82,119 @@ public:
   NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(PushNotifier, nsIPushNotifier)
   NS_DECL_NSIPUSHNOTIFIER
 
-  nsresult NotifyPush(const nsACString& aScope, nsIPrincipal* aPrincipal,
-                      const nsAString& aMessageId,
-                      const Maybe<nsTArray<uint8_t>>& aData);
-  nsresult NotifyPushWorkers(const nsACString& aScope,
-                             nsIPrincipal* aPrincipal,
-                             const nsAString& aMessageId,
-                             const Maybe<nsTArray<uint8_t>>& aData);
-  nsresult NotifySubscriptionChangeWorkers(const nsACString& aScope,
-                                           nsIPrincipal* aPrincipal);
-  void NotifyErrorWorkers(const nsACString& aScope, const nsAString& aMessage,
-                          uint32_t aFlags);
-
-protected:
-  virtual ~PushNotifier();
-
 private:
-  nsresult NotifyPushObservers(const nsACString& aScope,
-                               const Maybe<nsTArray<uint8_t>>& aData);
-  nsresult NotifySubscriptionChangeObservers(const nsACString& aScope);
-  nsresult DoNotifyObservers(nsISupports *aSubject, const char *aTopic,
-                             const nsACString& aScope);
-  bool ShouldNotifyObservers(nsIPrincipal* aPrincipal);
-  bool ShouldNotifyWorkers(nsIPrincipal* aPrincipal);
+  ~PushNotifier();
+
+  nsresult Dispatch(PushDispatcher& aDispatcher);
 };
 
 /**
- * `PushMessage` implements the `nsIPushMessage` interface, similar to
- * the `PushMessageData` WebIDL interface. Instances of this class are
- * passed as the subject of `push-message` observer notifications for
- * system subscriptions.
+ * `PushData` provides methods for retrieving push message data in different
+ * formats. This class is similar to the `PushMessageData` WebIDL interface.
  */
-class PushMessage final : public nsIPushMessage
+class PushData final : public nsIPushData
 {
 public:
-  explicit PushMessage(const nsTArray<uint8_t>& aData);
+  explicit PushData(const nsTArray<uint8_t>& aData);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
-  NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(PushMessage,
-                                           nsIPushMessage)
-  NS_DECL_NSIPUSHMESSAGE
-
-protected:
-  virtual ~PushMessage();
+  NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(PushData, nsIPushData)
+  NS_DECL_NSIPUSHDATA
 
 private:
+  ~PushData();
+
   nsresult EnsureDecodedText();
 
   nsTArray<uint8_t> mData;
   nsString mDecodedText;
+};
+
+/**
+ * `PushMessage` exposes the subscription principal and data for a push
+ * message. Each `push-message` observer receives an instance of this class
+ * as the subject.
+ */
+class PushMessage final : public nsIPushMessage
+{
+public:
+  PushMessage(nsIPrincipal* aPrincipal, nsIPushData* aData);
+
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_CLASS_AMBIGUOUS(PushMessage, nsIPushMessage)
+  NS_DECL_NSIPUSHMESSAGE
+
+private:
+  ~PushMessage();
+
+  nsCOMPtr<nsIPrincipal> mPrincipal;
+  nsCOMPtr<nsIPushData> mData;
+};
+
+class PushMessageDispatcher final : public PushDispatcher
+{
+public:
+  PushMessageDispatcher(const nsACString& aScope,
+               nsIPrincipal* aPrincipal,
+               const nsAString& aMessageId,
+               const Maybe<nsTArray<uint8_t>>& aData);
+  ~PushMessageDispatcher();
+
+  nsresult NotifyObservers() override;
+  nsresult NotifyWorkers() override;
+  bool SendToParent(ContentChild* aParentActor) override;
+  bool SendToChild(ContentParent* aContentActor) override;
+
+private:
+  const nsString mMessageId;
+  const Maybe<nsTArray<uint8_t>> mData;
+};
+
+class PushSubscriptionChangeDispatcher final : public PushDispatcher
+{
+public:
+  PushSubscriptionChangeDispatcher(const nsACString& aScope,
+                                 nsIPrincipal* aPrincipal);
+  ~PushSubscriptionChangeDispatcher();
+
+  nsresult NotifyObservers() override;
+  nsresult NotifyWorkers() override;
+  bool SendToParent(ContentChild* aParentActor) override;
+  bool SendToChild(ContentParent* aContentActor) override;
+};
+
+class PushSubscriptionModifiedDispatcher : public PushDispatcher
+{
+public:
+  PushSubscriptionModifiedDispatcher(const nsACString& aScope,
+                                     nsIPrincipal* aPrincipal);
+  ~PushSubscriptionModifiedDispatcher();
+
+  nsresult NotifyObservers() override;
+  nsresult NotifyWorkers() override;
+  bool SendToParent(ContentChild* aParentActor) override;
+  bool SendToChild(ContentParent* aContentActor) override;
+};
+
+class PushErrorDispatcher final : public PushDispatcher
+{
+public:
+  PushErrorDispatcher(const nsACString& aScope,
+                      nsIPrincipal* aPrincipal,
+                      const nsAString& aMessage,
+                      uint32_t aFlags);
+  ~PushErrorDispatcher();
+
+  nsresult NotifyObservers() override;
+  nsresult NotifyWorkers() override;
+  bool SendToParent(ContentChild* aParentActor) override;
+  bool SendToChild(ContentParent* aContentActor) override;
+
+private:
+  nsresult HandleNoChildProcesses() override;
+
+  const nsString mMessage;
+  uint32_t mFlags;
 };
 
 } // namespace dom

@@ -37,6 +37,8 @@
 #include "mozilla/dom/WakeLock.h"
 #include "mozilla/dom/power/PowerManagerService.h"
 #include "mozilla/dom/CellBroadcast.h"
+#include "mozilla/dom/FlyWebPublishedServer.h"
+#include "mozilla/dom/FlyWebService.h"
 #include "mozilla/dom/IccManager.h"
 #include "mozilla/dom/InputPortManager.h"
 #include "mozilla/dom/MobileMessageManager.h"
@@ -96,7 +98,6 @@
 #endif
 
 #include "nsIDOMGlobalPropertyInitializer.h"
-#include "mozilla/dom/DataStoreService.h"
 #include "nsJSUtils.h"
 
 #include "nsScriptNameSpaceManager.h"
@@ -135,18 +136,61 @@
 namespace mozilla {
 namespace dom {
 
-static bool sDoNotTrackEnabled = false;
 static bool sVibratorEnabled   = false;
 static uint32_t sMaxVibrateMS  = 0;
 static uint32_t sMaxVibrateListLen = 0;
+static const char* kVibrationPermissionType = "vibration";
+
+static void
+AddPermission(nsIPrincipal* aPrincipal, const char* aType, uint32_t aPermission,
+              uint32_t aExpireType, int64_t aExpireTime)
+{
+  MOZ_ASSERT(aType);
+  MOZ_ASSERT(aPrincipal);
+
+  nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
+  if (!permMgr) {
+    return;
+  }
+  permMgr->AddFromPrincipal(aPrincipal, aType, aPermission, aExpireType,
+                            aExpireTime);
+}
+
+static uint32_t
+GetPermission(nsPIDOMWindowInner* aWindow, const char* aType)
+{
+  MOZ_ASSERT(aType);
+
+  uint32_t permission = nsIPermissionManager::UNKNOWN_ACTION;
+
+  nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
+  if (!permMgr) {
+    return permission;
+  }
+  permMgr->TestPermissionFromWindow(aWindow, aType, &permission);
+  return permission;
+}
+
+static uint32_t
+GetPermission(nsIPrincipal* aPrincipal, const char* aType)
+{
+  MOZ_ASSERT(aType);
+  MOZ_ASSERT(aPrincipal);
+
+  uint32_t permission = nsIPermissionManager::UNKNOWN_ACTION;
+
+  nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
+  if (!permMgr) {
+    return permission;
+  }
+  permMgr->TestPermissionFromPrincipal(aPrincipal, aType, &permission);
+  return permission;
+}
 
 /* static */
 void
 Navigator::Init()
 {
-  Preferences::AddBoolVarCache(&sDoNotTrackEnabled,
-                               "privacy.donottrackheader.enabled",
-                               false);
   Preferences::AddBoolVarCache(&sVibratorEnabled,
                                "dom.vibrator.enabled", true);
   Preferences::AddUintVarCache(&sMaxVibrateMS,
@@ -716,7 +760,13 @@ Navigator::GetBuildID(nsAString& aBuildID)
 NS_IMETHODIMP
 Navigator::GetDoNotTrack(nsAString &aResult)
 {
-  if (sDoNotTrackEnabled) {
+  bool doNotTrack = nsContentUtils::DoNotTrackEnabled();
+  if (!doNotTrack) {
+    nsCOMPtr<nsILoadContext> loadContext = do_GetInterface(mWindow);
+    doNotTrack = loadContext && loadContext->UseTrackingProtection();
+  }
+
+  if (doNotTrack) {
     aResult.AssignLiteral("1");
   } else {
     aResult.AssignLiteral("unspecified");
@@ -878,6 +928,47 @@ Navigator::RemoveIdleObserver(MozIdleObserver& aIdleObserver, ErrorResult& aRv)
   }
 }
 
+void
+Navigator::SetVibrationPermission(bool aPermitted, bool aPersistent)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  nsTArray<uint32_t> pattern;
+  pattern.SwapElements(mRequestedVibrationPattern);
+
+  if (!mWindow) {
+    return;
+  }
+
+  nsCOMPtr<nsIDocument> doc = mWindow->GetExtantDoc();
+
+  if (!MayVibrate(doc)) {
+    return;
+  }
+
+  if (aPermitted) {
+    // Add a listener to cancel the vibration if the document becomes hidden,
+    // and remove the old visibility listener, if there was one.
+    if (!gVibrateWindowListener) {
+      // If gVibrateWindowListener is null, this is the first time we've vibrated,
+      // and we need to register a listener to clear gVibrateWindowListener on
+      // shutdown.
+      ClearOnShutdown(&gVibrateWindowListener);
+    } else {
+      gVibrateWindowListener->RemoveListener();
+    }
+    gVibrateWindowListener = new VibrateWindowListener(mWindow, doc);
+    hal::Vibrate(pattern, mWindow);
+  }
+
+  if (aPersistent) {
+    AddPermission(doc->NodePrincipal(), kVibrationPermissionType,
+                  aPermitted ? nsIPermissionManager::ALLOW_ACTION :
+                               nsIPermissionManager::DENY_ACTION,
+                  nsIPermissionManager::EXPIRE_SESSION, 0);
+  }
+}
+
 bool
 Navigator::Vibrate(uint32_t aDuration)
 {
@@ -889,6 +980,8 @@ Navigator::Vibrate(uint32_t aDuration)
 bool
 Navigator::Vibrate(const nsTArray<uint32_t>& aPattern)
 {
+  MOZ_ASSERT(NS_IsMainThread());
+
   if (!mWindow) {
     return false;
   }
@@ -906,9 +999,7 @@ Navigator::Vibrate(const nsTArray<uint32_t>& aPattern)
   }
 
   for (size_t i = 0; i < pattern.Length(); ++i) {
-    if (pattern[i] > sMaxVibrateMS) {
-      pattern[i] = sMaxVibrateMS;
-    }
+    pattern[i] = std::min(sMaxVibrateMS, pattern[i]);
   }
 
   // The spec says we check sVibratorEnabled after we've done the sanity
@@ -917,21 +1008,28 @@ Navigator::Vibrate(const nsTArray<uint32_t>& aPattern)
     return true;
   }
 
-  // Add a listener to cancel the vibration if the document becomes hidden,
-  // and remove the old visibility listener, if there was one.
+  mRequestedVibrationPattern.SwapElements(pattern);
+  uint32_t permission = GetPermission(mWindow, kVibrationPermissionType);
 
-  if (!gVibrateWindowListener) {
-    // If gVibrateWindowListener is null, this is the first time we've vibrated,
-    // and we need to register a listener to clear gVibrateWindowListener on
-    // shutdown.
-    ClearOnShutdown(&gVibrateWindowListener);
+  if (permission == nsIPermissionManager::ALLOW_ACTION ||
+      mRequestedVibrationPattern.IsEmpty() ||
+      (mRequestedVibrationPattern.Length() == 1 &&
+       mRequestedVibrationPattern[0] == 0)) {
+    // Always allow cancelling vibration and respect session permissions.
+    SetVibrationPermission(true /* permitted */, false /* persistent */);
+    return true;
   }
-  else {
-    gVibrateWindowListener->RemoveListener();
-  }
-  gVibrateWindowListener = new VibrateWindowListener(mWindow, doc);
 
-  hal::Vibrate(pattern, mWindow);
+  nsCOMPtr<nsIObserverService> obs = services::GetObserverService();
+  if (!obs || permission == nsIPermissionManager::DENY_ACTION) {
+    // Abort without observer service or on denied session permission.
+    SetVibrationPermission(false /* permitted */, false /* persistent */);
+    return true;
+  }
+
+  // Request user permission.
+  obs->NotifyObservers(ToSupports(this), "Vibration:Request", nullptr);
+
   return true;
 }
 
@@ -1522,6 +1620,11 @@ Navigator::GetDeprecatedBattery(ErrorResult& aRv)
     mBatteryManager->Init();
   }
 
+  nsIDocument* doc = mWindow->GetDoc();
+  if (doc) {
+    doc->WarnOnceAbout(nsIDocument::eNavigatorBattery);
+  }
+
   // Is this the first time this page has accessed navigator.battery?
   if (!mBatteryTelemetryReported) {
     // sample value 0 = navigator.battery
@@ -1532,36 +1635,39 @@ Navigator::GetDeprecatedBattery(ErrorResult& aRv)
   return mBatteryManager;
 }
 
-/* static */ already_AddRefed<Promise>
-Navigator::GetDataStores(nsPIDOMWindowInner* aWindow,
-                         const nsAString& aName,
-                         const nsAString& aOwner,
+already_AddRefed<Promise>
+Navigator::PublishServer(const nsAString& aName,
+                         const FlyWebPublishOptions& aOptions,
                          ErrorResult& aRv)
 {
-  if (!aWindow || !aWindow->GetDocShell()) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
-  }
-
-  RefPtr<DataStoreService> service = DataStoreService::GetOrCreate();
+  RefPtr<FlyWebService> service = FlyWebService::GetOrCreate();
   if (!service) {
     aRv.Throw(NS_ERROR_FAILURE);
     return nullptr;
   }
 
-  nsCOMPtr<nsISupports> promise;
-  aRv = service->GetDataStores(aWindow, aName, aOwner, getter_AddRefs(promise));
+  RefPtr<FlyWebPublishPromise> mozPromise =
+    service->PublishServer(aName, aOptions, mWindow);
+  MOZ_ASSERT(mozPromise);
 
-  RefPtr<Promise> p = static_cast<Promise*>(promise.get());
-  return p.forget();
-}
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(mWindow);
+  ErrorResult result;
+  RefPtr<Promise> domPromise = Promise::Create(global, result);
+  if (result.Failed()) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return nullptr;
+  }
 
-already_AddRefed<Promise>
-Navigator::GetDataStores(const nsAString& aName,
-                         const nsAString& aOwner,
-                         ErrorResult& aRv)
-{
-  return GetDataStores(mWindow, aName, aOwner, aRv);
+  mozPromise->Then(AbstractThread::MainThread(),
+                   __func__,
+                   [domPromise] (FlyWebPublishedServer* aServer) {
+                     domPromise->MaybeResolve(aServer);
+                   },
+                   [domPromise] (nsresult aStatus) {
+                     domPromise->MaybeReject(aStatus);
+                   });
+
+  return domPromise.forget();
 }
 
 already_AddRefed<Promise>
@@ -2230,12 +2336,7 @@ Navigator::CheckPermission(nsPIDOMWindowInner* aWindow, const char* aType)
     return false;
   }
 
-  nsCOMPtr<nsIPermissionManager> permMgr =
-    services::GetPermissionManager();
-  NS_ENSURE_TRUE(permMgr, false);
-
-  uint32_t permission = nsIPermissionManager::DENY_ACTION;
-  permMgr->TestPermissionFromWindow(aWindow, aType, &permission);
+  uint32_t permission = GetPermission(aWindow, aType);
   return permission == nsIPermissionManager::ALLOW_ACTION;
 }
 
@@ -2290,14 +2391,9 @@ Navigator::HasWifiManagerSupport(JSContext* /* unused */,
   // and test directly with permission manager.
 
   nsIPrincipal* principal = nsContentUtils::ObjectPrincipal(aGlobal);
+  uint32_t permission = GetPermission(principal, "wifi-manage");
 
-  nsCOMPtr<nsIPermissionManager> permMgr =
-    services::GetPermissionManager();
-  NS_ENSURE_TRUE(permMgr, false);
-
-  uint32_t permission = nsIPermissionManager::DENY_ACTION;
-  permMgr->TestPermissionFromPrincipal(principal, "wifi-manage", &permission);
-  return nsIPermissionManager::ALLOW_ACTION == permission;
+  return permission == nsIPermissionManager::ALLOW_ACTION;
 }
 
 #ifdef MOZ_NFC
@@ -2323,75 +2419,6 @@ Navigator::HasUserMediaSupport(JSContext* /* unused */,
          Preferences::GetBool("media.peerconnection.enabled", false);
 }
 
-/* static */
-bool
-Navigator::HasDataStoreSupport(nsIPrincipal* aPrincipal)
-{
-  workers::AssertIsOnMainThread();
-
-  return DataStoreService::CheckPermission(aPrincipal);
-}
-
-// A WorkerMainThreadRunnable to synchronously dispatch the call of
-// HasDataStoreSupport() from the worker thread to the main thread.
-class HasDataStoreSupportRunnable final
-  : public workers::WorkerCheckAPIExposureOnMainThreadRunnable
-{
-public:
-  bool mResult;
-
-  explicit HasDataStoreSupportRunnable(workers::WorkerPrivate* aWorkerPrivate)
-    : workers::WorkerCheckAPIExposureOnMainThreadRunnable(aWorkerPrivate)
-    , mResult(false)
-  {
-    MOZ_ASSERT(aWorkerPrivate);
-    aWorkerPrivate->AssertIsOnWorkerThread();
-  }
-
-protected:
-  virtual bool
-  MainThreadRun() override
-  {
-    workers::AssertIsOnMainThread();
-
-    mResult = Navigator::HasDataStoreSupport(mWorkerPrivate->GetPrincipal());
-
-    return true;
-  }
-};
-
-/* static */
-bool
-Navigator::HasDataStoreSupport(JSContext* aCx, JSObject* aGlobal)
-{
-  // If the caller is on the worker thread, dispatch this to the main thread.
-  if (!NS_IsMainThread()) {
-    workers::WorkerPrivate* workerPrivate =
-      workers::GetWorkerPrivateFromContext(aCx);
-    workerPrivate->AssertIsOnWorkerThread();
-
-    RefPtr<HasDataStoreSupportRunnable> runnable =
-      new HasDataStoreSupportRunnable(workerPrivate);
-    return runnable->Dispatch() && runnable->mResult;
-  }
-
-  workers::AssertIsOnMainThread();
-
-  JS::Rooted<JSObject*> global(aCx, aGlobal);
-
-  nsCOMPtr<nsPIDOMWindowInner> win = GetWindowFromGlobal(global);
-  if (!win) {
-    return false;
-  }
-
-  nsIDocument* doc = win->GetExtantDoc();
-  if (!doc || !doc->NodePrincipal()) {
-    return false;
-  }
-
-  return HasDataStoreSupport(doc->NodePrincipal());
-}
-
 #ifdef MOZ_B2G
 /* static */
 bool
@@ -2408,12 +2435,8 @@ Navigator::HasMobileIdSupport(JSContext* aCx, JSObject* aGlobal)
   }
 
   nsIPrincipal* principal = doc->NodePrincipal();
+  uint32_t permission = GetPermission(principal, "mobileid");
 
-  nsCOMPtr<nsIPermissionManager> permMgr = services::GetPermissionManager();
-  NS_ENSURE_TRUE(permMgr, false);
-
-  uint32_t permission = nsIPermissionManager::UNKNOWN_ACTION;
-  permMgr->TestPermissionFromPrincipal(principal, "mobileid", &permission);
   return permission == nsIPermissionManager::PROMPT_ACTION ||
          permission == nsIPermissionManager::ALLOW_ACTION;
 }
@@ -2437,40 +2460,38 @@ Navigator::HasPresentationSupport(JSContext* aCx, JSObject* aGlobal)
 
   // Grant access to browser receiving pages and their same-origin iframes. (App
   // pages should be controlled by "presentation" permission in app manifests.)
-  mozilla::dom::ContentChild* cc =
-    mozilla::dom::ContentChild::GetSingleton();
-  if (!cc || !cc->IsForBrowser()) {
+  nsCOMPtr<nsIDocShell> docshell = inner->GetDocShell();
+  if (!docshell) {
     return false;
   }
 
-  nsCOMPtr<nsPIDOMWindowOuter> win = inner->GetOuterWindow();
-  nsCOMPtr<nsPIDOMWindowOuter> top = win->GetTop();
-  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(win);
-  nsCOMPtr<nsIScriptObjectPrincipal> topSop = do_QueryInterface(top);
-  if (!sop || !topSop) {
+  if (!docshell->GetIsInMozBrowserOrApp()) {
     return false;
   }
 
-  nsIPrincipal* principal = sop->GetPrincipal();
-  nsIPrincipal* topPrincipal = topSop->GetPrincipal();
-  if (!principal || !topPrincipal || !principal->Subsumes(topPrincipal)) {
+  nsAutoString presentationURL;
+  nsContentUtils::GetPresentationURL(docshell, presentationURL);
+
+  if (presentationURL.IsEmpty()) {
     return false;
   }
 
-  nsCOMPtr<nsPIDOMWindowInner> topInner;
-  if (!(topInner = top->GetCurrentInnerWindow())) {
+  nsCOMPtr<nsIScriptSecurityManager> securityManager =
+    do_GetService(NS_SCRIPTSECURITYMANAGER_CONTRACTID);
+  if (!securityManager) {
     return false;
   }
 
-  nsCOMPtr<nsIPresentationService> presentationService =
-    do_GetService(PRESENTATION_SERVICE_CONTRACTID);
-  if (NS_WARN_IF(!presentationService)) {
+  nsCOMPtr<nsIURI> presentationURI;
+  nsresult rv = NS_NewURI(getter_AddRefs(presentationURI), presentationURL);
+  if (NS_FAILED(rv)) {
     return false;
   }
 
-  nsAutoString sessionId;
-  presentationService->GetExistentSessionIdAtLaunch(topInner->WindowID(), sessionId);
-  return !sessionId.IsEmpty();
+  nsCOMPtr<nsIURI> docURI = inner->GetDocumentURI();
+  return NS_SUCCEEDED(securityManager->CheckSameOriginURI(presentationURI,
+                                                          docURI,
+                                                          false));
 }
 
 /* static */

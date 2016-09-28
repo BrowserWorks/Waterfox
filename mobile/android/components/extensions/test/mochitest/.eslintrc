@@ -1,0 +1,8 @@
+{
+  "extends": "../../../../../../toolkit/components/extensions/test/mochitest/.eslintrc",
+
+  "globals": {
+    "isPageActionShown": true,
+    "clickPageAction": true,
+  },
+}

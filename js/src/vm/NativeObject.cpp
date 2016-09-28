@@ -84,13 +84,19 @@ ObjectElements::ConvertElementsToDoubles(JSContext* cx, uintptr_t elementsPtr)
 /* static */ bool
 ObjectElements::MakeElementsCopyOnWrite(ExclusiveContext* cx, NativeObject* obj)
 {
-    static_assert(sizeof(HeapSlot) >= sizeof(HeapPtrObject),
+    static_assert(sizeof(HeapSlot) >= sizeof(GCPtrObject),
                   "there must be enough room for the owner object pointer at "
                   "the end of the elements");
     if (!obj->ensureElements(cx, obj->getDenseInitializedLength() + 1))
         return false;
 
     ObjectElements* header = obj->getElementsHeader();
+
+    // As soon as we have (or may soon have) multiple objects referencing a
+    // single header, it isn't clear which object the "I'm already in the
+    // whole-cell store buffer" bit is describing, so just disable that
+    // optimization.
+    header->clearInWholeCellBuffer();
 
     // Note: this method doesn't update type information to indicate that the
     // elements might be copy on write. Handling this is left to the caller.
@@ -1043,7 +1049,7 @@ CallAddPropertyHookDense(ExclusiveContext* cx, HandleNativeObject obj, uint32_t 
 }
 
 static bool
-UpdateShapeTypeAndValue(ExclusiveContext* cx, NativeObject* obj, Shape* shape, const Value& value)
+UpdateShapeTypeAndValue(ExclusiveContext* cx, HandleNativeObject obj, HandleShape shape, const Value& value)
 {
     jsid id = shape->propid();
     if (shape->hasSlot()) {
@@ -1080,7 +1086,7 @@ PurgeProtoChain(ExclusiveContext* cx, JSObject* objArg, HandleId id)
         if (shape)
             return obj->as<NativeObject>().shadowingShapeChange(cx, *shape);
 
-        obj = obj->getProto();
+        obj = obj->staticPrototype();
     }
 
     return true;
@@ -1099,7 +1105,7 @@ PurgeScopeChainHelper(ExclusiveContext* cx, HandleObject objArg, HandleId id)
     if (JSID_IS_INT(id))
         return true;
 
-    if (!PurgeProtoChain(cx, obj->getProto(), id))
+    if (!PurgeProtoChain(cx, obj->staticPrototype(), id))
         return false;
 
     /*
@@ -1344,11 +1350,13 @@ js::NativeDefineProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId 
             // redefined, it will.
             if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
                 obj->as<ArgumentsObject>().markLengthOverridden();
-        }
-        if (JSID_IS_SYMBOL(id) && JSID_TO_SYMBOL(id) == cx->wellKnownSymbols().iterator) {
+        } else if (JSID_IS_SYMBOL(id) && JSID_TO_SYMBOL(id) == cx->wellKnownSymbols().iterator) {
             // Do same thing as .length for [@@iterator].
             if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
                 obj->as<ArgumentsObject>().markIteratorOverridden();
+        } else if (JSID_IS_INT(id)) {
+            if ((desc_.attributes() & JSPROP_RESOLVING) == 0)
+                obj->as<ArgumentsObject>().markElementOverridden();
         }
     }
 
@@ -1638,7 +1646,7 @@ js::NativeHasProperty(JSContext* cx, HandleNativeObject obj, HandleId id, bool* 
         // What they all have in common is we do not want to keep walking
         // the prototype chain, and always claim that the property
         // doesn't exist.
-        RootedObject proto(cx, done ? nullptr : pobj->getProto());
+        RootedObject proto(cx, done ? nullptr : pobj->staticPrototype());
 
         // Step 8.
         if (!proto) {
@@ -1815,6 +1823,14 @@ static bool
 Detecting(JSContext* cx, JSScript* script, jsbytecode* pc)
 {
     MOZ_ASSERT(script->containsPC(pc));
+
+    // Skip jump target opcodes.
+    while (pc < script->codeEnd() && BytecodeIsJumpTarget(JSOp(*pc)))
+        pc = GetNextPc(pc);
+
+    MOZ_ASSERT(script->containsPC(pc));
+    if (pc >= script->codeEnd())
+        return false;
 
     // General case: a branch or equality op follows the access.
     JSOp op = JSOp(*pc);
@@ -2010,7 +2026,7 @@ NativeGetPropertyInline(JSContext* cx,
         //   being resolved.
         // What they all have in common is we do not want to keep walking
         // the prototype chain.
-        RootedObject proto(cx, done ? nullptr : pobj->getProto());
+        RootedObject proto(cx, done ? nullptr : pobj->staticPrototype());
 
         // Step 4.c. The spec algorithm simply returns undefined if proto is
         // null, but see the comment on GetNonexistentProperty.
@@ -2220,9 +2236,10 @@ js::SetPropertyOnProto(JSContext* cx, HandleObject obj, HandleId id, HandleValue
 {
     MOZ_ASSERT(!obj->is<ProxyObject>());
 
-    RootedObject proto(cx, obj->getProto());
+    RootedObject proto(cx, obj->staticPrototype());
     if (proto)
         return SetProperty(cx, proto, id, v, receiver, result);
+
     return SetPropertyByDefining(cx, id, v, receiver, result);
 }
 
@@ -2396,7 +2413,7 @@ js::NativeSetProperty(JSContext* cx, HandleNativeObject obj, HandleId id, Handle
         //   being resolved.
         // What they all have in common is we do not want to keep walking
         // the prototype chain.
-        RootedObject proto(cx, done ? nullptr : pobj->getProto());
+        RootedObject proto(cx, done ? nullptr : pobj->staticPrototype());
         if (!proto) {
             // Step 4.d.i (and step 5).
             return SetNonexistentProperty(cx, id, v, receiver, qualified, result);

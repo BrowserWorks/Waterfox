@@ -33,6 +33,8 @@ LoadInfoArgsToLoadInfo(const mozilla::net::OptionalLoadInfoArgs& aLoadInfoArgs,
                        nsILoadInfo** outLoadInfo);
 } // namespace ipc
 
+namespace net {
+
 /**
  * Class that provides an nsILoadInfo implementation.
  *
@@ -140,6 +142,7 @@ private:
   bool                             mIsPreflight;
 };
 
+} // namespace net
 } // namespace mozilla
 
 #endif // mozilla_LoadInfo_h

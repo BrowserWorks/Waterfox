@@ -15,13 +15,10 @@ from mozrunner import Runner
 
 class GeckoInstance(object):
     required_prefs = {
-        "browser.displayedE10SPrompt.1": 5,
-        "browser.displayedE10SPrompt.2": 5,
-        "browser.displayedE10SPrompt.3": 5,
-        "browser.displayedE10SPrompt.4": 5,
-        "browser.displayedE10SPrompt": 5,
         "browser.sessionstore.resume_from_crash": False,
         "browser.shell.checkDefaultBrowser": False,
+        # Needed for branded builds to prevent opening a second tab on startup
+        "browser.startup.homepage_override.mstone": "ignore",
         "browser.startup.page": 0,
         "browser.tabs.remote.autostart.1": False,
         "browser.tabs.remote.autostart.2": False,
@@ -42,7 +39,8 @@ class GeckoInstance(object):
         "extensions.autoDisableScopes": 10,
         "focusmanager.testmode": True,
         "marionette.defaultPrefs.enabled": True,
-        "startup.homepage_welcome_url": "about:blank",
+        "startup.homepage_welcome_url": "",
+        "startup.homepage_welcome_url.additional": "",
         "toolkit.telemetry.enabled": False,
         # Until Bug 1238095 is fixed, we have to enable CPOWs in order
         # for Marionette tests to work properly.
@@ -136,8 +134,8 @@ class GeckoInstance(object):
 
         # environment variables needed for crashreporting
         # https://developer.mozilla.org/docs/Environment_variables_affecting_crash_reporting
-        env.update({ 'MOZ_CRASHREPORTER': '1',
-                     'MOZ_CRASHREPORTER_NO_REPORT': '1', })
+        env.update({'MOZ_CRASHREPORTER': '1',
+                    'MOZ_CRASHREPORTER_NO_REPORT': '1'})
         self.runner = Runner(
             binary=self.bin,
             profile=self.profile,
@@ -168,6 +166,7 @@ class GeckoInstance(object):
             self.prefs = None
         self.start()
 
+
 class B2GDesktopInstance(GeckoInstance):
     def __init__(self, host, port, bin, **kwargs):
         # Pass a profile and change the binary to -bin so that
@@ -196,21 +195,22 @@ class DesktopInstance(GeckoInstance):
         'app.update.auto': False,
         'app.update.enabled': False,
         'browser.dom.window.dump.enabled': True,
+        'browser.firstrun-content.dismissed': True,
         # Bug 1145668 - Has to be reverted to about:blank once Marionette
         # can correctly handle error pages
         'browser.newtab.url': 'about:newtab',
         'browser.newtabpage.enabled': False,
         'browser.reader.detectedFirstArticle': True,
+        'browser.safebrowsing.blockedURIs.enabled': False,
         'browser.safebrowsing.enabled': False,
         'browser.safebrowsing.forbiddenURIs.enabled': False,
         'browser.safebrowsing.malware.enabled': False,
-        'browser.safebrowsing.blockedURIs.enabled': False,
         'browser.search.update': False,
         'browser.tabs.animate': False,
         'browser.tabs.warnOnClose': False,
         'browser.tabs.warnOnOpen': False,
         'browser.uitour.enabled': False,
-        'dom.report_all_js_exceptions': True,
+        'browser.usedOnWindows10.introURL': '',
         'extensions.getAddons.cache.enabled': False,
         'extensions.installDistroAddons': False,
         'extensions.showMismatchUI': False,

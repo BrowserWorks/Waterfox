@@ -333,7 +333,9 @@ this.FxAccountsWebChannelHelpers.prototype = {
     // features (ie, new fields) - forcing the server to track a map of
     // versions to supported field names doesn't buy us much.
     // So we just remove field names we know aren't handled.
-    let newCredentials = {};
+    let newCredentials = {
+      deviceId: null
+    };
     for (let name of Object.keys(credentials)) {
       if (name == "email" || name == "uid" || FxAccountsStorageManagerCanStoreField(name)) {
         newCredentials[name] = credentials[name];
@@ -341,7 +343,8 @@ this.FxAccountsWebChannelHelpers.prototype = {
         log.info("changePassword ignoring unsupported field", name);
       }
     }
-    return this._fxAccounts.updateUserAccountData(newCredentials);
+    return this._fxAccounts.updateUserAccountData(newCredentials)
+      .then(() => this._fxAccounts.updateDeviceRegistration());
   },
 
   /**
@@ -448,12 +451,20 @@ var singleton;
 // sent multiple times.
 this.EnsureFxAccountsWebChannel = function() {
   if (!singleton) {
-    let contentUri = Services.urlFormatter.formatURLPref("identity.fxaccounts.remote.webchannel.uri");
-    // The FxAccountsWebChannel listens for events and updates
-    // the state machine accordingly.
-    singleton = new this.FxAccountsWebChannel({
-      content_uri: contentUri,
-      channel_id: WEBCHANNEL_ID,
-    });
+    try {
+      let contentUri = Services.urlFormatter.formatURLPref("identity.fxaccounts.remote.webchannel.uri");
+      if (contentUri) {
+        // The FxAccountsWebChannel listens for events and updates
+        // the state machine accordingly.
+        singleton = new this.FxAccountsWebChannel({
+          content_uri: contentUri,
+          channel_id: WEBCHANNEL_ID,
+        });
+      } else {
+        log.warn("FxA WebChannel functionaly is disabled due to no URI pref.");
+      }
+    } catch (ex) {
+      log.error("Failed to create FxA WebChannel", ex);
+    }
   }
 }

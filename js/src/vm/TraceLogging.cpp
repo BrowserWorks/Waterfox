@@ -356,6 +356,8 @@ TraceLoggerThread::getOrCreateEventPayload(const char* text)
         return p->value();
     }
 
+    AutoTraceLog internal(this, TraceLogger_Internal);
+
     size_t len = strlen(text);
     char* str = js_pod_malloc<char>(len + 1);
     if (!str)
@@ -378,13 +380,13 @@ TraceLoggerThread::getOrCreateEventPayload(const char* text)
         return nullptr;
     }
 
-    if (!pointerMap.add(p, text, payload))
-        return nullptr;
-
     if (graph.get())
         graph->addTextId(textId, str);
 
     nextTextId++;
+
+    if (!pointerMap.add(p, text, payload))
+        return nullptr;
 
     return payload;
 }
@@ -410,6 +412,8 @@ TraceLoggerThread::getOrCreateEventPayload(TraceLoggerTextId type, const char* f
         MOZ_ASSERT(p->value()->textId() < nextTextId); // Sanity check.
         return p->value();
     }
+
+    AutoTraceLog internal(this, TraceLogger_Internal);
 
     // Compute the length of the string to create.
     size_t lenFilename = strlen(filename);
@@ -440,13 +444,13 @@ TraceLoggerThread::getOrCreateEventPayload(TraceLoggerTextId type, const char* f
         return nullptr;
     }
 
-    if (!pointerMap.add(p, ptr, payload))
-        return nullptr;
-
     if (graph.get())
         graph->addTextId(textId, str);
 
     nextTextId++;
+
+    if (!pointerMap.add(p, ptr, payload))
+        return nullptr;
 
     return payload;
 }
@@ -644,10 +648,10 @@ TraceLoggerThreadState::init()
             "Collections:\n"
             "  Default        Output all default. It includes:\n"
             "                 AnnotateScripts, Bailout, Baseline, BaselineCompilation, GC,\n"
-            "                 GCAllocation, GCSweeping, Interpreter, IonCompilation, IonLinking,\n"
-            "                 IonMonkey, MinorGC, ParserCompileFunction, ParserCompileScript,\n"
-            "                 ParserCompileLazy, ParserCompileModule, IrregexpCompile,\n"
-            "                 IrregexpExecute, Scripts, Engine\n"
+            "                 GCAllocation, GCSweeping, Interpreter, IonAnalysis, IonCompilation,\n"
+            "                 IonLinking, IonMonkey, MinorGC, ParserCompileFunction,\n"
+            "                 ParserCompileScript, ParserCompileLazy, ParserCompileModule,\n"
+            "                 IrregexpCompile, IrregexpExecute, Scripts, Engine, WasmCompilation\n"
             "\n"
             "  IonCompiler    Output all information about compilation. It includes:\n"
             "                 IonCompilation, IonLinking, PruneUnusedBranches, FoldTests,\n"
@@ -657,7 +661,7 @@ TraceLoggerThreadState::init()
             "                 LoopUnrolling, EffectiveAddressAnalysis, AlignmentMaskAnalysis, \n"
             "                 EliminateDeadCode, ReorderInstructions, EdgeCaseAnalysis, \n"
             "                 EliminateRedundantChecks, AddKeepAliveInstructions, GenerateLIR, \n"
-            "                 RegisterAllocation, GenerateCode, Scripts\n"
+            "                 RegisterAllocation, GenerateCode, Scripts, IonBuilderRestartLoop\n"
             "\n"
             "Specific log items:\n"
         );
@@ -689,6 +693,7 @@ TraceLoggerThreadState::init()
         enabledTextIds[TraceLogger_GCAllocation] = true;
         enabledTextIds[TraceLogger_GCSweeping] = true;
         enabledTextIds[TraceLogger_Interpreter] = true;
+        enabledTextIds[TraceLogger_IonAnalysis] = true;
         enabledTextIds[TraceLogger_IonCompilation] = true;
         enabledTextIds[TraceLogger_IonLinking] = true;
         enabledTextIds[TraceLogger_IonMonkey] = true;
@@ -701,6 +706,7 @@ TraceLoggerThreadState::init()
         enabledTextIds[TraceLogger_IrregexpExecute] = true;
         enabledTextIds[TraceLogger_Scripts] = true;
         enabledTextIds[TraceLogger_Engine] = true;
+        enabledTextIds[TraceLogger_WasmCompilation] = true;
     }
 
     if (ContainsFlag(env, "IonCompiler")) {
@@ -733,6 +739,7 @@ TraceLoggerThreadState::init()
         enabledTextIds[TraceLogger_RegisterAllocation] = true;
         enabledTextIds[TraceLogger_GenerateCode] = true;
         enabledTextIds[TraceLogger_Scripts] = true;
+        enabledTextIds[TraceLogger_IonBuilderRestartLoop] = true;
     }
 
     enabledTextIds[TraceLogger_Interpreter] = enabledTextIds[TraceLogger_Engine];

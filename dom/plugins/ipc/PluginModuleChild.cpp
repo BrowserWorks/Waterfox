@@ -104,13 +104,6 @@ static GetWindowInfoPtr sGetWindowInfoPtrStub = nullptr;
 static HWND sBrowserHwnd = nullptr;
 #endif
 
-template<>
-struct RunnableMethodTraits<PluginModuleChild>
-{
-    static void RetainCallee(PluginModuleChild* obj) { }
-    static void ReleaseCallee(PluginModuleChild* obj) { }
-};
-
 /* static */
 PluginModuleChild*
 PluginModuleChild::CreateForContentProcess(mozilla::ipc::Transport* aTransport,
@@ -167,7 +160,8 @@ PluginModuleChild::~PluginModuleChild()
         // bridged protocol (bug 1090570). So we have to do it ourselves. This
         // code is only invoked for PluginModuleChild instances created via
         // bridging; otherwise mTransport is null.
-        XRE_GetIOMessageLoop()->PostTask(FROM_HERE, new DeleteTask<Transport>(mTransport));
+        RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(mTransport);
+        XRE_GetIOMessageLoop()->PostTask(task.forget());
     }
 
     if (mIsChrome) {
@@ -835,7 +829,9 @@ PluginModuleChild::ActorDestroy(ActorDestroyReason why)
         }
 
         // Destroy ourselves once we finish other teardown activities.
-        MessageLoop::current()->PostTask(FROM_HERE, new DeleteTask<PluginModuleChild>(this));
+        RefPtr<DeleteTask<PluginModuleChild>> task =
+            new DeleteTask<PluginModuleChild>(this);
+        MessageLoop::current()->PostTask(task.forget());
         return;
     }
 
@@ -2222,11 +2218,12 @@ public:
     {
     }
 
-    void Run() override
+    NS_IMETHOD Run() override
     {
         RemoveFromAsyncList();
         DebugOnly<bool> sendOk = mInstance->SendAsyncNPP_NewResult(mResult);
         MOZ_ASSERT(sendOk);
+        return NS_OK;
     }
 
 private:
@@ -2240,8 +2237,9 @@ RunAsyncNPP_New(void* aChildInstance)
     PluginInstanceChild* childInstance =
         static_cast<PluginInstanceChild*>(aChildInstance);
     NPError rv = childInstance->DoNPP_New();
-    AsyncNewResultSender* task = new AsyncNewResultSender(childInstance, rv);
-    childInstance->PostChildAsyncCall(task);
+    RefPtr<AsyncNewResultSender> task =
+        new AsyncNewResultSender(childInstance, rv);
+    childInstance->PostChildAsyncCall(task.forget());
 }
 
 bool

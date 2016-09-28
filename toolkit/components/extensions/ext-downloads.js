@@ -20,6 +20,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "EventEmitter",
 Cu.import("resource://gre/modules/ExtensionUtils.jsm");
 const {
   ignoreEvent,
+  normalizeTime,
   runSafeSync,
   SingletonEventManager,
 } = ExtensionUtils;
@@ -241,24 +242,18 @@ function downloadQuery(query) {
     }
   }
 
-  function normalizeTime(arg, before) {
+  function normalizeDownloadTime(arg, before) {
     if (arg == null) {
       return before ? Number.MAX_VALUE : 0;
+    } else {
+      return normalizeTime(arg).getTime();
     }
-
-    // We accept several formats: a Date object, an ISO8601 string, or a
-    // number of milliseconds since the epoch as either a number or a string.
-    // The "number of milliseconds since the epoch as a string" is an outlier,
-    // everything else can just be passed directly to the Date constructor.
-    const date = new Date((typeof arg == "string" && /^\d+$/.test(arg))
-                          ? parseInt(arg, 10) : arg);
-    return date.valueOf();
   }
 
-  const startedBefore = normalizeTime(query.startedBefore, true);
-  const startedAfter = normalizeTime(query.startedAfter, false);
-  // const endedBefore = normalizeTime(query.endedBefore, true);
-  // const endedAfter = normalizeTime(query.endedAfter, false);
+  const startedBefore = normalizeDownloadTime(query.startedBefore, true);
+  const startedAfter = normalizeDownloadTime(query.startedAfter, false);
+  // const endedBefore = normalizeDownloadTime(query.endedBefore, true);
+  // const endedAfter = normalizeDownloadTime(query.endedAfter, false);
 
   const totalBytesGreater = query.totalBytesGreater || 0;
   const totalBytesLess = (query.totalBytesLess != null)
@@ -425,8 +420,13 @@ extensions.registerSchemaAPI("downloads", "downloads", (extension, context) => {
           if (options.filename) {
             target = OS.Path.join(downloadsDir, options.filename);
           } else {
-            let uri = NetUtil.newURI(options.url).QueryInterface(Ci.nsIURL);
-            target = OS.Path.join(downloadsDir, uri.fileName);
+            let uri = NetUtil.newURI(options.url);
+
+            let filename;
+            if (uri instanceof Ci.nsIURL) {
+              filename = uri.fileName;
+            }
+            target = OS.Path.join(downloadsDir, filename || "download");
           }
 
           // This has a race, something else could come along and create

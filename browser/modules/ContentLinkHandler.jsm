@@ -12,6 +12,7 @@ this.EXPORTED_SYMBOLS = [ "ContentLinkHandler" ];
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/NetUtil.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "Feeds",
   "resource:///modules/Feeds.jsm");
@@ -109,8 +110,11 @@ this.ContentLinkHandler = {
 
 	  if (uri.scheme == 'blob') {
             // Blob URLs don't work cross process, work around this by sending as a data uri
-            let channel = Cc["@mozilla.org/network/io-service;1"].
-                getService(Ci.nsIIOService).newChannelFromURI2(uri, null, Services.scriptSecurityManager.getSystemPrincipal(), null, Ci.nsILoadInfo.SEC_ALLOW_CROSS_ORIGIN_DATA_IS_NULL, Ci.nsIContentPolicy.TYPE_OTHER);
+            let channel = NetUtil.newChannel({
+              uri: uri,
+              contentPolicyType: Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE,
+              loadUsingSystemPrincipal: true
+            });
             let listener = {
               encoded: "",
               bis: null,
@@ -129,7 +133,7 @@ this.ContentLinkHandler = {
                 this.encoded += btoa(this.bis.readBytes(this.bis.available()));
               }
             }
-            channel.asyncOpen(listener, null);
+            channel.asyncOpen2(listener);
           } else {
             chromeGlobal.sendAsyncMessage(
               "Link:SetIcon",
@@ -161,41 +165,6 @@ this.ContentLinkHandler = {
   getLinkIconURI: function(aLink) {
     let targetDoc = aLink.ownerDocument;
     var uri = BrowserUtils.makeURI(aLink.href, targetDoc.characterSet);
-
-    // Verify that the load of this icon is legal.
-    // Some error or special pages can load their favicon.
-    // To be on the safe side, only allow chrome:// favicons.
-    var isAllowedPage = [
-      /^about:neterror\?/,
-      /^about:blocked\?/,
-      /^about:certerror\?/,
-      /^about:home$/,
-    ].some(re => re.test(targetDoc.documentURI));
-
-    if (!isAllowedPage || !uri.schemeIs("chrome")) {
-      var ssm = Services.scriptSecurityManager;
-      try {
-        ssm.checkLoadURIWithPrincipal(targetDoc.nodePrincipal, uri,
-                                      Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
-      } catch(e) {
-        return null;
-      }
-    }
-
-    try {
-      var contentPolicy = Cc["@mozilla.org/layout/content-policy;1"].
-                          getService(Ci.nsIContentPolicy);
-    } catch(e) {
-      return null; // Refuse to load if we can't do a security check.
-    }
-
-    // Security says okay, now ask content policy
-    if (contentPolicy.shouldLoad(Ci.nsIContentPolicy.TYPE_INTERNAL_IMAGE,
-                                 uri, targetDoc.documentURIObject,
-                                 aLink, aLink.type, null)
-                                 != Ci.nsIContentPolicy.ACCEPT)
-      return null;
-
     try {
       uri.userPass = "";
     } catch(e) {

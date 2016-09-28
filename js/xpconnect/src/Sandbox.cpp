@@ -1033,7 +1033,6 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
             principal = sop->GetPrincipal();
         } else {
             RefPtr<nsNullPrincipal> nullPrin = nsNullPrincipal::Create();
-            NS_ENSURE_TRUE(nullPrin, NS_ERROR_FAILURE);
             principal = nullPrin;
         }
     }
@@ -1042,6 +1041,10 @@ xpc::CreateSandboxObject(JSContext* cx, MutableHandleValue vp, nsISupports* prin
     JS::CompartmentOptions compartmentOptions;
 
     auto& creationOptions = compartmentOptions.creationOptions();
+
+    // XXXjwatt: Consider whether/when sandboxes should be able to see
+    // [SecureContext] API (bug 1273687).  In that case we'd call
+    // creationOptions.setSecureContext(true).
 
     if (xpc::SharedMemoryEnabled())
         creationOptions.setSharedMemoryAndAtomicsEnabled(true);
@@ -1236,7 +1239,8 @@ nsXPCComponents_utils_Sandbox::Construct(nsIXPConnectWrappedNative* wrapper, JSC
  * we use the related Codebase Principal for the sandbox.
  */
 bool
-ParsePrincipal(JSContext* cx, HandleString codebase, nsIPrincipal** principal)
+ParsePrincipal(JSContext* cx, HandleString codebase, const PrincipalOriginAttributes& aAttrs,
+               nsIPrincipal** principal)
 {
     MOZ_ASSERT(principal);
     MOZ_ASSERT(codebase);
@@ -1252,9 +1256,8 @@ ParsePrincipal(JSContext* cx, HandleString codebase, nsIPrincipal** principal)
     // We could allow passing in the app-id and browser-element info to the
     // sandbox constructor. But creating a sandbox based on a string is a
     // deprecated API so no need to add features to it.
-    PrincipalOriginAttributes attrs;
     nsCOMPtr<nsIPrincipal> prin =
-        BasePrincipal::CreateCodebasePrincipal(uri, attrs);
+        BasePrincipal::CreateCodebasePrincipal(uri, aAttrs);
     prin.forget(principal);
 
     if (!*principal) {
@@ -1322,7 +1325,11 @@ GetExpandedPrincipal(JSContext* cx, HandleObject arrayObj, nsIExpandedPrincipal*
         if (allowed.isString()) {
             // In case of string let's try to fetch a codebase principal from it.
             RootedString str(cx, allowed.toString());
-            if (!ParsePrincipal(cx, str, getter_AddRefs(principal)))
+
+            // We use a default originAttributes here because we don't support
+            // passing a userContextId with an array.
+            PrincipalOriginAttributes attrs;
+            if (!ParsePrincipal(cx, str, attrs, getter_AddRefs(principal)))
                 return false;
 
         } else if (allowed.isObject()) {
@@ -1513,6 +1520,29 @@ OptionsBase::ParseId(const char* name, MutableHandleId prop)
 }
 
 /*
+ * Helper that tries to get a uint32_t property from the options object.
+ */
+bool
+OptionsBase::ParseUInt32(const char* name, uint32_t* prop)
+{
+    MOZ_ASSERT(prop);
+    RootedValue value(mCx);
+    bool found;
+    bool ok = ParseValue(name, &value, &found);
+    NS_ENSURE_TRUE(ok, false);
+
+    if (!found)
+        return true;
+
+    if(!JS::ToUint32(mCx, value, prop)) {
+        JS_ReportError(mCx, "Expected a uint32_t value for property %s", name);
+        return false;
+    }
+
+    return true;
+}
+
+/*
  * Helper that tries to get a list of DOM constructors and other helpers from the options object.
  */
 bool
@@ -1563,7 +1593,8 @@ SandboxOptions::Parse()
               ParseJSString("addonId", &addonId) &&
               ParseBoolean("writeToGlobalPrototype", &writeToGlobalPrototype) &&
               ParseGlobalProperties() &&
-              ParseValue("metadata", &metadata);
+              ParseValue("metadata", &metadata) &&
+              ParseUInt32("userContextId", &userContextId);
     if (!ok)
         return false;
 
@@ -1620,6 +1651,16 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative* wrappe
 
     nsresult rv;
     bool ok = false;
+    bool calledWithOptions = args.length() > 1;
+    if (calledWithOptions && !args[1].isObject())
+        return ThrowAndFail(NS_ERROR_INVALID_ARG, cx, _retval);
+
+    RootedObject optionsObject(cx, calledWithOptions ? &args[1].toObject()
+                                                     : nullptr);
+
+    SandboxOptions options(cx, optionsObject);
+    if (calledWithOptions && !options.Parse())
+        return ThrowAndFail(NS_ERROR_INVALID_ARG, cx, _retval);
 
     // Make sure to set up principals on the sandbox before initing classes.
     nsCOMPtr<nsIPrincipal> principal;
@@ -1628,7 +1669,9 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative* wrappe
 
     if (args[0].isString()) {
         RootedString str(cx, args[0].toString());
-        ok = ParsePrincipal(cx, str, getter_AddRefs(principal));
+        PrincipalOriginAttributes attrs;
+        attrs.mUserContextId = options.userContextId;
+        ok = ParsePrincipal(cx, str, attrs, getter_AddRefs(principal));
         prinOrSop = principal;
     } else if (args[0].isObject()) {
         RootedObject obj(cx, &args[0].toObject());
@@ -1636,8 +1679,13 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative* wrappe
         if (!JS_IsArrayObject(cx, obj, &isArray)) {
             ok = false;
         } else if (isArray) {
-            ok = GetExpandedPrincipal(cx, obj, getter_AddRefs(expanded));
-            prinOrSop = expanded;
+            if (options.userContextId != 0) {
+                // We don't support passing a userContextId with an array.
+                ok = false;
+            } else {
+                ok = GetExpandedPrincipal(cx, obj, getter_AddRefs(expanded));
+                prinOrSop = expanded;
+            }
         } else {
             ok = GetPrincipalOrSOP(cx, obj, getter_AddRefs(prinOrSop));
         }
@@ -1650,16 +1698,6 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative* wrappe
     if (!ok)
         return ThrowAndFail(NS_ERROR_INVALID_ARG, cx, _retval);
 
-    bool calledWithOptions = args.length() > 1;
-    if (calledWithOptions && !args[1].isObject())
-        return ThrowAndFail(NS_ERROR_INVALID_ARG, cx, _retval);
-
-    RootedObject optionsObject(cx, calledWithOptions ? &args[1].toObject()
-                                                     : nullptr);
-
-    SandboxOptions options(cx, optionsObject);
-    if (calledWithOptions && !options.Parse())
-        return ThrowAndFail(NS_ERROR_INVALID_ARG, cx, _retval);
 
     if (NS_FAILED(AssembleSandboxMemoryReporterName(cx, options.sandboxName)))
         return ThrowAndFail(NS_ERROR_INVALID_ARG, cx, _retval);
@@ -1728,8 +1766,6 @@ xpc::EvalInSandbox(JSContext* cx, HandleObject sandboxArg, const nsAString& sour
         // This is clearly Gecko-specific and not in any spec.
         mozilla::dom::AutoEntryScript aes(priv, "XPConnect sandbox evaluation");
         JSContext* sandcx = aes.cx();
-        AutoSaveContextOptions savedOptions(sandcx);
-        JS::ContextOptionsRef(sandcx).setDontReportUncaught(true);
         JSAutoCompartment ac(sandcx, sandbox);
 
         JS::CompileOptions options(sandcx);

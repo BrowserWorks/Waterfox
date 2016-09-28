@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2011 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -236,99 +238,6 @@ void Histogram::WriteAscii(bool graph_it, const std::string& newline,
     past += current;
   }
   DCHECK_EQ(sample_count, past);
-}
-
-// static
-std::string Histogram::SerializeHistogramInfo(const Histogram& histogram,
-                                              const SampleSet& snapshot) {
-  DCHECK_NE(NOT_VALID_IN_RENDERER, histogram.histogram_type());
-
-  Pickle pickle;
-  pickle.WriteString(histogram.histogram_name());
-  pickle.WriteInt(histogram.declared_min());
-  pickle.WriteInt(histogram.declared_max());
-  pickle.WriteSize(histogram.bucket_count());
-  pickle.WriteUInt32(histogram.range_checksum());
-  pickle.WriteInt(histogram.histogram_type());
-  pickle.WriteInt(histogram.flags());
-
-  snapshot.Serialize(&pickle);
-  return std::string(static_cast<const char*>(pickle.data()), pickle.size());
-}
-
-// static
-bool Histogram::DeserializeHistogramInfo(const std::string& histogram_info) {
-  if (histogram_info.empty()) {
-      return false;
-  }
-
-  Pickle pickle(histogram_info.data(),
-                static_cast<int>(histogram_info.size()));
-  std::string histogram_name;
-  int declared_min;
-  int declared_max;
-  size_t bucket_count;
-  uint32_t range_checksum;
-  int histogram_type;
-  int pickle_flags;
-  SampleSet sample;
-
-  void* iter = NULL;
-  if (!pickle.ReadString(&iter, &histogram_name) ||
-      !pickle.ReadInt(&iter, &declared_min) ||
-      !pickle.ReadInt(&iter, &declared_max) ||
-      !pickle.ReadSize(&iter, &bucket_count) ||
-      !pickle.ReadUInt32(&iter, &range_checksum) ||
-      !pickle.ReadInt(&iter, &histogram_type) ||
-      !pickle.ReadInt(&iter, &pickle_flags) ||
-      !sample.Histogram::SampleSet::Deserialize(&iter, pickle)) {
-    CHROMIUM_LOG(ERROR) << "Pickle error decoding Histogram: " << histogram_name;
-    return false;
-  }
-  DCHECK(pickle_flags & kIPCSerializationSourceFlag);
-  // Since these fields may have come from an untrusted renderer, do additional
-  // checks above and beyond those in Histogram::Initialize()
-  if (declared_max <= 0 || declared_min <= 0 || declared_max < declared_min ||
-      INT_MAX / sizeof(Count) <= bucket_count || bucket_count < 2) {
-    CHROMIUM_LOG(ERROR) << "Values error decoding Histogram: " << histogram_name;
-    return false;
-  }
-
-  Flags flags = static_cast<Flags>(pickle_flags & ~kIPCSerializationSourceFlag);
-
-  DCHECK_NE(NOT_VALID_IN_RENDERER, histogram_type);
-
-  Histogram* render_histogram(NULL);
-
-  if (histogram_type == HISTOGRAM) {
-    render_histogram = Histogram::FactoryGet(
-        histogram_name, declared_min, declared_max, bucket_count, flags);
-  } else if (histogram_type == LINEAR_HISTOGRAM) {
-    render_histogram = LinearHistogram::FactoryGet(
-        histogram_name, declared_min, declared_max, bucket_count, flags);
-  } else if (histogram_type == BOOLEAN_HISTOGRAM) {
-    render_histogram = BooleanHistogram::FactoryGet(histogram_name, flags);
-  } else {
-    CHROMIUM_LOG(ERROR) << "Error Deserializing Histogram Unknown histogram_type: "
-                        << histogram_type;
-    return false;
-  }
-
-  DCHECK_EQ(render_histogram->declared_min(), declared_min);
-  DCHECK_EQ(render_histogram->declared_max(), declared_max);
-  DCHECK_EQ(render_histogram->bucket_count(), bucket_count);
-  DCHECK_EQ(render_histogram->range_checksum(), range_checksum);
-  DCHECK_EQ(render_histogram->histogram_type(), histogram_type);
-
-  if (render_histogram->flags() & kIPCSerializationSourceFlag) {
-    DVLOG(1) << "Single process mode, histogram observed and not copied: "
-             << histogram_name;
-  } else {
-    DCHECK_EQ(flags & render_histogram->flags(), flags);
-    render_histogram->AddSampleSet(sample);
-  }
-
-  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -771,48 +680,6 @@ void Histogram::SampleSet::Add(const SampleSet& other) {
     counts_[index] += other.counts_[index];
 }
 
-bool Histogram::SampleSet::Serialize(Pickle* pickle) const {
-  OffTheBooksMutexAutoLock locker(mutex_);
-  pickle->WriteInt64(sum_);
-  pickle->WriteInt64(redundant_count_);
-  pickle->WriteSize(counts_.size());
-
-  for (size_t index = 0; index < counts_.size(); ++index) {
-    pickle->WriteInt(counts_[index]);
-  }
-
-  return true;
-}
-
-bool Histogram::SampleSet::Deserialize(void** iter, const Pickle& pickle) {
-  OffTheBooksMutexAutoLock locker(mutex_);
-  DCHECK_EQ(counts_.size(), 0u);
-  DCHECK_EQ(sum_, 0);
-  DCHECK_EQ(redundant_count_, 0);
-
-  size_t counts_size;
-
-  if (!pickle.ReadInt64(iter, &sum_) ||
-      !pickle.ReadInt64(iter, &redundant_count_) ||
-      !pickle.ReadSize(iter, &counts_size)) {
-    return false;
-  }
-
-  if (counts_size == 0)
-    return false;
-
-  int count = 0;
-  for (size_t index = 0; index < counts_size; ++index) {
-    int i;
-    if (!pickle.ReadInt(iter, &i))
-      return false;
-    counts_.push_back(i);
-    count += i;
-  }
-
-  return true;
-}
-
 //------------------------------------------------------------------------------
 // LinearHistogram: This histogram uses a traditional set of evenly spaced
 // buckets.
@@ -1074,7 +941,7 @@ void
 CountHistogram::Accumulate(Sample value, Count count, size_t index)
 {
   size_t zero_index = BucketIndex(0);
-  LinearHistogram::Accumulate(1, 1, zero_index);
+  LinearHistogram::Accumulate(value, 1, zero_index);
 }
 
 void

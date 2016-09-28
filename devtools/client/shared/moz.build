@@ -10,6 +10,7 @@ XPCSHELL_TESTS_MANIFESTS += ['test/unit/xpcshell.ini']
 DIRS += [
     'components',
     'redux',
+    'shim',
     'vendor',
     'widgets',
 ]
@@ -18,7 +19,9 @@ DevToolsModules(
     'AppCacheUtils.jsm',
     'autocomplete-popup.js',
     'browser-loader.js',
-    'css-parsing-utils.js',
+    'css-angle.js',
+    'css-color-db.js',
+    'css-color.js',
     'css-reload.js',
     'Curl.jsm',
     'demangle.js',
@@ -33,6 +36,7 @@ DevToolsModules(
     'getjson.js',
     'inplace-editor.js',
     'Jsbeautify.jsm',
+    'key-shortcuts.js',
     'l10n.js',
     'node-attribute-parser.js',
     'options-view.js',
@@ -48,4 +52,5 @@ DevToolsModules(
     'undo.js',
     'view-source.js',
     'webgl-utils.js',
+    'zoom-keys.js',
 )

@@ -43,6 +43,19 @@ namespace jit {
 
 namespace X86Encoding {
 
+class BaseAssembler;
+
+class AutoUnprotectAssemblerBufferRegion
+{
+    BaseAssembler* assembler;
+    size_t firstByteOffset;
+    size_t lastByteOffset;
+
+  public:
+    AutoUnprotectAssemblerBufferRegion(BaseAssembler& holder, int32_t offset, size_t size);
+    ~AutoUnprotectAssemblerBufferRegion();
+};
+
 class BaseAssembler : public GenericAssembler {
 public:
     BaseAssembler()
@@ -62,11 +75,34 @@ public:
         m_formatter.oneByteOp(OP_NOP);
     }
 
-    void twoByteNop()
+    MOZ_MUST_USE JmpSrc
+    twoByteNop()
     {
         spew("nop (2 byte)");
+        JmpSrc r(m_formatter.size());
         m_formatter.prefix(PRE_OPERAND_SIZE);
         m_formatter.oneByteOp(OP_NOP);
+        return r;
+    }
+
+    static void patchTwoByteNopToJump(uint8_t* jump, uint8_t* target)
+    {
+        // Note: the offset is relative to the address of the instruction after
+        // the jump which is two bytes.
+        ptrdiff_t rel8 = target - jump - 2;
+        MOZ_RELEASE_ASSERT(rel8 >= INT8_MIN && rel8 <= INT8_MAX);
+        MOZ_RELEASE_ASSERT(jump[0] == PRE_OPERAND_SIZE);
+        MOZ_RELEASE_ASSERT(jump[1] == OP_NOP);
+        jump[0] = OP_JMP_rel8;
+        jump[1] = rel8;
+    }
+
+    static void patchJumpToTwoByteNop(uint8_t* jump)
+    {
+        // See twoByteNop.
+        MOZ_RELEASE_ASSERT(jump[0] == OP_JMP_rel8);
+        jump[0] = PRE_OPERAND_SIZE;
+        jump[1] = OP_NOP;
     }
 
     /*
@@ -547,6 +583,84 @@ public:
         m_formatter.twoByteOp(OP2_XADD_EvGv, offset, base, index, scale, srcdest);
     }
 
+    void vpaddb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddb", VEX_PD, OP2_PADDB_VdqWdq, src1, src0, dst);
+    }
+    void vpaddb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddb", VEX_PD, OP2_PADDB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpaddb_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddb", VEX_PD, OP2_PADDB_VdqWdq, address, src0, dst);
+    }
+
+    void vpaddsb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddsb", VEX_PD, OP2_PADDSB_VdqWdq, src1, src0, dst);
+    }
+    void vpaddsb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddsb", VEX_PD, OP2_PADDSB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpaddsb_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddsb", VEX_PD, OP2_PADDSB_VdqWdq, address, src0, dst);
+    }
+
+    void vpaddusb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddusb", VEX_PD, OP2_PADDUSB_VdqWdq, src1, src0, dst);
+    }
+    void vpaddusb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddusb", VEX_PD, OP2_PADDUSB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpaddusb_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddusb", VEX_PD, OP2_PADDUSB_VdqWdq, address, src0, dst);
+    }
+
+    void vpaddw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddw", VEX_PD, OP2_PADDW_VdqWdq, src1, src0, dst);
+    }
+    void vpaddw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddw", VEX_PD, OP2_PADDW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpaddw_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddw", VEX_PD, OP2_PADDW_VdqWdq, address, src0, dst);
+    }
+
+    void vpaddsw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddsw", VEX_PD, OP2_PADDSW_VdqWdq, src1, src0, dst);
+    }
+    void vpaddsw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddsw", VEX_PD, OP2_PADDSW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpaddsw_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddsw", VEX_PD, OP2_PADDSW_VdqWdq, address, src0, dst);
+    }
+
+    void vpaddusw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddusw", VEX_PD, OP2_PADDUSW_VdqWdq, src1, src0, dst);
+    }
+    void vpaddusw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddusw", VEX_PD, OP2_PADDUSW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpaddusw_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpaddusw", VEX_PD, OP2_PADDUSW_VdqWdq, address, src0, dst);
+    }
+
     void vpaddd_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
     {
         twoByteOpSimd("vpaddd", VEX_PD, OP2_PADDD_VdqWdq, src1, src0, dst);
@@ -558,6 +672,84 @@ public:
     void vpaddd_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
     {
         twoByteOpSimd("vpaddd", VEX_PD, OP2_PADDD_VdqWdq, address, src0, dst);
+    }
+
+    void vpsubb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubb", VEX_PD, OP2_PSUBB_VdqWdq, src1, src0, dst);
+    }
+    void vpsubb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubb", VEX_PD, OP2_PSUBB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpsubb_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubb", VEX_PD, OP2_PSUBB_VdqWdq, address, src0, dst);
+    }
+
+    void vpsubsb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubsb", VEX_PD, OP2_PSUBSB_VdqWdq, src1, src0, dst);
+    }
+    void vpsubsb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubsb", VEX_PD, OP2_PSUBSB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpsubsb_mr(const void* subress, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubsb", VEX_PD, OP2_PSUBSB_VdqWdq, subress, src0, dst);
+    }
+
+    void vpsubusb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubusb", VEX_PD, OP2_PSUBUSB_VdqWdq, src1, src0, dst);
+    }
+    void vpsubusb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubusb", VEX_PD, OP2_PSUBUSB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpsubusb_mr(const void* subress, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubusb", VEX_PD, OP2_PSUBUSB_VdqWdq, subress, src0, dst);
+    }
+
+    void vpsubw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubw", VEX_PD, OP2_PSUBW_VdqWdq, src1, src0, dst);
+    }
+    void vpsubw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubw", VEX_PD, OP2_PSUBW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpsubw_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubw", VEX_PD, OP2_PSUBW_VdqWdq, address, src0, dst);
+    }
+
+    void vpsubsw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubsw", VEX_PD, OP2_PSUBSW_VdqWdq, src1, src0, dst);
+    }
+    void vpsubsw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubsw", VEX_PD, OP2_PSUBSW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpsubsw_mr(const void* subress, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubsw", VEX_PD, OP2_PSUBSW_VdqWdq, subress, src0, dst);
+    }
+
+    void vpsubusw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubusw", VEX_PD, OP2_PSUBUSW_VdqWdq, src1, src0, dst);
+    }
+    void vpsubusw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubusw", VEX_PD, OP2_PSUBUSW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpsubusw_mr(const void* subress, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsubusw", VEX_PD, OP2_PSUBUSW_VdqWdq, subress, src0, dst);
     }
 
     void vpsubd_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
@@ -580,6 +772,15 @@ public:
     void vpmuludq_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
     {
         twoByteOpSimd("vpmuludq", VEX_PD, OP2_PMULUDQ_VdqWdq, offset, base, src0, dst);
+    }
+
+    void vpmullw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpmullw", VEX_PD, OP2_PMULLW_VdqWdq, src1, src0, dst);
+    }
+    void vpmullw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpmullw", VEX_PD, OP2_PMULLW_VdqWdq, offset, base, src0, dst);
     }
 
     void vpmulld_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
@@ -1281,21 +1482,55 @@ public:
         m_formatter.oneByteOp(OP_GROUP2_EvCL, dst, GROUP2_OP_SHL);
     }
 
-    void bsr_rr(RegisterID src, RegisterID dst)
+    void roll_ir(int32_t imm, RegisterID dst)
     {
-        spew("bsr        %s, %s", GPReg32Name(src), GPReg32Name(dst));
+        MOZ_ASSERT(imm < 32);
+        spew("roll       $%d, %s", imm, GPReg32Name(dst));
+        if (imm == 1)
+            m_formatter.oneByteOp(OP_GROUP2_Ev1, dst, GROUP2_OP_ROL);
+        else {
+            m_formatter.oneByteOp(OP_GROUP2_EvIb, dst, GROUP2_OP_ROL);
+            m_formatter.immediate8u(imm);
+        }
+    }
+    void roll_CLr(RegisterID dst)
+    {
+        spew("roll       %%cl, %s", GPReg32Name(dst));
+        m_formatter.oneByteOp(OP_GROUP2_EvCL, dst, GROUP2_OP_ROL);
+    }
+
+    void rorl_ir(int32_t imm, RegisterID dst)
+    {
+        MOZ_ASSERT(imm < 32);
+        spew("rorl       $%d, %s", imm, GPReg32Name(dst));
+        if (imm == 1)
+            m_formatter.oneByteOp(OP_GROUP2_Ev1, dst, GROUP2_OP_ROR);
+        else {
+            m_formatter.oneByteOp(OP_GROUP2_EvIb, dst, GROUP2_OP_ROR);
+            m_formatter.immediate8u(imm);
+        }
+    }
+    void rorl_CLr(RegisterID dst)
+    {
+        spew("rorl       %%cl, %s", GPReg32Name(dst));
+        m_formatter.oneByteOp(OP_GROUP2_EvCL, dst, GROUP2_OP_ROR);
+    }
+
+    void bsrl_rr(RegisterID src, RegisterID dst)
+    {
+        spew("bsrl       %s, %s", GPReg32Name(src), GPReg32Name(dst));
         m_formatter.twoByteOp(OP2_BSR_GvEv, src, dst);
     }
 
-    void bsf_rr(RegisterID src, RegisterID dst)
+    void bsfl_rr(RegisterID src, RegisterID dst)
     {
-        spew("bsf        %s, %s", GPReg32Name(src), GPReg32Name(dst));
+        spew("bsfl       %s, %s", GPReg32Name(src), GPReg32Name(dst));
         m_formatter.twoByteOp(OP2_BSF_GvEv, src, dst);
     }
 
-    void popcnt_rr(RegisterID src, RegisterID dst)
+    void popcntl_rr(RegisterID src, RegisterID dst)
     {
-        spew("popcnt     %s, %s", GPReg32Name(src), GPReg32Name(dst));
+        spew("popcntl    %s, %s", GPReg32Name(src), GPReg32Name(dst));
         m_formatter.legacySSEPrefix(VEX_SS);
         m_formatter.twoByteOp(OP2_POPCNT_GvEv, src, dst);
     }
@@ -1504,7 +1739,7 @@ public:
         }
     }
 
-    MOZ_WARN_UNUSED_RESULT JmpSrc
+    MOZ_MUST_USE JmpSrc
     cmpl_im_disp32(int32_t rhs, int32_t offset, RegisterID base)
     {
         spew("cmpl       $0x%x, " MEM_o32b, rhs, ADDR_o32b(offset, base));
@@ -1521,7 +1756,7 @@ public:
         return r;
     }
 
-    MOZ_WARN_UNUSED_RESULT JmpSrc
+    MOZ_MUST_USE JmpSrc
     cmpl_im_disp32(int32_t rhs, const void* addr)
     {
         spew("cmpl       $0x%x, %p", rhs, addr);
@@ -1776,17 +2011,17 @@ public:
     void cmovz_rr(RegisterID src, RegisterID dst)
     {
         spew("cmovz     %s, %s", GPReg16Name(src), GPReg32Name(dst));
-        m_formatter.twoByteOp(OP2_CMOVZ_GvqpEvqp, src, dst);
+        m_formatter.twoByteOp(OP2_CMOVZ_GvEv, src, dst);
     }
     void cmovz_mr(int32_t offset, RegisterID base, RegisterID dst)
     {
         spew("cmovz     " MEM_ob ", %s", ADDR_ob(offset, base), GPReg32Name(dst));
-        m_formatter.twoByteOp(OP2_CMOVZ_GvqpEvqp, offset, base, dst);
+        m_formatter.twoByteOp(OP2_CMOVZ_GvEv, offset, base, dst);
     }
     void cmovz_mr(int32_t offset, RegisterID base, RegisterID index, int scale, RegisterID dst)
     {
         spew("cmovz     " MEM_obs ", %s", ADDR_obs(offset, base, index, scale), GPReg32Name(dst));
-        m_formatter.twoByteOp(OP2_CMOVZ_GvqpEvqp, offset, base, index, scale, dst);
+        m_formatter.twoByteOp(OP2_CMOVZ_GvEv, offset, base, index, scale, dst);
     }
 
     void movl_rr(RegisterID src, RegisterID dst)
@@ -2236,7 +2471,7 @@ public:
 
     // Flow control:
 
-    MOZ_WARN_UNUSED_RESULT JmpSrc
+    MOZ_MUST_USE JmpSrc
     call()
     {
         m_formatter.oneByteOp(OP_CALL_rel32);
@@ -2260,7 +2495,7 @@ public:
     // Comparison of EAX against a 32-bit immediate. The immediate is patched
     // in as if it were a jump target. The intention is to toggle the first
     // byte of the instruction between a CMP and a JMP to produce a pseudo-NOP.
-    MOZ_WARN_UNUSED_RESULT JmpSrc
+    MOZ_MUST_USE JmpSrc
     cmp_eax()
     {
         m_formatter.oneByteOp(OP_CMP_EAXIv);
@@ -2285,7 +2520,7 @@ public:
             m_formatter.immediate32(diff - 5);
         }
     }
-    MOZ_WARN_UNUSED_RESULT JmpSrc
+    MOZ_MUST_USE JmpSrc
     jmp()
     {
         m_formatter.oneByteOp(OP_JMP_rel32);
@@ -2328,7 +2563,7 @@ public:
         }
     }
 
-    MOZ_WARN_UNUSED_RESULT JmpSrc
+    MOZ_MUST_USE JmpSrc
     jCC(Condition cond)
     {
         m_formatter.twoByteOp(jccRel32(cond));
@@ -2339,9 +2574,56 @@ public:
 
     // SSE operations:
 
+    void vpcmpeqb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpeqb", VEX_PD, OP2_PCMPEQB_VdqWdq, src1, src0, dst);
+    }
+    void vpcmpeqb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpeqb", VEX_PD, OP2_PCMPEQB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpcmpeqb_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpeqb", VEX_PD, OP2_PCMPEQB_VdqWdq, address, src0, dst);
+    }
+
+    void vpcmpgtb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpgtb", VEX_PD, OP2_PCMPGTB_VdqWdq, src1, src0, dst);
+    }
+    void vpcmpgtb_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpgtb", VEX_PD, OP2_PCMPGTB_VdqWdq, offset, base, src0, dst);
+    }
+    void vpcmpgtb_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpgtb", VEX_PD, OP2_PCMPGTB_VdqWdq, address, src0, dst);
+    }
+
     void vpcmpeqw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
     {
-        twoByteOpSimd("vpcmpeqw", VEX_PD, OP2_PCMPEQW, src1, src0, dst);
+        twoByteOpSimd("vpcmpeqw", VEX_PD, OP2_PCMPEQW_VdqWdq, src1, src0, dst);
+    }
+    void vpcmpeqw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpeqw", VEX_PD, OP2_PCMPEQW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpcmpeqw_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpeqw", VEX_PD, OP2_PCMPEQW_VdqWdq, address, src0, dst);
+    }
+
+    void vpcmpgtw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpgtw", VEX_PD, OP2_PCMPGTW_VdqWdq, src1, src0, dst);
+    }
+    void vpcmpgtw_mr(int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpgtw", VEX_PD, OP2_PCMPGTW_VdqWdq, offset, base, src0, dst);
+    }
+    void vpcmpgtw_mr(const void* address, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpcmpgtw", VEX_PD, OP2_PCMPGTW_VdqWdq, address, src0, dst);
     }
 
     void vpcmpeqd_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
@@ -2590,6 +2872,21 @@ public:
         twoByteOpImmSimd("vpshufd", VEX_PD, OP2_PSHUFD_VdqWdqIb, mask, address, invalid_xmm, dst);
     }
 
+    void vpshuflw_irr(uint32_t mask, XMMRegisterID src, XMMRegisterID dst)
+    {
+        twoByteOpImmSimd("vpshuflw", VEX_SD, OP2_PSHUFLW_VdqWdqIb, mask, src, invalid_xmm, dst);
+    }
+
+    void vpshufhw_irr(uint32_t mask, XMMRegisterID src, XMMRegisterID dst)
+    {
+        twoByteOpImmSimd("vpshufhw", VEX_SS, OP2_PSHUFHW_VdqWdqIb, mask, src, invalid_xmm, dst);
+    }
+
+    void vpshufb_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        threeByteOpSimd("vpshufb", VEX_PD, OP3_PSHUFB_VdqWdq, ESCAPE_38, src1, src0, dst);
+    }
+
     void vshufps_irr(uint32_t mask, XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
     {
         twoByteOpImmSimd("vshufps", VEX_PS, OP2_SHUFPS_VpsWpsIb, mask, src1, src0, dst);
@@ -2627,13 +2924,13 @@ public:
     void vpsllq_ir(uint32_t count, XMMRegisterID src, XMMRegisterID dst)
     {
         MOZ_ASSERT(count < 64);
-        shiftOpImmSimd("vpsllq", OP2_PSRLDQ_Vd, ShiftID::vpsllq, count, src, dst);
+        shiftOpImmSimd("vpsllq", OP2_PSRLDQ_Vd, ShiftID::vpsllx, count, src, dst);
     }
 
     void vpsrlq_ir(uint32_t count, XMMRegisterID src, XMMRegisterID dst)
     {
         MOZ_ASSERT(count < 64);
-        shiftOpImmSimd("vpsrlq", OP2_PSRLDQ_Vd, ShiftID::vpsrlq, count, src, dst);
+        shiftOpImmSimd("vpsrlq", OP2_PSRLDQ_Vd, ShiftID::vpsrlx, count, src, dst);
     }
 
     void vpslld_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
@@ -2644,7 +2941,7 @@ public:
     void vpslld_ir(uint32_t count, XMMRegisterID src, XMMRegisterID dst)
     {
         MOZ_ASSERT(count < 32);
-        shiftOpImmSimd("vpslld", OP2_PSLLD_UdqIb, ShiftID::vpslld, count, src, dst);
+        shiftOpImmSimd("vpslld", OP2_PSLLD_UdqIb, ShiftID::vpsllx, count, src, dst);
     }
 
     void vpsrad_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
@@ -2666,7 +2963,40 @@ public:
     void vpsrld_ir(uint32_t count, XMMRegisterID src, XMMRegisterID dst)
     {
         MOZ_ASSERT(count < 32);
-        shiftOpImmSimd("vpsrld", OP2_PSRLD_UdqIb, ShiftID::vpsrld, count, src, dst);
+        shiftOpImmSimd("vpsrld", OP2_PSRLD_UdqIb, ShiftID::vpsrlx, count, src, dst);
+    }
+
+    void vpsllw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsllw", VEX_PD, OP2_PSLLW_VdqWdq, src1, src0, dst);
+    }
+
+    void vpsllw_ir(uint32_t count, XMMRegisterID src, XMMRegisterID dst)
+    {
+        MOZ_ASSERT(count < 16);
+        shiftOpImmSimd("vpsllw", OP2_PSLLW_UdqIb, ShiftID::vpsllx, count, src, dst);
+    }
+
+    void vpsraw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsraw", VEX_PD, OP2_PSRAW_VdqWdq, src1, src0, dst);
+    }
+
+    void vpsraw_ir(int32_t count, XMMRegisterID src, XMMRegisterID dst)
+    {
+        MOZ_ASSERT(count < 16);
+        shiftOpImmSimd("vpsraw", OP2_PSRAW_UdqIb, ShiftID::vpsrad, count, src, dst);
+    }
+
+    void vpsrlw_rr(XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        twoByteOpSimd("vpsrlw", VEX_PD, OP2_PSRLW_VdqWdq, src1, src0, dst);
+    }
+
+    void vpsrlw_ir(uint32_t count, XMMRegisterID src, XMMRegisterID dst)
+    {
+        MOZ_ASSERT(count < 16);
+        shiftOpImmSimd("vpsrlw", OP2_PSRLW_UdqIb, ShiftID::vpsrlx, count, src, dst);
     }
 
     void vmovmskpd_rr(XMMRegisterID src, RegisterID dst)
@@ -3015,6 +3345,12 @@ public:
         twoByteOpSimd("vmulss", VEX_SS, OP2_MULSD_VsdWsd, offset, base, src0, dst);
     }
 
+    void vpinsrw_irr(uint32_t whichWord, RegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        MOZ_ASSERT(whichWord < 8);
+        twoByteOpImmInt32Simd("vpinsrw", VEX_PD, OP2_PINSRW, whichWord, src1, src0, dst);
+    }
+
     void vpextrw_irr(uint32_t whichWord, XMMRegisterID src, RegisterID dst)
     {
         MOZ_ASSERT(whichWord < 8);
@@ -3180,31 +3516,28 @@ public:
         threeByteOpImmSimd("vinsertps", VEX_PD, OP3_INSERTPS_VpsUps, ESCAPE_3A, mask, offset, base, src0, dst);
     }
 
+    void vpinsrb_irr(unsigned lane, RegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        MOZ_ASSERT(lane < 16);
+        threeByteOpImmInt32Simd("vpinsrb", VEX_PD, OP3_PINSRB_VdqEdIb, ESCAPE_3A, lane, src1, src0, dst);
+    }
+
     void vpinsrd_irr(unsigned lane, RegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
     {
         MOZ_ASSERT(lane < 4);
         threeByteOpImmInt32Simd("vpinsrd", VEX_PD, OP3_PINSRD_VdqEdIb, ESCAPE_3A, lane, src1, src0, dst);
     }
 
-    void vpinsrd_imr(unsigned lane, int32_t offset, RegisterID base, XMMRegisterID src0, XMMRegisterID dst)
+    void vpextrb_irr(unsigned lane, XMMRegisterID src, RegisterID dst)
     {
-        MOZ_ASSERT(lane < 4);
-        threeByteOpImmInt32Simd("vpinsrd", VEX_PD, OP3_PINSRD_VdqEdIb, ESCAPE_3A, lane, offset, base, src0, dst);
+        MOZ_ASSERT(lane < 16);
+        threeByteOpImmSimdInt32("vpextrb", VEX_PD, OP3_PEXTRB_EdVdqIb, ESCAPE_3A, lane, (XMMRegisterID)dst, (RegisterID)src);
     }
 
     void vpextrd_irr(unsigned lane, XMMRegisterID src, RegisterID dst)
     {
         MOZ_ASSERT(lane < 4);
         threeByteOpImmSimdInt32("vpextrd", VEX_PD, OP3_PEXTRD_EdVdqIb, ESCAPE_3A, lane, (XMMRegisterID)dst, (RegisterID)src);
-    }
-
-    void vpextrd_irm(unsigned lane, XMMRegisterID src, int32_t offset, RegisterID base)
-    {
-        MOZ_ASSERT(lane < 4);
-        spew("pextrd     $0x%x, %s, " MEM_ob, lane, XMMRegName(src), ADDR_ob(offset, base));
-        m_formatter.prefix(PRE_SSE_66);
-        m_formatter.threeByteOp(OP3_PEXTRD_EdVdqIb, ESCAPE_3A, offset, base, (RegisterID)src);
-        m_formatter.immediate8u(lane);
     }
 
     void vblendps_irr(unsigned imm, XMMRegisterID src1, XMMRegisterID src0, XMMRegisterID dst)
@@ -3361,17 +3694,12 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
         m_formatter.floatConstant(f);
     }
 
-    void int32x4Constant(const int32_t s[4])
+    void simd128Constant(const void* data)
     {
-        spew(".int %d,%d,%d,%d", s[0], s[1], s[2], s[3]);
+        const uint32_t* dw = reinterpret_cast<const uint32_t*>(data);
+        spew(".int 0x%08x,0x%08x,0x%08x,0x%08x", dw[0], dw[1], dw[2], dw[3]);
         MOZ_ASSERT(m_formatter.isAligned(16));
-        m_formatter.int32x4Constant(s);
-    }
-    void float32x4Constant(const float f[4])
-    {
-        spew(".float %g,%g,%g,%g", f[0], f[1], f[2], f[3]);
-        MOZ_ASSERT(m_formatter.isAligned(16));
-        m_formatter.float32x4Constant(f);
+        m_formatter.simd128Constant(data);
     }
 
     void int64Constant(int64_t i)
@@ -3443,6 +3771,7 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
         MOZ_RELEASE_ASSERT(to.offset() == -1 || size_t(to.offset()) <= size());
 
         unsigned char* code = m_formatter.data();
+        AutoUnprotectAssemblerBufferRegion unprotect(*this, from.offset() - 4, 4);
         SetInt32(code + from.offset(), to.offset());
     }
 
@@ -3461,6 +3790,7 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
 
         spew(".set .Lfrom%d, .Llabel%d", from.offset(), to.offset());
         unsigned char* code = m_formatter.data();
+        AutoUnprotectAssemblerBufferRegion unprotect(*this, from.offset() - 4, 4);
         SetRel32(code + from.offset(), code + to.offset());
     }
 
@@ -3468,14 +3798,19 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
     {
         memcpy(buffer, m_formatter.buffer(), size());
     }
-    bool appendBuffer(const BaseAssembler& other)
+    MOZ_MUST_USE bool appendBuffer(const BaseAssembler& other)
     {
-        size_t otherSize = other.size();
-        size_t formerSize = size();
-        if (!m_formatter.growByUninitialized(otherSize))
-            return false;
-        memcpy((char*)m_formatter.buffer() + formerSize, other.m_formatter.buffer(), otherSize);
-        return true;
+        return m_formatter.append(other.m_formatter.buffer(), other.size());
+    }
+
+    void enableBufferProtection() { m_formatter.enableBufferProtection(); }
+    void disableBufferProtection() { m_formatter.disableBufferProtection(); }
+
+    void unprotectDataRegion(size_t firstByteOffset, size_t lastByteOffset) {
+        m_formatter.unprotectDataRegion(firstByteOffset, lastByteOffset);
+    }
+    void reprotectDataRegion(size_t firstByteOffset, size_t lastByteOffset) {
+        m_formatter.reprotectDataRegion(firstByteOffset, lastByteOffset);
     }
 
   protected:
@@ -3781,6 +4116,22 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
 
         spew("%-11s$0x%x, %s, %s", name, imm, XMMRegName(rm), GPReg32Name(dst));
         m_formatter.twoByteOpVex(ty, opcode, (RegisterID)rm, invalid_xmm, dst);
+        m_formatter.immediate8u(imm);
+    }
+
+    void twoByteOpImmInt32Simd(const char* name, VexOperandType ty, TwoByteOpcodeID opcode,
+                               uint32_t imm, RegisterID rm, XMMRegisterID src0, XMMRegisterID dst)
+    {
+        if (useLegacySSEEncodingForOtherOutput()) {
+            spew("%-11s$0x%x, %s, %s", legacySSEOpName(name), imm, GPReg32Name(rm), XMMRegName(dst));
+            m_formatter.legacySSEPrefix(ty);
+            m_formatter.twoByteOp(opcode, rm, dst);
+            m_formatter.immediate8u(imm);
+            return;
+        }
+
+        spew("%-11s$0x%x, %s, %s", name, imm, GPReg32Name(rm), XMMRegName(dst));
+        m_formatter.twoByteOpVex(ty, opcode, rm, src0, dst);
         m_formatter.immediate8u(imm);
     }
 
@@ -4618,14 +4969,14 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
         // above will have ensured space.
 
         // A signed 8-bit immediate.
-        void immediate8s(int32_t imm)
+        MOZ_ALWAYS_INLINE void immediate8s(int32_t imm)
         {
             MOZ_ASSERT(CAN_SIGN_EXTEND_8_32(imm));
             m_buffer.putByteUnchecked(imm);
         }
 
         // An unsigned 8-bit immediate.
-        void immediate8u(uint32_t imm)
+        MOZ_ALWAYS_INLINE void immediate8u(uint32_t imm)
         {
             MOZ_ASSERT(CAN_ZERO_EXTEND_8_32(imm));
             m_buffer.putByteUnchecked(int32_t(imm));
@@ -4633,20 +4984,20 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
 
         // An 8-bit immediate with is either signed or unsigned, for use in
         // instructions which actually only operate on 8 bits.
-        void immediate8(int32_t imm)
+        MOZ_ALWAYS_INLINE void immediate8(int32_t imm)
         {
             m_buffer.putByteUnchecked(imm);
         }
 
         // A signed 16-bit immediate.
-        void immediate16s(int32_t imm)
+        MOZ_ALWAYS_INLINE void immediate16s(int32_t imm)
         {
             MOZ_ASSERT(CAN_SIGN_EXTEND_16_32(imm));
             m_buffer.putShortUnchecked(imm);
         }
 
         // An unsigned 16-bit immediate.
-        void immediate16u(int32_t imm)
+        MOZ_ALWAYS_INLINE void immediate16u(int32_t imm)
         {
             MOZ_ASSERT(CAN_ZERO_EXTEND_16_32(imm));
             m_buffer.putShortUnchecked(imm);
@@ -4654,22 +5005,22 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
 
         // A 16-bit immediate with is either signed or unsigned, for use in
         // instructions which actually only operate on 16 bits.
-        void immediate16(int32_t imm)
+        MOZ_ALWAYS_INLINE void immediate16(int32_t imm)
         {
             m_buffer.putShortUnchecked(imm);
         }
 
-        void immediate32(int32_t imm)
+        MOZ_ALWAYS_INLINE void immediate32(int32_t imm)
         {
             m_buffer.putIntUnchecked(imm);
         }
 
-        void immediate64(int64_t imm)
+        MOZ_ALWAYS_INLINE void immediate64(int64_t imm)
         {
             m_buffer.putInt64Unchecked(imm);
         }
 
-        MOZ_WARN_UNUSED_RESULT JmpSrc
+        MOZ_ALWAYS_INLINE MOZ_MUST_USE JmpSrc
         immediateRel32()
         {
             m_buffer.putIntUnchecked(0);
@@ -4700,16 +5051,12 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
             m_buffer.putIntUnchecked(mozilla::BitwiseCast<uint32_t>(f));
         }
 
-        void int32x4Constant(const int32_t s[4])
+        void simd128Constant(const void* data)
         {
-            for (size_t i = 0; i < 4; ++i)
-                int32Constant(s[i]);
-        }
-
-        void float32x4Constant(const float s[4])
-        {
-            for (size_t i = 0; i < 4; ++i)
-                floatConstant(s[i]);
+            const uint8_t* bytes = reinterpret_cast<const uint8_t*>(data);
+            m_buffer.ensureSpace(16);
+            for (size_t i = 0; i < 16; ++i)
+                m_buffer.putByteUnchecked(bytes[i]);
         }
 
         void int64Constant(int64_t i)
@@ -4727,11 +5074,25 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
         // Administrative methods:
 
         size_t size() const { return m_buffer.size(); }
-        bool growByUninitialized(size_t size) { return m_buffer.growByUninitialized(size); }
         const unsigned char* buffer() const { return m_buffer.buffer(); }
         bool oom() const { return m_buffer.oom(); }
         bool isAligned(int alignment) const { return m_buffer.isAligned(alignment); }
         unsigned char* data() { return m_buffer.data(); }
+
+        MOZ_MUST_USE bool append(const unsigned char* values, size_t size)
+        {
+            return m_buffer.append(values, size);
+        }
+
+        void enableBufferProtection() { m_buffer.enableBufferProtection(); }
+        void disableBufferProtection() { m_buffer.disableBufferProtection(); }
+
+        void unprotectDataRegion(size_t firstByteOffset, size_t lastByteOffset) {
+            m_buffer.unprotectDataRegion(firstByteOffset, lastByteOffset);
+        }
+        void reprotectDataRegion(size_t firstByteOffset, size_t lastByteOffset) {
+            m_buffer.reprotectDataRegion(firstByteOffset, lastByteOffset);
+        }
 
     private:
 
@@ -4964,6 +5325,23 @@ threeByteOpImmSimd("vblendps", VEX_PD, OP3_BLENDPS_VpsWpsIb, ESCAPE_3A, imm, off
 
     bool useVEX_;
 };
+
+MOZ_ALWAYS_INLINE
+AutoUnprotectAssemblerBufferRegion::AutoUnprotectAssemblerBufferRegion(BaseAssembler& holder,
+                                                                       int32_t offset, size_t size)
+{
+    assembler = &holder;
+    MOZ_ASSERT(offset >= 0);
+    firstByteOffset = size_t(offset);
+    lastByteOffset = firstByteOffset + (size - 1);
+    assembler->unprotectDataRegion(firstByteOffset, lastByteOffset);
+}
+
+MOZ_ALWAYS_INLINE
+AutoUnprotectAssemblerBufferRegion::~AutoUnprotectAssemblerBufferRegion()
+{
+    assembler->reprotectDataRegion(firstByteOffset, lastByteOffset);
+}
 
 } // namespace X86Encoding
 

@@ -60,7 +60,7 @@ using namespace mozilla::gfx;
 using namespace mozilla::image;
 using namespace mozilla::layers;
 
-class nsImageBoxFrameEvent : public nsRunnable
+class nsImageBoxFrameEvent : public Runnable
 {
 public:
   nsImageBoxFrameEvent(nsIContent *content, EventMessage message)
@@ -210,6 +210,8 @@ nsImageBoxFrame::UpdateImage()
 {
   nsPresContext* presContext = PresContext();
 
+  RefPtr<imgRequestProxy> oldImageRequest = mImageRequest;
+
   if (mImageRequest) {
     nsLayoutUtils::DeregisterImageRequest(presContext, mImageRequest,
                                           &mRequestRegistered);
@@ -223,28 +225,24 @@ nsImageBoxFrame::UpdateImage()
   mUseSrcAttr = !src.IsEmpty();
   if (mUseSrcAttr) {
     nsIDocument* doc = mContent->GetComposedDoc();
-    if (!doc) {
-      // No need to do anything here...
-      return;
-    }
-    nsCOMPtr<nsIURI> baseURI = mContent->GetBaseURI();
-    nsCOMPtr<nsIURI> uri;
-    nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(uri),
-                                              src,
-                                              doc,
-                                              baseURI);
+    if (doc) {
+      nsCOMPtr<nsIURI> baseURI = mContent->GetBaseURI();
+      nsCOMPtr<nsIURI> uri;
+      nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(uri),
+                                                src,
+                                                doc,
+                                                baseURI);
+      if (uri) {
+        nsresult rv = nsContentUtils::LoadImage(uri, mContent, doc, mContent->NodePrincipal(),
+                                                doc->GetDocumentURI(), doc->GetReferrerPolicy(),
+                                                mListener, mLoadFlags,
+                                                EmptyString(), getter_AddRefs(mImageRequest));
 
-    if (uri && nsContentUtils::CanLoadImage(uri, mContent, doc,
-                                            mContent->NodePrincipal())) {
-      nsContentUtils::LoadImage(uri, mContent, doc, mContent->NodePrincipal(),
-                                doc->GetDocumentURI(), doc->GetReferrerPolicy(),
-                                mListener, mLoadFlags,
-                                EmptyString(), getter_AddRefs(mImageRequest));
-
-      if (mImageRequest) {
-        nsLayoutUtils::RegisterImageRequestIfAnimated(presContext,
-                                                      mImageRequest,
-                                                      &mRequestRegistered);
+        if (NS_SUCCEEDED(rv) && mImageRequest) {
+          nsLayoutUtils::RegisterImageRequestIfAnimated(presContext,
+                                                        mImageRequest,
+                                                        &mRequestRegistered);
+        }
       }
     }
   } else {
@@ -268,6 +266,11 @@ nsImageBoxFrame::UpdateImage()
     // We don't want discarding or decode-on-draw for xul images.
     mImageRequest->StartDecoding();
     mImageRequest->LockImage();
+  }
+
+  // Do this _after_ locking the new image in case they are the same image.
+  if (oldImageRequest) {
+    oldImageRequest->UnlockImage();
   }
 }
 
@@ -398,7 +401,7 @@ nsImageBoxFrame::PaintImage(nsRenderingContext& aRenderingContext,
   return nsLayoutUtils::DrawSingleImage(
            *aRenderingContext.ThebesContext(),
            PresContext(), imgCon,
-           nsLayoutUtils::GetGraphicsFilterForFrame(this),
+           nsLayoutUtils::GetSamplingFilterForFrame(this),
            dest, dirty, nullptr, aFlags,
            anchorPoint.ptrOr(nullptr),
            hasSubRect ? &mSubRect : nullptr);

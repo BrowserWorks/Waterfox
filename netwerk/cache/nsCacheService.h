@@ -38,7 +38,7 @@ class mozIStorageService;
  * nsNotifyDoomListener
  *****************************************************************************/
 
-class nsNotifyDoomListener : public nsRunnable {
+class nsNotifyDoomListener : public mozilla::Runnable {
 public:
     nsNotifyDoomListener(nsICacheListener *listener,
                          nsresult status)
@@ -327,6 +327,7 @@ private:
 
     mozilla::Mutex                  mLock;
     mozilla::CondVar                mCondVar;
+    bool                            mNotified;
 
     mozilla::Mutex                  mTimeStampLock;
     mozilla::TimeStamp              mLockAcquiredTimeStamp;

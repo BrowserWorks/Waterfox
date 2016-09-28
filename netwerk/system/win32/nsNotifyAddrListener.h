@@ -34,7 +34,7 @@ public:
     void CheckLinkStatus(void);
 
 protected:
-    class ChangeEvent : public nsRunnable {
+    class ChangeEvent : public mozilla::Runnable {
     public:
         NS_DECL_NSIRUNNABLE
         ChangeEvent(nsINetworkLinkService *aService, const char *aEventID)
@@ -66,6 +66,11 @@ private:
 
     // Called for every detected network change
     nsresult NetworkChanged();
+
+    // Figure out the current network identification
+    void calculateNetworkId(void);
+    void findMac(char *gateway);
+    nsCString mNetworkId;
 
     HANDLE mCheckEvent;
 

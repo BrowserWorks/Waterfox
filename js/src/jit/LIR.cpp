@@ -89,7 +89,7 @@ LBlock::init(TempAllocator& alloc)
     size_t numLPhis = 0;
     for (MPhiIterator i(block_->phisBegin()), e(block_->phisEnd()); i != e; ++i) {
         MPhi* phi = *i;
-        numLPhis += (phi->type() == MIRType_Value) ? BOX_PIECES : 1;
+        numLPhis += (phi->type() == MIRType::Value) ? BOX_PIECES : 1;
     }
 
     // Allocate space for the LPhis.
@@ -105,7 +105,7 @@ LBlock::init(TempAllocator& alloc)
         MPhi* phi = *i;
         MOZ_ASSERT(phi->numOperands() == numPreds);
 
-        int numPhis = (phi->type() == MIRType_Value) ? BOX_PIECES : 1;
+        int numPhis = (phi->type() == MIRType::Value) ? BOX_PIECES : 1;
         for (int i = 0; i < numPhis; i++) {
             LAllocation* inputs = alloc.allocateArray<LAllocation>(numPreds);
             if (!inputs)
@@ -347,8 +347,8 @@ static const char * const TypeChars[] =
     "s",            // SLOTS
     "f",            // FLOAT32
     "d",            // DOUBLE
-    "i32x4",        // INT32X4
-    "f32x4",        // FLOAT32X4
+    "simd128int",   // SIMD128INT
+    "simd128float", // SIMD128FLOAT
     "sincos",       // SINCOS
 #ifdef JS_NUNBOX32
     "t",            // TYPE

@@ -90,12 +90,24 @@
             "description": "The $(topic:transition-types)[transition type] for this visit from its referrer."
           }
         }
+      },
+      {
+        "id": "HistoryTime",
+        "description": "A time specified as a Date object, a number or string representing milliseconds since the epoch, or an ISO 8601 string",
+        "choices": [
+          {
+            "type": "string",
+            "pattern": "^[1-9]\\d*$"
+          },
+          {
+            "$ref": "extensionTypes.Date"
+          }
+        ]
       }
     ],
     "functions": [
       {
         "name": "search",
-        "unsupported": true,
         "type": "function",
         "description": "Searches the history for the last visit time of each page matching the query.",
         "async": "callback",
@@ -109,19 +121,19 @@
                 "description": "A free-text query to the history service.  Leave empty to retrieve all pages."
               },
               "startTime": {
-                "type": "number",
+                "$ref": "HistoryTime",
                 "optional": true,
-                "description": "Limit results to those visited after this date, represented in milliseconds since the epoch. If not specified, this defaults to 24 hours in the past."
+                "description": "Limit results to those visited after this date. If not specified, this defaults to 24 hours in the past."
               },
               "endTime": {
-                "type": "number",
+                "$ref": "HistoryTime",
                 "optional": true,
-                "description": "Limit results to those visited before this date, represented in milliseconds since the epoch."
+                "description": "Limit results to those visited before this date."
               },
               "maxResults": {
                 "type": "integer",
                 "optional": true,
-                "minimum": 0,
+                "minimum": 1,
                 "description": "The maximum number of results to retrieve.  Defaults to 100."
               }
             }
@@ -175,9 +187,8 @@
       },
       {
         "name": "addUrl",
-        "unsupported": true,
         "type": "function",
-        "description": "Adds a URL to the history at the current time with a $(topic:transition-types)[transition type] of \"link\".",
+        "description": "Adds a URL to the history with a default visitTime of the current time and a default $(topic:transition-types)[transition type] of \"link\".",
         "async": "callback",
         "parameters": [
           {
@@ -186,7 +197,22 @@
             "properties": {
               "url": {
                 "type": "string",
-                "description": "The URL to add."
+                "description": "The URL to add. Must be a valid URL that can be added to history."
+              },
+              "title": {
+                "type": "string",
+                "optional": true,
+                "description": "The title of the page."
+              },
+              "transition": {
+                "$ref": "TransitionType",
+                "optional": true,
+                "description": "The $(topic:transition-types)[transition type] for this visit from its referrer."
+              },
+              "visitTime": {
+                "$ref": "HistoryTime",
+                "optional": true,
+                "description": "The date when this visit occurred."
               }
             }
           },
@@ -200,7 +226,6 @@
       },
       {
         "name": "deleteUrl",
-        "unsupported": true,
         "type": "function",
         "description": "Removes all occurrences of the given URL from the history.",
         "async": "callback",
@@ -225,7 +250,6 @@
       },
       {
         "name": "deleteRange",
-        "unsupported": true,
         "type": "function",
         "description": "Removes all items within the specified date range from the history.  Pages will not be removed from the history unless all visits fall within the range.",
         "async": "callback",
@@ -235,12 +259,12 @@
             "type": "object",
             "properties": {
               "startTime": {
-                "type": "number",
-                "description": "Items added to history after this date, represented in milliseconds since the epoch."
+                "$ref": "HistoryTime",
+                "description": "Items added to history after this date."
               },
               "endTime": {
-                "type": "number",
-                "description": "Items added to history before this date, represented in milliseconds since the epoch."
+                "$ref": "HistoryTime",
+                "description": "Items added to history before this date."
               }
             }
           },
@@ -253,7 +277,6 @@
       },
       {
         "name": "deleteAll",
-        "unsupported": true,
         "type": "function",
         "description": "Deletes all items from the history.",
         "async": "callback",

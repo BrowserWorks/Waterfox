@@ -14,7 +14,11 @@ var gTab, gPanel, gDebugger;
 var gEditor, gSources, gSearchView, gSearchBox;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -183,7 +187,7 @@ function test() {
          "The global search pane splitter shouldn't be visible after clearing.");
     }
 
-    Task.spawn(function*() {
+    Task.spawn(function* () {
       yield waitForSourceAndCaretAndScopes(gPanel, "-02.js", 1);
       yield firstSearch();
       yield doFirstJump();

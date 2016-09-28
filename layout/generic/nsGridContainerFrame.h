@@ -106,6 +106,7 @@ public:
   }
 
   struct TrackSize;
+  struct GridItemInfo;
 protected:
   static const uint32_t kAutoLine;
   // The maximum line number, in the zero-based translated grid.
@@ -120,7 +121,6 @@ protected:
   struct Grid;
   struct GridArea;
   class GridItemCSSOrderIterator;
-  struct GridItemInfo;
   struct GridReflowState;
   class LineNameMap;
   struct LineRange;
@@ -231,14 +231,15 @@ private:
                                     nscoord              aAvailableSize);
 
   // Helper for ReflowChildren / ReflowInFragmentainer
-  void ReflowInFlowChild(nsIFrame*              aChild,
-                         const GridItemInfo*    aGridItemInfo,
-                         nsSize                 aContainerSize,
-                         const Fragmentainer*   aFragmentainer,
-                         const GridReflowState& aState,
-                         const LogicalRect&     aContentArea,
-                         nsHTMLReflowMetrics&   aDesiredSize,
-                         nsReflowStatus&        aStatus);
+  void ReflowInFlowChild(nsIFrame*               aChild,
+                         const GridItemInfo*     aGridItemInfo,
+                         nsSize                  aContainerSize,
+                         mozilla::Maybe<nscoord> aStretchBSize,
+                         const Fragmentainer*    aFragmentainer,
+                         const GridReflowState&  aState,
+                         const LogicalRect&      aContentArea,
+                         nsHTMLReflowMetrics&    aDesiredSize,
+                         nsReflowStatus&         aStatus);
 
   /**
    * Cached values to optimize GetMinISize/GetPrefISize.

@@ -7,11 +7,12 @@
 "use strict";
 
 const {Cc, Ci, Cu} = require("chrome");
-const {escapeCSSComment} = require("devtools/client/shared/css-parsing-utils");
+const {escapeCSSComment} = require("devtools/shared/css-parsing-utils");
+const {getCssProperties} = require("devtools/shared/fronts/css-properties");
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "domUtils", function() {
+XPCOMUtils.defineLazyGetter(this, "domUtils", function () {
   return Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
 });
 
@@ -49,6 +50,9 @@ function TextProperty(rule, name, value, priority, enabled = true,
   this.enabled = !!enabled;
   this.invisible = invisible;
   this.updateComputed();
+
+  const toolbox = this.rule.elementStyle.ruleView.inspector.toolbox;
+  this.cssProperties = getCssProperties(toolbox);
 }
 
 TextProperty.prototype = {
@@ -56,7 +60,7 @@ TextProperty.prototype = {
    * Update the editor associated with this text property,
    * if any.
    */
-  updateEditor: function() {
+  updateEditor: function () {
     if (this.editor) {
       this.editor.update();
     }
@@ -65,7 +69,7 @@ TextProperty.prototype = {
   /**
    * Update the list of computed properties for this text property.
    */
-  updateComputed: function() {
+  updateComputed: function () {
     if (!this.name) {
       return;
     }
@@ -107,7 +111,7 @@ TextProperty.prototype = {
    * @param {TextProperty} prop
    *        The other TextProperty instance.
    */
-  set: function(prop) {
+  set: function (prop) {
     let changed = false;
     for (let item of ["name", "value", "priority", "enabled"]) {
       if (this[item] !== prop[item]) {
@@ -121,7 +125,7 @@ TextProperty.prototype = {
     }
   },
 
-  setValue: function(value, priority, force = false) {
+  setValue: function (value, priority, force = false) {
     let store = this.rule.elementStyle.store;
 
     if (this.editor && value !== this.editor.committed.value || force) {
@@ -136,14 +140,14 @@ TextProperty.prototype = {
    * Called when the property's value has been updated externally, and
    * the property and editor should update.
    */
-  noticeNewValue: function(value) {
+  noticeNewValue: function (value) {
     if (value !== this.value) {
       this.value = value;
       this.updateEditor();
     }
   },
 
-  setName: function(name) {
+  setName: function (name) {
     let store = this.rule.elementStyle.store;
 
     if (name !== this.name) {
@@ -155,19 +159,19 @@ TextProperty.prototype = {
     this.updateEditor();
   },
 
-  setEnabled: function(value) {
+  setEnabled: function (value) {
     this.rule.setPropertyEnabled(this, value);
     this.updateEditor();
   },
 
-  remove: function() {
+  remove: function () {
     this.rule.removeProperty(this);
   },
 
   /**
    * Return a string representation of the rule property.
    */
-  stringifyProperty: function() {
+  stringifyProperty: function () {
     // Get the displayed property value
     let declaration = this.name + ": " + this.editor.valueSpan.textContent +
       ";";
@@ -185,26 +189,36 @@ TextProperty.prototype = {
    *
    * @return {Boolean} true if the property name is known, false otherwise.
    */
-  isKnownProperty: function() {
-    try {
-      // If the property name is invalid, the cssPropertyIsShorthand
-      // will throw an exception.  But if it is valid, no exception will
-      // be thrown; so we just ignore the return value.
-      domUtils.cssPropertyIsShorthand(this.name);
-      return true;
-    } catch (e) {
-      return false;
-    }
+  isKnownProperty: function () {
+    return this.cssProperties.isKnown(this.name);
   },
 
   /**
    * Validate this property. Does it make sense for this value to be assigned
-   * to this property name? This does not apply the property value
+   * to this property name?
    *
    * @return {Boolean} true if the property value is valid, false otherwise.
    */
-  isValid: function() {
-    return domUtils.cssPropertyIsValid(this.name, this.value);
+  isValid: function () {
+    // Starting with FF49, StyleRuleActors provide a list of parsed
+    // declarations, with data about their validity, but if we don't have this,
+    // compute validity locally (which might not be correct, but better than
+    // nothing).
+    if (!this.rule.domRule.declarations) {
+      return domUtils.cssPropertyIsValid(this.name, this.value);
+    }
+
+    let selfIndex = this.rule.textProps.indexOf(this);
+
+    // When adding a new property in the rule-view, the TextProperty object is
+    // created right away before the rule gets updated on the server, so we're
+    // not going to find the corresponding declaration object yet. Default to
+    // true.
+    if (!this.rule.domRule.declarations[selfIndex]) {
+      return true;
+    }
+
+    return this.rule.domRule.declarations[selfIndex].isValid;
   }
 };
 

@@ -33,6 +33,10 @@
 #endif
 #endif
 
+#ifndef USE_FAKE_MEDIA_STREAMS
+#include "MediaStreamGraphImpl.h"
+#endif
+
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsIURI.h"
@@ -111,9 +115,37 @@ PipelineDetachTransport_s(RefPtr<MediaPipeline> pipeline,
 }
 
 void
+SourceStreamInfo::EndTrack(MediaStream* stream, dom::MediaStreamTrack* track)
+{
+  if (!stream || !stream->AsSourceStream()) {
+    return;
+  }
+
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  class Message : public ControlMessage {
+   public:
+    Message(MediaStream* stream, TrackID track)
+      : ControlMessage(stream),
+        track_id_(track) {}
+
+    virtual void Run() override {
+      mStream->AsSourceStream()->EndTrack(track_id_);
+    }
+   private:
+    TrackID track_id_;
+  };
+
+  stream->GraphImpl()->AppendMessage(
+      MakeUnique<Message>(stream, track->mTrackID));
+#endif
+
+}
+
+void
 SourceStreamInfo::RemoveTrack(const std::string& trackId)
 {
   mTracks.erase(trackId);
+
   RefPtr<MediaPipeline> pipeline = GetPipelineByTrackId_m(trackId);
   if (pipeline) {
     mPipelines.erase(trackId);
@@ -244,10 +276,20 @@ PeerConnectionMedia::PeerConnectionMedia(PeerConnectionImpl *parent)
       mIceRestartState(ICE_RESTART_NONE) {
 }
 
-nsresult PeerConnectionMedia::Init(const std::vector<NrIceStunServer>& stun_servers,
-                                   const std::vector<NrIceTurnServer>& turn_servers,
-                                   NrIceCtx::Policy policy)
+nsresult
+PeerConnectionMedia::InitProxy()
 {
+#if !defined(MOZILLA_EXTERNAL_LINKAGE)
+  // Allow mochitests to disable this, since mochitest configures a fake proxy
+  // that serves up content.
+  bool disable = Preferences::GetBool("media.peerconnection.disable_http_proxy",
+                                      false);
+  if (disable) {
+    mProxyResolveCompleted = true;
+    return NS_OK;
+  }
+#endif
+
   nsresult rv;
   nsCOMPtr<nsIProtocolProxyService> pps =
     do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID, &rv);
@@ -304,6 +346,16 @@ nsresult PeerConnectionMedia::Init(const std::vector<NrIceStunServer>& stun_serv
     CSFLogError(logTag, "%s: Failed to resolve protocol proxy: %d", __FUNCTION__, (int)rv);
     return NS_ERROR_FAILURE;
   }
+
+  return NS_OK;
+}
+
+nsresult PeerConnectionMedia::Init(const std::vector<NrIceStunServer>& stun_servers,
+                                   const std::vector<NrIceTurnServer>& turn_servers,
+                                   NrIceCtx::Policy policy)
+{
+  nsresult rv = InitProxy();
+  NS_ENSURE_SUCCESS(rv, rv);
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
   bool ice_tcp = Preferences::GetBool("media.peerconnection.ice.tcp", false);
@@ -926,23 +978,6 @@ PeerConnectionMedia::RemoveRemoteTrack(const std::string& streamId,
   return NS_OK;
 }
 
-nsresult
-PeerConnectionMedia::GetRemoteTrackId(const std::string streamId,
-                                      const MediaStreamTrack& track,
-                                      std::string* trackId) const
-{
-  auto* ncThis = const_cast<PeerConnectionMedia*>(this);
-  const RemoteSourceStreamInfo* info =
-    ncThis->GetRemoteStreamById(streamId);
-
-  if (!info) {
-    CSFLogError(logTag, "%s: Could not find stream info", __FUNCTION__);
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
-  return info->GetTrackId(track, trackId);
-}
-
 void
 PeerConnectionMedia::SelfDestruct()
 {
@@ -1159,6 +1194,7 @@ PeerConnectionMedia::OnCandidateFound_s(NrIceMediaStream *aStream,
 {
   ASSERT_ON_THREAD(mSTSThread);
   MOZ_ASSERT(aStream);
+  MOZ_RELEASE_ASSERT(mIceCtxHdlr);
 
   CSFLogDebug(logTag, "%s: %s", __FUNCTION__, aStream->name().c_str());
 
@@ -1371,25 +1407,22 @@ LocalSourceStreamInfo::TakePipelineFrom(RefPtr<LocalSourceStreamInfo>& info,
 
 #if !defined(MOZILLA_EXTERNAL_LINKAGE)
 /**
- * Tells you if any local streams is isolated to a specific peer identity.
- * Obviously, we want all the streams to be isolated equally so that they can
+ * Tells you if any local track is isolated to a specific peer identity.
+ * Obviously, we want all the tracks to be isolated equally so that they can
  * all be sent or not.  We check once when we are setting a local description
  * and that determines if we flip the "privacy requested" bit on.  Once the bit
  * is on, all media originating from this peer connection is isolated.
  *
- * @returns true if any stream has a peerIdentity set on it
+ * @returns true if any track has a peerIdentity set on it
  */
 bool
-PeerConnectionMedia::AnyLocalStreamHasPeerIdentity() const
+PeerConnectionMedia::AnyLocalTrackHasPeerIdentity() const
 {
   ASSERT_ON_THREAD(mMainThread);
 
   for (uint32_t u = 0; u < mLocalSourceStreams.Length(); u++) {
-    DOMMediaStream* stream = mLocalSourceStreams[u]->GetMediaStream();
-    nsTArray<RefPtr<MediaStreamTrack>> tracks;
-    stream->GetTracks(tracks);
-    for (const RefPtr<MediaStreamTrack>& track : tracks) {
-      if (track->GetPeerIdentity() != nullptr) {
+    for (auto pair : mLocalSourceStreams[u]->GetMediaStreamTracks()) {
+      if (pair.second->GetPeerIdentity() != nullptr) {
         return true;
       }
     }
@@ -1481,26 +1514,6 @@ SourceStreamInfo::AnyCodecHasPluginID(uint64_t aPluginID)
   return false;
 }
 
-#if !defined(MOZILLA_EXTERNAL_LINKAGE)
-RefPtr<mozilla::dom::VideoStreamTrack>
-SourceStreamInfo::GetVideoTrackByTrackId(const std::string& trackId)
-{
-  nsTArray<RefPtr<mozilla::dom::VideoStreamTrack>> videoTracks;
-
-  mMediaStream->GetVideoTracks(videoTracks);
-
-  for (size_t i = 0; i < videoTracks.Length(); ++i) {
-    nsString aTrackId;
-    videoTracks[i]->GetId(aTrackId);
-    if (aTrackId.EqualsIgnoreCase(trackId.c_str())) {
-      return videoTracks[i];
-    }
-  }
-
-  return nullptr;
-}
-#endif
-
 nsresult
 SourceStreamInfo::StorePipeline(
     const std::string& trackId,
@@ -1514,6 +1527,26 @@ SourceStreamInfo::StorePipeline(
 
   mPipelines[trackId] = aPipeline;
   return NS_OK;
+}
+
+void
+RemoteSourceStreamInfo::DetachMedia_m()
+{
+  for (auto& webrtcIdAndTrack : mTracks) {
+    EndTrack(mMediaStream->GetInputStream(), webrtcIdAndTrack.second);
+  }
+  SourceStreamInfo::DetachMedia_m();
+}
+
+void
+RemoteSourceStreamInfo::RemoveTrack(const std::string& trackId)
+{
+  auto it = mTracks.find(trackId);
+  if (it != mTracks.end()) {
+    EndTrack(mMediaStream->GetInputStream(), it->second);
+  }
+
+  SourceStreamInfo::RemoveTrack(trackId);
 }
 
 void
@@ -1554,7 +1587,6 @@ RemoteSourceStreamInfo::StartReceiving()
   mReceiving = true;
 
   SourceMediaStream* source = GetMediaStream()->GetInputStream()->AsSourceStream();
-  source->FinishAddTracks();
   source->SetPullEnabled(true);
   // AdvanceKnownTracksTicksTime(HEAT_DEATH_OF_UNIVERSE) means that in
   // theory per the API, we can't add more tracks before that

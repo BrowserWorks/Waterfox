@@ -181,6 +181,9 @@ js::CheckTracedThing(JSTracer* trc, T* thing)
     MOZ_ASSERT(trc);
     MOZ_ASSERT(thing);
 
+    if (!trc->checkEdges())
+        return;
+
     thing = MaybeForwarded(thing);
 
     /* This function uses data that's not available in the nursery. */
@@ -347,6 +350,9 @@ AssertRootMarkingPhase(JSTracer* trc)
 // statically select the correct Cell layout for marking. Below, we instantiate
 // each override with a declaration of the most derived layout type.
 //
+// The use of TraceKind::Null for the case where the type is not matched
+// generates a compile error as no template instantiated for that kind.
+//
 // Usage:
 //   BaseGCType<T>::type
 //
@@ -354,16 +360,13 @@ AssertRootMarkingPhase(JSTracer* trc)
 //   BaseGCType<JSFunction>::type => JSObject
 //   BaseGCType<UnownedBaseShape>::type => BaseShape
 //   etc.
-template <typename T,
-          JS::TraceKind = IsBaseOf<JSObject, T>::value     ? JS::TraceKind::Object
-                        : IsBaseOf<JSString, T>::value     ? JS::TraceKind::String
-                        : IsBaseOf<JS::Symbol, T>::value   ? JS::TraceKind::Symbol
-                        : IsBaseOf<JSScript, T>::value     ? JS::TraceKind::Script
-                        : IsBaseOf<Shape, T>::value        ? JS::TraceKind::Shape
-                        : IsBaseOf<BaseShape, T>::value    ? JS::TraceKind::BaseShape
-                        : IsBaseOf<jit::JitCode, T>::value ? JS::TraceKind::JitCode
-                        : IsBaseOf<LazyScript, T>::value   ? JS::TraceKind::LazyScript
-                        :                                    JS::TraceKind::ObjectGroup>
+template <typename T, JS::TraceKind =
+#define EXPAND_MATCH_TYPE(name, type, _) \
+          IsBaseOf<type, T>::value ? JS::TraceKind::name :
+JS_FOR_EACH_TRACEKIND(EXPAND_MATCH_TYPE)
+#undef EXPAND_MATCH_TYPE
+          JS::TraceKind::Null>
+
 struct BaseGCType;
 #define IMPL_BASE_GC_TYPE(name, type_, _) \
     template <typename T> struct BaseGCType<T, JS::TraceKind:: name> { typedef type_ type; };
@@ -979,7 +982,7 @@ LazyScript::traceChildren(JSTracer* trc)
         TraceManuallyBarrieredEdge(trc, &atom, "lazyScriptFreeVariable");
     }
 
-    HeapPtrFunction* innerFunctions = this->innerFunctions();
+    GCPtrFunction* innerFunctions = this->innerFunctions();
     for (auto i : MakeRange(numInnerFunctions()))
         TraceEdge(trc, &innerFunctions[i], "lazyScriptInnerFunction");
 }
@@ -1003,7 +1006,7 @@ js::GCMarker::eagerlyMarkChildren(LazyScript *thing)
     for (auto i : MakeRange(thing->numFreeVariables()))
         traverseEdge(thing, static_cast<JSString*>(freeVariables[i].atom()));
 
-    HeapPtrFunction* innerFunctions = thing->innerFunctions();
+    GCPtrFunction* innerFunctions = thing->innerFunctions();
     for (auto i : MakeRange(thing->numInnerFunctions()))
         traverseEdge(thing, static_cast<JSObject*>(innerFunctions[i]));
 }
@@ -2021,7 +2024,7 @@ template <typename S>
 struct TenuringTraversalFunctor : public IdentityDefaultAdaptor<S> {
     template <typename T> S operator()(T* t, TenuringTracer* trc) {
         trc->traverse(&t);
-        return js::gc::RewrapTaggedPointer<S, T*>::wrap(t);
+        return js::gc::RewrapTaggedPointer<S, T>::wrap(t);
     }
 };
 
@@ -2091,6 +2094,9 @@ js::gc::StoreBuffer::WholeCellEdges::trace(TenuringTracer& mover) const
     JS::TraceKind kind = edge->getTraceKind();
     if (kind == JS::TraceKind::Object) {
         JSObject *object = static_cast<JSObject*>(edge);
+        if (object->is<NativeObject>())
+            object->as<NativeObject>().clearInWholeCellBuffer();
+
         mover.traceObject(object);
 
         // Additionally trace the expando object attached to any unboxed plain
@@ -2150,12 +2156,10 @@ js::TenuringTracer::moveToTenured(JSObject* src)
 
     TenuredCell* t = zone->arenas.allocateFromFreeList(dstKind, Arena::thingSize(dstKind));
     if (!t) {
-        zone->arenas.checkEmptyFreeList(dstKind);
-        AutoMaybeStartBackgroundAllocation maybeStartBackgroundAllocation;
         AutoEnterOOMUnsafeRegion oomUnsafe;
-        t = zone->arenas.allocateFromArena(zone, dstKind, maybeStartBackgroundAllocation);
+        t = runtime()->gc.refillFreeListInGC(zone, dstKind);
         if (!t)
-            oomUnsafe.crash("Failed to allocate object while tenuring.");
+            oomUnsafe.crash(ChunkSize, "Failed to allocate object while tenuring.");
     }
     JSObject* dst = reinterpret_cast<JSObject*>(t);
     tenuredSize += moveObjectToTenured(dst, src, dstKind);
@@ -2312,7 +2316,7 @@ js::TenuringTracer::moveSlotsToTenured(NativeObject* dst, NativeObject* src, All
         AutoEnterOOMUnsafeRegion oomUnsafe;
         dst->slots_ = zone->pod_malloc<HeapSlot>(count);
         if (!dst->slots_)
-            oomUnsafe.crash("Failed to allocate slots while tenuring.");
+            oomUnsafe.crash(sizeof(HeapSlot) * count, "Failed to allocate slots while tenuring.");
     }
 
     PodCopy(dst->slots_, src->slots_, count);
@@ -2353,8 +2357,10 @@ js::TenuringTracer::moveElementsToTenured(NativeObject* dst, NativeObject* src, 
     {
         AutoEnterOOMUnsafeRegion oomUnsafe;
         dstHeader = reinterpret_cast<ObjectElements*>(zone->pod_malloc<HeapSlot>(nslots));
-        if (!dstHeader)
-            oomUnsafe.crash("Failed to allocate elements while tenuring.");
+        if (!dstHeader) {
+            oomUnsafe.crash(sizeof(HeapSlot) * nslots,
+                            "Failed to allocate elements while tenuring.");
+        }
     }
 
     js_memcpy(dstHeader, srcHeader, nslots * sizeof(HeapSlot));
@@ -2424,7 +2430,7 @@ template <typename S>
 struct IsMarkedFunctor : public IdentityDefaultAdaptor<S> {
     template <typename T> S operator()(T* t, bool* rv) {
         *rv = IsMarkedInternal(&t);
-        return js::gc::RewrapTaggedPointer<S, T*>::wrap(t);
+        return js::gc::RewrapTaggedPointer<S, T>::wrap(t);
     }
 };
 
@@ -2480,7 +2486,7 @@ template <typename S>
 struct IsAboutToBeFinalizedFunctor : public IdentityDefaultAdaptor<S> {
     template <typename T> S operator()(T* t, bool* rv) {
         *rv = IsAboutToBeFinalizedInternal(&t);
-        return js::gc::RewrapTaggedPointer<S, T*>::wrap(t);
+        return js::gc::RewrapTaggedPointer<S, T>::wrap(t);
     }
 };
 

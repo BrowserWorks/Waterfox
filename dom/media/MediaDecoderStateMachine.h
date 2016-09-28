@@ -87,6 +87,7 @@ hardware (via AudioStream).
 #include "mozilla/StateMirroring.h"
 
 #include "nsThreadUtils.h"
+#include "MediaCallbackID.h"
 #include "MediaDecoder.h"
 #include "MediaDecoderReader.h"
 #include "MediaDecoderOwner.h"
@@ -142,6 +143,9 @@ public:
                            bool aRealTime = false);
 
   nsresult Init(MediaDecoder* aDecoder);
+
+  void SetMediaDecoderReaderWrapperCallback();
+  void CancelMediaDecoderReaderWrapperCallback();
 
   // Enumeration for the valid decoding states
   enum State {
@@ -364,7 +368,7 @@ private:
 
   // Resets all state related to decoding and playback, emptying all buffers
   // and aborting all pending operations on the decode task queue.
-  void Reset();
+  void Reset(MediaDecoderReader::TargetQueues aQueues = MediaDecoderReader::AUDIO_VIDEO);
 
 protected:
   virtual ~MediaDecoderStateMachine();
@@ -381,7 +385,8 @@ protected:
   void OnAudioPopped(const RefPtr<MediaData>& aSample);
   void OnVideoPopped(const RefPtr<MediaData>& aSample);
 
-  void CheckIsAudible(const MediaData* aSample);
+  void AudioAudibleChanged(bool aAudible);
+
   void VolumeChanged();
   void LogicalPlaybackRateChanged();
   void PreservesPitchChanged();
@@ -467,8 +472,8 @@ protected:
   // Notification method invoked when mPlayState changes.
   void PlayStateChanged();
 
-  // Notification method invoked when mLogicallySeeking changes.
-  void LogicallySeekingChanged();
+  // Notification method invoked when mIsVisible changes.
+  void VisibilityChanged();
 
   // Sets internal state which causes playback of media to pause.
   // The decoder monitor must be held.
@@ -505,9 +510,14 @@ protected:
 
   void EnqueueFirstFrameLoadedEvent();
 
-  // Clears any previous seeking state and initiates a new see on the decoder.
+  // Clears any previous seeking state and initiates a new seek on the decoder.
   // The decoder monitor must be held.
   void InitiateSeek(SeekJob aSeekJob);
+
+  // Clears any previous seeking state and initiates a video-only seek on the
+  // decoder to catch up the video to the current audio position, when recovering
+  // from video decoding being suspended in background.
+  void InitiateVideoDecodeRecoverySeek();
 
   nsresult DispatchAudioDecodeTaskIfNeeded();
 
@@ -590,6 +600,10 @@ protected:
   // decode buffers and is waiting. We can shut the decode thread down in this
   // case as it may not be needed again.
   bool IsPausedAndDecoderWaiting();
+
+  // Returns true if the video decoding is suspended because the element is not
+  // visible
+  bool IsVideoDecodeSuspended() const;
 
   // These return true if the respective stream's decode has not yet reached
   // the end of stream.
@@ -682,6 +696,10 @@ private:
   void OnSeekTaskResolved(SeekTaskResolveValue aValue);
   void OnSeekTaskRejected(SeekTaskRejectValue aValue);
 
+  // This method discards the seek task and then get the ownership of
+  // MedaiDecoderReaderWarpper back via registering MDSM's callback into it.
+  void DiscardSeekTaskIfExist();
+
   // Media Fragment end time in microseconds. Access controlled by decoder monitor.
   int64_t mFragmentEndTime;
 
@@ -748,7 +766,7 @@ private:
   // At the start of decoding we want to "preroll" the decode until we've
   // got a few frames decoded before we consider whether decode is falling
   // behind. Otherwise our "we're falling behind" logic will trigger
-  // unneccessarily if we start playing as soon as the first sample is
+  // unnecessarily if we start playing as soon as the first sample is
   // decoded. These two fields store how many video frames and audio
   // samples we must consume before are considered to be finished prerolling.
   uint32_t AudioPrerollUsecs() const
@@ -773,7 +791,8 @@ private:
   bool DonePrerollingVideo()
   {
     MOZ_ASSERT(OnTaskQueue());
-    return !IsVideoDecoding() ||
+    return !mIsVisible ||
+        !IsVideoDecoding() ||
         static_cast<uint32_t>(VideoQueue().GetSize()) >=
             VideoPrerollFrames() * mPlaybackRate + 1;
   }
@@ -810,39 +829,16 @@ private:
   // Only one of a given pair of ({Audio,Video}DataPromise, WaitForDataPromise)
   // should exist at any given moment.
 
-  MozPromiseRequestHolder<MediaDecoderReader::MediaDataPromise> mAudioDataRequest;
-  MozPromiseRequestHolder<MediaDecoderReader::WaitForDataPromise> mAudioWaitRequest;
-  const char* AudioRequestStatus()
-  {
-    MOZ_ASSERT(OnTaskQueue());
-    if (mAudioDataRequest.Exists()) {
-      MOZ_DIAGNOSTIC_ASSERT(!mAudioWaitRequest.Exists());
-      return "pending";
-    } else if (mAudioWaitRequest.Exists()) {
-      return "waiting";
-    }
-    return "idle";
-  }
+  CallbackID mAudioCallbackID;
+  CallbackID mWaitAudioCallbackID;
+  const char* AudioRequestStatus() const;
 
-  MozPromiseRequestHolder<MediaDecoderReader::WaitForDataPromise> mVideoWaitRequest;
-  MozPromiseRequestHolder<MediaDecoderReader::MediaDataPromise> mVideoDataRequest;
-  const char* VideoRequestStatus()
-  {
-    MOZ_ASSERT(OnTaskQueue());
-    if (mVideoDataRequest.Exists()) {
-      MOZ_DIAGNOSTIC_ASSERT(!mVideoWaitRequest.Exists());
-      return "pending";
-    } else if (mVideoWaitRequest.Exists()) {
-      return "waiting";
-    }
-    return "idle";
-  }
+  CallbackID mVideoCallbackID;
+  CallbackID mWaitVideoCallbackID;
+  const char* VideoRequestStatus() const;
 
-  MozPromiseRequestHolder<MediaDecoderReader::WaitForDataPromise>& WaitRequestRef(MediaData::Type aType)
-  {
-    MOZ_ASSERT(OnTaskQueue());
-    return aType == MediaData::AUDIO_DATA ? mAudioWaitRequest : mVideoWaitRequest;
-  }
+  void OnSuspendTimerResolved();
+  void OnSuspendTimerRejected();
 
   // True if we shouldn't play our audio (but still write it to any capturing
   // streams). When this is true, the audio thread will never start again after
@@ -874,7 +870,7 @@ private:
 
   // True if we've dispatched an event to the decode task queue to call
   // DecodeThreadRun(). We use this flag to prevent us from dispatching
-  // unneccessary runnables, since the decode thread runs in a loop.
+  // unnecessary runnables, since the decode thread runs in a loop.
   bool mDispatchedEventToDecode;
 
   // If this is true while we're in buffering mode, we can exit early,
@@ -916,7 +912,7 @@ private:
   MozPromiseRequestHolder<MediaDecoderReader::BufferedUpdatePromise> mBufferedUpdateRequest;
 
   // True if we need to call FinishDecodeFirstFrame() upon frame decoding
-  // successeeding.
+  // succeeding.
   bool mDecodingFirstFrame;
 
   // True if we are back from DECODER_STATE_DORMANT state and
@@ -931,6 +927,12 @@ private:
 
   bool mSentPlaybackEndedEvent;
 
+  // True if video decoding is suspended.
+  bool mVideoDecodeSuspended;
+
+  // Track enabling video decode suspension via timer
+  DelayedScheduler mVideoDecodeSuspendTimer;
+
   // Data about MediaStreams that are being fed by the decoder.
   const RefPtr<OutputStreamManager> mOutputStreamManager;
 
@@ -943,6 +945,7 @@ private:
 
   MediaEventListener mAudioQueueListener;
   MediaEventListener mVideoQueueListener;
+  MediaEventListener mAudibleListener;
 
   MediaEventProducerExc<nsAutoPtr<MediaInfo>,
                         nsAutoPtr<MetadataTags>,
@@ -956,9 +959,6 @@ private:
   // True if audio is offloading.
   // Playback will not start when audio is offloading.
   bool mAudioOffloading;
-
-  // Duration of the continuous silent data.
-  uint32_t mSilentDataDuration;
 
 #ifdef MOZ_EME
   void OnCDMProxyReady(RefPtr<CDMProxy> aProxy);
@@ -980,7 +980,6 @@ private:
   // The current play state and next play state, mirrored from the main thread.
   Mirror<MediaDecoder::PlayState> mPlayState;
   Mirror<MediaDecoder::PlayState> mNextPlayState;
-  Mirror<bool> mLogicallySeeking;
 
   // Volume of playback. 0.0 = muted. 1.0 = full volume.
   Mirror<double> mVolume;
@@ -1016,6 +1015,9 @@ private:
   // True if the media is seekable only in buffered ranges.
   Mirror<bool> mMediaSeekableOnlyInBufferedRanges;
 
+  // IsVisible, mirrored from the media decoder.
+  Mirror<bool> mIsVisible;
+
   // Duration of the media. This is guaranteed to be non-null after we finish
   // decoding the first frame.
   Canonical<media::NullableTimeUnit> mDuration;
@@ -1035,7 +1037,7 @@ private:
   // Current playback position in the stream in bytes.
   Canonical<int64_t> mPlaybackOffset;
 
-  // Used to distiguish whether the audio is producing sound.
+  // Used to distinguish whether the audio is producing sound.
   Canonical<bool> mIsAudioDataAudible;
 
 public:

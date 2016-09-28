@@ -36,7 +36,7 @@ var tests = [
         ok(true, "The snapshot should conform to the schema.");
       }
       catch (err) {
-        ok(false, err);
+        ok(false, "Schema mismatch, " + err);
       }
       done();
     });
@@ -113,10 +113,6 @@ const SNAPSHOT_SCHEMA = {
           type: "string",
         },
         osVersion: {
-          required: true,
-          type: "string",
-        },
-        arch: {
           required: true,
           type: "string",
         },
@@ -309,6 +305,12 @@ const SNAPSHOT_SCHEMA = {
           items: {
             type: "string",
           },
+        },
+        featureLog: {
+          type: "object",
+        },
+        crashGuards: {
+          type: "array",
         },
         direct2DEnabledMessage: {
           type: "array",

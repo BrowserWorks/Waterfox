@@ -158,8 +158,8 @@ struct CopyTo
 
 struct CopyToHeap
 {
-    HeapValue* dst;
-    explicit CopyToHeap(HeapValue* dst) : dst(dst) {}
+    GCPtrValue* dst;
+    explicit CopyToHeap(GCPtrValue* dst) : dst(dst) {}
     void operator()(const Value& src) { dst->init(src); ++dst; }
 };
 
@@ -757,7 +757,7 @@ AbstractFramePtr::initArgsObj(ArgumentsObject& argsobj) const
 }
 
 inline bool
-AbstractFramePtr::copyRawFrameSlots(AutoValueVector* vec) const
+AbstractFramePtr::copyRawFrameSlots(MutableHandle<GCVector<Value>> vec) const
 {
     if (isInterpreterFrame())
         return asInterpreterFrame()->copyRawFrameSlots(vec);
@@ -869,7 +869,6 @@ Activation::Activation(JSContext* cx, Kind kind)
     compartment_(cx->compartment()),
     prev_(cx->runtime_->activation_),
     prevProfiling_(prev_ ? prev_->mostRecentProfiling() : nullptr),
-    savedFrameChain_(0),
     hideScriptedCallerCount_(0),
     frameCache_(cx),
     asyncStack_(cx, cx->runtime_->asyncStackForNewActivations),

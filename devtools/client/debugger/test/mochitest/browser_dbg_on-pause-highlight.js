@@ -14,14 +14,18 @@ var gTab, gPanel, gDebugger;
 var gToolbox, gToolboxTab;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gToolbox = gPanel._toolbox;
     gToolboxTab = gToolbox.doc.getElementById("toolbox-tab-jsdebugger");
 
-    waitForSourceShown(gPanel, ".html").then(testPause);
+    testPause();
   });
 }
 
@@ -54,7 +58,7 @@ function testPause() {
   // Evaluate a script to fully pause the debugger
   once(gDebugger.gClient, "willInterrupt").then(() => {
     evalInTab(gTab, "1+1;");
-  })
+  });
 }
 
 function testResume() {
@@ -73,7 +77,7 @@ function testResume() {
     gDebugger);
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

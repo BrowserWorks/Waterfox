@@ -59,6 +59,8 @@ public:
 
   NS_IMETHOD Traverse(void* aPtr, nsCycleCollectionTraversalCallback& aCb)
     override;
+
+  NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(JSGCThingParticipant)
 };
 
 class JSZoneParticipant : public nsCycleCollectionParticipant
@@ -90,6 +92,8 @@ public:
 
   NS_IMETHOD Traverse(void* aPtr, nsCycleCollectionTraversalCallback& aCb)
     override;
+
+  NS_DECL_CYCLE_COLLECTION_CLASS_NAME_METHOD(JSZoneParticipant)
 };
 
 class IncrementalFinalizeRunnable;
@@ -219,6 +223,7 @@ private:
                               void* aData);
   static bool EnqueuePromiseJobCallback(JSContext* aCx,
                                         JS::HandleObject aJob,
+                                        JS::HandleObject aAllocationSite,
                                         void* aData);
 
   virtual void TraceNativeBlackRoots(JSTracer* aTracer) { };
@@ -294,7 +299,7 @@ public:
   nsCycleCollectionParticipant* ZoneParticipant();
 
   nsresult TraverseRoots(nsCycleCollectionNoteRootCallback& aCb);
-  bool UsefulToMergeZones() const;
+  virtual bool UsefulToMergeZones() const;
   void FixWeakMappingGrayBits() const;
   bool AreGCGrayBitsValid() const;
   void GarbageCollect(uint32_t aReason) const;

@@ -399,7 +399,8 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
       // of the SVG image's internal document that is visible, in combination
       // with preserveAspectRatio and viewBox.
       SVGImageContext context(CSSIntSize(width, height),
-                              Some(imgElem->mPreserveAspectRatio.GetAnimValue()));
+                              Some(imgElem->mPreserveAspectRatio.GetAnimValue()),
+                              1.0, true);
 
       // For the actual draw operation to draw crisply (and at the right size),
       // our destination rect needs to be |width|x|height|, *in dev pixels*.
@@ -416,7 +417,7 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
         aContext,
         PresContext(),
         mImageContainer,
-        nsLayoutUtils::GetGraphicsFilterForFrame(this),
+        nsLayoutUtils::GetSamplingFilterForFrame(this),
         destRect,
         aDirtyRect ? dirtyRect : destRect,
         &context,
@@ -427,7 +428,7 @@ nsSVGImageFrame::PaintSVG(gfxContext& aContext,
         aContext,
         PresContext(),
         mImageContainer,
-        nsLayoutUtils::GetGraphicsFilterForFrame(this),
+        nsLayoutUtils::GetSamplingFilterForFrame(this),
         nsPoint(0, 0),
         aDirtyRect ? &dirtyRect : nullptr,
         drawFlags);

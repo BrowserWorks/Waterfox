@@ -8,13 +8,11 @@ const Services = require("Services");
 
 const WEBGL_CONTEXT_NAME = "experimental-webgl";
 
-function isWebGLForceEnabled()
-{
+function isWebGLForceEnabled() {
   return Services.prefs.getBoolPref("webgl.force-enabled");
 }
 
-function isWebGLSupportedByGFX()
-{
+function isWebGLSupportedByGFX() {
   let supported = false;
 
   try {
@@ -25,19 +23,18 @@ function isWebGLSupportedByGFX()
     // if either the Angle or OpenGL renderers are available, WebGL should work
     supported = gfxInfo.getFeatureStatus(angle) === gfxInfo.FEATURE_STATUS_OK ||
                 gfxInfo.getFeatureStatus(opengl) === gfxInfo.FEATURE_STATUS_OK;
-  } catch(e) {
+  } catch (e) {
     return false;
   }
   return supported;
 }
 
-function create3DContext(aCanvas)
-{
+function create3DContext(canvas) {
   // try to get a valid context from an existing canvas
   let context = null;
   try {
-    context = aCanvas.getContext(WEBGL_CONTEXT_NAME, aFlags);
-  } catch(e) {
+    context = canvas.getContext(WEBGL_CONTEXT_NAME, aFlags);
+  } catch (e) {
     return null;
   }
   return context;

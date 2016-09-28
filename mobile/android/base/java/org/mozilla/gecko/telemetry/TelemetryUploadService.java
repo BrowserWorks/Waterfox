@@ -4,217 +4,138 @@
 
 package org.mozilla.gecko.telemetry;
 
+import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
-import android.text.TextUtils;
 import android.util.Log;
-
 import ch.boye.httpclientandroidlib.HttpHeaders;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.ClientProtocolException;
 import ch.boye.httpclientandroidlib.client.methods.HttpRequestBase;
 import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
-
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
-import org.mozilla.gecko.background.BackgroundService;
-import org.mozilla.gecko.distribution.DistributionStoreCallback;
 import org.mozilla.gecko.preferences.GeckoPreferences;
+import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.BaseResource;
 import org.mozilla.gecko.sync.net.BaseResourceDelegate;
 import org.mozilla.gecko.sync.net.Resource;
-import org.mozilla.gecko.telemetry.pings.TelemetryCorePingBuilder;
-import org.mozilla.gecko.telemetry.pings.TelemetryPing;
+import org.mozilla.gecko.telemetry.stores.TelemetryPingStore;
 import org.mozilla.gecko.util.DateUtil;
+import org.mozilla.gecko.util.NetworkUtils;
 import org.mozilla.gecko.util.StringUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
- * The service that handles uploading telemetry payloads to the server.
- *
- * Note that we'll fail to upload if the network is off or background uploads are disabled but the caller is still
- * expected to increment the sequence number.
+ * The service that handles retrieving a list of telemetry pings to upload from the given
+ * {@link TelemetryPingStore}, uploading those payloads to the associated server, and reporting
+ * back to the Store which uploads were a success.
  */
-public class TelemetryUploadService extends BackgroundService {
+public class TelemetryUploadService extends IntentService {
     private static final String LOGTAG = StringUtils.safeSubstring("Gecko" + TelemetryUploadService.class.getSimpleName(), 0, 23);
     private static final String WORKER_THREAD_NAME = LOGTAG + "Worker";
 
-    private static final int MILLIS_IN_DAY = 1000 * 60 * 60 * 24;
+    public static final String ACTION_UPLOAD = "upload";
+    public static final String EXTRA_STORE = "store";
+
+    // TelemetryUploadService can run in a background thread so for future proofing, we set it volatile.
+    private static volatile boolean isDisabled = false;
+
+    public static void setDisabled(final boolean isDisabled) {
+        TelemetryUploadService.isDisabled = isDisabled;
+        if (isDisabled) {
+            Log.d(LOGTAG, "Telemetry upload disabled (env var?");
+        }
+    }
 
     public TelemetryUploadService() {
         super(WORKER_THREAD_NAME);
 
-        // Intent redelivery can fail hard (e.g. we OOM as we try to upload, the Intent gets redelivered, repeat) so for
-        // simplicity, we avoid it for now. In the unlikely event that Android kills our upload service, we'll thus fail
-        // to upload the document with a specific sequence number. Furthermore, we never attempt to re-upload it.
-        //
-        // We'll fix this issue in bug 1243585.
+        // Intent redelivery can fail hard (e.g. we OOM as we try to upload, the Intent gets redelivered, repeat)
+        // so for simplicity, we avoid it. We expect the upload service to eventually get called again by the caller.
         setIntentRedelivery(false);
     }
 
     /**
-     * Handles a core ping with the mandatory extras:
-     *   EXTRA_DOC_ID: a unique document ID.
-     *   EXTRA_SEQ: a sequence number for this upload.
-     *   EXTRA_PROFILE_NAME: the gecko profile name.
-     *   EXTRA_PROFILE_PATH: the gecko profile path.
-     *
-     * Note that for a given doc ID, seq should always be identical because these are the tools the server uses to
-     * de-duplicate documents. In order to maintain this consistency, we receive the doc ID and seq from the Intent and
-     * rely on the caller to update the values. The Service can be killed at any time so we can't ensure seq could be
-     * incremented properly if we tried to do so in the Service.
+     * Handles a ping with the mandatory extras:
+     *   * EXTRA_STORE: A {@link TelemetryPingStore} where the pings to upload are located
      */
     @Override
     public void onHandleIntent(final Intent intent) {
         Log.d(LOGTAG, "Service started");
 
-        // Sanity check: is upload enabled? Generally, the caller should check this before starting the service.
-        // Since we don't have the profile here, we rely on the caller to check the enabled state for the profile.
-        if (!isUploadEnabledByAppConfig(this)) {
-            Log.w(LOGTAG, "Upload is not available by configuration; returning");
+        if (!isReadyToUpload(this, intent)) {
             return;
         }
 
-        if (!isIntentValid(intent)) {
-            Log.w(LOGTAG, "Received invalid Intent; returning");
-            return;
+        final TelemetryPingStore store = intent.getParcelableExtra(EXTRA_STORE);
+        final boolean wereAllUploadsSuccessful = uploadPendingPingsFromStore(this, store);
+        store.maybePrunePings();
+        Log.d(LOGTAG, "Service finished: upload and prune attempts completed");
+
+        if (!wereAllUploadsSuccessful) {
+            // If we had an upload failure, we should stop the IntentService and drop any
+            // pending Intents in the queue so we don't waste resources (e.g. battery)
+            // trying to upload when there's likely to be another connection failure.
+            Log.d(LOGTAG, "Clearing Intent queue due to connection failures");
+            stopSelf();
         }
-
-        if (!TelemetryConstants.ACTION_UPLOAD_CORE.equals(intent.getAction())) {
-            Log.w(LOGTAG, "Unknown action: " + intent.getAction() + ". Returning");
-            return;
-        }
-
-        final String defaultSearchEngine = intent.getStringExtra(TelemetryConstants.EXTRA_DEFAULT_SEARCH_ENGINE);
-        final String docId = intent.getStringExtra(TelemetryConstants.EXTRA_DOC_ID);
-        final int seq = intent.getIntExtra(TelemetryConstants.EXTRA_SEQ, -1);
-
-        final String profileName = intent.getStringExtra(TelemetryConstants.EXTRA_PROFILE_NAME);
-        final String profilePath = intent.getStringExtra(TelemetryConstants.EXTRA_PROFILE_PATH);
-
-        uploadCorePing(docId, seq, profileName, profilePath, defaultSearchEngine);
     }
 
     /**
-     * Determines if the telemetry upload feature is enabled via the application configuration. Prefer to use
-     * {@link #isUploadEnabledByProfileConfig(Context, GeckoProfile)} if the profile is available as it takes into
-     * account more information.
-     *
-     * Note that this method logs debug statements when upload is disabled.
+     * @return true if all pings were uploaded successfully, false otherwise.
      */
-    public static boolean isUploadEnabledByAppConfig(final Context context) {
-        if (!TelemetryConstants.UPLOAD_ENABLED) {
-            Log.d(LOGTAG, "Telemetry upload feature is compile-time disabled");
-            return false;
+    private static boolean uploadPendingPingsFromStore(final Context context, final TelemetryPingStore store) {
+        final List<TelemetryPing> pingsToUpload = store.getAllPings();
+        if (pingsToUpload.isEmpty()) {
+            return true;
         }
 
-        if (!GeckoPreferences.getBooleanPref(context, GeckoPreferences.PREFS_HEALTHREPORT_UPLOAD_ENABLED, true)) {
-            Log.d(LOGTAG, "Telemetry upload opt-out");
-            return false;
+        final String serverSchemeHostPort = getServerSchemeHostPort(context);
+        final HashSet<String> successfulUploadIDs = new HashSet<>(pingsToUpload.size()); // used for side effects.
+        final PingResultDelegate delegate = new PingResultDelegate(successfulUploadIDs);
+        for (final TelemetryPing ping : pingsToUpload) {
+            // TODO: It'd be great to re-use the same HTTP connection for each upload request.
+            delegate.setDocID(ping.getDocID());
+            final String url = serverSchemeHostPort + "/" + ping.getURLPath();
+            uploadPayload(url, ping.getPayload(), delegate);
+
+            // There are minimal gains in trying to upload if we already failed one attempt.
+            if (delegate.hadConnectionError()) {
+                break;
+            }
         }
 
-        if (!backgroundDataIsEnabled(context)) {
-            Log.d(LOGTAG, "Background data is disabled");
-            return false;
+        final boolean wereAllUploadsSuccessful = !delegate.hadConnectionError();
+        if (wereAllUploadsSuccessful) {
+            // We don't log individual successful uploads to avoid log spam.
+            Log.d(LOGTAG, "Telemetry upload success!");
         }
-
-        return true;
+        store.onUploadAttemptComplete(successfulUploadIDs);
+        return wereAllUploadsSuccessful;
     }
 
-    /**
-     * Determines if the telemetry upload feature is enabled via profile & application level configurations. This is the
-     * preferred method.
-     *
-     * Note that this method logs debug statements when upload is disabled.
-     */
-    public static boolean isUploadEnabledByProfileConfig(final Context context, final GeckoProfile profile) {
-        if (profile.inGuestMode()) {
-            Log.d(LOGTAG, "Profile is in guest mode");
-            return false;
-        }
-
-        return isUploadEnabledByAppConfig(context);
+    private static String getServerSchemeHostPort(final Context context) {
+        // TODO (bug 1241685): Sync this preference with the gecko preference or a Java-based pref.
+        // We previously had this synced with profile prefs with no way to change it in the client, so
+        // we don't have to worry about losing data by switching it to app prefs, which is more convenient for now.
+        final SharedPreferences sharedPrefs = GeckoSharedPrefs.forApp(context);
+        return sharedPrefs.getString(TelemetryConstants.PREF_SERVER_URL, TelemetryConstants.DEFAULT_SERVER_URL);
     }
 
-    private boolean isIntentValid(final Intent intent) {
-        // Intent can be null. Bug 1025937.
-        if (intent == null) {
-            Log.d(LOGTAG, "Received null intent");
-            return false;
-        }
-
-        if (intent.getStringExtra(TelemetryConstants.EXTRA_DOC_ID) == null) {
-            Log.d(LOGTAG, "Received invalid doc ID in Intent");
-            return false;
-        }
-
-        if (!intent.hasExtra(TelemetryConstants.EXTRA_SEQ)) {
-            Log.d(LOGTAG, "Received Intent without sequence number");
-            return false;
-        }
-
-        if (intent.getStringExtra(TelemetryConstants.EXTRA_PROFILE_NAME) == null) {
-            Log.d(LOGTAG, "Received invalid profile name in Intent");
-            return false;
-        }
-
-        // GeckoProfile can use the name to get the path so this isn't strictly necessary.
-        // However, getting the path requires parsing an ini file so we optimize by including it here.
-        if (intent.getStringExtra(TelemetryConstants.EXTRA_PROFILE_PATH) == null) {
-            Log.d(LOGTAG, "Received invalid profile path in Intent");
-            return false;
-        }
-
-        return true;
-    }
-
-    @WorkerThread
-    private void uploadCorePing(@NonNull final String docId, final int seq, @NonNull final String profileName,
-                @NonNull final String profilePath, @Nullable final String defaultSearchEngine) {
-        final GeckoProfile profile = GeckoProfile.get(this, profileName, profilePath);
-        final String clientId;
-        try {
-            clientId = profile.getClientId();
-        } catch (final IOException e) {
-            Log.w(LOGTAG, "Unable to get client ID to generate core ping: returning.", e);
-            return;
-        }
-
-        // Each profile can have different telemetry data so we intentionally grab the shared prefs for the profile.
-        final SharedPreferences sharedPrefs = GeckoSharedPrefs.forProfileName(this, profileName);
-        // TODO (bug 1241685): Sync this preference with the gecko preference.
-        final String serverURLSchemeHostPort =
-                sharedPrefs.getString(TelemetryConstants.PREF_SERVER_URL, TelemetryConstants.DEFAULT_SERVER_URL);
-
-        final long profileCreationDate = getProfileCreationDate(profile);
-        final TelemetryCorePingBuilder builder = new TelemetryCorePingBuilder(this, serverURLSchemeHostPort)
-                .setClientID(clientId)
-                .setDefaultSearchEngine(TextUtils.isEmpty(defaultSearchEngine) ? null : defaultSearchEngine)
-                .setProfileCreationDate(profileCreationDate < 0 ? null : profileCreationDate)
-                .setSequenceNumber(seq);
-
-        final String distributionId = sharedPrefs.getString(DistributionStoreCallback.PREF_DISTRIBUTION_ID, null);
-        if (distributionId != null) {
-            builder.setOptDistributionID(distributionId);
-        }
-
-        final TelemetryPing corePing = builder.build();
-        final CorePingResultDelegate resultDelegate = new CorePingResultDelegate();
-        uploadPing(corePing, resultDelegate);
-    }
-
-    private void uploadPing(final TelemetryPing ping, final ResultDelegate delegate) {
+    private static void uploadPayload(final String url, final ExtendedJSONObject payload, final ResultDelegate delegate) {
         final BaseResource resource;
         try {
-            resource = new BaseResource(ping.getURL());
+            resource = new BaseResource(url);
         } catch (final URISyntaxException e) {
             Log.w(LOGTAG, "URISyntaxException for server URL when creating BaseResource: returning.");
             return;
@@ -227,26 +148,138 @@ public class TelemetryUploadService extends BackgroundService {
 
         // We're in a background thread so we don't have any reason to do this asynchronously.
         // If we tried, onStartCommand would return and IntentService might stop itself before we finish.
-        resource.postBlocking(ping.getPayload());
+        resource.postBlocking(payload);
+    }
+
+    private static boolean isReadyToUpload(final Context context, final Intent intent) {
+        // Sanity check: is upload enabled? Generally, the caller should check this before starting the service.
+        // Since we don't have the profile here, we rely on the caller to check the enabled state for the profile.
+        if (!isUploadEnabledByAppConfig(context)) {
+            Log.w(LOGTAG, "Upload is not available by configuration; returning");
+            return false;
+        }
+
+        if (!NetworkUtils.isConnected(context)) {
+            Log.w(LOGTAG, "Network is not connected; returning");
+            return false;
+        }
+
+        if (!isIntentValid(intent)) {
+            Log.w(LOGTAG, "Received invalid Intent; returning");
+            return false;
+        }
+
+        if (!ACTION_UPLOAD.equals(intent.getAction())) {
+            Log.w(LOGTAG, "Unknown action: " + intent.getAction() + ". Returning");
+            return false;
+        }
+
+        return true;
     }
 
     /**
-     * @return the profile creation date in the format expected by TelemetryPingGenerator.
+     * Determines if the telemetry upload feature is enabled via the application configuration. Prefer to use
+     * {@link #isUploadEnabledByProfileConfig(Context, GeckoProfile)} if the profile is available as it takes into
+     * account more information.
+     *
+     * You may wish to also check if the network is connected when calling this method.
+     *
+     * Note that this method logs debug statements when upload is disabled.
      */
-    @WorkerThread
-    private long getProfileCreationDate(final GeckoProfile profile) {
-        final long profileMillis = profile.getAndPersistProfileCreationDate(this);
-        // getAndPersistProfileCreationDate can return -1,
-        // and we don't want to truncate (-1 / MILLIS) to 0.
-        if (profileMillis < 0) {
-            return profileMillis;
+    public static boolean isUploadEnabledByAppConfig(final Context context) {
+        if (!TelemetryConstants.UPLOAD_ENABLED) {
+            Log.d(LOGTAG, "Telemetry upload feature is compile-time disabled");
+            return false;
         }
-        return (long) Math.floor((double) profileMillis / MILLIS_IN_DAY);
+
+        if (isDisabled) {
+            Log.d(LOGTAG, "Telemetry upload feature is disabled by intent (in testing?)");
+            return false;
+        }
+
+        if (!GeckoPreferences.getBooleanPref(context, GeckoPreferences.PREFS_HEALTHREPORT_UPLOAD_ENABLED, true)) {
+            Log.d(LOGTAG, "Telemetry upload opt-out");
+            return false;
+        }
+
+        return true;
     }
 
-    private static class CorePingResultDelegate extends ResultDelegate {
-        public CorePingResultDelegate() {
+    /**
+     * Determines if the telemetry upload feature is enabled via profile & application level configurations. This is the
+     * preferred method.
+     *
+     * You may wish to also check if the network is connected when calling this method.
+     *
+     * Note that this method logs debug statements when upload is disabled.
+     */
+    public static boolean isUploadEnabledByProfileConfig(final Context context, final GeckoProfile profile) {
+        if (profile.inGuestMode()) {
+            Log.d(LOGTAG, "Profile is in guest mode");
+            return false;
+        }
+
+        return isUploadEnabledByAppConfig(context);
+    }
+
+    private static boolean isIntentValid(final Intent intent) {
+        // Intent can be null. Bug 1025937.
+        if (intent == null) {
+            Log.d(LOGTAG, "Received null intent");
+            return false;
+        }
+
+        if (intent.getParcelableExtra(EXTRA_STORE) == null) {
+            Log.d(LOGTAG, "Received invalid store in Intent");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Logs on success & failure and appends the set ID to the given Set on success.
+     *
+     * Note: you *must* set the ping ID before attempting upload or we'll throw!
+     *
+     * We use mutation on the set ID and the successful upload array to avoid object allocation.
+     */
+    private static class PingResultDelegate extends ResultDelegate {
+        // We persist pings and don't need to worry about losing data so we keep these
+        // durations short to save resources (e.g. battery).
+        private static final int SOCKET_TIMEOUT_MILLIS = (int) TimeUnit.SECONDS.toMillis(30);
+        private static final int CONNECTION_TIMEOUT_MILLIS = (int) TimeUnit.SECONDS.toMillis(30);
+
+        /** The store ID of the ping currently being uploaded. Use {@link #getDocID()} to access it. */
+        private String docID = null;
+        private final Set<String> successfulUploadIDs;
+
+        private boolean hadConnectionError = false;
+
+        public PingResultDelegate(final Set<String> successfulUploadIDs) {
             super();
+            this.successfulUploadIDs = successfulUploadIDs;
+        }
+
+        @Override
+        public int socketTimeout() {
+            return SOCKET_TIMEOUT_MILLIS;
+        }
+
+        @Override
+        public int connectionTimeout() {
+            return CONNECTION_TIMEOUT_MILLIS;
+        }
+
+        private String getDocID() {
+            if (docID == null) {
+                throw new IllegalStateException("Expected ping ID to have been updated before retrieval");
+            }
+            return docID;
+        }
+
+        public void setDocID(final String id) {
+            docID = id;
         }
 
         @Override
@@ -260,10 +293,11 @@ public class TelemetryUploadService extends BackgroundService {
             switch (status) {
                 case 200:
                 case 201:
-                    Log.d(LOGTAG, "Telemetry upload success.");
+                    successfulUploadIDs.add(getDocID());
                     break;
                 default:
                     Log.w(LOGTAG, "Telemetry upload failure. HTTP status: " + status);
+                    hadConnectionError = true;
             }
         }
 
@@ -271,18 +305,25 @@ public class TelemetryUploadService extends BackgroundService {
         public void handleHttpProtocolException(final ClientProtocolException e) {
             // We don't log the exception to prevent leaking user data.
             Log.w(LOGTAG, "HttpProtocolException when trying to upload telemetry");
+            hadConnectionError = true;
         }
 
         @Override
         public void handleHttpIOException(final IOException e) {
             // We don't log the exception to prevent leaking user data.
             Log.w(LOGTAG, "HttpIOException when trying to upload telemetry");
+            hadConnectionError = true;
         }
 
         @Override
         public void handleTransportException(final GeneralSecurityException e) {
             // We don't log the exception to prevent leaking user data.
             Log.w(LOGTAG, "Transport exception when trying to upload telemetry");
+            hadConnectionError = true;
+        }
+
+        private boolean hadConnectionError() {
+            return hadConnectionError;
         }
 
         @Override

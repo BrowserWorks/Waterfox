@@ -7,7 +7,7 @@
 
 const TEST_URI = 'data:text/html;charset=utf-8,<div style="-moz-opacity:0;">' +
                  'test repeated css warnings</div><p style="-moz-opacity:0">' +
-                 'hi</p>';
+                 "hi</p>";
 var hud;
 
 /**
@@ -31,7 +31,7 @@ add_task(function* () {
 });
 
 function onContentLoaded() {
-  let cssWarning = "Unknown property '-moz-opacity'.  Declaration dropped.";
+  let cssWarning = "Unknown property \u2018-moz-opacity\u2019.  Declaration dropped.";
 
   return waitForMessages({
     webconsole: hud,

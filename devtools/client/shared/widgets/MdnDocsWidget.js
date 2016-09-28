@@ -24,11 +24,9 @@
 
 "use strict";
 
-const {Cc, Cu, Ci} = require("chrome");
 const Services = require("Services");
 const Promise = require("promise");
-const DOMUtils = Cc["@mozilla.org/inspector/dom-utils;1"]
-                 .getService(Ci.inIDOMUtils);
+const {getCSSLexer} = require("devtools/shared/css-lexer");
 
 // Parameters for the XHR request
 // see https://developer.mozilla.org/en-US/docs/MDN/Kuma/API#Document_parameters
@@ -38,12 +36,13 @@ var XHR_CSS_URL = "https://developer.mozilla.org/en-US/docs/Web/CSS/";
 
 // Parameters for the link to MDN in the tooltip, so
 // so we know which MDN visits come from this feature
-const PAGE_LINK_PARAMS = "?utm_source=mozilla&utm_medium=firefox-inspector&utm_campaign=default"
+const PAGE_LINK_PARAMS =
+  "?utm_source=mozilla&utm_medium=firefox-inspector&utm_campaign=default";
 // URL for the page link omits locale, so a locale-specific page will be loaded
 var PAGE_LINK_URL = "https://developer.mozilla.org/docs/Web/CSS/";
 exports.PAGE_LINK_URL = PAGE_LINK_URL;
 
-const BROWSER_WINDOW = 'navigator:browser';
+const BROWSER_WINDOW = "navigator:browser";
 
 const PROPERTY_NAME_COLOR = "theme-fg-color5";
 const PROPERTY_VALUE_COLOR = "theme-fg-color1";
@@ -83,7 +82,7 @@ const COMMENT_COLOR = "theme-comment";
 function appendSyntaxHighlightedCSS(cssText, parentElement) {
   let doc = parentElement.ownerDocument;
   let identClass = PROPERTY_NAME_COLOR;
-  let lexer = DOMUtils.getCSSLexer(cssText);
+  let lexer = getCSSLexer(cssText);
 
   /**
    * Create a SPAN node with the given text content and class.
@@ -105,11 +104,8 @@ function appendSyntaxHighlightedCSS(cssText, parentElement) {
   function updateIdentClass(tokenText) {
     if (tokenText === ":") {
       identClass = PROPERTY_VALUE_COLOR;
-    }
-    else {
-      if (tokenText === ";") {
-        identClass = PROPERTY_NAME_COLOR;
-      }
+    } else if (tokenText === ";") {
+      identClass = PROPERTY_NAME_COLOR;
     }
   }
 
@@ -161,7 +157,7 @@ exports.appendSyntaxHighlightedCSS = appendSyntaxHighlightedCSS;
 function getMdnPage(pageUrl) {
   let deferred = Promise.defer();
 
-  let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance(Ci.nsIXMLHttpRequest);
+  let xhr = new XMLHttpRequest();
 
   xhr.addEventListener("load", onLoaded, false);
   xhr.addEventListener("error", onError, false);
@@ -173,8 +169,7 @@ function getMdnPage(pageUrl) {
   function onLoaded(e) {
     if (xhr.status != 200) {
       deferred.reject({page: pageUrl, status: xhr.status});
-    }
-    else {
+    } else {
       deferred.resolve(xhr.responseXML);
     }
   }
@@ -203,7 +198,6 @@ function getMdnPage(pageUrl) {
  * we could not load the page.
  */
 function getCssDocs(cssProperty) {
-
   let deferred = Promise.defer();
   let pageUrl = XHR_CSS_URL + cssProperty + XHR_PARAMS;
 
@@ -215,8 +209,7 @@ function getCssDocs(cssProperty) {
     theDocs.syntax = getSyntax(responseDocument);
     if (theDocs.summary || theDocs.syntax) {
       deferred.resolve(theDocs);
-    }
-    else {
+    } else {
       deferred.reject("Couldn't find the docs in the page.");
     }
   }
@@ -247,7 +240,6 @@ exports.getCssDocs = getCssDocs;
  * structure.
  */
 function MdnDocsWidget(tooltipDocument) {
-
   // fetch all the bits of the document that we will manipulate later
   this.elements = {
     heading: tooltipDocument.getElementById("property-name"),
@@ -265,7 +257,7 @@ function MdnDocsWidget(tooltipDocument) {
 
   // listen for clicks and open in the browser window instead
   let browserWindow = Services.wm.getMostRecentWindow(BROWSER_WINDOW);
-  this.elements.linkToMdn.addEventListener("click", function(e) {
+  this.elements.linkToMdn.addEventListener("click", function (e) {
     e.stopPropagation();
     e.preventDefault();
     let link = e.target.href;
@@ -296,21 +288,19 @@ MdnDocsWidget.prototype = {
    * @param {string} propertyName
    * The name of the CSS property for which we need to display help.
    */
-  loadCssDocs: function(propertyName) {
-
+  loadCssDocs: function (propertyName) {
     /**
      * Do all the setup we can do synchronously, and get the document in
      * a state where it can be displayed while we are waiting for the
      * MDN docs content to be retrieved.
      */
-    function initializeDocument(propertyName) {
-
+    function initializeDocument(propName) {
       // set property name heading
-      elements.heading.textContent = propertyName;
+      elements.heading.textContent = propName;
 
       // set link target
       elements.linkToMdn.setAttribute("href",
-        PAGE_LINK_URL + propertyName + PAGE_LINK_PARAMS);
+        PAGE_LINK_URL + propName + PAGE_LINK_PARAMS);
 
       // clear docs summary and syntax
       elements.summary.textContent = "";
@@ -347,7 +337,8 @@ MdnDocsWidget.prototype = {
      */
     function gotError(error) {
       // show error message
-      elements.summary.textContent = l10n.strings.GetStringFromName("docsTooltip.loadDocsError");
+      elements.summary.textContent =
+        l10n.strings.GetStringFromName("docsTooltip.loadDocsError");
 
       // hide the throbber
       elements.info.classList.remove("devtools-throbber");
@@ -359,7 +350,6 @@ MdnDocsWidget.prototype = {
 
     let deferred = Promise.defer();
     let elements = this.elements;
-    let doc = this.doc;
 
     initializeDocument(propertyName);
     getCssDocs(propertyName).then(finalizeDocument, gotError);
@@ -367,11 +357,11 @@ MdnDocsWidget.prototype = {
     return deferred.promise;
   },
 
-  destroy: function() {
+  destroy: function () {
     this.elements = null;
     this.doc = null;
   }
-}
+};
 
 /**
  * L10N utility class
@@ -403,8 +393,9 @@ function isAllWhitespace(node) {
  * True if the node is a comment node or is all whitespace, otherwise false.
  */
 function isIgnorable(node) {
-  return (node.nodeType == 8) || // A comment node
-         ((node.nodeType == 3) && isAllWhitespace(node)); // text node, all ws
+  // Comment nodes (8), text nodes (3) or whitespace
+  return (node.nodeType == 8) ||
+         ((node.nodeType == 3) && isAllWhitespace(node));
 }
 
 /**
@@ -416,7 +407,9 @@ function isIgnorable(node) {
  */
 function nodeAfter(sib) {
   while ((sib = sib.nextSibling)) {
-    if (!isIgnorable(sib)) return sib;
+    if (!isIgnorable(sib)) {
+      return sib;
+    }
   }
   return null;
 }
@@ -488,7 +481,6 @@ function getSummary(mdnDocument) {
  * The syntax section as a string, or null if it could not be found.
  */
 function getSyntax(mdnDocument) {
-
   let syntax = mdnDocument.getElementById("Syntax");
   if (!hasTagName(syntax, "H2")) {
     return null;
@@ -503,9 +495,7 @@ function getSyntax(mdnDocument) {
   if (hasTagName(secondParagraph, "PRE")) {
     return secondParagraph.textContent;
   }
-  else {
-    return firstParagraph.textContent;
-  }
+  return firstParagraph.textContent;
 }
 
 /**

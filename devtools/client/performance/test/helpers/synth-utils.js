@@ -15,33 +15,33 @@ exports.synthesizeProfile = () => {
       samples: [{
         time: 1,
         frames: [
-          { category: CATEGORY_MASK("other"),  location: "(root)" },
-          { category: CATEGORY_MASK("other"),  location: "A (http://foo/bar/baz:12)" },
-          { category: CATEGORY_MASK("css"),    location: "B (http://foo/bar/baz:34)" },
-          { category: CATEGORY_MASK("js"),     location: "C (http://foo/bar/baz:56)" }
+          { category: CATEGORY_MASK("other"), location: "(root)" },
+          { category: CATEGORY_MASK("other"), location: "A (http://foo/bar/baz:12)" },
+          { category: CATEGORY_MASK("css"), location: "B (http://foo/bar/baz:34)" },
+          { category: CATEGORY_MASK("js"), location: "C (http://foo/bar/baz:56)" }
         ]
       }, {
         time: 1 + 1,
         frames: [
-          { category: CATEGORY_MASK("other"),  location: "(root)" },
-          { category: CATEGORY_MASK("other"),  location: "A (http://foo/bar/baz:12)" },
-          { category: CATEGORY_MASK("css"),    location: "B (http://foo/bar/baz:34)" },
-          { category: CATEGORY_MASK("gc", 1),  location: "D (http://foo/bar/baz:78:9)" }
+          { category: CATEGORY_MASK("other"), location: "(root)" },
+          { category: CATEGORY_MASK("other"), location: "A (http://foo/bar/baz:12)" },
+          { category: CATEGORY_MASK("css"), location: "B (http://foo/bar/baz:34)" },
+          { category: CATEGORY_MASK("gc", 1), location: "D (http://foo/bar/baz:78:9)" }
         ]
       }, {
         time: 1 + 1 + 2,
         frames: [
-          { category: CATEGORY_MASK("other"),  location: "(root)" },
-          { category: CATEGORY_MASK("other"),  location: "A (http://foo/bar/baz:12)" },
-          { category: CATEGORY_MASK("css"),    location: "B (http://foo/bar/baz:34)" },
-          { category: CATEGORY_MASK("gc", 1),  location: "D (http://foo/bar/baz:78:9)" }
+          { category: CATEGORY_MASK("other"), location: "(root)" },
+          { category: CATEGORY_MASK("other"), location: "A (http://foo/bar/baz:12)" },
+          { category: CATEGORY_MASK("css"), location: "B (http://foo/bar/baz:34)" },
+          { category: CATEGORY_MASK("gc", 1), location: "D (http://foo/bar/baz:78:9)" }
         ]
       }, {
         time: 1 + 1 + 2 + 3,
         frames: [
-          { category: CATEGORY_MASK("other"),   location: "(root)" },
-          { category: CATEGORY_MASK("other"),   location: "A (http://foo/bar/baz:12)" },
-          { category: CATEGORY_MASK("gc", 2),   location: "E (http://foo/bar/baz:90)" },
+          { category: CATEGORY_MASK("other"), location: "(root)" },
+          { category: CATEGORY_MASK("other"), location: "A (http://foo/bar/baz:12)" },
+          { category: CATEGORY_MASK("gc", 2), location: "E (http://foo/bar/baz:90)" },
           { category: CATEGORY_MASK("network"), location: "F (http://foo/bar/baz:99)" }
         ]
       }]
@@ -55,7 +55,7 @@ exports.synthesizeProfile = () => {
 exports.synthesizeCustomTreeClass = () => {
   const { Cu } = require("chrome");
   const { AbstractTreeItem } = Cu.import("resource://devtools/client/shared/widgets/AbstractTreeItem.jsm", {});
-  const { Heritage } = Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm", {});
+  const { Heritage } = require("devtools/client/shared/widgets/view-helpers");
 
   function MyCustomTreeItem(dataSrc, properties) {
     AbstractTreeItem.call(this, properties);
@@ -63,15 +63,15 @@ exports.synthesizeCustomTreeClass = () => {
   }
 
   MyCustomTreeItem.prototype = Heritage.extend(AbstractTreeItem.prototype, {
-    _displaySelf: function(document, arrowNode) {
+    _displaySelf: function (document, arrowNode) {
       let node = document.createElement("hbox");
-      node.MozMarginStart = (this.level * 10) + "px";
+      node.style.marginInlineStart = (this.level * 10) + "px";
       node.appendChild(arrowNode);
       node.appendChild(document.createTextNode(this.itemDataSrc.label));
       return node;
     },
 
-    _populateSelf: function(children) {
+    _populateSelf: function (children) {
       for (let childDataSrc of this.itemDataSrc.children) {
         children.push(new MyCustomTreeItem(childDataSrc, {
           parent: this,

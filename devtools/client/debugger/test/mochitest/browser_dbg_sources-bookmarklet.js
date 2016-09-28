@@ -12,21 +12,23 @@ const TAB_URL = EXAMPLE_URL + "doc_script-bookmarklet.html";
 const BOOKMARKLET_SCRIPT_CODE = "console.log('bookmarklet executed');";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gSources = gDebugger.DebuggerView.Sources;
     const gBreakpoints = gDebugger.DebuggerController.Breakpoints;
     const getState = gDebugger.DebuggerController.getState;
-    const constants = gDebugger.require('./content/constants');
-    const queries = gDebugger.require('./content/queries');
+    const constants = gDebugger.require("./content/constants");
+    const queries = gDebugger.require("./content/queries");
     const actions = bindActionCreators(gPanel);
 
-    return Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, '.html');
-
-      const added =  waitForNextDispatch(gDebugger.DebuggerController, constants.ADD_SOURCE);
+    return Task.spawn(function* () {
+      const added = waitForNextDispatch(gDebugger.DebuggerController, constants.ADD_SOURCE);
       // NOTE: devtools debugger panel needs to be already open,
       // or the bookmarklet script will not be shown in the sources panel
       callInTab(gTab, "injectBookmarklet", BOOKMARKLET_SCRIPT_CODE);

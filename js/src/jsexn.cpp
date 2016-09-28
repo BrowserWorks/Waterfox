@@ -305,7 +305,13 @@ js::ErrorFromException(JSContext* cx, HandleObject objArg)
     if (!obj->is<ErrorObject>())
         return nullptr;
 
-    return obj->as<ErrorObject>().getOrCreateErrorReport(cx);
+    JSErrorReport* report = obj->as<ErrorObject>().getOrCreateErrorReport(cx);
+    if (!report) {
+        MOZ_ASSERT(cx->isThrowingOutOfMemory());
+        cx->recoverFromOutOfMemory();
+    }
+
+    return report;
 }
 
 JS_PUBLIC_API(JSObject*)
@@ -510,8 +516,8 @@ js::GetErrorTypeName(JSRuntime* rt, int16_t exnType)
      * JSEXN_INTERNALERR returns null to prevent that "InternalError: "
      * is prepended before "uncaught exception: "
      */
-    if (exnType <= JSEXN_NONE || exnType >= JSEXN_LIMIT ||
-        exnType == JSEXN_INTERNALERR)
+    if (exnType < 0 || exnType >= JSEXN_LIMIT ||
+        exnType == JSEXN_INTERNALERR || exnType == JSEXN_WARN)
     {
         return nullptr;
     }
@@ -530,23 +536,25 @@ js::ErrorToException(JSContext* cx, const char* message, JSErrorReport* reportp,
 
     // Similarly, we cannot throw a proper object inside the self-hosting
     // compartment, as we cannot construct the Error constructor without
-    // self-hosted code. Tell our caller to report immediately.
-    // Without self-hosted code, we cannot get started anyway.
-    if (cx->runtime()->isSelfHostingCompartment(cx->compartment()))
+    // self-hosted code. Just print the error to stderr to help debugging.
+    if (cx->runtime()->isSelfHostingCompartment(cx->compartment())) {
+        PrintError(cx, stderr, message, reportp, true);
         return false;
+    }
 
     // Find the exception index associated with this error.
     JSErrNum errorNumber = static_cast<JSErrNum>(reportp->errorNumber);
     if (!callback)
         callback = GetErrorMessage;
     const JSErrorFormatString* errorString = callback(userRef, errorNumber);
-    JSExnType exnType = errorString ? static_cast<JSExnType>(errorString->exnType) : JSEXN_NONE;
+    JSExnType exnType = errorString ? static_cast<JSExnType>(errorString->exnType) : JSEXN_ERR;
     MOZ_ASSERT(exnType < JSEXN_LIMIT);
 
-    // Return false (no exception raised) if no exception is associated
-    // with the given error number.
-    if (exnType == JSEXN_NONE)
-        return false;
+    if (exnType == JSEXN_WARN) {
+        // werror must be enabled, so we use JSEXN_ERR.
+        MOZ_ASSERT(cx->runtime()->options().werror());
+        exnType = JSEXN_ERR;
+    }
 
     // Prevent infinite recursion.
     if (cx->generatingError)
@@ -627,8 +635,9 @@ ErrorReportToString(JSContext* cx, JSErrorReport* reportp)
      */
     JSExnType type = static_cast<JSExnType>(reportp->exnType);
     RootedString str(cx);
-    if (type != JSEXN_NONE)
+    if (type != JSEXN_WARN)
         str = ClassName(GetExceptionProtoKey(type), cx);
+
     /*
      * If "str" is null at this point, that means we just want to use
      * reportp->ucmessage without prefixing it with anything.
@@ -892,7 +901,7 @@ ErrorReport::init(JSContext* cx, HandleValue exn,
         new (reportp) JSErrorReport();
         ownedReport.filename = filename.ptr();
         ownedReport.lineno = lineno;
-        ownedReport.exnType = int16_t(JSEXN_NONE);
+        ownedReport.exnType = JSEXN_INTERNALERR;
         ownedReport.column = column;
         if (str) {
             // Note that using |str| for |ucmessage| here is kind of wrong,
@@ -1028,49 +1037,49 @@ JS::CreateError(JSContext* cx, JSExnType type, HandleObject stack, HandleString 
 const char*
 js::ValueToSourceForError(JSContext* cx, HandleValue val, JSAutoByteString& bytes)
 {
-    if (val.isUndefined()) {
+    if (val.isUndefined())
         return "undefined";
-    }
-    if (val.isNull()) {
+
+    if (val.isNull())
         return "null";
-    }
+
+    AutoClearPendingException acpe(cx);
 
     RootedString str(cx, JS_ValueToSource(cx, val));
-    if (!str) {
-        JS_ClearPendingException(cx);
+    if (!str)
         return "<<error converting value to string>>";
-    }
 
     StringBuffer sb(cx);
     if (val.isObject()) {
         RootedObject valObj(cx, val.toObjectOrNull());
         ESClassValue cls;
-        if (!GetBuiltinClass(cx, valObj, &cls)) {
-            JS_ClearPendingException(cx);
+        if (!GetBuiltinClass(cx, valObj, &cls))
             return "<<error determining class of value>>";
-        }
-        if (cls == ESClass_Array) {
-            sb.append("the array ");
-        } else if (cls == ESClass_ArrayBuffer) {
-            sb.append("the array buffer ");
-        } else if (JS_IsArrayBufferViewObject(valObj)) {
-            sb.append("the typed array ");
-        } else {
-            sb.append("the object ");
-        }
+        const char* s;
+        if (cls == ESClass_Array)
+            s = "the array ";
+        else if (cls == ESClass_ArrayBuffer)
+            s = "the array buffer ";
+        else if (JS_IsArrayBufferViewObject(valObj))
+            s = "the typed array ";
+        else
+            s = "the object ";
+        if (!sb.append(s, strlen(s)))
+            return "<<error converting value to string>>";
     } else if (val.isNumber()) {
-        sb.append("the number ");
+        if (!sb.append("the number "))
+            return "<<error converting value to string>>";
     } else if (val.isString()) {
-        sb.append("the string ");
+        if (!sb.append("the string "))
+            return "<<error converting value to string>>";
     } else {
         MOZ_ASSERT(val.isBoolean() || val.isSymbol());
         return bytes.encodeLatin1(cx, str);
     }
-    sb.append(str);
-    str = sb.finishString();
-    if (!str) {
-        JS_ClearPendingException(cx);
+    if (!sb.append(str))
         return "<<error converting value to string>>";
-    }
+    str = sb.finishString();
+    if (!str)
+        return "<<error converting value to string>>";
     return bytes.encodeLatin1(cx, str);
 }

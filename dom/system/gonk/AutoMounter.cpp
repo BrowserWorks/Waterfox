@@ -23,6 +23,7 @@
 #include "nsVolumeService.h"
 #include "AutoMounterSetting.h"
 #include "base/message_loop.h"
+#include "base/task.h"
 #include "mozilla/AutoRestore.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/Hal.h"
@@ -962,8 +963,7 @@ AutoMounter::UpdateState()
         if (delay <= 4000) {
           LOG("UpdateState: Volume '%s' is inaccessible, checking again in %d msec", vol->NameStr(), delay);
           MessageLoopForIO::current()->
-            PostDelayedTask(FROM_HERE,
-                            NewRunnableMethod(this, &AutoMounter::UpdateState),
+            PostDelayedTask(NewRunnableMethod(this, &AutoMounter::UpdateState),
                             delay);
           delay *= 2;
         } else {
@@ -1037,8 +1037,7 @@ AutoMounter::UpdateState()
               delay = 5000;
             }
             MessageLoopForIO::current()->
-              PostDelayedTask(FROM_HERE,
-                              NewRunnableMethod(this, &AutoMounter::UpdateState),
+              PostDelayedTask(NewRunnableMethod(this, &AutoMounter::UpdateState),
                               delay);
             filesOpen = true;
             break;
@@ -1390,7 +1389,6 @@ public:
     DBG("UsbCable switch device: %d state: %s\n",
         aEvent.device(), SwitchStateStr(aEvent));
     XRE_GetIOMessageLoop()->PostTask(
-        FROM_HERE,
         NewRunnableFunction(UsbCableEventIOThread));
   }
 };
@@ -1405,7 +1403,6 @@ InitAutoMounter()
   sAutoMounterSetting = new AutoMounterSetting();
 
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(InitAutoMounterIOThread));
 
   // Switch Observers need to run on the main thread, so we need to
@@ -1442,7 +1439,6 @@ void
 SetAutoMounterMode(int32_t aMode)
 {
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(SetAutoMounterModeIOThread, aMode));
 }
 
@@ -1450,7 +1446,6 @@ void
 SetAutoMounterSharingMode(const nsCString& aVolumeName, bool aAllowSharing)
 {
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(SetAutoMounterSharingModeIOThread,
                           aVolumeName, aAllowSharing));
 }
@@ -1459,7 +1454,6 @@ void
 AutoMounterFormatVolume(const nsCString& aVolumeName)
 {
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(AutoMounterFormatVolumeIOThread,
                           aVolumeName));
 }
@@ -1468,7 +1462,6 @@ void
 AutoMounterMountVolume(const nsCString& aVolumeName)
 {
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(AutoMounterMountVolumeIOThread,
                           aVolumeName));
 }
@@ -1477,7 +1470,6 @@ void
 AutoMounterUnmountVolume(const nsCString& aVolumeName)
 {
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(AutoMounterUnmountVolumeIOThread,
                           aVolumeName));
 }
@@ -1498,7 +1490,6 @@ ShutdownAutoMounter()
   sUsbCableObserver = nullptr;
 
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(ShutdownAutoMounterIOThread));
 }
 

@@ -6,7 +6,9 @@
 package org.mozilla.gecko.widget;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.favicons.FaviconGenerator;
 import org.mozilla.gecko.favicons.Favicons;
+import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -16,6 +18,9 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.TypedValue;
 import android.widget.ImageView;
 /**
  * Special version of ImageView for favicons.
@@ -23,7 +28,12 @@ import android.widget.ImageView;
  * selected is the dominant colour of the provided Favicon.
  */
 public class FaviconView extends ImageView {
+    private static final String LOGTAG = "GeckoFaviconView";
+
     private static String DEFAULT_FAVICON_KEY = FaviconView.class.getSimpleName() + "DefaultFavicon";
+
+    // Default x/y-radius of the oval used to round the corners of the background (dp)
+    private static final int DEFAULT_CORNER_RADIUS_DP = 4;
 
     private Bitmap mIconBitmap;
 
@@ -45,20 +55,14 @@ public class FaviconView extends ImageView {
     // Dominant color of the favicon.
     private int mDominantColor;
 
-    // Stroke width for the border.
-    private static float sStrokeWidth;
-
-    // Paint for drawing the stroke.
-    private static final Paint sStrokePaint;
-
     // Paint for drawing the background.
     private static final Paint sBackgroundPaint;
 
-    // Size of the stroke rectangle.
-    private final RectF mStrokeRect;
-
     // Size of the background rectangle.
     private final RectF mBackgroundRect;
+
+    // The x/y-radius of the oval used to round the corners of the background (pixels)
+    private final float mBackgroundCornerRadius;
 
     // Type of the border whose value is defined in attrs.xml .
     private final boolean isDominantBorderEnabled;
@@ -68,9 +72,6 @@ public class FaviconView extends ImageView {
 
     // Initializing the static paints.
     static {
-        sStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        sStrokePaint.setStyle(Paint.Style.STROKE);
-
         sBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         sBackgroundPaint.setStyle(Paint.Style.FILL);
     }
@@ -90,16 +91,10 @@ public class FaviconView extends ImageView {
             setScaleType(ImageView.ScaleType.CENTER);
         }
 
-        mStrokeRect = new RectF();
-        mBackgroundRect = new RectF();
+        final DisplayMetrics metrics = getResources().getDisplayMetrics();
 
-        if (sStrokeWidth == 0) {
-            sStrokeWidth = getResources().getDisplayMetrics().density;
-            sStrokePaint.setStrokeWidth(sStrokeWidth);
-        }
-
-        mStrokeRect.left = mStrokeRect.top = sStrokeWidth;
-        mBackgroundRect.left = mBackgroundRect.top = sStrokeWidth * 2.0f;
+        mBackgroundRect = new RectF(0, 0, 0, 0);
+        mBackgroundCornerRadius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_CORNER_RADIUS_DP, metrics);
     }
 
     @Override
@@ -114,26 +109,21 @@ public class FaviconView extends ImageView {
         mActualWidth = w;
         mActualHeight = h;
 
-        mStrokeRect.right = w - sStrokeWidth;
-        mStrokeRect.bottom = h - sStrokeWidth;
-        mBackgroundRect.right = mStrokeRect.right - sStrokeWidth;
-        mBackgroundRect.bottom = mStrokeRect.bottom - sStrokeWidth;
+        mBackgroundRect.right = w;
+        mBackgroundRect.bottom = h;
 
         formatImage();
     }
 
     @Override
     public void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
         if (isDominantBorderEnabled) {
-            // 27.5% transparent dominant color.
-            sBackgroundPaint.setColor(mDominantColor & 0x46FFFFFF);
-            canvas.drawRect(mStrokeRect, sBackgroundPaint);
+            sBackgroundPaint.setColor(mDominantColor & 0x7FFFFFFF);
 
-            sStrokePaint.setColor(mDominantColor);
-            canvas.drawRoundRect(mStrokeRect, sStrokeWidth, sStrokeWidth, sStrokePaint);
+            canvas.drawRoundRect(mBackgroundRect, mBackgroundCornerRadius, mBackgroundCornerRadius, sBackgroundPaint);
         }
+
+        super.onDraw(canvas);
     }
 
     /**
@@ -199,7 +189,10 @@ public class FaviconView extends ImageView {
      */
     private void updateImageInternal(Bitmap bitmap, String key, boolean allowScaling) {
         if (bitmap == null) {
-            showDefaultFavicon();
+            Log.w(LOGTAG, "updateImageInternal() called without bitmap");
+
+            // At this point we do not have a page URL anymore.
+            showDefaultFavicon(null);
             return;
         }
 
@@ -216,13 +209,23 @@ public class FaviconView extends ImageView {
         formatImage();
     }
 
-    public void showDefaultFavicon() {
-        // We handle the default favicon as any other favicon to avoid the complications of special
-        // casing it. This means that the icon can be scaled both up and down, and the dominant
-        // color box can used if it is enabled in XML attrs.
-        final Bitmap defaultFaviconBitmap = BitmapFactory.decodeResource(getResources(),
-                R.drawable.favicon_globe);
-        updateAndScaleImage(defaultFaviconBitmap, DEFAULT_FAVICON_KEY);
+    public void showDefaultFavicon(final String pageURL) {
+        ThreadUtils.postToBackgroundThread(new Runnable() {
+            @Override
+            public void run() {
+                final Bitmap favicon = FaviconGenerator.generate(getContext(), pageURL);
+
+                ThreadUtils.postToUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // We handle the default favicon as any other favicon to avoid the complications of special
+                        // casing it. This means that the icon can be scaled both up and down, and the dominant
+                        // color box can used if it is enabled in XML attrs.
+                        updateAndScaleImage(favicon, DEFAULT_FAVICON_KEY);
+                    }
+                });
+            }
+        });
     }
 
     private void showNoImage() {

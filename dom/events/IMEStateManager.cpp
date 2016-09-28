@@ -135,36 +135,10 @@ GetIMEStateSetOpenName(IMEState::Open aOpen)
   }
 }
 
-static const char*
-GetNotifyIMEMessageName(IMEMessage aMessage)
-{
-  switch (aMessage) {
-    case NOTIFY_IME_OF_FOCUS:
-      return "NOTIFY_IME_OF_FOCUS";
-    case NOTIFY_IME_OF_BLUR:
-      return "NOTIFY_IME_OF_BLUR";
-    case NOTIFY_IME_OF_SELECTION_CHANGE:
-      return "NOTIFY_IME_OF_SELECTION_CHANGE";
-    case NOTIFY_IME_OF_TEXT_CHANGE:
-      return "NOTIFY_IME_OF_TEXT_CHANGE";
-    case NOTIFY_IME_OF_COMPOSITION_UPDATE:
-      return "NOTIFY_IME_OF_COMPOSITION_UPDATE";
-    case NOTIFY_IME_OF_POSITION_CHANGE:
-      return "NOTIFY_IME_OF_POSITION_CHANGE";
-    case NOTIFY_IME_OF_MOUSE_BUTTON_EVENT:
-      return "NOTIFY_IME_OF_MOUSE_BUTTON_EVENT";
-    case REQUEST_TO_COMMIT_COMPOSITION:
-      return "REQUEST_TO_COMMIT_COMPOSITION";
-    case REQUEST_TO_CANCEL_COMPOSITION:
-      return "REQUEST_TO_CANCEL_COMPOSITION";
-    default:
-      return "unacceptable IME notification message";
-  }
-}
-
 StaticRefPtr<nsIContent> IMEStateManager::sContent;
 nsPresContext* IMEStateManager::sPresContext = nullptr;
-nsIWidget* IMEStateManager::sFocusedIMEWidget;
+nsIWidget* IMEStateManager::sFocusedIMEWidget = nullptr;
+nsIWidget* IMEStateManager::sActiveInputContextWidget = nullptr;
 StaticRefPtr<TabParent> IMEStateManager::sActiveTabParent;
 StaticRefPtr<IMEContentObserver> IMEStateManager::sActiveIMEContentObserver;
 TextCompositionArray* IMEStateManager::sTextCompositions = nullptr;
@@ -222,6 +196,9 @@ IMEStateManager::WidgetDestroyed(nsIWidget* aWidget)
   if (sFocusedIMEWidget == aWidget) {
     sFocusedIMEWidget = nullptr;
   }
+  if (sActiveInputContextWidget == aWidget) {
+    sActiveInputContextWidget = nullptr;
+  }
 }
 
 // static
@@ -237,6 +214,7 @@ IMEStateManager::StopIMEStateManagement()
   if (sTextCompositions && sPresContext) {
     NotifyIME(REQUEST_TO_COMMIT_COMPOSITION, sPresContext);
   }
+  sActiveInputContextWidget = nullptr;
   sPresContext = nullptr;
   sContent = nullptr;
   sActiveTabParent = nullptr;
@@ -890,7 +868,7 @@ IMEStateManager::GetNewIMEState(nsPresContext* aPresContext,
 }
 
 // Helper class, used for IME enabled state change notification
-class IMEEnabledStateChangedEvent : public nsRunnable {
+class IMEEnabledStateChangedEvent : public Runnable {
 public:
   explicit IMEEnabledStateChangedEvent(uint32_t aState)
     : mState(aState)
@@ -1004,8 +982,6 @@ IMEStateManager::SetIMEState(const IMEState& aState,
 
   NS_ENSURE_TRUE_VOID(aWidget);
 
-  InputContext oldContext = aWidget->GetInputContext();
-
   InputContext context;
   context.mIMEState = aState;
   context.mMayBeIMEUnaware = context.mIMEState.IsEditable() &&
@@ -1108,13 +1084,15 @@ IMEStateManager::SetInputContext(nsIWidget* aWidget,
 
   MOZ_RELEASE_ASSERT(aWidget);
 
-  InputContext oldContext = aWidget->GetInputContext();
-
   aWidget->SetInputContext(aInputContext, aAction);
-  if (oldContext.mIMEState.mEnabled == aInputContext.mIMEState.mEnabled) {
-    return;
-  }
+  sActiveInputContextWidget = aWidget;
 
+  // Don't compare with old IME enabled state for reducing the count of
+  // notifying observers since in a remote process, nsIWidget::GetInputContext()
+  // call here may cause synchronous IPC, it's much more expensive than
+  // notifying observes.
+
+  // XXX Looks like nobody is observing this.
   nsContentUtils::AddScriptRunner(
     new IMEEnabledStateChangedEvent(aInputContext.mIMEState.mEnabled));
 }
@@ -1227,6 +1205,13 @@ IMEStateManager::DispatchCompositionEvent(
       sTextCompositions->RemoveElementAt(i);
     }
   }
+}
+
+// static
+IMEContentObserver*
+IMEStateManager::GetActiveContentObserver()
+{
+  return sActiveIMEContentObserver;
 }
 
 // static
@@ -1348,7 +1333,7 @@ IMEStateManager::NotifyIME(const IMENotification& aNotification,
     ("ISM: IMEStateManager::NotifyIME(aNotification={ mMessage=%s }, "
      "aWidget=0x%p, aOriginIsRemote=%s), sFocusedIMEWidget=0x%p, "
      "sRemoteHasFocus=%s",
-     GetNotifyIMEMessageName(aNotification.mMessage), aWidget,
+     ToChar(aNotification.mMessage), aWidget,
      GetBoolName(aOriginIsRemote), sFocusedIMEWidget,
      GetBoolName(sRemoteHasFocus)));
 
@@ -1419,6 +1404,7 @@ IMEStateManager::NotifyIME(const IMENotification& aNotification,
     case NOTIFY_IME_OF_TEXT_CHANGE:
     case NOTIFY_IME_OF_POSITION_CHANGE:
     case NOTIFY_IME_OF_MOUSE_BUTTON_EVENT:
+    case NOTIFY_IME_OF_COMPOSITION_EVENT_HANDLED:
       if (!sRemoteHasFocus && aOriginIsRemote) {
         MOZ_LOG(sISMLog, LogLevel::Info,
           ("ISM:   IMEStateManager::NotifyIME(), received content change "
@@ -1472,20 +1458,6 @@ IMEStateManager::NotifyIME(const IMENotification& aNotification,
     case REQUEST_TO_CANCEL_COMPOSITION:
       return composition ?
         composition->RequestToCommit(aWidget, true) : NS_OK;
-    case NOTIFY_IME_OF_COMPOSITION_UPDATE:
-      if (!aOriginIsRemote && (!composition || isSynthesizedForTests)) {
-        MOZ_LOG(sISMLog, LogLevel::Info,
-          ("ISM:   IMEStateManager::NotifyIME(), FAILED, received content "
-           "change notification from this process but there is no compostion"));
-        return NS_OK;
-      }
-      if (!sRemoteHasFocus && aOriginIsRemote) {
-        MOZ_LOG(sISMLog, LogLevel::Info,
-          ("ISM:   IMEStateManager::NotifyIME(), received content change "
-           "notification from the remote but it's already lost focus"));
-        return NS_OK;
-      }
-      return aWidget->NotifyIME(aNotification);
     default:
       MOZ_CRASH("Unsupported notification");
   }
@@ -1503,8 +1475,7 @@ IMEStateManager::NotifyIME(IMEMessage aMessage,
   MOZ_LOG(sISMLog, LogLevel::Info,
     ("ISM: IMEStateManager::NotifyIME(aMessage=%s, aPresContext=0x%p, "
      "aOriginIsRemote=%s)",
-     GetNotifyIMEMessageName(aMessage), aPresContext,
-     GetBoolName(aOriginIsRemote)));
+     ToChar(aMessage), aPresContext, GetBoolName(aOriginIsRemote)));
 
   NS_ENSURE_TRUE(aPresContext, NS_ERROR_INVALID_ARG);
 

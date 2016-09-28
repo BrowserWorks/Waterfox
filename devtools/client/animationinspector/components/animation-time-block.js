@@ -6,8 +6,7 @@
 
 "use strict";
 
-const {Cu} = require("chrome");
-Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
+const EventEmitter = require("devtools/shared/event-emitter");
 const {createNode, TimeScale} = require("devtools/client/animationinspector/utils");
 
 const { LocalizationHelper } = require("devtools/client/shared/l10n");
@@ -27,25 +26,25 @@ function AnimationTimeBlock() {
 exports.AnimationTimeBlock = AnimationTimeBlock;
 
 AnimationTimeBlock.prototype = {
-  init: function(containerEl) {
+  init: function (containerEl) {
     this.containerEl = containerEl;
     this.containerEl.addEventListener("click", this.onClick);
   },
 
-  destroy: function() {
+  destroy: function () {
     this.containerEl.removeEventListener("click", this.onClick);
     this.unrender();
     this.containerEl = null;
     this.animation = null;
   },
 
-  unrender: function() {
+  unrender: function () {
     while (this.containerEl.firstChild) {
       this.containerEl.firstChild.remove();
     }
   },
 
-  render: function(animation) {
+  render: function (animation) {
     this.unrender();
 
     this.animation = animation;
@@ -120,7 +119,7 @@ AnimationTimeBlock.prototype = {
     }
   },
 
-  getTooltipText: function(state) {
+  getTooltipText: function (state) {
     let getTime = time => L10N.getFormatStr("player.timeLabel",
                             L10N.numberWithDecimals(time / 1000, 2));
 
@@ -175,14 +174,22 @@ AnimationTimeBlock.prototype = {
 
     // Adding a note that the animation is running on the compositor thread if
     // needed.
-    if (state.isRunningOnCompositor) {
+    if (state.propertyState) {
+      if (state.propertyState
+          .every(propState => propState.runningOnCompositor)) {
+        text += L10N.getStr("player.allPropertiesOnCompositorTooltip");
+      } else if (state.propertyState
+                 .some(propState => propState.runningOnCompositor)) {
+        text += L10N.getStr("player.somePropertiesOnCompositorTooltip");
+      }
+    } else if (state.isRunningOnCompositor) {
       text += L10N.getStr("player.runningOnCompositorTooltip");
     }
 
     return text;
   },
 
-  onClick: function(e) {
+  onClick: function (e) {
     e.stopPropagation();
     this.emit("selected", this.animation);
   }

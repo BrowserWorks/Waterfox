@@ -42,13 +42,19 @@ class MediaRawDataQueue {
 
   void PushFront(MediaRawDataQueue&& aOther) {
     while (!aOther.mQueue.empty()) {
-      Push(aOther.PopFront());
+      PushFront(aOther.Pop());
     }
   }
 
   already_AddRefed<MediaRawData> PopFront() {
     RefPtr<MediaRawData> result = mQueue.front().forget();
     mQueue.pop_front();
+    return result.forget();
+  }
+
+  already_AddRefed<MediaRawData> Pop() {
+    RefPtr<MediaRawData> result = mQueue.back().forget();
+    mQueue.pop_back();
     return result.forget();
   }
 
@@ -107,7 +113,7 @@ public:
   // Demux next WebM packet and append samples to MediaRawDataQueue
   bool GetNextPacket(TrackInfo::TrackType aType, MediaRawDataQueue *aSamples);
 
-  nsresult Reset();
+  nsresult Reset(TrackInfo::TrackType aType);
 
   // Pushes a packet to the front of the audio packet queue.
   void PushAudioPacket(NesteggPacketHolder* aItem);
@@ -116,33 +122,55 @@ public:
   void PushVideoPacket(NesteggPacketHolder* aItem);
 
   // Public accessor for nestegg callbacks
-  MediaResourceIndex* GetResource()
-  {
-    return &mResource;
-  }
-
-  int64_t GetEndDataOffset() const
-  {
-    return (!mIsMediaSource || mLastWebMBlockOffset < 0)
-      ? mResource.GetLength() : mLastWebMBlockOffset;
-  }
-  int64_t IsMediaSource() const
+  bool IsMediaSource() const
   {
     return mIsMediaSource;
   }
+
+  int64_t LastWebMBlockOffset() const
+  {
+    return mLastWebMBlockOffset;
+  }
+
+  struct NestEggContext {
+    NestEggContext(WebMDemuxer* aParent, MediaResource* aResource)
+    : mParent(aParent)
+    , mResource(aResource)
+    , mContext(nullptr) {}
+
+    ~NestEggContext();
+
+    int Init();
+
+    // Public accessor for nestegg callbacks
+
+    bool IsMediaSource() const { return mParent->IsMediaSource(); }
+    MediaResourceIndex* GetResource() { return &mResource; }
+
+    int64_t GetEndDataOffset() const
+    {
+      return (!mParent->IsMediaSource() || mParent->LastWebMBlockOffset() < 0)
+             ? mResource.GetLength() : mParent->LastWebMBlockOffset();
+    }
+
+    WebMDemuxer* mParent;
+    MediaResourceIndex mResource;
+    nestegg* mContext;
+  };
 
 private:
   friend class WebMTrackDemuxer;
 
   ~WebMDemuxer();
-  void Cleanup();
   void InitBufferedState();
   nsresult ReadMetadata();
   void NotifyDataArrived() override;
   void NotifyDataRemoved() override;
   void EnsureUpToDateIndex();
   media::TimeIntervals GetBuffered();
-  nsresult SeekInternal(const media::TimeUnit& aTarget);
+  nsresult SeekInternal(TrackInfo::TrackType aType,
+                        const media::TimeUnit& aTarget);
+  CryptoTrack GetTrackCrypto(TrackInfo::TrackType aType, size_t aTrackNumber);
 
   // Read a packet from the nestegg file. Returns nullptr if all packets for
   // the particular track have been read. Pass TrackInfo::kVideoTrack or
@@ -151,9 +179,23 @@ private:
 
   // Internal method that demuxes the next packet from the stream. The caller
   // is responsible for making sure it doesn't get lost.
-  RefPtr<NesteggPacketHolder> DemuxPacket();
+  RefPtr<NesteggPacketHolder> DemuxPacket(TrackInfo::TrackType aType);
 
-  MediaResourceIndex mResource;
+  // libnestegg audio and video context for webm container.
+  // Access on reader's thread only.
+  NestEggContext mVideoContext;
+  NestEggContext mAudioContext;
+  MediaResourceIndex& Resource(TrackInfo::TrackType aType)
+  {
+    return aType == TrackInfo::kVideoTrack
+           ? mVideoContext.mResource : mAudioContext.mResource;
+  }
+  nestegg* Context(TrackInfo::TrackType aType) const
+  {
+    return aType == TrackInfo::kVideoTrack
+           ? mVideoContext.mContext : mAudioContext.mContext;
+  }
+
   MediaInfo mInfo;
   nsTArray<RefPtr<WebMTrackDemuxer>> mDemuxers;
 
@@ -162,10 +204,6 @@ private:
   RefPtr<WebMBufferedState> mBufferedState;
   RefPtr<MediaByteBuffer> mInitData;
 
-  // libnestegg context for webm container.
-  // Access on reader's thread for main demuxer,
-  // or main thread for cloned demuxer
-  nestegg* mContext;
 
   // Queue of video and audio packets that have been read but not decoded.
   WebMPacketQueue mVideoPackets;
@@ -207,6 +245,8 @@ private:
   // This will be populated only if a resolution change occurs, otherwise it
   // will be left as null so the original metadata is used
   RefPtr<SharedTrackInfo> mSharedVideoTrackInfo;
+
+  EncryptionInfo mCrypto;
 };
 
 class WebMTrackDemuxer : public MediaTrackDemuxer
@@ -229,6 +269,8 @@ public:
   RefPtr<SkipAccessPointPromise> SkipToNextRandomAccessPoint(media::TimeUnit aTimeThreshold) override;
 
   media::TimeIntervals GetBuffered() override;
+
+  int64_t GetEvictionOffset(const media::TimeUnit& aTime) override;
 
   void BreakCycles() override;
 

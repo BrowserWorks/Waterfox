@@ -1829,6 +1829,7 @@ class ASTSerializer
   public:
     ASTSerializer(JSContext* c, bool l, char const* src, uint32_t ln)
         : cx(c)
+        , parser(nullptr)
         , builder(c, l, src)
 #ifdef DEBUG
         , lineno(ln)
@@ -3470,7 +3471,7 @@ ASTSerializer::function(ParseNode* pn, ASTType type, MutableHandleValue dst)
 #endif
 
     RootedValue id(cx);
-    RootedAtom funcAtom(cx, func->atom());
+    RootedAtom funcAtom(cx, func->name());
     if (!optIdentifier(funcAtom, nullptr, &id))
         return false;
 
@@ -3747,6 +3748,9 @@ reflect_parse(JSContext* cx, uint32_t argc, Value* vp)
         if (!pn)
             return false;
     } else {
+        if (!GlobalObject::ensureModulePrototypesCreated(cx, cx->global()))
+            return false;
+
         Rooted<ModuleObject*> module(cx, ModuleObject::create(cx, nullptr));
         if (!module)
             return false;

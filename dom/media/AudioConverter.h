@@ -123,6 +123,8 @@ public:
   // Convert the AudioDataBuffer.
   // Conversion will be done in place if possible. Otherwise a new buffer will
   // be returned.
+  // Providing an empty buffer and resampling is expected, the resampler
+  // will be drained.
   template <AudioConfig::SampleFormat Format, typename Value>
   AudioDataBuffer<Format, Value> Process(AudioDataBuffer<Format, Value>&& aBuffer)
   {
@@ -152,7 +154,7 @@ public:
       return AudioDataBuffer<Format, Value>(Move(temp1));
     }
     frames = ProcessInternal(temp1.Data(), aBuffer.Data(), frames);
-    if (!frames || mIn.Rate() == mOut.Rate()) {
+    if (mIn.Rate() == mOut.Rate()) {
       MOZ_ALWAYS_TRUE(temp1.SetLength(FramesOutToSamples(frames)));
       return AudioDataBuffer<Format, Value>(Move(temp1));
     }
@@ -161,15 +163,19 @@ public:
     // If we are downsampling we can re-use it.
     AlignedBuffer<Value>* outputBuffer = &temp1;
     AlignedBuffer<Value> temp2;
-    if (mOut.Rate() > mIn.Rate()) {
-      // We are upsampling, we can't work in place. Allocate another temporary
-      // buffer where the upsampling will occur.
+    if (!frames || mOut.Rate() > mIn.Rate()) {
+      // We are upsampling or about to drain, we can't work in place.
+      // Allocate another temporary buffer where the upsampling will occur.
       if (!temp2.SetLength(FramesOutToSamples(ResampleRecipientFrames(frames)))) {
         return AudioDataBuffer<Format, Value>(Move(temp2));
       }
       outputBuffer = &temp2;
     }
-    frames = ResampleAudio(outputBuffer->Data(), temp1.Data(), frames);
+    if (!frames) {
+      frames = DrainResampler(outputBuffer->Data());
+    } else {
+      frames = ResampleAudio(outputBuffer->Data(), temp1.Data(), frames);
+    }
     MOZ_ALWAYS_TRUE(outputBuffer->SetLength(FramesOutToSamples(frames)));
     return AudioDataBuffer<Format, Value>(Move(*outputBuffer));
   }
@@ -215,6 +221,7 @@ private:
   size_t ProcessInternal(void* aOut, const void* aIn, size_t aFrames);
   void ReOrderInterleavedChannels(void* aOut, const void* aIn, size_t aFrames) const;
   size_t DownmixAudio(void* aOut, const void* aIn, size_t aFrames) const;
+  size_t UpmixAudio(void* aOut, const void* aIn, size_t aFrames) const;
 
   size_t FramesOutToSamples(size_t aFrames) const;
   size_t SamplesInToFrames(size_t aSamples) const;
@@ -224,6 +231,8 @@ private:
   SpeexResamplerState* mResampler;
   size_t ResampleAudio(void* aOut, const void* aIn, size_t aFrames);
   size_t ResampleRecipientFrames(size_t aFrames) const;
+  void RecreateResampler();
+  size_t DrainResampler(void* aOut);
 };
 
 } // namespace mozilla

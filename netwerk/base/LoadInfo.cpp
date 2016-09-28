@@ -10,6 +10,7 @@
 #include "mozilla/dom/ToJSValue.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsFrameLoader.h"
+#include "nsIContentSecurityPolicy.h"
 #include "nsIDocShell.h"
 #include "nsIDocument.h"
 #include "nsIDOMDocument.h"
@@ -24,6 +25,7 @@
 using namespace mozilla::dom;
 
 namespace mozilla {
+namespace net {
 
 static void
 InheritOriginAttributes(nsIPrincipal* aLoadingPrincipal, NeckoOriginAttributes& aAttrs)
@@ -88,6 +90,7 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
   // if the load is sandboxed, we can not also inherit the principal
   if (mSecurityFlags & nsILoadInfo::SEC_SANDBOXED) {
     mSecurityFlags ^= nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
+    mSecurityFlags |= nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL_WAS_DROPPED;
   }
 
   if (aLoadingContext) {
@@ -145,6 +148,24 @@ LoadInfo::LoadInfo(nsIPrincipal* aLoadingPrincipal,
     }
   }
 
+    // If CSP requires SRI (require-sri-for), then store that information
+    // in the loadInfo so we can enforce SRI before loading the subresource.
+    if (!mEnforceSRI) {
+      // do not look into the CSP if already true:
+      // a CSP saying that SRI isn't needed should not
+      // overrule GetVerifySignedContent
+      nsCOMPtr<nsIContentSecurityPolicy> csp;
+      if (aLoadingPrincipal) {
+        aLoadingPrincipal->GetCsp(getter_AddRefs(csp));
+        // csp could be null if loading principal is system principal
+        if (csp) {
+          uint32_t loadType =
+            nsContentUtils::InternalContentPolicyTypeToExternal(aContentPolicyType);
+          csp->RequireSRIForType(loadType, &mEnforceSRI);
+        }
+      }
+    }
+
   if (!(mSecurityFlags & nsILoadInfo::SEC_FORCE_PRIVATE_BROWSING)) {
     if (aLoadingContext) {
       nsCOMPtr<nsILoadContext> loadContext =
@@ -194,6 +215,7 @@ LoadInfo::LoadInfo(nsPIDOMWindowOuter* aOuterWindow,
   // if the load is sandboxed, we can not also inherit the principal
   if (mSecurityFlags & nsILoadInfo::SEC_SANDBOXED) {
     mSecurityFlags ^= nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL;
+    mSecurityFlags |= nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL_WAS_DROPPED;
   }
 
   // NB: Ignore the current inner window since we're navigating away from it.
@@ -470,6 +492,15 @@ LoadInfo::GetAllowChrome(bool* aResult)
 }
 
 NS_IMETHODIMP
+LoadInfo::GetDisallowScript(bool* aResult)
+{
+  *aResult =
+    (mSecurityFlags & nsILoadInfo::SEC_DISALLOW_SCRIPT);
+  return NS_OK;
+}
+
+
+NS_IMETHODIMP
 LoadInfo::GetDontFollowRedirects(bool* aResult)
 {
   *aResult =
@@ -731,4 +762,5 @@ LoadInfo::MaybeIncreaseTainting(uint32_t aTainting)
   return NS_OK;
 }
 
+} // namespace net
 } // namespace mozilla

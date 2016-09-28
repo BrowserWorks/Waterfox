@@ -35,6 +35,10 @@
 
  ******/
 
+CSS_PROP_ALIAS(word-wrap,
+               overflow_wrap,
+               WordWrap,
+               "")
 CSS_PROP_ALIAS(-moz-transform-origin,
                transform_origin,
                MozTransformOrigin,
@@ -178,6 +182,10 @@ CSS_PROP_ALIAS(-moz-border-start-width,
 CSS_PROP_ALIAS(-moz-hyphens,
                hyphens,
                MozHyphens,
+               "")
+CSS_PROP_ALIAS(-moz-text-align-last,
+               text_align_last,
+               MozTextAlignLast,
                "")
 
 #define WEBKIT_PREFIX_PREF "layout.css.prefixes.webkit"
@@ -433,6 +441,14 @@ CSS_PROP_ALIAS(-webkit-mask-origin,
 CSS_PROP_ALIAS(-webkit-mask-position,
                mask_position,
                WebkitMaskPosition,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-position-x,
+               mask_position_x,
+               WebkitMaskPositionX,
+               WEBKIT_PREFIX_PREF)
+CSS_PROP_ALIAS(-webkit-mask-position-y,
+               mask_position_y,
+               WebkitMaskPositionY,
                WEBKIT_PREFIX_PREF)
 CSS_PROP_ALIAS(-webkit-mask-repeat,
                mask_repeat,

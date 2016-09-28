@@ -20,6 +20,7 @@ class nsNSSU2FToken : public nsINSSU2FToken,
 {
 public:
   NS_DECL_ISUPPORTS
+  NS_DECL_NSIU2FTOKEN
   NS_DECL_NSINSSU2FTOKEN
 
   nsNSSU2FToken();
@@ -30,13 +31,13 @@ public:
 
 private:
   bool mInitialized;
-  mozilla::ScopedPK11SymKey mWrappingKey;
+  mozilla::UniquePK11SymKey mWrappingKey;
 
   static const nsCString mSecretNickname;
   static const nsString mVersion;
 
   ~nsNSSU2FToken();
-  nsresult GetOrCreateWrappingKey(PK11SlotInfo* aSlot,
+  nsresult GetOrCreateWrappingKey(const mozilla::UniquePK11SlotInfo& aSlot,
                                   const nsNSSShutDownPreventionLock&);
 };
 

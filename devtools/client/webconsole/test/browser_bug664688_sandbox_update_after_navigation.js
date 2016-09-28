@@ -72,19 +72,26 @@ add_task(function* () {
   is(hud.outputNode.textContent.indexOf("Permission denied"), -1,
      "no permission denied errors");
 
+  // Navigation clears messages. Wait for that clear to happen before
+  // continuing the test or it might destroy messages we wait later on (Bug
+  // 1270234).
+  let cleared = hud.jsterm.once("messages-cleared");
+
   gBrowser.goBack();
 
+  info("Waiting for page to navigate");
   yield waitForSuccess({
     name: "go back",
-    validator: function() {
+    validator: function () {
       return content.location.href == TEST_URI1;
     },
   });
 
-  hud.jsterm.clearOutput();
-  executeSoon(() => {
-    hud.jsterm.execute("window.location.href");
-  });
+  info("Waiting for messages to be cleared due to navigation");
+  yield cleared;
+
+  info("Messages cleared after navigation; checking location");
+  hud.jsterm.execute("window.location.href");
 
   info("wait for window.location.href after goBack()");
   yield waitForMessages(msgForLocation1);

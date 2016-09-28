@@ -8,10 +8,10 @@
 
 const {Cu} = require("chrome");
 
-Cu.import("resource://gre/modules/XPCOMUtils.jsm");
-
 var Services = require("Services");
 var promise = require("promise");
+var {Task} = require("devtools/shared/task");
+var {XPCOMUtils} = require("resource://gre/modules/XPCOMUtils.jsm");
 var EventEmitter = require("devtools/shared/event-emitter");
 
 Cu.import("resource://devtools/client/styleeditor/StyleEditorUI.jsm");
@@ -19,10 +19,10 @@ Cu.import("resource://devtools/client/styleeditor/StyleEditorUI.jsm");
 Cu.import("resource://devtools/client/styleeditor/StyleEditorUtil.jsm");
 
 loader.lazyGetter(this, "StyleSheetsFront",
-  () => require("devtools/server/actors/stylesheets").StyleSheetsFront);
+  () => require("devtools/shared/fronts/stylesheets").StyleSheetsFront);
 
 loader.lazyGetter(this, "StyleEditorFront",
-  () => require("devtools/server/actors/styleeditor").StyleEditorFront);
+  () => require("devtools/shared/fronts/styleeditor").StyleEditorFront);
 
 var StyleEditorPanel = function StyleEditorPanel(panelWin, toolbox) {
   EventEmitter.decorate(this);
@@ -84,7 +84,7 @@ StyleEditorPanel.prototype = {
    * @param  {string} data
    *         The parameters to customize the error message
    */
-  _showError: function(event, data) {
+  _showError: function (event, data) {
     if (!this._toolbox) {
       // could get an async error after we've been destroyed
       return;
@@ -121,7 +121,7 @@ StyleEditorPanel.prototype = {
    *         Promise that will resolve when the editor is selected and ready
    *         to be used.
    */
-  selectStyleSheet: function(href, line, col) {
+  selectStyleSheet: function (href, line, col) {
     if (!this._debuggee || !this.UI) {
       return null;
     }
@@ -131,7 +131,7 @@ StyleEditorPanel.prototype = {
   /**
    * Destroy the style editor.
    */
-  destroy: function() {
+  destroy: function () {
     if (!this._destroyed) {
       this._destroyed = true;
 
@@ -152,7 +152,7 @@ StyleEditorPanel.prototype = {
 };
 
 XPCOMUtils.defineLazyGetter(StyleEditorPanel.prototype, "strings",
-  function() {
+  function () {
     return Services.strings.createBundle(
             "chrome://devtools/locale/styleeditor.properties");
   });

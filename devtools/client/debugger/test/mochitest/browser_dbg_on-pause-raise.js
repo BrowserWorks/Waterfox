@@ -13,14 +13,18 @@ var gTab, gPanel, gDebugger;
 var gFocusedWindow, gToolbox, gToolboxTab;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gToolbox = gPanel._toolbox;
     gToolboxTab = gToolbox.doc.getElementById("toolbox-tab-jsdebugger");
 
-    waitForSourceShown(gPanel, ".html").then(performTest);
+    performTest();
   });
 }
 
@@ -39,7 +43,7 @@ function performTest() {
 function focusMainWindow() {
   // Make sure toolbox is not focused.
   window.addEventListener("focus", onFocus, true);
-  info("Focusing main window.")
+  info("Focusing main window.");
 
   // Execute soon to avoid any race conditions between toolbox and main window
   // getting focused.
@@ -50,7 +54,7 @@ function focusMainWindow() {
 
 function onFocus() {
   window.removeEventListener("focus", onFocus, true);
-  info("Main window focused.")
+  info("Main window focused.");
 
   gFocusedWindow = window;
   testPause();
@@ -126,7 +130,7 @@ function maybeEndTest() {
   }
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   // Revert to the default toolbox host, so that the following tests proceed
   // normally and not inside a non-default host.
   Services.prefs.setCharPref("devtools.toolbox.host", Toolbox.HostType.BOTTOM);

@@ -13,7 +13,6 @@
 #include "GMPVideoDecoderParent.h"
 #include "nsIObserverService.h"
 #include "GeckoChildProcessHost.h"
-#include "mozilla/Preferences.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/SyncRunnable.h"
 #include "nsXPCOMPrivate.h"
@@ -24,7 +23,6 @@
 #include "GMPDecryptorParent.h"
 #include "GMPAudioDecoderParent.h"
 #include "nsComponentManagerUtils.h"
-#include "mozilla/Preferences.h"
 #include "runnable_utils.h"
 #include "VideoUtils.h"
 #if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
@@ -65,7 +63,7 @@ namespace gmp {
 
 static StaticRefPtr<GeckoMediaPluginService> sSingletonService;
 
-class GMPServiceCreateHelper final : public nsRunnable
+class GMPServiceCreateHelper final : public mozilla::Runnable
 {
   RefPtr<GeckoMediaPluginService> mService;
 
@@ -329,7 +327,16 @@ GeckoMediaPluginService::ShutdownGMPThread()
 }
 
 nsresult
-GeckoMediaPluginService::GMPDispatch(nsIRunnable* event, uint32_t flags)
+GeckoMediaPluginService::GMPDispatch(nsIRunnable* event,
+                                     uint32_t flags)
+{
+  nsCOMPtr<nsIRunnable> r(event);
+  return GMPDispatch(r.forget());
+}
+
+nsresult
+GeckoMediaPluginService::GMPDispatch(already_AddRefed<nsIRunnable> event,
+                                     uint32_t flags)
 {
   nsCOMPtr<nsIRunnable> r(event);
   nsCOMPtr<nsIThread> thread;

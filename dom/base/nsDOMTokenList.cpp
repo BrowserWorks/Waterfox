@@ -19,9 +19,11 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
-nsDOMTokenList::nsDOMTokenList(Element* aElement, nsIAtom* aAttrAtom)
+nsDOMTokenList::nsDOMTokenList(Element* aElement, nsIAtom* aAttrAtom,
+                               const DOMTokenListSupportedTokenArray aSupportedTokens)
   : mElement(aElement),
-    mAttrAtom(aAttrAtom)
+    mAttrAtom(aAttrAtom),
+    mSupportedTokens(aSupportedTokens)
 {
   // We don't add a reference to our element. If it goes away,
   // we'll be told to drop our reference
@@ -74,7 +76,7 @@ nsDOMTokenList::IndexedGetter(uint32_t aIndex, bool& aFound, nsAString& aResult)
 }
 
 void
-nsDOMTokenList::SetValue(const nsAString& aValue, mozilla::ErrorResult& rv)
+nsDOMTokenList::SetValue(const nsAString& aValue, ErrorResult& rv)
 {
   if (!mElement) {
     return;
@@ -117,13 +119,8 @@ nsDOMTokenList::CheckTokens(const nsTArray<nsString>& aTokens)
 }
 
 bool
-nsDOMTokenList::Contains(const nsAString& aToken, ErrorResult& aError)
+nsDOMTokenList::Contains(const nsAString& aToken)
 {
-  aError = CheckToken(aToken);
-  if (aError.Failed()) {
-    return false;
-  }
-
   const nsAttrValue* attr = GetParsedAttr();
   return attr && attr->Contains(aToken);
 }
@@ -182,7 +179,7 @@ nsDOMTokenList::Add(const nsTArray<nsString>& aTokens, ErrorResult& aError)
 }
 
 void
-nsDOMTokenList::Add(const nsAString& aToken, mozilla::ErrorResult& aError)
+nsDOMTokenList::Add(const nsAString& aToken, ErrorResult& aError)
 {
   AutoTArray<nsString, 1> tokens;
   tokens.AppendElement(aToken);
@@ -268,7 +265,7 @@ nsDOMTokenList::Remove(const nsTArray<nsString>& aTokens, ErrorResult& aError)
 }
 
 void
-nsDOMTokenList::Remove(const nsAString& aToken, mozilla::ErrorResult& aError)
+nsDOMTokenList::Remove(const nsAString& aToken, ErrorResult& aError)
 {
   AutoTArray<nsString, 1> tokens;
   tokens.AppendElement(aToken);
@@ -306,6 +303,65 @@ nsDOMTokenList::Toggle(const nsAString& aToken,
   }
 
   return isPresent;
+}
+
+void
+nsDOMTokenList::Replace(const nsAString& aToken,
+                        const nsAString& aNewToken,
+                        ErrorResult& aError)
+{
+  // Doing this here instead of using `CheckToken` because if aToken had invalid
+  // characters, and aNewToken is empty, the returned error should be a
+  // SyntaxError, not an InvalidCharacterError.
+  if (aNewToken.IsEmpty()) {
+    aError.Throw(NS_ERROR_DOM_SYNTAX_ERR);
+    return;
+  }
+
+  aError = CheckToken(aToken);
+  if (aError.Failed()) {
+    return;
+  }
+
+  aError = CheckToken(aNewToken);
+  if (aError.Failed()) {
+    return;
+  }
+
+  const nsAttrValue* attr = GetParsedAttr();
+  if (!attr || !attr->Contains(aToken)) {
+    return;
+  }
+
+  AutoTArray<nsString, 1> tokens;
+
+  tokens.AppendElement(aToken);
+  RemoveInternal(attr, tokens);
+
+  tokens[0] = aNewToken;
+  AddInternal(attr, tokens);
+}
+
+bool
+nsDOMTokenList::Supports(const nsAString& aToken,
+                         ErrorResult& aError)
+{
+  if (!mSupportedTokens) {
+    aError.ThrowTypeError<MSG_TOKENLIST_NO_SUPPORTED_TOKENS>(
+      mElement->LocalName(),
+      nsDependentAtomString(mAttrAtom));
+    return false;
+  }
+
+  for (DOMTokenListSupportedToken* supportedToken = mSupportedTokens;
+       *supportedToken;
+       ++supportedToken) {
+    if (aToken.LowerCaseEqualsASCII(*supportedToken)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 void

@@ -13,7 +13,7 @@
 #include "mozilla/gfx/MatrixFwd.h"      // for Matrix4x4
 #include "mozilla/gfx/Point.h"          // for Point
 #include "mozilla/gfx/Rect.h"           // for Rect
-#include "mozilla/gfx/Types.h"          // for Filter
+#include "mozilla/gfx/Types.h"          // for SamplingFilter
 #include "mozilla/layers/CompositorTypes.h"  // for TextureInfo, etc
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
 #include "mozilla/layers/LayersTypes.h"  // for LayerRenderState, etc
@@ -47,8 +47,8 @@ public:
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
-                         const gfx::Filter& aFilter,
-                         const gfx::Rect& aClipRect,
+                         const gfx::SamplingFilter aSamplingFilter,
+                         const gfx::IntRect& aClipRect,
                          const nsIntRegion* aVisibleRegion = nullptr) override;
 
   virtual void UseTextureHost(const nsTArray<TimedTexture>& aTextures) override;
@@ -84,7 +84,7 @@ public:
 
   virtual void Unlock() override;
 
-  virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::Filter& aFilter) override;
+  virtual already_AddRefed<TexturedEffect> GenEffect(const gfx::SamplingFilter aSamplingFilter) override;
 
   void SetCurrentTextureHost(TextureHost* aTexture);
 
@@ -119,7 +119,7 @@ public:
 
 protected:
   struct TimedImage {
-    RefPtr<TextureHost> mTextureHost;
+    CompositableTextureHostRef mTextureHost;
     TimeStamp mTimeStamp;
     gfx::IntRect mPictureRect;
     int32_t mFrameID;
@@ -127,7 +127,10 @@ protected:
     int32_t mInputFrameID;
   };
 
-  CompositableTextureHostRef mCurrentTextureHost;
+  // Use a simple RefPtr because the same texture is already held by a
+  // a CompositableTextureHostRef in the array of TimedImage.
+  // See the comment in CompositableTextureRef for more details.
+  RefPtr<TextureHost> mCurrentTextureHost;
   CompositableTextureSourceRef mCurrentTextureSource;
   // When doing texture uploads it's best to alternate between two (or three)
   // texture sources so that the texture we upload to isn't being used by
@@ -181,8 +184,8 @@ public:
                          EffectChain& aEffectChain,
                          float aOpacity,
                          const gfx::Matrix4x4& aTransform,
-                         const gfx::Filter& aFilter,
-                         const gfx::Rect& aClipRect,
+                         const gfx::SamplingFilter aSamplingFilter,
+                         const gfx::IntRect& aClipRect,
                          const nsIntRegion* aVisibleRegion);
   virtual LayerRenderState GetRenderState();
   virtual void UseOverlaySource(OverlaySource aOverlay,

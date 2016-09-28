@@ -1,4 +1,4 @@
 ;!@Install@!UTF-8!
-Title="Waterfox"
+Title="Mozilla Firefox"
 RunProgram="setup.exe"
 ;!@InstallEnd@!

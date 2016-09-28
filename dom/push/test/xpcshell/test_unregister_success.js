@@ -29,7 +29,6 @@ add_task(function* test_unregister_success() {
   let unregisterPromise = new Promise(resolve => unregisterDone = resolve);
   PushService.init({
     serverURI: "wss://push.example.org/",
-    networkInfo: new MockDesktopNetworkInfo(),
     db,
     makeWebSocket(uri) {
       return new MockWebSocket(uri, {
@@ -54,10 +53,18 @@ add_task(function* test_unregister_success() {
     }
   });
 
+  let subModifiedPromise = promiseObserverNotification(
+    PushServiceComponent.subscriptionModifiedTopic);
+
   yield PushService.unregister({
     scope: 'https://example.com/page/unregister-success',
     originAttributes: '',
   });
+
+  let {data: subModifiedScope} = yield subModifiedPromise;
+  equal(subModifiedScope, 'https://example.com/page/unregister-success',
+    'Should fire a subscription modified event after unsubscribing');
+
   let record = yield db.getByKeyID(channelID);
   ok(!record, 'Unregister did not remove record');
 

@@ -5,13 +5,13 @@
 "use strict";
 
 const { Cc, Ci, Cu, Cr } = require("chrome");
-const { Task } = require("resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 const EventEmitter = require("devtools/shared/event-emitter");
 const { MemoryFront } = require("devtools/server/actors/memory");
 const HeapAnalysesClient = require("devtools/shared/heapsnapshot/HeapAnalysesClient");
 const promise = require("promise");
 
-function MemoryPanel (iframeWindow, toolbox) {
+function MemoryPanel(iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
   this._toolbox = toolbox;
 
@@ -19,7 +19,7 @@ function MemoryPanel (iframeWindow, toolbox) {
 }
 
 MemoryPanel.prototype = {
-  open: Task.async(function *() {
+  open: Task.async(function* () {
     if (this._opening) {
       return this._opening;
     }
@@ -50,7 +50,7 @@ MemoryPanel.prototype = {
     return this._toolbox.target;
   },
 
-  destroy: Task.async(function *() {
+  destroy: Task.async(function* () {
     // Make sure this panel is not already destroyed.
     if (this._destroyer) {
       return this._destroyer;

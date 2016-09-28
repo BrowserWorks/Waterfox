@@ -9,8 +9,9 @@
 #include "mozilla/dom/Animation.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/KeyframeEffect.h" // For KeyframeEffectReadOnly
-#include "mozilla/AnimationUtils.h"
 #include "mozilla/AnimationPerformanceWarning.h"
+#include "mozilla/AnimationTarget.h"
+#include "mozilla/AnimationUtils.h"
 #include "mozilla/EffectSet.h"
 #include "mozilla/InitializerList.h"
 #include "mozilla/LayerAnimationInfo.h"
@@ -518,33 +519,24 @@ EffectCompositor::GetAnimationElementAndPseudoForFrame(const nsIFrame* aFrame)
   // Always return the same object to benefit from return-value optimization.
   Maybe<NonOwningAnimationTarget> result;
 
+  CSSPseudoElementType pseudoType =
+    aFrame->StyleContext()->GetPseudoType();
+
+  if (pseudoType != CSSPseudoElementType::NotPseudo &&
+      pseudoType != CSSPseudoElementType::before &&
+      pseudoType != CSSPseudoElementType::after) {
+    return result;
+  }
+
   nsIContent* content = aFrame->GetContent();
   if (!content) {
     return result;
   }
 
-  CSSPseudoElementType pseudoType = CSSPseudoElementType::NotPseudo;
-
-  if (aFrame->IsGeneratedContentFrame()) {
-    nsIFrame* parent = aFrame->GetParent();
-    if (parent->IsGeneratedContentFrame()) {
-      return result;
-    }
-    nsIAtom* name = content->NodeInfo()->NameAtom();
-    if (name == nsGkAtoms::mozgeneratedcontentbefore) {
-      pseudoType = CSSPseudoElementType::before;
-    } else if (name == nsGkAtoms::mozgeneratedcontentafter) {
-      pseudoType = CSSPseudoElementType::after;
-    } else {
-      return result;
-    }
+  if (pseudoType == CSSPseudoElementType::before ||
+      pseudoType == CSSPseudoElementType::after) {
     content = content->GetParent();
     if (!content) {
-      return result;
-    }
-  } else {
-    if (nsLayoutUtils::GetStyleFrame(content) != aFrame) {
-      // The effects associated with an element are for its primary frame.
       return result;
     }
   }

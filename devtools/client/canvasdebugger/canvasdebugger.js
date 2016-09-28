@@ -7,22 +7,21 @@ var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://devtools/client/shared/widgets/SideMenuWidget.jsm");
-Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
-Cu.import("resource://gre/modules/Console.jsm");
 
 const { require } = Cu.import("resource://devtools/shared/Loader.jsm", {});
 const promise = require("promise");
 const Services = require("Services");
 const EventEmitter = require("devtools/shared/event-emitter");
-const { CallWatcherFront } = require("devtools/server/actors/call-watcher");
-const { CanvasFront } = require("devtools/server/actors/canvas");
+const { CallWatcherFront } = require("devtools/shared/fronts/call-watcher");
+const { CanvasFront } = require("devtools/shared/fronts/canvas");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const { LocalizationHelper } = require("devtools/client/shared/l10n");
+const { Heritage, WidgetMethods, setNamedTimeout, clearNamedTimeout,
+        setConditionalTimeout } = require("devtools/client/shared/widgets/view-helpers");
 
 const CANVAS_ACTOR_RECORDING_ATTEMPT = DevToolsUtils.testing ? 500 : 5000;
 
-XPCOMUtils.defineLazyModuleGetter(this, "Task",
-  "resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 
 XPCOMUtils.defineLazyModuleGetter(this, "PluralForm",
   "resource://gre/modules/PluralForm.jsm");
@@ -33,7 +32,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
   "resource://gre/modules/NetUtil.jsm");
 
-XPCOMUtils.defineLazyGetter(this, "NetworkHelper", function() {
+XPCOMUtils.defineLazyGetter(this, "NetworkHelper", function () {
   return require("devtools/shared/webconsole/network-helper");
 });
 
@@ -129,7 +128,7 @@ var EventsHandler = {
   /**
    * Listen for events emitted by the current tab target.
    */
-  initialize: function() {
+  initialize: function () {
     this._onTabNavigated = this._onTabNavigated.bind(this);
     gTarget.on("will-navigate", this._onTabNavigated);
     gTarget.on("navigate", this._onTabNavigated);
@@ -138,7 +137,7 @@ var EventsHandler = {
   /**
    * Remove events emitted by the current tab target.
    */
-  destroy: function() {
+  destroy: function () {
     gTarget.off("will-navigate", this._onTabNavigated);
     gTarget.off("navigate", this._onTabNavigated);
   },
@@ -146,7 +145,7 @@ var EventsHandler = {
   /**
    * Called for each location change in the debugged tab.
    */
-  _onTabNavigated: function(event) {
+  _onTabNavigated: function (event) {
     if (event != "will-navigate") {
       return;
     }

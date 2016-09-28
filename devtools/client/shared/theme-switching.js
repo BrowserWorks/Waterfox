@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-(function() {
+/* eslint-env browser */
+"use strict";
+(function () {
   const SCROLLBARS_URL = "chrome://devtools/skin/floating-scrollbars-dark-theme.css";
   let documentElement = document.documentElement;
 
@@ -33,10 +35,13 @@
       // required then as scrollbars would be in their state without flushing.
       return;
     }
-    let display = computedStyle.display; // Save display value
+    // Save display value
+    let display = computedStyle.display;
     documentElement.style.display = "none";
-    window.getComputedStyle(documentElement).display; // Flush
-    documentElement.style.display = display; // Restore
+    // Flush
+    window.getComputedStyle(documentElement).display;
+    // Restore
+    documentElement.style.display = display;
   }
 
   /*
@@ -100,7 +105,7 @@
 
     let loadEvents = [];
     for (let url of newThemeDef.stylesheets) {
-      let {styleSheet,loadPromise} = appendStyleSheet(url);
+      let {styleSheet, loadPromise} = appendStyleSheet(url);
       devtoolsStyleSheets.get(newThemeDef).push(styleSheet);
       loadEvents.push(loadPromise);
     }
@@ -170,7 +175,7 @@
     switchTheme(Services.prefs.getCharPref("devtools.theme"));
 
     gDevTools.on("pref-changed", handlePrefChange);
-    window.addEventListener("unload", function() {
+    window.addEventListener("unload", function () {
       gDevTools.off("pref-changed", handlePrefChange);
     });
   }

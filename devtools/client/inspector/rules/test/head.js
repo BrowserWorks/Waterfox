@@ -32,7 +32,7 @@ registerCleanupFunction(() => {
  * script, so they can run on remote targets too.
  */
 var _addTab = addTab;
-addTab = function(url) {
+addTab = function (url) {
   return _addTab(url).then(tab => {
     info("Loading the helper frame script " + FRAME_SCRIPT_URL);
     let browser = tab.linkedBrowser;
@@ -170,36 +170,6 @@ var focusEditableField = Task.async(function* (ruleView, editable, xOffset = 1,
 });
 
 /**
- * Given a tooltip object instance (see Tooltip.js), checks if it is set to
- * toggle and hover and if so, checks if the given target is a valid hover
- * target. This won't actually show the tooltip (the less we interact with XUL
- * panels during test runs, the better).
- *
- * @return a promise that resolves when the answer is known
- */
-function isHoverTooltipTarget(tooltip, target) {
-  if (!tooltip._basedNode || !tooltip.panel) {
-    return promise.reject(new Error(
-      "The tooltip passed isn't set to toggle on hover or is not a tooltip"));
-  }
-  return tooltip.isValidHoverTarget(target);
-}
-
-/**
- * Same as isHoverTooltipTarget except that it will fail the test if there is no
- * tooltip defined on hover of the given element
- *
- * @return a promise
- */
-function assertHoverTooltipOn(tooltip, element) {
-  return isHoverTooltipTarget(tooltip, element).then(() => {
-    ok(true, "A tooltip is defined on hover of the given element");
-  }, () => {
-    ok(false, "No tooltip is defined on hover of the given element");
-  });
-}
-
-/**
  * When a tooltip is closed, this ends up "commiting" the value changed within
  * the tooltip (e.g. the color in case of a colorpicker) which, in turn, ends up
  * setting the value of the corresponding css property in the rule-view.
@@ -242,24 +212,6 @@ var waitForSuccess = Task.async(function* (validatorFn, desc = "untitled") {
     }
     yield new Promise(r => setTimeout(r, 200));
   }
-});
-
-/**
- * Get the dataURL for the font family tooltip.
- *
- * @param {String} font
- *        The font family value.
- * @param {object} nodeFront
- *        The NodeActor that will used to retrieve the dataURL for the
- *        font family tooltip contents.
- */
-var getFontFamilyDataURL = Task.async(function* (font, nodeFront) {
-  let fillStyle = (Services.prefs.getCharPref("devtools.theme") === "light") ?
-      "black" : "white";
-
-  let {data} = yield nodeFront.getFontFamilyDataURL(font, fillStyle);
-  let dataURL = yield data.string();
-  return dataURL;
 });
 
 /**
@@ -763,6 +715,7 @@ function* reloadPage(inspector, testActor) {
 
 /**
  * Create a new rule by clicking on the "add rule" button.
+ * This will leave the selector inplace-editor active.
  *
  * @param {InspectorPanel} inspector
  *        The instance of InspectorPanel currently loaded in the toolbox
@@ -776,6 +729,36 @@ function* addNewRule(inspector, view) {
 
   info("Waiting for rule view to change");
   yield view.once("ruleview-changed");
+}
+
+/**
+ * Create a new rule by clicking on the "add rule" button, dismiss the editor field and
+ * verify that the selector is correct.
+ *
+ * @param {InspectorPanel} inspector
+ *        The instance of InspectorPanel currently loaded in the toolbox
+ * @param {CssRuleView} view
+ *        The instance of the rule-view panel
+ * @param {String} expectedSelector
+ *        The value we expect the selector to have
+ * @param {Number} expectedIndex
+ *        The index we expect the rule to have in the rule-view
+ * @return a promise that resolves after the rule has been added
+ */
+function* addNewRuleAndDismissEditor(inspector, view, expectedSelector, expectedIndex) {
+  yield addNewRule(inspector, view);
+
+  info("Getting the new rule at index " + expectedIndex);
+  let ruleEditor = getRuleViewRuleEditor(view, expectedIndex);
+  let editor = ruleEditor.selectorText.ownerDocument.activeElement;
+  is(editor.value, expectedSelector,
+     "The editor for the new selector has the correct value: " + expectedSelector);
+
+  info("Pressing escape to leave the editor");
+  EventUtils.synthesizeKey("VK_ESCAPE", {});
+
+  is(ruleEditor.selectorText.textContent, expectedSelector,
+     "The new selector has the correct text: " + expectedSelector);
 }
 
 /**

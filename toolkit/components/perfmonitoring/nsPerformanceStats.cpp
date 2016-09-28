@@ -708,16 +708,16 @@ nsPerformanceStatsService::~nsPerformanceStatsService()
 void
 nsPerformanceStatsService::Dispose()
 {
+  // Make sure that we do not accidentally destroy `this` while we are
+  // cleaning up back references.
+  RefPtr<nsPerformanceStatsService> kungFuDeathGrip(this);
+  mIsAvailable = false;
+
   if (mDisposed) {
     // Make sure that we don't double-dispose.
     return;
   }
   mDisposed = true;
-
-  // Make sure that we do not accidentally destroy `this` while we are
-  // cleaning up back references.
-  RefPtr<nsPerformanceStatsService> kungFuDeathGrip(this);
-  mIsAvailable = false;
 
   // Disconnect from nsIObserverService.
   nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
@@ -823,7 +823,6 @@ nsPerformanceStatsService::Observe(nsISupports *aSubject, const char *aTopic,
   MOZ_ASSERT(strcmp(aTopic, "profile-before-change") == 0
              || strcmp(aTopic, "quit-application") == 0
              || strcmp(aTopic, "quit-application-granted") == 0
-             || strcmp(aTopic, "content-child-shutdown") == 0
              || strcmp(aTopic, "xpcom-will-shutdown") == 0);
 
   Dispose();

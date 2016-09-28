@@ -36,6 +36,11 @@ public:
   virtual bool
   delete_(JSContext* aCx, JS::Handle<JSObject*> aProxy, JS::Handle<jsid> aId,
           JS::ObjectOpResult &aResult) const override;
+
+  // No need for getPrototypeIfOrdinary here: window named-properties objects
+  // have static prototypes, so the version inherited from BaseDOMProxyHandler
+  // will do the right thing.
+
   virtual bool
   preventExtensions(JSContext* aCx, JS::Handle<JSObject*> aProxy,
                     JS::ObjectOpResult& aResult) const override

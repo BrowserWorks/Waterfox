@@ -107,6 +107,7 @@ Var DownloadedBytes
 Var DownloadRetryCount
 Var OpenedDownloadPage
 Var DownloadServerIP
+Var PostSigningData
 
 Var ControlHeightPX
 Var ControlRightPX
@@ -115,7 +116,7 @@ Var ControlRightPX
 ; the stub installer
 ;!define STUB_DEBUG
 
-!define StubURLVersion "v6"
+!define StubURLVersion "v7"
 
 ; Successful install exit code
 !define ERR_SUCCESS 0
@@ -220,11 +221,13 @@ Var ControlRightPX
 !include "nsDialogs.nsh"
 !include "LogicLib.nsh"
 !include "FileFunc.nsh"
+!include "TextFunc.nsh"
 !include "WinVer.nsh"
 !include "WordFunc.nsh"
 
 !insertmacro GetParameters
 !insertmacro GetOptions
+!insertmacro LineFind
 !insertmacro StrFilter
 
 !include "locales.nsi"
@@ -313,11 +316,22 @@ Function .onInit
   ; isn't supported for the stub installer.
   ${SetBrandNameVars} "$PLUGINSDIR\ignored.ini"
 
+  ; Don't install on systems that don't support SSE2. The parameter value of
+  ; 10 is for PF_XMMI64_INSTRUCTIONS_AVAILABLE which will check whether the
+  ; SSE2 instruction set is available.
+  System::Call "kernel32::IsProcessorFeaturePresent(i 10)i .R7"
+
 !ifdef HAVE_64BIT_BUILD
   ; Restrict x64 builds from being installed on x86 and pre Win7
   ${Unless} ${RunningX64}
-  ${OrUnless} ${AtLeastWinXP}
-    MessageBox MB_OK|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_OS_MSG)"
+  ${OrUnless} ${AtLeastWin7}
+    ${If} "$R7" == "0"
+      strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
+    ${Else}
+      strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_MSG)"
+    ${EndIf}
+    MessageBox MB_OKCANCEL|MB_ICONSTOP "$R7" IDCANCEL +2
+    ExecShell "open" "${URLSystemRequirements}"
     Quit
   ${EndUnless}
 
@@ -348,11 +362,23 @@ Function .onInit
     ${OrIf} "$R8" == "3"
     ${OrIf} "$R8" == "4"
     ${OrIf} "$R8" == "5"
-      MessageBox MB_OK|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_OS_MSG)"
+      ${If} "$R7" == "0"
+        strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_CPU_MSG)"
+      ${Else}
+        strCpy $R7 "$(WARN_MIN_SUPPORTED_OSVER_MSG)"
+      ${EndIf}
+      MessageBox MB_OKCANCEL|MB_ICONSTOP "$R7" IDCANCEL +2
+      ExecShell "open" "${URLSystemRequirements}"
       Quit
     ${EndIf}
   ${EndUnless}
 !endif
+
+  ${If} "$R7" == "0"
+    MessageBox MB_OKCANCEL|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_CPU_MSG)" IDCANCEL +2
+    ExecShell "open" "${URLSystemRequirements}"
+    Quit
+  ${EndIf}
 
   ; Require elevation if the user can elevate
   ${ElevateUAC}
@@ -360,7 +386,7 @@ Function .onInit
 ; The commands inside this ifndef are needed prior to NSIS 3.0a2 and can be
 ; removed after we require NSIS 3.0a2 or greater.
 !ifndef NSIS_PACKEDVERSION
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWinVista}
     System::Call 'user32::SetProcessDPIAware()'
   ${EndIf}
 !endif
@@ -417,7 +443,7 @@ Function .onInit
   ${EndIf}
 
   ; The interval in MS used for the progress bars set as marquee.
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWinVista}
     StrCpy $ProgressbarMarqueeIntervalMS "10"
   ${Else}
     StrCpy $ProgressbarMarqueeIntervalMS "50"
@@ -662,7 +688,7 @@ Function SendPing
     ${EndIf}
 
     ${If} "$R2" == "0"
-    ${AndIf} ${AtLeastWinXP}
+    ${AndIf} ${AtLeastWinVista}
       ; Check to see if this install location is currently set as the default
       ; browser by Default Programs which is only available on Vista and above.
       ClearErrors
@@ -745,14 +771,15 @@ Function SendPing
                       $\nHas Admin = $R8 \
                       $\nDefault Status = $R2 \
                       $\nSet As Sefault Status = $R3 \
-                      $\nDownload Server IP = $DownloadServerIP"
+                      $\nDownload Server IP = $DownloadServerIP \
+                      $\nPost-Signing Data = $PostSigningData"
     ; The following will exit the installer
     SetAutoClose true
     StrCpy $R9 "2"
     Call RelativeGotoPage
 !else
     ${NSD_CreateTimer} OnPing ${DownloadIntervalMS}
-    InetBgDL::Get "${BaseURLStubPing}/${StubURLVersion}${StubURLVersionAppend}/${Channel}/${UpdateChannel}/${AB_CD}/$R0/$R1/$5/$6/$7/$8/$9/$ExitCode/$FirefoxLaunchCode/$DownloadRetryCount/$DownloadedBytes/$DownloadSizeBytes/$IntroPhaseSeconds/$OptionsPhaseSeconds/$0/$1/$DownloadFirstTransferSeconds/$2/$3/$4/$InitialInstallRequirementsCode/$OpenedDownloadPage/$ExistingProfile/$ExistingVersion/$ExistingBuildID/$R5/$R6/$R7/$R8/$R2/$R3/$DownloadServerIP" \
+    InetBgDL::Get "${BaseURLStubPing}/${StubURLVersion}${StubURLVersionAppend}/${Channel}/${UpdateChannel}/${AB_CD}/$R0/$R1/$5/$6/$7/$8/$9/$ExitCode/$FirefoxLaunchCode/$DownloadRetryCount/$DownloadedBytes/$DownloadSizeBytes/$IntroPhaseSeconds/$OptionsPhaseSeconds/$0/$1/$DownloadFirstTransferSeconds/$2/$3/$4/$InitialInstallRequirementsCode/$OpenedDownloadPage/$ExistingProfile/$ExistingVersion/$ExistingBuildID/$R5/$R6/$R7/$R8/$R2/$R3/$DownloadServerIP/$PostSigningData" \
                   "$PLUGINSDIR\_temp" /END
 !endif
   ${Else}
@@ -918,7 +945,7 @@ Function createOptions
   SetCtlColors $0 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
   SendMessage $0 ${WM_SETFONT} $FontNormal 0
 
-  ${If} ${AtLeastWinXP}
+  ${If} ${AtLeastWin7}
     StrCpy $0 "$(ADD_SC_TASKBAR)"
   ${Else}
     StrCpy $0 "$(ADD_SC_QUICKLAUNCHBAR)"
@@ -1045,7 +1072,7 @@ Function createOptions
   ; We can only install the maintenance service if the user is an admin.
   Call IsUserAdmin
   Pop $0
-  
+
   ; Only show the maintenance service checkbox if we're on XP SP3 or higher;
   ;  we don't ever want to install it on XP without at least SP3 installed.
   ${If} $0 == "true"
@@ -1053,7 +1080,7 @@ Function createOptions
   ${AndIf} ${AtMostServicePack} 2
     StrCpy $0 "false"
   ${EndIf}
-  
+
   ; Only show the maintenance service checkbox if we have write access to HKLM
   ClearErrors
   WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
@@ -1767,8 +1794,8 @@ Function FinishProgressBar
 
   ${NSD_KillTimer} FinishProgressBar
 
+  Call CopyPostSigningData
   Call LaunchApp
-
   Call SendPing
 FunctionEnd
 
@@ -1995,6 +2022,17 @@ Function LaunchAppFromElevatedProcess
   ${GetParent} "$0" $1
   SetOutPath "$1"
   Exec "$\"$0$\""
+FunctionEnd
+
+Function CopyPostSigningData
+  ${LineRead} "$EXEDIR\postSigningData" "1" $PostSigningData
+  ${If} ${Errors}
+    ClearErrors
+    StrCpy $PostSigningData "0"
+  ${Else}
+    CreateDirectory "$LOCALAPPDATA\Mozilla\Firefox"
+    CopyFiles /SILENT "$EXEDIR\postSigningData" "$LOCALAPPDATA\Mozilla\Firefox"
+  ${Endif}
 FunctionEnd
 
 Function DisplayDownloadError

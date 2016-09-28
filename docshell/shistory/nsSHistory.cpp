@@ -1383,10 +1383,8 @@ nsSHistory::RemoveEntries(nsTArray<uint64_t>& aIDs, int32_t aStartIndex)
     --index;
   }
   if (didRemove && mRootDocShell) {
-    nsCOMPtr<nsIRunnable> ev =
-      NS_NewRunnableMethod(static_cast<nsDocShell*>(mRootDocShell),
-                           &nsDocShell::FireDummyOnLocationChange);
-    NS_DispatchToCurrentThread(ev);
+    NS_DispatchToCurrentThread(NewRunnableMethod(static_cast<nsDocShell*>(mRootDocShell),
+                                                 &nsDocShell::FireDummyOnLocationChange));
   }
 }
 
@@ -1494,6 +1492,12 @@ nsSHistory::LoadURIWithOptions(const char16_t* aURI,
                                nsIInputStream* aPostStream,
                                nsIInputStream* aExtraHeaderStream,
                                nsIURI* aBaseURI)
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSHistory::SetOriginAttributesBeforeLoading(JS::HandleValue aOriginAttributes)
 {
   return NS_OK;
 }

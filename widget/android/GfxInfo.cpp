@@ -75,7 +75,9 @@ public:
     }
 
     RefPtr<gl::GLContext> gl;
-    gl = gl::GLContextProvider::CreateHeadless(gl::CreateContextFlags::REQUIRE_COMPAT_PROFILE);
+    nsCString discardFailureId;
+    gl = gl::GLContextProvider::CreateHeadless(gl::CreateContextFlags::REQUIRE_COMPAT_PROFILE,
+                                               discardFailureId);
 
     if (!gl) {
       // Setting mReady to true here means that we won't retry. Everything will
@@ -413,12 +415,16 @@ GfxInfo::GetFeatureStatusImpl(int32_t aFeature,
   // Don't evaluate special cases when evaluating the downloaded blocklist.
   if (aDriverInfo.IsEmpty()) {
     if (aFeature == nsIGfxInfo::FEATURE_CANVAS2D_ACCELERATION) {
-      // It's slower than software due to not having a compositing fast path
-      if (mSDKVersion >= 11) {
-        *aStatus = nsIGfxInfo::FEATURE_STATUS_OK;
-      } else {
+      if (mSDKVersion < 11) {
+        // It's slower than software due to not having a compositing fast path
         *aStatus = nsIGfxInfo::FEATURE_BLOCKED_OS_VERSION;
         aFailureId = "FEATURE_FAILURE_CANVAS_2D_SDK";
+      } else if (mGLStrings->Renderer().Find("Vivante GC1000") != -1) {
+        // Blocklist Vivante GC1000. See bug 1248183.
+        *aStatus = nsIGfxInfo::FEATURE_BLOCKED_DEVICE;
+        aFailureId = "FEATURE_FAILED_CANVAS_2D_HW";
+      } else {
+        *aStatus = nsIGfxInfo::FEATURE_STATUS_OK;
       }
       return NS_OK;
     }

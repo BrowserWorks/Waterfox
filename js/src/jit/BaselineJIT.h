@@ -127,12 +127,12 @@ struct BaselineScript
 
   private:
     // Code pointer containing the actual method.
-    RelocatablePtrJitCode method_;
+    HeapPtr<JitCode*> method_;
 
     // For functions with a call object, template objects to use for the call
     // object and decl env object (linked via the call object's enclosing
     // scope).
-    RelocatablePtrObject templateScope_;
+    HeapPtr<JSObject*> templateScope_;
 
     // Allocated space for fallback stubs.
     FallbackICStubSpace fallbackStubSpace_;
@@ -415,7 +415,8 @@ struct BaselineScript
     // the result may not be accurate.
     jsbytecode* approximatePcForNativeAddress(JSScript* script, uint8_t* nativeAddress);
 
-    bool addDependentWasmModule(JSContext* cx, wasm::Module& module, uint32_t importIndex);
+    MOZ_MUST_USE bool addDependentWasmModule(JSContext* cx, wasm::Module& module,
+                                             uint32_t importIndex);
     void unlinkDependentWasmModules(FreeOp* fop);
     void clearDependentWasmModules();
     void removeDependentWasmModule(wasm::Module& module, uint32_t importIndex);
@@ -485,19 +486,19 @@ struct BaselineScript
         MOZ_ASSERT(hasPendingIonBuilder());
         return pendingBuilder_;
     }
-    void setPendingIonBuilder(JSContext* maybecx, JSScript* script, js::jit::IonBuilder* builder) {
+    void setPendingIonBuilder(JSRuntime* maybeRuntime, JSScript* script, js::jit::IonBuilder* builder) {
         MOZ_ASSERT(script->baselineScript() == this);
         MOZ_ASSERT(!builder || !hasPendingIonBuilder());
 
         if (script->isIonCompilingOffThread())
-            script->setIonScript(maybecx, ION_PENDING_SCRIPT);
+            script->setIonScript(maybeRuntime, ION_PENDING_SCRIPT);
 
         pendingBuilder_ = builder;
 
         // lazy linking cannot happen during asmjs to ion.
         clearDependentWasmModules();
 
-        script->updateBaselineOrIonRaw(maybecx);
+        script->updateBaselineOrIonRaw(maybeRuntime);
     }
     void removePendingIonBuilder(JSScript* script) {
         setPendingIonBuilder(nullptr, script, nullptr);

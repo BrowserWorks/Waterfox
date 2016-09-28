@@ -23,6 +23,19 @@ class Utils(BaseLib):
         """
         return self._permissions
 
+    def compare_version(self, a, b):
+        """Compare two version strings.
+
+        :param a: The first version.
+        :param b: The second version.
+
+        :returns: -1 if a is smaller than b, 0 if equal, and 1 if larger.
+        """
+        return self.marionette.execute_script("""
+          Components.utils.import("resource://gre/modules/Services.jsm");
+          return Services.vc.compare(arguments[0], arguments[1]);
+        """, script_args=[a, b])
+
     def sanitize(self, data_type):
         """Sanitize user data, including cache, cookies, offlineApps, history, formdata,
         downloads, passwords, sessions, siteSettings.

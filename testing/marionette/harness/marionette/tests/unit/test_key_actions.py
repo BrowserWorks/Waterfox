@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from marionette import MarionetteTestCase, skip_if_b2g
+from marionette import MarionetteTestCase
 from marionette_driver.keys import Keys
 from marionette_driver.marionette import Actions
 from marionette_driver.by import By
@@ -11,7 +11,7 @@ from marionette_driver.by import By
 class TestKeyActions(MarionetteTestCase):
     def setUp(self):
         MarionetteTestCase.setUp(self)
-        if self.marionette.session_capabilities["platformName"] == "Darwin":
+        if self.marionette.session_capabilities["platformName"] == "darwin":
             self.mod_key = Keys.META
         else:
             self.mod_key = Keys.CONTROL
@@ -68,7 +68,6 @@ class TestKeyActions(MarionetteTestCase):
                         .perform())
         self.assertEqual(self.key_reporter_value, "")
 
-    @skip_if_b2g
     def test_open_in_new_window_shortcut(self):
         el = self.marionette.find_element(By.ID, "updatediv")
         start_win = self.marionette.current_chrome_window_handle

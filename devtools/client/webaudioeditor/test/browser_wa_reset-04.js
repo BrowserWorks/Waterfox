@@ -1,10 +1,10 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-///////////////////
+// /////////////////
 //
 // Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
+// As part of bug 1077403, the leaking uncaught rejection should be fixed.
 //
 thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Connection closed");
 
@@ -12,7 +12,7 @@ thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Connection closed");
  * Tests that switching to an iframe works fine.
  */
 
-add_task(function*() {
+add_task(function* () {
   Services.prefs.setBoolPref("devtools.command-button-frames.enabled", true);
 
   let { target, panel, toolbox } = yield initWebAudioEditor(IFRAME_CONTEXT_URL);
@@ -26,12 +26,17 @@ add_task(function*() {
     "The tool's content should initially be hidden.");
 
   let btn = toolbox.doc.getElementById("command-button-frames");
-  ok(!btn.firstChild.getAttribute("hidden"), "The frame list button is visible");
-  let frameBtns = btn.firstChild.querySelectorAll("[data-window-id]");
-  is(frameBtns.length, 2, "We have both frames in the list");
+  ok(!btn.firstChild, "The frame list button has no children");
+
+  // Open frame menu and wait till it's available on the screen.
+  let menu = toolbox.showFramesMenu({target: btn});
+  yield once(menu, "open");
+
+  let frames = menu.items;
+  is(frames.length, 2, "We have both frames in the list");
 
   // Select the iframe
-  frameBtns[1].click();
+  frames[1].click();
 
   let navigating = once(target, "will-navigate");
 

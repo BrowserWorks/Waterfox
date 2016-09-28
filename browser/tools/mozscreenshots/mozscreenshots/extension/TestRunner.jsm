@@ -7,8 +7,8 @@
 this.EXPORTED_SYMBOLS = ["TestRunner"];
 
 const {classes: Cc, interfaces: Ci, utils: Cu} = Components;
-const defaultSetNames = ["TabsInTitlebar", "Tabs", "WindowSize", "Toolbars", "LightweightThemes"];
 const env = Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
+const APPLY_CONFIG_TIMEOUT_MS = 60 * 1000;
 const HOME_PAGE = "chrome://mozscreenshots/content/lib/mozscreenshots.html";
 
 Cu.import("resource://gre/modules/FileUtils.jsm");
@@ -51,9 +51,7 @@ this.TestRunner = {
   /**
    * Load specified sets, execute all combinations of them, and capture screenshots.
    */
-  start: Task.async(function*(setNames = null) {
-    setNames = setNames || defaultSetNames;
-
+  start: Task.async(function*(setNames, jobName = null) {
     let subDirs = ["mozscreenshots",
                    (new Date()).toISOString().replace(/:/g, "-") + "_" + Services.appinfo.OS];
     let screenshotPath = FileUtils.getFile("TmpD", subDirs).path;
@@ -65,7 +63,11 @@ this.TestRunner = {
 
     log.info("Saving screenshots to:", screenshotPath);
 
-    let screenshotPrefix = Services.appinfo.appBuildID + "_";
+    let screenshotPrefix = Services.appinfo.appBuildID;
+    if (jobName) {
+      screenshotPrefix += "-" + jobName;
+    }
+    screenshotPrefix += "_";
     Screenshot.init(screenshotPath, this._extensionPath, screenshotPrefix);
     this._libDir = this._extensionPath.QueryInterface(Ci.nsIFileURL).file.clone();
     this._libDir.append("chrome");
@@ -155,11 +157,14 @@ this.TestRunner = {
 
     function changeConfig(config) {
       log.debug("calling " + config.name);
-      let promise = Promise.resolve(config.applyConfig());
+      let applyPromise = Promise.resolve(config.applyConfig());
+      let timeoutPromise = new Promise((resolve, reject) => {
+        setTimeout(reject, APPLY_CONFIG_TIMEOUT_MS, "Timed out");
+      });
       log.debug("called " + config.name);
       // Add a default timeout of 500ms to avoid conflicts when configurations
       // try to apply at the same time. e.g WindowSize and TabsInTitlebar
-      return promise.then(() => {
+      return Promise.race([applyPromise, timeoutPromise]).then(() => {
         return new Promise((resolve) => {
           setTimeout(resolve, 500);
         });

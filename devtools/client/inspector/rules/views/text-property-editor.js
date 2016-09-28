@@ -4,8 +4,9 @@
 
 "use strict";
 
-const {Cc, Ci, Cu} = require("chrome");
+const {Ci} = require("chrome");
 const {CssLogic} = require("devtools/shared/inspector/css-logic");
+const {getCssProperties} = require("devtools/shared/fronts/css-properties");
 const {InplaceEditor, editableField} =
       require("devtools/client/shared/inplace-editor");
 const {
@@ -18,12 +19,27 @@ const {
 const {
   parseDeclarations,
   parseSingleValue,
-} = require("devtools/client/shared/css-parsing-utils");
-const {setTimeout} = Cu.import("resource://gre/modules/Timer.jsm", {});
+} = require("devtools/shared/css-parsing-utils");
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const IOService = Cc["@mozilla.org/network/io-service;1"]
-                  .getService(Ci.nsIIOService);
+
+const SHARED_SWATCH_CLASS = "ruleview-swatch";
+const COLOR_SWATCH_CLASS = "ruleview-colorswatch";
+const BEZIER_SWATCH_CLASS = "ruleview-bezierswatch";
+const FILTER_SWATCH_CLASS = "ruleview-filterswatch";
+const ANGLE_SWATCH_CLASS = "ruleview-angleswatch";
+
+/*
+ * An actionable element is an element which on click triggers a specific action
+ * (e.g. shows a color tooltip, opens a link, …).
+ */
+const ACTIONABLE_ELEMENTS_SELECTORS = [
+  `.${COLOR_SWATCH_CLASS}`,
+  `.${BEZIER_SWATCH_CLASS}`,
+  `.${FILTER_SWATCH_CLASS}`,
+  `.${ANGLE_SWATCH_CLASS}`,
+  "a"
+];
 
 /**
  * TextPropertyEditor is responsible for the following:
@@ -46,6 +62,11 @@ function TextPropertyEditor(ruleEditor, property) {
   this.prop.editor = this;
   this.browserWindow = this.doc.defaultView.top;
   this._populatedComputed = false;
+  this._hasPendingClick = false;
+  this._clickedElementOptions = null;
+
+  const toolbox = this.ruleView.inspector.toolbox;
+  this.cssProperties = getCssProperties(toolbox);
 
   this._onEnableClicked = this._onEnableClicked.bind(this);
   this._onExpandClicked = this._onExpandClicked.bind(this);
@@ -57,6 +78,7 @@ function TextPropertyEditor(ruleEditor, property) {
   this._onSwatchRevert = this._onSwatchRevert.bind(this);
   this._onValidate = throttle(this._previewValue, 10, this);
   this.update = this.update.bind(this);
+  this.updatePropertyState = this.updatePropertyState.bind(this);
 
   this._create();
   this.update();
@@ -81,7 +103,7 @@ TextPropertyEditor.prototype = {
   /**
    * Create the property editor's DOM.
    */
-  _create: function() {
+  _create: function () {
     this.element = this.doc.createElementNS(HTML_NS, "li");
     this.element.classList.add("ruleview-property");
     this.element._textPropertyEditor = this;
@@ -194,7 +216,7 @@ TextPropertyEditor.prototype = {
         start: this._onStartEditing,
         element: this.nameSpan,
         done: this._onNameDone,
-        destroy: this.update,
+        destroy: this.updatePropertyState,
         advanceChars: ":",
         contentType: InplaceEditor.CONTENT_TYPES.CSS_PROPERTY,
         popup: this.popup
@@ -202,7 +224,7 @@ TextPropertyEditor.prototype = {
 
       // Auto blur name field on multiple CSS rules get pasted in.
       this.nameContainer.addEventListener("paste",
-        blurOnMultipleProperties, false);
+        blurOnMultipleProperties(this.cssProperties), false);
 
       this.valueContainer.addEventListener("click", (event) => {
         // Clicks within the value shouldn't propagate any further.
@@ -212,6 +234,37 @@ TextPropertyEditor.prototype = {
         if (event.target === this.valueContainer) {
           this.valueSpan.click();
         }
+      }, false);
+
+      // The mousedown event could trigger a blur event on nameContainer, which
+      // will trigger a call to the update function. The update function clears
+      // valueSpan's markup. Thus the regular click event does not bubble up, and
+      // listener's callbacks are not called.
+      // So we need to remember where the user clicks in order to re-trigger the click
+      // after the valueSpan's markup is re-populated. We only need to track this for
+      // valueSpan's child elements, because direct click on valueSpan will always
+      // trigger a click event.
+      this.valueSpan.addEventListener("mousedown", (event) => {
+        let clickedEl = event.target;
+        if (clickedEl === this.valueSpan) {
+          return;
+        }
+        this._hasPendingClick = true;
+
+        let matchedSelector = ACTIONABLE_ELEMENTS_SELECTORS.find(
+          (selector) => clickedEl.matches(selector));
+        if (matchedSelector) {
+          let similarElements = [...this.valueSpan.querySelectorAll(matchedSelector)];
+          this._clickedElementOptions = {
+            selector: matchedSelector,
+            index: similarElements.indexOf(clickedEl)
+          };
+        }
+      }, false);
+
+      this.valueSpan.addEventListener("mouseup", (event) => {
+        this._clickedElementOptions = null;
+        this._hasPendingClick = false;
       }, false);
 
       this.valueSpan.addEventListener("click", (event) => {
@@ -255,66 +308,14 @@ TextPropertyEditor.prototype = {
   },
 
   /**
-   * Get the URI from which to resolve relative requests for
-   * this rule's stylesheet.
-   *
-   * @return {nsIURI} A URI based on the the stylesheet's href.
-   */
-  get sheetURI() {
-    if (this._sheetURI === undefined) {
-      if (this.sheetHref) {
-        this._sheetURI = IOService.newURI(this.sheetHref, null, null);
-      } else {
-        this._sheetURI = null;
-      }
-    }
-
-    return this._sheetURI;
-  },
-
-  /**
-   * Resolve a URI based on the rule stylesheet
-   *
-   * @param {String} relativePath
-   *        the path to resolve
-   * @return {String} the resolved path.
-   */
-  resolveURI: function(relativePath) {
-    if (this.sheetURI) {
-      relativePath = this.sheetURI.resolve(relativePath);
-    }
-    return relativePath;
-  },
-
-  /**
    * Populate the span based on changes to the TextProperty.
    */
-  update: function() {
+  update: function () {
     if (this.ruleView.isDestroyed) {
       return;
     }
 
-    if (this.prop.enabled) {
-      this.enable.style.removeProperty("visibility");
-      this.enable.setAttribute("checked", "");
-    } else {
-      this.enable.style.visibility = "visible";
-      this.enable.removeAttribute("checked");
-    }
-
-    this.warning.hidden = this.editing || this.isValid();
-    this.filterProperty.hidden = this.editing ||
-                                 !this.isValid() ||
-                                 !this.prop.overridden ||
-                                 this.ruleEditor.rule.isUnmatched;
-
-    if (!this.editing &&
-        (this.prop.overridden || !this.prop.enabled ||
-         !this.prop.isKnownProperty())) {
-      this.element.classList.add("ruleview-overridden");
-    } else {
-      this.element.classList.remove("ruleview-overridden");
-    }
+    this.updatePropertyState();
 
     let name = this.prop.name;
     this.nameSpan.textContent = name;
@@ -336,33 +337,29 @@ TextPropertyEditor.prototype = {
       this.element.removeAttribute("dirty");
     }
 
-    const sharedSwatchClass = "ruleview-swatch ";
-    const colorSwatchClass = "ruleview-colorswatch";
-    const bezierSwatchClass = "ruleview-bezierswatch";
-    const filterSwatchClass = "ruleview-filterswatch";
-    const angleSwatchClass = "ruleview-angleswatch";
-
     let outputParser = this.ruleView._outputParser;
     let parserOptions = {
-      colorSwatchClass: sharedSwatchClass + colorSwatchClass,
+      colorSwatchClass: SHARED_SWATCH_CLASS + " " + COLOR_SWATCH_CLASS,
       colorClass: "ruleview-color",
-      bezierSwatchClass: sharedSwatchClass + bezierSwatchClass,
+      bezierSwatchClass: SHARED_SWATCH_CLASS + " " + BEZIER_SWATCH_CLASS,
       bezierClass: "ruleview-bezier",
-      filterSwatchClass: sharedSwatchClass + filterSwatchClass,
+      filterSwatchClass: SHARED_SWATCH_CLASS + " " + FILTER_SWATCH_CLASS,
       filterClass: "ruleview-filter",
-      angleSwatchClass: sharedSwatchClass + angleSwatchClass,
+      angleSwatchClass: SHARED_SWATCH_CLASS + " " + ANGLE_SWATCH_CLASS,
       angleClass: "ruleview-angle",
       defaultColorType: !propDirty,
       urlClass: "theme-link",
-      baseURI: this.sheetURI
+      baseURI: this.sheetHref
     };
     let frag = outputParser.parseCssProperty(name, val, parserOptions);
     this.valueSpan.innerHTML = "";
     this.valueSpan.appendChild(frag);
 
+    this.ruleView.emit("property-value-updated", this.valueSpan);
+
     // Attach the color picker tooltip to the color swatches
     this._colorSwatchSpans =
-      this.valueSpan.querySelectorAll("." + colorSwatchClass);
+      this.valueSpan.querySelectorAll("." + COLOR_SWATCH_CLASS);
     if (this.ruleEditor.isEditable) {
       for (let span of this._colorSwatchSpans) {
         // Adding this swatch to the list of swatches our colorpicker
@@ -374,12 +371,14 @@ TextPropertyEditor.prototype = {
           onRevert: this._onSwatchRevert
         });
         span.on("unit-change", this._onSwatchCommit);
+        let title = CssLogic.l10n("rule.colorSwatch.tooltip");
+        span.setAttribute("title", title);
       }
     }
 
     // Attach the cubic-bezier tooltip to the bezier swatches
     this._bezierSwatchSpans =
-      this.valueSpan.querySelectorAll("." + bezierSwatchClass);
+      this.valueSpan.querySelectorAll("." + BEZIER_SWATCH_CLASS);
     if (this.ruleEditor.isEditable) {
       for (let span of this._bezierSwatchSpans) {
         // Adding this swatch to the list of swatches our colorpicker
@@ -390,11 +389,13 @@ TextPropertyEditor.prototype = {
           onCommit: this._onSwatchCommit,
           onRevert: this._onSwatchRevert
         });
+        let title = CssLogic.l10n("rule.bezierSwatch.tooltip");
+        span.setAttribute("title", title);
       }
     }
 
     // Attach the filter editor tooltip to the filter swatch
-    let span = this.valueSpan.querySelector("." + filterSwatchClass);
+    let span = this.valueSpan.querySelector("." + FILTER_SWATCH_CLASS);
     if (this.ruleEditor.isEditable) {
       if (span) {
         parserOptions.filterSwatch = true;
@@ -405,15 +406,39 @@ TextPropertyEditor.prototype = {
           onCommit: this._onSwatchCommit,
           onRevert: this._onSwatchRevert
         }, outputParser, parserOptions);
+        let title = CssLogic.l10n("rule.filterSwatch.tooltip");
+        span.setAttribute("title", title);
       }
     }
 
     this.angleSwatchSpans =
-      this.valueSpan.querySelectorAll("." + angleSwatchClass);
+      this.valueSpan.querySelectorAll("." + ANGLE_SWATCH_CLASS);
     if (this.ruleEditor.isEditable) {
       for (let angleSpan of this.angleSwatchSpans) {
         angleSpan.on("unit-change", this._onSwatchCommit);
+        let title = CssLogic.l10n("rule.angleSwatch.tooltip");
+        angleSpan.setAttribute("title", title);
       }
+    }
+
+    // Now that we have updated the property's value, we might have a pending
+    // click on the value container. If we do, we have to trigger a click event
+    // on the right element.
+    if (this._hasPendingClick) {
+      this._hasPendingClick = false;
+      let elToClick;
+
+      if (this._clickedElementOptions !== null) {
+        let {selector, index} = this._clickedElementOptions;
+        elToClick = this.valueSpan.querySelectorAll(selector)[index];
+
+        this._clickedElementOptions = null;
+      }
+
+      if (!elToClick) {
+        elToClick = this.valueSpan;
+      }
+      elToClick.click();
     }
 
     // Populate the computed styles.
@@ -423,16 +448,44 @@ TextPropertyEditor.prototype = {
     this.ruleView._updatePropertyHighlight(this);
   },
 
-  _onStartEditing: function() {
+  _onStartEditing: function () {
     this.element.classList.remove("ruleview-overridden");
     this.enable.style.visibility = "hidden";
+  },
+
+  /**
+   * Update the visibility of the enable checkbox, the warning indicator and
+   * the filter property, as well as the overriden state of the property.
+   */
+  updatePropertyState: function () {
+    if (this.prop.enabled) {
+      this.enable.style.removeProperty("visibility");
+      this.enable.setAttribute("checked", "");
+    } else {
+      this.enable.style.visibility = "visible";
+      this.enable.removeAttribute("checked");
+    }
+
+    this.warning.hidden = this.editing || this.isValid();
+    this.filterProperty.hidden = this.editing ||
+                                 !this.isValid() ||
+                                 !this.prop.overridden ||
+                                 this.ruleEditor.rule.isUnmatched;
+
+    if (!this.editing &&
+        (this.prop.overridden || !this.prop.enabled ||
+         !this.prop.isKnownProperty())) {
+      this.element.classList.add("ruleview-overridden");
+    } else {
+      this.element.classList.remove("ruleview-overridden");
+    }
   },
 
   /**
    * Update the indicator for computed styles. The computed styles themselves
    * are populated on demand, when they become visible.
    */
-  _updateComputed: function() {
+  _updateComputed: function () {
     this.computed.innerHTML = "";
 
     let showExpander = this.prop.computed.some(c => c.name !== this.prop.name);
@@ -447,7 +500,7 @@ TextPropertyEditor.prototype = {
   /**
    * Populate the list of computed styles.
    */
-  _populateComputed: function() {
+  _populateComputed: function () {
     if (this._populatedComputed) {
       return;
     }
@@ -479,7 +532,7 @@ TextPropertyEditor.prototype = {
         computed.name, computed.value, {
           colorSwatchClass: "ruleview-swatch ruleview-colorswatch",
           urlClass: "theme-link",
-          baseURI: this.sheetURI
+          baseURI: this.sheetHref
         }
       );
 
@@ -502,7 +555,7 @@ TextPropertyEditor.prototype = {
   /**
    * Handles clicks on the disabled property.
    */
-  _onEnableClicked: function(event) {
+  _onEnableClicked: function (event) {
     let checked = this.enable.hasAttribute("checked");
     if (checked) {
       this.enable.removeAttribute("checked");
@@ -520,7 +573,7 @@ TextPropertyEditor.prototype = {
    * expand the computed list and tracks whether or not the computed list is
    * expanded by manually by the user.
    */
-  _onExpandClicked: function(event) {
+  _onExpandClicked: function (event) {
     if (this.computed.hasAttribute("filter-open") ||
         this.computed.hasAttribute("user-open")) {
       this.expander.removeAttribute("open");
@@ -540,7 +593,7 @@ TextPropertyEditor.prototype = {
    * filtering. The filter-open attribute is used to track whether or not the
    * computed list was toggled opened by the filter.
    */
-  expandForFilter: function() {
+  expandForFilter: function () {
     if (!this.computed.hasAttribute("user-open")) {
       this.expander.setAttribute("open", "true");
       this.computed.setAttribute("filter-open", "");
@@ -551,7 +604,7 @@ TextPropertyEditor.prototype = {
   /**
    * Collapses the computed list that was expanded by style filtering.
    */
-  collapseForFilter: function() {
+  collapseForFilter: function () {
     this.computed.removeAttribute("filter-open");
 
     if (!this.computed.hasAttribute("user-open")) {
@@ -571,7 +624,7 @@ TextPropertyEditor.prototype = {
    * @param {Number} direction
    *        The move focus direction number.
    */
-  _onNameDone: function(value, commit, direction) {
+  _onNameDone: function (value, commit, direction) {
     let isNameUnchanged = (!commit && !this.ruleEditor.isEditing) ||
                           this.committed.name === value;
     if (this.prop.value && isNameUnchanged) {
@@ -594,7 +647,7 @@ TextPropertyEditor.prototype = {
 
     // Adding multiple rules inside of name field overwrites the current
     // property with the first, then adds any more onto the property list.
-    let properties = parseDeclarations(value);
+    let properties = parseDeclarations(this.cssProperties.isKnown, value);
 
     if (properties.length) {
       this.prop.setName(properties[0].name);
@@ -619,7 +672,7 @@ TextPropertyEditor.prototype = {
    * @param {Number} direction
    *        The move focus direction number.
    */
-  remove: function(direction) {
+  remove: function (direction) {
     if (this._colorSwatchSpans && this._colorSwatchSpans.length) {
       for (let span of this._colorSwatchSpans) {
         this.ruleView.tooltips.colorPicker.removeSwatch(span);
@@ -651,9 +704,10 @@ TextPropertyEditor.prototype = {
    * @param {Number} direction
    *        The move focus direction number.
    */
-  _onValueDone: function(value = "", commit, direction) {
+  _onValueDone: function (value = "", commit, direction) {
     let parsedProperties = this._getValueAndExtraProperties(value);
-    let val = parseSingleValue(parsedProperties.firstValue);
+    let val = parseSingleValue(this.cssProperties.isKnown,
+                               parsedProperties.firstValue);
     let isValueUnchanged = (!commit && !this.ruleEditor.isEditing) ||
                            !parsedProperties.propertiesToAdd.length &&
                            this.committed.value === val.value &&
@@ -697,7 +751,7 @@ TextPropertyEditor.prototype = {
   /**
    * Called when the swatch editor wants to commit a value change.
    */
-  _onSwatchCommit: function() {
+  _onSwatchCommit: function () {
     this._onValueDone(this.valueSpan.textContent, true);
     this.update();
   },
@@ -705,7 +759,7 @@ TextPropertyEditor.prototype = {
   /**
    * Called when the swatch editor wants to preview a value change.
    */
-  _onSwatchPreview: function() {
+  _onSwatchPreview: function () {
     this._previewValue(this.valueSpan.textContent);
   },
 
@@ -713,7 +767,7 @@ TextPropertyEditor.prototype = {
    * Called when the swatch editor closes from an ESC. Revert to the original
    * value of this property before editing.
    */
-  _onSwatchRevert: function() {
+  _onSwatchRevert: function () {
     this._previewValue(this.prop.value, true);
     this.update();
   },
@@ -733,7 +787,7 @@ TextPropertyEditor.prototype = {
    *        propertiesToAdd: An array with additional properties, following the
    *                         parseDeclarations format of {name,value,priority}
    */
-  _getValueAndExtraProperties: function(value) {
+  _getValueAndExtraProperties: function (value) {
     // The inplace editor will prevent manual typing of multiple properties,
     // but we need to deal with the case during a paste event.
     // Adding multiple properties inside of value editor sets value with the
@@ -741,7 +795,7 @@ TextPropertyEditor.prototype = {
     let firstValue = value;
     let propertiesToAdd = [];
 
-    let properties = parseDeclarations(value);
+    let properties = parseDeclarations(this.cssProperties.isKnown, value);
 
     // Check to see if the input string can be parsed as multiple properties
     if (properties.length) {
@@ -773,14 +827,14 @@ TextPropertyEditor.prototype = {
    * @param {Boolean} reverting
    *        True if we're reverting the previously previewed value
    */
-  _previewValue: function(value, reverting = false) {
+  _previewValue: function (value, reverting = false) {
     // Since function call is throttled, we need to make sure we are still
     // editing, and any selector modifications have been completed
     if (!reverting && (!this.editing || this.ruleEditor.isEditing)) {
       return;
     }
 
-    let val = parseSingleValue(value);
+    let val = parseSingleValue(this.cssProperties.isKnown, value);
     this.ruleEditor.rule.previewPropertyValue(this.prop, val.value,
                                               val.priority);
   },
@@ -791,7 +845,7 @@ TextPropertyEditor.prototype = {
    *
    * @return {Boolean} true if the property value is valid, false otherwise.
    */
-  isValid: function() {
+  isValid: function () {
     return this.prop.isValid();
   }
 };

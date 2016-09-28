@@ -15,6 +15,7 @@
 #include "nsIMemoryReporter.h"
 #include "nsIThread.h"
 #include "nsIRunnable.h"
+#include "nsIAsyncShutdown.h"
 #include "Latency.h"
 #include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
@@ -90,8 +91,9 @@ public:
  * file. It's not in the anonymous namespace because MediaStream needs to
  * be able to friend it.
  *
- * Currently we have one global instance per process, and one per each
- * OfflineAudioContext object.
+ * There can be multiple MediaStreamGraph per process: one per AudioChannel.
+ * Additionaly, each OfflineAudioContext object creates its own MediaStreamGraph
+ * object too.
  */
 class MediaStreamGraphImpl : public MediaStreamGraph,
                              public nsIMemoryReporter
@@ -103,10 +105,10 @@ public:
   /**
    * Use aGraphDriverRequested with SYSTEM_THREAD_DRIVER or AUDIO_THREAD_DRIVER
    * to create a MediaStreamGraph which provides support for real-time audio
-   * and/or video.  Set it to false in order to create a non-realtime instance
-   * which just churns through its inputs and produces output.  Those objects
-   * currently only support audio, and are used to implement
-   * OfflineAudioContext.  They do not support MediaStream inputs.
+   * and/or video.  Set it to OFFLINE_THREAD_DRIVER in order to create a
+   * non-realtime instance which just churns through its inputs and produces
+   * output.  Those objects currently only support audio, and are used to
+   * implement OfflineAudioContext.  They do not support MediaStream inputs.
    */
   explicit MediaStreamGraphImpl(GraphDriverType aGraphDriverRequested,
                                 TrackRate aSampleRate,
@@ -143,13 +145,48 @@ public:
    */
   void AppendMessage(UniquePtr<ControlMessage> aMessage);
 
+  // Shutdown helpers.
+
+  static already_AddRefed<nsIAsyncShutdownClient>
+  GetShutdownBarrier()
+  {
+    nsCOMPtr<nsIAsyncShutdownService> svc = services::GetAsyncShutdown();
+    MOZ_RELEASE_ASSERT(svc);
+
+    nsCOMPtr<nsIAsyncShutdownClient> barrier;
+    nsresult rv = svc->GetProfileBeforeChange(getter_AddRefs(barrier));
+    if (!barrier) {
+      // We are probably in a content process. We need to do cleanup at
+      // XPCOM shutdown in leakchecking builds.
+      rv = svc->GetXpcomWillShutdown(getter_AddRefs(barrier));
+    }
+    MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv));
+    MOZ_RELEASE_ASSERT(barrier);
+    return barrier.forget();
+  }
+
+  class ShutdownTicket final
+  {
+  public:
+    explicit ShutdownTicket(nsIAsyncShutdownBlocker* aBlocker) : mBlocker(aBlocker) {}
+    NS_INLINE_DECL_REFCOUNTING(ShutdownTicket)
+  private:
+    ~ShutdownTicket()
+    {
+      nsCOMPtr<nsIAsyncShutdownClient> barrier = GetShutdownBarrier();
+      barrier->RemoveBlocker(mBlocker);
+    }
+
+    nsCOMPtr<nsIAsyncShutdownBlocker> mBlocker;
+  };
+
   /**
    * Make this MediaStreamGraph enter forced-shutdown state. This state
    * will be noticed by the media graph thread, which will shut down all streams
    * and other state controlled by the media graph thread.
    * This is called during application shutdown.
    */
-  void ForceShutDown();
+  void ForceShutDown(ShutdownTicket* aShutdownTicket);
 
   /**
    * Called before the thread runs.
@@ -368,7 +405,7 @@ public:
   void PlayVideo(MediaStream* aStream);
   /**
    * No more data will be forthcoming for aStream. The stream will end
-   * at the current buffer end point. The StreamBuffer's tracks must be
+   * at the current buffer end point. The StreamTracks's tracks must be
    * explicitly set to finished by the caller.
    */
   void OpenAudioInputImpl(int aID,
@@ -716,6 +753,12 @@ public:
    * True when we need to do a forced shutdown during application shutdown.
    */
   bool mForceShutDown;
+
+  /**
+   * Drop this reference during shutdown to unblock shutdown.
+   **/
+  RefPtr<ShutdownTicket> mForceShutdownTicket;
+
   /**
    * True when we have posted an event to the main thread to run
    * RunInStableState() and the event hasn't run yet.

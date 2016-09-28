@@ -6,6 +6,7 @@
 #include "GMPStorageChild.h"
 #include "GMPChild.h"
 #include "gmp-storage.h"
+#include "base/task.h"
 
 #define ON_GMP_THREAD() (mPlugin->GMPMessageLoop() == MessageLoop::current())
 
@@ -15,7 +16,7 @@
       _func(__VA_ARGS__); \
     } else { \
       mPlugin->GMPMessageLoop()->PostTask( \
-        FROM_HERE, NewRunnableMethod(this, &GMPStorageChild::_func, ##__VA_ARGS__) \
+        dont_add_new_uses_of_this::NewRunnableMethod(this, &GMPStorageChild::_func, ##__VA_ARGS__) \
       ); \
     } \
   } while(false)

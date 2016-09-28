@@ -38,9 +38,13 @@ struct FuncOffsets;
 struct ProfilingOffsets;
 
 // Iterates over the frames of a single WasmActivation, called synchronously
-// from C++ in the thread of the asm.js. The one exception is that this iterator
-// may be called from the interrupt callback which may be called asynchronously
-// from asm.js code; in this case, the backtrace may not be correct.
+// from C++ in the thread of the asm.js.
+//
+// The one exception is that this iterator may be called from the interrupt
+// callback which may be called asynchronously from asm.js code; in this case,
+// the backtrace may not be correct. That being said, we try our best printing
+// an informative message to the user and at least the name of the innermost
+// function stack frame.
 class FrameIterator
 {
     JSContext* cx_;
@@ -48,6 +52,7 @@ class FrameIterator
     const CallSite* callsite_;
     const CodeRange* codeRange_;
     uint8_t* fp_;
+    bool missingFrameMessage_;
 
     void settle();
 
@@ -55,7 +60,7 @@ class FrameIterator
     explicit FrameIterator();
     explicit FrameIterator(const WasmActivation& activation);
     void operator++();
-    bool done() const { return !fp_; }
+    bool done() const;
     JSAtom* functionDisplayAtom() const;
     unsigned lineOrBytecode() const;
 };
@@ -98,6 +103,7 @@ class ProfilingFrameIterator
 };
 
 // Prologue/epilogue code generation
+
 void
 GenerateExitPrologue(jit::MacroAssembler& masm, unsigned framePushed, ExitReason reason,
                      ProfilingOffsets* offsets);
@@ -105,20 +111,21 @@ void
 GenerateExitEpilogue(jit::MacroAssembler& masm, unsigned framePushed, ExitReason reason,
                      ProfilingOffsets* offsets);
 void
-GenerateFunctionPrologue(jit::MacroAssembler& masm, unsigned framePushed, FuncOffsets* offsets);
+GenerateFunctionPrologue(jit::MacroAssembler& masm, unsigned framePushed, uint32_t sigIndex,
+                         FuncOffsets* offsets);
 void
 GenerateFunctionEpilogue(jit::MacroAssembler& masm, unsigned framePushed, FuncOffsets* offsets);
 
 // Runtime patching to enable/disable profiling
 
 void
-EnableProfilingPrologue(const Module& module, const CallSite& callSite, bool enabled);
+ToggleProfiling(const Module& module, const CallSite& callSite, bool enabled);
 
 void
-EnableProfilingThunk(const Module& module, const CallThunk& callThunk, bool enabled);
+ToggleProfiling(const Module& module, const CallThunk& callThunk, bool enabled);
 
 void
-EnableProfilingEpilogue(const Module& module, const CodeRange& codeRange, bool enabled);
+ToggleProfiling(const Module& module, const CodeRange& codeRange, bool enabled);
 
 } // namespace wasm
 } // namespace js

@@ -170,7 +170,8 @@ DrawTargetD2D1::DrawSurface(SourceSurface *aSurface,
   }
 
   if (bitmap && aSurfOptions.mSamplingBounds == SamplingBounds::UNBOUNDED) {
-    mDC->DrawBitmap(bitmap, D2DRect(aDest), aOptions.mAlpha, D2DFilter(aSurfOptions.mFilter), D2DRect(aSource));
+    mDC->DrawBitmap(bitmap, D2DRect(aDest), aOptions.mAlpha,
+                    D2DFilter(aSurfOptions.mSamplingFilter), D2DRect(aSource));
   } else {
     // This has issues ignoring the alpha channel on windows 7 with images marked opaque.
     MOZ_ASSERT(aSurface->GetFormat() != SurfaceFormat::B8G8R8X8);
@@ -178,7 +179,7 @@ DrawTargetD2D1::DrawSurface(SourceSurface *aSurface,
                           D2D1::ImageBrushProperties(samplingBounds,
                                                      D2D1_EXTEND_MODE_CLAMP,
                                                      D2D1_EXTEND_MODE_CLAMP,
-                                                     D2DInterpolationMode(aSurfOptions.mFilter)),
+                                                     D2DInterpolationMode(aSurfOptions.mSamplingFilter)),
                           D2D1::BrushProperties(aOptions.mAlpha, D2DMatrix(transform)),
                           getter_AddRefs(brush));
     mDC->FillRectangle(D2DRect(aDest), brush);
@@ -363,7 +364,7 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
   mDC->SetTransform(D2D1::IdentityMatrix());
   mTransformDirty = true;
 
-  Matrix mat;
+  Matrix mat = Matrix::Translation(aDestination.x - aSourceRect.x, aDestination.y - aSourceRect.y);
   RefPtr<ID2D1Image> image = GetImageForSurface(aSurface, mat, ExtendMode::CLAMP);
 
   if (!image) {
@@ -371,10 +372,16 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
     return;
   }
 
-  if (!mat.IsIdentity()) {
-    gfxDebug() << *this << ": At this point complex partial uploads are not supported for CopySurface.";
+  if (mat.HasNonIntegerTranslation()) {
+    gfxDebug() << *this << ": At this point scaled partial uploads are not supported for CopySurface.";
     return;
   }
+
+  IntRect sourceRect = aSourceRect;
+  sourceRect.x += (aDestination.x - aSourceRect.x) - mat._31;
+  sourceRect.width -= (aDestination.x - aSourceRect.x) - mat._31;
+  sourceRect.y += (aDestination.y - aSourceRect.y) - mat._32;
+  sourceRect.height -= (aDestination.y - aSourceRect.y) - mat._32;
 
   RefPtr<ID2D1Bitmap> bitmap;
   image->QueryInterface((ID2D1Bitmap**)getter_AddRefs(bitmap));
@@ -391,7 +398,7 @@ DrawTargetD2D1::CopySurface(SourceSurface *aSurface,
     return;
   }
 
-  Rect srcRect(Float(aSourceRect.x), Float(aSourceRect.y),
+  Rect srcRect(Float(sourceRect.x), Float(sourceRect.y),
                Float(aSourceRect.width), Float(aSourceRect.height));
 
   Rect dstRect(Float(aDestination.x), Float(aDestination.y),
@@ -1698,7 +1705,7 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
 
         mDC->CreateBitmapBrush(bitmap,
                                D2D1::BitmapBrushProperties(xRepeat, yRepeat,
-                                                           D2DFilter(pat->mFilter)),
+                                                           D2DFilter(pat->mSamplingFilter)),
                                D2D1::BrushProperties(aAlpha, D2DMatrix(mat)),
                                getter_AddRefs(bitmapBrush));
         if (!bitmapBrush) {
@@ -1729,7 +1736,7 @@ DrawTargetD2D1::CreateBrushForPattern(const Pattern &aPattern, Float aAlpha)
                           D2D1::ImageBrushProperties(samplingBounds,
                                                      xRepeat,
                                                      yRepeat,
-                                                     D2DInterpolationMode(pat->mFilter)),
+                                                     D2DInterpolationMode(pat->mSamplingFilter)),
                           D2D1::BrushProperties(aAlpha, D2DMatrix(mat)),
                           getter_AddRefs(imageBrush));
 

@@ -26,6 +26,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "LoginHelper",
 XPCOMUtils.defineLazyServiceGetter(this, "gContentSecurityManager",
                                    "@mozilla.org/contentsecuritymanager;1",
                                    "nsIContentSecurityManager");
+XPCOMUtils.defineLazyServiceGetter(this, "gScriptSecurityManager",
+                                   "@mozilla.org/scriptsecuritymanager;1",
+                                   "nsIScriptSecurityManager");
 XPCOMUtils.defineLazyServiceGetter(this, "gNetUtil",
                                    "@mozilla.org/network/util;1",
                                    "nsINetUtil");
@@ -226,6 +229,9 @@ var LoginManagerContent = {
     let win = doc.defaultView;
 
     let formOrigin = LoginUtils._getPasswordOrigin(doc.documentURI);
+    if (!formOrigin) {
+      return Promise.reject("_getLoginDataFromParent: A form origin is required");
+    }
     let actionOrigin = LoginUtils._getActionOrigin(form);
 
     let messageManager = messageManagerFromWindow(win);
@@ -464,7 +470,7 @@ var LoginManagerContent = {
    */
   fillForm({ topDocument, loginFormOrigin, loginsFound, recipes, inputElement }) {
     let topState = this.stateForDocument(topDocument);
-    if (!topState.loginFormForFill) {
+    if (!inputElement && !topState.loginFormForFill) {
       log("fillForm: There is no login form anymore. The form may have been",
           "removed or the document may have changed.");
       return;
@@ -1123,8 +1129,8 @@ var LoginManagerContent = {
    *        The document whose principal and URI are to be considered.
    */
   isDocumentSecure(document) {
-    let docPrincipal = document.nodePrincipal;
-    if (docPrincipal.isSystemPrincipal) {
+    let principal = document.nodePrincipal;
+    if (principal.isSystemPrincipal) {
       return true;
     }
 
@@ -1134,11 +1140,13 @@ var LoginManagerContent = {
     // insecure while they are secure, for example sandboxed documents created
     // using a "javascript:" or "data:" URI from an HTTPS page. See bug 1162772
     // for defining "window.isSecureContext", that may help in these cases.
-    let uri = docPrincipal.isCodebasePrincipal ? docPrincipal.URI
-                                               : document.documentURIObject;
+    if (!principal.isCodebasePrincipal) {
+      principal =
+        gScriptSecurityManager.getCodebasePrincipal(document.documentURIObject);
+    }
 
     // These checks include "file", "resource", HTTPS, and HTTP to "localhost".
-    return gContentSecurityManager.isURIPotentiallyTrustworthy(uri);
+    return gContentSecurityManager.isOriginPotentiallyTrustworthy(principal);
   },
 };
 

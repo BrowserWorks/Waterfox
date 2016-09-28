@@ -1,5 +1,5 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim:set ts=2 sw=2 sts=2 et cindent: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -300,7 +300,7 @@ protected:
   class ThenValueBase : public Request
   {
   public:
-    class ResolveOrRejectRunnable : public nsRunnable
+    class ResolveOrRejectRunnable : public Runnable
     {
     public:
       ResolveOrRejectRunnable(ThenValueBase* aThenValue, MozPromise* aPromise)
@@ -366,8 +366,8 @@ protected:
       aPromise->mMutex.AssertCurrentThreadOwns();
       MOZ_ASSERT(!aPromise->IsPending());
 
-      RefPtr<nsRunnable> runnable =
-        static_cast<nsRunnable*>(new (typename ThenValueBase::ResolveOrRejectRunnable)(this, aPromise));
+      RefPtr<Runnable> runnable =
+        static_cast<Runnable*>(new (typename ThenValueBase::ResolveOrRejectRunnable)(this, aPromise));
       PROMISE_LOG("%s Then() call made from %s [Runnable=%p, Promise=%p, ThenValue=%p]",
                   aPromise->mValue.IsResolve() ? "Resolving" : "Rejecting", ThenValueBase::mCallSite,
                   runnable.get(), aPromise, this);
@@ -785,7 +785,7 @@ public:
   // Provide a Monitor that should always be held when accessing this instance.
   void SetMonitor(Monitor* aMonitor) { mMonitor = aMonitor; }
 
-  bool IsEmpty()
+  bool IsEmpty() const
   {
     if (mMonitor) {
       mMonitor->AssertCurrentThreadOwns();
@@ -892,7 +892,7 @@ public:
     }
   }
 
-  bool Exists() { return !!mRequest; }
+  bool Exists() const { return !!mRequest; }
 
 private:
   RefPtr<typename PromiseType::Request> mRequest;
@@ -949,7 +949,7 @@ private:
 };
 
 template<typename PromiseType, typename ThisType, typename ...ArgTypes>
-class ProxyRunnable : public nsRunnable
+class ProxyRunnable : public Runnable
 {
 public:
   ProxyRunnable(typename PromiseType::Private* aProxyPromise, MethodCall<PromiseType, ThisType, ArgTypes...>* aMethodCall)

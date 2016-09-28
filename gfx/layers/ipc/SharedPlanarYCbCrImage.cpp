@@ -135,7 +135,7 @@ SharedPlanarYCbCrImage::AllocateAndGetNewBuffer(uint32_t aSize)
     // buffer which is where the y channel starts by default.
     return mapped.y.data;
   } else {
-    MOZ_CRASH();
+    MOZ_CRASH("GFX: Cannot borrow mapped YCbCr data");
   }
 }
 
@@ -151,6 +151,7 @@ SharedPlanarYCbCrImage::AdoptData(const Data &aData)
   }
   mData = aData;
   mSize = aData.mPicSize;
+  mOrigin = gfx::IntPoint(aData.mPicX, aData.mPicY);
 
   uint8_t *base = GetBuffer();
   uint32_t yOffset = aData.mYChannel - base;
@@ -191,7 +192,7 @@ SharedPlanarYCbCrImage::Allocate(PlanarYCbCrData& aData)
   // because the underlyin BufferTextureData is always mapped in memory even outside
   // of the lock/unlock interval. That's sad and new code should follow this example.
   if (!mTextureClient->Lock(OpenMode::OPEN_READ) || !mTextureClient->BorrowMappedYCbCrData(mapped)) {
-    MOZ_CRASH();
+    MOZ_CRASH("GFX: Cannot lock or borrow mapped YCbCr");
   }
 
   aData.mYChannel = mapped.y.data;
@@ -221,6 +222,7 @@ SharedPlanarYCbCrImage::Allocate(PlanarYCbCrData& aData)
   // shmem.
   mBufferSize = ImageDataSerializer::ComputeYCbCrBufferSize(mData.mYSize, mData.mCbCrSize);
   mSize = mData.mPicSize;
+  mOrigin = gfx::IntPoint(aData.mPicX, aData.mPicY);
 
   mTextureClient->Unlock();
 

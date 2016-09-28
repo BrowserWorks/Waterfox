@@ -9,6 +9,7 @@ CppUnitTests([
     'TestAtomics',
     'TestBinarySearch',
     'TestBloomFilter',
+    'TestBufferList',
     'TestCasting',
     'TestCeilingFloor',
     'TestCheckedInt',
@@ -28,6 +29,7 @@ CppUnitTests([
     'TestMacroForEach',
     'TestMathAlgorithms',
     'TestMaybe',
+    'TestNotNull',
     'TestPair',
     'TestRefPtr',
     'TestRollingMean',
@@ -66,3 +68,6 @@ if CONFIG['_MSC_VER']:
 USE_LIBS += [
     'mfbt',
 ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

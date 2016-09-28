@@ -6,7 +6,7 @@
 "use strict";
 
 const { Cc, Ci, Cu, Cr } = require("chrome");
-const { Task } = require("resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 
 loader.lazyRequireGetter(this, "promise");
 loader.lazyRequireGetter(this, "EventEmitter",
@@ -29,7 +29,7 @@ PerformancePanel.prototype = {
    *         A promise that is resolved when the Performance tool
    *         completes opening.
    */
-  open: Task.async(function*() {
+  open: Task.async(function* () {
     if (this._opening) {
       return this._opening;
     }
@@ -50,7 +50,7 @@ PerformancePanel.prototype = {
     // does not exist), and in that case, the tool shouldn't be available,
     // so let's ensure this assertion.
     if (!front) {
-      Cu.reportError("No PerformanceFront found in toolbox.");
+      console.error("No PerformanceFront found in toolbox.");
     }
 
     this.panelWin.gFront = front;
@@ -77,7 +77,7 @@ PerformancePanel.prototype = {
     return this.toolbox.target;
   },
 
-  destroy: Task.async(function*() {
+  destroy: Task.async(function* () {
     // Make sure this panel is not already destroyed.
     if (this._destroyed) {
       return;

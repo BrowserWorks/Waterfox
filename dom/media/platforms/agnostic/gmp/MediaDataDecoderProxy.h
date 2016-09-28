@@ -15,7 +15,7 @@
 
 namespace mozilla {
 
-class InputTask : public nsRunnable {
+class InputTask : public Runnable {
 public:
   InputTask(MediaDataDecoder* aDecoder,
             MediaRawData* aSample)
@@ -74,7 +74,7 @@ public:
     mProxyCallback->Output(aData);
   }
 
-  void Error() override;
+  void Error(MediaDataDecoderError aError) override;
 
   void InputExhausted() override {
     mProxyCallback->InputExhausted();

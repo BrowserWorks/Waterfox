@@ -306,6 +306,9 @@ nsCaseTransformTextRunFactory::TransformString(
   mozilla::GreekCasing::State greekState;
   mozilla::IrishCasing::State irishState;
   uint32_t irishMark = uint32_t(-1); // location of possible prefix letter(s)
+                                     // in the output string
+  uint32_t irishMarkSrc; // corresponding location in source string (may differ
+                         // from output due to expansions like eszet -> 'SS')
 
   for (uint32_t i = 0; i < length; ++i) {
     uint32_t ch = str[i];
@@ -318,7 +321,7 @@ nsCaseTransformTextRunFactory::TransformString(
       forceNonFullWidth = charStyle->mForceNonFullWidth;
 
       nsIAtom* newLang = charStyle->mExplicitLanguage
-                         ? charStyle->mLanguage : nullptr;
+                         ? charStyle->mLanguage.get() : nullptr;
       if (lang != newLang) {
         lang = newLang;
         languageSpecificCasing = GetCasingFor(lang);
@@ -456,6 +459,7 @@ nsCaseTransformTextRunFactory::TransformString(
         ch = mozilla::IrishCasing::UpperCase(ch, irishState, mark, action);
         if (mark) {
           irishMark = aConvertedString.Length();
+          irishMarkSrc = i;
           break;
         } else if (action) {
           nsString& str = aConvertedString; // shorthand
@@ -481,7 +485,7 @@ nsCaseTransformTextRunFactory::TransformString(
             NS_ASSERTION(str.Length() >= 2 && irishMark == str.Length() - 2,
                          "bad irishMark!");
             str.Replace(irishMark, 2, ToLowerCase(str[irishMark]));
-            aDeletedCharsArray[irishMark + 1] = true;
+            aDeletedCharsArray[irishMarkSrc + 1] = true;
             // Remove the trailing entries (corresponding to the deleted hyphen)
             // from the auxiliary arrays.
             aCharsToMergeArray.SetLength(aCharsToMergeArray.Length() - 1);
@@ -554,7 +558,7 @@ nsCaseTransformTextRunFactory::TransformString(
       }
       break;
 
-    case NS_STYLE_TEXT_TRANSFORM_FULLWIDTH:
+    case NS_STYLE_TEXT_TRANSFORM_FULL_WIDTH:
       ch = mozilla::unicode::GetFullWidth(ch);
       break;
 

@@ -28,8 +28,8 @@ factory((root.pdfjsDistBuildPdfWorker = {}));
   // Use strict in our context only - users might not want it
   'use strict';
 
-var pdfjsVersion = '1.4.258';
-var pdfjsBuild = '990150c';
+var pdfjsVersion = '1.5.281';
+var pdfjsBuild = '5a5bb99';
 
   var pdfjsFilePath =
     typeof document !== 'undefined' && document.currentScript ?
@@ -451,7 +451,7 @@ exports.ArithmeticDecoder = ArithmeticDecoder;
           types[j] = 'EN';
         }
         // do after
-        for (j = i + 1; j < strLength; --j) {
+        for (j = i + 1; j < strLength; ++j) {
           if (types[j] !== 'ET') {
             break;
           }
@@ -3793,7 +3793,7 @@ var CFFParser = (function CFFParserClosure() {
       function parseOperand() {
         var value = dict[pos++];
         if (value === 30) {
-          return parseFloatOperand(pos);
+          return parseFloatOperand();
         } else if (value === 28) {
           value = dict[pos++];
           value = ((value << 24) | (dict[pos++] << 16)) >> 16;
@@ -4457,6 +4457,11 @@ var CFFDict = (function CFFDictClosure() {
       // remove the array wrapping these types of values
       if (type === 'num' || type === 'sid' || type === 'offset') {
         value = value[0];
+        // Ignore invalid values (fixes bug 1068432).
+        if (isNaN(value)) {
+          warn('Invalid CFFDict value: ' + value + ', for key: ' + key + '.');
+          return true;
+        }
       }
       this.values[key] = value;
       return true;
@@ -4844,7 +4849,7 @@ var CFFCompiler = (function CFFCompilerClosure() {
       if (value >= -107 && value <= 107) {
         code = [value + 139];
       } else if (value >= 108 && value <= 1131) {
-        value = [value - 108];
+        value = value - 108;
         code = [(value >> 8) + 247, value & 0xFF];
       } else if (value >= -1131 && value <= -108) {
         value = -value - 108;
@@ -12421,7 +12426,7 @@ var JpxImage = (function JpxImageClosure() {
       for (j = 0; j < codingpasses; j++) {
         switch (currentCodingpassType) {
           case 0:
-            bitModel.runSignificancePropogationPass();
+            bitModel.runSignificancePropagationPass();
             break;
           case 1:
             bitModel.runMagnitudeRefinementPass();
@@ -12900,8 +12905,8 @@ var JpxImage = (function JpxImageClosure() {
         }
         neighborsSignificance[index] |= 0x80;
       },
-      runSignificancePropogationPass:
-        function BitModel_runSignificancePropogationPass() {
+      runSignificancePropagationPass:
+        function BitModel_runSignificancePropagationPass() {
         var decoder = this.decoder;
         var width = this.width, height = this.height;
         var coefficentsMagnitude = this.coefficentsMagnitude;
@@ -19663,7 +19668,7 @@ var JpegStream = (function JpegStreamClosure() {
 
       // checking if values needs to be transformed before conversion
       if (this.forceRGB && this.dict && isArray(this.dict.get('Decode'))) {
-        var decodeArr = this.dict.get('Decode');
+        var decodeArr = this.dict.getArray('Decode');
         var bitsPerComponent = this.dict.get('BitsPerComponent') || 8;
         var decodeArrLength = decodeArr.length;
         var transform = new Int32Array(decodeArrLength);
@@ -19803,8 +19808,8 @@ var Jbig2Stream = (function Jbig2StreamClosure() {
 
     var jbig2Image = new Jbig2Image();
 
-    var chunks = [], xref = this.dict.xref;
-    var decodeParams = xref.fetchIfRef(this.dict.get('DecodeParms'));
+    var chunks = [];
+    var decodeParams = this.dict.getArray('DecodeParms');
 
     // According to the PDF specification, DecodeParms can be either
     // a dictionary, or an array whose elements are dictionaries.
@@ -19813,7 +19818,7 @@ var Jbig2Stream = (function Jbig2StreamClosure() {
         warn('JBIG2 - \'DecodeParms\' array with multiple elements ' +
              'not supported.');
       }
-      decodeParams = xref.fetchIfRef(decodeParams[0]);
+      decodeParams = decodeParams[0];
     }
     if (decodeParams && decodeParams.has('JBIG2Globals')) {
       var globalsStream = decodeParams.get('JBIG2Globals');
@@ -22996,17 +23001,15 @@ var CipherTransformFactory = (function CipherTransformFactoryClosure() {
       pdfAlgorithm = new PDF17();
     }
 
-    if (pdfAlgorithm) {
-      if (pdfAlgorithm.checkUserPassword(password, userValidationSalt,
-                                         userPassword)) {
-        return pdfAlgorithm.getUserKey(password, userKeySalt, userEncryption);
-      } else if (password.length && pdfAlgorithm.checkOwnerPassword(password,
-                                                   ownerValidationSalt,
-                                                   uBytes,
-                                                   ownerPassword)) {
-        return pdfAlgorithm.getOwnerKey(password, ownerKeySalt, uBytes,
-                                        ownerEncryption);
-      }
+    if (pdfAlgorithm.checkUserPassword(password, userValidationSalt,
+                                        userPassword)) {
+      return pdfAlgorithm.getUserKey(password, userKeySalt, userEncryption);
+    } else if (password.length && pdfAlgorithm.checkOwnerPassword(password,
+                                                  ownerValidationSalt,
+                                                  uBytes,
+                                                  ownerPassword)) {
+      return pdfAlgorithm.getOwnerKey(password, ownerKeySalt, uBytes,
+                                      ownerEncryption);
     }
 
     return null;
@@ -27068,19 +27071,18 @@ exports.Type1Parser = Type1Parser;
   {
     factory((root.pdfjsCoreFonts = {}), root.pdfjsSharedUtil,
       root.pdfjsCorePrimitives, root.pdfjsCoreStream, root.pdfjsCoreParser,
-      root.pdfjsCoreGlyphList, root.pdfjsCoreCharsets,
-      root.pdfjsCoreFontRenderer, root.pdfjsCoreEncodings,
-      root.pdfjsCoreStandardFonts, root.pdfjsCoreUnicode,
-      root.pdfjsCoreType1Parser, root.pdfjsCoreCFFParser);
+      root.pdfjsCoreGlyphList, root.pdfjsCoreFontRenderer,
+      root.pdfjsCoreEncodings, root.pdfjsCoreStandardFonts,
+      root.pdfjsCoreUnicode, root.pdfjsCoreType1Parser,
+      root.pdfjsCoreCFFParser);
   }
 }(this, function (exports, sharedUtil, corePrimitives, coreStream, coreParser,
-                  coreGlyphList, coreCharsets, coreFontRenderer,
-                  coreEncodings, coreStandardFonts, coreUnicode,
-                  coreType1Parser, coreCFFParser) {
+                  coreGlyphList, coreFontRenderer, coreEncodings,
+                  coreStandardFonts, coreUnicode, coreType1Parser,
+                  coreCFFParser) {
 
 var FONT_IDENTITY_MATRIX = sharedUtil.FONT_IDENTITY_MATRIX;
 var FontType = sharedUtil.FontType;
-var Util = sharedUtil.Util;
 var assert = sharedUtil.assert;
 var bytesToString = sharedUtil.bytesToString;
 var error = sharedUtil.error;
@@ -27090,7 +27092,6 @@ var isInt = sharedUtil.isInt;
 var isNum = sharedUtil.isNum;
 var readUint32 = sharedUtil.readUint32;
 var shadow = sharedUtil.shadow;
-var stringToBytes = sharedUtil.stringToBytes;
 var string32 = sharedUtil.string32;
 var warn = sharedUtil.warn;
 var MissingDataException = sharedUtil.MissingDataException;
@@ -27098,16 +27099,11 @@ var Stream = coreStream.Stream;
 var Lexer = coreParser.Lexer;
 var getGlyphsUnicode = coreGlyphList.getGlyphsUnicode;
 var getDingbatsGlyphsUnicode = coreGlyphList.getDingbatsGlyphsUnicode;
-var ISOAdobeCharset = coreCharsets.ISOAdobeCharset;
-var ExpertCharset = coreCharsets.ExpertCharset;
-var ExpertSubsetCharset = coreCharsets.ExpertSubsetCharset;
 var FontRendererFactory = coreFontRenderer.FontRendererFactory;
-var WinAnsiEncoding = coreEncodings.WinAnsiEncoding;
 var StandardEncoding = coreEncodings.StandardEncoding;
 var MacRomanEncoding = coreEncodings.MacRomanEncoding;
 var SymbolSetEncoding = coreEncodings.SymbolSetEncoding;
 var ZapfDingbatsEncoding = coreEncodings.ZapfDingbatsEncoding;
-var ExpertEncoding = coreEncodings.ExpertEncoding;
 var getEncoding = coreEncodings.getEncoding;
 var getStdFontMap = coreStandardFonts.getStdFontMap;
 var getNonStdFontMap = coreStandardFonts.getNonStdFontMap;
@@ -29105,7 +29101,7 @@ var Font = (function FontClosure() {
         }
       }
 
-      function sanitizeTTPrograms(fpgm, prep, cvt) {
+      function sanitizeTTPrograms(fpgm, prep, cvt, maxFunctionDefs) {
         var ttContext = {
           functionsDefined: [],
           functionsUsed: [],
@@ -29862,7 +29858,8 @@ var ErrorFont = (function ErrorFontClosure() {
  * @param {Object} properties Font properties object.
  * @param {Object} builtInEncoding The encoding contained within the actual font
  * data.
- * @param {Array} Array of glyph names where the index is the glyph ID.
+ * @param {Array} glyphNames Array of glyph names where the index is the
+ * glyph ID.
  * @returns {Object} A char code to glyph ID map.
  */
 function type1FontGlyphMapping(properties, builtInEncoding, glyphNames) {
@@ -30478,8 +30475,8 @@ var PDFFunction = (function PDFFunctionClosure() {
         }
         return out;
       }
-      var domain = dict.get('Domain');
-      var range = dict.get('Range');
+      var domain = dict.getArray('Domain');
+      var range = dict.getArray('Range');
 
       if (!domain || !range) {
         error('No domain or range');
@@ -30500,7 +30497,7 @@ var PDFFunction = (function PDFFunctionClosure() {
         info('No support for cubic spline interpolation: ' + order);
       }
 
-      var encode = dict.get('Encode');
+      var encode = dict.getArray('Encode');
       if (!encode) {
         encode = [];
         for (var i = 0; i < inputSize; ++i) {
@@ -30510,7 +30507,7 @@ var PDFFunction = (function PDFFunctionClosure() {
       }
       encode = toMultiArray(encode);
 
-      var decode = dict.get('Decode');
+      var decode = dict.getArray('Decode');
       if (!decode) {
         decode = range;
       } else {
@@ -30612,8 +30609,8 @@ var PDFFunction = (function PDFFunctionClosure() {
 
     constructInterpolated: function PDFFunction_constructInterpolated(str,
                                                                       dict) {
-      var c0 = dict.get('C0') || [0];
-      var c1 = dict.get('C1') || [1];
+      var c0 = dict.getArray('C0') || [0];
+      var c1 = dict.getArray('C1') || [1];
       var n = dict.get('N');
 
       if (!isArray(c0) || !isArray(c1)) {
@@ -30648,7 +30645,7 @@ var PDFFunction = (function PDFFunctionClosure() {
     },
 
     constructStiched: function PDFFunction_constructStiched(fn, dict, xref) {
-      var domain = dict.get('Domain');
+      var domain = dict.getArray('Domain');
 
       if (!domain) {
         error('No domain');
@@ -30665,8 +30662,8 @@ var PDFFunction = (function PDFFunctionClosure() {
         fns.push(PDFFunction.getIR(xref, xref.fetchIfRef(fnRefs[i])));
       }
 
-      var bounds = dict.get('Bounds');
-      var encode = dict.get('Encode');
+      var bounds = dict.getArray('Bounds');
+      var encode = dict.getArray('Encode');
 
       return [CONSTRUCT_STICHED, domain, bounds, encode, fns];
     },
@@ -30728,8 +30725,8 @@ var PDFFunction = (function PDFFunctionClosure() {
 
     constructPostScript: function PDFFunction_constructPostScript(fn, dict,
                                                                   xref) {
-      var domain = dict.get('Domain');
-      var range = dict.get('Range');
+      var domain = dict.getArray('Domain');
+      var range = dict.getArray('Range');
 
       if (!domain) {
         error('No domain.');
@@ -31803,16 +31800,16 @@ var ColorSpace = (function ColorSpaceClosure() {
           return 'DeviceCmykCS';
         case 'CalGray':
           params = xref.fetchIfRef(cs[1]);
-          whitePoint = params.get('WhitePoint');
-          blackPoint = params.get('BlackPoint');
+          whitePoint = params.getArray('WhitePoint');
+          blackPoint = params.getArray('BlackPoint');
           gamma = params.get('Gamma');
           return ['CalGrayCS', whitePoint, blackPoint, gamma];
         case 'CalRGB':
           params = xref.fetchIfRef(cs[1]);
-          whitePoint = params.get('WhitePoint');
-          blackPoint = params.get('BlackPoint');
-          gamma = params.get('Gamma');
-          var matrix = params.get('Matrix');
+          whitePoint = params.getArray('WhitePoint');
+          blackPoint = params.getArray('BlackPoint');
+          gamma = params.getArray('Gamma');
+          var matrix = params.getArray('Matrix');
           return ['CalRGBCS', whitePoint, blackPoint, gamma, matrix];
         case 'ICCBased':
           var stream = xref.fetchIfRef(cs[1]);
@@ -31866,9 +31863,9 @@ var ColorSpace = (function ColorSpaceClosure() {
           return ['AlternateCS', numComps, alt, tintFnIR];
         case 'Lab':
           params = xref.fetchIfRef(cs[1]);
-          whitePoint = params.get('WhitePoint');
-          blackPoint = params.get('BlackPoint');
-          var range = params.get('Range');
+          whitePoint = params.getArray('WhitePoint');
+          blackPoint = params.getArray('BlackPoint');
+          var range = params.getArray('Range');
           return ['LabCS', whitePoint, blackPoint, range];
         default:
           error('unimplemented color space object "' + mode + '"');
@@ -32941,7 +32938,7 @@ var PDFImage = (function PDFImageClosure() {
       this.numComps = this.colorSpace.numComps;
     }
 
-    this.decode = dict.get('Decode', 'D');
+    this.decode = dict.getArray('Decode', 'D');
     this.needsDecode = false;
     if (this.decode &&
         ((this.colorSpace && !this.colorSpace.isDefaultDecode(this.decode)) ||
@@ -33592,7 +33589,7 @@ var Catalog = (function CatalogClosure() {
         var title = outlineDict.get('Title');
         var flags = outlineDict.get('F') || 0;
 
-        var color = outlineDict.get('C'), rgbColor = blackColor;
+        var color = outlineDict.getArray('C'), rgbColor = blackColor;
         // We only need to parse the color when it's valid, and non-default.
         if (isArray(color) && color.length === 3 &&
             (color[0] !== 0 || color[1] !== 0 || color[2] !== 0)) {
@@ -34156,6 +34153,12 @@ var XRef = (function XRefClosure() {
             error('Invalid entry in XRef subsection: ' + first + ', ' + count);
           }
 
+          // The first xref table entry, i.e. obj 0, should be free. Attempting
+          // to adjust an incorrect first obj # (fixes issue 3248 and 7229).
+          if (i === 0 && entry.free && first === 1) {
+            first = 0;
+          }
+
           if (!this.entries[i + first]) {
             this.entries[i + first] = entry;
           }
@@ -34167,12 +34170,6 @@ var XRef = (function XRefClosure() {
         tableState.parserBuf2 = parser.buf2;
         delete tableState.firstEntryNum;
         delete tableState.entryCount;
-      }
-
-      // Per issue 3248: hp scanners generate bad XRef
-      if (first === 1 && this.entries[1] && this.entries[1].free) {
-        // shifting the entries
-        this.entries.shift();
       }
 
       // Sanity check: as per spec, first object must be free
@@ -34595,6 +34592,11 @@ var XRef = (function XRefClosure() {
       // read stream objects for cache
       for (i = 0; i < n; ++i) {
         entries.push(parser.getObj());
+        // The ObjStm should not contain 'endobj'. If it's present, skip over it
+        // to support corrupt PDFs (fixes issue 5241, bug 898610, bug 1037816).
+        if (isCmd(parser.buf1, 'endobj')) {
+          parser.shift();
+        }
         num = nums[i];
         var entry = this.entries[num];
         if (entry && entry.offset === tableOffset && entry.gen === i) {
@@ -35113,7 +35115,7 @@ Shadings.SMALL_NUMBER = 1e-6;
 Shadings.RadialAxial = (function RadialAxialClosure() {
   function RadialAxial(dict, matrix, xref, res) {
     this.matrix = matrix;
-    this.coordsArr = dict.get('Coords');
+    this.coordsArr = dict.getArray('Coords');
     this.shadingType = dict.get('ShadingType');
     this.type = 'Pattern';
     var cs = dict.get('ColorSpace', 'CS');
@@ -35122,14 +35124,14 @@ Shadings.RadialAxial = (function RadialAxialClosure() {
 
     var t0 = 0.0, t1 = 1.0;
     if (dict.has('Domain')) {
-      var domainArr = dict.get('Domain');
+      var domainArr = dict.getArray('Domain');
       t0 = domainArr[0];
       t1 = domainArr[1];
     }
 
     var extendStart = false, extendEnd = false;
     if (dict.has('Extend')) {
-      var extendArr = dict.get('Extend');
+      var extendArr = dict.getArray('Extend');
       extendStart = extendArr[0];
       extendEnd = extendArr[1];
     }
@@ -35734,7 +35736,7 @@ Shadings.Mesh = (function MeshClosure() {
     this.matrix = matrix;
     this.shadingType = dict.get('ShadingType');
     this.type = 'Pattern';
-    this.bbox = dict.get('BBox');
+    this.bbox = dict.getArray('BBox');
     var cs = dict.get('ColorSpace', 'CS');
     cs = ColorSpace.parse(cs, xref, res);
     this.cs = cs;
@@ -35752,7 +35754,7 @@ Shadings.Mesh = (function MeshClosure() {
       bitsPerCoordinate: dict.get('BitsPerCoordinate'),
       bitsPerComponent: dict.get('BitsPerComponent'),
       bitsPerFlag: dict.get('BitsPerFlag'),
-      decode: dict.get('Decode'),
+      decode: dict.getArray('Decode'),
       colorFn: fn,
       colorSpace: cs,
       numComps: fn ? 1 : cs.numComps
@@ -35819,8 +35821,8 @@ Shadings.Dummy = (function DummyClosure() {
 })();
 
 function getTilingPatternIR(operatorList, dict, args) {
-  var matrix = dict.get('Matrix');
-  var bbox = dict.get('BBox');
+  var matrix = dict.getArray('Matrix');
+  var bbox = dict.getArray('BBox');
   var xstep = dict.get('XStep');
   var ystep = dict.get('YStep');
   var paintType = dict.get('PaintType');
@@ -35954,7 +35956,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       function NativeImageDecoder_isSupported(image, xref, res) {
     var cs = ColorSpace.parse(image.dict.get('ColorSpace', 'CS'), xref, res);
     return (cs.name === 'DeviceGray' || cs.name === 'DeviceRGB') &&
-           cs.isDefaultDecode(image.dict.get('Decode', 'D'));
+           cs.isDefaultDecode(image.dict.getArray('Decode', 'D'));
   };
   /**
    * Checks if the image can be decoded by the browser.
@@ -35963,7 +35965,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
       function NativeImageDecoder_isDecodable(image, xref, res) {
     var cs = ColorSpace.parse(image.dict.get('ColorSpace', 'CS'), xref, res);
     return (cs.numComps === 1 || cs.numComps === 3) &&
-           cs.isDefaultDecode(image.dict.get('Decode', 'D'));
+           cs.isDefaultDecode(image.dict.getArray('Decode', 'D'));
   };
 
   function PartialEvaluator(pdfManager, xref, handler, pageIndex,
@@ -36153,7 +36155,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         var height = dict.get('Height', 'H');
         var bitStrideLength = (width + 7) >> 3;
         var imgArray = image.getBytes(bitStrideLength * height);
-        var decode = dict.get('Decode', 'D');
+        var decode = dict.getArray('Decode', 'D');
         var inverseDecode = (!!decode && decode[0] > 0);
 
         imgData = PDFImage.createMask(imgArray, width, height,
@@ -36594,7 +36596,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                                        dict, operatorList, task);
         } else if (typeNum === SHADING_PATTERN) {
           var shading = dict.get('Shading');
-          var matrix = dict.get('Matrix');
+          var matrix = dict.getArray('Matrix');
           pattern = Pattern.parseShading(shading, matrix, xref, resources,
                                          this.handler);
           operatorList.addOp(fn, pattern.getIR());
@@ -37202,13 +37204,13 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           textState = stateManager.state;
           var fn = operation.fn;
           args = operation.args;
-          var advance;
+          var advance, diff;
 
           switch (fn | 0) {
             case OPS.setFont:
               flushTextContentItem();
               textState.fontSize = args[1];
-              next(handleSetFont(args[0].name));
+              next(handleSetFont(args[0].name, null));
               return;
             case OPS.setTextRise:
               flushTextContentItem();
@@ -37235,8 +37237,8 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
                   (args[0] - textContentItem.lastAdvanceWidth);
                 textContentItem.height +=
                   (args[1] - textContentItem.lastAdvanceHeight);
-                var diff = (args[0] - textContentItem.lastAdvanceWidth) -
-                           (args[1] - textContentItem.lastAdvanceHeight);
+                diff = (args[0] - textContentItem.lastAdvanceWidth) -
+                       (args[1] - textContentItem.lastAdvanceHeight);
                 addFakeSpaces(diff, textContentItem.str);
                 break;
               }
@@ -37256,6 +37258,24 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               textState.carriageReturn();
               break;
             case OPS.setTextMatrix:
+              // Optimization to treat same line movement as advance.
+              advance = textState.calcTextLineMatrixAdvance(
+                args[0], args[1], args[2], args[3], args[4], args[5]);
+              if (advance !== null && textContentItem.initialized &&
+                  advance.value > 0 &&
+                  advance.value <= textContentItem.fakeMultiSpaceMax) {
+                textState.translateTextLineMatrix(advance.width,
+                                                  advance.height);
+                textContentItem.width +=
+                  (advance.width - textContentItem.lastAdvanceWidth);
+                textContentItem.height +=
+                  (advance.height - textContentItem.lastAdvanceHeight);
+                diff = (advance.width - textContentItem.lastAdvanceWidth) -
+                       (advance.height - textContentItem.lastAdvanceHeight);
+                addFakeSpaces(diff, textContentItem.str);
+                break;
+              }
+
               flushTextContentItem();
               textState.setTextMatrix(args[0], args[1], args[2], args[3],
                 args[4], args[5]);
@@ -37375,7 +37395,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               }
 
               stateManager.save();
-              var matrix = xobj.dict.get('Matrix');
+              var matrix = xobj.dict.getArray('Matrix');
               if (isArray(matrix) && matrix.length === 6) {
                 stateManager.transform(matrix);
               }
@@ -37396,21 +37416,17 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
               var dictName = args[0];
               var extGState = resources.get('ExtGState');
 
-              if (!isDict(extGState) || !extGState.has(dictName.name)) {
+              if (!isDict(extGState) || !isName(dictName)) {
                 break;
               }
-
-              var gsStateMap = extGState.get(dictName.name);
-              var gsStateFont = null;
-              for (var key in gsStateMap) {
-                if (key === 'Font') {
-                  assert(!gsStateFont);
-                  gsStateFont = gsStateMap[key];
-                }
+              var gState = extGState.get(dictName.name);
+              if (!isDict(gState)) {
+                break;
               }
-              if (gsStateFont) {
-                textState.fontSize = gsStateFont[1];
-                next(handleSetFont(gsStateFont[0]));
+              var gStateFont = gState.get('Font');
+              if (gStateFont) {
+                textState.fontSize = gStateFont[1];
+                next(handleSetFont(null, gStateFont[0]));
                 return;
               }
               break;
@@ -37972,7 +37988,7 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
           // is a tagged pdf. Create a barbebones one to get by.
           descriptor = new Dict(null);
           descriptor.set('FontName', Name.get(type));
-          descriptor.set('FontBBox', dict.get('FontBBox'));
+          descriptor.set('FontBBox', dict.getArray('FontBBox'));
         } else {
           // Before PDF 1.5 if the font was one of the base 14 fonts, having a
           // FontDescriptor was not required.
@@ -38074,10 +38090,10 @@ var PartialEvaluator = (function PartialEvaluatorClosure() {
         composite: composite,
         wideChars: composite,
         fixedPitch: false,
-        fontMatrix: (dict.get('FontMatrix') || FONT_IDENTITY_MATRIX),
+        fontMatrix: (dict.getArray('FontMatrix') || FONT_IDENTITY_MATRIX),
         firstChar: firstChar || 0,
         lastChar: (lastChar || maxCharIndex),
-        bbox: descriptor.get('FontBBox'),
+        bbox: descriptor.getArray('FontBBox'),
         ascent: descriptor.get('Ascent'),
         descent: descriptor.get('Descent'),
         xHeight: descriptor.get('XHeight'),
@@ -38352,6 +38368,30 @@ var TextState = (function TextStateClosure() {
       var m = this.textLineMatrix;
       m[4] = m[0] * x + m[2] * y + m[4];
       m[5] = m[1] * x + m[3] * y + m[5];
+    },
+    calcTextLineMatrixAdvance:
+        function TextState_calcTextLineMatrixAdvance(a, b, c, d, e, f) {
+      var font = this.font;
+      if (!font) {
+        return null;
+      }
+      var m = this.textLineMatrix;
+      if (!(a === m[0] && b === m[1] && c === m[2] && d === m[3])) {
+        return null;
+      }
+      var txDiff = e - m[4], tyDiff = f - m[5];
+      if ((font.vertical && txDiff !== 0) || (!font.vertical && tyDiff !== 0)) {
+        return null;
+      }
+      var tx, ty, denominator = a * d - b * c;
+      if (font.vertical) {
+        tx = -tyDiff * c / denominator;
+        ty = tyDiff * a / denominator;
+      } else {
+        tx = txDiff * d / denominator;
+        ty = -txDiff * b / denominator;
+      }
+      return { width: tx, height: ty, value: (font.vertical ? ty : tx), };
     },
     calcRenderMatrix: function TextState_calcRendeMatrix(ctm) {
       // 9.4.4 Text Space Details
@@ -39189,7 +39229,7 @@ var Annotation = (function AnnotationClosure() {
 
     this.setFlags(dict.get('F'));
     this.setRectangle(dict.getArray('Rect'));
-    this.setColor(dict.get('C'));
+    this.setColor(dict.getArray('C'));
     this.setBorderStyle(dict);
     this.appearance = getDefaultAppearance(dict);
 
@@ -39206,27 +39246,48 @@ var Annotation = (function AnnotationClosure() {
 
   Annotation.prototype = {
     /**
+     * @private
+     */
+    _hasFlag: function Annotation_hasFlag(flags, flag) {
+      return !!(flags & flag);
+    },
+
+    /**
+     * @private
+     */
+    _isViewable: function Annotation_isViewable(flags) {
+      return !this._hasFlag(flags, AnnotationFlag.INVISIBLE) &&
+             !this._hasFlag(flags, AnnotationFlag.HIDDEN) &&
+             !this._hasFlag(flags, AnnotationFlag.NOVIEW);
+    },
+
+    /**
+     * @private
+     */
+    _isPrintable: function AnnotationFlag_isPrintable(flags) {
+      return this._hasFlag(flags, AnnotationFlag.PRINT) &&
+             !this._hasFlag(flags, AnnotationFlag.INVISIBLE) &&
+             !this._hasFlag(flags, AnnotationFlag.HIDDEN);
+    },
+
+    /**
      * @return {boolean}
      */
     get viewable() {
-      if (this.flags) {
-        return !this.hasFlag(AnnotationFlag.INVISIBLE) &&
-               !this.hasFlag(AnnotationFlag.HIDDEN) &&
-               !this.hasFlag(AnnotationFlag.NOVIEW);
+      if (this.flags === 0) {
+        return true;
       }
-      return true;
+      return this._isViewable(this.flags);
     },
 
     /**
      * @return {boolean}
      */
     get printable() {
-      if (this.flags) {
-        return this.hasFlag(AnnotationFlag.PRINT) &&
-               !this.hasFlag(AnnotationFlag.INVISIBLE) &&
-               !this.hasFlag(AnnotationFlag.HIDDEN);
+      if (this.flags === 0) {
+        return false;
       }
-      return false;
+      return this._isPrintable(this.flags);
     },
 
     /**
@@ -39239,11 +39300,7 @@ var Annotation = (function AnnotationClosure() {
      * @see {@link shared/util.js}
      */
     setFlags: function Annotation_setFlags(flags) {
-      if (isInt(flags)) {
-        this.flags = flags;
-      } else {
-        this.flags = 0;
-      }
+      this.flags = (isInt(flags) && flags > 0) ? flags : 0;
     },
 
     /**
@@ -39257,10 +39314,7 @@ var Annotation = (function AnnotationClosure() {
      * @see {@link shared/util.js}
      */
     hasFlag: function Annotation_hasFlag(flag) {
-      if (this.flags) {
-        return (this.flags & flag) > 0;
-      }
-      return false;
+      return this._hasFlag(this.flags, flag);
     },
 
     /**
@@ -39340,10 +39394,10 @@ var Annotation = (function AnnotationClosure() {
                                   dictType.name === 'Border')) {
           this.borderStyle.setWidth(dict.get('W'));
           this.borderStyle.setStyle(dict.get('S'));
-          this.borderStyle.setDashArray(dict.get('D'));
+          this.borderStyle.setDashArray(dict.getArray('D'));
         }
       } else if (borderStyle.has('Border')) {
-        var array = borderStyle.get('Border');
+        var array = borderStyle.getArray('Border');
         if (isArray(array) && array.length >= 3) {
           this.borderStyle.setHorizontalCornerRadius(array[0]);
           this.borderStyle.setVerticalCornerRadius(array[1]);
@@ -39415,8 +39469,8 @@ var Annotation = (function AnnotationClosure() {
         // ProcSet
         // Properties
       ]);
-      var bbox = appearanceDict.get('BBox') || [0, 0, 1, 1];
-      var matrix = appearanceDict.get('Matrix') || [1, 0, 0, 1, 0 ,0];
+      var bbox = appearanceDict.getArray('BBox') || [0, 0, 1, 1];
+      var matrix = appearanceDict.getArray('Matrix') || [1, 0, 0, 1, 0 ,0];
       var transform = getTransformMatrix(data.rect, bbox, matrix);
       var self = this;
 
@@ -39835,8 +39889,18 @@ var PopupAnnotation = (function PopupAnnotationClosure() {
       // Fall back to the default background color.
       this.data.color = null;
     } else {
-      this.setColor(parentItem.get('C'));
+      this.setColor(parentItem.getArray('C'));
       this.data.color = this.color;
+    }
+
+    // If the Popup annotation is not viewable, but the parent annotation is,
+    // that is most likely a bug. Fallback to inherit the flags from the parent
+    // annotation (this is consistent with the behaviour in Adobe Reader).
+    if (!this.viewable) {
+      var parentFlags = parentItem.get('F');
+      if (this._isViewable(parentFlags)) {
+        this.setFlags(parentFlags);
+      }
     }
   }
 
@@ -41542,11 +41606,8 @@ exports.setPDFNetworkStreamClass = setPDFNetworkStreamClass;
 exports.WorkerTask = WorkerTask;
 exports.WorkerMessageHandler = WorkerMessageHandler;
 }));
-
-
   }).call(pdfjsLibs);
 
   exports.WorkerMessageHandler = pdfjsLibs.pdfjsCoreWorker.WorkerMessageHandler;
 }));
-
 

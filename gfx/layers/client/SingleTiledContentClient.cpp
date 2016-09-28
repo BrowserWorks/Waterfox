@@ -30,11 +30,6 @@ SingleTiledContentClient::ClearCachedResources()
 void
 SingleTiledContentClient::UpdatedBuffer(TiledBufferType aType)
 {
-  // Take a ReadLock on behalf of the TiledContentHost. This
-  // reference will be adopted when the descriptor is opened in
-  // TiledLayerBufferComposite.
-  mTiledBuffer->ReadLock();
-
   mForwarder->UseTiledLayerBuffer(this, mTiledBuffer->GetSurfaceDescriptorTiles());
   mTiledBuffer->ClearPaintedRegion();
 }
@@ -51,15 +46,9 @@ ClientSingleTiledLayerBuffer::ClientSingleTiledLayerBuffer(ClientTiledPaintedLay
                                                            ClientLayerManager* aManager)
   : ClientTiledLayerBuffer(aPaintedLayer, aCompositableClient)
   , mManager(aManager)
+  , mWasLastPaintProgressive(false)
   , mFormat(gfx::SurfaceFormat::UNKNOWN)
 {
-}
-
-void
-ClientSingleTiledLayerBuffer::ReadLock() {
-  if (!mTile.IsPlaceholderTile()) {
-    mTile.ReadLock();
-  }
 }
 
 void
@@ -96,7 +85,8 @@ ClientSingleTiledLayerBuffer::GetSurfaceDescriptorTiles()
                                 0, 0, 1, 1,
                                 1.0,
                                 mFrameResolution.xScale,
-                                mFrameResolution.yScale);
+                                mFrameResolution.yScale,
+                                mWasLastPaintProgressive);
 }
 
 already_AddRefed<TextureClient>
@@ -113,8 +103,11 @@ ClientSingleTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
                                           const nsIntRegion& aPaintRegion,
                                           const nsIntRegion& aDirtyRegion,
                                           LayerManager::DrawPaintedLayerCallback aCallback,
-                                          void* aCallbackData)
+                                          void* aCallbackData,
+                                          bool aIsProgressive)
 {
+  mWasLastPaintProgressive = aIsProgressive;
+
   // Compare layer valid region size to current backbuffer size, discard if not matching.
   gfx::IntSize size = aNewValidRegion.GetBounds().Size();
   gfx::IntPoint origin = aNewValidRegion.GetBounds().TopLeft();

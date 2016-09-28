@@ -87,6 +87,9 @@ DefaultJitOptions::DefaultJitOptions()
     // Toggles whether Edge Case Analysis is gobally disabled.
     SET_DEFAULT(disableEdgeCaseAnalysis, false);
 
+    // Toggles whether to use flow sensitive Alias Analysis.
+    SET_DEFAULT(disableFlowAA, true);
+
     // Toggle whether global value numbering is globally disabled.
     SET_DEFAULT(disableGvn, false);
 
@@ -107,6 +110,9 @@ DefaultJitOptions::DefaultJitOptions()
 
     // Toggles whether Range Analysis is globally disabled.
     SET_DEFAULT(disableRangeAnalysis, false);
+
+    // Toggles wheter Recover instructions is globally disabled.
+    SET_DEFAULT(disableRecoverIns, false);
 
     // Toggle whether eager scalar replacement is globally disabled.
     SET_DEFAULT(disableScalarReplacement, false);
@@ -160,7 +166,7 @@ DefaultJitOptions::DefaultJitOptions()
     SET_DEFAULT(osrPcMismatchesBeforeRecompile, 6000);
 
     // The bytecode length limit for small function.
-    SET_DEFAULT(smallFunctionMaxBytecodeLength_, 120);
+    SET_DEFAULT(smallFunctionMaxBytecodeLength_, 130);
 
     // An artificial testing limit for the maximum supported offset of
     // pc-relative jump and call instructions.
@@ -176,6 +182,17 @@ DefaultJitOptions::DefaultJitOptions()
             forcedDefaultIonWarmUpThreshold.emplace(value.ref());
         else
             Warn(forcedDefaultIonWarmUpThresholdEnv, env);
+    }
+
+    // Same but for compiling small functions.
+    const char* forcedDefaultIonSmallFunctionWarmUpThresholdEnv =
+        "JIT_OPTION_forcedDefaultIonSmallFunctionWarmUpThreshold";
+    if (const char* env = getenv(forcedDefaultIonSmallFunctionWarmUpThresholdEnv)) {
+        Maybe<int> value = ParseInt(env);
+        if (value.isSome())
+            forcedDefaultIonSmallFunctionWarmUpThreshold.emplace(value.ref());
+        else
+            Warn(forcedDefaultIonSmallFunctionWarmUpThresholdEnv, env);
     }
 
     // Force the used register allocator instead of letting the optimization
@@ -213,6 +230,8 @@ DefaultJitOptions::setEagerCompilation()
     baselineWarmUpThreshold = 0;
     forcedDefaultIonWarmUpThreshold.reset();
     forcedDefaultIonWarmUpThreshold.emplace(0);
+    forcedDefaultIonSmallFunctionWarmUpThreshold.reset();
+    forcedDefaultIonSmallFunctionWarmUpThreshold.emplace(0);
 }
 
 void
@@ -220,6 +239,8 @@ DefaultJitOptions::setCompilerWarmUpThreshold(uint32_t warmUpThreshold)
 {
     forcedDefaultIonWarmUpThreshold.reset();
     forcedDefaultIonWarmUpThreshold.emplace(warmUpThreshold);
+    forcedDefaultIonSmallFunctionWarmUpThreshold.reset();
+    forcedDefaultIonSmallFunctionWarmUpThreshold.emplace(warmUpThreshold);
 
     // Undo eager compilation
     if (eagerCompilation && warmUpThreshold != 0) {

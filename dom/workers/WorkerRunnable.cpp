@@ -15,6 +15,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/ScriptSettings.h"
+#include "mozilla/Telemetry.h"
 
 #include "js/RootingAPI.h"
 #include "js/Value.h"
@@ -28,6 +29,48 @@ namespace {
 
 const nsIID kWorkerRunnableIID = {
   0x320cc0b5, 0xef12, 0x4084, { 0x88, 0x6e, 0xca, 0x6a, 0x81, 0xe4, 0x1d, 0x68 }
+};
+
+// This runnable is used to stop a sync loop and it's meant to be used on the
+// main-thread only. As sync loops keep the busy count incremented as long as
+// they run this runnable does not modify the busy count
+// in any way.
+class MainThreadStopSyncLoopRunnable : public WorkerSyncRunnable
+{
+  bool mResult;
+
+public:
+  // Passing null for aSyncLoopTarget is not allowed.
+  MainThreadStopSyncLoopRunnable(
+                               WorkerPrivate* aWorkerPrivate,
+                               already_AddRefed<nsIEventTarget>&& aSyncLoopTarget,
+                               bool aResult);
+
+  // By default StopSyncLoopRunnables cannot be canceled since they could leave
+  // a sync loop spinning forever.
+  nsresult
+  Cancel() override;
+
+protected:
+  virtual ~MainThreadStopSyncLoopRunnable()
+  { }
+
+private:
+  virtual bool
+  PreDispatch(WorkerPrivate* aWorkerPrivate) override final
+  {
+    AssertIsOnMainThread();
+    return true;
+  }
+
+  virtual void
+  PostDispatch(WorkerPrivate* aWorkerPrivate, bool aDispatchResult) override;
+
+  virtual bool
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override;
+
+  virtual bool
+  DispatchInternal() override final;
 };
 
 } // namespace
@@ -466,19 +509,20 @@ MainThreadWorkerSyncRunnable::PostDispatch(WorkerPrivate* aWorkerPrivate,
 {
 }
 
-StopSyncLoopRunnable::StopSyncLoopRunnable(
+MainThreadStopSyncLoopRunnable::MainThreadStopSyncLoopRunnable(
                                WorkerPrivate* aWorkerPrivate,
                                already_AddRefed<nsIEventTarget>&& aSyncLoopTarget,
                                bool aResult)
 : WorkerSyncRunnable(aWorkerPrivate, Move(aSyncLoopTarget)), mResult(aResult)
 {
+  AssertIsOnMainThread();
 #ifdef DEBUG
   mWorkerPrivate->AssertValidSyncLoop(mSyncLoopTarget);
 #endif
 }
 
 nsresult
-StopSyncLoopRunnable::Cancel()
+MainThreadStopSyncLoopRunnable::Cancel()
 {
   nsresult rv = Run();
   NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Run() failed");
@@ -490,8 +534,8 @@ StopSyncLoopRunnable::Cancel()
 }
 
 bool
-StopSyncLoopRunnable::WorkerRun(JSContext* aCx,
-                                WorkerPrivate* aWorkerPrivate)
+MainThreadStopSyncLoopRunnable::WorkerRun(JSContext* aCx,
+                                          WorkerPrivate* aWorkerPrivate)
 {
   aWorkerPrivate->AssertIsOnWorkerThread();
   MOZ_ASSERT(mSyncLoopTarget);
@@ -499,20 +543,16 @@ StopSyncLoopRunnable::WorkerRun(JSContext* aCx,
   nsCOMPtr<nsIEventTarget> syncLoopTarget;
   mSyncLoopTarget.swap(syncLoopTarget);
 
-  if (!mResult) {
-    MaybeSetException();
-  }
-
   aWorkerPrivate->StopSyncLoop(syncLoopTarget, mResult);
   return true;
 }
 
 bool
-StopSyncLoopRunnable::DispatchInternal()
+MainThreadStopSyncLoopRunnable::DispatchInternal()
 {
   MOZ_ASSERT(mSyncLoopTarget);
 
-  RefPtr<StopSyncLoopRunnable> runnable(this);
+  RefPtr<MainThreadStopSyncLoopRunnable> runnable(this);
   return NS_SUCCEEDED(mSyncLoopTarget->Dispatch(runnable.forget(), NS_DISPATCH_NORMAL));
 }
 
@@ -572,8 +612,10 @@ MainThreadWorkerControlRunnable::PostDispatch(WorkerPrivate* aWorkerPrivate,
 
 NS_IMPL_ISUPPORTS_INHERITED0(WorkerControlRunnable, WorkerRunnable)
 
-WorkerMainThreadRunnable::WorkerMainThreadRunnable(WorkerPrivate* aWorkerPrivate)
+WorkerMainThreadRunnable::WorkerMainThreadRunnable(WorkerPrivate* aWorkerPrivate,
+                                                   const nsACString& aTelemetryKey)
 : mWorkerPrivate(aWorkerPrivate)
+, mTelemetryKey(aTelemetryKey)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
 }
@@ -582,6 +624,8 @@ void
 WorkerMainThreadRunnable::Dispatch(ErrorResult& aRv)
 {
   mWorkerPrivate->AssertIsOnWorkerThread();
+
+  TimeStamp startTime = TimeStamp::NowLoRes();
 
   AutoSyncLoopHolder syncLoop(mWorkerPrivate);
 
@@ -596,6 +640,12 @@ WorkerMainThreadRunnable::Dispatch(ErrorResult& aRv)
   if (!syncLoop.Run()) {
     aRv.ThrowUncatchableException();
   }
+
+  // Telemetry is apparently not threadsafe
+  // Telemetry::Accumulate(Telemetry::SYNC_WORKER_OPERATION, mTelemetryKey,
+  //                       static_cast<uint32_t>((TimeStamp::NowLoRes() - startTime)
+  //                                               .ToMilliseconds()));
+  Unused << startTime; // Shut the compiler up.
 }
 
 NS_IMETHODIMP
@@ -614,6 +664,14 @@ WorkerMainThreadRunnable::Run()
 
   return NS_OK;
 }
+
+WorkerCheckAPIExposureOnMainThreadRunnable::WorkerCheckAPIExposureOnMainThreadRunnable(WorkerPrivate* aWorkerPrivate):
+  WorkerMainThreadRunnable(aWorkerPrivate,
+                           NS_LITERAL_CSTRING("WorkerCheckAPIExposureOnMainThread"))
+{}
+
+WorkerCheckAPIExposureOnMainThreadRunnable::~WorkerCheckAPIExposureOnMainThreadRunnable()
+{}
 
 bool
 WorkerCheckAPIExposureOnMainThreadRunnable::Dispatch()

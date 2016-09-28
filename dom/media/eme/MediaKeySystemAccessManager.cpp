@@ -4,7 +4,7 @@
 
 #include "MediaKeySystemAccessManager.h"
 #include "DecoderDoctorDiagnostics.h"
-#include "mozilla/Preferences.h"
+#include "MediaPrefs.h"
 #include "mozilla/EMEUtils.h"
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
@@ -97,7 +97,7 @@ MediaKeySystemAccessManager::Request(DetailedPromise* aPromise,
     return;
   }
 
-  if (!Preferences::GetBool("media.eme.enabled", false)) {
+  if (!MediaPrefs::EMEEnabled()) {
     // EME disabled by user, send notification to chrome so UI can inform user.
     MediaKeySystemAccess::NotifyObservers(mWindow,
                                           aKeySystem,
@@ -266,8 +266,31 @@ MediaKeySystemAccessManager::Observe(nsISupports* aSubject,
 {
   EME_LOG("MediaKeySystemAccessManager::Observe %s", aTopic);
 
-  if (!strcmp(aTopic, "gmp-path-added")) {
-    nsTArray<PendingRequest> requests(Move(mRequests));
+  if (!strcmp(aTopic, "gmp-changed")) {
+    // Filter out the requests where the CDM's install-status is no longer
+    // "unavailable". This will be the CDMs which have downloaded since the
+    // initial request.
+    // Note: We don't have a way to communicate from chrome that the CDM has
+    // failed to download, so we'll just let the timeout fail us in that case.
+    nsTArray<PendingRequest> requests;
+    for (size_t i = mRequests.Length(); i > 0; i--) {
+      const size_t index = i - i;
+      PendingRequest& request = mRequests[index];
+      nsAutoCString message;
+      nsAutoCString cdmVersion;
+      MediaKeySystemStatus status =
+        MediaKeySystemAccess::GetKeySystemStatus(request.mKeySystem,
+                                                 NO_CDM_VERSION,
+                                                 message,
+                                                 cdmVersion);
+      if (status == MediaKeySystemStatus::Cdm_not_installed) {
+        // Not yet installed, don't retry. Keep waiting until timeout.
+        continue;
+      }
+      // Status has changed, retry request.
+      requests.AppendElement(Move(request));
+      mRequests.RemoveElementAt(index);
+    }
     // Retry all pending requests, but this time fail if the CDM is not installed.
     for (PendingRequest& request : requests) {
       RetryRequest(request);
@@ -299,7 +322,7 @@ MediaKeySystemAccessManager::EnsureObserversAdded()
   if (NS_WARN_IF(!obsService)) {
     return false;
   }
-  mAddedObservers = NS_SUCCEEDED(obsService->AddObserver(this, "gmp-path-added", false));
+  mAddedObservers = NS_SUCCEEDED(obsService->AddObserver(this, "gmp-changed", false));
   return mAddedObservers;
 }
 
@@ -316,7 +339,7 @@ MediaKeySystemAccessManager::Shutdown()
   if (mAddedObservers) {
     nsCOMPtr<nsIObserverService> obsService = mozilla::services::GetObserverService();
     if (obsService) {
-      obsService->RemoveObserver(this, "gmp-path-added");
+      obsService->RemoveObserver(this, "gmp-changed");
       mAddedObservers = false;
     }
   }

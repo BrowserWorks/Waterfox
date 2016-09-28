@@ -16,10 +16,10 @@ function doUpdate(update) {
     updateUrlRequested: function(url) { },
     streamFinished: function(status) { },
     updateError: function(errorCode) {
-      sendAsyncMessage("updateError", { errorCode });
+      sendAsyncMessage("updateError", errorCode);
     },
     updateSuccess: function(requestedTimeout) {
-      sendAsyncMessage("loadTestFrame");
+      sendAsyncMessage("updateSuccess");
     }
   };
 

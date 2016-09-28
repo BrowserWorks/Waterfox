@@ -11,6 +11,7 @@
 #include "xpcprivate.h"
 #include "XPCWrapper.h"
 #include "nsIAppsService.h"
+#include "nsIInputStreamChannel.h"
 #include "nsILoadContext.h"
 #include "nsIServiceManager.h"
 #include "nsIScriptObjectPrincipal.h"
@@ -226,20 +227,6 @@ private:
     bool mMustFreeName;
 };
 
-JSContext *
-nsScriptSecurityManager::GetCurrentJSContext()
-{
-    // Get JSContext from stack.
-    return nsXPConnect::XPConnect()->GetCurrentJSContext();
-}
-
-JSContext *
-nsScriptSecurityManager::GetSafeJSContext()
-{
-    // Get JSContext from stack.
-    return nsXPConnect::XPConnect()->GetSafeJSContext();
-}
-
 /* static */
 bool
 nsScriptSecurityManager::SecurityCompareURIs(nsIURI* aSourceURI,
@@ -329,6 +316,23 @@ NS_IMETHODIMP
 nsScriptSecurityManager::GetChannelResultPrincipal(nsIChannel* aChannel,
                                                    nsIPrincipal** aPrincipal)
 {
+  return GetChannelResultPrincipal(aChannel, aPrincipal,
+                                   /*aIgnoreSandboxing*/ false);
+}
+
+nsresult
+nsScriptSecurityManager::GetChannelResultPrincipalIfNotSandboxed(nsIChannel* aChannel,
+                                                                 nsIPrincipal** aPrincipal)
+{
+  return GetChannelResultPrincipal(aChannel, aPrincipal,
+                                   /*aIgnoreSandboxing*/ true);
+}
+
+nsresult
+nsScriptSecurityManager::GetChannelResultPrincipal(nsIChannel* aChannel,
+                                                   nsIPrincipal** aPrincipal,
+                                                   bool aIgnoreSandboxing)
+{
     NS_PRECONDITION(aChannel, "Must have channel!");
     nsCOMPtr<nsISupports> owner;
     aChannel->GetOwner(getter_AddRefs(owner));
@@ -343,25 +347,33 @@ nsScriptSecurityManager::GetChannelResultPrincipal(nsIChannel* aChannel,
     nsCOMPtr<nsILoadInfo> loadInfo;
     aChannel->GetLoadInfo(getter_AddRefs(loadInfo));
     if (loadInfo) {
-        if (loadInfo->GetLoadingSandboxed()) {
+        if (!aIgnoreSandboxing && loadInfo->GetLoadingSandboxed()) {
             RefPtr<nsNullPrincipal> prin;
             if (loadInfo->LoadingPrincipal()) {
               prin =
                 nsNullPrincipal::CreateWithInheritedAttributes(loadInfo->LoadingPrincipal());
-              NS_ENSURE_TRUE(prin, NS_ERROR_FAILURE);
             } else {
               NeckoOriginAttributes nAttrs;
               loadInfo->GetOriginAttributes(&nAttrs);
               PrincipalOriginAttributes pAttrs;
               pAttrs.InheritFromNecko(nAttrs);
               prin = nsNullPrincipal::Create(pAttrs);
-              NS_ENSURE_TRUE(prin, NS_ERROR_FAILURE);
             }
             prin.forget(aPrincipal);
             return NS_OK;
         }
 
-        if (loadInfo->GetForceInheritPrincipal()) {
+        bool forceInterit = loadInfo->GetForceInheritPrincipal();
+        if (aIgnoreSandboxing && !forceInterit) {
+          // Check if SEC_FORCE_INHERIT_PRINCIPAL was dropped because of
+          // sandboxing:
+          if (loadInfo->GetLoadingSandboxed() &&
+              (loadInfo->GetSecurityFlags() &
+               nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL_WAS_DROPPED)) {
+            forceInterit = true;
+          }
+        }
+        if (forceInterit) {
             NS_ADDREF(*aPrincipal = loadInfo->TriggeringPrincipal());
             return NS_OK;
         }
@@ -646,7 +658,7 @@ EqualOrSubdomain(nsIURI* aProbeArg, nsIURI* aBase)
         }
 
         nsAutoCString host, newHost;
-        nsresult rv = probe->GetHost(host);
+        rv = probe->GetHost(host);
         NS_ENSURE_SUCCESS(rv, false);
 
         rv = tldService->GetNextSubDomain(host, newHost);
@@ -819,8 +831,6 @@ nsScriptSecurityManager::CheckLoadURIWithPrincipal(nsIPrincipal* aPrincipal,
         // as long as they don't represent null principals...
         // Or they don't require an special permission to do so
         // See bug#773886
-
-        bool hasFlags;
         rv = NS_URIChainHasFlags(targetBaseURI,
                                  nsIProtocolHandler::URI_CROSS_ORIGIN_NEEDS_WEBAPPS_PERM,
                                  &hasFlags);
@@ -1083,16 +1093,6 @@ nsScriptSecurityManager::CheckLoadURIStrWithPrincipal(nsIPrincipal* aPrincipal,
     return rv;
 }
 
-bool
-nsScriptSecurityManager::ScriptAllowed(JSObject *aGlobal)
-{
-    MOZ_ASSERT(aGlobal);
-    MOZ_ASSERT(JS_IsGlobalObject(aGlobal) || js::IsWindowProxy(aGlobal));
-
-    // Check the bits on the compartment private.
-    return xpc::Scriptability::Get(aGlobal).Allowed();
-}
-
 ///////////////// Principals ///////////////////////
 
 NS_IMETHODIMP
@@ -1101,16 +1101,6 @@ nsScriptSecurityManager::GetSystemPrincipal(nsIPrincipal **result)
     NS_ADDREF(*result = mSystemPrincipal);
 
     return NS_OK;
-}
-
-NS_IMETHODIMP
-nsScriptSecurityManager::GetSimpleCodebasePrincipal(nsIURI* aURI,
-                                                    nsIPrincipal** aPrincipal)
-{
-  PrincipalOriginAttributes attrs(UNKNOWN_APP_ID, false);
-  nsCOMPtr<nsIPrincipal> prin = BasePrincipal::CreateCodebasePrincipal(aURI, attrs);
-  prin.forget(aPrincipal);
-  return *aPrincipal ? NS_OK : NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
@@ -1169,7 +1159,6 @@ nsScriptSecurityManager::CreateNullPrincipal(JS::Handle<JS::Value> aOriginAttrib
       return NS_ERROR_INVALID_ARG;
   }
   nsCOMPtr<nsIPrincipal> prin = nsNullPrincipal::Create(attrs);
-  NS_ENSURE_TRUE(prin, NS_ERROR_FAILURE);
   prin.forget(aPrincipal);
   return NS_OK;
 }

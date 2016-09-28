@@ -100,9 +100,6 @@ SimpleGlobalObject::Create(GlobalType globalType, JS::Handle<JS::Value> proto)
 
   if (NS_IsMainThread()) {
     nsCOMPtr<nsIPrincipal> principal = nsNullPrincipal::Create();
-    if (!principal) {
-      return nullptr;
-    }
     options.creationOptions().setTrace(xpc::TraceXPCGlobal);
     global = xpc::CreateGlobalObject(cx, js::Jsvalify(&SimpleGlobalClass),
                                      nsJSPrincipals::get(principal),

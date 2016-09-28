@@ -293,7 +293,7 @@ class MacArtifactJob(ArtifactJob):
                 # 'libreplace_malloc.dylib',
                 'libsoftokn3.dylib',
                 'plugin-container.app/Contents/MacOS/plugin-container',
-                'updater.app/Contents/MacOS/updater',
+                'updater.app/Contents/MacOS/org.mozilla.updater',
                 # 'xpcshell',
                 'XUL',
             ])
@@ -392,13 +392,23 @@ JOB_DETAILS = {
                                          None)),
     'linux': (LinuxArtifactJob, ('public/build/firefox-(.*)\.linux-i686\.tar\.bz2',
                                  'public/build/firefox-(.*)\.common\.tests\.zip')),
+    'linux-debug': (LinuxArtifactJob, ('public/build/firefox-(.*)\.linux-i686\.tar\.bz2',
+                                 'public/build/firefox-(.*)\.common\.tests\.zip')),
     'linux64': (LinuxArtifactJob, ('public/build/firefox-(.*)\.linux-x86_64\.tar\.bz2',
                                    'public/build/firefox-(.*)\.common\.tests\.zip')),
+    'linux64-debug': (LinuxArtifactJob, ('public/build/target\.tar\.bz2',
+                                         'public/build/target\.common\.tests\.zip')),
     'macosx64': (MacArtifactJob, ('public/build/firefox-(.*)\.mac\.dmg',
+                                  'public/build/firefox-(.*)\.common\.tests\.zip')),
+    'macosx64-debug': (MacArtifactJob, ('public/build/firefox-(.*)\.mac64\.dmg',
                                   'public/build/firefox-(.*)\.common\.tests\.zip')),
     'win32': (WinArtifactJob, ('public/build/firefox-(.*)\.win32.zip',
                                'public/build/firefox-(.*)\.common\.tests\.zip')),
+    'win32-debug': (WinArtifactJob, ('public/build/firefox-(.*)\.win32.zip',
+                               'public/build/firefox-(.*)\.common\.tests\.zip')),
     'win64': (WinArtifactJob, ('public/build/firefox-(.*)\.win64.zip',
+                               'public/build/firefox-(.*)\.common\.tests\.zip')),
+    'win64-debug': (WinArtifactJob, ('public/build/firefox-(.*)\.win64.zip',
                                'public/build/firefox-(.*)\.common\.tests\.zip')),
 }
 
@@ -754,14 +764,21 @@ class Artifacts(object):
         if buildconfig.substs['target_cpu'] == 'x86_64':
             target_64bit = True
 
+        target_suffix = ''
+
+        # Add the "-debug" suffix to the guessed artifact job name
+        # if MOZ_DEBUG is enabled.
+        if buildconfig.substs.get('MOZ_DEBUG'):
+            target_suffix = '-debug'
+
         if buildconfig.defines.get('XP_LINUX', False):
-            return 'linux64' if target_64bit else 'linux'
+            return ('linux64' if target_64bit else 'linux') + target_suffix
         if buildconfig.defines.get('XP_WIN', False):
-            return 'win64' if target_64bit else 'win32'
+            return ('win64' if target_64bit else 'win32') + target_suffix
         if buildconfig.defines.get('XP_MACOSX', False):
             # We only produce unified builds in automation, so the target_cpu
             # check is not relevant.
-            return 'macosx64'
+            return 'macosx64' + target_suffix
         raise Exception('Cannot determine default job for |mach artifact|!')
 
     def _pushheads_from_rev(self, rev, count):
@@ -807,11 +824,10 @@ class Artifacts(object):
         return candidate_pushheads
 
     def _get_hg_revisions_from_git(self):
-
-        # First commit is HEAD, next is HEAD~1, etc.
         rev_list = subprocess.check_output([
             self._git, 'rev-list', '--topo-order',
-            'HEAD~{num}..HEAD'.format(num=NUM_REVISIONS_TO_QUERY),
+            '--max-count={num}'.format(num=NUM_REVISIONS_TO_QUERY),
+            'HEAD',
         ])
 
         hg_hash_list = subprocess.check_output([

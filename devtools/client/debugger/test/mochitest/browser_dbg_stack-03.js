@@ -11,7 +11,11 @@ const TAB_URL = EXAMPLE_URL + "doc_recursion-stack.html";
 let framesScrollingInterval;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab, aDebuggee, aPanel]) => {
     const tab = aTab;
     const debuggee = aDebuggee;
     const panel = aPanel;
@@ -19,7 +23,7 @@ function test() {
     const frames = gDebugger.DebuggerView.StackFrames;
     const classicFrames = gDebugger.DebuggerView.StackFramesClassicList;
 
-    Task.spawn(function*() {
+    Task.spawn(function* () {
       framesScrollingInterval = window.setInterval(() => {
         frames.widget._list.scrollByIndex(-1);
       }, 100);

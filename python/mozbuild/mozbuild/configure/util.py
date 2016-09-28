@@ -14,6 +14,20 @@ from collections import deque
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 
+def getpreferredencoding():
+    # locale._parse_localename makes locale.getpreferredencoding
+    # return None when LC_ALL is C, instead of e.g. 'US-ASCII' or
+    # 'ANSI_X3.4-1968' when it uses nl_langinfo.
+    encoding = None
+    try:
+        encoding = locale.getpreferredencoding()
+    except ValueError:
+        # On english OSX, LC_ALL is UTF-8 (not en-US.UTF-8), and
+        # that throws off locale._parse_localename, which ends up
+        # being used on e.g. homebrew python.
+        if os.environ.get('LC_ALL', '').upper() == 'UTF-8':
+            encoding = 'utf-8'
+    return encoding
 
 class Version(LooseVersion):
     '''A simple subclass of distutils.version.LooseVersion.
@@ -70,19 +84,7 @@ class ConfigureOutputHandler(logging.Handler):
                 isatty = True
 
             if not isatty:
-                encoding = None
-                try:
-                    encoding = locale.getpreferredencoding()
-                except ValueError:
-                    # On english OSX, LC_ALL is UTF-8 (not en-US.UTF-8), and
-                    # that throws off locale._parse_localename, which ends up
-                    # being used on e.g. homebrew python.
-                    if os.environ.get('LC_ALL', '').upper() == 'UTF-8':
-                        encoding = 'utf-8'
-
-                # locale._parse_localename makes locale.getpreferredencoding
-                # return None when LC_ALL is C, instead of e.g. 'US-ASCII' or
-                # 'ANSI_X3.4-1968' when it uses nl_langinfo.
+                encoding = getpreferredencoding()
                 if encoding:
                     return codecs.getwriter(encoding)(fh)
             return fh
@@ -98,6 +100,7 @@ class ConfigureOutputHandler(logging.Handler):
         self._stdout_waiting = None
         self._debug = deque(maxlen=maxlen + 1)
         self._keep_if_debug = self.THROW
+        self._queue_is_active = False
 
     @staticmethod
     def _is_same_output(fd1, fd2):
@@ -154,6 +157,10 @@ class ConfigureOutputHandler(logging.Handler):
 
     @contextmanager
     def queue_debug(self):
+        if self._queue_is_active:
+            yield
+            return
+        self._queue_is_active = True
         self._keep_if_debug = self.KEEP
         try:
             yield
@@ -162,6 +169,8 @@ class ConfigureOutputHandler(logging.Handler):
             # The exception will be handled and very probably printed out by
             # something upper in the stack.
             raise
+        finally:
+            self._queue_is_active = False
         self._keep_if_debug = self.THROW
         self._debug.clear()
 
@@ -188,8 +197,11 @@ class LineIO(object):
     def __init__(self, callback):
         self._callback = callback
         self._buf = ''
+        self._encoding = getpreferredencoding()
 
     def write(self, buf):
+        if self._encoding and isinstance(buf, str):
+            buf = buf.decode(self._encoding)
         lines = buf.splitlines()
         if not lines:
             return

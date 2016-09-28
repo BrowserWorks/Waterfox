@@ -122,7 +122,7 @@ static nsIWidget* GetWidget(Element* aElement)
 
 Element* HTMLObjectElement::sLastFocused = nullptr; // Weak
 
-class PluginFocusSetter : public nsRunnable
+class PluginFocusSetter : public Runnable
 {
 public:
   PluginFocusSetter(nsIWidget* aWidget, Element* aElement)
@@ -244,18 +244,6 @@ HTMLObjectElement::GetForm(nsIDOMHTMLFormElement **aForm)
   return nsGenericHTMLFormElement::GetForm(aForm);
 }
 
-void
-HTMLObjectElement::GetItemValueText(DOMString& aValue)
-{
-  GetData(aValue);
-}
-
-void
-HTMLObjectElement::SetItemValueText(const nsAString& aValue)
-{
-  SetData(aValue);
-}
-
 nsresult
 HTMLObjectElement::BindToTree(nsIDocument *aDocument,
                               nsIContent *aParent,
@@ -280,7 +268,7 @@ HTMLObjectElement::BindToTree(nsIDocument *aDocument,
   // If we already have all the children, start the load.
   if (mIsDoneAddingChildren && !pluginDoc) {
     void (HTMLObjectElement::*start)() = &HTMLObjectElement::StartObjectLoad;
-    nsContentUtils::AddScriptRunner(NS_NewRunnableMethod(this, start));
+    nsContentUtils::AddScriptRunner(NewRunnableMethod(this, start));
   }
 
   return NS_OK;
@@ -453,7 +441,7 @@ HTMLObjectElement::SubmitNamesValues(nsFormSubmission *aFormSubmission)
 NS_IMPL_STRING_ATTR(HTMLObjectElement, Align, align)
 NS_IMPL_STRING_ATTR(HTMLObjectElement, Archive, archive)
 NS_IMPL_STRING_ATTR(HTMLObjectElement, Border, border)
-NS_IMPL_URI_ATTR_WITH_BASE(HTMLObjectElement, Code, code, codebase)
+NS_IMPL_STRING_ATTR(HTMLObjectElement, Code, code)
 NS_IMPL_URI_ATTR(HTMLObjectElement, CodeBase, codebase)
 NS_IMPL_STRING_ATTR(HTMLObjectElement, CodeType, codetype)
 NS_IMPL_URI_ATTR_WITH_BASE(HTMLObjectElement, Data, data, codebase)

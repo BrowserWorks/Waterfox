@@ -2,6 +2,9 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 "use strict";
 
+// Avoid test timeouts that can occur while waiting for the "addon-console-works" message.
+requestLongerTimeout(2);
+
 const ADDON_ID = "test-devtools@mozilla.org";
 const ADDON_NAME = "test-devtools";
 
@@ -47,7 +50,7 @@ add_task(function* () {
   // which lives in another process. So do not try to use any scope variable!
   let env = Cc["@mozilla.org/process/environment;1"]
               .getService(Ci.nsIEnvironment);
-  let testScript = function() {
+  let testScript = function () {
     /* eslint-disable no-undef */
     toolbox.selectTool("webconsole")
       .then(console => {

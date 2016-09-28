@@ -96,14 +96,6 @@ static const char kHangUIMinDisplayPref[] = "dom.ipc.plugins.hangUIMinDisplaySec
 #define CHILD_TIMEOUT_PREF kChildTimeoutPref
 #endif
 
-template<>
-struct RunnableMethodTraits<mozilla::plugins::PluginModuleParent>
-{
-    typedef mozilla::plugins::PluginModuleParent Class;
-    static void RetainCallee(Class* obj) { }
-    static void ReleaseCallee(Class* obj) { }
-};
-
 bool
 mozilla::plugins::SetupBridge(uint32_t aPluginId,
                               dom::ContentParent* aContentParent,
@@ -150,7 +142,7 @@ mozilla::plugins::SetupBridge(uint32_t aPluginId,
 /**
  * Use for executing CreateToolhelp32Snapshot off main thread
  */
-class mozilla::plugins::FinishInjectorInitTask : public CancelableTask
+class mozilla::plugins::FinishInjectorInitTask : public mozilla::CancelableRunnable
 {
 public:
     FinishInjectorInitTask()
@@ -169,34 +161,31 @@ public:
 
     void PostToMainThread()
     {
+        RefPtr<Runnable> self = this;
         mSnapshot.own(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
-        bool deleteThis = false;
         {   // Scope for lock
             mozilla::MutexAutoLock lock(mMutex);
             if (mMainThreadMsgLoop) {
-                mMainThreadMsgLoop->PostTask(FROM_HERE, this);
-            } else {
-                deleteThis = true;
+                mMainThreadMsgLoop->PostTask(self.forget());
             }
-        }
-        if (deleteThis) {
-            delete this;
         }
     }
 
-    void Run() override
+    NS_IMETHOD Run() override
     {
         mParent->DoInjection(mSnapshot);
         // We don't need to hold this lock during DoInjection, but we do need
         // to obtain it before returning from Run() to ensure that
         // PostToMainThread has completed before we return.
         mozilla::MutexAutoLock lock(mMutex);
+        return NS_OK;
     }
 
-    void Cancel() override
+    nsresult Cancel() override
     {
         mozilla::MutexAutoLock lock(mMutex);
         mMainThreadMsgLoop = nullptr;
+        return NS_OK;
     }
 
 private:
@@ -710,8 +699,9 @@ PluginModuleContentParent::PluginModuleContentParent(bool aAllowAsyncInit)
 
 PluginModuleContentParent::~PluginModuleContentParent()
 {
-    XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
-                                     new DeleteTask<Transport>(GetTransport()));
+    RefPtr<DeleteTask<Transport>> task = new DeleteTask<Transport>(GetTransport());
+    XRE_GetIOMessageLoop()->PostTask(task.forget());
+                                     
 
     Preferences::UnregisterCallback(TimeoutChanged, kContentTimeoutPref, this);
 }
@@ -906,7 +896,6 @@ PluginModuleChromeParent::CleanupFromTimeout(const bool aFromHangUI)
     if (!OkToCleanup()) {
         // there's still plugin code on the C++ stack, try again
         MessageLoop::current()->PostDelayedTask(
-            FROM_HERE,
             mChromeTaskFactory.NewRunnableMethod(
                 &PluginModuleChromeParent::CleanupFromTimeout, aFromHangUI), 10);
         return;
@@ -1171,7 +1160,6 @@ PluginModuleChromeParent::ShouldContinueFromReplyTimeout()
 {
     if (mIsFlashPlugin) {
         MessageLoop::current()->PostTask(
-            FROM_HERE,
             mTaskFactory.NewRunnableMethod(
                 &PluginModuleChromeParent::NotifyFlashHang));
     }
@@ -1349,7 +1337,6 @@ PluginModuleChromeParent::TerminateChildProcess(MessageLoop* aMsgLoop,
     // or not at all
     bool isFromHangUI = aMsgLoop != MessageLoop::current();
     aMsgLoop->PostTask(
-        FROM_HERE,
         mChromeTaskFactory.NewRunnableMethod(
             &PluginModuleChromeParent::CleanupFromTimeout, isFromHangUI));
 
@@ -1599,7 +1586,6 @@ PluginModuleParent::ActorDestroy(ActorDestroyReason why)
         // and potentially modify the actor child list while enumerating it.
         if (mPlugin)
             MessageLoop::current()->PostTask(
-                FROM_HERE,
                 mTaskFactory.NewRunnableMethod(
                     &PluginModuleParent::NotifyPluginCrashed));
         break;
@@ -1655,7 +1641,6 @@ PluginModuleParent::NotifyPluginCrashed()
     if (!OkToCleanup()) {
         // there's still plugin code on the C++ stack.  try again
         MessageLoop::current()->PostDelayedTask(
-            FROM_HERE,
             mTaskFactory.NewRunnableMethod(
                 &PluginModuleParent::NotifyPluginCrashed), 10);
         return;
@@ -2047,27 +2032,27 @@ PluginModuleParent::OnInitFailure()
     }
 }
 
-class OfflineObserver final : public nsIObserver
+class PluginOfflineObserver final : public nsIObserver
 {
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIOBSERVER
 
-    explicit OfflineObserver(PluginModuleChromeParent* pmp)
+    explicit PluginOfflineObserver(PluginModuleChromeParent* pmp)
       : mPmp(pmp)
     {}
 
 private:
-    ~OfflineObserver() {}
+    ~PluginOfflineObserver() {}
     PluginModuleChromeParent* mPmp;
 };
 
-NS_IMPL_ISUPPORTS(OfflineObserver, nsIObserver)
+NS_IMPL_ISUPPORTS(PluginOfflineObserver, nsIObserver)
 
 NS_IMETHODIMP
-OfflineObserver::Observe(nsISupports *aSubject,
-                         const char *aTopic,
-                         const char16_t *aData)
+PluginOfflineObserver::Observe(nsISupports *aSubject,
+                               const char *aTopic,
+                               const char16_t *aData)
 {
     MOZ_ASSERT(!strcmp(aTopic, "ipc:network:set-offline"));
     mPmp->CachedSettingChanged();
@@ -2087,8 +2072,8 @@ PluginModuleChromeParent::RegisterSettingsCallbacks()
 
     nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
     if (observerService) {
-        mOfflineObserver = new OfflineObserver(this);
-        observerService->AddObserver(mOfflineObserver, "ipc:network:set-offline", false);
+        mPluginOfflineObserver = new PluginOfflineObserver(this);
+        observerService->AddObserver(mPluginOfflineObserver, "ipc:network:set-offline", false);
     }
 }
 
@@ -2101,8 +2086,8 @@ PluginModuleChromeParent::UnregisterSettingsCallbacks()
 
     nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
     if (observerService) {
-        observerService->RemoveObserver(mOfflineObserver, "ipc:network:set-offline");
-        mOfflineObserver = nullptr;
+        observerService->RemoveObserver(mPluginOfflineObserver, "ipc:network:set-offline");
+        mPluginOfflineObserver = nullptr;
     }
 }
 
@@ -2666,6 +2651,7 @@ PluginModuleParent::NPP_NewInternal(NPMIMEType pluginType, NPP instance,
                                     InfallibleTArray<nsCString>& values,
                                     NPSavedData* saved, NPError* error)
 {
+    MOZ_ASSERT(names.Length() == values.Length());
     if (mPluginName.IsEmpty()) {
         GetPluginDetails();
         InitQuirksModes(nsDependentCString(pluginType));
@@ -2691,6 +2677,18 @@ PluginModuleParent::NPP_NewInternal(NPMIMEType pluginType, NPP instance,
         new PluginInstanceParent(this, instance, strPluginType, mNPNIface);
 
     if (mIsFlashPlugin) {
+        // In Bug 1287588, we found out that if the salign attribute is before
+        // the scale attribute in embed parameters, flash objects render
+        // incorrectly. This is most likely due to an order of operations
+        // problem in the plugin itself. Bug 1264270 changes the order in which
+        // parameters were passed, causing this bug to trigger on pages that
+        // formerly worked. In order to keep things working the way they were in
+        // Firefox <= 48, we reverse the order of parameters, making sure it
+        // happens before we possibly appends more parameters. This should keep
+        // parameters in the same order as prior versions.
+        std::reverse(names.begin(), names.end());
+        std::reverse(values.begin(), values.end());
+
         parentInstance->InitMetadata(strPluginType, srcAttribute);
 #ifdef XP_WIN
         bool supportsAsyncRender = false;
@@ -3161,7 +3159,6 @@ PluginModuleChromeParent::InitializeInjector()
     mFinishInitTask->Init(this);
     if (!::QueueUserWorkItem(&PluginModuleChromeParent::GetToolhelpSnapshot,
                              mFinishInitTask, WT_EXECUTEDEFAULT)) {
-        delete mFinishInitTask;
         mFinishInitTask = nullptr;
         return;
     }

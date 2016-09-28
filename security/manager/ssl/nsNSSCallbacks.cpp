@@ -6,6 +6,8 @@
 
 #include "nsNSSCallbacks.h"
 
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Casting.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/unused.h"
@@ -49,7 +51,7 @@ const uint32_t KEA_NOT_SUPPORTED = 1;
 
 } // namespace
 
-class nsHTTPDownloadEvent : public nsRunnable {
+class nsHTTPDownloadEvent : public Runnable {
 public:
   nsHTTPDownloadEvent();
   ~nsHTTPDownloadEvent();
@@ -176,7 +178,7 @@ nsHTTPDownloadEvent::Run()
   return NS_OK;
 }
 
-struct nsCancelHTTPDownloadEvent : nsRunnable {
+struct nsCancelHTTPDownloadEvent : Runnable {
   RefPtr<nsHTTPListener> mListener;
 
   NS_IMETHOD Run() {
@@ -189,7 +191,7 @@ struct nsCancelHTTPDownloadEvent : nsRunnable {
 Result
 nsNSSHttpServerSession::createSessionFcn(const char* host,
                                          uint16_t portnum,
-                                         SEC_HTTP_SERVER_SESSION* pSession)
+                                 /*out*/ nsNSSHttpServerSession** pSession)
 {
   if (!host || !pSession) {
     return Result::FATAL_ERROR_INVALID_ARGS;
@@ -208,20 +210,15 @@ nsNSSHttpServerSession::createSessionFcn(const char* host,
 }
 
 Result
-nsNSSHttpRequestSession::createFcn(SEC_HTTP_SERVER_SESSION session,
+nsNSSHttpRequestSession::createFcn(const nsNSSHttpServerSession* session,
                                    const char* http_protocol_variant,
                                    const char* path_and_query_string,
                                    const char* http_request_method,
                                    const PRIntervalTime timeout,
-                                   SEC_HTTP_REQUEST_SESSION* pRequest)
+                           /*out*/ nsNSSHttpRequestSession** pRequest)
 {
   if (!session || !http_protocol_variant || !path_and_query_string ||
       !http_request_method || !pRequest) {
-    return Result::FATAL_ERROR_INVALID_ARGS;
-  }
-
-  nsNSSHttpServerSession* hss = static_cast<nsNSSHttpServerSession*>(session);
-  if (!hss) {
     return Result::FATAL_ERROR_INVALID_ARGS;
   }
 
@@ -241,14 +238,14 @@ nsNSSHttpRequestSession::createFcn(SEC_HTTP_SERVER_SESSION session,
 
   rs->mURL.Assign(http_protocol_variant);
   rs->mURL.AppendLiteral("://");
-  rs->mURL.Append(hss->mHost);
+  rs->mURL.Append(session->mHost);
   rs->mURL.Append(':');
-  rs->mURL.AppendInt(hss->mPort);
+  rs->mURL.AppendInt(session->mPort);
   rs->mURL.Append(path_and_query_string);
 
   rs->mRequestMethod = http_request_method;
 
-  *pRequest = (void*)rs;
+  *pRequest = rs;
   return Success;
 }
 
@@ -675,9 +672,9 @@ ShowProtectedAuthPrompt(PK11SlotInfo* slot, nsIInterfaceRequestor *ir)
   char* protAuthRetVal = nullptr;
 
   // Get protected auth dialogs
-  nsITokenDialogs* dialogs = 0;
-  nsresult nsrv = getNSSDialogs((void**)&dialogs, 
-                                NS_GET_IID(nsITokenDialogs), 
+  nsCOMPtr<nsITokenDialogs> dialogs;
+  nsresult nsrv = getNSSDialogs(getter_AddRefs(dialogs),
+                                NS_GET_IID(nsITokenDialogs),
                                 NS_TOKENDIALOGS_CONTRACTID);
   if (NS_SUCCEEDED(nsrv))
   {
@@ -711,15 +708,12 @@ ShowProtectedAuthPrompt(PK11SlotInfo* slot, nsIInterfaceRequestor *ir)
               default:
                   protAuthRetVal = nullptr;
                   break;
-              
           }
         }
       }
 
       NS_RELEASE(protectedAuthRunnable);
     }
-
-    NS_RELEASE(dialogs);
   }
 
   return protAuthRetVal;
@@ -870,17 +864,18 @@ PreliminaryHandshakeDone(PRFileDesc* fd)
   unsigned char npnbuf[256];
   unsigned int npnlen;
 
-  if (SSL_GetNextProto(fd, &state, npnbuf, &npnlen, 256) == SECSuccess) {
+  if (SSL_GetNextProto(fd, &state, npnbuf, &npnlen,
+                       AssertedCast<unsigned int>(ArrayLength(npnbuf)))
+        == SECSuccess) {
     if (state == SSL_NEXT_PROTO_NEGOTIATED ||
         state == SSL_NEXT_PROTO_SELECTED) {
-      infoObject->SetNegotiatedNPN(reinterpret_cast<char *>(npnbuf), npnlen);
-    }
-    else {
+      infoObject->SetNegotiatedNPN(BitwiseCast<char*, unsigned char*>(npnbuf),
+                                   npnlen);
+    } else {
       infoObject->SetNegotiatedNPN(nullptr, 0);
     }
     mozilla::Telemetry::Accumulate(Telemetry::SSL_NPN_TYPE, state);
-  }
-  else {
+  } else {
     infoObject->SetNegotiatedNPN(nullptr, 0);
   }
 
@@ -1038,6 +1033,8 @@ AccumulateCipherSuite(Telemetry::ID probe, const SSLChannelInfo& channelInfo)
     case TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA: value = 10; break;
     case TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256: value = 11; break;
     case TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256: value = 12; break;
+    case TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384: value = 13; break;
+    case TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384: value = 14; break;
     // DHE key exchange
     case TLS_DHE_RSA_WITH_AES_128_CBC_SHA: value = 21; break;
     case TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA: value = 22; break;
@@ -1068,6 +1065,8 @@ AccumulateCipherSuite(Telemetry::ID probe, const SSLChannelInfo& channelInfo)
     case TLS_RSA_WITH_SEED_CBC_SHA: value = 67; break;
     case TLS_RSA_WITH_RC4_128_SHA: value = 68; break;
     case TLS_RSA_WITH_RC4_128_MD5: value = 69; break;
+    // TLS 1.3 PSK resumption
+    case TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256: value = 70; break;
     // unknown
     default:
       value = 0;
@@ -1163,10 +1162,6 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
           switch (cipherInfo.authAlgorithm) {
             case ssl_auth_rsa:
               AccumulateNonECCKeySize(Telemetry::SSL_AUTH_RSA_KEY_SIZE_FULL,
-                                      channelInfo.authKeyBits);
-              break;
-            case ssl_auth_dsa:
-              AccumulateNonECCKeySize(Telemetry::SSL_AUTH_DSA_KEY_SIZE_FULL,
                                       channelInfo.authKeyBits);
               break;
             case ssl_auth_ecdsa:

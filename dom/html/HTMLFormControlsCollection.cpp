@@ -63,7 +63,9 @@ HTMLFormControlsCollection::ShouldBeInElements(nsIFormControl* aFormControl)
   // form.elements array
   //
   // NS_FORM_INPUT_IMAGE
-  // NS_FORM_LABEL
+  //
+  // XXXbz maybe we should just check for that type here instead of the big
+  // switch?
 
   return false;
 }
@@ -390,13 +392,8 @@ HTMLFormControlsCollection::NamedGetter(const nsAString& aName,
 }
 
 void
-HTMLFormControlsCollection::GetSupportedNames(unsigned aFlags,
-                                              nsTArray<nsString>& aNames)
+HTMLFormControlsCollection::GetSupportedNames(nsTArray<nsString>& aNames)
 {
-  if (!(aFlags & JSITER_HIDDEN)) {
-    return;
-  }
-
   FlushPendingNotifications();
   // Just enumerate mNameLookupTable.  This won't guarantee order, but
   // that's OK, because the HTML5 spec doesn't define an order for

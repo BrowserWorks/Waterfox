@@ -7,6 +7,7 @@
 
 const promise = require("promise");
 const EventEmitter = require("devtools/shared/event-emitter");
+const { Task } = require("devtools/shared/task");
 
 function NetMonitorPanel(iframeWindow, toolbox) {
   this.panelWin = iframeWindow;
@@ -15,6 +16,7 @@ function NetMonitorPanel(iframeWindow, toolbox) {
   this._view = this.panelWin.NetMonitorView;
   this._controller = this.panelWin.NetMonitorController;
   this._controller._target = this.target;
+  this._controller._toolbox = this._toolbox;
 
   EventEmitter.decorate(this);
 }

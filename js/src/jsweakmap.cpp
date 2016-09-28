@@ -32,7 +32,7 @@ WeakMapBase::WeakMapBase(JSObject* memOf, Zone* zone)
 
 WeakMapBase::~WeakMapBase()
 {
-    MOZ_ASSERT(CurrentThreadIsGCSweeping() || CurrentThreadIsHandlingInitFailure());
+    MOZ_ASSERT(CurrentThreadIsGCSweeping());
 }
 
 void
@@ -142,10 +142,7 @@ ObjectValueMap::findZoneEdges()
         JSObject* key = r.front().key();
         if (key->asTenured().isMarked(BLACK) && !key->asTenured().isMarked(GRAY))
             continue;
-        JSWeakmapKeyDelegateOp op = key->getClass()->extWeakmapKeyDelegateOp();
-        if (!op)
-            continue;
-        JSObject* delegate = op(key);
+        JSObject* delegate = getDelegate(key);
         if (!delegate)
             continue;
         Zone* delegateZone = delegate->zone();

@@ -27,6 +27,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "SyncedTabs",
   "resource://services-sync/SyncedTabs.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ContextualIdentityService",
+  "resource:///modules/ContextualIdentityService.jsm");
 
 XPCOMUtils.defineLazyGetter(this, "CharsetBundle", function() {
   const kCharsetBundle = "chrome://global/locale/charsetMenu.properties";
@@ -493,6 +495,7 @@ const CustomizableWidgets = [
       item.addEventListener("click", e => {
         doc.defaultView.openUILink(tabInfo.url, e);
         CustomizableUI.hidePanelForNode(item);
+        BrowserUITelemetry.countSyncedTabEvent("open", "toolbarbutton-subview");
       });
       return item;
     },
@@ -1102,6 +1105,56 @@ const CustomizableWidgets = [
       win.MailIntegration.sendLinkForBrowser(win.gBrowser.selectedBrowser)
     }
   }];
+
+if (Services.prefs.getBoolPref("privacy.userContext.enabled")) {
+  CustomizableWidgets.push({
+    id: "containers-panelmenu",
+    type: "view",
+    viewId: "PanelUI-containers",
+    onCreated: function(aNode) {
+      let doc = aNode.ownerDocument;
+      let win = doc.defaultView;
+      let items = doc.getElementById("PanelUI-containersItems");
+
+      let onItemCommand = function (aEvent) {
+        let item = aEvent.target;
+        let userContextId = parseInt(item.getAttribute("usercontextid"));
+        win.openUILinkIn(win.BROWSER_NEW_TAB_URL, "tab", {userContextId});
+      };
+      items.addEventListener("command", onItemCommand);
+
+      if (PrivateBrowsingUtils.isWindowPrivate(win)) {
+        aNode.setAttribute("disabled", "true");
+      }
+    },
+    onViewShowing: function(aEvent) {
+      let doc = aEvent.detail.ownerDocument;
+
+      let items = doc.getElementById("PanelUI-containersItems");
+
+      while (items.firstChild) {
+        items.firstChild.remove();
+      }
+
+      let fragment = doc.createDocumentFragment();
+
+      ContextualIdentityService.getIdentities().forEach(identity => {
+        let bundle = doc.getElementById("bundle_browser");
+        let label = bundle.getString(identity.label);
+
+        let item = doc.createElementNS(kNSXUL, "toolbarbutton");
+        item.setAttribute("label", label);
+        item.setAttribute("usercontextid", identity.userContextId);
+        item.setAttribute("class", "subviewbutton");
+        item.setAttribute("image", identity.icon);
+
+        fragment.appendChild(item);
+      });
+
+      items.appendChild(fragment);
+    }
+  });
+}
 
 let preferencesButton = {
   id: "preferences-button",

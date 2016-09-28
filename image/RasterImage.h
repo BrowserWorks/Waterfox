@@ -254,7 +254,7 @@ private:
                           gfxContext* aContext,
                           const nsIntSize& aSize,
                           const ImageRegion& aRegion,
-                          gfx::Filter aFilter,
+                          gfx::SamplingFilter aSamplingFilter,
                           uint32_t aFlags);
 
   already_AddRefed<gfx::SourceSurface> CopyFrame(uint32_t aWhichFrame,
@@ -421,7 +421,7 @@ private: // data
   // Error handling.
   void DoError();
 
-  class HandleErrorWorker : public nsRunnable
+  class HandleErrorWorker : public Runnable
   {
   public:
     /**

@@ -18,10 +18,14 @@ const VIEWPORT_MIN_WIDTH = Constants.MIN_VIEWPORT_DIMENSION;
 const VIEWPORT_MIN_HEIGHT = Constants.MIN_VIEWPORT_DIMENSION;
 
 module.exports = createClass({
+
+  displayName: "ResizableViewport",
+
   propTypes: {
     devices: PropTypes.shape(Types.devices).isRequired,
     location: Types.location.isRequired,
     screenshot: PropTypes.shape(Types.screenshot).isRequired,
+    swapAfterMount: PropTypes.bool.isRequired,
     viewport: PropTypes.shape(Types.viewport).isRequired,
     onBrowserMounted: PropTypes.func.isRequired,
     onChangeViewportDevice: PropTypes.func.isRequired,
@@ -30,8 +34,6 @@ module.exports = createClass({
     onRotateViewport: PropTypes.func.isRequired,
     onUpdateDeviceModalOpen: PropTypes.func.isRequired,
   },
-
-  displayName: "ResizableViewport",
 
   getInitialState() {
     return {
@@ -75,10 +77,10 @@ module.exports = createClass({
     }
 
     let { lastClientX, lastClientY, ignoreX, ignoreY } = this.state;
-    // we are resizing a centered viewport, so dragging a mouse resizes
-    // twice as much - also on opposite side.
+    // the viewport is centered horizontally, so horizontal resize resizes
+    // by twice the distance the mouse was dragged - on left and right side.
     let deltaX = 2 * (clientX - lastClientX);
-    let deltaY = 2 * (clientY - lastClientY);
+    let deltaY = (clientY - lastClientY);
 
     if (ignoreX) {
       deltaX = 0;
@@ -118,6 +120,7 @@ module.exports = createClass({
       devices,
       location,
       screenshot,
+      swapAfterMount,
       viewport,
       onBrowserMounted,
       onChangeViewportDevice,
@@ -159,6 +162,7 @@ module.exports = createClass({
         },
         Browser({
           location,
+          swapAfterMount,
           onBrowserMounted,
           onContentResize,
         })

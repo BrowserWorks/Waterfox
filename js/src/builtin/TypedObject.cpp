@@ -24,6 +24,7 @@
 #include "jsatominlines.h"
 #include "jsobjinlines.h"
 
+#include "gc/StoreBuffer-inl.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/Shape-inl.h"
 
@@ -253,6 +254,8 @@ ScalarTypeDescr::typeName(Type type)
         JS_FOR_EACH_SCALAR_TYPE_REPR(NUMERIC_TYPE_TO_STRING)
 #undef NUMERIC_TYPE_TO_STRING
       case Scalar::Float32x4:
+      case Scalar::Int8x16:
+      case Scalar::Int16x8:
       case Scalar::Int32x4:
       case Scalar::MaxTypedArrayViewType:
         MOZ_CRASH();
@@ -291,6 +294,8 @@ ScalarTypeDescr::call(JSContext* cx, unsigned argc, Value* vp)
         JS_FOR_EACH_SCALAR_TYPE_REPR(SCALARTYPE_CALL)
 #undef SCALARTYPE_CALL
       case Scalar::Float32x4:
+      case Scalar::Int8x16:
+      case Scalar::Int16x8:
       case Scalar::Int32x4:
       case Scalar::MaxTypedArrayViewType:
         MOZ_CRASH();
@@ -644,8 +649,10 @@ ArrayMetaTypeDescr::create(JSContext* cx,
     if (!CreateTraceList(cx, obj))
         return nullptr;
 
-    if (!cx->zone()->typeDescrObjects.put(obj))
+    if (!cx->zone()->typeDescrObjects.put(obj)) {
+        ReportOutOfMemory(cx);
         return nullptr;
+    }
 
     return obj;
 }
@@ -691,12 +698,16 @@ ArrayMetaTypeDescr::construct(JSContext* cx, unsigned argc, Value* vp)
 
     // Construct a canonical string `new ArrayType(<elementType>, N)`:
     StringBuffer contents(cx);
-    contents.append("new ArrayType(");
-    contents.append(&elementType->stringRepr());
-    contents.append(", ");
+    if (!contents.append("new ArrayType("))
+        return false;
+    if (!contents.append(&elementType->stringRepr()))
+        return false;
+    if (!contents.append(", "))
+        return false;
     if (!NumberValueToStringBuffer(cx, NumberValue(length), contents))
         return false;
-    contents.append(")");
+    if (!contents.append(")"))
+        return false;
     RootedAtom stringRepr(cx, contents.finishAtom());
     if (!stringRepr)
         return false;
@@ -799,10 +810,8 @@ StructMetaTypeDescr::create(JSContext* cx,
     if (!userFieldTypes)
         return nullptr;
 
-    if (!stringBuffer.append("new StructType({")) {
-        ReportOutOfMemory(cx);
+    if (!stringBuffer.append("new StructType({"))
         return nullptr;
-    }
 
     RootedValue fieldTypeVal(cx);
     RootedId id(cx);
@@ -830,14 +839,10 @@ StructMetaTypeDescr::create(JSContext* cx,
 
         // Collect field name and type object
         RootedValue fieldName(cx, IdToValue(id));
-        if (!fieldNames.append(fieldName)) {
-            ReportOutOfMemory(cx);
+        if (!fieldNames.append(fieldName))
             return nullptr;
-        }
-        if (!fieldTypeObjs.append(ObjectValue(*fieldType))) {
-            ReportOutOfMemory(cx);
+        if (!fieldTypeObjs.append(ObjectValue(*fieldType)))
             return nullptr;
-        }
 
         // userFieldTypes[id] = typeObj
         if (!DefineProperty(cx, userFieldTypes, id, fieldTypeObjs[i], nullptr, nullptr,
@@ -847,22 +852,14 @@ StructMetaTypeDescr::create(JSContext* cx,
         }
 
         // Append "f:Type" to the string repr
-        if (i > 0 && !stringBuffer.append(", ")) {
-            ReportOutOfMemory(cx);
+        if (i > 0 && !stringBuffer.append(", "))
             return nullptr;
-        }
-        if (!stringBuffer.append(JSID_TO_ATOM(id))) {
-            ReportOutOfMemory(cx);
+        if (!stringBuffer.append(JSID_TO_ATOM(id)))
             return nullptr;
-        }
-        if (!stringBuffer.append(": ")) {
-            ReportOutOfMemory(cx);
+        if (!stringBuffer.append(": "))
             return nullptr;
-        }
-        if (!stringBuffer.append(&fieldType->stringRepr())) {
-            ReportOutOfMemory(cx);
+        if (!stringBuffer.append(&fieldType->stringRepr()))
             return nullptr;
-        }
 
         // Offset of this field is the current total size adjusted for
         // the field's alignment.
@@ -873,10 +870,8 @@ StructMetaTypeDescr::create(JSContext* cx,
             return nullptr;
         }
         MOZ_ASSERT(offset.value() >= 0);
-        if (!fieldOffsets.append(Int32Value(offset.value()))) {
-            ReportOutOfMemory(cx);
+        if (!fieldOffsets.append(Int32Value(offset.value())))
             return nullptr;
-        }
 
         // userFieldOffsets[id] = offset
         RootedValue offsetValue(cx, Int32Value(offset.value()));
@@ -903,10 +898,9 @@ StructMetaTypeDescr::create(JSContext* cx,
     }
 
     // Complete string representation.
-    if (!stringBuffer.append("})")) {
-        ReportOutOfMemory(cx);
+    if (!stringBuffer.append("})"))
         return nullptr;
-    }
+
     RootedAtom stringRepr(cx, stringBuffer.finishAtom());
     if (!stringRepr)
         return nullptr;
@@ -1003,6 +997,7 @@ StructMetaTypeDescr::create(JSContext* cx,
     if (!cx->zone()->typeDescrObjects.put(descr) ||
         !cx->zone()->typeDescrObjects.put(fieldTypeVec))
     {
+        ReportOutOfMemory(cx);
         return nullptr;
     }
 
@@ -1172,8 +1167,10 @@ DefineSimpleTypeDescr(JSContext* cx,
     if (!CreateTraceList(cx, descr))
         return false;
 
-    if (!cx->zone()->typeDescrObjects.put(descr))
+    if (!cx->zone()->typeDescrObjects.put(descr)) {
+        ReportOutOfMemory(cx);
         return false;
+    }
 
     return true;
 }
@@ -1310,12 +1307,13 @@ GlobalObject::initTypedObjectModule(JSContext* cx, Handle<GlobalObject*> global)
 
     // Everything is setup, install module on the global object:
     RootedValue moduleValue(cx, ObjectValue(*module));
-    global->setConstructor(JSProto_TypedObject, moduleValue);
     if (!DefineProperty(cx, global, cx->names().TypedObject, moduleValue, nullptr, nullptr,
                         JSPROP_RESOLVING))
     {
         return false;
     }
+
+    global->setConstructor(JSProto_TypedObject, moduleValue);
 
     return module;
 }
@@ -1618,11 +1616,7 @@ OutlineTypedObject::obj_trace(JSTracer* trc, JSObject* object)
     if (!typedObj.owner_)
         return;
 
-    // When this is called for compacting GC, the related objects we touch here
-    // may not have had their slots updated yet. Note that this does not apply
-    // to generational GC because these objects (type descriptors and
-    // prototypes) are never allocated in the nursery.
-    TypeDescr& descr = *MaybeForwarded(&typedObj.typeDescr());
+    TypeDescr& descr = typedObj.typeDescr();
 
     // Mark the owner, watching in case it is moved by the tracer.
     JSObject* oldOwner = typedObj.owner_;
@@ -1690,7 +1684,7 @@ TypedObject::obj_lookupProperty(JSContext* cx, HandleObject obj, HandleId id,
         return true;
     }
 
-    RootedObject proto(cx, obj->getProto());
+    RootedObject proto(cx, obj->staticPrototype());
     if (!proto) {
         objp.set(nullptr);
         propp.set(nullptr);
@@ -1762,7 +1756,7 @@ TypedObject::obj_hasProperty(JSContext* cx, HandleObject obj, HandleId id, bool*
         }
     }
 
-    RootedObject proto(cx, obj->getProto());
+    RootedObject proto(cx, obj->staticPrototype());
     if (!proto) {
         *foundp = false;
         return true;
@@ -1819,7 +1813,7 @@ TypedObject::obj_getProperty(JSContext* cx, HandleObject obj, HandleValue receiv
       }
     }
 
-    RootedObject proto(cx, obj->getProto());
+    RootedObject proto(cx, obj->staticPrototype());
     if (!proto) {
         vp.setUndefined();
         return true;
@@ -1847,7 +1841,7 @@ TypedObject::obj_getElement(JSContext* cx, HandleObject obj, HandleValue receive
         return obj_getArrayElement(cx, typedObj, descr, index, vp);
     }
 
-    RootedObject proto(cx, obj->getProto());
+    RootedObject proto(cx, obj->staticPrototype());
     if (!proto) {
         vp.setUndefined();
         return true;
@@ -2030,7 +2024,7 @@ TypedObject::obj_deleteProperty(JSContext* cx, HandleObject obj, HandleId id, Ob
     if (IsOwnId(cx, obj, id))
         return ReportPropertyError(cx, JSMSG_CANT_DELETE, id);
 
-    RootedObject proto(cx, obj->getProto());
+    RootedObject proto(cx, obj->staticPrototype());
     if (!proto)
         return result.succeed();
 
@@ -2138,11 +2132,7 @@ InlineTypedObject::obj_trace(JSTracer* trc, JSObject* object)
     if (typedObj.is<InlineTransparentTypedObject>())
         return;
 
-    // When this is called for compacting GC, the related objects we touch here
-    // may not have had their slots updated yet.
-    TypeDescr& descr = *MaybeForwarded(&typedObj.typeDescr());
-
-    descr.traceInstances(trc, typedObj.inlineTypedMem(), 1);
+    typedObj.typeDescr().traceInstances(trc, typedObj.inlineTypedMem(), 1);
 }
 
 /* static */ void
@@ -2628,7 +2618,7 @@ js::StoreScalar##T::Func(JSContext*, unsigned argc, Value* vp)         \
 
 #define JS_STORE_REFERENCE_CLASS_IMPL(_constant, T, _name)                      \
 bool                                                                            \
-js::StoreReference##T::Func(JSContext* cx, unsigned argc, Value* vp)    \
+js::StoreReference##_name::Func(JSContext* cx, unsigned argc, Value* vp)        \
 {                                                                               \
     CallArgs args = CallArgsFromVp(argc, vp);                                   \
     MOZ_ASSERT(args.length() == 4);                                             \
@@ -2655,7 +2645,7 @@ js::StoreReference##T::Func(JSContext* cx, unsigned argc, Value* vp)    \
 
 #define JS_LOAD_SCALAR_CLASS_IMPL(_constant, T, _name)                                  \
 bool                                                                                    \
-js::LoadScalar##T::Func(JSContext*, unsigned argc, Value* vp)                  \
+js::LoadScalar##T::Func(JSContext*, unsigned argc, Value* vp)                           \
 {                                                                                       \
     CallArgs args = CallArgsFromVp(argc, vp);                                           \
     MOZ_ASSERT(args.length() == 2);                                                     \
@@ -2675,7 +2665,7 @@ js::LoadScalar##T::Func(JSContext*, unsigned argc, Value* vp)                  \
 
 #define JS_LOAD_REFERENCE_CLASS_IMPL(_constant, T, _name)                       \
 bool                                                                            \
-js::LoadReference##T::Func(JSContext*, unsigned argc, Value* vp)       \
+js::LoadReference##_name::Func(JSContext*, unsigned argc, Value* vp)            \
 {                                                                               \
     CallArgs args = CallArgsFromVp(argc, vp);                                   \
     MOZ_ASSERT(args.length() == 2);                                             \
@@ -2698,8 +2688,8 @@ js::LoadReference##T::Func(JSContext*, unsigned argc, Value* vp)       \
 // private methods `store()` and `load()`.
 
 bool
-StoreReferenceHeapValue::store(JSContext* cx, HeapValue* heap, const Value& v,
-                               TypedObject* obj, jsid id)
+StoreReferenceAny::store(JSContext* cx, GCPtrValue* heap, const Value& v,
+                         TypedObject* obj, jsid id)
 {
     // Undefined values are not included in type inference information for
     // value properties of typed objects, as these properties are always
@@ -2716,8 +2706,8 @@ StoreReferenceHeapValue::store(JSContext* cx, HeapValue* heap, const Value& v,
 }
 
 bool
-StoreReferenceHeapPtrObject::store(JSContext* cx, HeapPtrObject* heap, const Value& v,
-                                   TypedObject* obj, jsid id)
+StoreReferenceObject::store(JSContext* cx, GCPtrObject* heap, const Value& v,
+                            TypedObject* obj, jsid id)
 {
     MOZ_ASSERT(v.isObjectOrNull()); // or else Store_object is being misused
 
@@ -2736,8 +2726,8 @@ StoreReferenceHeapPtrObject::store(JSContext* cx, HeapPtrObject* heap, const Val
 }
 
 bool
-StoreReferenceHeapPtrString::store(JSContext* cx, HeapPtrString* heap, const Value& v,
-                                   TypedObject* obj, jsid id)
+StoreReferencestring::store(JSContext* cx, GCPtrString* heap, const Value& v,
+                            TypedObject* obj, jsid id)
 {
     MOZ_ASSERT(v.isString()); // or else Store_string is being misused
 
@@ -2748,15 +2738,13 @@ StoreReferenceHeapPtrString::store(JSContext* cx, HeapPtrString* heap, const Val
 }
 
 void
-LoadReferenceHeapValue::load(HeapValue* heap,
-                             MutableHandleValue v)
+LoadReferenceAny::load(GCPtrValue* heap, MutableHandleValue v)
 {
     v.set(*heap);
 }
 
 void
-LoadReferenceHeapPtrObject::load(HeapPtrObject* heap,
-                                 MutableHandleValue v)
+LoadReferenceObject::load(GCPtrObject* heap, MutableHandleValue v)
 {
     if (*heap)
         v.setObject(**heap);
@@ -2765,8 +2753,7 @@ LoadReferenceHeapPtrObject::load(HeapPtrObject* heap,
 }
 
 void
-LoadReferenceHeapPtrString::load(HeapPtrString* heap,
-                                 MutableHandleValue v)
+LoadReferencestring::load(GCPtrString* heap, MutableHandleValue v)
 {
     v.setString(*heap);
 }
@@ -2849,23 +2836,23 @@ MemoryInitVisitor::visitReference(ReferenceTypeDescr& descr, uint8_t* mem)
     switch (descr.type()) {
       case ReferenceTypeDescr::TYPE_ANY:
       {
-        js::HeapValue* heapValue = reinterpret_cast<js::HeapValue*>(mem);
+        js::GCPtrValue* heapValue = reinterpret_cast<js::GCPtrValue*>(mem);
         heapValue->init(UndefinedValue());
         return;
       }
 
       case ReferenceTypeDescr::TYPE_OBJECT:
       {
-        js::HeapPtrObject* objectPtr =
-            reinterpret_cast<js::HeapPtrObject*>(mem);
+        js::GCPtrObject* objectPtr =
+            reinterpret_cast<js::GCPtrObject*>(mem);
         objectPtr->init(nullptr);
         return;
       }
 
       case ReferenceTypeDescr::TYPE_STRING:
       {
-        js::HeapPtrString* stringPtr =
-            reinterpret_cast<js::HeapPtrString*>(mem);
+        js::GCPtrString* stringPtr =
+            reinterpret_cast<js::GCPtrString*>(mem);
         stringPtr->init(rt_->emptyString);
         return;
       }
@@ -2919,21 +2906,21 @@ MemoryTracingVisitor::visitReference(ReferenceTypeDescr& descr, uint8_t* mem)
     switch (descr.type()) {
       case ReferenceTypeDescr::TYPE_ANY:
       {
-        HeapValue* heapValue = reinterpret_cast<js::HeapValue*>(mem);
+        GCPtrValue* heapValue = reinterpret_cast<js::GCPtrValue*>(mem);
         TraceEdge(trace_, heapValue, "reference-val");
         return;
       }
 
       case ReferenceTypeDescr::TYPE_OBJECT:
       {
-        HeapPtrObject* objectPtr = reinterpret_cast<js::HeapPtrObject*>(mem);
+        GCPtrObject* objectPtr = reinterpret_cast<js::GCPtrObject*>(mem);
         TraceNullableEdge(trace_, objectPtr, "reference-obj");
         return;
       }
 
       case ReferenceTypeDescr::TYPE_STRING:
       {
-        HeapPtrString* stringPtr = reinterpret_cast<js::HeapPtrString*>(mem);
+        GCPtrString* stringPtr = reinterpret_cast<js::GCPtrString*>(mem);
         TraceNullableEdge(trace_, stringPtr, "reference-str");
         return;
       }

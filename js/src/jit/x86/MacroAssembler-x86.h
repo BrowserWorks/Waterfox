@@ -785,8 +785,8 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
 
     void loadConstantDouble(double d, FloatRegister dest);
     void loadConstantFloat32(float f, FloatRegister dest);
-    void loadConstantInt32x4(const SimdConstant& v, FloatRegister dest);
-    void loadConstantFloat32x4(const SimdConstant& v, FloatRegister dest);
+    void loadConstantSimd128Int(const SimdConstant& v, FloatRegister dest);
+    void loadConstantSimd128Float(const SimdConstant& v, FloatRegister dest);
 
     Condition testInt32Truthy(bool truthy, const ValueOperand& operand) {
         test32(operand.payloadReg(), operand.payloadReg());
@@ -803,10 +803,6 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
 
     template <typename T>
     inline void loadUnboxedValue(const T& src, MIRType type, AnyRegister dest);
-
-    template <typename T>
-    void storeUnboxedValue(ConstantOrRegister value, MIRType valueType, const T& dest,
-                           MIRType slotType);
 
     template <typename T>
     void storeUnboxedPayload(ValueOperand value, T address, size_t nbytes) {

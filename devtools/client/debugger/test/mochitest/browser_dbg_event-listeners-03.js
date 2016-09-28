@@ -28,7 +28,7 @@ function test() {
     addTab(TAB_URL)
       .then((aTab) => {
         gTab = aTab;
-        return attachThreadActorForUrl(gClient, TAB_URL)
+        return attachThreadActorForUrl(gClient, TAB_URL);
       })
       .then(pauseDebuggee)
       .then(testEventListeners)
@@ -68,9 +68,9 @@ function testEventListeners(aThreadClient) {
       return;
     }
 
-    // There are 4 event listeners in the page: button.onclick, window.onload
-    // and two more from the video element controls.
-    is(aPacket.listeners.length, 4, "Found all event listeners.");
+    // There are 3 event listeners in the page: button.onclick, window.onload
+    // and one more from the video element controls.
+    is(aPacket.listeners.length, 3, "Found all event listeners.");
     aThreadClient.resume(deferred.resolve);
   });
 
@@ -83,6 +83,6 @@ function closeConnection() {
   return deferred.promise;
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gClient = null;
 });

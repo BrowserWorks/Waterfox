@@ -64,7 +64,17 @@ function PeerConnectionTest(options) {
   options.rtcpmux = "rtcpmux" in options ? options.rtcpmux : true;
   options.opus = "opus" in options ? options.opus : true;
 
-  if (typeof turnServers !== "undefined") {
+  if (iceServersArray.length) {
+    if (!options.turn_disabled_local) {
+      options.config_local = options.config_local || {}
+      options.config_local.iceServers = iceServersArray;
+    }
+    if (!options.turn_disabled_remote) {
+      options.config_remote = options.config_remote || {}
+      options.config_remote.iceServers = iceServersArray;
+    }
+  }
+  else if (typeof turnServers !== "undefined") {
     if ((!options.turn_disabled_local) && (turnServers.local)) {
       if (!options.hasOwnProperty("config_local")) {
         options.config_local = {};
@@ -399,6 +409,7 @@ function(peer, desc, stateExpected) {
 
   var stateChanged = peer.setRemoteDescription(desc).then(() => {
     peer.setRemoteDescDate = new Date();
+    peer.checkMediaTracks();
   });
 
   return Promise.all([eventFired, stateChanged]);
@@ -711,9 +722,6 @@ function PeerConnectionWrapper(label, configuration) {
 
   this.constraints = [ ];
   this.offerOptions = {};
-  this.streams = [ ];
-  this.streamsForLocalTracks = [ ];
-  this.mediaElements = [ ];
 
   this.dataChannels = [ ];
 
@@ -722,6 +730,8 @@ function PeerConnectionWrapper(label, configuration) {
   this.localRequiresTrickleIce = false;
   this.remoteRequiresTrickleIce = false;
   this.localMediaElements = [];
+  this.remoteMediaElements = [];
+  this.audioElementsOnly = false;
 
   this.expectedLocalTrackInfoById = {};
   this.expectedRemoteTrackInfoById = {};
@@ -821,6 +831,26 @@ PeerConnectionWrapper.prototype = {
     this._pc.setIdentityProvider(provider, protocol, identity);
   },
 
+  ensureMediaElement : function(track, stream, direction) {
+    var element = getMediaElement(this.label, direction, stream.id);
+
+    if (!element) {
+      element = createMediaElement(this.label, direction, stream.id,
+                                   this.audioElementsOnly);
+      if (direction == "local") {
+        this.localMediaElements.push(element);
+      } else if (direction == "remote") {
+        this.remoteMediaElements.push(element);
+      }
+    }
+
+    // We do this regardless, because sometimes we end up with a new stream with
+    // an old id (ie; the rollback tests cause the same stream to be added
+    // twice)
+    element.srcObject = stream;
+    element.play();
+  },
+
   /**
    * Attaches a local track to this RTCPeerConnection using
    * RTCPeerConnection.addTrack().
@@ -848,83 +878,49 @@ PeerConnectionWrapper.prototype = {
       streamId: stream.id,
     };
 
-    var mappedStream =
-      this.streamsForLocalTracks.find(o => o.fromStreamId == stream.id);
+    // This will create one media element per track, which might not be how
+    // we set up things with the RTCPeerConnection. It's the only way
+    // we can ensure all sent tracks are flowing however.
+    this.ensureMediaElement(track, new MediaStream([track]), "local");
 
-    if (mappedStream) {
-      mappedStream.stream.addTrack(track);
-      return this.observedNegotiationNeeded;
-    }
-
-    mappedStream = new MediaStream([track]);
-    this.streamsForLocalTracks.push(
-      { fromStreamId: stream.id
-      , stream: mappedStream
-      }
-    );
-
-    var element = createMediaElement(track.kind, this.label + '_tracks_' + this.streamsForLocalTracks.length);
-    this.mediaElements.push(element);
-    element.srcObject = mappedStream;
-    element.play();
-
-    // Store local media elements so that we can stop them when done.
-    // Don't store remote ones because they should stop when the PC does.
-    this.localMediaElements.push(element);
     return this.observedNegotiationNeeded;
   },
 
   /**
-   * Callback when we get media from either side. Also an appropriate
-   * HTML media element will be created.
+   * Callback when we get local media. Also an appropriate HTML media element
+   * will be created, which may be obtained later with |getMediaElement|.
    *
    * @param {MediaStream} stream
    *        Media stream to handle
-   * @param {string} type
-   *        The type of media stream ('audio' or 'video')
-   * @param {string} side
-   *        The location the stream is coming from ('local' or 'remote')
    */
-  attachMedia : function(stream, type, side) {
-    info("Got media stream: " + type + " (" + side + ")");
-    this.streams.push(stream);
+  attachLocalStream : function(stream) {
+    info("Got local media stream: (" + stream.id + ")");
 
-    if (side === 'local') {
-      this.expectNegotiationNeeded();
-      // In order to test both the addStream and addTrack APIs, we do video one
-      // way and audio + audiovideo the other.
-      if (type == "video") {
-        this._pc.addStream(stream);
-        ok(this._pc.getSenders().find(sender => sender.track == stream.getVideoTracks()[0]),
-           "addStream adds sender");
-      } else {
-        stream.getTracks().forEach(track => {
-          var sender = this._pc.addTrack(track, stream);
-          is(sender.track, track, "addTrack returns sender");
-        });
-      }
-
+    this.expectNegotiationNeeded();
+    // In order to test both the addStream and addTrack APIs, we do half one
+    // way, half the other, at random.
+    if (Math.random() < 0.5) {
+      info("Using addStream.");
+      this._pc.addStream(stream);
+      ok(this._pc.getSenders().find(sender => sender.track == stream.getTracks()[0]),
+         "addStream returns sender");
+    } else {
+      info("Using addTrack (on PC).");
       stream.getTracks().forEach(track => {
-        ok(track.id, "track has id");
-        ok(track.kind, "track has kind");
-        this.expectedLocalTrackInfoById[track.id] = {
-            type: track.kind,
-            streamId: stream.id
-          };
+        var sender = this._pc.addTrack(track, stream);
+        is(sender.track, track, "addTrack returns sender");
       });
     }
 
-    var element = createMediaElement(type, this.label + '_' + side + this.streams.length);
-    this.mediaElements.push(element);
-    element.srcObject = stream;
-    element.play();
-
-    // Store local media elements so that we can stop them when done.
-    // Don't store remote ones because they should stop when the PC does.
-    if (side === 'local') {
-      this.localMediaElements.push(element);
-      return this.observedNegotiationNeeded;
-    }
+    stream.getTracks().forEach(track => {
+      ok(track.id, "track has id");
+      ok(track.kind, "track has kind");
+      this.expectedLocalTrackInfoById[track.id] = {
+          type: track.kind,
+          streamId: stream.id
+        };
+      this.ensureMediaElement(track, stream, "local");
+    });
   },
 
   removeSender : function(index) {
@@ -960,22 +956,19 @@ PeerConnectionWrapper.prototype = {
     info("Get " + constraintsList.length + " local streams");
     return Promise.all(constraintsList.map(constraints => {
       return getUserMedia(constraints).then(stream => {
-        var type = '';
         if (constraints.audio) {
-          type = 'audio';
           stream.getAudioTracks().map(track => {
             info(this + " gUM local stream " + stream.id +
               " with audio track " + track.id);
           });
         }
         if (constraints.video) {
-          type += 'video';
           stream.getVideoTracks().map(track => {
             info(this + " gUM local stream " + stream.id +
               " with video track " + track.id);
           });
         }
-        return this.attachMedia(stream, type, 'local');
+        return this.attachLocalStream(stream);
       });
     }));
   },
@@ -1140,50 +1133,24 @@ PeerConnectionWrapper.prototype = {
     observedTrackInfoById[track.id] = expectedTrackInfoById[track.id];
   },
 
+  isTrackOnPC: function(track) {
+    return this._pc.getRemoteStreams().some(s => !!s.getTrackById(track.id));
+  },
+
   allExpectedTracksAreObserved: function(expected, observed) {
     return Object.keys(expected).every(trackId => observed[trackId]);
   },
 
-  setupAddStreamEventHandler: function() {
-    var resolveAllAddStreamEventsDone;
+  setupTrackEventHandler: function() {
+    this._pc.addEventListener('track', event => {
+      info(this + ": 'ontrack' event fired for " + JSON.stringify(event.track));
 
-    // checkMediaTracks waits on this promise later on in the test.
-    this.allAddStreamEventsDonePromise =
-      new Promise(resolve => resolveAllAddStreamEventsDone = resolve);
+      this.checkTrackIsExpected(event.track,
+                                this.expectedRemoteTrackInfoById,
+                                this.observedRemoteTrackInfoById);
+      ok(this.isTrackOnPC(event.track), "Found track " + event.track.id);
 
-    this._pc.addEventListener('addstream', event => {
-      info(this + ": 'onaddstream' event fired for " + JSON.stringify(event.stream));
-
-      // TODO(bug 1130185): We need to handle addtrack events once we start
-      // testing addTrack on pre-existing streams.
-
-      event.stream.getTracks().forEach(track => {
-        this.checkTrackIsExpected(track,
-                                  this.expectedRemoteTrackInfoById,
-                                  this.observedRemoteTrackInfoById);
-      });
-
-      if (this.allExpectedTracksAreObserved(this.expectedRemoteTrackInfoById,
-                                            this.observedRemoteTrackInfoById)) {
-        resolveAllAddStreamEventsDone();
-      }
-
-      var type = '';
-      if (event.stream.getAudioTracks().length > 0) {
-        type = 'audio';
-        event.stream.getAudioTracks().map(track => {
-          info(this + " remote stream " + event.stream.id + " with audio track " +
-               track.id);
-        });
-      }
-      if (event.stream.getVideoTracks().length > 0) {
-        type += 'video';
-        event.stream.getVideoTracks().map(track => {
-          info(this + " remote stream " + event.stream.id + " with video track " +
-            track.id);
-        });
-      }
-      this.attachMedia(event.stream, type, 'remote');
+      this.ensureMediaElement(event.track, event.streams[0], 'remote');
     });
   },
 
@@ -1363,9 +1330,6 @@ PeerConnectionWrapper.prototype = {
 
   /**
    * Checks that we are getting the media tracks we expect.
-   *
-   * @param {object} constraints
-   *        The media constraints of the remote peer connection object
    */
   checkMediaTracks : function() {
     this.checkLocalMediaTracks();
@@ -1373,13 +1337,11 @@ PeerConnectionWrapper.prototype = {
     info(this + " Checking remote tracks " +
          JSON.stringify(this.expectedRemoteTrackInfoById));
 
-    // No tracks are expected
-    if (this.allExpectedTracksAreObserved(this.expectedRemoteTrackInfoById,
-                                          this.observedRemoteTrackInfoById)) {
-      return;
-    }
-
-    return timerGuard(this.allAddStreamEventsDonePromise, 60000, "onaddstream never fired");
+    ok(this.allExpectedTracksAreObserved(this.expectedRemoteTrackInfoById,
+                                         this.observedRemoteTrackInfoById),
+       "All expected tracks have been observed"
+       + "\nexpected: " + JSON.stringify(this.expectedRemoteTrackInfoById)
+       + "\nobserved: " + JSON.stringify(this.observedRemoteTrackInfoById));
   },
 
   checkMsids: function() {
@@ -1396,6 +1358,20 @@ PeerConnectionWrapper.prototype = {
                      "local");
     checkSdpForMsids(this.remoteDescription, this.expectedRemoteTrackInfoById,
                      "remote");
+  },
+
+  markRemoteTracksAsNegotiated: function() {
+    Object.values(this.observedRemoteTrackInfoById).forEach(
+        trackInfo => trackInfo.negotiated = true);
+  },
+
+  rollbackRemoteTracksIfNotNegotiated: function() {
+    Object.keys(this.observedRemoteTrackInfoById).forEach(
+        id => {
+          if (!this.observedRemoteTrackInfoById[id].negotiated) {
+            delete this.observedRemoteTrackInfoById[id];
+          }
+        });
   },
 
   /**
@@ -1480,7 +1456,8 @@ PeerConnectionWrapper.prototype = {
    */
   waitForMediaFlow : function() {
     return Promise.all([].concat(
-      this.mediaElements.map(element => this.waitForMediaElementFlow(element)),
+      this.localMediaElements.map(element => this.waitForMediaElementFlow(element)),
+      this.remoteMediaElements.map(element => this.waitForMediaElementFlow(element)),
       this._pc.getSenders().map(sender => this.waitForRtpFlow(sender.track)),
       this._pc.getReceivers().map(receiver => this.waitForRtpFlow(receiver.track))));
   },
@@ -1502,7 +1479,7 @@ PeerConnectionWrapper.prototype = {
     // As input we use the stream of |from|'s first available audio sender.
     var inputSenderTracks = from._pc.getSenders().map(sn => sn.track);
     var inputAudioStream = from._pc.getLocalStreams()
-      .find(s => s.getAudioTracks().some(t => inputSenderTracks.some(t2 => t == t2)));
+      .find(s => inputSenderTracks.some(t => t.kind == "audio" && s.getTrackById(t.id)));
     var inputAnalyser = new AudioStreamAnalyser(audiocontext, inputAudioStream);
 
     // It would have been nice to have a working getReceivers() here, but until
@@ -1679,7 +1656,7 @@ PeerConnectionWrapper.prototype = {
    * @param {object} stats
    *        The stats to be verified for relayed vs. direct connection.
    */
-  checkStatsIceConnectionType : function(stats) {
+  checkStatsIceConnectionType : function(stats, expectedLocalCandidateType) {
     let lId;
     let rId;
     for (let stat of stats.values()) {
@@ -1698,21 +1675,25 @@ PeerConnectionWrapper.prototype = {
          "failed to find candidatepair IDs or stats for local: "+ lId +" remote: "+ rId);
       return;
     }
+
     info("checkStatsIceConnectionType verifying: local=" +
          JSON.stringify(lCand) + " remote=" + JSON.stringify(rCand));
-    if ((this.configuration) && (typeof this.configuration.iceServers !== 'undefined')) {
-      info("Ice Server configured");
-      // Note: the IP comparising is a workaround for bug 1097333
-      //       And this will fail if a TURN server address is a DNS name!
-      var serverIp = this.configuration.iceServers[0].url.split(':')[1];
-      ok(lCand.candidateType == "relayed" || rCand.candidateType == "relayed" ||
-         lCand.ipAddress === serverIp || rCand.ipAddress === serverIp,
-         "One peer uses a relay");
-    } else {
-      info("P2P configured");
-      ok(lCand.candidateType != "relayed" && rCand.candidateType != "relayed",
-         "Pure peer to peer call without a relay");
+    expectedLocalCandidateType = expectedLocalCandidateType || "host";
+    var candidateType = lCand.candidateType;
+    if ((lCand.mozLocalTransport === "tcp") && (candidateType === "relayed")) {
+      candidateType = "relayed-tcp";
     }
+
+    if ((expectedLocalCandidateType === "serverreflexive") &&
+        (candidateType === "peerreflexive")) {
+      // Be forgiving of prflx when expecting srflx, since that can happen due
+      // to timing.
+      candidateType = "serverreflexive";
+    }
+
+    is(candidateType,
+       expectedLocalCandidateType,
+       "Local candidate type is what we expected for selected pair");
   },
 
   /**
@@ -1845,10 +1826,59 @@ function createHTML(options) {
   return scriptsReady.then(() => realCreateHTML(options));
 }
 
-function runNetworkTest(testFunction) {
+var iceServerWebsocket;
+var iceServersArray = [];
+
+var setupIceServerConfig = useIceServer => {
+  // We disable ICE support for HTTP proxy when using a TURN server, because
+  // mochitest uses a fake HTTP proxy to serve content, which will eat our STUN
+  // packets for TURN TCP.
+  var enableHttpProxy = enable => new Promise(resolve => {
+    SpecialPowers.pushPrefEnv(
+        {'set': [['media.peerconnection.disable_http_proxy', !enable]]},
+        resolve);
+  });
+
+  var spawnIceServer = () => new Promise( (resolve, reject) => {
+    iceServerWebsocket = new WebSocket("ws://localhost:8191/");
+    iceServerWebsocket.onopen = (event) => {
+      info("websocket/process bridge open, starting ICE Server...");
+      iceServerWebsocket.send("iceserver");
+    }
+
+    iceServerWebsocket.onmessage = event => {
+      // The first message will contain the iceServers configuration, subsequent
+      // messages are just logging.
+      info("ICE Server: " + event.data);
+      resolve(event.data);
+    }
+
+    iceServerWebsocket.onerror = () => {
+      reject("ICE Server error: Is the ICE server websocket up?");
+    }
+
+    iceServerWebsocket.onclose = () => {
+      info("ICE Server websocket closed");
+      reject("ICE Server gone before getting configuration");
+    }
+  });
+
+  if (!useIceServer) {
+    info("Skipping ICE Server for this test");
+    return enableHttpProxy(true);
+  }
+
+  return enableHttpProxy(false)
+    .then(spawnIceServer)
+    .then(iceServersStr => { iceServersArray = JSON.parse(iceServersStr); });
+};
+
+function runNetworkTest(testFunction, fixtureOptions) {
+  fixtureOptions = fixtureOptions || {}
   return scriptsReady.then(() =>
     runTestWhenReady(options =>
       startNetworkAndTest()
+        .then(() => setupIceServerConfig(fixtureOptions.useIceServer))
         .then(() => testFunction(options))
     )
   );

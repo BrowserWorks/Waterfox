@@ -122,6 +122,11 @@ interface nsIDOMWindowUtils : nsISupports {
                        out boolean aAutoSize);
 
   /**
+   * Information about the window size in device pixels.
+   */
+  void getContentViewerSize(out uint32_t aDisplayWidth, out uint32_t aDisplayHeight);
+
+  /**
    * For any scrollable element, this allows you to override the
    * visible region and draw more than what is visible, which is
    * useful for asynchronous drawing. The "displayport" will be
@@ -221,6 +226,18 @@ interface nsIDOMWindowUtils : nsISupports {
    * The caller of this method must have chrome privileges.
    */
   void setResolutionAndScaleTo(in float aResolution);
+
+  /**
+   * Set a resolution on the presShell which is the "restored" from history.
+   * The display dimensions are compared to their current values and used
+   * to scale the resolution value if necessary, e.g. if the device was
+   * rotated between saving and restoring of the session data.
+   * This resolution should be used when painting for the first time. Calling
+   * this too late may have no effect.
+   */
+  void setRestoreResolution(in float aResolution,
+                            in uint32_t aDisplayWidth,
+                            in uint32_t aDisplayHeight);
 
   /**
    * Whether the resolution has been set by the user.
@@ -1751,10 +1768,10 @@ interface nsIDOMWindowUtils : nsISupports {
   void postRestyleSelfEvent(in nsIDOMElement aElement);
 
   /**
-   * Used to pause or resume all MediaElements in this window. Use-cases are
-   * audio competing and remote media control.
+   * Used to pause or resume all media in this window. Use-cases are audio
+   * competing, remote media control and to prevent auto-playing media.
    */
-  attribute boolean mediaSuspended;
+  attribute uint32_t mediaSuspend;
 
   /**
    * With this it's possible to mute all the MediaElements in this window.
@@ -1780,6 +1797,17 @@ interface nsIDOMWindowUtils : nsISupports {
    * e10s support properly.
    */
   void askPermission(in nsIContentPermissionRequest aRequest);
+
+  /**
+   * Number of elements restyled for the curent document.
+   *
+   * Note that during a restyle operation we may restyle an element more
+   * than once (e.g., for an inline that contains blocks).  This also
+   * counts restyling of pseudo-elements and anonymous boxes.
+   *
+   * May throw NS_ERROR_NOT_AVAILABLE.
+   */
+  readonly attribute unsigned long long elementsRestyled;
 
   /**
    * Number of frames constructed (excluding breaking) for the curent
@@ -1861,6 +1889,12 @@ interface nsIDOMWindowUtils : nsISupports {
    * was last provided is what will be used.
    */
   void respectDisplayPortSuppression(in boolean aEnabled);
+
+  /**
+   * Set a flag that forces the next reflow interrupt check to return true. This
+   * can be used by tests to force execution of the interrupted reflow codepaths.
+   */
+  void forceReflowInterrupt();
 };
 
 [scriptable, uuid(c694e359-7227-4392-a138-33c0cc1f15a6)]

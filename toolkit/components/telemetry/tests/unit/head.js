@@ -281,6 +281,13 @@ function getSnapshot(histogramId) {
   return Telemetry.getHistogramById(histogramId).snapshot();
 }
 
+// Helper for setting an empty list of Environment preferences to watch.
+function setEmptyPrefWatchlist() {
+  let TelemetryEnvironment =
+    Cu.import("resource://gre/modules/TelemetryEnvironment.jsm").TelemetryEnvironment;
+  TelemetryEnvironment.testWatchPreferences(new Map());
+}
+
 if (runningInParent) {
   // Set logging preferences for all the tests.
   Services.prefs.setCharPref("toolkit.telemetry.log.level", "Trace");
@@ -299,7 +306,7 @@ if (runningInParent) {
   do_register_cleanup(() => TelemetrySend.shutdown());
 }
 
-TelemetryController.initLogging();
+TelemetryController.testInitLogging();
 
 // Avoid timers interrupting test behavior.
 fakeSchedulerTimer(() => {}, () => {});

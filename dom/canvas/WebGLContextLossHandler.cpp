@@ -68,13 +68,20 @@ ContextLossWorkerEventTarget::DispatchFromScript(nsIRunnable* aEvent, uint32_t a
 }
 
 NS_IMETHODIMP
-ContextLossWorkerEventTarget::Dispatch(already_AddRefed<nsIRunnable>&& aEvent,
+ContextLossWorkerEventTarget::Dispatch(already_AddRefed<nsIRunnable> aEvent,
                                        uint32_t aFlags)
 {
     nsCOMPtr<nsIRunnable> eventRef(aEvent);
     RefPtr<ContextLossWorkerRunnable> wrappedEvent =
         new ContextLossWorkerRunnable(eventRef);
     return mEventTarget->Dispatch(wrappedEvent, aFlags);
+}
+
+NS_IMETHODIMP
+ContextLossWorkerEventTarget::DelayedDispatch(already_AddRefed<nsIRunnable>,
+                                              uint32_t)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
 }
 
 NS_IMETHODIMP

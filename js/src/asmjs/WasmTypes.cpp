@@ -49,41 +49,60 @@ __aeabi_uidivmod(int, int);
 static void
 WasmReportOverRecursed()
 {
-    ReportOverRecursed(JSRuntime::innermostWasmActivation()->cx());
+    ReportOverRecursed(JSRuntime::innermostWasmActivation()->cx(), JSMSG_WASM_OVERRECURSED);
 }
 
 static bool
 WasmHandleExecutionInterrupt()
 {
-    return CheckForInterrupt(JSRuntime::innermostWasmActivation()->cx());
+    WasmActivation* activation = JSRuntime::innermostWasmActivation();
+    bool success = CheckForInterrupt(activation->cx());
+
+    // Preserve the invariant that having a non-null resumePC means that we are
+    // handling an interrupt.  Note that resumePC has already been copied onto
+    // the stack by the interrupt stub, so we can clear it before returning
+    // to the stub.
+    activation->setResumePC(nullptr);
+
+    return success;
 }
 
 static void
-OnOutOfBounds()
+HandleTrap(int32_t trapIndex)
 {
     JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
-}
 
-static void
-OnImpreciseConversion()
-{
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_SIMD_FAILED_CONVERSION);
-}
+    MOZ_ASSERT(trapIndex < int32_t(Trap::Limit) && trapIndex >= 0);
+    Trap trap = Trap(trapIndex);
 
-static void
-BadIndirectCall()
-{
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_WASM_BAD_IND_CALL);
-}
+    unsigned errorNumber;
+    switch (trap) {
+      case Trap::Unreachable:
+        errorNumber = JSMSG_WASM_UNREACHABLE;
+        break;
+      case Trap::IntegerOverflow:
+        errorNumber = JSMSG_WASM_INTEGER_OVERFLOW;
+        break;
+      case Trap::InvalidConversionToInteger:
+        errorNumber = JSMSG_WASM_INVALID_CONVERSION;
+        break;
+      case Trap::IntegerDivideByZero:
+        errorNumber = JSMSG_WASM_INT_DIVIDE_BY_ZERO;
+        break;
+      case Trap::BadIndirectCall:
+        errorNumber = JSMSG_WASM_BAD_IND_CALL;
+        break;
+      case Trap::ImpreciseSimdConversion:
+        errorNumber = JSMSG_SIMD_FAILED_CONVERSION;
+        break;
+      case Trap::OutOfBounds:
+        errorNumber = JSMSG_BAD_INDEX;
+        break;
+      default:
+        MOZ_CRASH("unexpected trap");
+    }
 
-static void
-UnreachableTrap()
-{
-    JSContext* cx = JSRuntime::innermostWasmActivation()->cx();
-    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, JSMSG_WASM_UNREACHABLE);
+    JS_ReportErrorNumber(cx, GetErrorMessage, nullptr, errorNumber);
 }
 
 static int32_t
@@ -230,16 +249,10 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
         return cx->stackLimitAddressForJitCode(StackForUntrustedScript);
       case SymbolicAddress::ReportOverRecursed:
         return FuncCast(WasmReportOverRecursed, Args_General0);
-      case SymbolicAddress::OnOutOfBounds:
-        return FuncCast(OnOutOfBounds, Args_General0);
-      case SymbolicAddress::OnImpreciseConversion:
-        return FuncCast(OnImpreciseConversion, Args_General0);
-      case SymbolicAddress::BadIndirectCall:
-        return FuncCast(BadIndirectCall, Args_General0);
-      case SymbolicAddress::UnreachableTrap:
-        return FuncCast(UnreachableTrap, Args_General0);
       case SymbolicAddress::HandleExecutionInterrupt:
         return FuncCast(WasmHandleExecutionInterrupt, Args_General0);
+      case SymbolicAddress::HandleTrap:
+        return FuncCast(HandleTrap, Args_General1);
       case SymbolicAddress::InvokeImport_Void:
         return FuncCast(InvokeImport_Void, Args_General3);
       case SymbolicAddress::InvokeImport_I32:
@@ -301,6 +314,14 @@ wasm::AddressOf(SymbolicAddress imm, ExclusiveContext* cx)
         return FuncCast<double (double)>(fdlibm::floor, Args_Double_Double);
       case SymbolicAddress::FloorF:
         return FuncCast<float (float)>(fdlibm::floorf, Args_Float32_Float32);
+      case SymbolicAddress::TruncD:
+        return FuncCast<double (double)>(fdlibm::trunc, Args_Double_Double);
+      case SymbolicAddress::TruncF:
+        return FuncCast<float (float)>(fdlibm::truncf, Args_Float32_Float32);
+      case SymbolicAddress::NearbyIntD:
+        return FuncCast<double (double)>(nearbyint, Args_Double_Double);
+      case SymbolicAddress::NearbyIntF:
+        return FuncCast<float (float)>(nearbyintf, Args_Float32_Float32);
       case SymbolicAddress::ExpD:
         return FuncCast<double (double)>(fdlibm::exp, Args_Double_Double);
       case SymbolicAddress::LogD:

@@ -108,17 +108,18 @@ protected:
   ~GetVolumeTask() { }
 };
 
-class BluetoothHfpManager::CloseScoTask : public Task
+class BluetoothHfpManager::CloseScoTask : public Runnable
 {
 private:
-  void Run() override
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(sBluetoothHfpManager);
     sBluetoothHfpManager->DisconnectSco();
+    return NS_OK;
   }
 };
 
-class BluetoothHfpManager::CloseScoRunnable : public nsRunnable
+class BluetoothHfpManager::CloseScoRunnable : public Runnable
 {
 public:
   NS_IMETHOD Run() override
@@ -126,16 +127,16 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
 
     MessageLoop::current()->PostDelayedTask(
-      FROM_HERE, new CloseScoTask(), sBusyToneInterval);
+      MakeAndAddRef<CloseScoTask>(), sBusyToneInterval);
 
     return NS_OK;
   }
 };
 
-class BluetoothHfpManager::RespondToBLDNTask : public Task
+class BluetoothHfpManager::RespondToBLDNTask : public Runnable
 {
 private:
-  void Run() override
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(sBluetoothHfpManager);
 
@@ -143,6 +144,7 @@ private:
       sBluetoothHfpManager->mDialingRequestProcessed = true;
       sBluetoothHfpManager->SendResponse(HFP_AT_RESPONSE_ERROR);
     }
+    return NS_OK;
   }
 };
 
@@ -319,7 +321,7 @@ private:
 };
 
 class BluetoothHfpManager::InitProfileResultHandlerRunnable final
-  : public nsRunnable
+  : public Runnable
 {
 public:
   InitProfileResultHandlerRunnable(BluetoothProfileResultHandler* aRes,
@@ -355,7 +357,7 @@ BluetoothHfpManager::InitHfpInterface(BluetoothProfileResultHandler* aRes)
 
   if (sBluetoothHfpInterface) {
     BT_LOGR("Bluetooth Handsfree interface is already initalized.");
-    RefPtr<nsRunnable> r =
+    RefPtr<Runnable> r =
       new InitProfileResultHandlerRunnable(aRes, NS_OK);
     if (NS_FAILED(NS_DispatchToMainThread(r))) {
       BT_LOGR("Failed to dispatch HFP Init runnable");
@@ -368,7 +370,7 @@ BluetoothHfpManager::InitHfpInterface(BluetoothProfileResultHandler* aRes)
   if (NS_WARN_IF(!btInf)) {
     // If there's no backend interface, we dispatch a runnable
     // that calls the profile result handler.
-    RefPtr<nsRunnable> r =
+    RefPtr<Runnable> r =
       new InitProfileResultHandlerRunnable(aRes, NS_ERROR_FAILURE);
     if (NS_FAILED(NS_DispatchToMainThread(r))) {
       BT_LOGR("Failed to dispatch HFP OnError runnable");
@@ -381,7 +383,7 @@ BluetoothHfpManager::InitHfpInterface(BluetoothProfileResultHandler* aRes)
   if (NS_WARN_IF(!setupInterface)) {
     // If there's no Setup interface, we dispatch a runnable
     // that calls the profile result handler.
-    RefPtr<nsRunnable> r =
+    RefPtr<Runnable> r =
       new InitProfileResultHandlerRunnable(aRes, NS_ERROR_FAILURE);
     if (NS_FAILED(NS_DispatchToMainThread(r))) {
       BT_LOGR("Failed to dispatch HFP OnError runnable");
@@ -394,7 +396,7 @@ BluetoothHfpManager::InitHfpInterface(BluetoothProfileResultHandler* aRes)
   if (NS_WARN_IF(!interface)) {
     // If there's no HFP interface, we dispatch a runnable
     // that calls the profile result handler.
-    RefPtr<nsRunnable> r =
+    RefPtr<Runnable> r =
       new InitProfileResultHandlerRunnable(aRes, NS_ERROR_FAILURE);
     if (NS_FAILED(NS_DispatchToMainThread(r))) {
       BT_LOGR("Failed to dispatch HFP OnError runnable");
@@ -471,7 +473,7 @@ private:
 };
 
 class BluetoothHfpManager::DeinitProfileResultHandlerRunnable final
-  : public nsRunnable
+  : public Runnable
 {
 public:
   DeinitProfileResultHandlerRunnable(BluetoothProfileResultHandler* aRes,
@@ -507,7 +509,7 @@ BluetoothHfpManager::DeinitHfpInterface(BluetoothProfileResultHandler* aRes)
 
   if (!sBluetoothHfpInterface) {
     BT_LOGR("Bluetooth Handsfree interface has not been initialized.");
-    RefPtr<nsRunnable> r =
+    RefPtr<Runnable> r =
       new DeinitProfileResultHandlerRunnable(aRes, NS_OK);
     if (NS_FAILED(NS_DispatchToMainThread(r))) {
       BT_LOGR("Failed to dispatch HFP Deinit runnable");
@@ -520,7 +522,7 @@ BluetoothHfpManager::DeinitHfpInterface(BluetoothProfileResultHandler* aRes)
   if (NS_WARN_IF(!btInf)) {
     // If there's no backend interface, we dispatch a runnable
     // that calls the profile result handler.
-    RefPtr<nsRunnable> r =
+    RefPtr<Runnable> r =
       new DeinitProfileResultHandlerRunnable(aRes, NS_ERROR_FAILURE);
     if (NS_FAILED(NS_DispatchToMainThread(r))) {
       BT_LOGR("Failed to dispatch HFP OnError runnable");
@@ -533,7 +535,7 @@ BluetoothHfpManager::DeinitHfpInterface(BluetoothProfileResultHandler* aRes)
   if (NS_WARN_IF(!setupInterface)) {
     // If there's no Setup interface, we dispatch a runnable
     // that calls the profile result handler.
-    RefPtr<nsRunnable> r =
+    RefPtr<Runnable> r =
       new DeinitProfileResultHandlerRunnable(aRes, NS_ERROR_FAILURE);
     if (NS_FAILED(NS_DispatchToMainThread(r))) {
       BT_LOGR("Failed to dispatch HFP OnError runnable");
@@ -1597,8 +1599,7 @@ void BluetoothHfpManager::DialCallNotification(const nsAString& aNumber,
     mDialingRequestProcessed = false;
     NotifyDialer(NS_LITERAL_STRING("BLDN"));
 
-    MessageLoop::current()->PostDelayedTask(FROM_HERE,
-                                            new RespondToBLDNTask(),
+    MessageLoop::current()->PostDelayedTask(MakeAndAddRef<RespondToBLDNTask>(),
                                             sWaitingForDialingInterval);
   } else if (message[0] == '>') {
     mDialingRequestProcessed = false;
@@ -1607,8 +1608,7 @@ void BluetoothHfpManager::DialCallNotification(const nsAString& aNumber,
     newMsg += StringHead(message, message.Length() - 1);
     NotifyDialer(NS_ConvertUTF8toUTF16(newMsg));
 
-    MessageLoop::current()->PostDelayedTask(FROM_HERE,
-                                            new RespondToBLDNTask(),
+    MessageLoop::current()->PostDelayedTask(MakeAndAddRef<RespondToBLDNTask>(),
                                             sWaitingForDialingInterval);
   } else {
     SendResponse(HFP_AT_RESPONSE_OK);
@@ -1766,8 +1766,7 @@ BluetoothHfpManager::KeyPressedNotification(const BluetoothAddress& aBdAddress)
 
     NotifyDialer(NS_LITERAL_STRING("BLDN"));
 
-    MessageLoop::current()->PostDelayedTask(FROM_HERE,
-                                            new RespondToBLDNTask(),
+    MessageLoop::current()->PostDelayedTask(MakeAndAddRef<RespondToBLDNTask>(),
                                             sWaitingForDialingInterval);
   }
 }

@@ -4,7 +4,7 @@
 
 import urllib
 
-from marionette import MarionetteTestCase, skip_if_b2g
+from marionette import MarionetteTestCase
 from marionette_driver.keys import Keys
 from marionette_driver.errors import ElementNotVisibleException
 from marionette_driver.by import By
@@ -56,10 +56,9 @@ class TestTyping(MarionetteTestCase):
         keyReporter.send_keys("ABC DEF")
         self.assertEqual("ABC DEF", keyReporter.get_property("value"))
 
-    @skip_if_b2g
     def testCutAndPasteShortcuts(self):
         # test that modifier keys work via copy/paste shortcuts
-        if self.marionette.session_capabilities["platformName"] == "Darwin":
+        if self.marionette.session_capabilities["platformName"] == "darwin":
             mod_key = Keys.META
         else:
             mod_key = Keys.CONTROL

@@ -14,13 +14,17 @@ function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(4);
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gSources = gDebugger.DebuggerView.Sources;
     const gVariables = gDebugger.DebuggerView.Variables;
-    const queries = gDebugger.require('./content/queries');
+    const queries = gDebugger.require("./content/queries");
     const getState = gDebugger.DebuggerController.getState;
     const actions = bindActionCreators(gPanel);
 
@@ -209,10 +213,8 @@ function test() {
       return deferred.promise;
     }
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, ".html");
-
-      yield addBreakpoint()
+    Task.spawn(function* () {
+      yield addBreakpoint();
       yield ensureThreadClientState(gPanel, "resumed");
       yield pauseDebuggee();
       yield prepareVariablesAndProperties();

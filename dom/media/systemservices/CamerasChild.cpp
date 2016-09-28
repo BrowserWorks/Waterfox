@@ -40,7 +40,7 @@ CamerasSingleton::~CamerasSingleton() {
   LOG(("~CamerasSingleton: %p", this));
 }
 
-class InitializeIPCThread : public nsRunnable
+class InitializeIPCThread : public Runnable
 {
 public:
   InitializeIPCThread()
@@ -484,25 +484,23 @@ Shutdown(void)
   child->ShutdownAll();
 }
 
-class ShutdownRunnable : public nsRunnable {
+class ShutdownRunnable : public Runnable {
 public:
-  ShutdownRunnable(RefPtr<nsRunnable> aReplyEvent,
-                   nsIThread* aReplyThread)
-    : mReplyEvent(aReplyEvent), mReplyThread(aReplyThread) {};
+  explicit
+  ShutdownRunnable(RefPtr<Runnable> aReplyEvent)
+    : mReplyEvent(aReplyEvent) {};
 
   NS_IMETHOD Run() override {
     LOG(("Closing BackgroundChild"));
     ipc::BackgroundChild::CloseForCurrentThread();
 
-    LOG(("PBackground thread exists, shutting down thread"));
-    mReplyThread->Dispatch(mReplyEvent, NS_DISPATCH_NORMAL);
+    NS_DispatchToMainThread(mReplyEvent);
 
     return NS_OK;
   }
 
 private:
-  RefPtr<nsRunnable> mReplyEvent;
-  nsIThread* mReplyThread;
+  RefPtr<Runnable> mReplyEvent;
 };
 
 void
@@ -525,7 +523,7 @@ CamerasChild::ShutdownParent()
   if (CamerasSingleton::Thread()) {
     LOG(("Dispatching actor deletion"));
     // Delete the parent actor.
-    RefPtr<nsRunnable> deleteRunnable =
+    RefPtr<Runnable> deleteRunnable =
       // CamerasChild (this) will remain alive and is only deleted by the
       // IPC layer when SendAllDone returns.
       media::NewRunnableFrom([this]() -> nsresult {
@@ -546,10 +544,9 @@ CamerasChild::ShutdownChild()
     LOG(("PBackground thread exists, dispatching close"));
     // Dispatch closing the IPC thread back to us when the
     // BackgroundChild is closed.
-    RefPtr<nsRunnable> event =
+    RefPtr<Runnable> event =
       new ThreadDestructor(CamerasSingleton::Thread());
-    RefPtr<ShutdownRunnable> runnable =
-      new ShutdownRunnable(event, NS_GetCurrentThread());
+    RefPtr<ShutdownRunnable> runnable = new ShutdownRunnable(event);
     CamerasSingleton::Thread()->Dispatch(runnable, NS_DISPATCH_NORMAL);
   } else {
     LOG(("Shutdown called without PBackground thread"));

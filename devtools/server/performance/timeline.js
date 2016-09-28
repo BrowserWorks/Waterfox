@@ -25,8 +25,7 @@ const { Class } = require("sdk/core/heritage");
 // Be aggressive about lazy loading, as this will run on every
 // toolbox startup
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
-loader.lazyRequireGetter(this, "Timers", "sdk/timers");
-loader.lazyRequireGetter(this, "Task", "resource://gre/modules/Task.jsm", true);
+loader.lazyRequireGetter(this, "Task", "devtools/shared/task", true);
 loader.lazyRequireGetter(this, "Memory", "devtools/server/performance/memory", true);
 loader.lazyRequireGetter(this, "Framerate", "devtools/server/performance/framerate", true);
 loader.lazyRequireGetter(this, "StackFrameCache", "devtools/server/actors/utils/stack", true);
@@ -63,7 +62,7 @@ var Timeline = exports.Timeline = Class({
   /**
    * Destroys this actor, stopping recording first.
    */
-  destroy: function() {
+  destroy: function () {
     this.stop();
 
     events.off(this.tabActor, "window-ready", this._onWindowReady);
@@ -110,7 +109,7 @@ var Timeline = exports.Timeline = Class({
    * At regular intervals, pop the markers from the docshell, and forward
    * markers, memory, tick and frames events, if any.
    */
-  _pullTimelineData: function() {
+  _pullTimelineData: function () {
     let docShells = this.docShells;
     if (!this._isRecording || !docShells.length) {
       return;
@@ -174,7 +173,7 @@ var Timeline = exports.Timeline = Class({
       }
     }
 
-    this._dataPullTimeout = Timers.setTimeout(() => {
+    this._dataPullTimeout = setTimeout(() => {
       this._pullTimelineData();
     }, DEFAULT_TIMELINE_DATA_PULL_TIMEOUT);
   },
@@ -208,7 +207,7 @@ var Timeline = exports.Timeline = Class({
    *         Boolean indicating whether or not DOMContentLoaded and Load
    *         marker events are emitted.
    */
-  start: Task.async(function *({
+  start: Task.async(function* ({
     withMarkers,
     withTicks,
     withMemory,
@@ -265,7 +264,7 @@ var Timeline = exports.Timeline = Class({
   /**
    * Stop recording profile markers.
    */
-  stop: Task.async(function *() {
+  stop: Task.async(function* () {
     let docShells = this.docShells;
     if (!docShells.length) {
       return -1;
@@ -308,7 +307,7 @@ var Timeline = exports.Timeline = Class({
     this._withDocLoadingEvents = false;
     this._withGCEvents = false;
 
-    Timers.clearTimeout(this._dataPullTimeout);
+    clearTimeout(this._dataPullTimeout);
 
     return endTime;
   }),
@@ -317,7 +316,7 @@ var Timeline = exports.Timeline = Class({
    * When a new window becomes available in the tabActor, start recording its
    * markers if we were recording.
    */
-  _onWindowReady: function({ window }) {
+  _onWindowReady: function ({ window }) {
     if (this._isRecording) {
       let docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
                            .getInterface(Ci.nsIWebNavigation)

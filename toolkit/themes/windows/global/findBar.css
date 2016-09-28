@@ -30,15 +30,15 @@ findbar[noanim] {
 }
 
 .findbar-container {
-  -moz-padding-start: 8px;
+  padding-inline-start: 8px;
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
 .findbar-closebutton {
-  -moz-margin-start: 4px;
-  -moz-padding-start: 0;
-  -moz-padding-end: 8px;
+  margin-inline-start: 4px;
+  padding-inline-start: 0;
+  padding-inline-end: 8px;
   border: none;
   -moz-appearance: none;
 }
@@ -81,12 +81,11 @@ findbar[noanim] {
 
 .findbar-find-previous,
 .findbar-find-next {
-  -moz-margin-start: 0;
+  margin-inline-start: 0;
   -moz-appearance: none;
   background: linear-gradient(rgba(255,255,255,.9), rgba(255,255,255,.2));
   border: 1px solid ThreeDShadow;
   box-shadow: 0 1px #fff inset;
-  list-style-image: url("chrome://global/skin/icons/find-arrows.png");
   padding: 1px 5px;
   line-height: 1em;
 }
@@ -98,11 +97,11 @@ findbar[noanim] {
 }
 
 .findbar-find-previous {
-  -moz-image-region: rect(0, 12px, 9px, 0);
+  list-style-image: url(chrome://global/skin/icons/find-arrows.svg#glyph-find-previous);
 }
 
 .findbar-find-next {
-  -moz-image-region: rect(0, 24px, 9px, 12px);
+  list-style-image: url(chrome://global/skin/icons/find-arrows.svg#glyph-find-next);
 }
 
 .findbar-find-previous,
@@ -133,7 +132,7 @@ findbar[noanim] {
 
 .findbar-highlight,
 .findbar-case-sensitive {
-  -moz-margin-start: 5px;
+  margin-inline-start: 5px;
 }
 
 .findbar-highlight > .toolbarbutton-icon,
@@ -145,7 +144,7 @@ findbar[noanim] {
 .found-matches {
   color: GrayText;
   margin: 0 !important;
-  -moz-margin-start: 12px !important;
+  margin-inline-start: 12px !important;
 }
 
 .find-status-icon[status="pending"] {

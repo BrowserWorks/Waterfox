@@ -18,7 +18,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     DEFINES['UNICODE'] = True
     DEFINES['_UNICODE'] = True
     USE_LIBS += [
-        'google_breakpad_libxul_staticruntime_s',
+        'google_breakpad_libxul_s',
     ]
     OS_LIBS += [
         'comctl32',
@@ -26,7 +26,6 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'wininet',
         'shlwapi',
     ]
-    USE_STATIC_LIBS = True
 elif CONFIG['OS_ARCH'] == 'Darwin':
     UNIFIED_SOURCES += [
         'crashreporter_osx.mm',
@@ -62,6 +61,11 @@ if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
     OS_LIBS += CONFIG['MOZ_GTHREAD_LIBS']
     CXXFLAGS += CONFIG['TK_CFLAGS']
     CXXFLAGS += CONFIG['MOZ_GTHREAD_CFLAGS']
+
+if CONFIG['OS_ARCH'] == 'Linux' or CONFIG['OS_ARCH'] == 'SunOS':
+    FINAL_TARGET_FILES += [
+        '/toolkit/themes/windows/global/throbber/Throbber-small.gif',
+    ]
 
 RCINCLUDE = 'crashreporter.rc'
 

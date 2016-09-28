@@ -207,12 +207,12 @@ class JitRuntime
   public:
     explicit JitRuntime(JSRuntime* rt);
     ~JitRuntime();
-    bool initialize(JSContext* cx);
+    bool initialize(JSContext* cx, js::AutoLockForExclusiveAccess& lock);
 
     uint8_t* allocateOsrTempData(size_t size);
     void freeOsrTempData();
 
-    static void Mark(JSTracer* trc);
+    static void Mark(JSTracer* trc, js::AutoLockForExclusiveAccess& lock);
     static void MarkJitcodeGlobalTableUnconditionally(JSTracer* trc);
     static bool MarkJitcodeGlobalTableIteratively(JSTracer* trc);
     static void SweepJitcodeGlobalTable(JSRuntime* rt);
@@ -318,11 +318,11 @@ class JitRuntime
 
     JitCode* preBarrier(MIRType type) const {
         switch (type) {
-          case MIRType_Value: return valuePreBarrier_;
-          case MIRType_String: return stringPreBarrier_;
-          case MIRType_Object: return objectPreBarrier_;
-          case MIRType_Shape: return shapePreBarrier_;
-          case MIRType_ObjectGroup: return objectGroupPreBarrier_;
+          case MIRType::Value: return valuePreBarrier_;
+          case MIRType::String: return stringPreBarrier_;
+          case MIRType::Object: return objectPreBarrier_;
+          case MIRType::Shape: return shapePreBarrier_;
+          case MIRType::ObjectGroup: return objectGroupPreBarrier_;
           default: MOZ_CRASH();
         }
     }
@@ -403,6 +403,10 @@ struct CacheIRStubKey : public DefaultHasher<CacheIRStubKey> {
 
     explicit CacheIRStubKey(CacheIRStubInfo* info) : stubInfo(info) {}
     CacheIRStubKey(CacheIRStubKey&& other) : stubInfo(Move(other.stubInfo)) { }
+
+    void operator=(CacheIRStubKey&& other) {
+        stubInfo = Move(other.stubInfo);
+    }
 };
 
 class JitCompartment
@@ -446,12 +450,14 @@ class JitCompartment
     // CodeGenerator::link.
     JitCode* stringConcatStub_;
     JitCode* regExpMatcherStub_;
+    JitCode* regExpSearcherStub_;
     JitCode* regExpTesterStub_;
 
     mozilla::EnumeratedArray<SimdType, SimdType::Count, ReadBarrieredObject> simdTemplateObjects_;
 
     JitCode* generateStringConcatStub(JSContext* cx);
     JitCode* generateRegExpMatcherStub(JSContext* cx);
+    JitCode* generateRegExpSearcherStub(JSContext* cx);
     JitCode* generateRegExpTesterStub(JSContext* cx);
 
   public:
@@ -561,6 +567,17 @@ class JitCompartment
             return true;
         regExpMatcherStub_ = generateRegExpMatcherStub(cx);
         return regExpMatcherStub_ != nullptr;
+    }
+
+    JitCode* regExpSearcherStubNoBarrier() const {
+        return regExpSearcherStub_;
+    }
+
+    bool ensureRegExpSearcherStubExists(JSContext* cx) {
+        if (regExpSearcherStub_)
+            return true;
+        regExpSearcherStub_ = generateRegExpSearcherStub(cx);
+        return regExpSearcherStub_ != nullptr;
     }
 
     JitCode* regExpTesterStubNoBarrier() const {

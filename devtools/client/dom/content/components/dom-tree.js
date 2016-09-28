@@ -26,6 +26,8 @@ const PropTypes = React.PropTypes;
  * Renders DOM panel tree.
  */
 var DomTree = React.createClass({
+  displayName: "DomTree",
+
   propTypes: {
     object: PropTypes.any,
     filter: PropTypes.string,
@@ -33,13 +35,11 @@ var DomTree = React.createClass({
     grips: PropTypes.object,
   },
 
-  displayName: "DomTree",
-
   /**
    * Filter DOM properties. Return true if the object
    * should be visible in the tree.
    */
-  onFilter: function(object) {
+  onFilter: function (object) {
     if (!this.props.filter) {
       return true;
     }
@@ -50,7 +50,7 @@ var DomTree = React.createClass({
   /**
    * Render DOM panel content
    */
-  render: function() {
+  render: function () {
     let columns = [{
       "id": "value"
     }];

@@ -42,7 +42,7 @@ struct ArgumentsData
      * arguments.callee, or MagicValue(JS_OVERWRITTEN_CALLEE) if
      * arguments.callee has been modified.
      */
-    HeapValue   callee;
+    GCPtrValue callee;
 
     /* The script for the function containing this arguments object. */
     JSScript*   script;
@@ -61,16 +61,16 @@ struct ArgumentsData
      * canonical value so any element access to the arguments object should load
      * the value out of the CallObject (which is pointed to by MAYBE_CALL_SLOT).
      */
-    HeapValue   args[1];
+    GCPtrValue args[1];
 
     /* For jit use: */
     static ptrdiff_t offsetOfArgs() { return offsetof(ArgumentsData, args); }
 
     /* Iterate args. */
-    HeapValue* begin() { return args; }
-    const HeapValue* begin() const { return args; }
-    HeapValue* end() { return args + numArgs; }
-    const HeapValue* end() const { return args + numArgs; }
+    GCPtrValue* begin() { return args; }
+    const GCPtrValue* begin() const { return args; }
+    GCPtrValue* end() { return args + numArgs; }
+    const GCPtrValue* end() const { return args + numArgs; }
 };
 
 // Maximum supported value of arguments.length. This bounds the maximum
@@ -127,7 +127,11 @@ class ArgumentsObject : public NativeObject
   public:
     static const uint32_t LENGTH_OVERRIDDEN_BIT = 0x1;
     static const uint32_t ITERATOR_OVERRIDDEN_BIT = 0x2;
-    static const uint32_t PACKED_BITS_COUNT = 2;
+    static const uint32_t ELEMENT_OVERRIDDEN_BIT = 0x4;
+    static const uint32_t PACKED_BITS_COUNT = 3;
+
+    static_assert(ARGS_LENGTH_MAX <= (UINT32_MAX >> PACKED_BITS_COUNT),
+                  "Max arguments length must fit in available bits");
 
   protected:
     template <typename CopyArgs>
@@ -199,6 +203,18 @@ class ArgumentsObject : public NativeObject
         setFixedSlot(INITIAL_LENGTH_SLOT, Int32Value(v));
     }
 
+    /* True iff any element has been assigned or its attributes
+     * changed. */
+    bool hasOverriddenElement() const {
+        const Value& v = getFixedSlot(INITIAL_LENGTH_SLOT);
+        return v.toInt32() & ELEMENT_OVERRIDDEN_BIT;
+    }
+
+    void markElementOverridden() {
+        uint32_t v = getFixedSlot(INITIAL_LENGTH_SLOT).toInt32() | ELEMENT_OVERRIDDEN_BIT;
+        setFixedSlot(INITIAL_LENGTH_SLOT, Int32Value(v));
+    }
+
     /*
      * Because the arguments object is a real object, its elements may be
      * deleted. This is implemented by setting a 'deleted' flag for the arg
@@ -256,7 +272,7 @@ class ArgumentsObject : public NativeObject
 
     void setArg(unsigned i, const Value& v) {
         MOZ_ASSERT(i < data()->numArgs);
-        HeapValue& lhs = data()->args[i];
+        GCPtrValue& lhs = data()->args[i];
         MOZ_ASSERT(!lhs.isMagic());
         lhs = v;
     }

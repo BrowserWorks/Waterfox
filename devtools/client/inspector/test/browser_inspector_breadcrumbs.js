@@ -7,18 +7,28 @@
 
 const TEST_URI = URL_ROOT + "doc_inspector_breadcrumbs.html";
 const NODES = [
-  {selector: "#i1111", result: "i1 i11 i111 i1111"},
-  {selector: "#i22", result: "i2 i22 i221"},
-  {selector: "#i2111", result: "i2 i21 i211 i2111"},
-  {selector: "#i21", result: "i2 i21 i211 i2111"},
-  {selector: "#i22211", result: "i2 i22 i222 i2221 i22211"},
-  {selector: "#i22", result: "i2 i22 i222 i2221 i22211"},
-  {selector: "#i3", result: "i3 i31"},
+  {selector: "#i1111", ids: "i1 i11 i111 i1111", nodeName: "div",
+    title: "div#i1111"},
+  {selector: "#i22", ids: "i2 i22", nodeName: "div",
+    title: "div#i22"},
+  {selector: "#i2111", ids: "i2 i21 i211 i2111", nodeName: "div",
+    title: "div#i2111"},
+  {selector: "#i21", ids: "i2 i21 i211 i2111", nodeName: "div",
+    title: "div#i21"},
+  {selector: "#i22211", ids: "i2 i22 i222 i2221 i22211", nodeName: "div",
+    title: "div#i22211"},
+  {selector: "#i22", ids: "i2 i22 i222 i2221 i22211", nodeName: "div",
+    title: "div#i22"},
+  {selector: "#i3", ids: "i3", nodeName: "article",
+    title: "article#i3"},
+  {selector: "clipPath", ids: "vector clip", nodeName: "clipPath",
+    title: "clipPath#clip"},
 ];
 
-add_task(function*() {
+add_task(function* () {
   let { inspector } = yield openInspectorForURL(TEST_URI);
-  let container = inspector.panelDoc.getElementById("inspector-breadcrumbs");
+  let breadcrumbs = inspector.panelDoc.getElementById("inspector-breadcrumbs");
+  let container = breadcrumbs.querySelector(".html-arrowscrollbox-inner");
 
   for (let node of NODES) {
     info("Testing node " + node.selector);
@@ -29,7 +39,7 @@ add_task(function*() {
     yield breadcrumbsUpdated;
 
     info("Performing checks for node " + node.selector);
-    let buttonsLabelIds = node.result.split(" ");
+    let buttonsLabelIds = node.ids.split(" ");
 
     // html > body > …
     is(container.childNodes.length, buttonsLabelIds.length + 2,
@@ -40,35 +50,44 @@ add_task(function*() {
       let button = container.childNodes[i];
       let labelId = button.querySelector(".breadcrumbs-widget-item-id");
       is(labelId.textContent, expectedId,
-        "Node #" + node.selector + ": button " + i + " matches");
+        "Node " + node.selector + ": button " + i + " matches");
     }
 
     let checkedButton = container.querySelector("button[checked]");
     let labelId = checkedButton.querySelector(".breadcrumbs-widget-item-id");
     let id = inspector.selection.nodeFront.id;
     is(labelId.textContent, "#" + id,
-      "Node #" + node.selector + ": selection matches");
+      "Node " + node.selector + ": selection matches");
+
+    let labelTag = checkedButton.querySelector(".breadcrumbs-widget-item-tag");
+    is(labelTag.textContent, node.nodeName,
+      "Node " + node.selector + " has the expected tag name");
+
+    is(checkedButton.getAttribute("title"), node.title,
+      "Node " + node.selector + " has the expected tooltip");
   }
 
   yield testPseudoElements(inspector, container);
 });
 
 function* testPseudoElements(inspector, container) {
-  info ("Checking for pseudo elements");
+  info("Checking for pseudo elements");
 
   let pseudoParent = yield getNodeFront("#pseudo-container", inspector);
   let children = yield inspector.walker.children(pseudoParent);
-  is (children.nodes.length, 2, "Pseudo children returned from walker");
+  is(children.nodes.length, 2, "Pseudo children returned from walker");
 
   let beforeElement = children.nodes[0];
   let breadcrumbsUpdated = inspector.once("breadcrumbs-updated");
   yield selectNode(beforeElement, inspector);
   yield breadcrumbsUpdated;
-  is(container.childNodes[3].textContent, "::before", "::before shows up in breadcrumb");
+  is(container.childNodes[3].textContent, "::before",
+     "::before shows up in breadcrumb");
 
   let afterElement = children.nodes[1];
   breadcrumbsUpdated = inspector.once("breadcrumbs-updated");
   yield selectNode(afterElement, inspector);
   yield breadcrumbsUpdated;
-  is(container.childNodes[3].textContent, "::after", "::before shows up in breadcrumb");
+  is(container.childNodes[3].textContent, "::after",
+     "::before shows up in breadcrumb");
 }

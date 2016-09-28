@@ -223,7 +223,7 @@ HTMLCanvasPrintState::Done()
       mCanvas->InvalidateCanvas();
     }
     RefPtr<nsRunnableMethod<HTMLCanvasPrintState> > doneEvent =
-      NS_NewRunnableMethod(this, &HTMLCanvasPrintState::NotifyDone);
+      NewRunnableMethod(this, &HTMLCanvasPrintState::NotifyDone);
     if (NS_SUCCEEDED(NS_DispatchToCurrentThread(doneEvent))) {
       mPendingNotify = true;
     }
@@ -503,7 +503,7 @@ HTMLCanvasElement::DispatchPrintCallback(nsITimerCallback* aCallback)
   mPrintState = new HTMLCanvasPrintState(this, mCurrentContext, aCallback);
 
   RefPtr<nsRunnableMethod<HTMLCanvasElement> > renderEvent =
-        NS_NewRunnableMethod(this, &HTMLCanvasElement::CallPrintCallback);
+        NewRunnableMethod(this, &HTMLCanvasElement::CallPrintCallback);
   return NS_DispatchToCurrentThread(renderEvent);
 }
 
@@ -593,10 +593,10 @@ HTMLCanvasElement::GetAttributeChangeHint(const nsIAtom* aAttribute,
   if (aAttribute == nsGkAtoms::width ||
       aAttribute == nsGkAtoms::height)
   {
-    NS_UpdateHint(retval, NS_STYLE_HINT_REFLOW);
+    retval |= NS_STYLE_HINT_REFLOW;
   } else if (aAttribute == nsGkAtoms::moz_opaque)
   {
-    NS_UpdateHint(retval, NS_STYLE_HINT_VISUAL);
+    retval |= NS_STYLE_HINT_VISUAL;
   }
   return retval;
 }
@@ -1358,12 +1358,14 @@ HTMLCanvasElement::SetAttrFromAsyncCanvasRenderer(AsyncCanvasRenderer *aRenderer
   gfx::IntSize asyncCanvasSize = aRenderer->GetSize();
 
   ErrorResult rv;
-  element->SetUnsignedIntAttr(nsGkAtoms::width, asyncCanvasSize.width, rv);
+  element->SetUnsignedIntAttr(nsGkAtoms::width, asyncCanvasSize.width,
+                              DEFAULT_CANVAS_WIDTH, rv);
   if (rv.Failed()) {
     NS_WARNING("Failed to set width attribute to a canvas element asynchronously.");
   }
 
-  element->SetUnsignedIntAttr(nsGkAtoms::height, asyncCanvasSize.height, rv);
+  element->SetUnsignedIntAttr(nsGkAtoms::height, asyncCanvasSize.height,
+                              DEFAULT_CANVAS_HEIGHT, rv);
   if (rv.Failed()) {
     NS_WARNING("Failed to set height attribute to a canvas element asynchronously.");
   }

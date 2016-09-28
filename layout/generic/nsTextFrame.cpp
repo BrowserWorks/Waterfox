@@ -2371,7 +2371,7 @@ BuildTextRunsScanner::SetupBreakSinksForTextRun(gfxTextRun* aTextRun,
   // We should only use a language for hyphenation if it was specified
   // explicitly.
   nsIAtom* hyphenationLanguage =
-    styleFont->mExplicitLanguage ? styleFont->mLanguage : nullptr;
+    styleFont->mExplicitLanguage ? styleFont->mLanguage.get() : nullptr;
   // We keep this pointed at the skip-chars data for the current mappedFlow.
   // This lets us cheaply check whether the flow has compressed initial
   // whitespace...
@@ -3074,10 +3074,9 @@ PropertyProvider::ComputeJustification(Range aRange)
 {
   // Horizontal-in-vertical frame is orthogonal to the line, so it
   // doesn't actually include any justification opportunity inside.
-  // Note: although the spec says such frame should be treated as a
-  // U+FFFC, which indicates it is justifiable on its sides, we don't
-  // do that because it is difficult to implement, and doesn't make
-  // any difference in common use cases.
+  // The spec says such frame should be treated as a U+FFFC. Since we
+  // do not insert justification opportunities on the sides of that
+  // character, the sides of this frame are not justifiable either.
   if (mFrame->StyleContext()->IsTextCombined()) {
     return;
   }
@@ -9637,10 +9636,10 @@ nsTextFrame::HasAnyNoncollapsedCharacters()
 }
 
 bool
-nsTextFrame::UpdateOverflow()
+nsTextFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
 {
   if (GetStateBits() & NS_FRAME_FIRST_REFLOW) {
-    return false;
+    return true;
   }
 
   nsIFrame* decorationsBlock;
@@ -9658,14 +9657,13 @@ nsTextFrame::UpdateOverflow()
       f = f->GetParent();
       if (!f) {
         NS_ERROR("Couldn't find any block ancestor (for text decorations)");
-        return false;
+        return nsFrame::ComputeCustomOverflow(aOverflowAreas);
       }
     }
   }
 
-  nsOverflowAreas overflowAreas = RecomputeOverflow(decorationsBlock);
-
-  return FinishAndStoreOverflow(overflowAreas, GetSize());
+  aOverflowAreas = RecomputeOverflow(decorationsBlock);
+  return nsFrame::ComputeCustomOverflow(aOverflowAreas);
 }
 
 NS_DECLARE_FRAME_PROPERTY_SMALL_VALUE(JustificationAssignmentProperty, int32_t)

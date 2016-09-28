@@ -13,6 +13,7 @@ UNIFIED_SOURCES += [
     'testArrayBuffer.cpp',
     'testArrayBufferView.cpp',
     'testBug604087.cpp',
+    'testCallArgs.cpp',
     'testCallNonGenericMethodOnProxy.cpp',
     'testChromeBuffer.cpp',
     'testClassGetter.cpp',
@@ -24,10 +25,12 @@ UNIFIED_SOURCES += [
     'testDefineGetterSetterNonEnumerable.cpp',
     'testDefineProperty.cpp',
     'testDefinePropertyIgnoredAttributes.cpp',
+    'testDeflateStringToUTF8Buffer.cpp',
     'testDifferentNewTargetInvokeConstructor.cpp',
     'testEnclosingFunction.cpp',
     'testErrorCopying.cpp',
     'testException.cpp',
+    'testExternalArrayBuffer.cpp',
     'testExternalStrings.cpp',
     'testFindSCCs.cpp',
     'testForceLexicalInitialization.cpp',
@@ -55,6 +58,7 @@ UNIFIED_SOURCES += [
     'testIntString.cpp',
     'testIntTypesABI.cpp',
     'testIsInsideNursery.cpp',
+    'testIteratorObject.cpp',
     'testJSEvaluateScript.cpp',
     'testLookup.cpp',
     'testLooselyEqual.cpp',
@@ -68,6 +72,7 @@ UNIFIED_SOURCES += [
     'testParseJSON.cpp',
     'testPersistentRooted.cpp',
     'testPreserveJitCode.cpp',
+    'testPrivateGCThingValue.cpp',
     'testProfileStrings.cpp',
     'testPropCache.cpp',
     'testRegExp.cpp',
@@ -79,12 +84,15 @@ UNIFIED_SOURCES += [
     'testScriptObject.cpp',
     'testSetProperty.cpp',
     'testSetPropertyIgnoringNamedGetter.cpp',
+    'testSharedImmutableStringsCache.cpp',
     'testSourcePolicy.cpp',
     'testStringBuffer.cpp',
     'testStructuredClone.cpp',
     'testSymbol.cpp',
+    'testThreadingConditionVariable.cpp',
     'testThreadingExclusiveData.cpp',
     'testThreadingMutex.cpp',
+    'testThreadingThread.cpp',
     'testToIntWidth.cpp',
     'testTypedArrays.cpp',
     'testUbiNode.cpp',
@@ -135,6 +143,9 @@ USE_LIBS += [
 ]
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-shadow']
 
 # This is intended as a temporary workaround to enable VS2015.
 if CONFIG['_MSC_VER']:

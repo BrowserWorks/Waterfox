@@ -24,15 +24,18 @@ class nsIPrefBranch;
 class nsICancelable;
 class nsICookieService;
 class nsIIOService;
-class nsISchedulingContextService;
+class nsIRequestContextService;
 class nsISiteSecurityService;
 class nsIStreamConverterService;
 class nsITimer;
+class nsIUUIDGenerator;
 
-extern mozilla::Atomic<PRThread*, mozilla::Relaxed> gSocketThread;
 
 namespace mozilla {
 namespace net {
+
+extern Atomic<PRThread*, Relaxed> gSocketThread;
+
 class ATokenBucketEvent;
 class EventTokenBucket;
 class Tickler;
@@ -352,12 +355,17 @@ public:
     void SetCacheSkippedUntil(TimeStamp arg) { mCacheSkippedUntil = arg; }
     void ClearCacheSkippedUntil() { mCacheSkippedUntil = TimeStamp(); }
 
-    nsISchedulingContextService *GetSchedulingContextService()
+    nsIRequestContextService *GetRequestContextService()
     {
-        return mSchedulingContextService.get();
+        return mRequestContextService.get();
     }
 
     void ShutdownConnectionManager();
+
+    bool KeepEmptyResponseHeadersAsEmtpyString() const
+    {
+        return mKeepEmptyResponseHeadersAsEmtpyString;
+    }
 
 private:
     virtual ~nsHttpHandler();
@@ -567,10 +575,17 @@ private:
     // incorrect content lengths or malformed chunked encodings
     FrameCheckLevel mEnforceH1Framing;
 
-    nsCOMPtr<nsISchedulingContextService> mSchedulingContextService;
+    nsCOMPtr<nsIRequestContextService> mRequestContextService;
 
     // True if remote newtab content-signature disabled because of the channel.
     bool mNewTabContentSignaturesDisabled;
+
+    // If it is set to false, headers with empty value will not appear in the
+    // header array - behavior as it used to be. If it is true: empty headers
+    // coming from the network will exits in header array as empty string.
+    // Call SetHeader with an empty value will still delete the header.
+    // (Bug 6699259)
+    bool mKeepEmptyResponseHeadersAsEmtpyString;
 
 private:
     // For Rate Pacing Certain Network Events. Only assign this pointer on
@@ -614,6 +629,11 @@ private:
     nsresult SpeculativeConnectInternal(nsIURI *aURI,
                                         nsIInterfaceRequestor *aCallbacks,
                                         bool anonymous);
+
+    // UUID generator for channelIds
+    nsCOMPtr<nsIUUIDGenerator> mUUIDGen;
+
+    nsresult NewChannelId(nsID *channelId);
 };
 
 extern nsHttpHandler *gHttpHandler;

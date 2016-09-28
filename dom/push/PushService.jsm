@@ -31,10 +31,6 @@ const CONNECTION_PROTOCOLS = (function() {
   }
 })();
 
-XPCOMUtils.defineLazyServiceGetter(this, "gContentSecurityManager",
-                                   "@mozilla.org/contentsecuritymanager;1",
-                                   "nsIContentSecurityManager");
-
 XPCOMUtils.defineLazyServiceGetter(this, "gPushNotifier",
                                    "@mozilla.org/push/Notifier;1",
                                    "nsIPushNotifier");
@@ -102,6 +98,33 @@ function errorWithResult(message, result = Cr.NS_ERROR_FAILURE) {
   let error = new Error(message);
   error.result = result;
   return error;
+}
+
+/**
+ * Copied from ForgetAboutSite.jsm.
+ *
+ * Returns true if the string passed in is part of the root domain of the
+ * current string.  For example, if this is "www.mozilla.org", and we pass in
+ * "mozilla.org", this will return true.  It would return false the other way
+ * around.
+ */
+function hasRootDomain(str, aDomain)
+{
+  let index = str.indexOf(aDomain);
+  // If aDomain is not found, we know we do not have it as a root domain.
+  if (index == -1)
+    return false;
+
+  // If the strings are the same, we obviously have a match.
+  if (str == aDomain)
+    return true;
+
+  // Otherwise, we have aDomain as our root domain iff the index of aDomain is
+  // aDomain.length subtracted from our length and (since we do not have an
+  // exact match) the character before the index is a dot or slash.
+  let prevChar = str[index - 1];
+  return (index == (str.length - aDomain.length)) &&
+         (prevChar == "." || prevChar == "/");
 }
 
 /**
@@ -334,14 +357,8 @@ this.PushService = {
     }
 
     let pattern = JSON.parse(data);
-    return this._db.clearIf(record => {
-      if (!record.matchesOriginAttributes(pattern)) {
-        return false;
-      }
-      this._backgroundUnregister(record,
-                                 Ci.nsIPushErrorReporter.UNSUBSCRIBE_MANUAL);
-      return true;
-    });
+    return this._dropRegistrationsIf(record =>
+      record.matchesOriginAttributes(pattern));
   },
 
   /**
@@ -360,7 +377,9 @@ this.PushService = {
     }
 
     console.debug("backgroundUnregister: Notifying server", record);
-    this._sendUnregister(record, reason).catch(e => {
+    this._sendUnregister(record, reason).then(() => {
+      gPushNotifier.notifySubscriptionModified(record.scope, record.principal);
+    }).catch(e => {
       console.error("backgroundUnregister: Error notifying server", e);
     });
   },
@@ -394,11 +413,6 @@ this.PushService = {
     } catch (e) {
       console.warn("findService: Error creating valid URI from",
         "dom.push.serverURL", serverURL);
-      return [];
-    }
-
-    if (!gContentSecurityManager.isURIPotentiallyTrustworthy(uri)) {
-      console.warn("findService: Untrusted server URI", uri.spec);
       return [];
     }
 
@@ -664,15 +678,12 @@ this.PushService = {
    * once the permission is reinstated.
    */
   dropUnexpiredRegistrations: function() {
-    let subscriptionChanges = [];
     return this._db.clearIf(record => {
       if (record.isExpired()) {
         return false;
       }
-      subscriptionChanges.push(record);
+      this._notifySubscriptionChangeObservers(record);
       return true;
-    }).then(() => {
-      this.notifySubscriptionChanges(subscriptionChanges);
     });
   },
 
@@ -722,12 +733,6 @@ this.PushService = {
         this._notifySubscriptionChangeObservers(record);
         return record;
       });
-  },
-
-  notifySubscriptionChanges: function(records) {
-    records.forEach(record => {
-      this._notifySubscriptionChangeObservers(record);
-    });
   },
 
   ensureCrypto: function(record) {
@@ -854,6 +859,9 @@ this.PushService = {
           return newRecord;
         });
       });
+    }).then(record => {
+      gPushNotifier.notifySubscriptionModified(record.scope, record.principal);
+      return record;
     });
   },
 
@@ -905,13 +913,18 @@ this.PushService = {
       }
       return record;
     }).then(record => {
-      if (record && record.isExpired()) {
-        this._recordDidNotNotify(kDROP_NOTIFICATION_REASON_EXPIRED);
-        // Drop the registration in the background. If the user returns to the
-        // site, the service worker will be notified on the next `idle-daily`
-        // event.
-        this._backgroundUnregister(record,
-          Ci.nsIPushErrorReporter.UNSUBSCRIBE_QUOTA_EXCEEDED);
+      if (record) {
+        if (record.isExpired()) {
+          this._recordDidNotNotify(kDROP_NOTIFICATION_REASON_EXPIRED);
+          // Drop the registration in the background. If the user returns to the
+          // site, the service worker will be notified on the next `idle-daily`
+          // event.
+          this._backgroundUnregister(record,
+            Ci.nsIPushErrorReporter.UNSUBSCRIBE_QUOTA_EXCEEDED);
+        } else {
+          gPushNotifier.notifySubscriptionModified(record.scope,
+                                                   record.principal);
+        }
       }
       if (this._updateQuotaTestCallback) {
         // Callback so that test may be notified when the quota update is complete.
@@ -1038,6 +1051,8 @@ this.PushService = {
             err => this._onRegisterError(err))
       .then(record => {
         this._deletePendingRequest(aPageRecord);
+        gPushNotifier.notifySubscriptionModified(record.scope,
+                                                 record.principal);
         return record.toSubscription();
       }, err => {
         this._deletePendingRequest(aPageRecord);
@@ -1180,65 +1195,29 @@ this.PushService = {
           return false;
         }
 
+        let reason = Ci.nsIPushErrorReporter.UNSUBSCRIBE_MANUAL;
         return Promise.all([
-          this._sendUnregister(record,
-                               Ci.nsIPushErrorReporter.UNSUBSCRIBE_MANUAL),
+          this._sendUnregister(record, reason),
           this._db.delete(record.keyID),
-        ]).then(() => true);
+        ]).then(() => {
+          gPushNotifier.notifySubscriptionModified(record.scope,
+                                                   record.principal);
+          return true;
+        });
       });
   },
 
   clear: function(info) {
-    if (info.domain == "*") {
-      return this._clearAll();
-    }
-    return this._clearForDomain(info.domain);
-  },
-
-  _clearAll: function _clearAll() {
     return this._checkActivated()
-      .then(_ => this._db.drop())
-      .catch(_ => Promise.resolve());
-  },
-
-  _clearForDomain: function(domain) {
-    /**
-     * Copied from ForgetAboutSite.jsm.
-     *
-     * Returns true if the string passed in is part of the root domain of the
-     * current string.  For example, if this is "www.mozilla.org", and we pass in
-     * "mozilla.org", this will return true.  It would return false the other way
-     * around.
-     */
-    function hasRootDomain(str, aDomain)
-    {
-      let index = str.indexOf(aDomain);
-      // If aDomain is not found, we know we do not have it as a root domain.
-      if (index == -1)
-        return false;
-
-      // If the strings are the same, we obviously have a match.
-      if (str == aDomain)
-        return true;
-
-      // Otherwise, we have aDomain as our root domain iff the index of aDomain is
-      // aDomain.length subtracted from our length and (since we do not have an
-      // exact match) the character before the index is a dot or slash.
-      let prevChar = str[index - 1];
-      return (index == (str.length - aDomain.length)) &&
-             (prevChar == "." || prevChar == "/");
-    }
-
-    let clear = (db, domain) => {
-      db.clearIf(record => {
-        return record.uri && hasRootDomain(record.uri.prePath, domain);
-      });
-    }
-
-    return this._checkActivated()
-      .then(_ => clear(this._db, domain))
+      .then(_ => {
+        return this._dropRegistrationsIf(record =>
+          info.domain == "*" ||
+          (record.uri && hasRootDomain(record.uri.prePath, info.domain))
+        );
+      })
       .catch(e => {
-        console.warn("clearForDomain: Error forgetting about domain", e);
+        console.warn("clear: Error dropping subscriptions for domain",
+          info.domain, e);
         return Promise.resolve();
       });
   },
@@ -1286,19 +1265,7 @@ this.PushService = {
     console.debug("onPermissionChange()");
 
     if (data == "cleared") {
-      // If the permission list was cleared, drop all registrations
-      // that are subject to quota.
-      return this._db.clearIf(record => {
-        if (record.quotaApplies()) {
-          if (!record.isExpired()) {
-            // Drop the registration in the background.
-            this._backgroundUnregister(record,
-              Ci.nsIPushErrorReporter.UNSUBSCRIBE_PERMISSION_REVOKED);
-          }
-          return true;
-        }
-        return false;
-      });
+      return this._clearPermissions();
     }
 
     let permission = subject.QueryInterface(Ci.nsIPermission);
@@ -1307,6 +1274,20 @@ this.PushService = {
     }
 
     return this._updatePermission(permission, data);
+  },
+
+  _clearPermissions() {
+    console.debug("clearPermissions()");
+
+    return this._db.clearIf(record => {
+      if (!record.quotaApplies()) {
+        // Only drop registrations that are subject to quota.
+        return false;
+      }
+      this._backgroundUnregister(record,
+        Ci.nsIPushErrorReporter.UNSUBSCRIBE_PERMISSION_REVOKED);
+      return true;
+    });
   },
 
   _updatePermission: function(permission, type) {
@@ -1320,34 +1301,27 @@ this.PushService = {
       // Permission set to "allow". Drop all expired registrations for this
       // site, notify the associated service workers, and reset the quota
       // for active registrations.
-      return this._reduceByPrincipal(
+      return this._forEachPrincipal(
         permission.principal,
-        (subscriptionChanges, record, cursor) => {
-          this._permissionAllowed(subscriptionChanges, record, cursor);
-          return subscriptionChanges;
-        },
-        []
-      ).then(subscriptionChanges => {
-        this.notifySubscriptionChanges(subscriptionChanges);
-      });
+        (record, cursor) => this._permissionAllowed(record, cursor)
+      );
     } else if (isChange || (isAllow && type == "deleted")) {
       // Permission set to "block" or "always ask," or "allow" permission
       // removed. Expire all registrations for this site.
-      return this._reduceByPrincipal(
+      return this._forEachPrincipal(
         permission.principal,
-        (memo, record, cursor) => this._permissionDenied(record, cursor)
+        (record, cursor) => this._permissionDenied(record, cursor)
       );
     }
 
     return Promise.resolve();
   },
 
-  _reduceByPrincipal: function(principal, callback, initialValue) {
-    return this._db.reduceByOrigin(
+  _forEachPrincipal: function(principal, callback) {
+    return this._db.forEachOrigin(
       principal.URI.prePath,
       ChromeUtils.originAttributesToSuffix(principal.originAttributes),
-      callback,
-      initialValue
+      callback
     );
   },
 
@@ -1380,12 +1354,10 @@ this.PushService = {
    * permission is granted. If the record has expired, it will be dropped;
    * otherwise, its quota will be reset to the default value.
    *
-   * @param {Array} subscriptionChanges A list of records whose associated
-   *  service workers should be notified once the transaction has committed.
    * @param {PushRecord} record The record to update.
    * @param {IDBCursor} cursor The IndexedDB cursor.
    */
-  _permissionAllowed: function(subscriptionChanges, record, cursor) {
+  _permissionAllowed(record, cursor) {
     console.debug("permissionAllowed()");
 
     if (!record.quotaApplies()) {
@@ -1394,11 +1366,40 @@ this.PushService = {
     if (record.isExpired()) {
       // If the registration has expired, drop and notify the worker
       // unconditionally.
-      subscriptionChanges.push(record);
+      this._notifySubscriptionChangeObservers(record);
       cursor.delete();
       return;
     }
     record.resetQuota();
     cursor.update(record);
+  },
+
+  /**
+   * Drops all matching registrations from the database. Notifies the
+   * associated service workers if permission is granted, and removes
+   * unexpired registrations from the server.
+   *
+   * @param {Function} predicate A function called for each record.
+   * @returns {Promise} Resolves once the registrations have been dropped.
+   */
+  _dropRegistrationsIf(predicate) {
+    return this._db.clearIf(record => {
+      if (!predicate(record)) {
+        return false;
+      }
+      if (record.hasPermission()) {
+        // "Clear Recent History" and the Forget button remove permissions
+        // before clearing registrations, but it's possible for the worker to
+        // resubscribe if the "dom.push.testing.ignorePermission" pref is set.
+        this._notifySubscriptionChangeObservers(record);
+      }
+      if (!record.isExpired()) {
+        // Only unregister active registrations, since we already told the
+        // server about expired ones.
+        this._backgroundUnregister(record,
+                                   Ci.nsIPushErrorReporter.UNSUBSCRIBE_MANUAL);
+      }
+      return true;
+    });
   },
 };

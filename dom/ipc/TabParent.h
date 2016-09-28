@@ -209,6 +209,9 @@ public:
   virtual bool
   RecvDispatchAfterKeyboardEvent(const WidgetKeyboardEvent& aEvent) override;
 
+  virtual bool
+  RecvAccessKeyNotHandled(const WidgetKeyboardEvent& aEvent) override;
+
   virtual bool RecvBrowserFrameOpenWindow(PBrowserParent* aOpener,
                                           PRenderFrameParent* aRenderFrame,
                                           const nsString& aURL,
@@ -309,6 +312,12 @@ public:
 
   virtual bool RecvRequestFocus(const bool& aCanRaise) override;
 
+  virtual bool RecvLookUpDictionary(
+                 const nsString& aText,
+                 nsTArray<mozilla::FontRange>&& aFontRangeArray,
+                 const bool& aIsVertical,
+                 const LayoutDeviceIntPoint& aPoint) override;
+
   virtual bool
   RecvEnableDisableCommands(const nsString& aAction,
                             nsTArray<nsCString>&& aEnabledCommands,
@@ -399,8 +408,8 @@ public:
 
   void ThemeChanged();
 
-  void HandleAccessKey(nsTArray<uint32_t>& aCharCodes,
-                       const bool& aIsTrusted,
+  void HandleAccessKey(const WidgetKeyboardEvent& aEvent,
+                       nsTArray<uint32_t>& aCharCodes,
                        const int32_t& aModifierMask);
 
   void Activate();
@@ -585,7 +594,7 @@ public:
   virtual bool
   RecvInvokeDragSession(nsTArray<IPCDataTransfer>&& aTransfers,
                         const uint32_t& aAction,
-                        const nsCString& aVisualDnDData,
+                        const OptionalShmem& aVisualDnDData,
                         const uint32_t& aWidth, const uint32_t& aHeight,
                         const uint32_t& aStride, const uint8_t& aFormat,
                         const int32_t& aDragAreaX, const int32_t& aDragAreaY) override;
@@ -638,9 +647,6 @@ protected:
 
   virtual bool RecvAudioChannelActivityNotification(const uint32_t& aAudioChannel,
                                                     const bool& aActive) override;
-
-  bool InitBrowserConfiguration(const nsCString& aURI,
-                                BrowserConfiguration& aConfiguration);
 
   ContentCacheInParent mContentCache;
 

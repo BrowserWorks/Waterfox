@@ -5,104 +5,116 @@
  * accompanying file LICENSE for details.
  */
 #include <assert.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "halloc.h"
 #include "nestegg/nestegg.h"
 
 /* EBML Elements */
-#define ID_EBML                 0x1a45dfa3
-#define ID_EBML_VERSION         0x4286
-#define ID_EBML_READ_VERSION    0x42f7
-#define ID_EBML_MAX_ID_LENGTH   0x42f2
-#define ID_EBML_MAX_SIZE_LENGTH 0x42f3
-#define ID_DOCTYPE              0x4282
-#define ID_DOCTYPE_VERSION      0x4287
-#define ID_DOCTYPE_READ_VERSION 0x4285
+#define ID_EBML                     0x1a45dfa3
+#define ID_EBML_VERSION             0x4286
+#define ID_EBML_READ_VERSION        0x42f7
+#define ID_EBML_MAX_ID_LENGTH       0x42f2
+#define ID_EBML_MAX_SIZE_LENGTH     0x42f3
+#define ID_DOCTYPE                  0x4282
+#define ID_DOCTYPE_VERSION          0x4287
+#define ID_DOCTYPE_READ_VERSION     0x4285
 
 /* Global Elements */
-#define ID_VOID                 0xec
-#define ID_CRC32                0xbf
+#define ID_VOID                     0xec
+#define ID_CRC32                    0xbf
 
 /* WebM Elements */
-#define ID_SEGMENT              0x18538067
+#define ID_SEGMENT                  0x18538067
 
 /* Seek Head Elements */
-#define ID_SEEK_HEAD            0x114d9b74
-#define ID_SEEK                 0x4dbb
-#define ID_SEEK_ID              0x53ab
-#define ID_SEEK_POSITION        0x53ac
+#define ID_SEEK_HEAD                0x114d9b74
+#define ID_SEEK                     0x4dbb
+#define ID_SEEK_ID                  0x53ab
+#define ID_SEEK_POSITION            0x53ac
 
 /* Info Elements */
-#define ID_INFO                 0x1549a966
-#define ID_TIMECODE_SCALE       0x2ad7b1
-#define ID_DURATION             0x4489
+#define ID_INFO                     0x1549a966
+#define ID_TIMECODE_SCALE           0x2ad7b1
+#define ID_DURATION                 0x4489
 
 /* Cluster Elements */
-#define ID_CLUSTER              0x1f43b675
-#define ID_TIMECODE             0xe7
-#define ID_BLOCK_GROUP          0xa0
-#define ID_SIMPLE_BLOCK         0xa3
+#define ID_CLUSTER                  0x1f43b675
+#define ID_TIMECODE                 0xe7
+#define ID_BLOCK_GROUP              0xa0
+#define ID_SIMPLE_BLOCK             0xa3
 
 /* BlockGroup Elements */
-#define ID_BLOCK                0xa1
-#define ID_BLOCK_ADDITIONS      0x75a1
-#define ID_BLOCK_DURATION       0x9b
-#define ID_REFERENCE_BLOCK      0xfb
-#define ID_DISCARD_PADDING      0x75a2
+#define ID_BLOCK                    0xa1
+#define ID_BLOCK_ADDITIONS          0x75a1
+#define ID_BLOCK_DURATION           0x9b
+#define ID_REFERENCE_BLOCK          0xfb
+#define ID_DISCARD_PADDING          0x75a2
 
 /* BlockAdditions Elements */
-#define ID_BLOCK_MORE           0xa6
+#define ID_BLOCK_MORE               0xa6
 
 /* BlockMore Elements */
-#define ID_BLOCK_ADD_ID         0xee
-#define ID_BLOCK_ADDITIONAL     0xa5
+#define ID_BLOCK_ADD_ID             0xee
+#define ID_BLOCK_ADDITIONAL         0xa5
 
 /* Tracks Elements */
-#define ID_TRACKS               0x1654ae6b
-#define ID_TRACK_ENTRY          0xae
-#define ID_TRACK_NUMBER         0xd7
-#define ID_TRACK_UID            0x73c5
-#define ID_TRACK_TYPE           0x83
-#define ID_FLAG_ENABLED         0xb9
-#define ID_FLAG_DEFAULT         0x88
-#define ID_FLAG_LACING          0x9c
-#define ID_TRACK_TIMECODE_SCALE 0x23314f
-#define ID_LANGUAGE             0x22b59c
-#define ID_CODEC_ID             0x86
-#define ID_CODEC_PRIVATE        0x63a2
-#define ID_CODEC_DELAY          0x56aa
-#define ID_SEEK_PREROLL         0x56bb
-#define ID_DEFAULT_DURATION     0x23e383
+#define ID_TRACKS                   0x1654ae6b
+#define ID_TRACK_ENTRY              0xae
+#define ID_TRACK_NUMBER             0xd7
+#define ID_TRACK_UID                0x73c5
+#define ID_TRACK_TYPE               0x83
+#define ID_FLAG_ENABLED             0xb9
+#define ID_FLAG_DEFAULT             0x88
+#define ID_FLAG_LACING              0x9c
+#define ID_TRACK_TIMECODE_SCALE     0x23314f
+#define ID_LANGUAGE                 0x22b59c
+#define ID_CODEC_ID                 0x86
+#define ID_CODEC_PRIVATE            0x63a2
+#define ID_CODEC_DELAY              0x56aa
+#define ID_SEEK_PREROLL             0x56bb
+#define ID_DEFAULT_DURATION         0x23e383
 
 /* Video Elements */
-#define ID_VIDEO                0xe0
-#define ID_STEREO_MODE          0x53b8
-#define ID_ALPHA_MODE           0x53c0
-#define ID_PIXEL_WIDTH          0xb0
-#define ID_PIXEL_HEIGHT         0xba
-#define ID_PIXEL_CROP_BOTTOM    0x54aa
-#define ID_PIXEL_CROP_TOP       0x54bb
-#define ID_PIXEL_CROP_LEFT      0x54cc
-#define ID_PIXEL_CROP_RIGHT     0x54dd
-#define ID_DISPLAY_WIDTH        0x54b0
-#define ID_DISPLAY_HEIGHT       0x54ba
+#define ID_VIDEO                    0xe0
+#define ID_STEREO_MODE              0x53b8
+#define ID_ALPHA_MODE               0x53c0
+#define ID_PIXEL_WIDTH              0xb0
+#define ID_PIXEL_HEIGHT             0xba
+#define ID_PIXEL_CROP_BOTTOM        0x54aa
+#define ID_PIXEL_CROP_TOP           0x54bb
+#define ID_PIXEL_CROP_LEFT          0x54cc
+#define ID_PIXEL_CROP_RIGHT         0x54dd
+#define ID_DISPLAY_WIDTH            0x54b0
+#define ID_DISPLAY_HEIGHT           0x54ba
 
 /* Audio Elements */
-#define ID_AUDIO                0xe1
-#define ID_SAMPLING_FREQUENCY   0xb5
-#define ID_CHANNELS             0x9f
-#define ID_BIT_DEPTH            0x6264
+#define ID_AUDIO                    0xe1
+#define ID_SAMPLING_FREQUENCY       0xb5
+#define ID_CHANNELS                 0x9f
+#define ID_BIT_DEPTH                0x6264
 
 /* Cues Elements */
-#define ID_CUES                 0x1c53bb6b
-#define ID_CUE_POINT            0xbb
-#define ID_CUE_TIME             0xb3
-#define ID_CUE_TRACK_POSITIONS  0xb7
-#define ID_CUE_TRACK            0xf7
-#define ID_CUE_CLUSTER_POSITION 0xf1
-#define ID_CUE_BLOCK_NUMBER     0x5378
+#define ID_CUES                     0x1c53bb6b
+#define ID_CUE_POINT                0xbb
+#define ID_CUE_TIME                 0xb3
+#define ID_CUE_TRACK_POSITIONS      0xb7
+#define ID_CUE_TRACK                0xf7
+#define ID_CUE_CLUSTER_POSITION     0xf1
+#define ID_CUE_BLOCK_NUMBER         0x5378
+
+/* Encoding Elements */
+#define ID_CONTENT_ENCODINGS        0x6d80
+#define ID_CONTENT_ENCODING         0x6240
+#define ID_CONTENT_ENCODING_TYPE    0x5033
+
+/* Encryption Elements */
+#define ID_CONTENT_ENCRYPTION       0x5035
+#define ID_CONTENT_ENC_ALGO         0x47e1
+#define ID_CONTENT_ENC_KEY_ID       0x47e2
+#define ID_CONTENT_ENC_AES_SETTINGS 0x47e7
+#define ID_AES_SETTINGS_CIPHER_MODE 0x47e8
 
 /* EBML Types */
 enum ebml_type_enum {
@@ -110,40 +122,52 @@ enum ebml_type_enum {
   TYPE_MASTER,
   TYPE_UINT,
   TYPE_FLOAT,
-  TYPE_INT,
   TYPE_STRING,
   TYPE_BINARY
 };
 
-#define LIMIT_STRING            (1 << 20)
-#define LIMIT_BINARY            (1 << 24)
-#define LIMIT_BLOCK             (1 << 30)
-#define LIMIT_FRAME             (1 << 28)
+#define LIMIT_STRING                (1 << 20)
+#define LIMIT_BINARY                (1 << 24)
+#define LIMIT_BLOCK                 (1 << 30)
+#define LIMIT_FRAME                 (1 << 28)
 
 /* Field Flags */
-#define DESC_FLAG_NONE          0
-#define DESC_FLAG_MULTI         (1 << 0)
-#define DESC_FLAG_SUSPEND       (1 << 1)
-#define DESC_FLAG_OFFSET        (1 << 2)
+#define DESC_FLAG_NONE              0
+#define DESC_FLAG_MULTI             (1 << 0)
+#define DESC_FLAG_SUSPEND           (1 << 1)
+#define DESC_FLAG_OFFSET            (1 << 2)
 
 /* Block Header Flags */
-#define BLOCK_FLAGS_LACING      6
+#define SIMPLE_BLOCK_FLAGS_KEYFRAME (1 << 7)
+#define BLOCK_FLAGS_LACING          6
 
 /* Lacing Constants */
-#define LACING_NONE             0
-#define LACING_XIPH             1
-#define LACING_FIXED            2
-#define LACING_EBML             3
+#define LACING_NONE                 0
+#define LACING_XIPH                 1
+#define LACING_FIXED                2
+#define LACING_EBML                 3
 
 /* Track Types */
-#define TRACK_TYPE_VIDEO        1
-#define TRACK_TYPE_AUDIO        2
+#define TRACK_TYPE_VIDEO            1
+#define TRACK_TYPE_AUDIO            2
 
 /* Track IDs */
-#define TRACK_ID_VP8            "V_VP8"
-#define TRACK_ID_VP9            "V_VP9"
-#define TRACK_ID_VORBIS         "A_VORBIS"
-#define TRACK_ID_OPUS           "A_OPUS"
+#define TRACK_ID_VP8                "V_VP8"
+#define TRACK_ID_VP9                "V_VP9"
+#define TRACK_ID_VORBIS             "A_VORBIS"
+#define TRACK_ID_OPUS               "A_OPUS"
+
+/* Track Encryption */
+#define CONTENT_ENC_ALGO_AES        5
+#define AES_SETTINGS_CIPHER_CTR     1
+
+/* Packet Encryption */
+#define SIGNAL_BYTE_SIZE            1
+#define IV_SIZE                     8
+
+/* Signal Byte */
+#define PACKET_ENCRYPTED            1
+#define ENCRYPTED_BIT_MASK          (1 << 0)
 
 enum vint_mask {
   MASK_NONE,
@@ -204,27 +228,6 @@ struct info {
   struct ebml_type duration;
 };
 
-struct block_more {
-  struct ebml_type block_add_id;
-  struct ebml_type block_additional;
-};
-
-struct block_additions {
-  struct ebml_list block_more;
-};
-
-struct block_group {
-  struct ebml_type block_additions;
-  struct ebml_type duration;
-  struct ebml_type reference_block;
-  struct ebml_type discard_padding;
-};
-
-struct cluster {
-  struct ebml_type timecode;
-  struct ebml_list block_group;
-};
-
 struct video {
   struct ebml_type stereo_mode;
   struct ebml_type alpha_mode;
@@ -244,6 +247,25 @@ struct audio {
   struct ebml_type bit_depth;
 };
 
+struct content_enc_aes_settings {
+  struct ebml_type aes_settings_cipher_mode;
+};
+
+struct content_encryption {
+  struct ebml_type content_enc_algo;
+  struct ebml_type content_enc_key_id;
+  struct ebml_list content_enc_aes_settings;
+};
+
+struct content_encoding {
+  struct ebml_type content_encoding_type;
+  struct ebml_list content_encryption;
+};
+
+struct content_encodings {
+  struct ebml_list content_encoding;
+};
+
 struct track_entry {
   struct ebml_type number;
   struct ebml_type uid;
@@ -260,6 +282,7 @@ struct track_entry {
   struct ebml_type default_duration;
   struct video video;
   struct audio audio;
+  struct content_encodings content_encodings;
 };
 
 struct tracks {
@@ -284,14 +307,18 @@ struct cues {
 struct segment {
   struct ebml_list seek_head;
   struct info info;
-  struct ebml_list cluster;
   struct tracks tracks;
   struct cues cues;
 };
 
 /* Misc. */
+struct pool_node {
+  struct pool_node * next;
+  void * data;
+};
+
 struct pool_ctx {
-  char dummy;
+  struct pool_node * head;
 };
 
 struct list_node {
@@ -302,15 +329,21 @@ struct list_node {
 
 struct saved_state {
   int64_t stream_offset;
-  struct list_node * ancestor;
   uint64_t last_id;
   uint64_t last_size;
   int last_valid;
 };
 
+struct frame_encryption {
+  unsigned char * iv;
+  size_t length;
+  uint8_t signal_byte;
+};
+
 struct frame {
   unsigned char * data;
   size_t length;
+  struct frame_encryption * frame_encryption;
   struct frame * next;
 };
 
@@ -334,15 +367,24 @@ struct nestegg {
   struct segment segment;
   int64_t segment_offset;
   unsigned int track_count;
+  /* Last read cluster. */
+  uint64_t cluster_timecode;
+  int read_cluster_timecode;
+  struct saved_state saved;
 };
 
 struct nestegg_packet {
   uint64_t track;
   uint64_t timecode;
   uint64_t duration;
+  int read_duration;
   struct frame * frame;
   struct block_additional * block_additional;
   int64_t discard_padding;
+  int read_discard_padding;
+  int64_t reference_block;
+  int read_reference_block;
+  uint8_t keyframe;
 };
 
 /* Element Descriptor */
@@ -402,33 +444,6 @@ static struct ebml_element_desc ne_info_elements[] = {
   E_LAST
 };
 
-static struct ebml_element_desc ne_block_more_elements[] = {
-  E_FIELD(ID_BLOCK_ADD_ID, TYPE_UINT, struct block_more, block_add_id),
-  E_FIELD(ID_BLOCK_ADDITIONAL, TYPE_BINARY, struct block_more, block_additional),
-  E_LAST
-};
-
-static struct ebml_element_desc ne_block_additions_elements[] = {
-  E_MASTER(ID_BLOCK_MORE, TYPE_MASTER, struct block_additions, block_more),
-  E_LAST
-};
-
-static struct ebml_element_desc ne_block_group_elements[] = {
-  E_SUSPEND(ID_BLOCK, TYPE_BINARY),
-  E_FIELD(ID_BLOCK_DURATION, TYPE_UINT, struct block_group, duration),
-  E_FIELD(ID_REFERENCE_BLOCK, TYPE_INT, struct block_group, reference_block),
-  E_FIELD(ID_DISCARD_PADDING, TYPE_INT, struct block_group, discard_padding),
-  E_SINGLE_MASTER(ID_BLOCK_ADDITIONS, TYPE_MASTER, struct block_group, block_additions),
-  E_LAST
-};
-
-static struct ebml_element_desc ne_cluster_elements[] = {
-  E_FIELD(ID_TIMECODE, TYPE_UINT, struct cluster, timecode),
-  E_MASTER(ID_BLOCK_GROUP, TYPE_MASTER, struct cluster, block_group),
-  E_SUSPEND(ID_SIMPLE_BLOCK, TYPE_BINARY),
-  E_LAST
-};
-
 static struct ebml_element_desc ne_video_elements[] = {
   E_FIELD(ID_STEREO_MODE, TYPE_UINT, struct video, stereo_mode),
   E_FIELD(ID_ALPHA_MODE, TYPE_UINT, struct video, alpha_mode),
@@ -450,6 +465,29 @@ static struct ebml_element_desc ne_audio_elements[] = {
   E_LAST
 };
 
+static struct ebml_element_desc ne_content_enc_aes_settings_elements[] = {
+  E_FIELD(ID_AES_SETTINGS_CIPHER_MODE, TYPE_UINT, struct content_enc_aes_settings, aes_settings_cipher_mode),
+  E_LAST
+};
+
+static struct ebml_element_desc ne_content_encryption_elements[] = {
+  E_FIELD(ID_CONTENT_ENC_ALGO, TYPE_UINT, struct content_encryption, content_enc_algo),
+  E_FIELD(ID_CONTENT_ENC_KEY_ID, TYPE_BINARY, struct content_encryption, content_enc_key_id),
+  E_MASTER(ID_CONTENT_ENC_AES_SETTINGS, TYPE_MASTER, struct content_encryption, content_enc_aes_settings),
+  E_LAST
+};
+
+static struct ebml_element_desc ne_content_encoding_elements[] = {
+  E_FIELD(ID_CONTENT_ENCODING_TYPE, TYPE_UINT, struct content_encoding, content_encoding_type),
+  E_MASTER(ID_CONTENT_ENCRYPTION, TYPE_MASTER, struct content_encoding, content_encryption),
+  E_LAST
+};
+
+static struct ebml_element_desc ne_content_encodings_elements[] = {
+  E_MASTER(ID_CONTENT_ENCODING, TYPE_MASTER, struct content_encodings, content_encoding),
+  E_LAST
+};
+
 static struct ebml_element_desc ne_track_entry_elements[] = {
   E_FIELD(ID_TRACK_NUMBER, TYPE_UINT, struct track_entry, number),
   E_FIELD(ID_TRACK_UID, TYPE_UINT, struct track_entry, uid),
@@ -466,6 +504,7 @@ static struct ebml_element_desc ne_track_entry_elements[] = {
   E_FIELD(ID_DEFAULT_DURATION, TYPE_UINT, struct track_entry, default_duration),
   E_SINGLE_MASTER(ID_VIDEO, TYPE_MASTER, struct track_entry, video),
   E_SINGLE_MASTER(ID_AUDIO, TYPE_MASTER, struct track_entry, audio),
+  E_SINGLE_MASTER(ID_CONTENT_ENCODINGS, TYPE_MASTER, struct track_entry, content_encodings),
   E_LAST
 };
 
@@ -495,7 +534,7 @@ static struct ebml_element_desc ne_cues_elements[] = {
 static struct ebml_element_desc ne_segment_elements[] = {
   E_MASTER(ID_SEEK_HEAD, TYPE_MASTER, struct segment, seek_head),
   E_SINGLE_MASTER(ID_INFO, TYPE_MASTER, struct segment, info),
-  E_MASTER(ID_CLUSTER, TYPE_MASTER, struct segment, cluster),
+  E_SUSPEND(ID_CLUSTER, TYPE_MASTER),
   E_SINGLE_MASTER(ID_TRACKS, TYPE_MASTER, struct segment, tracks),
   E_SINGLE_MASTER(ID_CUES, TYPE_MASTER, struct segment, cues),
   E_LAST
@@ -517,26 +556,41 @@ static struct ebml_element_desc ne_top_level_elements[] = {
 static struct pool_ctx *
 ne_pool_init(void)
 {
-  return h_malloc(sizeof(struct pool_ctx));
+  return calloc(1, sizeof(struct pool_ctx));
 }
 
 static void
 ne_pool_destroy(struct pool_ctx * pool)
 {
-  h_free(pool);
+  struct pool_node * node = pool->head;
+  while (node) {
+    struct pool_node * old = node;
+    node = node->next;
+    free(old->data);
+    free(old);
+  }
+  free(pool);
 }
 
 static void *
 ne_pool_alloc(size_t size, struct pool_ctx * pool)
 {
-  void * p;
+  struct pool_node * node;
 
-  p = h_malloc(size);
-  if (!p)
+  node = calloc(1, sizeof(*node));
+  if (!node)
     return NULL;
-  hattach(p, pool);
-  memset(p, 0, size);
-  return p;
+
+  node->data = calloc(1, size);
+  if (!node->data) {
+    free(node);
+    return NULL;
+  }
+
+  node->next = pool->head;
+  pool->head = node;
+
+  return node->data;
 }
 
 static void *
@@ -865,7 +919,6 @@ ne_ctx_save(nestegg * ctx, struct saved_state * s)
   s->stream_offset = ne_io_tell(ctx->io);
   if (s->stream_offset < 0)
     return -1;
-  s->ancestor = ctx->ancestor;
   s->last_id = ctx->last_id;
   s->last_size = ctx->last_size;
   s->last_valid = ctx->last_valid;
@@ -877,10 +930,11 @@ ne_ctx_restore(nestegg * ctx, struct saved_state * s)
 {
   int r;
 
+  if (s->stream_offset < 0)
+    return -1;
   r = ne_io_seek(ctx->io, s->stream_offset, NESTEGG_SEEK_SET);
   if (r != 0)
     return -1;
-  ctx->ancestor = s->ancestor;
   ctx->last_id = s->last_id;
   ctx->last_size = s->last_size;
   ctx->last_valid = s->last_valid;
@@ -1007,9 +1061,6 @@ ne_read_simple(nestegg * ctx, struct ebml_element_desc * desc, size_t length)
   case TYPE_FLOAT:
     r = ne_read_float(ctx->io, &storage->v.f, length);
     break;
-  case TYPE_INT:
-    r = ne_read_int(ctx->io, &storage->v.i, length);
-    break;
   case TYPE_STRING:
     r = ne_read_string(ctx, &storage->v.s, length);
     break;
@@ -1038,8 +1089,7 @@ ne_parse(nestegg * ctx, struct ebml_element_desc * top_level, int64_t max_offset
   uint64_t id, size, peeked_id;
   struct ebml_element_desc * element;
 
-  if (!ctx->ancestor)
-    return -1;
+  assert(ctx->ancestor);
 
   for (;;) {
     if (max_offset > 0 && ne_io_tell(ctx->io) >= max_offset) {
@@ -1055,7 +1105,7 @@ ne_parse(nestegg * ctx, struct ebml_element_desc * top_level, int64_t max_offset
     element = ne_find_element(id, ctx->ancestor->node);
     if (element) {
       if (element->flags & DESC_FLAG_SUSPEND) {
-        assert(element->type == TYPE_BINARY);
+        assert(element->id == ID_CLUSTER && element->type == TYPE_MASTER);
         ctx->log(ctx, NESTEGG_LOG_DEBUG, "suspend parse at %llx", id);
         r = 1;
         break;
@@ -1115,6 +1165,55 @@ ne_parse(nestegg * ctx, struct ebml_element_desc * top_level, int64_t max_offset
       ne_ctx_pop(ctx);
 
   return r;
+}
+
+static int
+ne_read_block_encryption(nestegg * ctx, struct track_entry const * entry,
+                         uint64_t * encoding_type, uint64_t * encryption_algo,
+                         uint64_t * encryption_mode)
+{
+  struct content_encoding * encoding;
+  struct content_encryption * encryption;
+  struct content_enc_aes_settings * aes_settings;
+
+  *encoding_type = 0;
+  if (entry->content_encodings.content_encoding.head) {
+    encoding = entry->content_encodings.content_encoding.head->data;
+    if (ne_get_uint(encoding->content_encoding_type, encoding_type) != 0)
+      return -1;
+
+    if (*encoding_type == NESTEGG_ENCODING_ENCRYPTION) {
+      /* Metadata states content is encrypted */
+      if (!encoding->content_encryption.head)
+        return -1;
+
+      encryption = encoding->content_encryption.head->data;
+      if (ne_get_uint(encryption->content_enc_algo, encryption_algo) != 0) {
+        ctx->log(ctx, NESTEGG_LOG_ERROR, "No ContentEncAlgo element found");
+        return -1;
+      }
+
+      if (*encryption_algo != CONTENT_ENC_ALGO_AES) {
+        ctx->log(ctx, NESTEGG_LOG_ERROR, "Disallowed ContentEncAlgo used");
+        return -1;
+      }
+
+      if (!encryption->content_enc_aes_settings.head) {
+        ctx->log(ctx, NESTEGG_LOG_ERROR, "No ContentEncAESSettings element found");
+        return -1;
+      }
+
+      aes_settings = encryption->content_enc_aes_settings.head->data;
+      *encryption_mode = AES_SETTINGS_CIPHER_CTR;
+      ne_get_uint(aes_settings->aes_settings_cipher_mode, encryption_mode);
+
+      if (*encryption_mode != AES_SETTINGS_CIPHER_CTR) {
+        ctx->log(ctx, NESTEGG_LOG_ERROR, "Disallowed AESSettingsCipherMode used");
+        return -1;
+      }
+    }
+  }
+  return 1;
 }
 
 static int
@@ -1266,13 +1365,14 @@ ne_read_block(nestegg * ctx, uint64_t block_id, uint64_t block_size, nestegg_pac
   int r;
   int64_t timecode, abs_timecode;
   nestegg_packet * pkt;
-  struct cluster * cluster;
   struct frame * f, * last;
   struct track_entry * entry;
   double track_scale;
-  uint64_t track_number, length, frame_sizes[256], cluster_tc, flags, frames, tc_scale, total;
+  uint64_t track_number, length, frame_sizes[256], cluster_tc, flags, frames, tc_scale, total,
+           encoding_type, encryption_algo, encryption_mode;
   unsigned int i, lacing, track;
-  size_t consumed = 0;
+  uint8_t signal_byte, keyframe = NESTEGG_PACKET_HAS_KEYFRAME_UNKNOWN;
+  size_t consumed = 0, data_size, encryption_size;
 
   *data = NULL;
 
@@ -1301,6 +1401,12 @@ ne_read_block(nestegg * ctx, uint64_t block_id, uint64_t block_size, nestegg_pac
   consumed += 1;
 
   frames = 0;
+
+  /* Simple blocks have an explicit flag for if the contents a keyframes*/
+  if (block_id == ID_SIMPLE_BLOCK)
+    keyframe = (flags & SIMPLE_BLOCK_FLAGS_KEYFRAME) == SIMPLE_BLOCK_FLAGS_KEYFRAME ?
+                                                        NESTEGG_PACKET_HAS_KEYFRAME_TRUE :
+                                                        NESTEGG_PACKET_HAS_KEYFRAME_FALSE;
 
   /* Flags are different between Block and SimpleBlock, but lacing is
      encoded the same way. */
@@ -1363,14 +1469,25 @@ ne_read_block(nestegg * ctx, uint64_t block_id, uint64_t block_size, nestegg_pac
   if (!entry)
     return -1;
 
+  r = ne_read_block_encryption(ctx, entry, &encoding_type, &encryption_algo, &encryption_mode);
+  if (r != 1)
+    return r;
+
+  /* Encryption does not support lacing */
+  if (lacing != LACING_NONE && encoding_type == NESTEGG_ENCODING_ENCRYPTION) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "Encrypted blocks may not also be laced");
+    return -1;
+  }
+
   track_scale = 1.0;
 
   tc_scale = ne_get_timecode_scale(ctx);
-
-  assert(ctx->segment.cluster.tail->id == ID_CLUSTER);
-  cluster = ctx->segment.cluster.tail->data;
-  if (ne_get_uint(cluster->timecode, &cluster_tc) != 0)
+  if (tc_scale == 0)
     return -1;
+
+  if (!ctx->read_cluster_timecode)
+    return -1;
+  cluster_tc = ctx->cluster_timecode;
 
   abs_timecode = timecode + cluster_tc;
   if (abs_timecode < 0)
@@ -1381,6 +1498,7 @@ ne_read_block(nestegg * ctx, uint64_t block_id, uint64_t block_size, nestegg_pac
     return -1;
   pkt->track = track;
   pkt->timecode = abs_timecode * tc_scale * track_scale;
+  pkt->keyframe = keyframe;
 
   ctx->log(ctx, NESTEGG_LOG_DEBUG, "%sblock t %lld pts %f f %llx frames: %llu",
            block_id == ID_BLOCK ? "" : "simple", pkt->track, pkt->timecode / 1e9, flags, frames);
@@ -1396,19 +1514,69 @@ ne_read_block(nestegg * ctx, uint64_t block_id, uint64_t block_size, nestegg_pac
       nestegg_free_packet(pkt);
       return -1;
     }
-    f->data = ne_alloc(frame_sizes[i]);
+    /* Parse encryption */
+    if (encoding_type == NESTEGG_ENCODING_ENCRYPTION) {
+      r = ne_io_read(ctx->io, &signal_byte, SIGNAL_BYTE_SIZE);
+      if (r != 1) {
+        free(f);
+        nestegg_free_packet(pkt);
+        return r;
+      }
+      f->frame_encryption = ne_alloc(sizeof(*f->frame_encryption));
+      if (!f->frame_encryption) {
+        free(f);
+        nestegg_free_packet(pkt);
+        return -1;
+      }
+      f->frame_encryption->signal_byte = signal_byte;
+      if ((signal_byte & ENCRYPTED_BIT_MASK) == PACKET_ENCRYPTED) {
+        f->frame_encryption->iv = ne_alloc(IV_SIZE);
+        if (!f->frame_encryption->iv) {
+          free(f->frame_encryption);
+          free(f);
+          nestegg_free_packet(pkt);
+          return -1;
+        }
+        r = ne_io_read(ctx->io, f->frame_encryption->iv, IV_SIZE);
+        if (r != 1) {
+          free(f->frame_encryption->iv);
+          free(f->frame_encryption);
+          free(f);
+          nestegg_free_packet(pkt);
+          return r;
+        }
+        f->frame_encryption->length = IV_SIZE;
+        encryption_size = SIGNAL_BYTE_SIZE + IV_SIZE;
+      } else {
+        f->frame_encryption->iv = NULL;
+        f->frame_encryption->length = 0;
+        encryption_size = SIGNAL_BYTE_SIZE;
+      }
+    } else {
+      f->frame_encryption = NULL;
+      encryption_size = 0;
+    }
+    data_size = frame_sizes[i] - encryption_size;
+    /* Encryption parsed */
+    f->data = ne_alloc(data_size);
     if (!f->data) {
+      if (f->frame_encryption)
+        free(f->frame_encryption->iv);
+      free(f->frame_encryption);
       free(f);
       nestegg_free_packet(pkt);
       return -1;
     }
-    f->length = frame_sizes[i];
-    r = ne_io_read(ctx->io, f->data, frame_sizes[i]);
+    f->length = data_size;
+    r = ne_io_read(ctx->io, f->data, data_size);
     if (r != 1) {
+      if (f->frame_encryption)
+        free(f->frame_encryption->iv);
+      free(f->frame_encryption);
       free(f->data);
       free(f);
       nestegg_free_packet(pkt);
-      return -1;
+      return r;
     }
 
     if (!last)
@@ -1424,71 +1592,7 @@ ne_read_block(nestegg * ctx, uint64_t block_id, uint64_t block_size, nestegg_pac
 }
 
 static int
-ne_read_block_duration(nestegg * ctx, nestegg_packet * pkt)
-{
-  int r;
-  uint64_t id, size;
-  struct ebml_element_desc * element;
-  struct ebml_type * storage;
-
-  if (!ctx->ancestor)
-    return -1;
-
-  r = ne_peek_element(ctx, &id, &size);
-  if (r != 1)
-    return r;
-
-  if (id != ID_BLOCK_DURATION)
-    return 1;
-
-  element = ne_find_element(id, ctx->ancestor->node);
-  if (!element)
-    return 1;
-
-  r = ne_read_simple(ctx, element, size);
-  if (r != 1)
-    return r;
-
-  storage = (struct ebml_type *) (ctx->ancestor->data + element->offset);
-  pkt->duration = storage->v.i * ne_get_timecode_scale(ctx);
-
-  return 1;
-}
-
-static int
-ne_read_discard_padding(nestegg * ctx, nestegg_packet * pkt)
-{
-  int r;
-  uint64_t id, size;
-  struct ebml_element_desc * element;
-  struct ebml_type * storage;
-
-  if (!ctx->ancestor)
-    return -1;
-
-  r = ne_peek_element(ctx, &id, &size);
-  if (r != 1)
-    return r;
-
-  if (id != ID_DISCARD_PADDING)
-    return 1;
-
-  element = ne_find_element(id, ctx->ancestor->node);
-  if (!element)
-    return 1;
-
-  r = ne_read_simple(ctx, element, size);
-  if (r != 1)
-    return r;
-
-  storage = (struct ebml_type *) (ctx->ancestor->data + element->offset);
-  pkt->discard_padding = storage->v.i;
-
-  return 1;
-}
-
-static int
-ne_read_block_additions(nestegg * ctx, nestegg_packet * pkt)
+ne_read_block_additions(nestegg * ctx, uint64_t block_size, struct block_additional ** pkt_block_additional)
 {
   int r;
   uint64_t id, size, data_size;
@@ -1498,24 +1602,9 @@ ne_read_block_additions(nestegg * ctx, nestegg_packet * pkt)
   struct block_additional * block_additional;
   uint64_t add_id;
 
-  assert(pkt != NULL);
-  assert(pkt->block_additional == NULL);
+  assert(*pkt_block_additional == NULL);
 
-  if (!ctx->ancestor)
-    return -1;
-
-  r = ne_peek_element(ctx, &id, &size);
-  if (r != 1)
-    return r;
-
-  if (id != ID_BLOCK_ADDITIONS)
-    return 1;
-
-  /* This makes ne_read_element read the next element instead of returning
-     information about the already "peeked" one. */
-  ctx->last_valid = 0;
-
-  block_additions_end = ne_io_tell(ctx->io) + size;
+  block_additions_end = ne_io_tell(ctx->io) + block_size;
 
   while (ne_io_tell(ctx->io) < block_additions_end) {
     add_id = 1;
@@ -1523,14 +1612,16 @@ ne_read_block_additions(nestegg * ctx, nestegg_packet * pkt)
     has_data = 0;
     r = ne_read_element(ctx, &id, &size);
     if (r != 1)
-      return -1;
+      return r;
 
     if (id != ID_BLOCK_MORE) {
       /* We don't know what this element is, so skip over it */
       if (id != ID_VOID && id != ID_CRC32)
         ctx->log(ctx, NESTEGG_LOG_DEBUG,
                  "unknown element %llx in BlockAdditions", id);
-      ne_io_read_skip(ctx->io, size);
+      r = ne_io_read_skip(ctx->io, size);
+      if (r != 1)
+        return r;
       continue;
     }
 
@@ -1582,7 +1673,11 @@ ne_read_block_additions(nestegg * ctx, nestegg_packet * pkt)
         if (id != ID_VOID && id != ID_CRC32)
           ctx->log(ctx, NESTEGG_LOG_DEBUG,
                    "unknown element %llx in BlockMore", id);
-        ne_io_read_skip(ctx->io, size);
+        r = ne_io_read_skip(ctx->io, size);
+        if (r != 1) {
+          free(data);
+          return r;
+        }
       }
     }
 
@@ -1593,11 +1688,11 @@ ne_read_block_additions(nestegg * ctx, nestegg_packet * pkt)
     }
 
     block_additional = ne_alloc(sizeof(*block_additional));
-    block_additional->next = pkt->block_additional;
+    block_additional->next = *pkt_block_additional;
     block_additional->id = add_id;
     block_additional->data = data;
     block_additional->length = data_size;
-    pkt->block_additional = block_additional;
+    *pkt_block_additional = block_additional;
   }
 
   return 1;
@@ -1696,14 +1791,6 @@ ne_find_cue_point_for_tstamp(nestegg * ctx, struct ebml_list_node * cue_point, u
   return prev;
 }
 
-static int
-ne_is_suspend_element(uint64_t id)
-{
-  if (id == ID_SIMPLE_BLOCK || id == ID_BLOCK)
-    return 1;
-  return 0;
-}
-
 static void
 ne_null_log_callback(nestegg * ctx, unsigned int severity, char const * fmt, ...)
 {
@@ -1748,7 +1835,7 @@ ne_init_cue_points(nestegg * ctx, int64_t max_offset)
     if (id != ID_CUES)
       return -1;
 
-    ctx->ancestor = NULL;
+    assert(ctx->ancestor == NULL);
     if (ne_ctx_push(ctx, ne_top_level_elements, ctx) < 0)
       return -1;
     if (ne_ctx_push(ctx, ne_segment_elements, &ctx->segment) < 0)
@@ -1834,69 +1921,8 @@ ne_buffer_tell(void * userdata)
 }
 
 static int
-ne_match_webm(nestegg_io io, int64_t max_offset)
+ne_context_new(nestegg ** context, nestegg_io io, nestegg_log callback)
 {
-  int r;
-  uint64_t id;
-  char * doctype;
-  nestegg * ctx;
-
-  if (!(io.read && io.seek && io.tell))
-    return -1;
-
-  ctx = ne_alloc(sizeof(*ctx));
-  if (!ctx)
-    return -1;
-
-  ctx->io = ne_alloc(sizeof(*ctx->io));
-  if (!ctx->io) {
-    nestegg_destroy(ctx);
-    return -1;
-  }
-  *ctx->io = io;
-  ctx->alloc_pool = ne_pool_init();
-  if (!ctx->alloc_pool) {
-    nestegg_destroy(ctx);
-    return -1;
-  }
-  ctx->log = ne_null_log_callback;
-
-  r = ne_peek_element(ctx, &id, NULL);
-  if (r != 1) {
-    nestegg_destroy(ctx);
-    return 0;
-  }
-
-  if (id != ID_EBML) {
-    nestegg_destroy(ctx);
-    return 0;
-  }
-
-  ne_ctx_push(ctx, ne_top_level_elements, ctx);
-
-  /* we don't check the return value of ne_parse, that might fail because
-     max_offset is not on a valid element end point. We only want to check
-     the EBML ID and that the doctype is "webm". */
-  ne_parse(ctx, NULL, max_offset);
-
-  if (ne_get_string(ctx->ebml.doctype, &doctype) != 0 ||
-      strcmp(doctype, "webm") != 0) {
-    nestegg_destroy(ctx);
-    return 0;
-  }
-
-  nestegg_destroy(ctx);
-
-  return 1;
-}
-
-int
-nestegg_init(nestegg ** context, nestegg_io io, nestegg_log callback, int64_t max_offset)
-{
-  int r;
-  uint64_t id, version, docversion;
-  struct ebml_list_node * track;
-  char * doctype;
   nestegg * ctx;
 
   if (!(io.read && io.seek && io.tell))
@@ -1922,6 +1948,64 @@ nestegg_init(nestegg ** context, nestegg_io io, nestegg_log callback, int64_t ma
   if (!ctx->log)
     ctx->log = ne_null_log_callback;
 
+  *context = ctx;
+  return 0;
+}
+
+static int
+ne_match_webm(nestegg_io io, int64_t max_offset)
+{
+  int r;
+  uint64_t id;
+  char * doctype;
+  nestegg * ctx;
+
+  if (ne_context_new(&ctx, io, NULL) != 0)
+    return -1;
+
+  r = ne_peek_element(ctx, &id, NULL);
+  if (r != 1) {
+    nestegg_destroy(ctx);
+    return 0;
+  }
+
+  if (id != ID_EBML) {
+    nestegg_destroy(ctx);
+    return 0;
+  }
+
+  ne_ctx_push(ctx, ne_top_level_elements, ctx);
+
+  /* we don't check the return value of ne_parse, that might fail because
+     max_offset is not on a valid element end point. We only want to check
+     the EBML ID and that the doctype is "webm". */
+  ne_parse(ctx, NULL, max_offset);
+  while (ctx->ancestor)
+    ne_ctx_pop(ctx);
+
+  if (ne_get_string(ctx->ebml.doctype, &doctype) != 0 ||
+      strcmp(doctype, "webm") != 0) {
+    nestegg_destroy(ctx);
+    return 0;
+  }
+
+  nestegg_destroy(ctx);
+
+  return 1;
+}
+
+int
+nestegg_init(nestegg ** context, nestegg_io io, nestegg_log callback, int64_t max_offset)
+{
+  int r;
+  uint64_t id, version, docversion;
+  struct ebml_list_node * track;
+  char * doctype;
+  nestegg * ctx;
+
+  if (ne_context_new(&ctx, io, callback) != 0)
+    return -1;
+
   r = ne_peek_element(ctx, &id, NULL);
   if (r != 1) {
     nestegg_destroy(ctx);
@@ -1938,6 +2022,8 @@ nestegg_init(nestegg ** context, nestegg_io io, nestegg_log callback, int64_t ma
   ne_ctx_push(ctx, ne_top_level_elements, ctx);
 
   r = ne_parse(ctx, NULL, max_offset);
+  while (ctx->ancestor)
+    ne_ctx_pop(ctx);
 
   if (r != 1) {
     nestegg_destroy(ctx);
@@ -1978,6 +2064,12 @@ nestegg_init(nestegg ** context, nestegg_io io, nestegg_log callback, int64_t ma
     track = track->next;
   }
 
+  r = ne_ctx_save(ctx, &ctx->saved);
+  if (r != 0) {
+    nestegg_destroy(ctx);
+    return -1;
+  }
+
   *context = ctx;
 
   return 0;
@@ -1986,8 +2078,7 @@ nestegg_init(nestegg ** context, nestegg_io io, nestegg_log callback, int64_t ma
 void
 nestegg_destroy(nestegg * ctx)
 {
-  while (ctx->ancestor)
-    ne_ctx_pop(ctx);
+  assert(ctx->ancestor == NULL);
   ne_pool_destroy(ctx->alloc_pool);
   free(ctx->io);
   free(ctx);
@@ -2003,6 +2094,13 @@ nestegg_duration(nestegg * ctx, uint64_t * duration)
     return -1;
 
   tc_scale = ne_get_timecode_scale(ctx);
+  if (tc_scale == 0)
+    return -1;
+
+  if (unscaled_duration != unscaled_duration ||
+      unscaled_duration < 0 || unscaled_duration > (double) UINT64_MAX ||
+      (uint64_t) unscaled_duration > UINT64_MAX / tc_scale)
+    return -1;
 
   *duration = (uint64_t) (unscaled_duration * tc_scale);
   return 0;
@@ -2012,6 +2110,8 @@ int
 nestegg_tstamp_scale(nestegg * ctx, uint64_t * scale)
 {
   *scale = ne_get_timecode_scale(ctx);
+  if (*scale == 0)
+    return -1;
   return 0;
 }
 
@@ -2054,6 +2154,8 @@ nestegg_get_cue_point(nestegg * ctx, unsigned int cluster_num, int64_t max_offse
   nestegg_track_count(ctx, &track_count);
 
   tc_scale = ne_get_timecode_scale(ctx);
+  if (tc_scale == 0)
+    return -1;
 
   while (cues_node && !range_obtained) {
     assert(cues_node->id == ID_CUE_POINT);
@@ -2107,16 +2209,7 @@ nestegg_offset_seek(nestegg * ctx, uint64_t offset)
     return -1;
   ctx->last_valid = 0;
 
-  while (ctx->ancestor)
-    ne_ctx_pop(ctx);
-
-  ne_ctx_push(ctx, ne_top_level_elements, ctx);
-  ne_ctx_push(ctx, ne_segment_elements, &ctx->segment);
-
-  ctx->log(ctx, NESTEGG_LOG_DEBUG, "seek: parsing cluster elements");
-  r = ne_parse(ctx, NULL, -1);
-  if (r != 1)
-    return -1;
+  assert(ctx->ancestor == NULL);
 
   return 0;
 }
@@ -2138,6 +2231,8 @@ nestegg_track_seek(nestegg * ctx, unsigned int track, uint64_t tstamp)
   }
 
   tc_scale = ne_get_timecode_scale(ctx);
+  if (tc_scale == 0)
+    return -1;
 
   cue_point = ne_find_cue_point_for_tstamp(ctx, ctx->segment.cues.cue_point.head,
                                            track, tc_scale, tstamp);
@@ -2151,12 +2246,9 @@ nestegg_track_seek(nestegg * ctx, unsigned int track, uint64_t tstamp)
   if (ne_get_uint(pos->cluster_position, &seek_pos) != 0)
     return -1;
 
-  /* Seek and set up parser state for segment-level element (Cluster). */
+  /* Seek to (we assume) the start of a Cluster element. */
   r = nestegg_offset_seek(ctx, ctx->segment_offset + seek_pos);
   if (r != 0)
-    return -1;
-
-  if (!ne_is_suspend_element(ctx->last_id))
     return -1;
 
   return 0;
@@ -2422,6 +2514,108 @@ nestegg_track_audio_params(nestegg * ctx, unsigned int track,
 }
 
 int
+nestegg_track_encoding(nestegg * ctx, unsigned int track)
+{
+  struct track_entry * entry;
+  struct content_encoding * encoding;
+  uint64_t encoding_value;
+
+  entry = ne_find_track_entry(ctx, track);
+  if (!entry) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "No track entry found");
+    return -1;
+  }
+
+  if (!entry->content_encodings.content_encoding.head) {
+    /* Default encoding is compression */
+    return NESTEGG_ENCODING_COMPRESSION;
+  }
+
+  encoding = entry->content_encodings.content_encoding.head->data;
+
+  encoding_value = NESTEGG_ENCODING_COMPRESSION;
+  ne_get_uint(encoding->content_encoding_type, &encoding_value);
+  if (encoding_value != NESTEGG_ENCODING_COMPRESSION && encoding_value != NESTEGG_ENCODING_ENCRYPTION) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "Invalid ContentEncoding element found");
+    return -1;
+  }
+
+  return encoding_value;
+}
+
+int
+nestegg_track_content_enc_key_id(nestegg * ctx, unsigned int track, unsigned char const ** content_enc_key_id,
+                                 size_t * content_enc_key_id_length)
+{
+  struct track_entry * entry;
+  struct content_encoding * encoding;
+  struct content_encryption * encryption;
+  struct content_enc_aes_settings * aes_settings;
+  struct nestegg_encryption_params;
+  uint64_t value;
+  struct ebml_binary enc_key_id;
+
+  entry = ne_find_track_entry(ctx, track);
+  if (!entry) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "No track entry found");
+    return -1;
+  }
+
+  if (!entry->content_encodings.content_encoding.head) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "No ContentEncoding element found");
+    return -1;
+  }
+
+  encoding = entry->content_encodings.content_encoding.head->data;
+
+  value = 0;
+  ne_get_uint(encoding->content_encoding_type, &value);
+  if (value != NESTEGG_ENCODING_ENCRYPTION) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "Disallowed ContentEncodingType found");
+    return -1;
+  }
+
+  if (!encoding->content_encryption.head) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "No ContentEncryption element found");
+    return -1;
+  }
+
+  encryption = encoding->content_encryption.head->data;
+
+  value = 0;
+  ne_get_uint(encryption->content_enc_algo, &value);
+
+  if (value != CONTENT_ENC_ALGO_AES) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "Disallowed ContentEncAlgo found");
+    return -1;
+  }
+
+  if (!encryption->content_enc_aes_settings.head) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "No ContentEncAesSettings element found");
+    return -1;
+  }
+
+  aes_settings = encryption->content_enc_aes_settings.head->data;
+  value = AES_SETTINGS_CIPHER_CTR;
+  ne_get_uint(aes_settings->aes_settings_cipher_mode, &value);
+
+  if (value != AES_SETTINGS_CIPHER_CTR) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "Disallowed AESSettingCipherMode used");
+    return -1;
+  }
+
+  if (ne_get_binary(encryption->content_enc_key_id, &enc_key_id) != 0) {
+    ctx->log(ctx, NESTEGG_LOG_ERROR, "Could not retrieve track ContentEncKeyId");
+    return -1;
+  }
+
+  *content_enc_key_id = enc_key_id.data;
+  *content_enc_key_id_length = enc_key_id.length;
+
+  return 0;
+}
+
+int
 nestegg_track_default_duration(nestegg * ctx, unsigned int track,
                                uint64_t * duration)
 {
@@ -2440,6 +2634,13 @@ nestegg_track_default_duration(nestegg * ctx, unsigned int track,
 }
 
 int
+nestegg_read_reset(nestegg * ctx)
+{
+  assert(ctx->ancestor == NULL);
+  return ne_ctx_restore(ctx, &ctx->saved);
+}
+
+int
 nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
 {
   int r, read_block = 0;
@@ -2447,49 +2648,192 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
 
   *pkt = NULL;
 
-  for (;;) {
-    r = ne_peek_element(ctx, &id, &size);
+  assert(ctx->ancestor == NULL);
+
+  /* Prepare for read_reset to resume parsing from this point upon error. */
+  r = ne_ctx_save(ctx, &ctx->saved);
+  if (r != 0)
+    return -1;
+
+  while (!read_block) {
+    r = ne_read_element(ctx, &id, &size);
     if (r != 1)
       return r;
 
-    /* Any DESC_FLAG_SUSPEND fields must be handled here. */
-    if (ne_is_suspend_element(id)) {
+    switch (id) {
+    case ID_CLUSTER: {
       r = ne_read_element(ctx, &id, &size);
       if (r != 1)
         return r;
 
-      /* The only DESC_FLAG_SUSPEND fields are Blocks and SimpleBlocks, which we
-         handle directly. */
+      /* Timecode must be the first element in a Cluster, per spec. */
+      if (id != ID_TIMECODE)
+        return -1;
+
+      r = ne_read_uint(ctx->io, &ctx->cluster_timecode, size);
+      if (r != 1)
+        return r;
+      ctx->read_cluster_timecode = 1;
+      break;
+    }
+    case ID_SIMPLE_BLOCK:
       r = ne_read_block(ctx, id, size, pkt);
       if (r != 1)
         return r;
 
       read_block = 1;
+      break;
+    case ID_BLOCK_GROUP: {
+      int64_t block_group_end;
+      uint64_t block_duration = 0;
+      int read_block_duration = 0;
+      int64_t discard_padding = 0;
+      int read_discard_padding = 0;
+      int64_t reference_block = 0;
+      int read_reference_block = 0;
+      struct block_additional * block_additional = NULL;
+      uint64_t tc_scale;
 
-      /* These are not valid elements of a SimpleBlock, only a full-blown
-         Block. */
-      if (id != ID_SIMPLE_BLOCK) {
-        r = ne_read_block_duration(ctx, *pkt);
-        if (r < 0)
-          return r;
+      block_group_end = ne_io_tell(ctx->io) + size;
 
-        r = ne_read_discard_padding(ctx, *pkt);
-        if (r < 0)
+      /* Read the entire BlockGroup manually. */
+      while (ne_io_tell(ctx->io) < block_group_end) {
+        r = ne_read_element(ctx, &id, &size);
+        if (r != 1) {
+          free(block_additional);
+          if (*pkt) {
+            nestegg_free_packet(*pkt);
+            *pkt = NULL;
+          }
           return r;
+        }
 
-        r = ne_read_block_additions(ctx, *pkt);
-        if (r < 0)
-          return r;
+        switch (id) {
+        case ID_BLOCK: {
+          r = ne_read_block(ctx, id, size, pkt);
+          if (r != 1) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return r;
+          }
+
+          read_block = 1;
+          break;
+        }
+        case ID_BLOCK_DURATION: {
+          r = ne_read_uint(ctx->io, &block_duration, size);
+          if (r != 1) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return r;
+          }
+          tc_scale = ne_get_timecode_scale(ctx);
+          if (tc_scale == 0) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return -1;
+          }
+          block_duration *= tc_scale;
+          read_block_duration = 1;
+          break;
+        }
+        case ID_DISCARD_PADDING: {
+          r = ne_read_int(ctx->io, &discard_padding, size);
+          if (r != 1) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return r;
+          }
+          read_discard_padding = 1;
+          break;
+        }
+        case ID_BLOCK_ADDITIONS: {
+          /* There should only be one BlockAdditions; treat multiple as an error. */
+          if (block_additional) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return -1;
+          }
+          r = ne_read_block_additions(ctx, size, &block_additional);
+          if (r != 1) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return r;
+          }
+          break;
+        }
+        case ID_REFERENCE_BLOCK: {
+          r = ne_read_int(ctx->io, &reference_block, size);
+          if (r != 1) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return r;
+          }
+          read_reference_block = 1;
+          break;
+        }
+        default:
+          /* We don't know what this element is, so skip over it */
+          if (id != ID_VOID && id != ID_CRC32)
+            ctx->log(ctx, NESTEGG_LOG_DEBUG,
+                     "read_packet: unknown element %llx in BlockGroup", id);
+          r = ne_io_read_skip(ctx->io, size);
+          if (r != 1) {
+            free(block_additional);
+            if (*pkt) {
+              nestegg_free_packet(*pkt);
+              *pkt = NULL;
+            }
+            return r;
+          }
+        }
       }
 
-      /* If we have read a block and hit EOS when reading optional block
-         subelements, don't report EOS until the next call. */
-      return read_block;
+      assert(read_block == (*pkt != NULL));
+      if (*pkt) {
+        (*pkt)->duration = block_duration;
+        (*pkt)->read_duration = read_block_duration;
+        (*pkt)->discard_padding = discard_padding;
+        (*pkt)->read_discard_padding = read_discard_padding;
+        (*pkt)->reference_block = reference_block;
+        (*pkt)->read_reference_block = read_reference_block;
+        (*pkt)->block_additional = block_additional;
+        if ((*pkt)->read_reference_block)
+          /* If a packet has a reference block it contains
+             predictive frames and no keyframes */
+          (*pkt)->keyframe = NESTEGG_PACKET_HAS_KEYFRAME_FALSE;
+      } else {
+        free(block_additional);
+      }
+      break;
     }
-
-    r = ne_parse(ctx, NULL, -1);
-    if (r != 1)
-      return r;
+    default:
+      ctx->log(ctx, NESTEGG_LOG_DEBUG, "read_packet: unknown element %llx", id);
+      r = ne_io_read_skip(ctx->io, size);
+      if (r != 1)
+        return r;
+    }
   }
 
   return 1;
@@ -2504,6 +2848,10 @@ nestegg_free_packet(nestegg_packet * pkt)
   while (pkt->frame) {
     frame = pkt->frame;
     pkt->frame = frame->next;
+    if (frame->frame_encryption) {
+      free(frame->frame_encryption->iv);
+    }
+    free(frame->frame_encryption);
     free(frame->data);
     free(frame);
   }
@@ -2516,6 +2864,12 @@ nestegg_free_packet(nestegg_packet * pkt)
   }
 
   free(pkt);
+}
+
+int
+nestegg_packet_has_keyframe(nestegg_packet * pkt)
+{
+  return pkt->keyframe;
 }
 
 int
@@ -2535,6 +2889,8 @@ nestegg_packet_tstamp(nestegg_packet * pkt, uint64_t * tstamp)
 int
 nestegg_packet_duration(nestegg_packet * pkt, uint64_t * duration)
 {
+  if (!pkt->read_duration)
+    return -1;
   *duration = pkt->duration;
   return 0;
 }
@@ -2542,7 +2898,18 @@ nestegg_packet_duration(nestegg_packet * pkt, uint64_t * duration)
 int
 nestegg_packet_discard_padding(nestegg_packet * pkt, int64_t * discard_padding)
 {
+  if (!pkt->read_discard_padding)
+    return -1;
   *discard_padding = pkt->discard_padding;
+  return 0;
+}
+
+int
+nestegg_packet_reference_block(nestegg_packet * pkt, int64_t * reference_block)
+{
+  if (!pkt->read_reference_block)
+    return -1;
+  *reference_block = pkt->reference_block;
   return 0;
 }
 
@@ -2606,6 +2973,50 @@ nestegg_packet_additional_data(nestegg_packet * pkt, unsigned int id,
 }
 
 int
+nestegg_packet_encryption(nestegg_packet * pkt)
+{
+  struct frame * f = pkt->frame;
+  unsigned char encrypted_bit;
+
+  if (!f->frame_encryption)
+    return NESTEGG_PACKET_HAS_SIGNAL_BYTE_FALSE;
+
+  /* Should never have parsed blocks with both encryption and lacing */
+  assert(f->next == NULL);
+
+  encrypted_bit = f->frame_encryption->signal_byte & ENCRYPTED_BIT_MASK;
+
+  if (encrypted_bit != PACKET_ENCRYPTED)
+    return NESTEGG_PACKET_HAS_SIGNAL_BYTE_UNENCRYPTED;
+
+  return NESTEGG_PACKET_HAS_SIGNAL_BYTE_ENCRYPTED;
+}
+
+int
+nestegg_packet_iv(nestegg_packet * pkt, unsigned char const ** iv, size_t * length)
+{
+  struct frame * f = pkt->frame;
+  unsigned char encrypted_bit;
+
+  *iv = NULL;
+  *length = 0;
+  if (!f->frame_encryption)
+    return -1;
+
+  /* Should never have parsed blocks with both encryption and lacing */
+  assert(f->next == NULL);
+
+  encrypted_bit = f->frame_encryption->signal_byte & ENCRYPTED_BIT_MASK;
+
+  if (encrypted_bit != PACKET_ENCRYPTED)
+    return 0;
+
+  *iv = f->frame_encryption->iv;
+  *length = f->frame_encryption->length;
+  return 0;
+}
+
+int
 nestegg_has_cues(nestegg * ctx)
 {
   return ctx->segment.cues.cue_point.head ||
@@ -2627,13 +3038,4 @@ nestegg_sniff(unsigned char const * buffer, size_t length)
   io.tell = ne_buffer_tell;
   io.userdata = &userdata;
   return ne_match_webm(io, length);
-}
-
-/* From halloc.c */
-int halloc_set_allocator(realloc_t realloc_func);
-
-int
-nestegg_set_halloc_func(void * (* realloc_func)(void *, size_t))
-{
-  return halloc_set_allocator(realloc_func);
 }

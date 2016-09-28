@@ -36,8 +36,8 @@ ContentHostTexture::Composite(LayerComposite* aLayer,
                               EffectChain& aEffectChain,
                               float aOpacity,
                               const gfx::Matrix4x4& aTransform,
-                              const Filter& aFilter,
-                              const Rect& aClipRect,
+                              const SamplingFilter aSamplingFilter,
+                              const IntRect& aClipRect,
                               const nsIntRegion* aVisibleRegion)
 {
   NS_ASSERTION(aVisibleRegion, "Requires a visible region");
@@ -61,7 +61,7 @@ ContentHostTexture::Composite(LayerComposite* aLayer,
 
   RefPtr<TexturedEffect> effect = CreateTexturedEffect(mTextureSource.get(),
                                                        mTextureSourceOnWhite.get(),
-                                                       aFilter, true,
+                                                       aSamplingFilter, true,
                                                        GetRenderState());
   if (!effect) {
     return;
@@ -456,7 +456,7 @@ ContentHostTexture::GetRenderState()
 }
 
 already_AddRefed<TexturedEffect>
-ContentHostTexture::GenEffect(const gfx::Filter& aFilter)
+ContentHostTexture::GenEffect(const gfx::SamplingFilter aSamplingFilter)
 {
   if (!mTextureHost) {
     return nullptr;
@@ -472,7 +472,7 @@ ContentHostTexture::GenEffect(const gfx::Filter& aFilter)
   }
   return CreateTexturedEffect(mTextureSource.get(),
                               mTextureSourceOnWhite.get(),
-                              aFilter, true,
+                              aSamplingFilter, true,
                               GetRenderState());
 }
 

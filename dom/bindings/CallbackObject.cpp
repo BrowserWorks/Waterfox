@@ -12,7 +12,6 @@
 #include "nsIScriptContext.h"
 #include "nsPIDOMWindow.h"
 #include "nsJSUtils.h"
-#include "nsIScriptSecurityManager.h"
 #include "xpcprivate.h"
 #include "WorkerPrivate.h"
 #include "nsGlobalWindow.h"
@@ -47,6 +46,27 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN(CallbackObject)
   NS_IMPL_CYCLE_COLLECTION_TRACE_JS_MEMBER_CALLBACK(mIncumbentJSGlobal)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
+void
+CallbackObject::Trace(JSTracer* aTracer)
+{
+  JS::TraceEdge(aTracer, &mCallback, "CallbackObject.mCallback");
+  JS::TraceEdge(aTracer, &mCreationStack, "CallbackObject.mCreationStack");
+  JS::TraceEdge(aTracer, &mIncumbentJSGlobal,
+                "CallbackObject.mIncumbentJSGlobal");
+}
+
+void
+CallbackObject::HoldJSObjectsIfMoreThanOneOwner()
+{
+  MOZ_ASSERT(mRefCnt.get() > 0);
+  if (mRefCnt.get() > 1) {
+    mozilla::HoldJSObjects(this);
+  } else {
+    // We can just forget all our stuff.
+    ClearJSReferences();
+  }
+}
+
 CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
                                      ErrorResult& aRv,
                                      const char* aExecutionReason,
@@ -80,27 +100,26 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
     // global to get a context. Everything here is simple getters that cannot
     // GC, so just paper over the necessary dataflow inversion.
     JS::AutoSuppressGCAnalysis nogc;
-    if (mIsMainThread) {
-      // Now get the global for this callback. Note that for the case of
-      // JS-implemented WebIDL we never have a window here.
-      nsGlobalWindow* win =
-        aIsJSImplementedWebIDL ? nullptr : xpc::WindowGlobalOrNull(realCallback);
-      if (win) {
-        MOZ_ASSERT(win->IsInnerWindow());
-        // We don't want to run script in windows that have been navigated away
-        // from.
-        if (!win->AsInner()->HasActiveDocument()) {
-          return;
-        }
-        globalObject = win;
-      } else {
-        // No DOM Window. Store the global.
-        JSObject* glob = js::GetGlobalForObjectCrossCompartment(realCallback);
-        globalObject = xpc::NativeGlobal(glob);
-        MOZ_ASSERT(globalObject);
+
+    // Now get the global for this callback. Note that for the case of
+    // JS-implemented WebIDL we never have a window here.
+    nsGlobalWindow* win = mIsMainThread && !aIsJSImplementedWebIDL
+                        ? xpc::WindowGlobalOrNull(realCallback)
+                        : nullptr;
+    if (win) {
+      MOZ_ASSERT(win->IsInnerWindow());
+      // We don't want to run script in windows that have been navigated away
+      // from.
+      if (!win->AsInner()->HasActiveDocument()) {
+        aRv.ThrowDOMException(NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+          NS_LITERAL_CSTRING("Refusing to execute function from window "
+                             "whose document is no longer active."));
+        return;
       }
+      globalObject = win;
     } else {
-      JSObject *global = js::GetGlobalForObjectCrossCompartment(realCallback);
+      // No DOM Window. Store the global.
+      JSObject* global = js::GetGlobalForObjectCrossCompartment(realCallback);
       globalObject = xpc::NativeGlobal(global);
       MOZ_ASSERT(globalObject);
     }
@@ -109,6 +128,9 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
     // on gaia-ui tests, probably because nsInProcessTabChildGlobal is returning
     // null in some kind of teardown state.
     if (!globalObject->GetGlobalJSObject()) {
+      aRv.ThrowDOMException(NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+        NS_LITERAL_CSTRING("Refusing to execute function from global which is "
+                           "being torn down."));
       return;
     }
 
@@ -125,6 +147,9 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
       // nsIGlobalObject has severed its reference to the JS global. Let's just
       // be safe here, so that nobody has to waste a day debugging gaia-ui tests.
       if (!incumbent->GetGlobalJSObject()) {
+      aRv.ThrowDOMException(NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+        NS_LITERAL_CSTRING("Refusing to execute function because our "
+                           "incumbent global is being torn down."));
         return;
       }
       mAutoIncumbentScript.emplace(incumbent);
@@ -147,10 +172,12 @@ CallbackObject::CallSetup::CallSetup(CallbackObject* aCallback,
     // Check that it's ok to run this callback at all.
     // Make sure to use realCallback to get the global of the callback object,
     // not the wrapper.
-    bool allowed = nsContentUtils::GetSecurityManager()->
-      ScriptAllowed(js::GetGlobalForObjectCrossCompartment(realCallback));
+    bool allowed = xpc::Scriptability::Get(realCallback).Allowed();
 
     if (!allowed) {
+      aRv.ThrowDOMException(NS_ERROR_DOM_NOT_SUPPORTED_ERR,
+        NS_LITERAL_CSTRING("Refusing to execute function from global in which "
+                           "script is disabled."));
       return;
     }
   }

@@ -407,9 +407,12 @@ InputQueue::MaybeRequestContentResponse(const RefPtr<AsyncPanZoomController>& aT
     waitForMainThread = true;
   }
   if (aBlock->AsTouchBlock() && gfxPrefs::TouchActionEnabled()) {
-    // TODO: once bug 1101628 is fixed, waitForMainThread should only be set
-    // to true if the APZCTM didn't know the touch-action behaviours for this
-    // block.
+    // waitForMainThread is set to true unconditionally here, but if the APZCTM
+    // has the touch-action behaviours for this block, it will set it
+    // immediately after we unwind out of this ReceiveInputEvent call. So even
+    // though we are scheduling the main-thread timeout, we might end up not
+    // waiting.
+    INPQ_LOG("waiting for main thread touch-action info on block %p\n", aBlock);
     waitForMainThread = true;
   }
   if (waitForMainThread) {
@@ -560,9 +563,10 @@ InputQueue::ScheduleMainThreadTimeout(const RefPtr<AsyncPanZoomController>& aTar
                                       CancelableBlockState* aBlock) {
   INPQ_LOG("scheduling main thread timeout for target %p\n", aTarget.get());
   aBlock->StartContentResponseTimer();
-  aTarget->PostDelayedTask(
-    NewRunnableMethod(this, &InputQueue::MainThreadTimeout, aBlock->GetBlockId()),
-    gfxPrefs::APZContentResponseTimeout());
+  aTarget->PostDelayedTask(NewRunnableMethod<uint64_t>(this,
+                                                       &InputQueue::MainThreadTimeout,
+                                                       aBlock->GetBlockId()),
+                           gfxPrefs::APZContentResponseTimeout());
 }
 
 void

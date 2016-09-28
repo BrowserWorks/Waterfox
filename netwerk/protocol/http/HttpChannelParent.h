@@ -133,13 +133,14 @@ protected:
                    const OptionalHttpResponseHead& aSynthesizedResponseHead,
                    const nsCString&           aSecurityInfoSerialization,
                    const uint32_t&            aCacheKey,
-                   const nsCString&           aSchedulingContextID,
+                   const nsCString&           aRequestContextID,
                    const OptionalCorsPreflightArgs& aCorsPreflightArgs,
                    const uint32_t&            aInitialRwin,
                    const bool&                aBlockAuthPrompt,
                    const bool&                aSuspendAfterSynthesizeResponse,
                    const bool&                aAllowStaleCacheContent,
-                   const nsCString&           aContentTypeHint);
+                   const nsCString&           aContentTypeHint,
+                   const nsCString&           aChannelId);
 
   virtual bool RecvSetPriority(const uint16_t& priority) override;
   virtual bool RecvSetClassOfService(const uint32_t& cos) override;

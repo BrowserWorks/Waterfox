@@ -58,6 +58,7 @@
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/dom/ShadowRoot.h"
+#include "mozilla/ServoStyleSet.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -203,6 +204,10 @@ nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElem
   // (2) The children's parent back pointer should not be to this synthetic root
   // but should instead point to the enclosing parent element.
   nsIDocument* doc = aElement->GetUncomposedDoc();
+  ServoStyleSet* servoStyleSet = nullptr;
+  if (nsIPresShell* presShell = aElement->OwnerDoc()->GetShell()) {
+    servoStyleSet = presShell->StyleSet()->GetAsServo();
+  }
   bool allowScripts = AllowScripts();
 
   nsAutoScriptBlocker scriptBlocker;
@@ -233,6 +238,10 @@ nsXBLBinding::InstallAnonymousContent(nsIContent* aAnonParent, nsIContent* aElem
     if (xuldoc)
       xuldoc->AddSubtreeToDocument(child);
 #endif
+
+    if (servoStyleSet) {
+      servoStyleSet->RestyleSubtree(child);
+    }
   }
 }
 
@@ -957,6 +966,15 @@ GetOrCreateMapEntryForPrototype(JSContext *cx, JS::Handle<JSObject*> proto)
   return entry;
 }
 
+static
+nsXBLPrototypeBinding*
+GetProtoBindingFromClassObject(JSObject* obj)
+{
+  MOZ_ASSERT(JS_GetClass(obj) == &gPrototypeJSClass);
+  return static_cast<nsXBLPrototypeBinding*>(::JS_GetReservedSlot(obj, 0).toPrivate());
+}
+
+
 // static
 nsresult
 nsXBLBinding::DoInitJSClass(JSContext *cx,
@@ -1012,7 +1030,9 @@ nsXBLBinding::DoInitJSClass(JSContext *cx,
   *aNew = !desc.object();
   if (desc.object()) {
     proto = &desc.value().toObject();
-    MOZ_ASSERT(JS_GetClass(js::UncheckedUnwrap(proto)) == &gPrototypeJSClass);
+    DebugOnly<nsXBLPrototypeBinding*> cachedBinding =
+      GetProtoBindingFromClassObject(js::UncheckedUnwrap(proto));
+    MOZ_ASSERT(cachedBinding == aProtoBinding);
   } else {
 
     // We need to create the prototype. First, enter the compartment where it's

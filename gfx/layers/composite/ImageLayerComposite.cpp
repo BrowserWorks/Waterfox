@@ -106,12 +106,12 @@ ImageLayerComposite::RenderLayer(const IntRect& aClipRect)
   mCompositor->MakeCurrent();
 
   RenderWithAllMasks(this, mCompositor, aClipRect,
-                     [&](EffectChain& effectChain, const Rect& clipRect) {
+                     [&](EffectChain& effectChain, const IntRect& clipRect) {
     mImageHost->SetCompositor(mCompositor);
     mImageHost->Composite(this, effectChain,
                           GetEffectiveOpacity(),
                           GetEffectiveTransformForBuffer(),
-                          GetEffectFilter(),
+                          GetSamplingFilter(),
                           clipRect);
   });
   mImageHost->BumpFlashCounter();
@@ -205,17 +205,17 @@ ImageLayerComposite::CleanupResources()
   mImageHost = nullptr;
 }
 
-gfx::Filter
-ImageLayerComposite::GetEffectFilter()
+gfx::SamplingFilter
+ImageLayerComposite::GetSamplingFilter()
 {
-  return mFilter;
+  return mSamplingFilter;
 }
 
 void
 ImageLayerComposite::GenEffectChain(EffectChain& aEffect)
 {
   aEffect.mLayerRef = this;
-  aEffect.mPrimaryEffect = mImageHost->GenEffect(GetEffectFilter());
+  aEffect.mPrimaryEffect = mImageHost->GenEffect(GetSamplingFilter());
 }
 
 void

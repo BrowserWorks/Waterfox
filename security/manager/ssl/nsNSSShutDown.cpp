@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "mozilla/Casting.h"
 #include "nsNSSShutDown.h"
 #include "nsCOMPtr.h"
 
@@ -114,8 +115,8 @@ nsresult nsNSSShutDownList::doPK11Logout()
        !iter.Done();
        iter.Next()) {
     auto entry = static_cast<ObjectHashEntry*>(iter.Get());
-    nsOnPK11LogoutCancelObject *pklco =
-      reinterpret_cast<nsOnPK11LogoutCancelObject*>(entry->obj);
+    nsOnPK11LogoutCancelObject* pklco =
+      BitwiseCast<nsOnPK11LogoutCancelObject*, nsNSSShutDownObject*>(entry->obj);
     if (pklco) {
       pklco->logout();
     }
@@ -126,18 +127,39 @@ nsresult nsNSSShutDownList::doPK11Logout()
 
 nsresult nsNSSShutDownList::evaporateAllNSSResources()
 {
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
+  if (!NS_IsMainThread()) {
+    return NS_ERROR_NOT_SAME_THREAD;
+  }
+
   StaticMutexAutoLock lock(sListLock);
+  // Other threads can acquire an nsNSSShutDownPreventionLock and cause this
+  // thread to block when it calls restructActivityToCurrentThread, below. If
+  // those other threads then attempt to create an object that must be
+  // remembered by the shut down list, they will call
+  // nsNSSShutDownList::remember, which attempts to acquire sListLock.
+  // Consequently, holding sListLock while we're in
+  // restrictActivityToCurrentThread would result in deadlock. sListLock
+  // protects the singleton, so if we enforce that the singleton only be created
+  // and destroyed on the main thread, and if we similarly enforce that this
+  // function is only called on the main thread, what we can do is check that
+  // the singleton hasn't already gone away and then we don't actually have to
+  // hold sListLock while calling restrictActivityToCurrentThread.
   if (!singleton) {
     return NS_OK;
   }
 
-  PRStatus rv = singleton->mActivityState.restrictActivityToCurrentThread();
-  if (rv != PR_SUCCESS) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("failed to restrict activity to current thread\n"));
-    return NS_ERROR_FAILURE;
+  {
+    StaticMutexAutoUnlock unlock(sListLock);
+    PRStatus rv = singleton->mActivityState.restrictActivityToCurrentThread();
+    if (rv != PR_SUCCESS) {
+      MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+              ("failed to restrict activity to current thread"));
+      return NS_ERROR_FAILURE;
+    }
   }
 
-  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("now evaporating NSS resources\n"));
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("now evaporating NSS resources"));
 
   // Never free more than one entry, because other threads might be calling
   // us and remove themselves while we are iterating over the list,
@@ -190,6 +212,7 @@ bool nsNSSShutDownList::construct(const StaticMutexAutoLock& /*proofOfLock*/)
 
 void nsNSSShutDownList::shutdown()
 {
+  MOZ_RELEASE_ASSERT(NS_IsMainThread());
   StaticMutexAutoLock lock(sListLock);
   sInShutdown = true;
 

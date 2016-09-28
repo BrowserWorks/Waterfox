@@ -69,4 +69,3 @@ LOCAL_INCLUDES += [
 RESOURCE_FILES += [
     'svg.css',
 ]
-

@@ -37,7 +37,7 @@ class BufferableRef
 typedef HashSet<void*, PointerHasher<void*, 3>, SystemAllocPolicy> EdgeSet;
 
 /* The size of a single block of store buffer storage space. */
-static const size_t LifoAllocBlockSize = 1 << 16; /* 64KiB */
+static const size_t LifoAllocBlockSize = 1 << 13; /* 8KiB */
 
 /*
  * The StoreBuffer observes all writes that occur in the system and performs
@@ -48,7 +48,7 @@ class StoreBuffer
     friend class mozilla::ReentrancyGuard;
 
     /* The size at which a block is about to overflow. */
-    static const size_t LowAvailableThreshold = (size_t)(LifoAllocBlockSize * 1.0 / 16.0);
+    static const size_t LowAvailableThreshold = size_t(LifoAllocBlockSize / 2.0);
 
     /*
      * This buffer holds only a single type of edge. Using this buffer is more
@@ -64,7 +64,7 @@ class StoreBuffer
 
         /*
          * A one element cache in front of the canonical set to speed up
-         * temporary instances of RelocatablePtr.
+         * temporary instances of HeapPtr.
          */
         T last_;
 
@@ -74,7 +74,7 @@ class StoreBuffer
         explicit MonoTypeBuffer() : last_(T()) {}
         ~MonoTypeBuffer() { stores_.finish(); }
 
-        bool init() {
+        MOZ_MUST_USE bool init() {
             if (!stores_.initialized() && !stores_.init())
                 return false;
             clear();
@@ -141,7 +141,7 @@ class StoreBuffer
         explicit GenericBuffer() : storage_(nullptr) {}
         ~GenericBuffer() { js_delete(storage_); }
 
-        bool init() {
+        MOZ_MUST_USE bool init() {
             if (!storage_)
                 storage_ = js_new<LifoAlloc>(LifoAllocBlockSize);
             clear();
@@ -156,7 +156,8 @@ class StoreBuffer
         }
 
         bool isAboutToOverflow() const {
-            return !storage_->isEmpty() && storage_->availableInCurrentChunk() < LowAvailableThreshold;
+            return !storage_->isEmpty() &&
+                   storage_->availableInCurrentChunk() < LowAvailableThreshold;
         }
 
         /* Trace all generic edges. */
@@ -347,31 +348,11 @@ class StoreBuffer
 
         bool maybeInRememberedSet(const Nursery&) const { return true; }
 
-        static bool supportsDeduplication() { return true; }
-        void* deduplicationKey() const { return (void*)edge; }
-
         void trace(TenuringTracer& mover) const;
 
         explicit operator bool() const { return edge != nullptr; }
 
         typedef PointerEdgeHasher<WholeCellEdges> Hasher;
-    };
-
-    template <typename Key>
-    struct CallbackRef : public BufferableRef
-    {
-        typedef void (*TraceCallback)(JSTracer* trc, Key* key, void* data);
-
-        CallbackRef(TraceCallback cb, Key* k, void* d) : callback(cb), key(k), data(d) {}
-
-        virtual void trace(JSTracer* trc) {
-            callback(trc, key, data);
-        }
-
-      private:
-        TraceCallback callback;
-        Key* key;
-        void* data;
     };
 
     template <typename Buffer, typename Edge>
@@ -426,7 +407,7 @@ class StoreBuffer
     void disable();
     bool isEnabled() const { return enabled_; }
 
-    bool clear();
+    void clear();
 
     /* Get the overflowed status. */
     bool isAboutToOverflow() const { return aboutToOverflow_; }
@@ -445,20 +426,11 @@ class StoreBuffer
         else
             put(bufferSlot, edge);
     }
-    void putWholeCell(Cell* cell) {
-        MOZ_ASSERT(cell->isTenured());
-        put(bufferWholeCell, WholeCellEdges(cell));
-    }
+    inline void putWholeCell(Cell* cell);
 
     /* Insert an entry into the generic buffer. */
     template <typename T>
     void putGeneric(const T& t) { put(bufferGeneric, t);}
-
-    /* Insert or update a callback entry. */
-    template <typename Key>
-    void putCallback(void (*callback)(JSTracer* trc, Key* key, void* data), Key* key, void* data) {
-        put(bufferGeneric, CallbackRef<Key>(callback, key, data));
-    }
 
     void setShouldCancelIonCompilations() {
         cancelIonCompilations_ = true;
@@ -473,10 +445,6 @@ class StoreBuffer
 
     /* For use by our owned buffers and for testing. */
     void setAboutToOverflow();
-
-    bool hasPostBarrierCallbacks() {
-        return !bufferGeneric.isEmpty();
-    }
 
     void addSizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::GCSizes* sizes);
 };

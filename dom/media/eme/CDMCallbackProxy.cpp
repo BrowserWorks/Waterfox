@@ -23,7 +23,7 @@ CDMCallbackProxy::CDMCallbackProxy(CDMProxy* aProxy)
 
 }
 
-class SetSessionIdTask : public nsRunnable {
+class SetSessionIdTask : public Runnable {
 public:
   SetSessionIdTask(CDMProxy* aProxy,
                    uint32_t aToken,
@@ -56,7 +56,7 @@ CDMCallbackProxy::SetSessionId(uint32_t aToken,
   NS_DispatchToMainThread(task);
 }
 
-class LoadSessionTask : public nsRunnable {
+class LoadSessionTask : public Runnable {
 public:
   LoadSessionTask(CDMProxy* aProxy,
                   uint32_t aPromiseId,
@@ -97,7 +97,7 @@ CDMCallbackProxy::ResolvePromise(uint32_t aPromiseId)
   mProxy->ResolvePromise(aPromiseId);
 }
 
-class RejectPromiseTask : public nsRunnable {
+class RejectPromiseTask : public Runnable {
 public:
   RejectPromiseTask(CDMProxy* aProxy,
                     uint32_t aPromiseId,
@@ -137,7 +137,7 @@ CDMCallbackProxy::RejectPromise(uint32_t aPromiseId,
   NS_DispatchToMainThread(task);
 }
 
-class SessionMessageTask : public nsRunnable {
+class SessionMessageTask : public Runnable {
 public:
   SessionMessageTask(CDMProxy* aProxy,
                      const nsCString& aSessionId,
@@ -177,7 +177,7 @@ CDMCallbackProxy::SessionMessage(const nsCString& aSessionId,
   NS_DispatchToMainThread(task);
 }
 
-class ExpirationChangeTask : public nsRunnable {
+class ExpirationChangeTask : public Runnable {
 public:
   ExpirationChangeTask(CDMProxy* aProxy,
                        const nsCString& aSessionId,
@@ -222,20 +222,20 @@ CDMCallbackProxy::SessionClosed(const nsCString& aSessionId)
   }
   if (keyStatusesChange) {
     nsCOMPtr<nsIRunnable> task;
-    task = NS_NewRunnableMethodWithArg<nsString>(mProxy,
+    task = NewRunnableMethod<nsString>(mProxy,
       &CDMProxy::OnKeyStatusesChange,
       NS_ConvertUTF8toUTF16(aSessionId));
     NS_DispatchToMainThread(task);
   }
 
   nsCOMPtr<nsIRunnable> task;
-  task = NS_NewRunnableMethodWithArg<nsString>(mProxy,
-                                               &CDMProxy::OnSessionClosed,
-                                               NS_ConvertUTF8toUTF16(aSessionId));
+  task = NewRunnableMethod<nsString>(mProxy,
+                                     &CDMProxy::OnSessionClosed,
+                                     NS_ConvertUTF8toUTF16(aSessionId));
   NS_DispatchToMainThread(task);
 }
 
-class SessionErrorTask : public nsRunnable {
+class SessionErrorTask : public Runnable {
 public:
   SessionErrorTask(CDMProxy* aProxy,
                    const nsCString& aSessionId,
@@ -295,20 +295,11 @@ CDMCallbackProxy::KeyStatusChanged(const nsCString& aSessionId,
   }
   if (keyStatusesChange) {
     nsCOMPtr<nsIRunnable> task;
-    task = NS_NewRunnableMethodWithArg<nsString>(mProxy,
-                                                 &CDMProxy::OnKeyStatusesChange,
-                                                 NS_ConvertUTF8toUTF16(aSessionId));
+    task = NewRunnableMethod<nsString>(mProxy,
+                                       &CDMProxy::OnKeyStatusesChange,
+                                       NS_ConvertUTF8toUTF16(aSessionId));
     NS_DispatchToMainThread(task);
   }
-}
-
-void
-CDMCallbackProxy::SetCaps(uint64_t aCaps)
-{
-  MOZ_ASSERT(mProxy->IsOnGMPThread());
-
-  CDMCaps::AutoLock caps(mProxy->Capabilites());
-  caps.SetCaps(aCaps);
 }
 
 void
@@ -325,7 +316,7 @@ void
 CDMCallbackProxy::Terminated()
 {
   MOZ_ASSERT(mProxy->IsOnGMPThread());
-  nsCOMPtr<nsIRunnable> task = NS_NewRunnableMethod(mProxy, &CDMProxy::Terminated);
+  nsCOMPtr<nsIRunnable> task = NewRunnableMethod(mProxy, &CDMProxy::Terminated);
   NS_DispatchToMainThread(task);
 }
 

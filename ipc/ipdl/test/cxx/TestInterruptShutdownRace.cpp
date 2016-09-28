@@ -1,15 +1,8 @@
 #include "TestInterruptShutdownRace.h"
 
+#include "base/task.h"
 #include "IPDLUnitTests.h"      // fail etc.
 #include "IPDLUnitTestSubprocess.h"
-
-template<>
-struct RunnableMethodTraits<mozilla::_ipdltest::TestInterruptShutdownRaceParent>
-{
-    static void RetainCallee(mozilla::_ipdltest::TestInterruptShutdownRaceParent* obj) { }
-    static void ReleaseCallee(mozilla::_ipdltest::TestInterruptShutdownRaceParent* obj) { }
-};
-
 
 namespace mozilla {
 namespace _ipdltest {
@@ -59,9 +52,8 @@ TestInterruptShutdownRaceParent::RecvStartDeath()
     // this will be ordered before the OnMaybeDequeueOne event of
     // Orphan in the queue
     MessageLoop::current()->PostTask(
-        FROM_HERE,
-        NewRunnableMethod(this,
-                          &TestInterruptShutdownRaceParent::StartShuttingDown));
+        NewNonOwningRunnableMethod(this,
+				   &TestInterruptShutdownRaceParent::StartShuttingDown));
     return true;
 }
 
@@ -82,12 +74,10 @@ TestInterruptShutdownRaceParent::StartShuttingDown()
     delete static_cast<TestInterruptShutdownRaceParent*>(gParentActor);
     gParentActor = nullptr;
 
-    XRE_GetIOMessageLoop()->PostTask(FROM_HERE,
-                                     NewRunnableFunction(DeleteSubprocess));
+    XRE_GetIOMessageLoop()->PostTask(NewRunnableFunction(DeleteSubprocess));
 
     // this is ordered after the OnMaybeDequeueOne event in the queue
-    MessageLoop::current()->PostTask(FROM_HERE,
-                                     NewRunnableFunction(Done));
+    MessageLoop::current()->PostTask(NewRunnableFunction(Done));
 
     // |this| has been deleted, be mindful
 }

@@ -85,8 +85,7 @@ MediaDecoderReader::MediaDecoderReader(AbstractMediaDecoder* aDecoder)
   }
 
   // Dispatch initialization that needs to happen on that task queue.
-  nsCOMPtr<nsIRunnable> r = NS_NewRunnableMethod(this, &MediaDecoderReader::InitializationTask);
-  mTaskQueue->Dispatch(r.forget());
+  mTaskQueue->Dispatch(NewRunnableMethod(this, &MediaDecoderReader::InitializationTask));
 }
 
 void
@@ -133,16 +132,17 @@ size_t MediaDecoderReader::SizeOfAudioQueueInFrames()
   return mAudioQueue.GetSize();
 }
 
-nsresult MediaDecoderReader::ResetDecode()
+nsresult MediaDecoderReader::ResetDecode(TargetQueues aQueues /*= AUDIO_VIDEO*/)
 {
   VideoQueue().Reset();
-  AudioQueue().Reset();
-
-  mAudioDiscontinuity = true;
   mVideoDiscontinuity = true;
-
-  mBaseAudioPromise.RejectIfExists(CANCELED, __func__);
   mBaseVideoPromise.RejectIfExists(CANCELED, __func__);
+
+  if (aQueues == AUDIO_VIDEO) {
+    AudioQueue().Reset();
+    mAudioDiscontinuity = true;
+    mBaseAudioPromise.RejectIfExists(CANCELED, __func__);
+  }
 
   return NS_OK;
 }
@@ -184,6 +184,10 @@ MediaDecoderReader::UpdateBuffered()
   mBuffered = GetBuffered();
 }
 
+void
+MediaDecoderReader::VisibilityChanged()
+{}
+
 media::TimeIntervals
 MediaDecoderReader::GetBuffered()
 {
@@ -224,7 +228,7 @@ MediaDecoderReader::AsyncReadMetadata()
   return MetadataPromise::CreateAndResolve(metadata, __func__);
 }
 
-class ReRequestVideoWithSkipTask : public nsRunnable
+class ReRequestVideoWithSkipTask : public Runnable
 {
 public:
   ReRequestVideoWithSkipTask(MediaDecoderReader* aReader,
@@ -251,7 +255,7 @@ private:
   const int64_t mTimeThreshold;
 };
 
-class ReRequestAudioTask : public nsRunnable
+class ReRequestAudioTask : public Runnable
 {
 public:
   explicit ReRequestAudioTask(MediaDecoderReader* aReader)

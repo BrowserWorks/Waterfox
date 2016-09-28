@@ -42,6 +42,7 @@
 #include "MainThreadUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/layers/CompositorBridgeParent.h"
+#include "mozilla/layers/CompositorThread.h"
 #include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
 
@@ -101,7 +102,7 @@ sp<IGraphicBufferAlloc> FakeSurfaceComposer::createGraphicBufferAlloc()
     return gba;
 }
 
-class DestroyDisplayRunnable : public nsRunnable {
+class DestroyDisplayRunnable : public Runnable {
 public:
     DestroyDisplayRunnable(FakeSurfaceComposer* aComposer, ssize_t aIndex)
         : mComposer(aComposer), mIndex(aIndex) { }
@@ -443,14 +444,15 @@ FakeSurfaceComposer::captureScreen(const sp<IBinder>& display
     return result;
 }
 
-class RunnableCallTask : public Task {
+class RunnableCallTask final : public Runnable
+{
 public:
     explicit RunnableCallTask(nsIRunnable* aRunnable)
         : mRunnable(aRunnable) {}
 
-    void Run() override
+    NS_IMETHOD Run() override
     {
-        mRunnable->Run();
+        return mRunnable->Run();
     }
 protected:
     nsCOMPtr<nsIRunnable> mRunnable;
@@ -524,8 +526,8 @@ FakeSurfaceComposer::captureScreenImp(const sp<IGraphicBufferProducer>& producer
             NS_ReleaseOnMainThread(screenAlias.forget());
         });
 
-    mozilla::layers::CompositorBridgeParent::CompositorLoop()->PostTask(
-        FROM_HERE, new RunnableCallTask(runnable));
+    layers::CompositorThreadHolder::Loop()->PostTask(
+        MakeAndAddRef<RunnableCallTask>(runnable));
 }
 
 #if ANDROID_VERSION >= 21

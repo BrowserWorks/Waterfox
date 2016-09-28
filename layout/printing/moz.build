@@ -28,10 +28,6 @@ UNIFIED_SOURCES += [
     'PrintTranslator.cpp',
 ]
 
-IPDL_SOURCES = [
-    'ipc/PRemotePrintJob.ipdl',
-]
-
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
@@ -39,5 +35,3 @@ LOCAL_INCLUDES += [
     '../base',
     '/dom/base',
 ]
-if CONFIG['GNU_CXX']:
-    CXXFLAGS += ['-Wshadow']

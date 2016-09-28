@@ -1,4 +1,5 @@
 #include "TestSyncHang.h"
+#include "base/task.h"
 #include "mozilla/ipc/GeckoChildProcessHost.h"
 
 #include "IPDLUnitTests.h"      // fail etc.
@@ -35,7 +36,6 @@ DeferredSyncHangParentShutdown()
 {
   // ping to DeleteSubprocess
   XRE_GetIOMessageLoop()->PostTask(
-      FROM_HERE,
       NewRunnableFunction(DeleteSyncHangSubprocess, MessageLoop::current()));
 }
 
@@ -49,8 +49,7 @@ TestSyncHangParent::Main()
   if (launched)
     fail("Calling SyncLaunch with an invalid path should return false");
 
-  MessageLoop::current()->PostTask(
-  				   FROM_HERE, NewRunnableFunction(DeferredSyncHangParentShutdown));
+  MessageLoop::current()->PostTask(NewRunnableFunction(DeferredSyncHangParentShutdown));
   Close();
 }
 

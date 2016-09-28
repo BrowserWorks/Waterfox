@@ -12,6 +12,8 @@ EXPORTS.ipc += [
 
 EXPORTS.mozilla += [
     'ErrorResult.h',
+    'RootedOwningNonNull.h',
+    'RootedRefPtr.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -39,6 +41,7 @@ EXPORTS.mozilla.dom += [
     'ToJSValue.h',
     'TypedArray.h',
     'UnionMember.h',
+    'WebIDLGlobalNameHash.h',
 ]
 
 # Generated bindings reference *Binding.h, not mozilla/dom/*Binding.h. And,
@@ -89,6 +92,7 @@ UNIFIED_SOURCES += [
     'IterableIterator.cpp',
     'SimpleGlobalObject.cpp',
     'ToJSValue.cpp',
+    'WebIDLGlobalNameHash.cpp',
 ]
 
 SOURCES += [
@@ -143,3 +147,6 @@ if CONFIG['MOZ_SIMPLEPUSH']:
 PYTHON_UNIT_TESTS += [
     'mozwebidlcodegen/test/test_mozwebidlcodegen.py',
 ]
+
+if CONFIG['GNU_CXX']:
+    CXXFLAGS += ['-Wno-error=shadow']

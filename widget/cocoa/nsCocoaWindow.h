@@ -241,6 +241,8 @@ typedef struct _nsCocoaWindowList {
 - (void)placeFullScreenButton:(NSRect)aRect;
 - (NSPoint)windowButtonsPositionWithDefaultPosition:(NSPoint)aDefaultPosition;
 - (NSPoint)fullScreenButtonPositionWithDefaultPosition:(NSPoint)aDefaultPosition;
+- (void)setTemporaryBackgroundColor;
+- (void)restoreBackgroundColor;
 @end
 
 class nsCocoaWindow : public nsBaseWidget, public nsPIWidgetCocoa
@@ -385,6 +387,11 @@ public:
     void SetPopupWindowLevel();
 
     NS_IMETHOD         ReparentNativeWidget(nsIWidget* aNewParent) override;
+
+    CompositorWidgetProxy* NewCompositorWidgetProxy() override {
+      return nullptr;
+    }
+
 protected:
   virtual ~nsCocoaWindow();
 

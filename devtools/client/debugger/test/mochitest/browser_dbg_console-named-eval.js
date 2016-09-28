@@ -14,7 +14,7 @@ function test() {
 
 function* runTests() {
   let TAB_URL = EXAMPLE_URL + "doc_empty-tab-01.html";
-  let [,, panel] = yield initDebugger(TAB_URL);
+  let [,, panel] = yield initDebugger(TAB_URL, { source: null });
   let dbgWin = panel.panelWin;
   let sources = dbgWin.DebuggerView.Sources;
   let frames = dbgWin.DebuggerView.StackFrames;
@@ -31,11 +31,11 @@ function* runTests() {
   EventUtils.synthesizeKey("VK_ESCAPE", {}, dbgWin);
 
   yield paused;
-  is(sources.selectedItem.attachment.label, 'foo.js',
-     'New source is selected in sources');
-  is(sources.selectedItem.attachment.group, 'http://example.com',
-     'New source is in the right group');
-  ok(editor.getText() === 'debugger; //# sourceURL=foo.js', 'Editor has correct text');
+  is(sources.selectedItem.attachment.label, "foo.js",
+     "New source is selected in sources");
+  is(sources.selectedItem.attachment.group, "http://example.com",
+     "New source is in the right group");
+  ok(editor.getText() === "debugger; //# sourceURL=foo.js", "Editor has correct text");
 
   yield toolbox.closeSplitConsole();
   yield resumeDebuggerThenCloseAndFinish(panel);

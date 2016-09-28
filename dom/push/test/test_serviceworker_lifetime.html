@@ -253,11 +253,17 @@
         .then(cancelShutdownObserver)
 
         // Test with push events and message events
+        .then(setShutdownObserver(true))
         .then(createIframe)
+        // Make sure we are shutdown before entering our "no shutdown" sequence
+        // to avoid races.
+        .then(waitOnShutdownObserver)
         .then(setShutdownObserver(false))
         .then(checkStateAndUpdate(pushEvent, "from_scope", "wait"))
-        .then(setShutdownObserver(true))
         .then(checkStateAndUpdate(messageEventIframe, "wait", "update"))
+        .then(checkStateAndUpdate(messageEventIframe, "update", "update"))
+        .then(setShutdownObserver(true))
+        .then(checkStateAndUpdate(messageEventIframe, "update", "release"))
         .then(waitOnShutdownObserver)
         .then(closeIframe)
     }
@@ -269,15 +275,28 @@
       ["dom.serviceWorkers.idle_extended_timeout", 2999999]
     ],
     steps: function(ctx) {
-      // Non push workers are terminated when they stop controlling documents.
+      // Older versions used to terminate workers when the last controlled
+      // window was closed.  This should no longer happen, though.  Verify
+      // the new behavior.
+      setShutdownObserver(true)(ctx);
       return createIframe(ctx)
-        .then(setShutdownObserver(true))
+        // Make sure we are shutdown before entering our "no shutdown" sequence
+        // to avoid races.
+        .then(waitOnShutdownObserver)
+        .then(setShutdownObserver(false))
         .then(checkStateAndUpdate(fetchEvent, "from_scope", "wait"))
         .then(closeIframe)
+        .then(setShutdownObserver(true))
+        .then(checkStateAndUpdate(messageEvent, "wait", "release"))
         .then(waitOnShutdownObserver)
 
-      // Push workers are exempt from this rule.
+      // Push workers were exempt from the old rule and should continue to
+      // survive past the closing of the last controlled window.
+        .then(setShutdownObserver(true))
         .then(createIframe)
+        // Make sure we are shutdown before entering our "no shutdown" sequence
+        // to avoid races.
+        .then(waitOnShutdownObserver)
         .then(setShutdownObserver(false))
         .then(checkStateAndUpdate(pushEvent, "from_scope", "wait"))
         .then(closeIframe)

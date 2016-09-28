@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1471452426000">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1472845813000">
   <emItems>
       <emItem  blockID="i58" id="webmaster@buzzzzvideos.info">
                         <versionRange  minVersion="0" maxVersion="*">
@@ -9,6 +9,12 @@
     </emItem>
       <emItem  blockID="i71" id="youtube@2youtube.com">
                         <versionRange  minVersion="0" maxVersion="*">
+                    </versionRange>
+                    <prefs>
+              </prefs>
+    </emItem>
+      <emItem  blockID="i1229" id="/^(.*@(unblocker\.yt|sparpilot\.com))|axtara@axtara\.com$/">
+                        <versionRange  minVersion="0" maxVersion="*" severity="3">
                     </versionRange>
                     <prefs>
               </prefs>
@@ -159,12 +165,6 @@
                     <prefs>
               </prefs>
     </emItem>
-      <emItem  blockID="i1229" id="/^(.*@(unblocker\.yt|sparpilot\.com|suchpony\.de))|axtara@axtara\.com$/">
-                        <versionRange  minVersion="0" maxVersion="*" severity="3">
-                    </versionRange>
-                    <prefs>
-              </prefs>
-    </emItem>
       <emItem  blockID="i590" id="{94cd2cc3-083f-49ba-a218-4cda4b4829fd}">
                         <versionRange  minVersion="0" maxVersion="*" severity="1">
                     </versionRange>
@@ -282,6 +282,12 @@
     </emItem>
       <emItem  blockID="i554" id="lightningnewtab@gmail.com">
                         <versionRange  minVersion="0" maxVersion="*" severity="1">
+                    </versionRange>
+                    <prefs>
+              </prefs>
+    </emItem>
+      <emItem  blockID="i1266" id="@stopad">
+                        <versionRange  minVersion="0" maxVersion="0.0.4" severity="1">
                     </versionRange>
                     <prefs>
               </prefs>
@@ -716,7 +722,7 @@
               </prefs>
     </emItem>
       <emItem  blockID="i45" id="{22119944-ED35-4ab1-910B-E619EA06A115}">
-                        <versionRange  minVersion="0.1" maxVersion="7.6.1">
+                        <versionRange  minVersion="0.1" maxVersion="7.9.20.6" severity="1">
                       <targetApplication  id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}">
                               <versionRange  minVersion="8.0a1" maxVersion="*" />
                           </targetApplication>
@@ -781,6 +787,12 @@
     </emItem>
       <emItem  blockID="i162" id="{EB7508CA-C7B2-46E0-8C04-3E94A035BD49}">
                         <versionRange  minVersion="0" maxVersion="*" severity="3">
+                    </versionRange>
+                    <prefs>
+              </prefs>
+    </emItem>
+      <emItem  blockID="i1261" id="support@lastpass.com">
+                        <versionRange  minVersion="4.0.0a" maxVersion="4.1.20a" severity="1">
                     </versionRange>
                     <prefs>
               </prefs>
@@ -1959,6 +1971,12 @@
                     <prefs>
               </prefs>
     </emItem>
+      <emItem  blockID="i1265" id="@video_downloader_pro">
+                        <versionRange  minVersion="1.2.1" maxVersion="1.2.5" severity="1">
+                    </versionRange>
+                    <prefs>
+              </prefs>
+    </emItem>
       <emItem  blockID="i60" id="youtb3@youtb3.com">
                         <versionRange  minVersion="0" maxVersion="*">
                     </versionRange>
@@ -2125,6 +2143,12 @@
     </emItem>
       <emItem  blockID="i474" id="{906000a4-88d9-4d52-b209-7a772970d91f}">
                         <versionRange  minVersion="0" maxVersion="*" severity="3">
+                    </versionRange>
+                    <prefs>
+              </prefs>
+    </emItem>
+      <emItem  blockID="i1264" id="suchpony@suchpony.de">
+                        <versionRange  minVersion="0" maxVersion="1.6.7" severity="3">
                     </versionRange>
                     <prefs>
               </prefs>
@@ -2773,8 +2797,11 @@
                     <prefs>
               </prefs>
     </emItem>
-      <emItem  blockID="i314" id="crossriderapp8812@crossrider.com">
-                        <versionRange  minVersion="0" maxVersion="*" severity="1">
+      <emItem  blockID="i24" id="{6E19037A-12E3-4295-8915-ED48BC341614}">
+                        <versionRange  minVersion="0.1" maxVersion="1.3.328.4" severity="1">
+                      <targetApplication  id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}">
+                              <versionRange  minVersion="3.7a1pre" maxVersion="*" />
+                          </targetApplication>
                     </versionRange>
                     <prefs>
               </prefs>
@@ -2791,11 +2818,8 @@
                     <prefs>
               </prefs>
     </emItem>
-      <emItem  blockID="i24" id="{6E19037A-12E3-4295-8915-ED48BC341614}">
-                        <versionRange  minVersion="0.1" maxVersion="1.3.328.4" severity="1">
-                      <targetApplication  id="{ec8030f7-c20a-464f-9b0e-13a3a9e97384}">
-                              <versionRange  minVersion="3.7a1pre" maxVersion="*" />
-                          </targetApplication>
+      <emItem  blockID="i314" id="crossriderapp8812@crossrider.com">
+                        <versionRange  minVersion="0" maxVersion="*" severity="1">
                     </versionRange>
                     <prefs>
               </prefs>
@@ -3576,6 +3600,18 @@
                   <match name="filename" exp="(nppdf32\.dll)|(AdobePDFViewerNPAPI\.plugin)" />                      <versionRange  minVersion="15.016.20045" maxVersion="15.016.20045" severity="0" vulnerabilitystatus="1"></versionRange>
                             <infoURL>https://get.adobe.com/reader</infoURL>
           </pluginItem>
+      <pluginItem  os="Linux" blockID="p1252">
+                  <match name="filename" exp="libflashplayer\.so" />                      <versionRange  minVersion="11.2.202.621" maxVersion="11.2.202.626" severity="0" vulnerabilitystatus="1"></versionRange>
+                            <infoURL>https://get.adobe.com/flashplayer/</infoURL>
+          </pluginItem>
+      <pluginItem  blockID="p1253">
+                  <match name="filename" exp="(NPSWF32.*\.dll)|(NPSWF64.*\.dll)|(Flash\ Player\.plugin)" />                      <versionRange  minVersion="18.0.0.352" maxVersion="18.0.0.360" severity="0" vulnerabilitystatus="1"></versionRange>
+                            <infoURL>https://get.adobe.com/flashplayer/</infoURL>
+          </pluginItem>
+      <pluginItem  blockID="p1254">
+                  <match name="filename" exp="(NPSWF32.*\.dll)|(NPSWF64.*\.dll)|(Flash\ Player\.plugin)" />                      <versionRange  minVersion="21.0.0.242" maxVersion="22.0.0.192" severity="0" vulnerabilitystatus="1"></versionRange>
+                            <infoURL>https://get.adobe.com/flashplayer/</infoURL>
+          </pluginItem>
     </pluginItems>
 
   <gfxItems>
@@ -4106,6 +4142,36 @@
     </certItem>
         <certItem issuerName="MIHKMQswCQYDVQQGEwJVUzEXMBUGA1UEChMOVmVyaVNpZ24sIEluYy4xHzAdBgNVBAsTFlZlcmlTaWduIFRydXN0IE5ldHdvcmsxOjA4BgNVBAsTMShjKSAyMDA3IFZlcmlTaWduLCBJbmMuIC0gRm9yIGF1dGhvcml6ZWQgdXNlIG9ubHkxRTBDBgNVBAMTPFZlcmlTaWduIENsYXNzIDMgUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgLSBHNA==">
       <serialNumber>cXXMzbWDHMIdCotb3h64yw==</serialNumber>
+    </certItem>
+        <certItem issuerName="MDsxCzAJBgNVBAYTAkVTMREwDwYDVQQKDAhGTk1ULVJDTTEZMBcGA1UECwwQQUMgUkFJWiBGTk1ULVJDTQ==">
+      <serialNumber>BA==</serialNumber>
+    </certItem>
+        <certItem issuerName="MDsxCzAJBgNVBAYTAkVTMREwDwYDVQQKDAhGTk1ULVJDTTEZMBcGA1UECwwQQUMgUkFJWiBGTk1ULVJDTQ==">
+      <serialNumber>BQ==</serialNumber>
+    </certItem>
+        <certItem issuerName="MDsxCzAJBgNVBAYTAkVTMREwDwYDVQQKDAhGTk1ULVJDTTEZMBcGA1UECwwQQUMgUkFJWiBGTk1ULVJDTQ==">
+      <serialNumber>Bg==</serialNumber>
+    </certItem>
+        <certItem issuerName="MDsxCzAJBgNVBAYTAkVTMREwDwYDVQQKDAhGTk1ULVJDTTEZMBcGA1UECwwQQUMgUkFJWiBGTk1ULVJDTQ==">
+      <serialNumber>EA==</serialNumber>
+    </certItem>
+        <certItem issuerName="MDsxCzAJBgNVBAYTAkVTMREwDwYDVQQKDAhGTk1ULVJDTTEZMBcGA1UECwwQQUMgUkFJWiBGTk1ULVJDTQ==">
+      <serialNumber>EQ==</serialNumber>
+    </certItem>
+        <certItem issuerName="MDsxCzAJBgNVBAYTAkVTMREwDwYDVQQKDAhGTk1ULVJDTTEZMBcGA1UECwwQQUMgUkFJWiBGTk1ULVJDTQ==">
+      <serialNumber>Eg==</serialNumber>
+    </certItem>
+        <certItem issuerName="MG8xCzAJBgNVBAYTAlNFMRQwEgYDVQQKEwtBZGRUcnVzdCBBQjEmMCQGA1UECxMdQWRkVHJ1c3QgRXh0ZXJuYWwgVFRQIE5ldHdvcmsxIjAgBgNVBAMTGUFkZFRydXN0IEV4dGVybmFsIENBIFJvb3Q=">
+      <serialNumber>RurwlgVMxeP6Zepun0LGZA==</serialNumber>
+    </certItem>
+        <certItem issuerName="MG8xCzAJBgNVBAYTAlNFMRQwEgYDVQQKEwtBZGRUcnVzdCBBQjEmMCQGA1UECxMdQWRkVHJ1c3QgRXh0ZXJuYWwgVFRQIE5ldHdvcmsxIjAgBgNVBAMTGUFkZFRydXN0IEV4dGVybmFsIENBIFJvb3Q=">
+      <serialNumber>Os2rnHWYhryvdOXfgan06A==</serialNumber>
+    </certItem>
+        <certItem issuerName="MG8xCzAJBgNVBAYTAlNFMRQwEgYDVQQKEwtBZGRUcnVzdCBBQjEmMCQGA1UECxMdQWRkVHJ1c3QgRXh0ZXJuYWwgVFRQIE5ldHdvcmsxIjAgBgNVBAMTGUFkZFRydXN0IEV4dGVybmFsIENBIFJvb3Q=">
+      <serialNumber>U3t2Vk8pfxTcaUPpIq0seQ==</serialNumber>
+    </certItem>
+        <certItem issuerName="ME0xCzAJBgNVBAYTAlVTMRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxJzAlBgNVBAMTHkRpZ2lDZXJ0IFNIQTIgU2VjdXJlIFNlcnZlciBDQQ==">
+      <serialNumber>Aa8e+91erglSMgsk/mtVaA==</serialNumber>
     </certItem>
       </certItems>
 

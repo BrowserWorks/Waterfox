@@ -1750,7 +1750,7 @@ nsEditor::RemoveEditorObserver(nsIEditorObserver *aObserver)
   return NS_OK;
 }
 
-class EditorInputEventDispatcher : public nsRunnable
+class EditorInputEventDispatcher : public Runnable
 {
 public:
   EditorInputEventDispatcher(nsEditor* aEditor,
@@ -2422,7 +2422,7 @@ nsEditor::InsertTextIntoTextNodeImpl(const nsAString& aStringToInsert,
     for (uint32_t i = 0; i < (ranges ? ranges->Length() : 0); ++i) {
       const TextRange& textRange = ranges->ElementAt(i);
       if (!textRange.Length() ||
-          textRange.mRangeType != NS_TEXTRANGE_RAWINPUT) {
+          textRange.mRangeType != TextRangeType::eRawClause) {
         continue;
       }
       if (!mPhonetic) {
@@ -3253,13 +3253,6 @@ nsEditor::GetLeftmostChild(nsINode *aCurrentNode,
 }
 
 bool
-nsEditor::IsBlockNode(nsIDOMNode* aNode)
-{
-  nsCOMPtr<nsINode> node = do_QueryInterface(aNode);
-  return IsBlockNode(node);
-}
-
-bool
 nsEditor::IsBlockNode(nsINode* aNode)
 {
   // stub to be overridden in nsHTMLEditor.
@@ -3352,13 +3345,6 @@ nsEditor::IsDescendantOfRoot(nsINode* inNode)
   NS_ENSURE_TRUE(root, false);
 
   return nsContentUtils::ContentIsDescendantOf(inNode, root);
-}
-
-bool
-nsEditor::IsDescendantOfEditorRoot(nsIDOMNode* aNode)
-{
-  nsCOMPtr<nsINode> node = do_QueryInterface(aNode);
-  return IsDescendantOfEditorRoot(node);
 }
 
 bool
@@ -3655,13 +3641,15 @@ nsEditor::GetChildAt(nsIDOMNode *aParent, int32_t aOffset)
 // assuming that aParentOrNode is the node itself if it's a text node, or
 // the node's parent otherwise.
 //
-nsCOMPtr<nsIDOMNode>
+nsIContent*
 nsEditor::GetNodeAtRangeOffsetPoint(nsIDOMNode* aParentOrNode, int32_t aOffset)
 {
-  if (IsTextNode(aParentOrNode)) {
-    return aParentOrNode;
+  nsCOMPtr<nsINode> parentOrNode = do_QueryInterface(aParentOrNode);
+  NS_ENSURE_TRUE(parentOrNode || !aParentOrNode, nullptr);
+  if (parentOrNode->GetAsText()) {
+    return parentOrNode->AsContent();
   }
-  return GetChildAt(aParentOrNode, aOffset);
+  return parentOrNode->GetChildAt(aOffset);
 }
 
 
@@ -3678,7 +3666,9 @@ nsEditor::GetStartNodeAndOffset(Selection* aSelection,
   nsCOMPtr<nsINode> startNode;
   nsresult rv = GetStartNodeAndOffset(aSelection, getter_AddRefs(startNode),
                                       outStartOffset);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
 
   if (startNode) {
     NS_ADDREF(*outStartNode = startNode->AsDOMNode());
@@ -3699,7 +3689,9 @@ nsEditor::GetStartNodeAndOffset(Selection* aSelection, nsINode** aStartNode,
   *aStartNode = nullptr;
   *aStartOffset = 0;
 
-  NS_ENSURE_TRUE(aSelection->RangeCount(), NS_ERROR_FAILURE);
+  if (!aSelection->RangeCount()) {
+    return NS_ERROR_FAILURE;
+  }
 
   const nsRange* range = aSelection->GetRangeAt(0);
   NS_ENSURE_TRUE(range, NS_ERROR_FAILURE);
@@ -4624,21 +4616,21 @@ nsEditor::HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent)
   if (IsReadonly() || IsDisabled()) {
     // consume backspace for disabled and readonly textfields, to prevent
     // back in history, which could be confusing to users
-    if (nativeKeyEvent->keyCode == nsIDOMKeyEvent::DOM_VK_BACK_SPACE) {
+    if (nativeKeyEvent->mKeyCode == NS_VK_BACK) {
       aKeyEvent->AsEvent()->PreventDefault();
     }
     return NS_OK;
   }
 
-  switch (nativeKeyEvent->keyCode) {
-    case nsIDOMKeyEvent::DOM_VK_META:
-    case nsIDOMKeyEvent::DOM_VK_WIN:
-    case nsIDOMKeyEvent::DOM_VK_SHIFT:
-    case nsIDOMKeyEvent::DOM_VK_CONTROL:
-    case nsIDOMKeyEvent::DOM_VK_ALT:
+  switch (nativeKeyEvent->mKeyCode) {
+    case NS_VK_META:
+    case NS_VK_WIN:
+    case NS_VK_SHIFT:
+    case NS_VK_CONTROL:
+    case NS_VK_ALT:
       aKeyEvent->AsEvent()->PreventDefault(); // consumed
       return NS_OK;
-    case nsIDOMKeyEvent::DOM_VK_BACK_SPACE:
+    case NS_VK_BACK:
       if (nativeKeyEvent->IsControl() || nativeKeyEvent->IsAlt() ||
           nativeKeyEvent->IsMeta() || nativeKeyEvent->IsOS()) {
         return NS_OK;
@@ -4646,7 +4638,7 @@ nsEditor::HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent)
       DeleteSelection(nsIEditor::ePrevious, nsIEditor::eStrip);
       aKeyEvent->AsEvent()->PreventDefault(); // consumed
       return NS_OK;
-    case nsIDOMKeyEvent::DOM_VK_DELETE:
+    case NS_VK_DELETE:
       // on certain platforms (such as windows) the shift key
       // modifies what delete does (cmd_cut in this case).
       // bailing here to allow the keybindings to do the cut.

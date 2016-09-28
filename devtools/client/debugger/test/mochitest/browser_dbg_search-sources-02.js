@@ -16,7 +16,11 @@ function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(3);
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_script-switching-01.js?a=b",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -25,8 +29,7 @@ function test() {
     gSearchView = gDebugger.DebuggerView.Filtering.FilteredSources;
     gSearchBox = gDebugger.DebuggerView.Filtering._searchbox;
 
-    waitForSourceShown(gPanel, "-01.js")
-      .then(firstSearch)
+    firstSearch()
       .then(secondSearch)
       .then(thirdSearch)
       .then(fourthSearch)
@@ -153,7 +156,7 @@ function goDown() {
   EventUtils.sendKey("DOWN", gDebugger);
 
   return finished.then(() => promise.all([
-    ensureSourceIs(gPanel,"test-editor-mode"),
+    ensureSourceIs(gPanel, "test-editor-mode"),
     ensureCaretAt(gPanel, 1),
     verifyContents([
       "code_script-switching-01.js?a=b",
@@ -172,7 +175,7 @@ function goDownAndWrap() {
   EventUtils.synthesizeKey("g", { metaKey: true }, gDebugger);
 
   return finished.then(() => promise.all([
-    ensureSourceIs(gPanel,"-01.js"),
+    ensureSourceIs(gPanel, "-01.js"),
     ensureCaretAt(gPanel, 1),
     verifyContents([
       "code_script-switching-01.js?a=b",
@@ -183,7 +186,7 @@ function goDownAndWrap() {
 
 function goUpAndWrap() {
   let finished = promise.all([
-    ensureSourceIs(gPanel,"-01.js"),
+    ensureSourceIs(gPanel, "-01.js"),
     ensureCaretAt(gPanel, 1),
     waitForSourceShown(gPanel, "test-editor-mode")
   ]);
@@ -191,7 +194,7 @@ function goUpAndWrap() {
   EventUtils.synthesizeKey("G", { metaKey: true }, gDebugger);
 
   return finished.then(() => promise.all([
-    ensureSourceIs(gPanel,"test-editor-mode"),
+    ensureSourceIs(gPanel, "test-editor-mode"),
     ensureCaretAt(gPanel, 1),
     verifyContents([
       "code_script-switching-01.js?a=b",
@@ -202,7 +205,7 @@ function goUpAndWrap() {
 
 function goUp() {
   let finished = promise.all([
-    ensureSourceIs(gPanel,"test-editor-mode"),
+    ensureSourceIs(gPanel, "test-editor-mode"),
     ensureCaretAt(gPanel, 1),
     waitForSourceShown(gPanel, "-01.js"),
   ]);
@@ -210,7 +213,7 @@ function goUp() {
   EventUtils.sendKey("UP", gDebugger);
 
   return finished.then(() => promise.all([
-    ensureSourceIs(gPanel,"-01.js"),
+    ensureSourceIs(gPanel, "-01.js"),
     ensureCaretAt(gPanel, 1),
     verifyContents([
       "code_script-switching-01.js?a=b",
@@ -221,7 +224,7 @@ function goUp() {
 
 function returnAndSwitch() {
   let finished = promise.all([
-    ensureSourceIs(gPanel,"-01.js"),
+    ensureSourceIs(gPanel, "-01.js"),
     ensureCaretAt(gPanel, 1),
     once(gDebugger, "popuphidden")
   ]);
@@ -229,14 +232,14 @@ function returnAndSwitch() {
   EventUtils.sendKey("RETURN", gDebugger);
 
   return finished.then(() => promise.all([
-    ensureSourceIs(gPanel,"-01.js"),
+    ensureSourceIs(gPanel, "-01.js"),
     ensureCaretAt(gPanel, 1)
   ]));
 }
 
 function clickAndSwitch() {
   let finished = promise.all([
-    ensureSourceIs(gPanel,"-01.js"),
+    ensureSourceIs(gPanel, "-01.js"),
     ensureCaretAt(gPanel, 1),
     once(gDebugger, "popuphidden"),
     waitForSourceShown(gPanel, "test-editor-mode")
@@ -245,7 +248,7 @@ function clickAndSwitch() {
   EventUtils.sendMouseEvent({ type: "click" }, gSearchView.items[1].target, gDebugger);
 
   return finished.then(() => promise.all([
-    ensureSourceIs(gPanel,"test-editor-mode"),
+    ensureSourceIs(gPanel, "test-editor-mode"),
     ensureCaretAt(gPanel, 1)
   ]));
 }
@@ -267,7 +270,7 @@ function verifyContents(aMatches) {
   }
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

@@ -59,10 +59,13 @@ protected:
       nsIntRegion(IntRect(0, 50, 100, 50))   // scrolling child 2
     };
     root = CreateLayerTree(layerTreeSyntax, layerVisibleRegion, nullptr, lm, layers);
-    SetScrollableFrameMetrics(layers[1], FrameMetrics::START_SCROLL_ID, CSSRect(0, 0, 100, 100));
-    SetScrollableFrameMetrics(layers[2], FrameMetrics::START_SCROLL_ID + 1, CSSRect(0, 0, 100, 100));
-    SetScrollableFrameMetrics(layers[3], FrameMetrics::START_SCROLL_ID + 2, CSSRect(0, 50, 100, 100));
-    SetScrollableFrameMetrics(layers[4], FrameMetrics::START_SCROLL_ID + 3, CSSRect(0, 50, 100, 100));
+    SetScrollableFrameMetrics(layers[0], FrameMetrics::START_SCROLL_ID, CSSRect(0, 0, 100, 100));
+    SetScrollableFrameMetrics(layers[1], FrameMetrics::START_SCROLL_ID + 1, CSSRect(0, 0, 100, 100));
+    SetScrollableFrameMetrics(layers[2], FrameMetrics::START_SCROLL_ID + 2, CSSRect(0, 0, 100, 100));
+    SetScrollableFrameMetrics(layers[3], FrameMetrics::START_SCROLL_ID + 3, CSSRect(0, 50, 100, 100));
+    SetScrollableFrameMetrics(layers[4], FrameMetrics::START_SCROLL_ID + 4, CSSRect(0, 50, 100, 100));
+    SetScrollHandoff(layers[1], layers[0]);
+    SetScrollHandoff(layers[3], layers[0]);
     SetScrollHandoff(layers[2], layers[1]);
     SetScrollHandoff(layers[4], layers[3]);
     registration = MakeUnique<ScopedLayerTreeRegistration>(manager, 0, root, mcc);
@@ -83,7 +86,7 @@ protected:
     registration = MakeUnique<ScopedLayerTreeRegistration>(manager, 0, root, mcc);
     manager->UpdateHitTestingTree(nullptr, root, false, 0, 0);
     rootApzc = ApzcOf(root);
-    rootApzc->GetFrameMetrics().SetHasScrollgrab(true);
+    rootApzc->GetScrollMetadata().SetHasScrollgrab(true);
   }
 
   void TestFlingAcceleration() {
@@ -96,7 +99,7 @@ protected:
 
     // Pan once, enough to fully scroll the scrollgrab parent and then scroll
     // and fling the child.
-    Pan(manager, mcc, 70, 40);
+    Pan(manager, 70, 40);
 
     // Give the fling animation a chance to start.
     SampleAnimationsOnce();
@@ -104,7 +107,7 @@ protected:
     float childVelocityAfterFling1 = childApzc->GetVelocityVector().y;
 
     // Pan again.
-    Pan(manager, mcc, 70, 40);
+    Pan(manager, 70, 40);
 
     // Give the fling animation a chance to start.
     // This time it should be accelerated.
@@ -139,7 +142,7 @@ TEST_F(APZScrollHandoffTester, DeferredInputEventProcessing) {
 
   // Queue input events for a pan.
   uint64_t blockId = 0;
-  ApzcPanNoFling(childApzc, mcc, 90, 30, &blockId);
+  ApzcPanNoFling(childApzc, 90, 30, &blockId);
 
   // Allow the pan to be processed.
   childApzc->ContentReceivedInputBlock(blockId, false);
@@ -167,7 +170,7 @@ TEST_F(APZScrollHandoffTester, LayerStructureChangesWhileEventsArePending) {
 
   // Queue input events for a pan.
   uint64_t blockId = 0;
-  ApzcPanNoFling(childApzc, mcc, 90, 30, &blockId);
+  ApzcPanNoFling(childApzc, 90, 30, &blockId);
 
   // Modify the APZC tree to insert a new APZC 'middle' into the handoff chain
   // between the child and the root.
@@ -178,7 +181,7 @@ TEST_F(APZScrollHandoffTester, LayerStructureChangesWhileEventsArePending) {
 
   // Queue input events for another pan.
   uint64_t secondBlockId = 0;
-  ApzcPanNoFling(childApzc, mcc, 30, 90, &secondBlockId);
+  ApzcPanNoFling(childApzc, 30, 90, &secondBlockId);
 
   // Allow the first pan to be processed.
   childApzc->ContentReceivedInputBlock(blockId, false);
@@ -213,7 +216,7 @@ TEST_F(APZScrollHandoffTester, StuckInOverscroll_Bug1073250) {
   TestAsyncPanZoomController* child = ApzcOf(layers[1]);
 
   // Pan, causing the parent APZC to overscroll.
-  Pan(manager, mcc, 10, 40, true /* keep finger down */);
+  Pan(manager, 10, 40, true /* keep finger down */);
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_TRUE(rootApzc->IsOverscrolled());
 
@@ -251,7 +254,7 @@ TEST_F(APZScrollHandoffTester, StuckInOverscroll_Bug1231228) {
   TestAsyncPanZoomController* child = ApzcOf(layers[1]);
 
   // Pan, causing the parent APZC to overscroll.
-  Pan(manager, mcc, 60, 90, true /* keep finger down */);
+  Pan(manager, 60, 90, true /* keep finger down */);
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_TRUE(rootApzc->IsOverscrolled());
 
@@ -285,7 +288,7 @@ TEST_F(APZScrollHandoffTester, StuckInOverscroll_Bug1240202a) {
   TestAsyncPanZoomController* child = ApzcOf(layers[1]);
 
   // Pan, causing the parent APZC to overscroll.
-  Pan(manager, mcc, 60, 90, true /* keep finger down */);
+  Pan(manager, 60, 90, true /* keep finger down */);
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_TRUE(rootApzc->IsOverscrolled());
 
@@ -318,7 +321,7 @@ TEST_F(APZScrollHandoffTester, StuckInOverscroll_Bug1240202b) {
   TestAsyncPanZoomController* child = ApzcOf(layers[1]);
 
   // Pan, causing the parent APZC to overscroll.
-  Pan(manager, mcc, 60, 90, true /* keep finger down */);
+  Pan(manager, 60, 90, true /* keep finger down */);
   EXPECT_FALSE(child->IsOverscrolled());
   EXPECT_TRUE(rootApzc->IsOverscrolled());
 
@@ -364,7 +367,7 @@ TEST_F(APZScrollHandoffTester, PartialFlingHandoff) {
   // Fling up and to the left. The child APZC has room to scroll up, but not
   // to the left, so the horizontal component of the fling should be handed
   // off to the parent APZC.
-  Pan(manager, mcc, ScreenIntPoint(90, 90), ScreenIntPoint(55, 55));
+  Pan(manager, ScreenIntPoint(90, 90), ScreenIntPoint(55, 55));
 
   RefPtr<TestAsyncPanZoomController> parent = ApzcOf(root);
   RefPtr<TestAsyncPanZoomController> child = ApzcOf(layers[1]);
@@ -393,10 +396,10 @@ TEST_F(APZScrollHandoffTester, SimultaneousFlings) {
   RefPtr<TestAsyncPanZoomController> child2 = ApzcOf(layers[4]);
 
   // Pan on the lower child.
-  Pan(child2, mcc, 45, 5);
+  Pan(child2, 45, 5);
 
   // Pan on the upper child.
-  Pan(child1, mcc, 95, 55);
+  Pan(child1, 95, 55);
 
   // Check that child1 and child2 are in a FLING state.
   child1->AssertStateIsFling();
@@ -421,7 +424,7 @@ TEST_F(APZScrollHandoffTester, Scrollgrab) {
 
   // Pan on the child, enough to fully scroll the scrollgrab parent (20 px)
   // and leave some more (another 15 px) for the child.
-  Pan(childApzc, mcc, 80, 45);
+  Pan(childApzc, 80, 45);
 
   // Check that the parent and child have scrolled as much as we expect.
   EXPECT_EQ(20, rootApzc->GetFrameMetrics().GetScrollOffset().y);
@@ -436,7 +439,7 @@ TEST_F(APZScrollHandoffTester, ScrollgrabFling) {
   RefPtr<TestAsyncPanZoomController> childApzc = ApzcOf(layers[1]);
 
   // Pan on the child, not enough to fully scroll the scrollgrab parent.
-  Pan(childApzc, mcc, 80, 70);
+  Pan(childApzc, 80, 70);
 
   // Check that it is the scrollgrab parent that's in a fling, not the child.
   rootApzc->AssertStateIsFling();
@@ -466,7 +469,7 @@ TEST_F(APZScrollHandoffTester, ImmediateHandoffDisallowed_Pan) {
   // Pan on the child, enough to scroll it to its end and have scroll
   // left to hand off. Since immediate handoff is disallowed, we expect
   // the leftover scroll not to be handed off.
-  Pan(childApzc, mcc, 60, 5);
+  Pan(childApzc, 60, 5);
 
   // Verify that the parent has not scrolled.
   EXPECT_EQ(50, childApzc->GetFrameMetrics().GetScrollOffset().y);
@@ -474,7 +477,7 @@ TEST_F(APZScrollHandoffTester, ImmediateHandoffDisallowed_Pan) {
 
   // Pan again on the child. This time, since the child was scrolled to
   // its end when the gesture began, we expect the scroll to be handed off.
-  Pan(childApzc, mcc, 60, 50);
+  Pan(childApzc, 60, 50);
 
   // Verify that the parent scrolled.
   EXPECT_EQ(10, parentApzc->GetFrameMetrics().GetScrollOffset().y);
@@ -491,7 +494,7 @@ TEST_F(APZScrollHandoffTester, ImmediateHandoffDisallowed_Fling) {
 
   // Pan on the child, enough to get very close to the end, so that the
   // subsequent fling reaches the end and has leftover velocity to hand off.
-  Pan(childApzc, mcc, 60, 12);
+  Pan(childApzc, 60, 12);
 
   // Allow the fling to run its course.
   childApzc->AdvanceAnimationsUntilEnd();
@@ -506,7 +509,7 @@ TEST_F(APZScrollHandoffTester, ImmediateHandoffDisallowed_Fling) {
 
   // Pan again on the child. This time, since the child was scrolled to
   // its end when the gesture began, we expect the scroll to be handed off.
-  Pan(childApzc, mcc, 60, 50);
+  Pan(childApzc, 60, 50);
 
   // Allow the fling to run its course. The fling should also be handed off.
   childApzc->AdvanceAnimationsUntilEnd();

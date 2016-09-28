@@ -1397,12 +1397,12 @@ nsTableRowGroupFrame::Reflow(nsPresContext*           aPresContext,
 }
 
 bool
-nsTableRowGroupFrame::UpdateOverflow()
+nsTableRowGroupFrame::ComputeCustomOverflow(nsOverflowAreas& aOverflowAreas)
 {
   // Row cursor invariants depend on the visual overflow area of the rows,
   // which may have changed, so we need to clear the cursor now.
   ClearRowCursor();
-  return nsContainerFrame::UpdateOverflow();
+  return nsContainerFrame::ComputeCustomOverflow(aOverflowAreas);
 }
 
 /* virtual */ void
@@ -1563,9 +1563,9 @@ nsTableRowGroupFrame::GetBSizeBasis(const nsHTMLReflowState& aReflowState)
     result = aReflowState.ComputedBSize() - cellSpacing;
   }
   else {
-    const nsHTMLReflowState* parentRS = aReflowState.parentReflowState;
+    const nsHTMLReflowState* parentRS = aReflowState.mParentReflowState;
     if (parentRS && (tableFrame != parentRS->frame)) {
-      parentRS = parentRS->parentReflowState;
+      parentRS = parentRS->mParentReflowState;
     }
     if (parentRS && (tableFrame == parentRS->frame) &&
         (parentRS->ComputedBSize() > 0) && (parentRS->ComputedBSize() < NS_UNCONSTRAINEDSIZE)) {

@@ -54,7 +54,7 @@ struct ParamTraits<mozilla::gfx::Matrix>
     WriteParam(aMsg, aParam._32);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (ReadParam(aMsg, aIter, &aResult->_11) &&
         ReadParam(aMsg, aIter, &aResult->_12) &&
@@ -89,7 +89,7 @@ struct ParamTraits<mozilla::gfx::Matrix4x4>
 #undef Wr
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
 #define Rd(_f)  ReadParam(msg, iter, &result-> _f)
     return (Rd(_11) && Rd(_12) && Rd(_13) && Rd(_14) &&
@@ -116,7 +116,7 @@ struct ParamTraits<mozilla::gfx::Matrix5x4>
 #undef Wr
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
 #define Rd(_f)  ReadParam(msg, iter, &result-> _f)
     return (Rd(_11) && Rd(_12) && Rd(_13) && Rd(_14) &&
@@ -139,7 +139,7 @@ struct ParamTraits<gfxPoint>
     WriteParam(aMsg, aParam.y);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->x) &&
             ReadParam(aMsg, aIter, &aResult->y));
@@ -157,7 +157,7 @@ struct ParamTraits<gfxSize>
     WriteParam(aMsg, aParam.height);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     if (ReadParam(aMsg, aIter, &aResult->width) &&
         ReadParam(aMsg, aIter, &aResult->height))
@@ -180,7 +180,7 @@ struct ParamTraits<gfxRect>
     WriteParam(aMsg, aParam.height);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return ReadParam(aMsg, aIter, &aResult->x) &&
            ReadParam(aMsg, aIter, &aResult->y) &&
@@ -206,11 +206,11 @@ struct ParamTraits<gfxSurfaceType>
 {};
 
 template <>
-struct ParamTraits<mozilla::gfx::Filter>
+struct ParamTraits<mozilla::gfx::SamplingFilter>
   : public ContiguousEnumSerializer<
-             mozilla::gfx::Filter,
-             mozilla::gfx::Filter::GOOD,
-             mozilla::gfx::Filter::SENTINEL>
+             mozilla::gfx::SamplingFilter,
+             mozilla::gfx::SamplingFilter::GOOD,
+             mozilla::gfx::SamplingFilter::SENTINEL>
 {};
 
 template <>
@@ -297,7 +297,7 @@ struct ParamTraits<mozilla::gfx::Color>
     WriteParam(msg, param.a);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->r) &&
             ReadParam(msg, iter, &result->g) &&
@@ -317,7 +317,7 @@ struct ParamTraits<nsPoint>
     WriteParam(msg, param.y);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y));
@@ -335,7 +335,7 @@ struct ParamTraits<nsIntPoint>
     WriteParam(msg, param.y);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y));
@@ -353,7 +353,7 @@ struct ParamTraits<mozilla::gfx::IntSizeTyped<T> >
     WriteParam(msg, param.height);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->width) &&
             ReadParam(msg, iter, &result->height));
@@ -378,7 +378,7 @@ struct RegionParamTraits
     WriteParam(msg, Rect());
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     RegionBuilder<Region> builder;
     Rect rect;
@@ -387,7 +387,7 @@ struct RegionParamTraits
         *result = builder.ToRegion();
         return true;
       }
-      builder.Or(rect);
+      builder.OrWith(rect);
     }
 
     return false;
@@ -412,7 +412,7 @@ struct ParamTraits<mozilla::gfx::IntSize>
     WriteParam(msg, param.height);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->width) &&
             ReadParam(msg, iter, &result->height));
@@ -429,7 +429,7 @@ struct ParamTraits< mozilla::gfx::CoordTyped<T> >
     WriteParam(msg, param.value);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->value));
   }
@@ -445,7 +445,7 @@ struct ParamTraits< mozilla::gfx::IntCoordTyped<T> >
     WriteParam(msg, param.value);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->value));
   }
@@ -461,7 +461,7 @@ struct ParamTraits< mozilla::gfx::ScaleFactor<T, U> >
     WriteParam(msg, param.scale);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->scale));
   }
@@ -478,7 +478,7 @@ struct ParamTraits< mozilla::gfx::ScaleFactors2D<T, U> >
     WriteParam(msg, param.yScale);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->xScale) &&
             ReadParam(msg, iter, &result->yScale));
@@ -496,7 +496,7 @@ struct ParamTraits< mozilla::gfx::PointTyped<T> >
     WriteParam(msg, param.y);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y));
@@ -515,7 +515,7 @@ struct ParamTraits< mozilla::gfx::Point3DTyped<F, T> >
     WriteParam(msg, param.z);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y) &&
@@ -534,7 +534,7 @@ struct ParamTraits< mozilla::gfx::IntPointTyped<T> >
     WriteParam(msg, param.y);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y));
@@ -552,7 +552,7 @@ struct ParamTraits< mozilla::gfx::SizeTyped<T> >
     WriteParam(msg, param.height);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->width) &&
             ReadParam(msg, iter, &result->height));
@@ -572,7 +572,7 @@ struct ParamTraits< mozilla::gfx::RectTyped<T> >
     WriteParam(msg, param.height);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y) &&
@@ -594,7 +594,7 @@ struct ParamTraits< mozilla::gfx::IntRectTyped<T> >
     WriteParam(msg, param.height);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y) &&
@@ -616,7 +616,7 @@ struct ParamTraits<mozilla::gfx::Margin>
     WriteParam(msg, param.left);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->top) &&
             ReadParam(msg, iter, &result->right) &&
@@ -638,7 +638,7 @@ struct ParamTraits< mozilla::gfx::MarginTyped<T> >
     WriteParam(msg, param.left);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->top) &&
             ReadParam(msg, iter, &result->right) &&
@@ -660,7 +660,7 @@ struct ParamTraits<nsRect>
     WriteParam(msg, param.height);
   }
 
-  static bool Read(const Message* msg, void** iter, paramType* result)
+  static bool Read(const Message* msg, PickleIterator* iter, paramType* result)
   {
     return (ReadParam(msg, iter, &result->x) &&
             ReadParam(msg, iter, &result->y) &&
@@ -682,15 +682,35 @@ struct ParamTraits<mozilla::layers::FrameMetrics::ScrollOffsetUpdateType>
              mozilla::layers::FrameMetrics::ScrollOffsetUpdateType::eSentinel>
 {};
 
+// Helper class for reading bitfields.
+// If T has bitfields members, derive ParamTraits<T> from BitfieldHelper<T>.
+template <typename ParamType>
+struct BitfieldHelper
+{
+  // We need this helper because we can't get the address of a bitfield to
+  // pass directly to ReadParam. So instead we read it into a temporary bool
+  // and set the bitfield using a setter function
+  static bool ReadBoolForBitfield(const Message* aMsg, PickleIterator* aIter,
+        ParamType* aResult, void (ParamType::*aSetter)(bool))
+  {
+    bool value;
+    if (ReadParam(aMsg, aIter, &value)) {
+      (aResult->*aSetter)(value);
+      return true;
+    }
+    return false;
+  }
+};
+
 template <>
 struct ParamTraits<mozilla::layers::FrameMetrics>
+    : BitfieldHelper<mozilla::layers::FrameMetrics>
 {
   typedef mozilla::layers::FrameMetrics paramType;
 
   static void Write(Message* aMsg, const paramType& aParam)
   {
     WriteParam(aMsg, aParam.mScrollId);
-    WriteParam(aMsg, aParam.mScrollParentId);
     WriteParam(aMsg, aParam.mPresShellResolution);
     WriteParam(aMsg, aParam.mCompositionBounds);
     WriteParam(aMsg, aParam.mDisplayPort);
@@ -707,51 +727,17 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
     WriteParam(aMsg, aParam.mPresShellId);
     WriteParam(aMsg, aParam.mViewport);
     WriteParam(aMsg, aParam.mExtraResolution);
-    WriteParam(aMsg, aParam.mBackgroundColor);
-    WriteParam(aMsg, aParam.GetContentDescription());
-    WriteParam(aMsg, aParam.mLineScrollAmount);
-    WriteParam(aMsg, aParam.mPageScrollAmount);
     WriteParam(aMsg, aParam.mPaintRequestTime);
     WriteParam(aMsg, aParam.mScrollUpdateType);
     WriteParam(aMsg, aParam.mIsRootContent);
-    WriteParam(aMsg, aParam.mHasScrollgrab);
     WriteParam(aMsg, aParam.mDoSmoothScroll);
     WriteParam(aMsg, aParam.mUseDisplayPortMargins);
-    WriteParam(aMsg, aParam.mAllowVerticalScrollWithWheel);
-    WriteParam(aMsg, aParam.mIsLayersIdRoot);
-    WriteParam(aMsg, aParam.mUsesContainerScrolling);
     WriteParam(aMsg, aParam.mIsScrollInfoLayer);
-    WriteParam(aMsg, aParam.mForceDisableApz);
   }
 
-  static bool ReadContentDescription(const Message* aMsg, void** aIter, paramType* aResult)
-  {
-    nsCString str;
-    if (!ReadParam(aMsg, aIter, &str)) {
-      return false;
-    }
-    aResult->SetContentDescription(str);
-    return true;
-  }
-
-  // We need this helper because we can't get the address of a bitfield to
-  // pass directly to ReadParam. So instead we read it into a temporary bool
-  // and set the bitfield using a setter function
-  static bool ReadBoolForBitfield(const Message* aMsg, void** aIter,
-        paramType* aResult, void (paramType::*aSetter)(bool))
-  {
-    bool value;
-    if (ReadParam(aMsg, aIter, &value)) {
-      (aResult->*aSetter)(value);
-      return true;
-    }
-    return false;
-  }
-
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mScrollId) &&
-            ReadParam(aMsg, aIter, &aResult->mScrollParentId) &&
             ReadParam(aMsg, aIter, &aResult->mPresShellResolution) &&
             ReadParam(aMsg, aIter, &aResult->mCompositionBounds) &&
             ReadParam(aMsg, aIter, &aResult->mDisplayPort) &&
@@ -768,21 +754,12 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
             ReadParam(aMsg, aIter, &aResult->mPresShellId) &&
             ReadParam(aMsg, aIter, &aResult->mViewport) &&
             ReadParam(aMsg, aIter, &aResult->mExtraResolution) &&
-            ReadParam(aMsg, aIter, &aResult->mBackgroundColor) &&
-            ReadContentDescription(aMsg, aIter, aResult) &&
-            ReadParam(aMsg, aIter, &aResult->mLineScrollAmount) &&
-            ReadParam(aMsg, aIter, &aResult->mPageScrollAmount) &&
             ReadParam(aMsg, aIter, &aResult->mPaintRequestTime) &&
             ReadParam(aMsg, aIter, &aResult->mScrollUpdateType) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsRootContent) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetHasScrollgrab) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetDoSmoothScroll) &&
             ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetUseDisplayPortMargins) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetAllowVerticalScrollWithWheel) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsLayersIdRoot) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetUsesContainerScrolling) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsScrollInfoLayer) &&
-            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetForceDisableApz));
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsScrollInfoLayer));
   }
 };
 
@@ -801,7 +778,7 @@ struct ParamTraits<mozilla::layers::ScrollSnapInfo>
     WriteParam(aMsg, aParam.mScrollSnapCoordinates);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mScrollSnapTypeX) &&
             ReadParam(aMsg, aIter, &aResult->mScrollSnapTypeY) &&
@@ -813,7 +790,26 @@ struct ParamTraits<mozilla::layers::ScrollSnapInfo>
 };
 
 template <>
+struct ParamTraits<mozilla::layers::LayerClip>
+{
+  typedef mozilla::layers::LayerClip paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    WriteParam(aMsg, aParam.mClipRect);
+    WriteParam(aMsg, aParam.mMaskLayerIndex);
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
+  {
+    return (ReadParam(aMsg, aIter, &aResult->mClipRect) &&
+            ReadParam(aMsg, aIter, &aResult->mMaskLayerIndex));
+  }
+};
+
+template <>
 struct ParamTraits<mozilla::layers::ScrollMetadata>
+    : BitfieldHelper<mozilla::layers::ScrollMetadata>
 {
   typedef mozilla::layers::ScrollMetadata paramType;
 
@@ -821,16 +817,44 @@ struct ParamTraits<mozilla::layers::ScrollMetadata>
   {
     WriteParam(aMsg, aParam.mMetrics);
     WriteParam(aMsg, aParam.mSnapInfo);
-    WriteParam(aMsg, aParam.mMaskLayerIndex);
-    WriteParam(aMsg, aParam.mClipRect);
+    WriteParam(aMsg, aParam.mScrollParentId);
+    WriteParam(aMsg, aParam.mBackgroundColor);
+    WriteParam(aMsg, aParam.GetContentDescription());
+    WriteParam(aMsg, aParam.mLineScrollAmount);
+    WriteParam(aMsg, aParam.mPageScrollAmount);
+    WriteParam(aMsg, aParam.mScrollClip);
+    WriteParam(aMsg, aParam.mHasScrollgrab);
+    WriteParam(aMsg, aParam.mAllowVerticalScrollWithWheel);
+    WriteParam(aMsg, aParam.mIsLayersIdRoot);
+    WriteParam(aMsg, aParam.mUsesContainerScrolling);
+    WriteParam(aMsg, aParam.mForceDisableApz);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool ReadContentDescription(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
+  {
+    nsCString str;
+    if (!ReadParam(aMsg, aIter, &str)) {
+      return false;
+    }
+    aResult->SetContentDescription(str);
+    return true;
+  }
+
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mMetrics) &&
             ReadParam(aMsg, aIter, &aResult->mSnapInfo) &&
-            ReadParam(aMsg, aIter, &aResult->mMaskLayerIndex) &&
-            ReadParam(aMsg, aIter, &aResult->mClipRect));
+            ReadParam(aMsg, aIter, &aResult->mScrollParentId) &&
+            ReadParam(aMsg, aIter, &aResult->mBackgroundColor) &&
+            ReadContentDescription(aMsg, aIter, aResult) &&
+            ReadParam(aMsg, aIter, &aResult->mLineScrollAmount) &&
+            ReadParam(aMsg, aIter, &aResult->mPageScrollAmount) &&
+            ReadParam(aMsg, aIter, &aResult->mScrollClip) &&
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetHasScrollgrab) &&
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetAllowVerticalScrollWithWheel) &&
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetIsLayersIdRoot) &&
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetUsesContainerScrolling) &&
+            ReadBoolForBitfield(aMsg, aIter, aResult, &paramType::SetForceDisableApz));
   }
 };
 
@@ -848,7 +872,7 @@ struct ParamTraits<mozilla::layers::TextureFactoryIdentifier>
     WriteParam(aMsg, aParam.mSyncHandle);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     bool result = ReadParam(aMsg, aIter, &aResult->mParentBackend) &&
                   ReadParam(aMsg, aIter, &aResult->mMaxTextureSize) &&
@@ -870,7 +894,7 @@ struct ParamTraits<mozilla::layers::TextureInfo>
     WriteParam(aMsg, aParam.mTextureFlags);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return ReadParam(aMsg, aIter, &aResult->mCompositableType) &&
            ReadParam(aMsg, aIter, &aResult->mTextureFlags);
@@ -913,7 +937,7 @@ struct ParamTraits<mozilla::layers::ScrollableLayerGuid>
     WriteParam(aMsg, aParam.mScrollId);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mLayersId) &&
             ReadParam(aMsg, aIter, &aResult->mPresShellId) &&
@@ -935,7 +959,7 @@ struct ParamTraits<mozilla::layers::ZoomConstraints>
     WriteParam(aMsg, aParam.mMaxZoom);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mAllowZoom) &&
             ReadParam(aMsg, aIter, &aResult->mAllowDoubleTapZoom) &&
@@ -958,7 +982,7 @@ struct ParamTraits<mozilla::layers::EventRegions>
     WriteParam(aMsg, aParam.mVerticalPanRegion);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mHitRegion) &&
             ReadParam(aMsg, aIter, &aResult->mDispatchToContentHitRegion) &&
@@ -1008,12 +1032,12 @@ struct ParamTraits<mozilla::gfx::AttributeMap>
 #undef CASE_TYPE
 
         default:
-          MOZ_CRASH("unhandled attribute type");
+          MOZ_CRASH("GFX: unhandled attribute type");
       }
     }
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     uint32_t count;
     if (!ReadParam(aMsg, aIter, &count)) {
@@ -1065,7 +1089,7 @@ struct ParamTraits<mozilla::gfx::AttributeMap>
           break;
         }
         default:
-          MOZ_CRASH("unhandled attribute type");
+          MOZ_CRASH("GFX: unhandled attribute type");
       }
     }
     return true;
@@ -1092,7 +1116,7 @@ struct ParamTraits<mozilla::gfx::FilterPrimitiveDescription>
     WriteParam(aMsg, aParam.Attributes());
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     mozilla::gfx::PrimitiveType type;
     mozilla::gfx::IntRect primitiveSubregion;
@@ -1140,7 +1164,7 @@ struct ParamTraits<mozilla::gfx::FilterDescription>
     WriteParam(aMsg, aParam.mPrimitives);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mPrimitives));
   }
@@ -1186,7 +1210,7 @@ struct ParamTraits<mozilla::layers::AsyncDragMetrics>
     WriteParam(aMsg, aParam.mDirection);
   }
 
-  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  static bool Read(const Message* aMsg, PickleIterator* aIter, paramType* aResult)
   {
     return (ReadParam(aMsg, aIter, &aResult->mViewId) &&
             ReadParam(aMsg, aIter, &aResult->mPresShellId) &&

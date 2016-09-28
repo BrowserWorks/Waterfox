@@ -947,6 +947,11 @@ nsHTMLDocument::SetDomain(const nsAString& aDomain, ErrorResult& rv)
     return;
   }
 
+  // If the old uri had a port number and the new domain does not have,
+  // SetHostPort will not reset the port number of the old uri, it will be
+  // kept. Here we want to reset the port number, so we need to do it manually.
+  newURI->SetPort(-1);
+
   rv2 = newURI->SetHostPort(NS_ConvertUTF16toUTF8(aDomain));
   if (NS_FAILED(rv2)) {
     rv.Throw(rv2);
@@ -1975,86 +1980,6 @@ nsHTMLDocument::GetElementsByName(const nsAString& aElementName,
   return NS_OK;
 }
 
-static bool MatchItems(nsIContent* aContent, int32_t aNameSpaceID, 
-                       nsIAtom* aAtom, void* aData)
-{
-  if (!aContent->IsHTMLElement()) {
-    return false;
-  }
-
-  nsGenericHTMLElement* elem = static_cast<nsGenericHTMLElement*>(aContent);
-  if (!elem->HasAttr(kNameSpaceID_None, nsGkAtoms::itemscope) ||
-      elem->HasAttr(kNameSpaceID_None, nsGkAtoms::itemprop)) {
-    return false;
-  }
-
-  nsTArray<nsCOMPtr<nsIAtom> >* tokens = static_cast<nsTArray<nsCOMPtr<nsIAtom> >*>(aData);
-  if (tokens->IsEmpty()) {
-    return true;
-  }
- 
-  const nsAttrValue* attr = elem->GetParsedAttr(nsGkAtoms::itemtype);
-  if (!attr)
-    return false;
-
-  for (uint32_t i = 0; i < tokens->Length(); i++) {
-    if (!attr->Contains(tokens->ElementAt(i), eCaseMatters)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-static void DestroyTokens(void* aData)
-{
-  nsTArray<nsCOMPtr<nsIAtom> >* tokens = static_cast<nsTArray<nsCOMPtr<nsIAtom> >*>(aData);
-  delete tokens;
-}
-
-static void* CreateTokens(nsINode* aRootNode, const nsString* types)
-{
-  nsTArray<nsCOMPtr<nsIAtom> >* tokens = new nsTArray<nsCOMPtr<nsIAtom> >();
-  nsAString::const_iterator iter, end;
-  types->BeginReading(iter);
-  types->EndReading(end);
-  
-  // skip initial whitespace
-  while (iter != end && nsContentUtils::IsHTMLWhitespace(*iter)) {
-    ++iter;
-  }
-
-  // parse the tokens
-  while (iter != end) {
-    nsAString::const_iterator start(iter);
-
-    do {
-      ++iter;
-    } while (iter != end && !nsContentUtils::IsHTMLWhitespace(*iter));
-
-    tokens->AppendElement(NS_Atomize(Substring(start, iter)));
-
-    // skip whitespace
-    while (iter != end && nsContentUtils::IsHTMLWhitespace(*iter)) {
-      ++iter;
-    }
-  }
-  return tokens;
-}
-
-NS_IMETHODIMP
-nsHTMLDocument::GetItems(const nsAString& types, nsIDOMNodeList** aReturn)
-{
-  *aReturn = GetItems(types).take();
-  return NS_OK;
-}
-
-already_AddRefed<nsINodeList>
-nsHTMLDocument::GetItems(const nsAString& aTypeNames)
-{
-  return NS_GetFuncStringNodeList(this, MatchItems, DestroyTokens, CreateTokens,
-                                  aTypeNames);
-}
-
 void
 nsHTMLDocument::AddedForm()
 {
@@ -2325,14 +2250,8 @@ nsHTMLDocument::NamedGetter(JSContext* cx, const nsAString& aName, bool& aFound,
   aRetval.set(&val.toObject());
 }
 
-bool
-nsHTMLDocument::NameIsEnumerable(const nsAString& aName)
-{
-  return true;
-}
-
 void
-nsHTMLDocument::GetSupportedNames(unsigned, nsTArray<nsString>& aNames)
+nsHTMLDocument::GetSupportedNames(nsTArray<nsString>& aNames)
 {
   for (auto iter = mIdentifierMap.Iter(); !iter.Done(); iter.Next()) {
     nsIdentifierMapEntry* entry = iter.Get();
@@ -2505,7 +2424,7 @@ nsHTMLDocument::MaybeEditingStateChanged()
       EditingStateChanged();
     } else if (!mInDestructor) {
       nsContentUtils::AddScriptRunner(
-        NS_NewRunnableMethod(this, &nsHTMLDocument::MaybeEditingStateChanged));
+        NewRunnableMethod(this, &nsHTMLDocument::MaybeEditingStateChanged));
     }
   }
 }
@@ -2524,7 +2443,7 @@ nsHTMLDocument::EndUpdate(nsUpdateType aUpdateType)
 
 
 // Helper class, used below in ChangeContentEditableCount().
-class DeferredContentEditableCountChangeEvent : public nsRunnable
+class DeferredContentEditableCountChangeEvent : public Runnable
 {
 public:
   DeferredContentEditableCountChangeEvent(nsHTMLDocument *aDoc,
@@ -2969,7 +2888,7 @@ nsHTMLDocument::GetMidasCommandManager(nsICommandManager** aCmdMgr)
   if (!docshell)
     return NS_ERROR_FAILURE;
 
-  mMidasCommandManager = do_GetInterface(docshell);
+  mMidasCommandManager = docshell->GetCommandManager();
   if (!mMidasCommandManager)
     return NS_ERROR_FAILURE;
 

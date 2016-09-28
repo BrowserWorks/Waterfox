@@ -150,9 +150,7 @@ static void
 GetBorderPadding(nsStyleContext* aContext, nsMargin& aMargin)
 {
   aMargin.SizeTo(0, 0, 0, 0);
-  if (!aContext->StylePadding()->GetPadding(aMargin)) {
-    NS_NOTYETIMPLEMENTED("percentage padding");
-  }
+  aContext->StylePadding()->GetPadding(aMargin);
   aMargin += aContext->StyleBorder()->GetComputedBorder();
 }
 
@@ -2188,21 +2186,17 @@ nsTreeBodyFrame::GetImage(int32_t aRowIndex, nsTreeColumn* aCol, bool aUseContex
 
       // XXXbz what's the origin principal for this stuff that comes from our
       // view?  I guess we should assume that it's the node's principal...
-      if (nsContentUtils::CanLoadImage(srcURI, mContent, doc,
-                                       mContent->NodePrincipal())) {
-        nsresult rv = nsContentUtils::LoadImage(srcURI,
-                                                mContent,
-                                                doc,
-                                                mContent->NodePrincipal(),
-                                                doc->GetDocumentURI(),
-                                                doc->GetReferrerPolicy(),
-                                                imgNotificationObserver,
-                                                nsIRequest::LOAD_NORMAL,
-                                                EmptyString(),
-                                                getter_AddRefs(imageRequest));
-        NS_ENSURE_SUCCESS(rv, rv);
-                                  
-      }
+      nsresult rv = nsContentUtils::LoadImage(srcURI,
+                                              mContent,
+                                              doc,
+                                              mContent->NodePrincipal(),
+                                              doc->GetDocumentURI(),
+                                              doc->GetReferrerPolicy(),
+                                              imgNotificationObserver,
+                                              nsIRequest::LOAD_NORMAL,
+                                              EmptyString(),
+                                              getter_AddRefs(imageRequest));
+      NS_ENSURE_SUCCESS(rv, rv);
     }
     listener->UnsuppressInvalidation();
 
@@ -3490,7 +3484,7 @@ nsTreeBodyFrame::PaintTwisty(int32_t              aRowIndex,
         result &=
           nsLayoutUtils::DrawSingleUnscaledImage(
               *aRenderingContext.ThebesContext(), aPresContext, image,
-              Filter::POINT, pt, &aDirtyRect,
+              SamplingFilter::POINT, pt, &aDirtyRect,
               imgIContainer::FLAG_NONE, &imageSize);
       }
     }
@@ -3656,7 +3650,7 @@ nsTreeBodyFrame::PaintImage(int32_t              aRowIndex,
 
     result &=
       nsLayoutUtils::DrawImage(*ctx, aPresContext, image,
-        nsLayoutUtils::GetGraphicsFilterForFrame(this),
+        nsLayoutUtils::GetSamplingFilterForFrame(this),
         wholeImageDest, destRect, destRect.TopLeft(), aDirtyRect,
         imgIContainer::FLAG_NONE);
 
@@ -3675,6 +3669,13 @@ nsTreeBodyFrame::PaintImage(int32_t              aRowIndex,
   return result;
 }
 
+// Disable PGO for PaintText because MSVC 2015 seems to have decided
+// that it can null out the alreadyAddRefed<nsFontMetrics> used to
+// initialize fontMet after storing fontMet on the stack in the same
+// space, overwriting fontMet's stack storage with null.
+#ifdef _MSC_VER
+# pragma optimize("g", off)
+#endif
 DrawResult
 nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
                            nsTreeColumn*        aColumn,
@@ -3807,6 +3808,9 @@ nsTreeBodyFrame::PaintText(int32_t              aRowIndex,
 
   return result;
 }
+#ifdef _MSC_VER
+# pragma optimize("", on)
+#endif
 
 DrawResult
 nsTreeBodyFrame::PaintCheckbox(int32_t              aRowIndex,
@@ -3870,7 +3874,7 @@ nsTreeBodyFrame::PaintCheckbox(int32_t              aRowIndex,
     result &=
       nsLayoutUtils::DrawSingleUnscaledImage(*aRenderingContext.ThebesContext(),
         aPresContext,
-        image, Filter::POINT, pt, &aDirtyRect,
+        image, SamplingFilter::POINT, pt, &aDirtyRect,
         imgIContainer::FLAG_NONE, &imageSize);
   }
 
@@ -3938,7 +3942,7 @@ nsTreeBodyFrame::PaintProgressMeter(int32_t              aRowIndex,
       result &=
         nsLayoutUtils::DrawImage(*aRenderingContext.ThebesContext(),
           aPresContext, image,
-          nsLayoutUtils::GetGraphicsFilterForFrame(this),
+          nsLayoutUtils::GetSamplingFilterForFrame(this),
           nsRect(meterRect.TopLeft(), size), meterRect, meterRect.TopLeft(),
           aDirtyRect, imgIContainer::FLAG_NONE);
     } else {
@@ -3966,7 +3970,7 @@ nsTreeBodyFrame::PaintProgressMeter(int32_t              aRowIndex,
       result &=
         nsLayoutUtils::DrawImage(*aRenderingContext.ThebesContext(),
           aPresContext, image,
-          nsLayoutUtils::GetGraphicsFilterForFrame(this),
+          nsLayoutUtils::GetSamplingFilterForFrame(this),
           nsRect(meterRect.TopLeft(), size), meterRect, meterRect.TopLeft(),
           aDirtyRect, imgIContainer::FLAG_NONE);
     }
@@ -4093,12 +4097,12 @@ nsTreeBodyFrame::PaintBackgroundLayer(nsStyleContext*      aStyleContext,
                                       const nsRect&        aDirtyRect)
 {
   const nsStyleBorder* myBorder = aStyleContext->StyleBorder();
-
+  nsCSSRendering::PaintBGParams params =
+    nsCSSRendering::PaintBGParams::ForAllLayers(*aPresContext, aRenderingContext,
+                                                aDirtyRect, aRect, this,
+                                                nsCSSRendering::PAINTBG_SYNC_DECODE_IMAGES);
   DrawResult result =
-    nsCSSRendering::PaintBackgroundWithSC(aPresContext, aRenderingContext,
-                                          this, aDirtyRect, aRect,
-                                          aStyleContext, *myBorder,
-                                          nsCSSRendering::PAINTBG_SYNC_DECODE_IMAGES);
+    nsCSSRendering::PaintBackgroundWithSC(params, aStyleContext, *myBorder);
 
   result &=
     nsCSSRendering::PaintBorderWithStyleBorder(aPresContext, aRenderingContext,
@@ -4840,7 +4844,7 @@ nsTreeBodyFrame::FireInvalidateEvent(int32_t aStartRowIdx, int32_t aEndRowIdx,
 }
 #endif
 
-class nsOverflowChecker : public nsRunnable
+class nsOverflowChecker : public Runnable
 {
 public:
   explicit nsOverflowChecker(nsTreeBodyFrame* aFrame) : mFrame(aFrame) {}

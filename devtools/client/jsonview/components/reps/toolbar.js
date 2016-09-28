@@ -6,7 +6,7 @@
 
 "use strict";
 
-define(function(require, exports, module) {
+define(function (require, exports, module) {
   const React = require("devtools/client/shared/vendor/react");
   const DOM = React.DOM;
 
@@ -14,6 +14,8 @@ define(function(require, exports, module) {
    * Renders a simple toolbar.
    */
   let Toolbar = React.createClass({
+    displayName: "Toolbar",
+
     propTypes: {
       children: React.PropTypes.oneOfType([
         React.PropTypes.array,
@@ -21,9 +23,7 @@ define(function(require, exports, module) {
       ])
     },
 
-    displayName: "Toolbar",
-
-    render: function() {
+    render: function () {
       return (
         DOM.div({className: "toolbar"},
           this.props.children
@@ -36,15 +36,15 @@ define(function(require, exports, module) {
    * Renders a simple toolbar button.
    */
   let ToolbarButton = React.createClass({
+    displayName: "ToolbarButton",
+
     propTypes: {
       active: React.PropTypes.bool,
       disabled: React.PropTypes.bool,
       children: React.PropTypes.string,
     },
 
-    displayName: "ToolbarButton",
-
-    render: function() {
+    render: function () {
       let props = Object.assign({className: "btn"}, this.props);
       return (
         DOM.button(props, this.props.children)

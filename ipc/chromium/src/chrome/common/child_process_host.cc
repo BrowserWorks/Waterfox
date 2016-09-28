@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 // Copyright (c) 2009 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -27,16 +29,17 @@ typedef std::list<ChildProcessHost*> ChildProcessList;
 // The NotificationTask is used to notify about plugin process connection/
 // disconnection. It is needed because the notifications in the
 // NotificationService must happen in the main thread.
-class ChildNotificationTask : public Task {
+class ChildNotificationTask : public mozilla::Runnable {
  public:
   ChildNotificationTask(
       NotificationType notification_type, ChildProcessInfo* info)
       : notification_type_(notification_type), info_(*info) { }
 
-  virtual void Run() {
+  NS_IMETHOD Run() {
     NotificationService::current()->
         Notify(notification_type_, NotificationService::AllSources(),
                Details<ChildProcessInfo>(&info_));
+    return NS_OK;
   }
 
  private:
@@ -129,8 +132,8 @@ void ChildProcessHost::Notify(NotificationType type) {
       loop = mozilla::ipc::ProcessChild::message_loop();
   if (!loop)
       loop = MessageLoop::current();
-  loop->PostTask(
-      FROM_HERE, new ChildNotificationTask(type, this));
+  RefPtr<ChildNotificationTask> task = new ChildNotificationTask(type, this);
+  loop->PostTask(task.forget());
 }
 
 void ChildProcessHost::OnWaitableEventSignaled(base::WaitableEvent *event) {

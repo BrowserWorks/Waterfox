@@ -34,7 +34,7 @@ class LIRGeneratorARM64 : public LIRGeneratorShared
     bool needTempForPostBarrier() { return true; }
 
     // ARM64 has a scratch register, so no need for another temp for dispatch ICs.
-    LDefinition tempForDispatchCache(MIRType outputType = MIRType_None) {
+    LDefinition tempForDispatchCache(MIRType outputType = MIRType::None) {
         return LDefinition::BogusTemp();
     }
 
@@ -107,16 +107,12 @@ class LIRGeneratorARM64 : public LIRGeneratorShared
     void visitAsmJSAtomicExchangeHeap(MAsmJSAtomicExchangeHeap* ins);
     void visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap* ins);
     void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic* ins);
-    void visitSimdBinaryArith(MSimdBinaryArith* ins);
-    void visitSimdSelect(MSimdSelect* ins);
-    void visitSimdSplatX4(MSimdSplatX4* ins);
-    void visitSimdValueX4(MSimdValueX4* ins);
     void visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement* ins);
     void visitAtomicExchangeTypedArrayElement(MAtomicExchangeTypedArrayElement* ins);
     void visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop* ins);
     void visitSubstr(MSubstr* ins);
     void visitRandom(MRandom* ins);
-    void visitTruncateToInt64(MTruncateToInt64* ins);
+    void visitWasmTruncateToInt64(MWasmTruncateToInt64* ins);
     void visitInt64ToFloatingPoint(MInt64ToFloatingPoint* ins);
 };
 

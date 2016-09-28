@@ -13,14 +13,18 @@ function test() {
   // Linux debug test slaves are a bit slow at this test sometimes.
   requestLongerTimeout(2);
 
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gSources = gDebugger.DebuggerView.Sources;
-    const queries = gDebugger.require('./content/queries');
-    const constants = gDebugger.require('./content/constants');
+    const queries = gDebugger.require("./content/queries");
+    const constants = gDebugger.require("./content/constants");
     const actions = bindActionCreators(gPanel);
     const getState = gDebugger.DebuggerController.getState;
 
@@ -29,7 +33,7 @@ function test() {
     var client = gPanel.target.client;
     client.mainRoot.traits.conditionalBreakpoints = false;
 
-    const addBreakpoints = Task.async(function*() {
+    const addBreakpoints = Task.async(function* () {
       yield actions.addBreakpoint({ actor: gSources.selectedValue, line: 18 },
                                   "undefined");
       yield actions.addBreakpoint({ actor: gSources.selectedValue, line: 19 },
@@ -78,9 +82,9 @@ function test() {
            "The correct source is selected.");
 
         ok(gSources.selectedItem,
-           "There should be a selected source in the sources pane.")
+           "There should be a selected source in the sources pane.");
         ok(!gSources._selectedBreakpoint,
-           "There should be no selected breakpoint in the sources pane.")
+           "There should be no selected breakpoint in the sources pane.");
         is(gSources._conditionalPopupVisible, false,
            "The breakpoint conditional expression popup should not be shown.");
 
@@ -132,7 +136,7 @@ function test() {
          "The editor caret position is not properly set.");
     }
 
-    const testAfterReload = Task.async(function*() {
+    const testAfterReload = Task.async(function* () {
       let selectedActor = gSources.selectedValue;
       let selectedBreakpoint = gSources._selectedBreakpoint;
 
@@ -163,15 +167,18 @@ function test() {
          "The correct source is selected.");
 
       ok(gSources.selectedItem,
-         "There should be a selected source in the sources pane.")
+         "There should be a selected source in the sources pane.");
       ok(gSources._selectedBreakpoint,
-         "There should be a selected breakpoint in the sources pane.")
+         "There should be a selected breakpoint in the sources pane.");
       is(gSources._conditionalPopupVisible, false,
          "The breakpoint conditional expression popup should not be shown.");
     });
 
-    Task.spawn(function*() {
-      yield waitForSourceAndCaretAndScopes(gPanel, ".html", 17);
+    Task.spawn(function* () {
+      let onCaretUpdated = waitForCaretAndScopes(gPanel, 17);
+      callInTab(gTab, "ermahgerd");
+      yield onCaretUpdated;
+
       yield addBreakpoints();
 
       is(gDebugger.gThreadClient.state, "paused",
@@ -207,7 +214,5 @@ function test() {
       client.mainRoot.traits.conditionalBreakpoints = true;
       closeDebuggerAndFinish(gPanel);
     });
-
-    callInTab(gTab, "ermahgerd");
   });
 }

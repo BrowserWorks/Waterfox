@@ -194,6 +194,15 @@ enum nsChangeHint {
    */
   nsChangeHint_UpdateUsesOpacity = 1 << 25,
 
+  /**
+   * Indicates that the 'background-position' property changed.
+   * Regular frames can invalidate these changes using DLBI, but
+   * for some frame types we need to repaint the whole frame because
+   * the frame does not build individual background image display items
+   * for each background layer.
+   */
+  nsChangeHint_UpdateBackgroundPosition = 1 << 26,
+
   // IMPORTANT NOTE: When adding new hints, consider whether you need to
   // add them to NS_HintsNotHandledForDescendantsIn() below.  Please also
   // add them to RestyleManager::ChangeHintToString.
@@ -210,25 +219,6 @@ inline void operator<=(nsChangeHint s1, nsChangeHint s2) {}
 inline void operator>=(nsChangeHint s1, nsChangeHint s2) {}
 
 // Operators on nsChangeHints
-
-// Merge two hints, taking the union
-inline nsChangeHint NS_CombineHint(nsChangeHint aH1, nsChangeHint aH2) {
-  return (nsChangeHint)(aH1 | aH2);
-}
-
-// Merge two hints, taking the union
-inline nsChangeHint NS_SubtractHint(nsChangeHint aH1, nsChangeHint aH2) {
-  return (nsChangeHint)(aH1 & ~aH2);
-}
-
-// Merge the "src" hint into the "dst" hint
-// Returns true iff the destination changed
-inline bool NS_UpdateHint(nsChangeHint& aDest, nsChangeHint aSrc) {
-  nsChangeHint r = (nsChangeHint)(aDest | aSrc);
-  bool changed = (int)r != (int)aDest;
-  aDest = r;
-  return changed;
-}
 
 // Returns true iff the second hint contains all the hints of the first hint
 inline bool NS_IsHintSubset(nsChangeHint aSubset, nsChangeHint aSuperSet) {
@@ -303,7 +293,8 @@ inline nsChangeHint operator^=(nsChangeHint& aLeft, nsChangeHint aRight)
           nsChangeHint_ReflowChangesSizeOrPosition | \
           nsChangeHint_ClearAncestorIntrinsics | \
           nsChangeHint_UpdateComputedBSize | \
-          nsChangeHint_UpdateUsesOpacity)
+          nsChangeHint_UpdateUsesOpacity | \
+          nsChangeHint_UpdateBackgroundPosition)
 
 inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint) {
   nsChangeHint result = nsChangeHint(aChangeHint & (
@@ -319,20 +310,21 @@ inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint)
     nsChangeHint_UpdateContainingBlock |
     nsChangeHint_BorderStyleNoneChange |
     nsChangeHint_UpdateComputedBSize |
-    nsChangeHint_UpdateUsesOpacity));
+    nsChangeHint_UpdateUsesOpacity | \
+    nsChangeHint_UpdateBackgroundPosition));
 
   if (!NS_IsHintSubset(nsChangeHint_NeedDirtyReflow, aChangeHint)) {
     if (NS_IsHintSubset(nsChangeHint_NeedReflow, aChangeHint)) {
       // If NeedDirtyReflow is *not* set, then NeedReflow is a
       // non-inherited hint.
-      NS_UpdateHint(result, nsChangeHint_NeedReflow);
+      result |= nsChangeHint_NeedReflow;
     }
 
     if (NS_IsHintSubset(nsChangeHint_ReflowChangesSizeOrPosition,
                         aChangeHint)) {
       // If NeedDirtyReflow is *not* set, then ReflowChangesSizeOrPosition is a
       // non-inherited hint.
-      NS_UpdateHint(result, nsChangeHint_ReflowChangesSizeOrPosition);
+      result |= nsChangeHint_ReflowChangesSizeOrPosition;
     }
   }
 
@@ -340,7 +332,7 @@ inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint)
       NS_IsHintSubset(nsChangeHint_ClearAncestorIntrinsics, aChangeHint)) {
     // If ClearDescendantIntrinsics is *not* set, then
     // ClearAncestorIntrinsics is a non-inherited hint.
-    NS_UpdateHint(result, nsChangeHint_ClearAncestorIntrinsics);
+    result |= nsChangeHint_ClearAncestorIntrinsics;
   }
 
   MOZ_ASSERT(NS_IsHintSubset(result,
@@ -366,6 +358,13 @@ inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint)
   nsChangeHint(NS_STYLE_HINT_VISUAL | nsChangeHint_AllReflowHints)
 #define NS_STYLE_HINT_FRAMECHANGE \
   nsChangeHint(NS_STYLE_HINT_REFLOW | nsChangeHint_ReconstructFrame)
+
+#define nsChangeHint_Hints_CanIgnoreIfNotVisible   \
+  nsChangeHint(NS_STYLE_HINT_VISUAL |              \
+               nsChangeHint_NeutralChange |        \
+               nsChangeHint_UpdateOpacityLayer |   \
+               nsChangeHint_UpdateTransformLayer | \
+               nsChangeHint_UpdateUsesOpacity)
 
 /**
  * |nsRestyleHint| is a bitfield for the result of

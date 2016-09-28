@@ -14,14 +14,12 @@
 
 var { classes: Cc, interfaces: Ci, utils: Cu, results: Cr } = Components;
 
-Cu.import("resource://gre/modules/Task.jsm");
 var { loader, require } = Cu.import("resource://devtools/shared/Loader.jsm");
-Cu.import("resource://gre/modules/Console.jsm");
-Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm");
+var { Task } = require("devtools/shared/task");
 
 loader.lazyRequireGetter(this, "promise");
 loader.lazyRequireGetter(this, "EventEmitter", "devtools/shared/event-emitter");
-loader.lazyRequireGetter(this, "AnimationsFront", "devtools/server/actors/animation", true);
+loader.lazyRequireGetter(this, "AnimationsFront", "devtools/shared/fronts/animation", true);
 
 const { LocalizationHelper } = require("devtools/client/shared/l10n");
 
@@ -192,7 +190,7 @@ var AnimationsController = {
     this.destroyed.resolve();
   }),
 
-  startListeners: function() {
+  startListeners: function () {
     // Re-create the list of players when a new node is selected, except if the
     // sidebar isn't visible.
     gInspector.selection.on("new-node-front", this.onNewNodeFront);
@@ -200,7 +198,7 @@ var AnimationsController = {
     gToolbox.on("select", this.onPanelVisibilityChange);
   },
 
-  stopListeners: function() {
+  stopListeners: function () {
     gInspector.selection.off("new-node-front", this.onNewNodeFront);
     gInspector.sidebar.off("select", this.onPanelVisibilityChange);
     gToolbox.off("select", this.onPanelVisibilityChange);
@@ -209,7 +207,7 @@ var AnimationsController = {
     }
   },
 
-  isPanelVisible: function() {
+  isPanelVisible: function () {
     return gToolbox.currentToolId === "inspector" &&
            gInspector.sidebar &&
            gInspector.sidebar.getCurrentTabID() == "animationinspector";
@@ -248,7 +246,7 @@ var AnimationsController = {
   /**
    * Toggle (pause/play) all animations in the current target.
    */
-  toggleAll: function() {
+  toggleAll: function () {
     if (!this.traits.hasToggleAll) {
       return promise.resolve();
     }
@@ -341,7 +339,7 @@ var AnimationsController = {
     }
   }),
 
-  onAnimationMutations: function(changes) {
+  onAnimationMutations: function (changes) {
     // Insert new players into this.animationPlayers when new animations are
     // added.
     for (let {type, player} of changes) {
@@ -378,7 +376,7 @@ var AnimationsController = {
     return time;
   },
 
-  destroyAnimationPlayers: function() {
+  destroyAnimationPlayers: function () {
     this.animationPlayers = [];
   }
 };

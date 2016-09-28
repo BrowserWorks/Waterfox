@@ -114,6 +114,7 @@ OnSharedPreferenceChangeListener
     // some devices look bad. Don't use transitions on those
     // devices.
     private static final boolean NO_TRANSITIONS = HardwareUtils.IS_KINDLE_DEVICE;
+    private static final int NO_SUCH_ID = 0;
 
     public static final String NON_PREF_PREFIX = "android.not_a_preference.";
     public static final String INTENT_EXTRA_RESOURCES = "resource";
@@ -169,6 +170,8 @@ OnSharedPreferenceChangeListener
     private static final String PREFS_BROWSER_LOCALE = "locale";
 
     public static final String PREFS_RESTORE_SESSION = NON_PREF_PREFIX + "restoreSession3";
+    public static final String PREFS_RESTORE_SESSION_FROM_CRASH = "browser.sessionstore.resume_from_crash";
+    public static final String PREFS_RESTORE_SESSION_MAX_CRASH_RESUMES = "browser.sessionstore.max_resumed_crashes";
     public static final String PREFS_TAB_QUEUE = NON_PREF_PREFIX + "tab_queue";
     public static final String PREFS_TAB_QUEUE_LAST_SITE = NON_PREF_PREFIX + "last_site";
     public static final String PREFS_TAB_QUEUE_LAST_TIME = NON_PREF_PREFIX + "last_time";
@@ -282,7 +285,12 @@ OnSharedPreferenceChangeListener
             }
 
             // Update the title to for the preference pane that we're currently showing.
-            setTitle(R.string.pref_category_language);
+            final int titleId = getIntent().getExtras().getInt(PreferenceActivity.EXTRA_SHOW_FRAGMENT_TITLE);
+            if (titleId != NO_SUCH_ID) {
+                setTitle(titleId);
+            } else {
+                throw new IllegalStateException("Title id not found in intent bundle extras");
+            }
 
             // Don't finish the activity -- we just reloaded all of the
             // individual parts! -- but when it returns, make sure that the
@@ -429,6 +437,8 @@ OnSharedPreferenceChangeListener
         // Build fragment intent.
         intent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT, GeckoPreferenceFragment.class.getName());
         intent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT_ARGUMENTS, fragmentArgs);
+        // Used to get fragment title when locale changes (see onLocaleChanged method above)
+        intent.putExtra(PreferenceActivity.EXTRA_SHOW_FRAGMENT_TITLE, R.string.settings_title);
     }
 
     @Override
@@ -1422,34 +1432,15 @@ OnSharedPreferenceChangeListener
             return screen.findPreference(prefName);
         }
 
-        // Handle v14 TwoStatePreference with backwards compatibility.
-        private static class CheckBoxPrefSetter {
-            public void setBooleanPref(Preference preference, boolean value) {
-                if ((preference instanceof CheckBoxPreference) &&
-                   ((CheckBoxPreference) preference).isChecked() != value) {
-                    ((CheckBoxPreference) preference).setChecked(value);
-                }
-            }
-        }
-
-        private static class TwoStatePrefSetter extends CheckBoxPrefSetter {
-            @Override
-            public void setBooleanPref(Preference preference, boolean value) {
-                if ((preference instanceof TwoStatePreference) &&
-                   ((TwoStatePreference) preference).isChecked() != value) {
-                    ((TwoStatePreference) preference).setChecked(value);
-                }
-            }
-        }
-
         @Override
         public void prefValue(String prefName, final boolean value) {
-            final Preference pref = getField(prefName);
-            final CheckBoxPrefSetter prefSetter = new TwoStatePrefSetter();
+            final TwoStatePreference pref = (TwoStatePreference) getField(prefName);
             ThreadUtils.postToUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    prefSetter.setBooleanPref(pref, value);
+                    if (pref.isChecked() != value) {
+                        pref.setChecked(value);
+                    }
                 }
             });
         }

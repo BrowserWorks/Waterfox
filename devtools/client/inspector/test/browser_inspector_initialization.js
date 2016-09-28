@@ -3,7 +3,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
+/* globals getTestActorWithoutToolbox */
 "use strict";
 
 // Tests for different ways to initialize the inspector.
@@ -108,6 +108,6 @@ function* testBreadcrumbs(selector, inspector) {
   let expectedText = b.prettyPrintNodeAsText(nodeFront);
   let button = b.container.querySelector("button[checked=true]");
   ok(button, "A crumbs is checked=true");
-  is(button.getAttribute("tooltiptext"), expectedText,
+  is(button.getAttribute("title"), expectedText,
      "Crumb refers to the right node");
 }

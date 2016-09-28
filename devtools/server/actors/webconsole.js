@@ -18,6 +18,7 @@ const ErrorDocs = require("devtools/server/actors/errordocs");
 loader.lazyRequireGetter(this, "NetworkMonitor", "devtools/shared/webconsole/network-monitor", true);
 loader.lazyRequireGetter(this, "NetworkMonitorChild", "devtools/shared/webconsole/network-monitor", true);
 loader.lazyRequireGetter(this, "ConsoleProgressListener", "devtools/shared/webconsole/network-monitor", true);
+loader.lazyRequireGetter(this, "StackTraceCollector", "devtools/shared/webconsole/network-monitor", true);
 loader.lazyRequireGetter(this, "events", "sdk/event/core");
 loader.lazyRequireGetter(this, "ServerLoggingListener", "devtools/shared/webconsole/server-logger", true);
 loader.lazyRequireGetter(this, "JSPropertyProvider", "devtools/shared/webconsole/js-property-provider", true);
@@ -27,7 +28,7 @@ for (let name of ["WebConsoleUtils", "ConsoleServiceListener",
     "ConsoleAPIListener", "addWebConsoleCommands",
     "ConsoleReflowListener", "CONSOLE_WORKER_IDS"]) {
   Object.defineProperty(this, name, {
-    get: function(prop) {
+    get: function (prop) {
       if (prop == "WebConsoleUtils") {
         prop = "Utils";
       }
@@ -325,7 +326,7 @@ WebConsoleActor.prototype =
       // We are very explicitly examining the "console" property of
       // the non-Xrayed object here.
       let console = aWindow.wrappedJSObject.console;
-      isNative = console instanceof aWindow.Console;
+      isNative = new XPCNativeWrapper(console).IS_NATIVE_CONSOLE
     }
     catch (ex) { }
     return isNative;
@@ -354,6 +355,10 @@ WebConsoleActor.prototype =
     if (this.networkMonitorChild) {
       this.networkMonitorChild.destroy();
       this.networkMonitorChild = null;
+    }
+    if (this.stackTraceCollector) {
+      this.stackTraceCollector.destroy();
+      this.stackTraceCollector = null;
     }
     if (this.consoleProgressListener) {
       this.consoleProgressListener.destroy();
@@ -548,9 +553,9 @@ WebConsoleActor.prototype =
     return this._lastConsoleInputEvaluation;
   },
 
-  //////////////////
+  // ////////////////
   // Request handlers for known packet types.
-  //////////////////
+  // ////////////////
 
   /**
    * Handler for the "startListeners" request.
@@ -564,7 +569,7 @@ WebConsoleActor.prototype =
   {
     // XXXworkers: Not handling the Console API yet for workers (Bug 1209353).
     if (isWorker) {
-       aRequest.listeners = [];
+      aRequest.listeners = [];
     }
 
     let startedListeners = [];
@@ -598,6 +603,12 @@ WebConsoleActor.prototype =
           break;
         case "NetworkActivity":
           if (!this.networkMonitor) {
+            // Create a StackTraceCollector that's going to be shared both by the
+            // NetworkMonitorChild (getting messages about requests from parent) and
+            // by the NetworkMonitor that directly watches service workers requests.
+            this.stackTraceCollector = new StackTraceCollector({ window, appId });
+            this.stackTraceCollector.init();
+
             if (appId || messageManager) {
               // Start a network monitor in the parent process to listen to
               // most requests than happen in parent
@@ -606,12 +617,10 @@ WebConsoleActor.prototype =
                                         this.parentActor.actorID, this);
               this.networkMonitor.init();
               // Spawn also one in the child to listen to service workers
-              this.networkMonitorChild = new NetworkMonitor({ window: window },
-                                                            this);
+              this.networkMonitorChild = new NetworkMonitor({ window }, this);
               this.networkMonitorChild.init();
-            }
-            else {
-              this.networkMonitor = new NetworkMonitor({ window: window }, this);
+            } else {
+              this.networkMonitor = new NetworkMonitor({ window }, this);
               this.networkMonitor.init();
             }
           }
@@ -699,6 +708,10 @@ WebConsoleActor.prototype =
           if (this.networkMonitorChild) {
             this.networkMonitorChild.destroy();
             this.networkMonitorChild = null;
+          }
+          if (this.stackTraceCollector) {
+            this.stackTraceCollector.destroy();
+            this.stackTraceCollector = null;
           }
           stoppedListeners.push(listener);
           break;
@@ -893,9 +906,9 @@ WebConsoleActor.prototype =
 
           // It is possible that we won't have permission to unwrap an
           // object and retrieve its errorMessageName.
-          try {
-            errorDocURL = ErrorDocs.GetURL(error && error.errorMessageName);
-          } catch (ex) {}
+        try {
+          errorDocURL = ErrorDocs.GetURL(error && error.errorMessageName);
+        } catch (ex) {}
       }
     }
 
@@ -945,7 +958,7 @@ WebConsoleActor.prototype =
         // can throw "Debugger.Frame is not live"
         let frame = frameActor.frame;
         environment = frame.environment;
-      } catch(e) {
+      } catch (e) {
         DevToolsUtils.reportException("onAutocomplete",
           Error("The frame actor was not found: " + frameActorId));
       }
@@ -1051,9 +1064,9 @@ WebConsoleActor.prototype =
     return { updated: Object.keys(aRequest.preferences) };
   },
 
-  //////////////////
+  // ////////////////
   // End of request handlers.
-  //////////////////
+  // ////////////////
 
   /**
    * Create an object with the API we expose to the Web Console during
@@ -1069,7 +1082,7 @@ WebConsoleActor.prototype =
    *         The sandbox holds methods and properties that can be used as
    *         bindings during JS evaluation.
    */
-  _getWebConsoleCommands: function(aDebuggerGlobal)
+  _getWebConsoleCommands: function (aDebuggerGlobal)
   {
     let helpers = {
       window: this.evalWindow,
@@ -1102,9 +1115,9 @@ WebConsoleActor.prototype =
 
       // Workers don't have access to Cu so won't be able to exportFunction.
       if (!isWorker) {
-        maybeExport(desc, 'get');
-        maybeExport(desc, 'set');
-        maybeExport(desc, 'value');
+        maybeExport(desc, "get");
+        maybeExport(desc, "set");
+        maybeExport(desc, "value");
       }
       if (desc.value) {
         // Make sure the helpers can be used during eval.
@@ -1305,7 +1318,7 @@ WebConsoleActor.prototype =
           // Only let and const declarations put bindings into an
           // "initializing" state.
           if (!(line.kind == "let" || line.kind == "const"))
-                continue;
+            continue;
 
           let identifiers = [];
           for (let decl of line.declarations) {
@@ -1318,11 +1331,11 @@ WebConsoleActor.prototype =
                 // let [foo, bar]    = [1, 2];
                 // let [foo=99, bar] = [1, 2];
                 for (let e of decl.id.elements) {
-                    if (e.type == "Identifier") {
-                      identifiers.push(e.name);
-                    } else if (e.type == "AssignmentExpression") {
-                      identifiers.push(e.left.name);
-                    }
+                  if (e.type == "Identifier") {
+                    identifiers.push(e.name);
+                  } else if (e.type == "AssignmentExpression") {
+                    identifiers.push(e.left.name);
+                  }
                 }
                 break;
               case "ObjectPattern":
@@ -1375,9 +1388,9 @@ WebConsoleActor.prototype =
     };
   },
 
-  //////////////////
+  // ////////////////
   // Event handlers for various listeners.
-  //////////////////
+  // ////////////////
 
   /**
    * Handler for messages received from the ConsoleServiceListener. This method
@@ -1633,9 +1646,9 @@ WebConsoleActor.prototype =
     this.conn.send(packet);
   },
 
-  //////////////////
+  // ////////////////
   // End of event handlers for various listeners.
-  //////////////////
+  // ////////////////
 
   /**
    * Prepare a message from the console API to be sent to the remote Web Console
@@ -1750,7 +1763,7 @@ WebConsoleActor.prototype =
     this.onStartListeners({listeners: listeners});
 
     // Also reset the cached top level chrome window being targeted
-    this._lastChromeWindow  = null;
+    this._lastChromeWindow = null;
   },
 };
 
@@ -1828,6 +1841,7 @@ NetworkEventActor.prototype =
       url: this._request.url,
       method: this._request.method,
       isXHR: this._isXHR,
+      cause: this._cause,
       fromCache: this._fromCache,
       fromServiceWorker: this._fromServiceWorker,
       private: this._private,
@@ -1873,10 +1887,11 @@ NetworkEventActor.prototype =
   {
     this._startedDateTime = aNetworkEvent.startedDateTime;
     this._isXHR = aNetworkEvent.isXHR;
+    this._cause = aNetworkEvent.cause;
     this._fromCache = aNetworkEvent.fromCache;
     this._fromServiceWorker = aNetworkEvent.fromServiceWorker;
 
-    for (let prop of ['method', 'url', 'httpVersion', 'headersSize']) {
+    for (let prop of ["method", "url", "httpVersion", "headersSize"]) {
       this._request[prop] = aNetworkEvent[prop];
     }
 
@@ -2004,7 +2019,7 @@ NetworkEventActor.prototype =
     };
   },
 
-  /******************************************************************
+  /** ****************************************************************
    * Listeners for new network event data coming from NetworkMonitor.
    ******************************************************************/
 

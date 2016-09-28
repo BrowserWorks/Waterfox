@@ -136,7 +136,7 @@ DecoderCallbackFuzzingWrapper::Output(MediaData* aData)
 {
   if (!mTaskQueue->IsCurrentThreadIn()) {
     nsCOMPtr<nsIRunnable> task =
-      NS_NewRunnableMethodWithArg<StorensRefPtrPassByPtr<MediaData>>(
+      NewRunnableMethod<StorensRefPtrPassByPtr<MediaData>>(
         this, &DecoderCallbackFuzzingWrapper::Output, aData);
     mTaskQueue->Dispatch(task.forget());
     return;
@@ -173,27 +173,26 @@ DecoderCallbackFuzzingWrapper::Output(MediaData* aData)
 }
 
 void
-DecoderCallbackFuzzingWrapper::Error()
+DecoderCallbackFuzzingWrapper::Error(MediaDataDecoderError aError)
 {
   if (!mTaskQueue->IsCurrentThreadIn()) {
-    nsCOMPtr<nsIRunnable> task =
-      NS_NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::Error);
-    mTaskQueue->Dispatch(task.forget());
+    mTaskQueue->Dispatch(
+      NewRunnableMethod<MediaDataDecoderError>(this,
+                                               &DecoderCallbackFuzzingWrapper::Error,
+                                               aError));
     return;
   }
   CFW_LOGV("");
   MOZ_ASSERT(mCallback);
   ClearDelayedOutput();
-  mCallback->Error();
+  mCallback->Error(MediaDataDecoderError::FATAL_ERROR);
 }
 
 void
 DecoderCallbackFuzzingWrapper::InputExhausted()
 {
   if (!mTaskQueue->IsCurrentThreadIn()) {
-    nsCOMPtr<nsIRunnable> task =
-      NS_NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::InputExhausted);
-    mTaskQueue->Dispatch(task.forget());
+    mTaskQueue->Dispatch(NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::InputExhausted));
     return;
   }
   if (!mDontDelayInputExhausted && !mDelayedOutput.empty()) {
@@ -212,9 +211,7 @@ void
 DecoderCallbackFuzzingWrapper::DrainComplete()
 {
   if (!mTaskQueue->IsCurrentThreadIn()) {
-    nsCOMPtr<nsIRunnable> task =
-      NS_NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::DrainComplete);
-    mTaskQueue->Dispatch(task.forget());
+    mTaskQueue->Dispatch(NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::DrainComplete));
     return;
   }
   MOZ_ASSERT(mCallback);
@@ -233,9 +230,7 @@ void
 DecoderCallbackFuzzingWrapper::ReleaseMediaResources()
 {
   if (!mTaskQueue->IsCurrentThreadIn()) {
-    nsCOMPtr<nsIRunnable> task =
-      NS_NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::ReleaseMediaResources);
-    mTaskQueue->Dispatch(task.forget());
+    mTaskQueue->Dispatch(NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::ReleaseMediaResources));
     return;
   }
   CFW_LOGV("");
@@ -317,9 +312,7 @@ DecoderCallbackFuzzingWrapper::ClearDelayedOutput()
 {
   if (!mTaskQueue->IsCurrentThreadIn()) {
     DFW_LOGV("(dispatching self)");
-    nsCOMPtr<nsIRunnable> task =
-      NS_NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::ClearDelayedOutput);
-    mTaskQueue->Dispatch(task.forget());
+    mTaskQueue->Dispatch(NewRunnableMethod(this, &DecoderCallbackFuzzingWrapper::ClearDelayedOutput));
     return;
   }
   DFW_LOGV("");

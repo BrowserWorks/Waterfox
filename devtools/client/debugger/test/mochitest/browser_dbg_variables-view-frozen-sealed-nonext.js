@@ -13,7 +13,11 @@ const TAB_URL = EXAMPLE_URL + "doc_frame-parameters.html";
 var gTab, gPanel, gDebugger;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  let options = {
+    source: TAB_URL,
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
@@ -25,7 +29,7 @@ function test() {
 function prepareTest() {
   gDebugger.once(gDebugger.EVENTS.FETCHED_SCOPES, runTest);
 
-  evalInTab(gTab, "(" + function() {
+  evalInTab(gTab, "(" + function () {
     var frozen = Object.freeze({});
     var sealed = Object.seal({});
     var nonExtensible = Object.preventExtensions({});
@@ -37,7 +41,7 @@ function prepareTest() {
 }
 
 function runTest() {
-  let hasNoneTester = function(aVariable) {
+  let hasNoneTester = function (aVariable) {
     ok(!aVariable.hasAttribute("frozen"),
        "The variable should not be frozen.");
     ok(!aVariable.hasAttribute("sealed"),
@@ -82,7 +86,7 @@ function runTest() {
   resumeDebuggerThenCloseAndFinish(gPanel);
 }
 
-registerCleanupFunction(function() {
+registerCleanupFunction(function () {
   gTab = null;
   gPanel = null;
   gDebugger = null;

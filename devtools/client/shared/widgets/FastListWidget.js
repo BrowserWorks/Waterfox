@@ -6,22 +6,21 @@
 "use strict";
 
 const EventEmitter = require("devtools/shared/event-emitter");
-const { Cu, Ci } = require("chrome");
-const { ViewHelpers } = Cu.import("resource://devtools/client/shared/widgets/ViewHelpers.jsm", {});
+const { ViewHelpers } = require("devtools/client/shared/widgets/view-helpers");
 
 /**
  * A list menu widget that attempts to be very fast.
  *
  * Note: this widget should be used in tandem with the WidgetMethods in
- * ViewHelpers.jsm.
+ * view-helpers.js.
  *
  * @param nsIDOMNode aNode
  *        The element associated with the widget.
  */
-const FastListWidget = module.exports = function FastListWidget(aNode) {
-  this.document = aNode.ownerDocument;
+const FastListWidget = module.exports = function FastListWidget(node) {
+  this.document = node.ownerDocument;
   this.window = this.document.defaultView;
-  this._parent = aNode;
+  this._parent = node;
   this._fragment = this.document.createDocumentFragment();
 
   // This is a prototype element that each item added to the list clones.
@@ -34,7 +33,8 @@ const FastListWidget = module.exports = function FastListWidget(aNode) {
   this._list.setAttribute("orient", "vertical");
   this._list.setAttribute("tabindex", "0");
   this._list.addEventListener("keypress", e => this.emit("keyPress", e), false);
-  this._list.addEventListener("mousedown", e => this.emit("mousePress", e), false);
+  this._list.addEventListener("mousedown", e => this.emit("mousePress", e),
+                              false);
   this._parent.appendChild(this._list);
 
   this._orderedMenuElementsArray = [];
@@ -45,9 +45,9 @@ const FastListWidget = module.exports = function FastListWidget(aNode) {
 
   // Delegate some of the associated node's methods to satisfy the interface
   // required by MenuContainer instances.
-  ViewHelpers.delegateWidgetAttributeMethods(this, aNode);
-  ViewHelpers.delegateWidgetEventMethods(this, aNode);
-}
+  ViewHelpers.delegateWidgetAttributeMethods(this, node);
+  ViewHelpers.delegateWidgetEventMethods(this, node);
+};
 
 FastListWidget.prototype = {
   /**
@@ -63,11 +63,11 @@ FastListWidget.prototype = {
    * @return nsIDOMNode
    *         The element associated with the displayed item.
    */
-  insertItemAt: function(aIndex, aContents, aAttachment={}) {
+  insertItemAt: function (index, contents, attachment = {}) {
     let element = this._templateElement.cloneNode();
-    element.appendChild(aContents);
+    element.appendChild(contents);
 
-    if (aIndex >= 0) {
+    if (index >= 0) {
       throw new Error("FastListWidget only supports appending items.");
     }
 
@@ -83,15 +83,14 @@ FastListWidget.prototype = {
    * they are queued in a document fragment. This method appends the document
    * fragment to the dom.
    */
-  flush: function() {
+  flush: function () {
     this._list.appendChild(this._fragment);
   },
 
   /**
    * Removes all of the child nodes from this container.
    */
-  removeAllItems: function() {
-    let parent = this._parent;
+  removeAllItems: function () {
     let list = this._list;
 
     while (list.hasChildNodes()) {
@@ -107,7 +106,7 @@ FastListWidget.prototype = {
   /**
    * Remove the given item.
    */
-  removeChild: function(child) {
+  removeChild: function (child) {
     throw new Error("Not yet implemented");
   },
 
@@ -149,7 +148,7 @@ FastListWidget.prototype = {
    * @return nsIDOMNode
    *         The element associated with the displayed item.
    */
-  getItemAtIndex: function(index) {
+  getItemAtIndex: function (index) {
     return this._orderedMenuElementsArray[index];
   },
 
@@ -161,7 +160,7 @@ FastListWidget.prototype = {
    * @param string value
    *        The desired attribute value.
    */
-  setAttribute: function(name, value) {
+  setAttribute: function (name, value) {
     this._parent.setAttribute(name, value);
 
     if (name == "emptyText") {
@@ -175,7 +174,7 @@ FastListWidget.prototype = {
    * @param string name
    *        The name of the attribute.
    */
-  removeAttribute: function(name) {
+  removeAttribute: function (name) {
     this._parent.removeAttribute(name);
 
     if (name == "emptyText") {
@@ -189,7 +188,7 @@ FastListWidget.prototype = {
    * @param nsIDOMNode element
    *        The element to make visible.
    */
-  ensureElementIsVisible: function(element) {
+  ensureElementIsVisible: function (element) {
     if (!element) {
       return;
     }
@@ -204,18 +203,18 @@ FastListWidget.prototype = {
    * Sets the text displayed in this container when empty.
    * @param string aValue
    */
-  set _textWhenEmpty(aValue) {
+  set _textWhenEmpty(value) {
     if (this._emptyTextNode) {
-      this._emptyTextNode.setAttribute("value", aValue);
+      this._emptyTextNode.setAttribute("value", value);
     }
-    this._emptyTextValue = aValue;
+    this._emptyTextValue = value;
     this._showEmptyText();
   },
 
   /**
    * Creates and appends a label signaling that this container is empty.
    */
-  _showEmptyText: function() {
+  _showEmptyText: function () {
     if (this._emptyTextNode || !this._emptyTextValue) {
       return;
     }
@@ -230,7 +229,7 @@ FastListWidget.prototype = {
   /**
    * Removes the label signaling that this container is empty.
    */
-  _removeEmptyText: function() {
+  _removeEmptyText: function () {
     if (!this._emptyTextNode) {
       return;
     }

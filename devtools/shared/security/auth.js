@@ -17,8 +17,7 @@ loader.lazyRequireGetter(this, "cert",
   "devtools/shared/security/cert");
 loader.lazyRequireGetter(this, "asyncStorage",
   "devtools/shared/async-storage");
-DevToolsUtils.defineLazyModuleGetter(this, "Task",
-  "resource://gre/modules/Task.jsm");
+const { Task } = require("devtools/shared/task");
 
 /**
  * A simple enum-like object with keys mirrored to values.
@@ -92,7 +91,7 @@ var Prompt = Authenticators.Prompt = {};
 
 Prompt.mode = "PROMPT";
 
-Prompt.Client = function() {};
+Prompt.Client = function () {};
 Prompt.Client.prototype = {
 
   mode: Prompt.mode,
@@ -138,7 +137,7 @@ Prompt.Client.prototype = {
 
 };
 
-Prompt.Server = function() {};
+Prompt.Server = function () {};
 Prompt.Server.prototype = {
 
   mode: Prompt.mode,
@@ -256,7 +255,7 @@ var OOBCert = Authenticators.OOBCert = {};
 
 OOBCert.mode = "OOB_CERT";
 
-OOBCert.Client = function() {};
+OOBCert.Client = function () {};
 OOBCert.Client.prototype = {
 
   mode: OOBCert.mode,
@@ -326,7 +325,7 @@ OOBCert.Client.prototype = {
     };
 
     transport.hooks = {
-      onPacket: Task.async(function*(packet) {
+      onPacket: Task.async(function* (packet) {
         closeDialog();
         let { authResult } = packet;
         switch (authResult) {
@@ -381,7 +380,7 @@ OOBCert.Client.prototype = {
    * Create the package of data that needs to be transferred across the OOB
    * channel.
    */
-  _createOOB: Task.async(function*() {
+  _createOOB: Task.async(function* () {
     let clientCert = yield cert.local.getOrCreate();
     return {
       sha256: clientCert.sha256Fingerprint,
@@ -419,7 +418,7 @@ OOBCert.Client.prototype = {
 
 };
 
-OOBCert.Server = function() {};
+OOBCert.Server = function () {};
 OOBCert.Server.prototype = {
 
   mode: OOBCert.mode,
@@ -493,7 +492,7 @@ OOBCert.Server.prototype = {
    * @return An AuthenticationResult value.
    *         A promise that will be resolved to the above is also allowed.
    */
-  authenticate: Task.async(function*({ client, server, transport }) {
+  authenticate: Task.async(function* ({ client, server, transport }) {
     // Step B.3 / C.3
     // TLS connection established, authentication begins
     const storageKey = `devtools.auth.${this.mode}.approved-clients`;

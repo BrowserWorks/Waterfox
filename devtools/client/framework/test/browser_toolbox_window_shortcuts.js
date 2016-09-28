@@ -10,7 +10,7 @@ var {Toolbox} = require("devtools/client/framework/toolbox");
 var toolbox, toolIDs, idIndex, modifiedPrefs = [];
 
 function test() {
-  addTab("about:blank").then(function() {
+  addTab("about:blank").then(function () {
     toolIDs = [];
     for (let [id, definition] of gDevTools._tools) {
       if (definition.key) {
@@ -59,7 +59,7 @@ function testShortcuts(aToolbox, aIndex) {
   idIndex = aIndex;
   info("Testing shortcut for tool " + aIndex + ":" + toolIDs[aIndex] +
        " using key " + key);
-  EventUtils.synthesizeKey(key, modifiers, toolbox.doc.defaultView.parent);
+  EventUtils.synthesizeKey(key, modifiers, toolbox.win.parent);
 }
 
 function selectCB(event, id) {
@@ -72,7 +72,7 @@ function selectCB(event, id) {
 }
 
 function tidyUp() {
-  toolbox.destroy().then(function() {
+  toolbox.destroy().then(function () {
     gBrowser.removeCurrentTab();
 
     for (let pref of modifiedPrefs) {

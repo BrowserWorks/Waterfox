@@ -227,6 +227,9 @@ class RobocopTestRunner(MochitestDesktop):
         self.options.extraPrefs.append('browser.casting.enabled=true')
         self.options.extraPrefs.append('extensions.autoupdate.enabled=false')
 
+        # Override the telemetry init delay for integration testing.
+        self.options.extraPrefs.append('toolkit.telemetry.initDelay=1')
+
         self.options.extensionsToExclude.extend([
             'mochikit@mozilla.org',
             'worker-test@mozilla.org.xpi',
@@ -454,9 +457,12 @@ class RobocopTestRunner(MochitestDesktop):
         log_result = -1
         try:
             self.dm.recordLogcat()
+            timeout = self.options.timeout
+            if not timeout:
+                timeout = self.NO_OUTPUT_TIMEOUT
             result = self.auto.runApp(
                 None, browserEnv, "am", self.localProfile, browserArgs,
-                timeout=self.NO_OUTPUT_TIMEOUT, symbolsPath=self.options.symbolsPath)
+                timeout=timeout, symbolsPath=self.options.symbolsPath)
             self.log.debug("runApp completes with status %d" % result)
             if result != 0:
                 self.log.error("runApp() exited with code %s" % result)

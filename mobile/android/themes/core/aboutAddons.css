@@ -4,6 +4,10 @@
 
 @import "defines.css";
 
+html[details] {
+  background-color: var(--color_about_item);
+}
+
 a {
   text-decoration: none;
   color: #0096DD;
@@ -36,7 +40,7 @@ a:active {
 .warn-unsigned {
   border-top: 1px solid var(--color_about_item_border);
   padding: 1em;
-  -moz-padding-start: calc(var(--icon-size) + var(--icon-margin) * 2);
+  padding-inline-start: calc(var(--icon-size) + var(--icon-margin) * 2);
   background-image: url("chrome://browser/skin/images/grey-caution.svg");
   background-size: var(--icon-size);
   background-position: var(--icon-margin);
@@ -68,6 +72,11 @@ a:active {
   display: none;
 }
 
+#addons-details > .list-item {
+  margin-bottom: 42px;
+  border-bottom: none;
+}
+
 #addons-details > .list-item:active {
   background-color: #fff;
 }
@@ -78,14 +87,22 @@ a:active {
   display: flex;
   flex-direction: row;
   width: 100%;
+  position: fixed;
+  bottom: 0px;
+}
+
+.buttons::after {
+  content: "";
+  border-right: 1px solid var(--color_about_item_border);
 }
 
 .buttons > button {
   -moz-appearance: none;
   font-size: 1em;
   border: 1px solid transparent;
+  border-right: none;
   border-top-color: var(--color_about_item_border);
-  -moz-border-start-color: var(--color_about_item_border);
+  border-inline-start-color: var(--color_about_item_border);
   background-color: var(--color_about_item);
   flex: 1;
   padding: 0.75em 0.5em;
@@ -105,7 +122,7 @@ a:active {
 }
 
 .buttons:first-child {
-  -moz-border-start-color: transparent;
+  border-inline-start-color: transparent;
 }
 
 /* Settings */

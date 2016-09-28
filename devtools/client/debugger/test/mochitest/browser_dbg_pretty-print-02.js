@@ -11,16 +11,19 @@
 const TAB_URL = EXAMPLE_URL + "doc_pretty-print.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+  // Wait for debugger panel to be fully set and break on debugger statement
+  let options = {
+    source: EXAMPLE_URL + "code_ugly.js",
+    line: 2
+  };
+  initDebugger(TAB_URL, options).then(([aTab,, aPanel]) => {
     const gTab = aTab;
     const gPanel = aPanel;
     const gDebugger = gPanel.panelWin;
     const gEditor = gDebugger.DebuggerView.editor;
     const gContextMenu = gDebugger.document.getElementById("sourceEditorContextMenu");
 
-    Task.spawn(function*() {
-      yield waitForSourceShown(gPanel, "code_ugly.js");
-
+    Task.spawn(function* () {
       const finished = waitForSourceShown(gPanel, "code_ugly.js");
       once(gContextMenu, "popupshown").then(() => {
         const menuItem = gDebugger.document.getElementById("se-dbg-cMenu-prettyPrint");
@@ -30,9 +33,9 @@ function test() {
       yield finished;
 
       ok(gEditor.getText().includes("\n  "),
-         "The source should be pretty printed.")
+         "The source should be pretty printed.");
 
-      closeDebuggerAndFinish(gPanel);
+      resumeDebuggerThenCloseAndFinish(gPanel);
     });
   });
 }

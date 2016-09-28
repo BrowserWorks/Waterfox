@@ -95,6 +95,7 @@ enum class GLFeature {
     element_index_uint,
     ES2_compatibility,
     ES3_compatibility,
+    EXT_color_buffer_float,
     frag_color_float,
     frag_depth,
     framebuffer_blit,
@@ -479,6 +480,7 @@ public:
         NV_geometry_program4,
         NV_half_float,
         NV_instanced_arrays,
+        NV_texture_barrier,
         NV_transform_feedback,
         NV_transform_feedback2,
         OES_EGL_image,
@@ -729,7 +731,7 @@ private:
                 printf_stderr("Fatal: %s called on non-current context %p. The"
                               " current context for this thread is %p.\n",
                               funcName, this, tlsContext);
-                MOZ_CRASH("GLContext is not current.");
+                MOZ_CRASH("GFX: GLContext is not current.");
             }
         }
     }
@@ -814,7 +816,7 @@ private:
                 MOZ_ASSERT(strstr(MOZ_FUNCTION_NAME, #func) != nullptr, "Mismatched symbol check.");\
                 if (MOZ_UNLIKELY(!mSymbols.func)) {\
                     printf_stderr("RUNTIME ASSERT: Uninitialized GL function: %s\n", #func);\
-                    MOZ_CRASH();\
+                    MOZ_CRASH("GFX: Uninitialized GL function");\
                 }\
             } while (0)
 
@@ -2880,6 +2882,17 @@ public:
         AFTER_GL_CALL;
     }
 
+// -----------------------------------------------------------------------------
+// Extension NV_texture_barrier
+public:
+    void fTextureBarrier()
+    {
+        ASSERT_SYMBOL_PRESENT(fTextureBarrier);
+        BEFORE_GL_CALL;
+        mSymbols.fTextureBarrier();
+        AFTER_GL_CALL;
+    }
+
 // Core GL & Extension ARB_copy_buffer
 public:
     void fCopyBufferSubData(GLenum readtarget, GLenum writetarget,
@@ -3413,7 +3426,6 @@ public:
 
 protected:
     SurfaceCaps mCaps;
-    nsAutoPtr<GLFormats> mGLFormats;
 
 public:
     const SurfaceCaps& Caps() const {
@@ -3422,14 +3434,6 @@ public:
 
     // Only varies based on bpp16 and alpha.
     GLFormats ChooseGLFormats(const SurfaceCaps& caps) const;
-    void UpdateGLFormats(const SurfaceCaps& caps) {
-        mGLFormats = new GLFormats(ChooseGLFormats(caps));
-    }
-
-    const GLFormats& GetGLFormats() const {
-        MOZ_ASSERT(mGLFormats);
-        return *mGLFormats;
-    }
 
     bool IsFramebufferComplete(GLuint fb, GLenum* status = nullptr);
 

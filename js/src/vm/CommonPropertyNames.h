@@ -66,9 +66,9 @@
     macro(currencyDisplay, currencyDisplay, "currencyDisplay") \
     macro(DateTimeFormat, DateTimeFormat, "DateTimeFormat") \
     macro(DateTimeFormatFormatGet, DateTimeFormatFormatGet, "Intl_DateTimeFormat_format_get") \
-    macro(DateTimeFormatFormatToPartsGet, DateTimeFormatFormatToPartsGet, "Intl_DateTimeFormat_formatToParts_get") \
+    macro(DateTimeFormatFormatToParts, DateTimeFormatFormatToParts, "Intl_DateTimeFormat_formatToParts") \
     macro(day, day, "day") \
-    macro(dayperiod, dayperiod, "dayperiod") \
+    macro(dayPeriod, dayPeriod, "dayPeriod") \
     macro(decodeURI, decodeURI, "decodeURI") \
     macro(decodeURIComponent, decodeURIComponent, "decodeURIComponent") \
     macro(default_, default_, "default") \
@@ -96,6 +96,7 @@
     macro(era, era, "era") \
     macro(escape, escape, "escape") \
     macro(eval, eval, "eval") \
+    macro(exec, exec, "exec") \
     macro(false, false_, "false") \
     macro(fieldOffsets, fieldOffsets, "fieldOffsets") \
     macro(fieldTypes, fieldTypes, "fieldTypes") \
@@ -121,10 +122,12 @@
     macro(gcCycleNumber, gcCycleNumber, "gcCycleNumber") \
     macro(GeneratorFunction, GeneratorFunction, "GeneratorFunction") \
     macro(get, get, "get") \
+    macro(getPrefix, getPrefix, "get ") \
     macro(getInternals, getInternals, "getInternals") \
     macro(getOwnPropertyDescriptor, getOwnPropertyDescriptor, "getOwnPropertyDescriptor") \
     macro(getOwnPropertyNames, getOwnPropertyNames, "getOwnPropertyNames") \
     macro(getPropertyDescriptor, getPropertyDescriptor, "getPropertyDescriptor") \
+    macro(getPrototypeOf, getPrototypeOf, "getPrototypeOf") \
     macro(global, global, "global") \
     macro(Handle, Handle, "Handle") \
     macro(has, has, "has") \
@@ -166,6 +169,7 @@
     macro(let, let, "let") \
     macro(line, line, "line") \
     macro(lineNumber, lineNumber, "lineNumber") \
+    macro(literal, literal, "literal") \
     macro(loc, loc, "loc") \
     macro(locale, locale, "locale") \
     macro(lookupGetter, lookupGetter, "__lookupGetter__") \
@@ -179,6 +183,8 @@
     macro(minute, minute, "minute") \
     macro(missingArguments, missingArguments, "missingArguments") \
     macro(module, module, "module") \
+    macro(ModuleDeclarationInstantiation, ModuleDeclarationInstantiation, "ModuleDeclarationInstantiation") \
+    macro(ModuleEvaluation, ModuleEvaluation, "ModuleEvaluation") \
     macro(month, month, "month") \
     macro(multiline, multiline, "multiline") \
     macro(name, name, "name") \
@@ -233,8 +239,9 @@
     macro(scripts, scripts, "scripts") \
     macro(second, second, "second") \
     macro(sensitivity, sensitivity, "sensitivity") \
-    macro(separator, separator, "separator") \
     macro(set, set, "set") \
+    macro(setPrefix, setPrefix, "set ") \
+    macro(setPrototypeOf, setPrototypeOf, "setPrototypeOf") \
     macro(shape, shape, "shape") \
     macro(size, size, "size") \
     macro(source, source, "source") \
@@ -292,6 +299,12 @@
     macro(wasm, wasm, "wasm") \
     macro(watch, watch, "watch") \
     macro(WeakSet_add, WeakSet_add, "WeakSet_add") \
+    macro(RegExp_prototype_Exec, RegExp_prototype_Exec, "RegExp_prototype_Exec") \
+    macro(UnwrapAndCallRegExpBuiltinExec, UnwrapAndCallRegExpBuiltinExec, "UnwrapAndCallRegExpBuiltinExec") \
+    macro(RegExpBuiltinExec, RegExpBuiltinExec, "RegExpBuiltinExec") \
+    macro(RegExpMatcher, RegExpMatcher, "RegExpMatcher") \
+    macro(RegExpSearcher, RegExpSearcher, "RegExpSearcher") \
+    macro(RegExpTester, RegExpTester, "RegExpTester") \
     macro(weekday, weekday, "weekday") \
     macro(writable, writable, "writable") \
     macro(year, year, "year") \

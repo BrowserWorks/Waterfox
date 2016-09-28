@@ -42,17 +42,29 @@
   background-color: transparent;
   border-radius: 3px;
   overflow-x: hidden;
-  max-height: 40rem;
+  max-height: 20rem;
 }
 
 :root[platform="linux"] .devtools-autocomplete-popup {
-  max-height: 32rem;
+  /* Root font size is bigger on Linux, adjust rem-based values. */
+  max-height: 16rem;
 }
 
 .devtools-autocomplete-listbox {
   -moz-appearance: none !important;
   background-color: transparent;
   border-width: 0px !important;
+  margin: 0;
+}
+
+.devtools-autocomplete-listbox > scrollbox {
+  padding: 2px;
+}
+
+.inplace-editor-autocomplete-popup .devtools-autocomplete-listbox {
+  /* Inplace editor closes the autocomplete popup on blur, the autocomplete
+  popup should not steal the focus here.*/
+  -moz-user-focus: ignore;
 }
 
 .devtools-autocomplete-listbox > richlistitem,
@@ -202,7 +214,7 @@
   width: 32px;
   height: 32px;
   margin: 6px;
-  -moz-margin-end: 20px;
+  margin-inline-end: 20px;
 }
 
 .devtools-tooltip-alert-icon {
@@ -216,7 +228,7 @@
 }
 
 .devtools-tooltip-variables-view-box .variable-or-property > .title {
-  -moz-padding-end: 6px;
+  padding-inline-end: 6px;
 }
 
 /* Tooltip: Tiles */
@@ -232,6 +244,90 @@
 .devtools-tooltip-iframe {
   border: none;
   background: transparent;
+}
+
+.tooltip-container {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  display: none;
+  background: transparent;
+}
+
+.tooltip-panel{
+  background-color: var(--theme-tooltip-background);
+}
+
+.tooltip-visible {
+  display: block;
+}
+
+.tooltip-container[type="normal"] > .tooltip-panel {
+  height: 100%;
+  width: 100%;
+}
+
+/* Tooltip : arrow style */
+
+.tooltip-container[type="arrow"] {
+  filter: drop-shadow(0 3px 4px var(--theme-tooltip-shadow));
+}
+
+.tooltip-container[type="arrow"] > .tooltip-panel {
+  position: absolute;
+  box-sizing: border-box;
+  height: calc(100% - 13px);
+  width: 100%;
+
+  border: 3px solid var(--theme-tooltip-border);
+  border-radius: 5px;
+}
+
+.tooltip-top[type="arrow"] .tooltip-panel {
+  top: 0;
+}
+
+.tooltip-bottom[type="arrow"] .tooltip-panel {
+  bottom: 0;
+}
+
+.tooltip-arrow {
+  position: absolute;
+  height: 16px;
+  width: 32px;
+  overflow: hidden;
+}
+
+.tooltip-top .tooltip-arrow {
+  bottom: 0;
+}
+
+.tooltip-bottom .tooltip-arrow {
+  top: 0;
+}
+
+.tooltip-arrow:before {
+  content: "";
+  position: absolute;
+  width: 21px;
+  height: 21px;
+  margin-left: 4px;
+  background: linear-gradient(-45deg,
+    var(--theme-tooltip-background) 50%, transparent 50%);
+  border-color: var(--theme-tooltip-border);
+  border-style: solid;
+  border-width: 0px 3px 3px 0px;
+  border-radius: 3px;
+}
+
+.tooltip-bottom .tooltip-arrow:before {
+  margin-top: 4px;
+  transform: rotate(225deg);
+}
+
+.tooltip-top .tooltip-arrow:before {
+  margin-top: -12px;
+  transform: rotate(45deg);
 }
 
 /* links to source code, like displaying `myfile.js:45` */
@@ -263,4 +359,30 @@
   flex: none;
   margin: 2px 0px;
   cursor: pointer;
+}
+
+/* Keyboard focus highlight styles */
+
+:-moz-focusring {
+  outline: var(--theme-focus-outline);
+  outline-offset: -1px;
+}
+
+textbox[focused="true"] {
+  border-color: var(--theme-focus-border-color-textbox);
+  box-shadow: var(--theme-focus-box-shadow-textbox);
+  transition: all 0.2s ease-in-out
+}
+
+textbox :-moz-focusring {
+  box-shadow: none;
+  outline: none;
+}
+
+/* Form fields should already have box-shadow hightlight */
+select:-moz-focusring,
+input[type="radio"]:-moz-focusring,
+input[type="checkbox"]:-moz-focusring,
+checkbox:-moz-focusring {
+  outline: none;
 }

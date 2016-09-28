@@ -12,17 +12,25 @@
 #include "nsTArray.h"
 #include "nsStringGlue.h"
 
-namespace base {
-  class Histogram;
-} // namespace base
+#include "mozilla/TelemetryHistogramEnums.h"
+
+/******************************************************************************
+ * This implements the Telemetry system.
+ * It allows recording into histograms as well some more specialized data
+ * points and gives access to the data.
+ *
+ * For documentation on how to add and use new Telemetry probes, see:
+ * https://developer.mozilla.org/en-US/docs/Mozilla/Performance/Adding_a_new_Telemetry_probe
+ *
+ * For more general information on Telemetry see:
+ * https://wiki.mozilla.org/Telemetry
+ *****************************************************************************/
 
 namespace mozilla {
 namespace HangMonitor {
   class HangAnnotations;
 } // namespace HangMonitor
 namespace Telemetry {
-
-#include "mozilla/TelemetryHistogramEnums.h"
 
 enum TimerResolution {
   Millisecond,
@@ -84,6 +92,13 @@ void Accumulate(const char *name, const nsCString& key, uint32_t sample = 1);
 void AccumulateTimeDelta(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now());
 
 /**
+ * This clears the data for a histogram in TelemetryHistograms.h.
+ *
+ * @param id - histogram id
+ */
+void ClearHistogram(ID id);
+
+/**
  * Enable/disable recording for this histogram at runtime.
  * Recording is enabled by default, unless listed at kRecordingInitiallyDisabledIDs[].
  * id must be a valid telemetry enum, otherwise an assertion is triggered.
@@ -93,17 +108,7 @@ void AccumulateTimeDelta(ID id, TimeStamp start, TimeStamp end = TimeStamp::Now(
  */
 void SetHistogramRecordingEnabled(ID id, bool enabled);
 
-/**
- * Return a raw Histogram for direct manipulation for users who can not use Accumulate().
- */
-base::Histogram* GetHistogramById(ID id);
-
 const char* GetHistogramName(ID id);
-
-/**
- * Return a raw histogram for keyed histograms.
- */
-base::Histogram* GetKeyedHistogramById(ID id, const nsAString&);
 
 /**
  * Those wrappers are needed because the VS versions we use do not support free

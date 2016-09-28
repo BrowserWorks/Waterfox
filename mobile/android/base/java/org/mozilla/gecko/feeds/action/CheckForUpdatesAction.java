@@ -7,12 +7,10 @@ package org.mozilla.gecko.feeds.action;
 
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
@@ -49,7 +47,7 @@ public class CheckForUpdatesAction extends FeedAction {
      */
     public static final String EXTRA_CONTENT_NOTIFICATION = "content-notification";
 
-    private Context context;
+    private final Context context;
 
     public CheckForUpdatesAction(Context context) {
         this.context = context;
@@ -177,6 +175,7 @@ public class CheckForUpdatesAction extends FeedAction {
                 .setColor(ContextCompat.getColor(context, R.color.fennec_ui_orange))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
+                .addAction(createOpenAction(feed))
                 .addAction(createNotificationSettingsAction())
                 .build();
 
@@ -200,6 +199,7 @@ public class CheckForUpdatesAction extends FeedAction {
                 .setColor(ContextCompat.getColor(context, R.color.fennec_ui_orange))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
+                .addAction(createOpenAction(feeds))
                 .setNumber(feeds.size())
                 .addAction(createNotificationSettingsAction())
                 .build();
@@ -227,6 +227,24 @@ public class CheckForUpdatesAction extends FeedAction {
         return intent;
     }
 
+    private NotificationCompat.Action createOpenAction(Feed feed) {
+        final List<Feed> feeds = new ArrayList<>();
+        feeds.add(feed);
+
+        return createOpenAction(feeds);
+    }
+
+    private NotificationCompat.Action createOpenAction(List<Feed> feeds) {
+        Intent intent = createOpenIntent(feeds);
+        intent.putExtra(ContentNotificationsDelegate.EXTRA_READ_BUTTON, true);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        return new NotificationCompat.Action(
+                R.drawable.open_in_browser,
+                context.getString(R.string.content_notification_action_read_now),
+                pendingIntent);
+    }
 
     private NotificationCompat.Action createNotificationSettingsAction() {
         final Intent intent = new Intent(GeckoApp.ACTION_LAUNCH_SETTINGS);
@@ -238,7 +256,7 @@ public class CheckForUpdatesAction extends FeedAction {
         PendingIntent settingsIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         return new NotificationCompat.Action(
-                R.drawable.firefox_settings_alert,
+                R.drawable.settings_notifications,
                 context.getString(R.string.content_notification_action_settings),
                 settingsIntent);
     }

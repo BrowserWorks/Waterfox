@@ -16,15 +16,19 @@ function test() {
   RootActor.prototype.traits.noBlackBoxing = true;
   RootActor.prototype.traits.noPrettyPrinting = true;
 
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  let options = {
+    source: EXAMPLE_URL + "code_ugly-5.js",
+    line: 1
+  };
+  initDebugger(TAB_URL, options).then(([aTab, aDebuggee, aPanel]) => {
     let document = aPanel.panelWin.document;
-    let ppButton = document.querySelector('#pretty-print');
-    let bbButton = document.querySelector('#black-box');
-    let sep = document.querySelector('#sources-toolbar .devtools-separator');
+    let ppButton = document.querySelector("#pretty-print");
+    let bbButton = document.querySelector("#black-box");
+    let sep = document.querySelector("#sources-toolbar .devtools-separator");
 
-    is(ppButton.style.display, 'none', 'The pretty-print button is hidden');
-    is(bbButton.style.display, 'none', 'The blackboxing button is hidden');
-    is(sep.style.display, 'none', 'The separator is hidden');
-    closeDebuggerAndFinish(aPanel)
+    is(ppButton.style.display, "none", "The pretty-print button is hidden");
+    is(bbButton.style.display, "none", "The blackboxing button is hidden");
+    is(sep.style.display, "none", "The separator is hidden");
+    closeDebuggerAndFinish(aPanel);
   });
 }

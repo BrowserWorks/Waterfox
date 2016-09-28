@@ -87,7 +87,7 @@ private:
     }
 
     nsCOMPtr<nsIRunnable> destroyRunnable =
-      NS_NewNonOwningRunnableMethod(this, &StreamWrapper::Destroy);
+      NewNonOwningRunnableMethod(this, &StreamWrapper::Destroy);
 
     MOZ_ALWAYS_SUCCEEDS(mOwningThread->Dispatch(destroyRunnable,
                                                 NS_DISPATCH_NORMAL));
@@ -99,7 +99,7 @@ private:
 };
 
 class StreamWrapper::CloseRunnable final
-  : public nsRunnable
+  : public Runnable
 {
   friend class StreamWrapper;
 
@@ -283,7 +283,7 @@ StreamWrapper::Deserialize(const InputStreamParams& aParams,
 }
 
 NS_IMPL_ISUPPORTS_INHERITED0(StreamWrapper::CloseRunnable,
-                             nsRunnable)
+                             Runnable)
 
 NS_IMETHODIMP
 StreamWrapper::

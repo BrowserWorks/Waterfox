@@ -169,17 +169,17 @@ nsresult OggReader::Init() {
   return NS_OK;
 }
 
-nsresult OggReader::ResetDecode()
+nsresult OggReader::ResetDecode(TargetQueues aQueues)
 {
-  return ResetDecode(false);
+  return ResetDecode(false, aQueues);
 }
 
-nsresult OggReader::ResetDecode(bool start)
+nsresult OggReader::ResetDecode(bool start, TargetQueues aQueues)
 {
   MOZ_ASSERT(OnTaskQueue());
   nsresult res = NS_OK;
 
-  if (NS_FAILED(MediaDecoderReader::ResetDecode())) {
+  if (NS_FAILED(MediaDecoderReader::ResetDecode(aQueues))) {
     res = NS_ERROR_FAILURE;
   }
 
@@ -572,9 +572,10 @@ nsresult OggReader::DecodeOpus(ogg_packet* aPacket) {
                                                     aPacket->bytes);
   if (frames_number <= 0)
     return NS_ERROR_FAILURE; // Invalid packet header.
-  int32_t samples = opus_packet_get_samples_per_frame(aPacket->packet,
-                                                      (opus_int32) mOpusState->mRate);
-  int32_t frames = frames_number*samples;
+  int32_t samplesPerFrame =
+      opus_packet_get_samples_per_frame(aPacket->packet,
+                                        (opus_int32) mOpusState->mRate);
+  int32_t frames = frames_number * samplesPerFrame;
 
   // A valid Opus packet must be between 2.5 and 120 ms long.
   if (frames < 120 || frames > 5760)
@@ -622,12 +623,12 @@ nsresult OggReader::DecodeOpus(ogg_packet* aPacket) {
       return NS_OK;
     }
     int32_t keepFrames = frames - skipFrames;
-    int samples = keepFrames * channels;
-    AlignedAudioBuffer trimBuffer(samples);
+    int keepSamples = keepFrames * channels;
+    AlignedAudioBuffer trimBuffer(keepSamples);
     if (!trimBuffer) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
-    for (int i = 0; i < samples; i++)
+    for (int i = 0; i < keepSamples; i++)
       trimBuffer[i] = buffer[skipFrames*channels + i];
 
     startFrame = endFrame - keepFrames;
@@ -645,16 +646,16 @@ nsresult OggReader::DecodeOpus(ogg_packet* aPacket) {
 #ifdef MOZ_SAMPLE_TYPE_FLOAT32
   if (mOpusState->mGain != 1.0f) {
     float gain = mOpusState->mGain;
-    int samples = frames * channels;
-    for (int i = 0; i < samples; i++) {
+    int gainSamples = frames * channels;
+    for (int i = 0; i < gainSamples; i++) {
       buffer[i] *= gain;
     }
   }
 #else
   if (mOpusState->mGain_Q16 != 65536) {
     int64_t gain_Q16 = mOpusState->mGain_Q16;
-    int samples = frames * channels;
-    for (int i = 0; i < samples; i++) {
+    int gainSamples = frames * channels;
+    for (int i = 0; i < gainSamples; i++) {
       int32_t val = static_cast<int32_t>((gain_Q16*buffer[i] + 32768)>>16);
       buffer[i] = static_cast<AudioDataValue>(MOZ_CLIP_TO_15(val));
     }
@@ -1337,7 +1338,6 @@ nsresult OggReader::SeekInBufferedRange(int64_t aTarget,
                                           const SeekRange& aRange)
 {
   LOG(LogLevel::Debug, ("%p Seeking in buffered data to %lld using bisection search", mDecoder, aTarget));
-  nsresult res = NS_OK;
   if (HasVideo() || aAdjustedTarget >= aTarget) {
     // We know the exact byte range in which the target must lie. It must
     // be buffered in the media cache. Seek there.
@@ -1358,7 +1358,7 @@ nsresult OggReader::SeekInBufferedRange(int64_t aTarget,
     } while (!eof &&
              mVideoQueue.GetSize() == 0);
 
-    VideoData* video = mVideoQueue.PeekFront();
+    RefPtr<VideoData> video = mVideoQueue.PeekFront();
     if (video && !video->mKeyframe) {
       // First decoded frame isn't a keyframe, seek back to previous keyframe,
       // otherwise we'll get visual artifacts.
@@ -1371,6 +1371,8 @@ nsresult OggReader::SeekInBufferedRange(int64_t aTarget,
       aAdjustedTarget = std::min(aAdjustedTarget, keyframeTime);
     }
   }
+
+  nsresult res = NS_OK;
   if (aAdjustedTarget < aTarget) {
     SeekRange k = SelectSeekRange(aRanges,
                                   aAdjustedTarget,
@@ -1490,7 +1492,7 @@ nsresult OggReader::SeekInternal(int64_t aTarget, int64_t aEndTime)
     // First, we must check to see if there's already a keyframe in the frames
     // that we may have already decoded, and discard frames up to the
     // keyframe.
-    VideoData* v;
+    RefPtr<VideoData> v;
     while ((v = mVideoQueue.PeekFront()) && !v->mKeyframe) {
       RefPtr<VideoData> releaseMe = mVideoQueue.PopFront();
     }
@@ -1697,16 +1699,16 @@ nsresult OggReader::SeekBisection(int64_t aTarget,
       // Locate the next page after our seek guess, and then figure out the
       // granule time of the audio and video bitstreams there. We can then
       // make a bisection decision based on our location in the media.
-      PageSyncResult res = PageSync(&mResource,
-                                    &mOggState,
-                                    false,
-                                    guess,
-                                    endOffset,
-                                    &page,
-                                    skippedBytes);
-      NS_ENSURE_TRUE(res != PAGE_SYNC_ERROR, NS_ERROR_FAILURE);
+      PageSyncResult pageSyncResult = PageSync(&mResource,
+                                               &mOggState,
+                                               false,
+                                               guess,
+                                               endOffset,
+                                               &page,
+                                               skippedBytes);
+      NS_ENSURE_TRUE(pageSyncResult != PAGE_SYNC_ERROR, NS_ERROR_FAILURE);
 
-      if (res == PAGE_SYNC_END_OF_RANGE) {
+      if (pageSyncResult == PAGE_SYNC_END_OF_RANGE) {
         // Our guess was too close to the end, we've ended up reading the end
         // page. Backoff exponentially from the end point, in case the last
         // page/frame/sample is huge.
@@ -1891,16 +1893,16 @@ media::TimeIntervals OggReader::GetBuffered()
     while (startTime == -1) {
       ogg_page page;
       int32_t discard;
-      PageSyncResult res = PageSync(&mResource,
-                                    &sync.mState,
-                                    true,
-                                    startOffset,
-                                    endOffset,
-                                    &page,
-                                    discard);
-      if (res == PAGE_SYNC_ERROR) {
+      PageSyncResult pageSyncResult = PageSync(&mResource,
+                                               &sync.mState,
+                                               true,
+                                               startOffset,
+                                               endOffset,
+                                               &page,
+                                               discard);
+      if (pageSyncResult == PAGE_SYNC_ERROR) {
         return media::TimeIntervals::Invalid();
-      } else if (res == PAGE_SYNC_END_OF_RANGE) {
+      } else if (pageSyncResult == PAGE_SYNC_END_OF_RANGE) {
         // Hit the end of range without reading a page, give up trying to
         // find a start time for this buffered range, skip onto the next one.
         break;
@@ -1959,7 +1961,7 @@ media::TimeIntervals OggReader::GetBuffered()
 #endif
 }
 
-VideoData* OggReader::FindStartTime(int64_t& aOutStartTime)
+void OggReader::FindStartTime(int64_t& aOutStartTime)
 {
   MOZ_ASSERT(OnTaskQueue());
 
@@ -1967,17 +1969,16 @@ VideoData* OggReader::FindStartTime(int64_t& aOutStartTime)
   // the duration.
   int64_t videoStartTime = INT64_MAX;
   int64_t audioStartTime = INT64_MAX;
-  VideoData* videoData = nullptr;
 
   if (HasVideo()) {
-    videoData = SyncDecodeToFirstVideoData();
+    RefPtr<VideoData> videoData = SyncDecodeToFirstVideoData();
     if (videoData) {
       videoStartTime = videoData->mTime;
       LOG(LogLevel::Debug, ("OggReader::FindStartTime() video=%lld", videoStartTime));
     }
   }
   if (HasAudio()) {
-    AudioData* audioData = SyncDecodeToFirstAudioData();
+    RefPtr<AudioData> audioData = SyncDecodeToFirstAudioData();
     if (audioData) {
       audioStartTime = audioData->mTime;
       LOG(LogLevel::Debug, ("OggReader::FindStartTime() audio=%lld", audioStartTime));
@@ -1988,11 +1989,9 @@ VideoData* OggReader::FindStartTime(int64_t& aOutStartTime)
   if (startTime != INT64_MAX) {
     aOutStartTime = startTime;
   }
-
-  return videoData;
 }
 
-AudioData* OggReader::SyncDecodeToFirstAudioData()
+RefPtr<AudioData> OggReader::SyncDecodeToFirstAudioData()
 {
   bool eof = false;
   while (!eof && AudioQueue().GetSize() == 0) {
@@ -2004,11 +2003,10 @@ AudioData* OggReader::SyncDecodeToFirstAudioData()
   if (eof) {
     AudioQueue().Finish();
   }
-  AudioData* d = nullptr;
-  return (d = AudioQueue().PeekFront()) ? d : nullptr;
+  return AudioQueue().PeekFront();
 }
 
-VideoData* OggReader::SyncDecodeToFirstVideoData()
+RefPtr<VideoData> OggReader::SyncDecodeToFirstVideoData()
 {
   bool eof = false;
   while (!eof && VideoQueue().GetSize() == 0) {
@@ -2021,8 +2019,7 @@ VideoData* OggReader::SyncDecodeToFirstVideoData()
   if (eof) {
     VideoQueue().Finish();
   }
-  VideoData* d = nullptr;
-  return (d = VideoQueue().PeekFront()) ? d : nullptr;
+  return VideoQueue().PeekFront();
 }
 
 OggCodecStore::OggCodecStore()
@@ -2049,4 +2046,3 @@ OggCodecState* OggCodecStore::Get(uint32_t serial)
 }
 
 } // namespace mozilla
-

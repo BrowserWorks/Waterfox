@@ -84,6 +84,7 @@ XPIDL_MODULE = 'dom_media'
 
 EXPORTS += [
     'AbstractMediaDecoder.h',
+    'AccurateSeekTask.h',
     'ADTSDecoder.h',
     'ADTSDemuxer.h',
     'AudioBufferUtils.h',
@@ -103,11 +104,11 @@ EXPORTS += [
     'DOMMediaStream.h',
     'EncodedBufferCache.h',
     'FileBlockCache.h',
-    'FlushableTaskQueue.h',
     'FrameStatistics.h',
     'Intervals.h',
     'Latency.h',
     'MediaCache.h',
+    'MediaCallbackID.h',
     'MediaData.h',
     'MediaDataDemuxer.h',
     'MediaDecoder.h',
@@ -118,6 +119,7 @@ EXPORTS += [
     'MediaFormatReader.h',
     'MediaInfo.h',
     'MediaMetadataManager.h',
+    'MediaPrefs.h',
     'MediaQueue.h',
     'MediaRecorder.h',
     'MediaResource.h',
@@ -131,6 +133,7 @@ EXPORTS += [
     'MP3Decoder.h',
     'MP3Demuxer.h',
     'MP3FrameParser.h',
+    'NextFrameSeekTask.h',
     'nsIDocumentActivity.h',
     'PrincipalChangeObserver.h',
     'QueueObject.h',
@@ -140,7 +143,7 @@ EXPORTS += [
     'SeekTask.h',
     'SelfRef.h',
     'SharedBuffer.h',
-    'StreamBuffer.h',
+    'StreamTracks.h',
     'ThreadPoolCOMListener.h',
     'TimeUnits.h',
     'TrackUnionStream.h',
@@ -195,6 +198,7 @@ EXPORTS.mozilla.dom += [
 ]
 
 UNIFIED_SOURCES += [
+    'AccurateSeekTask.cpp',
     'ADTSDecoder.cpp',
     'ADTSDemuxer.cpp',
     'AudioCaptureStream.cpp',
@@ -213,11 +217,11 @@ UNIFIED_SOURCES += [
     'DOMMediaStream.cpp',
     'EncodedBufferCache.cpp',
     'FileBlockCache.cpp',
-    'FlushableTaskQueue.cpp',
     'GetUserMediaRequest.cpp',
     'GraphDriver.cpp',
     'Latency.cpp',
     'MediaCache.cpp',
+    'MediaCallbackID.cpp',
     'MediaData.cpp',
     'MediaDecoder.cpp',
     'MediaDecoderReader.cpp',
@@ -228,6 +232,7 @@ UNIFIED_SOURCES += [
     'MediaFormatReader.cpp',
     'MediaInfo.cpp',
     'MediaManager.cpp',
+    'MediaPrefs.cpp',
     'MediaRecorder.cpp',
     'MediaResource.cpp',
     'MediaShutdownManager.cpp',
@@ -240,11 +245,12 @@ UNIFIED_SOURCES += [
     'MP3Decoder.cpp',
     'MP3Demuxer.cpp',
     'MP3FrameParser.cpp',
+    'NextFrameSeekTask.cpp',
     'QueueObject.cpp',
     'RtspMediaResource.cpp',
     'SeekJob.cpp',
     'SeekTask.cpp',
-    'StreamBuffer.cpp',
+    'StreamTracks.cpp',
     'TextTrack.cpp',
     'TextTrackCue.cpp',
     'TextTrackCueList.cpp',
@@ -333,7 +339,10 @@ include('/ipc/chromium/chromium-config.mozbuild')
 #  - about attributes on forward declarations for types that are already
 #    defined, which complains about an important MOZ_EXPORT for android::AString
 if CONFIG['GNU_CC']:
-  CXXFLAGS += ['-Wno-error=attributes']
+    CXXFLAGS += [
+        '-Wno-error=attributes',
+        '-Wno-error=shadow',
+    ]
 
 if CONFIG['_MSC_VER']:
     # This is intended as a temporary workaround to unblock compilation

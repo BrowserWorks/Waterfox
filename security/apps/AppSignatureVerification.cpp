@@ -12,6 +12,7 @@
 #include "ScopedNSSTypes.h"
 #include "base64.h"
 #include "certdb.h"
+#include "mozilla/Casting.h"
 #include "mozilla/Logging.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtr.h"
@@ -176,12 +177,12 @@ VerifyStreamContentDigest(nsIInputStream* stream,
     return NS_ERROR_SIGNED_JAR_ENTRY_TOO_LARGE;
   }
 
-  ScopedPK11Context digestContext(PK11_CreateDigestContext(SEC_OID_SHA1));
+  UniquePK11Context digestContext(PK11_CreateDigestContext(SEC_OID_SHA1));
   if (!digestContext) {
     return mozilla::psm::GetXPCOMFromNSSError(PR_GetError());
   }
 
-  rv = MapSECStatus(PK11_DigestBegin(digestContext));
+  rv = MapSECStatus(PK11_DigestBegin(digestContext.get()));
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint64_t totalBytesRead = 0;
@@ -199,7 +200,7 @@ VerifyStreamContentDigest(nsIInputStream* stream,
       return NS_ERROR_SIGNED_JAR_ENTRY_TOO_LARGE;
     }
 
-    rv = MapSECStatus(PK11_DigestOp(digestContext, buf.data, bytesRead));
+    rv = MapSECStatus(PK11_DigestOp(digestContext.get(), buf.data, bytesRead));
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
@@ -622,7 +623,7 @@ ParseMF(const char* filebuf, nsIZipReader * zip,
 
 struct VerifyCertificateContext {
   AppTrustedRoot trustedRoot;
-  ScopedCERTCertList& builtChain;
+  UniqueCERTCertList& builtChain;
 };
 
 nsresult
@@ -633,7 +634,7 @@ VerifyCertificate(CERTCertificate* signerCert, void* voidContext, void* pinArg)
     return NS_ERROR_INVALID_ARG;
   }
   const VerifyCertificateContext& context =
-    *reinterpret_cast<const VerifyCertificateContext*>(voidContext);
+    *static_cast<const VerifyCertificateContext*>(voidContext);
 
   AppTrustDomain trustDomain(context.builtChain, pinArg);
   if (trustDomain.SetTrustedRoot(context.trustedRoot) != SECSuccess) {
@@ -682,7 +683,7 @@ VerifyCertificate(CERTCertificate* signerCert, void* voidContext, void* pinArg)
 nsresult
 VerifySignature(AppTrustedRoot trustedRoot, const SECItem& buffer,
                 const SECItem& detachedDigest,
-                /*out*/ ScopedCERTCertList& builtChain)
+                /*out*/ UniqueCERTCertList& builtChain)
 {
   // Currently, this function is only called within the CalculateResult() method
   // of CryptoTasks. As such, NSS should not be shut down at this point and the
@@ -742,7 +743,7 @@ OpenSignedAppFile(AppTrustedRoot aTrustedRoot, nsIFile* aJarFile,
   }
 
   sigBuffer.type = siBuffer;
-  ScopedCERTCertList builtChain;
+  UniqueCERTCertList builtChain;
   rv = VerifySignature(aTrustedRoot, sigBuffer, sfCalculatedDigest.get(),
                        builtChain);
   if (NS_FAILED(rv)) {
@@ -916,14 +917,14 @@ VerifySignedManifest(AppTrustedRoot aTrustedRoot,
   // Calculate SHA1 digest of the base64 encoded string
   Digest doubleDigest;
   rv = doubleDigest.DigestBuf(SEC_OID_SHA1,
-                              reinterpret_cast<uint8_t*>(base64EncDigest.get()),
+                              BitwiseCast<uint8_t*, char*>(base64EncDigest.get()),
                               strlen(base64EncDigest.get()));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
   // Verify the manifest signature (signed digest of the base64 encoded string)
-  ScopedCERTCertList builtChain;
+  UniqueCERTCertList builtChain;
   rv = VerifySignature(aTrustedRoot, signatureBuffer,
                        doubleDigest.get(), builtChain);
   if (NS_FAILED(rv)) {
@@ -1422,7 +1423,7 @@ VerifySignedDirectory(AppTrustedRoot aTrustedRoot,
   }
 
   sigBuffer.type = siBuffer;
-  ScopedCERTCertList builtChain;
+  UniqueCERTCertList builtChain;
   rv = VerifySignature(aTrustedRoot, sigBuffer, sfCalculatedDigest.get(),
                        builtChain);
   if (NS_FAILED(rv)) {

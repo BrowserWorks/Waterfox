@@ -68,9 +68,10 @@ CacheFileHandle::DispatchRelease()
     return false;
   }
 
-  RefPtr<nsRunnableMethod<CacheFileHandle, MozExternalRefCountType, false> > event =
-    NS_NewNonOwningRunnableMethod(this, &CacheFileHandle::Release);
-  nsresult rv = ioTarget->Dispatch(event, nsIEventTarget::DISPATCH_NORMAL);
+  nsresult rv =
+    ioTarget->Dispatch(NewNonOwningRunnableMethod(this,
+						  &CacheFileHandle::Release),
+		       nsIEventTarget::DISPATCH_NORMAL);
   if (NS_FAILED(rv)) {
     return false;
   }
@@ -536,7 +537,7 @@ CacheFileHandles::SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
 
 // Events
 
-class ShutdownEvent : public nsRunnable {
+class ShutdownEvent : public Runnable {
 public:
   ShutdownEvent()
     : mMonitor("ShutdownEvent.mMonitor")
@@ -582,7 +583,7 @@ protected:
   bool             mNotified;
 };
 
-class OpenFileEvent : public nsRunnable {
+class OpenFileEvent : public Runnable {
 public:
   OpenFileEvent(const nsACString &aKey, uint32_t aFlags,
                 CacheFileIOListener *aCallback)
@@ -642,7 +643,7 @@ protected:
   nsCString                     mKey;
 };
 
-class ReadEvent : public nsRunnable {
+class ReadEvent : public Runnable {
 public:
   ReadEvent(CacheFileHandle *aHandle, int64_t aOffset, char *aBuf,
             int32_t aCount, CacheFileIOListener *aCallback)
@@ -685,7 +686,7 @@ protected:
   nsCOMPtr<CacheFileIOListener> mCallback;
 };
 
-class WriteEvent : public nsRunnable {
+class WriteEvent : public Runnable {
 public:
   WriteEvent(CacheFileHandle *aHandle, int64_t aOffset, const char *aBuf,
              int32_t aCount, bool aValidate, bool aTruncate,
@@ -752,7 +753,7 @@ protected:
   nsCOMPtr<CacheFileIOListener> mCallback;
 };
 
-class DoomFileEvent : public nsRunnable {
+class DoomFileEvent : public Runnable {
 public:
   DoomFileEvent(CacheFileHandle *aHandle,
                 CacheFileIOListener *aCallback)
@@ -792,7 +793,7 @@ protected:
   RefPtr<CacheFileHandle>                    mHandle;
 };
 
-class DoomFileByKeyEvent : public nsRunnable {
+class DoomFileByKeyEvent : public Runnable {
 public:
   DoomFileByKeyEvent(const nsACString &aKey,
                      CacheFileIOListener *aCallback)
@@ -838,7 +839,7 @@ protected:
   RefPtr<CacheFileIOManager>    mIOMan;
 };
 
-class ReleaseNSPRHandleEvent : public nsRunnable {
+class ReleaseNSPRHandleEvent : public Runnable {
 public:
   explicit ReleaseNSPRHandleEvent(CacheFileHandle *aHandle)
     : mHandle(aHandle)
@@ -866,7 +867,7 @@ protected:
   RefPtr<CacheFileHandle>       mHandle;
 };
 
-class TruncateSeekSetEOFEvent : public nsRunnable {
+class TruncateSeekSetEOFEvent : public Runnable {
 public:
   TruncateSeekSetEOFEvent(CacheFileHandle *aHandle, int64_t aTruncatePos,
                           int64_t aEOFPos, CacheFileIOListener *aCallback)
@@ -910,7 +911,7 @@ protected:
   nsCOMPtr<CacheFileIOListener> mCallback;
 };
 
-class RenameFileEvent : public nsRunnable {
+class RenameFileEvent : public Runnable {
 public:
   RenameFileEvent(CacheFileHandle *aHandle, const nsACString &aNewName,
                   CacheFileIOListener *aCallback)
@@ -952,7 +953,7 @@ protected:
   nsCOMPtr<CacheFileIOListener> mCallback;
 };
 
-class InitIndexEntryEvent : public nsRunnable {
+class InitIndexEntryEvent : public Runnable {
 public:
   InitIndexEntryEvent(CacheFileHandle *aHandle, uint32_t aAppId,
                       bool aAnonymous, bool aInIsolatedMozBrowser, bool aPinning)
@@ -998,7 +999,7 @@ protected:
   bool                      mPinning;
 };
 
-class UpdateIndexEntryEvent : public nsRunnable {
+class UpdateIndexEntryEvent : public Runnable {
 public:
   UpdateIndexEntryEvent(CacheFileHandle *aHandle, const uint32_t *aFrecency,
                         const uint32_t *aExpirationTime)
@@ -1045,7 +1046,7 @@ protected:
   uint32_t                  mExpirationTime;
 };
 
-class MetadataWriteScheduleEvent : public nsRunnable
+class MetadataWriteScheduleEvent : public Runnable
 {
 public:
   enum EMode {
@@ -2614,8 +2615,8 @@ CacheFileIOManager::EvictIfOverLimit()
   }
 
   nsCOMPtr<nsIRunnable> ev;
-  ev = NS_NewRunnableMethod(ioMan,
-                            &CacheFileIOManager::EvictIfOverLimitInternal);
+  ev = NewRunnableMethod(ioMan,
+			 &CacheFileIOManager::EvictIfOverLimitInternal);
 
   rv = ioMan->mIOThread->Dispatch(ev, CacheIOThread::EVICT);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -2675,8 +2676,8 @@ CacheFileIOManager::EvictIfOverLimitInternal()
        cacheUsage, cacheLimit));
 
   nsCOMPtr<nsIRunnable> ev;
-  ev = NS_NewRunnableMethod(this,
-                            &CacheFileIOManager::OverLimitEvictionInternal);
+  ev = NewRunnableMethod(this,
+			 &CacheFileIOManager::OverLimitEvictionInternal);
 
   rv = mIOThread->Dispatch(ev, CacheIOThread::EVICT);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -2815,7 +2816,7 @@ CacheFileIOManager::EvictAll()
   }
 
   nsCOMPtr<nsIRunnable> ev;
-  ev = NS_NewRunnableMethod(ioMan, &CacheFileIOManager::EvictAllInternal);
+  ev = NewRunnableMethod(ioMan, &CacheFileIOManager::EvictAllInternal);
 
   rv = ioMan->mIOThread->DispatchAfterPendingOpens(ev);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -2827,7 +2828,7 @@ CacheFileIOManager::EvictAll()
 
 namespace {
 
-class EvictionNotifierRunnable : public nsRunnable
+class EvictionNotifierRunnable : public Runnable
 {
 public:
   NS_DECL_NSIRUNNABLE
@@ -2933,7 +2934,7 @@ CacheFileIOManager::EvictByContext(nsILoadContextInfo *aLoadContextInfo, bool aP
   }
 
   nsCOMPtr<nsIRunnable> ev;
-  ev = NS_NewRunnableMethodWithArgs<nsCOMPtr<nsILoadContextInfo>, bool>
+  ev = NewRunnableMethod<nsCOMPtr<nsILoadContextInfo>, bool>
          (ioMan, &CacheFileIOManager::EvictByContextInternal, aLoadContextInfo, aPinned);
 
   rv = ioMan->mIOThread->DispatchAfterPendingOpens(ev);
@@ -3052,7 +3053,7 @@ CacheFileIOManager::CacheIndexStateChanged()
   // We have to re-distatch even if we are on IO thread to prevent reentering
   // the lock in CacheIndex
   nsCOMPtr<nsIRunnable> ev;
-  ev = NS_NewRunnableMethod(
+  ev = NewRunnableMethod(
     gInstance, &CacheFileIOManager::CacheIndexStateChangedInternal);
 
   nsCOMPtr<nsIEventTarget> ioTarget = IOTarget();
@@ -3227,8 +3228,8 @@ CacheFileIOManager::StartRemovingTrash()
   }
 
   nsCOMPtr<nsIRunnable> ev;
-  ev = NS_NewRunnableMethod(this,
-                            &CacheFileIOManager::RemoveTrashInternal);
+  ev = NewRunnableMethod(this,
+			 &CacheFileIOManager::RemoveTrashInternal);
 
   rv = mIOThread->Dispatch(ev, CacheIOThread::EVICT);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -4060,7 +4061,7 @@ namespace {
 // to safely get handles memory report.
 // We must do this, since the handle list is only accessed and managed w/o
 // locking on the I/O thread.  That is by design.
-class SizeOfHandlesRunnable : public nsRunnable
+class SizeOfHandlesRunnable : public Runnable
 {
 public:
   SizeOfHandlesRunnable(mozilla::MallocSizeOf mallocSizeOf,

@@ -187,8 +187,15 @@
           return this._fullZoom;
         ]]></getter>
         <setter><![CDATA[
+          let changed = val.toFixed(2) != this._fullZoom.toFixed(2);
+
           this._fullZoom = val;
           this.messageManager.sendAsyncMessage("FullZoom", {value: val});
+
+          if (changed) {
+            let event = new Event("FullZoomChange", {bubbles: true});
+            this.dispatchEvent(event);
+          }
         ]]></setter>
       </property>
 
@@ -198,8 +205,15 @@
           return this._textZoom;
         ]]></getter>
         <setter><![CDATA[
+          let changed = val.toFixed(2) != this._textZoom.toFixed(2);
+
           this._textZoom = val;
           this.messageManager.sendAsyncMessage("TextZoom", {value: val});
+
+          if (changed) {
+            let event = new Event("TextZoomChange", {bubbles: true});
+            this.dispatchEvent(event);
+          }
         ]]></setter>
       </property>
 
@@ -359,10 +373,13 @@
           this._remoteWebNavigationImpl = this._remoteWebNavigation.wrappedJSObject;
           this._remoteWebNavigationImpl.swapBrowser(this);
 
+          // Initialize to the null principal
+          let Services = Components.utils.import("resource://gre/modules/Services.jsm", {}).Services
+          this._contentPrincipal = Services.scriptSecurityManager.createNullPrincipal({});
+
           this.messageManager.addMessageListener("Browser:Init", this);
           this.messageManager.addMessageListener("DOMTitleChanged", this);
           this.messageManager.addMessageListener("ImageDocumentLoaded", this);
-          this.messageManager.addMessageListener("DocumentInserted", this);
           this.messageManager.addMessageListener("FullZoomChange", this);
           this.messageManager.addMessageListener("TextZoomChange", this);
           this.messageManager.addMessageListener("ZoomChangeUsingMouseWheel", this);
@@ -378,8 +395,7 @@
           }
 
           if (!this.hasAttribute("disablehistory")) {
-            Components.utils.import("resource://gre/modules/Services.jsm", {}).Services
-                      .obs.addObserver(this, "browser:purge-session-history", true);
+            Services.obs.addObserver(this, "browser:purge-session-history", true);
           }
 
           let jsm = "resource://gre/modules/RemoteController.jsm";

@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* global PromisesController, promise */
+/* import-globals-from promise-controller.js */
 
 "use strict";
 
@@ -14,7 +15,7 @@
 var PromisesPanel = {
   PANEL_INITIALIZED: "panel-initialized",
 
-  initialize: Task.async(function*() {
+  initialize: Task.async(function* () {
     if (PromisesController.destroyed) {
       return null;
     }
@@ -28,7 +29,7 @@ var PromisesPanel = {
     this.emit(this.PANEL_INITIALIZED);
   }),
 
-  destroy: Task.async(function*() {
+  destroy: Task.async(function* () {
     if (!this.initialized) {
       return null;
     }

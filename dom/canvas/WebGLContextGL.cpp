@@ -50,7 +50,7 @@
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/ImageData.h"
 #include "mozilla/dom/ToJSValue.h"
-#include "mozilla/Endian.h"
+#include "mozilla/EndianUtils.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/UniquePtrExtensions.h"
 
@@ -745,6 +745,8 @@ WebGLContext::GetFramebufferAttachmentParameter(JSContext* cx,
     default:
         MOZ_CRASH("Bad target.");
     }
+
+    MakeContextCurrent();
 
     if (fb)
         return fb->GetAttachmentParameter(funcName, cx, target, attachment, pname, &rv);

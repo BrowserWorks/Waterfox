@@ -115,7 +115,7 @@ public:
    * to Next() reads another token from the input and shifts the cursor.
    * Returns false if we have passed the end of the input.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool Next(Token& aToken);
 
   /**
@@ -123,21 +123,21 @@ public:
    * and if so, put it into aResult, shift the cursor and return true.  Otherwise, leave
    * the input read cursor position intact and return false.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool Check(const TokenType aTokenType, Token& aResult);
   /**
    * Same as above method, just compares both token type and token value passed in aToken.
    * When both the type and the value equals, shift the cursor and return true.  Otherwise
    * return false.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool Check(const Token& aToken);
 
   /**
    * Return false iff the last Check*() call has returned false or when we've read past
    * the end of the input string.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool HasFailed() const;
 
   /**
@@ -161,18 +161,24 @@ public:
    */
   void SkipWhites(WhiteSkipping aIncludeNewLines = DONT_INCLUDE_NEW_LINE);
 
+  /**
+   * Skips all tokens until the given one is found or EOF is hit.  The token
+   * or EOF are next to read.
+   */
+  void SkipUntil(Token const& aToken);
+
   // These are mostly shortcuts for the Check() methods above.
 
   /**
    * Check whitespace character is present.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool CheckWhite() { return Check(Token::Whitespace()); }
   /**
    * Check there is a single character on the read cursor position.  If so, shift the read
    * cursor position and return true.  Otherwise false.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool CheckChar(const char aChar) { return Check(Token::Char(aChar)); }
   /**
    * This is a customizable version of CheckChar.  aClassifier is a function called with
@@ -181,38 +187,39 @@ public:
    * The user classifiction function is not called when we are at or past the end and
    * false is immediately returned.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool CheckChar(bool (*aClassifier)(const char aChar));
   /**
    * Check for a whole expected word.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool CheckWord(const nsACString& aWord) { return Check(Token::Word(aWord)); }
   /**
    * Shortcut for literal const word check with compile time length calculation.
    */
   template <uint32_t N>
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool CheckWord(const char (&aWord)[N]) { return Check(Token::Word(nsDependentCString(aWord, N - 1))); }
   /**
    * Checks \r, \n or \r\n.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool CheckEOL() { return Check(Token::NewLine()); }
   /**
    * Checks we are at the end of the input string reading.  If so, shift past the end
    * and returns true.  Otherwise does nothing and returns false.
    */
-  MOZ_WARN_UNUSED_RESULT
+  MOZ_MUST_USE
   bool CheckEOF() { return Check(Token::EndOfFile()); }
 
   /**
    * These are shortcuts to obtain the value immediately when the token type matches.
    */
-  bool ReadChar(char* aValue);
-  bool ReadChar(bool (*aClassifier)(const char aChar), char* aValue);
-  bool ReadWord(nsACString& aValue);
-  bool ReadWord(nsDependentCSubstring& aValue);
+  MOZ_MUST_USE bool ReadChar(char* aValue);
+  MOZ_MUST_USE bool ReadChar(bool (*aClassifier)(const char aChar),
+                             char* aValue);
+  MOZ_MUST_USE bool ReadWord(nsACString& aValue);
+  MOZ_MUST_USE bool ReadWord(nsDependentCSubstring& aValue);
 
   /**
    * This is an integer read helper.  It returns false and doesn't move the read
@@ -223,7 +230,7 @@ public:
    * and the cursor is moved forward.
    */
   template <typename T>
-  bool ReadInteger(T* aValue)
+  MOZ_MUST_USE bool ReadInteger(T* aValue)
   {
     MOZ_RELEASE_ASSERT(aValue);
 
@@ -299,8 +306,10 @@ public:
    * Calling Rollback() after ReadUntil() will return the read cursor to the
    * position it had before ReadUntil was called.
    */
-  bool ReadUntil(Token const& aToken, nsDependentCSubstring& aResult, ClaimInclusion aInclude = EXCLUDE_LAST);
-  bool ReadUntil(Token const& aToken, nsACString& aResult, ClaimInclusion aInclude = EXCLUDE_LAST);
+  MOZ_MUST_USE bool ReadUntil(Token const& aToken, nsDependentCSubstring& aResult,
+                              ClaimInclusion aInclude = EXCLUDE_LAST);
+  MOZ_MUST_USE bool ReadUntil(Token const& aToken, nsACString& aResult,
+                              ClaimInclusion aInclude = EXCLUDE_LAST);
 
 protected:
   // false if we have already read the EOF token.

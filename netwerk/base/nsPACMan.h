@@ -20,10 +20,15 @@
 #include "nsAutoPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "mozilla/Logging.h"
+#include "mozilla/Atomics.h"
 
-class nsPACMan;
 class nsISystemProxySettings;
 class nsIThread;
+
+namespace mozilla {
+namespace net {
+
+class nsPACMan;
 class WaitForThreadShutdown;
 
 /**
@@ -50,8 +55,8 @@ public:
                                const nsCString &newPACURL) = 0;
 };
 
-class PendingPACQuery final : public nsRunnable,
-                              public mozilla::LinkedListElement<PendingPACQuery>
+class PendingPACQuery final : public Runnable,
+                              public LinkedListElement<PendingPACQuery>
 {
 public:
   PendingPACQuery(nsPACMan *pacMan, nsIURI *uri, uint32_t appId,
@@ -67,7 +72,7 @@ public:
   nsCString                  mHost;
   int32_t                    mPort;
 
-  NS_IMETHOD Run(void);     /* nsRunnable */
+  NS_IMETHOD Run(void);     /* Runnable */
 
 private:
   nsPACMan                  *mPACMan;  // weak reference
@@ -217,11 +222,11 @@ private:
   void NamePACThread();
 
 private:
-  mozilla::net::ProxyAutoConfig mPAC;
+  ProxyAutoConfig mPAC;
   nsCOMPtr<nsIThread>           mPACThread;
   nsCOMPtr<nsISystemProxySettings> mSystemProxySettings;
 
-  mozilla::LinkedList<PendingPACQuery> mPendingQ; /* pac thread only */
+  LinkedList<PendingPACQuery> mPendingQ; /* pac thread only */
 
   // These specs are not nsIURI so that they can be used off the main thread.
   // The non-normalized versions are directly from the configuration, the
@@ -232,16 +237,15 @@ private:
 
   nsCOMPtr<nsIStreamLoader>    mLoader;
   bool                         mLoadPending;
-  bool                         mShutdown;
-  mozilla::TimeStamp           mScheduledReload;
+  Atomic<bool, Relaxed>        mShutdown;
+  TimeStamp                    mScheduledReload;
   uint32_t                     mLoadFailureCount;
 
   bool                         mInProgress;
 };
 
-namespace mozilla {
-namespace net {
 extern LazyLogModule gProxyLog;
+
 } // namespace net
 } // namespace mozilla
 

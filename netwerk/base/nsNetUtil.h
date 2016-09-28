@@ -569,7 +569,7 @@ nsresult NS_BackgroundOutputStream(nsIOutputStream **result,
                                    uint32_t          segmentSize  = 0,
                                    uint32_t          segmentCount = 0);
 
-MOZ_WARN_UNUSED_RESULT nsresult
+MOZ_MUST_USE nsresult
 NS_NewBufferedInputStream(nsIInputStream **result,
                           nsIInputStream  *str,
                           uint32_t         bufferSize);
@@ -1023,7 +1023,7 @@ bool InScriptableRange(uint64_t val);
 
 // Include some function bodies for callers with external linkage
 #ifndef MOZILLA_INTERNAL_API
-#include "nsNetUtil.inl"
+#include "nsNetUtilInlines.h"
 #endif
 
 #endif // !nsNetUtil_h__

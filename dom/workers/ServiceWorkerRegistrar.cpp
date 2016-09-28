@@ -1,3 +1,4 @@
+
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
@@ -521,7 +522,7 @@ ServiceWorkerRegistrar::RegisterServiceWorkerInternal(const ServiceWorkerRegistr
   }
 }
 
-class ServiceWorkerRegistrarSaveDataRunnable final : public nsRunnable
+class ServiceWorkerRegistrarSaveDataRunnable final : public Runnable
 {
 public:
   ServiceWorkerRegistrarSaveDataRunnable()
@@ -538,8 +539,8 @@ public:
 
     service->SaveData();
 
-    RefPtr<nsRunnable> runnable =
-      NS_NewRunnableMethod(service, &ServiceWorkerRegistrar::DataSaved);
+    RefPtr<Runnable> runnable =
+      NewRunnableMethod(service, &ServiceWorkerRegistrar::DataSaved);
     nsresult rv = mThread->Dispatch(runnable, NS_DISPATCH_NORMAL);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
@@ -562,7 +563,7 @@ ServiceWorkerRegistrar::ScheduleSaveData()
     do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID);
   MOZ_ASSERT(target, "Must have stream transport service");
 
-  RefPtr<nsRunnable> runnable =
+  RefPtr<Runnable> runnable =
     new ServiceWorkerRegistrarSaveDataRunnable();
   nsresult rv = target->Dispatch(runnable, NS_DISPATCH_NORMAL);
   if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -612,8 +613,8 @@ ServiceWorkerRegistrar::MaybeScheduleShutdownCompleted()
     return;
   }
 
-  RefPtr<nsRunnable> runnable =
-     NS_NewRunnableMethod(this, &ServiceWorkerRegistrar::ShutdownCompleted);
+  RefPtr<Runnable> runnable =
+     NewRunnableMethod(this, &ServiceWorkerRegistrar::ShutdownCompleted);
   nsresult rv = NS_DispatchToMainThread(runnable);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
@@ -743,7 +744,7 @@ ServiceWorkerRegistrar::ProfileStarted()
   MOZ_ASSERT(target, "Must have stream transport service");
 
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NewRunnableMethod(this, &ServiceWorkerRegistrar::LoadData);
+    NewRunnableMethod(this, &ServiceWorkerRegistrar::LoadData);
   rv = target->Dispatch(runnable, NS_DISPATCH_NORMAL);
   if (NS_FAILED(rv)) {
     NS_WARNING("Failed to dispatch the LoadDataRunnable.");

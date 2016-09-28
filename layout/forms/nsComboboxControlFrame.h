@@ -244,7 +244,7 @@ protected:
   nscoord GetIntrinsicISize(nsRenderingContext* aRenderingContext,
                             nsLayoutUtils::IntrinsicISizeType aType);
 
-  class RedisplayTextEvent : public nsRunnable {
+  class RedisplayTextEvent : public mozilla::Runnable {
   public:
     NS_DECL_NSIRUNNABLE
     explicit RedisplayTextEvent(nsComboboxControlFrame *c) : mControlFrame(c) {}
