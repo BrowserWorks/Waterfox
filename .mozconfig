@@ -27,7 +27,7 @@ ac_add_options --disable-webapp-runtime
 ac_add_options --disable-websms-backend
 
 ac_add_options --enable-application=browser
-ac_add_options --enable-optimize="-O2 -std:c++14 -w"
+ac_add_options --enable-optimize="-O2 -D_ATL_XP_TARGETING"
 ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 

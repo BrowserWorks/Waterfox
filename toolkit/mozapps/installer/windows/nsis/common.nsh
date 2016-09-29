@@ -3718,7 +3718,7 @@
       Push $R5
       Push $R4
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
         ; Since shortcuts that are pinned can later be removed without removing
         ; the pinned shortcut unpin the pinned shortcuts for the application's
         ; main exe using the pinned shortcuts themselves.
@@ -5109,7 +5109,7 @@
 
       !ifdef HAVE_64BIT_BUILD
         ${Unless} ${RunningX64}
-        ${OrUnless} ${AtLeastWin7}
+        ${OrUnless} ${AtLeastWinXP}
           MessageBox MB_OK|MB_ICONSTOP "$R9"
           ; Nothing initialized so no need to call OnEndCommon
           Quit
@@ -5870,7 +5870,7 @@
       Push $0
 
 !ifndef NONADMIN_ELEVATE
-        ${If} ${AtLeastWinVista}
+        ${If} ${AtLeastWinXP}
           UAC::IsAdmin
           ; If the user is not an admin already
           ${If} "$0" != "1"
@@ -5901,7 +5901,7 @@
           ${EndIf}
         ${EndIf}
 !else
-      ${If} ${AtLeastWinVista}
+      ${If} ${AtLeastWinXP}
         UAC::IsAdmin
         ; If the user is not an admin already
         ${If} "$0" != "1"
@@ -6014,7 +6014,7 @@
     !define ${_MOZFUNC_UN}UnloadUAC "!insertmacro ${_MOZFUNC_UN}UnloadUACCall"
 
     Function ${_MOZFUNC_UN}UnloadUAC
-      ${Unless} ${AtLeastWinVista}
+      ${Unless} ${AtLeastWinXP}
         Return
       ${EndUnless}
 
@@ -6667,7 +6667,7 @@
     !define ${_MOZFUNC_UN}SetAppLSPCategories "!insertmacro ${_MOZFUNC_UN}SetAppLSPCategoriesCall"
 
     Function ${_MOZFUNC_UN}SetAppLSPCategories
-      ${Unless} ${AtLeastWinVista}
+      ${Unless} ${AtLeastWinXP}
         Return
       ${EndUnless}
 
@@ -6780,7 +6780,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6860,7 +6860,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -6932,7 +6932,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6993,7 +6993,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -7074,7 +7074,7 @@
 
       StrCpy $R3 "false"
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
         ; installed shortcuts
         ${${_MOZFUNC_UN}GetLongPath} "$INSTDIR\uninstall\${SHORTCUTS_LOG}" $R6
         ${If} ${FileExists} "$R6"
@@ -7305,7 +7305,7 @@
       Exch $R8 ; stack: $R8, $R9   | $R8 = regpath
       Push $R7
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
         ${${_MOZFUNC_UN}GetLongPath} "$R9" $R9
         ; Always create a new AppUserModelID and overwrite the existing one
         ; for the current installation path.
@@ -7408,7 +7408,7 @@
       ; Don't create when running silently.
       ${Unless} ${Silent}
         ; This is only supported on Win 7 and above.
-        ${If} ${AtLeastWin7}
+        ${If} ${AtLeastWinXP}
           System::Call "ole32::CoCreateInstance(g '${CLSID_ITaskbarList}', \
                                                 i 0, \
                                                 i ${CLSCTX_INPROC_SERVER}, \
