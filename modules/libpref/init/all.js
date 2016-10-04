@@ -887,7 +887,7 @@ pref("toolkit.telemetry.server", "");
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
 pref("toolkit.telemetry.server_owner", "Mozilla");
 // Information page about telemetry (temporary ; will be about:telemetry in the end)
-pref("toolkit.telemetry.infoURL", "https://www.mozilla.org/legal/privacy/firefox.html#telemetry");
+pref("toolkit.telemetry.infoURL", "");
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
 pref("toolkit.telemetry.debugSlowSql", false);
@@ -2111,7 +2111,7 @@ pref("security.cert_pinning.process_headers_from_non_builtin_roots", false);
 pref("security.view-source.reachable-from-inner-protocol", false);
 
 // Services security settings
-pref("services.settings.server", "https://firefox.settings.services.mozilla.com/v1");
+pref("services.settings.server", "");
 
 // Blocklist preferences
 pref("extensions.blocklist.enabled", true);
@@ -4709,7 +4709,7 @@ pref("dom.push.enabled", false);
 
 pref("dom.push.loglevel", "off");
 
-pref("dom.push.serverURL", "wss://push.services.mozilla.com/");
+pref("dom.push.serverURL", "");
 pref("dom.push.userAgentID", "");
 
 // The maximum number of push messages that a service worker can receive
