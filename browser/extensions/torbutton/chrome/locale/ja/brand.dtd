@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "Tor Browser">
+<!ENTITY  brandShortName        "Tor Browser">
+<!ENTITY  brandFullName         "Tor Browser">
+<!ENTITY  vendorShortName       "Tor Project">
+<!ENTITY  trademarkInfo.part1   "FirefoxおよびFirefoxのロゴはMozilla財団の登録商標です。">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "クリックするとインストールされたシステムプラグインをロードします。">
+<!ENTITY plugins.installed.enable "プラグインを有効化">
+<!ENTITY plugins.installed.disable "プラグインを無効化">
+<!ENTITY plugins.installed.disable.tip "クリックするとインストールされたプラグインを読み込まなくします。">

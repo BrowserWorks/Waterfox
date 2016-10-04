@@ -1,0 +1,49 @@
+<!--
+   - Copyright (c) 2015, The Tor Project, Inc.
+   - See LICENSE for licensing information.
+   - vim: set sw=2 sts=2 ts=8 et syntax=xml:
+  -->
+
+<!ENTITY aboutTor.title "درباره‌ی تور">
+
+<!ENTITY aboutTor.outOfDateTorOn.label "هشدار: این مرورگر به روز نیست.">
+<!ENTITY aboutTor.outOfDateTorOff.label "همچنین ٫ این مرورگر قدیمی می باشد .">
+<!ENTITY aboutTor.outOfDate2.label "روی پیاز کلیک کنید و سپس انتخاب کنید Check را برای به روز رسانی Tor Browser">
+
+<!ENTITY aboutTor.check.label "تنظیمات شبکه‌ی تور را بررسی کنید">
+
+<!ENTITY aboutTor.success.label "به مرورگر تور خوش آمدید.">
+<!ENTITY aboutTor.success2.label "اتصال با شبکه‌ی تور برقرار شد.">
+<!ENTITY aboutTor.success3.label "اکنون شما به طور ناشناس به اینترنت دسترسی دارید.">
+<!ENTITY aboutTor.failure.label "خطایی پیش آمده است!">
+<!ENTITY aboutTor.failure2.label "تا با این مرورگر کار نمی‌کند.">
+<!ENTITY aboutTor.failure3prefix.label "برای کمک، تماس حاصل فرمایید:">
+<!ENTITY aboutTor.failure3Link "help@rt.torproject.org">
+<!ENTITY aboutTor.failure3suffix.label ".">
+
+<!ENTITY aboutTor.search.label "جستجو">
+
+<!ENTITY aboutTor.searchSPPost.link "https://startpage.com/rth/search">
+<!ENTITY aboutTor.searchDDGPost.link "https://duckduckgo.com/html/">
+<!ENTITY aboutTor.searchDCPost.link "https://search.disconnect.me/searchTerms/search?ses=Google&amp;location_option=US&amp;source=tor">
+
+<!ENTITY aboutTor.torInfo1.label "اطلاعات بيشتر">
+<!ENTITY aboutTor.torInfo2.label "كشور و آدرس آى پی:">
+<!ENTITY aboutTor.torInfo3.label "مسيرياب مخرج">
+<!ENTITY aboutTor.torInfo4.label "این سرور هیچ گزارشی از فعالیت بازدید کنندگان خود ثبت نمی کند.">
+<!ENTITY aboutTor.whatnextQuestion.label "بعدی چیست؟">
+<!ENTITY aboutTor.whatnextAnswer.label "تور همه‌ی نیاز شما برای ناشناس ماندن در وب را برآورده نمی‌کند! برای اطمینان از ایمنی هویتتان، نیاز دارید برخی عادات وبگردیتان را تغییر دهید.">
+<!ENTITY aboutTor.whatnext.label "راهنمایی برای ناشناس ماندن.">
+<!ENTITY aboutTor.whatnext.link "https://www.torproject.org/download/download.html.en#warning">
+<!ENTITY aboutTor.helpInfo1.label "می‌توانید کمک کنید!">
+<!ENTITY aboutTor.helpInfo2.label "راه های زیادی برای کمک کردن شما جهت سریعتر کردن و مستحکم کردن شبکه تور وجود دارد:">
+<!ENTITY aboutTor.helpInfo3.label "مسيرياب تورى اداره كنيد »">
+<!ENTITY aboutTor.helpInfo3.link "https://www.torproject.org/docs/tor-doc-relay.html.en">
+<!ENTITY aboutTor.helpInfo4.label "داوطلب شويد »">
+<!ENTITY aboutTor.helpInfo4.link "https://www.torproject.org/getinvolved/volunteer.html.en">
+<!ENTITY aboutTor.helpInfo5.label "اهدا كنيد »">
+<!ENTITY aboutTor.helpInfo5.link "https://www.torproject.org/donate/donate.html.en">
+
+<!ENTITY aboutTor.footer.label "پروژهٔ تور سازمان غیر انتفاعی آمریکایی 501(c)3 مختص پژوهش, توسعه و آموزش در زمین ناشناسی و حریم شخصی آنلاين هست.">
+<!ENTITY aboutTor.learnMore.label "اطلاعات بیشتر در پروژهٔ تور كسب كنيد">
+<!ENTITY aboutTor.learnMore.link "https://www.torproject.org/about/overview.html.en">

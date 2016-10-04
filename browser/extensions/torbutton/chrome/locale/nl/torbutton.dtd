@@ -1,0 +1,61 @@
+<!ENTITY torbutton.context_menu.new_identity "Nieuwe identiteit">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.new_circuit "Nieuw tor circuit voor deze website">
+<!ENTITY torbutton.context_menu.new_circuit_key "C">
+<!ENTITY torbutton.context_menu.preferences "Privacy- en beveiligingsinstellingen...">
+<!ENTITY torbutton.context_menu.preferences.key "V">
+<!ENTITY torbutton.context_menu.networksettings "Tor netwerk instellingen">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "Controleer op updates voor de Tor Browser...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "U">
+<!ENTITY torbutton.context_menu.cookieProtections "Cookie beveiligingen...">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Klik hier om Torbutton te initialiseren">
+<!ENTITY torbutton.prefs.privacy_security_settings "Privacy- en beveiligingsinstellingen">
+<!ENTITY torbutton.prefs.restore_defaults "Terugzetten op begintoestand">
+<!ENTITY torbutton.cookiedialog.title "Beheer Cookie Beveiligingen">
+<!ENTITY torbutton.cookiedialog.lockCol "Beveiligd">
+<!ENTITY torbutton.cookiedialog.domainCol "Host">
+<!ENTITY torbutton.cookiedialog.nameCol "Naam">
+<!ENTITY torbutton.cookiedialog.pathCol "Pad">
+<!ENTITY torbutton.cookiedialog.protectCookie "Beveilig Cookie">
+<!ENTITY torbutton.cookiedialog.removeCookie "Verwijder Cookie">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "Hef Cookie beveiliging op.">
+<!ENTITY torbutton.cookiedialog.removeAllBut "Verwijder alle behalve beveiligde">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "Beveilig nieuwe Cookies">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "Beveilig nieuwe Cookies niet">
+<!ENTITY torbutton.prefs.priv_caption "Privacyinstellingen">
+<!ENTITY torbutton.prefs.block_disk "Bewaar geen surfgeschiedenis of websitegegevens. (Schakelt Privénavigatie in.)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Beperk cookies en andere tracking-gegevens van derden">
+<!ENTITY torbutton.prefs.block_plugins "Schakel browserplug-ins uit (zoals Flash)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Verander details die je onderscheiden van andere Tor Browser gebruikers">
+<!ENTITY torbutton.prefs.sec_caption "Beveiligingsniveau">
+<!ENTITY torbutton.prefs.sec_low "Laag (standaard)">
+<!ENTITY torbutton.prefs.sec_low_usable_desc "Dit verschaft de meest bruikbare ervaring">
+<!ENTITY torbutton.prefs.sec_low_desc "Op dit beveiligingsniveau worden alle browserfuncties ingeschakeld.">
+<!ENTITY torbutton.prefs.sec_font_rend_svg_tooltip "De SVG OpenType font rendering mechanisme is uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_med_low "Medium-Laag">
+<!ENTITY torbutton.prefs.sec_gen_desc "Op dit beveiligingsniveau gelden de volgende wijzigingen (beweeg de muis over de items voor meer informatie)">
+<!ENTITY torbutton.prefs.sec_html5_desc "HTML5 video en audio media geworden click-to-play via NoScript.">
+<!ENTITY torbutton.prefs.sec_html5_tooltip "Op sommige sites zou je de NoScript werkbalk knop moeten gebruiken om deze media -objecten mogelijk te maken.">
+<!ENTITY torbutton.prefs.sec_some_jit_desc "Sommige JavaScript-prestatieverbeteringen zijn uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_jit_desc_tooltip "ION JIT, Type Inference, ASM.JS.">
+<!ENTITY torbutton.prefs.sec_baseline_jit_desc_tooltip "Baseline JIT.">
+<!ENTITY torbutton.prefs.sec_jit_slower_desc "Scripts kunnen op sommige websites trager zijn.">
+<!ENTITY torbutton.prefs.sec_mathml_desc "Sommige mechanismen van het weergeven van wiskundige vergelijkingen zijn uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_mathml_desc_tooltip "MathML is uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_med_high "Medium-Hoog">
+<!ENTITY torbutton.prefs.sec_all_jit_desc "Alle JavaScript-prestatieverbeteringen zijn uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_font_rend_desc "Sommige lettertype-weergavefuncties zijn uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_font_rend_graphite_tooltip "De Graphite lettertype rendering mechanisme is uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_svg_desc "Sommige afbeeldingtypes zijn uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_svg_desc_tooltip "SVG afbeeldingen zijn uitgeschakeld.">
+<!ENTITY torbutton.prefs.sec_js_https_desc "JavaScript is standaard uitgeschakeld op alle niet-HTTPS websites.">
+<!ENTITY torbutton.prefs.sec_js_desc_tooltip "JavaScript kan worden ingeschakeld op een basis per - site via de NoScript werkbalk knop.">
+<!ENTITY torbutton.prefs.sec_high "Hoog">
+<!ENTITY torbutton.prefs.sec_all_js_desc "JavaScript is standaard uitgeschakeld op alle websites.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc "Sommige lettertypen en pictogrammen worden mogelijk niet goed weergegeven. ">
+<!ENTITY torbutton.prefs.sec_webfonts_desc_tooltip "Door websites aangeleverde lettertypes worden geblokkeerd.">
+<!ENTITY torbutton.prefs.sec_custom "Aangepaste waarden">
+<!ENTITY torbutton.circuit_display.title "Tor circuit voor deze website">
+

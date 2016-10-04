@@ -1,0 +1,19 @@
+<!ENTITY project.start           "&brandShortName; garatzen du ">
+<!-- LOCALIZATION NOTE (project.tpoLink): This is a link title that links to https://www.torproject.org -->
+<!ENTITY project.tpoLink         "&vendorShortName;">
+<!ENTITY project.end             ", irabazi asmorik gabeko eta zure sareko askatasun eta pribatutasuna defendatzen duen erakunde bat.">
+
+<!ENTITY help.start              "Lagundu nahi duzu?">
+<!-- LOCALIZATION NOTE (help.donate): This is a link title that links to https://www.torproject.org/donate/donate.html.en -->
+<!ENTITY help.donateLink         "Egizu dohaintza">
+<!ENTITY help.or                 "edo">
+<!-- LOCALIZATION NOTE (help.getInvolvedLink): This is a link title that links to https://www.torproject.org/getinvolved/volunteer.html.en -->
+<!ENTITY help.getInvolvedLink    "egizu bat">
+<!ENTITY help.end                "!">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/docs/trademark-faq.html.en -->
+<!ENTITY bottomLinks.questions   "Galderarik?">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/getinvolved/relays -->
+<!ENTITY bottomLinks.grow        "Lagundu Tor sarea hazten!">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to about:license -->
+<!ENTITY bottomLinks.license  "Lizentziei Buruzko Informazioa">
+<!ENTITY tor.TrademarkStatement   "'Tor' eta 'Onion Logo' Tor Project, Inc.ren marka erregistratuak dira.">

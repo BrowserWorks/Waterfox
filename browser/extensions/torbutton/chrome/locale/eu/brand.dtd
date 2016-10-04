@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "Tor Browser">
+<!ENTITY  brandShortName        "Tor Browser">
+<!ENTITY  brandFullName         "Tor Browser">
+<!ENTITY  vendorShortName       "Tor Project">
+<!ENTITY  trademarkInfo.part1   "Firefox eta Firefox logoak Mozilla Fundazioaren marka errgistratuak dira.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "Klikatu sisteman instalatuta daunden pluginak kargatzeko">
+<!ENTITY plugins.installed.enable "Pluginak gaitu.">
+<!ENTITY plugins.installed.disable "Pluginak ezgaitu">
+<!ENTITY plugins.installed.disable.tip "Klikatu sistemaren pluginak karga ez daitezen">

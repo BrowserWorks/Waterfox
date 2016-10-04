@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "Tor webbläsaren">
+<!ENTITY  brandShortName        "Tor webbläsaren">
+<!ENTITY  brandFullName         "Tor webbläsaren">
+<!ENTITY  vendorShortName       "Tor-projektet">
+<!ENTITY  trademarkInfo.part1   "Firefox och Firefox-logotypen är varumärken som tillhör Mozilla Foundation.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "Klicka här för att ladda installerade systemtillägg.">
+<!ENTITY plugins.installed.enable "Tillåt tillägg">
+<!ENTITY plugins.installed.disable "Stäng av tillägg.">
+<!ENTITY plugins.installed.disable.tip "Klicka för att förhindra laddningen av systemtillägg.">

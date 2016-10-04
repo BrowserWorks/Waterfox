@@ -1,0 +1,27 @@
+<!ENTITY torbutton.context_menu.new_identity "nova indetiteta">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.preferences "Nastavitve...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "Open Network Settings…">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "Download Tor Browser Bundle Update...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "A">
+<!ENTITY torbutton.context_menu.cookieProtections "piškotkina zaščita">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Klikni za inicializiranje razširitve Torbutton">
+<!ENTITY torbutton.prefs.restore_defaults "Privzete nastavitve">
+<!ENTITY torbutton.cookiedialog.title "Manage Cookie Protections">
+<!ENTITY torbutton.cookiedialog.lockCol "Protected">
+<!ENTITY torbutton.cookiedialog.domainCol "Host">
+<!ENTITY torbutton.cookiedialog.nameCol "ime">
+<!ENTITY torbutton.cookiedialog.pathCol "Path">
+<!ENTITY torbutton.cookiedialog.protectCookie "žaščiti piškotke">
+<!ENTITY torbutton.cookiedialog.removeCookie "odstrani piškotke">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "nezaščiti piškotkov">
+<!ENTITY torbutton.cookiedialog.removeAllBut "Remove All But Protected">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "Protect New Cookies">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "ne zaščiti novih piškotkov">
+<!ENTITY torbutton.prefs.block_disk "Don't record browsing history or website data (enables Private Browsing Mode)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Restrict third party cookies and other tracking data">
+<!ENTITY torbutton.prefs.block_plugins "Disable browser plugins (such as Flash)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Change details that distinguish you from other Tor Browser users">

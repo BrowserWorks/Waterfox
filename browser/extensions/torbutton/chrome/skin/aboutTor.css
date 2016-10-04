@@ -1,0 +1,304 @@
+/*
+ * Copyright (c) 2015, The Tor Project, Inc.
+ * See LICENSE for licensing information.
+ *
+ * vim: set sw=2 sts=2 ts=8 et syntax=css:
+ */
+
+* {
+  padding: 0px;
+  margin: 0px;
+}
+
+body {
+  min-width: 920px;
+  max-width: 920px;
+  width: 100%;
+  height: 100%;
+  margin: 0px auto;
+  padding: 0px 0px;
+  font-size: 62.5%;
+  font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+  font-weight: normal;
+  color: #4d4d4d;
+  background-color: #FFFFFF;
+  background-attachment: fixed;
+  background-size: 100% 100%;
+}
+
+body {
+  background-image: -moz-linear-gradient(top, #ffffff, #ffffff 10%, #dddddd 50%, #dddddd);
+}
+
+body[toron] {
+  background-image: -moz-linear-gradient(top, #ffffff, #ffffff 10%, #d5ffd5 50%, #d5ffd5);
+}
+
+#torstatus-version {
+  position: fixed;
+  top: 6px;
+  right: 6px;
+  height: 30px;
+  width: 200px;
+  font-size: 1.4em;
+  white-space: pre-wrap;
+  text-align: right;
+}
+
+body[toron] #torstatus-image {
+  background-image: url('chrome://torbutton/content/aboutTor/tor-on.png');
+}
+
+#torstatus-image {
+  position: absolute;
+  left: 70px;
+  height: 128px;
+  width: 128px;
+  background-image: url('chrome://torbutton/content/aboutTor/tor-off.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: -1;
+}
+
+.arrow {
+  display: none;
+  position: absolute;
+  z-index: -1;
+}
+
+#toolbarIconArrowHead {
+  top: 4px;
+  width: 30px;
+  height: 36px;
+  background-image: url('chrome://torbutton/content/aboutTor/onionArrow-short.png');
+}
+
+#toolbarIconArrowVertExtension, #toolbarIconArrowHorzExtension {
+  width: 11px;
+  height: 11px;
+  background-image: url('chrome://torbutton/content/aboutTor/onionArrow-extension.png');
+}
+
+#toolbarIconArrowBend {
+  width: 22px;
+  height: 22px;
+  background-image: url('chrome://torbutton/content/aboutTor/onionArrow-leftBend.png');
+}
+
+#toolbarIconArrowBend[pos="right"] {
+  background-image: url('chrome://torbutton/content/aboutTor/onionArrow-rightBend.png');
+}
+
+a {
+  color: #008000;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #00A000;
+  text-decoration: underline;
+}
+
+#testTorSettings {
+  font-size: 1.6em;
+  text-decoration: underline;
+  margin-bottom: 5px;
+}
+
+#torstatus {
+  position: relative; /* needed for torstatus-image positioning */
+  max-width: 620px;
+  min-height: 148px;
+  padding: 15px 128px 0px 128px;
+  margin: 20px auto 0px auto;
+}
+
+.top {
+  text-align: center;
+  white-space: nowrap;
+}
+
+body[toron][torNeedsUpdate] .hideIfTBBNeedsUpdate,
+body:not([torNeedsUpdate]) .hideIfTorIsUpToDate {
+  display: none;
+}
+
+body[toron] .hideIfTorOn,
+body:not([toron]) .hideIfTorOff {
+  display: none;
+}
+
+body[toron] .top h1 {
+  color: #600060;
+}
+
+div.hideIfTorIsUpToDate,
+body .top div.hideIfTorIsUpToDate h1 {
+  color: black;
+}
+
+body .top div.hideIfTorIsUpToDate h1.hideIfTorOff {
+  margin-left: 30px;
+}
+
+/* Use inline-block for text-oriented elements whose widths need to measured. */
+.torstatus-container *,
+.top div.hideIfTorIsUpToDate h3 {
+  display: inline-block;
+}
+
+.top div.hideIfTorOff h1 {
+  margin-top: 20px;
+}
+
+.top h1 {
+  font-size: 4.00em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.top h2 {
+  font-size: 2.934em;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.top h3 {
+  font-size: 1.8em;
+  font-weight: normal;
+  color: #3B503C;
+}
+
+#middle {
+  display: table;
+  width: 904px;   /* 920px - (2 * 8px extra side margin) */
+  margin: 40px auto 10px auto;
+  border-spacing: 100px 0px;
+  border-collapse: separate;
+  text-align: center;
+  font-size: 1.6em;
+}
+
+.bubbleRow {
+  display: table-row;
+}
+
+.bubbleRow div.bubble {
+  display: table-cell;
+  width: 50%;
+  height: 100%;
+  padding: 20px 30px;
+  color: #3B503C;
+  background-color: #FFFFFF;
+  border: none;
+  border-radius: 16px;
+  text-align: start;
+  vertical-align: top;
+}
+
+#middle h1 {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+#middle a.tips {
+  display: block;
+  margin-top: 1.6em;
+}
+
+#middle ul {
+  padding: 5px 0 0 22px;
+}
+
+#middle ul:-moz-dir(rtl) {
+  padding: 5px 22px 0 0;
+}
+
+#middle li {
+  padding-top: 2px;
+}
+
+#bottom {
+  margin: 30px 0px 0px 0px;
+  padding-bottom: 40px;
+  float: left;
+}
+
+#bottom p {
+  font-size: 1.6em;
+  text-align: start;
+  margin: 10px 125px 0px 125px;
+}
+
+#bottom a {
+  color: #800080;
+  text-decoration: underline;
+}
+
+#bottom a:hover {
+  color: #A000A0;
+  text-decoration: none;
+}
+
+#bottom h4 {
+  margin-top: 50px;
+  line-height: 1em;
+  font-size: 1em;
+  font-weight: normal;
+  text-align: center;
+}
+
+#bottom p.lang {
+  max-width: 620px;
+  margin: 10px auto;
+  font-size: 1em;
+  font-weight: normal;
+  text-align: center;
+}
+
+.searchbox form {
+  width: 396px;
+  margin: 35px auto 1px auto;
+  text-align: left;
+}
+
+.searchbox h4 {
+  padding-top: 5px;
+  font-size: 12px;
+  font-weight: normal;
+  text-align: center;
+}
+
+#sbutton {
+  display: block;
+  float: right;
+  width: 33px;
+}
+
+#sbutton input {
+  height: 34px;
+  width: 33px;
+  border: 0;
+  background: url('chrome://torbutton/content/aboutTor/search.png') no-repeat top left;
+  cursor: pointer;
+}
+
+/* #sxw is the container div for the search field and button */
+#sxw {
+  border: none;
+}
+
+/* #sx is the search input (text) field */
+#sx {
+  border-color: lightgray;
+  border-style: solid;
+  border-width: 1px 0px 1px 1px;
+  width: 350px;
+  min-height: 23px;
+  padding: 4px 6px 5px 6px;
+  margin: 0;
+  outline: none;
+  color: #222;
+  font-size: 18px;
+}
+

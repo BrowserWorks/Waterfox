@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://torbutton/skin/torbutton.css" type="text/css"?>
+<?xml-stylesheet href="chrome://torbutton/skin/tor-circuit-display.css" type="text/css"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://torbutton/locale/torbutton.dtd">
+
+<overlay id="torbutton-popup-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <stringbundleset id="torbutton-stringbundleset">
+    <stringbundle id="torbutton-bundle" src="chrome://torbutton/locale/torbutton.properties"/>
+  </stringbundleset>
+  <panel id="torbutton-context-menu"
+         onpopupshowing="torbutton_check_protections();"
+         titlebar="normal" noautohide="true"
+         anchor="torbutton-button" position="after_start" >
+    <hbox align="start">
+      <vbox>
+        <menuitem id="torbutton-new-identity"
+                  label="&torbutton.context_menu.new_identity;"
+                  accesskey="&torbutton.context_menu.new_identity_key;"
+                  key="torbutton-new-identity-key"
+                  insertafter="context-stop"
+                  oncommand="torbutton_new_identity()"/>
+        <menuitem id="torbutton-new-circuit"
+                  label="&torbutton.context_menu.new_circuit;"
+                  accesskey="&torbutton.context_menu.new_circuit_key;"
+                  key="torbutton-new-circuit-key"
+                  insertafter="context-stop"
+                  oncommand="torbutton_new_circuit()"/>
+        <menuseparator/>
+        <menuitem id="torbutton-cookie-protector"
+                  label="&torbutton.context_menu.cookieProtections;"
+                  accesskey="&torbutton.context_menu.cookieProtections.key;"
+                  insertafter="context-stop"
+                  hidden="true"
+                  oncommand="torbutton_open_cookie_dialog()"/>
+        <menuitem id="torbutton-preferences"
+                  label="&torbutton.context_menu.preferences;"
+                  accesskey="&torbutton.context_menu.preferences.key;"
+                  insertafter="context-stop"
+                  oncommand="torbutton_open_prefs_dialog()"/>
+        <menuitem id="torbutton-networksettings"
+                  label="&torbutton.context_menu.networksettings;"
+                  accesskey="&torbutton.context_menu.networksettings.key;"
+                  oncommand="torbutton_open_network_settings()"/>
+        <menuseparator/>
+        <menuitem id="torbutton-checkForUpdate"
+                  label="&torbutton.context_menu.downloadUpdate;"
+                  accesskey="&torbutton.context_menu.downloadUpdate.key;"
+                  insertafter="context-stop"
+                  oncommand="torbutton_check_for_update()"/>
+      </vbox>
+      <vbox id="circuit-display-container">
+        <div id="circuit-display" xmlns="http://www.w3.org/1999/xhtml" dir="auto">
+          <p id="title">&torbutton.circuit_display.title;</p>
+          <p id="domain">(example.com):</p>
+          <ul id="circuit-nodes" dir="auto">
+            <li>example A</li>
+            <li>example B</li>
+            <li>example C</li>
+          </ul>
+        </div>
+      </vbox>
+    </hbox>
+  </panel>
+</overlay>

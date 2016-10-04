@@ -1,0 +1,51 @@
+<!--
+   - Copyright (c) 2015, The Tor Project, Inc.
+   - See LICENSE for licensing information.
+   - vim: set sw=2 sts=2 ts=8 et syntax=xml:
+  -->
+
+<!ENTITY aboutTor.title "Informacje na temat Tor'a">
+
+<!ENTITY aboutTor.outOfDateTorOn.label "Ostrzeżenie: ta przeglądarka jest nieaktualna.">
+<!ENTITY aboutTor.outOfDateTorOff.label "PONADTO, ta przeglądarka jest nieaktualna.">
+<!ENTITY aboutTor.outOfDate2.label "Kliknij na ikonę cebuli, a następnie wybierz Sprawdź czy są dostępne aktualizacje.">
+
+<!ENTITY aboutTor.check.label "Przetestuj Ustawienia Sieci Tor">
+
+<!ENTITY aboutTor.success.label "Witamy w Tor Browser">
+<!ENTITY aboutTor.success2.label "Połączono z siecią Tor">
+<!ENTITY aboutTor.success3.label "Możesz teraz swobodnie przeglądać Internet anonimowo.">
+<!ENTITY aboutTor.failure.label "Coś poszło nie tak!">
+<!ENTITY aboutTor.failure2.label "Tor nie działa w tej przeglądarce.">
+<!ENTITY aboutTor.failure3prefix.label "Aby uzyskać pomoc, prosimy o kontakt">
+<!ENTITY aboutTor.failure3Link "help@rt.torproject.org">
+<!ENTITY aboutTor.failure3suffix.label ".">
+
+<!ENTITY aboutTor.search.label "Szukaj">
+
+<!ENTITY aboutTor.searchSPPost.link "https://startpage.com/rth/search">
+<!ENTITY aboutTor.searchDDGPost.link "https://duckduckgo.com/html/">
+<!ENTITY aboutTor.searchDCPost.link "https://search.disconnect.me/searchTerms/search?ses=Google&amp;location_option=US&amp;source=tor">
+
+<!ENTITY aboutTor.torInfo1.label "Dodatkowe informacje:">
+<!ENTITY aboutTor.torInfo2.label "Kraj i adres IP:">
+<!ENTITY aboutTor.torInfo3.label "Węzeł Wyjściowy:">
+<!ENTITY aboutTor.torInfo4.label "Ten serwer nie rejestruje żadnych informacji o odwiedzających.">
+<!ENTITY aboutTor.whatnextQuestion.label "Co dalej?">
+<!ENTITY aboutTor.whatnextAnswer.label "Tor, to NIE jest wszystko czego potrzebujesz, aby przeglądać sieć anonimowo! Być może potrzeba będzie zmienić niektóre Twoje nawyki internetowe, aby zapewnić Twojej tożsamości bezpieczeństwo.">
+<!ENTITY aboutTor.whatnext.label "Porady: Jak pozostać anonimowym w internecie »">
+<!ENTITY aboutTor.whatnext.link "https://www.torproject.org/download/download.html.en#warning">
+<!ENTITY aboutTor.helpInfo1.label "Możesz pomóc!">
+<!ENTITY aboutTor.helpInfo2.label "Istnieje wiele sposobów, abyś mógł uczynić sieć Tor'a szybszą i silniejszą:">
+<!ENTITY aboutTor.helpInfo3.label "Uruchom Przekaźnikowy Węzeł Tora »">
+<!ENTITY aboutTor.helpInfo3.link "https://www.torproject.org/docs/tor-doc-relay.html.en">
+<!ENTITY aboutTor.helpInfo4.label "Zgłoś się na ochotnika »">
+<!ENTITY aboutTor.helpInfo4.link "https://www.torproject.org/getinvolved/volunteer.html.en">
+<!ENTITY aboutTor.helpInfo5.label "Przekaż darowiznę »">
+<!ENTITY aboutTor.helpInfo5.link "https://www.torproject.org/donate/donate.html.en">
+
+<!ENTITY aboutTor.footer.label "Projekt Tor jest organizacją non-profit*, zajmująca się badaniami, rozwojem i edukacji o anonimowości i prywatności w internecie.
+
+* 501(c)(3)">
+<!ENTITY aboutTor.learnMore.label "Dowiedz się więcej na temat Tor Project »">
+<!ENTITY aboutTor.learnMore.link "https://www.torproject.org/about/overview.html.en">

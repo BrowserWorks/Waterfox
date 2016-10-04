@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2014, International Business Machines
+*   Copyright (C) 2014-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 */
@@ -24,7 +24,8 @@ static icu::UVector* gLocExtTypeEntries = NULL;
 typedef enum {
     SPECIALTYPE_NONE = 0,
     SPECIALTYPE_CODEPOINTS = 1,
-    SPECIALTYPE_REORDER_CODE = 2
+    SPECIALTYPE_REORDER_CODE = 2,
+    SPECIALTYPE_RG_KEY_VALUE = 4
 } SpecialType;
 
 typedef struct LocExtKeyData {
@@ -213,6 +214,10 @@ initFromResourceBundle(UErrorCode& sts) {
                 }
                 if (uprv_strcmp(legacyTypeId, "REORDER_CODE") == 0) {
                     specialTypes |= SPECIALTYPE_REORDER_CODE;
+                    continue;
+                }
+                if (uprv_strcmp(legacyTypeId, "RG_KEY_VALUE") == 0) {
+                    specialTypes |= SPECIALTYPE_RG_KEY_VALUE;
                     continue;
                 }
 
@@ -450,6 +455,23 @@ isSpecialTypeReorderCode(const char* val) {
     return (subtagLen >=3 && subtagLen <=8);
 }
 
+static UBool
+isSpecialTypeRgKeyValue(const char* val) {
+    int32_t subtagLen = 0;
+    const char* p = val;
+    while (*p) {
+        if ( (subtagLen < 2 && uprv_isASCIILetter(*p)) ||
+                    (subtagLen >= 2 && (*p == 'Z' || *p == 'z')) ) {
+            subtagLen++;
+        } else {
+            return FALSE;
+        }
+        p++;
+    }
+    return (subtagLen == 6);
+    return TRUE;
+}
+
 U_CFUNC const char*
 ulocimp_toBcpKey(const char* key) {
     if (!init()) {
@@ -506,6 +528,9 @@ ulocimp_toBcpType(const char* key, const char* type, UBool* isKnownKey, UBool* i
             if (!matched && keyData->specialTypes & SPECIALTYPE_REORDER_CODE) {
                 matched = isSpecialTypeReorderCode(type);
             }
+            if (!matched && keyData->specialTypes & SPECIALTYPE_RG_KEY_VALUE) {
+                matched = isSpecialTypeRgKeyValue(type);
+            }
             if (matched) {
                 if (isSpecialType != NULL) {
                     *isSpecialType = TRUE;
@@ -547,6 +572,9 @@ ulocimp_toLegacyType(const char* key, const char* type, UBool* isKnownKey, UBool
             }
             if (!matched && keyData->specialTypes & SPECIALTYPE_REORDER_CODE) {
                 matched = isSpecialTypeReorderCode(type);
+            }
+            if (!matched && keyData->specialTypes & SPECIALTYPE_RG_KEY_VALUE) {
+                matched = isSpecialTypeRgKeyValue(type);
             }
             if (matched) {
                 if (isSpecialType != NULL) {

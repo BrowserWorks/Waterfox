@@ -1,0 +1,19 @@
+<!ENTITY project.start           "&brandShortName; は">
+<!-- LOCALIZATION NOTE (project.tpoLink): This is a link title that links to https://www.torproject.org -->
+<!ENTITY project.tpoLink         "&vendorShortName; によって開発されました。">
+<!ENTITY project.end             "あなたのオンラインでのプライバシーと自由を守る非営利団体です。">
+
+<!ENTITY help.start              "支援に興味がありますか？">
+<!-- LOCALIZATION NOTE (help.donate): This is a link title that links to https://www.torproject.org/donate/donate.html.en -->
+<!ENTITY help.donateLink         "寄付">
+<!ENTITY help.or                 "や">
+<!-- LOCALIZATION NOTE (help.getInvolvedLink): This is a link title that links to https://www.torproject.org/getinvolved/volunteer.html.en -->
+<!ENTITY help.getInvolvedLink    "参加">
+<!ENTITY help.end                "で支援してください！">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/docs/trademark-faq.html.en -->
+<!ENTITY bottomLinks.questions   "質問がありますか？">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/getinvolved/relays -->
+<!ENTITY bottomLinks.grow        "Tor ネットワークを育てましょう！">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to about:license -->
+<!ENTITY bottomLinks.license  "ライセンス情報">
+<!ENTITY tor.TrademarkStatement   "'Tor' と 'Onion Logo' は Tor Project, Inc. の登録商標です。">

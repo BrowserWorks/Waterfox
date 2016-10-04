@@ -1,0 +1,27 @@
+<!ENTITY torbutton.context_menu.new_identity "Нова особистість">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.preferences "Налаштування...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "Відкрити Налаштування Мережі...">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "Завантажити пакет оновлень переглядача Tor...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "U">
+<!ENTITY torbutton.context_menu.cookieProtections "Захист куки">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Клацніть для запуску Torbutton">
+<!ENTITY torbutton.prefs.restore_defaults "За Замовчуванням">
+<!ENTITY torbutton.cookiedialog.title "Керувати Захистом Куків">
+<!ENTITY torbutton.cookiedialog.lockCol "Захищено">
+<!ENTITY torbutton.cookiedialog.domainCol "Хост">
+<!ENTITY torbutton.cookiedialog.nameCol "Ім’я">
+<!ENTITY torbutton.cookiedialog.pathCol "Шлях">
+<!ENTITY torbutton.cookiedialog.protectCookie "Захистити Куки">
+<!ENTITY torbutton.cookiedialog.removeCookie "Видалити Куки">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "Незахищені Куки">
+<!ENTITY torbutton.cookiedialog.removeAllBut "Видалити Усі, Окрім Захищених">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "Захищати Нові Куки">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "Не Захищати Нові Куки">
+<!ENTITY torbutton.prefs.block_disk "Не зберігати історію переглядів або дані з відвідуваних сайтів (активує функцію приватного перегляду)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Блокувати сторонні куки та інші дані відстеження">
+<!ENTITY torbutton.prefs.block_plugins "Вимкнути розширення переглядача (такі як Flash)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Змінити відомості, що відрізняють вас від інших користувачів переглядача Tor">

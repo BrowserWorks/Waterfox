@@ -1,6 +1,6 @@
 /*
  **********************************************************************
- *   Copyright (C) 1997-2015, International Business Machines
+ *   Copyright (C) 1997-2016, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  **********************************************************************
 *
@@ -536,7 +536,7 @@ Locale& Locale::init(const char* localeID, UBool canonicalize)
         /* after uloc_getName/canonicalize() we know that only '_' are separators */
         separator = field[0] = fullName;
         fieldIdx = 1;
-        while ((separator = uprv_strchr(field[fieldIdx-1], SEP_CHAR)) && fieldIdx < (int32_t)(sizeof(field)/sizeof(field[0]))-1) {
+        while ((separator = uprv_strchr(field[fieldIdx-1], SEP_CHAR)) && fieldIdx < UPRV_LENGTHOF(field)-1) {
             field[fieldIdx] = separator + 1;
             fieldLen[fieldIdx-1] = (int32_t)(separator - field[fieldIdx-1]);
             fieldIdx++;

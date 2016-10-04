@@ -1,0 +1,27 @@
+<!ENTITY torbutton.context_menu.new_identity "Ny identitet">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.preferences "Indstillinger...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "Open Network Settings…">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "Hent bundt-opdatering Tor Browser Bundle ...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "O">
+<!ENTITY torbutton.context_menu.cookieProtections "Cookie-beskyttelser">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Klik for at starte Torbutton">
+<!ENTITY torbutton.prefs.restore_defaults "Gendan Standarder">
+<!ENTITY torbutton.cookiedialog.title "Håndtér Cookie-beskyttelser">
+<!ENTITY torbutton.cookiedialog.lockCol "Beskyttet">
+<!ENTITY torbutton.cookiedialog.domainCol "Vært">
+<!ENTITY torbutton.cookiedialog.nameCol "Navn">
+<!ENTITY torbutton.cookiedialog.pathCol "Sti">
+<!ENTITY torbutton.cookiedialog.protectCookie "Beskyt cookie">
+<!ENTITY torbutton.cookiedialog.removeCookie "Fjern cookie">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "Fjern beskyttelse af cookie">
+<!ENTITY torbutton.cookiedialog.removeAllBut "Fjern alle pånær beskyttede">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "Beskyt nye cookies">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "Beskyt ikke nye cookies">
+<!ENTITY torbutton.prefs.block_disk "Undlad at registrere historik for browsing eller data for websteder (aktiverer tilstanden Privat browsing)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Begræns tredjeparts-cookies og andre registreringsdata">
+<!ENTITY torbutton.prefs.block_plugins "Slå browser-udvidelser fra (såsom Flash)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Tilpas detaljer som adskiller dig fra andre Tor Browser-brugere">

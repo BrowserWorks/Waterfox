@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "مرورگر تور">
+<!ENTITY  brandShortName        "مرورگر تور">
+<!ENTITY  brandFullName         "مرورگر تور">
+<!ENTITY  vendorShortName       "پروژهٔ تور">
+<!ENTITY  trademarkInfo.part1   "فایرفاکس و لوگو فایرفاکس نشان تجاری بنیاد موزیلا می باشند.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "کلیک کنید تا لود شود سیستم نصب پلاگین ها">
+<!ENTITY plugins.installed.enable "فعال کردن پلاگین ها">
+<!ENTITY plugins.installed.disable "غیر فعال کردن پلاگین ها">
+<!ENTITY plugins.installed.disable.tip "کلیک کنید تا جلوگیری شود از لود شدن سیستم نصب پلاگین ها">

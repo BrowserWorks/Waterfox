@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "Tor-Browser">
+<!ENTITY  brandShortName        "Tor-Browser">
+<!ENTITY  brandFullName         "Tor-Browser">
+<!ENTITY  vendorShortName       "Tor-Projekt">
+<!ENTITY  trademarkInfo.part1   "Firefox und die Firefox-Logos sind Warenzeichen der Mozilla Foundation.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "Klicke um System-Erweiterungen zu laden">
+<!ENTITY plugins.installed.enable "Erweiterungen aktivieren">
+<!ENTITY plugins.installed.disable "Erweiterungen deaktivieren">
+<!ENTITY plugins.installed.disable.tip "Klicke um das Laden von System-Erweiterungen zu verhindern">

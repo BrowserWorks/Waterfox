@@ -1,0 +1,19 @@
+<!ENTITY project.start           "&brandShortName; توسعه یافته توسط">
+<!-- LOCALIZATION NOTE (project.tpoLink): This is a link title that links to https://www.torproject.org -->
+<!ENTITY project.tpoLink         " &vendorShortName;">
+<!ENTITY project.end             "، یک کار غیر انتفاعی برای دفاع از حریم خصوصی شما و آزادی آنلاین است.">
+
+<!ENTITY help.start              "آیا کمک می خواهید؟">
+<!-- LOCALIZATION NOTE (help.donate): This is a link title that links to https://www.torproject.org/donate/donate.html.en -->
+<!ENTITY help.donateLink         "اهدا">
+<!ENTITY help.or                 "یا">
+<!-- LOCALIZATION NOTE (help.getInvolvedLink): This is a link title that links to https://www.torproject.org/getinvolved/volunteer.html.en -->
+<!ENTITY help.getInvolvedLink    "درگیر شدن">
+<!ENTITY help.end                "!">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/docs/trademark-faq.html.en -->
+<!ENTITY bottomLinks.questions   "پرسش؟">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/getinvolved/relays -->
+<!ENTITY bottomLinks.grow        "کمک به رشد شبکه Tor!">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to about:license -->
+<!ENTITY bottomLinks.license  "صدور مجوز اطلاعات">
+<!ENTITY tor.TrademarkStatement   "'Tor' و 'Onion Logo' علامت های تجاری ثبت شده از پروژه Tor هستند">

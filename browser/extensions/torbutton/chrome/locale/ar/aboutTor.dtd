@@ -1,0 +1,49 @@
+<!--
+   - Copyright (c) 2015, The Tor Project, Inc.
+   - See LICENSE for licensing information.
+   - vim: set sw=2 sts=2 ts=8 et syntax=xml:
+  -->
+
+<!ENTITY aboutTor.title "عن تور">
+
+<!ENTITY aboutTor.outOfDateTorOn.label "تحذير: هذه نسخة قديمة من المتصفح.">
+<!ENTITY aboutTor.outOfDateTorOff.label "أيضاً، هذه نسخة قديمة من المتصفح.">
+<!ENTITY aboutTor.outOfDate2.label "اضغط على رمز البصلة ثم اختر &quot;تحقق من تحديثات متصفح تور&quot;">
+
+<!ENTITY aboutTor.check.label "اختبر إعدادات شبكة تور.">
+
+<!ENTITY aboutTor.success.label "أهلاً بك في متصفح تور">
+<!ENTITY aboutTor.success2.label "تم الإتصال بشبكة تور">
+<!ENTITY aboutTor.success3.label "يمكنك الآن تصفح الانترنت بشكل يحمي هويتك.">
+<!ENTITY aboutTor.failure.label "حدث خطأ ما!">
+<!ENTITY aboutTor.failure2.label "تور لا يعمل في هذا المتصفح.">
+<!ENTITY aboutTor.failure3prefix.label "للمساعدة،  يرجى مراسلة ">
+<!ENTITY aboutTor.failure3Link "help@rt.torproject.org">
+<!ENTITY aboutTor.failure3suffix.label ".">
+
+<!ENTITY aboutTor.search.label "بحث">
+
+<!ENTITY aboutTor.searchSPPost.link "https://startpage.com/rth/search">
+<!ENTITY aboutTor.searchDDGPost.link "https://duckduckgo.com/html/">
+<!ENTITY aboutTor.searchDCPost.link "https://search.disconnect.me/searchTerms/search?ses=Google&amp;location_option=US&amp;source=tor">
+
+<!ENTITY aboutTor.torInfo1.label "معلومات إضافية:">
+<!ENTITY aboutTor.torInfo2.label "الدولة وعنوان الإنترنت:">
+<!ENTITY aboutTor.torInfo3.label "نقطة الخروج:">
+<!ENTITY aboutTor.torInfo4.label "هذا المخدم لا يحتفظ بأي معلومات عن زواره.">
+<!ENTITY aboutTor.whatnextQuestion.label "ماذا بعد؟">
+<!ENTITY aboutTor.whatnextAnswer.label "لا يمثل تور كل ما تحتاجه للتصفح بشكل يحمي هويتك! قد تحتاج لتغيير بعد عاداتك أثناء التصفّح لضمان سرية هويتك.">
+<!ENTITY aboutTor.whatnext.label "نصائح للحفاظ على سريّة هويتك »">
+<!ENTITY aboutTor.whatnext.link "https://www.torproject.org/download/download.html.en#warning">
+<!ENTITY aboutTor.helpInfo1.label "بإمكانك المساعدة!">
+<!ENTITY aboutTor.helpInfo2.label "يمكنك مساعدة شبكة تور و جعلها أكثر سرعة و قوّة بإحدي الطرق الآتية:">
+<!ENTITY aboutTor.helpInfo3.label "شغّل نقطة تور »">
+<!ENTITY aboutTor.helpInfo3.link "https://www.torproject.org/docs/tor-doc-relay.html.en">
+<!ENTITY aboutTor.helpInfo4.label "تبرع بخدماتك »">
+<!ENTITY aboutTor.helpInfo4.link "https://www.torproject.org/getinvolved/volunteer.html.en">
+<!ENTITY aboutTor.helpInfo5.label "تبرع »">
+<!ENTITY aboutTor.helpInfo5.link "https://www.torproject.org/donate/donate.html.en">
+
+<!ENTITY aboutTor.footer.label "مشروع تور هو مشروع غير ربحي (حسب US 501(c)(3)) مُكرس للبحث، والتطوير، والتوعية حول موضوع إخفاء الهوية والخصوصية.">
+<!ENTITY aboutTor.learnMore.label "اقرأ المزيد عن مشروع تور »">
+<!ENTITY aboutTor.learnMore.link "https://www.torproject.org/about/overview.html.en">

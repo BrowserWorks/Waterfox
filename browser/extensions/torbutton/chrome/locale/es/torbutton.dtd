@@ -1,0 +1,61 @@
+<!ENTITY torbutton.context_menu.new_identity "Nueva identidad (nueva instancia y conexiones de Tor)">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.new_circuit "Nuevo circuito Tor para este sitio">
+<!ENTITY torbutton.context_menu.new_circuit_key "C">
+<!ENTITY torbutton.context_menu.preferences "Configuración de privacidad y seguridad...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "Configuración de red Tor...">
+<!ENTITY torbutton.context_menu.networksettings.key "G">
+<!ENTITY torbutton.context_menu.downloadUpdate "Comprobar actualización del Navegador Tor...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "a">
+<!ENTITY torbutton.context_menu.cookieProtections "Protecciones de cookie...">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Haga clic para inicializar Torbutton">
+<!ENTITY torbutton.prefs.privacy_security_settings "Preferencias de Privacidad y Seguridad">
+<!ENTITY torbutton.prefs.restore_defaults "Restablecer valores predeterminados ">
+<!ENTITY torbutton.cookiedialog.title "Administrar protecciones de cookie">
+<!ENTITY torbutton.cookiedialog.lockCol "Protegidas">
+<!ENTITY torbutton.cookiedialog.domainCol "Servidor (host)">
+<!ENTITY torbutton.cookiedialog.nameCol "Nombre">
+<!ENTITY torbutton.cookiedialog.pathCol "Ruta">
+<!ENTITY torbutton.cookiedialog.protectCookie "Cookie protegida">
+<!ENTITY torbutton.cookiedialog.removeCookie "Eliminar cookie">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "Desproteger cookie">
+<!ENTITY torbutton.cookiedialog.removeAllBut "Eliminar todas excepto las protegidas">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "Proteger las nuevas cookies">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "No proteger las nuevas cookies">
+<!ENTITY torbutton.prefs.priv_caption "Parámetros de privacidad">
+<!ENTITY torbutton.prefs.block_disk "No registrar historial de navegación o datos del sitio web (habilita Modo de Navegación Privada)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Restringir cookies de terceros y otros datos de seguimiento">
+<!ENTITY torbutton.prefs.block_plugins "Desactivar complementos del navegador (como Flash)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Cambiar los detalles que le distinguen de otros usuarios del Navegador Tor">
+<!ENTITY torbutton.prefs.sec_caption "Nivel de Seguridad">
+<!ENTITY torbutton.prefs.sec_low "Bajo (por defecto)">
+<!ENTITY torbutton.prefs.sec_low_usable_desc "Esto proporciona la mejor experiencia de usabilidad.">
+<!ENTITY torbutton.prefs.sec_low_desc "En este nivel de seguridad, todas las funciones del navegador están habilitadas.">
+<!ENTITY torbutton.prefs.sec_font_rend_svg_tooltip "El mecanismo de representación de fuentes SVG OpenType está deshabilitado.">
+<!ENTITY torbutton.prefs.sec_med_low "Medio-Bajo">
+<!ENTITY torbutton.prefs.sec_gen_desc "En este nivel de seguridad, se aplican los siguientes cambios (ratón encima para detalles):">
+<!ENTITY torbutton.prefs.sec_html5_desc "Los medios de vídeo y audio HTML5 se vuelven tipo clic-para-reproducir mediante NoScript.">
+<!ENTITY torbutton.prefs.sec_html5_tooltip "En algunos sitios, podría necesitar usar el botón NoScript de barra de herramientas para habilitar estos objetos de medios.">
+<!ENTITY torbutton.prefs.sec_some_jit_desc "Algunas optimizaciones de rendimiento de JavaScript están deshabilitadas.">
+<!ENTITY torbutton.prefs.sec_jit_desc_tooltip "ION JIT (compilador JS instantáneo optimizado), Type Inference (deducción del tipo de datos por el compilador), ASM.JS (JS intermedio para alto rendimiento de otros lenguajes)">
+<!ENTITY torbutton.prefs.sec_baseline_jit_desc_tooltip "Baseline JIT (compilador JS instantáneo)">
+<!ENTITY torbutton.prefs.sec_jit_slower_desc "Los scripts en algunos sitios puede que se ejecuten más lentamente.">
+<!ENTITY torbutton.prefs.sec_mathml_desc "Algunos mecanismos de representación de ecuaciones matemáticas están deshabilitados.">
+<!ENTITY torbutton.prefs.sec_mathml_desc_tooltip "MathML está deshabilitado.">
+<!ENTITY torbutton.prefs.sec_med_high "Medio-Alto">
+<!ENTITY torbutton.prefs.sec_all_jit_desc "Todas las optimizaciones de rendimiento de JavaScript están deshabilitadas.">
+<!ENTITY torbutton.prefs.sec_font_rend_desc "Algunas características de representación de fuentes están deshabilitadas.">
+<!ENTITY torbutton.prefs.sec_font_rend_graphite_tooltip "El mecanismo de representación de fuentes Graphite está deshabilitado.">
+<!ENTITY torbutton.prefs.sec_svg_desc "Algunos tipos de imágenes están deshabilitados.">
+<!ENTITY torbutton.prefs.sec_svg_desc_tooltip "Las imágenes SVG están deshabilitadas.">
+<!ENTITY torbutton.prefs.sec_js_https_desc "JavaScript está deshabilitado por defecto en todos los sitios que no usan HTTPS.">
+<!ENTITY torbutton.prefs.sec_js_desc_tooltip "JavaScript puede habilitarse por sitios mediante el botón de barra de herramientas de NoScript.">
+<!ENTITY torbutton.prefs.sec_high "Alto">
+<!ENTITY torbutton.prefs.sec_all_js_desc "JavaScript está deshabilitado por defecto en todos los sitios.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc "Algunas fuentes e iconos pueden mostrarse de forma incorrecta.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc_tooltip "Los ficheros de fuentes proporcionados por el sitio web están bloqueados.">
+<!ENTITY torbutton.prefs.sec_custom "Valores Personalizados">
+<!ENTITY torbutton.circuit_display.title "Circuito Tor para este sitio">
+

@@ -1,0 +1,61 @@
+<!ENTITY torbutton.context_menu.new_identity "Nortasun berria">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.new_circuit "Tor zirkuitu berria gune honetarako">
+<!ENTITY torbutton.context_menu.new_circuit_key "C">
+<!ENTITY torbutton.context_menu.preferences "Pribatutasun eta segurtasun ezarpenak...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "Tor Sarearen Ezarpenak...">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "Tor Browser eguneraketa egiaztatu">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "U">
+<!ENTITY torbutton.context_menu.cookieProtections "Cookie babesak...">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Sakatu Torbutton abiarazteko">
+<!ENTITY torbutton.prefs.privacy_security_settings "Pribatutasun eta segurtasun ezarpenak">
+<!ENTITY torbutton.prefs.restore_defaults "Lehenetsiak berrezarri">
+<!ENTITY torbutton.cookiedialog.title "Cookie Babesak kudeatu">
+<!ENTITY torbutton.cookiedialog.lockCol "Babestuta">
+<!ENTITY torbutton.cookiedialog.domainCol "Ostalaria">
+<!ENTITY torbutton.cookiedialog.nameCol "Izena">
+<!ENTITY torbutton.cookiedialog.pathCol "Bidea">
+<!ENTITY torbutton.cookiedialog.protectCookie "Cookiea babestu">
+<!ENTITY torbutton.cookiedialog.removeCookie "Cookiea kendu">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "Cookiea ez babestu">
+<!ENTITY torbutton.cookiedialog.removeAllBut "Denak kendu babestutakoak izan ezik">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "Cookie berriak babestu">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "Ez babestu cookie berririk">
+<!ENTITY torbutton.prefs.priv_caption "Pribatutasun ezarpenak">
+<!ENTITY torbutton.prefs.block_disk "Ez grabatu nabigatze historia edo webgune datuak (Nabigatze pribatu modua gaitzen du)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Hirugarrenen cookie-ak eta beste jarraipen datuak murriztu">
+<!ENTITY torbutton.prefs.block_plugins "Nabigatzaile pluginak ezgaitu (Flash bezala)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Zu beste Tor Browser erabiltzaileengandik nabarmentzen zaituzten xehetasunak aldatu">
+<!ENTITY torbutton.prefs.sec_caption "Segurtasun maila">
+<!ENTITY torbutton.prefs.sec_low "Baxua (lehentsia)">
+<!ENTITY torbutton.prefs.sec_low_usable_desc "This provides the most usable experience.">
+<!ENTITY torbutton.prefs.sec_low_desc "At this security level, all browser features are enabled.">
+<!ENTITY torbutton.prefs.sec_font_rend_svg_tooltip "The SVG OpenType font rendering mechanism is disabled.">
+<!ENTITY torbutton.prefs.sec_med_low "Ertaina-baxua">
+<!ENTITY torbutton.prefs.sec_gen_desc "At this security level, the following changes apply (mouseover for details):">
+<!ENTITY torbutton.prefs.sec_html5_desc "HTML5 video and audio media become click-to-play via NoScript.">
+<!ENTITY torbutton.prefs.sec_html5_tooltip "On some sites, you might need to use the NoScript toolbar button to enable these media objects.">
+<!ENTITY torbutton.prefs.sec_some_jit_desc "Some JavaScript performance optimizations are disabled.">
+<!ENTITY torbutton.prefs.sec_jit_desc_tooltip "ION JIT, Type Inference, ASM.JS.">
+<!ENTITY torbutton.prefs.sec_baseline_jit_desc_tooltip "Baseline JIT.">
+<!ENTITY torbutton.prefs.sec_jit_slower_desc "Scripts on some sites may run slower.">
+<!ENTITY torbutton.prefs.sec_mathml_desc "Some mechanisms of displaying math equations are disabled.">
+<!ENTITY torbutton.prefs.sec_mathml_desc_tooltip "MathML ezgaituta dago.">
+<!ENTITY torbutton.prefs.sec_med_high "Ertaina-altua">
+<!ENTITY torbutton.prefs.sec_all_jit_desc "All JavaScript performance optimizations are disabled.">
+<!ENTITY torbutton.prefs.sec_font_rend_desc "Some font rendering features are disabled.">
+<!ENTITY torbutton.prefs.sec_font_rend_graphite_tooltip "The Graphite font rendering mechanism is disabled.">
+<!ENTITY torbutton.prefs.sec_svg_desc "Some types of images are disabled.">
+<!ENTITY torbutton.prefs.sec_svg_desc_tooltip "SVG irudiak ezgaituta daude.">
+<!ENTITY torbutton.prefs.sec_js_https_desc "JavaScript is disabled by default on all non-HTTPS sites.">
+<!ENTITY torbutton.prefs.sec_js_desc_tooltip "JavaScript can be enabled on a per-site basis via the NoScript toolbar button.">
+<!ENTITY torbutton.prefs.sec_high "Altua">
+<!ENTITY torbutton.prefs.sec_all_js_desc "JavaScript is disabled by default on all sites.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc "Some fonts and icons may display incorrectly.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc_tooltip "Webguneak hornitutako letra fitxategiak blokeatuta daude.">
+<!ENTITY torbutton.prefs.sec_custom "Balio pertsonalizatuak">
+<!ENTITY torbutton.circuit_display.title "Gune honetako Tor zirkuitua">
+

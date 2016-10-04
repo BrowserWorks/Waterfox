@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://torbutton/locale/brand.dtd">
+
+<overlay id="torbutton-extensions-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <vbox id="plugin-enable-button" class="alert-container" flex="1"
+        hidden="true">
+    <spacer class="alert-spacer-before"/>
+    <vbox class="alert">
+      <label value="&plugins.installed.find;"/>
+      <button class="button-plugin-enable"
+              label="&plugins.installed.enable;"
+              command="cmd_pluginEnable"/>
+    </vbox>
+    <spacer class="alert-spacer-after"/>
+  </vbox>
+
+  <vbox id="plugin-disable-button" class="global-info" flex="1" align="end">
+    <button class="button-plugin-disable"
+            label="&plugins.installed.disable;"
+            tooltiptext="&plugins.installed.disable.tip;"
+            command="cmd_pluginDisable"/>
+    <spacer flex="5000"/>
+  </vbox>
+
+</overlay>

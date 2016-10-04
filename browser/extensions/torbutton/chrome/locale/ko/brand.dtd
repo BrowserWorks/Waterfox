@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "Tor 브라우저">
+<!ENTITY  brandShortName        "Tor 브라우저">
+<!ENTITY  brandFullName         "Tor 브라우저">
+<!ENTITY  vendorShortName       "Tor 프로젝트">
+<!ENTITY  trademarkInfo.part1   "파이어폭스와 파이어폭스 로고들은 모질라 재단의 등록 상표입니다.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "클릭하여 플러그인 불러오기">
+<!ENTITY plugins.installed.enable "플러그인 활성">
+<!ENTITY plugins.installed.disable "플러그인 비활성">
+<!ENTITY plugins.installed.disable.tip "클릭하여 플러그인 열기 취소">

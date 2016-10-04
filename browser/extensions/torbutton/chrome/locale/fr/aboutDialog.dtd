@@ -1,0 +1,19 @@
+<!ENTITY project.start           "&brandShortName; est développé par">
+<!-- LOCALIZATION NOTE (project.tpoLink): This is a link title that links to https://www.torproject.org -->
+<!ENTITY project.tpoLink         "le &vendorShortName;">
+<!ENTITY project.end             ", une organisation à but non lucratif travaillant à défendre votre vie privée et liberté en ligne.">
+
+<!ENTITY help.start              "voulez-vous aider ?">
+<!-- LOCALIZATION NOTE (help.donate): This is a link title that links to https://www.torproject.org/donate/donate.html.en -->
+<!ENTITY help.donateLink         "Faire une donation">
+<!ENTITY help.or                 "ou">
+<!-- LOCALIZATION NOTE (help.getInvolvedLink): This is a link title that links to https://www.torproject.org/getinvolved/volunteer.html.en -->
+<!ENTITY help.getInvolvedLink    "s'engager">
+<!ENTITY help.end                "!">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/docs/trademark-faq.html.en -->
+<!ENTITY bottomLinks.questions   "Des questions ?">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/getinvolved/relays -->
+<!ENTITY bottomLinks.grow        "Aider le réseau Tor à grandir !">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to about:license -->
+<!ENTITY bottomLinks.license  "Information sur les licences">
+<!ENTITY tor.TrademarkStatement   "&quot;Tor&quot; et le &quot;Logo Oignon&quot; sont des marques déposés du Projet Tor, Inc.">

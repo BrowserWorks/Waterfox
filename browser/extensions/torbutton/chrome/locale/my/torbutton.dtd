@@ -1,0 +1,27 @@
+<!ENTITY torbutton.context_menu.new_identity "အထောက်အထား အသစ်">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.preferences "ဦးစားပေးချက်များ...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "Open Network Settings…">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "Download Tor Browser Bundle Update...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "A">
+<!ENTITY torbutton.context_menu.cookieProtections "ကွတ်ကီး ကာကွယ်မှုများ">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Torbutton ကို အစပြုရန် နှိပ်ပါ။">
+<!ENTITY torbutton.prefs.restore_defaults " မူလအတိုင်း ပြန်ထားရန်">
+<!ENTITY torbutton.cookiedialog.title "ကွတ်ကီး ကာကွယ်မှုများကို စီမံခန့်ခွဲရန်">
+<!ENTITY torbutton.cookiedialog.lockCol "အကာအကွယ် လုပ်ထားသည်">
+<!ENTITY torbutton.cookiedialog.domainCol "Host">
+<!ENTITY torbutton.cookiedialog.nameCol "အမည်">
+<!ENTITY torbutton.cookiedialog.pathCol "လမ်းကြောင်း">
+<!ENTITY torbutton.cookiedialog.protectCookie "ကွတ်ကီးကို ကာကွယ်ရန်">
+<!ENTITY torbutton.cookiedialog.removeCookie "ကွတ်ကီးကို ဖယ်ထုတ်ရန်">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "ကွတ်ကီးကို ကာကွယ်မထားပါ">
+<!ENTITY torbutton.cookiedialog.removeAllBut "အားလုံးကို ဖယ်ထုတ်ပါ။ သို့သော် အကာအကွယ် လုပ်ထားသည်">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "ကွတ်ကီးသစ်များကို ကာကွယ်ရန်">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "ကွတ်ကီးသစ်များကို ကာကွယ်ခြင်း မပြုရန်">
+<!ENTITY torbutton.prefs.block_disk "Don't record browsing history or website data (enables Private Browsing Mode)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Restrict third party cookies and other tracking data">
+<!ENTITY torbutton.prefs.block_plugins "Disable browser plugins (such as Flash)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Change details that distinguish you from other Tor Browser users">

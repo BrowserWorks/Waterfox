@@ -1,0 +1,90 @@
+#torbutton-button {
+  list-style-image: url("chrome://torbutton/skin/tor-24.png");
+}
+#torbutton-button[tbstatus="on"] {
+  list-style-image: url("chrome://torbutton/skin/tor-enabled-24.png");
+}
+#torbutton-button[tbstatus="off"] {
+  list-style-image: url("chrome://torbutton/skin/tor-disabled-24.png");
+}
+#torbutton-button[tbUpdateNeeded="true"] {
+  list-style-image: url("chrome://torbutton/skin/tor-update-24.gif");
+}
+toolbar[iconsize="small"] #torbutton-button {
+  list-style-image: url("chrome://torbutton/skin/tor-16.png");
+}
+/* Although the tor-enabled-16.png, tor-disabled-16.png and tor-update-16.gif
+indicate that they are 16x16 icons, they have 18x18 pixels in fact. This
+leads to resizing the content window's height on start-up on Windows at
+least. To guarantee a content window with a multiple of 200x100 we
+therefore use only a x16 part of each icon while trying to minimize bad UI
+effects until #8941 gets fixed.*/
+toolbar[iconsize="small"] #torbutton-button[tbstatus="on"] {
+  list-style-image: url("chrome://torbutton/skin/tor-enabled-16.png");
+  -moz-image-region: rect(1px, 17px, 17px, 1px);
+}
+toolbar[iconsize="small"] #torbutton-button[tbstatus="off"] {
+  list-style-image: url("chrome://torbutton/skin/tor-disabled-16.png");
+  -moz-image-region: rect(0px, 18px, 16px, 0px);
+}
+toolbar[iconsize="small"] #torbutton-button[tbUpdateNeeded="true"] {
+  list-style-image: url("chrome://torbutton/skin/tor-update-16.gif");
+  -moz-image-region: rect(1px, 17px, 17px, 1px);
+}
+
+#torbutton-button-tb {
+  list-style-image: url("chrome://torbutton/skin/tor-24.png");
+}
+#torbutton-button-tb[tbstatus="on"] {
+  list-style-image: url("chrome://torbutton/skin/tor-enabled-24.png");
+}
+#torbutton-button-tb[tbstatus="off"] {
+  list-style-image: url("chrome://torbutton/skin/tor-disabled-24.png");
+}
+toolbar[iconsize="small"] #torbutton-button-tb {
+  list-style-image: url("chrome://torbutton/skin/tor-16.png");
+}
+toolbar[iconsize="small"] #torbutton-button-tb[tbstatus="on"] {
+  list-style-image: url("chrome://torbutton/skin/tor-enabled-16.png");
+}
+toolbar[iconsize="small"] #torbutton-button-tb[tbstatus="off"] {
+  list-style-image: url("chrome://torbutton/skin/tor-disabled-16.png");
+}
+
+#torbutton-button-tb-msg {
+  list-style-image: url("chrome://torbutton/skin/tor-24.png");
+}
+#torbutton-button-tb-msg[tbstatus="on"] {
+  list-style-image: url("chrome://torbutton/skin/tor-enabled-24.png");
+}
+#torbutton-button-tb-msg[tbstatus="off"] {
+  list-style-image: url("chrome://torbutton/skin/tor-disabled-24.png");
+}
+toolbar[iconsize="small"] #torbutton-button-tb-msg {
+  list-style-image: url("chrome://torbutton/skin/tor-16.png");
+}
+toolbar[iconsize="small"] #torbutton-button-tb-msg[tbstatus="on"] {
+  list-style-image: url("chrome://torbutton/skin/tor-enabled-16.png");
+}
+toolbar[iconsize="small"] #torbutton-button-tb-msg[tbstatus="off"] {
+  list-style-image: url("chrome://torbutton/skin/tor-disabled-16.png");
+}
+
+#torbutton-checkForUpdate[tbUpdateNeeded] {
+    font-weight: bold;
+}
+
+svg.circuit text {
+    font-family: Arial;
+}
+
+svg#tor-circuit text.node-text {
+    dominant-baseline: central;
+    font-size: 14px;
+}
+
+svg#tor-circuit circle.node-circle {
+    stroke: #195021;
+    stroke-width: 2px;
+    fill: white;
+}

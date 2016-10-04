@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2005-2011, International Business Machines
+*   Copyright (C) 2005-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -216,7 +216,7 @@ _caseMap(const UCaseMap *csm, UCaseMapFull *map,
          const uint8_t *src, UCaseContext *csc,
          int32_t srcStart, int32_t srcLimit,
          UErrorCode *pErrorCode) {
-    const UChar *s;
+    const UChar *s = NULL;
     UChar32 c, c2 = 0;
     int32_t srcIndex, destIndex;
     int32_t locCache;
@@ -344,10 +344,10 @@ ucasemap_internalUTF8ToTitle(const UCaseMap *csm,
                 destIndex=appendResult(dest, destIndex, destCapacity, c, s);
 
                 /* Special case Dutch IJ titlecasing */
-                if ( titleStart+1 < idx && 
+                if ( titleStart+1 < idx &&
                      ucase_getCaseLocale(csm->locale, &locCache) == UCASE_LOC_DUTCH &&
                      ( src[titleStart] == 0x0049 || src[titleStart] == 0x0069 ) &&
-                     ( src[titleStart+1] == 0x004A || src[titleStart+1] == 0x006A )) { 
+                     ( src[titleStart+1] == 0x004A || src[titleStart+1] == 0x006A )) {
                             c=0x004A;
                             destIndex=appendResult(dest, destIndex, destCapacity, c, s);
                             titleLimit++;

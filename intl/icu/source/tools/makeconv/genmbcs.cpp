@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2000-2013, International Business Machines
+*   Copyright (C) 2000-2016, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -831,10 +831,13 @@ MBCSAddFromUnicode(MBCSData *mbcsData,
     switch(length) {
     case 4:
         b=*pb++;
+        U_FALLTHROUGH;
     case 3:
         b=(b<<8)|*pb++;
+        U_FALLTHROUGH;
     case 2:
         b=(b<<8)|*pb++;
+        U_FALLTHROUGH;
     case 1:
     default:
         b=(b<<8)|*pb++;
@@ -1011,6 +1014,7 @@ MBCSAddTable(NewConverter *cnvData, UCMTable *table, UConverterStaticData *stati
         case -1:
             /* there was no precision/fallback indicator */
             /* fall through to set the mappings */
+            U_FALLTHROUGH;
         case 0:
             /* set roundtrip mappings */
             isOK&=MBCSAddToUnicode(mbcsData, m->b.bytes, m->bLen, c, f);

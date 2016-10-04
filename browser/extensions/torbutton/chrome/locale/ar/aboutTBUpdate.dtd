@@ -1,0 +1,6 @@
+<!ENTITY aboutTBUpdate.title "تحديث متصفح تور">
+<!ENTITY aboutTBUpdate.updated "لقد تم تحديث متصفح تور.">
+<!ENTITY aboutTBUpdate.linkPrefix "للحصول على أحدث المعلومات حول هذا الإصدار.">
+<!ENTITY aboutTBUpdate.linkLabel  "زُر موقعنا">
+<!ENTITY aboutTBUpdate.linkSuffix ".">
+<!ENTITY aboutTBUpdate.changeLogHeading "تغير سجل:">

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "Браузер Tor">
+<!ENTITY  brandShortName        "Tor Browser">
+<!ENTITY  brandFullName         "Tor Browser">
+<!ENTITY  vendorShortName       "Проект Tor">
+<!ENTITY  trademarkInfo.part1   "Firefox и его логотипы являются торговыми знаками Mozilla Foundation.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "Нажмите для загрузки установленных системных плагинов">
+<!ENTITY plugins.installed.enable "Включить плагины">
+<!ENTITY plugins.installed.disable "Выключить плагины">
+<!ENTITY plugins.installed.disable.tip "Нажмите для предотвращения загрузки системых плагинов">

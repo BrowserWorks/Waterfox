@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   - Copyright (c) 2016, The Tor Project, Inc.
+   - See LICENSE for licensing information.
+   - vim: set sw=2 sts=2 ts=8 et syntax=xml:
+  -->
+
+<!DOCTYPE html [
+  <!ENTITY % htmlDTD
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "DTD/xhtml1-strict.dtd">
+  %htmlDTD;
+  <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+  %globalDTD;
+  <!ENTITY % aboutTorDTD SYSTEM "chrome://torbutton/locale/aboutTor.dtd">
+  %aboutTorDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>&aboutTor.title;</title>
+  <link rel="stylesheet" type="text/css" media="all"
+        href="chrome://torbutton/skin/aboutTor.css"/>
+<script type="text/javascript;version=1.7">
+ <![CDATA[
+function onLoad()
+{
+  insertPropertyStrings();
+
+  document.addEventListener("AboutTorAdjustArrow", function() {
+    adjustToolbarIconArrow();
+  }, false);
+
+  window.setTimeout( function() {
+    adjustToolbarIconArrow();
+  }, 0);
+}
+
+function adjustToolbarIconArrow()
+{
+  let textElem = document.getElementById("updatePrompt");
+  let arrowHeadDiv = document.getElementById("toolbarIconArrowHead");
+  let vertExtDiv = document.getElementById("toolbarIconArrowVertExtension");
+  let bendDiv = document.getElementById("toolbarIconArrowBend");
+  let horzExtDiv = document.getElementById("toolbarIconArrowHorzExtension");
+  if (!textElem || !arrowHeadDiv || !vertExtDiv || !bendDiv || !horzExtDiv)
+    return;
+
+  let arrowTailElems = [ vertExtDiv, bendDiv, horzExtDiv ];
+  let tbXpos;
+  if (document.body.hasAttribute("torbutton-xpos"))
+    tbXpos = parseInt(document.body.getAttribute("torbutton-xpos"), 10);
+
+  if (!tbXpos || isNaN(tbXpos) || (tbXpos < 0))
+  {
+    arrowHeadDiv.style.display = "none";
+    for (let elem of arrowTailElems)
+      elem.style.display = "none";
+    return;
+  }
+
+  const kArrowMargin = 6;          // Horizontal margin between line and text.
+  const kArrowHeadExtraWidth = 9;  // Horizontal margin to the line.
+  const kArrowLineThickness = 11;
+  const kBendWidth = 22;
+  const kBendHeight = 22;
+
+  arrowHeadDiv.style.display = "block";  // Must be visible to get offsetWidth.
+  let arrowHalfWidth = Math.round(arrowHeadDiv.offsetWidth / 2);
+  let leftAnchor = textElem.offsetLeft - kArrowMargin
+                    - kBendWidth + Math.round(kArrowLineThickness / 2);
+  let rightAnchor = textElem.offsetLeft + textElem.offsetWidth
+                    + kArrowMargin + arrowHalfWidth;
+
+  let isArrowOnLeft = (tbXpos < leftAnchor);
+  let isArrowOnRight = (tbXpos > rightAnchor) &&
+                       (tbXpos < (window.innerWidth - arrowHalfWidth));
+  let isArrowInMiddle = (tbXpos >= leftAnchor) && (tbXpos <= rightAnchor);
+
+  if (isArrowOnLeft || isArrowOnRight || isArrowInMiddle)
+  {
+    // Position the arrow head.
+    let arrowHeadLeft = tbXpos - arrowHalfWidth;
+    arrowHeadDiv.style.left = arrowHeadLeft + "px";
+    if (isArrowOnLeft || isArrowOnRight)
+    {
+      let horzExtBottom = textElem.offsetTop +
+               Math.round((textElem.offsetHeight + kArrowLineThickness) / 2);
+
+      // Position the vertical (extended) line.
+      let arrowHeadBottom = arrowHeadDiv.offsetTop + arrowHeadDiv.offsetHeight;
+      vertExtDiv.style.top = arrowHeadBottom + "px";
+      vertExtDiv.style.left = (arrowHeadLeft + kArrowHeadExtraWidth) + "px";
+      let ht = horzExtBottom - kBendHeight - arrowHeadBottom;
+      vertExtDiv.style.height = ht + "px";
+
+      // Position the bend (elbow).
+      bendDiv.style.top = (horzExtBottom - kBendHeight) + "px";
+      let bendDivLeft;
+      if (isArrowOnLeft)
+      {
+        bendDiv.setAttribute("pos", "left");
+        bendDivLeft = arrowHeadLeft + kArrowHeadExtraWidth;
+      }
+      else if (isArrowOnRight)
+      {
+        bendDiv.setAttribute("pos", "right");
+        bendDivLeft = arrowHeadLeft + kArrowHeadExtraWidth
+                      + kArrowLineThickness - kBendWidth;
+      }
+      bendDiv.style.left = bendDivLeft + "px";
+
+      // Position the horizontal (extended) line.
+      horzExtDiv.style.top = (horzExtBottom - kArrowLineThickness) + "px";
+      let horzExtLeft, w;
+      if (isArrowOnLeft)
+      {
+        horzExtLeft = bendDivLeft + kBendWidth;
+        w = (textElem.offsetLeft - horzExtLeft - kArrowMargin);
+      }
+      else
+      {
+        horzExtLeft = rightAnchor - arrowHalfWidth;
+        w = tbXpos - arrowHalfWidth - horzExtLeft;
+      }
+      horzExtDiv.style.left = horzExtLeft + "px";
+      horzExtDiv.style.width = w + "px";
+    }
+  }
+
+  let headDisplay = (isArrowOnLeft || isArrowInMiddle || isArrowOnRight)
+                      ? "block" : "none";
+  arrowHeadDiv.style.display = headDisplay;
+  let tailDisplay = (isArrowOnLeft || isArrowOnRight) ? "block" : "none";
+  for (let elem of arrowTailElems)
+    elem.style.display = tailDisplay;
+}
+
+function insertPropertyStrings()
+{
+  try {
+    let kPropertiesURL = "chrome://torbutton/locale/aboutTor.properties";
+
+    Components.utils.import("resource://gre/modules/Services.jsm");
+    let gStringBundle = Services.strings.createBundle(kPropertiesURL);
+    let s1 = gStringBundle.GetStringFromName("aboutTor.searchDC.privacy.link");
+    let s2 = gStringBundle.GetStringFromName("aboutTor.searchDC.search.link");
+    let result = gStringBundle.formatStringFromName("aboutTor.searchDC.privacy",
+                  [s1, s2], 2);
+    if (result) {
+      let elem = document.getElementById("searchProviderInfo");
+      if (elem)
+        elem.innerHTML = result;
+    }
+  } catch(e) {};
+}
+
+window.addEventListener("pageshow", function() {
+  let evt = new CustomEvent("AboutTorLoad", { bubbles: true });
+  document.dispatchEvent(evt);
+});
+
+]]>
+</script>
+</head>
+<body dir="&locale.dir;" onload="onLoad();">
+<div id="torstatus" class="top">
+  <div id="torstatus-version"/>
+  <div id="torstatus-image"/>
+  <div id="torstatus-on-container" class="hideIfTorOff torstatus-container">
+    <h1>&aboutTor.success.label;</h1>
+    <br/>
+    <h3 class="hideIfTBBNeedsUpdate">&aboutTor.success3.label;</h3>
+    <br/>
+    <div style="margin-top: 20px;">
+      <a id="testTorSettings" href="about:blank">&aboutTor.check.label;</a>
+    </div>
+  </div>
+  <div id="torstatus-off-container" class="hideIfTorOn torstatus-container">
+    <h1>&aboutTor.failure.label;</h1>
+    <br/>
+    <h2>&aboutTor.failure2.label;</h2>
+    <br/>
+    <h3>&aboutTor.failure3prefix.label;<a href="mailto:&aboutTor.failure3Link;"
+>&aboutTor.failure3Link;</a>&aboutTor.failure3suffix.label;</h3>
+  </div>
+</div>
+<div class="top">
+  <div class="hideIfTorIsUpToDate">
+    <h1 class="hideIfTorOff">&aboutTor.outOfDateTorOn.label;</h1>
+    <h1 class="hideIfTorOn">&aboutTor.outOfDateTorOff.label;</h1>
+    <h3 id="updatePrompt">&aboutTor.outOfDate2.label;</h3>
+
+    <div id="toolbarIconArrowHead" class="arrow"/>
+    <div id="toolbarIconArrowVertExtension" class="arrow"/>
+    <div id="toolbarIconArrowBend" class="arrow"/>
+    <div id="toolbarIconArrowHorzExtension" class="arrow"/>
+  </div>
+</div>
+
+<div class="searchbox hideIfTorOff"> <!-- begin form based search -->
+  <form action="&aboutTor.searchDCPost.link;" method="post">
+  <div id="sxw">
+    <div id="sbutton">
+      <input name="b" id="sb" value="" title="&aboutTor.search.label;"
+             alt="&aboutTor.search.label;" type="submit"/>
+    </div>
+    <input name="q" autocomplete="off" id="sx" type="text"/>
+  </div>
+  <h4 id="searchProviderInfo" />
+  </form>
+</div>
+
+<div class="hideIfTorOn" style="height:100px"/>
+
+<div id="middle" class="hideIfTorOff">
+  <div class="bubbleRow">
+    <div class="bubble">
+      <h1>&aboutTor.whatnextQuestion.label;</h1>
+      <p>&aboutTor.whatnextAnswer.label;</p>
+      <a class="tips" href="&aboutTor.whatnext.link;">&aboutTor.whatnext.label;</a>
+    </div>
+
+    <div class="bubble">
+      <h1>&aboutTor.helpInfo1.label;</h1>
+      <p>&aboutTor.helpInfo2.label;</p>
+      <ul>
+        <li><a href="&aboutTor.helpInfo3.link;">&aboutTor.helpInfo3.label;</a></li>
+        <li><a href="&aboutTor.helpInfo4.link;">&aboutTor.helpInfo4.label;</a></li>
+        <li><a href="&aboutTor.helpInfo5.link;">&aboutTor.helpInfo5.label;</a></li>
+      </ul>
+    </div>
+  </div>
+</div> <!-- middle -->
+
+<div id="bottom">
+  <p>&aboutTor.footer.label;
+<a href="&aboutTor.learnMore.link;">&aboutTor.learnMore.label;</a></p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "متصفح تور">
+<!ENTITY  brandShortName        "متصفح تور">
+<!ENTITY  brandFullName         "متصفح تور">
+<!ENTITY  vendorShortName       "مشروع تور">
+<!ENTITY  trademarkInfo.part1   "فايرفوكس وشعارات فايرفوكس علامات تجارية مسجلة لمؤسسة موزيلا.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "اضغط لتحميل الإضافات المثبتة على المتصفح">
+<!ENTITY plugins.installed.enable "تمكين الإضافات">
+<!ENTITY plugins.installed.disable "تعطيل الإضافات ">
+<!ENTITY plugins.installed.disable.tip "انقر لمنع  تحميل الإضافات المثبتة على المتصفح">

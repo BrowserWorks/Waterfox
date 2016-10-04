@@ -477,8 +477,7 @@ private:
     } fUnion;
     enum EHave {
       kNone=0,
-      kDouble,
-      kInt64
+      kDouble
     } fHave;
 
 
@@ -512,10 +511,6 @@ private:
     inline void internalSetDouble(double d) {
       fHave = kDouble;
       fUnion.fDouble=d;
-    }
-    inline void internalSetInt64(int64_t d) {
-      fHave = kInt64;
-      fUnion.fInt64=d;
     }
     inline void internalClear() {
       fHave = kNone;

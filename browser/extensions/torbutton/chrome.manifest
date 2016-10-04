@@ -1,0 +1,174 @@
+content torbutton chrome/content/
+overlay chrome://browser/content/browser.xul chrome://torbutton/content/torbutton.xul
+overlay chrome://browser/content/preferences/connection.xul chrome://torbutton/content/pref-connection.xul
+overlay chrome://messenger/content/messenger.xul chrome://torbutton/content/torbutton_tb.xul
+overlay chrome://messenger/content/messengercompose/messengercompose.xul chrome://torbutton/content/torbutton_tb.xul
+overlay about:addons chrome://torbutton/content/torbutton-extensions.xul
+overlay chrome://mozapps/content/extensions/extensions.xul chrome://torbutton/content/torbutton-extensions.xul
+resource torbutton ./
+
+# browser branding
+override chrome://branding/locale/brand.dtd chrome://torbutton/locale/brand.dtd
+override chrome://branding/locale/brand.properties chrome://torbutton/locale/brand.properties
+overlay chrome://browser/content/aboutDialog.xul chrome://torbutton/content/aboutDialog.xul
+
+# UI customization
+overlay chrome://browser/content/baseMenuOverlay.xul chrome://torbutton/content/menu-overlay.xul
+
+# Strings for the about:tbupdate page
+override chrome://browser/locale/aboutTBUpdate.dtd chrome://torbutton/locale/aboutTBUpdate.dtd
+
+locale torbutton af chrome/locale/af/
+locale torbutton ak chrome/locale/ak/
+locale torbutton am chrome/locale/am/
+locale torbutton ar chrome/locale/ar/
+locale torbutton arn chrome/locale/arn/
+locale torbutton ast chrome/locale/ast/
+locale torbutton az chrome/locale/az/
+locale torbutton be chrome/locale/be/
+locale torbutton bg chrome/locale/bg/
+locale torbutton bms chrome/locale/bms/
+locale torbutton bn chrome/locale/bn/
+locale torbutton bn-IN chrome/locale/bn-IN/
+locale torbutton bo chrome/locale/bo/
+locale torbutton br chrome/locale/br/
+locale torbutton bs chrome/locale/bs/
+locale torbutton ca chrome/locale/ca/
+locale torbutton cs chrome/locale/cs/
+locale torbutton csb chrome/locale/csb/
+locale torbutton cy chrome/locale/cy/
+locale torbutton da chrome/locale/da/
+locale torbutton de chrome/locale/de/
+locale torbutton dz chrome/locale/dz/
+locale torbutton el chrome/locale/el/
+locale torbutton en chrome/locale/en/
+locale torbutton eo chrome/locale/eo/
+locale torbutton es chrome/locale/es/
+locale torbutton et chrome/locale/et/
+locale torbutton eu chrome/locale/eu/
+locale torbutton fa chrome/locale/fa/
+locale torbutton fi chrome/locale/fi/
+locale torbutton fil chrome/locale/fil/
+locale torbutton fo chrome/locale/fo/
+locale torbutton fr chrome/locale/fr/
+locale torbutton fur chrome/locale/fur/
+locale torbutton fy chrome/locale/fy/
+locale torbutton ga chrome/locale/ga/
+locale torbutton gl chrome/locale/gl/
+locale torbutton gu chrome/locale/gu/
+locale torbutton gun chrome/locale/gun/
+locale torbutton ha chrome/locale/ha/
+locale torbutton he chrome/locale/he/
+locale torbutton hi chrome/locale/hi/
+locale torbutton hr chrome/locale/hr/
+locale torbutton ht chrome/locale/ht/
+locale torbutton hu chrome/locale/hu/
+locale torbutton hy chrome/locale/hy/
+locale torbutton id chrome/locale/id/
+locale torbutton is chrome/locale/is/
+locale torbutton it chrome/locale/it/
+locale torbutton ja chrome/locale/ja/
+locale torbutton jv chrome/locale/jv/
+locale torbutton ka chrome/locale/ka/
+locale torbutton km chrome/locale/km/
+locale torbutton kn chrome/locale/kn/
+locale torbutton ko chrome/locale/ko/
+locale torbutton ku chrome/locale/ku/
+locale torbutton kw chrome/locale/kw/
+locale torbutton ky chrome/locale/ky/
+locale torbutton lb chrome/locale/lb/
+locale torbutton lg chrome/locale/lg/
+locale torbutton ln chrome/locale/ln/
+locale torbutton lo chrome/locale/lo/
+locale torbutton lt chrome/locale/lt/
+locale torbutton lv chrome/locale/lv/
+locale torbutton mg chrome/locale/mg/
+locale torbutton mi chrome/locale/mi/
+locale torbutton mk chrome/locale/mk/
+locale torbutton ml chrome/locale/ml/
+locale torbutton mn chrome/locale/mn/
+locale torbutton mr chrome/locale/mr/
+locale torbutton ms chrome/locale/ms/
+locale torbutton mt chrome/locale/mt/
+locale torbutton my chrome/locale/my/
+locale torbutton nah chrome/locale/nah/
+locale torbutton nap chrome/locale/nap/
+locale torbutton nb chrome/locale/nb/
+locale torbutton ne chrome/locale/ne/
+locale torbutton nl chrome/locale/nl/
+locale torbutton nn chrome/locale/nn/
+locale torbutton nso chrome/locale/nso/
+locale torbutton oc chrome/locale/oc/
+locale torbutton or chrome/locale/or/
+locale torbutton pa chrome/locale/pa/
+locale torbutton pap chrome/locale/pap/
+locale torbutton pl chrome/locale/pl/
+locale torbutton pms chrome/locale/pms/
+locale torbutton ps chrome/locale/ps/
+locale torbutton pt chrome/locale/pt/
+locale torbutton pt-BR chrome/locale/pt-BR/
+locale torbutton ro chrome/locale/ro/
+locale torbutton ru chrome/locale/ru/
+locale torbutton sco chrome/locale/sco/
+locale torbutton sk chrome/locale/sk/
+locale torbutton sl chrome/locale/sl/
+locale torbutton so chrome/locale/so/
+locale torbutton son chrome/locale/son/
+locale torbutton sq chrome/locale/sq/
+locale torbutton sr chrome/locale/sr/
+locale torbutton st chrome/locale/st/
+locale torbutton su chrome/locale/su/
+locale torbutton sv chrome/locale/sv/
+locale torbutton sw chrome/locale/sw/
+locale torbutton ta chrome/locale/ta/
+locale torbutton te chrome/locale/te/
+locale torbutton tg chrome/locale/tg/
+locale torbutton th chrome/locale/th/
+locale torbutton ti chrome/locale/ti/
+locale torbutton tk chrome/locale/tk/
+locale torbutton tr chrome/locale/tr/
+locale torbutton uk chrome/locale/uk/
+locale torbutton ur chrome/locale/ur/
+locale torbutton ve chrome/locale/ve/
+locale torbutton vi chrome/locale/vi/
+locale torbutton wa chrome/locale/wa/
+locale torbutton wo chrome/locale/wo/
+locale torbutton zh-CN chrome/locale/zh-CN/
+locale torbutton zh-HK chrome/locale/zh-HK/
+locale torbutton zh-TW chrome/locale/zh-TW/
+locale torbutton zu chrome/locale/zu/
+
+skin torbutton classic/1.0 chrome/skin/
+style chrome://global/content/customizeToolbar.xul chrome://torbutton/skin/torbutton.css
+
+# Firefox 4-style component registration
+component {3da0269f-fc29-4e9e-a678-c3b1cafcf13f} components/external-app-blocker.js
+contract @torproject.org/torbutton-extAppBlockerService;1 {3da0269f-fc29-4e9e-a678-c3b1cafcf13f}
+
+component {06322def-6fde-4c06-aef6-47ae8e799629} components/startup-observer.js
+contract @torproject.org/startup-observer;1 {06322def-6fde-4c06-aef6-47ae8e799629}
+
+component {e6204253-b690-4159-bfe8-d4eedab6b3be} components/cookie-jar-selector.js
+contract @torproject.org/cookie-jar-selector;1 {e6204253-b690-4159-bfe8-d4eedab6b3be}
+
+component {84d47da6-79c3-4661-aa9f-8049476f7bf5} components/aboutTor.js
+contract @mozilla.org/network/protocol/about;1?what=tor {84d47da6-79c3-4661-aa9f-8049476f7bf5}
+
+component {5d57312b-5d8c-4169-b4af-e80d6a28a72e} components/torCheckService.js
+contract @torproject.org/torbutton-torCheckService;1 {5d57312b-5d8c-4169-b4af-e80d6a28a72e}
+
+component {f36d72c9-9718-4134-b550-e109638331d7} components/torbutton-logger.js
+contract @torproject.org/torbutton-logger;1 {f36d72c9-9718-4134-b550-e109638331d7}
+
+component {e33fd6d4-270f-475f-a96f-ff3140279f68} components/domain-isolator.js
+contract @torproject.org/domain-isolator;1 {e33fd6d4-270f-475f-a96f-ff3140279f68}
+
+category profile-after-change CookieJarSelector @torproject.org/cookie-jar-selector;1
+
+component {4c03be7d-492f-990e-f0da-f3689e564898} components/content-policy.js
+contract @torproject.org/content-policy;1 {4c03be7d-492f-990e-f0da-f3689e564898}
+category content-policy ContentPolicy @torproject.org/content-policy;1
+
+category profile-after-change StartupObserver @torproject.org/startup-observer;1
+category profile-after-change DomainIsolator @torproject.org/domain-isolator;1
+category profile-after-change ExtAppBlockerService @torproject.org/torbutton-extAppBlockerService;1

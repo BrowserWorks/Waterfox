@@ -1,0 +1,19 @@
+<!ENTITY project.start           "&brandShortName;의 개발자: ">
+<!-- LOCALIZATION NOTE (project.tpoLink): This is a link title that links to https://www.torproject.org -->
+<!ENTITY project.tpoLink         "&vendorShortName;">
+<!ENTITY project.end             ", 여러분의 사생활과 인터넷의 자유를 위해 비영리로 운영되는 서비스">
+
+<!ENTITY help.start              "도움이 필요하신가요?">
+<!-- LOCALIZATION NOTE (help.donate): This is a link title that links to https://www.torproject.org/donate/donate.html.en -->
+<!ENTITY help.donateLink         "후원하기">
+<!ENTITY help.or                 "또는">
+<!-- LOCALIZATION NOTE (help.getInvolvedLink): This is a link title that links to https://www.torproject.org/getinvolved/volunteer.html.en -->
+<!ENTITY help.getInvolvedLink    "서비스 향상에 기여하기">
+<!ENTITY help.end                "!">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/docs/trademark-faq.html.en -->
+<!ENTITY bottomLinks.questions   "질문이 있으신가요?">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to https://www.torproject.org/getinvolved/relays -->
+<!ENTITY bottomLinks.grow        "Tor 네트워크가 성장할 수 있도록 도와주세요!">
+<!-- LOCALIZATION NOTE (bottom.questions): This is a link title that links to about:license -->
+<!ENTITY bottomLinks.license  "라이센스 정보">
+<!ENTITY tor.TrademarkStatement   "'Tor'와 'Onion Logo'는 Tor Project의 등록 상표입니다.">

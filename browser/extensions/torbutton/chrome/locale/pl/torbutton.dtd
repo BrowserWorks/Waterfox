@@ -1,0 +1,61 @@
+<!ENTITY torbutton.context_menu.new_identity "Nowa Tożsamość">
+<!ENTITY torbutton.context_menu.new_identity_key "o">
+<!ENTITY torbutton.context_menu.new_circuit "Nowy obwód dla tej strony">
+<!ENTITY torbutton.context_menu.new_circuit_key "c">
+<!ENTITY torbutton.context_menu.preferences "Ustawienia Prywatności i Bezpieczeństwa...">
+<!ENTITY torbutton.context_menu.preferences.key "U">
+<!ENTITY torbutton.context_menu.networksettings "Ustawienia Sieci Tor...">
+<!ENTITY torbutton.context_menu.networksettings.key "s">
+<!ENTITY torbutton.context_menu.downloadUpdate "Sprawdź czy są aktualizacje Tor Browser...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "u">
+<!ENTITY torbutton.context_menu.cookieProtections "Ochrona plików cookie...">
+<!ENTITY torbutton.context_menu.cookieProtections.key "c">
+<!ENTITY torbutton.button.tooltip "Kliknij tutaj, aby uruchomić Torbutton">
+<!ENTITY torbutton.prefs.privacy_security_settings "Ustawienia prywatności i bezpieczeństwa">
+<!ENTITY torbutton.prefs.restore_defaults "Ustawienia domyślne">
+<!ENTITY torbutton.cookiedialog.title "Zarządzaj ochroną ciasteczek">
+<!ENTITY torbutton.cookiedialog.lockCol "Chronione">
+<!ENTITY torbutton.cookiedialog.domainCol "Host">
+<!ENTITY torbutton.cookiedialog.nameCol "Nazwa">
+<!ENTITY torbutton.cookiedialog.pathCol "Ścieżka">
+<!ENTITY torbutton.cookiedialog.protectCookie "Chroń ciasteczko">
+<!ENTITY torbutton.cookiedialog.removeCookie "Usuń ciasteczko">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "Nie chroń ciasteczka">
+<!ENTITY torbutton.cookiedialog.removeAllBut "Usuń wszystkie oprócz chronionych">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "Chroń nowe ciasteczka">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "Nie chroń nowych ciasteczek">
+<!ENTITY torbutton.prefs.priv_caption "Ustawienia Prywatności">
+<!ENTITY torbutton.prefs.block_disk "Nie zapisuj historii przeglądania i danych o stronach (włącza Tryb Prywatny)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "Ograniczaj ciasteczka firm trzecich i inne dane służące do śledzenia">
+<!ENTITY torbutton.prefs.block_plugins "Wyłącz wtyczki przeglądarki (takie jak Flash)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "Zmień szczegóły odróżniające Cię od innych użytkowników Przeglądarki Tora">
+<!ENTITY torbutton.prefs.sec_caption "Poziom bezpieczeństwa">
+<!ENTITY torbutton.prefs.sec_low "Niski (domyślny)">
+<!ENTITY torbutton.prefs.sec_low_usable_desc "To zapewnia najbardziej przyjazdne dla użytkownika ustawienia.">
+<!ENTITY torbutton.prefs.sec_low_desc "Na tym poziomie zabezpieczeń, wszystkie funkcje przeglądarki są włączone.">
+<!ENTITY torbutton.prefs.sec_font_rend_svg_tooltip "Mechanizm SVG OpenType renderowania czcionek jest wyłączony.">
+<!ENTITY torbutton.prefs.sec_med_low "Średni-Niski">
+<!ENTITY torbutton.prefs.sec_gen_desc "Na tym poziomie bezpieczeństwa, stosuje się następujące zmiany (najedź kursorem po więcej szczegółów): ">
+<!ENTITY torbutton.prefs.sec_html5_desc "HTML5 video oraz audio będą dostępne jako 'kliknij-aby-otworzyć' przez NoScript.">
+<!ENTITY torbutton.prefs.sec_html5_tooltip "Na niektórych stronach internetowych będziesz musiał użyć przycisku NoScript znajdującym się w pasku narzędzi, aby włączyć dane obiekty medialne.">
+<!ENTITY torbutton.prefs.sec_some_jit_desc "Niektóre optymalizacje wydajności JavaScript są wyłączone.">
+<!ENTITY torbutton.prefs.sec_jit_desc_tooltip "ION JIT, Type Inference, ASM.JS.">
+<!ENTITY torbutton.prefs.sec_baseline_jit_desc_tooltip "Baseline JIT.">
+<!ENTITY torbutton.prefs.sec_jit_slower_desc "Skrypty na niektórych stronach mogą działać wolniej.">
+<!ENTITY torbutton.prefs.sec_mathml_desc "Niektóre mechanizmy wyświetlania równań matematycznych są wyłączone.">
+<!ENTITY torbutton.prefs.sec_mathml_desc_tooltip "MathML jest wyłączony.">
+<!ENTITY torbutton.prefs.sec_med_high "Średni-Wysoki">
+<!ENTITY torbutton.prefs.sec_all_jit_desc "Wszystkie optymalizacje wydajności JavaScript są wyłączone.">
+<!ENTITY torbutton.prefs.sec_font_rend_desc "Niektóre funkcje renderingu czcionki są wyłączone.">
+<!ENTITY torbutton.prefs.sec_font_rend_graphite_tooltip "Mechanizm Graphite do renderowania czcionki jest wyłączony.">
+<!ENTITY torbutton.prefs.sec_svg_desc "Niektóre typy obrazów są wyłączone.">
+<!ENTITY torbutton.prefs.sec_svg_desc_tooltip "Obrazy SVG są wyłączone.">
+<!ENTITY torbutton.prefs.sec_js_https_desc "JavaScript jest wyłączone domyślnie dla wszystkich stron które nie są HTTPS.">
+<!ENTITY torbutton.prefs.sec_js_desc_tooltip "JavaScript może być włączony dla pojedyńczych, wybranych przez Ciebie stronach używając przycisku NoScript z paska narzędzi.">
+<!ENTITY torbutton.prefs.sec_high "Wysoki">
+<!ENTITY torbutton.prefs.sec_all_js_desc "JavaScript jest domyślnie wyłączona na wszystkich stronach.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc "Niektóre czcionki i ikony mogą być wyświetlane niepoprawnie.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc_tooltip "Pliki czcionek dostarczane przez strony internetowe są blokowane.">
+<!ENTITY torbutton.prefs.sec_custom "Wartości niestandardowe">
+<!ENTITY torbutton.circuit_display.title "Obwód Tor dla tej strony">
+

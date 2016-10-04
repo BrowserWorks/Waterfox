@@ -1,0 +1,61 @@
+<!ENTITY torbutton.context_menu.new_identity "새로운 신원">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.new_circuit "Tor 서킷 재구축">
+<!ENTITY torbutton.context_menu.new_circuit_key "C">
+<!ENTITY torbutton.context_menu.preferences "개인정보 및 보안 관련 설정...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "토르 네트워크 설정...">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "토르 브라우저 업데이트 체크하기...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "U">
+<!ENTITY torbutton.context_menu.cookieProtections "쿠키 보호....">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "Torbutton 설정 초기화">
+<!ENTITY torbutton.prefs.privacy_security_settings "개인 정보와 보안 설정">
+<!ENTITY torbutton.prefs.restore_defaults "설정 초기화">
+<!ENTITY torbutton.cookiedialog.title "쿠키 보호 관리">
+<!ENTITY torbutton.cookiedialog.lockCol "보호됨">
+<!ENTITY torbutton.cookiedialog.domainCol "Host">
+<!ENTITY torbutton.cookiedialog.nameCol "이름">
+<!ENTITY torbutton.cookiedialog.pathCol "경로">
+<!ENTITY torbutton.cookiedialog.protectCookie "쿠키 보호">
+<!ENTITY torbutton.cookiedialog.removeCookie "쿠키 삭제">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "쿠키 보호하지 않음">
+<!ENTITY torbutton.cookiedialog.removeAllBut "보호된 것 빼고 모두 지우기">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "새로운 쿠키 보호">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "새로운 쿠키를 보호하지 않음">
+<!ENTITY torbutton.prefs.priv_caption "개인 정보 설정">
+<!ENTITY torbutton.prefs.block_disk "브라우징 히스토리나 웹사이트 데이터를 기록하지 마십시오 (Private Browsing 모드 활성화)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "제 3자 쿠키와 다른 추적 데이터 제한">
+<!ENTITY torbutton.prefs.block_plugins "브라우저 플러그인 비활성화 (예 : 플래시)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "다른 Tor browser 사용자로부터 구별되는 세부 사항 변경">
+<!ENTITY torbutton.prefs.sec_caption "보안 등급">
+<!ENTITY torbutton.prefs.sec_low "낮음 (기본)">
+<!ENTITY torbutton.prefs.sec_low_usable_desc "This provides the most usable experience.">
+<!ENTITY torbutton.prefs.sec_low_desc "At this security level, all browser features are enabled.">
+<!ENTITY torbutton.prefs.sec_font_rend_svg_tooltip "SVG 폰트 렌터링 체계가 비활성화되었습니다.">
+<!ENTITY torbutton.prefs.sec_med_low "중간 낮음">
+<!ENTITY torbutton.prefs.sec_gen_desc "At this security level, the following changes apply (mouseover for details):">
+<!ENTITY torbutton.prefs.sec_html5_desc "HTML5 video and audio media become click-to-play via NoScript.">
+<!ENTITY torbutton.prefs.sec_html5_tooltip "On some sites, you might need to use the NoScript toolbar button to enable these media objects.">
+<!ENTITY torbutton.prefs.sec_some_jit_desc "일부 JavaScript 의 성능 최적화가 비활성화되었습니다.">
+<!ENTITY torbutton.prefs.sec_jit_desc_tooltip "ION JIT, Type Inference, ASM.JS.">
+<!ENTITY torbutton.prefs.sec_baseline_jit_desc_tooltip "Baseline (베이스라인) JIT.">
+<!ENTITY torbutton.prefs.sec_jit_slower_desc "일부 사이트의 스크립트 동작이 느려질 수 있습니다.">
+<!ENTITY torbutton.prefs.sec_mathml_desc "Some mechanisms of displaying math equations are disabled.">
+<!ENTITY torbutton.prefs.sec_mathml_desc_tooltip "MathML가 비활성화 되었습니다.">
+<!ENTITY torbutton.prefs.sec_med_high "중간 높음">
+<!ENTITY torbutton.prefs.sec_all_jit_desc "모든 JavaScript 의 성능 최적화가 비활성화되었습니다.">
+<!ENTITY torbutton.prefs.sec_font_rend_desc "일부 폰트의 렌터링이 비활성화되었습니다.">
+<!ENTITY torbutton.prefs.sec_font_rend_graphite_tooltip "The Graphite font rendering mechanism is disabled.">
+<!ENTITY torbutton.prefs.sec_svg_desc "몇몇 종류의 이미지가 비활성화 되었습니다.">
+<!ENTITY torbutton.prefs.sec_svg_desc_tooltip "SVG images가 비활성화 되었습니다.">
+<!ENTITY torbutton.prefs.sec_js_https_desc "JavaScript is disabled by default on all non-HTTPS sites.">
+<!ENTITY torbutton.prefs.sec_js_desc_tooltip "JavaScript can be enabled on a per-site basis via the NoScript toolbar button.">
+<!ENTITY torbutton.prefs.sec_high "높음">
+<!ENTITY torbutton.prefs.sec_all_js_desc "자바 스크립트는 기본 설정으로 모든 사이트에서 비활성화 되어 있습니다.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc "어떤 글씨체나 아이콘은 올바르지 않게 표시될 수 있습니다.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc_tooltip "사이트 내장 폰트가 차단되었습니다.">
+<!ENTITY torbutton.prefs.sec_custom "맞춤 값">
+<!ENTITY torbutton.circuit_display.title "Tor circuit for this site">
+

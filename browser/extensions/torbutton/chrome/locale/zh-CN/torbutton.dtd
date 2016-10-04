@@ -1,0 +1,61 @@
+<!ENTITY torbutton.context_menu.new_identity "新身份">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.new_circuit "为此站点使用新 Tor 线路">
+<!ENTITY torbutton.context_menu.new_circuit_key "C">
+<!ENTITY torbutton.context_menu.preferences "隐私与安全设置…">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "Tor 网络设置…">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "Tor Browser 检查更新…">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "U">
+<!ENTITY torbutton.context_menu.cookieProtections "Cookie 保护…">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "点此初始化 Torbutton">
+<!ENTITY torbutton.prefs.privacy_security_settings "隐私与安全设置">
+<!ENTITY torbutton.prefs.restore_defaults "恢复默认设置">
+<!ENTITY torbutton.cookiedialog.title "管理受保护的 Cookie">
+<!ENTITY torbutton.cookiedialog.lockCol "受保护">
+<!ENTITY torbutton.cookiedialog.domainCol "主机">
+<!ENTITY torbutton.cookiedialog.nameCol "名称">
+<!ENTITY torbutton.cookiedialog.pathCol "路径">
+<!ENTITY torbutton.cookiedialog.protectCookie "保护 Cookie">
+<!ENTITY torbutton.cookiedialog.removeCookie "移除 Cookie">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "停止保护 Cookie">
+<!ENTITY torbutton.cookiedialog.removeAllBut "全部移除仅保留受保护的 Cookie">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "保护新的 Cookie">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "不保护新的 Cookie">
+<!ENTITY torbutton.prefs.priv_caption "隐私设置">
+<!ENTITY torbutton.prefs.block_disk "禁止记录浏览历史或网站数据（启用隐私浏览模式）">
+<!ENTITY torbutton.prefs.restrict_thirdparty "限制第三方 cookie 和其他数据跟踪程序">
+<!ENTITY torbutton.prefs.block_plugins "禁用浏览器插件（比如 Flash）">
+<!ENTITY torbutton.prefs.resist_fingerprinting "修改 Tor 浏览器中可区分你与其他 Tor 用户的细节信息">
+<!ENTITY torbutton.prefs.sec_caption "安全等级">
+<!ENTITY torbutton.prefs.sec_low "低（默认）">
+<!ENTITY torbutton.prefs.sec_low_usable_desc "该选项可提供最佳的用户体验。">
+<!ENTITY torbutton.prefs.sec_low_desc "该安全级别将启用所有浏览器功能。">
+<!ENTITY torbutton.prefs.sec_font_rend_svg_tooltip "禁用 SVG OpenType 字体渲染功能。">
+<!ENTITY torbutton.prefs.sec_med_low "中低">
+<!ENTITY torbutton.prefs.sec_gen_desc "在这个安全级别，下列更改将会生效（鼠标悬停查看细节）：">
+<!ENTITY torbutton.prefs.sec_html5_desc "HTML5 视频和音频需通过 NoScript 点击播放。">
+<!ENTITY torbutton.prefs.sec_html5_tooltip "在某些网站，可通过 NoScript 工具栏按钮播放这些媒体。">
+<!ENTITY torbutton.prefs.sec_some_jit_desc "禁用某些 JavaScript 性能优化。">
+<!ENTITY torbutton.prefs.sec_jit_desc_tooltip "ION JIT、类型推断、ASM.JS。">
+<!ENTITY torbutton.prefs.sec_baseline_jit_desc_tooltip "Baseline JIT。">
+<!ENTITY torbutton.prefs.sec_jit_slower_desc "一些网站脚本可能会暂缓执行。">
+<!ENTITY torbutton.prefs.sec_mathml_desc "禁用数学方程式的某些显示机制。">
+<!ENTITY torbutton.prefs.sec_mathml_desc_tooltip "禁用 MathML。">
+<!ENTITY torbutton.prefs.sec_med_high "中高">
+<!ENTITY torbutton.prefs.sec_all_jit_desc "禁用全部 JavaScript 性能优化。">
+<!ENTITY torbutton.prefs.sec_font_rend_desc "禁用某些字体渲染功能。">
+<!ENTITY torbutton.prefs.sec_font_rend_graphite_tooltip "禁用 Graphite 字体渲染。">
+<!ENTITY torbutton.prefs.sec_svg_desc "禁用某些图像类型。">
+<!ENTITY torbutton.prefs.sec_svg_desc_tooltip "禁用 SVG 图像。">
+<!ENTITY torbutton.prefs.sec_js_https_desc "对于非 HTTPS 网站，默认禁用 JavaScript。">
+<!ENTITY torbutton.prefs.sec_js_desc_tooltip "可通过工具栏上的  NoScript 按钮，启用某个网站上的 JavaScript。">
+<!ENTITY torbutton.prefs.sec_high "高">
+<!ENTITY torbutton.prefs.sec_all_js_desc "默认禁用所有网站 JavaScript。">
+<!ENTITY torbutton.prefs.sec_webfonts_desc "某些字体和图标可能无法正确显示。">
+<!ENTITY torbutton.prefs.sec_webfonts_desc_tooltip "禁用网站提供的字体文件。">
+<!ENTITY torbutton.prefs.sec_custom "自定义">
+<!ENTITY torbutton.circuit_display.title "为此站点使用的 Tor 线路">
+

@@ -1,0 +1,6 @@
+<!ENTITY aboutTBUpdate.title "Tor Browser Güncellemesi">
+<!ENTITY aboutTBUpdate.updated "Tor Browser güncellendi.">
+<!ENTITY aboutTBUpdate.linkPrefix "Bu sürüm hakkındaki güncelleme bilgilerinin çoğu ">
+<!ENTITY aboutTBUpdate.linkLabel  "web sitemizden edinilebilir">
+<!ENTITY aboutTBUpdate.linkSuffix ".">
+<!ENTITY aboutTBUpdate.changeLogHeading "Sürüm notları:">

@@ -1,0 +1,6 @@
+<!ENTITY aboutTBUpdate.title "بروز رسانی مرورگر تور">
+<!ENTITY aboutTBUpdate.updated "مرورگر تور به‌روز شده است.">
+<!ENTITY aboutTBUpdate.linkPrefix "به منظور جدیدترین اطلاعات درباره‌ی این نسخه،">
+<!ENTITY aboutTBUpdate.linkLabel  "از وب‌سایت ما دیدن کنید">
+<!ENTITY aboutTBUpdate.linkSuffix ".">
+<!ENTITY aboutTBUpdate.changeLogHeading "لیست تغییرات:">

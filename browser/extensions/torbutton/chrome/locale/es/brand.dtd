@@ -1,0 +1,15 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!ENTITY  brandShorterName      "Navegador Tor">
+<!ENTITY  brandShortName        "Navegador Tor">
+<!ENTITY  brandFullName         "Navegador Tor">
+<!ENTITY  vendorShortName       "Proyecto Tor">
+<!ENTITY  trademarkInfo.part1   "Firefox y los logotipos de Firefox son marcas registradas de la Mozilla Foundation.">
+
+<!-- The following strings are for bug #10280's UI. We place them here for our translators -->
+<!ENTITY plugins.installed.find "Haga clic para cargar los complementos de sistema instalados">
+<!ENTITY plugins.installed.enable "Habilitar complementos">
+<!ENTITY plugins.installed.disable "Deshabilitar complementos">
+<!ENTITY plugins.installed.disable.tip "Haga clic para evitar que se carguen complementos de sistema">

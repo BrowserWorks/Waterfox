@@ -1,0 +1,6 @@
+<!ENTITY aboutTBUpdate.title "更新 Tor Browser">
+<!ENTITY aboutTBUpdate.updated "Tor Browser 更新完成。">
+<!ENTITY aboutTBUpdate.linkPrefix "有关此版本的最新信息，">
+<!ENTITY aboutTBUpdate.linkLabel  "访问我们的网站">
+<!ENTITY aboutTBUpdate.linkSuffix "。">
+<!ENTITY aboutTBUpdate.changeLogHeading "更新日志：">

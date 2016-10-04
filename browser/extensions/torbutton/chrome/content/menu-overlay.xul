@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- Mode: HTML -*- -->
+
+<!-- Bug 18905: Hide unused help menu items -->
+<overlay id="torbutton-menu-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <menupopup id="menu_HelpPopup">
+    <menuitem id="menu_openHelp" removeelement="true"/>
+    <menuitem id="menu_openTour" removeelement="true"/>
+    <menuitem id="healthReport" removeelement="true"/>
+    <menuitem id="feedbackPage" removeelement="true"/>
+    <menuitem id="helpSafeMode" removeelement="true"/>
+    <menuitem id="menu_HelpPopup_reportPhishingtoolmenu" removeelement="true"/>
+    <menuitem id="menu_HelpPopup_reportPhishingErrortoolmenu" removeelement="true"/>
+    <!-- dummy elements to avoid 'getElementById' errors -->
+    <box id="menu_HelpPopup_reportPhishingtoolmenu"/>
+    <box id="menu_HelpPopup_reportPhishingErrortoolmenu"/>
+  </menupopup>
+</overlay>

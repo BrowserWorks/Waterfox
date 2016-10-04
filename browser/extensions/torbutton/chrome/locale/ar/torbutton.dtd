@@ -1,0 +1,61 @@
+<!ENTITY torbutton.context_menu.new_identity "هوية جديدة">
+<!ENTITY torbutton.context_menu.new_identity_key "I">
+<!ENTITY torbutton.context_menu.new_circuit "دائرة تور جديدة لهذا الموقع">
+<!ENTITY torbutton.context_menu.new_circuit_key "C">
+<!ENTITY torbutton.context_menu.preferences "إعدادات الخصوصية والأمان...">
+<!ENTITY torbutton.context_menu.preferences.key "P">
+<!ENTITY torbutton.context_menu.networksettings "إعدادات شبكة تور...">
+<!ENTITY torbutton.context_menu.networksettings.key "S">
+<!ENTITY torbutton.context_menu.downloadUpdate "تحقق من تحديثات متصفح تور...">
+<!ENTITY torbutton.context_menu.downloadUpdate.key "U">
+<!ENTITY torbutton.context_menu.cookieProtections "إعدادات أمان ملفات تعريف الارتباط...">
+<!ENTITY torbutton.context_menu.cookieProtections.key "C">
+<!ENTITY torbutton.button.tooltip "انقر لبدء زر تور">
+<!ENTITY torbutton.prefs.privacy_security_settings "إعدادات الأمان والخصوصيّة">
+<!ENTITY torbutton.prefs.restore_defaults "استعادة الافتراضيات">
+<!ENTITY torbutton.cookiedialog.title "إدارة إعدادت الحماية لملفات تعريف الارتباط">
+<!ENTITY torbutton.cookiedialog.lockCol "محمية">
+<!ENTITY torbutton.cookiedialog.domainCol "استضافة">
+<!ENTITY torbutton.cookiedialog.nameCol "اسم">
+<!ENTITY torbutton.cookiedialog.pathCol "المسار">
+<!ENTITY torbutton.cookiedialog.protectCookie "احم ملف تعريف الارتباط (كوكي)">
+<!ENTITY torbutton.cookiedialog.removeCookie "إزالة ملف تعريف الارتباط (كوكي)">
+<!ENTITY torbutton.cookiedialog.unprotectCookie "إلغاء حماية ملف تعريف الارتباط (كوكي)">
+<!ENTITY torbutton.cookiedialog.removeAllBut "إزالة الكل لكن استمر في الحماية">
+<!ENTITY torbutton.cookiedialog.saveAllCookies "احم ملفات تعريف الارتباط الجديدة">
+<!ENTITY torbutton.cookiedialog.doNotSaveAllCookies "لا تحم ملفات تعريف الارتباط الجديدة">
+<!ENTITY torbutton.prefs.priv_caption "إعدادات الخصوصية">
+<!ENTITY torbutton.prefs.block_disk "لا تسجل سجل التصفح أو بيانات المواقع الألكترونية (تفعيل التصفح الخصوصي)">
+<!ENTITY torbutton.prefs.restrict_thirdparty "تقييد الـCookies الخاصة بالطرف الثالث و بيانات التتبع الأخري.">
+<!ENTITY torbutton.prefs.block_plugins "تعطيل إضافات المتصفح (مثل فلاش)">
+<!ENTITY torbutton.prefs.resist_fingerprinting "تغيير التفاصيل التي تميزك عن المستخدمين الآخرين لمتصفح تور">
+<!ENTITY torbutton.prefs.sec_caption "مستوى الأمان">
+<!ENTITY torbutton.prefs.sec_low "منخفض (افتراضي)">
+<!ENTITY torbutton.prefs.sec_low_usable_desc "هذا يوفر أفضل خبرة للإستخدام">
+<!ENTITY torbutton.prefs.sec_low_desc "طبقاً لهذا المستوى من إعدادات الأمان سوف يتم تفعيل كل صفات المتصفح">
+<!ENTITY torbutton.prefs.sec_font_rend_svg_tooltip "The SVG OpenType font rendering mechanism is disabled.">
+<!ENTITY torbutton.prefs.sec_med_low "شبه منخفض">
+<!ENTITY torbutton.prefs.sec_gen_desc "طبقاً لهذا المستوى من إعدادات الأمان سوف يتم تفعيل هذه التغيرات ( لمزيد من التفاصيل مرر الفأرة فوق)">
+<!ENTITY torbutton.prefs.sec_html5_desc "HTML5 video and audio media become click-to-play via NoScript.">
+<!ENTITY torbutton.prefs.sec_html5_tooltip "في بعض المواقع من الممكن أن تحتاج لإستخدام زر تعطيل النصوص في شرط الأدوات لتفعل المحتويات المرئية">
+<!ENTITY torbutton.prefs.sec_some_jit_desc "بعض محسنات نصوص الجافا معطلة">
+<!ENTITY torbutton.prefs.sec_jit_desc_tooltip "ION JIT, Type Inference, ASM.JS.">
+<!ENTITY torbutton.prefs.sec_baseline_jit_desc_tooltip "Baseline JIT.">
+<!ENTITY torbutton.prefs.sec_jit_slower_desc "سكربت في بعض المواقع قد تعمل بشكل بطيئ">
+<!ENTITY torbutton.prefs.sec_mathml_desc "Some mechanisms of displaying math equations are disabled.">
+<!ENTITY torbutton.prefs.sec_mathml_desc_tooltip "MathML is disabled.">
+<!ENTITY torbutton.prefs.sec_med_high "شبه عالٍ">
+<!ENTITY torbutton.prefs.sec_all_jit_desc "All JavaScript performance optimizations are disabled.">
+<!ENTITY torbutton.prefs.sec_font_rend_desc "بعض ميزات إظهار الخطوط معطلة ">
+<!ENTITY torbutton.prefs.sec_font_rend_graphite_tooltip "The Graphite font rendering mechanism is disabled.">
+<!ENTITY torbutton.prefs.sec_svg_desc "بعض الانواع من الصور معطله">
+<!ENTITY torbutton.prefs.sec_svg_desc_tooltip "SVG images are disabled.">
+<!ENTITY torbutton.prefs.sec_js_https_desc "JavaScript is disabled by default on all non-HTTPS sites.">
+<!ENTITY torbutton.prefs.sec_js_desc_tooltip "JavaScript can be enabled on a per-site basis via the NoScript toolbar button.">
+<!ENTITY torbutton.prefs.sec_high "عالٍ">
+<!ENTITY torbutton.prefs.sec_all_js_desc "JavaScript is disabled by default on all sites.">
+<!ENTITY torbutton.prefs.sec_webfonts_desc "من الممكن أن بعض الخطوط والايقونات معروضة خطأ">
+<!ENTITY torbutton.prefs.sec_webfonts_desc_tooltip "Website-provided font files are blocked.">
+<!ENTITY torbutton.prefs.sec_custom "قيم مخصصة">
+<!ENTITY torbutton.circuit_display.title "دائرة تور لهذا الموقع">
+

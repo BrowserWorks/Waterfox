@@ -1,0 +1,6 @@
+<!ENTITY aboutTBUpdate.title "Aggiornamento del Browser TOR">
+<!ENTITY aboutTBUpdate.updated "Il Browser TOR è stato aggiornato.">
+<!ENTITY aboutTBUpdate.linkPrefix "Per maggiori informazioni su questa versione,">
+<!ENTITY aboutTBUpdate.linkLabel  "visita il nostro sito web">
+<!ENTITY aboutTBUpdate.linkSuffix ".">
+<!ENTITY aboutTBUpdate.changeLogHeading "Log dei cambiamenti:">

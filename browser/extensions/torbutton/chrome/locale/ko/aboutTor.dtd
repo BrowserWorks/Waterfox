@@ -1,0 +1,49 @@
+<!--
+   - Copyright (c) 2015, The Tor Project, Inc.
+   - See LICENSE for licensing information.
+   - vim: set sw=2 sts=2 ts=8 et syntax=xml:
+  -->
+
+<!ENTITY aboutTor.title "Tor에 대해서">
+
+<!ENTITY aboutTor.outOfDateTorOn.label "주의: 현재 구버전 브라우저를 사용하고 계십니다.">
+<!ENTITY aboutTor.outOfDateTorOff.label "또한,  현재 구버전 브라우저를 사용하고 계십니다.">
+<!ENTITY aboutTor.outOfDate2.label "onion을 클릭하고 Tor Browser 업데이트 체크를 선택하세요.">
+
+<!ENTITY aboutTor.check.label "Tor 네트워크 설정 테스트">
+
+<!ENTITY aboutTor.success.label "Tor 브라우저에 오신 것을 환영합니다">
+<!ENTITY aboutTor.success2.label "Tor 네트워크에 연결되었습니다.">
+<!ENTITY aboutTor.success3.label "이제 자유롭게 익명으로 인터넷을 탐색할 수 있습니다.">
+<!ENTITY aboutTor.failure.label "뭔가 잘못되었습니다!">
+<!ENTITY aboutTor.failure2.label "Tor는 이 브라우저에서 작동하지 않습니다.">
+<!ENTITY aboutTor.failure3prefix.label "도움을 위해서, 문의해 주세요">
+<!ENTITY aboutTor.failure3Link "help@rt.torproject.org">
+<!ENTITY aboutTor.failure3suffix.label " ">
+
+<!ENTITY aboutTor.search.label "검색">
+
+<!ENTITY aboutTor.searchSPPost.link "https://startpage.com/rth/search">
+<!ENTITY aboutTor.searchDDGPost.link "https://duckduckgo.com/html/">
+<!ENTITY aboutTor.searchDCPost.link "https://search.disconnect.me/searchTerms/search?ses=Google&amp;location_option=US&amp;source=tor">
+
+<!ENTITY aboutTor.torInfo1.label "추가 정보 :">
+<!ENTITY aboutTor.torInfo2.label "국가 &amp; IP 주소 :">
+<!ENTITY aboutTor.torInfo3.label "출구 노드: ">
+<!ENTITY aboutTor.torInfo4.label "이 서버는 방문자에 대한 정보를 기록하지 않습니다.">
+<!ENTITY aboutTor.whatnextQuestion.label "그 다음은?">
+<!ENTITY aboutTor.whatnextAnswer.label "Tor는 완벽한 익명 브라우징을 보장하지 않습니다! 따라서 신분을 안전하게 유지하기 위해서는 브라우징 습관을 바꾸셔야 합니다.">
+<!ENTITY aboutTor.whatnext.label "익명으로 알짱거릴 때의 팁 &gt;&gt;">
+<!ENTITY aboutTor.whatnext.link "https://www.torproject.org/download/download.html.en#warning">
+<!ENTITY aboutTor.helpInfo1.label "여러분도 도울 수 있습니다!">
+<!ENTITY aboutTor.helpInfo2.label "여러분이 Tor 네트워크를 보다 빠르고 강하게 만들 수 있는 방법이 있습니다.">
+<!ENTITY aboutTor.helpInfo3.label "Tor 중계 서버 node 실행 »">
+<!ENTITY aboutTor.helpInfo3.link "https://www.torproject.org/docs/tor-doc-relay.html.en">
+<!ENTITY aboutTor.helpInfo4.label "자원 봉사로 Tor 돕기 »">
+<!ENTITY aboutTor.helpInfo4.link "https://www.torproject.org/getinvolved/volunteer.html.en">
+<!ENTITY aboutTor.helpInfo5.label "후원하기 »">
+<!ENTITY aboutTor.helpInfo5.link "https://www.torproject.org/donate/donate.html.en">
+
+<!ENTITY aboutTor.footer.label "Tor 프로젝트란? 온라인 익명 및 개인 정보 보호의 연구, 개발 및 교육에 힘쓰는 US 501(c)(3) 비영리 단체입니다.">
+<!ENTITY aboutTor.learnMore.label "Tor 프로젝트에 대해서 더 알아보기 »">
+<!ENTITY aboutTor.learnMore.link "https://www.torproject.org/about/overview.html.en">
